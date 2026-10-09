@@ -1,199 +1,56 @@
-# parasite-eve-decomp
+# Parasite Eve PC
 
-Work-in-progress matching decompilation of the North American PlayStation
-release of Parasite Eve, target `SLUS-006.62`.
+Native PC port of the North American PlayStation release of Parasite Eve
+(`SLUS-006.62`). The game code in this tree is the matching decompilation from
+[parasite-eve-decomp](https://github.com/khasinski/parasite-eve-decomp). The
+PlayStation runtime is replaced by [PsyZ](https://github.com/Xeeynamo/psyz),
+a native PSY-Q stand-in. This is not an emulator and not a static recompiler.
 
-This repository is source-only. It does not contain disc images, extracted game
-assets, FMV, memory cards, Sony PSYQ SDK files, compiler binaries, or generated
-split output. Contributors must provide their own legally obtained copy of the
-game and local toolchains.
+The port is not playable yet. `pc/` builds a small PsyZ window so the SDK,
+headers, and host link are in place. The decompiled game is not linked into
+that executable.
 
-## Target
+This repository is source-only. It does not contain disc images, extracted
+assets, FMV, memory cards, or Sony PSY-Q SDK files. A legal copy of the game
+is required before any disc-backed path can run.
 
-| Field | Value |
-|---|---|
-| Game | Parasite Eve, USA Disc 1 |
-| Executable | `SLUS_006.62` |
-| Target path | `assets/USA/main.exe` |
-| SHA-1 | `452fb033f2eaa4b18aa20a5bca60b8125af3a37b` |
-| Entry PC | `0x80072534` |
-| Text VRAM | `0x80010000..0x801FE000` |
+## Build the host smoke test
 
-## Progress
+The smoke test opens a 256x240 window through PsyZ, draws a frame counter, and
+exits after a few frames. It does not load `PE.IMG`.
 
-![functions](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkhasinski%2Fparasite-eve-decomp%2Fmain%2Fdocs%2Fbadges%2Ffunctions.json)
-![code](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkhasinski%2Fparasite-eve-decomp%2Fmain%2Fdocs%2Fbadges%2Fcode.json)
-![debt](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkhasinski%2Fparasite-eve-decomp%2Fmain%2Fdocs%2Fbadges%2Fdebt.json)
+```sh
+git clone --recurse-submodules https://github.com/khasinski/parasite-eve-pc
+cd parasite-eve-pc
+git submodule update --init third_party/psyz third_party/psyz/external/SDL
+cmake -S pc -B pc/build
+cmake --build pc/build
+./pc/build/parasite-eve-pc
+```
 
-Progress is measured by objdiff against a disassembly of the retail binaries,
-the same `report.json` CI publishes for decomp.dev. Regenerate locally with
-`make report` and render the badges and per-category table with `make
-progress`. This README intentionally avoids hardcoded numbers.
-CI regenerates the badges after auditing the report and rejects stale committed
-values. Run `make report`, `make progress`, and `make debt` before committing
-changes that affect progress or debt; include `docs/badges/` in that commit.
-
-The badges measure **verified semantic C**, not merely matching bytes. A unit
-is eligible only when its complete executable or overlay matches the retail
-SHA-1. Generated split assembly, original BIOS/SDK assembly, inline CPU
-instruction implementations, and data stored in `.text` receive no semantic-C
-credit. Register pins and empty compiler barriers remain eligible but are
-reported separately as crutch debt. Function counts remain a secondary,
-partly source-dependent estimate: the target generator borrows symbol names
-and sizes from verified C objects so objdiff can pair them. The audit checks
-that the two sides are consistent, but it does not turn those boundaries into
-independent evidence about the original translation units. Code bytes and the
-full linked SHA-1 are the stronger measures.
-
-Binary matching is only one quality level. A file is finished when it is
-also named, typed, free of hidden fixed addresses and placed in its
-subsystem; [docs/CONVENTIONS.md](docs/CONVENTIONS.md) defines that bar.
-
-For normal acceptance run `make verify`; it combines the source-policy gates,
-tests, build, and retail checksum. Structural, manifest, toolchain, and shared
-header changes require `make verify-clean`. See [CONTRIBUTING.md](CONTRIBUTING.md)
-for the working contract.
-
-The matching policy is conservative: promoted decompilation work must match
-through the stock compiler pipeline. Register pins and empty asm barriers are
-allowed source-level constraints, but are tracked as debt, kept to a minimum,
-and removed after matching whenever the stock compiler still produces the
-retail bytes. Inline instructions are limited to named, central macros for
-documented GTE/COP2 operations or functions proven to have originated in
-assembly. Whole-function asm bodies are not decompilation results. Compiler or
-MASPSX modifications, post-build rewrites, and build hacks are forbidden. See
-[docs/ASM_AND_GTE_POLICY.md](docs/ASM_AND_GTE_POLICY.md).
-
-## How the game is built
-
-`SLUS_006.62` is the resident executable: boot, the script interpreter,
-actors, rendering, battle, menus, the AKAO sound driver and the PsyQ
-libraries. Rooms, scene sets, effects and a few screens are overlays read
-from `PE.IMG` into fixed RAM windows; all 162 room overlays and 22 scene sets
-share the window at `0x8018EFE8`. Each overlay is linked separately against
-the executable's symbols. The memory map, the overlay windows and the build
-pipeline are described in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+PsyZ's other submodules (`nugget`, `cimgui`) are only needed for PlayStation
+cross-builds and the imgui sample. The PC target needs `external/SDL`.
 
 ## Layout
 
-- `src/main/<subsystem>/` - the executable, one directory per subsystem;
-  PsyQ objects under `src/main/psyq/lib*/` with their SDK names.
-- `src/overlays/<overlay>/` - one directory per overlay binary;
-  `room_lib/` holds templates shared by many rooms.
-- `include/pe1/` - game headers, one owner per declaration.
-- `configs/USA/` - splat configs, symbols, relocations, SDK provenance and
-  assembler evidence.
-- `tools/scripts/`, `tools/tests/` - build, check and report helpers and
-  their tests.
-- `docs/` - the contracts and badges.
+- `src/`, `include/`, `configs/` — the matching decompilation. The PlayStation
+  build (`make verify`) still targets the retail executable and is unchanged.
+- `third_party/psyz/` — PsyZ, as a submodule.
+- `pc/` — the native CMake target.
 
-Naming, the subsystem taxonomy, headers, the assembler rule and code style
-are in [docs/CONVENTIONS.md](docs/CONVENTIONS.md); source placement and
-translation-unit changes follow
-[docs/CODE_ORGANIZATION.md](docs/CODE_ORGANIZATION.md). CI enforces a
-one-to-one mapping between manifest C entries and files under `src/` and
-prevents organization and crutch debt from increasing.
+## What has to change before the game links
 
-Generated directories such as `asm/`, `linkers/`, `build/`, `assets/`, and
-`disc/` are intentionally ignored, along with local working notes.
+PsyZ's [porting guide](https://github.com/Xeeynamo/psyz/blob/main/PORTING_GUIDE.md)
+is the contract. The decomp still targets GCC 2.7 and a fixed PlayStation
+address map, so a host link has to deal with at least:
 
-## Toolchain
+- ordering tables stored as `u_long*`, which PsyZ replaces with `OT_TYPE*`
+- pointers kept in `s32` / `u32`, which truncate on 64-bit hosts
+- symbols that overlap in the PlayStation memory map
+- hardcoded addresses such as `0x800A1234` and `0x1F800000`
+- `register` asm constraints and empty scheduling barriers kept for the match
+- GTE and GPU operations written as `.word` encodings rather than PSY-Q calls
 
-Linking and assembling use standard GNU binutils: `mipsel-none-elf-as`,
-`mipsel-none-elf-ld`, and `mipsel-none-elf-objcopy` on `PATH`.
-
-Compiling matching C uses a native PSX GCC 2.7.2 `cc1` from
-[decompals/old-gcc](https://github.com/decompals/old-gcc), plus a
-PSYQ-compatible preprocessor and
-[maspsx](https://github.com/mkst/maspsx) reproducing ASPSX assembler behavior.
-The supported compiler path is the native toolchain below. Default local paths:
-
-```text
-sdk/psyq-4.0/PSX/INCLUDE/
-tools/psyq-gcc-2.7.2/cpp
-tools/old-gcc/cc1
-tools/maspsx/maspsx.py
-```
-
-Overridable with environment variables:
-
-```sh
-export PE_CPP=/path/to/gcc-2.7.2/cpp
-export PE_CC1=/path/to/stock/native/old-gcc/cc1-or-wrapper
-```
-
-Install the local compiler pieces with:
-
-```sh
-tools/scripts/setup_stock_cc1.sh
-tools/scripts/setup_maspsx.sh
-```
-
-Current matching note: `-G8` is part of the expected PSX small-data profile.
-The final build must use the unmodified stock compiler and the unmodified,
-pinned upstream maspsx checkout. Local patches, diagnostic compiler builds,
-postpasses, and MASPSX flags absent from that revision are forbidden. The
-upstream flags `--use-comm-section` and `--expand-div` remain available where
-required by the original compiler output. A function that cannot match with
-stock maspsx stays undecompiled until its C source is corrected; extending the
-assembler wrapper is not an acceptable matching technique.
-
-## Quick Start
-
-```sh
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-
-mkdir -p assets/USA
-cp /path/to/your/SLUS_006.62 assets/USA/main.exe
-
-make split
-make build
-make check
-```
-
-`make split` regenerates `asm/` and `linkers/` from the user-supplied
-executable, `make build` compiles and links `build/USA/main.exe`, and
-`make check` verifies its SHA-1 against retail. Useful extras:
-
-```sh
-make diff FUNC=SomeFunction
-make permute FUNC=SomeFunction
-make progress          # badges + per-category table from build/USA/report.json
-```
-
-## decomp.dev report
-
-CI publishes an [objdiff](https://github.com/encounter/objdiff) report for
-[decomp.dev](https://decomp.dev/khasinski/parasite-eve-decomp) on every push to
-`main`. Local commits and pushes to other branches do not update that page.
-The published `SLUS_006.62_report` artifact and the README badges come from
-the same audited build. It covers the main
-executable and all configured overlays, with PsyQ code in a separate category.
-The target side is a fresh disassembly of the retail binaries, never a snapshot
-of our own build. Generated assembly remains visible as unmatched work;
-text-resident data is typed as data rather than guessed functions. Report
-generation fails if any shipped module is absent or fails its retail SHA-1.
-
-To reproduce it locally:
-
-```sh
-tools/scripts/setup_objdiff.sh              # pinned objdiff-cli
-make build                                  # base: main executable
-make overlay-build-all                      # base: all overlays
-make report                                 # fresh retail target + audited report
-```
-
-`make report` regenerates the target objects directly from the retail binaries,
-rebuilds `objdiff.json`, verifies every configured module SHA-1, and runs the
-progress-input audit before invoking objdiff. A final report audit rejects the
-artifact if any code byte or function outside `semantic_c` receives credit.
-
-`objdiff.json` is generated, not committed; run `make objdiff-config` before
-pointing the objdiff GUI at the repository.
-
-## License
-
-See [LICENSE.md](LICENSE.md). Game code and data remain the property of their
-respective owners; this repository contains only clean-room reimplementation
-source.
+The disc check that decides CD1 versus CD2 lives in `OpenPeImage`
+(`src/main/render/Render_InitDisplayLists.c`). On PC that search has to read
+the inserted disc image instead of `DsSearchFile` against the drive.

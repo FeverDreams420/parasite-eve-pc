@@ -1,0 +1,20 @@
+name: pc
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Fetch PsyZ and SDL
+        run: git submodule update --init third_party/psyz third_party/psyz/external/SDL
+      - name: Build the host smoke test
+        run: |
+          cmake -S pc -B pc/build
+          cmake --build pc/build

@@ -35,8 +35,6 @@ int SetRCnt(unsigned int counter, int target, int mode) {
     return 1;
 }
 
-#include "pe1/psyq_api_internal.h"
-
 int GetRCnt(unsigned int counter) {
     int id;
 
@@ -47,8 +45,6 @@ int GetRCnt(unsigned int counter) {
     return _counters[id].rootCounter;
 }
 
-#include "pe1/psyq_api_internal.h"
-
 int StartRCnt(unsigned int counter) {
     int id;
 
@@ -57,15 +53,11 @@ int StartRCnt(unsigned int counter) {
     return id < 3;
 }
 
-#include "pe1/psyq_api_internal.h"
-
 int StopRCnt(unsigned int counter) {
     int id = counter & 0xFFFF;
     D_8009B7CC->mask &= ~_interrupt_status_masks[id];
     return 1;
 }
-
-#include "pe1/psyq_api_internal.h"
 
 int ResetRCnt(unsigned int counter) {
     int id;

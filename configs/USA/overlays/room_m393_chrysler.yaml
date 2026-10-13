@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m393_chrysler
   ld_script_path: linkers/USA/overlays/room_m393_chrysler.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m393_chrysler.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m393_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m393_chrysler.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m393_chrysler.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,21 +37,20 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m393_chrysler]
-      - [0xC, .rodata, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x14, .rodata, ../room_lib/RoomFx_FallingSpriteBurst]
-      - [0x4C, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/three_particles]
+      - [0x14, .rodata, ../room_lib/falling_sprite_burst]
+      - [0x4C, .rodata, ../room_lib/actor_classes]
       - [0x224, rodata, RoomLib_HandlerCArgsData_801936F4]
-      - [0x224, c, ../room_lib/RoomLib_ThreeParticleClass]
-      - [0x3D4, c, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x1220, c, ../room_lib/RoomLib_ClassNop0]
-      - [0x1228, c, ../room_lib/RoomLib_PlantScript]
-      - [0x1254, c, ../room_lib/RoomLib_Spawn6]
-      - [0x1280, c, ../room_lib/RoomLib_RegisterDrawList]
-      - [0x12C8, c, ../room_lib/RoomLib_RegisterPairedTables]
-      - [0x1354, c, ../room_lib/RoomLib_CloseTarget]
-      - [0x13D8, c, ../room_lib/RoomLib_ClassNop6]
-      - [0x13E0, c, ../room_lib/RoomFx_FallingSpriteBurst]
-      - [0x233C, c, ../room_lib/RoomLib_ActorClasses]
+      - [0x224, c, ../room_lib/three_particles]
+      - [0x1220, c, ../room_lib/class_nop0]
+      - [0x1228, c, ../room_lib/class_plant_script]
+      - [0x1254, c, ../room_lib/class_spawn]
+      - [0x1280, c, ../room_lib/class_register_draw_list]
+      - [0x12C8, c, ../room_lib/class_register_tables]
+      - [0x1354, c, ../room_lib/class_close_target]
+      - [0x13D8, c, ../room_lib/class_nop6]
+      - [0x13E0, c, ../room_lib/falling_sprite_burst]
+      - [0x233C, c, ../room_lib/actor_classes]
       - [0x5658, data, D_80194640]
       - [0x5664, data, RoomLib_TableA_8018F264]
       - [0x5670, data, D_80194658]
@@ -63,7 +64,8 @@ segments:
       - [0x5730, data, D_80194718]
       - [0x573C, data, D_80194724]
       - [0x5758, data, RoomLib_TableB_80190210]
-      - [0x57DC, data, D_801947C4]
+      - [0x57A4, .data, ../room_lib/actor_class_table]
+      - [0x584C, data, D_80194834]
       - [0x5850, data, D_80194838]
       - [0x5854, data, D_8019483C]
       - [0x5858, data, D_80194840]

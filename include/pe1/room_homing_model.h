@@ -2,7 +2,17 @@
 #define PE1_ROOM_HOMING_MODEL_H
 
 #include "common.h"
+#include "pe1/asset_find.h"
+#include "pe1/battle_context.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/field_vector_math.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_task_pool.h"
+#include "pe1/floor_polygon.h"
+#include "pe1/gte_sine_table.h"
 #include "pe1/gte_types.h"
+#include "pe1/pm.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
 #include "pe1/room_floor.h"
 
@@ -98,57 +108,14 @@ typedef struct RoomHomingModelEntity {
     s32 position[3];              /* 0x28 */
 } RoomHomingModelEntity;
 
-extern RoomHomingModelEvent *D_800E2368;
-extern RoomHomingModelActorChannel *D_800F32D0;
-extern RoomHomingModelSparkChannel *D_800F33E0;
-extern RoomHomingModelEntity *D_8009D254;
-extern RoomHomingModelVertex *D_8009D248;
-extern u16 D_8009D1CC;
-/* One packed word of the PSY-Q sine table: sine low, cosine high. */
-typedef union RoomHomingTrig {
-    s32 word;
-    struct {
-        s16 sin;
-        s16 cos;
-    } part;
-} RoomHomingTrig;
+extern struct BattleEntity *D_8009D254;
 
-extern RoomHomingTrig D_800966EC[];
-/* Texture page index slots and the trailing parameter pair, read and
- * written as records so they stay ordered with the parameter-block
- * pointer stores, as retail does. */
-typedef struct RoomHomingModelTextureSlot {
-    u16 index;
-} RoomHomingModelTextureSlot;
-
-typedef struct RoomHomingModelParamsTail {
-    s16 parameter0A;
-    s16 depth;
-} RoomHomingModelParamsTail;
-
-extern RoomHomingModelTextureSlot D_800E11EC;
-extern RoomHomingModelTextureSlot D_800E11E8;
-extern RoomHomingModelParamsTail D_800F3372;
-
-extern int func_800CE560(void *pool, int size, int count, void *callback);
-extern RoomHomingModelSpark *func_800CE610(void *pool);
-extern int func_8006DCE4(int id, int channel, int x, int y, int z);
-extern int FieldEng_VecToAngle(s32 *vec, s32 *ref);
-extern int func_800DFE20(s32 *vec, s32 *ref);
-extern int rcos(int angle);
-extern int rsin(int angle);
-extern void func_800866A4(int handle, int arg);
-extern int func_8006F39C(int id, void *actor);
-extern void func_8006F6D4(int handle, int, int index, int value, int, int);
-extern u16 func_80077AA4(int, int);
-/* Battle_GetEnemyContextField in main. */
-extern int func_8003010C(void *actor, int field);
-
+extern void Akao_Cmd_21(int handle, int arg);
 
 /* The projectile's constant seeds: the spark sprite's rotation and colour,
  * the model words reported to the scene script, and the floor ring's
  * rotation and colours. They are the data of
- * src/overlays/room_lib/RoomEffect_HomingProjectileSeeds.c; scene_e04 and
+ * src/overlays/room_lib/homing_projectile_seeds.c; scene_e04 and
  * scene_e05 keep them past the end of their extracted image and name them
  * in their symbol files. */
 extern GteRotation g_RoomHomingSparkRotation;

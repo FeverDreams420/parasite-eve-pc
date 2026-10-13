@@ -2,10 +2,16 @@
 #define FX_COMMON_H
 
 #include "common.h"
-#include "fx_common_vectors.h"
-#include "pe1/room_fx.h"
+#include "pe1/akao/pan3d.h"
+#include "pe1/akao_send.h"
+#include "pe1/asset_tim.h"
 #include "pe1/gte_types.h"
+#include "pe1/projection_slot.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_matrix_slot.h"
+#include "pe1/room_fx.h"
+
+#include "fx_common_vectors.h"
 
 typedef struct FxCommonSelection {
     s16 record;
@@ -137,7 +143,7 @@ PE1_STATIC_ASSERT(sizeof(FxCommonTransformSeed) == 8,
 PE1_STATIC_ASSERT(sizeof(FxCommonTransformNode) == sizeof(FxCommonRecord),
                   fx_common_transform_node_record_size);
 
-/* Level-of-detail model node drawn by func_80191114: the model kind is picked
+/* Level-of-detail model node drawn by FxCommon_DrawLodNode: the model kind is picked
  * by the view depth against nearDepth / farDepth. */
 typedef struct FxCommonLodNode {
     s16 id;
@@ -183,12 +189,14 @@ typedef struct FxCommonPathPoint {
     u16 count;                  /* 0x06: header record only */
 } FxCommonPathPoint;
 
-typedef struct FxCommonMotionVec {
-    s32 x;
-    s32 y;
-    s32 z;
+/* Fixed-stride motion storage; the sampler writes only the vector prefix. */
+typedef struct FxCommonMotionRecord {
+    FxCommonVec3 vector;
     s32 pad0C;
-} FxCommonMotionVec;
+} FxCommonMotionRecord;
+PE1_STATIC_ASSERT(sizeof(FxCommonMotionRecord) == 16, fx_motion_record_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FxCommonMotionRecord, vector) == 0,
+                  fx_motion_record_vector_offset);
 
 typedef struct FxCommonMotionLane {
     s32 value;
@@ -207,7 +215,7 @@ typedef struct FxCommonResourceState {
     } current;
 } FxCommonResourceState;
 
-extern s16 D_8019C058;
+extern s16 g_FxCommonMotionBlendFrames;
 extern u8 D_8019BFCC;
 extern GteMatrix D_8018F014;
 extern s32 D_8019C810, D_8019C814, D_8019C818;
@@ -221,64 +229,54 @@ extern volatile s16 D_8019C0B4, D_8019C0B6, D_8019C0B8;
 extern volatile s16 D_8019C07C, D_8019C07E, D_8019C080;
 extern volatile s16 D_8019C084, D_8019C086, D_8019C088;
 extern s16 D_8019C056, D_8019C054, D_8019C052, D_8019C050;
-extern FxCommonMotionVec D_8019CAA8[10];
+extern FxCommonMotionRecord D_8019CAA8[10];
 extern FxCommonMotionLane D_8019CAB0[10];
 extern FxCommonMotionByte D_801EA268[1];
 extern FxCommonMotionByte D_801EA26C[1];
 extern FxCommonMotionByte D_801EA270[1];
-extern FxCommonMotionVec g_FxCommonMotionDeltas[10] __asm__("D_801EA268");
-extern FxCommonResourceState g_FxCommonResourceState __asm__("D_8019C140");
+extern FxCommonMotionRecord g_FxCommonMotionDeltas[10];
+extern FxCommonResourceState g_FxCommonResourceState;
 
-extern s16 D_8019CC50;
-extern FxCommonBucket D_8019CCBC[];
+extern s16 g_FxCommonRecordCursor;
+extern FxCommonBucket g_FxCommonNodeBuckets[];
 extern FxCommonSelection D_801E4A8A[];
-extern FxCommonRecord D_801E4E00[];
-extern s16 D_8019C830[];
-extern s16 D_8019C9D0;
-extern u16 D_8019CBC0;
-extern FxCommonIndexLink D_801E4A88[];
+extern FxCommonRecord g_FxCommonRecords[];
+extern s16 g_FxCommonIndexFreeNext[];
+extern s16 g_FxCommonIndexLast;
+extern u16 g_FxCommonIndexFreeHead;
+extern FxCommonIndexLink g_FxCommonIndexLinks[];
 
-extern u8 D_800B0DCE;
-extern u8 D_800B0DCF;
+extern u8 g_Akao3dVolumeMin;
+extern u8 g_Akao3dVolumeMax;
 extern s16 D_800B0DD0;
 extern s16 D_800B0DD2;
 extern FxCommonBufferRegion *D_800B0E4C;
 extern u8 D_8019C1F8;
 extern u8 D_8019C1F0;
-extern s16 D_8019C02C;
+extern s16 g_FxCommonMarkerFade;
 extern u32 D_801EA598[];
-extern FxCommonBuffer *D_8019C9C0;
-extern FxCommonNode D_8019C340;
-extern RoomSpriteMatrix D_8019CC30;
-extern RoomSpriteMatrix *D_8019BFF0;
-extern u8 D_801D0260;
-extern u8 D_801EA378[];
-extern void *volatile D_800BCFA8;
+extern FxCommonBuffer *g_FxCommonActiveBuffer;
+extern FxCommonNode g_FxCommonDefaultNode;
+extern RoomSpriteMatrix g_FxCommonViewMatrix;
+extern RoomSpriteMatrix *g_FxCommonWorkMatrix;
+extern TimRelativeTable g_FxCommonTimTable;
 
-void func_800868AC(int mode, int arg1);
-void func_80077BC4(FxCommonGradientQuad *packet);
-void func_80077B04(void *packet, int enabled);
-void func_80077C84(FxCommonDrawModePacket *packet, int x, int y, int tpage);
-void func_800752AC(void *allocation, int size);
-s16 func_80193B5C(s16 value);
-void *func_8006EC6C(void *data, int count);
-int func_8018F55C(u32 position, int radius, void *allocation,
-                   FxCommonMotionVec *vector, GteShortVector *angles);
-int func_8006DF50(void *resource, int arg1, int arg2, int arg3, int enabled);
+void Akao_Cmd_A9(int mode, int arg1);
+void SetSemiTrans(void *packet, int enabled);
+s16 FxCommon_DrawEffectMarkers(s16 value);
+int FxCommon_SamplePath(u32 position, int radius, void *allocation,
+                   FxCommonVec3 *vector, GteShortVector *angles);
 void *PushMatrix(void);
-void CompMatrix(RoomSpriteMatrix *left, RoomSpriteMatrix *right,
-                   RoomSpriteMatrix *result);
 int PopMatrix(void);
-void func_8006DFA8(FxCommonShortVec3 *input, int *outA, int *outB);
-void func_800868F0(void *object, int index, int value);
-void func_80086A28(void *object, int index, int value);
-void func_8003746C(int resourceId);
-void func_80038940(int resourceId, int red, int green, int blue);
-void func_800375E0(int resourceId, int mode, s16 *result);
-void func_801941A4(int value);
-void func_80191678(s16 id);
-void func_80191834(FxCommonNode *node);
-void func_8019BF8C(void **buffer);
+void Akao_Cmd_A0(int handle, int index, int value);
+void Akao_Cmd_A2(int handle, int index, int value);
+void Draw_CloseTextboxPage(int resourceId);
+void Menu_SetHighlightColor(int resourceId, int red, int green, int blue);
+void Render_SetupColorTable(int resourceId, int mode, s16 *result);
+void FxCommon_DrawFullScreenFade(int value);
+void FxCommon_FreeIndexLink(s16 id);
+void FxCommon_UnlinkNode(FxCommonNode *node);
+void FxCommon_SelectBufferAllocation(void **buffer);
 typedef struct FxCommonPolyResource FxCommonPolyResource;
 void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource);
 int FxCommon_CheckBoundsWithMargin(int *point, int margin);

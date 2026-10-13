@@ -4,6 +4,8 @@ import itertools
 import struct
 import unittest
 
+from tools.tests.csource import find_definition
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -21,7 +23,7 @@ def _function(source, name):
 
 class CDReadProgressTests(unittest.TestCase):
     def test_plain_source(self):
-        self.assertNotRegex(_function((ROOT/'src/main/psyq/libds/dsread_2.c').read_text(), 'DS_read_cbready'), r'\b(?:asm|__asm__)\b')
+        self.assertNotRegex(_function(find_definition('DS_read_cbready').read_text(), 'DS_read_cbready'), r'\b(?:asm|__asm__)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
                          (ROOT/'build/USA/main.exe').is_file(), 'images unavailable')

@@ -1,9 +1,10 @@
 /* ASSEMBLER: GNU */
-/* Psy-Q LIBDS DSSYS_1.OBJ, part 1 of 11: DS_init. */
-/* DSSYS_1 is split where its functions need different options: parts 2, 5,
- * 7, 9 and 11 only match with GCC 2.8.1 and -mno-split-addresses (2.7.2
- * cannot keep the shared address base in a register), part 3 needs
- * -fno-schedule-insns2, the rest match with GCC 2.7.2. */
+/* Psy-Q LIBDS DSSYS_1.OBJ, part 1 of 10: DS_init. */
+/* DSSYS_1 is split where its functions need different options: parts 2, 4,
+ * 6, 8 and 10 only match with GCC 2.8.1 and -mno-split-addresses (2.7.2
+ * cannot keep the shared address base in a register), the rest match with
+ * GCC 2.7.2. */
+
 #include "pe1/psyq_cd.h"
 #include "pe1/psyq_ds.h"
 
@@ -30,6 +31,6 @@ void DS_init(void) {
     g_CdReadyCallback = (CdlCB)LIBDS_DSSYS_1_text_E10;
     VSyncCallbacks(0, LIBDS_DSSYS_1_text_4A4);
 
-    D_8009AFD8 = 1;
+    g_CdDsActive = 1;
     g_DsReadSysEnabled.enabled = 1;
 }

@@ -1,6 +1,7 @@
 /* PSY-Q LIBGTE MTX_004: ApplyMatrixLV. */
-#include "pe1/gte_types.h"
+
 #include "pe1/gte.h"
+#include "pe1/gte_types.h"
 
 /* Split signed inputs at bit 15 before the two GTE rotation passes.
  * Empty outputs on architectural $0 retain retail's relative branches;
@@ -28,9 +29,7 @@ GteVector *ApplyMatrixLV(const GteMatrix *matrix, const GteVector *v, GteVector 
     x = v->x;
     y = v->y;
     z = v->z;
-    if (x >= 0) {
-        goto positive_x;
-    }
+    if (x < 0) {
     x = 0U - x;
     hx = x >> 15;
     hx = 0U - hx;
@@ -39,14 +38,13 @@ GteVector *ApplyMatrixLV(const GteMatrix *matrix, const GteVector *v, GteVector 
     if (zero == 0) {
         goto split_x;
     }
+    }
 positive_x:
     asm volatile("" : "=r"(x) : "0"(x));
     hx = x >> 15;
     x &= 0x7fff;
 split_x:
-    if (y >= 0) {
-        goto positive_y;
-    }
+    if (y < 0) {
     y = 0U - y;
     hy = y >> 15;
     hy = 0U - hy;
@@ -55,14 +53,13 @@ split_x:
     if (zero == 0) {
         goto split_y;
     }
+    }
 positive_y:
     asm volatile("" : "=r"(y) : "0"(y));
     hy = y >> 15;
     y &= 0x7fff;
 split_y:
-    if (z >= 0) {
-        goto positive_z;
-    }
+    if (z < 0) {
     z = 0U - z;
     hz = z >> 15;
     hz = 0U - hz;
@@ -70,6 +67,7 @@ split_y:
         z = 0U - z;
     if (zero == 0) {
         goto split_z;
+    }
     }
 positive_z:
     asm volatile("" : "=r"(z) : "0"(z));
@@ -89,9 +87,7 @@ split_z:
     gte_mtc2_11(z);
     gte_cop2_hazard_slot();
     gte_mvmva_rotation_ir_sf12();
-    if (hx >= 0) {
-        goto shift_positive_x;
-    }
+    if (hx < 0) {
     hx = 0U - hx;
     hx = hx << 3;
     asm volatile("" : "=r"(zero));
@@ -99,12 +95,11 @@ split_z:
     if (zero == 0) {
         goto shifted_x;
     }
+    }
 shift_positive_x:
     hx = hx << 3;
 shifted_x:
-    if (hy >= 0) {
-        goto shift_positive_y;
-    }
+    if (hy < 0) {
     hy = 0U - hy;
     hy = hy << 3;
     asm volatile("" : "=r"(zero));
@@ -112,18 +107,18 @@ shifted_x:
     if (zero == 0) {
         goto shifted_y;
     }
+    }
 shift_positive_y:
     hy = hy << 3;
 shifted_y:
-    if (hz >= 0) {
-        goto shift_positive_z;
-    }
+    if (hz < 0) {
     hz = 0U - hz;
     hz = hz << 3;
     asm volatile("" : "=r"(zero));
     hz = 0U - hz;
     if (zero == 0) {
         goto shifted_z;
+    }
     }
 shift_positive_z:
     hz = hz << 3;

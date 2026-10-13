@@ -1,34 +1,18 @@
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
-/* PSY-Q LIBPAD PADPORTD, part 1 of 4: PadInitDirect. */
-/* PADPORTD stays in four units: MemCard_DmaCompleteCallback (padportd_3.c)
- * only matches with GCC 2.8.1 and -mno-split-addresses, padportd_2.c
- * and padportd_4.c only with GCC 2.7.2. */
+/* ASSEMBLER: GNU */
+/* PSY-Q LIBPAD PADPORTD: PadInitDirect, CardObj_ResetFields,
+ * MemCard_DmaCompleteCallback, CardObj_SwapByteField, CardObj_ReadPayloadByte,
+ * LIBPAD_PADPORTD_text_388, CardObj_GetChannelId, CardObj_LookupByChannelId. */
 
 #include "common.h"
 #include "pe1/card_obj.h"
+#include "pe1/memcard_state.h"
+#include "pe1/psyq_pad_main.h"
 
-extern CardObj D_800A5B70[];
-extern u8 D_800A5AE0[];
-extern u8 D_800A5B28[];
-
-extern int g_MemCardServiceReady;
-extern int g_MemCardCommandByte;
-extern CardObj *g_MemCardObjArray;
-extern int (*D_8009B724)(int);
-extern void (*g_MemCardObjResetFn)(CardObj *);
-extern void (*D_8009B730)(CardObj *);
-extern int (*D_8009B734)(CardObj *);
-extern CardObj *(*g_MemCardObjLookupFn)(int);
-extern void (*D_8009B748)(CardObj *);
+#include "padportd_externs.h"
 
 void _padInitDirSeq(void);
 int MemCard_DmaCompleteCallback(int result);
-void CardObj_ResetFields(CardObj *obj);
 void LIBPAD_PADPORTD_text_388(CardObj *);
-int CardObj_GetChannelId(CardObj *obj);
-CardObj *CardObj_LookupByChannelId(int channel);
-void CardObj_SwapByteField(CardObj *obj);
 void bzero(void *ptr, int size);
 void _padSetVsyncParam(void);
 
@@ -40,7 +24,7 @@ int PadInitDirect(u8 *output0, u8 *output1) {
     u8 *table40;
     int i;
     int fill;
-    register u8 *field40 asm("$4");
+    register u8 **field40 asm("$4");
     u8 *cursor;
     void (*swapCommand)(CardObj *);
     CardObj *clearObj;
@@ -51,33 +35,35 @@ int PadInitDirect(u8 *output0, u8 *output1) {
     _padInitDirSeq();
 
     obj = &D_800A5B70[0];
-    D_8009B724 = MemCard_DmaCompleteCallback;
+    g_PadDmaCompleteFn = MemCard_DmaCompleteCallback;
     g_MemCardObjResetFn = CardObj_ResetFields;
-    D_8009B72C = CardObj_ReadPayloadByte;
-    D_8009B730 = LIBPAD_PADPORTD_text_388;
-    D_8009B734 = CardObj_GetChannelId;
+    g_MemCardObjReadPayloadByteFn = CardObj_ReadPayloadByte;
+    g_PadPortActuatorMapFn = LIBPAD_PADPORTD_text_388;
+    g_CardGetChannelIdFn = CardObj_GetChannelId;
     g_MemCardObjLookupFn = CardObj_LookupByChannelId;
     swapCommand = CardObj_SwapByteField;
     asm volatile("" : "=r"(clearObj) : "0"(obj));
     g_MemCardObjArray = obj;
-    D_8009B748 = swapCommand;
+    g_CardSwapByteFieldFn = swapCommand;
 
     bzero(clearObj, sizeof(CardObj) * 2);
     i = 0;
     fill = 0xFF;
-    field40 = (u8 *)&obj->field_40;
-    table40 = D_800A5B28;
-    table3c = D_800A5AE0;
-    obj[0].output_30 = savedOutput0;
-    obj[1].output_30 = savedOutput1;
+    field40 = &obj->statusBuffer;
+    table40 = g_MemCardObjStatusBuffers;
+    table3c = g_MemCardObjResponseBuffers;
+    cursor = (u8 *)&obj[0].output_30;
+    *(u8 **)cursor = savedOutput0;
+    cursor = (u8 *)&obj[1].output_30;
+    *(u8 **)cursor = savedOutput1;
     do {
-        *(void **)(field40 - 0x34) = 0;
-        *(CardObj **)(field40 - 0x30) = obj;
-        (*(u8 **)(field40 - 0x10))[0] = fill;
-        (*(u8 **)(field40 - 0x10))[1] = 0;
-        *(u8 **)(field40 - 4) = table3c;
-        *(u8 **)field40 = table40;
-        cursor = obj->field_5d;
+        CARD_OBJ_FROM_STATUS_BUFFER(field40)->subPorts = 0;
+        CARD_OBJ_FROM_STATUS_BUFFER(field40)->ownerPort = obj;
+        CARD_OBJ_FROM_STATUS_BUFFER(field40)->output_30[0] = fill;
+        CARD_OBJ_FROM_STATUS_BUFFER(field40)->output_30[1] = 0;
+        CARD_OBJ_FROM_STATUS_BUFFER(field40)->response_3c = table3c;
+        *field40 = table40;
+        cursor = obj->actuatorMap;
         count = 5;
         do {
             *cursor = fill;
@@ -87,12 +73,290 @@ int PadInitDirect(u8 *output0, u8 *output1) {
         table40 += 0x23;
         table3c += 0x23;
         i++;
-        field40 += sizeof(CardObj);
+        field40 = &CARD_OBJ_FROM_STATUS_BUFFER(field40)[1].statusBuffer;
         obj++;
     } while (i < 2);
 
     _padSetVsyncParam();
     g_MemCardServiceReady = 1;
-    asm volatile("" : : : "memory");
     return 1;
+}
+
+void CardObj_ResetFields(CardObj *arg0) {
+    int count;
+    int value;
+    char *ptr;
+
+    if (arg0->communicationState != 0) {
+        ptr = (char *)arg0->actuatorMap;
+        value = 0xFF;
+        count = 5;
+        arg0->communicationState = 0;
+        arg0->sequenceStep = 0;
+        arg0->currentExtendedId = 0;
+        arg0->fn_14 = 0;
+        arg0->fn_18 = 0;
+        arg0->modeCount = 0;
+        arg0->currentModeIndex = 0;
+        arg0->currentExtendedId = 0;
+        arg0->actuatorCount = 0;
+        arg0->combinationCount = 0;
+        arg0->modeTable = 0;
+        arg0->capabilities = 0;
+        arg0->combinations = 0;
+
+        do {
+            *ptr = value;
+            count -= 1;
+            ptr += 1;
+        } while (count >= 0);
+    }
+}
+
+void _dirFailAuto(CardObj *obj);
+int _padInitSioMode(CardObj *obj);
+
+int MemCard_DmaCompleteCallback(int result) {
+    register int callbackResult asm("$5") = result;
+    CardObj *objects;
+    int ignoredResult;
+    int *channelResults;
+    CardObj *obj;
+    int index;
+    MemCardSioRegisters *control;
+    int limit;
+    int offset;
+    int nextResult;
+    int cleared;
+
+    objects = &D_800A5B70[0];
+    ignoredResult = -9;
+    channelResults = &g_MemCardChannelCounts[0];
+
+    do {
+        index = g_PadActivePortIndex;
+        offset = index * sizeof(CardObj);
+        obj = (CardObj *)(offset + (int)objects);
+
+        if (callbackResult != ignoredResult) {
+            cleared = callbackResult == 0;
+            if (cleared) {
+                channelResults[index] = 0;
+            } else {
+                _dirFailAuto(obj);
+                CardObj_SwapByteField(obj);
+            }
+        }
+
+        asm("" : "=r"(control), "=r"(index) : "0"(g_CardSioRegsPtr), "1"(g_PadActivePortIndex));
+        g_MemCardCommandStep = 0;
+        asm volatile("" : : : "memory");
+        control->control = 0;
+        limit = g_MemCardPort2Present;
+        index += 1;
+        g_PadActivePortIndex = index;
+        asm volatile("" : : : "memory");
+        if (limit >= index) {
+            nextResult = _padInitSioMode(
+                (CardObj *)((((index << 4) - index) << 4) + (int)objects));
+        } else {
+            nextResult = 1;
+        }
+        callbackResult = 0xFFFF;
+        asm("" : "=r"(callbackResult) : "0"(callbackResult));
+    } while (nextResult == 0);
+
+    return nextResult;
+}
+
+void CardObj_SwapByteField(CardObj *obj) {
+    u8 command;
+
+    command = obj->command;
+    obj->command = 0;
+    obj->saved_command = command;
+}
+
+int CardObj_ReadPayloadByte(CardObj *arg0, int needsAck) {
+    int index;
+    int mode;
+    u8 *ptr;
+
+    index = arg0->payload_index - 3;
+    mode = arg0->command;
+    if (mode != 0) {
+        if (mode == 0x4D) {
+            goto mode4D;
+        }
+
+    }
+    else
+    {
+mode0:
+    if (index < 6) {
+        if (arg0->actuatorEnabled[index] == 0) {
+            return 0;
+        }
+    }
+
+    if (index >= arg0->payload_28_len) {
+        return 0;
+    }
+    ptr = arg0->payload_28 + index;
+
+load:
+    asm volatile("" : "=r"(ptr) : "0"(ptr));
+    return *ptr;
+
+mode4D:
+    if (index < arg0->payload_2c_len) {
+        ptr = arg0->payload_2c + index;
+        goto load;
+    }
+    return 0xFF;
+
+    }
+other:
+    if (index >= arg0->payload_2c_len) {
+        return 0;
+    }
+    return arg0->payload_2c[index];
+}
+
+void bzero(void *, int);
+void LIBPAD_PADPORTD_text_388(CardObj *port) {
+    register int limit, i, j, mask asm("$7"), active asm("$6");
+    register int count;
+    register int offset;
+    register int one;
+    register u8 *map, *data;
+    bzero(port->actuatorEnabled, 6);
+    if (port->currentExtendedId && port->payload_28) {
+        limit = 6;
+        if (port->payload_28_len < 7) {
+            asm("" ::: "memory");
+            limit = port->payload_28_len;
+        }
+        i = 0;
+        if (port->actuatorCount) {
+            one = 1;
+            offset = 0;
+            do {
+                CardObjAddress capability;
+                active = 0;
+                mask = 1;
+                capability.capability = port->capabilities;
+                capability.word = offset + capability.word;
+                if (capability.capability->payloadBytes)
+                    mask = 255;
+                map = port->actuatorMap;
+                data = port->payload_28;
+                j = 0;
+                if (limit) {
+                    while (1) {
+                        if (*map != i || !(*data & mask)) {
+                            map++;
+                            j++;
+                            data++;
+                            if (j < limit)
+                                continue;
+                        } else
+                            goto selected;
+                        break;
+                    }
+                }
+            search_done:
+                if (active) {
+                    CardObjAddress costRecord;
+                    int total;
+                    costRecord.capability = port->capabilities;
+                    costRecord.word = offset + costRecord.word;
+                    total = g_PadActuatorCostTotal + costRecord.capability->activationCost;
+                    if (total < 61)
+                        g_PadActuatorCostTotal = total;
+                    else {
+                        goto deny;
+                    selected:
+                        active = 1;
+                        goto search_done;
+                    deny:
+                        active = 0;
+                    }
+                    if (active) {
+                        map = port->actuatorMap;
+                        data = port->actuatorEnabled;
+                        j = 0;
+                        if (limit)
+                            do {
+                                int same = *map == i;
+                                map++;
+                                if (same)
+                                    *data = one;
+                                j++;
+                                data++;
+                            } while (j < limit);
+                    }
+                }
+                count = port->actuatorCount;
+                asm("" : "=r"(i) : "0"(i), "r"(count));
+                i++;
+                offset += 5;
+            } while (i < count);
+        }
+    } else {
+        if (((unsigned)(port->currentId - 4) < 2 || port->currentId == 7) &&
+            !port->currentExtendedId && port->payload_28_len >= 2) {
+            if ((port->payload_28[0] & 192) == 64 && (port->payload_28[1] & 1) &&
+                g_PadActuatorCostTotal + 10 < 61) {
+                port->actuatorEnabled[1] = 1;
+                port->actuatorEnabled[0] = 1;
+                g_PadActuatorCostTotal += 10;
+            }
+        } else {
+            asm("" ::: "memory");
+            if (port->currentId == 3)
+                port->actuatorEnabled[0] = 1;
+            else if (!port->currentExtendedId) {
+                register int value = 1;
+                register int k asm("$3") = 5;
+                /* Byte cursor over the object, offset by the flag index. */
+                register CardObjAddress cursor;
+                cursor.obj = port;
+                cursor.word += 5;
+                do {
+                    cursor.bytes[PE1_OFFSETOF(CardObj, actuatorEnabled)] = value;
+                    k--;
+                    cursor.bytes--;
+                } while (k >= 0);
+            }
+        }
+    }
+}
+
+int CardObj_GetChannelId(CardObj *entry) {
+    CardObj *candidate;
+    int index;
+    int value;
+
+    index = 0;
+    value = 0x10;
+    candidate = D_800A5B70;
+    for (; index < 2; index++) {
+        if (entry == candidate) {
+            return value;
+        }
+        value += 0x10;
+        candidate += 1;
+    }
+
+    return 0xFF;
+}
+
+CardObj *CardObj_LookupByChannelId(int value) {
+    CardObj *entry = D_800A5B70;
+
+    if ((value & 0xF0) != 0) {
+        entry += 1;
+    }
+    return entry;
 }

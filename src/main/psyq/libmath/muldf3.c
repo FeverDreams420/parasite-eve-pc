@@ -1,12 +1,8 @@
 /* ASSEMBLER: GNU */
-/* MULDF3 stays in two units: __muldf3 only matches with GCC 2.7.2,
- * _mul_mant_d (_mul_mant_d.c) only with GCC 2.8.1. */
+/* PSY-Q LIBMATH MULDF3: __muldf3 and its helper _mul_mant_d. */
+
 #include "pe1/math64.h"
 
-/* PSY-Q LIBMATH MULDF3: __muldf3. The same object's _mul_mant_d is the
- * separate unit _mul_mant_d.c: this function matches only with GCC 2.7.2 and
- * the helper only with GCC 2.8.1, so one translation unit cannot reproduce
- * both. */
 double __muldf3(double x, double y)
 {
     struct {
@@ -96,4 +92,52 @@ double __muldf3(double x, double y)
         }
     }
     return result.value;
+}
+
+
+/* Four 16-bit partial products, with the two cross terms accumulated by
+ * _add_mant_d. The output pointer is passed in a0 and returned in v0.
+ * Register pins and empty scheduling barriers are included in debt. */
+MathU64 *_mul_mant_d(MathU64 *out, unsigned int left, unsigned int right) {
+    volatile MathU64 result;
+    MathU64 part;
+    register unsigned int low asm("$18") = left & 0xFFFF;
+    register unsigned int firstProduct;
+    register unsigned int product asm("$2");
+    register MathU64 *resultPtr;
+
+    asm("" : "=r"(low), "=r"(right) : "0"(low), "1"(right));
+    product = right & 0xFFFF;
+    firstProduct = low * product;
+    left >>= 16;
+    product = left * product;
+    resultPtr = (MathU64 *)&result;
+    asm("" : "=r"(resultPtr) : "0"(resultPtr));
+    result.hi = 0;
+    result.lo = firstProduct;
+    part.hi = product >> 16;
+    part.lo = product << 16;
+    right >>= 16;
+    _add_mant_d(resultPtr, result, part);
+
+    product = low * right;
+    part.hi = product >> 16;
+    part.lo = product << 16;
+    _add_mant_d(&result, result, part);
+    {
+        unsigned int last = left * right;
+        register unsigned int hi = result.hi;
+        hi += last;
+        result.hi = hi;
+    }
+    {
+        register unsigned int lo;
+        register unsigned int hi;
+        lo = result.lo;
+        hi = result.hi;
+        out->lo = lo;
+        out->hi = hi;
+    }
+    asm volatile("" : : "m"(*out));
+    return out;
 }

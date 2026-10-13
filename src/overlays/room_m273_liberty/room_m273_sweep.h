@@ -6,6 +6,6 @@
 
 /* Transformed boss sweep point, shared by the sweep and rising-sprite emitters. */
 typedef GteShortVector RoomM273SweepPoint;
-extern RoomM273SweepPoint D_8019AEFC;
+extern RoomM273SweepPoint g_RoomM273SweepPoint;
 
 #endif

@@ -1,19 +1,15 @@
-/* ASSEMBLER: GNU */
-/* PSY-Q LIBC SPRINTF: sprintf. */
 /* GAS_VERSION: 2.8.1 */
 /* GCC_VERSION: 2.8.1 */
 /* CC1_FLAGS: -mno-split-addresses */
+/* PSY-Q LIBC SPRINTF: sprintf. */
 /* Psy-Q SPRINTF: variadic formatter, including its private tables and template.
  * Empty scheduling barriers and register pins are tracked in the debt report. */
 
-typedef unsigned char u8;
-typedef signed char s8;
-typedef unsigned short u16;
-typedef signed short s16;
-typedef unsigned int u32;
-typedef signed int s32;
+#include "common.h"
 
-/* The 12-byte template at D_80094528 is all zero.  Only the low-byte
+#include "sprintf_externs.h"
+
+/* The 12-byte template at g_SprintfFormatSpecDefault is all zero.  Only the low-byte
  * flag field and the following prefix byte are used by this formatter. */
 typedef union {
     u32 flags;
@@ -35,13 +31,9 @@ typedef struct {
     FormatSpec spec;
 } FormatWork;
 
-FormatSpec D_80094528 = {{0}, 0, 0};
-const u8 D_8001161C[] = "0123456789ABCDEF";
-const u8 D_80011630[] = "0123456789abcdef";
-
-extern s32 strlen(u8 *);
-extern u8 *memchr(u8 *, s32, s32);
-extern void *memmove(void *, const void *, int);
+FormatSpec g_SprintfFormatSpecDefault = {{0}, 0, 0};
+const u8 g_SprintfDigitsUpper[] = "0123456789ABCDEF";
+const u8 g_SprintfDigitsLower[] = "0123456789abcdef";
 
 s32 sprintf(char *dest, s8 *format, ...)
 {
@@ -63,12 +55,10 @@ s32 sprintf(char *dest, s8 *format, ...)
     s8 *flagBase;
     s8 *precisionBase;
 
-    args = (u8 *)&format + 4;
+    args = (u8 *)(&format + 1);
     c = *format;
     length = 0;
-    if (c == 0) {
-        goto finished;
-    }
+    if (c != 0) {
     minus = '-';
     plus = '+';
     space = ' ';
@@ -81,7 +71,7 @@ s32 sprintf(char *dest, s8 *format, ...)
         }
 
         {
-            register FormatSpec *initial asm("$5") = &D_80094528;
+            register FormatSpec *initial asm("$5") = &g_SprintfFormatSpecDefault;
             u32 flags = initial->header.flags;
             s32 width = initial->width;
             s32 precision = initial->precision;
@@ -135,7 +125,7 @@ s32 sprintf(char *dest, s8 *format, ...)
             format = flagBase + 2;
             c = flagBase[2];
         } else {
-            while ((u32)(c - '0') < 10) {
+            while (c >= '0' && c <= '9') {
                 work.spec.width = work.spec.width * 10 - ('0' - c);
                 c = *++format;
             }
@@ -153,7 +143,7 @@ s32 sprintf(char *dest, s8 *format, ...)
                 format = precisionBase + 2;
                 c = precisionBase[2];
             } else {
-                while ((u32)(c - '0') < 10) {
+                while (c >= '0' && c <= '9') {
                     work.spec.precision = work.spec.precision * 10 - ('0' - c);
                     c = *++format;
                 }
@@ -193,7 +183,7 @@ conversion:
             if ((work.spec.header.flags >> 5) & 1) {
                 value = (s16)value;
             }
-            if ((s32)value < 0) {
+            if (value & 0x80000000) {
                 value = -value;
                 work.spec.header.bytes.prefix = minus;
             } else if ((work.spec.header.flags >> 1) & 1) {
@@ -228,12 +218,12 @@ decimal:
                 value = q;
                 count++;
             }
-            do {
+            
                 while (count < work.spec.precision) {
                     *--src = zero;
                     count++;
                 }
-            } while (0);
+            
             {
                 s32 psgn = work.spec.header.bytes.prefix;
                 s32 pch = *(u8 *)&work.spec.header.bytes.prefix;
@@ -269,12 +259,12 @@ decimal:
                 *--src = zero;
                 count++;
             }
-            do {
+            
                 while (count < work.spec.precision) {
                     *--src = zero;
                     count++;
                 }
-            } while (0);
+            
             break;
 
         case 'p':
@@ -285,11 +275,11 @@ decimal:
             }
 
         case 'X':
-            digits = D_8001161C;
+            digits = g_SprintfDigitsUpper;
             goto hexadecimal;
 
         case 'x':
-            digits = D_80011630;
+            digits = g_SprintfDigitsLower;
 hexadecimal:
             value = *(u32 *)args;
             args += 4;
@@ -314,12 +304,12 @@ hexadecimal:
                 value >>= 4;
                 count++;
             }
-            do {
+            
                 while (count < work.spec.precision) {
                     *--src = zero;
                     count++;
                 }
-            } while (0);
+            
             if ((work.spec.header.flags >> 2) & 1) {
                 --src;
                 *src = c;
@@ -396,6 +386,7 @@ hexadecimal:
         }
     } while ((c = *++format) != 0);
 
+    }
 finished:
     dest[length] = 0;
     return length;

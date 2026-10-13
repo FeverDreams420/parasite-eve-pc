@@ -2,15 +2,18 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import host_unit  # noqa: E402
 
 
 class CdReadStepTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_timeout_and_completion_state(self):
-        source = (ROOT / "src/main/psyq/libds/dsread_2.c").read_text()
+        source = host_unit("DS_read_cbdata")
         source = source.replace("extern int D_8009B6B0[];",
             "static int words[7];\n#define D_8009B6B0 (words + 1)")
         harness = source + r'''
@@ -18,7 +21,8 @@ class CdReadStepTests(unittest.TestCase):
 #include <stdint.h>
 static int ticks[2], calls, finished, notified, initialCount, change, enabled;
 static int finalCount;
-void (*D_8009B6D0)(int, void *);
+CdReadCompleteCallback g_CdReadCompleteCallback;
+#define D_8009B6D0 g_CdReadCompleteCallback
 static void done(int event, void *payload) {
     assert(finished == 1 && notified++ == 0);
     assert(event == (finalCount < 0 ? 5 : 2));

@@ -2,24 +2,27 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import function_text, host_unit  # noqa: E402
 
 
 class ClearOtTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_forward_links_last_entry_and_debug(self):
-        source = (ROOT / "src/main/psyq/libgpu/ClearOTag.c").read_text()
-        self.assertEqual(source.count(' asm("$5")'), 1)
-        source = source.replace(' asm("$5")', "")
+        # The link-mask register pin was replaced by staged masks.
+        self.assertNotRegex(function_text("ClearOTag"), r'\basm\s*\(\s*"\$')
+        source = host_unit("ClearOTag")
         harness = source + r'''
 #include <assert.h>
 #include <stdarg.h>
 #include <stdint.h>
-GpuDebugState D_8009574C;
-char D_800118F8[] = "ot";
-u32 D_800957F8, D_8009580C;
+GpuDebugState g_GpuSystemState;
+char g_ClearOTagFormat[] = "ot";
+u32 g_GpuOtTerminatorTarget, g_GpuOtTerminatorWord;
 static u32 storage[130];
 static int calls, expectedCount;
 static void debug(char *message, ...) {
@@ -30,31 +33,31 @@ static void debug(char *message, ...) {
     ot = va_arg(args, void *);
     count = va_arg(args, int);
     va_end(args);
-    assert(message == D_800118F8 && ot == storage + 1 && count == expectedCount);
+    assert(message == g_ClearOTagFormat && ot == storage + 1 && count == expectedCount);
     assert(storage[1] == 0xA5ABCDEF);
     ++calls;
 }
-GpuDebugPrintf D_80095748 = debug;
+GpuDebugPrintf g_GpuDebugPrintf = debug;
 int main(void) {
     int level, count, i;
     for (level = 0; level <= 3; ++level) {
-        D_8009574C.queueState.debugLevel = level;
+        g_GpuSystemState.queueState.debugLevel = level;
         for (count = 1; count <= 128; ++count) {
             u32 *result;
             expectedCount = count;
             calls = 0;
             for (i = 0; i < 130; ++i) storage[i] = 0xA5ABCDEF;
-            D_800957F8 = 0x12345678;
-            D_8009580C = 0;
+            g_GpuOtTerminatorTarget = 0x12345678;
+            g_GpuOtTerminatorWord = 0;
             result = ClearOTag(storage + 1, count);
             assert(result == storage + count);
             assert(calls == (level >= 2));
             assert(storage[0] == 0xA5ABCDEF && storage[count + 1] == 0xA5ABCDEF);
             for (i = 1; i < count; ++i)
                 assert(storage[i] == ((uintptr_t)(storage + i + 1) & 0xFFFFFF));
-            assert(storage[count] == ((uintptr_t)&D_8009580C & 0xFFFFFF));
-            assert(D_8009580C == (0x04000000 | ((uintptr_t)&D_800957F8 & 0xFFFFFF)));
-            assert(D_800957F8 == 0x12345678);
+            assert(storage[count] == ((uintptr_t)&g_GpuOtTerminatorWord & 0xFFFFFF));
+            assert(g_GpuOtTerminatorWord == (0x04000000 | ((uintptr_t)&g_GpuOtTerminatorTarget & 0xFFFFFF)));
+            assert(g_GpuOtTerminatorTarget == 0x12345678);
         }
     }
     return 0;

@@ -3,15 +3,22 @@ from pathlib import Path
 import itertools
 import re
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import functions_text  # noqa: E402
 
 
 class AkaoVoiceBankAliasTests(unittest.TestCase):
     def test_translation_units_are_plain_c(self):
-        for name in ('Akao_PlaybackBank','Akao_GlobalSlideAndVoices'):
-            source = (ROOT/f'src/main/akao/{name}.c').read_text()
+        for names in (('Seq_SelectPlaybackBank','Seq_RestorePrimaryState'),
+                      ('Akao_SlideGlobalD2D0ToTarget','Akao_SlideGlobalD2D0FromStartToTarget',
+                       'Akao_SetGlobalD2CCImmediate','Akao_SlideGlobalD2CCToTarget',
+                       'Akao_SlideGlobalD2CCFromStartToTarget','Akao_InitPrimarySecondaryVoices',
+                       'Akao_InitPrimarySecondaryVoicesWithMode','Spu_StopActiveVoices')):
+            source = functions_text(*names)
             source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
             self.assertNotRegex(source,r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')
 

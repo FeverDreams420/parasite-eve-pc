@@ -8,11 +8,14 @@ checks the destination, the untouched argument block, and the terminating NUL.
 import pathlib
 import random
 import shutil
-import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import linked_function_bytes  # noqa: E402
+
 ENTRY = 0x8004006C
 EXIT = 0x80010000
 ARGS = 0x800A1708
@@ -74,26 +77,10 @@ class SaveSprintfSjisTests(unittest.TestCase):
         retail = (ROOT / "assets/USA/main.exe").read_bytes()[RETAIL_OFF:RETAIL_END]
         with tempfile.TemporaryDirectory() as directory:
             work = pathlib.Path(directory)
-            obj, elf, data = work / "sjis.o", work / "sjis.elf", work / "sjis.bin"
-            subprocess.run(
-                ["tools/scripts/cc.sh", "src/main/save/Save_SprintfSjis.c", str(obj)],
-                cwd=ROOT, check=True, capture_output=True,
-            )
-            (work / "sjis.ld").write_text(
-                "D_800A1708 = 0x800A1708;\n"
-                "_gp = 0x8009CD70;\n"
-                "SECTIONS { .text 0x8004006C : SUBALIGN(4) { *(.text) } "
-                "/DISCARD/ : { *(.reginfo) *(.mdebug) *(.pdr) } }\n"
-            )
-            subprocess.run(
-                ["mipsel-none-elf-ld", "-EL", "-T", str(work / "sjis.ld"), str(obj), "-o", str(elf)],
-                check=True, capture_output=True,
-            )
-            subprocess.run(
-                ["mipsel-none-elf-objcopy", "-O", "binary", "-j", ".text", str(elf), str(data)],
-                check=True, capture_output=True,
-            )
-            compiled = data.read_bytes()
+            # The unit holding Save_SprintfSjis changes as files merge.
+            compiled = linked_function_bytes(
+                "Save_SprintfSjis", ENTRY, RETAIL_END - RETAIL_OFF,
+                "g_SaveSjisFormatArguments = 0x800A1708;\n_gp = 0x8009CD70;\n", work)
         self.assertEqual(compiled, retail)
 
         def read_byte(memory, address):

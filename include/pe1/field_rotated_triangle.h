@@ -2,13 +2,13 @@
 #define PE1_FIELD_ROTATED_TRIANGLE_H
 
 #include "common.h"
+#include "pe1/field_tile.h"
 #include "pe1/gte_types.h"
+#include "pe1/render_object.h"
 #include "pe1/render_prim.h"
 #include "pe1/render_tint.h"
-#include "pe1/render_object.h"
-#include "pe1/field_tile.h"
 
-/* Field engine rotated triangle (func_800D0E88): a gouraud fan blade with
+/* Field engine rotated triangle (FieldFx_DrawRotatedTriangle): a gouraud fan blade with
  * its apex at the anchor and its base `length` away in the local XZ plane,
  * turned by a YXZ rotation and drawn as a PSY-Q POLY_G3. */
 
@@ -25,7 +25,7 @@ typedef struct FieldG3Packet {
 PE1_STATIC_ASSERT(sizeof(FieldG3Packet) == 0x1C, field_g3_packet_size);
 
 /* Black default for a missing corner colour. */
-extern RenderColor D_800C22A0;
+extern RenderColor g_FieldFxBlackColor;
 
 void SetPolyG3(FieldG3Packet *packet);
 void MulRotMatrix(GteMatrix *matrix);

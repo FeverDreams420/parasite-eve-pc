@@ -2,6 +2,7 @@
 #define PE1_ROOM_LINE_BURST_H
 
 #include "common.h"
+#include "pe1/field_texture_tables.h"
 #include "pe1/gte_types.h"
 #include "pe1/render_object.h"
 #include "pe1/render_prim.h"
@@ -65,8 +66,6 @@ typedef struct RoomLineBurstColor {
 } RoomLineBurstColor;
 
 extern char *D_800B0E58[];
-extern u16 D_800E11EC;
-extern u16 D_800E11E8;
 extern void LoadAverageShort12(void *from, void *to, int weightFrom, int weightTo, void *out);
 
 #endif

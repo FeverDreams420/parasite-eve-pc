@@ -2,23 +2,24 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'src/overlays/room_m350/RoomEffect_RampedPalettePair.c'
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import find_definition, host_unit, psx_compile  # noqa: E402
 
+# Overlay function addresses repeat across rooms; search this room only.
+ROOM = 'src/overlays/room_m350_cruiser'
 
-def emitter_source():
-    source = SOURCE.read_text()
-    callback = source.index('int func_80192ADC')
-    emitter = source.index('int func_80192C34')
-    return source[:callback] + 'extern int func_80192ADC(int, Particle *);\n' + source[emitter:]
+EMITTER = 'RoomM350_HandGlowEmitter'
 
 
 class RampedPairTests(unittest.TestCase):
     @unittest.skipUnless((ROOT/'tools/old-gcc/cc1').is_file() and shutil.which('mipsel-none-elf-as'), 'PSX tools unavailable')
     def test_target_layout(self):
-        source = emitter_source() + r'''
+        unit = find_definition(EMITTER, under=ROOM)
+        source = unit.read_text() + r'''
 #define OFF(t,f) ((unsigned long)&((t *)0)->f)
 typedef char a[sizeof(Particle)==8 ? 1:-1];
 typedef char b[OFF(Particle,scale)==4 ? 1:-1];
@@ -26,60 +27,57 @@ typedef char c[sizeof(State)==4 ? 1:-1];
 typedef char d[OFF(State,current)==2 ? 1:-1];
 typedef char e[OFF(Instance,frame)==22 ? 1:-1];
 typedef char f[OFF(Actor,instance)==8 ? 1:-1];
-typedef char g[OFF(Emitter,pool)==8 ? 1:-1];
+typedef char g[OFF(RoomM350Emitter,pool)==8 ? 1:-1];
 '''
         with tempfile.TemporaryDirectory() as directory:
-            path = pathlib.Path(directory)/'layout.c'
-            path.write_text(source)
-            result = subprocess.run([str(ROOT/'tools/scripts/cc.sh'), str(path), str(path.with_suffix('.o'))], cwd=ROOT, capture_output=True, text=True)
+            result = psx_compile(source, pathlib.Path(directory) / "layout.o", unit)
             self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
 
     @unittest.skipUnless(shutil.which('cc'), 'host compiler unavailable')
     def test_signed_ramp_and_allocation_reloads(self):
-        source = emitter_source().replace(' asm("$16")', '')
+        source = host_unit(EMITTER, path=find_definition(EMITTER, under=ROOM))
         harness = '#include <assert.h>\n#include <stdint.h>\n#include <string.h>\n#include <limits.h>\n' + source + r'''
-Emitter *D_800F33E0;
-Actor *D_800F32D0;
-int D_800E27EC;
-Vector D_8019A778[2];
-volatile short D_800F3368,D_800F3376,D_800F3378,D_800F336E,D_800F3372,D_800F3374;
-unsigned short D_800F336C;
-short D_800F336A;
-volatile unsigned short D_800E11E8,D_800F3370;
-unsigned short D_800E2850[65536];
-static Emitter emitters[2];
+FieldFxTaskSlot *g_FieldFxActiveTaskSlot;
+FieldFxObjectPrefix *g_FieldFxOwner;
+int g_FieldFxCurrentAge;
+GteShortVector g_RoomM350HandPoints[2];
+RenderEffectParameters g_FieldFxSpriteParams;
+u16 g_FieldFxTpageSlot2;
+u16 g_FieldFxTpageTable[65536];
+static RoomM350Emitter emitters[2];
 static Actor actor;
 static Instance instance;
 static State state,reference;
 static Particle particles[2],expected[2];
 static int pools[2],calls,setups,setupResult,failAt,mutate;
 static int half(uint32_t x) { x&=65535; return x<32768 ? (int)x:(int)x-65536; }
-int func_80192ADC(int e,Particle *p) { return 0; }
-int func_800CE560(void *pool,int size,int count,int (*cb)(int,Particle *)) {
-    assert(pool==&pools[0] && size==8 && count==6 && cb==func_80192ADC);
+int RoomM350_HandGlowCallback(int e,Particle *p) { return 0; }
+int FieldFx_InitCallbackList(char *pool,int size,int count,FieldFxCallbackListCallback cb) {
+    assert(pool==(char *)&pools[0] && size==8 && count==6);
+    assert(cb==(FieldFxCallbackListCallback)RoomM350_HandGlowCallback);
     assert(state.target==16384 && state.current==0); setups++; return setupResult;
 }
-Particle *func_800CE610(void *pool) {
+void *FieldFx_AcquireCallbackSlot(char *pool) {
     int i=calls++;
-    assert(i<2 && pool==&pools[mutate && i>0]);
+    assert(i<2 && pool==(char *)&pools[mutate && i>0]);
     assert(memcmp(&state,&reference,sizeof(state))==0);
     if(mutate) {
         state.current=half((unsigned short)state.current+0x8001u);
         state.target=-777; reference=state;
-        D_800F33E0=&emitters[1]; D_800E27EC=7; instance.frame=65535;
+        g_FieldFxActiveTaskSlot=(FieldFxTaskSlot *)&emitters[1]; g_FieldFxCurrentAge=7; instance.frame=65535;
     }
     if(i==failAt) return 0;
-    expected[i].position=&D_8019A778[i]; expected[i].scale=state.current;
+    expected[i].position=&g_RoomM350HandPoints[i]; expected[i].scale=state.current;
     return &particles[i];
 }
 static void reset(int target,int current) {
     calls=setups=0; state.target=target; state.current=current; reference=state;
-    D_800F33E0=&emitters[0]; D_800F32D0=&actor;
+    g_FieldFxActiveTaskSlot=(FieldFxTaskSlot *)&emitters[0]; g_FieldFxOwner=(FieldFxObjectPrefix *)&actor;
     memset(particles,0x5A,sizeof(particles)); memcpy(expected,particles,sizeof(particles));
 }
 static void run(int target,int current,unsigned frame,int timer,int failure,int mutation) {
     int result=0,emitting=0;
-    reset(target,current); instance.frame=frame; D_800E27EC=timer; failAt=failure; mutate=mutation;
+    reset(target,current); instance.frame=frame; g_FieldFxCurrentAge=timer; failAt=failure; mutate=mutation;
     if(!target && current<=0) result=2;
     else {
         if(target && frame>=41) reference.target=0;
@@ -90,8 +88,8 @@ static void run(int target,int current,unsigned frame,int timer,int failure,int 
         }
     }
     /* A zero target must not dereference the actor, even while fading. */
-    if(!target) D_800F32D0=0;
-    assert(func_80192C34(1,&state)==result && setups==0);
+    if(!target) g_FieldFxOwner=0;
+    assert(RoomM350_HandGlowEmitter(1,&state)==result && setups==0);
     assert(calls==(emitting ? (failure<2 ? failure+1:2):0));
     assert(memcmp(&state,&reference,sizeof(state))==0);
     assert(memcmp(particles,expected,sizeof(particles))==0);
@@ -112,17 +110,20 @@ int main(void) {
         run(16384,32767,40,INT_MIN+phase,2,0);
     }
     for(setupResult=-2;setupResult<=2;setupResult++) {
-        reset(-123,456); assert(func_80192C34(0,&state)==setupResult && setups==1 && calls==0);
+        reset(-123,456); assert(RoomM350_HandGlowEmitter(0,&state)==setupResult && setups==1 && calls==0);
     }
     for(i=0;i<65536;i++) {
-        reset(-123,456); D_800E11E8=i; D_800E2850[i]=65535-i;
-        assert(func_80192C34(2,&state)==0 && !calls && !setups);
-        assert(D_800F336C==2 && D_800F336E==0 && D_800F3368==16 && D_800F336A==1);
-        assert(D_800F3376==16 && D_800F3378==16 && D_800F3372==0 && D_800F3374==0 && D_800F3370==65535-i);
+        reset(-123,456); g_FieldFxTpageSlot2=i; g_FieldFxTpageTable[i]=65535-i;
+        memset(&g_FieldFxSpriteParams,0x9D,sizeof(g_FieldFxSpriteParams));
+        assert(RoomM350_HandGlowEmitter(2,&state)==0 && !calls && !setups);
+        assert(g_FieldFxSpriteParams.palette==2 && g_FieldFxSpriteParams.parameter06==0);
+        assert(g_FieldFxSpriteParams.parameter00==16 && g_FieldFxSpriteParams.parameter02==1);
+        assert(g_FieldFxSpriteParams.extent_x==16 && g_FieldFxSpriteParams.extent_y==16);
+        assert(g_FieldFxSpriteParams.parameter0A==0 && g_FieldFxSpriteParams.depth==0 && g_FieldFxSpriteParams.tpage==65535-i);
         assert(state.target==-123 && state.current==456);
     }
     for(event=-3;event<=5;event++) if(event<0 || event>2) {
-        reset(-123,456); assert(func_80192C34(event,&state)==0 && !calls && !setups);
+        reset(-123,456); assert(RoomM350_HandGlowEmitter(event,&state)==0 && !calls && !setups);
         assert(state.target==-123 && state.current==456);
     }
     return 0;

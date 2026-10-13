@@ -8,9 +8,9 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
-# BIOS_1 text at 0x8007BAC0: unchanged CD_initvol (240 bytes),
+# BIOS.OBJ part 4 (bios_4.c) at 0x8007BAC0: unchanged CD_initvol (240 bytes),
 # followed by CD_initintr (76 bytes). Data and strings retain retail addresses.
-CASES = [('bios',
+CASES = [('bios_4',
   316,
   '30f818c95d807b9a809ae43802eb7518448196b61ea18a466dc9c47e4ee45a3f',
   'D_8009B290 = 0x8009B290;\n'

@@ -3,21 +3,19 @@
 
 #include "pe1/battle.h"
 
-extern Combatant *D_8009D278;
+extern Combatant *g_ActiveActor;
 extern int D_8009D1D0;
 extern u8 D_8009D234[];
-extern u8 D_8009D244;
-extern s16 D_8009D298[];
-extern u8 D_8009D29A[];
-extern u8 D_8009D29B[];
-extern u32 D_8009D29C[];
+extern u8 g_BattleEnemyEscapeFlag;
+extern u16 D_8009D298;
+extern u8 D_8009D29A;
+extern u8 g_BattleHitActionSubmode[];
+extern s32 D_8009D29C[1];
 
-/* Independent symbol views keep the original absolute load and store. */
-extern u32 reset_flags_read[4] __asm__("D_8009D2E8");
-extern u32 reset_flags_write[4] __asm__("D_8009D2E8");
+extern unsigned int D_8009D2E8;
 
 void Battle_FlushScriptSounds(void);
-void Tbl_ResetAll(void);
+void Draw_ResetTextboxes(void);
 void Battle_ResetEnemyStats(int mode);
 
 #endif

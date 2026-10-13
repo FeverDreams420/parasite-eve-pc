@@ -46,13 +46,13 @@ extern void func_800870F0(s32);
 extern void func_80074F44(VideoRect *, s32, s32, s32);
 extern s32 func_8007C484(void **, VideoFrame **);
 extern u16 D_800B0DD4;
-extern VideoEntry *D_801D11AC;
+extern VideoEntry *g_MenuCardScreenVideoEntry;
 extern u8 D_800B0DBE;
 extern u8 D_801D0DBD;
 extern s8 D_800B0DBB;
-extern s16 D_801D11B0;
+extern s16 g_MenuCardScreenVideoLastTime;
 extern s16 D_801D0DE0[2];
-void *Memcard_UpdateVideoFrame(VideoDisplay *display);
+void *MenuCard_UpdateVideoFrame(VideoDisplay *display);
 extern s16 D_801D148C;
 extern s16 D_801D148E;
 extern s16 D_801D1490;
@@ -66,10 +66,10 @@ extern void *D_801D1470[2];
 extern s16 D_800B0CD0;
 extern s32 D_8009CDDC;
 extern void func_8007C564(void);
-extern void func_8010C01C(void *, s32);
+extern void DecDCTout(void *, s32);
 extern void func_801918F8(s8, s8);
 extern void func_8007506C(void *, void *);
-void Memcard_UploadVideoSlice(void);
+void MenuCard_UploadVideoSlice(void);
 typedef struct VideoDisplayTemplate
 {
   u8 bytes[20];
@@ -78,7 +78,7 @@ typedef struct VideoDrawTemplate
 {
   u32 words[23];
 } VideoDrawTemplate;
-extern VideoDisplayTemplate D_801D1384[2];
+extern VideoDisplayTemplate g_MenuCardScreenSavedDispEnv[2];
 extern VideoDisplayTemplate D_800BCE80[2];
 extern VideoDrawTemplate D_801D13AC[2];
 extern VideoDrawTemplate D_800BCDC8[2];
@@ -92,7 +92,7 @@ extern u8 D_800B0DBA;
 extern s16 D_800B0DBC;
 extern u32 D_800B0CD8;
 extern void func_8007512C(VideoRect *, s32, s32);
-s32 Memcard_InitVideoBuffers(s8 count, u8 **buffers);
+s32 MenuCard_InitVideoBuffers(s8 count, u8 **buffers);
 typedef struct VideoDiscRange
 {
   u16 start;
@@ -109,7 +109,7 @@ extern VideoDiscRange D_8009315E;
 extern u16 D_80093160;
 extern u16 D_80093162;
 extern void *D_8001160C;
-extern u8 *D_80011610;
+extern u8 *g_CdLoadAreaBase;
 extern u32 D_800B0DD8;
 extern u32 D_8009D26C;
 extern s32 func_8006E6A8(u32, void *, s32);
@@ -123,12 +123,12 @@ extern void func_80072714(void);
 extern void func_800726C4(void);
 extern void func_80072724(void);
 extern void func_8003EB04(void);
-extern void func_8010C0D8(s32);
+extern void DecDCToutCallback(s32);
 extern void func_8007A2A4(void);
 extern void DsControlB(s32, s32, s32);
 extern void VSync(s32);
-extern void Gpu_RenderFrame(void);
-s32 Memcard_PlayVideo(s32 index);
+extern void Draw_RenderFrame(void);
+s32 MenuCard_PlayVideo(s32 index);
 extern u8 D_801D0DBE;
 extern s16 D_800BCE84[];
 extern s16 D_800BCDCC[];
@@ -141,7 +141,7 @@ extern u8 D_800BCDE2[];
 extern u8 D_800BCDE3[];
 extern void func_800749D8(void *, s32, s32, s32, s32);
 extern void func_80074924(void *, s32, s32, s32, s32);
-void Memcard_SetVideoDisplay(s8 index, s8 wide);
+void MenuCard_SetVideoDisplay(s8 index, s8 wide);
 typedef struct VideoDiscPosition
 {
   u8 minute;
@@ -169,14 +169,14 @@ extern u8 D_801D146C;
 extern u8 D_801D0DBE;
 extern VideoDiscPosition D_801D0DC4;
 extern VideoDiscPosition D_801D0DDC;
-extern void func_8010BFA0(void *, s32);
-extern void func_8010C89C(void *, void *, void *);
+extern void DecDCTin(void *, s32);
+extern void DecDCTvlc2(void *, void *, void *);
 extern void func_8007C394(void *);
 extern void func_8007C2A0(VideoDiscPosition *);
 extern s32 DsQueueLen(void);
 extern s32 func_80081314(VideoDiscPosition *, s32);
 extern void func_80080D5C(s32, VideoDiscPosition *, volatile s32 *);
-s16 Memcard_StepVideo(void)
+s16 MenuCard_StepVideo(void)
 {
   register s32 ended asm("$19");
   volatile s32 wait;
@@ -201,24 +201,24 @@ s16 Memcard_StepVideo(void)
     displayState = &D_801D0DC0;
     if ((*displayState) == 2)
     {
-      Memcard_SetVideoDisplay(D_8009CDDC ^ 1, D_800B0DBB);
+      MenuCard_SetVideoDisplay(D_8009CDDC ^ 1, D_800B0DBB);
       *displayState = 0;
     }
     D_801D0DDC = D_801D0DC4;
     selector = &D_801D146C;
     firstBuffers = (void **) (selector - 8);
-    func_8010BFA0(firstBuffers[*selector], D_801D0DBE);
+    DecDCTin(firstBuffers[*selector], D_801D0DBE);
     buffers = firstBuffers;
     asm("" : "=r"(buffers) : "0"(buffers));
     one = 1;
     selector += D_801D1478 * 4;
-    func_8010C01C(*((void **) (selector + 4)), (D_801D1490 * D_801D1492) / 2);
+    DecDCTout(*((void **) (selector + 4)), (D_801D1490 * D_801D1492) / 2);
     retry:
     retries = 2000;
 
     do
     {
-      frame = Memcard_UpdateVideoFrame((VideoDisplay *) (&D_801D1464));
+      frame = MenuCard_UpdateVideoFrame((VideoDisplay *) (&D_801D1464));
       nextRetry = retries - 1;
       if (frame)
       {
@@ -241,7 +241,7 @@ s16 Memcard_StepVideo(void)
       D_801D146C = region;
       D_800B0DBC = frames;
       asm("" : "=r"(region) : "0"(region));
-      func_8010C89C(frame, buffers[region], D_801D0DF8);
+      DecDCTvlc2(frame, buffers[region], D_801D0DF8);
       func_8007C394(frame);
       decodeResult = 0;
     }
@@ -295,7 +295,7 @@ s16 Memcard_StepVideo(void)
     }
     active = &D_800B0DBA;
     (*active)--;
-    func_8010C0D8(0);
+    DecDCToutCallback(0);
     func_8007A2A4();
     DsControlB(9, 0, 0);
   }

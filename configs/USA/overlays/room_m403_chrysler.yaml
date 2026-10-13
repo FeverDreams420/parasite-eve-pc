@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m403_chrysler
   ld_script_path: linkers/USA/overlays/room_m403_chrysler.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m403_chrysler.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m403_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m403_chrysler.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m403_chrysler.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,13 +37,12 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m403_chrysler]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1E4, .rodata, ../room_lib/RoomEffect_HomingFlash]
-      - [0x1F8, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3514, c, ../room_lib/RoomEffect_HomingFlash]
-      - [0x4130, c, ../room_lib/RoomLib_SetArgs3]
-      - [0x4154, data, D_8019313C]
-      - [0x418C, data, D_80193174]
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, .rodata, ../room_lib/homing_flash]
+      - [0x1F8, c, ../room_lib/actor_classes]
+      - [0x3514, c, ../room_lib/homing_flash]
+      - [0x4130, c, ../room_lib/script_args]
+      - [0x4154, .data, ../room_lib/actor_class_table]
       - [0x41FC, data, D_801931E4]
       - [0x424C, data, D_80193234]
       - [0x426C, data, D_80193254]
@@ -50,6 +51,11 @@ segments:
       - start: 0x42AC
         type: databin
         name: RoomSlotC_80193118
+        dir: room_m403_chrysler
+      - [0x2F87C, data, D_801BE864]
+      - start: 0x2F8A0
+        type: databin
+        name: D_801BE888
         dir: room_m403_chrysler
   - [0x30000]
 # room: m403, section3 sector 92792, scanner delta 0

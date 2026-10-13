@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m104_nypd
   ld_script_path: linkers/USA/overlays/room_m104_nypd.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m104_nypd.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m104_nypd.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m104_nypd.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m104_nypd.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,14 +37,20 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m104_header]
-      - [0xC, .rodata, ../room_lib/RoomEffect_LineBurst]
-      - [0x20, c, ../room_lib/RoomEffect_LineBurst]
-      - [0xE10, c, ../room_lib/RoomLib_SlotSet]
+      - [0xC, .rodata, ../room_lib/line_burst]
+      - [0x20, c, ../room_lib/line_burst]
+      - [0xE10, c, ../room_lib/script_slot]
       - [0xE54, data, D_8018FE3C]
+      - [0xE74, data, D_8018FE5C]
       - [0xEAC, data, RoomLib_SlotTable]
       - start: 0x4D10
         type: databin
         name: D_80193CF8
+        dir: room_m104_nypd
+      - [0x1B480, data, D_801AA468]
+      - start: 0x1B48C
+        type: databin
+        name: D_801AA474
         dir: room_m104_nypd
   - [0x1B800]
 # room: m104, section3 sector 33654, scanner delta 0

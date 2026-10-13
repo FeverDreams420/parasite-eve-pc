@@ -28,6 +28,12 @@ cmake --build pc/build
 ./pc/build/parasite-eve-pc
 ```
 
+![functions](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkhasinski%2Fparasite-eve-decomp%2Fmain%2Fdocs%2Fbadges%2Ffunctions.json)
+![code](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkhasinski%2Fparasite-eve-decomp%2Fmain%2Fdocs%2Fbadges%2Fcode.json)
+![PsyQ debt](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkhasinski%2Fparasite-eve-decomp%2Fmain%2Fdocs%2Fbadges%2Fdebt-psyq.json%3Fv%3D5)
+![Game debt](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkhasinski%2Fparasite-eve-decomp%2Fmain%2Fdocs%2Fbadges%2Fdebt-game.json%3Fv%3D5)
+![Overlays debt](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkhasinski%2Fparasite-eve-decomp%2Fmain%2Fdocs%2Fbadges%2Fdebt-overlays.json%3Fv%3D5)
+
 PsyZ's other submodules (`nugget`, `cimgui`) are only needed for PlayStation
 cross-builds and the imgui sample. The PC target needs `external/SDL`.
 

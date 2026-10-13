@@ -12,7 +12,7 @@ u32 SpuWrite(void *address, u32 size) {
 
     _spu_Fw(address, size);
     if (_spu_transferCallback == 0) {
-        D_8009B430 = 0;
+        _spu_inTransfer = 0;
     }
     return size;
 }

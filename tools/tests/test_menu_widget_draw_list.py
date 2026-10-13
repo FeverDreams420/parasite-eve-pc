@@ -7,14 +7,17 @@ GPU packets, easing and highlights are modeled, not physical GPU behavior.
 from pathlib import Path
 import itertools
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_closure  # noqa: E402
 
 
 class MenuWidgetDrawListTests(unittest.TestCase):
     def test_plain_source(self):
-        source = (ROOT/'src/main/menu/MenuWidget_DrawList.c').read_text()
+        source = function_closure('MenuWidget_DrawList')
         self.assertNotRegex(source, r'\b(?:asm|__asm__|INCLUDE_ASM|REGALLOC_BARRIER)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
@@ -33,7 +36,7 @@ class MenuWidgetDrawListTests(unittest.TestCase):
             'SetDrawArea': 0x80075B84, 'MenuWidget_DrawListRow': 0x800634D4,
             'Draw_AllocPrimWithMask': 0x8006374C, 'MenuWidget_EaseNodePosition': 0x80065260,
             'Draw_RemapStatusFlags': 0x8005E038, 'Draw_AllocColorTriGradient': 0x800622BC,
-            'BoundsCheck_AssertStub': 0x800527C0,
+            'Inv_BoundsCheckAssertStub': 0x800527C0,
         }
         NODE=0x80100000;PARENT=NODE+0x100;OTHER=NODE+0x200;POPUP=NODE+0x300
         X=0x8009D124;Y=X+4;STACK=X+8;LO=0x800A2270;HI=0x800A22B0
@@ -43,7 +46,7 @@ class MenuWidgetDrawListTests(unittest.TestCase):
             ('SetDrawArea','area',2),('MenuWidget_DrawListRow','row',4),
             ('Draw_AllocPrimWithMask','mask',1),('MenuWidget_EaseNodePosition','ease',1),
             ('Draw_RemapStatusFlags','remap',0),('Draw_AllocColorTriGradient','gradient',4),
-            ('BoundsCheck_AssertStub','assert',1))}
+            ('Inv_BoundsCheckAssertStub','assert',1))}
         cases=[(*c,0,0) for c in itertools.product((0,2),(-3,0,3),(-1,0,1,2),(0,1),(0,128),(0,1),(0,32),(0,1),(0,3))]
         cases += [(2,adjust,1,1,0,1,32,1,2,depth,mutation)
                   for adjust,depth,mutation in itertools.product((-5,0,5),(0,7,8),(1,2,4,8,16,32))]

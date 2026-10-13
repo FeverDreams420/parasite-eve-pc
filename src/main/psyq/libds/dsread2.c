@@ -1,10 +1,10 @@
 /* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSREAD2.OBJ: DsRead2, StCdInterrupt2. */
+
 #include "pe1/psyq_ds_queue.h"
 
-extern int g_DsStreamNoLocFlag;
+#include "dsread2_externs.h"
 
-void data_ready_callback(void);
 void StCdInterrupt2(u_char event, u_char *result);
 
 int DsRead2(CdlLOC *pos, int mode) {
@@ -37,8 +37,6 @@ int DsRead2(CdlLOC *pos, int mode) {
 
     return DsPacket(mode & 0xFF, pos, 0x1B, 0, -1);
 }
-
-void StCdInterrupt(void);
 
 void StCdInterrupt2(unsigned char event, unsigned char *result) {
     StCdInterrupt();

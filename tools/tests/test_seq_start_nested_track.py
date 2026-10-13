@@ -4,14 +4,19 @@ import itertools
 import random
 import re
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import functions_text  # noqa: E402
 
 
 class SeqStartNestedTrackTests(unittest.TestCase):
-    def test_entire_translation_unit_is_plain_c(self):
-        source = (ROOT/'src/main/akao/Akao_NestedTrack.c').read_text()
+    def test_nested_track_functions_are_plain_c(self):
+        # Spu_ManageVoices, once in the same unit, is gated by
+        # test_spu_manage_voices.
+        source = functions_text('Akao_InitVoices', 'Seq_StartNestedTrack', 'Seq_ClearTrackVoiceId')
         source = re.sub(r'/\*.*?\*/|//[^\n]*','',source,flags=re.S)
         self.assertNotRegex(source,r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')
 

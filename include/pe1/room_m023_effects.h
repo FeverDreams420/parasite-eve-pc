@@ -2,7 +2,14 @@
 #define PE1_ROOM_M023_EFFECTS_H
 
 #include "common.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
+#include "pe1/room_script_record.h"
 
 /* Room m023 controller that scatters particles around a model joint,
  * either at the joint itself or at a random point of a wide band. */
@@ -58,17 +65,12 @@ typedef struct RoomM023Template {
     s32 word[2];
 } __attribute__((packed)) RoomM023Template;
 
-extern RoomM023EventState *D_800E2368;
-extern RoomM023Channel *D_800F32D0, *D_800F33E0;
 extern RoomM023Template D_8018EFF4;
-extern GteShortVector g_RoomScriptRecord;
-extern u16 D_800E11E4[];
+/* Anchor vector room_m023 keeps in its scene script record. */
+#define RoomM023_ScriptAnchor (*(GteShortVector *)&g_RoomScriptRecord)
 
-extern int func_800CE560(void *pool, int size, int count, void *callback);
-extern void func_800CE8F0(void *pool, int index, void *template, void *position);
-extern RoomM023Particle *func_800CE610(void *pool);
-extern int func_80071A54(void);
-extern int func_8018F004(int mode,
+extern int rand(void);
+extern int RoomM023_DriftPulseCallback(int mode,
                          RoomM023DriftPulseCallbackView *particle);
 
 /* Joint glow: a ring burst, then a growing and pulsing glow sprite pair
@@ -79,12 +81,8 @@ typedef struct RoomM023JointGlow {
     s16 state;
 } RoomM023JointGlow;
 
-extern u16 D_800E11EA;
 extern RenderColor D_8018EFFC;
 extern RenderColor D_8018F000;
-extern int func_800D3FD8(void);
-extern int func_800D3F64(int sound, int handle);
-extern u16 GetClut(int x, int y);
-int func_8018F710(int mode, RoomM023JointGlow *glow);
+int RoomM023_JointGlow(int mode, RoomM023JointGlow *glow);
 
 #endif

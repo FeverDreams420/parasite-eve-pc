@@ -4,6 +4,8 @@ import itertools
 import struct
 import unittest
 
+from tools.tests.csource import find_definition
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -21,7 +23,7 @@ def _function(source, name):
 
 class CDPollPendingTests(unittest.TestCase):
     def test_plain_source(self):
-        source = _function((ROOT/'src/main/psyq/libds/dssys_2_5.c').read_text(), 'CQ_vsync_system')
+        source = _function(find_definition('CQ_vsync_system').read_text(), 'CQ_vsync_system')
         self.assertNotRegex(source, r'\b(?:asm|__asm__|PE1_COMPILER_MEMORY_BARRIER|PE1_COMPILER_LAUNDER)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and

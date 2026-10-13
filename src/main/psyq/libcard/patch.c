@@ -9,6 +9,7 @@
  * followed there by CardPatchFunctions. It runs inside the BIOS with v0/v1
  * supplied by the patched kernel code, not under the C calling convention.
  */
+
 #include "pe1/psyq_asm.h"
 
 PSYQ_ASM_OBJECT(LIBCARD, PATCH)

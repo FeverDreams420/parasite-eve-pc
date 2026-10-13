@@ -101,7 +101,7 @@ For small-data loads followed by symbolic stores, upstream MASPSX's
 `--aspsx-version=2.21 --dont-expand-li` reproduces the required load hazard
 spacing while leaving `li` expansion to GNU as. The source markers
 `ASPSX_VERSION: 2.21` and `MASPSX_FLAGS: --dont-expand-li` select these stock
-options through `cc.sh`. `Task_AllocNode`, `Menu_CreateInvSwapView`, and
+options through `cc.sh`. `Script_AllocNode`, `Menu_CreateInvSwapView`, and
 `Menu_StepSaveSelect` match with these settings after removing handwritten
 `nop` instructions. These flags are per-unit choices, not a global default.
 
@@ -116,7 +116,7 @@ only forwards the stock option; the compiler and MASPSX remain unchanged.
 
 Inline instructions are allowed only for individual GTE/COP2 hardware
 operations, the evidenced scratchpad stack switch (see "Scratchpad stack
-switch"), the evidenced view-matrix loads (see "GTE matrix window"), or in
+switch"), or in
 functions with concrete evidence that the original source
 was assembly. Put each permitted instruction sequence behind a small, named,
 central macro and isolate only the instruction window that C cannot express.
@@ -230,7 +230,7 @@ comparisons.
 | LIBGTE PATCHGTE | `psyq/libgte/patchgte.c` (+ `PATCHGTE_templates` data) | `_patch_gte` | PSY-Q 3.5 `patchgte.o`: same static-ra installer, inline B0 call and `.text` instruction templates (`_patch_GTE` to `_patch_GTE_end`, copy loop at assembler label `1$`). |
 | LIBAPI PATCH | `psyq/libapi/patch_2.c` | `_patch_pad` | Static `ra` slot, inline B0 call, trapping `addi`. EnablePAD/DisablePAD of the same object remain C in `psyq/libapi/patch.c`. |
 | LIBAPI CHCLRPAD | `psyq/libapi/chclrpad.c` | `_remove_ChgclrPAD` | Static `ra` slot, inline B0 call, trapping `addi`. |
-| LIBCARD PATCH | `psyq/libcard/patch.c`, `psyq/libcard/patch_3.c` | `func_8007E344`, `func_8007E3C8`, `_patch_card`, `_patch_card2` | Kernel patch image copied to 0xDF80 that runs with BIOS-supplied `v0`/`v1`. The installers use a static `ra` slot and inline C0/B0 calls. CardPatchFunctions, `func_8007E3B4` and `_copy_memcard_patch` of the same object remain C. |
+| LIBCARD PATCH | `psyq/libcard/patch.c`, `psyq/libcard/patch_3.c` | `func_8007E344`, `func_8007E3C8`, `_patch_card`, `_patch_card2` | Kernel patch image copied to 0xDF80 that runs with BIOS-supplied `v0`/`v1`. The installers use a static `ra` slot and inline C0/B0 calls. CardPatchFunctions, `LIBCARD_PATCH_text_70` and `_copy_memcard_patch` of the same object remain C. |
 | LIBCARD END | `psyq/libcard/end.c` (+ `END_templates` data) | `_ExitCard` | Static `ra` slot, inline C0 call; copies a three-NOP template into the C0 table. |
 
 ## Game-side assembler
@@ -287,22 +287,22 @@ the manifest entry, write the unit with the macro, flip its yaml subsegment to
 
 | Function | Unit | Size | Evidence |
 | --- | --- | --- | --- |
-| `Math_FixedMul` | `math/Math_FixedMul` | 28 | `mult`, then LO before HI, both shifted in place, `or v0,v1,v0`. Stock 2.7.2 and 2.8.1 compile `(long long)a * b >> 16` to HI before LO and keep the dead high-word shift (9 words, not 7). |
-| `Math_FixedRoundToInt`, `Math_FixedRoundToByte` | `math/math_fixed` | 16 + 16 | `ori $at, $zero, 0x8000` and trapping `add $v0, $a0, $at`: the assembler expansion of `add $v0, $a0, 0x8000`. GCC never allocates `$at` and emits `addu` for C addition. |
-| `Task_GpuPackPrimColor` | `task/Task_GpuPackPrimColor` | 52 | Calls `Task_GpuFlushPrimQueue` without a frame: `ra` saved with `or $v1, $zero, $ra` and restored with `or $ra, $zero, $v1`; trapping `sub` in the `jal` delay slot and trapping `add` in the return delay slot. It returns `low + ((u16)r * (high - low) >> 16)` for the generator result `r`. |
-| `Math_SqrtApprox3` | `math/Math_SqrtApprox3` | 136 | No frame; LO before HI for all three squares with two NOPs before each following `mult`; three unfilled `bgez` delay slots; the carry is added before the high words. Stock 2.7.2 and 2.8.1 compile the `long long` sum with an 8-byte stack spill, HI first, filled delay slots and a dead high-word shift. |
+| `Math_FixedMul` | `math/fixed_mul` | 28 | `mult`, then LO before HI, both shifted in place, `or v0,v1,v0`. Stock 2.7.2 and 2.8.1 compile `(long long)a * b >> 16` to HI before LO and keep the dead high-word shift (9 words, not 7). |
+| `Math_FixedRoundToInt`, `Math_FixedRoundToByte` | `math/fixed_round` | 16 + 16 | `ori $at, $zero, 0x8000` and trapping `add $v0, $a0, $at`: the assembler expansion of `add $v0, $a0, 0x8000`. GCC never allocates `$at` and emits `addu` for C addition. |
+| `Draw_PackPrimColor` | `draw/prim_color` | 52 | Calls `Draw_FlushPrimQueue` without a frame: `ra` saved with `or $v1, $zero, $ra` and restored with `or $ra, $zero, $v1`; trapping `sub` in the `jal` delay slot and trapping `add` in the return delay slot. It returns `low + ((u16)r * (high - low) >> 16)` for the generator result `r`. |
+| `Math_SqrtApprox3` | `math/sqrt_approx` | 136 | No frame; LO before HI for all three squares with two NOPs before each following `mult`; three unfilled `bgez` delay slots; the carry is added before the high words. Stock 2.7.2 and 2.8.1 compile the `long long` sum with an 8-byte stack spill, HI first, filled delay slots and a dead high-word shift. |
 
 Overlay SDK entries in the same manifest:
 
 | Functions | Unit | Object | Evidence |
 | --- | --- | --- | --- |
-| `func_8010C4CC` (DecDCTvlcSize), `func_8010C4FC` (DecDCTvlc) | `sys_reset` `DecDCTvlc` | LIBPRESS VLC | DecDCTvlcSize: 12/12 words identical to PSY-Q 3.5 `vlc.o` with relocations masked, label `default` at the same offset. DecDCTvlc keeps the frameless static-state protocol and has 54 trapping instructions and COP0 Status masking; its 4.0 body was revised after 3.5. The VLC range 0x8010C4C8..0x8010C860 is 0x398 bytes, the size Psyz gives the PSY-Q 4.0 `vlc` object. |
-| `func_8010C86C` (DecDCTvlcSize2), `func_8010C89C` (DecDCTvlc2) | `sys_reset` `DecDCTvlc2` | LIBPRESS VLC_C | The same protocol; DecDCTvlc2 has 56 trapping instructions and reads the table built by `SysReset_ExpandDecoderTable` (DecDCTvlcBuild). Psyz places DecDCTvlcSize2 at +4 of the 4.0 `vlc_c` object. |
+| `DecDCTvlcSize`, `DecDCTvlc` | `mdec_diag` `DecDCTvlc` | LIBPRESS VLC | DecDCTvlcSize: 12/12 words identical to PSY-Q 3.5 `vlc.o` with relocations masked, label `default` at the same offset. DecDCTvlc keeps the frameless static-state protocol and has 54 trapping instructions and COP0 Status masking; its 4.0 body was revised after 3.5. The VLC range 0x8010C4C8..0x8010C860 is 0x398 bytes, the size Psyz gives the PSY-Q 4.0 `vlc` object. |
+| `DecDCTvlcSize2`, `DecDCTvlc2` | `mdec_diag` `DecDCTvlc2` | LIBPRESS VLC_C | The same protocol; DecDCTvlc2 has 56 trapping instructions and reads the table built by `MdecDiag_ExpandDecoderTable` (DecDCTvlcBuild). Psyz places DecDCTvlcSize2 at +4 of the 4.0 `vlc_c` object. |
 
 The three zero words at 0x8010C860..0x8010C86B between the two objects are a
 separate data subsegment, so neither unit range contains padding.
 
-`Task_InitGpuHwRegs` and `Task_GpuFlushPrimQueue`, which initialize and step
+`Draw_InitGpuHwRegs` and `Draw_FlushPrimQueue`, which initialize and step
 the additive generator whose state is the 80-byte `.text` block at
 0x80070E04, show the same hand-written style: absolute addresses built with
 `lui`/`ori` rather than GCC's `lui`/`addiu`, no frame, and `or v0, zero, t5`
@@ -316,7 +316,7 @@ Rule: inside a C function, the only CPU instruction assembly allowed is
 `BOOT_CALL_ON_SCRATCHPAD_STACK(top, call)` from `include/pe1/boot_stack.h`,
 and only in the functions listed under `stack_switch_macros` in
 `configs/USA/original_asm_evidence.json`. Today that is one function, the boot
-entry `main` in `boot/Boot_MainLoop`.
+entry `main` in `boot/main`.
 
 Why C cannot express it: the retail code runs one call with `$sp` moved into
 the 1 KiB scratchpad. It parks the caller's `$sp` in the top word
@@ -361,81 +361,32 @@ window, evidence, verified_by), use the macro once, and run
 Any other stack or register manipulation needs its own policy decision; do not
 widen this macro.
 
-## GTE matrix window
+## GTE view-matrix loads
 
-Rule: the CPU loads that move the view matrix into the GTE rotation and
-translation registers may be written as inline assembly only with
-`GTE_LOAD_ROTATION_WINDOW(matrix)` and `GTE_LOAD_TRANSLATION_WINDOW(matrix)`
-from `include/pe1/gte_window.h`, and only in the functions listed under
-`gte_matrix_windows` in `configs/USA/original_asm_evidence.json`. The listed users include
-scene_e20 `func_8018F028` (`RoomEffect_FlareParticle_8018F028`, two windows).
-The legacy `gte_ldrotmatrix`/`gte_ldtransmatrix` in `include/pe1/gte.h` are a
-separate, older debt being replaced by C; they are not this exemption.
+The view-matrix loads into RT0..RT4 and TRX..TRZ are the PSY-Q inline
+`gte_SetRotMatrix`/`gte_SetTransMatrix` expansions (`lw` through `$t4..$t6`
+interleaved with `ctc2`, rotation then translation) and are written with
+`gte_ldrotmatrix(matrix)` and `gte_ldtransmatrix(matrix)` from
+`include/pe1/gte.h`, the same helpers the other scene_e19 and room effects
+use for this slot:
 
-API, used back to back with the same operand:
+    gte_ldrotmatrix(g_ViewMatrixSlot.value);
+    gte_ldtransmatrix(g_ViewMatrixSlot.value);
 
-    GTE_LOAD_ROTATION_WINDOW(D_800BCFA4.value);    /* RT0..RT4, 10 instructions */
-    GTE_LOAD_TRANSLATION_WINDOW(D_800BCFA4.value); /* TRX..TRZ, 6 instructions */
+The compiler emits the pointer load for the `"r"` operand: the two reads of
+`g_ViewMatrixSlot.value` share the slot address (retail's `la`/`lw 0(v0)`) and the
+second read is a common subexpression, so both transfers use one base
+register. C reads of the eight words instead fold the slot address into an
+absolute `lui`/`lw` and schedule the loads with the surrounding code (lev 47
+in scene_e20 `SceneE20_FlareParticle` without crutches, lev 6 at best with pins).
 
-`matrix` is an ordinary `"r"` operand (the pointer read from the view slot).
-Each macro holds only the `lw`/`ctc2` instructions of its window, with `%0` as
-the base and `$12..$14` (`$t4..$t6`) as the transfer registers; no control
-flow, no raw words, no register pin.
-
-Why C cannot express it: retail reads the slot pointer with
-`la v0,D_800BCFA4; lw base,0(v0)`, waits one load-delay `nop`, and then moves
-the eight words through `$t4..$t6` interleaved with `ctc2` (the PSY-Q
-`SetRotMatrix`/`SetTransMatrix` inline shape). C reads of the words fold the
-slot address into an absolute `lui`/`lw`, keep the pointer in `$v0` and
-schedule the word loads with the surrounding code. For `func_8018F028` the
-best C form was lev 6 with two pins and a barrier, the remaining words being
-reload registers elsewhere in the function; without crutches it was lev 47.
-
-Where the rest of the window comes from: the compiler emits the pointer load
-for the operand. The two reads of `D_800BCFA4.value` share the slot address
-(giving retail's `la`/`lw 0(v0)`), and the second read is a common
-subexpression, so both windows use one base register (`$t0` in scene_e20,
-`$t1` in scene_e19_2, chosen by the allocator). The assembler inserts the
-load-delay `nop`. One combined macro does not reproduce this: with a single
-use the pointer load becomes an absolute `lui`/`lw` (lev 14), so the API is
-two macros.
-
-Evidence for each listed function records its retail range, every window
-(address range, base register, any instructions scheduled into it) and why C
-cannot express it. `check_source_policy.py` requires:
-
-- every unit that uses either macro is listed;
-- inside each listed function, each macro is used exactly once per listed
-  window, and nowhere else in the unit;
-- the unit has no other instruction asm (it classifies as `semantic_c`);
-- the listed function lies inside the unit's yaml `c` range;
-- every listed entry uses the macros, and none lacks evidence or windows;
-- `gte_window.h` holds exactly the two windows, and nothing else defines
-  the macros; and
-- no function is listed both as a user and under `gte_matrix_windows_pending`.
-
-`source_quality.classify()` reports a listed user as `semantic_c` and an
-unlisted user as `asm_constrained`. `crutch_debt.py` counts each macro use in
-the `gte_matrix_windows` column (two per window). It is debt, so the file stays
-dirty, and the ratchet keeps the count from growing without a reviewed
-baseline change.
-
-Integrated: scene_e19 `func_80192F9C` uses four evidenced windows (base `$t1`,
-0x801936D0, 0x80193B70, 0x80193EC4, 0x8019475C). The two old scene slices
-are linked as one continuous scene_e19 block. Its complete code and rodata
-match with stock GCC/MASPSX, and merged overlay-check passes. No bound register variables and two empty constraints remain after testing
-all 4095 nonempty subsets of the initial five pins and seven constraints. The
-selector constraint clobbers s0 so GCC allocates the parameter pointer
-naturally in s1. Eight GTE-window uses are tracked as debt. The entry is active in `gte_matrix_windows`.
-
-To add a use: show from the retail disassembly that the function loads the
-view matrix with exactly this window (both halves, same base, `$t4..$t6`), that
-C reads do not reproduce it, and that the rest of the function matches as
-plain C. Then add an entry (name, module, source, address, size, windows,
-evidence, verified_by), use each macro once per window, and run
-`make source-policy-check`, `make debt-baseline` and the usual match checks.
-A different matrix source, register set or instruction order needs its own
-policy decision; do not widen these macros.
+Users: scene_e20 `SceneE20_FlareParticle` (two loads) and scene_e19 `func_80192F9C`
+(four loads). These previously used the duplicate macros
+`GTE_LOAD_ROTATION_WINDOW`/`GTE_LOAD_TRANSLATION_WINDOW` from a separate
+`gte_window.h` with a per-function evidence list; the instruction text was
+identical, so the switch to the gte.h helpers is byte-identical and the
+separate header, evidence list and `gte_matrix_windows` debt column were
+retired.
 
 ## LZCS / LZCR
 
@@ -445,12 +396,12 @@ pair: `mtc2 value,$30` writes LZCS; `swc2 $31,0(ptr)` stores LZCR; and
 `gte_getlzcr` transfers LZCR to a general-purpose register after its two
 required hazard slots. Scalar C cannot express these hardware transfers.
 
-The initial target windows are `Gte_StoreTableEntry` at `0x8003EACC`, the
-type-3 branch of `Task_DispatchCmd` at `0x80013188`, and `SquareRoot0` at
+The initial target windows are `Boot_StoreTableEntry` at `0x8003EACC`, the
+type-3 branch of `Script_DispatchCmd` at `0x80013188`, and `SquareRoot0` at
 `0x80078004`. The first two store LZCR through a normal stack or argument
 pointer; `SquareRoot0`, `InvSquareRoot`, and `LIBGTE_MSC02_text_100` read it after two nop
 hazard slots. No scratchpad layout is involved. The first remaining difference
-in `Gte_StoreTableEntry` is an 8-byte compiler frame for the C local receiving
+in `Boot_StoreTableEntry` is an 8-byte compiler frame for the C local receiving
 LZCR, not the COP2 window itself. The dispatcher still needs source-shape work
 for argument-load timing and branch sharing. These macros contain only the
 documented COP2 transfers and a memory constraint for the LZCR store.
@@ -463,7 +414,7 @@ They load SXY0..2,
 run the documented NCLIP command, and store MAC0. `gte_nclip` owns the two
 required hazard slots before opcode `0x4B400006`; callers retain all culling
 and primitive-building logic in C. Initial users are the NCLIP helpers in
-`Entity_UpdateAndRender`, `Render_DecompressAnimFrame`, and
+`Entity_UpdateAndRender`, `Render_DrawWireframeModel`, and
 `Render_DrawTexturedQuads`. No scratchpad memory is involved.
 
 ## RTV0TR / IR1..3
@@ -475,9 +426,9 @@ from two words, execute RTV0TR (`0x4A480012`), and read IR1..3 or store
 IR1..3/MAC1..3. The IR-read window has one hazard slot; the MAC-store windows
 have two. The C caller owns source and destination layout; the macros only
 move COP2 state. Initial users include `Render_DrawObjectAlt`,
-`Render_DrawObjectVariant`, `Render_DecompressAnimFrame`,
+`Render_DrawObjectVariant`, `Render_DrawWireframeModel`,
 `Render_TransformMorphVertices`, `Render_SetupBoneTransforms`, and
-`Task_SetGteMatrix`.
+`Script_SetGteMatrix`.
 
 ## RTIR12
 
@@ -485,9 +436,9 @@ move COP2 state. Initial users include `Render_DrawObjectAlt`,
 the documented rotation-only MVMVA form (`0x4A49E012`) after one hazard slot.
 IR results are read through the existing `gte_getir*` macros; matrix layout
 and destination stores remain ordinary C. Initial users are the matrix-axis
-helpers in `Render_DecompressAnimFrame`, `Render_SetupBoneTransforms`,
+helpers in `Render_DrawWireframeModel`, `Render_SetupBoneTransforms`,
 `Render_TransformMorphVertices`, `Render_TransformSkinnedVertices`,
-`Render_TransformVertices`, and `Task_SetGteMatrix`.
+`Render_TransformVertices`, and `Script_SetGteMatrix`.
 
 ## LoadAverage byte results
 
@@ -613,7 +564,7 @@ load barrier were removable. The retired CPU instruction macros are deleted.
 
 ## Engine CPU Helper Removal
 
-The engine's `func_800C6148`, `func_800C6584`, and `func_800C6B90` now express
+The engine's `FieldFx_IsActorWithinRadius`, `FieldFx_CirclesOverlapXZ`, and `FieldFx_IsPlayerWithinRadius` now express
 their distance tests as C multiplications and comparisons. Their local
 `volatile int delta[3]` preserves two original stack stores; the third function
 also preserves a short position buffer. These volatile locals are matching
@@ -622,29 +573,29 @@ No register pins, empty barriers or instruction ASM remain in these three
 functions. Keeping the Y halfword in an `int` before narrowing it removes a
 trial tied barrier while retaining signed-load code generation.
 
-`func_800C6B20` now uses C position loads and two ordinary calls instead of
+`FieldFx_IsPlayerInQuadXZ` now uses C position loads and two ordinary calls instead of
 an ASM relocation/call window. One result temporary pin remains; three old
-pins and all trial barriers were removable. `func_800CC92C` uses a signed-byte
+pins and all trial barriers were removable. `PointSprite_UpdateRisingStreak` uses a signed-byte
 C load after one empty memory barrier, which prevents forwarding the previous
 byte store. Its old frame pin remains; removing it changes allocation.
 
 Four further engine units now avoid CPU instruction ASM. `func_800C2E08`
 computes the slot-status mask in C, with one tied empty barrier to prevent
 the optimizer replacing the arithmetic mask with a conditional assignment.
-Its old result pin was removed. `func_800C2FF0` computes width/height decrements
+Its old result pin was removed. `FieldFx_SetSpriteCellSize` computes width/height decrements
 in C with one input-only barrier; both trial pins and the trial tied outputs
 were removable. Neither function retains register pins.
 
-`func_800D3F64` needs no explicit ASM `nop`: the stock pipeline supplies the
+`FieldFx_PlaySoundAtOwner` needs no explicit ASM `nop`: the stock pipeline supplies the
 same load hazard spacing. Its two existing pins and two memory barriers were
-tested for removal and remain. `func_800CC878` forms its first output address
+tested for removal and remain. `PointSprite_DrawOrientedFlash` forms its first output address
 and performs the store in C. It retains one pointer pin, one load-order input
 barrier clobbering `$4`, and one tied pointer barrier preventing address
 folding; removing these changes code generation. No new volatile accesses
 were introduced in this group. These are repairs of constrained sources,
 not independent evidence that all headers are free of CPU instruction ASM.
 
-`func_800C5EB0` replaces its explicit `move` and unaligned copy macro with C.
+`FieldFx_UpdateStripCollision` replaces its explicit `move` and unaligned copy macro with C.
 Four assignments of halfword-aligned eight-byte records reproduce the
 `lwl/lwr/swl/swr` pairs, including their two-word grouping. The local buffer
 is now an array of `s16[4]` records; names remain neutral because copy width
@@ -873,7 +824,7 @@ remain in the C caller.
 three vectors, with one required hazard slot, then store SXY0..2 and SZ1..3.
 The operations are the documented GTE perspective transforms (`0x4A180001` and
 `0x4A280030`); clipping, depth selection, and output-buffer management stay in
-C. Initial users are `Render_DecompressAnimFrame`, `Render_DrawObjectVariant`,
+C. Initial users are `Render_DrawWireframeModel`, `Render_DrawObjectVariant`,
 and `Render_TransformMorphVertices`.
 
 ## Room 350 swept-area emitter
@@ -1295,8 +1246,11 @@ and reads palette state after its helper. Remaining buffer fields are unknown.
 
 ## Psy-Q CD command retry wrapper
 
-`CdControl` in `psyq/libcd/CdControl.c` matches all 316 relocated
-bytes with stock GCC 2.8.1 and stock MASPSX. Three pins retain the saved
+`CdControl` in `psyq/libcd/sys_2.c` matches all 316 relocated
+bytes with stock GCC 2.7.2 and GNU as, the marker set of the rest of the
+SYS object; it first matched with GCC 2.8.1 and MASPSX, then with
+`-fno-schedule-insns`, which copying the command through the retry counter
+(`tries = cmd; cmd_reg = tries;`) made unnecessary. Three pins retain the saved
 callback, return value, and comparison constant. Removing them independently
 from the final zero candidate causes 15, 35, and 2 differing bytes.
 Five other pins were removed while retaining the match, including two after
@@ -1340,7 +1294,7 @@ that option, the sector setter uses v0 instead of AT; enabling it gives
 
 The removed page types only encoded fixed addresses. The actual objects
 are four-byte integers: D_8009B260 at 0x8009B260, g_CdStreamMask at
-0x800C0DC0, D_800B6918 at 0x800B6918, and g_CdStreamEndSector at 0x800C0DBC.
+0x800C0DC0, g_CdStreamStartFrame at 0x800B6918, and g_CdStreamEndSector at 0x800C0DBC.
 These are declared separately; no large enclosing structure is inferred.
 All AT uses in the two generated functions were checked against the retail
 instructions, including the final store in each return delay slot.
@@ -1702,7 +1656,7 @@ delay slot naturally. The accepted source uses the equivalent `if/else`.
 Simply deleting the barrier while retaining the unconditional OR schedules
 that OR before the DMA register writes and leaves a nop in the branch slot.
 
-All four functions in `psyq/libspu/spu_3.c` compare at 100% against
+All four functions in `psyq/libspu/spu_2.c` compare at 100% against
 the prior SHA-verified object. The entire TU now contains no pins, barriers
 or instruction assembly. Full main and all 191 overlay SHA checks pass.
 
@@ -2045,7 +1999,7 @@ The audited PsyQ result is 141/254 functions and 44.75% code.
 
 ## LIBCD sector DMA setup
 
-CD_getsector2 in `CD_getsector.c` is ordinary C with no pins or barriers. A volatile
+CD_getsector2 in `psyq/libcd/bios_7.c` is ordinary C with no pins or barriers. A volatile
 readback local replaces the synthetic SP frame, and direct typed MMIO accesses
 replace the union and global v0 register views. Its initial byte-ready test
 and inner polling loop retain the original two-stage control flow. All four
@@ -2177,7 +2131,7 @@ assembly is present.
 
 ## Menu memcard fade display
 
-`Memcard_UpdateFadeDisplay` matches all 148 retail bytes. The shared
+`MenuCard_UpdateFadeDisplay` matches all 148 retail bytes. The shared
 `MenuMemcardFadeState` now names the display halfwords at offsets 6 and 10.
 Volatile accesses preserve the original velocity reloads and the upper display
 store. One empty compiler barrier keeps the lower display floor constant in
@@ -2234,7 +2188,7 @@ executable retains SHA-1 `452fb033f2eaa4b18aa20a5bca60b8125af3a37b`.
 
 ## Scene e20 trail controller
 
-`func_8018F750` (`RoomEffect_HoverOrbController_8018F750.c`) matches all 3996 bytes at
+`SceneE20_HoverOrbController` (`SceneE20_HoverOrbController.c`) matches all 3996 bytes at
 `0x8018F750` with stock native GCC 2.7.2 and stock MASPSX 2.56, `-G0` and
 `--expand-div`. It reconstructs initialization, seven update phases, particle
 spawning, endpoint interpolation, trail history and model/glow rendering.
@@ -2242,7 +2196,7 @@ The compiler owns the seven-entry switch table at overlay offset `0x24`.
 The complete overlay retains SHA-1
 `cb847aba4aa80d900b766aa03ca9e306edc140e8`.
 
-The controller and `Scene_CommandEffectSlot` share the 24-byte command record
+The controller and `SceneE20_CommandEffectSlot` share the 24-byte command record
 in `pe1/scene_e20_hover_orb.h`. The controller record is 196 bytes, including seven
 head/tail history pairs beginning at offset `0x54`; spawned particles are
 20 bytes. Reserved members and address-based external names remain provisional.
@@ -2320,9 +2274,9 @@ Permuter scoring must include `--no-ignore-branch-targets`; the final proof
 also compares linked bytes directly with retail. Address views, mechanical
 temporary names, local packet types, and eight loop gotos remain cleanup debt.
 
-### Twin-model effect camera loads (`func_800DC058`)
+### Twin-model effect camera loads (`FieldFx_TwinModelEffect`)
 
-`FieldEng_TwinModel.c` now expresses the former `gte_ldrotmatrix` and
+`FieldFx_TwinModel.c` now expresses the former `gte_ldrotmatrix` and
 `gte_ldtransmatrix` CPU loads in C, using the shared `GteMatrixWords` view.
 Each GTE transfer has its own macro. Stock native GCC 2.7.2 and stock MASPSX
 2.56 reproduce all 1380 retail bytes at `0x800DC058`, with linked score 0.
@@ -2343,14 +2297,14 @@ individual clobber; each remaining individual clobber is needed in this
 source form. This does not establish that the original source had any of
 these constraints.
 
-### Arcing emitter camera loads (`func_800D5A00`)
+### Arcing emitter camera loads (`FieldFx_CosineSparkEmitter`)
 
-`FieldEng_CosinePulse.c` replaces the arcing emitter's former matrix-load
+`FieldFx_CosinePulse.c` replaces the arcing emitter's former matrix-load
 macros with C reads through `GteMatrixWords` and individually wrapped GTE
 transfers. Stock native GCC 2.7.2 and stock MASPSX 2.56, with `--expand-div`,
 produce linked score 0 and all 1100 retail bytes for the two-function TU
 at `0x800D5898`. The edited function at `0x800D5A00` occupies 740 bytes;
-`func_800D5898` is unchanged. This removes hidden CPU assembly from an
+`FieldFx_CosineEffectB` is unchanged. This removes hidden CPU assembly from an
 existing C function.
 
 Matching debt: three transfer-register pins, four empty constraints, and
@@ -2482,7 +2436,7 @@ single or paired deletion of the remaining added bindings retained a match.
 
 ### Animation-frame renderer: remaining matrix transfers
 
-`Render_DecompressAnimFrame` now expresses the three column loads/stores,
+`Render_DrawWireframeModel` now expresses the three column loads/stores,
 both translation loads, and the final rotation load in C, with individual
 GTE transfers. The long-vector packing helper also uses separate MTC2 and
 LWC2 wrappers. Stock native GCC 2.7.2 and stock MASPSX 2.56, with the existing

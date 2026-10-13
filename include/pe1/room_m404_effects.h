@@ -16,11 +16,11 @@ typedef struct RoomM404JointTemplate {
     s32 word[2];
 } __attribute__((packed)) RoomM404JointTemplate;
 
-extern RoomM404JointTemplate D_8018F21C;
-extern GteRotation D_8018F210;
-extern RenderColor D_8018F218;
-extern u8 D_80193F68[];
+extern const RoomM404JointTemplate D_8018F21C;
+extern const GteRotation D_8018F210;
+extern const RenderColor D_8018F218;
+extern u8 g_RoomM404DebrisSparkColorTrack[];
 
-extern int func_801935E0(int mode, RoomDampedSpark *spark);
+extern int RoomM404_DebrisSparkCallback(int mode, RoomDampedSpark *spark);
 
 #endif

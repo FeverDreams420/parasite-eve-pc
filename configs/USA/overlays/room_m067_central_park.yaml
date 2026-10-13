@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m067_central_park
   ld_script_path: linkers/USA/overlays/room_m067_central_park.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m067_central_park.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m067_central_park.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m067_central_park.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m067_central_park.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,17 +37,22 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m067_central_park]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/actor_classes]
       - [0x1E4, rodata, RoomLib_HandlerCArgsData_8019159C]
-      - [0x1E4, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3500, data, D_801924E8]
-      - start: 0x3538
+      - [0x1E4, c, ../room_lib/actor_classes]
+      - [0x3500, .data, ../room_lib/actor_class_table]
+      - start: 0x35A8
         type: databin
-        name: D_80192520
+        name: D_80192590
         dir: room_m067_central_park
       - start: 0x19200
         type: databin
         name: D_801A81E8
+        dir: room_m067_central_park
+      - [0x25364, data, D_801B434C]
+      - start: 0x25370
+        type: databin
+        name: D_801B4358
         dir: room_m067_central_park
   - [0x25800]
 # room: m067, section3 sector 25106, scanner delta 0

@@ -1,4 +1,5 @@
 /* PSY-Q LIBSPU S_SNC: SpuSetNoiseClock. */
+
 #include "pe1/psyq_spu_internal.h"
 
 long SpuSetNoiseClock(long clock) {

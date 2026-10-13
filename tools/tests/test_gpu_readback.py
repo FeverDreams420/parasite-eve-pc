@@ -2,29 +2,30 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import function_text, host_unit  # noqa: E402
 
 
 class GpuReadbackTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_two_waits_cpu_prefix_dma_blocks_and_timeouts(self):
-        source = (ROOT / "src/main/psyq/libgpu/vram_transfer.c").read_text()
-        readback = source.index("/* Read VRAM")
-        source = source[:source.index("/* Upload pixels")] + source[readback:]
-        self.assertEqual(source.count(' asm("$2")'), 1)
-        source = source.replace(' asm("$2")', "")
+        # The former readback register pin is gone; keep it that way.
+        self.assertNotRegex(function_text("Gpu_FlushDisplayBuffer"), r'\basm\s*\(\s*"\$')
+        source = host_unit("Gpu_FlushDisplayBuffer")
         harness = source + r'''
 #include <assert.h>
 #include <stdint.h>
 #define SENTINEL 0xDEADBEEFU
 #define SAMPLE 0x56781234U
-short D_80095750 = 1024, D_80095752 = 512;
+short g_GpuMaxWidth = 1024, g_GpuMaxHeight = 512;
 static unsigned int gp0, gp1, madr, bcr, chcr;
-unsigned int *D_80095850 = &gp0;
-GpuDmaRegisterWindow D_80095854 = {&gp1, &madr, &bcr, &chcr};
+unsigned int *g_GpuGp0Ptr = &gp0;
+GpuDmaRegisterWindow g_GpuDmaRegisterWindow = {&gp1, &madr, &bcr, &chcr};
 static unsigned int pixels[262144], expectedDimensions;
 static int resets, commandPolls, dataPolls, commandReady, dataReady;
 static int commandTimeout, dataTimeout;

@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m332_hospital
   ld_script_path: linkers/USA/overlays/room_m332_hospital.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m332_hospital.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m332_hospital.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m332_hospital.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m332_hospital.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,20 +37,28 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m332_hospital]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1E4, .rodata, ../room_lib/RoomLib_TimedSpawn]
-      - [0x1EC, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3508, c, ../room_lib/RoomLib_FloorWalkerClass]
-      - [0x3CF8, c, ../room_lib/RoomLib_TimedSpawn]
-      - [0x41D4, data, D_801931BC]
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, .rodata, ../room_lib/timed_spawn]
+      - [0x1EC, c, ../room_lib/actor_classes]
+      - [0x3508, c, ../room_lib/floor_walker_class]
+      - [0x3CF8, c, ../room_lib/timed_spawn]
+      - [0x41D4, .data, ../room_lib/actor_class_table]
+      - [0x427C, data, D_80193264]
       - [0x4298, data, D_80193280]
-      - start: 0x42B8
+      - [0x42B8, data, RoomLib_TimedRenderTable]
+      - [0x42D8, data, D_801932C0]
+      - start: 0x4310
         type: databin
-        name: D_801932A0
+        name: D_801932F8
         dir: room_m332_hospital
       - start: 0x15540
         type: databin
         name: D_801A4528
+        dir: room_m332_hospital
+      - [0x2E094, data, D_801BD07C]
+      - start: 0x2E0B8
+        type: databin
+        name: D_801BD0A0
         dir: room_m332_hospital
   - [0x2E800]
 # room: m332, section3 sector 80323, scanner delta 0

@@ -7,9 +7,16 @@ typedef struct MathU64 {
     unsigned int hi;
 } MathU64;
 
+/* The high word read as signed carries the sign of the double. */
+typedef struct MathS64 {
+    unsigned int lo;
+    int hi;
+} MathS64;
+
 typedef union MathDoubleBits {
     double value;
     MathU64 bits;
+    MathS64 signedBits;
 } MathDoubleBits;
 
 MathU64 *_add_mant_d(MathU64 *result, MathU64 left, MathU64 right);

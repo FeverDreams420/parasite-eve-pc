@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m167_sewer2
   ld_script_path: linkers/USA/overlays/room_m167_sewer2.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m167_sewer2.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m167_sewer2.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m167_sewer2.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m167_sewer2.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,16 +37,16 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m167_sewer2]
-      - [0xC, .rodata, ../room_lib/RoomLib_TwelveElementEffect]
-      - [0x2C, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/twelve_elements]
+      - [0x2C, .rodata, ../room_lib/actor_classes]
       - [0x204, rodata, RoomLib_HandlerCArgsData_80192238]
-      - [0x204, c, ../room_lib/RoomLib_PlantScript]
-      - [0x230, c, ../room_lib/RoomLib_Spawn6]
-      - [0x25C, c, ../room_lib/RoomLib_RegisterDrawList]
-      - [0x2A4, c, ../room_lib/RoomLib_RegisterPairedTables]
-      - [0x330, c, ../room_lib/RoomLib_CloseTarget]
-      - [0x3B4, c, ../room_lib/RoomLib_TwelveElementEffect]
-      - [0xE80, c, ../room_lib/RoomLib_ActorClasses]
+      - [0x204, c, ../room_lib/class_plant_script]
+      - [0x230, c, ../room_lib/class_spawn]
+      - [0x25C, c, ../room_lib/class_register_draw_list]
+      - [0x2A4, c, ../room_lib/class_register_tables]
+      - [0x330, c, ../room_lib/class_close_target]
+      - [0x3B4, c, ../room_lib/twelve_elements]
+      - [0xE80, c, ../room_lib/actor_classes]
       - [0x419C, data, D_80193184]
       - [0x41A8, data, RoomLib_TableA_8018F244]
       - [0x41B4, data, D_8019319C]
@@ -52,8 +54,7 @@ segments:
       - [0x41C8, data, D_801931B0]
       - [0x41E4, data, D_801931CC]
       - [0x4220, data, D_80193208]
-      - [0x4230, data, D_80193218]
-      - [0x4268, data, D_80193250]
+      - [0x4230, .data, ../room_lib/actor_class_table]
       - [0x42D8, data, D_801932C0]
       - [0x42DC, data, D_801932C4]
       - [0x42E0, data, D_801932C8]
@@ -62,6 +63,11 @@ segments:
       - start: 0x42F0
         type: databin
         name: D_801932D8
+        dir: room_m167_sewer2
+      - [0x273E0, data, D_801B63C8]
+      - start: 0x27404
+        type: databin
+        name: D_801B63EC
         dir: room_m167_sewer2
   - [0x27800]
 # room: m167, section3 sector 47196, scanner delta 0

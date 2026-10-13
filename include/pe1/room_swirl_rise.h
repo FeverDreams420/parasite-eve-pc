@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
 
 /* Room effect that spirals a sprite up from an anchor (phase 0) and then
@@ -21,8 +22,5 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSwirlRiseState, radius) == 0x0C,
                   room_swirl_rise_radius_offset);
 
 extern RenderColor D_8018F1D8;
-int func_80077AA4(int, int);
-int rsin(int angle);
-int rcos(int angle);
 
 #endif

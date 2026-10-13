@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/fx_common
   ld_script_path: linkers/USA/overlays/fx_common.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.fx_common.txt
-  symbol_addrs_path: configs/USA/overlays/sym.fx_common.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.fx_common.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.fx_common.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -38,62 +40,14 @@ segments:
         type: rodatabin
         name: fx_common_header
         dir: fx_common
-      - [0x44, .rodata, FxCommon_MainLoopFlow]
-      - [0x6C, c, FxCommon_UpdateCamera]
-      - [0x354, c, FxCommon_LookAtMatrix]
-      - [0x56C, c, FxCommon_SamplePath]
-      - [0x93C, c, FxCommon_BuildFrustumPlanes]
-      - [0x1004, c, FxCommon_CheckBounds]
-      - [0x1264, c, FxCommon_CheckBoundsWithMargin]
-      - [0x14C0, c, FxCommon_CheckFourBoundsWithMargin]
-      - [0x19A8, c, func_80190998]
-      - [0x1AFC, c, FxCommon_AllocateNode]
-      - [0x1B88, c, FxCommon_AllocateTypedNode]
-      - [0x1C2C, c, FxCommon_AllocateConfiguredNode]
-      - [0x1D18, c, FxCommon_DestroyNode]
-      - [0x1D4C, c, FxCommon_ApplyNodeTransform]
-      - [0x1E14, c, FxCommon_UpdateTransformNode]
-      - [0x2124, c, FxCommon_DrawLodNode]
-      - [0x2590, c, FxCommon_InitNodeTransform]
-      - [0x25EC, c, FxCommon_InsertFreeIndex]
-      - [0x2688, c, FxCommon_RemoveIndex]
-      - [0x2750, c, FxCommon_ResetSelection]
-      - [0x2764, c, FxCommon_SelectRecord]
-      - [0x27CC, c, FxCommon_InsertNode]
-      - [0x2844, c, FxCommon_RemoveNode]
-      - [0x2864, c, FxCommon_SelectSceneVariant]
-      - [0x2CA4, c, func_80191C94]
-      - [0x2DF8, c, FxCommon_ConfigureDisplayRange]
-      - [0x2E40, c, FxCommon_RunRenderOperation]
-      - [0x2F0C, c, FxCommon_ApplyRenderVector]
-      - [0x2FF8, c, FxCommon_SetMode1]
-      - [0x301C, c, FxCommon_SetMode30]
-      - [0x3040, c, FxCommon_MainLoopFlow]
-      - [0x3750, c, func_80192740]
-      - [0x3810, c, FxCommon_DrawScene]
-      - [0x4488, c, FxCommon_AdvancePathNodes]
-      - [0x48F8, c, FxCommon_InitializeMotionVectors]
-      - [0x49C0, c, FxCommon_SetMotionTargets]
-      - [0x4AC0, c, FxCommon_AdvanceMotionVectors]
-      - [0x4B6C, c, FxCommon_DrawEffectMarkers]
-      - [0x5118, c, FxCommon_AdjustIntensity]
-      - [0x51B4, c, FxCommon_DrawIntensityQuad]
-      - [0x530C, c, FxCommon_UpdateEffects]
-      - [0x68E4, c, FxCommon_UpdateResource]
-      - [0x69A4, c, FxCommon_InitMotionDeltas]
-      - [0x6BD8, c, func_80195BC8]
-      - [0x6D4C, c, func_80195D3C]
-      - [0x6E5C, c, func_80195E4C]
-      - [0x6F7C, c, FxCommon_EffectInitializationFlow]
-      - [0x8BB0, c, FxCommon_DrawPolyResource]
-      - [0xA5AC, c, FxCommon_GetOffsetEntryValue]
-      - [0xA5CC, c, FxCommon_DrawModel]
-      - [0xB328, c, FxCommon_DrawModelTinted]
-      - [0xC1E0, c, FxCommon_DrawModelFlat]
-      - [0xCD88, c, func_8019BD78]
-      - [0xCF60, c, FxCommon_PrepareBuffer]
-      - [0xCF9C, c, FxCommon_LinkBuffer]
-      - [0xCFD4, data, D_8019BFC4]
+      - [0x44, .rodata, effects]
+      - [0x6C, c, camera]
+      - [0x2FF8, c, effects]
+      - [0x6BD8, c, motion_endpoints]
+      - [0x6D4C, c, camera_path]
+      - [0x6F7C, c, effect_init]
+      - [0x8BB0, c, model_buffers]
+      - [0xCFD4, data, g_FxCommonCameraAngles]
   - [0xD000]
 # source slice: scanner
 # extract locally with: dd if=disc/extracted/PE.IMG of=original/USA/overlays/fx_common.bin bs=2048 skip=1792 count=26

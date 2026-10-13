@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m410_chrysler
   ld_script_path: linkers/USA/overlays/room_m410_chrysler.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m410_chrysler.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m410_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m410_chrysler.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m410_chrysler.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,14 +37,12 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m410_chrysler]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1E4, .rodata, ../room_lib/RoomEffect_SoundBurst]
-      - [0x1F0, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x350C, c, ../room_lib/RoomEffect_SoundBurst]
-      - [0x3C2C, c, ../room_lib/RoomLib_SetArgs3]
-      - [0x3C50, data, D_80192C38]
-      - [0x3C88, data, D_80192C70]
-      - [0x3CC0, data, D_80192CA8]
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, .rodata, ../room_lib/sound_burst]
+      - [0x1F0, c, ../room_lib/actor_classes]
+      - [0x350C, c, ../room_lib/sound_burst]
+      - [0x3C2C, c, ../room_lib/script_args]
+      - [0x3C50, .data, ../room_lib/actor_class_table]
       - [0x3CF8, data, D_80192CE0]
       - [0x3D1C, data, D_80192D04]
       - [0x3D54, data, D_80192D3C]
@@ -50,6 +50,11 @@ segments:
       - start: 0x3D5C
         type: databin
         name: D_80192D44
+        dir: room_m410_chrysler
+      - [0x2F7A4, data, D_801BE78C]
+      - start: 0x2F7D4
+        type: databin
+        name: D_801BE7BC
         dir: room_m410_chrysler
   - [0x30000]
 # room: m410, section3 sector 94183, scanner delta 0

@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m318_chrysler
   ld_script_path: linkers/USA/overlays/room_m318_chrysler.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m318_chrysler.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m318_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m318_chrysler.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m318_chrysler.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,33 +37,13 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m318_chrysler]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/actor_classes]
       - [0x1E4, rodata, RoomLib_HandlerCArgsData_80191614]
-      - [0x25C, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3578, c, func_80192560]
-      - [0x3638, c, func_80192620]
-      - [0x3730, c, RoomEffect_FanSweepFlow]
-      - [0x3DB8, c, RoomEffect_SpiralDropFlow]
-      - [0x4284, c, RoomEffect_SweepShakeFlow]
-      - [0x49C4, c, RoomEffect_DriftingPaletteSprite]
-      - [0x4DA0, c, func_80193D88]
-      - [0x4FDC, c, RoomEffect_ShakeBurstFlow]
-      - [0x5500, c, RoomEffect_EmberBurstFlow]
-      - [0x61A8, c, RoomEffect_RisingColumnFlow]
-      - [0x691C, c, RoomEffect_FlashBurstFlow]
-      - [0x7484, c, RoomEffect_CrossFlashFlow]
-      - [0x7C60, c, RoomEffect_TwinRibbonFlow]
-      - [0x8630, c, RoomEffect_EmberFountainFlow]
-      - [0x9280, c, RoomEffect_EmberSpiralFlow]
-      - [0xA230, c, func_80199218]
-      - [0xA24C, c, func_80199234]
-      - [0xA268, c, func_80199250]
-      - [0xA2AC, c, ../room_lib/RoomLib_SetArg1]
-      - [0xA2BC, c, func_801992A4]
-      - [0xA394, c, RoomLib_SetArg1_8019937C]
-      - [0xA3A4, c, func_8019938C]
-      - [0xA3B4, data, D_8019939C]
-      - [0xA3EC, data, D_801993D4]
+      - [0x25C, c, ../room_lib/actor_classes]
+      - [0x3578, c, m318]
+      - [0xA2AC, c, ../room_lib/script_arg]
+      - [0xA2BC, c, m318_player_gate]
+      - [0xA3B4, .data, ../room_lib/actor_class_table]
       - [0xA45C, data, D_80199444]
       - [0xA47C, data, D_80199464]
       - [0xA4A4, data, D_8019948C]
@@ -109,7 +91,7 @@ segments:
       - [0xA944, data, RoomSlotA_80199294]
       - [0xA948, data, D_80199930]
       - [0xA94C, data, D_80199934]
-      - [0xA950, data, RoomSlotA_8019937C]
+      - [0xA950, data, g_RoomM318ScriptArg2]
       - [0xA954, data, D_8019993C]
       - [0xA958, data, D_80199940]
       - start: 0xA95C
@@ -120,6 +102,11 @@ segments:
       - start: 0x31210
         type: databin
         name: D_801C01F8
+        dir: room_m318_chrysler
+      - [0x5C1D0, data, D_801EB1B8]
+      - start: 0x5C248
+        type: databin
+        name: D_801EB230
         dir: room_m318_chrysler
   - [0x5C800]
 # room: m318, section3 sector 77178, scanner delta 0

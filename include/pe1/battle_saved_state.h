@@ -3,10 +3,12 @@
 
 #include "common.h"
 #include "pe1/battle.h"
+#include "pe1/weapon_list_output.h"
 
 /* Word-aligned battle views over opaque save records serialized as bytes. */
-typedef struct BattleStateTail {
+typedef union BattleStateTail {
     s32 words[6];
+    WeaponListOutput weapon;
 } BattleStateTail;
 PE1_STATIC_ASSERT(sizeof(BattleStateTail) == 0x18, battle_state_tail_size);
 
@@ -22,10 +24,10 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(AyaBattleState, action) == 0x68,
                   aya_battle_state_action_offset);
 
 /* Rodata defaults Battle_SaveAyaState loads into the saved battle records. */
-extern AyaBattleState D_80010928;
-extern BattleStateTail D_80010998;
+extern AyaBattleState g_AyaBattleStateInitial;
+extern BattleStateTail g_SavedBattleStateTailInitial;
 
-extern AyaBattleState g_AyaBattleState __asm__("D_800B8A20");
-extern BattleStateTail g_SavedBattleStateTail __asm__("D_800B0CB0");
+extern AyaBattleState g_AyaBattleState;
+extern BattleStateTail g_SavedBattleStateTail;
 
 #endif /* PE1_BATTLE_SAVED_STATE_H */

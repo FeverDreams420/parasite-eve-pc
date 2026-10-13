@@ -1,9 +1,3 @@
-Akao_SendTableCommand = 0x8006DF50; // type:func
-g_PlayerEntity = 0x8009D254;
-FieldEng_VecToAngle = 0x800DFF80;
-FieldEng_TurnToward = 0x800DFFB8;
-RotMatrixYXZ = 0x80079754; // type:func
-ScaleMatrix = 0x80078CC4; // type:func
 RoomLib_HandlerDNop0 = 0x8018F1D4; // type:func
 RoomLib_InitHandlerD = 0x8018F1DC; // type:func
 RoomLib_ConfigureHandlerD = 0x8018F27C; // type:func
@@ -69,3 +63,4 @@ RoomLib_HandlerGNop6 = 0x80192CD8; // type:func
 RoomLib_UpdateTimedRender = 0x80192CE0; // type:func
 RoomLib_ControlTimedSpawn = 0x80192E78; // type:func
 RoomLib_TimedRenderTable = 0x801932A0;
+g_RoomClassTable = 0x801931BC; // size:0xA8 allow_addend:true

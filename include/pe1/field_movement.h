@@ -18,7 +18,7 @@
 
 #include "pe1/battle.h"
 
-/* ---- Field pad bits (g_FieldInputState / D_8009D26C), confirmed by live walking ---- */
+/* ---- Field pad bits (g_FieldInputState / g_FieldPadBits), confirmed by live walking ---- */
 #define FIELD_PAD_UP    0x20   /* north, -Z, facing angle 0x000 */
 #define FIELD_PAD_LEFT  0x40   /* west,  -X, facing angle 0x400 */
 #define FIELD_PAD_DOWN  0x08   /* south, +Z, facing angle 0x800 */
@@ -53,16 +53,13 @@
  *   Entity_IntegratePositionFull()    pos += (motion + accel + gravity) ; saves base for rollback
  *   Entity_IntegratePositionConditional()  same, gated by a pause flag
  *   Entity_ResolvePosition()          field-geometry height (Y) + collision via triangle table
- *   Task_MoveTowardPoint(), Task_TurnTowardPointStep()  scripted/NPC movement & turning
- *   Camera base angle: D_800BD020/D_800BD022 ; analog stick: D_800BE9A0/A6/A7
+ *   Script_MoveTowardPoint(), Script_TurnTowardPointStep()  scripted/NPC movement & turning
+ *   Camera base angle: g_CameraBaseAngleDigital/g_CameraBaseAngleAnalog ; analog stick: g_PadPackets[0]
  */
 
-/* Pad packet header and left-stick coordinates read by the facing update. */
-extern u16 D_800BE9A0;
-extern u8 D_800BE9A6, D_800BE9A7;
-extern u16 D_800BD020, D_800BD022;
-extern unsigned int D_8009D26C;
-extern u32 D_8009D1A0;
+extern u16 g_CameraBaseAngleDigital, g_CameraBaseAngleAnalog;
+extern unsigned int g_FieldPadBits;
+extern u32 g_GameStateFlags;
 
 void Scene_Init(BattleEntity *entity, int *actionState);
 void Scene_SyncEntityAction(BattleEntity *entity, int *actionState);

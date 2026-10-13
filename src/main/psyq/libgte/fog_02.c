@@ -1,6 +1,6 @@
 /* GAS_VERSION: 2.8.1 */
-/* GCC_VERSION: 2.8.1 */
 /* PSY-Q LIBGTE FOG_02: SetFogNearFar. */
+
 #include "pe1/gte_types.h"
 
 void SetFogNearFar(int near, int far, int h) {

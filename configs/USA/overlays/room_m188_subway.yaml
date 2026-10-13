@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m188_subway
   ld_script_path: linkers/USA/overlays/room_m188_subway.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m188_subway.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m188_subway.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m188_subway.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m188_subway.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,14 +37,12 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m188_subway]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1E4, .rodata, ../room_lib/RoomEffect_SparkBarrage]
-      - [0x218, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3534, c, ../room_lib/RoomEffect_SparkBarrage]
-      - [0x6D90, c, ../room_lib/RoomLib_SetArgPair]
-      - [0x6DB0, data, D_80195D98]
-      - [0x6DE8, data, D_80195DD0]
-      - [0x6E20, data, D_80195E08]
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, .rodata, ../room_lib/spark_barrage]
+      - [0x218, c, ../room_lib/actor_classes]
+      - [0x3534, c, ../room_lib/spark_barrage]
+      - [0x6D90, c, ../room_lib/script_arg_pair]
+      - [0x6DB0, .data, ../room_lib/actor_class_table]
       - [0x6E58, data, D_80195E40]
       - [0x6E7C, data, D_80195E64]
       - [0x6E9C, data, D_80195E84]
@@ -70,6 +70,11 @@ segments:
       - start: 0x511F8
         type: databin
         name: D_801E01E0
+        dir: room_m188_subway
+      - [0x5B940, data, D_801EA928]
+      - start: 0x5B988
+        type: databin
+        name: D_801EA970
         dir: room_m188_subway
   - [0x5C000]
 # room: m188, section3 sector 50714, scanner delta 0

@@ -3,31 +3,33 @@
 
 #include "common.h"
 
-/* Field engine sprite draw state, owned by engine/FieldEng_SpriteRendering.c:
+/* Field engine sprite draw state, owned by fieldfx/sprite_render.c:
  * the texture page and CLUT origin the sprite draws use, the semi-transparency
  * mode and the cell size. The corners of the sprite quad that
- * func_800C2FF0 sizes are declared with the shaded quad (field_shaded_quad.h).
- * Effects set it up before drawing through func_800C2EAC (page origin and
- * CLUT row), func_800C3098 (colour depth), func_800C3238 (blend mode) and
- * func_800C2FF0 (cell size in texels). */
+ * FieldFx_SetSpriteCellSize sizes are declared with the shaded quad (field_shaded_quad.h).
+ * Effects set it up before drawing through FieldFx_SetSpriteTexturePreset (page origin and
+ * CLUT row), FieldFx_SetSpriteColorMode (colour depth), FieldFx_SetSpriteBlendMode (blend mode) and
+ * FieldFx_SetSpriteCellSize (cell size in texels). */
 
-extern u8 D_800F33AC;  /* texture colour mode: 0 = 4-bit, 1 = 8-bit */
-extern u8 D_800E224C;  /* semi-transparency rate (GetTPage abr) */
-extern u8 D_800F33B8;  /* blend mode last set by func_800C3238 */
-extern u8 D_800F337A;  /* draw the sprites semi-transparent */
-extern u16 D_800F3424; /* texture page origin x */
-extern u16 D_800F3426; /* texture page origin y */
-extern u16 D_800E27AC; /* GetTPage value of the current state */
-extern u16 D_800F341C; /* CLUT origin x */
-extern u16 D_800F341E; /* CLUT origin y */
+extern u8 g_FieldFxSpriteColorMode;  /* texture colour mode: 0 = 4-bit, 1 = 8-bit */
+extern u8 g_FieldFxSpriteBlendRate;  /* semi-transparency rate (GetTPage abr) */
+extern u8 g_FieldFxSpriteBlendMode;  /* blend mode last set by FieldFx_SetSpriteBlendMode */
+extern u8 g_FieldFxSpriteSemiTrans;  /* draw the sprites semi-transparent */
+extern u16 g_FieldFxSpriteTpageX; /* texture page origin x */
+extern u16 g_FieldFxSpriteTpageY; /* texture page origin y */
+extern u16 g_FieldFxSpriteTpageValue; /* GetTPage value of the current state */
+extern u16 g_FieldFxSpriteClutX; /* CLUT origin x */
+extern u16 g_FieldFxSpriteClutY; /* CLUT origin y */
 extern u8 D_800F3422;
-extern u8 D_800F345C;  /* cell width - 1 */
-extern u8 D_800F345D;  /* cell height - 1 */
+extern u8 g_FieldFxSpriteCellUMax;  /* cell width - 1 */
+extern u8 g_FieldFxSpriteCellVExtent;  /* cell height - 1 */
 
-void func_800C2EAC(u8 mode);
-void func_800C2FF0(int width, int height);
-void func_800C3098(int mode);
-void func_800C3134(u8 *table, u32 step, u8 *out);
-void func_800C3238(u8 mode);
+void FieldFx_SetSpriteTexturePreset(u8 mode);
+void FieldFx_SetSpriteCellSize(int width, int height);
+void FieldFx_SetSpriteColorMode(int mode);
+/* Printed by FieldFx_SetSpriteColorMode for a depth other than 4 or 8 bits. */
+extern char g_FieldSpriteWrongColorModeMsg[];
+void FieldFx_InterpolateColorRamp(u8 *table, u32 step, u8 *out);
+void FieldFx_SetSpriteBlendMode(u8 mode);
 
 #endif

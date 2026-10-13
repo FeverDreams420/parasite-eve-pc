@@ -4,14 +4,17 @@ import itertools
 import random
 import re
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text  # noqa: E402
 
 
 class BeginPlayerActionTests(unittest.TestCase):
     def test_plain_c(self):
-        source = (ROOT / 'src/main/battle/Battle_BeginPlayerAction.c').read_text()
+        source = function_text('Battle_BeginPlayerAction')
         source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
         self.assertIsNone(re.search(r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS|REGALLOC_BARRIER)\b', source))
 

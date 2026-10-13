@@ -4,7 +4,7 @@
 #include "pe1/gte_types.h"
 
 /* Identity rotation with zero translation used as the roll matrix seed. */
-extern GteMatrix D_800C2270;
+extern GteMatrix g_FieldFxIdentityMatrix;
 
 void MulRotMatrix(GteMatrix *matrix);
 

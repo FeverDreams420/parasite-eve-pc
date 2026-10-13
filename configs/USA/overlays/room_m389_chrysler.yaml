@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m389_chrysler
   ld_script_path: linkers/USA/overlays/room_m389_chrysler.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m389_chrysler.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m389_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m389_chrysler.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m389_chrysler.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,19 +37,18 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m389_chrysler]
-      - [0xC, .rodata, ../room_lib/RoomLib_TwelveElementEffect]
-      - [0x2C, .rodata, ../room_lib/RoomFx_OrbitEffectSet]
-      - [0x4C, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/twelve_elements]
+      - [0x2C, .rodata, ../room_lib/orbit_set]
+      - [0x4C, .rodata, ../room_lib/actor_classes]
       - [0x224, rodata, RoomLib_HandlerCArgsData_801931EC]
-      - [0x224, c, ../room_lib/RoomLib_PlantScript]
-      - [0x250, c, ../room_lib/RoomLib_Spawn6]
-      - [0x27C, c, ../room_lib/RoomLib_RegisterDrawList]
-      - [0x2C4, c, ../room_lib/RoomLib_RegisterPairedTables]
-      - [0x350, c, ../room_lib/RoomLib_CloseTarget]
-      - [0x3D4, c, ../room_lib/RoomLib_TwelveElementEffect]
-      - [0xEA0, c, ../room_lib/RoomFx_OrbitSetClass]
-      - [0x1060, c, ../room_lib/RoomFx_OrbitEffectSet]
-      - [0x1E34, c, ../room_lib/RoomLib_ActorClasses]
+      - [0x224, c, ../room_lib/class_plant_script]
+      - [0x250, c, ../room_lib/class_spawn]
+      - [0x27C, c, ../room_lib/class_register_draw_list]
+      - [0x2C4, c, ../room_lib/class_register_tables]
+      - [0x350, c, ../room_lib/class_close_target]
+      - [0x3D4, c, ../room_lib/twelve_elements]
+      - [0xEA0, c, ../room_lib/orbit_set]
+      - [0x1E34, c, ../room_lib/actor_classes]
       - [0x5150, data, D_80194138]
       - [0x515C, data, RoomLib_TableA_8018F264]
       - [0x5168, data, D_80194150]
@@ -61,8 +62,8 @@ segments:
       - [0x5220, data, D_80194208]
       - [0x522C, data, D_80194214]
       - [0x5248, data, RoomLib_TableB_8018FE90]
-      - [0x52BC, data, D_801942A4]
-      - [0x52F4, data, D_801942DC]
+      - [0x52BC, .data, ../room_lib/actor_class_table]
+      - [0x5364, data, D_8019434C]
       - [0x5368, data, D_80194350]
       - [0x536C, data, D_80194354]
       - [0x5370, data, D_80194358]
@@ -83,6 +84,11 @@ segments:
       - start: 0x53C0
         type: databin
         name: D_801943A8
+        dir: room_m389_chrysler
+      - [0x28EE4, data, D_801B7ECC]
+      - start: 0x28F14
+        type: databin
+        name: D_801B7EFC
         dir: room_m389_chrysler
   - [0x29800]
 # room: m389, section3 sector 89727, scanner delta 0

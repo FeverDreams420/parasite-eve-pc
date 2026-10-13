@@ -1,4 +1,5 @@
 /* Psy-Q LIBCD C_007.OBJ: StFreeRing. */
+
 #include "pe1/psyq_cd.h"
 
 u32 StFreeRing(u32 *ptr) {
@@ -29,7 +30,12 @@ u32 StFreeRing(u32 *ptr) {
         do {
             int slot = i + index;
             i++;
-            *(s16 *)((u8 *)StRingAddr + (slot << 5)) = 0;
+            {
+                StHeaderAddress at;
+                at.header = StRingAddr;
+                at.word += slot << 5;
+                *at.status = 0;
+            }
         } while (i < limit);
     }
 

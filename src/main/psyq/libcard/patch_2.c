@@ -1,4 +1,5 @@
-/* PSY-Q LIBCARD PATCH, part 2 of 4: CardPatchFunctions, func_8007E3B4. */
+/* PSY-Q LIBCARD PATCH, part 2 of 4: CardPatchFunctions, LIBCARD_PATCH_text_70. */
+
 #include "pe1/psyq_card.h"
 
 /* The copied BIOS patch enters with its I/O base in v1, not in a0. */
@@ -15,6 +16,6 @@ void CardPatchFunctions(void) {
 
 /* The first LIBCARD/PATCH redirect template enters the installed wait patch.
  * GNU computed goto preserves the incoming BIOS return address and v1. */
-void func_8007E3B4(void) {
+void LIBCARD_PATCH_text_70(void) {
     goto *(void *)D_A000DFAC;
 }

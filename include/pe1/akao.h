@@ -1,10 +1,12 @@
 #ifndef PE1_AKAO_H
 #define PE1_AKAO_H
 
-#include "pe1/akao/track.h"
-#include "pe1/akao/queue.h"
 #include "pe1/akao/commands.h"
+#include "pe1/akao/queue.h"
 #include "pe1/akao/spu_voice.h"
+#include "pe1/akao/stream.h"
+#include "pe1/akao/track.h"
+#include "pe1/akao_send.h"
 
 /*
  * Track structs are still intentionally partial in C files. The FF7/FF8 AKAO
@@ -12,21 +14,27 @@
  * either game yet.
  */
 
-/* Sample transfer and stream instrument relocation. Addresses passed to the
- * upload wrapper are 32-bit main-memory addresses in the PSX ABI. */
-int SpuSetTransferStartAddr(int address);
-void Spu_UploadWithPrepare(int source, int size);
-void Spu_RebaseStreamAddrs(unsigned char *instruments, int address, int count);
-int Spu_UploadStreamBlockA(unsigned bank, unsigned char *cursor, unsigned size);
-int Spu_UploadStreamBlockB(unsigned bank, unsigned char *cursor);
-int Akao_StepNoteSequencer(unsigned char *cursor, unsigned size);
-/* Stream instrument scratch table; bank selection advances by 0x400 bytes. */
-extern unsigned D_800B4900[];
-extern unsigned D_800B4D00[];
-extern AkaoInstrument D_800B2900[];
-extern unsigned D_8009D270, D_8009D1EC, D_8009D204, D_8009D2BC, D_8009D2E4;
+/* SPU sample transfers (akao/spu_transfer.c). The transfer status is
+ * 1 while a DMA transfer runs; the completion callback clears it. */
+extern volatile int g_SpuTransferStatus;
 
-extern void * volatile g_AkaoBgmHandle;
-int Akao_SendTableCommand(void *table, int command, int arg1, int arg2, int arg3);
+/* Stream instrument relocation. */
+/* Stream instrument scratch table; bank selection advances by 0x400 bytes. */
+extern AkaoInstrument g_AkaoStreamInstrumentCacheB[];
+extern AkaoInstrument D_800B4D00[];
+/* An instrument record address as the word retail adds a byte offset to
+ * (table slots, cache slots copied word by word). */
+typedef union AkaoInstrumentAddress {
+    AkaoInstrument *instrument;
+    unsigned *words;
+    unsigned word;
+} AkaoInstrumentAddress;
+/* Instrument records replaced by Spu_UploadSampleBlock. */
+extern AkaoInstrument g_AkaoInstrumentTable[];
+extern unsigned g_AkaoStreamUploadMode, g_AkaoStreamAAddress, g_AkaoStreamARemaining, D_8009D2BC, D_8009D2E4;
+
+extern void *g_AkaoBgmHandle[];
+
+int Akao_SendPositionalCmdStereo(int arg0, int arg1, short x, short y, short z);
 
 #endif

@@ -26,6 +26,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM123JointTriangleRecord, callback.position) =
                       PE1_OFFSETOF(RoomM123JointTriangleRecord, emitter.z),
                   room_m123_joint_triangle_position_view);
 
-int func_8019251C(int mode, RoomM123JointTriangle *triangle);
+int RoomM123_JointTriangleCallback(int mode, RoomM123JointTriangle *triangle);
 
 #endif

@@ -1,34 +1,41 @@
 import pathlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+ROOM = 'src/overlays/room_m350_cruiser'
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import host_unit  # noqa: E402
 
 
 class Room350EffectBallisticTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_motion_and_palette_rendering(self):
-        source = (ROOT / "src/overlays/room_m350/RoomEffect_DualBallistic.c").read_text()
-        source = source.split('int func_80196A14', 1)[0]
+        source = host_unit("RoomM350_AreaDropletCallback", under=ROOM)
         harness = '#include <assert.h>\n#include <string.h>\n' + source + r'''
-int D_800E27EC, D_800F3428, D_800966EC[4096], D_8019A598[4];
-unsigned short D_800F336C, D_800E1204[8];
-short D_800F336A;
+int g_FieldFxCurrentAge, g_FieldFxAltPaletteFlag, D_8019A598[4];
+GteSineWord rcossin_tbl[4096];
+RenderEffectParameters g_FieldFxSpriteParams;
+unsigned short g_FieldFxPaletteTable[8];
+#define D_800F336C g_FieldFxSpriteParams.palette
+#define D_800F336A g_FieldFxSpriteParams.parameter02
 static short position[5];
 static int lookups, draws, nextCounter, expectedScale, expectedShade, handleValue;
-int GetClut(int x, int y) {
+u_short GetClut(int x, int y) {
     unsigned int index = ((unsigned int)(nextCounter - 1) << 7) & 0xF80;
     assert(lookups++ == 0 && draws == 0 && x == 16);
-    assert(y == D_800E1204[D_800F336C] +
-           (D_800F336C == 4 && D_800F3428 ? 4 : 0));
-    D_800E27EC = nextCounter; D_800F336A = expectedScale;
-    D_800966EC[index] = (int)(0x76540000U | (unsigned short)expectedShade);
+    assert(y == g_FieldFxPaletteTable[D_800F336C] +
+           (D_800F336C == 4 && g_FieldFxAltPaletteFlag ? 4 : 0));
+    g_FieldFxCurrentAge = nextCounter; D_800F336A = expectedScale;
+    rcossin_tbl[index].word = (int)(0x76540000U | (unsigned short)expectedShade);
     return handleValue;
 }
-void func_800CEE20(void *point, int zero, int a, int b, int scale,
-                  unsigned int handle, int flag, int shade, void *colors) {
+void FieldFx_DrawShapeQuads(struct GteShortVector *point, struct GteRotation *zero, int a,
+                  int b, int scale, int handle, int flag, int shade,
+                  struct RenderColor *colors) {
     assert(lookups == 1 && draws++ == 0 && point == position && zero == 0);
     assert(a == 12288 && b == 12288);
     assert(scale == expectedScale * (((nextCounter - 1) >> 1) & 7) + 200);
@@ -51,22 +58,22 @@ int main(void) {
             expected[1] = (short)(position[1] + position[3]);
             expected[3] = (short)(position[3] - position[4]);
         }
-        D_800E27EC = counter; lookups = draws = 0;
-        assert(func_801968D8(event, position) == result);
+        g_FieldFxCurrentAge = counter; lookups = draws = 0;
+        assert(RoomM350_AreaDropletCallback(event, position) == result);
         assert(lookups == 0 && draws == 0);
         assert(memcmp(position, expected, sizeof(position)) == 0);
     }
     for (counter = 0; counter < 32; ++counter)
     for (kind = 0; kind < 8; ++kind) for (special = 0; special < 2; ++special)
     for (h = 0; h < 2; ++h) for (s = 0; s < 6; ++s) {
-        for (i = 0; i < 8; ++i) D_800E1204[i] = h ? 65535 : i * 100;
-        D_800E27EC = counter; nextCounter = counter + 1;
-        D_800F336C = kind; D_800F3428 = special; D_800F336A = 999;
+        for (i = 0; i < 8; ++i) g_FieldFxPaletteTable[i] = h ? 65535 : i * 100;
+        g_FieldFxCurrentAge = counter; nextCounter = counter + 1;
+        D_800F336C = kind; g_FieldFxAltPaletteFlag = special; D_800F336A = 999;
         expectedScale = values[s]; expectedShade = values[5-s];
         handleValue = h ? -1 : 0x12345;
         memcpy(expected, position, sizeof(position));
         lookups = draws = 0;
-        assert(func_801968D8(2, position) == 0);
+        assert(RoomM350_AreaDropletCallback(2, position) == 0);
         assert(lookups == 1 && draws == 1);
         assert(memcmp(position, expected, sizeof(position)) == 0);
     }

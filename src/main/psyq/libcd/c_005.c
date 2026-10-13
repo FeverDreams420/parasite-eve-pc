@@ -7,13 +7,13 @@
 void StSetStream(u32 mode, u32 startFrame, u32 endFrame,
                  void (*callback1)(void), void (*callback2)(void)) {
     StSetMask(1, startFrame, endFrame);
-    D_800C0DB8 = 0;
+    g_CdStreamMemorySource = 0;
     g_StrDataReadyCallback = callback1;
     D_800A801C = mode & 1;
-    D_800B8620 = 0;
+    g_CdStreamExpectedTypeId = 0;
     D_800B6914 = 0;
-    D_800A8018 = 0;
-    D_800A5D54 = 0;
-    D_800B0CCC = callback2;
+    g_StFrameSectorIndex = 0;
+    g_StCurrentFrameNumber = 0;
+    g_StrEndCallback = callback2;
     asm volatile("" : : : "memory");
 }

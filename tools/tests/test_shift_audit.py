@@ -7,15 +7,46 @@ class ParseAssignmentsTests(unittest.TestCase):
     def test_absolute_symbolic_and_provide(self):
         rows = sa.parse_assignments(
             "/* comment = 0x1; */\n"
-            "D_80012018 = 0x80012018;\n"
+            "g_DsDotDotName = 0x80012018;\n"
             "CdRom_Init = DsMix;\n"
             "PROVIDE(g_Foo = 0x8009CD70);\n"
         )
         self.assertEqual([(r.name, r.value, r.provide) for r in rows], [
-            ("D_80012018", 0x80012018, False),
+            ("g_DsDotDotName", 0x80012018, False),
             ("CdRom_Init", None, False),
             ("g_Foo", 0x8009CD70, True),
         ])
+
+
+class OwnerBlockTests(unittest.TestCase):
+    TEXT = (
+        "/* Header without a kind. */\n"
+        "\n"
+        "/* hardware: SPU registers (akao). More text\n"
+        " * on a second line. */\n"
+        "g_SpuKeyOnLow = 0x1F801D88;\n"
+        "g_SpuKeyOnHigh = 0x1F801D8A;\n"
+        "\n"
+        "g_DsDotDotName = 0x80012018;\n"
+        "/* alias, wave 2c: record views. */\n"
+        "g_A = g_B;\n"
+        "/* Not a kind: x. */\n"
+        "g_C = g_D;\n"
+    )
+
+    def test_block_owners(self):
+        owners = sa.block_owners(self.TEXT)
+        self.assertEqual(owners["g_SpuKeyOnLow"], "hardware: SPU registers (akao).")
+        self.assertEqual(owners["g_SpuKeyOnHigh"], owners["g_SpuKeyOnLow"])
+        self.assertNotIn("g_DsDotDotName", owners)  # after a blank line
+        self.assertEqual(owners["g_A"], "alias, wave 2c: record views.")
+        self.assertNotIn("g_C", owners)
+
+    def test_owner_kind_must_match(self):
+        self.assertTrue(sa.owner_matches("hardware: x", "hardware"))
+        self.assertTrue(sa.owner_matches("alias, wave 3b: x", "symbolic_alias"))
+        self.assertFalse(sa.owner_matches("alias: x", "data_asm_blob"))
+        self.assertFalse(sa.owner_matches("kernel: x", "unreferenced"))
 
 
 class RegionTests(unittest.TestCase):

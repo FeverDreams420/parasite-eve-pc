@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m256_museum
   ld_script_path: linkers/USA/overlays/room_m256_museum.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m256_museum.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m256_museum.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m256_museum.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m256_museum.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,32 +37,15 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m256_museum]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/actor_classes]
       - [0x1E4, rodata, RoomLib_HandlerCArgsData_80191630]
-      - [0x1F4, .rodata, RoomEffect_ScatterDrop_80192844]
-      - [0x220, rodata, RoomEffect_SpriteSeeds_8018F208]
-      - [0x244, .rodata, RoomEffect_TrailBurstCallback]
+      - [0x1F4, .rodata, m256]
       - [0x270, rodata, RoomEffect_TrailBurstPadding]
-      - [0x278, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3594, c, func_8019257C]
-      - [0x359C, c, func_80192584]
-      - [0x35C4, c, func_801925AC]
-      - [0x363C, c, func_80192624]
-      - [0x3644, c, ../room_lib/RoomLib_UpdateCallback]
-      - [0x366C, c, func_80192654]
-      - [0x3820, c, func_80192808]
-      - [0x3854, c, func_8019283C]
-      - [0x385C, c, RoomEffect_ScatterDrop_80192844]
-      - [0x44C4, c, RoomEffect_RandomSparkController]
-      - [0x4794, c, RoomEffect_SwirlSparkFlow]
-      - [0x50C8, c, RoomEffect_TrailBurstCallback]
-      - [0x6338, c, func_80195320]
-      - [0x6544, c, RoomEffect_PulsingSpriteCallback]
-      - [0x6740, c, RoomEffect_ModelPulseController]
-      - [0x6CE0, c, func_80195CC8]
-      - [0x6CF0, c, func_80195CD8]
-      - [0x6D18, data, D_80195D00]
-      - [0x6D50, data, D_80195D38]
+      - [0x278, c, ../room_lib/actor_classes]
+      - [0x3594, c, m256_class]
+      - [0x3644, c, ../room_lib/class_update_callback]
+      - [0x366C, c, m256]
+      - [0x6D18, .data, ../room_lib/actor_class_table]
       - [0x6DC0, data, D_80195DA8]
       - [0x6DDC, data, D_80195DC4]
       - [0x6E00, data, D_80195DE8]

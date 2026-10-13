@@ -1,5 +1,6 @@
 /* ASSEMBLER: GNU */
 /* PSY-Q LIBSPU S_SIC: SpuSetIRQCallback. */
+
 #include "pe1/psyq_spu_internal.h"
 
 SpuCallback SpuSetIRQCallback(SpuCallback callback) {

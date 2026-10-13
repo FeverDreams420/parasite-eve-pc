@@ -49,10 +49,10 @@
  *   LAYER 1 (POS array stride 4, UV array stride 8, tx=(uvword>>16)&0xf, etc.).
  *   There is no separate sprite sub-format: at runtime EVERY mesh entry is drawn
  *   through one path.  Confirmed by disassembly:
- *     Geo_BuildMeshList 0x80067A78 iterates the mesh-entry array and, for each
+ *     Render_BuildMeshList 0x80067A78 iterates the mesh-entry array and, for each
  *       entry with flag bit 0x2 set AND group(+0x24)==g_GeomGroupSel(0x800BCFFD),
  *       calls Render_DrawSpriteEntry 0x80067294.
- *     Geo_LoadMeshEntry 0x80066F60 is the BUILD step that decodes an entry's
+ *     Render_LoadMeshEntry 0x80066F60 is the BUILD step that decodes an entry's
  *       POS/UV tiles into GPU prims. Entry +0x30 points to two consecutive
  *       sprite frame buffers; +0x34 points to two texture-page frame buffers.
  *       Bit 0x10000000 of UV word 1 sets each sprite's semitransparency bit.
@@ -80,15 +80,15 @@
  *   MAE 0.41 / tol48 100% / tol16 100% vs 9.png (vs 1.35 without).
  *
  * == DRAW / LOAD CODE ==
- *   loader  Scene_LoadFieldBg 0x8006AD40  src/main/scene/Scene_LoadFieldBg.c
+ *   loader  Scene_LoadFieldBg 0x8006AD40  src/main/scene/room_load.c
  *                                 (renamed from the mis-named Scene_Nop; room
  *                                 bg/asset loader, gated by g_GameState[0]&1)
  *                                 upload loop 0x8006AF18 (LoadImage records),
  *                                 tpage/clut pack loop 0x8006AFB4.
- *   Geo_LoadMeshEntry 0x80066F60  builds the tile primitives (the format above).
+ *   Render_LoadMeshEntry 0x80066F60  builds the tile primitives (the format above).
  *   Render_DrawSpriteEntry 0x80067294  flat screen-space path (clips vs 320/224).
- *   Render_DrawRoom   0x80068014  src/main/render/Render_MeshListAndFade.c (GTE/OT).
- *   Geo_BuildMeshList 0x80067A78 ; Gpu_LoadGeomState 0x80066800 ; called from
+ *   Render_DrawActorShadow   0x80068014  src/main/render/mesh_list.c (GTE/OT).
+ *   Render_BuildMeshList 0x80067A78 ; Render_LoadGeomState 0x80066800 ; called from
  *                     Entity_FrameUpdate 0x80035558 (@0x80035B0C).
  *   GetClut 0x80077AA4 ; GetTPage 0x80077A64 (libgpu).
  *   Asset_FindTable08ByU32Key 0x8006E498  (container resource lookup by u32 id).
@@ -105,8 +105,8 @@
  *                       state (also referenced by menu/textbox code via .reloc),
  *                       so renaming needs the full byte-safe workflow.
  *   g_GeomGroupSel        0x800BCFFD   active group/view selector (u8). Written by
- *                       Gpu_LoadGeomState; read by Geo_BuildMeshList/
- *                       Geo_RenderMeshList/Render_* as an index of stride-52
+ *                       Render_LoadGeomState; read by Render_BuildMeshList/
+ *                       Render_DrawMeshList/Render_* as an index of stride-52
  *                       entries in the State ctx g_GeomState (selects which
  *                       mesh-entry group / camera view is drawn).
  *   g_GeomState        field GPU/draw "State" context (typedef State); +0x38/+0x3A

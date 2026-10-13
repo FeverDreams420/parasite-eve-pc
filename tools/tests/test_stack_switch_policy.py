@@ -26,13 +26,13 @@ MAIN_YAML = '''segments:
     start: 0x800
     vram: 0x80010000
     subsegments:
-      - [0x1000, c, boot/Boot_MainLoop]
+      - [0x1000, c, boot/main]
       - [0x1100, c, boot/Other]
   - [0x2000]
 '''
 
 ENTRIES = [
-    {"name": "main", "module": "main", "source": "main/boot/Boot_MainLoop.c",
+    {"name": "main", "module": "main", "source": "main/boot/main.c",
      "address": "0x80010810", "size": 0xF0,
      "evidence": ["stack pointer switched around one call"], "verified_by": "test"},
 ]
@@ -40,7 +40,7 @@ ENTRIES = [
 
 class StackSwitchPolicyTests(unittest.TestCase):
     def errors(self, files=None, entries=None, header=HEADER, headers=None):
-        files = {"main/boot/Boot_MainLoop.c": USER} if files is None else files
+        files = {"main/boot/main.c": USER} if files is None else files
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             src = root / "src"
@@ -69,7 +69,7 @@ class StackSwitchPolicyTests(unittest.TestCase):
         self.assertEqual(self.errors(), [])
 
     def test_unlisted_unit_is_rejected(self):
-        self.assertError(self.errors({"main/boot/Boot_MainLoop.c": USER,
+        self.assertError(self.errors({"main/boot/main.c": USER,
                                       "main/boot/Other.c": USER}),
                          "without evidence: main/boot/Other.c")
 
@@ -77,18 +77,18 @@ class StackSwitchPolicyTests(unittest.TestCase):
         text = USER.replace("void helper(void) {\n",
                             "void helper(void) {\n    BOOT_CALL_ON_SCRATCHPAD_STACK("
                             "BOOT_SCRATCHPAD_STACK_TOP, g());\n")
-        self.assertError(self.errors({"main/boot/Boot_MainLoop.c": text}),
+        self.assertError(self.errors({"main/boot/main.c": text}),
                          "used in helper, main")
 
     def test_second_use_in_the_listed_function_is_rejected(self):
         text = USER.replace("    helper();\n",
                             "    BOOT_CALL_ON_SCRATCHPAD_STACK(BOOT_SCRATCHPAD_STACK_TOP, g());\n")
-        self.assertError(self.errors({"main/boot/Boot_MainLoop.c": text}),
+        self.assertError(self.errors({"main/boot/main.c": text}),
                          "used in main, main")
 
     def test_other_instruction_asm_is_rejected(self):
         text = USER + 'void tail(void) { asm volatile("nop"); }\n'
-        self.assertError(self.errors({"main/boot/Boot_MainLoop.c": text}),
+        self.assertError(self.errors({"main/boot/main.c": text}),
                          "has other instruction asm")
 
     def test_evidence_is_required(self):
@@ -114,7 +114,7 @@ class StackSwitchPolicyTests(unittest.TestCase):
             "other.h": "#define BOOT_CALL_ON_SCRATCHPAD_STACK(top, call) call\n"}),
             "redefined outside")
         text = "#define BOOT_CALL_ON_SCRATCHPAD_STACK(top, call) call\n" + USER
-        self.assertError(self.errors({"main/boot/Boot_MainLoop.c": text}),
+        self.assertError(self.errors({"main/boot/main.c": text}),
                          "redefined outside")
 
     def test_repository_window_and_users_are_consistent(self):

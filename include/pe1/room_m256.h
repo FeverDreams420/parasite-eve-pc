@@ -1,44 +1,27 @@
 #ifndef PE1_ROOM_M256_H
 #define PE1_ROOM_M256_H
 
+#include "pe1/asset_find.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/room_m256_trail.h"
+#include "pe1/room_model_pulse_particle.h"
+#include "pe1/scene_archive.h"
 
 /* ABI declarations used by the room_m256 effect dispatcher. */
-extern int D_800B0E64;
-extern u16 D_800E11EA;
-extern int D_800E27EC;
-extern u16 D_800E2850[];
-extern u16 D_800F336C;
-extern short D_800F336E, D_800F3372, D_800F3374;
-extern u16 D_800F3370;
 extern int D_80195EF8;
-extern int func_801940B0(int mode, void *state);
+extern int RoomM256_TrailCallback(int mode, void *state);
 
-extern int func_8006E498(int, int);
-extern int func_800D3FD8(void);
-extern void func_800D3F64(int, int);
+int RoomM256_TrailEmitter(int mode, u16 *out);
 
-int func_80195320(int mode, u16 *out);
+extern char g_RoomM256PulseParticleColorTrack[];
+extern s16 g_RoomM256PulseBrightness;
 
-typedef struct RoomM256Particle {
-    u16 frame;
-    u16 offset;
-    s16 scale;
-} RoomM256Particle;
-
-extern char D_801960A0[];
-extern char D_80196098[];
-extern char D_80195E64[];
-extern s16 D_80196094;
-extern s16 D_800F336A;
-extern u16 D_800E1204[];
-extern int D_800F3428;
-
-int rcos(int);
-int func_80077AA4(int, int);
-void func_800CF844(void *, void *, int, void *, int, int);
-void func_800CF3AC(void *, void *, int);
-void func_800D1DEC(void *, void *, int, int);
-int func_8019552C(int mode, RoomM256Particle *particle);
+void FieldFx_OffsetPointByAngles(void *, void *, int, void *, int, int);
 
 #endif

@@ -2,6 +2,9 @@
 #define PE1_ROOM_WINDOW_H
 
 #include "common.h"
+#include "pe1/field_actor.h"
+#include "pe1/field_vector_math.h"
+#include "pe1/gte_sine_table.h" /* packed PSY-Q sine table, one RoomWindowTrig per angle step */
 #include "pe1/gte_types.h"
 
 /* The window effect: a script object that flies a camera-facing frame from
@@ -27,14 +30,20 @@ typedef union RoomWindowTrig {
     } part;
 } RoomWindowTrig;
 
+/* The anchor's render marker: flag word and the state byte the release
+ * closes. */
 typedef struct RoomWindowFlags {
-    s32 flags;
+    s32 flags;                    /* 0x00 */
+    u8 pad04[0x14];
+    u8 *state;                    /* 0x18 */
 } RoomWindowFlags;
 
 /* The anchor record reached through RoomWindowActor.anchor. */
 typedef struct RoomWindowAnchor {
     RoomWindowFlags *marker;      /* 0x00 */
-    u8 pad04[0x10];
+    u8 pad04[0xB];
+    u8 frameCount;                /* 0x0F */
+    u8 pad10[0x4];
     s32 speed;                    /* 0x14 */
     u8 pad18[0x2];
     u16 frame;                    /* 0x1A */
@@ -80,7 +89,12 @@ typedef struct RoomWindowPlayer {
  * RoomLib_ConfigureWindowClass for the configuration ops). */
 typedef struct RoomWindowState {
     void (*callback)(void);       /* 0x00 */
-    u8 pad04[0xA];
+    int *signal;                  /* 0x04 */
+    s16 active;                   /* 0x08 */
+    s8 variant;                   /* 0x0A */
+    s8 optionB;                   /* 0x0B */
+    s8 optionC;                   /* 0x0C */
+    u8 flags;                     /* 0x0D */
     u8 started;                   /* 0x0E (object + 0x1A) */
     u8 pad0F;
     GteMatrix rotation;           /* 0x10 */
@@ -102,7 +116,9 @@ typedef struct RoomWindowState {
 } RoomWindowState;
 
 typedef struct RoomWindowObject {
-    u8 pad00[0x4];
+    u8 status;                    /* 0x00: 4 = closed */
+    u8 pad01[0x2];
+    u8 enabled;                   /* 0x03 */
     s32 index;                    /* 0x04 */
     RoomWindowActor *actor;       /* 0x08 */
     RoomWindowState state;        /* 0x0C */
@@ -127,22 +143,29 @@ typedef struct RoomWindowScratch {
 
 #define ROOM_WINDOW_SCRATCH ((RoomWindowScratch *)0x1F800000)
 
-/* The packed PSY-Q sine table, one RoomWindowTrig per angle step. */
-extern short D_800966EC[][2];
-extern RoomWindowPlayer *g_PlayerEntity;
+extern struct FieldActor *g_PlayerEntity;
 
-extern int FieldEng_VecToAngle(s32 *from, s32 *to);
-extern int func_800DFC80(s32 *from, s32 *to);
-extern int func_800DFC44(int value);
-extern int func_800DFE20(s32 *from, s32 *to);
-extern void func_800DFE94(void *from, void *to, void *angles);
+extern int FieldFx_IntSqrt(int value);
 
 struct RoomEnt;
 
-/* The window actor class (src/overlays/room_lib/RoomLib_WindowClass.c). */
+/* The window actor class (src/overlays/room_lib/window_class.c). */
+int RoomLib_WindowClassNop0(void);
+int RoomLib_InitWindowClass(RoomWindowObject *ctx);
+int RoomLib_ConfigureWindowClass(RoomWindowObject *obj, int query, unsigned int op,
+                                 int a, int b, int c);
+int RoomLib_WindowClassNop3(void);
+int RoomLib_UpdateWindowClass(struct RoomEnt *o);
+int RoomLib_WindowClassNop6(void);
 void RoomLib_WindowHandler(RoomWindowObject *obj);
 void RoomLib_WindowArrived(void *ctx);
 void RoomLib_ArmWindowClass(struct RoomEnt *o);
 int RoomLib_ReleaseWindowClass(char *ctx);
+
+/* Its row of a room's class table (g_RoomClassTable, pe1/room_module.h). */
+#define ROOMLIB_WINDOW_CLASS \
+    { RoomLib_WindowClassNop0, RoomLib_InitWindowClass, RoomLib_ConfigureWindowClass, \
+      RoomLib_WindowClassNop3, RoomLib_UpdateWindowClass, RoomLib_ReleaseWindowClass, \
+      RoomLib_WindowClassNop6 }
 
 #endif

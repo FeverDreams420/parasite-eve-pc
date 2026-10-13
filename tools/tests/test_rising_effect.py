@@ -8,12 +8,15 @@ import itertools
 import struct
 import unittest
 
+from tools.tests.csource import find_definition
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class RisingEffectTests(unittest.TestCase):
     def test_plain_source(self):
-        source = (ROOT/'src/main/engine/FieldEng_RisingEffect.c').read_text()
+        source = find_definition('FieldFx_RisingSprite').read_text()
+        source = source[source.index('int FieldFx_RisingSprite'):source.index('int FieldFx_RisingSpriteEmitter')]
         self.assertNotRegex(source, r'\b(?:asm|__asm__|INCLUDE_ASM|REGALLOC_BARRIER)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and

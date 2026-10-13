@@ -1,7 +1,7 @@
 /* PSY-Q LIBSPU S_STSA: SpuSetTransferStartAddr. */
+
 #include "common.h"
 #include "pe1/psyq_spu_internal.h"
-
 
 int SpuSetTransferStartAddr(int arg0) {
     int result;

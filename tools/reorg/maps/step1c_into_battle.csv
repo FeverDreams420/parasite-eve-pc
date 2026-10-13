@@ -1,0 +1,17 @@
+old,new
+src/main/menu/Menu_MainUpdate.c,src/main/battle/Menu_MainUpdate.c
+src/main/entity/Entity_HitAndDropTable.c,src/main/battle/Entity_HitAndDropTable.c
+src/main/entity/Entity_UpdateTimers.c,src/main/battle/Entity_UpdateTimers.c
+src/main/save/Save_ResetGlobalFlags.c,src/main/battle/Save_ResetGlobalFlags.c
+src/main/menu/Pad_GetMenuPressedBitOrDisabled.c,src/main/battle/Pad_GetMenuPressedBitOrDisabled.c
+src/main/menu/Menu_BattleActiveQuery.c,src/main/battle/Menu_BattleActiveQuery.c
+src/main/save/Save_InitSystem.c,src/main/battle/Save_InitSystem.c
+src/main/entity/Entity_AnimationEvents.c,src/main/battle/Entity_AnimationEvents.c
+src/main/entity/Entity_WriteFieldByCmd.c,src/main/battle/Entity_WriteFieldByCmd.c
+src/main/draw/Gpu_SetupSprites.c,src/main/battle/Gpu_SetupSprites.c
+src/main/menu/Menu_ActiveWindowMode.c,src/main/battle/Menu_ActiveWindowMode.c
+src/main/script/Task_SignalExit.c,src/main/battle/Task_SignalExit.c
+src/main/render/Render_AnimationFrame.c,src/main/battle/Render_AnimationFrame.c
+src/main/item/Inv_ActiveListCommand.c,src/main/battle/Inv_ActiveListCommand.c
+src/main/aya/Aya_WeaponChangeAndSpellCheck.c,src/main/battle/Aya_WeaponChangeAndSpellCheck.c
+src/main/aya/Aya_UnlockParasiteSpell.c,src/main/battle/Aya_UnlockParasiteSpell.c

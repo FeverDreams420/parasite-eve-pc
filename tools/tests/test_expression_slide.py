@@ -4,14 +4,19 @@ import itertools
 import random
 import re
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import functions_text  # noqa: E402
 
 
 class ExpressionSlideTests(unittest.TestCase):
     def test_translation_unit_is_plain_c(self):
-        source = (ROOT / 'src/main/akao/akao5.c').read_text()
+        source = functions_text('Akao_SetExpressionSlide', 'SeqOp_Skip2', 'SeqOp_Ignore', 'Akao_SetPanTarget',
+                                'Akao_SetPanTargetSlide', 'Akao_SetPanpot', 'Akao_SetPanSlide', 'SeqOp_ReadPanpot',
+                                'SeqOp_IncPanpot', 'SeqOp_DecPanpot', 'Akao_PlayNote', 'Akao_TieNote')
         source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
         self.assertIsNone(re.search(r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS|REGALLOC_BARRIER)\b', source))
 

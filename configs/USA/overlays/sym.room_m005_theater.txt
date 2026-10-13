@@ -1,5 +1,14 @@
-RoomM005_FxOrbiter_8018F018 = 0x8018F018; // type:func
+RoomM005_FxOrbiter = 0x8018F018; // type:func
 RoomLib_SetTaskVar0 = 0x80190A6C; // type:func
 g_RoomScriptRecord = 0x80190B80;
 RoomM005_Rec2 = 0x80190AD4;
-D_800E2368 = 0x800E2368;
+RoomM005_Orbiter = 0x8018F330; // type:func
+RoomM005_CrossFlare = 0x8018F614; // type:func
+RoomM005_BeaconDriftCallback = 0x8018FB84; // type:func
+RoomM005_JointBeacon = 0x8018FDC4; // type:func
+g_RoomM005Effects = 0x80190B44;
+g_RoomM005CrossFlareColorTrack = 0x80190AF4;
+g_RoomM005BeaconModel0 = 0x80190B94;
+g_RoomM005BeaconModel1 = 0x80190B98;
+g_RoomM005BeaconOffset = 0x80190BA0;
+g_RoomM005BeaconCenter = 0x80190BA8;

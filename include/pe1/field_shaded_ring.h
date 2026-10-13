@@ -2,11 +2,11 @@
 #define PE1_FIELD_SHADED_RING_H
 
 #include "common.h"
+#include "pe1/field_ring_geometry.h"
+#include "pe1/field_sprite_state.h"
+#include "pe1/fieldfx_scratch.h"
 #include "pe1/gte_types.h"
 #include "pe1/render_tint.h"
-#include "pe1/field_engine_scratch.h"
-#include "pe1/field_sprite_state.h"
-#include "pe1/field_ring_geometry.h"
 
 /* Field engine ring geometry: the vertex builder writes the outer ring first
  * and the inner ring second; the renderer joins each pair with POLY_G4. */
@@ -38,12 +38,11 @@ typedef union FieldRingLink {
 } FieldRingLink;
 
 #define RING_OT(depth) \
-    ((RenderGpuTag *)(D_800B0E38.ordering[D_8009CDDC] + (depth) * 4))
+    ((RenderGpuTag *)(D_800B0E38.ordering[g_ActiveDrawSlot] + (depth)))
 
 extern char *D_800B0E58[];
 
-void func_800C608C(int scale, u8 *src, u8 *dst);
-void RotTrans(const GteShortVector *v, GteVector *out, s32 *flag);
+void FieldFx_ScaleColor(int scale, u8 *src, u8 *dst);
 long RotTransPers4(void *v0, void *v1, void *v2, void *v3, void *sxy0,
                    void *sxy1, void *sxy2, void *sxy3, void *p, void *flag);
 

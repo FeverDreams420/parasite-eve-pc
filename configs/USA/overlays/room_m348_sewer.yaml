@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m348_sewer
   ld_script_path: linkers/USA/overlays/room_m348_sewer.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m348_sewer.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m348_sewer.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m348_sewer.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m348_sewer.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,9 +37,8 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m348_sewer]
-      - [0xC, .rodata, ../room_lib/RoomFx_DropFieldEffects]
-      - [0x7C, c, ../room_lib/RoomFx_DropFieldClass]
-      - [0x258, c, ../room_lib/RoomFx_DropFieldEffects]
+      - [0xC, .rodata, ../room_lib/drop_field]
+      - [0x7C, c, ../room_lib/drop_field]
       - [0x3860, data, D_80192848]
       - [0x3898, data, D_80192880]
       - [0x38D0, data, D_801928B8]
@@ -94,6 +95,11 @@ segments:
       - start: 0x291FC
         type: databin
         name: D_801B81E4
+        dir: room_m348_sewer
+      - [0x33724, data, D_801C270C]
+      - start: 0x33730
+        type: databin
+        name: D_801C2718
         dir: room_m348_sewer
   - [0x34000]
 # room: m348, section3 sector 83089, scanner delta 0

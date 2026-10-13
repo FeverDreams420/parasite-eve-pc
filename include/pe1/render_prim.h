@@ -2,8 +2,9 @@
 #define PE1_RENDER_PRIM_H
 
 #include "common.h"
-#include "pe1/render_packets.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/render_packets.h"
 
 /* A render primitive list and its 0x10-byte color records (Render_SetPrimColour).
  * The stride 0x10 is load-bearing (code indexes entries with i<<4). */
@@ -22,6 +23,11 @@ typedef struct PrimObj {
     PrimEntry *entries;               /* 0x30 */
 } PrimObj;
 
+/* Grid cursor state of Render_MoveGridCursor: the selected entry, the one
+ * selected before it, and the selected entry's unpacked position. */
+extern int g_GridCursorPrevious, g_GridCursorIndex, g_GridCursorX, g_GridCursorY;
+int Render_MoveGridCursor(PrimObj *obj, u32 *entries, u8 ascending, u8 restart);
+
 /* Flat-color GPU line packet: tag, RGB/code, and two screen points. */
 typedef struct RenderLinePacket {
     u32 tag;
@@ -36,6 +42,30 @@ typedef struct RenderColorTilePacket {
     u8 r0, g0, b0, code;
     u16 x0, y0, w, h;
 } RenderColorTilePacket;
+
+/* The same TILE packet seen through its link tag and colour word, as the
+ * wipe renderer builds it. */
+typedef struct RenderFlatTilePacket {
+    RenderPacketTag tag;
+    RenderPacketColor color;
+    u16 x0, y0, w, h;
+} RenderFlatTilePacket;
+
+PE1_STATIC_ASSERT(sizeof(RenderFlatTilePacket) == sizeof(RenderColorTilePacket),
+                  render_flat_tile_packet_size);
+
+/* Flat-colour triangle packet (POLY_F3). Coordinates retain the unsigned
+ * halfword view used by the wipe renderer. */
+typedef struct RenderColorTrianglePacket {
+    RenderPacketTag tag;
+    RenderPacketColor color;
+    u16 x0, y0, x1, y1, x2, y2;
+} RenderColorTrianglePacket;
+
+PE1_STATIC_ASSERT(sizeof(RenderColorTrianglePacket) == 0x14,
+                  render_color_triangle_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTrianglePacket, x0) == 8,
+                  render_color_triangle_first_vertex);
 
 /* Four-vertex Gouraud quad (POLY_G4), used for HUD gauge gradients. */
 typedef struct RenderGouraudQuad {
@@ -67,11 +97,7 @@ typedef struct RenderDrawModePacket {
 
 /* Four-vertex textured GPU packet. The final halfwords are packet padding. */
 typedef struct RenderTexturedQuad {
-    union {
-        u32 word;
-        struct { u8 address[3], length; } bytes;
-        struct { u32 address : 24, length : 8; } link; /* ordering-table link */
-    } tag;
+    RenderPacketTag tag;
     union { u32 word; struct { u8 r, g, b, code; } bytes; } color;
     u16 x0, y0; u8 u0, v0; u16 clut;
     u16 x1, y1; u8 u1, v1; u16 tpage;
@@ -98,6 +124,17 @@ typedef struct RenderTexturePagePacket {
     u8 address[3], length;
     u32 command;
 } RenderTexturePagePacket;
+
+/* Texture-page command followed by the variable-size sprite it configures. */
+typedef struct RenderPagedSpritePacket {
+    RenderTexturePagePacket page;
+    RenderSpritePacket sprite;
+} RenderPagedSpritePacket;
+
+PE1_STATIC_ASSERT(sizeof(RenderPagedSpritePacket) == 0x1C,
+                  render_paged_sprite_packet_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPagedSpritePacket, sprite) == 8,
+                  render_paged_sprite_packet_sprite_offset);
 
 typedef union RenderTileTexture {
     u32 words[2];
@@ -126,13 +163,11 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderBufferPrefix, packets) == 0x20,
 PE1_STATIC_ASSERT(sizeof(RenderBufferPrefix) == 0x28,
                   render_buffer_prefix_size);
 extern RenderBufferPrefix D_800B0E38;
-extern int D_8009CDD8, D_8009CDDC;
+extern int g_DrawPacketOffset, g_ActiveDrawSlot;
 void SetLineF2(RenderLinePacket *packet);
-u16 GetTPage(int tp, int abr, int x, int y);
-void SetDrawTPage(void *packet, int drawTexture, int dither, int tpage);
-void func_800CF6F8(void *ordering, void *packet, int mode);
+void FieldFx_LinkBlendedPacket(void *ordering, void *packet, int mode);
 struct RenderColor;
-void func_800DB25C(GteShortVector *position, int x, int y, int angle,
+void FieldFx_DrawDiamondOutline(GteShortVector *position, int x, int y, int angle,
                    int radius, int depth, int intensity, struct RenderColor *color);
 
 #endif /* PE1_RENDER_PRIM_H */

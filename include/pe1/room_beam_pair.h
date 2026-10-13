@@ -2,9 +2,13 @@
 #define PE1_ROOM_BEAM_PAIR_H
 
 #include "common.h"
-#include "pe1/gte_types.h"
-#include "pe1/field_sprite_state.h"
 #include "pe1/field_glow_sprite.h"
+#include "pe1/field_ring_geometry.h"
+#include "pe1/field_script_context.h"
+#include "pe1/field_sprite_state.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_libc.h"
 
 /* Work area of the paired beam effect (rooms m174, m348, m383): the
  * anchor matrix copied from the script actor, a scale and a brightness. */
@@ -18,10 +22,10 @@ typedef struct RoomBeamPair {
 
 typedef struct RoomBeamPairActor {
     /* 0x000 */ u8 pad000[0x238];
-    /* 0x238 */ u8 *model;
+    /* 0x238 */ GteMatrix *matrices;
 } RoomBeamPairActor;
 
-/* Sprite parameter block drawn by func_800C4FC4 (one per beam half). */
+/* Sprite parameter block drawn by FieldFx_DrawShadedRing (one per beam half). */
 typedef struct RoomBeamSprite {
     /* 0x00 */ void *texture;
     /* 0x04 */ u8 r0, g0, b0;
@@ -38,7 +42,7 @@ typedef struct RoomBeamSprite {
 
 PE1_STATIC_ASSERT(sizeof(RoomBeamSprite) == 0x18, room_beam_sprite_size);
 
-/* Sprite parameter block drawn by func_800C42A4 for the drops. */
+/* Sprite parameter block drawn by FieldFx_DrawGlowSprite for the drops. */
 typedef struct RoomDropSprite {
     /* 0x00 */ u8 r, g, b;
     /* 0x03 */ u8 reserved03[7];
@@ -71,8 +75,7 @@ typedef struct RoomDropSlot {
     /* 0x02 */ s16 step;
 } RoomDropSlot;
 
-int *func_800C2B28(int index);
-RoomDropPoint *func_800C2B90(void *object, int kind, void *callback, void *data);
+int *FieldFx_VarPtr(int index);
 typedef struct RoomDropActor {
     /* 0x00 */ u8 pad00[0x44];
     /* 0x44 */ u8 shade;
@@ -80,9 +83,5 @@ typedef struct RoomDropActor {
     /* 0x4C */ s16 touched;
 } RoomDropActor;
 
-void *func_800C2B50(void);
-int func_800C6B90(void *position, int radius);
-void *memset(void *dst, int value, unsigned int size);
-void func_800C4FC4(RoomBeamSprite *params, GteMatrix *matrix, int mode);
 
 #endif

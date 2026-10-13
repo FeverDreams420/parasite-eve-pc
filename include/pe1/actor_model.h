@@ -48,7 +48,7 @@
  *   Entity_CopyAttachmentData()                        -- find same-type actor, share
  *   Scene_LoadEntityTexture()/Scene_LoadEntityTextures()/Asset_LoadTimTextures()
  *                                                      -- stream TIM textures from PE.IMG
- *   Gpu_LoadTimAsset()/Gpu_LoadTimTable()             -- upload TIMs to VRAM (LoadImage)
+ *   Draw_LoadTimAsset()/Draw_LoadTimTable()             -- upload TIMs to VRAM (LoadImage)
  *   Anim_BuildRotationMatrices(), Anim_DecodeBoneRotationsByte/Short(),
  *   Entity_AdvanceAnim(), Entity_TickAnimSequences()  -- skeletal animation
  *     (bone rotations are delta/abs-encoded; decoded to 3x3 matrices in scratch
@@ -60,7 +60,7 @@
  * MODEL DATA BLOCK FORMAT (TMD-like, PE-custom; read live from a shared model):
  *   The 9 pointers at robj +0x00..+0x20 point to consecutive sections of one
  *   model block loaded in RAM (streamed from PE.IMG as part of the scene/room
- *   load: Task_LoadSceneData / Scene_LoadMap / Render_InitDisplayLists).
+ *   load: Script_LoadSceneData / Scene_LoadMap / Render_InitDisplayLists).
  *   Render_SetupEntityPrims(robj, block) is the PARSER: it stores block -> robj
  *   +0x00, skips the 0x1C header (addiu a1,a1,0x1C), then walks the per-section
  *   element counts to compute and store each following section pointer into robj

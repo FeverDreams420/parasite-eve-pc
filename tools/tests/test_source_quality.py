@@ -4,6 +4,7 @@ import tempfile
 import unittest
 
 from tools.scripts import source_quality
+from tools.tests.csource import find_definition, function_text
 
 
 class SourceQualityTests(unittest.TestCase):
@@ -13,85 +14,71 @@ class SourceQualityTests(unittest.TestCase):
             path.write_text(text)
             return source_quality.classify(path)
 
-    def assert_symbol_is_semantic(self, root, name):
-        # Locate definitions, not call sites or prototypes, after TU merges.
-        pattern = re.compile(r"\b" + re.escape(name) + r"\s*\([^();{}]*\)\s*\{")
-        matches = [path for path in root.glob("*.c")
-                   if pattern.search(path.read_text())]
-        self.assertEqual(len(matches), 1, (name, matches))
-        self.assertEqual(source_quality.classify(matches[0]), "semantic_c")
+    def assert_symbol_is_semantic(self, name):
+        # Locate the defining unit by symbol: units are merged and moved.
+        self.assertEqual(source_quality.classify(find_definition(name)), "semantic_c")
 
     def test_plain_c_is_semantic(self):
         self.assertEqual(self.classify("int f(void) { return 1; }"), "semantic_c")
 
     def test_repaired_engine_load_and_distance_sources_are_semantic(self):
-        root = pathlib.Path(__file__).resolve().parents[2] / "src/main/engine"
-        for name in ("func_800CC92C", "func_800C6148", "func_800C6584",
-                     "func_800C6B90", "func_800C6B20", "func_800C2E08",
-                     "func_800C2FF0", "func_800D3F64", "func_800CC878",
-                     "func_800C5EB0", "func_800CC644", "func_800CC6F8",
-                     "func_800CE3B4", "func_800CDE90", "func_800CDD0C",
-                     "func_800C8270", "func_800C8970", "func_800C8A88",
-                     "func_800C9268", "func_800C9EA8", "func_800CACDC",
-                     "func_800CB9F8"):
+        for name in ("PointSprite_UpdateRisingStreak", "FieldFx_IsActorWithinRadius", "FieldFx_CirclesOverlapXZ",
+                     "FieldFx_IsPlayerWithinRadius", "FieldFx_IsPlayerInQuadXZ", "FieldFx_FreeAllSlots",
+                     "FieldFx_SetSpriteCellSize", "FieldFx_PlaySoundAtOwner", "PointSprite_DrawOrientedFlash",
+                     "FieldFx_UpdateStripCollision", "PointSprite_DrawGroundRing", "PointSprite_DrawBillboardFlash",
+                     "BurstEffectC_DrawTimedSpark", "BurstEffectB_DrawSparkPoint", "BurstEffectB_DrawSparkCloud",
+                     "GlowEffect_DrawParticle", "GlowEffect_DrawGroundGlow", "GlowEffect_DrawHaloGlow",
+                     "GlowEffectB_DrawParticle", "GlowEffectC_DrawParticle", "FourLayerGlow_DrawParticle",
+                     "FourLayerGlow_DrawHaloGlow"):
             with self.subTest(name=name):
-                self.assert_symbol_is_semantic(root, name)
+                self.assert_symbol_is_semantic(name)
 
     def test_repaired_render_load_and_tint_sources_are_semantic(self):
-        root = pathlib.Path(__file__).resolve().parents[2] / "src/main/render"
         for name in ("Pm_StopAll", "Render_ApplyScreenTint", "Render_StepFade"):
             with self.subTest(name=name):
-                self.assert_symbol_is_semantic(root, name)
+                self.assert_symbol_is_semantic(name)
 
     def test_font_step_modulo_is_semantic_c(self):
         root = pathlib.Path(__file__).resolve().parents[2]
         self.assertEqual(source_quality.classify(
-            root / "src/main/render/Render_FontGlyphSelection.c"), "semantic_c")
+            root / "src/main/render/font.c"), "semantic_c")
 
     def test_wayne_item_table_store_is_semantic_c(self):
-        root = pathlib.Path(__file__).resolve().parents[2]
-        self.assertEqual(source_quality.classify(
-            root / "src/main/item/Inv_ActiveListController.c"), "semantic_c")
+        self.assert_symbol_is_semantic("Inv_LoadWayneItemsAsOverride")
 
-    def test_field_map_entry_frame_is_semantic_c(self):
-        root = pathlib.Path(__file__).resolve().parents[2]
-        self.assertEqual(source_quality.classify(
-            root / "src/main/field/Field_GetMapEntry.c"), "semantic_c")
+    def test_object_texture_page_frame_is_semantic_c(self):
+        self.assert_symbol_is_semantic("Render_SetObjectTexturePage")
 
     def test_equip_panel_alignment_is_semantic_c(self):
         root = pathlib.Path(__file__).resolve().parents[2]
         self.assertEqual(source_quality.classify(
-            root / "src/main/menu/Menu_InventoryAndBonusPoints.c"), "semantic_c")
+            root / "src/main/menu/item_actions.c"), "semantic_c")
 
     def test_selected_equip_lookup_is_semantic_c(self):
         root = pathlib.Path(__file__).resolve().parents[2]
         self.assertEqual(source_quality.classify(
-            root / "src/main/render/Render_FontGlyphSelection.c"), "semantic_c")
+            root / "src/main/render/font.c"), "semantic_c")
 
     def test_max_level_inventory_is_semantic_c(self):
         root = pathlib.Path(__file__).resolve().parents[2]
         self.assertEqual(source_quality.classify(
-            root / "src/main/item/Inv_InitMaxLevelInventory.c"), "semantic_c")
+            root / "src/main/save/game_data.c"), "semantic_c")
 
     def test_memcard_dialog_workflow_is_semantic_c(self):
         root = pathlib.Path(__file__).resolve().parents[2]
         self.assertEqual(source_quality.classify(
-            root / "src/main/menu/Menu_MemCardProgressInput.c"), "semantic_c")
+            root / "src/main/menu/save_screens.c"), "semantic_c")
 
     def test_two_line_dialog_width_picker_is_semantic_c(self):
         root = pathlib.Path(__file__).resolve().parents[2]
         self.assertEqual(source_quality.classify(
-            root / "src/main/menu/Menu_NotificationDialogs.c"), "semantic_c")
+            root / "src/main/menu/save_screens.c"), "semantic_c")
 
     def test_akao_pitch_lfo_depth_is_semantic_c(self):
-        root = pathlib.Path(__file__).resolve().parents[2]
-        self.assertEqual(source_quality.classify(
-            root / "src/main/akao/Akao_SeqPitchLfo.c"), "semantic_c")
+        self.assert_symbol_is_semantic("SeqOp_SetPitchLFO")
 
     def test_akao_pitch_slide_voice_search_is_semantic_c(self):
-        root = pathlib.Path(__file__).resolve().parents[2]
-        self.assertEqual(source_quality.classify(
-            root / "src/main/akao/SeqOp_NoteOnWithPitchSlide.c"), "semantic_c")
+        self.assert_symbol_is_semantic("SeqOp_NoteOnWithPitchSlide")
 
     def test_audited_cpu_helpers_are_not_gte_exemptions(self):
         for name in ("gte_ldv0_short3", "gte_load_packed_short3",
@@ -148,20 +135,15 @@ class SourceQualityTests(unittest.TestCase):
                     self.assertNotIn(name, text)
 
     def test_arc_divisions_use_c_and_stock_expansion(self):
-        root = pathlib.Path(__file__).resolve().parents[2] / "src/overlays"
-        templates = ("RoomLib_AdvanceArcToTarget.inc", "RoomLib_AdvanceArcToTargetY.inc")
-        for name in templates:
-            text = (root / "room_lib" / name).read_text()
-            self.assertEqual(text.count("value /= count;"), 2)
-            self.assertNotIn("ROOMLIB_DIV_V0_A0_CHECKED", text)
-        callers = 0
-        for source in root.rglob("*.c"):
-            text = source.read_text()
-            if any('room_lib/' + name in text for name in templates):
-                callers += 1
-                with self.subTest(source=str(source)):
-                    self.assertIn("/* MASPSX_FLAGS: --expand-div */", text)
-        self.assertGreater(callers, 0)
+        # The arc steppers divide in C and rely on maspsx's stock div expansion
+        # rather than the retired ROOMLIB_DIV_V0_A0_CHECKED CPU helper.
+        for name in ("RoomLib_AdvanceArcToTarget", "RoomLib_AdvanceArcToTargetY"):
+            with self.subTest(name=name):
+                text = function_text(name)
+                self.assertEqual(len(re.findall(r"\) / count;", text)), 2)
+                self.assertNotIn("ROOMLIB_DIV_V0_A0_CHECKED", text)
+                self.assertNotIn("--no-expand-div",
+                                 find_definition(name).read_text())
 
     def test_cpu_helper_mentions_are_not_calls(self):
         text = '''
@@ -184,7 +166,7 @@ class SourceQualityTests(unittest.TestCase):
 
     def test_global_scalar_link_alias_is_semantic(self):
         text = '''
-        signed char target_mode asm("D_8009CE40");
+        signed char target_mode asm("g_BattleTargetCycleMode");
         int f(void) { return target_mode; }
         '''
         self.assertEqual(self.classify(text), "semantic_c")
@@ -306,71 +288,24 @@ class SourceQualityTests(unittest.TestCase):
 
     def test_listed_stack_switch_is_semantic_c(self):
         self.assertEqual(self.classify_unit(
-            "main/boot/Boot_MainLoop.c", self.STACK_SWITCH,
-            {"main/boot/Boot_MainLoop.c"}), "semantic_c")
+            "main/boot/main.c", self.STACK_SWITCH,
+            {"main/boot/main.c"}), "semantic_c")
 
     def test_unlisted_stack_switch_is_asm_constrained(self):
         self.assertEqual(self.classify_unit(
             "main/boot/Other.c", self.STACK_SWITCH,
-            {"main/boot/Boot_MainLoop.c"}), "asm_constrained")
+            {"main/boot/main.c"}), "asm_constrained")
 
     def test_stack_switch_does_not_excuse_other_asm(self):
         self.assertEqual(self.classify_unit(
-            "main/boot/Boot_MainLoop.c",
+            "main/boot/main.c",
             self.STACK_SWITCH + 'void g(void) { asm volatile("nop"); }\n',
-            {"main/boot/Boot_MainLoop.c"}), "asm_constrained")
+            {"main/boot/main.c"}), "asm_constrained")
 
     def test_repository_stack_switch_user_is_semantic_c(self):
         root = pathlib.Path(__file__).resolve().parents[2]
         self.assertEqual(source_quality.classify(
-            root / "src/main/boot/Boot_MainLoop.c"), "semantic_c")
-
-    GTE_WINDOW = (
-        '#include "pe1/gte_window.h"\n'
-        'void draw(void) {\n'
-        '    GTE_LOAD_ROTATION_WINDOW(D_800BCFA4.value);\n'
-        '    GTE_LOAD_TRANSLATION_WINDOW(D_800BCFA4.value);\n'
-        '}\n')
-
-    def classify_window_unit(self, name, text, allowed):
-        with tempfile.TemporaryDirectory() as directory:
-            path = pathlib.Path(directory) / "src" / name
-            path.parent.mkdir(parents=True)
-            path.write_text(text)
-            return source_quality.classify(path, gte_window_allowed=allowed)
-
-    def test_listed_gte_window_is_semantic_c(self):
-        self.assertEqual(self.classify_window_unit(
-            "overlays/scene_x/Flare.c", self.GTE_WINDOW,
-            {"overlays/scene_x/Flare.c"}), "semantic_c")
-
-    def test_unlisted_gte_window_is_asm_constrained(self):
-        self.assertEqual(self.classify_window_unit(
-            "overlays/scene_x/Other.c", self.GTE_WINDOW,
-            {"overlays/scene_x/Flare.c"}), "asm_constrained")
-        self.assertEqual(self.classify_window_unit(
-            "overlays/scene_x/Other.c",
-            '#include "pe1/gte_window.h"\n'
-            'void g(void) { GTE_LOAD_TRANSLATION_WINDOW(p); }\n',
-            {"overlays/scene_x/Flare.c"}), "asm_constrained")
-
-    def test_gte_window_does_not_excuse_other_asm(self):
-        self.assertEqual(self.classify_window_unit(
-            "overlays/scene_x/Flare.c",
-            self.GTE_WINDOW + 'void g(void) { asm volatile("nop"); }\n',
-            {"overlays/scene_x/Flare.c"}), "asm_constrained")
-
-    def test_gte_window_name_in_a_comment_is_not_a_use(self):
-        self.assertEqual(self.classify_window_unit(
-            "overlays/scene_x/Other.c",
-            '/* GTE_LOAD_ROTATION_WINDOW(p) */\nint f(void) { return 1; }\n',
-            frozenset()), "semantic_c")
-
-    def test_repository_gte_window_user_is_semantic_c(self):
-        root = pathlib.Path(__file__).resolve().parents[2]
-        self.assertEqual(source_quality.classify(
-            root / "src/overlays/scene_e20/RoomEffect_FlareParticle_8018F028.c"),
-            "semantic_c")
+            root / "src/main/boot/main.c"), "semantic_c")
 
     def test_psyq_assembler_object_cannot_hide_c_functions(self):
         self.assertEqual(self.classify(

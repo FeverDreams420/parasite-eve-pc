@@ -8,44 +8,44 @@
   "verified_excluded_matches": 5,
   "entries": [
     {
-      "unit": "main/boot/Boot_MainLoop",
+      "unit": "main/boot/main",
       "symbol": "main",
       "reported_size": 748,
-      "source": "src/main/boot/Boot_MainLoop.c",
+      "source": "src/main/boot/main.c",
       "status": "matched_excluded_by_asm_policy",
       "levenshtein_score": 0,
       "evidence": "Fresh linked asm-differ run on darwine against retail instruction target; no source changes required."
     },
     {
-      "unit": "main/math/Math_FixedMul",
+      "unit": "main/math/fixed_mul",
       "symbol": "Math_FixedMul",
       "reported_size": 28,
-      "source": "src/main/math/Math_FixedMul.c",
+      "source": "src/main/math/fixed_mul.c",
       "status": "matched_excluded_by_asm_policy",
       "levenshtein_score": 0,
       "evidence": "Fresh linked asm-differ run on darwine against retail instruction target; no source changes required."
     },
     {
-      "unit": "main/math/math_fixed",
+      "unit": "main/math/fixed_round",
       "symbol": "Math_FixedRoundToInt",
       "reported_size": 16,
-      "source": "src/main/math/math_fixed.c",
+      "source": "src/main/math/fixed_round.c",
       "status": "matched_excluded_by_asm_policy",
       "levenshtein_score": 0,
       "evidence": "Fresh linked asm-differ run on darwine against retail instruction target; no source changes required."
     },
     {
-      "unit": "main/math/math_fixed",
+      "unit": "main/math/fixed_round",
       "symbol": "Math_FixedRoundToByte",
       "reported_size": 16,
-      "source": "src/main/math/math_fixed.c",
+      "source": "src/main/math/fixed_round.c",
       "status": "matched_excluded_by_asm_policy",
       "levenshtein_score": 0,
       "evidence": "Fresh linked asm-differ run on darwine against retail instruction target; no source changes required."
     },
     {
-      "unit": "main/task/Task_GpuPackPrimColor",
-      "symbol": "Task_GpuPackPrimColor",
+      "unit": "main/draw/prim_color",
+      "symbol": "Draw_PackPrimColor",
       "reported_size": 52,
       "source": null,
       "status": "unimplemented_custom_abi",
@@ -53,10 +53,10 @@
       "evidence": "Fresh linked stock GCC 2.7.2 + MASPSX 2.56 candidate score on darwine. Not integrated at the time of this inventory."
     },
     {
-      "unit": "main/math/Math_SqrtApprox3",
+      "unit": "main/math/sqrt_approx",
       "symbol": "Math_SqrtApprox3",
       "reported_size": 136,
-      "source": "src/main/math/Math_SqrtApprox3.c",
+      "source": "src/main/math/sqrt_approx.c",
       "status": "matched_excluded_by_asm_policy",
       "levenshtein_score": 0,
       "evidence": "Fresh linked asm-differ run on darwine against retail instruction target; no source changes required."
@@ -65,7 +65,7 @@
       "unit": "overlays/scene_e19_2/scene_pre",
       "symbol": "func_8018EFF0",
       "reported_size": 1204,
-      "source": "src/overlays/scene_e19/SceneE19_BlastSequence.c",
+      "source": "src/overlays/scene_e19_cruiser/e19.c",
       "status": "matched_integrated",
       "levenshtein_score": 0,
       "actual_symbol": "func_80192F9C",
@@ -73,32 +73,32 @@
       "actual_start": "0x80192F9C",
       "actual_end_exclusive": "0x8019549C",
       "missing_extracted_bytes": 8192,
-      "evidence": "Complete function and rodata match with stock GCC 2.7.2 and MASPSX 2.56. The two extraction slices are merged into the full scene_e19 block; overlay-check SHA1 6b114d71ecf274e02267aa9ea10cb2126793d3af. No bound register variables; two empty barriers (one clobbers $s0 to retain natural parameter allocation), eight evidenced GTE-window macro uses.",
-      "current_unit": "overlays/scene_e19/SceneE19_BlastSequence",
+      "evidence": "Complete function and rodata match with stock GCC 2.7.2 and MASPSX 2.56. The two extraction slices are merged into the full scene_e19 block; overlay-check SHA1 6b114d71ecf274e02267aa9ea10cb2126793d3af. No bound register variables; two empty barriers (one clobbers $s0 to retain natural parameter allocation), eight gte.h view-matrix transfers (gte_ldrotmatrix/gte_ldtransmatrix).",
+      "current_unit": "overlays/scene_e19_cruiser/e19.c",
       "extraction_restored": true,
       "candidate_debt": {
         "pins": 0,
         "empty_barriers": 2,
         "fixed_register_clobbers": 1,
-        "gte_matrix_windows": 8,
+        "gte_view_matrix_loads": 8,
         "inline_conversion_helpers": 0
       }
     },
     {
-      "unit": "overlays/sys_reset/sys_reset_7CC",
-      "symbol": "func_8010C4CC",
+      "unit": "overlays/mdec_diag/mdec_diag_7CC",
+      "symbol": "DecDCTvlcSize",
       "reported_size": 48,
       "source": null,
       "status": "original_asm_extraction_restored",
       "levenshtein_score": null,
       "actual_size": 48,
       "missing_extracted_bytes": 0,
-      "evidence": "Complete 48-byte function restored through 0x8010C4FC, including the missing return delay slot. Full sys_reset overlay-check and report pass; no C match claimed.",
+      "evidence": "Complete 48-byte function restored through 0x8010C4FC, including the missing return delay slot. Full mdec_diag overlay-check and report pass; no C match claimed.",
       "baseline_reported_size": 44
     },
     {
-      "unit": "overlays/sys_reset/sys_reset_7CC",
-      "symbol": "func_8010C4FC",
+      "unit": "overlays/mdec_diag/mdec_diag_7CC",
+      "symbol": "DecDCTvlc",
       "reported_size": 868,
       "source": null,
       "status": "original_asm_extraction_restored",
@@ -107,8 +107,8 @@
       "evidence": "Restored from PE.IMG sectors 927..964; complete function boundaries and data boundary verified."
     },
     {
-      "unit": "overlays/sys_reset/sys_reset_7CC",
-      "symbol": "func_8010C86C",
+      "unit": "overlays/mdec_diag/mdec_diag_7CC",
+      "symbol": "DecDCTvlcSize2",
       "reported_size": 48,
       "source": null,
       "status": "original_asm_extraction_restored",
@@ -117,8 +117,8 @@
       "evidence": "Restored from PE.IMG sectors 927..964; complete function boundaries and data boundary verified."
     },
     {
-      "unit": "overlays/sys_reset/sys_reset_7CC",
-      "symbol": "func_8010C89C",
+      "unit": "overlays/mdec_diag/mdec_diag_7CC",
+      "symbol": "DecDCTvlc2",
       "reported_size": 864,
       "source": null,
       "status": "original_asm_extraction_restored",
@@ -134,7 +134,7 @@
     "audit_source_commit": "73a4f03a297aff5601ae3546e145414cdd4d2dcb",
     "reported_uncredited_functions": 44
   },
-  "report_evidence": "Local make report after landing scene_e20 func_8018F028 with the evidenced GTE matrix windows (docs/ASM_AND_GTE_POLICY.md, GTE matrix window): 11642/11643 functions, 3537500/3546972 code bytes; make check and all 191 overlay checks pass. CI publication pending.",
+  "report_evidence": "Local make report after landing scene_e20 SceneE20_FlareParticle with the evidenced GTE matrix windows (docs/ASM_AND_GTE_POLICY.md, GTE matrix window): 11642/11643 functions, 3537500/3546972 code bytes; make check and all 191 overlay checks pass. CI publication pending.",
   "previous_published_report": {
     "report_commit": "48a5cd21c995a17752f5d2039478d62d00e96b39",
     "report_run": 37333637624,
@@ -143,49 +143,49 @@
   },
   "resolved_entries": [
     {
-      "unit": "main/battle/Battle_AyaEquipStateFlow",
+      "unit": "main/battle/encounter",
       "symbol": "Battle_SaveAyaState",
       "reported_size": 276,
-      "source": "src/main/battle/Battle_AyaEquipStateFlow.c",
+      "source": "src/main/battle/encounter.c",
       "status": "matched_report_credited",
       "levenshtein_score": 0,
       "evidence": "Fresh linked asm-differ run on darwine against retail instruction target; no source changes required. Main commit 4682d1677 replaced the CPU ASM implementation with matching plain C; the fresh complete report now credits this function."
     },
     {
-      "unit": "main/battle/Battle_AyaEquipStateFlow",
+      "unit": "main/battle/encounter",
       "symbol": "Battle_InitEquipLists",
       "reported_size": 108,
-      "source": "src/main/battle/Battle_AyaEquipStateFlow.c",
+      "source": "src/main/battle/encounter.c",
       "status": "matched_report_credited",
       "levenshtein_score": 0,
       "evidence": "Fresh linked asm-differ run on darwine against retail instruction target; no source changes required. Main commit 4682d1677 replaced the CPU ASM implementation with matching plain C; the fresh complete report now credits this function."
     },
     {
-      "unit": "overlays/sys_reset/sys_reset",
+      "unit": "overlays/mdec_diag/mdec_diag",
       "symbol": "D_8010BCF8",
       "reported_size": 84,
       "source": null,
       "status": "data_or_padding_excluded_from_function_report",
       "levenshtein_score": null,
-      "evidence": "The complete 84-byte range contains a leading word 7, NUL-terminated MDEC diagnostic strings and zero alignment. D_8010BCFC is passed as a format string by func_8010C0FC; D_8010BD38 is passed as a format string by func_8010C448. No executable instructions occur in this header. The existing report still classifies the .text unit as one function; metadata correction is pending. Corrected sys_reset data subsegments now remove this entry from the function ledger; full retail overlay-check and report audit pass."
+      "evidence": "The complete 84-byte range contains a leading word 7, NUL-terminated MDEC diagnostic strings and zero alignment. g_MdecResetBadOptionFormat is passed as a format string by func_8010C0FC; g_MdecTimeoutFormat is passed as a format string by MdecDiag_HandleTimeout. No executable instructions occur in this header. The existing report still classifies the .text unit as one function; metadata correction is pending. Corrected mdec_diag data subsegments now remove this entry from the function ledger; full retail overlay-check and report audit pass."
     },
     {
-      "unit": "overlays/sys_reset/sys_reset_decoder_padding",
+      "unit": "overlays/mdec_diag/mdec_diag_decoder_padding",
       "symbol": "func_8010BE30",
       "reported_size": 4,
       "source": null,
       "status": "data_or_padding_excluded_from_function_report",
       "levenshtein_score": null,
-      "evidence": "Generated target assembly contains only zero-word nop padding at this symbol, followed by additional zero words before the next real entry. The current report still counts one 4-byte function; no C match claimed. Corrected sys_reset data subsegments now remove this entry from the function ledger; full retail overlay-check and report audit pass."
+      "evidence": "Generated target assembly contains only zero-word nop padding at this symbol, followed by additional zero words before the next real entry. The current report still counts one 4-byte function; no C match claimed. Corrected mdec_diag data subsegments now remove this entry from the function ledger; full retail overlay-check and report audit pass."
     },
     {
-      "unit": "overlays/sys_reset/sys_reset_7CC",
+      "unit": "overlays/mdec_diag/mdec_diag_7CC",
       "symbol": "func_8010C4C4",
       "reported_size": 4,
       "source": null,
       "status": "data_or_padding_excluded_from_function_report",
       "levenshtein_score": null,
-      "evidence": "Generated target assembly contains only zero-word nop padding at this symbol, followed by additional zero words before the next real entry. The current report still counts one 4-byte function; no C match claimed. Corrected sys_reset data subsegments now remove this entry from the function ledger; full retail overlay-check and report audit pass."
+      "evidence": "Generated target assembly contains only zero-word nop padding at this symbol, followed by additional zero words before the next real entry. The current report still counts one 4-byte function; no C match claimed. Corrected mdec_diag data subsegments now remove this entry from the function ledger; full retail overlay-check and report audit pass."
     },
     {
       "unit": "main/main/D_8003E60C",
@@ -203,7 +203,7 @@
       "source": null,
       "status": "data_or_padding_excluded_from_function_report",
       "levenshtein_score": null,
-      "evidence": "0x50 zero bytes after Task_GpuPackPrimColor returns; now pad. Byte-identical; see docs/CONVENTIONS.md, text-resident data."
+      "evidence": "0x50 zero bytes after Draw_PackPrimColor returns; now pad. Byte-identical; see docs/CONVENTIONS.md, text-resident data."
     },
     {
       "unit": "main/sys/RawData_80074354",
@@ -398,7 +398,7 @@
       "evidence": "Size/offset tables; now a data subsegment (.code_data). Byte-identical; see docs/CONVENTIONS.md, text-resident data."
     },
     {
-      "unit": "overlays/render_clip/render_clip_header",
+      "unit": "overlays/fx_common_sector17/render_clip_header",
       "symbol": "func_80170000",
       "reported_size": 944,
       "source": null,
@@ -407,7 +407,7 @@
       "evidence": "render_clip.bin is PE.IMG sector 1809 = fx_common sector 17 (0x8800-0x9000), code already counted and matched in fx_common; the duplicate is now one data subsegment. Byte-identical; see docs/CONVENTIONS.md, text-resident data."
     },
     {
-      "unit": "overlays/render_clip/func_render_clip_0003B0",
+      "unit": "overlays/fx_common_sector17/func_render_clip_0003B0",
       "symbol": "func_801703B0",
       "reported_size": 1104,
       "source": null,
@@ -416,7 +416,7 @@
       "evidence": "render_clip.bin is PE.IMG sector 1809 = fx_common sector 17 (0x8800-0x9000), code already counted and matched in fx_common; the duplicate is now one data subsegment. Byte-identical; see docs/CONVENTIONS.md, text-resident data."
     },
     {
-      "unit": "overlays/scene_e14/scene_e14",
+      "unit": "overlays/scene_e14_chrysler/scene_e14",
       "symbol": "D_8018EFE8",
       "reported_size": 36,
       "source": null,
@@ -425,7 +425,7 @@
       "evidence": "Overlay header words; now the scene_e14_header data subsegment (.code_data). Byte-identical; see docs/CONVENTIONS.md, text-resident data."
     },
     {
-      "unit": "overlays/scene_e22/func_scene_e22_00A0D8",
+      "unit": "overlays/scene_e22_liberty/func_scene_e22_00A0D8",
       "symbol": "D_801990C0",
       "reported_size": 250,
       "source": null,
@@ -434,7 +434,7 @@
       "evidence": "Callback pointer tables and parameter records; now the scene_e22_data_00A0D8 data subsegment (.code_data). Byte-identical; see docs/CONVENTIONS.md, text-resident data."
     },
     {
-      "unit": "overlays/scene_e22/func_scene_e22_00A0D8",
+      "unit": "overlays/scene_e22_liberty/func_scene_e22_00A0D8",
       "symbol": "D_801991BA",
       "reported_size": 820,
       "source": null,
@@ -443,7 +443,7 @@
       "evidence": "Callback pointer tables and parameter records; now the scene_e22_data_00A0D8 data subsegment (.code_data). Byte-identical; see docs/CONVENTIONS.md, text-resident data."
     },
     {
-      "unit": "overlays/scene_e22/func_scene_e22_00A0D8",
+      "unit": "overlays/scene_e22_liberty/func_scene_e22_00A0D8",
       "symbol": "D_801994EE",
       "reported_size": 8,
       "source": null,
@@ -452,7 +452,7 @@
       "evidence": "Callback pointer tables and parameter records; now the scene_e22_data_00A0D8 data subsegment (.code_data). Byte-identical; see docs/CONVENTIONS.md, text-resident data."
     },
     {
-      "unit": "overlays/scene_e22/func_scene_e22_00A0D8",
+      "unit": "overlays/scene_e22_liberty/func_scene_e22_00A0D8",
       "symbol": "D_801994F6",
       "reported_size": 754,
       "source": null,
@@ -461,13 +461,13 @@
       "evidence": "Callback pointer tables and parameter records; now the scene_e22_data_00A0D8 data subsegment (.code_data). Byte-identical; see docs/CONVENTIONS.md, text-resident data."
     },
     {
-      "unit": "overlays/scene_e20/RoomEffect_FlareParticle_8018F028",
-      "symbol": "func_8018F028",
+      "unit": "overlays/scene_e20_cruiser/SceneE20_FlareParticle",
+      "symbol": "SceneE20_FlareParticle",
       "reported_size": 1832,
-      "source": "src/overlays/scene_e20/RoomEffect_FlareParticle_8018F028.c",
+      "source": "src/overlays/scene_e20_cruiser/SceneE20_FlareParticle.c",
       "status": "matched_report_credited",
       "levenshtein_score": 0,
-      "evidence": "Plain C except the two evidenced view-matrix windows (GTE_LOAD_ROTATION_WINDOW/GTE_LOAD_TRANSLATION_WINDOW, include/pe1/gte_window.h; manifest gte_matrix_windows in configs/USA/original_asm_evidence.json; docs/ASM_AND_GTE_POLICY.md, 'GTE matrix window'). No pins or barriers. Local stock cc1 lev 0 at equal size (458 words); scene_e20 overlay-check OK; make report credits it. A former C-only attempt reached lev 6."
+      "evidence": "Plain C except the two view-matrix loads through gte.h gte_ldrotmatrix/gte_ldtransmatrix (PSY-Q SetRotMatrix/SetTransMatrix inline shape; docs/ASM_AND_GTE_POLICY.md, 'GTE view-matrix loads'). No pins or barriers. Local stock cc1 lev 0 at equal size (458 words); scene_e20 overlay-check OK; make report credits it. A former C-only attempt reached lev 6."
     }
   ]
 }

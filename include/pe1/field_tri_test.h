@@ -13,7 +13,7 @@ typedef struct FieldTriScratch {
 
 #define FIELD_TRI_SCRATCH ((FieldTriScratch *)0x1F800000)
 
-extern FieldTriScratch *D_800E2844;
+extern FieldTriScratch *g_FieldFxTriScratch;
 
 /* Player entity; the 16.16 field position integer halves sit at 0x2A/0x2E/0x32. */
 typedef struct FieldTriEntity {
@@ -24,9 +24,11 @@ typedef struct FieldTriEntity {
     } pos[3];
 } FieldTriEntity;
 
-extern FieldTriEntity *D_8009D254;
+extern struct BattleEntity *D_8009D254;
 
-int func_800C62DC(GteShortVector *point, GteShortVector *tri);
-int func_800C689C(GteShortVector *tri);
+int FieldFx_IsPointInTriangleXZ(GteShortVector *point, GteShortVector *tri);
+int FieldFx_IsPlayerInTriangleXZ(GteShortVector *tri);
+/* Nonzero when the player stands inside the XZ quad of four corners. */
+int FieldFx_IsPlayerInQuadXZ(GteShortVector *quad);
 
 #endif /* PE1_FIELD_TRI_TEST_H */

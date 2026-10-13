@@ -6,7 +6,7 @@ GOAL.md wants plain C with no `asm`/`__asm__` of any kind. A function can be
 byte-matched yet still carry crutches: register pins, empty asm barriers,
 `asm("sym")` aliases, real asm bodies, `goto` chains, INCLUDE_ASM. This script
 counts each per subsystem (read-only; no build side effects) and writes
-docs/CRUTCH_DEBT.md + docs/badges/debt.json.
+docs/CRUTCH_DEBT.md + separate PsyQ, Game and Overlays debt badges.
 
 Run: `make debt` (or `python tools/scripts/crutch_debt.py`).
 """
@@ -38,8 +38,6 @@ _HW_OPS = "cfc2|ctc2|lwc2|swc2|mfc2|mtc2|nop"
 PATTERNS = {
     # Explicitly named frame reservations retained solely for matching.
     "stack_reserves": re.compile(r"\b(?:volatile\s+\w+\s+matchingStackReserve\s*\[|long\s+long\s+matchingStackSlot\s*;)"),
-    # One explicitly authorized scheduling instruction per macro invocation.
-    "nop_barriers": re.compile(r"\bPE1_NOP(?:_DEP|_MEMORY_DEP|_IO2_DEP)?\s*\("),
     # Dead statements kept only for their scheduling-block effect.
     "dead_code": re.compile(r"\bPE1_DEAD_CODE\s*\("),
     # Filled from the source classifier below; unlike regex-only counters this
@@ -61,11 +59,6 @@ PATTERNS = {
     # configs/USA/original_asm_evidence.json. Debt, so the ratchet stops it
     # from spreading.
     "stack_switch_macros": re.compile(r"\bBOOT_CALL_ON_SCRATCHPAD_STACK\s*\("),
-    # GTE view-matrix transfer windows (include/pe1/gte_window.h), one count
-    # per macro use, limited to the functions listed under "gte_matrix_windows"
-    # in configs/USA/original_asm_evidence.json. Debt, ratcheted like the stack
-    # switch.
-    "gte_matrix_windows": re.compile(r"\bGTE_LOAD_(?:ROTATION|TRANSLATION)_WINDOW\s*\("),
     "byte_pointer_arithmetic": re.compile(
         r"\(\s*(?:const\s+|volatile\s+)?(?:u8|s8|char)\s*\*\s*\)"
         r"(?!\s*\()[^;=\n]*\+"
@@ -107,11 +100,10 @@ PATTERNS = {
 
 ORDER = [
     "asm_constrained_units", "byte_pointer_arithmetic", "raw_offset_dereferences",
-    "pointer_integer_casts", "field_macros", "pins", "barriers", "nop_barriers", "aliases",
+    "pointer_integer_casts", "field_macros", "pins", "barriers", "aliases",
     "asm_bodies", "directives", "gotos", "include_asm", "postpass",
     "statement_expressions", "unknown_fields", "declaration_overrides",
     "externs_in_c", "stack_reserves", "dead_code", "stack_switch_macros",
-    "gte_matrix_windows",
     "original_asm_units", "game_asm_units",
 ]
 HEAVY = [key for key in ORDER if key not in ("gotos", "original_asm_units", "game_asm_units")]
@@ -218,7 +210,6 @@ def render_report(per_sub, totals, dirty_files) -> str:
         "Read-only; regenerate with `make debt`. Watch these shrink._",
         "",
         "**pins** = `register T x asm(\"$r\")` · **barriers** = empty `asm(\"\")` and `PE1_COMPILER_*` calls · "
-        "**nop_barriers** = explicit one-NOP scheduling macros · "
         "**stack_reserves** = explicitly named unused matchingStackReserve arrays · "
         "**dead_code** = `PE1_DEAD_CODE(...)` dead statements kept for scheduling · "
         "**aliases** = `extern T x asm(\"sym\")` (C and shared headers) · **asm_bodies** = real instructions · "
@@ -229,9 +220,6 @@ def render_report(per_sub, totals, dirty_files) -> str:
         "in directly included C templates and is the progress-exclusion count. "
         "**stack_switch_macros** = `BOOT_CALL_ON_SCRATCHPAD_STACK` scratchpad "
         "stack switches, a CPU-asm window allowed only in an evidenced C function. "
-        "**gte_matrix_windows** = `GTE_LOAD_ROTATION_WINDOW` / "
-        "`GTE_LOAD_TRANSLATION_WINDOW` view-matrix transfers, likewise limited "
-        "to evidenced functions. "
         "**original_asm_units** = sanctioned reproductions of proven PSY-Q "
         "assembler objects and BIOS veneers (docs/ASM_AND_GTE_POLICY.md); "
         "**game_asm_units** = sanctioned reproductions of game routines proven to "
@@ -255,15 +243,26 @@ def write_reports(per_sub, totals, dirty_files) -> None:
         render_report(per_sub, totals, dirty_files)
     )
 
-    # ----- badge (date-free, code.json shape) -----
-    msg = (f"{totals['asm_constrained_units']} asm units / "
-           f"{totals['pins']} pins / {totals['barriers']} barriers / "
-           f"{totals['nop_barriers']} nops / {totals['gotos']} gotos / {totals['aliases']} aliases")
-    heavy_total = sum(totals[k] for k in HEAVY)
-    color = "brightgreen" if heavy_total == 0 else ("yellow" if heavy_total < 500 else "orange" if heavy_total < 1500 else "red")
-    (ROOT / "docs" / "badges" / "debt.json").write_text(json.dumps({
-        "schemaVersion": 1, "label": "crutch debt", "message": msg, "color": color,
-    }))
+    groups = {name: {k: 0 for k in ORDER} for name in ("PsyQ", "Game", "Overlays")}
+    for subsystem, counts in per_sub.items():
+        group = ("PsyQ" if subsystem == "main/psyq" else
+                 "Overlays" if subsystem == "overlays" else "Game")
+        for key in ORDER:
+            groups[group][key] += counts[key]
+
+    def badge_message(counts):
+        return (f"{counts['pins']} pins / {counts['barriers']} barriers / "
+                f"{counts['gotos']} gotos")
+
+    for group, counts in groups.items():
+        heavy_total = sum(counts[k] for k in HEAVY)
+        color = "brightgreen" if heavy_total == 0 else ("yellow" if heavy_total < 500 else "orange" if heavy_total < 1500 else "red")
+        (ROOT / "docs" / "badges" / f"debt-{group.lower()}.json").write_text(json.dumps({
+            "schemaVersion": 1, "label": f"crutch debt: {group}",
+            "message": badge_message(counts), "color": color,
+        }) + "\n")
+
+    msg = badge_message(totals)
 
     print(f"wrote {ROOT/'docs'/'CRUTCH_DEBT.md'}")
     print("  " + msg + f" | asm_bodies {totals['asm_bodies']} | directives {totals['directives']} | "

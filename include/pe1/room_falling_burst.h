@@ -2,15 +2,18 @@
 #define PE1_ROOM_FALLING_BURST_H
 
 #include "common.h"
-#include "pe1/room_fx.h"
-#include "pe1/field_script_context.h"
-#include "pe1/room_module.h"
-#include "pe1/field_sprite_state.h"
-#include "pe1/room_floor.h"
 #include "pe1/field_glow_sprite.h"
+#include "pe1/field_script_context.h"
+#include "pe1/field_sprite_state.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/pe_image.h"
+#include "pe1/psyq_libc.h"
+#include "pe1/room_floor.h"
+#include "pe1/room_fx.h"
+#include "pe1/room_module.h"
 
 /* The falling sprite burst linked by ten hospital and Chrysler rooms
- * (src/overlays/room_lib/RoomFx_FallingSpriteBurst.c): a sprite and its
+ * (src/overlays/room_lib/falling_sprite_burst.c): a sprite and its
  * floor shadow fall until they reach the floor, then spawn an impact
  * shimmer, a ground pulse and six particles. */
 
@@ -21,14 +24,27 @@ typedef struct RoomFallingBurstControl {
     s16 endTick;                  /* 0x02 */
 } RoomFallingBurstControl;
 
-/* Shared scene clock returned by func_800C2B50. */
+/* The script object the burst belongs to and its owner actor. */
+typedef struct RoomFallingBurstEntity {
+    u8 pad00[0x8];
+    struct FieldActor *actor;     /* 0x08 */
+} RoomFallingBurstEntity;
+
+/* Shared scene clock returned by FieldFx_GetScriptContext: the owner's actor, the
+ * re-arm reload and timer, the hit request, the clock step and tick, and
+ * the sprite asset whose low byte selects the texture page. */
 typedef struct RoomFallingBurstClock {
-    u8 pad0[0x8];
+    struct FieldActor *actor;     /* 0x00 */
+    s16 reload;                   /* 0x04 */
+    s16 cooldown;                 /* 0x06 */
     s16 hit;                      /* 0x08 */
     s16 step;                     /* 0x0A */
     s16 tick;                     /* 0x0C */
     u8 padE[0x2];
-    u8 renderOwner;               /* 0x10 */
+    union {
+        int index;
+        u8 page;
+    } asset;                      /* 0x10 */
 } RoomFallingBurstClock;
 
 /* Parameter block of the floor decals: the ground pulse uses the scale and
@@ -53,6 +69,22 @@ typedef struct RoomFallingBurstVec {
     s16 pad6;
 } RoomFallingBurstVec;
 
+/* Sprite position and velocity use wrapping halfword storage. The vertical
+ * step at 0x14 is integrated as a signed 8.8 value by the update pass. */
+typedef struct RoomFallingSpriteState {
+    u16 x, y, z;
+    s16 pad6;
+    u16 velocityX, velocityY, velocityZ;
+    s16 padE;
+    u16 scale;
+    u16 depth;
+    s16 verticalStep;             /* 0x14: signed 8.8 displacement per tick */
+    u8 active;
+} RoomFallingSpriteState;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFallingSpriteState, verticalStep) == 0x14,
+                  room_falling_sprite_vertical_step);
+
 /* The six impact particles. */
 typedef struct RoomFallingBurstParticles {
     RoomSpriteMatrix matrix;          /* 0x00 */
@@ -67,7 +99,6 @@ typedef struct RoomFallingBurstParticles {
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFallingBurstParticles, liveCount) == 0xA4,
                   room_falling_burst_particles_live);
 
-
 /* Per-room data: the five sprite records. When it lands the falling sprite
  * spawns from the room module's init list and spawn layout
  * (pe1/room_module.h). */
@@ -77,15 +108,7 @@ extern RoomFxSpritePacket g_RoomFallingBurstSprite;
 extern RoomFxSpritePacket g_RoomFallingBurstPulse;
 extern RoomFxSpritePacket g_RoomFallingBurstParticle;
 
-void *func_8006DC18(int type);
-int *func_800C2B10(int index);
-int *func_800C2B28(int index);
-void *func_800C2B90(void *entity, int kind, void *script, void *data);
-int func_800C2B68(void);
-void func_800C6800(void *entity, int effectId, void *state);
-void func_800C6C18(int entity);
-int func_800C6B90(void *position, int radius);
-void func_80071A44(void *dst, int value, int size);
-int func_80071A54(void);
+int *FieldFx_RegPtr(int index);
+int *FieldFx_VarPtr(int index);
 
 #endif

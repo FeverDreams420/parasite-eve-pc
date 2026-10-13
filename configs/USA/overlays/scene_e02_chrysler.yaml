@@ -1,0 +1,61 @@
+name: scene_e02_chrysler.bin
+sha1: 2db8e96a07ced98b54cb73db9c9812b75abb0b52
+options:
+  basename: scene_e02_chrysler
+  target_path: original/USA/overlays/scene_e02.bin
+  base_path: ../../..
+  platform: psx
+  compiler: GCC
+  asm_path: asm/USA/overlays/scene_e02_chrysler
+  src_path: src/overlays/scene_e02_chrysler
+  build_path: build/USA/overlays/scene_e02_chrysler
+  ld_script_path: linkers/USA/overlays/scene_e02_chrysler.ld
+  undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.scene_e02_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.scene_e02_chrysler.txt
+    - configs/USA/sym.main.txt
+  undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.scene_e02_chrysler.txt
+  find_file_boundaries: True
+  disassemble_all: True
+  asm_function_macro: glabel
+  asm_jtbl_label_macro: jlabel
+  asm_data_macro: dlabel
+  generate_asm_macros_files: False
+  section_order: [".rodata", ".text", ".data", ".sdata", ".sbss", ".bss"]
+  subalign: 4
+  string_encoding: ASCII
+  data_string_encoding: ASCII
+  rodata_string_guesser_level: 2
+  data_string_guesser_level: 2
+segments:
+  - name: scene_e02_chrysler
+    type: code
+    start: 0x0
+    # Section 3 is loaded at g_LoadedSceneAssetBlock, including its header.
+    vram: 0x8018EFE8
+    align: 4
+    subalign: 4
+    bss_size: 0x0
+    subsegments:
+      - start: 0
+        type: rodatabin
+        name: scene_e02_header
+        dir: scene_e02_chrysler
+      - [0xC, .rodata, ../room_lib/ground_eruption]
+      - [0x5C, .rodata, ../room_lib/actor_classes]
+      - [0x234, .rodata, ../room_lib/orbit_flare]
+      - [0x244, c, ../room_lib/ground_eruption]
+      - [0x1708, c, ../room_lib/actor_classes]
+      - [0x4A24, c, ../room_lib/orbit_flare]
+      - [0x5674, c, ../room_lib/script_args]
+      - [0x5698, c, ../room_lib/homing_projectile]
+      - [0x6484, data]
+      - [0x654C, .data, ../room_lib/actor_class_table]
+      - [0x65F4, data]
+      - [0x6680, .data, ../room_lib/homing_projectile_seeds]
+      - [0x66A8, data]
+  - [0x6800]
+# source slice: scanner
+# extract locally with: dd if=disc/extracted/PE.IMG of=original/USA/overlays/scene_e02.bin bs=2048 skip=94681 count=13
+# special-scene set: entry 2 of the table at 0x80094048 (this bin = its section 3); finale (Eve/Melissa) bank
+# area: no save-location label for map 412; place chrysler, medium confidence (docs/ROOMS.md)

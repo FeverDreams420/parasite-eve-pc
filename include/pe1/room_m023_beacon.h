@@ -2,15 +2,25 @@
 #define PE1_ROOM_M023_BEACON_H
 
 #include "common.h"
+#include "pe1/asset_find.h"
+#include "pe1/field_model_draw.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/field_transform_point.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/render_prim.h"
-#include "pe1/field_model_draw.h"
 #include "pe1/room_floor.h"
+#include "pe1/room_m023_effects.h"
+#include "pe1/scene_archive.h"
 
-
-/* room_m023 joint beacon (func_8018FC14): follows a model joint, swells
+/* room_m023 joint beacon (RoomM023_JointBeacon): follows a model joint, swells
  * and pulses through four phases, tags the player on contact and draws a
  * glow sprite pair, two star fans and a loaded model at the joint. */
 typedef struct RoomM023Beacon {
@@ -60,63 +70,16 @@ typedef struct RoomM023BeaconEvent {
     /* 0x12 */ s16 variant;
 } RoomM023BeaconEvent;
 
-typedef struct RoomM023BeaconOffset {
-    s32 word[2];
-} __attribute__((packed)) RoomM023BeaconOffset;
-
-typedef struct RoomM023BeaconArchive {
-    void *channel;
-} RoomM023BeaconArchive;
-
-/* The sprite parameter block at 0x800F3368 (RenderEffectParameters). */
-typedef struct RoomM023BeaconParams {
-    u16 parameter00;
-    u16 parameter02;
-    u16 palette;
-    u16 parameter06;
-    u16 tpage;
-    u16 parameter0A;
-    s16 depth;
-    u16 extent_x;
-    u16 extent_y;
-} RoomM023BeaconParams;
-
 typedef struct RoomM023BeaconColor {
     u8 r, g, b, code;
 } RoomM023BeaconColor;
 
-extern RoomM023BeaconParams D_800F3368;
-extern u16 D_800E1204[];
-extern u16 D_800E2850[];
-extern int D_800F3428;
-extern int D_800E27EC;
-extern RoomM023BeaconChannel *D_800F32D0;
-extern RoomM023BeaconEvent *D_800E2368;
-extern RoomM023BeaconEntity *D_8009D254;
-extern RoomM023BeaconArchive D_800B0E64;
-extern RoomM023BeaconOffset D_8018EFF4;
+extern struct BattleEntity *D_8009D254;
 extern u8 *D_80190760;
 extern u8 D_801906F0[];
-extern u16 D_800E11EA;
 
-u8 *func_8006E498(void *channel, int id);
-void func_800C6D5C(u8 *data, u8 x_offset, u8 y_offset);
-void func_800C6FA0(u8 *data, u16 factor);
-void func_800C70EC(u8 *data, int r, int g, int b);
-void func_800CFB7C(GteShortVector *angles, s16 distance, GteShortVector *out);
-void func_800CEE20(GteShortVector *position, GteShortVector *rotation,
-                   int scale_x, int scale_y, int texture, int clut,
-                   int page, int intensity, RoomM023BeaconColor *color);
-void func_800D004C(GteShortVector *position, int width, int height, int segments,
-                   GteShortVector *rotation, int scale_x, int scale_y,
-                   RoomM023BeaconColor *color0, RoomM023BeaconColor *color1,
-                   int intensity, int mode);
-void func_800CF3AC(void *track, RoomM023BeaconColor *color, int time);
-void func_800CE9D4(void *owner, int index, void *out);
-void func_800CE8F0(void *pool, int index, void *offset, void *position);
-int func_800CEB8C(void *position, GteShortVector *target, int radius);
-u16 GetClut(int x, int y);
+void FieldFx_ModelShiftColors(u8 *data, int r, int g, int b);
+int FieldFx_IsPlayerInSegmentBand(void *position, GteShortVector *target, int radius);
 GteMatrix *MulMatrix0(GteMatrix *first, GteMatrix *second, GteMatrix *out);
-int rcos(int angle);
 
 #endif

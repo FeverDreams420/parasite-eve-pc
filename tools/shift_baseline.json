@@ -1,0 +1,31 @@
+{
+ "counts": {
+  "exe:relocs_to_absolute_program": 0,
+  "exe:unrelocated:data_word": 3,
+  "exe:unrelocated:lui": 7,
+  "overlays:abi_loader_contract": 511,
+  "overlays:distinct_main_addresses": 323,
+  "overlays:main_references": 7283,
+  "overlays:own_overlay_pinned": 208,
+  "shift_test:gprel_to_pinned": 0,
+  "shift_test:literal_data_word": 3,
+  "shift_test:literal_jump": 0,
+  "shift_test:literal_lui": 7,
+  "shift_test:pinned_symbol_reference": 0,
+  "shift_test:relocated_unchanged_other": 0,
+  "shift_test:unexplained_difference": 0,
+  "shift_test:unexplained_relocated": 0,
+  "src:include:alias_address_named_owned": 2,
+  "src:include:alias_named_owned": 2,
+  "src:include:pointer_integer_cast": 11,
+  "src:main:alias_named_owned": 2,
+  "src:main:int_to_pointer_literal": 6,
+  "src:main:pointer_integer_cast": 8,
+  "src:overlays:pointer_integer_cast": 61,
+  "undefined_addr_aliases.main.txt:kernel": 1,
+  "undefined_syms_manual.txt:hardware": 10,
+  "undefined_syms_manual.txt:kernel": 2,
+  "undefined_syms_manual.txt:symbolic_alias": 72,
+  "undefined_syms_manual.txt:unowned": 0
+ }
+}

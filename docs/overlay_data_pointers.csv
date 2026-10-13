@@ -1,0 +1,262 @@
+overlay,address,role,element_type,count,status
+room_m005_theater,0x801BEB0C,script pointer records (op 0x75 -> D_80190B44),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801BEB0C; was raw databin words
+room_m013_theater,0x8019F1E0,script pointer records (op 0x73 -> D_8018FCB4),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_8019F1E0; was raw databin words
+room_m014_theater,0x8019316C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m014_theater,0x801AF644,script pointer records (op 0x73 -> D_80193250; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801AF644; was raw databin words
+room_m016_theater,0x8019316C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m016_theater,0x801B28D4,script pointer records (op 0x49 -> g_RoomClassTable+0x70; op 0x73 -> D_80193250),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B28D4; was raw databin words
+room_m017_theater,0x801B034C,script pointer records (op 0x45 -> g_RoomFxMirrorHandlers),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801B034C; was raw databin words
+room_m018_theater,0x801A6D18,script pointer records (op 0x45 -> g_RoomFxMirrorHandlers),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801A6D18; was raw databin words
+room_m021_theater,0x801AB600,script pointer records (op 0x45 -> g_RoomFxMirrorHandlers),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AB600; was raw databin words
+room_m022_theater,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m022_theater,0x801A92A8,script pointer records (op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801A92A8; was raw databin words
+room_m027_sewer,0x8019EF50,script pointer records (op 0x73 -> D_8018FCB4),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_8019EF50; was raw databin words
+room_m028_sewer,0x8019316C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m028_sewer,0x801B11F4,script pointer records (op 0x73 -> D_80193250),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801B11F4; was raw databin words
+room_m028_sewer,0x801B1200,script pointer records (op 0x49 -> g_RoomClassTable+0x70),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801B1200; was raw databin words
+room_m030_sewer,0x801A0E48,script pointer records (op 0x73 -> D_8018FCB4),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801A0E48; was raw databin words
+room_m032_sewer,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m032_sewer,0x801A68B0,script pointer records (op 0x49 -> g_RoomClassTable+0x70),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801A68B0; was raw databin words
+room_m034_sewer,0x801C0D28,script pointer records (op 0x08 -> D_8018FF7C),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801C0D28; was raw databin words
+room_m045_nypd,0x801BBE58,script pointer records (op 0x45 -> g_RoomFxMirrorHandlers),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801BBE58; was raw databin words
+room_m059_central_park,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m059_central_park,0x801B07BC,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801B07BC; was raw databin words
+room_m061_central_park,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m061_central_park,0x801AB5A4,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AB5A4; was raw databin words
+room_m062_central_park,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m062_central_park,0x801AC720,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AC720; was raw databin words
+room_m063_central_park,0x8018FDDC,"g_RoomClassTable, class rows W (room_lib/window_class_table.c)",RoomModuleHandler[7],1,C; was raw databin words
+room_m063_central_park,0x801ACF3C,script pointer records (op 0x4A -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801ACF3C; was raw databin words
+room_m065_central_park,0x801A7588,"sprite record list, two pointers per record (7 into the image are symbols; 17 point past the image end into run-time memory and stay numbers)",0x38-byte record,12,asm data D_801A7588; was raw databin words
+room_m066_central_park,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m066_central_park,0x801A89B0,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801A89B0; was raw databin words
+room_m067_central_park,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m067_central_park,0x801B434C,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801B434C; was raw databin words
+room_m075_central_park,0x80194010,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m075_central_park,0x801BD084,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0C -> D_80193F74),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801BD084; was raw databin words
+room_m078_central_park,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m078_central_park,0x801AD160,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AD160; was raw databin words
+room_m080_central_park,0x80194010,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m080_central_park,0x801C2310,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0C -> D_80193F74),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801C2310; was raw databin words
+room_m081_central_park,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m081_central_park,0x801A520C,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801A520C; was raw databin words
+room_m082_central_park,0x80194010,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m083_central_park,0x8018FDDC,"g_RoomClassTable, class rows W (room_lib/window_class_table.c)",RoomModuleHandler[7],1,C; was raw databin words
+room_m083_central_park,0x801ADDE4,script pointer records (op 0x4A -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801ADDE4; was raw databin words
+room_m085_central_park,0x801AD998,script pointer records (op 0x0A -> D_80190024),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AD998; was raw databin words
+room_m086_central_park,0x801B56A8,script pointer records (op 0x79 -> D_80190B3C; op 0x78 -> D_80190AEC),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B56A8; was raw databin words
+room_m087_central_park,0x8019357C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m087_central_park,0x801BA0C4,script pointer records (op 0x0A -> D_80193518; op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801BA0C4; was raw databin words
+room_m089_central_park,0x80194024,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m089_central_park,0x801EBE48,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x77 -> D_80194128),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801EBE48; was raw databin words
+room_m090_soho,0x801CA9FC,script pointer records (op 0x0E -> D_80192BCC),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801CA9FC; was raw databin words
+room_m100_nypd,0x8019316C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m100_nypd,0x801D1150,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x73 -> D_80193250),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801D1150; was raw databin words
+room_m102_nypd,0x801AC554,script pointer records (op 0x45 -> g_RoomFxMirrorHandlers),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AC554; was raw databin words
+room_m104_nypd,0x801AA468,script pointer records (op 0x88 -> D_8018FE5C),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AA468; was raw databin words
+room_m107_nypd,0x80193678,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m107_nypd,0x801C2244,script pointer records (op 0x23 -> D_801935DC; op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801C2244; was raw databin words
+room_m110_nypd,0x8019316C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m110_nypd,0x801B3398,script pointer records (op 0x73 -> D_80193250; op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B3398; was raw databin words
+room_m111_nypd,0x801C0888,script pointer records (op 0x23 -> D_801900E8),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801C0888; was raw databin words
+room_m113_nypd,0x801BC544,script pointer records (op 0x73 -> D_80190AFC; op 0x88 -> D_80190B54),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801BC544; was raw databin words
+room_m114_nypd,0x80193678,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m114_nypd,0x801B5B14,script pointer records (op 0x48 -> g_RoomClassTable+0x54; op 0x23 -> D_801935DC),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B5B14; was raw databin words
+room_m116_nypd,0x80193330,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m118_nypd,0x801BEC2C,script pointer records (op 0x23 -> D_801900E8),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801BEC2C; was raw databin words
+room_m120_nypd,0x80193330,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m120_nypd,0x801B7754,script pointer records (op 0x88 -> D_801933F8; op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B7754; was raw databin words
+room_m121_nypd,0x8019316C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m121_nypd,0x801D32A0,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801D32A0; was raw databin words
+room_m121_nypd,0x801D32AC,script pointer records (op 0x73 -> D_80193250),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801D32AC; was raw databin words
+room_m122_nypd,0x801BBF3C,script pointer records (op 0x88 -> D_80190FEC; op 0x23 -> D_80190F30),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801BBF3C; was raw databin words
+room_m123_nypd,0x801953E4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m126_hospital,0x801B3060,script pointer records (op 0x7A -> D_8018FD00),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801B3060; was raw databin words
+room_m129_hospital,0x801AE1FC,script pointer records (op 0x7A -> D_8018FD00),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AE1FC; was raw databin words
+room_m139_hospital,0x801B0400,script pointer records (op 0x7A -> D_8018FD00),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801B0400; was raw databin words
+room_m141_hospital,0x801CD0A0,script pointer records (op 0xA6 -> D_80192140; op 0x25 -> D_80192040; op 0x7A -> D_801920C8),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801CD0A0; was raw databin words
+room_m145_hospital,0x801931BC,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m145_hospital,0x801932C0,"timed spawn record (RoomLib_ControlTimedSpawn, pointer to D_80193280)",0x38-byte record,1,asm data D_801932C0; was raw databin words
+room_m145_hospital,0x801BF378,script pointer records (op 0xBB -> D_801932C0; op 0x4B -> g_RoomClassTable+0x38; op 0x4F -> D_80193264),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801BF378; was raw databin words
+room_m146_hospital,0x801DE3DC,script pointer records (op 0x28 -> D_80192564; op 0xA6 -> D_8019260C; op 0x25 -> D_801924AC),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801DE3DC; was raw databin words
+room_m147_hospital,0x801D22DC,script pointer records (op 0x28 -> D_80190E84; op 0x7A -> D_80190F10),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801D22DC; was raw databin words
+room_m149_hospital,0x801B0854,script pointer records (op 0x7A -> D_8018FD00),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801B0854; was raw databin words
+room_m151_hospital,0x801A0120,script pointer records (op 0x45 -> g_RoomFxMirrorHandlers),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801A0120; was raw databin words
+room_m152_hospital,0x80193EA4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m152_hospital,0x801CE68C,script pointer records (op 0xBB -> D_80194004; op 0x4B -> g_RoomClassTable+0x38; op 0x4F -> D_80193F4C; op 0x7A -> D_80193F8C),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801CE68C; was raw databin words
+room_m153_hospital,0x80195584,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m153_hospital,0x801D2D70,script pointer records (op 0xBB -> D_80195688; op 0x4B -> g_RoomClassTable+0x38; op 0x4F -> D_8019562C; op 0xA6 -> D_80195700; op 0x25 -> D_80195520),struct { u32 offset; u32 op_size; void *ptr; },5,asm data D_801D2D70; was raw databin words
+room_m154_hospital,0x80195584,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m154_hospital,0x801DD2E0,script pointer records (op 0xBB -> D_80195688; op 0x4B -> g_RoomClassTable+0x38; op 0x4F -> D_8019562C; op 0xA6 -> D_80195700; op 0x25 -> D_80195520),struct { u32 offset; u32 op_size; void *ptr; },5,asm data D_801DD2E0; was raw databin words
+room_m159_hospital,0x801ACE18,script pointer records (op 0x88 -> D_8018FE5C),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801ACE18; was raw databin words
+room_m162_chinatown,0x8019313C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m162_chinatown,0x801C45A0,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x7B -> D_80193254),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801C45A0; was raw databin words
+room_m163_chinatown,0x8019313C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m163_chinatown,0x801C483C,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x7B -> D_80193254),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801C483C; was raw databin words
+room_m167_sewer2,0x80193218,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m167_sewer2,0x801B63C8,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_801931B0; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801B63C8; was raw databin words
+room_m168_sewer2,0x80193218,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m168_sewer2,0x801B8890,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_801931B0; op 0x46 -> g_RoomClassTable; op 0x49 -> g_RoomClassTable+0x70),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801B8890; was raw databin words
+room_m169_sewer2,0x80193218,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m169_sewer2,0x801B898C,script pointer records (op 0x49 -> g_RoomClassTable+0x70; op 0x46 -> g_RoomClassTable; op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_801931B0),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801B898C; was raw databin words
+room_m173_sewer2,0x80193218,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m173_sewer2,0x801B1CD8,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_801931B0; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801B1CD8; was raw databin words
+room_m174_sewer2,0x80196F20,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m174_sewer2,0x801CCA84,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x09 -> D_80196E30; op 0x08 -> D_80196CC4),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801CCA84; was raw databin words
+room_m178_sewer2,0x80193218,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m178_sewer2,0x801A8D7C,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_801931B0; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801A8D7C; was raw databin words
+room_m186_subway,0x801942A4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m186_subway,0x801B8240,script pointer records (op 0x24 -> D_80194214; op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_80194164; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801B8240; was raw databin words
+room_m187_subway,0x801A6580,script pointer records (op 0x24 -> D_8018FFF0),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801A6580; was raw databin words
+room_m188_subway,0x80195D98,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m188_subway,0x801EA928,script pointer records (op 0x49 -> g_RoomClassTable+0x70; op 0x4B -> g_RoomClassTable+0x38; op 0x7F -> D_80195F98; op 0x7C -> D_80195E84; op 0x46 -> g_RoomClassTable; op 0x7D -> D_80195F28),struct { u32 offset; u32 op_size; void *ptr; },6,asm data D_801EA928; was raw databin words
+room_m197_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m198_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m199_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m199_museum,0x801CFE28,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801CFE28; was raw databin words
+room_m201_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m201_museum,0x801AA174,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AA174; was raw databin words
+room_m203_museum,0x80193FD0,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m203_museum,0x801D96F4,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x8E -> D_801940B8; op 0xB4 -> D_80194110),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801D96F4; was raw databin words
+room_m205_museum,0x80192C38,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m205_museum,0x801B7468,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x74 -> D_80192D04),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B7468; was raw databin words
+room_m206_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m207_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m207_museum,0x801C3798,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801C3798; was raw databin words
+room_m210_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m210_museum,0x801ABCB4,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801ABCB4; was raw databin words
+room_m214_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m214_museum,0x801BC1E4,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801BC1E4; was raw databin words
+room_m217_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m218_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m218_museum,0x801BABDC,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801BABDC; was raw databin words
+room_m219_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m219_museum,0x801B9570,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B9570; was raw databin words
+room_m220_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m221_museum,0x80193FD0,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m221_museum,0x801B8EAC,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x8E -> D_801940B8; op 0xB4 -> D_80194110),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801B8EAC; was raw databin words
+room_m223_museum,0x80193FD0,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m223_museum,0x801D2AC4,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x8E -> D_801940B8; op 0xB4 -> D_80194110),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801D2AC4; was raw databin words
+room_m224_museum,0x80193FD0,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m224_museum,0x801D31F8,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x8E -> D_801940B8; op 0xB4 -> D_80194110; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801D31F8; was raw databin words
+room_m226_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m227_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m227_museum,0x801B6CEC,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B6CEC; was raw databin words
+room_m229_museum,0x80193FD0,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m229_museum,0x801D6460,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x8E -> D_801940B8; op 0xB4 -> D_80194110),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801D6460; was raw databin words
+room_m231_museum,0x80194720,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m231_museum,0x801E4C74,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x74 -> D_801947EC; op 0x8E -> D_80194864; op 0xB4 -> D_801948BC),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801E4C74; was raw databin words
+room_m232_museum,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m232_museum,0x801ABD68,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801ABD68; was raw databin words
+room_m233_museum,0x80193FD0,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m234_museum,0x80194720,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m234_museum,0x801E5AD0,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x74 -> D_801947EC; op 0x8E -> D_80194864; op 0xB4 -> D_801948BC),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801E5AD0; was raw databin words
+room_m242_museum,0x80193FD0,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m243_museum,0x80192C38,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m243_museum,0x801BA2FC,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x74 -> D_80192D04),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801BA2FC; was raw databin words
+room_m245_museum,0x80195604,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m246_museum,0x80193FD0,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m256_museum,0x80195D00,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m263_warehouse,0x80193FB4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m263_warehouse,0x801CC9F0,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801CC9F0; was raw databin words
+room_m263_warehouse,0x801CCA08,script pointer records (op 0x73 -> D_80194098; op 0x88 -> D_801940F0),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801CCA08; was raw databin words
+room_m265_warehouse,0x80193FB4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m265_warehouse,0x801B6274,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x73 -> D_80194098; op 0x88 -> D_801940F0),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801B6274; was raw databin words
+room_m273_liberty,0x8019A810,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m273_liberty,0x801DEDB4,script pointer records (op 0x52 -> D_8019A900; op 0x4B -> g_RoomClassTable+0x38; op 0xB8 -> D_8019ACE4; op 0x49 -> g_RoomClassTable+0x70; op 0xB9 -> D_8019AD98; op 0xB7 -> D_8019AC40; op 0x51 -> D_8019A8E4; op 0xBA -> D_8019AE24; op 0xA7 -> D_8019AB94; op 0x48 -> g_RoomClassTable+0x54),struct { u32 offset; u32 op_size; void *ptr; },10,asm data D_801DEDB4; was raw databin words
+room_m291_chrysler,0x801CD288,script pointer records (op 0x81 -> D_80192B08; op 0x82 -> D_80192B64),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801CD288; was raw databin words
+room_m295_chrysler,0x80193218,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m295_chrysler,0x801E0B40,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_801931B0; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801E0B40; was raw databin words
+room_m298_chrysler,0x8019316C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m298_chrysler,0x801ACB84,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x73 -> D_80193250),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801ACB84; was raw databin words
+room_m299_chrysler,0x80193218,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m299_chrysler,0x801B85C8,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_801931B0; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801B85C8; was raw databin words
+room_m308_chrysler,0x8019316C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m308_chrysler,0x801AC284,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x73 -> D_80193250),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801AC284; was raw databin words
+room_m309_chrysler,0x80193218,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m309_chrysler,0x801B7D28,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_801931B0; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801B7D28; was raw databin words
+room_m310_chrysler,0x80193218,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m310_chrysler,0x801B7CF4,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_801931B0; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801B7CF4; was raw databin words
+room_m311_chrysler,0x8019316C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m311_chrysler,0x801AC780,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x73 -> D_80193250),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801AC780; was raw databin words
+room_m318_chrysler,0x8019939C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m318_chrysler,0x801EB1B8,script pointer records (op 0xAC -> D_8019970C; op 0xAF -> D_8019980C; op 0xAE -> D_801997C0; op 0xAD -> D_801998B8; op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0xA8 -> D_801994EC; op 0xAB -> D_8019969C; op 0xA9 -> D_80199548; op 0xAA -> D_80199624),struct { u32 offset; u32 op_size; void *ptr; },10,asm data D_801EB1B8; was raw databin words
+room_m319_hospital,0x801AD0A8,script pointer records (op 0x45 -> g_RoomFxMirrorHandlers),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AD0A8; was raw databin words
+room_m326_hospital,0x801AF598,script pointer records (op 0x7A -> D_8018FD00),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801AF598; was raw databin words
+room_m328_hospital,0x801CCB64,script pointer records (op 0xA6 -> D_80192140; op 0x25 -> D_80192040; op 0x7A -> D_801920C8),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801CCB64; was raw databin words
+room_m332_hospital,0x801931BC,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m332_hospital,0x801932C0,"timed spawn record (RoomLib_ControlTimedSpawn, pointer to D_80193280)",0x38-byte record,1,asm data D_801932C0; was raw databin words
+room_m332_hospital,0x801BD07C,script pointer records (op 0xBB -> D_801932C0; op 0x4B -> g_RoomClassTable+0x38; op 0x4F -> D_80193264),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801BD07C; was raw databin words
+room_m333_warehouse,0x80193FB4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m333_warehouse,0x801B716C,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x73 -> D_80194098; op 0x88 -> D_801940F0),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801B716C; was raw databin words
+room_m344_museum,0x801EB1EC,script pointer records (op 0x0E -> D_80192BCC),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801EB1EC; was raw databin words
+room_m348_sewer,0x801C270C,script pointer records (op 0x09 -> D_8019290C),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801C270C; was raw databin words
+room_m349_cruiser,0x801C88B0,script pointer records (op 0xB5 -> D_8019015C),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801C88B0; was raw databin words
+room_m350_cruiser,0x8019A318,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m350_cruiser,0x801D4510,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x9B -> D_8019A468; op 0x9C -> D_8019A508; op 0x49 -> g_RoomClassTable+0x70; op 0x9E -> D_8019A5A0; op 0xA1 -> D_8019A73C; op 0x9F -> D_8019A638; op 0xA0 -> D_8019A6A0),struct { u32 offset; u32 op_size; void *ptr; },9,asm data D_801D4510; was raw databin words
+room_m358_central_park,0x801932D0,"g_RoomClassTable, class rows D,D,E,B,C,A,W (room_lib/actor_window_class_table.c)",RoomModuleHandler[7],7,C; was raw databin words
+room_m358_central_park,0x801B9C08,script pointer records (op 0x4A -> g_RoomClassTable+0xA8; op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B9C08; was raw databin words
+room_m374_central_park,0x801CCE44,script pointer records (op 0x0E -> D_80192BCC),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801CCE44; was raw databin words
+room_m383_chrysler,0x80196F20,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m383_chrysler,0x801C4880,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x09 -> D_80196E30),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801C4880; was raw databin words
+room_m383_chrysler,0x801C4898,script pointer records (op 0x08 -> D_80196CC4),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801C4898; was raw databin words
+room_m384_chrysler,0x801932D0,"g_RoomClassTable, class rows D,D,E,B,C,A,W (room_lib/actor_window_class_table.c)",RoomModuleHandler[7],7,C; was raw databin words
+room_m384_chrysler,0x801B1628,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x4A -> g_RoomClassTable+0xA8),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B1628; was raw databin words
+room_m385_chrysler,0x801942A4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m385_chrysler,0x801B8270,script pointer records (op 0x24 -> D_80194214; op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_80194164; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801B8270; was raw databin words
+room_m386_chrysler,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m386_chrysler,0x801A162C,script pointer records (op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },1,asm data D_801A162C; was raw databin words
+room_m387_chrysler,0x801932D0,"g_RoomClassTable, class rows D,D,E,B,C,A,W (room_lib/actor_window_class_table.c)",RoomModuleHandler[7],7,C; was raw databin words
+room_m387_chrysler,0x801B0D68,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x4A -> g_RoomClassTable+0xA8),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801B0D68; was raw databin words
+room_m388_chrysler,0x801942A4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m388_chrysler,0x801B7944,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_80194164; op 0x46 -> g_RoomClassTable; op 0x24 -> D_80194214),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801B7944; was raw databin words
+room_m389_chrysler,0x801942A4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m389_chrysler,0x801B7ECC,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x0B -> D_80194164; op 0x46 -> g_RoomClassTable; op 0x24 -> D_80194214),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801B7ECC; was raw databin words
+room_m390_chrysler,0x80195D98,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m390_chrysler,0x801E99A4,script pointer records (op 0x49 -> g_RoomClassTable+0x70; op 0x4B -> g_RoomClassTable+0x38; op 0x7F -> D_80195F98; op 0x7C -> D_80195E84; op 0x46 -> g_RoomClassTable; op 0x7D -> D_80195F28),struct { u32 offset; u32 op_size; void *ptr; },6,asm data D_801E99A4; was raw databin words
+room_m391_chrysler,0x801943C4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m391_chrysler,0x801BE5E0,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x88 -> D_8019448C; op 0x0A -> D_80194360),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801BE5E0; was raw databin words
+room_m392_chrysler,0x80194540,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m392_chrysler,0x801C162C,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x88 -> D_80194608; op 0x28 -> D_801944D8),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801C162C; was raw databin words
+room_m393_chrysler,0x8019478C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m394_chrysler,0x801943C4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m394_chrysler,0x801BDD38,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x88 -> D_8019448C; op 0x0A -> D_80194360),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801BDD38; was raw databin words
+room_m395_chrysler,0x801943C4,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m395_chrysler,0x801BDD64,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x88 -> D_8019448C; op 0x0A -> D_80194360),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801BDD64; was raw databin words
+room_m396_chrysler,0x8019478C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m397_chrysler,0x80195604,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m397_chrysler,0x801CDE14,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x8C -> D_80195720; op 0x8D -> D_801957E4),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801CDE14; was raw databin words
+room_m398_chrysler,0x8019313C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m398_chrysler,0x801BF230,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x7B -> D_80193254),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801BF230; was raw databin words
+room_m399_chrysler,0x80194250,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m399_chrysler,0x801C2248,script pointer records (op 0x0A -> D_801941EC; op 0xBB -> D_80194354; op 0x4B -> g_RoomClassTable+0x38; op 0x4F -> D_801942F8),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801C2248; was raw databin words
+room_m400_chrysler,0x8019313C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m400_chrysler,0x801BE370,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x7B -> D_80193254),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801BE370; was raw databin words
+room_m401_chrysler,0x80195460,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m401_chrysler,0x801D4E0C,script pointer records (op 0x0A -> D_80195340; op 0xBB -> D_80195564; op 0x4B -> g_RoomClassTable+0x38; op 0x4F -> D_80195508; op 0x28 -> D_801953F8),struct { u32 offset; u32 op_size; void *ptr; },5,asm data D_801D4E0C; was raw databin words
+room_m402_chrysler,0x80194250,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m402_chrysler,0x801C213C,script pointer records (op 0x0A -> D_801941EC; op 0xBB -> D_80194354; op 0x4B -> g_RoomClassTable+0x38; op 0x4F -> D_801942F8),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801C213C; was raw databin words
+room_m403_chrysler,0x8019313C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m403_chrysler,0x801BE864,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x7B -> D_80193254),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801BE864; was raw databin words
+room_m404_chrysler,0x80193E34,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m404_chrysler,0x801D0160,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x85 -> D_80193F1C; op 0x86 -> D_80193F88),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801D0160; was raw databin words
+room_m405_chrysler,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m405_chrysler,0x801B9630,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x46 -> g_RoomClassTable; op 0x49 -> g_RoomClassTable+0x70),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801B9630; was raw databin words
+room_m406_chrysler,0x80192C38,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m406_chrysler,0x801BBF98,script pointer records (op 0x4B -> g_RoomClassTable+0x38; op 0x74 -> D_80192D04; op 0x46 -> g_RoomClassTable),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801BBF98; was raw databin words
+room_m407_chrysler,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m407_chrysler,0x801AE7A8,script pointer records (op 0x46 -> g_RoomClassTable; op 0x49 -> g_RoomClassTable+0x70),struct { u32 offset; u32 op_size; void *ptr; },2,asm data D_801AE7A8; was raw databin words
+room_m408_chrysler,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m408_chrysler,0x801B85C0,script pointer records (op 0x46 -> g_RoomClassTable; op 0x4B -> g_RoomClassTable+0x38; op 0x49 -> g_RoomClassTable+0x70),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801B85C0; was raw databin words
+room_m409_chrysler,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+room_m409_chrysler,0x801B864C,script pointer records (op 0x46 -> g_RoomClassTable; op 0x49 -> g_RoomClassTable+0x70; op 0x4B -> g_RoomClassTable+0x38),struct { u32 offset; u32 op_size; void *ptr; },3,asm data D_801B864C; was raw databin words
+room_m410_chrysler,0x80192C38,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+room_m410_chrysler,0x801BE78C,script pointer records (op 0x49 -> g_RoomClassTable+0x70; op 0x46 -> g_RoomClassTable; op 0x4B -> g_RoomClassTable+0x38; op 0x74 -> D_80192D04),struct { u32 offset; u32 op_size; void *ptr; },4,asm data D_801BE78C; was raw databin words
+scene_e02_chrysler,0x80195534,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+scene_e09_chrysler,0x80194CF8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+scene_e10_chrysler,0x80194CF8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was raw databin words
+scene_e19_cruiser,0x8019B254,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+scene_e22_liberty,0x801990C0,"class table (rows D,D,E,B,C,A); asm data linked into .text as code data",RoomModuleHandler[7],6,"symbolic (asm .word), not in C"
+scene_e24_chrysler,0x8019313C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+scene_e25_chrysler,0x8019313C,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data
+scene_e26_chrysler,0x801924E8,"g_RoomClassTable, class rows D,D,E,B,C,A (room_lib/actor_class_table.c)",RoomModuleHandler[7],6,C; was asm .word data

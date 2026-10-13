@@ -2,9 +2,15 @@
 #define PE1_SCENE_E22_RING_BURST_H
 
 #include "common.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_task_pool.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
-#include "pe1/room_orbit_trail.h"
 #include "pe1/room_floor.h"
+#include "pe1/room_orbit_trail.h"
 
 /* Ring burst controller (scene_e22): scene event gate, particle channel
  * and the helpers the burst and its orbit trail particles call. */
@@ -19,46 +25,34 @@ typedef struct SceneE22BurstChannel {
     void *pool;                   /* 0x08 */
 } SceneE22BurstChannel;
 
-extern SceneE22BurstEvent *D_800E2368;
-extern SceneE22BurstChannel *D_800F33E0;
-extern char RoomMain_ActorPtr[];
-extern u16 D_800E11EA;
-extern u16 D_800E11FA;
+extern struct FieldActor *g_PlayerEntity; /* the player actor (0x8009D254) */
 extern RenderColor D_8018F1D0;
 extern RenderColor D_8018F1D4;
 extern GteShortVector D_801994EC;
-extern int rsin(int angle);
-extern int rcos(int angle);
-extern u16 func_80077AA4(int, int);
-extern int func_800CE560(void *pool, int size, int count, void *callback);
-extern RoomOrbitTrailParticle *func_800CE610(void *pool);
-extern int func_80071A54(void);
-extern int func_800D3FD8(void);
-extern int func_800D3F64(int sound, int handle);
-extern int func_80192548(int mode, RoomOrbitTrailParticle *p);
+extern int rand(void);
+extern int SceneE22_RingBurstParticleCallback(int mode, RoomOrbitTrailParticle *p);
 
-/* Orbit ring trail particle (func_80192548): its colour seed and trail
+/* Orbit ring trail particle (SceneE22_RingBurstParticleCallback): its colour seed and trail
  * track, and the trail strip renderer. */
 extern RenderColor D_8018F1CC;
 extern u8 D_80199168[];
-extern void func_800D2B58(void *, void *, void *, void *, int, int, int);
+extern void FieldFx_DrawGlowLine(void *, void *, void *, void *, int, int, int);
 
-/* Damped glow particle (func_801931B8): its glow colour track. */
+/* Damped glow particle (SceneE22_LinkBeamSparkCallback): its glow colour track. */
 extern u8 D_80199190[];
 
-/* Twisting trail particle (func_801962FC): spin template, colour track and
+/* Twisting trail particle (SceneE22_TwistTrailCallback): spin template, colour track and
  * the bent trail renderer. */
 extern GteRotation D_8018F1F4;
 extern u8 D_80199434[];
 extern u8 D_8019944C[];
-extern void func_800CF844(void *, void *, int, void *, int, int);
+extern void FieldFx_OffsetPointByAngles(void *, void *, int, void *, int, int);
 
-/* Twist beam particle (func_8019702C): its colours, trail track, the beam
+/* Twist beam particle (SceneE22_TwistBeamCallback): its colours, trail track, the beam
  * release flag and the beam sprite colour row. */
 extern RenderColor D_8018F21C;
 extern RenderColor D_8018F220;
 extern u8 D_8019946C[];
 extern s16 D_80199504;
-extern u16 D_800E120A;
 
 #endif

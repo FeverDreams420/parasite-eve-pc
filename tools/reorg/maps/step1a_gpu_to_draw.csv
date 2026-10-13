@@ -1,0 +1,10 @@
+old,new
+src/main/gpu/Draw_AllocColorQuad.c,src/main/draw/Draw_AllocColorQuad.c
+src/main/gpu/Draw_BaseOffset.c,src/main/draw/Draw_BaseOffset.c
+src/main/gpu/Draw_TextPrimitives.c,src/main/draw/Draw_TextPrimitives.c
+src/main/gpu/Draw_WipeAndGradient.c,src/main/draw/Draw_WipeAndGradient.c
+src/main/gpu/Gpu_DisplayInitAndStatus.c,src/main/draw/Gpu_DisplayInitAndStatus.c
+src/main/gpu/Gpu_DrawModePackets.c,src/main/draw/Gpu_DrawModePackets.c
+src/main/gpu/Gpu_RenderFrame.c,src/main/draw/Gpu_RenderFrame.c
+src/main/gpu/Gpu_SetupSprites.c,src/main/draw/Gpu_SetupSprites.c
+src/main/gpu/Gte_LightingState.c,src/main/draw/Gte_LightingState.c

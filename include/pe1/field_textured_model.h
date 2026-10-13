@@ -3,10 +3,10 @@
 
 #include "common.h"
 #include "pe1/gte_types.h"
-#include "pe1/render_tint.h"
 #include "pe1/render_object.h"
+#include "pe1/render_tint.h"
 
-/* Field engine textured model (func_800C71E4): flat and gouraud textured
+/* Field engine textured model (FieldFx_ModelDraw): flat and gouraud textured
  * triangles and quads whose vertex, colour and face records are linked by
  * byte offsets from the model start. Back faces are culled by NCLIP. */
 
@@ -33,6 +33,10 @@ typedef struct FieldModelQuad {
     /* 0x08 */ u16 uv[4];
 } FieldModelQuad;
 
+/* Colour words FieldFx_ModelSaveColors saves from a model and FieldFx_ModelRestoreColors
+ * writes back (0x100 entries). */
+extern u32 g_FieldModelColorBackup[];
+
 typedef struct FieldModelHeader {
     /* 0x00 */ u16 flatTris;
     /* 0x02 */ u16 shadedTris;
@@ -40,7 +44,7 @@ typedef struct FieldModelHeader {
     /* 0x06 */ u16 shadedQuads;
     /* 0x08 */ u16 colorOffset;   /* byte offset of the colour words */
     /* 0x0A */ u16 colorCount;
-    /* 0x0C */ u16 uOffset;       /* UV scroll applied by func_800C6D5C */
+    /* 0x0C */ u16 uOffset;       /* UV scroll applied by FieldFx_ModelScrollUv */
     /* 0x0E */ u16 vOffset;
     /* 0x10 */ FieldModelTri tris[1];
 } FieldModelHeader;
@@ -144,13 +148,11 @@ typedef struct FieldModelScratch {
 
 /* Ordering-table entry `depth` of the active buffer. */
 #define TEXTURED_MODEL_OT(depth) \
-    ((RenderGpuTag *)(D_800B0E38.ordering[D_8009CDDC] + (depth) * 4))
+    ((RenderGpuTag *)(D_800B0E38.ordering[g_ActiveDrawSlot] + (depth)))
 
-extern u16 D_800F346C;
-extern u16 D_800F3414;
-extern u16 D_800F33E4;
-extern s16 D_800F3420;
-
-GteMatrix *CompMatrix(GteMatrix *m0, GteMatrix *m1, GteMatrix *m2);
+extern u16 g_FieldFxModelTpage;
+extern u16 g_FieldFxModelClut;
+extern u16 g_FieldFxModelSemiTrans;
+extern s16 g_FieldFxModelDepthBias;
 
 #endif

@@ -1,20 +1,22 @@
 #ifndef PE1_MENU_EQUIPMENT_H
 #define PE1_MENU_EQUIPMENT_H
 
-#include "pe1/menu_dialog.h"
 #include "pe1/inventory_slots.h"
+#include "pe1/menu_context_help.h"
+#include "pe1/menu_dialog.h"
+#include "pe1/menu_state.h"
+#include "pe1/menu_widget.h"
 
 void Menu_StepSaveLoadScreen(void);
 int Menu_SaveLoadNavigate(MenuWidgetNode *node, unsigned int flags);
 int Menu_InventoryInputHandler(MenuWidgetNode *node, unsigned int flags);
-void Menu_DrawArmorListContainer(int node);
-void Menu_DrawArmorSelectionList(int node);
-void Menu_DrawSelectableEquipSlotList(int node);
+void Menu_DrawArmorListContainer(MenuWidgetNode *node);
+void Menu_DrawArmorSelectionList(MenuWidgetNode *node);
+void Menu_DrawSelectableEquipSlotList(MenuWidgetNode *node);
 void Menu_RebuildSelectableMask(void);
 int Inv_TransferItem(int arg0, int arg1, int arg2, int arg3);
 int Menu_GetBattleCount(void);
 void MenuWidget_ClampCursor(MenuWidgetNode *node, int x, int y);
-extern int D_8009CF94, D_8009CF8C, D_8009CF00;
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, itemAction) == 0x84,
                   menu_widget_item_action_offset);
@@ -24,23 +26,19 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, refreshItems) == 0x88,
 void Menu_OpenEquipScreen(int mode);
 int Menu_StepInventoryCategory(MenuWidgetNode *node, unsigned int flags);
 void Menu_DrawEquipListContainer(void *node);
-void Menu_DrawContextHelpText(void);
-void Menu_SetBattleEquipMode(int mode);
-extern int D_8009CF0C, D_8009CEFC;
 
-int Menu_EquipOptionsInputHandler(int node, int flags);
+int Menu_EquipOptionsInputHandler(void *node, int flags);
 void Menu_DrawEquipOptionsList(int node);
-void MenuWidget_SetCursorY(MenuWidgetNode *node);
-void MenuWidget_ClearColumnLayout(void *node);
 void Menu_OpenInventoryScreen(void);
-extern int D_8009CFB8, D_8009CF1C;
 /* Equipment selection state and stat preview. */
-extern int D_8009CF30, D_8009CF34, D_8009CF38;
+extern int g_MenuItemUseMode, g_MenuItemRenameMode, g_MenuItemDiscardMode;
 extern int D_8009CFC4, D_8009CFC8, D_8009CFCC;
+/* Ammo counts of the four ammo categories (999 when a category is
+ * unlimited); a nonzero sum enables the ammo transfer actions. */
 extern int g_StatBaseTable[4];
-extern int D_8009CF24, D_8009CF28, D_8009CFBC, D_8009CF2C;
-extern int D_8009CF14;
-extern int D_800A1888[], D_800A188C[], D_800A1890[], D_800A1894[];
+extern int g_MenuSelectedItemList, g_MenuSelectedItemSlot, D_8009CFBC, g_MenuSelectedItemIndex;
+/* Item put back into Aya's inventory after a storage swap (0: none). */
+extern int g_AyaFullInvHold;
 
 void Menu_DrawEquipScreenHeader(void);
 int Menu_InventoryItemHandler(MenuWidgetNode *node, int flags);
@@ -55,8 +53,25 @@ void Menu_StepItemGridScroll(ItemDataRecord *item, ItemDataRecord *other);
 
 int Menu_StepEquipScreen(MenuWidgetNode *node, unsigned int flags);
 void Menu_OnInventoryItemConfirm(int index);
-extern int D_8009CF10, D_8009CF04, D_8009CF08, D_8009CDA8;
+extern int g_MenuActiveItemList, g_MenuActiveItemSlot, g_MenuItemActionDisabled, g_MenuItemActionContext;
 /* Three action IDs per menu configuration, indexed by the selected child cell. */
-extern int D_80092234[][3];
+extern int g_MenuItemActionStateTable[][3];
+
+void Menu_DrawAmmoTypeHeader(MenuWidgetNode *node);
+void Menu_DrawEquipSortToggleRow(int index);
+void Menu_DrawEquipInfoOptionRow(int index);
+
+/* Sort option rows: the first row index per view mode, then the first,
+ * second and third glyph of each row. */
+/* Equipment slot glyphs per equip mode. */
+extern unsigned char g_MenuEquipSlotGlyphs[][8];
+/* Sort toggle row glyphs: the label, then the off and on markers. */
+extern short g_MenuSortToggleGlyphs[];
+/* Item icon glyph table for the current list (Text_LookupTable4 entry). */
+extern unsigned char *g_MenuItemIconGlyphTable;
+extern u8 g_MenuModSlotIconIndexOffsetByView[];
+extern u8 g_MenuModSlotFirstGlyphs[];
+extern u8 g_MenuModSlotSecondGlyphs[];
+extern u8 D_800922CC[];
 
 #endif

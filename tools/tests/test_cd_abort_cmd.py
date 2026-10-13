@@ -5,12 +5,14 @@ import random
 import struct
 import unittest
 
+from tools.tests.csource import find_definition
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class CDAbortCmdTests(unittest.TestCase):
     def test_plain_source(self):
-        source = (ROOT/'src/main/psyq/libds/dssys_1_9.c').read_text()
+        source = find_definition('DS_stop').read_text()
         self.assertNotRegex(source, r'\b(?:asm|__asm__)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and

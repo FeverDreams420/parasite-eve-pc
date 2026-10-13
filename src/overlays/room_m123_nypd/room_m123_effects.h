@@ -2,6 +2,7 @@
 #define ROOM_M123_EFFECTS_H
 
 #include "common.h"
+#include "pe1/fieldfx_task_pool.h"
 
 typedef struct RoomM123Particle {
     u16 frame;
@@ -26,7 +27,6 @@ typedef struct RoomM123Pool {
     void *pool;
 } RoomM123Pool;
 
-extern RoomM123Pool *D_800F32D0, *D_800F33E0;
 
 PE1_STATIC_ASSERT(sizeof(RoomM123Wave) == 0x0C,
                   room_m123_wave_size);

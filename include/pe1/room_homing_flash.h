@@ -2,9 +2,11 @@
 #define PE1_ROOM_HOMING_FLASH_H
 
 #include "common.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
 #include "pe1/room_sound_burst.h"
 
-/* The homing flash (src/overlays/room_lib/RoomEffect_HomingFlash.c): a
+/* The homing flash (src/overlays/room_lib/homing_flash.c): a
  * flash controller anchored to the actor and the homing sparks it
  * releases. */
 
@@ -35,10 +37,6 @@ typedef struct RoomFlashSpriteChild {
 
 /* Per-room data: the colour ramp the controller blends through. */
 extern u8 g_RoomFlashColorRamp[];
-
-/* The sprite parameter block at 0x800F3368. */
-extern RoomSoundBurstParams D_800F3368;
-extern u16 D_800E11EC;
 
 int RoomEffect_HomingSpark(int mode, RoomHomingSpark *spark,
                            RoomHomingSparkParams *params);

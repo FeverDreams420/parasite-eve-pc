@@ -7,7 +7,7 @@
 #include "pe1/room_spark.h"
 
 /* The spark barrage linked by room_m188 and room_m390
- * (src/overlays/room_lib/RoomEffect_SparkBarrage.c): five spark attacks,
+ * (src/overlays/room_lib/spark_barrage.c): five spark attacks,
  * each a particle callback and its controller. Phased sparks drop from
  * above the player and flash the scene, bouncing sparks spray from the
  * actor's hand, wave sparks ride the actor's joints, comet sparks are fired

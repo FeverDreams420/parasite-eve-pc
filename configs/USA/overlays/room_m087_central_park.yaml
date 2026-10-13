@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m087_central_park
   ld_script_path: linkers/USA/overlays/room_m087_central_park.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m087_central_park.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m087_central_park.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m087_central_park.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m087_central_park.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,12 +37,11 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m087_central_park]
-      - [0xC, .rodata, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x14, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/three_particles]
+      - [0x14, .rodata, ../room_lib/actor_classes]
       - [0x1EC, rodata, RoomLib_HandlerCArgsData_801925A0]
-      - [0x1EC, c, ../room_lib/RoomLib_ThreeParticleClass]
-      - [0x39C, c, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x11E8, c, ../room_lib/RoomLib_ActorClasses]
+      - [0x1EC, c, ../room_lib/three_particles]
+      - [0x11E8, c, ../room_lib/actor_classes]
       - [0x4504, data, D_801934EC]
       - [0x4510, data, RoomLib_TableA_8018F22C]
       - [0x451C, data, D_80193504]
@@ -48,7 +49,8 @@ segments:
       - [0x4530, data, D_80193518]
       - [0x454C, data, D_80193534]
       - [0x4584, data, D_8019356C]
-      - [0x45CC, data, D_801935B4]
+      - [0x4594, .data, ../room_lib/actor_class_table]
+      - [0x463C, data, D_80193624]
       - [0x4640, data, D_80193628]
       - [0x4644, data, D_8019362C]
       - [0x4648, data, D_80193630]
@@ -57,6 +59,11 @@ segments:
       - start: 0x4658
         type: databin
         name: D_80193640
+        dir: room_m087_central_park
+      - [0x2B0DC, data, D_801BA0C4]
+      - start: 0x2B0F4
+        type: databin
+        name: D_801BA0DC
         dir: room_m087_central_park
   - [0x2B800]
 # room: m087, section3 sector 29381, scanner delta 0

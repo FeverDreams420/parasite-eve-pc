@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m086_central_park
   ld_script_path: linkers/USA/overlays/room_m086_central_park.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m086_central_park.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m086_central_park.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m086_central_park.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m086_central_park.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,11 +37,7 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m086_header]
-      - [0x1C, c, RoomEffect_M086FallingSeeker_8018F004]
-      - [0x74C, c, RoomEffect_M086SeekerController_8018F734]
-      - [0x10E4, c, RoomEffect_BounceGlintFlow]
-      - [0x1A5C, c, func_80190A44]
-      - [0x1AA8, c, func_80190A90]
+      - [0x1C, c, m086]
       - [0x1AE4, data, D_80190ACC]
       - [0x1B04, data, D_80190AEC]
       - [0x1B3C, data, D_80190B24]
@@ -60,6 +58,11 @@ segments:
       - start: 0x1920C
         type: databin
         name: D_801A81F4
+        dir: room_m086_central_park
+      - [0x266C0, data, D_801B56A8]
+      - start: 0x266D8
+        type: databin
+        name: D_801B56C0
         dir: room_m086_central_park
   - [0x27000]
 # room: m086, section3 sector 29189, scanner delta 0

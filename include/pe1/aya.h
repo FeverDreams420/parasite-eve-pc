@@ -93,11 +93,35 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(AyaSaveState, blend_color) == 0x44,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(AyaSaveState, stats.levels) == 0x28,
                   aya_stat_allocations_offset);
 PE1_STATIC_ASSERT(sizeof(AyaSaveState) == 0xAC, aya_save_state_prefix_size);
-extern AyaSaveState D_800C0E00;
-extern u16 D_800C0E28[7];
+extern AyaSaveState g_AyaSaveState;
+/* AyaSaveState.pe_bonus_pool as a one-field record: a small word that
+ * -G8 units with MASPSX_FORCE_G0 address directly (Aya_SetTotalExp). */
+typedef struct AyaBonusPoolRecord {
+    u16 pool;
+} AyaBonusPoolRecord;
+extern AyaBonusPoolRecord g_AyaBonusPoolRecord;
+/* Interior names for single AyaSaveState fields. Incomplete arrays keep
+ * their accesses absolute in -G8 units; scalar readers index element 0. */
+extern u16 g_AyaHpCurrent[];
+extern u16 g_AyaHpMax[];
+extern s32 g_AyaSaveTotalExp[];
+extern u8 g_AyaInventorySlotCount[];
+extern s8 g_AyaEquippedWeaponSlot[];
+extern s8 g_AyaEquippedArmorSlot[];
+/* Scalar views of the same two bytes for -G8 units with MASPSX_FORCE_G0:
+ * cc1 then addresses each access directly (absolute after MASPSX) instead of
+ * keeping the address in a register as it does for the arrays. */
+extern s8 g_EquippedWeaponSlot;
+extern s8 g_EquippedArmorSlot;
+extern s32 g_AyaBonusPoints[];
+extern u32 g_AyaParasiteSpellFlags[];
+extern u16 g_AyaStatAgility[];
+extern u16 g_AyaStatActiveTimeRate[];
+extern u16 g_AyaStatAgility[7];
+extern u8 g_AyaSaveLevel[];
 /* Growth tables have multiple consumers: 32-bit thresholds and initial u16. */
-void *Stat_GetGrowthTable(int category);
-void Stat_QueryLevelAndSubLevel(int category, int value, int *level, int *sublevel);
+void *Aya_GetStatGrowthTable(int category);
+void Aya_StatQueryLevelAndSubLevel(int category, int value, int *level, int *sublevel);
 
 /* ------------------------------------------------------------------------- */
 /* Per-level stat record. The level table base is reached via                */
@@ -124,6 +148,7 @@ PE1_STATIC_ASSERT(sizeof(AyaLevelStats) == 0x18, aya_level_stats_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(AyaLevelStats, inventoryCapacity) == 7,
                   aya_level_inventory_capacity_offset);
 AyaLevelStats *Aya_LookupLevelStats(int level);
+void *Aya_GetLevelExpTable(void);
 
 /* EXP threshold table (Aya_GetLevelExpTable): base = *(u32*)0x800A8040 + 0x800A8028,
  * 4 bytes/level, cumulative EXP to REACH each level [CONFIRMED live]:
@@ -133,12 +158,20 @@ AyaLevelStats *Aya_LookupLevelStats(int level);
 /* Stat derivation entry points (see src/main/aya, src/main/item):
  *   void *Aya_GetLevelExpTable(void);        // 0x8005DBF8 alias; 4 bytes/level EXP thresholds
  *   AyaLevelStats *Aya_LookupLevelStats(int level); // tableBase + level*0x18
- *   int  Stat_BinarySearch(...);             // EXP -> level
- *   void Stat_QueryLevelAndSubLevel(int cat, int value, int *outLevel, int *outSublevel);
+ *   int  Aya_StatBinarySearch(...);             // EXP -> level
+ *   void Aya_StatQueryLevelAndSubLevel(int cat, int value, int *outLevel, int *outSublevel);
  *   void Aya_DeriveStats(int *out_max, int *out_current);
- *   int  Battle_GetScaledMaxHP(int level);        // (D_800A1B30+0x14)*levelHp/20
+ *   int  Battle_GetScaledMaxHP(int level);        // (g_StatScaleBase[0]+0x14)*levelHp/20
  *   void Inv_RecalcSlotStats(void);          // pushes save-state stats into the active battle slot
- * Stat scaling parameters live at D_800A1B30..D_800A1B44 (per-category offsets).
+ * Stat scaling parameters live in g_StatScaleBase[0..6] (per-category offsets).
  */
+
+void Inv_RecalcSlotStats(void);
+int Aya_StatBinarySearch(int value, int *table);
+void Aya_StatQueryDistanceAndSubLevel(int kind, int value, int *distance_out, int *sublevel_out);
+int Aya_StatOverflowQuery(int kind, int value);
+int Battle_GetScaledMaxHP(int level);
+void Aya_DeriveStats(int *out_max, int *out_current);
+int Aya_UnlockParasiteSpellById(int key);
 
 #endif /* PE1_AYA_H */

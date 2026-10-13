@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m045_nypd
   ld_script_path: linkers/USA/overlays/room_m045_nypd.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m045_nypd.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m045_nypd.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m045_nypd.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m045_nypd.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,11 +37,16 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m045_nypd]
-      - [0xC, c, ../room_lib/RoomFx_MirrorModel]
-      - [0xB5C, .data, ../room_lib/RoomFx_MirrorModel]
+      - [0xC, c, ../room_lib/mirror_model]
+      - [0xB5C, .data, ../room_lib/mirror_model]
       - start: 0xB98
         type: databin
         name: D_8018FB80
+        dir: room_m045_nypd
+      - [0x2CE70, data, D_801BBE58]
+      - start: 0x2CE7C
+        type: databin
+        name: D_801BBE64
         dir: room_m045_nypd
   - [0x2D800]
 # room: m045, section3 sector 19716, scanner delta 0

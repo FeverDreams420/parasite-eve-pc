@@ -5,6 +5,8 @@ import random
 import struct
 import unittest
 
+from tools.tests.csource import find_definition
+
 ROOT = Path(__file__).resolve().parents[2]
 CASES = (
     ('Attack',0x8008780C,0x30,0x1F801C08,1,2,15,8,0xFF),
@@ -15,7 +17,7 @@ CASES = (
 
 class SpuAdsrRegisterTests(unittest.TestCase):
     def test_changed_helpers_are_plain(self):
-        source = (ROOT/'src/main/akao/Akao_SpuVoiceControl.c').read_text()
+        source = find_definition('AkaoSpuVoice_SetAdsrReleaseRate').read_text()
         for name,*_ in CASES:
             body = source.split('void AkaoSpuVoice_SetAdsr'+name+'(',1)[1].split('\n}',1)[0]
             self.assertNotRegex(body,r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')

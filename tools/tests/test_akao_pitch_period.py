@@ -2,14 +2,18 @@
 from pathlib import Path
 import itertools
 import random
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import functions_text  # noqa: E402
 
 
 class PitchPeriodTests(unittest.TestCase):
     def test_offset_pin_is_removed(self):
-        source = (ROOT/'src/main/akao/voice_pitch.c').read_text()
+        source = functions_text('Akao_SetVoiceLoopAddr', 'Akao_SetVoiceLoopAddrAlt',
+                                'Akao_SetNotePitchBounded', 'Akao_LookupPitchPeriod')
         self.assertLessEqual(source.count('asm("$'),1)
         self.assertNotRegex(source,r'offset\s+asm')
 

@@ -2,31 +2,31 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import find_definition, functions_text, host_unit  # noqa: E402
 
 
 class QsortTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_sort_and_record_preservation(self):
-        source = (ROOT / "src/main/psyq/libc/qsort.c").read_text()
-        # Host execution tests the C algorithm; retail SHA tests MIPS constraints.
-        for constraint in (' asm("$20")', ' asm("$22")', ' asm("$8")',
-                           'asm volatile("" : "=r"(left) : "0"(left));',
+        text = functions_text("qsort", "Mem_SwapBuffers")
+        # Host execution tests the C algorithm; retail SHA tests MIPS
+        # constraints.  The constraints are matching debt and may only go.
+        for constraint in (' asm("$20")', ' asm("$22")',
                            'asm volatile("" : "+r"(pivot) : "r"(half));'):
-            self.assertEqual(source.count(constraint), 1)
-            source = source.replace(constraint, "")
-        source = source.replace('#include "common.h"', "")
-        source = source[:source.index("/* Trailing word")]
-        harness = r'''
-#include <assert.h>
-#include <string.h>
-#define qsort pe_qsort
-typedef unsigned char u8;
-typedef unsigned int u32;
-'''
+            self.assertLessEqual(text.count(constraint), 1)
+        for removed in (' asm("$8")',
+                        'asm volatile("" : "=r"(left) : "0"(left));'):
+            self.assertEqual(text.count(removed), 0)
+        source = host_unit("pe_qsort", "Mem_SwapBuffers",
+                           path=find_definition("qsort"),
+                           prefix="#define qsort pe_qsort")
+        harness = "#include <assert.h>\n"
         harness += source
         harness += r'''
 static int compare_ints(const void *a, const void *b) {
@@ -51,7 +51,7 @@ int main(void) {
             after[values[i] + 8]++;
             if (i) assert(values[i - 1] <= values[i]);
         }
-        assert(memcmp(before, after, sizeof(before)) == 0);
+        assert(__builtin_memcmp(before, after, sizeof(before)) == 0);
         pe_qsort(values, n, sizeof(int), compare_ints);
         for (i = 1; i < n; i++) assert(values[i - 1] <= values[i]);
     }

@@ -1,14 +1,20 @@
 """Regression gates for glyph packet load-delay cleanup."""
 from pathlib import Path
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text  # noqa: E402
+
+
+def glyph_source():
+    return function_text('Draw_EmitGlyph')
 
 
 class DrawEmitGlyphTests(unittest.TestCase):
     def test_typed_fields_remove_clut_register_pin(self):
-        source = (ROOT/'src/main/gpu/Draw_GlyphSprites.c').read_text()
-        source = source[source.index('void *Draw_LookupGlyphDescriptor'):source.index('int g_DrawGlyphAdvance')]
+        source = glyph_source()
         self.assertIn('RenderTexturedQuad *packet;', source)
         self.assertIn('DrawGlyphDescriptor *glyph;', source)
         self.assertNotIn('M2C_FIELD', source)
@@ -16,8 +22,7 @@ class DrawEmitGlyphTests(unittest.TestCase):
         self.assertLessEqual(source.count('asm("$4")'), 1)
 
     def test_load_delays_need_no_explicit_nops(self):
-        source = (ROOT/'src/main/gpu/Draw_GlyphSprites.c').read_text()
-        source = source[source.index('void *Draw_LookupGlyphDescriptor'):source.index('int g_DrawGlyphAdvance')]
+        source = glyph_source()
         self.assertNotIn('PE1_NOP', source)
         self.assertNotIn('psyq_nop.h', source)
         self.assertNotIn('asm volatile("nop")', source)

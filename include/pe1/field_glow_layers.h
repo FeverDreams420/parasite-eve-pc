@@ -2,12 +2,12 @@
 #define PE1_FIELD_GLOW_LAYERS_H
 
 #include "common.h"
-#include "pe1/gte_types.h"
-#include "pe1/field_sprite_state.h"
 #include "pe1/field_glow_sprite.h"
+#include "pe1/field_sprite_state.h"
+#include "pe1/gte_types.h"
 
 /* Field engine glow layers: a placed axis matrix turned by fixed spins
- * and drawn as scaled sprites through func_800C42A4. Three two-layer
+ * and drawn as scaled sprites through FieldFx_DrawGlowSprite. Three two-layer
  * variants and one four-layer variant share this record. */
 typedef struct FieldGlowLayers {
     /* 0x00 */ u8 pad00[4];
@@ -20,21 +20,21 @@ typedef struct FieldGlowLayers {
     /* 0x10 */ GteMatrix matrix;
 } FieldGlowLayers;
 
-extern FieldGlowSprite D_800F34A8;
+extern FieldGlowSprite g_GlowEffectBSprite2;
 
-extern GteShortVector D_800C2154;
-extern GteShortVector D_800C215C;
-extern GteVector D_800C2164;
-extern GteShortVector D_800C2184;
-extern GteShortVector D_800C218C;
-extern GteVector D_800C2194;
-extern GteShortVector D_800C21A4;
-extern GteShortVector D_800C21AC;
-extern GteVector D_800C21B4;
-extern GteShortVector D_800C21D4;
-extern GteShortVector D_800C21DC;
-extern GteShortVector D_800C21E4;
-extern GteShortVector D_800C21EC;
-extern GteVector D_800C21F4;
+extern GteShortVector g_GlowEffectLayersSpinA;
+extern GteShortVector g_GlowLayers1SpinB;
+extern GteVector g_GlowLayers1Scale;
+extern GteShortVector g_GlowEffectBLayersSpinA;
+extern GteShortVector g_GlowEffectBSpinB;
+extern GteVector g_GlowEffectBLayersScale;
+extern GteShortVector g_GlowEffectCLayersSpinA;
+extern GteShortVector g_GlowEffectCLayersSpinB;
+extern GteVector g_GlowLayers3Scale;
+extern GteShortVector g_FourLayerGlowSpinA;
+extern GteShortVector g_FourLayerGlowSpinB;
+extern GteShortVector g_FourLayerGlowSpinC;
+extern GteShortVector g_FourLayerGlowSpinD;
+extern GteVector g_FourLayerGlowScale;
 
 #endif

@@ -1,14 +1,12 @@
-/* CC1_FLAGS: -mno-split-addresses */
-/* ASSEMBLER: GNU */
 /* GCC_VERSION: 2.8.1 */
 /* Psy-Q LIBGPU EXT.OBJ: LoadTPage, LoadClut, LoadClut2, SetDefDrawEnv and
  * SetDefDispEnv. */
+
 #include "common.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/psyq_tim.h"
 #include "pe1/render_prim.h"
-#include "pe1/psyq_gpu.h"
 
-u_short GetClut(int x, int y);
 int GetVideoMode(void);
 
 u32 LoadTPage(u_long *pixels, int mode, int blend,
@@ -24,21 +22,20 @@ u32 LoadTPage(u_long *pixels, int mode, int blend,
     rect.y = y;
     rect.h = height;
 
-    if (mode == 1) {
-        goto mode1;
-    }
-    if (mode < 2) {
-        if (mode == 0) {
-            goto mode0;
+    if (mode != 1) {
+        if (mode < 2) {
+            if (mode == 0) {
+                goto mode0;
+            }
+        } else if (mode == 2) {
+            goto mode2;
         }
-    } else if (mode == 2) {
-        goto mode2;
-    }
-    goto load;
+        goto load;
 
-mode0:
-    rect.w = width / 4;
-    goto loadWidth;
+    mode0:
+        rect.w = width / 4;
+        goto loadWidth;
+    }
 mode1:
     rect.w = width / 2;
     goto loadWidth;

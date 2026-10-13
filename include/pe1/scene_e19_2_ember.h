@@ -9,8 +9,8 @@ extern GteRotation D_8018F1CC;
 extern GteRotation D_8018F1D4;
 extern RenderColor D_8018F234;
 extern RenderColor D_8018F238;
-extern u8 D_8019B484[];
+extern u8 g_SceneE19EmberFlareColorTrack[];
 
-extern int func_801972EC(int mode, RoomOrbitTrailParticle *p);
+extern int SceneE19_EmberFlareParticleCallback(int mode, RoomOrbitTrailParticle *p);
 
 #endif

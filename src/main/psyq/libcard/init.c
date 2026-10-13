@@ -1,5 +1,6 @@
 /* ASSEMBLER: GNU */
 /* Psy-Q LIBCARD INIT.OBJ: InitCARD, StartCARD, StopCARD. */
+
 #include "pe1/pad_internal.h"
 #include "pe1/psyq_bios.h"
 #include "pe1/psyq_card.h"

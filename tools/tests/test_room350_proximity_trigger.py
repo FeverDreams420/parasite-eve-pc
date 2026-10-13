@@ -2,21 +2,30 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import find_definition, host_unit  # noqa: E402
+
+# Overlay function addresses repeat across rooms; search this room only.
+ROOM = 'src/overlays/room_m350_cruiser'
 
 
 class Room350ProximityTriggerTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_bounds_flags_and_post_sqrt_pointers(self):
-        source = (ROOT / "src/overlays/room_m350/RoomActor_TriggerWithinRadius.c").read_text()
+        source = host_unit("RoomM350_TestDropPlayerHit", path=find_definition("RoomM350_TestDropPlayerHit", under=ROOM))
         harness = '#include <assert.h>\n#include <string.h>\n' + source + r'''
-WorldActor *g_PlayerEntity;
-RoomActor **D_800F32D0;
-short D_8019A86C, D_800942EC;
+/* The player is read both as a FieldActor (state flags) and through the
+ * unit's WorldActor view (x/z); both share the leading state pointer. */
+FieldActor *g_PlayerEntity;
+FieldFxObjectPrefix *g_FieldFxOwner;
+short g_RoomM350DropHitCooldown;
+RoomFloorY g_RoomFloorY[1];
 static WorldActor world[2];
-static ActorFlags actors[2];
+static FieldActorState actors[2];
 static RoomActor rooms[2];
 static RoomActor *roomSlots[2][3];
 static unsigned int roomFlags[2];
@@ -24,9 +33,9 @@ static int calls, expectedSquared, distanceResult, mutate;
 int Math_IntSqrt(int squared) {
     assert(calls++ == 0 && squared == expectedSquared);
     if (mutate) {
-        g_PlayerEntity = &world[1];
-        D_800F32D0 = roomSlots[1];
-        D_8019A86C = 77;
+        g_PlayerEntity = (FieldActor *)&world[1];
+        g_FieldFxOwner = (FieldFxObjectPrefix *)roomSlots[1];
+        g_RoomM350DropHitCooldown = 77;
     }
     return distanceResult;
 }
@@ -44,16 +53,17 @@ int main(void) {
         for (i = 0; i < 2; ++i) {
             memset(&world[i], 0, sizeof(world[i]));
             memset(&actors[i], 0, sizeof(actors[i]));
-            world[i].actor = &actors[i];
+            world[i].actor = (ActorFlags *)&actors[i];
             actors[i].flags = 0x12340005U;
             roomFlags[i] = 0x00123456U;
             rooms[i].actor = hasActor ? &roomFlags[i] : 0;
             roomSlots[i][2] = &rooms[i];
         }
-        g_PlayerEntity = &world[0]; D_800F32D0 = roomSlots[0];
+        g_PlayerEntity = (FieldActor *)&world[0];
+        g_FieldFxOwner = (FieldFxObjectPrefix *)roomSlots[0];
         world[0].x = point[4] + dx; world[0].z = point[6] + dz;
-        D_800942EC = 700; point[5] = 188 + height;
-        D_8019A86C = gate ? 30 : 0;
+        g_RoomFloorY[0].y = 700; point[5] = 188 + height;
+        g_RoomM350DropHitCooldown = gate ? 30 : 0;
         calls = 0; mutate = m; distanceResult = radii[r] + delta;
         expectedSquared = dx * dx + dz * dz;
         expectedCalls = !gate && height >= 0 &&
@@ -62,8 +72,8 @@ int main(void) {
         expectedResult = expectedCalls && distanceResult <= radii[r];
         active = expectedCalls && mutate;
         expectedGate = expectedResult ? 30 : active ? 77 : gate ? 30 : 0;
-        assert(func_8019721C(point, radii[r]) == expectedResult);
-        assert(calls == expectedCalls && D_8019A86C == expectedGate);
+        assert(RoomM350_TestDropPlayerHit(point, radii[r]) == expectedResult);
+        assert(calls == expectedCalls && g_RoomM350DropHitCooldown == expectedGate);
         for (i = 0; i < 2; ++i) {
             int changed = expectedResult && i == active;
             assert(actors[i].flags == (0x12340005U | (changed ? 0x4000 : 0)));
@@ -71,8 +81,8 @@ int main(void) {
                    (changed && hasActor ? 0x80000000U : 0)));
         }
     }
-    D_8019A86C = -1; g_PlayerEntity = 0; D_800F32D0 = 0; calls = 0;
-    assert(func_8019721C(0, 10) == 0 && calls == 0);
+    g_RoomM350DropHitCooldown = -1; g_PlayerEntity = 0; g_FieldFxOwner = 0; calls = 0;
+    assert(RoomM350_TestDropPlayerHit(0, 10) == 0 && calls == 0);
     return 0;
 }
 '''

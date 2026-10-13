@@ -10,6 +10,7 @@
  * and local labels (RshiftI, CNTISQ, RTNISQRT, VectorNormalS_entry, ...);
  * 4.0 reordered some delay slots.
  */
+
 #include "pe1/psyq_asm.h"
 
 PSYQ_ASM_OBJECT(LIBGTE, MSC02)
@@ -42,9 +43,9 @@ PSYQ_ASM_FUNCTION(InvSquareRoot,
     ".LCNTISQ:\n"
     "    addi    $t4, $t4, -0x40\n"
     "    sll     $t4, $t4, 1\n"
-    "    lui     $t5, %hi(D_80096250)\n"
+    "    lui     $t5, %hi(g_InvSquareRootMantissaTable)\n"
     "    addu    $t5, $t5, $t4\n"
-    "    lh      $t5, %lo(D_80096250)($t5)\n"
+    "    lh      $t5, %lo(g_InvSquareRootMantissaTable)($t5)\n"
     "    sw      $t1, 0x0($a2)\n"
     "    sw      $t5, 0x0($a1)\n"
     "    addiu   $v0, $zero, 0x1\n"
@@ -122,9 +123,9 @@ PSYQ_ASM_FUNCTION(LIBGTE_MSC02_text_100,
     ".LCNTISQ_VN:\n"
     "    addi    $t4, $t4, -0x40\n"
     "    sll     $t4, $t4, 1\n"
-    "    lui     $t5, %hi(D_80096250)\n"
+    "    lui     $t5, %hi(g_InvSquareRootMantissaTable)\n"
     "    addu    $t5, $t5, $t4\n"
-    "    lh      $t5, %lo(D_80096250)($t5)\n"
+    "    lh      $t5, %lo(g_InvSquareRootMantissaTable)($t5)\n"
     "    nop\n"
     "    mtc2    $t5, $8\n"
     "    mtc2    $t0, $9\n"

@@ -4,6 +4,8 @@ import subprocess
 import tempfile
 import unittest
 
+from tools.tests.csource import find_definition
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -11,7 +13,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 class IntrVSyncStartTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_clears_handlers_installs_vsync_trap_and_returns_registrar(self):
-        source = (ROOT / "src/main/psyq/libetc/intr_vb.c").read_text()
+        source = find_definition('startIntrVSync').read_text()
         source = source[:source.index("void trapIntrVSync(void) {")]
         harness = source + r'''
 #include <assert.h>
@@ -19,7 +21,7 @@ void handler(void) {}
 void (*g_IntrVSyncCallbackTable[8])(void);
 volatile int g_VSyncCount;
 static int timer_mode;
-int *D_800956B0 = &timer_mode;
+int *g_IntrVSyncTimerModePtr = &timer_mode;
 static int clear_calls, event, callback;
 void memclrIntrVSync(void *ptr, int count) {
     int i;

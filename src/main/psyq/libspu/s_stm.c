@@ -1,5 +1,6 @@
 /* ASSEMBLER: GNU */
 /* PSY-Q LIBSPU S_STM: SpuSetTransferMode. */
+
 #include "pe1/psyq_spu_internal.h"
 
 int SpuSetTransferMode(int mode) {
@@ -15,7 +16,7 @@ int SpuSetTransferMode(int mode) {
         enabled = 0;
         break;
     }
-    D_8009B38C = mode;
-    D_8009B418 = enabled;
+    _spu_trans_mode = mode;
+    _spu_transMode = enabled;
     return enabled;
 }

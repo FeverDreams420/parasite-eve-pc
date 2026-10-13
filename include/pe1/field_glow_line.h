@@ -2,12 +2,13 @@
 #define PE1_FIELD_GLOW_LINE_H
 
 #include "common.h"
+#include "pe1/field_tile.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_prim.h"
 #include "pe1/render_tint.h"
-#include "pe1/field_tile.h"
 
-/* Field engine glow line (func_800D2B58): a gouraud line between two
+/* Field engine glow line (FieldFx_DrawGlowLine): a gouraud line between two
  * projected points plus a textured glow quad laid across it. */
 
 /* PSY-Q LINE_G2. */
@@ -44,10 +45,6 @@ PE1_STATIC_ASSERT(sizeof(FieldLineG2Packet) == 0x14, field_line_g2_size);
 PE1_STATIC_ASSERT(sizeof(FieldGlowQuadPacket) == 0x34, field_glow_quad_size);
 
 /* Texture page of the shared effect sheet. */
-extern u16 D_800E2852;
-
-int rsin(int angle);
-int rcos(int angle);
-u16 GetClut(int x, int y);
+extern u16 g_FieldFxTpageTableEntry1;
 
 #endif /* PE1_FIELD_GLOW_LINE_H */

@@ -5,12 +5,14 @@ import re
 import struct
 import unittest
 
+from tools.tests.csource import find_definition, function_text
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class AkaoBgmVolumeFadeTests(unittest.TestCase):
     def test_translation_unit_is_plain_c(self):
-        source = (ROOT/'src/main/akao/Akao_SetBgmVolumeFade.c').read_text()
+        source = function_text('Akao_SetBgmVolumeFade')
         source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
         self.assertNotRegex(source, r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')
         self.assertIn('value = Akao_SendTableCommand(', source)

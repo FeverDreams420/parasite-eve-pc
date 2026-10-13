@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m083_central_park
   ld_script_path: linkers/USA/overlays/room_m083_central_park.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m083_central_park.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m083_central_park.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m083_central_park.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m083_central_park.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,15 +37,21 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m083_central_park]
-      - [0xC, .rodata, ../room_lib/RoomLib_WindowClass]
-      - [0x6C, c, ../room_lib/RoomLib_WindowClass]
-      - start: 0xDF4
+      - [0xC, .rodata, ../room_lib/window_class]
+      - [0x6C, c, ../room_lib/window_class]
+      - [0xDF4, .data, ../room_lib/window_class_table]
+      - start: 0xE10
         type: databin
-        name: D_8018FDDC
+        name: D_8018FDF8
         dir: room_m083_central_park
       - start: 0xE890
         type: databin
         name: D_8019D878
+        dir: room_m083_central_park
+      - [0x1EDFC, data, D_801ADDE4]
+      - start: 0x1EE08
+        type: databin
+        name: D_801ADDF0
         dir: room_m083_central_park
   - [0x1F000]
 # room: m083, section3 sector 28573, scanner delta 0

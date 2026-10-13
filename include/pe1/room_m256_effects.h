@@ -23,8 +23,8 @@ typedef struct RoomM256Template {
     s32 word[2];
 } __attribute__((packed)) RoomM256Template;
 
-extern RoomM256Template D_8018F210;
+extern const RoomM256Template D_8018F210;
 
-int func_8019377C(int mode, RoomM256SwirlSpark *spark);
+int RoomM256_SwirlSparkCallback(int mode, RoomM256SwirlSpark *spark);
 
 #endif

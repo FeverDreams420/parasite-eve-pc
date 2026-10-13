@@ -3,8 +3,8 @@
 
 /* Declarations used by the model parser Render_SetupEntityPrims. */
 
-#include "pe1/render_object.h"
 #include "pe1/gte_types.h"
+#include "pe1/render_object.h"
 
 /* GPU packet head shared by every primitive class: the word count byte of
  * the tag and the command byte after the first colour. */
@@ -56,9 +56,14 @@ typedef union RenderModelCursor {
     RenderTriTexture *tri;
 } RenderModelCursor;
 
-extern int D_8009CDDC;
+extern int g_ActiveDrawSlot;
 void Anim_SetInterpRate(RenderObjectEntity *object, int rate);
 void Render_InitPrimBlock(RenderObjectEntity *object, s16 x, s16 y, int unused,
                           unsigned int palette_row);
+
+int Render_SetupEntityPrims(RenderObjectEntity *object, RenderObjectHeader *model,
+                            u8 *packetBuffer, s16 x, s16 y, s16 unused,
+                            s16 paletteRow, s16 initCount, s8 **textureOut,
+                            int setup);
 
 #endif /* PE1_RENDER_SETUP_H */

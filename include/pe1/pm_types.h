@@ -3,7 +3,6 @@
 
 #include "common.h"
 
-
 /* Both process-manager banks share this prefix. Pm_Exec increments ticks
  * at +4 after calling the command handler; +8 identifies the owning object. */
 typedef struct PmSlotHeader {
@@ -15,16 +14,16 @@ typedef struct PmSlotHeader {
     void *owner;
 } PmSlotHeader;
 
-typedef int (*PmSendCallback)(PmSlotHeader *, int, int, int *, int *, int *);
+typedef int (*PmSendCallback)(PmSlotHeader *, int, int, int, int, int);
 
 /* Handler table entries expose both scene-asset and process-manager callbacks. */
 typedef struct PmCommand {
     void (*init)(void);
     void (*initialize)(PmSlotHeader *);
     PmSendCallback send;
-    int (*start)(void);
+    int (*start)(PmSlotHeader *);
     int (*execute)(PmSlotHeader *);
-    int (*stop)(void);
+    int (*stop)(PmSlotHeader *);
     void (*unload)(void);
 } PmCommand;
 

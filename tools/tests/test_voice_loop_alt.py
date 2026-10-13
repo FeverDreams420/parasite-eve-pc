@@ -3,15 +3,17 @@ from pathlib import Path
 import itertools
 import random
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import functions_text  # noqa: E402
 
 
 class VoiceLoopAltTests(unittest.TestCase):
     def test_backward_loop_function_has_no_asm(self):
-        source = (ROOT/'src/main/akao/voice_pitch.c').read_text()
-        body = source.split('void Akao_SetVoiceLoopAddrAlt',1)[1].split('extern int g_AkaoPitchPeriodTable',1)[0]
+        body = functions_text('Akao_SetVoiceLoopAddrAlt', 'Akao_SetNotePitchBounded')
         self.assertNotRegex(body,r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and

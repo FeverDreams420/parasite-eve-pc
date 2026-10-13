@@ -11,13 +11,14 @@
  * has the same structure (_patch_GTE.._patch_GTE_end in .text, copy loop at
  * assembler label 1$) without the comparison pass.
  */
+
 #include "pe1/psyq_asm.h"
 
 PSYQ_ASM_OBJECT(LIBGTE, PATCHGTE)
 
 PSYQ_ASM_FUNCTION(_patch_gte,
-    "    lui     $at, %hi(D_800A3450)\n"
-    "    sw      $ra, %lo(D_800A3450)($at)\n"
+    "    lui     $at, %hi(g_PatchGteSavedRa)\n"
+    "    sw      $ra, %lo(g_PatchGteSavedRa)($at)\n"
     "    jal     EnterCriticalSection\n"
     "    nop\n"
     "    addiu   $t1, $zero, 0x56\n"
@@ -57,8 +58,8 @@ PSYQ_ASM_FUNCTION(_patch_gte,
     "    nop\n"
     "    jal     ExitCriticalSection\n"
     "    nop\n"
-    "    lui     $ra, %hi(D_800A3450)\n"
-    "    lw      $ra, %lo(D_800A3450)($ra)\n"
+    "    lui     $ra, %hi(g_PatchGteSavedRa)\n"
+    "    lw      $ra, %lo(g_PatchGteSavedRa)($ra)\n"
     "    nop\n"
     "    jr      $ra\n"
     "    nop\n");

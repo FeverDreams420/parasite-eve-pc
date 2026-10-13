@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m089_central_park
   ld_script_path: linkers/USA/overlays/room_m089_central_park.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m089_central_park.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m089_central_park.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m089_central_park.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m089_central_park.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,17 +37,11 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m089_central_park]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/actor_classes]
       - [0x1E4, rodata, D_8018F1CC]
-      - [0x1F4, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3510, c, RoomEffect_SpiralTrail_801924F8]
-      - [0x3A48, c, RoomLib_SpawnRandomEffect_80192A30]
-      - [0x3CEC, c, RoomEffect_SpinModel_80192CD4]
-      - [0x4218, c, RoomEffect_SwirlRiseSprite_80193200]
-      - [0x4630, c, RoomEffect_ModelPulse_80193618]
-      - [0x5008, c, func_80193FF0]
-      - [0x503C, data, D_80194024]
-      - [0x5074, data, D_8019405C]
+      - [0x1F4, c, ../room_lib/actor_classes]
+      - [0x3510, c, m089]
+      - [0x503C, .data, ../room_lib/actor_class_table]
       - [0x50E4, data, D_801940CC]
       - [0x5110, data, D_801940F8]
       - [0x5140, data, D_80194128]
@@ -55,6 +51,11 @@ segments:
       - start: 0x5184
         type: databin
         name: D_8019416C
+        dir: room_m089_central_park
+      - [0x5CE60, data, D_801EBE48]
+      - start: 0x5CE78
+        type: databin
+        name: D_801EBE60
         dir: room_m089_central_park
   - [0x5D800]
 # room: m089, section3 sector 29945, scanner delta 0

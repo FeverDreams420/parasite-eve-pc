@@ -4,20 +4,26 @@ import itertools
 import random
 import re
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text  # noqa: E402
 
 
 class SpuManageVoicesTests(unittest.TestCase):
-    def test_function_is_plain_typed_c(self):
-        source = (ROOT/'src/main/akao/Akao_NestedTrack.c').read_text()
-        match = re.search(r'void Spu_ManageVoices\([^)]*\)\s*\{',source)
-        self.assertIsNotNone(match)
-        body = source[match.start():source.index('\n#include',match.start())]
-        body = re.sub(r'/\*.*?\*/|//[^\n]*','',body,flags=re.S)
-        self.assertNotRegex(body,r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')
-        self.assertIn('field->key_on_mask',body)
+    @staticmethod
+    def body():
+        return re.sub(r'/\*.*?\*/|//[^\n]*','',function_text('Spu_ManageVoices'),flags=re.S)
+
+    def test_function_uses_typed_fields(self):
+        self.assertRegex(self.body(),r'\w+->key_on_mask')
+
+    # Merging the unit into akao/voice_bank.c (92e54cdf9) once brought
+    # back two register pins and a barrier; keep them from returning.
+    def test_function_has_no_asm_constraints(self):
+        self.assertNotRegex(self.body(),r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
                          (ROOT/'build/USA/main.exe').is_file(), 'retail/build unavailable')

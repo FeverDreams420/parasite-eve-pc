@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m273_liberty
   ld_script_path: linkers/USA/overlays/room_m273_liberty.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m273_liberty.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m273_liberty.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m273_liberty.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m273_liberty.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,69 +37,31 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m273_liberty]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1E4, .rodata, func_80192E64]
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, .rodata, m273]
       - [0x1FC, rodata, D_8018F1E4]
-      - [0x200, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x351C, c, func_80192504]
-      - [0x3524, c, func_8019250C]
-      - [0x35C8, c, func_801925B0]
-      - [0x3620, c, func_80192608]
-      - [0x3628, c, ../room_lib/RoomLib_UpdateCallback]
-      - [0x3650, c, ../room_lib/SceneEffect_GrabAwaitStance]
-      - [0x367C, c, SceneEffect_GrabOnApproach]
-      - [0x3850, c, func_80192838]
+      - [0x200, c, ../room_lib/actor_classes]
+      - [0x351C, c, m273_class]
+      - [0x3628, c, ../room_lib/class_update_callback]
+      - [0x3650, c, ../room_lib/grab_await_stance]
+      - [0x367C, c, m273]
       # Placement setup, frame gate, and selection-state reset share one TU.
-      - [0x3C18, c, RoomPlacementFlow]
-      - [0x3E54, c, func_80192E3C]
-      - [0x3E5C, c, func_80192E44]
-      - [0x3E64, c, func_80192E4C]
-      - [0x3E7C, c, func_80192E64]
-      - [0x3F6C, c, func_80192F54]
-      - [0x4100, c, func_801930E8]
-      - [0x4124, c, func_8019310C]
-      - [0x412C, c, func_80193114]
-      - [0x4224, c, RoomEffect_TwoPassSampledLayer]
       # The emitter initializes the callback's contiguous twelve-byte records.
-      - [0x4554, c, RoomEffect_ScaledLayer]
-      - [0x4888, c, RoomEffect_PointerPaletteSprite]
       # Four threshold effect families share their mode context and allocator flow.
-      - [0x4B74, c, RoomEffect_ThresholdPairBurst]
-      - [0x5B74, c, RoomEffect_TwoPassScaledLayer]
-      - [0x5D6C, c, func_80194D54]
       # The controller fills the callback record using the boss-hand trail layout.
-      - [0x5E84, c, RoomEffect_FallingTrailFlow]
       # The pulse callback and its paired-batch controller share one typed TU.
-      - [0x699C, c, RoomEffect_PulseBatchFlow]
       # The rising sprite and adjacent dual-pool controllers share one TU.
-      - [0x6E28, c, RoomEffect_RisingAndPeriodicPoolsFlow]
-      - [0x7360, c, RoomEffect_BossTurnController]
       # The ring emitter fills the same 24-byte record interpreted by its callback.
-      - [0x7674, c, RoomEffect_DirectedRingsFlow]
       # The batch emitter fills the callback's contiguous eight-byte records.
-      - [0x7F44, c, RoomEffect_BatchRising]
       # Sized-table, timed, and position-layer sprite pools share one TU.
-      - [0x8248, c, RoomEffect_RisingSpritePoolFlow]
       # Boss sweep position and its shard/pool callbacks share the boss state ABI.
-      - [0x8BD4, c, RoomM273BossSwayFlow]
       # Paired ground sprites and ground rings share sway points and pool-record layout.
-      - [0x9B34, c, RoomEffect_BossGroundSwayFlow]
-      - [0xA580, c, RoomEffect_DelayedBurstFlow]
       # The emitter owns the callback's four-byte pointer entries.
       # The pointer emitter and boss sway controller share the typed sway-point table.
-      - [0xA968, c, RoomM273PointerSwayFlow]
-      - [0xAF88, c, func_80199F70]
-      - [0xAF9C, c, func_80199F84]
-      - [0xB080, c, func_8019A068]
-      - [0xB1B8, c, func_8019A1A0]
-      - [0xB2A8, c, func_8019A290]
-      - [0xB3B0, c, func_8019A398]
+      - [0xB3B0, c, RoomM273_PulseSpriteCallback]
       # Adjacent phased-pointer and arc callbacks share frame/trig inputs and effect-pool flow.
       - [0xB4E4, c, RoomEffect_PhasedArcSpriteFlow]
-      - [0xB828, data, D_8019A810]
-      - [0xB860, data, D_8019A848]
-      - [0xB87C, data, D_8019A864]
-      - [0xB898, data, D_8019A880]
+      - [0xB828, .data, ../room_lib/actor_class_table]
       - [0xB8D0, data, D_8019A8B8]
       - [0xB8E0, data, D_8019A8C8]
       - [0xB8E4, data, D_8019A8CC]
@@ -203,6 +167,11 @@ segments:
       - start: 0x41200
         type: databin
         name: D_801D01E8
+        dir: room_m273_liberty
+      - [0x4FDCC, data, D_801DEDB4]
+      - start: 0x4FE44
+        type: databin
+        name: D_801DEE2C
         dir: room_m273_liberty
   - [0x50800]
 # room: m273, section3 sector 70012, scanner delta 0

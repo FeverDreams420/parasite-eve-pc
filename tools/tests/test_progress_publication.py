@@ -95,8 +95,11 @@ class ProgressPublicationTests(unittest.TestCase):
         self.assertEqual(upload["with"]["name"], "SLUS_006.62_report")
         self.assertEqual(upload["with"]["path"], "build/USA/report.json")
         self.assertEqual(upload["with"]["if-no-files-found"], "error")
+        # Published from main pushes only, and kept even when a later check
+        # fails (95a3a3056) so the report of a red build can be inspected.
         self.assertEqual(upload["if"],
-                         "github.event_name == 'push' && github.ref == 'refs/heads/main'")
+                         "always() && github.event_name == 'push' && "
+                         "github.ref == 'refs/heads/main'")
 
 
 if __name__ == "__main__":

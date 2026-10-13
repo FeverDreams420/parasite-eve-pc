@@ -3,18 +3,29 @@ from pathlib import Path
 import itertools
 import random
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import defined_functions, find_definition, function_text  # noqa: E402
 
 
 class LoadVoiceBankTests(unittest.TestCase):
     def test_redundant_constraints_are_gone(self):
-        source = (ROOT/'src/main/akao/Akao_LoadVoiceBank.c').read_text()
+        # The function plus the declarations between it and the previous
+        # definition in its unit.
+        path = find_definition('Akao_LoadVoiceBank')
+        unit = path.read_text()
+        names = defined_functions(path)
+        previous = function_text(names[names.index('Akao_LoadVoiceBank')-1], path).strip()
+        body = function_text('Akao_LoadVoiceBank', path).strip()
+        source = unit[unit.index(previous)+len(previous):unit.index(body)+len(body)]
         self.assertNotIn('__asm__', source)
         self.assertLessEqual(source.count('asm("$'), 1)
-        self.assertIn('extern AkaoVoiceActor *D_8009D254;', source)
-        self.assertIn('extern int D_8009D1A0;', source)
+        # Plain typed externs, not assembler aliases.
+        self.assertRegex(source, r'extern [^;(]*\*\s*D_8009D254;')
+        self.assertRegex(source, r'extern (?:unsigned )?int D_8009D1A0;')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
                          (ROOT/'build/USA/main.exe').is_file(), 'retail/build unavailable')

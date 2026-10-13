@@ -8,4 +8,9 @@
  * their own view; see the note in field_actor.h. */
 extern FieldActor *g_PlayerEntity;
 
+/* Points the player actor's state at Aya's battle record and rebuilds her
+ * equipment lists (battle/encounter.c). */
+struct AyaBattleState;
+void Battle_InitEquipLists(struct AyaBattleState **out);
+
 #endif /* PE1_PLAYER_ENTITY_H */

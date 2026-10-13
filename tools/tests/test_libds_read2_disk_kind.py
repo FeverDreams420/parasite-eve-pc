@@ -2,11 +2,13 @@
 import hashlib
 import pathlib
 import shutil
-import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import linked_range_bytes  # noqa: E402
 
 # Retail at 0x80081314 and 0x80082400. The latter TU includes the unchanged
 # 68-byte GD_cbsync followed by the newly reconstructed 100-byte GD_cbready.
@@ -26,15 +28,9 @@ class LibdsRead2DiskKindTests(unittest.TestCase):
         for name, size, digest, script in CASES:
             with self.subTest(function=name), tempfile.TemporaryDirectory() as directory:
                 work = pathlib.Path(directory)
-                obj, elf, data = work / "code.o", work / "code.elf", work / "code.bin"
-                subprocess.run(["tools/scripts/cc.sh", f"src/main/psyq/libds/{name}.c", str(obj)],
-                               cwd=ROOT, check=True, capture_output=True)
-                linker_script = work / "code.ld"
-                linker_script.write_text(script)
-                subprocess.run(["mipsel-none-elf-ld", "-T", str(linker_script),
-                                str(obj), "-o", str(elf)], check=True)
-                subprocess.run(["mipsel-none-elf-objcopy", "-O", "binary",
-                                "--only-section=.text", str(elf), str(data)], check=True)
-                code = data.read_bytes()
+                symbols, sections = script.split("SECTIONS", 1)
+                address = int(sections.split()[2], 16)
+                # Units churn; link whichever current units cover the range.
+                code = linked_range_bytes(address, size, symbols, work)
                 self.assertEqual(len(code), size)
                 self.assertEqual(hashlib.sha256(code).hexdigest(), digest)

@@ -8,7 +8,7 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ENTRY = 0x8006A674
-UNIT = 0x8006A5BC
+UNIT = 0x800698D4  # start of asset/game_state.c (display lists first)
 EXIT = 0x80010000
 STATE = 0x800B0CD8
 PAIRS = 0x80094488
@@ -39,17 +39,22 @@ class AkaoClearVoiceBankTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             work = pathlib.Path(directory)
             obj, elf, binary = (work / name for name in ("akao.o", "akao.elf", "akao.bin"))
-            subprocess.run(["tools/scripts/cc.sh", "src/main/boot/Boot_GameStateInit.c", str(obj)],
+            subprocess.run(["tools/scripts/cc.sh", "src/main/asset/game_state.c", str(obj)],
                            cwd=ROOT, check=True, capture_output=True)
+            # Call targets elsewhere in the unit are placed in jal range; only
+            # the reset routine's slice is compared.
+            undefined = subprocess.run(["mipsel-none-elf-nm", "-u", str(obj)], check=True,
+                                       capture_output=True, text=True).stdout.split()
+            stubs = "".join(f"{name} = 0x80060000;\n" for name in undefined
+                            if name not in ("U", "g_GameState", "g_AkaoVoiceBankEntries", "_gp"))
             (work / "akao.ld").write_text(
+                stubs +
                 "g_GameState = 0x800B0CD8;\n"
-                "D_80094488 = 0x80094488;\n"
+                "g_AkaoVoiceBankEntries = 0x80094488;\n"
                 "_gp = 0x8009CD70;\n"
-                "SECTIONS { .text 0x8006A5BC : SUBALIGN(4) { *(.text) } "
+                "SECTIONS { .text 0x800698D4 : SUBALIGN(4) { *(.text) } "
                 "/DISCARD/ : { *(.reginfo) *(.mdebug) *(.pdr) } }\n"
             )
-            # The unit's other functions reference symbols this check does not
-            # need; only the reset routine's slice is compared.
             subprocess.run(["mipsel-none-elf-ld", "-EL", "--unresolved-symbols=ignore-all",
                             "-T", str(work / "akao.ld"),
                             str(obj), "-o", str(elf)], check=True, capture_output=True)

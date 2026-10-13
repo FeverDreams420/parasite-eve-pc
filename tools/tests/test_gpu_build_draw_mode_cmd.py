@@ -6,6 +6,8 @@ import subprocess
 import tempfile
 import unittest
 
+from tools.tests.csource import find_definition
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -19,7 +21,7 @@ class GpuBuildDrawModeCmdTests(unittest.TestCase):
             self.skipTest('unicorn unavailable')
         ENTRY, EXIT = 0x80076150, 0x80010000
         retail = (ROOT/'assets/USA/main.exe').read_bytes()[0x66950:0x66970]
-        source = ROOT/'src/main/psyq/libgpu/Gpu_BuildDrawModeCmd.c'
+        source = find_definition('Gpu_BuildDrawModeCmd')
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
             subprocess.run([str(ROOT/'tools/scripts/cc.sh'), str(source), str(work/'test.o')], check=True, capture_output=True)

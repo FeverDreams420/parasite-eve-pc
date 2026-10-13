@@ -31,6 +31,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273SwayState, done) == 0x2E,
 PE1_STATIC_ASSERT(sizeof(RoomM273SwayState) == 0x30,
                   room_m273_sway_state_size);
 
-extern RoomM273SwayState D_8019AF74;
+extern RoomM273SwayState g_RoomM273SwayState;
 
 #endif

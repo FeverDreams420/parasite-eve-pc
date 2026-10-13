@@ -1,7 +1,3 @@
-FieldEng_VecToAngle = 0x800DFF80;
-FieldEng_TurnToward = 0x800DFFB8;
-g_FieldActorListHead = 0x8009D20C;
-g_PlayerEntity = 0x8009D254;
 RoomLib_HandlerDNop0 = 0x8018F22C; // type:func
 RoomLib_InitHandlerD = 0x8018F234; // type:func
 RoomLib_ConfigureHandlerD = 0x8018F2D4; // type:func
@@ -65,3 +61,4 @@ RoomLib_WindowHandler = 0x80192814; // type:func
 RoomLib_WindowArrived = 0x80193208; // type:func
 RoomLib_ReleaseWindowClass = 0x80193250; // type:func
 RoomLib_WindowClassNop6 = 0x801932C8; // type:func
+g_RoomClassTable = 0x801932D0; // size:0xC4 allow_addend:true

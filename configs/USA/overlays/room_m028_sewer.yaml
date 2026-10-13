@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m028_sewer
   ld_script_path: linkers/USA/overlays/room_m028_sewer.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m028_sewer.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m028_sewer.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m028_sewer.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m028_sewer.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,13 +37,14 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m028_sewer]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1E4, .rodata, ../room_lib/RoomEffect_OrbitFlare]
-      - [0x1F4, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3510, c, ../room_lib/RoomEffect_OrbitFlare]
-      - [0x4160, c, ../room_lib/RoomLib_SetArgs3]
-      - [0x4184, data, D_8019316C]
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, .rodata, ../room_lib/orbit_flare]
+      - [0x1F4, c, ../room_lib/actor_classes]
+      - [0x3510, c, ../room_lib/orbit_flare]
+      - [0x4160, c, ../room_lib/script_args]
+      - [0x4184, .data, ../room_lib/actor_class_table]
       - [0x422C, data, D_80193214]
+      - [0x4268, data, D_80193250]
       - [0x42A0, data, RoomSlotA_80193148]
       - [0x42A4, data, RoomSlotB_80193148]
       - start: 0x42A8
@@ -51,6 +54,12 @@ segments:
       - start: 0x14F50
         type: databin
         name: D_801A3F38
+        dir: room_m028_sewer
+      - [0x2220C, data, D_801B11F4]
+      - [0x22218, data, D_801B1200]
+      - start: 0x22224
+        type: databin
+        name: D_801B120C
         dir: room_m028_sewer
   - [0x22800]
 # room: m028, section3 sector 14003, scanner delta 0

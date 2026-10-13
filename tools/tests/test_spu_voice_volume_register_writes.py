@@ -5,12 +5,14 @@ import random
 import struct
 import unittest
 
+from tools.tests.csource import find_definition
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class SpuVoiceVolumeTests(unittest.TestCase):
     def test_volume_helper_is_plain(self):
-        source = (ROOT/'src/main/akao/Akao_SpuVoiceControl.c').read_text()
+        source = find_definition('AkaoSpuVoice_SetVolume').read_text()
         body = source.split('void AkaoSpuVoice_SetVolume(',1)[1].split('void AkaoSpuVoice_SetPitch',1)[0]
         self.assertNotRegex(body,r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')
 

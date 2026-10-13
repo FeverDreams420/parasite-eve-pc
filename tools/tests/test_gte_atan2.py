@@ -21,7 +21,7 @@ class GteAtan2Tests(unittest.TestCase):
             subprocess.run(['tools/scripts/cc.sh', 'src/main/psyq/libgte/ratan.c', str(obj)],
                            cwd=ROOT, check=True, capture_output=True)
             script = work / 'gte.ld'
-            script.write_text('D_8009A6EC = 0x8009A6EC;\n'
+            script.write_text('atan_table = 0x8009A6EC;\n'
                               'SECTIONS { .text 0x80079FB4 : SUBALIGN(4) '
                               '{ *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }')
             subprocess.run(['mipsel-none-elf-ld', '-T', str(script), str(obj), '-o', str(linked)], check=True)

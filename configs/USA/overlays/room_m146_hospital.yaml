@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m146_hospital
   ld_script_path: linkers/USA/overlays/room_m146_hospital.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m146_hospital.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m146_hospital.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m146_hospital.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m146_hospital.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,19 +37,18 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m146_hospital]
-      - [0xC, .rodata, ../room_lib/RoomEffect_GroundEruption]
-      - [0x5C, .rodata, ../room_lib/RoomFx_FallingSpriteBurst]
-      - [0x94, c, ../room_lib/RoomEffect_GroundEruptionClass]
-      - [0x230, c, ../room_lib/RoomEffect_GroundEruption]
-      - [0x1558, c, ../room_lib/RoomLib_ClassNop0]
-      - [0x1560, c, ../room_lib/RoomLib_PlantScript]
-      - [0x158C, c, ../room_lib/RoomLib_Spawn6]
-      - [0x15B8, c, ../room_lib/RoomLib_RegisterDrawList]
-      - [0x1600, c, ../room_lib/RoomLib_RegisterPairedTables]
-      - [0x168C, c, ../room_lib/RoomLib_CloseTarget]
-      - [0x1710, c, ../room_lib/RoomLib_ClassNop6]
-      - [0x1718, c, ../room_lib/RoomFx_FallingSpriteBurst]
-      - [0x2674, c, ../room_lib/RoomEffect_HomingProjectile]
+      - [0xC, .rodata, ../room_lib/ground_eruption]
+      - [0x5C, .rodata, ../room_lib/falling_sprite_burst]
+      - [0x94, c, ../room_lib/ground_eruption]
+      - [0x1558, c, ../room_lib/class_nop0]
+      - [0x1560, c, ../room_lib/class_plant_script]
+      - [0x158C, c, ../room_lib/class_spawn]
+      - [0x15B8, c, ../room_lib/class_register_draw_list]
+      - [0x1600, c, ../room_lib/class_register_tables]
+      - [0x168C, c, ../room_lib/class_close_target]
+      - [0x1710, c, ../room_lib/class_nop6]
+      - [0x1718, c, ../room_lib/falling_sprite_burst]
+      - [0x2674, c, ../room_lib/homing_projectile]
       - [0x3460, data, D_80192448]
       - [0x347C, data, RoomLib_TableC]
       - [0x3498, data, D_80192480]
@@ -61,7 +62,7 @@ segments:
       - [0x357C, data, D_80192564]
       - [0x3598, data, RoomLib_TableB_80190548]
       - [0x35E4, data, D_801925CC]
-      - [0x35FC, .data, ../room_lib/RoomEffect_HomingProjectileSeeds]
+      - [0x35FC, .data, ../room_lib/homing_projectile_seeds]
       - [0x3624, data, D_8019260C]
       - [0x3660, data, g_RoomHomingLaunch]
       - [0x3680, data, D_80192668]
@@ -94,6 +95,11 @@ segments:
       - start: 0x9208
         type: databin
         name: D_801981F0
+        dir: room_m146_hospital
+      - [0x4F3F4, data, D_801DE3DC]
+      - start: 0x4F418
+        type: databin
+        name: D_801DE400
         dir: room_m146_hospital
   - [0x50000]
 # room: m146, section3 sector 42308, scanner delta 0

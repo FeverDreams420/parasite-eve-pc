@@ -22,7 +22,9 @@ if [ -z "${PE_CC1:-}" ] && grep -q 'GCC_VERSION:.*2\.8\.1' "$IN"; then
     CC1="$ROOT/tools/scripts/cc1_stock281psx.sh"
 fi
 MASPSX=("$ROOT/.venv/bin/python" "$ROOT/tools/maspsx/maspsx.py")
-MASPSX_ASPSX_VERSION="${PE_MASPSX_ASPSX_VERSION:-2.56}"
+# Default ASPSX 2.70: every unit compiles the same under it except the ones
+# that say `ASPSX_VERSION: 2.56` (docs/COMPILATION_FLAGS.md).
+MASPSX_ASPSX_VERSION="${PE_MASPSX_ASPSX_VERSION:-2.70}"
 if [ -z "${PE_MASPSX_ASPSX_VERSION:-}" ]; then
     SOURCE_ASPSX_VERSION=$(sed -n 's/.*ASPSX_VERSION:[[:space:]]*\([0-9][0-9.]*\).*/\1/p' "$IN" | head -1)
     if [ -n "$SOURCE_ASPSX_VERSION" ]; then
@@ -103,6 +105,48 @@ if grep -q 'CC1_FLAGS:.*-fno-thread-jumps' "$IN"; then
     CC1_FLAGS="$CC1_FLAGS -fno-thread-jumps"
 fi
 
+BACKEND=maspsx
+if grep -q 'GAS_VERSION:.*2\.8\.1' "$IN"; then
+    BACKEND=gas-2.8.1
+elif grep -q 'GAS_VERSION:.*2\.7' "$IN"; then
+    BACKEND=gas-2.7
+elif grep -q 'ASSEMBLER: GNU' "$IN"; then
+    BACKEND=gnu-as
+fi
+
+MASPSX_EXTRA=()
+if grep -q 'MASPSX_FLAGS:.*--dont-expand-li' "$IN"; then
+    MASPSX_EXTRA+=(--dont-expand-li)
+fi
+# Divisions get ASPSX's divide checks unless the unit opts out with
+# `MASPSX_FLAGS: --no-expand-div` (MASPSX itself has no negative option).
+if ! grep -q 'MASPSX_FLAGS:.*--no-expand-div' "$IN"; then
+    MASPSX_EXTRA+=(--expand-div)
+fi
+if grep -q 'MASPSX_FLAGS:.*--use-comm-section' "$IN"; then
+    MASPSX_EXTRA+=(--use-comm-section)
+fi
+# Some retail units use GP-relative loads but absolute address-taking. Preserve
+# MASPSX's stock forced-G0 assembler mode for those units: COMMON metadata still
+# drives MASPSX's explicit GP loads, while GNU as leaves `la` absolute.
+if [[ "$AS_G_FLAG" != "-G0" ]] && ! grep -q 'MASPSX_FORCE_G0:[[:space:]]*1' "$IN"; then
+    MASPSX_EXTRA+=(--dont-force-G0)
+fi
+
+# `PE_CC_PRINT_FLAGS=1 cc.sh <input.c> -` prints the resolved per-file
+# settings and compiles nothing (tools/reorg/flag_audit.py reads this).
+if [ -n "${PE_CC_PRINT_FLAGS:-}" ]; then
+    echo "cc1: $(basename "$CC1")"
+    echo "cc1_flags: $CC1_FLAGS"
+    echo "backend: $BACKEND"
+    echo "as_g: $AS_G_FLAG"
+    if [ "$BACKEND" = maspsx ]; then
+        echo "aspsx_version: $MASPSX_ASPSX_VERSION"
+        echo "maspsx_flags: ${MASPSX_EXTRA[*]+"${MASPSX_EXTRA[*]}"}"
+    fi
+    exit 0
+fi
+
 mkdir -p "$(dirname "$OUT")"
 
 TMP_I=$(mktemp -t pe1-cc.XXXXXX.i)
@@ -117,7 +161,7 @@ trap 'rm -f "$TMP_I" "$TMP_S" "$TMP_D" "$TMP_GAS"' EXIT
 "$CPP" $CPP_FLAGS "$IN" -o "$TMP_I"
 "$CC1" $CC1_FLAGS "$TMP_I" -o "$TMP_S"
 
-if grep -q 'GAS_VERSION:.*2\.8\.1' "$IN"; then
+if [ "$BACKEND" = gas-2.8.1 ]; then
     GAS281="${PE_GAS281_DIR:-$ROOT/tools/gas-2.8.1}/as"
     [ -x "$GAS281" ] || "$ROOT/tools/scripts/setup_gas281.sh" >&2
     "$GAS281" -EL "$AS_G_FLAG" -mips1 -mcpu=r3000 -o "$OUT" "$TMP_S"
@@ -125,7 +169,7 @@ if grep -q 'GAS_VERSION:.*2\.8\.1' "$IN"; then
     exit 0
 fi
 
-if grep -q 'GAS_VERSION:.*2\.7' "$IN"; then
+if [ "$BACKEND" = gas-2.7 ]; then
     GAS27="${PE_GAS27_DIR:-$ROOT/tools/gas-2.7}/as"
     [ -x "$GAS27" ] || "$ROOT/tools/scripts/setup_gas27.sh" >&2
     "$GAS27" -EL "$AS_G_FLAG" -mips1 -mcpu=r3000 -o "$OUT" "$TMP_S"
@@ -133,7 +177,7 @@ if grep -q 'GAS_VERSION:.*2\.7' "$IN"; then
     exit 0
 fi
 
-if grep -q 'ASSEMBLER: GNU' "$IN"; then
+if [ "$BACKEND" = gnu-as ]; then
     cat > "$TMP_GAS" <<'EOF'
 .macro move destination, source
     addu \destination, \source, $zero
@@ -144,23 +188,6 @@ EOF
         -o "$OUT" "$TMP_GAS" "$TMP_S"
     mv "$TMP_D" "$OUT.d"
     exit 0
-fi
-
-MASPSX_EXTRA=()
-if grep -q 'MASPSX_FLAGS:.*--dont-expand-li' "$IN"; then
-    MASPSX_EXTRA+=(--dont-expand-li)
-fi
-if grep -q 'MASPSX_FLAGS:.*--expand-div' "$IN"; then
-    MASPSX_EXTRA+=(--expand-div)
-fi
-if grep -q 'MASPSX_FLAGS:.*--use-comm-section' "$IN"; then
-    MASPSX_EXTRA+=(--use-comm-section)
-fi
-# Some retail units use GP-relative loads but absolute address-taking. Preserve
-# MASPSX's stock forced-G0 assembler mode for those units: COMMON metadata still
-# drives MASPSX's explicit GP loads, while GNU as leaves `la` absolute.
-if [[ "$AS_G_FLAG" != "-G0" ]] && ! grep -q 'MASPSX_FORCE_G0:[[:space:]]*1' "$IN"; then
-    MASPSX_EXTRA+=(--dont-force-G0)
 fi
 
 "${MASPSX[@]}" --aspsx-version="$MASPSX_ASPSX_VERSION" \

@@ -4,12 +4,14 @@ import itertools
 import struct
 import unittest
 
+from tools.tests.csource import function_text
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class CDReadDoneTests(unittest.TestCase):
     def test_plain_source(self):
-        self.assertNotRegex((ROOT/'src/main/psyq/libds/dsready_3.c').read_text(), r'\b(?:asm|__asm__)\b')
+        self.assertNotRegex(function_text('LIBDS_DSREADY_text_3D8'), r'\b(?:asm|__asm__)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
                          (ROOT/'build/USA/main.exe').is_file(), 'images unavailable')

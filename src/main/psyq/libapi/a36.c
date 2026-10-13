@@ -1,4 +1,5 @@
 /* PSY-Q LIBAPI A36: EnterCriticalSection. */
+
 #include "pe1/psyq_bios.h"
 
 int EnterCriticalSection(void) {

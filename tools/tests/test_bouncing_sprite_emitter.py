@@ -2,22 +2,27 @@
 from importlib.util import find_spec
 from pathlib import Path
 import itertools
+import shutil
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text  # noqa: E402
 
 
 class BouncingSpriteEmitterTests(unittest.TestCase):
     def test_plain_source(self):
-        source = (ROOT / "src/main/engine/FieldEng_BouncingSpriteEmitter.c").read_text()
+        source = function_text("FieldFx_BouncingSpinEmitter")
         self.assertNotRegex(source, r'\b(?:INCLUDE_ASM|REGALLOC_BARRIER)\b')
         self.assertNotRegex(source, r'asm\s+volatile\s*\(\s*"[^\"]+')
 
     @unittest.skipUnless(
         (ROOT / "assets/USA/main.exe").is_file()
         and (ROOT / "build/USA/main.exe").is_file()
-        and find_spec("unicorn"), "images or Unicorn unavailable"
+        and find_spec("unicorn") and shutil.which("mipsel-none-elf-nm"),
+        "images, Unicorn or mipsel-none-elf-nm unavailable"
     )
     def test_behavior(self):
         from unicorn import Uc, UC_ARCH_MIPS, UC_MODE_MIPS32, UC_MODE_LITTLE_ENDIAN, UC_HOOK_CODE

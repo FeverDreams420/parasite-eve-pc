@@ -1,11 +1,18 @@
 #ifndef PE1_SCENE_E19_2_HOMING_BURST_H
 #define PE1_SCENE_E19_2_HOMING_BURST_H
 
-#include "pe1/render_object.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/render_object.h"
 
 /* Scene e19_2 homing burst controller: anchored on the room actor, it
- * releases twenty homing particles (func_8019549C) on odd frames, then
+ * releases twenty homing particles (SceneE19_HomingParticleCallback) on odd frames, then
  * draws a fading flash, a screen tint and a shrinking set of glows. */
 typedef struct SceneHomingBurst {
     /* 0x00 */ GteShortVector position;
@@ -45,22 +52,6 @@ extern GteRotation D_8018F210;
 extern GteRotation D_8018F1CC;
 extern RenderColor D_8018F21C;
 extern RenderColor D_8018F220;
-/* The texture page index read as a one-field record so the read stays below
- * the parameter block store made through its base register. */
-typedef struct SceneHomingBurstPageIndex {
-    u16 value;
-} SceneHomingBurstPageIndex;
 
-extern SceneHomingBurstPageIndex D_800E11EA;
-extern SceneHomingBurstChannel *D_800F32D0, *D_800F33E0;
-extern SceneHomingBurstEvent *D_800E2368;
-
-int rsin(int angle);
-u16 func_80077AA4(int x, int y);
-int func_800CE560(void *pool, int size, int count, void *callback);
-SceneHomingBurstChild *func_800CE610(void *pool);
-void func_800CE8F0(void *pool, int index, GteRotation *rotation, GteShortVector *position);
-void func_800D1AE0(RenderColor *color, int value, int step, int count);
-int func_8019549C(int mode, void *particle);
 
 #endif

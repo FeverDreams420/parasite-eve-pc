@@ -2,47 +2,22 @@
 #define PE1_ROOM_DROP_FIELD_H
 
 #include "common.h"
-#include "pe1/gte_types.h"
-#include "pe1/room_fx.h"
-#include "pe1/field_ring_geometry.h"
 #include "pe1/field_collision.h"
-#include "pe1/room_spark.h"
+#include "pe1/field_ring_geometry.h"
+#include "pe1/field_script_context.h"
 #include "pe1/field_sprite_state.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/gte_types.h"
+#include "pe1/pe_image.h"
+#include "pe1/psyq_libc.h"
 #include "pe1/room_drop_field_class.h"
+#include "pe1/room_fx.h"
+#include "pe1/room_spark.h"
 
 /* The drop field effect set linked by room_m174, room_m348 and room_m383
- * (src/overlays/room_lib/RoomFx_DropFieldEffects.c): a controller and
+ * (src/overlays/room_lib/drop_field.c): a controller and
  * twelve init/draw/update triples, among them the drop field, a beam pair,
  * a ring pair, staged motion and eight particles. */
-
-/* The room entity and its link as the controller init reads them. */
-typedef struct RoomDropFieldLink {
-    u8 pad0[0x238];
-    void *view;                   /* 0x238: view matrices */
-} RoomDropFieldLink;
-
-typedef struct RoomDropFieldEntity {
-    u8 pad0[0x8];
-    RoomDropFieldLink *link;      /* 0x08 */
-} RoomDropFieldEntity;
-
-typedef struct RoomDropFieldMatrixWords {
-    int w0;
-    int w1;
-    int w2;
-    int w3;
-    int w4;
-    int w5;
-    int w6;
-    int w7;
-} RoomDropFieldMatrixWords;
-
-typedef struct RoomDropFieldState {
-    RoomDropFieldLink *link;
-    RoomDropFieldMatrixWords matrix0;
-    RoomDropFieldMatrixWords matrix1;
-    void *asset;
-} RoomDropFieldState;
 
 typedef struct RoomDropFieldQuad {
     s32 x;
@@ -50,6 +25,46 @@ typedef struct RoomDropFieldQuad {
     s32 z;
     s32 w;
 } RoomDropFieldQuad;
+
+/* A view matrix copied as words; the drop field takes its two halves as
+ * its anchor and facing. */
+typedef struct RoomDropFieldMatrixWords {
+    RoomDropFieldQuad head;
+    RoomDropFieldQuad tail;
+} RoomDropFieldMatrixWords;
+
+/* The room entity and its link as the controller init reads them. */
+typedef struct RoomDropFieldLink {
+    u8 pad0[0x238];
+    RoomDropFieldMatrixWords *view; /* 0x238: view matrices */
+} RoomDropFieldLink;
+
+typedef struct RoomDropFieldEntity {
+    u8 pad0[0x8];
+    RoomDropFieldLink *link;      /* 0x08 */
+} RoomDropFieldEntity;
+
+typedef struct RoomDropFieldState {
+    RoomDropFieldLink *link;
+    RoomDropFieldMatrixWords matrix0;
+    RoomDropFieldMatrixWords matrix1;
+    union {
+        int index;
+        u8 page;                  /* texture page the draws select */
+    } asset;                      /* 0x44 */
+    u16 holdFrames;               /* 0x48 */
+    s16 holdTimer;                /* 0x4A */
+    s16 hit;                      /* 0x4C */
+    s16 particlePattern;          /* 0x4E */
+    s32 radiusRate;               /* 0x50 */
+    s32 fallRate;                 /* 0x54 */
+    s32 initialFallStep;          /* 0x58, converted to 8.8 at spawn */
+} RoomDropFieldState;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDropFieldState, holdFrames) == 0x48,
+                  room_drop_field_hold_offset);
+PE1_STATIC_ASSERT(sizeof(RoomDropFieldState) == 0x5C,
+                  room_drop_field_state_size);
 
 typedef struct RoomDropFieldVec {
     s16 x, y, z, pad;
@@ -71,16 +86,22 @@ typedef struct RoomDropFieldDrops {
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDropFieldDrops, h180) == 0x180,
                   room_drop_field_drops_h180);
 
-/* Parameter block reset by the model sprite init. */
-typedef struct RoomDropFieldDecal {
-    char pad0[0x8];
-    short h8;
-    short hA;
-    short hC;
-    char padE[0x2];
-    short h10;
-    short h12;
-} RoomDropFieldDecal;
+/* Work block of the spin, double and model sprites: position, rotation,
+ * uniform scale and depth. The spin sprite grows while phase is 1 and
+ * shrinks while it is 0; the double sprite counts its frames there. */
+typedef struct RoomDropFieldSprite {
+    short x;                      /* 0x00 */
+    short y;                      /* 0x02 */
+    short z;                      /* 0x04 */
+    u8 pad06[2];
+    GteShortVector rotation;      /* 0x08 */
+    u16 scale;                    /* 0x10 */
+    u16 depth;                    /* 0x12 */
+    u16 phase;                    /* 0x14 */
+} RoomDropFieldSprite;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDropFieldSprite, phase) == 0x14,
+                  room_drop_field_sprite_phase);
 
 /* Stack frame of the two rotated sprite draws. */
 typedef struct RoomDropFieldSpinFrame {
@@ -112,14 +133,8 @@ extern char g_RoomDropFieldRingImages[];
 extern unsigned char g_RoomDropFieldBeamImages[];
 extern u8 g_RoomDropFieldParticleFrames[];
 
-void *func_8006DC18(int type);
-int rand(void);
-void func_80071A44(void *dst, s32 value, s32 size);
-s32 *func_800C2B10(s32 index);
-int func_800C2B68(void);
-void func_800C4E50(void *params);
-void func_800C6800(s32 arg0, s32 arg1, void *arg2);
-void func_800C6C18(int arg0);
-void func_800C6EE8(int arg0);
+s32 *FieldFx_RegPtr(s32 index);
+void FieldFx_BuildRingGeometry(void *params);
+void FieldFx_ModelSetDepthBias(int arg0);
 
 #endif

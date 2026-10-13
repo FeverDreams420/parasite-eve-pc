@@ -4,10 +4,15 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-CASES = [('psyq/libc/sprintf',
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import find_definition, linked_function_bytes  # noqa: E402
+
+# Whole-unit section checks: the unit owns its .rodata/.data.
+CASES = [('sprintf',
   '\n'
   'strlen = 0x80072314;\n'
   'memchr = 0x80072324;\n'
@@ -20,20 +25,21 @@ CASES = [('psyq/libc/sprintf',
   '}\n',
   [('.text', 2192, '3f21dbc67784752f7ff40a3661fa4c650b3efa4c427f4be5c35d2889ff6ec866'),
    ('.rodata', 220, '90be5217bf0b4b3cff6e499901737f5f655eaa5c5e70acb5f2a2500e94adb6c9'),
-   ('.data', 12, '15ec7bf0b50732b49f8228e07d24365338f9e3ab994b00af08e5a3bffe55fd8b')]),
- ('main/Gpu_SetDisplayBuffer',
-  'D_80095860 = 0x80095860;\n'
-  'SetIntrMask = 0x80073E10;\n'
-  'D_80095874 = 0x80095874;\n'
-  'D_80095878 = 0x80095878;\n'
-  'D_80095880 = 0x80095880;\n'
-  'D_8009574C = 0x8009574C;\n'
-  'DMACallback = 0x80073CF4;\n'
-  'D_80095854 = 0x80095854;\n'
-  'D_800BD030 = 0x800BD030;\n'
-  'SECTIONS { .text 0x80076ee4 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) '
-  '*(.mdebug) } }',
-  [('.text', 608, 'a124857ab6fd91a3b68ea3e5c2efa5337bf6ed5528ef94ca23bc4a781337a78c')])]
+   ('.data', 12, '15ec7bf0b50732b49f8228e07d24365338f9e3ab994b00af08e5a3bffe55fd8b')])]
+
+# Function ranges inside merged units: the unit is linked so the function
+# lands at its retail address, then the retail-sized range is hashed.
+RANGES = [('Gpu_SetDisplayBuffer', 0x80076EE4, 608,
+           'g_GpuDmaChcrPtr = 0x80095860;\n'
+           'SetIntrMask = 0x80073E10;\n'
+           'g_GpuDmaQueueHead = 0x80095874;\n'
+           'g_GpuDmaQueueTail = 0x80095878;\n'
+           'g_GpuSavedIntrMaskDrain = 0x80095880;\n'
+           'g_GpuSystemState = 0x8009574C;\n'
+           'DMACallback = 0x80073CF4;\n'
+           'g_GpuDmaRegisterWindow = 0x80095854;\n'
+           'g_GpuDmaQueue = 0x800BD030;\n',
+           'a124857ab6fd91a3b68ea3e5c2efa5337bf6ed5528ef94ca23bc4a781337a78c')]
 
 
 class FormatterGpuDrainTests(unittest.TestCase):
@@ -43,7 +49,7 @@ class FormatterGpuDrainTests(unittest.TestCase):
             with self.subTest(function=name), tempfile.TemporaryDirectory() as directory:
                 work = pathlib.Path(directory)
                 obj, elf = work / "code.o", work / "code.elf"
-                subprocess.run(["tools/scripts/cc.sh", f"src/main/{name}.c", str(obj)],
+                subprocess.run(["tools/scripts/cc.sh", str(find_definition(name)), str(obj)],
                                cwd=ROOT, check=True, capture_output=True)
                 script = work / "code.ld"
                 script.write_text(layout)

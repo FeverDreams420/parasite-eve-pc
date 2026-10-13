@@ -4,10 +4,11 @@
  * callbacks and controls in dsread_2.c only with GCC 2.8.1 and
  * -mno-split-addresses (2.7.2 cannot keep the shared address base in a
  * register). */
-#include "pe1/psyq_cd.h"
-#include "pe1/psyq_ds_queue.h"
+
 #include "pe1/cdrom.h"
+#include "pe1/psyq_cd.h"
 #include "pe1/psyq_ds.h"
+#include "pe1/psyq_ds_queue.h"
 
 #define READ_STATE(anchor, field) ((CdReadProgressState *)((char *)(anchor) - PE1_OFFSETOF(CdReadProgressState, field)))
 
@@ -22,12 +23,10 @@ int DsRead(CdlLOC *position, int sectors, void *destination, int incomingMode) {
     state = &g_CdReadInProgress;
     asm volatile("" : "=r"(state), "=r"(incoming) : "0"(state), "1"(incoming));
     mode = incoming;
-    if (*state != 1) {
-        if (!ER_active()) goto start;
+    if (*state == 1 || ER_active()) {
+        result = 0;
+        return result;
     }
-    result = 0;
-    goto done;
-start:
     READ_STATE(state, inProgress)->sectorSize = 512;
     READ_STATE(state, inProgress)->destination = (int)destination;
     READ_STATE(state, inProgress)->remainingSectors = sectors;
@@ -44,7 +43,7 @@ start:
                                          (DslCB)DS_read_cbsync, -1);
     }
     result = 0;
-    if (!mode) goto done;
+    if (!mode) return result;
     result = VSync(-1);
     state = &g_CdReadStartVsync;
     asm volatile("" : "=r"(state) : "0"(state));

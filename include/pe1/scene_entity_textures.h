@@ -2,9 +2,13 @@
 #define PE1_SCENE_ENTITY_TEXTURES_H
 
 #include "common.h"
-#include "pe1/scene_assets.h"
+#include "pe1/cdrom.h"
 #include "pe1/field_actor.h"
 #include "pe1/player_entity.h"
+#include "pe1/render_lighting.h"
+#include "pe1/render_setup.h"
+#include "pe1/scene_assets.h"
+#include "pe1/scene_room_load.h"
 
 /*
  * Scene_LoadEntityTextures: 14-state loader for the area entity bank.
@@ -14,21 +18,16 @@
  */
 
 extern u8 g_SceneAreaType;
-extern s8 D_800B0CE4;
+extern s8 D_800B0CE4[];
 extern u32 g_PeImageBaseLba;
-extern u16 D_800930D8[], D_800930DA[];
-extern u8 D_800BEA40[];
+extern u16 D_800930D8[], g_PeImageSectorBoundsNext[];
 extern u8 g_EntityRenderScratch[];
+/* Aya action sequencer step (battle_runtime.h); a battle-start texture
+ * load waits until it reaches 2. */
+extern u8 D_8009D25C;
 
 int Scene_UpdateBgDraw(void);
-int CdRom_PollReady(void);
-int CdRom_ReadSectorsFromLba(u32 lba, void *destination, u32 size);
-int Render_SetupEntityPrims(void *object, void *model, void *work, int a3,
-                            int a4, int a5, int a6, int a7, void *setup,
-                            int a9);
-int Render_InitRoomPrimState(void *object);
-void Render_DrawWithAnim(void *object, int animation, int frame,
+void Render_DrawWithAnim(void *object, void *animation, int frame,
                          void *matrices, void *scratch);
-int Scene_LoadEntityTextures(void);
 
 #endif

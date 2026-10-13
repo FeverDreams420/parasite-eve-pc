@@ -8,22 +8,12 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
-# Entire sys TU at 0x8007A3CC, including the unchanged six neighbors.
-# CdSyncCallback and CdReadyCallback occupy its final 40 bytes.
-CASES = [('sys',
-  260,
-  '8a39029de84423013c1f0477058380a6d1b63ac8b7a3ab85696f9de8eae81f91',
-  'CD_flush = 0x8007B9EC;\n'
-  'CD_debug = 0x8009AFC0;\n'
-  'g_CdCmdNameTable = 0x8009AFDC;\n'
-  'func_800119CC = 0x800119CC;\n'
-  'g_CdIntrStringTable = 0x8009B05C;\n'
-  'CD_sync = 0x8007B010;\n'
-  'CD_ready = 0x8007B290;\n'
-  'D_8009AFB4 = 0x8009AFB4;\n'
-  'D_8009AFB8 = 0x8009AFB8;\n'
-  'SECTIONS { .text 0x8007A3CC : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) '
-  '*(.mdebug) } }')]
+# Entire sys_2 TU at 0x8007A3CC (SYS.OBJ part 2, CdFlush to CdDataSync).
+# CdSyncCallback and CdReadyCallback sit after CdReady.
+CASES = [('sys_2',
+  1380,
+  '2f727289bc6dce6fc794dc321cc61b2c97dce1a5db4c3b1ad2d047f67860bdfc',
+  'CD_cw = 0x8007b558;\nCD_datasync = 0x8007bddc;\nCD_debug = 0x8009afc0;\nCD_flush = 0x8007b9ec;\nCD_getsector = 0x8007bf44;\nCD_getsector2 = 0x8007c044;\nCD_ready = 0x8007b290;\nCD_sync = 0x8007b010;\nCD_vol = 0x8007b964;\nDMACallback = 0x80073cf4;\nD_8009AFB4 = 0x8009afb4;\nD_8009AFB8 = 0x8009afb8;\nD_8009AFC4 = 0x8009afc4;\ng_CdNoneString = 0x800119cc;\ng_CdCmdNameTable = 0x8009afdc;\ng_CdIntrStringTable = 0x8009b05c;\nSECTIONS { .text 0x8007a3cc : SUBALIGN(4) { *(.text .text.*) } .data 0x8009af2c : SUBALIGN(4) { *(.data .data.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }')]
 
 
 class LibcdCallbackExchangeTests(unittest.TestCase):

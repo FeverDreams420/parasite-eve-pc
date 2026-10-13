@@ -1,0 +1,350 @@
+#include "common.h"
+#include "pe1/field_actor.h"
+#include "pe1/fieldfx_state.h"
+#include "pe1/fieldfx_task_pool.h"
+#include "pe1/psyq_bios.h"
+
+/* Field engine objects: clearing an object's script state and dispatch
+ * slots, and the two per-frame passes over the 0x40 dispatch slots. */
+
+void **FieldFx_GetSlot(FieldFxObject *obj) {
+    u8 *p;
+    unsigned int i;
+
+    p = (u8 *)&obj->state;
+    do {
+        *p++ = 0;
+    } while (p < (u8 *)&obj->data[FIELDFX_DATA_SIZE]);
+
+    obj->prefix.owner_kind = 0;
+    obj->prefix.live_slots = 0;
+
+    g_FieldFxScriptState = &obj->state;
+    g_FieldFxSlotTable = obj->slots;
+    g_FieldFxScriptObject = obj;
+    g_FieldFxScriptData = obj->data;
+
+    obj->state.wait = 0;
+    obj->state.pc = 0;
+    obj->state.data_next = 0;
+
+    i = 0;
+    do {
+        g_FieldFxSlotTable[i].handler_id = 0;
+        g_FieldFxSlotTable[i].flag = 0;
+        g_FieldFxSlotTable[i].counter = 0;
+        g_FieldFxSlotTable[i].data_offset = 0;
+        i++;
+    } while (i < 0x40);
+
+    if (FieldFx_GetStatus(obj) == 3) {
+        FieldActorState *inner = obj->prefix.actor->state;
+
+        inner->core_flags = (inner->core_flags & 0xC0FFFFFF) | 0x01000000;
+    }
+
+    return (void **)&g_FieldFxScriptState->commands;
+}
+
+int FieldFx_Register(FieldFxObject *obj, FieldFxHandler *handlers)
+{
+  register FieldFxObject *obj_s0 = obj;
+  register FieldFxHandler *handlers_s2 = handlers;
+  s16 i;
+  int *table;
+  i = 0;
+  table = obj_s0->state.commands;
+  g_FieldFxScriptState = &obj_s0->state;
+  g_FieldFxSlotTable = obj_s0->slots;
+  g_FieldFxScriptData = obj_s0->data;
+  g_FieldFxCommandTable = table;
+  for (; i < 0x40; i++)
+  {
+    FieldFxSlotAddress entry;
+    entry.slot = g_FieldFxSlotTable;
+    entry.word = i * sizeof(FieldFxSlot) + entry.word;
+    if (entry.slot->flag == 1)
+    {
+      FieldFxHandler handler = handlers_s2[entry.slot->handler_id];
+      if (handler != ((void *) (-1)))
+      {
+        handler(obj, entry.slot, g_FieldFxScriptData + entry.slot->data_offset);
+      }
+      else
+      {
+        printf(g_FieldFxServiceThreadMissingMsg);
+      }
+    }
+  }
+
+  return 0;
+}
+
+int FieldFx_UpdateSlots(FieldFxObject *obj, FieldFxHandler *handlers) {
+    int result;
+    s16 i;
+    FieldActor *data;
+    int *table;
+
+    result = 0;
+    table = obj->state.commands;
+    data = obj->prefix.actor;
+
+    g_FieldFxScriptState = &obj->state;
+    g_FieldFxSlotTable = obj->slots;
+    g_FieldFxScriptObject = obj;
+    g_FieldFxScriptData = obj->data;
+    g_FieldFxCommandTable = table;
+
+    obj->prefix.live_slots = obj->state.slot_count;
+
+    if (FieldFx_GetStatus(obj) == 3) {
+        if (obj->prefix.asset_type != 0x24) {
+            u8 *state = obj->prefix.actor->state->action_state;
+
+            if (state[0] == 1) {
+                state[0] = 2;
+            }
+        }
+    }
+
+    for (i = 0; i < 0x40; i++) {
+        FieldFxSlotAddress entry;
+
+        entry.slot = g_FieldFxSlotTable;
+        entry.word = i * sizeof(FieldFxSlot) + entry.word;
+        if (entry.slot->flag == 1) {
+            FieldFxHandler handler = handlers[entry.slot->handler_id];
+
+            if (handler != (void *)-1) {
+                handler(obj, entry.slot, g_FieldFxScriptData + entry.slot->data_offset);
+            } else {
+                printf(g_FieldFxUpdateThreadMissingMsg);
+            }
+            g_FieldFxSlotTable[i].counter += 1;
+        }
+
+        if (g_FieldFxSlotTable[i].flag == 2) {
+            result |= FieldFx_FreeSlot((u16)i);
+        }
+    }
+
+    if (FieldFx_GetStatus(obj) == 3) {
+        char *inner = (char *)data->state;
+        u32 flags = ((FieldActorState *)inner)->core_flags;
+
+        if (*(u8 *)(inner + ((flags >> 17) & 0x70) + 0x1C) == 0 && (flags & 0x180E) != 0) {
+            result = -1;
+        }
+    }
+
+    return result;
+}
+
+#define SCRIPT g_FieldFxScriptState
+
+/* Runs the field script of obj until a wait or end command. */
+int FieldFx_RunScript(FieldFxObject *obj, FieldFxHandler *handlers, u16 *sizes) {
+    u8 stopped = 0;
+    int result = 0;
+    s16 wait;
+
+    g_FieldFxScriptState = &obj->state;
+    g_FieldFxSlotTable = obj->slots;
+    g_FieldFxScriptObject = obj;
+    g_FieldFxScriptData = obj->data;
+    g_FieldFxCommandTable = obj->state.commands;
+
+    wait = obj->state.wait;
+    if (wait == 0) {
+        do {
+            int command = g_FieldFxCommandTable[SCRIPT->pc];
+
+            if (command == -3) {
+                result |= FieldFx_FreeAllSlots();
+            }
+            if (command == -2) {
+                command = 0;
+            }
+            if (command != -1) {
+                int high = (unsigned int)command >> 16;
+                u16 op = high;
+                    s16 operand = command;
+                u8 index;
+
+                if (op == 1) {
+                    FieldFx_StartSlot(obj, (u8)operand, sizes, handlers);
+                }
+                if (op == 2) {
+                    stopped = 1;
+                    SCRIPT->wait = operand;
+                }
+                if ((unsigned int)(high - 0x10) < 0x10) {
+                    index = op - 0x10;
+                    SCRIPT->regs[index] = (s16)command;
+                }
+                if ((unsigned int)(high - 0x20) < 0x10) {
+                    index = op - 0x20;
+                    SCRIPT->regs[index] += (s16)command;
+                }
+                if ((unsigned int)(high - 0x30) < 0x10) {
+                    index = op - 0x30;
+                    SCRIPT->regs[index] -= (s16)command;
+                }
+                if ((unsigned int)(high - 0x40) < 0x10) {
+                    index = op - 0x40;
+                    SCRIPT->regs[index] = SCRIPT->vars[(u16)operand];
+                }
+                if ((unsigned int)(high - 0x50) < 0x10) {
+                    index = op - 0x50;
+                    SCRIPT->vars[(u16)operand] = SCRIPT->regs[index];
+                }
+                if ((unsigned int)(high - 0x1000) < 0x1000) {
+                    s8 jump = op;
+
+                    if (SCRIPT->regs[(high & 0xF00) >> 8] == (s16)command) {
+                        SCRIPT->pc += jump;
+                    }
+                }
+                if ((unsigned int)(op - 0x2000) < 0x1000) {
+                    s8 jump = op;
+
+                    if (SCRIPT->regs[(op & 0xF00) >> 8] != operand) {
+                        SCRIPT->pc += jump;
+                    }
+                }
+                if ((unsigned int)(op - 0x3000) < 0x1000) {
+                    SCRIPT->pc += (s8)op;
+                }
+            } else {
+                SCRIPT->halted = 1;
+                stopped = 1;
+            }
+
+            if (SCRIPT->halted == 0) {
+                SCRIPT->pc++;
+            } else if (SCRIPT->slot_count == 0) {
+                result = -1;
+            }
+        } while (!stopped);
+    } else {
+        obj->state.wait = wait - 1;
+    }
+
+    return result;
+}
+
+int FieldFx_Spawn6(FieldFxObject *obj, int unused, int index, int value) {
+    FieldFxState *state = &obj->state;
+
+    g_FieldFxScriptState = state;
+    state->vars[index] = value;
+    return 0;
+}
+
+int *FieldFx_RegPtr(int index) {
+    return &g_FieldFxScriptState->regs[index];
+}
+
+int *FieldFx_VarPtr(int index) {
+    return &g_FieldFxScriptState->vars[index];
+}
+
+void FieldFx_SetScriptContext(void *context) {
+    g_FieldFxScriptState->current_context = context;
+}
+
+void *FieldFx_GetScriptContext(void) {
+    return g_FieldFxScriptState->current_context;
+}
+
+int FieldFx_IsLastSlotHalted(void) {
+    return ((((FieldFxStateWords *)g_FieldFxScriptState)->status & 0xFFFF0000U) ^ 0x01010000U) < 1;
+}
+
+void *FieldFx_StartSlot(void *obj, u8 id, u16 *sizes, FieldFxHandler *handlers) {
+    s16 slot = -1;
+    s16 i;
+    FieldFxSlot *base;
+    void *entry;
+    void *data;
+    FieldFxHandler handler;
+
+    base = g_FieldFxSlotTable;
+    for (i = 0; i < 0x40; i++) {
+        if (base[i].flag == 0) {
+            slot = i;
+            break;
+        }
+    }
+
+    if (slot == -1) {
+        g_FieldFxScriptState->regs[14] = 1;
+        return 0;
+    }
+
+    if (FieldFx_GetStatus(obj) == 3 || FieldFx_GetStatus(obj) == 4 || FieldFx_GetStatus(obj) == 5) {
+        FieldFx_ActivateSlot(slot, id, sizes[id]);
+
+        entry = &g_FieldFxSlotTable[slot];
+        data = g_FieldFxScriptData + ((FieldFxSlot *)entry)->data_offset;
+        handler = handlers[id];
+        if (handler != (void *)-1) {
+            handler(obj, entry, data);
+        }
+        return data;
+    }
+
+    return 0;
+}
+
+/* Activate slot `slot` with handler `id` and reserve `size` bytes of script
+ * data for it, wrapping to offset 0 when the 0x80C-byte area would overflow. */
+void FieldFx_ActivateSlot(u16 slot, u8 id, u16 size) {
+    FieldFxState *state;
+    s16 offset;
+
+    g_FieldFxSlotTable[slot].flag = 1;
+    g_FieldFxSlotTable[slot].handler_id = id;
+    g_FieldFxSlotTable[slot].counter = 0;
+    state = g_FieldFxScriptState;
+    offset = state->data_next;
+    if ((unsigned int)(offset + size) >= 0x80C) {
+        offset = 0;
+    }
+    g_FieldFxSlotTable[slot].data_offset = offset;
+    offset += size;
+    state->data_next = offset;
+    state->slot_count++;
+}
+
+int FieldFx_FreeSlot(u16 slot) {
+    g_FieldFxSlotTable[slot].flag = 0;
+    g_FieldFxScriptState->slot_count--;
+
+    return -((((((FieldFxStateWords *)g_FieldFxScriptState)->status & 0xFFFF0000) ^ 0x01000000) < 1));
+}
+
+int FieldFx_FreeAllSlots(void) {
+    int i;
+    int result;
+    u32 andMask;
+    u32 xorMask;
+
+    result = 0;
+    i = 0;
+    andMask = 0xFFFF0000;
+    xorMask = 0x01000000;
+    for (; i < 0x40; i++) {
+        if (g_FieldFxSlotTable[i].flag != 0) {
+            u32 check;
+            g_FieldFxSlotTable[(u16)i].flag = 0;
+            g_FieldFxScriptState->slot_count--;
+            check = ((FieldFxStateWords *)g_FieldFxScriptState)->status & andMask;
+            check = check == xorMask;
+            result |= -check;
+        }
+    }
+
+    return result;
+}

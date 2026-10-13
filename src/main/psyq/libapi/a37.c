@@ -1,4 +1,5 @@
 /* PSY-Q LIBAPI A37: ExitCriticalSection. */
+
 #include "pe1/psyq_bios.h"
 
 void ExitCriticalSection(void) {

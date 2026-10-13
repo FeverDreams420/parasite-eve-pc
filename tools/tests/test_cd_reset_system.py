@@ -2,30 +2,32 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import host_unit  # noqa: E402
 
 
 class CdResetSystemTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_reset_order_and_preserved_fields(self):
-        source = (ROOT / "src/main/psyq/libds/dssys_2_4.c").read_text()
-        reset_start = source.index("int DsReset(void)")
-        init_start = source.index("int DsInit(void)")
-        source = source[:init_start] + source[reset_start:]
+        source = host_unit("DsReset")
         source = source.replace(
             'extern unsigned char D_800A3515[], D_800A3525[], D_800A3535[];',
             '#define D_800A3515 ((unsigned char *)g_CdQueuedCmdSlots + 5)\n'
             '#define D_800A3525 ((unsigned char *)g_CdQueuedCmdSlots + 21)\n'
             '#define D_800A3535 ((unsigned char *)g_CdQueuedCmdSlots + 37)')
-        harness = '#include <assert.h>\n#include <string.h>\n' + \
+        # psyq_ds.h declares the PSY-Q strncmp/strcmp, which clash with <string.h>.
+        harness = '#include <assert.h>\n#define memset __builtin_memset\n' + \
                   source + r'''
 DsCallbackRegistry g_DsReadCallbackState;
 CdQueuedCmdSlot g_CdQueuedCmdSlots[3];
 CdDsReadQueueEntry g_CdDsReadQueue[8];
-DsReadCallbackSlot D_800A3610[8];
-int D_800A3604, D_800A3600, g_CdPendingReadCount, D_800A3690;
+DsReadCallbackSlot g_DsReadCallbackSlots[8];
+DsQueueIndices D_800A3600;
+int D_800A3604, g_CdPendingReadCount, g_DsReadCallbackCursor;
 static int stage, queues, fill;
 static void status_cleared(void) {
     unsigned char *bytes = (unsigned char *)g_CdQueuedCmdSlots;
@@ -45,9 +47,9 @@ void CQ_clear_queue(void *raw_queue) {
     CdDsReadQueueEntry *queue = raw_queue;
     int i, j;
     assert(stage == 1 && queue == &g_CdDsReadQueue[queues]);
-    assert(D_800A3690 == fill);
+    assert(g_DsReadCallbackCursor == fill);
     status_cleared();
-    assert(D_800A3600 == 123 && D_800A3604 == 456 && g_CdPendingReadCount == 789);
+    assert(D_800A3600.start == 123 && D_800A3604 == 456 && g_CdPendingReadCount == 789);
     for (i = 0; i < 8; ++i) for (j = 0; j < sizeof(CdDsReadQueueEntry); ++j)
         assert(((unsigned char *)&g_CdDsReadQueue[i])[j] == (i < queues ? 0 : fill));
     memset(queue, 0, sizeof(*queue));
@@ -57,10 +59,10 @@ void ER_clear(void) {
     int i, j;
     assert(stage++ == 1 && queues == 8);
     status_cleared();
-    assert(D_800A3600 == 0 && D_800A3604 == 0 && g_CdPendingReadCount == 0);
+    assert(D_800A3600.start == 0 && D_800A3604 == 0 && g_CdPendingReadCount == 0);
     for (i = 0; i < 8; ++i) for (j = 0; j < 16; ++j)
-        assert(((unsigned char *)&D_800A3610[i])[j] == (j < 4 ? 0 : fill));
-    assert(D_800A3690 == 0);
+        assert(((unsigned char *)&g_DsReadCallbackSlots[i])[j] == (j < 4 ? 0 : fill));
+    assert(g_DsReadCallbackCursor == 0);
 }
 DsCallback DsReadySystemMode(DsCallback callback) {
     assert(stage++ == 2 && callback == 0);
@@ -72,12 +74,14 @@ int main(void) {
         memset(&g_DsReadCallbackState, fill, sizeof(g_DsReadCallbackState));
         memset(g_CdQueuedCmdSlots, fill, sizeof(g_CdQueuedCmdSlots));
         memset(g_CdDsReadQueue, fill, sizeof(g_CdDsReadQueue));
-        memset(D_800A3610, fill, sizeof(D_800A3610));
-        D_800A3690 = fill;
-        D_800A3600 = 123; D_800A3604 = 456; g_CdPendingReadCount = 789;
+        memset(g_DsReadCallbackSlots, fill, sizeof(g_DsReadCallbackSlots));
+        g_DsReadCallbackCursor = fill;
+        D_800A3600.start = 123; D_800A3600.current = 321; D_800A3600.count = 654;
+        D_800A3604 = 456; g_CdPendingReadCount = 789;
         stage = queues = 0;
         assert(DsReset() == 1);
         assert(stage == 4 && queues == 8);
+        assert(D_800A3600.current == 321 && D_800A3600.count == 654);
     }
     return 0;
 }

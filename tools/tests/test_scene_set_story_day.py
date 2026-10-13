@@ -3,11 +3,13 @@ from pathlib import Path
 import random
 import shutil
 import struct
-import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT/'tools/tests'))
+from csource import linked_function_bytes  # noqa: E402
 
 
 @unittest.skipUnless(shutil.which('mipsel-none-elf-ld') and (ROOT/'assets/USA/main.exe').is_file(), 'retail/toolchain unavailable')
@@ -25,13 +27,8 @@ class SceneSetStoryDayTests(unittest.TestCase):
                        D_800B0CE5=state+13, D_800B0CE6=state+14)
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
-            source = ROOT/'src/main/scene/Scene_SetStoryDay.c'
-            subprocess.run([str(ROOT/'tools/scripts/cc.sh'),str(source),str(work/'test.o')],check=True,capture_output=True)
-            script = 'SECTIONS { .text 0x8006C4C4 : SUBALIGN(4) { *(.text) } /DISCARD/ : { *(.reginfo) *(.mdebug) *(.pdr) *(.MIPS.abiflags) } }\n'
-            (work/'test.ld').write_text(script+'\n'.join(f'{name} = 0x{address:X};' for name,address in symbols.items()))
-            subprocess.run(['mipsel-none-elf-ld','-EL','-T',str(work/'test.ld'),str(work/'test.o'),'-o',str(work/'test.elf')],check=True,capture_output=True)
-            subprocess.run(['mipsel-none-elf-objcopy','-O','binary','-j','.text',str(work/'test.elf'),str(work/'test.bin')],check=True,capture_output=True)
-            compiled = (work/'test.bin').read_bytes()
+            script = ''.join(f'{name} = 0x{address:X};\n' for name, address in symbols.items())
+            compiled = linked_function_bytes('Scene_SetStoryDay', entry, len(retail), script, work)
         self.assertEqual(compiled, retail)
         rng = random.Random(entry)
         cases = [(pending, bits, day) for pending in range(256) for bits in range(8) for day in (-1, 1, 8, 9)]

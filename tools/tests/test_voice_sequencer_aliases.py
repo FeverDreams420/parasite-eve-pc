@@ -4,17 +4,25 @@ import itertools
 import random
 import re
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import find_definition, functions_text  # noqa: E402
 
 
 class VoiceSequencerAliasTests(unittest.TestCase):
     def test_aliases_removed(self):
-        source = (ROOT / 'src/main/akao/voice_sequencer.c').read_text()
-        self.assertIsNone(re.search(r'extern[^;]*__asm__', source))
-        self.assertEqual(source.count('extern void *g_AkaoCurTrack;'), 1)
-        self.assertEqual(source.count('asm("$'), 3)
+        names = ('Akao_InitVoiceState', 'Akao_ForEachVoiceMasked',
+                 'Spu_RebaseStreamAddrs', 'Akao_StepSequencerVoice')
+        source = functions_text(*names)
+        unit = find_definition(names[0]).read_text()
+        self.assertIsNone(re.search(r'extern[^;]*__asm__', unit))
+        # One typed declaration (in the unit or a shared header), no alias.
+        self.assertLessEqual(len(re.findall(r'extern\s+\w+\s*\*\s*g_AkaoCurTrack\s*;', unit)), 1)
+        # Ratchet: three pins when written, two remain.
+        self.assertLessEqual(source.count('asm("$'), 2)
 
     @unittest.skipUnless((ROOT / 'assets/USA/main.exe').is_file() and
                          (ROOT / 'build/USA/main.exe').is_file(), 'retail/build unavailable')

@@ -1,4 +1,5 @@
 /* PSY-Q LIBGTE MTX_12: SetTransMatrix. */
+
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"
 

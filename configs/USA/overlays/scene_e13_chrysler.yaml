@@ -1,0 +1,57 @@
+name: scene_e13_chrysler.bin
+sha1: 33bee77f752d4465c7a775d7b3ee4e94643b45ab
+options:
+  basename: scene_e13_chrysler
+  target_path: original/USA/overlays/scene_e13.bin
+  base_path: ../../..
+  platform: psx
+  compiler: GCC
+  asm_path: asm/USA/overlays/scene_e13_chrysler
+  src_path: src/overlays/scene_e13_chrysler
+  build_path: build/USA/overlays/scene_e13_chrysler
+  ld_script_path: linkers/USA/overlays/scene_e13_chrysler.ld
+  undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.scene_e13_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.scene_e13_chrysler.txt
+    - configs/USA/sym.main.txt
+  undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.scene_e13_chrysler.txt
+  find_file_boundaries: True
+  disassemble_all: True
+  asm_function_macro: glabel
+  asm_jtbl_label_macro: jlabel
+  asm_data_macro: dlabel
+  generate_asm_macros_files: False
+  section_order: [".rodata", ".text", ".data", ".sdata", ".sbss", ".bss"]
+  subalign: 4
+  string_encoding: ASCII
+  data_string_encoding: ASCII
+  rodata_string_guesser_level: 2
+  data_string_guesser_level: 2
+segments:
+  - name: scene_e13_chrysler
+    type: code
+    start: 0x0
+    vram: 0x8018EFE8
+    align: 4
+    subalign: 4
+    bss_size: 0x0
+    subsegments:
+      - [0x0, rodata, scene_e13_header]
+      - [0xC, .rodata, ../room_lib/paired_glow]
+      - [0x14, .rodata, ../room_lib/orbit_flare]
+      - [0x24, .rodata, ../room_lib/dropped_flare]
+      - [0x68, c, ../room_lib/class_plant_script]
+      - [0x94, c, ../room_lib/class_spawn]
+      - [0xC0, c, ../room_lib/class_register_draw_list]
+      - [0x108, c, ../room_lib/class_register_tables]
+      - [0x194, c, ../room_lib/class_close_target]
+      - [0x218, c, ../room_lib/paired_glow]
+      - [0x1100, c, ../room_lib/orbit_flare]
+      - [0x1D50, c, ../room_lib/script_args]
+      - [0x1D74, c, ../room_lib/dropped_flare]
+      - [0x2A18, data]
+  - [0x3000]
+# source slice: scanner
+# extract locally with: dd if=disc/extracted/PE.IMG of=original/USA/overlays/scene_e13.bin bs=2048 skip=96862 count=6
+# special-scene set: entry 13 of the table at 0x80094048 (this bin = its section 3); finale (Eve/Melissa) bank
+# area: no save-location label for map 423; place chrysler, medium confidence (docs/ROOMS.md)

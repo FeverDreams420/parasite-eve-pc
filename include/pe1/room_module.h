@@ -14,14 +14,20 @@
  * The lists the methods hand to the field engine are the module's own data,
  * named in each room's symbol file. A room that links several modules names
  * the lists of the module whose methods are the shared units. The other
- * module's methods are a class unit of that module, linked in every room
- * that links the module, with the same methods and lists under the
- * module's names (RoomFx_OrbitSetClass.c, RoomFx_DropFieldClass.c,
- * RoomEffect_GroundEruptionClass.c, RoomLib_ThreeParticleClass.c). */
+ * module's methods open that module's unit in room_lib, linked in every
+ * room that links the module, with the same methods and lists under the
+ * module's names (orbit_set.c, drop_field.c, ground_eruption.c,
+ * three_particles.c). */
 
 struct RoomEnt;
 
 typedef int (*RoomModuleHandler)();
+
+/* A room's class table: one row per class, its seven methods in slot order
+ * (no-op, Init, Configure, no-op, Update, Release, no-op). The rows are the
+ * room's (room_lib/actor_class_table.c and its window-class variants). */
+#define ROOM_CLASS_METHODS 7
+extern RoomModuleHandler g_RoomClassTable[][ROOM_CLASS_METHODS];
 
 /* Command program planted into the engine slot (opcode in the high half of
  * each word, -1 terminated). */
@@ -34,7 +40,7 @@ extern RoomModuleHandler g_RoomInitList[];
 extern int g_RoomSpawnLayout[];
 
 int RoomLib_ClassNop0(void);
-int RoomLib_PlantScript(void);
+int RoomLib_PlantScript(void *object);
 int RoomLib_Spawn6(int a, int b, int c, int d, int e, int f);
 int RoomLib_RegisterDrawList(void *o);
 int RoomLib_RegisterPairedTables(void *o);
@@ -59,7 +65,7 @@ extern int g_RoomScriptArg;
 int *RoomLib_SetArg1(int unused, int value);
 
 /* The spark barrage rooms take two such words, one entry each
- * (RoomLib_SetArgPair). */
+ * (room_lib/script_arg_pair.c). */
 extern int g_RoomScriptArgA;
 extern int g_RoomScriptArgB;
 

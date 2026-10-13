@@ -1,8 +1,9 @@
 /* ASSEMBLER: GNU */
 /* GAS_VERSION: 2.7 */
 /* PSY-Q LIBGTE RATAN: ratan2. */
+
 #include "common.h"
-extern s16 atan_table[] __asm__("D_8009A6EC");
+#include "pe1/gte_types.h"
 
 /* A function section avoids GAS 2.7's mandatory 16-byte .text padding. */
 int __attribute__((section(".text.ratan2"))) ratan2(int y, int x) {
@@ -17,7 +18,7 @@ int __attribute__((section(".text.ratan2"))) ratan2(int y, int x) {
     y_less_than_x = y < x;
     if (x == 0) {
         result = 0;
-        if (y == 0) goto done;
+        if (y == 0) return result;
         asm volatile("" : "=r"(x));
         y_less_than_x = y < x;
     }
@@ -32,7 +33,12 @@ int __attribute__((section(".text.ratan2"))) ratan2(int y, int x) {
             y = (int)(y << 10) / x;
             index = y << 1;
         }
-        angle = *(s16 *)((char *)atan_table + index);
+        {
+            GteAtanEntryAddress at;
+            at.entry = atan_table;
+            at.word += index;
+            angle = *at.entry;
+        }
     } else {
         if (x & 0x7FE00000) {
             y = x / (y >> 10);
@@ -43,7 +49,12 @@ int __attribute__((section(".text.ratan2"))) ratan2(int y, int x) {
             y = (int)(x << 10) / y;
             index = y << 1;
         }
-        angle = *(s16 *)((char *)atan_table + index);
+        {
+            GteAtanEntryAddress at;
+            at.entry = atan_table;
+            at.word += index;
+            angle = *at.entry;
+        }
         angle = 1024 - angle;
     }
     if (negative_x) angle = 2048 - angle;

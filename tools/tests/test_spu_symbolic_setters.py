@@ -21,8 +21,8 @@ CASES = [('psyq/libspu/s_sic',
  ('psyq/libspu/s_stm',
   48,
   '134e29bc16aa82935dc5bf1526921eca7242026ae951ebcb936eeb9cd001121e',
-  'D_8009B38C = 0x8009B38C;\n'
-  'D_8009B418 = 0x8009B418;\n'
+  '_spu_trans_mode = 0x8009B38C;\n'
+  '_spu_transMode = 0x8009B418;\n'
   'SECTIONS { .text 0x80085f14 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) '
   '*(.mdebug) } }')]
 
@@ -34,9 +34,9 @@ RELOCATIONS = {
         (36, 6, "_spu_IRQCallback"),
     ],
     "psyq/libspu/s_stm": [
-        (16, 4, ".text"), (28, 5, "D_8009B38C"),
-        (32, 6, "D_8009B38C"), (36, 5, "D_8009B418"),
-        (44, 6, "D_8009B418"),
+        (16, 4, ".text"), (28, 5, "_spu_trans_mode"),
+        (32, 6, "_spu_trans_mode"), (36, 5, "_spu_transMode"),
+        (44, 6, "_spu_transMode"),
     ],
 }
 

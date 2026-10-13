@@ -2,21 +2,23 @@
 #define PE1_FIELD_COLLISION_H
 
 #include "common.h"
+#include "pe1/collision_database.h"
+#include "pe1/floor_edge_point.h"
+#include "pe1/floor_polygon.h"
+#include "pe1/gte_types.h"
 
-/* Little-endian 16.16 X/Z pair. The containment test reads only the
- * signed integer halves, at offsets 2 and 6 of each eight-byte vertex. */
-typedef struct {
-    unsigned short xFraction;
-    short x;
-    unsigned short zFraction;
-    short z;
-} PolygonVertex;
+/* Up axis (0, -4096, 0) the placement basis (fieldfx/collision.c)
+ * crosses with the facing direction. */
+extern GteVector g_FieldPlacementUpAxis;
 
 /* vertices must contain count > 0 entries. x and z are 16.16 coordinates. */
 int Geo_PointInPoly(int x, int z, const PolygonVertex *vertices,
                     unsigned short count);
 
 struct BattleEntity;
+void Entity_FindFloor(struct BattleEntity *actor);
+void Entity_ResolvePosition(struct BattleEntity *actor, int index);
+void Entity_UpdateAndRender(struct BattleEntity *actor);
 
 /* 16.16 edge length; the slide reads only the integer half. */
 typedef union RampEdgeLength {
@@ -27,7 +29,7 @@ typedef union RampEdgeLength {
     } parts;
 } RampEdgeLength;
 
-/* Floor edge record (D_8009CE14, one per edge id): 16.16 length and unit
+/* Floor edge record (g_SceneDataTable2, one per edge id): 16.16 length and unit
  * direction in the X/Z plane. */
 typedef struct RampEdge {
     RampEdgeLength length;
@@ -35,17 +37,8 @@ typedef struct RampEdge {
     s32 directionZ;
 } RampEdge;
 
-/* Endpoints of the edge the player last crossed onto a ramp, as screen
- * style XY pairs: the GTE normal clip reads each point as one packed word. */
-typedef union FloorEdgePoint {
-    struct {
-        s16 x, z;
-    } point;
-    u32 packed;
-} FloorEdgePoint;
-extern FloorEdgePoint D_8009CE0C, D_8009CE10;
-extern RampEdge *D_8009CE14;
-extern u16 D_8009CE18;
+extern RampEdge *g_SceneDataTable2;
+extern u16 g_FieldCollisionTriIndex;
 void Entity_SlideOnRamp(struct BattleEntity *entity);
 
 PE1_STATIC_ASSERT(sizeof(RampEdge) == 12, ramp_edge_size);
@@ -55,9 +48,9 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RampEdge, directionZ) == 8, ramp_edge_z_offset);
 
 /* Shared collision query state. The response routine publishes the scaled
  * half-width before querying and sliding against this polygon. */
-extern unsigned short D_8009CE2C;
-extern PolygonVertex *D_8009D2F8;
-extern unsigned short D_8009D264;
+extern unsigned short g_CollisionRadius;
+extern PolygonVertex *g_WallPolygonVertices;
+extern unsigned short g_WallPolygonVertexCount;
 
 int Geo_FindNearestEdge(int x, int z, PolygonVertex *vertices,
                         unsigned short count);
@@ -67,21 +60,11 @@ void Entity_SlideOnWall(struct BattleEntity *actor, const PolygonVertex *vertice
 struct FieldActor;
 void Entity_ApplyCollisionResponse(struct FieldActor *player);
 
-#include "pe1/collision_database.h"
-
 /* Vertex `index` of the active table, addressed as retail does. */
 #define COLLISION_VERTEX(address, index, type) \
-    ((address).word = (index) * sizeof(type) + D_8009D1FC->vertices.word)
+    ((address).word = (index) * sizeof(type) + g_CollisionDb->vertices.word)
 
-extern CollisionDatabase *D_8009D1FC;
-
-/* Shared head of both triangle formats. */
-typedef struct CollisionFace {
-    u8 kind;
-    u8 region;    /* flat mode: index into D_8009CE08 */
-    u16 plane;    /* sloped mode: index into D_8009D1D8 */
-    s32 distance; /* sloped mode: plane D term */
-} CollisionFace;
+extern CollisionDatabase *g_CollisionDb;
 
 /* Sloped-mode plane A*x + B*y + C*z = D, with B stored inverted. */
 typedef struct CollisionPlane {
@@ -91,15 +74,21 @@ typedef struct CollisionPlane {
 } CollisionPlane;
 
 /* Plane-table pointer; existing floor queries require a fresh read. */
-extern CollisionPlane *volatile D_8009D1D8;
-/* Flat mode: per-region records that start with the region height. */
-extern s16 **D_8009CE08;
+extern CollisionPlane *g_CollisionPlaneTable;
+/* Flat mode: per-region records that start with the region height. The
+ * floor search adds the slot offset to the table address as integers, which
+ * keeps the sum in the offset register as retail does. */
+typedef union CollisionRegionTable {
+    CollisionRegionEntry *entries;
+    u32 address;
+} CollisionRegionTable;
+extern CollisionRegionTable g_RegionHeightTable;
 /* Bounding box of the ramp edge the player last crossed. */
-extern u16 D_8009CE1C, D_8009CE20, D_8009CE24, D_8009CE28;
+extern u16 g_FloorBlockedEdgeMaxX, g_FloorBlockedEdgeMinX, g_FloorBlockedEdgeMaxZ, g_FloorBlockedEdgeMinZ;
 /* One bit per triangle already visited by the floor search. */
-extern u32 D_8009DFB0[];
+extern u32 g_FloorEdgeVisitedBitmap[];
 int Geo_PointInTri(void *triangle, s16 x, s16 z);
-void *Geo_ClipToFloorBoundarySub(u16 *triangle, void *previous, s16 x0, s16 z0,
+void *Geo_ClipToFloorBoundarySub(void *triangle, void *previous, s16 x0, s16 z0,
                                  s16 x1, s16 z1);
 
 PE1_STATIC_ASSERT(sizeof(CollisionVertexXZ) == 4, collision_vertex_xz_size);
@@ -117,23 +106,23 @@ PE1_STATIC_ASSERT(sizeof(CollisionTriangleXYZ) == 28, collision_triangle_xyz_siz
  * Verified live via DuckStation GDB on the first field map (flat/region mode).
  *
  * The walkable area is a 2D mesh (in the X/Z plane) of triangles/regions:
- *   D_8009D1FC  collision DB base [live: 0x801aa85c]
+ *   g_CollisionDb  collision DB base [live: 0x801aa85c]
  *     +0x18  vertex table  (vertices: u16 x@+0, u16 z; stride 6 plane-mode / 4 flat-mode)
  *     +0x1C  triangle/region entry table (stride 28 plane-mode / 22 flat-mode)
- *   D_8009D1D8  plane-equation table, OR 0 -> selects the height mode (see below)
- *   D_8009CE08  region -> height table (flat mode only)
+ *   g_CollisionPlaneTable  plane-equation table, OR 0 -> selects the height mode (see below)
+ *   g_RegionHeightTable  region -> height table (flat mode only)
  *
  * Entry (one per walkable triangle/region):
- *   +0x01  u8   region/height id        (flat mode: index into D_8009CE08)
- *   +0x02  u16  plane id                (plane mode: index into D_8009D1D8)
+ *   +0x01  u8   region/height id        (flat mode: index into g_RegionHeightTable)
+ *   +0x02  u16  plane id                (plane mode: index into g_CollisionPlaneTable)
  *   +0x04  s32  plane D term            (plane mode)
  *   +0x02/+0x06/+0x08/+0x0C  vertex/neighbor indices walked by Geo_PointInTri
  *
- * TWO HEIGHT MODES (chosen by D_8009D1D8):
- *   1) FLAT / region mode  (D_8009D1D8 == 0)  [this map]:
- *        Y = D_8009CE08[entry[1]] << 16     (per-region constant height; here Y=0)
- *   2) SLOPED / plane mode (D_8009D1D8 != 0):
- *        plane[id] = D_8009D1D8 + id*12 : { s32 A@+0, s32 invB@+4, s32 C@+8 }
+ * TWO HEIGHT MODES (chosen by g_CollisionPlaneTable):
+ *   1) FLAT / region mode  (g_CollisionPlaneTable == 0)  [this map]:
+ *        Y = g_RegionHeightTable[entry[1]] << 16     (per-region constant height; here Y=0)
+ *   2) SLOPED / plane mode (g_CollisionPlaneTable != 0):
+ *        plane[id] = g_CollisionPlaneTable + id*12 : { s32 A@+0, s32 invB@+4, s32 C@+8 }
  *        Y = FixedMul( entryD - FixedMul(A, pos_x) - FixedMul(C, pos_z), invB )
  *        i.e. solve the triangle's plane equation A*x + B*y + C*z = D for y.
  *   The resolved Y is written to pos_y (FieldActor +0x2C), then base (+0x40..) is
@@ -158,14 +147,14 @@ PE1_STATIC_ASSERT(sizeof(CollisionTriangleXYZ) == 28, collision_triangle_xyz_siz
  *   recurses over the child and every entity sharing the same +0x18C parent,
  *   so a whole grouped formation reverts together.
  *   The per-frame actor contact pass Scene_UpdateEntityPositions walks every
- *   pair in the entity list D_8009D20C (skipping actors with flags(+0x98)&0x20),
+ *   pair in the entity list g_FieldActorListHead (skipping actors with flags(+0x98)&0x20),
  *   tests body spheres and x/z cylinders, and rolls back actors that move into
  *   each other through Entity_RollbackPositionHierarchy.
  *
  * Functions:
- *   void Entity_ResolvePosition(FieldActor *a, int triIndex);  // snap Y + cache tri
+ *   void Entity_ResolvePosition(struct BattleEntity *a, int triIndex);  // snap Y + cache tri
  *   int  Entity_ResolveCurrentPosition(u16 **idx);             // resolve D_8009D2F0
- *   s32  Geo_PointInTri(u8 *entry, s16 x, s16 z);              // containment test
+ *   int  Geo_PointInTri(void *entry, s16 x, s16 z);              // containment test
  *   void Entity_RollbackPositionHierarchy(FieldActor *a);      // revert pos<-base on block
  *   void Scene_UpdateEntityPositions(void);                    // per-frame actor contact pass
  *   int  Math_FixedMul(int a, int b);                          // (a*b)>>12 fixed-point

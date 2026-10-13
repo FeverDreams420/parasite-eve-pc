@@ -2,12 +2,15 @@
 /* GCC_VERSION: 2.8.1 */
 /* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBDS DSREAD.OBJ, part 2 of 2: DS_read_cbready, DS_read_cbdata, DsReadSync, DsReadCallback, DsReadBreak, DsReadMode. */
-#include "pe1/psyq_cd.h"
+
 #include "pe1/cdrom.h"
+#include "pe1/psyq_cd.h"
 #include "pe1/psyq_ds.h"
 #include "pe1/psyq_ds_queue.h"
+#include "pe1/psyq_gpu.h"
 
-extern int VSync(int mode);
+#include "dsread_2_externs.h"
+#include "dsread_2_externs_1.h"
 
 #define CD_READ_FIELD(anchor, field)                                      \
     ((anchor)[(PE1_OFFSETOF(CdReadProgressState, field) -                  \
@@ -54,10 +57,6 @@ void DS_read_cbready(int status, void *data, void *detail) {
 
 #undef CD_READ_FIELD
 
-extern int D_8009B6B0[];
-extern int VSync(int);
-extern void DsReadBreak(void);
-
 void DS_read_cbdata(void) {
     int *state = D_8009B6B0;
     int query;
@@ -73,8 +72,6 @@ void DS_read_cbdata(void) {
             g_CdReadCompleteCallback(state[1] < 0 ? 5 : 2, (void *)state[3]);
     }
 }
-
-extern int VSync(int arg0);
 
 int DsReadSync(void *argument) {
     int v0;
@@ -95,19 +92,16 @@ int DsReadSync(void *argument) {
     return s0;
 }
 
-register CdReadCompleteCallbackPage *g_CdCallbackWritePage asm("$1");
-
 CdReadCompleteCallback DsReadCallback(CdReadCompleteCallback callback) {
     CdReadCompleteCallback old;
 
     old = g_CdReadCompleteCallback;
-    g_CdCallbackWritePage = (CdReadCompleteCallbackPage *)0x800A0000;
-    g_CdCallbackWritePage[-1].callback = callback;
+    g_CdReadCompleteCallback = callback;
     return old;
 }
 
 void DsFlush(void);
-int DS_cw_system(int mode, int unused);
+int DS_cw_system(int mode, void *parameter);
 
 void DsReadBreak(void) {
     int *readInProgress;
@@ -137,10 +131,8 @@ void DsReadBreak(void) {
     asm volatile("" : : : "memory");
 }
 
-extern unsigned int D_8009B6B8;
-
 void DsReadMode(unsigned int mode) {
     if (mode < 2) {
-        D_8009B6B8 = mode;
+        g_DsReadMode = mode;
     }
 }

@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "pe1/psyq_callbacks.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/psyq_types.h"
 
 typedef PsyqEventCallback CdlCB;
@@ -22,15 +23,16 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CdInterruptEvents, ready) == 1,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdInterruptEvents, end) == 2,
                   cd_interrupt_events_end_offset);
 
-extern CdInterruptEvents D_8009B294;
+extern CdInterruptEvents g_CdInterruptEvents;
 
 /* Shared LIBCD hardware pointers: byte-wide indexed ports and word control. */
 extern volatile u8 *g_CdRegIndexBase;
 extern volatile u8 *g_CdRegPort1;
 extern volatile u8 *g_CdRegDataWrite;
 extern volatile u8 *g_CdRegResponse;
-/* DMA code adds volatile through its access pointer; CD_flush writes once. */
-extern u32 *g_CdRegRequest;
+/* The common delay register (0x1F801020); LIBCD writes 0x1325 or 0x1323. */
+extern volatile u32 *g_CdRegRequest;
+extern u16 *volatile g_CdSpuRegBase;
 
 typedef union CdDmaInterruptRegister {
     volatile u32 word;
@@ -45,17 +47,15 @@ typedef union CdDmaInterruptRegister {
 typedef char CdDmaInterruptRegisterSize[
     (sizeof(CdDmaInterruptRegister) == 4) ? 1 : -1];
 
-extern CdDmaInterruptRegister *D_8009B348;
-extern volatile u32 *D_8009B344;
-extern volatile u8 *D_8009B32C;
-extern char D_80011C2C[];
+extern CdDmaInterruptRegister *g_CdDmaInterruptRegPtr;
+extern volatile u32 *g_CdDmaControlRegPtr;
+extern volatile u8 *g_CdStIntrIndexRegPtr;
+extern char g_CdDmaStatusErrorFormat[];
 
 /* LIBCD keeps DMA register addresses in shared pointer slots. */
-extern volatile u32 *D_8009B28C;
-extern volatile u32 *D_8009B2B0, *D_8009B2B4;
-extern void *volatile *D_8009B2B8;
-extern volatile u32 *D_8009B2BC, *D_8009B2C0;
-extern volatile u32 *g_CdRegDmaControl;
+extern volatile u32 *g_CdRegDelaySize, *g_CdRegDmaPcr;
+extern void *volatile *g_CdRegDmaMadr;
+extern volatile u32 *g_CdRegDmaBcr, *g_CdRegDmaControl;
 
 typedef void (*CdReadCompleteCallback)(int event, void *data);
 
@@ -91,7 +91,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CdReadProgressState, inProgress) == 0x28,
                   cd_read_progress_in_progress_offset);
 
 /* Optional 2048-byte-sector staging buffer used by the streaming CD path. */
-extern u8 *D_800C0DB8;
+extern u8 *g_CdStreamMemorySource;
 
 typedef struct CdlLOC {
     u_char minute;
@@ -122,7 +122,20 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(StHEADER, loc) == 0x1C,
                   st_header_location_offset);
 
 /* LIBCD streaming ring: StRingSize headers followed by sector payloads. */
+/* Each ring slot's sector payload: 2048 bytes less its 32-byte header. */
+typedef struct StSectorPayload {
+    u32 words[0x1F8];
+} StSectorPayload;
+
 extern StHEADER *StRingAddr;
+/* A ring header addressed by its byte offset. StFreeRing and init_ring_status
+ * clear its leading status as a plain halfword or word, not a member. */
+typedef union StHeaderAddress {
+    StHEADER *header;
+    s16 *status;
+    s32 *statusWord;
+    u32 word;
+} StHeaderAddress;
 extern u32 StRingSize;
 
 /* C_004 streaming completion and back-location state. The byte-view alias
@@ -131,16 +144,15 @@ extern u32 StRingSize;
 extern u8 *g_CdRingBufPtr;
 extern int g_CdStreamRingReadSlot;
 extern int g_CdStreamDataReadyFlag;
-extern int D_800BE998;
-extern CdlLOC D_800A3490;
-extern int D_800A3494;
-extern int D_800A8020;
+extern int g_CdStreamRingWriteSlot;
+extern CdlLOC g_StLastFrameLoc;
+extern int g_StLastFrameNumber;
+extern int g_DsStreamNoLocFlag;
 extern volatile DsCallback g_StrDataReadyCallback;
 int CdPosToInt(CdlLOC *p);
 CdlLOC *CdIntToPos(int i, CdlLOC *p);
 void data_ready_callback(void);
 int StGetBackloc(CdlLOC *position);
-
 
 typedef struct CdlATV {
     u_char val0;
@@ -187,7 +199,7 @@ typedef struct CdRomEventCommandState {
     u_char pendingParamBytes[4];
     u_char reserved05[3];
     u_char *pendingParams;
-    u_char reserved0C[8];
+    u_char eventResult[8];
     CdRomCommandState command;
 } CdRomEventCommandState;
 
@@ -261,6 +273,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomSystemState, view) +
                   cdrom_system_command_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomEventCommandState, command) == 0x14,
                   cdrom_event_command_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomEventCommandState, eventResult) == 0x0C,
+                  cdrom_event_result_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomEventCommandState, pendingParams) == 0x08,
                   cdrom_event_pending_params_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomEventCommandState, command) +
@@ -279,30 +293,39 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomEventCommandState, command) +
                   cdrom_retry_attempts_address_offset);
 
 extern CdRomSystemState g_DsReadSysEnabled;
-extern DsReadStatusBlock g_DsReadStatusBlock __asm__("D_8009B574");
+extern DsReadStatusBlock g_DsReadStatusBlock;
 extern CdRomCommandState g_CdSeekState;
-extern CdRomEventCommandState g_CdRomEventCommandState
-    __asm__("D_8009B558");
+extern CdRomEventCommandState g_CdRomEventCommandState;
 /* Direct word aliases of the overlapping command-state structure fields. */
-extern s32 g_CdRomCommandEventValue __asm__("D_8009B570");
-extern s32 g_DsSyncResultCountdown __asm__("D_8009B594");
-extern int g_CdRomCmdTimeout __asm__("D_8009B598");
-extern int g_CdRomCmdRetryState __asm__("D_8009B59C");
+extern s32 g_CdRomCommandEventValue;
+extern s32 g_DsSyncResultCountdown;
+extern int g_CdRomCmdTimeout;
+extern int g_CdRomCmdRetryState;
 extern int g_CdRomCmdLongTimeoutTable[];
+/* A long-timeout flag addressed by the command's word offset. */
+typedef union CdTimeoutFlagAddress {
+    int *flag;
+    u32 word;
+} CdTimeoutFlagAddress;
 
 /* Recover the shared command window from its timeout/ready-result word. */
 #define CDROM_EVENT_STATE_FROM_TIMEOUT(pointer) \
     ((CdRomEventCommandState *)((char *)(pointer) - \
         PE1_OFFSETOF(CdRomEventCommandState, command.read.readyResult)))
+/* The same window addressed from its retry counter. */
+#define CDROM_EVENT_STATE_FROM_RETRY(pointer) \
+    ((CdRomEventCommandState *)((char *)(pointer) - \
+        PE1_OFFSETOF(CdRomEventCommandState, command.retryAttempts)))
 
 /* This word is also the base address used by CQ_execute. */
 extern int g_CdDsReadIndex;
 
 void DS_read_cbready(int status, void *data, void *detail);
 
-extern CdReadProgressState g_CdReadProgress __asm__("D_8009B6A4");
-/* Direct alias preserves the SDK's word access to the first state field. */
-extern s32 g_CdReadCommandPollToggle __asm__("D_8009B6A4");
+extern CdReadProgressState g_CdReadProgress;
+/* Scalar view of the first field: LIBDS_DSSYS_1_text_4A4 reads it as a plain
+ * word; through the structure GCC keeps its address live in $s0. */
+extern s32 g_CdReadCommandPollToggle __asm__("g_CdReadProgress");
 #define g_CdReadStartVsync (g_CdReadProgress.startVsync)
 #define g_CdReadCurrentVsync (g_CdReadProgress.currentVsync)
 #define g_CdReadInProgress (g_CdReadProgress.inProgress)
@@ -312,12 +335,12 @@ CdReadCompleteCallback DsReadCallback(CdReadCompleteCallback callback);
 void DS_stop(void);
 void callback(void);
 /* BIOS_1.OBJ polling state, result buffers and timeout diagnostics. */
-extern char *D_8009AFDC[], *D_8009B05C[];
-extern volatile u8 *D_8009B27C, *D_8009B288;
-extern u8 D_800A3460[8], D_800A3468[8], D_800A3470[8];
-extern int D_800A3478, D_800A347C;
-extern char *D_800A3480;
-extern char D_80011B18[], D_80011B28[], D_80011BA0[], D_80011BA8[];
+extern const char *g_CdCommandNames[], *g_CdInterruptNames[];
+extern u32 g_CdCommandAckOnly[];
+extern u8 g_CdSyncResult[8], g_CdReadyResult[8], g_CdEndResult[8];
+extern int g_CdTimeoutDeadlineVsync, g_CdTimeoutPollCount;
+extern char *g_CdTimeoutFuncName;
+extern char g_CdTimeoutText[], g_CdTimeoutDetailFormat[], g_CdSyncName[], g_CdReadyName[];
 int getintr(void);
 void CD_flush(void);
 
@@ -331,14 +354,12 @@ typedef struct CdCommandTables {
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdCommandTables, parameter_counts) == 0x100,
                   cd_command_parameter_counts_offset);
 PE1_STATIC_ASSERT(sizeof(CdCommandTables) == 0x180, cd_command_tables_size);
-extern CdCommandTables D_8009B0FC;
-extern int D_8009B1FC[];
-extern int D_8009AFC0;
-extern u8 D_8009AFD0[4];
-extern u8 g_CdMode __asm__("D_8009AFD4");
-extern u8 g_CdLastCom __asm__("D_8009AFD5");
-extern volatile u8 *D_8009B280, *D_8009B284;
-extern char D_80011BB4[], D_80011BBC[], D_80011BCC[];
+extern CdCommandTables g_CdCommandTables;
+extern u8 g_CdMode;
+extern u8 g_CdLastCom;
+extern char g_CdCommandTraceFormat[], g_CdNoParamFormat[], g_CdCwName[];
+/* "$Id: bios.c,v 1.86 ...$", the LIBCD BIOS version string. */
+extern const char g_CdBiosVersion[];
 
 /* Command/ready event polling; result is an optional eight-byte buffer. */
 int CD_sync(int mode, u8 *result);
@@ -363,7 +384,6 @@ u32 StFreeRing(u32 *base);
 u32 StGetNext(u32 **addr, u32 **header);
 void StCdInterrupt(void);
 int DsDataSync(int mode);
-int VSync(int mode);
 int DsGetSector();
 int DsGetSector2();
 void DsReadBreak(void);
@@ -372,16 +392,25 @@ void DS_read_cbsync(u_char event);
 void DS_read_cbdata(void);
 
 extern CdlLOC g_CdLastPos;
+
+/* LIBCD BIOS descriptor: CD_init prints its address. */
+typedef struct CdBiosInitDescriptor {
+    CdInterruptEvents *events;
+    u8 *sync_result;
+    u8 *command;
+    u32 *status;
+    CdlLOC *position;
+    const char *version;
+} CdBiosInitDescriptor;
+extern CdBiosInitDescriptor g_CdBiosInitDescriptor;
 extern CdlLOC g_CdCurPosPtr;
-extern int D_8009B260;
 extern u32 g_CdStreamMask;
-extern u32 D_800B6918;
+extern u32 g_CdStreamStartFrame;
 
 /* CD streaming state shared by StSetStream, StSetRing and StCdInterrupt. */
-extern s32 D_800A5D54;
-extern s16 D_800A8018;
+extern s32 g_StCurrentFrameNumber;
+extern s16 g_StFrameSectorIndex;
 extern s32 D_800A801C;
-extern u32 D_800C20C4;
 /* Contiguous end-of-stream controls. StCdInterrupt retains its two interior
  * scalar aliases because field-based addressing changes its retail schedule. */
 typedef struct CdStreamEndState {
@@ -395,7 +424,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CdStreamEndState, endSectorPending) == 0x04,
                   cd_stream_end_pending_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdStreamEndState, dmaBuffer) == 0x08,
                   cd_stream_dma_buffer_offset);
-extern CdStreamEndState g_CdStreamEndState __asm__("g_CdStreamEndSector");
+extern CdStreamEndState g_CdStreamEndState;
 typedef union CdStreamReadyState {
     s32 word;
     struct {
@@ -405,30 +434,31 @@ typedef union CdStreamReadyState {
 } CdStreamReadyState;
 PE1_STATIC_ASSERT(sizeof(CdStreamReadyState) == 4,
                   cd_stream_ready_state_size);
-extern CdStreamReadyState D_800B0CD0;
-/* The memcard overlay reads and clears only the low halfword at this address. */
-extern s16 g_CdStreamReadyHalfword __asm__("D_800B0CD0");
-extern volatile s32 D_800B6914, D_800B8620;
-extern void (*D_800B0CCC)(void);
-extern s32 g_CdStreamRingIndex __asm__("D_800BE9EC");
-extern StHEADER *D_800C0DC8;
+extern CdStreamReadyState g_CdStreamReady;
+/* The memcard overlay reads and clears only the low halfword, as a scalar:
+ * through the union its test and clear schedule differently. */
+extern s16 g_CdStreamReadyHalfword __asm__("g_CdStreamReady");
+extern volatile s32 D_800B6914, g_CdStreamExpectedTypeId;
+extern void (*g_StrEndCallback)(void);
+extern s32 g_CdStreamRingIndex;
 
 /* Low-level LIBCD command retry wrapper and its shared command state. */
-extern u32 D_8009AF2C[];
-extern CdlCB D_8009AFB4;
-extern CdlCB D_8009AFB8;
+extern u32 g_CdCommandHasParam[];
 extern CdlCB g_CdSyncCallback;
 extern CdlCB g_CdReadyCallback;
+extern CdlCB g_CdReadCallback;
 extern int CD_debug;
 int CdSetDebug(int level);
 CdlCB CdSyncCallback(CdlCB callback);
 CdlCB CdReadyCallback(CdlCB callback);
 int DsSetDebug(int level);
 /* SDK CD_status occupies one word; public getters read its low byte. */
-extern u32 D_8009AFC4;
-extern u32 D_8009AFC8; /* SDK CD_status1, also stored as a full word. */
+extern u32 g_CdStatus;
+extern u32 g_CdStatus1; /* SDK CD_status1, also stored as a full word. */
+/* Counts status words that newly report the shell (lid) open. */
+extern int g_CdLidOpenCount;
 int CD_cw(int command, void *parameters, u8 *result, int mode);
-void dma_execute(int channel, u32 address, int blockCount, int blockSize,
+void dma_execute(int channel, void *address, int blockCount, int blockSize,
                  volatile u32 control, u8 interrupt, int reserved);
 /* The streaming caller supplies a fourth word; the copy helper ignores it. */
 void mem2mem(void *destination, void *source, unsigned int count, int reserved);
@@ -436,11 +466,15 @@ int CdControl(u_char command, u_char *parameters, u_char *result);
 int CdControlF(u_char command, u_char *parameters);
 int CdControlB(u_char command, u_char *parameters, u_char *result);
 int CdMix(CdlATV *volume);
+int DsMix(CdlATV *volume);
+int CD_vol(CdlATV *volume);
+int CD_getsector(void *destination, int words);
+int CD_getsector2(void *destination, int words);
 int CdGetSector2(void *address, int size);
 int CdGetSector(void *address, int size);
-DsCallback CdDataCallback(DsCallback callback);
-int CdDataSync(int mode);
 
+void LIBDS_DSSYS_1_text_8B8(int event, u8 *result);
+void LIBDS_DSSYS_1_text_A9C(int event, u8 *result);
 void LIBDS_DSSYS_1_text_D24(int event, u8 *result);
 
 #endif

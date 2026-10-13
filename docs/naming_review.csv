@@ -1,0 +1,874 @@
+address,old_name,name,review,proposer_confidence,evidence
+0x1F801D88,D_1F801D88,g_SpuKeyOnLow,ok,verified,SPU KON low halfword; Spu_WriteKeyOn in src/main/akao/voice_driver.c:638 stores the low half of the voice mask.
+0x1F801D8A,D_1F801D8A,g_SpuKeyOnHigh,ok,verified,SPU KON high halfword; Spu_WriteKeyOn voice_driver.c:640 stores value>>16.
+0x1F801D8C,D_1F801D8C,g_SpuKeyOffLow,ok,verified,SPU KOFF low halfword; Spu_WriteKeyOff voice_driver.c:644.
+0x1F801D8E,D_1F801D8E,g_SpuKeyOffHigh,ok,verified,SPU KOFF high halfword; Spu_WriteKeyOff voice_driver.c:646.
+0x1F801D90,D_1F801D90,g_SpuPitchModLow,ok,verified,SPU PMON (FM pitch modulation) low halfword; Spu_WriteFmEnable voice_driver.c:662.
+0x1F801D92,D_1F801D92,g_SpuFmEnableHigh,fix,verified,Written only by Spu_WriteFmEnable (voice_driver.c:664); name should follow that function (FM enable high half).
+0x1F801D94,D_1F801D94,g_SpuNoiseEnableLow,fix,verified,"Hardware 0x1F801D94 is SPU NON low half and its writer is Spu_WriteNoiseEnable (voice_driver.c:656), matching g_AkaoNoiseEnableMask; ""Mode"" is not used for it anywhere."
+0x1F801D96,D_1F801D96,g_SpuNoiseEnableHigh,fix,verified,"The register is the NON (noise on) high half written by Spu_WriteNoiseEnable (voice_driver.c:658), so 'Enable' matches the function name better than 'Mode'."
+0x1F801D98,D_1F801D98,g_SpuReverbEnableLow,ok,verified,SPU EON (reverb enable) low halfword; Spu_WriteReverbEnable voice_driver.c:650.
+0x1F801D9A,D_1F801D9A,g_SpuReverbEnableHigh,ok,verified,SPU EON high halfword; Spu_WriteReverbEnable voice_driver.c:652.
+0x80010760,D_80010760,g_BattleActionSoundIds,ok,likely,include/pe1/battle.h documents it as the sound effect per battle action; indexed by spell idx in src/main/battle/attack.c:595 and copied in phase.c:128.
+0x80010928,D_80010928,g_AyaBattleStateInitial,ok,verified,Battle_SaveAyaState (src/main/battle/encounter.c:1835) copies this rodata template into g_AyaBattleState.
+0x80010998,D_80010998,g_SavedBattleStateTailInitial,ok,verified,Battle_SaveAyaState (encounter.c:1836) copies it into g_SavedBattleStateTail.
+0x800109B0,D_800109B0,g_EnemyCombatantInitial,ok,verified,Entity_AllocSlot (src/main/battle/enemy_slots.c:4) copies it into D_800A5D58[index].combatant for a freshly allocated slot.
+0x80010DFC,D_80010DFC,g_BattleStatusSymbolUv,ok,verified,Battle_DrawStatusSymbol (src/main/battle/status_hud.c:810) indexes it by status*2 and stores the pair into the packet u/v bytes (D_8009E93C/D).
+0x80010E10,D_80010E10,g_BattleStatusSymbolSize,ok,verified,status_hud.c:811 indexes it by status*2 and stores the pair as RenderSpritePacket width and height.
+0x80010E24,D_80010E24,g_BattleStatusSymbolOffset,ok,verified,status_hud.c:812 indexes it by status*2 and adds the pair to the HUD slot x and y.
+0x80010E94,D_80010E94,g_ErrorSeverityWarningName,ok,verified,Rodata string directly before g_ErrorSeverityFatalName (0x80010EA0) and referenced from the severity name table in dtail_gp_pre_s016.data.s:1151.
+0x80010EB0,D_80010EB0,g_ErrorMessageFormat,ok,verified,printf format in src/main/draw/error.c:7.
+0x80010EC8,D_80010EC8,g_ErrorDetailFormat,ok,verified,printf format in src/main/draw/error.c:8.
+0x80011610,D_80011610,g_CdLoadAreaBase,fix,likely,"It is a rodata pointer to 0x80120D00 used as base for CD reads and image/video buffers (disc_tables.c:273, video_playback.c:152, image_display.c:37); ""High"" is not evidenced."
+0x8001161C,D_8001161C,g_SprintfDigitsUpper,ok,verified,sprintf.c:278 selects it as the digit set for upper-case hex conversion (src/main/psyq/libc/sprintf.c:35).
+0x80011630,D_80011630,g_SprintfDigitsLower,ok,verified,sprintf.c:282 selects it as the digit set for lower-case hex conversion (sprintf.c:36).
+0x800116FC,D_800116FC,g_VSyncTimeoutText,ok,verified,puts argument in src/main/psyq/libetc/vsync.c:56.
+0x80011740,D_80011740,g_IntrUnexpectedFormat,ok,verified,printf format in src/main/psyq/libetc/intr_2.c:76.
+0x8001175C,D_8001175C,g_IntrTimeoutFormat,ok,verified,"printf format in libetc/intr_2.c:110,116."
+0x8001177C,D_8001177C,g_DmaBusErrorFormat,ok,verified,printf format in src/main/psyq/libetc/intr_dma.c:39.
+0x80011798,D_80011798,g_DmaMadrFormat,ok,verified,printf format in libetc/intr_dma.c:41.
+0x800117E0,D_800117E0,g_ResetGraphJtbFormat,ok,verified,format in src/main/psyq/libgpu/sys.c:38.
+0x80011800,D_80011800,g_ResetGraphModeFormat,ok,verified,g_GpuDebugPrintf in libgpu/sys.c:57.
+0x80011814,D_80011814,g_SetGraphDebugFormat,ok,verified,debugPrint in libgpu/sys.c:87.
+0x80011840,D_80011840,g_SetGraphQueFormat,ok,verified,g_GpuDebugPrintf in libgpu/sys.c:100.
+0x80011854,D_80011854,g_DrawSyncCallbackFormat,ok,verified,g_GpuDebugPrintf in libgpu/sys.c:121.
+0x80011870,D_80011870,g_SetDispMaskFormat,ok,verified,g_GpuDebugPrintf in libgpu/sys.c:136.
+0x80011884,D_80011884,g_DrawSyncFormat,ok,verified,"called as fn(D_80011884, arg0) in libgpu/sys.c:161."
+0x80011898,D_80011898,g_BadRectFormat,ok,verified,selected as format in libgpu/sys.c:175.
+0x800118A4,D_800118A4,g_RectCoordsFormat,ok,verified,"g_GpuDebugPrintf of x,y,width,height in libgpu/sys.c:191."
+0x800118B8,D_800118B8,g_RectNameFormat,ok,verified,selected as format in libgpu/sys.c:180.
+0x800118BC,D_800118BC,g_ClearImageName,ok,verified,checkRECT name argument in libgpu/sys.c:201.
+0x800118C8,D_800118C8,g_ClearImage2Name,ok,verified,checkRECT name argument in libgpu/sys.c:211.
+0x800118D4,D_800118D4,g_LoadImageName,ok,verified,checkRECT name argument in libgpu/sys.c:220.
+0x800118E0,D_800118E0,g_StoreImageName,ok,verified,checkRECT name argument in libgpu/sys.c:228 and sys_10.c:40.
+0x800118EC,D_800118EC,g_MoveImageName,ok,verified,checkRECT name argument in libgpu/sys.c:234.
+0x800118F8,D_800118F8,g_ClearOTagFormat,ok,verified,g_GpuDebugPrintf in libgpu/sys.c:278.
+0x80011910,D_80011910,g_ClearOTagRFormat,ok,verified,g_GpuDebugPrintf in libgpu/sys.c:314.
+0x80011928,D_80011928,g_DrawOTagFormat,ok,verified,g_GpuDebugPrintf in libgpu/sys.c:347.
+0x8001193C,D_8001193C,g_PutDrawEnvFormat,ok,verified,g_GpuDebugPrintf in libgpu/sys.c:367.
+0x80011954,D_80011954,g_DrawOTagEnvFormat,ok,verified,g_GpuDebugPrintf in libgpu/sys.c:383.
+0x80011970,D_80011970,g_PutDispEnvFormat,ok,verified,g_GpuDebugPrintf in libgpu/sys_2.c:45.
+0x80011988,D_80011988,g_GpuTimeoutFormat,ok,verified,printf in libgpu/sys_9.c:47.
+0x800119BC,D_800119BC,g_LoadImage2Name,ok,verified,checkRECT name argument in libgpu/sys_10.c:26.
+0x80011B18,D_80011B18,g_CdTimeoutText,ok,verified,puts in libcd/bios_6.c:14.
+0x80011B28,D_80011B28,g_CdTimeoutDetailFormat,ok,verified,printf in libcd/bios_6.c:15.
+0x80011B44,D_80011B44,g_CdDiskErrorText,ok,verified,printf in libcd/bios.c:42.
+0x80011B50,D_80011B50,g_CdDiskErrorDetailFormat,fix,verified,"D_80011B44 is the ""DiskError: "" prefix (bios.c:42); D_80011B50 is ""com=%s,code=(%02x:%02x)
+"" detail line printed after it."
+0x80011B6C,D_80011B6C,g_CdUnknownIntrText,ok,verified,puts in libcd/bios.c:90.
+0x80011B80,D_80011B80,g_CdUnknownIntrFormat,ok,verified,printf of the interrupt number in libcd/bios.c:91.
+0x80011BA0,D_80011BA0,g_CdSyncName,ok,verified,stored to the current-function-name global D_800A3480 in libcd/bios_2.c:20.
+0x80011BA8,D_80011BA8,g_CdReadyName,ok,verified,stored to D_800A3480 in libcd/bios_2.c:52.
+0x80011BB4,D_80011BB4,g_CdCommandTraceFormat,ok,verified,printf of the command name in libcd/bios_3.c:19.
+0x80011BBC,D_80011BBC,g_CdNoParamFormat,ok,verified,printf in libcd/bios_3.c:27.
+0x80011BCC,D_80011BCC,g_CdCwName,ok,verified,stored to D_800A3480 in libcd/bios_3.c:75.
+0x80011C08,D_80011C08,g_CdInitName,ok,verified,puts in libcd/bios_5.c:15.
+0x80011C14,D_80011C14,g_CdInitAddrFormat,ok,verified,printf in libcd/bios_5.c:16.
+0x80011C20,D_80011C20,g_CdDataSyncName,ok,verified,stored to D_800A3480 in libcd/bios_6.c:32.
+0x80011C2C,D_80011C2C,g_CdDmaStatusErrorFormat,ok,verified,printf in libcd/c_011_2.c:22.
+0x80011C4C,D_80011C4C,g_SpuTimeoutFormat,ok,verified,"printf in libspu/spu.c:27,118,134."
+0x80011C5C,D_80011C5C,g_SpuWaitResetText,ok,verified,printf argument in libspu/spu.c:27.
+0x80011C6C,D_80011C6C,g_SpuWaitWrdyText,ok,verified,printf argument in libspu/spu.c:118.
+0x80011C80,D_80011C80,g_SpuWaitDmafText,ok,verified,printf argument in libspu/spu.c:134.
+0x80011D74,D_80011D74,g_DsStatusHeaderText,ok,verified,printf in libds/dssys_1_10.c:25.
+0x80011D94,D_80011D94,g_DsCommandStatusFormat,ok,verified,printf in dssys_1_10.c:28.
+0x80011DB0,D_80011DB0,g_DsLastCommandFormat,ok,verified,printf in dssys_1_10.c:36.
+0x80011DD8,D_80011DD8,g_DsCommandRemainFormat,ok,verified,printf in dssys_1_10.c:37.
+0x80011DF8,D_80011DF8,g_DsSystemTimerFormat,ok,verified,printf in dssys_1_10.c:38.
+0x80011E0C,D_80011E0C,g_DsCallbacksFormat,ok,verified,printf in dssys_1_10.c:44.
+0x80011E3C,D_80011E3C,g_DsActiveText,ok,verified,busy string selected in dssys_1_10.c:50.
+0x80011E44,D_80011E44,g_DsNoneText,ok,verified,busy string selected in dssys_1_10.c:49.
+0x80011E4C,D_80011E4C,g_DsReadySystemFormat,ok,verified,printf in dssys_1_10.c:52.
+0x80011E6C,D_80011E6C,g_DsPathLevelErrorFormat,fix,verified,"The string is ""%s: path level (%d) error
+"" (dsfile.c:20-21), so the role is a path-level error, not a search path."
+0x80011E88,D_80011E88,g_DsDirNotFoundFormat,fix,verified,"The string is ""%s: dir was not found
+"" (dsfile.c:22-23), not a generic search-file format."
+0x80011EA0,D_80011EA0,g_DsSearchFileDiscErrorText,fix,verified,"String is ""DsSearchFile: disc error\n"" (libds/dsfile.c:24), a specific error message, so a generic ""SearchFileText"" name loses the role."
+0x80011EBC,D_80011EBC,g_DsSearchComponentFormat,ok,verified,printf(component) in libds/dsfile.c:108.
+0x80011EDC,D_80011EDC,g_DsComponentFoundFormat,ok,verified,printf in libds/dsfile.c:117.
+0x80011EE8,D_80011EE8,g_DsComponentNotFoundFormat,ok,verified,printf in libds/dsfile.c:138.
+0x80011EF8,D_80011EF8,g_DsNewMediaPvdReadErrorText,fix,verified,"String is ""DS_newmedia: Read error in ds_read(PVD)\n"" (libds/dsfile.c:30-31); ""DebugText0"" is a position index, not a role."
+0x80011F24,D_80011F24,g_DsIso9660Magic,ok,verified,"strncmp(...,5) against the volume descriptor in libds/dsfile_2.c:34."
+0x80011F2C,D_80011F2C,g_DsNewMediaPvdFormatErrorText,fix,verified,"String is ""DS_newmedia: Disc format error in ds_read(PVD)\n"" (libds/dsfile.c:33); the numeric suffix 1 is a position index, not a role, and Text0/Text1/Text3 do not say what each message is."
+0x80011F5C,D_80011F5C,g_DsNewMediaPtReadErrorFormat,fix,verified,"String is ""DS_newmedia: Read error (PT:%08x)
+"" (dsfile.c:35-36), printed on path-table read failure; name derived from the argument, not the role."
+0x80011F80,D_80011F80,g_DsNewMediaSearchingDirText,fix,verified,"dsfile.c:37 string is ""DS_newmedia: sarching dir.."" put by dsfile_2.c:44; Text2 is a counter, not a role."
+0x80011FA0,D_80011FA0,g_DsDirectoryEntryFormat,ok,verified,printf of directory cache sector in libds/dsfile_2.c:70.
+0x80011FB4,D_80011FB4,g_DsDirectoryCountFormat,ok,verified,printf(count) in libds/dsfile_2.c:81.
+0x80011FD8,D_80011FD8,g_DsCacheFileDirNotFoundText,fix,verified,"String is ""DS_cachefile: dir not found\n"" (libds/dsfile.c:43-44); ""DebugText3"" is a position index and says nothing about the message."
+0x80011FF8,D_80011FF8,g_DsCacheFileSearchingText,fix,verified,"dsfile.c:45 is the string ""DS_cachefile: searching...\n"" printed at dsfile_2.c:115; the ""4"" index has no basis."
+0x80012014,D_80012014,g_DsDotName,ok,verified,memcpy into g_DslFileCache[0].name in libds/dsfile_2.c:124.
+0x80012018,D_80012018,g_DsDotDotName,ok,verified,memcpy into g_DslFileCache[1].name in libds/dsfile_2.c:127.
+0x8001201C,D_8001201C,g_DsCacheEntryFormat,ok,verified,printf of the cache entry position in libds/dsfile_2.c:134.
+0x80012038,D_80012038,g_DsCacheCountFormat,ok,verified,printf(count) in libds/dsfile_2.c:143.
+0x8001205C,D_8001205C,g_DsIso9660Id,ok,verified,strncmp against buffer[1] in libds/dstype.c:54.
+0x8001208C,D_8001208C,g_SpuTimeoutFormatIrq,ok,verified,"printf in libspu/s_si.c:17,28."
+0x8001209C,D_8001209C,g_SpuWaitIrqOnText,ok,verified,printf argument in libspu/s_si.c:17.
+0x800120AC,D_800120AC,g_SpuWaitIrqOffText,ok,verified,printf argument in libspu/s_si.c:28.
+0x8007E584,D_8007E584,g_CardExitHookTemplate,ok,verified,End.c comment: three-NOP template D_8007E584..D_8007E590 that _ExitCard copies over the C0 card hook (src/main/psyq/libcard/end.c:25).
+0x800910A0,D_800910A0,g_ScriptQueueOpcodeHandlers,ok,verified,Script_RunQueue (script/flow_opcodes.c) calls D_800910A0[opcode](args) in a do-while; the table holds Script_* and Akao_ProcessCommand function pointers (dtail_gp_pre_s016.data.s).
+0x80091474,D_80091474,g_AnalyzeHpFormatText,ok,likely,"Save_DrawSlotMetadata uses it as the textbox message when prompt==phase; decodes to ""HP <FB>8;<FB>8"" (HP with two number escapes)."
+0x80091480,D_80091480,g_TextSusceptibleToPoison,fix,verified,"save_slot.c:62 picks D_80091480[windowIndex] for prompt bit 0x1000 and row 1 (0x80091496) decodes to ""Susceptible to poison""; the Analyze attribution is unproven."
+0x800914AC,D_800914AC,g_TextSusceptibleToAcid,fix,verified,"menu/save_slot.c:65 picks D_800914AC[windowIndex] for prompt bit 0x2000 and row 1 decodes to ""Susceptible to acid"" (status_text_table.md:20), but no Analyze caller of the bit exists in code, so name the text not the feature."
+0x800914FC,D_800914FC,g_AnalyzeHeatWeakTexts,ok,verified,"Selected by prompt bit 0x8000 in Save_DrawSlotMetadata; row 1 decodes to ""Sensitive to heat""."
+0x8009159C,D_8009159C,g_EscapeFailedTexts,ok,verified,"Battle_RollEscapeChance (battle/turn.c) sets D_8009D1F8 = D_8009159C + windowIndex*17; row 1 decodes to ""Failed to escape""."
+0x800915C0,D_800915C0,g_EscapeBlockedTexts,ok,verified,"Battle_RollEscapeChance sets D_8009D1F8 = D_800915C0 + windowIndex*14; row 1 decodes to ""Can't escape!""."
+0x80091644,D_80091644,g_TextboxFontPages,ok,likely,Menu_DrawTextboxEntries (draw/textbox.c) reads [1].tpage/clut and [2].textureY/tpage/clut for glyph packets; same 64 bytes are viewed 4 bytes later as g_FieldBgTextureSlots.
+0x80091648,D_80091648,g_FieldBgTextureSlots,ok,likely,"Scene_LoadFieldBg (scene/room_load.c) derives .tpage/.clut for slots 0..3 from x,y,clut_x,clut_y after loading the bg TIMs; overlaps g_TextboxFontPages."
+0x80091694,D_80091694,g_TextboxNameGlyphs,ok,verified,Menu_CopyPromptCodes (aya/stats.c) fills glyphs/count with the name codes and Menu_DrawTextboxEntries loops glyphs[0..count) to draw the player name inline.
+0x800916A0,D_800916A0,g_TextboxGlyphSpacing,ok,verified,Menu_DrawTextboxEntries subtracts D_800916A0[code].left from the cursor before a glyph and adds .right after it (draw/textbox.c lines 871 and 891).
+0x80091A1D,D_80091A1D,g_FontSelectionCodeIndex,ok,likely,font.h documents it as the byte view of g_FontSelectionState.codeIndex; Render_StepFontLoad reads D_80091A1D % 10.
+0x80091A1F,D_80091A1F,g_FontSelectionSelectedSlot,ok,likely,font.h documents it as the byte view of .selected; Render_SetFontGlyphByCode stores it and Render_StepFontLoad indexes slots with it; initial value 0xFF.
+0x80091A2C,D_80091A2C,g_ErrorSeverityNames,ok,verified,"Draw_ReportError (draw/error.c) prints D_80091A2C[index] before the message; the table holds pointers to ""Fatal Error: "" and ""Warning: "" strings."
+0x800921F8,D_800921F8,g_PadActuatorAlign,ok,likely,"Field_HandleStateTransition (boot/init.c) passes it to PadSetActAlign(0, D_800921F8); bytes are 00 01 FF FF FF FF 00 00, the vibration actuator align mapping."
+0x80092200,D_80092200,g_PadComboSequence,ok,verified,Field_HandleStateTransition (boot/init.c) compares newly pressed pad bits against D_80092200[D_8009D2A8]; after 9 consecutive matches it sets g_SceneDispatchToken to 0xAA108448 and ORs 0x12000 into g_GameStateFlags (a hidden button-code sequence).
+0x80092230,D_80092230,g_MemCardSearchPatternPtr,ok,verified,"MemCard_UpdateSaveState (memcard/save_flow.c) patches [2] with the port digit and passes it to firstfile(); it points to ""bu 0:*""."
+0x800922B8,D_800922B8,g_MenuModSlotIconIndexOffsetByView,fix,likely,"skills.c:499 adds D_800922B8[g_MenuInventoryViewMode] to the slot and uses the sum to index the icon id tables D_800922BC/C4/CC, so it is an icon index offset, not a row offset."
+0x800922BC,D_800922BC,g_MenuModSlotFirstGlyphs,ok,likely,Menu_DrawWeaponModSlots feeds D_800922BC[row] to Draw_AllocSprite as the first slot-type glyph.
+0x800922C4,D_800922C4,g_MenuModSlotSecondGlyphs,ok,likely,Menu_DrawWeaponModSlots feeds D_800922C4[row] to Draw_AllocSprite as the second slot-type glyph.
+0x8009234C,D_8009234C,g_MenuContextHelpTextIds,fix,likely,save_screens.c:311-322 indexes it in context-help case 50 and passes the byte to Text_LookupTable10; g_MenuEquipMode only selects one override row.
+0x80092354,D_80092354,g_MenuRenamePanelPointsWindow0,ok,likely,Menu_OpenRenameScreen (menu/save_screens.c) assigns it to appearance.gradientPoints when Save_GetMetadataWindowIndex()==0.
+0x80092380,D_80092380,g_MenuRenamePanelPointsWindow1,ok,likely,Menu_OpenRenameScreen assigns it to appearance.gradientPoints when Save_GetMetadataWindowIndex()!=0.
+0x800923A0,D_800923A0,g_MenuRenamePreviewPanelPoints,ok,likely,Menu_OpenRenameScreen assigns it to the preview node gradientPoints when no rename target record exists.
+0x800923D8,D_800923D8,g_InvItemTableRanges,ok,likely,"Inv_RebuildSelectionBitset (item/active_list.c) walks 8 start/stop ranges of D_800A77F0 and marks equipment records flag 8; contents 0x1C..0x21, 0x31..0x35, ... 0x107..0x12C."
+0x80092410,D_80092410,g_InvSortRankTableB,ok,likely,Inv_SortContainerItems and Inv_SortInventoryItems (item/armor_capacity.c) assign it to g_InvSortRankTable; sibling of g_InvSortRankTableA at 0x800923F8.
+0x80092428,D_80092428,g_InvSortRankTableC,ok,likely,Inv_SortInventoryByMode case 0 assigns it to g_InvSortRankTable; same 24-entry kind-rank layout as g_InvSortRankTableA.
+0x80092440,D_80092440,g_InvSortRankTableD,ok,likely,Inv_SortInventoryByMode case 2 assigns it to g_InvSortRankTable; same 24-entry kind-rank layout as g_InvSortRankTableA.
+0x800930A8,D_800930A8,g_WipeRectEdgeList,ok,verified,"Draw_EmitWipeBarRect, Draw_AllocColorGradient and Draw_AllocColorTriGradient pass it to Draw_EmitWipeBar; bytes 00 01 00 02 FF 01 03 02 03 FF are vertex-index pairs of a quad outline with 0xFF list terminators."
+0x800930DA,D_800930DA,g_PeImageSectorBoundsNext,ok,likely,"Scene_LoadEntityTexture(s) read D_800930DA[i] - D_800930D8[i] as the sector count, so it is the same table one entry ahead."
+0x800930E4,D_800930E4,g_PeImageTimTexturesEndSector,ok,likely,Asset_LoadTimTextures uses it as the end of the TIM texture sector range.
+0x80093166,D_80093166,g_BootDisplayDataLbaTbl,fix,likely,"disc_tables.c:270-272 reads it as a sector range into D_80011610 and boot_display uses g_MainAssetLbaTbl[0]-D_80093166 as image offset (image_display.c:236), i.e. display data, not audio."
+0x8009316C,D_8009316C,g_SmallTexLbaTbl,fix,likely,"disc_tables.c:203 loads object_texture_blob from it exactly when bit 0x2000 is clear, mirroring g_LargeTexLbaTbl; 'ObjectTex' does not distinguish them."
+0x80094188,D_80094188,g_PmCmdHandlerArray,fix,likely,asm shows it is the 86-entry handler array (last word D_800E13D4 at 0x800942DC = command 85) and g_PmCmdHandlerTable (0x800942E0) is the pointer to it; g_PmCmdHandlers vs g_PmCmdHandlerTable is indistinguishable.
+0x800942F0,D_800942F0,g_EntityInputRulesMode15,ok,likely,"Slot 0x15 of D_800943C0 points here; records are {3,1,0x78,Scene_UpdateEntityFacing}, {2,0,0x78,Scene_UpdatePlayerEntity} and a zero terminator."
+0x80094320,D_80094320,g_EntityInputRulesMode16,ok,likely,Slot 0x16 of D_800943C0 points here; same two rules as the 0x15 set plus a flags=0 record whose callback is Scene_Init.
+0x80094380,D_80094380,g_EntityInputRulesMode04,ok,likely,"Slot 4 of D_800943C0 points here; one rule {2,0,0x78,Scene_UpdateEntityFacing} and a zero terminator."
+0x800943C0,D_800943C0,g_EntityInputRulesByMode,ok,verified,Entity_IntegratePositionFull (entity/frame_update.c) passes it to Scene_CheckFlagBits indexed by the entity mode (0x11 while the player flag state is 0x80).
+0x80094488,D_80094488,g_AkaoVoiceBankEntries,ok,verified,"Akao_LoadVoiceBank, Asset_ResetGameState and Akao_LoadVoiceBankAlt loop over 4 entries of {group,set,index,frame,ids[2]} (scene_assets.h, sizeof==8)."
+0x80094528,D_80094528,g_SprintfFormatSpecDefault,ok,verified,sprintf (psyq/libc/sprintf.c) loads flags and width from &D_80094528 as the reset template of each conversion; the source comment states the 12-byte template is all zero.
+0x80094538,D_80094538,g_SnCtorsDone,ok,likely,"__main (psyq/libsn/snmain.c) tests it, sets it to 1 before walking __sn_ctor_table, and __do_global_dtors skips the destructor walk while it is 0."
+0x8009453C,D_8009453C,g_SnProgramEnd,fix,likely,"snmain.c:51-52 stores (_end & 0x1FFFFFFF)|0x80000000 here while InitHeap receives this value + 4, so it is the end of the image/heap start rather than a heap object."
+0x80094540,D_80094540,g_SnHeapSize,ok,likely,"__SN_ENTRY_POINT stores _ramsize - 8 - _stacksize - _end here, the free heap byte count."
+0x80094564,D_80094564,g_MathErrCode,ok,verified,_err_math (psyq/libmath/ferr.c) stores its first argument here before testing for 0x21 and 0x22.
+0x80094568,D_80094568,g_MathErrArg,ok,verified,_err_math stores its second argument here.
+0x800945E4,D_800945E4,g_IntrState,ok,verified,"Sys_InitIntrManager, trapIntr (Render_InitSceneGeom), Sys_SaveDisableIntr and Sys_RestoreIntr cast it to InterruptCallbackState (psyq_api_internal.h, size assert 0x1068); INTR.OBJ state."
+0x800945E6,D_800945E6,g_IntrInCallback,ok,likely,Render_InitSceneGeom (trapIntr) sets it to 0 on exit and CheckCallback returns it; it is offset 2 of g_IntrState.
+0x800945E8,D_800945E8,g_IntrHandlers,ok,verified,Sys_SetIntrCallback indexes it by interrupt channel; it is g_IntrState.handlers at offset 4.
+0x80094614,D_80094614,g_IntrEnabledMask,ok,likely,trapIntr ANDs it with I_STAT and I_MASK to find pending sources; offset 0x30 of g_IntrState.
+0x8009564C,D_8009564C,g_IntrDispatchTable,fix,likely,"asm shows 28 bytes (g_IntrVersion, Sys_SetIntrCallback, Sys_InitIntrManager, ...) matching InterruptDispatchTable (psyq_api_internal.h:100-113); g_EventCallbackTable is the pointer to it, so it is the table, not ""entries""."
+0x80095670,D_80095670,g_IntrStatusRegPtr,ok,verified,Holds 0x1F801070 (I_STAT); trapIntr acknowledges bits with *D_80095670 = ~(bit << channel).
+0x80095678,D_80095678,g_IntrDmaControlRegPtr,ok,verified,Holds 0x1F8010F0 (DPCR); Sys_InitIntrManager writes 0x33333333 to it and Sys_SaveDisableIntr/Sys_RestoreIntr save and restore it.
+0x8009567C,D_8009567C,g_IntrTimeoutCounter,ok,verified,"trapIntr increments it while I_STAT and I_MASK stay pending; past 0x800 it prints ""intr timeout(%04x:%04x)"" and clears I_STAT, otherwise resets it."
+0x800956B0,D_800956B0,g_IntrVSyncTimerModePtr,ok,verified,Holds 0x1F801114 (root counter 1 mode); startIntrVSync writes 0x107 through it.
+0x800956E0,D_800956E0,g_DmaChannelRegsPtr,fix,verified,"It is a pointer variable holding 0x1F801080 (12-byte object, asm data) typed DmaChannelRegisters* (psyq_api_internal.h:83); the sibling pointer globals carry a Ptr suffix (g_IntrMaskRegPtr, g_GpuDmaBcrPtr)."
+0x80095704,D_80095704,g_GpuDefaultCallbacks,ok,verified,g_GpuCallbacks (0x80095744) is initialised with this address and ResetGraph passes it to GPU_cw and prints it as the version.
+0x8009574C,D_8009574C,g_GpuSystemState,ok,verified,"ResetGraph, SetGraphDebug, DrawSync, PutDispEnv, SetDrawEnv and others use it as GpuDebugState/GpuSystemState (gpu_state.h with size assert 0x80)."
+0x80095750,D_80095750,g_GpuMaxWidth,ok,likely,"Gpu_BuildDrawAreaCmd, Gpu_DmaVramTransfer and Gpu_FlushDisplayBuffer clamp rect widths to it; offset 4 of g_GpuSystemState, set from the VRAM width table."
+0x80095752,D_80095752,g_GpuMaxHeight,ok,likely,Same functions clamp rect heights to it; offset 6 of g_GpuSystemState.
+0x800957CC,D_800957CC,g_GpuTypeWidthTable,ok,verified,"ResetGraph reads D_800957CC[gpuType][0] into state->status.width (values 0x400,0x400,0x400)."
+0x800957D8,D_800957D8,g_GpuTypeHeightTable,ok,verified,"ResetGraph reads D_800957D8[gpuType][0] into state->status.height (values 0x200,0x200,0x400)."
+0x800957EC,D_800957EC,g_GpuMoveImagePacket,ok,verified,"MoveImage2 fills D_800957EC[0..2] with source rect, destination x/y and size, and MoveImage hands the array to the GPU command routine."
+0x800957F8,D_800957F8,g_GpuOtTerminatorTarget,ok,likely,ClearOTag and ClearOTagR build the terminator word as the 24-bit address of D_800957F8 combined with 0x04000000 and store it in D_8009580C.
+0x8009580C,D_8009580C,g_GpuOtTerminatorWord,ok,verified,ClearOTag and ClearOTagR store the terminator link word there and point the last OT entry at it.
+0x80095820,D_80095820,g_GpuHRangeTable,ok,verified,"PutDispEnv indexes D_80095820[(video*5+widthIndex)*2] as the horizontal start and D_80095822 as the end (values 590/3150, 600/3160, ...)."
+0x80095848,D_80095848,g_GpuDotClockDividers,ok,verified,"PutDispEnv multiplies screen.x by D_80095848[widthIndex] and adds 4*D_80095848[index] as the minimum span; bytes 10,8,7,5,4 are the GPU dot-clock dividers for 256/320/384/512/640 widths."
+0x80095864,D_80095864,g_GpuOtDmaMadrPtr,ok,verified,Holds 0x1F8010E0 (DMA6 MADR); Gpu_SendOtChain writes the last table address through it.
+0x80095868,D_80095868,g_GpuOtDmaBcrPtr,ok,verified,Holds 0x1F8010E4 (DMA6 BCR); Gpu_SendOtChain writes the entry count through it.
+0x8009586C,D_8009586C,g_GpuOtDmaChcrPtr,ok,verified,Holds 0x1F8010E8 (DMA6 CHCR); Gpu_SendOtChain writes 0x11000002 and polls it.
+0x8009587C,D_8009587C,g_GpuSavedIntrMask,fix,likely,"sys_8.c:33,50,82 only saves/restores SetIntrMask(0) in the command-submit routine; 'Swap' comes from that function's misleading project name."
+0x80095880,D_80095880,g_GpuSavedIntrMaskDrain,fix,likely,"Gpu_SetDisplayBuffer (sys_8.c:93-157) saves/restores it around draining g_GpuDmaQueueHead/Tail, so Display describes the misnamed function, not the role."
+0x80095884,D_80095884,g_GpuSavedIntrMaskDma,ok,likely,Gpu_InitDmaQueue and Gpu_DmaTimeoutCheck store the saved interrupt mask in it and restore it.
+0x8009589C,D_8009589C,g_SineQuarterTable,ok,verified,"sin_1 and rcos read D_8009589C[angle] for 0..0x400 and mirrored indexes; data begins 0,6,13,19,25 (4096*sin)."
+0x800960AC,D_800960AC,g_InitGeomSaveRa,ok,verified,InitGeom (psyq/libgte/msc00.c) parks ra in it around the _patch_gte call (the object's SAVERA word).
+0x800960BC,D_800960BC,g_SquareRootMantissaTable,ok,verified,"SquareRoot0 (msc01.c) reads lh from D_800960BC at (normalised value - 0x40)*2; data starts 4096,4127,4159 (sqrt mantissa x 4096)."
+0x80096250,D_80096250,g_InvSquareRootMantissaTable,ok,verified,"InvSquareRoot and the VectorNormal routines (msc02.c) read lh at (normalised value - 0x40)*2; data starts 4096,4064,4033 (1/sqrt mantissa x 4096)."
+0x800963DC,D_800963DC,g_MatrixStackSaveRa,ok,verified,PushMatrix and PopMatrix (mtx_006.c) store ra there around the printf of the stack error text.
+0x800963EC,D_800963EC,g_MatrixStack,ok,verified,PushMatrix writes the rotation and translation words to D_800963EC + g_MatrixStackOffset; PopMatrix reads them back.
+0x8009666C,D_8009666C,g_PushMatrixFullMessage,ok,verified,"PushMatrix passes it to printf when the stack is full; decodes to ""Error: Can't push matrix,stack(max 20) is full!""."
+0x8009669D,D_8009669D,g_PopMatrixEmptyMessage,ok,verified,"PopMatrix passes it to printf when the stack is empty; decodes to ""Error: Can't pop matrix,stack is empty!""."
+0x800966EC,D_800966EC,rcossin_tbl,ok,likely,"include/pe1/gte_sine_table.h reads D_800966EC with byte offsets and 247 overlay sources index it; 0x4000 bytes ending at atan_table, matching the PsyQ LIBGTE table name."
+0x8009AF1C,D_8009AF1C,g_CdStreamIndexRegPtr,ok,verified,Holds 0x1F801800 (CD index/status register); StUnSetRing (psyq/libcd/c_003.c) writes 0 through it.
+0x8009AF28,D_8009AF28,g_CdStreamIrqRegPtr,ok,verified,Holds 0x1F801803 (CD interrupt enable/flag register); StUnSetRing reads it as interrupt_enable.
+0x8009AF2C,D_8009AF2C,g_CdCommandHasParam,ok,verified,"CdControl, CdControlF and CdControlB index it by command byte and send the parameter packet only when the entry is non-zero (set for commands 3, 6, 21, 22, 27)."
+0x8009B2BC,D_8009B2BC,g_CdRegDmaBcr,ok,verified,"Holds 0x1F8010B4 (DMA3 BCR); CD_getsector and CD_getsector2 (libcd/bios_7.c) write the data word ORed with 0x10000 through it, next to g_CdRegDmaMadr (0x1F8010B0) and g_CdRegDmaControl (0x1F8010B8)."
+0x8009B32C,D_8009B32C,g_CdStIntrIndexRegPtr,ok,verified,Holds 0x1F801800; StCdInterrupt writes 0 to select index 0 and dma_execute polls bit 0x40.
+0x8009B334,D_8009B334,g_CdStIntrDataFifoPtr,fix,verified,"value 0x1F801802 read at c_011.c:71 is the CD data FIFO, not the parameter register."
+0x8009B338,D_8009B338,g_CdStIntrRequestRegPtr,ok,verified,Holds 0x1F801803; StCdInterrupt writes 0 then 0x80 through it (request register).
+0x8009B33C,D_8009B33C,g_CdStIntrDelayRegPtr,ok,verified,Holds 0x1F801018 (CD-ROM delay/size register); StCdInterrupt writes 0x20943 through it.
+0x8009B340,D_8009B340,g_CdStIntrComDelayRegPtr,ok,verified,Holds 0x1F801020 (COM_DELAY); StCdInterrupt writes 0x1323 or 0x1325 through it.
+0x8009B344,D_8009B344,g_CdDmaControlRegPtr,ok,verified,Holds 0x1F8010F0 (DPCR); dma_execute (libcd/c_011_2.c) ORs the channel priority bit into it.
+0x8009B348,D_8009B348,g_CdDmaInterruptRegPtr,ok,verified,Holds 0x1F8010F4 (DICR); dma_execute reads and writes its word.
+0x8009B34C,D_8009B34C,g_CdStIntrMdecDmaChcrPtr,ok,likely,Holds 0x1F801098 (DMA1 CHCR); StCdInterrupt tests bit 0x01000000 (busy) when D_800A801C is non-zero.
+0x8009B35C,D_8009B35C,g_CdStIntrDmaChcrPtr,ok,verified,Holds 0x1F8010B8 (DMA3 CHCR); StCdInterrupt busy-waits while bit 0x01000000 is set.
+0x8009B374,D_8009B374,g_CdStIntrState,ok,likely,"StCdInterrupt assigns the values 1, 3 and 4 to it while stepping its streaming states; no reader outside that function."
+0x8009B38C,D_8009B38C,_spu_trans_mode,ok,likely,SpuSetTransferMode stores its raw mode argument here and _SpuInit clears it; it pairs with the normalised 0/1 flag D_8009B418.
+0x8009B3A0,D_8009B3A0,g_SpuReverbState,ok,verified,"_SpuInit clears it, SpuSetReverbModeType/Depth update .mode/.depth/.delay/.feedback and Seq_GetGlobalPitch reads .mode (psyq_spu_internal.h documents the 16-byte layout)."
+0x8009B418,D_8009B418,_spu_transMode,ok,likely,"SpuSetTransferMode stores the normalised 0/1 mode here; _spu_Fw, SpuClearReverbWorkArea, SpuRead and SpuWrite test or reset it."
+0x8009B430,D_8009B430,_spu_inTransfer,ok,likely,_spu_init sets it to 1 and SpuRead and SpuWrite clear it; behaves as the transfer-idle flag.
+0x8009B450,D_8009B450,g_SpuDmaAddress,ok,likely,_spu_t case 3 stores the transfer address argument here and writes it to the DMA MADR register.
+0x8009B454,D_8009B454,g_SpuDmaBlockCount,ok,likely,_spu_t case 3 stores (size >> 6) rounded up here and builds BCR from the count shifted left 16 plus 0x10.
+0x8009B4B0,D_8009B4B0,g_PadSioBasePtr,ok,verified,Holds 0x1F801040 (SIO0 base); func_8007E0F8 clears the control field at +0xA through it.
+0x8009B4B4,D_8009B4B4,g_PadIntrRegsPtr,ok,verified,Holds 0x1F801070 (I_STAT/I_MASK); func_8007E160 reads state[0] and state[1] to test the interrupt bit.
+0x8009B4BC,D_8009B4BC,g_DsCommandHasParam,ok,likely,DsCommand (psyq/libds/dssys_2_3.c) indexes it by command byte and queues a parameter packet when set; same shape as g_CdCommandHasParam.
+0x8009B53C,D_8009B53C,g_DsCommandSerial,ok,verified,DsCommand and DsPacket increment it (skipping 0) as the ticket stored in each queue entry.
+0x8009B624,D_8009B624,g_DsCommandStatusByteIndex,fix,likely,"dssys_1_7.c:21-30 uses D_8009B624[pendingCommand]-1 as a byte index into the response data (src = data + index, value = src[0]), not a callback index."
+0x8009B6B8,D_8009B6B8,g_DsReadMode,ok,verified,DsReadMode(mode) stores mode (0 or 1) here.
+0x8009B708,D_8009B708,g_DsReadySystemCallback,ok,verified,DsReadySystemMode swaps its argument into this slot and returns the old value.
+0x8009B724,D_8009B724,g_PadDmaCompleteFn,ok,likely,"PadInitDirect installs MemCard_DmaCompleteCallback here; MemCard_RunCommandStep and MemCard_TimerCallback call it with results 0xFFFF, -3 and the step result."
+0x8009B72C,D_8009B72C,g_MemCardObjReadPayloadByteFn,fix,likely,padportd.c:40 installs CardObj_ReadPayloadByte beside g_MemCardObjResetFn and g_MemCardObjLookupFn; use the same g_MemCardObj*Fn family instead of Pad.
+0x8009B730,D_8009B730,g_PadPortActuatorMapFn,fix,likely,"padportd.c:227 (LIBPAD_PADPORTD_text_388) clears port->actuatorEnabled and maps the payload, so it is a libpad actuator handler, not a memory-card callback."
+0x8009B734,D_8009B734,g_CardGetChannelIdFn,fix,likely,"padportd.c:42 assigns CardObj_GetChannelId to it, so name it after the CardObj routine rather than 'Pad'."
+0x8009B748,D_8009B748,g_CardSwapByteFieldFn,fix,likely,"padportd.c:44,47 assigns CardObj_SwapByteField to it and padif.c:224 calls it with a CardObj, so it is a CardObj hook, not a pad command."
+0x8009B74C,D_8009B74C,g_PadMainHook,ok,likely,padmain.c calls it when non-null on each pad main tick; hook pointer whose setter is not identified.
+0x8009B764,D_8009B764,g_PadActivePortIndex,ok,likely,CardObj_WriteCommandByte compares it with g_MemCardPort1Present and _padInitSioMode indexes D_8009B77C with it.
+0x8009B768,D_8009B768,g_MemCardCommandStep,fix,likely,"It is the step index into D_8009B7A8 used by MemCard_RunCommandStep (padmain.c:250-264), and neighbours are named g_MemCard*, so Pad prefix misfits."
+0x8009B76C,D_8009B76C,g_PadActuatorCostTotal,fix,likely,"padportd.c:274-313 sums capability->activationCost (cap 60) over actuatorEnabled flags and padmain.c:126 resets it, so it is the pad actuator power budget, not a memcard counter."
+0x8009B77C,D_8009B77C,g_MemCardChannelCounts,fix,likely,padmain.c:194-198 and padif.c:169 index it per D_8009B764 channel to count pending responses passed to g_MemCardResponseHandler; libpad neighbours use g_MemCard*.
+0x8009B7A0,D_8009B7A0,g_PadSioDataPtr,ok,verified,Holds 0x1F801040 (SIO0 data port); LIBPAD_PADIF_text_26C reads a received byte through it.
+0x8009B7A8,D_8009B7A8,g_MemCardCommandStepHandlers,fix,likely,"padmain.c:255 indexes it in MemCard_RunCommandStep and all five entries (MemCard_ReadByteWithCallbackValue, CardObj_WriteCommandByte, ...) are memory-card routines, so the MemCard_ prefix fits better than Pad."
+0x8009B7BC,D_8009B7BC,g_CardSioRegsPtr,fix,verified,"padportd.c:151 uses it as MemCardSioRegisters * inside MemCard_DmaCompleteCallback, so Card rather than Pad."
+0x8009B8DC,D_8009B8DC,g_AkaoNoteLengthTable,ok,verified,"Akao_StepSampleLoader sets track->note_length = D_8009B8DC[opcode % 11]; values 192,96,48,24,12,6,3,32,16,8,4."
+0x8009B8F8,D_8009B8F8,g_AkaoPanVolumeTable,ok,verified,"Akao_SetVoiceKeyOn/Off compute volume_left = base * D_8009B8F8[pan] >> 15 and volume_right from [pan ^ 0xFF]; values rise 0,6,24,54,... to 0x7FFF."
+0x8009BAF8,D_8009BAF8,g_AkaoLfoWave0,ok,verified,"Entry 0 of g_AkaoSoundEntryTable (the LFO table pointer array indexed by pitch/volume/aux lfo selector in akao/sequencer.c); values alternate +-8191,16383,24575,32767 and end with the -2 marker."
+0x8009BB10,D_8009BB10,g_AkaoLfoWave1,ok,verified,"Entry 1 of g_AkaoSoundEntryTable; values 32767,-32767 then the end marker."
+0x8009BB1C,D_8009BB1C,g_AkaoLfoStaircaseWave,fix,verified,"Entry 2 of g_AkaoSoundEntryTable (asm .word D_8009BB1C) holds 0x1FFF,0x3FFF,0x5FFF,0x7FFF,terminator, a rising staircase; Wave2 is an index key, not a role."
+0x8009BB30,D_8009BB30,g_AkaoLfoSquarePulse,fix,verified,"Table index in g_AkaoSoundEntryTable (index 3) is a lookup key; data 0x7FFF,0x7FFF,0 is a square pulse, usable as pitch/volume/aux LFO table (sequencer.c:817-827)."
+0x8009BB3C,D_8009BB3C,g_AkaoLfoDescendingSteps,fix,verified,"Index 4 of g_AkaoSoundEntryTable is a lookup key; data 0xE001,0xC001,0xA001,0x8001 is a descending staircase used as an LFO table (sequencer.c:817)."
+0x8009BB50,D_8009BB50,g_AkaoLfoWave5,ok,verified,Entry 5 of g_AkaoSoundEntryTable; -32767 square pulse.
+0x8009BB5C,D_8009BB5C,g_AkaoLfoWave6,ok,verified,"Entry 6 of g_AkaoSoundEntryTable; sampled sine at four amplitudes (+-8192, 16384, ...)."
+0x8009BC9C,D_8009BC9C,g_AkaoLfoWave7,ok,verified,Entry 7 of g_AkaoSoundEntryTable; one full-amplitude sine cycle (+-32767).
+0x8009BD98,D_8009BD98,g_AkaoLfoWave11,fix,verified,"Entry 11 of g_AkaoSoundEntryTable (24-point full-amplitude sine); the sibling names use decimal indices (Wave1, Wave6, Wave7, Wave9), so the hex-style suffix B is inconsistent."
+0x8009BE50,D_8009BE50,g_AkaoLfoWave9,ok,verified,"Entries 9, 13 and 15 of g_AkaoSoundEntryTable; one 32767 triangle cycle."
+0x8009C4C0,D_8009C4C0,g_SpuZeroBuffer,ok,verified,"SpuClearReverbWorkArea DMAs 0x400-byte chunks from it into SPU RAM through _spu_t(3, &D_8009C4C0, size); contents are all zero."
+0x8009C8F0,D_8009C8F0,g_AkaoOpcodeHandlers,ok,verified,"Akao_StepSampleLoader dispatches D_8009C8F0[opcode](track, voice_mask) for opcodes 0xA0 and up; the first 160 entries are zero."
+0x8009CCF0,D_8009CCF0,g_AkaoExtOpcodeHandlers,ok,verified,Akao_StepSampleLoader dispatches D_8009CCF0[period] after opcode 0xFC (extended page); entries are code pointers.
+0x8009CD88,D_8009CD88,g_FloorNeighboursInit,ok,verified,Used as the initialiser source for the floor neighbour array; contents read from main.exe are three 0xFF bytes.
+0x8009CD94,D_8009CD94,g_ErrorSeverityNoneName,ok,likely,Zero-byte string that is entry 0 of the string table D_80091A2C.
+0x8009CD98,D_8009CD98,g_SkinAnchorVector,ok,likely,"Read by skin attach code as the anchor offset vector; x component, y at 9A."
+0x8009CDA0,D_8009CDA0,g_RenderFadeColour,ok,likely,Default 0x808080 read by the render fade code as the neutral colour.
+0x8009CDD8,D_8009CDD8,g_DrawPacketOffset,ok,verified,"Per-frame byte offset into the draw packet arena, advanced by the packet allocator and reset each frame."
+0x8009CDF0,D_8009CDF0,g_AkaoCmd24Sequence,fix,likely,"voice_bank.c:2068-2070 advances it only in the opcode 0x24 case (commands.h: rolling 0x400..0x5FF), not for every staged command."
+0x8009CE0C,D_8009CE0C,g_FloorBlockedEdgePointA,ok,verified,Written by the floor collision query with the first endpoint of the blocking edge and read back by the slide code.
+0x8009CE10,D_8009CE10,g_FloorBlockedEdgePrev,fix,verified,"actor_collision.c:794-797 stores nextX/Z in D_8009CE0C and prevX/Z in D_8009CE10, so role is previous vertex, not an arbitrary B."
+0x8009CE1C,D_8009CE1C,g_FloorBlockedEdgeMaxX,ok,verified,"Floor edge query bounding box max X, compared against the moving point."
+0x8009CE20,D_8009CE20,g_FloorBlockedEdgeMinX,ok,verified,Floor edge query bounding box min X.
+0x8009CE24,D_8009CE24,g_FloorBlockedEdgeMaxZ,ok,verified,Floor edge query bounding box max Z.
+0x8009CE28,D_8009CE28,g_FloorBlockedEdgeMinZ,ok,verified,Floor edge query bounding box min Z.
+0x8009CE34,D_8009CE34,g_AyaStatusEffectTimer,fix,likely,combat.c:312-314 decrements it while state flag 0x01000000 is set and main_update.c:507 sets 0x5A; hex flag value should not be encoded in the name.
+0x8009CE38,D_8009CE38,g_BattleActionAnimModes,fix,likely,"turn.c:172-175 copies action->animMode[0..3] into it; phase.c:279-282 then reuses entries as counters, so ""timers"" is not supported."
+0x8009CE40,D_8009CE40,g_BattleTargetCycleMode,fix,verified,turn.c:372-454 sets 0/4/5/6/7 for commands 393-397 and passes it as the mode of Battle_CycleTarget; nothing shows these are item commands (battle_runtime.h:36 comment only).
+0x8009CE74,D_8009CE74,g_BattleStepIndex,ok,verified,"Step counter across the victory, level-up and death step handlers."
+0x8009CE84,D_8009CE84,g_MenuActiveWindowXOffset,ok,likely,Horizontal offset applied to menu window placement.
+0x8009CE88,D_8009CE88,g_SaveOverlayTimer,ok,verified,"Timer of the save overlay shown after saving, set and decremented in the save menu."
+0x8009CE90,D_8009CE90,g_TextboxMessageSource,ok,verified,"Pointer to the current textbox message, set by the textbox entry setup."
+0x8009CE98,D_8009CE98,g_TextboxPendingRect,fix,verified,"Menu_SetTextCursorRect stores x,y,w,h here (draw/textbox.c:186-189) and they are copied into each styled textbox entry geometry (:291-294), so it is the rect for new boxes, not a cursor."
+0x8009CEA8,D_8009CEA8,g_TextboxGlyphColorR,ok,likely,Red component of the textbox glyph tint.
+0x8009CEB0,D_8009CEB0,g_TextboxGlyphColorB,ok,likely,Blue component of the textbox glyph tint.
+0x8009CEC4,D_8009CEC4,g_TextboxHighlightColorR,ok,likely,Red component of the textbox highlight colour.
+0x8009CECC,D_8009CECC,g_TextboxHighlightColorB,ok,likely,Blue component of the textbox highlight colour.
+0x8009D070,D_8009D070,g_InvCompareLeftItem,ok,likely,Left item pointer of the inventory sort comparison.
+0x8009D074,D_8009D074,g_InvCompareRightItem,ok,likely,Right item pointer of the inventory sort comparison.
+0x8009D0A8,D_8009D0A8,g_InvAmmoSortStatIndex,fix,likely,"armor_capacity.c:638 copies it to g_InvSortStatIndex in Inv_SortAmmoSubrange (a stat index 0..2 used by the comparator at :560), mirroring D_8009D0A4 for weapons."
+0x8009D0CC,D_8009D0CC,g_InvRebuildFilterMode,fix,likely,game_data.c:909-911 sets it under INV_CMD_SET_REBUILD_FILTER and 689/708 branch on it to pick the list mask; 'BonusSlot' is unproven.
+0x8009D0D0,D_8009D0D0,g_InvRebuildMinFirstStat,fix,likely,"game_data.c:697 compares baseStats[0]+bonusStats[0] against it (beside minSecond/minThird) and :911 sets it from INV_CMD_SET_REBUILD_FILTER; it is a minimum stat, not a slot threshold."
+0x8009D0F8,D_8009D0F8,g_MenuInputRepeatTimer,fix,likely,"input_queue.c:200-212 resets to 0x10 on change, decrements 2 per call and triggers repeat when negative."
+0x8009D0FC,D_8009D0FC,g_DrawCurrentFrameBuffer,ok,likely,Points at the current double buffer frame.
+0x8009D118,D_8009D118,g_DrawOrderingTableBase,ok,likely,Ordering table base pointer.
+0x8009D198,D_8009D198,g_SnEntrySavedRa,ok,likely,libsn startup saves ra here.
+0x8009D1C0,D_8009D1C0,g_PadSetActBuffer,ok,likely,Buffer passed to PadSetAct.
+0x8009D1CC,D_8009D1CC,g_FloorPolygonVertexCount,ok,likely,"Vertex count paired with the floor polygon pointer, used by overlays."
+0x8009D1E8,D_8009D1E8,g_BattleFrameCounter,ok,verified,Frame counter incremented in the battle update.
+0x8009D1EC,D_8009D1EC,g_AkaoStreamAAddress,ok,likely,Stream A upload address.
+0x8009D204,D_8009D204,g_AkaoStreamARemaining,ok,likely,Stream A remaining size.
+0x8009D21C,D_8009D21C,g_BattlePeBonusReward,ok,likely,Accumulator passed to Aya_SetTotalExp.
+0x8009D240,D_8009D240,g_AkaoSampleOffsetTable,ok,likely,Akao sample offset table pointer.
+0x8009D248,D_8009D248,g_FloorPolygonVertices,fix,likely,floor_polygon.h:18 is a PolygonVertex* set by script (system_opcodes.c:1613) next to count D_8009D1CC; sibling is g_WallPolygonVertices.
+0x8009D258,D_8009D258,g_BattleEffectPmSlot,fix,likely,"Declared in battle/phase.c, setup.c and attack.c; phase.c:287 stores Scene_LoadRoomAssets result and :355 indexes g_PmSlotTable, so it is the effect PM slot but D suffix is an arbitrary tag."
+0x8009D260,D_8009D260,g_AkaoSampleDataBase,ok,likely,Akao sample data base.
+0x8009D268,D_8009D268,g_AkaoMessageQueueLock,fix,likely,spu_transfer.c:147 comment calls it the message-queue lock and sequencer.c:312 gates Akao_ProcessMessageQueue on it; Command is inconsistent with g_AkaoMessageQueueCount.
+0x8009D27C,D_8009D27C,g_BattlePlayerAimHeight,fix,likely,"phase.c:264, attack.c:137 and player_turn.c:42 use target_y - D_8009D27C as the vertical delta for ratan2 against the distance to the player (an aim pitch), set from player model Y - 0x64 at encounter.c:227; no camera involved."
+0x8009D2A8,D_8009D2A8,g_PadComboProgress,ok,verified,Progress counter of g_PadComboSequence.
+0x8009D2CC,D_8009D2CC,g_AkaoGlobalPitchDepth,fix,likely,globals.h:21 documents it as the global pitch depth word; sequencer.c:77-85 slides it.
+0x8009D2D4,D_8009D2D4,g_FieldPadBitsPrevious,ok,likely,Previous pad bits.
+0x8009D304,D_8009D304,g_BattleExpReward,ok,likely,Accumulator passed to Aya_SetTotalExp.
+0x8009D310,D_8009D310,g_ScriptNodes,ok,verified,Script queue node array.
+0x8009DFB0,D_8009DFB0,g_FloorEdgeVisitedBitmap,ok,verified,Bitmap of edges tested per query.
+0x8009E070,D_8009E070,g_BattleStatusBackgroundTiles,ok,likely,Alias view in battle_status.h.
+0x8009E0F8,D_8009E0F8,g_BattleHpDigitSlots,ok,likely,Alias view.
+0x8009E1D8,D_8009E1D8,g_BattleMaxHpDigitSlots,ok,likely,Alias view.
+0x8009E358,D_8009E358,g_BattleStatusBarTiles,ok,verified,"BATTLE_STATUS_TILES, 3 tiles per buffer."
+0x8009E3B8,D_8009E3B8,g_BattleTargetHighlightSprites,ok,likely,HUD packets.
+0x8009E460,D_8009E460,g_BattleStatusPointerSprites,ok,likely,HUD packets.
+0x8009E498,D_8009E498,g_BattleStatusPointerLines,ok,verified,status_hud.c draws it.
+0x8009E4D8,D_8009E4D8,g_BattleStatusPointerTriangles,ok,verified,status_hud.c draws it.
+0x8009E7A0,D_8009E7A0,g_BattleAmmoDigitSprites,fix,verified,"status_hud.c:273-277 initialises it as RenderPagedSpritePacket[2][4] 6x6 sprites and :874 passes it to Battle_DrawDecimalNumber; it is packet storage, not digit values."
+0x8009E880,D_8009E880,g_BattleStatusValueMarkers,ok,likely,Marker packets.
+0x8009E8B8,D_8009E8B8,g_BattleStatusValueDigits,ok,likely,Battle_DrawStatusValue digits.
+0x8009E928,D_8009E928,g_BattleStatusSymbolSprites,ok,likely,Battle_DrawStatusSymbol.
+0x8009ECA8,D_8009ECA8,g_TextboxFogTilePackets,ok,likely,Textbox fog tiles (24-byte).
+0x8009EE22,D_8009EE22,g_FontGlyphCodeSequence,fix,likely,"font.c:201-236 fills (D_8009EE22+2)[0..0x44] with a seeded shuffled sequence of glyph codes (forced slot every 10th) indexed by FontGlyphSelectionState.codeIndex, so it is a load-order sequence, not the glyph code list itself."
+0x800A1720,D_800A1720,g_MemCardPreviewBuffers,ok,verified,"memcard/save_flow.c uses D_800A1720[port].bytes as transferData and &D_800A1720[port].preview, one 0x80-byte preview per port (0x100 bytes up to g_MemCardEventF400Spec0004Flag)."
+0x800A1878,D_800A1878,g_MenuSaveBgFadeLut,ok,verified,menu/status_panels.c:Menu_ComputeGammaLut fills this 16-entry curve and Menu_SaveBgApplyFadeStep indexes it with g_MenuSaveBgFadeIndex.
+0x800A1960,D_800A1960,g_MenuItemUseSelectedItemSnapshot,ok,likely,"menu/item_actions.c copies the active-list record of the restored selection into it (line 1189, bonus-point/use-item mode) and clears iconId (line 816); no other reader found."
+0x800A1A00,D_800A1A00,g_BonusPointSpendItemCopy,ok,verified,"menu/item_actions.c: Menu_OpenBonusPointSpend copies the selected item record into it, Menu_DrawBonusPointSpendPanel draws baseStats+bonusStats from it and line 1582 writes it back (*item = D_800A1A00)."
+0x800A1B50,D_800A1B50,g_InvItemMessageBuffer,ok,likely,item/active_list.c:Inv_GetItemEffectData builds an FF-terminated item-name plus suffix string here and returns it; callers are battle/attack.c (steal messages) and battle/enemy_actions.c.
+0x800A204C,D_800A204C,g_InvSavedSelectionRecord0,fix,likely,"armor_capacity.c:211,259 hold exactly one 0x20-byte record for selection 0 (D_800A206C is selection 1), so plural 'Records' is misleading."
+0x800A32D0,D_800A32D0,g_FirstFileOriginalHandler,ok,verified,psyq/libapi/first.c:firstfile saves the matching device entry->firstFile here and Sys_FirstFileHookCallback restores it and forwards the call through it.
+0x800A32D8,D_800A32D8,g_FirstFileDeviceName,ok,verified,psyq/libapi/first.c:firstfile copies the device name prefix of its argument here and both firstfile and Sys_FirstFileHookCallback strcmp it against BIOS device entry names.
+0x800A3300,D_800A3300,g_GpuVramFillPacket,ok,verified,"psyq/libgpu/sys_6.c:Gpu_DmaVramTransfer builds the GPU command packet (E3..E6 setup, rect fill words) in it and hands it to Gpu_StartDmaTransfer."
+0x800A3328,D_800A3328,g_GpuVramFillTailPacket,ok,verified,psyq/libgpu/sys_6.c:Gpu_DmaVramTransfer chains D_800A3300[0] to this packet (address in the link word) and fills its three E3/E4/E5 drawing-area words.
+0x800A3450,D_800A3450,g_PatchGteSavedRa,ok,verified,psyq/libgte/patchgte.c:_patch_gte stores $ra here on entry and reloads it before returning (static ra slot).
+0x800A3460,D_800A3460,g_CdSyncResult,ok,verified,psyq/libcd/bios.c interrupt handler copies the INT2/INT3 response into it and bios_internal.h passes it to g_CdSyncCallback (bios_2.c CD_sync copies it out).
+0x800A3468,D_800A3468,g_CdReadyResult,ok,verified,"psyq/libcd/bios.c copies the INT1/INT4/INT5 response into it, bios_7.c and bios_internal.h pass it to g_CdReadyCallback."
+0x800A3470,D_800A3470,g_CdEndResult,ok,verified,psyq/libcd/bios.c case 4 (data end) copies the response into it and bios_2.c copy_result returns it as the end result.
+0x800A3478,D_800A3478,g_CdTimeoutDeadlineVsync,ok,verified,"psyq/libcd/bios_2.c, bios_3.c, bios_6.c set it to VSync(-1)+0x3C0 when a wait starts and bios_internal.h:timed_out compares VSync(-1) against it."
+0x800A347C,D_800A347C,g_CdTimeoutPollCount,ok,verified,"psyq/libcd/bios_internal.h:count_poll and bios_6.c increment it per poll, timed_out fails above 0x3C0000, and CD waits reset it to 0."
+0x800A3480,D_800A3480,g_CdTimeoutFuncName,ok,verified,"psyq/libcd/bios_2.c, bios_3.c and bios_6.c store the wait routine name string (e.g. ""CD_sync"") that timed_out prints in the timeout message."
+0x800A3490,D_800A3490,g_StLastFrameLoc,ok,likely,psyq/libcd/c_004.c:data_ready_callback copies the ring header's loc into it and StGetBackloc converts it with CdPosToInt()+1 for its caller.
+0x800A3494,D_800A3494,g_StLastFrameNumber,ok,likely,psyq/libcd/c_004.c:data_ready_callback stores base->frameCount in it and StGetBackloc returns it.
+0x800A34A0,D_800A34A0,g_StCurrentHeader,ok,verified,"psyq/libcd/c_011.c sets it to the ring slot header (StRingAddr + D_800BE998) and then reads its id, type, secCount and frame index (25 references)."
+0x800A34B0,D_800A34B0,g_PadIntQueueNode,ok,likely,"psyq/libapi/pad.c:Sys_SetInterruptHandler clears it and its siblings at D_800A34B4/34BC then SysEnqIntRP(1, queue) and RemovePatchPad does SysDeqIntRP(1, &D_800A34B0), so it is the next-link word of the 16-byte interrupt queue node."
+0x800A34C0,D_800A34C0,g_PatchPadSavedRa,ok,verified,psyq/libapi/patch_2.c:_patch_pad stores $ra here on entry and reloads it at exit (static ra slot).
+0x800A34D0,D_800A34D0,g_RemoveChgclrPadSavedRa,ok,verified,psyq/libapi/chclrpad.c:_remove_ChgclrPAD stores $ra here on entry and reloads it at exit.
+0x800A34E0,D_800A34E0,g_PatchCardSavedRa,ok,verified,psyq/libcard/patch_3.c:_patch_card and _patch_card2 store $ra here on entry and reload it before returning.
+0x800A34F0,D_800A34F0,g_ExitCardSavedRa,ok,verified,psyq/libcard/end.c:_ExitCard stores $ra here on entry and reloads it at exit.
+0x800A3500,D_800A3500,g_DsSlotResultCopy,ok,likely,psyq/libds/dssys_2_3.c publishes the four words of the selected g_DsReadCallbackSlots history entry into it and rescpy then copies the payload from it for the caller.
+0x800A5AB0,D_800A5AB0,g_PadVsyncIntQueueNode,ok,likely,"psyq/libpad/padmain.c:_padStartCom does SysDeqIntRP/SysEnqIntRP(2, D_800A5AB0) and _padSetVsyncParam fills the callback words that follow it, so it is the next-link word of that 16-byte interrupt queue node."
+0x800A5AD0,D_800A5AD0,g_PadInfoWriteCursor,ok,likely,psyq/libpad/padcmd.c stores the destination for combination/info bytes in it and then copies response bytes through it with post-increment.
+0x800A5AE0,D_800A5AE0,g_MemCardObjResponseBuffers,ok,likely,psyq/libpad/padportd.c init sets obj->response_3c = D_800A5AE0 and advances it 0x23 per CardObj for 2 objects (72 bytes).
+0x800A5B28,D_800A5B28,g_MemCardObjStatusBuffers,ok,likely,psyq/libpad/padportd.c init sets obj->statusBuffer (0x40) = D_800A5B28 and advances it 0x23 per CardObj for 2 objects (72 bytes).
+0x800A5D54,D_800A5D54,g_StCurrentFrameNumber,ok,likely,"psyq/libcd/c_011.c sets it to the frame index from the first sector (secCount == 0), compares it with ST_FRAME_INDEX of later sectors and resets it in StSetStream (c_005.c) and StClearRing (c_002.c)."
+0x800A5D58,D_800A5D58,g_BattleEnemySlots,ok,verified,"battle/enemy_slots.c allocates and frees entries by .active and hands out &.combatant, battle/encounter.c clears .active for 7 slots (0xDC bytes each)."
+0x800A6360,D_800A6360,g_RenderVertexWorkWords,ok,likely,"render/object.c uses it per vertex index as the GTE SZ output (gte_stsz3c), as the second lighting colour set (altColours) and as a tpage table in Render_UpdateClutTable; 0x4800 bytes up to g_EntityAllocationTable at 0x7620."
+0x800A7620,D_800A7620,g_EntityAllocationTable,ok,verified,"entity/allocation.c:Entity_AllocBlock scans 16 {blockCount,address} slots and Entity_FreeAllocationBlock clears them, entity/pool.c zeroes all addresses."
+0x800A76B0,D_800A76B0,g_GameTimer1Current,ok,likely,"g_GameTimers[1] sits at 0x76AC (flags g_GameTimer1Flags, limit g_GameTimer1Limit at 0x76B4), so 0x76B0 is its current value, zeroed in time/counters.c:GameTime_InitCounter1 and Save_InitMetadataState."
+0x800A76C8,D_800A76C8,g_CombatTimerCurrent,ok,likely,g_GameTimers[3] begins at g_CombatModeFlags (0x76C4); script/system_opcodes.c:Script_ComputeAudioTimer stores the combat countdown frames into it and Save_InitMetadataState zeroes it.
+0x800A76D8,D_800A76D8,g_BattleMenuActionRecord,ok,verified,"battle_runtime.h: record filled by the battle menu (Menu_RunFrameWithArg in battle/encounter.c and entity/frame_update.c), copied into the actor action by battle/setup.c:Battle_CopyPadStateToRecord and Battle_SyncEnemyAttributes."
+0x800A76DC,D_800A76DC,g_BattleMenuEffectBits,ok,verified,battle/setup.c:Battle_SyncEnemyAttributes copies its resist/auto-medicine bit fields into the active actor's effect flags; it is word +4 of g_BattleMenuActionRecord.
+0x800A76E4,D_800A76E4,g_BattleMenuAttackBits,ok,verified,battle/setup.c:Battle_CopyPadStateToRecord copies count/power/category from it; it is attackWord (+0xC) of g_BattleMenuActionRecord.
+0x800A76E8,D_800A76E8,g_BattleMenuTurnBits,ok,verified,battle/setup.c:Battle_CopyPadStateToRecord copies actions/slot/mode/element/hit flags from it; it is turnWord (+0x10) of g_BattleMenuActionRecord.
+0x800A7770,D_800A7770,g_FieldPadHeldFrameCounts,ok,verified,"boot/init.c increments D_800A7770[i] each frame a logical pad bit i is held and zeroes it otherwise, and script/value_ops.c returns D_800A7770[bit index] as the held duration."
+0x800A77F0,D_800A77F0,g_ScriptVariableBank,fix,verified,"Existing name g_EntityWorkBuffer is a misnomer: flow_opcodes.c:331 indexes it as script operand bank (mode 2), active_list.c:486 uses it as a word table, pool.c clears 0x200 words and save_flow.c saves 0x800 bytes of it."
+0x800A7FF0,D_800A7FF0,g_BattleRewardSlots,ok,verified,"battle/encounter.c clears 10 {id,extra} slots, battle/enemy_movement.c appends reward and loot item ids and encounter.c passes them to Aya_SetTotalExp."
+0x800A8018,D_800A8018,g_StFrameSectorIndex,ok,likely,"psyq/libcd/c_011.c increments it per received sector (transfer_sector), compares it with the header secCount and clears it on frame resets, StSetStream and StClearRing."
+0x800B0CCC,D_800B0CCC,g_StrEndCallback,ok,likely,"StSetStream (src/main/psyq/libcd/c_005.c) stores its callback2 here and the stream pump (libcd/c_011.c:150,165) calls it when the end sector is reached or the ring overruns."
+0x800B0DB0,D_800B0DB0,g_DrawBaseX,ok,likely,draw/text.c:44 Draw_SetBaseOffsetPosition adds D_800B0DB0[0] to x just as it adds g_DrawBaseY (0x800B0DB1) to y; it is the X sibling of g_DrawBaseY.
+0x800B0DB4,D_800B0DB4,g_SceneAudioSlot0Key,ok,likely,"track_read.c:321,390 compare/store the requested track key of slot 0 here (CdRom_RegisterAudioSlot slot,key), reset to -1 in scene_assets.c:407 and fx_common/effects.c:127."
+0x800B0DB5,D_800B0DB5,g_SceneAudioSlot0Handle,ok,likely,"script/actor_opcodes.c:1225-1226 stores the Akao_Cmd_10 result with CdRom_RegisterAudioSlot(slot, key, result,...) into keys[slot][1], and fx_common/effects.c:122,1176 pass D_800B0DB5 as the slot of Akao_Cmd_C1_WithSlot to fade the scene track."
+0x800B0DB7,D_800B0DB7,g_SceneAudioSlot1Handle,ok,likely,CdRom_RegisterAudioSlot (cdrom/track_read.c:572) stores the bank/handle argument of slot 1 at keys[1][1]; reset to -1 in scene_assets.c:408.
+0x800B0DB9,D_800B0DB9,g_ScenePendingTrackBank,ok,likely,scene/room_load.c:566 loads it from the room's track record bank and cdrom/track_read.c:480 passes it to CdRom_ReadAssetSectors; init 0x0D in asset/game_state.c:504.
+0x800B0DBF,D_800B0DBF,g_MovieIndex,ok,verified,menu_memcard/video_open.inc:100 stores the opened movie number (0..46) here and boot/init.c:339 tests whether it equals 1 to mask pad bits during a movie.
+0x800B0DC5,D_800B0DC5,g_SceneInitPhase,ok,likely,"Offset 0xED of g_GameState (scene_init_phase); asset/game_state.c:530 initialises it to 0x20 with the fade tile colour; no other reader found in C, so the name rests on the struct field."
+0x800B0DC6,D_800B0DC6,g_SceneInitSubphase,ok,likely,scene/room_load.c uses scene_init_subphase as the state of the entity texture loader and pm/disc_tables.c:104 clears it via D_800B0DC6 before Menu_ConsumeEquipSlotFlag.
+0x800B0DCE,D_800B0DCE,g_Akao3dVolumeMin,ok,verified,"cdrom/scene_assets.c:157 Akao_Calc3DPan uses it as the minimum volume (low) of the depth to volume curve; init 0x30 (game_state.c:519), overridden in fx_common/camera.c:976."
+0x800B0DCF,D_800B0DCF,g_Akao3dVolumeMax,ok,verified,"cdrom/scene_assets.c:156 Akao_Calc3DPan uses it as the maximum volume (span); init 0x7F (game_state.c:520), overridden in fx_common/camera.c:977."
+0x800B0E00,D_800B0E00,g_SceneVoiceBankBuffers,ok,likely,"asset/game_state.c:550-551 and scene/room_load.c:369-370 set them to the voice bank base and base+0x1400, and script/actor_opcodes.c:1223,1326 pass D_800B0CE8.voice_banks[slot] with slot 0/1 to Akao_Cmd_10."
+0x800B0E24,D_800B0E24,g_SceneBankAssetSource,ok,likely,"Boot_InitMemoryLayout (asset/game_state.c:571) sets it to g_BootWorkArea and scene/room_load.c:249-278 reads a CD sector range into it, then looks up keys 0xC4B5BA04/0xCAAD0704/0x5EAF6804 in it."
+0x800B0E28,D_800B0E28,g_VoiceBankBase,ok,likely,Boot_InitMemoryLayout (asset/game_state.c:573) sets it to g_BootWorkArea+0x1800; asset/game_state.c:534 and scene/room_load.c:368 derive bank_work_base from it.
+0x800B0E30,D_800B0E30,g_EntityTextureBlob,ok,likely,"scene/room_load.c:1040,1060,1113 read the per-story-day entity texture range into it and walk it as a scene asset view."
+0x800B0E34,D_800B0E34,g_SceneObjectWork,ok,likely,pm/disc_tables.c:177-185 reads the main table sectors into it and scene/room_load.c:1150 uses it as the work area for a scene object setup.
+0x800B0E60,D_800B0E60,g_ScenePmSlotBanks,ok,likely,"scene/room_load.c:287,304 read the PM slot bank sector range into it and asset/tim_textures.c:25,35 take g_PmTables.primary/secondary from it."
+0x800B161C,D_800B161C,g_RoomTaskBlock,ok,likely,scene/room_load.c:511 stores Script_RelocBlock(...directory->taskBlock...) into this slot (offset 0x944); no direct C reader.
+0x800B1620,D_800B1620,g_RoomCollisionData,ok,likely,scene/room_load.c:513 stores the directory->taskData payload and field/actor_collision.c:250 Entity_RelocateSceneData loads D_800B1620[0] as the CollisionDatabase it relocates into g_CollisionDb.
+0x800B4900,D_800B4900,g_AkaoStreamInstrumentCacheB,ok,likely,akao/voice_driver.c:625 Spu_UploadStreamBlockB copies the relocated instrument records to D_800B4900 + (bank<<10).
+0x800B6918,D_800B6918,g_CdStreamStartFrame,ok,verified,"psyq/libcd/c_010.c:StSetMask stores its start argument here and psyq/libcd/c_011.c:StCdInterrupt compares it with ST_FRAME_INDEX of the incoming sector header, clearing g_CdStreamMask when they match."
+0x800B8620,D_800B8620,g_CdStreamExpectedTypeId,ok,likely,psyq/libcd/c_011.c:StCdInterrupt rejects a sector whose StHEADER.type bits 10-14 differ from it and reloads it from D_800B6914 after the final sector of a frame; psyq/libcd/c_005.c:StSetStream clears it.
+0x800B8628,D_800B8628,g_AkaoMessageQueue,ok,verified,"akao/voice_bank.c:Akao_AllocMessageSlot hands out &D_800B8628[g_AkaoMessageQueueCount++] and Akao_ProcessMessageQueue walks it dispatching on opcode.id, with spu_transfer.c:Spu_InitVoiceState clearing entry 0."
+0x800B8A18,D_800B8A18,g_RenderProjectionDistance,ok,verified,"0x800B8A18 = D_800B89F8[8], the word render/frame_update.c:Render_PrepareFrame passes to SetGeomScreen and that Render_InitViewState registers as g_GeomScroll.words.projectionDistance; draw/pipeline.c:Draw_InitPipeline calls SetGeomScreen of it."
+0x800BCD58,D_800BCD58,g_AkaoSfxAllocatedVoiceMask,ok,likely,"akao/sequencer.c sets bits in it for tracks with parent_track_id != 0 where primary-bank tracks set bank allocated_voice_mask, akao/voice_driver.c masks g_SpuActiveVoiceMask with it to key on SFX channels, and voice_bank.c/sequencer.c clear bits on stop or gate end."
+0x800BCD68,D_800BCD68,g_AkaoSfxTickAccumulator,ok,likely,akao/sequencer.c adds the SFX tempo each tick and on overflow into the upper half clears it with & 0xFFFF and steps all SFX channel notes; Spu_InitVoiceState initialises it to 1.
+0x800BCD7C,D_800BCD7C,g_CdStreamSectorSlot,ok,likely,"psyq/libcd/c_011.c:StCdInterrupt copies each sector to D_800C0DB8 + (D_800BCD7C << 11) and increments it per sector, resetting to 0 on a header mismatch."
+0x800BCF90,D_800BCF90,g_CameraSavedX,ok,likely,render/mesh_list.c:Render_ScrollEntries copies D_800BCF8C.x here when the transition-complete flag 0x80 is set (and clears it); GeomScrollCoordinates names it savedX.
+0x800BCF92,D_800BCF92,g_CameraSavedY,ok,likely,render/mesh_list.c:Render_ScrollEntries copies g_CameraClampedY here together with D_800BCF90 on the 0x80 flag; GeomScrollCoordinates names it savedY.
+0x800BCF94,D_800BCF94,g_CameraScreenOffsetX,ok,verified,render/camera.c:Render_SetViewport stores 320 - focus screen X (clamped to the viewport) here and Render_StepCameraTransition stores 160 - (camX - width/2); out_disp_x is derived from the camera X in mesh_list.c.
+0x800BCF9A,D_800BCF9A,g_CameraTransitionStartY,ok,verified,render/camera.c:Render_UpdateScrollPosition saves g_CameraClampedY here at transition start and Render_StepCameraTransition interpolates from it toward D_800BCF9E.
+0x800BCFB4,D_800BCFB4,g_CameraFocusScreenX,ok,likely,render/camera.c:Render_SetViewport projects the camera focus point with the GTE and stores the average of the previous and new screen X here (and render/frame_update.c:Render_PrepareFrame stores the player projection); then derives g_CameraScreenOffsetX from it.
+0x800BCFB6,D_800BCFB6,g_CameraOffsetScreenY,fix,likely,"camera.c:416-430 stores the smoothed projected actor Y here and geom_state.h:157-158,185 already call the B4/B6 pair cameraOffsetX/Y, so 'Focus' is not the established term."
+0x800BCFEC,D_800BCFEC,g_ScreenTintTargetB,ok,verified,render/frame_update.c:Render_SetCDDCSlot uses it as the blue target of the tint lerp and render/camera.c:CdRom_SetScreenPos writes it; RenderTintState.target_b is at 0x800BCFEC.
+0x800BCFFC,D_800BCFFC,g_RenderMeshTintLevel,ok,verified,"render/mesh_list.c:Render_ApplyScreenTint writes it as the grey r/g/b of every sprite primitive when g_RenderStateFlags & 0x2000, render/camera.c:Render_InitViewState defaults it to 0x60 and script/system_opcodes.c:Script_SetMeshFadeLevel sets it from script."
+0x800BCFFE,D_800BCFFE,g_CameraFocusHeight,ok,verified,"entity/frame_update.c subtracts (D_800BCFFE << 16) from the focus actor pos_y to place the camera target, render/camera.c:Render_InitViewState defaults it to 0x180 and script/system_opcodes.c sets it from the script."
+0x800BD000,D_800BD000,g_CameraBasisMatrix,ok,likely,"Render_DrawSprite (render/camera.c) builds the camera basis from the yaw with rcos/rsin and stores right/up/forward columns and a zero translation into D_800BD000; GteMatrix layout (m at +0, pad at +0x12, t at +0x14). No C reader found, so the consumer is asm/GTE."
+0x800BD020,D_800BD020,g_CameraBaseAngleDigital,ok,likely,Script_SetScreenScrollPos (script/system_opcodes.c) stores arg0 here; Render_DrawSprite uses it as the camera yaw and Scene_UpdatePlayerEntity (scene/player_movement.c) as the facing base when the pad is not in analog mode (g_AnalogStickState type != 0x7000); catalogue alias g_CameraBaseAngleX.
+0x800BD022,D_800BD022,g_CameraBaseAngleAnalog,ok,likely,Script_SetScreenScrollPos stores arg1 here; Render_DrawSprite and Scene_UpdatePlayerEntity (scene/player_movement.c) add it to the stick angle only in analog mode (g_AnalogStickState type 0x7000); catalogue alias g_CameraBaseAngleY.
+0x800BD025,D_800BD025,g_RoomLightTint,ok,likely,Script opcode 2700 (script/flow_opcodes.c) writes r/g/b here and Render_InitRoomPrimState (render/camera.c) multiplies both directional light intensities by it before gte_SetColorMatrix; Render_InitViewState resets it to 0xFF white.
+0x800BD030,D_800BD030,g_GpuDmaQueue,ok,verified,libgpu sys_8.c (Gpu_SwapDisplayBuffers/Gpu_SubmitPacket) store function/argument0/argument1/packet into D_800BD030[g_GpuDmaQueueHead] and Gpu_InitDmaQueue GPU_memsets 0x1800 bytes (64 entries of 0x60).
+0x800BE830,D_800BE830,g_BattleActionQueue,ok,verified,battle/phase.c indexes D_800BE830[g_BattleActionIndex].command/.actor and iterates up to g_BattleActionQueueCount; 45 slots of 8 bytes end at 0x800BE998.
+0x800BE998,D_800BE998,g_CdStreamRingWriteSlot,ok,likely,"libcd c_011.c (StCdInterrupt) uses it as the ring slot receiving the current sector (header = StRingAddr + D_800BE998, ++ after each sector, reset to 0 on wrap), StClearRing zeroes it and data_ready_callback copies it to g_CdStreamRingReadSlot."
+0x800BE9A0,D_800BE9A0,g_PadPort1Buffer,fix,verified,"Existing alias g_AnalogStickState is the raw port-1 controller packet passed to PadInitDirect (init.c:162, pad_state.h:13), the buffer for the whole pad, not analog stick state alone."
+0x800BEA40,D_800BEA40,g_RenderLightingState,ok,verified,Render_InitRoomPrimState (render/camera.c) writes the two opposite Y light directions here and pipeline.c passes it to Boot_SetBackColor/Boot_SetLightColor; Render_DrawObject receives &D_800BEA40 everywhere.
+0x800BEA90,D_800BEA90,g_EntityPool,ok,verified,Entity_ResetAllPools (entity/pool.c) clears 14 records of 0x280 bytes from D_800BEA90 and Entity_InitFreePool makes it the free-list head g_EntityFreeListHead; 14*0x280 ends exactly at g_AkaoSpuCommonAttr (0x800C0D90).
+0x800C0DB8,D_800C0DB8,g_CdStreamMemorySource,fix,likely,"c_011.c:221 copies sectors from D_800C0DB8+(idx<<11)+0x20 into the ring; it is a source buffer, 'Emulate' is unproven."
+0x800C0DC4,D_800C0DC4,g_CdStreamSectorPayloadPtr,ok,likely,c_011.c sets it to &((StSectorPayload*)(StRingAddr+StRingSize))[D_800BE998] and passes it as the destination to dma_execute/mem2mem for each streamed sector.
+0x800C0DD0,D_800C0DD0,g_AkaoReverbEnableMask,ok,verified,Akao_SetVoiceVolume-family code in akao/voice_driver.c:1765 builds it from g_AkaoTrack38Mask and line 1640 passes it to Spu_WriteReverbEnable (SPU reg 0x1F801D98); spu_transfer.c clears it.
+0x800C0DD4,D_800C0DD4,g_AkaoNoiseEnableMask,ok,verified,akao/voice_driver.c:1734 builds it from g_AkaoTrack34Mask and line 1641 passes it to Spu_WriteNoiseEnable (SPU reg 0x1F801D94); spu_transfer.c clears it.
+0x800C0DD8,D_800C0DD8,g_AkaoFmEnableMask,ok,verified,akao/voice_driver.c:1796 builds it from g_AkaoTrack3CMask and line 1642 passes it to Spu_WriteFmEnable (SPU pitch-modulation reg 0x1F801D90); spu_transfer.c clears it.
+0x800C0E00,D_800C0E00,g_AyaSaveState,ok,verified,"include/pe1/aya.h documents it as Aya persistent block (total_exp, hp, level, bonus points, slots, stats, items); 62 references in battle/commands.c, menu/status_panels.c, item/actions.c; it is SaveRuntimeState+0x20 (existing aliases g_AyaSaveTotalExp etc.)."
+0x800C0E20,D_800C0E20,g_InventoryRuntime,ok,verified,"include/pe1/inventory_slots.h overlays tracked selections, 50 item slots at +0x28, 128 equipment records at +0x8C, storage at +0x1098; 95 refs (item/active_list.c, battle/commands.c, save/game_data.c); first bytes are the equipped weapon/armor slots (aliases g_AyaEquippedWeaponSlot)."
+0x800C0E3C,D_800C0E3C,g_SavePlayTimeClass,ok,likely,"SaveRuntimeState.playTimeClass (+0x5C): Save_BuildHeader stores Save_ClassifyPlaytime(g_PlayTimeFrameCounter), a 1..6 bucket (status_panels.c:399); docs/notes/references/save_memcard_function_map.md calls it day number."
+0x800C2154,D_800C2154,g_GlowEffectLayersSpinA,fix,likely,"glow.c:232 defines GLOW_LAYERS_SPIN_A for the GlowEffect module; other modules are named g_GlowEffectB*, g_FourLayerGlow*, so ""Layers1"" breaks the module naming."
+0x800C215C,D_800C215C,g_GlowLayers1SpinB,ok,likely,"Local spinB of func_800C83A0 (fieldfx/glow.c, glow_layers.inc) fed to RotMatrixYXZ; rodata (x,y,z)=(0x0400,0x0C00,0)."
+0x800C2164,D_800C2164,g_GlowLayers1Scale,ok,likely,GLOW_LAYERS_SCALE of func_800C83A0 (fieldfx/glow.c:234) used for both layers via ScaleMatrix; value 0x490 for x/y/z.
+0x800C2184,D_800C2184,g_GlowEffectBLayersSpinA,fix,likely,glow.c:577 is class B's GLOW_LAYERS_SPIN_A; numeric 'Layers2' hides the class.
+0x800C218C,D_800C218C,g_GlowEffectBSpinB,fix,likely,"glow.c:578 uses it as GLOW_LAYERS_SPIN_B of func_800C9398, which is GlowEffectB draw slot 2; GlowLayers2 is a positional label unlike the g_GlowEffectB*/g_FourLayerGlow* names."
+0x800C2194,D_800C2194,g_GlowEffectBLayersScale,fix,likely,glow.c:576-579 uses it for func_800C9398 which is in the GlowEffectB draw list (0x800E09A8); name by module like g_FourLayerGlowSpinA.
+0x800C21A4,D_800C21A4,g_GlowEffectCLayersSpinA,fix,likely,"glow.c:814-818 binds it to the layer draw whose sprite is named g_GlowEffectCSprite1, so 'GlowLayers3' mixes a different naming scheme for the same class."
+0x800C21AC,D_800C21AC,g_GlowEffectCLayersSpinB,fix,likely,glow.c:816 is class C's GLOW_LAYERS_SPIN_B; numeric 'Layers3' does not match the GlowEffectC class naming.
+0x800C21B4,D_800C21B4,g_GlowLayers3Scale,ok,likely,GLOW_LAYERS_SCALE of func_800C9FD8 (fieldfx/glow.c:817).
+0x800C21D4,D_800C21D4,g_FourLayerGlowSpinA,ok,likely,Copied into a local spin vector of the four-layer glow function (fieldfx/glow.c:1136) and passed to RotMatrixYXZ; sits between g_FourLayerGlowPointOffsetB and g_FourLayerGlowSpriteRotation.
+0x800C21DC,D_800C21DC,g_FourLayerGlowSpinB,ok,likely,Copied into a local spin vector of the four-layer glow function (fieldfx/glow.c:1137) and passed to RotMatrixYXZ; sits between g_FourLayerGlowPointOffsetB and g_FourLayerGlowSpriteRotation.
+0x800C21E4,D_800C21E4,g_FourLayerGlowSpinC,ok,likely,Copied into a local spin vector of the four-layer glow function (fieldfx/glow.c:1140) and passed to RotMatrixYXZ; sits between g_FourLayerGlowPointOffsetB and g_FourLayerGlowSpriteRotation.
+0x800C21EC,D_800C21EC,g_FourLayerGlowSpinD,ok,likely,Copied into a local spin vector of the four-layer glow function (fieldfx/glow.c:1141) and passed to RotMatrixYXZ; sits between g_FourLayerGlowPointOffsetB and g_FourLayerGlowSpriteRotation.
+0x800C21F4,D_800C21F4,g_FourLayerGlowScale,ok,likely,"Used for scaleA..scaleD of the four-layer glow function (fieldfx/glow.c:1191,1221,1258,1288) via ScaleMatrix."
+0x800C220C,D_800C220C,g_BurstEffectScaleA,ok,likely,func_800CCBA8 (fieldfx/burst.c:461) copies it and ScaleMatrix-es identity matrix D_800F3478.
+0x800C221C,D_800C221C,g_BurstEffectScaleB,ok,likely,func_800CCBA8 (fieldfx/burst.c:464) scales identity matrix D_800F33C0 with it.
+0x800C222C,D_800C222C,g_BurstEffectScaleC,ok,likely,func_800CCBA8 (fieldfx/burst.c:467) scales identity matrix D_800F32B0 with it.
+0x800C2244,D_800C2244,g_FieldFxTaskProgramMissingMsg,ok,verified,FieldFx_BindTaskProgram (fieldfx/task_list.c:13) printf()s it when g_FieldFxTaskPrograms[index] is null; follows g_FieldFxServiceThreadMissingMsg naming.
+0x800C2260,D_800C2260,g_FieldFxZeroVector,ok,likely,"geometry.c:67,613,814,968 copies it as origin, default rotation and the base of a (0,0,distance) direction (func_800CFB7C); rodata is 8 zero bytes."
+0x800C2268,D_800C2268,g_FieldFxZeroRotation,ok,likely,geometry.c:229 copies it as the default rotation when the caller passes none (quad strip draw); rodata is 8 zero bytes.
+0x800C2270,D_800C2270,g_FieldFxIdentityMatrix,ok,verified,geometry.c:540 initialises rollMatrix from it; rodata is 0x1000 on the diagonal and zero elsewhere with a zero translation (0x14 bytes of data plus padding).
+0x800C2290,D_800C2290,g_FieldFxUnitScale,ok,verified,"geometry.c:815,969 uses it as the ScaleMatrix scale; rodata 0x1000 for x/y/z (1.0 in 12-bit fixed)."
+0x800C22A0,D_800C22A0,g_FieldFxBlackColor,ok,verified,"geometry.c:1138,1539 copy it into a local named black used as the vertex colors in the rotated quad and triangle draws; rodata is zero."
+0x800C22C0,D_800C22C0,g_FieldFxCosineEffectTint,ok,likely,"RGB (12,120,255) copied into the local RenderColor of func_800D5898 (sprite_effects.c:305); name taken from the effect type, role as a tint is certain but the effect identity is only the struct type."
+0x800C22C4,D_800C22C4,g_FieldFxArcingEmitterTint,ok,likely,"RGB (0,80,200) copied into the local RenderColor of func_800D5A00 (sprite_effects.c:329); name taken from the effect type, role as a tint is certain but the effect identity is only the struct type."
+0x800C22C8,D_800C22C8,g_FieldFxSpiralSpriteTint,ok,likely,"RGB (120,100,100) copied into the local RenderColor of func_800D629C (sprite_effects.c:516); name taken from the effect type, role as a tint is certain but the effect identity is only the struct type."
+0x800C22CC,D_800C22CC,g_FieldFxRingPulseTint,ok,likely,"RGB (255,200,200) copied into the local RenderColor of func_800D6A1C (sprite_effects.c:655); name taken from the effect type, role as a tint is certain but the effect identity is only the struct type."
+0x800C22D0,D_800C22D0,g_FieldFxBouncingSpriteTint,ok,likely,"RGB (128,128,128) copied into the local RenderColor of func_800D6C58 (sprite_effects.c:700); name taken from the effect type, role as a tint is certain but the effect identity is only the struct type."
+0x800C22D8,D_800C22D8,g_FieldFxFanSweepGlowTint,ok,likely,"RGB (128,80,10) copied into the local RenderColor of func_800D7764 (sprite_effects.c:890); name taken from the effect type, role as a tint is certain but the effect identity is only the struct type."
+0x800C22E0,D_800C22E0,g_FieldFxOrbitHelicalTint,ok,likely,"RGB (140,140,70) copied into the local RenderColor of func_800D7FBC and func_800D8E74 (sprite_effects.c:1060,1378); name taken from the effect type, role as a tint is certain but the effect identity is only the struct type."
+0x800C22E4,D_800C22E4,g_FieldFxDampedSparkTint,fix,likely,"sprite_effects.c:1548 loads it in func_800D96F4 which spawns RenderDampedSpark effects; ""SparkEmitter"" is ambiguous because func_800DACA4 also uses RenderSparkEmitter."
+0x800C22E8,D_800C22E8,g_FieldFxSparkOuterTint,ok,likely,"RGB (30,200,50) copied into the local RenderColor of func_800DACA4 (emitters.c:38), passed to the size-800 sprites; name taken from the effect type, role as a tint is certain but the effect identity is only the struct type."
+0x800C22F0,D_800C22F0,g_FieldFxZeroOffset,ok,likely,func_800DEFFC (fieldfx/emitters.c:1218) copies it as the initial offset of a fade-particle child; rodata is 8 zero bytes.
+0x800E086C,D_800E086C,g_GlowEffectClass,ok,verified,"Entry 0 of g_PmCmdHandlerTable (D_80094188, dtail_gp_pre_s016.data.s:4003-4010) and its words are GlowEffect_ClassNop0/PlantScript/Spawn6/RegisterDrawList/RegisterPairedTables/CloseTarget/ClassNop6."
+0x800E09D4,D_800E09D4,g_GlowEffectBClass,ok,verified,"Entry 1 of g_PmCmdHandlerTable (D_80094188, dtail_gp_pre_s016.data.s:4003-4010) and its words are GlowEffectB_ClassNop0/PlantScript/Spawn6/RegisterDrawList/RegisterPairedTables/CloseTarget/ClassNop6."
+0x800E0ABC,D_800E0ABC,g_GlowEffectCClass,ok,verified,"Entry 2 of g_PmCmdHandlerTable (D_80094188, dtail_gp_pre_s016.data.s:4003-4010) and its words are GlowEffectC_ClassNop0/PlantScript/Spawn6/RegisterDrawList/RegisterPairedTables/CloseTarget/ClassNop6."
+0x800E0BCC,D_800E0BCC,g_FourLayerGlowClass,ok,verified,"Entry 3 of g_PmCmdHandlerTable (D_80094188, dtail_gp_pre_s016.data.s:4003-4010) and its words are FourLayerGlow_ClassNop0/PlantScript/Spawn6/RegisterDrawList/RegisterPairedTables/CloseTarget/ClassNop6."
+0x800E0D50,D_800E0D50,g_PointSpriteClass,ok,verified,"Entry 7 of g_PmCmdHandlerTable (D_80094188, dtail_gp_pre_s016.data.s:4003-4010) and its words are PointSprite_ClassNop0/PlantScript/Spawn6/RegisterDrawList/RegisterPairedTables/CloseTarget/ClassNop6."
+0x800E0E9C,D_800E0E9C,g_BurstEffectClass,ok,verified,"Entry 5 of g_PmCmdHandlerTable (D_80094188, dtail_gp_pre_s016.data.s:4003-4010) and its words are BurstEffect_ClassNop0/PlantScript/Spawn6/RegisterDrawList/RegisterPairedTables/CloseTarget/ClassNop6."
+0x800E0EB8,D_800E0EB8,g_BurstEffectScript,ok,likely,FieldFx script bytes that BurstEffect plant-script func_800CCBA8 stores into the object slot (src/main/fieldfx/burst.c:460).
+0x800E0F50,D_800E0F50,g_BurstEffectBClass,ok,verified,"Entry 4 of g_PmCmdHandlerTable (D_80094188, dtail_gp_pre_s016.data.s:4003-4010) and its words are BurstEffectB_ClassNop0/PlantScript/Spawn6/RegisterDrawList/RegisterPairedTables/CloseTarget/ClassNop6."
+0x800E0FE0,D_800E0FE0,g_BurstEffectCClass,ok,verified,"Entry 6 of g_PmCmdHandlerTable (D_80094188, dtail_gp_pre_s016.data.s:4003-4010) and its words are BurstEffectC_ClassNop0/PlantScript/Spawn6/RegisterDrawList/RegisterPairedTables/CloseTarget/ClassNop6."
+0x800E11E4,D_800E11E4,g_FieldFxTpageSlots,ok,likely,Texture page slot table indexed into D_800E2850 (include/pe1/field_texture_tables.h:6-7); used as D_800E2850[D_800E11E4[n]] e.g. e19.c:592.
+0x800E11E6,D_800E11E6,g_FieldFxTpageSlot1,ok,likely,"Entry 1 of the g_FieldFxTpageSlots table (field_texture_tables.h comments), read as D_800E2850[this] by effects such as e19.c, glint_effects.c, m318.c."
+0x800E11E8,D_800E11E8,g_FieldFxTpageSlot2,ok,likely,"Entry 2 of the g_FieldFxTpageSlots table (field_texture_tables.h comments), read as D_800E2850[this] by effects such as e19.c, glint_effects.c, m318.c."
+0x800E11EA,D_800E11EA,g_FieldFxTpageSlot3,ok,likely,"Entry 3 of the g_FieldFxTpageSlots table (field_texture_tables.h comments), read as D_800E2850[this] by effects such as e19.c, glint_effects.c, m318.c."
+0x800E11EC,D_800E11EC,g_FieldFxTpageSlot4,ok,likely,"Entry 4 of the g_FieldFxTpageSlots table (field_texture_tables.h comments), read as D_800E2850[this] by effects such as e19.c, glint_effects.c, m318.c."
+0x800E11F6,D_800E11F6,g_FieldFxTpageSlot9,ok,likely,"Entry 9 of the g_FieldFxTpageSlots table (field_texture_tables.h comments), read as D_800E2850[this] by effects such as e19.c, glint_effects.c, m318.c."
+0x800E11F8,D_800E11F8,g_FieldFxTpageSlot10,ok,likely,"Entry 10 of the g_FieldFxTpageSlots table (field_texture_tables.h comments), read as D_800E2850[this] by effects such as e19.c, glint_effects.c, m318.c."
+0x800E11FA,D_800E11FA,g_FieldFxTpageSlot11,ok,likely,"Entry 11 of the g_FieldFxTpageSlots table (field_texture_tables.h comments), read as D_800E2850[this] by effects such as e19.c, glint_effects.c, m318.c."
+0x800E1204,D_800E1204,g_FieldFxPaletteTable,ok,verified,Header calls it the palette (CLUT) table indexed by effect kind; read as D_800E1204[D_800F3368.palette] in src/main/fieldfx/sprite_effects.c:60 and e19.c:347.
+0x800E1208,D_800E1208,g_FieldFxPaletteEntry2,fix,likely,"it is element 2 of the D_800E1204 palette table (RoomEffect_ConfiguredPulseCallback.c:58), not a table."
+0x800E120A,D_800E120A,g_FieldFxPaletteEntry3,fix,likely,"it is element 3 of the D_800E1204 palette table (e19.c:557), not a table."
+0x800E1210,D_800E1210,g_FieldFxStripPacketCounts,ok,likely,Packet count per shape index parameter0A: D_8009CDD8 += D_800E1210[parameter0A]*sizeof(FieldStripPacket) (src/main/fieldfx/geometry.c:293).
+0x800E121C,D_800E121C,g_FieldFxStripVertices0,ok,likely,Vertex list 0 of D_800E13BC (engine_data_800E0060.data.s:1490); sized 4 vertices per packet matching D_800E1210[0].
+0x800E127C,D_800E127C,g_FieldFxStripVertices2,ok,likely,Vertex list 2 of D_800E13BC (engine_data_800E0060.data.s:1492); sized 4 vertices per packet matching D_800E1210[2].
+0x800E12BC,D_800E12BC,g_FieldFxStripVertices3,ok,likely,Vertex list 3 of D_800E13BC (engine_data_800E0060.data.s:1493); sized 4 vertices per packet matching D_800E1210[3].
+0x800E12FC,D_800E12FC,g_FieldFxStripVertices4,ok,likely,Vertex list 4 of D_800E13BC (engine_data_800E0060.data.s:1494); sized 4 vertices per packet matching D_800E1210[4].
+0x800E133C,D_800E133C,g_FieldFxStripVertices5,ok,likely,Vertex list 5 of D_800E13BC (engine_data_800E0060.data.s:1495); sized 4 vertices per packet matching D_800E1210[5].
+0x800E13BC,D_800E13BC,g_FieldFxShapeVertexTable,fix,verified,"geometry.c:305 is the shape quad drawer (field_shape_quads.h:10, func_800CEE20), indexed by D_800F3368.parameter0A to select a shape vertex array, not a strip."
+0x800E13D4,D_800E13D4,g_FieldFxTaskClass,ok,likely,"Entry 85 of g_PmCmdHandlerTable (dtail_gp_pre_s016.data.s:4012); words func_800D4860 (loads the effect models), func_800D4620 (FieldFxTaskOwner *) etc."
+0x800E13F0,D_800E13F0,g_FieldFxTaskScriptCmd85,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd85, engine_data_800E0060.data.s."
+0x800E141C,D_800E141C,g_FallingSpriteColorTrack0,fix,likely,"Used in func_800D4928 (sprite_effects.c:40), the function proposed as FieldFx_FallingSprite, so BouncingSprite would be inconsistent."
+0x800E146C,D_800E146C,g_BouncingSpriteColorTrack2,ok,likely,"Same function, default variant (sprite_effects.c:46)."
+0x800E1494,D_800E1494,g_RotatingEffectColorTrack,ok,likely,Passed to func_800CF3AC in FieldFx_RotatingEffect (src/main/fieldfx/emitters.c:1403).
+0x800E14BC,D_800E14BC,g_FieldFxTaskProgramCmd85,ok,verified,"Entry 0 of g_FieldFxTaskPrograms (0x800E1044+4*0, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E14F4,D_800E14F4,g_FieldFxTaskScriptCmd86,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd86, engine_data_800E0060.data.s."
+0x800E1568,D_800E1568,g_FieldFxTaskProgramCmd86,ok,verified,"Entry 1 of g_FieldFxTaskPrograms (0x800E1044+4*1, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E15A0,D_800E15A0,g_FieldFxTaskScriptCmd87,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd87, engine_data_800E0060.data.s."
+0x800E15C4,D_800E15C4,g_FieldFxTaskProgramCmd87,ok,verified,"Entry 2 of g_FieldFxTaskPrograms (0x800E1044+4*2, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E15FC,D_800E15FC,g_FieldFxTaskScriptCmd88,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd88, engine_data_800E0060.data.s."
+0x800E1614,D_800E1614,g_FieldFxTaskProgramCmd88,ok,verified,"Entry 3 of g_FieldFxTaskPrograms (0x800E1044+4*3, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E164C,D_800E164C,g_FieldFxTaskScriptCmd89,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd89, engine_data_800E0060.data.s."
+0x800E1694,D_800E1694,g_RisingSpriteColorTrack,fix,likely,"Used only by func_800D5CE4 (sprite_effects.c:408) which the same batch names FieldFx_RisingSprite, so the track should follow that name."
+0x800E16C4,D_800E16C4,g_FieldFxTaskProgramCmd89,ok,verified,"Entry 4 of g_FieldFxTaskPrograms (0x800E1044+4*4, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E16FC,D_800E16FC,g_FieldFxTaskScriptCmd90,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd90, engine_data_800E0060.data.s."
+0x800E1728,D_800E1728,g_FieldFxTaskProgramCmd90,ok,verified,"Entry 5 of g_FieldFxTaskPrograms (0x800E1044+4*5, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1760,D_800E1760,g_FieldFxTaskScriptCmd91,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd91, engine_data_800E0060.data.s."
+0x800E1790,D_800E1790,g_FieldFxTaskProgramCmd91,ok,verified,"Entry 6 of g_FieldFxTaskPrograms (0x800E1044+4*6, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E17C8,D_800E17C8,g_FieldFxTaskScriptCmd92,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd92, engine_data_800E0060.data.s."
+0x800E1808,D_800E1808,g_FieldFxTaskProgramCmd92,ok,verified,"Entry 7 of g_FieldFxTaskPrograms (0x800E1044+4*7, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1840,D_800E1840,g_FieldFxTaskScriptCmd93,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd93, engine_data_800E0060.data.s."
+0x800E1864,D_800E1864,g_FieldFxTaskProgramCmd93,ok,verified,"Entry 8 of g_FieldFxTaskPrograms (0x800E1044+4*8, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E189C,D_800E189C,g_FieldFxTaskScriptCmd94,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd94, engine_data_800E0060.data.s."
+0x800E18C0,D_800E18C0,g_ArcingEffectColorTrack,ok,likely,"Passed to func_800CF3AC in func_800D7A1C (RenderArcingEffect, sprite_effects.c:956)."
+0x800E1920,D_800E1920,g_FieldFxTaskProgramCmd94,ok,verified,"Entry 9 of g_FieldFxTaskPrograms (0x800E1044+4*9, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1958,D_800E1958,g_FieldFxTaskScriptCmd95,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd95, engine_data_800E0060.data.s."
+0x800E19B0,D_800E19B0,g_FieldFxTaskProgramCmd95,ok,verified,"Entry 10 of g_FieldFxTaskPrograms (0x800E1044+4*10, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E19E8,D_800E19E8,g_FieldFxTaskScriptCmd96,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd96, engine_data_800E0060.data.s."
+0x800E1A14,D_800E1A14,g_VerticalEffectColorTrack,ok,likely,"Passed to func_800CF3AC in func_800D8978 (RenderVerticalEffect, sprite_effects.c:1290)."
+0x800E1A44,D_800E1A44,g_FieldFxTaskProgramCmd96,ok,verified,"Entry 11 of g_FieldFxTaskPrograms (0x800E1044+4*11, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1A7C,D_800E1A7C,g_FieldFxTaskScriptCmd97,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd97, engine_data_800E0060.data.s."
+0x800E1AC8,D_800E1AC8,g_DampedSparkColorTrack,ok,likely,"Passed to func_800CF3AC in func_800D9554 (RenderDampedSpark, sprite_effects.c:1533)."
+0x800E1AF0,D_800E1AF0,g_FieldFxTaskProgramCmd97,ok,verified,"Entry 12 of g_FieldFxTaskPrograms (0x800E1044+4*12, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1B28,D_800E1B28,g_FieldFxTaskScriptCmd98,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd98, engine_data_800E0060.data.s."
+0x800E1B4C,D_800E1B4C,g_FieldFxTaskProgramCmd98,ok,verified,"Entry 13 of g_FieldFxTaskPrograms (0x800E1044+4*13, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1B84,D_800E1B84,g_FieldFxTaskScriptCmd99,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd99, engine_data_800E0060.data.s."
+0x800E1BA8,D_800E1BA8,g_FieldFxTaskProgramCmd99,ok,verified,"Entry 14 of g_FieldFxTaskPrograms (0x800E1044+4*14, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1BE0,D_800E1BE0,g_FieldFxTaskScriptCmd100,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd100, engine_data_800E0060.data.s."
+0x800E1C04,D_800E1C04,g_CosineEffectColorTrack,ok,likely,Passed to func_800CF3AC in FieldFx_CosineEffect (emitters.c:28).
+0x800E1C2C,D_800E1C2C,g_SineSweepColorTrack,fix,likely,"Used only by func_800DAF8C (emitters.c:92) which the same batch names FieldFx_SineSweepTriangle, so 'SineEffect' is inconsistent."
+0x800E1C64,D_800E1C64,g_FieldFxTaskProgramCmd100,ok,verified,"Entry 15 of g_FieldFxTaskPrograms (0x800E1044+4*15, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1C9C,D_800E1C9C,g_FieldFxTaskScriptCmd101,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd101, engine_data_800E0060.data.s."
+0x800E1CC8,D_800E1CC8,g_DiamondParticleColorTrack,ok,likely,"Passed to func_800CF3AC in func_800DB5F4 (RenderDiamondParticle, emitters.c:189)."
+0x800E1CF8,D_800E1CF8,g_FieldFxTaskProgramCmd101,ok,verified,"Entry 16 of g_FieldFxTaskPrograms (0x800E1044+4*16, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1D30,D_800E1D30,g_FieldFxTaskScriptCmd102,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd102, engine_data_800E0060.data.s."
+0x800E1D60,D_800E1D60,g_SparkEmitterPhaseSeed,ok,likely,func_800DBA9C (emitters.c:254-255) hands it to each spark as its phase and adds 1365 (about a third of a turn of 4096).
+0x800E1DCC,D_800E1DCC,g_FieldFxTaskProgramCmd102,ok,verified,"Entry 17 of g_FieldFxTaskPrograms (0x800E1044+4*17, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1E04,D_800E1E04,g_FieldFxTaskScriptCmd103,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd103, engine_data_800E0060.data.s."
+0x800E1E24,D_800E1E24,g_TwinModelColorTrack,ok,likely,"Passed to func_800CF3AC in func_800DC058 (FieldFxTwinModel, emitters.c:403)."
+0x800E1E8C,D_800E1E8C,g_FieldFxTaskProgramCmd103,ok,verified,"Entry 18 of g_FieldFxTaskPrograms (0x800E1044+4*18, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1EC4,D_800E1EC4,g_FieldFxTaskScriptCmd104,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd104, engine_data_800E0060.data.s."
+0x800E1EE8,D_800E1EE8,g_DriftingEffectColorTrack,ok,likely,Passed to func_800CF3AC in FieldFx_DriftingEffect (emitters.c:557).
+0x800E1F18,D_800E1F18,g_TiltingSpriteColorTrack,ok,likely,"Passed to func_800CF3AC twice in func_800DCCCC (RenderTiltingSprite, emitters.c:618,663)."
+0x800E1F48,D_800E1F48,g_FieldFxTaskProgramCmd104,ok,verified,"Entry 19 of g_FieldFxTaskPrograms (0x800E1044+4*19, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E1F80,D_800E1F80,g_FieldFxTaskScriptCmd105,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd105, engine_data_800E0060.data.s."
+0x800E1FEC,D_800E1FEC,g_ConvergingSpriteColorTrack,ok,likely,"Passed to func_800CF3AC in func_800DD380 (RenderConvergingSprite, emitters.c:738)."
+0x800E2014,D_800E2014,g_FieldFxTaskProgramCmd105,ok,verified,"Entry 20 of g_FieldFxTaskPrograms (0x800E1044+4*20, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E204C,D_800E204C,g_FieldFxTaskScriptCmd106,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd106, engine_data_800E0060.data.s."
+0x800E207C,D_800E207C,g_SettlingSpriteColorTrack,ok,likely,"Passed to func_800CF3AC in func_800DD9E4 (RenderSettlingSprite, emitters.c:850)."
+0x800E20EC,D_800E20EC,g_FieldFxTaskProgramCmd106,ok,verified,"Entry 21 of g_FieldFxTaskPrograms (0x800E1044+4*21, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E2124,D_800E2124,g_FieldFxTaskScriptCmd107,ok,verified,"Word at offset 0x34 (FieldFxTaskProgram.script) of g_FieldFxTaskProgramCmd107, engine_data_800E0060.data.s."
+0x800E213C,D_800E213C,g_FadeParticleColorTrack,ok,likely,"Passed to func_800CF3AC in func_800DEFFC (RenderFadeParticle, emitters.c:1325)."
+0x800E2164,D_800E2164,g_FadeEmitterParticleKinds,ok,likely,func_800DF6AC indexes it by state->count for each spawned particle (emitters.c:1354).
+0x800E216C,D_800E216C,g_FieldFxTaskProgramCmd107,ok,verified,"Entry 22 of g_FieldFxTaskPrograms (0x800E1044+4*22, command 85+index per src/main/pm/process.c:93 indexing) as a FieldFxTaskProgram."
+0x800E21C8,D_800E21C8,g_FieldFxRandomPhaseCounter,ok,likely,"Incremented modulo 8 and mixed into rand() results in two spray generators (geometry.c:756,782)."
+0x800E21D4,D_800E21D4,g_SpiralEffectRadius,ok,verified,sprite_effects.c:513 comment: spiral sprites circle the anchor at radius D_800E21D4; used in :525.
+0x800E21D8,D_800E21D8,g_SpiralEffectAnchor,ok,verified,sprite_effects.c:512 comment names it the shared anchor of the spiral effect; read at :525.
+0x800E21E0,D_800E21E0,g_FanSweepSparkAnchor,ok,verified,sprite_effects.c:819 defines ROOM_FAN_SWEEP_SPARK_ANCHOR as it; written at :869.
+0x800E21E8,D_800E21E8,g_FanSweepSparkTrailPool,ok,verified,sprite_effects.c:820 defines ROOM_FAN_SWEEP_SPARK_TRAIL as it; stores sweep->pool at :858.
+0x800E21EC,D_800E21EC,g_OrbitingEffectAnchor,ok,likely,"Anchor orbited by func_800D7FBC particles (sprite_effects.c:1065) and written by the orbiting emitters func_800D8388/func_800D868C (:1173,1242)."
+0x800E21F4,D_800E21F4,g_OrbitingEffectParticlePool,ok,likely,"Pool pointer set by the orbiting emitters (sprite_effects.c:1157,1222) and used to spawn particles in func_800D7FBC (:1071)."
+0x800E21F8,D_800E21F8,g_VerticalEffectAnchor,ok,likely,"Base position of func_800D8978 (RenderVerticalEffect, sprite_effects.c:1265) set by emitter func_800D8B6C (:1326)."
+0x800E2200,D_800E2200,g_HelicalEffectAnchor,ok,likely,"Centre of func_800D8E74 (RenderHelicalEffect, sprite_effects.c:1383) set by emitter func_800D927C (:1495)."
+0x800E2208,D_800E2208,g_HelicalEffectParticlePool,ok,likely,Pool pointer set by func_800D927C (sprite_effects.c:1475) and used by func_800D8E74 (:1392).
+0x800E2214,D_800E2214,g_SpinningModelAnchorB,ok,likely,"SPINNING_MODEL_ANCHOR for the second spinning model flare (sprite_effects.c:1690, written from the owner target at :1720)."
+0x800E221C,D_800E221C,g_SineEffectAnchor,ok,likely,"Position copied from state and used by func_800DAF8C (RenderSineEffect) in emitters.c:93,124."
+0x800E2224,D_800E2224,g_DiamondParticleAnchor,ok,likely,Written at emitters.c:231 and used by func_800DB5F4 (RenderDiamondParticle) at :190.
+0x800E222C,D_800E222C,g_TiltingSpriteAnchor,ok,likely,"Used by func_800DCCCC (RenderTiltingSprite) at emitters.c:623,671."
+0x800E2234,D_800E2234,g_ConvergingSpriteAnchor,ok,likely,"Blend target of func_800DD380 (RenderConvergingSprite) at emitters.c:735,757."
+0x800E223C,D_800E223C,g_SettlingSpriteAnchor,ok,likely,"Blend target of func_800DD9E4 (RenderSettlingSprite, emitters.c:843) written by its emitter at :916."
+0x800E2244,D_800E2244,g_FadeEmitterIntensity,ok,verified,"emitters.c:1215 comment calls it the emitter intensity that caps each shape quad; compared at :1301,1314."
+0x800E224C,D_800E224C,g_FieldFxSpriteBlendRate,ok,verified,include/pe1/field_sprite_state.h comment: semi-transparency rate (GetTPage abr); set in func_800C3238 and fed to GetTPage (sprite_render.c:53).
+0x800E2250,D_800E2250,g_BurstEffectSprite0,ok,likely,"Initialised (cell, clut) in func_800CCBA8 (BurstEffect plant script, burst.c:471-496); numbered in address order."
+0x800E2260,D_800E2260,g_PointSpriteState0,ok,likely,Oriented sprite state initialised in PointSprite_PlantScript (burst.c:34-82); numbered in address order.
+0x800E2290,D_800E2290,g_PointSpriteActorPosition,ok,likely,Loaded from actor pos_x/y >> 16 in PointSprite_PlantScript and its callbacks (burst.c:29-30).
+0x800E2298,D_800E2298,g_BurstEffectSprite1,ok,likely,"Initialised (cell, clut) in func_800CCBA8 (BurstEffect plant script, burst.c:471-496); numbered in address order."
+0x800E22A8,D_800E22A8,g_BurstEffectCState,ok,likely,Oriented sprite state initialised in BurstEffectC_PlantScript (burst.c:1052).
+0x800E22D4,D_800E22D4,g_FieldFxGlintModel,fix,likely,geometry.c:2380 loads it by key 0x57E8EB04 and its only use is glint_effects.c:838-863 drawing a scaled faded model; a hex key is not a role name.
+0x800E22D8,D_800E22D8,g_GlowEffectSprite0,ok,likely,"Initialised (cell, clut, colour) in GlowEffect_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800E22E8,D_800E22E8,g_GlowEffectBSprite0,ok,likely,"Initialised (cell, clut, colour) in GlowEffectB_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800E22F8,D_800E22F8,g_GlowEffectCSprite0,ok,likely,"Initialised (cell, clut, colour) in GlowEffectC_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800E2308,D_800E2308,g_FourLayerGlowSprite0,ok,likely,"Initialised (cell, clut, colour) in FourLayerGlow_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800E2318,D_800E2318,g_GlowEffectSprite1,ok,likely,"Initialised (cell, clut, colour) in GlowEffect_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800E2328,D_800E2328,g_GlowEffectBSprite1,ok,likely,"Initialised (cell, clut, colour) in GlowEffectB_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800E2338,D_800E2338,g_FourLayerGlowSprite1,ok,likely,"Initialised (cell, clut, colour) in FourLayerGlow_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800E2348,D_800E2348,g_GlowEffectPosition,ok,likely,Written from render_object.matrices[19].translation by the GlowEffect callbacks func_800C7DE4..C815C (glow.c).
+0x800E2350,D_800E2350,g_GlowEffectBPosition,ok,likely,Written from render_object.matrices[19].translation by the GlowEffectB callbacks func_800C8F28..C91A8 (glow.c).
+0x800E2358,D_800E2358,g_GlowEffectCPosition,ok,likely,Written from render_object.matrices[19].translation by the GlowEffectC callbacks func_800C9C20..C9D9C (glow.c).
+0x800E2360,D_800E2360,g_FourLayerGlowPosition,ok,likely,Written from render_object.matrices[19].translation by the FourLayerGlow callbacks func_800CA7B8..CABC8 (glow.c).
+0x800E2368,D_800E2368,g_FieldFxTaskContext,ok,verified,"include/pe1/fieldfx_task_pool.h: the running task context; set in geometry.c:2185,2330,2347 and read by effects as their event state (FX_TASK_AS)."
+0x800E2770,D_800E2770,g_BurstEffectBState0,ok,likely,Oriented sprite state initialised in BurstEffectB_PlantScript/func_800CDD0C (burst.c:787-811); numbered in address order.
+0x800E27AC,D_800E27AC,g_FieldFxSpriteTpageValue,ok,verified,"Header: GetTPage value of the current state; computed at sprite_render.c:53,102."
+0x800E27B0,D_800E27B0,g_BurstEffectBState1,ok,likely,Oriented sprite state initialised in BurstEffectB_PlantScript/func_800CDD0C (burst.c:787-811); numbered in address order.
+0x800E27E0,D_800E27E0,g_BurstEffectSprite2,ok,likely,"Initialised (cell, clut) in func_800CCBA8 (BurstEffect plant script, burst.c:471-496); numbered in address order."
+0x800E27EC,D_800E27EC,g_FieldFxCurrentAge,ok,verified,"Loaded from the callback entry age before each callback (src/main/fieldfx/task_list.c:141,167; geometry.c:2275) and read as the frame counter by effects (852 refs)."
+0x800E27F0,D_800E27F0,g_BurstEffectBTargetPosition,ok,likely,Set from render_object.target by callbacks adjacent to BurstEffectB_ClassNop0 (burst.c:884).
+0x800E27F8,D_800E27F8,g_BurstEffectTargetPosition,ok,likely,Set from render_object.target_x/y/z by the BurstEffect callbacks (burst.c:563).
+0x800E2808,D_800E2808,g_BurstEffectCTargetPosition,ok,likely,Set from render_object.target by callbacks adjacent to BurstEffectC_ClassNop0 (burst.c:1124).
+0x800E2818,D_800E2818,g_PointSpriteState1,ok,likely,Oriented sprite state initialised in PointSprite_PlantScript (burst.c:34-82); numbered in address order.
+0x800E2844,D_800E2844,g_FieldFxTriScratch,ok,verified,Set to FIELD_TRI_SCRATCH (scratchpad) in fieldfx/collision.c:180 and used for the GTE edge loads at :183.
+0x800E284C,D_800E284C,g_FieldFxBillboardScratch,ok,verified,Set to FIELD_BILLBOARD_SCRATCH in fieldfx/sprite_render.c:272; header comment: scratchpad work area published through it.
+0x800E2850,D_800E2850,g_FieldFxTpageTable,ok,verified,Header: texture page table indexed by a slot from D_800E11E4; 338 reads like D_800F3368.tpage = D_800E2850[...].
+0x800E2852,D_800E2852,g_FieldFxTpageTableEntry1,fix,likely,"it is element 1 of the D_800E2850 tpage table (geometry.c:1767), so 'Table1' reads as a separate table."
+0x800F32B0,D_800F32B0,g_BurstEffectScaleMatrix2,ok,likely,func_800CCBA8 (burst.c:462-469) sets identity and ScaleMatrix with the third scale vector.
+0x800F32D0,D_800F32D0,g_FieldFxOwner,ok,verified,"include/pe1/fieldfx_task_pool.h: the active effect owner (actor at +8), read 71 times as ANIM_OWNER_AS."
+0x800F32D4,D_800F32D4,g_FieldFxModel6DEAE684,fix,likely,"It is the model pointer returned by Asset_FindTable08ByU32Key (geometry.c:2375), not a key, so Model is the object and the key is only an identifier."
+0x800F32E0,D_800F32E0,g_PointSpriteGroundRingSprite,fix,likely,"burst.c:48-56 inits it flat (rotation.x 0x400, grey 0xA0) and func_800CC644 (ground ring draw) is its only user; the address-order ordinal hides that role."
+0x800F3310,D_800F3310,g_FieldFxCellQuad,fix,verified,"It is element 0 of a 4-vertex GteShortVector array (collision.c:139-142 index [0]..[3]; sprite_render.c:70-81 fill corners at 0x3310/18/20/28), so the object is the quad, not a single top-left corner."
+0x800F3320,D_800F3320,g_FieldFxCellQuadBottomLeft,ok,verified,"func_800C2FF0 (sprite_render.c:70-80) stores the cell corner (-x,y) scaled by width/height*16; D_800F3310 is also indexed as an array."
+0x800F3338,D_800F3338,g_PointSpriteState3,ok,likely,Oriented sprite state initialised in PointSprite_PlantScript (burst.c:34-82); numbered in address order.
+0x800F3368,D_800F3368,g_FieldFxSpriteParams,ok,verified,include/pe1/field_sprite_params.h: the one declaration of the halfword sprite parameter block filled by effect controllers before their particles draw (2962 refs).
+0x800F337A,D_800F337A,g_FieldFxSpriteSemiTrans,ok,verified,"Header: draw the sprites semi-transparent; set by func_800C3238 (sprite_render.c:147,151)."
+0x800F3380,D_800F3380,g_PointSpriteState4,ok,likely,Oriented sprite state initialised in PointSprite_PlantScript (burst.c:34-82); numbered in address order.
+0x800F33AC,D_800F33AC,g_FieldFxSpriteColorMode,ok,verified,Header: texture colour mode 0=4-bit 1=8-bit; set in func_800C3098 (sprite_render.c:92) and fed to GetTPage.
+0x800F33B4,D_800F33B4,g_FieldFxScratch,ok,verified,Set to FIELDFX_SCRATCH (scratchpad 0x1F800000) in sprite_render.c:176 and used for 121 field accesses (header comment).
+0x800F33B8,D_800F33B8,g_FieldFxSpriteBlendMode,ok,verified,Header: blend mode last set by func_800C3238 (sprite_render.c:144).
+0x800F33C0,D_800F33C0,g_BurstEffectScaleMatrix1,ok,likely,func_800CCBA8 (burst.c:462-469) sets identity and ScaleMatrix with the second scale vector.
+0x800F33E0,D_800F33E0,g_FieldFxActiveTaskSlot,fix,verified,"geometry.c:2159,2274,2354 assign the slot currently running (FieldFxTaskSlot *), and effects read ->end; it is not the pool itself."
+0x800F33E4,D_800F33E4,g_FieldFxModelSemiTrans,ok,verified,FieldFx_ModelSetSemiTrans (model.c:65) stores it; copied to sp->semiTrans (:215).
+0x800F33E8,D_800F33E8,g_BurstEffectBState2,ok,likely,Oriented sprite state initialised in BurstEffectB_PlantScript/func_800CDD0C (burst.c:787-811); numbered in address order.
+0x800F3414,D_800F3414,g_FieldFxModelClut,ok,verified,FieldFx_ModelSetTexture stores y here (model.c:61); copied to sp->clut (:214).
+0x800F341C,D_800F341C,g_FieldFxSpriteClutX,ok,verified,"Header: CLUT origin x; set in func_800C2EAC (sprite_render.c:27,35)."
+0x800F341E,D_800F341E,g_FieldFxSpriteClutY,ok,verified,"Header: CLUT origin y; set in func_800C2EAC (sprite_render.c:28,34)."
+0x800F3420,D_800F3420,g_FieldFxModelDepthBias,ok,verified,FieldFx_ModelSetDepthBias (model.c:69) stores it; reset to 0 at :56.
+0x800F3424,D_800F3424,g_FieldFxSpriteTpageX,ok,verified,Header: texture page origin x; set in func_800C2EAC (sprite_render.c:25).
+0x800F3426,D_800F3426,g_FieldFxSpriteTpageY,ok,verified,Header: texture page origin y; set in func_800C2EAC (sprite_render.c:26).
+0x800F3428,D_800F3428,g_FieldFxAltPaletteFlag,ok,verified,"field_texture_tables.h: selects the alternate palette for effect kind 4 when set; tested as kind==4 && D_800F3428 (e19.c:348,597)."
+0x800F342C,D_800F342C,g_FieldFxTwinModelB,fix,likely,"geometry.c:2378 loads it by key 0x5AB32104 beside D_800F3418; a hash key in the name is a placeholder, it is the second twin model (emitters.c:367,463)."
+0x800F3430,D_800F3430,g_PointSpriteStreakSprite,fix,likely,burst.c:137-139 sets its rgb from script regs 0-2 and :266-273 draws it with y scale 2*extent for the rising slot-0 streak; ordinal 5 hides that role.
+0x800F345C,D_800F345C,g_FieldFxSpriteCellUMax,fix,verified,"sprite_render.c:83 overwrites it with width-1 and 232/387 add it to the u coordinate, so it is the maximum u offset, not the cell width."
+0x800F345D,D_800F345D,g_FieldFxSpriteCellVExtent,fix,verified,"Value stored is height-1 (sprite_render.c:84) and used as the v extent added to v (sprite_render.c:235), not the cell height."
+0x800F3460,D_800F3460,g_BurstEffectSprite3,ok,likely,"Initialised (cell, clut) in func_800CCBA8 (BurstEffect plant script, burst.c:471-496); numbered in address order."
+0x800F346C,D_800F346C,g_FieldFxModelTpage,ok,verified,FieldFx_ModelSetTexture stores x here (fieldfx/model.c:60) and the draw copies it to sp->tpage (:213).
+0x800F3474,D_800F3474,g_FieldFxModel83ACD504,fix,likely,"geometry.c:2379 stores the looked-up model pointer; emitters.c:962-1019 pass it to FieldFx_Model* so it is a model, not a key."
+0x800F3478,D_800F3478,g_BurstEffectScaleMatrix0,ok,likely,func_800CCBA8 (burst.c:462-469) sets identity and ScaleMatrix with the first scale vector.
+0x800F3498,D_800F3498,g_GlowEffectSprite2,ok,likely,"Initialised (cell, clut, colour) in GlowEffect_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800F34A8,D_800F34A8,g_GlowEffectBSprite2,ok,likely,"Initialised (cell, clut, colour) in GlowEffectB_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800F34B8,D_800F34B8,g_GlowEffectCSprite1,ok,likely,"Initialised (cell, clut, colour) in GlowEffectC_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800F34C8,D_800F34C8,g_FourLayerGlowSprite2,ok,likely,"Initialised (cell, clut, colour) in FourLayerGlow_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800F34D8,D_800F34D8,g_GlowEffectSprite3,ok,likely,"Initialised (cell, clut, colour) in GlowEffect_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x800F34E4,D_800F34E4,g_FieldFxLoadedTexturePage,ok,verified,Index (0 or 1) of the effect texture page last uploaded with LoadImage (geometry.c:180) and compared in func_800CEDA8 (:187).
+0x800F34E8,D_800F34E8,g_FourLayerGlowSprite3,ok,likely,"Initialised (cell, clut, colour) in FourLayerGlow_PlantScript (src/main/fieldfx/glow.c); numbered in address order within the class."
+0x801ED800,D_801ED800,g_SceneLoadScratchArea,ok,likely,Stored into g_SceneLoadScratchBuffer[0] in disc_tables.c:91 and game_state.c:604.
+0x801F1BD8,D_801F1BD8,g_FieldFxTaskProgramCmd108,ok,verified,Pm_AllocSlot (src/main/pm/process.c:93) installs it as g_FieldFxTaskPrograms[108-85] after loading the task program blob from PE.IMG.
+0x801F1C58,D_801F1C58,g_FieldFxTaskProgramCmd109,ok,verified,process.c:94 installs it as g_FieldFxTaskPrograms[109-85].
+0x801F1D00,D_801F1D00,g_FieldFxTaskProgramCmd110,ok,verified,process.c:95 installs it as g_FieldFxTaskPrograms[110-85].
+0x801F1D8C,D_801F1D8C,g_FieldFxTaskProgramCmd111,ok,verified,process.c:96 installs it as g_FieldFxTaskPrograms[111-85].
+0x801F1E18,D_801F1E18,g_FieldFxTaskProgramCmd112,ok,verified,process.c:97 installs it as g_FieldFxTaskPrograms[112-85].
+0x801F1EA4,D_801F1EA4,g_FieldFxTaskProgramCmd113,ok,verified,process.c:98 installs it as g_FieldFxTaskPrograms[113-85].
+0x801F1EF0,D_801F1EF0,g_FieldFxTaskProgramCmd114,ok,verified,process.c:99 installs it as g_FieldFxTaskPrograms[114-85].
+0x80038CE4,func_80038CE4,Render_GetFontSlotCode,ok,verified,"render/font.c: returns table->groups.codes[table->slots.indices[(u8)index]], the glyph code cached in font slot index; no callers left in src"
+0x80038D48,func_80038D48,Render_ConsumeFontShuffleSeed,ok,likely,render/font.c: if g_FontSelectionState.seed (rand seed of the glyph code shuffle) is nonzero clears it and returns 0 else 0xFF; called once at the end of the fx_common effect teardown
+0x8007E0F8,func_8007E0F8,LIBAPI_PAD_text_254,ok,likely,installed by Sys_SetInterruptHandler as first interrupt-queue handler; address is PAD.OBJ offset 0x254 (596) per configs/USA/psyq_provenance.json; SDK has no public symbol so the project text_<offset> spelling is used
+0x8007E160,func_8007E160,LIBAPI_PAD_text_2BC,ok,likely,second handler installed by Sys_SetInterruptHandler; address is PAD.OBJ offset 0x2BC (700) per configs/USA/psyq_provenance.json; project text_<offset> spelling
+0x8007E3B4,func_8007E3B4,LIBCARD_PATCH_text_70,ok,likely,LIBCARD PATCH label text_70 (offset 112) in configs/USA/psyq_provenance.json; computed goto to D_A000DFAC; copied by _patch_card
+0x80084B78,func_80084B78,LIBPAD_PADSEQD_text_34,ok,likely,"LIBPAD PADSEQD label text_34 (offset 52) in configs/USA/psyq_provenance.json; installed as g_MemCardStateDispatchFn by _padInitDirSeq, issues _padCmdParaMode/_padSendAtLoadInfo"
+0x80086CF8,func_80086CF8,Akao_Cmd_C8,ok,verified,"akao/voice_driver.c: stages opcode 0xC8 with arg0 and enqueues, same shape as the named Akao_Cmd_C0/D0 siblings"
+0x80086D2C,func_80086D2C,Akao_Cmd_C9,ok,verified,"akao/voice_driver.c: stages opcode 0xC9 with two args and enqueues, same shape as Akao_Cmd_C1_WithSlot/D1"
+0x800C2EAC,func_800C2EAC,FieldFx_SetSpriteTexturePreset,ok,verified,"fieldfx/sprite_render.c: mode 0..3 selects texture page x/y and CLUT origin (D_800F3424/6, D_800F341C/E) then rebuilds D_800E27AC via GetTPage; every effect draw calls it with 3"
+0x800C2FF0,func_800C2FF0,FieldFx_SetSpriteCellSize,ok,verified,"fieldfx/sprite_render.c: stores width-1/height-1 as UV extent D_800F345C/D and the quad corner vectors +-(w<<4),+-(h<<4) in D_800F3310..3328"
+0x800C3098,func_800C3098,FieldFx_SetSpriteColorMode,ok,verified,"fieldfx/sprite_render.c: 0x10 -> 4-bit (D_800F33AC=0), 0x100 -> 8-bit (1), else prints g_FieldSpriteWrongColorModeMsg; rebuilds the tpage word"
+0x800C3134,func_800C3134,FieldFx_InterpolateColorRamp,ok,verified,"fieldfx/sprite_render.c: walks 8-byte keyframes (rgb,duration,next rgb), linearly interpolates in 12-bit fixed point at time step, writes 3 bytes to out"
+0x800C3238,func_800C3238,FieldFx_SetSpriteBlendMode,ok,verified,"fieldfx/sprite_render.c: mode 0 opaque, 1..4 semi-transparent with ABR 0..3 (D_800F337A, D_800E224C), rebuilds the tpage word"
+0x800C3324,func_800C3324,FieldFx_DrawOrientedSprite,ok,verified,"fieldfx/sprite_render.c: builds rotation+scale+position matrix, GTE RTPT of the cell quad, fills a 0x2C textured quad packet and links it into the OT (FieldOrientedSprite)"
+0x800C3B04,func_800C3B04,FieldFx_DrawBillboard,ok,verified,"fieldfx/sprite_render.c: RotTransPers of the board position, width/height scaled by perspective, camera-facing quad packet linked into OT (FieldBillboard)"
+0x800C42A4,func_800C42A4,FieldFx_DrawGlowSprite,ok,verified,"fieldfx/sprite_render.c: composes camera matrix with placement (mode 0) or RotTrans (mode 1), emits glow quad packet into OT; called by every glow handler with a FieldGlowSprite"
+0x800C499C,func_800C499C,FieldFx_DrawShadedQuad,ok,verified,"fieldfx/sprite_render.c: quad with four independently shaded corner colours (FieldShadedQuadColors), placement matrix + mode like FieldFx_DrawGlowSprite"
+0x800C4E50,func_800C4E50,FieldFx_BuildRingGeometry,ok,verified,"fieldfx/sprite_render.c: fills FieldRingGeometry source array with rsin/rcos circle points, first inner (extent1) then outer (extent0) ring, mode = point count; callers are the ring/annulus effects in room_lib and scene_e08"
+0x800C4FC4,func_800C4FC4,FieldFx_DrawShadedRing,ok,verified,fieldfx/sprite_render.c: draws FieldShadedRing annulus as shaded quads between inner and outer vertices (placement + mode like the other draws)
+0x800C5538,func_800C5538,FieldFx_BuildParticleChain,ok,verified,"fieldfx/sprite_render.c: for each FieldChainRecord link composes matrix (bending randomly away from player by rand()%512+0x40) and stores head/tail edge points; geometry only, drawn by FieldFx_DrawTexturedStrip"
+0x800C5A40,func_800C5A40,FieldFx_DrawTexturedStrip,ok,verified,fieldfx/sprite_render.c: for consecutive FieldStripNode pairs RotTransPers4 the 4 edge points and emit a 0x2C textured quad packet linked into OT
+0x800C5EB0,func_800C5EB0,FieldFx_UpdateStripCollision,ok,likely,"fieldfx/collision.c: randomises node cell step, marks node collision_step visible=2, tests its quad against player (func_800C6B20) for a hit flag, fades brightness by 0xC per frame, returns 1 when step counter reaches 0x64"
+0x800C608C,func_800C608C,FieldFx_ScaleColor,ok,verified,"fieldfx/collision.c: rgb dst = min(src*scale,0x7FFF)>>7 per channel (scale 0x80 = copy); used by FieldFx_DrawTexturedStrip for node brightness"
+0x800C6148,func_800C6148,FieldFx_IsActorWithinRadius,ok,verified,fieldfx/collision.c: XZ distance squared between actor 16.16 position and s16 point < radius squared
+0x800C61A8,func_800C61A8,FieldFx_IsPointInSpriteQuad,ok,verified,"fieldfx/collision.c: transforms sprite quad corners D_800F3310[0..3] by matrix, flattens Y, tests point with func_800C653C"
+0x800C62DC,func_800C62DC,FieldFx_IsPointInTriangleXZ,ok,verified,"fieldfx/collision.c comment: edge x rel cross products via GTE OP in XZ, inside when all Y components share sign"
+0x800C653C,func_800C653C,FieldFx_IsPointInQuadXZ,ok,verified,fieldfx/collision.c: ORs the triangle test on verts[0..2] and verts[1..3]
+0x800C6584,func_800C6584,FieldFx_CirclesOverlapXZ,ok,verified,fieldfx/collision.c: dx^2+dz^2 < (rA+rB)^2 for two s16 positions
+0x800C65E4,func_800C65E4,FieldFx_BuildPlacementBasis,ok,likely,"fieldfx/collision.c: forward = to-from, side = forward x g_FieldPlacementUpAxis, up = forward x side, normalises three vectors into out->t[0..2]; func_800C66C8 header comment says it reads them"
+0x800C66C8,func_800C66C8,FieldFx_PlaySoundAtMatrixPosition,fix,verified,"collision.c:263 forwards to Asset_Find08w, which is really Akao_SendPositionalCmd (scene_assets.c:59-60,106: Akao_Calc3DPan then Akao_Cmd_24), so it plays a positional sound, not an asset find."
+0x800C6764,func_800C6764,FieldFx_PlaySoundAtVectorPosition,fix,verified,"collision.c:273 forwards (s16)pos->x/y/z to Asset_Find08w, which is Akao_SendPositionalCmd (scene_assets.c:59-60), a positional sound."
+0x800C6800,func_800C6800,FieldFx_FindAssetAtShortPosition,ok,verified,fieldfx/collision.c and fieldfx_calls.h comment: Asset_Find08w at a halfword position while status is 3 or 4
+0x800C689C,func_800C689C,FieldFx_IsPlayerInTriangleXZ,ok,verified,fieldfx/collision.c comment: func_800C62DC specialised for the player position D_8009D254 integer halves
+0x800C6B20,func_800C6B20,FieldFx_IsPlayerInQuadXZ,ok,verified,fieldfx/collision.c: player pos >>16 tested against the two triangles of the quad via func_800C62DC
+0x800C6B90,func_800C6B90,FieldFx_IsPlayerWithinRadius,ok,verified,fieldfx/collision.c and fieldfx_calls.h: XZ distance^2 from player < (hit_cylinder.radius+extra)^2
+0x800C7DE4,func_800C7DE4,GlowEffect_InitOwner,ok,likely,fieldfx/glow.c: init list slot 0; stores owner actor and its matrix[19] translation then func_800CEDA8(0); sibling per-module slot-0 init
+0x800C7E50,func_800C7E50,GlowEffect_InitParticle,ok,likely,"fieldfx/glow.c: init list slot 1; random velocity rotated by owner matrix, lifetime 0x14, age 0 (FieldFxMovingParticle)"
+0x800C7F60,func_800C7F60,GlowEffect_InitFlareLayers,ok,likely,"fieldfx/glow.c: init slot 2; position = owner matrix[19] * g_GlowEffectFlareOffsets[actionId-1], copies transform, brightness 0x7F; paired with the glow-layers draw"
+0x800C8064,func_800C8064,GlowEffect_InitCoreGlow,ok,likely,"fieldfx/glow.c: init slot 3; position from g_GlowEffectPointOffset via owner matrix[19], brightness 0x7F, scale 0"
+0x800C811C,func_800C811C,GlowEffect_InitGroundGlow,ok,likely,"fieldfx/glow.c: init slot 4; x/z from owner point, y = player posY, scale 0x224"
+0x800C815C,func_800C815C,GlowEffect_InitHaloGlow,ok,likely,"fieldfx/glow.c: init slot 5; position from g_GlowEffectHaloOffsets[actionId-1] via owner matrix[19], copies transform, scale 0x224"
+0x800C8268,func_800C8268,GlowEffect_DrawNop,ok,verified,"fieldfx/glow.c: draw list slot 0, empty body"
+0x800C8270,func_800C8270,GlowEffect_DrawParticle,ok,likely,fieldfx/glow.c: draw slot 1; spinning (age<<6 about z) 16x16 sprite scaled by g_GlowEffectScaleByAction[actionId-1] via FieldFx_DrawGlowSprite
+0x800C83A0,func_800C83A0,GlowEffect_DrawFlareLayers,ok,likely,"fieldfx/glow.c via glow_layers.inc: draw slot 2; axis matrix composed with two fixed spins, glow sprite drawn twice"
+0x800C8870,func_800C8870,GlowEffect_DrawPointGlow,fix,likely,"g_GlowEffectDrawList slot 3 pairs with init slot 3 func_800C8064 (g_GlowEffectPointOffset, FieldFxGlowPoint); nothing marks it as a 'core', only a 32x32 glow at a point."
+0x800C8970,func_800C8970,GlowEffect_DrawGroundGlow,ok,likely,"fieldfx/glow.c: draw slot 4; 8-bit-mode 32x32 sprite rotated by g_GlowEffectSpriteRotation, scaled anim->scale"
+0x800C8A88,func_800C8A88,GlowEffect_DrawHaloGlow,ok,likely,"fieldfx/glow.c: draw slot 5; 8-bit-mode sprite using the stored transform matrix, scaled anim->scale"
+0x800C8BB4,func_800C8BB4,GlowEffect_UpdateEnd,ok,likely,fieldfx/glow.c: update list slot 0; sets slot flag to 2 (finished) immediately
+0x800C8BC0,func_800C8BC0,GlowEffect_UpdateParticle,ok,likely,"fieldfx/glow.c: update slot 1; adds velocity to position, velocity.y += 3, bounces at y>0, ends when lifetime expires"
+0x800C8C4C,func_800C8C4C,GlowEffect_UpdateFlareLayers,ok,likely,fieldfx/glow.c: update slot 2; brightness -= 0x14 until below 0x14 then flag 2
+0x800C8C80,func_800C8C80,GlowEffect_UpdateCoreGlow,ok,likely,"fieldfx/glow.c: update slot 3; brightness -= 8, scale += 0x3C, ends below 0x14"
+0x800C8CF8,func_800C8CF8,GlowEffect_UpdateHaloGlow,ok,likely,"fieldfx/glow.c: update slot 5; brightness -= 8, scale += 0xA, ends below 0x14"
+0x800C8F28,func_800C8F28,GlowEffectB_InitOwner,ok,likely,fieldfx/glow.c: GlowEffectB init slot 0; stores owner and matrix[19] translation then func_800CEDA8(0)
+0x800C8F94,func_800C8F94,GlowEffectB_InitParticle,ok,likely,"fieldfx/glow.c: GlowEffectB init slot 1; random velocity, lifetime 0x14"
+0x800C90A4,func_800C90A4,GlowEffectB_InitFlareLayers,ok,likely,fieldfx/glow.c: GlowEffectB init slot 2; position from g_GlowEffectBFlareOffsets[actionId-1]
+0x800C91A8,func_800C91A8,GlowEffectB_InitPointGlow,fix,likely,"glow.c:518 positions a FieldFxGlowPoint at g_GlowEffectBPointOffset (slot 3 of g_GlowEffectBInitList), but ""core"" is not evidenced anywhere; the offset name says point."
+0x800C9260,func_800C9260,GlowEffectB_DrawNop,ok,verified,"fieldfx/glow.c: GlowEffectB draw slot 0, empty body"
+0x800C9268,func_800C9268,GlowEffectB_DrawParticle,ok,likely,fieldfx/glow.c: GlowEffectB draw slot 1; spinning 16x16 sprite scaled by g_GlowEffectBScaleByAction
+0x800C9398,func_800C9398,GlowEffectB_DrawFlareLayers,ok,likely,fieldfx/glow.c via glow_layers.inc: GlowEffectB draw slot 2
+0x800C9868,func_800C9868,GlowEffectB_DrawPointGlow,fix,likely,"glow.c:583 draws the sprite D_800E2328 at the FieldFxGlowPoint written by the slot-3 init (point offset); ""core"" is not evidenced, pair with the InitPointGlow rename."
+0x800C9968,func_800C9968,GlowEffectB_UpdateEnd,ok,likely,fieldfx/glow.c: GlowEffectB update slot 0; sets slot flag 2
+0x800C9974,func_800C9974,GlowEffectB_UpdateParticle,ok,likely,fieldfx/glow.c: GlowEffectB update slot 1; ballistic particle step
+0x800C9A00,func_800C9A00,GlowEffectB_UpdateFlareLayers,ok,likely,fieldfx/glow.c: GlowEffectB update slot 2; brightness -= 0x14
+0x800C9A34,func_800C9A34,GlowEffectB_UpdatePointGlow,fix,likely,glow.c:662 updates a FieldFxGlowPoint spawned by func_800C91A8 at g_GlowEffectBPointOffset; 'Core' is not supported by the code.
+0x800C9C20,func_800C9C20,GlowEffectC_InitOwner,ok,likely,fieldfx/glow.c: GlowEffectC init slot 0; stores owner and matrix[19] translation
+0x800C9C8C,func_800C9C8C,GlowEffectC_InitParticle,ok,likely,"fieldfx/glow.c: GlowEffectC init slot 1; random velocity, lifetime 0x14"
+0x800C9D9C,func_800C9D9C,GlowEffectC_InitFlareLayers,ok,likely,fieldfx/glow.c: GlowEffectC init slot 2; position from g_GlowEffectCFlareOffsets
+0x800C9EA0,func_800C9EA0,GlowEffectC_DrawNop,ok,verified,"fieldfx/glow.c: GlowEffectC draw slot 0, empty body"
+0x800C9EA8,func_800C9EA8,GlowEffectC_DrawParticle,ok,likely,fieldfx/glow.c: GlowEffectC draw slot 1; spinning sprite scaled by g_GlowEffectCScaleByAction
+0x800C9FD8,func_800C9FD8,GlowEffectC_DrawFlareLayers,ok,likely,fieldfx/glow.c via glow_layers.inc: GlowEffectC draw slot 2
+0x800CA4A8,func_800CA4A8,GlowEffectC_UpdateEnd,ok,likely,fieldfx/glow.c: GlowEffectC update slot 0; sets slot flag 2
+0x800CA4B4,func_800CA4B4,GlowEffectC_UpdateParticle,ok,likely,fieldfx/glow.c: GlowEffectC update slot 1; ballistic particle step
+0x800CA540,func_800CA540,GlowEffectC_UpdateFlareLayers,ok,likely,fieldfx/glow.c: GlowEffectC update slot 2; brightness -= 0x14
+0x800CA7B8,func_800CA7B8,FourLayerGlow_InitOwner,ok,likely,fieldfx/glow.c: FourLayerGlow init slot 0; stores owner and matrix[19] translation
+0x800CA824,func_800CA824,FourLayerGlow_InitParticle,ok,likely,"fieldfx/glow.c: FourLayerGlow init slot 1; random velocity, lifetime 0x14"
+0x800CA934,func_800CA934,FourLayerGlow_InitFlareLayers,ok,likely,fieldfx/glow.c: FourLayerGlow init slot 2; position from g_FourLayerGlowFlareOffsets[actionId-1]
+0x800CAA38,func_800CAA38,FourLayerGlow_InitTwinGlow,ok,likely,fieldfx/glow.c: FourLayerGlow init slot 3; two positions from g_FourLayerGlowPointOffsetA/B via owner matrix[19] (FieldFxTwinGlow)
+0x800CAB88,func_800CAB88,FourLayerGlow_InitGroundGlow,ok,likely,"fieldfx/glow.c: FourLayerGlow init slot 4; y = player posY, scale 0x224"
+0x800CABC8,func_800CABC8,FourLayerGlow_InitHaloGlow,ok,likely,"fieldfx/glow.c: FourLayerGlow init slot 5; position from g_FourLayerGlowHaloOffsets, scale 0x224"
+0x800CACD4,func_800CACD4,FourLayerGlow_DrawNop,ok,verified,"fieldfx/glow.c: FourLayerGlow draw slot 0, empty body"
+0x800CACDC,func_800CACDC,FourLayerGlow_DrawParticle,ok,likely,fieldfx/glow.c: FourLayerGlow draw slot 1; spinning sprite scaled by g_FourLayerGlowScaleByAction
+0x800CAE0C,func_800CAE0C,FourLayerGlow_DrawFlareLayers,ok,likely,"fieldfx/glow.c: FourLayerGlow draw slot 2; four spun glow sprite layers (spins A..D), second pair pushed out at full depth"
+0x800CB750,func_800CB750,FourLayerGlow_DrawTwinGlow,ok,likely,fieldfx/glow.c: FourLayerGlow draw slot 3; draws the glow sprite at both FieldFxTwinGlow positions scaled anim->scale+0x42C
+0x800CB8E0,func_800CB8E0,FourLayerGlow_DrawGroundGlow,ok,likely,fieldfx/glow.c: FourLayerGlow draw slot 4; 8-bit sprite rotated by g_FourLayerGlowSpriteRotation
+0x800CB9F8,func_800CB9F8,FourLayerGlow_DrawHaloGlow,ok,likely,fieldfx/glow.c: FourLayerGlow draw slot 5; sprite using stored transform
+0x800CBB24,func_800CBB24,FourLayerGlow_UpdateEnd,ok,likely,fieldfx/glow.c: FourLayerGlow update slot 0; sets flag 2
+0x800CBB30,func_800CBB30,FourLayerGlow_UpdateParticle,ok,likely,fieldfx/glow.c: FourLayerGlow update slot 1; ballistic particle step
+0x800CBBBC,func_800CBBBC,FourLayerGlow_UpdateFlareLayers,ok,likely,fieldfx/glow.c: FourLayerGlow update slot 2; brightness -= 0x14
+0x800CBC2C,func_800CBC2C,FourLayerGlow_UpdateGroundGlow,ok,likely,"fieldfx/glow.c: FourLayerGlow update slot 4; brightness -= 8, scale += 0x78"
+0x800CBC68,func_800CBC68,FourLayerGlow_UpdateHaloGlow,ok,likely,"fieldfx/glow.c: FourLayerGlow update slot 5; brightness -= 8, scale += 0xA"
+0x800CBFC4,func_800CBFC4,PointSprite_InitRisingStreak,ok,likely,"fieldfx/burst.c: PointSprite init slot 0; random x/z within +-100 of owner point, extent 0x20C, scale 0x7F; paired with the tall (scale.y = 2*extent) billboard draw and the upward-moving update"
+0x800CC244,func_800CC244,PointSprite_InitGroundRing,ok,likely,"fieldfx/burst.c: PointSprite init slot 2; point at owner, extent 0xBE8; draw uses the flat (rotation.x 0x400) oriented sprite D_800F32E0"
+0x800CC284,func_800CC284,PointSprite_InitBillboard,fix,likely,"burst.c:199 is init slot 3 (point at owner y-0x64, extent 0) paired with the billboard draw using D_800F3380; nothing shows a ""flash""."
+0x800CC2C4,func_800CC2C4,FieldFx_InitScatteredParticles,ok,likely,fieldfx/burst.c: PointSprite init slot 4; 16 (4 if actionId 3) points at owner with random velocities (rand()%11-5)*256; sibling of the named FieldFx_InitRadialEntries and FieldFx_ProcessPointTriples
+0x800CC440,func_800CC440,PointSprite_InitOrientedFlash,ok,likely,"fieldfx/burst.c: PointSprite init slot 5; point at owner, extent 0x224; draw is the oriented sprite D_800F3338"
+0x800CC480,func_800CC480,PointSprite_DrawRisingStreak,ok,likely,fieldfx/burst.c: PointSprite draw slot 0; billboard with scale.y = 2*extent and brightness fading with the slot counter
+0x800CC644,func_800CC644,PointSprite_DrawGroundRing,ok,likely,"fieldfx/burst.c: PointSprite draw slot 2; oriented sprite D_800F32E0 (rotation.x 0x400, flat) in blend mode 3 sized by extent"
+0x800CC6F8,func_800CC6F8,PointSprite_DrawBillboardFlash,ok,likely,fieldfx/burst.c: PointSprite draw slot 3; 8-bit billboard D_800F3380 sized by extent
+0x800CC878,func_800CC878,PointSprite_DrawOrientedFlash,ok,likely,fieldfx/burst.c: PointSprite draw slot 5; 8-bit oriented sprite D_800F3338 sized by extent
+0x800CC92C,func_800CC92C,PointSprite_UpdateRisingStreak,ok,likely,"fieldfx/burst.c: PointSprite update slot 0; point.y -= 10, scale -= 2, extent += 0x1E, ends when scale < 0x1E"
+0x800CC974,func_800CC974,PointSprite_UpdateRadialParticles,fix,likely,"Function is slot 1 of g_PointSpriteUpdateList (engine_data_800E0060.data.s:976), so it takes the PointSprite_ class prefix, not FieldFx_."
+0x800CCA78,func_800CCA78,PointSprite_UpdateBillboardFlash,ok,likely,"fieldfx/burst.c: PointSprite update slot 3; scale -= 6, extent += 0xB4"
+0x800CCAB0,func_800CCAB0,PointSprite_UpdateScatteredParticles,fix,likely,"Function is slot 4 of g_PointSpriteUpdateList (engine_data_800E0060.data.s), so the module-class prefix PointSprite_ applies, not FieldFx_ (CONVENTIONS fieldfx row)."
+0x800CCB6C,func_800CCB6C,PointSprite_UpdateOrientedFlash,ok,likely,"fieldfx/burst.c: PointSprite update slot 5; scale -= 8, extent += 0x1A4, ends below 0x14"
+0x800CCBA8,func_800CCBA8,BurstEffect_PlantScript,ok,verified,"fieldfx/burst.c: sits in class table D_800E0E9C slot 1 (where the other modules have PlantScript), stores script D_800E0EB8 in the engine slot and initialises the sprite parameter blocks and scale matrices"
+0x800CCFA0,func_800CCFA0,BurstEffect_InitTarget,ok,likely,"fieldfx/burst.c: BurstEffect init slot 0; takes next actor from the script target list (VarPtr 1, RegPtr 0xD), sets g_BurstEffectTarget and D_800E27F8 to its target_x/y/z, starts sound Akao_Cmd_24 on reset_pending"
+0x800CD1FC,func_800CD1FC,BurstEffect_InitSparkPoint,ok,likely,"fieldfx/burst.c: BurstEffect init slot 3; random point within +-100/+-50 of the target, duration 0x544"
+0x800CD2DC,func_800CD2DC,BurstEffect_InitNop4,ok,verified,"fieldfx/burst.c: BurstEffect init slot 4, empty body"
+0x800CD2E4,func_800CD2E4,BurstEffect_DrawNop0,ok,verified,"fieldfx/burst.c: BurstEffect draw slot 0, empty body"
+0x800CD2EC,func_800CD2EC,BurstEffect_DrawGroundGlow,ok,likely,fieldfx/burst.c: BurstEffect draw slot 1; 8-bit sprite rotated by g_BurstEffectSpriteRotation scaled by anim->scale via FieldFx_DrawGlowSprite
+0x800CD404,func_800CD404,BurstEffect_DrawSparkPairs,ok,likely,"fieldfx/burst.c: BurstEffect draw slot 2; one glow at the burst origin with cell animated by shade, then two glow sprites at the stored window points"
+0x800CD50C,func_800CD50C,BurstEffect_DrawSparkPoint,ok,likely,fieldfx/burst.c: BurstEffect draw slot 3; single additive glow sprite D_800E27E0 at the anim position
+0x800CD59C,func_800CD59C,BurstEffect_DrawNop4,ok,verified,"fieldfx/burst.c: BurstEffect draw slot 4, empty body"
+0x800CD5A4,func_800CD5A4,BurstEffect_UpdateEnd,fix,likely,"burst.c:721 is update slot 0 setting flag 2 like BurstEffectC_UpdateEnd, GlowEffectB_UpdateEnd and FourLayerGlow_UpdateEnd; the ""0"" suffix is inconsistent."
+0x800CD5B0,func_800CD5B0,BurstEffect_UpdateGroundGlow,ok,likely,"fieldfx/burst.c: BurstEffect update slot 1; brightness -= 0xA, scale += 0x3C, ends below 0x14"
+0x800CD5EC,func_800CD5EC,BurstEffect_UpdateSparkPairs,ok,likely,"fieldfx/burst.c: BurstEffect update slot 2; moves the two points by their velocities, ends after 8 frames"
+0x800CD678,func_800CD678,BurstEffect_UpdateSparkPoint,ok,likely,"fieldfx/burst.c: BurstEffect update slot 3; y -= 8, x jitter rand()%11-5, brightness -= 8"
+0x800CD71C,func_800CD71C,BurstEffect_UpdateEnd4,ok,likely,fieldfx/burst.c: BurstEffect update slot 4; sets slot flag 2 immediately
+0x800CD980,func_800CD980,BurstEffectB_InitTarget,ok,likely,"fieldfx/burst.c: BurstEffectB init slot 0; same target-list pop as BurstEffect_InitTarget but into g_BurstEffectBTarget/D_800E27F0, plays Akao_Cmd_24"
+0x800CDA5C,func_800CDA5C,BurstEffectB_InitSparkCloud,ok,likely,fieldfx/burst.c: BurstEffectB init slot 1; centre at target with random displacement and 8 sparks with random velocities (FieldFxSparkCloud)
+0x800CDC24,func_800CDC24,BurstEffectB_InitSparkPoint,ok,likely,"fieldfx/burst.c: BurstEffectB init slot 2; point at target with random displacement, brightness 0x7F"
+0x800CDD04,func_800CDD04,BurstEffectB_DrawNop,ok,verified,"fieldfx/burst.c: BurstEffectB draw slot 0, empty body"
+0x800CDD0C,func_800CDD0C,BurstEffectB_DrawSparkCloud,ok,likely,fieldfx/burst.c: BurstEffectB draw slot 1; centre billboard plus 8 spark billboards at position+displacement
+0x800CDE90,func_800CDE90,BurstEffectB_DrawSparkPoint,ok,likely,"fieldfx/burst.c: BurstEffectB draw slot 2; one 8-bit billboard at position+displacement, mode 3"
+0x800CDF40,func_800CDF40,BurstEffectB_UpdateEnd,ok,likely,fieldfx/burst.c: BurstEffectB update slot 0; sets slot flag 2
+0x800CDF4C,func_800CDF4C,BurstEffectB_UpdateSparkCloud,ok,likely,"fieldfx/burst.c: BurstEffectB update slot 1; brightness -= 0x10, scaleStep += 0xC, moves the 8 sparks, ends below 0x10"
+0x800CDFE0,func_800CDFE0,BurstEffectB_UpdateSparkPoint,ok,likely,"fieldfx/burst.c: BurstEffectB update slot 2; y -= 4, x jitter, brightness -= 3"
+0x800CE1FC,func_800CE1FC,BurstEffectC_InitTarget,ok,likely,fieldfx/burst.c: BurstEffectC init slot 0; target-list pop into g_BurstEffectCTarget/D_800E2808
+0x800CE2B4,func_800CE2B4,BurstEffectC_InitTimedSpark,ok,likely,"fieldfx/burst.c: BurstEffectC init slot 1; random position within 80 units around the target, brightness 0x7F, age 0 (FieldFxTimedSpark)"
+0x800CE3AC,func_800CE3AC,BurstEffectC_DrawNop,ok,verified,"fieldfx/burst.c: BurstEffectC draw slot 0, empty body"
+0x800CE3B4,func_800CE3B4,BurstEffectC_DrawTimedSpark,ok,likely,fieldfx/burst.c: BurstEffectC draw slot 1; billboard whose cell steps with age*2-0x60
+0x800CE464,func_800CE464,BurstEffectC_UpdateEnd,ok,likely,fieldfx/burst.c: BurstEffectC update slot 0; sets slot flag 2
+0x800CE470,func_800CE470,BurstEffectC_UpdateTimedSpark,ok,likely,"fieldfx/burst.c: BurstEffectC update slot 1; age++, ends at age 6"
+0x800CE560,func_800CE560,FieldFx_InitCallbackList,ok,verified,"fieldfx/task_list.c: writes callback, stride+4 and count at the list header and clears the active byte of each entry; returns header+entries size; called by every task emitter in mode 0"
+0x800CE5AC,func_800CE5AC,FieldFx_AllocCallbackList,ok,verified,fieldfx/task_list.c: same init but places the list at D_800F33E0->end + offset (end of the current task slot payload) and stores the list pointer through arg0
+0x800CE610,func_800CE610,FieldFx_AcquireCallbackSlot,ok,verified,"fieldfx/task_list.c: scans entries for active==0, marks it active with age 0 and returns the payload pointer, else 0; used by emitters to spawn a particle"
+0x800CE688,func_800CE688,FieldFx_UpdateCallbackList,ok,verified,"fieldfx/task_list.c: for each active entry runs callback(1, state, argument) with the entry age in D_800E27EC, frees the entry when it returns nonzero; mode 1 is the update phase in FieldFx_UpdateTasks"
+0x800CE78C,func_800CE78C,FieldFx_DrawCallbackList,ok,verified,"fieldfx/task_list.c: for each active entry runs callback(2, ...); called from the draw pass FieldFx_DrawTasks (mode 2 = draw)"
+0x800CE870,func_800CE870,FieldFx_GetActorPosition,ok,verified,"fieldfx/task_list.c: mode 0 copies matrices[0].translation, mode 1 the integer pos of the actor into an s16[3]; used by emitters to anchor on the player"
+0x800CE9D4,func_800CE9D4,FieldFx_GetTransformLookAngles,ok,verified,fieldfx/geometry.c: rotates fixed direction D_800C2258 by owner->transforms[index] and returns FieldFx_CalculateLookAngles from D_800C2260
+0x800CEB8C,func_800CEB8C,FieldFx_IsPlayerInSegmentBand,ok,verified,fieldfx/geometry.c: builds a rectangle of half-width radius around segment a-b in XZ and returns FieldFx_IsPlayerInQuadXZ of it
+0x800CECAC,func_800CECAC,FieldFx_InitTexturePageTable,ok,verified,"fieldfx/geometry.c: fills D_800E2850 with GetTPage values for both colour modes at the 0x380,0x100 and 0x340,0x100 effect pages"
+0x800CED3C,func_800CED3C,FieldFx_LoadEffectTexturePage,ok,verified,"fieldfx/geometry.c: LoadImage of effect resource page 0 or 1 into the 64x256 area at VRAM 0x380,0x100 and records the page in D_800F34E4"
+0x800CEDA8,func_800CEDA8,FieldFx_EnsureEffectTexturePage,ok,verified,fieldfx/geometry.c: same LoadImage as FieldFx_LoadEffectTexturePage but only when D_800F34E4 differs from index; called by every effect before drawing
+0x800CEE20,func_800CEE20,FieldFx_DrawShapeQuads,ok,verified,"fieldfx/geometry.c: draws the quads of shape D_800F3368.parameter0A (vertex table D_800E13BC) with RotMatrixYXZ/ScaleMatrix, textured cell, CLUT, tint and OT depth; the common textured-sprite draw of the task effects"
+0x800CF3AC,func_800CF3AC,FieldFx_SampleColorTrack,ok,verified,fieldfx/geometry.c: lazily caches per-key start/length of a RenderColorTrack then LoadAverageCol-interpolates between the two keys around time; used by all effect draws for colour animation
+0x800CF4B4,func_800CF4B4,FieldFx_LoadRotatedClutRow,ok,likely,"fieldfx/geometry.c comment: rotating 16-entry CLUT row upload; arg1 == -1 reads the row back with StoreImage, otherwise rotates entries by arg1 mod 15 and LoadImage"
+0x800CF658,func_800CF658,FieldFx_LoadRotationMatrix,ok,verified,"fieldfx/geometry.c: RotMatrixYXZ plus optional ScaleMatrix and MulRotMatrix, then gte_ldrotmatrix"
+0x800CF6F8,func_800CF6F8,FieldFx_LinkBlendedPacket,ok,verified,"fieldfx/geometry.c: links a packet into the OT and, unless mode is 0xFF, flags it semi-transparent and adds a SetDrawTPage packet with GetTPage(0,mode)"
+0x800CF844,func_800CF844,FieldFx_OffsetPointByAngles,ok,likely,"fieldfx/geometry.c comment: offsets a point by radius along the rotated Z axis and a roll-rotated X arm, then restores the camera matrix"
+0x800CFB7C,func_800CFB7C,FieldFx_AnglesToVector,ok,verified,"fieldfx/geometry.c comment: rotates (0,0,distance) by YXZ angles, inverse of FieldFx_CalculateLookAngles; restores the shared camera matrix"
+0x800CFCF4,func_800CFCF4,FieldFx_GetTurnDirection,ok,verified,fieldfx/geometry.c: shortest signed turn direction (+1/-1) between two 12-bit angles and optional unsigned distance
+0x800CFD50,func_800CFD50,FieldFx_EaseAngles,ok,likely,fieldfx/geometry.c comment (eased turning): moves to[0..1] toward from[0..1] by distance*speed/4096 along the shortest direction
+0x800CFE94,func_800CFE94,FieldFx_GetDistanceNonZero,ok,verified,"fieldfx/geometry.c: SquareRoot0 of the 3D squared distance of two s16 vectors, clamped to at least 1"
+0x800CFF0C,func_800CFF0C,FieldFx_RandomScatterOffsetYZ,ok,likely,"fieldfx/geometry.c comment (alternating scatter offsets): x=0, y and z random 0x100..0x6FF with the sign of z alternating by a counter D_800E21C8"
+0x800CFFAC,func_800CFFAC,FieldFx_RandomScatterOffsetXY,ok,likely,"fieldfx/geometry.c: like FieldFx_RandomScatterOffsetYZ but x random and y alternating sign, z=0"
+0x800D004C,func_800D004C,FieldFx_DrawStarFan,ok,verified,"fieldfx/geometry.c comment: `segments` triangles around position with rim radius alternating width/height, centre colour0 and rim colour1 (pe1/field_star_fan.h)"
+0x800D0728,func_800D0728,FieldFx_DrawRingBand,ok,verified,fieldfx/geometry.c comment: `segments` quads between inner radius (colour0) and outer radius (colour1) (pe1/field_ring_band.h)
+0x800D0E88,func_800D0E88,FieldFx_DrawRotatedTriangle,ok,verified,"fieldfx/geometry.c comment: triangle with apex at position and a base breadth wide, length away, shaded per corner (pe1/field_rotated_triangle.h)"
+0x800D1384,func_800D1384,FieldFx_DrawHistoryTrail,ok,verified,fieldfx/geometry.c comment: pushes head/tail pair onto a count-deep history and draws a fading ribbon through it (pe1/field_history_trail.h)
+0x800D1AE0,func_800D1AE0,FieldFx_DrawScreenTint,ok,verified,fieldfx/geometry.c comment: full-screen 320x240 tile in colour scaled by scale/128 linked at depth; used by the flash burst
+0x800D1DEC,func_800D1DEC,FieldFx_DrawHaloedPoint,ok,verified,fieldfx/geometry.c comment: projected one-pixel tile plus a 3x3 halo at a quarter of its colour
+0x800D2104,func_800D2104,FieldFx_DrawPointTile,ok,verified,fieldfx/geometry.c comment: one-pixel tile at the projected position linked at its view depth
+0x800D2370,func_800D2370,FieldFx_DrawRotatedQuad,ok,verified,"fieldfx/geometry.c comment: rectangle length x breadth in the local XZ plane, gouraud from colour0 to colour1, textured at (u,v) (pe1/field_rotated_quad.h)"
+0x800D27FC,func_800D27FC,FieldFx_DrawOrbitPoint,ok,verified,"fieldfx/geometry.c comment: haloed point at distance x from view origin rotated by y about Z, always semi-transparent (pe1/field_orbit_point.h)"
+0x800D2B58,func_800D2B58,FieldFx_DrawGlowLine,ok,verified,fieldfx/geometry.c comment: gouraud line from `from` to `to` with a 16x16 glow cell stretched along it (pe1/field_glow_line.h)
+0x800D3114,func_800D3114,FieldFx_DrawTexturedRibbon,ok,verified,"fieldfx/geometry.c comment: textured ribbon `width` wide through `count` points, shaded colour0 to colour1 (pe1/field_textured_ribbon.h)"
+0x800D3BC8,func_800D3BC8,FieldFx_DrawPulledSprite,ok,verified,"fieldfx/geometry.c: strip packet at a projected position, LoadAverageShort12 blends the screen position toward the centre (0xA0,0x78) by `pull` (pe1/field_pulled_sprite.h)"
+0x800D3F64,func_800D3F64,FieldFx_PlaySoundAtOwner,fix,verified,"geometry.c:2104 reads the owner actor matrix translation and calls Asset_Find08w, which is Akao_SendPositionalCmd (scene_assets.c:59-60), i.e. a positional sound, not an asset find."
+0x800D3FD8,func_800D3FD8,FieldFx_GetOwnerProgress,ok,likely,"fieldfx/geometry.c: returns the owner actor state progress, 0x80 when there is no state or progress >= 0x41"
+0x800D401C,func_800D401C,FieldFx_SpawnTask,ok,verified,"fieldfx/geometry.c: finds a free slot of 8, assigns id, reserves callbacks sizes[id] bytes in the arena (reset above 0x97C), runs callback(0,...) and returns the payload size"
+0x800D413C,func_800D413C,FieldFx_UpdateTasks,ok,verified,"fieldfx/geometry.c comment: runs the owner's task script (opcodes stop, set var, spawn, loop, wait, hold) until it yields, then steps every live task with callback(1)"
+0x800D4620,func_800D4620,FieldFx_InitTaskContext,ok,verified,"fieldfx/geometry.c: resets owner kind, delay, arena cursor, count, flags, 7 variables and marks the 8 slots free (id 0xFFFF)"
+0x800D4698,func_800D4698,FieldFx_InitTaskProgram,ok,likely,fieldfx/geometry.c: when skip==0 calls the program's initialize callback with the four args and stores the result as context argument
+0x800D4704,func_800D4704,FieldFx_DrawTasks,ok,verified,fieldfx/geometry.c comment: loads the view matrix into the GTE and runs each live task callback and its callback list in mode 2
+0x800D4850,func_800D4850,FieldFx_CloseTaskOwner,ok,likely,"fieldfx/geometry.c: sets owner state byte to 4 and returns 0, same body as the module CloseTarget methods"
+0x800D4860,func_800D4860,FieldFx_InitEffectResources,ok,verified,"fieldfx/geometry.c: calls FieldFx_InitTexturePageTable, looks up six effect models by u32 key in g_FieldEffectAssetTable and loads texture page 0"
+0x800D4928,func_800D4928,FieldFx_FallingSprite,ok,likely,"fieldfx/sprite_effects.c comment: one falling sprite with damped sideways speed (x6/7), floor bounce and a seven-frame strip tinted by the scene colour track; task callback spawned by 800D4C24"
+0x800D4C24,func_800D4C24,FieldFx_FallingSpriteEmitter,ok,likely,"fieldfx/sprite_effects.c comment: drops one falling sprite per frame for eight frames from above the player on a turning angle; opens its pool with func_800CE560(...,func_800D4928)"
+0x800D4EA4,func_800D4EA4,FieldFx_PulsingStarFan,ok,likely,"fieldfx/sprite_effects.c: 20-frame task with no state that draws an 8-segment FieldFx_DrawStarFan 300 above the player, scale rsin-pulsed, colour from track D_800E1518/D_800E1540"
+0x800D5290,func_800D5290,FieldFx_ScatterBurstEmitter,ok,likely,"fieldfx/sprite_effects.c comment: scatter burst at the actor target, throws two bouncing sprites per frame for six frames and draws a growing flash, a short ring and a ground ring"
+0x800D5898,func_800D5898,FieldFx_CosineEffectB,ok,likely,"fieldfx/sprite_effects.c: RenderCosineEffect twin of FieldFx_CosineEffect (x = amplitude*cos over duration, drawn with FieldFx_DrawOrbitPoint) but with a fixed colour and no y drift"
+0x800D5A00,func_800D5A00,FieldFx_CosineSparkEmitter,fix,likely,sprite_effects.c:326-380 spawns RenderCosineEffect sparks; no CosineEmitter A exists so suffix B is meaningless.
+0x800D5CE4,func_800D5CE4,FieldFx_RisingSprite,ok,likely,"fieldfx/sprite_effects.c: RenderRisingEffect, position += velocity with vy accelerating by 2, rotating sprite scaled by rsin, spawned by 800D5EB4"
+0x800D5EB4,func_800D5EB4,FieldFx_RisingSpriteEmitter,ok,likely,"fieldfx/sprite_effects.c comment: rising effect emitter at the actor target, plays asset sound 0x487 via Asset_Find08Alt, one rising sprite per frame for eight frames"
+0x800D629C,func_800D629C,FieldFx_SpiralSprite,ok,likely,"fieldfx/sprite_effects.c comment: one sprite of the spiral, circles the shared anchor D_800E21D8 at radius D_800E21D4 while sinking, flickers through an eight-frame strip"
+0x800D6514,func_800D6514,FieldFx_SpiralEmitter,ok,likely,"fieldfx/sprite_effects.c comment: spiral emitter on the ground under the actor, releases 24 circling sprites on frame 0 and draws a spinning model in two sizes"
+0x800D6A1C,func_800D6A1C,FieldFx_RingPulse,ok,likely,"fieldfx/sprite_effects.c comment: ring pulse at the actor target, a breathing star-fan disc for 32 frames and an expanding ground ring over the first 17 (RenderRingPulse)"
+0x800D6E3C,func_800D6E3C,FieldFx_BouncingSpinEmitter,ok,likely,fieldfx/sprite_effects.c: RenderPhaseEmitter that spawns three bouncing sprites per frame at the actor target for eight frames with speed 70..197
+0x800D70C0,func_800D70C0,FieldFx_EmberSpark,ok,likely,fieldfx/sprite_effects.c comment: rising ember sparks; jittering point drawn as a haloed point with g_EmberColorTrack for 18 frames; used as the fan sweep trail pool callback
+0x800D71B8,func_800D71B8,FieldFx_FanSweepSpark,ok,verified,fieldfx/sprite_effects.c includes room_lib/fan_sweep_spark.inc as func_800D71B8: fan sweep spark circling the published anchor while rising (include/pe1/room_ember_burst.h says main executable copy of the fan sweep spark)
+0x800D751C,func_800D751C,FieldFx_FanSweep,ok,verified,"fieldfx/sprite_effects.c comment and room_ember_burst.h: fan sweep controller, opens a spark pool and a trail pool, launches a spark on a turning angle every other frame for 32 frames"
+0x800D7764,func_800D7764,FieldFx_FanSweepGlow,ok,verified,"fieldfx/sprite_effects.c comment and room_ember_burst.h: glow under the fan sweep, pulsing sprite at the actor for 60 frames plus a flickering ring while the event is not in stage 11"
+0x800D7A1C,func_800D7A1C,FieldFx_ArcingSpark,ok,likely,"fieldfx/sprite_effects.c: RenderArcingEffect rising with decreasing velocity (y -= vy, vy--), colour track D_800E18C0, spawned by 800D7B70"
+0x800D7B70,func_800D7B70,FieldFx_ArcingSparkEmitter,ok,likely,fieldfx/sprite_effects.c: RenderArcingEmitter that spawns an arcing spark per frame on a circle of growing radius around the player for 51 frames and draws an expanding flat ring
+0x800D7E78,func_800D7E78,FieldFx_OrbitTrailPoint,ok,likely,"fieldfx/sprite_effects.c: point that rises one unit per frame for 6 frames and shrinks, spawned from FieldFx_OrbitingSprite via the particle list D_800E21F4"
+0x800D7FBC,func_800D7FBC,FieldFx_OrbitingSprite,ok,likely,"fieldfx/sprite_effects.c: RenderOrbitingEffect circling D_800E21EC at radius 700*cos(frame) with angle += 96, three-stage swell/hold/fade, drops trail points"
+0x800D8388,func_800D8388,FieldFx_OrbitingSpriteEmitter,ok,likely,fieldfx/sprite_effects.c: RenderOrbitingEmitter spawning an orbiting sprite every third frame for 44 frames around the player and owning the trail point list
+0x800D868C,func_800D868C,FieldFx_OrbitingSpriteBurst,ok,likely,fieldfx/sprite_effects.c: RenderOrbitingEmitter variant that spawns three orbiting sprites at once on frame 1 (400 above the player) and ends at frame 43
+0x800D8978,func_800D8978,FieldFx_VerticalRingSprite,ok,likely,"fieldfx/sprite_effects.c: RenderVerticalEffect, flat ring (rotation.x 1024) whose y climbs 900 over 24 frames with a swell stage, spawned by 800D8B6C"
+0x800D8B6C,func_800D8B6C,FieldFx_VerticalEffectEmitter,fix,likely,sprite_effects.c:1303 spawns RenderVerticalEffect rising with a flat disc; 'Ring' is not established.
+0x800D8D14,func_800D8D14,FieldFx_HelicalTrailPoint,ok,likely,"fieldfx/sprite_effects.c: point that rises 3 per frame for 12 frames and shrinks, trail point list of FieldFx_HelicalSprite"
+0x800D8E74,func_800D8E74,FieldFx_HelicalSprite,ok,likely,"fieldfx/sprite_effects.c: RenderHelicalEffect circling D_800E2200 with a rising or falling y by direction, swell/hold/fade stages, drops trail points every other frame"
+0x800D927C,func_800D927C,FieldFx_HelicalSpriteEmitter,ok,likely,fieldfx/sprite_effects.c: RenderOrbitingEmitter that spawns two helical sprites (angle offset 0x800) on frames 0 and 1 and owns the trail point list
+0x800D9554,func_800D9554,FieldFx_DampedSpark,ok,likely,"fieldfx/sprite_effects.c: RenderDampedSpark with x/z damped x31/32, vy decreasing then increasing, drawn as haloed point, flickers white after frame 19"
+0x800D96F4,func_800D96F4,FieldFx_DampedSparkEmitter,ok,likely,fieldfx/sprite_effects.c: RenderSparkEmitter throwing two damped sparks per frame for 12 frames from the player and drawing a pulsing glow
+0x800D9A8C,func_800D9A8C,FieldFx_SpinningModelFlareA,ok,verified,"include/pe1/fieldfx_task.h and spinning_model.inc: first instance of the spinning model flare (anchor D_800E220C, palette 4), spawned by FieldFx_PointEmitter"
+0x800D9E5C,func_800D9E5C,FieldFx_RisingSpinSprite,ok,likely,"fieldfx/sprite_effects.c: RenderArcingEffect rising with vy -= 2 for 19 frames, rotation.y = frame<<7, cell 136, spawned by 800D9FD4"
+0x800D9FD4,func_800D9FD4,FieldFx_RisingSpinEmitter,ok,likely,fieldfx/sprite_effects.c: spawns a rising spin sprite every other frame for 32 frames at random +-200 offsets around the player
+0x800DA1FC,func_800DA1FC,FieldFx_SpinningModelFlareB,ok,verified,"include/pe1/fieldfx_task.h and spinning_model.inc: second instance of the spinning model flare (anchor D_800E2214, palette 3), spawned by 800DA5D4"
+0x800DA5D4,func_800DA5D4,FieldFx_SpinningModelEmitterB,ok,likely,fieldfx/sprite_effects.c comment: emitter that spawns the second spinning model flare on the attached actor target at floor height every sixth frame for 40 frames; twin of FieldFx_PointEmitter
+0x800DA780,func_800DA780,FieldFx_DescendingSprite,ok,likely,"fieldfx/sprite_effects.c: RenderArcingEffect starting 800 above the floor with vy 42 decelerating, spinning cell stepping every 6 frames, spawned by 800DA934"
+0x800DA934,func_800DA934,FieldFx_DescendingSpriteEmitter,ok,likely,fieldfx/sprite_effects.c: spawns a descending sprite every other frame for 40 frames at random +-200 around the floor point under the target
+0x800DACA4,func_800DACA4,FieldFx_CosineEmitter,ok,likely,fieldfx/emitters.c: RenderSparkEmitter spawning FieldFx_CosineEffect sparks each frame for 51 frames while drawing two star fans and a ring band
+0x800DAF8C,func_800DAF8C,FieldFx_SineSweepTriangle,ok,likely,"fieldfx/emitters.c: RenderSineEffect, position/angle follow sines over 64 frames and the draw is FieldFx_DrawRotatedTriangle with colour track D_800E1C2C"
+0x800DB0D0,func_800DB0D0,FieldFx_SineEmitter,fix,likely,"emitters.c:100 RenderSineEmitter spawns RenderSineEffect particles for 17 frames at the player (rsin-driven), nothing shows a ""sweep""; name after the type."
+0x800DB25C,func_800DB25C,FieldFx_DrawDiamondOutline,ok,verified,"fieldfx/emitters.c: projects a point, offsets it and draws four line packets (SetLineF2) forming a diamond rotated by angle with the given radius, colour*intensity/128"
+0x800DB5F4,func_800DB5F4,FieldFx_DiamondParticle,ok,likely,"fieldfx/emitters.c: RenderDiamondParticle, 8-frame particle drawn with FieldFx_DrawDiamondOutline fading by 16 per frame"
+0x800DB6BC,func_800DB6BC,FieldFx_DiamondEmitter,ok,likely,"fieldfx/emitters.c: RenderDiamondEmitter anchored at the actor target, spawns a diamond particle per frame along a shrinking spiral for 25 frames"
+0x800DBA9C,func_800DBA9C,FieldFx_RingFlash,ok,likely,"fieldfx/emitters.c: RenderSparkEmitter without pool, 8-frame flash at 300 units around the player drawing two star fans and a ring band with colour tracks D_800E1D64/D_800E1D84"
+0x800DBCD8,func_800DBCD8,FieldFx_JitterSprite,ok,likely,"fieldfx/emitters.c: point with random x/z jitter and slow y rise for 32 frames drawn as a rotating cell-animated sprite, spawned by 800DBE6C"
+0x800DBE6C,func_800DBE6C,FieldFx_JitterSpriteEmitter,ok,likely,fieldfx/emitters.c: spawns a jitter sprite per frame for 21 frames at random +-256 offsets around the actor target
+0x800DC058,func_800DC058,FieldFx_TwinModelEffect,ok,likely,"fieldfx/emitters.c: FieldFxTwinModel task that grows a scaled model (D_800F3418) over 24 frames, adds a mirrored copy and a spinning second model (D_800F342C)"
+0x800DC5BC,func_800DC5BC,FieldFx_RisingJitterSprite,ok,likely,"fieldfx/emitters.c: point with x/z jitter and y -= 2..5 for 14 frames drawn as a rotating sprite scaled by rsin, spawned by 800DC750"
+0x800DC750,func_800DC750,FieldFx_RisingJitterEmitter,ok,likely,fieldfx/emitters.c: spawns a rising jitter sprite per frame for 40 frames at random +-256 offsets around the player
+0x800DCA80,func_800DCA80,FieldFx_DriftingEmitter,ok,likely,fieldfx/emitters.c: spawns FieldFx_DriftingEffect points every other frame for 33 frames at random offsets above the player
+0x800DCCCC,func_800DCCCC,FieldFx_TiltingSprite,ok,likely,"fieldfx/emitters.c: RenderTiltingSprite, rotation.y/z advance and tilt relaxes over 64 frames, drawn as FieldFx_DrawRotatedQuad with animated u/v"
+0x800DCE94,func_800DCE94,FieldFx_TiltingSpriteEmitter,ok,likely,"fieldfx/emitters.c: RenderSparkEmitter spawning a tilting sprite per frame for 17 frames at the player and drawing ring band, star fan, and outer ring"
+0x800DD19C,func_800DD19C,FieldFx_StarFanRingGlow,ok,likely,"fieldfx/emitters.c: RenderSparkEmitter with no pool, 64-frame task 510 above the player drawing a star fan, a ring band and a rotating star fan with colour tracks D_800E1FA4/D_800E1FCC"
+0x800DD380,func_800DD380,FieldFx_ConvergingSprite,ok,likely,"fieldfx/emitters.c: RenderConvergingSprite, stage 0 blends from its start toward the target point D_800E2234 with sine wobble, stage 1 bursts up to four times near the target"
+0x800DD76C,func_800DD76C,FieldFx_ConvergingEmitter,ok,likely,fieldfx/emitters.c: RenderConvergingEmitter that sets target 550 above the player and spawns a converging sprite every other frame for 49 frames
+0x800DD9E4,func_800DD9E4,FieldFx_SettlingSprite,ok,likely,"fieldfx/emitters.c: RenderSettlingSprite, stage 0 blends toward the anchor D_800E223C then jitters in place and fades; drawn with haloed point and sprite"
+0x800DDD70,func_800DDD70,FieldFx_SettlingEmitter,ok,likely,fieldfx/emitters.c: spawns settling sprites for 67 frames at random positions around the player and draws star fan and ring band under the player model point 19
+0x800DE0A8,func_800DE0A8,FieldFx_FlashBurst,ok,verified,"fieldfx/emitters.c comment: FieldFlashBurst, mode 0 anchors at actor point 19, mode 2 flashes the screen via FieldFx_DrawScreenTint, swells the model and draws fan, band and quad"
+0x800DE7A8,func_800DE7A8,FieldFx_SpinGlow,ok,verified,"fieldfx/emitters.c comment: FieldSpinGlow, moves with damped horizontal speed and gravity for 32 ticks and draws a pulsing spinning sprite with a fainter halo"
+0x800DEA30,func_800DEA30,FieldFx_GlowFountain,ok,verified,"fieldfx/emitters.c comment: FieldGlowFountain, anchors at the owner actor, opens a pool of 32 spin glows, throws two per frame for 16 frames and draws the rising quad, ring and band"
+0x800DEFFC,func_800DEFFC,FieldFx_FadeParticle,ok,verified,"fieldfx/emitters.c comment: RenderFadeParticle, phase 0 follows actor matrix point `kind` and sheds falling/drifting sparks; mode 2 draws each phase as a shape quad capped by D_800E2244"
+0x800DF6AC,func_800DF6AC,FieldFx_FadeEmitter,ok,likely,fieldfx/emitters.c: RenderFadeEmitter that starts one FieldFx_FadeParticle every 4 frames for 8 kinds (D_800E2164) and fades its intensity from 160 after frame 32
+0x800DFB78,func_800DFB78,FieldFx_IsOwnerBusy,ok,verified,"fieldfx/vector.c comment: wait condition for a field object, nonzero while busy (consumes one-shot flags 0x80000/0x40000, waits on child animation)"
+0x800DFC44,func_800DFC44,FieldFx_IntSqrt,ok,verified,fieldfx/vector.c: bitwise integer square root of a 32-bit value (shift 30 down by 2)
+0x800DFC80,func_800DFC80,FieldFx_GetFixedDistance3D,ok,verified,fieldfx/vector.c: 3D distance of two 16.16 vectors via two integer square roots (horizontal then with dy)
+0x800DFD54,func_800DFD54,FieldFx_GetShortDistance3D,ok,verified,fieldfx/vector.c: same two-stage integer square root on two s16 vectors
+0x800DFE20,func_800DFE20,FieldFx_GetDistanceXZ,fix,verified,vector.c:233 returns an integer square root of dx^2+dz^2 after >>16; 'Fixed' encodes the argument type rather than the role.
+0x800DFE94,func_800DFE94,FieldFx_FixedVecToLookAngles,ok,verified,"fieldfx/vector.c: out[0]=ratan2(dy, horizontal distance), out[1]=ratan2(dx,dz), out[2]=0 for two 16.16 vectors; FieldFx_VecToAngle is the yaw-only sibling"
+0x801909B4,func_801909B4,MenuCard_RunListScreen,ok,likely,src/overlays/menu_memcard/list_screen.c comment: runs the title/card-selection screen then restores the game display; called from Boot main case 0xA9400048 as Draw_InitDisplay(func_801909B4())
+0x8019234C,func_8019234C,FxCommon_RunFrameLoop,ok,verified,"src/overlays/fx_common/effects.c comment: the effect overlay's own frame loop (runs effect systems, compacts OT, presents and flips until the scene leaves); called by Boot main on the scratchpad stack"

@@ -1,19 +1,21 @@
-"""Regression gates for partial key-on/off constraint removal, not clean matches."""
+"""Regression gates: the key-on/off steps stay free of register constraints."""
 from pathlib import Path
 import re
 import unittest
+
+from tools.tests.csource import find_definition
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class AkaoVoiceKeyConstraintTests(unittest.TestCase):
     def test_redundant_constraints_are_absent(self):
-        unit = (ROOT/'src/main/akao/Akao_SpuVoiceControl.c').read_text()
+        unit = find_definition('Akao_SetVoiceKeyOn').read_text()
         for name,limit,unpinned,first,last in (
-            ('Akao_SetVoiceKeyOn',9,('flags','base_volume','value','next'),
-             '#undef ADVANCE_ENV_PTR','void Spu_CopyVoiceToStereoSlot('),
-            ('Akao_SetVoiceKeyOff',19,('voice','one','raw_pan','bias','pitch'),
-             '#define U16(','#undef ADVANCE_ENV_PTR'),
+            ('Akao_SetVoiceKeyOn',0,('flags','base_volume','value','next'),
+             'void Akao_SetVoiceKeyOn(','void Spu_CopyVoiceToStereoSlot('),
+            ('Akao_SetVoiceKeyOff',0,('voice','one','raw_pan','bias','pitch'),
+             'void Akao_SetVoiceKeyOff(','void Akao_SetVoiceKeyOn('),
         ):
             with self.subTest(function=name):
                 source = unit[unit.index(first):unit.index(last)]

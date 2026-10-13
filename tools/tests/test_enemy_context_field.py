@@ -5,12 +5,14 @@ import re
 import struct
 import unittest
 
+from tools.tests.csource import function_text
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class EnemyContextFieldTests(unittest.TestCase):
     def test_plain_c(self):
-        source = (ROOT / 'src/main/battle/Battle_GetEnemyContextField.c').read_text()
+        source = function_text('Battle_GetEnemyContextField')
         source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
         self.assertIsNone(re.search(r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS|REGALLOC_BARRIER)\b', source))
 

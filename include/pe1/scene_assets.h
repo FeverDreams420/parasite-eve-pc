@@ -2,8 +2,10 @@
 #define PE1_SCENE_ASSETS_H
 
 #include "common.h"
+#include "pe1/asset_table.h"
 #include "pe1/game_state.h"
 #include "pe1/pm_types.h"
+#include "pe1/scene_room_load.h"
 
 /* Scene startup and teardown callbacks; other handlers remain unidentified. */
 typedef PmCommand SceneAssetHandler;
@@ -82,6 +84,13 @@ typedef struct CdRange {
     u16 last;
 } CdRange;
 
+/* Range table address as a pointer or a word: CdRom_FindNextDataSector adds
+ * the scaled index to the table address as an integer, index first. */
+typedef union CdRangeAddress {
+    CdRange *range;
+    u32 word;
+} CdRangeAddress;
+
 PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneSectorDirectory, offsets) == 4,
                   scene_sector_offsets_offset);
 PE1_STATIC_ASSERT(sizeof(CdArchiveRoot) == 8, cd_archive_root_size);
@@ -150,11 +159,11 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, pending_stream_banks) == 0xEA,
                   scene_pending_streams_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, cd_transition_phase) == 0xF2,
                   scene_transition_phase_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, transition_volume) == 0xFE,
-                  scene_transition_volume_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, track_volumes) == 0xFE,
+                  scene_track_volumes_offset);
 
-/* Range-table cursor used by CD_FindNextDataSector. */
-extern int D_8009CDCC;
+/* Range-table cursor used by CdRom_FindNextDataSector. */
+extern int g_CdRangeIndex;
 
 /* Scene containers encode byte offsets relative to their loaded base. */
 static inline void *SceneAsset_ResolveOffset(void *base, unsigned int offset)
@@ -162,17 +171,36 @@ static inline void *SceneAsset_ResolveOffset(void *base, unsigned int offset)
     return (u8 *)base + offset;
 }
 
-typedef struct TimUploadRecord { u32 words[5]; } TimUploadRecord;
+typedef union TimUploadSource {
+    u32 offsetAndHeight;
+    struct { u8 offset[3]; u8 height; } bytes;
+} TimUploadSource;
+
+/* Each source word stores a 24-bit byte offset and an 8-bit height.
+ * Rectangles pack width (10 bits), x (11 bits), then y (11 bits). */
+typedef struct TimUploadRecord {
+    u32 reserved;
+    TimUploadSource image_source;
+    u32 image_rectangle;
+    TimUploadSource secondary_source;
+    u32 secondary_rectangle;
+} TimUploadRecord;
 typedef struct TimPackedImage {
-    u32 key;
     union {
-        u32 offsetAndHeight;
-        struct { u8 offset[3]; u8 height; } bytes;
-    } source;
+        u32 value;
+        struct { u8 reserved[3]; u8 type; } bytes;
+    } key;
+    TimUploadSource source;
     u32 geometry;
 } TimPackedImage;
 
 PE1_STATIC_ASSERT(sizeof(TimUploadRecord) == 20, scene_tim_upload_record_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(TimUploadRecord, image_source.bytes.height) == 7,
+                  scene_tim_upload_image_height_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(TimUploadRecord, image_rectangle) == 8,
+                  scene_tim_upload_image_rectangle_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(TimUploadRecord, secondary_source.bytes.height) == 15,
+                  scene_tim_upload_secondary_height_offset);
 PE1_STATIC_ASSERT(sizeof(TimPackedImage) == 12, scene_tim_packed_image_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(TimPackedImage, source.bytes.height) == 7,
                   scene_tim_image_height_offset);
@@ -203,31 +231,31 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneAssetBlob, directoryOffset) == 4,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, loaded_scene_assets) == 0x18C,
                   game_state_scene_assets_offset);
 
-extern unsigned int g_GameStateFlags;
 /* Opaque handler pointers; the unload path reads the prefix declared above. */
 extern PmCommand **g_PmCmdHandlerTable;
-extern void *D_800E1044[104];
+extern void *g_FieldFxTaskPrograms[104];
 
-int CD_ReadSectors(unsigned int kind, unsigned int index, int channel,
+int CdRom_ReadAssetSectors(unsigned int kind, unsigned int index, int channel,
                    void *buffer, u32 maximum, int blocking);
-int CD_FindNextDataSector(void);
+int CdRom_FindNextDataSector(void);
 
 int Asset_UnloadTableEntries(void);
-int Asset_LoadTimTextures(int force);
-int Gpu_LoadTimAsset(TimUploadRecord *record, void *base);
-extern u16 D_800930E2, D_800930E4;
+int Draw_LoadTimAsset(TimUploadRecord *record, void *base);
+extern u16 D_800930E2, g_PeImageTimTexturesEndSector;
 
-/* The initializer clears each record's halfwords at offsets 6 and 4. */
-typedef struct SceneBankResetPair {
-    u32 reserved;
-    u16 first, second;
-} SceneBankResetPair;
-extern SceneBankResetPair D_80094488[4];
-void *Asset_FindTable08ByU32Key(void *base, s32 key);
+/* Scene voice-bank entries: actor animation key and two voice ids; the
+ * game-state initializer clears both ids. */
+typedef struct AkaoVoiceBankEntry {
+    u8 group;
+    u8 set;
+    u8 index;
+    u8 frame;
+    u16 ids[2];
+} AkaoVoiceBankEntry;
+extern AkaoVoiceBankEntry g_AkaoVoiceBankEntries[];
 void *Asset_FindTable2CByU16Key(char *base, int key);
 void *Asset_FindTable30ByU16Key(char *base, int key);
 void Akao_LoadVoiceBankAlt(void);
-void Akao_ClearVoiceBank(void);
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, bank_asset_table) == 0x124,
                   game_state_bank_asset_table_offset);
@@ -240,6 +268,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, bank_rows) == 0x1C0,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, bank_reset_940) == 0x940,
                   game_state_bank_reset_offset);
 PE1_STATIC_ASSERT(sizeof(Pe1GameState) == 0x95C, game_state_size);
-PE1_STATIC_ASSERT(sizeof(SceneBankResetPair) == 8, scene_bank_reset_pair_size);
+PE1_STATIC_ASSERT(sizeof(AkaoVoiceBankEntry) == 8, akao_voice_bank_entry_size);
 
 #endif

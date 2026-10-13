@@ -1,10 +1,11 @@
 /* ASSEMBLER: GNU */
 /* Psy-Q LIBPAD PADENTRY.OBJ: PadChkVsync, PadStartCom, PadStopCom, PadChkMtap, PadGetState, PadInfoMode, PadInfoAct, PadInfoComb, PadSetActAlign, PadSetMainMode, PadSetAct. */
+
 #include "pe1/card_obj.h"
 
-int _padChkVsync(void);
+#include "padentry_externs.h"
 
-extern void _padStartCom(void);
+int _padChkVsync(void);
 
 void _padStopCom(void);
 
@@ -30,7 +31,7 @@ int PadChkMtap(int arg0)
   if (g_MemCardCommandByte != 0)
   {
     index = arg0 >> 4;
-    return g_MemCardObjArray[index].field_e8 == 8;
+    return g_MemCardObjArray[index].currentId == 8;
   }
   return 0;
 }
@@ -40,7 +41,7 @@ int PadGetState(int channel) {
 
     obj = g_MemCardObjLookupFn(channel);
     if ((*(u32 *)&obj->payload_28_len & 0xFFFF0000) == 0
-        && (obj == obj->field_10 || obj->pad_38[0] == 0)
+        && (obj == obj->ownerPort || obj->pad_38[0] == 0)
         && obj->output_30[0] == 0) {
         return obj->communicationState;
     }
@@ -63,21 +64,21 @@ int PadInfoMode(int channel, int mode, int index) {
     obj = g_MemCardObjLookupFn(channel);
     switch (mode) {
     case 1:
-        return obj->field_e8;
+        return obj->currentId;
     case 2:
-        return obj->field_e6;
+        return obj->currentExtendedId;
     case 3:
-        return obj->field_e4;
+        return obj->currentModeIndex;
     case 4:
         if (index < 0) {
-            return obj->field_e3;
+            return obj->modeCount;
         }
-        if (index < obj->field_e3) {
+        if (index < obj->modeCount) {
             return obj->modeTable[index];
         }
-        goto late_fail;
+        break;
     case 100:
-        return obj->field_4c;
+        return obj->frameCounter;
     default:
         return 0;
     }
@@ -92,9 +93,9 @@ int PadInfoAct(int channel, int index, int field) {
 
     obj = g_MemCardObjLookupFn(channel);
     if (index < 0) {
-        return obj->field_e9;
+        return obj->actuatorCount;
     }
-    if (index >= obj->field_e9) {
+    if (index >= obj->actuatorCount) {
         return 0;
     }
 
@@ -121,9 +122,9 @@ int PadInfoComb(int channel, int index0, int index1) {
 
     obj = g_MemCardObjLookupFn(channel);
     if (index0 < 0) {
-        return obj->field_ea;
+        return obj->combinationCount;
     }
-    if (index0 >= obj->field_ea) {
+    if (index0 >= obj->combinationCount) {
         return 0;
     }
     entry = &obj->combinations[index0];
@@ -135,9 +136,8 @@ int PadInfoComb(int channel, int index0, int index1) {
     }
     return entry->data[index1];
 }
-int _padSetActAlign(CardObj *obj, int command);
 
-void PadSetActAlign(int channel, int command) {
+void PadSetActAlign(int channel, u8 *command) {
     _padSetActAlign(g_MemCardObjLookupFn(channel), command);
 }
 void _padSetMainMode(CardObj *obj, int byte1, int byte2);
@@ -145,9 +145,8 @@ void _padSetMainMode(CardObj *obj, int byte1, int byte2);
 void PadSetMainMode(int channel, unsigned char byte1, unsigned char byte2) {
     _padSetMainMode(g_MemCardObjLookupFn(channel), byte1, byte2);
 }
-void _padSetAct(CardObj *obj, int payload, int size);
 
-void PadSetAct(int channel, int payload, int size) {
+void PadSetAct(int channel, u8 *payload, int size) {
     _padSetAct(g_MemCardObjLookupFn(channel), payload, size);
 }
 

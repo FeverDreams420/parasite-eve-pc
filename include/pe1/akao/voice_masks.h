@@ -12,16 +12,15 @@ extern AkaoVoiceEnvelopeSlot g_AkaoVoiceEnvelopeTable[];
 extern unsigned g_AkaoVoicePortamentoResetMask;
 extern unsigned g_AkaoTrack34Mask, g_AkaoTrack38Mask, g_AkaoTrack3CMask;
 extern unsigned g_AkaoVoiceUpdateFlags;
-extern unsigned D_800C0DD0, D_800C0DD4, D_800C0DD8;
-extern int D_8009D2C0;
-extern short D_8009B8F8[], D_8009B9F8[];
+extern unsigned g_AkaoReverbEnableMask, g_AkaoNoiseEnableMask, g_AkaoFmEnableMask;
+extern int g_AkaoPlaybackMode;
+extern short g_AkaoPanVolumeTable[], D_8009B9F8[];
 
 void Akao_SetVoiceKeyOn(AkaoTrack *voice, unsigned int voice_mask);
 
 void Spu_ManageVoices(int id, int control);
 void Seq_StartNestedTrack(AkaoTrack *track, AkaoNestedSource *source, unsigned mask, void *script);
 void Seq_ClearTrackVoiceId(AkaoTrack *track, unsigned voice_id);
-void Seq_StartNestedStreams(AkaoNestedSource *source, void *first, void *second);
 
 void Spu_VoiceMaskCompose(AkaoTrack *track, int *mask_out, int mask, int mask_keep);
 void Seq_MarkTrack34MaskDirty(void);
@@ -32,6 +31,10 @@ void Akao_StepVoiceNote(AkaoTrack *track, unsigned mask, unsigned direct, unsign
 /* Retail callers supply differing numbers of trailing, unused arguments. */
 void Akao_WriteVoiceParam();
 void Spu_WriteKeyOff(unsigned value);
+/* Mark every active track of a 24-track table for a full voice refresh. */
+void Seq_MarkDirtyTracks(AkaoTrack *tracks);
+void Spu_MarkActiveVoicesDirty(void);
+void Akao_LoadSamplePairFromIndex(int *first, int *second, int sample_id);
 void Akao_SetVoicePitch(void);
 void Akao_SetVoiceVolume(void);
 void Akao_SetVoiceAdsr(void);

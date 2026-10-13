@@ -5,33 +5,41 @@ import re
 import unittest
 
 from tools.scripts import source_quality
+from tools.tests.csource import find_definition, function_closure
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
 class GteMacReadTests(unittest.TestCase):
+    # The handler templates (RoomLib_Handler{B,C,D}.inc) were inlined into the
+    # room library unit; the functions are found by name, with the static
+    # helpers they call, wherever they live now.
+    def assertMacWindowIsC(self, name):
+        text = function_closure(name)
+        # Include the bodies of unit-local function-like macros it uses.
+        unit = find_definition(name).read_text()
+        for macro in re.finditer(r"^#define (\w+)\(.*?(?<!\\)$", unit,
+                                 re.MULTILINE | re.DOTALL):
+            if re.search(r"\b" + macro.group(1) + r"\(", text):
+                text += "\n" + macro.group(0)
+        self.assertFalse(source_quality.has_instruction_asm(text))
+        self.assertNotIn("asm volatile(\"addiu", text)
+        # The vector load and MAC store go through the GTE macros with
+        # C-computed scratch addresses.
+        self.assertRegex(text, r"gte_ldv0\(")
+        self.assertRegex(text, r"gte_stmac\(")
+        return text
+
     def test_handler_b_and_c_addresses_are_c(self):
-        directory = ROOT / "src/overlays/room_lib"
-        for name in ("RoomLib_HandlerB.inc", "RoomLib_HandlerC.inc",
-                     "RoomLib_HandlerBSceneReset.inc"):
+        for name in ("RoomLib_HandlerB", "RoomLib_HandlerC"):
             with self.subTest(name=name):
-                text = (directory / name).read_text()
-                self.assertFalse(source_quality.has_instruction_asm(text))
-                self.assertNotIn("asm volatile(\"addiu", text)
-        b = (directory / "RoomLib_HandlerB.inc").read_text()
-        c = (directory / "RoomLib_HandlerC.inc").read_text()
-        self.assertIn("gte_ldv0((char *)(base) + 0x20);", b)
-        self.assertIn("gte_stmac((char *)scratch + 0x28);", b)
-        self.assertIn("gte_ldv0((char *)scratch + 0x20);", c)
-        self.assertIn("gte_stmac((char *)scratch + 0x38);", c)
+                self.assertMacWindowIsC(name)
 
     def test_handler_d_address_calculation_is_c(self):
-        template = (ROOT / "src/overlays/room_lib/RoomLib_HandlerD.inc").read_text()
-        self.assertFalse(source_quality.has_instruction_asm(template))
-        self.assertIn("gte_stmac((char *)scratch + 8);", template)
-        self.assertIn("gte_stmac((char *)scratch + 0x18);", template)
-        self.assertNotIn("ROOMLIB_HANDLER_D_GTE_STORE_MAC", template)
+        text = self.assertMacWindowIsC("RoomLib_HandlerD")
+        self.assertGreaterEqual(text.count("gte_stmac("), 2)
+        self.assertNotIn("ROOMLIB_HANDLER_D_GTE_STORE_MAC", text)
 
     def test_retired_cpu_store_helpers_are_absent(self):
         header = source_quality.strip_comments(

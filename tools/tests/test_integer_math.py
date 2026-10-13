@@ -15,12 +15,10 @@ CASES = [('psyq/libmath/fltsidf',
   '_dbl_shift_us = 0x80073294;\n'
   'SECTIONS { .text 0x80073454 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) '
   '*(.mdebug) } }'),
- ('psyq/libmath/_mul_mant_d',
-  236,
-  'c05005c411d44159dcc1fbe8fab722366870bea126932e8b3cc666b9897cbf05',
-  '_add_mant_d = 0x80072DF4;\n'
-  'SECTIONS { .text 0x800738d8 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) '
-  '*(.mdebug) } }')]
+ ('psyq/libmath/muldf3',
+  1024,
+  'e1aebadc811ba84da2cc8868a33f9df18ff73f5ac4d1d92d2bce95f710aa1c6a',
+  '_add_mant_d = 0x80072df4;\n_dbl_shift_us = 0x80073294;\n_err_math = 0x800739c4;\nSECTIONS { .text 0x800735c4 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }')]
 
 
 class IntegerMathTests(unittest.TestCase):

@@ -1,5 +1,6 @@
 /* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSSYS_4.OBJ: DsControlF, DsControl, DsControlB and the object's zero tail. */
+
 #include "pe1/psyq_ds_queue.h"
 
 int DsControlF(u_char command, u_char *parameter) {

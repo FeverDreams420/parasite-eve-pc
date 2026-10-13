@@ -2,14 +2,17 @@
 #define PE1_ROOM_GLOW_ORB_H
 
 #include "common.h"
+#include "pe1/field_glow_sprite.h"
+#include "pe1/field_script_context.h"
+#include "pe1/field_sprite_state.h"
+#include "pe1/fieldfx_slot.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_libc.h"
 #include "pe1/room_fx.h"
 #include "pe1/room_module.h"
 #include "pe1/room_spark.h"
-#include "pe1/field_sprite_state.h"
-#include "pe1/field_glow_sprite.h"
 
-/* The glow orb (src/overlays/room_lib/RoomEffect_GlowOrb.c, rooms m034,
+/* The glow orb (src/overlays/room_lib/glow_orb.c, rooms m034,
  * m174 and m383): a camera-facing glow placed by the owner's matrix,
  * turned with the script's yaw, drifting until it leaves the walkable area
  * and leaving fading flashes behind. */
@@ -79,15 +82,11 @@ extern RoomGlowOrbLink *g_RoomGlowOrbOwner;
 extern RoomFxSpritePacket g_RoomGlowOrbSprite;
 extern RoomFxSpritePacket g_RoomGlowOrbFlashSprite;
 
-int RoomEffect_GlowOrbSetup(void);
+int RoomEffect_GlowOrbSetup(void *object);
 
-void *memset(void *dst, int value, unsigned int size);
-int func_800C61A8(GteShortVector *point, GteMatrix *matrix);
-int FieldEng_GetStatus(void *object);
-void **FieldEng_GetSlot(void);
-u16 *func_800C2B90(void *owner, int kind, int *layout,
-                   RoomModuleHandler *initList);
-int *func_800C2B10(int index);
-int *func_800C2B28(int index);
+int FieldFx_IsPointInSpriteQuad(GteShortVector *point, GteMatrix *matrix);
+int FieldFx_GetStatus(void *object);
+int *FieldFx_RegPtr(int index);
+int *FieldFx_VarPtr(int index);
 
 #endif

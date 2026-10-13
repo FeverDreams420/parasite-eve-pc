@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m137_hospital
   ld_script_path: linkers/USA/overlays/room_m137_hospital.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m137_hospital.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m137_hospital.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m137_hospital.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m137_hospital.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,17 +37,17 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m137_0_44]
-      - [0xC, .rodata, ../room_lib/RoomFx_FallingSpriteBurst]
-      - [0x44, .rodata, ../room_lib/RoomEffect_DroppedFlare]
-      - [0x88, c, ../room_lib/RoomLib_ClassNop0]
-      - [0x90, c, ../room_lib/RoomLib_PlantScript]
-      - [0xBC, c, ../room_lib/RoomLib_Spawn6]
-      - [0xE8, c, ../room_lib/RoomLib_RegisterDrawList]
-      - [0x130, c, ../room_lib/RoomLib_RegisterPairedTables]
-      - [0x1BC, c, ../room_lib/RoomLib_CloseTarget]
-      - [0x240, c, ../room_lib/RoomLib_ClassNop6]
-      - [0x248, c, ../room_lib/RoomFx_FallingSpriteBurst]
-      - [0x11A4, c, ../room_lib/RoomEffect_DroppedFlare]
+      - [0xC, .rodata, ../room_lib/falling_sprite_burst]
+      - [0x44, .rodata, ../room_lib/dropped_flare]
+      - [0x88, c, ../room_lib/class_nop0]
+      - [0x90, c, ../room_lib/class_plant_script]
+      - [0xBC, c, ../room_lib/class_spawn]
+      - [0xE8, c, ../room_lib/class_register_draw_list]
+      - [0x130, c, ../room_lib/class_register_tables]
+      - [0x1BC, c, ../room_lib/class_close_target]
+      - [0x240, c, ../room_lib/class_nop6]
+      - [0x248, c, ../room_lib/falling_sprite_burst]
+      - [0x11A4, c, ../room_lib/dropped_flare]
       - [0x1E48, data, D_80190E30]
       - [0x1E60, data, RoomLib_TableA_8018F0D0]
       - [0x1E78, data, D_80190E60]

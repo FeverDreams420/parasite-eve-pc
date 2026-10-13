@@ -50,12 +50,12 @@ class CrutchDebtTests(unittest.TestCase):
             root = pathlib.Path(tmp)
             math = root / "main" / "math"
             math.mkdir(parents=True)
-            (math / "math_fixed.c").write_text(
+            (math / "fixed_round.c").write_text(
                 '/* ASSEMBLER: GNU */\n'
                 'GAME_ASM_FUNCTION(Math_FixedRoundToInt,\n'
                 '    "    ori $at, $zero, 0x8000\\n" "    add $v0, $a0, $at\\n"\n'
                 '    "    jr $ra\\n" "    sra $v0, $v0, 16\\n");\n')
-            vlc = root / "overlays" / "sys_reset"
+            vlc = root / "overlays" / "mdec_diag"
             vlc.mkdir(parents=True)
             (vlc / "DecDCTvlc.c").write_text(
                 'PSYQ_ASM_OBJECT(LIBPRESS, VLC)\n'
@@ -91,13 +91,13 @@ class CrutchDebtTests(unittest.TestCase):
             root = pathlib.Path(tmp) / "src"
             boot = root / "main" / "boot"
             boot.mkdir(parents=True)
-            (boot / "Boot_MainLoop.c").write_text(
+            (boot / "main.c").write_text(
                 'void main(void) {\n'
                 '    BOOT_CALL_ON_SCRATCHPAD_STACK(BOOT_SCRATCHPAD_STACK_TOP, f());\n'
                 '}\n')
             source_quality = crutch_debt.classify.__globals__
             original = source_quality["stack_switch_sources"]
-            source_quality["stack_switch_sources"] = lambda: {"main/boot/Boot_MainLoop.c"}
+            source_quality["stack_switch_sources"] = lambda: {"main/boot/main.c"}
             try:
                 _, totals, dirty, scopes = crutch_debt.collect_debt(root)
             finally:
@@ -123,45 +123,6 @@ class CrutchDebtTests(unittest.TestCase):
         self.assertEqual(scopes["main"]["stack_switch_macros"], 1)
         self.assertEqual(totals["asm_constrained_units"], 1)
 
-    def test_gte_window_is_ratcheted_debt(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = pathlib.Path(tmp) / "src"
-            scene = root / "overlays" / "scene_x"
-            scene.mkdir(parents=True)
-            (scene / "Flare.c").write_text(
-                'void draw(void) {\n'
-                '    GTE_LOAD_ROTATION_WINDOW(D_800BCFA4.value);\n'
-                '    GTE_LOAD_TRANSLATION_WINDOW(D_800BCFA4.value);\n'
-                '}\n')
-            source_quality = crutch_debt.classify.__globals__
-            original = source_quality["gte_window_sources"]
-            source_quality["gte_window_sources"] = lambda: {"overlays/scene_x/Flare.c"}
-            try:
-                _, totals, dirty, scopes = crutch_debt.collect_debt(root)
-            finally:
-                source_quality["gte_window_sources"] = original
-
-        self.assertEqual(scopes["overlays"]["gte_matrix_windows"], 2)
-        self.assertEqual(totals["asm_constrained_units"], 0)
-        self.assertEqual(totals["asm_bodies"], 0)
-        self.assertEqual(dirty, 1)
-
-    def test_unlisted_gte_window_is_asm_constrained(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = pathlib.Path(tmp) / "src"
-            scene = root / "overlays" / "scene_x"
-            scene.mkdir(parents=True)
-            (scene / "Other.c").write_text(
-                'void g(void) {\n'
-                '    GTE_LOAD_ROTATION_WINDOW(p);\n'
-                '    GTE_LOAD_TRANSLATION_WINDOW(p);\n'
-                '}\n')
-
-            _, totals, _, scopes = crutch_debt.collect_debt(root)
-
-        self.assertEqual(scopes["overlays"]["gte_matrix_windows"], 2)
-        self.assertEqual(totals["asm_constrained_units"], 1)
-
     def test_shared_header_alias_survives_declaration_move(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp) / "src"
@@ -184,7 +145,7 @@ class CrutchDebtTests(unittest.TestCase):
         self.assertEqual(scopes["overlays"]["aliases"], 0)
         self.assertEqual(dirty, 1)
 
-    def test_counts_individual_nop_macro_invocations(self):
+    def test_nop_macros_are_not_crutch_debt(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             source = root / "main" / "test.c"
@@ -196,9 +157,11 @@ class CrutchDebtTests(unittest.TestCase):
                 PE1_NOP_IO2_DEP(first, second, value);
                 /* PE1_NOP(); */
             }''')
-            _, totals, _, _ = crutch_debt.collect_debt(root)
-        self.assertEqual(totals["nop_barriers"], 4)
+            _, totals, dirty, _ = crutch_debt.collect_debt(root)
+        self.assertNotIn("nop_barriers", totals)
+        self.assertEqual(totals["asm_bodies"], 0)
         self.assertEqual(totals["asm_constrained_units"], 0)
+        self.assertEqual(dirty, 0)
 
     def test_nop_header_has_only_individual_nop_instructions(self):
         import re

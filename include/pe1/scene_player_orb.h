@@ -2,13 +2,20 @@
 #define PE1_SCENE_PLAYER_ORB_H
 
 #include "common.h"
-#include "pe1/gte_types.h"
+#include "pe1/akao_send.h"
 #include "pe1/field_actor.h"
-#include "pe1/render_object.h"
-#include "pe1/field_sprite_state.h"
-#include "pe1/room_floor.h"
-#include "pe1/player_entity.h"
 #include "pe1/field_glow_sprite.h"
+#include "pe1/field_script_context.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_sprite_state.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/gte_types.h"
+#include "pe1/player_entity.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/psyq_libc.h"
+#include "pe1/render_object.h"
+#include "pe1/room_floor.h"
+#include "pe1/scene_archive.h"
 
 /* Scene e08 player orb: an effect spawned at a random spot around the
  * player, swung around the scene anchor by the anchor's facing, then drawn
@@ -23,6 +30,23 @@ typedef struct ScenePlayerOrbAnchor {
     /* 0x25 */ u8 pad25[7];
     /* 0x2C */ s16 orbHit;
 } ScenePlayerOrbAnchor;
+
+/* The same scene object as its init (SceneE08_InitLayeredSpriteContext) fills it before
+ * making it the script context: the source actor, a copy of that actor's
+ * root bone matrix whose translation is the anchor position above, the
+ * sprite asset handle whose low byte is the mode above, and the re-arming
+ * hit timer (pe1/room_rearm_timer.h) the effects request through. */
+typedef struct SceneE08Context {
+    /* 0x00 */ FieldActor *source;
+    /* 0x04 */ RenderMatrix rootMatrix;
+    /* 0x24 */ s32 spriteAsset;
+    /* 0x28 */ s16 hitReload;
+    /* 0x2A */ s16 hitTimer;
+    /* 0x2C */ s16 hitRequest;
+} SceneE08Context;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE08Context, spriteAsset) == 0x24,
+                  scene_e08_context_sprite_asset_offset);
 
 typedef struct ScenePlayerOrbTimer {
     /* 0x00 */ u8 pad00;
@@ -46,29 +70,13 @@ typedef struct ScenePlayerOrb {
     /* 0xAA */ u8 count;
 } ScenePlayerOrb;
 
-extern GteRotation D_8018EFFC;
-extern RenderColor D_8018F004;
-extern GteVector D_8018F008;
-extern u8 D_801987E4[];
-extern u8 D_80199690[];
-/* The sound owner read as a one-field record (see room_m089_spin_model.h). */
-typedef struct ScenePlayerOrbSound {
-    void *channel;
-} ScenePlayerOrbSound;
+extern GteRotation g_SceneE08PlayerOrbRotationSeed;
+extern RenderColor g_SceneE08PlayerOrbTrailBColor;
+extern GteVector g_SceneE08PlayerOrbPointScale;
+extern u8 g_SceneE08PlayerOrbRamp[];
+extern FieldGlowSprite g_SceneE08PlayerOrbPointSprite;
 
-extern ScenePlayerOrbSound D_800B0E64;
-
-ScenePlayerOrbAnchor *func_800C2B50(void);
-int *func_800C2B10(int index);
-GteShortVector *func_800C2B90(void *object, int kind, u8 *script, u8 *data);
-int func_800C6B90(GteShortVector *position, int radius);
-int func_80071A54(void);
-int func_80077A64(int arg0, int arg1, int x, int y);
-int func_80077AA4(int x, int y);
-void func_800D3114(GteShortVector *trail, int last, int arg2, int arg3, int r, int g, int b,
-                   int tpage, int clut, int alpha, RenderColor *head,
-                   RenderColor *tail, int mode);
-void func_8006DF50(void *channel, int id, int value, int volume, int pan);
+int *FieldFx_RegPtr(int index);
 
 /* Scene e08 limb beams: ten ribbons fanned from the player's chest bone to
  * hand and foot bones, each with its own swing and bend offsets. */
@@ -86,12 +94,10 @@ typedef struct SceneLimbBeams {
     /* 0x24 */ u8 mode[10];
 } SceneLimbBeams;
 
-extern SceneLimbBeamShape D_801994D8[10];
-extern u16 D_80199658[10];
-extern u8 D_801989BC[];
-extern u8 D_801989D0[];
-int rsin(int angle);
-int rcos(int angle);
+extern SceneLimbBeamShape g_SceneE08LimbBeamOffsets[10];
+extern u16 g_SceneE08LimbBeamAngles[10];
+extern u8 g_SceneE08LimbBeamsHeadRamp[];
+extern u8 g_SceneE08LimbBeamsTailRamp[];
 
 /* Scene e08 arm glow: a ribbon from the player's hand bone (matrix 32) to
  * the elbow bone (matrix 22) with a scaled glow sprite on each end. */
@@ -102,14 +108,9 @@ typedef struct SceneArmGlow {
     /* 0x0C */ u16 offsets[5][3];
 } SceneArmGlow;
 
-typedef struct SceneArmGlowSprite {
-    /* 0x00 */ u8 pad00[0xA];
-    /* 0x0A */ u16 frame;
-} SceneArmGlowSprite;
 
-extern SceneArmGlowSprite D_801994C8;
-extern RenderColor D_8018F060;
-extern RenderColor D_8018F064;
-void func_80071A44(GteVector *vector, int value, int size);
+extern FieldGlowSprite g_SceneE08ArmGlowSprite;
+extern RenderColor g_SceneE08ArmGlowHeadColor;
+extern RenderColor g_SceneE08ArmGlowTailColor;
 
 #endif

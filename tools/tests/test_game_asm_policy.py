@@ -39,7 +39,7 @@ MAIN_YAML = '''segments:
     start: 0x800
     vram: 0x80010000
     subsegments:
-      - [0x1000, c, math/math_fixed]
+      - [0x1000, c, math/fixed_round]
       - [0x1020, c, math/other]
       - [0x1040, asm, math/tail]
   - [0x2000]
@@ -68,10 +68,10 @@ OVERLAY_YAML = '''segments:
 '''
 
 ENTRIES = [
-    {"name": "Math_RoundA", "module": "main", "source": "main/math/math_fixed.c",
+    {"name": "Math_RoundA", "module": "main", "source": "main/math/fixed_round.c",
      "address": "0x80010800", "size": 16, "origin": "game",
      "evidence": ["trapping add with $at"], "verified_by": "test"},
-    {"name": "Math_RoundB", "module": "main", "source": "main/math/math_fixed.c",
+    {"name": "Math_RoundB", "module": "main", "source": "main/math/fixed_round.c",
      "address": "0x80010810", "size": 16, "origin": "game",
      "evidence": ["trapping add with $at"], "verified_by": "test"},
     {"name": "DecSize", "module": "ovl", "source": "overlays/ovl/vlc.c",
@@ -99,7 +99,7 @@ class GameAsmPolicyTests(unittest.TestCase):
             return check_source_policy.original_asm_manifest_errors(src, configs, manifest)
 
     def good_files(self):
-        return {"main/math/math_fixed.c": GOOD, "overlays/ovl/vlc.c": OVERLAY_GOOD}
+        return {"main/math/fixed_round.c": GOOD, "overlays/ovl/vlc.c": OVERLAY_GOOD}
 
     def assertError(self, errors, text):
         self.assertTrue(any(text in error for error in errors), errors)
@@ -119,17 +119,17 @@ class GameAsmPolicyTests(unittest.TestCase):
 
     def test_gnu_assembler_marker_is_required(self):
         files = self.good_files()
-        files["main/math/math_fixed.c"] = GOOD.replace("/* ASSEMBLER: GNU */\n", "")
+        files["main/math/fixed_round.c"] = GOOD.replace("/* ASSEMBLER: GNU */\n", "")
         self.assertError(self.errors(files), "without ASSEMBLER: GNU")
 
     def test_c_functions_cannot_share_the_unit(self):
         files = self.good_files()
-        files["main/math/math_fixed.c"] = GOOD + "int helper(void) { return 0; }\n"
+        files["main/math/fixed_round.c"] = GOOD + "int helper(void) { return 0; }\n"
         self.assertError(self.errors(files), "mixed with C functions")
 
     def test_defined_functions_must_match_the_manifest(self):
         files = self.good_files()
-        files["main/math/math_fixed.c"] = GOOD.replace("Math_RoundB", "Math_RoundC")
+        files["main/math/fixed_round.c"] = GOOD.replace("Math_RoundB", "Math_RoundC")
         self.assertError(self.errors(files), "manifest lists Math_RoundA, Math_RoundB")
 
     def test_yaml_range_must_equal_the_listed_functions(self):

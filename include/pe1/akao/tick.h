@@ -33,7 +33,9 @@ typedef union AkaoTickBank {
         /* 0x2C */ unsigned char pad_2C[0x14];
         /* 0x40 */ AkaoU32 volume;
         /* 0x44 */ AkaoU32 volume_delta;
-        /* 0x48 */ unsigned char pad_48[0x0A];
+        /* 0x48 */ AkaoU16 pitch_fraction; /* halves of the 16.16 bank pitch */
+        /* 0x4A */ AkaoU16 pitch_integer;
+        /* 0x4C */ unsigned char pad_4C[0x06];
         /* 0x52 */ AkaoU16 tempo_slide_duration;
         /* 0x54 */ AkaoU16 bank_id;
         /* 0x56 */ AkaoU16 pad_56;
@@ -48,45 +50,32 @@ typedef union AkaoTickBank {
     } timing;
 } AkaoTickBank;
 
-typedef union AkaoTickTrack {
-    AkaoTrack track;
-    AkaoU32 words[sizeof(AkaoTrack) / 4];
-    struct {
-        /* 0x000 */ unsigned char pad_000[0x2C];
-        /* 0x02C */ AkaoU32 key_on_mask;
-        /* 0x030 */ unsigned char pad_030[0x20];
-        /* 0x050 */ AkaoU32 tick_count;
-        /* 0x054 */ AkaoU16 parent_track_id;
-        /* 0x056 */ AkaoU16 note_length;
-        /* 0x058 */ AkaoU16 gate_length;
-    } timing;
-} AkaoTickTrack;
-
 PE1_STATIC_ASSERT(sizeof(AkaoTickBank) == 0x68, akao_tick_bank_size);
-PE1_STATIC_ASSERT(sizeof(AkaoTickTrack) == 0x11C, akao_tick_track_size);
 
 extern AkaoTickBank *D_8009D2C8;
-extern AkaoTickTrack D_800B8AC0[48];
 extern AkaoTickTrack D_800BC000[];
 extern u8 D_8009D2D2;
-extern u32 D_8009D2DC;
+extern u32 g_AkaoSeqPendingFlags;
 extern u32 D_8009D22C;
-extern u32 D_8009D268;
-extern u32 D_8009D2C4;
-extern u32 D_800BCD50;
-extern u32 D_800BCD58;
-extern u32 D_800BCD5C;
-extern u16 D_800BCD66;
-extern u32 D_800BCD68;
+/* Message-queue lock, also read by the timer interrupt. */
+extern volatile u32 g_AkaoMessageQueueLock;
+extern u32 g_AkaoVoiceUpdateFlags;
+extern u32 g_SpuActiveVoiceMask;
+extern u32 g_AkaoSfxAllocatedVoiceMask;
+extern u32 g_SpuPendingKeyOffMask;
+/* Sound-effect tempo, 16.16; the tick adds its integer half. */
+extern AkaoTickTempo g_AkaoSfxTempo;
+extern u32 g_AkaoSfxTickAccumulator;
 
 void Akao_ProcessVoiceQueue(void);
 void Akao_StepSampleLoader(AkaoTrack *track, u32 voice_mask);
 void Spu_UpdateVoiceRegisters(AkaoTrack *track, u32 voice_mask);
 void Spu_TickVoiceEnvelopes(AkaoTrack *track, unsigned int voice_mask);
 void Akao_ProcessMessageQueue(void);
-void SPU_StepReverbLoad(void);
+void Spu_StepReverbLoad(void);
 void Akao_SetVoicePitch(void);
-void Util_CopyWords(unsigned int *src, unsigned int *dst, unsigned int size);
+void Akao_CopyWords(unsigned int *src, unsigned int *dst, unsigned int size);
 void Akao_Tick(void);
+int Akao_TimerCallback(void);
 
 #endif

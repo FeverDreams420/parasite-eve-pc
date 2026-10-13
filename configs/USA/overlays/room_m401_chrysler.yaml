@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m401_chrysler
   ld_script_path: linkers/USA/overlays/room_m401_chrysler.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m401_chrysler.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m401_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m401_chrysler.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m401_chrysler.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,23 +37,22 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m401_chrysler]
-      - [0xC, .rodata, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x14, .rodata, ../room_lib/RoomFx_FallingSpriteBurst]
-      - [0x4C, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x224, .rodata, ../room_lib/RoomLib_TimedSpawn]
-      - [0x22C, c, ../room_lib/RoomLib_ThreeParticleClass]
-      - [0x3DC, c, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x1228, c, ../room_lib/RoomLib_ClassNop0]
-      - [0x1230, c, ../room_lib/RoomLib_PlantScript]
-      - [0x125C, c, ../room_lib/RoomLib_Spawn6]
-      - [0x1288, c, ../room_lib/RoomLib_RegisterDrawList]
-      - [0x12D0, c, ../room_lib/RoomLib_RegisterPairedTables]
-      - [0x135C, c, ../room_lib/RoomLib_CloseTarget]
-      - [0x13E0, c, ../room_lib/RoomLib_ClassNop6]
-      - [0x13E8, c, ../room_lib/RoomFx_FallingSpriteBurst]
-      - [0x2344, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x5660, c, ../room_lib/RoomLib_FloorWalkerClass]
-      - [0x5E50, c, ../room_lib/RoomLib_TimedSpawn]
+      - [0xC, .rodata, ../room_lib/three_particles]
+      - [0x14, .rodata, ../room_lib/falling_sprite_burst]
+      - [0x4C, .rodata, ../room_lib/actor_classes]
+      - [0x224, .rodata, ../room_lib/timed_spawn]
+      - [0x22C, c, ../room_lib/three_particles]
+      - [0x1228, c, ../room_lib/class_nop0]
+      - [0x1230, c, ../room_lib/class_plant_script]
+      - [0x125C, c, ../room_lib/class_spawn]
+      - [0x1288, c, ../room_lib/class_register_draw_list]
+      - [0x12D0, c, ../room_lib/class_register_tables]
+      - [0x135C, c, ../room_lib/class_close_target]
+      - [0x13E0, c, ../room_lib/class_nop6]
+      - [0x13E8, c, ../room_lib/falling_sprite_burst]
+      - [0x2344, c, ../room_lib/actor_classes]
+      - [0x5660, c, ../room_lib/floor_walker_class]
+      - [0x5E50, c, ../room_lib/timed_spawn]
       - [0x632C, data, D_80195314]
       - [0x6338, data, RoomLib_TableA_8018F26C]
       - [0x6344, data, D_8019532C]
@@ -65,7 +66,7 @@ segments:
       - [0x6404, data, D_801953EC]
       - [0x6410, data, D_801953F8]
       - [0x642C, data, RoomLib_TableB_80190218]
-      - [0x64B0, data, D_80195498]
+      - [0x6478, .data, ../room_lib/actor_class_table]
       - [0x6520, data, D_80195508]
       - [0x653C, data, D_80195524]
       - [0x655C, data, D_80195544]
@@ -97,6 +98,11 @@ segments:
       - start: 0x311FC
         type: databin
         name: D_801C01E4
+        dir: room_m401_chrysler
+      - [0x45E24, data, D_801D4E0C]
+      - start: 0x45E60
+        type: databin
+        name: D_801D4E48
         dir: room_m401_chrysler
   - [0x46800]
 # room: m401, section3 sector 92367, scanner delta 0

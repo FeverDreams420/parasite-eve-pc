@@ -2,12 +2,19 @@
 #define PE1_ROOM_SPARK_RING_BURST_H
 
 #include "common.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
+#include "pe1/floor_polygon.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
 #include "pe1/room_floor.h"
 
 /* The spark ring and spark burst effects linked by ten museum rooms
- * (src/overlays/room_lib/RoomEffect_SparkRingBurst.c). The ring controller
+ * (src/overlays/room_lib/spark_ring_burst.c). The ring controller
  * plays a sound, then sheds damped sparks around the actor while it draws
  * a pulsing sprite with two expanding rings; the burst spawner launches
  * homing sparks that shed trail sparks and burst into debris when they
@@ -80,29 +87,9 @@ typedef struct RoomSparkBattleEntity {
     RoomSparkActor *actor;
 } RoomSparkBattleEntity;
 
-/* Texture page index records (0x800E11E8, 0x800E11EC), read as records so
- * they stay ordered after stores through the particle pointer. */
-typedef struct RoomSparkTextureSlot {
-    u16 index;
-} RoomSparkTextureSlot;
+extern struct BattleEntity *D_8009D254;
 
-extern RoomSparkChannel *D_800F32D0, *D_800F33E0;
-extern RoomSparkEventState *D_800E2368;
-extern RoomSparkBattleEntity *D_8009D254;
-extern RoomSparkTextureSlot D_800E11E8;
-extern RoomSparkTextureSlot D_800E11EC;
-extern void *D_8009D248;
-extern u16 D_8009D1CC;
-
-int func_80071A54(void);
-int func_80077AA4(int x, int y);
-void *func_800CE610(char *pool);
-int func_800CE560(char *pool, int size, int count, void *callback);
-void func_800CE8F0(char *pool, int joint, void *offset, void *out);
-int func_800C6B90(void *position, int radius);
-int func_8001CAB0(int x, int z, void *vertices, int count);
-int func_800D3FD8(void);
-int func_800D3F64(int sound, int handle);
+int rand(void);
 
 /* Per-room data: the colour ramp of the ring sprite and the damped sparks,
  * and the word the room's slot setter writes. */

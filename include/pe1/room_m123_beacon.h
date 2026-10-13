@@ -2,14 +2,23 @@
 #define PE1_ROOM_M123_BEACON_H
 
 #include "common.h"
+#include "pe1/asset_find.h"
+#include "pe1/field_model_draw.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/field_transform_point.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/render_prim.h"
-#include "pe1/field_model_draw.h"
+#include "pe1/scene_archive.h"
 
-
-/* room_m123 joint beacon (func_80193618): follows joint 0x17 of the actor,
+/* room_m123 joint beacon (RoomM123_JointBeacon): follows joint 0x17 of the actor,
  * swells, pulses and fades, tags the player once on contact, and draws a glow
  * sprite pair with star fans, a fading ground ring of three sprites, a
  * turning model while the effect starts and three passes of a second model. */
@@ -66,64 +75,19 @@ typedef struct RoomM123BeaconOffset {
     s32 word[2];
 } __attribute__((packed)) RoomM123BeaconOffset;
 
-typedef struct RoomM123BeaconArchive {
-    void *channel;
-} RoomM123BeaconArchive;
-
-/* The sprite parameter block at 0x800F3368 (RenderEffectParameters). */
-typedef struct RoomM123BeaconParams {
-    u16 parameter00;
-    u16 parameter02;
-    u16 palette;
-    u16 parameter06;
-    u16 tpage;
-    u16 parameter0A;
-    s16 depth;
-    u16 extent_x;
-    u16 extent_y;
-} RoomM123BeaconParams;
-
 typedef struct RoomM123BeaconColor {
     u8 r, g, b, code;
 } RoomM123BeaconColor;
 
-extern RoomM123BeaconParams D_800F3368;
-extern u16 D_800E1204[];
-extern u16 D_800E2850[];
-extern int D_800F3428;
-extern int D_800E27EC;
-extern RoomM123BeaconChannel *D_800F32D0;
-extern RoomM123BeaconEvent *D_800E2368;
-extern RoomM123BeaconEntity *D_8009D254;
-extern RoomM123BeaconArchive D_800B0E64;
+extern struct BattleEntity *D_8009D254;
 extern RoomM123BeaconOffset D_8018F1E8;
-extern u8 *D_80195698;
-extern u8 *D_8019569C;
-extern u8 D_8019550C[];
-extern u16 D_800E11FA;
-extern u16 D_800E11EA;
-extern u16 D_800E11E4[];
+extern u8 *g_RoomM123BeaconModel0;
+extern u8 *g_RoomM123BeaconModel1;
+extern u8 g_RoomM123BeaconColorTrack[];
 
-u8 *func_8006E498(void *channel, int id);
-void func_800C6D5C(u8 *data, u8 x_offset, u8 y_offset);
-void func_800C6FA0(u8 *data, u16 factor);
-void func_800D3BC8(GteShortVector *position, int scale_x, int scale_y, int texture,
+void FieldFx_DrawPulledSprite(GteShortVector *position, int scale_x, int scale_y, int texture,
                    int clut, int page, int intensity, int unused, int angle);
-void func_800CFB7C(GteShortVector *angles, s16 distance, GteShortVector *out);
-void func_800CEE20(GteShortVector *position, GteShortVector *rotation,
-                   int scale_x, int scale_y, int texture, int clut,
-                   int page, int intensity, RoomM123BeaconColor *color);
-void func_800D004C(GteShortVector *position, int width, int height, int segments,
-                   GteShortVector *rotation, int scale_x, int scale_y,
-                   RoomM123BeaconColor *color0, RoomM123BeaconColor *color1,
-                   int intensity, int mode);
-void func_800CF3AC(void *track, RoomM123BeaconColor *color, int time);
-void func_800CE9D4(void *owner, int index, void *out);
-void func_800CE8F0(void *pool, int index, void *offset, void *position);
-int func_800CEB8C(void *position, GteShortVector *target, int radius);
-u16 GetClut(int x, int y);
+int FieldFx_IsPlayerInSegmentBand(void *position, GteShortVector *target, int radius);
 GteMatrix *MulMatrix0(GteMatrix *first, GteMatrix *second, GteMatrix *out);
-int rcos(int angle);
-int rsin(int angle);
 
 #endif

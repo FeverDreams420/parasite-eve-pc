@@ -2,15 +2,25 @@
 #define PE1_ROOM_M005_BEACON_H
 
 #include "common.h"
+#include "pe1/asset_find.h"
+#include "pe1/field_model_draw.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/field_transform_point.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/render_prim.h"
-#include "pe1/field_model_draw.h"
 #include "pe1/room_floor.h"
+#include "pe1/room_m005_drifting_sprite.h"
+#include "pe1/scene_archive.h"
 
-
-/* room_m005 joint beacon (func_8018FDC4): follows joint 0x14 of the actor,
+/* room_m005 joint beacon (RoomM005_JointBeacon): follows joint 0x14 of the actor,
  * sheds drifting sprites, swells and shrinks, tags the player on contact and
  * draws four passes of a model, three glow sprites and a turning second
  * model while the effect starts. */
@@ -72,63 +82,19 @@ typedef struct RoomM005BeaconOffset {
     s32 word[2];
 } __attribute__((packed)) RoomM005BeaconOffset;
 
-typedef struct RoomM005BeaconArchive {
-    void *channel;
-} RoomM005BeaconArchive;
-
-/* The sprite parameter block at 0x800F3368 (RenderEffectParameters). */
-typedef struct RoomM005BeaconParams {
-    u16 parameter00;
-    u16 parameter02;
-    u16 palette;
-    u16 parameter06;
-    u16 tpage;
-    u16 parameter0A;
-    s16 depth;
-    u16 extent_x;
-    u16 extent_y;
-} RoomM005BeaconParams;
-
 typedef struct RoomM005BeaconColor {
     u8 r, g, b, code;
 } RoomM005BeaconColor;
 
-extern RoomM005BeaconParams D_800F3368;
-extern u16 D_800E1204[];
-extern u16 D_800E2850[];
-extern int D_800F3428;
-extern int D_800E27EC;
-extern RoomM005BeaconChannel *D_800F32D0;
-extern RoomM005BeaconEvent *D_800E2368;
-extern RoomM005BeaconEntity *D_8009D254;
-extern RoomM005BeaconArchive D_800B0E64;
+extern struct BattleEntity *D_8009D254;
 extern RoomM005BeaconOffset D_8018F010;
-extern RoomM005BeaconSpawnChannel *D_800F33E0;
-extern u8 *D_80190B94;
-extern u8 *D_80190B98;
-extern GteShortVector D_80190BA0;
-extern GteShortVector D_80190BA8;
-extern u16 D_800E11FA;
-extern u16 D_800E11EA;
-extern u16 D_800E11E4[];
+extern u8 *g_RoomM005BeaconModel0;
+extern u8 *g_RoomM005BeaconModel1;
+extern GteShortVector g_RoomM005BeaconOffset;
+extern GteShortVector g_RoomM005BeaconCenter;
 
-u8 *func_8006E498(void *channel, int id);
-void func_800C6D5C(u8 *data, u8 x_offset, u8 y_offset);
-void func_800C6FA0(u8 *data, u16 factor);
-void func_800C70EC(u8 *data, int r, int g, int b);
-void func_800CFB7C(GteShortVector *angles, s16 distance, GteShortVector *out);
-void func_800CEE20(GteShortVector *position, GteShortVector *rotation,
-                   int scale_x, int scale_y, int texture, int clut,
-                   int page, int intensity, RoomM005BeaconColor *color);
-void func_800CE9D4(void *owner, int index, void *out);
-void func_800CE8F0(void *pool, int index, void *offset, void *position);
-int func_800CEB8C(void *position, GteShortVector *target, int radius);
-u16 GetClut(int x, int y);
-int rcos(int angle);
-int rsin(int angle);
-int func_800CE560(void *pool, int count, int size, void *callback);
-RoomM005BeaconSprite *func_800CE610(void *pool);
-int func_80071A54(void);
-int func_8018FB84(int mode, RoomM005BeaconSprite *sprite);
+void FieldFx_ModelShiftColors(u8 *data, int r, int g, int b);
+int FieldFx_IsPlayerInSegmentBand(void *position, GteShortVector *target, int radius);
+int rand(void);
 
 #endif

@@ -2,6 +2,14 @@
 #define PE1_ROOM_M404_H
 
 #include "common.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/field_transform_point.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 
 typedef struct { s32 word[2]; } __attribute__((packed)) RoomTemplate8;
 typedef struct RoomM404Node {
@@ -21,21 +29,6 @@ typedef struct RoomM404Particle {
     s16 vx, vy, vz, unused0E;
     s16 state, timer;
 } RoomM404Particle;
-extern RoomTemplate8 D_8018F208;
-extern s32 D_800E27EC;
-extern volatile u16 D_800E11EA;
-extern u16 D_800E2850[];
-extern volatile s16 D_800F3368, D_800F336A, D_800F3376, D_800F3378;
-extern volatile s16 D_800F336C, D_800F336E, D_800F3372, D_800F3374, D_800F3370;
-extern RoomM404Channel *D_800F32D0, *D_800F33E0;
-extern RoomM404EventState *D_800E2368;
-extern int func_800D3FD8(void);
-extern void func_800D3F64(int, int);
-extern int func_800CE560(void *, int, int, void *);
-extern void func_800CE8F0(void *, int, void *, void *);
-extern void func_800CE9D4(void *, int, void *);
-extern RoomM404Particle *func_800CE610(void *);
-extern void func_800CFB7C(void *, int, void *);
-extern void func_80192540(void);
+extern const RoomTemplate8 D_8018F208;
 
 #endif

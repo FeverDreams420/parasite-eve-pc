@@ -3,10 +3,11 @@
 
 #include "common.h"
 #include "pe1/gte_types.h"
-#include "pe1/render_prim.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
+#include "pe1/render_prim.h"
 
-/* Field engine rotated quad (func_800D2370): a gouraud textured rectangle
+/* Field engine rotated quad (FieldFx_DrawRotatedQuad): a gouraud textured rectangle
  * spanned in the local XZ plane, turned by a YXZ rotation about a projected
  * anchor and drawn as a PSY-Q POLY_GT4. */
 
@@ -33,12 +34,9 @@ typedef struct FieldGt4Packet {
 PE1_STATIC_ASSERT(sizeof(FieldGt4Packet) == 0x34, field_gt4_packet_size);
 
 /* Black default for a missing corner colour. */
-extern RenderColor D_800C22A0;
+extern RenderColor g_FieldFxBlackColor;
 /* Texture page of the current sprite parameter block. */
-extern u16 D_800F3370;
 
-void SetPolyGT4(FieldGt4Packet *packet);
 void MulRotMatrix(GteMatrix *matrix);
-void AddPrim(unsigned int *orderingEntry, unsigned int *primitive);
 
 #endif /* PE1_FIELD_ROTATED_QUAD_H */

@@ -2,12 +2,9 @@
 #define PE1_RENDER_ANIMATION_FRAME_H
 
 #include "common.h"
+#include "pe1/asset_find.h"
 #include "pe1/render_anim_position.h"
-
-typedef struct RenderAnimVramCounter {
-    int value;
-    char reserved[8];
-} RenderAnimVramCounter;
+#include "pe1/render_buffers.h"
 
 typedef struct RenderAnimFrameData {
     u8 reserved00[2];
@@ -48,21 +45,23 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderAnimPlayer, z) - 0x28 ==
                   render_anim_player_position_z_view);
 
 extern int g_BattleAttackAnimFrame;
-extern RenderAnimActor *g_ActiveActor[3];
-extern RenderAnimPlayer *g_PlayerEntity[3];
-extern int g_ActiveDrawSlot[3];
-extern RenderAnimVramCounter g_RenderAnimVramOffset;
-/* Distinct views reproduce the original load and later update. */
-extern RenderAnimVramCounter g_RenderAnimVramOffsetLoad asm("g_RenderAnimVramOffset");
-extern RenderAnimVramCounter g_RenderAnimVramOffsetUpdate asm("g_RenderAnimVramOffset");
-extern void *D_800B0DF8[3];
-extern u8 *g_OtBufferTable[];
-extern u8 *g_RenderAnimBufferBase[];
+extern struct Combatant *g_ActiveActor;
+extern struct FieldActor *g_PlayerEntity;
+/* Byte offset of the next free packet in the current draw buffer. */
+extern int g_DrawPacketOffset;
 
-void Asset_Find08Alt(int id, int zero, int x, int y, int z);
+/* Scratchpad buffers for the wireframe pass: projected screen XY per
+ * vertex and its SZ depth. */
+typedef struct RenderWireScratch {
+    u32 *screenXY;
+    s16 *depth;
+} RenderWireScratch;
+extern RenderWireScratch g_WireScratch;
+
 void Render_SetGteScreenOffset(void);
-int Render_DecompressAnimFrame(void *anim, void *entity, int size, int width,
-                               void *ot, void *buffer);
+struct RenderAnimFrame;
+int Render_DrawWireframeModel(struct RenderAnimFrame *frame, void *position, int scale,
+                              int yaw, void *ot, u8 *buffer);
 void Render_ResetGteScreenOffset(void);
 void Render_AnimationFrame(void);
 

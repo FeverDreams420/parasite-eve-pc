@@ -8,8 +8,10 @@ import subprocess
 import tempfile
 import unittest
 
+from tools.tests.csource import find_definition
+
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT/'src/main/psyq/libgpu/p33.c'
+SOURCE = find_definition('SetDrawTPage')
 
 
 class SetDrawTPageTests(unittest.TestCase):

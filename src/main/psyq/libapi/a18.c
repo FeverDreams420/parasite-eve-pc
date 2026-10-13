@@ -1,4 +1,5 @@
 /* PSY-Q LIBAPI A18: InitPAD2. */
+
 #include "pe1/psyq_bios.h"
 
 PSYQ_BIOS_TRAMPOLINE(InitPAD2, 0xB0, 0x12);

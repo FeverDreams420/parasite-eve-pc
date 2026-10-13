@@ -1,9 +1,9 @@
 /* ASSEMBLER: GNU */
 /* PSY-Q LIBPAD WAITRC2: setRC2wait, chkRC2wait. */
+
 #include "pe1/psyq_pad_main.h"
 
-extern u32 g_TimerTimeoutStart;
-extern u32 g_TimerTimeoutLimit;
+#include "waitrc2_externs.h"
 
 void setRC2wait(int limit) {
     int start = *(volatile u16 *)0x1F801120;

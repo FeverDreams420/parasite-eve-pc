@@ -1,63 +1,66 @@
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import host_unit  # noqa: E402
 
 
 class CdSendCommandTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_command_state_transitions(self):
-        source = (ROOT / "src/main/cdrom/CdRom_SendCmd.c").read_text()
-        source = source.replace(
-            '#include "pe1/psyq_cd.h"',
-            'int CD_cw(int, void *, unsigned char *, int);\n'
-            '#define g_CdRomEventCommandState (*(unsigned char (*)[80])storage.bytes)\n'
-            '#define g_CdRomCmdTimeout (*(int *)(storage.bytes + 64))')
-        source = source.replace("extern int g_CdRomCmdLongTimeoutTable[];", "")
+        source = host_unit("LIBDS_DSSYS_1_text_368")
+        # The sender reaches the command window back through its timeout word
+        # (CDROM_EVENT_STATE_FROM_TIMEOUT), so on the host that word must be
+        # the readyResult field of the same object, as it is in retail RAM.
+        source, count = re.subn(r'extern\s+int\s+g_CdRomCmdTimeout\b[^;]*;',
+            "#define g_CdRomCmdTimeout "
+            "(*(int *)&g_CdRomEventCommandState.command.read.readyResult)", source)
+        self.assertEqual(count, 1)
         harness = r'''
 #include <assert.h>
 #include <stdint.h>
-#include <string.h>
-static union { void *alignment; unsigned char bytes[80]; } storage;
-#define D_8009B558 (storage.bytes)
-#define timeoutWords ((int *)(storage.bytes + 64))
-static int g_CdRomCmdLongTimeoutTable[256];
+#define memcpy __builtin_memcpy
+#define memcmp __builtin_memcmp
+#define memset __builtin_memset
+''' + source + r'''
+CdRomEventCommandState g_CdRomEventCommandState;
+#define state g_CdRomEventCommandState
+int g_CdRomCmdLongTimeoutTable[256];
 static int commandValue, statusValue, hasParam, outcome, flushes, copies, sends;
 static unsigned char parameters[4] = {0x12, 0x34, 0x56, 0x78};
-''' + source + r'''
 void CD_flush(void) {
     assert(flushes++ == 0 && copies == 0 && sends == 0);
-    assert(storage.bytes[0] == 0xCC);
+    assert(state.pendingCommand == 0xCC);
 }
 void parcpy(void *dst, const void *src) {
     assert(flushes == 1 && copies++ == 0 && sends == 0);
-    assert(dst == storage.bytes + 1 && src == parameters);
-    assert(storage.bytes[0] == commandValue);
+    assert(dst == state.pendingParamBytes && src == parameters);
+    assert(state.pendingCommand == commandValue);
     memcpy(dst, src, 4);
 }
-int CD_cw(int command, void *param, unsigned char *a, int b) {
+int CD_cw(int command, void *param, u8 *a, int b) {
     int rewritten = (commandValue == 7 && statusValue == 1) ||
                     (commandValue == 8 && statusValue != 1);
     assert(flushes == 1 && copies == hasParam && sends++ == 0);
     assert(command == (rewritten ? 1 : commandValue));
     assert(a == 0 && b == 1);
-    /* Only the low 32 bits belong to the PS1 pointer slot. A host pointer
-       store is wider, while the original command rewrite clears one word. */
-    assert((uint32_t)(uintptr_t)param ==
-           ((!rewritten && hasParam) ?
-            (uint32_t)(uintptr_t)(storage.bytes + 1) : 0));
-    assert(timeoutWords[0] == (g_CdRomCmdLongTimeoutTable[commandValue] ? 960 : 30));
-    assert(timeoutWords[1] == 0);
-    assert(storage.bytes[40] == 0xCC);
-    if (hasParam) assert(memcmp(storage.bytes + 1, parameters, 4) == 0);
+    assert(param == ((!rewritten && hasParam) ? state.pendingParamBytes : 0));
+    assert(state.command.read.readyResult ==
+           (g_CdRomCmdLongTimeoutTable[commandValue] ? 960 : 30));
+    assert(state.command.retryAttempts == 0);
+    assert(state.command.read.lastCommand == 0xCC);
+    if (hasParam) assert(memcmp(state.pendingParamBytes, parameters, 4) == 0);
     /* The sender's post-call path must reload the command and clear both
        timeout words on failure, even when the low-level call changed them. */
-    storage.bytes[0] = 0x5A;
-    timeoutWords[0] = 111;
-    timeoutWords[1] = 222;
+    state.pendingCommand = 0x5A;
+    state.command.read.readyResult = 111;
+    state.command.retryAttempts = 222;
     return outcome;
 }
 int main(void) {
@@ -67,17 +70,17 @@ int main(void) {
     for (p = 0; p < 2; ++p) for (t = 0; t < 2; ++t)
     for (o = 0; o < 4; ++o) {
         int result;
-        memset(&storage, 0xCC, sizeof(storage));
+        memset(&state, 0xCC, sizeof(state));
         commandValue = c; statusValue = s; hasParam = p; outcome = outcomes[o];
         flushes = copies = sends = 0;
-        storage.bytes[51] = s;
+        state.command.read.eventFlags.bit1 = s;
         g_CdRomCmdLongTimeoutTable[c] = t ? -7 : 0;
         result = LIBDS_DSSYS_1_text_368(c, p ? parameters : 0);
         assert(result == (outcome == 0));
         assert(flushes == 1 && copies == p && sends == 1);
-        assert(storage.bytes[40] == (outcome ? 0xCC : 0x5A));
-        assert(timeoutWords[0] == (outcome ? 0 : 111));
-        assert(timeoutWords[1] == (outcome ? 0 : 222));
+        assert(state.command.read.lastCommand == (outcome ? 0xCC : 0x5A));
+        assert(state.command.read.readyResult == (outcome ? 0 : 111));
+        assert(state.command.retryAttempts == (outcome ? 0 : 222));
     }
     return 0;
 }

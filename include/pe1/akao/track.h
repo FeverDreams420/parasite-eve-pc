@@ -129,12 +129,17 @@ typedef char AkaoVoiceEnvelopeSlotSizeCheck[
     (sizeof(AkaoVoiceEnvelopeSlot) == 8) ? 1 : -1];
 
 /* Source descriptor passed when a nested AKAO stream allocates a voice. */
+/* The pan is read as a byte and written as a whole word. */
+typedef union AkaoNestedPan {
+    AkaoU8 value;
+    AkaoU32 word;
+} AkaoNestedPan;
+
 typedef struct AkaoNestedSource {
     /* 0x00 */ unsigned char pad_00[4];
     /* 0x04 */ AkaoU32 key_off_mask;
     /* 0x08 */ AkaoU32 key_on_mask;
-    /* 0x0C */ AkaoU8 pan;
-    /* 0x0D */ unsigned char pad_0D[3];
+    /* 0x0C */ AkaoNestedPan pan;
     /* 0x10 */ AkaoU32 pan_target;
 } AkaoNestedSource;
 
@@ -151,25 +156,35 @@ typedef struct AkaoSequencerBank {
     /* 0x00 */ AkaoU32 status_flags;
     /* 0x04 */ AkaoU32 active_voice_mask;
     /* 0x08 */ AkaoU32 pending_voice_mask;
-    /* 0x0C */ AkaoU32 field_0C;
+    /* 0x0C */ AkaoU32 yield_voice_mask; /* sequence header word 2; these channels release voices that sound effects claim */
     /* 0x10 */ AkaoU32 key_on_request_mask;
     /* 0x14 */ AkaoU32 allocated_voice_mask;
     /* 0x18 */ AkaoU32 key_off_request_mask;
     /* 0x1C */ AkaoU32 pending_restore_mask;
-    /* 0x20 */ AkaoU32 field_20[5];
+    /* 0x20 */ AkaoU32 tempo;       /* 16.16; SeqOp_SetTempo */
+    /* 0x24 */ AkaoU32 tempo_delta; /* per-tick step while tempo_slide_duration runs */
+    /* 0x28 */ AkaoU32 tick_accumulator; /* beat timer accumulator, see AkaoTickBank */
+    /* 0x2C */ AkaoU8 *sequence_base; /* rebased along with voice program pointers */
+    /* 0x30 */ AkaoU32 reserved_voice_mask; /* voices taken by parent-track notes */
     /* 0x34 */ AkaoU32 key_off_dirty_mask;
     /* 0x38 */ AkaoU32 volume_dirty_mask;
     /* 0x3C */ AkaoU32 adsr_dirty_mask;
-    /* 0x40 */ AkaoU32 field_40[2];
-    /* 0x48 */ AkaoU32 pitch_current;
-    /* 0x4C */ AkaoU32 pitch_delta;
-    /* 0x50 */ AkaoS16 pitch_slide_duration; /* signed countdown in SPU_StepReverbLoad */
-    /* 0x52 */ AkaoU16 field_52;
+    /* 0x40 */ AkaoU32 volume;       /* 16.16 master volume */
+    /* 0x44 */ AkaoU32 volume_delta; /* per-tick step while volume_slide_duration runs */
+    /* 0x48 */ int pitch_current; /* 16.16 bank pitch, set from a 7-bit command value */
+    /* 0x4C */ int pitch_delta;   /* signed per-tick increment for rising or falling slides */
+    /* 0x50 */ AkaoS16 pitch_slide_duration; /* signed countdown in Spu_StepReverbLoad */
+    /* 0x52 */ AkaoU16 tempo_slide_duration;
     /* 0x54 */ AkaoU16 bank_id;
-    /* 0x56 */ AkaoU16 field_56;
+    /* 0x56 */ AkaoU16 condition_value; /* compared by the conditional-jump opcode */
     /* 0x58 */ AkaoU16 volume_slide_duration;
-    /* 0x5A */ AkaoU16 field_5A;
-    /* 0x5C */ AkaoU32 field_5C[3];
+    /* 0x5A */ AkaoU16 noise_clock; /* SpuSetNoiseClock value */
+    /* 0x5C */ AkaoU16 beats_per_measure;
+    /* 0x5E */ AkaoU16 beat;
+    /* 0x60 */ AkaoU16 ticks_per_beat;
+    /* 0x62 */ AkaoU16 tick;
+    /* 0x64 */ AkaoU16 measure;
+    /* 0x66 */ AkaoU16 pad_66;
 } AkaoSequencerBank;
 typedef char AkaoSequencerBankSizeCheck[
     (sizeof(AkaoSequencerBank) == 0x68) ? 1 : -1];
@@ -192,8 +207,8 @@ typedef struct AkaoTrack {
     /* 0x030 */ AkaoU32 pitch_base;
     /* 0x034 */ AkaoU32 voice_mask_a;
     /* 0x038 */ AkaoU32 flags;
-    /* 0x03C */ AkaoU32 voice_mask_b;
-    /* 0x040 */ AkaoU32 pan_base;
+    /* 0x03C */ AkaoU32 pitch_offset; /* 8.8 voice pitch command value */
+    /* 0x040 */ AkaoU32 pitch_offset_step; /* signed increment accessed as a word by slides */
     /* 0x044 */ int expression_value;
     /* 0x048 */ int expression_delta;
     /* 0x04C */ int pitch_slide_step;
@@ -210,10 +225,10 @@ typedef struct AkaoTrack {
     /* 0x06A */ AkaoS16 volume;
     /* 0x06C */ AkaoU16 volume_base;
     /* 0x06E */ AkaoU16 volume_duration;
-    /* 0x070 */ AkaoU16 field_70;
+    /* 0x070 */ AkaoU16 pitch_offset_duration; /* countdown in akao/sequencer.c */
     /* 0x072 */ AkaoU16 expression_duration;
     /* 0x074 */ AkaoU16 panpot_duration;
-    /* 0x076 */ AkaoU16 panpot;
+    /* 0x076 */ AkaoU16 panpot; /* 8.8 stereo position, set by the voice pan commands */
     /* 0x078 */ AkaoU16 panpot_slide_duration;
     /* 0x07A */ AkaoU16 pitch_slide_steps;
     /* 0x07C */ AkaoU16 panpot_step;
@@ -255,7 +270,8 @@ typedef struct AkaoTrack {
     /* 0x0D2 */ AkaoS16 fixed_note_length;
     /* 0x0D4 */ AkaoS16 volume_delta;
     /* 0x0D6 */ AkaoS16 pitch_slide_delta;
-    /* 0x0D8 */ AkaoS16 pan_target;
+    /* 0x0D8 */ AkaoS16 pan_target; /* 8.8 split between the source and stereo-copy SPU slots
+                                   * (Spu_CopyVoiceToStereoSlot); separate from panpot */
     /* 0x0DA */ AkaoS16 pan_delta;
     /* 0x0DC */ AkaoS16 panpot_delta;
     /* 0x0DE */ AkaoS16 expression;
@@ -284,6 +300,11 @@ typedef struct AkaoTrack {
     /* 0x11A */ AkaoS16 volume_right;
 } AkaoTrack;
 
+/* The voice record that contains a member the voice loops walk: retail biases
+ * those loop cursors to one field and reaches the record back from it. */
+#define AKAO_TRACK_OF(cursor, member) \
+    ((AkaoTrack *)((unsigned char *)(cursor) - PE1_OFFSETOF(AkaoTrack, member)))
+
 /* View at AkaoTrack::update_flags. Tables using this view retain the full
  * AkaoTrack stride while exposing the field the sequencer updates. */
 typedef struct AkaoTrackUpdateSlot {
@@ -300,5 +321,27 @@ typedef struct AkaoVoiceBank {
 #define AKAO_TRACK_VOICE(track) (*(AkaoVoiceParams *)&(track)->assigned_voice_index)
 
 typedef void (*AkaoTrackHandler)(AkaoTrack *track);
+
+/* Track record as the timer tick and the voice driver see it: the whole
+ * record, its words, and the timing fields AkaoTrack leaves anonymous. */
+typedef union AkaoTickTrack {
+    AkaoTrack track;
+    AkaoU32 words[sizeof(AkaoTrack) / 4];
+    struct {
+        /* 0x000 */ unsigned char pad_000[0x2C];
+        /* 0x02C */ AkaoU32 key_on_mask;
+        /* 0x030 */ unsigned char pad_030[0x20];
+        /* 0x050 */ AkaoU32 tick_count;
+        /* 0x054 */ AkaoU16 parent_track_id;
+        /* 0x056 */ AkaoU16 note_length;
+        /* 0x058 */ AkaoU16 gate_length;
+    } timing;
+} AkaoTickTrack;
+typedef char AkaoTickTrackSizeCheck[sizeof(AkaoTickTrack) == 0x11C ? 1 : -1];
+
+/* The 48 sequencer tracks: 24 for music, 24 saved or for sound effects. */
+extern AkaoTickTrack D_800B8AC0[48];
+
+void Seq_StartNestedStreams(AkaoNestedSource *source, void *first, void *second);
 
 #endif

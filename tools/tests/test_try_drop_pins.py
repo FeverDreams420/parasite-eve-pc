@@ -1,27 +1,29 @@
+import contextlib
+import io
 import pathlib
+import tempfile
 import unittest
 from unittest.mock import patch
 
 from tools.scripts import try_drop_pins
 
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
-
-# Lines whose pin match used to swallow every asm except the last one.
+# Lines whose pin match used to swallow every asm except the last one. The
+# shapes come from real units (libpad, render object helpers, the scene_e20
+# hover orb); a fixture is used because the live pins keep being removed.
+FIXTURE = '''int f(int a, int b, int c) {
+    register int x asm("$7"), y asm("$6");
+    register int p asm("$20"), q asm("$21"), r asm("$22");
+    register short *u asm("$12"), *v asm("$13"), *w asm("$14");
+    register int single asm("$16");
+    return a + b + c + x + y + p + q + r + *u + *v + *w + single;
+}
+'''
 CLAUSE_LINES = (
-    ("src/main/psyq/libpad/padportd_5.c", 6, ('asm("$7")', 'asm("$6")')),
-    ("src/main/render/Render_DrawObjectAndClut.c", 95, ('asm("$20")', 'asm("$21")', 'asm("$22")')),
-    ("src/main/render/Render_ObjectStateHelpers.c", 317, ('asm("$12")', 'asm("$13")')),
-    (
-        "src/overlays/scene_e20/RoomEffect_HoverOrbController_8018F750.c",
-        302,
-        ('asm("$12")', 'asm("$13")', 'asm("$14")'),
-    ),
-    (
-        "src/overlays/scene_e20/RoomEffect_HoverOrbController_8018F750.c",
-        326,
-        ('asm("$12")', 'asm("$13")', 'asm("$14")'),
-    ),
+    (2, ('asm("$7")', 'asm("$6")')),
+    (3, ('asm("$20")', 'asm("$21")', 'asm("$22")')),
+    (4, ('asm("$12")', 'asm("$13")', 'asm("$14")')),
+    (5, ('asm("$16")',)),
 )
 
 
@@ -32,26 +34,30 @@ class _Baseline(object):
 
 class TryDropPinsClauseTests(unittest.TestCase):
     def test_main_tries_every_asm_clause_on_the_line(self):
-        for rel, lineno, expected in CLAUSE_LINES:
-            with self.subTest(rel=rel, line=lineno):
-                original = (ROOT / rel).read_text()
-                attempted = []
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "pins.c"
+            path.write_text(FIXTURE)
+            attempted = []
 
-                def try_edit(src, text, candidate, baseline):
-                    attempted.append(candidate)
-                    return False
+            def try_edit(src, text, candidate, baseline):
+                attempted.append(candidate)
+                return False
 
-                with patch.object(try_drop_pins, "snapshot", return_value=_Baseline()), \
-                     patch.object(try_drop_pins, "try_edit", side_effect=try_edit), \
-                     patch.object(try_drop_pins, "compile_one", return_value=True):
-                    try_drop_pins.main([rel])
+            with patch.object(try_drop_pins, "snapshot", return_value=_Baseline()), \
+                 patch.object(try_drop_pins, "try_edit", side_effect=try_edit), \
+                 patch.object(try_drop_pins, "compile_one", return_value=True), \
+                 contextlib.redirect_stdout(io.StringIO()):
+                try_drop_pins.main([str(path)])
 
-                self.assertEqual((ROOT / rel).read_text(), original)
+            self.assertEqual(path.read_text(), FIXTURE)
+
+        original = FIXTURE.splitlines()
+        for lineno, expected in CLAUSE_LINES:
+            with self.subTest(line=lineno):
                 removed = []
                 for candidate in attempted:
-                    before = original.splitlines()[lineno - 1]
                     after = candidate.splitlines()[lineno - 1]
-                    if before == after:
+                    if original[lineno - 1] == after:
                         continue
                     gone = [clause for clause in expected if clause not in after]
                     kept = [clause for clause in expected if clause in after]
@@ -59,3 +65,25 @@ class TryDropPinsClauseTests(unittest.TestCase):
                     self.assertEqual(kept, [clause for clause in expected if clause != gone[0]])
                     removed.append(gone[0])
                 self.assertEqual(tuple(removed), expected)
+
+    def test_kept_removal_is_written_back(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "pins.c"
+            path.write_text(FIXTURE)
+
+            def try_edit(src, text, candidate, baseline):
+                # Only the single pin is redundant; every other one is load-bearing.
+                return 'asm("$16")' in text and candidate == text.replace(' asm("$16")', '')
+
+            with patch.object(try_drop_pins, "snapshot", return_value=_Baseline()), \
+                 patch.object(try_drop_pins, "try_edit", side_effect=try_edit), \
+                 patch.object(try_drop_pins, "compile_one", return_value=True), \
+                 contextlib.redirect_stdout(io.StringIO()):
+                try_drop_pins.main([str(path)])
+
+            self.assertEqual(path.read_text(),
+                             FIXTURE.replace(' asm("$16")', ''))
+
+
+if __name__ == "__main__":
+    unittest.main()

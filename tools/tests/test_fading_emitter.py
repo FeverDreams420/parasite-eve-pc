@@ -6,15 +6,18 @@ no claim about arbitrary negative table indices or physical rendering.
 from pathlib import Path
 import itertools
 import struct
+import sys
 import unittest
 from importlib.util import find_spec
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text  # noqa: E402
 
 
 class FadingEmitterTests(unittest.TestCase):
     def test_plain_source(self):
-        source = (ROOT/'src/main/engine/FieldEng_FadingEmitter.c').read_text()
+        source = function_text('FieldFx_FadeEmitter')
         self.assertNotRegex(source, r'\b(?:asm|__asm__|INCLUDE_ASM|REGALLOC_BARRIER)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
@@ -25,8 +28,8 @@ class FadingEmitterTests(unittest.TestCase):
         from unicorn import mips_const as R
         BASE,SIZE=0x800DF6AC,464
         STOP,SP,GP=0x80010000,0x801F0000,0x8009CD70
-        syms={'func_800CE560':0x800CE560,'func_800CE610':0x800CE610,
-              'func_800CEDA8':0x800CEDA8,'func_800DEFFC':0x800DEFFC}
+        syms={'FieldFx_InitCallbackList':0x800CE560,'FieldFx_AcquireCallbackSlot':0x800CE610,
+              'FieldFx_EnsureEffectTexturePage':0x800CEDA8,'FieldFx_FadeParticle':0x800DEFFC}
         retail,code=[(ROOT/p).read_bytes()[BASE-0x8000F800:BASE-0x8000F800+SIZE]
                      for p in ('assets/USA/main.exe','build/USA/main.exe')]
         self.assertEqual(len(code),SIZE)
@@ -39,7 +42,7 @@ class FadingEmitterTests(unittest.TestCase):
                                     (-2,0,3,4,31,32,33,2147483647),(0,1,2)))
         saved=[getattr(R,f'UC_MIPS_REG_S{i}') for i in range(8)]+[R.UC_MIPS_REG_FP]
         def sx(v,n):return ((v+(1<<(n-1)))&((1<<n)-1))-(1<<(n-1))
-        hooks={syms['func_800CE560']:'init',syms['func_800CE610']:'alloc',syms['func_800CEDA8']:'display'}
+        hooks={syms['FieldFx_InitCallbackList']:'init',syms['FieldFx_AcquireCallbackSlot']:'alloc',syms['FieldFx_EnsureEffectTexturePage']:'display'}
         for label,body in (('retail',retail),('candidate',code)):
             m=Uc(UC_ARCH_MIPS,UC_MODE_MIPS32|UC_MODE_LITTLE_ENDIAN);m.mem_map(0,0x200000)
             def put(a,b):m.mem_write(a&0x1FFFFFFF,bytes(b))
@@ -85,7 +88,7 @@ class FadingEmitterTests(unittest.TestCase):
                 def call(kind,*args):return callback(kind,tuple(args),g,s,events)
                 if mode==0:
                     s(STATE,0,2);s(STATE+2,160,2)
-                    result=call('init',g(g(CHANNEL)+8),20,32,syms['func_800DEFFC'])
+                    result=call('init',g(g(CHANNEL)+8),20,32,syms['FieldFx_FadeParticle'])
                 elif mode==1:
                     if g(TIME)&3==0 and sx(g(STATE,2),16)<8:
                         p=call('alloc',g(g(CHANNEL)+8))

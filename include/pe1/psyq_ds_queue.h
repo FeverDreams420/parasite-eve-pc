@@ -42,13 +42,10 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(DsQueueCallback, callback) == 4,
                   ds_queue_callback_pointer_offset);
 PE1_STATIC_ASSERT(sizeof(DsQueueIndices) == 12, ds_queue_indices_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DsQueueIndices, count) == 8, ds_queue_count_offset);
-extern DsQueueIndices D_800A3600;
 void CQ_add_result(u32 id, u8 event, u8 *result);
 
-extern int D_8009B4BC[];
-extern u32 D_8009B53C;
-extern int D_800A3608, D_800A3604;
-extern CdDsReadQueueEntry D_800A3540[];
+extern int g_DsCommandHasParam[];
+extern u32 g_DsCommandSerial;
 int DsCommand(int command, void *parameter, DslCB callback,
                              int count);
 int DsPacket(int mode, DslLOC *position, int command,
@@ -60,6 +57,7 @@ int DS_system_status(int mode);
 int CQ_execute(void);
 int DS_cw(u8 command, void *parameter);
 int DsPosToInt(CdlLOC *);
+CdlLOC *DsIntToPos(int sector, CdlLOC *position);
 int DsSync(int id, void *result);
 
 #endif

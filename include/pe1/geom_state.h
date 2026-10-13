@@ -23,16 +23,32 @@
 #include "pe1/gte_types.h"
 #include "pe1/render_tint.h"
 
+/* The low byte selects the group; the remaining signed 24 bits hold an
+ * animation position with eight fractional bits. Halfword and packed-word
+ * accesses are also used by the slot setup commands. */
+typedef union GeomAnimationPosition {
+    u32 packed;
+    struct { u16 groupFraction; s16 frame; } parts;
+    struct { unsigned int group : 8; signed int value : 24; } bits;
+} GeomAnimationPosition;
+
+PE1_STATIC_ASSERT(sizeof(GeomAnimationPosition) == 4,
+                  geom_animation_position_size);
+
+/* Flags occupy the first byte; other paths read or update the full word. */
+typedef union GeomPackedFlags {
+    u32 packed;
+    struct { u8 flags; u8 reserved[3]; } b;
+} GeomPackedFlags;
+
+PE1_STATIC_ASSERT(sizeof(GeomPackedFlags) == 4, geom_packed_flags_size);
+
 /* 16-byte control entry. base = g_GeomState->ctrl_offset (+0x10), index << 4. */
 typedef struct GeomCtrlEntry {            /* 0x10 */
-    union {                               /* +0x00  u8 flags vs u32 packed (>>8 = count) */
-        u32 packed;
-        struct { u8 flags; u8 _b[3]; } b;
-    } head;
-    u16 field4;                           /* +0x04  (u32 readers use *(u32*)&field4) */
-    s16 field6;                           /* +0x06  (read sign-extended in Obj_GetEntryField6) */
-    s16 field8;                           /* +0x08 */
-    u16 fieldA;                           /* +0x0A */
+    GeomPackedFlags head;                /* +0x00: flags/count */
+    GeomAnimationPosition position;      /* +0x04 */
+    s16 step;                            /* +0x08 */
+    u16 elapsed;                         /* +0x0A */
     s32 slot_offset;                      /* +0x0C  added to entry base -> slot array */
 } GeomCtrlEntry;
 
@@ -43,23 +59,15 @@ typedef struct GeomAnimationSlot {
     s8 duration;
 } GeomAnimationSlot;
 
-typedef struct GeomAnimationControl {
-    union { u32 packed; struct { u8 flags; u8 padding[3]; } b; } head;
-    unsigned int group : 8;
-    signed int position : 24;
-    s16 step;
-    u16 elapsed;
-    s32 slotOffset;
-} GeomAnimationControl;
-
 PE1_STATIC_ASSERT(sizeof(GeomAnimationSlot) == 2, geom_animation_slot_size);
-PE1_STATIC_ASSERT(sizeof(GeomAnimationControl) == sizeof(GeomCtrlEntry),
-                  geom_animation_control_view_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomAnimationControl, step) == 8,
+PE1_STATIC_ASSERT(sizeof(GeomCtrlEntry) == 0x10, geom_control_entry_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomCtrlEntry, position) == 4,
+                  geom_animation_position_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomCtrlEntry, step) == 8,
                   geom_animation_step_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomAnimationControl, elapsed) == 10,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomCtrlEntry, elapsed) == 10,
                   geom_animation_elapsed_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomAnimationControl, slotOffset) == 12,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomCtrlEntry, slot_offset) == 12,
                   geom_animation_slots_offset);
 
 struct RenderTexturePagePacket;
@@ -75,8 +83,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomCoordinateBounds, minY) == 4,
 
 /* 56-byte render/mesh entry. Base = entry_offset (+0x14). */
 typedef struct GeomEntry {                /* 0x38 */
-    u8  flags;                            /* +0x00  bits 2,4,8,0x14,0x20 */
-    u8  pad01[3];                         /* +0x01 */
+    GeomPackedFlags head;                /* +0x00: flags/depth */
     u16 anim_mod_x;                       /* +0x04 */
     u16 anim_mod_y;                       /* +0x06 */
     u16 base_x;                           /* +0x08 */
@@ -86,8 +93,8 @@ typedef struct GeomEntry {                /* 0x38 */
     GeomCoordinateBounds bounds;         /* +0x10: limits applied before scr_x/scr_y stores */
     u16 disp_x;                           /* +0x18 */
     u16 disp_y;                           /* +0x1A */
-    s16 field1C;                          /* +0x1C  scroll/mirror/anim coef */
-    s16 field1E;                          /* +0x1E */
+    s16 speedX;                           /* +0x1C  added into the 8.8 position when flags bit 4 is set */
+    s16 speedY;                           /* +0x1E */
     s16 field20;                          /* +0x20 */
     s16 field22;                          /* +0x22 */
     u8  group;                            /* +0x24  == g_GeomGroupSel */
@@ -107,14 +114,13 @@ typedef struct GeomEntry {                /* 0x38 */
     } u30;
     union {                               /* +0x34: second packet-array base */
         struct RenderTexturePagePacket *pagePackets;
-        u8 storage[4];
     } u34;
 } GeomEntry;
 
 PE1_STATIC_ASSERT(sizeof(GeomEntry) == 0x38, geom_entry_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomEntry, u34) == 0x34, geom_entry_page_offset);
 struct RenderTilePacket;
-int Geo_LoadMeshEntry(GeomEntry *entry, struct RenderTilePacket *buffer, void **end);
+int Render_LoadMeshEntry(GeomEntry *entry, struct RenderTilePacket *buffer, void **end);
 
 
 /* Scrolling view of a 56-byte GeomEntry. Fractions are read as bytes but
@@ -134,9 +140,10 @@ typedef struct GeomScrollEntry {
     u8 reserved24[20];
 } GeomScrollEntry;
 
-/* Observed prefix of the scroll state, not a claim about its full extent.
- * This address-based view spans the interleaved screen-tint block too.
- * The origin pair is also written by script dispatch at 0x800BD028/2A. */
+/* Camera and view part of the scroll state (from 0x800BCF8C), with the
+ * interleaved screen-tint block. x/y is the camera position after clamping
+ * to the room bounds; a transition moves it from start to target over
+ * duration frames. The origin pair is also written by script dispatch. */
 typedef struct GeomScrollCoordinates {
     s16 x, y;
     u16 savedX, savedY;
@@ -144,10 +151,21 @@ typedef struct GeomScrollCoordinates {
     u16 startX, startY;
     u16 targetX, targetY;
     u16 elapsed, duration;
-    u32 *matrixWords;
-    u8 reserved1C[0x10];
+    u32 *matrixWords;           /* g_ViewMatrixSlot */
+    s32 *projectionDistance;    /* g_ProjectionSlot */
+    /* Viewport bounds saved by Render_DrawMeshList. */
+    s16 boundsMinX, boundsMaxX, boundsMinY, boundsMaxY;
+    /* Projected screen position of the active actor. */
+    s16 cameraOffsetX, cameraOffsetY;
     RenderTintState tint;
-    u8 reserved70[0x2C];
+    u8 meshTintLevel;           /* 0x70: g_RenderMeshTintLevel */
+    u8 groupSelect;             /* 0x71: g_GeomGroupSel, selected viewport */
+    s16 focusHeight;            /* 0x72: g_CameraFocusHeight */
+    GteMatrix cameraBasis;      /* 0x74: g_CameraBasisMatrix */
+    u16 baseAngleDigital;       /* 0x94: g_CameraBaseAngleDigital */
+    u16 baseAngleAnalog;        /* 0x96: g_CameraBaseAngleAnalog */
+    u8 otZ;                     /* 0x98: g_GeomOtZ */
+    u8 lightTint[3];            /* 0x99: g_RoomLightTint */
     s16 originX, originY;
 } GeomScrollCoordinates;
 
@@ -158,8 +176,8 @@ typedef struct GeomScrollState {
 
 /* The same state as the view reset (Render_InitViewState) writes it: every
  * halfword pair is cleared with one word store, and the two words after the
- * timer point at the current view matrix (the RenderMatrixSlot D_800BCFA4)
- * and at its projection distance (D_800BCFA8). */
+ * timer point at the current view matrix (the RenderMatrixSlot g_ViewMatrixSlot)
+ * and at its projection distance (g_ProjectionSlot). */
 typedef struct GeomScrollWords {
     u32 flags;
     u32 position;               /* x, y */
@@ -172,7 +190,7 @@ typedef struct GeomScrollWords {
     s32 *projectionDistance;
     u32 savedBoundsX;           /* saved viewport X bounds */
     u32 savedBoundsY;           /* saved viewport Y bounds */
-    u32 cameraOffset;           /* D_800BCFB4, D_800BCFB6 */
+    u32 cameraOffset;           /* cameraOffsetX, cameraOffsetY */
     u8 reserved30[0x70];
     u32 origin;                 /* originX, originY */
 } GeomScrollWords;
@@ -199,6 +217,12 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollState, position) == 4,
                   geom_scroll_position_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, originX) == 0x9C,
                   geom_scroll_origin_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, meshTintLevel) == 0x70,
+                  geom_scroll_mesh_tint_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, cameraBasis) == 0x74,
+                  geom_scroll_camera_basis_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, otZ) == 0x98,
+                  geom_scroll_ot_z_offset);
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollState, position.tint) == 0x30,
                   geom_scroll_tint_offset);
@@ -221,10 +245,10 @@ typedef struct GeomState {                /* header */
     u8  pad18[4];                         /* +0x18 */
     s32 entry_offset_1C;                  /* +0x1C  -> CameraViewport[] */
     u8  pad20[4];                         /* +0x20 */
-    u16 depth_offset;                     /* +0x24  Geo_ClipPoint input Z offset */
+    u16 depth_offset;                     /* +0x24  Render_ClipPoint input Z offset */
     u16 field26;                          /* +0x26 */
-    u16 clip_offset_x;                    /* +0x28  Geo_ClipPoint input X offset */
-    u16 clip_offset_y;                    /* +0x2A  Geo_ClipPoint input Y offset */
+    u16 clip_offset_x;                    /* +0x28  Render_ClipPoint input X offset */
+    u16 clip_offset_y;                    /* +0x2A  Render_ClipPoint input Y offset */
     u16 disp_src_x;                       /* +0x2C */
     u16 disp_src_y;                       /* +0x2E */
     s16 clip_min_x;                       /* +0x30 */
@@ -245,12 +269,11 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomState, entry_offset_1C) == 0x1C,
                   geom_camera_viewport_offset);
 
 extern GeomState * volatile g_GeomState;
-extern GeomState * volatile D_800B1624;
 
 extern u8 g_GeomGroupSel;
-int Scene_CheckBattleFlag(void);
-int Scene_IsBattleMode(void);
-int Scene_IsNotBattleMode(void);
+int Render_StepGroupAnimations(void);
+int Render_ScrollEntries(void);
+int Render_StepCameraTransition(void);
 
 /* 52-byte viewport records addressed through header offset 0x1C. */
 /* GPU state loading reads this 0x20-byte prefix of each viewport record using
@@ -308,6 +331,7 @@ typedef union GeomStateAddress {
     GeomEntry *entry;
     GeomEntryView *views;
     CameraViewport *viewport;
+    GeomAnimationSlot *slots;
     u8 *bytes;
     u32 word;
 } GeomStateAddress;
@@ -319,18 +343,29 @@ typedef union GeomStateAddress {
      (address).word = (base).word + (address).state->field + (extra))
 
 int Render_UpdateScrollPosition(void *position, int duration, int mode);
-extern s16 D_800BCFFE;
+extern s16 g_CameraFocusHeight[];
 extern int g_RenderStateFlags;
-extern u16 D_800BCF94, D_800BCF96, D_800BCF98, D_800BCF9A;
-extern u16 D_800BCF9C, D_800BCF9E, D_800BCFA0, D_800BCFA2;
+/* g_GeomScroll.state.position.screenOffsetX as its own symbol:
+ * Render_StepCameraTransition stores it through this name; with the record
+ * view cc1 schedules the following screenOffsetY computation differently. */
+extern u16 g_CameraScreenOffsetX;
 
-/* Existing absolute symbols expose overlapping views of the scroll state. */
-extern GeomScrollRecord D_800BCF88;
-extern char D_800BCFFC;
-extern GeomScrollCoordinates D_800BCF8C;
-extern u16 D_800BCF8E, D_800BCF90, D_800BCF92;
+/* Existing absolute symbols expose overlapping views of the scroll state.
+ * The symbol is the leading flags word, a volatile scalar: the grab effects
+ * (room_lib/grab_attack.c, scene_e19) read-modify-write it with
+ * absolute loads and stores, which any record view would turn into an
+ * address kept in a register. The renderer reads the whole state through
+ * g_GeomScroll, which generates the same code as a record declaration. */
+extern volatile int D_800BCF88;
+#define g_GeomScroll (*(GeomScrollRecord *)&D_800BCF88)
+/* The screen tint and fade parameters inside the scroll state. */
+#define g_ScreenTint (g_GeomScroll.state.position.tint)
+extern char g_RenderMeshTintLevel;
+/* Screen fade length and elapsed frames (Render_StartFadeIn/StepFade). */
+extern u8 g_RenderFadeFrameCount;
+extern u8 g_RenderFadeFrameCounter;
 
-int Geo_TransformPoint(GeomEntry *entry, int x, int y, int depth);
-int Geo_ClipPoint(int x, int y, int z);
+int Render_TransformPoint(GeomEntry *entry, int x, int y, int depth);
+int Render_ClipPoint(int x, int y, int z);
 
 #endif /* PE1_GEOM_STATE_H */

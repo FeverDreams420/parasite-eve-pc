@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m397_chrysler
   ld_script_path: linkers/USA/overlays/room_m397_chrysler.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m397_chrysler.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m397_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m397_chrysler.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m397_chrysler.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,12 +37,11 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m397_chrysler]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1E4, .rodata, ../room_lib/RoomEffect_TrailBurstAttacks]
-      - [0x1FC, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3518, c, ../room_lib/RoomEffect_TrailBurstAttacks]
-      - [0x661C, data, D_80195604]
-      - [0x6654, data, D_8019563C]
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, .rodata, ../room_lib/trail_burst_attacks]
+      - [0x1FC, c, ../room_lib/actor_classes]
+      - [0x3518, c, ../room_lib/trail_burst_attacks]
+      - [0x661C, .data, ../room_lib/actor_class_table]
       - [0x66C4, data, D_801956AC]
       - [0x6710, data, D_801956F8]
       - [0x6738, data, D_80195720]
@@ -59,6 +60,11 @@ segments:
       - start: 0x6B8C
         type: databin
         name: D_80195B74
+        dir: room_m397_chrysler
+      - [0x3EE2C, data, D_801CDE14]
+      - start: 0x3EE5C
+        type: databin
+        name: D_801CDE44
         dir: room_m397_chrysler
   - [0x3F800]
 # room: m397, section3 sector 91518, scanner delta 0

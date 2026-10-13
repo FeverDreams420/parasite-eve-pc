@@ -2,16 +2,19 @@
 from pathlib import Path
 import random
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text  # noqa: E402
 
 
 class SpuInitVoiceStateTests(unittest.TestCase):
     def test_redundant_constraints_are_gone(self):
-        source = (ROOT/'src/main/akao/Spu_InitVoiceState.c').read_text()
+        source = function_text('Spu_InitVoiceState')
         self.assertNotRegex(source, r'\b(?:asm|__asm__|INCLUDE_ASM|REGALLOC_BARRIER)\b')
-        self.assertIn('track = (u8 *)g_AkaoVoiceChannelTable;', source)
+        self.assertNotIn('(u8 *)', source)
         for name in ('voice_base', 'voice_count', 'track_enabled', 'track_volume'):
             self.assertNotRegex(source, name+r'\s+asm')
 

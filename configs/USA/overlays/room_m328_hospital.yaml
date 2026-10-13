@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m328_hospital
   ld_script_path: linkers/USA/overlays/room_m328_hospital.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m328_hospital.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m328_hospital.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m328_hospital.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m328_hospital.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,12 +37,11 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m328_hospital]
-      - [0xC, .rodata, ../room_lib/RoomEffect_GroundEruption]
-      - [0x5C, .rodata, ../room_lib/RoomEffect_DroppedFlare]
-      - [0xA0, c, ../room_lib/RoomEffect_GroundEruptionClass]
-      - [0x23C, c, ../room_lib/RoomEffect_GroundEruption]
-      - [0x1564, c, ../room_lib/RoomEffect_DroppedFlare]
-      - [0x2208, c, ../room_lib/RoomEffect_HomingProjectile]
+      - [0xC, .rodata, ../room_lib/ground_eruption]
+      - [0x5C, .rodata, ../room_lib/dropped_flare]
+      - [0xA0, c, ../room_lib/ground_eruption]
+      - [0x1564, c, ../room_lib/dropped_flare]
+      - [0x2208, c, ../room_lib/homing_projectile]
       - [0x2FF4, data, D_80191FDC]
       - [0x3010, data, RoomLib_TableC]
       - [0x302C, data, D_80192014]
@@ -50,7 +51,7 @@ segments:
       - [0x30BC, data, D_801920A4]
       - [0x30E0, data, D_801920C8]
       - [0x3118, data, D_80192100]
-      - [0x3130, .data, ../room_lib/RoomEffect_HomingProjectileSeeds]
+      - [0x3130, .data, ../room_lib/homing_projectile_seeds]
       - [0x3158, data, D_80192140]
       - [0x3190, data, RoomLib_PairA]
       - [0x3194, data, RoomLib_PairB]
@@ -73,6 +74,11 @@ segments:
       - start: 0x311FC
         type: databin
         name: D_801C01E4
+        dir: room_m328_hospital
+      - [0x3DB7C, data, D_801CCB64]
+      - start: 0x3DBA0
+        type: databin
+        name: D_801CCB88
         dir: room_m328_hospital
   - [0x3E000]
 # room: m328, section3 sector 79539, scanner delta 0

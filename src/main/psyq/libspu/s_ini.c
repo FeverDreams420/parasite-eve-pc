@@ -1,9 +1,12 @@
 /* ASSEMBLER: GNU */
 /* PSY-Q LIBSPU S_INI: _SpuInit, SpuStart. */
 /* Complete LIBSPU S_INI.OBJ code; object alignment stays in the manifest. */
+
 #include "pe1/psyq_bios.h"
 #include "pe1/psyq_callbacks.h"
 #include "pe1/psyq_spu_internal.h"
+
+#include "s_ini_externs.h"
 
 void _SpuInit(int mode) {
     int i;
@@ -13,7 +16,7 @@ void _SpuInit(int mode) {
     _spu_init(mode);
     if (!mode) {
         unsigned short value = 0xC000;
-        unsigned short *base = D_8009B3B8;
+        unsigned short *base = _spu_voice_centerNote;
         i = 23;
         do {
             base[i] = value;
@@ -23,9 +26,9 @@ void _SpuInit(int mode) {
     SpuStart();
     /* Keep the register selector and shared reverb base ahead of the resets. */
     reverbRegister = 0xD1;
-    asm volatile("" : "=r"(reverbRegister) : "0"(reverbRegister));
-    reverb = &D_8009B3A0;
-    asm volatile("" : "=r"(reverb) : "0"(reverb));
+    reverb = &g_SpuReverbState;
+    asm volatile("" : "=r"(reverbRegister), "=r"(reverb)
+        : "0"(reverbRegister), "1"(reverb));
     _spu_rev_flag = 0;
     _spu_rev_reserve_wa = 0;
     reverb->mode = 0;
@@ -35,19 +38,16 @@ void _SpuInit(int mode) {
     reverb->feedback = 0;
     _spu_rev_offsetaddr = D_8009B46C;
     _spu_FsetRXX(reverbRegister, _spu_rev_offsetaddr, 0);
-    D_8009B45C = 0;
-    D_8009B460 = 0;
-    D_8009B464 = 0;
-    D_8009B38C = 0;
-    D_8009B418 = 0;
+    _spu_AllocBlockNum = 0;
+    _spu_AllocLastNum = 0;
+    _spu_memList = 0;
+    _spu_trans_mode = 0;
+    _spu_transMode = 0;
     D_8009B388 = 0;
     D_8009B3B4 = 0;
     D_8009B3B0 = 0;
     D_8009B3E8 = 0;
 }
-
-extern s32 OpenEvent(u32 event, s32 spec, s32 mode, s32 (*callback)(void));
-extern s32 EnableEvent(s32 event);
 
 void SpuStart(void) {
     if (_spu_isCalled == 0) {

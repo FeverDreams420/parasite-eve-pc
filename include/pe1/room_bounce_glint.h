@@ -2,7 +2,9 @@
 #define PE1_ROOM_BOUNCE_GLINT_H
 
 #include "common.h"
+#include "pe1/field_texture_tables.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
 #include "pe1/room_floor.h"
 
@@ -24,9 +26,5 @@ typedef struct RoomBounceGlint {
 PE1_STATIC_ASSERT(sizeof(RoomBounceGlint) == 0x14, room_bounce_glint_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomBounceGlint, phase) == 0x12,
                   room_bounce_glint_phase_offset);
-
-extern u16 D_800E11EA;
-int func_80077AA4(int, int);
-int rcos(int angle);
 
 #endif

@@ -6,6 +6,8 @@ import subprocess
 import tempfile
 import unittest
 
+from tools.tests.csource import find_definition
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -28,7 +30,7 @@ class GpuDmaTransferTests(unittest.TestCase):
         retail = (ROOT/'assets/USA/main.exe').read_bytes()[0x67DE8:0x68200]
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
-            subprocess.run([str(ROOT/'tools/scripts/cc.sh'), str(ROOT/'src/main/psyq/libgpu/LoadImage2.c'), str(work/'test.o')], check=True, capture_output=True)
+            subprocess.run([str(ROOT/'tools/scripts/cc.sh'), str(find_definition('LoadImage2')), str(work/'test.o')], check=True, capture_output=True)
             needed = [line.split()[-1] for line in subprocess.check_output(['mipsel-none-elf-nm', '-u', str(work/'test.o')], text=True).splitlines()]
             script = 'SECTIONS { .text 0x800775E8 : SUBALIGN(4) { *(.text) } /DISCARD/ : { *(.reginfo) *(.mdebug) *(.pdr) *(.MIPS.abiflags) } }\n'
             (work/'test.ld').write_text(script + '\n'.join(f'{name} = 0x{symbols[name]:X};' for name in needed))
@@ -52,10 +54,10 @@ class GpuDmaTransferTests(unittest.TestCase):
                         debug = shape
                         expected = []
                         if function != 'DrawOTag2':
-                            label = {'LoadImage2': 'D_800119BC', 'StoreImage2': 'D_800118E0', 'MoveImage2': 'D_800118EC'}[function]
+                            label = {'LoadImage2': 'g_LoadImage2Name', 'StoreImage2': 'g_StoreImageName', 'MoveImage2': 'g_MoveImageName'}[function]
                             expected.append(('checkRECT', symbols[label], rect_addr))
                         elif debug >= 2:
-                            expected.append(('debug', symbols['D_80011928'], data_addr))
+                            expected.append(('debug', symbols['g_DrawOTagFormat'], data_addr))
                         expected.append(('VSync', 0xFFFFFFFF))
                         failed = False
                         for index, (busy, ready) in enumerate(sequence + [(0, 1)]):
@@ -77,7 +79,7 @@ class GpuDmaTransferTests(unittest.TestCase):
                                     result = 0xFFFFFFFF
                                 else:
                                     packet = rect[:4] + struct.pack('<I', ((y << 16) | (x & 0xFFFF)) & 0xFFFFFFFF) + rect[4:]
-                                    expected.append(('move', symbols['D_800957EC'] - 8))
+                                    expected.append(('move', symbols['g_GpuMoveImagePacket'] - 8))
                             elif function == 'DrawOTag2':
                                 expected.append(('move', data_addr))
                             else:
@@ -93,12 +95,12 @@ class GpuDmaTransferTests(unittest.TestCase):
                             put(rect_addr, rect)
                             word(symbols['g_GpuDmaChcrPtr'], dma)
                             word(symbols['g_GpuGp1Ptr'], gpu)
-                            word(symbols['D_80095744'], table)
+                            word(symbols['g_GpuCallbacks'], table)
                             word(table + 0x18, move_cb)
                             word(table + 0x1C, store_cb)
                             word(table + 0x20, load_cb)
-                            word(symbols['D_80095748'], debug_cb)
-                            put(symbols['D_8009574C'] + 2, bytes([debug]))
+                            word(symbols['g_GpuDebugPrintf'], debug_cb)
+                            put(symbols['g_GpuSystemState'] + 2, bytes([debug]))
                             word(symbols['g_GpuDmaWaitLoopCounter'], 99)
                             machine.reg_write(R.UC_MIPS_REG_A0, data_addr if function == 'DrawOTag2' else rect_addr)
                             machine.reg_write(R.UC_MIPS_REG_A1, x if function == 'MoveImage2' else data_addr)
@@ -148,6 +150,6 @@ class GpuDmaTransferTests(unittest.TestCase):
                             for i in range(8):
                                 self.assertEqual(machine.reg_read(getattr(R, f'UC_MIPS_REG_S{i}')), 0xABCD0000+i)
                             self.assertEqual(bytes(machine.mem_read(rect_addr & 0x1FFFFFFF, 8)), rect)
-                            self.assertEqual(bytes(machine.mem_read(symbols['D_800957EC'] & 0x1FFFFFFF, 12)), packet)
+                            self.assertEqual(bytes(machine.mem_read(symbols['g_GpuMoveImagePacket'] & 0x1FFFFFFF, 12)), packet)
                             for name, value in (('g_GpuDmaTimeoutDeadline', 1474), ('g_GpuDmaWaitLoopCounter', 0)):
                                 self.assertEqual(bytes(machine.mem_read(symbols[name] & 0x1FFFFFFF, 4)), struct.pack('<I', value))

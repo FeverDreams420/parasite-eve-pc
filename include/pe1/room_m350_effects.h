@@ -41,6 +41,35 @@ typedef struct RoomM350Particle {
     RoomM350ParticleTail tail;
 } RoomM350Particle;
 
+typedef struct RoomM350PointerQueue {
+    GteShortVector *positions[4];
+    /* The position queue follows the four pointer slots in room_m350 data. */
+    GteShortVector pendingPositions[8];
+    struct FieldActor *anchorActor;
+    s16 repeats;
+    s16 count;
+} RoomM350PointerQueue;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PointerQueue, pendingPositions) == 0x10,
+                  room_m350_pointer_queue_positions_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PointerQueue, anchorActor) == 0x50,
+                  room_m350_pointer_queue_actor_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PointerQueue, count) == 0x56,
+                  room_m350_pointer_queue_count_offset);
+
+typedef struct RoomM350PositionQueue {
+    GteShortVector positions[8];
+    struct FieldActor *anchorActor;
+    s16 repeats;
+    s16 pointerCount;
+    s16 count;
+} RoomM350PositionQueue;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PositionQueue, anchorActor) == 0x40,
+                  room_m350_position_queue_actor_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PositionQueue, count) == 0x48,
+                  room_m350_position_queue_count_offset);
+
 typedef struct RoomM350FlareParticle {
     s16 y;
     s16 z;
@@ -67,9 +96,41 @@ typedef struct RoomM350CloudParticle {
     RoomM350CloudParticleState state;
 } RoomM350CloudParticle;
 
+typedef struct RoomM350RadialSpriteState {
+    GteRotation rotation;
+    s16 count, brightness, fade, size;
+} RoomM350RadialSpriteState;
+
+PE1_STATIC_ASSERT(sizeof(RoomM350RadialSpriteState) == 0x10,
+                  room_m350_radial_sprite_state_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350RadialSpriteState, count) == 8,
+                  room_m350_radial_sprite_state_count_offset);
+
+typedef struct RoomM350RadialSpriteParticle {
+    s16 position[3];
+    s16 size;
+} RoomM350RadialSpriteParticle;
+
+PE1_STATIC_ASSERT(sizeof(RoomM350RadialSpriteParticle) == 8,
+                  room_m350_radial_sprite_particle_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350RadialSpriteParticle, size) == 6,
+                  room_m350_radial_sprite_particle_size_offset);
+
+typedef struct RoomM350FadingParticle {
+    GteShortVector position;
+    s16 velocity, acceleration, brightness, size, phase, counter;
+} RoomM350FadingParticle;
+
+PE1_STATIC_ASSERT(sizeof(RoomM350FadingParticle) == 0x14,
+                  room_m350_fading_particle_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350FadingParticle, velocity) == 8,
+                  room_m350_fading_particle_velocity_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350FadingParticle, size) == 0xE,
+                  room_m350_fading_particle_size_offset);
+
 typedef struct RoomM350SineParticle {
     GteShortVector position;
-    s16 controls[4];
+    GteRotation rotation;
     s16 brightness;
     s16 size;
     s16 amplitude;
@@ -132,8 +193,8 @@ PE1_STATIC_ASSERT(sizeof(RoomM350CloudParticle) == 20,
 PE1_STATIC_ASSERT(sizeof(RoomM350SineParticle) == 24,
                   room_m350_sine_particle_size);
 PE1_STATIC_ASSERT(sizeof(RoomM350Model) == 3, room_m350_model_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350SineParticle, controls) == 8,
-                  room_m350_sine_particle_controls_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350SineParticle, rotation) == 8,
+                  room_m350_sine_particle_rotation_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350SineParticle, brightness) == 0x10,
                   room_m350_sine_particle_brightness_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350Model, transformCount) == 2,

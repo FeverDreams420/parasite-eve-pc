@@ -2,13 +2,24 @@
 #define PE1_ROOM_M086_SEEKER_H
 
 #include "common.h"
+#include "pe1/asset_find.h"
+#include "pe1/field_model_draw.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/field_transform_point.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/render_prim.h"
-#include "pe1/field_model_draw.h"
 #include "pe1/room_floor.h"
+#include "pe1/scene_archive.h"
 
-/* room_m086 falling seeker (func_8018F004): a turning model that flies
+/* room_m086 falling seeker (RoomM086_SeekerCallback): a turning model that flies
  * along its heading until it lands, bursts on the player (flagging the
  * battle actor), then rises and fades or bounces as a flaring spark. */
 typedef struct RoomM086Seeker {
@@ -54,43 +65,10 @@ typedef struct RoomM086EventState {
     u8 active;
 } RoomM086EventState;
 
+extern struct BattleEntity *D_8009D254;
+extern u8 *g_RoomM086SeekerModelB;
 
-extern int D_800E27EC;
-
-/* The sprite parameter block at 0x800F3368 (RenderEffectParameters). */
-typedef struct RoomM086EffectParams {
-    u16 parameter00;
-    u16 parameter02;
-    u16 palette;
-    u16 parameter06;
-    u16 tpage;
-    u16 parameter0A;
-    s16 depth;
-    u16 extent_x;
-    u16 extent_y;
-} RoomM086EffectParams;
-
-extern RoomM086EffectParams D_800F3368;
-extern u16 D_800E11E4[];
-extern u16 D_800E1204[];
-extern u16 D_800E2850[];
-extern int D_800F3428;
-void func_800CFB7C(GteShortVector *angles, s16 distance, GteShortVector *out);
-void func_800CEE20(GteShortVector *position, GteShortVector *rotation,
-                   int scale_x, int scale_y, int texture, int clut,
-                   int page, int intensity, void *color);
-extern RoomM086Channel *D_800F32D0;
-extern RoomM086BattleEntity *D_8009D254;
-extern RoomM086EventState *D_800E2368;
-extern u8 *D_80190B84;
-extern u16 D_800E11E8;
-extern u16 D_800E11EA;
-int func_800C6B90(void *position, int radius);
-void func_800C6FA0(u8 *data, u16 factor);
-u16 func_80077AA4(int, int);
-int rcos(int angle);
-
-/* room_m086 seeker controller (func_8018F734): follows joint 7 of the
+/* room_m086 seeker controller (RoomM086_SeekerController): follows joint 7 of the
  * actor, drifts and falls, then bursts into three seeker rings. */
 typedef struct RoomM086SeekerController {
     /* 0x00 */ GteShortVector position;
@@ -116,30 +94,12 @@ typedef struct RoomM086SpawnChannel {
     void *pool;
 } RoomM086SpawnChannel;
 
-extern RoomM086SpawnChannel *D_800F33E0;
 extern RoomM086Offset D_8018EFF4;
 extern RoomM086Offset D_8018EFFC;
-/* Model archive base, read twice through one address register. */
-typedef struct RoomM086Archive {
-    void *base;
-} RoomM086Archive;
+extern u8 *g_RoomM086SeekerModelA;
+extern u16 g_FieldFxPaletteEntry2;
 
-extern RoomM086Archive D_800B0E64;
-extern u8 *D_80190B88;
-extern u16 D_800E1208;
-extern u16 D_800E120A;
-
-int func_8018F004(int mode, RoomM086Seeker *seeker, RoomM086SeekerParams *params);
-void func_800CE8F0(void *owner, int joint, RoomM086Offset *offset, void *out);
-void func_800CEAE8(void *bone, RoomM086Offset *offset, void *out);
-void func_800CE9D4(void *owner, int index, void *out);
-RoomM086Seeker *func_800CE610(void *pool);
-int func_800CE560(void *pool, int count, int size, void *callback);
-void *func_8006E498(void *base, u32 key);
-void func_800C6D5C(void *asset, int x, int y);
-int func_800D3FD8(void);
-void func_800D3F64(int sound, int handle);
-int func_80071A54(void);
-int rsin(int angle);
+int RoomM086_SeekerCallback(int mode, RoomM086Seeker *seeker, RoomM086SeekerParams *params);
+int rand(void);
 
 #endif

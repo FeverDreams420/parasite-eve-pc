@@ -7,6 +7,9 @@ import subprocess
 import tempfile
 import unittest
 
+from tools.tests.csource import (find_definition, linked_function_bytes,
+                                  text_function_closure)
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -17,9 +20,13 @@ class DrawEmitDigitSpriteTests(unittest.TestCase):
             [str(ROOT/'tools/psyq-gcc-2.7.2/cpp'), '-P', '-undef',
              '-D__GNUC__=2', '-D__OPTIMIZE__', '-Dmips', '-D__mips__',
              '-D__LITTLE_ENDIAN__', '-I'+str(ROOT/'include'),
-             str(ROOT/'src/main/gpu/Draw_EmitDigitSprite.c')],
+             '-I'+str(ROOT/'tools/m2c'),  # as tools/scripts/cc.sh
+             str(find_definition('Draw_EmitDigitSprite'))],
             check=True, capture_output=True, text=True)
-        self.assertNotRegex(result.stdout, r'\b(?:asm|__asm__)\b')
+        # The unit was merged with other draw helpers; check this function
+        # (with the static helpers it reaches) after macro expansion.
+        source = text_function_closure(result.stdout, 'Draw_EmitDigitSprite')
+        self.assertNotRegex(source, r'\b(?:asm|__asm__)\b')
 
     def test_retail_bytes_and_packet_model(self):
         try:
@@ -35,17 +42,13 @@ class DrawEmitDigitSpriteTests(unittest.TestCase):
             if len(fields) == 3:
                 symbols[fields[2]] = int(fields[0], 16)
         retail = (ROOT/'assets/USA/main.exe').read_bytes()[0x50074:0x5023C]
-        source = ROOT/'src/main/gpu/Draw_EmitDigitSprite.c'
         with tempfile.TemporaryDirectory() as directory:
-            work = Path(directory)
-            subprocess.run([str(ROOT/'tools/scripts/cc.sh'),str(source),str(work/'test.o')],check=True,capture_output=True)
-            needed = [line.split()[-1] for line in subprocess.check_output(['mipsel-none-elf-nm','-u',str(work/'test.o')],text=True).splitlines()]
-            script = 'SECTIONS { .text 0x8005F874 : SUBALIGN(4) { *(.text) } /DISCARD/ : { *(.reginfo) *(.mdebug) *(.pdr) *(.MIPS.abiflags) } }\n'
-            script += '\n'.join(f'{name} = 0x{symbols[name]:X};' for name in set(needed+['_gp']))
-            (work/'test.ld').write_text(script)
-            subprocess.run(['mipsel-none-elf-ld','-EL','-T',str(work/'test.ld'),str(work/'test.o'),'-o',str(work/'test.elf')],check=True,capture_output=True)
-            subprocess.run(['mipsel-none-elf-objcopy','-O','binary','-j','.text',str(work/'test.elf'),str(work/'test.bin')],check=True,capture_output=True)
-            compiled = (work/'test.bin').read_bytes()
+            # The defining unit may hold more functions; link it with this
+            # one at its retail address and take the retail range.
+            provide = ''.join(f'PROVIDE({name} = 0x{value:X});\n'
+                              for name, value in symbols.items())
+            compiled = linked_function_bytes('Draw_EmitDigitSprite', ENTRY,
+                                             len(retail), provide, Path(directory))
         self.assertEqual(compiled, retail)
         rng = random.Random(ENTRY)
         for case in range(512):
@@ -90,7 +93,7 @@ class DrawEmitDigitSpriteTests(unittest.TestCase):
                 for i in range(8): machine.reg_write(getattr(R, f'UC_MIPS_REG_S{i}'), 0xABCD0000+i)
                 events = []
                 def hook(m, address, size, user):
-                    if address == symbols['BoundsCheck_AssertStub']:
+                    if address == symbols['Inv_BoundsCheckAssertStub']:
                         events.append(m.reg_read(R.UC_MIPS_REG_A0))
                         m.emu_stop()
                 machine.hook_add(UC_HOOK_CODE, hook)
@@ -101,7 +104,7 @@ class DrawEmitDigitSpriteTests(unittest.TestCase):
                     assert machine.reg_read(R.UC_MIPS_REG_SP) == STACK
                     for i in range(8): assert machine.reg_read(getattr(R, f'UC_MIPS_REG_S{i}')) == 0xABCD0000+i
                 else:
-                    assert machine.reg_read(R.UC_MIPS_REG_PC) == symbols['BoundsCheck_AssertStub']
+                    assert machine.reg_read(R.UC_MIPS_REG_PC) == symbols['Inv_BoundsCheckAssertStub']
                 assert bytes(machine.mem_read(pointer & 0x1FFFFFFF, 40)) == expected, case
                 assert bytes(machine.mem_read(OT & 0x1FFFFFFF, 4)) == struct.pack('<I', expected_ot), case
                 values['D_8009D100'] = pointer if failed else pointer + 40

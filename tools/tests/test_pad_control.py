@@ -4,6 +4,8 @@ import subprocess
 import tempfile
 import unittest
 
+from tools.tests.csource import functions_text
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -11,10 +13,18 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 class PadControlTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_start_and_stop_manage_the_pad_lifecycle(self):
-        source = (ROOT / "src/main/psyq/libapi/pad_4.c").read_text()
-        harness = source + r'''
-#include <assert.h>
+        # StartPAD and StopPAD alone: their unit also holds PAD_init/InitPAD.
+        source = functions_text('StartPAD', 'StopPAD')
+        harness = r'''
+long StartPAD2(void);
+void ChangeClearPAD(int value);
+void EnablePAD(void);
+void DisablePAD(void);
+void StopPAD2(void);
+int RemovePatchPad(void);
 int g_InitPadFlag;
+''' + source + r'''
+#include <assert.h>
 static int start2, clear, enable, disable, stop2, remove;
 long StartPAD2(void) { ++start2; return 1; }
 void ChangeClearPAD(int value) { assert(value == 0); ++clear; }
@@ -34,7 +44,7 @@ int main(void) {
         with tempfile.TemporaryDirectory() as directory:
             exe = pathlib.Path(directory) / "pad-control-test"
             result = subprocess.run(
-                ["cc", "-std=gnu11", "-O2", "-I", str(ROOT / "include"), "-x", "c", "-", "-o", str(exe)],
+                ["cc", "-std=gnu11", "-O2", "-x", "c", "-", "-o", str(exe)],
                 input=harness, text=True, capture_output=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)

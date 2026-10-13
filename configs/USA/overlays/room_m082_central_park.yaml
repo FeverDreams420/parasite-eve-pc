@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m082_central_park
   ld_script_path: linkers/USA/overlays/room_m082_central_park.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m082_central_park.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m082_central_park.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m082_central_park.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m082_central_park.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,21 +37,21 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m082_central_park]
-      - [0xC, .rodata, ../room_lib/RoomFx_MotionParticles]
-      - [0x14, .rodata, ../room_lib/RoomFx_MotionParticles_2]
-      - [0x24, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/motion_particles]
+      - [0x14, .rodata, ../room_lib/motion_particles_2]
+      - [0x24, .rodata, ../room_lib/actor_classes]
       - [0x1FC, rodata, RoomLib_HandlerCArgsData_80192FD4]
-      - [0x1FC, c, ../room_lib/RoomLib_PlantScript]
-      - [0x228, c, ../room_lib/RoomLib_Spawn6]
-      - [0x254, c, ../room_lib/RoomLib_RegisterDrawList]
-      - [0x29C, c, ../room_lib/RoomLib_RegisterPairedTablesGated]
-      - [0x360, c, ../room_lib/RoomLib_CloseTarget]
-      - [0x3E4, c, ../room_lib/RoomLib_ClassNop6]
-      - [0x3EC, c, ../room_lib/RoomLib_ClassNop0]
-      - [0x3F4, c, ../room_lib/RoomFx_MotionParticles]
-      - [0x1428, c, ../room_lib/RoomFx_MotionParticles_2]
-      - [0x16E8, c, ../room_lib/RoomFx_MotionParticles_3]
-      - [0x1C1C, c, ../room_lib/RoomLib_ActorClasses]
+      - [0x1FC, c, ../room_lib/class_plant_script]
+      - [0x228, c, ../room_lib/class_spawn]
+      - [0x254, c, ../room_lib/class_register_draw_list]
+      - [0x29C, c, ../room_lib/class_register_tables_gated]
+      - [0x360, c, ../room_lib/class_close_target]
+      - [0x3E4, c, ../room_lib/class_nop6]
+      - [0x3EC, c, ../room_lib/class_nop0]
+      - [0x3F4, c, ../room_lib/motion_particles]
+      - [0x1428, c, ../room_lib/motion_particles_2]
+      - [0x16E8, c, ../room_lib/motion_particles_3]
+      - [0x1C1C, c, ../room_lib/actor_classes]
       - [0x4F38, data, D_80193F20]
       - [0x4F50, data, RoomLib_TableA_8018F23C]
       - [0x4F68, data, D_80193F50]
@@ -57,7 +59,7 @@ segments:
       - [0x4F8C, data, D_80193F74]
       - [0x4FA8, data, D_80193F90]
       - [0x5020, data, D_80194008]
-      - [0x5060, data, D_80194048]
+      - [0x5028, .data, ../room_lib/actor_class_table]
       - [0x50D0, data, D_801940B8]
       - [0x50D4, data, D_801940BC]
       - [0x50D8, data, D_801940C0]

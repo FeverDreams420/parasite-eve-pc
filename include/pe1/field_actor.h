@@ -2,8 +2,9 @@
 #define PE1_FIELD_ACTOR_H
 
 #include "common.h"
-#include "pe1/task_node.h"
+#include "pe1/fixed_point.h"
 #include "pe1/render_object.h"
+#include "pe1/script_node.h"
 
 typedef struct FieldActorState FieldActorState;
 
@@ -15,8 +16,8 @@ typedef struct FieldActor {
     /* 0x00D */ unsigned char sub_id;
     /* 0x00E */ unsigned char mode;
     /* 0x00F */ unsigned char action;
-    /* 0x010 */ unsigned char pad_010[0x02];
-    /* 0x012 */ unsigned short anim_frame_target; /* clamped target anim frame (Task_SetEntityAnimFrame) */
+    /* 0x010 */ unsigned short pad_010; /* 0xC8 when the actor is created */
+    /* 0x012 */ unsigned short anim_frame_target; /* clamped target anim frame (Script_SetEntityAnimFrame) */
     /* 0x014 */ union {
         int fixed;                                /* current animation position, 16.16 */
         struct { unsigned short fraction; unsigned short integer; } parts;
@@ -24,8 +25,9 @@ typedef struct FieldActor {
     /* 0x018 */ int anim_prev;                    /* previous animation position, 16.16 */
     /* 0x01C */ int anim_step;                    /* signed animation increment, 16.16 */
     /* 0x020 */ int move_factor;          /* fixed movement magnitude, scaled for the player */
-    /* 0x024 */ unsigned short field_sfx_id; /* entity value forwarded to Task_QueueFieldSfx */
-    /* 0x026 */ unsigned short move_speed;  /* movement-speed multiplier, written by Task_SetEntityMoveSpeed */
+    /* 0x024 */ unsigned short field_sfx_id; /* entity value forwarded to Script_QueueFieldSfx */
+    /* 0x026 */ unsigned short move_speed;  /* movement-speed multiplier, written by Script_SetEntityMoveSpeed */
+    /* Signed 16.16 coordinates; Pe1Fixed_Integer reads their high halfwords. */
     /* 0x028 */ int pos_x;
     /* 0x02C */ int pos_y;
     /* 0x030 */ int pos_z;
@@ -60,19 +62,24 @@ typedef struct FieldActor {
     /* 0x094 */ unsigned char pad_094[0x04];
     /* 0x098 */ unsigned int flags;
     /* 0x09C */ unsigned char *script_base; /* base of the entity's 16-bit scene script */
-    /* 0x0A0 */ TaskNode *task_node_lists[3]; /* 3 task-node list heads (Entity_MarkNodeFree) */
-    /* 0x0AC */ unsigned char pad_0AC[0xE0];
+    /* 0x0A0 */ ScriptNode *script_node_lists[3]; /* 3 script-node list heads (Entity_MarkNodeFree) */
+    /* 0x0AC */ unsigned int pad_0AC[0x38]; /* cleared when the actor is created */
     /* 0x18C */ struct FieldActor *parent; /* parent actor; child copies its pos/rot when flags & 0x400000 */
     /* 0x190 */ void (*frame_callback)(struct FieldActor *actor); /* run first every frame */
     /* 0x194 */ void (*contact_callback)(struct FieldActor *self, int self_part,
                                          struct FieldActor *other, int other_part);
                 /* run for each overlapping hit-sphere pair (Scene_UpdateEntityPositions) */
-    /* 0x198 */ unsigned char pad_198[0x04];
-    /* 0x19C */ int script_cursor_19c;
-    /* 0x1A0 */ int script_cursor_1a0;
-    /* 0x1A4 */ int field_1a4;          /* rolled back from field_1a8 alongside pos */
-    /* 0x1A8 */ int field_1a8;
-    /* 0x1AC */ int allocation_active; /* nonzero when allocation_block must be freed with the actor */
+    /* 0x198 */ unsigned int pad_198;
+    /* 0x19C */ unsigned int *script_cursor_19c; /* entry for queued field-sfx tasks */
+    /* 0x1A0 */ unsigned int *script_cursor_1a0; /* entry for actor-contact tasks */
+    /* 0x1A4 */ int collision_face;        /* floor face under the actor; rolled back with pos */
+    /* 0x1A8 */ int collision_face_mirror; /* face recorded before the move */
+    /* A model-header address; the integer view is also tested before using
+     * or releasing the actor's render allocation. */
+    /* 0x1AC */ union {
+        int allocation_active;
+        RenderObjectHeader *model_header;
+    } model_state;
     /* 0x1B0 */ void *action_data;      /* current animation/action record */
     /* 0x1B4 */ RenderObjectEntity render_object;
     /* 0x270 */ unsigned char pad_270[0x08];
@@ -85,13 +92,13 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, next) == 0x04,
                   field_actor_next_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, flags) == 0x98,
                   field_actor_flags_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, task_node_lists) == 0xA0,
-                  field_actor_task_node_lists_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, script_node_lists) == 0xA0,
+                  field_actor_script_node_lists_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, anim) == 0x14,
                   field_actor_anim_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, script_base) == 0x9C,
                   field_actor_script_base_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, allocation_active) == 0x1AC,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, model_state.allocation_active) == 0x1AC,
                   field_actor_allocation_active_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, render_object.hit_cylinder.radius) == 0x224,
                   field_actor_render_scale_offset);
@@ -100,6 +107,16 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, render_object.flags_9C) == 0x250,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, allocation_block) == 0x278,
                   field_actor_allocation_block_offset);
 PE1_STATIC_ASSERT(sizeof(FieldActor) == 0x27C, field_actor_size);
+
+/* Per-type frame and contact callbacks copied into a new actor
+ * (Scene_LoadMap), indexed by the scene entry's type byte. */
+typedef struct FieldActorCallbacks {
+    void (*frame)(struct FieldActor *actor);
+    void (*contact)(struct FieldActor *self, int self_part,
+                    struct FieldActor *other, int other_part);
+} FieldActorCallbacks;
+
+extern FieldActorCallbacks g_FieldActorTypeCallbacks[];
 
 /* Packed status values addressed by script selectors 0x64..0x6E. */
 typedef union FieldActorPackedStatus {
@@ -216,7 +233,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorState, panel_c_timer) == 0xD6,
 /* Scene movement target record; shared by the E02/E03/E06...E27 overlays. */
 typedef struct FieldMoveTarget {
     unsigned char pad00[0x60];
-    int target_pos[3];           /* 0x60: x/y/z passed to FieldEng_VecToAngle */
+    int target_pos[3];           /* 0x60: x/y/z passed to FieldFx_VecToAngle */
     unsigned char pad6C[0x18];
     FieldActor *target_actor;    /* 0x84: copies x/z while target tracking is enabled */
     unsigned char pad88[0x10];
@@ -266,5 +283,13 @@ void Entity_WriteFieldByCmd(FieldActor *actor, int command, int value);
  * gp-relative addressing. Prefer local externs until a whole actor cluster is
  * migrated and build-checked.
  */
+
+/* The actor whose script-node lists are being run. */
+extern FieldActor *g_CurrentEntity;
+/* Head of the active actor list (entity/pool.c). */
+extern FieldActor *g_FieldActorListHead;
+
+/* Spawns the actors of a scene record after an existing actor. */
+FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull);
 
 #endif

@@ -4,14 +4,18 @@ import itertools
 import random
 import re
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import functions_text  # noqa: E402
 
 
 class SeqOpPitchSlideTests(unittest.TestCase):
     def test_translation_unit_is_plain_c(self):
-        source = (ROOT / 'src/main/akao/seq_op.c').read_text()
+        source = functions_text('SeqOp_SetVoiceInstrument', 'Akao_SetNotePitch', 'SeqOp_DeactivateVoice',
+                                'SeqOp_SetTempo', 'SeqOp_SetPitchSlideTarget')
         source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
         self.assertIsNone(re.search(r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS|REGALLOC_BARRIER)\b', source))
 

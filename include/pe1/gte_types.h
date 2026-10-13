@@ -36,6 +36,12 @@ typedef union GteMatrixStorage {
 
 PE1_STATIC_ASSERT(sizeof(GteMatrixStorage) == 32, gte_matrix_storage_size);
 
+/* MULTU: unsigned 32 x 32 -> 64 bit product in HI/LO. The Q12 matrix code
+ * feeds signed operands and reads LO only, as the assembler does. A macro,
+ * not an inline function, so the pinned operand registers feed MULTU
+ * directly. */
+#define GTE_MULTU(a, b) ((unsigned long long)(u32)(a) * (u32)(b))
+
 typedef struct GteVector {
     s32 x, y, z, pad;
 } GteVector;
@@ -59,8 +65,17 @@ void SetLightMatrix(const GteMatrix *matrix);
 void SetColorMatrix(const GteMatrix *matrix);
 void SetTransMatrix(const GteMatrix *matrix);
 int ratan2(int y, int x);
+/* RATAN.OBJ arctangent table, indexed by the scaled ratio. */
+extern s16 atan_table[];
+/* An atan_table entry addressed by its byte offset (the doubled ratio). */
+typedef union GteAtanEntryAddress {
+    s16 *entry;
+    u32 word;
+} GteAtanEntryAddress;
 int SquareRoot0(int value);
 void VectorNormal(GteVector *vector, GteVector *unit);
+void VectorNormalS(GteVector *vector, GteShortVector *unit);
+void OuterProduct12(void *matrix_column, void *vector, void *output);
 void SetFogNearFar(int near, int far, int h);
 void SetDQA(int dqa);
 void SetDQB(int dqb);
@@ -75,5 +90,15 @@ typedef struct GteRotation {
     s16 z;
     s16 flags;
 } GteRotation;
+
+int rcos(int angle);
+
+int rsin(int angle);
+
+GteMatrix *CompMatrix(GteMatrix *m0, GteMatrix *m1, GteMatrix *m2);
+
+void RotTrans(const GteShortVector *v, GteVector *out, int *flag);
+
+int RotTransPers(const GteShortVector *v, int *sxy, int *p, int *flag);
 
 #endif

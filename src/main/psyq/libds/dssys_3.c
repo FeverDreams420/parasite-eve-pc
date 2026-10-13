@@ -1,25 +1,20 @@
 /* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSSYS_3.OBJ: DsMix, DsGetSector, DsGetSector2, DsDataSync, DsIntToPos, DsPosToInt, DsSetDebug, DsLastPos. */
-#include "pe1/psyq_cd.h"
+
 #include "pe1/cdrom.h"
+#include "pe1/psyq_cd.h"
 
-extern void CD_vol(void);
-
-extern int CD_getsector(void);
-
-extern int CD_getsector2(void);
-
-int DsMix(void) {
-    CD_vol();
+int DsMix(CdlATV *volume) {
+    CD_vol(volume);
     return 1;
 }
 
-int DsGetSector(void) {
-    return CD_getsector() == 0;
+int DsGetSector(void *address, int size) {
+    return CD_getsector(address, size) == 0;
 }
 
-int DsGetSector2(void) {
-    return CD_getsector2() == 0;
+int DsGetSector2(void *address, int size) {
+    return CD_getsector2(address, size) == 0;
 }
 
 int DsDataSync(int mode) {

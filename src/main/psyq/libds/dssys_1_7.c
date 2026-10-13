@@ -1,35 +1,44 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses -fno-schedule-insns */
-/* Psy-Q LIBDS DSSYS_1.OBJ, part 7 of 11: LIBDS_DSSYS_1_text_E10. */
+/* Psy-Q LIBDS DSSYS_1.OBJ, part 7 of 10: LIBDS_DSSYS_1_text_EA4. */
+
 #include "common.h"
 #include "pe1/psyq_cd.h"
-#include "pe1/psyq_ds.h"
+#include "pe1/psyq_ds_queue.h"
 
-void LIBDS_DSSYS_1_text_EA4(int event, u8 *data);
+#include "dssys_1_7_externs.h"
 
-void LIBDS_DSSYS_1_text_E10(int event, u8 *data) {
-    int event_reg;
-    u8 event_arg;
+void LIBDS_DSSYS_1_text_EA4(int event, u8 *data) {
     u8 *data_reg;
-    CdRomCommandState *state;
-    u32 pending;
+    DsDecodedEventFlags *state;
+    CdRomEventCommandState *eventState;
+    u8 value;
+    u8 *src;
+    int index;
+
     data_reg = data;
-    event_reg = event & 0xFF;
-    LIBDS_DSSYS_1_text_EA4(event_reg, data_reg);
+    event &= 0xFF;
+    if (event != 5) {
 
-    state = &g_CdSeekState;
-    if (state->eventStatus & 0x10) {
-        state->read.status = 2;
-        state->read.command = 0xC;
+    index = g_DsCommandStatusByteIndex[g_CdRomEventCommandState.pendingCommand] - 1;
+    if (index < 0) {
+        return;
     }
 
-    if (g_DsReadyCallback != 0) {
-        pending = ((CdRomSystemState *)((char *)state -
-            CDROM_SYSTEM_COMMAND_OFFSET))->enabled;
-        event_arg = event_reg;
-        if (pending != 0) {
-            g_DsReadyCallback(event_arg, data_reg);
-        }
+    } else {
+    index = 0;
     }
+    src = data_reg + index;
+    value = src[0];
+    asm volatile("" : : "r"(value));
+    state = &g_CdRomEventCommandState.command.read.eventFlags;
+    asm volatile("" : "=r"(state) : "0"(state));
+    state->bit7 = value >> 7;
+    state->bit6 = (value >> 6) & 1;
+    state->bit5 = (value >> 5) & 1;
+    state->bit1 = (value >> 1) & 1;
+    eventState = (CdRomEventCommandState *)((u8 *)state -
+        (PE1_OFFSETOF(CdRomEventCommandState, command) +
+         PE1_OFFSETOF(CdRomCommandState, read) +
+         PE1_OFFSETOF(DsReadStatusBlock, eventFlags)));
+    eventState->command.eventStatus = value;
+    rescpy(eventState->eventResult, data_reg);
 }

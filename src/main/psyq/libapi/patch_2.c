@@ -1,5 +1,6 @@
 /* ASSEMBLER: GNU */
 /* PSY-Q LIBAPI PATCH, part 2 of 2: _patch_pad. */
+
 #include "pe1/psyq_asm.h"
 
 /*
@@ -13,8 +14,8 @@
 PSYQ_ASM_OBJECT(LIBAPI, PATCH)
 
 PSYQ_ASM_FUNCTION(_patch_pad,
-    "    lui     $at, %hi(D_800A34C0)\n"
-    "    sw      $ra, %lo(D_800A34C0)($at)\n"
+    "    lui     $at, %hi(g_PatchPadSavedRa)\n"
+    "    sw      $ra, %lo(g_PatchPadSavedRa)($at)\n"
     "    jal     EnterCriticalSection\n"
     "    nop\n"
     "    addiu   $t1, $zero, 0x57\n"
@@ -37,8 +38,8 @@ PSYQ_ASM_FUNCTION(_patch_pad,
     "    nop\n"
     "    jal     FlushCache\n"
     "    nop\n"
-    "    lui     $ra, %hi(D_800A34C0)\n"
-    "    lw      $ra, %lo(D_800A34C0)($ra)\n"
+    "    lui     $ra, %hi(g_PatchPadSavedRa)\n"
+    "    lw      $ra, %lo(g_PatchPadSavedRa)($ra)\n"
     "    nop\n"
     "    jr      $ra\n"
     "    nop\n");

@@ -2,20 +2,23 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import host_unit  # noqa: E402
 
 
 class CdControlWaitTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_both_waiters(self):
-        source = (ROOT / "src/main/psyq/libds/dssys_4.c").read_text()
+        source = host_unit("DsControl", "DsControlB")
         harness = source + r'''
 #include <assert.h>
 static int commandValue, requestValue, terminal, pending, polls, sends;
 static int paramData, resultData;
-int DsCommand(int command, void *param, int a, int b) {
+int DsCommand(int command, void *param, DslCB a, int b) {
     assert(sends++ == 0 && polls == 0);
     assert(command == (commandValue & 255));
     assert(param == &paramData && a == 0 && b == 0);

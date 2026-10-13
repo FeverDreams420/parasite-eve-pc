@@ -2,6 +2,8 @@
 #define PE1_ROOM_FLOOR_WALKER_H
 
 #include "common.h"
+#include "pe1/field_vector_math.h"
+#include "pe1/floor_polygon.h"
 #include "pe1/gte_types.h"
 
 /* Room creature that walks along its heading inside the walkable floor
@@ -29,9 +31,11 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFloorWalkerCore, flags) == 0x98,
 /* Handler state at RoomFloorWalkerObject + 0xC. */
 typedef struct RoomFloorWalkerState {
     void (*callback)(void);       /* 0x00 */
-    u8 pad04[0xA];
+    int *signal;                  /* 0x04 */
+    u8 pad08[0x6];
     u8 started;                   /* 0x0E (object + 0x1A) */
-    u8 pad0F[5];
+    u8 pad0F;
+    struct RoomLink *leader;      /* 0x10: actor whose view the walker follows */
     s32 speed;                    /* 0x14: 16.16 */
     s32 hopVelocity;              /* 0x18 */
     s32 velocity;                 /* 0x1C */
@@ -92,12 +96,13 @@ typedef struct RoomFloorWalkerTarget {
     s32 pos[3];                   /* 0x28 */
 } RoomFloorWalkerTarget;
 
-extern RoomFloorWalkerVertex *D_8009D248;
-extern s16 D_8009D1CC;
-/* The rsin/rcos table (D_800966EC) and the player entity (D_8009D254) are
+/* The rsin/rcos table (rcossin_tbl) and the player entity (D_8009D254) are
  * declared by the room library header and read through the views above;
  * the floor height is g_RoomFloorY (pe1/room_floor.h). */
 
-extern int FieldEng_VecToAngle(s32 *from, s32 *to);
+/* The scale vector RoomLib_UpdateHandlerG builds in the scratchpad. */
+extern s32 Scratch_1F800008 asm("0x1F800008");
+extern s32 Scratch_1F80000C asm("0x1F80000C");
+extern s32 Scratch_1F800010 asm("0x1F800010");
 
 #endif

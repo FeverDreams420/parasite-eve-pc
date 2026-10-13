@@ -3,11 +3,31 @@
 
 #include "common.h"
 
-void *Str_LookupTable4(unsigned int index);
-void *Str_LookupTable8(unsigned int index);
-extern int D_8009D218;
-void Util_CopyFFTerminatedBytes(u8 *dst, u8 *src);
-void Util_AppendFFTerminatedBytes(u8 *dst, u8 *src);
+/* A counted table of entries addressed by signed byte offsets relative to the
+ * start of the table itself; `bytes` resolves an offset. */
+typedef union TextOffsetTable {
+    struct {
+        u16 count;
+        s16 offsets[0];
+    } header;
+    u8 bytes[0];
+} TextOffsetTable;
+
+/* Table offsets are byte offsets relative to this directory; the first word
+ * is unknown. */
+typedef union TextTableDirectory {
+    struct {
+        u32 reserved;
+        s32 tableOffsets[4];
+    } header;
+    u8 bytes[0];
+} TextTableDirectory;
+
+void *Text_LookupTable4(unsigned int index);
+void *Text_LookupTable8(unsigned int index);
+extern int g_SaveMetadataWindowIndex;
+void Text_CopyFFTerminatedBytes(u8 *dst, u8 *src);
+void Text_AppendFFTerminatedBytes(u8 *dst, u8 *src);
 int Draw_MeasureTextWidth(u8 *text);
 void Draw_OffsetCursor(int x, int y);
 void Draw_PrintCenteredText(u8 *text);
@@ -25,7 +45,7 @@ void Draw_PrintTextById(unsigned int textId);
  *   Draw_AllocTexturedQuad(code) -> one textured quad sampling the glyph from
  *   the VRAM font cache. Printers:
  *     Draw_PrintRawText(u8 *s)              -- raw string
- *     Draw_PrintTextById(index)             -- string from a table (Str_LookupTable4)
+ *     Draw_PrintTextById(index)             -- string from a table (Text_LookupTable4)
  *     Draw_PrintTextWrapped(u8 *s, int w)   -- word-wrap to width w
  *     Draw_PrintCenteredText / *InWidth     -- centered
  *     Draw_PrintNumberWidth2..6 / Signed*   -- numeric fields
@@ -37,9 +57,9 @@ void Draw_PrintTextById(unsigned int textId);
  * TEXT CURSOR (pen position):
  *   g_TextCursorX (0x8009D124)  cursor X (live: 8 inside the dialogue box)
  *   g_TextCursorY (0x8009D128)  cursor Y (live: 32)
- *   D_8009D12C  cursor stack pointer; bounds D_800A2270 (bottom) .. D_800A22B0
+ *   g_TextCursorStackPtr  cursor stack pointer; bounds g_TextCursorStackBottom .. g_TextCursorStackTop
  *               (top). Printers push {X,Y} (8 bytes) then pop to restore.
- *   D_8009D0D8  text mode/variant flag read by the quad allocator.
+ *   g_TextRenderMode  text mode/variant flag read by the quad allocator.
  *
  * FONT (image glyphs, not a vector/ASCII font):
  *   Glyph bitmaps are streamed from PE.IMG by code (Render_LoadFontGlyph /
@@ -51,7 +71,7 @@ void Draw_PrintTextById(unsigned int textId);
  *   Draw_LookupGlyphMetrics / Draw_EmitGlyph back the metrics/advance.
  *
  * MESSAGE SOURCE: messages are looked up by index from PE asset tables (loaded
- * from PE.IMG): Str_LookupTable0/4/8/C/10 (e.g. Str_LookupTable4 = func_8005DC4C,
+ * from PE.IMG): Text_LookupTable0/4/8/C/10 (e.g. Text_LookupTable4 = func_8005DC4C,
  * used by Draw_PrintTextById and many Menu_Draw* helpers). The string returned
  * is the 0xFF-terminated glyph-code array above.
  *
@@ -60,14 +80,14 @@ void Draw_PrintTextById(unsigned int textId);
  *   engine walks the active entries and types out / draws their text. Entry:
  *     +0x00 u8   state (0=free, 1=new -> init, 2=active/displaying)
  *     +0x04 u8*  CURRENT message pointer == the live typewriter position; for a
- *                new entry it is seeded from D_8009CE90 then advanced past
+ *                new entry it is seeded from g_TextboxMessageSource then advanced past
  *                control codes. This points into the room/event message blob
  *                (loaded with the scene, 0x801Axxxx region).
  *     +0x08 u8   box style (0/1/3), +0x12/+0x14 u16 x/y, +0x16/+0x18 colour,
  *     +0x0C flags, +0x10 page/id, +0x1A.. inline data.
  *   Control codes in the stream: 0xF7 (switch/colour), 0xF8/0xF9, 0xFE <arg>
  *   (page/cond), 0xFF (end). Speaker is in-line, e.g. "Doorman" + ':' + text.
- *   D_8009CE90 holds the message SOURCE handed to a freshly-queued entry (the
+ *   g_TextboxMessageSource holds the message SOURCE handed to a freshly-queued entry (the
  *   "show message" call); after that the per-entry +0x04 is the live cursor.
  *
  *   *** To know the current on-screen text: scan D_800BCEA8 (0x38 stride), and
@@ -77,5 +97,8 @@ void Draw_PrintTextById(unsigned int textId);
  * Quick live probe: text cursor = *(s32*)0x8009D124 (x), *(s32*)0x8009D128 (y);
  *   current message = decode *(u8**)(0x800BCEA8 + 0x04) (entry 0).
  */
+
+/* Nth non-empty entry of the location name table (text/tables.c). */
+u8 *Text_FindNthNonEmpty(int index);
 
 #endif /* PE1_TEXT_H */

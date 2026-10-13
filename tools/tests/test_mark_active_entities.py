@@ -27,7 +27,8 @@ class MarkActiveEntitiesTests(unittest.TestCase):
         self.assertEqual(len(candidate), 0x43C)
         self.assertEqual(candidate, retail)
         syms = {name: int(name[2:], 16) for name in
-                ('D_8009D278', 'D_8009D254', 'D_8009D20C', 'D_8009D2B0', 'D_8009CE6C')}
+                ('D_8009D278', 'D_8009D254', 'D_8009D20C', 'D_8009D2B0')}
+        syms['g_BattleFadeStep'] = 0x8009CE6C
         actors,profiles,table,action=0x80104000,0x80108000,0x80101000,0x80109000
         saved=[getattr(R,f'UC_MIPS_REG_S{i}') for i in range(8)]+[R.UC_MIPS_REG_FP]
         centers=(-32768,-32257,-2048,-1537,-1536,-1535,0,1535,1536,1537,2047,32256,32767)
@@ -53,7 +54,7 @@ class MarkActiveEntitiesTests(unittest.TestCase):
                 word(actors+0x68,action);word(action+0x10,mode<<6)
                 word(syms['D_8009D278'],actors);word(syms['D_8009D254'],actors+4*0x300)
                 word(syms['D_8009D20C'],actors+4*0x300 if list_present else 0)
-                put(syms['D_8009D2B0'],bytes([int(enabled)]));put(syms['D_8009CE6C'],b'\xAA')
+                put(syms['D_8009D2B0'],bytes([int(enabled)]));put(syms['g_BattleFadeStep'],b'\xAA')
                 table_data=bytearray(b'\x5A'*(384*12))
                 angles=[]
                 for i in range(-128,256):
@@ -83,7 +84,7 @@ class MarkActiveEntitiesTests(unittest.TestCase):
                 m.emu_start(base,0x80010000,count=60000)
                 assert read(actors,0x1800)==expected,case
                 assert read(table-128*12,len(table_data))==table_data and read(profiles,0x100)==before_profiles,case
-                assert read(syms['D_8009CE6C'],1)==(b'\0' if enabled else b'\xAA'),case
+                assert read(syms['g_BattleFadeStep'],1)==(b'\0' if enabled else b'\xAA'),case
                 assert m.reg_read(R.UC_MIPS_REG_PC)==0x80010000 and m.reg_read(R.UC_MIPS_REG_SP)==0x801F0000,case
                 assert m.reg_read(R.UC_MIPS_REG_GP)==0x8009CD70,case
                 for i,r in enumerate(saved):assert m.reg_read(r)==0xABCD0000+i,case

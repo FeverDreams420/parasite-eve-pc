@@ -94,10 +94,21 @@ BATTLE_CMD_STATIC_ASSERT(
     restore_tail_offset);
 BATTLE_CMD_STATIC_ASSERT(sizeof(BattleCmdEntry) == 0x24, entry_size);
 
+/* Undo stack of pending battle commands: four entries that end where the
+ * equipment modifier words (g_StatScaleBase) begin, and the next free entry. */
+extern BattleCmdEntry g_BattleCmdStack[];
+extern BattleCmdEntry *g_BattleCmdStackTop;
+
+void BattleCmd_InitTableCursor(void);
 void BattleCmd_ResetTableCursor(void);
 BattleCmdEntry *BattleCmd_AllocSlot(void);
+void BattleCmd_UndoPending(void);
+void BattleCmd_UndoAllPending(void);
 int BattleCmd_GetRemainingAmmo(int *out);
 void BattleCmd_CommitAndSyncAmmo(int item);
+/* Declared without a prototype: retail calls it with the queued action (which
+ * it forwards to Inv_BuildWeaponList) and without any argument. */
+int BattleCmd_CommitAmmoAndUpdate();
 void BattleCmd_ChangeWeaponAndSync(int item);
 
 #undef BATTLE_CMD_STATIC_ASSERT

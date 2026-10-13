@@ -2,10 +2,21 @@
 #define PE1_ROOM_SPARK_H
 
 #include "common.h"
-#include "pe1/gte_types.h"
-#include "pe1/render_object.h"
+#include "pe1/akao_send.h"
+#include "pe1/asset_find.h"
 #include "pe1/field_collision.h"
+#include "pe1/field_model_draw.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/render_object.h"
 #include "pe1/room_floor.h"
+#include "pe1/scene_archive.h"
 
 /* Room spark particles: damped velocity, gravity and a floor bounce against
  * the frame-count driven floor height. */
@@ -23,53 +34,24 @@ typedef struct RoomDampedSpark {
 
 PE1_STATIC_ASSERT(sizeof(RoomDampedSpark) == 0x14, room_damped_spark_size);
 
-extern int rsin(int angle);
-extern int rcos(int angle);
-extern u16 func_80077AA4(int, int);
-void func_800D2104(GteShortVector *position, u8 *color, int scale, int abr);
-
 /* Particle pools reached through the two effect channels. */
 typedef struct RoomSparkChannel {
     s32 reserved[2];
     char *pool;                   /* 0x08 */
 } RoomSparkChannel;
 
-extern RoomSparkChannel *D_800F32D0, *D_800F33E0;
-extern RoomSparkChannel *D_800942E4;
-extern u16 D_800E11EA;
-extern int func_800CE560(void *pool, int size, int count, void *callback);
-extern void *func_800CE610(void *pool);
-extern int func_80071A54(void);
-extern int func_800D3FD8(void);
-extern int func_800D3F64(int sound, int handle);
-extern void *D_800B0E64;
-extern void func_8006DF50(void *channel, int id, int value, int volume, int pan);
+extern struct PmPrimarySlot *g_PmSlotTable; /* running process slot (pm/process.c) */
+extern int rand(void);
 
 /* Heading helpers and the trail history: turn the angles towards a target,
  * record a position into a history of points and draw the history as a
  * ribbon. */
-extern void func_800CFAA8(void *from, void *to, void *angles);
-extern void func_800CFD50(void *angles, void *out, int speed);
-extern void func_800D3AFC(void *history, int count, void *position, int reset);
-extern void func_800D3114(void *trail, int count, int length, int arg3, int arg4,
-                          int arg5, int arg6, int tpage, int clut, int alpha,
-                          void *headColor, void *tailColor, int mode);
 /* Rotates an offset by a bone's matrix. */
-extern void func_800CEAE8(void *bone, s16 *offset, s16 *out);
 /* Fades a colour layer record in or out. */
-extern void func_800CF4B4(int kind, int value, void *layer);
+extern void FieldFx_LoadRotatedClutRow(int kind, int value, void *layer);
 
 /* Asset library lookup and the model draw calls of the model effects. */
-void *func_8006E498(void *base, u32 key);
-void func_800C6D5C(void *asset, int x, int y);
-s32 func_80077A64(s32, s32, s32, s32);
-void func_800C6EC0(int tpage, int clut);
-void func_800C6ED8(int);
-void func_800C6EF8(void *asset);
-void func_800C6FA0(void *asset, int brightness);
-void func_800C7098(void *asset, int r, int g, int b);
-void func_800C71E4(void *asset, void *matrix);
-void func_800C6F4C(void *asset);
+void FieldFx_ModelSetTexture(int tpage, int clut);
 
 /* Jitter spark: the damped spark layout with a spin angle and a size. */
 typedef struct RoomJitterSpark {
@@ -118,8 +100,6 @@ typedef struct RoomPhasedSpark {
 
 PE1_STATIC_ASSERT(sizeof(RoomPhasedSpark) == 0x18, room_phased_spark_size);
 
-extern void func_800CE8F0(void *pool, int index, void *rotation, void *position);
-
 /* Comet spark: a damped spark that carries two steering rotations. */
 typedef struct RoomCometSpark {
     s16 x, y, z, reserved06;      /* 0x00 */
@@ -154,8 +134,6 @@ typedef struct RoomSparkNode {
     u8 *state;
 } RoomSparkNode;
 
-extern RoomSparkEventState *D_800E2368;
-
 /* The active battle entity: a spark that reaches it flags its actor. */
 typedef struct RoomSparkActor {
     u8 reserved[0x4C];
@@ -179,13 +157,8 @@ typedef struct RoomSparkBattleEntity {
     RoomSparkCoord z;             /* 0x30 */
 } RoomSparkBattleEntity;
 
-extern RoomSparkBattleEntity *D_8009D254;
-/* Walkable floor polygons and their count, for func_8001CAB0. */
-extern PolygonVertex *D_8009D248;
-extern u16 D_8009D1CC;
-extern int func_8001CAB0(int x, int z, void *map, int flags);
-extern int func_800C6B90(void *position, int radius);
-extern u16 D_800E11FA;
+extern struct BattleEntity *D_8009D254;
+/* Walkable floor polygons and their count, for Geo_PointInPoly. */
 
 /* Bouncing spark: the damped spark layout with a rise acceleration in the
  * word the damped spark leaves reserved. */
@@ -200,7 +173,6 @@ typedef struct RoomBounceSpark {
 } RoomBounceSpark;
 
 PE1_STATIC_ASSERT(sizeof(RoomBounceSpark) == 0x14, room_bounce_spark_size);
-
 
 /* Beam spark: a line drawn from the actor to a tip that is blended towards
  * the target, with a scaled model drawn at the target. */
@@ -228,9 +200,8 @@ typedef struct RoomBeamSparkParams {
 } RoomBeamSparkParams;
 
 /* Sprite tpage index table: one entry per sprite kind, followed by the
- * D_800E1204 palette table. An entry read as an array element is an
+ * g_FieldFxPaletteTable palette table. An entry read as an array element is an
  * in-struct reference, so it stays ordered after a store through the
  * parameter block base register, as retail's reads do. */
-extern u16 D_800E11E4[];
 
 #endif

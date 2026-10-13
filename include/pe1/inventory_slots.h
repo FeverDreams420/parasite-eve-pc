@@ -3,8 +3,9 @@
 
 #include "common.h"
 #include "pe1/inventory.h"
+#include "pe1/inventory_queries.h"
 
-extern s16 D_800C0E48[];
+extern s16 g_AyaInventoryItems[];
 /* Retail adjacency: tracked selections at C0E20, 50 item IDs at C0E48,
  * and 128 equipment records at C0EAC. Reserved bytes are not interpreted. */
 typedef struct InventoryRuntime {
@@ -25,50 +26,46 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(InventoryRuntime, storage) == 0x1098,
                   inventory_runtime_storage_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(InventoryRuntime, specialStorage) == 0x1160,
                   inventory_runtime_special_storage_offset);
-extern InventoryRuntime D_800C0E20;
-/* Count of filtered slot indices in D_800A1D9C; distinct from the
- * pending item-ID list at D_800A1FD4 (count D_8009D078). */
-extern s32 D_8009D040;
-extern s32 D_8009D044;
-extern s16 D_800A1E00[];
-extern s16 *D_8009D07C;
+extern InventoryRuntime g_InventoryRuntime;
+/* Count of filtered slot indices in g_InvPackedList; distinct from the
+ * pending item-ID list at g_InvActiveListItems (count g_InvActiveListCount). */
+extern s32 g_InvPackedListCount;
+extern s32 g_InvTransferItemCount;
+extern s16 g_InvTransferItemList[];
+extern s16 *g_InvActiveItemList;
 extern s32 D_8009D080;
-extern s16 D_800C1F80[];
-extern s16 D_800A1D9C[];
-extern u8 D_8009DE64[];
+extern s16 g_InvPackedList[];
+/* Saved by inventory commands as a word; the frame loop reads its low byte. */
+typedef union SavedMenuMode {
+    u32 value;
+    struct { u8 mode; u8 reserved[3]; } bytes;
+} SavedMenuMode;
+extern SavedMenuMode g_SavedMenuMode;
+
 void Inv_SetActiveList(int mode, int *slot);
+void Inv_ResetActiveList(void);
+void Battle_UseItem(int item);
+/* Moves ammo between the compared weapons; nonzero when it cannot. */
+int Inv_SpendAmmo(int amount);
+void Inv_InitMaxLevelInventory(int variant);
+int Inv_CountTotal(void);
+void Item_PackParasiteSpells(void);
 int Inv_LoadWayneItemsAsOverride(short *items);
-extern u8 D_800C0E0C;
-/* Separate views preserve retail's address reload across bonus queries.
- * Matching debt: these aliases name the same byte, not distinct storage. */
-extern u8 g_InvBaseCapacityForLimit[] asm("D_800C0E0C");
-extern u8 g_InvBaseCapacityForResult[] asm("D_800C0E0C");
+extern u8 g_InvBaseCapacity;
 
-extern u32 D_8009D05C[];
-extern s16 *D_8009D048;
-extern s32 D_8009D050;
-extern u32 *D_8009D058;
-extern s32 D_8009D064;
-extern s32 D_8009D06C;
-extern s32 D_8009D068;
+extern u32 g_InvSelectionBitStorage[];
+extern s16 *g_InvItemPtr;
+extern s32 g_InvSlotLimit;
+extern u32 *g_InvSelectionBits;
+extern s32 g_InvSelectionBitWords;
+extern s32 g_InvPendingCompactCount;
+extern s32 g_InvPackedListCursor;
 /* Equipment comparison filter: nonzero selects kinds 1..8, zero kind 9; first-stat floor. */
-extern s32 D_8009D0CC, D_8009D0D0;
+extern s32 g_InvRebuildFilterMode, g_InvRebuildMinFirstStat;
 /* Pending item IDs and the current number to transfer. */
-extern s32 D_8009D078;
-extern s16 D_800A1FD4[];
-#define g_InvActiveListCount D_8009D078
-#define g_InvActiveListItems D_800A1FD4
-
-#define g_AyaInventoryItems D_800C0E48
-#define g_InvItemPtr D_8009D048
-#define g_InvSlotLimit D_8009D050
-#define g_InvSelectionBitStorage D_8009D05C
-#define g_InvSelectionBits D_8009D058
-#define g_InvSelectionBitWords D_8009D064
-#define g_InvPendingCompactCount D_8009D06C
-#define g_InvTrackedSlots D_800C0E20.tracked
-#define g_InvBaseCapacity D_800C0E0C
-
+extern s32 g_InvActiveListCount;
+extern s16 g_InvActiveListItems[];
+#define g_InvTrackedSlots g_InventoryRuntime.tracked
 /* Two remembered selections. The retail indexed accesses use full addresses;
  * fixed-slot accesses use the individual small-data symbols below. Keeping
  * incomplete arrays avoids the old, overlapping three-element declarations. */
@@ -79,17 +76,17 @@ extern s32 D_8009D098, D_8009D09C; /* storage flags 0, 1 */
 extern s16 *g_InvActiveListOverride;
 extern s32 g_InvOverrideSlotLimit;
 extern u32 g_InvStorageSelectionBits[];
-#define g_AyaItemSelectionBits D_8009D05C
-
 /* Scratch state and full record snapshots used by the item-detail operation. */
 extern u8 D_800A1FE8[];
 extern u8 *D_8009D084;
 extern s32 D_8009D088, D_8009D08C;
-extern ItemDataRecord D_800A204C, D_800A206C;
-/* Global fallback and category-specific ammunition records; storage tool IDs. */
-extern ItemDataRecord D_800A1E44;
-extern ItemDataRecord D_800A1E64[];
-extern s16 D_800C1EB8[];
+extern ItemDataRecord g_InvSavedSelectionRecord0, D_800A206C;
+/* Global fallback ammunition record, then the records of item values
+ * 0x200..0x208 (the first three are the category ammunition pools);
+ * storage tool IDs. */
+extern ItemDataRecord g_InvFallbackAmmoRecord;
+extern ItemDataRecord g_InvSpecialItemRecords[];
+extern s16 g_WayneStorageItems[];
 
 void Inv_InitWayneStorage(void);
 void Inv_RememberSelection(unsigned int index, int value);
@@ -97,14 +94,55 @@ int Inv_RestoreSelection(unsigned int index);
 void Inv_BuildStorageDisplay(void);
 
 void Inv_SetActiveListOverride(s16 *items, int count);
-int Inv_GetAyaSlotLimit(void);
 int Inv_GetBonusSlotCount(void);
 int Inv_FindFirstEmptySlot(int neededSlots);
 void Inv_CompactActiveListSlots(void);
 int Inv_CheckFreeSlotCapacity(int requestedSlots);
 
-extern int D_8009D03C; /* First base-item ID represented by the three ammo pools. */
+extern int g_InvCategoryBaseItemId; /* First base-item ID represented by the three ammo pools. */
 
 int Inv_GetPackedListItem(int index);
+
+int Menu_GetCommandResult(void);
+void Menu_ClearCommandResult(void);
+
+/* Item record of an inventory value: 0x100..0x17F equipment records,
+ * 1..0xFF base item data, 0x200..0x208 the special item records at g_InvSpecialItemRecords
+ * (32 bytes each). Retail units spell the key item address two ways: as a
+ * record index, or scaled from the key item table base g_KeyItemDataTable. */
+static inline ItemDataRecord *Inv_LookupItemRecord(int value) {
+    int saved = value;
+    ItemDataRecord *result;
+    if (value - 0x100U < 0x80U) {
+        result = &g_InventoryRuntime.equipment[value - 0x100];
+    } else {
+        if (value - 1U < 0xFFU) {
+            result = Item_LookupBaseData(value - 1);
+        } else if (saved - 0x200U < 9U) {
+            result = &g_InvSpecialItemRecords[saved - 0x200];
+        } else {
+            result = 0;
+        }
+    }
+    return result;
+}
+
+static inline ItemDataRecord *Inv_LookupItemRecordScaled(int value) {
+    int saved = value;
+    ItemDataRecord *result;
+    if (value - 0x100U < 0x80U) {
+        result = &g_InventoryRuntime.equipment[value - 0x100];
+    } else {
+        if (value - 1U < 0xFFU) {
+            result = Item_LookupBaseData(value - 1);
+        } else if (saved - 0x200U < 9U) {
+            int shifted = saved << 5;
+            result = (ItemDataRecord *)(g_KeyItemDataTable + shifted);
+        } else {
+            result = 0;
+        }
+    }
+    return result;
+}
 
 #endif

@@ -8,6 +8,7 @@
  * protocol, and the templates are copied into kernel memory word by word.
  * The template's fifth word is part of the 20 bytes _patch_card2 copies.
  */
+
 #include "pe1/psyq_asm.h"
 
 PSYQ_ASM_OBJECT(LIBCARD, PATCH)
@@ -20,8 +21,8 @@ PSYQ_ASM_FUNCTION(func_8007E3C8,
     "    nop\n");
 
 PSYQ_ASM_FUNCTION(_patch_card,
-    "    lui     $at, %hi(D_800A34E0)\n"
-    "    sw      $ra, %lo(D_800A34E0)($at)\n"
+    "    lui     $at, %hi(g_PatchCardSavedRa)\n"
+    "    sw      $ra, %lo(g_PatchCardSavedRa)($at)\n"
     "    jal     EnterCriticalSection\n"
     "    nop\n"
     "    addiu   $t1, $zero, 0x56\n"
@@ -39,8 +40,8 @@ PSYQ_ASM_FUNCTION(_patch_card,
     "    andi    $t2, $v1, 0xFFFF\n"
     "    addu    $v1, $t1, $t2\n"
     "    addiu   $v0, $v1, 0x28\n"
-    "    lui     $t2, %hi(func_8007E3B4)\n"
-    "    addiu   $t2, $t2, %lo(func_8007E3B4)\n"
+    "    lui     $t2, %hi(LIBCARD_PATCH_text_70)\n"
+    "    addiu   $t2, $t2, %lo(LIBCARD_PATCH_text_70)\n"
     "    lui     $t1, %hi(func_8007E3C8)\n"
     "    addiu   $t1, $t1, %lo(func_8007E3C8)\n"
     ".Lcopy_card:\n"
@@ -53,15 +54,15 @@ PSYQ_ASM_FUNCTION(_patch_card,
     "    lui     $at, %hi(g_CardPatchContinuation)\n"
     "    jal     FlushCache\n"
     "    sw      $v0, %lo(g_CardPatchContinuation)($at)\n"
-    "    lui     $ra, %hi(D_800A34E0)\n"
-    "    lw      $ra, %lo(D_800A34E0)($ra)\n"
+    "    lui     $ra, %hi(g_PatchCardSavedRa)\n"
+    "    lw      $ra, %lo(g_PatchCardSavedRa)($ra)\n"
     "    nop\n"
     "    jr      $ra\n"
     "    nop\n");
 
 PSYQ_ASM_FUNCTION(_patch_card2,
-    "    lui     $at, %hi(D_800A34E0)\n"
-    "    sw      $ra, %lo(D_800A34E0)($at)\n"
+    "    lui     $at, %hi(g_PatchCardSavedRa)\n"
+    "    sw      $ra, %lo(g_PatchCardSavedRa)($at)\n"
     "    jal     EnterCriticalSection\n"
     "    nop\n"
     "    addiu   $t1, $zero, 0x57\n"
@@ -84,8 +85,8 @@ PSYQ_ASM_FUNCTION(_patch_card2,
     "    addiu   $v0, $v0, 0x4\n"
     "    jal     FlushCache\n"
     "    nop\n"
-    "    lui     $ra, %hi(D_800A34E0)\n"
-    "    lw      $ra, %lo(D_800A34E0)($ra)\n"
+    "    lui     $ra, %hi(g_PatchCardSavedRa)\n"
+    "    lw      $ra, %lo(g_PatchCardSavedRa)($ra)\n"
     "    nop\n"
     "    jr      $ra\n"
     "    nop\n");

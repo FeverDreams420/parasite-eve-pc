@@ -3,8 +3,10 @@
 
 /* Declarations used only by the memory card save state machine
  * (MemCard_UpdateSaveState). */
+
 #include "pe1/memcard.h"
 #include "pe1/menu_inventory.h"
+#include "pe1/menu_notification_dialog.h"
 #include "pe1/psyq_bios.h"
 #include "pe1/psyq_libc.h"
 
@@ -31,17 +33,10 @@ unsigned int MemCard_GetDialogMode(void);
 int Menu_CreateSaveSlotListView(int port, int count);
 void Menu_ShowMemCardErrorDialog(int port);
 void Menu_DestroyMemCardProgressWidget(void);
-void Menu_CreateTwoLineDialog(int first, int second);
 void Save_LoadCardFileIntoRuntime(void);
 
 /* Card directory path "bu00:" whose port digit is patched before scans. */
-extern char *D_80092230;
-/* Save-file image written by the save flow. */
-extern u8 D_8009EED0[];
-extern int D_800A1704;
-extern int D_800A186C;
-extern int D_800A1864;
-extern MemCardPortState *D_800A1854;
+extern char *g_MemCardSearchPatternPtr;
 
 void MemCard_UpdateSaveState(int port);
 

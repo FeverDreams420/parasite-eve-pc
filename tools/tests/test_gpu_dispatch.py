@@ -2,31 +2,32 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import function_closure, host_unit  # noqa: E402
 
 
 class GpuDispatchTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_ready_states_timeout_and_callback_order(self):
-        unit = (ROOT / "src/main/psyq/libgpu/LoadImage2.c").read_text()
-        source = (unit[:unit.index("int LoadImage2")] +
-                  unit[unit.index("extern char D_80011928"):])
-        self.assertNotRegex(source, r'\b(?:asm|__asm__)\b')
+        self.assertNotRegex(function_closure("DrawOTag2"), r'\b(?:asm|__asm__)\b')
+        source = host_unit("DrawOTag2")
         harness = source + r'''
 #include <assert.h>
 #include <stdarg.h>
-GpuDebugState D_8009574C;
-char D_80011928[] = "dispatch";
+GpuDebugState g_GpuSystemState;
+char g_DrawOTagFormat[] = "dispatch";
 int g_GpuDmaTimeoutDeadline, g_GpuDmaWaitLoopCounter;
 static volatile unsigned int dma;
 static unsigned int gpu;
 volatile unsigned int *g_GpuDmaChcrPtr = &dma;
-volatile unsigned int *g_GpuGp1Ptr = &gpu;
+unsigned int *g_GpuGp1Ptr = &gpu;
 static GpuCallbacks callbacks;
-GpuCallbacks *D_80095744 = &callbacks;
+GpuCallbacks *g_GpuCallbacks = &callbacks;
 static int packet, polls, idleAt, readyAt, timeoutAt, events, vsyncCalls;
 static void debug(char *message, ...) {
     va_list args;
@@ -34,14 +35,14 @@ static void debug(char *message, ...) {
     va_start(args, message);
     argument = va_arg(args, void *);
     va_end(args);
-    assert(message == D_80011928 && argument == &packet);
+    assert(message == g_DrawOTagFormat && argument == &packet);
     assert(events == 0);
     events = 1;
 }
-GpuDebugPrintf D_80095748 = debug;
+GpuDebugPrintf g_GpuDebugPrintf = debug;
 int VSync(int mode) {
     assert(mode == -1 && ++vsyncCalls == 1);
-    assert(events == (D_8009574C.queueState.debugLevel >= 2 ? 1 : 0));
+    assert(events == (g_GpuSystemState.queueState.debugLevel >= 2 ? 1 : 0));
     events = events * 10 + 2;
     return 123;
 }
@@ -58,18 +59,18 @@ void Gpu_RestoreDmaCallback(void) { assert(0); }
 PsyqInterruptHandler DMACallback(int channel, PsyqInterruptHandler callback) {
     assert(channel == 2 && callback == Gpu_RestoreDmaCallback);
     assert(dma == 0 && gpu == 0x04000000);
-    assert(events == (D_8009574C.queueState.debugLevel >= 2 ? 12 : 2));
+    assert(events == (g_GpuSystemState.queueState.debugLevel >= 2 ? 12 : 2));
     events = events * 10 + 3;
     return 0;
 }
 static int send(void *argument) {
     assert(argument == &packet);
-    assert(events == (D_8009574C.queueState.debugLevel >= 2 ? 123 : 23));
+    assert(events == (g_GpuSystemState.queueState.debugLevel >= 2 ? 123 : 23));
     events = events * 10 + 4;
     return 77;
 }
 static void check(int debugLevel, int idle, int ready, int timeout) {
-    D_8009574C.queueState.debugLevel = debugLevel;
+    g_GpuSystemState.queueState.debugLevel = debugLevel;
     idleAt = idle;
     readyAt = ready;
     timeoutAt = timeout;

@@ -19,9 +19,9 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneGrabHead, callback) == 0x0C,
                   scene_grab_head_callback_offset);
 
 /* Step that waits for the actor's attack stance
- * (src/overlays/room_lib/SceneEffect_GrabAwaitStance.c), then hands over to
+ * (src/overlays/room_lib/grab_await_stance.c), then hands over to
  * the scene's own approach check. */
-void SceneEffect_GrabAwaitStance(SceneGrabHead *head);
-void SceneEffect_GrabOnApproach(SceneGrabHead *head);
+void RoomLib_GrabAwaitStance(SceneGrabHead *head);
+void RoomLib_GrabOnApproach(SceneGrabHead *head);
 
 #endif

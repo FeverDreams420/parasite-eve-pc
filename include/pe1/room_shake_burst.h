@@ -2,10 +2,20 @@
 #define PE1_ROOM_SHAKE_BURST_H
 
 #include "common.h"
+#include "pe1/akao_send.h"
+#include "pe1/field_model_draw.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_task_pool.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
+#include "pe1/room_floor.h"
 #include "pe1/room_fx.h"
 #include "pe1/room_orbit_trail.h"
-#include "pe1/room_floor.h"
+#include "pe1/scene_archive.h"
 
 /* Shake burst controller (room_m318): shakes the camera while it scatters
  * debris particles around its anchor, then flags the actor for the
@@ -78,53 +88,29 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomShakeSweepParticle, stretch) == 0x0E,
 PE1_STATIC_ASSERT(sizeof(RoomShakeSweepParticle) == 0x10,
                   room_shake_sweep_particle_size);
 
-extern RoomShakeBurstEvent *D_800E2368;
-extern RoomShakeBurstChannel *D_800F32D0;
-extern RoomShakeBurstSparkChannel *D_800F33E0;
-extern RoomShakeBurstEntity **D_8009D254;
-extern void *D_800B0E64;
-extern int D_800E27EC;
-extern u16 D_800E11EA;
-extern u16 D_800E2850[];
+extern struct BattleEntity *D_8009D254;
 
-extern int func_800CE560(void *pool, int size, int count, void *callback);
-extern RoomShakeBurstPoint *func_800CE610(void *pool);
-extern int func_800D3FD8(void);
-extern void func_8006DF50(void *channel, int id, int value, int volume, int pan);
-extern int func_80071A54(void);
-extern void func_80020D50(void);
+extern int rand(void);
+extern void Battle_HaltOnPositiveX(void);
 extern u8 *D_800F32D8;
-extern void func_800C6D5C(u8 *data, u8 x_offset, u8 y_offset);
-extern void func_80020DD0(void);
+extern void Battle_InitEntityColors(void);
 
 /* room_m318 particle callbacks and the sweep anchor. */
-extern int func_80193FC4(int mode,
+extern int RoomM318_ShakeBurstParticleCallback(int mode,
                          RoomShakeBurstParticleCallbackView *particle);
-extern int func_8019326C(int mode, RoomShakeSweepParticle *particle);
+extern int RoomM318_ShakeSweepParticleCallback(int mode, RoomShakeSweepParticle *particle);
 extern GteShortVector D_80199904;
 
 /* Sweep particle draw: model asset, matrix helpers and clut lookups. */
-extern u16 D_800E11FA;
-extern u16 GetClut(int x, int y);
-extern int rsin(int angle);
-extern int func_80077A64(int, int, int, int);
-#include "pe1/gte_types.h"
-extern void func_800C6EC0(int tpage, int clut);
-extern void func_800C6ED8(int);
-extern void func_800C6EF8(void *asset);
-extern void func_800C7098(void *asset, int r, int g, int b);
-extern void func_800C71E4(void *asset, RoomSpriteMatrix *matrix);
-extern void func_800C6F4C(void *asset);
+extern void FieldFx_ModelSetTexture(int tpage, int clut);
 
-/* Flash burst controller (func_80195D20): its particle callback, colour
+/* Flash burst controller (RoomM318_FlashBurst): its particle callback, colour
  * seed, glow track and the helpers it calls. */
-extern int func_80195904(int mode, RoomOrbitTrailParticle *p);
+extern int RoomM318_FlashBurstParticleCallback(int mode, RoomOrbitTrailParticle *p);
 extern RenderColor D_8018F210;
 extern u8 D_80199770[];
-extern int rcos(int angle);
-extern void func_800D1AE0(RenderColor *color, int value, int step, int count);
 
-/* Rising column controller (func_801955E4): the anchor rises from the
+/* Rising column controller (RoomM318_RisingColumn): the anchor rises from the
  * floor over the configured duration while sparks fall off it. */
 typedef struct RoomRisingColumn {
     s16 x, y, z;                  /* 0x00 */
@@ -141,14 +127,12 @@ typedef struct RoomRisingColumnParams {
 } RoomRisingColumnParams;
 
 extern GteShortVector D_80199924;
-extern int func_80195190(int mode, RoomOrbitTrailParticle *p);
+extern int RoomM318_RisingColumnParticleCallback(int mode, RoomOrbitTrailParticle *p);
 extern GteRotation D_8018F208;
 extern u8 D_801996EC[];
-extern u16 D_800E11E8;
-extern u16 D_800E11F8;
-extern int func_800D3F64(int sound, int handle);
+extern u16 g_FieldFxTpageSlot10;
 
-/* Cross flash controller (func_80196820): an anchor with an orientation,
+/* Cross flash controller (RoomM318_CrossFlash): an anchor with an orientation,
  * and particles that carry their own position, rotation and draw kind. */
 typedef struct RoomCrossFlash {
     s16 x, y, z;                  /* 0x00 */
@@ -165,11 +149,11 @@ typedef struct RoomCrossFlashParticle {
 } RoomCrossFlashParticle;
 
 extern GteShortVector D_80199930;
-extern int func_8019646C(int mode, RoomCrossFlashParticle *p);
+extern int RoomM318_CrossFlashParticleCallback(int mode, RoomCrossFlashParticle *p);
 extern RenderColor D_8018F1FC;
 extern u8 D_80199798[];
 
-/* Ember burst particle (func_801944E8): spin template, colour seed and
+/* Ember burst particle (RoomM318_EmberBurstParticleCallback): spin template, colour seed and
  * glow track. */
 extern GteRotation D_8018F1F4;
 extern u8 D_80199674[];

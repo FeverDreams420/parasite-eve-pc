@@ -2,7 +2,22 @@
 #define PE1_BOOT_DISPLAY_H
 
 #include "common.h"
+#include "pe1/asset_tim.h"
 #include "pe1/cdrom_buffers.h"
+#include "pe1/display_env.h"
+#include "pe1/gpu_image.h"
+#include "pe1/psyq_callbacks.h"
+#include "pe1/psyq_cd.h"
+#include "pe1/psyq_ds.h"
+#include "pe1/psyq_ds_queue.h"
+#include "pe1/psyq_gpu.h"
+
+/* Three byte channels in the boot screen image buffer. */
+typedef struct BootRgb24Pixel {
+    u8 red, green, blue;
+} BootRgb24Pixel;
+
+PE1_STATIC_ASSERT(sizeof(BootRgb24Pixel) == 3, boot_rgb24_pixel_size);
 
 typedef struct {
     s32 tag;
@@ -36,7 +51,7 @@ typedef struct {
     u16 transferX, transferY;
     char *decodeTarget;
 } BootDisplayImageBuffer;
-extern BootDisplayImageBuffer g_BootDisplayImageBuffers[2] __asm__("D_80125B84");
+extern BootDisplayImageBuffer g_BootDisplayImageBuffers[2];
 
 typedef struct {
     void (*init)(void);
@@ -52,13 +67,13 @@ extern u16 g_BootDisplayFontStyle;
 extern const u8 D_80125B1C[][4];
 extern const u8 D_80125B1E[][4];
 extern const u8 g_BootDisplayLowercaseWidths[][4];
-extern const u8 *D_80125C88[];
+extern const u8 *g_BootDisplayCreditLines[];
 extern const u8 **g_BootDisplayTextCursor;
 
-extern char *g_BootDisplayOrderingTable;
+extern char *volatile g_BootDisplayOrderingTable;
 extern u16 g_BootDisplayTPage;
 extern u16 g_BootDisplayClut;
-extern char *g_BootDisplayPrimitiveCursor;
+extern char *volatile g_BootDisplayPrimitiveCursor;
 extern s32 g_BootDisplayTextScrollX;
 extern s32 g_BootDisplayTextScrollStepX;
 extern s32 g_BootDisplayTransition;
@@ -66,80 +81,59 @@ extern s32 g_BootDisplayBufferIndex;
 extern volatile s16 g_BootDisplayStateTimer;
 extern s16 g_BootDisplayTransferProgress;
 extern s32 g_BootDisplayState;
-extern s16 *D_80172C90;
-extern s16 *D_80172C94;
-extern s32 D_80172C98;
-extern s32 D_80172C9C;
-extern u16 D_80093166;
-extern u16 D_80093168;
-extern char D_8012682C[];
+extern s16 *g_BootDisplayFontImageRect;
+extern s16 *g_BootDisplayFontClutRect;
+extern s32 g_BootDisplayFontImagePixels;
+extern s32 g_BootDisplayFontClutPixels;
+extern u16 g_BootDisplayDataLbaTbl;
+extern u16 g_MainAssetLbaTbl[];
+extern char g_BootDisplayFontTim[];
 /* Two buffer records, each holding four image addresses. */
 extern char *D_80125B88[8];
 extern char *D_80125B90;
 extern char *D_80125B98;
 extern char *D_80125BA0;
-extern volatile s32 D_80172CF0;
-extern volatile s32 D_80172CEC;
-extern s32 D_80172CE8;
-extern s32 D_80172CE4;
-extern u8 D_80125AF0[];
-extern u16 D_800B0DD4;
-extern volatile u16 D_80172CF8;
+extern volatile s32 g_BootDisplayPlaybackCurrentPos;
+extern volatile s32 g_BootDisplayPlaybackEndPos;
+extern s32 g_BootDisplayPlaybackStartPos;
+extern s32 g_BootDisplayPlaybackEnded;
+void BootDisplay_RecordReadPosition(u8 mode, int value);
+extern u16 g_CdDiskType;
+extern volatile u16 g_BootDisplayPlaybackRingIndex;
 extern volatile u16 D_80172CFA;
-extern char *D_80172D00;
-extern volatile s32 D_80172CF4;
-extern char *D_80125B48;
-extern s32 g_ActiveDrawSlot __asm__("D_8009CDDC");
-extern char g_RenderDisplayEnvArray[] __asm__("D_800BCE80");
-extern char g_RenderDrawEnvArray[] __asm__("D_800BCDC8");
+extern char *g_BootDisplayPlaybackSectorBuffer;
+extern volatile s32 g_BootDisplayPlaybackReadCount;
+extern char *g_BootDisplayPlaybackFilePath;
+extern s32 g_ActiveDrawSlot;
 
-void func_80077AC4(void *ordering_table, void *primitive);
-void func_80077B04(void *primitive, s32 code);
-void func_80077C84(void *primitive, s32 x, s32 y, u16 tpage);
-void func_80077CB4(void *primitive, void *next);
-void func_80074A44(s32 value);
-s32 func_80073A44(s32 value);
-void func_800870F0(s32 value);
-void func_801258EC(s32, s32);
-s32 func_8007EE84(s32, void *, void *, s32);
-s32 func_8007F418(s32, void *);
-void func_800824C8(s32 (*)(u8));
-void func_80073D24(void (*)(void));
-s32 Boot_StartPlayback(void);
-void Boot_CheckPlaybackTime(void);
-s32 func_8007F72C(void);
-s32 func_8007F7A8(void);
+void SetSemiTrans(void *primitive, s32 code);
+void ResetGraph(s32 value);
+s32 VSync(s32 value);
+void Spu_SetVoiceVolume(s32 value);
+int BootDisplay_IssuePlaybackRead(int command, int parameter);
+int BootDisplay_SetCdFilter(int code);
+s32 BootDisplay_WaitForCdAndRestoreCallbacks(void);
+s32 DsSync(s32, void *);
+s32 BootDisplay_StartPlayback(void);
+void BootDisplay_CheckPlaybackTime(void);
+s32 DsSystemStatus(void);
+s32 DsShellOpen(void);
 /* PsyQ exit: the failure path never returns to the transfer callback. */
-void func_800719E4(s32) __attribute__((noreturn));
-void func_80080AE4(void *, s32);
-s32 Boot_StepPlaybackTransfer(u8 mode);
-void func_8007EC14(void);
-void func_80080CC8(void *);
-s32 func_8007F778(void);
-s32 Boot_InitPlaybackFile(void);
-void func_80074BB8(s32 value);
-void func_80074D28(s32 value);
-void func_80074DC0(s32 value);
-void func_80074F44(void *rect, s32 x, s32 y, s32 mode);
-s32 func_800718D0(void *resource);
-s32 func_800719C4(void *resource);
-s32 func_80071994(void *resource);
-s16 *func_80071964(void *resource);
-s16 *func_80071944(void *resource);
-s32 func_80077A64(s32, s32, s32, s32);
-s32 func_80077AA4(s32, s32);
-void func_8010BE3C(s32 value);
-void func_8010BD4C(void *address);
-void func_800755F0(void *entry);
-void func_8007506C(void *rect, void *image);
-void func_80075424(void *draw_env);
-void Boot_PresentFrame(void);
-void func_800754E4(void *dst, void *src);
-void func_80124F40(s32 value);
+void exit(s32) __attribute__((noreturn));
+s32 BootDisplay_StepPlaybackTransfer(u8 mode);
+void DsInit(void);
+s32 DsQueueLen(void);
+s32 BootDisplay_InitPlaybackFile(void);
+void SetGraphDebug(s32 value);
+void SetDispMask(s32 value);
+void DecDCTReset(s32 value);
+void MdecDiag_ExpandDecoderTable(void *address);
+void BootDisplay_PresentFrame(void);
+void BootDisplay_SetImageDisplay(u16 index);
 
 /* Callable entry points inside neighboring boot-display code. */
-s32 Boot_GetGlyphIndex(u8 character);
-u16 Boot_GetGlyphWidth(u8 character);
+s32 BootDisplay_GetGlyphIndex(u8 character);
+u16 BootDisplay_GetGlyphWidth(u8 character);
 void func_8012462C(void *primitive, u16 x, u16 y, s32 u, s32 v);
 
 #endif

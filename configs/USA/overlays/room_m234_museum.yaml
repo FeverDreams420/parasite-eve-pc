@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m234_museum
   ld_script_path: linkers/USA/overlays/room_m234_museum.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m234_museum.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m234_museum.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m234_museum.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m234_museum.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,15 +37,14 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m234_museum]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1E4, .rodata, ../room_lib/RoomEffect_SoundBurst]
-      - [0x1F0, .rodata, ../room_lib/RoomEffect_SparkRingBurst]
-      - [0x244, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3560, c, ../room_lib/RoomEffect_SoundBurst]
-      - [0x3C80, c, ../room_lib/RoomLib_SetArgs3]
-      - [0x3CA4, c, ../room_lib/RoomEffect_SparkRingBurst]
-      - [0x5738, data, D_80194720]
-      - [0x5770, data, D_80194758]
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, .rodata, ../room_lib/sound_burst]
+      - [0x1F0, .rodata, ../room_lib/spark_ring_burst]
+      - [0x244, c, ../room_lib/actor_classes]
+      - [0x3560, c, ../room_lib/sound_burst]
+      - [0x3C80, c, ../room_lib/script_args]
+      - [0x3CA4, c, ../room_lib/spark_ring_burst]
+      - [0x5738, .data, ../room_lib/actor_class_table]
       - [0x57E0, data, D_801947C8]
       - [0x5804, data, D_801947EC]
       - [0x583C, data, D_80194824]
@@ -62,6 +63,11 @@ segments:
       - start: 0x41210
         type: databin
         name: D_801D01F8
+        dir: room_m234_museum
+      - [0x56AE8, data, D_801E5AD0]
+      - start: 0x56B18
+        type: databin
+        name: D_801E5B00
         dir: room_m234_museum
   - [0x57000]
 # room: m234, section3 sector 61240, scanner delta 0

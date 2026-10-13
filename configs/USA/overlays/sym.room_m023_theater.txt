@@ -1,2 +1,7 @@
 g_RoomScriptRecord = 0x80190758;
 RoomLib_SetTaskVar0 = 0x80190644; // type:func
+RoomM023_DriftPulseCallback = 0x8018F004; // type:func
+RoomM023_ScatterEmitter = 0x8018F3C8; // type:func
+RoomM023_JointGlow = 0x8018F710; // type:func
+RoomM023_JointBeacon = 0x8018FC14; // type:func
+g_RoomM023Effects = 0x80190720;

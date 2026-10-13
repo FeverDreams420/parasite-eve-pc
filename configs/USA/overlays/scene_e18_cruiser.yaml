@@ -1,0 +1,52 @@
+name: scene_e18_cruiser.bin
+sha1: 7f43edcaa8c1bcc20d1feabb75c703c7496b7502
+options:
+  basename: scene_e18_cruiser
+  target_path: original/USA/overlays/scene_e18.bin
+  base_path: ../../..
+  platform: psx
+  compiler: GCC
+  asm_path: asm/USA/overlays/scene_e18_cruiser
+  src_path: src/overlays/scene_e18_cruiser
+  build_path: build/USA/overlays/scene_e18_cruiser
+  ld_script_path: linkers/USA/overlays/scene_e18_cruiser.ld
+  undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.scene_e18_cruiser.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.scene_e18_cruiser.txt
+    - configs/USA/sym.main.txt
+  undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.scene_e18_cruiser.txt
+  find_file_boundaries: True
+  disassemble_all: True
+  asm_function_macro: glabel
+  asm_jtbl_label_macro: jlabel
+  asm_data_macro: dlabel
+  generate_asm_macros_files: False
+  section_order: [".rodata", ".text", ".data", ".sdata", ".sbss", ".bss"]
+  subalign: 4
+  string_encoding: ASCII
+  data_string_encoding: ASCII
+  rodata_string_guesser_level: 2
+  data_string_guesser_level: 2
+segments:
+  - name: scene_e18_cruiser
+    type: code
+    start: 0x0
+    vram: 0x8018EFE8
+    align: 4
+    subalign: 4
+    bss_size: 0x0
+    subsegments:
+      - start: 0x0
+        type: rodatabin
+        name: scene_e18_header
+        dir: scene_e18_cruiser
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, c, ../room_lib/actor_classes]
+      - [0x3500, c, e18_emitters]
+      # Pulse-ring emitter and callback share one pool-record flow.
+      - [0x4EF4, data]
+  - [0x5000]
+# source slice: scanner
+# extract locally with: dd if=disc/extracted/PE.IMG of=original/USA/overlays/scene_e18.bin bs=2048 skip=98289 count=10
+# special-scene set: entry 18 of the table at 0x80094048 (this bin = its section 3); mid-game (Daniel/Maeda) bank
+# area: save-location label "Cruiser" (id 14) for map 428; place cruiser, high confidence (docs/ROOMS.md)

@@ -1,6 +1,8 @@
 /* ASSEMBLER: GNU */
 /* PSY-Q LIBMATH DIVDF3: __divdf3 and _comp_mant. */
+
 #include "pe1/math64.h"
+
 double __divdf3(double numerator, double denominator) {
     struct {
         MathU64 quotient, bit, round, n, d, temp;
@@ -103,7 +105,7 @@ double __divdf3(double numerator, double denominator) {
 
 int _comp_mant(MathU64 left, MathU64 right)
 {
-    if (left.hi > right.hi) goto greater;
+    if (left.hi <= right.hi) {
     if (left.hi < right.hi) return -1;
     if (left.lo > right.lo) return 1;
     {
@@ -112,6 +114,7 @@ int _comp_mant(MathU64 left, MathU64 right)
     }
     asm("");
     return 0;
+    }
 greater:
     {
         register int result asm("$2") = 1;

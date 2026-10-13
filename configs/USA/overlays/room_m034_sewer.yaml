@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m034_sewer
   ld_script_path: linkers/USA/overlays/room_m034_sewer.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m034_sewer.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m034_sewer.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m034_sewer.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m034_sewer.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,13 +37,12 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m034_sewer]
-      - [0xC, .rodata, ../room_lib/RoomEffect_GlowOrb]
-      - [0x24, c, ../room_lib/RoomEffect_GlowOrbSetup]
-      - [0xD0, c, ../room_lib/RoomLib_Spawn6]
-      - [0xFC, c, ../room_lib/RoomLib_RegisterDrawListActive]
-      - [0x144, c, ../room_lib/RoomLib_RegisterPairedTablesActive]
-      - [0x1D0, c, ../room_lib/RoomLib_CloseTarget]
-      - [0x254, c, ../room_lib/RoomEffect_GlowOrb]
+      - [0xC, .rodata, ../room_lib/glow_orb]
+      - [0x24, c, ../room_lib/glow_orb_setup]
+      - [0xD0, c, ../room_lib/class_spawn]
+      - [0xFC, c, ../room_lib/class_register_active]
+      - [0x1D0, c, ../room_lib/class_close_target]
+      - [0x254, c, ../room_lib/glow_orb]
       - [0xF4C, data, D_8018FF34]
       - [0xF60, data, RoomLib_TableC]
       - [0xF74, data, D_8018FF5C]
@@ -64,6 +65,11 @@ segments:
       - start: 0x291FC
         type: databin
         name: D_801B81E4
+        dir: room_m034_sewer
+      - [0x31D40, data, D_801C0D28]
+      - start: 0x31D4C
+        type: databin
+        name: D_801C0D34
         dir: room_m034_sewer
   - [0x32000]
 # room: m034, section3 sector 15584, scanner delta 0

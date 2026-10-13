@@ -1,15 +1,12 @@
 #ifndef PE1_PSYQ_SPU_INTERNAL_H
 #define PE1_PSYQ_SPU_INTERNAL_H
 
-#ifndef PE1_COMMON_H
-typedef signed int s32;
-typedef unsigned int u32;
-typedef unsigned short u16;
-#endif
-#include "pe1/psyq_types.h"
+#include "common.h"
 #include "pe1/psyq_callbacks.h"
 #include "pe1/psyq_spu_api.h"
 #include "pe1/psyq_spu_reverb.h"
+#include "pe1/psyq_types.h"
+
 typedef PsyqVoidCallback SpuCallback;
 
 /*
@@ -56,7 +53,7 @@ typedef struct SpuRegs {
 } SpuRegs;
 typedef char SpuRegsSizeCheck[(sizeof(SpuRegs) == 0x200) ? 1 : -1];
 
-/* S_INI.OBJ's 16-byte reverb state at D_8009B3A0. Depths are signed
+/* S_INI.OBJ's 16-byte reverb state at g_SpuReverbState. Depths are signed
  * left/right halfwords; delay and feedback begin at offsets 8 and 12.
  */
 typedef struct SpuReverbState {
@@ -72,11 +69,11 @@ typedef char SpuReverbStateDelayCheck[
     ((unsigned long)&((SpuReverbState *)0)->delay == 8) ? 1 : -1];
 typedef char SpuReverbStateFeedbackCheck[
     ((unsigned long)&((SpuReverbState *)0)->feedback == 12) ? 1 : -1];
-extern SpuReverbState D_8009B3A0;
-extern u16 D_8009B3B8[24];
+extern SpuReverbState g_SpuReverbState;
+extern u16 _spu_voice_centerNote[24];
 extern int _spu_rev_flag, _spu_rev_reserve_wa, D_8009B46C;
 extern u32 _spu_rev_offsetaddr;
-extern int D_8009B45C, D_8009B460, D_8009B464, D_8009B38C;
+extern int _spu_trans_mode;
 extern int D_8009B388, D_8009B3B4, D_8009B3B0, D_8009B3E8;
 void _SpuInit(int mode);
 void _spu_FiDMA(void);
@@ -101,6 +98,12 @@ extern SpuAddressUnit _spu_mem_mode;
 extern SpuRegs *_spu_RXX;
 extern u32 *_spu_sys_pcr;
 extern volatile u32 *g_SpuDmaMadrPtr;
+/* A reverb work-area table entry as the address word SpuClearReverbWorkArea
+ * keeps in the register it then reuses for the byte count. */
+typedef union SpuReverbEntryAddress {
+    u32 *entry;
+    u32 word;
+} SpuReverbEntryAddress;
 extern volatile u32 *g_SpuDmaBcrPtr;
 extern volatile u32 *g_SpuDmaChcrPtr;
 extern s32 g_SpuDmaDirection;
@@ -118,9 +121,9 @@ void _SpuDataCallback(SpuCallback callback);
 s32 _spu_Fr(void *address, s32 size);
 u32 _spu_Fw(void *address, u32 size);
 /* SPU.OBJ initialization state and its ten-halfword request buffer. */
-extern int D_8009B418, D_8009B41C, D_8009B430;
+extern int _spu_transMode, D_8009B41C, _spu_inTransfer;
 extern u16 D_800B6900[10], D_8009B43C[];
-extern char D_80011C4C[], D_80011C5C[];
+extern char g_SpuTimeoutFormat[], g_SpuWaitResetText[];
 int _spu_init(int hot);
 void _spu_Fw1ts(void);
 void _spu_FwriteByIO(void *address, u32 size);

@@ -2,74 +2,70 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/overlays/room_m350/RoomEffect_PointerQueue.c"
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import find_definition, host_unit, psx_compile  # noqa: E402
 
+# Overlay function addresses repeat across rooms; search this room only.
+ROOM = 'src/overlays/room_m350_cruiser'
 
-def controller_source():
-    source = SOURCE.read_text()
-    callback = source.index('int func_80194F04')
-    controller = source.index('int func_80195064')
-    declarations = source[:callback]
-    declarations = declarations.replace('extern int D_800E27EC, D_800F3428, D_800966EC[], D_8019A4E8[];\n', '')
-    declarations = declarations.replace('extern unsigned short D_800F336C, D_800E1204[];\n', '')
-    declarations = declarations.replace('extern short D_800F336A;\n', '')
-    declarations = declarations.replace('extern int GetClut(int, int);\n', '')
-    declarations = declarations.replace('extern void func_800CEE20(void *, int, int, int, int, unsigned int, int, int, void *);\n', '')
-    return declarations + 'extern volatile short D_800F336A,D_800F336C;\nextern int func_80194F04(int, Particle *);\n' + source[controller:]
+CONTROLLER = 'RoomM350_OrbImpactEmitter'
 
 
 class PointerQueueTests(unittest.TestCase):
     @unittest.skipUnless((ROOT / "tools/old-gcc/cc1").is_file() and shutil.which("mipsel-none-elf-as"), "PSX tools unavailable")
     def test_target_layout(self):
-        source = controller_source().split("extern Emitter", 1)[0] + r'''
+        unit = find_definition(CONTROLLER, under=ROOM)
+        source = unit.read_text() + r'''
 #define OFF(t,f) ((unsigned long)&((t *)0)->f)
 typedef char a[sizeof(Particle)==8 ? 1:-1];
 typedef char b[OFF(Particle,offset)==4 ? 1:-1];
 typedef char c[OFF(Queue,count)==0x56 ? 1:-1];
-typedef char d[OFF(Emitter,pool)==8 ? 1:-1];
+typedef char d[OFF(RoomM350Emitter,pool)==8 ? 1:-1];
 '''
         with tempfile.TemporaryDirectory() as directory:
-            path = pathlib.Path(directory) / "layout.c"
-            path.write_text(source)
-            result = subprocess.run([str(ROOT / "tools/scripts/cc.sh"), str(path), str(path.with_suffix(".o"))], cwd=ROOT, capture_output=True, text=True)
+            result = psx_compile(source, pathlib.Path(directory) / "layout.o", unit)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     @unittest.skipUnless(shutil.which("cc"), "host compiler unavailable")
     def test_queue_mutation_and_failure(self):
-        source = controller_source().replace(' asm("$16")', '')
-        declarations, body = source.split("extern Emitter", 1)
-        body = ("extern Emitter" + body).replace("extern short D_8019A7FE, D_8019A802;", "extern short D_8019A802;")
+        source = host_unit(CONTROLLER, path=find_definition(CONTROLLER, under=ROOM))
+        source = source.replace("extern short D_8019A7FE, D_8019A802;", "extern short D_8019A802;")
         # Bind the interior count symbol to real storage, preserving aliasing.
-        harness = '#include <assert.h>\n#include <string.h>\n' + declarations + '\nstatic Queue pending;\n#define D_8019A7FE pending.count\n' + body + r'''
-Emitter *D_800F33E0;
+        head = 'int RoomM350_OrbImpactEmitter(int event) {'
+        assert head in source
+        source = source.replace(head, 'static Queue pending;\n#define D_8019A7FE pending.count\n' + head)
+        harness = '#include <assert.h>\n#include <string.h>\n' + source + r'''
+FieldFxTaskSlot *g_FieldFxActiveTaskSlot;
 short D_8019A802;
 unsigned char D_8019A804;
-volatile short D_800F3368,D_800F336A,D_800F3376,D_800F3378,D_800F3372,D_800F3374,D_800F336C,D_800F336E;
-volatile unsigned short D_800E11FA,D_800F3370;
-unsigned short D_800E2850[65536];
-static Emitter emitters[2];
+RenderEffectParameters g_FieldFxSpriteParams;
+u16 g_FieldFxTpageSlots[16];
+u16 g_FieldFxTpageTable[65536];
+static RoomM350Emitter emitters[2];
 static int pools[2], calls, setups, setupResult, failAt, nextCount;
 static Particle particles[4], expected[4];
 static Vector positions[8];
-int func_80194F04(int e, Particle *p) { return 0; }
-int func_800CE560(void *p,int stride,int count,int (*cb)(int,Particle *)) {
-    assert(p==&pools[0] && stride==8 && count==16 && cb==func_80194F04);
+int RoomM350_OrbImpactCallback(int e, Particle *p) { return 0; }
+int FieldFx_InitCallbackList(char *p,int stride,int count,FieldFxCallbackListCallback cb) {
+    assert(p==(char *)&pools[0] && stride==8 && count==16);
+    assert(cb==(FieldFxCallbackListCallback)RoomM350_OrbImpactCallback);
     setups++; return setupResult;
 }
-Particle *func_800CE610(void *p) {
+void *FieldFx_AcquireCallbackSlot(char *p) {
     int index=calls++;
-    assert(index<4 && p==&pools[index ? 1:0]);
-    D_800F33E0=&emitters[1];
+    assert(index<4 && p==(char *)&pools[index ? 1:0]);
+    g_FieldFxActiveTaskSlot=(FieldFxTaskSlot *)&emitters[1];
     pending.count=nextCount;
     pending.positions[index]=&positions[index+4];
     return index==failAt ? 0:&particles[index];
 }
 static void reset(void) {
     int i;
-    calls=setups=0; D_800F33E0=&emitters[0];
+    calls=setups=0; g_FieldFxActiveTaskSlot=(FieldFxTaskSlot *)&emitters[0];
     memset(particles,0x5A,sizeof(particles)); memcpy(expected,particles,sizeof(particles));
     for(i=0;i<4;i++) pending.positions[i]=&positions[i];
 }
@@ -85,7 +81,7 @@ static void run(int count,int stop,int active,int replacement,int failure) {
             successes++;
         } while(successes<replacement);
     }
-    assert(func_80195064(1)==(stopped ? 2:0));
+    assert(RoomM350_OrbImpactEmitter(1)==(stopped ? 2:0));
     assert(calls==expectedCalls && setups==0);
     assert(pending.count==(stopped ? count:0));
     for(i=0;i<successes;i++) {
@@ -105,18 +101,22 @@ int main(void) {
     for(active=-32768;active<=32767;active++) run(1,255,active,0,0);
     for(setupResult=-2;setupResult<=2;setupResult++) {
         reset(); pending.count=3;
-        assert(func_80195064(0)==setupResult && setups==1 && calls==0 && pending.count==3);
+        assert(RoomM350_OrbImpactEmitter(0)==setupResult && setups==1 && calls==0 && pending.count==3);
     }
     for(i=0;i<65536;i++) {
-        reset(); pending.count=3; D_800E11FA=i; D_800E2850[i]=65535-i;
-        assert(func_80195064(2)==0 && calls==0 && setups==0 && pending.count==3);
-        assert(D_800F3368==32 && D_800F336A==2 && D_800F3376==32 && D_800F3378==32);
-        assert(D_800F3372==0 && D_800F3374==0 && D_800F336C==3 && D_800F336E==1);
-        assert(D_800F3370==65535-i);
+        /* Texture slot 11 of g_FieldFxTpageSlots is the halfword at 0x800E11FA. */
+        reset(); pending.count=3; g_FieldFxTpageSlots[11]=i; g_FieldFxTpageTable[i]=65535-i;
+        memset(&g_FieldFxSpriteParams,0x9D,sizeof(g_FieldFxSpriteParams));
+        assert(RoomM350_OrbImpactEmitter(2)==0 && calls==0 && setups==0 && pending.count==3);
+        assert(g_FieldFxSpriteParams.parameter00==32 && g_FieldFxSpriteParams.parameter02==2);
+        assert(g_FieldFxSpriteParams.extent_x==32 && g_FieldFxSpriteParams.extent_y==32);
+        assert(g_FieldFxSpriteParams.parameter0A==0 && g_FieldFxSpriteParams.depth==0);
+        assert(g_FieldFxSpriteParams.palette==3 && g_FieldFxSpriteParams.parameter06==1);
+        assert(g_FieldFxSpriteParams.tpage==65535-i);
     }
     for(i=-3;i<=5;i++) if(i<0 || i>2) {
         reset(); pending.count=3;
-        assert(func_80195064(i)==0 && calls==0 && setups==0 && pending.count==3);
+        assert(RoomM350_OrbImpactEmitter(i)==0 && calls==0 && setups==0 && pending.count==3);
     }
     return 0;
 }

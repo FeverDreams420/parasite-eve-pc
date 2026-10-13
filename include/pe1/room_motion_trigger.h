@@ -3,7 +3,7 @@
 
 #include "pe1/field_actor.h"
 
-/* The grab class's instance (src/overlays/room_lib/RoomFx_GrabAttackSet.c):
+/* The grab class's instance (src/overlays/room_lib/grab_attack.c):
  * an actor that seizes the player when it comes within reach, plays the
  * hold on the player's model and lets go when the hold ends. */
 typedef struct RoomMotionTrigger {

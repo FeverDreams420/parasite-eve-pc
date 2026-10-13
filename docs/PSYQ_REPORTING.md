@@ -60,7 +60,7 @@ functions. Moving 238 functions into the SDK category changes `main-psyq` to
 `SpuSetIRQCallback` and `SpuSetTransferMode` previously matched the retail
 EXE after linking, but their object comparisons were below 100%. Their final
 stores used a hard-coded `0x800A0000` page base and negative offsets instead
-of HI16/LO16 relocations against `_spu_IRQCallback` and `D_8009B418`.
+of HI16/LO16 relocations against `_spu_IRQCallback` and `_spu_transMode`.
 
 Direct C assignments through the existing shared declarations, compiled with
 stock native GCC 2.7.2 and the existing GNU assembler route, retain every
@@ -142,7 +142,7 @@ labels in `.text`, which objdiff reported as two unmatched functions. They
 are now `rodata` segments in the `.psyq_text_data` linker section, the same
 mechanism as the MSC00/A63 signatures, and objdiff counts their 68 bytes as
 data. `func_8007E3C8`, the LIBCARD redirect stub that `_patch_card2` installs,
-stays a function like its C sibling `func_8007E3B4`.
+stays a function like its C sibling `LIBCARD_PATCH_text_70`.
 
 Report effect (`make report`): main-psyq goes from 465/489 to 487/487
 functions and from 75300/78168 to 78128/78128 code bytes. Overall matched

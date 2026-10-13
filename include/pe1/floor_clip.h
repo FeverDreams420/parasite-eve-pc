@@ -10,7 +10,7 @@ typedef struct FloorNeighbours {
     s16 index[3];
 } FloorNeighbours;
 
-extern FloorNeighbours D_8009CD88;
+extern FloorNeighbours g_FloorNeighboursInit;
 
 int Math_FixedMul(int lhs, int rhs);
 int Geo_ClipToFloorBoundary(s16 x, s16 z, void *triangle);

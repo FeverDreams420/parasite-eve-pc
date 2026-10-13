@@ -1,0 +1,461 @@
+old,new_module,part,markers,current
+src/main/boot/Boot_MainLoop.c,src/main/boot/main.c,1,"default",src/main/boot/main.c
+src/main/task/Task_NodePoolSetupFlow.c,src/main/script/script_pool.c,1,"cc1 -G8 -fno-strength-reduce, as -G8",src/main/script/node_pool.c
+src/main/task/Task_NodePoolFlow.c,src/main/script/script_pool.c,2,"cc1 -G8, as noli comm -G8, FG0, aspsx 2.21",src/main/script/node_pool.c
+src/main/task/Task_ValueOps.c,src/main/script/script_expr.c,1,"as div",src/main/script/value_ops.c
+src/main/task/Task_NodeActions.c,src/main/script/script_expr.c,2,"cc1 -G8, as div comm -G8, FG0",src/main/script/node_actions.c
+src/main/entity/Entity_QueryAndDistance.c,src/main/script/script_actor_ops.c,1,"default",src/main/script/actor_opcodes.c
+src/main/task/Task_MemCardPositionCameraOps.c,src/main/script/script_actor_ops.c,1,"cc1 -G8, as comm -G8, FG0",src/main/script/actor_opcodes.c
+src/main/task/Task_PolyAndSceneLoadOps.c,src/main/script/script_actor_ops.c,1,"default",src/main/script/actor_opcodes.c
+src/main/task/Task_PlayEntityAnim.c,src/main/script/script_actor_ops.c,1,"cc1 -G8, as comm -G8, FG0",src/main/script/actor_opcodes.c
+src/main/task/Task_CopyEntityRenderObject.c,src/main/script/script_actor_ops.c,1,"default",src/main/script/actor_opcodes.c
+src/main/task/Task_ActorModelOps.c,src/main/script/script_actor_ops.c,1,"cc1 -G8, as comm -G8, FG0",src/main/script/actor_opcodes.c
+src/main/main/MapSelectionFlow.c,src/main/script/script_actor_ops.c,1,"default",src/main/script/actor_opcodes.c
+src/main/task/Task_ItemAndSoundOps.c,src/main/script/script_actor_ops.c,1,"cc1 -G8, as comm -G8, FG0",src/main/script/actor_opcodes.c
+src/main/task/Task_DispatchScriptCmd.c,src/main/script/script_flow_ops.c,1,"cc1 -G8, as comm -G8, FG0, aspsx 2.70",src/main/script/flow_opcodes.c
+src/main/task/Task_ShadowFlagOps.c,src/main/script/script_flow_ops.c,1,"default",src/main/script/flow_opcodes.c
+src/main/task/Task_BeginSceneTransition.c,src/main/script/script_flow_ops.c,1,"cc1 -G8, as comm -G8, FG0",src/main/script/flow_opcodes.c
+src/main/task/Task_GetPlayerInputFlag.c,src/main/script/script_flow_ops.c,1,"default",src/main/script/flow_opcodes.c
+src/main/task/Task_RunQueue.c,src/main/script/script_flow_ops.c,1,"cc1 -G8, as comm -G8, FG0",src/main/script/flow_opcodes.c
+src/main/task/Task_NodeAndFlowOpcodes.c,src/main/script/script_flow_ops.c,1,"cc1 -G8, as comm -G8, FG0",src/main/script/flow_opcodes.c
+src/main/entity/Entity_ComputeVelocityToTarget.c,src/main/script/script_flow_ops.c,1,"default",src/main/script/flow_opcodes.c
+src/main/task/Task_ActorAndNodeFieldOps.c,src/main/script/script_flow_ops.c,1,"cc1 -G8, as comm -G8, FG0",src/main/script/flow_opcodes.c
+src/main/task/Task_BitAndActionOpcodes.c,src/main/script/script_flow_ops.c,1,"default",src/main/script/flow_opcodes.c
+src/main/task/Task_WaitAnimFrameMatch.c,src/main/script/script_flow_ops.c,1,"cc1 -G8, as comm -G8, FG0",src/main/script/flow_opcodes.c
+src/main/task/Task_StateAndFlagOpcodes.c,src/main/script/script_system_ops.c,1,"as comm -G8",src/main/script/system_opcodes.c
+src/main/entity/Entity_TaskAnimationOps.c,src/main/script/script_system_ops.c,1,"cc1 -G8, as comm -G8, FG0",src/main/script/system_opcodes.c
+src/main/task/Task_SystemCommandOps.c,src/main/script/script_system_ops.c,1,"default",src/main/script/system_opcodes.c
+src/main/task/Task_DrawYield.c,src/main/script/script_system_ops.c,2,"cc1 -G8, as -G8",src/main/script/system_opcodes.c
+src/main/entity/Entity_AttachmentAndControl.c,src/main/script/script_system_ops.c,3,"default",src/main/script/system_opcodes.c
+src/main/task/Task_LoadWaitAndItemOps.c,src/main/script/script_system_ops.c,3,"cc1 -G8, as comm -G8, FG0",src/main/script/system_opcodes.c
+src/main/task/Task_FieldEntityCommands.c,src/main/script/script_system_ops.c,3,"default",src/main/script/system_opcodes.c
+src/main/task/Task_WaitEntityFlags8.c,src/main/script/script_system_ops.c,3,"cc1 -G8, as comm -G8, FG0",src/main/script/system_opcodes.c
+src/main/task/Task_RotateEntityAngle.c,src/main/script/script_system_ops.c,3,"default",src/main/script/system_opcodes.c
+src/main/task/Task_SetNodeFlag80.c,src/main/script/script_system_ops.c,4,"cc1 -G8, as -G8",src/main/script/system_opcodes.c
+src/main/task/Task_SceneCommandOps.c,src/main/script/script_system_ops.c,5,"default",src/main/script/system_opcodes.c
+src/main/entity/Entity_AnimationState.c,src/main/field/actor_collision.c,1,"as div",src/main/field/actor_collision.c
+src/main/entity/Entity_CollisionDatabase.c,src/main/field/actor_collision.c,1,"cc1 -G8, as comm -G8, FG0",src/main/field/actor_collision.c
+src/main/entity/Entity_UpdateList.c,src/main/field/actor_collision.c,1,"default",src/main/field/actor_collision.c
+src/main/field/Geo_ActorFloorResolution.c,src/main/field/actor_collision.c,1,"cc1 -G8, as div comm -G4, FG0, aspsx 2.70",src/main/field/actor_collision.c
+src/main/field/Entity_ApplyCollisionResponse.c,src/main/field/actor_collision.c,2,"cc1 -G8, as div -G8",src/main/field/actor_collision.c
+src/main/entity/Entity_CheckActionIdMatch.c,src/main/field/actor_collision.c,2,"default",src/main/field/actor_collision.c
+src/main/menu/Menu_MainUpdate.c,src/main/battle/battle_actor.c,1,"cc1 -G1 -g3, as div comm -G1, FG0",src/main/menu/main_update.c
+src/main/entity/Entity_HitAndDropTable.c,src/main/battle/battle_actor.c,2,"cc1 -G8, as div comm -G8, FG0",src/main/entity/combat.c
+src/main/entity/Entity_UpdateTimers.c,src/main/battle/battle_actor.c,3,"cc1 -G1 -g3, as div -G1",src/main/entity/combat.c
+src/main/battle/Battle_SubActionStep.c,src/main/battle/battle_actor.c,4,"default",src/main/battle/enemy_actions.c
+src/main/main/Battle_ApplyEnemyAttack.c,src/main/battle/battle_actor.c,4,"default",src/main/battle/enemy_actions.c
+src/main/battle/Battle_SetupEnemyAnims.c,src/main/battle/battle_actor.c,4,"default",src/main/battle/enemy_actions.c
+src/main/battle/Battle_ActionLifecycle.c,src/main/battle/battle_setup.c,1,"cc1 -G2, as -G2",src/main/battle/setup.c
+src/main/battle/Battle_HaltOnPositiveX.c,src/main/battle/battle_setup.c,1,"cc1 -G1, as -G1",src/main/battle/setup.c
+src/main/battle/Battle_InitEntityColors.c,src/main/battle/battle_setup.c,2,"cc1 -G8, as comm -G8, FG0",src/main/battle/setup.c
+src/main/save/Save_ResetGlobalFlags.c,src/main/battle/battle_setup.c,2,"as comm -G8",src/main/battle/setup.c
+src/main/main/Battle_Init.c,src/main/battle/battle_setup.c,2,"cc1 -G8, as comm -G8, FG0",src/main/battle/setup.c
+src/main/menu/Pad_GetMenuPressedBitOrDisabled.c,src/main/battle/battle_setup.c,2,"as comm -G8",src/main/battle/setup.c
+src/main/menu/Menu_BattleActiveQuery.c,src/main/battle/battle_setup.c,2,"cc1 -G8, as comm -G8, FG0",src/main/battle/setup.c
+src/main/battle/Battle_DispatchEntityEffect.c,src/main/battle/battle_setup.c,2,"cc1 -G8, as comm -G8, FG0",src/main/battle/setup.c
+src/main/main/Battle_CheckEvasion.c,src/main/battle/battle_setup.c,3,"as div",src/main/battle/setup.c
+src/main/main/Battle_BuildTargetList.c,src/main/battle/battle_setup.c,4,"cc1 -G8, as comm -G8, FG0",src/main/battle/setup.c
+src/main/battle/Battle_TargetSort.c,src/main/battle/battle_setup.c,4,"default",src/main/battle/setup.c
+src/main/battle/Battle_PadStateSyncFlow.c,src/main/battle/battle_setup.c,4,"cc1 -G8, as comm -G8, FG0",src/main/battle/setup.c
+src/main/battle/Battle_FlushScriptSounds.c,src/main/battle/battle_setup.c,4,"cc1 -G8, as comm -G8, FG0",src/main/battle/setup.c
+src/main/battle/Battle_StepScriptEntry.c,src/main/battle/battle_setup.c,5,"cc1 -G2, as -G2",src/main/battle/setup.c
+src/main/main/Battle_PlayerTurnFlow.c,src/main/battle/battle_attack.c,1,"cc1 -G8, as comm -G8, FG0",src/main/battle/player_turn.c
+src/main/main/Battle_PhaseAndEnemyEffectFlow.c,src/main/battle/battle_attack.c,2,"cc1 -G8 -g3, as div comm -G8, FG0",src/main/battle/phase.c
+src/main/main/Battle_FinalizeAttackResult.c,src/main/battle/battle_attack.c,3,"cc1 -G8 -fno-force-mem, as comm -G8, FG0",src/main/battle/attack.c
+src/main/battle/Battle_ResolveHitOnTimer.c,src/main/battle/battle_attack.c,3,"cc1 -G8, as comm -G8, FG0",src/main/battle/attack.c
+src/main/main/Battle_ApplyDamage.c,src/main/battle/battle_attack.c,3,"default",src/main/battle/attack.c
+src/main/main/Battle_ApplySpellEffect.c,src/main/battle/battle_attack.c,3,"cc1 -G8, as comm -G8, FG0",src/main/battle/attack.c
+src/main/battle/Battle_StepAyaAction.c,src/main/battle/battle_attack.c,3,"cc1 -G8, as div comm -G8, FG0, aspsx 2.77",src/main/battle/attack.c
+src/main/battle/Battle_DispatchSpecialAction.c,src/main/battle/battle_turn.c,1,"default",src/main/battle/turn.c
+src/main/battle/Battle_RollEscapeChance.c,src/main/battle/battle_turn.c,1,"cc1 -G0, as comm -G0",src/main/battle/turn.c
+src/main/battle/Battle_TargetAndEnemyTurnFlow.c,src/main/battle/battle_turn.c,1,"cc1 -G0, as div comm -G8, aspsx 2.70",src/main/battle/turn.c
+src/main/battle/Battle_AdvanceTurnSlot.c,src/main/battle/battle_turn.c,1,"cc1 -G8, as comm -G8, FG0",src/main/battle/turn.c
+src/main/battle/Battle_TargetFade.c,src/main/battle/battle_turn.c,1,"cc1 -G0, as comm -G8",src/main/battle/turn.c
+src/main/battle/Battle_MarkActiveEntities.c,src/main/battle/battle_turn.c,1,"cc1 -G8, as comm -G8, FG0",src/main/battle/turn.c
+src/main/battle/Battle_ActionSlotAndEnemy.c,src/main/battle/battle_turn.c,2,"cc1 -G8, as comm -G8, FG0",src/main/battle/turn.c
+src/main/battle/Battle_StepEnemyMovement.c,src/main/battle/battle_turn.c,3,"cc1 -G0, as div -G0",src/main/battle/enemy_movement.c
+src/main/main/Battle_UpdateEntityFacing.c,src/main/battle/battle_turn.c,3,"default",src/main/battle/enemy_movement.c
+src/main/battle/Battle_StepEntityAnimState.c,src/main/battle/battle_turn.c,3,"default",src/main/battle/enemy_movement.c
+src/main/save/Save_InitSystem.c,src/main/battle/battle_main.c,1,"cc1 -G8, as -G8",src/main/battle/encounter.c
+src/main/battle/Battle_EncounterInitializationFlow.c,src/main/battle/battle_main.c,2,"cc1 -G0, as comm -G8, FG0",src/main/battle/encounter.c
+src/main/battle/Battle_Update.c,src/main/battle/battle_main.c,3,"cc1 -G8, as comm -G8, FG0",src/main/battle/encounter.c
+src/main/battle/Battle_StepVictory.c,src/main/battle/battle_main.c,3,"cc1 -G0, as comm -G8, FG0",src/main/battle/encounter.c
+src/main/battle/Battle_StepLevelUp.c,src/main/battle/battle_main.c,3,"cc1 -G8, as comm -G8, FG0",src/main/battle/encounter.c
+src/main/battle/Battle_StepPostBattle.c,src/main/battle/battle_main.c,3,"cc1 -G0, as div comm -G8, FG0",src/main/battle/encounter.c
+src/main/battle/Battle_EscapeAndPhaseInitFlow.c,src/main/battle/battle_main.c,3,"cc1 -G8, as comm -G8, FG0",src/main/battle/encounter.c
+src/main/battle/Battle_AyaEquipStateFlow.c,src/main/battle/battle_main.c,3,"cc1 -G8, as comm -G8, FG0",src/main/battle/encounter.c
+src/main/battle/Battle_EnemySlotLifecycle.c,src/main/battle/battle_main.c,3,"default",src/main/battle/enemy_slots.c
+src/main/entity/Entity_AnimationEvents.c,src/main/battle/battle_context.c,1,"default",src/main/battle/context.c
+src/main/battle/Battle_ContextAccess.c,src/main/battle/battle_context.c,1,"default",src/main/battle/context.c
+src/main/battle/Battle_GetEnemyContextField.c,src/main/battle/battle_context.c,1,"default",src/main/battle/context.c
+src/main/entity/Entity_WriteFieldByCmd.c,src/main/battle/battle_context.c,1,"default",src/main/battle/context.c
+src/main/battle/Battle_AngleAndDistanceFlow.c,src/main/battle/battle_context.c,1,"default",src/main/battle/context.c
+src/main/battle/Battle_RandomChecks.c,src/main/battle/battle_context.c,1,"default",src/main/battle/context.c
+src/main/battle/Battle_DrawHPBar.c,src/main/battle/battle_hud.c,1,"cc1 -G8, as -G8",src/main/battle/status_hud.c
+src/main/main/Battle_DrawStatusOverlay.c,src/main/battle/battle_hud.c,1,"default",src/main/battle/status_hud.c
+src/main/main/Battle_StatusPrimitiveFlow.c,src/main/battle/battle_hud.c,1,"cc1 -G8, as comm -G8, FG0",src/main/battle/status_hud.c
+src/main/main/Battle_StatusNumberFlow.c,src/main/battle/battle_hud.c,1,"default",src/main/battle/status_hud.c
+src/main/battle/Battle_DrawStatusPanel.c,src/main/battle/battle_hud.c,1,"cc1 -G8, as comm -G8, FG0",src/main/battle/status_hud.c
+src/main/gpu/Gpu_SetupSprites.c,src/main/battle/battle_hud.c,1,"cc1 -G8, as comm -G8, FG0",src/main/battle/status_hud.c
+src/main/menu/Menu_ActiveWindowMode.c,src/main/battle/battle_hud.c,1,"as comm -G8",src/main/battle/status_hud.c
+src/main/task/Task_SignalExit.c,src/main/battle/battle_hud.c,1,"default",src/main/battle/status_hud.c
+src/main/battle/Battle_ActiveAndEnemyStatusFlow.c,src/main/battle/battle_hud.c,1,"cc1 -G8, as div comm -G8, FG0, aspsx 2.70",src/main/battle/status_hud.c
+src/main/render/Render_AnimationFrame.c,src/main/battle/battle_hud.c,1,"cc1 -G8, as comm -G8, FG0",src/main/battle/status_hud.c
+src/main/save/Save_DrawSlotMetadata.c,src/main/menu/save_slot_draw.c,1,"cc1 -G8, as -G4",src/main/menu/save_slot.c
+src/main/menu/Menu_SaveOverlayDraw.c,src/main/menu/save_slot_draw.c,1,"cc1 -G8, as -G8",src/main/menu/save_slot.c
+src/main/entity/Entity_PoolInit.c,src/main/entity/entity.c,1,"cc1 -fno-strength-reduce, as comm -G8",src/main/entity/pool.c
+src/main/scene/Scene_LoadMap.c,src/main/entity/entity.c,2,"cc1 -G8, as comm -G8",src/main/entity/frame_update.c
+src/main/entity/Entity_FrameUpdate.c,src/main/entity/entity.c,3,"cc1 -G8, as comm -G4, FG0",src/main/entity/frame_update.c
+src/main/entity/Entity_AllocationAndContacts.c,src/main/entity/entity.c,3,"default",src/main/entity/allocation.c
+src/main/time/GameTime_Counters.c,src/main/time/game_time.c,1,"default",src/main/time/counters.c
+src/main/scene/Scene_TickTimers.c,src/main/time/game_time.c,1,"default",src/main/time/counters.c
+src/main/math/Math_FixedMul.c,src/main/math/fixed.c,1,"GNU-as",src/main/math/fixed_mul.c
+src/main/math/Math_FixedDivide.c,src/main/math/fixed.c,2,"default",src/main/math/fixed_div.c
+src/main/math/math_fixed.c,src/main/math/fixed.c,3,"GNU-as",src/main/math/fixed_round.c
+src/main/gpu/Gpu_DrawModePackets.c,src/main/draw/textbox.c,1,"default",src/main/draw/textbox.c
+src/main/menu/Menu_SetEquipSlotIndex.c,src/main/draw/textbox.c,1,"cc1 -G8, as comm -G8",src/main/draw/textbox.c
+src/main/menu/Menu_TextboxDraw.c,src/main/draw/textbox.c,2,"cc1 -G8, as comm -G8, FG0, aspsx 2.70",src/main/draw/textbox.c
+src/main/sys/Sys_ReportError.c,src/main/draw/font.c,1,"default",src/main/draw/error.c
+src/main/render/Render_FontGlyphLoad.c,src/main/draw/font.c,2,"cc1 -fno-schedule-insns",src/main/render/font_load.c
+src/main/render/Render_FontGlyphSelection.c,src/main/draw/font.c,3,"as div",src/main/render/font.c
+src/main/scene/Scene_CheckFlagBits.c,src/main/anim/anim.c,1,"default",src/main/anim/bone_rotations.c
+src/main/anim/Anim_BoneRotations.c,src/main/anim/anim.c,1,"default",src/main/anim/bone_rotations.c
+src/main/render/Render_VertexTransforms.c,src/main/render/object.c,1,"cc1 -G8, as -G8",src/main/render/object.c
+src/main/render/Render_EntityAndTexturedQuadFlow.c,src/main/render/object.c,2,"default",src/main/render/object.c
+src/main/render/Render_DrawObjectAndClut.c,src/main/render/object.c,3,"cc1 -G8, as -G8",src/main/render/object.c
+src/main/render/Render_DrawObjectAlt.c,src/main/render/object.c,4,"default",src/main/render/object.c
+src/main/render/Render_DrawObjectVariant.c,src/main/render/object.c,4,"cc1 -G8, as div",src/main/render/object.c
+src/main/render/Render_ObjectSetupAndAnim.c,src/main/render/object.c,5,"default",src/main/render/object.c
+src/main/boot/Boot_InitSystemFlow.c,src/main/boot/boot.c,1,"default",src/main/boot/init.c
+src/main/boot/Boot_RenderFlagsAndPadInput.c,src/main/boot/boot.c,1,"cc1 -G8, as comm -G8, FG0",src/main/boot/init.c
+src/main/boot/Gpu_InitPipeline.c,src/main/boot/boot.c,1,"cc1 -G0, as comm -G8, FG0",src/main/draw/pipeline.c
+src/main/boot/Boot_FrameLoop.c,src/main/boot/boot.c,2,"cc1 -G8, as comm -G8, FG0",src/main/boot/frame_loop.c
+src/main/gpu/Gte_LightingState.c,src/main/boot/boot.c,2,"default",src/main/boot/frame_loop.c
+src/main/save/Save_TailBlobFlow.c,src/main/memcard/memcard.c,1,"default",src/main/memcard/save_flow.c
+src/main/memcard/MemCard_PortAndSaveFlow.c,src/main/memcard/memcard.c,1,"default",src/main/memcard/save_flow.c
+src/main/menu/Menu_SaveBackground.c,src/main/menu/menu_status.c,1,"cc1 -G8, as comm -G8",src/main/menu/status_panels.c
+src/main/menu/Menu_SaveBgIsFadeComplete.c,src/main/menu/menu_status.c,1,"as comm -G8",src/main/menu/status_panels.c
+src/main/item/Inv_FetchSelectedInventoryItem.c,src/main/menu/menu_status.c,2,"default",src/main/menu/status_panels.c
+src/main/menu/Menu_HandleInput.c,src/main/menu/menu_status.c,3,"cc1 -G8, as -G8",src/main/menu/status_panels.c
+src/main/menu/Menu_SetItemContext.c,src/main/menu/menu_status.c,3,"as comm -G8",src/main/menu/status_panels.c
+src/main/menu/Menu_CheckItemAffordable.c,src/main/menu/menu_status.c,3,"cc1 -G8, as -G8",src/main/menu/status_panels.c
+src/main/save/Save_ClassifyPlaytime.c,src/main/menu/menu_status.c,3,"default",src/main/menu/status_panels.c
+src/main/menu/Menu_DrawSaveSlotEntry.c,src/main/menu/menu_status.c,3,"cc1 -G8, as -G8",src/main/menu/status_panels.c
+src/main/menu/Menu_StatBarAnimation.c,src/main/menu/menu_status.c,3,"cc1 -G8, as comm -G8",src/main/menu/status_panels.c
+src/main/menu/Menu_StatPanels.c,src/main/menu/menu_status.c,3,"cc1 -G8, as comm -G8",src/main/menu/status_panels.c
+src/main/menu/Menu_StepItemSelectScreen.c,src/main/menu/menu_status.c,3,"cc1 -G8, as -G8",src/main/menu/status_panels.c
+src/main/menu/Menu_EquipScreenFlow.c,src/main/menu/menu_equip.c,1,"cc1 -G8, as comm -G8, FG0",src/main/menu/equip_screen.c
+src/main/menu/Menu_ItemLabel.c,src/main/menu/menu_equip.c,1,"default",src/main/menu/item_detail.c
+src/main/menu/Menu_ItemDetailPanel.c,src/main/menu/menu_equip.c,2,"cc1 -G8 -fno-expensive-optimizations, as -G8",src/main/menu/item_detail.c
+src/main/menu/Menu_AmmoSpendPanel.c,src/main/menu/menu_equip.c,3,"cc1 -G8, as comm -G8",src/main/menu/equip_select.c
+src/main/menu/Menu_EquipItemSelectionFlow.c,src/main/menu/menu_equip.c,3,"cc1 -G8, as -G8",src/main/menu/equip_select.c
+src/main/menu/Menu_CreateInventoryListView.c,src/main/menu/menu_equip.c,3,"cc1 -G8, as -G8",src/main/menu/equip_select.c
+src/main/menu/Menu_DrawItemDetailPanel.c,src/main/menu/menu_equip.c,3,"cc1 -G8, as -G8",src/main/menu/equip_select.c
+src/main/menu/Menu_InventoryPageInputHandler.c,src/main/menu/menu_equip.c,3,"cc1 -G8, as -G8",src/main/menu/equip_select.c
+src/main/event/Evt_DeferredExec.c,src/main/menu/menu_skill.c,1,"as comm -G8",src/main/menu/skills.c
+src/main/menu/Menu_StepSkillList.c,src/main/menu/menu_skill.c,2,"cc1 -G8, as -G8",src/main/menu/skills.c
+src/main/menu/Menu_OnEquipConfirm.c,src/main/menu/menu_skill.c,2,"cc1 -G8, as -G8",src/main/menu/skills.c
+src/main/menu/Menu_CreateSkillActionScreen.c,src/main/menu/menu_skill.c,3,"default",src/main/menu/skills.c
+src/main/menu/Menu_SkillActionHandler.c,src/main/menu/menu_skill.c,4,"cc1 -G8, as comm -G8",src/main/menu/skills.c
+src/main/menu/Menu_CreateInvSwapView.c,src/main/menu/menu_skill.c,5,"cc1 -G8, as noli -G8, aspsx 2.21",src/main/menu/skills.c
+src/main/menu/Menu_InventoryWeaponModFlow.c,src/main/menu/menu_skill.c,6,"cc1 -G8, as comm -G8",src/main/menu/skills.c
+src/main/menu/Menu_ConfigureScreen.c,src/main/menu/menu_item.c,1,"default",src/main/menu/item_actions.c
+src/main/menu/Menu_ItemActionFlow.c,src/main/menu/menu_item.c,1,"cc1 -G8, as comm -G8",src/main/menu/item_actions.c
+src/main/menu/Menu_StepSaveLoadScreen.c,src/main/menu/menu_item.c,1,"cc1 -G8, as -G8",src/main/menu/item_actions.c
+src/main/menu/Menu_SaveLoadNavigate.c,src/main/menu/menu_item.c,2,"default",src/main/menu/item_actions.c
+src/main/menu/Menu_InventoryAndBonusPoints.c,src/main/menu/menu_item.c,3,"cc1 -G8, as comm -G8",src/main/menu/item_actions.c
+src/main/menu/Menu_CreateMainMenuView.c,src/main/menu/menu_main.c,1,"default",src/main/menu/main_menu.c
+src/main/menu/Menu_VisualSettingsFlow.c,src/main/menu/menu_main.c,2,"cc1 -G8, as comm -G8",src/main/menu/main_menu.c
+src/main/menu/Menu_LevelUpFlow.c,src/main/menu/menu_main.c,3,"cc1 -G8, as comm -G8, FG0",src/main/menu/main_menu.c
+src/main/menu/Menu_OpenEquipSlotSwap.c,src/main/menu/menu_main.c,4,"cc1 -G8, as -G8",src/main/menu/main_menu.c
+src/main/menu/Menu_Dialogs.c,src/main/menu/menu_save.c,1,"cc1 -G8, as comm -G8",src/main/menu/save_screens.c
+src/main/menu/Menu_SaveSlotListView.c,src/main/menu/menu_save.c,1,"cc1 -G8, as -G8",src/main/menu/save_screens.c
+src/main/menu/Menu_DrawSaveSlotPortLabel.c,src/main/menu/menu_save.c,1,"default",src/main/menu/save_screens.c
+src/main/menu/Menu_StepSaveSelect.c,src/main/menu/menu_save.c,2,"cc1 -G8, as noli -G8, aspsx 2.21",src/main/menu/save_screens.c
+src/main/menu/Menu_MemCardProgress.c,src/main/menu/menu_save.c,3,"cc1 -G8, as comm -G8",src/main/menu/save_screens.c
+src/main/menu/Menu_OpenSaveLoadEntryPoint.c,src/main/menu/menu_save.c,3,"default",src/main/menu/save_screens.c
+src/main/menu/Menu_OpenRenameScreen.c,src/main/menu/menu_save.c,3,"cc1 -G8, as -G8",src/main/menu/save_screens.c
+src/main/menu/Menu_NameEntryFlow.c,src/main/menu/menu_save.c,4,"cc1 -G4096, as -G8",src/main/menu/save_screens.c
+src/main/menu/Menu_OpenEquipInventoryScreens.c,src/main/menu/menu_inventory.c,1,"cc1 -G8, as comm -G8",src/main/menu/inventory.c
+src/main/menu/Menu_InventoryCategoryLists.c,src/main/menu/menu_inventory.c,1,"cc1 -G8, as comm -G8",src/main/menu/inventory.c
+src/main/menu/Menu_InventoryPageNavHandler.c,src/main/menu/menu_inventory.c,1,"cc1 -G8, as -G8",src/main/menu/inventory.c
+src/main/menu/Menu_OpenSkillSelectionView.c,src/main/menu/menu_inventory.c,1,"default",src/main/menu/inventory.c
+src/main/menu/Menu_EquipSwap.c,src/main/menu/menu_inventory.c,1,"cc1 -G8, as comm -G8",src/main/menu/inventory.c
+src/main/menu/Menu_ItemUsePanel.c,src/main/menu/menu_inventory.c,1,"cc1 -G8, as comm -G8",src/main/menu/inventory.c
+src/main/menu/Menu_EquipItemIcon.c,src/main/menu/menu_inventory.c,1,"cc1 -G8, as comm -G8",src/main/menu/inventory.c
+src/main/menu/Menu_DrawListRenderers.c,src/main/menu/menu_inventory.c,1,"cc1 -G8, as comm -G8",src/main/menu/inventory.c
+src/main/menu/Menu_DrawEquipSelectionList.c,src/main/menu/menu_inventory.c,1,"cc1 -G8, as -G8",src/main/menu/inventory.c
+src/main/menu/Menu_SelectionListCallbacks.c,src/main/menu/menu_inventory.c,1,"cc1 -G8, as comm -G8",src/main/menu/inventory.c
+src/main/menu/Menu_DrawSaveSlotList.c,src/main/menu/menu_list.c,1,"as comm -G8",src/main/menu/lists.c
+src/main/menu/Menu_ListCallbacks.c,src/main/menu/menu_list.c,2,"cc1 -G8, as comm -G8",src/main/menu/lists.c
+src/main/menu/Menu_ItemUseAction.c,src/main/menu/menu_list.c,2,"cc1 -G8, as comm -G8",src/main/menu/lists.c
+src/main/menu/Menu_DrawBlendColorOptionRow.c,src/main/menu/menu_list.c,2,"default",src/main/menu/lists.c
+src/main/save/SaveWriteFlow.c,src/main/menu/menu_list.c,2,"cc1 -G8, as comm -G8",src/main/menu/lists.c
+src/main/menu/Menu_DrawListRows.c,src/main/menu/menu_list.c,3,"as comm -G8",src/main/menu/lists.c
+src/main/menu/Menu_DrawItemSlot.c,src/main/menu/menu_list.c,3,"as comm -G8",src/main/menu/lists.c
+src/main/menu/Menu_DrawSelectableEquipSlotRow.c,src/main/menu/menu_list.c,4,"cc1 -G8, as -G8",src/main/menu/lists.c
+src/main/menu/Sfx_ContextPick.c,src/main/menu/menu_list.c,4,"as comm -G8",src/main/menu/lists.c
+src/main/menu/Menu_ListItemDrawers.c,src/main/menu/menu_list.c,4,"cc1 -G8, as comm -G8",src/main/menu/lists.c
+src/main/battle/BattleCmd_InitTableCursor.c,src/main/battle/battle_cmd.c,1,"cc1 -G8, as -G8",src/main/battle/commands.c
+src/main/battle/BattleCmd_StackFlow.c,src/main/battle/battle_cmd.c,1,"cc1 -G8, as comm -G8",src/main/battle/commands.c
+src/main/item/Inv_ActiveListCommand.c,src/main/battle/battle_cmd.c,2,"cc1 -G8, as comm -G8, FG0",src/main/battle/commands.c
+src/main/battle/BattleCmd_ActiveStats.c,src/main/battle/battle_cmd.c,2,"default",src/main/battle/commands.c
+src/main/battle/BattleCmd_GetRemainingAmmo.c,src/main/battle/battle_cmd.c,2,"cc1 -G8, as comm -G8, FG0",src/main/battle/commands.c
+src/main/battle/BattleCmd_CommitAndSyncAmmo.c,src/main/battle/battle_cmd.c,2,"default",src/main/battle/commands.c
+src/main/aya/Aya_WeaponChangeAndSpellCheck.c,src/main/battle/battle_cmd.c,2,"default",src/main/battle/commands.c
+src/main/aya/Aya_UnlockParasiteSpell.c,src/main/battle/battle_cmd.c,3,"cc1 -fno-schedule-insns",src/main/battle/commands.c
+src/main/battle/Math_IntSqrt.c,src/main/battle/battle_cmd.c,4,"default",src/main/battle/commands.c
+src/main/battle/BattleCmd_CommitAmmoAndUpdate.c,src/main/battle/battle_cmd.c,4,"default",src/main/battle/commands.c
+src/main/battle/Inv_BuildWeaponList.c,src/main/battle/battle_cmd.c,4,"cc1 -G8, as -G8",src/main/battle/commands.c
+src/main/battle/BattleCmd_LoadWeaponModifiers.c,src/main/battle/battle_cmd.c,5,"cc1 -G8, as -G8",src/main/battle/commands.c
+src/main/battle/Battle_GetScaledMaxHP.c,src/main/battle/battle_cmd.c,5,"default",src/main/battle/commands.c
+src/main/item/Inv_BonusSlotCount.c,src/main/aya/aya_stats.c,1,"cc1 -G8, as -G8",src/main/aya/stats.c
+src/main/battle/Inv_BuildArmorList.c,src/main/aya/aya_stats.c,1,"cc1 -G0, as comm -G0",src/main/aya/stats.c
+src/main/aya/Aya_StatDerivation.c,src/main/aya/aya_stats.c,2,"cc1 -G0, as comm -G0",src/main/aya/stats.c
+src/main/menu/Menu_SoundsAndBattleQueries.c,src/main/aya/aya_stats.c,2,"default",src/main/aya/stats.c
+src/main/akao/Akao_SetBgmVolumeFade.c,src/main/item/inventory_list.c,1,"cc1 -G8, as -G8",src/main/item/active_list.c
+src/main/menu/Menu_ActionSubmenuSelection.c,src/main/item/inventory_list.c,1,"cc1 -G8, as -G8",src/main/item/active_list.c
+src/main/time/GameTime_CounterSeconds.c,src/main/item/inventory_list.c,1,"default",src/main/item/active_list.c
+src/main/item/Inv_DropRng.c,src/main/item/inventory_list.c,1,"cc1 -G8, as comm -G8",src/main/item/active_list.c
+src/main/item/Inv_ActiveListSelection.c,src/main/item/inventory_list.c,1,"cc1 -G8, as comm -G8",src/main/item/active_list.c
+src/main/item/inv2.c,src/main/item/inventory_list.c,1,"default",src/main/item/active_list.c
+src/main/item/Inv_LookupActiveListDisplayData.c,src/main/item/inventory_list.c,1,"cc1 -G8, as -G8",src/main/item/active_list.c
+src/main/item/Inv_RebuildSelectionBitset.c,src/main/item/inventory_list.c,1,"default",src/main/item/active_list.c
+src/main/item/Inv_DataLookup.c,src/main/item/inventory_list.c,1,"cc1 -G8, as comm -G8",src/main/item/active_list.c
+src/main/menu/Sfx_DrawSlotRow.c,src/main/item/inventory_list.c,1,"cc1 -G8, as -G8",src/main/item/active_list.c
+src/main/item/Inv_FindFirstEmptySlot.c,src/main/item/inventory_list.c,1,"cc1 -G8, as -G8",src/main/item/active_list.c
+src/main/item/Inv_InsertItem.c,src/main/item/inventory_list.c,1,"cc1 -G8, as comm -G8",src/main/item/active_list.c
+src/main/item/Inv_CountByValue.c,src/main/item/inventory_list.c,1,"as comm -G8",src/main/item/active_list.c
+src/main/item/Inv_ActiveListQueries.c,src/main/item/inventory_list.c,1,"cc1 -G8, as comm -G8",src/main/item/active_list.c
+src/main/item/Inv_FilteredList.c,src/main/item/inventory_list.c,1,"cc1 -G8, as -G8",src/main/item/active_list.c
+src/main/item/Inv_RandomPickAndCompact.c,src/main/item/inventory_list.c,2,"cc1 -G8, as comm -G8, FG0",src/main/item/active_list.c
+src/main/item/Inv_EquipmentCapacityFlow.c,src/main/item/item_use.c,1,"cc1 -G4, as comm -G4, FG0",src/main/item/actions.c
+src/main/item/Inv_RollRandomItemType.c,src/main/item/item_use.c,2,"cc1 -G8, as comm -G8",src/main/item/actions.c
+src/main/item/Item_PackParasiteSpells.c,src/main/item/item_use.c,2,"as comm -G8",src/main/item/actions.c
+src/main/aya/Aya_UnlockParasiteSpellById.c,src/main/item/item_use.c,2,"default",src/main/item/actions.c
+src/main/item/Inv_PackedListItem.c,src/main/item/item_use.c,2,"cc1 -G8, as comm -G8",src/main/item/actions.c
+src/main/item/Inv_ItemActions.c,src/main/item/item_use.c,3,"cc1 -G8, as comm -G8, FG0",src/main/item/actions.c
+src/main/menu/menu_get.c,src/main/item/inventory_swap.c,1,"cc1 -G8, as comm -G8",src/main/item/swap.c
+src/main/item/Inv_TransferItem.c,src/main/item/inventory_swap.c,1,"cc1 -G8, as comm -G8, FG0",src/main/item/swap.c
+src/main/item/Inv_CanAddActiveListItemToAya.c,src/main/item/inventory_swap.c,2,"cc1 -G8, as comm -G8",src/main/item/swap.c
+src/main/menu/Menu_DrawArmorItemDetail.c,src/main/item/inventory_swap.c,2,"cc1 -G8, as -G8",src/main/item/swap.c
+src/main/item/Inv_InventorySwap.c,src/main/item/inventory_swap.c,2,"cc1 -G8, as comm -G8",src/main/item/swap.c
+src/main/menu/Menu_OpenItemUsePanelAtIndex.c,src/main/item/inventory_swap.c,2,"cc1 -G8, as comm -G8",src/main/menu/item_use_panel.c
+src/main/item/Inv_ArmorCapacity.c,src/main/item/inventory_swap.c,3,"cc1 -G8, as comm -G8, FG0",src/main/item/armor_capacity.c
+src/main/item/Inv_CompareItemsForSort.c,src/main/item/inventory_swap.c,4,"cc1 -G8, as -G8",src/main/item/armor_capacity.c
+src/main/menu/Menu_BattleEquipMode.c,src/main/item/inventory_swap.c,4,"cc1 -G8, as comm -G8",src/main/item/armor_capacity.c
+src/main/item/stat.c,src/main/save/save_data.c,1,"as div",src/main/save/game_data.c
+src/main/save/Save_MetadataWindow.c,src/main/save/save_data.c,1,"cc1 -G8, as comm -G8",src/main/save/game_data.c
+src/main/item/Inv_FindItem.c,src/main/save/save_data.c,1,"cc1 -G8, as comm -G8",src/main/save/game_data.c
+src/main/save/Save_BuildHeader.c,src/main/save/save_data.c,2,"default",src/main/save/game_data.c
+src/main/save/Save_RestoreHeader.c,src/main/save/save_data.c,3,"cc1 -G8, as -G8",src/main/save/game_data.c
+src/main/menu/Menu_RunFrame.c,src/main/save/save_data.c,3,"cc1 -G8, as comm -G8",src/main/save/game_data.c
+src/main/item/Inv_EquipmentSelection.c,src/main/save/save_data.c,4,"cc1 -G8, as comm -G8, FG0",src/main/save/game_data.c
+src/main/save/Save_GetCurrentMapNumber.c,src/main/save/save_data.c,4,"default",src/main/save/game_data.c
+src/main/menu/Menu_InitScrollDirection.c,src/main/save/save_data.c,5,"cc1 -G8, as -G8",src/main/save/game_data.c
+src/main/item/Inv_InitMaxLevelInventory.c,src/main/save/save_data.c,5,"cc1 -G8, as comm -G8, FG0",src/main/save/game_data.c
+src/main/table/Tbl_DataTableLookups.c,src/main/text/text_table.c,1,"default",src/main/text/tables.c
+src/main/menu/queue.c,src/main/menu/menu_queue.c,1,"cc1 -G8, as comm -G8, FG0",src/main/menu/input_queue.c
+src/main/gpu/Draw_BaseOffset.c,src/main/draw/draw.c,1,"default",src/main/draw/text.c
+src/main/gpu/Draw_TextPrimitives.c,src/main/draw/draw.c,2,"cc1 -G8 -fno-cse-skip-blocks, as div comm -G8",src/main/draw/text.c
+src/main/gpu/Draw_AllocColorQuad.c,src/main/draw/draw.c,3,"cc1 -G8 -fno-schedule-insns, as div -G8",src/main/draw/color_quad.c
+src/main/gpu/Draw_WipeAndGradient.c,src/main/draw/draw.c,4,"cc1 -G8, as comm -G8",src/main/draw/wipe.c
+src/main/menu/MenuWidget_Lifecycle.c,src/main/menu/menu_widget.c,1,"cc1 -G8, as div comm -G8",src/main/menu/widget.c
+src/main/task/Task_FieldSfxQueue.c,src/main/script/sfx_queue.c,1,"cc1 -G0, as comm -G8",src/main/script/sfx_queue.c
+src/main/render/Obj_ControlEntries.c,src/main/render/render.c,1,"cc1 -fno-force-mem, as div",src/main/render/camera.c
+src/main/render/Render_CameraViewportFlow.c,src/main/render/render.c,1,"as div",src/main/render/camera.c
+src/main/field/Geo_LoadMeshEntry.c,src/main/render/render.c,2,"cc1 -fno-expensive-optimizations -fno-strength-reduce",src/main/render/mesh_entry.c
+src/main/render/Render_MeshListAndFade.c,src/main/render/render.c,3,"cc1 -fno-strength-reduce, as div",src/main/render/mesh_list.c
+src/main/render/Render_SortOt.c,src/main/render/render.c,4,"cc1 -G8, as -G8",src/main/render/frame_update.c
+src/main/render/Render_FrameUpdateAndScreenState.c,src/main/render/render.c,5,"as div",src/main/render/frame_update.c
+src/main/asset/Asset_LoadTimTextures.c,src/main/asset/asset.c,1,"default",src/main/asset/tim_textures.c
+src/main/pm/Pm_RunBanks.c,src/main/asset/asset.c,1,"default",src/main/asset/tim_textures.c
+src/main/asset/Asset_UnloadTableEntries.c,src/main/asset/asset.c,2,"cc1 -fno-force-mem",src/main/asset/unload_table.c
+src/main/render/Render_InitDisplayLists.c,src/main/asset/asset.c,3,"default",src/main/asset/game_state.c
+src/main/sys/Sys_GameStateAndVoiceBanks.c,src/main/asset/asset.c,3,"default",src/main/asset/game_state.c
+src/main/scene/Scene_LoadSceneData.c,src/main/scene/scene_load.c,1,"default",src/main/scene/room_load.c
+src/main/akao/Akao_LoadVoiceBankAlt.c,src/main/scene/scene_load.c,1,"default",src/main/scene/room_load.c
+src/main/scene/Scene_LoadRoom.c,src/main/scene/scene_load.c,1,"cc1 -G1, as -G1",src/main/scene/room_load.c
+src/main/scene/Scene_LoadTextureAndPlayer.c,src/main/scene/scene_load.c,2,"default",src/main/scene/room_load.c
+src/main/scene/Scene_UpdateBgDraw.c,src/main/scene/scene_load.c,2,"default",src/main/scene/room_load.c
+src/main/cdrom/CD_TrackReadFlow.c,src/main/cdrom/cdrom.c,1,"cc1 -G8, as comm -G8",src/main/cdrom/track_read.c
+src/main/overlay/Overlay_AudioSlotFlow.c,src/main/cdrom/cdrom.c,1,"default",src/main/cdrom/track_read.c
+src/main/asset/Asset_SceneTablesAndSound.c,src/main/cdrom/cdrom.c,2,"as div",src/main/cdrom/scene_assets.c
+src/main/cdrom/CdRom_BootReadFlow.c,src/main/cdrom/cdrom.c,2,"default",src/main/cdrom/scene_assets.c
+src/main/gpu/Gpu_DisplayInitAndStatus.c,src/main/pm/process.c,1,"default",src/main/pm/disc_tables.c
+src/main/boot/Boot_DiscTableLoad.c,src/main/pm/process.c,1,"default",src/main/pm/disc_tables.c
+src/main/pm/Pm_ProcessManager.c,src/main/pm/process.c,1,"default",src/main/pm/process.c
+src/main/render/Render_DrawWireframeModel.c,src/main/draw/prim_queue.c,1,"cc1 -G8, as -G8",src/main/render/wireframe.c
+src/main/task/Task_InitGpuHwRegs.c,src/main/draw/prim_queue.c,2,"cc1 -fno-schedule-insns",src/main/draw/gpu_regs.c
+src/main/task/Task_GpuFlushPrimQueue.c,src/main/draw/prim_queue.c,2,"default",src/main/draw/prim_queue.c
+src/main/task/Task_GpuPackPrimColor.c,src/main/draw/prim_queue.c,3,"GNU-as",src/main/draw/prim_color.c
+src/main/gpu/Gpu_RenderFrame.c,src/main/draw/prim_queue.c,4,"cc1 -G8, as -G8",src/main/draw/frame.c
+src/main/math/Math_SqrtApprox3.c,src/main/draw/prim_queue.c,5,"GNU-as",src/main/math/sqrt_approx.c
+src/main/scene/Scene_PlayerMovement.c,src/main/scene/player_move.c,1,"default",src/main/scene/player_movement.c
+src/main/asset/Asset_TimImage.c,src/main/scene/player_move.c,1,"default",src/main/scene/player_movement.c
+src/main/akao/Spu_TransferAndLifecycle.c,src/main/akao/spu.c,1,"default",src/main/akao/spu_transfer.c
+src/main/akao/Akao_SpuVoiceDriver.c,src/main/akao/voice.c,1,"default",src/main/akao/voice_driver.c
+src/main/akao/Akao_VoiceBankLifecycle.c,src/main/akao/voice_bank.c,1,"cc1 -fno-strength-reduce, as div",src/main/akao/voice_bank.c
+src/main/akao/Akao_SequencerFlow.c,src/main/akao/sequencer.c,1,"as div",src/main/akao/sequencer.c
+src/main/engine/FieldEng_ObjectScript.c,src/main/fieldfx/object.c,1,"default",src/main/fieldfx/object_script.c
+src/main/engine/FieldEng_SpriteRendering.c,src/main/fieldfx/sprite.c,1,"as div",src/main/fieldfx/sprite_render.c
+src/main/engine/FieldEng_CollisionQueries.c,src/main/fieldfx/collision.c,1,"cc1 -fno-strength-reduce",src/main/fieldfx/collision.c
+src/main/engine/FieldEng_CollisionQueries_2.c,src/main/fieldfx/collision.c,1,"default",src/main/fieldfx/collision.c
+src/main/engine/FieldEng_CollisionQueries_3.c,src/main/fieldfx/collision.c,1,"default",src/main/fieldfx/collision.c
+src/main/engine/FieldEng_TexturedModel.c,src/main/fieldfx/model.c,1,"default",src/main/fieldfx/model.c
+src/main/engine/FieldEng_GlowEffect.c,src/main/fieldfx/glow.c,1,"default",src/main/fieldfx/glow.c
+src/main/engine/FieldEng_GlowEffectB.c,src/main/fieldfx/glow.c,1,"default",src/main/fieldfx/glow.c
+src/main/engine/FieldEng_GlowEffectC.c,src/main/fieldfx/glow.c,1,"default",src/main/fieldfx/glow.c
+src/main/engine/FieldEng_FourLayerGlowEffect.c,src/main/fieldfx/glow.c,1,"default",src/main/fieldfx/glow.c
+src/main/engine/FieldEng_PointSpriteEffect.c,src/main/fieldfx/burst.c,1,"default",src/main/fieldfx/burst.c
+src/main/engine/FieldEng_BurstEffect.c,src/main/fieldfx/burst.c,1,"default",src/main/fieldfx/burst.c
+src/main/engine/FieldEng_BurstEffect_2.c,src/main/fieldfx/burst.c,1,"default",src/main/fieldfx/burst.c
+src/main/engine/FieldEng_BurstEffect_3.c,src/main/fieldfx/burst.c,1,"default",src/main/fieldfx/burst.c
+src/main/engine/FieldEng_BurstEffectB.c,src/main/fieldfx/burst.c,1,"default",src/main/fieldfx/burst.c
+src/main/engine/FieldEng_BurstEffectC.c,src/main/fieldfx/burst.c,1,"default",src/main/fieldfx/burst.c
+src/main/engine/FieldAnim_TaskList.c,src/main/fieldfx/anim.c,1,"default",src/main/fieldfx/task_list.c
+src/main/engine/FieldEng_GeometryAndShapes.c,src/main/fieldfx/shapes.c,1,"as div",src/main/fieldfx/geometry.c
+src/main/engine/FieldEng_EffectPrimitives.c,src/main/fieldfx/shapes.c,1,"as div",src/main/fieldfx/geometry.c
+src/main/engine/FieldEng_TaskSpawn.c,src/main/fieldfx/shapes.c,1,"default",src/main/fieldfx/geometry.c
+src/main/engine/FieldEng_FallingSpriteEffect.c,src/main/fieldfx/effects_sprite.c,1,"as div",src/main/fieldfx/sprite_effects.c
+src/main/engine/FieldEng_ScatterBurstEffect.c,src/main/fieldfx/effects_sprite.c,1,"as div",src/main/fieldfx/sprite_effects.c
+src/main/engine/FieldEng_SpiralSpriteEffect.c,src/main/fieldfx/effects_sprite.c,1,"default",src/main/fieldfx/sprite_effects.c
+src/main/engine/FieldEng_FanSweepSparks.c,src/main/fieldfx/effects_sprite.c,1,"default",src/main/fieldfx/sprite_effects.c
+src/main/engine/FieldEng_SparkEffects.c,src/main/fieldfx/effects_sprite.c,1,"as div",src/main/fieldfx/sprite_effects.c
+src/main/engine/FieldEng_SpinningModel.c,src/main/fieldfx/effects_sprite.c,1,"default",src/main/fieldfx/sprite_effects.c
+src/main/engine/FieldEng_BallisticSprite.c,src/main/fieldfx/effects_sprite.c,1,"default",src/main/fieldfx/sprite_effects.c
+src/main/engine/FieldEng_AttachedEmitterEffect.c,src/main/fieldfx/effects_sprite.c,1,"default",src/main/fieldfx/sprite_effects.c
+src/main/engine/FieldEng_WaveEmitterEffect.c,src/main/fieldfx/effects_emitter.c,1,"as div",src/main/fieldfx/emitters.c
+src/main/engine/FieldEng_DiamondEmitter.c,src/main/fieldfx/effects_emitter.c,1,"default",src/main/fieldfx/emitters.c
+src/main/engine/FieldEng_RadialFlashEffect.c,src/main/fieldfx/effects_emitter.c,1,"default",src/main/fieldfx/emitters.c
+src/main/engine/FieldEng_TwinModelEffect.c,src/main/fieldfx/effects_emitter.c,1,"default",src/main/fieldfx/emitters.c
+src/main/engine/FieldEng_DriftingSpriteEffect.c,src/main/fieldfx/effects_emitter.c,1,"default",src/main/fieldfx/emitters.c
+src/main/engine/FieldEng_ConvergingFlashEffect.c,src/main/fieldfx/effects_emitter.c,1,"default",src/main/fieldfx/emitters.c
+src/main/engine/FieldEng_SettlingGlowEffect.c,src/main/fieldfx/effects_emitter.c,1,"as div",src/main/fieldfx/emitters.c
+src/main/engine/FieldEng_FadeParticle.c,src/main/fieldfx/effects_emitter.c,1,"default",src/main/fieldfx/emitters.c
+src/main/engine/FieldEng_RotatingEffect.c,src/main/fieldfx/effects_emitter.c,1,"default",src/main/fieldfx/emitters.c
+src/main/engine/FieldEng_PointEmitter.c,src/main/fieldfx/effects_emitter.c,1,"default",src/main/fieldfx/emitters.c
+src/main/engine/FieldEng_ObjectConditions.c,src/main/fieldfx/fx_math.c,1,"default",src/main/fieldfx/vector.c
+src/main/engine/FieldEng_VectorMath.c,src/main/fieldfx/fx_math.c,1,"default",src/main/fieldfx/vector.c
+src/main/engine/FieldEng_AngleMath.c,src/main/fieldfx/fx_math.c,2,"cc1 -fno-schedule-insns",src/main/fieldfx/angle.c
+src/overlays/mdec_diag/MdecDiag_ExpandDecoderTable.c,src/overlays/mdec_diag/vlc_build.c,1,"default",src/overlays/mdec_diag/vlc_build.c
+src/overlays/mdec_diag/DecDCTReset.c,src/overlays/mdec_diag/decdct.c,1,"gcc 2.8.1 (now gnu-as)",src/overlays/mdec_diag/decdct.c
+src/overlays/mdec_diag/DecDCTGetEnv.c,src/overlays/mdec_diag/decdct.c,1,"default (now gnu-as)",src/overlays/mdec_diag/decdct.c
+src/overlays/mdec_diag/DecDCTPutEnv.c,src/overlays/mdec_diag/decdct.c,1,"gnu-as",src/overlays/mdec_diag/decdct.c
+src/overlays/mdec_diag/libpress_decdct.c,src/overlays/mdec_diag/decdct.c,1,"default (now gnu-as)",src/overlays/mdec_diag/decdct.c
+src/overlays/mdec_diag/MdecDiag_Reset.c,src/overlays/mdec_diag/decdct.c,1,"gnu-as",src/overlays/mdec_diag/decdct.c
+src/overlays/mdec_diag/MdecDiag_SendInput.c,src/overlays/mdec_diag/decdct.c,1,"gnu-as",src/overlays/mdec_diag/decdct.c
+src/overlays/mdec_diag/MdecDiag_ReceiveOutput.c,src/overlays/mdec_diag/decdct.c,1,"gnu-as",src/overlays/mdec_diag/decdct.c
+src/overlays/mdec_diag/mdec_wait.c,src/overlays/mdec_diag/mdec_wait.c,2,"default ($a0 global register variable)",src/overlays/mdec_diag/mdec_wait.c
+src/overlays/mdec_diag/mdec_status.c,src/overlays/mdec_diag/mdec_status.c,3,"default",src/overlays/mdec_diag/mdec_status.c
+src/overlays/mdec_diag/DecDCTvlc.c,src/overlays/mdec_diag/vlc.c,1,"gnu-as (PsyQ LIBPRESS VLC)",src/overlays/mdec_diag/vlc.c
+src/overlays/mdec_diag/DecDCTvlc2.c,src/overlays/mdec_diag/vlc_c.c,1,"gnu-as (PsyQ LIBPRESS VLC_C)",src/overlays/mdec_diag/vlc_c.c
+src/overlays/fx_common/camera_nodes.c,src/overlays/fx_common/camera.c,1,"default (now K8)",src/overlays/fx_common/camera.c
+src/overlays/fx_common/render_op.c,src/overlays/fx_common/camera.c,1,"cc1 -G8, as -G8 comm, FG0",src/overlays/fx_common/camera.c
+src/overlays/fx_common/effects.c,src/overlays/fx_common/effects.c,1,"default",src/overlays/fx_common/effects.c
+src/overlays/fx_common/FxCommon_SetMotionEndpoints.c,src/overlays/fx_common/motion_endpoints.c,1,"cc1 -fno-schedule-insns",src/overlays/fx_common/motion_endpoints.c
+src/overlays/fx_common/FxCommon_CameraPathSequence.c,src/overlays/fx_common/camera_path.c,1,"default",src/overlays/fx_common/camera_path.c
+src/overlays/fx_common/FxCommon_EffectInitializationFlow.c,src/overlays/fx_common/effect_init.c,1,"cc1 -fno-expensive-optimizations",src/overlays/fx_common/effect_init.c
+src/overlays/fx_common/model_buffers.c,src/overlays/fx_common/model_buffers.c,1,"default",src/overlays/fx_common/model_buffers.c
+src/overlays/boot_display/BootDisplay_RunDisplay.c,src/overlays/boot_display/text_screen.c,1,"default",src/overlays/boot_display/text_screen.c
+src/overlays/boot_display/BootDisplay_DrawTextBlock.c,src/overlays/boot_display/text_screen.c,1,"default",src/overlays/boot_display/text_screen.c
+src/overlays/boot_display/BootDisplay_GetGlyphIndex.c,src/overlays/boot_display/text_screen.c,1,"default",src/overlays/boot_display/text_screen.c
+src/overlays/boot_display/BootDisplay_GetGlyphWidth.c,src/overlays/boot_display/text_screen.c,1,"default",src/overlays/boot_display/text_screen.c
+src/overlays/boot_display/BootDisplay_InitDisplayResources.c,src/overlays/boot_display/sprites.c,1,"default",src/overlays/boot_display/sprites.c
+src/overlays/boot_display/BootDisplay_SelectFrameBuffers.c,src/overlays/boot_display/sprites.c,1,"default",src/overlays/boot_display/sprites.c
+src/overlays/boot_display/BootDisplay_DisplayNoOp.c,src/overlays/boot_display/sprites.c,1,"default",src/overlays/boot_display/sprites.c
+src/overlays/boot_display/BootDisplay_StepImageSprite.c,src/overlays/boot_display/sprites.c,1,"default",src/overlays/boot_display/sprites.c
+src/overlays/boot_display/sprites.c,src/overlays/boot_display/sprites.c,1,"default",src/overlays/boot_display/sprites.c
+src/overlays/boot_display/BootDisplay_PresentFrame.c,src/overlays/boot_display/image_display.c,1,"default",src/overlays/boot_display/image_display.c
+src/overlays/boot_display/BootDisplay_BrightenGlyph.c,src/overlays/boot_display/image_display.c,1,"default",src/overlays/boot_display/image_display.c
+src/overlays/boot_display/BootDisplay_SetImageDisplay.c,src/overlays/boot_display/image_display.c,1,"default",src/overlays/boot_display/image_display.c
+src/overlays/boot_display/BootDisplay_StepImageDisplay.c,src/overlays/boot_display/image_display.c,1,"default",src/overlays/boot_display/image_display.c
+src/overlays/boot_display/BootDisplay_CallInitSystem.c,src/overlays/boot_display/image_display.c,1,"default",src/overlays/boot_display/image_display.c
+src/overlays/boot_display/BootDisplay_BrightenImageRegion.c,src/overlays/boot_display/image_display.c,1,"default",src/overlays/boot_display/image_display.c
+src/overlays/boot_display/BootDisplay_WaitForCdAndRestoreCallbacks.c,src/overlays/boot_display/playback_stop.c,1,"default",src/overlays/boot_display/playback_stop.c
+src/overlays/boot_display/BootDisplay_InitPlaybackFile.c,src/overlays/boot_display/playback_file.c,1,"default",src/overlays/boot_display/playback_file.c
+src/overlays/boot_display/BootDisplay_StartPlayback.c,src/overlays/boot_display/playback.c,1,"default",src/overlays/boot_display/playback.c
+src/overlays/boot_display/BootDisplay_SetCdFilter.c,src/overlays/boot_display/playback.c,1,"default",src/overlays/boot_display/playback.c
+src/overlays/boot_display/playback.c,src/overlays/boot_display/playback.c,1,"default",src/overlays/boot_display/playback.c
+src/overlays/boot_display/BootDisplay_RecordReadPosition.c,src/overlays/boot_display/playback.c,1,"default",src/overlays/boot_display/playback.c
+src/overlays/menu_memcard/video.c,src/overlays/menu_memcard/video.c,1,"default",src/overlays/menu_memcard/video.c
+src/overlays/menu_memcard/glint_effects.c,src/overlays/menu_memcard/glint_effects.c,1,"default",src/overlays/menu_memcard/glint_effects.c
+src/overlays/menu_memcard/MenuCard_PulseImage.c,src/overlays/menu_memcard/image_effects.c,1,"default",src/overlays/menu_memcard/image_effects.c
+src/overlays/menu_memcard/MenuCard_LinkEffect.c,src/overlays/menu_memcard/image_effects.c,1,"default",src/overlays/menu_memcard/image_effects.c
+src/overlays/menu_memcard/MenuCard_CosineImage.c,src/overlays/menu_memcard/image_effects.c,1,"default",src/overlays/menu_memcard/image_effects.c
+src/overlays/menu_memcard/MenuCard_TrailEffect.c,src/overlays/menu_memcard/image_effects.c,1,"default",src/overlays/menu_memcard/image_effects.c
+src/overlays/menu_memcard/MenuCard_SineRotatingImage.c,src/overlays/menu_memcard/image_effects.c,1,"default",src/overlays/menu_memcard/image_effects.c
+src/overlays/menu_memcard/MenuCard_SineTrailEffect.c,src/overlays/menu_memcard/image_effects.c,1,"default",src/overlays/menu_memcard/image_effects.c
+src/overlays/menu_memcard/MenuCard_GlintOriginHooks.c,src/overlays/menu_memcard/image_effects.c,1,"default",src/overlays/menu_memcard/image_effects.c
+src/overlays/menu_memcard/MenuCard_FlipScreenPages.c,src/overlays/menu_memcard/page_flip.c,1,"cc1 -fno-cse-skip-blocks",src/overlays/menu_memcard/page_flip.c
+src/overlays/menu_memcard/MenuCard_RedrawImageNodes.c,src/overlays/menu_memcard/image_nodes.c,1,"default",src/overlays/menu_memcard/image_nodes.c
+src/overlays/menu_memcard/MenuCard_BlendImage.c,src/overlays/menu_memcard/image_nodes.c,1,"default",src/overlays/menu_memcard/image_nodes.c
+src/overlays/menu_memcard/MenuCard_BlendRotatedImage.c,src/overlays/menu_memcard/image_nodes.c,1,"default",src/overlays/menu_memcard/image_nodes.c
+src/overlays/menu_memcard/MenuCard_CreateImageNode.c,src/overlays/menu_memcard/image_nodes.c,1,"default",src/overlays/menu_memcard/image_nodes.c
+src/overlays/menu_memcard/MenuCard_CreateImageFlow.c,src/overlays/menu_memcard/image_nodes.c,1,"default",src/overlays/menu_memcard/image_nodes.c
+src/overlays/menu_memcard/MenuCard_ListAndScreenFlow.c,src/overlays/menu_memcard/list_screen.c,1,"cc1 -fno-cse-skip-blocks",src/overlays/menu_memcard/list_screen.c
+src/overlays/menu_memcard/MenuCard_SetVideoDisplay.c,src/overlays/menu_memcard/video_playback.c,1,"default",src/overlays/menu_memcard/video_playback.c
+src/overlays/menu_memcard/MenuCard_UpdateVideoFrame.c,src/overlays/menu_memcard/video_playback.c,1,"default",src/overlays/menu_memcard/video_playback.c
+src/overlays/menu_memcard/MenuCard_UploadVideoSlice.c,src/overlays/menu_memcard/video_playback.c,1,"default",src/overlays/menu_memcard/video_playback.c
+src/overlays/menu_memcard/MenuCard_InitVideoBuffers.c,src/overlays/menu_memcard/video_playback.c,1,"default",src/overlays/menu_memcard/video_playback.c
+src/overlays/menu_memcard/MenuCard_ResetDisplayState.c,src/overlays/menu_memcard/video_playback.c,1,"default",src/overlays/menu_memcard/video_playback.c
+src/overlays/menu_memcard/video_open_step.c,src/overlays/menu_memcard/video_playback.c,1,"default",src/overlays/menu_memcard/video_playback.c
+src/overlays/menu_memcard/MenuCard_StopVideo.c,src/overlays/menu_memcard/video_playback.c,1,"default",src/overlays/menu_memcard/video_playback.c
+src/overlays/menu_memcard/MenuCard_UpdateEventFlag_8012B1F0.c,src/overlays/menu_memcard/video_playback.c,1,"default",src/overlays/menu_memcard/video_playback.c
+src/overlays/menu_memcard/MenuCard_PlayVideo.c,src/overlays/menu_memcard/video_playback.c,1,"default",src/overlays/menu_memcard/video_playback.c
+src/overlays/menu_memcard/MenuCard_InitFadeForNode.c,src/overlays/menu_memcard/fade.c,1,"default",src/overlays/menu_memcard/fade.c
+src/overlays/menu_memcard/MenuCard_UpdateFadeCounter.c,src/overlays/menu_memcard/fade.c,1,"default",src/overlays/menu_memcard/fade.c
+src/overlays/menu_memcard/fade.c,src/overlays/menu_memcard/fade.c,1,"default",src/overlays/menu_memcard/fade.c
+src/overlays/room_lib/RoomEffect_DropFieldClass.c,src/overlays/room_lib/drop_field.c,1,"default",src/overlays/room_lib/drop_field.c
+src/overlays/room_lib/RoomEffect_DropFieldEffects.c,src/overlays/room_lib/drop_field.c,2,"default",src/overlays/room_lib/drop_field.c
+src/overlays/room_lib/RoomEffect_DroppedFlare.c,src/overlays/room_lib/dropped_flare.c,1,"default",src/overlays/room_lib/dropped_flare.c
+src/overlays/room_lib/RoomEffect_EffectSequence.c,src/overlays/room_lib/effect_sequence.c,1,"default",src/overlays/room_lib/effect_sequence.c
+src/overlays/room_lib/RoomEffect_FallingSpriteBurst.c,src/overlays/room_lib/falling_sprite_burst.c,1,"default",src/overlays/room_lib/falling_sprite_burst.c
+src/overlays/room_lib/RoomEffect_GlowOrb.c,src/overlays/room_lib/glow_orb.c,1,"default",src/overlays/room_lib/glow_orb.c
+src/overlays/room_lib/RoomEffect_GlowOrbSetup.c,src/overlays/room_lib/glow_orb_setup.c,1,"default",src/overlays/room_lib/glow_orb_setup.c
+src/overlays/room_lib/RoomEffect_GrabAttackSet.c,src/overlays/room_lib/grab_attack.c,1,"default",src/overlays/room_lib/grab_attack.c
+src/overlays/room_lib/RoomEffect_GroundEruption.c,src/overlays/room_lib/ground_eruption.c,2,"default",src/overlays/room_lib/ground_eruption.c
+src/overlays/room_lib/RoomEffect_GroundEruptionClass.c,src/overlays/room_lib/ground_eruption.c,1,"default",src/overlays/room_lib/ground_eruption.c
+src/overlays/room_lib/RoomEffect_HomingFlash.c,src/overlays/room_lib/homing_flash.c,1,"default",src/overlays/room_lib/homing_flash.c
+src/overlays/room_lib/RoomEffect_HomingProjectile.c,src/overlays/room_lib/homing_projectile.c,1,"default",src/overlays/room_lib/homing_projectile.c
+src/overlays/room_lib/RoomEffect_HomingProjectileSeeds.c,src/overlays/room_lib/homing_projectile_seeds.c,1,"default",src/overlays/room_lib/homing_projectile_seeds.c
+src/overlays/room_lib/RoomEffect_LineBurst.c,src/overlays/room_lib/line_burst.c,1,"default",src/overlays/room_lib/line_burst.c
+src/overlays/room_lib/RoomEffect_MirrorModel.c,src/overlays/room_lib/mirror_model.c,1,"default",src/overlays/room_lib/mirror_model.c
+src/overlays/room_lib/RoomEffect_MotionParticles.c,src/overlays/room_lib/motion_particles.c,1,"default",src/overlays/room_lib/motion_particles.c
+src/overlays/room_lib/RoomEffect_MotionParticles_2.c,src/overlays/room_lib/motion_particles_2.c,1,"cc1 -fno-strength-reduce",src/overlays/room_lib/motion_particles_2.c
+src/overlays/room_lib/RoomEffect_MotionParticles_3.c,src/overlays/room_lib/motion_particles_3.c,1,"default",src/overlays/room_lib/motion_particles_3.c
+src/overlays/room_lib/RoomEffect_OrbitEffectSet.c,src/overlays/room_lib/orbit_set.c,2,"cc1 -fno-strength-reduce",src/overlays/room_lib/orbit_set.c
+src/overlays/room_lib/RoomEffect_OrbitFlare.c,src/overlays/room_lib/orbit_flare.c,1,"default",src/overlays/room_lib/orbit_flare.c
+src/overlays/room_lib/RoomEffect_OrbitSetClass.c,src/overlays/room_lib/orbit_set.c,1,"cc1 -fno-strength-reduce",src/overlays/room_lib/orbit_set.c
+src/overlays/room_lib/RoomEffect_SeekerSparkCallback.c,src/overlays/room_lib/seeker_spark.c,1,"default",src/overlays/room_lib/seeker_spark.c
+src/overlays/room_lib/RoomEffect_SoundBurst.c,src/overlays/room_lib/sound_burst.c,1,"default",src/overlays/room_lib/sound_burst.c
+src/overlays/room_lib/RoomEffect_SparkAttacks.c,src/overlays/room_lib/spark_attacks.c,1,"default",src/overlays/room_lib/spark_attacks.c
+src/overlays/room_lib/RoomEffect_SparkBarrage.c,src/overlays/room_lib/spark_barrage.c,1,"default",src/overlays/room_lib/spark_barrage.c
+src/overlays/room_lib/RoomEffect_SparkRingBurst.c,src/overlays/room_lib/spark_ring_burst.c,1,"default",src/overlays/room_lib/spark_ring_burst.c
+src/overlays/room_lib/RoomEffect_TrailBurstAttacks.c,src/overlays/room_lib/trail_burst_attacks.c,1,"default",src/overlays/room_lib/trail_burst_attacks.c
+src/overlays/room_lib/RoomLib_ActorClasses.c,src/overlays/room_lib/actor_classes.c,1,"default",src/overlays/room_lib/actor_classes.c
+src/overlays/room_lib/RoomLib_CaptureFrameSample.c,src/overlays/room_lib/capture_frame_sample.c,1,"default",src/overlays/room_lib/capture_frame_sample.c
+src/overlays/room_lib/RoomLib_ClassNop0.c,src/overlays/room_lib/class_nop0.c,1,"default",src/overlays/room_lib/class_nop0.c
+src/overlays/room_lib/RoomLib_ClassNop6.c,src/overlays/room_lib/class_nop6.c,1,"default",src/overlays/room_lib/class_nop6.c
+src/overlays/room_lib/RoomLib_CloseTarget.c,src/overlays/room_lib/class_close_target.c,1,"default",src/overlays/room_lib/class_close_target.c
+src/overlays/room_lib/RoomLib_FloorWalkerClass.c,src/overlays/room_lib/floor_walker_class.c,1,"default",src/overlays/room_lib/floor_walker_class.c
+src/overlays/room_lib/RoomLib_GrabAwaitStance.c,src/overlays/room_lib/grab_await_stance.c,1,"default",src/overlays/room_lib/grab_await_stance.c
+src/overlays/room_lib/RoomLib_PairedGlow.c,src/overlays/room_lib/paired_glow.c,1,"default",src/overlays/room_lib/paired_glow.c
+src/overlays/room_lib/RoomLib_PlantScript.c,src/overlays/room_lib/class_plant_script.c,1,"default",src/overlays/room_lib/class_plant_script.c
+src/overlays/room_lib/RoomLib_RegisterDrawList.c,src/overlays/room_lib/class_register_draw_list.c,1,"default",src/overlays/room_lib/class_register_draw_list.c
+src/overlays/room_lib/RoomLib_RegisterDrawListActive.c,src/overlays/room_lib/class_register_active.c,1,"default",src/overlays/room_lib/class_register_active.c
+src/overlays/room_lib/RoomLib_RegisterPairedTables.c,src/overlays/room_lib/class_register_tables.c,1,"default",src/overlays/room_lib/class_register_tables.c
+src/overlays/room_lib/RoomLib_RegisterPairedTablesActive.c,src/overlays/room_lib/class_register_active.c,2,"default",src/overlays/room_lib/class_register_active.c
+src/overlays/room_lib/RoomLib_RegisterPairedTablesGated.c,src/overlays/room_lib/class_register_tables_gated.c,1,"default",src/overlays/room_lib/class_register_tables_gated.c
+src/overlays/room_lib/RoomLib_SetArg1.c,src/overlays/room_lib/script_arg.c,1,"default",src/overlays/room_lib/script_arg.c
+src/overlays/room_lib/RoomLib_SetArgPair.c,src/overlays/room_lib/script_arg_pair.c,1,"default",src/overlays/room_lib/script_arg_pair.c
+src/overlays/room_lib/RoomLib_SetArgs3.c,src/overlays/room_lib/script_args.c,1,"default",src/overlays/room_lib/script_args.c
+src/overlays/room_lib/RoomLib_SetTaskVar0.c,src/overlays/room_lib/script_task_var.c,1,"default",src/overlays/room_lib/script_task_var.c
+src/overlays/room_lib/RoomLib_SlotSet.c,src/overlays/room_lib/script_slot.c,1,"default",src/overlays/room_lib/script_slot.c
+src/overlays/room_lib/RoomLib_Spawn6.c,src/overlays/room_lib/class_spawn.c,1,"default",src/overlays/room_lib/class_spawn.c
+src/overlays/room_lib/RoomLib_ThreeParticleClass.c,src/overlays/room_lib/three_particles.c,1,"default",src/overlays/room_lib/three_particles.c
+src/overlays/room_lib/RoomLib_ThreeTransformParticles.c,src/overlays/room_lib/three_particles.c,2,"default",src/overlays/room_lib/three_particles.c
+src/overlays/room_lib/RoomLib_TimedSpawn.c,src/overlays/room_lib/timed_spawn.c,1,"default",src/overlays/room_lib/timed_spawn.c
+src/overlays/room_lib/RoomLib_TwelveElementEffect.c,src/overlays/room_lib/twelve_elements.c,1,"default",src/overlays/room_lib/twelve_elements.c
+src/overlays/room_lib/RoomLib_UpdateCallback.c,src/overlays/room_lib/class_update_callback.c,1,"default",src/overlays/room_lib/class_update_callback.c
+src/overlays/room_lib/RoomLib_WindowClass.c,src/overlays/room_lib/window_class.c,1,"default",src/overlays/room_lib/window_class.c

@@ -1,5 +1,6 @@
 /* ASSEMBLER: GNU */
 /* PSY-Q LIBAPI CHCLRPAD: _remove_ChgclrPAD. */
+
 #include "pe1/psyq_asm.h"
 
 /*
@@ -11,8 +12,8 @@
 PSYQ_ASM_OBJECT(LIBAPI, CHCLRPAD)
 
 PSYQ_ASM_FUNCTION(_remove_ChgclrPAD,
-    "    lui     $at, %hi(D_800A34D0)\n"
-    "    sw      $ra, %lo(D_800A34D0)($at)\n"
+    "    lui     $at, %hi(g_RemoveChgclrPadSavedRa)\n"
+    "    sw      $ra, %lo(g_RemoveChgclrPadSavedRa)($at)\n"
     "    jal     EnterCriticalSection\n"
     "    nop\n"
     "    addiu   $t1, $zero, 0x57\n"
@@ -33,8 +34,8 @@ PSYQ_ASM_FUNCTION(_remove_ChgclrPAD,
     "    nop\n"
     "    jal     ExitCriticalSection\n"
     "    nop\n"
-    "    lui     $ra, %hi(D_800A34D0)\n"
-    "    lw      $ra, %lo(D_800A34D0)($ra)\n"
+    "    lui     $ra, %hi(g_RemoveChgclrPadSavedRa)\n"
+    "    lw      $ra, %lo(g_RemoveChgclrPadSavedRa)($ra)\n"
     "    nop\n"
     "    jr      $ra\n"
     "    nop\n");

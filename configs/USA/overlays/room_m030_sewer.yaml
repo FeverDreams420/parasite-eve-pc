@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m030_sewer
   ld_script_path: linkers/USA/overlays/room_m030_sewer.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m030_sewer.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m030_sewer.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m030_sewer.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m030_sewer.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,9 +37,9 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m030_header]
-      - [0xC, .rodata, ../room_lib/RoomEffect_OrbitFlare]
-      - [0x1C, c, ../room_lib/RoomEffect_OrbitFlare]
-      - [0xC6C, c, ../room_lib/RoomLib_SetArgs3]
+      - [0xC, .rodata, ../room_lib/orbit_flare]
+      - [0x1C, c, ../room_lib/orbit_flare]
+      - [0xC6C, c, ../room_lib/script_args]
       - [0xC90, data, D_8018FC78]
       - [0xCCC, data, D_8018FCB4]
       - [0xD04, data, RoomSlotA_8018FC54]
@@ -45,6 +47,11 @@ segments:
       - start: 0xD0C
         type: databin
         name: RoomSlotC_8018FC54
+        dir: room_m030_sewer
+      - [0x11E60, data, D_801A0E48]
+      - start: 0x11E6C
+        type: databin
+        name: D_801A0E54
         dir: room_m030_sewer
   - [0x12800]
 # room: m030, section3 sector 14403, scanner delta 0

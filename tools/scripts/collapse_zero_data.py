@@ -4,7 +4,7 @@
 Three passes over *.data.s / *.rodata.s, run after splat and before assembly:
 
 - Collapse runs of `.word/.short/.byte 0` into a single `.space N`. GNU as
-  emits the same zero bytes, but the huge zero-blob data files (dtail_0D0860
+  emits the same zero bytes, but the huge zero-blob data files (overlay_windows
   is 15 MB, 99.5% zeros) stop costing ~279k assembled lines.
   Only collapses lines that are pure zero data with nothing but an address
   comment; stops at labels, directives, and non-zero data so symbol

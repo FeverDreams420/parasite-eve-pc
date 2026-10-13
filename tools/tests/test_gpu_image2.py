@@ -2,38 +2,36 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import functions_text, host_unit  # noqa: E402
 
 
 class GpuImage2Tests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_transfer_dispatch_and_move_packet(self):
-        unit = (ROOT / "src/main/psyq/libgpu/LoadImage2.c").read_text()
-        prefix_end = unit.index("int LoadImage2")
-        store_marker = unit.index("extern char D_800118E0")
-        move_marker = unit.index("extern char D_800118EC")
-        dispatch_marker = unit.index("extern char D_80011928")
-        source = (unit[:prefix_end] + unit[prefix_end:store_marker] +
-                  unit[store_marker:move_marker] + unit[move_marker:dispatch_marker])
-        self.assertNotRegex(source, r'\b(?:asm|__asm__)\b')
+        functions = ("LoadImage2", "StoreImage2", "MoveImage2")
+        self.assertNotRegex(functions_text(*functions), r'\b(?:asm|__asm__)\b')
+        source = host_unit(*functions)
         harness = source + r'''
 #include <assert.h>
-char D_800119BC[] = "load", D_800118E0[] = "store", D_800118EC[] = "move";
+char g_LoadImage2Name[] = "load", g_StoreImageName[] = "store", g_MoveImageName[] = "move";
 static volatile unsigned int dma;
 static unsigned int gpu, data[16];
 volatile unsigned int *g_GpuDmaChcrPtr = &dma;
-volatile unsigned int *g_GpuGp1Ptr = &gpu;
+unsigned int *g_GpuGp1Ptr = &gpu;
 int g_GpuDmaTimeoutDeadline, g_GpuDmaWaitLoopCounter;
-unsigned int D_800957EC[3];
+unsigned int g_GpuMoveImagePacket[3];
 static GpuCallbacks table;
-GpuCallbacks *D_80095744 = &table;
+GpuCallbacks *g_GpuCallbacks = &table;
 static RECT rect;
 static int kind, phase, polls, idleAt, readyAt, timeoutAt;
 void checkRECT(char *name, RECT *r) {
     assert(phase == 0 && r == &rect);
-    assert(name == (kind == 0 ? D_800119BC : kind == 1 ? D_800118E0 : D_800118EC));
+    assert(name == (kind == 0 ? g_LoadImage2Name : kind == 1 ? g_StoreImageName : g_MoveImageName));
     phase = 1;
 }
 int VSync(int mode) { assert(phase == 1 && mode == -1); phase = 2; return 42; }
@@ -58,11 +56,11 @@ static int transfer(RECT *r, unsigned int *p) {
     return -77;
 }
 static int move(void *packet) {
-    assert(phase == 3 && packet == (char *)D_800957EC - 8);
-    assert(D_800957EC[0] == ((unsigned int)(unsigned short)rect.y << 16 |
+    assert(phase == 3 && packet == (char *)g_GpuMoveImagePacket - 8);
+    assert(g_GpuMoveImagePacket[0] == ((unsigned int)(unsigned short)rect.y << 16 |
                             (unsigned short)rect.x));
-    assert(D_800957EC[1] == 0x2345FFFE);
-    assert(D_800957EC[2] == ((unsigned int)(unsigned short)rect.h << 16 |
+    assert(g_GpuMoveImagePacket[1] == 0x2345FFFE);
+    assert(g_GpuMoveImagePacket[2] == ((unsigned int)(unsigned short)rect.h << 16 |
                             (unsigned short)rect.w));
     phase = 4;
     return -77;
@@ -72,14 +70,14 @@ static void check(int idle, int ready, int timeout, int w, int h) {
     rect.x = -3; rect.y = 9; rect.w = w; rect.h = h;
     phase = polls = 0; idleAt = idle; readyAt = ready; timeoutAt = timeout;
     dma = idle ? 0x01000000 : 0; gpu = ready ? 0 : 0x04000000;
-    for (i = 0; i < 3; ++i) D_800957EC[i] = 0xDEADBEEF;
+    for (i = 0; i < 3; ++i) g_GpuMoveImagePacket[i] = 0xDEADBEEF;
     result = kind == 0 ? LoadImage2(&rect, data) : kind == 1 ?
         StoreImage2(&rect, data) : MoveImage2(&rect, -2, 0x12345);
     assert(result == (timeout || invalid ? -1 : 0));
     assert(phase == (timeout ? 2 : invalid ? 3 : 4));
     assert(polls == (timeout ? timeout : idle > ready ? idle : ready));
     if (timeout || invalid || kind != 2)
-        for (i = 0; i < 3; ++i) assert(D_800957EC[i] == 0xDEADBEEF);
+        for (i = 0; i < 3; ++i) assert(g_GpuMoveImagePacket[i] == 0xDEADBEEF);
 }
 int main(void) {
     table.u20.load = transfer; table.u1c.store = transfer; table.u18.moveImage = move;

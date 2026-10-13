@@ -8,7 +8,7 @@ typedef CdlLOC DslLOC;
 PE1_STATIC_ASSERT(sizeof(DslLOC) == 4, dsl_loc_size);
 
 /* Selects whether StUnSetRing clears the LIBDS or LIBCD callbacks. */
-extern u32 D_8009AFD8;
+extern u32 g_CdDsActive;
 
 /* Psy-Q LIBDS.H file record returned by DsSearchFile. */
 typedef struct DslFILE {
@@ -25,14 +25,19 @@ typedef struct DslDirectoryCacheEntry {
     char name[32];
 } DslDirectoryCacheEntry;
 
+/* A cache entry's name, addressed from the first name by byte offset. */
+typedef union DslNameAddress {
+    char *text;
+    u32 word;
+} DslNameAddress;
+
 enum {
     DSL_MAX_FILE = 64,
     DSL_MAX_DIR = 128,
 };
 
-extern DslFILE g_DslFileCache[DSL_MAX_FILE] __asm__("D_800A36B0");
-extern DslDirectoryCacheEntry g_DslDirectoryCache[DSL_MAX_DIR]
-    __asm__("D_800A3CB0");
+extern DslFILE g_DslFileCache[DSL_MAX_FILE];
+extern DslDirectoryCacheEntry g_DslDirectoryCache[DSL_MAX_DIR];
 
 typedef union DsCallbackValue {
     DsCallback poll;
@@ -42,7 +47,7 @@ typedef union DsCallbackValue {
 
 PE1_STATIC_ASSERT(sizeof(DsCallbackValue) == 4, ds_callback_value_size);
 
-/* Runtime callback pointers at D_800A36A0 are a contiguous four-word window. */
+/* Runtime callback pointers at g_DsPollCallback are a contiguous four-word window. */
 typedef struct DsRuntimeCallbacks {
     DsCallback volatile poll;
     DsEventCallback volatile sync;
@@ -76,6 +81,13 @@ typedef struct CdDsReadQueueEntry {
     DslCB callback;
     int count;
 } CdDsReadQueueEntry;
+
+/* A queue entry addressed by byte offset, as DSSYS_2.OBJ computes it. */
+typedef union CdDsQueueEntryAddress {
+    CdDsReadQueueEntry *entry;
+    u8 *bytes;
+    u32 word;
+} CdDsQueueEntryAddress;
 PE1_STATIC_ASSERT(sizeof(CdDsReadQueueEntry) == 0x18,
                   ds_command_entry_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdDsReadQueueEntry, callback) == 0x10,
@@ -119,14 +131,20 @@ typedef struct DsCallbackRegistry {
 } DsCallbackRegistry;
 PE1_STATIC_ASSERT(sizeof(DsCallbackRegistry) == 12, ds_callback_registry_size);
 
-extern DsCallbackRegistry g_DsReadCallbackState __asm__("D_800B8AB0");
-extern CdQueuedCmdSlot g_CdQueuedCmdSlots[3] __asm__("D_800A3510");
-extern DsReadCallbackSlot g_DsReadCallbackSlots[8] __asm__("D_800A3610");
-extern int g_DsReadCallbackCursor __asm__("D_800A3690");
-extern DsEventCallback volatile g_DsSyncCallback __asm__("D_800A36A4");
-extern DsEventCallback volatile g_DsReadyCallback __asm__("D_800A36A8");
-extern DsCallback volatile g_DsPollCallback __asm__("g_DsPollCallback");
-extern DsEventCallback volatile g_DsDispatchCallback __asm__("D_800A36AC");
+extern DsCallbackRegistry g_DsReadCallbackState;
+extern CdQueuedCmdSlot g_CdQueuedCmdSlots[3];
+extern DsReadCallbackSlot g_DsReadCallbackSlots[8];
+/* A history slot (or one of its words) addressed by byte offset (DsSync). */
+typedef union DsSlotAddress {
+    DsReadCallbackSlot *slot;
+    int *words;
+    u32 word;
+} DsSlotAddress;
+extern int g_DsReadCallbackCursor;
+extern DsEventCallback volatile g_DsSyncCallback;
+extern DsEventCallback volatile g_DsReadyCallback;
+extern DsCallback volatile g_DsPollCallback;
+extern DsEventCallback volatile g_DsDispatchCallback;
 DsEventCallback DsSyncCallback(DsEventCallback callback);
 DsEventCallback DsReadyCallback(DsEventCallback callback);
 DsEventCallback DsStartCallback(DsEventCallback callback);
@@ -138,13 +156,15 @@ extern volatile int g_DsDiskType;
 void CQ_clear_queue(void *queue);
 void ER_clear(void);
 void DS_init(void);
-void DS_sync_callback(unsigned int value);
-void DS_ready_callback(unsigned int value);
-void DS_start_callback(unsigned int value);
-void DS_vsync_callback(unsigned int value);
+void DS_sync_callback(DsEventCallback callback);
+void DS_ready_callback(DsEventCallback callback);
+void DS_start_callback(DsEventCallback callback);
+void DS_vsync_callback(DsCallback callback);
 void CQ_sync_system(int event, u8 *result);
 int CQ_ready_system(int command, u8 *payload);
 void LIBDS_DSSYS_2_text_13CC(int event);
+int LIBDS_DSSYS_1_text_368(unsigned char command, void *param);
+void LIBDS_DSSYS_1_text_EA4(int event, u8 *data);
 void CQ_vsync_system(void);
 extern CdDsReadQueueEntry g_CdDsReadQueue[];
 extern int g_CdDsReadQueueState;
@@ -203,9 +223,14 @@ typedef struct IsoDirectoryRecord {
     char name[1];
 } IsoDirectoryRecord;
 
-extern u8 g_DsFileSectorBuffer[2048] __asm__("D_800A52B0");
-extern int g_DsCachedDirectory __asm__("D_8009B6DC");
-extern int g_DsCachedDiskType __asm__("D_8009B6E0");
+/* ISO-9660 directory records are variable length: recordLength bytes each,
+ * up to the end of the sector. */
+#define ISO_NEXT_DIRECTORY_RECORD(record) \
+    ((IsoDirectoryRecord *)((u8 *)(record) + (record)->recordLength))
+
+extern u8 g_DsFileSectorBuffer[2048];
+extern int g_DsCachedDirectory;
+extern int g_DsCachedDiskType;
 
 typedef void (*DsAsyncReadCallback)(int status, void *data, void *detail);
 
@@ -278,7 +303,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CdCallbackDataPage, readComplete) +
                       0x738,
                   cd_callback_data_page_async_state_offset);
 
-extern DsAsyncReadState g_DsAsyncReadState __asm__("D_8009B6EC");
+extern DsAsyncReadState g_DsAsyncReadState;
 #define g_DsAsyncReadRetryPending (g_DsAsyncReadState.retryPending)
 #define g_DsAsyncReadSavedReadyCallback \
     (g_DsAsyncReadState.savedReadyCallback)
@@ -310,5 +335,8 @@ DslFILE *DsSearchFile(DslFILE *file, char *name);
 int DsGetDiskType(void);
 int strncmp(const char *left, const char *right, unsigned int count);
 int strcmp(const char *left, const char *right);
+
+/* Pending async-read callback slot polled by the DSREADY callbacks. */
+extern DsCallback g_DsReadySystemCallback;
 
 #endif /* PE1_PSYQ_DS_H */

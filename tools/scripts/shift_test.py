@@ -19,8 +19,14 @@ the same content in the shifted image (address + PAD):
 
 Sections placed at a fixed VMA in the linker script cannot follow the shift.
 The test first links with the script unchanged to show which sections pin the
-layout, then rebases those sections (and `_gp`) by PAD in the scratch copy so
-the comparison can run over the whole image.
+layout (none: the overlay window block follows the boot work area since it
+floats), then rebases any such sections (and `_gp`) by PAD in the scratch
+copy so the comparison can run over the whole image. The room left before
+the image reaches the initial stack (`PSX_EXE_HEADROOM`) is reported; the
+unchanged script is expected to fail when PAD exceeds it.
+
+The overlays are not relinked here; tools/scripts/shift_full_test.py does
+that and compares every retail and shifted image.
 """
 from __future__ import annotations
 
@@ -44,10 +50,13 @@ LD = tool("mipsel-none-elf-ld")
 OBJCOPY = tool("mipsel-none-elf-objcopy")
 FIXED_VMA_RE = re.compile(r"^(\s*)(\.[\w.]+)\s+(0x[0-9A-Fa-f]+)(\s*(?:\(NOLOAD\))?\s*:)", re.M)
 GP_RE = re.compile(r"^(\s*_gp\s*=\s*)(0x[0-9A-Fa-f]+)(\s*;)", re.M)
+HEADROOM_SYMBOL = "PSX_EXE_HEADROOM"  # room before the initial stack (ld_postpass.py)
 
 
 def pad_script(text: str, pad: int, rebase: bool) -> tuple[str, list[str]]:
-    """Insert PAD at the start of .main; optionally rebase fixed VMAs and _gp."""
+    """Insert PAD at the start of .main; optionally rebase fixed VMAs and _gp.
+
+    The returned list names the fixed placements."""
     marker = re.search(r"^(\s*\.main\s+0x[0-9A-Fa-f]+\s*:[^\n]*\n\s*\{\n\s*FILL\([^)]*\);\n)", text, re.M)
     if not marker:
         raise SystemExit("could not find the start of .main in the linker script")
@@ -218,7 +227,34 @@ def compare(base: Image, shifted: Image, pad: int, layout: Layout):
     return counts, findings
 
 
-def run(pad: int, scratch: Path, verbose: int) -> int:
+# Counts that mean a hidden fixed address; the shift ratchet
+# (`shift_audit.py --check`) fails when any of them grows.
+HIDDEN = ("pinned_symbol_reference", "gprel_to_pinned", "literal_data_word", "literal_lui",
+          "literal_jump", "unexplained_relocated", "unexplained_difference",
+          "relocated_unchanged_other")
+
+
+def symbol_value(elf_path: Path, name: str) -> int | None:
+    from elftools.elf.elffile import ELFFile
+
+    with open(elf_path, "rb") as fh:
+        syms = ELFFile(fh).get_section_by_name(".symtab").get_symbol_by_name(name)
+    return syms[0]["st_value"] if syms else None
+
+
+@dataclass
+class Measurement:
+    base_identical: bool
+    pinned: list[str]  # fixed placements in the linker script
+    headroom: int | None  # room before the initial stack in the base link
+    plain_errors: list[str] | None  # None when the unchanged script links
+    shifted_error: str | None
+    counts: Counter
+    findings: dict
+
+
+def measure(pad: int, scratch: Path) -> Measurement:
+    """Link base, plainly padded and rebased padded images and compare them."""
     script = LINKERS / "main.ld"
     extra = [LINKERS / "undefined_syms_manual.txt", LINKERS / "undefined_addr_aliases.main.txt"]
     for need in [script, *extra, BUILD / "main.map"]:
@@ -233,41 +269,55 @@ def run(pad: int, scratch: Path, verbose: int) -> int:
     subprocess.run([OBJCOPY, "-O", "binary", str(base_elf), str(scratch / "base.exe")], check=True)
     retail = (BUILD / "main.exe").read_bytes()
     same = (scratch / "base.exe").read_bytes() == retail
-    print(f"base relink identical to build/USA/main.exe: {same}")
 
     # 1. shift with the layout as written: which sections pin it?
     plain, pinned = pad_script(text, pad, rebase=False)
+    headroom = symbol_value(base_elf, HEADROOM_SYMBOL)
     (scratch / "plain.ld").write_text(plain)
     res = link(scratch / "plain.ld", scratch / "plain.elf", extra)
-    print(f"fixed placements in the script: {', '.join(pinned) or 'none'}")
+    plain_errors = None
     if res.returncode:
-        errors = [l for l in res.stderr.splitlines() if "error" in l or "overlap" in l]
-        print("shift with the script unchanged: link FAILS")
-        for line in errors[:6]:
-            print(f"  {line.strip()}")
-    else:
-        print("shift with the script unchanged: links")
+        plain_errors = [l.strip() for l in res.stderr.splitlines()
+                        if "warning" not in l and "alignment discrepancies" not in l]
 
     # 2. shift with the fixed placements rebased in the scratch copy.
     rebased, _ = pad_script(text, pad, rebase=True)
     (scratch / "shifted.ld").write_text(rebased)
     res = link(scratch / "shifted.ld", scratch / "shifted.elf", extra)
     if res.returncode:
-        print("shifted link failed:\n" + "\n".join(res.stderr.splitlines()[:20]))
-        return 2
+        return Measurement(same, pinned, headroom, plain_errors,
+                           "\n".join(res.stderr.splitlines()[:20]), Counter(), {})
     base = load_image(base_elf)
     shifted = load_image(scratch / "shifted.elf")
     layout = Layout(parse_map_sections((scratch / "base.map").read_text()))
     counts, findings = compare(base, shifted, pad, layout)
+    return Measurement(same, pinned, headroom, plain_errors, None, counts, findings)
+
+
+def run(pad: int, scratch: Path, verbose: int) -> int:
+    m = measure(pad, scratch)
+    print(f"base relink identical to build/USA/main.exe: {m.base_identical}")
+    print(f"fixed placements in the script: {', '.join(m.pinned) or 'none'}")
+    room = "unknown" if m.headroom is None else f"0x{m.headroom:X}"
+    print(f"room before the image reaches the initial stack ({HEADROOM_SYMBOL}): {room}")
+    if m.plain_errors is not None:
+        expected = m.headroom is not None and pad > m.headroom and not m.pinned
+        print("shift with the script unchanged: link FAILS"
+              + (" (as expected: the pad exceeds the room before the stack)" if expected else ""))
+        for line in m.plain_errors[:6]:
+            print(f"  {line}")
+    else:
+        print("shift with the script unchanged: links")
+    if m.shifted_error is not None:
+        print("shifted link failed:\n" + m.shifted_error)
+        return 2
+    counts, findings = m.counts, m.findings
 
     print(f"\nshifted by 0x{pad:X}: compared {sum(counts.values())} words")
     for k, v in sorted(counts.items(), key=lambda kv: -kv[1]):
         print(f"  {k:28} {v:7}")
 
-    hidden = ["pinned_symbol_reference", "gprel_to_pinned", "literal_data_word", "literal_lui",
-              "literal_jump", "unexplained_relocated", "unexplained_difference",
-              "relocated_unchanged_other"]
-    for key in hidden:
+    for key in HIDDEN:
         items = findings.get(key)
         if not items:
             continue
@@ -285,11 +335,13 @@ def run(pad: int, scratch: Path, verbose: int) -> int:
                 print(f"    {a:08X} {sym:40} {info}")
 
     # The header is not part of an allocated program section.
-    header = retail[:0x800]
-    pc = int.from_bytes(header[0x10:0x14], "little")
-    size = int.from_bytes(header[0x1C:0x20], "little")
-    print(f"\nPS-X EXE header (asm/USA/main/header.s): initial PC 0x{pc:08X} and text size 0x{size:X}"
-          " are literals; they do not follow the shift (size-dependent fields).")
+    header = ROOT / "asm" / "USA" / "main" / "header.s"
+    text = header.read_text() if header.exists() else ""
+    fields = re.findall(r"^\.word (\S+)\s*/\* (.*?) \*/", text, re.M)
+    literal = [f"{c} {v}" for v, c in fields if v.startswith("0x") and int(v, 16)]
+    linked = [f"{c} = {v}" for v, c in fields if not v.startswith("0x")]
+    print(f"\nPS-X EXE header (asm/USA/main/header.s): from the link: {', '.join(linked) or 'none'}; "
+          f"literals: {', '.join(literal) or 'none'}.")
     return 0
 
 

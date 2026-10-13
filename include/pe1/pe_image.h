@@ -9,7 +9,7 @@
  * single container we must understand byte-for-byte.
  *
  * == HOW IT IS LOCATED (boot) ==
- *   OpenPeImage() (src/main/cdrom/OpenPeImage.c) searches the ISO9660 volume
+ *   Asset_OpenPeImage() (src/main/asset/game_state.c) searches the ISO9660 volume
  *   with DsSearchFile() for these paths (verified from the data bytes at
  *   0x80011330 / 0x80011348 / 0x80011354):
  *     "\FMV1\PEDISC01.IDF;1"   -- CD1 marker
@@ -36,13 +36,15 @@
  *     start = baseTable[idx];  end = endTable[idx];  count = end - start;
  *     CdRom_ReadSectorsFromLba(g_PeImageBaseLba + start, dst, count);
  *   Known tables (data lives in Data_0818A0.inc region; dump for exact rows):
- *     D_800930D8 / D_800930DA  entity-texture start / end sectors
+ *     D_800930D8 / g_PeImageSectorBoundsNext  entity-texture start / end sectors
  *                              (Scene_LoadEntityTexture(s), Render_InitDisplayLists)
  *     D_80093378 / D_8009337C  room data start / offset (Scene_LoadRoom)
- *     D_8009315E / D_80093160  scene init-data ranges (Task_LoadSceneData)
- *     D_80093162               scene asset ranges (Scene_LoadRoomAssets)
- *     D_80093168 / D_8009316A / D_8009316E  overlay/main asset + font/UI table
- *                              ranges (Overlay_LoadTables)
+ *     g_SceneInitLbaTbl0 / g_SceneInitLbaTbl1
+ *                              scene init-data ranges (Script_LoadSceneData)
+ *     g_SceneAssetLbaTbl       scene asset ranges (Scene_LoadRoomAssets)
+ *     g_MainAssetLbaTbl / g_LargeTexLbaTbl / g_FontUiLbaTbl
+ *                              overlay/main asset + font/UI table ranges
+ *                              (Boot_LoadOverlayTables)
  *     D_80093176               font glyph data (Render_LoadFontGlyph)
  *   These define WHERE each *category* of asset sits inside PE.IMG.
  *
@@ -69,7 +71,7 @@
  *   The async "DsRead" subsystem (CdRom_*DsRead*) lets a load run across frames.
  *
  * == PORTING NOTES ==
- *   - Replace OpenPeImage with: open the extracted PE.IMG; set base = 0.
+ *   - Replace Asset_OpenPeImage with: open the extracted PE.IMG; set base = 0.
  *   - sectorOffset * 2048 == byte offset into the extracted file.
  *   - Keep the Tier-1 tables (dump them from the EXE) and the Asset_FindTable*
  *     descriptor logic verbatim; only the read primitive changes (fseek+fread).
@@ -88,6 +90,18 @@
 extern unsigned int   g_PeImageBaseLba;    /* =0x800B0DD8: PE.IMG start sector, found at boot */
 extern signed char    g_PeImageMountFlags; /* =0x800B0DCD: bit0 CD1 (FMV1), bit1 CD2 (FMV2) */
 
+/* ISO9660 paths searched by Asset_OpenPeImage. */
+extern char g_PeDisc1MarkerPath[]; /* "\FMV1\PEDISC01.IDF;1" */
+extern char g_PeImagePath[];       /* "\PE.IMG;1" */
+extern char g_PeDisc2MarkerPath[]; /* "\FMV2\PEDISC02.IDF;1" */
+
 int Asset_SearchByKeyType(int type);
+
+/* Sector table address as a pointer or a word: some loaders add the scaled
+ * entry index to the table address as integers, index first. */
+typedef union PeSectorTableAddress {
+    unsigned short *entry;
+    unsigned int word;
+} PeSectorTableAddress;
 
 #endif /* PE1_PE_IMAGE_H */

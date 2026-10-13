@@ -14,6 +14,7 @@ typedef struct GpuDmaRegisterWindow {
     /* 0x08 */ u32 *bcr;
     /* 0x0C */ u32 *chcr;
 } GpuDmaRegisterWindow;
+extern GpuDmaRegisterWindow g_GpuDmaRegisterWindow;
 
 #if defined(__mips__)
 PE1_STATIC_ASSERT(sizeof(GpuDmaRegisterWindow) == 0x10,
@@ -25,5 +26,11 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(GpuDmaRegisterWindow, bcr) == 0x08,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GpuDmaRegisterWindow, chcr) == 0x0C,
                   gpu_dma_register_window_chcr_offset);
 #endif
+
+/* DMA channel 2 address and control register pointers and the DMA
+ * control register pointer; every access is a hardware register access. */
+extern volatile u32 *g_GpuDmaMadrPtr;
+extern volatile u32 *g_GpuDmaChcrPtr;
+extern volatile u32 *g_GpuDmaControlRegPtr;
 
 #endif /* PE1_GPU_DMA_REGISTER_WINDOW_H */

@@ -7,6 +7,8 @@ from pathlib import Path
 import itertools
 import struct
 import unittest
+
+from tools.tests.csource import find_definition
 from importlib.util import find_spec
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -14,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class BouncingGlowTests(unittest.TestCase):
     def test_plain_source(self):
-        source = (ROOT/'src/main/engine/FieldEng_BouncingGlow.c').read_text()
+        source = find_definition('func_800D6C58').read_text()
         self.assertNotRegex(source, r'\b(?:asm|__asm__|INCLUDE_ASM|REGALLOC_BARRIER)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
@@ -25,7 +27,7 @@ class BouncingGlowTests(unittest.TestCase):
         from unicorn import mips_const as R
         BASE,SIZE=0x800D6C58,484
         STOP,SP,GP=0x80010000,0x801F0000,0x8009CD70
-        syms={'GetClut':0x80077AA4,'func_800CEE20':0x800CEE20}
+        syms={'GetClut':0x80077AA4,'FieldFx_DrawShapeQuads':0x800CEE20}
         retail,code=[(ROOT/p).read_bytes()[BASE-0x8000F800:BASE-0x8000F800+SIZE]
                      for p in ('assets/USA/main.exe','build/USA/main.exe')]
         self.assertEqual(len(code),SIZE)
@@ -49,7 +51,7 @@ class BouncingGlowTests(unittest.TestCase):
             def get(a,n=4):return int.from_bytes(read(a,n),'little')
             def set_(a,v,n=4):put(a,(v&((1<<(8*n))-1)).to_bytes(n,'little'))
             put(BASE,body)
-            for address in (syms['GetClut'],syms['func_800CEE20']):put(address,struct.pack('<II',0x03E00008,0))
+            for address in (syms['GetClut'],syms['FieldFx_DrawShapeQuads']):put(address,struct.pack('<II',0x03E00008,0))
             actual=[]
             def callback(kind,args,g,s,events):
                 events.append((kind,args))
@@ -60,7 +62,7 @@ class BouncingGlowTests(unittest.TestCase):
                     return 0x9876ABCD
                 return 0
             def hook(uc,address,size,data):
-                if address not in (syms['GetClut'],syms['func_800CEE20']):return
+                if address not in (syms['GetClut'],syms['FieldFx_DrawShapeQuads']):return
                 a=[uc.reg_read(getattr(R,f'UC_MIPS_REG_A{i}')) for i in range(4)]
                 if address==syms['GetClut']:kind='clut';args=tuple(a[:2])
                 else:

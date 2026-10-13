@@ -1,11 +1,13 @@
 /* ASSEMBLER: GNU */
 /* PSY-Q LIBGTE FGO_05: RotMatrixY. */
-#include "pe1/gte_types.h"
+
 #include "pe1/gte_sine_table.h"
+#include "pe1/gte_types.h"
 #include "pe1/psyq_nop.h"
 
-/* Q12 rotation with retail wrap/rounding order. Pins, empty HI/LO and
- * scheduling constraints, and individual NOPs are tracked matching debt.
+/* Q12 rotation with retail wrap/rounding order. Pins and empty HI/LO
+ * scheduling constraints are tracked matching debt. The NOP slots reproduce
+ * the handwritten LIBGTE schedule and are not debt.
  * Provenance: configs/USA/psyq_provenance.json (LIBGTE FGO objects).
  */
 GteMatrix *RotMatrixY(s32 angle, GteMatrix *m) {
@@ -13,8 +15,8 @@ GteMatrix *RotMatrixY(s32 angle, GteMatrix *m) {
     unsigned low;
     register s32 a asm("$15") = angle;
     register GteMatrix *ret = m;
-    register u32 packed asm("$25");
-    register u32 temp asm("$24");
+    register s32 packed asm("$25");
+    register s32 temp asm("$24");
     register s32 scratch asm("$14");
     register s32 cosine asm("$8");
     register s32 negative_sine asm("$9");
@@ -22,8 +24,6 @@ GteMatrix *RotMatrixY(s32 angle, GteMatrix *m) {
     register s32 x1 asm("$11");
     register s32 x2 asm("$12");
     register s32 z0 asm("$13");
-    register s32 z1 asm("$14");
-    register s32 z2 asm("$15");
     asm volatile("" : "=r"(a), "=r"(ret) : "0"(a), "1"(ret));
     /* The second factor is -sin(angle), simplifying the row updates. */
     packed = a & 0xfff;
@@ -36,117 +36,117 @@ GteMatrix *RotMatrixY(s32 angle, GteMatrix *m) {
             a &= 0xfff;
         asm volatile("" : : : "24");
         temp = a << 2;
-        packed = *(u32 *)((char *)D_800966EC + temp);
+        packed = GTE_SINE_WORD_AT_OFFSET(temp);
         scratch = packed << 16;
         asm volatile("" : "=r"(scratch) : "0"(scratch));
         negative_sine = scratch >> 16;
-        cosine = (s32)packed >> 16;
+        cosine = packed >> 16;
     } else {
         temp = packed << 2;
-        packed = *(u32 *)((char *)D_800966EC + temp);
+        packed = GTE_SINE_WORD_AT_OFFSET(temp);
         temp = packed << 16;
         asm volatile("" : "=r"(temp) : "0"(temp));
-        a = (s32)temp >> 16;
+        a = temp >> 16;
         negative_sine = 0U - a;
-        cosine = (s32)packed >> 16;
+        cosine = packed >> 16;
         asm volatile("" : "=r"(cosine) : "0"(cosine));
     }
     x0 = m->m[0][0];
     z0 = m->m[2][0];
     asm volatile("" : : "r"(x0), "r"(z0));
-    product = (unsigned long long)(u32)cosine * (u32)x0;
+    product = GTE_MULTU(cosine, x0);
     x1 = m->m[0][1];
     asm volatile("" : : "r"(x1) : "memory");
-    z1 = m->m[2][1];
+    scratch = m->m[2][1];
     asm volatile("" : "=l"(low) : "x"(product));
     temp = low;
     asm volatile("" : "=r"(temp) : "0"(temp));
     x2 = m->m[0][2];
     asm volatile("" : : "r"(x2) : "memory");
-    z2 = m->m[2][2];
-    asm volatile("" : : "r"(temp), "r"(x2), "r"(z2));
-    product = (unsigned long long)(u32)negative_sine * (u32)z0;
+    a = m->m[2][2];
+    asm volatile("" : : "r"(temp), "r"(x2), "r"(a));
+    product = GTE_MULTU(negative_sine, z0);
     PE1_NOP_DEP("x", product);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     packed = low;
     asm volatile("" : "=r"(temp), "=r"(packed) : "0"(temp), "1"(packed));
     packed = temp - packed;
-    temp = (s32)packed >> 12;
+    temp = packed >> 12;
     asm volatile("" : : "r"(temp));
     m->m[0][0] = temp;
-    product = (unsigned long long)(u32)cosine * (u32)x1;
+    product = GTE_MULTU(cosine, x1);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     temp = low;
     asm volatile("" : "=r"(temp) : "0"(temp));
-    product = (unsigned long long)(u32)negative_sine * (u32)z1;
+    product = GTE_MULTU(negative_sine, scratch);
     PE1_NOP_DEP("x", product);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     packed = low;
     asm volatile("" : "=r"(temp), "=r"(packed) : "0"(temp), "1"(packed));
     packed = temp - packed;
-    temp = (s32)packed >> 12;
+    temp = packed >> 12;
     asm volatile("" : : "r"(temp));
     m->m[0][1] = temp;
-    product = (unsigned long long)(u32)cosine * (u32)x2;
+    product = GTE_MULTU(cosine, x2);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     temp = low;
     asm volatile("" : "=r"(temp) : "0"(temp));
-    product = (unsigned long long)(u32)negative_sine * (u32)z2;
+    product = GTE_MULTU(negative_sine, a);
     PE1_NOP_DEP("x", product);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     packed = low;
     asm volatile("" : "=r"(temp), "=r"(packed) : "0"(temp), "1"(packed));
     packed = temp - packed;
-    temp = (s32)packed >> 12;
+    temp = packed >> 12;
     asm volatile("" : : "r"(temp));
     m->m[0][2] = temp;
-    product = (unsigned long long)(u32)negative_sine * (u32)x0;
+    product = GTE_MULTU(negative_sine, x0);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     temp = low;
     asm volatile("" : "=r"(temp) : "0"(temp));
-    product = (unsigned long long)(u32)cosine * (u32)z0;
+    product = GTE_MULTU(cosine, z0);
     PE1_NOP_DEP("x", product);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     packed = low;
     asm volatile("" : "=r"(temp), "=r"(packed) : "0"(temp), "1"(packed));
     packed = temp + packed;
-    temp = (s32)packed >> 12;
+    temp = packed >> 12;
     asm volatile("" : : "r"(temp));
     m->m[2][0] = temp;
-    product = (unsigned long long)(u32)negative_sine * (u32)x1;
+    product = GTE_MULTU(negative_sine, x1);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     temp = low;
     asm volatile("" : "=r"(temp) : "0"(temp));
-    product = (unsigned long long)(u32)cosine * (u32)z1;
+    product = GTE_MULTU(cosine, scratch);
     PE1_NOP_DEP("x", product);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     packed = low;
     asm volatile("" : "=r"(temp), "=r"(packed) : "0"(temp), "1"(packed));
     packed = temp + packed;
-    temp = (s32)packed >> 12;
+    temp = packed >> 12;
     asm volatile("" : : "r"(temp));
     m->m[2][1] = temp;
-    product = (unsigned long long)(u32)negative_sine * (u32)x2;
+    product = GTE_MULTU(negative_sine, x2);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     temp = low;
-    product = (unsigned long long)(u32)cosine * (u32)z2;
+    product = GTE_MULTU(cosine, a);
     PE1_NOP_DEP("x", product);
     PE1_NOP_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     packed = low;
     asm volatile("" : "=r"(temp), "=r"(packed) : "0"(temp), "1"(packed));
     packed = temp + packed;
-    temp = (s32)packed >> 12;
+    temp = packed >> 12;
     m->m[2][2] = temp;
     PE1_NOP();
     return ret;

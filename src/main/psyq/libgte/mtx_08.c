@@ -1,4 +1,5 @@
 /* PSY-Q LIBGTE MTX_08: ScaleMatrix. */
+
 #include "pe1/gte_types.h"
 
 /* Packed-word scaling preserves the original full-word padding overwrite.
@@ -9,7 +10,7 @@ GteMatrix *ScaleMatrix(GteMatrix *m, const GteVector *scale) {
     register s32 sx asm("$11");
     register s32 sy asm("$12");
     register s32 sz asm("$13");
-    register u32 packed asm("$8");
+    register s32 packed asm("$8");
     register s32 lo asm("$9");
     register s32 hi asm("$10");
     unsigned long long product;
@@ -24,15 +25,15 @@ GteMatrix *ScaleMatrix(GteMatrix *m, const GteVector *scale) {
     asm volatile("" : "=r"(lo) : "0"(lo));
     lo = lo << 16;
     lo >>= 16;
-    product = (unsigned long long)(u32)lo * (u32)sx;
+    product = GTE_MULTU(lo, sx);
     asm volatile("" : "=l"(low) : "x"(product));
     lo = low;
     asm volatile("" : "=r"(lo) : "0"(lo));
     lo >>= 12;
     lo &= 0xffff;
     asm volatile("" : "=r"(lo) : "0"(lo));
-    hi = (s32)packed >> 16;
-    product = (unsigned long long)(u32)hi * (u32)sy;
+    hi = packed >> 16;
+    product = GTE_MULTU(hi, sy);
     asm volatile("" : "=l"(low) : "x"(product));
     hi = low;
     asm volatile("" : "=r"(hi) : "0"(hi));
@@ -45,15 +46,15 @@ GteMatrix *ScaleMatrix(GteMatrix *m, const GteVector *scale) {
     asm volatile("" : "=r"(lo) : "0"(lo));
     lo = lo << 16;
     lo >>= 16;
-    product = (unsigned long long)(u32)lo * (u32)sz;
+    product = GTE_MULTU(lo, sz);
     asm volatile("" : "=l"(low) : "x"(product));
     lo = low;
     asm volatile("" : "=r"(lo) : "0"(lo));
     lo >>= 12;
     lo &= 0xffff;
     asm volatile("" : "=r"(lo) : "0"(lo));
-    hi = (s32)packed >> 16;
-    product = (unsigned long long)(u32)hi * (u32)sx;
+    hi = packed >> 16;
+    product = GTE_MULTU(hi, sx);
     asm volatile("" : "=l"(low) : "x"(product));
     hi = low;
     asm volatile("" : "=r"(hi) : "0"(hi));
@@ -67,15 +68,15 @@ GteMatrix *ScaleMatrix(GteMatrix *m, const GteVector *scale) {
     asm volatile("" : "=r"(lo) : "0"(lo));
     lo = lo << 16;
     lo >>= 16;
-    product = (unsigned long long)(u32)lo * (u32)sy;
+    product = GTE_MULTU(lo, sy);
     asm volatile("" : "=l"(low) : "x"(product));
     lo = low;
     asm volatile("" : "=r"(lo) : "0"(lo));
     lo >>= 12;
     lo &= 0xffff;
     asm volatile("" : "=r"(lo) : "0"(lo));
-    hi = (s32)packed >> 16;
-    product = (unsigned long long)(u32)hi * (u32)sz;
+    hi = packed >> 16;
+    product = GTE_MULTU(hi, sz);
     asm volatile("" : "=l"(low) : "x"(product));
     hi = low;
     asm volatile("" : "=r"(hi) : "0"(hi));
@@ -89,15 +90,15 @@ GteMatrix *ScaleMatrix(GteMatrix *m, const GteVector *scale) {
     asm volatile("" : "=r"(lo) : "0"(lo));
     lo = lo << 16;
     lo >>= 16;
-    product = (unsigned long long)(u32)lo * (u32)sx;
+    product = GTE_MULTU(lo, sx);
     asm volatile("" : "=l"(low) : "x"(product));
     lo = low;
     asm volatile("" : "=r"(lo) : "0"(lo));
     lo >>= 12;
     lo &= 0xffff;
     asm volatile("" : "=r"(lo) : "0"(lo));
-    hi = (s32)packed >> 16;
-    product = (unsigned long long)(u32)hi * (u32)sy;
+    hi = packed >> 16;
+    product = GTE_MULTU(hi, sy);
     asm volatile("" : "=l"(low) : "x"(product));
     hi = low;
     asm volatile("" : "=r"(hi) : "0"(hi));
@@ -112,7 +113,7 @@ GteMatrix *ScaleMatrix(GteMatrix *m, const GteVector *scale) {
     asm volatile("" : "=r"(lo) : "0"(lo));
     lo = lo << 16;
     lo >>= 16;
-    product = (unsigned long long)(u32)lo * (u32)sz;
+    product = GTE_MULTU(lo, sz);
     asm volatile("" : "=l"(low) : "x"(product));
     lo = low;
     asm volatile("" : "=r"(lo) : "0"(lo));

@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m018_theater
   ld_script_path: linkers/USA/overlays/room_m018_theater.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m018_theater.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m018_theater.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m018_theater.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m018_theater.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,11 +37,16 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m018_theater]
-      - [0xC, c, ../room_lib/RoomFx_MirrorModel]
-      - [0xB5C, .data, ../room_lib/RoomFx_MirrorModel]
+      - [0xC, c, ../room_lib/mirror_model]
+      - [0xB5C, .data, ../room_lib/mirror_model]
       - start: 0xB98
         type: databin
         name: D_8018FB80
+        dir: room_m018_theater
+      - [0x17D30, data, D_801A6D18]
+      - start: 0x17D3C
+        type: databin
+        name: D_801A6D24
         dir: room_m018_theater
   - [0x18000]
 # room: m018, section3 sector 12076, scanner delta 0

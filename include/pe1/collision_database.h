@@ -27,25 +27,83 @@ typedef struct CollisionTriangleHeader {
     u8 region; /* flat mode: index into the height records */
 } CollisionTriangleHeader;
 
+/* Sloped triangle prefix. Only kind and region are shared with flat triangles. */
+typedef struct CollisionFace {
+    u8 kind;
+    u8 region;    /* flat mode: index into g_RegionHeightTable */
+    u16 plane;    /* sloped mode: index into g_CollisionPlaneTable */
+    s32 distance; /* sloped mode: plane D term */
+} CollisionFace;
+
 /* Walkable triangles. Both formats are walked as halfword arrays: the
  * flat one keeps its vertex indices at [1..3] and its edge neighbours at
  * [7..9], the sloped one at [4..6] and [10..12]. */
+/* Three vertices, three edge ids and three neighbouring triangle ids.
+ * Both formats keep the same links after their different headers. */
+typedef struct CollisionTriangleLinks {
+    u16 vertices[3];
+    u16 edgeIds[3];
+    u16 neighbours[3];
+    u16 reserved;
+} CollisionTriangleLinks;
+
 typedef union CollisionTriangleXZ {
     CollisionTriangleHeader header;
     u16 words[11];
+    struct { CollisionTriangleHeader header; CollisionTriangleLinks links; } layout;
     u8 kind; /* bit 0x80: not walkable from a neighbour */
 } CollisionTriangleXZ;
 typedef union CollisionTriangleXYZ {
     CollisionTriangleHeader header;
+    CollisionFace face;
     u16 words[14];
+    struct { CollisionFace face; CollisionTriangleLinks links; } layout;
     u8 kind;
 } CollisionTriangleXYZ;
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionFace, plane) == 2, collision_face_plane_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionFace, distance) == 4, collision_face_distance_offset);
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionTriangleXZ, layout.links.vertices) == 2,
+                  collision_xz_vertex_indices_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionTriangleXYZ, layout.links.vertices) == 8,
+                  collision_xyz_vertex_indices_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionTriangleXZ, layout.links.neighbours) == 14,
+                  collision_xz_neighbours_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionTriangleXYZ, layout.links.neighbours) == 20,
+                  collision_xyz_neighbours_offset);
+
 typedef union CollisionTriangleTable {
     void *pointer;
+    CollisionTriangleHeader *header; /* Common prefix of either triangle format. */
     CollisionTriangleXZ *xz;
     CollisionTriangleXYZ *xyz;
     u32 word;
 } CollisionTriangleTable;
+/* Per-region triangle index lists; the database selects one height mode. */
+typedef struct CollisionFlatRegion {
+    s16 height;
+    u16 triangleCount;
+    u16 triangleIndices[0];
+} CollisionFlatRegion;
+typedef struct CollisionPlaneRegion {
+    u32 reserved;
+    u16 triangleCount;
+    u16 triangleIndices[0];
+} CollisionPlaneRegion;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionFlatRegion, triangleIndices) == 4,
+                  collision_flat_region_indices_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionPlaneRegion, triangleIndices) == 6,
+                  collision_plane_region_indices_offset);
+
+/* A relative byte offset on disk, or a region pointer after relocation. */
+typedef union CollisionRegionEntry {
+    u32 word;
+    s16 *height;
+    CollisionFlatRegion *flat;
+    CollisionPlaneRegion *plane;
+} CollisionRegionEntry;
+
 typedef struct CollisionDatabase {
     u16 reserved00;
     u16 regionCount;                  /* 0x02: inline height-table references. */
@@ -57,14 +115,21 @@ typedef struct CollisionDatabase {
     CollisionTriangleTable triangles; /* 0x1C: XZ or XYZ triangles. */
     union { struct CollisionPlane *pointer; u32 word; } planes; /* 0x20 */
     union { struct RampEdge *pointer; u32 word; } rampEdges; /* 0x24 */
-    union { s16 *height; u32 word; } regions[0]; /* 0x28: variable-length tail. */
+    CollisionRegionEntry regions[0]; /* 0x28: variable-length tail. */
 } CollisionDatabase;
+
+/* The database address as the word added to each relative region offset. */
+typedef union CollisionDatabaseAddress {
+    CollisionDatabase *db;
+    u32 word;
+} CollisionDatabaseAddress;
 
 
 extern CollisionDatabase *g_CollisionDb;
+/* Loaded scene blocks; entry 0 is the room collision database. */
+extern char *g_RoomCollisionData[];
 /* Active views published by the scene-data relocator. */
 extern struct CollisionPlane *g_CollisionPlaneTable;
-extern s16 **g_RegionHeightTable;
 
 PE1_STATIC_ASSERT(sizeof(CollisionTriangleHeader) == 2, collision_triangle_header_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionTriangleHeader, region) == 1,
@@ -73,5 +138,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionTriangleHeader, region) == 1,
 PE1_STATIC_ASSERT(sizeof(CollisionDatabase) == 0x28, collision_database_header_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionDatabase, regions) == 0x28,
                   collision_database_regions_offset);
+
+/* Script word that receives the wall slot hit by the current entity. */
+extern short *g_EntityCollisionWallSlot;
 
 #endif

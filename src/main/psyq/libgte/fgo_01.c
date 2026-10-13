@@ -1,11 +1,13 @@
 /* ASSEMBLER: GNU */
 /* PSY-Q LIBGTE FGO_01: RotMatrix. */
-#include "pe1/gte_types.h"
+
 #include "pe1/gte_sine_table.h"
+#include "pe1/gte_types.h"
 #include "pe1/psyq_nop.h"
 
-/* Q12 rotation with retail wrap/rounding order. Pins, empty HI/LO and
- * scheduling constraints, and individual NOPs are tracked matching debt.
+/* Q12 rotation with retail wrap/rounding order. Pins and empty HI/LO
+ * scheduling constraints are tracked matching debt. The NOP slots reproduce
+ * the handwritten LIBGTE schedule and are not debt.
  * Provenance: configs/USA/psyq_provenance.json (LIBGTE FGO objects).
  */
 GteMatrix *RotMatrix(GteShortVector *angles, GteMatrix *matrix) {
@@ -26,8 +28,7 @@ GteMatrix *RotMatrix(GteShortVector *angles, GteMatrix *matrix) {
     angle = angles->x;
     result = matrix;
     word = angle & 0xFFF;
-    if (angle >= 0)
-        goto positive_x;
+    if (angle < 0) {
     angle = 0U - angle;
     if (angle < 0)
         asm volatile("" : : : "15");
@@ -36,26 +37,25 @@ GteMatrix *RotMatrix(GteShortVector *angles, GteMatrix *matrix) {
     asm volatile("" : : : "24");
 
     temp = angle << 2;
-    word = *(u32 *)((char *)D_800966EC + temp);
+    word = GTE_SINE_WORD_AT_OFFSET(temp);
     PE1_NOP_MEMORY_DEP("r", word);
     temp = word << 16;
     temp = temp >> 16;
     sx = 0U - temp;
     cx = word >> 16;
-    goto x_ready;
-positive_x:;
+    } else {
     temp = word << 2;
-    word = *(u32 *)((char *)D_800966EC + temp);
+    word = GTE_SINE_WORD_AT_OFFSET(temp);
     PE1_NOP_MEMORY_DEP("r", word);
     temp = word << 16;
     sx = temp >> 16;
     cx = word >> 16;
     asm volatile("" : "=r"(cx) : "0"(cx));
+    }
 x_ready:;
     angle = angles->y;
     word = angle & 0xFFF;
-    if (angle >= 0)
-        goto positive_y;
+    if (angle < 0) {
     angle = 0U - angle;
     if (angle < 0)
         asm volatile("" : : : "15");
@@ -64,24 +64,24 @@ x_ready:;
     asm volatile("" : : : "24");
 
     temp = angle << 2;
-    word = *(u32 *)((char *)D_800966EC + temp);
+    word = GTE_SINE_WORD_AT_OFFSET(temp);
     PE1_NOP_MEMORY_DEP("r", word);
     negative_sy = word << 16;
     negative_sy = negative_sy >> 16;
     value = 0U - negative_sy;
     cy = word >> 16;
-    goto y_ready;
-positive_y:;
+    } else {
     temp = word << 2;
-    word = *(u32 *)((char *)D_800966EC + temp);
-    PE1_NOP_MEMORY_DEP("r", word);
-    value = word << 16;
-    value = value >> 16;
-    negative_sy = 0U - value;
-    cy = word >> 16;
-    asm volatile("" : "=r"(cy) : "0"(cy));
+        word = GTE_SINE_WORD_AT_OFFSET(temp);
+        PE1_NOP_MEMORY_DEP("r", word);
+        value = word << 16;
+        value = value >> 16;
+        negative_sy = 0U - value;
+        cy = word >> 16;
+        asm volatile("" : "=r"(cy) : "0"(cy));
+    }
 y_ready:;
-    product = (unsigned long long)(u32)cy * (u32)sx;
+    product = GTE_MULTU(cy, sx);
     angle = angles->z;
     matrix->m[0][2] = value;
     asm volatile("" : "=l"(low) : "x"(product));
@@ -89,12 +89,11 @@ y_ready:;
     asm volatile("" : "=r"(temp) : "0"(temp));
     word = 0U - temp;
     value = word >> 12;
-    product = (unsigned long long)(u32)cy * (u32)cx;
+    product = GTE_MULTU(cy, cx);
     asm volatile("" : : "x"(product) : "memory");
     matrix->m[1][2] = value;
     word = angle & 0xFFF;
-    if (angle >= 0)
-        goto positive_z;
+    if (angle < 0) {
     asm volatile("" : "=l"(low) : "x"(product));
     temp = low;
     asm volatile("" : "=r"(temp) : "0"(temp));
@@ -109,29 +108,29 @@ y_ready:;
     asm volatile("" : : : "24");
 
     temp = angle << 2;
-    word = *(u32 *)((char *)D_800966EC + temp);
+    word = GTE_SINE_WORD_AT_OFFSET(temp);
     PE1_NOP_MEMORY_DEP("r", word);
     temp = word << 16;
     temp = temp >> 16;
     sz = 0U - temp;
     cz = word >> 16;
-    goto z_ready;
-positive_z:;
+    } else {
     asm volatile("" : "=l"(low) : "x"(product));
-    angle = low;
-    asm volatile("" : "=r"(angle) : "0"(angle));
-    value = angle >> 12;
-    matrix->m[2][2] = value;
-    asm volatile("" : : "m"(matrix->m[2][2]) : "memory");
-    temp = word << 2;
-    word = *(u32 *)((char *)D_800966EC + temp);
-    PE1_NOP_MEMORY_DEP("r", word);
-    temp = word << 16;
-    sz = temp >> 16;
-    cz = word >> 16;
-    asm volatile("" : "=r"(cz) : "0"(cz));
+        angle = low;
+        asm volatile("" : "=r"(angle) : "0"(angle));
+        value = angle >> 12;
+        matrix->m[2][2] = value;
+        asm volatile("" : : "m"(matrix->m[2][2]) : "memory");
+        temp = word << 2;
+        word = GTE_SINE_WORD_AT_OFFSET(temp);
+        PE1_NOP_MEMORY_DEP("r", word);
+        temp = word << 16;
+        sz = temp >> 16;
+        cz = word >> 16;
+        asm volatile("" : "=r"(cz) : "0"(cz));
+    }
 z_ready:;
-    product = (unsigned long long)(u32)cz * (u32)cy;
+    product = GTE_MULTU(cz, cy);
     PE1_NOP_MEMORY_DEP("x", product);
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
@@ -140,7 +139,7 @@ z_ready:;
     value = angle >> 12;
     matrix->m[0][0] = value;
     asm volatile("" : : "m"(matrix->m[0][0]) : "memory");
-    product = (unsigned long long)(u32)sz * (u32)cy;
+    product = GTE_MULTU(sz, cy);
     PE1_NOP_MEMORY_DEP("x", product);
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
@@ -149,14 +148,14 @@ z_ready:;
     value = 0U - angle;
     angle = value >> 12;
     asm volatile("" : "=r"(angle) : "0"(angle));
-    product = (unsigned long long)(u32)cz * (u32)negative_sy;
+    product = GTE_MULTU(cz, negative_sy);
     matrix->m[0][1] = angle;
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     angle = low;
     asm volatile("" : "=r"(angle) : "0"(angle));
     temp = angle >> 12;
-    product = (unsigned long long)(u32)temp * (u32)sx;
+    product = GTE_MULTU(temp, sx);
     PE1_NOP_MEMORY_DEP("x", product);
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
@@ -164,7 +163,7 @@ z_ready:;
     asm volatile("" : "=r"(angle) : "0"(angle));
     value = angle >> 12;
     PE1_NOP_MEMORY_DEP("r", value);
-    product = (unsigned long long)(u32)sz * (u32)cx;
+    product = GTE_MULTU(sz, cx);
     PE1_NOP_MEMORY_DEP("x", product);
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
@@ -173,7 +172,7 @@ z_ready:;
     word = angle >> 12;
     angle = word - value;
     asm volatile("" : "=r"(angle) : "0"(angle));
-    product = (unsigned long long)(u32)temp * (u32)cx;
+    product = GTE_MULTU(temp, cx);
     matrix->m[1][0] = angle;
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
@@ -181,7 +180,7 @@ z_ready:;
     asm volatile("" : "=r"(value) : "0"(value));
     angle = value >> 12;
     PE1_NOP_MEMORY_DEP("r", angle);
-    product = (unsigned long long)(u32)sz * (u32)sx;
+    product = GTE_MULTU(sz, sx);
     PE1_NOP_MEMORY_DEP("x", product);
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
@@ -190,14 +189,14 @@ z_ready:;
     word = value >> 12;
     value = word + angle;
     asm volatile("" : "=r"(value) : "0"(value));
-    product = (unsigned long long)(u32)sz * (u32)negative_sy;
+    product = GTE_MULTU(sz, negative_sy);
     matrix->m[2][0] = value;
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
     angle = low;
     asm volatile("" : "=r"(angle) : "0"(angle));
     temp = angle >> 12;
-    product = (unsigned long long)(u32)temp * (u32)sx;
+    product = GTE_MULTU(temp, sx);
     PE1_NOP_MEMORY_DEP("x", product);
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
@@ -205,7 +204,7 @@ z_ready:;
     asm volatile("" : "=r"(angle) : "0"(angle));
     value = angle >> 12;
     PE1_NOP_MEMORY_DEP("r", value);
-    product = (unsigned long long)(u32)cz * (u32)cx;
+    product = GTE_MULTU(cz, cx);
     PE1_NOP_MEMORY_DEP("x", product);
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
@@ -214,7 +213,7 @@ z_ready:;
     word = angle >> 12;
     angle = word + value;
     asm volatile("" : "=r"(angle) : "0"(angle));
-    product = (unsigned long long)(u32)temp * (u32)cx;
+    product = GTE_MULTU(temp, cx);
     matrix->m[1][1] = angle;
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));
@@ -222,7 +221,7 @@ z_ready:;
     asm volatile("" : "=r"(value) : "0"(value));
     angle = value >> 12;
     PE1_NOP_MEMORY_DEP("r", angle);
-    product = (unsigned long long)(u32)cz * (u32)sx;
+    product = GTE_MULTU(cz, sx);
     PE1_NOP_MEMORY_DEP("x", product);
     PE1_NOP_MEMORY_DEP("x", product);
     asm volatile("" : "=l"(low) : "x"(product));

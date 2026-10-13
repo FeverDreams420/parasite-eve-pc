@@ -2,8 +2,17 @@
 #define PE1_SCENE_E18_EFFECTS_H
 
 #include "common.h"
+#include "pe1/asset_find.h"
+#include "pe1/field_actor.h"
+#include "pe1/field_model_draw.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/psyq_libc.h"
 #include "pe1/render_object.h"
+#include "pe1/scene_archive.h"
 #include "pe1/scene_e18_pulse.h"
 
 /* Particle emitters of the scene_e18 script: one rises from random model
@@ -75,22 +84,11 @@ typedef struct SceneE18WaveParticle {
     s16 amplitude;                /* 0x14 */
 } SceneE18WaveParticle;
 
-extern SceneE18Actor *D_800F32D0;
-extern SceneE18Emitter *D_800F33E0;
-extern u8 D_801941D0;
-extern u16 D_800E11E4[];
+extern u8 g_SceneE18RisingStop;
 
-extern int func_800CE560(void *pool, int size, int count, void *callback);
-extern void *func_800CE610(void *pool);
-extern int func_8006DCE4(int id, int channel, int x, int y, int z);
-extern int func_80052B2C(void);
-extern int func_80071A54(void);
-extern int rcos(int angle);
-extern int rsin(int angle);
-extern int func_80193488(int mode, SceneE18RisingParticle *particle);
-extern int func_80193A58(int mode, SceneE18WaveParticle *particle);
+extern int Inv_ScrambleGrid(void);
 
-/* Flank model emitter (func_80192B8C): four model particles that follow
+/* Flank model emitter (SceneE18_FlankEmitter): four model particles that follow
  * the room model's translation and alternate sides, the model asset it
  * looks up and the frame countdown its particles run down. */
 typedef struct SceneE18FlankParticle {
@@ -105,35 +103,20 @@ typedef struct SceneE18FlankParticle {
     s16 leader;                   /* 0x12 */
 } SceneE18FlankParticle;
 
-extern void *D_800B0E64;
-extern void *D_801941C4;
-extern s16 D_801941C8;
-extern u16 D_800E11FA;
-extern void *func_8006E498(void *base, u32 key);
-extern void func_800C6D5C(void *asset, int x, int y);
-extern int func_80077A64(int, int, int, int);
-extern u16 func_80077AA4(int, int);
-extern void func_800C6EC0(int tpage, int clut);
-extern void func_800C6ED8(int mode);
-extern int func_801928CC(int mode, SceneE18FlankParticle *particle);
+extern void *g_SceneE18FlankModel;
+extern s16 g_SceneE18FlankRemaining;
+extern int SceneE18_FlankParticleCallback(int mode, SceneE18FlankParticle *particle);
 
-/* Flank model particle (func_801928CC): the player instance whose distance
+/* Flank model particle (SceneE18_FlankParticleCallback): the player instance whose distance
  * to the model releases the actor, and the model draw helpers. */
-extern SceneE18Instance *RoomMain_ActorPtr;
-extern int func_8005186C(int value);
-extern int rsin(int angle);
-extern int rcos(int angle);
-extern void func_80071A44(void *data, int value, int size);
-extern void func_800C6EF8(void *asset);
-extern void func_800C6FA0(void *asset, u16 intensity);
-extern void func_800C71E4(void *asset, GteMatrix *matrix);
-extern void func_800C6F4C(void *asset);
+extern struct FieldActor *g_PlayerEntity; /* the player actor (0x8009D254) */
+extern int Math_IntSqrt(int value);
 
-/* Pulse ring particle (func_80193018): shrinking light rings around the
+/* Pulse ring particle (SceneE18_PulseRingCallback): shrinking light rings around the
  * room model; the last one releases the actor once the player is near. */
 extern RenderColor D_8019411C[2];
 
-/* Spinning model controller (func_801924E8): spins the scene model's
+/* Spinning model controller (SceneE18_SpinShell): spins the scene model's
  * glow shell around the room model while it grows and flares, and sets
  * the model's stage byte once its seventh animation ends. */
 typedef struct SceneE18SpinShell {
@@ -146,6 +129,6 @@ typedef struct SceneE18SpinShell {
     s16 brightness;               /* 0x0C */
 } SceneE18SpinShell;
 
-extern void *D_801941C0;
+extern void *g_SceneE18ShellModel;
 
 #endif

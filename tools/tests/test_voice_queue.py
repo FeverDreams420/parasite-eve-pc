@@ -3,14 +3,17 @@ from pathlib import Path
 import itertools
 import random
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text  # noqa: E402
 
 
 class VoiceQueueTests(unittest.TestCase):
     def test_global_memory_barrier_is_removed(self):
-        source = (ROOT/'src/main/akao/Akao_ProcessVoiceQueue.c').read_text()
+        source = function_text('Akao_ProcessVoiceQueue')
         self.assertNotIn('asm("" : : : "memory")',source)
         self.assertLessEqual(source.count('asm("$'),1)
 
@@ -38,7 +41,7 @@ class VoiceQueueTests(unittest.TestCase):
             'Akao_StepVoiceNote':0x8008900c,
             'Akao_UpdateVoiceEnvelopes':0x80089250,
             'Akao_WriteVoiceParam':0x800878f0,
-            'D_800BCD58':0x800bcd58,
+            'g_AkaoSfxAllocatedVoiceMask':0x800bcd58,
             'g_AkaoCurTrack':0x8009d2c8,
             'g_AkaoTrack5ATransposeValue':0x800bcd78,
             'g_AkaoVoiceChannelTable':0x800bc000,
@@ -88,7 +91,7 @@ class VoiceQueueTests(unittest.TestCase):
                 word(retail_syms['g_AkaoCurTrack'],banks)
                 word(retail_syms['g_AkaoVoiceUpdateFlags'],updates)
                 word(retail_syms['g_SpuActiveVoiceMask'],channels)
-                word(retail_syms['D_800BCD58'],0xF000)
+                word(retail_syms['g_AkaoSfxAllocatedVoiceMask'],0xF000)
                 word(retail_syms['g_SpuStoppedVoiceMask'],(0,1,5,0xF)[pattern])
                 word(retail_syms['g_AkaoVoiceMaskScratch'],0x123000)
                 put(retail_syms['g_AkaoTrack5ATransposeValue'],struct.pack('<H',0x8123))

@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m159_hospital
   ld_script_path: linkers/USA/overlays/room_m159_hospital.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m159_hospital.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m159_hospital.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m159_hospital.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m159_hospital.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,14 +37,19 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m159_header]
-      - [0xC, .rodata, ../room_lib/RoomEffect_LineBurst]
-      - [0x20, c, ../room_lib/RoomEffect_LineBurst]
-      - [0xE10, c, ../room_lib/RoomLib_SlotSet]
+      - [0xC, .rodata, ../room_lib/line_burst]
+      - [0x20, c, ../room_lib/line_burst]
+      - [0xE10, c, ../room_lib/script_slot]
       - [0xE54, data, D_8018FE3C]
       - [0xE74, data, D_8018FE5C]
       - start: 0xEAC
         type: databin
         name: RoomLib_SlotTable
+        dir: room_m159_hospital
+      - [0x1DE30, data, D_801ACE18]
+      - start: 0x1DE3C
+        type: databin
+        name: D_801ACE24
         dir: room_m159_hospital
   - [0x1E800]
 # room: m159, section3 sector 45529, scanner delta 0

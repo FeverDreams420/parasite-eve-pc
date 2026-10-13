@@ -50,19 +50,13 @@ typedef struct MemcardTim {
     MemcardTimBlock clut;
 } MemcardTim;
 
-extern MemcardScreenBuffer *D_801D11BC[2];
-extern MemcardScreenBuffer *D_801D11C4;
-extern s32 D_801D11C8;
+extern MemcardScreenBuffer *g_MemcardScreenBuffers[2];
+extern MemcardScreenBuffer *g_MemcardCurrentScreen;
+extern s32 g_MemcardScreenPage;
 extern u8 D_80193254[];
 extern s32 D_80193278;
 
-void func_8007506C(RECT *rect, void *data); /* LoadImage */
-void func_80077C84(MemcardDrawTPage *packet, s32 dfe, s32 dtd, s32 tpage); /* SetDrawTPage */
-void func_80075358(void *packet); /* DrawPrim */
-void func_800755F0(DISPENV *env); /* PutDispEnv */
-void DrawSync(s32 mode);
-s32 VSync(s32 mode);
 void SetDispMask(s32 mask);
-void func_80074A44(s32 mode);
+void ResetGraph(s32 mode);
 
 #endif

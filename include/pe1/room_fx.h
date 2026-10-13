@@ -30,6 +30,24 @@ typedef struct RoomFxSpritePacket {
     short depth;                  /* 0x0A */
 } RoomFxSpritePacket;
 
+/* Control fields in the sprite packet, beginning at its code byte. */
+typedef struct RoomFxSpriteControl {
+    u8 code;
+    u8 mode;
+    u8 zero;
+    u8 pad03;
+    s16 offset;
+    s16 depth;
+} RoomFxSpriteControl;
+PE1_STATIC_ASSERT(sizeof(RoomFxSpriteControl) == 8, room_fx_sprite_control_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFxSpriteControl, depth) == 6,
+                  room_fx_sprite_control_depth_offset);
+
+static inline RoomFxSpriteControl *RoomEffect_SpriteControlFromDepth(s16 *depth) {
+    return (RoomFxSpriteControl *)((char *)depth -
+        PE1_OFFSETOF(RoomFxSpriteControl, depth));
+}
+
 typedef GteVector RoomFxVec4;
 
 typedef struct RoomUniformSpriteFxParams {
@@ -112,10 +130,11 @@ typedef struct RoomOrbitSpriteFxParams {
     short x;
     short y;
     short z;
-    unsigned char pad6[0xA];
+    short pad06;
+    GteShortVector velocity;
     short scale;
     unsigned short depth;
-    unsigned char pad14[2];
+    short phase;
     unsigned short alpha;
 } RoomOrbitSpriteFxParams;
 
@@ -197,10 +216,14 @@ typedef struct RoomFxGroundSpriteParams {
     unsigned short depth;
 } RoomFxGroundSpriteParams;
 
+/* A timed spawn's sprite: its position, a disable flag and its frame. */
 typedef struct RoomFxTimedRenderState {
-    unsigned char pad00[8];
-    short disabled;
-    unsigned short frame;
+    unsigned short x;
+    unsigned short y;
+    unsigned short z;
+    unsigned short pad06;
+    short disabled;               /* 0x08 */
+    unsigned short frame;         /* 0x0A */
 } RoomFxTimedRenderState;
 
 typedef struct RoomFallingParticleControl {
@@ -253,7 +276,7 @@ typedef struct RoomEightParticleControl {
 } RoomEightParticleControl;
 
 typedef struct RoomEightParticleContext {
-    char *root;
+    struct RoomFxTransformOwner *root;
     unsigned char pad04[0x34];
     int baseX;
     int baseY;
@@ -272,8 +295,11 @@ typedef struct RoomFxTransformOwner {
     RoomFxTransform *transforms;
 } RoomFxTransformOwner;
 
+/* The field engine slot an effect method runs in: setting state to 2 ends
+ * the effect; frame counts the frames it has run. */
 typedef struct RoomFxControl {
-    unsigned char pad00[2];
+    unsigned char handler;
+    unsigned char state;
     short frame;
 } RoomFxControl;
 
@@ -378,7 +404,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFxPairedEmitterState, secondary) == 0x120,
 PE1_STATIC_ASSERT(sizeof(RoomFxPairedEmitterState) == 0x140,
                   room_fx_paired_state_size);
 
-/* Each room that links RoomLib_ThreeTransformParticles defines its sprite
+/* Each room that links room_lib/three_particles.c defines its sprite
  * table and the two packet templates (primary sprite, floor shadow). */
 extern unsigned char RoomLib_ThreeParticleTable[];
 extern RoomFxSpritePacket RoomLib_ThreeParticlePacket;

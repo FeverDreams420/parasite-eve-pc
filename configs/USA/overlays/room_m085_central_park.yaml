@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m085_central_park
   ld_script_path: linkers/USA/overlays/room_m085_central_park.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m085_central_park.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m085_central_park.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m085_central_park.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m085_central_park.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,9 +37,8 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m085_central_park]
-      - [0xC, .rodata, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x14, c, ../room_lib/RoomLib_ThreeParticleClass]
-      - [0x1C4, c, ../room_lib/RoomLib_ThreeTransformParticles]
+      - [0xC, .rodata, ../room_lib/three_particles]
+      - [0x14, c, ../room_lib/three_particles]
       - [0x1010, data, D_8018FFF8]
       - [0x101C, data, RoomLib_TableA_8018F054]
       - [0x1028, data, D_80190010]
@@ -57,6 +58,11 @@ segments:
       - start: 0x9204
         type: databin
         name: D_801981EC
+        dir: room_m085_central_park
+      - [0x1E9B0, data, D_801AD998]
+      - start: 0x1E9BC
+        type: databin
+        name: D_801AD9A4
         dir: room_m085_central_park
   - [0x1F000]
 # room: m085, section3 sector 28933, scanner delta 0

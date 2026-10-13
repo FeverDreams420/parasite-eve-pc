@@ -1,4 +1,5 @@
 /* PSY-Q LIBGTE SMP_03: RotTransPers3. */
+
 #include "common.h"
 #include "pe1/gte.h"
 

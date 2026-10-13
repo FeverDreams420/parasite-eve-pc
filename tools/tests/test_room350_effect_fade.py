@@ -1,22 +1,26 @@
 import pathlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+ROOM = 'src/overlays/room_m350_cruiser'
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import host_unit  # noqa: E402
 
 
 class Room350EffectFadeTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_motion_fade_threshold_and_palette(self):
-        source = (ROOT / "src/overlays/room_m350/RoomEffect_FadingModel.c").read_text()
-        source = source[:source.index('/* MASPSX_FLAGS: --expand-div */')]
-        source = source.replace('asm("$2")', '').replace('asm("$4")', '')
+        source = host_unit("RoomM350_BodyDebrisCallback", under=ROOM)
         harness = '#include <assert.h>\n#include <stddef.h>\n#include <string.h>\n' + source + r'''
-int D_800F3428;
-unsigned short D_800F336C, D_800E1204[8];
-short D_800F336A;
+RenderEffectParameters g_FieldFxSpriteParams;
+#define D_800F336A g_FieldFxSpriteParams.parameter02
+#define D_800F336C g_FieldFxSpriteParams.palette
+int g_FieldFxAltPaletteFlag;
+unsigned short g_FieldFxPaletteTable[8];
 static Particle object;
 static int lookups, draws, handleValue;
 static short sizeValue, phaseValue, brightnessValue, scaleValue;
@@ -24,17 +28,18 @@ _Static_assert(sizeof(Particle) == 20, "particle size");
 _Static_assert(offsetof(Particle, velocity) == 8, "velocity offset");
 _Static_assert(offsetof(Particle, brightness) == 12, "brightness offset");
 _Static_assert(offsetof(Particle, phase) == 16, "phase offset");
-int GetClut(int x, int y) {
+u_short GetClut(int x, int y) {
     assert(lookups++ == 0 && draws == 0 && x == 0);
-    assert(y == D_800E1204[D_800F336C] +
-           (D_800F336C == 4 && D_800F3428 ? 6 : 2));
+    assert(y == g_FieldFxPaletteTable[D_800F336C] +
+           (D_800F336C == 4 && g_FieldFxAltPaletteFlag ? 6 : 2));
     /* Stub mutations verify post-call reads, not real GetClut side effects. */
     object.size = sizeValue; object.phase = phaseValue;
     object.brightness = brightnessValue; D_800F336A = scaleValue;
     return handleValue;
 }
-void func_800CEE20(void *p, int zero, int a, int b, int scale,
-                  unsigned int handle, int flag, int shade, void *colors) {
+void FieldFx_DrawShapeQuads(struct GteShortVector *p, struct GteRotation *zero, int a,
+                   int b, int scale, int handle, int flag, int shade,
+                   struct RenderColor *colors) {
     assert(lookups == 1 && draws++ == 0 && p == &object && zero == 0);
     assert(a == sizeValue && b == sizeValue && scale == scaleValue * phaseValue);
     assert(handle == (unsigned short)handleValue && flag == 1);
@@ -61,25 +66,25 @@ int main(void) {
             expected.velocity = (short)(values[v] + values[a]);
         }
         lookups = draws = 0;
-        assert(func_80199148(1, &object) == (phase >= 8));
+        assert(RoomM350_BodyDebrisCallback(1, &object) == (phase >= 8));
         assert(memcmp(&object, &expected, sizeof(object)) == 0);
         assert(lookups == 0 && draws == 0);
     }
     for (event = -2; event <= 4; ++event) {
         if (event == 1 || event == 2) continue;
         lookups = draws = 0;
-        assert(func_80199148(event, 0) == 0 && lookups == 0 && draws == 0);
+        assert(RoomM350_BodyDebrisCallback(event, 0) == 0 && lookups == 0 && draws == 0);
     }
     for (kind = 0; kind < 8; ++kind) for (special = 0; special < 2; ++special)
     for (h = 0; h < 2; ++h) for (s = 0; s < 8; ++s) for (m = 0; m < 8; ++m) {
-        for (i = 0; i < 8; ++i) D_800E1204[i] = h ? 65535 : i * 100;
-        D_800F336C = kind; D_800F3428 = special;
+        for (i = 0; i < 8; ++i) g_FieldFxPaletteTable[i] = h ? 65535 : i * 100;
+        D_800F336C = kind; g_FieldFxAltPaletteFlag = special;
         sizeValue = values[s]; phaseValue = values[m];
         brightnessValue = values[7-s]; scaleValue = values[7-m];
         handleValue = h ? -1 : 0x12345;
         memset(&object, 0, sizeof(object)); D_800F336A = 999;
         lookups = draws = 0;
-        assert(func_80199148(2, &object) == 0);
+        assert(RoomM350_BodyDebrisCallback(2, &object) == 0);
         assert(lookups == 1 && draws == 1);
     }
     return 0;

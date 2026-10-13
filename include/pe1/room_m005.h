@@ -1,19 +1,17 @@
 #ifndef PE1_ROOM_M005_H
 #define PE1_ROOM_M005_H
 
+#include "pe1/akao_send.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
-
-/* Drifting sprite drawn by the room_m005 effect callback. */
-typedef struct RoomM005DriftingSpriteState {
-    unsigned short x;             /* 0x00 */
-    unsigned short y;             /* 0x02 */
-    unsigned short z;             /* 0x04 */
-    short pad06;                  /* 0x06 */
-    unsigned short vx;            /* 0x08 */
-    unsigned short vy;            /* 0x0A */
-    unsigned short vz;            /* 0x0C */
-} RoomM005DriftingSpriteState;
+#include "pe1/room_m005_drifting_sprite.h"
+#include "pe1/scene_archive.h"
 
 /* Orbiter effect controller state and the event flag it watches. */
 typedef struct RoomM005OrbiterState {
@@ -48,37 +46,16 @@ typedef struct RoomM005Seed8 {
 extern RoomM005Seed8 D_8018EFF4;
 extern u8 D_80190B84[];
 extern u8 D_80190B8C[];
-extern void *D_800B0E64;
-extern RoomM005Channel *D_800F32D0, *D_800F33E0;
-extern RoomM005EventState *D_800E2368;
-extern volatile u16 D_800E11E8;
-extern volatile s16 D_800F336E, D_800F3372, D_800F3374, D_800F3370;
-extern volatile s16 D_800F3376, D_800F3378;
-extern int func_800D3FD8(void);
-extern void func_8006DF50(void *channel, int id, int value, int volume, int pan);
-extern int func_800CE560(void *, int, int, void *);
-extern void func_800CE8F0(void *, int, void *, void *);
-extern RoomM005OrbiterChild *func_800CE610(void *);
-extern int func_80071A54(void);
-extern void RoomM005_FxOrbiter_8018F018(void);
-int func_8018F330(int mode, RoomM005OrbiterState *state);
+extern int rand(void);
+int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state);
 
 extern RenderColor D_8018F00C;
-extern unsigned short D_80190BA0;
-extern unsigned short D_80190BA2;
-extern unsigned short D_80190BA4;
-extern GteShortVector D_80190BA8;
+extern GteShortVector g_RoomM005BeaconOffset; /* drift offset, written by the joint beacon */
+extern GteShortVector g_RoomM005BeaconCenter;
 
-int rcos(int angle);
-int rsin(int angle);
-
-/* Cross flare (func_8018F614): two joint templates and the flash track. */
+/* Cross flare (RoomM005_CrossFlare): two joint templates and the flash track. */
 extern RoomM005Seed8 D_8018EFFC;
 extern RoomM005Seed8 D_8018F004;
-extern u8 D_80190AF4[];
-extern u16 D_800E11EA;
-extern u16 D_800E11FA;
-int func_80077AA4(int, int);
-int func_8018FB84(int mode, RoomM005DriftingSpriteState *state);
+extern u8 g_RoomM005CrossFlareColorTrack[];
 
 #endif

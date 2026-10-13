@@ -2,6 +2,7 @@
 from importlib.util import find_spec
 from pathlib import Path
 import itertools
+import shutil
 import struct
 import subprocess
 import unittest
@@ -10,7 +11,8 @@ import unittest
 class MenuWidgetDrawListRowTests(unittest.TestCase):
     @unittest.skipUnless((Path(__file__).resolve().parents[2] / "assets/USA/main.exe").is_file() and
                          (Path(__file__).resolve().parents[2] / "build/USA/main.exe").is_file() and
-                         find_spec("unicorn"), "images or unicorn unavailable")
+                         find_spec("unicorn") and shutil.which("mipsel-none-elf-nm"),
+                         "images, unicorn or mipsel-none-elf-nm unavailable")
     def test_exact_bytes_and_state_model(self):
         from unicorn import Uc, UC_ARCH_MIPS, UC_MODE_MIPS32, UC_MODE_LITTLE_ENDIAN, UC_HOOK_CODE
         from unicorn import mips_const as R
@@ -26,7 +28,7 @@ class MenuWidgetDrawListRowTests(unittest.TestCase):
         assert code == retail[base-0x80010000:base-0x80010000+0x278]
         NODE=0x80100000;X=0x8009D124;Y=X+4;STACK=X+8;DIM=0x8009D10C;LO=0x800A2270;HI=0x800A22B0
         SELECT=0x801E0000;DRAW=0x801E0020
-        hooks={SELECT:('select',1),DRAW:('draw',1),syms['VSync']:('vsync',1),syms['Draw_AllocColorTri']:('tri',3),syms['BoundsCheck_AssertStub']:('assert',1)}
+        hooks={SELECT:('select',1),DRAW:('draw',1),syms['VSync']:('vsync',1),syms['Draw_AllocColorTri']:('tri',3),syms['Inv_BoundsCheckAssertStub']:('assert',1)}
         cases=[(*c,3) for c in itertools.product((-1,0,1,3),range(4),(False,True),(-1,0,2),(0,1),(0,8),(0,7,8),(0,1,2,4,8,16))]
         cases += [(3,3,True,r,1,8,0,0,stride) for r,stride in itertools.product((-2,-1,0,31,32),(-1,1,32))]
         def signed(v):return v if v<0x80000000 else v-0x100000000

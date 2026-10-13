@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
-"""Reject growth in opaque source filenames.
+"""Reject growth in opaque or unconventional source filenames.
 
 Address and placeholder filenames are valid migration state, but new work must
 not make that state larger. Counts are scoped so mass-generated overlays cannot
 hide regressions in the resident executable.
+
+Game units in ``src/main`` (outside ``psyq/``) are named like the original
+developers would name C files (docs/CONVENTIONS.md): lower snake case, short,
+named by the unit's role inside its subsystem directory, without the
+directory's or the functions' prefix (``battle/encounter.c``, not
+``battle/Battle_EncounterFlow.c`` or ``battle/battle_encounter.c``). Names
+that break this count as ``unconventional_files``. The shared room library
+(``src/overlays/room_lib``) follows the same rule and is counted in the
+overlays scope; the other overlay directories keep their names for now.
 """
 from __future__ import annotations
 
@@ -22,20 +31,52 @@ PLACEHOLDER_NAME = re.compile(
     r"(?:misc|main|task|entity|seq|spu|akao|menu|engine|gpu|psyq)\d*$",
     re.IGNORECASE,
 )
+SNAKE_NAME = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
+
+
+def defines_function(path: pathlib.Path, name: str) -> bool:
+    """The unit defines a function called `name` (boot/main.c defines main)."""
+    pattern = r"^[A-Za-z_][\w \t\*]*\b%s\s*\([^;]*$" % re.escape(name)
+    return re.search(pattern, path.read_text(errors="ignore"), re.M) is not None
+
+
+def unconventional(rel: pathlib.PurePath) -> bool:
+    """A src/main game unit whose file name is not a short snake-case role."""
+    if rel.parts[1] == "psyq":
+        return False  # SDK object names (docs/CONVENTIONS.md, PsyQ file names)
+    if len(rel.parts) != 3:
+        return True  # a game unit sits in exactly one subsystem directory
+    directory, stem = rel.parts[1], rel.stem
+    return not SNAKE_NAME.fullmatch(stem) or stem.startswith(directory + "_")
+
+
+def unconventional_shared(rel: pathlib.PurePath) -> bool:
+    """A room_lib unit whose file name is not a short snake-case role."""
+    stem = rel.stem
+    return not SNAKE_NAME.fullmatch(stem) or stem.startswith(rel.parts[1] + "_")
 
 
 def collect(source_root: pathlib.Path = SRC) -> dict[str, dict[str, int]]:
     counts = {
-        "main": {"address_files": 0, "placeholder_files": 0},
-        "overlays": {"address_files": 0, "placeholder_files": 0},
+        "main": {"address_files": 0, "placeholder_files": 0,
+                 "unconventional_files": 0},
+        "overlays": {"address_files": 0, "placeholder_files": 0,
+                     "unconventional_files": 0},
     }
     for path in source_root.rglob("*.c"):
         rel = path.relative_to(source_root)
         scope = "overlays" if rel.parts and rel.parts[0] == "overlays" else "main"
+        if scope == "main" and unconventional(rel):
+            counts[scope]["unconventional_files"] += 1
+        if rel.parts[:2] == ("overlays", "room_lib") and unconventional_shared(rel):
+            counts[scope]["unconventional_files"] += 1
         if ADDRESS_NAME.fullmatch(path.stem):
             counts[scope]["address_files"] += 1
-        elif PLACEHOLDER_NAME.fullmatch(path.stem) and "psyq" not in rel.parts:
-            # PsyQ units carry SDK object names (LIBSPU SPU is spu.c).
+        elif (PLACEHOLDER_NAME.fullmatch(path.stem) and "psyq" not in rel.parts
+              and not defines_function(path, path.stem)):
+            # PsyQ units carry SDK object names (LIBSPU SPU is spu.c), and a
+            # unit named after the function it defines (boot/main.c) is not a
+            # placeholder.
             counts[scope]["placeholder_files"] += 1
     return counts
 
@@ -62,7 +103,7 @@ def check(counts, baseline_path: pathlib.Path = BASELINE) -> int:
             print(f"  {scope}.{metric}: {before} -> {after}")
         print("Run `make organization-baseline` and commit the lowered baseline.")
         return 1
-    print("OK: opaque source filename counts match the ratchet baseline.")
+    print("OK: opaque and unconventional source filename counts match the ratchet baseline.")
     return 0
 
 

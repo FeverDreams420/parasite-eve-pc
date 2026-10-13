@@ -24,8 +24,17 @@ typedef char SpuCommonAttrSizeCheck[(sizeof(SpuCommonAttr) == 40) ? 1 : -1];
 void SpuSetCommonAttr(SpuCommonAttr *attr);
 int SpuSetReverb(int on_off);
 int SpuSetReverbModeType(unsigned int mode);
+void SpuSetReverbModeDepth(short left, short right);
 void SpuInit(void);
 void SpuStart(void);
 void SpuQuit(void);
+long SpuInitMalloc(long num, char *top);
+int SpuSetTransferMode(int mode);
+int SpuSetTransferStartAddr(int address);
+unsigned int SpuWrite(void *address, unsigned int size);
+unsigned int SpuRead(void *address, unsigned int size);
+long SpuSetIRQ(long mode);
+void SpuSetVoiceVolumeAttr(int voice, unsigned short left, unsigned short right,
+                           short left_mode, unsigned short right_mode);
 
 #endif

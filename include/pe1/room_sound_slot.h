@@ -2,6 +2,7 @@
 #define PE1_ROOM_SOUND_SLOT_H
 
 #include "common.h"
+#include "pe1/scene_archive.h"
 
 /* The sound helper channel pointer D_800B0E64 read as a one-field record.
  * A store to an outgoing stack argument invalidates remembered in-struct
@@ -12,6 +13,5 @@ typedef struct RoomSoundSlot {
     void *channel;
 } RoomSoundSlot;
 
-extern RoomSoundSlot D_800B0E64_slot __asm__("D_800B0E64");
 
 #endif

@@ -33,11 +33,11 @@ extern SavePromptBlock D_8009D1A8;
 
 /* Prompt texts: two fixed lines, then per-window tables. */
 extern u8 D_80091464[];
-extern u8 D_80091474[];
-extern u8 D_80091480[][22];
-extern u8 D_800914AC[][20];
+extern u8 g_AnalyzeHpFormatText[];
+extern u8 g_TextSusceptibleToPoison[][22];
+extern u8 g_TextSusceptibleToAcid[][20];
 extern u8 D_800914D4[][20];
-extern u8 D_800914FC[][18];
+extern u8 g_AnalyzeHeatWeakTexts[][18];
 extern u8 D_80091520[][18];
 extern u8 D_80091544[][22];
 extern u8 D_80091570[][21];

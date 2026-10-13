@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m197_museum
   ld_script_path: linkers/USA/overlays/room_m197_museum.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m197_museum.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m197_museum.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m197_museum.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m197_museum.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,13 +37,13 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m197_museum]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/actor_classes]
       - [0x1E4, rodata, RoomLib_HandlerCArgsData_8019159C]
-      - [0x1E4, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3500, data, D_801924E8]
-      - start: 0x3538
+      - [0x1E4, c, ../room_lib/actor_classes]
+      - [0x3500, .data, ../room_lib/actor_class_table]
+      - start: 0x35A8
         type: databin
-        name: D_80192520
+        name: D_80192590
         dir: room_m197_museum
       - [0x311F8, data, D_801C01E0]
       - [0x31200, data, D_801C01E8]

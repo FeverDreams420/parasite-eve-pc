@@ -69,39 +69,51 @@ typedef struct DISPENV {
     u_char pad1;
 } DISPENV;
 
-/* Two adjacent environment records are followed by the ordering-table and
- * front-buffer bases used by Draw_InitBuffers and Draw_SelectBuffer. */
-typedef struct GpuDisplayBufferRecord {
-    DRAWENV draw;
-    DISPENV display;
-    int orderingTableBase;
-    int frontBufferBase;
-} GpuDisplayBufferRecord;
-
 PE1_GPU_STATIC_ASSERT(sizeof(DRAWENV) == 0x5C, drawenv_size);
 PE1_GPU_STATIC_ASSERT(sizeof(DISPENV) == 0x14, dispenv_size);
-PE1_GPU_STATIC_ASSERT(PE1_GPU_OFFSETOF(GpuDisplayBufferRecord, display) == 0x5C,
-                      gpu_display_buffer_display_offset);
-PE1_GPU_STATIC_ASSERT(PE1_GPU_OFFSETOF(GpuDisplayBufferRecord, orderingTableBase) == 0x70,
-                      gpu_display_buffer_ot_offset);
-PE1_GPU_STATIC_ASSERT(PE1_GPU_OFFSETOF(GpuDisplayBufferRecord, frontBufferBase) == 0x74,
-                      gpu_display_buffer_front_offset);
-PE1_GPU_STATIC_ASSERT(sizeof(GpuDisplayBufferRecord) == 0x78,
-                      gpu_display_buffer_record_size);
 #undef PE1_GPU_OFFSETOF
 #undef PE1_GPU_STATIC_ASSERT
 
+/* Ordering tables: ClearOTagR links a reverse table and returns it,
+ * DrawOTag queues one and returns the queue result. */
+u_int *ClearOTagR(u_int *ot, int count);
+int DrawOTag(u_int *ot);
 DRAWENV *GetDrawEnv(DRAWENV *env);
 DRAWENV *PutDrawEnv(DRAWENV *env);
+int DrawPrim(void *primitive);
 void DrawOTagEnv(void *next, DRAWENV *env);
 DISPENV *PutDispEnv(DISPENV *env);
+DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h);
+DISPENV *SetDefDispEnv(DISPENV *env, int x, int y, int w, int h);
+void SetDispMask(int mask);
+int LoadImage(RECT *rect, void *pixels);
+int StoreImage(RECT *rect, void *p);
+void SetDrawTPage(void *packet, int drawTexture, int dither, int tpage);
 u_short GetClut(int x, int y);
 
 /*
- * Many GPU helpers in src/main/main currently keep local callback-table
+ * Many GPU helpers in the game code currently keep local callback-table
  * structs because register allocation is sensitive there. Centralize RECT
  * first; migrate callback declarations only after a function cluster is
  * build-checked.
  */
+
+int DrawSync(int mode);
+
+int VSync(int mode);
+
+void GPU_memset(unsigned char *dst, int value, int count);
+
+int Gpu_SetDisplayBuffer(void);
+
+void SetTile(void *tile);
+void SetPolyG4(void *packet);
+void SetPolyGT4(void *packet);
+void SetSprt(void *sprite);
+int MargePrim(void *first, void *second);
+
+void AddPrim(unsigned int *ot, unsigned int *prim);
+
+u_short GetTPage(int tp, int abr, int x, int y);
 
 #endif

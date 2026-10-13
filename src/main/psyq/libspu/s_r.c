@@ -12,10 +12,7 @@ u32 SpuRead(void *address, u32 size) {
 
     _spu_Fr(address, size);
     if (_spu_transferCallback == 0) {
-        D_8009B430 = 0;
+        _spu_inTransfer = 0;
     }
     return size;
 }
-
-/* S_R.OBJ ends with a zero alignment word before S_W.OBJ. */
-static unsigned int SpuRead_alignment __attribute__((section(".text"))) = 0;

@@ -3,14 +3,27 @@
 #ifndef ROOM_LIB_H
 #define ROOM_LIB_H
 
-#include "../../../include/common.h"
-#include "../../../include/pe1/gte.h"
-#include "../../../include/pe1/room_fx.h"
-#include "../../../include/pe1/field_script_context.h"
-#include "../../../include/pe1/room_particle_state.h"
-#include "../../../include/pe1/render_object.h"
-#include "../../../include/pe1/field_sprite_state.h"
+#include "common.h"
+#include "pe1/battle_context.h"
+#include "pe1/field_glow_sprite.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_script_context.h"
+#include "pe1/field_sprite_state.h"
+#include "pe1/field_vector_math.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_slot.h"
+#include "pe1/fieldfx_state.h"
+#include "pe1/fieldfx_task_pool.h"
+#include "pe1/gte.h"
+#include "pe1/gte_sine_table.h"
+#include "pe1/gte_types.h"
+#include "pe1/pe_image.h"
+#include "pe1/render_object.h"
 #include "pe1/room_floor.h"
+#include "pe1/room_fx.h"
+#include "pe1/room_particle_state.h"
+#include "pe1/room_twelve_effect.h"
 
 typedef struct RoomObj {
     char pad0[0xC];
@@ -55,20 +68,6 @@ typedef struct RoomParticleEmitter {
 #define ROOMLIB_V0_PTR_DECL(name) void *name
 #define ROOMLIB_V1_INT_DECL(name) int name
 #define ROOMLIB_A0_INT_DECL(name) int name
-typedef struct RoomLibTick12Rec {
-    char pad00[0x20];
-    unsigned short frameStep;     /* 0x20 */
-    short timerLimit;             /* 0x22 */
-    char pad24[0x2];
-    unsigned short repeatCount;   /* 0x26 */
-    short phaseLimit;             /* 0x28 */
-    unsigned short phaseStep;     /* 0x2A */
-    signed char state[12];        /* 0x2C */
-    signed char timer[12];        /* 0x38 */
-    unsigned short phase[12];     /* 0x44 */
-    char pad5C[0x4];
-    unsigned short frame[12][4];  /* 0x60 */
-} RoomLibTick12Rec;
 
 #define ROOMLIB_TICK_12_COUNTERS(name) \
     void name(void *arg0, unsigned char *signal, RoomLibTick12Rec *rec) { \
@@ -84,8 +83,8 @@ typedef struct RoomLibTick12Rec {
                         rec->phase[i] = limit; \
                     } \
                 } \
-                rec->frame[i][0] -= rec->frameStep; \
-                if ((short)rec->frame[i][0] < 10) { \
+                rec->position[i].z -= rec->frameStep; \
+                if ((short)rec->position[i].z < 10) { \
                     rec->state[i] = 1; \
                 } \
             } \
@@ -99,34 +98,25 @@ typedef struct RoomLibTick12Rec {
         } \
     }
 
-
 struct RoomEnt;
 extern void RoomLib_HandlerA(struct RoomEnt *obj);
 extern void RoomLib_HandlerB(struct RoomEnt *obj);
 extern void RoomLib_HandlerC(struct RoomEnt *obj);
 extern void RoomLib_HandlerD(struct RoomEnt *obj);
 extern void RoomLib_HandlerE(struct RoomEnt *obj);
-extern void RoomLib_HandlerF();
-extern int FieldEng_VecToAngle(int *vec, int *ref);
-extern int FieldEng_TurnToward(short cur, short target, short rate);
-extern char *RoomMain_ActorPtr;
-extern int RoomMain_RotTable[];
+extern void RoomLib_HandlerF(struct RoomEnt *obj);
+extern struct FieldActor *g_PlayerEntity; /* the player actor (0x8009D254) */
 /* Field object status: 0 no model, 1 model without data, 2 inactive,
  * 3 active, 4 disabled object, 5 the player. */
-extern int FieldEng_GetStatus(void *object);
-extern void FieldEng_Spawn6(int a, int b, int c, int d, int e, int f);
-extern void FieldEng_Register(void *o, void *table);
-extern int func_800C251C(void *o, void *table);
-extern int func_800C2758(void *o, void *tableA, void *tableB);
-extern void **FieldEng_GetSlot(void);
-extern int func_8003010C(void *o, int arg);
-extern void func_80030220(void *o, int arg, int value);
+extern int FieldFx_GetStatus(void *object);
 extern int func_80192BFC();
 
 typedef struct RoomRenderNode {
     int flags;                    /* 0x00: 0x3F000000 owner bits, 0xC0FFFFFF mask dance */
     char pad04[0x14];
     unsigned char *state;         /* 0x18: byte poked with entity state (4) */
+    char pad1C[0x90];
+    unsigned char startFlag;      /* 0xAC: opens the gated module start */
 } RoomRenderNode;
 
 /* The actor/object record shared with the field engine (>= 0x254 bytes).
@@ -142,9 +132,8 @@ typedef struct RoomLink {
     char pad1C[0xA];
     unsigned short h26;           /* 0x26 */
     int pos[4];                   /* 0x28: 16.16 x/y/z plus copied trailing word */
-    char pad38[0x2];
-    unsigned short h3A;           /* 0x3A */
-    char pad3C[0x4];
+    short rotation[3];            /* 0x38: x/y/z angles, y is the heading */
+    char pad3E[0x2];
     int posMirror[4];             /* 0x40: optional position snapshot */
     char pad50[0x18];
     int vel[3];                   /* 0x68 */
@@ -153,13 +142,11 @@ typedef struct RoomLink {
     char pad84[0x4];
     int accel[3];                 /* 0x88 */
     char pad94[0x4];
-    void *node98;                 /* 0x98 */
+    unsigned int flags;           /* 0x98 */
     char pad9C[0xF0];
     struct RoomLink *link18C;     /* 0x18C: nested link record */
     char pad190[0x6C];
-    int w1FC;                     /* 0x1FC */
-    int w200;
-    int w204;
+    int modelTranslation[3];      /* 0x1FC: integer position of the model matrix */
     char pad208[0x30];
     void *p238;                   /* 0x238 */
     char pad23C[0x14];
@@ -176,7 +163,7 @@ typedef struct RoomEnt {
     int w04;                      /* 0x04 */
     RoomLink *link;               /* 0x08 */
     struct RoomSub {
-        void (*cb)(void);         /* 0x0C: armed FX handler */
+        void (*cb)(struct RoomEnt *); /* 0x0C: armed FX handler */
         int *signal;              /* 0x10: completion word (0/1/2) */
     } sub;
     short active;                 /* 0x14 */
@@ -231,8 +218,8 @@ typedef struct RoomLibMotionState {
     } mode;                       /* 0x4C */
     int anchor[3];                /* 0x50 */
     char pad5C[0x14];
-    int localStep[3];             /* 0x70 */
-    char pad7C[0x4];
+    short localStep[3];           /* 0x70: packed GTE V0, shared with rotation */
+    char pad76[0xA];
     RoomLink *target;             /* 0x80 */
 } RoomLibMotionState;
 
@@ -240,10 +227,26 @@ typedef struct RoomLibMotionWork {
     short input[3];               /* 0x00 */
     short pad06;
     int rotated[3];               /* 0x08 */
-    char pad14[0x14];
+    char pad14[0x4];
+    int displacement[3];          /* 0x18: second transform result */
+    char pad24[0x4];
     short matrix[9];              /* 0x28 */
     short pad3A;
 } RoomLibMotionWork;
+
+/* Scratchpad layout of the arc handlers (B and C): the heading matrix, the
+ * local vector it turns, the point and offset vectors and the landed flag. */
+typedef struct RoomLibArcWork {
+    short matrix[9];              /* 0x00 */
+    char pad12[0xE];
+    short input[3];               /* 0x20 */
+    short pad26;
+    int point[3];                 /* 0x28: target point or turned step */
+    char pad34[0x4];
+    int offset[3];                /* 0x38: turned local offset */
+    char pad44[0x4];
+    int landed;                   /* 0x48 */
+} RoomLibArcWork;
 
 /* Four lanes of three-component values with increments and a shared timer. */
 typedef struct RoomLibStepRecords {
@@ -308,22 +311,35 @@ typedef struct RoomLibHandlerDState {
     unsigned char optionB;        /* 0x0B */
     unsigned char optionC;        /* 0x0C */
     unsigned char flags;          /* 0x0D */
-    char pad0E[0x32];
+    char pad0E[0x2];
+    short matrix[9];              /* 0x10: travel rotation */
+    char pad22[0xE];
+    int motion[3];                /* 0x30: local x/y/z travel */
+    char pad3C[0x4];
     int target[4];                /* 0x40 */
-    char pad50[0x10];
+    int anchor[3];                /* 0x50: start position */
+    char pad5C[0x4];
     int positionX;                /* 0x60 */
     char pad64[0x4];
     int positionZ;                /* 0x68 */
     char pad6C[0x4];
     short rotation[3];            /* 0x70 */
-    char pad76[0xA];
+    char pad76[0x2];
+    short angles[3];              /* 0x78: travel direction */
+    char pad7E[0x2];
     RoomLink *targetLink;         /* 0x80 */
     RoomLink *secondaryLink;      /* 0x84 */
     int value88;                  /* 0x88 */
     int value8C;                  /* 0x8C */
     int value90;                  /* 0x90 */
-    char pad94[0x6];
-    short stateValue;             /* 0x9A */
+    int speed;                    /* 0x94 */
+    union {
+        int word;                 /* 0x98: 16.16 progress */
+        struct {
+            short fraction;
+            short whole;          /* 0x9A: reported state value */
+        } half;
+    } progress;
     short range[3];               /* 0x9C */
     short heading;                /* 0xA2 */
     short duration;               /* 0xA4 */
@@ -344,7 +360,10 @@ typedef struct RoomLibHandlerBState {
     unsigned char optionB;        /* 0x0B */
     unsigned char optionC;        /* 0x0C */
     unsigned char flags;          /* 0x0D */
-    char pad0E[0x22];
+    unsigned char started;        /* 0x0E */
+    char pad0F;
+    short matrix[9];              /* 0x10: heading rotation */
+    char pad22[0xE];
     int target[3];                /* 0x30 */
     char pad3C[0x4];
     int localOffset[3];           /* 0x40 */
@@ -359,12 +378,13 @@ typedef struct RoomLibHandlerBState {
     int acceleration;             /* 0x6C */
     int duration;                 /* 0x70 */
     int phaseValue;               /* 0x74 */
-    char pad78[0x8];
+    int horizontalVelocity[2];   /* 0x78: X/Z velocity during the arc */
     int mode;                     /* 0x80 */
-    char pad84[0x2];
+    short floorY;                 /* 0x84: landing height */
     short rate;                   /* 0x86 */
     short heading;                /* 0x88 */
     short secondaryHeading;       /* 0x8A */
+    unsigned char finished;       /* 0x8C */
 } RoomLibHandlerBState;
 
 /* Argument-controlled state used by HandlerC through RoomEnt + 0x0C. */
@@ -376,9 +396,12 @@ typedef struct RoomLibHandlerCState {
     unsigned char optionB;        /* 0x0B */
     unsigned char optionC;        /* 0x0C */
     unsigned char flags;          /* 0x0D */
-    char pad0E[0x22];
+    unsigned char started;        /* 0x0E */
+    char pad0F[0x21];
     int target[3];                /* 0x30 */
-    char pad3C[0x14];
+    char pad3C[0x4];
+    int arcTarget[3];             /* 0x40: transformed destination */
+    char pad4C[0x4];
     int localOffset[3];           /* 0x50 */
     char pad5C[0x4];
     int secondaryX;               /* 0x60 */
@@ -389,19 +412,19 @@ typedef struct RoomLibHandlerCState {
     RoomLink *secondaryLink;      /* 0x74 */
     char pad78[0x4];
     int phaseValue;               /* 0x7C */
-    char pad80[0x8];
+    int horizontalVelocity[2];   /* 0x80: X/Z velocity during the arc */
     int mode;                     /* 0x88 */
     char pad8C[0x4];
     short rate;                   /* 0x90 */
     short heading;                /* 0x92 */
     short secondaryHeading;       /* 0x94 */
+    unsigned char finished;       /* 0x96 */
 } RoomLibHandlerCState;
 
 extern short D_800966EE[];
-extern short D_800966EC[][2];
-extern char *D_8009D254;
+extern struct BattleEntity *D_8009D254;
 struct FieldActorNode;
-extern struct FieldActorNode *D_8009D20C;
+extern struct FieldActor *g_FieldActorListHead;
 extern int RoomLib_ResetAndSignal_801914B0(RoomEnt *obj);
 extern int RoomLib_Set4ClearSignal_80192510(RoomEnt *obj);
 extern void RoomLib_ArmWindowA_80190D0C(RoomEnt *obj);
@@ -510,7 +533,6 @@ extern void func_801921A0(RoomEnt *obj);
 extern void func_80192268(RoomEnt *obj);
 extern void func_8019261C(RoomEnt *obj);
 extern void func_80192B38(RoomEnt *obj);
-extern void func_80192D50(RoomEnt *obj);
 extern void func_80193258(RoomEnt *obj);
 extern void func_80193260(RoomEnt *obj);
 extern void func_80195894(RoomEnt *obj);
@@ -573,21 +595,26 @@ extern void func_80193E68(void);
 extern void func_8019649C(struct RoomEnt *obj);
 extern int RoomLib_Set4ClearSignal_801924D4(RoomEnt *o);
 
-typedef struct RoomLibFxMatrixWords {
-    int w0;
-    int w1;
-    int w2;
-    int w3;
-    int w4;
-    int w5;
-    int w6;
-    int w7;
+/* A view matrix copied as eight words. */
+typedef union RoomLibFxMatrixWords {
+    int words[8];
+    GteMatrix matrix;
 } RoomLibFxMatrixWords;
 
+/* Effect owner state set up by the room effect Init methods: the owner's
+ * link, a copy of its view matrix (the translation is where the effect
+ * stands), the sprite asset whose low byte selects the texture page, and
+ * the reload timer and hit flag the owner tick polls. */
 typedef struct RoomLibFxMatrixState {
-    RoomLink *link;
-    RoomLibFxMatrixWords matrix;
-    void *asset;
+    RoomLink *link;               /* 0x00 */
+    RoomLibFxMatrixWords matrix;  /* 0x04 */
+    union {
+        int index;
+        unsigned char page;
+    } asset;                      /* 0x24 */
+    unsigned short reload;        /* 0x28 */
+    short cooldown;               /* 0x2A */
+    short hit;                    /* 0x2C */
 } RoomLibFxMatrixState;
 
 typedef struct RoomLibPacked8 {
@@ -595,9 +622,8 @@ typedef struct RoomLibPacked8 {
     int hi;
 } __attribute__((packed)) RoomLibPacked8;
 
-extern void *func_8006DC18(int type);
 
-/* Each room that links RoomLib_TwelveElementEffect defines the two packet
+/* Each room that links room_lib/twelve_elements.c defines the two packet
  * templates and the sprite table in its data. */
 extern RoomFxSpritePacket RoomLib_TwelveEffectPrimaryPacket;
 extern RoomFxSpritePacket RoomLib_TwelveEffectSecondaryPacket;
@@ -607,11 +633,7 @@ extern unsigned char RoomLib_TwelveEffectTable[];
 #define ROOMLIB_JOIN(a, b) ROOMLIB_JOIN_RAW(a, b)
 
 extern void RoomLib_FxNotify(RoomLink *l, struct RoomSub *s, int scratch);
-extern void func_800DFE94(void *a0, void *a1, void *a2);
-extern int func_800DFC80(int *lhs, int *rhs);
-extern int ratan2(int x, int z);
 extern void func_800DFB20(void *state);
-
 
 /* state=4 and clear the signal word */
 #define ROOMLIB_SET4_CLEAR_SIGNAL(name) \
@@ -650,73 +672,16 @@ extern void func_800DFB20(void *state);
                 finish(o); \
             } \
             if (o->h46 != 0) { \
-                RW16(D_8009D254, 0x3A) = FieldEng_TurnToward( \
-                    RW16(D_8009D254, 0x3A), o->h48, o->h46); \
+                RW16(D_8009D254, 0x3A) = FieldFx_TurnToward( \
+                    RW16(D_8009D254, 0x3A), (short)o->h48, (short)o->h46); \
             } \
         } \
     }
 
-
-/* argument parser variant whose comparison value is stored as the fallback handler */
-#define ROOMLIB_ARG_DISPATCH_REARM_FALLBACK(name, rearm) \
-    int name(RoomEnt *o, int arg1, unsigned int op, int arg3, int sp10, int sp14) { \
-        int value = 0xA; \
-        if (op == value) { \
-            goto case10; \
-        } \
-        value = op < 0xB; \
-        if (value == 0) { \
-            goto high; \
-        } \
-        value = 4; \
-        if (op == value) { \
-            goto case4; \
-        } \
-        goto store; \
-    high: \
-        value = 0x19; \
-        if (op == value) { \
-            goto case25; \
-        } \
-        value = 0x1C; \
-        if (op == value) { \
-            goto case28; \
-        } \
-        goto store; \
-    case25: \
-        if (arg1 != 1) { \
-            goto done; \
-        } \
-        o->sub.signal = (int *)arg3; \
-        *(int *)arg3 = arg1; \
-        value = 1; \
-        goto store; \
-    case4: \
-        o->pos[0] = arg3; \
-        o->pos[1] = sp10; \
-        o->h44 = sp14; \
-        goto store; \
-    case28: \
-        o->h48 = arg3; \
-        o->h46 = sp10; \
-        goto store; \
-    case10: \
-        value = (int)rearm; \
-    store: \
-        *(volatile unsigned char *)&o->t16 = arg3; \
-        o->sub.cb = (void (*)(void))value; \
-    done: \
-        return 0; \
-    }
-
-
-extern char RoomLib_TableA[];
-extern char RoomLib_TableB[];
-
 /* six-argument passthrough to the field engine spawn */
 #define ROOMLIB_SPAWN6(name) \
     int name(int a, int b, int c, int d, int e, int f) { \
-        FieldEng_Spawn6(a, b, c, d, e, f); \
+        FieldFx_Spawn6(a, b, c, d, e, f); \
         return 0; \
     }
 
@@ -724,7 +689,7 @@ extern char RoomLib_TableB[];
 #define ROOMLIB_CLOSE_TARGET(name) \
     int name(RoomEnt *o) { \
         o->state = 4; \
-        if ((unsigned int)FieldEng_GetStatus(o) >= 2) { \
+        if ((unsigned int)FieldFx_GetStatus(o) >= 2) { \
             RoomLinkByte *tgt = o->link->target; \
             *(int *)tgt &= 0xC0FFFFFF; \
             *o->link->target->state = 4; \
@@ -735,8 +700,8 @@ extern char RoomLib_TableB[];
 /* register this entity's table with the field engine when active */
 #define ROOMLIB_REGISTER_TABLE(name, table) \
     int name(void *o) { \
-        if ((unsigned int)FieldEng_GetStatus(o) >= 2) { \
-            FieldEng_Register(o, table); \
+        if ((unsigned int)FieldFx_GetStatus(o) >= 2) { \
+            FieldFx_Register(o, table); \
         } \
         return 0; \
     }
@@ -745,7 +710,7 @@ extern char RoomLib_TableB[];
  * engine's status */
 #define ROOMLIB_REGISTER_TABLE_ANY(name, table) \
     int name(void *o) { \
-        FieldEng_Register(o, table); \
+        FieldFx_Register(o, table); \
         return 0; \
     }
 
@@ -754,7 +719,7 @@ extern char RoomLib_TableB[];
  * closing the module with `close` when either call fails */
 #define ROOMLIB_START_ANY(name, update, init, layout, close) \
     int name(void *o) { \
-        if ((func_800C251C(o, update) | func_800C2758(o, init, layout)) == -1) { \
+        if ((FieldFx_UpdateSlots(o, update) | FieldFx_RunScript(o, init, layout)) == -1) { \
             close(o); \
         } \
         return 0; \
@@ -767,9 +732,9 @@ extern char RoomLib_TableB[];
 #define ROOMLIB_START_AT3(name, update, init, layout, close) \
     int name(void *o) { \
         int result; \
-        if (FieldEng_GetStatus(o) == 3) { \
-            result = func_800C251C(o, update); \
-            result |= func_800C2758(o, init, layout); \
+        if (FieldFx_GetStatus(o) == 3) { \
+            result = FieldFx_UpdateSlots(o, update); \
+            result |= FieldFx_RunScript(o, init, layout); \
         } else { \
             result = -1; \
         } \
@@ -781,27 +746,9 @@ extern char RoomLib_TableB[];
 
 /* plant the room table pointer into the engine slot */
 #define ROOMLIB_PLANT_TABLE(name, table) \
-    int name(void) { \
-        *FieldEng_GetSlot() = table; \
+    int name(void *object) { \
+        *FieldFx_GetSlot(object) = table; \
         return 0; \
-    }
-
-/* stash three args into room slots; returns the first slot */
-#define ROOMLIB_SET_ARGS2(name, sA, sB) \
-    int *name(int a0, int a1, int a2) { \
-        int *p = &sA; \
-        *p = a1; \
-        sB = a2; \
-        return p; \
-    }
-
-#define ROOMLIB_SET_ARGS3(name, sA, sB, sC) \
-    int *name(int a0, int a1, int a2, int a3) { \
-        int *p = &sA; \
-        *p = a1; \
-        sB = a2; \
-        sC = a3; \
-        return p; \
     }
 
 /* stash one arg into a room slot; returns the slot */
@@ -822,8 +769,6 @@ typedef struct FieldActorNode {
     int w98;                      /* 0x98: 0x10 = busy */
 } FieldActorNode;
 
-extern FieldActorNode *g_FieldActorListHead;
-
 typedef struct RoomSlotRec {
     short h0;
     short h2;                     /* stamped with the global frame counter */
@@ -833,8 +778,7 @@ typedef struct RoomSlotRec {
     int wC;
 } RoomSlotRec;
 
-
-/* The room's slot table (RoomLib_SlotSet.c), named in each room's symbol
+/* The room's slot table (script_slot.c), named in each room's symbol
  * file. */
 extern RoomSlotRec RoomLib_SlotTable[];
 RoomSlotRec *RoomLib_SlotSet(int mode, int idx, int a, int b);
@@ -865,11 +809,11 @@ typedef struct RoomDlgAnimState {
     short x;                     /* 0x00 */
     short y;                     /* 0x02 */
     short z;                     /* 0x04 */
-    short field_06;              /* 0x06 */
+    short pad06;                 /* 0x06 */
     short velocityX;             /* 0x08 */
     short velocityY;             /* 0x0A */
     short velocityZ;             /* 0x0C */
-    short field_0E;              /* 0x0E */
+    short pad0E;                 /* 0x0E */
     short state;                 /* 0x10 */
     short timer;                 /* 0x12 */
 } RoomDlgAnimState;
@@ -910,42 +854,33 @@ typedef struct RoomDlgState {
     short h12;                    /* 0x12 */
 } RoomDlgState;
 
-extern RoomChanCtx *D_800F32D0;
-extern RoomChanCtx *D_800F33E0;
-extern RoomDlgState *D_800E2368;
-extern int D_800E27EC;
-extern short D_800F3372;
-extern short D_800F3374;
-extern void *RoomMain_ActorPtr2;
-extern int func_800CE8F0();
-extern int func_800CFAA8();
-extern int func_800CE560();
-extern RoomQRec *func_800CE610();
-extern int func_800D3FD8();
-extern int func_800D3F64();
+
+/* The colour ramp table of the timed spawns (timed_spawn.c), each
+ * room's own data. */
+extern char RoomLib_TimedRenderTable;
 
 #define ROOMLIB_MSG_DISPATCH(name, rect, blob) \
     int name(int mode, RoomMsg *msg, short *pitch) { \
         RoomBlob8 tmp = rect; \
         switch (mode) { \
         case 0: \
-            func_800CE8F0(D_800F32D0->w8, 0x13, &tmp, msg); \
-            if (D_800E2368->h12 == 0) goto send_pos; \
-            if (D_800E2368->h12 == 1) goto at_actor; \
+            FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomChanCtx)->w8, 0x13, &tmp, msg); \
+            if (FX_TASK_AS(RoomDlgState)->h12 == 0) goto send_pos; \
+            if (FX_TASK_AS(RoomDlgState)->h12 == 1) goto at_actor; \
             goto after; \
         send_pos: \
-            func_800CE9D4(D_800F32D0->w8, 0x13, &msg->sub); \
+            FieldFx_GetTransformLookAngles(ANIM_OWNER_AS(RoomChanCtx)->w8, 0x13, &msg->sub); \
             goto after; \
         at_actor: \
             { \
                 short vec[4]; \
-                func_800CE870(RoomMain_ActorPtr2, 0, vec); \
-                func_800CFAA8(msg, vec, &msg->sub); \
+                FieldFx_GetActorPosition(g_PlayerEntity, 0, vec); \
+                FieldFx_CalculateLookAngles(msg, vec, &msg->sub); \
                 msg->sub.h0 = 0x180; \
             } \
         after: \
-            if (D_800E2368->bD != 0) { \
-                RoomNodeB **q = D_800F32D0->w8; \
+            if (FX_TASK_AS(RoomDlgState)->bD != 0) { \
+                RoomNodeB **q = ANIM_OWNER_AS(RoomChanCtx)->w8; \
                 if (q != 0 && *q != 0) { \
                     unsigned char *st = (*q)->state; \
                     if (*st == 1) { \
@@ -953,19 +888,19 @@ extern int func_800D3F64();
                     } \
                 } \
             } \
-            return func_800CE560(D_800F33E0->w8, 0x14, 0x18, &blob); \
+            return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomChanCtx)->w8, 0x14, 0x18, &blob); \
         case 1: \
-            if (D_800E27EC == mode) { \
-                RoomQRec *p = func_800CE610(D_800F33E0->w8); \
+            if (g_FieldFxCurrentAge == mode) { \
+                RoomQRec *p = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomChanCtx)->w8); \
                 if (p != 0) { \
                     p->h0 = msg->h0; \
                     p->h2 = msg->h2; \
                     p->h4 = msg->h4; \
-                    func_800CFB7C(&msg->sub, *pitch, p->sub); \
+                    FieldFx_AnglesToVector(&msg->sub, *pitch, p->sub); \
                     p->h10 = 0; \
                     p->h12 = 0; \
                 } \
-                p = func_800CE610(D_800F33E0->w8); \
+                p = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomChanCtx)->w8); \
                 if (p != 0) { \
                     p->h0 = msg->h0; \
                     p->h2 = msg->h2; \
@@ -973,13 +908,13 @@ extern int func_800D3F64();
                     p->h10 = 3; \
                     p->h12 = 0; \
                 } \
-                func_800D3F64(0x586, func_800D3FD8()); \
+                FieldFx_PlaySoundAtOwner(0x586, FieldFx_GetOwnerProgress()); \
             } \
-            if (D_800E27EC < 2) goto ret0; \
+            if (g_FieldFxCurrentAge < 2) goto ret0; \
             return 2; \
         case 2: \
-            D_800F3372 = 0; \
-            D_800F3374 = 8; \
+            g_FieldFxSpriteParams.parameter0A = 0; \
+            g_FieldFxSpriteParams.depth = 8; \
             goto ret0; \
         default: \
         ret0: \
@@ -988,7 +923,7 @@ extern int func_800D3F64();
     }
 
 /* Field engine state query used by the actor class update handlers. */
-extern int func_800DFB78();
+extern int FieldFx_IsOwnerBusy();
 
 typedef struct RoomTimer {
     char pad0[0x24];
@@ -1011,32 +946,29 @@ typedef struct RoomTimer2 {
     short h2C;                    /* 0x2C: fire request */
 } RoomTimer2;
 
-extern int func_800C6C18();
-extern int func_800C2B68();
 
 #define ROOMLIB_PARTICLE_TICK_A(name) \
-    void name(RoomEnt *o, unsigned char *state, char *sys) { \
+    void name(RoomEnt *o, RoomFxControl *state, RoomFxPairedEmitterState *sys) { \
         struct { short a; short pad; short b; } saved; \
-        char *clock = (char *)func_800C2B50(); \
+        RoomLibFxMatrixState *clock = FieldFx_GetScriptContext(); \
         int tmp = RW16(o->link, 0x2A); \
         saved.a = tmp; \
         tmp = RW16(o->link, 0x32); \
         saved.b = tmp; \
-        if (RW16(state, 2) < 0x20) { \
-            RWU16(sys, 0x138) = RWU16(sys, 0x138) + RWU16(sys, 0x13C); \
-            RWU16(sys, 0x13C) = RWU16(sys, 0x13C) + 7; \
-            if (RW16(state, 2) < 0x20 && RW16(sys, 0x13A) >= 5) { \
-                RW16(sys, 0x13A) = RW16(sys, 0x13A) - 4; \
+        if (state->frame < 0x20) { \
+            sys->timer = (unsigned short)sys->timer + (unsigned short)sys->phase; \
+            sys->phase = (unsigned short)sys->phase + 7; \
+            if (state->frame < 0x20 && sys->intensity >= 5) { \
+                sys->intensity = sys->intensity - 4; \
             } \
         } \
-        if (RW16(state, 2) == 0x10) { \
-            RW16(clock, 0x2C) = 1; \
+        if (state->frame == 0x10) { \
+            clock->hit = 1; \
         } \
-        if (RW16(state, 2) == 0x20) { \
-            state[1] = 2; \
+        if (state->frame == 0x20) { \
+            state->state = 2; \
         } \
     }
-
 
 typedef struct RoomFxParams {
     char pad0[0x8];
@@ -1075,22 +1007,18 @@ typedef struct RoomClock {
     unsigned char renderOwner;   /* 0x10 */
 } RoomClock;
 
-extern int func_800C6B90(void *position, int radius);
-#include "pe1/gte_types.h"
-#include "pe1/field_glow_sprite.h"
-extern int func_80071A54(void);
-
+extern int rand(void);
 
 #define ROOMLIB_REGISTER_TABLE_AT3(name, table) \
     int name(void *o) { \
-        if (FieldEng_GetStatus(o) == 3) { \
-            FieldEng_Register(o, table); \
+        if (FieldFx_GetStatus(o) == 3) { \
+            FieldFx_Register(o, table); \
         } \
         return 0; \
     }
 
-/* The room library's actor classes (RoomLib_ActorClasses.c, and
- * RoomLib_FloorWalkerClass.c in the rooms that link the longer library).
+/* The room library's actor classes (actor_classes.c, and
+ * floor_walker_class.c in the rooms that link the longer library).
  * A room's class table lists seven methods per class: three no-ops (slots
  * 0, 3 and 6), Init, Configure, Update and Release; the remaining functions
  * are the class's private states. */
@@ -1155,8 +1083,30 @@ int RoomLib_ConfigureHandlerG(RoomEnt *o, int mode, unsigned int op,
                               int arg0, int arg1, int arg2);
 int RoomLib_HandlerGNop3(void);
 void RoomLib_HandlerG(RoomEnt *o);
-void RoomLib_HandlerGFloorWalker(struct RoomFloorWalkerObject *object);
+void RoomLib_HandlerGFloorWalker(struct RoomEnt *obj);
 int RoomLib_ReleaseHandlerG(RoomEnt *o);
 int RoomLib_HandlerGNop6(void);
+
+/* One row of a room's class table (g_RoomClassTable) per actor class. */
+#define ROOMLIB_ACTOR_CLASS_D \
+    { RoomLib_HandlerDNop0, RoomLib_InitHandlerD, RoomLib_ConfigureHandlerD, \
+      RoomLib_HandlerDNop3, RoomLib_UpdateHandlerD, RoomLib_ReleaseHandlerD, \
+      RoomLib_HandlerDNop6 }
+#define ROOMLIB_ACTOR_CLASS_E \
+    { RoomLib_HandlerENop0, RoomLib_InitHandlerE, RoomLib_ConfigureHandlerE, \
+      RoomLib_HandlerENop3, RoomLib_UpdateHandlerE, RoomLib_ReleaseHandlerE, \
+      RoomLib_HandlerENop6 }
+#define ROOMLIB_ACTOR_CLASS_B \
+    { RoomLib_HandlerBNop0, RoomLib_InitHandlerB, RoomLib_ConfigureHandlerB, \
+      RoomLib_HandlerBNop3, RoomLib_UpdateHandlerB, RoomLib_ReleaseHandlerB, \
+      RoomLib_HandlerBNop6 }
+#define ROOMLIB_ACTOR_CLASS_C \
+    { RoomLib_HandlerCNop0, RoomLib_InitHandlerC, RoomLib_ConfigureHandlerC, \
+      RoomLib_HandlerCNop3, RoomLib_UpdateHandlerC, RoomLib_ReleaseHandlerC, \
+      RoomLib_HandlerCNop6 }
+#define ROOMLIB_ACTOR_CLASS_A \
+    { RoomLib_HandlerANop0, RoomLib_InitHandlerA, RoomLib_ConfigureHandlerA, \
+      RoomLib_HandlerANop3, RoomLib_UpdateHandlerA, RoomLib_ReleaseHandlerA, \
+      RoomLib_HandlerANop6 }
 
 #endif

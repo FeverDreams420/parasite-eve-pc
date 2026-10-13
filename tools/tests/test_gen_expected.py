@@ -44,32 +44,53 @@ class LiteralAddressOperandTests(unittest.TestCase):
 
 
 class MainDataLayoutTests(unittest.TestCase):
-    def test_gp_data_is_not_text_and_engine_keeps_its_retail_address(self):
+    def test_gp_data_is_not_text_and_engine_starts_at_retail_end(self):
         root = Path(__file__).resolve().parents[2]
         config = yaml.safe_load((root / "configs/USA/main.yaml").read_text())
         segments = {s["name"]: s for s in config["segments"]
                     if isinstance(s, dict)}
-        self.assertEqual(segments["main"]["subsegments"][-13:], [
-            [0x818A0, "data", "main/dtail_gp_pre_s016"],
-            [0x84D28, ".data", "psyq/libc/sprintf"],
-            [0x84D34, "data", "main/dtail_gp_post_sprintf"],
-            [0x8B72C, ".data", "psyq/libcd/CdControl"],
-            [0x8B7AC, "data", "main/dtail_gp_post_s016_pre_bios"],
-            [0x8B7B4, ".data", "psyq/libcd/bios"],
-            [0x8BABC, "data", "main/dtail_gp_post_bios"],
-            [0x8BEDC, ".data", "psyq/libds/dsfile"],
-            [0x8BEEC, "data", "main/dtail_gp_post_dsfile"],
-            {"start": 0x8D5A0, "type": ".sdata",
-             "name": "render/Render_TickObject", "linker_section_order": ".data"},
-            [0x8D5A4, "data", "main/dtail_gp_post_render_color"],
-            [0x8DA54, ".data", "field/Entity_ApplyCollisionResponse"],
-            [0x8DA58, "data", "main/dtail_gp_post_collision_actor"],
+        # Offsets and kinds are the retail layout; the owning unit names are
+        # not, since game units are renamed and merged as they are understood.
+        tail = [r for r in segments["main"]["subsegments"]
+                if (r["start"] if isinstance(r, dict) else r[0]) >= 0x818A0]
+        rows = [[r["start"], r["type"]] if isinstance(r, dict) else r[:2]
+                for r in tail]
+        self.assertEqual(rows, [
+            [0x818A0, "data"],
+            [0x84D28, ".data"],
+            [0x84D34, "data"],
+            [0x8B72C, ".data"],
+            [0x8B7AC, "data"],
+            [0x8B7B4, ".data"],
+            [0x8BABC, "data"],
+            [0x8BEDC, ".data"],
+            [0x8BEEC, "data"],
+            [0x8D5A0, ".sdata"],
+            [0x8D5A4, "data"],
+            [0x8D5F8, "linker_offset"],
+            [0x8D5F8, "data"],
+            [0x8DA54, ".data"],
+            [0x8DA58, "data"],
+            [0x8DB10, "linker_offset"],
+            [0x8DB10, "data"],
+            [0x93980, ".bss"],
+            [0x93AD0, "data"],
         ])
+        self.assertEqual([r[2] for r in tail[1:9:2]],
+                         ["psyq/libc/sprintf", "psyq/libcd/sys_2",
+                          "psyq/libcd/bios_4", "psyq/libds/dsfile"])
+        # The gp-relative word is emitted with its owner's .data.
+        self.assertEqual(tail[9]["linker_section_order"], ".data")
+        # .sdata ends and retail's BSS starts at 0x8009CDF8; the small COMMON
+        # pool ends at 0x8009D310 (ld_postpass.py places catch-alls there).
+        self.assertEqual(tail[11][2], "main_sbss")
+        self.assertEqual(tail[15][2], "main_scommon")
         engine = segments["field_engine"]
-        self.assertEqual(engine["start"], 0xB24A0)
-        self.assertEqual(engine["vram"], 0x800C1CA0)
-        self.assertEqual(engine["subsegments"][0],
-                         [0xB24A0, "asm", "engine/engine_800C1CA0"])
+        self.assertEqual(engine["start"], 0xB28C8)
+        self.assertEqual(engine["vram"], 0x800C20C8)
+        first = engine["subsegments"][0]
+        self.assertEqual(first[0], 0xB28C8)
+        self.assertNotEqual(first[1], "c")
 
 
 class SymbolTableTests(unittest.TestCase):
@@ -141,9 +162,9 @@ class SubsegmentSliceTests(unittest.TestCase):
                     "start": 0x800,
                     "vram": 0x80010000,
                     "subsegments": [
-                        [0x800, ".rodata", "task/Task_EvalExpr"],
-                        [0x3050, "c", "task/Task_EvalExpr"],
-                        [0x38B4, "asm", "task/Task_DispatchCmd"],
+                        [0x800, ".rodata", "task/Script_EvalExpr"],
+                        [0x3050, "c", "task/Script_EvalExpr"],
+                        [0x38B4, "asm", "task/Script_DispatchCmd"],
                     ],
                 },
             ]
@@ -151,9 +172,9 @@ class SubsegmentSliceTests(unittest.TestCase):
 
         slices, spans = gen_expected.subsegment_slices(config)
 
-        self.assertEqual(slices["task/Task_EvalExpr"][".text"], 0x80012850)
-        self.assertEqual(slices["task/Task_EvalExpr"][".rodata"], 0x80010000)
-        self.assertEqual(slices["task/Task_DispatchCmd"][".text"], 0x800130B4)
+        self.assertEqual(slices["task/Script_EvalExpr"][".text"], 0x80012850)
+        self.assertEqual(slices["task/Script_EvalExpr"][".rodata"], 0x80010000)
+        self.assertEqual(slices["task/Script_DispatchCmd"][".text"], 0x800130B4)
         self.assertEqual(spans, [(0x80010000, 0x800130B4)])
 
     def test_configured_padding_counts_unnamed_ranges(self):
@@ -182,6 +203,16 @@ class SubsegmentSliceTests(unittest.TestCase):
             [0x100C, "asm", "function"],
         ]}]}
         self.assertEqual(gen_expected.configured_pad_bytes(config), 4)
+
+    def test_inline_bss_counts_only_bss_rows_inside_the_image(self):
+        config = {"segments": [{"subsegments": [
+            [0x1000, "data", "before"],
+            {"start": 0x1010, "type": ".bss", "name": "unit",
+             "linker_section_order": ".data"},
+            [0x1160, "data", "after"],
+            [0x1200, ".bss", "tail"],
+        ]}]}
+        self.assertEqual(gen_expected.inline_bss_bytes(config), 0x150)
 
 
 class ObjectCoverageTests(unittest.TestCase):
@@ -362,12 +393,12 @@ class OverlappingFunctionNameTests(unittest.TestCase):
         instruction = "    /* 212C 80125544 D0FFBD27 */  addiu $sp, $sp, -0x30"
         text = '.section .text, "ax"\nglabel func_80125544\n' + instruction + '\n'
         restored = gen_expected.restore_c_function_names(
-            text, [(0, "Boot_InitPlaybackFile")], 0x80125544)
+            text, [(0, "BootDisplay_InitPlaybackFile")], 0x80125544)
         normalized = gen_expected.normalize_c_function_labels(
-            restored, {"Boot_InitPlaybackFile"})
+            restored, {"BootDisplay_InitPlaybackFile"})
         self.assertIn(".global func_80125544\nfunc_80125544:", normalized)
-        self.assertIn("glabel Boot_InitPlaybackFile\n" + instruction, normalized)
-        self.assertIn("endlabel Boot_InitPlaybackFile", normalized)
+        self.assertIn("glabel BootDisplay_InitPlaybackFile\n" + instruction, normalized)
+        self.assertIn("endlabel BootDisplay_InitPlaybackFile", normalized)
         self.assertEqual([line for line in normalized.splitlines() if "/*" in line],
                          [instruction])
 

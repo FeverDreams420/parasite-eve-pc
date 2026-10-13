@@ -1,25 +1,25 @@
 /* GAS_VERSION: 2.7 */
 /* Psy-Q LIBCD C_003.OBJ: StUnSetRing. */
 /* GAS 2.7 retains the load-delay nop before ExitCriticalSection. */
+
 #include "pe1/psyq_cd.h"
 #include "pe1/psyq_ds.h"
 
-extern unsigned char *D_8009AF1C;
-extern unsigned char *D_8009AF28;
+#include "c_003_externs.h"
 
 void StUnSetRing(void) {
     unsigned char *interrupt_enable;
 
     EnterCriticalSection();
-    if (D_8009AFD8 == 1) {
+    if (g_CdDsActive == 1) {
         DsDataCallback(0);
         DsReadyCallback(0);
     } else {
         CdDataCallback(0);
         CdReadyCallback(0);
     }
-    *D_8009AF1C = 0;
-    interrupt_enable = D_8009AF28;
+    *g_CdStreamIndexRegPtr = 0;
+    interrupt_enable = g_CdStreamIrqRegPtr;
     *interrupt_enable = 0;
     ExitCriticalSection();
 }

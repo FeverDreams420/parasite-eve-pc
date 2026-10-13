@@ -10,7 +10,9 @@ options:
   src_path: src/overlays/menu_memcard
   build_path: build/USA/overlays/menu_memcard
   ld_script_path: linkers/USA/overlays/menu_memcard.ld
-  symbol_addrs_path: configs/USA/overlays/sym.menu_memcard.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.menu_memcard.txt
+    - configs/USA/sym.main.txt
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.menu_memcard.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.menu_memcard.txt
   find_file_boundaries: True
@@ -37,18 +39,12 @@ segments:
       # The block's local jumps and jal targets resolve at 0x80120D00, 0x44 bytes
       # below the load address the header implies.
       - {start: 0x0, type: data, name: menu_memcard_header, linker_section_order: .text, linker_section: .code_data}
-      - [0x304, c, Memcard_SetVideoDisplay_80121004]
-      - [0x570, c, Memcard_UpdateVideoFrame_80121270]
-      - [0x7D4, c, Memcard_UploadVideoSlice_801214D4]
-      - [0x9C4, c, Memcard_InitVideoBuffers_801216C4]
-      - [0xD00, c, Memcard_ResetDisplayState_80121A44]
-      - [0xF04, c, Memcard_OpenVideo_80121C04]
-      - [0x1340, c, Memcard_StepVideo_80122040]
-      - [0x1654, c, func_80122398]
-      - [0x16A8, c, func_801223EC]
+      - [0x304, c, video]
       - {start: 0x16F4, type: data, name: menu_memcard_data_0016F4, linker_section_order: .text, linker_section: .code_data}
   - [0x2060]
-  - name: menu_memcard_glint_linkbase
+  # The effect callbacks keep the 0x801EB7F8 link base of the block they were
+  # copied from.
+  - name: menu_memcard_effects
     type: code
     start: 0x2060
     vram: 0x801ED858
@@ -56,89 +52,13 @@ segments:
     subalign: 4
     bss_size: 0x0
     subsegments:
-      - [0x2060, c, Memcard_DriftGlowParticle]
-      - [0x244C, c, Memcard_RingBurstController]
-      - [0x2D9C, c, Memcard_RisingEmberParticle]
-      - [0x33D0, c, Memcard_CrossFlashController]
-      - [0x3D68, c, Memcard_FadingGlintParticle]
-      - [0x4180, c, Memcard_GlintBurstController]
-      - [0x4870, c, Memcard_SpinRingParticle]
-      - [0x4E98, c, Memcard_SpinBurstController]
-  - [0x53A8]
-  # Pulse-image jumps retain the original copied callback link address.
-  - name: menu_memcard_pulse_linkbase
-    type: code
-    start: 0x53A8
-    vram: 0x801F0BA0
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x53A8, c, Memcard_PulseImage]
-  - [0x5538]
-  - name: menu_memcard_link_effect_linkbase
-    type: code
-    start: 0x5538
-    vram: 0x801F0D30
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x5538, c, Memcard_LinkEffect]
-  - [0x5878]
-  - name: menu_memcard_cosine_linkbase
-    type: code
-    start: 0x5878
-    vram: 0x801F1070
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x5878, c, Memcard_CosineImage]
-  - [0x5A04]
-  - name: menu_memcard_trail_linkbase
-    type: code
-    start: 0x5A04
-    vram: 0x801F11FC
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x5A04, c, Memcard_TrailEffect]
-  - [0x5DE4]
-  - name: menu_memcard_sine_rotate_linkbase
-    type: code
-    start: 0x5DE4
-    vram: 0x801F15DC
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x5DE4, c, Memcard_SineRotatingImage]
-  - [0x5F98]
-  - name: menu_memcard_sine_trail_linkbase
-    type: code
-    start: 0x5F98
-    vram: 0x801F1790
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x5F98, c, Memcard_SineTrailEffect]
-  - [0x6308]
-  # The glint origin hooks keep their original copied link address.
-  - name: menu_memcard_glint_hooks_linkbase
-    type: code
-    start: 0x6308
-    vram: 0x801F1B00
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x6308, c, Memcard_GlintOriginHooks]
+      - [0x2060, c, glint_effects]
+      - [0x53A8, c, image_effects]
   - [0x63A0]
-  # Resolves its local jumps at the 0x801887F0 link base.
-  - name: menu_memcard_effect_callbacks_tail
+  # The screen and the second video player copy resolve their local jumps
+  # at the 0x801887F0 link base (callers name some of them by their
+  # 0x80120D44 load address). Units without local jumps sit at the same base.
+  - name: menu_memcard_screen
     type: code
     start: 0x63A0
     vram: 0x8018EB90
@@ -147,191 +67,31 @@ segments:
     bss_size: 0x0
     subsegments:
       - {start: 0x63A0, type: data, name: menu_memcard_data_0063A0, linker_section_order: .text, linker_section: .code_data}
-      - [0x6B04, c, func_80127848]
-      - [0x6C78, c, Memcard_RedrawImageNodes_8018F468]
-  - [0x7000]
-  - name: menu_memcard_blend_image_linkbase
-    type: code
-    start: 0x7000
-    vram: 0x8018F7F0
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x7000, c, Memcard_BlendImage]
-  - [0x7168]
-  - name: menu_memcard_blend_rotated_linkbase
-    type: code
-    start: 0x7168
-    vram: 0x8018F958
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x7168, c, Memcard_BlendRotatedImage]
-  - [0x73D0]
-  # This allocator retains local jumps from its original link address.
-  - name: menu_memcard_image_node_linkbase
-    type: code
-    start: 0x73D0
-    vram: 0x8018FBC0
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x73D0, c, Memcard_CreateImageNode]
-  - [0x7514]
-  - name: menu_memcard_fixed_image_linkbase
-    type: code
-    start: 0x7514
-    vram: 0x8018FD04
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x7514, c, Memcard_CreateImageFlow]
-  - [0x7874]
-  # Like the copied video player, this block resolves its local jumps at the
-  # 0x801887F0 link base.
-  - name: menu_memcard_image_node_late
-    type: code
-    start: 0x7874
-    vram: 0x80190064
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x7874, c, Memcard_ListAndScreenFlow]
-  - [0x9108]
-  - name: menu_memcard_video_display_linkbase
-    type: code
-    start: 0x9108
-    vram: 0x801918F8
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x9108, c, Memcard_SetVideoDisplay]
-  - [0x9374]
-  - name: menu_memcard_video_frame_linkbase
-    type: code
-    start: 0x9374
-    vram: 0x80191B64
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x9374, c, Memcard_UpdateVideoFrame]
-  - [0x95D8]
-  - name: menu_memcard_video_upload_linkbase
-    type: code
-    start: 0x95D8
-    vram: 0x80191DC8
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x95D8, c, Memcard_UploadVideoSlice]
-  - [0x97C8]
-  - name: menu_memcard_video_init_linkbase
-    type: code
-    start: 0x97C8
-    vram: 0x80191FB8
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x97C8, c, Memcard_InitVideoBuffers]
-  - [0x9B04]
-  - name: menu_memcard_video_after_init
-    type: code
-    start: 0x9B04
-    vram: 0x8012A848
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x9B04, c, func_8012A848]
-  - [0x9D08]
-  # The copied video open and step keep the 0x801887F0 link base of the
-  # video player copy.
-  - name: menu_memcard_video_step_linkbase
-    type: code
-    start: 0x9D08
-    vram: 0x801924F8
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0x9D08, c, Memcard_OpenVideo]
-      - [0xA144, c, Memcard_StepVideo]
-  - [0xA458]
-  - name: menu_memcard_video_after_step
-    type: code
-    start: 0xA458
-    vram: 0x8012B19C
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0xA458, c, func_8012B19C]
-  - [0xA4AC]
-  # This copied handler shares the 0x801887F0 link base of the video player copy.
-  - name: menu_memcard_copied_handler
-    type: code
-    start: 0xA4AC
-    vram: 0x80192C9C
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0xA4AC, c, Memcard_UpdateEventFlag_8012B1F0]
-  - [0xA4F8]
-  - name: menu_memcard_play_video_linkbase
-    type: code
-    start: 0xA4F8
-    vram: 0x80192CE8
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0xA4F8, c, Memcard_PlayVideo]
+      - [0x6B04, c, page_flip]
+      - [0x6C78, c, image_nodes]
+      - [0x7874, c, list_screen]
+      - [0x9108, c, video_playback]
   - [0xA7A8]
-  - name: menu_memcard_fade_before_counter
+  # The fade code resolves its local jumps at the 0x801887A4 link base, 0x4C
+  # (the size of the copied event-flag handler) below the video player's.
+  - name: menu_memcard_fade
     type: code
     start: 0xA7A8
-    vram: 0x8012B4EC
+    vram: 0x80192F4C
     align: 4
     subalign: 4
     bss_size: 0x0
     subsegments:
-      - [0xA7A8, c, Memcard_InitFadeForNode]
-  - [0xA7F8]
-  # The retail jump to the shared epilogue retained this earlier link address.
-  - name: menu_memcard_fade_linkbase
+      - [0xA7A8, c, fade]
+  - [0xAA64]
+  - name: menu_memcard_tail
     type: code
-    start: 0xA7F8
-    vram: 0x80192F9C
+    start: 0xAA64
+    vram: 0x8012B7A8
     align: 4
     subalign: 4
     bss_size: 0x0
     subsegments:
-      - [0xA7F8, c, Memcard_UpdateFadeCounter_8012B53C]
-  - [0xA894]
-  - name: menu_memcard_fade_late
-    type: code
-    start: 0xA894
-    vram: 0x8012B5D8
-    align: 4
-    subalign: 4
-    bss_size: 0x0
-    subsegments:
-      - [0xA894, c, Memcard_AdvanceFade]
-      - [0xA8E8, c, Memcard_UpdateFadeDisplay]
-      - [0xA97C, c, Memcard_DecreaseFade]
-      - [0xA9AC, c, func_8012B6F0]
-      - [0xA9CC, c, func_8012B710]
-      - [0xAA10, c, func_8012B754]
       - {start: 0xAA64, type: data, name: menu_memcard_data, linker_section_order: .text, linker_section: .code_data}
   - [0xB000]
 # source slice: scanner

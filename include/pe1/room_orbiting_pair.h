@@ -2,6 +2,12 @@
 #define PE1_ROOM_ORBITING_PAIR_H
 
 #include "common.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
+#include "pe1/gte_types.h"
 #include "pe1/render_object.h"
 
 typedef struct RoomOrbitPairTemplate8 {
@@ -47,20 +53,9 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOrbitPairEventState, active) == 0xD,
 PE1_STATIC_ASSERT(sizeof(RoomOrbitPairParticle) == 0x14,
                   room_orbit_pair_particle_size);
 
-extern RoomOrbitPairChannel *D_800F32D0, *D_800F33E0;
-extern RoomOrbitPairEventState *D_800E2368;
-extern volatile u16 D_800E11EA;
-extern int func_800CE560(void *, int, int, void *);
-extern void func_800CE8F0(void *, int, void *, void *);
-extern RoomOrbitPairParticle *func_800CE610(void *);
-extern int rcos(int);
-extern int rsin(int);
-extern int func_800D3FD8(void);
-extern void func_800D3F64(int, int);
-extern int func_80071A54(void);
+extern int rand(void);
 
-extern RoomOrbitPairTemplate8 D_8018F208;
-extern void func_80192844(void);
-int func_801934AC(int mode, u16 *counter);
+extern const RoomOrbitPairTemplate8 D_8018F208;
+int RoomM256_ScatterDropEmitter(int mode, u16 *counter);
 
 #endif

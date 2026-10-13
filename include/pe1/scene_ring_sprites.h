@@ -2,9 +2,12 @@
 #define PE1_SCENE_RING_SPRITES_H
 
 #include "common.h"
-#include "pe1/gte_types.h"
-#include "pe1/field_sprite_state.h"
 #include "pe1/field_glow_sprite.h"
+#include "pe1/field_ring_geometry.h"
+#include "pe1/field_script_context.h"
+#include "pe1/field_sprite_state.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_libc.h"
 
 /* Scene e08 ring sprites: an animated flash sprite (first 12 ticks), a
  * steady glow sprite, and two shaded rings scaled by the state's size. */
@@ -21,33 +24,21 @@ typedef struct SceneRingSpritesState {
     /* 0x08 */ s16 size;
     /* 0x0A */ s16 depth;
     /* 0x0C */ u8 ticks;
+    /* 0x0D */ u8 reserved0D;  /* set to 156 by the init, never read */
 } SceneRingSpritesState;
 
-/* Sprite parameter block drawn by func_800C42A4. */
-typedef struct SceneRingSprite {
-    /* 0x00 */ u8 r, g, b, pad3;
-    /* 0x04 */ u8 texture, mode, extra, pad7;
-    /* 0x08 */ s16 offset;
-    /* 0x0A */ s16 depth;
-    /* 0x0C */ u8 pad0C[4];
-} SceneRingSprite;
-
-/* Shaded ring parameter block drawn by func_800C4FC4. */
+/* Shaded ring parameter block drawn by FieldFx_DrawShadedRing. */
 typedef struct SceneRingShade {
     /* 0x00 */ u8 pad00[0x14];
     /* 0x14 */ s16 depth;
     /* 0x16 */ u8 pad16[2];
 } SceneRingShade;
 
-extern GteRotation D_8018F018;
-extern GteVector D_8018F020;
-extern GteVector D_8018F030;
-extern SceneRingSprite D_801995A8;
-extern SceneRingSprite D_801995B8;
-extern SceneRingShade D_801995C8[2];
-
-SceneRingSpritesOwner *func_800C2B50(void);
-void func_80071A44(GteVector *vector, int value, int size);
-void func_800C4FC4(SceneRingShade *ring, GteMatrix *matrix, int mode);
+extern GteRotation g_SceneE08RingSpritesRotation;
+extern GteVector g_SceneE08RingSpritesFlashScale;
+extern GteVector g_SceneE08RingSpritesGlowScale;
+extern FieldGlowSprite g_SceneE08RingSpritesFlashSprite;
+extern FieldGlowSprite g_SceneE08RingSpritesGlowSprite;
+extern SceneRingShade g_SceneE08RingSpritesRings[2];
 
 #endif

@@ -3,6 +3,7 @@
 
 /* Declarations used by the stat bar renderer Draw_AllocTexturedRectAlt. */
 
+#include "pe1/bounds_check.h"
 #include "pe1/draw_state.h"
 #include "pe1/render_prim.h"
 
@@ -13,7 +14,6 @@ typedef union DrawLevelBarLink {
     u32 word;
 } DrawLevelBarLink;
 
-void BoundsCheck_AssertStub(int code);
 void Draw_PrintNumberWidth2Unk(int value);
 void Draw_AllocTexturedRectAlt(int value, int width);
 

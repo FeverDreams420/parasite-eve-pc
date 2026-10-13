@@ -13,8 +13,9 @@ retail byte match is required, but it is only one part of accepting a change.
 5. Run `make verify` before handing work off.
 
 `make verify` runs the source/manifest contract, debt ratchets, organization
-ratchet, tool tests, full main build, and retail SHA-1 check. It needs the local
-retail-derived files and compiler setup. `make ci` is its source-only subset and
+ratchet, tool tests, full main build, retail SHA-1 check and the
+shiftability ratchet (`make shift-check`, fixed program addresses). It needs
+the local retail-derived files and compiler setup. `make ci` is its source-only subset and
 runs in GitHub Actions.
 
 ## Definition of done
@@ -24,8 +25,9 @@ A normal main-executable change is done when:
 - the intended function is semantic C under `docs/ASM_AND_GTE_POLICY.md`;
 - its stock-compiler object diff is exact;
 - `make verify` passes;
-- any debt reduction is captured with `make debt-baseline` or
-  `make organization-baseline` and the lowered JSON is included;
+- any debt reduction is captured with `make debt-baseline`,
+  `make organization-baseline` or `make shift-baseline` and the lowered JSON
+  is included;
 - naming, typing, or source-boundary claims have evidence, not only a byte
   match.
 

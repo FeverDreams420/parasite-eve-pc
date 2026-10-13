@@ -1,8 +1,8 @@
 #ifndef FX_COMMON_MODEL_H
 #define FX_COMMON_MODEL_H
 
-#include "fx_common_render.h"
 #include "fx_common_motion.h"
+#include "fx_common_render.h"
 
 /* Polygon model blocks: a header of eight primitive counts and eight byte
  * offsets (relative to the block) of the primitive arrays, one per kind. */

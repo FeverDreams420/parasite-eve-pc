@@ -5,6 +5,7 @@
  * the trapping add instruction that GCC never emits. All 88 words are
  * identical to CompMatrix in PSY-Q 3.5 mtx_00.o.
  */
+
 #include "pe1/psyq_asm.h"
 
 PSYQ_ASM_OBJECT(LIBGTE, MTX_003)

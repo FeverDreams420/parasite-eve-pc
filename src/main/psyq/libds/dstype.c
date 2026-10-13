@@ -1,12 +1,12 @@
 /* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSTYPE.OBJ: DsGetDiskType, GD_cbsync, GD_cbready. */
-#include "pe1/psyq_ds_queue.h"
-#include "pe1/psyq_cd.h"
+
 #include "pe1/cdrom.h"
+#include "pe1/psyq_cd.h"
+#include "pe1/psyq_ds_queue.h"
 
-extern char D_8001205C[];
+#include "dstype_externs.h"
 
-CdlLOC *DsIntToPos(int sector, CdlLOC *position);
 void GD_cbsync(unsigned char event);
 
 
@@ -47,14 +47,15 @@ void GD_cbsync(unsigned char arg0) {
 void GD_cbready(int event, void *data, void *detail) {
     u8 arg0 = event;
     u8 buffer[8];
-    /* Preserve the branch result in the strncmp return register. */
-    register int disk_type asm("$2");
+    int disk_type;
 
     if (arg0 == 1) {
         DsGetSector(buffer, 2);
-        if ((disk_type = strncmp((char *)&buffer[1], D_8001205C, 5)) != 0) {
+        disk_type = strncmp((char *)&buffer[1], g_DsIso9660Id, 5);
+        if (disk_type != 0) {
             disk_type = 2;
-        } else {
+        }
+        if (disk_type == 0) {
             disk_type = 4;
         }
     } else {

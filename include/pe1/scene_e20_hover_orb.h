@@ -1,6 +1,19 @@
 #ifndef PE1_SCENE_E20_HOVER_ORB_H
 #define PE1_SCENE_E20_HOVER_ORB_H
 
+#include "pe1/asset_find.h"
+#include "pe1/field_model_draw.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/render_matrix_slot.h"
+#include "pe1/scene_archive.h"
 #include "pe1/scene_e20_flare.h"
 
 /* Scene e20 trail controller and its command/particle records.
@@ -22,60 +35,16 @@ typedef struct SceneE20Actor { u8 reserved[0x4c]; u32 flags; } SceneE20Actor;
 typedef struct SceneE20Event { u8 reserved[13]; u8 active; } SceneE20Event;
 typedef struct SceneE20Pool { SceneE20Node *node; u8 reserved04[0x264]; SceneE20Vec position; } SceneE20Pool;
 typedef struct SceneE20Channel { int reserved[2]; SceneE20Pool *pool; } SceneE20Channel;
-extern SceneE20Channel *D_800F32D0, *D_800F33E0;
 extern SceneE20Color D_8018EFFC, D_8018F000, D_8018F004, D_8018F008;
-extern SceneE20Actor **D_8009D254;
-extern void *D_800B0E64;
-extern void *D_8019085C;
-int func_8018F750(int mode, SceneE20TrailEffect *effect, SceneEffectSlot *command);
-extern SceneEffectSlot D_80190860[];
-int func_80071A54(void);
-int func_800D3FD8(void);
-void *func_8006E498(void *archive, unsigned key);
-void func_8006DCE4(int sound, int volume, s16 x, s16 y, int z);
-int rsin(int angle);
-int rcos(int angle);
-u16 func_80077A64(int tp, int abr, int x, int y);
-u16 func_80077AA4(int x, int y);
-#include "pe1/gte_types.h"
-int func_800C6B90(SceneE20Vec *position, int radius);
-void func_800C6D5C(void *model, int a, int b);
-SceneE20Particle *func_800CE610(SceneE20Pool *pool);
-void func_800CE870(void *object, int joint, SceneE20Vec *out);
-void func_800CFAA8(SceneE20Vec *from, SceneE20Vec *to, SceneE20Vec *angles);
-void func_800CFB7C(SceneE20Vec *angles, s16 distance, SceneE20Vec *out);
-void func_800D1384(SceneE20Vec *from, SceneE20Vec *to, u32 count, SceneE20Color *color0, SceneE20Color *color1, int scale, void *history, int mode);
-void func_800D2B58(void *from, void *to, void *color0, void *color1, int scale0,
+extern struct BattleEntity *D_8009D254;
+extern void *g_SceneE20HoverOrbModel;
+int SceneE20_HoverOrbController(int mode, SceneE20TrailEffect *effect, SceneEffectSlot *command);
+extern SceneEffectSlot g_SceneE20EffectSlots[];
+int rand(void);
+void FieldFx_DrawGlowLine(void *from, void *to, void *color0, void *color1, int scale0,
                   int scale1, int mode);
 
-void func_800C6EC0(int tpage,int clut);
-void func_800C6ED8(int mode);
-void func_800C6EF8(void *model);
-void func_800C6F4C(void *model);
-void func_800C6FA0(void *model, u16 alpha);
-void func_800C71E4(void *model, SceneE20Matrix *matrix);
-int func_800CE560(SceneE20Pool *pool,int stride,int count,void *callback);
-void func_800CEE20(SceneE20Vec *position,SceneE20Vec *rotation,int scaleX,int scaleY,int cell,int clut,int mode,int alpha,SceneE20Color *color);
-extern SceneE20Event *D_800E2368;
-extern u16 D_800E1204[],D_800E2850[];
-extern SceneE20Matrix *D_800BCFA4;
-
-extern u16 firstPageTable[] asm("D_800E2850"); /* Same linker symbol, distinct compiler name. */
-extern u16 D_800E11EA;
-extern u16 D_800E11FA;
-extern u16 D_800E120A;
-extern s32 D_800E27EC;
-extern s16 D_800F3368;
-extern s16 D_800F336A;
-extern u16 D_800F336C;
-extern s16 D_800F336E;
-extern u16 D_800F3370;
-extern s16 D_800F3372;
-extern s16 D_800F3374;
-extern s16 D_800F3376;
-extern s16 D_800F3378;
-extern s32 D_800F3428;
-extern s32 D_80190800;
+extern s32 g_SceneE20HoverOrbHitCooldown;
 
 PE1_STATIC_ASSERT(sizeof(SceneEffectSlot) == 0x18, scene_e20_slot_size);
 PE1_STATIC_ASSERT(sizeof(SceneE20TrailEffect) == 0xC4, scene_e20_trail_size);

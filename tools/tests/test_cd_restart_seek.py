@@ -2,21 +2,24 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text, host_unit  # noqa: E402
 
 
 class RestartSeekTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_order_parameters_and_result(self):
-        source = (ROOT / "src/main/psyq/libds/dsready_4.c").read_text()
-        self.assertEqual(source.count('asm("$3")'), 1)
-        source = source.replace('asm("$3")', "")
+        self.assertEqual(function_text("ER_retry").count('asm("$3")'), 1)
+        source = host_unit("ER_retry")
         harness = source + r'''
 #include <assert.h>
 #include <limits.h>
-int D_8009B6EC;
+DsAsyncReadState g_DsAsyncReadState;
+#define D_8009B6EC g_DsAsyncReadState.nextSector
 static CdlLOC first, second;
 static int step, modeValue, commandValue, sectorValue, resultValue;
 DsEventCallback DsReadyCallback(DsEventCallback callback) {
@@ -41,12 +44,12 @@ int func_8007FC44(void) {
     return commandValue;
 }
 void func_8008227C(void) { assert(0); }
-int DsPacket(int mode, CdlLOC *position, int command,
-                             void (*callback)(void), int limit) {
+int DsPacket(int mode, DslLOC *position, int command,
+             DslCB callback, int limit) {
     assert(step++ == 6);
     assert(mode == (modeValue & 255) && position == &second);
     assert(command == (commandValue & 255));
-    assert(callback == func_8008227C && limit == -1);
+    assert(callback == (DslCB)func_8008227C && limit == -1);
     return resultValue;
 }
 int main(void) {

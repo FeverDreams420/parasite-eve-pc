@@ -1,0 +1,70 @@
+#include "common.h"
+
+/* Table entry address: the queue offsets are byte offsets into the table. */
+typedef union DrawPrimGeneratorAddress {
+    u32 *pointer;
+    u32 address;
+} DrawPrimGeneratorAddress;
+
+u32 Draw_FlushPrimQueue(void) {
+    register u32 *base asm("$8");
+    register u32 *head_slot asm("$15");
+    register u32 *tail_slot asm("$24");
+    register s32 head asm("$9");
+    register s32 tail asm("$10");
+    register u32 *head_ptr asm("$11");
+    register u32 *tail_ptr asm("$12");
+    register u32 head_value asm("$13");
+    register u32 tail_value asm("$14");
+    u32 ret;
+    /* Match debt: read architectural zero without emitting an instruction;
+     * OR/ORI preserve the original encodings of the return and wrap value. */
+    register u32 zero asm("$0");
+        base = (u32 *)0x80070E0C;
+    head_slot = (u32 *)0x80070E04;
+    tail_slot = (u32 *)0x80070E08;
+    head = *head_slot;
+    tail = *tail_slot;
+    /* Keep the base as a register operand rather than a folded constant. */
+    asm volatile("" : "=r"(base) : "0"(base));
+
+    /* Match note: preserve target operand order in the address adds. */
+    {
+        DrawPrimGeneratorAddress entry;
+
+        entry.pointer = base;
+        entry.address += head;
+        head_ptr = entry.pointer;
+    }
+    {
+        DrawPrimGeneratorAddress entry;
+
+        entry.pointer = base;
+        entry.address += tail;
+        tail_ptr = entry.pointer;
+    }
+    asm volatile("" : "=r"(head_ptr), "=r"(tail_ptr) : "0"(head_ptr), "1"(tail_ptr));
+
+    {
+        u32 previousValue = *head_ptr;
+        tail_value = *tail_ptr;
+        head_value = previousValue + tail_value;
+    }
+    *head_ptr = head_value;
+    /* Finish the entry write and result copy before updating queue offsets. */
+    asm volatile("" : "=r"(head_value) : "0"(head_value));
+    ret = zero | head_value;
+    asm volatile("" : "=r"(head) : "0"(head));
+
+    head = head - 4;
+    tail = tail - 4;
+    if (head < 0) {
+        head = zero | 0x40;
+    }
+    *head_slot = head;
+    if (tail < 0) {
+        tail |= 0x40;
+    }
+    *tail_slot = tail;
+    return ret;
+}

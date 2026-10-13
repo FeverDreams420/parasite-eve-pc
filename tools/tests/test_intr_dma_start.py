@@ -4,6 +4,8 @@ import subprocess
 import tempfile
 import unittest
 
+from tools.tests.csource import find_definition
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -11,7 +13,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 class IntrDmaStartTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_clears_handlers_installs_dma_trap_and_returns_registrar(self):
-        source = (ROOT / "src/main/psyq/libetc/intr_dma.c").read_text()
+        source = find_definition('startIntrDMA').read_text()
         source = source[:source.index("void trapIntrDMA(")]
         harness = source + r'''
 #include <assert.h>

@@ -46,6 +46,15 @@ typedef struct MenuWidgetNode {
     int (*selectionAvailable)(int index); /* +0x8C item-slot filter callback. */
 } MenuWidgetNode;
 
+/* Four-byte saved cursor/scroll slot indexed by a widget aux_index. */
+typedef struct MenuWidgetSavedLayout {
+    s8 cursorX, cursorY, scrollY, reserved;
+} MenuWidgetSavedLayout;
+PE1_STATIC_ASSERT(sizeof(MenuWidgetSavedLayout) == 4, menu_widget_saved_layout_size);
+extern MenuWidgetSavedLayout g_MenuWidgetColumnLayoutTable[];
+
+MenuWidgetNode *MenuWidget_AllocNode(MenuWidgetNode *parent, MenuWidgetNode *attachTo);
+
 /* parent is recorded for input dispatch; attachTo supplies a free child slot.
  * The simple node's last argument initializes cursor_x. */
 MenuWidgetNode *MenuWidget_CreateSimpleNode(int mode, MenuWidgetNode *parent,
@@ -133,13 +142,20 @@ PE1_STATIC_ASSERT(sizeof(MenuWidgetGridDescriptor) == 0x20,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetGridDescriptor, yLimit) == 0x10,
                   menu_widget_grid_descriptor_y_limit_offset);
 
+/* Resident widget layout tables, 0x41 entries each. */
+extern MenuWidgetSimpleDescriptor g_MenuWidgetSimpleDescriptors[0x41];
+extern MenuWidgetGridDescriptor g_MenuWidgetGridDescriptors[0x41];
+
 MenuWidgetSimpleDescriptor *MenuWidget_LookupSimpleDescriptor(unsigned int index);
 MenuWidgetGridDescriptor *MenuWidget_LookupGridDescriptor(unsigned int index);
 void Draw_SwapPrimBuffers(MenuWidgetNode *list);
 void Draw_AllocPrimWithMask(MenuWidgetNode *node);
 void Draw_FlushFrontBuffer(MenuWidgetListNavigation *node);
 void Draw_SetPrimCallback(MenuWidgetNode *node, int item_count);
-void MenuWidget_SetColumnLayout(void *node, int layout);
+void MenuWidget_SetColumnLayout(MenuWidgetNode *node, int layout);
+void MenuWidget_ApplyColumnLayout(MenuWidgetNode *node);
+void MenuWidget_ClearColumnLayout(MenuWidgetNode *node);
+void MenuWidget_SaveColumnLayout(MenuWidgetNode *node);
 void MenuWidget_DestroyPopupNode(MenuWidgetNode *node);
 
 extern MenuWidgetNode g_MenuWidgetNodePool[];
@@ -156,7 +172,7 @@ extern MenuWidgetNode *g_MenuWidgetSavedNode;
 
 /* MENU TAB / LIST NAVIGATION (verified live via DuckStation GDB while moving the
  * cursor and switching tabs):
- *   D_8009D15C  = the currently FOCUSED node == the active tab/list.
+ *   g_MenuWidgetCurrentNode  = the currently FOCUSED node == the active tab/list.
  *                 Switching tabs moves this pointer to a different node; moving
  *                 inside a list changes that node's cursor.
  *   Each tab/category is its own MenuWidgetNode with mode==2 and a distinct
@@ -173,5 +189,28 @@ extern MenuWidgetNode *g_MenuWidgetSavedNode;
  * Quick live probe: active tab node = *(u32*)0x8009D15C; tab id =
  *   node->selected_base (+0x24); cursor = node->cursor_x/cursor_y (+0x44/+0x48).
  */
+
+MenuWidgetNode *MenuWidget_GetChild(MenuWidgetNode *node, int index);
+int MenuWidget_HasActiveNodes(void);
+MenuWidgetNode *MenuWidget_FindByFieldValue(int value);
+MenuWidgetNode *MenuWidget_FindByModeAndSelectedBase(int mode, int selectedBase);
+
+void MenuWidget_UpdateAndDraw(void);
+
+MenuWidgetNode *MenuWidget_FindLastMode1WithCursorX(void);
+int MenuWidget_GetCellIndex(MenuWidgetNode *node);
+MenuWidgetNode *MenuWidget_GetCurrentNode(void);
+int MenuWidget_GridCellIndex(MenuWidgetNode *node);
+void MenuWidget_InitPool(void);
+void MenuWidget_NavScrollTo(int selectedBase);
+void MenuWidget_SetCurrentNode(MenuWidgetNode *node);
+void MenuWidget_SetCursorY(MenuWidgetNode *node);
+int MenuWidget_IsCursorYClear(MenuWidgetNode *node);
+int MenuWidget_GetColumnLayoutMode(void);
+/* Draws the text-table entry's primitive list (0 clears). */
+void Draw_FlushPrimList(int text_id);
+
+/* List node being drawn by the list renderers and row callbacks. */
+extern MenuWidgetNode *g_MenuActiveWidget;
 
 #endif

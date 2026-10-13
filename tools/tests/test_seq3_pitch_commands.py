@@ -3,15 +3,20 @@ from pathlib import Path
 import itertools
 import random
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text, functions_text  # noqa: E402
 
 
 class Seq3PitchCommandTests(unittest.TestCase):
     def test_immediate_value_pin_is_gone(self):
-        source = (ROOT/'src/main/akao/seq3.c').read_text()
-        immediate = source.split('void Seq_SetTrackPitchImmediate(',1)[1].split('void Seq_SlideTrackPitch(',1)[0]
+        source = functions_text('Seq_StartRelativeNestedStream', 'Spu_ManageVoicesCmd',
+                                'Seq_SetTrackPitchImmediate', 'Seq_SlideTrackPitch',
+                                'Seq_TrackPitchSetup', 'Seq_SetGlobalPitchImmediate')
+        immediate = function_text('Seq_SetTrackPitchImmediate')
         self.assertNotRegex(immediate, r'\b(?:asm|__asm__)\b')
         self.assertLessEqual(source.count('asm("$'),4)
 

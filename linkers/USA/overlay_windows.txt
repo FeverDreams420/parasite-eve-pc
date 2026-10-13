@@ -1,0 +1,32 @@
+/*
+ * The overlay window block: the overlay load windows and the runtime
+ * buffers that share them, from the end of main + field engine +
+ * g_BootWorkArea up to the end of the PS-X EXE image.
+ *
+ * One source of truth. The block floats as a unit: its base is
+ * overlay_windows_VRAM, the start of the `overlay_windows` segment of
+ * configs/USA/main.yaml, which the link places right after the boot work
+ * area. Each window below is a fixed offset from that base. What the disc
+ * fixes is the layout inside the block (the overlays in PE.IMG are linked
+ * at these offsets), not where the block starts.
+ *
+ * Consumers:
+ * - main.ld INCLUDEs this file (tools/scripts/ld_postpass.py), so the
+ *   built main.elf defines every window symbol;
+ * - each overlay links its segments and every address it uses inside the
+ *   block as `window + offset` (tools/scripts/overlay_windows.py rewrites
+ *   the generated overlay linker script; overlay_link_symbols.py writes
+ *   the window values from main.elf and linkers/USA/overlay_abi.txt
+ *   states its entries the same way);
+ * - an address in the block belongs to the window with the greatest
+ *   offset not above it.
+ *
+ * Retail base 0x8010BCF8 (the segment's `vram`, for the disassembly); the
+ * comments give the retail address of each window.
+ */
+OVERLAY_WINDOW_MDEC_DIAG = overlay_windows_VRAM + 0x0;          /* 0x8010BCF8 mdec_diag */
+OVERLAY_WINDOW_MENU_MEMCARD = overlay_windows_VRAM + 0x15008;   /* 0x80120D00 menu_memcard */
+OVERLAY_WINDOW_BOOT_DISPLAY = overlay_windows_VRAM + 0x172AC;   /* 0x80122FA4 boot_display */
+OVERLAY_WINDOW_FX_SECTOR17 = overlay_windows_VRAM + 0x64308;    /* 0x80170000 fx_common_sector17 */
+OVERLAY_WINDOW_ROOM = overlay_windows_VRAM + 0x832F0;           /* 0x8018EFE8 rooms, scenes, field effects (fx_common at +8) */
+OVERLAY_WINDOW_TASK_PROGRAM = overlay_windows_VRAM + 0xE1B00;   /* 0x801ED7F8 task program buffer, process slots */

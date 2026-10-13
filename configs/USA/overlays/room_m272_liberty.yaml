@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m272_liberty
   ld_script_path: linkers/USA/overlays/room_m272_liberty.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m272_liberty.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m272_liberty.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m272_liberty.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m272_liberty.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,13 +37,7 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m272_liberty]
-      - [0x24, c, func_8018F00C]
-      - [0x2C, c, RoomM272_Cinematic_8018F014]
-      - [0x190, c, RoomM272_SetPhase_8018F178]
-      - [0x1A0, c, RoomM272_Nop_8018F188]
-      - [0x1A8, c, RoomM272_Nop_8018F190]
-      - [0x1B0, c, RoomM272_Nop_8018F198]
-      - [0x1B8, c, RoomM272_Nop_8018F1A0]
+      - [0x24, c, m272]
       - [0x1C0, data, D_8018F1A8]
       - start: 0x1E0
         type: databin

@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m151_hospital
   ld_script_path: linkers/USA/overlays/room_m151_hospital.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m151_hospital.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m151_hospital.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m151_hospital.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m151_hospital.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,11 +37,16 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m151_hospital]
-      - [0xC, c, ../room_lib/RoomFx_MirrorModel]
-      - [0xB5C, .data, ../room_lib/RoomFx_MirrorModel]
+      - [0xC, c, ../room_lib/mirror_model]
+      - [0xB5C, .data, ../room_lib/mirror_model]
       - start: 0xB98
         type: databin
         name: D_8018FB80
+        dir: room_m151_hospital
+      - [0x11138, data, D_801A0120]
+      - start: 0x11144
+        type: databin
+        name: D_801A012C
         dir: room_m151_hospital
   - [0x11800]
 # room: m151, section3 sector 43423, scanner delta 0

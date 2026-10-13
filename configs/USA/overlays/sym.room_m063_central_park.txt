@@ -1,5 +1,3 @@
-g_FieldActorListHead = 0x8009D20C;
-g_PlayerEntity = 0x8009D254;
 RoomLib_WindowClassNop0 = 0x8018F054; // type:func
 RoomLib_InitWindowClass = 0x8018F05C; // type:func
 RoomLib_ConfigureWindowClass = 0x8018F0D0; // type:func
@@ -10,3 +8,4 @@ RoomLib_WindowHandler = 0x8018F320; // type:func
 RoomLib_WindowArrived = 0x8018FD14; // type:func
 RoomLib_ReleaseWindowClass = 0x8018FD5C; // type:func
 RoomLib_WindowClassNop6 = 0x8018FDD4; // type:func
+g_RoomClassTable = 0x8018FDDC; // size:0x1C allow_addend:true

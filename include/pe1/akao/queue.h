@@ -15,6 +15,8 @@ typedef struct AkaoQueueEntry {
         int value;
         /* sample load messages: sample data past the header */
         unsigned short *sample_data;
+        /* sequence messages: the sequence data to play */
+        unsigned char *sequence;
     } arg0;
     /* 0x08 */ int arg1;
     /* 0x0C */ int arg2;
@@ -27,9 +29,9 @@ typedef struct AkaoQueueEntry {
 
 typedef void (*AkaoMessageHandler)(AkaoQueueEntry *entry);
 
-extern AkaoQueueEntry D_800B8628[];
+extern AkaoQueueEntry g_AkaoMessageQueue[];
 extern int g_AkaoMessageQueueCount;
-extern AkaoMessageHandler Akao_MessageHandlers[] asm("D_8009C0C0");
+extern AkaoMessageHandler Akao_MessageHandlers[];
 
 void Akao_MessageNoop(AkaoQueueEntry *entry);
 void Akao_AllocMessageSlot(AkaoQueueEntry **out_msg);

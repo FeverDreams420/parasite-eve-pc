@@ -2,13 +2,14 @@
 import pathlib
 import random
 import shutil
-import subprocess
+import sys
 import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import linked_function_bytes  # noqa: E402
 ENTRY, EXIT = 0x8003E474, 0x80010000
-UNIT = 0x2E3E4
 HEADER, OBJECT, PACKETS, STACK = 0x80100000, 0x80101000, 0x80110000, 0x801F0000
 
 
@@ -19,16 +20,9 @@ class RenderOffsetObjectTextureCoordinatesTests(unittest.TestCase):
     def setUpClass(cls):
         cls.retail = (ROOT / "assets/USA/main.exe").read_bytes()[0x2EC74:0x2EDF0]
         with tempfile.TemporaryDirectory() as directory:
-            work = pathlib.Path(directory)
-            obj, binary = work / "unit.o", work / "unit.bin"
-            subprocess.run(["tools/scripts/cc.sh",
-                            "src/main/render/Render_ObjectStateHelpers.c", str(obj)],
-                           cwd=ROOT, check=True, capture_output=True)
-            # The routine has no relocations, so its bytes in the unit's
-            # unlinked .text are final.
-            subprocess.run(["mipsel-none-elf-objcopy", "-O", "binary", "-j", ".text",
-                            str(obj), str(binary)], check=True, capture_output=True)
-            cls.compiled = binary.read_bytes()[0x2EC74 - UNIT:0x2EDF0 - UNIT]
+            cls.compiled = linked_function_bytes(
+                "Render_OffsetObjectTextureCoordinates", ENTRY, len(cls.retail), "",
+                pathlib.Path(directory))
 
     def test_byte_match(self):
         self.assertEqual(self.compiled, self.retail)

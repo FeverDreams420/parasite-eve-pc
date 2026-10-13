@@ -2,23 +2,28 @@
 #define PE1_FIELD_TEXTURED_STRIP_H
 
 #include "common.h"
-#include "pe1/gte_types.h"
-#include "pe1/field_textured_chain_node.h"
-#include "pe1/render_tint.h"
-#include "pe1/field_engine_scratch.h"
 #include "pe1/field_sprite_state.h"
+#include "pe1/field_textured_chain_node.h"
+#include "pe1/fieldfx_scratch.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/render_tint.h"
 
-/* Field engine textured strip (func_800C5A40): consecutive nodes joined by
+/* Field engine textured strip (FieldFx_DrawTexturedStrip): consecutive nodes joined by
  * POLY_FT4 segments, each node's two edge points projected with
  * RotTransPers4 and textured from a 16x16 cell grid. */
 
 typedef struct FieldTexturedStrip {
     /* 0x00 */ FieldStripNode *nodes;
     /* 0x04 */ s16 count;
-    /* 0x06 */ u8 pad06[0xA];
+    /* 0x06 */ u8 pad06[8];
+    /* 0x0E */ s16 collision_step; /* Advances the active collision segment. */
     /* 0x10 */ u8 cell;
     /* 0x11 */ u8 clut;
 } FieldTexturedStrip;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldTexturedStrip, collision_step) == 0x0E,
+                  field_textured_strip_collision_step_offset);
 
 /* PSY-Q POLY_FT4. */
 typedef struct FieldStripPacket {
@@ -44,13 +49,12 @@ typedef union FieldStripLink {
 } FieldStripLink;
 
 #define STRIP_OT(depth) \
-    ((RenderGpuTag *)(D_800B0E38.ordering[D_8009CDDC] + (depth) * 4))
+    ((RenderGpuTag *)(D_800B0E38.ordering[g_ActiveDrawSlot] + (depth)))
 
 extern char *D_800B0E58[];
 
-void func_800C608C(int scale, u8 *src, u8 *dst);
+void FieldFx_ScaleColor(int scale, u8 *src, u8 *dst);
 long RotTransPers4(void *v0, void *v1, void *v2, void *v3, void *sxy0,
                    void *sxy1, void *sxy2, void *sxy3, void *p, void *flag);
-u16 GetClut(int x, int y);
 
 #endif

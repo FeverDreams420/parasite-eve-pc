@@ -1,58 +1,32 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
-/* Psy-Q LIBDS DSSYS_1.OBJ, part 9 of 11: DS_stop, DS_restart, DS_system_active. */
-#include "common.h"
+/* Psy-Q LIBDS DSSYS_1.OBJ, part 9 of 10: parcpy, rescpy. */
+
 #include "pe1/psyq_cd.h"
-#include "pe1/cdrom.h"
+#include "include_asm.h"
 
-void CD_flush(void);
+void parcpy(unsigned char *dst, unsigned char *src) {
+    int i;
 
-void DS_stop(void)
-{
-    CdRomSystemState *state;
-    u32 kind;
-    u32 cmp;
-
-    state = &g_DsReadSysEnabled;
-    state->enabled = 0;
-    CD_flush();
-
-    if (state->view.system.command.read.status == 2) {
-        kind = state->view.system.command.read.command;
-        cmp = 0xB;
-        if (kind == cmp) {
-            goto abortPending;
+    if (src) {
+        if (dst) {
+            for (i = 0; i < 4; i++) {
+                *dst++ = *src++;
+            }
         }
-        cmp = 0x11;
-        if (kind == cmp) {
-            goto abortPending;
-        }
-        cmp = 0x10;
-        if (kind == cmp) {
-            DsReadStatusBlock *slot;
-            u32 value;
-
-abortPending:
-            slot = &g_DsReadStatusBlock;
-            value = 1;
-            slot->status = value;
-            slot->command = 0xB;
-        }
+    } else if (dst) {
+        *dst = 0;
     }
 }
 
-void DS_restart(void) {
-    int enabled;
-    enabled = 1;
-    g_DsReadSysEnabled.enabled = enabled;
-}
+void rescpy(unsigned char *dst, unsigned char *src) {
+    int i;
 
-int DS_system_active(void) {
-    int scratch;
-    int enabled;
-
-    /* Keep $at live so the load uses $v0 as both base and destination. */
-    enabled = g_DsReadSysEnabled.enabled;
-    return enabled;
+    if (src) {
+        if (dst) {
+            for (i = 0; i < 8; i++) {
+                *dst++ = *src++;
+            }
+        }
+    } else if (dst) {
+        *dst = 0;
+    }
 }

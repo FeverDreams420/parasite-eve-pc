@@ -8,6 +8,7 @@
  * only in the temporary register its assembler chose to expand `and $t2,
  * $v0, -2`.
  */
+
 #include "pe1/psyq_asm.h"
 
 PSYQ_ASM_OBJECT(LIBGTE, MSC01)
@@ -38,9 +39,9 @@ PSYQ_ASM_FUNCTION(SquareRoot0,
     ".LCNTSQ:\n"
     "    addi    $t4, $t4, -0x40\n"
     "    sll     $t4, $t4, 1\n"
-    "    lui     $t5, %hi(D_800960BC)\n"
+    "    lui     $t5, %hi(g_SquareRootMantissaTable)\n"
     "    addu    $t5, $t5, $t4\n"
-    "    lh      $t5, %lo(D_800960BC)($t5)\n"
+    "    lh      $t5, %lo(g_SquareRootMantissaTable)($t5)\n"
     "    nop\n"
     "    sllv    $t5, $t5, $t1\n"
     "    srl     $v0, $t5, 12\n"

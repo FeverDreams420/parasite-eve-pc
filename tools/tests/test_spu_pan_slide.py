@@ -4,18 +4,21 @@ import itertools
 import random
 import re
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import functions_text  # noqa: E402
 
 
 class SpuPanSlideTests(unittest.TestCase):
     def test_translation_unit_is_plain_c(self):
-        source = (ROOT/'src/main/akao/Spu_SlideAllVoicePan.c').read_text()
+        source = functions_text('PanDelta','Spu_SlideAllVoicePan')
         source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
         self.assertNotRegex(source, r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')
         for field in ('key_on_mask','panpot','panpot_delta','panpot_slide_duration'):
-            self.assertIn('voice->'+field,source)
+            self.assertRegex(source,r'\w+->'+field+r'\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
                          (ROOT/'build/USA/main.exe').is_file(), 'retail/build unavailable')

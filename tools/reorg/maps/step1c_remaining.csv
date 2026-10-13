@@ -1,0 +1,12 @@
+old,new
+src/main/scene/Scene_TickTimers.c,src/main/time/Scene_TickTimers.c
+src/main/scene/Scene_CheckFlagBits.c,src/main/anim/Scene_CheckFlagBits.c
+src/main/draw/Gte_LightingState.c,src/main/boot/Gte_LightingState.c
+src/main/field/Geo_LoadMeshEntry.c,src/main/render/Geo_LoadMeshEntry.c
+src/main/pm/Pm_RunBanks.c,src/main/asset/Pm_RunBanks.c
+src/main/render/Render_InitDisplayLists.c,src/main/asset/Render_InitDisplayLists.c
+src/main/akao/Akao_LoadVoiceBankAlt.c,src/main/scene/Akao_LoadVoiceBankAlt.c
+src/main/asset/Asset_SceneTablesAndSound.c,src/main/cdrom/Asset_SceneTablesAndSound.c
+src/main/draw/Gpu_DisplayInitAndStatus.c,src/main/pm/Gpu_DisplayInitAndStatus.c
+src/main/boot/Boot_DiscTableLoad.c,src/main/pm/Boot_DiscTableLoad.c
+src/main/asset/Asset_TimImage.c,src/main/scene/Asset_TimImage.c

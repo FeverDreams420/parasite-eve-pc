@@ -10,8 +10,8 @@ human decision.
 
 - `NNN` in `room_mNNN` is the game's own map number, not an index chosen by
   this project. The engine builds a scene token from a room letter and the
-  number (`Str_EncodeBase32`), reads the digits back with
-  `Str_ParseMapNumber`, and uses `number - 1` as the row of the room sector
+  number (`Text_EncodeBase32`), reads the digits back with
+  `Text_ParseMapNumber`, and uses `number - 1` as the row of the room sector
   table at `0x80093378` (`Scene_LoadRoom`). The special-scene table at
   `0x80094048` is the same table continued: `scene_eNN` is row `409 + NN`,
   that is map number `410 + NN`.
@@ -38,7 +38,7 @@ human decision.
 `Scene_LoadSceneData` reads PE.IMG sectors 72-86 (the pair at `0x800930DC`)
 into `0x800A8028`, a global data pack. Its header is a list of offsets from
 the start of the pack. `Save_FormatTitle` calls
-`Tbl_FindNthNonEmpty(Save_GetCurrentMapNumber())`, which
+`Text_GetMapLocationName(Save_GetCurrentMapNumber())`, which
 
 1. takes header word 9 (`0x6FA8`): a byte array indexed by map number, 440
    entries;
@@ -113,7 +113,7 @@ in each run (`m` = `room_m`, `e` = `scene_e`):
 | 57-89 | Central Park (4) | m059, m061, m062, m063, m065, m066, m067, m075, m078, m080, m081, m082, m083, m085, m086, m087, m089 |
 | 90-97 | Soho (5) | m090 |
 | 98-124 | N.Y.P.D. (3) | m100, m102, m104, m107, m110, m111, m113, m114, m115, m116, m118, m120, m121, m122, m123 |
-| 125-160 | Hospital (6) | m126+1, m129+1, m137, m139+1, m140, m141, m145, m146, m147, m149+1, m151, m152, m153, m154, m156+2, m159 |
+| 125-160 | Hospital (6) | m126, m129, m137, m139, m140, m141, m145, m146, m147, m149, m151, m152, m153, m154, m156, m159 |
 | 161-165 | Chinatown (7) | m162, m163 |
 | 166-181 | Sewer2 (8) | m167, m168, m169, m173, m174, m178 |
 | 182-190 | Subway (9) | m186, m187, m188 |
@@ -122,8 +122,8 @@ in each run (`m` = `room_m`, `e` = `scene_e`):
 | 271 | Carrier (12) | - |
 | 272-273 | Liberty (13) | m272, m273 |
 | 274-287 | Cruiser (14) | - |
-| 288-318 | none (0) | m291+2, m295, m298, m299, m308, m309, m310, m311, m318 |
-| 319-332 | Hospital (6) | m319, m324, m326+1, m327, m328, m332 |
+| 288-318 | none (0) | m291, m295, m298, m299, m308, m309, m310, m311, m318 |
+| 319-332 | Hospital (6) | m319, m324, m326, m327, m328, m332 |
 | 333 | Warehouse (11) | m333 |
 | 334 | Sewer (2) | - |
 | 335 | none (0) | - |
@@ -148,7 +148,7 @@ in each run (`m` = `room_m`, `e` = `scene_e`):
 | 376 | N.Y.P.D. (3) | - |
 | 377-378 | Theater (1) | - |
 | 379 | Museum (10) | - |
-| 380-381 | Hospital (6) | m380+2 |
+| 380-381 | Hospital (6) | m380 |
 | 382-424 | none (0) | m383-m410, e01-e14 |
 | 425-430 | Cruiser (14) | e18, e19, e20 |
 | 431 | Theater (1) | (e21, not configured) |
@@ -209,8 +209,10 @@ a real story revisit, not a numbering inversion.
 
 ## Naming scheme
 
-Overlays that have a place get a suffix: `room_mNNN_<place>` (the `+N`
-variants keep their marker: `room_m126+1_hospital`).
+Overlays that have a place get a suffix: `room_mNNN_<place>`. Eight
+overlays were first extracted with a scanner delta and named `room_mNNN+N`;
+the delta is not part of the identity and is dropped (`room_m126_hospital`),
+while their retail assets keep the `+N` file name (`target_path`).
 
 - `NNN` stays: it is the game's map number and the key that links the
   overlay to the room table, the save table and the retail asset name.
@@ -248,8 +250,10 @@ split; the old ones can be deleted. Headers under `include/pe1/` that carry a
 room number in their file name (`room_m089_trail.h`) and prose in other docs
 keep the number, which still identifies the overlay.
 
-All 161 room overlays with a place of medium or high confidence are renamed;
-room_m350 keeps its name. The scene overlays keep theirs.
+All 161 room overlays with a place of medium or high confidence are renamed.
+room_m350 has no save label and takes its slug from its text bank instead:
+`room_m350_cruiser` (low confidence, see entry 6 below). The 22 configured
+scene overlays follow the same rule: `scene_eNN_<place>`.
 
 ### Overlays by place
 
@@ -261,7 +265,7 @@ room_m350 keeps its name. The scene overlays keep theirs.
 | `nypd` | medium | 2 | m049, m050 |
 | `central_park` | high | 19 | m059, m061, m062, m063, m065, m066, m067, m075, m078, m080, m081, m082, m083, m085, m086, m087, m089, m358, m374 |
 | `soho` | high | 1 | m090 |
-| `hospital` | high | 22 | m126+1, m129+1, m137, m139+1, m140, m141, m145, m146, m147, m149+1, m151, m152, m153, m154, m156+2, m159, m324, m326+1, m327, m328, m332, m380+2 |
+| `hospital` | high | 22 | m126, m129, m137, m139, m140, m141, m145, m146, m147, m149, m151, m152, m153, m154, m156, m159, m324, m326, m327, m328, m332, m380 |
 | `hospital` | medium | 1 | m319 |
 | `chinatown` | high | 2 | m162, m163 |
 | `sewer2` | high | 6 | m167, m168, m169, m173, m174, m178 |
@@ -271,16 +275,17 @@ room_m350 keeps its name. The scene overlays keep theirs.
 | `liberty` | high | 2 | m272, m273 |
 | `sewer` | medium | 1 | m348 |
 | `cruiser` | medium | 1 | m349 |
-| `chrysler` | medium | 37 | m291+2, m295, m298, m299, m308-m311, m318, m383-m410 |
-| (none) | low | 1 | m350 |
+| `chrysler` | medium | 37 | m291, m295, m298, m299, m308-m311, m318, m383-m410 |
+| `cruiser` (text bank only) | low | 1 | m350 |
 
 Confidence rules: **high** = save label present and the dialog bank agrees
 (or the bank is empty and the map sits inside a run of at least three maps
 with the same label); **medium** = save label present but the bank belongs
 to another place, or no label but the Chrysler floor bank; **low** = neither.
 
-Scene overlays are not renamed. Their places, for reference: e18-e20
-cruiser, e22 liberty (high); e01-e14 and e24-e27 Chrysler bank (medium).
+Scene overlays carry the same suffixes: e18-e20 `cruiser` and e22
+`liberty` (high); e01-e14 and e24-e27 `chrysler` from the Chrysler bank
+(medium), for example `scene_e08_chrysler`.
 
 ## Entries to confirm
 
@@ -293,8 +298,10 @@ cruiser, e22 liberty (high); e01-e14 and e24-e27 Chrysler bank (medium).
 4. **m348 (`sewer`).** Labelled Sewer, but alone in the late-addition block
    and its bank has none of the keywords.
 5. **m349 (`cruiser`).** Labelled Cruiser, museum-side bank.
-6. **m350 (not renamed).** No save label; its bank is the cruiser bank, so it
-   is probably a final-day scene, but the evidence is not enough for a name.
+6. **m350 (`cruiser`, from the text bank).** No save label; its bank is the
+   cruiser bank, so it is probably a final-day scene. The suffix follows the
+   text-bank rule of docs/CONVENTIONS.md and is the weakest place name in the
+   tree; rename it if a save label or a script reference says otherwise.
 7. **Slug style.** `theater`, `nypd`, `hospital`, `warehouse`, `liberty`
    and `cruiser` are the game's own words. The longer forms
    (`carnegie_hall`, `precinct`, `st_francis_hospital`, `pier4_warehouse`,

@@ -1,8 +1,7 @@
 #ifndef PE1_GTE_H
 #define PE1_GTE_H
 
-int rcos(int angle);
-int rsin(int angle);
+#include "pe1/gte_types.h"
 
 /*
  * PSY-Q-style GTE operations.  Keep these macros limited to COP2 state and
@@ -181,28 +180,29 @@ int rsin(int angle);
 #define gte_lwc2_1_8(ptr) \
     asm volatile("lwc2 $1,8(%0)" : : "r"(ptr) : "memory")
 
-/* Pack the low halfwords of X/Y from word-stride input, then transfer V0.
- * source is an lvalue so callers can reuse the constrained address. */
+/* Load V0 from an s32[3] translation (a matrix's t): the low halfwords of
+ * t[0] and t[1] packed into VXY0 (narrowed to lhu), t[2] by lwc2 into VZ0.
+ * source is an s32 * lvalue so callers can reuse the constrained address. */
 #define gte_ldv0_word3(source) \
-    do { \
+    { \
         register unsigned int packed asm("$12"); \
         register unsigned int high asm("$13"); \
         asm volatile("" : "=r"(source) : "0"(source)); \
-        high = ((volatile unsigned short *)source)[2]; \
-        packed = ((unsigned short *)source)[0]; \
+        high = (unsigned short)(source)[1]; \
+        packed = (unsigned short)(source)[0]; \
         asm volatile("" : "=r"(high) : "0"(high), "r"(packed)); \
         high <<= 16; \
         packed |= high; \
         asm volatile("mtc2 %0,$0\n\t" \
                      "lwc2 $1,8(%1)" \
                      : : "r"(packed), "r"(source) : "memory"); \
-    } while (0)
+    }
 
 #define gte_ldv0_word3_at(vec) \
-    do { \
-        unsigned short *source = (unsigned short *)(vec); \
+    { \
+        s32 *source = (vec); \
         gte_ldv0_word3(source); \
-    } while (0)
+    }
 
 #define gte_swc2_9_0(ptr) \
     asm volatile("swc2 $9,0(%0)" : : "r"(ptr) : "memory")
@@ -229,7 +229,7 @@ int rsin(int angle);
 
 /* Store IR1..3 back to a strided matrix column. */
 #define gte_stir123_column(out) \
-    do { \
+    ({ \
         register int x asm("$12"); \
         register int y asm("$13"); \
         register int z asm("$14"); \
@@ -241,7 +241,8 @@ int rsin(int angle);
         ((short *)(out))[0] = x; \
         ((short *)(out))[3] = y; \
         ((short *)(out))[6] = z; \
-    } while (0)
+        asm volatile(""); \
+    })
 
 /* PSY-Q gte_stsv: store IR1..3 as a short vector (mfc2 into $12..$14, then
  * three halfword stores inside the same statement, as the SDK macro does). */
@@ -255,10 +256,10 @@ int rsin(int angle);
                  : : "r"(out) : "$12", "$13", "$14", "memory")
 
 #define gte_stir123_column_at(column) \
-    do { \
+    { \
         volatile short *out = (volatile short *)(column); \
         gte_stir123_column(out); \
-    } while (0)
+    }
 
 #define gte_rtv0tr_sf0() \
     asm volatile(".word 0x4A480012")
@@ -494,11 +495,11 @@ int rsin(int angle);
     register void *gte_out2 asm("$10")
 
 #define gte_bind_three_outputs(out0, out1, out2)                            \
-    do {                                                                     \
+    {                                                                     \
         gte_out0 = (out0);                                                   \
         gte_out1 = (out1);                                                   \
         gte_out2 = (out2);                                                   \
-    } while (0)
+    }
 
 #define gte_dpct_separate()                                                 \
     asm volatile("nop\n\t"                                                \
@@ -598,7 +599,6 @@ int rsin(int angle);
     asm volatile("nop\n\t" \
                  ".word 0x4A680029")
 
-
 #define gte_intpl() \
     asm volatile("nop\n\t" \
                  ".word 0x4A980011")
@@ -638,16 +638,16 @@ int rsin(int angle);
 #define gte_set_shift12() (gte_shift = 12)
 
 #define gte_load_byte2(input)                                                \
-    do {                                                                     \
+    {                                                                     \
         gte_x = ((unsigned char *)(input))[0];                               \
         gte_y = ((unsigned char *)(input))[1];                               \
-    } while (0)
+    }
 
 #define gte_load_byte3(input)                                                \
-    do {                                                                     \
+    {                                                                     \
         gte_load_byte2(input);                                               \
         gte_z = ((unsigned char *)(input))[2];                               \
-    } while (0)
+    }
 
 #define gte_ldir0_ir12(scale)                                                \
     asm volatile("mtc2 %0,$8\n\t"                                          \
@@ -768,12 +768,12 @@ int rsin(int angle);
                  : : : "$8", "$9", "$10", "$11")
 
 #define gte_bind_separate_outputs(out1, out2, depth, flags)                  \
-    do {                                                                     \
+    {                                                                     \
         gte_out1 = (out1);                                                   \
         gte_out2 = (out2);                                                   \
         gte_depth_out = (depth);                                             \
         gte_flags_out = (flags);                                             \
-    } while (0)
+    }
 
 #define gte_stsxy0(out)                                                     \
     asm volatile("swc2 $12,0(%0)" : : "r"(out) : "memory")
@@ -924,6 +924,17 @@ int rsin(int angle);
         gte_stlvl((char *)(r3) + 20); \
     }
 
+/* gte_CompMatrix storing the composed translation from MAC1..3
+ * (gte_stlvnl) instead of IR1..3; the skinned and bone transforms use it. */
+#define gte_CompMatrixMac(r1, r2, r3) \
+    { \
+        gte_MulMatrix0(r1, r2, r3); \
+        gte_ldtransmatrix(r1); \
+        gte_ldlv0((char *)(r2) + 20); \
+        gte_rt(); \
+        gte_stlvnl((char *)(r3) + 20); \
+    }
+
 /* Stock PSY-Q inline_c.h (DMPSX version 3) forms, copied register for
  * register and instruction for instruction.  The SDK writes the COP2 commands
  * as DMPSX placeholder words; the real command words DMPSX substitutes are
@@ -960,5 +971,103 @@ int rsin(int angle);
     asm volatile("nop\n\t" \
                  "nop\n\t" \
                  ".word 0x4B78000C")
+
+/* PSY-Q gte_SetBackColor: BK from three colour components scaled by 16. */
+#define gte_SetBackColor(r0, r1, r2) \
+    asm volatile("sll $12,%0,4\n\t" \
+                 "sll $13,%1,4\n\t" \
+                 "sll $14,%2,4\n\t" \
+                 "ctc2 $12,$13\n\t" \
+                 "ctc2 $13,$14\n\t" \
+                 "ctc2 $14,$15" \
+                 : : "r"(r0), "r"(r1), "r"(r2) : "$12", "$13", "$14")
+
+/* PSY-Q gte_SetLightMatrix: the five packed words of L11..L33. */
+#define gte_SetLightMatrix(r0) \
+    asm volatile("lw $12,0(%0)\n\t" \
+                 "lw $13,4(%0)\n\t" \
+                 "ctc2 $12,$8\n\t" \
+                 "ctc2 $13,$9\n\t" \
+                 "lw $12,8(%0)\n\t" \
+                 "lw $13,12(%0)\n\t" \
+                 "lw $14,16(%0)\n\t" \
+                 "ctc2 $12,$10\n\t" \
+                 "ctc2 $13,$11\n\t" \
+                 "ctc2 $14,$12" \
+                 : : "r"(r0) : "$12", "$13", "$14")
+
+/* PSY-Q gte_ncct: two hazard nops, then NCCT. */
+#define gte_ncct() asm volatile("nop\n\tnop\n\t.word 0x4B18043F")
+
+/* PSY-Q gte_strgb3: store RGB0..RGB2 to three addresses. */
+#define gte_strgb3(r0, r1, r2) \
+    asm volatile("swc2 $20,0(%0)\n\t" \
+                 "swc2 $21,0(%1)\n\t" \
+                 "swc2 $22,0(%2)" \
+                 : : "r"(r0), "r"(r1), "r"(r2) : "memory")
+
+/* PSY-Q gte_stlvnl: store MAC1..3 as a long vector. */
+#define gte_stlvnl(r0) \
+    asm volatile("swc2 $25,0(%0)\n\t" \
+                 "swc2 $26,4(%0)\n\t" \
+                 "swc2 $27,8(%0)" \
+                 : : "r"(r0) : "memory")
+
+/* Store the whole GTE matrix: R11..R33 as five packed words (PSY-Q
+ * gte_ReadRotMatrix) followed by TRX, TRY, TRZ at +20. */
+#define gte_ReadMatrix(r0) \
+    asm volatile("cfc2 $12,$0\n\t" \
+                 "cfc2 $13,$1\n\t" \
+                 "sw $12,0(%0)\n\t" \
+                 "sw $13,4(%0)\n\t" \
+                 "cfc2 $12,$2\n\t" \
+                 "cfc2 $13,$3\n\t" \
+                 "cfc2 $14,$4\n\t" \
+                 "sw $12,8(%0)\n\t" \
+                 "sw $13,12(%0)\n\t" \
+                 "sw $14,16(%0)\n\t" \
+                 "cfc2 $12,$5\n\t" \
+                 "cfc2 $13,$6\n\t" \
+                 "cfc2 $14,$7\n\t" \
+                 "sw $12,20(%0)\n\t" \
+                 "sw $13,24(%0)\n\t" \
+                 "sw $14,28(%0)" \
+                 : : "r"(r0) : "$12", "$13", "$14", "memory")
+
+/* PSY-Q gte_ldv3c: V0..V2 from three consecutive short vectors. */
+#define gte_ldv3c(r0) \
+    asm volatile("lwc2 $0,0(%0)\n\t" \
+                 "lwc2 $1,4(%0)\n\t" \
+                 "lwc2 $2,8(%0)\n\t" \
+                 "lwc2 $3,12(%0)\n\t" \
+                 "lwc2 $4,16(%0)\n\t" \
+                 "lwc2 $5,20(%0)" \
+                 : : "r"(r0) : "memory")
+
+/* PSY-Q gte_stsxy3c / gte_stsz3c: SXY0..2 and SZ1..3 to consecutive words. */
+#define gte_stsxy3c(r0) \
+    asm volatile("swc2 $12,0(%0)\n\t" \
+                 "swc2 $13,4(%0)\n\t" \
+                 "swc2 $14,8(%0)" \
+                 : : "r"(r0) : "memory")
+#define gte_stsz3c(r0) \
+    asm volatile("swc2 $17,0(%0)\n\t" \
+                 "swc2 $18,4(%0)\n\t" \
+                 "swc2 $19,8(%0)" \
+                 : : "r"(r0) : "memory")
+
+/* PSY-Q gte_SetColorMatrix: the five packed words of LR1..LB3. */
+#define gte_SetColorMatrix(r0) \
+    asm volatile("lw $12,0(%0)\n\t" \
+                 "lw $13,4(%0)\n\t" \
+                 "ctc2 $12,$16\n\t" \
+                 "ctc2 $13,$17\n\t" \
+                 "lw $12,8(%0)\n\t" \
+                 "lw $13,12(%0)\n\t" \
+                 "lw $14,16(%0)\n\t" \
+                 "ctc2 $12,$18\n\t" \
+                 "ctc2 $13,$19\n\t" \
+                 "ctc2 $14,$20" \
+                 : : "r"(r0) : "$12", "$13", "$14")
 
 #endif

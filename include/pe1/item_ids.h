@@ -23,8 +23,8 @@ enum ItemId {
     ITEM_MEDICINE_3 = 0x08,  /* "Restores 180 HP" */
     ITEM_MEDICINE_4 = 0x09,  /* "Restores 400 HP" */
     ITEM_FULL_RECOVER = 0x0A,  /* "Restores All HP" */
-    ITEM_SUPER_JUNK = 0x0B,  /* "Helps Item" */
-    ITEM_DUPER_JUNK = 0x0C,  /* "Helps Item" */
+    ITEM_SUPER_JUNK = 0x0B,  /* "Helps Item". Use restores PE by maxAtk/4. */
+    ITEM_DUPER_JUNK = 0x0C,  /* "Helps Item". Use restores PE by maxAtk/2. */
     ITEM_CURE_P = 0x0D,  /* "Cures & Prevents Poison" */
     ITEM_CURE_D = 0x0E,  /* "Cures & Prevents Darkness" */
     ITEM_CURE_C = 0x0F,  /* "Cures & Prevents Confusion" */

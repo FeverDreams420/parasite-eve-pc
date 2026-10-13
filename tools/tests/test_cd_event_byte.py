@@ -4,17 +4,22 @@ import itertools
 import random
 import re
 import struct
+import sys
 import unittest
 
 ROOT=Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text  # noqa: E402
 
 
 class CDEventByteTests(unittest.TestCase):
     def test_pin_and_alias_removed(self):
-        source=(ROOT/'src/main/psyq/libds/dssys_1_8.c').read_text()
+        source=function_text('LIBDS_DSSYS_1_text_EA4')
         self.assertNotIn('asm("$',source)
         self.assertNotIn('asm("D_8009B588")',source)
-        self.assertIn('extern DsDecodedEventFlags D_8009B588;',source)
+        # The decoded flags (D_8009B588) are reached through the shared typed state.
+        self.assertNotIn('D_8009B588',source)
+        self.assertIn('g_CdRomEventCommandState.command.read.eventFlags',source)
         self.assertEqual(len(re.findall(r'asm volatile',source)),2)
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and

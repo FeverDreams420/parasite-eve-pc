@@ -1,29 +1,37 @@
 import pathlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+ROOM = 'src/overlays/room_m350_cruiser'
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import host_unit  # noqa: E402
 
 
 class Room350EffectRotationTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_threshold_rotation_and_signed_fields(self):
-        source = (ROOT / "src/overlays/room_m350/RoomEffect_Threshold16RotationCallback.c").read_text()
+        source = host_unit("RoomM350_DropSplashCallback", under=ROOM)
         harness = '#include <assert.h>\n' + source + r'''
-int D_800E27EC, D_8019A3C8[2], D_8019A628[2];
-short D_800966EC[8192];
+int g_FieldFxCurrentAge, D_8019A628[2];
+RenderColor D_8019A3C8;
+GteSineWord rcossin_tbl[4096];
+#define SINE ((short *)rcossin_tbl)
 static int calls, expectedScale, expectedShade, contextData;
-void func_800D004C(void *context, int a, int b, int c, short *rotation,
-                  int scale0, int scale1, int *first, int *second,
+void FieldFx_DrawStarFan(struct GteShortVector *context, int a, int b, int c,
+                  struct GteRotation *turn, int scale0, int scale1,
+                  struct RenderColor *first, struct RenderColor *second,
                   int shade, int flag) {
-    assert(calls++ == 0 && context == &contextData);
+    short *rotation = (short *)turn;
+    assert(calls++ == 0 && (void *)context == &contextData);
     assert(a == 384 && b == 384 && c == 10 && flag == 1);
     assert(rotation[0] == 1024 && rotation[1] == 0 && rotation[3] == 1);
-    assert(rotation[2] == (short)((D_800E27EC * 4096) / 20));
+    assert(rotation[2] == (short)((g_FieldFxCurrentAge * 4096) / 20));
     assert(scale0 == expectedScale && scale1 == expectedScale);
-    assert(first == D_8019A3C8 && second == D_8019A628);
+    assert(first == &D_8019A3C8 && (int *)second == D_8019A628);
     assert(shade == expectedShade >> 5);
 }
 int main(void) {
@@ -31,24 +39,24 @@ int main(void) {
     int counter, event, s, t, i;
     assert(sizeof(EffectEntry) == 4);
     for (counter = -16; counter <= 128; ++counter) {
-        D_800E27EC = counter;
+        g_FieldFxCurrentAge = counter;
         for (event = -2; event < 5; ++event) {
             if (event == 2) continue;
             calls = 0;
-            assert(func_8019A21C(event, 0) == (event == 1 && counter >= 16));
+            assert(RoomM350_DropSplashCallback(event, 0) == (event == 1 && counter >= 16));
             assert(calls == 0);
         }
     }
     for (counter = 0; counter <= 128; ++counter)
     for (s = 0; s < 10; ++s) for (t = 0; t < 10; ++t) {
         unsigned int index = (((unsigned int)counter - 1) * 256 & 0x3F00) / 2;
-        for (i = 0; i < 8192; ++i) D_800966EC[i] = 12345;
-        D_800E27EC = counter;
+        for (i = 0; i < 8192; ++i) SINE[i] = 12345;
+        g_FieldFxCurrentAge = counter;
         expectedScale = values[s]; expectedShade = values[t];
-        D_800966EC[index] = expectedScale;
-        D_800966EC[index + 1] = expectedShade;
+        SINE[index] = expectedScale;
+        SINE[index + 1] = expectedShade;
         calls = 0;
-        assert(func_8019A21C(2, &contextData) == 0);
+        assert(RoomM350_DropSplashCallback(2, &contextData) == 0);
         assert(calls == 1);
     }
     return 0;

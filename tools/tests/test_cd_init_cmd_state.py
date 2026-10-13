@@ -2,16 +2,21 @@
 from pathlib import Path
 import random
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text  # noqa: E402
 
 
 class CDInitCmdStateTests(unittest.TestCase):
     def test_plain_source(self):
-        source = (ROOT/'src/main/psyq/libds/dssys_1_2.c').read_text()
+        source = function_text('DS_reset_members')
         self.assertNotRegex(source, r'\b(?:asm|__asm__)\b')
-        self.assertIn('extern u_int D_8009B560[3];', source)
+        # The event result words (D_8009B560) are cleared through the shared state.
+        self.assertNotIn('D_8009B560', source)
+        self.assertIn('eventState->eventResult', source)
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
                          (ROOT/'build/USA/main.exe').is_file(), 'images unavailable')

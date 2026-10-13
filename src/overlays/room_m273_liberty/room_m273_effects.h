@@ -2,8 +2,13 @@
 #define ROOM_M273_EFFECTS_H
 
 #include "common.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte_types.h"
 #include "pe1/s32_vector3.h"
+
 #include "room_m273_particles.h"
 
 /* The third word of the shared allocator context points at its pool. */
@@ -141,7 +146,7 @@ typedef struct RoomM273ScaledLayerOwner {
     RoomM273ThresholdTransform *transform;
 } RoomM273ScaledLayerOwner;
 
-/* D_800F32D0 points at either view as each controller is active. */
+/* g_FieldFxOwner points at either view as each controller is active. */
 typedef union RoomM273EffectStatePointer {
     RoomM273EffectModeState *mode;
     RoomM273ThresholdEntityState *threshold;
@@ -155,11 +160,6 @@ typedef struct RoomM273EffectStateContext {
     RoomM273EffectStatePointer state;
 } RoomM273EffectStateContext;
 
-extern RoomM273PoolContext *D_800F33E0;
-extern int D_800E27EC;
-extern u16 D_800F336C, D_800E1204[];
-extern int D_800F3428;
-extern u16 D_800F3376, D_800F3378;
 
 PE1_STATIC_ASSERT(sizeof(RoomM273PoolContext) == 0x0C,
                   room_m273_pool_context_size);

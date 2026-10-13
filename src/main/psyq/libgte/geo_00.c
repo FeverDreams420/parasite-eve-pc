@@ -1,6 +1,6 @@
 /* PSY-Q LIBGTE GEO_00: rsin and sin_1. */
-extern short D_8009489C[];
-extern short D_8009589C[];
+
+#include "geo_00_externs.h"
 
 int sin_1(int angle);
 
@@ -17,10 +17,10 @@ int sin_1(int angle) {
 
     if (angle < 0x801) {
         if (angle < 0x401) {
-            return D_8009589C[angle];
+            return g_SineQuarterTable[angle];
         }
 
-        return D_8009589C[0x800 - angle];
+        return g_SineQuarterTable[0x800 - angle];
     }
 
     if (angle < 0xC01) {
@@ -28,6 +28,6 @@ int sin_1(int angle) {
         return -value;
     }
 
-    value = D_8009589C[0x1000 - angle];
+    value = g_SineQuarterTable[0x1000 - angle];
     return -value;
 }

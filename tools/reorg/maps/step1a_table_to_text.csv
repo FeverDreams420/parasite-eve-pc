@@ -1,0 +1,2 @@
+old,new
+src/main/table/Tbl_DataTableLookups.c,src/main/text/Tbl_DataTableLookups.c

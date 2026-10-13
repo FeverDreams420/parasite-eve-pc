@@ -1,12 +1,13 @@
-/* PSY-Q LIBETC INTR, part 1 of 3: ResetCallback, InterruptCallback,
+/* PSY-Q LIBETC INTR, part 1 of 2: ResetCallback, InterruptCallback,
  * DMACallback, VSyncCallback, VSyncCallbacks, StopCallback, RestartCallback,
  * CheckCallback, GetIntrMask, SetIntrMask. */
-/* INTR stays in three units: these callbacks only match with GCC 2.7.2,
+/* INTR stays in two units: these callbacks only match with GCC 2.7.2,
  * the interrupt manager in intr_2.c only with GCC 2.8.1 and
  * -mno-split-addresses. */
+
 #include "pe1/psyq_api_internal.h"
-extern unsigned short D_800945E6;
-extern unsigned short *g_IntrMaskRegPtr;
+
+#include "intr_externs.h"
 
 int ResetCallback(void) {
     return g_EventCallbackTable->reset();
@@ -37,7 +38,7 @@ int RestartCallback(void) {
 }
 
 int CheckCallback(void) {
-    return D_800945E6;
+    return g_IntrInCallback;
 }
 
 unsigned short GetIntrMask(void) {

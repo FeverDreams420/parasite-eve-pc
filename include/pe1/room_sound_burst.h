@@ -2,9 +2,18 @@
 #define PE1_ROOM_SOUND_BURST_H
 
 #include "common.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/field_transform_point.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte_types.h"
-#include "pe1/room_floor.h"
+#include "pe1/psyq_gpu.h"
 #include "pe1/render_matrix_slot.h"
+#include "pe1/room_floor.h"
 
 /* Room effect controllers that play a sound, then emit one particle every
  * third frame along an angle that sweeps half a turn over seventy frames. */
@@ -66,49 +75,12 @@ PE1_STATIC_ASSERT(sizeof(RoomSoundBurstParticle) == 0x18,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSoundBurstState, soundHandle) == 0xC,
                   room_sound_burst_state_sound_handle);
 
-extern RoomSoundBurstChannel *D_800F32D0, *D_800F33E0;
-extern RoomSoundBurstEventState *D_800E2368;
-extern s32 D_800E27EC;
-extern volatile u16 D_800E11E8;
-extern u16 D_800E2850[];
-/* Halfword parameter block at 0x800F3368. The controller writes it through
- * volatile scalars; the particle reads it as this struct so the compiler
- * keeps the reads ordered after the particle stores, as retail does. */
-typedef struct RoomSoundBurstParams {
-    u16 parameter00;
-    u16 parameter02;
-    u16 palette;
-    u16 parameter06;
-    u16 tpage;
-    u16 parameter0A;
-    s16 depth;
-    u16 extent_x;
-    u16 extent_y;
-} RoomSoundBurstParams;
-extern int func_800CE560(void *, int, int, void *);
-extern void func_800CE8F0(void *, int, void *, void *);
-extern void func_800CE9D4(void *, int, void *);
-extern RoomSoundBurstParticle *func_800CE610(void *);
-extern int rsin(int);
-extern int func_800D3FD8(void);
-extern int func_800D3F64(int, int);
-extern void func_800866A4(int, int);
-extern int func_80071A54(void);
-extern RoomSoundBurstBattleEntity *D_8009D254;
-extern u16 D_800E1204[];
-extern int D_800F3428;
-extern int rcos(int);
-extern u16 func_80077AA4(int, int);
-extern void func_800CF844(void *, void *, int, void *, int, int);
-extern int func_800C6B90(void *position, int radius);
-extern void func_800CEE20(void *, void *, int, int, int, int, int, int, void *);
-extern void func_800CE870(void *object, int mode, void *position);
-extern void func_800CFAA8(void *from, void *to, void *angles);
-extern void func_800CFD50(void *angles, void *out, int speed);
-extern void func_800CFB7C(void *angles, int distance, void *out);
-extern int rsin(int angle);
+extern void Akao_Cmd_21(int, int);
+extern int rand(void);
+extern struct BattleEntity *D_8009D254;
+extern void FieldFx_OffsetPointByAngles(void *, void *, int, void *, int, int);
 extern void LoadAverageShort12(void *, void *, int, int, void *);
-extern void func_800D2B58(void *, void *, void *, void *, int, int, int);
+extern void FieldFx_DrawGlowLine(void *, void *, void *, void *, int, int, int);
 
 /* Homing spark: anchor, heading vector, state, timer and sound handle. */
 typedef struct RoomHomingSpark {
@@ -126,10 +98,5 @@ typedef struct RoomHomingSparkParams {
 } RoomHomingSparkParams;
 
 PE1_STATIC_ASSERT(sizeof(RoomHomingSpark) == 0x16, room_homing_spark_size);
-
-extern void func_800CF3AC(void *track, void *color, int time);
-extern void func_800D004C(void *position, int width, int height, int segments,
-                          void *rotation, int scale_x, int scale_y,
-                          void *color0, void *color1, int intensity, int mode);
 
 #endif

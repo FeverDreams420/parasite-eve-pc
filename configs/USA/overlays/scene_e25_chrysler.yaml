@@ -1,0 +1,62 @@
+name: scene_e25_chrysler.bin
+sha1: 52b2b1cf4b919768aeb95f1a43b48f4a5297b435
+options:
+  basename: scene_e25_chrysler
+  target_path: original/USA/overlays/scene_e25.bin
+  base_path: ../../..
+  platform: psx
+  compiler: GCC
+  asm_path: asm/USA/overlays/scene_e25_chrysler
+  src_path: src/overlays/scene_e25_chrysler
+  build_path: build/USA/overlays/scene_e25_chrysler
+  ld_script_path: linkers/USA/overlays/scene_e25_chrysler.ld
+  undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.scene_e25_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.scene_e25_chrysler.txt
+    - configs/USA/sym.main.txt
+  undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.scene_e25_chrysler.txt
+  find_file_boundaries: True
+  disassemble_all: True
+  asm_function_macro: glabel
+  asm_jtbl_label_macro: jlabel
+  asm_data_macro: dlabel
+  generate_asm_macros_files: False
+  section_order: [".rodata", ".text", ".data", ".sdata", ".sbss", ".bss"]
+  subalign: 4
+  string_encoding: ASCII
+  data_string_encoding: ASCII
+  rodata_string_guesser_level: 2
+  data_string_guesser_level: 2
+segments:
+  - name: scene_e25_chrysler
+    type: code
+    start: 0x0
+    vram: 0x8018EFE8
+    align: 4
+    subalign: 4
+    bss_size: 0x0
+    subsegments:
+      - start: 0x0
+        type: rodatabin
+        name: scene_e25_header
+        dir: scene_e25_chrysler
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, .rodata, ../room_lib/homing_flash]
+      - [0x1F8, c, ../room_lib/actor_classes]
+      - [0x3514, c, ../room_lib/homing_flash]
+      - [0x4130, c, ../room_lib/script_args]
+      - [0x4154, .data, ../room_lib/actor_class_table]
+      - [0x41FC, data, D_801931E4]
+      - [0x424C, data, D_80193234]
+      - [0x426C, data, D_80193254]
+      - [0x42A4, data, RoomSlotA_80193118]
+      - [0x42A8, data, RoomSlotB_80193118]
+      - start: 0x42AC
+        type: databin
+        name: RoomSlotC_80193118
+        dir: scene_e25_chrysler
+  - [0x4800]
+# source slice: scanner
+# extract locally with: dd if=disc/extracted/PE.IMG of=original/USA/overlays/scene_e25.bin bs=2048 skip=100008 count=9
+# special-scene set: entry 25 of the table at 0x80094048 (this bin = its section 3); finale (Eve/Melissa) bank
+# area: no save-location label for map 435; place chrysler, medium confidence (docs/ROOMS.md)

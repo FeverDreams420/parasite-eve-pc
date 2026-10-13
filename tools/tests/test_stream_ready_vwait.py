@@ -16,7 +16,7 @@ CASES = [('libcd/c_004',
  ('libetc/vsync',
   528,
   'e356692b0a159f0f9e07da321a2ea515c4789379094ff39d6d77f42858169af4',
-  'ChangeClearPAD = 0x80073C74;\nChangeClearRCnt = 0x80073C84;\nD_800116FC = 0x800116FC;\nD_80094574 = 0x80094574;\nD_80094578 = 0x80094578;\nD_8009457C = 0x8009457C;\nD_80094580 = 0x80094580;\ng_VSyncCount = 0x800956AC;\nputs = 0x80073C5C;\nSECTIONS { .text 0x80073a44 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }')]
+  'ChangeClearPAD = 0x80073C74;\nChangeClearRCnt = 0x80073C84;\nD_800116FC = 0x800116FC;\ng_VSyncGpuStatusRegister = 0x80094574;\ng_VSyncHcountRegister = 0x80094578;\ng_VSyncLastHcount = 0x8009457C;\ng_VSyncLastCount = 0x80094580;\ng_VSyncCount = 0x800956AC;\nputs = 0x80073C5C;\nSECTIONS { .text 0x80073a44 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }')]
 
 
 class StreamReadyVwaitTests(unittest.TestCase):

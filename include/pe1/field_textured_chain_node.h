@@ -25,6 +25,20 @@ typedef struct FieldTexturedChainNode {
 typedef FieldTexturedChainNode FieldChainLink;
 typedef FieldTexturedChainNode FieldStripNode;
 
+/* The same node seen from its brightness field (node + 4). The strip
+ * collision pass walks this view beside the node pointer; the view's last
+ * byte is the following node's cell step. */
+typedef struct FieldStripNodeTail {
+    /* 0x00 */ u16 brightness;
+    /* 0x02 */ u8 pad02[0x0E];
+    /* 0x10 */ GteShortVector edgeA;
+    /* 0x18 */ GteShortVector edgeB;
+    /* 0x20 */ u8 pad20[0x23];
+    /* 0x43 */ u8 nextCellStep;
+} FieldStripNodeTail;
+
+PE1_STATIC_ASSERT(sizeof(FieldStripNodeTail) == 0x44, field_strip_node_tail_size);
+
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldTexturedChainNode, cellStep) == 3,
                   field_textured_chain_cell_step_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldTexturedChainNode, brightness) == 4,

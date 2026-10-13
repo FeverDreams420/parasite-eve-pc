@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m404_chrysler
   ld_script_path: linkers/USA/overlays/room_m404_chrysler.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m404_chrysler.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m404_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m404_chrysler.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m404_chrysler.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,18 +37,13 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m404_chrysler]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
+      - [0xC, .rodata, ../room_lib/actor_classes]
       - [0x1E4, rodata, RoomLib_HandlerCArgsData_801915F4]
-      - [0x1F4, .rodata, RoomEffect_SinkingDrop_80192540]
-      - [0x220, rodata, RoomEffect_SpriteSeeds_8018F208]
-      - [0x23C, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3558, c, RoomEffect_SinkingDrop_80192540]
-      - [0x4380, c, RoomEffect_M404ParticleController]
-      - [0x45F8, c, RoomEffect_BounceGlowSpark_801935E0]
-      - [0x4A84, c, RoomEffect_JointDebrisBurst_80193A6C]
-      - [0x4E3C, c, ../room_lib/RoomLib_SetArg1]
-      - [0x4E4C, data, D_80193E34]
-      - [0x4E84, data, D_80193E6C]
+      - [0x1F4, .rodata, m404]
+      - [0x23C, c, ../room_lib/actor_classes]
+      - [0x3558, c, m404]
+      - [0x4E3C, c, ../room_lib/script_arg]
+      - [0x4E4C, .data, ../room_lib/actor_class_table]
       - [0x4EF4, data, D_80193EDC]
       - [0x4F14, data, D_80193EFC]
       - [0x4F34, data, D_80193F1C]
@@ -56,6 +53,11 @@ segments:
       - start: 0x4FD8
         type: databin
         name: RoomSlotA_80193E24
+        dir: room_m404_chrysler
+      - [0x41178, data, D_801D0160]
+      - start: 0x4119C
+        type: databin
+        name: D_801D0184
         dir: room_m404_chrysler
       - [0x411F8, data, D_801D01E0]
   - [0x41800]

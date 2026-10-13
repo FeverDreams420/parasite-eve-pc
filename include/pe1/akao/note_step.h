@@ -3,23 +3,23 @@
 
 /* Declarations used by the sequencer note step Akao_StepSampleLoader. */
 
-#include "pe1/akao/track.h"
 #include "pe1/akao/tick.h"
+#include "pe1/akao/track.h"
 
 typedef void (*AkaoCommandHandler)(AkaoTrack *track, u32 voice_mask);
 
 /* Opcode handlers: 0xA0..0xFF, and the 0xFC extended page. */
-extern AkaoCommandHandler D_8009C8F0[];
-extern AkaoCommandHandler D_8009CCF0[];
+extern AkaoCommandHandler g_AkaoOpcodeHandlers[];
+extern AkaoCommandHandler g_AkaoExtOpcodeHandlers[];
 /* Note lengths in ticks, indexed by opcode % 11. */
-extern u16 D_8009B8DC[];
+extern u16 g_AkaoNoteLengthTable[];
 /* LFO waveform tables. */
-extern void *D_8009C080[];
+extern void *g_AkaoSoundEntryTable[];
 /* Key-on mask of the child (sound effect) tracks. */
-extern u32 D_800BCD54;
+extern u32 g_AkaoVoiceMaskScratch;
 /* Instrument table, 0x40-byte records (also viewed as words by the
  * stream relocation code in akao.h). */
-extern AkaoInstrument D_800B2900[];
+extern AkaoInstrument g_AkaoInstrumentTable[];
 
 int Akao_LookupSampleBankByte(AkaoTrack *track);
 int Akao_LookupPitchPeriod(int instrument, int note, int detune);

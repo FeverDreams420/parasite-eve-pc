@@ -2,6 +2,7 @@
 #define PE1_INVENTORY_H
 
 #include "common.h"
+#include "pe1/inventory_category.h"
 
 enum ItemDataFlags {
     ITEM_DATA_FLAG_GENERIC_DESCRIPTION = 0x10,
@@ -20,7 +21,9 @@ enum ItemKind {
  * are the ItemId enum; tailData mods are ItemMod codes (see item_ids.h).
  */
 typedef struct ItemDataRecord {
-/* 0x00 */ u8  pad_00[4];
+/* 0x00 */ u8  iconId;       /* one-based glyph selector; zero marks a free equipment record */
+/* 0x01 */ u8  tailCapacity; /* compared with tailCount when filtering writable records */
+/* 0x02 */ u8  reserved02[2];
 /* 0x04 */ u8  itemId;       /* ItemId type code (E-Reg value) */
 /* 0x05 */ u8  flags;
 /* 0x06 */ u8  kind;
@@ -35,13 +38,12 @@ typedef struct ItemDataRecord {
 /* Historical name retained while older consumers are migrated. */
 typedef ItemDataRecord InvItemSlot;
 
-extern u8 g_EquipItemDataTable[] __asm__("D_800BEEAC");
-extern u8 g_KeyItemDataTable[] __asm__("D_8009DE64");
+extern u8 g_EquipItemDataTable[];
+extern u8 g_KeyItemDataTable[];
 extern ItemDataRecord g_InvCompareSlotLeft;
 extern ItemDataRecord g_InvCompareSlotRight;
-extern ItemDataRecord *D_8009D070, *D_8009D074;
-extern u16 g_InvCategoryItemTable[];
-extern ItemDataRecord D_800A1A00;
+extern ItemDataRecord *g_InvCompareLeftItem, *g_InvCompareRightItem;
+extern ItemDataRecord g_BonusPointSpendItemCopy;
 extern ItemDataRecord g_InvItemSlotArray[128];
 
 /* Historical name: this operation returns a status, not an item pointer. */
@@ -66,7 +68,7 @@ int Inv_StepScrollDisplay2(int special);
 int Inv_SetupSlotDisplay(int mask);
 int Inv_PickRandomItem(int unused);
 u8 *Inv_GetItemEffectData(int item, int mode);
-extern u8 D_800A1B50[];
+extern u8 g_InvItemMessageBuffer[];
 void Inv_RollRandomItemType(s16 *type, s16 *amount);
 int Inv_IsSlotSelectable(int index);
 int Inv_IsSlotEquipped(int index);
@@ -83,6 +85,7 @@ int Inv_IsAyaInventorySlotReserved(int index);
 int Inv_GetActiveSlotCount(int *requiredReserve);
 void Inv_TransferItemBetweenLists(unsigned selection, int modifier, int flags, int cost);
 void Inv_BuildEquipSlotDisplay(int index);
+int Inv_ClearActiveListSlot(int index);
 int Inv_RemoveActiveListItem(int index);
 void Inv_RebuildSelectableMask(void);
 int Inv_GetSlotHighlightState(int spell, int available);
@@ -90,11 +93,16 @@ int Inv_GetActiveListItemType(int index);
 void Item_SetDisabledFlag(int itemId, int enabled);
 int Inv_FindIndexByData(void *needle);
 void Inv_BuildFilteredPackedList(int mask);
+ItemDataRecord *Inv_LookupData(int itemId);
 ItemDataRecord *Inv_LookupActiveListData(int index);
 ItemDataRecord *Item_LookupBaseData(unsigned int index);
 void Inv_ClearEquipFlagForKind(ItemDataRecord *record);
 
 PE1_STATIC_ASSERT(sizeof(ItemDataRecord) == 0x20, item_data_record_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(ItemDataRecord, iconId) == 0x00,
+                  item_data_record_icon_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(ItemDataRecord, tailCapacity) == 0x01,
+                  item_data_record_tail_capacity_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(ItemDataRecord, itemId) == 0x04,
                   item_data_record_id_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(ItemDataRecord, flags) == 0x05,
@@ -111,9 +119,13 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(ItemDataRecord, tailData) == 0x15,
                   item_data_record_tail_data_offset);
 
 int Inv_CountByCategory(int category);
-int WayneStorage_CountItemType(int category);
+int Inv_CountWayneStorageItemType(int category);
 
 void Inv_ClearSelectionBitset(void);
 int Inv_IsActiveListOverrideSelected(void);
+
+int Inv_FindItemById(int id);
+int Inv_SwapSlots(int unused, int from, int unused2, int to);
+void Menu_CursorRenderData(ItemDataRecord *record);
 
 #endif /* PE1_INVENTORY_H */

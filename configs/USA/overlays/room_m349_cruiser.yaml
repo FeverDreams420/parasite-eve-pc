@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m349_cruiser
   ld_script_path: linkers/USA/overlays/room_m349_cruiser.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m349_cruiser.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m349_cruiser.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m349_cruiser.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m349_cruiser.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,9 +37,7 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m349_header]
-      - [0x28, c, RoomEffect_FlareSparkParticle_8018F010]
-      - [0x7DC, c, RoomEffect_FlareSparkController_8018F7C4]
-      - [0x10E8, c, func_801900D0]
+      - [0x28, c, m349]
       - [0x1150, data, D_80190138]
       - [0x1174, data, D_8019015C]
       - [0x11AC, data, D_80190194]
@@ -51,6 +51,11 @@ segments:
       - start: 0x311F8
         type: databin
         name: D_801C01E0
+        dir: room_m349_cruiser
+      - [0x398C8, data, D_801C88B0]
+      - start: 0x398D4
+        type: databin
+        name: D_801C88BC
         dir: room_m349_cruiser
   - [0x3A000]
 # room: m349, section3 sector 83300, scanner delta 0

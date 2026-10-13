@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m402_chrysler
   ld_script_path: linkers/USA/overlays/room_m402_chrysler.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m402_chrysler.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m402_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m402_chrysler.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m402_chrysler.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,14 +37,13 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m402_chrysler]
-      - [0xC, .rodata, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x14, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1EC, .rodata, ../room_lib/RoomLib_TimedSpawn]
-      - [0x1F4, c, ../room_lib/RoomLib_ThreeParticleClass]
-      - [0x3A4, c, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x11F0, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x450C, c, ../room_lib/RoomLib_FloorWalkerClass]
-      - [0x4CFC, c, ../room_lib/RoomLib_TimedSpawn]
+      - [0xC, .rodata, ../room_lib/three_particles]
+      - [0x14, .rodata, ../room_lib/actor_classes]
+      - [0x1EC, .rodata, ../room_lib/timed_spawn]
+      - [0x1F4, c, ../room_lib/three_particles]
+      - [0x11F0, c, ../room_lib/actor_classes]
+      - [0x450C, c, ../room_lib/floor_walker_class]
+      - [0x4CFC, c, ../room_lib/timed_spawn]
       - [0x51D8, data, D_801941C0]
       - [0x51E4, data, RoomLib_TableA_8018F234]
       - [0x51F0, data, D_801941D8]
@@ -50,7 +51,7 @@ segments:
       - [0x5204, data, D_801941EC]
       - [0x5220, data, D_80194208]
       - [0x5258, data, D_80194240]
-      - [0x52A0, data, D_80194288]
+      - [0x5268, .data, ../room_lib/actor_class_table]
       - [0x5310, data, D_801942F8]
       - [0x532C, data, D_80194314]
       - [0x534C, data, D_80194334]
@@ -63,6 +64,11 @@ segments:
       - start: 0x53C0
         type: databin
         name: D_801943A8
+        dir: room_m402_chrysler
+      - [0x33154, data, D_801C213C]
+      - start: 0x33184
+        type: databin
+        name: D_801C216C
         dir: room_m402_chrysler
   - [0x33800]
 # room: m402, section3 sector 92607, scanner delta 0

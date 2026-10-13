@@ -4,19 +4,22 @@ import itertools
 import random
 import re
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_text  # noqa: E402
 
 
 class AkaoInitVoicesTests(unittest.TestCase):
     def test_initializer_is_plain_typed_c(self):
-        source = (ROOT/'src/main/akao/Akao_NestedTrack.c').read_text()
-        body = source.split('void Akao_InitVoices(',1)[1].split('void Spu_ManageVoices(',1)[0]
+        body = function_text('Akao_InitVoices')
         body = re.sub(r'/\*.*?\*/|//[^\n]*','',body,flags=re.S)
         self.assertNotRegex(body,r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')
-        self.assertIn('voice->adsr_release_rate',body)
-        self.assertIn('voice->update_flags',body)
+        # Typed AkaoTrack field stores (the record pointer name is free).
+        self.assertRegex(body,r'\w+->adsr_release_rate\s*=')
+        self.assertRegex(body,r'\w+->update_flags\s*\|=')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
                          (ROOT/'build/USA/main.exe').is_file(), 'retail/build unavailable')

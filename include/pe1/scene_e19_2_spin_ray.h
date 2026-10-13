@@ -1,8 +1,15 @@
 #ifndef PE1_SCENE_E19_2_SPIN_RAY_H
 #define PE1_SCENE_E19_2_SPIN_RAY_H
 
-#include "pe1/render_object.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/render_object.h"
 #include "pe1/room_floor.h"
 
 /* Scene e19_2 spin ray: a spinning ray anchored at the scene origin that
@@ -36,22 +43,12 @@ extern RenderColor D_8018F228;
 extern RenderColor D_8018F22C;
 extern GteRotation D_8018F210;
 extern RenderColor D_8018F230;
-extern u8 D_8019B3E4[];
-extern u8 D_8019B404[];
-extern GteShortVector D_8019B670;
-extern u16 D_800E11EA;
-extern SceneSpinRayChannel *D_800F32D0, *D_800F33E0;
+extern u8 g_SceneE19SpinRayColorTrack[];
+extern u8 g_SceneE19SpinRayBurstColorTrack[];
+extern GteShortVector g_SceneE19SpinRayOrigin;
 
-int rsin(int angle);
-int rcos(int angle);
-u16 func_80077AA4(int x, int y);
-int func_80071A54(void);
-int func_800D3FD8(void);
-int func_800D3F64(int sound, int handle);
-int func_800CE560(void *pool, int size, int count, void *callback);
-SceneSpinRay *func_800CE610(void *pool);
-void func_800CE8F0(void *pool, int index, GteRotation *rotation, GteShortVector *position);
-void func_800CFFAC(SceneSpinRay *ray);
-int func_80196748(int mode, SceneSpinRay *ray);
+int rand(void);
+void FieldFx_RandomScatterOffsetXY(SceneSpinRay *ray);
+int SceneE19_SpinRayCallback(int mode, SceneSpinRay *ray);
 
 #endif

@@ -1,10 +1,14 @@
 #ifndef ROOM_M273_H
 #define ROOM_M273_H
 
-#include "pe1/render_object.h"
 #include "pe1/field_actor_script_state.h"
-#include "room_m273_effects.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/gte_sine_table.h"
+#include "pe1/render_object.h"
 #include "pe1/room_floor.h"
+
+#include "room_m273_effects.h"
 
 typedef GteShortVector RoomM273Vector;
 
@@ -72,25 +76,18 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273TemplatePoint, flags) ==
                       PE1_OFFSETOF(RoomM273RisingParticle, speed),
                   room_m273_delayed_burst_tail_offset);
 
-extern RoomM273TrigEntry D_800966EC[];
 extern s16 D_8019AE98;
 extern int D_8019ABFC[];
-extern s16 D_800F336A;
 extern s16 D_8019ACC0[];
 extern u8 D_8019AFA2;
 extern u8 D_8019AF8A[];
-extern u16 D_800E11E8;
-extern u16 D_800F3376;
-extern u16 D_800F3378;
-extern void *D_8019AE94;
+extern void *g_RoomM273GrabSparkPool;
 extern RoomM273PaletteWord D_8019AC30[];
-extern char D_8019AB70[];
+extern unsigned char g_RoomM273BlackColor[];
 extern char D_8019ACC8[];
 extern char D_8019ACCC[];
-void *func_800CE610(void *pool);
 int Inv_ScrambleGrid(void);
-int func_80199568(int mode, RoomM273RisingParticle *particle);
-int func_800CE560(void *pool, int size, int count, int (*callback)());
+int RoomM273_SwayBurstCallback(int mode, RoomM273RisingParticle *particle);
 
 typedef struct RoomPlacementMap {
     u8 pad_000[0x594];
@@ -125,16 +122,22 @@ typedef struct RoomPlacementState {
 
 typedef struct RoomSelectionState RoomSelectionState;
 struct RoomSelectionState {
-    u8 pad_00[8];
+    u8 status;                  /* 4 = closed */
+    u8 pad_01[2];
+    u8 flag3;                   /* RoomEnt flag3, 0xFF while armed */
+    u8 pad_04[4];
     struct FieldActor *actor;
     void (*callback)(RoomSelectionState *);
     int *signal;
-    u8 pad_14[8];
-    RenderMatrix matrix;
+    u8 pad_14[6];
+    u8 started;                 /* 0x1A */
+    u8 pad_1B;
+    RenderMatrix matrix;        /* 0x1C: grab placement, translation at 0x30 */
     u8 pad_3c[4];
     int savedX;
     int savedZ;
-    u8 pad_48[3];
+    s16 verticalTicks;          /* 0x48: RoomPlacementState.vertical_ticks */
+    u8 placementChecked;        /* 0x4A */
     u8 activated;
 };
 
@@ -157,7 +160,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, callback) +
  * substate the grab sequence flips to 2 and 4. */
 typedef FieldActorScriptState RoomM273ActorState;
 
-s32 func_80192D8C(RoomSelectionState *selection);
+s32 RoomM273_GrabRelease(RoomSelectionState *selection);
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementOwner, map) == 0x238,
                   room_placement_map_offset);
@@ -182,28 +185,38 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementState, vertical_ticks) == 0x3C,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementState, placement_checked) == 0x3E,
                   room_placement_checked_offset);
 
-void func_80192C00(RoomPlacementOwner *owner, RoomPlacementState *state);
+void RoomM273_ReturnPlayerToPlacement(RoomPlacementOwner *owner, RoomPlacementState *state);
+
+/* The oscillation module object (class methods RoomM273_OscillationInit, the
+ * command handler RoomM273_OscillationConfigure, RoomM273_OscillationUpdate, RoomM273_OscillationRelease): bobs the
+ * actor up and down and reports the player angle and distance through the
+ * two output words the script hands it (command 4). Its first two words
+ * double as the choice inputs of RoomM273_ChooseWeightedAction (command 3). */
+typedef struct RoomOscillationParams {
+    int *angleOut;          /* 0x00 */
+    int *distanceOut;       /* 0x04 */
+    int *signal;            /* 0x08: completion word (command 5) */
+    int frame;              /* 0x0C */
+    int baseHeight;         /* 0x10 */
+    s16 active;             /* 0x14 */
+    s16 amplitude;          /* 0x16 */
+    s16 period;             /* 0x18 */
+} RoomOscillationParams;
 
 typedef struct RoomOscillationEffect {
-    u8 pad_00[8];
+    u8 status;              /* 4 = closed */
+    u8 pad_01[7];
     struct FieldActor *actor;
-    int *angleOut;
-    int *distanceOut;
-    u8 pad_14[4];
-    int frame;
-    int baseHeight;
-    s16 active;
-    s16 amplitude;
-    s16 period;
+    RoomOscillationParams params;   /* 0x0C */
 } RoomOscillationEffect;
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOscillationEffect, actor) == 0x08,
                   room_oscillation_actor_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOscillationEffect, frame) == 0x18,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOscillationEffect, params.frame) == 0x18,
                   room_oscillation_frame_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOscillationEffect, period) == 0x24,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOscillationEffect, params.period) == 0x24,
                   room_oscillation_period_offset);
 
-int func_80192F5C(RoomOscillationEffect *effect);
+int RoomM273_OscillationUpdate(RoomOscillationEffect *effect);
 
 #endif

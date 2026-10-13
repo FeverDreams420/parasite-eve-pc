@@ -4,14 +4,16 @@ Widths -2..10, finite sign strings, valid cursor-stack storage. Callback
 mutations deliberately exercise live global reloads, including assert paths.
 """
 from pathlib import Path
-import itertools, struct, unittest
+import itertools, struct, sys, unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import function_closure  # noqa: E402
 
 
 class DrawNumberRectTests(unittest.TestCase):
     def test_plain_source(self):
-        source = (ROOT/'src/main/gpu/Draw_AllocTexturedRect.c').read_text()
+        source = function_closure('Draw_AllocTexturedRect')
         self.assertNotRegex(source, r'\b(?:asm|__asm__|INCLUDE_ASM|REGALLOC_BARRIER)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and

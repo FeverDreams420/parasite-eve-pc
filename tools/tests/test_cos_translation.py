@@ -12,7 +12,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 CASES = [('libgte/geo_01',
   160,
   '42a01d993875f0235428e98e55a064a5ece684098ceefe8a4b7152870e7959af',
-  'D_8009589C = 0x8009589C;\n'
+  'g_SineQuarterTable = 0x8009589C;\n'
   'D_8009509C = 0x8009509C;\n'
   'D_8009409C = 0x8009409C;\n'
   'SECTIONS { .text 0x80077dc4 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) '

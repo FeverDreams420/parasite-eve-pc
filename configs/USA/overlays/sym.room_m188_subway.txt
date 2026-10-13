@@ -1,5 +1,3 @@
-FieldEng_VecToAngle = 0x800DFF80;
-FieldEng_TurnToward = 0x800DFFB8;
 RoomLib_SetArgA = 0x80195D78; // type:func
 RoomLib_SetArgB = 0x80195D88; // type:func
 g_RoomScriptArgA = 0x80195FD0;
@@ -72,3 +70,4 @@ g_RoomWaveSparkColors = 0x80195EE0;
 g_RoomCometSparkColors = 0x80195F00;
 g_RoomLiftedSparkColors = 0x80195F78;
 g_RoomCometSparkTrail = 0x80195FD8;
+g_RoomClassTable = 0x80195D98; // size:0xA8 allow_addend:true

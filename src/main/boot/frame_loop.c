@@ -1,0 +1,219 @@
+/* CC1_FLAGS: -G8 */
+/* MASPSX_FLAGS: -G8 --use-comm-section */
+/* MASPSX_FORCE_G0: 1 */
+
+#include "common.h"
+#include "pe1/battle_runtime.h"
+#include "pe1/battle_status.h"
+#include "pe1/boot_disc_check.h"
+#include "pe1/field_movement.h"
+#include "pe1/game_state.h"
+#include "pe1/geom_state.h"
+#include "pe1/gte.h"
+#include "pe1/pad_state.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/render_animation_frame.h"
+#include "pe1/render_camera.h"
+#include "pe1/render_lighting.h"
+#include "pe1/render_tint.h"
+#include "pe1/room_floor.h"
+#include "pe1/scene_dispatch.h"
+#include "pe1/scene_room_load.h"
+#include "pe1/scene_transition.h"
+
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+u32 D_8009D280;
+int g_SceneDispatchCur;
+unsigned int g_GameStateFlags;
+u32 g_GlobalFrameCounter[1];
+
+/* Field frame loop and its scene flush: Boot_FlushSceneFast is the exit tail
+ * that Boot_RunFrame repeats after its loop. Contiguous -G8 pair. */
+
+/* Late include: its D_8009CDA4[] would make the COMMON word above large. */
+#include "pe1/boot.h"
+
+void Draw_InitPipeline(void);
+void Field_HandleStateTransition(void);
+void Scene_UpdateEntityList(void);
+void Entity_FrameUpdate(void);
+int func_80122040(void);
+void func_80121A00(void);
+void Draw_ClearOnFlag(void);
+void Render_Update(void);
+void func_800E01BC(void);
+void Boot_FinishFrame(void);
+void Akao_Cmd_F1(void);
+void Render_Noop(int mode);
+int Asset_UnloadTableEntries(void);
+
+void Boot_FlushSceneFast(void) {
+    RECT rect;
+    u32 status;
+    u32 first_status;
+
+    if (g_GameState.flags & 0x200) {
+        rect.w = 0x140;
+        rect.x = 0;
+        rect.y = 0;
+        rect.h = 0x1C0;
+        ClearImage(&rect, 0, 0, 1);
+    }
+    DrawSync(0);
+    Akao_Cmd_F1();
+    Render_Noop(1);
+    Asset_UnloadTableEntries();
+    status = g_GameState.flags | 2;
+    g_GameStateFlags = (g_GameStateFlags | 0x40) & ~0x3800;
+    first_status = status & ~0x800;
+    g_GameState.flags = first_status;
+    if (status & 0x200) {
+        g_GameState.flags = (first_status | 2) & 0xFFFF7DFF;
+    }
+}
+
+/* The frame loop reaches the game-state flags back from its scene flag byte. */
+#define GAME_STATE_OF_SCENE_FLAGS(flagsByte) \
+    ((Pe1GameState *)((flagsByte) - PE1_OFFSETOF(Pe1GameState, bank_state_12)))
+
+void Boot_RunFrame(void)
+{
+    RECT clear_rect;
+    u32 flags;
+    u32 status;
+    Pe1GameState *state;
+    u8 *scene_flags;
+    RenderTintTargetView *fade;
+
+    Draw_InitPipeline();
+    if (g_SceneDispatchCur == D_8009D280) {
+        scene_flags = &g_GameState.bank_state_12;
+        state = &g_GameState;
+        fade = (RenderTintTargetView *)&g_ScreenTint.targetR;
+        do {
+            g_DrawPacketOffset = 0;
+            *scene_flags = 0;
+            Field_HandleStateTransition();
+            flags = g_GameStateFlags;
+            g_GameStateFlags = flags & ~0x30u;
+
+            if (!(GAME_STATE_OF_SCENE_FLAGS(scene_flags)->flags & 0x8000) && g_GlobalFrameCounter[0] &&
+                (D_8009D1F4 & 4) &&
+                !(D_8009D238 & 0xB0002380u)) {
+                g_GameStateFlags =
+                    ((flags & 1) ? (flags & ~0x30u) | 0x20u
+                                 : (flags & ~0x30u) | 0x10u) ^ 1u;
+            }
+
+            if (!(g_GameStateFlags & 1)) {
+            if (!(state->flags & 0x200)) {
+                Pe1GameStateAddress slot;
+
+                /* The draw slot steps the state one word per slot, so the
+                 * ordering table is read from the shifted state. */
+                slot.state = state;
+                slot.word += g_ActiveDrawSlot << 2;
+                ClearOTagR((u32 *)slot.state->shared_buffers.ordering_tables[0],
+                           0x1000);
+            }
+            D_8009D250 = D_8009D250 + 1;
+            Scene_UpdateEntityList();
+            Entity_FrameUpdate();
+
+            if (!(state->flags & 0x100)) {
+                if ((s8)Draw_CheckDrawStatus() != 0) {
+                    if ((s8)func_80122040() == 0) {
+                        func_80121A00();
+                        Draw_ClearOnFlag();
+                        continue;
+                    }
+                } else if (!(state->flags & 0x200)) {
+                    Render_Update();
+                    Menu_DrawTextboxEntries();
+                    Render_SetGteScreenOffset();
+                    func_800E01BC();
+                    Render_ResetGteScreenOffset();
+                    Render_SetCDDCSlot();
+                }
+                Draw_RenderFrame();
+                /* A finished fade to white reloads fade colour 15. */
+                if (!g_GlobalFrameCounter[0] && fade->packed.red_green == 0xFF00FFu &&
+                    fade->packed.blue == 0xFF) {
+                    if (fade->colour.fadeMode & 0x40) {
+                        Render_SetFadeColour(15);
+                    }
+                }
+            }
+            } else {
+            VSync(2);
+            }
+
+            if (!(D_800B0CD8 & 0x4200) &&
+                (g_FieldPadBits & 0x0F000006u) == 0x0F000006u) {
+                Boot_Shutdown();
+            }
+            if (!(state->flags & 0x100)) {
+                Boot_FinishFrame();
+            }
+            g_GlobalFrameCounter[0]++;
+            if ((g_GameStateFlags & 0x2000) && (state->flags & 0x800)) {
+                break;
+            }
+loop_end_check:
+            ;
+        } while (g_SceneDispatchCur == D_8009D280);
+    }
+
+    if (D_800B0CD8 & 0x200) {
+        clear_rect.x = 0;
+        clear_rect.y = 0;
+        clear_rect.w = 0x140;
+        clear_rect.h = 0x1C0;
+        ClearImage(&clear_rect, 0, 0, 1);
+    }
+    DrawSync(0);
+    Akao_Cmd_F1();
+    Render_Noop(1);
+    Asset_UnloadTableEntries();
+    g_GameStateFlags = (g_GameStateFlags | 0x40) & ~0x3800u;
+    status = D_800B0CD8 | 2;
+    {
+        u32 first_status = status & ~0x800u;
+        D_800B0CD8 = first_status;
+        if (status & 0x200)
+            D_800B0CD8 = (first_status | 2u) & ~0x8200u;
+    }
+}
+
+/* Load the GTE back colour (scaled by 16) and clear the nine-halfword
+ * caller block that mirrors it. */
+void Boot_SetBackColor(u16 *dst, int r, int g, int b) {
+    gte_SetBackColor(r, g, b);
+
+    dst[0] = 0;
+    dst[1] = 0;
+    dst[2] = 0;
+    dst[3] = 0;
+    dst[4] = 0;
+    dst[5] = 0;
+    dst[6] = 0;
+    dst[7] = 0;
+    dst[8] = 0;
+}
+
+/* Store one light's colour in the light colour matrix column and the 8-bit
+ * colour table, then reload the GTE light colour matrix. */
+void Boot_SetLightColor(RenderLightingState *lighting, int index, int r, int g, u16 b) {
+    if ((unsigned int)index < 3) {
+        lighting->color.matrix.m[0][index] = r;
+        lighting->color.matrix.m[1][index] = g;
+        lighting->color.matrix.m[2][index] = b;
+    }
+
+    lighting->light_colors[index][0] = r;
+    lighting->light_colors[index][1] = g;
+    lighting->light_colors[index][2] = b;
+
+    gte_SetColorMatrix(&lighting->color);
+}

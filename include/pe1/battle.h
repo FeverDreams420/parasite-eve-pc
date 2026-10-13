@@ -2,6 +2,7 @@
 #define PE1_BATTLE_H
 
 #include "common.h"
+#include "pe1/battle_ailment.h"
 #include "pe1/field_actor.h"
 
 typedef struct BattleRewardSlot {
@@ -28,7 +29,7 @@ typedef struct BattleGameStateWindow {
 PE1_STATIC_ASSERT(sizeof(BattleGameStateWindow) == 16, battle_game_state_window_size);
 
 /* Battle subsystem (ATB combat). Layout reverse-engineered from the battle code
- * (src/main/battle, src/main/main/Battle_) and validated live on real
+ * (src/main/battle) and validated live on real
  * BIOS (DuckStation GDB) by fighting the first Carnegie Hall encounter and
  * cross-checking enemy stats against the wiki (enemy max HP read as 40).
  *
@@ -47,8 +48,8 @@ PE1_STATIC_ASSERT(sizeof(BattleGameStateWindow) == 16, battle_game_state_window_
  *                                -> Combatant in the player-side paths below
  *
  *   Proof: Battle_DispatchInit.c:17        g_ActiveActor = *g_PlayerEntity;
- *          Battle_DispatchSpecialAction.c:30 g_ActiveActor = actor->core;
- *          Battle_ApplyDamage.c:51          g_ActiveActor = *(void**)g_PlayerEntity;
+ *          battle/turn.c:143 g_ActiveActor = actor->core;
+ *          battle/attack.c:496          g_ActiveActor = *(void**)g_PlayerEntity;
  *          Battle_Set/GetContextField use   ctx = *(u8**)g_PlayerEntity, index ctx.
  *
  *   The old prose notes conflated the two: the side byte / screen coords / a
@@ -82,7 +83,7 @@ typedef union BattleParameterWord {
 
 typedef struct BattleAttributes {
 /* 0x00 */ BattleParameterWord parameterWord;
-/* 0x04 */ u32 effectFlags;   /* attack/status capabilities consumed by hit logic */
+/* 0x04 */ u32 effectFlags;   /* EFFECT_RESIST_* / EFFECT_AUTO_* in battle_ailment.h */
 } BattleAttributes;
 
 /* Effect descriptor referenced by an enemy's battle-state record. This is a
@@ -90,7 +91,7 @@ typedef struct BattleAttributes {
  */
 typedef struct EnemyActionEffect {
 /* 0x00 */ u8  state;       /* 1=ready; changed to 3/4 by drop resolution */
-/* 0x01 */ u8  effectType;  /* Battle_ApplyEnemyAttack dispatch id */
+/* 0x01 */ u8  effectType;  /* ENEMY_EFFECT_* dispatch id; Battle_ApplyEnemyAttack */
 /* 0x02 */ u8  enterMode;
 /* 0x03 */ u8  exitMode;
 /* 0x04 */ s32 enterStep;
@@ -99,6 +100,56 @@ typedef struct EnemyActionEffect {
 /* 0x0E */ u8  category;    /* selects which packed BattleAttributes value applies */
 /* 0x0F */ u8  frame;       /* animation frame that changes state to 3 */
 } EnemyActionEffect;
+
+/* Animation-event view of an entity core. The six inline event records
+ * overlap fields in EnemyCombatant's battle-state view; keep the views
+ * separate until their shared storage/lifetime is established.
+ */
+/* The selected inline record occupies bits 21..23. The meanings of the
+ * separately cleared high bits are not yet established. */
+typedef union EntityAnimEventFlags {
+    u32 raw;
+    struct {
+        u32 reservedLow : 21;
+        u32 selectedRecord : 3;
+        u32 reservedHigh : 6;
+        u32 bit30 : 1;
+        u32 bit31 : 1;
+    } bits;
+} EntityAnimEventFlags;
+
+typedef struct EntityAnimEventCore {
+/* 0x00 */ EntityAnimEventFlags flags;
+/* 0x04 */ u8 rank;
+/* 0x05 */ s8 kind;
+/* 0x06 */ u8 baseMode;
+/* 0x07 */ u8 reserved07;
+/* 0x08 */ u8 reserved08[0x10];
+/* 0x18 */ EnemyActionEffect *active;
+/* 0x1C */ EnemyActionEffect records[6];
+/* 0x7C */ u8 parameters[6][4]; /* four per-record bytes written by script setup */
+/* 0x94 */ u8 reserved94[0x1E];
+/* 0xB2 */ u16 assetId;
+} EntityAnimEventCore;
+
+PE1_STATIC_ASSERT(sizeof(EntityAnimEventFlags) == 4, entity_anim_event_flags_size);
+PE1_STATIC_ASSERT(sizeof(EntityAnimEventCore) == 0xB4, entity_anim_event_core_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EntityAnimEventCore, active) == 0x18,
+                  entity_anim_event_active_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EntityAnimEventCore, records) == 0x1C,
+                  entity_anim_event_records_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EntityAnimEventCore, parameters) == 0x7C,
+                  entity_anim_event_parameters_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EntityAnimEventCore, assetId) == 0xB2,
+                  entity_anim_event_asset_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyActionEffect, enterStep) == 4,
+                  enemy_action_effect_enter_step_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyActionEffect, exitStep) == 8,
+                  enemy_action_effect_exit_step_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyActionEffect, frame) == 15,
+                  enemy_action_effect_frame_offset);
+
+
 
 /* Eight-byte descriptor consumed by Battle_DrawStatusPanel. The last two
  * bytes are timer/style values whose gameplay meaning varies by panel slot. */
@@ -120,41 +171,45 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleStatusPanel, timer) == 6,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleStatusPanel, style) == 7,
                   battle_status_panel_style_offset);
 
+/* Player and enemy contexts share this two-byte prefix. Script context
+ * access also reads and writes both bytes as a single signed halfword. */
+typedef union CombatantIdentity {
+    s16 fieldId04;
+    struct {
+        u8 rank;
+        s8 kind;
+    } bytes;
+} CombatantIdentity;
+
+PE1_STATIC_ASSERT(sizeof(CombatantIdentity) == 2, combatant_identity_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CombatantIdentity, bytes.kind) == 1,
+                  combatant_identity_kind_offset);
+
 /* ----------------------------------------------------------------------------
  * Combatant -- the active/player-side stat record. g_ActiveActor points here
  * in the setup and command paths below. Enemy entity cores share several
  * offsets but diverge at +0x10; use EnemyCombatant for those records.
  * --------------------------------------------------------------------------*/
 typedef struct Combatant {
-/* 0x00 */ u32  coreFlags;     /* bitfield; &0x6000 / &0xC0000 facing, >>13&3 weapon-cat (Battle_GetEnemyContextField.c:28,44,55) */
-/* 0x04 */ union {
-               s16 fieldId04;  /* SetContextField case1; GetEnemyCtx case0x29 */
-               struct {
-                   u8 rank;    /* signed rank byte in escape/spawn calculations */
-                   u8 field05;
-               } bytes;
-           } field04;
+/* 0x00 */ u32  coreFlags;     /* bitfield; &0x6000 / &0xC0000 facing, >>13&3 weapon-cat (battle/context.c:302,318,329) */
+/* 0x04 */ CombatantIdentity field04;
 /* 0x06 */ s16  fieldId06;     /* SetContextField case2 (Battle_SetContextField.c:24) */
-/* 0x08 */ s32  exp_or_acc;    /* damage-derived accumulator, clamped to maxAtk@0x28 / 0x10000 (Battle_ApplyDamage.c:92,96) */
-/* 0x0C */ u16  curHP;         /* CURRENT HP -- damage & heal land here; clamped to maxHP@0x1C (Battle_ApplyDamage.c:73-85) */
+/* 0x08 */ s32  exp_or_acc;    /* damage-derived accumulator, clamped to maxAtk@0x28 / 0x10000 (battle/attack.c:537,541) */
+/* 0x0C */ u16  curHP;         /* CURRENT HP -- damage & heal land here; clamped to maxHP@0x1C (battle/attack.c:518-530) */
 /* 0x0E */ u16  hpMirror;      /* current-HP MIRROR; re-synced from curHP each reset (Battle_ResetEnemyStats.c:42) */
-/* 0x10 */ u16  hpAlive;       /* authoritative ">0 == alive" HP (target tests); on player doubles as EXP/level gauge clamped 0x2328 (Battle_BuildTargetList.c:47; Battle_Update.c:155). TENTATIVE width: some reads s32 */
-/* 0x12 */ u8   actionMode12;  /* action-mode id table [0x12..0x19], filled per enemy by facing (Battle_SetupEnemyAnims.c:38-46): 4 idle, 0xD special */
+/* 0x10 */ u16  hpAlive;       /* authoritative ">0 == alive" HP (target tests); on player doubles as EXP/level gauge clamped 0x2328 (battle/setup.c:436; battle/encounter.c:373). TENTATIVE width: some reads s32 */
+/* 0x12 */ u8   actionMode12;  /* action-mode id table [0x12..0x19], filled per enemy by facing (battle/enemy_actions.c:38-46): 4 idle, 0xD special */
 /* 0x13 */ s8   actionMode13;
-/* 0x14 */ u8   actionMode14;
-/* 0x15 */ u8   actionMode15;
-/* 0x16 */ u8   actionMode16;
-/* 0x17 */ u8   actionMode17;
-/* 0x18 */ s8   actionMode18;
-/* 0x19 */ s8   actionMode19;
+/* 0x14 */ u8   targetAngleActionModes[3]; /* selected by the relative target angle in Battle_AdvancePhase */
+/* 0x17 */ u8   followUpAngleActionModes[3]; /* modes 7/9/11 that end the attack started by targetAngleActionModes */
 /* 0x1A */ u8   pad_1A[2];
-/* 0x1C */ u16  maxHP;         /* MAX HP; curHP clamped to this (Battle_ApplyDamage.c:85; Battle_ResetEnemyStats.c:34) */
+/* 0x1C */ u16  maxHP;         /* MAX HP; curHP clamped to this (battle/attack.c:530; Battle_ResetEnemyStats.c:34) */
 /* 0x1E */ s16  stat1E;        /* SetContextField case11 (Battle_SetContextField.c:42) */
 /* 0x20 */ s16  stat20;        /* SetContextField case12 (Battle_SetContextField.c:45) */
-/* 0x22 */ u16  stat22;        /* base for scaled-offense calc (Battle_SetupEnemyAnims.c:39) */
-/* 0x24 */ u16  scaledOffense; /* = stat22 * tbl[anim] / 10 (Battle_SetupEnemyAnims.c:39) */
+/* 0x22 */ u16  stat22;        /* base for scaled-offense calc (battle/enemy_actions.c:39) */
+/* 0x24 */ u16  scaledOffense; /* = stat22 * tbl[anim] / 10 (battle/enemy_actions.c:39) */
 /* 0x26 */ s16  stat26;        /* SetContextField case18 (Battle_SetContextField.c:50) */
-/* 0x28 */ s32  maxAtk;        /* cap for exp_or_acc@0x08 (Battle_ApplyDamage.c:88,95; Battle_StartEncounter.c:116) */
+/* 0x28 */ s32  maxAtk;        /* cap for exp_or_acc@0x08 (battle/attack.c:533,540; Battle_StartEncounter.c:116) */
 /* 0x2C */ s32  atbStep;       /* per-frame increment subtracted from atbRate */
 /* 0x30 */ s32  atbRate;       /* divisor/rate used while charging exp_or_acc */
 /* 0x34 */ s32  atbGauge;      /* ATB / "AT" gauge; reset 0, latched 0xF0 (Battle_ResetEnemyStats.c:41; Battle_StartEncounter.c:119) */
@@ -170,7 +225,7 @@ typedef struct Combatant {
 /* 0x48 */ s8   knockbackFrames;
 /* 0x49 */ u8   knockbackDistance;
 /* 0x4A */ s16  knockbackAngle;
-/* 0x4C */ s32  stateFlags;    /* PRIMARY status/state bitfield. &0xFF status groups (poison/etc, ApplyDamage cases13-17), 0x10000="battle ended" (Battle_IsActive), 0x80000 special-move guard, 0x100000 acted-this-frame, 0x200000 action-committed (Battle_ApplyPlayerHit.c:53,63; Battle_UpdatePlayerTurn.c:47) */
+/* 0x4C */ s32  stateFlags;    /* PRIMARY status/state bitfield. Ailment pairs and buffs: battle_ailment.h. 0x10000="battle ended" (Battle_IsActive), 0x80000 special-move guard, 0x100000 acted-this-frame, 0x200000 action-committed (Battle_ApplyPlayerHit.c:53,63; Battle_UpdatePlayerTurn.c:47) */
 /* 0x50 */ s16  panelA_val;    /* floating damage-number panel A: {s16 val; u16 x; u16 y; u8 scale; u8 mode}; drawn by Battle_DrawStatusPanel(0, &panelA) (Battle_PhaseHitReaction.c:191) */
 /* 0x52 */ u16  panelA_x;      /* x copied from entity projX@0x210 (Battle_PhaseHitReaction.c:188) */
 /* 0x54 */ u16  panelA_y;      /* y from entity projY@0x212 */
@@ -186,14 +241,14 @@ typedef struct Combatant {
 /* 0x64 */ u16  panelAux_y;
 /* 0x66 */ u8   panelAux_timer; /* set to 0x1E when Battle_SubActionStep emits the descriptor */
 /* 0x67 */ u8   panelAux_mode;
-/* 0x68 */ struct BattleAction *action; /* the queued action/command descriptor; read by nearly every turn func via M2C_FIELD(combatant,void**,0x68) (Battle_Init.c:60; Battle_DrawATBGauge.c:55; Battle_AdvanceTurnSlot.c:70) */
+/* 0x68 */ struct BattleAction *action; /* the queued action/command descriptor; read by nearly every turn func via M2C_FIELD(combatant,void**,0x68) (battle/setup.c:195; Battle_DrawATBGauge.c:55; battle/turn.c:537) */
 /* 0x6C */ BattleAttributes *attributes;
 /* 0x70 */ void *field70;      /* TENTATIVE: no semantic use confirmed yet */
 /* 0x74 */ u8   pad_74[0x14];
-/* 0x88 */ s32  field88;       /* GetEnemyCtx case19, clamped >=0 (Battle_GetEnemyContextField.c:35) */
-/* 0x8C */ u16  field8C;       /* GetEnemyCtx case20 (Battle_GetEnemyContextField.c:41) */
+/* 0x88 */ s32  field88;       /* GetEnemyCtx case19, clamped >=0 (battle/context.c:309) */
+/* 0x8C */ u16  field8C;       /* GetEnemyCtx case20 (battle/context.c:315) */
 /* 0x8E */ u8   pad_8E[0x3E];
-/* 0xCC */ s32  statusFlags2;  /* secondary status bitfield: 0x1000000 petrify-ish, &0x3C000 / &0xC000 / &0x30000 status, &0x30/0xC attack-element gates (Battle_GetEnemyContextField.c:53; Battle_StartEnemyAttackEffect.c:25-64) */
+/* 0xCC */ u32  statusFlags2;  /* secondary status bitfield: 0x1000000 petrify-ish, &0x3C000 / &0xC000 / &0x30000 status, &0x30/0xC attack-element gates (battle/context.c:327; Battle_StartEnemyAttackEffect.c:25-64) */
 /* 0xD0 */ s16  panelC_val;    /* enemy floating panel C: Battle_DrawStatusPanel(1, &panelC) (Battle_PhaseHitReaction.c:226) */
 /* 0xD2 */ u16  panelC_x;
 /* 0xD4 */ u16  panelC_y;
@@ -208,15 +263,12 @@ typedef struct Combatant {
  */
 typedef struct EnemyCombatant {
 /* 0x00 */ u32 coreFlags;
-/* 0x04 */ union {
-               s16 fieldId04;
-               struct { u8 rank; u8 field05; } bytes;
-           } field04;
+/* 0x04 */ CombatantIdentity field04;
 /* 0x06 */ union {
                s16 field06;
                struct { u8 low; u8 entityId; } bytes;
-           } field06;
-/* 0x08 */ s32 field08;
+           } lowAndEntityId;
+/* 0x08 */ s32 slotBit; /* 1 << allocated enemy slot */
 /* 0x0C */ u16 curHP;
 /* 0x0E */ u16 hpMirror;
 /* 0x10 */ s32 hpAlive;
@@ -226,13 +278,15 @@ typedef struct EnemyCombatant {
 /* 0x4C */ u32 stateFlags;
 /* 0x50 */ u8  pad_50[0x1C];
 /* 0x6C */ BattleAttributes *attributes;
-/* 0x70 */ u8  pad_70[0x18];
-/* 0x88 */ s32 field88;
-/* 0x8C */ u16 field8C;
+/* 0x70 */ u8  pad_70[0x0C];
+/* 0x7C */ s8  contactActionIds[0x0C]; /* four ids per facing group (coreFlags >> 21), -1 ends a group (Entity_CheckActionIdMatch) */
+/* 0x88 */ s32 hpAliveCap; /* caps hpAlive when smaller */
+/* 0x8C */ u16 defense; /* subtracted from attack power */
 /* 0x8E */ u16 chargeStep;
 /* 0x90 */ u8  effectChance;
 /* 0x91 */ u8  deathAnimFrame;
-/* 0x92 */ u8  pad_92[2];
+/* 0x92 */ u8  contactDamage;    /* HP taken from the player on body contact (Menu_MainUpdate) */
+/* 0x93 */ u8  contactKnockback; /* knockback distance applied on body contact */
 /* 0x94 */ u8  effectLevel;
 /* 0x95 */ u8  effectDuration;
 /* 0x96 */ s16 periodicDamage;
@@ -255,7 +309,7 @@ typedef struct EnemyCombatant {
 /* 0xB0 */ u16 attackAssetId;
 /* 0xB2 */ u8  pad_B2[2];
 /* 0xB4 */ u16 deathAssetId;
-/* 0xB6 */ u8  pad_B6[6];
+/* 0xB6 */ u16 contactAssetIds[3]; /* effect asset per facing group (coreFlags >> 21) spawned on contact */
 /* 0xBC */ u8  resumePhase;
 /* 0xBD */ u8  savedActionMode;
 /* 0xBE */ u8  savedInterpolation;
@@ -271,24 +325,82 @@ typedef struct EnemyCombatant {
 /* 0xD7 */ u8  panelC_mode; /* 0=damage, 1=recovery, 2=alternate damage display */
 } EnemyCombatant;
 
+/* Bit layout of EnemyCombatant.coreFlags as hit resolution writes it. */
+typedef struct EnemyCoreFlagBits {
+    u32 low : 13;
+    u32 hitState : 2;  /* 0x6000 */
+    u32 reaction : 3;  /* 0x38000: evasion reaction of the last hit */
+    u32 category : 2;  /* 0xC0000: weapon category of the last hit */
+    u32 high : 12;     /* >> 21: contact facing group */
+} EnemyCoreFlagBits;
+
 /* ----------------------------------------------------------------------------
  * BattleAction -- the per-actor action/command descriptor (Combatant.action,
  * i.e. *(void**)(combatant+0x68)). Holds the queued action id and timing.
  * --------------------------------------------------------------------------*/
 typedef struct BattleAction {
-/* 0x00 */ u16  field00;
+/* 0x00 */ u16  powerBonus; /* added to stat1E/5 to form attack power */
 /* 0x02 */ s16  range;         /* compared vs target distance for cycling (Battle_CycleTarget.c:93) */
 /* 0x04 */ u16  field04;
 /* 0x06 */ union {
                s16 actionId;   /* 5=, 6=fire-weapon, 8=item/special */
                struct { u8 actionIdByte; u8 field07; } bytes;
            } actionCode;
-/* 0x08 */ s32  field08;       /* set from anim table (Battle_SetupEnemyAnims.c:52) */
-/* 0x0C */ u32  attackWord;    /* &0x3FF = shot/hit countdown (consumed per hit), >>0x14&3 = weapon category (Battle_DrawATBGauge.c:55; Battle_FinalizeAttackResult.c:34) */
-/* 0x10 */ u32  turnWord;      /* &0xF = remaining actions, >>4&3 = active turn slot, &0xC0 = action mode, 0x100..0x1000 = attack element (Battle_Init.c:60; Battle_AdvanceTurnSlot.c:70; Battle_StartEnemyAttackEffect.c:26) */
-/* 0x14 */ u8   animMode[4];   /* per-facing anim/effect ids [0x14..0x17], filled from a 5-byte table (Battle_Init.c:62; Battle_SetupEntityTarget.c:55) */
+/* 0x08 */ s32  hitTrigger;    /* anim-row byte matched against the hit timer */
+/* 0x0C */ u32  attackWord;    /* &0x3FF = shot/hit countdown (consumed per hit), >>0x14&3 = weapon category (Battle_DrawATBGauge.c:55; battle/attack.c:51) */
+/* 0x10 */ u32  turnWord;      /* &0xF = remaining actions, >>4&3 = active turn slot, &0xC0 = action mode, 0x100..0x1000 = attack element (battle/setup.c:195; battle/turn.c:537; Battle_StartEnemyAttackEffect.c:26) */
+/* 0x14 */ u8   animMode[4];   /* per-facing anim/effect ids [0x14..0x17], filled from a 5-byte table (battle/setup.c:197; Battle_SetupEntityTarget.c:55) */
                                /* ... continues; rest unmapped */
 } BattleAction;
+
+/* Bit layouts of the packed BattleAction and BattleAttributes words. Retail
+ * copies the menu's action record into the actor field by field, so the
+ * copies read and write these words through bitfield views. */
+typedef struct BattleAttackBits {
+    u32 count : 10;    /* shots/hits left, consumed per hit */
+    u32 power : 10;
+    u32 category : 2;  /* weapon category */
+    u32 reserved : 10;
+} BattleAttackBits;
+
+typedef struct BattleTurnBits {
+    u32 actions : 4;   /* remaining actions */
+    u32 slot : 2;      /* active turn slot */
+    u32 mode : 2;      /* target mode */
+    u32 element8 : 1;  /* 0x100..0x1000: attack elements */
+    u32 element9 : 1;
+    u32 element10 : 1;
+    u32 element11 : 1;
+    u32 element12 : 1;
+    u32 hitState : 2;
+    u32 flag15 : 1;
+    u32 flag16 : 1;
+    u32 flag17 : 1;
+    u32 reserved : 14;
+} BattleTurnBits;
+
+typedef struct BattleEffectBits {
+    u32 resistPoison : 1;
+    u32 resistConfusion : 1;
+    u32 resistDarkness : 1;
+    u32 resistStiffness : 1;
+    u32 resistSteal : 1;
+    u32 armorMode : 4; /* one bit per armor mod 8..10 */
+    u32 mod14 : 1;     /* bits 9..13 and 16..17: armor mod flags */
+    u32 mod16 : 1;
+    u32 mod11 : 1;
+    u32 mod17 : 1;
+    u32 mod12 : 1;
+    u32 autoMedicine : 1;
+    u32 autoCure : 1;
+    u32 mod13 : 1;
+    u32 mod15 : 1;
+    u32 reserved : 14;
+} BattleEffectBits;
+
+PE1_STATIC_ASSERT(sizeof(BattleAttackBits) == 4, battle_attack_bits_size);
+PE1_STATIC_ASSERT(sizeof(BattleTurnBits) == 4, battle_turn_bits_size);
+PE1_STATIC_ASSERT(sizeof(BattleEffectBits) == 4, battle_effect_bits_size);
 
 /* ----------------------------------------------------------------------------
  * BattleEntity -- the field-actor / linked-list node. g_PlayerEntity and every
@@ -300,7 +412,7 @@ typedef struct BattleAction {
  * --------------------------------------------------------------------------*/
 typedef struct BattleEntity {
 /* 0x000 */ void *core; /* Combatant for player paths, EnemyCombatant for enemy entities */
-/* 0x004 */ struct BattleEntity *next; /* next in actor list (Battle_BuildTargetList.c:63) */
+/* 0x004 */ struct BattleEntity *next; /* next in actor list (battle/setup.c:63) */
 /* 0x008 */ u8   pad_008[4];
 /* 0x00C */ u8   modelIndex;     /* selects a 0xC0-byte action-pointer table (Entity_SetActionMode) */
 /* 0x00D */ u8   teamId;        /* group/team id; target must differ/match (Battle_SetupEntityTarget.c:66) */
@@ -317,12 +429,12 @@ typedef struct BattleEntity {
 /* 0x020 */ s32  moveFactor;
 /* 0x024 */ u16  fieldSfxId;
 /* 0x026 */ u16  moveSpeed;
-/* 0x028 */ union { s32 fixed; struct { u16 frac; s16 integer; } parts; } posX;
-/* 0x02C */ union { s32 fixed; struct { u16 frac; s16 integer; } parts; } posY;
-/* 0x030 */ union { s32 fixed; struct { u16 frac; s16 integer; } parts; } posZ;
+/* 0x028 */ Pe1Fixed16_16 posX;
+/* 0x02C */ Pe1Fixed16_16 posY;
+/* 0x030 */ Pe1Fixed16_16 posZ;
 /* 0x034 */ u8   pad_034[4];
 /* 0x038 */ s16  rotationX;
-/* 0x03A */ s16  facingAngle;   /* facing/heading, set from target (Battle_UpdateEntityFacing.c:71) */
+/* 0x03A */ s16  facingAngle;   /* facing/heading, set from target (battle/enemy_movement.c:275) */
 /* 0x03C */ s16  rotationZ;
 /* 0x03E */ u8   pad_03E[2];
 /* 0x040 */ s32  baseX;
@@ -333,15 +445,15 @@ typedef struct BattleEntity {
 /* 0x06C */ s32  motionY;
 /* 0x070 */ s32  motionZ;
 /* 0x074 */ u8   pad_074[0x24];
-/* 0x098 */ u32  entityFlags;   /* &0x40 visible, &0x4000 skip-as-target, &0x40000000 area-target, &0x6000 hit-state (Battle_BuildTargetList.c:46; Battle_SetupEntityTarget.c:60) */
+/* 0x098 */ u32  entityFlags;   /* &0x40 visible, &0x4000 skip-as-target, &0x40000000 area-target, &0x6000 hit-state (battle/setup.c:435; Battle_SetupEntityTarget.c:60) */
 /* 0x09C */ u8  *scriptBase;
 /* 0x0A0 */ u8   pad_0A0[0xEC];
 /* 0x18C */ struct BattleEntity *parent; /* parent/owner; linked animations recurse through this entity */
 /* 0x190 */ u8   pad_190[4];
 /* 0x194 */ void *actionCheckFn; /* Entity_CheckActionIdMatch fn ptr (Battle_StartEncounter.c:124) */
 /* 0x198 */ u8   pad_198[4];
-/* 0x19C */ s32  scriptCursor19C;
-/* 0x1A0 */ s32  scriptCursor1A0;
+/* 0x19C */ u32 *scriptCursor19C;
+/* 0x1A0 */ u32 *scriptCursor1A0;
 /* 0x1A4 */ void *collisionFace;
 /* 0x1A8 */ void *collisionFaceMirror;
 /* 0x1AC */ s32  allocationActive; /* nonzero when allocationBlock must be released */
@@ -357,9 +469,9 @@ typedef struct BattleEntity {
  * Battle_CycleTarget. g_BattleTargetCount entries; g_BattleTargetIndex selects.
  * --------------------------------------------------------------------------*/
 typedef struct BattleTarget {
-/* 0x00 */ struct BattleEntity *actor; /* target entity (Battle_BuildTargetList.c:49) */
+/* 0x00 */ struct BattleEntity *actor; /* target entity (battle/setup.c:438) */
 /* 0x04 */ s32  dist;                  /* distance to player (Battle_CycleTarget.c:90) */
-/* 0x08 */ s16  angle;                 /* ratan2 angle to player (Battle_BuildTargetList.c:58) */
+/* 0x08 */ s16  angle;                 /* ratan2 angle to player (battle/setup.c:447) */
 /* 0x0A */ u8   pad_0A[2];
 } BattleTarget;                        /* sizeof == 0xC */
 
@@ -380,18 +492,26 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleTargetWords, word_08) == 8,
 
 typedef struct BattleInitSlot {
     BattleEntity *actor;
-    s16 field04;
-    s16 field06;
+    s16 command; /* turn command or spell id; 1/2 are actor action kinds */
+    s16 actionGeneration; /* signed byte generation shared by entries of one queued action */
 } BattleInitSlot;
-extern BattleInitSlot D_800BE830[45];
+extern BattleInitSlot g_BattleActionQueue[45];
+/* A queue slot address as a pointer or a word: the phase code adds a
+ * pre-scaled slot offset to the queue address as an integer. */
+typedef union BattleInitSlotAddress {
+    BattleInitSlot *slot;
+    u32 address;
+} BattleInitSlotAddress;
 
 PE1_STATIC_ASSERT(sizeof(BattleInitSlot) == 8, battle_init_slot_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleInitSlot, field04) == 4,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleInitSlot, command) == 4,
                   battle_init_slot_field04_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleInitSlot, field06) == 6,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleInitSlot, actionGeneration) == 6,
                   battle_init_slot_field06_offset);
 
 extern BattleTarget g_BattleTargetList[];
+/* Incomplete array: retail reads the count absolutely in -G0 units. */
+extern s8 g_BattleTargetCount[];
 extern int D_8009D208; /* last scene asset/effect result selected by battle */
 
 void Battle_SwapRecords(BattleTargetWords *records, int from, int to);
@@ -566,6 +686,9 @@ PE1_STATIC_ASSERT(sizeof(BattleEntity) == sizeof(FieldActor),
 
 int Battle_RollEscapeChance(void);
 
+/* Restoring integer square root (battle/commands.c). */
+int Math_IntSqrt(int value);
+
 /* ============================================================================
  * ENTITY TINT COLOR PACKETS (battle/menu)  -- documented, not yet symbol-named.
  *
@@ -578,14 +701,14 @@ int Battle_RollEscapeChance(void);
  * flat array: the code holds individual extern u8 handles per channel.)
  *
  * CLUSTER A -- entity tint, stride 0x48, base packet 0x800B0158 (sibling at
- *   0x800B0134). Seeded in Battle_InitEntityColors.c:81-104 with 4 vertices
+ *   0x800B0134). Seeded in battle/setup.c:81-104 with 4 vertices
  *   alternating {0xFF,0x3D,0x81} (pink) and {0x83,0x13,0x01} (dark orange):
  *     V0 R/G/B = 0x800B0158/59/5A   V1 = 0x800B0160/61/62
  *     V2 R/G/B = 0x800B0168/69/6A   V3 = 0x800B0170/71/72
  *   (init writes a second identical block at 0x800B01A0/A8/B0/B8.) Runtime
  *   recolor picks {0xFF,0x3D,0x81}/{0xC1,0x28,0x41}/{0x83,0x13,0x01} by
  *   g_FrameRngCounter&3 in Battle_PhaseInitEnemyTurn.c:235, Battle_PhaseEndTurn.c:214,
- *   Menu_MainUpdate.c:269 (form *(&D_800B0158 + slot*0x48)).
+ *   menu/main_update.c:269 (form *(&D_800B0158 + slot*0x48)).
  *
  * CLUSTER B -- status-bar / hit-reaction tint, stride 0x24, base 0x800B00EC:
  *     V0 R/G/B = 0x800B00EC/ED/EE   V1 = 0x800B00F4/F5/F6
@@ -609,5 +732,7 @@ int Battle_RollEscapeChance(void);
  * ==========================================================================*/
 
 void Battle_ApplyDamage(int action);
+void Battle_ApplyEnemyAttack(EnemyCombatant *enemy);
+void Battle_ApplySpellEffect(u32 spell, BattleEntity *target);
 
 #endif /* PE1_BATTLE_H */

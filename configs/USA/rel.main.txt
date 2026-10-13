@@ -1,2 +1,5 @@
 // Manual relocation overrides for SLUS_006.62.
 // Populate when splat's auto-reloc detection misses something.
+// g_MemCardSearchPatternPtr holds the memory card wildcard path "bu 0*", a field of
+// g_MemCardSaveSupportData in memcard/save_flow.c.
+rom:0x82A30 reloc:MIPS_32 symbol:g_MemCardSaveSupportData addend:0x10

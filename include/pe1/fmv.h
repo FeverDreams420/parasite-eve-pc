@@ -11,13 +11,13 @@
  *
  * == DISC SOURCE ==
  *   FMV streams live on the disc as \FMV1\PEDISC01.IDF;1 (CD1) and
- *   \FMV2\PEDISC02.IDF;1 (CD2) -- the same files OpenPeImage searches for disc
+ *   \FMV2\PEDISC02.IDF;1 (CD2) -- the same files Asset_OpenPeImage searches for disc
  *   detection (see pe_image.h). They are streamed via the CD/DsRead path, not
  *   read out of PE.IMG.
  *
  * == STATE-MACHINE BRACKETING (verified live) ==
- *   FMV is dispatched as its own SCENE through the Boot_MainLoop dispatcher on
- *   D_8009D280 (0x8009D280, the scene-dispatch token; see Boot_MainLoop). For the
+ *   FMV is dispatched as its own SCENE through the boot/main.c dispatcher on
+ *   D_8009D280 (0x8009D280, the scene-dispatch token; see boot/main.c). For the
  *   opening movie:
  *       before FMV : D_8009D280 = 0xA80001C8   flags = 0x40000000
  *       FMV playing: D_8009D280 = 0xA8067148   flags = 0x4000A240

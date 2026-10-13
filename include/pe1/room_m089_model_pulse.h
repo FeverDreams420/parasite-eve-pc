@@ -2,10 +2,14 @@
 #define PE1_ROOM_M089_MODEL_PULSE_H
 
 #include "common.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/room_m089_spin_model.h"
 #include "pe1/room_swirl_rise.h"
 
-/* room_m089 pulsing model burst (func_80193618): three turning layers of
+/* room_m089 pulsing model burst (RoomM089_ModelPulse): three turning layers of
  * one model and a fourth model over a glow strip, while swirl/rise sprites
  * spawn around the anchor and the player is tagged on contact. */
 typedef struct RoomM089ModelPulse {
@@ -48,18 +52,11 @@ typedef struct RoomM089PulseEvent {
     u8 active;
 } RoomM089PulseEvent;
 
-extern RoomM089PulseChannel *D_800F32D0;
-extern RoomM089SpawnChannel *D_800F33E0;
-extern RoomM089PulseEvent *D_800E2368;
-extern RoomM089PulseEntity *D_8009D254;
-extern u8 *D_8019416C;
-extern u8 D_801940F8[];
-extern u16 D_800E11EA;
+extern struct BattleEntity *D_8009D254;
+extern u8 *g_RoomM089PulseModel;
+extern u8 g_RoomM089PulseColorTrack[];
 
-int func_80193200(int mode, RoomSwirlRiseState *state);
-RoomSwirlRiseState *func_800CE610(void *pool);
-int func_800CE560(void *pool, int count, int size, void *callback);
-int func_800C6B90(void *position, int radius);
-int func_80071A54(void);
+int RoomM089_SwirlSpriteCallback(int mode, RoomSwirlRiseState *state);
+int rand(void);
 
 #endif

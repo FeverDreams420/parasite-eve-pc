@@ -1,9 +1,21 @@
 #ifndef PE1_SCENE_E19_BLAST_H
 #define PE1_SCENE_E19_BLAST_H
 
-#include "pe1/render_object.h"
+#include "pe1/akao_send.h"
+#include "pe1/asset_find.h"
+#include "pe1/field_model_draw.h"
+#include "pe1/field_owner_actor.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte.h"
+#include "pe1/gte_types.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/render_object.h"
 #include "pe1/room_floor.h"
+#include "pe1/scene_archive.h"
 
 /* Scene e19 blast sequence: loads five shell models, then runs a five-state
  * charge/burst timeline at an actor position, spawning rising sparks while
@@ -42,43 +54,13 @@ typedef struct SceneE19BlastScript {
     u8 active; /* 0x0D */
 } SceneE19BlastScript;
 
-typedef struct SceneE19BlastSound {
-    void *channel;
-} SceneE19BlastSound;
+extern struct BattleEntity *D_8009D254;
+extern s32 g_SceneE19BlastGlow;
+extern void *g_SceneE19BlastModel0, *g_SceneE19BlastModel1, *g_SceneE19BlastModel2, *g_SceneE19BlastModel3, *g_SceneE19BlastModel4;
 
-extern SceneE19BlastSound D_800B0E64;
-extern SceneE19BlastChannel *D_800F32D0, *D_800F33E0;
-extern SceneE19BlastPlayer **D_8009D254;
-extern SceneE19BlastScript *D_800E2368;
-extern u16 D_800E11EA[];
-extern u16 D_800E120A, D_800E11FA;
-extern s16 D_800F336A, D_800F336E, D_800F3372, D_800F3374;
-extern u16 D_800F3370, D_800F3376, D_800F3378;
-extern s32 D_8019B668;
-extern void *D_8019B680, *D_8019B684, *D_8019B688, *D_8019B68C, *D_8019B690;
-
-int func_80192F9C(int mode, SceneE19Blast *blast);
-int func_80192E08(int mode, void *spark);
-void *func_8006E498(void *channel, u32 key);
-void func_8006DF50(void *channel, int sound, int time, int pan, int volume);
-int func_80071A54(void);
-int func_80077A64(int tp, int abr, int x, int y);
-u16 func_80077AA4(int x, int y);
-int rsin(int angle);
-int rcos(int angle);
-#include "pe1/gte_types.h"
-int func_800C6B90(GteShortVector *position, int range);
-void func_800C6D5C(void *model, int x, int y);
-void func_800C6EC0(int page, int clut);
-void func_800C6ED8(int mode);
-void func_800C6EF8(void *model);
-void func_800C6F4C(void *model);
-void func_800C6FA0(void *model, int intensity);
-void func_800C71E4(void *model, GteMatrix *matrix);
-int func_800CE560(void *pool, int size, int count, void *callback);
-SceneE19BlastSpark *func_800CE610(void *pool);
-void func_800D1AE0(RenderColor *color, int value, int mode, int step);
-void func_800D1D24(int mode, int count, int value);
-int func_800D3FD8(void);
+int SceneE19_Blast(int mode, SceneE19Blast *blast);
+int rand(void);
+void FieldFx_ModelSetTexture(int page, int clut);
+void Geo_ClipAlternatingArcPoint(int mode, int count, int value);
 
 #endif

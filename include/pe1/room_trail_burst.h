@@ -7,7 +7,7 @@
 #include "pe1/room_spark.h"
 
 /* The trail and burst attacks linked by room_m245 and room_m397
- * (src/overlays/room_lib/RoomEffect_TrailBurstAttacks.c): two seeking
+ * (src/overlays/room_lib/trail_burst_attacks.c): two seeking
  * trails that chase the player and shed sparks and flashes, each with its
  * controller, and two model bursts that grow a scaled model at one of the
  * actor's joints while shedding pulsing sprites. */

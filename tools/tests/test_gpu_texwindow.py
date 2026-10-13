@@ -3,17 +3,18 @@ from pathlib import Path
 import re
 import unittest
 
+from tools.tests.csource import functions_text
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class GpuTexWindowTests(unittest.TestCase):
     def test_no_local_register_pins(self):
-        source = (ROOT/'src/main/psyq/libgpu/gpu_build.c').read_text()
+        # The command builders and _status open the libgpu sys_6.c unit.
+        source = functions_text('Gpu_BuildDrawOffsetCmd', 'Gpu_BuildTexWindowCmd',
+                                '_status')
         source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
-        function = source.split('u32 Gpu_BuildTexWindowCmd(', 1)[1]
-        self.assertNotRegex(function, r'\b(?:asm|__asm__)\b')
-        # The translation unit still has its unresolved global stack pin.
-        self.assertLessEqual(len(re.findall(r'\b(?:asm|__asm__)\b', source)), 1)
+        self.assertNotRegex(source, r'\b(?:asm|__asm__)\b')
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
                          (ROOT/'build/USA/main.exe').is_file(), 'retail/build unavailable')

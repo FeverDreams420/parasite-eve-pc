@@ -21,7 +21,7 @@ typedef struct BiosDeviceDirectory {
 
 #define BIOS_DEVICE_DIRECTORY ((BiosDeviceDirectory *)0x150)
 
-extern BiosFirstFileHandler D_800A32D0;
-extern char D_800A32D8[];
+extern BiosFirstFileHandler g_FirstFileOriginalHandler;
+extern char g_FirstFileDeviceName[];
 
 #endif

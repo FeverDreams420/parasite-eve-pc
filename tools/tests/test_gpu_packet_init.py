@@ -2,25 +2,22 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools/tests"))
+from csource import host_unit  # noqa: E402
 
 
 class GpuPacketInitTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("cc"), "host C compiler unavailable")
     def test_draw_mask_and_mode_packets(self):
-        source = (ROOT / "src/main/psyq/libgpu/GetDispEnv.c").read_text()
+        source = host_unit("SetPriority", "SetDrawStp", "SetDrawMode")
         harness = source + r'''
 #include <assert.h>
 static int mode_calls, window_calls;
-GpuCallbacks *D_80095744;
-GpuDebugState D_8009574C;
-char g_GpuActiveDispEnv[0x14];
-int Gpu_BuildDrawAreaTopLeftCmd(int x, int y) { return 0; }
-int Gpu_BuildDrawAreaBottomRightCmd(int x, int y) { return 0; }
-unsigned int Gpu_BuildDrawOffsetCmd(unsigned int x, unsigned int y) { return 0; }
 int Gpu_BuildDrawModeCmd(int a, int b, int c) {
     assert(a == 7 && b == 9 && c == 0x5678);
     ++mode_calls;

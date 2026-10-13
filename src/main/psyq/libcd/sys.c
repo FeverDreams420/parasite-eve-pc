@@ -1,59 +1,47 @@
-/* ASSEMBLER: GNU */
-/* Psy-Q LIBCD SYS.OBJ: CdFlush, CdSetDebug, CdComstr, CdIntstr, CdSync,
- * CdReady, CdSyncCallback, CdReadyCallback. */
+/* GCC_VERSION: 2.8.1 */
+/* Psy-Q LIBCD SYS.OBJ, part 1 of 2: CdStatus, CdMode, CdLastCom, CdLastPos
+ * and CdReset. CdReset needs GCC 2.8.1 (the call result goes through $v1). */
+
 #include "pe1/psyq_cd.h"
 
-extern void CD_flush(void);
-extern char func_800119CC[];
-extern char *g_CdCmdNameTable[];
-extern char *g_CdIntrStringTable[];
-
-void CdFlush(void) {
-    CD_flush();
+int CdStatus(void) {
+    return *(u8 *)&g_CdStatus;
 }
 
-int CdSetDebug(int level) {
-    int old = CD_debug;
-    CD_debug = level;
-    return old;
+int CdMode(void) {
+    return g_CdMode;
 }
 
-char *CdComstr(unsigned int index) {
-    index &= 0xFF;
-    if (index >= 0x1C) {
-        return func_800119CC;
+int CdLastCom(void) {
+    return g_CdLastCom;
+}
+
+CdlLOC *CdLastPos(void) {
+    return &g_CdLastPos;
+}
+
+void CD_initintr(void);
+int CD_init(void);
+int CD_initvol(void);
+
+int CdReset(int arg0) {
+    int ret;
+
+    if (arg0 == 2) {
+        CD_initintr();
+        return 1;
     }
-    return g_CdCmdNameTable[index];
-}
 
-char *CdIntstr(unsigned int index) {
-    index &= 0xFF;
-    if (index >= 7) {
-        return func_800119CC;
+    if (CD_init() != 0) {
+        return 0;
     }
-    return g_CdIntrStringTable[index];
-}
 
-int CdSync(int mode, u8 *result) {
-    return CD_sync(mode, result);
-}
+    if (arg0 == 1) {
+        ret = CD_initvol();
+        if (ret != 0) {
+            return 0;
+        }
+    }
 
-int CdReady(int mode, u8 *result) {
-    return CD_ready(mode, result);
-}
-
-CdlCB CdSyncCallback(CdlCB callback) {
-    CdlCB old;
-
-    old = D_8009AFB4;
-    D_8009AFB4 = callback;
-    return old;
-}
-
-CdlCB CdReadyCallback(CdlCB callback) {
-    CdlCB old;
-
-    old = D_8009AFB8;
-    D_8009AFB8 = callback;
-    return old;
+    return 1;
 }

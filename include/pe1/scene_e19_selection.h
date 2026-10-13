@@ -2,10 +2,11 @@
 #define PE1_SCENE_E19_SELECTION_H
 
 #include "common.h"
+#include "pe1/battle_setup.h"
 #include "pe1/field_actor.h"
 #include "pe1/field_actor_script_state.h"
-#include "pe1/render_object.h"
 #include "pe1/player_entity.h"
+#include "pe1/render_object.h"
 
 /* Scene e19 grab sequence: keeps the player locked to the selection matrix
  * while the partner actor plays its animation and fires events on frame
@@ -35,8 +36,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE19Selection, matrix) == 0x1C,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE19Selection, savedZ) == 0x40,
                   scene_e19_selection_saved_z_offset);
 
-s32 func_80020CE4();
-void func_80192B10();
-int func_80192BFC();
+void SceneE19_ResetPlayerMotion();
+int SceneE19_GrabRelease();
 
 #endif

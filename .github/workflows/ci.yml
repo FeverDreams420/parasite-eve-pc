@@ -159,9 +159,10 @@ jobs:
           rm -rf .assets
 
       # Overlay splitting and compilation dominate the workflow. Main-only
-      # decompilation changes do not affect these products, so retain their
-      # objects, linker maps and generated assembly under an input hash that
-      # covers every shared file that can change their bytes.
+      # decompilation changes do not change the overlays' objects, so retain
+      # their objects, linker maps and generated assembly under an input hash
+      # that covers every shared file that can change them. Their link
+      # depends on main's symbols as well and is redone below.
       - name: Restore overlay build
         id: overlay-cache
         uses: actions/cache@v4
@@ -170,9 +171,9 @@ jobs:
             asm/USA/overlays
             build/USA/overlays
             linkers/USA/overlays
-          key: overlays-v3-${{ hashFiles('configs/USA/overlays/**', 'configs/USA/sym.main.txt', 'src/overlays/**', 'include/**', 'tools/m2c/**', 'tools/scripts/cc.sh', 'tools/scripts/overlay_extra_undefineds.py', 'tools/scripts/parallel_overlay_make.py', 'Makefile', 'requirements.txt') }}
+          key: overlays-v4-${{ hashFiles('configs/USA/overlays/**', 'configs/USA/sym.main.txt', 'src/overlays/**', 'include/**', 'tools/m2c/**', 'tools/scripts/cc.sh', 'tools/scripts/overlay_link_symbols.py', 'linkers/USA/overlay_abi.txt', 'linkers/USA/overlay_windows.txt', 'tools/scripts/overlay_windows.py', 'tools/scripts/parallel_overlay_make.py', 'Makefile', 'requirements.txt') }}
           restore-keys: |
-            overlays-v3-
+            overlays-v4-
 
       - name: Split and build the main executable
         run: |
@@ -182,12 +183,24 @@ jobs:
       - name: Verify the main executable against the retail SHA-1
         run: make check
 
+      # Overlays link against the main executable built above, so they are
+      # always relinked; parallel_overlay_make.py skips an overlay whose
+      # inputs and main symbol table are unchanged.
       - name: Build every overlay
-        if: steps.overlay-cache.outputs.cache-hit != 'true'
         run: make overlay-build-all OVERLAY_JOBS="$(nproc)"
 
       - name: Verify the overlays against the retail SHA-1s
         run: make overlay-check-all
+
+      # Shiftability ratchet: no fixed program address may be added
+      # (tools/shift_baseline.json, docs/CODE_ORGANIZATION.md).
+      - name: Check that no fixed-address count grew
+        run: make shift-check SHIFT_REQUIRE_OVERLAYS=1
+
+      # Overlay global names must stay unique per meaning
+      # (tools/overlay_collisions_baseline.json, docs/OVERLAY_SYMBOL_COLLISIONS.md).
+      - name: Check overlay symbol collisions
+        run: make overlay-collision-check SHIFT_REQUIRE_OVERLAYS=1
 
       - name: Generate the target objects and the progress report
         run: make report

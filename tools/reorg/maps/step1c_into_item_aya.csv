@@ -1,0 +1,13 @@
+old,new
+src/main/item/Inv_BonusSlotCount.c,src/main/aya/Inv_BonusSlotCount.c
+src/main/battle/Inv_BuildArmorList.c,src/main/aya/Inv_BuildArmorList.c
+src/main/menu/Menu_SoundsAndBattleQueries.c,src/main/aya/Menu_SoundsAndBattleQueries.c
+src/main/akao/Akao_SetBgmVolumeFade.c,src/main/item/Akao_SetBgmVolumeFade.c
+src/main/menu/Menu_ActionSubmenuSelection.c,src/main/item/Menu_ActionSubmenuSelection.c
+src/main/time/GameTime_CounterSeconds.c,src/main/item/GameTime_CounterSeconds.c
+src/main/menu/Sfx_DrawSlotRow.c,src/main/item/Sfx_DrawSlotRow.c
+src/main/aya/Aya_UnlockParasiteSpellById.c,src/main/item/Aya_UnlockParasiteSpellById.c
+src/main/menu/menu_get.c,src/main/item/menu_get.c
+src/main/menu/Menu_DrawArmorItemDetail.c,src/main/item/Menu_DrawArmorItemDetail.c
+src/main/menu/Menu_OpenItemUsePanelAtIndex.c,src/main/item/Menu_OpenItemUsePanelAtIndex.c
+src/main/menu/Menu_BattleEquipMode.c,src/main/item/Menu_BattleEquipMode.c

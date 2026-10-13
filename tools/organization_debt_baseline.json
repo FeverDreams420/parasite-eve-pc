@@ -1,10 +1,12 @@
 {
   "main": {
     "address_files": 0,
-    "placeholder_files": 1
+    "placeholder_files": 0,
+    "unconventional_files": 0
   },
   "overlays": {
-    "address_files": 151,
-    "placeholder_files": 0
+    "address_files": 0,
+    "placeholder_files": 0,
+    "unconventional_files": 0
   }
 }

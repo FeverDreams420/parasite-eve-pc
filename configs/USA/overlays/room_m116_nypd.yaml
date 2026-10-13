@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m116_nypd
   ld_script_path: linkers/USA/overlays/room_m116_nypd.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m116_nypd.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m116_nypd.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m116_nypd.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m116_nypd.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,12 +37,12 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m116_nypd]
-      - [0xC, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1E4, .rodata, ../room_lib/RoomEffect_LineBurst]
-      - [0x1F8, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x3514, c, ../room_lib/RoomEffect_LineBurst]
-      - [0x4304, c, ../room_lib/RoomLib_SlotSet]
-      - [0x4348, data, D_80193330]
+      - [0xC, .rodata, ../room_lib/actor_classes]
+      - [0x1E4, .rodata, ../room_lib/line_burst]
+      - [0x1F8, c, ../room_lib/actor_classes]
+      - [0x3514, c, ../room_lib/line_burst]
+      - [0x4304, c, ../room_lib/script_slot]
+      - [0x4348, .data, ../room_lib/actor_class_table]
       - [0x43F0, data, D_801933D8]
       - start: 0x4448
         type: databin

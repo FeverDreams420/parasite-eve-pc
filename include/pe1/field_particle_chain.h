@@ -2,8 +2,8 @@
 #define PE1_FIELD_PARTICLE_CHAIN_H
 
 #include "common.h"
-#include "pe1/gte_types.h"
 #include "pe1/field_textured_chain_node.h"
+#include "pe1/gte_types.h"
 #include "pe1/psyq_libc.h"
 #include "pe1/room_spark.h"
 

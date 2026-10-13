@@ -7,16 +7,15 @@
 
 #include "pe1/psyq_api_internal.h"
 
-void EnablePAD(void) {
-    register PadToggleFunc callback asm("$9");
+static inline void PadToggle(PadToggleFunc target) {
+    register PadToggleFunc callback asm("$9") = target;
+    goto *(void *)callback;
+}
 
-    callback = jtbl_800A34C8;
-        goto *(void *)callback;
+void EnablePAD(void) {
+    PadToggle(jtbl_800A34C8);
 }
 
 void DisablePAD(void) {
-    register PadToggleFunc callback asm("$9");
-
-    callback = jtbl_800A34CC;
-        goto *(void *)callback;
+    PadToggle(jtbl_800A34CC);
 }

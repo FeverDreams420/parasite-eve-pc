@@ -1,4 +1,5 @@
 /* PSY-Q LIBSPU S_SRA: _spu_setReverbAttr. */
+
 #include "common.h"
 #include "pe1/psyq_spu_internal.h"
 

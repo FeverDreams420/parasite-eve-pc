@@ -10,13 +10,17 @@ int open(char *path, int mode);
 int close(int descriptor);
 int erase(char *path);
 
+/* Program control and cache services. */
+void exit(int code);
+void FlushCache(void);
+
 /* Entry-hook and automatic IRQ acknowledgement services used by LIBETC. */
 int EnterCriticalSection(void);
 void ExitCriticalSection(void);
 int ResetEntryInt(void);
 void ReturnFromException(void);
 void HookEntryInt(void *entry);
-void ChangeClearPAD(long enabled);
+void ChangeClearPAD(int mode);
 int ChangeClearRCnt(int counter, int enabled);
 
 #define PE1_STRINGIFY_INNER(value) #value
@@ -47,5 +51,28 @@ int ChangeClearRCnt(int counter, int enabled);
                      : "1"(selector) : "memory")
 
 void bzero(void *destination, int length);
+void *memcpy(void *destination, const void *source, unsigned int length);
+char *strcpy(char *destination, char *source);
+
+int DeliverEvent(unsigned int event, int spec);
+
+int OpenEvent(unsigned int desc, int spec, int mode, int (*func)(void));
+int CloseEvent(int event);
+int EnableEvent(int event);
+int TestEvent(int event);
+int DisableEvent(int event);
+int UnDeliverEvent(unsigned int event, int spec);
+
+/* LIBAPI root counters (counter.c). */
+int SetRCnt(unsigned int counter, int target, int mode);
+int GetRCnt(unsigned int counter);
+int StartRCnt(unsigned int counter);
+int StopRCnt(unsigned int counter);
+
+/* LIBAPI.H descriptor, event and counter mode constants. */
+#define RCntCNT2 0xF2000002
+#define RCntMdINTR 0x1000
+#define EvSpINT 0x0002
+#define EvMdINTR 0x1000
 
 #endif

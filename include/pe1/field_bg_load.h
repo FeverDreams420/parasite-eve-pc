@@ -25,15 +25,13 @@ typedef struct FieldBgImageRecord {
     ((0 << 7) | (1 << 5) | (((y) & 0x100) >> 4) | (((x) & 0x3ff) >> 6) | (((y) & 0x200) << 2))
 #define BG_SLOT_CLUT(x, y) (((y) << 6) | (((x) >> 4) & 0x3f))
 
-extern FieldBgTextureSlot D_80091648[4];
+extern FieldBgTextureSlot g_FieldBgTextureSlots[4];
 
 /* PE.IMG start/end sector table (consecutive entries bound one chunk). */
 extern u16 D_800930D8[];
 
 void Akao_Cmd_F1(void);
-void DrawSync(int mode);
 void ResetGraph(int mode);
-void SetDispMask(int mask);
 void Battle_DrawHPBar(void);
 
 int Scene_LoadFieldBg(void);

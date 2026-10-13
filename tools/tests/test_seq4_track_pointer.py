@@ -2,18 +2,31 @@
 from pathlib import Path
 import itertools
 import random
+import re
 import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools/tests'))
+from csource import find_definition, functions_text  # noqa: E402
 
 
 class Seq4TrackPointerTests(unittest.TestCase):
     def test_duplicate_assembly_alias_is_gone(self):
-        source=(ROOT/'src/main/akao/seq4.c').read_text()
-        self.assertNotIn('g_AkaoCurTrack_1',source)
-        self.assertNotIn('__asm__',source)
-        self.assertEqual(source.count('extern char *g_AkaoCurTrack;'),1)
+        names=('SeqOp_SetTrack38Mask','SeqOp_ClearMask','SeqOp_EnableField84','SeqOp_Noop_904AC',
+               'SeqOp_Noop_904B4','SeqOp_Noop_904BC','SeqOp_SetTrack5AValue',
+               'SeqOp_ReadAdsrAttackRate','SeqOp_ReadAdsrDecayRate','SeqOp_ReadAdsrSustainLevel',
+               'SeqOp_ReadAdsrSustainRate','SeqOp_ReadAdsrReleaseRate','SeqOp_ReadAdsrAttack',
+               'SeqOp_ReadAdsrSustain','SeqOp_ReadAdsrRelease','Akao_SetReleaseRate',
+               'Akao_ResetReleaseRate','SeqOp_PushLoopPoint','SeqOp_LoopCounter','SeqOp_JumpIfLoopCount',
+               'SeqOp_JumpIfLoopCountPop','SeqOp_Return','SeqOp_SetVolume','SeqOp_AdjustVolumeTarget')
+        body=functions_text(*names)
+        unit=find_definition(names[0]).read_text()
+        self.assertNotIn('g_AkaoCurTrack_1',unit)
+        self.assertNotIn('__asm__',body)
+        # One typed declaration (in the unit or a shared header), no alias.
+        self.assertLessEqual(len(re.findall(r'extern\s+\w+\s*\*\s*g_AkaoCurTrack\s*;',unit)),1)
 
     @unittest.skipUnless((ROOT/'assets/USA/main.exe').is_file() and
                          (ROOT/'build/USA/main.exe').is_file(), 'retail/build unavailable')

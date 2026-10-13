@@ -1,4 +1,5 @@
 /* PSY-Q LIBGTE MTX_001: MulRotMatrix. */
+
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"
 

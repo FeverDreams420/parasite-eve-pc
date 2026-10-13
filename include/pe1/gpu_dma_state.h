@@ -37,8 +37,13 @@ typedef struct GpuQueueEntry {
     /* 0x0C */ u32 packet[21];
 } GpuQueueEntry;
 
-extern GpuQueueEntry D_800BD030[64];
-extern GpuDmaState D_80095850;
+extern GpuQueueEntry g_GpuDmaQueue[64];
+/* A queue entry addressed by its byte offset, as _exeque computes it. */
+typedef union GpuQueueEntryAddress {
+    GpuQueueEntry *entry;
+    u32 word;
+} GpuQueueEntryAddress;
+extern GpuDmaState g_GpuDmaState;
 
 int Gpu_SwapDisplayBuffers(GpuQueueFunction function, u32 *source,
                            int size, u32 argument);

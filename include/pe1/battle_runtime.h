@@ -1,10 +1,12 @@
 #ifndef PE1_BATTLE_RUNTIME_H
 #define PE1_BATTLE_RUNTIME_H
 
-#include "pe1/battle.h"
+#include "pe1/asset_find.h"
+#include "pe1/entity_animation.h"
 #include "pe1/pm.h"
+#include "pe1/scene_transition.h"
 
-extern Combatant *D_8009D278;
+extern Combatant *g_ActiveActor;
 extern BattleEntity *D_8009D254;
 extern s16 D_8009D2A4;
 extern int D_8009D200;
@@ -17,47 +19,80 @@ typedef struct BattleEvasionOutcome {
 
 PE1_STATIC_ASSERT(sizeof(BattleEvasionOutcome) == 2, battle_evasion_outcome_size);
 
+/* Record view of the outcome's reaction byte (g_EvasionReaction). Hit resolution
+ * reads it back through this view after storing the target's core flags, so
+ * the read stays ordered after those stores as in retail. */
+typedef struct BattleEvasionReaction {
+    s8 value;
+} BattleEvasionReaction;
+
 typedef struct BattleEnemySlot {
     s32 active;
     EnemyCombatant combatant;
 } BattleEnemySlot;
 
 extern int D_8009D2FC;
-extern int D_8009D258;
-extern int D_8009D208;
-extern u8 D_8009CE44;
-extern u8 D_8009CE40;
+extern int g_BattleEffectPmSlot;
+extern s8 g_BattleTargetCycleMode; /* item target mode: 0, or 4..7 while picking */
 extern u8 D_8009D2D8;
-extern u8 D_8009D1DC;
-extern u8 D_8009CE38[4];
-extern unsigned int D_8009D1AC;
+/* Actions left in the battle turn (Save_ResetGlobalFlags clears it). */
+extern unsigned char g_BattleRemainingActions;
+extern u8 g_BattleActionAnimModes[4];
+extern unsigned int g_BattleResultFlags;
 extern u8 D_8009D1CE;
+/* D_8009D1CE read as the signed save-overlay flag, and the actor effect
+ * timer at 0x8009D228 read as a signed count. */
+extern s8 g_BattleSaveOverlayActive;
+extern s16 g_ActorEffectFlag100Timer;
 extern u8 D_8009CE60;
-extern u8 D_8009D1D4;
-extern u8 D_8009CE3C;
+extern u8 g_BattleActionIndex;
+extern u8 g_BattleActionQueueCount;
 extern unsigned int D_8009D2E8;
-extern int D_8009D28C;
-extern BattleAction D_800A76D8;
+extern int g_BattleModeState;
+/* Action record the battle menu fills in (Menu_RunFrameWithArg). Its packed
+ * words are also declared on their own: retail reads each of them through
+ * its own absolute address. */
+extern BattleAction g_BattleMenuActionRecord;
+extern BattleEffectBits g_BattleMenuEffectBits;
+extern BattleAttackBits g_BattleMenuAttackBits;
+extern BattleTurnBits g_BattleMenuTurnBits;
 extern s8 D_8009D2B0;
-extern BattleEntity *D_8009D20C;
+extern struct FieldActor *g_FieldActorListHead; /* actor list head */
 extern void *D_8009D1F8;
-extern u8 D_8009159C[];
-extern u8 D_800915C0[];
-extern const EnemyCombatant D_800109B0;
-extern BattleEnemySlot D_800A5D58[7];
-extern u8 D_8009D2EC;
-extern u8 D_8009D2A0;
-extern u8 D_8009CE74;
-extern u8 D_8009D244;
+extern u8 g_EscapeFailedTexts[];
+extern u8 g_EscapeBlockedTexts[];
+extern const EnemyCombatant g_EnemyCombatantInitial;
+extern BattleEnemySlot g_BattleEnemySlots[7];
+extern u8 g_EntityInstanceCounter;
+extern s8 D_8009D2A0;
+extern u8 g_BattleStepIndex;
+extern u8 g_BattleEnemyEscapeFlag;
+/* Frames since the player halted at battle end; Menu_MainUpdate counts it up
+ * to 0x5A. */
+extern s8 D_8009CE30;
+
+/* Per-action tables Battle_SetupEnemyAnims copies to the stack: four facing
+ * animation modes plus the action frame word, and the offense scale (x/10). */
+typedef struct EnemyAnimTable {
+    u8 rows[9][5];
+} EnemyAnimTable;
+
+typedef struct EnemyOffenseScaleTable {
+    u8 values[9];
+} EnemyOffenseScaleTable;
+
+extern const EnemyAnimTable g_BattleActionAnimRows;
+extern const EnemyOffenseScaleTable g_BattleActionOffenseScale;
 
 void Battle_FinalizeAttackResult(void);
 void Battle_Init(void);
 void Battle_StepScriptEntry(void);
+void Battle_FlushScriptSounds(void);
+int Battle_GetAgilityBonus(void);
 void Pm_StopAll(void);
 int Pm_SendCmd(int command, int arg1, int arg2, int arg3, int arg4, int arg5);
 int Akao_SetPos3D(int arg0, int arg1, int x, int y, int z);
-int Asset_Find08Alt(int id, int arg1, int x, int y, int z);
-void Tbl_ResetAll(void);
+void Draw_ResetTextboxes(void);
 extern s8 g_BattleTargetIndex;
 extern s8 g_BattleActiveTurnSlot, g_BattleItemMenuState;
 extern unsigned int g_GameStateFlags;
@@ -75,13 +110,11 @@ void Battle_InitFadeVars(void);
 void Battle_UpdatePlayerTurn(void);
 void Battle_ApplyPlayerHit(void);
 int Battle_CalcDistToPlayer(BattleEntity *actor, BattleEntity *player);
+int Battle_CalcRelativeAngle(BattleEntity *target, BattleEntity *viewer);
 void Battle_CheckEvasion(BattleEntity *actor, BattleEvasionOutcome *outcome,
                          int attackType);
 void Battle_AdvancePhase(void);
 void BattleCmd_UndoPending(void);
-void Entity_SetActionMode(BattleEntity *entity, int mode);
-void Entity_SetAction(BattleEntity *entity, int mode);
-int Battle_RollEscapeChance(void);
 void Battle_CopyPadStateToRecord(void);
 int Battle_HandleItemMenu(void);
 int Battle_StepEnemyTurn(s8 mode);
@@ -90,17 +123,15 @@ void Battle_AdvanceTurnSlot(void);
 void Entity_AllocSlot(BattleEntity *entity);
 void Battle_StepEntityDeath(void);
 void Anim_SetInterpRate(RenderObjectEntity *object, int rate);
-void Pm_StopAllBoth(void);
-int CD_StepReadState(int mode);
+int CdRom_StepReadState(int mode);
 void Battle_ClearMotionTable(void);
 void Battle_SetupPlayerPalette(void);
 void Battle_ResetEnemyStats(int mode);
 void Battle_SetupEnemyAnims(void);
-void Scene_SetStoryDay(int day);
 void Battle_StartEnemyAttackEffect(BattleEntity *entity);
 void Battle_DrawATBGauge(void);
 int Inv_GetWeaponCategoryAmmoBase(unsigned int category);
-int Pad_GetMenuPressedBitOrDisabled(void);
+s8 Pad_GetMenuPressedBitOrDisabled(void);
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEnemySlot, active) == 0, battle_enemy_slot_active_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEnemySlot, combatant) == 4, battle_enemy_slot_combatant_offset);
@@ -108,19 +139,33 @@ PE1_STATIC_ASSERT(sizeof(BattleEnemySlot) == 0xDC, battle_enemy_slot_size);
 
 /* Aya action sequencer state and its render/scene dependencies. */
 extern u8 D_8009D25C;
-extern s8 D_8009CE48;
-extern s8 D_8009CE54;
-extern s8 D_8009CE55;
-extern s16 D_8009CE4C;
-extern s32 D_8009E054, D_8009E058, D_8009E05C;
-extern u16 D_8009CE58[2];
-extern u16 D_8009CE5C;
-extern RenderObjectEntity D_800B0CEC;
-extern u16 D_800B0D88;
-extern u8 D_800B0D8A;
+extern s8 g_AyaAttackStep;
+/* The BattleEvasionOutcome Battle_CheckEvasion fills for the current hit.
+ * g_EvasionReaction names its second byte for units whose assembler
+ * (ASPSX 2.56) only addresses whole small-data symbols through $gp; the
+ * status byte is the record's first field and is read through the record.
+ * Battle_StepAyaAction writes the record itself. */
+extern BattleEvasionOutcome g_EvasionOutcome;
+extern s8 g_EvasionReaction;
+extern s16 g_AyaActionTimer;
+/* Aya's world position (16.16) saved before an action moves her. */
+typedef struct BattleSavedPosition {
+    s32 x, y, z;
+} BattleSavedPosition;
+extern BattleSavedPosition g_AyaSavedPos;
+/* Aya's rotation saved with the position. */
+typedef struct BattleSavedRotation {
+    u16 x, facing, z;
+} BattleSavedRotation;
+extern BattleSavedRotation g_AyaSavedRotation;
+/* D_800B0D88 is g_PlayerBattleEntity.flags_9C. Battle_StepEscapeOrDeath reloads the
+ * player's flags only after this store, so the store must look like it may
+ * alias them: a non-small view keeps the address in a register, and separate
+ * read and write views keep GCC from sharing one LUI between the load and
+ * the store. Matching debt (see docs/CODE_ORGANIZATION.md). */
+extern struct { u16 value; char pad[14]; } D_800B0D88_read __asm__("D_800B0D88");
+extern struct { u16 value; char pad[14]; } D_800B0D88_write __asm__("D_800B0D88");
 extern u16 D_801F1F38;
-extern BattleGameStateWindow g_BattleGameStateWindow __asm__("D_8009D1A0");
-extern u32 D_8009D1A0;
 int Scene_InitEntityPlayer(int mode);
 void Pm_StopLowerHalf(void);
 s16 Battle_CalcAngleToTarget(RenderObjectEntity *object, void *target);

@@ -16,7 +16,7 @@ CASES = [('psyq/libmath/dbshift',
  ('psyq/libapi/first',
   668,
   '54cf62beee29111f4732b454b4ccce07e6d3a611b4d0ab06412c87c69fe2cdba',
-  'D_800A32D0 = 0x800A32D0;\nD_800A32D8 = 0x800A32D8;\nfirstfile2 = 0x80072A64;\nstrcmp = 0x80072A54;\nSECTIONS { .text 0x800727b4 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }')]
+  'g_FirstFileOriginalHandler = 0x800A32D0;\nD_800A32D8 = 0x800A32D8;\nfirstfile2 = 0x80072A64;\nstrcmp = 0x80072A54;\nSECTIONS { .text 0x800727b4 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }')]
 
 
 class ArithmeticShiftFirstFileTests(unittest.TestCase):

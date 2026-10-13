@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m395_chrysler
   ld_script_path: linkers/USA/overlays/room_m395_chrysler.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m395_chrysler.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m395_chrysler.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m395_chrysler.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m395_chrysler.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,14 +37,13 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m395_chrysler]
-      - [0xC, .rodata, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x14, .rodata, ../room_lib/RoomLib_ActorClasses]
-      - [0x1EC, .rodata, ../room_lib/RoomEffect_LineBurst]
-      - [0x200, c, ../room_lib/RoomLib_ThreeParticleClass]
-      - [0x3B0, c, ../room_lib/RoomLib_ThreeTransformParticles]
-      - [0x11FC, c, ../room_lib/RoomLib_ActorClasses]
-      - [0x4518, c, ../room_lib/RoomEffect_LineBurst]
-      - [0x5308, c, ../room_lib/RoomLib_SlotSet]
+      - [0xC, .rodata, ../room_lib/three_particles]
+      - [0x14, .rodata, ../room_lib/actor_classes]
+      - [0x1EC, .rodata, ../room_lib/line_burst]
+      - [0x200, c, ../room_lib/three_particles]
+      - [0x11FC, c, ../room_lib/actor_classes]
+      - [0x4518, c, ../room_lib/line_burst]
+      - [0x5308, c, ../room_lib/script_slot]
       - [0x534C, data, D_80194334]
       - [0x5358, data, RoomLib_TableA_8018F240]
       - [0x5364, data, D_8019434C]
@@ -50,7 +51,7 @@ segments:
       - [0x5378, data, D_80194360]
       - [0x5394, data, D_8019437C]
       - [0x53CC, data, D_801943B4]
-      - [0x5414, data, D_801943FC]
+      - [0x53DC, .data, ../room_lib/actor_class_table]
       - [0x5484, data, D_8019446C]
       - [0x54A4, data, D_8019448C]
       - [0x54E0, data, RoomLib_SlotTable]
@@ -62,6 +63,11 @@ segments:
       - start: 0x5578
         type: databin
         name: D_80194560
+        dir: room_m395_chrysler
+      - [0x2ED7C, data, D_801BDD64]
+      - start: 0x2EDA0
+        type: databin
+        name: D_801BDD88
         dir: room_m395_chrysler
   - [0x2F800]
 # room: m395, section3 sector 91056, scanner delta 0

@@ -8,11 +8,11 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
-# Retail TUs at 0x8007BF44 (492 bytes) and 0x80081414 (736 bytes).
-CASES = [('libcd/CD_getsector',
-  492,
-  'e9f1ff7e2cc8ea7a5bf11be1f838ef39ebab8d2906c4d0817f980aa9eb3a1bc3',
-  'D_8009B27C = 0x8009B27C;\nD_8009B288 = 0x8009B288;\nD_8009B2B0 = 0x8009B2B0;\nD_8009B28C = 0x8009B28C;\nD_8009B2B4 = 0x8009B2B4;\nD_8009B2B8 = 0x8009B2B8;\nD_8009B2BC = 0x8009B2BC;\nD_8009B2C0 = 0x8009B2C0;\ng_CdRegIndexBase = 0x8009B27C;\ng_CdRegResponse = 0x8009B288;\ng_CdRegRequest = 0x8009B28C;\ng_CdRegDmaControl = 0x8009B2C0;\nSECTIONS { .text 0x8007bf44 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }'),
+# Retail TUs at 0x8007BF44 (bios_7.c, LIBCD BIOS part 7) and 0x80081414 (dsfile.c).
+CASES = [('libcd/bios_7',
+  720,
+  'cf57c86e189e44e052836d51bc43c23062405ef42d40be9b66945cb8fc0ebcd2',
+  'D_8009AFB4 = 0x8009afb4;\nD_8009AFB8 = 0x8009afb8;\nD_8009B260 = 0x8009b260;\nD_8009B27C = 0x8009b27c;\nD_8009B288 = 0x8009b288;\nD_8009B28C = 0x8009b28c;\nD_8009B2B0 = 0x8009b2b0;\nD_8009B2B4 = 0x8009b2b4;\nD_8009B2B8 = 0x8009b2b8;\nD_8009B2BC = 0x8009b2bc;\ng_CdRegDmaControl = 0x8009b2c0;\nD_800A3460 = 0x800a3460;\nD_800A3468 = 0x800a3468;\ng_CdReadyEvent = 0x8009b295;\ng_CdRegDmaControl = 0x8009b2c0;\ng_CdRegIndexBase = 0x8009b27c;\ng_CdRegRequest = 0x8009b28c;\ng_CdRegResponse = 0x8009b288;\ngetintr = 0x8007aab4;\nSECTIONS { .text 0x8007bf44 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }'),
  ('libds/dsfile',
   768,
   '0e47249fb6a552eda5b9ed324059dcf6a2f680f9d28a61de6a092dbf6c6ba57b',

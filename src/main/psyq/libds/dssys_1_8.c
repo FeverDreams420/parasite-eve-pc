@@ -1,44 +1,48 @@
 /* ASSEMBLER: GNU */
-/* Psy-Q LIBDS DSSYS_1.OBJ, part 8 of 11: LIBDS_DSSYS_1_text_EA4. */
+/* GCC_VERSION: 2.8.1 */
+/* CC1_FLAGS: -mno-split-addresses */
+/* Psy-Q LIBDS DSSYS_1.OBJ, part 8 of 10: DS_stop, DS_restart, DS_system_active. */
+
 #include "common.h"
+#include "pe1/cdrom.h"
 #include "pe1/psyq_cd.h"
-#include "pe1/psyq_ds_queue.h"
 
-extern DsDecodedEventFlags D_8009B588;
-extern u32 D_8009B624[];
+void DS_stop(void)
+{
+    CdRomSystemState *state;
+    u32 kind;
+    u32 cmp;
 
-void LIBDS_DSSYS_1_text_EA4(int event, u8 *data) {
-    u8 *data_reg;
-    DsDecodedEventFlags *state;
-    u8 value;
-    u8 *src;
-    int index;
+    state = &g_DsReadSysEnabled;
+    state->enabled = 0;
+    CD_flush();
 
-    data_reg = data;
-    event &= 0xFF;
-    if (event == 5) {
-        goto event_five;
+    if (state->view.system.command.read.status == 2) {
+        kind = state->view.system.command.read.command;
+        cmp = 0xB;
+        if (kind == cmp || ((cmp = 0x11), kind == cmp) || ((cmp = 0x10), kind == cmp)) {
+            DsReadStatusBlock *slot;
+            u32 value;
+
+            slot = &g_DsReadStatusBlock;
+            value = 1;
+            slot->status = value;
+            slot->command = 0xB;
+        }
     }
+}
 
-    index = D_8009B624[g_CdRomEventCommandState.pendingCommand] - 1;
-    if (index < 0) {
-        return;
-    }
-    goto process;
+void DS_restart(void) {
+    int enabled;
+    enabled = 1;
+    g_DsReadSysEnabled.enabled = enabled;
+}
 
-event_five:
-    index = 0;
+int DS_system_active(void) {
+    int scratch;
+    int enabled;
 
-process:
-    src = data_reg + index;
-    value = src[0];
-    asm volatile("" : : "r"(value));
-    state = &D_8009B588;
-    asm volatile("" : "=r"(state) : "0"(state));
-    state->bit7 = value >> 7;
-    state->bit6 = (value >> 6) & 1;
-    state->bit5 = (value >> 5) & 1;
-    state->bit1 = (value >> 1) & 1;
-        ((u8 *)state)[-0x1C] = value;
-    rescpy((u8 *)state - 0x24, data_reg);
+    /* Keep $at live so the load uses $v0 as both base and destination. */
+    enabled = g_DsReadSysEnabled.enabled;
+    return enabled;
 }

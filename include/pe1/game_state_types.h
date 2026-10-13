@@ -1,6 +1,8 @@
 #ifndef PE1_GAME_STATE_TYPES_H
 #define PE1_GAME_STATE_TYPES_H
 
+#include "pe1/render_object.h"
+
 typedef signed char Pe1S8;
 typedef unsigned char Pe1U8;
 typedef unsigned int Pe1U32;
@@ -17,16 +19,6 @@ struct PmSlotBanks;
 struct RenderObjectEntity;
 union SceneAssetView;
 
-/* Embedded render object at 0x014; the full layout is RenderObjectEntity. */
-typedef struct Pe1SceneRenderObject {
-    void *sections[9];                             /* 0x00 */
-    struct RenderObjectEntity *animation_source;   /* 0x24 */
-    short animation_state, animation_id;           /* 0x28 */
-    Pe1U8 reserved_2c[0x5C];
-    Pe1U8 shade, light_negative_y, light_positive_y; /* 0x88 */
-    Pe1U8 reserved_8b[0x39];
-} Pe1SceneRenderObject;
-
 typedef union Pe1SceneAudioState {
     Pe1U8 bytes[0x10];
     struct {
@@ -34,13 +26,37 @@ typedef union Pe1SceneAudioState {
         Pe1S8 banks[2];
         Pe1S8 keys[2][2];
         Pe1S8 pending_key, pending_bank; /* 0xE0, 0xE1 in game state */
-        Pe1U8 trailing[6];
+        /* Movie playback state (menu_memcard video player). */
+        Pe1U8 movie_active;      /* 0xE2: frame countdown while playing */
+        Pe1S8 movie_wide;        /* 0xE3: wide-screen movie flag */
+        short movie_frame;       /* 0xE4 */
+        Pe1U8 movie_volume;      /* 0xE6: fade scale, reset to 0x98 */
+        Pe1S8 movie_index;       /* 0xE7 */
     } tracks;
 } Pe1SceneAudioState;
 
+/* GPU primitive tag: 24-bit next-primitive link and the word count. */
+typedef struct Pe1PrimTag {
+    Pe1U8 addr[3];
+    Pe1U8 len;
+} Pe1PrimTag;
+
+/* Full-screen fade primitive pair drawn by the end-of-frame pass. */
+typedef struct Pe1FadeTile {
+    Pe1PrimTag tag;
+    Pe1U8 r, g, b, code;
+    short x, y;
+    unsigned short w, h;
+} Pe1FadeTile;
+
+typedef struct Pe1FadeTpage {
+    Pe1PrimTag tag;
+    Pe1U32 mode;
+} Pe1FadeTpage;
+
 typedef struct Pe1GameState {
     Pe1U32 flags;                    /* 0x000 */
-    Pe1U8 unk_004[2];
+    unsigned short saved_state_004;  /* 0x004: kept in the save tail, reset to 10 */
     short field_bg_cache_id;         /* 0x006: reset to -1 after a background load */
     Pe1U8 room_type;                /* 0x008: room directory byte 3 */
     Pe1S8 field_bg_cache_bank;       /* 0x009: reset to -1 after a background load */
@@ -50,10 +66,11 @@ typedef struct Pe1GameState {
     Pe1S8 pending_story_day;         /* 0x00D */
     Pe1U8 story_day_flags;           /* 0x00E */
     Pe1U8 unk_00f;
-    Pe1U8 cd_range_read_mode;      /* 0x010: CD_FindNextDataSector */
+    Pe1U8 cd_range_read_mode;      /* 0x010: CdRom_FindNextDataSector */
     Pe1U8 bank_state_11, bank_state_12;
-    Pe1U8 unk_013;
-    Pe1SceneRenderObject scene_object; /* 0x014 */
+    Pe1U8 scene_area_type_backup;   /* 0x013: area type kept across a disc swap */
+    RenderObjectEntity scene_object; /* 0x014 */
+    Pe1U8 reserved_scene_object_tail[8]; /* 0x0D0: outside the render object */
     Pe1SceneAudioState scene_audio; /* 0x0D8: cached track banks and keys */
     short pending_sample_bank;      /* 0x0E8: -1 means no sample upload */
     Pe1U8 pending_stream_banks[2];  /* 0x0EA: zero means no stream upload */
@@ -64,32 +81,37 @@ typedef struct Pe1GameState {
     Pe1U8 cd_read_phase;            /* 0x0F0 */
     Pe1U8 cd_track_phase;           /* 0x0F1 */
     Pe1U8 cd_transition_phase;      /* 0x0F2 */
-    Pe1U8 cd_range_state;          /* 0x0F3: CD_FindNextDataSector */
-    Pe1U8 reserved_0f4;
+    Pe1U8 cd_range_state;          /* 0x0F3: CdRom_FindNextDataSector */
+    Pe1U8 memcard_init_phase;     /* 0x0F4: Boot_MemCardStepInit, phases 0 and 0x37..0x3B. */
     Pe1U8 display_list_modes;       /* 0x0F5: bit 0 mode 1, bit 1 mode 2 (Render_InitDisplayLists) */
     Pe1U8 bank_value_f6, bank_value_f7;
     unsigned short bank_value_f8, bank_value_fa;
     Pe1U8 unk_0fc[2];
-    Pe1U8 transition_volume;        /* 0x0FE */
-    Pe1U8 unk_0ff;
+    Pe1U8 track_volumes[2];         /* 0x0FE: per scene audio slot (CdRom_RegisterAudioSlot) */
     Pe1U32 pe_image_base_lba;        /* 0x100: g_PeImageBaseLba */
-    Pe1U8 draw_prim_b[0x10];         /* 0x104 */
-    Pe1U8 draw_prim_c[8];            /* 0x114 */
-    void *scene_object_model;        /* 0x11C */
+    Pe1FadeTile fade_tile;           /* 0x104: full-screen fade TILE */
+    Pe1FadeTpage fade_tpage;         /* 0x114: draw mode for the fade tile */
+    RenderObjectHeader *scene_object_model;        /* 0x11C */
     void *room_geometry_table;       /* 0x120: key 0xCAAD0704 */
     void *bank_asset_table;           /* 0x124: resolved bank asset table */
-    Pe1U32 bank_work_base;           /* 0x128 */
-    Pe1U32 bank_work_end;            /* 0x12C */
-    Pe1U32 bank_work_far_end;        /* 0x130: voice bank base + 0x2800 */
+    u8 *bank_work_base;              /* 0x128 */
+    u8 *bank_work_end;               /* 0x12C */
+    u8 *bank_work_far_end;           /* 0x130: voice bank base + 0x2800 */
     void *scene_object_tables[3];    /* 0x134 */
-    Pe1U8 unk_140[0x0C];
+    /* Startup resource tables selected by keys 0x57D40D84 and 0x57D41D84. */
+    void *startup_resource_tables[2]; /* 0x140 */
+    u8 *startup_resource_blob;       /* 0x148 */
     void *bank_asset_source;         /* 0x14C */
-    Pe1U32 voice_bank_base;          /* 0x150 */
-    Pe1U32 voice_bank_base_1400;     /* 0x154 */
+    u8 *voice_bank_base;             /* 0x150 */
+    u8 *voice_bank_base_1400;        /* 0x154 */
     union SceneAssetView *entity_texture_blob; /* 0x158: voice bank base + 0x2800 */
-    void *scene_object_work;         /* 0x15C */
-    struct SceneAssetBlob *bg_texture_blob;    /* 0x160 */
-    Pe1U8 unk_164[4];
+    u8 *scene_object_work;         /* 0x15C */
+    /* 0x160: the frame ordering tables (g_OtBufferTable) double as the
+     * background texture load buffer while a scene loads. */
+    union {
+        unsigned char *ordering_tables[2];
+        struct SceneAssetBlob *bg_texture_blob;
+    } shared_buffers;
     union SceneAssetView *texture_load_scratch; /* 0x168: second room read */
     struct SceneAssetBlob *object_texture_blob; /* 0x16C */
     Pe1U8 unk_170[4];
@@ -113,5 +135,17 @@ typedef struct Pe1GameState {
     Pe1U32 bank_reset_958[1];
 } Pe1GameState;
 
+/* A game-state pointer stepped by a word index: the per-slot fields
+ * (ordering tables, bank work bounds) are read through the shifted state. */
+typedef union Pe1GameStateAddress {
+    Pe1GameState *state;
+    Pe1U32 word;
+} Pe1GameStateAddress;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, scene_object) == 0x14,
+                  game_state_scene_object_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, scene_audio) == 0xD8,
+                  game_state_scene_audio_offset);
+PE1_STATIC_ASSERT(sizeof(Pe1GameState) == 0x95C, embedded_render_game_state_size);
 
 #endif

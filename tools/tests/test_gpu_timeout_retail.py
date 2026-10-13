@@ -7,12 +7,14 @@ import subprocess
 import tempfile
 import unittest
 
+from tools.tests.csource import find_definition
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class GpuTimeoutRetailTests(unittest.TestCase):
     def test_source_has_no_assembly(self):
-        source = (ROOT/'src/main/psyq/libgpu/Gpu_ResetDmaWaitTimer.c').read_text()
+        source = find_definition('Gpu_ResetDmaWaitTimer').read_text()
         source = re.sub(r'/\*.*?\*/|//[^\n]*', '', source, flags=re.S)
         self.assertNotRegex(source, r'\b(?:asm|__asm__|INCLUDE_ASM|CC_POSTPASS)\b')
 
@@ -33,7 +35,7 @@ class GpuTimeoutRetailTests(unittest.TestCase):
         retail = (ROOT/'assets/USA/main.exe').read_bytes()[0x67BD0:0x67DE8]
         with tempfile.TemporaryDirectory() as directory:
             work = Path(directory)
-            subprocess.run([str(ROOT/'tools/scripts/cc.sh'),str(ROOT/'src/main/psyq/libgpu/Gpu_ResetDmaWaitTimer.c'),str(work/'test.o')],check=True,capture_output=True)
+            subprocess.run([str(ROOT/'tools/scripts/cc.sh'),str(find_definition('Gpu_ResetDmaWaitTimer')),str(work/'test.o')],check=True,capture_output=True)
             needed = [line.split()[-1] for line in subprocess.check_output(['mipsel-none-elf-nm','-u',str(work/'test.o')],text=True).splitlines()]
             script = f'SECTIONS {{ .text 0x{base:X} : SUBALIGN(4) {{ *(.text) }} /DISCARD/ : {{ *(.reginfo) *(.mdebug) *(.pdr) *(.MIPS.abiflags) }} }}\n'
             (work/'test.ld').write_text(script+'\n'.join(f'{name} = 0x{symbols[name]:X};' for name in needed))
@@ -53,7 +55,7 @@ class GpuTimeoutRetailTests(unittest.TestCase):
                         expected = [('vsync',0xFFFFFFFF)]
                         if expired:
                             expected += [('gp1',0xAABBCCDD),('head',new_head),('tail',tail),('madr',0x12345000),('gp1',0x11223344),('chcr',0x01000401),
-                                         ('printf',symbols['D_80011988'],(new_head-tail)&63,0x11223344,0x01000401,0x12345000),('mask',0),
+                                         ('printf',symbols['g_GpuTimeoutFormat'],(new_head-tail)&63,0x11223344,0x01000401,0x12345000),('mask',0),
                                          ('write_tail',0),('tail',0),('write_head',0),('write_chcr',0x401),('control',0x20),('write_control',0x820),
                                          ('write_gp1',0x02000000),('write_gp1',0x01000000),('mask',0x1357)]
                         for body in (retail,compiled):
@@ -68,7 +70,7 @@ class GpuTimeoutRetailTests(unittest.TestCase):
                             for name,address in (('g_GpuGp1Ptr',gp1),('g_GpuDmaChcrPtr',chcr),('g_GpuDmaMadrPtr',madr),('g_GpuDmaControlRegPtr',control)):
                                 word(symbols[name],0x80000000+address)
                             for address,value in ((gp1,0),(chcr,0x01000401),(madr,0x12345000),(control,0x20),(head_addr,head),(tail_addr,tail),
-                                                  (symbols['g_GpuDmaTimeoutDeadline'],100),(symbols['g_GpuDmaWaitLoopCounter'],counter),(symbols['D_80095884'],0x2468)):
+                                                  (symbols['g_GpuDmaTimeoutDeadline'],100),(symbols['g_GpuDmaWaitLoopCounter'],counter),(symbols['g_GpuSavedIntrMaskDma'],0x2468)):
                                 word(address,value)
                             m.reg_write(R.UC_MIPS_REG_SP,stack)
                             m.reg_write(R.UC_MIPS_REG_RA,stop)
@@ -106,7 +108,7 @@ class GpuTimeoutRetailTests(unittest.TestCase):
                             self.assertEqual(m.reg_read(R.UC_MIPS_REG_PC),stop)
                             self.assertEqual(m.reg_read(R.UC_MIPS_REG_V0),0xFFFFFFFF if expired else 0)
                             self.assertEqual(read_word(symbols['g_GpuDmaWaitLoopCounter']),(counter if now>100 else counter+1)&0xFFFFFFFF)
-                            self.assertEqual(read_word(symbols['D_80095884']),0x1357 if expired else 0x2468)
+                            self.assertEqual(read_word(symbols['g_GpuSavedIntrMaskDma']),0x1357 if expired else 0x2468)
                             self.assertEqual(m.reg_read(R.UC_MIPS_REG_SP),stack)
                             for i in range(8): self.assertEqual(m.reg_read(getattr(R,f'UC_MIPS_REG_S{i}')),0xABCD0000+i)
 

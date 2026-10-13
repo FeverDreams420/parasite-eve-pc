@@ -12,15 +12,15 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 CASES = [('libpad/padseqd',
   1140,
   'e080b43d7fdd01895057432b2eb8509d80c259ecb79f25aa77b5711f3411b504',
-  'D_8009B728 = 0x8009B728;\n_padCmdParaMode = 0x80083E50;\n_padRecvAtLoadInfo = 0x80083644;\n_padSendAtLoadInfo = 0x800835C0;\ng_MemCardIsTransferActiveFn = 0x8009B740;\ng_MemCardResponseHandler = 0x8009B744;\ng_MemCardStateDispatchFn = 0x8009B73C;\nSECTIONS { .text 0x80084b44 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }'),
+  'g_MemCardObjResetFn = 0x8009B728;\n_padCmdParaMode = 0x80083E50;\n_padRecvAtLoadInfo = 0x80083644;\n_padSendAtLoadInfo = 0x800835C0;\ng_MemCardIsTransferActiveFn = 0x8009B740;\ng_MemCardResponseHandler = 0x8009B744;\ng_MemCardStateDispatchFn = 0x8009B73C;\nSECTIONS { .text 0x80084b44 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }'),
  ('libpad/padcmd',
   2388,
   'f4d9851b3c04b09b55295b3653fb9b46c24182d46125ce755235a0d4ac168e3e',
-  'D_8009B728 = 0x8009B728;\nD_8009B740 = 0x8009B740;\nD_800A5AD0 = 0x800A5AD0;\nfunc_80083C20 = 0x80083C20;\nfunc_80083C3C = 0x80083C3C;\ng_MemCardIsTransferActiveFn = 0x8009B740;\nSECTIONS { .text 0x800835a4 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }'),
- ('libds/dssys_2_3',
-  1380,
-  'b7050732b8e92fb15e3d90b4f1314937417e99711c63adb0f137f19178bc1494',
-  'CQ_delete_command = 0x8007E5C4;\nDS_cw = 0x8007FB44;\nDS_system_status = 0x8007FBF0;\nD_800A3510 = 0x800A3510;\nD_800A3540 = 0x800A3540;\nD_800A3600 = 0x800A3600;\nD_800A3604 = 0x800A3604;\nD_800A3608 = 0x800A3608;\nD_800A3610 = 0x800A3610;\nD_800A3690 = 0x800A3690;\nD_800B8AB0 = 0x800B8AB0;\ng_CdPendingReadCount = 0x800A3608;\nrescpy = 0x80080998;\nSECTIONS { .text 0x8007e6b0 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }')]
+  'g_MemCardObjResetFn = 0x8009B728;\ng_MemCardIsTransferActiveFn = 0x8009B740;\nD_800A5AD0 = 0x800A5AD0;\nfunc_80083C20 = 0x80083C20;\nfunc_80083C3C = 0x80083C3C;\ng_MemCardIsTransferActiveFn = 0x8009B740;\nSECTIONS { .text 0x800835a4 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }'),
+ ('libds/dssys_2',
+  1664,
+  'c75008ee4feeec03ea466c3a4598009a2b0c8d457a5bc434ea83b805770809d3',
+  'DS_cw = 0x8007fb44;\nDS_system_status = 0x8007fbf0;\nD_800A3540 = 0x800a3540;\nD_800A3600 = 0x800a3600;\nD_800A3604 = 0x800a3604;\nD_800A3608 = 0x800a3608;\ng_CdDsReadIndex = 0x800a3604;\ng_CdDsReadQueue = 0x800a3540;\ng_CdDsReadQueueState = 0x800a3600;\ng_CdPendingReadCount = 0x800a3608;\ng_CdQueuedCmdSlots = 0x800a3510;\ng_DsReadCallbackCursor = 0x800a3690;\ng_DsReadCallbackSlots = 0x800a3610;\ng_DsReadCallbackState = 0x800b8ab0;\nrescpy = 0x80080998;\nSECTIONS { .text 0x8007e594 : SUBALIGN(4) { *(.text .text.*) } /DISCARD/ : { *(.reginfo) *(.mdebug) } }')]
 
 
 class PsyqPadDsFourTests(unittest.TestCase):

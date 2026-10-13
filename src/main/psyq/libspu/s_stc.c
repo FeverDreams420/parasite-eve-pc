@@ -1,4 +1,5 @@
 /* PSY-Q LIBSPU S_STC: SpuSetTransferCallback. */
+
 #include "pe1/psyq_spu_internal.h"
 
 SpuCallback SpuSetTransferCallback(SpuCallback callback) {

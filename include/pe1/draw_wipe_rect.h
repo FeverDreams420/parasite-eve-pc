@@ -2,6 +2,7 @@
 #define PE1_DRAW_WIPE_RECT_H
 
 #include "common.h"
+#include "pe1/bounds_check.h"
 #include "pe1/draw_state.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_prim.h"
@@ -15,10 +16,7 @@ extern int g_DrawBlendColor;
 extern int g_SavedDrawBlendColor[];
 extern int g_DrawScratchBuffer[];
 extern u16 *g_DrawVertexWritePtr;
-extern int g_TextCursorStackTop[];
-extern u8 D_800930A8[];
-extern int g_TextCursorX;
-extern int g_TextCursorY;
+extern u8 g_WipeRectEdgeList[];
 
 /* A packet in the 16 KiB packet arena, or an ordering-table link word. */
 typedef union DrawPacketAddress {
@@ -31,14 +29,12 @@ typedef union DrawPacketAddress {
 
 extern u8 *D_8009D100;                  /* packet cursor address */
 extern u8 *D_8009D104;                  /* packet arena base address */
-extern int D_8009D10C;                 /* colour select */
-extern int D_8009D110;                 /* primary colour */
-extern int D_8009D114;                 /* alternate colour */
+extern int g_DrawTextDimmed;                 /* colour select */
+extern unsigned int g_DrawPrimColor;                 /* primary colour */
+extern unsigned int g_DrawColorShaded;                 /* alternate colour */
 extern u32 *D_8009D11C;                 /* ordering-table entry */
 
-void BoundsCheck_AssertStub(int arg0);
 void SetTexWindow(GpuCmdPacket *packet, RECT *window);
-void Draw_EmitWipeBar(u8 *edges, int mode);
 void Draw_AllocColorTri(int width, int height, int pulse);
 
 static inline void Draw_BlendColorInline(int color)
@@ -68,19 +64,25 @@ static inline void Draw_BlendColorInline(int color)
     }
 }
 
+typedef struct DrawWipeVertex {
+    s16 y, x;
+} DrawWipeVertex;
+
+PE1_STATIC_ASSERT(sizeof(DrawWipeVertex) == 4, draw_wipe_vertex_size);
+
 /* Push one (x, y) vertex, stored y first, while below `limit`. */
 #define DRAW_PUSH_WIPE_VERTEX(xValue, yValue, limit) \
     {                                                \
         int x = (xValue);                            \
         int y = (yValue);                            \
-        u16 *out = g_DrawVertexWritePtr;             \
+        DrawWipeVertex *out = g_DrawVertexWritePtr;             \
                                                      \
-        if (out < (limit)) {                         \
-            out[1] = x;                              \
-            g_DrawVertexWritePtr = out + 2;          \
-            out[0] = y;                              \
+        if (out < (DrawWipeVertex *)(limit)) {                         \
+            out->x = x;                              \
+            g_DrawVertexWritePtr = (u16 *)(out + 1);          \
+            out->y = y;                              \
         } else {                                     \
-            BoundsCheck_AssertStub(4);               \
+            Inv_BoundsCheckAssertStub(4);               \
         }                                            \
     }
 
@@ -92,10 +94,10 @@ static inline void Draw_BlendColorInline(int color)
                                                                          \
         (packet).word = 0;                                               \
         if (next < (u32)D_8009D104 + 0x4000) {                                \
-            D_8009D100 = (u8 *)next;                                           \
+            D_8009D100 = next;                                           \
             (packet).word = old;                                         \
         } else {                                                         \
-            BoundsCheck_AssertStub(1);                                   \
+            Inv_BoundsCheckAssertStub(1);                                   \
         }                                                                \
     }
 
@@ -103,7 +105,7 @@ static inline void Draw_BlendColorInline(int color)
 #define DRAW_LINK_PACKET(packet)                                         \
     {                                                                    \
         u32 mask24 = 0xFFFFFF, maskTop = 0xFF000000;                     \
-        DrawPacketAddress *ot = (DrawPacketAddress *)D_8009D11C;                              \
+        DrawPacketAddress *ot = D_8009D11C;                              \
         u32 tag = *(packet).tag;                                         \
         tag &= maskTop;                                                  \
         tag |= ot->word & mask24;                                        \

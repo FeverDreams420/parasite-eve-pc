@@ -4,9 +4,13 @@
 Read-only. It inspects the linker symbol files, the sources, the built main
 executable and the built overlays, and prints one table per area:
 
-  (a) absolute symbol assignments under linkers/USA, classified by what the
+  (a) absolute symbol assignments under linkers/USA (and the unlinked
+      catalogue configs/USA/symbol_catalogue.main.txt), classified by what the
       address is: hardware, kernel, an overlay load window, a function, data
       owned by a C unit, data inside an anonymous asm blob, or nothing built;
+      the hand-written linked file is also grouped by owner block (each block
+      comment starts with its kind, `hardware:`, `kernel:` or `alias`), and an
+      assignment outside a block of its own kind counts as `unowned`;
   (b) fixed addresses written in C: address-named alias declarations,
       integer-to-pointer casts of program addresses, literal program
       addresses and the pointer-integer casts counted by the crutch ratchet;
@@ -16,8 +20,12 @@ executable and the built overlays, and prints one table per area:
   (d) how the overlays learn main's addresses;
   (e) layout that is fixed in the linker script or the executable header.
 
-`--json` prints the same inventory as JSON. `--check BASELINE` fails when a
-counted category grows past the JSON baseline (for later CI use).
+`--json` prints the same inventory as JSON. `--check [BASELINE]` (`make
+shift-check`) is the ratchet: it adds the hidden-address counts of
+`shift_test.py` and fails when any counted category grows past the committed
+baseline `tools/shift_baseline.json`; `--update-baseline` (`make
+shift-baseline`) rewrites it. Both need `make build` and `make
+overlay-build-all`.
 """
 from __future__ import annotations
 
@@ -38,6 +46,9 @@ VERSION = "USA"
 LINKERS = ROOT / "linkers" / VERSION
 BUILD = ROOT / "build" / VERSION
 OVERLAY_CONFIGS = ROOT / "configs" / VERSION / "overlays"
+# Overlays whose copied code keeps foreign link addresses: their generated
+# script also pins names their own objects define (Makefile OVERLAY_VMA_OVERLAP).
+PIN_DEFINED_OVERLAYS = ("boot_display", "menu_memcard")
 
 
 def tool(name: str) -> str:
@@ -94,6 +105,40 @@ class Assignment:
     rhs: str
     path: str
     provide: bool = False  # PROVIDE() yields to an object definition
+
+
+BLOCK_COMMENT_RE = re.compile(r"/\*(.*?)\*/", re.S)
+OWNER_KINDS = ("hardware", "kernel", "alias")
+
+
+def block_owners(text: str) -> dict[str, str]:
+    """name -> the owner line of the comment block above its assignment.
+
+    A block is a comment followed by assignments up to the next blank line
+    or comment. The owner line is the comment's first sentence, which in the
+    linked symbol files starts with the kind (`hardware:`, `kernel:`,
+    `alias`); a name in no block, or in a block that does not start with one
+    of OWNER_KINDS, has no owner.
+    """
+    owners: dict[str, str] = {}
+    owner = ""
+    pos = 0
+    for m in BLOCK_COMMENT_RE.finditer(text + "/**/"):
+        chunk = text[pos:m.start()]
+        if pos:  # the rest of the line that closed the previous comment
+            chunk = chunk.split("\n", 1)[1] if "\n" in chunk else ""
+        for line in chunk.splitlines(keepends=True):
+            if not line.strip():
+                owner = ""
+                continue
+            a = ASSIGN_RE.match(line)
+            if a and owner:
+                owners[a.group(2)] = owner
+        body = " ".join(part.strip(" *") for part in m.group(1).splitlines()).strip()
+        first = re.split(r"(?<=\.)\s", body, maxsplit=1)[0] if body else ""
+        owner = first if first.split(":")[0].split(",")[0].strip() in OWNER_KINDS else ""
+        pos = m.end()
+    return owners
 
 
 def parse_assignments(text: str, path: str = "") -> list[Assignment]:
@@ -266,6 +311,31 @@ def classify_main_assignment(a: Assignment, defined: set[str], referenced: set[s
     return kind
 
 
+CATALOGUE = ROOT / "configs" / VERSION / "symbol_catalogue.main.txt"
+# (report name, path) of every symbol file of main; only the linked ones bind
+# addresses. The catalogue and splat's auto files are reference data.
+LINKER_SYMBOL_FILES = (
+    ("undefined_syms_manual.txt", LINKERS / "undefined_syms_manual.txt"),
+    ("undefined_addr_aliases.main.txt", LINKERS / "undefined_addr_aliases.main.txt"),
+    ("symbol_catalogue.main.txt", CATALOGUE),
+    ("undefined_syms_auto.main.txt", LINKERS / "undefined_syms_auto.main.txt"),
+    ("undefined_funcs_auto.main.txt", LINKERS / "undefined_funcs_auto.main.txt"),
+)
+LINKED_SYMBOL_FILES = ("undefined_syms_manual.txt", "undefined_addr_aliases.main.txt")
+# Hand-written linked files: every assignment must sit in a block whose
+# comment names its kind and owner (block_owners), and the kind must be one
+# that can stay: hardware, kernel/BIOS, or a relative alias.
+OWNED_SYMBOL_FILES = ("undefined_syms_manual.txt",)
+ALLOWED_KINDS = {"hardware": ("hardware", "scratchpad"), "kernel": ("kernel",),
+                 "alias": ("symbolic_alias",)}
+
+
+def owner_matches(owner: str, kind: str) -> bool:
+    """The block's declared kind agrees with what the address is."""
+    declared = owner.split(":")[0].split(",")[0].strip()
+    return kind in ALLOWED_KINDS.get(declared, ())
+
+
 # --------------------------------------------------------------------------
 # (b) sources
 
@@ -372,6 +442,35 @@ def find_unrelocated(data: bytes, base: int, relocated: set[int], text: bool):
             yield addr, word, "data_word"
 
 
+# Address-shaped words without a relocation that are explained, by owner
+# (object path suffix) and value. They stay counted by the ratchet; the
+# reason only says why each one is left (docs/SHIFTABILITY_PLAN.md, section 9).
+KNOWN_LITERALS = (
+    ("src/main/draw/gpu_regs.c.o", None,
+     "the primitive queue block inside .text (0x80070E04..0x80070E50), loaded with lui/ori; "
+     "C emits lui/addiu for a symbol, so retail's bytes need the literal (SHIFTABILITY_PLAN 9)"),
+    ("src/main/draw/prim_queue.c.o", None,
+     "the same primitive queue block as Draw_InitGpuHwRegs (lui/ori, SHIFTABILITY_PLAN 9)"),
+    ("src/main/render/font.c.o", 0x3C108001,
+     "not an address: upper half of the multiplier 0x80010003 (division by 0x7FFF)"),
+    ("asm/USA/main/data/main/dtail_gp_post_dsfile.data.s.o", 0x80017FFF,
+     "not an address: halfword pair 0x7FFF, 0x8001 of an AKAO sound table"),
+    ("asm/USA/main/data/main/dtail_gp_post_dsfile.data.s.o", 0x80010804,
+     "not an address: one word of the random-looking table D_8009BE78"),
+)
+
+
+def short_obj(obj: str) -> str:
+    return obj[len("build/USA/"):] if obj.startswith("build/USA/") else obj
+
+
+def literal_reason(obj: str, word: int) -> str | None:
+    for suffix, value, reason in KNOWN_LITERALS:
+        if obj.endswith(suffix) and (value is None or value == word):
+            return reason
+    return None
+
+
 def emit_relocs_link(scratch: Path) -> Path:
     """Relink main with --emit-relocs into scratch; the repository is untouched."""
     out = scratch / "main_relocs.elf"
@@ -397,6 +496,10 @@ def relocation_audit(elf_path: Path, layout: Layout):
             if not isinstance(sec, RelocationSection):
                 continue
             target = elf.get_section(sec["sh_info"])
+            if target.name == ".header":
+                # PS-X EXE header fields (text size, initial $sp) are layout
+                # values the link computes, not references into the program.
+                continue
             for rel in sec.iter_relocations():
                 relocated[target.name].add(rel["r_offset"])
                 sym = symtab.get_symbol(rel["r_info_sym"])
@@ -435,92 +538,124 @@ def relocation_audit(elf_path: Path, layout: Layout):
 # (d) overlays
 
 
-def overlay_symbols() -> dict[str, dict[str, int]]:
-    """Defined symbols of every built overlay ELF: overlay -> name -> address."""
-    from elftools.elf.elffile import ELFFile
+def resolve_window_offsets(assigns: list[Assignment], table) -> int:
+    """Give `OVERLAY_WINDOW_x + offset` assignments their retail address.
 
-    out = {}
-    for elf_path in sorted((BUILD / "overlays").glob("*/*.elf")):
-        with open(elf_path, "rb") as fh:
-            symtab = ELFFile(fh).get_section_by_name(".symtab")
-            out[elf_path.stem] = {s.name: s["st_value"] for s in symtab.iter_symbols()
-                                  if s.name and s["st_shndx"] not in ("SHN_ABS", "SHN_UNDEF")}
-    return out
+    Overlays write every address inside the floating window block as a window
+    of linkers/USA/overlay_windows.txt plus an offset; it is still a fixed
+    place inside the block (the disc ABI), so it is classified like the
+    retail address it stands for. Returns how many were resolved."""
+    resolved = 0
+    for a in assigns:
+        if a.value is None:
+            value = table.evaluate(a.rhs)
+            if value is not None:
+                a.value = value
+                resolved += 1
+    return resolved
 
 
-def classify_overlay_assignment(a: Assignment, overlay: str, referenced: set[str],
-                                defined: set[str],
-                                own: list[tuple[int, int]], windows,
+def classify_overlay_assignment(a: Assignment, referenced: set[str], defined: set[str],
+                                own: list[tuple[int, int]], windows, abi: dict[str, int],
                                 main_syms: dict[str, int], main_addrs: set[int],
-                                main_abs: set[str], other: dict[str, int]) -> str:
+                                main_abs: dict[str, int]) -> str:
+    """How one assignment of an overlay's link_symbols script binds its name.
+
+    `main_same_name` follows main: the generator took the address from the
+    built main executable by name. `main_pinned_in_main_too` also comes from
+    main by name, but main itself still pins the symbol (main's debt). The
+    `abi_*` kinds are the loader contract listed in linkers/USA/overlay_abi.txt
+    and are not debt. `main_other_name`, `main_no_symbol` and
+    `other_window_unlisted` cannot be linked any more (the generator fails on
+    them) and stay at zero.
+    """
     if a.value is None:
         return "symbolic"
     if a.name not in referenced:
         return "unreferenced"
+    if a.name in defined:
+        return "provide_unused" if a.provide else "shadows_own_definition"
+    if abi.get(a.name) == a.value:
+        if any(lo <= a.value < hi for lo, hi in own):
+            return "abi_own_window"
+        return "abi_loader_contract"
     region = address_region(a.value)
     if region:
         return region
-    if a.name in defined:
-        return "provide_unused" if a.provide else "shadows_own_definition"
     if any(lo <= a.value < hi for lo, hi in own):
         return "own_overlay_pinned"
-    if other.get(a.name) == a.value:
-        return "other_overlay_symbol"
-    if in_program(a.value) and not any(lo <= a.value < hi for lo, hi, _ in windows):
-        if main_syms.get(a.name) == a.value:
-            return "main_same_name"
-        if a.value in main_addrs:
-            return "main_other_name"
-        if a.name in main_abs:
-            return "main_pinned_in_main_too"
-        return "main_no_symbol"
+    if any(lo <= a.value < hi for lo, hi, _ in windows):
+        return "other_window_unlisted"
+    if main_syms.get(a.name) == a.value:
+        return "main_same_name"
+    if main_abs.get(a.name) == a.value:
+        return "main_pinned_in_main_too"
     if in_program(a.value):
-        return "overlay_window_buffer"
+        return "main_other_name" if a.value in main_addrs else "main_no_symbol"
     return "outside_image"
 
 
+def overlay_window_table():
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from tools.scripts import overlay_windows
+
+    return overlay_windows.load()
+
+
 def overlay_audit(main_syms: dict[str, int], windows) -> dict:
-    """How each overlay learns main's (and other overlays') addresses."""
+    """How each overlay learns main's (and other overlays') addresses.
+
+    Every overlay links one generated script, link_symbols.<overlay>.txt:
+    main's addresses by name from the built main.elf, the ABI list, and its
+    own window (tools/scripts/overlay_link_symbols.py).
+    """
     stats = Counter()
+    addresses = Counter()  # distinct addresses per overlay and category
     files = Counter()
     per_overlay = {}
     main_addrs = set(main_syms.values())
-    main_abs = absolute_symbols()
-    ovl_syms = overlay_symbols()
+    main_abs = absolute_symbol_values()
+    table = overlay_window_table()
+    abi_path = LINKERS / "overlay_abi.txt"
+    abi_assigns = parse_assignments(abi_path.read_text()) if abi_path.exists() else []
+    resolve_window_offsets(abi_assigns, table)
+    abi = {a.name: a.value for a in abi_assigns}
+    stats["abi_file_entries"] = len(abi)
     main_targets: set[int] = set()
     for cfg in sorted(OVERLAY_CONFIGS.glob("*.yaml")):
         name = cfg.stem
-        assigns = []
-        for kind in ("undefined_funcs_auto", "undefined_syms_auto", "undefined_extra"):
-            path = LINKERS / "overlays" / f"{kind}.{name}.txt"
-            if path.exists():
-                got = parse_assignments(path.read_text(), path.name)
-                files[kind] += len(got)
-                assigns += got
+        path = LINKERS / "overlays" / f"link_symbols.{name}.txt"
+        assigns = parse_assignments(path.read_text(), path.name) if path.exists() else []
+        stats["window_offsets"] += resolve_window_offsets(assigns, table)
+        files["link_symbols"] += len(assigns)
         objdir = BUILD / "overlays" / name
         objects = sorted(objdir.rglob("*.o")) if objdir.exists() else []
-        if not objects:
+        if not objects or not path.exists():
             stats["overlays_not_built"] += 1
             continue
         defined, undefined, _common = nm_tables(objects)
+        if name in PIN_DEFINED_OVERLAYS:
+            # Their script also binds names their objects define.
+            undefined, defined = undefined | defined, set()
         own = [(lo, hi) for lo, hi, n in windows if n == name]
-        other = {}
-        for oname, syms in ovl_syms.items():
-            if oname != name:
-                for sname, addr in syms.items():
-                    other.setdefault(sname, addr)
         counts = Counter()
+        targets = defaultdict(set)
         for a in assigns:
-            kind = classify_overlay_assignment(a, name, undefined, defined, own, windows, main_syms,
-                                               main_addrs, main_abs, other)
+            kind = classify_overlay_assignment(a, undefined, defined, own, windows, abi, main_syms,
+                                               main_addrs, main_abs)
             counts[kind] += 1
+            targets[kind].add(a.value if a.value is not None else a.name)
             if kind.startswith("main_"):
                 main_targets.add(a.value)
         per_overlay[name] = counts
         stats.update(counts)
+        addresses.update({kind: len(values) for kind, values in targets.items()})
+        addresses["main_references"] += len(set().union(
+            *(values for kind, values in targets.items() if kind.startswith("main_"))))
         stats["overlays_built"] += 1
     stats["distinct_main_addresses"] = len(main_targets)
-    return {"totals": stats, "per_overlay": per_overlay, "files": files}
+    return {"totals": stats, "addresses": addresses, "per_overlay": per_overlay, "files": files}
 
 
 # --------------------------------------------------------------------------
@@ -544,6 +679,17 @@ def fixed_layout(ld_text: str, header_text: str) -> list[str]:
 
 # --------------------------------------------------------------------------
 # driver
+
+
+def absolute_symbol_values() -> dict[str, int]:
+    """Program-range symbols main.elf still pins (absolute), with values."""
+    from elftools.elf.elffile import ELFFile
+
+    with open(BUILD / "main.elf", "rb") as fh:
+        return {sym.name: sym["st_value"]
+                for sym in ELFFile(fh).get_section_by_name(".symtab").iter_symbols()
+                if sym.name and sym["st_shndx"] == "SHN_ABS"
+                and address_region(sym["st_value"]) is None}
 
 
 def absolute_symbols() -> set[str]:
@@ -616,15 +762,17 @@ def collect(with_relocs: bool = True) -> dict:
 
     # (a)
     files = {}
-    for name in ("undefined_syms_manual.txt", "undefined_addr_aliases.main.txt",
-                 "undefined_syms_auto.main.txt", "undefined_funcs_auto.main.txt"):
-        path = LINKERS / name
+    for name, path in LINKER_SYMBOL_FILES:
         if not path.exists():
             continue
-        linked = name in ("undefined_syms_manual.txt", "undefined_addr_aliases.main.txt")
+        linked = name in LINKED_SYMBOL_FILES
         counts = Counter()
         examples = defaultdict(list)
-        assigns = parse_assignments(path.read_text(), name)
+        text = path.read_text()
+        assigns = parse_assignments(text, name)
+        owners = block_owners(text)
+        by_owner = Counter()
+        unowned = []
         shadowed = {a.name for a in assigns if a.value is not None and a.name in defined}
         own = object_addresses(shadowed, layout) if shadowed else {}
         for a in assigns:
@@ -634,14 +782,27 @@ def collect(with_relocs: bool = True) -> dict:
             counts[kind] += 1
             if len(examples[kind]) < 4:
                 examples[kind].append(f"{a.name}={a.rhs}")
+            if name in OWNED_SYMBOL_FILES:
+                owner = owners.get(a.name)
+                if owner and owner_matches(owner, kind):
+                    by_owner[(kind, owner)] += 1
+                else:
+                    unowned.append(f"{a.name}={a.rhs} ({kind})")
         files[name] = {"linked": linked, "total": sum(counts.values()),
                        "categories": dict(counts), "examples": dict(examples)}
+        if name in OWNED_SYMBOL_FILES:
+            files[name]["owners"] = [[kind, owner, n] for (kind, owner), n in sorted(by_owner.items())]
+            files[name]["unowned"] = unowned
     report["linker_assignments"] = files
 
     # (b)
+    # Overlays link only their generated link_symbols script (splat's
+    # undefined_*_auto files are catalogues); names it takes from the built
+    # main executable follow main and are not pins.
     pinned = absolute_symbols()
-    for path in (LINKERS / "overlays").glob("*.txt"):
-        pinned |= {a.name for a in parse_assignments(path.read_text()) if a.value is not None}
+    for path in (LINKERS / "overlays").glob("link_symbols.*.txt"):
+        pinned |= {a.name for a in parse_assignments(path.read_text())
+                   if a.value is not None and main_syms.get(a.name) != a.value}
     main_src = sorted((ROOT / "src" / "main").rglob("*.[ch]")) + sorted((ROOT / "src" / "main").rglob("*.inc"))
     ovl_src = sorted((ROOT / "src" / "overlays").rglob("*.[ch]")) + sorted((ROOT / "src" / "overlays").rglob("*.inc"))
     inc = sorted((ROOT / "include").rglob("*.h"))
@@ -665,6 +826,8 @@ def collect(with_relocs: bool = True) -> dict:
         by_obj = Counter(o for _, _, _, o in unrel)
         report["executable"] = {
             "unrelocated": dict(by_kind),
+            "unrelocated_words": [[f"0x{a:08X}", f"0x{w:08X}", k, short_obj(o), literal_reason(o, w)]
+                                  for a, w, k, o in sorted(unrel)],
             "unrelocated_worst": [(str(Path(o).relative_to("build/USA")) if o.startswith("build/USA") else o, n)
                                   for o, n in by_obj.most_common(12)],
             "relocs_to_absolute": dict(rel["abs_relocs"]),
@@ -697,6 +860,14 @@ def render(report: dict) -> str:
             out.append(f"  {name if first else '':38} {('yes' if info['linked'] else 'no') if first else '':6} {cat:22} {n:6}")
             first = False
         out.append(f"  {'':38} {'':6} {'TOTAL':22} {info['total']:6}")
+    for name, info in report["linker_assignments"].items():
+        if "owners" not in info:
+            continue
+        out.append(f"  {name} by owner block (kind: owner):")
+        for kind, owner, n in info["owners"]:
+            out.append(f"    {n:5}  {kind:16} {owner[:100]}")
+        out.append(f"    {len(info['unowned']):5}  without an owner block of a matching kind"
+                   + (": " + ", ".join(info["unowned"][:6]) if info["unowned"] else ""))
     out.append("")
     out.append("(b) fixed addresses in C")
     keys = SOURCE_KEYS
@@ -713,8 +884,8 @@ def render(report: dict) -> str:
         ex = report["executable"]
         out.append("(c) built main executable")
         out.append(f"  unrelocated address-shaped words: {ex['unrelocated']}")
-        for o, n in ex["unrelocated_worst"]:
-            out.append(f"    {n:5}  {o}")
+        for addr, word, kind, obj, reason in ex.get("unrelocated_words", []):
+            out.append(f"    {addr} {word} {kind:9} {obj:44} {reason or 'UNEXPLAINED'}")
         out.append(f"  relocations resolving to absolute symbols: {ex['relocs_to_absolute']} "
                    f"({ex['absolute_symbols_used']} distinct program-range symbols)")
         for o, n in ex["abs_worst_files"]:
@@ -723,8 +894,13 @@ def render(report: dict) -> str:
     ov = report["overlays"]
     out.append("(d) overlay -> main references")
     out.append(f"  linker files: {dict(ov['files'])}")
-    for k, v in sorted(ov["totals"].items()):
-        out.append(f"  {k:32} {v:6}")
+    out.append(f"  {'category':32} {'names':>6} {'addresses':>9}")
+    for k in sorted(set(ov["totals"]) | set(ov.get("addresses", {}))):
+        v = ov["totals"].get(k, "")
+        n = ov.get("addresses", {}).get(k, "")
+        out.append(f"  {k:32} {v:>6} {n:>9}")
+    out.append("  addresses: distinct per overlay, the ratchet's measure (a second name for")
+    out.append("  an address adds no fixed address)")
     out.append("")
     out.append("(e) fixed layout")
     for item in report["fixed_layout"]:
@@ -732,12 +908,26 @@ def render(report: dict) -> str:
     return "\n".join(out)
 
 
+# Categories that are catalogue or bookkeeping, not a fixed address: they may
+# grow (a decompiled reference can make a manual symbol unreferenced; a
+# PROVIDE that an object definition overrides binds nothing). Overlay pins of
+# main addresses are ratcheted as one total (`main_references`) plus the
+# categories that lack main's name, so moving a reference to main's own name
+# (main_same_name) is not a regression.
+UNCOUNTED = {"unreferenced", "overlays_built", "overlays_not_built", "provide_unused",
+             "main_same_name", "window_offsets"}
+BASELINE = ROOT / "tools" / "shift_baseline.json"
+
+
 def flat_counts(report: dict) -> dict[str, int]:
     flat = {}
     for name, info in report["linker_assignments"].items():
         if info["linked"]:
             for cat, n in info["categories"].items():
-                flat[f"{name}:{cat}"] = n
+                if cat not in UNCOUNTED:
+                    flat[f"{name}:{cat}"] = n
+            if "unowned" in info:
+                flat[f"{name}:unowned"] = len(info["unowned"])
     for scope, c in report["source"].items():
         for k, n in c.items():
             flat[f"src:{scope}:{k}"] = n
@@ -745,26 +935,82 @@ def flat_counts(report: dict) -> dict[str, int]:
         for k, n in report["executable"]["unrelocated"].items():
             flat[f"exe:unrelocated:{k}"] = n
         flat["exe:relocs_to_absolute_program"] = report["executable"]["relocs_to_absolute"].get("program", 0)
+    for k, n in report["overlays"]["addresses"].items():
+        if k not in UNCOUNTED:
+            flat[f"overlays:{k}"] = n
+    flat["overlays:distinct_main_addresses"] = report["overlays"]["totals"]["distinct_main_addresses"]
+    for k, n in report.get("shift_test", {}).items():
+        flat[f"shift_test:{k}"] = n
     return flat
+
+
+def shift_test_counts(pad: int = 0x10) -> dict[str, int]:
+    """The hidden-address counts of `shift_test.py` (padded relink comparison)."""
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from tools.scripts import shift_test
+
+    with tempfile.TemporaryDirectory(prefix="shift_check_") as tmp:
+        m = shift_test.measure(pad, Path(tmp))
+    if not m.base_identical:
+        sys.exit("shift-check: the base relink differs from build/USA/main.exe; rebuild first")
+    if m.shifted_error is not None:
+        sys.exit("shift-check: the shifted relink failed:\n" + m.shifted_error)
+    return {k: m.counts.get(k, 0) for k in shift_test.HIDDEN}
+
+
+def check(counts: dict[str, int], baseline_path: Path) -> int:
+    baseline = json.loads(baseline_path.read_text())
+    baseline = baseline.get("counts", baseline)
+    worse = [(k, baseline.get(k, 0), v) for k, v in sorted(counts.items()) if v > baseline.get(k, 0)]
+    better = [(k, b, counts.get(k, 0)) for k, b in sorted(baseline.items()) if counts.get(k, 0) < b]
+    for k, b, v in worse:
+        print(f"shift-check: {k} grew {b} -> {v}", file=sys.stderr)
+    if worse:
+        print("A fixed program address was added; refer to the owning symbol instead "
+              "(docs/CODE_ORGANIZATION.md, Shiftability).", file=sys.stderr)
+        return 1
+    if better:
+        print("Shiftability improved; lower the ratchet with `make shift-baseline`:")
+        for k, b, v in better:
+            print(f"  {k}: {b} -> {v}")
+    print("OK: no fixed-address category grew past tools/shift_baseline.json.")
+    return 0
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--no-relocs", action="store_true", help="skip the --emit-relocs relink")
-    parser.add_argument("--check", type=Path, help="fail if a count exceeds this JSON baseline")
+    parser.add_argument("--check", nargs="?", type=Path, const=BASELINE,
+                        help="fail if a count exceeds this JSON baseline (default tools/shift_baseline.json)")
+    parser.add_argument("--update-baseline", action="store_true",
+                        help="write the current counts to tools/shift_baseline.json")
+    parser.add_argument("--require-overlays", action="store_true",
+                        help="with --check, fail instead of warning when an overlay is not built")
     args = parser.parse_args(argv)
-    report = collect(with_relocs=not args.no_relocs)
+    ratchet = args.check is not None or args.update_baseline
+    report = collect(with_relocs=ratchet or not args.no_relocs)
+    if ratchet:
+        missing = report["overlays"]["totals"].get("overlays_not_built", 0)
+        if missing and (args.update_baseline or args.require_overlays):
+            sys.exit(f"shift-check: {missing} overlays are not built; run `make overlay-build-all` first")
+        if missing:
+            # Unbuilt overlays only lower the overlay counts, so the check
+            # stays sound for everything else; CI requires them.
+            print(f"shift-check: {missing} overlays not built, overlay counts not fully checked")
+        report["shift_test"] = shift_test_counts()
+    if args.update_baseline:
+        counts = flat_counts(report)
+        BASELINE.write_text(json.dumps({"counts": counts}, indent=1, sort_keys=True) + "\n")
+        print(f"wrote {BASELINE.relative_to(ROOT)} ({len(counts)} counts)")
+        return 0
+    if args.check is not None:
+        return check(flat_counts(report), args.check)
     if args.json:
         print(json.dumps({"report": report, "counts": flat_counts(report)}, indent=1, default=list))
     else:
         print(render(report))
-    if args.check:
-        baseline = json.loads(args.check.read_text())
-        worse = [(k, v, baseline.get(k, 0)) for k, v in flat_counts(report).items() if v > baseline.get(k, 0)]
-        for k, v, b in worse:
-            print(f"shift-audit: {k} grew {b} -> {v}", file=sys.stderr)
-        return 1 if worse else 0
     return 0
 
 

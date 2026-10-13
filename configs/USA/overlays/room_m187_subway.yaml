@@ -11,7 +11,9 @@ options:
   build_path: build/USA/overlays/room_m187_subway
   ld_script_path: linkers/USA/overlays/room_m187_subway.ld
   undefined_funcs_auto_path: linkers/USA/overlays/undefined_funcs_auto.room_m187_subway.txt
-  symbol_addrs_path: configs/USA/overlays/sym.room_m187_subway.txt
+  symbol_addrs_path:
+    - configs/USA/overlays/sym.room_m187_subway.txt
+    - configs/USA/sym.main.txt
   undefined_syms_auto_path: linkers/USA/overlays/undefined_syms_auto.room_m187_subway.txt
   find_file_boundaries: True
   disassemble_all: True
@@ -35,9 +37,8 @@ segments:
     bss_size: 0x0
     subsegments:
       - [0x0, rodata, room_m187_subway]
-      - [0xC, .rodata, ../room_lib/RoomFx_OrbitEffectSet]
-      - [0x2C, c, ../room_lib/RoomFx_OrbitSetClass]
-      - [0x1EC, c, ../room_lib/RoomFx_OrbitEffectSet]
+      - [0xC, .rodata, ../room_lib/orbit_set]
+      - [0x2C, c, ../room_lib/orbit_set]
       - [0xFC0, data, D_8018FFA8]
       - [0xFD4, data, RoomLib_TableC]
       - [0xFE8, data, D_8018FFD0]
@@ -58,6 +59,11 @@ segments:
       - start: 0x10D0
         type: databin
         name: D_801900B8
+        dir: room_m187_subway
+      - [0x17598, data, D_801A6580]
+      - start: 0x175A4
+        type: databin
+        name: D_801A658C
         dir: room_m187_subway
   - [0x17800]
 # room: m187, section3 sector 50449, scanner delta 0

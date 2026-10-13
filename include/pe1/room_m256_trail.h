@@ -2,7 +2,17 @@
 #define PE1_ROOM_M256_TRAIL_H
 
 #include "pe1/field_actor.h"
-#include "pe1/field_anim.h"
+#include "pe1/field_model_draw.h"
+#include "pe1/field_sprite_draw.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
+#include "pe1/fieldfx_callback_list.h"
+#include "pe1/fieldfx_calls.h"
+#include "pe1/fieldfx_task.h"
+#include "pe1/gte_types.h"
+#include "pe1/player_entity.h"
+#include "pe1/psyq_gpu.h"
+#include "pe1/render_object.h"
 #include "pe1/room_floor.h"
 
 /* Shared 24-byte pool record: steering trail, damped sparks, model burst,
@@ -19,36 +29,22 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM256TrailEffect, kind) == 0x14,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM256TrailEffect, frame) == 0x16,
                   room_m256_trail_effect_frame);
 
-extern RenderColor D_8018F218, D_8018F21C;
-extern GteRotation D_8018F220,D_8018F1CC;
-extern char D_80195EFC[],D_80195F1C[],D_80195F1E[],D_80195F20[];
-extern s32 D_80195EF0,D_80195EF8,D_800E27EC,D_800F3428;
-extern s16 D_800F336A, D_800F336E, D_800F3372, D_800F3374, D_800F3376, D_800F3378;
-extern u16 D_800E11EA,D_800E1204[],D_800E1208,D_800E2850[],D_800F336C,D_800F3370;
+extern const RenderColor D_8018F218, D_8018F21C;
+extern const GteRotation D_8018F220;
+extern GteRotation D_8018F1CC;
+/* Sixteen stored steps plus the current position, each an eight-byte vector. */
+typedef struct RoomM256TrailHistory {
+    GteShortVector point[17];
+} RoomM256TrailHistory;
+PE1_STATIC_ASSERT(sizeof(RoomM256TrailHistory) == 0x88, room_m256_trail_history_size);
+extern RoomM256TrailHistory D_80195EFC[];
+extern char D_80195F1C[], D_80195F1E[], D_80195F20[];
+extern s32 D_80195EF0, D_80195EF8;
+extern u16 g_FieldFxPaletteEntry2;
 typedef struct RoomM256TrailPalettes { u16 first, second; } RoomM256TrailPalettes;
-extern RoomM256TrailPalettes D_800E11E8;
-int func_80071A54(void);
-int func_80077A64(int,int,int,int);
-int func_80077AA4(int,int);
-int rsin(int);
-int rcos(int);
-#include "pe1/gte_types.h"
-#include "pe1/player_entity.h"
-int func_800C6B90(void *,int);
-void func_800C6EC0(int,int);
-void func_800C6ED8(int);
-void func_800C6EF8(int);
-void func_800C6F4C(int);
-void func_800C6FA0(int,int);
-void func_800C7098(int,int,int,int);
-void func_800C71E4(int,void *);
-void *func_800CE610(char *);
-void func_800CE8F0(void *,int,void *,void *);
-void func_800CFAA8(void *,void *,void *);
-void func_800CFD50(void *,void *,int);
-void func_800D3114(void *,int,int,int,int,int,int,int,int,int,void *,void *,int);
-void func_800D3AFC(void *,int,void *,int);
+int rand(void);
+void FieldFx_ModelSetTexture(int,int);
 
-int func_801940B0(int mode, void *effect);
+int RoomM256_TrailCallback(int mode, void *effect);
 
 #endif

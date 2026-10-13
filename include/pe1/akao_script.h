@@ -11,10 +11,7 @@
  * AkaoScriptState* so the trailing size is not load-bearing.
  */
 
-typedef unsigned char  u8;
-typedef unsigned short u16;
-typedef unsigned int   u32;
-typedef signed short   s16;
+#include "common.h"
 
 typedef struct AkaoScriptState {
     /* 0x00 */ u8 *pc;                /* script program counter */

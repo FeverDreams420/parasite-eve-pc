@@ -12,6 +12,12 @@ typedef struct RelocBlock {
     RelocU32 offsets[1];
 } RelocBlock;
 
+/* A block's own address, added to the offsets it holds on disk. */
+typedef union RelocAddress {
+    RelocBlock *block;
+    RelocU32 word;
+} RelocAddress;
+
 extern RelocBlock *g_SceneDataTable1;
 
 #endif /* PE1_RELOC_BLOCK_H */

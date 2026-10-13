@@ -15,7 +15,7 @@ extern u8 g_DiscChangeFlags;
 /* g_GameState.pending_story_day as an unsigned byte symbol. Matching debt:
  * Scene_SetStoryDay keeps the lbu and its separate sign extension only
  * through a volatile read; a plain one combines into lb (lev 28). */
-extern volatile u8 D_800B0CE5;
+extern volatile u8 g_PendingStoryDay;
 /* Room and area bytes of g_GameState as their own symbols:
  * field_bg_cache_bank (the loaded texture page) and loaded_entity_bank
  * (the area type before the transition). */
@@ -26,7 +26,7 @@ extern u8 g_SavedSceneAreaType;
  * screens, the scene loader and the fx_common/menu_memcard overlays update
  * it with absolute loads and stores, where the record keeps its address in
  * a register. */
-extern u32 D_800B0CD8;
+extern u32 g_GameStateFlagsWord;
 
 /* g_GameState.scene_object.animation_source as its own scalar symbol:
  * Scene_UpdateBgDraw tests and sets it with absolute loads and stores. */

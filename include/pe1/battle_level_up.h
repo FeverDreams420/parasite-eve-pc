@@ -6,7 +6,7 @@
 extern BattleEntity *D_8009D254;
 extern BattleRewardSlot g_BattleRewardSlots[10];
 extern u8 g_BattleStepIndex;
-extern s16 D_8009D2A4;
+extern s16 g_MenuFrameCommand;
 extern u32 g_BattleExpReward;
 extern u16 g_BattlePeBonusReward;
 extern int g_BattleModeState;

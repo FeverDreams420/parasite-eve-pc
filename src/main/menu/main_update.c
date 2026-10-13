@@ -2,7 +2,6 @@
 #include "pe1/akao.h"
 #include "pe1/asset_find.h"
 #include "pe1/battle.h"
-#include "pe1/battle_hud_colors.h"
 #include "pe1/battle_reset_stats.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_setup.h"
@@ -27,16 +26,17 @@ int Entity_ResolveDropTable(void *);                      /* static */
 s16 Entity_ApplyHitAndSetAnim(void *);                 /* static */
 void Entity_UpdateTimers(void);
 /* Separate declarations preserve the original GCC quantities for each tail. */
-s8 D_8009CE30;
+/* COMMON supplies small-data metadata to MASPSX. */
+s8 g_BattleHaltTimer;
 unsigned char g_AyaStatusEffectTimer;
 
 
 static inline u8 Battle_GetReactionTimer(void) {
-    return D_8009D234[0];
+    return g_BattleEnemyHoldTimer[0];
 }
 
 static inline void Battle_SetReactionTimer(u8 value) {
-    D_8009D234[0] = value;
+    g_BattleEnemyHoldTimer[0] = value;
 }
 
 void Menu_MainUpdate(s32 arg0) {
@@ -154,20 +154,20 @@ void Menu_MainUpdate(s32 arg0) {
             var_v1 = g_ActiveDrawSlot;
             do { } while (0);
             var_a0 = 1;
-            *(&D_800B0158[0] + (var_v1 * 0x48)) = var_t1;
+            g_BattlePeGauges[var_v1][1].r0 = var_t1;
             }
-            *(&D_800B0159[0] + (g_ActiveDrawSlot * 0x48)) = var_t0.value;
-            *(&D_800B015A[0] + (g_ActiveDrawSlot * 0x48)) = var_a3;
-            *(&D_800B0160[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-            *(&D_800B0161[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-            *(&D_800B0162[0] + (g_ActiveDrawSlot * 0x48)) = var_a0;
-            *(&D_800B0168[0] + (g_ActiveDrawSlot * 0x48)) = var_t1;
-            *(&D_800B0169[0] + (g_ActiveDrawSlot * 0x48)) = var_t0.value;
-            *(&D_800B016A[0] + (g_ActiveDrawSlot * 0x48)) = var_a3;
-            *(&D_800B0170[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-            *(&D_800B0171[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = var_t0.value;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = var_a3;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = var_a2;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = var_a0;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = var_t1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = var_t0.value;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = var_a3;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = var_a2;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = var_a1;
             var_v0_3 = g_ActiveDrawSlotRecord.slot;
-            *(&D_800B0172[0] + ((var_v0_3 * 9) * 8)) = var_a0;
+            g_BattlePeGauges[var_v0_3][1].b3 = var_a0;
         }
         else if (var_v1 == 1) {
             var_a2 = 0xC1;
@@ -176,20 +176,20 @@ void Menu_MainUpdate(s32 arg0) {
             var_v1 = g_ActiveDrawSlot;
             do { } while (0);
             var_a0 = 0x41;
-            *(&D_800B0158[0] + (var_v1 * 0x48)) = var_a2;
+            g_BattlePeGauges[var_v1][1].r0 = var_a2;
             }
-            *(&D_800B0159[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-            *(&D_800B015A[0] + (g_ActiveDrawSlot * 0x48)) = var_a0;
-            *(&D_800B0160[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-            *(&D_800B0161[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-            *(&D_800B0162[0] + (g_ActiveDrawSlot * 0x48)) = var_a0;
-            *(&D_800B0168[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-            *(&D_800B0169[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-            *(&D_800B016A[0] + (g_ActiveDrawSlot * 0x48)) = var_a0;
-            *(&D_800B0170[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-            *(&D_800B0171[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = var_a0;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = var_a2;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = var_a0;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = var_a2;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = var_a0;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = var_a2;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = var_a1;
             var_v0_3 = g_ActiveDrawSlotRecord.slot;
-            *(&D_800B0172[0] + ((var_v0_3 * 9) * 8)) = var_a0;
+            g_BattlePeGauges[var_v0_3][1].b3 = var_a0;
         }
         else if (var_v1 == 2) {
             var_t1 = 0x83;
@@ -201,20 +201,20 @@ void Menu_MainUpdate(s32 arg0) {
             var_v1 = g_ActiveDrawSlot;
             do { } while (0);
             var_a0 = 0x81;
-            *(&D_800B0158[0] + (var_v1 * 0x48)) = var_t1;
+            g_BattlePeGauges[var_v1][1].r0 = var_t1;
             }
-            *(&D_800B0159[0] + (g_ActiveDrawSlot * 0x48)) = var_t0.value;
-            *(&D_800B015A[0] + (g_ActiveDrawSlot * 0x48)) = var_a3;
-            *(&D_800B0160[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-            *(&D_800B0161[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-            *(&D_800B0162[0] + (g_ActiveDrawSlot * 0x48)) = var_a0;
-            *(&D_800B0168[0] + (g_ActiveDrawSlot * 0x48)) = var_t1;
-            *(&D_800B0169[0] + (g_ActiveDrawSlot * 0x48)) = var_t0.value;
-            *(&D_800B016A[0] + (g_ActiveDrawSlot * 0x48)) = var_a3;
-            *(&D_800B0170[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-            *(&D_800B0171[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = var_t0.value;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = var_a3;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = var_a2;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = var_a0;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = var_t1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = var_t0.value;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = var_a3;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = var_a2;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = var_a1;
             var_v0_3 = g_ActiveDrawSlotRecord.slot;
-            *(&D_800B0172[0] + ((var_v0_3 * 9) * 8)) = var_a0;
+            g_BattlePeGauges[var_v0_3][1].b3 = var_a0;
         }
         else {
         var_a2 = 0xC1;
@@ -225,26 +225,26 @@ void Menu_MainUpdate(s32 arg0) {
             var_v1 = g_ActiveDrawSlot;
             do { } while (0);
             var_a0 = 0x41;
-            *(&D_800B0158[0] + (var_v1 * 0x48)) = var_a2;
+            g_BattlePeGauges[var_v1][1].r0 = var_a2;
             }
-            *(&D_800B0159[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-            *(&D_800B015A[0] + (g_ActiveDrawSlot * 0x48)) = var_a0;
-            *(&D_800B0160[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-            *(&D_800B0161[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-            *(&D_800B0162[0] + (g_ActiveDrawSlot * 0x48)) = var_a0;
-            *(&D_800B0168[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-            *(&D_800B0169[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-            *(&D_800B016A[0] + (g_ActiveDrawSlot * 0x48)) = var_a0;
-            *(&D_800B0170[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-            *(&D_800B0171[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = var_a0;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = var_a2;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = var_a0;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = var_a2;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = var_a1;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = var_a0;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = var_a2;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = var_a1;
             var_v0_3 = g_ActiveDrawSlot;
-            *(&D_800B0172[0] + ((var_v0_3 * 9) * 8)) = var_a0;
+            g_BattlePeGauges[var_v0_3][1].b3 = var_a0;
         }
         }
         if (D_8009D254->actionMode != 0x12) {
             ((void (*)(BattleEntity *, int, int))Entity_SetActionMode)(D_8009D254, 0x12U, var_a2);
         }
-        if (D_8009CE30 == 0x5A) {
+        if (g_BattleHaltTimer == 0x5A) {
             s32 reset_flags;
             u32 reset_operand;
 
@@ -253,35 +253,35 @@ void Menu_MainUpdate(s32 arg0) {
             reset_operand = ~0x2000U;
             reset_flags &= reset_operand;
             reset_operand = (u32) g_ActiveActor;
-            D_8009CE30 = 0;
+            g_BattleHaltTimer = 0;
             *temp_s2 = reset_flags;
             ((Combatant *)reset_operand)->exp_or_acc = 0x10000;
-            D_800B0158[0] = 0xFF;
-            D_800B0159[0] = 0x3D;
-            D_800B015A[0] = 0x81;
-            D_800B0160[0] = 0x83;
-            D_800B0161[0] = 0x13;
-            D_800B0162[0] = 1;
-            D_800B0168[0] = 0xFF;
-            D_800B0169[0] = 0x3D;
-            D_800B016A[0] = 0x81;
-            D_800B0170[0] = 0x83;
-            D_800B0171[0] = 0x13;
-            D_800B0172[0] = 1;
-            D_800B01A0[0] = 0xFF;
-            D_800B01A1[0] = 0x3D;
-            D_800B01A2[0] = 0x81;
-            D_800B01A8[0] = 0x83;
-            D_800B01A9[0] = 0x13;
-            D_800B01AA[0] = 1;
-            D_800B01B0[0] = 0xFF;
-            D_800B01B1[0] = 0x3D;
-            D_800B01B2[0] = 0x81;
-            D_800B01B8[0] = 0x83;
-            D_800B01B9[0] = 0x13;
-            D_800B01BA[0] = 1;
+            g_BattlePeGauges[0][1].r0 = 0xFF;
+            g_BattlePeGauges[0][1].g0 = 0x3D;
+            g_BattlePeGauges[0][1].b0 = 0x81;
+            g_BattlePeGauges[0][1].r1 = 0x83;
+            g_BattlePeGauges[0][1].g1 = 0x13;
+            g_BattlePeGauges[0][1].b1 = 1;
+            g_BattlePeGauges[0][1].r2 = 0xFF;
+            g_BattlePeGauges[0][1].g2 = 0x3D;
+            g_BattlePeGauges[0][1].b2 = 0x81;
+            g_BattlePeGauges[0][1].r3 = 0x83;
+            g_BattlePeGauges[0][1].g3 = 0x13;
+            g_BattlePeGauges[0][1].b3 = 1;
+            g_BattlePeGauges[1][1].r0 = 0xFF;
+            g_BattlePeGauges[1][1].g0 = 0x3D;
+            g_BattlePeGauges[1][1].b0 = 0x81;
+            g_BattlePeGauges[1][1].r1 = 0x83;
+            g_BattlePeGauges[1][1].g1 = 0x13;
+            g_BattlePeGauges[1][1].b1 = 1;
+            g_BattlePeGauges[1][1].r2 = 0xFF;
+            g_BattlePeGauges[1][1].g2 = 0x3D;
+            g_BattlePeGauges[1][1].b2 = 0x81;
+            g_BattlePeGauges[1][1].r3 = 0x83;
+            g_BattlePeGauges[1][1].g3 = 0x13;
+            g_BattlePeGauges[1][1].b3 = 1;
         } else {
-            D_8009CE30 += 1;
+            g_BattleHaltTimer += 1;
             D_8009D254->motionX = 0;
             D_8009D254->motionY = 0;
             D_8009D254->motionZ = 0;
@@ -306,20 +306,20 @@ void Menu_MainUpdate(s32 arg0) {
                     var_v1 = g_ActiveDrawSlot;
                     do { } while (0);
                     var_a0_2 = 0x3B;
-                    *(&D_800B0134[0] + (var_v1 * 0x48)) = 0;
+                    g_BattlePeGauges[var_v1][0].r0 = 0;
                     }
-                    *(&D_800B0135[0] + (g_ActiveDrawSlot * 0x48)) = var_t0.value;
-                    *(&D_800B0136[0] + (g_ActiveDrawSlot * 0x48)) = var_a3;
-                    *(&D_800B013C[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-                    *(&D_800B013D[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-                    *(&D_800B013E[0] + (g_ActiveDrawSlot * 0x48)) = 0x3B;
-                    *(&D_800B0144[0] + (g_ActiveDrawSlot * 0x48)) = 0;
-                    *(&D_800B0145[0] + (g_ActiveDrawSlot * 0x48)) = var_t0.value;
-                    *(&D_800B0146[0] + (g_ActiveDrawSlot * 0x48)) = var_a3;
-                    *(&D_800B014C[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-                    *(&D_800B014D[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g0 = var_t0.value;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b0 = var_a3;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r1 = var_a2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g1 = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b1 = 0x3B;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r2 = 0;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g2 = var_t0.value;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b2 = var_a3;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r3 = var_a2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g3 = var_a1;
                     var_v0_4 = g_ActiveDrawSlotRecord.slot;
-                    *(&D_800B014E[0] + ((var_v0_4 * 9) * 8)) = var_a0_2;
+                    g_BattlePeGauges[var_v0_4][0].b3 = var_a0_2;
                 }
                 else if (var_v1 == 1) {
                     var_a2 = 0x25;
@@ -328,20 +328,20 @@ void Menu_MainUpdate(s32 arg0) {
                     var_v1 = g_ActiveDrawSlot;
                     do { } while (0);
                     var_a0_2 = 0x39;
-                    *(&D_800B0134[0] + (var_v1 * 0x48)) = var_a2;
+                    g_BattlePeGauges[var_v1][0].r0 = var_a2;
                     }
-                    *(&D_800B0135[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-                    *(&D_800B0136[0] + (g_ActiveDrawSlot * 0x48)) = var_a0_2;
-                    *(&D_800B013C[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-                    *(&D_800B013D[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-                    *(&D_800B013E[0] + (g_ActiveDrawSlot * 0x48)) = var_a0_2;
-                    *(&D_800B0144[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-                    *(&D_800B0145[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-                    *(&D_800B0146[0] + (g_ActiveDrawSlot * 0x48)) = var_a0_2;
-                    *(&D_800B014C[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-                    *(&D_800B014D[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g0 = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b0 = var_a0_2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r1 = var_a2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g1 = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b1 = var_a0_2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r2 = var_a2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g2 = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b2 = var_a0_2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r3 = var_a2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g3 = var_a1;
                     var_v0_4 = g_ActiveDrawSlotRecord.slot;
-                    *(&D_800B014E[0] + ((var_v0_4 * 9) * 8)) = var_a0_2;
+                    g_BattlePeGauges[var_v0_4][0].b3 = var_a0_2;
                 }
                 else if (var_v1 == 2) {
                     var_t0.value = 0x4A;
@@ -352,20 +352,20 @@ void Menu_MainUpdate(s32 arg0) {
                     var_v1 = g_ActiveDrawSlot;
                     do { } while (0);
                     var_a0_2 = 0x36;
-                    *(&D_800B0134[0] + (var_v1 * 0x48)) = var_t0.value;
+                    g_BattlePeGauges[var_v1][0].r0 = var_t0.value;
                     }
-                    *(&D_800B0135[0] + (g_ActiveDrawSlot * 0x48)) = var_a3;
-                    *(&D_800B0136[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-                    *(&D_800B013C[0] + (g_ActiveDrawSlot * 0x48)) = 0;
-                    *(&D_800B013D[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-                    *(&D_800B013E[0] + (g_ActiveDrawSlot * 0x48)) = var_a0_2;
-                    *(&D_800B0144[0] + (g_ActiveDrawSlot * 0x48)) = var_t0.value;
-                    *(&D_800B0145[0] + (g_ActiveDrawSlot * 0x48)) = var_a3;
-                    *(&D_800B0146[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-                    *(&D_800B014C[0] + (g_ActiveDrawSlot * 0x48)) = 0;
-                    *(&D_800B014D[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g0 = var_a3;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b0 = var_a2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r1 = 0;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g1 = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b1 = var_a0_2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r2 = var_t0.value;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g2 = var_a3;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b2 = var_a2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r3 = 0;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g3 = var_a1;
                     var_v0_4 = g_ActiveDrawSlotRecord.slot;
-                    *(&D_800B014E[0] + ((var_v0_4 * 9) * 8)) = var_a0_2;
+                    g_BattlePeGauges[var_v0_4][0].b3 = var_a0_2;
                 }
                 else if (var_v1 == 3) {
                     var_a2 = 0x25;
@@ -374,75 +374,75 @@ void Menu_MainUpdate(s32 arg0) {
                     var_v1 = g_ActiveDrawSlot;
                     do { } while (0);
                     var_a0_2 = 0x39;
-                    *(&D_800B0134[0] + (var_v1 * 0x48)) = var_a2;
+                    g_BattlePeGauges[var_v1][0].r0 = var_a2;
                     }
-                    *(&D_800B0135[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-                    *(&D_800B0136[0] + (g_ActiveDrawSlot * 0x48)) = var_a0_2;
-                    *(&D_800B013C[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-                    *(&D_800B013D[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-                    *(&D_800B013E[0] + (g_ActiveDrawSlot * 0x48)) = var_a0_2;
-                    *(&D_800B0144[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-                    *(&D_800B0145[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
-                    *(&D_800B0146[0] + (g_ActiveDrawSlot * 0x48)) = var_a0_2;
-                    *(&D_800B014C[0] + (g_ActiveDrawSlot * 0x48)) = var_a2;
-                    *(&D_800B014D[0] + (g_ActiveDrawSlot * 0x48)) = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g0 = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b0 = var_a0_2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r1 = var_a2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g1 = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b1 = var_a0_2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r2 = var_a2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g2 = var_a1;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].b2 = var_a0_2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].r3 = var_a2;
+                    g_BattlePeGauges[g_ActiveDrawSlot][0].g3 = var_a1;
                     var_v0_4 = g_ActiveDrawSlot;
-                    *(&D_800B014E[0] + ((var_v0_4 * 9) * 8)) = var_a0_2;
+                    g_BattlePeGauges[var_v0_4][0].b3 = var_a0_2;
                 }
                 if (g_ActiveActor->exp_or_acc < g_ActiveActor->maxAtk) {
                     g_ActiveActor->atbGauge = 0;
                 }
                 if (g_ActiveActor->atbGauge == 0) {
-                D_800B0134[0] = 0;
-                D_800B0135[0] = 0x82;
-                D_800B0136[0] = 0x36;
-                D_800B013C[0] = 0x4A;
-                D_800B013D[0] = 0xFF;
-                D_800B013E[0] = 0x3B;
-                D_800B0144[0] = 0;
-                D_800B0145[0] = 0x82;
-                D_800B0146[0] = 0x36;
-                D_800B014C[0] = 0x4A;
-                D_800B014D[0] = 0xFF;
-                D_800B014E[0] = 0x3B;
-                D_800B017C[0] = 0;
-                D_800B017D[0] = 0x82;
-                D_800B017E[0] = 0x36;
-                D_800B0184[0] = 0x4A;
-                D_800B0185[0] = 0xFF;
-                D_800B0186[0] = 0x3B;
-                D_800B018C[0] = 0;
-                D_800B018D[0] = 0x82;
-                D_800B018E[0] = 0x36;
-                D_800B0194[0] = 0x4A;
-                D_800B0195[0] = 0xFF;
-                D_800B0196[0] = 0x3B;
+                g_BattlePeGauges[0][0].r0 = 0;
+                g_BattlePeGauges[0][0].g0 = 0x82;
+                g_BattlePeGauges[0][0].b0 = 0x36;
+                g_BattlePeGauges[0][0].r1 = 0x4A;
+                g_BattlePeGauges[0][0].g1 = 0xFF;
+                g_BattlePeGauges[0][0].b1 = 0x3B;
+                g_BattlePeGauges[0][0].r2 = 0;
+                g_BattlePeGauges[0][0].g2 = 0x82;
+                g_BattlePeGauges[0][0].b2 = 0x36;
+                g_BattlePeGauges[0][0].r3 = 0x4A;
+                g_BattlePeGauges[0][0].g3 = 0xFF;
+                g_BattlePeGauges[0][0].b3 = 0x3B;
+                g_BattlePeGauges[1][0].r0 = 0;
+                g_BattlePeGauges[1][0].g0 = 0x82;
+                g_BattlePeGauges[1][0].b0 = 0x36;
+                g_BattlePeGauges[1][0].r1 = 0x4A;
+                g_BattlePeGauges[1][0].g1 = 0xFF;
+                g_BattlePeGauges[1][0].b1 = 0x3B;
+                g_BattlePeGauges[1][0].r2 = 0;
+                g_BattlePeGauges[1][0].g2 = 0x82;
+                g_BattlePeGauges[1][0].b2 = 0x36;
+                g_BattlePeGauges[1][0].r3 = 0x4A;
+                g_BattlePeGauges[1][0].g3 = 0xFF;
+                g_BattlePeGauges[1][0].b3 = 0x3B;
                 }
             } else {
-                D_800B0134[0] = 0;
-                D_800B0135[0] = 0x82;
-                D_800B0136[0] = 0x36;
-                D_800B013C[0] = 0x4A;
-                D_800B013D[0] = 0xFF;
-                D_800B013E[0] = 0x3B;
-                D_800B0144[0] = 0;
-                D_800B0145[0] = 0x82;
-                D_800B0146[0] = 0x36;
-                D_800B014C[0] = 0x4A;
-                D_800B014D[0] = 0xFF;
-                D_800B014E[0] = 0x3B;
-                D_800B017C[0] = 0;
-                D_800B017D[0] = 0x82;
-                D_800B017E[0] = 0x36;
-                D_800B0184[0] = 0x4A;
-                D_800B0185[0] = 0xFF;
-                D_800B0186[0] = 0x3B;
-                D_800B018C[0] = 0;
-                D_800B018D[0] = 0x82;
-                D_800B018E[0] = 0x36;
-                D_800B0194[0] = 0x4A;
-                D_800B0195[0] = 0xFF;
-                D_800B0196[0] = 0x3B;
+                g_BattlePeGauges[0][0].r0 = 0;
+                g_BattlePeGauges[0][0].g0 = 0x82;
+                g_BattlePeGauges[0][0].b0 = 0x36;
+                g_BattlePeGauges[0][0].r1 = 0x4A;
+                g_BattlePeGauges[0][0].g1 = 0xFF;
+                g_BattlePeGauges[0][0].b1 = 0x3B;
+                g_BattlePeGauges[0][0].r2 = 0;
+                g_BattlePeGauges[0][0].g2 = 0x82;
+                g_BattlePeGauges[0][0].b2 = 0x36;
+                g_BattlePeGauges[0][0].r3 = 0x4A;
+                g_BattlePeGauges[0][0].g3 = 0xFF;
+                g_BattlePeGauges[0][0].b3 = 0x3B;
+                g_BattlePeGauges[1][0].r0 = 0;
+                g_BattlePeGauges[1][0].g0 = 0x82;
+                g_BattlePeGauges[1][0].b0 = 0x36;
+                g_BattlePeGauges[1][0].r1 = 0x4A;
+                g_BattlePeGauges[1][0].g1 = 0xFF;
+                g_BattlePeGauges[1][0].b1 = 0x3B;
+                g_BattlePeGauges[1][0].r2 = 0;
+                g_BattlePeGauges[1][0].g2 = 0x82;
+                g_BattlePeGauges[1][0].b2 = 0x36;
+                g_BattlePeGauges[1][0].r3 = 0x4A;
+                g_BattlePeGauges[1][0].g3 = 0xFF;
+                g_BattlePeGauges[1][0].b3 = 0x3B;
             }
         }
         temp_v1_4 = *temp_s2;
@@ -693,13 +693,13 @@ void Menu_MainUpdate(s32 arg0) {
     if (temp_a0_4 <= 0) {
         *temp_s2 |= 0x2000;
         if (Pad_GetMenuPressedBitOrDisabled() != g_BattleActionIndex) {
-            if (D_8009D200 != -1) {
-                Pm_SendCmd(D_8009D200, 0, 0, 2, 0, 0);
-                D_8009D200 = -1;
+            if (g_BattleAttackPmSlot != -1) {
+                Pm_SendCmd(g_BattleAttackPmSlot, 0, 0, 2, 0, 0);
+                g_BattleAttackPmSlot = -1;
             }
-            if (D_8009D2FC != -1) {
-                Pm_SendCmd(D_8009D2FC, 0, 0, 2, 0, 0);
-                D_8009D2FC = -1;
+            if (g_BattleImpactPmSlot != -1) {
+                Pm_SendCmd(g_BattleImpactPmSlot, 0, 0, 2, 0, 0);
+                g_BattleImpactPmSlot = -1;
             }
         }
         Battle_FlushScriptSounds();
@@ -710,63 +710,63 @@ void Menu_MainUpdate(s32 arg0) {
         var_a0 = 0x9F;
         var_v0.value = 0xFF;
         var_v1 = 0xF9;
-        D_800B00ED[0] = var_a2;
-        D_800B00FD[0] = var_a2;
-        D_800B0111[0] = var_a2;
-        D_800B0121[0] = var_a2;
+        g_BattleAtbGauges[0].g0 = var_a2;
+        g_BattleAtbGauges[0].g2 = var_a2;
+        g_BattleAtbGauges[1].g0 = var_a2;
+        g_BattleAtbGauges[1].g2 = var_a2;
         var_a2 = 0x36;
-        D_800B00F4[0] = var_a0;
-        D_800B0104[0] = var_a0;
+        g_BattleAtbGauges[0].r1 = var_a0;
+        g_BattleAtbGauges[0].r3 = var_a0;
         g_BattleAtbMarkers[0].sprite.color.bytes.r = var_a0;
-        D_800B0118[0] = var_a0;
-        D_800B0128[0] = var_a0;
+        g_BattleAtbGauges[1].r1 = var_a0;
+        g_BattleAtbGauges[1].r3 = var_a0;
         g_BattleAtbMarkers[1].sprite.color.bytes.r = var_a0;
         var_a0 = 0x4A;
-        D_800B00F6[0] = var_v1;
-        D_800B0106[0] = var_v1;
+        g_BattleAtbGauges[0].b1 = var_v1;
+        g_BattleAtbGauges[0].b3 = var_v1;
         g_BattleAtbMarkers[0].sprite.color.bytes.b = var_v1;
-        D_800B011A[0] = var_v1;
-        D_800B012A[0] = var_v1;
+        g_BattleAtbGauges[1].b1 = var_v1;
+        g_BattleAtbGauges[1].b3 = var_v1;
         g_BattleAtbMarkers[1].sprite.color.bytes.b = var_v1;
         var_v1 = 0x3B;
-        D_800B00EC[0] = 0;
-        D_800B00EE[0] = var_a1;
-        D_800B00F5[0] = var_v0.value;
-        D_800B00FC[0] = 0;
-        D_800B00FE[0] = var_a1;
-        D_800B0105[0] = var_v0.value;
+        g_BattleAtbGauges[0].r0 = 0;
+        g_BattleAtbGauges[0].b0 = var_a1;
+        g_BattleAtbGauges[0].g1 = var_v0.value;
+        g_BattleAtbGauges[0].r2 = 0;
+        g_BattleAtbGauges[0].b2 = var_a1;
+        g_BattleAtbGauges[0].g3 = var_v0.value;
         g_BattleAtbMarkers[0].sprite.color.bytes.g = var_v0.value;
-        D_800B0110[0] = 0;
-        D_800B0112[0] = var_a1;
-        D_800B0119[0] = var_v0.value;
-        D_800B0120[0] = 0;
-        D_800B0122[0] = var_a1;
-        D_800B0129[0] = var_v0.value;
+        g_BattleAtbGauges[1].r0 = 0;
+        g_BattleAtbGauges[1].b0 = var_a1;
+        g_BattleAtbGauges[1].g1 = var_v0.value;
+        g_BattleAtbGauges[1].r2 = 0;
+        g_BattleAtbGauges[1].b2 = var_a1;
+        g_BattleAtbGauges[1].g3 = var_v0.value;
         g_BattleAtbMarkers[1].sprite.color.bytes.g = var_v0.value;
-        D_800B0134[0] = 0;
-        D_800B0135[0] = var_a1;
-        D_800B0136[0] = var_a2;
-        D_800B013C[0] = var_a0;
-        D_800B013D[0] = var_v0.value;
-        D_800B013E[0] = var_v1;
-        D_800B0144[0] = 0;
-        D_800B0145[0] = var_a1;
-        D_800B0146[0] = var_a2;
-        D_800B014C[0] = var_a0;
-        D_800B014D[0] = var_v0.value;
-        D_800B014E[0] = var_v1;
-        D_800B017C[0] = 0;
-        D_800B017D[0] = var_a1;
-        D_800B017E[0] = var_a2;
-        D_800B0184[0] = var_a0;
-        D_800B0185[0] = var_v0.value;
-        D_800B0186[0] = var_v1;
-        D_800B018C[0] = 0;
-        D_800B018D[0] = var_a1;
-        D_800B018E[0] = var_a2;
-        D_800B0194[0] = var_a0;
-        D_800B0195[0] = var_v0.value;
-        D_800B0196[0] = var_v1;
+        g_BattlePeGauges[0][0].r0 = 0;
+        g_BattlePeGauges[0][0].g0 = var_a1;
+        g_BattlePeGauges[0][0].b0 = var_a2;
+        g_BattlePeGauges[0][0].r1 = var_a0;
+        g_BattlePeGauges[0][0].g1 = var_v0.value;
+        g_BattlePeGauges[0][0].b1 = var_v1;
+        g_BattlePeGauges[0][0].r2 = 0;
+        g_BattlePeGauges[0][0].g2 = var_a1;
+        g_BattlePeGauges[0][0].b2 = var_a2;
+        g_BattlePeGauges[0][0].r3 = var_a0;
+        g_BattlePeGauges[0][0].g3 = var_v0.value;
+        g_BattlePeGauges[0][0].b3 = var_v1;
+        g_BattlePeGauges[1][0].r0 = 0;
+        g_BattlePeGauges[1][0].g0 = var_a1;
+        g_BattlePeGauges[1][0].b0 = var_a2;
+        g_BattlePeGauges[1][0].r1 = var_a0;
+        g_BattlePeGauges[1][0].g1 = var_v0.value;
+        g_BattlePeGauges[1][0].b1 = var_v1;
+        g_BattlePeGauges[1][0].r2 = 0;
+        g_BattlePeGauges[1][0].g2 = var_a1;
+        g_BattlePeGauges[1][0].b2 = var_a2;
+        g_BattlePeGauges[1][0].r3 = var_a0;
+        g_BattlePeGauges[1][0].g3 = var_v0.value;
+        g_BattlePeGauges[1][0].b3 = var_v1;
     }
     if ((s16) g_ActiveActor->curHP <= 0) {
         var_a2 = 0x46;
@@ -781,107 +781,107 @@ void Menu_MainUpdate(s32 arg0) {
         var_v0.entity->motionZ = 0;
         }
         var_v0.value = 0xFF;
-        D_800B00ED[0] = var_a2;
-        D_800B00FD[0] = var_a2;
-        D_800B0111[0] = var_a2;
-        D_800B0121[0] = var_a2;
-        D_800B00F4[0] = var_a0;
-        D_800B0104[0] = var_a0;
+        g_BattleAtbGauges[0].g0 = var_a2;
+        g_BattleAtbGauges[0].g2 = var_a2;
+        g_BattleAtbGauges[1].g0 = var_a2;
+        g_BattleAtbGauges[1].g2 = var_a2;
+        g_BattleAtbGauges[0].r1 = var_a0;
+        g_BattleAtbGauges[0].r3 = var_a0;
         g_BattleAtbMarkers[0].sprite.color.bytes.r = var_a0;
-        D_800B0118[0] = var_a0;
-        D_800B0128[0] = var_a0;
+        g_BattleAtbGauges[1].r1 = var_a0;
+        g_BattleAtbGauges[1].r3 = var_a0;
         g_BattleAtbMarkers[1].sprite.color.bytes.r = var_a0;
-        D_800B00EC[0] = 0;
-        D_800B00EE[0] = var_a1;
-        D_800B00F5[0] = var_v0.value;
-        D_800B00F6[0] = var_v1;
-        D_800B00FC[0] = 0;
-        D_800B00FE[0] = var_a1;
-        D_800B0105[0] = var_v0.value;
-        D_800B0106[0] = var_v1;
+        g_BattleAtbGauges[0].r0 = 0;
+        g_BattleAtbGauges[0].b0 = var_a1;
+        g_BattleAtbGauges[0].g1 = var_v0.value;
+        g_BattleAtbGauges[0].b1 = var_v1;
+        g_BattleAtbGauges[0].r2 = 0;
+        g_BattleAtbGauges[0].b2 = var_a1;
+        g_BattleAtbGauges[0].g3 = var_v0.value;
+        g_BattleAtbGauges[0].b3 = var_v1;
         g_BattleAtbMarkers[0].sprite.color.bytes.g = var_v0.value;
         g_BattleAtbMarkers[0].sprite.color.bytes.b = var_v1;
-        D_800B0110[0] = 0;
-        D_800B0112[0] = var_a1;
-        D_800B0119[0] = var_v0.value;
-        D_800B011A[0] = var_v1;
-        D_800B0120[0] = 0;
-        D_800B0122[0] = var_a1;
-        D_800B0129[0] = var_v0.value;
-        D_800B012A[0] = var_v1;
+        g_BattleAtbGauges[1].r0 = 0;
+        g_BattleAtbGauges[1].b0 = var_a1;
+        g_BattleAtbGauges[1].g1 = var_v0.value;
+        g_BattleAtbGauges[1].b1 = var_v1;
+        g_BattleAtbGauges[1].r2 = 0;
+        g_BattleAtbGauges[1].b2 = var_a1;
+        g_BattleAtbGauges[1].g3 = var_v0.value;
+        g_BattleAtbGauges[1].b3 = var_v1;
         g_BattleAtbMarkers[1].sprite.color.bytes.g = var_v0.value;
         g_BattleAtbMarkers[1].sprite.color.bytes.b = var_v1;
         {
         var_a2 = 0x36;
         var_a0 = 0x4A;
         var_v1 = 0x3B;
-        D_800B0136[0] = var_a2;
-        D_800B0146[0] = var_a2;
-        D_800B017E[0] = var_a2;
-        D_800B018E[0] = var_a2;
+        g_BattlePeGauges[0][0].b0 = var_a2;
+        g_BattlePeGauges[0][0].b2 = var_a2;
+        g_BattlePeGauges[1][0].b0 = var_a2;
+        g_BattlePeGauges[1][0].b2 = var_a2;
         var_a2 = 0x81;
-        D_800B0135[0] = var_a1;
-        D_800B0145[0] = var_a1;
-        D_800B017D[0] = var_a1;
-        D_800B018D[0] = var_a1;
+        g_BattlePeGauges[0][0].g0 = var_a1;
+        g_BattlePeGauges[0][0].g2 = var_a1;
+        g_BattlePeGauges[1][0].g0 = var_a1;
+        g_BattlePeGauges[1][0].g2 = var_a1;
         var_a1 = 0x83;
-        D_800B013C[0] = var_a0;
-        D_800B014C[0] = var_a0;
-        D_800B0184[0] = var_a0;
-        D_800B0194[0] = var_a0;
+        g_BattlePeGauges[0][0].r1 = var_a0;
+        g_BattlePeGauges[0][0].r3 = var_a0;
+        g_BattlePeGauges[1][0].r1 = var_a0;
+        g_BattlePeGauges[1][0].r3 = var_a0;
         var_a0 = 0x13;
         }
-        D_800B013E[0] = var_v1;
-        D_800B014E[0] = var_v1;
-        D_800B0186[0] = var_v1;
-        D_800B0196[0] = var_v1;
+        g_BattlePeGauges[0][0].b1 = var_v1;
+        g_BattlePeGauges[0][0].b3 = var_v1;
+        g_BattlePeGauges[1][0].b1 = var_v1;
+        g_BattlePeGauges[1][0].b3 = var_v1;
         var_v1 = 1;
-        D_800B0134[0] = 0;
-        D_800B013D[0] = var_v0.value;
-        D_800B0144[0] = 0;
-        D_800B014D[0] = var_v0.value;
-        D_800B017C[0] = 0;
-        D_800B0185[0] = var_v0.value;
-        D_800B018C[0] = 0;
-        D_800B0195[0] = var_v0.value;
+        g_BattlePeGauges[0][0].r0 = 0;
+        g_BattlePeGauges[0][0].g1 = var_v0.value;
+        g_BattlePeGauges[0][0].r2 = 0;
+        g_BattlePeGauges[0][0].g3 = var_v0.value;
+        g_BattlePeGauges[1][0].r0 = 0;
+        g_BattlePeGauges[1][0].g1 = var_v0.value;
+        g_BattlePeGauges[1][0].r2 = 0;
+        g_BattlePeGauges[1][0].g3 = var_v0.value;
         {
-        D_800B0158[0] = var_v0.value;
-        D_800B0159[0] = var_a3;
-        D_800B015A[0] = var_a2;
-        D_800B0160[0] = var_a1;
-        D_800B0161[0] = var_a0;
-        D_800B0162[0] = var_v1;
-        D_800B0168[0] = var_v0.value;
-        D_800B0169[0] = var_a3;
-        D_800B016A[0] = var_a2;
-        D_800B0170[0] = var_a1;
-        D_800B0171[0] = var_a0;
-        D_800B0172[0] = var_v1;
-        D_800B01A0[0] = var_v0.value;
-        D_800B01A1[0] = var_a3;
-        D_800B01A2[0] = var_a2;
-        D_800B01A8[0] = var_a1;
-        D_800B01A9[0] = var_a0;
-        D_800B01AA[0] = var_v1;
-        D_800B01B0[0] = var_v0.value;
-        D_800B01B1[0] = var_a3;
-        D_800B01B2[0] = var_a2;
-        D_800B01B8[0] = var_a1;
-        D_800B01B9[0] = var_a0;
-        D_800B01BA[0] = var_v1;
+        g_BattlePeGauges[0][1].r0 = var_v0.value;
+        g_BattlePeGauges[0][1].g0 = var_a3;
+        g_BattlePeGauges[0][1].b0 = var_a2;
+        g_BattlePeGauges[0][1].r1 = var_a1;
+        g_BattlePeGauges[0][1].g1 = var_a0;
+        g_BattlePeGauges[0][1].b1 = var_v1;
+        g_BattlePeGauges[0][1].r2 = var_v0.value;
+        g_BattlePeGauges[0][1].g2 = var_a3;
+        g_BattlePeGauges[0][1].b2 = var_a2;
+        g_BattlePeGauges[0][1].r3 = var_a1;
+        g_BattlePeGauges[0][1].g3 = var_a0;
+        g_BattlePeGauges[0][1].b3 = var_v1;
+        g_BattlePeGauges[1][1].r0 = var_v0.value;
+        g_BattlePeGauges[1][1].g0 = var_a3;
+        g_BattlePeGauges[1][1].b0 = var_a2;
+        g_BattlePeGauges[1][1].r1 = var_a1;
+        g_BattlePeGauges[1][1].g1 = var_a0;
+        g_BattlePeGauges[1][1].b1 = var_v1;
+        g_BattlePeGauges[1][1].r2 = var_v0.value;
+        g_BattlePeGauges[1][1].g2 = var_a3;
+        g_BattlePeGauges[1][1].b2 = var_a2;
+        g_BattlePeGauges[1][1].r3 = var_a1;
+        g_BattlePeGauges[1][1].g3 = var_a0;
+        g_BattlePeGauges[1][1].b3 = var_v1;
         }
         if (*temp_s2 & 0x10000) {
             Battle_ReturnToIdle();
         }
         Draw_ResetTextboxes();
         if (Pad_GetMenuPressedBitOrDisabled() != g_BattleActionIndex) {
-            if (D_8009D200 != -1) {
-                Pm_SendCmd(D_8009D200, 0, 0, 2, 0, 0);
-                D_8009D200 = -1;
+            if (g_BattleAttackPmSlot != -1) {
+                Pm_SendCmd(g_BattleAttackPmSlot, 0, 0, 2, 0, 0);
+                g_BattleAttackPmSlot = -1;
             }
-            if (D_8009D2FC != -1) {
-                Pm_SendCmd(D_8009D2FC, 0, 0, 2, 0, 0);
-                D_8009D2FC = -1;
+            if (g_BattleImpactPmSlot != -1) {
+                Pm_SendCmd(g_BattleImpactPmSlot, 0, 0, 2, 0, 0);
+                g_BattleImpactPmSlot = -1;
             }
         }
         Battle_FlushScriptSounds();
@@ -915,7 +915,7 @@ void Menu_MainUpdate(s32 arg0) {
             coordinate = &var_t0.entity->posZ.parts.integer;
             tail_sp = *coordinate;
             tail_a1 = 0;
-            D_8009D1CE = 0;
+            g_BattleSaveOverlayActive = 0;
             Asset_Find08Alt(tail_a0, tail_a1, tail_a2, tail_a3, tail_sp);
         }
         }

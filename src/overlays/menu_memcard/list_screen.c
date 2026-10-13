@@ -14,7 +14,7 @@ static inline MemcardImageNode *MenuCard_FindImageNode(s32 kind) {
 }
 
 /* Scroll and confirm handling for the memory card list screen. */
-void func_80190064(void) {
+void MenuCard_HandleListInput(void) {
     s32 pad;
     s32 y;
     MemcardImageNode *node;
@@ -27,7 +27,7 @@ void func_80190064(void) {
             if (node->stepY == 0) {
                 node->stepY = 1;
                 node->parameter = 8;
-                node->field14 = D_801931BC;
+                node->field14 = g_MenuCardAttachFadePayloadEntry;
                 g_MemcardScreenTimer = 0;
                 Menu_PlayConfirmSound();
             }
@@ -44,7 +44,7 @@ void func_80190064(void) {
             if (node->y == 200 && MemCard_HasAnyPresentFile() != 0) {
                 node = MenuCard_FindImageNode(6);
                 if (node->targetY == 0) {
-                    node->draw = D_801930D8;
+                    node->draw = g_MenuCardUpdateFadeDisplayEntry;
                     node->update = MenuCard_BlendRotatedImage;
                     node->targetY = 20;
                     node->stepY = 1;
@@ -61,7 +61,7 @@ void func_80190064(void) {
         if (MemCard_HasAnyPresentFile() == 0) {
             node = MenuCard_FindImageNode(6);
             if (node->targetY == 0x54) {
-                node->draw = D_8019316C;
+                node->draw = g_MenuCardDecreaseFadeEntry;
             }
             if (node->intensity != 0) {
                 node->stepY = -1;
@@ -98,7 +98,7 @@ void func_80190064(void) {
 }
 
 /* Fade a two-part logo in and out over 480 frames on the flipping screens. */
-void func_80190660(void) {
+void MenuCard_ShowLogoFade(void) {
     MemcardSprite sprites[2][2];
     MemcardDrawTPage tpages[2][2];
     RECT overlay;
@@ -110,7 +110,7 @@ void func_80190660(void) {
     s32 page;
     s32 shade;
 
-    tim = (MemcardTim *)&D_80193254[D_80193278];
+    tim = (MemcardTim *)&g_MemcardImageBundle[g_MemcardImageOffsets[8]];
     LoadImage(&tim->clut.rect, tim->clut.data);
     block = &tim->clut;
     block = (MemcardTimBlock *)((u32 *)block + (block->size >> 2));
@@ -200,7 +200,7 @@ void func_80190660(void) {
 
 /* Run the title/card-selection screen, then restore the game display.
  * Five pins and the header's two symbol views retain retail allocation. */
-s32 func_801909B4(void) {
+s32 MenuCard_RunListScreen(void) {
     u8 *firstMemory;
     s32 searchKind;
     s32 wantedKind;
@@ -233,19 +233,19 @@ s32 func_801909B4(void) {
     u32 *destination;
 
     /* Save both display pages before borrowing their backing memory. */
-    D_801D1550 = g_RenderDispEnvArray[0];
-    D_801D1564 = g_RenderDispEnvArray[1];
-    titleMode = D_800B0DCD & 1;
-    D_801D1498 = g_RenderDrawEnvArray[0];
-    D_801D14F4 = g_RenderDrawEnvArray[1];
+    g_MemcardListSavedDispEnv[0] = g_RenderDispEnvArray[0];
+    g_MemcardListSavedDispEnv[1] = g_RenderDispEnvArray[1];
+    titleMode = g_PeImageMountFlags & 1;
+    g_MemcardListSavedDrawEnv[0] = g_RenderDrawEnvArray[0];
+    g_MemcardListSavedDrawEnv[1] = g_RenderDrawEnvArray[1];
     firstMemory = g_CdLoadAreaBase;
     secondMemory = firstMemory + 0x1C080;
-    D_800B0E50 = firstMemory + 0x4080;
+    g_RenderFrontBufferBase[0] = firstMemory + 0x4080;
     g_MemcardScreenBuffers[0] = (MemcardScreenBuffer *) firstMemory;
     g_MemcardSecondScreen.value = (MemcardScreenBuffer *) secondMemory;
-    D_800B0E54 = secondMemory + 0x4080;
+    g_RenderBackBufferBase[0] = secondMemory + 0x4080;
     D_800B0E38.ordering[0] = (u32 *)(firstMemory + 0x80);
-    D_800B0E3C = secondMemory + 0x80;
+    g_RenderOtBufferBaseAlt[0] = secondMemory + 0x80;
     Draw_SetPresentEnabled(1);
     result = -1;
     do {
@@ -261,7 +261,7 @@ s32 func_801909B4(void) {
         VSync(0);
         VSync(0);
         SetDefDrawEnv(&g_MemcardFirstDrawScreen->draw, 0, 0, 0x140, 0xF0);
-        SetDefDrawEnv(&D_801D11C0->draw, 0, 0xF0, 0x140, 0xF0);
+        SetDefDrawEnv(&g_MemcardSecondScreenView->draw, 0, 0xF0, 0x140, 0xF0);
         SetDefDispEnv(&g_MemcardScreenBuffers[0]->disp, 0, 0xF0, 0x140, 0xF0);
         SetDefDispEnv(&g_MemcardSecondScreen.value->disp, 0, 0, 0x140, 0xF0);
         g_MemcardScreenBuffers[0]->disp.screen.y = g_MemcardSecondScreen.value->disp.screen.y = 0;
@@ -277,12 +277,12 @@ s32 func_801909B4(void) {
         DrawSync(0);
         VSync(0);
         VSync(0);
-        if (D_8009D1BC == 0) {
-            D_8009D1BC = 1;
-            func_80190660();
+        if (g_LogoFadePlayed == 0) {
+            g_LogoFadePlayed = 1;
+            MenuCard_ShowLogoFade();
         }
         if (titleMode != 0) {
-            if (func_80192CE8(1) != 0) {
+            if (MenuCard_PlayVideo(1) != 0) {
                 waitFrames = 0;
                 do {
                     waitFrames += 1;
@@ -356,7 +356,7 @@ s32 func_801909B4(void) {
         g_MemcardPendingNodeHead = 0;
         g_MemcardActiveNodeTail = 0;
         g_MemcardActiveNodeHead = 0;
-        func_8018FBC0(1)->field14 = D_8019319C;
+        MenuCard_CreateImageNode(1)->field14 = g_MenuCardCreateFadeImageNodeEntry;
         g_MemcardScreenTimer = titleMode;
         if (titleMode < 0x3E8) {
             do {
@@ -365,7 +365,7 @@ s32 func_801909B4(void) {
                 g_MemcardCurrentScreen = g_MemcardScreenBuffers[page];
                 MemCard_UpdateSavePolling();
                 Field_HandleStateTransition();
-                func_80190064();
+                MenuCard_HandleListInput();
                 MenuCard_RedrawImageNodes();
                 node = (g_MemcardActiveNodeHead);
                 previous = 0;
@@ -466,11 +466,11 @@ s32 func_801909B4(void) {
             } else if ((selectionY >= 0xB5) || ((selectionY == 0xB4) && (MemCard_IsPortPresent(0) == 0) && (MemCard_IsPortPresent(1) == 0))) {
                 result = 3;
             } else {
-                Draw_SetPresentImage((u8 *)D_801D11C0 + 0x1C080);
-                image = (MemcardImage *)&D_80193254[*g_MemcardImageOffsets];
+                Draw_SetPresentImage((u8 *)g_MemcardSecondScreenView + 0x1C080);
+                image = (MemcardImage *)&g_MemcardImageBundle[*g_MemcardImageOffsets];
                 source = (u32 *)(image + 1);
                 groupsRemaining = (image->width * image->height) / 6;
-                destination = (u32 *)((u8 *)D_801D11C0 + 0x1C080);
+                destination = (u32 *)((u8 *)g_MemcardSecondScreenView + 0x1C080);
                 /* Pack four RGB24 pixels into two dimmed RGB555 words.
                  * The inclusive last group is intentional: retail uses >= 0. */
                 if (groupsRemaining >= 0) {
@@ -517,10 +517,10 @@ s32 func_801909B4(void) {
             }
         }
     } while (result < 0);
-    g_RenderDrawEnvArray[0] = D_801D1498;
-    g_RenderDrawEnvArray[1] = D_801D14F4;
-    g_RenderDispEnvArray[0] = D_801D1550;
-    g_RenderDispEnvArray[1] = D_801D1564;
+    g_RenderDrawEnvArray[0] = g_MemcardListSavedDrawEnv[0];
+    g_RenderDrawEnvArray[1] = g_MemcardListSavedDrawEnv[1];
+    g_RenderDispEnvArray[0] = g_MemcardListSavedDispEnv[0];
+    g_RenderDispEnvArray[1] = g_MemcardListSavedDispEnv[1];
     {
         /* Color processing is complete; reuse its scratch for display Y. */
         packedColor = screenYRestore;

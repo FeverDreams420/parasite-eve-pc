@@ -7,6 +7,7 @@
 
 #include "room_m273_arc.h"
 #include "room_m273_effects.h"
+#include "room_m273_sway.h"
 #include "room_m273_sweep.h"
 #include "RoomEffect_PhasedArcSpriteFlow_externs.h"
 #include "RoomEffect_PhasedArcSpriteFlow_externs_1.h"
@@ -33,7 +34,7 @@ int RoomM273_HandRingBandCallback(int mode,Effect *effect) {
         parameters.z=(unsigned int)frame<<8;
         parameters.flags=1;
         FieldFx_DrawRingBand(effect->position,32,96,8,&parameters,size,size,
-            (struct RenderColor *)D_8019ACDC,(struct RenderColor *)D_8019ACE0,shade,1);
+            (struct RenderColor *)g_RoomM273HandRingBandColorA,(struct RenderColor *)g_RoomM273HandRingBandColorB,shade,1);
     }
     return 0;
 }
@@ -41,12 +42,12 @@ int RoomM273_HandRingBandCallback(int mode,Effect *effect) {
 /* Arc spawn-state helper, callback, and pool controller. */
 
 void *RoomM273_SweepConfigure(int unused, int value, int flag) {
-    D_8019AF56 = value;
-    D_8019AF58 = value;
+    g_RoomM273SweepState.loops = value;
+    g_RoomM273SweepState.reserved_54 = value;
     value++;
-    D_8019AF5C = value * 6;
-    D_8019AF5A = flag;
-    D_8019AF64 = flag != 0 ? 0x52 : 0xE;
+    g_RoomM273SweepState.divisor = value * 6;
+    g_RoomM273SweepState.side = flag;
+    g_RoomM273SweepState.contact = flag != 0 ? 0x52 : 0xE;
 
     return &g_RoomM273SweepPoint;
 }
@@ -65,7 +66,7 @@ s32 RoomM273_SweepArcEmitter(s32 arg0) {
                              (FieldFxCallbackListCallback)RoomM273_SweepArcCallback);
     }
 
-    if (D_8019AF6B != 0) {
+    if (g_RoomM273SweepState.started != 0) {
         return 2;
     }
     if ((g_FieldFxCurrentAge & 3) != 0) {
@@ -75,8 +76,8 @@ s32 RoomM273_SweepArcEmitter(s32 arg0) {
     obj = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM273PoolContext)->pool);
     if (obj != 0) {
         *(u16 *)(obj + 0) = g_RoomM273SweepPoint.x;
-        *(u16 *)(obj + 2) = D_8019AEFE;
-        *(u16 *)(obj + 4) = D_8019AF00;
+        *(u16 *)(obj + 2) = g_RoomM273SweepPoint.y;
+        *(u16 *)(obj + 4) = g_RoomM273SweepPoint.z;
         *(u16 *)(obj + 6) = 0;
     }
 
@@ -84,7 +85,7 @@ s32 RoomM273_SweepArcEmitter(s32 arg0) {
 }
 
 short *RoomM273_SwayConfigure(void *arg0, short arg1) {
-    short *ptr = &D_8019AF9A;
+    short *ptr = &g_RoomM273SwayState.repeat;
 
     *ptr = arg1;
     return ptr - 0x17;
@@ -124,7 +125,7 @@ s32 RoomM273_SweepArcCallback(s32 mode, RoomM273ArcCallbackState *state) {
         FieldFx_DrawStarFan((GteShortVector *)callState, 0x100, 0x100, count, (GteRotation *)&rotation,
         ((packed << 16) >> 16) + 0x400,
         ((packed << 16) >> 16) + 0x400,
-        (struct RenderColor *)g_RoomM273BlackColor, (struct RenderColor *)D_8019AD7C, packed >> 21, 1);
+        (struct RenderColor *)g_RoomM273BlackColor, (struct RenderColor *)g_RoomM273SweepArcColor, packed >> 21, 1);
         }
     }
 return_zero:

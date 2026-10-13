@@ -362,7 +362,7 @@ void RoomEffect_InitEffectSequenceSprites(RoomEnt *ent, void *unused, RoomLibFxM
     RoomEffectSequenceSprite *primary;
 
     FieldFx_SetScriptContext(state);
-    g_EffectSequenceModel = Asset_FindTable08ByU32Key(D_800B0E64[0], 0x498704);
+    g_EffectSequenceModel = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0x498704);
     link = ent->link;
     state->link = link;
     matrix = link->p238;
@@ -422,7 +422,8 @@ void RoomEffect_EffectSequenceNopA(void) {
 }
 
 #define ROOMLIB_EFFECT_CALL(command) \
-    FieldFx_StartSlot((void *)owner, (command), D_80192BBC, D_80192B5C)
+    FieldFx_StartSlot((void *)owner, (command), (unsigned short *)g_RoomSpawnLayout, \
+                      g_RoomInitList)
 #define ROOMLIB_EFFECT_SET(index, value, command) \
     *FieldFx_RegPtr(index) = (value); \
     ROOMLIB_EFFECT_CALL(command)
@@ -683,9 +684,9 @@ void RoomEffect_DrawVariant38(void *arg0, RoomOverlay024VariantControl *control,
     matrix.t[2] = transform->z;
 
     if (state->resource_selector == -1) {
-        FieldFx_InterpolateColorRamp(&D_80192BF0, state->field30, (char *)&g_EffectSequenceGlowSprite);
+        FieldFx_InterpolateColorRamp(&g_EffectSequenceLimeGlowRamp, state->field30, (char *)&g_EffectSequenceGlowSprite);
     } else {
-        FieldFx_InterpolateColorRamp(&D_80192BFC, state->field30, (char *)&g_EffectSequenceGlowSprite);
+        FieldFx_InterpolateColorRamp(&g_EffectSequenceAmberGlowRamp, state->field30, (char *)&g_EffectSequenceGlowSprite);
     }
     g_EffectSequenceGlowSprite.cell = state->phase * 2;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_EffectSequenceGlowSprite, (GteMatrix *)&matrix, 1);
@@ -931,9 +932,9 @@ void RoomEffect_DrawVariant38Pulse(void *arg0, RoomOverlay024VariantControl *con
     matrix.t[2] = transform->z + (rand() % 20) - 10;
 
     if (state->resource_selector == -1) {
-        FieldFx_InterpolateColorRamp(&D_80192BF0, state->field30, (char *)&g_EffectSequenceGlowSprite);
+        FieldFx_InterpolateColorRamp(&g_EffectSequenceLimeGlowRamp, state->field30, (char *)&g_EffectSequenceGlowSprite);
     } else {
-        FieldFx_InterpolateColorRamp(&D_80192BFC, state->field30, (char *)&g_EffectSequenceGlowSprite);
+        FieldFx_InterpolateColorRamp(&g_EffectSequenceAmberGlowRamp, state->field30, (char *)&g_EffectSequenceGlowSprite);
     }
     g_EffectSequenceGlowSprite.cell = state->phase * 2;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_EffectSequenceGlowSprite, (GteMatrix *)&matrix, 1);
@@ -1189,7 +1190,7 @@ void RoomEffect_DrawVariant290(void *arg0, RoomOverlay024VariantControl *control
     matrix.t[1] = transform->y;
     matrix.t[2] = transform->z + (rand() % 20) - 10;
 
-    FieldFx_InterpolateColorRamp(&D_80192BFC, state->field30, (char *)&g_EffectSequenceGlowSprite);
+    FieldFx_InterpolateColorRamp(&g_EffectSequenceAmberGlowRamp, state->field30, (char *)&g_EffectSequenceGlowSprite);
     g_EffectSequenceGlowSprite.cell = state->phase * 2;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)((char *)&g_EffectSequenceGlowSprite), (GteMatrix *)&matrix, 1);
     RotMatrix(&base_seed, &matrix);
@@ -1391,7 +1392,7 @@ void RoomEffect_DrawVariantD(void *arg0, RoomOverlay024VariantControl *control, 
     matrix.t[1] = transform->y + projected[1] - ((state->vertical_offset) >> 4);
     matrix.t[2] = transform->z + projected[2] + (rand() % 20) - 10;
 
-    FieldFx_InterpolateColorRamp(&D_80192BFC, state->field30, (char *)&g_EffectSequenceGlowSpriteSecondary);
+    FieldFx_InterpolateColorRamp(&g_EffectSequenceAmberGlowRamp, state->field30, (char *)&g_EffectSequenceGlowSpriteSecondary);
     g_EffectSequenceGlowSpriteSecondary.cell = state->phase * 2;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_EffectSequenceGlowSpriteSecondary, (GteMatrix *)&matrix, 1);
 

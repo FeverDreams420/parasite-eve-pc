@@ -7,7 +7,7 @@
 /* Task script interpreter state and the tables its opcodes read
  * (src/main/script). */
 
-extern int g_SceneDataTable0;
+extern int g_ScriptCursorAddress;
 extern short g_EntityCollisionWallParam;
 extern ScriptNode *g_ScriptNodeFreeListHead;
 /* Sequence number stamped into each allocated script node (a one-element

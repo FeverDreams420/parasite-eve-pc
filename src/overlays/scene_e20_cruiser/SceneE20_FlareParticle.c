@@ -22,8 +22,8 @@ int SceneE20_FlareParticle(int mode, SceneE20Particle *p)
     int time;
     int state;
 
-    streakColor = D_8018EFF4;
-    glowColor = D_8018EFF8;
+    streakColor = g_SceneE20FlareStreakColor;
+    glowColor = g_SceneE20FlareGlowColor;
     switch (mode) {
     case 1:
         switch (p->kind) {

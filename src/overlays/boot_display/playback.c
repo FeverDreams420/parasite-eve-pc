@@ -73,8 +73,8 @@ s32 BootDisplay_StepPlaybackTransfer(u8 mode) {
         next = (*index + 1) & 7;
         *index = next;
     } else {
-        D_80172CFA = D_80172CFA + 1;
-        next = D_80172CFA;
+        g_BootDisplayPlaybackAltCount = g_BootDisplayPlaybackAltCount + 1;
+        next = g_BootDisplayPlaybackAltCount;
     }
     return next;
 }

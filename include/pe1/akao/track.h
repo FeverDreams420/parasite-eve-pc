@@ -143,7 +143,7 @@ typedef struct AkaoNestedSource {
     /* 0x10 */ AkaoU32 pan_target;
 } AkaoNestedSource;
 
-/* One of the twelve nested-stream voice slots at D_800BC000. */
+/* One of the twelve nested-stream voice slots at g_AkaoVoiceChannelTable. */
 typedef struct AkaoNestedVoiceSlot {
     /* 0x00 */ unsigned char pad_00[0x2C];
     /* 0x2C */ AkaoU32 flags;
@@ -340,7 +340,7 @@ typedef union AkaoTickTrack {
 typedef char AkaoTickTrackSizeCheck[sizeof(AkaoTickTrack) == 0x11C ? 1 : -1];
 
 /* The 48 sequencer tracks: 24 for music, 24 saved or for sound effects. */
-extern AkaoTickTrack D_800B8AC0[48];
+extern AkaoTickTrack g_AkaoSequencerTracks[48];
 
 void Seq_StartNestedStreams(AkaoNestedSource *source, void *first, void *second);
 

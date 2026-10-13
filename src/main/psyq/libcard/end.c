@@ -2,7 +2,7 @@
 /*
  * PSY-Q LIBCARD END: _ExitCard. Assembler source with the same static ra
  * slot and inline C0 table call as LIBCARD PATCH. It copies the three-NOP
- * template g_CardExitHookTemplate..D_8007E590 over the card hook in the C0 table. That
+ * template g_CardExitHookTemplate..g_CardExitHookTemplateEnd over the card hook in the C0 table. That
  * template and END's final word are data at their link address, kept as the
  * segment psyq/libcard/END_templates.
  */
@@ -23,8 +23,8 @@ PSYQ_ASM_FUNCTION(_ExitCard,
     "    lw      $v0, 0x18($v0)\n"
     "    lui     $t2, %hi(g_CardExitHookTemplate)\n"
     "    addiu   $t2, $t2, %lo(g_CardExitHookTemplate)\n"
-    "    lui     $t1, %hi(D_8007E590)\n"
-    "    addiu   $t1, $t1, %lo(D_8007E590)\n"
+    "    lui     $t1, %hi(g_CardExitHookTemplateEnd)\n"
+    "    addiu   $t1, $t1, %lo(g_CardExitHookTemplateEnd)\n"
     ".Lcopy:\n"
     "    lw      $v1, 0x0($t2)\n"
     "    nop\n"

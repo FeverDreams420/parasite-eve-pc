@@ -17,7 +17,9 @@
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_transition.h"
 
-u32 D_8009D280;
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+int g_SceneDispatchToken;
 int g_SceneDispatchCur;
 unsigned int g_GameStateFlags;
 u32 g_GlobalFrameCounter[1];
@@ -25,7 +27,7 @@ u32 g_GlobalFrameCounter[1];
 /* Field frame loop and its scene flush: Boot_FlushSceneFast is the exit tail
  * that Boot_RunFrame repeats after its loop. Contiguous -G8 pair. */
 
-/* Late include: its D_8009CDA4[] would make the COMMON word above large. */
+/* Late include: its g_GlobalFrameCounter[] would make the COMMON word above large. */
 #include "pe1/boot.h"
 
 void Draw_InitPipeline(void);
@@ -36,7 +38,7 @@ int func_80122040(void);
 void func_80121A00(void);
 void Draw_ClearOnFlag(void);
 void Render_Update(void);
-void func_800E01BC(void);
+void FieldFx_UpdateScriptSprites(void);
 void Boot_FinishFrame(void);
 void Akao_Cmd_F1(void);
 void Render_Noop(int mode);
@@ -81,7 +83,7 @@ void Boot_RunFrame(void)
     RenderTintTargetView *fade;
 
     Draw_InitPipeline();
-    if (g_SceneDispatchCur == D_8009D280) {
+    if (g_SceneDispatchCur == g_SceneDispatchToken) {
         scene_flags = &g_GameState.bank_state_12;
         state = &g_GameState;
         fade = (RenderTintTargetView *)&g_ScreenTint.targetR;
@@ -93,8 +95,8 @@ void Boot_RunFrame(void)
             g_GameStateFlags = flags & ~0x30u;
 
             if (!(GAME_STATE_OF_SCENE_FLAGS(scene_flags)->flags & 0x8000) && g_GlobalFrameCounter[0] &&
-                (D_8009D1F4 & 4) &&
-                !(D_8009D238 & 0xB0002380u)) {
+                (g_FieldPadPressed & 4) &&
+                !(g_FieldPadLastFrame & 0xB0002380u)) {
                 g_GameStateFlags =
                     ((flags & 1) ? (flags & ~0x30u) | 0x20u
                                  : (flags & ~0x30u) | 0x10u) ^ 1u;
@@ -111,7 +113,7 @@ void Boot_RunFrame(void)
                 ClearOTagR((u32 *)slot.state->shared_buffers.ordering_tables[0],
                            0x1000);
             }
-            D_8009D250 = D_8009D250 + 1;
+            g_FrameRngCounter = g_FrameRngCounter + 1;
             Scene_UpdateEntityList();
             Entity_FrameUpdate();
 
@@ -126,7 +128,7 @@ void Boot_RunFrame(void)
                     Render_Update();
                     Menu_DrawTextboxEntries();
                     Render_SetGteScreenOffset();
-                    func_800E01BC();
+                    FieldFx_UpdateScriptSprites();
                     Render_ResetGteScreenOffset();
                     Render_SetCDDCSlot();
                 }
@@ -143,7 +145,7 @@ void Boot_RunFrame(void)
             VSync(2);
             }
 
-            if (!(D_800B0CD8 & 0x4200) &&
+            if (!(g_GameStateFlagsWord & 0x4200) &&
                 (g_FieldPadBits & 0x0F000006u) == 0x0F000006u) {
                 Boot_Shutdown();
             }
@@ -156,10 +158,10 @@ void Boot_RunFrame(void)
             }
 loop_end_check:
             ;
-        } while (g_SceneDispatchCur == D_8009D280);
+        } while (g_SceneDispatchCur == g_SceneDispatchToken);
     }
 
-    if (D_800B0CD8 & 0x200) {
+    if (g_GameStateFlagsWord & 0x200) {
         clear_rect.x = 0;
         clear_rect.y = 0;
         clear_rect.w = 0x140;
@@ -171,12 +173,12 @@ loop_end_check:
     Render_Noop(1);
     Asset_UnloadTableEntries();
     g_GameStateFlags = (g_GameStateFlags | 0x40) & ~0x3800u;
-    status = D_800B0CD8 | 2;
+    status = g_GameStateFlagsWord | 2;
     {
         u32 first_status = status & ~0x800u;
-        D_800B0CD8 = first_status;
+        g_GameStateFlagsWord = first_status;
         if (status & 0x200)
-            D_800B0CD8 = (first_status | 2u) & ~0x8200u;
+            g_GameStateFlagsWord = (first_status | 2u) & ~0x8200u;
     }
 }
 

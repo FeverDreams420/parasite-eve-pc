@@ -25,9 +25,7 @@ void func_801235DC(void);
 int func_801909B4(void);
 
 /* Disc table load (pm/disc_tables.c): PE.IMG sector ranges of the
- * startup assets (entries of the D_800930D8 sector table) and the save
- * work word whose bit 0x2000 selects the large texture set. */
-extern unsigned int D_800A77FC;
+ * startup assets (entries of the g_PeImageSectorTable sector table). */
 extern u16 g_MainAssetLbaTbl[];
 extern u16 g_LargeTexLbaTbl[];
 extern u16 g_SmallTexLbaTbl[];
@@ -35,7 +33,9 @@ extern u16 g_FontUiLbaTbl[];
 extern u16 g_SceneInitLbaTbl0[];
 
 /* System start-up (boot/init.c). */
-extern s32 g_FrameRngCounter[];
+/* Frame counter stepped by Boot_RunFrame; battle colour cycles, the status
+ * pointer rotation and the battle srand seed read it. */
+extern u32 g_FrameRngCounter;
 
 /* Pad sampling (boot/init.c): render flag table, the
  * button mask per game bit, frames each bit has been held, the actuator

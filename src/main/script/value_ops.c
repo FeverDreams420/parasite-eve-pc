@@ -215,7 +215,7 @@ int Script_DispatchCmd(int **args) {
     case 1: {
         u32 mask;
         u32 state;
-        state = D_8009D1F4;
+        state = g_FieldPadPressed;
         mask = *args[1];
         if ((state & mask) == mask) {
             *args[2] = 1;
@@ -227,7 +227,7 @@ int Script_DispatchCmd(int **args) {
     case 2: {
         u32 mask;
         u32 state;
-        state = D_8009D1E4;
+        state = g_FieldPadReleased;
         mask = *args[1];
         if ((state & mask) == mask) {
             *args[2] = 1;

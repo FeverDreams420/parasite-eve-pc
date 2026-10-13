@@ -7,22 +7,17 @@
 #include "pe1/field_color.h"
 
 extern struct BattleEntity *D_8009D254;
-extern char D_8018F1CC[];
-extern char D_80199464[];
+extern char g_RoomM318GetMayaPosErrorFormat[];
+extern char g_RoomM318FanSweepTrailColorTrack[];
 extern s32 rand(void);
-extern char D_8019948C[];
+extern char g_RoomM318SpiralDropSparkColorTrack[];
 extern int g_RoomM318StarFlarePhase;
-extern char D_801995BC[], D_801995DC[];
-extern char D_801995FC[];
+extern char g_RoomM318StarFlareColorTrackA[], g_RoomM318StarFlareColorTrackB[];
+extern char g_RoomM318ShakeBurstParticleColorTrack[];
 extern int rand(void);
-extern RenderColor D_8018F1FC;
-extern u8 D_80199674[];
-extern int g_RoomM318ActorParams;
-extern int D_801998F4;
-extern int g_RoomM318EmberBurstParams;
-extern int D_80199910;
-extern int g_RoomM318RisingColumnParams;
-extern int D_80199918;
-extern int D_8019991C;
-extern int D_80199920;
+extern RenderColor g_RoomM318EmberParticleColor;
+extern u8 g_RoomM318EmberBurstParticleColorTrack[];
+extern int g_RoomM318ActorParams[2];
+extern int g_RoomM318EmberBurstParams[2];
+extern int g_RoomM318RisingColumnParams[4];
 #endif /* PE1_EXT_M318 */

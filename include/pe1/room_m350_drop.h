@@ -32,8 +32,8 @@ typedef struct RoomM350TrailQueue {
 } RoomM350TrailQueue;
 
 extern RoomM350TrailQueue g_RoomEffectTrailPositions;
-extern GteRotation D_8019A3C0;
-extern RenderColor D_8019A61C[3];
+extern GteRotation g_RoomM350StarFanTilt;
+extern RenderColor g_RoomM350DropColors[3];
 
 int RoomM350_DropCallback(int mode, RoomM350Drop *drop);
 int RoomM350_TestDropPlayerHit(short *point, int radius);

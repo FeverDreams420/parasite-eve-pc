@@ -1,0 +1,228 @@
+address,overlay,old_name,name,evidence
+0x80191FE8,fx_common,func_80191FE8,FxCommon_MuteMusic,"effects.c: Akao_Cmd_A9(1, 0); opcode 0xA9 is AKAO_SEQ_OP_CHANNEL_VOLUME_SLIDE (include/pe1/akao/commands.h), so this slides the volume to 0 over one tick; no direct caller in the overlay (the retail pair sits next to FxCommon_EndSequence)"
+0x8019200C,fx_common,func_8019200C,FxCommon_FadeMusicOut,"effects.c: Akao_Cmd_A9(30, 0) slides the volume to 0 over 30 ticks, the same call FxCommon_EndSequence makes (0x1E) before waiting 30 VSyncs"
+0x80190AEC,fx_common,func_80190AEC,FxCommon_CreateBareNode,"camera.c: takes a record from FxCommon_AllocIndexLink, sets type 0 and the payload, links it under the parent with FxCommon_LinkNodeToParent; unlike the other two creators it stores no offset-table value; effect_init.c makes the one node g_FxCommonRuntime.node0 (the node FxCommon_DrawSceneNodes ends on)"
+0x80190B78,fx_common,func_80190B78,FxCommon_CreateTypedNode,"camera.c: same allocation and link as the bare creator but stores the type and value32 = FxCommon_GetOffsetTableValue(payload, type); effect_init.c calls it 30 times with the scene node types 0x21 to 0x54"
+0x80190C1C,fx_common,func_80190C1C,FxCommon_CreateConfiguredNode,"camera.c: allocates a node with subtype, variant, type, value36 from the offset table and data38/data3C (the two LOD depths FxCommon_DrawLodNode reads); effect_init.c calls it for the effect point pairs (0x22/0x20/0x20 and the setup record subtype/variant/type)"
+0x80192740,fx_common,func_80192740,FxCommon_DrawNightShadeAndMarkers,"effects.c: when the night flag D_8019C1F0 is 1 it links the frame's g_FxCommonShadeQuads entry (stride 9 words) into the active buffer's ordering table slot 0xFFF, then runs g_FxCommonMarkerFade = FxCommon_DrawEffectMarkers(g_FxCommonMarkerFade); called once per frame from the scene loop before FxCommon_DrawSceneNodes"
+0x80195994,fx_common,func_80195994,FxCommon_StartCameraMove,"effects.c callers pass (variant, 4, 5, 0) to restart the camera and (variant, 0, 0, frame << 8) to step it; the body samples g_FxCommonEffectSetup[index].motionIndices[0] at the path position, then loads the target lane and the position lane (origin, delta, remaining = 1 << shift) exactly like FxCommon_SetMotionEndpoints"
+0x80196498,fx_common,func_80196498,FxCommon_InitScene,"effect_init.c: runs FxCommon_SelectRoomVariant, FxCommon_InitNodePools and FxCommon_InitFadeQuads, sets the lighting and fog, fills g_FxCommonEffectSetup and creates every scene node; called once from the scene main loop (func_8019234C) before the frame loop"
+0x8009D280,fx_common,D_8009D280,g_SceneDispatchToken,"Main names 0x8009D280 g_SceneDispatchToken (sym.main.txt, pe1/scene_dispatch.h); FxCommon_EndSequence stores the next scene token there. Overlay u32 declaration dropped; same gp-relative stores."
+0x800B0CD8,fx_common,D_800B0CD8,g_GameState,"Main names 0x800B0CD8 g_GameState (Pe1GameState, flags at +0, pe_image_base_lba at +0x100); camera.c reads g_GameState.flags and takes the image base through the FxAssetSource cast. One scalar view D_800B0CD8 stays in effects.c (FxCommon_EndSequence clears flag 0x40): the struct form is not gp-relative and changes the code."
+0x800B0DB2,fx_common,D_800B0DB2,g_GameState.scene_audio.tracks.banks[0],"0x800B0CD8 + 0xD8 + 2 is the scene-audio track bank (Pe1SceneAudioState, scene_assets.h static assert banks at 0xDA); FxCommon_EndSequence resets it to -1 next to g_SceneAudioSlot0Key."
+0x800B0DD0,fx_common,D_800B0DD0,g_GameState.bank_value_f8,0x800B0CD8 + 0xF8 (Pe1GameState.bank_value_f8); FxCommon_SetAkao3dVolumeRange zeroes it beside g_Akao3dVolumeMin/Max. Field meaning still open in main.
+0x800B0DD2,fx_common,D_800B0DD2,g_GameState.bank_value_fa,0x800B0CD8 + 0xFA (Pe1GameState.bank_value_fa); FxCommon_SetAkao3dVolumeRange stores 0xFFF there beside g_Akao3dVolumeMin/Max. Field meaning still open in main.
+0x800B0E38,fx_common,D_800B0E38,g_OtBufferTable[0],Main names 0x800B0E38 g_OtBufferTable (render_buffers.h); FxCommon_InitDisplay takes ordering table 0 from it.
+0x800B0E3C,fx_common,D_800B0E3C,g_RenderOtBufferBaseAlt[0],Main names 0x800B0E3C g_RenderOtBufferBaseAlt; FxCommon_InitDisplay takes the second frame's ordering table from it.
+0x800B0E4C,fx_common,D_800B0E4C,g_RenderScratchBufferBase[0],Main names 0x800B0E4C g_RenderScratchBufferBase; FxCommon_SelectBufferAllocation picks buffer 0 or +1 region (0x15F90 stride) from it.
+0x800A77FC,fx_common,D_800A77FC,g_ScriptVariableBank[SCRIPT_VAR_FLAGS],Main names g_ScriptVariableBank = 0x800A77F0; word 3 (SCRIPT_VAR_FLAGS) is 0x800A77FC; the setup and flicker code test its bits 0x2000 etc. exactly like FxCommon_SelectRoomVariant does.
+0x8019C330,fx_common,D_8019C330,g_FxCommonCameraPosition.x,Interior of g_FxCommonCameraPosition (sym 0x8019C330): camera_path.c writes the sampled path point there.
+0x8019C334,fx_common,D_8019C334,g_FxCommonCameraPosition.y,Interior of g_FxCommonCameraPosition (+4).
+0x8019C338,fx_common,D_8019C338,g_FxCommonCameraPosition.z,Interior of g_FxCommonCameraPosition (+8).
+0x8019C810,fx_common,D_8019C810,g_FxCommonCameraTarget.x,Interior of g_FxCommonCameraTarget (sym 0x8019C810): camera_path.c writes the sampled path point there.
+0x8019C814,fx_common,D_8019C814,g_FxCommonCameraTarget.y,Interior of g_FxCommonCameraTarget (+4).
+0x8019C818,fx_common,D_8019C818,g_FxCommonCameraTarget.z,Interior of g_FxCommonCameraTarget (+8).
+0x8019C08C,fx_common,D_8019C08C,g_FxCommonMotionStep0X,Lane 0 (look-at target) per-frame step: FxCommon_SetMotionEndpoints/FxCommon_StartCameraMove store endpoint - current target; FxCommon_StepEffects adds it to g_FxCommonMotionAccum0 each frame. Volatile scalar kept (retail stores each component with its own lui).
+0x8019C090,fx_common,D_8019C090,g_FxCommonMotionStep0Y,Y component of the lane 0 step (see g_FxCommonMotionStep0X).
+0x8019C094,fx_common,D_8019C094,g_FxCommonMotionStep0Z,Z component of the lane 0 step (see g_FxCommonMotionStep0X).
+0x8019C05C,fx_common,D_8019C05C,g_FxCommonMotionStep1X,"Lane 1 (eye) per-frame step: endpoint - current camera position, added to g_FxCommonMotionAccum1 by FxCommon_StepEffects."
+0x8019C060,fx_common,D_8019C060,g_FxCommonMotionStep1Y,Y component of the lane 1 step.
+0x8019C064,fx_common,D_8019C064,g_FxCommonMotionStep1Z,Z component of the lane 1 step.
+0x8019C09C,fx_common,D_8019C09C,g_FxCommonMotionAccum0X,"Volatile scalar view of g_FxCommonMotionAccum0.x (sym 0x8019C09C): the lane initialisers zero it, FxCommon_StepEffects accumulates into it."
+0x8019C0A0,fx_common,D_8019C0A0,g_FxCommonMotionAccum0Y,"Same, interior of g_FxCommonMotionAccum0 (+4)."
+0x8019C0A4,fx_common,D_8019C0A4,g_FxCommonMotionAccum0Z,"Same, interior of g_FxCommonMotionAccum0 (+8)."
+0x8019C06C,fx_common,D_8019C06C,g_FxCommonMotionAccum1X,Volatile scalar view of g_FxCommonMotionAccum1.x (sym 0x8019C06C).
+0x8019C070,fx_common,D_8019C070,g_FxCommonMotionAccum1Y,Interior of g_FxCommonMotionAccum1 (+4).
+0x8019C074,fx_common,D_8019C074,g_FxCommonMotionAccum1Z,Interior of g_FxCommonMotionAccum1 (+8).
+0x8019C0AC,fx_common,D_8019C0AC,g_FxCommonMotionOrigin0X,Volatile halfword view of g_FxCommonMotionOrigin0.x (sym 0x8019C0AC); the initialisers store the current target there while y and z go through the volatile pointer.
+0x8019C0B4,fx_common,D_8019C0B4,g_FxCommonMotionTarget0X,Volatile halfword view of g_FxCommonMotionTarget0.x (sym 0x8019C0B4).
+0x8019C07C,fx_common,D_8019C07C,g_FxCommonMotionOrigin1X,Volatile halfword view of g_FxCommonMotionOrigin1.x (sym 0x8019C07C).
+0x8019C084,fx_common,D_8019C084,g_FxCommonMotionTarget1X,Volatile halfword view of g_FxCommonMotionTarget1.x (sym 0x8019C084).
+0x8019C050,fx_common,D_8019C050,g_FxCommonMotionRemaining1,Same address as g_FxCommonMotionRemaining1 (sym): lane 1 frame counter the initialisers set to 1 << shift and FxCommon_StepEffects decrements.
+0x8019C054,fx_common,D_8019C054,g_FxCommonMotionRemaining0,Same address as g_FxCommonMotionRemaining0 (sym): lane 0 frame counter.
+0x8019C052,fx_common,D_8019C052,g_FxCommonMotionShift1,Lane 1 shift: FxCommon_SetMotionEndpoints stores ai there and remaining1 = 1 << ai; FxCommon_StepEffects scales accum1 by >> shift.
+0x8019C056,fx_common,D_8019C056,g_FxCommonMotionShift0,"Lane 0 shift: stores bi, remaining0 = 1 << bi; FxCommon_StepEffects scales accum0 by >> shift."
+0x8019C00E,fx_common,D_8019C00E,g_FxCommonResetRequested,"scene loop func_8019234C clears it each start, the pad combo L1+L2+R1+R2+select+start sets it with VSync/SetDispMask(0)/Boot_Shutdown, the loop then skips the frame and the end sequence"
+0x8019C024,fx_common,D_8019C024,g_FxCommonExitRequested,the scene loop runs while it is 0; set by the reset combo and by FxCommon_StepEffects when D_8019C026 counts down to 1
+0x8019C026,fx_common,D_8019C026,g_FxCommonExitCountdown,FxCommon_StepEffects decrements it and requests the exit at 1; every confirm/exit action sets it to 0x10; gates the camera step and the pad handling while nonzero
+0x8019C02A,fx_common,D_8019C02A,g_FxCommonScreenFade,set to 1 together with the exit countdown; the scene loop feeds it to FxCommon_StepFadeIntensity every frame while nonzero (full-screen fade packets)
+0x8019CA68,fx_common,D_8019CA68,g_FxCommonExitVariant,assigned g_FxCommonRoomVariant when the exit starts; FxCommon_EndSequence switches on it to choose the scene token (g_SceneDispatchToken values)
+0x8019C034,fx_common,D_8019C034,g_FxCommonViewMode,"0 to 2 cycles with the pad (mode+1 mod 3) and picks which path nodes drive the camera (FxCommon_StepEffects, FxCommon_DrawSceneNodes), 0xA selects the timed flythrough with textbox drawing"
+0x8019C1F0,fx_common,D_8019C1F0,g_FxCommonNight,"FxCommon_SelectRoomVariant sets it from the script flags bit 0x2000, which FxCommon_EndSequence calls night; it picks the night texture sector range in FxCommon_LoadEffectSectors and enables the shade quad and echo nodes"
+0x8019CC1C,fx_common,D_8019CC1C,g_FxCommonPlayFrame,FxCommon_StepEffects increments it up to g_FxCommonEffectSetup[variant].value0c and passes frame << 8 to FxCommon_StartCameraMove as the path position
+0x8019C044,fx_common,D_8019C044,g_FxCommonPlaying,"set to 1 by the confirm pad action (with marker fade -1 and the play frame reset), cleared by cancel; gates the extra node draws and the replay timer"
+0x8019C045,fx_common,D_8019C045,g_FxCommonPlayAdvance,"while 1, FxCommon_StepEffects steps the camera by the play frame and stops at value0c - 1; cleared by the pad actions"
+0x8019C048,fx_common,D_8019C048,g_FxCommonPlayTicks,incremented every frame while playing; at 0xC9 with the camera path finished it switches on the replay camera
+0x8019C046,fx_common,D_8019C046,g_FxCommonReplayCamera,set once g_FxCommonPlayTicks passes 200; while 1 the camera is sampled along the setup motion indices 3 and 2
+0x8019C04C,fx_common,D_8019C04C,g_FxCommonCameraPathPosition,path position fed to FxCommon_SamplePath for the camera in the replay (+0x80 per frame) and in the flythrough (+0x10)
+0x8019C030,fx_common,D_8019C030,g_FxCommonDemoFrame,"incremented per frame in view mode 0xA; compared with 0x4B, 0x11D, ... to switch resources"
+0x8019C0BC,fx_common,D_8019C0BC,g_FxCommonDemoTicks,"incremented per frame in view mode 0xA; at 0x4B1 starts the exit fade, at 0x41A a slot command (Akao_Cmd_C1_WithSlot)"
+0x8019C0C0,fx_common,D_8019C0C0,g_FxCommonDemoExiting,set to 1 when the flythrough starts its exit; the scene loop then stops updating the 3d pan
+0x8019C0C4,fx_common,D_8019C0C4,g_FxCommonDemoResource,"result of FxCommon_SwitchResource in the flythrough, passed to Menu_SetHighlightColor with the shade"
+0x8019C0C8,fx_common,D_8019C0C8,g_FxCommonDemoResourceTicks,"cleared at each resource switch, +1 per frame; 0 resets the shade phase, 0x18 and 0xBA advance it"
+0x8019C0CD,fx_common,D_8019C0CD,g_FxCommonDemoFadePhase,"0 fades the resource shade up, 1 holds, 2 fades down (FxCommon_StepEffects, advanced at ticks 0x18 and 0xBA)"
+0x8019C0CC,fx_common,D_8019C0CC,g_FxCommonDemoShade,"+5 up to 0x78 in phase 0, -5 in phase 2; passed as the grey level of Menu_SetHighlightColor"
+0x8019C038,fx_common,D_8019C038,g_FxCommonTailPathPosition,FxCommon_StepPathNodes samples paths 0x4A and 0x4B at it for g_FxCommonPathNodes[4] and [5] (the path tail nodes) and adds 4 per frame
+0x8019C03C,fx_common,D_8019C03C,g_FxCommonFlyerPathPosition,FxCommon_StepPathNodes samples paths 0x4C and 0x4D at it for the two flyers (nodes 0 and 2) and adds 0x10; the scene loop seeds it with rand() % 3000000 (120000 in the flythrough)
+0x8019C040,fx_common,D_8019C040,g_FxCommonCameraPathRemaining,"camera_path.c: FxCommon_InitCameraPath stores the path length - 2, FxCommon_StepCameraPath decrements it while above 1"
+0x8019C041,fx_common,D_8019C041,g_FxCommonCameraPathStep,"camera_path.c: cleared by FxCommon_InitCameraPath, incremented per step, << 8 is the sample position"
+0x8019C042,fx_common,D_8019C042,g_FxCommonCameraPathIndex,camera_path.c: the motion index given to FxCommon_InitCameraPath; +1 selects the target path
+0x8019C018,fx_common,D_8019C018,g_FxCommonPageChanged,FxCommon_StepEffects: set when a new setup is picked; consumed once to swap the label page
+0x8019C01C,fx_common,D_8019C01C,g_FxCommonPageOpen,"FxCommon_StepEffects: 1 once a page is open, so the next swap closes D_8019C028 with Draw_CloseTextboxPage first"
+0x8019C028,fx_common,D_8019C028,g_FxCommonPageId,"FxCommon_StepEffects: stores g_FxCommonEffectSetup[variant].value25, the page id given to Menu_SetHighlightColor and Render_SetupColorTable, and closes it on the next swap"
+0x8019C020,fx_common,D_8019C020,g_FxCommonRouteNodeCount,FxCommon_InitScene counts the route node pairs it stores into D_8019C3B0; FxCommon_DrawSceneNodes draws half that many pairs
+0x8019C3B0,fx_common,D_8019C3B0,g_FxCommonRouteNodes,FxCommon_InitScene fills it with the nodes created at every point of the nine resource paths (two per point); FxCommon_DrawSceneNodes draws [i * 2] and [i * 2 + 1]
+0x801EA264,fx_common,D_801EA264,g_FxCommonFlatColor,"FxCommon_DrawSceneNodes sets {60,60,40} at night and {20,40,40} by day each pair; model_buffers.c writes it as the rgb of the flat ft3/ft4/gt3/gt4 packets"
+0x801EA5E0,fx_common,D_801EA5E0,g_FxCommonDepthBase,FxCommon_DrawSceneNodes sets 500 before the last transform node; model_buffers.c adds it to every ordering depth ((depth + D_801EA5E0) >> 2)
+0x801EA5E8,fx_common,D_801EA5E8,g_FxCommonListHeadNodes,camera.c FxCommon_InitNodePools links head[i].next to the tail sentinel and clears head[i].previous (one sentinel per node depth list)
+0x8019CC58,fx_common,D_8019CC58,g_FxCommonListTailNodes,camera.c FxCommon_InitNodePools links tail[i].previous to the head sentinel and clears tail[i].next; its previous field overlays g_FxCommonNodeBuckets[i].head
+0x8019C0FC,fx_common,D_8019C0FC,g_FxCommonColorMatrix,FxCommon_InitScene passes it to SetColorMatrix
+0x8019C11C,fx_common,D_8019C11C,g_FxCommonLightMatrix,FxCommon_InitScene passes it to SetLightMatrix
+0x8019CE10,fx_common,D_8019CE10,g_FxCommonModelTable,FxCommon_LoadEffectSectors reads the day or night sector range into it; FxCommon_InitScene takes every node resource from it with Draw_GetTimTableEntry (entries 0 and 1)
+0x8019BFCC,fx_common,D_8019BFCC,g_FxCommonPathWrapped,FxCommon_SamplePath sets it when the sample position is past the path end before wrapping the segment
+0x8019C0D4,fx_common,D_8019C0D4,g_FxCommonRouteFarDepths,"FxCommon_InitScene passes [group] as data38 to FxCommon_CreateConfiguredNode, which FxCommon_DrawLodNode reads as farDepth"
+0x8019C0E8,fx_common,D_8019C0E8,g_FxCommonRouteNearDepths,"FxCommon_InitScene passes [group] as data3C to FxCommon_CreateConfiguredNode, which FxCommon_DrawLodNode reads as nearDepth"
+0x8019BFF4,fx_common,D_8019BFF4,g_FxCommonStartPreset,FxCommon_SelectRoomVariant sets 0 for area 0x80 and 7 for area 0x208; FxCommon_InitScene starts the flythrough for 0 and a fixed playback of variant 9 for 7
+0x8019BFF8,fx_common,D_8019BFF8,g_FxCommonAutoPlay,FxCommon_SelectRoomVariant sets 1 for the areas that start a playback; FxCommon_StepEffects only accepts the pad actions while it is -1
+0x8019BFFC,fx_common,D_8019BFFC,g_FxCommonAutoVariant,variant FxCommon_InitScene selects when g_FxCommonAutoPlay is 1 (set together with it by FxCommon_SelectRoomVariant)
+0x8019C000,fx_common,D_8019C000,g_FxCommonConfirmExit,FxCommon_SelectRoomVariant sets 1 for the areas where confirming the variant in D_8019C004 leaves the scene at once (FxCommon_StepEffects)
+0x8019C004,fx_common,D_8019C004,g_FxCommonConfirmExitVariant,variant whose confirm leaves the scene when g_FxCommonConfirmExit is 1 (FxCommon_StepEffects compares it with g_FxCommonRoomVariant)
+0x8019C148,fx_common,D_8019C148,g_FxCommonEchoNodes[0],Interior of g_FxCommonEchoNodes (sym 0x8019C148): FxCommon_InitScene creates four type 0x53 nodes into it; FxCommon_DrawSceneNodes copies the flyers' matrices onto them.
+0x8019C14C,fx_common,D_8019C14C,g_FxCommonEchoNodes[1],"Same array, element 1 (type 0x53 node)."
+0x8019C150,fx_common,D_8019C150,g_FxCommonEchoNodes[2],"Same array, element 2 (type 0x53 node)."
+0x8019C154,fx_common,D_8019C154,g_FxCommonEchoNodes[3],"Same array, element 3 (type 0x53 node)."
+0x801EA578,fx_common,D_801EA578,g_FxCommonPathNodes[0],"Element 0 of g_FxCommonPathNodes (sym 0x801EA578); InitScene creates it as a type 0x52 node, the camera code reads its translation (matrix.t) as the look-at target."
+0x801EA57C,fx_common,D_801EA57C,g_FxCommonPathNodes[1],Element 1 of g_FxCommonPathNodes; type 0x52 node created next to element 0.
+0x801EA580,fx_common,D_801EA580,g_FxCommonPathNodes[2],Element 2 of g_FxCommonPathNodes; its translation is the view-mode 2 camera position in FxCommon_StepEffects.
+0x801EA584,fx_common,D_801EA584,g_FxCommonPathNodes[3],"Element 3 of g_FxCommonPathNodes (type 0x52 node, copy of element 2 each frame)."
+0x801EA588,fx_common,D_801EA588,g_FxCommonPathTailNodes[0],"Element 0 of g_FxCommonPathTailNodes (sym 0x801EA588): type 0x23 node, drawn with two depth biases by FxCommon_DrawSceneNodes."
+0x801EA58C,fx_common,D_801EA58C,g_FxCommonPathTailNodes[1],Element 1 of g_FxCommonPathTailNodes: type 0x23 node whose translation is the view-mode 1 camera position (minus 0x12C in y).
+0x8019C180,fx_common,D_8019C180,g_FxCommonType51Node,Node FxCommon_InitScene creates with type 0x51 and FxCommon_DrawSceneNodes draws after the 0x28..0x32 group.
+0x8019CDA0,fx_common,D_8019CDA0,g_FxCommonSceneNodes[0],"Nodes of types 0x28 to 0x32 are created in address order by FxCommon_InitScene into eleven consecutive pointers (0x8019CDA0..0x8019CDC8); FxCommon_DrawSceneNodes draws them with depth biases 1000, 0xF3B, 0xF3A, 0xF39 and 0. Element 0 is type 0x28."
+0x8019CDA4,fx_common,D_8019CDA4,g_FxCommonSceneNodes[1],Type 0x29 (see g_FxCommonSceneNodes[0]).
+0x8019CDA8,fx_common,D_8019CDA8,g_FxCommonSceneNodes[2],Type 0x2A.
+0x8019CDAC,fx_common,D_8019CDAC,g_FxCommonSceneNodes[3],Type 0x2B.
+0x8019CDB0,fx_common,D_8019CDB0,g_FxCommonSceneNodes[4],Type 0x2C.
+0x8019CDB4,fx_common,D_8019CDB4,g_FxCommonSceneNodes[5],Type 0x2D.
+0x8019CDB8,fx_common,D_8019CDB8,g_FxCommonSceneNodes[6],Type 0x2E.
+0x8019CDBC,fx_common,D_8019CDBC,g_FxCommonSceneNodes[7],Type 0x2F.
+0x8019CDC0,fx_common,D_8019CDC0,g_FxCommonSceneNodes[8],Type 0x30.
+0x8019CDC4,fx_common,D_8019CDC4,g_FxCommonSceneNodes[9],Type 0x31.
+0x8019CDC8,fx_common,D_8019CDC8,g_FxCommonSceneNodes[10],Type 0x32.
+0x8019CC20,fx_common,D_8019CC20,g_FxCommonType21Nodes[0],Two nodes of type 0x21 created back to back by FxCommon_InitScene; drawn with force=1 at depth bias 0 (element 0) and 800 mirrored (element 1).
+0x8019CC24,fx_common,D_8019CC24,g_FxCommonType21Nodes[1],Second type 0x21 node (mirrored draw).
+0x8019CC28,fx_common,D_8019CC28,g_FxCommonType54Node,Type 0x54 node; FxCommon_DrawSceneNodes draws it first at depth bias 0xFA1 when the view mode is not 0.
+0x8019C820,fx_common,D_8019C820,g_FxCommonLodNodes[0],"Node FxCommon_InitScene creates with FxCommon_CreateConfiguredNode(0x22, 0x20, 0x20) and far/near depths 0x2710/0x1F40; drawn with FxCommon_DrawLodNode at bias 0 beside g_FxCommonPairedNodes[0] (same parameters)."
+0x8019C824,fx_common,D_8019C824,g_FxCommonLodNodes[1],"Second configured LOD node (depths 0x14/0xA), drawn at bias 1000 beside g_FxCommonPairedNodes[1] (same parameters)."
+0x8019C1F8,fx_common,D_8019C1F8,g_FxCommonFrames,"model_buffers.c: base of the two-frame array; the buffer sentinel compare uses it and FxCommon_DrawNode takes &g_FxCommonFrames[0].buffer"
+0x8019C1FC/0x8019C274,fx_common,D_8019C1FC/D_8019C274,g_FxCommonFrames[0/1].buffer.allocation,"ClearOTagR(...,0x1000) on the ordering table taken from g_OtBufferTable[0] / g_RenderOtBufferBaseAlt[0]; stride 0x78 between frames"
+0x8019C218..0x8019C21B/0x8019C290..0x8019C293,fx_common,D_8019C218.. D_8019C290..,g_FxCommonFrames[n].drawEnv[0x18..0x1B],"DRAWENV isbg/r0/g0/b0 bytes at drawEnv+0x18..0x1B cleared in the display init"
+0x801EA598,fx_common,D_801EA598,g_FxCommonShadeQuads,"Existing array symbol; the plain extern was a duplicate view"
+0x801EA260,fx_common,D_801EA260,g_FxCommonRuntime.node0,"passed to FxCommon_DrawTransformNode as the first scene node; at runtime+0x1E0"
+0x8019CBB4..0x8019CBF8 (y/z),fx_common,D_8019CBB4 D_8019CBB8 D_8019CBD4 D_8019CBD8 D_8019CBF4 D_8019CBF8 D_8019CB54 D_8019CB58,g_FxCommonFrustumNormalN.y/.z,"fields inside the frustum normal vectors at +4/+8 of g_FxCommonFrustumNormal0..3"
+0x801E4DA8..0x801E4DAE,fx_common,D_801E4DA8 D_801E4DAA D_801E4DAC D_801E4DAE,g_FxCommonIndexLinks[200/201].previous/.next,"sentinel links -1/201 and 200/-1 written at init; IndexLinks entries are 4 bytes from 0x801E4A88"
+0x8019C39C,fx_common,D_8019C39C,g_FxCommonDefaultNode.bucket,"FxCommonNode.bucket at +0x5C of the default node at 0x8019C340"
+0x801E4E6C,fx_common,D_801E4E6C,&g_FxCommonRecords[1],"record 1 of the array at 0x801E4E00 (stride 0x6C)"
+0x801E4A8A,fx_common,D_801E4A8A,g_FxCommonIndexLinks[].next,"index link next field at +2 of g_FxCommonIndexLinks"
+0x8019CC14,fx_common,D_8019CC14,g_FxCommonHsyncCount,"effects.c: only access is D_8019CC14 = VSync(1) (mode 1 returns the horizontal-blank count) just before DrawSync(0)/VSync(2) in the buffer-swap path; never read"
+0x801D0DBD,menu_memcard,D_801D0DBD,g_MenuCardScreenVideoFinished,video_frame.inc sets it to 1 when the frame time wraps or reaches entry->end; video_open.inc clears it; video_step.inc stops the player on 1
+0x801D0DBE,menu_memcard,D_801D0DBE,g_MenuCardScreenVideoDecodeMode,"video_display.inc writes 3 (24-bit, wide) or 2 (16-bit); video_step.inc passes it as the mode argument of DecDCTin"
+0x801D0DC0,menu_memcard,D_801D0DC0,g_MenuCardScreenVideoDepthFlip,"video_upload.inc: 1 requests a colour-depth flip at frame end, the slice callback sets 2 after switching; video_step.inc applies it and clears it; event_flag.inc raises it"
+0x801D0DC4,menu_memcard,D_801D0DC4,g_MenuCardScreenVideoFile,"video_open.inc: DsSearchFile(&file, name) result record; .pos is the stream start"
+0x801D0DDC,menu_memcard,D_801D0DDC,g_MenuCardScreenVideoRestartLoc,"video_open.inc / video_step.inc: copy of file.pos used as the CdlLOC to restart the stream (StGetBackloc, DsRead2)"
+0x801D0DE0,menu_memcard,D_801D0DE0,g_MenuCardScreenVideoSize,video_frame.inc: last frame width/height (s16[2]); a change clears the screen and resizes the display regions
+0x801D0DE8,menu_memcard,D_801D0DE8,g_MenuCardScreenVideoDecodeBuffer0,video_open.inc MenuCard_OpenSetDecodeEnv: dec->decode[0]
+0x801D0DEC,menu_memcard,D_801D0DEC,g_MenuCardScreenVideoDecodeBuffer1,dec->decode[1]
+0x801D0DF0,menu_memcard,D_801D0DF0,g_MenuCardScreenVideoSliceBuffer0,"dec->buffers[0], the DecDCTout slice buffer"
+0x801D0DF4,menu_memcard,D_801D0DF4,g_MenuCardScreenVideoSliceBuffer1,dec->buffers[1]
+0x801D0DF8,menu_memcard,D_801D0DF8,g_MenuCardScreenVideoVlcTable,MdecDiag_ExpandDecoderTable(ptr) in video_open.inc and the third DecDCTvlc2 argument in video_step.inc
+0x801D0DFC,menu_memcard,D_801D0DFC,g_MenuCardScreenVideoStreamRing,"video_open.inc: StSetRing(ptr, 0x40)"
+0x801D1464,menu_memcard,D_801D1464,g_MenuCardScreenVideoDisplay,"VideoDisplay state used by the step, slice upload and decode setup"
+0x801D13AC,menu_memcard,D_801D13AC,g_MenuCardScreenSavedDrawEnv,video_buffers.inc saves g_RenderDrawEnvArray into it; display_reset.inc restores it (pair of g_MenuCardScreenSavedDispEnv)
+0x801D0E00,menu_memcard,D_801D0E00,g_MenuCardScreenVideoTable,"video_open.inc indexes it by movie number (47 VideoEntry records, 0x14 bytes); linkers/USA/pe_img_pointers.txt documents the table"
+0x801223F5,menu_memcard,D_801223F5,g_MenuCardVideoFinished,first-copy twin of g_MenuCardScreenVideoFinished (video.c passes it for MENUCARD_VIDEO_FINISHED); same template as the second copy
+0x801223F6,menu_memcard,D_801223F6,g_MenuCardVideoDecodeMode,first-copy video_display.inc mode byte; same template as the second copy
+0x801223F8,menu_memcard,D_801223F8,g_MenuCardVideoDepthFlip,first-copy depth-flip request; same template as the second copy
+0x801223FC,menu_memcard,D_801223FC,g_MenuCardVideoFile,first-copy DslFILE; same template as the second copy
+0x80122414,menu_memcard,D_80122414,g_MenuCardVideoRestartLoc,first-copy restart CdlLOC; same template as the second copy
+0x80122418,menu_memcard,D_80122418,g_MenuCardVideoSize,first-copy frame size; same template as the second copy
+0x80122420,menu_memcard,D_80122420,g_MenuCardVideoDecodeBuffer0,first-copy decode buffer 0; same template as the second copy
+0x80122424,menu_memcard,D_80122424,g_MenuCardVideoDecodeBuffer1,first-copy decode buffer 1; same template as the second copy
+0x80122428,menu_memcard,D_80122428,g_MenuCardVideoSliceBuffer0,first-copy slice buffer 0; same template as the second copy
+0x8012242C,menu_memcard,D_8012242C,g_MenuCardVideoSliceBuffer1,first-copy slice buffer 1; same template as the second copy
+0x80122430,menu_memcard,D_80122430,g_MenuCardVideoVlcTable,first-copy VLC table; same template as the second copy
+0x80122434,menu_memcard,D_80122434,g_MenuCardVideoStreamRing,first-copy stream ring; same template as the second copy
+0x80122438,menu_memcard,D_80122438,g_MenuCardVideoTable,first-copy VideoEntry table (video.c MENUCARD_VIDEO_TABLE); same template as the second copy
+0x801228CC,menu_memcard,D_801228CC,g_MenuCardVideoDisplay,first-copy VideoDisplay; same template as the second copy
+0x80122814,menu_memcard,D_80122814,g_MenuCardVideoSavedDrawEnv,first-copy saved DRAWENV pair; same template as the second copy
+0x8018FBC0,menu_memcard,func_8018FBC0,MenuCard_CreateImageNode,already defined under this name in image_nodes.c at 0x8018FBC0 (address in build map); fade.c and list_screen.c called it through an address spelling
+0x8018FE1C,menu_memcard,func_8018FE1C,MenuCard_CreateImageGroup,image_nodes.c definition at the same address
+0x801918F8,menu_memcard,func_801918F8,MenuCard_SetVideoDisplay,video_playback.c definition at 0x801918F8 (map); video_upload.inc called it by address
+0x80192CE8,menu_memcard,func_80192CE8,MenuCard_PlayVideo,video_playback.c definition at 0x80192CE8 (map)
+0x8018F7F0,menu_memcard,D_8018F7F0,MenuCard_BlendImage,node->update callback; the map has MenuCard_BlendImage at 0x8018F7F0
+0x8018F958,menu_memcard,D_8018F958,MenuCard_BlendRotatedImage,node->update callback; the map has MenuCard_BlendRotatedImage at 0x8018F958
+0x80121004,menu_memcard,func_80121004,MenuCardFirst_SetVideoDisplay,video_display.inc instance in the first video player block
+0x80121270,menu_memcard,func_80121270,MenuCardFirst_UpdateVideoFrame,video_frame.inc instance (first copy)
+0x801214D4,menu_memcard,func_801214D4,MenuCardFirst_UploadVideoSlice,"video_upload.inc instance, registered with DecDCToutCallback by the first-copy open"
+0x80121A44,menu_memcard,func_80121A44,MenuCardFirst_ResetDisplayState,display_reset.inc instance (first copy)
+0x80122398,menu_memcard,func_80122398,MenuCardFirst_StopVideo,"decrements the video-active byte, mutes SPU, clears DecDCTout callback and ring, DsControlB(9): same body as MenuCard_StopVideo"
+0x801223EC,menu_memcard,func_801223EC,MenuCardFirst_RequestVideoDepthFlip,event_flag.inc instance (first copy)
+0x8012B1F0,menu_memcard,func_8012B1F0,MenuCard_RequestVideoDepthFlip,event_flag.inc instance (second copy): raises the depth-flip request when the requested state differs from D_800B0DBB
+0x8012B6F0,menu_memcard,func_8012B6F0,MenuCard_CreateFadeImageNode,fade.c: MenuCard_CreateImageNode(2)
+0x8012B710,menu_memcard,func_8012B710,MenuCard_AttachFadePayload,fade.c: finds the kind-2 node and sets its payload to the fade step callback
+0x8012B754,menu_memcard,func_8012B754,MenuCard_StepFadeToImages,"fade.c: level -= 0x10; at 0x80 calls MenuCard_CreateImageGroup, at 0 sets finished"
+0x80190064,menu_memcard,func_80190064,MenuCard_HandleListInput,"list_screen.c comment: scroll and confirm handling for the memory card list screen (reads the remapped pad, moves node kinds 1 and 2)"
+0x80190660,menu_memcard,func_80190660,MenuCard_ShowLogoFade,"list_screen.c comment: fades a two-part logo (TIM from the image bundle, two sprites) in and out over 480 frames"
+0x801ED7FC,menu_memcard,D_801ED7FC,g_MenuCardEffectSpinRotation,"GteRotation template copied by DriftGlow, RingBurst (local 'spin') and RisingEmber for their sprite rotation"
+0x801ED804,menu_memcard,D_801ED804,g_MenuCardEffectTiltRotation,RingBurst local 'tilt' rotation template
+0x801ED80C,menu_memcard,D_801ED80C,g_MenuCardRingBurstGlowColor,RingBurst local 'glow' colour
+0x801ED810,menu_memcard,D_801ED810,g_MenuCardRingBurstRingColor,RingBurst local 'ring' colour
+0x801ED814,menu_memcard,D_801ED814,g_MenuCardRingBurstBandColor,RingBurst local 'band' colour
+0x801ED818,menu_memcard,D_801ED818,g_MenuCardHandOffset,"menu_memcard_offset.h: hand offset shared by the link, trail and cross flash effects"
+0x801ED820,menu_memcard,D_801ED820,g_MenuCardCrossFlashTipAOffset,"CrossFlash tipA, mirrored with x *= -1"
+0x801ED828,menu_memcard,D_801ED828,g_MenuCardCrossFlashTipBOffset,CrossFlash tipB
+0x801ED830,menu_memcard,D_801ED830,g_MenuCardCrossFlashCenterOffset,CrossFlash center point for the spark origin
+0x801ED838,menu_memcard,D_801ED838,g_MenuCardCrossFlashInnerColor,CrossFlash trail inner colour argument of FieldFx_DrawHistoryTrail
+0x801ED83C,menu_memcard,D_801ED83C,g_MenuCardCrossFlashOuterColor,CrossFlash trail outer colour
+0x801ED840,menu_memcard,D_801ED840,g_MenuCardCrossFlashEdgeColor,CrossFlash second beam colour
+0x801ED844,menu_memcard,D_801ED844,g_MenuCardGlintBurstFlashColor,GlintBurstController local 'flash'
+0x801ED848,menu_memcard,D_801ED848,g_MenuCardSpinRingColorA,SpinRingParticle colorA
+0x801ED84C,menu_memcard,D_801ED84C,g_MenuCardSpinRingColorB,SpinRingParticle colorB
+0x801ED850,menu_memcard,D_801ED850,g_MenuCardLinkColor1,LinkEffect color1
+0x801ED854,menu_memcard,D_801ED854,g_MenuCardLinkColor2,LinkEffect color2
+0x801F1BB0,menu_memcard,D_801F1BB0,g_MenuCardDriftGlowColorTrack,FieldFx_SampleColorTrack argument in DriftGlowParticle
+0x801F1C28,menu_memcard,D_801F1C28,g_MenuCardRisingEmberColorTrack,FieldFx_SampleColorTrack argument in RisingEmberParticle
+0x801F1CB0,menu_memcard,D_801F1CB0,g_MenuCardGlintBurstColorTrack,FieldFx_SampleColorTrack argument in GlintBurstController
+0x801F1CD8,menu_memcard,D_801F1CD8,g_MenuCardSpinRingColorTrack,FieldFx_SampleColorTrack argument in SpinRingParticle
+0x801F1D5C,menu_memcard,D_801F1D5C,g_MenuCardPulseColorTrack,FieldFx_SampleColorTrack argument in PulseImage and LinkEffect
+0x801F1DE8,menu_memcard,D_801F1DE8,g_MenuCardTrailColorTrack,FieldFx_SampleColorTrack argument in TrailEffect
+0x801F1E74,menu_memcard,D_801F1E74,g_MenuCardSineTrailColorTrack,FieldFx_SampleColorTrack argument in SineTrailEffect
+0x801F1D86,menu_memcard,D_801F1D86,g_MenuCardLinkJointA,second argument (joint index) of FieldFx_TransformMatrixPoint on the entity in LinkEffect
+0x801F1D88,menu_memcard,D_801F1D88,g_MenuCardLinkJointB,joint index on the player actor in LinkEffect
+0x801F1F3A,menu_memcard,D_801F1F3A,g_MenuCardCrossFlashRaised,CrossFlashController sets it every frame; MenuCard_ConsumeCrossFlashFlag reads and clears it
+0x80193254,menu_memcard,D_80193254,g_MemcardImageBundle,image_nodes.c / list_screen.c add g_MemcardImageOffsets[kind] to it to reach each image
+0x801D0D5C,menu_memcard,D_801D0D5C,g_MemcardImagePresets,"image_nodes.c: &presets[kind] (x, y, parameter) per node kind"
+0x801D0D8C,menu_memcard,D_801D0D8C,g_MemcardImagePresets[4],kind = 4 sits next to it in CreateFixedImageNode; 12-byte records from 0x801D0D5C
+0x801D0DA4,menu_memcard,D_801D0DA4,g_MemcardImagePresets[6],kind = 6 in CreateImageGroup
+0x801D0DB0,menu_memcard,D_801D0DB0,g_MemcardImagePresets[7],kind = 7 in CreateImageGroup
+0x80193268,menu_memcard,D_80193268,g_MemcardImageOffsets[4],CreateFixedImageNode kind 4 (image base + this); page_flip.c keeps a separate view g_MemcardImageOffsetsView4 because a shared base changes codegen
+0x80193270,menu_memcard,D_80193270,g_MemcardImageOffsets[6],CreateImageGroup kind 6
+0x80193274,menu_memcard,D_80193274,g_MemcardImageOffsets[7],CreateImageGroup kind 7
+0x80193278,menu_memcard,D_80193278,g_MemcardImageOffsets[8],ShowLogoFade uses it as the logo TIM offset
+0x801D1550,menu_memcard,D_801D1550,g_MemcardListSavedDispEnv[0],list_screen saves g_RenderDispEnvArray[0..1] into 0x14-byte DISPENVs at the start and restores them at the end
+0x801D1564,menu_memcard,D_801D1564,g_MemcardListSavedDispEnv[1],second saved DISPENV
+0x801D1498,menu_memcard,D_801D1498,g_MemcardListSavedDrawEnv[0],"saved DRAWENV copy of g_RenderDrawEnvArray[0], restored at the end of the list screen"
+0x801D14F4,menu_memcard,D_801D14F4,g_MemcardListSavedDrawEnv[1],second saved DRAWENV (0x5C stride)
+0x801D11C0,menu_memcard,D_801D11C0,g_MemcardSecondScreenView,third pointer view of the second MemcardScreenBuffer slot (same address as g_MemcardSecondScreen)
+0x80120FF4,menu_memcard,D_80120FF4,g_MenuCardVideoDirectory,"asciz ""\FMV1"": video_open.inc strcat()s it before the file name when the movie number is below 21 (first player copy)"
+0x80120FFC,menu_memcard,D_80120FFC,g_MenuCardVideoDirectoryLate,"""\FMV2"" prefix for movie numbers 21 and up (first copy)"
+0x8018F2E4,menu_memcard,D_8018F2E4,g_MenuCardScreenVideoDirectory,"""\FMV1"" prefix for movies below 21 (second copy)"
+0x8018F2EC,menu_memcard,D_8018F2EC,g_MenuCardScreenVideoDirectoryLate,"""\FMV2"" prefix for movies 21 and up (second copy)"
+0x80125B88,boot_display,D_80125B88[idx*4],g_BootDisplayImageBuffers[idx].pixels,"g_BootDisplayImageBuffers is the 16-byte-per-buffer record array at 0x80125B84; +4 is .pixels; the source indexed it as a char*[8]"
+0x80125B90,boot_display,D_80125B90,g_BootDisplayImageBuffers[0].decodeTarget,"record 0 +0xC"
+0x80125B98,boot_display,D_80125B98,g_BootDisplayImageBuffers[1].pixels,"record 1 +4"
+0x80125BA0,boot_display,D_80125BA0,g_BootDisplayImageBuffers[1].decodeTarget,"record 1 +0xC"
+0x80125B1C,boot_display,D_80125B1C,g_BootDisplayUppercaseWidths,"g_BootDisplayLowercaseWidths (0x80125A9C, 4 bytes per character) + 0x80 = entry for character-32; BootDisplay_GetGlyphWidth indexes it by an uppercase letter and the style"
+0x80125B1E,boot_display,D_80125B1E,g_BootDisplayUppercaseWidthsStyle2,"same table at column 2 (the style==2 branch of BootDisplay_GetGlyphWidth)"
+0x80172CFA,boot_display,D_80172CFA,g_BootDisplayPlaybackAltCount,"playback.c: incremented and returned by BootDisplay_StepPlaybackTransfer for modes other than 1 (mode 1 advances g_BootDisplayPlaybackRingIndex); reset in BootDisplay_InitPlaybackFile"
+0x8010BF94,boot_display;mdec_diag,func_8010BF94,MdecDiag_ReadHalfword,"body in mdec_diag/decdct.c is `return *value` on an unsigned short pointer; boot_display passes the first halfword of a credit image bitstream to DecDCTvlcSize2"

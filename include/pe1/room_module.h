@@ -1,6 +1,8 @@
 #ifndef PE1_ROOM_MODULE_H
 #define PE1_ROOM_MODULE_H
 
+#include "pe1/room_interface.h"
+
 /* A room module's class. Every effect module a room links starts with a
  * class of seven methods that the room's class table lists in slot order:
  * a no-op (RoomLib_ClassNop0), RoomLib_PlantScript, RoomLib_Spawn6, a

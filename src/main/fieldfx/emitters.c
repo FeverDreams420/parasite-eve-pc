@@ -36,7 +36,7 @@ int FieldFx_CosineEmitter(int mode, RenderSparkEmitter *state)
 {
     GteShortVector position;
     RenderColor first = g_FieldFxSparkOuterTint;
-    RenderColor second = D_800C22EC;
+    RenderColor second = g_FieldFxSparkInnerTint;
     RenderCosineEffect *particle;
     int scale, intensity;
     switch (mode) {
@@ -267,10 +267,10 @@ int FieldFx_RingFlash(int mode, RenderSparkEmitter *state)
         position.y = state->position.y;
         position.z = state->position.z;
         scale = 2048 + (g_FieldFxCurrentAge << 9);
-        FieldFx_SampleColorTrack(D_800E1D64, &color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_RingFlashColorTrack, &color, g_FieldFxCurrentAge);
         FieldFx_DrawStarFan(&position, 500, 500, 16, 0, scale, scale, &color, 0, 128, 1);
         FieldFx_DrawRingBand(&position, 410, 500, 20, 0, 4096, 4096, 0, &color, 128, 3);
-        FieldFx_SampleColorTrack(D_800E1D84, &color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_RingFlashInnerColorTrack, &color, g_FieldFxCurrentAge);
         FieldFx_DrawStarFan(&position, 500, 100, 16, 0, scale, scale, &color, 0, 128, 1);
         break;
     }
@@ -294,7 +294,7 @@ int FieldFx_JitterSprite(int mode, GteShortVector *state)
         rotation.y = 0;
         rotation.z = g_FieldFxCurrentAge * 12;
         rotation.flags = 0;
-        FieldFx_SampleColorTrack(D_800E1DA4, &color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_JitterSpriteColorTrack, &color, g_FieldFxCurrentAge);
         scale = 6144 + (g_FieldFxCurrentAge << 7);
         palette = g_FieldFxPaletteTable[g_FieldFxSpriteParams.palette];
         if (g_FieldFxSpriteParams.palette == 4 && g_FieldFxAltPaletteFlag) palette += 4;
@@ -488,7 +488,7 @@ int FieldFx_RisingJitterSprite(int mode, GteShortVector *state)
         rotation.y = 0;
         rotation.z = g_FieldFxCurrentAge << 7;
         rotation.flags = 0;
-        FieldFx_SampleColorTrack(D_800E1E64, &color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_RisingJitterColorTrack, &color, g_FieldFxCurrentAge);
         scale = rsin((g_FieldFxCurrentAge << 11) / 14);
         selector = g_FieldFxSpriteParams.palette;
         palette = g_FieldFxPaletteTable[selector];
@@ -702,10 +702,10 @@ int FieldFx_StarFanRingGlow(int mode, RenderSparkEmitter *state)
         position.y = state->position.y;
         position.z = state->position.z;
         scale = 4096 + (g_FieldFxCurrentAge << 5);
-        FieldFx_SampleColorTrack(D_800E1FA4, &color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_StarFanRingGlowColorTrack, &color, g_FieldFxCurrentAge);
         FieldFx_DrawStarFan(&position, 500, 500, 16, 0, scale, scale, &color, 0, 128, 1);
         FieldFx_DrawRingBand(&position, 410, 500, 20, 0, 4096, 4096, 0, &color, 128, 3);
-        FieldFx_SampleColorTrack(D_800E1FCC, &color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_StarFanRingGlowSpinColorTrack, &color, g_FieldFxCurrentAge);
         rotation.x = 0;
         rotation.y = 0;
         rotation.flags = 0;
@@ -919,7 +919,7 @@ int FieldFx_SettlingEmitter(int mode, GteShortVector *state)
         if (g_FieldFxCurrentAge < 87) {
             scale = (g_FieldFxCurrentAge << 12) / 86 + 2048;
             g_FieldFxSpriteParams.depth = 16;
-            FieldFx_SampleColorTrack(D_800E20AC, &color, g_FieldFxCurrentAge);
+            FieldFx_SampleColorTrack(g_SettlingEmitterColorTrack, &color, g_FieldFxCurrentAge);
             draw_mode = 1;
             if (g_FieldFxCurrentAge & 1) draw_mode = 3;
             FieldFx_DrawStarFan(&position, 500, 500, 16, 0, scale, scale, &color, 0, 128, 1);
@@ -982,7 +982,7 @@ int FieldFx_FlashBurst(int mode, FieldFlashBurst *state)
             matrix.t[0] = g_PlayerEntity->render_object.matrices[19].translation[0];
             matrix.t[1] = g_PlayerEntity->render_object.matrices[19].translation[1];
             matrix.t[2] = g_PlayerEntity->render_object.matrices[19].translation[2];
-            FieldFx_SampleColorTrack(D_800E20CC, &color, g_FieldFxCurrentAge);
+            FieldFx_SampleColorTrack(g_FlashBurstColorTrack, &color, g_FieldFxCurrentAge);
             slots = &g_FieldFxTpageSlot1;
             g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[slots[0]];
             g_FieldFxSpriteParams.palette = 1;
@@ -1020,13 +1020,13 @@ int FieldFx_FlashBurst(int mode, FieldFlashBurst *state)
         }
         if (g_FieldFxCurrentAge < 25) {
             g_FieldFxSpriteParams.depth = 16;
-            FieldFx_SampleColorTrack(D_800E20CC, &color, (g_FieldFxCurrentAge << 4) / 24);
+            FieldFx_SampleColorTrack(g_FlashBurstColorTrack, &color, (g_FieldFxCurrentAge << 4) / 24);
             FieldFx_DrawStarFan((GteShortVector *)state, 600, 600, 12, 0, 0x1000, 0x1000,
                           &color, 0, 0x80, 1);
             if (g_FieldFxCurrentAge < 17) {
                 color.b = 0;
                 size = rsin(g_FieldFxCurrentAge << 6) + 0x800;
-                FieldFx_SampleColorTrack(D_800E20CC, &color, g_FieldFxCurrentAge);
+                FieldFx_SampleColorTrack(g_FlashBurstColorTrack, &color, g_FieldFxCurrentAge);
                 FieldFx_DrawRingBand((GteShortVector *)state, 500, 600, 20, 0, size, size,
                               &color, 0, 0x40, 1);
             }
@@ -1109,7 +1109,7 @@ int FieldFx_GlowFountain(int mode, FieldGlowFountain *state)
 {
     GteRotation rotation;
     GteShortVector vector;
-    RenderColor black = D_800C22BC;
+    RenderColor tint = g_FieldFxGlowFountainTint;
     FieldSpinGlow *glow;
     int intensity;
     int scale;
@@ -1178,7 +1178,7 @@ int FieldFx_GlowFountain(int mode, FieldGlowFountain *state)
             if (g_FieldFxCurrentAge < 9) {
                 intensity = rcos(g_FieldFxCurrentAge << 7) / 32;
                 FieldFx_DrawStarFan((GteShortVector *)state, 100, 700, 16, &rotation,
-                              scale, scale, &black, 0, intensity, 1);
+                              scale, scale, &tint, 0, intensity, 1);
             }
         }
         g_FieldFxSpriteParams.depth = 0;
@@ -1192,7 +1192,7 @@ int FieldFx_GlowFountain(int mode, FieldGlowFountain *state)
             rotation.z = g_FieldFxCurrentAge << 7;
             scale = rsin((g_FieldFxCurrentAge - 4) << 6) * 2;
             FieldFx_DrawRingBand(&vector, 600, 700, 0x18, &rotation, scale, scale, 0,
-                          &black, intensity, 1);
+                          &tint, intensity, 1);
         }
         g_FieldFxSpriteParams.parameter00 = 0x20;
         g_FieldFxSpriteParams.parameter02 = 2;
@@ -1438,7 +1438,7 @@ int FieldFx_PointEmitter(int mode, FieldFxEmitter *state) {
             return 1;
         break;
     case 2:
-        FieldFx_GetActorPosition((char *)D_8009D254, 1, D_800E220C);
+        FieldFx_GetActorPosition((char *)D_8009D254, 1, g_SpinningModelAnchorA);
         break;
     }
     return 0;

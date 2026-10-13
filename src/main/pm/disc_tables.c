@@ -25,6 +25,7 @@
 #include "pe1/save_tail_state.h"
 #include "pe1/scene_assets.h"
 #include "pe1/scene_dispatch.h"
+#include "pe1/script_queue.h"
 
 int Draw_InitDisplay(int mode) {
     int mode_reg;
@@ -58,7 +59,7 @@ int Draw_InitDisplay(int mode) {
     g_SceneBankAssetSource = ptr;
     ptr += 0x6000;
     g_VoiceBankBase = ptr2;
-    D_800B0E2C = ptr;
+    g_EntityBankBuffer = ptr;
     ptr += 0xE000;
     g_EntityTextureBlob = ptr;
 
@@ -83,14 +84,14 @@ int Draw_InitDisplay(int mode) {
     ptr += const_8000;
     g_RenderBackBufferBase[0] = ptr2;
     ptr2 = ptr + 0x3800;
-    D_800B0E5C = ptr2;
+    g_ScriptSpriteBuffer = ptr2;
     tmp = g_StrFileDirBuffer;
     g_RenderAnimBufferBase[0] = ptr;
     ptr += 0x7000;
     g_ScenePmSlotBanks = ptr;
     g_SceneLoadScratchBuffer[0] = g_SceneLoadScratchArea;
     g_LoadedSceneAssetBlock[0] = tmp - 8;
-    D_800B0E68 = tmp;
+    g_StrFileDirectory = tmp;
 
     Draw_InitBuffers();
     CdRom_SetSeekPos(2);
@@ -187,7 +188,7 @@ retry_first_load:
         Asset_LoadTimImage(SceneAsset_ResolveOffset(main_table, main_table->offsets[(s16)i]));
     }
 
-    if (D_800A77FC & 0x2000) {
+    if (g_ScriptVariableBank[SCRIPT_VAR_FLAGS] & 0x2000) {
 retry_large_load_a:
         range = g_LargeTexLbaTbl;
         do {
@@ -253,7 +254,7 @@ retry_first:
     range = g_SceneInitLbaTbl0;
     retry = -1;
     do {
-        status = CdRom_ReadSectors(D_800B0DD8.baseLba + range[0], 0, D_8001160C, range[1] - range[0]);
+        status = CdRom_ReadSectors(g_DiscLoadState.baseLba + range[0], 0, g_MdecOverlayLoadBase, range[1] - range[0]);
     } while (status == retry);
 
     while ((status = CdRom_PollReady()) != 0) {
@@ -270,7 +271,7 @@ retry_second:
     range = &g_BootDisplayDataLbaTbl;
     retry = -1;
     do {
-        status = CdRom_ReadSectors(D_800B0DD8.baseLba + range[0], 0, g_CdLoadAreaBase, range[1] - range[0]);
+        status = CdRom_ReadSectors(g_DiscLoadState.baseLba + range[0], 0, g_CdLoadAreaBase, range[1] - range[0]);
     } while (status == retry);
 
     while ((status = CdRom_PollReady()) != 0) {

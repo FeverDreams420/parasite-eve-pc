@@ -113,11 +113,11 @@ void MenuCard_DecreaseFade(MenuMemcardFadeState *state) {
     }
 }
 
-void func_8012B6F0(void) {
-    func_8018FBC0(2);
+void MenuCard_CreateFadeImageNode(void) {
+    MenuCard_CreateImageNode(2);
 }
 
-void func_8012B710(void) {
+void MenuCard_AttachFadePayload(void) {
     MenuMemcardListNode *node;
     int kind;
 
@@ -130,19 +130,19 @@ void func_8012B710(void) {
         node = node->next;
     }
 
-    node->payload = &D_80193200;
+    node->payload = &g_MenuCardStepFadeToImagesEntry;
 }
 
-void func_8018FE1C(void);
+void MenuCard_CreateImageGroup(void);
 
-void func_8012B754(MenuMemcardFadeState *state) {
+void MenuCard_StepFadeToImages(MenuMemcardFadeState *state) {
     int step_value;
 
     step_value = state->level - 0x10;
     state->level = step_value;
 
     if (step_value == 0x80) {
-        func_8018FE1C();
+        MenuCard_CreateImageGroup();
     }
 
     if (state->level == 0) {

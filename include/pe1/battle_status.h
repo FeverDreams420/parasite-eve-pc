@@ -2,7 +2,6 @@
 #define PE1_BATTLE_STATUS_H
 
 #include "pe1/battle.h"
-#include "pe1/battle_hud_colors.h"
 #include "pe1/render_prim.h"
 
 typedef struct BattleStatusLinePrim {
@@ -53,13 +52,15 @@ extern BattleStatusLinePrim g_BattleStatusBarTiles[6];
 /* The same packets seen as the three shaded status-bar tiles of each draw
  * buffer (Battle_DrawHPBar). */
 #define BATTLE_STATUS_TILES ((RenderColorTilePacket (*)[3])g_BattleStatusBarTiles)
-extern BattleStatusMarkerBody D_8009E888[2];
+extern BattleStatusMarkerBody g_BattleStatusValueMarkerSlots[2];
 extern RenderPagedSpritePacket g_BattleStatusValueDigits[2][2];  /* ammo digits */
 extern BattleGaugePrim g_BattleTargetHighlightSprites[2][3];
 extern BattleGaugePrim g_BattleStatusPointerSprites[2];
-/* Status symbols use the same texture-page and sprite packet layout. */
-extern BattleGaugePrim D_8009E730[2];
-extern BattleGaugePrim D_8009E768[2];
+/* Status symbols use the same texture-page and sprite packet layout.
+ * Label sprite (u 0x68, v 0xF4, 24x4) Battle_DrawStatusOverlay mode 3 places
+ * at the status bar before the status value; one per draw buffer. */
+extern BattleGaugePrim g_BattleStatusValueLabelSprites[2];
+extern BattleGaugePrim g_BattleAmmoLabelSprites[2];
 extern RenderPagedSpritePacket g_BattleAmmoDigitSprites[2][4];  /* ammo count digits */
 
 void AddPrim(unsigned int *orderingEntry, unsigned int *primitive);
@@ -132,10 +133,9 @@ extern BattleDigitSlot g_BattleHpDigitSlots[2][4], g_BattleMaxHpDigitSlots[2][5]
 /* HP label packets. */
 extern RenderPagedSpritePacket g_BattleHpLabels[2];
 /* Further HUD sprite packets Battle_DrawHPBar initializes. */
-extern RenderPagedSpritePacket D_8009E500[2][10];
+extern RenderPagedSpritePacket g_BattleRemainingActionSprites[2][10];
 extern RenderPagedSpritePacket g_BattleStatusValueMarkers[2];
 extern RenderPagedSpritePacket g_BattleStatusSymbolSprites[2];
-extern u8 D_8009E976[];
 /* The sprites of a paged-sprite array seen from the first sprite: each is
  * followed by the texture-page command of the next packet. The view keeps
  * the sprite base (array + 8) in its own register, as Battle_DrawHPBar's
@@ -170,10 +170,13 @@ PE1_STATIC_ASSERT(sizeof(BattleGaugePrim) == 0x1C,
                   battle_gauge_prim_stride);
 
 extern s32 g_BattleStatusPanelSlot;
-extern RenderSpritePacket D_800B01C8[];
-/* Interior byte symbols of the first panel sprite, independently relocated. */
-extern u8 D_800B01CC[], D_800B01CD[], D_800B01CE[];
-extern u8 D_800B01D4[], D_800B01D5[];
+/* The MISS sprite: the sprite of g_BattlePanelDigits[slot][panel][0], which
+ * Battle_DrawStatusPanel draws for a negative value. Views of the record,
+ * its colour and its texture coordinates: retail addresses each byte with
+ * its own relocation, and the indexed field form changes the function. */
+extern RenderSpritePacket g_BattleMissSprite[];
+extern u8 g_BattleMissSpriteR[], g_BattleMissSpriteG[], g_BattleMissSpriteB[];
+extern u8 g_BattleMissSpriteU[], g_BattleMissSpriteV[];
 void Battle_DrawStatusPanel(int mode, BattleStatusPanel *panel);
 
 
@@ -189,7 +192,7 @@ typedef struct BattleStatusPointerPrim {
 extern RenderLinePacket g_BattleStatusPointerLines[2][2];
 extern BattleStatusPointerPrim g_BattleStatusPointerTriangles[2];
 /* Frame counter; drives the pointer's rotation. */
-extern u32 D_8009D250;
+extern u32 g_FrameRngCounter;
 
 void RotTrans(const GteShortVector *v, GteVector *out, s32 *flag);
 

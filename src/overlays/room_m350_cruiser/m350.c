@@ -124,7 +124,7 @@ int RoomM350_HandSparkEmitter(int event)
         int i;
         Vector *out;
         if(timer>=33) return 2;
-        count=(D_800966EE[((((unsigned int)timer<<7)+2048)&4095)*2]+4096)/2048+1;
+        count=(g_RcossinTblCos[((((unsigned int)timer<<7)+2048)&4095)*2]+4096)/2048+1;
         if(count*2<=0) return 0;
         i=0;
         out=&offset;
@@ -176,7 +176,7 @@ int RoomM350_HandPulseCallback(int event, PulsingPalettePairParticle *effect) {
     if (event == 1) {
         if (g_FieldFxCurrentAge >= 16) return 1;
     } else if (event == 2) {
-        int scale = D_800966EE[((unsigned int)(g_FieldFxCurrentAge - 1) << 8) & 0x1F00] * 4 + 2048;
+        int scale = g_RcossinTblCos[((unsigned int)(g_FieldFxCurrentAge - 1) << 8) & 0x1F00] * 4 + 2048;
         int kind = g_FieldFxSpriteParams.palette;
         int palette = g_FieldFxPaletteTable[kind];
         int handle;
@@ -258,7 +258,7 @@ int RoomM350_HandGlowCallback(int event, RampedPalettePairParticle *object)
         FieldFx_DrawShapeQuads(object->position, 0, size, size, (s16)g_FieldFxSpriteParams.parameter02 + 216,
             (unsigned short)handle, 1,
             (short)rcossin_tbl[((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80].word >> 5,
-            &D_8019A3D0);
+            &g_RoomM350GlowSpriteColor);
     }
     return 0;
 }
@@ -364,7 +364,7 @@ int RoomM350_HandSweepTrapCallback(int mode, RoomM350SweepTrap *trap) {
             if (kind == 4 && g_FieldFxAltPaletteFlag) palette += 4;
             FieldFx_DrawShapeQuads(&position, &rotation.rotation, 0x800, 0x1800,
                           (s16)g_FieldFxSpriteParams.parameter02 * (i & 7) + 0x40,
-                          GetClut(0, palette), 1, intensity, &D_8019A434[g_FieldFxCurrentAge & 1]);
+                          GetClut(0, palette), 1, intensity, &g_RoomM350HandSweepTrapPulseColors[g_FieldFxCurrentAge & 1]);
             position.x += step.vector.x;
             position.y += step.vector.y;
             position.z += step.vector.z;
@@ -382,7 +382,7 @@ int RoomM350_HandSweepTrapCallback(int mode, RoomM350SweepTrap *trap) {
             FieldFx_DrawShapeQuads(&position, &spin.rotation, 0x2000, 0x2000,
                           (s16)g_FieldFxSpriteParams.parameter02 * 17 + 0x84,
                           GetClut(0, (kind == 4 && g_FieldFxAltPaletteFlag) ? palette + 8 : palette + 4),
-                          1, intensity, &D_8019A434[g_FieldFxCurrentAge & 1]);
+                          1, intensity, &g_RoomM350HandSweepTrapPulseColors[g_FieldFxCurrentAge & 1]);
         }
         dx = position.x - trap->anchor->x;
         dz = position.z - trap->anchor->z;
@@ -391,8 +391,8 @@ int RoomM350_HandSweepTrapCallback(int mode, RoomM350SweepTrap *trap) {
         rotation.angles.x = 0;
         rotation.angles.y -= 0x14;
         for (i = 0; i < 2; i++) {
-            FieldFx_DrawRotatedTriangle(&position, &rotation.rotation, dist, 0x200, &D_8019A43C, &D_8019A3C8,
-                          &D_8019A3C8, (s16)intensity, 1);
+            FieldFx_DrawRotatedTriangle(&position, &rotation.rotation, dist, 0x200, &g_RoomM350HandSweepTrapTriangleColor, &g_RoomM350BlackColor,
+                          &g_RoomM350BlackColor, (s16)intensity, 1);
             rotation.angles.y += 0x28;
         }
         spin.angles.x = 0;
@@ -403,12 +403,12 @@ int RoomM350_HandSweepTrapCallback(int mode, RoomM350SweepTrap *trap) {
         {
             int scale = trig[(phase * 64) & 0xFFF].sin + 0x1000;
             FieldFx_DrawRingBand(trap->anchor, 0x100, 0x1C0, 0x10, &spin.rotation, scale, scale,
-                          &D_8019A3C8, &D_8019A440,
+                          &g_RoomM350BlackColor, &g_RoomM350HandSweepTrapRingColor,
                       trig[((g_FieldFxCurrentAge - 1) * 64) & 0xFFF].cos >> 5, 1);
         }
         if (trap->done) return 0;
         if (g_PlayerEntity->mode < 4) return 0;
-        D_8019A444[2].z = D_8019A444[3].z = -dist;
+        g_RoomM350HandSweepTrapCorners[2].z = g_RoomM350HandSweepTrapCorners[3].z = -dist;
         c = rcos(ANIM_OWNER_AS(RoomM350TrapChannel)->actor->heading);
         s = rsin(ANIM_OWNER_AS(RoomM350TrapChannel)->actor->heading);
         frame.m[0][2] = s;
@@ -429,7 +429,7 @@ int RoomM350_HandSweepTrapCallback(int mode, RoomM350SweepTrap *trap) {
         gte_ldrotmatrix(&frame);
         gte_ldtransmatrix(&frame);
         for (k = 0; k < 4; k++) {
-            gte_ldv0(&D_8019A444[k]);
+            gte_ldv0(&g_RoomM350HandSweepTrapCorners[k]);
             gte_rt();
             gte_stsv(&quad[k]);
         }
@@ -526,7 +526,7 @@ int RoomM350_HandSweepHitCallback(int event, short *position) {
             (s16)g_FieldFxSpriteParams.parameter02 * (((g_FieldFxCurrentAge - 1) >> 1) & 7),
             (unsigned short)handle, 1,
             rcossin_tbl[((unsigned int)(g_FieldFxCurrentAge - 1) << 6) & 0xFC0].bits.cos >> 5,
-            &D_8019A464);
+            &g_RoomM350HandSweepHitColor);
     }
     return 0;
 }
@@ -694,7 +694,7 @@ int RoomM350_HandSweepController(int event)
                 out->x=x; out->y=y; out->z=z;
             }
             offset.x=0u-(unsigned short)offset.x;
-            D_8019A77E[i*4]=i;
+            g_RoomM350HandPointPadView[i*4]=i;
         }
         frame=instance->anim.parts.integer;
         if(instance->mode!=11) return 0;
@@ -736,7 +736,7 @@ int RoomM350_OrbHandSparkCallback(int event, ModelShellLayersParticle *particle)
         clut = GetClut(48, palette);
         FieldFx_DrawShapeQuads((GteShortVector *)&particle->x, 0, size, size, (s16)g_FieldFxSpriteParams.parameter02 * 5 + 216, clut, 1,
             rcossin_tbl[(((unsigned int)g_FieldFxCurrentAge - 1) << 7) & 0xF80].bits.cos >> 5, (struct RenderColor *)particle);
-        FieldFx_DrawStarFan((GteShortVector *)&particle->x, 96, 96, 8, 0, size, size, (struct RenderColor *)D_8019A3CC, &D_8019A3C8,
+        FieldFx_DrawStarFan((GteShortVector *)&particle->x, 96, 96, 8, 0, size, size, (struct RenderColor *)g_RoomM350OrbHandSparkColor, &g_RoomM350BlackColor,
             (short)rcossin_tbl[(((unsigned int)g_FieldFxCurrentAge - 1) << 8) & 0xF00].word >> 5, 1);
     }
     return 0;
@@ -818,12 +818,12 @@ int RoomM350_OrbBurstCallback(int event, void **object)
         vector[2] = counter * 128;
         vector[3] = 0;
         FieldFx_DrawStarFan(*object, 320, 320, 16, (struct GteRotation *)vector, size, size,
-            (struct RenderColor *)D_8019A4DC, &D_8019A3C8, entry->shade >> 5, 1);
+            (struct RenderColor *)g_RoomM350OrbBurstRingColorA, &g_RoomM350BlackColor, entry->shade >> 5, 1);
         {
             int nextCounter = g_FieldFxCurrentAge;
             size = nextCounter * 512 + 2048;
             FieldFx_DrawRingBand(*object, 256, 512, 16, (struct GteRotation *)vector, size, size,
-                &D_8019A3C8, (struct RenderColor *)D_8019A4E0,
+                &g_RoomM350BlackColor, (struct RenderColor *)g_RoomM350OrbBurstRingColorB,
                 (short)base[((unsigned int)(nextCounter - 1) << 8) & 0xF00].word >> 5, 1);
         }
     }
@@ -967,7 +967,7 @@ int RoomM350_OrbCallback(int event,RoomM350Particle *p)
         clut=GetClut(32,palette);
         FieldFx_DrawShapeQuads(&p->position,0,4096,4096,108,(unsigned short)clut,1,p->tail.value.active.brightness,0);
         ground.x=p->position.x; ground.y=g_RoomFloorY->raw; ground.z=p->position.z;
-        FieldFx_DrawStarFan(&ground,192,192,8,&D_8019A3C0,4096,4096,&D_8019A4E4,&D_8019A3C8,p->tail.value.active.brightness,1);
+        FieldFx_DrawStarFan(&ground,192,192,8,&g_RoomM350StarFanTilt,4096,4096,&g_RoomM350OrbGroundFanColor,&g_RoomM350BlackColor,p->tail.value.active.brightness,1);
     }
     return 0;
 }
@@ -1041,7 +1041,7 @@ int RoomM350_OrbImpactCallback(int event, PointerQueueParticle *object)
         FieldFx_DrawShapeQuads((GteShortVector *)&position, 0, 8192, 8192, (s16)g_FieldFxSpriteParams.parameter02 * (frame >> 1),
             (unsigned short)handle, 1,
             (short)rcossin_tbl[((unsigned int)frame << 7) & 0xF80].word >> 5,
-            &D_8019A4E8);
+            &g_RoomM350OrbImpactColor);
     }
     return 0;
 }
@@ -1107,14 +1107,14 @@ int RoomM350_OrbTrailCallback(int event, PositionQueueParticle *object)
             int size,kind,palette,handle;
             vector[0] = 1024; vector[1] = object->position.pad;
             vector[2] = 1024; vector[3] = 1;
-            size = D_800966EE[((unsigned int)frame << 7) & 0x1F80];
+            size = g_RcossinTblCos[((unsigned int)frame << 7) & 0x1F80];
             kind = g_FieldFxSpriteParams.palette; palette = g_FieldFxPaletteTable[kind];
             if (kind == 4 && g_FieldFxAltPaletteFlag) palette += 4;
             handle = GetClut(0, palette);
             FieldFx_DrawShapeQuads((GteShortVector *)object, (struct GteRotation *)vector, size, size * 2, (s16)g_FieldFxSpriteParams.parameter02 * object->delay + 64,
                 (unsigned short)handle, 1,
                 rcossin_tbl[((unsigned int)frame << 6) & 0xFC0].bits.cos >> 5,
-                &D_8019A3D0);
+                &g_RoomM350GlowSpriteColor);
         }
     }
     return 0;
@@ -1176,10 +1176,10 @@ int RoomM350_OrbTableFlashCallback(int event, short *position) {
         int handle;
         handle = GetClut(0, (kind == 4 && g_FieldFxAltPaletteFlag != 0) ? texture + 8 : texture + 4);
         FieldFx_DrawShapeQuads((GteShortVector *)position, 0, position[3], position[3],
-            (s16)g_FieldFxSpriteParams.parameter02 * D_8019A4EC[(g_FieldFxCurrentAge - 1) / 2] + 128,
+            (s16)g_FieldFxSpriteParams.parameter02 * g_RoomM350OrbTableFlashSizes[(g_FieldFxCurrentAge - 1) / 2] + 128,
             (unsigned short)handle, 1,
             (short)rcossin_tbl[((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80].word >> 5,
-            &D_8019A3D0);
+            &g_RoomM350GlowSpriteColor);
     }
     return 0;
 }
@@ -1314,7 +1314,7 @@ int RoomM350_AreaSparkCallback(int event, RoomM350RadialSpriteParticle *object)
         }
         handle = GetClut(32, palette);
         FieldFx_DrawShapeQuads((GteShortVector *)position, 0, object->size, object->size, (s16)g_FieldFxSpriteParams.parameter02 + 216,
-            (unsigned short)handle, 1, shade, (struct RenderColor *)D_8019A56C);
+            (unsigned short)handle, 1, shade, (struct RenderColor *)g_RoomM350AreaSparkColor);
     }
     return 0;
 }
@@ -1412,7 +1412,7 @@ radial:
             int clut,pal=palettes[kind];
             if(kind==specialKind && g_FieldFxAltPaletteFlag) pal+=4;
             clut=GetClut(32,pal);
-            FieldFx_DrawShapeQuads(&local.position,&state->rotation,state->size,state->size,(s16)g_FieldFxSpriteParams.parameter02+216,(unsigned short)clut,1,state->brightness,(struct RenderColor *)D_8019A570);
+            FieldFx_DrawShapeQuads(&local.position,&state->rotation,state->size,state->size,(s16)g_FieldFxSpriteParams.parameter02+216,(unsigned short)clut,1,state->brightness,(struct RenderColor *)g_RoomM350AreaSparkEmitterColor);
             state->rotation.z=0u-(unsigned short)state->rotation.z;
             ++i;
         }
@@ -1431,7 +1431,7 @@ int RoomM350_AreaZoneEmitter(int event,TurningAreaControllerState *state)
     switch (event) {
 case 0:
     {
-        state->asset=Asset_FindTable08ByU32Key(D_800B0E64[0],0xC54E0704);
+        state->asset=Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0],0xC54E0704);
         FieldFx_ModelScrollUv(state->asset,0,0);
         state->size=0;
         {
@@ -1474,7 +1474,7 @@ case 1:
                 speed=(short)distance-512;
                 if(speed<0) speed=0;
                 factor=1536; if(speed>1024) factor=1024;
-                speed=D_800966EE[((speed/4)&4095)*2]*factor/4096;
+                speed=g_RcossinTblCos[((speed/4)&4095)*2]*factor/4096;
                 if(speed<0) speed=0;
                 speed+=(short)delta;
                 if(((short)angle-(state->yaw>>8))&2048) speed=-speed;
@@ -1492,7 +1492,7 @@ case 1:
             i=0; matrix=&g_RoomM350AreaMatrix; out=matrix->t;
             matrix->m[0][0]=cosine;
             g_RoomM350AreaMatrix.m[0][2]=sine; g_RoomM350AreaMatrix.m[2][0]=0u-sine; g_RoomM350AreaMatrix.m[2][2]=cosine;
-            g_RoomM350AreaMatrix.t[2]=0; g_RoomM350AreaMatrix.t[1]=0; D_8019A81C=0;
+            g_RoomM350AreaMatrix.t[2]=0; g_RoomM350AreaMatrix.t[1]=0; g_RoomM350AreaMatrixTxView=0;
             g_RoomM350AreaMatrix.m[2][1]=0; g_RoomM350AreaMatrix.m[1][2]=0; g_RoomM350AreaMatrix.m[1][0]=0; g_RoomM350AreaMatrix.m[0][1]=0; g_RoomM350AreaMatrix.m[1][1]=4096;
             for(;i<3;i++) *out++=instance->render_object.model_matrix.translation[i];
         }
@@ -1601,7 +1601,7 @@ case 2:
             int triple=state->size*3;
             size=triple*2;
             for (;i<3;i++) {
-                FieldFx_DrawRotatedTriangle(&position,(GteRotation *)&rotation,size,512,(RenderColor *)D_8019A594,&D_8019A3C8,&D_8019A3C8,state->brightness,1);
+                FieldFx_DrawRotatedTriangle(&position,(GteRotation *)&rotation,size,512,(RenderColor *)g_RoomM350AreaZoneTriangleColor,&g_RoomM350BlackColor,&g_RoomM350BlackColor,state->brightness,1);
                 rotation.y=(unsigned short)rotation.y+24;
             }
         }
@@ -1625,7 +1625,7 @@ int RoomM350_AreaDropletCallback(int event, short *position) {
             (s16)g_FieldFxSpriteParams.parameter02 * (((g_FieldFxCurrentAge - 1) >> 1) & 7) + 200,
             (unsigned short)handle, 1,
             (short)rcossin_tbl[((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80].word >> 5,
-            (struct RenderColor *)D_8019A598);
+            (struct RenderColor *)g_RoomM350AreaDropletColor);
     }
     return 0;
 }

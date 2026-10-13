@@ -63,15 +63,15 @@ typedef struct InterruptControlRegisters {
     s32 mask;
 } InterruptControlRegisters;
 
-extern RootCounter *D_8009B7D0;
-extern InterruptControlRegisters *D_8009B7CC;
-extern s32 D_8009B7D4[4];
+extern RootCounter *g_RCntRegsPtr;
+extern InterruptControlRegisters *g_RCntIntrRegsPtr;
+extern s32 g_RCntIntrMasks[4];
 extern PadToggleFunc jtbl_800A34C8;
 extern PadToggleFunc jtbl_800A34CC;
 
-#define _counters ((volatile RootCounter *)D_8009B7D0)
-#define _interrupt_status_register ((s32 *)D_8009B7CC)
-#define _interrupt_status_masks D_8009B7D4
+#define _counters ((volatile RootCounter *)g_RCntRegsPtr)
+#define _interrupt_status_register ((s32 *)g_RCntIntrRegsPtr)
+#define _interrupt_status_masks g_RCntIntrMasks
 
 typedef struct DmaChannelRegisters {
     u32 address;

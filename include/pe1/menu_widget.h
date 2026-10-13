@@ -163,7 +163,7 @@ extern MenuWidgetNode g_MenuWidgetNodePoolSentinel;
 
 /* Active linked-list head walked by the MenuWidget_Find* helpers. */
 extern MenuWidgetNode *g_MenuWidgetActiveListHead;
-/* Free-list head initialized from D_800A22E0. */
+/* Free-list head, initialized from g_MenuWidgetNodePool. */
 extern MenuWidgetNode *g_MenuWidgetFreeListHead;
 /* Current/selected widget node. */
 extern MenuWidgetNode *g_MenuWidgetCurrentNode;

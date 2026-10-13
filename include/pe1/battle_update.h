@@ -7,7 +7,7 @@
 int Akao_SendTableCommand(void *, int, int, int, int);
 int Battle_BuildTargetList(void);
 void Battle_ResolveHitOnTimer(void);
-void Battle_RollEnemySpawn(int);
+void Battle_RollEnemySpawn(void *);
 void Battle_StepEscapeOrDeath(void);
 void Battle_StepLevelUp(void);
 void Battle_StepPostBattle(void);
@@ -25,15 +25,13 @@ void Save_DrawSlotMetadata(void);
 void srand(unsigned int);
 
 /* Only element zero is accessed in the wide matching views below. */
-extern u8 D_8009CE7C;
-extern s32 D_8009D1D0;
+extern u8 g_BattleSuspendedModeState;
 extern s32 g_BattleFrameCounter;
-extern s8 D_8009D1F0[16];
-extern u32 D_8009D1F4;
-extern u8 D_8009D235[16];
+extern u32 g_FieldPadPressed;
+extern u8 g_BattleSpritePrimCountdown;
 extern u8 g_BattleActionActorCount;
-extern s32 D_8009D290[16];
-extern s32 D_8009D2FC;
+extern int g_BattleAttackAnimFrame;
+extern s32 g_BattleImpactPmSlot;
 extern void *g_AkaoBgmHandle[16];
 extern BattleEntity *g_BattleActionActors[7];
 

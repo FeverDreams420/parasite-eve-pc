@@ -71,12 +71,12 @@ void Draw_PrintTextById(unsigned int textId);
  *   Draw_LookupGlyphMetrics / Draw_EmitGlyph back the metrics/advance.
  *
  * MESSAGE SOURCE: messages are looked up by index from PE asset tables (loaded
- * from PE.IMG): Text_LookupTable0/4/8/C/10 (e.g. Text_LookupTable4 = func_8005DC4C,
+ * from PE.IMG): Text_LookupTable0/4/8/C/10 (e.g. Text_LookupTable4 at 0x8005DC4C,
  * used by Draw_PrintTextById and many Menu_Draw* helpers). The string returned
  * is the 0xFF-terminated glyph-code array above.
  *
  * TEXTBOX ENGINE (field dialogue / on-screen messages) -- Menu_DrawTextboxEntries:
- *   D_800BCEA8 = array of textbox ENTRY structs, stride 0x38. Each frame the
+ *   g_TextboxEntries = array of textbox ENTRY structs, stride 0x38. Each frame the
  *   engine walks the active entries and types out / draws their text. Entry:
  *     +0x00 u8   state (0=free, 1=new -> init, 2=active/displaying)
  *     +0x04 u8*  CURRENT message pointer == the live typewriter position; for a
@@ -90,7 +90,7 @@ void Draw_PrintTextById(unsigned int textId);
  *   g_TextboxMessageSource holds the message SOURCE handed to a freshly-queued entry (the
  *   "show message" call); after that the per-entry +0x04 is the live cursor.
  *
- *   *** To know the current on-screen text: scan D_800BCEA8 (0x38 stride), and
+ *   *** To know the current on-screen text: scan g_TextboxEntries (0x38 stride), and
  *   for each entry with state != 0 decode the 0xFF-terminated string at +0x04.
  *   (Verified live: entry[0] state=2, +0x04 -> "Doorman: Enjoy the show".) ***
  *

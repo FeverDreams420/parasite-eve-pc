@@ -86,7 +86,7 @@ extern TextboxGlyphPacket g_TextboxChoiceCursor[2];
 extern u8 g_TextboxFogTilePackets[];
 /* Text colour bytes of the textbox glyphs. */
 extern u8 g_TextboxHighlightColorR;
-extern u8 D_8009CEC8;
+extern u8 g_TextboxHighlightColorG;
 extern u8 g_TextboxHighlightColorB;
 
 PE1_STATIC_ASSERT(sizeof(TextboxEntry) == 0x38, textbox_entry_size);

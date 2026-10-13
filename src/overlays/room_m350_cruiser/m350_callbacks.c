@@ -157,10 +157,10 @@ int RoomM350_DropCallback(int mode, RoomM350Drop *drop) {
         FieldFx_DrawShapeQuads(&position, 0, 0xA00, 0xA00,
                       (s16)g_FieldFxSpriteParams.parameter02 * 6 + 0x80,
                       GetClut(0, (kind == 4 && g_FieldFxAltPaletteFlag) ? palette + 8 : palette + 4),
-                      1, 0x80, &D_8019A61C[0]);
+                      1, 0x80, &g_RoomM350DropColors[0]);
         position.y = g_RoomFloorY->y;
-        FieldFx_DrawStarFan(&position, 0x60, 0x60, 6, &D_8019A3C0, 0x1000, 0x1000,
-                      &D_8019A61C[1], &D_8019A61C[2], 0x80, 1);
+        FieldFx_DrawStarFan(&position, 0x60, 0x60, 6, &g_RoomM350StarFanTilt, 0x1000, 0x1000,
+                      &g_RoomM350DropColors[1], &g_RoomM350DropColors[2], 0x80, 1);
     }
     return 0;
 }
@@ -209,7 +209,7 @@ update:
         int dx, dz, dy;
         int angle;
         if (g_RoomM350DropDone) return 2;
-        if (!D_8019A855) return 0;
+        if (!g_RoomM350DropEmitterTrigger) return 0;
         effect = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM350Emitter)->pool);
         if (!effect) return 0;
         instance = (Instance *)ANIM_OWNER_AS(RoomM350Actor)->instance;
@@ -246,7 +246,7 @@ update:
         ApplyMatrixSV(&matrix, &vector, &effect->velocity);
         {
             RoomM350Actor *actor = ANIM_OWNER_AS(RoomM350Actor);
-            D_8019A855 = 0;
+            g_RoomM350DropEmitterTrigger = 0;
             /* Publish consumption before loading the sound's position and owner. */
             {
                 int x = effect->x;
@@ -274,7 +274,7 @@ int RoomM350_DropHitCallback(int event, short *position) {
             (s16)g_FieldFxSpriteParams.parameter02 * (((g_FieldFxCurrentAge - 1) >> 1) & 7),
             (unsigned short)handle, 1,
             rcossin_tbl[((unsigned int)(g_FieldFxCurrentAge - 1) << 6) & 0xFC0].bits.cos >> 5,
-            &D_8019A62C);
+            &g_RoomM350DropHitColor);
     }
     return 0;
 }
@@ -288,16 +288,16 @@ int RoomM350_DropHitEmitter(int event)
                              (FieldFxCallbackListCallback)RoomM350_DropHitCallback);
         case 1:
     if (g_RoomM350DropDone) return 2;
-    if (D_8019A857) {
+    if (g_RoomM350DropHitTrigger) {
         short *effect = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM350Emitter)->pool);
         if (!effect) return 0;
         {
-            effect[0] = D_8019A864[0];
-            effect[1] = D_8019A864[1];
-            effect[2] = D_8019A864[2];
+            effect[0] = g_RoomM350DropHitPosition[0];
+            effect[1] = g_RoomM350DropHitPosition[1];
+            effect[2] = g_RoomM350DropHitPosition[2];
             effect[3] = 0;
           }
-        D_8019A857 = 0;
+        g_RoomM350DropHitTrigger = 0;
     }
         break;
     case 2:
@@ -329,7 +329,7 @@ int RoomM350_DropTrailEmitter(int event)
     if (g_RoomM350DropDone) return 2;
     {
         int i;
-        for (i = 0; i < D_8019A85C; i++) {
+        for (i = 0; i < g_RoomM350DropTrailCount; i++) {
             short *effect = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM350Emitter)->pool);
             if (!effect) break;
             effect[0] = g_RoomEffectTrailPositions.points[i].x;
@@ -337,7 +337,7 @@ int RoomM350_DropTrailEmitter(int event)
             effect[2] = g_RoomEffectTrailPositions.points[i].z;
             /* Finish the copy before reloading the possibly aliased count. */
         }
-        D_8019A85C = 0;
+        g_RoomM350DropTrailCount = 0;
     }
     break;
     case 2:
@@ -387,7 +387,7 @@ int RoomM350_DropBurstCallback(int event, short *object)
         FieldFx_DrawShapeQuads((GteShortVector *)position, 0, 5120, 5120, (s16)g_FieldFxSpriteParams.parameter02 * 2 + 216,
             (unsigned short)handle, 1,
             (short)rcossin_tbl[((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80].word >> 5,
-            (struct RenderColor *)D_8019A634);
+            (struct RenderColor *)g_RoomM350DropBurstColor);
     }
     return 0;
 }
@@ -464,10 +464,10 @@ int RoomM350_DropController(int event,short *cursor) {
     int frame,previous;
     short phase;
     if (event==0) {
-        *(int *)&D_8019A854=0;
-        D_8019A858=0;
+        *(int *)&g_RoomM350DropEventSlots=0;
+        g_RoomM350DropBurstState=0;
         g_RoomM350DropDone=0;
-        D_8019A85C=0;
+        g_RoomM350DropTrailCount=0;
         g_RoomM350DropLungeTimer=0;
         g_RoomM350DropHitCooldown=0;
         *cursor=0;
@@ -507,7 +507,7 @@ int RoomM350_DropController(int event,short *cursor) {
         while ((short)frame>=events.entries[*cursor].frame) {
         Event *entry=&events.entries[*cursor];
         if ((short)previous>=entry->frame) break;
-        (&D_8019A854)[entry->slot]=entry->value;
+        (&g_RoomM350DropEventSlots)[entry->slot]=entry->value;
         *cursor+=1;
         if ((unsigned short)*cursor>=8) *cursor=2;
         }
@@ -518,7 +518,7 @@ int RoomM350_DropController(int event,short *cursor) {
         if (remaining>0) {
         movement.y=0;
         movement.x=0;
-        movement.z=D_800966EE[(((8-remaining)<<9)&0x3E00)/2]/256;
+        movement.z=g_RcossinTblCos[(((8-remaining)<<9)&0x3E00)/2]/256;
         ApplyMatrixSV(&instance->render_object.model_matrix,&movement,&movement);
         instance->pos_x+=(unsigned int)(int)movement.x<<16;
         instance->pos_z+=(unsigned int)(int)movement.z<<16;
@@ -572,7 +572,7 @@ int RoomM350_RushFlareCallback(int event, RoomM350FlareParticle *particle)
             int product = scale * phase;
             int texture = product + 64;
             FieldFx_DrawShapeQuads(&position, &rotation, 0x2200, 4096,
-                texture, clut, 1, particle->shade, (struct RenderColor *)&D_8019A690[timer & 3]);
+                texture, clut, 1, particle->shade, (struct RenderColor *)&g_RoomM350RushFlareColors[timer & 3]);
         }
     }
     return 0;
@@ -596,11 +596,11 @@ int RoomM350_RushFlareEmitter(int event) {
         return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM350EffectEmitter)->pool,8,4,
                              (FieldFxCallbackListCallback)RoomM350_RushFlareCallback);
         case 1:
-    previousEndpoint=&D_8019A8A8;
-    previousOppositeEndpoint=&D_8019A8B0;
-    currentOppositeEndpoint=(const GteShortVector *)&D_8019A8A0;
+    previousEndpoint=&g_RoomM350RushPreviousEndpoint;
+    previousOppositeEndpoint=&g_RoomM350RushPreviousOpposite;
+    currentOppositeEndpoint=(const GteShortVector *)&g_RoomM350RushOppositeX;
     if(instance->anim.parts.integer>=31) return 2;
-    currentEndpoint=(const GteShortVector *)&D_8019A898;
+    currentEndpoint=(const GteShortVector *)&g_RoomM350RushEndpointX;
     if(!(g_FieldFxCurrentAge&1)) {
         RoomM350FlareParticle *particle=FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM350EffectEmitter)->pool);
         if(particle) {
@@ -621,21 +621,21 @@ int RoomM350_RushFlareEmitter(int event) {
         int positionZ;
         x=offset.x;
         z=offset.z;
-        D_8019A898=x+positionX;
+        g_RoomM350RushEndpointX=x+positionX;
         positionZ=((volatile FieldActor *)instance)->render_object.model_matrix.translation[2];
-        D_8019A89E=1;
+        g_RoomM350RushEndpointValid=1;
         positionZ=z+positionZ;
-        D_8019A89C=positionZ;
-        D_8019A8A0=((volatile FieldActor *)instance)->render_object.model_matrix.translation[0]-x;
-        D_8019A8A4=((volatile FieldActor *)instance)->render_object.model_matrix.translation[2]-z;
+        g_RoomM350RushEndpointZ=positionZ;
+        g_RoomM350RushOppositeX=((volatile FieldActor *)instance)->render_object.model_matrix.translation[0]-x;
+        g_RoomM350RushOppositeZ=((volatile FieldActor *)instance)->render_object.model_matrix.translation[2]-z;
     }
-    vertices[0]=*(GteShortVector *)&D_8019A898;
-    vertices[1]=*(GteShortVector *)&D_8019A8A0;
-    vertices[2]=D_8019A8B0;
+    vertices[0]=*(GteShortVector *)&g_RoomM350RushEndpointX;
+    vertices[1]=*(GteShortVector *)&g_RoomM350RushOppositeX;
+    vertices[2]=g_RoomM350RushPreviousOpposite;
     {
         /* The saved endpoint uses its fourth halfword as a validity flag. */
-        int valid=D_8019A8A8.pad;
-        vertices[3]=D_8019A8A8;
+        int valid=g_RoomM350RushPreviousEndpoint.pad;
+        vertices[3]=g_RoomM350RushPreviousEndpoint;
         if(!valid) return 0;
         {
             int i=0;
@@ -714,7 +714,7 @@ int RoomM350_RushCloudCallback(int event,RoomM350CloudParticle *particle)
             unsigned short clut;
             if(kind==4 && g_FieldFxAltPaletteFlag) palette+=4;
             clut=GetClut(32,palette);
-            FieldFx_DrawShapeQuads(&world,0,particle->size,particle->size,(s16)g_FieldFxSpriteParams.parameter02*2+216,clut,1,particle->state.value.active.firstShade,&D_8019A3D0);
+            FieldFx_DrawShapeQuads(&world,0,particle->size,particle->size,(s16)g_FieldFxSpriteParams.parameter02*2+216,clut,1,particle->state.value.active.firstShade,&g_RoomM350GlowSpriteColor);
         }
         {
             int kind=g_FieldFxSpriteParams.palette;
@@ -722,7 +722,7 @@ int RoomM350_RushCloudCallback(int event,RoomM350CloudParticle *particle)
             unsigned short clut;
             if(kind==4 && g_FieldFxAltPaletteFlag) palette+=4;
             clut=GetClut(32,palette);
-            FieldFx_DrawShapeQuads(&world,0,particle->state.value.active.animatedSize,particle->state.value.active.animatedSize,(s16)g_FieldFxSpriteParams.parameter02*2+216,clut,1,particle->state.value.active.secondShade,&D_8019A3D0);
+            FieldFx_DrawShapeQuads(&world,0,particle->state.value.active.animatedSize,particle->state.value.active.animatedSize,(s16)g_FieldFxSpriteParams.parameter02*2+216,clut,1,particle->state.value.active.secondShade,&g_RoomM350GlowSpriteColor);
         }
     }
     return 0;
@@ -789,7 +789,7 @@ int RoomM350_RushController(int event,State *state)
     if(event==0) {
         RenderMatrix *matrix;
         state->speed=0; state->targetSpeed=0; state->heightPhase=0; state->mode=0;
-        g_RoomM350RushState.complete=0; g_RoomM350RushPlayerHit=0; D_8019A89E=0;
+        g_RoomM350RushState.complete=0; g_RoomM350RushPlayerHit=0; g_RoomM350RushEndpointValid=0;
         matrix=instance->render_object.matrices;
         state->asset=Asset_Find08w(0x5CB,instance->state->progress,
             (short)matrix->translation[0],(short)matrix->translation[1],(short)matrix->translation[2]);
@@ -1077,7 +1077,7 @@ int RoomM350_BodyRingCallback(int event, RoomM350SineParticle *object)
         texture.z = 0;
         texture.flags = 1;
         FieldFx_DrawStarFan(&position, 384, 384, 10, &texture, object->size,
-            object->size, &D_8019A738, &D_8019A734, object->brightness, 1);
+            object->size, &g_RoomM350BodyRingColor0, &g_RoomM350BodyRingColor1, object->brightness, 1);
     }
     return 0;
 }
@@ -1209,7 +1209,7 @@ s32 RoomM350_HandSparkCallback(s32 mode, GteShortVector *ctx) {
     }
 
     FieldFx_DrawShapeQuads(ctx, 0, 0x1800, 0x1800, (s16)g_FieldFxSpriteParams.parameter02 + 0xDC, GetClut(0x30, tex), 1,
-                  (rcossin_tbl[((g_FieldFxCurrentAge - 1) << 8) & 0xF00].word << 16) >> 21, &D_8019A410);
+                  (rcossin_tbl[((g_FieldFxCurrentAge - 1) << 8) & 0xF00].word << 16) >> 21, &g_RoomM350HandSparkColor);
 ret0:
     return 0;
 
@@ -1245,7 +1245,7 @@ char *RoomM350_AreaConfigure(void *arg0, char arg1, short arg2, short arg3) {
 
     *ptr = arg1;
     g_RoomM350AreaConfigYaw[0] = arg2;
-    D_8019A82C = arg3;
+    g_RoomM350AreaConfigYaw[1] = arg3;
     return ptr - 0x29;
 }
 
@@ -1303,12 +1303,12 @@ s32 RoomM350_DropFlareEmitter(s32 arg0) {
                              (FieldFxCallbackListCallback)RoomM350_DropFlareCallback);
     } else if ((char)g_RoomM350DropDone != 0) {
         return 2;
-    } else if (D_8019A854 != 0) {
+    } else if (g_RoomM350DropEventSlots != 0) {
         obj = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
         if (obj != 0) {
             /* The translation of the owner's eighth matrix. */
             *(s32 **)obj = g_FieldFxOwner->actor->render_object.matrices[7].translation;
-            D_8019A854 = 0;
+            g_RoomM350DropEventSlots = 0;
         }
     }
 
@@ -1329,13 +1329,13 @@ s32 RoomM350_DropSplashEmitter(s32 arg0) {
                              (FieldFxCallbackListCallback)RoomM350_DropSplashCallback);
     } else if ((char)g_RoomM350DropDone != 0) {
         return 2;
-    } else if (D_8019A856 != 0) {
+    } else if (g_RoomM350DropSplashTrigger != 0) {
         obj = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(char *)[2]);
         if (obj != 0) {
-            *(u16 *)(obj + 0) = D_8019A860;
+            *(u16 *)(obj + 0) = g_RoomM350DropSplashPosX;
             *(u16 *)(obj + 2) = g_RoomFloorY->raw;
-            *(u16 *)(obj + 4) = D_8019A862;
-            D_8019A856 = 0;
+            *(u16 *)(obj + 4) = g_RoomM350DropSplashPosZ;
+            g_RoomM350DropSplashTrigger = 0;
         }
     }
 
@@ -1365,7 +1365,7 @@ s32 RoomM350_DropTrailCallback(s32 mode, void *ctx) {
         tex += 4;
     }
 
-    FieldFx_DrawShapeQuads(ctx, 0, 0x1000, 0x1000, 0xDC, GetClut(0x30, tex), 1, (6 - g_FieldFxCurrentAge) << 5, &D_8019A630);
+    FieldFx_DrawShapeQuads(ctx, 0, 0x1000, 0x1000, 0xDC, GetClut(0x30, tex), 1, (6 - g_FieldFxCurrentAge) << 5, &g_RoomM350DropTrailColor);
 ret0:
     return 0;
 }
@@ -1387,8 +1387,8 @@ int RoomM350_DropFlareCallback(int event, int **position) {
         point[0] = (*position)[0];
         point[1] = (*position)[1];
         point[2] = (*position)[2];
-        shade = D_800966EE[((g_FieldFxCurrentAge - 1) << 9) & 0x1E00];
-        colors = D_8019A614;
+        colors = g_RoomM350DropFlareColors;
+        shade = g_RcossinTblCos[((g_FieldFxCurrentAge - 1) << 9) & 0x1E00];
         FieldFx_DrawStarFan((struct GteShortVector *)point, 512, 512, 16, 0, (short)shade, (short)shade,
                      (struct RenderColor *)colors, (struct RenderColor *)(colors + 1), (short)shade >> 5, 1);
     }
@@ -1412,7 +1412,7 @@ int RoomM350_DropSplashCallback(int event, void *context) {
         rotation[2] = angle;
         rotation[3] = 1;
         FieldFx_DrawStarFan(context, 384, 384, 10, (struct GteRotation *)rotation, scale, scale,
-                     &D_8019A3C8, (struct RenderColor *)D_8019A628,
+                     &g_RoomM350BlackColor, (struct RenderColor *)g_RoomM350DropSplashColor,
                      ((EffectEntry *)entry)->shade >> 5, 1);
     }
     return 0;

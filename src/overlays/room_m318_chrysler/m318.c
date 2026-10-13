@@ -42,7 +42,7 @@ FieldActor *RoomM318_FindActorPosition(int type_id, int sub_id, s16 *position) {
         actor = actor->next;
     }
 
-    printf(D_8018F1CC, type_id, sub_id);
+    printf(g_RoomM318GetMayaPosErrorFormat, type_id, sub_id);
     return 0;
 }
 
@@ -62,7 +62,7 @@ s32 RoomM318_FanSweepTrailCallback(s32 mode, s16 *pos) {
     in[0] = pos[0];
     in[1] = pos[1];
     in[2] = pos[2];
-    FieldFx_SampleColorTrack(D_80199464, out, g_FieldFxCurrentAge);
+    FieldFx_SampleColorTrack(g_RoomM318FanSweepTrailColorTrack, out, g_FieldFxCurrentAge);
     FieldFx_DrawHaloedPoint(in, out, 0x80, 1);
     break;
     default:
@@ -72,9 +72,9 @@ s32 RoomM318_FanSweepTrailCallback(s32 mode, s16 *pos) {
 }
 
 #define ROOM_FAN_SWEEP_SPARK_NAME RoomM318_FanSweepSpark
-#define ROOM_FAN_SWEEP_SPARK_COLOR D_8018F1F0
-#define ROOM_FAN_SWEEP_SPARK_ANCHOR D_801998F8
-#define ROOM_FAN_SWEEP_SPARK_TRAIL D_80199900
+#define ROOM_FAN_SWEEP_SPARK_COLOR g_RoomM318FanSweepSparkColor
+#define ROOM_FAN_SWEEP_SPARK_ANCHOR g_RoomM318FanSweepAnchor
+#define ROOM_FAN_SWEEP_SPARK_TRAIL g_RoomM318FanSweepSparkPool
 #define ROOM_FAN_SWEEP_SPARK_COS rcos
 #define ROOM_FAN_SWEEP_SPARK_SIN rsin
 #define ROOM_FAN_SWEEP_SPARK_RAND rand
@@ -115,7 +115,7 @@ int RoomM318_FanSweep(int mode, RoomFanSweep *sweep, RoomEmberBurstParams *param
         }
         if (g_FieldFxCurrentAge >= 0x46) return 1;
         FieldFx_UpdateCallbackList(sweep->pool);
-        D_80199900 = sweep->pool;
+        g_RoomM318FanSweepSparkPool = sweep->pool;
         break;
     case 2:
         {
@@ -125,9 +125,9 @@ int RoomM318_FanSweep(int mode, RoomFanSweep *sweep, RoomEmberBurstParams *param
         }
         g_FieldFxSpriteParams.depth = 8;
         FieldFx_DrawCallbackList(sweep->pool);
-        D_801998F8.x = sweep->x;
-        D_801998F8.y = sweep->y;
-        D_801998F8.z = sweep->z;
+        g_RoomM318FanSweepAnchor.x = sweep->x;
+        g_RoomM318FanSweepAnchor.y = sweep->y;
+        g_RoomM318FanSweepAnchor.z = sweep->z;
         g_FieldFxSpriteParams.parameter00 = 0x20;
         g_FieldFxSpriteParams.parameter02 = 2;
         g_FieldFxSpriteParams.extent_x = 0x20;
@@ -174,7 +174,7 @@ int RoomM318_SpiralDropSparkCallback(int mode, volatile RoomSpiralDropSparkRecor
         int kind;
         int z;
         unsigned short clut;
-        FieldFx_SampleColorTrack(D_8019948C, color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_RoomM318SpiralDropSparkColorTrack, color, g_FieldFxCurrentAge);
         kind = g_FieldFxSpriteParams.palette;
         position.x = particle->x;
         position.y = particle->y;
@@ -231,7 +231,7 @@ int RoomM318_SpiralDrop(int mode, RoomSpiralDrop *drop, RoomEmberBurstParams *pa
             spin.flags = 1;
             size = rsin((g_FieldFxCurrentAge << 10) / 50);
             drop->radius = size / 8;
-            FieldFx_SampleColorTrack(D_801994BC, &color, g_FieldFxCurrentAge);
+            FieldFx_SampleColorTrack(g_RoomM318SpiralDropColorTrack, &color, g_FieldFxCurrentAge);
             FieldFx_DrawRingBand(&position, 350, 500, 0x14, &spin, size, size, 0, &color,
                           0x80, 1);
         }
@@ -268,9 +268,9 @@ int RoomM318_ShakeSweepParticleCallback(int mode, RoomShakeSweepParticle *p) {
     switch (mode) {
     case 1:
         if (p->state == 0) {
-            p->x = D_80199904.x;
-            p->z = D_80199904.z;
-            p->y = D_80199904.y;
+            p->x = g_RoomM318ShakeSweepAnchor.x;
+            p->z = g_RoomM318ShakeSweepAnchor.z;
+            p->y = g_RoomM318ShakeSweepAnchor.y;
             spin = p->angle + 0x20;
             p->angle = spin + g_FieldFxCurrentAge * 4;
             p->size = rsin((g_FieldFxCurrentAge << 11) / 24) / 32;
@@ -359,7 +359,7 @@ int RoomM318_ShakeSweep(int mode, RoomShakeSweepAnchor *anchor) {
         anchor->angle = rand();
         FieldFx_GetActorPosition((char *)D_8009D254, 1, (s16 *)anchor);
         anchor->y = g_RoomFloorY->y;
-        soundSlot = D_800B0E64;
+        soundSlot = g_LoadedSceneAssetBlock;
         if (*soundSlot != 0) {
             volume = 0x7F;
             time = FieldFx_GetOwnerProgress();
@@ -411,9 +411,9 @@ int RoomM318_ShakeSweep(int mode, RoomShakeSweepAnchor *anchor) {
             break;
         return 1;
     case 2:
-        D_80199904.x = anchor->x;
-        D_80199904.y = anchor->y;
-        D_80199904.z = anchor->z;
+        g_RoomM318ShakeSweepAnchor.x = anchor->x;
+        g_RoomM318ShakeSweepAnchor.y = anchor->y;
+        g_RoomM318ShakeSweepAnchor.z = anchor->z;
         break;
     }
     return 0;
@@ -511,10 +511,10 @@ int RoomM318_StarFlare(int mode, RenderSparkEmitter *state)
         position.y = state->position.y;
         position.z = state->position.z;
         scale = 2048 + (g_FieldFxCurrentAge << 9);
-        FieldFx_SampleColorTrack(D_801995BC, &color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_RoomM318StarFlareColorTrackA, &color, g_FieldFxCurrentAge);
         FieldFx_DrawStarFan(&position, 500, 500, 16, 0, scale, scale, &color, 0, 128, 1);
         FieldFx_DrawRingBand(&position, 410, 500, 20, 0, 4096, 4096, 0, &color, 128, 3);
-        FieldFx_SampleColorTrack(D_801995DC, &color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_RoomM318StarFlareColorTrackB, &color, g_FieldFxCurrentAge);
         FieldFx_DrawStarFan(&position, 500, 100, 16, 0, scale, scale, &color, 0, 128, 1);
         break;
     }
@@ -545,7 +545,7 @@ int RoomM318_ShakeBurstParticleCallback(int mode, RoomShakeBurstParticleCallback
         position.y = 0;
         position.z = g_FieldFxCurrentAge * 12;
         position.pad = 0;
-        FieldFx_SampleColorTrack(D_801995FC, color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_RoomM318ShakeBurstParticleColorTrack, color, g_FieldFxCurrentAge);
         kind = g_FieldFxSpriteParams.palette;
         scale = g_FieldFxCurrentAge * 128 + 4096;
         palette = g_FieldFxPaletteTable[kind];
@@ -581,7 +581,7 @@ int RoomM318_ShakeBurst(int mode, RoomShakeBurstPoint *anchor) {
                     *object->status = 2;
             }
         }
-        soundSlot = D_800B0E64;
+        soundSlot = g_LoadedSceneAssetBlock;
         if (*soundSlot != 0) {
             volume = 0x7F;
             time = FieldFx_GetOwnerProgress();
@@ -642,9 +642,9 @@ int RoomM318_ShakeBurst(int mode, RoomShakeBurstPoint *anchor) {
  * pulse in place, and orbiting sparks sweep around their anchor drawing
  * the glow track; smoke rises and fades. */
 int RoomM318_EmberBurstParticleCallback(int mode, RoomOrbitTrailParticle *p) {
-    GteRotation spin = D_8018F1F4;
+    GteRotation spin = g_RoomM318ZeroSpin;
     GteShortVector offset;
-    RenderColor color = D_8018F1FC;
+    RenderColor color = g_RoomM318EmberParticleColor;
     int fall;
     int bounce;
     int angle;
@@ -727,7 +727,7 @@ int RoomM318_EmberBurstParticleCallback(int mode, RoomOrbitTrailParticle *p) {
                 g_FieldFxSpriteParams.parameter06 = 1;
                 g_FieldFxSpriteParams.tpage = tpage;
             }
-            FieldFx_SampleColorTrack(D_80199674, &color, (s16)p->timer);
+            FieldFx_SampleColorTrack(g_RoomM318EmberBurstParticleColorTrack, &color, (s16)p->timer);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             FieldFx_DrawShapeQuads(&offset, &spin, size / 2, size / 2, 0x24,
@@ -771,8 +771,8 @@ int RoomM318_EmberBurstParticleCallback(int mode, RoomOrbitTrailParticle *p) {
  * orbiting sparks, embers on odd frames and smoke on even ones, then fades;
  * while it glows it draws a flickering halo and a ring. */
 int RoomM318_EmberBurst(int mode, RoomEmberBurst *burst, RoomEmberBurstParams *params) {
-    RenderColor ringColor = D_8018F200;
-    RenderColor haloColor = D_8018F204;
+    RenderColor ringColor = g_RoomM318EmberRingColor;
+    RenderColor haloColor = g_RoomM318EmberHaloColor;
     RoomOrbitTrailParticle *child;
     int glow;
 
@@ -893,7 +893,7 @@ int RoomM318_EmberBurst(int mode, RoomEmberBurst *burst, RoomEmberBurstParams *p
 /* Rising column particle: rings pulse at the column centre while sparks
  * drift and bounce on the floor; both draw with the column's glow track. */
 int RoomM318_RisingColumnParticleCallback(int mode, RoomOrbitTrailParticle *p) {
-    GteRotation spin = D_8018F208;
+    GteRotation spin = g_RoomM318FlatTilt;
     RenderColor color;
     int fall;
     int bounce;
@@ -943,10 +943,10 @@ int RoomM318_RisingColumnParticleCallback(int mode, RoomOrbitTrailParticle *p) {
                 g_FieldFxSpriteParams.parameter06 = 1;
                 g_FieldFxSpriteParams.tpage = tpage;
             }
-            FieldFx_SampleColorTrack(D_801996EC, &color, (s16)p->timer);
+            FieldFx_SampleColorTrack(g_RoomM318RisingColumnParticleColorTrack, &color, (s16)p->timer);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
-            FieldFx_DrawShapeQuads(&D_80199924, &spin, size, size, 0x44,
+            FieldFx_DrawShapeQuads(&g_RoomM318RisingColumnAnchor, &spin, size, size, 0x44,
                           GetClut(0, (kind == 4 && g_FieldFxAltPaletteFlag != 0) ? palette + 8
                                                                     : palette + 4),
                           1, angle, &color);
@@ -968,7 +968,7 @@ int RoomM318_RisingColumnParticleCallback(int mode, RoomOrbitTrailParticle *p) {
                 g_FieldFxSpriteParams.parameter06 = 0;
                 g_FieldFxSpriteParams.tpage = tpage;
             }
-            FieldFx_SampleColorTrack(D_801996EC, &color, (s16)p->timer * 2);
+            FieldFx_SampleColorTrack(g_RoomM318RisingColumnParticleColorTrack, &color, (s16)p->timer * 2);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             if (kind == 4 && g_FieldFxAltPaletteFlag != 0) palette += 4;
@@ -1038,9 +1038,9 @@ int RoomM318_RisingColumn(int mode, RoomRisingColumn *column,
             gte_ldrotmatrix(matrixSlot->value);
             gte_ldtransmatrix(matrixSlot->value);
         }
-        D_80199924.x = column->x;
-        D_80199924.y = column->y;
-        D_80199924.z = column->z;
+        g_RoomM318RisingColumnAnchor.x = column->x;
+        g_RoomM318RisingColumnAnchor.y = column->y;
+        g_RoomM318RisingColumnAnchor.z = column->z;
         g_FieldFxSpriteParams.parameter0A = 0;
         g_FieldFxSpriteParams.depth = 4;
         break;
@@ -1147,7 +1147,7 @@ int RoomM318_FlashBurstParticleCallback(int mode, RoomOrbitTrailParticle *p) {
  * fades a glow sprite, halo and ring over 32 frames. */
 int RoomM318_FlashBurst(int mode, RoomShakeBurstPoint *burst) {
     RenderColor glowColor;
-    RenderColor color = D_8018F210;
+    RenderColor color = g_RoomM318FlashBurstColor;
     RoomOrbitTrailParticle *child;
     void **soundSlot;
     int volume;
@@ -1163,7 +1163,7 @@ int RoomM318_FlashBurst(int mode, RoomShakeBurstPoint *burst) {
         if (FX_TASK_AS(RoomShakeBurstEvent)->running == 0)
             return 1;
         if (g_FieldFxCurrentAge == 2) {
-            soundSlot = D_800B0E64;
+            soundSlot = g_LoadedSceneAssetBlock;
             if (*soundSlot != 0) {
                 volume = 0x7F;
                 time = FieldFx_GetOwnerProgress();
@@ -1244,7 +1244,7 @@ int RoomM318_FlashBurst(int mode, RoomShakeBurstPoint *burst) {
             FieldFx_DrawShapeQuads((GteShortVector *)burst, 0, 0x2000, 0x2000,
                           (s16)g_FieldFxSpriteParams.parameter02 * (g_FieldFxCurrentAge / 4) + 0xA0,
                           clut, 1, glow, 0);
-            FieldFx_SampleColorTrack(D_80199770, &glowColor, g_FieldFxCurrentAge);
+            FieldFx_SampleColorTrack(g_RoomM318FlashBurstColorTrack, &glowColor, g_FieldFxCurrentAge);
             scale = rsin(angle) + 0x1000;
             if (g_FieldFxCurrentAge & 1)
                 glow = glow * 2 / 3;
@@ -1274,7 +1274,7 @@ int RoomM318_FlashBurst(int mode, RoomShakeBurstPoint *burst) {
 int RoomM318_CrossFlashParticleCallback(int mode, RoomCrossFlashParticle *p) {
     GteShortVector origin;
     RenderColor glowColor;
-    RenderColor color = D_8018F1FC;
+    RenderColor color = g_RoomM318EmberParticleColor;
     int angle;
     int size;
     int glow;
@@ -1303,7 +1303,7 @@ int RoomM318_CrossFlashParticleCallback(int mode, RoomCrossFlashParticle *p) {
         switch (p->state) {
         case 0:
             size = rsin((s16)p->timer << 5);
-            FieldFx_SampleColorTrack(D_80199798, &glowColor, (s16)p->timer);
+            FieldFx_SampleColorTrack(g_RoomM318CrossFlashParticleColorTrack, &glowColor, (s16)p->timer);
             FieldFx_DrawRingBand((GteShortVector *)p, 0x578, 0x898, 0xC, &p->rotation, size,
                           size, 0, &glowColor, 0x80, 1);
             break;
@@ -1314,9 +1314,9 @@ int RoomM318_CrossFlashParticleCallback(int mode, RoomCrossFlashParticle *p) {
             glow = rcos(angle) / 32;
             if (p->timer & 1)
                 glow = glow * 2 / 3;
-            origin.x = D_80199930.x;
-            origin.y = D_80199930.y;
-            origin.z = D_80199930.z;
+            origin.x = g_RoomM318CrossFlashAnchor.x;
+            origin.y = g_RoomM318CrossFlashAnchor.y;
+            origin.z = g_RoomM318CrossFlashAnchor.z;
             length = 0x76C;
             if ((s16)p->timer < 0x21)
                 length = rsin((s16)p->timer << 5) * 1900 / 4096;
@@ -1429,9 +1429,9 @@ int RoomM318_CrossFlash(int mode, RoomCrossFlash *flash) {
             gte_ldrotmatrix(matrixSlot->value);
             gte_ldtransmatrix(matrixSlot->value);
         }
-        D_80199930.x = flash->x;
-        D_80199930.y = flash->y;
-        D_80199930.z = flash->z;
+        g_RoomM318CrossFlashAnchor.x = flash->x;
+        g_RoomM318CrossFlashAnchor.y = flash->y;
+        g_RoomM318CrossFlashAnchor.z = flash->z;
         {
             int tpage = g_FieldFxTpageTable[g_FieldFxTpageSlot3];
             g_FieldFxSpriteParams.palette = 3;
@@ -1506,13 +1506,13 @@ int RoomM318_TwinRibbonPulseCallback(int mode, RoomM318Pulse *pulse) {
 int RoomM318_TwinRibbon(int mode, RoomTwinRibbon *ribbon, RoomTwinRibbonParams *params) {
     GteShortVector from;
     GteShortVector to;
-    GteShortVector root = D_8018F214;
-    GteShortVector tip = D_8018F21C;
-    GteShortVector fork = D_8018F224;
-    GteShortVector shed = D_8018F22C;
-    RenderColor colorA = D_8018F234;
-    RenderColor colorB = D_8018F238;
-    RenderColor colorC = D_8018F23C;
+    GteShortVector root = g_RoomM318TwinRibbonRoot;
+    GteShortVector tip = g_RoomM318TwinRibbonTip;
+    GteShortVector fork = g_RoomM318TwinRibbonFork;
+    GteShortVector shed = g_RoomM318TwinRibbonShed;
+    RenderColor colorA = g_RoomM318TwinRibbonColorA;
+    RenderColor colorB = g_RoomM318TwinRibbonColorB;
+    RenderColor colorC = g_RoomM318TwinRibbonColorC;
     RoomOrbitTrailParticle *pulse;
     int scale;
     int alpha;
@@ -1623,10 +1623,10 @@ int RoomM318_TwinRibbon(int mode, RoomTwinRibbon *ribbon, RoomTwinRibbonParams *
  * sparks ride the fountain centre while their heading turns, and smoke
  * rises; each draws with the fountain's glow track. */
 int RoomM318_EmberFountainParticleCallback(int mode, RoomOrbitTrailParticle *p) {
-    GteRotation spin = D_8018F1F4;
+    GteRotation spin = g_RoomM318ZeroSpin;
     GteShortVector offset;
     RenderColor color;
-    RenderColor seed = D_8018F240;
+    RenderColor seed = g_RoomM318EmberFountainParticleColor;
     int fall;
     int bounce;
     int angle;
@@ -1653,9 +1653,9 @@ int RoomM318_EmberFountainParticleCallback(int mode, RoomOrbitTrailParticle *p) 
             return 1;
         case 1:
             p->timer++;
-            p->x = D_8019993C.x;
-            p->y = D_8019993C.y;
-            p->z = D_8019993C.z;
+            p->x = g_RoomM318EmberFountainAnchor.x;
+            p->y = g_RoomM318EmberFountainAnchor.y;
+            p->z = g_RoomM318EmberFountainAnchor.z;
             p->heading.x += 0x1D;
             p->heading.y += 0xB;
             if ((s16)p->timer < 0x18) break;
@@ -1686,7 +1686,7 @@ int RoomM318_EmberFountainParticleCallback(int mode, RoomOrbitTrailParticle *p) 
                 g_FieldFxSpriteParams.parameter06 = 0;
                 g_FieldFxSpriteParams.tpage = tpage;
             }
-            FieldFx_SampleColorTrack(D_80199868, &color, (s16)p->timer * 24 / 16);
+            FieldFx_SampleColorTrack(g_RoomM318EmberFountainParticleColorTrack, &color, (s16)p->timer * 24 / 16);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             if (kind == 4 && g_FieldFxAltPaletteFlag != 0) palette += 4;
@@ -1715,7 +1715,7 @@ int RoomM318_EmberFountainParticleCallback(int mode, RoomOrbitTrailParticle *p) 
                 g_FieldFxSpriteParams.parameter06 = 1;
                 g_FieldFxSpriteParams.tpage = tpage;
             }
-            FieldFx_SampleColorTrack(D_80199868, &color, (s16)p->timer);
+            FieldFx_SampleColorTrack(g_RoomM318EmberFountainParticleColorTrack, &color, (s16)p->timer);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             FieldFx_DrawShapeQuads(&offset, &spin, size, size, 6,
@@ -1761,7 +1761,7 @@ int RoomM318_EmberFountainParticleCallback(int mode, RoomOrbitTrailParticle *p) 
  * draws a halo and ring at it. */
 int RoomM318_EmberFountain(int mode, RoomEmberFountain *fountain) {
     GteShortVector position;
-    RenderColor color = D_8018F200;
+    RenderColor color = g_RoomM318EmberRingColor;
     RoomOrbitTrailParticle *child;
     int angle;
     int glow;
@@ -1831,9 +1831,9 @@ int RoomM318_EmberFountain(int mode, RoomEmberFountain *fountain) {
                 }
             }
         }
-        D_8019993C.x = fountain->x;
-        D_8019993C.y = fountain->y;
-        D_8019993C.z = fountain->z;
+        g_RoomM318EmberFountainAnchor.x = fountain->x;
+        g_RoomM318EmberFountainAnchor.y = fountain->y;
+        g_RoomM318EmberFountainAnchor.z = fountain->z;
         if (fountain->timer < 0x8D) break;
         return 1;
     case 2:
@@ -1866,7 +1866,7 @@ int RoomM318_EmberFountain(int mode, RoomEmberFountain *fountain) {
  * twist along a bent trail, and smoke rises; each draws with the glow
  * track. */
 int RoomM318_EmberSpiralParticleCallback(int mode, RoomOrbitTrailParticle *p) {
-    GteRotation spin = D_8018F1F4;
+    GteRotation spin = g_RoomM318ZeroSpin;
     GteShortVector offset;
     RenderColor color;
     int fall;
@@ -1922,7 +1922,7 @@ int RoomM318_EmberSpiralParticleCallback(int mode, RoomOrbitTrailParticle *p) {
                 g_FieldFxSpriteParams.parameter06 = 0;
                 g_FieldFxSpriteParams.tpage = tpage;
             }
-            FieldFx_SampleColorTrack(D_80199890, &color, (s16)p->timer);
+            FieldFx_SampleColorTrack(g_RoomM318EmberSpiralColorTrack, &color, (s16)p->timer);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             if (kind == 4 && g_FieldFxAltPaletteFlag != 0) palette += 4;
@@ -1949,7 +1949,7 @@ int RoomM318_EmberSpiralParticleCallback(int mode, RoomOrbitTrailParticle *p) {
                 g_FieldFxSpriteParams.parameter06 = 1;
                 g_FieldFxSpriteParams.tpage = tpage;
             }
-            FieldFx_SampleColorTrack(D_80199890, &color, (s16)p->timer * 3 / 2);
+            FieldFx_SampleColorTrack(g_RoomM318EmberSpiralColorTrack, &color, (s16)p->timer * 3 / 2);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             FieldFx_DrawShapeQuads(&offset, &spin, size, size, 4,
@@ -1975,7 +1975,7 @@ int RoomM318_EmberSpiralParticleCallback(int mode, RoomOrbitTrailParticle *p) {
                 g_FieldFxSpriteParams.depth = 0x20;
                 g_FieldFxSpriteParams.tpage = tpage;
             }
-            FieldFx_SampleColorTrack(D_80199890, &color, (s16)p->timer);
+            FieldFx_SampleColorTrack(g_RoomM318EmberSpiralColorTrack, &color, (s16)p->timer);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             FieldFx_DrawShapeQuads((GteShortVector *)p, 0, size, size, 0,
@@ -2022,7 +2022,7 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
         spiral->reserved08 = 0;
         spiral->timer = 0;
         spiral->glow = 0;
-        soundSlot = D_800B0E64;
+        soundSlot = g_LoadedSceneAssetBlock;
         if (*soundSlot != 0) {
             volume = 0x7F;
             time = FieldFx_GetOwnerProgress();
@@ -2032,7 +2032,7 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
             if (*(void *volatile *)soundSlot != 0)
                 Akao_SendTableCommand(*soundSlot, 0x5EE, 0x80, 0x80, volume);
         }
-        g_RoomM318EmberSpiralModel = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC5509704);
+        g_RoomM318EmberSpiralModel = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5509704);
         FieldFx_ModelScrollUv(g_RoomM318EmberSpiralModel, 0, 0);
         if (FX_TASK_AS(RoomShakeBurstEvent)->active) {
             pool = ANIM_OWNER_AS(RoomShakeBurstChannel)->pool;
@@ -2120,7 +2120,7 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
             if (g_FieldFxCurrentAge & 1)
                 glow = glow * 3 / 4;
             g_FieldFxSpriteParams.depth = 0x28;
-            FieldFx_SampleColorTrack(D_80199890, &color, (spiral->timer << 5) / 24);
+            FieldFx_SampleColorTrack(g_RoomM318EmberSpiralColorTrack, &color, (spiral->timer << 5) / 24);
             FieldFx_DrawStarFan(&position, 900, 800, 0xC, 0, 0x1000, 0x1000, &color, 0,
                           glow, 1);
             /* The angle shares its with the model page below. */
@@ -2184,31 +2184,31 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
 }
 
 int* RoomM318_SetActorParams(void* arg0, int arg1, int arg2) {
-    int* base = &g_RoomM318ActorParams;
+    int* base = g_RoomM318ActorParams;
 
     *base = arg2;
-    D_801998F4 = arg1;
+    g_RoomM318ActorParams[1] = arg1;
 
     return base;
 }
 
 int* RoomM318_SetEmberBurstParams(void* arg0, int arg1, int arg2) {
-    int* base = &g_RoomM318EmberBurstParams;
+    int* base = g_RoomM318EmberBurstParams;
 
     *base = arg2;
-    D_80199910 = arg1;
+    g_RoomM318EmberBurstParams[1] = arg1;
 
     return base;
 }
 
 int* RoomM318_SetRisingColumnParams(int arg0, int arg1, int arg2, int arg3) {
     if (arg0 == 1) {
-        g_RoomM318RisingColumnParams = arg1;
+        g_RoomM318RisingColumnParams[0] = arg1;
     } else {
-        D_80199918 = arg1;
-        D_8019991C = arg2;
-        D_80199920 = arg3;
+        g_RoomM318RisingColumnParams[1] = arg1;
+        g_RoomM318RisingColumnParams[2] = arg2;
+        g_RoomM318RisingColumnParams[3] = arg3;
     }
 
-    return &g_RoomM318RisingColumnParams;
+    return g_RoomM318RisingColumnParams;
 }

@@ -11,8 +11,8 @@ void GameTime_InitCounter0(void) {
     g_GameClockLimit = value;
     value = 1;
     g_GameTimeTable = 0;
-    D_800A76A0 = 0;
-    D_800A76A0 = value;
+    g_GameClockFlags = 0;
+    g_GameClockFlags = value;
 }
 
 /* Restarts the play time counter with no limit. */

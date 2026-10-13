@@ -57,11 +57,11 @@ typedef struct RoomM350Trig {
 } RoomM350Trig;
 
 extern struct FieldActor *g_PlayerEntity;
-extern RenderColor D_8019A434[];
-extern RenderColor D_8019A3C8;
-extern RenderColor D_8019A43C;
-extern RenderColor D_8019A440;
-extern GteShortVector D_8019A444[];
+extern RenderColor g_RoomM350HandSweepTrapPulseColors[];
+extern RenderColor g_RoomM350BlackColor;
+extern RenderColor g_RoomM350HandSweepTrapTriangleColor;
+extern RenderColor g_RoomM350HandSweepTrapRingColor;
+extern GteShortVector g_RoomM350HandSweepTrapCorners[];
 extern u8 g_RoomM350HandSweepHit;
 int Math_IntSqrt(int value);
 

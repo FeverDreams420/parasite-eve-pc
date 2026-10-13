@@ -15,12 +15,12 @@ s32 SceneE19_GrabInit(SceneGrabTrigger *obj) {
     obj->control.started = 0;
     obj->control.grabbed = 0;
     obj->flag3 = 0xFF;
-    RotMatrixYXZ(D_8019B31C, (void *)0x1F800028);
+    RotMatrixYXZ(g_SceneE19GrabAngles, (void *)0x1F800028);
     MulMatrix0(g_SceneE19GrabIdentityMatrix, (void *)0x1F800028, (GteMatrix *)&obj->control.player_matrix);
     /* player_matrix.translation, stored as plain words to keep retail order. */
-    *(s32 *)((char *)obj + 0x30) = D_8019B310;
-    *(s32 *)((char *)obj + 0x34) = D_8019B314;
-    *(s32 *)((char *)obj + 0x38) = D_8019B318;
+    *(s32 *)((char *)obj + 0x30) = g_SceneE19GrabPlayerTranslation[0];
+    *(s32 *)((char *)obj + 0x34) = g_SceneE19GrabPlayerTranslation[1];
+    *(s32 *)((char *)obj + 0x38) = g_SceneE19GrabPlayerTranslation[2];
     return 0;
 }
 

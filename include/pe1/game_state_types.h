@@ -114,15 +114,15 @@ typedef struct Pe1GameState {
     } shared_buffers;
     union SceneAssetView *texture_load_scratch; /* 0x168: second room read */
     struct SceneAssetBlob *object_texture_blob; /* 0x16C */
-    Pe1U8 unk_170[4];
+    u8 *unk_170;                      /* 0x170: work buffer set by the boot memory layout */
     struct TimFile *bg_tim;                    /* 0x174 */
     unsigned short *save_background_source;      /* 0x178 */
     unsigned short *save_background_destination; /* 0x17C */
     struct TimFile *hud_tim;                   /* 0x180 */
-    Pe1U8 unk_184[4];
+    u8 *script_sprite_buffer;        /* 0x184: FieldFx_ClearScriptSprites starts the sprite list below it */
     struct PmSlotBanks *scene_process_slots; /* 0x188 */
     union SceneAssetView *loaded_scene_assets; /* 0x18C */
-    Pe1U8 unk_190[4];
+    u8 *str_file_directory;          /* 0x190: g_StrFileDirBuffer */
     void *scene_load_scratch;        /* 0x194: g_SceneLoadScratchBuffer */
     /* Reset bounds establish these arrays; individual element roles unknown. */
     void *bank_slots[10];            /* 0x198 */

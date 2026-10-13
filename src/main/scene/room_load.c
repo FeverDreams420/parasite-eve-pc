@@ -24,6 +24,8 @@
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_transition.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 u8 D_8009CDC8;
 
 typedef struct { char b[16]; } __attribute__((aligned(1), packed)) Copy16u;
@@ -58,7 +60,7 @@ void Scene_LoadSceneData(void) {
     ClearImage(&rect, 0, 0, 1);
 
 restart1:
-    p0 = &D_800930D8[2];
+    p0 = &g_PeImageSectorTable[2];
     while (CdRom_ReadSectorsFromLba(lba + p0[0], &g_ResidentDataPack, p0[1] - p0[0]) == -1) {}
     t = 1;
     do {
@@ -70,7 +72,7 @@ restart1:
 
     flag = 0;
 restart2:
-    p0 = &D_800930D8[3];
+    p0 = &g_PeImageSectorTable[3];
     while (CdRom_ReadSectorsFromLba(lba + p0[0], state->scene_load_scratch, p0[1] - p0[0]) == -1) {}
     t = 1;
     do {
@@ -107,7 +109,7 @@ restart2:
     state->startup_resource_tables[1] = Asset_FindTable08ByU32Key(state->startup_resource_blob, 0x57D41D84);
 
 restart3:
-    p0 = &D_800930D8[6];
+    p0 = &g_PeImageSectorTable[6];
     while (CdRom_ReadSectorsFromLba(lba + p0[0], state->scene_load_scratch, p0[1] - p0[0]) == -1) {}
     t = 1;
     do {
@@ -120,7 +122,7 @@ restart3:
     Spu_UploadSampleBlockBlocking(g_GameState.scene_load_scratch, 1);
 
 restart4:
-    p0 = &D_800930D8[7];
+    p0 = &g_PeImageSectorTable[7];
     while (CdRom_ReadSectorsFromLba(lba + p0[0], state->scene_load_scratch, p0[1] - p0[0]) == -1) {}
     t = 1;
     do {
@@ -183,8 +185,8 @@ int Scene_LoadFieldBg(void)
     lba = g_PeImageBaseLba;
 
 retry1:
-    while (CdRom_ReadSectorsFromLba(lba + D_800930D8[9], state->shared_buffers.bg_texture_blob,
-               D_800930D8[10] - D_800930D8[9]) == -1)
+    while (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[9], state->shared_buffers.bg_texture_blob,
+               g_PeImageSectorTable[10] - g_PeImageSectorTable[9]) == -1)
         ;
     status = 1;
     do {
@@ -195,8 +197,8 @@ retry1:
 
     done = 0;
 retry2:
-    while ((status = CdRom_ReadSectorsFromLba(lba + D_800930D8[10], state->bg_tim,
-               D_800930D8[11] - D_800930D8[10])) == -1)
+    while ((status = CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[10], state->bg_tim,
+               g_PeImageSectorTable[11] - g_PeImageSectorTable[10])) == -1)
         ;
     status = 1;
     do {
@@ -220,8 +222,8 @@ retry2:
 
     done = 0;
 retry3:
-    while ((status = CdRom_ReadSectorsFromLba(lba + D_800930D8[11], state->hud_tim,
-               D_800930D8[12] - D_800930D8[11])) == -1)
+    while ((status = CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[11], state->hud_tim,
+               g_PeImageSectorTable[12] - g_PeImageSectorTable[11])) == -1)
         ;
     status = 1;
     do {
@@ -240,8 +242,8 @@ retry3:
 
     done = 0;
 retry4:
-    while ((status = CdRom_ReadSectorsFromLba(lba + D_800930D8[12], state->bank_asset_source,
-               D_800930D8[13] - D_800930D8[12])) == -1)
+    while ((status = CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[12], state->bank_asset_source,
+               g_PeImageSectorTable[13] - g_PeImageSectorTable[12])) == -1)
         ;
     status = 1;
     do {
@@ -257,8 +259,8 @@ retry4:
 
     done = 0;
 retry5:
-    while ((status = CdRom_ReadSectorsFromLba(lba + D_800930D8[4], state->object_texture_blob,
-               D_800930D8[5] - D_800930D8[4])) == -1)
+    while ((status = CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[4], state->object_texture_blob,
+               g_PeImageSectorTable[5] - g_PeImageSectorTable[4])) == -1)
         ;
     status = 1;
     do {
@@ -278,8 +280,8 @@ retry5:
 
     done = 0;
 retry6:
-    while ((status = CdRom_ReadSectorsFromLba(lba + D_800930D8[39], state->scene_process_slots,
-               D_800930D8[40] - D_800930D8[39])) == -1)
+    while ((status = CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[39], state->scene_process_slots,
+               g_PeImageSectorTable[40] - g_PeImageSectorTable[39])) == -1)
         ;
     status = 1;
     do {
@@ -417,9 +419,9 @@ int Scene_LoadRoom(unsigned int roomId)
 retry_scratch:
     {
         map = Text_ParseMapNumber(name) - 1;
-        while ((ready = CdRom_ReadSectorsFromLba(base + D_80093378[map].start,
+        while ((ready = CdRom_ReadSectorsFromLba(base + g_RoomSectorTable[map].start,
                                         state->scene_load_scratch,
-                                        D_80093378[map].scratchSectors)) == -1) {
+                                        g_RoomSectorTable[map].scratchSectors)) == -1) {
         }
         for (ready = 1; ready != 0; ready = CdRom_PollReady()) {
             if (ready == -1) {
@@ -432,10 +434,10 @@ retry_scratch:
     loaded = 0;
 retry_texture:
     {
-        while ((ready = CdRom_ReadSectorsFromLba(base + D_80093378[map].start +
-                                            D_80093378[map].scratchSectors,
+        while ((ready = CdRom_ReadSectorsFromLba(base + g_RoomSectorTable[map].start +
+                                            g_RoomSectorTable[map].scratchSectors,
                                         state->texture_load_scratch,
-                                        D_80093378[map].textureSectors)) == -1) {
+                                        g_RoomSectorTable[map].textureSectors)) == -1) {
         }
         for (ready = 1; ready != 0; ready = CdRom_PollReady()) {
             if (!loaded) {
@@ -457,11 +459,11 @@ retry_texture:
     loaded = 0;
 retry_room:
     {
-        while ((ready = CdRom_ReadSectorsFromLba(base + D_80093378[map].start +
-                                            D_80093378[map].scratchSectors +
-                                            D_80093378[map].textureSectors,
+        while ((ready = CdRom_ReadSectorsFromLba(base + g_RoomSectorTable[map].start +
+                                            g_RoomSectorTable[map].scratchSectors +
+                                            g_RoomSectorTable[map].textureSectors,
                                         state->loaded_scene_assets,
-                                        D_80093378[map].roomSectors)) == -1) {
+                                        g_RoomSectorTable[map].roomSectors)) == -1) {
         }
         for (ready = 1; ready != 0; ready = CdRom_PollReady()) {
             if (!loaded) {
@@ -541,12 +543,14 @@ retry_room:
             if (sample[i].flags & 0x20) {
                 int key = sample[i].u.track.key;
 
+                /* The id words of the voice-bank entries, indexed as one
+                 * halfword run from entry 1. */
                 if ((u16)key & 1) {
-                    D_80094494[sample[i].source.bytes.slot] = key;
-                    D_80094494[sample[i].source.bytes.slot + 8] = sample[i].u.track.key;
+                    g_AkaoVoiceBankEntries[1].ids[sample[i].source.bytes.slot] = key;
+                    g_AkaoVoiceBankEntries[1].ids[sample[i].source.bytes.slot + 8] = sample[i].u.track.key;
                 } else {
-                    D_80094494[sample[i].source.bytes.slot - 4] = key;
-                    D_80094494[sample[i].source.bytes.slot + 4] = sample[i].u.track.key;
+                    g_AkaoVoiceBankEntries[1].ids[sample[i].source.bytes.slot - 4] = key;
+                    g_AkaoVoiceBankEntries[1].ids[sample[i].source.bytes.slot + 4] = sample[i].u.track.key;
                 }
             }
         }
@@ -637,7 +641,7 @@ s32 Scene_StreamTexturePage(void)
         /* Matching debt: the CD retry restarts from the table address;
          * a loop lets loop.c hoist it (docs/CODE_ORGANIZATION.md). */
 restart:
-        ranges.entry = D_800930D8;
+        ranges.entry = g_PeImageSectorTable;
         nextRanges.entry = ranges.entry + 1;
         retry = -1;
         do {
@@ -688,8 +692,8 @@ int CdRom_DetectDiscChange(void) {
  * The shifted state view preserves the bank-row address calculation. */
 int Scene_LoadEntityTexture(void)
 {
-    int bank = *D_800B0CE2;
-    u32 lba = D_800B0DD8.baseLba;
+    int bank = g_SceneAreaType;
+    u32 lba = g_DiscLoadState.baseLba;
     Pe1GameState *state = &g_GameState;
     SceneAssetBlob *blob;
     SceneAssetDirectory *directory;
@@ -714,9 +718,9 @@ retry:
         break;
     case 1:
         index = bank + 3;
-        if (CdRom_ReadSectorsFromLba(lba + D_800930D8[index],
+        if (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[index],
                 state->scene_load_scratch,
-                g_PeImageSectorBoundsNext[index] - D_800930D8[index]) != -1)
+                g_PeImageSectorBoundsNext[index] - g_PeImageSectorTable[index]) != -1)
             state->entity_texture_phase = 2;
         return 1;
     case 2:
@@ -728,7 +732,7 @@ retry:
         if (result != 0)
             return 1;
         if (state->flags & 0x20000) {
-            if (!(state->flags & 0x80000) && D_8009D25C < 2)
+            if (!(state->flags & 0x80000) && g_AyaActionStep < 2)
                 return 1;
             state->flags |= 0x40000;
         }
@@ -753,9 +757,9 @@ retry:
         break;
     case 4:
         index = bank + 8;
-        if (CdRom_ReadSectorsFromLba(lba + D_800930D8[index],
+        if (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[index],
                 state->voice_bank_base_1400,
-                g_PeImageSectorBoundsNext[index] - D_800930D8[index]) != -1)
+                g_PeImageSectorBoundsNext[index] - g_PeImageSectorTable[index]) != -1)
             state->entity_texture_phase = 5;
         return 1;
     case 5:
@@ -837,7 +841,7 @@ s32 Scene_InitEntityPlayer(s32 resume) {
         if (area < 5) {
             saved = g_SavedSceneAreaType;
             if (g_SceneAreaType != saved) {
-                D_800B0CD8 = g_GameState.flags | 0x200000;
+                g_GameStateFlagsWord = g_GameState.flags | 0x200000;
             }
             if ((area >> 1) != ((saved - 0xA) / 2)) {
                 g_DiscChangeFlags |= 4;
@@ -857,7 +861,7 @@ s32 Scene_InitEntityPlayer(s32 resume) {
         return 1;
     case 37:
         g_GameState.story_day_flags |= 4;
-        Scene_SetStoryDay(D_800B0CE4[0]);
+        Scene_SetStoryDay(g_CurrentStoryDay[0]);
         gameState->scene_init_phase = 0x26;
         return 1;
     case 38:
@@ -892,7 +896,7 @@ s32 Scene_InitEntityPlayer(s32 resume) {
             FieldActor *player = g_PlayerEntity;
             player->render_object.header->shadow_radius = player->render_object.hit_cylinder.radius * 2;
         }
-        D_800B0CD8 = g_GameState.flags & ~0x60000;
+        g_GameStateFlagsWord = g_GameState.flags & ~0x60000;
         if (resume) {
             gameState->flags |= 0x80000;
         } else {
@@ -915,10 +919,10 @@ int Scene_SetStoryDay(s32 storyDay) {
     if (storyDay == -1) {
         u8 pending;
         u8 storyFlags;
-        pending = D_800B0CE5;
+        pending = g_PendingStoryDay;
         storyFlags = g_DiscChangeFlags;
         storyDay = (s8)pending;
-        D_800B0CE4[0] = pending;
+        g_CurrentStoryDay[0] = pending;
         g_DiscChangeFlags = storyFlags | 3;
     }
 
@@ -950,7 +954,7 @@ int Scene_SetStoryDay(s32 storyDay) {
 int Scene_LoadEntityTextures(void)
 {
     int area = g_SceneAreaType;
-    int day = D_800B0CE4[0];
+    int day = g_CurrentStoryDay[0];
     u32 lba = g_PeImageBaseLba;
     Pe1GameState *state = &g_GameState;
     SceneAssetView *view;
@@ -992,9 +996,9 @@ retry:
             break;
         }
         setup[0] = day + 0x26;
-        result = CdRom_ReadSectorsFromLba(lba + D_800930D8[setup[0]],
+        result = CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[setup[0]],
             state->scene_load_scratch,
-            g_PeImageSectorBoundsNext[setup[0]] - D_800930D8[setup[0]]);
+            g_PeImageSectorBoundsNext[setup[0]] - g_PeImageSectorTable[setup[0]]);
         Scene_UpdateBgDraw();
         if (result != -1)
             state->scene_init_subphase = 2;
@@ -1030,9 +1034,9 @@ retry:
         break;
     case 4:
         setup[0] = (state->requested_entity_bank - 10) / 2 * 8 + day + 0x16;
-        if (CdRom_ReadSectorsFromLba(lba + D_800930D8[setup[0]],
+        if (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[setup[0]],
                 state->entity_texture_blob,
-                g_PeImageSectorBoundsNext[setup[0]] - D_800930D8[setup[0]]) != -1)
+                g_PeImageSectorBoundsNext[setup[0]] - g_PeImageSectorTable[setup[0]]) != -1)
             state->scene_init_subphase = 5;
         if (!(g_GameStateFlags & 2))
             Scene_UpdateBgDraw();
@@ -1193,10 +1197,10 @@ int Scene_UpdateBgDraw(void) {
 
     Render_SetGteScreenOffset();
     Render_TransformVertices(&state->scene_object);
-    Render_TransformMorphVertices(&state->scene_object, D_800B89F8);
+    Render_TransformMorphVertices(&state->scene_object, g_EntityRenderScratch);
 
     if ((g_GameStateFlags & 2) || g_PlayerEntity->render_object.variant_visible != 0) {
-        Render_DrawEntity(&state->scene_object, D_800B89F8);
+        Render_DrawEntity(&state->scene_object, g_EntityRenderScratch);
     }
 
     Render_ResetGteScreenOffset();

@@ -15,6 +15,8 @@
 #include "pe1/player_entity.h"
 #include "pe1/scene_assets.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 RampEdge *g_SceneDataTable2;
 u16 g_FieldCollisionTriIndex;
 unsigned short g_WallPolygonVertexCount;
@@ -208,7 +210,7 @@ void Entity_ResetStateGlobals(void) {
 
     for (i = 0; i < 8; i += 4) {
         *(short *)&((char *)&g_FloorBlockedEdgePointA)[i] = 0;
-        *(short *)&D_8009CE0E[i] = 0;
+        *(short *)&g_FloorBlockedEdgeZHalves[i] = 0;
     }
 
     count = 0;

@@ -57,7 +57,7 @@ int RoomM350_AreaPlayerPulseCallback(int event, void *object)
             int *colors;
             unsigned int drawSampleOffset;
             drawSampleOffset = ((unsigned int)frame << 9) & 0x3E00;
-            colors = D_8019A59C;
+            colors = g_RoomM350AreaPlayerPulseColor;
             FieldFx_DrawShapeQuads(object, 0, size, size,
                 (s16)((RenderEffectParameters *)state)->parameter02 * phase + 192,
                 handle, 1, rcossin_tbl[drawSampleOffset / 4].bits.cos >> 5, (struct RenderColor *)colors);

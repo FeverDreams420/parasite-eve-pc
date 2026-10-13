@@ -32,7 +32,7 @@ void Menu_DrawEquipOptionsList(int node);
 void Menu_OpenInventoryScreen(void);
 /* Equipment selection state and stat preview. */
 extern int g_MenuItemUseMode, g_MenuItemRenameMode, g_MenuItemDiscardMode;
-extern int D_8009CFC4, D_8009CFC8, D_8009CFCC;
+extern int g_MenuSourceItemSlot, g_MenuStatItemStatIndex, g_MenuStatItemAmount;
 /* Ammo counts of the four ammo categories (999 when a category is
  * unlimited); a nonzero sum enables the ammo transfer actions. */
 extern int g_StatBaseTable[4];
@@ -72,6 +72,6 @@ extern unsigned char *g_MenuItemIconGlyphTable;
 extern u8 g_MenuModSlotIconIndexOffsetByView[];
 extern u8 g_MenuModSlotFirstGlyphs[];
 extern u8 g_MenuModSlotSecondGlyphs[];
-extern u8 D_800922CC[];
+extern u8 g_MenuModSlotThirdGlyphs[];
 
 #endif

@@ -6,14 +6,14 @@
 #define MENUCARD_RESET_DISPLAY_STATE_NAME MenuCard_ResetDisplayState
 #endif
 #ifndef MENUCARD_DISPLAY_PTR0
-#define MENUCARD_DISPLAY_PTR0 D_801D0DE8
-#define MENUCARD_DISPLAY_PTR1 D_801D0DEC
-#define MENUCARD_DISPLAY_PTR2 D_801D0DF0
-#define MENUCARD_DISPLAY_PTR3 D_801D0DF4
-#define MENUCARD_DISPLAY_PTR4 D_801D0DF8
-#define MENUCARD_DISPLAY_PTR5 D_801D0DFC
+#define MENUCARD_DISPLAY_PTR0 g_MenuCardScreenVideoDecodeBuffer0
+#define MENUCARD_DISPLAY_PTR1 g_MenuCardScreenVideoDecodeBuffer1
+#define MENUCARD_DISPLAY_PTR2 g_MenuCardScreenVideoSliceBuffer0
+#define MENUCARD_DISPLAY_PTR3 g_MenuCardScreenVideoSliceBuffer1
+#define MENUCARD_DISPLAY_PTR4 g_MenuCardScreenVideoVlcTable
+#define MENUCARD_DISPLAY_PTR5 g_MenuCardScreenVideoStreamRing
 #define MENUCARD_SLOT20_SOURCE g_MenuCardScreenSavedDispEnv
-#define MENUCARD_SLOT92_SOURCE D_801D13AC
+#define MENUCARD_SLOT92_SOURCE g_MenuCardScreenSavedDrawEnv
 #endif
 
 typedef struct MemcardRect {
@@ -33,7 +33,7 @@ void MENUCARD_RESET_DISPLAY_STATE_NAME(void) {
     u8 *active;
     MemcardRect rect;
 
-    active = &D_800B0DBA;
+    active = &g_DrawEnabled.bits;
     if (*active != 0) {
         MENUCARD_DISPLAY_PTR0 = 0;
         MENUCARD_DISPLAY_PTR1 = 0;
@@ -60,7 +60,7 @@ void MENUCARD_RESET_DISPLAY_STATE_NAME(void) {
         rect.h = 0x100;
         MoveImage(&rect, 0x140, 0);
 
-        if ((D_800B0CD8 & 0x8000000) == 0) {
+        if ((g_GameStateFlagsWord & 0x8000000) == 0) {
             rect.x = 0x200;
             rect.y = 0x100;
             rect.w = 0x140;

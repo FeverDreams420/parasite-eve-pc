@@ -20,10 +20,10 @@ typedef struct GameStateBlock {
     u32 reserved;
 } GameStateBlock;
 extern GameStateBlock g_GameStateBlock;
-extern u32 D_8009D1F4;         /* pad trigger bits */
-extern s16 D_8009D2A4;         /* menu frame result */
+extern u32 g_FieldPadPressed;         /* pad trigger bits */
+extern s16 g_MenuFrameCommand;         /* menu frame result */
 extern BattleAction g_BattleMenuActionRecord;        /* menu frame argument */
-extern u32 D_800B89F8[];       /* view matrix packet */
+extern u32 g_EntityRenderScratch[]; /* view matrix packet */
 extern s16 g_CameraFocusHeight[];       /* camera height (integer part) */
 
 void Battle_Update(void);

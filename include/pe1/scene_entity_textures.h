@@ -18,13 +18,13 @@
  */
 
 extern u8 g_SceneAreaType;
-extern s8 D_800B0CE4[];
+extern s8 g_CurrentStoryDay[];
 extern u32 g_PeImageBaseLba;
-extern u16 D_800930D8[], g_PeImageSectorBoundsNext[];
-extern u8 g_EntityRenderScratch[];
+extern u16 g_PeImageSectorTable[], g_PeImageSectorBoundsNext[];
+extern u32 g_EntityRenderScratch[];
 /* Aya action sequencer step (battle_runtime.h); a battle-start texture
  * load waits until it reaches 2. */
-extern u8 D_8009D25C;
+extern u8 g_AyaActionStep;
 
 int Scene_UpdateBgDraw(void);
 void Render_DrawWithAnim(void *object, void *animation, int frame,

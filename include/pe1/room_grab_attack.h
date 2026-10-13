@@ -12,6 +12,7 @@
 #include "pe1/gte.h"
 #include "pe1/room_fx.h"
 #include "pe1/room_ground_sweep.h"
+#include "pe1/room_interface.h"
 #include "pe1/room_motion_trigger.h"
 #include "pe1/room_orbit_trail.h"
 #include "pe1/room_rising_spray.h"

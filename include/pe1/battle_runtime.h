@@ -8,9 +8,9 @@
 
 extern Combatant *g_ActiveActor;
 extern BattleEntity *D_8009D254;
-extern s16 D_8009D2A4;
-extern int D_8009D200;
-extern u8 D_8009D294;
+extern s16 g_MenuFrameCommand;
+extern int g_BattleAttackPmSlot;
+extern u8 g_BattleHitPending;
 
 typedef struct BattleEvasionOutcome {
     s8 status;   /* -1: invalid target, 0: unresolved, 1: resolved */
@@ -31,20 +31,18 @@ typedef struct BattleEnemySlot {
     EnemyCombatant combatant;
 } BattleEnemySlot;
 
-extern int D_8009D2FC;
+extern int g_BattleImpactPmSlot;
 extern int g_BattleEffectPmSlot;
 extern s8 g_BattleTargetCycleMode; /* item target mode: 0, or 4..7 while picking */
-extern u8 D_8009D2D8;
 /* Actions left in the battle turn (Save_ResetGlobalFlags clears it). */
 extern unsigned char g_BattleRemainingActions;
 extern u8 g_BattleActionAnimModes[4];
 extern unsigned int g_BattleResultFlags;
-extern u8 D_8009D1CE;
-/* D_8009D1CE read as the signed save-overlay flag, and the actor effect
- * timer at 0x8009D228 read as a signed count. */
-extern s8 g_BattleSaveOverlayActive;
-extern s16 g_ActorEffectFlag100Timer;
-extern u8 D_8009CE60;
+/* Message overlay step of Menu_SaveOverlayDraw (0 idle, 1 show, 2 wait),
+ * and the frames left on the actor effect that flag 0x100 marks. */
+extern u8 g_BattleSaveOverlayActive;
+extern u16 g_ActorEffectFlag100Timer;
+extern u8 g_BattleSlotCancelPending;
 extern u8 g_BattleActionIndex;
 extern u8 g_BattleActionQueueCount;
 extern unsigned int D_8009D2E8;
@@ -56,20 +54,19 @@ extern BattleAction g_BattleMenuActionRecord;
 extern BattleEffectBits g_BattleMenuEffectBits;
 extern BattleAttackBits g_BattleMenuAttackBits;
 extern BattleTurnBits g_BattleMenuTurnBits;
-extern s8 D_8009D2B0;
+extern s8 g_BattleTargetCount;
 extern struct FieldActor *g_FieldActorListHead; /* actor list head */
-extern void *D_8009D1F8;
 extern u8 g_EscapeFailedTexts[];
 extern u8 g_EscapeBlockedTexts[];
 extern const EnemyCombatant g_EnemyCombatantInitial;
 extern BattleEnemySlot g_BattleEnemySlots[7];
 extern u8 g_EntityInstanceCounter;
-extern s8 D_8009D2A0;
+extern s8 g_BattleLiveEnemyCount;
 extern u8 g_BattleStepIndex;
 extern u8 g_BattleEnemyEscapeFlag;
 /* Frames since the player halted at battle end; Menu_MainUpdate counts it up
  * to 0x5A. */
-extern s8 D_8009CE30;
+extern s8 g_BattleHaltTimer;
 
 /* Per-action tables Battle_SetupEnemyAnims copies to the stack: four facing
  * animation modes plus the action frame word, and the offense scale (x/10). */
@@ -96,8 +93,8 @@ void Draw_ResetTextboxes(void);
 extern s8 g_BattleTargetIndex;
 extern s8 g_BattleActiveTurnSlot, g_BattleItemMenuState;
 extern unsigned int g_GameStateFlags;
-extern u8 D_8009D288;
-extern unsigned int D_8009D1F4;
+extern u8 g_BattleGaugeCapLatch;
+extern unsigned int g_FieldPadPressed;
 
 void Battle_SetupEntityTarget(BattleEntity *actor);
 void Battle_DispatchEntityEffect(void);
@@ -138,7 +135,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEnemySlot, combatant) == 4, battle_enemy_sl
 PE1_STATIC_ASSERT(sizeof(BattleEnemySlot) == 0xDC, battle_enemy_slot_size);
 
 /* Aya action sequencer state and its render/scene dependencies. */
-extern u8 D_8009D25C;
+extern u8 g_AyaActionStep;
 extern s8 g_AyaAttackStep;
 /* The BattleEvasionOutcome Battle_CheckEvasion fills for the current hit.
  * g_EvasionReaction names its second byte for units whose assembler
@@ -165,7 +162,10 @@ extern BattleSavedRotation g_AyaSavedRotation;
  * the store. Matching debt (see docs/CODE_ORGANIZATION.md). */
 extern struct { u16 value; char pad[14]; } D_800B0D88_read __asm__("D_800B0D88");
 extern struct { u16 value; char pad[14]; } D_800B0D88_write __asm__("D_800B0D88");
-extern u16 D_801F1F38;
+/* Set when Aya's action reaches its recovery pose (Battle_StepAyaAction case
+ * 12); the cross-flash effect in the task program area clears it when it
+ * starts and stops spawning its ember particles once it is set. */
+extern u16 g_BattleCrossFlashStop;
 int Scene_InitEntityPlayer(int mode);
 void Pm_StopLowerHalf(void);
 s16 Battle_CalcAngleToTarget(RenderObjectEntity *object, void *target);

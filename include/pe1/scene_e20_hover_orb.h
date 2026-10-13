@@ -35,7 +35,7 @@ typedef struct SceneE20Actor { u8 reserved[0x4c]; u32 flags; } SceneE20Actor;
 typedef struct SceneE20Event { u8 reserved[13]; u8 active; } SceneE20Event;
 typedef struct SceneE20Pool { SceneE20Node *node; u8 reserved04[0x264]; SceneE20Vec position; } SceneE20Pool;
 typedef struct SceneE20Channel { int reserved[2]; SceneE20Pool *pool; } SceneE20Channel;
-extern SceneE20Color D_8018EFFC, D_8018F000, D_8018F004, D_8018F008;
+extern SceneE20Color g_SceneE20OrbBeamColor, g_SceneE20OrbEdgeColor, g_SceneE20OrbFlashColorOdd, g_SceneE20OrbFlashColorEven;
 extern struct BattleEntity *D_8009D254;
 extern void *g_SceneE20HoverOrbModel;
 int SceneE20_HoverOrbController(int mode, SceneE20TrailEffect *effect, SceneEffectSlot *command);

@@ -21,8 +21,10 @@ void FieldFx_DrawGlowLine(void *, void *, void *, void *, int, int, int);
 
 /* Joint triangle: three boss joint points joined by lines that pull toward a
  * fourth joint, then a spark that runs around the triangle edges. */
-extern GteShortVector D_8018F1CC; /* joint offsets */
-extern GteShortVector D_8018F1D4;
-extern RenderColor D_8018F1DC;
+extern GteShortVector g_RoomM123JointOffset; /* joint offsets */
+extern GteShortVector g_RoomM123JointOrigin;
+extern GteShortVector g_RoomM123JointOffset; /* joint offsets */
+extern GteShortVector g_RoomM123JointOrigin;
+extern RenderColor g_RoomM123TriangleColor;
 
 #endif

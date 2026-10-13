@@ -113,7 +113,7 @@ typedef struct {
 
 s32 *FieldFx_RegPtr(int index);
 s32 *FieldFx_VarPtr(int index);
-extern s16 D_80199590[];
+extern s16 g_SceneE08LimbBeamUnusedAngles[];
 extern u16 g_SceneE08LimbBeamAngles[];
 extern s32 g_SceneE08CentreX;
 extern s32 g_SceneE08CentreZ;

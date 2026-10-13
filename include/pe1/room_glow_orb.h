@@ -9,6 +9,7 @@
 #include "pe1/gte_types.h"
 #include "pe1/psyq_libc.h"
 #include "pe1/room_fx.h"
+#include "pe1/room_interface.h"
 #include "pe1/room_module.h"
 #include "pe1/room_spark.h"
 

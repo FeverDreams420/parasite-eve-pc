@@ -28,9 +28,9 @@ typedef struct SceneTwinGlowChannel {
     char *pool; /* 0x08 */
 } SceneTwinGlowChannel;
 
-extern GteRotation D_8018F1D4;
-extern GteShortVector D_8018F264;
-extern RenderColor D_8018F26C;
+extern GteRotation g_SceneE19FlatTilt;
+extern GteShortVector g_SceneE19TwinGlowJointOrigin;
+extern RenderColor g_SceneE19TwinGlowColor;
 
 int rand(void);
 

@@ -21,7 +21,9 @@
 #include "pe1/save.h"
 #include "pe1/text.h"
 
-int D_8009CF4C;
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+int g_SaveSelectedSlotState;
 int D_8009CFA4;
 int g_InvItemUsableFlag;
 int g_InvSelectedItemIndex;
@@ -658,10 +660,10 @@ s32 Menu_StepSaveSelect(MenuWidgetNode *arg0, s32 arg1) {
             if (temp_v0_2 != NULL) {
                 temp_cf50 = g_McDialogMode;
                 if ((temp_cf50 != 0) || (temp_v0_2->state != MEMCARD_SLOT_EMPTY)) {
-                    D_8009CF4C = temp_v0_2->state;
+                    g_SaveSelectedSlotState = temp_v0_2->state;
                     if (temp_cf50 != 0) {
                         Save_SetTitleStyleFlag(g_MenuMemCardConfirmPending);
-                        if (D_8009CF4C != MEMCARD_SLOT_EMPTY) {
+                        if (g_SaveSelectedSlotState != MEMCARD_SLOT_EMPTY) {
                             temp_v0_3 = MenuWidget_CreateSimpleNode(0x29, temp_s2, 0, 1);
                             temp_s2_2 = MenuWidget_CreateNode(0x29, temp_v0_3, temp_v0_3);
                             temp_v0_3->draw = Menu_DrawItemLabel;
@@ -976,7 +978,7 @@ void Menu_DrawSaveMetadataPreview(void) {
 /* Name entry screen input: the two page handlers share one object
  * (contiguous at 0x8004E074, private data and helpers).
  *
- * The game-state flags are cleared through their scalar symbol D_800B0CD8,
+ * The game-state flags are cleared through their scalar symbol g_GameStateFlagsWord,
  * which keeps retail's absolute lui/lw and lui/sw under cc1 -G8. */
 
 int Menu_StepNameEntry(MenuWidgetNode *parent, unsigned int flags)
@@ -1037,7 +1039,7 @@ int Menu_StepNameEntry(MenuWidgetNode *parent, unsigned int flags)
                 Inv_SetActiveList(9, 0);
                 if (!g_MenuRenameTargetRecord)
                     Menu_CopyPromptCodes((unsigned char *)Save_GetActiveMetadataBuffer());
-                D_800B0CD8 &= ~0x8000;
+                g_GameStateFlagsWord &= ~0x8000;
                 Menu_PlayConfirmSound();
             } else {
                 Menu_PlayErrorSound();
@@ -1101,7 +1103,7 @@ int Menu_StepNameEntryAlt(MenuWidgetNode *parent, unsigned int input) {
                 if (g_MenuRenameTargetRecord == 0) {
                     Menu_CopyPromptCodes((unsigned char *)Save_GetActiveMetadataBuffer());
                 }
-                D_800B0CD8 &= 0xFFFF7FFF;
+                g_GameStateFlagsWord &= 0xFFFF7FFF;
                 Menu_PlayConfirmSound();
             } else {
                 Menu_PlayErrorSound();
@@ -1213,7 +1215,7 @@ name_input_back:
                 if (g_MenuRenameTargetRecord == 0) {
                     Menu_CopyPromptCodes((unsigned char *)Save_GetActiveMetadataBuffer());
                 }
-                D_800B0CD8 &= 0xFFFF7FFF;
+                g_GameStateFlagsWord &= 0xFFFF7FFF;
                 Menu_PlayConfirmSound();
             } else {
                 Menu_PlayErrorSound();

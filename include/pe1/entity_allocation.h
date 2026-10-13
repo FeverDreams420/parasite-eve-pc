@@ -24,12 +24,10 @@ typedef union EntityAllocationAddress {
 } EntityAllocationAddress;
 
 /* Entity pool storage cleared by Entity_ResetAllPools besides the script
- * variable bank (g_ScriptVariableBank): the 14 0x280-byte actor records at
- * g_EntityPool (D_800BEA94 is the free-list link word of the first) and the
- * pool's trailing record. */
+ * variable bank (g_ScriptVariableBank): 14 actor records of 0x280 bytes, each
+ * a FieldActor whose next field Entity_InitFreePool chains into the free
+ * list (the last one's link is cleared). */
 extern char g_EntityPool[];
-extern char D_800BEA94[];
-extern int D_800C0B14[];
 extern int g_FieldMoveLock;
 
 /* Claims scratch-buffer slots for a model allocation of `size` bytes and

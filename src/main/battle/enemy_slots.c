@@ -19,7 +19,7 @@ void Entity_AllocSlot(BattleEntity *entity) {
                 ((EnemyCombatant *)entity->core)->effect =
                     (EnemyActionEffect *)&((EnemyCombatant *)entity->core)->pad_1C;
                 Entity_SetActionMode(entity, 2);
-                D_8009D2A0++;
+                g_BattleLiveEnemyCount++;
             }
             return;
         }

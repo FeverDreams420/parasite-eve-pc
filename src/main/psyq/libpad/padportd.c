@@ -33,7 +33,7 @@ int PadInitDirect(u8 *output0, u8 *output1) {
     g_MemCardCommandByte = 0;
     _padInitDirSeq();
 
-    obj = &D_800A5B70[0];
+    obj = &g_MemCardObjs[0];
     g_PadDmaCompleteFn = MemCard_DmaCompleteCallback;
     g_MemCardObjResetFn = CardObj_ResetFields;
     g_MemCardObjReadPayloadByteFn = CardObj_ReadPayloadByte;
@@ -128,7 +128,7 @@ int MemCard_DmaCompleteCallback(int result) {
     int nextResult;
     int cleared;
 
-    objects = &D_800A5B70[0];
+    objects = &g_MemCardObjs[0];
     ignoredResult = -9;
     channelResults = &g_MemCardChannelCounts[0];
 
@@ -332,7 +332,7 @@ int CardObj_GetChannelId(CardObj *entry) {
 
     index = 0;
     value = 0x10;
-    candidate = D_800A5B70;
+    candidate = g_MemCardObjs;
     for (; index < 2; index++) {
         if (entry == candidate) {
             return value;
@@ -345,7 +345,7 @@ int CardObj_GetChannelId(CardObj *entry) {
 }
 
 CardObj *CardObj_LookupByChannelId(int value) {
-    CardObj *entry = D_800A5B70;
+    CardObj *entry = g_MemCardObjs;
 
     if ((value & 0xF0) != 0) {
         entry += 1;

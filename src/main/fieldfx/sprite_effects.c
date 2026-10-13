@@ -40,7 +40,7 @@ int FieldFx_FallingSprite(int mode, RenderBouncingSprite *state)
             track = g_FallingSpriteColorTrack0;
             break;
         case 1:
-            track = D_800E1444;
+            track = g_FallingSpriteColorTrack1;
             break;
         default:
             track = g_BouncingSpriteColorTrack2;
@@ -140,7 +140,7 @@ int FieldFx_PulsingStarFan(int mode)
         g_FieldFxSpriteParams.depth = 200;
         FieldFx_GetActorPosition((char *)D_8009D254, 1, &position.x);
         position.y -= 300;
-        track = g_FieldFxTaskContext->variables[6] == 1 ? D_800E1518 : D_800E1540;
+        track = g_FieldFxTaskContext->variables[6] == 1 ? g_PulsingStarFanColorTrack1 : g_PulsingStarFanColorTrack0;
         FieldFx_SampleColorTrack(track, &color, g_FieldFxCurrentAge * 24 / 20);
         scale = rsin((g_FieldFxCurrentAge << 10) / 20) / 2 + 2048;
         FieldFx_DrawStarFan(&position, 400, 400, 8, 0, scale, scale, &color, 0, 128, 1);
@@ -149,7 +149,7 @@ int FieldFx_PulsingStarFan(int mode)
     return 0;
 }
 
-int func_800D5010(int mode, RenderBouncingSprite *state)
+int FieldFx_ScatterBurstSprite(int mode, RenderBouncingSprite *state)
 {
     GteShortVector position;
     GteRotation rotation;
@@ -192,13 +192,13 @@ int func_800D5010(int mode, RenderBouncingSprite *state)
 
 
 /* Scatter burst at the actor target: opens a pool of bouncing sprites
- * (func_800D5010), throws two per frame for six frames on a turning angle,
+ * (FieldFx_ScatterBurstSprite), throws two per frame for six frames on a turning angle,
  * and draws a growing flash, a short ring and a ground ring. */
 int FieldFx_ScatterBurstEmitter(int mode, RenderArcingEmitter *state)
 {
     GteRotation rotation;
     GteShortVector position;
-    RenderColor color = D_800C22BC;
+    RenderColor color = g_FieldFxGlowFountainTint;
     RenderBouncingSprite *sprite;
     int speed;
     int intensity;
@@ -214,7 +214,7 @@ int FieldFx_ScatterBurstEmitter(int mode, RenderArcingEmitter *state)
         state->position.y = g_FieldFxOwner->actor->render_object.target_y;
         state->position.z = g_FieldFxOwner->actor->render_object.target_z;
         return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 16, 12,
-                             (FieldFxTaskCallback)func_800D5010);
+                             (FieldFxTaskCallback)FieldFx_ScatterBurstSprite);
     case 1:
         if (g_FieldFxCurrentAge < 6) {
             for (i = 0; i < 2; i++) {
@@ -363,7 +363,7 @@ int FieldFx_CosineSparkEmitter(int mode, RenderArcingEmitter *state)
             position.z = state->position.z;
             scale = rsin((g_FieldFxCurrentAge << 10) / 12);
             state->radius = scale / 8;
-            FieldFx_SampleColorTrack(D_800E166C, &color, g_FieldFxCurrentAge);
+            FieldFx_SampleColorTrack(g_CosineSparkColorTrack, &color, g_FieldFxCurrentAge);
             FieldFx_DrawRingBand(&position, 300, 512, 12, 0, scale, scale, 0,
                           &color, 128, 1);
         }
@@ -693,7 +693,7 @@ int FieldFx_RingPulse(int mode, RenderRingPulse *state)
     return 0;
 }
 
-int func_800D6C58(int mode, RenderBouncingSprite *state)
+int FieldFx_BouncingSpinSprite(int mode, RenderBouncingSprite *state)
 {
     GteShortVector position;
     GteRotation rotation;
@@ -744,7 +744,7 @@ int FieldFx_BouncingSpinEmitter(int mode, RenderPhaseEmitter *state) {
     case 0:
         state->phase = rand();
         return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 16, 24,
-                             (FieldFxTaskCallback)func_800D6C58);
+                             (FieldFxTaskCallback)FieldFx_BouncingSpinSprite);
     case 1:
         if (g_FieldFxCurrentAge < 8) {
             for (count = 0; count < 3; count++) {
@@ -815,7 +815,7 @@ int FieldFx_EmberSpark(int mode, s16 *state) {
 }
 
 #define ROOM_FAN_SWEEP_SPARK_NAME FieldFx_FanSweepSpark
-#define ROOM_FAN_SWEEP_SPARK_COLOR D_800C22D4
+#define ROOM_FAN_SWEEP_SPARK_COLOR g_FieldFxFanSweepSparkTint
 #define ROOM_FAN_SWEEP_SPARK_ANCHOR g_FanSweepSparkAnchor
 #define ROOM_FAN_SWEEP_SPARK_TRAIL g_FanSweepSparkTrailPool
 #define ROOM_FAN_SWEEP_SPARK_COS rcos
@@ -942,7 +942,7 @@ int FieldFx_FanSweepGlow(int mode, FieldFanSweepGlow *glow)
 
 int FieldFx_ArcingSpark(int mode, RenderArcingEffect *state)
 {
-    RenderColor color = D_800C22DC;
+    RenderColor color = g_FieldFxArcingSparkTint;
     GteShortVector position;
     int palette;
     switch (mode) {
@@ -1007,7 +1007,7 @@ int FieldFx_ArcingSparkEmitter(int mode, RenderArcingEmitter *state)
             rotation.flags = 1;
             scale = rsin((g_FieldFxCurrentAge << 10) / 50);
             state->radius = scale / 8;
-            FieldFx_SampleColorTrack(D_800E18F0, &color, g_FieldFxCurrentAge);
+            FieldFx_SampleColorTrack(g_ArcingSparkColorTrack, &color, g_FieldFxCurrentAge);
             FieldFx_DrawRingBand(&position, 350, 500, 20, &rotation,
                           scale, scale, 0, &color, 128, 1);
         }
@@ -1041,7 +1041,7 @@ int FieldFx_OrbitTrailPoint(int mode, GteShortVector *state)
         position.x = state->x;
         position.y = state->y;
         position.z = state->z;
-        FieldFx_SampleColorTrack(D_800E1988, &color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_OrbitTrailColorTrack, &color, g_FieldFxCurrentAge);
         scale = 4096 - (g_FieldFxCurrentAge << 12) / 6;
         clut_y = g_FieldFxPaletteTable[g_FieldFxSpriteParams.palette];
         if (g_FieldFxSpriteParams.palette == 4 && g_FieldFxAltPaletteFlag)
@@ -1359,7 +1359,7 @@ int FieldFx_HelicalTrailPoint(int mode, GteShortVector *state)
         rotation.y = 0;
         rotation.z = g_FieldFxCurrentAge << 6;
         rotation.flags = 0;
-        FieldFx_SampleColorTrack(D_800E1AA0, &color, g_FieldFxCurrentAge);
+        FieldFx_SampleColorTrack(g_HelicalTrailColorTrack, &color, g_FieldFxCurrentAge);
         scale = 4096 - (g_FieldFxCurrentAge << 12) / 12;
         palette = g_FieldFxPaletteTable[g_FieldFxSpriteParams.palette];
         if (g_FieldFxSpriteParams.palette == 4 && g_FieldFxAltPaletteFlag)
@@ -1610,7 +1610,7 @@ int FieldFx_DampedSparkEmitter(int mode, RenderSparkEmitter *state)
 }
 
 #define SPINNING_MODEL_FUNC FieldFx_SpinningModelFlareA
-#define SPINNING_MODEL_ANCHOR D_800E220C
+#define SPINNING_MODEL_ANCHOR g_SpinningModelAnchorA
 #define SPINNING_MODEL_PALETTE 4
 #define SPINNING_MODEL_COLOR(size) 0, (u8)((size) / 2), (u8)((size) / 8)
 #include "spinning_model.inc"

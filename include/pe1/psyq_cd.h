@@ -193,7 +193,8 @@ typedef struct CdRomCommandState {
     u_int reserved34;
 } CdRomCommandState;
 
-/* View beginning at D_8009B558, four bytes into the system-state window. */
+/* View beginning at g_CdRomEventCommandState (0x8009B558), four bytes into
+ * the system-state window. */
 typedef struct CdRomEventCommandState {
     u_char pendingCommand;
     u_char pendingParamBytes[4];
@@ -410,7 +411,7 @@ extern u32 g_CdStreamStartFrame;
 /* CD streaming state shared by StSetStream, StSetRing and StCdInterrupt. */
 extern s32 g_StCurrentFrameNumber;
 extern s16 g_StFrameSectorIndex;
-extern s32 D_800A801C;
+extern s32 g_StRgb24Mode;
 /* Contiguous end-of-stream controls. StCdInterrupt retains its two interior
  * scalar aliases because field-based addressing changes its retail schedule. */
 typedef struct CdStreamEndState {

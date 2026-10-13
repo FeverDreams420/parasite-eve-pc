@@ -53,14 +53,14 @@ int Sys_SetInterruptHandler(void) {
     int (**slot)(void);
     int (**handlers)(void);
     EnterCriticalSection();
-    slot = D_800A34B4;
+    slot = g_PadIntQueueHandlers;
     handlers = slot;
     queue = (char *)handlers - 4;
     slot = handlers++;
     *slot = LIBAPI_PAD_text_254;
     *handlers = LIBAPI_PAD_text_2BC;
     g_PadIntQueueNode = 0;
-    D_800A34BC = 0;
+    g_PadIntQueueSpare = 0;
     SysDeqIntRP(1, queue);
     SysEnqIntRP(1, queue);
     ExitCriticalSection();

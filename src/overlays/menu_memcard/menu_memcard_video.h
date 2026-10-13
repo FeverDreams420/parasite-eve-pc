@@ -6,6 +6,7 @@
 #include "pe1/cdrom_buffers.h"
 #include "pe1/disc_load_state.h"
 #include "pe1/display_env.h"
+#include "pe1/draw_state.h"
 #include "pe1/game_state.h"
 #include "pe1/gpu_image.h"
 #include "pe1/psyq_bios.h"
@@ -40,40 +41,42 @@ typedef struct VideoDisplay {
 extern s32 DsSystemStatus(void),DsShellOpen(void);
 extern void exit(s32),Spu_SetVoiceVolume(s32);
 extern VideoEntry *g_MenuCardScreenVideoEntry;
-extern u8 D_800B0DBE,D_801D0DBD;
-extern s8 D_800B0DBB;
-extern s16 g_MenuCardScreenVideoLastTime,D_801D0DE0[2];
+extern u8 g_MenuCardScreenVideoFinished;
+/* Wide-screen flag of the playing movie (Pe1SceneAudioState movie_wide). */
+extern s8 g_MovieWide;
+/* g_SeqElapsed as a one-field record: MENUCARD_OPEN_VIDEO_NAME sets it with
+ * its own address load, next to g_MovieWide and g_MovieIndex. */
+typedef struct VideoFrameCount { s16 value; } VideoFrameCount;
+extern VideoFrameCount g_SeqElapsedRecord;
+extern s16 g_MenuCardScreenVideoLastTime,g_MenuCardScreenVideoSize[2];
 
 void *MenuCard_UpdateVideoFrame(VideoDisplay *display);
-void *func_80121270(VideoDisplay *display);
+void *MenuCardFirst_UpdateVideoFrame(VideoDisplay *display);
 
 /* State of the first video player copy (linked at 0x80120D00). */
 extern VideoEntry *g_MenuCardVideoEntry;
-extern s16 g_MenuCardVideoLastTime, D_80122418[2];
-extern u8 D_801223F5;
+extern s16 g_MenuCardVideoLastTime, g_MenuCardVideoSize[2];
+extern u8 g_MenuCardVideoFinished;
 
-extern u8 D_801D0DC0;
+extern u8 g_MenuCardScreenVideoDepthFlip;
 extern s32 g_ActiveDrawSlot;
-extern void StCdInterrupt(void),DecDCTout(void *,s32),func_801918F8(s8,s8);
+extern void StCdInterrupt(void),DecDCTout(void *,s32),MenuCard_SetVideoDisplay(s8,s8);
 
 void MenuCard_UploadVideoSlice(void);
 
 extern DISPENV g_MenuCardScreenSavedDispEnv[2];
-extern DRAWENV D_801D13AC[2];
-extern u8 *D_801D0DE8,*D_801D0DEC,*D_801D0DF0,*D_801D0DF4,*D_801D0DF8,*D_801D0DFC;
-extern u8 D_800B0DBA;
-typedef struct VideoFrameCount { s16 value; } VideoFrameCount;
-extern VideoFrameCount D_800B0DBC;
+extern DRAWENV g_MenuCardScreenSavedDrawEnv[2];
+extern u8 *g_MenuCardScreenVideoDecodeBuffer0,*g_MenuCardScreenVideoDecodeBuffer1,*g_MenuCardScreenVideoSliceBuffer0,*g_MenuCardScreenVideoSliceBuffer1,*g_MenuCardScreenVideoVlcTable,*g_MenuCardScreenVideoStreamRing;
 
 s32 MenuCard_InitVideoBuffers(s8 count, u8 **buffers);
-s32 func_801216C4(s8 count, u8 **buffers);
+s32 MenuCardFirst_InitVideoBuffers(s8 count, u8 **buffers);
 /* Buffers and saved environments of the first video player copy. */
-extern u8 *D_80122420, *D_80122424, *D_80122428, *D_8012242C, *D_80122430, *D_80122434;
+extern u8 *g_MenuCardVideoDecodeBuffer0, *g_MenuCardVideoDecodeBuffer1, *g_MenuCardVideoSliceBuffer0, *g_MenuCardVideoSliceBuffer1, *g_MenuCardVideoVlcTable, *g_MenuCardVideoStreamRing;
 extern DISPENV g_MenuCardVideoSavedDispEnv[2];
-extern DRAWENV D_80122814[2];
+extern DRAWENV g_MenuCardVideoSavedDrawEnv[2];
 
 typedef struct VideoDiscRange { u16 start,end; } VideoDiscRange;
-extern VideoEntry D_801D0E00[];
+extern VideoEntry g_MenuCardScreenVideoTable[];
 extern u32 g_FieldPadBits;
 s32 MenuCard_StepVideo(void);
 extern void SetDispMask(s32), ResetGraph(s32), Field_HandleStateTransition(void), StUnSetRing(void), Draw_RenderFrame(void);
@@ -81,24 +84,24 @@ extern void SetDispMask(s32), ResetGraph(s32), Field_HandleStateTransition(void)
 s32 MenuCard_PlayVideo(s32 index);
 
 void MenuCard_SetVideoDisplay(s8 index, s8 wide);
-void func_80121004(s8 index, s8 wide);
+void MenuCardFirst_SetVideoDisplay(s8 index, s8 wide);
 
 /* Video open: file lookup, stream start and first decoded frame. */
 extern u8 g_MovieIndex;
-extern VideoEntry D_80122438[];
-extern DslFILE D_801223FC, D_801D0DC4;
-extern CdlLOC D_80122414, D_801D0DDC;
-extern VideoDisplay D_801228CC, D_801D1464;
-extern char D_80120FF4[], D_80120FFC[], D_8018F2E4[], D_8018F2EC[];
+extern VideoEntry g_MenuCardVideoTable[];
+extern DslFILE g_MenuCardVideoFile, g_MenuCardScreenVideoFile;
+extern CdlLOC g_MenuCardVideoRestartLoc, g_MenuCardScreenVideoRestartLoc;
+extern VideoDisplay g_MenuCardVideoDisplay, g_MenuCardScreenVideoDisplay;
+extern char g_MenuCardVideoDirectory[], g_MenuCardVideoDirectoryLate[], g_MenuCardScreenVideoDirectory[], g_MenuCardScreenVideoDirectoryLate[];
 extern void strcat(char *, char *), StSetRing(void *, s32);
-extern void DecDCTvlc2(void *, void *, void *), func_801214D4(void);
+extern void DecDCTvlc2(void *, void *, void *), MenuCardFirst_UploadVideoSlice(void);
 extern s32 DsRead2(CdlLOC *, s32);
-s32 func_80121C04(s32 number);
+s32 MenuCardFirst_OpenVideo(s32 number);
 s32 MenuCard_OpenVideo(s32 number);
 
 /* Per-frame video step: decode, restart the stream on a stall, page flip. */
-extern u8 D_801223F6, D_801223F8, D_801D0DBE;
+extern u8 g_MenuCardVideoDecodeMode, g_MenuCardVideoDepthFlip, g_MenuCardScreenVideoDecodeMode;
 extern void DecDCTin(void *, s32);
-s32 func_80122040(void);
+s32 MenuCardFirst_StepVideo(void);
 
 #endif

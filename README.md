@@ -6,7 +6,7 @@ PlayStation runtime APIs.
 
 The code was imported from
 [parasite-eve-decomp](https://github.com/khasinski/parasite-eve-decomp) through
-revision `adf75e939`. From this point this repository develops independently
+revision `1d20afe62`. From this point this repository develops independently
 as a native C project. Byte matching, retail executable checksums, original
 compiler output, fixed code addresses and PS1 binary builds are no longer
 acceptance requirements. Changes are evaluated by behavior, portability,

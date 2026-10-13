@@ -14,9 +14,9 @@
 typedef struct MemcardLinkColor { u8 bytes[4]; } MemcardLinkColor;
 typedef struct MemcardLinkState { s16 phase, timer, opacity, reserved06; GteRotation rotation; } MemcardLinkState;
 typedef struct MemcardLinkChannel { s32 reserved[2]; void *slots; } MemcardLinkChannel;
-extern MemcardLinkColor D_801ED850, D_801ED854;
+extern MemcardLinkColor g_MenuCardLinkColor1, g_MenuCardLinkColor2;
 extern struct BattleEntity *D_8009D254;
-extern s16 D_801F1D86, D_801F1D88;
+extern s16 g_MenuCardLinkJointA, g_MenuCardLinkJointB;
 
 s32 MenuCard_LinkEffect(s32 mode, MemcardLinkState *state);
 

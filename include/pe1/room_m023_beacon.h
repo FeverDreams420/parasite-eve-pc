@@ -75,8 +75,8 @@ typedef struct RoomM023BeaconColor {
 } RoomM023BeaconColor;
 
 extern struct BattleEntity *D_8009D254;
-extern u8 *D_80190760;
-extern u8 D_801906F0[];
+extern u8 *g_RoomM023BeaconModel;
+extern u8 g_RoomM023BeaconColorTrack[];
 
 void FieldFx_ModelShiftColors(u8 *data, int r, int g, int b);
 int FieldFx_IsPlayerInSegmentBand(void *position, GteShortVector *target, int radius);

@@ -22,6 +22,7 @@
 #include "pe1/render_object.h"
 #include "pe1/room_floor.h"
 #include "pe1/room_fx.h"
+#include "pe1/room_interface.h"
 #include "pe1/room_particle_state.h"
 #include "pe1/room_twelve_effect.h"
 
@@ -420,7 +421,7 @@ typedef struct RoomLibHandlerCState {
     unsigned char finished;       /* 0x96 */
 } RoomLibHandlerCState;
 
-extern short D_800966EE[];
+extern short g_RcossinTblCos[];
 extern struct BattleEntity *D_8009D254;
 struct FieldActorNode;
 extern struct FieldActor *g_FieldActorListHead;
@@ -632,7 +633,7 @@ extern unsigned char RoomLib_TwelveEffectTable[];
 #define ROOMLIB_JOIN(a, b) ROOMLIB_JOIN_RAW(a, b)
 
 extern void RoomLib_FxNotify(RoomLink *l, struct RoomSub *s, int scratch);
-extern void func_800DFB20(void *state);
+extern void FieldFx_LoopLinkedAnimation(void *state);
 
 /* state=4 and clear the signal word */
 #define ROOMLIB_SET4_CLEAR_SIGNAL(name) \

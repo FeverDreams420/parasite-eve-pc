@@ -29,6 +29,6 @@ typedef struct RoomM404Particle {
     s16 vx, vy, vz, unused0E;
     s16 state, timer;
 } RoomM404Particle;
-extern const RoomTemplate8 D_8018F208;
+extern const RoomTemplate8 g_RoomM404SinkingDropAnchor;
 
 #endif

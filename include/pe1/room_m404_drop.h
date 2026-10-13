@@ -70,9 +70,12 @@ typedef struct RoomM404DropEvent {
 } RoomM404DropEvent;
 
 extern struct BattleEntity *D_8009D254;
-extern RoomM404DropRotation D_8018F1CC;
-extern RoomM404DropColor D_8018F1D4;
-extern RoomM404DropColor D_8018F1D8;
+extern RoomM404DropRotation g_RoomM404DropFanTilt;
+extern RoomM404DropColor g_RoomM404DropFanColor;
+extern RoomM404DropColor g_RoomM404DropGlowColor;
+extern RoomM404DropRotation g_RoomM404DropFanTilt;
+extern RoomM404DropColor g_RoomM404DropFanColor;
+extern RoomM404DropColor g_RoomM404DropGlowColor;
 extern u8 g_RoomM404SinkingDropColorTrack[];
 
 int rand(void);

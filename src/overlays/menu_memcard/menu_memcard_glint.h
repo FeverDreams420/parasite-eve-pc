@@ -52,15 +52,15 @@ typedef struct MemcardModelScale {
     s32 x, y, z, reserved0C;
 } MemcardModelScale;
 
-extern RenderColor D_801ED844, D_801ED848, D_801ED84C;
-extern GteRotation D_801ED7FC, D_801ED804;
-extern RenderColor D_801ED80C, D_801ED810, D_801ED814;
-extern u8 D_801F1BB0[];
-extern u8 D_801F1C28[];
-extern u8 D_801F1CD8[];
+extern RenderColor g_MenuCardGlintBurstFlashColor, g_MenuCardSpinRingColorA, g_MenuCardSpinRingColorB;
+extern GteRotation g_MenuCardEffectSpinRotation, g_MenuCardEffectTiltRotation;
+extern RenderColor g_MenuCardRingBurstGlowColor, g_MenuCardRingBurstRingColor, g_MenuCardRingBurstBandColor;
+extern u8 g_MenuCardDriftGlowColorTrack[];
+extern u8 g_MenuCardRisingEmberColorTrack[];
+extern u8 g_MenuCardSpinRingColorTrack[];
 extern GteShortVector g_MemcardGlintOrigin;
-extern s16 D_801F1F3A;
-extern s16 D_801F1F38;
+extern s16 g_MenuCardCrossFlashRaised;
+extern s16 g_BattleCrossFlashStop;
 
 /* Cross flash: two beams between the actor's hands, each drawn as two
  * mirrored trails. */
@@ -75,9 +75,9 @@ typedef struct MemcardCrossFlash {
     u8 trailD[0x90];              /* 0x1D8 */
 } MemcardCrossFlash;
 
-extern MemcardJointOffset D_801ED820, D_801ED828, D_801ED830;
-extern RenderColor D_801ED838, D_801ED83C, D_801ED840;
-extern u8 D_801F1CB0[];
+extern MemcardJointOffset g_MenuCardCrossFlashTipAOffset, g_MenuCardCrossFlashTipBOffset, g_MenuCardCrossFlashCenterOffset;
+extern RenderColor g_MenuCardCrossFlashInnerColor, g_MenuCardCrossFlashOuterColor, g_MenuCardCrossFlashEdgeColor;
+extern u8 g_MenuCardGlintBurstColorTrack[];
 
 int MenuCard_FadingGlintParticle(int mode, RoomDampedSpark *spark);
 int MenuCard_GlintBurstController(int mode, MemcardGlintBurst *burst);

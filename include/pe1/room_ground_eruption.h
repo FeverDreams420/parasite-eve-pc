@@ -4,6 +4,7 @@
 #include "common.h"
 #include "pe1/psyq_libc.h"
 #include "pe1/room_fx.h"
+#include "pe1/room_interface.h"
 #include "pe1/room_module.h"
 
 /* The ground eruption (src/overlays/room_lib/ground_eruption.c). */

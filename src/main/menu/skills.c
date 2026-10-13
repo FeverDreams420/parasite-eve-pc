@@ -18,6 +18,8 @@
 #include "pe1/save_tail_state.h"
 #include "pe1/text.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 int g_MenuItemPrimListHandles[2];
 int g_InvSelectedItemIndex;
 int g_InvSwapTargetIndex;
@@ -498,7 +500,7 @@ void Menu_DrawWeaponModSlots(s32 arg0) {
             Draw_OffsetCursor(0x12, 2);
             Draw_AllocSprite(0x22U);
             Draw_OffsetCursor(0xC, -2);
-            var_a0 = D_800922CC[temp_s0];
+            var_a0 = g_MenuModSlotThirdGlyphs[temp_s0];
             Draw_AllocSprite(var_a0);
         }
     } else {
@@ -513,7 +515,7 @@ void Menu_DrawWeaponModSlots(s32 arg0) {
             Draw_OffsetCursor(0x12, 4);
             Draw_AllocSprite(0x22U);
             Draw_OffsetCursor(0xC, -4);
-            Draw_AllocSprite(D_800922CC[temp_s0]);
+            Draw_AllocSprite(g_MenuModSlotThirdGlyphs[temp_s0]);
             var_a0 = 0x68;
             Draw_AllocSprite(var_a0);
         }

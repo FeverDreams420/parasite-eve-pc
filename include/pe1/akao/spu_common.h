@@ -3,11 +3,9 @@
 
 #include "pe1/psyq_spu_api.h"
 
-/* Common attributes occupy the first 40 bytes of this shared AKAO area. */
-extern unsigned char D_800C0D90[];
-
-/* Independently addressed aliases of common.cd.volume and common.cd.reverb. */
-extern short D_800C0DA0, D_800C0DA2;
-extern int D_800C0DA4;
+/* SPU common attributes the sound driver hands to SpuSetCommonAttr:
+ * Spu_InitVoiceState fills them at start-up and Seq_ApplyGlobalPitch
+ * rewrites the CD volume and reverb. */
+extern SpuCommonAttr g_AkaoSpuCommonAttr;
 
 #endif

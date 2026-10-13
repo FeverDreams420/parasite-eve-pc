@@ -690,7 +690,7 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
         fx->ty = params->y;
         fx->tz = params->z;
         fx->ty = g_RoomFloorY->raw;
-        g_RoomBeamSparkAsset = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC5485704);
+        g_RoomBeamSparkAsset = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5485704);
         FieldFx_ModelScrollUv(g_RoomBeamSparkAsset, 0, 0);
         handle = FieldFx_GetOwnerProgress();
         FieldFx_PlaySoundAtOwner(0x58A, handle);
@@ -1034,7 +1034,7 @@ int RoomEffect_JitterSparkController(int mode, GteShortVector *target,
 
     switch (mode) {
     case 0:
-        sound = (RoomSoundSlot *)D_800B0E64;
+        sound = (RoomSoundSlot *)g_LoadedSceneAssetBlock;
         if (sound->channel != 0) {
             volume = 0x7F;
             handle = FieldFx_GetOwnerProgress();

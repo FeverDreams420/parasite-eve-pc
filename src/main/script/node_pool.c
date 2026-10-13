@@ -6,9 +6,11 @@
 #include "pe1/script_node.h"
 #include "pe1/script_state.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 ScriptNode *g_ScriptNodeFreeListHead;
 unsigned short g_ScriptNodeSeqCounter[1];
-int g_SceneDataTable0;
+int g_ScriptCursorAddress;
 RelocBlock *g_SceneDataTable1;
 ScriptNode *g_ScriptNodePool;
 
@@ -43,7 +45,7 @@ void Script_InitNodePool(void) {
         }
     }
 
-    g_SceneDataTable0 = 0;
+    g_ScriptCursorAddress = 0;
 
     i = 0;
     ptr = g_ScriptOperandTable;

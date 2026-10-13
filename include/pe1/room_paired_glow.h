@@ -9,6 +9,7 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/psyq_libc.h"
 #include "pe1/room_fx.h"
+#include "pe1/room_interface.h"
 #include "pe1/scene_archive.h"
 
 /* The paired glow (src/overlays/room_lib/paired_glow.c). */

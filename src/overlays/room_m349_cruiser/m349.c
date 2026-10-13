@@ -6,8 +6,8 @@
  * (state 2) by a small random amount each frame and bounces off the floor
  * height; draws as a spinning flare, the last state with a glow ring. */
 int RoomM349_FlareSparkCallback(int mode, RoomM349FlareSpark *spark) {
-    GteRotation rotation = D_8018EFF4;
-    RenderColor color = D_8018EFFC;
+    GteRotation rotation = g_RoomM349SparkRotationBase;
+    RenderColor color = g_RoomM349FlareColor;
     int angle;
     int size;
     int fade;
@@ -149,9 +149,9 @@ int RoomM349_FlareRing(int mode, RoomM349FlareTarget *target,
                   RoomM349FlareParams *params) {
     GteShortVector joint;
     GteShortVector anchor;
-    GteRotation rotation = D_8018F000;
-    GteRotation rotation2 = D_8018F008;
-    RenderColor color = D_8018EFFC;
+    GteRotation rotation = g_RoomM349JointGlowAnchorNegY;
+    GteRotation rotation2 = g_RoomM349JointGlowAnchorPosY;
+    RenderColor color = g_RoomM349FlareColor;
     RoomM349FlareSpark *child;
     int radius;
     int period;
@@ -295,18 +295,18 @@ int RoomM349_FlareRing(int mode, RoomM349FlareTarget *target,
 
 short *RoomM349_SetFlareParams(int arg0, int arg1, int arg2, int arg3) {
     if (arg0 == 1) {
-        g_RoomM349FlareParams = arg1;
-        D_80190196 = arg2;
-        D_80190198 = arg3;
+        g_RoomM349FlareParams.x = arg1;
+        g_RoomM349FlareParams.y = arg2;
+        g_RoomM349FlareParams.z = arg3;
     }
     if (arg0 == 2) {
-        D_8019019C = arg1;
-        D_801901A4 = arg2;
+        g_RoomM349FlareParams.radius = arg1;
+        g_RoomM349FlareParams.lastFrame = arg2;
     } else {
         if (arg1 < 2) {
             arg1 = 2;
         }
-        D_801901A0 = arg1;
+        g_RoomM349FlareParams.period = arg1;
     }
-    return &g_RoomM349FlareParams;
+    return (short *)&g_RoomM349FlareParams;
 }

@@ -37,12 +37,12 @@ void Scene_CheckFlagBits(void *ctx, SceneFlagRecord **table, int *index_ptr)
                 mask = record->mask_all;
                 if ((value & mask) == mask) {
                     if (flags & 4) {
-                        if (D_8009D1F4 & record->mask_any) {
+                        if (g_FieldPadPressed & record->mask_any) {
                             callback(ctx, index_ptr);
                             triggered = 1;
                         }
                     } else if (flags & 8) {
-                        if (D_8009D1E4 & record->mask_any) {
+                        if (g_FieldPadReleased & record->mask_any) {
                             callback(ctx, index_ptr);
                             triggered = 1;
                         }
@@ -64,12 +64,12 @@ void Scene_CheckFlagBits(void *ctx, SceneFlagRecord **table, int *index_ptr)
                 mask_copy = mask;
                 if (current & mask_copy) {
                     if (flags & 4) {
-                        if (D_8009D1F4 & mask) {
+                        if (g_FieldPadPressed & mask) {
                             callback(ctx, index_ptr);
                             triggered = 1;
                         }
                     } else if (flags & 8) {
-                        if (D_8009D1E4 & mask_copy) {
+                        if (g_FieldPadReleased & mask_copy) {
                             callback(ctx, index_ptr);
                             triggered = 1;
                         }
@@ -79,12 +79,12 @@ void Scene_CheckFlagBits(void *ctx, SceneFlagRecord **table, int *index_ptr)
                     }
                 }
             } else if (flags & 4) {
-                if (D_8009D1F4 & record->mask_any) {
+                if (g_FieldPadPressed & record->mask_any) {
                     callback(ctx, index_ptr);
                     triggered = 1;
                 }
             } else if (flags & 8) {
-                if (D_8009D1E4 & record->mask_any) {
+                if (g_FieldPadReleased & record->mask_any) {
                     callback(ctx, index_ptr);
                     triggered = 1;
                 }

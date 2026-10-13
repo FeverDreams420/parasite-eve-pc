@@ -4,7 +4,7 @@
 #include "pe1/menu_widget.h"
 
 extern int g_MenuInputActive;
-extern int g_DrawTextPosX, D_8009D168;
+extern int g_DrawTextPosX, g_MenuListRowHeight;
 
 /* The list renderer passes the row index in a0 to its drawing callback. */
 void MenuWidget_DrawList(MenuWidgetNode *node, void (*draw_callback)(int));

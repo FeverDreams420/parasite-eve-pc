@@ -10,7 +10,7 @@ typedef struct MemcardPulseState {
     GteRotation rotation;
     s16 phase, timer;
 } MemcardPulseState;
-extern u8 D_801F1D5C[];
+extern u8 g_MenuCardPulseColorTrack[];
 extern RenderColor g_MemcardCosineColor;
 extern RenderColor g_MemcardSineColor;
 

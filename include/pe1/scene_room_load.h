@@ -10,9 +10,6 @@ int Asset_LoadTimTextures(int force);
 
 /* Model allocation per actor type, given to actors of types below 10. */
 extern unsigned int g_SceneMapPrimBaseTable[];
-/* g_SceneAreaType as a byte array: Scene_LoadMap tests the array address
- * itself (an absolute la), which a -G8 scalar would make $gp-relative. */
-extern unsigned char D_800B0CE2[];
 
 /* Startup resource blob Scene_LoadSceneData copies out of the scratch buffer. */
 extern unsigned char g_StartupResourceBlob[];

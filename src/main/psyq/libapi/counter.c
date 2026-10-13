@@ -48,13 +48,13 @@ int StartRCnt(unsigned int counter) {
     int id;
 
     id = counter & 0xFFFF;
-    D_8009B7CC->mask |= _interrupt_status_masks[id];
+    g_RCntIntrRegsPtr->mask |= _interrupt_status_masks[id];
     return id < 3;
 }
 
 int StopRCnt(unsigned int counter) {
     int id = counter & 0xFFFF;
-    D_8009B7CC->mask &= ~_interrupt_status_masks[id];
+    g_RCntIntrRegsPtr->mask &= ~_interrupt_status_masks[id];
     return 1;
 }
 
@@ -65,6 +65,6 @@ int ResetRCnt(unsigned int counter) {
     if (id >= 3) {
         return 0;
     }
-    D_8009B7D0[id].rootCounter = 0;
+    g_RCntRegsPtr[id].rootCounter = 0;
     return 1;
 }

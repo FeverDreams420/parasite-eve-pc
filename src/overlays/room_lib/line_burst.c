@@ -166,7 +166,7 @@ int RoomEffect_LineBurstController(int mode, RoomLineBurstState *state,
         gte_ldtransmatrix(matrixSlot->value);
         if (state->color != 0) {
             RoomLineBurstLinePacket *line =
-                (RoomLineBurstLinePacket *)(D_800B0E58[g_ActiveDrawSlot] + g_DrawPacketOffset);
+                (RoomLineBurstLinePacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
             g_DrawPacketOffset += 0x10;
             gte_ldv3(state, &state->ex, state);
             gte_rtpt_padded();
@@ -178,7 +178,7 @@ int RoomEffect_LineBurstController(int mode, RoomLineBurstState *state,
             gte_stszotz(&otz);
             if ((u32)(otz - 1) < 0xFFF) {
                 gte_stsxy3(&line->x0, &line->x1, &weight);
-                FieldFx_LinkBlendedPacket(D_800B0E58[g_ActiveDrawSlot - 8] + otz * 4, line, 1);
+                FieldFx_LinkBlendedPacket(g_RenderAnimBufferBase[g_ActiveDrawSlot - 8] + otz * 4, line, 1);
             }
         }
         g_FieldFxSpriteParams.parameter00 = 0x20;

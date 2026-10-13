@@ -26,33 +26,37 @@ typedef struct SceneE22BurstChannel {
 } SceneE22BurstChannel;
 
 extern struct FieldActor *g_PlayerEntity; /* the player actor (0x8009D254) */
-extern RenderColor D_8018F1D0;
-extern RenderColor D_8018F1D4;
-extern GteShortVector D_801994EC;
+extern RenderColor g_SceneE22RingBurstRingColor;
+extern RenderColor g_SceneE22RingBurstHaloColor;
+extern RenderColor g_SceneE22RingBurstRingColor;
+extern RenderColor g_SceneE22RingBurstHaloColor;
+extern GteShortVector g_SceneE22BurstAnchor;
 extern int rand(void);
 extern int SceneE22_RingBurstParticleCallback(int mode, RoomOrbitTrailParticle *p);
 
 /* Orbit ring trail particle (SceneE22_RingBurstParticleCallback): its colour seed and trail
  * track, and the trail strip renderer. */
-extern RenderColor D_8018F1CC;
-extern u8 D_80199168[];
+extern RenderColor g_SceneE22RingBurstTriangleColor;
+extern u8 g_SceneE22RingBurstParticleColorTrack[];
 extern void FieldFx_DrawGlowLine(void *, void *, void *, void *, int, int, int);
 
 /* Damped glow particle (SceneE22_LinkBeamSparkCallback): its glow colour track. */
-extern u8 D_80199190[];
+extern u8 g_SceneE22LinkBeamSparkColorTrack[];
 
 /* Twisting trail particle (SceneE22_TwistTrailCallback): spin template, colour track and
  * the bent trail renderer. */
-extern GteRotation D_8018F1F4;
-extern u8 D_80199434[];
-extern u8 D_8019944C[];
+extern GteRotation g_SceneE22ZeroSpin;
+extern u8 g_SceneE22SwirlRingParticleColorTrack[];
+extern u8 g_SceneE22TwistTrailColorTrack[];
 extern void FieldFx_OffsetPointByAngles(void *, void *, int, void *, int, int);
 
 /* Twist beam particle (SceneE22_TwistBeamCallback): its colours, trail track, the beam
  * release flag and the beam sprite colour row. */
-extern RenderColor D_8018F21C;
-extern RenderColor D_8018F220;
-extern u8 D_8019946C[];
-extern s16 D_80199504;
+extern RenderColor g_SceneE22TwistBeamColorA;
+extern RenderColor g_SceneE22TwistBeamColorB;
+extern RenderColor g_SceneE22TwistBeamColorA;
+extern RenderColor g_SceneE22TwistBeamColorB;
+extern u8 g_SceneE22TwistBeamColorTrack[];
+extern s16 g_SceneE22TwistBeamStop;
 
 #endif

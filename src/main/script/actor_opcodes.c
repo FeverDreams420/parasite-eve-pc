@@ -38,9 +38,11 @@
 #include "pe1/script_node.h"
 #include "pe1/script_state.h"
 
-u32 *D_8009CE00;
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+u32 *g_ScriptCursor;
 ScriptNode *g_ScriptNodePool;
-int g_SceneDataTable0;
+int g_ScriptCursorAddress;
 
 /* Adjacent field-actor query and distance routines share one compiled unit. */
 #define NULL ((void *)0)
@@ -196,7 +198,7 @@ s32 Entity_GetDistanceComponents(s32 *args[]) {
 #undef NULL
 
 #define NULL ((void *)0)
-s32 g_SceneDataTable0;
+s32 g_ScriptCursorAddress;
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, memcard_init_phase) == 0xF4,
                   memcard_init_phase_offset);
@@ -249,7 +251,7 @@ s32 Boot_MemCardStepInit(u8 **arg0) {
     default:
         return 1;
     }
-    g_SceneDataTable0 -= 0xC;
+    g_ScriptCursorAddress -= 0xC;
     g_ScriptNodePool->active = 1;
     return 0;
 }
@@ -454,7 +456,7 @@ int Render_CameraTrackRelativeOffset(int **args) {
         camera_state->flags &= 0xFFDF;
         return 1;
     } else {
-        D_8009CE00 -= 5;
+        g_ScriptCursor -= 5;
         g_ScriptNodePool->active = 1;
         return 0;
     }
@@ -520,7 +522,7 @@ s32 Render_CameraStepAngleFade(s32 **arg0) {
         g_ScriptNodePool->flags &= 0xFFDF;
         return 1;
     }
-    g_SceneDataTable0 -= 0x10;
+    g_ScriptCursorAddress -= 0x10;
     g_CurrentEntity->rot_y += step;
     g_ScriptNodePool->active = 1;
     return 0;
@@ -568,7 +570,7 @@ retry_first:
         u16 *range = g_SceneInitLbaTbl0;
         s32 minus_one = -1;
         do {
-            ret = CdRom_ReadSectorsFromLba(base[0x40] + range[0], D_8001160C, range[1] - range[0]);
+            ret = CdRom_ReadSectorsFromLba(base[0x40] + range[0], g_MdecOverlayLoadBase, range[1] - range[0]);
         } while (ret == minus_one);
     }
     {
@@ -654,7 +656,7 @@ int Script_PlayEntityAnim(s16 **args) {
         }
     }
 
-    D_8009CE00 -= 3;
+    g_ScriptCursor -= 3;
     g_ScriptNodePool->active = 1;
     return 0;
 }
@@ -704,7 +706,7 @@ int Script_CopyEntityRenderObject(int **args) {
     Render_InitObjectFromTable(&g_CurrentEntity->render_object,
                                &source->render_object, (s16)*args[2]);
     Render_TransformSkinnedVertices(&g_CurrentEntity->render_object,
-                                    D_800B89F8);
+                                    g_EntityRenderScratch);
 
     g_CurrentEntity->parent = source;
     g_CurrentEntity->pos_x =
@@ -787,7 +789,7 @@ int Script_SetGteMatrix(int **args) {
     Anim_BuildRotationMatrices(&render_actor->render_object,
                                render_actor->action_data, 0, 1);
     Render_TransformVertices(&g_CurrentEntity->render_object);
-    Render_TransformSkinnedVertices(&g_CurrentEntity->render_object, D_800B89F8);
+    Render_TransformSkinnedVertices(&g_CurrentEntity->render_object, g_EntityRenderScratch);
     Render_DrawObject(&g_CurrentEntity->render_object, g_RenderLightingState.words);
     Render_UpdateClutTable(&g_CurrentEntity->render_object, 1,
                            (s16)g_ActiveDrawSlot);
@@ -806,10 +808,10 @@ int Script_SetGteMatrix(int **args) {
     } else {
         if ((flags & 0x08000000) == 0) {
         result = 0;
-        script_ptr = D_8009CE00;
+        script_ptr = g_ScriptCursor;
         flag_actor->flags = flags | 0x08000000;
         script_state = g_ScriptNodePool;
-        D_8009CE00 = script_ptr - 5;
+        g_ScriptCursor = script_ptr - 5;
         script_state->active = 1;
         return result;
         }
@@ -818,26 +820,21 @@ int Script_SetGteMatrix(int **args) {
     return 1;
 }
 
-int g_SceneDataTable0;
+int g_ScriptCursorAddress;
 
 int Boot_CheckModeSwitch(void) {
     int mode = g_RenderStateFlags & 7;
+    int cursor;
+    ScriptNode *node;
 
-    if (mode != 4) {
-        if (mode != 0) {
-            goto queue_mode_script;
-        }
-    }
-    return 1;
-queue_mode_script:
-    {
-        int cursor = g_SceneDataTable0;
-        ScriptNode *node = g_ScriptNodePool;
-        cursor -= 8;
-        g_SceneDataTable0 = cursor;
-        node->active = 1;
-        return 0;
-    }
+    if (mode == 4 || mode == 0)
+        return 1;
+    cursor = g_ScriptCursorAddress;
+    node = g_ScriptNodePool;
+    cursor -= 8;
+    g_ScriptCursorAddress = cursor;
+    node->active = 1;
+    return 0;
 }
 
 #define NULL ((void *)0)
@@ -923,30 +920,30 @@ int Scene_SelectMapById(int **args) {
         state = Menu_GetEquipSlotStateOrIndex();
         if (state < 2) {
             Menu_ResetEquipSlotState();
-            D_8009D280 = Text_ParseBase32Id(g_MapNameOverrideA);
+            g_SceneDispatchToken = Text_ParseBase32Id(g_MapNameOverrideA);
         } else {
             Menu_ResetEquipSlotState();
-            D_8009D280 = Text_ParseBase32Id(g_MapNameOverrideB);
+            g_SceneDispatchToken = Text_ParseBase32Id(g_MapNameOverrideB);
         }
         return 1;
     }
 
     if ((u8)(raw_selection - 6) < 2 || selection == 8) {
         if ((s16)Draw_PackPrimColor(0, 100) < 60) {
-            D_8009D280 = Text_ParseBase32Id(g_MapIdTable);
+            g_SceneDispatchToken = Text_ParseBase32Id(g_MapIdTable);
         } else {
-            D_8009D280 = Text_ParseBase32Id(g_MapIdTable + ((s16)Draw_PackPrimColor(1, 4) << 3));
+            g_SceneDispatchToken = Text_ParseBase32Id(g_MapIdTable + ((s16)Draw_PackPrimColor(1, 4) << 3));
         }
     } else {
         state = (u8)(Menu_GetEquipSlotStateOrIndex() - 1);
         state /= 10;
         select_index = g_MapSelectIndexTable + state;
-        D_8009D280 = Text_ParseBase32Id(
+        g_SceneDispatchToken = Text_ParseBase32Id(
             g_MapFilenameTable[select_index->filename_index[selection]].name);
     }
 
     raw_selection = 1;
-    if (g_SceneDispatchCur == D_8009D280) {
+    if (g_SceneDispatchCur == g_SceneDispatchToken) {
         game_state = &g_GameState.flags;
         state_flags = g_GameStateFlags;
         map_flags = game_state[0];
@@ -1028,10 +1025,10 @@ int Script_OpenMemCardDialog(void) {
         flags = *node_flags;
         if (!(flags & 0x20)) {
             *node_flags = flags | 0x20;
-            cursor = g_SceneDataTable0;
+            cursor = g_ScriptCursorAddress;
             node->active = 1;
             cursor -= 8;
-            g_SceneDataTable0 = cursor;
+            g_ScriptCursorAddress = cursor;
             return 0;
         }
         Render_BeginSceneLoad();
@@ -1065,10 +1062,10 @@ int Script_ShowReceivedItem(int **arg0) {
     flags = *node_flags;
     if (!(flags & 0x20)) {
     *node_flags = flags | 0x20;
-    cursor = g_SceneDataTable0;
+    cursor = g_ScriptCursorAddress;
     node->active = 1;
     cursor -= 0xC;
-    g_SceneDataTable0 = cursor;
+    g_ScriptCursorAddress = cursor;
     return 0;
 
     }
@@ -1117,12 +1114,12 @@ int Script_RunInvCommand(ScriptInvCommandArgs *args) {
         } else {
             g_GameStateFlags |= 4;
         }
-        g_SceneDataTable0 -= 0x1C;
+        g_ScriptCursorAddress -= 0x1C;
         g_ScriptNodePool->active = 1;
         return 0;
     }
 
-    result = D_8009D2A4;
+    result = g_MenuFrameCommand;
     if (result != 0) {
         *args->result = result;
         g_ScriptNodePool->flags &= 0xFFDF;
@@ -1168,7 +1165,7 @@ typedef struct AkaoStackLocals {
     u8 pad12[8];
 } AkaoStackLocals;
 
-u32 *D_8009CE00;
+u32 *g_ScriptCursor;
 
 int Akao_Cmd_19_Then_C0(u8 *data, int value);
 
@@ -1205,14 +1202,14 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         status = CdRom_SeekToTrack(*args->arg1, 1, 0, &locals.slot,
                                 *args->arg2 == 0);
         if (status == 1) {
-            D_8009CE00 -= 8;
+            g_ScriptCursor -= 8;
             g_ScriptNodePool->active = status;
             return 0;
         }
         if (locals.slot + 2U < 2U) {
             break;
         }
-        *args->result = Akao_Cmd_10(D_800B0CE8.voice_banks[locals.slot]);
+        *args->result = Akao_Cmd_10(g_AkaoRuntimeState.voice_banks[locals.slot]);
         Akao_Cmd_C0_WithSlot(0, 0x7F);
         CdRom_RegisterAudioSlot(locals.slot, *args->arg1, *args->result, 0x7F);
         break;
@@ -1220,7 +1217,7 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         status = CdRom_SeekToTrack(*args->arg1, 1, 1, &locals.slot,
                                 *args->arg3 == 0);
         if (status == 1) {
-            D_8009CE00 -= 8;
+            g_ScriptCursor -= 8;
             g_ScriptNodePool->active = status;
             return 0;
         }
@@ -1228,7 +1225,7 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
             break;
         }
         *args->result = Akao_Cmd_19_Then_C0(
-            D_800B0CE8.voice_banks[locals.slot], *args->arg2);
+            g_AkaoRuntimeState.voice_banks[locals.slot], *args->arg2);
         CdRom_RegisterAudioSlot(locals.slot, *args->arg1, *args->result,
                                   *args->arg2);
         break;
@@ -1243,7 +1240,7 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         if (status != wait_one) {
             break;
         }
-        D_8009CE00 -= 8;
+        g_ScriptCursor -= 8;
         g_ScriptNodePool->active = status;
         return 0;
     case 0xCC:
@@ -1315,7 +1312,7 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         break;
     case 0x12C:
         *args->result = Akao_SendTableCommand(
-            D_800B0CE8.archive, *args->arg1, *args->arg2, *args->arg3,
+            g_AkaoRuntimeState.archive, *args->arg1, *args->arg2, *args->arg3,
             *args->arg4);
         break;
     case 0x12D:
@@ -1364,10 +1361,10 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         Akao_Cmd_F1();
         break;
     case 0x15E:
-        D_800B0CE8.position_y = *args->arg1;
-        D_800B0CE8.position_x = *args->arg2;
-        D_800B0CE8.position_w = *args->arg3;
-        D_800B0CE8.position_z = *args->arg4;
+        g_AkaoRuntimeState.position_y = *args->arg1;
+        g_AkaoRuntimeState.position_x = *args->arg2;
+        g_AkaoRuntimeState.position_w = *args->arg3;
+        g_AkaoRuntimeState.position_z = *args->arg4;
         break;
     case 0x15F:
         *args->result = Asset_Find08w(
@@ -1408,9 +1405,9 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
                                      ((Pe1Fixed16_16 *)args->arg4)->parts.integer);
         break;
     case 0x190:
-        base = D_800B0CE8.archive;
+        base = g_AkaoRuntimeState.archive;
         table_info = ((AkaoArchiveSection *)(base +
-            ((AkaoArchiveHeader *)D_800B0CE8.archive)->section_offset))->asset_table;
+            ((AkaoArchiveHeader *)g_AkaoRuntimeState.archive)->section_offset))->asset_table;
         base += table_info & 0x3FFFFF;
         count = 0;
         entry_count = table_info >> 22;
@@ -1439,26 +1436,26 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         status = CdRom_SeekToTrack(*args->arg1, 1, 1, &locals.slot,
                                *args->arg2 == 0);
         if (status == 1) {
-            D_8009CE00 -= 8;
+            g_ScriptCursor -= 8;
             g_ScriptNodePool->active = status;
             return 0;
         }
         }
         else
         {
-        D_8009CE00 -= 8;
+        g_ScriptCursor -= 8;
         g_ScriptNodePool->active = status;
         return 0;
         }
         *args->result = locals.slot;
         break;
     case 0x195:
-        D_800B0CE8.defer_enabled = 1;
+        g_AkaoRuntimeState.defer_enabled = 1;
         break;
     case 0x196:
     case 0x197:
-        if (D_800B0CE8.deferred_count < 0x10) {
-            deferred = &g_DeferredAkaoCommands[D_800B0CE8.deferred_count];
+        if (g_AkaoRuntimeState.deferred_count < 0x10) {
+            deferred = &g_DeferredAkaoCommands[g_AkaoRuntimeState.deferred_count];
             deferred->actor_type = g_CurrentEntity->type_id;
             deferred->actor_id = g_CurrentEntity->sub_id;
             deferred->command = *args->arg1;
@@ -1469,7 +1466,7 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
             } else {
                 deferred->arg3 = *args->arg4;
             }
-            deferred_count = &D_800B0CE8.deferred_count;
+            deferred_count = &g_AkaoRuntimeState.deferred_count;
             (*deferred_count)++;
         }
         break;
@@ -1477,15 +1474,15 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         volume = *args->arg1;
         locals.volumes[3] = 0;
         locals.volumes[1] = 0;
-        D_800B0CE8.cd_volume = volume;
+        g_AkaoRuntimeState.cd_volume = volume;
         locals.volumes[2] = volume;
         locals.volumes[0] = volume;
         DsMix((CdlATV *)locals.volumes);
         break;
 archive_match:
-        D_800B0CE8.selected_id = current->id;
-        D_800B0CE8.selected_value = current->value8;
-        D_800B0CE8.selected_data = D_800B0CE8.archive +
+        g_AkaoRuntimeState.selected_id = current->id;
+        g_AkaoRuntimeState.selected_value = current->value8;
+        g_AkaoRuntimeState.selected_data = g_AkaoRuntimeState.archive +
                                     (current->data_offset & 0xFFFFFF);
         break;
     case 0x19A:

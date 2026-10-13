@@ -40,7 +40,7 @@ typedef union FieldRingLink {
 #define RING_OT(depth) \
     ((RenderGpuTag *)(D_800B0E38.ordering[g_ActiveDrawSlot] + (depth)))
 
-extern char *D_800B0E58[];
+extern unsigned char *g_RenderAnimBufferBase[];
 
 void FieldFx_ScaleColor(int scale, u8 *src, u8 *dst);
 long RotTransPers4(void *v0, void *v1, void *v2, void *v3, void *sxy0,

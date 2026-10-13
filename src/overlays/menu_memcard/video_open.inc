@@ -1,22 +1,22 @@
 #ifndef MENUCARD_OPEN_VIDEO_NAME
 #define MENUCARD_OPEN_VIDEO_NAME MenuCard_OpenVideo
-#define MENUCARD_VIDEO_TABLE D_801D0E00
+#define MENUCARD_VIDEO_TABLE g_MenuCardScreenVideoTable
 #define MENUCARD_VIDEO_ENTRY g_MenuCardScreenVideoEntry
 #define MENUCARD_VIDEO_SET_DISPLAY MenuCard_SetVideoDisplay
-#define MENUCARD_VIDEO_DIRECTORY D_8018F2E4
-#define MENUCARD_VIDEO_DIRECTORY_LATE D_8018F2EC
-#define MENUCARD_VIDEO_FILE D_801D0DC4
-#define MENUCARD_VIDEO_RESTART D_801D0DDC
-#define MENUCARD_VIDEO_DISPLAY D_801D1464
-#define MENUCARD_VIDEO_PTR0 D_801D0DE8
-#define MENUCARD_VIDEO_PTR1 D_801D0DEC
-#define MENUCARD_VIDEO_PTR2 D_801D0DF0
-#define MENUCARD_VIDEO_PTR3 D_801D0DF4
-#define MENUCARD_VIDEO_PTR4 D_801D0DF8
-#define MENUCARD_VIDEO_PTR5 D_801D0DFC
+#define MENUCARD_VIDEO_DIRECTORY g_MenuCardScreenVideoDirectory
+#define MENUCARD_VIDEO_DIRECTORY_LATE g_MenuCardScreenVideoDirectoryLate
+#define MENUCARD_VIDEO_FILE g_MenuCardScreenVideoFile
+#define MENUCARD_VIDEO_RESTART g_MenuCardScreenVideoRestartLoc
+#define MENUCARD_VIDEO_DISPLAY g_MenuCardScreenVideoDisplay
+#define MENUCARD_VIDEO_PTR0 g_MenuCardScreenVideoDecodeBuffer0
+#define MENUCARD_VIDEO_PTR1 g_MenuCardScreenVideoDecodeBuffer1
+#define MENUCARD_VIDEO_PTR2 g_MenuCardScreenVideoSliceBuffer0
+#define MENUCARD_VIDEO_PTR3 g_MenuCardScreenVideoSliceBuffer1
+#define MENUCARD_VIDEO_PTR4 g_MenuCardScreenVideoVlcTable
+#define MENUCARD_VIDEO_PTR5 g_MenuCardScreenVideoStreamRing
 #define MENUCARD_VIDEO_UPLOAD MenuCard_UploadVideoSlice
 #define MENUCARD_VIDEO_UPDATE_FRAME MenuCard_UpdateVideoFrame
-#define MENUCARD_VIDEO_FINISHED D_801D0DBD
+#define MENUCARD_VIDEO_FINISHED g_MenuCardScreenVideoFinished
 #endif
 
 /* Wait for the next decoded frame and start its decode; -1 on a stall. */
@@ -29,7 +29,7 @@ static inline s16 MenuCard_OpenNextVideoFrame(VideoDisplay *dec) {
             return -1;
         }
     }
-    D_800B0DBC.value++;
+    g_SeqElapsedRecord.value++;
     dec->decodeIndex ^= 1;
     DecDCTvlc2(frame, dec->decode[dec->decodeIndex], MENUCARD_VIDEO_PTR4);
     StFreeRing(frame);
@@ -76,7 +76,7 @@ static inline void MenuCard_OpenSetDecodeEnv(VideoDisplay *dec, s16 x0, s16 y0, 
     dec->region = g_ActiveDrawSlot;
     dec->rect.x = dec->regions[dec->region].x;
     dec->rect.y = dec->regions[dec->region].y;
-    if (D_800B0DBB) {
+    if (g_MovieWide) {
         dec->rect.w = 24;
     } else {
         dec->rect.w = 16;
@@ -99,9 +99,9 @@ s32 MENUCARD_OPEN_VIDEO_NAME(s32 number) {
     }
     g_MovieIndex = index;
     MENUCARD_VIDEO_ENTRY = &MENUCARD_VIDEO_TABLE[index];
-    D_800B0DBB = MENUCARD_VIDEO_ENTRY->wide;
-    MENUCARD_VIDEO_SET_DISPLAY(0, D_800B0DBB);
-    MENUCARD_VIDEO_SET_DISPLAY(1, D_800B0DBB);
+    g_MovieWide = MENUCARD_VIDEO_ENTRY->wide;
+    MENUCARD_VIDEO_SET_DISPLAY(0, g_MovieWide);
+    MENUCARD_VIDEO_SET_DISPLAY(1, g_MovieWide);
     name[0] = 0;
     if ((u16)number < 21) {
         strcat(name, MENUCARD_VIDEO_DIRECTORY);
@@ -129,16 +129,16 @@ search:
     StSetRing(MENUCARD_VIDEO_PTR5, 0x40);
     StSetStream(1, MENUCARD_VIDEO_ENTRY->speed, -1, 0, 0);
     MenuCard_OpenStartVideoStream(&MENUCARD_VIDEO_FILE.pos, result);
-    Spu_SetVoiceVolume(D_800B0DBE);
+    Spu_SetVoiceVolume(g_GameState.scene_audio.tracks.movie_volume);
     MdecDiag_ExpandDecoderTable(MENUCARD_VIDEO_PTR4);
     while (MenuCard_OpenNextVideoFrame(&MENUCARD_VIDEO_DISPLAY) == -1) {
         MENUCARD_VIDEO_RESTART = MENUCARD_VIDEO_FILE.pos;
         MenuCard_OpenKickVideoStream(&MENUCARD_VIDEO_RESTART, result);
     }
     MENUCARD_VIDEO_FINISHED = 0;
-    D_800B0DBC.value = 1;
+    g_SeqElapsedRecord.value = 1;
     {
-        u8 *active = &D_800B0DBA;
+        u8 *active = &g_DrawEnabled.bits;
 
         (*active)++;
     }

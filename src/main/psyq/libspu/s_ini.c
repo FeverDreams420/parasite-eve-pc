@@ -40,10 +40,10 @@ void _SpuInit(int mode) {
     _spu_memList = 0;
     _spu_trans_mode = 0;
     _spu_transMode = 0;
-    D_8009B388 = 0;
-    D_8009B3B4 = 0;
-    D_8009B3B0 = 0;
-    D_8009B3E8 = 0;
+    _spu_keystat = 0;
+    _spu_RQmask = 0;
+    _spu_RQvoice = 0;
+    _spu_env = 0;
 }
 
 void SpuStart(void) {

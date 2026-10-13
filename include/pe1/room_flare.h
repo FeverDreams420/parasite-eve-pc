@@ -17,6 +17,7 @@
 #include "pe1/render_matrix_slot.h"
 #include "pe1/room_floor.h"
 #include "pe1/room_fx.h"
+#include "pe1/room_interface.h"
 
 /* Flare effects: a controller that orbits an anchor read from the scene
  * object and sheds drift particles, and a dropped flare particle that falls,

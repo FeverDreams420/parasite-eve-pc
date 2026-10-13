@@ -2,10 +2,10 @@
 #include "pe1/battle.h"
 #include "pe1/battle_cmd.h"
 #include "pe1/battle_entity_anim.h"
-#include "pe1/battle_hud_colors.h"
 #include "pe1/battle_reset_stats.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_setup.h"
+#include "pe1/battle_status.h"
 #include "pe1/game_state.h"
 #include "pe1/gte_types.h"
 #include "pe1/inventory.h"
@@ -15,20 +15,18 @@
 #include "pe1/random.h"
 #include "pe1/textbox.h"
 
-s8 D_8009CE30;
-u16 D_8009D298;
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+s8 g_BattleHaltTimer;
+u16 g_BattleHitActionPending;
 u8 g_BattleActionAnimModes[4];
-u8 D_8009CE39;
-u8 D_8009CE3A;
-u8 D_8009CE3B;
 s8 g_BattleTargetCycleMode;
-u8 D_8009CE60;
+u8 g_BattleSlotCancelPending;
 u8 g_BattleRemainingActions;
-int D_8009D200;
-s32 D_8009D208;
+int g_BattleAttackPmSlot;
+s32 g_BattleAilmentPmSlot;
 s32 g_BattleEffectPmSlot;
-u8 D_8009D294;
-u8 D_8009D2D8;
+u8 g_BattleHitPending;
 unsigned char g_BattleActionQueueCount;
 s8 g_BattleTargetIndex;
 
@@ -50,7 +48,7 @@ void Battle_BeginPlayerAction(void) {
     *entityFlags = flags;
     stateFlags = &actor->stateFlags;
     *stateFlags |= 0x10000;
-    D_8009D298 = 0;
+    g_BattleHitActionPending = 0;
     Entity_SetActionMode(player, 0x12);
     Battle_FlushScriptSounds();
 }
@@ -94,7 +92,7 @@ void Battle_HaltOnPositiveX(void) {
         state2 = g_ActiveActor;
         actor2 = (BattleEntity *)g_PlayerEntity;
         flags = state2->stateFlags;
-        D_8009CE30 = 0;
+        g_BattleHaltTimer = 0;
         flags |= 0x2000;
         state2->stateFlags = flags;
         actor2->entityFlags &= ~0x100;
@@ -109,33 +107,33 @@ void Battle_InitEntityColors(void) {
     Entity_SetActionMode(D_8009D254, g_ActiveActor->actionMode12);
     stateFlags = &g_ActiveActor->stateFlags;
     flags = *stateFlags;
-    D_8009CE30 = 0;
+    g_BattleHaltTimer = 0;
     *stateFlags = flags & ~0x2000;
-    D_8009D298 = 0;
-    D_800B0158[0] = 0xFF;
-    D_800B0159[0] = 0x3D;
-    D_800B015A[0] = 0x81;
-    D_800B0160[0] = 0x83;
-    D_800B0161[0] = 0x13;
-    D_800B0162[0] = 1;
-    D_800B0168[0] = 0xFF;
-    D_800B0169[0] = 0x3D;
-    D_800B016A[0] = 0x81;
-    D_800B0170[0] = 0x83;
-    D_800B0171[0] = 0x13;
-    D_800B0172[0] = 1;
-    D_800B01A0[0] = 0xFF;
-    D_800B01A1[0] = 0x3D;
-    D_800B01A2[0] = 0x81;
-    D_800B01A8[0] = 0x83;
-    D_800B01A9[0] = 0x13;
-    D_800B01AA[0] = 1;
-    D_800B01B0[0] = 0xFF;
-    D_800B01B1[0] = 0x3D;
-    D_800B01B2[0] = 0x81;
-    D_800B01B8[0] = 0x83;
-    D_800B01B9[0] = 0x13;
-    D_800B01BA[0] = 1;
+    g_BattleHitActionPending = 0;
+    g_BattlePeGauges[0][1].r0 = 0xFF;
+    g_BattlePeGauges[0][1].g0 = 0x3D;
+    g_BattlePeGauges[0][1].b0 = 0x81;
+    g_BattlePeGauges[0][1].r1 = 0x83;
+    g_BattlePeGauges[0][1].g1 = 0x13;
+    g_BattlePeGauges[0][1].b1 = 1;
+    g_BattlePeGauges[0][1].r2 = 0xFF;
+    g_BattlePeGauges[0][1].g2 = 0x3D;
+    g_BattlePeGauges[0][1].b2 = 0x81;
+    g_BattlePeGauges[0][1].r3 = 0x83;
+    g_BattlePeGauges[0][1].g3 = 0x13;
+    g_BattlePeGauges[0][1].b3 = 1;
+    g_BattlePeGauges[1][1].r0 = 0xFF;
+    g_BattlePeGauges[1][1].g0 = 0x3D;
+    g_BattlePeGauges[1][1].b0 = 0x81;
+    g_BattlePeGauges[1][1].r1 = 0x83;
+    g_BattlePeGauges[1][1].g1 = 0x13;
+    g_BattlePeGauges[1][1].b1 = 1;
+    g_BattlePeGauges[1][1].r2 = 0xFF;
+    g_BattlePeGauges[1][1].g2 = 0x3D;
+    g_BattlePeGauges[1][1].b2 = 0x81;
+    g_BattlePeGauges[1][1].r3 = 0x83;
+    g_BattlePeGauges[1][1].g3 = 0x13;
+    g_BattlePeGauges[1][1].b3 = 1;
 }
 
 unsigned char g_BattleActionQueueCount;
@@ -167,10 +165,10 @@ void Battle_Init(void)
     Pm_StopAll();
     index = 0;
     records = g_BattleActionQueue;
-    D_8009D200 = -1;
-    D_8009D2FC = -1;
+    g_BattleAttackPmSlot = -1;
+    g_BattleImpactPmSlot = -1;
     g_BattleEffectPmSlot = -1;
-    D_8009D208 = -1;
+    g_BattleAilmentPmSlot = -1;
 
     do {
         g_BattleActionQueue[index].actor = 0;
@@ -183,24 +181,24 @@ void Battle_Init(void)
     config0 = *action;
     g_BattleTargetIndex = 0;
     g_BattleTargetCycleMode = 0;
-    D_8009D294 = 0;
+    g_BattleHitPending = 0;
     config1 = *action;
-    D_8009D2D8 = (config0->turnWord >> 4) & 3;
+    g_BattleActiveTurnSlot = (config0->turnWord >> 4) & 3;
     config2 = *action;
     g_BattleRemainingActions = config1->turnWord & 0xF;
     g_BattleActionAnimModes[0] = config2->animMode[0];
     config3 = *action;
-    D_8009CE39 = config3->animMode[1];
+    g_BattleActionAnimModes[1] = config3->animMode[1];
     config4 = *action;
-    D_8009CE3A = config4->animMode[2];
+    g_BattleActionAnimModes[2] = config4->animMode[2];
     config5 = *action;
-    D_8009CE3B = config5->animMode[3];
+    g_BattleActionAnimModes[3] = config5->animMode[3];
 
     Draw_ResetTextboxes();
-    D_8009D1CE = 0;
+    g_BattleSaveOverlayActive = 0;
     g_BattleResultFlags &= ~0x300;
     Battle_InitFadeVars();
-    D_8009CE60 = 0;
+    g_BattleSlotCancelPending = 0;
 }
 
 unsigned char g_BattleActionQueueCount;
@@ -235,7 +233,7 @@ int Pad_IsMenuConfirmAvailable(void) {
 /* MASPSX_FORCE_G0 keeps the battle pointers and the effect result absolute,
  * as retail; the COMMON asset result supplies the small-data metadata of the
  * one $gp-relative word. */
-int D_8009D200;
+int g_BattleAttackPmSlot;
 
 void Battle_DispatchEntityEffect(void) {
     int action_id;
@@ -254,12 +252,12 @@ void Battle_DispatchEntityEffect(void) {
         if ((action->attackWord & 0x3FF) == 0) {
             BattleCmd_CommitAmmoAndUpdate(action);
         }
-        D_8009D200 = Scene_LoadRoomAssets(3, D_8009D254);
+        g_BattleAttackPmSlot = Scene_LoadRoomAssets(3, D_8009D254);
         return;
     }
 
     if (action_id == 8) {
-        D_8009D2FC = Scene_LoadRoomAssets(6, D_8009D254);
+        g_BattleImpactPmSlot = Scene_LoadRoomAssets(6, D_8009D254);
         return;
     }
 
@@ -284,8 +282,8 @@ void Battle_DispatchEntityEffect(void) {
         next_id = 4;
     }
 
-    D_8009D200 = result;
-    D_8009D2FC = Scene_LoadRoomAssets(next_id, next_entity);
+    g_BattleAttackPmSlot = result;
+    g_BattleImpactPmSlot = Scene_LoadRoomAssets(next_id, next_entity);
 }
 
 void Battle_CheckEvasion(BattleEntity *actor, BattleEvasionOutcome *outcome,
@@ -423,7 +421,8 @@ void Battle_BuildTargetList(void) {
                                 D_8009D254->posZ.parts.integer);
                         nextIndex = g_BattleTargetIndex + 1;
                         g_BattleTargetList[g_BattleTargetIndex].angle = angle;
-                        g_BattleTargetIndex = nextIndex;
+                        angle = nextIndex;
+                        g_BattleTargetIndex = angle;
                     }
                 }
             }

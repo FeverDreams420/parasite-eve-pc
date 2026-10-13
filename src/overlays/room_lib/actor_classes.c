@@ -217,7 +217,7 @@ void RoomLib_ArmHandlerD(RoomEnt *o) {
 
 void RoomLib_HandlerD(RoomEnt *o) {
     RoomEnt *ent = o;
-    char *state = (char *)&o->sub;
+    RoomLibHandlerDState *state = (RoomLibHandlerDState *)&o->sub;
     short *scratch;
     RoomLink *link = o->link;
     char *left;
@@ -227,7 +227,6 @@ void RoomLib_HandlerD(RoomEnt *o) {
     int result;
     int work;
     int rot_word;
-    int rot_x;
 
     scratch = (short *)0x1F800000;
 
@@ -238,9 +237,9 @@ void RoomLib_HandlerD(RoomEnt *o) {
         if (ent->active != 0 && link->target != 0) {
             link->target->flags |= 0x40000000;
         }
-        ((RoomLibHandlerDState *)state)->anchor[0] = link->pos[0];
-        ((RoomLibHandlerDState *)state)->anchor[1] = link->pos[1];
-        ((RoomLibHandlerDState *)state)->anchor[2] = link->pos[2];
+        state->anchor[0] = link->pos[0];
+        state->anchor[1] = link->pos[1];
+        state->anchor[2] = link->pos[2];
         RoomLib_HandlerDTransformTarget((struct RoomLibMotionState *)state,
                                         (void *)scratch);
         {
@@ -249,19 +248,19 @@ void RoomLib_HandlerD(RoomEnt *o) {
             char *left_arg;
             int initial_velocity;
 
-            left = (char *)((RoomLibHandlerDState *)state)->anchor;
+            left = (char *)state->anchor;
             left_arg = left;
             targetPosition = (Vec3Fixed *)((RoomLibMotionState *)state)->position;
             initial_speed = FieldFx_GetFixedDistance3D((Vec3Fixed *)left_arg, targetPosition);
-            initial_speed += (((RoomLibHandlerDState *)state)->value8C * 0x70) >> 21;
+            initial_speed += (state->value8C * 0x70) >> 21;
             if (initial_speed < 0x148) {
                 initial_speed = 0x148;
             }
             initial_velocity = (0x5160000 / initial_speed) << 8;
-            ((RoomLibHandlerDState *)state)->speed = initial_velocity;
-            ((RoomLibHandlerDState *)state)->progress.word = initial_velocity >> 3;
-            FieldFx_FixedVecToLookAngles((Vec3Fixed *)left, targetPosition, ((RoomLibHandlerDState *)state)->angles);
-            RotMatrixYXZ(((RoomLibHandlerDState *)state)->angles, ((RoomLibHandlerDState *)state)->matrix);
+            state->speed = initial_velocity;
+            state->progress.word = initial_velocity >> 3;
+            FieldFx_FixedVecToLookAngles((Vec3Fixed *)left, targetPosition, state->angles);
+            RotMatrixYXZ(state->angles, state->matrix);
         }
     }
 
@@ -272,7 +271,7 @@ void RoomLib_HandlerD(RoomEnt *o) {
     scratch[0x34] = 0;
     {
         int angle;
-        angle = ((((RoomLibHandlerDState *)state)->progress.word + bias) >> 16) - 0x400;
+        angle = ((state->progress.word + bias) >> 16) - 0x400;
         scratch[0x35] = angle;
         rot = table + (angle & 0xFFF);
     }
@@ -280,7 +279,6 @@ void RoomLib_HandlerD(RoomEnt *o) {
     scratch[0x15] = 0;
     scratch[0x14] = result;
     rot_word = *rot;
-    rot_x = (unsigned short)scratch[0x14];
     scratch[0x17] = 0;
     scratch[0x19] = 0;
     scratch[0x1B] = 0;
@@ -291,19 +289,19 @@ void RoomLib_HandlerD(RoomEnt *o) {
         unsigned short negated;
         negated = *(volatile unsigned short *)&scratch[0x16];
         scratch[0x18] = 0x1000;
-        scratch[0x1C] = rot_x;
+        scratch[0x1C] = (unsigned short)scratch[0x14];
         negated = -negated;
         scratch[0x1A] = negated;
     }
-    scratch[0x02] = ((RoomLibHandlerDState *)state)->value88 >> 12;
+    scratch[0x02] = state->value88 >> 12;
     gte_ldrotmatrix((void *)((int)scratch | 0x28));
     gte_ldv0((void *)scratch);
     gte_mvmva();
     gte_stmac(((RoomLibMotionWork *)scratch)->rotated);
-    ((RoomLibHandlerDState *)state)->motion[0] += ((RoomLibMotionWork *)scratch)->rotated[0] << 12;
-    ((RoomLibHandlerDState *)state)->motion[2] += ((RoomLibMotionWork *)scratch)->rotated[2] << 12;
+    state->motion[0] += ((RoomLibMotionWork *)scratch)->rotated[0] << 12;
+    state->motion[2] += ((RoomLibMotionWork *)scratch)->rotated[2] << 12;
 
-    if (((RoomLibHandlerDState *)state)->progress.word > 0x08000000) {
+    if (state->progress.word > 0x08000000) {
         ent->flag3 = 2;
     }
     {
@@ -312,83 +310,83 @@ void RoomLib_HandlerD(RoomEnt *o) {
 
         if (((RoomLibMotionWork *)scratch)->rotated[2] >= 0) {
             int position;
-            position = ((RoomLibHandlerDState *)state)->value88;
-            position += ((RoomLibHandlerDState *)state)->value8C;
+            position = state->value88;
+            position += state->value8C;
             projected = (position + bias) >> 16;
             work = projected;
-            product = work * (((RoomLibHandlerDState *)state)->speed >> 12);
-            ((RoomLibHandlerDState *)state)->value88 = position;
-            progress = ((RoomLibHandlerDState *)state)->progress.word;
+            product = work * (state->speed >> 12);
+            state->value88 = position;
+            progress = state->progress.word;
         } else {
             int updated;
-            projected = ((RoomLibHandlerDState *)state)->value88;
+            projected = state->value88;
             projected = (projected + bias) >> 16;
-            product = projected * (((RoomLibHandlerDState *)state)->speed >> 12);
-            updated = ((RoomLibHandlerDState *)state)->value88;
-            updated -= ((RoomLibHandlerDState *)state)->value8C;
-            progress = work = ((RoomLibHandlerDState *)state)->progress.word;
-            ((RoomLibHandlerDState *)state)->value88 = updated;
+            product = projected * (state->speed >> 12);
+            updated = state->value88;
+            updated -= state->value8C;
+            progress = work = state->progress.word;
+            state->value88 = updated;
         }
         result = progress + ((product >> 8) << 12);
-        ((RoomLibHandlerDState *)state)->progress.word = result;
+        state->progress.word = result;
     }
     }
 
     {
         int bias = 0x8000;
-        if (((RoomLibHandlerDState *)state)->progress.half.whole >= 0xC01 && ((RoomLibHandlerDState *)state)->motion[0] <= 0) {
+        if (state->progress.half.whole >= 0xC01 && state->motion[0] <= 0) {
             ((RoomLibMotionWork *)scratch)->displacement[0] = 0;
             ((RoomLibMotionWork *)scratch)->displacement[1] = 0;
             ((RoomLibMotionWork *)scratch)->displacement[2] = 0;
             RoomLib_ReleaseHandlerD(ent);
         } else {
-            scratch[0] = ((((((RoomLibHandlerDState *)state)->motion[0] + bias) >> 16) *
-                           ((RoomLibHandlerDState *)state)->value90) >> 12);
+            scratch[0] = ((((state->motion[0] + bias) >> 16) *
+                           state->value90) >> 12);
             scratch[1] = 0;
-            scratch[2] = (((RoomLibHandlerDState *)state)->motion[2] + bias) >> 16;
-            gte_ldrotmatrix(((RoomLibHandlerDState *)state)->matrix);
+            scratch[2] = (state->motion[2] + bias) >> 16;
+            gte_ldrotmatrix(state->matrix);
             gte_ldv0((void *)scratch);
             gte_mvmva();
             gte_stmac(((RoomLibMotionWork *)scratch)->displacement);
         }
     }
 
-    if (((RoomLibHandlerDState *)state)->rate != 0 && ((RoomLibHandlerDState *)state)->rate < ((RoomLibHandlerDState *)state)->progress.half.whole) {
+    if (state->rate != 0 && state->rate < state->progress.half.whole) {
         RoomLib_ReleaseHandlerD(ent);
     }
-    link->pos[0] = ((RoomLibHandlerDState *)state)->anchor[0] +
+    link->pos[0] = state->anchor[0] +
                        (((RoomLibMotionWork *)scratch)->displacement[0] << 16);
-    link->pos[2] = ((RoomLibHandlerDState *)state)->anchor[2] +
+    link->pos[2] = state->anchor[2] +
                        (((RoomLibMotionWork *)scratch)->displacement[2] << 16);
     {
         link->modelTranslation[0] = (link->pos[0] + 0x8000) >> 16;
         link->modelTranslation[2] = (link->pos[2] + 0x8000) >> 16;
-        if (((RoomLibHandlerDState *)state)->copyPosition == 0) {
-            value = ((RoomLibHandlerDState *)state)->anchor[1] +
+        if (state->copyPosition == 0) {
+            value = state->anchor[1] +
                     (((RoomLibMotionWork *)scratch)->displacement[1] << 16);
             link->pos[1] = value;
             link->modelTranslation[1] = (value + 0x8000) >> 16;
         }
     }
-    if (((RoomLibHandlerDState *)state)->range[0] != 0 &&
+    if (state->range[0] != 0 &&
         ((RoomLibMotionWork *)scratch)->rotated[2] >= 0) {
-        if (ent->w04 >= (unsigned int)((RoomLibHandlerDState *)state)->range[1] &&
-            (((RoomLibHandlerDState *)state)->range[2] == 0 ||
-             ent->w04 <= (unsigned int)((RoomLibHandlerDState *)state)->range[2])) {
+        if (ent->w04 >= (unsigned int)state->range[1] &&
+            (state->range[2] == 0 ||
+             ent->w04 <= (unsigned int)state->range[2])) {
             RoomLib_HandlerDTransformTarget((struct RoomLibMotionState *)state,
                                         (void *)scratch);
-            scratch[1] = ((RoomLibHandlerDState *)state)->angles[1];
-            FieldFx_FixedVecToLookAngles((Vec3Fixed *)((RoomLibHandlerDState *)state)->anchor, (Vec3Fixed *)((RoomLibMotionState *)state)->position, ((RoomLibHandlerDState *)state)->angles);
-            ((RoomLibHandlerDState *)state)->angles[1] = FieldFx_TurnToward(
+            scratch[1] = state->angles[1];
+            FieldFx_FixedVecToLookAngles((Vec3Fixed *)state->anchor, (Vec3Fixed *)((RoomLibMotionState *)state)->position, state->angles);
+            state->angles[1] = FieldFx_TurnToward(
                 (short)*(volatile unsigned short *)&scratch[1],
-                ((RoomLibHandlerDState *)state)->angles[1], ((RoomLibHandlerDState *)state)->range[0]) & 0xFFF;
-            RotMatrixYXZ(((RoomLibHandlerDState *)state)->angles, ((RoomLibHandlerDState *)state)->matrix);
+                state->angles[1], state->range[0]) & 0xFFF;
+            RotMatrixYXZ(state->angles, state->matrix);
         }
     }
-    if (((RoomLibHandlerDState *)state)->lockY == 0) {
+    if (state->lockY == 0) {
         RoomLib_FxNotify(link, (struct RoomSub *)state, (int)scratch);
     }
-    func_800DFB20(ent);
+    FieldFx_LoopLinkedAnimation(ent);
 }
 
 void RoomLib_FxNotify(RoomLink *arg0, struct RoomSub *arg1, int scratch) {
@@ -781,7 +779,7 @@ void RoomLib_HandlerE(RoomEnt *o) {
         remain = state->duration;
     }
     if (state->eased != 0) {
-        scale = 0x1000 - D_800966EE[(((remain << 11) / state->duration) & 0xFFF) << 1];
+        scale = 0x1000 - g_RcossinTblCos[(((remain << 11) / state->duration) & 0xFFF) << 1];
         link->pos[0] = state->start[0] + (((state->delta[0] * scale + 0x1000) >> 13) << 12);
         if (state->lockY == 0) {
             link->pos[1] = state->start[1] + (((state->delta[1] * scale + 0x1000) >> 13) << 12);
@@ -810,7 +808,7 @@ void RoomLib_HandlerE(RoomEnt *o) {
         }
     }
     RoomLib_HandlerESteerToward(link, state);
-    func_800DFB20(o);
+    FieldFx_LoopLinkedAnimation(o);
 }
 void RoomLib_HandlerESteerToward(char *entArg, char *recArg) {
     RoomLink *ent = (RoomLink *)entArg;
@@ -1144,14 +1142,11 @@ void RoomLib_HandlerB(RoomEnt *obj) {
 
     previousValue = state->phaseValue;
     {
-        int delta = state->mode;
         int enabled = state->heading;
-        a0 = previousValue - delta;
+        a0 = previousValue - state->mode;
         state->phaseValue = a0;
         if (enabled != 0) {
-            delta = previousValue ^ a0;
-
-            if (delta < 0) {
+            if ((previousValue ^ a0) < 0) {
                 state->callback = RoomLib_HandlerBPhase;
                 state->started = 0;
                 self->flag3 = 2;
@@ -1176,7 +1171,7 @@ void RoomLib_HandlerB(RoomEnt *obj) {
         link->rotation[1] = FieldFx_TurnToward(
             link->rotation[1], (short)result, state->secondaryHeading);
     }
-    func_800DFB20(self);
+    FieldFx_LoopLinkedAnimation(self);
     if (scratch->landed != 0) {
         RoomLib_ReleaseHandlerB(self);
     }
@@ -1299,7 +1294,7 @@ void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
         link->pos[1] = ((RoomLibHandlerBState *)state)->target[1];
         link->pos[2] = ((RoomLibHandlerBState *)state)->target[2];
     }
-    func_800DFB20(self);
+    FieldFx_LoopLinkedAnimation(self);
     if (((RoomLibArcWork *)scratch)->landed != 0) {
         RoomLib_ReleaseHandlerB(self);
     }
@@ -1612,7 +1607,7 @@ void RoomLib_HandlerC(RoomEnt *obj) {
         link->rotation[1] = FieldFx_TurnToward(
             link->rotation[1], (short)angle, state->secondaryHeading);
     }
-    func_800DFB20(self);
+    FieldFx_LoopLinkedAnimation(self);
     if (((RoomLibArcWork *)scratch)->landed != 0) {
         RoomLib_ReleaseHandlerC(self);
     }
@@ -1733,7 +1728,7 @@ void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
         ((RoomLibArcWork *)scratch)->landed = 1;
         link->pos[1] = ((RoomLibHandlerCState *)state)->arcTarget[1];
     }
-    func_800DFB20(self);
+    FieldFx_LoopLinkedAnimation(self);
     if (((RoomLibArcWork *)scratch)->landed != 0) {
         RoomLib_ReleaseHandlerC(self);
     }

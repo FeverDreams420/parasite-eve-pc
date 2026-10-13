@@ -9,8 +9,6 @@
 
 #include "../room_lib/room_lib.h"
 
-extern short g_RoomM089Anchor;
-extern short D_80194162;
-extern short D_80194164;
+extern short g_RoomM089Anchor[3];
 
 #endif

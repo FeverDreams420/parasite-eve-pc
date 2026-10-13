@@ -3,6 +3,7 @@
 #include "pe1/akao/file_header.h"
 #include "pe1/akao/init_state.h"
 #include "pe1/akao/tick.h"
+#include "pe1/akao/voice_masks.h"
 #include "pe1/psyq_bios.h"
 #include "pe1/psyq_spu_internal.h"
 
@@ -90,7 +91,7 @@ void Spu_InitVoiceState(void) {
     g_AkaoPlaybackMode = 1;
     g_AkaoSequencerState.secondary.pitch_current = 0x7F0000;
     g_AkaoSequencerState.primary.pitch_current = 0x7F0000;
-    D_8009D2B4 = 0x7FFF0000;
+    g_AkaoCdInputVolumeAccum = 0x7FFF0000;
     g_SpuActiveVoiceMask = 0;
 
     g_AkaoSequencerState.primary.active_voice_mask = 0;
@@ -108,7 +109,7 @@ void Spu_InitVoiceState(void) {
     g_AkaoGlobalD2CCSlideCounter = 0;
     g_AkaoGlobalPitchDepth = 0;
     g_AkaoGlobalD2D0SlideCounter = 0;
-    D_8009D2D0 = 0;
+    g_AkaoTempoScaleAccum = 0;
     g_AkaoGlobalPitchSlideCounter = 0;
     g_AkaoTrack34Mask = 0;
     g_AkaoSequencerState.primary.key_off_dirty_mask = 0;
@@ -151,9 +152,9 @@ void Spu_InitVoiceState(void) {
     reset = g_AkaoMessageQueueLock;
     g_AkaoMessageQueueCount = reset;
     g_AkaoSeqPendingFlags = reset;
-    D_8009D2E0 = reset;
+    g_AkaoSeqBusyFlags = reset;
 
-    voice = D_800B8AC0;
+    voice = g_AkaoSequencerTracks;
     for (i = 0; i < AKAO_VOICE_COUNT; i++, voice++) {
         voice->track.flags = 0;
         voice->track.assigned_voice_index = AKAO_VOICE_COUNT;
@@ -169,7 +170,7 @@ void Spu_InitVoiceState(void) {
         SpuSetVoiceVolumeAttr(i, 0, 0, 0, 0);
     }
 
-    voice = D_800BC000;
+    voice = (AkaoTickTrack *)g_AkaoVoiceChannelTable;
     for (i = AKAO_SPU_VOICE_SFX_START_INDEX; i < AKAO_VOICE_COUNT; i++, voice++) {
         voice->track.flags = 0;
         voice->track.assigned_voice_index = i;

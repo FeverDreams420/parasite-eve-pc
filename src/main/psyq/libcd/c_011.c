@@ -30,7 +30,7 @@ void StCdInterrupt(void) {
     u8 *subheaderByte;
 
     if (g_CdStreamDataReadyFlag != 1) {
-        if ((D_800A801C != 0) && (*g_CdStIntrMdecDmaChcrPtr & 0x01000000)) {
+        if ((g_StRgb24Mode != 0) && (*g_CdStIntrMdecDmaChcrPtr & 0x01000000)) {
             g_CdStreamReady.word = 1;
             if (g_CdStreamMemorySource != 0) {
                 g_CdStreamSectorSlot += 1;
@@ -196,7 +196,7 @@ void StCdInterrupt(void) {
                 g_CdStreamSectorPayloadPtr =
                     &((StSectorPayload *)(StRingAddr + StRingSize))[g_CdStreamRingWriteSlot];
                 dmaControl = 0x11000000;
-                if (D_800A801C != 0) {
+                if (g_StRgb24Mode != 0) {
                     *g_CdStIntrDelayRegPtr = 0x20943;
                     *g_CdStIntrComDelayRegPtr = 0x1323;
                 } else {

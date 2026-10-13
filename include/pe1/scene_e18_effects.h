@@ -114,7 +114,7 @@ extern int Math_IntSqrt(int value);
 
 /* Pulse ring particle (SceneE18_PulseRingCallback): shrinking light rings around the
  * room model; the last one releases the actor once the player is near. */
-extern RenderColor D_8019411C[2];
+extern RenderColor g_SceneE18PulseRingColors[2];
 
 /* Spinning model controller (SceneE18_SpinShell): spins the scene model's
  * glow shell around the room model while it grows and flares, and sets

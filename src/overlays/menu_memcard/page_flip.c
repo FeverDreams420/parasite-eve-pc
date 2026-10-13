@@ -29,7 +29,7 @@ void MenuCard_FlipScreenPages(void) {
         main_rect.w = 0x1E0;
         main_rect.h = 0xCC;
         main_rect.y = y;
-        LoadImage(&main_rect, &((u8 *)&D_80193268)[g_MemcardImageOffsets[0]]);
+        LoadImage(&main_rect, &((u8 *)&g_MemcardImageOffsetsView4)[g_MemcardImageOffsets[0]]);
         DrawSync(0);
 
         screen = g_MemcardCurrentScreen;

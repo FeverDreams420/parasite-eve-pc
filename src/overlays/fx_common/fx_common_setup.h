@@ -3,82 +3,55 @@
 
 #include "pe1/boot_services.h"
 #include "pe1/field_bg_load.h"
+#include "pe1/game_state.h"
 #include "pe1/psyq_gpu.h"
+#include "pe1/script_queue.h"
 
 #include "fx_common.h"
 
-extern u32 D_800A77FC;
-
-extern u32 D_800B0CD8;
-extern s32 D_8019C000;
-extern s32 D_8019C004;
+extern s32 g_FxCommonConfirmExit;
+extern s32 g_FxCommonConfirmExitVariant;
+extern u32 g_GameStateFlagsWord;
 int Save_GetMetadataWindowIndex(void);
 void Menu_SetEquipSlotIndex(int enabled);
 void FxCommon_InitDisplay(void);
 void FxCommon_LoadEffectSectors(void);
-extern s32 D_8019BFF4;
-extern s32 D_8019BFF8;
-extern s32 D_8019BFFC;
-extern s32 D_8019C008;
+extern s32 g_FxCommonStartPreset;
+extern s32 g_FxCommonAutoPlay;
+extern s32 g_FxCommonAutoVariant;
+extern s32 g_FxCommonAltFogLayer;
 extern s8 D_8019C00D;
-extern u8 D_8019C017;
-extern s32 D_8019C020;
+extern u8 g_FxCommonStartCameraPath;
+extern s32 g_FxCommonRouteNodeCount;
 extern s16 D_8019C02E;
-extern s16 D_8019C034;
-extern u8 D_8019C040;
-extern u8 D_8019C041;
-extern u8 D_8019C042;
-extern u8 D_8019C044;
-extern u8 D_8019C045;
-extern u8 D_8019C046;
-extern s32 D_8019C048;
-extern short D_8019C0D4[];
-extern short D_8019C0E8[];
-extern unsigned char D_8019C0FC;
-extern unsigned char D_8019C11C;
-extern FxCommonNode *D_8019C148;
-extern FxCommonNode *D_8019C14C;
-extern FxCommonNode *D_8019C150;
-extern FxCommonNode *D_8019C154;
-extern FxCommonNode *D_8019C180;
-extern FxCommonNode *D_8019C3B0[];
-extern FxCommonNode *D_8019C820;
-extern FxCommonNode *D_8019C824;
-extern int D_8019CAAC[];
-extern s32 D_8019CC1C;
-extern FxCommonNode *D_8019CC20;
-extern FxCommonNode *D_8019CC24;
-extern FxCommonNode *D_8019CC28;
+extern s16 g_FxCommonViewMode;
+extern u8 g_FxCommonCameraPathRemaining;
+extern u8 g_FxCommonCameraPathStep;
+extern u8 g_FxCommonCameraPathIndex;
+extern u8 g_FxCommonPlaying;
+extern u8 g_FxCommonPlayAdvance;
+extern u8 g_FxCommonReplayCamera;
+extern s32 g_FxCommonPlayTicks;
+extern short g_FxCommonRouteFarDepths[];
+extern short g_FxCommonRouteNearDepths[];
+extern unsigned char g_FxCommonColorMatrix;
+extern unsigned char g_FxCommonLightMatrix;
+extern FxCommonNode *g_FxCommonRouteNodes[];
+extern int g_FxCommonMotionPositionY[];
+extern s32 g_FxCommonPlayFrame;
 extern s16 g_FxCommonRoomVariant;
-extern FxCommonNode *D_8019CDA0;
-extern FxCommonNode *D_8019CDA4;
-extern FxCommonNode *D_8019CDA8;
-extern FxCommonNode *D_8019CDAC;
-extern FxCommonNode *D_8019CDB0;
-extern FxCommonNode *D_8019CDB4;
-extern FxCommonNode *D_8019CDB8;
-extern FxCommonNode *D_8019CDBC;
-extern FxCommonNode *D_8019CDC0;
-extern FxCommonNode *D_8019CDC4;
-extern FxCommonNode *D_8019CDC8;
-extern unsigned char D_8019CE10;
-extern FxCommonNode *D_801EA578;
-extern FxCommonNode *D_801EA57C;
-extern FxCommonNode *D_801EA580;
-extern FxCommonNode *D_801EA584;
-extern FxCommonNode *D_801EA588;
-extern FxCommonNode *D_801EA58C;
+extern unsigned char g_FxCommonModelTable;
 void Render_SetupFogLayer(void *);
 void SetFogNearFar(int,int,int);
 void SetBackColor(int,int,int);
 void SetFarColor(int,int,int);
 void FxCommon_InitNodePools(void);
-FxCommonNode *func_80190AEC(FxCommonNode *,void *);
-FxCommonNode *func_80190B78(FxCommonNode *,s16,void *);
-FxCommonNode *func_80190C1C(FxCommonNode *,s16,s16,s16,void *,void *,void *);
+FxCommonNode *FxCommon_CreateBareNode(FxCommonNode *,void *);
+FxCommonNode *FxCommon_CreateTypedNode(FxCommonNode *,s16,void *);
+FxCommonNode *FxCommon_CreateConfiguredNode(FxCommonNode *,s16,s16,s16,void *,void *,void *);
 void FxCommon_SelectRoomVariant(void);
 /* The two camera lanes advance for 1 << durationShift frames. */
-void func_80195994(int setupIndex, int targetDurationShift,
+void FxCommon_StartCameraMove(int setupIndex, int targetDurationShift,
                    int eyeDurationShift, u32 pathPosition);
 void FxCommon_InitFadeQuads(void);
 
@@ -140,6 +113,13 @@ int RotTransPers3(GteShortVector *v0, GteShortVector *v1, GteShortVector *v2,
                   s32 *sxy0, s32 *sxy1, s32 *sxy2, s32 *p, s32 *flag);
 
 extern FxCommonNode *g_FxCommonType26Nodes[4];
+/* Scene nodes by creation: type 0x51; types 0x28 to 0x32 in order; two of type 0x21;
+ * type 0x54; two LOD-configured pairs (type 0x22). */
+extern FxCommonNode *g_FxCommonType51Node;
+extern FxCommonNode *g_FxCommonSceneNodes[11];
+extern FxCommonNode *g_FxCommonType21Nodes[2];
+extern FxCommonNode *g_FxCommonType54Node;
+extern FxCommonNode *g_FxCommonLodNodes[2];
 extern FxCommonNode *g_FxCommonPairedNodes[2];
 typedef struct FxCommonRuntime {
     FxCommonNode *node25;

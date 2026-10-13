@@ -19,7 +19,7 @@ typedef struct RoomM123GlowBurst {
     s16 timer;
 } RoomM123GlowBurst;
 
-extern GteShortVector D_8018F1E0;
+extern GteShortVector g_RoomM123JointAnchor;
 /* Joint angles published for the pulsing particles: written by the joint
  * transform as a vector, read back by the flare sweep as a rotation. */
 typedef union RoomM123JointAngles {

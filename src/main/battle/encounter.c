@@ -15,18 +15,20 @@
 #include "pe1/battle_update.h"
 #include "pe1/game_state.h"
 
-u8 D_8009CE7C;
-s32 D_8009D1D0;
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+u8 g_BattleSuspendedModeState;
+void *g_BattlePendingEnemySpawn;
 s32 g_BattleFrameCounter;
 u8 g_BattleActionActorCount;
 u8 g_BattleEnemyEscapeFlag;
 Combatant *g_ActiveActor;
-u8 D_8009D288;
+u8 g_BattleGaugeCapLatch;
 int g_BattleModeState;
-s8 D_8009D2A0;
-s16 D_8009D2A4;
-s8 D_8009D2B0;
-s32 D_8009D2FC;
+s8 g_BattleLiveEnemyCount;
+s16 g_MenuFrameCommand;
+s8 g_BattleTargetCount;
+s32 g_BattleImpactPmSlot;
 u8 g_BattleStepIndex;
 u32 g_BattleExpReward;
 u16 g_BattlePeBonusReward;
@@ -43,20 +45,24 @@ void Save_InitSystem(void)
     for (i = 0; i < 7; i++) {
         g_BattleEnemySlots[i].active = 0;
     }
-    D_8009D2A0 = 0;
+    g_BattleLiveEnemyCount = 0;
     g_EntityInstanceCounter = 0;
     Save_ResetGlobalFlags();
 }
 
-u8 g_BattleStepIndex, D_8009CE78, D_8009CE7C;
-int D_8009D1D0;
+/* COMMON supplies small-data metadata to MASPSX; the other battle words
+ * stay absolute. The story-day flags byte is set through its g_GameState
+ * record field: the record is not small data, so its address stays in a
+ * for the read-modify-write, as retail has it. */
+u8 g_BattleStepIndex, D_8009CE78, g_BattleSuspendedModeState;
+void *g_BattlePendingEnemySpawn;
 int g_BattleFrameCounter;
 u16 g_BattlePeBonusReward;
 u8 g_BattleEnemyEscapeFlag;
 Combatant *g_ActiveActor;
-u8 D_8009D288;
+u8 g_BattleGaugeCapLatch;
 int g_BattleModeState;
-s8 D_8009D2A0;
+s8 g_BattleLiveEnemyCount;
 u8 g_EntityInstanceCounter;
 u32 g_BattleExpReward;
 
@@ -75,10 +81,10 @@ void Battle_ResetEnemyStats(int mode) {
     actor->hpAlive = 0;
     actor->atbGauge = 0;
     actor->hpMirror = actor->curHP;
-    D_8009D1D0 = 0;
+    g_BattlePendingEnemySpawn = 0;
 
     if ((mode & 0xFF) == 1) {
-        D_8009D234[0] = 0x5A;
+        g_BattleEnemyHoldTimer[0] = 0x5A;
         g_BattleEnemyEscapeFlag = 1;
         actor->stateFlags |= 0x800000;
     } else {
@@ -120,10 +126,10 @@ void Battle_ResetEnemyStats(int mode) {
     D_8009D2E8 &= ~0x10;
     Battle_FlushScriptSounds();
     Draw_ResetTextboxes();
-    D_8009D298 = 0;
-    D_8009D29A = 0;
+    g_BattleHitActionPending = 0;
+    g_BattleHitActionMode[0] = 0;
     g_BattleHitActionSubmode[0] = 0;
-    D_8009D29C[0] = 0;
+    g_BattleHitActionParam[0] = 0;
 }
 
 /* Reset the PE gauge fill and remainder gradients of both draw buffers. */
@@ -136,8 +142,8 @@ void Battle_SetupPlayerPalette(void) {
     BATTLE_SET_GAUGE_GRADIENT(g_BattlePeGauges[1][1], 0xFF, 0x3D, 0x81, 0x83, 0x13, 1);
     Battle_FlushScriptSounds();
     g_EntityInstanceCounter = 0;
-    D_8009D2A0 = 0;
-    D_8009D254->actionCheckFn = (void *)D_800915E0[0];
+    g_BattleLiveEnemyCount = 0;
+    D_8009D254->actionCheckFn = (void *)g_FieldActorTypeCallbacks[0].contact;
     g_GameStateFlags &= -3;
     D_8009D2E8 &= -0x11;
     flags = &g_GameState.story_day_flags;
@@ -156,11 +162,11 @@ void Battle_StartEncounter(int mode) {
     entity = D_8009D254;
     g_ActiveActor = entity->core;
     g_BattleFrameCounter = 0;
-    *(u32 *)&D_8009D290 = 0;
+    g_BattleAttackAnimFrame = 0;
     g_BattleModeState = 0;
-    D_8009CE7C = 0;
+    g_BattleSuspendedModeState = 0;
     D_8009CE78 = 0;
-    D_8009D288 = 0;
+    g_BattleGaugeCapLatch = 0;
     g_BattleStepIndex = 0;
     mode_reg = mode;
     Save_ResetGlobalFlags();
@@ -169,9 +175,9 @@ void Battle_StartEncounter(int mode) {
     neg_one = -1;
     *(u8 *)&g_BattleResultFlags = 0;
     initial_flags = g_BattleResultFlags;
-    D_8009D1A8.summary = 0;
-    D_8009D1CE = 0;
-    D_8009D235[0] = 0;
+    g_BattleScanPanel.summary = 0;
+    g_BattleSaveOverlayActive = 0;
+    g_BattleSpritePrimCountdown = 0;
     g_BattleExpReward = 0;
     g_BattlePeBonusReward = 0;
     initial_flags &= -0x301;
@@ -186,7 +192,7 @@ void Battle_StartEncounter(int mode) {
         g_BattleActionActors[(u8)i] = 0;
     }
 
-    srand(D_8009D250);
+    srand(g_FrameRngCounter);
     Battle_ResetEnemyStats(0);
     Battle_SetupEnemyAnims();
 
@@ -225,9 +231,6 @@ void Battle_StartEncounter(int mode) {
     }
 }
 
-#define BATTLE_HUD_SLOT_BYTE(symbol, stride) \
-    (*(&(symbol)[0] +(g_ActiveDrawSlot * (stride))))
-
 void Battle_Update(void) {
     /* Retail reserves 0x1A0 unused bytes; original local layout is unknown. */
     volatile u8 matchingStackReserve[0x1A0];
@@ -245,133 +248,133 @@ void Battle_Update(void) {
     menuMode = 1;
     if (g_ActiveActor->stateFlags & 0x80000) {
         if (g_BattleModeState == 6) {
-            D_8009CE7C = 6;
+            g_BattleSuspendedModeState = 6;
             g_BattleModeState = 0;
         }
     }
     if (!(g_ActiveActor->stateFlags & 0x80000)) {
-        previousPhase = D_8009CE7C;
+        previousPhase = g_BattleSuspendedModeState;
         if (previousPhase == 6) {
-            D_8009CE7C = 0;
+            g_BattleSuspendedModeState = 0;
             g_BattleModeState = previousPhase;
         }
     }
     active = D_8009D254->core;
     g_BattleStatusPanelSlot = 0;
     g_ActiveActor = active;
-    D_8009D2A4 = Menu_RunFrameWithArg((int)&g_BattleMenuActionRecord);
+    g_MenuFrameCommand = Menu_RunFrameWithArg((int)&g_BattleMenuActionRecord);
     if (g_BattleModeState == 0 && g_BattleEnemyEscapeFlag != 0) {
         if (g_ActiveActor->hpAlive >= 0x2328U) {
             g_ActiveActor->hpAlive = 0x2328U;
-            if (D_8009D288 == 0) {
-                srand(D_8009D250);
+            if (g_BattleGaugeCapLatch == 0) {
+                srand(g_FrameRngCounter);
                 if ((g_AkaoBgmHandle[0]) != 0) {
                     Akao_SendTableCommand((g_AkaoBgmHandle[0]), 0x454, 0, 0x80, 0x7F);
                 }
-                D_8009D288 = 1;
+                g_BattleGaugeCapLatch = 1;
             }
-            if (!(g_ActiveActor->stateFlags & 0x2000) && (D_8009D2A0 != 0)) {
-                if ((D_8009D250 & 3) == 0) {
+            if (!(g_ActiveActor->stateFlags & 0x2000) && (g_BattleLiveEnemyCount != 0)) {
+                if ((g_FrameRngCounter & 3) == 0) {
                     int topGreen = 0x46;
                     int topBlue = 0x82;
                     int bottomRed = 0x9F;
                     int bottomGreen = 0xFF;
                     int bottomBlue = 0xF9;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = 0;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = topGreen;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = topBlue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = bottomRed;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = bottomGreen;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = bottomBlue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = 0;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = topGreen;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = topBlue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = bottomRed;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = bottomGreen;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = bottomBlue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r0 = 0;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g0 = topGreen;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b0 = topBlue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r1 = bottomRed;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g1 = bottomGreen;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b1 = bottomBlue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r2 = 0;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g2 = topGreen;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b2 = topBlue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r3 = bottomRed;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g3 = bottomGreen;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b3 = bottomBlue;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = bottomRed;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = bottomGreen;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = bottomBlue;
-                } else if ((D_8009D250 & 3) == 1) {
+                } else if ((g_FrameRngCounter & 3) == 1) {
                     int red = 0x50;
                     int green = 0xA3;
                     int blue = 0xBE;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = red;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = green;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = blue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = red;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = green;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = blue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = red;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = green;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = blue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = red;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = green;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = blue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r0 = red;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g0 = green;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b0 = blue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r1 = red;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g1 = green;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b1 = blue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r2 = red;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g2 = green;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b2 = blue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r3 = red;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g3 = green;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b3 = blue;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = red;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = green;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = blue;
-                } else if ((D_8009D250 & 3) == 2) {
+                } else if ((g_FrameRngCounter & 3) == 2) {
                     int topRed = 0x9F;
                     int topGreen = 0xFF;
                     int topBlue = 0xF9;
                     int bottomGreen = 0x46;
                     int bottomBlue = 0x82;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = topRed;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = topGreen;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = topBlue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = 0;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = bottomGreen;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = bottomBlue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = topRed;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = topGreen;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = topBlue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = 0;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = bottomGreen;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = bottomBlue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r0 = topRed;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g0 = topGreen;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b0 = topBlue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r1 = 0;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g1 = bottomGreen;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b1 = bottomBlue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r2 = topRed;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g2 = topGreen;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b2 = topBlue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r3 = 0;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g3 = bottomGreen;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b3 = bottomBlue;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = 0;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = bottomGreen;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = bottomBlue;
-                } else if ((D_8009D250 & 3) == 3) {
+                } else if ((g_FrameRngCounter & 3) == 3) {
                     int red = 0x50;
                     int green = 0xA3;
                     int blue = 0xBE;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = red;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = green;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = blue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = red;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = green;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = blue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = red;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = green;
-                    BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = blue;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = red;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = green;
-                    BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = blue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r0 = red;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g0 = green;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b0 = blue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r1 = red;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g1 = green;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b1 = blue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r2 = red;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g2 = green;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b2 = blue;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].r3 = red;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].g3 = green;
+                    g_BattleAtbGauges[g_ActiveDrawSlot].b3 = blue;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = red;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = green;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = blue;
                 }
                 if ((Pad_GetMenuPressedBitOrDisabled() << 0x18) == 0) {
                     opened = 0;
-                    if (D_8009D1F4 & 0x200) {
-                        (D_8009D1F0[0]) = 0;
+                    if (g_FieldPadPressed & 0x200) {
+                        g_BattleItemMenuState = 0;
                         opened = 1;
-                    } else if (D_8009D1F4 & 0x80) {
+                    } else if (g_FieldPadPressed & 0x80) {
                         opened = 1;
-                        (D_8009D1F0[0]) = opened;
+                        g_BattleItemMenuState = opened;
                         Inv_OpenAyaItemList(1);
                         Render_BeginSceneLoad();
                     }
                     if ((u8)opened != 0) {
                         Akao_Cmd_21(0, 0xFF);
                         g_BattleModeState = 1;
-                        (D_8009D290[0]) = 0;
+                        g_BattleAttackAnimFrame = 0;
                         g_GameStateFlags = g_GameStateFlags | 4;
                         menuMode = 0;
-                        D_8009D2B0 = Battle_BuildTargetList();
+                        g_BattleTargetCount = Battle_BuildTargetList();
                         Battle_Init();
-                        if (D_8009D2B0 != 0) {
+                        if (g_BattleTargetCount != 0) {
                             Menu_SetItemContext(0);
                         } else {
                             Menu_SetItemContext(1);
@@ -385,7 +388,7 @@ void Battle_Update(void) {
                 menuMode = 2;
                 Battle_StepScriptEntry();
             }
-            if ((D_8009D294) != 0) {
+            if ((g_BattleHitPending) != 0) {
                 Battle_ResolveHitOnTimer();
             }
         }
@@ -403,30 +406,30 @@ void Battle_Update(void) {
             } while (entity != 0);
         }
         if (g_BattleActionActorCount != 0) {
-            Pm_SendCmd(D_8009D2FC, 0, 1, (int)&(g_BattleActionActors[0]), 0, 0);
-            Pm_SendCmd(D_8009D2FC, 0, 0, 1, 0, 0);
+            Pm_SendCmd(g_BattleImpactPmSlot, 0, 1, (int)&(g_BattleActionActors[0]), 0, 0);
+            Pm_SendCmd(g_BattleImpactPmSlot, 0, 0, 1, 0, 0);
             g_BattleActionActorCount = 0;
         }
-        if ((D_8009D235[0]) != 0) {
+        if (g_BattleSpritePrimCountdown != 0) {
             Draw_QueuePrimitive();
         }
         player = D_8009D254;
         if ((player->animLastFrame == player->animPrev.parts.integer) && (player->actionMode < 4U)) {
-            if (D_8009D298 == 0) {
+            if (g_BattleHitActionPending == 0) {
                 Entity_SetActionMode(player, g_ActiveActor->actionMode12);
-                if (!(g_DiscChangeFlags & 1) && ((Pad_GetMenuPressedBitOrDisabled() << 0x18) == 0) && (g_BattleModeState == 0) && (g_ActiveActor->action->turnWord & 0x8000) && (D_8009D1D0 != 0)) {
-                    Battle_RollEnemySpawn(D_8009D1D0);
-                    D_8009D1D0 = 0;
+                if (!(g_DiscChangeFlags & 1) && ((Pad_GetMenuPressedBitOrDisabled() << 0x18) == 0) && (g_BattleModeState == 0) && (g_ActiveActor->action->turnWord & 0x8000) && (g_BattlePendingEnemySpawn != 0)) {
+                    Battle_RollEnemySpawn(g_BattlePendingEnemySpawn);
+                    g_BattlePendingEnemySpawn = 0;
                 }
             } else {
-                if (D_8009D298 >= 2U) {
+                if (g_BattleHitActionPending >= 2U) {
                     player->entityFlags |= 0x100;
                 }
-                D_8009D298 = 0;
-                Entity_SetActionMode(D_8009D254, D_8009D29A);
+                g_BattleHitActionPending = 0;
+                Entity_SetActionMode(D_8009D254, g_BattleHitActionMode[0]);
                 player = D_8009D254;
-                player->animFrame = D_8009D29C[0];
-                player->animPrev.fixed = D_8009D29C[0] + 0xFFFF0000;
+                player->animFrame = g_BattleHitActionParam[0];
+                player->animPrev.fixed = g_BattleHitActionParam[0] + 0xFFFF0000;
             }
         }
         if ((D_8009D254->actionMode == 0xD) && !(g_DiscChangeFlags & 1)) {
@@ -503,23 +506,22 @@ void Battle_Update(void) {
 
         }
     }
-    if (((D_8009D1CE) != 0) && (g_BattleModeState == 0)) {
+    if (((g_BattleSaveOverlayActive) != 0) && (g_BattleModeState == 0)) {
         Menu_SaveOverlayDraw();
     }
     if (g_BattleEnemyEscapeFlag != 0) {
         Battle_DrawActiveStatus();
     }
-    if (D_8009D2A4 != 0) {
+    if (g_MenuFrameCommand != 0) {
         Render_BeginSceneLoad();
     }
 }
-#undef BATTLE_HUD_SLOT_BYTE
 
 /* COMMON metadata retains retail GP-relative addressing; symbols provide storage. */
 u8 g_BattleEndTimer, g_BattleStepIndex;
 Combatant *g_ActiveActor;
 int g_BattleModeState;
-s8 D_8009D2A0;
+s8 g_BattleLiveEnemyCount;
 /* Eight-stage transition: model fades, an effect spawn, stat recovery and
  * HUD reset. Returns 1 once the stats have been restored. */
 int Battle_StepVictory(void)
@@ -649,7 +651,7 @@ int Battle_StepVictory(void)
         BATTLE_SET_GAUGE_GRADIENT(g_BattlePeGauges[1][0], 0, 0x82, 0x36, 0x4A, 0xFF, 0x3B);
         g_BattleStepIndex = 0;
         g_BattleModeState = 0;
-        if (D_8009D2A0 == 0)
+        if (g_BattleLiveEnemyCount == 0)
             Battle_StartDeathAnim();
         result = 1;
         break;
@@ -681,7 +683,7 @@ void Battle_StepLevelUp(void) {
         break;
 
     case 1:
-        if (D_8009D2A4 == 0x3E8) {
+        if (g_MenuFrameCommand == 0x3E8) {
             entity = D_8009D254;
             g_BattleStepIndex = step + 1;
             entity->entityFlags &= -0x101;
@@ -1017,10 +1019,6 @@ void Battle_StepEscapeOrDeath(void)
     }
 }
 
-#define BATTLE_HUD_BYTE(symbol) ((symbol)[0])
-#define BATTLE_HUD_SLOT_BYTE(symbol, stride) \
-    (*(&BATTLE_HUD_BYTE(symbol) + (g_ActiveDrawSlot * (stride))))
-
 /* Initialize the enemy turn and wait for HUD, animation and texture work. */
 void Battle_PhaseInitEnemyTurn(void) {
     /* Retail reserves this unused local area; its original purpose is unknown. */
@@ -1055,159 +1053,159 @@ void Battle_PhaseInitEnemyTurn(void) {
     g_GameStateFlags = gameFlags & clearMask;
     /* Animate the charged gauge and status highlight using the draw slot. */
     if (hp >= 0x2328U) {
-        if ((D_8009D250 & 3) == 0) {
+        if ((g_FrameRngCounter & 3) == 0) {
             int topGreen = 0x46;
             int topBlue = 0x82;
             int bottomRed = 0x9F;
             int bottomGreen = 0xFF;
             int bottomBlue = 0xF9;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = bottomBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = bottomRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = bottomRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = bottomBlue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = bottomRed;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = bottomGreen;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = bottomBlue;
-        } else if ((D_8009D250 & 3) == 1) {
+        } else if ((g_FrameRngCounter & 3) == 1) {
             int red = 0x50;
             int green = 0xA3;
             int blue = 0xBE;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = blue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = red;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = green;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = blue;
-        } else if ((D_8009D250 & 3) == 2) {
+        } else if ((g_FrameRngCounter & 3) == 2) {
             int topRed = 0x9F;
             int topGreen = 0xFF;
             int topBlue = 0xF9;
             int bottomGreen = 0x46;
             int bottomBlue = 0x82;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = bottomBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = topRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = topRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = bottomBlue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = 0;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = bottomGreen;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = bottomBlue;
-        } else if ((D_8009D250 & 3) == 3) {
+        } else if ((g_FrameRngCounter & 3) == 3) {
             int red = 0x50;
             int green = 0xA3;
             int blue = 0xBE;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = blue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = red;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = green;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = blue;
         }
     }
     if (g_ActiveActor->stateFlags & 0x2000) {
-        if ((D_8009D250 & 3) == 0) {
+        if ((g_FrameRngCounter & 3) == 0) {
             int topRed = 0xFF;
             int topGreen = 0x3D;
             int topBlue = 0x81;
             int bottomRed = 0x83;
             int bottomGreen = 0x13;
             int bottomBlue = 1;
-            BATTLE_HUD_SLOT_BYTE(D_800B0158, 0x48) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0159, 0x48) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B015A, 0x48) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0160, 0x48) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0161, 0x48) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0162, 0x48) = bottomBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0168, 0x48) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0169, 0x48) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B016A, 0x48) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0170, 0x48) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0171, 0x48) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0172, 0x48) = bottomBlue;
-        } else if ((D_8009D250 & 3) == 1) {
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r0 = topRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = topGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = topBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = bottomRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = bottomGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = bottomBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = topRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = topGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = topBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = bottomRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = bottomGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b3 = bottomBlue;
+        } else if ((g_FrameRngCounter & 3) == 1) {
             int red = 0xC1;
             int green = 0x28;
             int blue = 0x41;
-            BATTLE_HUD_SLOT_BYTE(D_800B0158, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0159, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B015A, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0160, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0161, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0162, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0168, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0169, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B016A, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0170, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0171, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0172, 0x48) = blue;
-        } else if ((D_8009D250 & 3) == 2) {
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r0 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b3 = blue;
+        } else if ((g_FrameRngCounter & 3) == 2) {
             int topRed = 0x83;
             int topGreen = 0x13;
             int topBlue = 1;
             int bottomRed = 0xFF;
             int bottomGreen = 0x3D;
             int bottomBlue = 0x81;
-            BATTLE_HUD_SLOT_BYTE(D_800B0158, 0x48) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0159, 0x48) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B015A, 0x48) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0160, 0x48) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0161, 0x48) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0162, 0x48) = bottomBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0168, 0x48) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0169, 0x48) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B016A, 0x48) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0170, 0x48) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0171, 0x48) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0172, 0x48) = bottomBlue;
-        } else if ((D_8009D250 & 3) == 3) {
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r0 = topRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = topGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = topBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = bottomRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = bottomGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = bottomBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = topRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = topGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = topBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = bottomRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = bottomGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b3 = bottomBlue;
+        } else if ((g_FrameRngCounter & 3) == 3) {
             int red = 0xC1;
             int green = 0x28;
             int blue = 0x41;
-            BATTLE_HUD_SLOT_BYTE(D_800B0158, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0159, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B015A, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0160, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0161, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0162, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0168, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0169, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B016A, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0170, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0171, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0172, 0x48) = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r0 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b3 = blue;
         }
     }
     /* Floating status panels must finish before the next phase. */
@@ -1238,15 +1236,15 @@ void Battle_PhaseInitEnemyTurn(void) {
                     entityFlags = entity->entityFlags & ~0x100;
                     entity->entityFlags = entityFlags;
                     if (entity->animLastFrame == entity->animPrev.parts.integer) {
-                        if ((entity->actionMode < 4U) && (D_8009D298 != 0)) {
-                            if (D_8009D298 >= 2U) {
+                        if ((entity->actionMode < 4U) && (g_BattleHitActionPending != 0)) {
+                            if (g_BattleHitActionPending >= 2U) {
                                 entity->entityFlags = (entityFlags | 0x100);
                             }
-                            D_8009D298 = 0;
-                            Entity_SetActionMode(D_8009D254, D_8009D29A);
+                            g_BattleHitActionPending = 0;
+                            Entity_SetActionMode(D_8009D254, g_BattleHitActionMode[0]);
                             player = D_8009D254;
-                            player->animFrame = (D_8009D29C[0]);
-                            player->animPrev.fixed = (D_8009D29C[0] + 0xFFFF0000);
+                            player->animFrame = g_BattleHitActionParam[0];
+                            player->animPrev.fixed = (g_BattleHitActionParam[0] + 0xFFFF0000);
                         } else {
                             Entity_SetActionMode(entity, g_ActiveActor->actionMode12);
                         }
@@ -1302,83 +1300,83 @@ void Battle_PhaseHitReaction(void) {
     BattleEntity *entity;
     EnemyCombatant *enemy;
     if (g_ActiveActor->hpAlive >= 0x2328U) {
-        if ((D_8009D250 & 3) == 0) {
+        if ((g_FrameRngCounter & 3) == 0) {
             int topGreen = 0x46;
             int topBlue = 0x82;
             int bottomRed = 0x9F;
             int bottomGreen = 0xFF;
             int bottomBlue = 0xF9;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = bottomBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = bottomRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = bottomRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = bottomBlue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = bottomRed;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = bottomGreen;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = bottomBlue;
-        } else if ((D_8009D250 & 3) == 1) {
+        } else if ((g_FrameRngCounter & 3) == 1) {
             int red = 0x50;
             int green = 0xA3;
             int blue = 0xBE;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = blue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = red;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = green;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = blue;
-        } else if ((D_8009D250 & 3) == 2) {
+        } else if ((g_FrameRngCounter & 3) == 2) {
             int topRed = 0x9F;
             int topGreen = 0xFF;
             int topBlue = 0xF9;
             int bottomGreen = 0x46;
             int bottomBlue = 0x82;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = bottomBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = topRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = topRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = bottomBlue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = 0;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = bottomGreen;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = bottomBlue;
-        } else if ((D_8009D250 & 3) == 3) {
+        } else if ((g_FrameRngCounter & 3) == 3) {
             int red = 0x50;
             int green = 0xA3;
             int blue = 0xBE;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = blue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = red;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = green;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = blue;
@@ -1448,159 +1446,159 @@ void Battle_PhaseEndTurn(void) {
     ready = 1;
     /* Animate the charged gauge and active status colors. */
     if (hp >= 0x2328U) {
-        if ((D_8009D250 & 3) == 0) {
+        if ((g_FrameRngCounter & 3) == 0) {
             int topGreen = 0x46;
             int topBlue = 0x82;
             int bottomRed = 0x9F;
             int bottomGreen = 0xFF;
             int bottomBlue = 0xF9;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = bottomBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = bottomRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = bottomRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = bottomBlue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = bottomRed;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = bottomGreen;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = bottomBlue;
-        } else if ((D_8009D250 & 3) == 1) {
+        } else if ((g_FrameRngCounter & 3) == 1) {
             int red = 0x50;
             int green = 0xA3;
             int blue = 0xBE;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = blue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = red;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = green;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = blue;
-        } else if ((D_8009D250 & 3) == 2) {
+        } else if ((g_FrameRngCounter & 3) == 2) {
             int topRed = 0x9F;
             int topGreen = 0xFF;
             int topBlue = 0xF9;
             int bottomGreen = 0x46;
             int bottomBlue = 0x82;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = bottomBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = 0;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = topRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = bottomBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = topRed;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = topGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = topBlue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = 0;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = bottomGreen;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = bottomBlue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = 0;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = bottomGreen;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = bottomBlue;
-        } else if ((D_8009D250 & 3) == 3) {
+        } else if ((g_FrameRngCounter & 3) == 3) {
             int red = 0x50;
             int green = 0xA3;
             int blue = 0xBE;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00ED, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00EE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F4, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F5, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00F6, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FC, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FD, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B00FE, 0x24) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0104, 0x24) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0105, 0x24) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0106, 0x24) = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r0 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g0 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b0 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r1 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g1 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b1 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r2 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g2 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b2 = blue;
+            g_BattleAtbGauges[g_ActiveDrawSlot].r3 = red;
+            g_BattleAtbGauges[g_ActiveDrawSlot].g3 = green;
+            g_BattleAtbGauges[g_ActiveDrawSlot].b3 = blue;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.r = red;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = green;
             g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = blue;
         }
     }
     if (g_ActiveActor->stateFlags & 0x2000) {
-        if ((D_8009D250 & 3) == 0) {
+        if ((g_FrameRngCounter & 3) == 0) {
             int topRed = 0xFF;
             int topGreen = 0x3D;
             int topBlue = 0x81;
             int bottomRed = 0x83;
             int bottomGreen = 0x13;
             int bottomBlue = 1;
-            BATTLE_HUD_SLOT_BYTE(D_800B0158, 0x48) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0159, 0x48) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B015A, 0x48) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0160, 0x48) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0161, 0x48) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0162, 0x48) = bottomBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0168, 0x48) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0169, 0x48) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B016A, 0x48) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0170, 0x48) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0171, 0x48) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0172, 0x48) = bottomBlue;
-        } else if ((D_8009D250 & 3) == 1) {
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r0 = topRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = topGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = topBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = bottomRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = bottomGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = bottomBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = topRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = topGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = topBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = bottomRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = bottomGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b3 = bottomBlue;
+        } else if ((g_FrameRngCounter & 3) == 1) {
             int red = 0xC1;
             int green = 0x28;
             int blue = 0x41;
-            BATTLE_HUD_SLOT_BYTE(D_800B0158, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0159, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B015A, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0160, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0161, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0162, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0168, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0169, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B016A, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0170, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0171, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0172, 0x48) = blue;
-        } else if ((D_8009D250 & 3) == 2) {
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r0 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b3 = blue;
+        } else if ((g_FrameRngCounter & 3) == 2) {
             int topRed = 0x83;
             int topGreen = 0x13;
             int topBlue = 1;
             int bottomRed = 0xFF;
             int bottomGreen = 0x3D;
             int bottomBlue = 0x81;
-            BATTLE_HUD_SLOT_BYTE(D_800B0158, 0x48) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0159, 0x48) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B015A, 0x48) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0160, 0x48) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0161, 0x48) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0162, 0x48) = bottomBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0168, 0x48) = topRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0169, 0x48) = topGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B016A, 0x48) = topBlue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0170, 0x48) = bottomRed;
-            BATTLE_HUD_SLOT_BYTE(D_800B0171, 0x48) = bottomGreen;
-            BATTLE_HUD_SLOT_BYTE(D_800B0172, 0x48) = bottomBlue;
-        } else if ((D_8009D250 & 3) == 3) {
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r0 = topRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = topGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = topBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = bottomRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = bottomGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = bottomBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = topRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = topGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = topBlue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = bottomRed;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = bottomGreen;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b3 = bottomBlue;
+        } else if ((g_FrameRngCounter & 3) == 3) {
             int red = 0xC1;
             int green = 0x28;
             int blue = 0x41;
-            BATTLE_HUD_SLOT_BYTE(D_800B0158, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0159, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B015A, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0160, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0161, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0162, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0168, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0169, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B016A, 0x48) = blue;
-            BATTLE_HUD_SLOT_BYTE(D_800B0170, 0x48) = red;
-            BATTLE_HUD_SLOT_BYTE(D_800B0171, 0x48) = green;
-            BATTLE_HUD_SLOT_BYTE(D_800B0172, 0x48) = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r0 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g0 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b0 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r1 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g1 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b1 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r2 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g2 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = blue;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = red;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = green;
+            g_BattlePeGauges[g_ActiveDrawSlot][1].b3 = blue;
         }
     }
     player = D_8009D254;
@@ -1770,8 +1768,6 @@ void Battle_StartDeathAnim(void) {
     }
 }
 
-#undef BATTLE_HUD_SLOT_BYTE
-#undef BATTLE_HUD_BYTE
 
 void Battle_SaveAyaState(void) {
     AyaBattleState aya = g_AyaBattleStateInitial;

@@ -81,7 +81,7 @@ int Scene_LoadRoomAssets(u32 command, void *owner)
         return -7;
     if (command - 108 < 7 && !(g_GameState.flags & 0x10000)) {
 retry:
-        while (CdRom_ReadSectorsFromLba(D_800B0DD8.baseLba + g_SceneAssetLbaTbl[0],
+        while (CdRom_ReadSectorsFromLba(g_DiscLoadState.baseLba + g_SceneAssetLbaTbl[0],
                 g_PmTaskProgramBuffer, g_SceneAssetLbaTbl[1] - g_SceneAssetLbaTbl[0]) == -1) {}
         while ((ready = CdRom_PollReady()) != 0) {
             if (ready == -1)
@@ -240,7 +240,7 @@ static inline void ClearSlot(int slot)
 
 int Pm_Exec(int slot) {
     PmSlotHeader *entry;
-    int state;
+    s16 state;
     int cmd;
     PmCommand *handler;
     int ret;
@@ -250,11 +250,9 @@ int Pm_Exec(int slot) {
     }
     entry = SlotHeader(slot);
     state = entry->state;
-    if (state - 1U >= 2U && state - 4U >= 2U) {
+    if (state - 1U >= 2U && entry->state - 4U >= 2U) {
         return 0;
     }
-    /* Matching debt: retail re-reads the state here; without the barrier
-     * delayed-branch scheduling drops the second load. */
     if (entry->state == 4) {
         entry->state = 5;
         return 0;

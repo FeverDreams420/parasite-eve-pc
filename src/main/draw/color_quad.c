@@ -4,12 +4,14 @@
 #include "pe1/menu_sound.h"
 #include "pe1/render_prim.h"
 
-unsigned char *D_8009D100;
-unsigned char *D_8009D104;
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+unsigned char *g_DrawPacketCursor;
+unsigned char *g_DrawPacketArenaBase;
 int g_DrawTextDimmed;
 unsigned int g_DrawPrimColor;
 unsigned int g_DrawColorShaded;
-unsigned int *D_8009D11C;
+unsigned int *g_DrawOrderingTableEntry;
 
 void Draw_AllocColorQuad(int width, int height) {
     int w = width;
@@ -56,10 +58,10 @@ void Draw_AllocColorQuad(int width, int height) {
 
     first = 0;
     shadeOffset = Battle_GetStateFlag1() == 0 ? 7 : 0;
-    old = D_8009D100;
+    old = g_DrawPacketCursor;
     next = old + sizeof(RenderGouraudQuad);
-    if (next < D_8009D104 + 0x4000) {
-        D_8009D100 = next;
+    if (next < g_DrawPacketArenaBase + 0x4000) {
+        g_DrawPacketCursor = next;
         first = (RenderGouraudQuad *)old;
     } else {
         Inv_BoundsCheckAssertStub(1);
@@ -118,17 +120,17 @@ void Draw_AllocColorQuad(int width, int height) {
     packet->y2 = packet->y3;
 
     maskTop = 0xFF000000;
-    ot = D_8009D11C;
+    ot = g_DrawOrderingTableEntry;
     packet->tag = (firstTag & maskTop) | (*ot & mask24);
     linkHigh = *ot & maskTop;
-    old = D_8009D100;
+    old = g_DrawPacketCursor;
     link.packet = packet;
     *ot = linkHigh | (link.word & mask24);
 
     second = 0;
     next = old + sizeof(RenderGouraudQuad);
-    if (next < D_8009D104 + 0x4000) {
-        D_8009D100 = next;
+    if (next < g_DrawPacketArenaBase + 0x4000) {
+        g_DrawPacketCursor = next;
         second = (RenderGouraudQuad *)old;
     } else {
         Inv_BoundsCheckAssertStub(1);
@@ -173,17 +175,17 @@ void Draw_AllocColorQuad(int width, int height) {
     g_DrawColorShaded = darkerColor;
     g_DrawTextDimmed = 0;
     tileMask24 = 0xFF000000;
-    ot = D_8009D11C;
+    ot = g_DrawOrderingTableEntry;
     packet->tag = (secondTag & tileMask24) | (*ot & mask24);
     linkHigh = *ot & tileMask24;
-    old = D_8009D100;
+    old = g_DrawPacketCursor;
     link.packet = packet;
     *ot = linkHigh | (link.word & mask24);
 
     tile = 0;
     next = old + sizeof(RenderColorTilePacket);
-    if (next < D_8009D104 + 0x4000) {
-        D_8009D100 = next;
+    if (next < g_DrawPacketArenaBase + 0x4000) {
+        g_DrawPacketCursor = next;
         tile = (RenderColorTilePacket *)old;
     } else {
         Inv_BoundsCheckAssertStub(1);
@@ -208,17 +210,17 @@ void Draw_AllocColorQuad(int width, int height) {
     tileCode = tile->code;
     tile->h = tileHeight;
     tile->code = tileCode | 2;
-    ot = D_8009D11C;
+    ot = g_DrawOrderingTableEntry;
     tile->tag = (tile->tag & tileMaskTop) | (*ot & tileMask24);
     linkHigh = *ot & tileMaskTop;
-    old = D_8009D100;
+    old = g_DrawPacketCursor;
     link.packet = tile;
     *ot = linkHigh | (link.word & tileMask24);
 
     drawMode = 0;
     next = old + sizeof(RenderDrawModePacket);
-    if (next < D_8009D104 + 0x4000) {
-        D_8009D100 = next;
+    if (next < g_DrawPacketArenaBase + 0x4000) {
+        g_DrawPacketCursor = next;
         drawMode = (RenderDrawModePacket *)old;
     } else {
         Inv_BoundsCheckAssertStub(1);
@@ -231,7 +233,7 @@ void Draw_AllocColorQuad(int width, int height) {
     modeColor2 = 0x400000;
     modeMaskTop = 0xFF000000;
     modeTag = drawMode->tag;
-    modeOt = D_8009D11C;
+    modeOt = g_DrawOrderingTableEntry;
     modeColor2 |= 0x4040;
     g_DrawPrimColor = modeColor1;
     g_DrawColorShaded = modeColor2;

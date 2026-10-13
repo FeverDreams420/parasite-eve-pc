@@ -24,7 +24,7 @@ int sin_1(int angle) {
     }
 
     if (angle < 0xC01) {
-        value = D_8009489C[angle];
+        value = g_SineQuarterTable[angle - 0x800];
         return -value;
     }
 

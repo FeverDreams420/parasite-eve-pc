@@ -13,8 +13,10 @@
 #include "pe1/player_entity.h"
 #include "pe1/weapon_list_output.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 BattleCmdEntry *g_BattleCmdStackTop;
-u8 *D_8009D1E0;
+u8 *g_MenuActiveListTarget;
 int g_MenuCommandResult;
 int g_InvBonusSlotCount;
 
@@ -145,10 +147,10 @@ void Inv_SetActiveList(int mode, int *slot) {
         break;
     case 2:
         if (active) {
-            u8 *out = D_8009D1E0;
+            u8 *out = g_MenuActiveListTarget;
             if (out) {
                 *(BattleAction *)out = *(BattleAction *)(active->action);
-                Inv_BuildWeaponList(0, (WeaponListOutput *)D_8009D1E0);
+                Inv_BuildWeaponList(0, (WeaponListOutput *)g_MenuActiveListTarget);
             }
             if (Menu_GetBattleEquipMode()) g_MenuCommandResult = 0x197;
             else Battle_DispatchSpecialAction(0x197);
@@ -156,10 +158,10 @@ void Inv_SetActiveList(int mode, int *slot) {
         break;
     case 3:
         if (active) {
-            u8 *out = D_8009D1E0;
+            u8 *out = g_MenuActiveListTarget;
             if (out) {
                 *(BattleAttributes *)out = *active->attributes;
-                Inv_BuildArmorList((BattleAttributes *)D_8009D1E0);
+                Inv_BuildArmorList((BattleAttributes *)g_MenuActiveListTarget);
             }
             if (Menu_GetBattleEquipMode()) g_MenuCommandResult = 0x198;
             else Battle_DispatchSpecialAction(0x198);
@@ -185,8 +187,8 @@ void Inv_SetActiveList(int mode, int *slot) {
             } else {
                             item = *(ItemDataRecord **)selection;
                 kind = item->kind;
-                if ((unsigned)kind < 19) encoded = 0;
-                else encoded = kind - 18;
+                encoded = 0;
+                if ((unsigned)kind >= 19) encoded = kind - 18;
             }
             flags2 = data->attackWord;
             flags2 &= 0xFFCFFFFF;

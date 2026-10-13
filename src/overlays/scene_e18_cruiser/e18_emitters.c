@@ -67,7 +67,7 @@ int SceneE18_SpinShell(int mode, SceneE18SpinShell *shell) {
 
     switch (mode) {
     case 0:
-        g_SceneE18ShellModel = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC54C7704);
+        g_SceneE18ShellModel = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC54C7704);
         FieldFx_ModelScrollUv(g_SceneE18ShellModel, 0, 0);
         shell->width = 0x400;
         shell->heightGrowth = 0x40;
@@ -232,7 +232,7 @@ int SceneE18_FlankEmitter(int mode, SceneE18EmitterState *state) {
     switch (mode) {
     case 0:
         g_SceneE18FlankRemaining = 4;
-        g_SceneE18FlankModel = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC58C7704);
+        g_SceneE18FlankModel = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC58C7704);
         FieldFx_ModelScrollUv(g_SceneE18FlankModel, 0, 0);
         state->count = 0;
         state->delay = 0;
@@ -300,7 +300,7 @@ int SceneE18_ExpandingRingCallback(int mode, Effect *effect) {
         effect->speed += 0x30;
         effect->size -= 0x20;
         if (effect->size < 0x20) {
-            D_801941CC--;
+            g_SceneE18ExpandingRingRemaining--;
             return 1;
         }
         return 0;
@@ -375,9 +375,9 @@ int SceneE18_PulseRingCallback(int mode, SceneE18PulseRing *ring) {
             spin.z = 0;
             spin.flags = 1;
             FieldFx_DrawRingBand(&position, 0x500, 0x600, 0x10, &spin, ring->radius, ring->radius,
-                          &D_8019411C[0], &D_8019411C[1], brightness, 1);
+                          &g_SceneE18PulseRingColors[0], &g_SceneE18PulseRingColors[1], brightness, 1);
             FieldFx_DrawRingBand(&position, 0x600, 0x680, 0x10, &spin, ring->radius, ring->radius,
-                          &D_8019411C[1], &D_8019411C[0], brightness, 1);
+                          &g_SceneE18PulseRingColors[1], &g_SceneE18PulseRingColors[0], brightness, 1);
         }
         break;
     }
@@ -586,7 +586,7 @@ int SceneE18_WaveRingCallback(int mode, SceneE18WaveEffect *effect) {
     params[2] = 0;
     params[3] = 1;
     FieldFx_DrawStarFan((struct GteShortVector *)position, 0x100, 0x100, 10, (struct GteRotation *)params,
-                  effect->wave, effect->wave, (struct RenderColor *)D_80194180, (struct RenderColor *)D_80194184,
+                  effect->wave, effect->wave, (struct RenderColor *)g_SceneE18WaveFanColor0, (struct RenderColor *)g_SceneE18WaveFanColor1,
                   effect->size, 1);
 ret0:
     return 0;

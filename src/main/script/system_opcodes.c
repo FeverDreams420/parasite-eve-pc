@@ -33,7 +33,9 @@
 #include "pe1/script_state.h"
 #include "pe1/textbox.h"
 
-int g_SceneDataTable0;
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+int g_ScriptCursorAddress;
 ScriptNode *g_ScriptNodePool;
 
 int Script_EncodeBarcode(int **arg0) {
@@ -120,7 +122,7 @@ int Entity_ClearCurrentFlag40(void) {
  * inequality. Contiguous pair; the choice reader has no data, so the
  * branch's assembler options leave it unchanged. */
 
-int g_SceneDataTable0;
+int g_ScriptCursorAddress;
 
 int Script_GetMenuChoice(int **arg0) {
     int value;
@@ -139,7 +141,7 @@ int Script_CondBranch(int **arg0) {
     b = arg0[1];
     if (*a != *b) {
         c = arg0[2];
-        g_SceneDataTable0 = (int)(g_CurrentEntity->script_base + (*c * 2));
+        g_ScriptCursorAddress = (int)(g_CurrentEntity->script_base + (*c * 2));
     }
     return 1;
 }
@@ -454,7 +456,7 @@ int Script_RunEntityCommand(int **arg0) {
     }
 
     g_ScriptNodePool->active = 1;
-    g_SceneDataTable0 -= 0x10;
+    g_ScriptCursorAddress -= 0x10;
     return 0;
 }
 
@@ -829,7 +831,7 @@ int Script_WaitFrameOrDraw(int **arg0) {
         return 1;
     }
     if ((Draw_CheckDrawStatus() << 24) != 0) {
-        g_SceneDataTable0 -= 0xC;
+        g_ScriptCursorAddress -= 0xC;
         g_ScriptNodePool->active = 1;
     } else {
         return 1;
@@ -848,7 +850,7 @@ int Script_Noop2(void) {
 
 int Entity_YieldOnDrawBusy(void) {
     if ((Draw_CheckDrawStatus() << 24) != 0) {
-        g_SceneDataTable0 -= 8;
+        g_ScriptCursorAddress -= 8;
         g_ScriptNodePool->active = 1;
     } else {
         return 1;
@@ -1001,7 +1003,7 @@ int Script_SetMenuSlotEntry(int **arg0) {
 
 int Entity_YieldOnLoading(void) {
     if ((g_ScreenTint.fadeMode & 3) >= 2) {
-        g_SceneDataTable0 -= 8;
+        g_ScriptCursorAddress -= 8;
         g_ScriptNodePool->active = 1;
         return 0;
     }
@@ -1042,25 +1044,25 @@ int Entity_InitWithTimeout(int **arg0) {
     if ((flags & 0x20) == 0) {
         state->flags = flags | 0x20;
         Render_BeginSceneLoad();
-        g_SceneDataTable0 -= 0x10;
+        g_ScriptCursorAddress -= 0x10;
         g_ScriptNodePool->active = 1;
         return 0;
     }
 
-    if ((unsigned short)(D_8009D2A4 - 3) < 0x180) {
-        *arg0[1] = D_8009D2A4 - 3;
+    if ((unsigned short)(g_MenuFrameCommand - 3) < 0x180) {
+        *arg0[1] = g_MenuFrameCommand - 3;
         g_ScriptNodePool->flags &= 0xFFDF;
         return 1;
     }
 
-    if (D_8009D2A4 == -1) {
+    if (g_MenuFrameCommand == -1) {
         *arg0[1] = -1;
         g_ScriptNodePool->flags &= 0xFFDF;
         return 1;
     }
 
     Menu_OpenEquipSlotSwap(*arg0[0]);
-    g_SceneDataTable0 -= 0x10;
+    g_ScriptCursorAddress -= 0x10;
     g_ScriptNodePool->active = 1;
     return 0;
 }
@@ -1248,7 +1250,7 @@ int Script_WaitEntityFlags8(void) {
         state->flags = flags | 0x20;
     }
 
-    g_SceneDataTable0 -= 8;
+    g_ScriptCursorAddress -= 8;
     g_ScriptNodePool->active = 1;
     return 0;
 }

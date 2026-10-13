@@ -76,16 +76,15 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273TemplatePoint, flags) ==
                       PE1_OFFSETOF(RoomM273RisingParticle, speed),
                   room_m273_delayed_burst_tail_offset);
 
-extern s16 D_8019AE98;
-extern int D_8019ABFC[];
-extern s16 D_8019ACC0[];
-extern u8 D_8019AFA2;
-extern u8 D_8019AF8A[];
+extern s16 g_RoomM273GrabColorIndex;
+extern int g_RoomM273GrabColors[];
+extern s16 g_RoomM273HandTrailLandingPulseScale[];
+extern u8 g_RoomM273SwayHitFlags[];
 extern void *g_RoomM273GrabSparkPool;
-extern RoomM273PaletteWord D_8019AC30[];
+extern RoomM273PaletteWord g_RoomM273StarBurstColors[];
 extern unsigned char g_RoomM273BlackColor[];
-extern char D_8019ACC8[];
-extern char D_8019ACCC[];
+extern char g_RoomM273LandingFanColor[];
+extern char g_RoomM273LandingFanRotations[];
 int Inv_ScrambleGrid(void);
 int RoomM273_SwayBurstCallback(int mode, RoomM273RisingParticle *particle);
 

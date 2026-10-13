@@ -5,12 +5,14 @@
 #include "pe1/gte_types.h"
 
 /* COMMON supplies the small-data sizes of the turn queue words to MASPSX;
- * every other word stays absolute. */
-u8 D_8009CE39;
-u8 D_8009CE3B;
+ * every other word stays absolute. g_BattleActionAnimMode1/3 are one-byte
+ * views of g_BattleActionAnimModes[1] and [3]: Battle_UpdatePlayerTurn
+ * compiles to retail only with the scalar symbols. */
+u8 g_BattleActionAnimMode1;
+u8 g_BattleActionAnimMode3;
 u8 g_BattleActionQueueCount;
 u8 g_BattleActionIndex;
-int D_8009D200;
+int g_BattleAttackPmSlot;
 s16 g_BattlePlayerAimHeight;
 
 int Battle_StepCharacterAction(BattleInitSlot *slot);
@@ -56,10 +58,10 @@ void Battle_UpdatePlayerTurn(void)
         {
             if (slot->actor != g_BattleActionQueue[g_BattleActionIndex + 1].actor ||
                 CORE_HEALTH(slot->actor) <= 0) {
-                u8 count = D_8009CE39;
-                u8 delta = D_8009CE3B;
+                u8 count = g_BattleActionAnimMode1;
+                u8 delta = g_BattleActionAnimMode3;
                 BattleAction *effectAction = g_ActiveActor->action;
-                D_8009CE39 = count + delta;
+                g_BattleActionAnimMode1 = count + delta;
                 if (effectAction->attackWord & 0x3FF)
                     Battle_StartEnemyAttackEffect(slot->actor);
             }
@@ -68,9 +70,9 @@ void Battle_UpdatePlayerTurn(void)
         g_BattleActionIndex++;
         if (g_BattleActionIndex != g_BattleActionQueueCount) return;
         if (g_ActiveActor->action->actionCode.actionId != 8)
-            Pm_SendCmd(D_8009D200, 0, 0, 2, 0, 0);
+            Pm_SendCmd(g_BattleAttackPmSlot, 0, 0, 2, 0, 0);
         {
-            int sound = D_8009D2FC;
+            int sound = g_BattleImpactPmSlot;
             if (sound != -1)
                 Pm_SendCmd(sound, 0, 0, 2, 0, 0);
         }

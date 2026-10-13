@@ -11,8 +11,8 @@
 PSYQ_ASM_OBJECT(LIBGTE, MTX_006)
 
 PSYQ_ASM_FUNCTION(PushMatrix,
-    "    lui     $t6, %hi(D_800963E8)\n"
-    "    lw      $t6, %lo(D_800963E8)($t6)\n"
+    "    lui     $t6, %hi(g_MatrixStackOffset)\n"
+    "    lw      $t6, %lo(g_MatrixStackOffset)($t6)\n"
     "    nop\n"
     "    slti    $at, $t6, 0x280\n"
     "    bnez    $at, .LCONTpush\n"
@@ -49,14 +49,14 @@ PSYQ_ASM_FUNCTION(PushMatrix,
     "    sw      $t1, 0x18($t7)\n"
     "    sw      $t2, 0x1C($t7)\n"
     "    addi    $t6, $t6, 0x20\n"
-    "    lui     $at, %hi(D_800963E8)\n"
-    "    sw      $t6, %lo(D_800963E8)($at)\n"
+    "    lui     $at, %hi(g_MatrixStackOffset)\n"
+    "    sw      $t6, %lo(g_MatrixStackOffset)($at)\n"
     "    jr      $ra\n"
     "    nop\n");
 
 PSYQ_ASM_FUNCTION(PopMatrix,
-    "    lui     $t6, %hi(D_800963E8)\n"
-    "    lw      $t6, %lo(D_800963E8)($t6)\n"
+    "    lui     $t6, %hi(g_MatrixStackOffset)\n"
+    "    lw      $t6, %lo(g_MatrixStackOffset)($t6)\n"
     "    nop\n"
     "    bgtz    $t6, .LCONTpop\n"
     "    nop\n"
@@ -72,8 +72,8 @@ PSYQ_ASM_FUNCTION(PopMatrix,
     "    nop\n"
     ".LCONTpop:\n"
     "    addi    $t6, $t6, -0x20\n"
-    "    lui     $at, %hi(D_800963E8)\n"
-    "    sw      $t6, %lo(D_800963E8)($at)\n"
+    "    lui     $at, %hi(g_MatrixStackOffset)\n"
+    "    sw      $t6, %lo(g_MatrixStackOffset)($at)\n"
     "    lui     $t7, %hi(g_MatrixStack)\n"
     "    addiu   $t7, $t7, %lo(g_MatrixStack)\n"
     "    addu    $t7, $t7, $t6\n"

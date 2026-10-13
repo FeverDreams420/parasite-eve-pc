@@ -5,7 +5,7 @@
 #include "pe1/card_obj.h"
 #include "pe1/memcard_state.h"
 
-extern CardObj D_800A5B70[];
+extern CardObj g_MemCardObjs[];
 extern u8 g_MemCardObjResponseBuffers[];
 extern u8 g_MemCardObjStatusBuffers[];
 extern void (*g_PadPortActuatorMapFn)(CardObj *);

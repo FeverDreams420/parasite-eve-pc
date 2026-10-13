@@ -1,8 +1,8 @@
 #ifndef MENUCARD_UPLOAD_VIDEO_SLICE_NAME
 #define MENUCARD_UPLOAD_VIDEO_SLICE_NAME MenuCard_UploadVideoSlice
-#define MENUCARD_VIDEO_DISPLAY D_801D1464
-#define MENUCARD_VIDEO_FLIP D_801D0DC0
-#define MENUCARD_VIDEO_SET_DISPLAY func_801918F8
+#define MENUCARD_VIDEO_DISPLAY g_MenuCardScreenVideoDisplay
+#define MENUCARD_VIDEO_FLIP g_MenuCardScreenVideoDepthFlip
+#define MENUCARD_VIDEO_SET_DISPLAY MenuCard_SetVideoDisplay
 #endif
 
 /* Slice callback of the PSY-Q movie player: upload the decoded slice to
@@ -13,7 +13,7 @@ void MENUCARD_UPLOAD_VIDEO_SLICE_NAME(void) {
     VideoRect rectangle;
     s8 old;
 
-    if (D_800B0DBB && g_CdStreamReadyHalfword) {
+    if (g_MovieWide && g_CdStreamReadyHalfword) {
         StCdInterrupt();
         g_CdStreamReadyHalfword = 0;
     }
@@ -32,7 +32,7 @@ void MENUCARD_UPLOAD_VIDEO_SLICE_NAME(void) {
         MENUCARD_VIDEO_DISPLAY.rect.x = MENUCARD_VIDEO_DISPLAY.regions[MENUCARD_VIDEO_DISPLAY.region].x;
         MENUCARD_VIDEO_DISPLAY.rect.y = MENUCARD_VIDEO_DISPLAY.regions[MENUCARD_VIDEO_DISPLAY.region].y;
         if (MENUCARD_VIDEO_FLIP == 1) {
-            s8 *wide = &D_800B0DBB;
+            s8 *wide = &g_MovieWide;
 
             *wide ^= 1;
             if (*wide) {
@@ -40,7 +40,7 @@ void MENUCARD_UPLOAD_VIDEO_SLICE_NAME(void) {
             } else {
                 MENUCARD_VIDEO_DISPLAY.rect.w = 16;
             }
-            MENUCARD_VIDEO_SET_DISPLAY(g_ActiveDrawSlot ^ 1, D_800B0DBB);
+            MENUCARD_VIDEO_SET_DISPLAY(g_ActiveDrawSlot ^ 1, g_MovieWide);
             MENUCARD_VIDEO_FLIP = 2;
         }
     }

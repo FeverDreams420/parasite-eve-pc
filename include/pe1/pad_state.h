@@ -6,9 +6,9 @@
 /* Game button bits sampled once per frame by Field_HandleStateTransition
  * (boot/init.c). */
 extern u32 g_FieldPadBits; /* held (g_FieldPadBits) */
-extern u32 D_8009D238; /* held on the previous frame */
-extern u32 D_8009D1F4; /* pressed this frame */
-extern u32 D_8009D1E4; /* released this frame */
+extern u32 g_FieldPadLastFrame; /* held on the previous frame */
+extern u32 g_FieldPadPressed; /* pressed this frame */
+extern u32 g_FieldPadReleased; /* released this frame */
 
 /* Raw controller packet that LIBPAD fills for one port (PadInitDirect):
  * the receive status byte and the type/length byte (type in the high

@@ -1,14 +1,14 @@
 #ifndef MENUCARD_INIT_VIDEO_BUFFERS_NAME
 #define MENUCARD_INIT_VIDEO_BUFFERS_NAME MenuCard_InitVideoBuffers
-#define MENUCARD_VIDEO_PTR0 D_801D0DE8
-#define MENUCARD_VIDEO_PTR1 D_801D0DEC
-#define MENUCARD_VIDEO_PTR2 D_801D0DF0
-#define MENUCARD_VIDEO_PTR3 D_801D0DF4
-#define MENUCARD_VIDEO_PTR4 D_801D0DF8
-#define MENUCARD_VIDEO_PTR5 D_801D0DFC
+#define MENUCARD_VIDEO_PTR0 g_MenuCardScreenVideoDecodeBuffer0
+#define MENUCARD_VIDEO_PTR1 g_MenuCardScreenVideoDecodeBuffer1
+#define MENUCARD_VIDEO_PTR2 g_MenuCardScreenVideoSliceBuffer0
+#define MENUCARD_VIDEO_PTR3 g_MenuCardScreenVideoSliceBuffer1
+#define MENUCARD_VIDEO_PTR4 g_MenuCardScreenVideoVlcTable
+#define MENUCARD_VIDEO_PTR5 g_MenuCardScreenVideoStreamRing
 #define MENUCARD_VIDEO_LAST_TIME g_MenuCardScreenVideoLastTime
 #define MENUCARD_VIDEO_SAVED_DISPLAY g_MenuCardScreenSavedDispEnv
-#define MENUCARD_VIDEO_SAVED_DRAW D_801D13AC
+#define MENUCARD_VIDEO_SAVED_DRAW g_MenuCardScreenSavedDrawEnv
 #endif
 
 s32 MENUCARD_INIT_VIDEO_BUFFERS_NAME(s8 count, u8 **buffers) {
@@ -25,7 +25,7 @@ s32 MENUCARD_INIT_VIDEO_BUFFERS_NAME(s8 count, u8 **buffers) {
             return 0;
         }
     }
-    if (D_800B0DBA) {
+    if (g_DrawEnabled.bits) {
         return 0;
     }
     switch (count) {
@@ -59,9 +59,9 @@ s32 MENUCARD_INIT_VIDEO_BUFFERS_NAME(s8 count, u8 **buffers) {
             MENUCARD_VIDEO_PTR3 = base + offset;
             break;
     }
-    D_800B0DBA = 1;
-    D_800B0DBE = 152;
-    D_800B0DBC.value = 0;
+    g_DrawEnabled.bits = 1;
+    g_GameState.scene_audio.tracks.movie_volume = 152;
+    g_SeqElapsedRecord.value = 0;
     MENUCARD_VIDEO_LAST_TIME = -1;
     for (i = 0; i < 2; i++) {
         MENUCARD_VIDEO_SAVED_DISPLAY[i] = g_RenderDispEnvArray[i];
@@ -72,7 +72,7 @@ s32 MENUCARD_INIT_VIDEO_BUFFERS_NAME(s8 count, u8 **buffers) {
     rectangle.w = 192;
     rectangle.h = 256;
     MoveImage(&rectangle, 512, 0);
-    if (!(D_800B0CD8 & 0x08000000)) {
+    if (!(g_GameStateFlagsWord & 0x08000000)) {
         rectangle.x = 0;
         rectangle.y = 448;
         rectangle.w = 320;

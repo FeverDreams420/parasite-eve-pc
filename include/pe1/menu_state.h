@@ -48,9 +48,8 @@ extern unsigned int g_MenuActionSubmenuSel;
 /* Scroll step chosen from D_8009CDAC: +4 below 300, -4 from 300 on. */
 extern int D_8009CDAC;
 extern int g_MenuScrollStep;
-/* List target handed to Menu_RunFrameWithArg; incomplete so -G8 units keep
- * retail's absolute accesses. */
-extern int g_MenuActiveListTarget[];
+/* List target handed to Menu_RunFrameWithArg. */
+extern u8 *g_MenuActiveListTarget;
 /* Which list the equipment options act on: 0 sorts Aya's inventory, any
  * other value sorts Wayne's storage. */
 extern int g_MenuInventoryViewMode;
@@ -102,7 +101,7 @@ extern unsigned char g_MenuBlendColorPanelPoints[];
  *   g_MenuWidgetCurrentNode  MenuWidget node-pool pointer : NULL in field -> 0x800a2370 in menu
  *   g_MenuWidgetFreeListHead  active widget/draw pointer    : 0x800a22e0  -> 0x800a2640
  *   g_MenuDrawPhase  menu draw phase / step        : field 0x01  -> menu 0x08
- *   D_8009D100  active draw buffer pointer     : switches with the layer
+ *   g_DrawPacketCursor  active draw buffer pointer     : switches with the layer
  *   (The g_DrawScratchBuffer..g_MenuWidgetSavedNode cluster is the MenuWidget pool head/free/tail,
  *    managed by MenuWidget_InitPool / MenuWidget_CreateNode; non-null only
  *    while a menu owns it -> a clean "is a menu open?" test.)

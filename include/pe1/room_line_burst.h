@@ -65,7 +65,7 @@ typedef struct RoomLineBurstColor {
     u8 r, g, b, code;
 } RoomLineBurstColor;
 
-extern char *D_800B0E58[];
+extern unsigned char *g_RenderAnimBufferBase[];
 extern void LoadAverageShort12(void *from, void *to, int weightFrom, int weightTo, void *out);
 
 #endif

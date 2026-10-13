@@ -4,6 +4,7 @@
 #include "common.h"
 #include "pe1/gte_types.h"
 #include "pe1/render_object.h"
+#include "pe1/room_interface.h"
 #include "pe1/room_spark.h"
 
 /* The spark attacks linked by room_m156, room_m291 and room_m380
@@ -23,9 +24,9 @@ extern void *g_RoomBeamSparkAsset;
 
 /* The capture block the same rooms fill through
  * RoomLib_CaptureFrameSample (src/overlays/room_lib/capture_frame_sample.c). */
-extern s16 D_80192C34;
-extern s16 D_80192C36;
-extern s16 D_80192C38;
-extern s32 D_80192C3C;
+extern s16 g_RoomCaptureX;
+extern s16 g_RoomCaptureY;
+extern s16 g_RoomCaptureZ;
+extern s32 g_RoomCaptureFrameWord;
 
 #endif

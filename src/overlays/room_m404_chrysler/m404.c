@@ -20,9 +20,9 @@
  * splash children, lingers as a pool that spits droplets and expires once
  * it leaves the walkable area; the splashes slow down and bounce. */
 int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
-    RoomM404DropRotation rotation = D_8018F1CC;
-    RoomM404DropColor color = D_8018F1D4;
-    RoomM404DropColor glow = D_8018F1D8;
+    RoomM404DropRotation rotation = g_RoomM404DropFanTilt;
+    RoomM404DropColor color = g_RoomM404DropFanColor;
+    RoomM404DropColor glow = g_RoomM404DropGlowColor;
     RoomM404DropColor fadeColor;
     RoomM404Drop *child;
     int size;
@@ -233,7 +233,7 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
 #undef ROOM_M404_DROP_FLASH
 
 int RoomM404_SinkingDrop(int mode, void *unused, char *state) {
-    RoomTemplate8 template = D_8018F208;
+    RoomTemplate8 template = g_RoomM404SinkingDropAnchor;
     s16 position[4];
     s16 target[4];
     char *pool;
@@ -299,10 +299,10 @@ int RoomM404_SinkingDrop(int mode, void *unused, char *state) {
  * floor while circling and draws as two glow points, state 1 falls
  * and draws as a spinning sprite tinted by a color track. */
 int RoomM404_DebrisSparkCallback(int mode, RoomDampedSpark *spark) {
-    GteRotation rotation = D_8018F210;
+    GteRotation rotation = g_RoomM404DebrisSparkRotation;
     GteShortVector position;
     RenderColor trackColor;
-    RenderColor color = D_8018F218;
+    RenderColor color = g_RoomM404DebrisSparkColor;
     RenderMatrixSlot *matrixSlot;
     int fall;
     int bounce;
@@ -390,7 +390,7 @@ int RoomM404_DebrisSparkCallback(int mode, RoomDampedSpark *spark) {
 /* Bursts six bouncing sparks and two falling ones from a model joint
  * during the first frames of the effect. */
 int RoomM404_DebrisBurst(int mode, RoomM404BurstOrigin *origin) {
-    RoomM404JointTemplate template = D_8018F21C;
+    RoomM404JointTemplate template = g_RoomM404DebrisBurstAnchor;
     RoomDampedSpark *spark;
     int i;
 
@@ -446,7 +446,7 @@ int RoomM404_DebrisBurst(int mode, RoomM404BurstOrigin *origin) {
 
 /* The stack templates the effects above copy: read-only data of this unit,
  * which GCC emits after the unit's jump tables, as retail has them. */
-const RoomTemplate8 D_8018F208 = {{0, 0xFFE2}};
-const GteRotation D_8018F210 = {0, 0, 0, 0};
-const RenderColor D_8018F218 = {0x6E, 0x3C, 0x3C, 0};
-const RoomM404JointTemplate D_8018F21C = {{0, 0x2BC}};
+const RoomTemplate8 g_RoomM404SinkingDropAnchor = {{0, 0xFFE2}};
+const GteRotation g_RoomM404DebrisSparkRotation = {0, 0, 0, 0};
+const RenderColor g_RoomM404DebrisSparkColor = {0x6E, 0x3C, 0x3C, 0};
+const RoomM404JointTemplate g_RoomM404DebrisBurstAnchor = {{0, 0x2BC}};

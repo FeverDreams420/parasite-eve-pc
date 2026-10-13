@@ -116,7 +116,7 @@ void BootDisplay_StepImageSprite(void) {
         s32 endOffset;
         char *base;
 
-        DecDCTvlcSize2(func_8010BF94(g_BootDisplayCreditImages[(u16)g_BootDisplayStateTimer]) >> 2);
+        DecDCTvlcSize2(MdecDiag_ReadHalfword(g_BootDisplayCreditImages[(u16)g_BootDisplayStateTimer]) >> 2);
         startOffset = 0x38800;
         endOffset = 0x43000;
         offset = (g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) * 2048;

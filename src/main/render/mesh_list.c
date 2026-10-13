@@ -703,10 +703,10 @@ int Render_DrawActorShadow(RenderShadowActor *actor)
         local.matrix.t[1] = origin.y;
     local.matrix.t[0] = actor->matrices[actor->shadow_matrix_index].matrix.t[0];
     local.matrix.t[2] = actor->matrices[actor->shadow_matrix_index].matrix.t[2];
-    gte_CompMatrix((GteMatrixWords *)D_800B89F8, &local, &world);
+    gte_CompMatrix((GteMatrixWords *)g_EntityRenderScratch, &local, &world);
     SetRotMatrix(&world);
     SetTransMatrix(&world);
-    SetGeomScreen(D_800B89F8[8]);
+    SetGeomScreen(g_EntityRenderScratch[8]);
 
     quad = &actor->shadow_quads[g_ActiveDrawSlot];
     quad->tag.length = 9;

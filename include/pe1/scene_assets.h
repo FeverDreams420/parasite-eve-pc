@@ -241,7 +241,7 @@ int CdRom_FindNextDataSector(void);
 
 int Asset_UnloadTableEntries(void);
 int Draw_LoadTimAsset(TimUploadRecord *record, void *base);
-extern u16 D_800930E2, g_PeImageTimTexturesEndSector;
+extern u16 g_PeImageSectorTable[];
 
 /* Scene voice-bank entries: actor animation key and two voice ids; the
  * game-state initializer clears both ids. */

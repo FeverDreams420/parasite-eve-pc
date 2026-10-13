@@ -60,8 +60,8 @@ void BootDisplay_RunDisplay(void) {
         }
         Field_HandleStateTransition();
         if (g_GameStateFlags & 0x10000) {
-            if (D_8009D1F4 & 0x4000000) BootDisplay_SetCdFilter(0);
-            if (D_8009D1F4 & 0x8000000) BootDisplay_SetCdFilter(1);
+            if (g_FieldPadPressed & 0x4000000) BootDisplay_SetCdFilter(0);
+            if (g_FieldPadPressed & 0x8000000) BootDisplay_SetCdFilter(1);
         }
         g_BootDisplayCallbacks->present();
         ++g_BootDisplayFrameCounter;
@@ -171,7 +171,7 @@ u16 BootDisplay_GetGlyphWidth(u8 character) {
         if ((u8)(character - 'a') < 26)
             saved = character - 32;
         if ((u8)(saved - 'A') < 26)
-            width = D_80125B1E[saved][0];
+            width = g_BootDisplayUppercaseWidthsStyle2[saved][0];
         else switch (saved) {
         case '!': case '\'': case '.': case ':': width = 3; break;
         case '#': width = 7; break;
@@ -184,7 +184,7 @@ u16 BootDisplay_GetGlyphWidth(u8 character) {
         }
     } else {
         if ((u8)(character - 'A') < 26)
-            width = D_80125B1C[character][style];
+            width = g_BootDisplayUppercaseWidths[character][style];
         else if ((u8)(character - 'a') < 26)
             width = g_BootDisplayLowercaseWidths[character][style | 1];
         else switch (character) {

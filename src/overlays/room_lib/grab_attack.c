@@ -515,7 +515,7 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
         case 0:
             sweep->timer++;
             if ((s16)sweep->timer == 2) {
-                RoomSoundSlot *sound = (RoomSoundSlot *)D_800B0E64;
+                RoomSoundSlot *sound = (RoomSoundSlot *)g_LoadedSceneAssetBlock;
                 sweep->soundHandle = sound->channel
                     ? Akao_SendTableCommand(sound->channel, 0x598, FieldFx_GetOwnerProgress(), 0x80, 0x7F)
                     : 0;
@@ -1193,14 +1193,14 @@ int RoomEffect_RisingSprayController(int mode, void *state,
             }
         }
         if (g_FieldFxCurrentAge == 1) {
-            RoomSoundSlot *sound = (RoomSoundSlot *)D_800B0E64;
+            RoomSoundSlot *sound = (RoomSoundSlot *)g_LoadedSceneAssetBlock;
             if (sound->channel) {
                 Akao_SendTableCommand(sound->channel, 0x599, FieldFx_GetOwnerProgress(), 0x80, 0x7F);
                 if (sound->channel) Akao_SendTableCommand(sound->channel, 0x5B5, 0x80, 0x80, 0x7F);
             }
         }
         if (g_FieldFxCurrentAge == 0x10) {
-            RoomSoundSlot *sound = (RoomSoundSlot *)D_800B0E64;
+            RoomSoundSlot *sound = (RoomSoundSlot *)g_LoadedSceneAssetBlock;
             if (sound->channel) {
                 Akao_SendTableCommand(sound->channel, 0x5B6, FieldFx_GetOwnerProgress(), 0x80, 0x7F);
                 if (sound->channel) Akao_SendTableCommand(sound->channel, 0x5B7, 0x80, 0x80, 0x7F);

@@ -16,7 +16,7 @@ int rcos(int angle) {
             return g_SineQuarterTable[0x400 - angle];
         }
 
-        value = D_8009509C[angle];
+        value = g_SineQuarterTable[angle - 0x400];
         return -value;
     }
 
@@ -25,5 +25,5 @@ int rcos(int angle) {
         return -value;
     }
 
-    return D_8009409C[angle];
+    return g_SineQuarterTable[angle - 0xC00];
 }

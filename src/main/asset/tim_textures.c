@@ -63,8 +63,8 @@ restart:
         state->tim_load_state = 0;
         return 0;
     case 0x34:
-        if (CdRom_ReadSectorsFromLba(state->pe_image_base_lba + D_800930E2,
-                                   state->scene_load_scratch, g_PeImageTimTexturesEndSector - D_800930E2) != -1)
+        if (CdRom_ReadSectorsFromLba(state->pe_image_base_lba + g_PeImageSectorTable[5],
+                                   state->scene_load_scratch, g_PeImageSectorTable[6] - g_PeImageSectorTable[5]) != -1)
             state->tim_load_state = 0x35;
         return 1;
     case 0x35:

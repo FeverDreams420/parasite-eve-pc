@@ -12,6 +12,7 @@
 #include "pe1/psyq_libc.h"
 #include "pe1/room_drop_field_class.h"
 #include "pe1/room_fx.h"
+#include "pe1/room_interface.h"
 #include "pe1/room_spark.h"
 
 /* The drop field effect set linked by room_m174, room_m348 and room_m383

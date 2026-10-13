@@ -19,6 +19,6 @@ typedef struct FieldFlashBurst {
 
 /* Model drawn by the burst and its colour track. */
 extern u8 *g_FieldFxModel83ACD504;
-extern u8 D_800E20CC[];
+extern u8 g_FlashBurstColorTrack[];
 
 #endif /* PE1_FIELD_FLASH_BURST_H */

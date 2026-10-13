@@ -20,7 +20,7 @@ extern u16 g_FieldFxSpriteTpageY; /* texture page origin y */
 extern u16 g_FieldFxSpriteTpageValue; /* GetTPage value of the current state */
 extern u16 g_FieldFxSpriteClutX; /* CLUT origin x */
 extern u16 g_FieldFxSpriteClutY; /* CLUT origin y */
-extern u8 D_800F3422;
+extern u8 g_FieldFxSpriteCellVBase; /* cell row base added to the cell's v */
 extern u8 g_FieldFxSpriteCellUMax;  /* cell width - 1 */
 extern u8 g_FieldFxSpriteCellVExtent;  /* cell height - 1 */
 

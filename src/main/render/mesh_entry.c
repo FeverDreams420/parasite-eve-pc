@@ -1,4 +1,5 @@
 #include "pe1/geom_state.h"
+#include "pe1/menu_background.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_prim.h"
 
@@ -11,7 +12,7 @@ typedef union GeomEntryAddress {
 /* Build both frame buffers of room-tile sprites and texture-page packets. */
 int Render_LoadMeshEntry(GeomEntry *entry, RenderTilePacket *buffer, void **end)
 {
-    unsigned int paletteStart = D_800BD024;
+    unsigned int paletteStart = g_GeomOtZ[0];
     GeomEntryAddress base;
     unsigned int count;
     u32 *positions;
@@ -88,7 +89,7 @@ int Render_LoadMeshEntry(GeomEntry *entry, RenderTilePacket *buffer, void **end)
         pages += count;
     } while (++pass < 2);
     *end = pages;
-    D_800BD024 = paletteMax + 33;
+    g_GeomOtZ[0] = paletteMax + 33;
     return 0;
 }
 

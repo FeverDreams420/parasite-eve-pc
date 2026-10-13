@@ -20,13 +20,13 @@ int RoomM273_GrabInit(RoomSelectionState *obj) {
     obj->verticalTicks = 0;
     obj->activated = 0;
     obj->flag3 = 0xFF;
-    RotMatrixYXZ(&D_8019A8D8, (void *)0x1F800028);
+    RotMatrixYXZ(&g_RoomM273GrabInitAngles, (void *)0x1F800028);
 
-    ret = MulMatrix0(&D_8019A8B8, (void *)0x1F800028, (GteMatrix *)&obj->matrix);
+    ret = MulMatrix0(&g_RoomM273GrabInitMatrix, (void *)0x1F800028, (GteMatrix *)&obj->matrix);
     /* matrix.translation, stored as plain words to keep retail order. */
-    *(int *)((char *)obj + 0x30) = D_8019A8CC;
-    *(int *)((char *)obj + 0x34) = D_8019A8D0;
-    *(int *)((char *)obj + 0x38) = D_8019A8D4;
+    *(int *)((char *)obj + 0x30) = g_RoomM273GrabInitTranslationX;
+    *(int *)((char *)obj + 0x34) = g_RoomM273GrabInitTranslationY;
+    *(int *)((char *)obj + 0x38) = g_RoomM273GrabInitTranslationZ;
     /* Keep the call result live so GCC allocates the final data load to v1. */
     return ret - ret;
 }
@@ -41,7 +41,7 @@ int RoomM273_GrabConfigure(void *obj, int mode, int event, int arg3, int index) 
         break;
     case 0x1D:
         RW16(obj, 0x14) = arg3;
-        RW8(obj, 0x4C) = D_8019A8E0[index];
+        RW8(obj, 0x4C) = g_RoomM273GrabSelectionByIndex[index];
         break;
     }
 

@@ -2,6 +2,7 @@
 #define PE1_ROOM_SCRIPT_RECORD_H
 
 #include "common.h"
+#include "pe1/room_interface.h"
 
 /*
  * The record a room's scene script reads back through the shared

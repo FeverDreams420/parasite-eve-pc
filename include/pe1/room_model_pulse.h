@@ -20,7 +20,7 @@ typedef struct RoomModelPulseScale {
     s32 x, y, z, reserved0C;
 } RoomModelPulseScale;
 
-extern GteRotation D_8018F258;          /* ring placement rotation seed */
+extern GteRotation g_RoomM256PulseAnchor;          /* ring placement rotation seed */
 extern u8 g_RoomM256PulseColorTrack[];                 /* colour ramp table */
 extern s16 g_RoomM256PulseBrightness;                  /* ring brightness */
 extern void *g_RoomM256PulseModel;                /* model asset */

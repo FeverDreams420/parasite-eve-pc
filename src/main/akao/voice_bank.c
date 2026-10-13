@@ -499,7 +499,7 @@ void Seq_StartNestedTrack(AkaoTrack *track, AkaoNestedSource *source, unsigned i
         int count;
 
         mask = 0x1000;
-        track_reg = (AkaoTrack *)D_800BC000;
+        track_reg = g_AkaoVoiceChannelTable;
         count = 0xC;
         busy_mask = 0x02000000;
         active_loop_mask = active_mask;
@@ -670,7 +670,7 @@ void Spu_MarkActiveVoicesDirty(void) {
     AkaoTrack *track;
     unsigned int *flags;
     mask = g_SpuActiveVoiceMask;
-    track = (AkaoTrack *)D_800BC000;
+    track = g_AkaoVoiceChannelTable;
         if (mask != 0) {
         bit = 0x1000;
         flags = (unsigned int *)track + 0x3D;
@@ -1062,7 +1062,7 @@ void Seq_SetGlobalPitchImmediate(AkaoGlobalPitchCommand *arg0) {
 
     value = arg0->pitch;
     g_AkaoGlobalPitchSlideCounter = 0;
-    D_8009D2B4 = value << 16;
+    g_AkaoCdInputVolumeAccum = value << 16;
     Seq_ApplyGlobalPitch();
 }
 
@@ -1079,7 +1079,7 @@ void Seq_SlideGlobalPitchToTarget(AkaoGlobalPitchSlideCommand *arg0) {
 
     value = arg0->target << 16;
     g_AkaoGlobalPitchSlideCounter = duration;
-    g_AkaoGlobalPitchSlideStep = (value - D_8009D2B4) / duration;
+    g_AkaoGlobalPitchSlideStep = (value - g_AkaoCdInputVolumeAccum) / duration;
 }
 
 void Seq_SlideGlobalPitchFromStartToTarget(AkaoGlobalPitchRangeCommand *arg0) {
@@ -1097,7 +1097,7 @@ void Seq_SlideGlobalPitchFromStartToTarget(AkaoGlobalPitchRangeCommand *arg0) {
     target = arg0->target << 16;
     start = arg0->start << 16;
     g_AkaoGlobalPitchSlideCounter = duration;
-    D_8009D2B4 = start;
+    g_AkaoCdInputVolumeAccum = start;
     g_AkaoGlobalPitchSlideStep = (target - start) / duration;
 }
 
@@ -1650,7 +1650,7 @@ void Akao_SetGlobalD2D0Immediate(AkaoGlobalParamCommand *cmd) {
     int value = cmd->value;
 
     g_AkaoGlobalD2D0SlideCounter = 0;
-    D_8009D2D0 = value << 16;
+    g_AkaoTempoScaleAccum = value << 16;
 }
 
 void Akao_SlideGlobalD2D0ToTarget(AkaoGlobalSlideCommand *cmd) {
@@ -1662,7 +1662,7 @@ void Akao_SlideGlobalD2D0ToTarget(AkaoGlobalSlideCommand *cmd) {
         duration = raw_duration;
     }
 
-    step = ((cmd->target << 16) - D_8009D2D0) / duration;
+    step = ((cmd->target << 16) - g_AkaoTempoScaleAccum) / duration;
     g_AkaoGlobalD2D0SlideCounter = duration;
     g_AkaoGlobalD2D0SlideStep = step;
 }
@@ -1680,7 +1680,7 @@ void Akao_SlideGlobalD2D0FromStartToTarget(AkaoGlobalSlideRangeCommand *cmd) {
 
     start <<= 24;
     start >>= 8;
-    D_8009D2D0 = start;
+    g_AkaoTempoScaleAccum = start;
     step = ((cmd->target << 16) - start) / duration;
     g_AkaoGlobalD2D0SlideCounter = duration;
     g_AkaoGlobalD2D0SlideStep = step;

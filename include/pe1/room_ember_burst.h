@@ -33,9 +33,11 @@ typedef struct RoomEmberBurstParams {
 
 typedef RoomOrbitTrailPoolChannel RoomEmberBurstChannel;
 
-extern char D_8018F1CC[];
-extern RenderColor D_8018F200;
-extern RenderColor D_8018F204;
+extern char g_RoomM318GetMayaPosErrorFormat[];
+extern RenderColor g_RoomM318EmberHaloColor;
+extern char g_RoomM318GetMayaPosErrorFormat[];
+extern RenderColor g_RoomM318EmberRingColor;
+extern RenderColor g_RoomM318EmberHaloColor;
 
 extern int rand(void);
 extern int RoomM318_EmberBurstParticleCallback(int mode, RoomOrbitTrailParticle *p);
@@ -56,17 +58,17 @@ typedef struct RoomEmberFountainChannel {
     void *pool;                   /* 0x08 */
 } RoomEmberFountainChannel;
 
-extern GteShortVector D_8019993C;
+extern GteShortVector g_RoomM318EmberFountainAnchor;
 extern int RoomM318_EmberFountainParticleCallback(int mode, RoomOrbitTrailParticle *p);
 
 /* Ember fountain particle (RoomM318_EmberFountainParticleCallback). */
-extern GteRotation D_8018F1F4;
-extern RenderColor D_8018F240;
-extern u8 D_80199868[];
+extern GteRotation g_RoomM318ZeroSpin;
+extern RenderColor g_RoomM318EmberFountainParticleColor;
+extern u8 g_RoomM318EmberFountainParticleColorTrack[];
 
 /* Twisting ember particle (RoomM318_EmberSpiralParticleCallback): its glow track and the bent
  * trail renderer it draws the orbiting sparks with. */
-extern u8 D_80199890[];
+extern u8 g_RoomM318EmberSpiralColorTrack[];
 extern void FieldFx_OffsetPointByAngles(void *, void *, int, void *, int, int);
 
 /* Fan sweep controller (RoomM318_FanSweep): attaches to the actor named by its
@@ -97,13 +99,14 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFanSweepSpark, radius) == 0x0C,
 PE1_STATIC_ASSERT(sizeof(RoomFanSweepSpark) == 0x10,
                   room_fan_sweep_spark_size);
 
-extern void *D_80199900;
-extern RenderColor D_8018F1F0;
-extern GteShortVector D_801998F8;
+extern RenderColor g_RoomM318FanSweepSparkColor;
+extern void *g_RoomM318FanSweepSparkPool;
+extern RenderColor g_RoomM318FanSweepSparkColor;
+extern GteShortVector g_RoomM318FanSweepAnchor;
 extern int RoomM318_FanSweepSpark(int mode, RoomFanSweepSpark *spark);
 /* Main executable copy of the fan sweep spark (FieldFx_FanSweepSpark). */
 extern void *g_FanSweepSparkTrailPool;
-extern RenderColor D_800C22D4;
+extern RenderColor g_FieldFxFanSweepSparkTint;
 extern GteShortVector g_FanSweepSparkAnchor;
 extern int FieldFx_FanSweepSpark(int mode, RoomFanSweepSpark *spark);
 extern int FieldFx_EmberSpark(int mode, s16 *position);
@@ -162,7 +165,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSpiralDropSparkRecord, emitter.speed) ==
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSpiralDropSparkRecord, callback.speed) == 6,
                   room_spiral_drop_spark_speed_offset);
 
-extern u8 D_801994BC[];
+extern u8 g_RoomM318SpiralDropColorTrack[];
 extern int RoomM318_SpiralDropSparkCallback(int mode, volatile RoomSpiralDropSparkRecord *spark);
 
 /* Attaches the effect to the first live actor with the given ids, or
@@ -178,7 +181,7 @@ static inline void RoomEffect_AttachToActor(int subId, int typeId, void *anchor)
             return;
         }
     }
-    printf(D_8018F1CC, subId, typeId);
+    printf(g_RoomM318GetMayaPosErrorFormat, subId, typeId);
 }
 
 #endif

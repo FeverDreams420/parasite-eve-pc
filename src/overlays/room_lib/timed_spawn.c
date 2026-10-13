@@ -120,9 +120,9 @@ int RoomLib_ControlTimedSpawn(int mode, RoomTimedSpawnState *state) {
             }
         }
 
-        if (D_800B0E64[0] != 0) {
+        if (g_LoadedSceneAssetBlock[0] != 0) {
             value = FieldFx_GetOwnerProgress();
-            Akao_SendTableCommand(D_800B0E64[0], 0x588, value, 0x80, 0x7F);
+            Akao_SendTableCommand(g_LoadedSceneAssetBlock[0], 0x588, value, 0x80, 0x7F);
         }
         return FieldFx_InitCallbackList(((void **)ANIM_POOL_AS(void))[2], 0xC, 8,
                              (FieldFxCallbackListCallback)RoomLib_UpdateTimedRender);

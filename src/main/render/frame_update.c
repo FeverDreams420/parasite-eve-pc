@@ -11,6 +11,8 @@
 #include "pe1/render_object.h"
 #include "pe1/render_prim.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 int g_GridCursorIndex;
 int g_GridCursorPrevious;
 int g_GridCursorX;
@@ -164,7 +166,7 @@ int Render_PrepareFrame(void) {
         void *result;
         union { int word; short xy[2]; } projected;
     } local;
-    unsigned int *state = D_800B89F8;
+    unsigned int *state = g_EntityRenderScratch;
     Render_InitViewState(state, state + 8);
     if (Render_DrawMeshList((void *)g_GameState.texture_load_scratch, &local.result)) return -2;
     SetGeomScreen(state[8]);

@@ -7,7 +7,7 @@ void StSetStream(u32 mode, u32 startFrame, u32 endFrame,
     StSetMask(1, startFrame, endFrame);
     g_CdStreamMemorySource = 0;
     g_StrDataReadyCallback = callback1;
-    D_800A801C = mode & 1;
+    g_StRgb24Mode = mode & 1;
     g_CdStreamExpectedTypeId = 0;
     D_800B6914 = 0;
     g_StFrameSectorIndex = 0;

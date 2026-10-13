@@ -15,8 +15,8 @@
 
 int RoomM089_SpiralTrailCallback(int mode, RoomM089SpiralTrail *trail, GteShortVector *anchor) {
     GteRotation rotation;
-    RenderColor head = D_8018F1CC;
-    RenderColor tail = D_8018F1D0;
+    RenderColor head = g_RoomM089TrailHeadColor;
+    RenderColor tail = g_RoomM089TrailTailColor;
     RenderMatrixSlot *matrixSlot;
     int radius;
     int intensity;
@@ -158,7 +158,7 @@ int RoomM089_SpiralTrail(int mode, unsigned short *dst, unsigned short *src) {
     }
 
     if (g_FieldFxCurrentAge == 9) {
-        RoomSoundSlot *sound = (RoomSoundSlot *)D_800B0E64;
+        RoomSoundSlot *sound = (RoomSoundSlot *)g_LoadedSceneAssetBlock;
         int volume;
         if (sound->channel != 0) {
             volume = 0x7F;
@@ -206,7 +206,7 @@ int RoomM089_SpiralTrail(int mode, unsigned short *dst, unsigned short *src) {
 int RoomM089_SpinModel(int mode, RoomM089SpinModel *spin, GteShortVector *anchor) {
     GteShortVector position;
     GteShortVector rotation;
-    RenderColor color = D_8018F1D4;
+    RenderColor color = g_RoomM089SpinGlowColor;
     GteMatrix matrix;
     GteVector scale;
     GteMatrix innerMatrix;
@@ -223,8 +223,8 @@ int RoomM089_SpinModel(int mode, RoomM089SpinModel *spin, GteShortVector *anchor
     case 0:
         spin->stage = 0;
         spin->timer = 0;
-        D_80194168 = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC5864704);
-        FieldFx_ModelScrollUv((union FieldTexturedModel *)D_80194168, 0, 0);
+        g_RoomM089CoreModel = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5864704);
+        FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM089CoreModel, 0, 0);
         return 0;
     case 1:
         spin->timer++;
@@ -305,10 +305,10 @@ int RoomM089_SpinModel(int mode, RoomM089SpinModel *spin, GteShortVector *anchor
         scale.y = turn;
         scale.z = turn;
         ScaleMatrix(&matrix, &scale);
-        FieldFx_ModelSaveColors(D_80194168);
-        FieldFx_ModelScaleColors(D_80194168, intensity);
-        FieldFx_ModelDraw((union FieldTexturedModel *)D_80194168, &matrix);
-        FieldFx_ModelRestoreColors(D_80194168);
+        FieldFx_ModelSaveColors(g_RoomM089CoreModel);
+        FieldFx_ModelScaleColors(g_RoomM089CoreModel, intensity);
+        FieldFx_ModelDraw((union FieldTexturedModel *)g_RoomM089CoreModel, &matrix);
+        FieldFx_ModelRestoreColors(g_RoomM089CoreModel);
         position.y += (0x20 - g_FieldFxCurrentAge) << 3;
         RotMatrixYXZ(&rotation, &innerMatrix);
         innerMatrix.t[0] = position.x;
@@ -318,10 +318,10 @@ int RoomM089_SpinModel(int mode, RoomM089SpinModel *spin, GteShortVector *anchor
         innerScale.y = turn / 2;
         innerScale.z = turn / 2;
         ScaleMatrix(&innerMatrix, &innerScale);
-        FieldFx_ModelSaveColors(D_80194168);
-        FieldFx_ModelScaleColors(D_80194168, intensity);
-        FieldFx_ModelDraw((union FieldTexturedModel *)D_80194168, &innerMatrix);
-        FieldFx_ModelRestoreColors(D_80194168);
+        FieldFx_ModelSaveColors(g_RoomM089CoreModel);
+        FieldFx_ModelScaleColors(g_RoomM089CoreModel, intensity);
+        FieldFx_ModelDraw((union FieldTexturedModel *)g_RoomM089CoreModel, &innerMatrix);
+        FieldFx_ModelRestoreColors(g_RoomM089CoreModel);
         break;
     }
     return 0;
@@ -341,7 +341,7 @@ int RoomM089_SwirlRiseSprite(int mode, RoomSwirlRiseState *state,
     RenderMatrixSlot *matrixSlot;
     int intensity;
 
-    color = D_8018F1D8;
+    color = g_RoomM089SwirlSpriteColor;
     switch (mode) {
     case 1:
         switch (state->phase) {
@@ -468,10 +468,10 @@ int RoomM089_ModelPulse(int mode, RoomM089ModelPulse *state, GteShortVector *anc
                 if (*flag == 1) *flag = 2;
             }
         }
-        g_RoomM089PulseModel = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC5464704);
+        g_RoomM089PulseModel = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5464704);
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM089PulseModel, 0, 0);
-        D_80194168 = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC5864704);
-        FieldFx_ModelScrollUv((union FieldTexturedModel *)D_80194168, 0, 0);
+        g_RoomM089CoreModel = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5864704);
+        FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM089CoreModel, 0, 0);
         return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM089SpawnChannel)->pool, 0x10, 0x18,
                              (FieldFxCallbackListCallback)RoomM089_SwirlSpriteCallback);
     case 1:
@@ -604,10 +604,10 @@ int RoomM089_ModelPulse(int mode, RoomM089ModelPulse *state, GteShortVector *anc
             lowScale.y = outer;
             lowScale.z = outer;
             ScaleMatrix(&coreMatrix, &lowScale);
-            FieldFx_ModelSaveColors(D_80194168);
-            FieldFx_ModelScaleColors(D_80194168, fade);
-            FieldFx_ModelDraw((union FieldTexturedModel *)D_80194168, &coreMatrix);
-            FieldFx_ModelRestoreColors(D_80194168);
+            FieldFx_ModelSaveColors(g_RoomM089CoreModel);
+            FieldFx_ModelScaleColors(g_RoomM089CoreModel, fade);
+            FieldFx_ModelDraw((union FieldTexturedModel *)g_RoomM089CoreModel, &coreMatrix);
+            FieldFx_ModelRestoreColors(g_RoomM089CoreModel);
         }
         if (g_FieldFxCurrentAge < 0x31) {
             FieldFx_SampleColorTrack(g_RoomM089PulseColorTrack, &color, g_FieldFxCurrentAge);
@@ -628,10 +628,10 @@ int RoomM089_ModelPulse(int mode, RoomM089ModelPulse *state, GteShortVector *anc
 
 short *RoomM089_SetAnchor(int arg0, short arg1, short arg2, short arg3) {
     if (arg0 == 1) {
-        g_RoomM089Anchor = arg1;
-        D_80194162 = arg2;
-        D_80194164 = arg3;
+        g_RoomM089Anchor[0] = arg1;
+        g_RoomM089Anchor[1] = arg2;
+        g_RoomM089Anchor[2] = arg3;
     }
 
-    return &g_RoomM089Anchor;
+    return g_RoomM089Anchor;
 }

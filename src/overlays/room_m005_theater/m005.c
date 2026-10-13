@@ -109,7 +109,7 @@ ret0:
 #undef RoomM005_ScriptDialog
 
 int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state) {
-    RoomM005Seed8 seed = D_8018EFF4;
+    RoomM005Seed8 seed = g_RoomM005OrbiterJointAnchor;
     s16 target[4];
     char *pool;
     RoomM005OrbiterChild *child;
@@ -127,7 +127,7 @@ int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state) {
                              (FieldFxCallbackListCallback)RoomM005_FxOrbiter);
     case 1:
         if (g_FieldFxCurrentAge == 7) {
-            soundSlot = (RoomSoundSlot *)D_800B0E64;
+            soundSlot = (RoomSoundSlot *)g_LoadedSceneAssetBlock;
             if (soundSlot->channel != 0) {
                 volume = 0x7F;
                 handle = FieldFx_GetOwnerProgress();
@@ -161,9 +161,9 @@ int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state) {
         break;
     case 2:
         pool = ANIM_OWNER_AS(RoomM005Channel)->pool;
-        FieldFx_GetActorPosition(pool, 0, (s16 *)D_80190B84);
+        FieldFx_GetActorPosition(pool, 0, (s16 *)g_RoomM005ScriptAnchorView);
         pool = ANIM_OWNER_AS(RoomM005Channel)->pool;
-        FieldFx_TransformMatrixPoint(pool, 20, &seed, D_80190B8C);
+        FieldFx_TransformMatrixPoint(pool, 20, &seed, g_RoomM005ScriptFadeView);
         {
             int idx = g_FieldFxTpageSlot2;
             int palette;
@@ -193,8 +193,8 @@ int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state) {
 int RoomM005_CrossFlare(int mode) {
     GteShortVector position;
     GteRotation rotation;
-    RoomM005Seed8 outer = D_8018EFFC;
-    RoomM005Seed8 inner = D_8018F004;
+    RoomM005Seed8 outer = g_RoomM005CrossFlareFlashAnchor;
+    RoomM005Seed8 inner = g_RoomM005CrossFlareTwinAnchor;
     RenderColor color;
     RoomSoundSlot *soundSlot;
     int volume;
@@ -206,7 +206,7 @@ int RoomM005_CrossFlare(int mode) {
 
     switch (mode) {
     case 0:
-        soundSlot = (RoomSoundSlot *)D_800B0E64;
+        soundSlot = (RoomSoundSlot *)g_LoadedSceneAssetBlock;
         if (soundSlot->channel != 0) {
             volume = 0x7F;
             handle = FieldFx_GetOwnerProgress();
@@ -306,7 +306,7 @@ int RoomM005_BeaconDriftCallback(int mode, RoomM005DriftingSpriteState *state) {
     int v;
     u16 clut;
 
-    color = D_8018F00C;
+    color = g_RoomM005BeaconTint;
     switch (mode) {
     case 1:
         state->x += state->vx;
@@ -345,7 +345,7 @@ int RoomM005_JointBeacon(int mode, RoomM005Beacon *state) {
     GteVector scale;
     GteShortVector position;
     GteShortVector rotation;
-    RoomM005BeaconOffset offset = D_8018F010;
+    RoomM005BeaconOffset offset = g_RoomM005JointBeaconAnchor;
     GteShortVector spinAngles;
     GteMatrix matrix;
     GteMatrix spin;
@@ -371,9 +371,9 @@ int RoomM005_JointBeacon(int mode, RoomM005Beacon *state) {
                 if (*flag == 1) *flag = 2;
             }
         }
-        g_RoomM005BeaconModel0 = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC5462704);
+        g_RoomM005BeaconModel0 = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5462704);
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM005BeaconModel0, 0, 0);
-        g_RoomM005BeaconModel1 = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC5862704);
+        g_RoomM005BeaconModel1 = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5862704);
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM005BeaconModel1, 0, 0);
         return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM005BeaconSpawnChannel)->pool, 0x10, 8,
                              (FieldFxCallbackListCallback)RoomM005_BeaconDriftCallback);

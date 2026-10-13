@@ -71,8 +71,8 @@ s32 Akao_SetPos3D(s32 arg0, s32 arg1, u16 arg2, u16 arg3, u16 arg4) {
     Akao_Calc3DPan(&local.rect, &local.out1, &local.out2);
 
     {
-        if (D_800B0CE8.reset_pending != 0) {
-            u8 **table = &D_800B0CE8.voice_banks[3];
+        if (g_AkaoRuntimeState.reset_pending != 0) {
+            u8 **table = &g_AkaoRuntimeState.voice_banks[3];
 
             ret = Akao_Cmd_24(table[arg0], arg1, local.out1, local.out2);
         }

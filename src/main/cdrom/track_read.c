@@ -10,6 +10,8 @@
 #include "pe1/scene_archive.h"
 #include "pe1/scene_assets.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 int g_CdFadeStartTime;
 int g_CdFadeFramesLeft;
 int g_CdRangeIndex;
@@ -21,6 +23,9 @@ int g_CdStreamBankIndex;
 s16 g_CdTrackBank;
 struct SceneTrackRecord *g_CdTrackRecord;
 
+/* Matching debt: pins and empty barriers retain the index,
+* zero extension and callback state. The duplicated ready branch preserves
+* GCC's block ordering. No ASM construct emits an instruction. */
 int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void *buffer, u32 maximum, int blocking)
 {
     /* Transfer addresses and phase changes use this scratch in separate cases. */
@@ -283,7 +288,7 @@ int CdRom_SeekToTrack(int key, int mode, int group, int *slot, int blocking)
     /* Group 1 copies into the second bank work bound. */
     selected.state = state;
     selected.word += bankIndex * 4;
-    directory = SceneAsset_ResolveOffset(*D_800B0E64, (*D_800B0E64)->directoryOffset);
+    directory = SceneAsset_ResolveOffset(*g_LoadedSceneAssetBlock, (*g_LoadedSceneAssetBlock)->directoryOffset);
     do {
         switch (state->cd_track_phase) {
         case 0: {

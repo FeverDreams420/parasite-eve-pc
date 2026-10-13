@@ -51,13 +51,16 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOrbitTrailParticle, timer) ==
                       PE1_OFFSETOF(RoomTwinRibbonPulse, age),
                   room_twin_ribbon_pulse_age_view);
 
-extern GteShortVector D_8018F214;
-extern GteShortVector D_8018F21C;
-extern GteShortVector D_8018F224;
-extern GteShortVector D_8018F22C;
-extern RenderColor D_8018F234;
-extern RenderColor D_8018F238;
-extern RenderColor D_8018F23C;
+extern GteShortVector g_RoomM318TwinRibbonRoot;
+extern GteShortVector g_RoomM318TwinRibbonTip;
+extern GteShortVector g_RoomM318TwinRibbonFork;
+extern GteShortVector g_RoomM318TwinRibbonRoot;
+extern GteShortVector g_RoomM318TwinRibbonTip;
+extern GteShortVector g_RoomM318TwinRibbonFork;
+extern GteShortVector g_RoomM318TwinRibbonShed;
+extern RenderColor g_RoomM318TwinRibbonColorA;
+extern RenderColor g_RoomM318TwinRibbonColorB;
+extern RenderColor g_RoomM318TwinRibbonColorC;
 extern int RoomM318_TwinRibbonPulseCallback(int mode, RoomTwinRibbonPulse *p);
 
 #endif

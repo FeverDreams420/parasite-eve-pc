@@ -29,17 +29,20 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM256TrailEffect, kind) == 0x14,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM256TrailEffect, frame) == 0x16,
                   room_m256_trail_effect_frame);
 
-extern const RenderColor D_8018F218, D_8018F21C;
-extern const GteRotation D_8018F220;
-extern GteRotation D_8018F1CC;
+extern GteRotation g_RoomM256SpriteTilt;
+extern const RenderColor g_RoomM256TrailColor, g_RoomM256TrailDarkColor;
+extern const GteRotation g_RoomM256TrailAnchor;
+extern GteRotation g_RoomM256SpriteTilt;
 /* Sixteen stored steps plus the current position, each an eight-byte vector. */
 typedef struct RoomM256TrailHistory {
     GteShortVector point[17];
 } RoomM256TrailHistory;
 PE1_STATIC_ASSERT(sizeof(RoomM256TrailHistory) == 0x88, room_m256_trail_history_size);
-extern RoomM256TrailHistory D_80195EFC[];
-extern char D_80195F1C[], D_80195F1E[], D_80195F20[];
-extern s32 D_80195EF0, D_80195EF8;
+extern RoomM256TrailHistory g_RoomM256TrailHistory[];
+/* g_RoomM256TrailHistory[0].point[4] x, y and z as raw byte views: member
+ * access recomputes the record address and no longer matches retail. */
+extern char g_RoomM256TrailPoint4X[], g_RoomM256TrailPoint4Y[], g_RoomM256TrailPoint4Z[];
+extern s32 g_RoomM256TrailTurnScale, g_RoomM256TrailModel;
 extern u16 g_FieldFxPaletteEntry2;
 typedef struct RoomM256TrailPalettes { u16 first, second; } RoomM256TrailPalettes;
 int rand(void);

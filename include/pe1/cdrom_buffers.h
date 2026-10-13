@@ -6,7 +6,7 @@
 extern u8 *g_StrFileDirBuffer;
 /* PE.IMG sector range (start, end) of the stream file directory. */
 extern u16 g_StrFileDirLba[];
-extern u8 *D_8001160C;
+extern u8 *g_MdecOverlayLoadBase;
 extern u8 *g_CdLoadAreaBase;
 
 #endif

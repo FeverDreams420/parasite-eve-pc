@@ -99,7 +99,7 @@ extern void Battle_InitEntityColors(void);
 extern int RoomM318_ShakeBurstParticleCallback(int mode,
                          RoomShakeBurstParticleCallbackView *particle);
 extern int RoomM318_ShakeSweepParticleCallback(int mode, RoomShakeSweepParticle *particle);
-extern GteShortVector D_80199904;
+extern GteShortVector g_RoomM318ShakeSweepAnchor;
 
 /* Sweep particle draw: model asset, matrix helpers and clut lookups. */
 extern void FieldFx_ModelSetTexture(int tpage, int clut);
@@ -107,8 +107,8 @@ extern void FieldFx_ModelSetTexture(int tpage, int clut);
 /* Flash burst controller (RoomM318_FlashBurst): its particle callback, colour
  * seed, glow track and the helpers it calls. */
 extern int RoomM318_FlashBurstParticleCallback(int mode, RoomOrbitTrailParticle *p);
-extern RenderColor D_8018F210;
-extern u8 D_80199770[];
+extern RenderColor g_RoomM318FlashBurstColor;
+extern u8 g_RoomM318FlashBurstColorTrack[];
 
 /* Rising column controller (RoomM318_RisingColumn): the anchor rises from the
  * floor over the configured duration while sparks fall off it. */
@@ -126,10 +126,10 @@ typedef struct RoomRisingColumnParams {
     s32 offset;                   /* 0x0C */
 } RoomRisingColumnParams;
 
-extern GteShortVector D_80199924;
+extern GteShortVector g_RoomM318RisingColumnAnchor;
 extern int RoomM318_RisingColumnParticleCallback(int mode, RoomOrbitTrailParticle *p);
-extern GteRotation D_8018F208;
-extern u8 D_801996EC[];
+extern GteRotation g_RoomM318FlatTilt;
+extern u8 g_RoomM318RisingColumnParticleColorTrack[];
 extern u16 g_FieldFxTpageSlot10;
 
 /* Cross flash controller (RoomM318_CrossFlash): an anchor with an orientation,
@@ -148,14 +148,14 @@ typedef struct RoomCrossFlashParticle {
     u16 timer;                    /* 0x12 */
 } RoomCrossFlashParticle;
 
-extern GteShortVector D_80199930;
+extern GteShortVector g_RoomM318CrossFlashAnchor;
 extern int RoomM318_CrossFlashParticleCallback(int mode, RoomCrossFlashParticle *p);
-extern RenderColor D_8018F1FC;
-extern u8 D_80199798[];
+extern RenderColor g_RoomM318EmberParticleColor;
+extern u8 g_RoomM318CrossFlashParticleColorTrack[];
 
 /* Ember burst particle (RoomM318_EmberBurstParticleCallback): spin template, colour seed and
  * glow track. */
-extern GteRotation D_8018F1F4;
-extern u8 D_80199674[];
+extern GteRotation g_RoomM318ZeroSpin;
+extern u8 g_RoomM318EmberBurstParticleColorTrack[];
 
 #endif

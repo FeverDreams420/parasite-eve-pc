@@ -88,8 +88,8 @@ int Render_InitDisplayLists(int mode)
      * not reproducible with structured loops in stock GCC 2.7.2 (loop.c
      * hoists the read constants out of the restart path). */
 retryNotice:
-    while (CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba + D_800930D8[0],
-               g_GameState.loaded_scene_assets, D_800930D8[1] - D_800930D8[0]) == -1)
+    while (CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba + g_PeImageSectorTable[0],
+               g_GameState.loaded_scene_assets, g_PeImageSectorTable[1] - g_PeImageSectorTable[0]) == -1)
         ;
     for (;;) {
         status = CdRom_PollReady();
@@ -99,8 +99,8 @@ retryNotice:
             goto retryNotice; /* Recorded debt: CD retry restart (goto). */
     }
 retryFog:
-    while (CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba + D_800930D8[1],
-               g_GameState.scene_load_scratch, D_800930D8[2] - D_800930D8[1]) == -1)
+    while (CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba + g_PeImageSectorTable[1],
+               g_GameState.scene_load_scratch, g_PeImageSectorTable[2] - g_PeImageSectorTable[1]) == -1)
         ;
     for (;;) {
         status = CdRom_PollReady();
@@ -191,7 +191,7 @@ retryFog:
                 state = 8;
                 break;
             case 0:
-                if ((mode == 1 && (D_800B0DCD & 1)) || (mode == 2 && (D_800B0DCD & 2))) {
+                if ((mode == 1 && (g_PeImageMountFlags & 1)) || (mode == 2 && (g_PeImageMountFlags & 2))) {
                     done = 1;
                 } else {
                     wait = 180;
@@ -255,7 +255,7 @@ retryFog:
     rect.h = 448;
     ClearImage(&rect, 0, 0, 1);
     DrawSync(0);
-    D_800B0DCD = mode == 1 ? 1 : 2;
+    g_PeImageMountFlags = mode == 1 ? 1 : 2;
     /* `wait` is free again here and holds the drive status. */
     while ((wait = DsSystemStatus()) != 1)
         VSync(0);
@@ -569,7 +569,7 @@ void Boot_InitMemoryLayout(void) {
     g_SceneBankAssetSource = ptr;
     ptr += 0x6000;
     g_VoiceBankBase = ptr2;
-    D_800B0E2C = ptr;
+    g_EntityBankBuffer = ptr;
     ptr += 0xE000;
     g_EntityTextureBlob = ptr;
 
@@ -594,12 +594,12 @@ void Boot_InitMemoryLayout(void) {
     ptr += const_8000;
     g_RenderBackBufferBase[0] = ptr2;
     ptr2 = ptr + 0x3800;
-    D_800B0E5C = ptr2;
+    g_ScriptSpriteBuffer = ptr2;
     tmp = g_StrFileDirBuffer;
     g_RenderAnimBufferBase[0] = ptr;
     ptr += 0x7000;
     g_ScenePmSlotBanks = ptr;
     g_SceneLoadScratchBuffer[0] = g_SceneLoadScratchArea;
     g_LoadedSceneAssetBlock[0] = tmp - 8;
-    D_800B0E68 = tmp;
+    g_StrFileDirectory = tmp;
 }

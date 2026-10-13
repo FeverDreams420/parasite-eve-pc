@@ -5,32 +5,38 @@
 #include "pe1/gte_types.h"
 #include "pe1/vector_types.h"
 
+/* Room actor controller (room_lib RoomEnt): its linked actor, the repeats
+ * left (-1 repeats forever) and the frame an animation restarts from. */
 typedef struct {
     char pad0[0x8];
-    void *target;
+    void *actor;          /* 0x08: RoomEnt.link */
     char padC[0x8];
-    s16 counter;
+    s16 repeats;          /* 0x14: RoomEnt.active */
     char pad16[0x2];
-    s8 value;
-} Func800DFB20State;
+    s8 restartFrame;      /* 0x18: RoomEnt.t18 */
+} FieldFxAnimLoopController;
 
+/* The FieldActor fields the loop reads and writes. */
 typedef struct {
     char pad0[0xF];
-    u8 limit;
+    u8 lastFrame;         /* 0x0F: FieldActor.action, the animation's last frame */
     char pad10[0x4];
-    int value;
+    int anim;             /* 0x14: FieldActor.anim, 16.16 position */
     char pad18[0x2];
-    u16 cursor;
-} Func800DFB20Target;
+    u16 prevFrame;        /* 0x1A: integer half of FieldActor.anim_prev */
+} FieldFxAnimLoopActor;
 
-void func_800DFB20(Func800DFB20State *state)
+/* Called by the room_lib actor handlers each frame: once the linked actor's
+ * animation has reached its last frame, restart it at restartFrame and use
+ * up one repeat. */
+void FieldFx_LoopLinkedAnimation(FieldFxAnimLoopController *state)
 {
-    Func800DFB20Target *target = state->target;
+    FieldFxAnimLoopActor *target = state->actor;
 
-    if (state->counter != 0 && target->cursor >= target->limit) {
-        target->value = state->value;
-        if (state->counter != -1) {
-            state->counter--;
+    if (state->repeats != 0 && target->prevFrame >= target->lastFrame) {
+        target->anim = state->restartFrame;
+        if (state->repeats != -1) {
+            state->repeats--;
         }
     }
 }

@@ -22,7 +22,7 @@ extern GameTimerEntry g_GameTimers[4];
 
 /* Interior symbol naming timer zero's flags word; its reset stores both the
  * cleared and the running value. */
-extern volatile u32 D_800A76A0;
+extern volatile u32 g_GameClockFlags;
 
 /* Interior symbols for the game clock words GameTime_InitCounter0 writes.
  * Retail stores the game clock limit twice on reset; the qualifier keeps
@@ -35,6 +35,6 @@ extern volatile int g_GameClockLimit;
 extern unsigned int g_PlayTimeFrameCounter;
 
 /* Frames left on the timed state that Entity_UpdateTimers clears with flag 0x100. */
-extern u16 D_8009D228;
+extern u16 g_ActorEffectFlag100Timer;
 
 #endif

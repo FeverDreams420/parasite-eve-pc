@@ -5,7 +5,7 @@
 #include "pe1/boot_display.h"
 
 extern BootDisplayCallbacks g_BootDisplaySpriteCallbacks, g_BootDisplayImageCallbacks;
-extern u32 g_GameStateFlags, D_8009D1F4;
+extern u32 g_GameStateFlags, g_FieldPadPressed;
 extern u32 g_FieldPadBits;
 extern s32 g_BootDisplayDone;
 extern u32 g_BootDisplayFrameCounter;

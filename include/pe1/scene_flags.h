@@ -19,6 +19,6 @@ void Scene_CheckFlagBits(void *ctx, SceneFlagRecord **table, int *index_ptr);
 
 /* Pad buttons released this frame (old & changed), tested by scene flag
  * records and task value ops. */
-extern unsigned int D_8009D1E4;
+extern unsigned int g_FieldPadReleased;
 
 #endif /* PE1_SCENE_FLAGS_H */

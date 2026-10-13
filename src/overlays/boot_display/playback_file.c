@@ -28,7 +28,7 @@ s32 BootDisplay_InitPlaybackFile(void) {
     g_BootDisplayPlaybackCurrentPos = *start;
     g_BootDisplayPlaybackReadCount = 0;
     g_BootDisplayPlaybackRingIndex = 0;
-    D_80172CFA = 0;
+    g_BootDisplayPlaybackAltCount = 0;
     g_BootDisplayPlaybackSectorBuffer = g_CdLoadAreaBase + (((g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) << 11) + 0x34800);
     return 0;
 }

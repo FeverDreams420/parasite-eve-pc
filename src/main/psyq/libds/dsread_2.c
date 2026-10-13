@@ -55,7 +55,7 @@ void DS_read_cbready(int status, void *data, void *detail) {
 #undef CD_READ_FIELD
 
 void DS_read_cbdata(void) {
-    int *state = D_8009B6B0;
+    int *state = &g_CdReadProgress.destination;
     int query;
     query = -1;
     /* Keep the clock query independent of the sector decrement. */

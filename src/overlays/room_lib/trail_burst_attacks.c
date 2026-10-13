@@ -357,7 +357,7 @@ int RoomEffect_ModelBurstController(int mode, s16 *state) {
     switch (mode) {
     case 0:
         *state = 0;
-        g_RoomModelBurstAsset = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC54A5704);
+        g_RoomModelBurstAsset = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC54A5704);
         FieldFx_ModelScrollUv(g_RoomModelBurstAsset, 0, 0);
         {
             int tpage = g_FieldFxTpageTable[g_FieldFxTpageSlot3];
@@ -797,7 +797,7 @@ int RoomEffect_ScatterBurstController(int mode, s16 *state) {
     switch (mode) {
     case 0:
         *state = 0;
-        g_RoomScatterBurstAsset = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC54A5704);
+        g_RoomScatterBurstAsset = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC54A5704);
         FieldFx_ModelScrollUv(g_RoomScatterBurstAsset, 0, 0);
         {
             int tpage = g_FieldFxTpageTable[g_FieldFxTpageSlot3];

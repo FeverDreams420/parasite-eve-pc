@@ -14,7 +14,7 @@
 #include "pe1/scene_archive.h"
 
 /* ABI declarations used by the room_m256 effect dispatcher. */
-extern int D_80195EF8;
+extern int g_RoomM256TrailModel;
 extern int RoomM256_TrailCallback(int mode, void *state);
 
 int RoomM256_TrailEmitter(int mode, u16 *out);

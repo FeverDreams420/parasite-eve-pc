@@ -1,9 +1,9 @@
 #ifndef PE1_EXT_M273_CLASS
 #define PE1_EXT_M273_CLASS
-extern char D_8019A8B8;
-extern int D_8019A8CC;
-extern int D_8019A8D0;
-extern int D_8019A8D4;
-extern char D_8019A8D8;
-extern unsigned char D_8019A8E0[];
+extern char g_RoomM273GrabInitMatrix;
+extern int g_RoomM273GrabInitTranslationX;
+extern int g_RoomM273GrabInitTranslationY;
+extern int g_RoomM273GrabInitTranslationZ;
+extern char g_RoomM273GrabInitAngles;
+extern unsigned char g_RoomM273GrabSelectionByIndex[];
 #endif /* PE1_EXT_M273_CLASS */

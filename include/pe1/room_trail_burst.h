@@ -4,6 +4,7 @@
 #include "common.h"
 #include "pe1/gte_types.h"
 #include "pe1/render_object.h"
+#include "pe1/room_interface.h"
 #include "pe1/room_spark.h"
 
 /* The trail and burst attacks linked by room_m245 and room_m397

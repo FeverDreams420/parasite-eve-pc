@@ -2,6 +2,7 @@
 #define PE1_SCENE_GRAB_HEAD_H
 
 #include "common.h"
+#include "pe1/room_interface.h"
 
 struct FieldActor;
 

@@ -19,9 +19,11 @@
 #include "pe1/scene_dispatch.h"
 #include "pe1/scene_flags.h"
 
-s32 g_SceneFlagBits;
-s32 g_BattleControlFlags;
-s32 g_FieldRenderFlags;
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+u32 g_FieldPadReleased;
+u32 g_FieldPadPressed;
+u32 g_FieldPadLastFrame;
 u32 g_FieldPadBits;
 u32 g_FieldPadBitsPrevious;
 
@@ -62,7 +64,6 @@ void Boot_BuildRenderFlagTable(void);
 int Save_PostInitStub();
 int CdRom_InitScreenState();
 int Draw_InitGpuHwRegs();
-#define g_FrameRngCounter (g_FrameRngCounter[0])
 
 void Boot_InitSubsystems(void) {
     u32 var_s0;
@@ -168,10 +169,10 @@ void Boot_BuildRenderFlagTable(void) {
 
     i = 0;
     entry = g_FieldRenderFlagTable;
-    g_SceneFlagBits = 0;
-    g_BattleControlFlags = 0;
+    g_FieldPadReleased = 0;
+    g_FieldPadPressed = 0;
     g_FieldPadBitsPrevious = 0;
-    g_FieldRenderFlags = 0;
+    g_FieldPadLastFrame = 0;
     g_FieldPadBits = 0;
     do {
         *entry = 0;
@@ -213,9 +214,6 @@ void Boot_StoreTableEntry(u32 mask, int value) {
     g_FieldRenderFlagTable[index] = value;
 }
 
-u32 D_8009D1F4;
-unsigned int D_8009D1E4;
-u32 D_8009D238;
 u32 g_PadComboProgress;
 
 int PadGetState();
@@ -246,9 +244,9 @@ void Field_HandleStateTransition(void) {
     if (PadGetState(0) == 0) {
         u32 initial_flags = g_GameStateFlags;
         if ((initial_flags & 0x4001) == 0) {
-            D_8009D1F4 = 4;
+            g_FieldPadPressed = 4;
             g_FieldPadBits = 4;
-            D_8009D1E4 = 0;
+            g_FieldPadReleased = 0;
             g_GameStateFlags = initial_flags | 0x4000;
             return;
         }
@@ -280,7 +278,7 @@ void Field_HandleStateTransition(void) {
     pad_mask = 0xFFFF9FFF;
     base_bits = rawInverted & pad_mask;
     old_pad_bits = g_FieldPadBits;
-    D_8009D238 = old_pad_bits;
+    g_FieldPadLastFrame = old_pad_bits;
     inverted = ~(u16)pad;
     pad_bits = base_bits;
     if (inverted & 0x2000) {
@@ -397,14 +395,14 @@ void Field_HandleStateTransition(void) {
     }
 
     final_pad = g_FieldPadBits;
-    final_old = D_8009D238;
+    final_old = g_FieldPadLastFrame;
     changed = final_pad ^ final_old;
-    D_8009D1F4 = changed & final_pad;
-    D_8009D1E4 = changed & final_old;
+    g_FieldPadPressed = changed & final_pad;
+    g_FieldPadReleased = changed & final_old;
     return;
     }
 
     g_FieldPadBits = 0;
-    D_8009D1F4 = 0;
-    D_8009D1E4 = 0;
+    g_FieldPadPressed = 0;
+    g_FieldPadReleased = 0;
 }

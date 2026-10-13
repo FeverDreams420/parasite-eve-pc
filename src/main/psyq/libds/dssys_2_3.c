@@ -6,7 +6,6 @@
 #include "pe1/psyq_ds_queue.h"
 
 #include "dssys_2_3_externs.h"
-#include "dssys_2_3_externs_1.h"
 #include "dssys_2_3_externs_2.h"
 #include "dssys_2_3_externs_3.h"
 #include "dssys_2_3_externs_5.h"
@@ -371,10 +370,10 @@ s32 DsSync(s32 inId, void *inResult) {
                 word0.slot = g_DsReadCallbackSlots;
                 word0.word += offset;
                 first = *word0.words;
-                word1.words = D_800A3614;
+                word1.words = (int *)g_DsReadCallbackSlots + 1;
                 word1.word += offset;
                 second = *word1.words;
-                word2.words = D_800A3618;
+                word2.words = (int *)g_DsReadCallbackSlots + 2;
                 word2.word += offset;
                 third = *word2.words;
             }
@@ -383,7 +382,7 @@ s32 DsSync(s32 inId, void *inResult) {
             dst[2] = third;
             {
                 DsSlotAddress word3;
-                word3.words = D_800A361C;
+                word3.words = (int *)g_DsReadCallbackSlots + 3;
                 word3.word += offset;
                 dst[3] = *word3.words;
             }
@@ -409,18 +408,18 @@ int DsReady(u8 *destination) {
 
     slot = (CdQueuedCmdSlot *)destination;
     DS_ready(0);
-    if (D_800A3530.state == 1) {
+    if (g_CdQueuedCmdSlots[2].state == 1) {
         selector = 4;
     } else {
-        selector = D_800A3520.state == 1;
+        selector = g_CdQueuedCmdSlots[1].state == 1;
     }
 
     if (selector == 4) {
         copyDestination = (u8 *)slot;
-        slot = &D_800A3530;
+        slot = &g_CdQueuedCmdSlots[2];
     } else if (selector == 1) {
         copyDestination = (u8 *)slot;
-        slot = &D_800A3520;
+        slot = &g_CdQueuedCmdSlots[1];
     } else {
         return 0;
     }
@@ -539,11 +538,11 @@ int CQ_ready_system(int command, u8 *payload) {
     switch (command_byte) {
     case 1:
     case 5:
-                slot = &D_800A3520;
+                slot = &g_CdQueuedCmdSlots[1];
                 copy_destination = slot->payload;
         break;
     case 4:
-        slot = &D_800A3530;
+        slot = &g_CdQueuedCmdSlots[2];
         copy_destination = slot->payload;
         break;
     default:

@@ -17,6 +17,8 @@
 #include "pe1/render_prim.h"
 #include "pe1/script_state.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 s32 g_BattleStatusPanelSlot;
 u8 g_BattleSpritePrimCountdown;
 u8 g_MenuActiveMode;
@@ -252,15 +254,15 @@ void Battle_DrawHPBar(void) {
                                     0x80, 0x80, 0x80);
         }
         for (i = 0; (u8)i < 10; i++) {
-            Draw_InitDrawModeSprtPacket(&D_8009E500[bufferIndex][(u8)i], hudPage);
-            BATTLE_SET_SPRITE_COLOR(BATTLE_SPRITE_SLOTS(D_8009E500, 10)[bufferIndex][(u8)i].sprite,
+            Draw_InitDrawModeSprtPacket(&g_BattleRemainingActionSprites[bufferIndex][(u8)i], hudPage);
+            BATTLE_SET_SPRITE_COLOR(BATTLE_SPRITE_SLOTS(g_BattleRemainingActionSprites, 10)[bufferIndex][(u8)i].sprite,
                                     0x80, 0x80, 0x80);
         }
-        Draw_InitDrawModeSprtPacket(&D_8009E768[bufferIndex], hudPage);
-        ammoLabel = &D_8009E768[bufferIndex].sprite;
+        Draw_InitDrawModeSprtPacket(&g_BattleAmmoLabelSprites[bufferIndex], hudPage);
+        ammoLabel = &g_BattleAmmoLabelSprites[bufferIndex].sprite;
         ammoLabel->u = 0x58;
         ammoLabel->v = 0xEF;
-        D_8009E768[bufferIndex].sprite.clut = hudClut;
+        g_BattleAmmoLabelSprites[bufferIndex].sprite.clut = hudClut;
         ammoLabel->width = 0x24;
         ammoLabel->height = 5;
         BATTLE_SET_SPRITE_COLOR(*ammoLabel, 0x80, 0x80, 0x80);
@@ -272,11 +274,11 @@ void Battle_DrawHPBar(void) {
             BATTLE_SET_SPRITE_COLOR(BATTLE_SPRITE_SLOTS(g_BattleAmmoDigitSprites, 4)[bufferIndex][(u8)i].sprite,
                                     0x80, 0x80, 0x80);
         }
-        Draw_InitDrawModeSprtPacket(&D_8009E730[bufferIndex], hudPage);
-        statusIcon = &D_8009E730[bufferIndex].sprite;
+        Draw_InitDrawModeSprtPacket(&g_BattleStatusValueLabelSprites[bufferIndex], hudPage);
+        statusIcon = &g_BattleStatusValueLabelSprites[bufferIndex].sprite;
         statusIcon->u = 0x68;
         statusIcon->v = 0xF4;
-        D_8009E730[bufferIndex].sprite.clut = GetClut(0x130, 0x1F9);
+        g_BattleStatusValueLabelSprites[bufferIndex].sprite.clut = GetClut(0x130, 0x1F9);
         statusIcon->width = 0x18;
         statusIcon->height = 4;
         BATTLE_SET_SPRITE_COLOR(*statusIcon, 0x80, 0x80, 0x80);
@@ -357,7 +359,7 @@ void Battle_DrawStatusOverlay(RenderObjectEntity *object, int mode, int outOfRan
             RenderSpritePacket *packet;
             u8 *packetTagBase;
             Battle_LayoutStatusPrimRow(0x1C);
-            packetBase = (u8 *)&D_8009E730[0].sprite;
+            packetBase = (u8 *)&g_BattleStatusValueLabelSprites[0].sprite;
             slot = g_ActiveDrawSlot;
             packetOffset = slot * 28;
             packet = (RenderSpritePacket *)(packetBase + packetOffset);
@@ -408,7 +410,7 @@ void Battle_BuildStatusPrimHeader(RenderObjectEntity *object, s8 outOfRange)
     GteMatrix translation;
     GteShortVector pointer[3] = { { -3, -16, 0 }, { 3, -16, 0 }, { 0, 0, 0 } };
     GteVector projected[3];
-    GteShortVector angles = { 0, 0, (D_8009D250 << 6) & 0xFFF };
+    GteShortVector angles = { 0, 0, (g_FrameRngCounter << 6) & 0xFFF };
     GteVector offset = { object->projected_target_x, object->projected_target_y, 0 };
     s32 flag;
     s16 x;
@@ -611,7 +613,7 @@ void Battle_DrawSpellName(void) {
         u8 *q508;
         workValue = 0x130;
 
-        q508 = D_8009E508;
+        q508 = (u8 *)&g_BattleRemainingActionSprites[0][0].sprite;
         {
             RenderSpritePacket *pa;
             u8 e0a;
@@ -635,7 +637,7 @@ void Battle_DrawSpellName(void) {
             cC = g_ActiveDrawSlotRecord.slot;
             rFD = 0x1FD;
             t3.address = cC * 0x118;
-            tE = *(u16 *)(D_8009E360 + cC * 0x30);
+            tE = *(u16 *)(g_BattleStatusRowPosX + cC * 0x30);
             base.bytes = q508;
             t3.address = t3.address + base.address;
             t3.sprite->y = ys;
@@ -649,7 +651,7 @@ void Battle_DrawSpellName(void) {
             q508 -= 8;
             eo = cD * 0x118;
             cD = cD * 4;
-            *(s16 *)(D_8009E516 + eo) = clut;
+            *(s16 *)(g_BattleRemainingActionClut + eo) = clut;
 
             {
                 BattleStatusPrimAddress entry;
@@ -664,13 +666,13 @@ void Battle_DrawSpellName(void) {
     i = 0;
     {
         s32 tx;
-        tx = *(u16 *)(D_8009E360 + c * 0x30);
+        tx = *(u16 *)(g_BattleStatusRowPosX + c * 0x30);
         xs = tx + 0x40;
     }
     if (g_BattleRemainingActions != 0) {
         u8 e0 = 0xE0;
         u8 *e5m8;
-        e508 = D_8009E508;
+        e508 = (u8 *)&g_BattleRemainingActionSprites[0][0].sprite;
         e5m8 = e508 - 8;
         do {
             s32 s0;
@@ -740,7 +742,7 @@ void Battle_DrawSpellName(void) {
                 workValue = g_ActiveDrawSlotRecord.slot;
                 packetOffset = workValue * 0x118;
                 packetOffset = s0 + packetOffset;
-                                *(s16 *)(D_8009E516 + packetOffset) = clut;
+                                *(s16 *)(g_BattleRemainingActionClut + packetOffset) = clut;
 
             }
             {
@@ -806,18 +808,18 @@ void Battle_DrawStatusSymbol(s8 which) {
     index = which * 2;
     a = first.data.bytes + index;
     b = second.data.bytes + index;
-    packetBase = D_8009E930;
+    packetBase = (u8 *)&g_BattleStatusSymbolSprites[0].sprite;
     thirdBase = third.data.bytes;
-    D_8009E93C[g_ActiveDrawSlot * 28] = a[0];
+    g_BattleStatusSymbolSpriteU[g_ActiveDrawSlot * 28] = a[0];
     c = thirdBase + index;
-    D_8009E93D[g_ActiveDrawSlot * 28] = a[1];
+    g_BattleStatusSymbolSpriteV[g_ActiveDrawSlot * 28] = a[1];
     slot = g_ActiveDrawSlot;
     packetOffset = slot * 28;
     packet = packetBase + packetOffset;
     ((RenderSpritePacket *)packet)->width = b[0];
     ((RenderSpritePacket *)packet)->height = b[1];
-    ((RenderSpritePacket *)packet)->x = *(u16 *)(D_8009E360 + slot * 48) + c[0];
-    ((RenderSpritePacket *)packet)->y = *(u16 *)(D_8009E360 + slot * 48 + 2) + c[1];
+    ((RenderSpritePacket *)packet)->x = *(u16 *)(g_BattleStatusRowPosX + slot * 48) + c[0];
+    ((RenderSpritePacket *)packet)->y = *(u16 *)(g_BattleStatusRowPosX + slot * 48 + 2) + c[1];
     packetBase -= 8;
     AddPrim(D_800B0E38.ordering[slot] + 4, (unsigned int *)(packetBase + packetOffset));
 }
@@ -836,11 +838,11 @@ void Battle_DrawATBGauge(void)
     y = g_BattleStatusBarTiles[g_ActiveDrawSlot * 3].y0 + 22;
     category = (g_ActiveActor->action->attackWord >> 20) & 3;
     ammo = Inv_GetWeaponCategoryAmmoBase(category - 1);
-    base = &D_8009E768[0].sprite;
+    base = &g_BattleAmmoLabelSprites[0].sprite;
     packet = (BattleGaugePrim *)((char *)base - PE1_OFFSETOF(BattleGaugePrim, sprite));
 
     packet += g_ActiveDrawSlot;
-    sprite = &D_8009E768[g_ActiveDrawSlot].sprite;
+    sprite = &g_BattleAmmoLabelSprites[g_ActiveDrawSlot].sprite;
     ammo += *(unsigned short *)&g_ActiveActor->action->attackWord & 0x3ff;
     sprite->x = g_BattleStatusBarTiles[g_ActiveDrawSlot * 3].x0 + 8;
     sprite->y = y;
@@ -883,7 +885,7 @@ void Battle_DrawStatusValue(int value, int yOffset)
     activeSlot = g_ActiveDrawSlot;
     savedValue = value;
     drawSlot = activeSlot;
-    markerBase = (u8 *)D_8009E888;
+    markerBase = (u8 *)g_BattleStatusValueMarkerSlots;
     anchorOffset = (drawSlot * 3) << 4;
     markerOffset = drawSlot * sizeof(BattleStatusMarkerBody);
     do {
@@ -900,7 +902,7 @@ void Battle_DrawStatusValue(int value, int yOffset)
             y = anchor.line->y0;
         }
         x = (marker->x =
-            *(u16 *)(D_8009E360 + anchorOffset) + 8);
+            *(u16 *)(g_BattleStatusRowPosX + anchorOffset) + 8);
         y += yOffset;
     } while (0);
     marker->y = y;
@@ -1002,25 +1004,25 @@ void Battle_DrawStatusPanel(s32 mode, BattleStatusPanel *input) {
         s32 y;
         timer = panel->timer;
         y = panel->y;
-        *(D_800B01CC + ((slotIndex * 0x8C) + (frame * 0x578))) = timer * 4;
+        *(g_BattleMissSpriteR + ((slotIndex * 0x8C) + (frame * 0x578))) = timer * 4;
         screenX = x - 16;
         timer -= 30;
         screenY = y + timer;
-        *(D_800B01CD + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0;
-        *(D_800B01CE + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0;
-        *(D_800B01D4 + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0x50;
-        *(D_800B01D5 + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0xE0;
+        *(g_BattleMissSpriteG + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0;
+        *(g_BattleMissSpriteB + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0;
+        *(g_BattleMissSpriteU + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0x50;
+        *(g_BattleMissSpriteV + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0xE0;
         {
             /* screenY is complete; reuse the Y scratch for the draw slot. */
             y = g_ActiveDrawSlot;
             missFrameOffset = y * 0x578;
             panelOffset = g_BattleStatusPanelSlot * 0x8C;
-            missSprite = (RenderSpritePacket *)(missFrameOffset + panelOffset + ((u8 *)D_800B01C8));
+            missSprite = (RenderSpritePacket *)(missFrameOffset + panelOffset + ((u8 *)g_BattleMissSprite));
             missSprite->width = 0x18;
             missSprite->x = screenX;
             missSprite->y = screenY;
             missSprite->height = 8;
-            AddPrim(((u32 *)D_800B0E38.ordering[y]) + 7, panelOffset + ((((u8 *)D_800B01C8) - 8) + missFrameOffset));
+            AddPrim(((u32 *)D_800B0E38.ordering[y]) + 7, panelOffset + ((((u8 *)g_BattleMissSprite) - 8) + missFrameOffset));
         }
     } else {
         value = number;
@@ -1106,7 +1108,7 @@ void Draw_QueuePrimitive(void) {
  * back 8 bytes for the packet; see CODE_ORGANIZATION.md. */
 #define INDEX_STRIDE(i) ((((((i) << 1) + (i)) << 3) - (i)) << 2) - (i)
 
-#define EMIT_CODED(code_expr) ({ ({  \
+#define EMIT_CODED(code_expr) ({  ({  \
     int packet_code; \
     char *base; \
     int code_off; \

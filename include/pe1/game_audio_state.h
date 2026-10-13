@@ -27,6 +27,6 @@ typedef struct AkaoRuntimeState {
 PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoRuntimeState, voice_banks) == 0x118, game_audio_voice_bank_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoRuntimeState, archive) == 0x17C, game_audio_archive_offset);
 
-extern AkaoRuntimeState D_800B0CE8;
+extern AkaoRuntimeState g_AkaoRuntimeState;
 
 #endif

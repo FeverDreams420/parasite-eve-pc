@@ -8,5 +8,5 @@
 # is not a scan of the whole image.
 #
 # offset      count  stride  what
-0x0022AE10    47     0x14    asset[70] (sectors 978..1111, read to OVERLAY_WINDOW_ROOM + 8): the video table at OVERLAY_WINDOW_ROOM + 0x41E18 (menu_memcard's D_801D0E00), file name pointers into menu_memcard's names ("\FMV000.STR;1" at OVERLAY_WINDOW_ROOM + 0x2EC and down)
+0x0022AE10    47     0x14    asset[70] (sectors 978..1111, read to OVERLAY_WINDOW_ROOM + 8): the video table at OVERLAY_WINDOW_ROOM + 0x41E18 (menu_memcard's g_MenuCardScreenVideoTable), file name pointers into menu_memcard's names ("\FMV000.STR;1" at OVERLAY_WINDOW_ROOM + 0x2EC and down)
 0x00230800    715    0x4     asset[71] (sectors 1111..1276, read to OVERLAY_WINDOW_MENU_MEMCARD): the credits line table after boot_display, pointers to the staff text at the start of asset[71]

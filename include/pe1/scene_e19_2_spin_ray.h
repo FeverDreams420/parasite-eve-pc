@@ -38,11 +38,12 @@ typedef struct SceneSpinRayChannel {
     char *pool; /* 0x08 */
 } SceneSpinRayChannel;
 
-extern RenderColor D_8018F224;
-extern RenderColor D_8018F228;
-extern RenderColor D_8018F22C;
-extern GteRotation D_8018F210;
-extern RenderColor D_8018F230;
+extern GteRotation g_SceneE19RollTilt;
+extern RenderColor g_SceneE19SpinRayColor;
+extern RenderColor g_SceneE19SpinRayBladeHeadColor;
+extern RenderColor g_SceneE19SpinRayBladeTailColor;
+extern GteRotation g_SceneE19RollTilt;
+extern RenderColor g_SceneE19SpinRayBurstRingColor;
 extern u8 g_SceneE19SpinRayColorTrack[];
 extern u8 g_SceneE19SpinRayBurstColorTrack[];
 extern GteShortVector g_SceneE19SpinRayOrigin;

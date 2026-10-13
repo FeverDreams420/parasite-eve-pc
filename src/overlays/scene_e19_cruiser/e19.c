@@ -45,6 +45,8 @@ typedef struct SceneE19Effect {
     s16 frame;
 } SceneE19Effect;
 
+/* Full callback reconstruction; source-level constraints are tracked
+ * in crutch debt because stock GCC needs them to reproduce the retail code. */
 typedef struct SceneE19HomingParticle {
     GteShortVector position; /* position.pad is the particle index */
     GteShortVector angles;
@@ -322,7 +324,7 @@ int SceneE19_GrabNop6(void) {
 }
 
 int SceneE19_BlastGlowCallback(int mode, SceneE19Effect *effect) {
-    GteRotation position = D_8018F1CC;
+    GteRotation position = g_SceneE19ZeroSpin;
     int angle, cosine, sine, brightness, palette, kind;
     u16 clut;
 
@@ -409,15 +411,15 @@ int SceneE19_Blast(int mode, SceneE19Blast *blast)
 
     switch (mode) {
     case 0:
-        g_SceneE19BlastModel0 = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC54C0704);
+        g_SceneE19BlastModel0 = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC54C0704);
         FieldFx_ModelScrollUv(g_SceneE19BlastModel0, 0, 0);
-        g_SceneE19BlastModel1 = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC58C0704);
+        g_SceneE19BlastModel1 = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC58C0704);
         FieldFx_ModelScrollUv(g_SceneE19BlastModel1, 0, 0);
-        g_SceneE19BlastModel2 = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC5CC0704);
+        g_SceneE19BlastModel2 = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5CC0704);
         FieldFx_ModelScrollUv(g_SceneE19BlastModel2, 0, 0);
-        g_SceneE19BlastModel3 = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC60C0704);
+        g_SceneE19BlastModel3 = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC60C0704);
         FieldFx_ModelScrollUv(g_SceneE19BlastModel3, 0, 0);
-        g_SceneE19BlastModel4 = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC64C0704);
+        g_SceneE19BlastModel4 = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC64C0704);
         FieldFx_ModelScrollUv(g_SceneE19BlastModel4, 0, 0);
         blast->state = 0;
         blast->timer = 0;
@@ -431,10 +433,10 @@ int SceneE19_Blast(int mode, SceneE19Blast *blast)
         case 0:
             timer = blast->timer + 1;
             blast->timer = timer;
-            if (timer == 2 && D_800B0E64[0] != 0) {
-                Akao_SendTableCommand(D_800B0E64[0], 0x5E3, FieldFx_GetOwnerProgress(), 0x80, 0x7F);
-                if (D_800B0E64[0] != 0) {
-                    Akao_SendTableCommand(D_800B0E64[0], 0x5E4, 0x80, 0x80, 0x7F);
+            if (timer == 2 && g_LoadedSceneAssetBlock[0] != 0) {
+                Akao_SendTableCommand(g_LoadedSceneAssetBlock[0], 0x5E3, FieldFx_GetOwnerProgress(), 0x80, 0x7F);
+                if (g_LoadedSceneAssetBlock[0] != 0) {
+                    Akao_SendTableCommand(g_LoadedSceneAssetBlock[0], 0x5E4, 0x80, 0x80, 0x7F);
                 }
             }
             if (blast->timer < 0x10) {
@@ -1060,10 +1062,10 @@ int FieldFx_GetDistanceNonZero(s16 *from, s16 *to);
 
 int SceneE19_HomingParticleCallback(int mode, SceneE19HomingParticle *particle)
 {
-    GteRotation templatePoint = D_8018F210;
+    GteRotation templatePoint = g_SceneE19RollTilt;
     GteShortVector temporaryPosition;
     GteShortVector rotation;
-    RenderColor color = D_8018F218;
+    RenderColor color = g_SceneE19HomingParticleColor;
     GteShortVector floor_position;
     GteRotation floor_rotation;
     int divider;
@@ -1317,10 +1319,10 @@ timer_return_one:
 int SceneE19_HomingBurst(int mode, SceneHomingBurst *burst)
 {
     GteShortVector position;
-    GteRotation rotation = D_8018F210;
-    GteRotation tilt = D_8018F1CC;
-    RenderColor flashColor = D_8018F21C;
-    RenderColor ringColor = D_8018F220;
+    GteRotation rotation = g_SceneE19RollTilt;
+    GteRotation tilt = g_SceneE19ZeroSpin;
+    RenderColor flashColor = g_SceneE19HomingBurstFlashColor;
+    RenderColor ringColor = g_SceneE19HomingBurstRingColor;
     SceneHomingBurstChild *child;
     int fade;
     int scale;
@@ -1464,9 +1466,9 @@ int SceneE19_SpinRayCallback(int mode, SceneSpinRay *ray)
     int glow;
     int angle;
 
-    rayColor = D_8018F224;
-    bladeHead = D_8018F228;
-    bladeTail = D_8018F22C;
+    rayColor = g_SceneE19SpinRayColor;
+    bladeHead = g_SceneE19SpinRayBladeHeadColor;
+    bladeTail = g_SceneE19SpinRayBladeTailColor;
     switch (mode) {
     case 1:
         switch (ray->state) {
@@ -1564,10 +1566,10 @@ int SceneE19_SpinRayCallback(int mode, SceneSpinRay *ray)
  * two rings there. */
 int SceneE19_SpinRayBurst(int mode, SceneSpinRayBurst *burst)
 {
-    GteRotation tilt = D_8018F210;
+    GteRotation tilt = g_SceneE19RollTilt;
     GteShortVector position;
     RenderColor color;
-    RenderColor ringColor = D_8018F230;
+    RenderColor ringColor = g_SceneE19SpinRayBurstRingColor;
     GteShortVector floor;
     GteRotation flat;
     SceneSpinRay *child;
@@ -1692,9 +1694,9 @@ int SceneE19_SpinRayBurst(int mode, SceneSpinRayBurst *burst)
  * sideways speed decays (state 0 slowly, state 1 quickly while falling),
  * and a wide flare pulses in place (state 2). */
 int SceneE19_EmberFlareParticleCallback(int mode, RoomOrbitTrailParticle *p) {
-    GteRotation spin = D_8018F1CC;
-    GteRotation turn = D_8018F1D4;
-    RenderColor color = D_8018F234;
+    GteRotation spin = g_SceneE19ZeroSpin;
+    GteRotation turn = g_SceneE19FlatTilt;
+    RenderColor color = g_SceneE19EmberParticleColor;
     int fall;
     int bounce;
     int size;
@@ -1800,7 +1802,7 @@ int SceneE19_EmberFlareParticleCallback(int mode, RoomOrbitTrailParticle *p) {
  * hands the actor to the scene script. While it glows it draws two floor
  * glows, a halo and a ring. */
 int SceneE19_EmberFlare(int mode, SceneE22EmberBurst *burst) {
-    RenderColor color = D_8018F238;
+    RenderColor color = g_SceneE19EmberFlareColor;
     GteShortVector position;
     GteRotation spin;
     GteShortVector floorPosition;
@@ -1827,7 +1829,7 @@ int SceneE19_EmberFlare(int mode, SceneE22EmberBurst *burst) {
                     *object->status = 2;
             }
         }
-        soundSlot = D_800B0E64;
+        soundSlot = g_LoadedSceneAssetBlock;
         if (*soundSlot != 0) {
             volume = 0x7F;
             Akao_SendTableCommand(*soundSlot, 0x5E5, FieldFx_GetOwnerProgress(), 0x80, volume);
@@ -2006,7 +2008,7 @@ int SceneE19_OrbitTrailParticleCallback(int mode, RoomOrbitTrailParticle *p) {
     int weight;
     int glow;
 
-    color = D_8018F234;
+    color = g_SceneE19EmberParticleColor;
     switch (mode) {
     case 1:
         switch (p->state) {
@@ -2124,8 +2126,8 @@ int SceneE19_OrbitTrailParticleCallback(int mode, RoomOrbitTrailParticle *p) {
  * fades, and publishes the actor position as the orbit centre. */
 int SceneE19_OrbitTrailBurst(int mode, RoomOrbitTrailBurst *burst) {
     RoomOrbitSpinBurstTilt tilt;
-    RenderColor color = D_8018F23C;
-    RenderColor ringColor = D_8018F240;
+    RenderColor color = g_SceneE19OrbitTrailBurstColor;
+    RenderColor ringColor = g_SceneE19OrbitTrailBurstRingColor;
     RoomOrbitTrailParticle *child;
     int i;
 
@@ -2300,7 +2302,7 @@ int SceneE19_OrbitTrailBurst(int mode, RoomOrbitTrailBurst *burst) {
  * age, state 1 spins while it drifts and draws a tinted fading glint. */
 int SceneE19_GlintRibbonSparkCallback(int mode, RoomDampedSpark *spark) {
     GteRotation rotation;
-    RenderColor color = D_8018F244;
+    RenderColor color = g_SceneE19GlintRibbonSparkColor;
     int fall;
     int bounce;
     int angle;
@@ -2405,11 +2407,11 @@ int SceneE19_GlintRibbon(int mode, RoomGlintRibbon *ribbon) {
     GteShortVector first;
     GteShortVector middle;
     GteShortVector last;
-    GteShortVector offset0 = D_8018F248;
-    GteShortVector offset1 = D_8018F250;
-    RenderColor color0 = D_8018F258;
-    RenderColor color1 = D_8018F25C;
-    RenderColor color2 = D_8018F260;
+    GteShortVector offset0 = g_SceneE19JointOrigin;
+    GteShortVector offset1 = g_SceneE19JointAnchor;
+    RenderColor color0 = g_SceneE19GlintRibbonHeadColor;
+    RenderColor color1 = g_SceneE19GlintRibbonMidColor;
+    RenderColor color2 = g_SceneE19GlintRibbonTailColor;
     RoomDampedSpark *spark;
 
     switch (mode) {
@@ -2605,9 +2607,9 @@ int SceneE19_TwinGlow(int mode, SceneTwinGlow *glow)
 {
     GteShortVector jointA;
     GteShortVector jointB;
-    GteRotation ring = D_8018F1D4;
-    GteShortVector offset = D_8018F264;
-    RenderColor color = D_8018F26C;
+    GteRotation ring = g_SceneE19FlatTilt;
+    GteShortVector offset = g_SceneE19TwinGlowJointOrigin;
+    RenderColor color = g_SceneE19TwinGlowColor;
     GteShortVector floor;
     GteRotation flat;
     RoomOrbitTrailParticle *child;
@@ -2827,7 +2829,7 @@ int SceneE19_TwinGlow(int mode, SceneTwinGlow *glow)
 /* Spark that drifts with damped velocity, jitters and spins for 8 frames
  * while drawing an animated sprite scaled by its size field. */
 int SceneE19_JitterSparkCallback(int mode, RoomJitterSpark *spark) {
-    GteRotation rotation = D_8018F1CC;
+    GteRotation rotation = g_SceneE19ZeroSpin;
     int fall;
     int bounce;
     int size;
@@ -2938,10 +2940,10 @@ u32 *SceneE19_BlastConfigure(void) {
 }
 
 s16 *SceneE19_SetHomingBurstParams(int unused, s16 first, s16 second) {
-    s16 *result = &g_SceneE19HomingBurstParams;
+    s16 *result = g_SceneE19HomingBurstParams;
 
     *result = first;
-    D_8019B66E = second;
+    g_SceneE19HomingBurstParams[1] = second;
     return result;
 }
 

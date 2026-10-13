@@ -8,9 +8,11 @@
 #include "pe1/textbox.h"
 #include "pe1/textbox_open.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 int g_ScriptCollisionFlag;
 u8 *g_TextboxMessageSource;
-unsigned char D_8009CE94;
+unsigned char g_TextboxKernGlyph0F;
 TextboxRect g_TextboxPendingRect;
 u8 g_DialogueChoiceCursor;
 u8 g_PlayerMovementEnabled;
@@ -50,7 +52,7 @@ void Draw_InitDrawModeTilePacket(GpuModeTilePacket *packet, int tpage) {
 }
 
 void Menu_SetEquipSlotIndex(int index) {
-    D_8009CE94 = index;
+    g_TextboxKernGlyph0F = index;
 }
 
 void SetDrawTPage(void *, int, int, int);
@@ -326,7 +328,7 @@ int Menu_GetEquipSlotIndex(void) {
  * symbol to the retail address, as for other unplaced game globals. */
 signed char g_MenuEquipSlotIndex;
 u8 g_TextboxGlyphColorR;
-u8 D_8009CEAC;
+u8 g_TextboxGlyphColorG;
 u8 g_TextboxGlyphColorB;
 
 void Menu_DrawTextboxEntries(void) {
@@ -443,7 +445,7 @@ void Menu_DrawTextboxEntries(void) {
             cursor.y = 0xAE;
             cursor.x = 0x14;
             g_TextboxGlyphColorB = 0x80;
-            D_8009CEAC = 0x80;
+            g_TextboxGlyphColorG = 0x80;
             g_TextboxGlyphColorR = 0x80;
             temp_v1_2 = textbox->style;
             if (temp_v1_2 != 0) {
@@ -451,7 +453,7 @@ void Menu_DrawTextboxEntries(void) {
                     cursor.y = 0xAE;
                     cursor.x = 0x14;
                     g_TextboxGlyphColorR = g_TextboxHighlightColorR;
-                    D_8009CEAC = D_8009CEC8;
+                    g_TextboxGlyphColorG = g_TextboxHighlightColorG;
                     g_TextboxGlyphColorB = g_TextboxHighlightColorB;
                 } else {
                     temp_t1 = textbox->x;
@@ -492,7 +494,7 @@ void Menu_DrawTextboxEntries(void) {
                     cursor.y += lineHeight;
                     break;
                 case 0xF8:
-                    if ((textbox->state == 2) && (D_8009D1F4 & 0x100)) {
+                    if ((textbox->state == 2) && (g_FieldPadPressed & 0x100)) {
                         do {
                             temp_v0 = *stream;
                             stream++;
@@ -506,7 +508,7 @@ void Menu_DrawTextboxEntries(void) {
                     stopDrawing = 1;
                     break;
                 case 0xFF:
-                    if ((textbox->state == 2) && (D_8009D1F4 & 0x100) &&
+                    if ((textbox->state == 2) && (g_FieldPadPressed & 0x100) &&
                         !(textbox->control.flags & 0x02000000)) {
                         textbox->state = 0U;
                     }
@@ -547,7 +549,7 @@ void Menu_DrawTextboxEntries(void) {
                             auxiliaryPacket->sprite.v = (s8)uv.y;
                             currentPacket++;
                             auxiliaryPacket->sprite.color.bytes.r = g_TextboxGlyphColorR;
-                            auxiliaryPacket->sprite.color.bytes.g = D_8009CEAC;
+                            auxiliaryPacket->sprite.color.bytes.g = g_TextboxGlyphColorG;
                             nextPacket++;
                             auxiliaryPacket->sprite.width = 12;
                             auxiliaryPacket->sprite.height = 12;
@@ -593,7 +595,7 @@ void Menu_DrawTextboxEntries(void) {
                         currentPacket->sprite.v = (s8)uv.y;
                         currentPacket->sprite.color.bytes.r = g_TextboxGlyphColorR;
                         currentPacket->sprite.width = 0xC;
-                        currentPacket->sprite.color.bytes.g = D_8009CEAC;
+                        currentPacket->sprite.color.bytes.g = g_TextboxGlyphColorG;
                         linkPacket = currentPacket;
                         currentPacket->sprite.height = 0xC;
                         currentPacket->sprite.color.bytes.b = g_TextboxGlyphColorB;
@@ -607,18 +609,18 @@ void Menu_DrawTextboxEntries(void) {
                     case 4:
                         g_TextboxGlyphColorR = 0xFF;
                         g_TextboxGlyphColorB = 0;
-                        D_8009CEAC = 0;
+                        g_TextboxGlyphColorG = 0;
                         stream += 1;
                         break;
                     case 5:
                         g_TextboxGlyphColorB = 0x80;
-                        D_8009CEAC = 0x80;
+                        g_TextboxGlyphColorG = 0x80;
                         g_TextboxGlyphColorR = 0x80;
                         stream += 1;
                         break;
                     case 6: {
                         s32 sectionTerminator = 6;
-                        if (D_8009D1F4 & 0x100) {
+                        if (g_FieldPadPressed & 0x100) {
                         section_again:
                             workingValue = textbox->control.flags;
                             if (sectionIndex == ((workingValue >> 16) & 15)) {
@@ -692,7 +694,7 @@ void Menu_DrawTextboxEntries(void) {
                                 currentPacket++;
                                 auxiliaryPacket->sprite.color.bytes.r = g_TextboxGlyphColorR;
                                 nextPacket++;
-                                auxiliaryPacket->sprite.color.bytes.g = D_8009CEAC;
+                                auxiliaryPacket->sprite.color.bytes.g = g_TextboxGlyphColorG;
                                 auxiliaryPacket->sprite.width = 12;
                                 auxiliaryPacket->sprite.height = 12;
                                 auxiliaryPacket->sprite.color.bytes.b = g_TextboxGlyphColorB;
@@ -715,21 +717,21 @@ void Menu_DrawTextboxEntries(void) {
                         workingValue = (temp_v1_7 & 0xFE3FFFFF) | ((*stream & 7) << 0x16);
                         textbox->control.flags = workingValue;
                         temp_v1_9 = (workingValue >> 0x16) & 7;
-                        if (D_8009D1F4 & 0x20) {
+                        if (g_FieldPadPressed & 0x20) {
                             temp_v0_5 = g_DialogueChoiceCursor + 1;
                             g_DialogueChoiceCursor = temp_v0_5;
                             if ((s8)temp_v0_5 >= temp_v1_9) {
                                 g_DialogueChoiceCursor = temp_v1_9 - 1;
                             }
                         }
-                        if (D_8009D1F4 & 8) {
+                        if (g_FieldPadPressed & 8) {
                             temp_v0_6 = g_DialogueChoiceCursor - 1;
                             g_DialogueChoiceCursor = temp_v0_6;
                             if ((s8)temp_v0_6 < 0) {
                                 g_DialogueChoiceCursor = 0;
                             }
                         }
-                        if (D_8009D1F4 & 0x100) {
+                        if (g_FieldPadPressed & 0x100) {
                             g_MenuEquipSlotIndex = g_DialogueChoiceCursor;
                         }
                         stream++;
@@ -772,7 +774,7 @@ void Menu_DrawTextboxEntries(void) {
                         currentPacket->sprite.v = (s8)uv.y;
                         currentPacket->sprite.color.bytes.r = g_TextboxGlyphColorR;
                         currentPacket->sprite.width = 0xC;
-                        currentPacket->sprite.color.bytes.g = D_8009CEAC;
+                        currentPacket->sprite.color.bytes.g = g_TextboxGlyphColorG;
                         linkPacket = currentPacket;
                         currentPacket->sprite.height = 0xC;
                         currentPacket->sprite.color.bytes.b = g_TextboxGlyphColorB;
@@ -803,7 +805,7 @@ void Menu_DrawTextboxEntries(void) {
                     currentPacket->sprite.v = (s8)uv.y;
                     currentPacket->sprite.color.bytes.r = g_TextboxGlyphColorR;
                     currentPacket->sprite.width = 0xC;
-                    currentPacket->sprite.color.bytes.g = D_8009CEAC;
+                    currentPacket->sprite.color.bytes.g = g_TextboxGlyphColorG;
                     linkPacket = currentPacket;
                     currentPacket->sprite.height = 0xC;
                     currentPacket->sprite.color.bytes.b = g_TextboxGlyphColorB;
@@ -831,7 +833,7 @@ void Menu_DrawTextboxEntries(void) {
                     currentPacket->sprite.v = (s8)uv.y;
                     currentPacket->sprite.color.bytes.r = g_TextboxGlyphColorR;
                     currentPacket->sprite.width = 0xC;
-                    currentPacket->sprite.color.bytes.g = D_8009CEAC;
+                    currentPacket->sprite.color.bytes.g = g_TextboxGlyphColorG;
                     linkPacket = currentPacket;
                     currentPacket->sprite.height = 0xC;
                     currentPacket->sprite.color.bytes.b = g_TextboxGlyphColorB;
@@ -843,7 +845,7 @@ void Menu_DrawTextboxEntries(void) {
                     cursor.x = var_v0_3;
                     break;
                 case 0xF:
-                    if (D_8009CE94 == 1) {
+                    if (g_TextboxKernGlyph0F == 1) {
                         cursor.x -= 7;
                     }
                     /* fallthrough */
@@ -868,7 +870,7 @@ void Menu_DrawTextboxEntries(void) {
                     currentPacket->sprite.v = (s8)uv.y;
                     currentPacket->sprite.color.bytes.r = g_TextboxGlyphColorR;
                     currentPacket->sprite.width = 12;
-                    currentPacket->sprite.color.bytes.g = D_8009CEAC;
+                    currentPacket->sprite.color.bytes.g = g_TextboxGlyphColorG;
                     currentPacket->sprite.height = 12;
                     nextPacket++;
                     currentPacket->sprite.color.bytes.b = g_TextboxGlyphColorB;
@@ -898,11 +900,11 @@ short D_8009CEB8;
 short D_8009CEBC;
 short D_8009CEC0;
 unsigned char g_TextboxHighlightColorR;
-unsigned char D_8009CEC8;
+unsigned char g_TextboxHighlightColorG;
 unsigned char g_TextboxHighlightColorB;
 
 unsigned char g_TextboxHighlightColorR;
-unsigned char D_8009CEC8;
+unsigned char g_TextboxHighlightColorG;
 unsigned char g_TextboxHighlightColorB;
 
 void Draw_SetLightingParams(short arg0, short arg1, short arg2, unsigned char arg3, unsigned char arg4, unsigned char arg5) {
@@ -911,12 +913,12 @@ void Draw_SetLightingParams(short arg0, short arg1, short arg2, unsigned char ar
     D_8009CEBC = arg1;
     D_8009CEC0 = arg2;
     g_TextboxHighlightColorR = arg3;
-    D_8009CEC8 = arg4;
+    g_TextboxHighlightColorG = arg4;
     g_TextboxHighlightColorB = arg5;
 }
 
 void Menu_SetHighlightColor(int arg0, int arg1, int arg2, int arg3) {
     g_TextboxHighlightColorR = arg1;
-    D_8009CEC8 = arg2;
+    g_TextboxHighlightColorG = arg2;
     g_TextboxHighlightColorB = arg3;
 }

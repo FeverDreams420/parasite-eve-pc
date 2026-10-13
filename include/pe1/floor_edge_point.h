@@ -14,6 +14,6 @@ typedef union FloorEdgePoint {
 extern FloorEdgePoint g_FloorBlockedEdgePointA, g_FloorBlockedEdgePrev;
 /* Byte view of the z halves, which Entity_ResetStateGlobals clears by
  * byte offset together with the x halves. */
-extern char D_8009CE0E[];
+extern char g_FloorBlockedEdgeZHalves[];
 
 #endif /* PE1_FLOOR_EDGE_POINT_H */

@@ -94,8 +94,10 @@ typedef struct RoomM086SpawnChannel {
     void *pool;
 } RoomM086SpawnChannel;
 
-extern RoomM086Offset D_8018EFF4;
-extern RoomM086Offset D_8018EFFC;
+extern RoomM086Offset g_RoomM086JointAnchor;
+extern RoomM086Offset g_RoomM086LaunchVelocity;
+extern RoomM086Offset g_RoomM086JointAnchor;
+extern RoomM086Offset g_RoomM086LaunchVelocity;
 extern u8 *g_RoomM086SeekerModelA;
 extern u16 g_FieldFxPaletteEntry2;
 

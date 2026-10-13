@@ -27,6 +27,8 @@
 #include "pe1/stat_modifiers.h"
 #include "pe1/text.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 int g_BonusPointDisplayValue;
 int g_BonusPointBarAnimStep;
 int g_BonusPointBarAnimProgress;
@@ -804,21 +806,12 @@ int Menu_StepItemSelectScreen(MenuWidgetNode *node, unsigned int buttons)
             Menu_StepInventoryRoot(0x33e, -1, -1);
             g_MenuBattleStatusOverlayActive = 0;
             break;
-        case 8: {
-            int command;
-            int first;
-            int second;
-            int third;
+        case 8:
             CLOSE_SELECT_VIEWS();
-            first = 0x37e;
-            second = -1;
-            third = -1;
-            command = 1;
-            g_MenuItemUseMode = command;
-            Menu_StepInventoryRoot(first, second, third);
+            g_MenuItemUseMode = 1;
+            Menu_StepInventoryRoot(0x37e, -1, -1);
             g_MenuBattleStatusOverlayActive = 0;
             break;
-        }
         default:
             goto return_one;
         }

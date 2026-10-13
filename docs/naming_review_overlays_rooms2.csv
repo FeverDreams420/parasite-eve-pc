@@ -1,0 +1,308 @@
+address,overlay,old_name,new_name,evidence
+0x8018EFF4,room_m005_theater,D_8018EFF4,g_RoomM005OrbiterJointAnchor,"RoomM005_Orbiter case 0 copies it to a local and passes it as the local point to FieldFx_TransformMatrixPoint(pool, 20, ..): bytes {0,0,-60}, a point on joint 0x14 the orbiting sprite starts from."
+0x8018EFFC,room_m005_theater,D_8018EFFC,g_RoomM005CrossFlareFlashAnchor,"RoomM005_CrossFlare case 2: local point {0,0,-70} transformed on joint 0x14 (0x14) into the position of the ring bands and the large flash sprite."
+0x8018F004,room_m005_theater,D_8018F004,g_RoomM005CrossFlareTwinAnchor,"RoomM005_CrossFlare case 2: local point {0,16,60} transformed on joint 9 into the position of the two small twin quads drawn at x-16 and x+16."
+0x8018F00C,room_m005_theater,D_8018F00C,g_RoomM005BeaconTint,RoomM005_BeaconDriftCallback copies the 0x80808080 rgb word into its draw colour (neutral grey tint).
+0x8018F010,room_m005_theater,D_8018F010,g_RoomM005JointBeaconAnchor,"RoomM005_JointBeacon case 0: local point {0,-40,-92} transformed on joint 0x14 into the beacon state position (header comment: rides joint 0x14)."
+0x80190B84,room_m005_theater,D_80190B84,g_RoomM005ScriptAnchorView,"Interior of g_RoomScriptRecord (RoomM005_Dialog.h4, the dialog anchor x/y/z); the orbiter passes its own address to FieldFx_GetActorPosition. Member access (&record.h4) shares the record base and shrinks RoomM005_Orbiter by 12 bytes, so it is a one-field view."
+0x80190B8C,room_m005_theater,D_80190B8C,g_RoomM005ScriptFadeView,"Interior of g_RoomScriptRecord (RoomM005_Dialog.hC, the fade target block RoomM005_FxOrbiter reads); the orbiter writes the transformed point there. Member access does not stay byte-identical, so a one-field view."
+0x8018EFF4,room_m023_theater,D_8018EFF4,g_RoomM023JointAnchor,"Local point {0,0,-70} passed to FieldFx_TransformMatrixPoint(pool, state->joint, &template, ..) by RoomM023_ScatterEmitter, JointGlow and JointBeacon: the anchor offset on the tracked model joint."
+0x8018EFFC,room_m023_theater,D_8018EFFC,g_RoomM023RingBandColor,"RoomM023_JointGlow copies it to local ring (rgb 100,200,10) and passes it as the colour of FieldFx_DrawRingBand."
+0x8018F000,room_m023_theater,D_8018F000,g_RoomM023StarFanColor,"RoomM023_JointGlow copies it to local flare (rgb 100,200,100) and passes it as the colour of FieldFx_DrawStarFan."
+0x801906F0,room_m023_theater,D_801906F0,g_RoomM023BeaconColorTrack,"Only reader: RoomM023_JointBeacon passes it as the track to FieldFx_SampleColorTrack(.., &color, state->shade), the beacon glow colour ramp."
+0x80190760,room_m023_theater,D_80190760,g_RoomM023BeaconModel,"RoomM023_JointBeacon case 0 stores Asset_FindTable08ByU32Key(scene block, 0xC5463704) in it; the draw case passes it to FieldFx_ModelSaveColors/ModelDraw (the beacon model)."
+0x8018EFF4,room_m086_central_park,D_8018EFF4,g_RoomM086JointAnchor,"Local point {0,0,-30}: RoomM086_SeekerController case 0 and RoomM086_BounceGlint both pass it to FieldFx_TransformMatrixPoint on joint 7 as the anchor."
+0x8018EFFC,room_m086_central_park,D_8018EFFC,g_RoomM086LaunchVelocity,"Local vector {0,0,-41}: RoomM086_SeekerController rotates it by the actor bone with FieldFx_RotateVector into state->velocity (initial drift velocity)."
+0x80190B78,room_m086_central_park,D_80190B78,g_RoomM086ControllerParams[1],Interior of the 4-word block g_RoomM086ControllerParams (0x80190B74): RoomM086_SetControllerParams stores arg2 there. Declared int[4]; element access stays byte-identical.
+0x80190B7C,room_m086_central_park,D_80190B7C,g_RoomM086ControllerParams[2],"Same block, arg3 store of RoomM086_SetControllerParams."
+0x80190B80,room_m086_central_park,D_80190B80,g_RoomM086ControllerParams[3],"Same block, arg1 store of the arg0==2 branch of RoomM086_SetControllerParams."
+0x80190B90,room_m086_central_park,D_80190B90,g_RoomM086BounceGlintParams[1],Interior of the 3-word block g_RoomM086BounceGlintParams (0x80190B8C): RoomM086_SetBounceGlintParams stores arg2 there through its base pointer; int[3] view.
+0x80190B94,room_m086_central_park,D_80190B94,g_RoomM086BounceGlintParams[2],"Same block, arg3 store of RoomM086_SetBounceGlintParams."
+0x8018F1CC,room_m089_central_park,D_8018F1CC,g_RoomM089TrailHeadColor,"RoomM089_SpiralTrailCallback copies it (rgb A0,50,FF) to a local passed as the head colour of the five FieldFx_DrawGlowLine segments and the end glow."
+0x8018F1D0,room_m089_central_park,D_8018F1D0,g_RoomM089TrailTailColor,"Same function: local tail colour (rgb 32,00,C8), the second colour of FieldFx_DrawGlowLine."
+0x8018F1D4,room_m089_central_park,D_8018F1D4,g_RoomM089SpinGlowColor,"RoomM089_SpinModel: initialises the local colour (80,20,32) passed to the glow draw of the swelling anchor glow."
+0x8018F1D8,room_m089_central_park,D_8018F1D8,g_RoomM089SwirlSpriteColor,"RoomM089_SwirlRiseSprite case entry: color = it (A0,A0,A0) and later passed as the sprite colour to the draw call."
+0x80194168,room_m089_central_park,D_80194168,g_RoomM089CoreModel,"Model pointer set from Asset_FindTable08ByU32Key(scene block, 0xC5864704) by RoomM089_SpinModel and RoomM089_ModelPulse and drawn by both (spin model and pulse core); the pulse's separate model is g_RoomM089PulseModel."
+0x80194162,room_m089_central_park,D_80194162,g_RoomM089Anchor[1],"Interior of g_RoomM089Anchor (0x80194160, three shorts): RoomM089_SetAnchor stores arg2 there. Declared short[3]; byte-identical."
+0x80194164,room_m089_central_park,D_80194164,g_RoomM089Anchor[2],"Same block, arg3 store of RoomM089_SetAnchor."
+0x8018F1CC,room_m123_nypd,D_8018F1CC,g_RoomM123JointOffset,"Local point {0,0,-110}: RoomM123_JointTriangleCallback transforms it on joints 0x28 and 0x22 (two triangle corners) and RoomM123_WaveBurst on joint 34/40 (burst origin); a joint-relative offset used by both."
+0x8018F1D4,room_m123_nypd,D_8018F1D4,g_RoomM123JointOrigin,"Zero point {0,0,0}: RoomM123_JointTriangleCallback transforms it on joints 0x1D and 0x17 (the tip corner and the centre average)."
+0x8018F1DC,room_m123_nypd,D_8018F1DC,g_RoomM123TriangleColor,"RoomM123_JointTriangleCallback local colour (rgb A0,46,00) passed as both colours of FieldFx_DrawGlowLine and to FieldFx_DrawHaloedPoint."
+0x8018F1E0,room_m123_nypd,D_8018F1E0,g_RoomM123JointAnchor,"Local point {0,0,-60}: RoomM123_GlowBurst and RoomM123_JointSwirl copy it to a local template and transform it on a model joint."
+0x8018F1E8,room_m123_nypd,D_8018F1E8,g_RoomM123BeaconAnchor,"Local point {0,0,-70}: RoomM123 joint beacon (RoomM123BeaconOffset) passes it to FieldFx_TransformMatrixPoint as the beacon anchor."
+0x8018F1F0,room_m123_nypd,D_8018F1F0,g_RoomM123PulseRingTilt,"RoomM123_PulseRingCallback copies {0x400,0,0,flags 1} to a local and passes it as the GteRotation argument of FieldFx_DrawRingBand (ring tilt)."
+0x8018F1F8,room_m123_nypd,D_8018F1F8,g_RoomM123WaveSpinBase,"RoomM123_WaveCallback copies the zero rotation, sets z to age<<5 and passes it as the rotation of FieldFx_DrawShapeQuads (wave sprite spin)."
+0x801956B0,room_m123_nypd,D_801956B0,g_RoomM123SwirlOrigin,RoomM123_JointSwirl stores the three halfwords outX/outY/outZ (D_801956B0/B2/B4) and RoomM123_JointSwirlParticleCallback passes the block as the origin of FieldFx_OffsetPointByAngles; folded into one u16[3] block (B2 and B4 are its interior).
+0x8019411C,scene_e18_cruiser,D_8019411C,g_SceneE18PulseRingColors,"RenderColor[2] passed as the two colours of both FieldFx_DrawRingBand calls in SceneE18_PulseRingCallback, in swapped order for the outer band (addresses past the extracted image, owner scene_e18_cruiser in overlay_abi.txt)."
+0x80194180,scene_e18_cruiser,D_80194180,g_SceneE18WaveFanColor0,SceneE18_WaveRingCallback passes it as color0 of FieldFx_DrawStarFan (see FieldFx_DrawStarFan signature).
+0x80194184,scene_e18_cruiser,D_80194184,g_SceneE18WaveFanColor1,SceneE18_WaveRingCallback passes it as color1 of FieldFx_DrawStarFan.
+0x801941CC,scene_e18_cruiser,D_801941CC,g_SceneE18ExpandingRingRemaining,"u16 decremented when an SceneE18_ExpandingRingCallback ring dies (size < 0x20), the same remaining-count pattern as g_SceneE18FlankRemaining; no writer in the image, so the role is the decrement only."
+0x8018EFF4,room_m349_cruiser,D_8018EFF4,g_RoomM349SparkRotationBase,"RoomM349_FlareSparkCallback copies the zero rotation to a local, sets rotation.z per state and passes it to FieldFx_DrawShapeQuads."
+0x8018EFFC,room_m349_cruiser,D_8018EFFC,g_RoomM349FlareColor,"Colour (rgb 20,C8,00) copied to a local in RoomM349_FlareSparkCallback and RoomM349_FlareRing and passed as the draw colour in both."
+0x8018F000,room_m349_cruiser,D_8018F000,g_RoomM349JointGlowAnchorNegY,"RoomM349_FlareRing: point {-36,-13,-15} (typed GteRotation in the old header) passed to FieldFx_TransformMatrixPoint on joint 13 for the first joint glow."
+0x8018F008,room_m349_cruiser,D_8018F008,g_RoomM349JointGlowAnchorPosY,"RoomM349_FlareRing: point {-36,13,-15}, joint 13 again, for the second joint glow (mirror in y of the first)."
+0x80190196,room_m349_cruiser,D_80190196,g_RoomM349FlareParams.y,"g_RoomM349FlareParams (0x80190194) is the block the controller reads as RoomM349FlareParams {x,y,z,pad,radius,period,lastFrame}; RoomM349_SetFlareParams writes y/z (0x196/0x198) there. Declared as the struct; byte-identical."
+0x80190198,room_m349_cruiser,D_80190198,g_RoomM349FlareParams.z,Same block.
+0x8019019C,room_m349_cruiser,D_8019019C,g_RoomM349FlareParams.radius,"Same block: radius at +0x08, read as params->radius in RoomM349_FlareRing."
+0x801901A0,room_m349_cruiser,D_801901A0,g_RoomM349FlareParams.period,Same block: period at +0x0C.
+0x801901A4,room_m349_cruiser,D_801901A4,g_RoomM349FlareParams.lastFrame,Same block: lastFrame at +0x10.
+0x8018F1CC,room_m404_chrysler,D_8018F1CC,g_RoomM404DropFanTilt,"RoomM404_SinkingDropCallback state 2: local rotation {0x400,0,0,flags 1} passed as the GteRotation of the pool's FieldFx_DrawStarFan."
+0x8018F1D4,room_m404_chrysler,D_8018F1D4,g_RoomM404DropFanColor,"Same call: local colour (rgb 60,08,46) is the colour0 of the pool star fan."
+0x8018F1D8,room_m404_chrysler,D_8018F1D8,g_RoomM404DropGlowColor,"RoomM404_SinkingDropCallback states 0 and 1: local colour (rgb 00,80,C8) passed to FieldFx_DrawShapeQuads and the star fan of the falling drop glow."
+0x8018F208,room_m404_chrysler,D_8018F208,g_RoomM404SinkingDropAnchor,"C-defined template {0,-30}: RoomM404_SinkingDrop passes it to FieldFx_TransformMatrixPoint on joint 3 as the spawn point."
+0x8018F210,room_m404_chrysler,D_8018F210,g_RoomM404DebrisSparkRotation,"C-defined zero rotation: RoomM404_DebrisSparkCallback copies it, sets z each frame and passes it to FieldFx_DrawShapeQuads."
+0x8018F218,room_m404_chrysler,D_8018F218,g_RoomM404DebrisSparkColor,"C-defined colour (6E,3C,3C): RoomM404_DebrisSparkCallback uses it for FieldFx_DrawPointTile."
+0x8018F21C,room_m404_chrysler,D_8018F21C,g_RoomM404DebrisBurstAnchor,"C-defined template {0,0x2BC}: RoomM404_DebrisBurst transforms it on joint 0 into the burst origin."
+0x8018EFF4,scene_e20_cruiser,D_8018EFF4,g_SceneE20FlareStreakColor,"SceneE20_FlareParticle copies it (rgb 80,80,80) and passes it as both colours of the streak draw (&streakColor, &streakColor)."
+0x8018EFF8,scene_e20_cruiser,D_8018EFF8,g_SceneE20FlareGlowColor,"SceneE20_FlareParticle passes the copy (rgb C8,32,0A) as the colour of the glow FieldFx_DrawShapeQuads."
+0x8018EFFC,scene_e20_cruiser,D_8018EFFC,g_SceneE20OrbBeamColor,"SceneE20_HoverOrbController: beamColor (46,C8,64) is color0 of FieldFx_DrawHistoryTrail and the colour of the orb's sprite draw."
+0x8018F000,scene_e20_cruiser,D_8018F000,g_SceneE20OrbEdgeColor,"SceneE20_HoverOrbController: edgeColor (00,32,64) is color1 of FieldFx_DrawHistoryTrail."
+0x8018F004,scene_e20_cruiser,D_8018F004,g_SceneE20OrbFlashColorOdd,"flashA (C8,32,00) is oddColor: used as flashColor on odd frames (age & 1), flashB when the age is even."
+0x8018F008,scene_e20_cruiser,D_8018F008,g_SceneE20OrbFlashColorEven,"flashB (78,0A,AA) is evenColor, selected when !(g_FieldFxCurrentAge & 1)."
+0x8018F1CC,room_m256_museum,D_8018F1CC,g_RoomM256SpriteTilt,"{0x400,0,0,flags 1} rotation copied by RoomM256_ScatterDropCallback and RoomM256_TrailCallback (spriteRotation) and passed as the rotation of their FieldFx_DrawShapeQuads calls."
+0x8018F1D4,room_m256_museum,D_8018F1D4,g_RoomM256DropColor,"RoomM256_ScatterDropCallback local colour (rgb C8,46,08) used for the drop star fan and haloed point."
+0x8018F208,room_m256_museum,D_8018F208,g_RoomM256ScatterDropAnchor,"C-defined template {0,-30} that RoomM256_ScatterDropEmitter copies and transforms on a joint as the drop spawn point."
+0x8018F210,room_m256_museum,D_8018F210,g_RoomM256SwirlSparkAnchor,"C-defined template {0,-70}: RoomM256_SwirlSparkEmitter copies it as its local spawn point."
+0x8018F218,room_m256_museum,D_8018F218,g_RoomM256TrailColor,"C-defined colour (C8,BE,18): RoomM256_TrailCallback colour for the ribbon, star fans."
+0x8018F21C,room_m256_museum,D_8018F21C,g_RoomM256TrailDarkColor,"C-defined colour (0A,80,F0): RoomM256_TrailCallback local named darkColor, the second ribbon colour, ring sprite colour and model tint."
+0x8018F220,room_m256_museum,D_8018F220,g_RoomM256TrailAnchor,"C-defined point {0,0,-10}: RoomM256_TrailCallback transforms it on joint 2 (initialRotation) into the trail head."
+0x8018F258,room_m256_museum,D_8018F258,g_RoomM256PulseAnchor,"RoomM256_ModelPulse transforms the point {0,0,110} on joint 2 (FieldFx_TransformMatrixPoint) into the pulse position."
+0x80195EF0,room_m256_museum,D_80195EF0,g_RoomM256TrailTurnScale,Written by RoomM256_SetTrailTurnScale (clamped to >= 0x200) and read by the trail callback as the multiplier of rsin(state->angle) into the turn blend.
+0x80195EF8,room_m256_museum,D_80195EF8,g_RoomM256TrailModel,"RoomM256_TrailEmitter stores Asset_FindTable08ByU32Key(scene block, 0xC5887704); RoomM256_TrailCallback draws it (ModelSaveColors/ModelDraw)."
+0x80195EFC,room_m256_museum,D_80195EFC,g_RoomM256TrailHistory,"Array of RoomM256TrailHistory (17 points, 0x88 bytes) indexed by state->index, read for the ribbon and sparks."
+0x80195F1C,room_m256_museum,D_80195F1C,g_RoomM256TrailPoint4X,"Interior of g_RoomM256TrailHistory: +0x20, point[4].x of record 0, indexed with ((index*17)+r)*8. Member form recomputes the address (SHA mismatch tested), so a raw one-field view."
+0x80195F1E,room_m256_museum,D_80195F1E,g_RoomM256TrailPoint4Y,"Same, point[4].y (+0x22)."
+0x80195F20,room_m256_museum,D_80195F20,g_RoomM256TrailPoint4Z,"Same, point[4].z (+0x24)."
+0x8018F1CC,scene_e22_liberty,D_8018F1CC,g_SceneE22RingBurstTriangleColor,"RoomOrbit RingBurstParticleCallback copies it into local seed (rgb C8,00,8C) and passes &seed as the colour of FieldFx_DrawRotatedTriangle."
+0x8018F1D0,scene_e22_liberty,D_8018F1D0,g_SceneE22RingBurstRingColor,"SceneE22_RingBurst local ringColor (C8,BE,78), the ring draw colour."
+0x8018F1D4,scene_e22_liberty,D_8018F1D4,g_SceneE22RingBurstHaloColor,"SceneE22_RingBurst local haloColor (5C,00,80), the halo draw colour."
+0x8018F1D8,scene_e22_liberty,D_8018F1D8,g_SceneE22JointOrigin,Zero point: SceneE22_LinkBeam transforms it (offset0) on the first joints to place the beam start and middle.
+0x8018F1E0,scene_e22_liberty,D_8018F1E0,g_SceneE22JointAnchor,"Point {0,0,-140}: SceneE22_LinkBeam offset1 (beam end), SceneE22_SwirlRing and SceneE22_TwistModel offset, each transformed on a joint."
+0x8018F1E8,scene_e22_liberty,D_8018F1E8,g_SceneE22LinkBeamTailColor,"LinkBeam color0, the final colour of the middle-to-last FieldFx_DrawHistoryTrail segment."
+0x8018F1EC,scene_e22_liberty,D_8018F1EC,g_SceneE22LinkBeamMidColor,"LinkBeam color1 (BE,00,BE): joins the two history trail segments."
+0x8018F1F0,scene_e22_liberty,D_8018F1F0,g_SceneE22LinkBeamHeadColor,"LinkBeam color2 (6E,14,E6): first colour of the first history trail segment."
+0x8018F1F4,scene_e22_liberty,D_8018F1F4,g_SceneE22ZeroSpin,"Zero GteRotation copied as 'spin' by EmberDriftParticleCallback, SwirlRing, SwirlRingParticleCallback, TwistTrailCallback, TwistModel and others, then filled per frame."
+0x8018F1FC,scene_e22_liberty,D_8018F1FC,g_SceneE22FlatTilt,"{0x400,0,0,flags 1} GteRotation copied as 'turn'/'spin' in EmberDriftParticleCallback, EmberColumn, SweepBolt and QuakeBlast for the flat ground-plane sprites."
+0x8018F204,scene_e22_liberty,D_8018F204,g_SceneE22EmberParticleColor,"Colour (80,80,80) of the ember particles in SceneE22_EmberDriftParticleCallback and SceneE22_EmberColumnParticleCallback."
+0x8018F208,scene_e22_liberty,D_8018F208,g_SceneE22EmberDriftRingColor,"SceneE22_EmberDrift local ringColor (32,00,C8)."
+0x8018F20C,scene_e22_liberty,D_8018F20C,g_SceneE22EmberDriftHaloColor,"SceneE22_EmberDrift local haloColor (C8,00,32)."
+0x8018F210,scene_e22_liberty,D_8018F210,g_SceneE22EmberColumnColor,"SceneE22_EmberColumn local colour (00,32,6E)."
+0x8018F214,scene_e22_liberty,D_8018F214,g_SceneE22SwirlRingColor,"SceneE22_SwirlRing local colour (BE,6E,C8)."
+0x8018F218,scene_e22_liberty,D_8018F218,g_SceneE22BoltColor,"Colour (8C,32,C8) of both SceneE22_TwistModel and SceneE22_SweepBolt, the bolt effects."
+0x8018F21C,scene_e22_liberty,D_8018F21C,g_SceneE22TwistBeamColorA,SceneE22_TwistBeamCallback colorA.
+0x8018F220,scene_e22_liberty,D_8018F220,g_SceneE22TwistBeamColorB,SceneE22_TwistBeamCallback colorB.
+0x8018F224,scene_e22_liberty,D_8018F224,g_SceneE22SweepBoltHaloColor,"SceneE22_SweepBolt local haloColor (8C,8C,C8)."
+0x8018F228,scene_e22_liberty,D_8018F228,g_SceneE22QuakeFlashColor,"SceneE22_QuakeBlast local 'flash' RenderColor (F0,C8,DC)."
+0x80199168,scene_e22_liberty,D_80199168,g_SceneE22RingBurstParticleColorTrack,Passed to FieldFx_SampleColorTrack by SceneE22_RingBurstParticleCallback (only reader).
+0x80199190,scene_e22_liberty,D_80199190,g_SceneE22LinkBeamSparkColorTrack,Only reader: SceneE22_LinkBeamSparkCallback FieldFx_SampleColorTrack.
+0x80199434,scene_e22_liberty,D_80199434,g_SceneE22SwirlRingParticleColorTrack,Only reader: SceneE22_SwirlRingParticleCallback FieldFx_SampleColorTrack.
+0x8019944C,scene_e22_liberty,D_8019944C,g_SceneE22TwistTrailColorTrack,Only reader: SceneE22_TwistTrailCallback FieldFx_SampleColorTrack.
+0x8019946C,scene_e22_liberty,D_8019946C,g_SceneE22TwistBeamColorTrack,Only reader: SceneE22_TwistBeamCallback FieldFx_SampleColorTrack.
+0x801994EC,scene_e22_liberty,D_801994EC,g_SceneE22BurstAnchor,"Written from burst x/y/z by SceneE22_RingBurst, read as the particle origin by RingBurstParticleCallback; returned by SceneE22_GetBurstAnchor and the EmberDrift/EmberColumn configure functions."
+0x80199504,scene_e22_liberty,D_80199504,g_SceneE22TwistBeamStop,"s16 cleared by SceneE22_SweepBolt init; SceneE22_TwistBeamCallback case 1 keeps the particle while it is 0 and ends it otherwise (stop flag, same pattern as g_SceneE18RisingStop)."
+0x801994F6,scene_e22_liberty,D_801994F6,g_SceneE22BlastTarget.y,"Interior of g_SceneE22BlastTarget (0x801994F4), which is the SceneE22QuakeTarget {x,y,z,reserved,radius} the quake blast receives: ConfigureBlastTarget stores the floor y at +2. Declared as the struct; byte-identical."
+0x801994F8,scene_e22_liberty,D_801994F8,g_SceneE22BlastTarget.z,"Same block, +4 (the extra argument)."
+0x801994FC,scene_e22_liberty,D_801994FC,g_SceneE22BlastTarget.radius,"Same block, +8: the int radius, written by the non-1 mode of ConfigureBlastTarget (clamped to >= 1)."
+0x8018F1CC,scene_e19_cruiser,D_8018F1CC,g_SceneE19ZeroSpin,"Zero GteRotation copied as 'spin'/'position' by BlastGlowCallback, HomingBurst (tilt) and EmberFlareParticleCallback."
+0x8018F1D4,scene_e19_cruiser,D_8018F1D4,g_SceneE19FlatTilt,"{0x400,0,0,flags 1} copied as 'turn' (EmberFlareParticleCallback) and 'ring' (TwinGlow), the flat ground-plane rotation."
+0x8018F210,scene_e19_cruiser,D_8018F210,g_SceneE19RollTilt,"GteRotation {0,0,-500}: copied as 'rotation' by HomingBurst, 'tilt' by SpinRayBurst and 'templatePoint' by HomingParticleCallback."
+0x8018F218,scene_e19_cruiser,D_8018F218,g_SceneE19HomingParticleColor,"SceneE19_HomingParticleCallback local colour (78,64,F0)."
+0x8018F21C,scene_e19_cruiser,D_8018F21C,g_SceneE19HomingBurstFlashColor,"SceneE19_HomingBurst local flashColor (28,64,8C)."
+0x8018F220,scene_e19_cruiser,D_8018F220,g_SceneE19HomingBurstRingColor,"SceneE19_HomingBurst local ringColor (B4,8C,50)."
+0x8018F224,scene_e19_cruiser,D_8018F224,g_SceneE19SpinRayColor,"SceneE19_SpinRayCallback rayColor (80,0A,5C), colour of the ray triangle."
+0x8018F228,scene_e19_cruiser,D_8018F228,g_SceneE19SpinRayBladeHeadColor,"SpinRayCallback bladeHead (8C,46,00), colour0 of the blade draw."
+0x8018F22C,scene_e19_cruiser,D_8018F22C,g_SceneE19SpinRayBladeTailColor,"SpinRayCallback bladeTail (8C,8C,0A), colour1 of the blade draw."
+0x8018F230,scene_e19_cruiser,D_8018F230,g_SceneE19SpinRayBurstRingColor,"SceneE19_SpinRayBurst local ringColor (6E,00,46)."
+0x8018F234,scene_e19_cruiser,D_8018F234,g_SceneE19EmberParticleColor,"Colour (80,80,80) of SceneE19_EmberFlareParticleCallback and SceneE19_OrbitTrailParticleCallback."
+0x8018F238,scene_e19_cruiser,D_8018F238,g_SceneE19EmberFlareColor,"SceneE19_EmberFlare local colour (64,50,C8)."
+0x8018F23C,scene_e19_cruiser,D_8018F23C,g_SceneE19OrbitTrailBurstColor,"SceneE19_OrbitTrailBurst local colour (C8,BE,78)."
+0x8018F240,scene_e19_cruiser,D_8018F240,g_SceneE19OrbitTrailBurstRingColor,"SceneE19_OrbitTrailBurst local ringColor (5C,00,80)."
+0x8018F244,scene_e19_cruiser,D_8018F244,g_SceneE19GlintRibbonSparkColor,"SceneE19_GlintRibbonSparkCallback local colour (0A,78,E6)."
+0x8018F248,scene_e19_cruiser,D_8018F248,g_SceneE19JointOrigin,"Zero point: SceneE19_GlintRibbon offset0, transformed on the ribbon joints."
+0x8018F250,scene_e19_cruiser,D_8018F250,g_SceneE19JointAnchor,"Point {0,0,-40}: SceneE19_GlintRibbon offset1, transformed on a joint for the ribbon end."
+0x8018F258,scene_e19_cruiser,D_8018F258,g_SceneE19GlintRibbonHeadColor,GlintRibbon color0: first colour of the first FieldFx_DrawHistoryTrail segment.
+0x8018F25C,scene_e19_cruiser,D_8018F25C,g_SceneE19GlintRibbonMidColor,"GlintRibbon color1 (00,00,8C): joins the two history trail segments."
+0x8018F260,scene_e19_cruiser,D_8018F260,g_SceneE19GlintRibbonTailColor,"GlintRibbon color2 (0A,A0,C8): last colour of the second segment."
+0x8018F264,scene_e19_cruiser,D_8018F264,g_SceneE19TwinGlowJointOrigin,Zero point SceneE19_TwinGlow transforms on jointA and jointB.
+0x8018F26C,scene_e19_cruiser,D_8018F26C,g_SceneE19TwinGlowColor,"SceneE19_TwinGlow local colour (50,46,46)."
+0x8019B31C,scene_e19_cruiser,D_8019B31C,g_SceneE19GrabAngles,"Angles {0xF00,0xC00,0} passed to RotMatrixYXZ by SceneE19_GrabInit to build the grab trigger's player_matrix."
+0x8019B310,scene_e19_cruiser,D_8019B310,g_SceneE19GrabPlayerTranslation[0],"Words {176,320,-48} stored by SceneE19_GrabInit into the player_matrix translation (+0x30..+0x38); declared s32[3], byte-identical."
+0x8019B314,scene_e19_cruiser,D_8019B314,g_SceneE19GrabPlayerTranslation[1],Same block.
+0x8019B318,scene_e19_cruiser,D_8019B318,g_SceneE19GrabPlayerTranslation[2],Same block.
+0x8019B66E,scene_e19_cruiser,D_8019B66E,g_SceneE19HomingBurstParams[1],"SceneE19_SetHomingBurstParams stores first at g_SceneE19HomingBurstParams (0x8019B66C) and second at +2; declared s16[2], byte-identical."
+0x8018F1CC,room_m318_chrysler,D_8018F1CC,g_RoomM318GetMayaPosErrorFormat,"Literal 'ThGetMayaPos Error Type %d,Name %d' passed to printf by the actor search that fails to find (type_id, sub_id)."
+0x8018F1F0,room_m318_chrysler,D_8018F1F0,g_RoomM318FanSweepSparkColor,"Bound to ROOM_FAN_SWEEP_SPARK_COLOR: the colour of the fan sweep spark (8C,78,46)."
+0x8018F1F4,room_m318_chrysler,D_8018F1F4,g_RoomM318ZeroSpin,"Zero GteRotation copied as 'spin' by EmberBurstParticleCallback, EmberFountainParticleCallback, EmberSpiralParticleCallback."
+0x8018F1FC,room_m318_chrysler,D_8018F1FC,g_RoomM318EmberParticleColor,"Colour (80,80,80) of RoomM318_EmberBurstParticleCallback and RoomM318_CrossFlash."
+0x8018F200,room_m318_chrysler,D_8018F200,g_RoomM318EmberRingColor,"RoomM318_EmberBurst ringColor (6E,C8,00), also the colour of RoomM318_EmberFountain."
+0x8018F204,room_m318_chrysler,D_8018F204,g_RoomM318EmberHaloColor,"RoomM318_EmberBurst haloColor (A0,A0,0A)."
+0x8018F208,room_m318_chrysler,D_8018F208,g_RoomM318FlatTilt,"{0x400,0,0,0} spin of RoomM318_RisingColumnParticleCallback (flat ground-plane tilt)."
+0x8018F210,room_m318_chrysler,D_8018F210,g_RoomM318FlashBurstColor,"RoomM318_FlashBurst local colour (74,50,80)."
+0x8018F214,room_m318_chrysler,D_8018F214,g_RoomM318TwinRibbonRoot,"RoomM318_TwinRibbon local 'root' point (zero), transformed on a joint."
+0x8018F21C,room_m318_chrysler,D_8018F21C,g_RoomM318TwinRibbonTip,"RoomM318_TwinRibbon local 'tip' point {-41,0,-235}."
+0x8018F224,room_m318_chrysler,D_8018F224,g_RoomM318TwinRibbonFork,"RoomM318_TwinRibbon local 'fork' point {0,0,-400}."
+0x8018F22C,room_m318_chrysler,D_8018F22C,g_RoomM318TwinRibbonShed,"RoomM318_TwinRibbon local 'shed' point {0,0,-32}."
+0x8018F234,room_m318_chrysler,D_8018F234,g_RoomM318TwinRibbonColorA,"RoomM318_TwinRibbon colorA (80,80,28)."
+0x8018F238,room_m318_chrysler,D_8018F238,g_RoomM318TwinRibbonColorB,"RoomM318_TwinRibbon colorB (80,32,32)."
+0x8018F23C,room_m318_chrysler,D_8018F23C,g_RoomM318TwinRibbonColorC,"RoomM318_TwinRibbon colorC (80,00,64)."
+0x8018F240,room_m318_chrysler,D_8018F240,g_RoomM318EmberFountainParticleColor,"RoomM318_EmberFountainParticleCallback local 'seed' colour (8C,8C,32)."
+0x80199464,room_m318_chrysler,D_80199464,g_RoomM318FanSweepTrailColorTrack,Only reader: RoomM318_FanSweepTrailCallback FieldFx_SampleColorTrack.
+0x8019948C,room_m318_chrysler,D_8019948C,g_RoomM318SpiralDropSparkColorTrack,Only reader: RoomM318_SpiralDropSparkCallback.
+0x801994BC,room_m318_chrysler,D_801994BC,g_RoomM318SpiralDropColorTrack,Only reader: RoomM318_SpiralDrop (ring band colour).
+0x801995BC,room_m318_chrysler,D_801995BC,g_RoomM318StarFlareColorTrackA,"RoomM318_StarFlare: first track, colours the star fan and ring band."
+0x801995DC,room_m318_chrysler,D_801995DC,g_RoomM318StarFlareColorTrackB,"RoomM318_StarFlare: second track, colours the narrow star fan."
+0x801995FC,room_m318_chrysler,D_801995FC,g_RoomM318ShakeBurstParticleColorTrack,Only reader: RoomM318_ShakeBurstParticleCallback.
+0x80199674,room_m318_chrysler,D_80199674,g_RoomM318EmberBurstParticleColorTrack,Only reader: RoomM318_EmberBurstParticleCallback.
+0x801996EC,room_m318_chrysler,D_801996EC,g_RoomM318RisingColumnParticleColorTrack,Only reader: RoomM318_RisingColumnParticleCallback (two sample sites).
+0x80199770,room_m318_chrysler,D_80199770,g_RoomM318FlashBurstColorTrack,Only reader: RoomM318_FlashBurst glow colour.
+0x80199798,room_m318_chrysler,D_80199798,g_RoomM318CrossFlashParticleColorTrack,Only reader: RoomM318_CrossFlashParticleCallback.
+0x80199868,room_m318_chrysler,D_80199868,g_RoomM318EmberFountainParticleColorTrack,Only reader: RoomM318_EmberFountainParticleCallback (two sites).
+0x80199890,room_m318_chrysler,D_80199890,g_RoomM318EmberSpiralColorTrack,Readers: RoomM318_EmberSpiralParticleCallback and RoomM318_EmberSpiral.
+0x801998F8,room_m318_chrysler,D_801998F8,g_RoomM318FanSweepAnchor,Written from sweep x/y/z by RoomM318_FanSweep (draw case); bound to ROOM_FAN_SWEEP_SPARK_ANCHOR for the spark.
+0x80199900,room_m318_chrysler,D_80199900,g_RoomM318FanSweepSparkPool,RoomM318_FanSweep stores sweep->pool; bound to ROOM_FAN_SWEEP_SPARK_TRAIL.
+0x80199904,room_m318_chrysler,D_80199904,g_RoomM318ShakeSweepAnchor,Written from the anchor x/y/z by RoomM318_ShakeSweep and read as the particle origin by RoomM318_ShakeSweepParticleCallback.
+0x80199924,room_m318_chrysler,D_80199924,g_RoomM318RisingColumnAnchor,Written from column x/y/z by RoomM318_RisingColumn; read as the draw position by RisingColumnParticleCallback.
+0x80199930,room_m318_chrysler,D_80199930,g_RoomM318CrossFlashAnchor,Written from flash x/y/z by RoomM318_CrossFlash; read as origin by RoomM318_CrossFlashParticleCallback.
+0x8019993C,room_m318_chrysler,D_8019993C,g_RoomM318EmberFountainAnchor,Written from fountain x/y/z by RoomM318_EmberFountain; read by RoomM318_EmberFountainParticleCallback to place particles.
+0x801998F4,room_m318_chrysler,D_801998F4,g_RoomM318ActorParams[1],"Block g_RoomM318ActorParams (0x801998F0): RoomM318_SetActorParams stores arg2 at [0], arg1 at [1]; declared int[2], byte-identical."
+0x80199910,room_m318_chrysler,D_80199910,g_RoomM318EmberBurstParams[1],"Block g_RoomM318EmberBurstParams (0x8019990C), same setter shape; int[2]."
+0x80199918,room_m318_chrysler,D_80199918,g_RoomM318RisingColumnParams[1],"Block g_RoomM318RisingColumnParams (0x80199914): RoomM318_SetRisingColumnParams writes arg1 at [0] in mode 1, arg1/arg2/arg3 at [1..3] otherwise; int[4]."
+0x8019991C,room_m318_chrysler,D_8019991C,g_RoomM318RisingColumnParams[2],Same block.
+0x80199920,room_m318_chrysler,D_80199920,g_RoomM318RisingColumnParams[3],Same block.
+0x8019A3C0,room_m350_cruiser,D_8019A3C0,g_RoomM350StarFanTilt,"GteRotation {0x400,0,0,1} (bytes read from the image) passed as the rotation of FieldFx_DrawStarFan in RoomM350_DropCallback and RoomM350_OrbCallback."
+0x8019A3C8,room_m350_cruiser,D_8019A3C8,g_RoomM350BlackColor,"RenderColor 00,00,00: second colour of the gouraud draws (star fan, ring band, triangle) in 6 functions, always paired with a coloured first argument."
+0x8019A3CC,room_m350_cruiser,D_8019A3CC,g_RoomM350OrbHandSparkColor,"(40,40,40) colour of the star fan in RoomM350_OrbHandSparkCallback."
+0x8019A3D0,room_m350_cruiser,D_8019A3D0,g_RoomM350GlowSpriteColor,"(80,80,C0) colour of the DrawShapeQuads glow sprites of RoomM350_RushCloudCallback, HandGlowCallback, OrbTrailCallback and OrbTableFlashCallback."
+0x8019A410,room_m350_cruiser,D_8019A410,g_RoomM350HandSparkColor,"(50,50,80) colour read by RoomM350_HandSparkCallback (only user)."
+0x8019A434,room_m350_cruiser,D_8019A434,g_RoomM350HandSweepTrapPulseColors,"RenderColor[2] (C0,C0,F0)/(80,80,F0) indexed by g_FieldFxCurrentAge & 1 in RoomM350_HandSweepTrapCallback."
+0x8019A43C,room_m350_cruiser,D_8019A43C,g_RoomM350HandSweepTrapTriangleColor,"(30,30,40) first colour of the FieldFx_DrawRotatedTriangle call in RoomM350_HandSweepTrapCallback."
+0x8019A440,room_m350_cruiser,D_8019A440,g_RoomM350HandSweepTrapRingColor,"(18,18,20) second colour of the ring band in RoomM350_HandSweepTrapCallback."
+0x8019A444,room_m350_cruiser,D_8019A444,g_RoomM350HandSweepTrapCorners,"GteShortVector[4]: RoomM350_HandSweepTrapCallback sets .z of corners 2 and 3 to -dist, loads each with gte_ldv0 and projects it into quad[k] (the trap's floor rectangle)."
+0x8019A464,room_m350_cruiser,D_8019A464,g_RoomM350HandSweepHitColor,"(00,80,F0) colour of RoomM350_HandSweepHitCallback."
+0x8019A4DC,room_m350_cruiser,D_8019A4DC,g_RoomM350OrbBurstRingColorA,"(C0,C0,F0) first-band colour of the paired ring draws in RoomM350_OrbBurstCallback."
+0x8019A4E0,room_m350_cruiser,D_8019A4E0,g_RoomM350OrbBurstRingColorB,"(10,10,20) second-band colour in RoomM350_OrbBurstCallback."
+0x8019A4E4,room_m350_cruiser,D_8019A4E4,g_RoomM350OrbGroundFanColor,"(50,50,50) colour0 of the ground star fan in RoomM350_OrbCallback."
+0x8019A4E8,room_m350_cruiser,D_8019A4E8,g_RoomM350OrbImpactColor,"(10,40,F0) colour of RoomM350_OrbImpactCallback."
+0x8019A4EC,room_m350_cruiser,D_8019A4EC,g_RoomM350OrbTableFlashSizes,"u8 table {2,3,6,7,0xF,..} indexed by (age-1)/2 as the size multiplier in RoomM350_OrbTableFlashCallback."
+0x8019A56C,room_m350_cruiser,D_8019A56C,g_RoomM350AreaSparkColor,"(F0,A0,FF) colour of RoomM350_AreaSparkCallback."
+0x8019A570,room_m350_cruiser,D_8019A570,g_RoomM350AreaSparkEmitterColor,"(C0,80,C0) colour of the shape quads drawn by RoomM350_AreaSparkEmitter."
+0x8019A594,room_m350_cruiser,D_8019A594,g_RoomM350AreaZoneTriangleColor,"(20,10,20) first colour of the rotated triangles in RoomM350_AreaZoneEmitter."
+0x8019A598,room_m350_cruiser,D_8019A598,g_RoomM350AreaDropletColor,"(80,40,80) colour of RoomM350_AreaDropletCallback."
+0x8019A59C,room_m350_cruiser,D_8019A59C,g_RoomM350AreaPlayerPulseColor,"(80,C0,C0) colour of RoomM350_AreaPlayerPulseCallback (local colors pointer)."
+0x8019A614,room_m350_cruiser,D_8019A614,g_RoomM350DropFlareColors,"Colour pair read as colors[0], colors[1] by RoomM350_DropFlareCallback."
+0x8019A61C,room_m350_cruiser,D_8019A61C,g_RoomM350DropColors,"RenderColor[3] used by RoomM350_DropCallback (shape quads colour [0], star fan colours [1] and [2])."
+0x8019A628,room_m350_cruiser,D_8019A628,g_RoomM350DropSplashColor,"(20,20,40) colour of RoomM350_DropSplashCallback."
+0x8019A62C,room_m350_cruiser,D_8019A62C,g_RoomM350DropHitColor,"(10,40,F0) colour of RoomM350_DropHitCallback."
+0x8019A630,room_m350_cruiser,D_8019A630,g_RoomM350DropTrailColor,"(40,40,80) colour of RoomM350_DropTrailCallback."
+0x8019A634,room_m350_cruiser,D_8019A634,g_RoomM350DropBurstColor,"(80,80,F0) colour of RoomM350_DropBurstCallback."
+0x8019A690,room_m350_cruiser,D_8019A690,g_RoomM350RushFlareColors,"Colour pair (F0,F0,F0)/(F0,50,F0) indexed by timer & 3 in RoomM350_RushFlareCallback."
+0x8019A734,room_m350_cruiser,D_8019A734,g_RoomM350BodyRingColor1,colour1 argument (80,40,40) of the RoomM350_BodyRingCallback ring band.
+0x8019A738,room_m350_cruiser,D_8019A738,g_RoomM350BodyRingColor0,"colour0 argument (00,00,00) of the RoomM350_BodyRingCallback ring band."
+0x8019A854,room_m350_cruiser,D_8019A854,g_RoomM350DropEventSlots,First of the four animation event slot bytes: cleared as one word by RoomM350_DropController and set by (&slot)[entry->slot]; slot 0 is tested by RoomM350_DropFlareEmitter (room_m350_data.h comment).
+0x8019A855,room_m350_cruiser,D_8019A855,g_RoomM350DropEmitterTrigger,Event slot 1: RoomM350_DropEmitter returns early unless set and clears it.
+0x8019A856,room_m350_cruiser,D_8019A856,g_RoomM350DropSplashTrigger,Event slot 2: tested and cleared by RoomM350_DropSplashEmitter.
+0x8019A857,room_m350_cruiser,D_8019A857,g_RoomM350DropHitTrigger,Event slot 3: tested and cleared by RoomM350_DropHitEmitter.
+0x8019A85C,room_m350_cruiser,D_8019A85C,g_RoomM350DropTrailCount,"Loop bound of the trail spawn loop in RoomM350_DropTrailEmitter, cleared by RoomM350_DropController init."
+0x8019A860,room_m350_cruiser,D_8019A860,g_RoomM350DropSplashPosX,u16 stored at +0 of the splash effect by RoomM350_DropSplashEmitter.
+0x8019A862,room_m350_cruiser,D_8019A862,g_RoomM350DropSplashPosZ,u16 stored at +4 of the splash effect by RoomM350_DropSplashEmitter.
+0x8019A864,room_m350_cruiser,D_8019A864,g_RoomM350DropHitPosition,short[3] copied into the effect position (effect[0..2]) by RoomM350_DropHitEmitter.
+0x8019A898,room_m350_cruiser,D_8019A898,g_RoomM350RushEndpointX,x of the current sweep endpoint vertex[0] built by RoomM350_RushFlareEmitter (y is the untouched middle halfword).
+0x8019A89C,room_m350_cruiser,D_8019A89C,g_RoomM350RushEndpointZ,z of the same endpoint.
+0x8019A89E,room_m350_cruiser,D_8019A89E,g_RoomM350RushEndpointValid,"pad halfword of the endpoint, set to 1 by the emitter."
+0x8019A8A0,room_m350_cruiser,D_8019A8A0,g_RoomM350RushOppositeX,x of the opposite endpoint vertex[1].
+0x8019A8A4,room_m350_cruiser,D_8019A8A4,g_RoomM350RushOppositeZ,z of the opposite endpoint.
+0x8019A8A8,room_m350_cruiser,D_8019A8A8,g_RoomM350RushPreviousEndpoint,"GteShortVector holding the previous endpoint, copied before the update; .pad is the validity flag the emitter tests (vertices[3])."
+0x8019A8B0,room_m350_cruiser,D_8019A8B0,g_RoomM350RushPreviousOpposite,GteShortVector holding the previous opposite endpoint (vertices[2]).
+0x8019A82C,room_m350_cruiser,D_8019A82C,g_RoomM350AreaConfigYaw[1],"RoomM350_AreaConfigure stores arg2 at g_RoomM350AreaConfigYaw[0] (0x8019A82A) and arg3 at the next halfword; folded into the array, byte-identical."
+0x8019A77E,room_m350_cruiser,D_8019A77E,g_RoomM350HandPointPadView,"Interior of g_RoomM350HandPoints (8-byte vectors, 0x8019A778): the pad halfword of element i, written as index i by the hand sweep controller. The member form recomputes the address and mismatches, so a one-field view."
+0x8019A81C,room_m350_cruiser,D_8019A81C,g_RoomM350AreaMatrixTxView,"Interior of g_RoomM350AreaMatrix (0x8019A808): its translation t[0] at +0x14, cleared with the other two components in RoomM350_AreaZoneEmitter; member form mismatches, so a one-field view."
+0x80199560,scene_e08_chrysler,D_80199560,g_SceneE08LayeredSpriteR,"Fields of the FieldGlowSprite at 0x80199560 (r,g,b 0..2; cell 4, clut 5, flip 6; offset 8; depth 0xA) set by SceneE08_InitLayeredSpriteContext and recoloured/drawn by SceneE08_DrawLayeredSprite through FieldFx_DrawGlowSprite(alpha-10). One-field views (D_80199561/62/64/65/66/68/6A -> ...G/B/Cell/Clut/Flip/Offset/Depth)."
+0x801996A0,scene_e08_chrysler,D_801996A0,g_SceneE08CentreGlowSprite,FieldGlowSprite at 0x801996A0 initialised by SceneE08_InitSlotsContext and passed to FieldFx_DrawGlowSprite by SceneE08_DrawCentreGlow and the orbit particle draw; scalar fields renamed ...G/B/Cell/Clut/Flip/Offset/Depth.
+0x801995CC,scene_e08_chrysler,D_801995CC,g_SceneE08RingSpritesRing0Color0R,"Fields of g_SceneE08RingSpritesRings[0] (0x801995C8, FieldRingGeometry layout confirmed by the base[1] stores in SceneE08_InitRingSprites): color0 at +4, color1 +8, mode +0xC, extent0 +0xE, extent1 +0x10, offset +0x12, intensity +0x14; one-field views Ring0Color0R/G/B, Color1R/G/B, Mode, Extent0, Extent1, Offset, Intensity."
+0x801994A8,scene_e08_chrysler,D_801994A8,g_SceneE08ParticleClusterSprite,FieldGlowSprite initialised in the particle cluster init and drawn by SceneE08_DrawParticleCluster as slot-10 of its depth word (D_801994B2 -> ...SpriteDepth).
+0x801994B8,scene_e08_chrysler,D_801994B8,g_SceneE08GlowSpritesSprite,FieldGlowSprite drawn by SceneE08_DrawGlowSprites as depth word minus 10 (D_801994C2 -> ...SpriteDepth).
+0x801994D2,scene_e08_chrysler,D_801994D2,g_SceneE08ArmGlowSpriteDepth,"Depth halfword (+0xA) of g_SceneE08ArmGlowSprite (0x801994C8), stored by the expanding glow draw before FieldFx_DrawGlowSprite(slot-0xA)."
+0x80199604,scene_e08_chrysler,D_80199604,g_SceneE08RingEffectRing0Mode,"g_SceneE08RingEffectRings (0x801995F8) entry 0 mode at +0xC, the interior label SceneE08_InitRingEffect addresses (see rooms.csv row for the Rings object)."
+0x8018F040,scene_e08_chrysler,D_8018F040,g_SceneE08ParticleSlotOffsetInit,Zero 8-byte GteShortVector copied into the offset local of SceneE08_DrawParticleSlots.
+0x8018F048,scene_e08_chrysler,D_8018F048,g_SceneE08ParticleSlotColorInit,"Grey (128,128,128) RenderColor copied into the colour local of SceneE08_DrawParticleSlots before the 0xFF stores."
+0x8019AEE8,room_m273_liberty,D_8019AEE8,g_RoomM273HandTrailState.landing_count,"Field of g_RoomM273HandTrailState (RoomM273BossState at 0x8019AE9C), member access byte-identical: landing_count at +0x4C, read and cleared by RoomM273_HandTrailLandingEmitter"
+0x8019AEEA,room_m273_liberty,D_8019AEEA,g_RoomM273HandTrailState.repeat,"Field of g_RoomM273HandTrailState (RoomM273BossState at 0x8019AE9C), member access byte-identical: repeat +0x4E, set by RoomM273_HandTrailConfigure per mode"
+0x8019AEEE,room_m273_liberty,D_8019AEEE,g_RoomM273HandTrailState.spin_target,"Field of g_RoomM273HandTrailState (RoomM273BossState at 0x8019AE9C), member access byte-identical: spin_target +0x52, set by RoomM273_HandTrailConfigure"
+0x8019AEF2,room_m273_liberty,D_8019AEF2,g_RoomM273HandTrailState.spin_step,"Field of g_RoomM273HandTrailState (RoomM273BossState at 0x8019AE9C), member access byte-identical: spin_step +0x56"
+0x8019AEF6,room_m273_liberty,D_8019AEF6,g_RoomM273HandTrailState.tick_limit,"Field of g_RoomM273HandTrailState (RoomM273BossState at 0x8019AE9C), member access byte-identical: tick_limit +0x5A"
+0x8019AEF8,room_m273_liberty,D_8019AEF8,g_RoomM273HandTrailState.done,"Field of g_RoomM273HandTrailState (RoomM273BossState at 0x8019AE9C), member access byte-identical: done +0x5C, the stop flag polled by the hand trail, landing, hit and glow emitters"
+0x8019AEFA,room_m273_liberty,D_8019AEFA,g_RoomM273HandTrailState.spinning,"Field of g_RoomM273HandTrailState (RoomM273BossState at 0x8019AE9C), member access byte-identical: spinning +0x5E, the mode written by RoomM273_HandTrailConfigure and tested by the trail emitter"
+0x8019AEB2,room_m273_liberty,D_8019AEB2,g_RoomM273HandTrailState.hit_flag,"Field of g_RoomM273HandTrailState (RoomM273BossState at 0x8019AE9C), member access byte-identical: hit_flag +0x16, the pending counter of the hit poll-reset actor"
+0x8019AEAC,room_m273_liberty,D_8019AEAC,g_RoomM273HandTrailHitSeed,"Field of g_RoomM273HandTrailState (RoomM273BossState at 0x8019AE9C), member access byte-identical: hit[3] +0x10 viewed as the RoomFxSeed8 the hit poll-reset actor copies (the view is wider than the s16[3] member)"
+0x8019AF56,room_m273_liberty,D_8019AF56,g_RoomM273SweepState.loops,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: loops +0x52, set by RoomM273_SweepConfigure"
+0x8019AF58,room_m273_liberty,D_8019AF58,g_RoomM273SweepState.reserved_54,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: +0x54, stored with the same value as loops by RoomM273_SweepConfigure"
+0x8019AF5A,room_m273_liberty,D_8019AF5A,g_RoomM273SweepState.side,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: side +0x56"
+0x8019AF5C,room_m273_liberty,D_8019AF5C,g_RoomM273SweepState.divisor,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: divisor +0x58 = (value+1)*6"
+0x8019AF60,room_m273_liberty,D_8019AF60,g_RoomM273SweepState.target,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: target +0x5C, heading pointer in RoomM273_SweepDropEmitter"
+0x8019AF62,room_m273_liberty,D_8019AF62,g_RoomM273SweepState.floor,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: floor +0x5E, compared with the drop y in RoomM273_SweepDropCallback"
+0x8019AF64,room_m273_liberty,D_8019AF64,g_RoomM273SweepState.contact,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: contact +0x60 = 0x52 or 0xE from RoomM273_SweepConfigure"
+0x8019AF68,room_m273_liberty,D_8019AF68,g_RoomM273SweepState.in_contact,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: in_contact +0x64, gate of RoomM273_SweepFlashEmitter"
+0x8019AF69,room_m273_liberty,D_8019AF69,g_RoomM273SweepState.done,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: done +0x65, stop flag of the sweep emitters"
+0x8019AF6A,room_m273_liberty,D_8019AF6A,g_RoomM273SweepState.in_window,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: in_window +0x66, gate of RoomM273_SweepRisingEmitter"
+0x8019AF6B,room_m273_liberty,D_8019AF6B,g_RoomM273SweepState.started,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: started +0x67, gate of RoomM273_SweepArcEmitter"
+0x8019AF6C,room_m273_liberty,D_8019AF6C,g_RoomM273SweepState.model,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: model +0x68, ground ring model fetched by RoomM273_SwayGroundRingEmitter"
+0x8019AF0A,room_m273_liberty,D_8019AF0A,g_RoomM273SweepState.hit.vector.pad,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: hit +0x06, the pending counter of the drop-hit poll-reset actor"
+0x8019AF0C,room_m273_liberty,D_8019AF0C,g_RoomM273SweepSplashBatch,"Field of g_RoomM273SweepState (RoomM273DropQueue at 0x8019AF04), member access byte-identical: x[] at +0x08 viewed as RoomM273RisingBatchBuffer by the splash emitter"
+0x8019AF9A,room_m273_liberty,D_8019AF9A,g_RoomM273SwayState.repeat,"Field of g_RoomM273SwayState (0x8019AF74) at +0x26, written by RoomM273_SwayConfigure"
+0x8019AFA2,room_m273_liberty,D_8019AFA2,g_RoomM273SwayState.done,"Field of g_RoomM273SwayState +0x2E, stop flag of RoomM273_SwayBurstEmitter"
+0x8019AF84,room_m273_liberty,D_8019AF84,g_RoomM273SwayHitView,"hits[0] of g_RoomM273SwayState (+0x10), addressed as EmitterState by RoomM273_SwayGroundRingEmitter (anchor +30 reaches done)"
+0x8019AF8A,room_m273_liberty,D_8019AF8A,g_RoomM273SwayHitFlags,"hits[].pad flag words of g_RoomM273SwayState (+0x16, stride 8) tested and cleared by RoomM273_SwayBurstEmitter"
+0x8019AEFE,room_m273_liberty,D_8019AEFE,g_RoomM273SweepPoint.y,"y of g_RoomM273SweepPoint (0x8019AEFC, GteShortVector), read by the arc, rising and flash sweep emitters"
+0x8019AF00,room_m273_liberty,D_8019AF00,g_RoomM273SweepPoint.z,"z of g_RoomM273SweepPoint, same readers"
+0x8009D254,room_m273_liberty,D_8009D254,g_PlayerEntity,"Main-range address; linkers/USA/undefined_syms_manual.txt aliases g_PlayerEntity = D_8009D254, so m273 uses the alias"
+0x8019AE5C,room_m273_liberty,D_8019AE5C,g_RoomM273PlayerPulseSpawned,"Set when RoomM273_GrabPlayerPulseEmitter acquires its single slot, tested to stop spawning and to gate the draw"
+0x8019AE60,room_m273_liberty,D_8019AE60,g_RoomM273PlayerTrailBurstsLeft,Counter set to 4 by RoomM273_GrabPlayerTrailEmitter and decremented per spawned trail point
+0x8019AE64,room_m273_liberty,D_8019AE64,g_RoomM273PlayerTrailDelay,Frame delay between trail points (set to 2 after each spawn) in the same emitter
+0x8019AE68,room_m273_liberty,D_8019AE68,g_RoomM273HoldFlareSpawned,"One-shot latch of RoomM273_GrabHoldFlareEmitter (cleared in mode 0, set after the spawn)"
+0x8019AE6C,room_m273_liberty,D_8019AE6C,g_RoomM273HandTrailPhase,"Cleared in RoomM273_HandTrailEmitter mode 0, incremented per spawn and used as the pattern phase"
+0x8019AE70,room_m273_liberty,D_8019AE70,g_RoomM273HandTrailCooldown,Per-call countdown (spawn only once it is not positive) in RoomM273_HandTrailEmitter
+0x8019AE74,room_m273_liberty,D_8019AE74,g_RoomM273HandTrailPeriodA,(Inv_ScrambleGrid()&7)+4 initialised in RoomM273_HandTrailEmitter mode 0
+0x8019AE78,room_m273_liberty,D_8019AE78,g_RoomM273HandTrailPeriodB,Second random period of the same init
+0x8019AE84,room_m273_liberty,D_8019AE84,g_RoomM273SweepRisingDelay,"Countdown (spawn when it runs out, reload 2) in RoomM273_SweepRisingEmitter"
+0x8019AE88,room_m273_liberty,D_8019AE88,g_RoomM273SwayPointerSpawned,One-shot latch of RoomM273_SwayPointerEmitter
+0x8019AE90,room_m273_liberty,D_8019AE90,g_RoomM273GrabModelList,Callback list handle passed to FieldFx_AcquireCallbackSlot/Update/DrawCallbackList by RoomM273_GrabModelEmitter
+0x8019AE98,room_m273_liberty,D_8019AE98,g_RoomM273GrabColorIndex,"Index into the grab colour table, set by RoomM273_GrabEffectConfigure"
+0x8019AE9A,room_m273_liberty,D_8019AE9A,g_RoomM273GrabEffectStopped,"Set by RoomM273_GrabEffectController when the boss animation passes the grab window, makes the grab emitters return 2"
+0x8019ABFC,room_m273_liberty,D_8019ABFC,g_RoomM273GrabColors,Indexed by g_RoomM273GrabColorIndex for the star burst and hold flare colours
+0x8019AC30,room_m273_liberty,D_8019AC30,g_RoomM273StarBurstColors,Palette words picked by g_FieldFxCurrentAge&3 in RoomM273_GrabStarBurstCallback
+0x8019AC20,room_m273_liberty,D_8019AC20,g_RoomM273PlayerStreakSeeds,RoomM273PulseSeed[2] copied per streak by RoomM273_GrabPlayerStreakEmitter
+0x8019AC0C,room_m273_liberty,D_8019AC0C,g_RoomM273GrabModelRingZ,z coordinate table of RoomM273_GrabModelRingCallback
+0x8019AC18,room_m273_liberty,D_8019AC18,g_RoomM273GrabModelRingX,x coordinate table of RoomM273_GrabModelRingCallback
+0x8019ACA4,room_m273_liberty,D_8019ACA4,g_RoomM273HandTrailDropOffset,GteShortVector loaded by gte_ldv0 in RoomM273_HandTrailCallback (drop offset comment in the source)
+0x8019ACAC,room_m273_liberty,D_8019ACAC,g_RoomM273HandTrailSampleOffsetA,Trail sample offset loaded by gte_ldv0 in RoomM273_HandTrailCallback
+0x8019ACB4,room_m273_liberty,D_8019ACB4,g_RoomM273HandTrailSampleOffsetB,"Second trail sample offset, same callback"
+0x8019ACBC,room_m273_liberty,D_8019ACBC,g_RoomM273HandTrailColor,RenderColor passed to the sprite draw in RoomM273_HandTrailCallback
+0x8019ACA8,room_m273_liberty,D_8019ACA8,g_RoomM273HandTrailPulse,Pulse value stored by RoomM273_HandTrailEmitter and read by its callback
+0x8019ACC0,room_m273_liberty,D_8019ACC0,g_RoomM273HandTrailLandingPulseScale,Halfword table indexed by frame/4 for the sprite size in RoomM273_HandTrailLandingPulseCallback
+0x8019ACC8,room_m273_liberty,D_8019ACC8,g_RoomM273LandingFanColor,RenderColor of the fan drawn by RoomM273_HandTrailLandingFanCallback
+0x8019ACCC,room_m273_liberty,D_8019ACCC,g_RoomM273LandingFanRotations,Rotation pair selected by frame&1 in the same callback
+0x8019ACDC,room_m273_liberty,D_8019ACDC,g_RoomM273HandRingBandColorA,First colour of FieldFx_DrawRingBand in RoomM273_HandRingBandCallback
+0x8019ACE0,room_m273_liberty,D_8019ACE0,g_RoomM273HandRingBandColorB,Second colour of the same call
+0x8019AD54,room_m273_liberty,D_8019AD54,g_RoomM273SweepDropColorA,RenderColor of RoomM273_SweepDropCallback (used for both ring colours of one draw)
+0x8019AD58,room_m273_liberty,D_8019AD58,g_RoomM273SweepDropColorB,Triangle colour of the same callback
+0x8019AD5C,room_m273_liberty,D_8019AD5C,g_RoomM273SweepDropColorC,Final sprite colour of the same callback
+0x8019AD60,room_m273_liberty,D_8019AD60,g_RoomM273SweepDropVector,Vector loaded by gte_ldv0 in RoomM273_SweepDropEmitter
+0x8019AD68,room_m273_liberty,D_8019AD68,g_RoomM273SweepSplashScale,Halfword table indexed by frame/4 in RoomM273_SweepSplashCallback
+0x8019AD70,room_m273_liberty,D_8019AD70,g_RoomM273SweepRisingColor,RenderColor of RoomM273_SweepRisingCallback
+0x8019AD74,room_m273_liberty,D_8019AD74,g_RoomM273SweepFlashColorA,First star-fan colour of RoomM273_SweepFlashCallback
+0x8019AD78,room_m273_liberty,D_8019AD78,g_RoomM273SweepFlashColorB,Second star-fan colour of RoomM273_SweepFlashCallback
+0x8019AD7C,room_m273_liberty,D_8019AD7C,g_RoomM273SweepArcColor,Ring colour (with g_RoomM273BlackColor) of RoomM273_SweepArcCallback
+0x8019AE00,room_m273_liberty,D_8019AE00,g_RoomM273SwayShardTrailColor,RenderColor of RoomM273_SwayShardTrailCallback
+0x8019AE04,room_m273_liberty,D_8019AE04,g_RoomM273SwayShardRingColor,Ring band colour of RoomM273_SwayShardCallback
+0x8019AE08,room_m273_liberty,D_8019AE08,g_RoomM273SwayShardStarColor,Outer star fan colour of RoomM273_SwayShardCallback
+0x8019AE0C,room_m273_liberty,D_8019AE0C,g_RoomM273SwayShardInnerStarColor,Inner (0xC0) star fan colour of RoomM273_SwayShardCallback
+0x8019AE10,room_m273_liberty,D_8019AE10,g_RoomM273SwayShardVelocity,Vector rotated into the shard velocity by RoomM273_SwayShardEmitter
+0x8019AE18,room_m273_liberty,D_8019AE18,g_RoomM273SwayGroundColor,Colour pair (with g_RoomM273BlackColor) of RoomM273_SwayGroundCallback
+0x8019AE1C,room_m273_liberty,D_8019AE1C,g_RoomM273SwayGroundRingColors,RenderColor[2] of RoomM273_SwayGroundRingCallback
+0x8019A8B8,room_m273_liberty,D_8019A8B8,g_RoomM273GrabInitMatrix,Matrix multiplied by the YXZ rotation into obj->matrix in RoomM273_GrabInit; its translation is read as the next three words
+0x8019A8CC,room_m273_liberty,D_8019A8CC,g_RoomM273GrabInitTranslationX,Word copied to obj+0x30 (matrix translation x) by RoomM273_GrabInit
+0x8019A8D0,room_m273_liberty,D_8019A8D0,g_RoomM273GrabInitTranslationY,Word copied to obj+0x34
+0x8019A8D4,room_m273_liberty,D_8019A8D4,g_RoomM273GrabInitTranslationZ,Word copied to obj+0x38
+0x8019A8D8,room_m273_liberty,D_8019A8D8,g_RoomM273GrabInitAngles,Vector passed to RotMatrixYXZ in RoomM273_GrabInit
+0x8019A8C8,room_m273_liberty,D_8019A8C8,g_RoomM273ActionWeights,u8 weight table indexed [action*84 + band*28 + variant*7] in RoomM273_ChooseWeightedAction
+0x8019A8E0,room_m273_liberty,D_8019A8E0,g_RoomM273GrabSelectionByIndex,"Byte table indexed by the event argument, stored to obj+0x4C by RoomM273_GrabConfigure"

@@ -14,7 +14,7 @@ extern unsigned g_AkaoTrack34Mask, g_AkaoTrack38Mask, g_AkaoTrack3CMask;
 extern unsigned g_AkaoVoiceUpdateFlags;
 extern unsigned g_AkaoReverbEnableMask, g_AkaoNoiseEnableMask, g_AkaoFmEnableMask;
 extern int g_AkaoPlaybackMode;
-extern short g_AkaoPanVolumeTable[], D_8009B9F8[];
+extern short g_AkaoPanVolumeTable[];
 
 void Akao_SetVoiceKeyOn(AkaoTrack *voice, unsigned int voice_mask);
 

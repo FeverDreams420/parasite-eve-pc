@@ -5,9 +5,9 @@
  * AKAO command handlers and the four-tick slide step. */
 
 /* 16.16 slide accumulators stepped by Spu_StepReverbLoad. */
-extern int D_8009D2B4;
+extern int g_AkaoCdInputVolumeAccum;
 extern int g_AkaoGlobalPitchDepth;
-extern int D_8009D2D0;
+extern int g_AkaoTempoScaleAccum;
 
 /* Sample offset table and sample data base set by the voice-bank loader. */
 extern unsigned short *g_AkaoSampleOffsetTable;

@@ -46,5 +46,5 @@ s32 RoomM318_PlayerGate(s32 arg0, void *arg1, s32 *arg2) {
 ROOMLIB_SET_ARG1(RoomM318_SetScriptArg2, g_RoomM318ScriptArg2)
 
 int *RoomM318_GetActorParams(void) {
-    return &g_RoomM318ActorParams;
+    return g_RoomM318ActorParams;
 }

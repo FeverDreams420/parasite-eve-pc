@@ -180,8 +180,8 @@ int RoomM086_SeekerCallback(int mode, RoomM086Seeker *seeker, RoomM086SeekerPara
 int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM086ControllerParams *params) {
     GteShortVector rotation;
     GteShortVector position;
-    RoomM086Offset anchor = D_8018EFF4;
-    RoomM086Offset drift = D_8018EFFC;
+    RoomM086Offset anchor = g_RoomM086JointAnchor;
+    RoomM086Offset drift = g_RoomM086LaunchVelocity;
     GteMatrix matrix;
     GteVector scale;
     RenderMatrixSlot *slot;
@@ -212,9 +212,9 @@ int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM08
                 if (*flag == 1) *flag = 2;
             }
         }
-        g_RoomM086SeekerModelA = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC5465704);
+        g_RoomM086SeekerModelA = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5465704);
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM086SeekerModelA, 0, 0);
-        g_RoomM086SeekerModelB = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xC5865704);
+        g_RoomM086SeekerModelB = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5865704);
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM086SeekerModelB, 0, 0);
         FieldFx_PlaySoundAtOwner(0x577, FieldFx_GetOwnerProgress());
         return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM086SpawnChannel)->pool, 0x14, 0xE,
@@ -507,7 +507,7 @@ s32 RoomM086_BounceGlint(s32 mode, RoomBounceGlint *ent) {
     s32 i;
     s32 value;
 
-    blob = D_8018EFF4;
+    blob = g_RoomM086JointAnchor;
 
     if (mode != 1) {
         if (mode < 2) {
@@ -656,23 +656,23 @@ done:;
 
 int *RoomM086_SetControllerParams(int arg0, int arg1, int arg2, int arg3) {
     if (arg0 == 1) {
-        g_RoomM086ControllerParams = arg1;
-        D_80190B78 = arg2;
-        D_80190B7C = arg3;
+        g_RoomM086ControllerParams[0] = arg1;
+        g_RoomM086ControllerParams[1] = arg2;
+        g_RoomM086ControllerParams[2] = arg3;
     } else if (arg0 == 2) {
-        D_80190B80 = arg1;
+        g_RoomM086ControllerParams[3] = arg1;
     }
-    return &g_RoomM086ControllerParams;
+    return g_RoomM086ControllerParams;
 }
 
 int *RoomM086_SetBounceGlintParams(int arg0, int arg1, int arg2, int arg3) {
     if (arg0 == 1) {
-        int *base = &g_RoomM086BounceGlintParams;
+        int *base = g_RoomM086BounceGlintParams;
 
         base[0] = arg1;
-        D_80190B90 = arg2;
-        D_80190B94 = arg3;
+        base[1] = arg2;
+        base[2] = arg3;
         base[0] = 0x1000;
     }
-    return &g_RoomM086BounceGlintParams;
+    return g_RoomM086BounceGlintParams;
 }

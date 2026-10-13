@@ -12,7 +12,7 @@
  * around the scene anchor, then their four shadows on the floor. */
 extern int g_SceneE08CentreX;
 extern int g_SceneE08CentreZ;
-extern GteShortVector D_8018F040;
-extern RenderColor D_8018F048;
+extern GteShortVector g_SceneE08ParticleSlotOffsetInit;
+extern RenderColor g_SceneE08ParticleSlotColorInit;
 
 #endif

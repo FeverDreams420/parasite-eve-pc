@@ -1,13 +1,5 @@
 #ifndef ROOM_FAN_SWEEP_SPARK_NAME
-#define ROOM_FAN_SWEEP_SPARK_NAME func_80192718
-#define ROOM_FAN_SWEEP_SPARK_COLOR D_8018F1F0
-#define ROOM_FAN_SWEEP_SPARK_ANCHOR D_801998F8
-#define ROOM_FAN_SWEEP_SPARK_TRAIL D_80199900
-#define ROOM_FAN_SWEEP_SPARK_COS rcos
-#define ROOM_FAN_SWEEP_SPARK_SIN rsin
-#define ROOM_FAN_SWEEP_SPARK_RAND rand
-#define ROOM_FAN_SWEEP_SPARK_PALETTE_LIT 9
-#define ROOM_FAN_SWEEP_SPARK_PALETTE_BASE 5
+#error "define ROOM_FAN_SWEEP_SPARK_NAME and its parameters (COLOR, ANCHOR, TRAIL, COS, SIN, RAND, PALETTE_LIT, PALETTE_BASE) before including fan_sweep_spark.inc"
 #endif
 
 /* Fan sweep spark: circles the published anchor while it rises, dropping a

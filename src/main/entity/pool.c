@@ -91,13 +91,13 @@ void Entity_InitFreePool(void)
     g_EntityFreeListHead = (FieldActor *)base;
 
     do {
-        *(void **)(D_800BEA94 + offset) = next;
+        ((FieldActor *)(g_EntityPool + offset))->next = (FieldActor *)next;
         next += 0x280;
         i++;
         offset += 0x280;
     } while ((unsigned int)i < 13);
 
-    D_800C0B14[0] = 0;
+    ((FieldActor *)(g_EntityPool + 13 * 0x280))->next = 0;
     offset = 0;
     do {
         EntityAllocationAddress block;

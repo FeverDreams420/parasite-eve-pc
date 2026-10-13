@@ -145,7 +145,6 @@ PE1_STATIC_ASSERT(sizeof(RenderTilePacket) == 16, render_tile_packet_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTilePacket, clut) == 14, render_tile_clut_offset);
 PE1_STATIC_ASSERT(sizeof(RenderTexturePagePacket) == 8, render_texture_page_packet_size);
 PE1_STATIC_ASSERT(sizeof(RenderTileTexture) == 8, render_tile_texture_size);
-extern u8 D_800BD024;
 
 PE1_STATIC_ASSERT(sizeof(RenderLinePacket) == 16, render_line_packet_size);
 PE1_STATIC_ASSERT(sizeof(RenderColorTilePacket) == 16,

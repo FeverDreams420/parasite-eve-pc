@@ -37,7 +37,7 @@ void Menu_DrawMemCardPortList(MenuWidgetNode *node);
 /* Save slot list of the memory card screen. */
 extern int g_SaveSelectedSlot;
 /* State of the save slot picked on the memory card screen. */
-extern int D_8009CF4C;
+extern int g_SaveSelectedSlotState;
 int Menu_StepSaveSelect(MenuWidgetNode *node, int flags);
 void Menu_DrawSaveSlotList(int node);
 void Menu_DrawSaveSlotPortLabel(MenuWidgetNode *node);

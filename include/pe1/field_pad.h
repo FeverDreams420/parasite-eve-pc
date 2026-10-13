@@ -5,6 +5,6 @@
  * pe1/field_movement.h); the menu input mapper reads them too. */
 extern unsigned int g_FieldPadBits;
 /* Pad bits newly pressed this frame. */
-extern unsigned int D_8009D1F4;
+extern unsigned int g_FieldPadPressed;
 
 #endif

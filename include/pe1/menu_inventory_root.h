@@ -25,7 +25,7 @@ void Menu_SetEquipPanelsCursorY(void);
 void Menu_AlignEquipPanels(void);
 
 /* Whether the active list override was selected when the root opened. */
-extern int D_8009CFD4;
+extern int g_MenuSourceItemList;
 /* Per-stat preview tables: value, level, sublevel and pending bonus. */
 extern int D_800A1898[7];
 extern int g_AyaBonusPoints[];

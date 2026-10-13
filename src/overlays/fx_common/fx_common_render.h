@@ -149,6 +149,6 @@ typedef struct FxGt4CursorSlot {
     FxCommonColoredTexturedQuad *cursor;
 } __attribute__((aligned(8))) FxGt4CursorSlot;
 
-extern s32 D_801EA5E0;
+extern s32 g_FxCommonDepthBase;
 
 #endif

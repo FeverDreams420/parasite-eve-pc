@@ -4,13 +4,24 @@
 #include "pe1/card_obj.h"
 #include "pe1/memcard_state.h"
 
+/* BIOS interrupt queue entry for SysEnqIntRP/SysDeqIntRP: the link word,
+ * the two handlers the BIOS calls and a spare word, all cleared or set by
+ * the code that enqueues it. */
+typedef struct PadIntQueueNode {
+    void *next;
+    void *handlers[2];
+    int spare;
+} PadIntQueueNode;
+
+PE1_STATIC_ASSERT(sizeof(PadIntQueueNode) == 0x10, pad_int_queue_node_size);
+
 /* LIBPAD/PADMAIN.OBJ. Legacy MemCard/Spu names are preserved for callers. */
 extern int g_MemCardServiceReady, g_MemCardCommandStep;
-extern char g_PadVsyncIntQueueNode[];
+extern PadIntQueueNode g_PadVsyncIntQueueNode;
 extern MemCardInterruptRegisters *D_8009B784;
 extern MemCardSioRegisters *D_8009B788;
 /* Per-port idle counters that PadEnableCom and the VSync timer age. */
-extern int D_800A5AC0[2];
+extern int g_PadPortIdleFrames[2];
 extern int (*g_MemCardCommandStepHandlers[])(void);
 extern int (*g_PadDmaCompleteFn)(int);
 extern u32 g_TimerTimeoutLimit, g_TimerTimeoutStart;

@@ -9,14 +9,16 @@
 #include "pe1/render_prim.h"
 #include "pe1/text.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 int g_DrawGlyphAdvance;
 int g_TextRenderMode;
-unsigned char *D_8009D100;
-unsigned char *D_8009D104;
+unsigned char *g_DrawPacketCursor;
+unsigned char *g_DrawPacketArenaBase;
 int g_DrawTextDimmed;
 unsigned int g_DrawPrimColor;
 unsigned int g_DrawColorShaded;
-unsigned int *D_8009D11C;
+unsigned int *g_DrawOrderingTableEntry;
 int g_TextCursorX;
 int g_TextCursorY;
 int *g_TextCursorStackPtr;
@@ -409,11 +411,11 @@ void Draw_SetGlyphAdvance(int arg0) {
 static inline RenderTexturedQuad *AllocBarQuad(void)
 {
     RenderTexturedQuad *prim = 0;
-    u8 *old = D_8009D100;
+    u8 *old = g_DrawPacketCursor;
     u8 *next = old + sizeof(RenderTexturedQuad);
 
-    if (next < D_8009D104 + 0x4000) {
-        D_8009D100 = next;
+    if (next < g_DrawPacketArenaBase + 0x4000) {
+        g_DrawPacketCursor = next;
         prim = (RenderTexturedQuad *)old;
     } else {
         Inv_BoundsCheckAssertStub(1);
@@ -496,10 +498,10 @@ void Draw_AllocTexturedQuad(int code) {
     column = glyph - row * 0x15;
 
     prim = 0;
-    old = D_8009D100;
+    old = g_DrawPacketCursor;
     next = old + sizeof(RenderTexturedQuad);
-    if (next < D_8009D104 + 0x4000) {
-        D_8009D100 = next;
+    if (next < g_DrawPacketArenaBase + 0x4000) {
+        g_DrawPacketCursor = next;
         prim = (RenderTexturedQuad *)old;
     } else {
         Inv_BoundsCheckAssertStub(1);
@@ -563,7 +565,7 @@ void Draw_AllocTexturedQuad(int code) {
     }
     prim->tpage = GetTPage(arg0, 0, 0x140, 0);
     {
-        RenderPacketTag *ot = (RenderPacketTag *)D_8009D11C;
+        RenderPacketTag *ot = (RenderPacketTag *)g_DrawOrderingTableEntry;
 
         prim->tag.link.address = ot->link.address;
         link.packet = prim;
@@ -1022,8 +1024,8 @@ static inline void PushCursorAt(int x, int y)
         quad->v2 = quad->v3 = quad->v0 + glyph->height; \
         quad->clut = glyph->clut; \
         quad->tpage = 7; \
-        quad->tag.link.address = *D_8009D11C; \
-        ot = D_8009D11C; \
+        quad->tag.link.address = *g_DrawOrderingTableEntry; \
+        ot = g_DrawOrderingTableEntry; \
         link.quad = quad; \
         *ot = (*ot & 0xFF000000) | (link.word & 0xFFFFFF); \
     }
@@ -1065,17 +1067,17 @@ void Draw_AllocTexturedRectAlt(int value, int width)
 
     drawMode = glyph->mode;
     mode = 0;
-    old = D_8009D100;
+    old = g_DrawPacketCursor;
     next = old + sizeof(RenderDrawModePacket);
-    if (next < D_8009D104 + 0x4000) {
-        D_8009D100 = next;
+    if (next < g_DrawPacketArenaBase + 0x4000) {
+        g_DrawPacketCursor = next;
         mode = (RenderDrawModePacket *)old;
     } else {
         Inv_BoundsCheckAssertStub(1);
     }
     if (mode != 0)
         SetDrawTPage(mode, 0, 0, ((drawMode & 3) << 7) | 7);
-    ot = D_8009D11C;
+    ot = g_DrawOrderingTableEntry;
     mode->tag = (mode->tag & 0xFF000000) | (*ot & 0xFFFFFF);
     link.mode = mode;
     *ot = (*ot & 0xFF000000) | (link.word & 0xFFFFFF);

@@ -13,17 +13,17 @@
 #include "pe1/item_ids.h"
 #include "pe1/random.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 u8 g_BattleActionAnimModes[4];
-u8 D_8009CE39;
-u8 D_8009CE3A;
 u8 g_BattleActionQueueCount;
 u8 g_BattleActionIndex;
 u8 g_BattleRemainingActions;
-int D_8009D200;
-u8 D_8009D274;
+int g_BattleAttackPmSlot;
+u8 g_BattleHitTimer;
 s16 g_BattlePlayerAimHeight;
-u8 D_8009D294;
-u8 D_8009D25C;
+u8 g_BattleHitPending;
+u8 g_AyaActionStep;
 s8 g_AyaAttackStep;
 BattleEvasionOutcome g_EvasionOutcome;
 s16 g_AyaActionTimer;
@@ -42,7 +42,7 @@ void Battle_FinalizeAttackResult(void)
     if (action->actionCode.actionId == 8) {
         BattleEntity *player;
 
-        D_8009D294 = 1;
+        g_BattleHitPending = 1;
         player = D_8009D254;
         Asset_Find08Alt(0x46C, 0, player->posX.parts.integer,
                         player->posY.parts.integer, player->posZ.parts.integer);
@@ -51,11 +51,11 @@ void Battle_FinalizeAttackResult(void)
 
     attack_word = action->attackWord;
     if ((attack_word & 0x3FF) != 0) {
-        D_8009D294 = 1;
+        g_BattleHitPending = 1;
         if (!(combatant->stateFlags & 0x100000)) {
             BattleEntity *player;
 
-            Pm_SendCmd(D_8009D200, 0, 0, 1, 0, 0);
+            Pm_SendCmd(g_BattleAttackPmSlot, 0, 0, 1, 0, 0);
             player = D_8009D254;
             Akao_SetPos3D(0, 0, player->posX.parts.integer,
                           player->posY.parts.integer, player->posZ.parts.integer);
@@ -78,7 +78,7 @@ void Battle_FinalizeAttackResult(void)
     {
         BattleEntity *player;
 
-        D_8009D294 = 0;
+        g_BattleHitPending = 0;
         player = D_8009D254;
         Asset_Find08Alt(0x46E, 0, player->posX.parts.integer,
                         player->posY.parts.integer, player->posZ.parts.integer);
@@ -101,6 +101,7 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
     int nextIndexB;
     int indexAlt;
     int indexDefault;
+    BattleEntity **actorField;
     int angle;
     int direction;
     int predicate;
@@ -116,8 +117,8 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
             break;
         if (g_BattleActionAnimModes[0] != 0) {
             g_BattleActionAnimModes[0]--;
-        } else if (D_8009CE39 != 0) {
-            D_8009CE39--;
+        } else if (g_BattleActionAnimModes[1] != 0) {
+            g_BattleActionAnimModes[1]--;
         } else {
             goto ready;
         }
@@ -125,9 +126,10 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
         break;
     ready:
         }
-        D_8009D274 = 0;
-        { u8 animMode = g_ActiveActor->action->animMode[1]; D_8009CE39 = animMode; }
-        { height = turnSlot->actor->renderObject.target_y; angle = height - g_BattlePlayerAimHeight; }
+        g_BattleHitTimer = 0;
+        actorField = &turnSlot->actor;
+        { u8 animMode = g_ActiveActor->action->animMode[1]; g_BattleActionAnimModes[1] = animMode; }
+        { height = (*actorField)->renderObject.target_y; angle = height - g_BattlePlayerAimHeight; }
         { facingAngle = ratan2(angle, Battle_CalcDistToPlayer(turnSlot->actor, D_8009D254));
         if (facingAngle < -0xAB) direction = 0; else { predicate = facingAngle < 0xE4; if (predicate) direction = 1; else direction = 2; } }
         Entity_SetActionMode(D_8009D254, *(direction + g_ActiveActor->followUpAngleActionModes));
@@ -194,7 +196,7 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
                 D_8009D254->entityFlags |= 0x100; }
               { BattleAction *postAction = postActor->action;
                 { u32 turnWord = postAction->turnWord;
-                D_8009CE39 += D_8009CE3A;
+                g_BattleActionAnimModes[1] += g_BattleActionAnimModes[2];
                 g_BattleRemainingActions = turnWord & 0xF; } } }
             break;
         }
@@ -249,17 +251,19 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
         g_BattleActionIndex = indexDefault + 1;
         if ((u8)(indexDefault + 1) != g_BattleActionQueueCount)
             break;
-        if (D_8009D200 < 0)
+        if (g_BattleAttackPmSlot < 0)
             break;
         if (g_ActiveActor->action->actionCode.actionId != 8)
-            Pm_SendCmd(D_8009D200, 0, 0, 2, 0, 0);
-        Pm_SendCmd(D_8009D2FC, 0, 0, 2, 0, 0);
+            Pm_SendCmd(g_BattleAttackPmSlot, 0, 0, 2, 0, 0);
+        Pm_SendCmd(g_BattleImpactPmSlot, 0, 0, 2, 0, 0);
         break;
     }
     return result;
 }
 
-u8 D_8009D274, g_BattleActionIndex, D_8009D294;
+/* COMMON supplies small-data metadata to stock MASPSX. Existing retail
+ * data/linker symbols provide storage; these do not allocate new globals. */
+u8 g_BattleHitTimer, g_BattleActionIndex, g_BattleHitPending;
 s8 g_EvasionReaction;
 
 /* Apply the evasion outcome Battle_CheckEvasion left in g_EvasionOutcome and
@@ -297,10 +301,10 @@ void Battle_ResolveHitOnTimer(void)
     s16 actionId;
     s32 stealMode;
     u8 hitTimer;
-    hitTimer = D_8009D274 + 1;
+    hitTimer = g_BattleHitTimer + 1;
     action = g_ActiveActor->action;
     selectedSlot = &g_BattleActionQueue[g_BattleActionIndex];
-    D_8009D274 = hitTimer;
+    g_BattleHitTimer = hitTimer;
     if ((hitTimer & 0xFF) != action->hitTrigger)
         return;
     actionId = action->actionCode.actionId;
@@ -324,13 +328,13 @@ void Battle_ResolveHitOnTimer(void)
                         if (Inv_AddItem(((EnemyCombatant *)selectedSlot->actor->core)->stealItemId) != 0)
                         {
                             EnemyCombatant *enemy = selectedSlot->actor->core;
-                            D_8009D1CE = 1;
-                            D_8009D1F8 = Inv_GetItemEffectData(enemy->stealItemId, 2);
+                            g_BattleSaveOverlayActive = 1;
+                            g_CurItemEffectData = Inv_GetItemEffectData(enemy->stealItemId, 2);
                         }
                         else
                         {
-                            D_8009D1CE = 1;
-                            D_8009D1F8 = Inv_GetItemEffectData(((EnemyCombatant *)selectedSlot->actor->core)->stealItemId, 1);
+                            g_BattleSaveOverlayActive = 1;
+                            g_CurItemEffectData = Inv_GetItemEffectData(((EnemyCombatant *)selectedSlot->actor->core)->stealItemId, 1);
                             ((EnemyCombatant *)selectedSlot->actor->core)->stealItemId = 0;
                         }
                     }
@@ -431,8 +435,8 @@ void Battle_ResolveHitOnTimer(void)
         Battle_CheckEvasion(selectedSlot->actor, &g_EvasionOutcome, 0);
         ApplyEvasionOutcome(selectedSlot->actor);
     }
-    D_8009D294 = 0;
-    D_8009D274 = 0;
+    g_BattleHitPending = 0;
+    g_BattleHitTimer = 0;
 }
 
 void Aya_DeriveStats(int *first, int *second);
@@ -567,7 +571,7 @@ void Battle_ApplyDamage(int damageKind) {
 }
 
 s32 rand(void);
-s16 g_ActorEffectFlag100Timer;
+u16 g_ActorEffectFlag100Timer;
 void *g_BattleActiveEntity;
 
 /* The acting combatant, reloaded after every structure store as retail does. */
@@ -743,7 +747,9 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
  * their field stores may alias the player's fields, which keeps retail's
  * load/store interleaving without pins.
  * Case 9 writes the evasion outcome record and the target's core flag bits
- * as fields, so the reaction byte is read back after the flag stores. */
+ * as fields, so the reaction byte is read back after the flag stores.
+ * Matching debt: pins and empty compiler barriers retain
+ * retail allocation and scheduling in the remaining cases. */
 s32 Battle_StepAyaAction(void)
 {
   BattleEntity *targetEntity;
@@ -763,7 +769,7 @@ s32 Battle_StepAyaAction(void)
   s32 transfer;
   EnemyCombatant *targetCore;
   finished = 0;
-  switch (D_8009D25C)
+  switch (g_AyaActionStep)
   {
     case 0:
     {
@@ -785,7 +791,7 @@ s32 Battle_StepAyaAction(void)
       g_PlayerBattleEntity.flags_9C |= 2;
       Pm_StopLowerHalf();
       g_BattleEffectPmSlot = Scene_LoadRoomAssets(0x6BU, D_8009D254);
-      D_8009D25C += 1;
+      g_AyaActionStep += 1;
       break;
     }
 
@@ -795,7 +801,7 @@ s32 Battle_StepAyaAction(void)
     {
       if (g_PlayerBattleEntity.variant_visible == 0)
       {
-        D_8009D25C++;
+        g_AyaActionStep++;
         break;
       }
     }
@@ -815,7 +821,7 @@ s32 Battle_StepAyaAction(void)
       assetOwner = D_8009D254;
       Scene_LoadRoomAssets(0x6CU, assetOwner);
       g_AyaActionTimer = 0x1E;
-      D_8009D25C++;
+      g_AyaActionStep++;
       break;
     }
       break;
@@ -823,7 +829,7 @@ s32 Battle_StepAyaAction(void)
     case 3:
       if (g_AyaActionTimer == 0)
     {
-      D_8009D25C += 1;
+      g_AyaActionStep += 1;
       D_8009D254->entityFlags &= ~0x100;
     }
     else
@@ -853,7 +859,7 @@ s32 Battle_StepAyaAction(void)
       Pm_Stop(g_BattleEffectPmSlot, D_8009D254, 0);
       effectId = 0x6D;
       Scene_LoadRoomAssets(effectId, D_8009D254);
-      D_8009D25C += 1;
+      g_AyaActionStep += 1;
       break;
     }
 
@@ -863,7 +869,7 @@ s32 Battle_StepAyaAction(void)
     case 5:
       Entity_SetActionMode(D_8009D254, 6);
       Anim_SetInterpRate(&D_8009D254->renderObject, 0xF);
-      D_8009D25C += 1;
+      g_AyaActionStep += 1;
       D_8009D254->renderObject.flags_9C |= 2;
       break;
 
@@ -888,7 +894,7 @@ s32 Battle_StepAyaAction(void)
       D_8009D254->baseZ = D_8009D254->posZ.fixed;
       Asset_Find08Alt(0x4B6, 0, D_8009D254->posX.parts.integer, D_8009D254->posY.parts.integer, D_8009D254->posZ.parts.integer);
       g_AyaActionTimer = 0x1E;
-      D_8009D25C++;
+      g_AyaActionStep++;
       break;
     }
       break;
@@ -903,7 +909,7 @@ s32 Battle_StepAyaAction(void)
     {
       D_8009D254->renderObject.variant_visible = 1;
       Anim_SetInterpRate(&D_8009D254->renderObject, 0xF);
-      D_8009D25C += 1;
+      g_AyaActionStep += 1;
       D_8009D254->renderObject.flags_9C |= 4;
     }
     else
@@ -921,7 +927,7 @@ s32 Battle_StepAyaAction(void)
         D_8009D254->renderObject.flags_9C = flags;
       }
       Entity_SetActionMode(D_8009D254, ((g_AyaAttackStep * 2) + 8) & 0xFFFE);
-      D_8009D25C += 1;
+      g_AyaActionStep += 1;
       break;
     }
       break;
@@ -976,13 +982,13 @@ s32 Battle_StepAyaAction(void)
         {
           {
             u8 next = g_BattleActionIndex + 1;
-            D_8009D25C = 8;
+            g_AyaActionStep = 8;
             g_BattleActionIndex = next;
           }
           break;
         }
       }
-      D_8009D25C += 1;
+      g_AyaActionStep += 1;
       break;
     }
       break;
@@ -993,12 +999,12 @@ s32 Battle_StepAyaAction(void)
       Entity_SetActionMode(D_8009D254, 7);
       if (g_AyaAttackStep < 7)
       {
-        D_8009D25C = 5;
+        g_AyaActionStep = 5;
         g_BattleActionIndex += 1;
         break;
       }
       Anim_SetInterpRate(&D_8009D254->renderObject, 15);
-      D_8009D25C += 1;
+      g_AyaActionStep += 1;
       D_8009D254->renderObject.flags_9C |= 2;
       break;
     }
@@ -1038,7 +1044,7 @@ s32 Battle_StepAyaAction(void)
         transfer = player->posZ.parts.integer;
         Asset_Find08Alt(effect, 0, x, y, transfer);
         g_AyaActionTimer = 0x1E;
-        D_8009D25C++;
+        g_AyaActionStep++;
         break;
       }
       break;
@@ -1050,9 +1056,9 @@ s32 Battle_StepAyaAction(void)
       Entity_SetActionMode(D_8009D254, 7);
       D_8009D254->renderObject.variant_visible = 1;
       Anim_SetInterpRate(&D_8009D254->renderObject, 0x1E);
-      D_801F1F38 = 1;
+      g_BattleCrossFlashStop = 1;
       g_AyaActionTimer = 0xF;
-      D_8009D25C += 1;
+      g_AyaActionStep += 1;
       D_8009D254->renderObject.flags_9C |= 4;
       break;
     }
@@ -1066,7 +1072,7 @@ s32 Battle_StepAyaAction(void)
       if (D_8009D254->animLastFrame == D_8009D254->animPrev.parts.integer)
       {
         Entity_SetActionMode(D_8009D254, 4);
-        D_8009D25C += 1;
+        g_AyaActionStep += 1;
         break;
       }
       break;
@@ -1082,7 +1088,7 @@ s32 Battle_StepAyaAction(void)
       effectId = 0x72;
       D_8009D254->renderObject.flags_9C |= 2;
       Scene_LoadRoomAssets(effectId, D_8009D254);
-      D_8009D25C += 1;
+      g_AyaActionStep += 1;
       break;
     }
       break;
@@ -1116,7 +1122,7 @@ s32 Battle_StepAyaAction(void)
         {
           g_AyaActionTimer = 0xF;
           g_PlayerBattleEntity.flags_9C |= 4;
-          D_8009D25C++;
+          g_AyaActionStep++;
         }
         break;
       }

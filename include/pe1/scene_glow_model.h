@@ -42,6 +42,6 @@ extern u8 *g_SceneE08GlowModel;
 extern int g_SceneE08CentreX;
 extern int g_SceneE08CentreZ;
 extern u8 g_SceneE08GlowModelRamp[];
-extern FieldGlowSprite D_801996B0;
+extern FieldGlowSprite g_SceneE08GlowModelHaloSprite;
 
 #endif

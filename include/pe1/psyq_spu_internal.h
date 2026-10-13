@@ -74,7 +74,7 @@ extern u16 _spu_voice_centerNote[24];
 extern int _spu_rev_flag, _spu_rev_reserve_wa, D_8009B46C;
 extern u32 _spu_rev_offsetaddr;
 extern int _spu_trans_mode;
-extern int D_8009B388, D_8009B3B4, D_8009B3B0, D_8009B3E8;
+extern int _spu_keystat, _spu_RQmask, _spu_RQvoice, _spu_env;
 void _SpuInit(int mode);
 void _spu_FiDMA(void);
 
@@ -108,8 +108,8 @@ extern volatile u32 *g_SpuDmaBcrPtr;
 extern volatile u32 *g_SpuDmaChcrPtr;
 extern s32 g_SpuDmaDirection;
 extern u16 g_SpuTransferAddr;
-extern u32 *D_8009B410;
-extern s32 D_8009B3EC;
+extern u32 *g_SpuDelayRegPtr;
+extern s32 _spu_isCalled;
 extern s32 _spu_EVdma;
 /* Shared by transfer callers and the DMA interrupt handler. */
 extern SpuCallback volatile _spu_transferCallback;
@@ -121,8 +121,8 @@ void _SpuDataCallback(SpuCallback callback);
 s32 _spu_Fr(void *address, s32 size);
 u32 _spu_Fw(void *address, u32 size);
 /* SPU.OBJ initialization state and its ten-halfword request buffer. */
-extern int _spu_transMode, D_8009B41C, _spu_inTransfer;
-extern u16 D_800B6900[10], D_8009B43C[];
+extern int _spu_transMode, _spu_addrMode, _spu_inTransfer;
+extern u16 _spu_RQ[10], _spu_dummy[];
 extern char g_SpuTimeoutFormat[], g_SpuWaitResetText[];
 int _spu_init(int hot);
 void _spu_Fw1ts(void);
@@ -138,7 +138,6 @@ extern int _spu_AllocBlockNum;
 extern int _spu_AllocLastNum;
 extern SPU_MALLOC *_spu_memList;
 
-#define _spu_isCalled D_8009B3EC
-#define _spu_delay D_8009B410
+#define _spu_delay g_SpuDelayRegPtr
 
 #endif

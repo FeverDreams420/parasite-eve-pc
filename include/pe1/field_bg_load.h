@@ -28,7 +28,7 @@ typedef struct FieldBgImageRecord {
 extern FieldBgTextureSlot g_FieldBgTextureSlots[4];
 
 /* PE.IMG start/end sector table (consecutive entries bound one chunk). */
-extern u16 D_800930D8[];
+extern u16 g_PeImageSectorTable[];
 
 void Akao_Cmd_F1(void);
 void ResetGraph(int mode);

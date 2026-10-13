@@ -14,23 +14,23 @@ extern AkaoSequencerState g_AkaoSequencerState;
 extern AkaoSequencerBank *g_AkaoCurTrack;
 
 /* Set while the voice driver is busy; the sequencer polls it. */
-extern volatile int D_8009D2E0;
+extern volatile int g_AkaoSeqBusyFlags;
 
 /* CD audio mix volume passed to CdMix (a CdlATV). */
 extern struct CdlATV g_AkaoCdVolume;
 /* High byte of the global pitch depth word g_AkaoGlobalPitchDepth. */
-extern unsigned char D_8009D2CE;
+extern unsigned char g_AkaoGlobalPitchScale;
 
 /* Global slides stepped every fourth tick: counters, 16.16 steps and the
- * integer half of the pitch accumulator D_8009D2B4. */
-extern u16 D_8009CDEC; /* tick divider */
+ * integer half of the pitch accumulator g_AkaoCdInputVolumeAccum. */
+extern u16 g_AkaoGlobalSlideTick; /* tick divider */
 extern short g_AkaoGlobalPitchSlideCounter;
 extern short g_AkaoGlobalD2D0SlideCounter;
 extern short g_AkaoGlobalD2CCSlideCounter;
 extern int g_AkaoGlobalPitchSlideStep;
 extern int g_AkaoGlobalD2D0SlideStep;
 extern int g_AkaoGlobalD2CCSlideStep;
-extern unsigned short D_8009D2B6;
+extern unsigned short g_AkaoCdInputVolume;
 
 /* Rolling timer-callback durations, newest first, and their sum. */
 extern s32 g_AkaoTimerDeltaHist0;
@@ -73,9 +73,9 @@ extern AkaoNestedSource g_AkaoNestedSource;
 /* Its key_off_mask, key_on_mask, pan word and pan_target as words of their
  * own: retail stores each one absolutely, where the record keeps the field
  * address in a and derives the record address from it. */
-extern u32 D_800B89D4;
-extern u32 D_800B89D8;
-extern u32 D_800B89DC;
-extern u32 D_800B89E0;
+extern u32 g_AkaoNestedKeyOffMask;
+extern u32 g_AkaoNestedKeyOnMask;
+extern u32 g_AkaoNestedPan;
+extern u32 g_AkaoNestedPanTarget;
 
 #endif

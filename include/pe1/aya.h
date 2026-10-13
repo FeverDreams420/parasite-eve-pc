@@ -58,12 +58,12 @@ typedef struct AyaSaveState {
     /* 0x06 */ u16 max_hp;               /* g_AyaHpMax  [CONFIRMED] max HP (status "45/45" right side) */
     /* 0x08 */ u16 current_hp;           /* g_AyaHpCurrent  [CONFIRMED] current HP (status left side); synced from battle slot +0x0C */
     /* 0x0A */ u8  level;                /* g_AyaSaveLevel: 0-based, status shows +1 [CONFIRMED 0 -> "LEVEL 1"]; clamp 0..0x62 */
-    /* 0x0B */ u8  pad_0B;
+    /* 0x0B */ u8  new_game_count;       /* Inv_DispatchCommand INV_CMD_START_NEW_GAME adds 1, up to 99 */
     /* 0x0C */ u8 inventory_slot_count; /* g_AyaInventorySlotCount [CONFIRMED 10 at new game]; <=0x32 */
     /* 0x0D */ u8 pad_0D[3];
     /* 0x10 */ u32 bonus_points;         /* g_AyaBonusPoints [CONFIRMED 0 -> "BONUS POINT 0"]; clamp 0x1869F */
     /* 0x14 */ u8  pad_14[0x0A];
-    /* 0x1E */ u16 pe_bonus_pool;        /* D_800C0E1E  TENTATIVE: pool cleared to 0 on level-up (Aya_SetTotalExp) */
+    /* 0x1E */ u16 pe_bonus_pool;        /* g_AyaBonusPoolRecord.pool  TENTATIVE: pool cleared to 0 on level-up (Aya_SetTotalExp) */
     /* 0x20 */ s8  equipped_weapon_slot; /* g_AyaEquippedWeaponSlot  [CONFIRMED 0 -> "M84F"] equipped weapon inventory slot */
     /* 0x21 */ u8  pad_21;
     /* 0x22 */ s8  equipped_armor_slot;  /* g_AyaEquippedArmorSlot  [CONFIRMED 1 -> "N Vest"] equipped armor inventory slot */
@@ -71,14 +71,14 @@ typedef struct AyaSaveState {
     /* 0x24 */ u32 parasite_spell_flags; /* g_AyaParasiteSpellFlags: unlocked-spell bitmask [CONFIRMED 0x1 at new game] */
 
     /* 0x28..0x35: 7 u16 stat-allocation LEVELS (0-based, status screen shows +1),
-     * written as one 7-entry array in Inv_InitNewGameInventory (loop from
-     * func_8005DB8C) and read via the g_AyaStat* accessors. These are the
+     * written as one 7-entry array in Inv_InitNewGameInventory (loop over
+     * Aya_GetStatGrowthTable) and read via the g_AyaStat* accessors. These are the
      * bonus-point allocation levels per category (all 0 at new game ->
      * every status stat shows "1"), NOT the final combat values. */
     /* 0x28 */ AyaStatAllocationWords stats;
 
     /* 0x3A */ u8  pad_3A[6];
-    /* 0x40 */ u16 menu_clamp_value;     /* D_800C0E40  [CONFIRMED 0x3D] set via Menu_ClampRange(0x3D) at init */
+    /* 0x40 */ u16 menu_clamp_value;     /* [CONFIRMED 0x3D] set via Menu_ClampRange(0x3D) at init */
     /* 0x42 */ u8  pad_42[2];
     /* 0x44 */ u32 blend_color;         /* Saved draw blend color, initialized to 0x404040. */
     /* 0x48 */ s16 inventory_items[50];   /* g_AyaInventoryItems: 50 item-ID slots */

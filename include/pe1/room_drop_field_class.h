@@ -2,6 +2,7 @@
 #define PE1_ROOM_DROP_FIELD_CLASS_H
 
 #include "common.h"
+#include "pe1/room_interface.h"
 #include "pe1/room_module.h"
 
 /* The drop field effect set's module class (drop_field.c), in

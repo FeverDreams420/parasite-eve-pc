@@ -13,7 +13,7 @@ address,old_name,name,review,proposer_confidence,evidence
 0x80010928,D_80010928,g_AyaBattleStateInitial,ok,verified,Battle_SaveAyaState (src/main/battle/encounter.c:1835) copies this rodata template into g_AyaBattleState.
 0x80010998,D_80010998,g_SavedBattleStateTailInitial,ok,verified,Battle_SaveAyaState (encounter.c:1836) copies it into g_SavedBattleStateTail.
 0x800109B0,D_800109B0,g_EnemyCombatantInitial,ok,verified,Entity_AllocSlot (src/main/battle/enemy_slots.c:4) copies it into D_800A5D58[index].combatant for a freshly allocated slot.
-0x80010DFC,D_80010DFC,g_BattleStatusSymbolUv,ok,verified,Battle_DrawStatusSymbol (src/main/battle/status_hud.c:810) indexes it by status*2 and stores the pair into the packet u/v bytes (D_8009E93C/D).
+0x80010DFC,D_80010DFC,g_BattleStatusSymbolUv,ok,verified,Battle_DrawStatusSymbol (src/main/battle/status_hud.c:810) indexes it by status*2 and stores the pair into the packet u/v bytes (g_BattleStatusSymbolSpriteU/D).
 0x80010E10,D_80010E10,g_BattleStatusSymbolSize,ok,verified,status_hud.c:811 indexes it by status*2 and stores the pair as RenderSpritePacket width and height.
 0x80010E24,D_80010E24,g_BattleStatusSymbolOffset,ok,verified,status_hud.c:812 indexes it by status*2 and adds the pair to the HUD slot x and y.
 0x80010E94,D_80010E94,g_ErrorSeverityWarningName,ok,verified,Rodata string directly before g_ErrorSeverityFatalName (0x80010EA0) and referenced from the severity name table in dtail_gp_pre_s016.data.s:1151.
@@ -105,7 +105,7 @@ address,old_name,name,review,proposer_confidence,evidence
 0x8001208C,D_8001208C,g_SpuTimeoutFormatIrq,ok,verified,"printf in libspu/s_si.c:17,28."
 0x8001209C,D_8001209C,g_SpuWaitIrqOnText,ok,verified,printf argument in libspu/s_si.c:17.
 0x800120AC,D_800120AC,g_SpuWaitIrqOffText,ok,verified,printf argument in libspu/s_si.c:28.
-0x8007E584,D_8007E584,g_CardExitHookTemplate,ok,verified,End.c comment: three-NOP template D_8007E584..D_8007E590 that _ExitCard copies over the C0 card hook (src/main/psyq/libcard/end.c:25).
+0x8007E584,D_8007E584,g_CardExitHookTemplate,ok,verified,End.c comment: three-NOP template D_8007E584..g_CardExitHookTemplateEnd that _ExitCard copies over the C0 card hook (src/main/psyq/libcard/end.c:25).
 0x800910A0,D_800910A0,g_ScriptQueueOpcodeHandlers,ok,verified,Script_RunQueue (script/flow_opcodes.c) calls D_800910A0[opcode](args) in a do-while; the table holds Script_* and Akao_ProcessCommand function pointers (dtail_gp_pre_s016.data.s).
 0x80091474,D_80091474,g_AnalyzeHpFormatText,ok,likely,"Save_DrawSlotMetadata uses it as the textbox message when prompt==phase; decodes to ""HP <FB>8;<FB>8"" (HP with two number escapes)."
 0x80091480,D_80091480,g_TextSusceptibleToPoison,fix,verified,"save_slot.c:62 picks D_80091480[windowIndex] for prompt bit 0x1000 and row 1 (0x80091496) decodes to ""Susceptible to poison""; the Analyze attribution is unproven."
@@ -135,7 +135,7 @@ address,old_name,name,review,proposer_confidence,evidence
 0x80092428,D_80092428,g_InvSortRankTableC,ok,likely,Inv_SortInventoryByMode case 0 assigns it to g_InvSortRankTable; same 24-entry kind-rank layout as g_InvSortRankTableA.
 0x80092440,D_80092440,g_InvSortRankTableD,ok,likely,Inv_SortInventoryByMode case 2 assigns it to g_InvSortRankTable; same 24-entry kind-rank layout as g_InvSortRankTableA.
 0x800930A8,D_800930A8,g_WipeRectEdgeList,ok,verified,"Draw_EmitWipeBarRect, Draw_AllocColorGradient and Draw_AllocColorTriGradient pass it to Draw_EmitWipeBar; bytes 00 01 00 02 FF 01 03 02 03 FF are vertex-index pairs of a quad outline with 0xFF list terminators."
-0x800930DA,D_800930DA,g_PeImageSectorBoundsNext,ok,likely,"Scene_LoadEntityTexture(s) read D_800930DA[i] - D_800930D8[i] as the sector count, so it is the same table one entry ahead."
+0x800930DA,D_800930DA,g_PeImageSectorBoundsNext,ok,likely,"Scene_LoadEntityTexture(s) read D_800930DA[i] - g_PeImageSectorTable[i] as the sector count, so it is the same table one entry ahead."
 0x800930E4,D_800930E4,g_PeImageTimTexturesEndSector,ok,likely,Asset_LoadTimTextures uses it as the end of the TIM texture sector range.
 0x80093166,D_80093166,g_BootDisplayDataLbaTbl,fix,likely,"disc_tables.c:270-272 reads it as a sector range into D_80011610 and boot_display uses g_MainAssetLbaTbl[0]-D_80093166 as image offset (image_display.c:236), i.e. display data, not audio."
 0x8009316C,D_8009316C,g_SmallTexLbaTbl,fix,likely,"disc_tables.c:203 loads object_texture_blob from it exactly when bit 0x2000 is clear, mirroring g_LargeTexLbaTbl; 'ObjectTex' does not distinguish them."
@@ -170,7 +170,7 @@ address,old_name,name,review,proposer_confidence,evidence
 0x800957EC,D_800957EC,g_GpuMoveImagePacket,ok,verified,"MoveImage2 fills D_800957EC[0..2] with source rect, destination x/y and size, and MoveImage hands the array to the GPU command routine."
 0x800957F8,D_800957F8,g_GpuOtTerminatorTarget,ok,likely,ClearOTag and ClearOTagR build the terminator word as the 24-bit address of D_800957F8 combined with 0x04000000 and store it in D_8009580C.
 0x8009580C,D_8009580C,g_GpuOtTerminatorWord,ok,verified,ClearOTag and ClearOTagR store the terminator link word there and point the last OT entry at it.
-0x80095820,D_80095820,g_GpuHRangeTable,ok,verified,"PutDispEnv indexes D_80095820[(video*5+widthIndex)*2] as the horizontal start and D_80095822 as the end (values 590/3150, 600/3160, ...)."
+0x80095820,D_80095820,g_GpuHRangeTable,ok,verified,"PutDispEnv indexes D_80095820[(video*5+widthIndex)*2] as the horizontal start and g_GpuHRangeEndTable as the end (values 590/3150, 600/3160, ...)."
 0x80095848,D_80095848,g_GpuDotClockDividers,ok,verified,"PutDispEnv multiplies screen.x by D_80095848[widthIndex] and adds 4*D_80095848[index] as the minimum span; bytes 10,8,7,5,4 are the GPU dot-clock dividers for 256/320/384/512/640 widths."
 0x80095864,D_80095864,g_GpuOtDmaMadrPtr,ok,verified,Holds 0x1F8010E0 (DMA6 MADR); Gpu_SendOtChain writes the last table address through it.
 0x80095868,D_80095868,g_GpuOtDmaBcrPtr,ok,verified,Holds 0x1F8010E4 (DMA6 BCR); Gpu_SendOtChain writes the entry count through it.
@@ -268,7 +268,7 @@ address,old_name,name,review,proposer_confidence,evidence
 0x8009CECC,D_8009CECC,g_TextboxHighlightColorB,ok,likely,Blue component of the textbox highlight colour.
 0x8009D070,D_8009D070,g_InvCompareLeftItem,ok,likely,Left item pointer of the inventory sort comparison.
 0x8009D074,D_8009D074,g_InvCompareRightItem,ok,likely,Right item pointer of the inventory sort comparison.
-0x8009D0A8,D_8009D0A8,g_InvAmmoSortStatIndex,fix,likely,"armor_capacity.c:638 copies it to g_InvSortStatIndex in Inv_SortAmmoSubrange (a stat index 0..2 used by the comparator at :560), mirroring D_8009D0A4 for weapons."
+0x8009D0A8,D_8009D0A8,g_InvAmmoSortStatIndex,fix,likely,"armor_capacity.c:638 copies it to g_InvSortStatIndex in Inv_SortAmmoSubrange (a stat index 0..2 used by the comparator at :560), mirroring g_InvWeaponSortStatIndex for weapons."
 0x8009D0CC,D_8009D0CC,g_InvRebuildFilterMode,fix,likely,game_data.c:909-911 sets it under INV_CMD_SET_REBUILD_FILTER and 689/708 branch on it to pick the list mask; 'BonusSlot' is unproven.
 0x8009D0D0,D_8009D0D0,g_InvRebuildMinFirstStat,fix,likely,"game_data.c:697 compares baseStats[0]+bonusStats[0] against it (beside minSecond/minThird) and :911 sets it from INV_CMD_SET_REBUILD_FILTER; it is a minimum stat, not a slot threshold."
 0x8009D0F8,D_8009D0F8,g_MenuInputRepeatTimer,fix,likely,"input_queue.c:200-212 resets to 0x10 on change, decrements 2 per call and triggers repeat when negative."

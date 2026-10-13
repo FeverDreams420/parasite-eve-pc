@@ -27,28 +27,28 @@ void FieldFx_SetSpriteTexturePreset(u8 mode) {
         g_FieldFxSpriteTpageY = 0x100;
         g_FieldFxSpriteClutX = 0;
         g_FieldFxSpriteClutY = 0x1D7;
-        D_800F3422 = 0;
+        g_FieldFxSpriteCellVBase = 0;
     }
     if (mode == 1) {
         g_FieldFxSpriteTpageX = 0x340;
         g_FieldFxSpriteTpageY = 0x160;
         g_FieldFxSpriteClutY = 0x1DB;
         g_FieldFxSpriteClutX = 0;
-        D_800F3422 = 0x60;
+        g_FieldFxSpriteCellVBase = 0x60;
     }
     if (mode == 2) {
         g_FieldFxSpriteTpageX = 0x340;
         g_FieldFxSpriteTpageY = 0x100;
         g_FieldFxSpriteClutX = 0;
         g_FieldFxSpriteClutY = 0x1D6;
-        D_800F3422 = 0;
+        g_FieldFxSpriteCellVBase = 0;
     }
     if (mode == 3) {
         g_FieldFxSpriteTpageX = 0x380;
         g_FieldFxSpriteTpageY = 0x100;
         g_FieldFxSpriteClutX = 0;
         g_FieldFxSpriteClutY = 0x1C8;
-        D_800F3422 = 0;
+        g_FieldFxSpriteCellVBase = 0;
     }
 
     g_FieldFxSpriteTpageValue = GetTPage(g_FieldFxSpriteColorMode, g_FieldFxSpriteBlendRate, g_FieldFxSpriteTpageX, g_FieldFxSpriteTpageY);
@@ -173,7 +173,7 @@ void FieldFx_DrawOrientedSprite(FieldOrientedSprite *sprite)
     FieldStripPacket *packet;
     FieldStripLink link;
 
-    packet = (FieldStripPacket *)(D_800B0E58[g_ActiveDrawSlot] + g_DrawPacketOffset);
+    packet = (FieldStripPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
     g_FieldFxScratch = FIELDFX_SCRATCH;
     g_FieldFxScratch->v = sprite->cell & 0xF0;
     g_FieldFxScratch->u = (sprite->cell - g_FieldFxScratch->v) << 4;
@@ -320,7 +320,7 @@ void FieldFx_DrawBillboard(FieldBillboard *board)
         (height << 5) * distance / (g_FieldFxBillboardScratch->depth * 4 + distance);
     halfWidth = projectedWidth >> 1;
     halfHeight = projectedHeight >> 1;
-    packet = (FieldStripPacket *)(D_800B0E58[g_ActiveDrawSlot] + g_DrawPacketOffset);
+    packet = (FieldStripPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
     packet->tag.length = 9;
     packet->code = 0x2C;
     /* PSY-Q setSemiTrans(packet, g_FieldFxSpriteSemiTrans). */
@@ -411,7 +411,7 @@ void FieldFx_DrawGlowSprite(FieldGlowSprite *sprite, GteMatrix *placement, u8 mo
     s32 flag;
     FieldStripLink link;
 
-    packet = (FieldStripPacket *)(D_800B0E58[g_ActiveDrawSlot] + g_DrawPacketOffset);
+    packet = (FieldStripPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
     g_FieldFxScratch = FIELDFX_SCRATCH;
     if (mode == 0) {
         /* Compose camera rotation with each placement column. */
@@ -445,7 +445,7 @@ void FieldFx_DrawGlowSprite(FieldGlowSprite *sprite, GteMatrix *placement, u8 mo
     FieldFx_ScaleColor((s16)sprite->depth, &sprite->r, &packet->r0);
     gte_ldv3(g_FieldFxCellQuad, &g_FieldFxCellQuad[1], &g_FieldFxCellQuad[2]);
     gte_rtpt_padded();
-    g_FieldFxScratch->v = D_800F3422 + (sprite->cell & 0xF0);
+    g_FieldFxScratch->v = g_FieldFxSpriteCellVBase + (sprite->cell & 0xF0);
     g_FieldFxScratch->u = (sprite->cell - g_FieldFxScratch->v) << 4;
     g_FieldFxScratch->clutX = sprite->clut << 4;
     g_FieldFxScratch->clutY = sprite->clut >> 4;
@@ -521,7 +521,7 @@ void FieldFx_DrawShadedQuad(FieldShadedQuadColors *colors, GteMatrix *placement,
     s32 flag;
     FieldShadedQuadLink link;
 
-    packet = (FieldShadedQuadPacket *)(D_800B0E58[g_ActiveDrawSlot] + g_DrawPacketOffset);
+    packet = (FieldShadedQuadPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
     g_FieldFxScratch = FIELDFX_SCRATCH;
     if (mode == 0) {
         /* Compose camera rotation with each placement column. */
@@ -666,9 +666,9 @@ void FieldFx_DrawShadedRing(FieldShadedRing *ring, GteMatrix *placement, u8 mode
     FieldFx_ScaleColor(ring->intensity, ring->color0, inner);
     points = ring->source;
     for (i = 0; i < ring->mode; i++) {
-        packet = (FieldRingPacket *)(D_800B0E58[g_ActiveDrawSlot] + g_DrawPacketOffset);
+        packet = (FieldRingPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
         g_DrawPacketOffset += sizeof(FieldRingPacket);
-        drawMode = D_800B0E58[g_ActiveDrawSlot] + g_DrawPacketOffset;
+        drawMode = g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset;
         g_DrawPacketOffset += 8;
         SetDrawTPage(drawMode, 0, 0, (g_FieldFxSpriteBlendRate & 3) << 5);
         next = (i + 1) % ring->mode;
@@ -796,7 +796,7 @@ void FieldFx_DrawTexturedStrip(FieldTexturedStrip *strip)
     node = strip->nodes;
     i = 0;
     g_FieldFxScratch = FIELDFX_SCRATCH;
-    packet = (FieldStripPacket *)(D_800B0E58[g_ActiveDrawSlot] + g_DrawPacketOffset);
+    packet = (FieldStripPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
     g_FieldFxScratch->clutX = strip->clut << 4;
     g_FieldFxScratch->clutY = strip->clut >> 4;
     while (i < strip->count - 1) {

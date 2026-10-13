@@ -23,6 +23,8 @@
 #include "pe1/script_queue.h"
 #include "pe1/text.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 s32 g_ItemDropRngIndex;
 s32 g_InvPackedListCount;
 s16 *g_InvItemPtr;
@@ -124,8 +126,6 @@ void GameTime_SetCounterSeconds(int timer, int seconds) {
 
 int g_ItemDropRngIndex;
 
-#define D_800A76A4_VALUE (D_800A76A4[0])
-
 #define SCRAMBLE_RANDOM_BYTES()                    \
     {                                           \
         int scramble_i_;                           \
@@ -144,7 +144,7 @@ void Inv_SetDefaultItemId(void) {
     int bit;
     int index;
 
-    seed = D_800A76A4_VALUE / 60;
+    seed = (unsigned int)g_GameTimers[0].current / 60;
     bits = 0;
 
     for (index = 0; index < 0x11; index++) {
@@ -262,7 +262,7 @@ void Inv_BuildItemGridFromCategory(void)
     Inv_SelectActiveList(0);
 
     i = 0x31;
-    clear = D_800C0EAA;
+    clear = &g_AyaInventoryItems[0x31];
     do {
         *clear = 0;
         i--;
@@ -287,12 +287,12 @@ void Inv_BuildItemGridFromCategory(void)
         base = g_InvCategoryBaseItemId + i % 3;
         src = Item_LookupBaseData(base - 1);
         g_InvSpecialItemRecords[i] = *src;
-        D_800A1E6D[i][0] = 0;
-        D_800A1E76[i][0] = 999;
+        g_InvSpecialItemRecords[i].baseStats[2] = 0;
+        g_InvSpecialItemRecords[i].bonusStats[2] = 999;
     } while (++i < 9);
 
     i = 0x63;
-    clear = D_800C1F7E;
+    clear = &g_WayneStorageItems[0x63];
     do {
         *clear = 0;
         i--;
@@ -300,7 +300,7 @@ void Inv_BuildItemGridFromCategory(void)
     } while (i >= 0);
 
     i = 0x51;
-    clear = D_800C2022;
+    clear = (s16 *)&g_InvItemArray[0x51];
     do {
         *clear = 0;
         i--;

@@ -11,8 +11,8 @@
 #include "pe1/room_m350_drop.h"
 
 /* Colour seeds handed to the trail and glow drawers. */
-extern RenderColor D_8019A3C8;
-extern RenderColor D_8019A3D0;
+extern RenderColor g_RoomM350BlackColor;
+extern RenderColor g_RoomM350GlowSpriteColor;
 
 /* Actor found by RoomM350_HandConfigure (type and sub id lookup), and the pair of
  * anchor positions the paired effects attach to. */
@@ -25,7 +25,7 @@ extern GteShortVector g_RoomM350OrbSpawnPoint;
 
 /* First animation event slot; the event controller clears the four slots
  * as one word and sets them byte by byte from here. */
-extern unsigned char D_8019A854;
+extern unsigned char g_RoomM350DropEventSlots;
 
 /* Rotation matrix the cloud controller builds and the swept flare uses. */
 extern GteMatrix g_RoomM350RushMatrix;

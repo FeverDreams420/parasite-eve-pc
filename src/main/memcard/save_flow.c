@@ -582,14 +582,14 @@ void MemCard_AbortActiveOperation(MemCardPortState *state) {
         base = g_MemCardPortStates;
         is_second = base < state;
         state_index = state - base;
-        name_buf = D_8009EE70;
+        name_buf = g_MemCardFilePath;
         /* Scheduling dependency for the retail argument setup. */
         retry = 0;
         slot = state->selectedSlot;
 
-        sprintf(name_buf, D_80092224, is_second,
+        sprintf(name_buf, g_MemCardFilenameFormatPtr, is_second,
                         state->slots[slot].titleStyleFlag + 0x30, slot + 0x41);
-        sprintf(path, g_MemCardSaveSupportData.saveFileFormat, state_index, D_8009EE70);
+        sprintf(path, g_MemCardSaveSupportData.saveFileFormat, state_index, g_MemCardFilePath);
 
         do {
             fd = open(path, 1);
@@ -616,7 +616,7 @@ void MemCard_AbortActiveOperation(MemCardPortState *state) {
 
 static inline void MemCard_FormatSlotFileName(MemCardPortState *state,
                                               int slot) {
-    sprintf(D_8009EE70, D_80092224, state > g_MemCardPortStates,
+    sprintf(g_MemCardFilePath, g_MemCardFilenameFormatPtr, state > g_MemCardPortStates,
                     state->slots[slot].titleStyleFlag + '0', slot + 'A');
 }
 
@@ -644,7 +644,7 @@ static inline void MemCard_NoteSaveFile(MemCardPortState *state,
                                         MemCardDirEntry *entry) {
     MemCardSaveSlot *slot;
 
-    if (strncmp(entry->name, &D_80092224[6], 12) == 0) {
+    if (strncmp(entry->name, &g_MemCardFilenameFormatPtr[6], 12) == 0) {
         slot = &state->slots[entry->name[19] - 'A'];
         slot->state = MEMCARD_SLOT_OCCUPIED;
         slot->metadataReady = 0;
@@ -845,7 +845,7 @@ void MemCard_UpdateSaveState(int port) {
         state->selectedSlot = slot;
         if (slot != 0xFF) {
             MemCard_FormatSlotFileName(state, slot);
-            if ((state->fileDescriptor = open(D_8009EE70, 1)) >= 0) {
+            if ((state->fileDescriptor = open(g_MemCardFilePath, 1)) >= 0) {
                 state->managerState = 8;
                 state->transferData = g_MemCardPreviewBuffers[port].bytes;
                 state->transferSize = 0x80;
@@ -870,7 +870,7 @@ void MemCard_UpdateSaveState(int port) {
         }
         state->slots[state->selectedSlot].titleStyleFlag = g_SaveTitleStyleFlag;
         MemCard_FormatSlotFileName(state, state->selectedSlot);
-        if ((fd = state->fileDescriptor = open(D_8009EE70, 0x10200)) >= 0) {
+        if ((fd = state->fileDescriptor = open(g_MemCardFilePath, 0x10200)) >= 0) {
             close(fd);
             state->fileDescriptor = -1;
             state->managerState = 6;
@@ -886,7 +886,7 @@ void MemCard_UpdateSaveState(int port) {
             break;
         }
         MemCard_FormatSlotFileName(state, state->selectedSlot);
-        if ((state->fileDescriptor = open(D_8009EE70, 1)) >= 0) {
+        if ((state->fileDescriptor = open(g_MemCardFilePath, 1)) >= 0) {
             state->retryCount = 30;
             state->managerState = 7;
         } else {
@@ -900,7 +900,7 @@ void MemCard_UpdateSaveState(int port) {
             break;
         }
         MemCard_FormatSlotFileName(state, state->selectedSlot);
-        if ((state->fileDescriptor = open(D_8009EE70, 2)) >= 0) {
+        if ((state->fileDescriptor = open(g_MemCardFilePath, 2)) >= 0) {
             state->managerState = 9;
             state->transferData = g_MemCardFileBuffer;
             state->retryCount = 30;
@@ -1007,11 +1007,11 @@ void MemCard_UpdateSaveState(int port) {
             break;
         }
         MemCard_FormatSlotFileName(state, state->selectedSlot);
-        if ((fd = state->fileDescriptor = open(D_8009EE70, 1)) >= 0) {
+        if ((fd = state->fileDescriptor = open(g_MemCardFilePath, 1)) >= 0) {
             close(fd);
             state->fileDescriptor = -1;
             MemCard_FormatSlotFileName(state, state->selectedSlot);
-            if (erase(D_8009EE70) != 0) {
+            if (erase(g_MemCardFilePath) != 0) {
                 state->managerState = 4;
                 state->retryCount = 10;
             } else {
@@ -1052,7 +1052,7 @@ void Save_StartWriteSlot(int port, int arg_slot) {
     slot_state = &state->slots[slot];
     firstSlotLetter = 0x41;
     MemCard_CloseAll();
-    formatBuffer = D_8009EE70;
+    formatBuffer = g_MemCardFilePath;
     Save_BuildHeader();
 
     sequence = state->sequence;
@@ -1070,12 +1070,12 @@ void Save_StartWriteSlot(int port, int arg_slot) {
     }
 
     formattedSlot = (u8)slot;
-    sprintf(path, D_80092224,
+    sprintf(path, g_MemCardFilenameFormatPtr,
                     state > g_MemCardPortStates,
                     state->slots[formattedSlot].titleStyleFlag + 0x30,
                     formattedSlot + firstSlotLetter);
     /* Recompute the path address after formatting it. */
-    path = D_8009EE70;
+    path = g_MemCardFilePath;
     Save_BuildCardFile(path);
 
     state->listCursor = slot;

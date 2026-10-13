@@ -3,7 +3,7 @@
 /* Spark that drifts with damped velocity for 44 frames; state 0 draws a
  * flickering coloured glow, state 1 a larger glow that fades with a sine. */
 int MenuCard_DriftGlowParticle(int mode, RoomDampedSpark *spark) {
-    GteRotation rotation = D_801ED7FC;
+    GteRotation rotation = g_MenuCardEffectSpinRotation;
     RenderColor color;
     int angle;
     int size;
@@ -32,7 +32,7 @@ int MenuCard_DriftGlowParticle(int mode, RoomDampedSpark *spark) {
             int palette;
             angle = ((s16)spark->timer << 10) / 44;
             fade = 128 - ((g_FieldFxCurrentAge & 1) << 5);
-            FieldFx_SampleColorTrack(D_801F1BB0, &color, (s16)spark->timer);
+            FieldFx_SampleColorTrack(g_MenuCardDriftGlowColorTrack, &color, (s16)spark->timer);
             rotation.z = -g_FieldFxCurrentAge * 16;
             size = rcos(angle) + 0x1000;
             D_800F336C = 1;
@@ -77,11 +77,11 @@ int MenuCard_DriftGlowParticle(int mode, RoomDampedSpark *spark) {
 int MenuCard_RingBurstController(int mode, MemcardRingBurst *burst) {
     GteShortVector position;
     GteShortVector offset;
-    GteRotation spin = D_801ED7FC;
-    GteRotation tilt = D_801ED804;
-    RenderColor glow = D_801ED80C;
-    RenderColor ring = D_801ED810;
-    RenderColor band = D_801ED814;
+    GteRotation spin = g_MenuCardEffectSpinRotation;
+    GteRotation tilt = g_MenuCardEffectTiltRotation;
+    RenderColor glow = g_MenuCardRingBurstGlowColor;
+    RenderColor ring = g_MenuCardRingBurstRingColor;
+    RenderColor band = g_MenuCardRingBurstBandColor;
     RoomDampedSpark *child;
     int i;
     int angle;
@@ -224,7 +224,7 @@ int MenuCard_RingBurstController(int mode, MemcardRingBurst *burst) {
  * coloured glint, state 1 rises with jitter as a pulsing flame frame,
  * state 2 lies on the floor as a flat glow that fades with a sine. */
 int MenuCard_RisingEmberParticle(int mode, RoomDampedSpark *spark) {
-    GteRotation rotation = D_801ED7FC;
+    GteRotation rotation = g_MenuCardEffectSpinRotation;
     RenderColor color;
     GteShortVector position;
     GteRotation tilt;
@@ -271,7 +271,7 @@ int MenuCard_RisingEmberParticle(int mode, RoomDampedSpark *spark) {
             int kind;
             int palette;
             angle = (s16)spark->timer;
-            FieldFx_SampleColorTrack(D_801F1C28, &color, angle * 2);
+            FieldFx_SampleColorTrack(g_MenuCardRisingEmberColorTrack, &color, angle * 2);
             rotation.z = spark->x + g_FieldFxCurrentAge * 32;
             size = rsin(angle << 7);
             g_FieldFxSpriteParams.parameter00 = 16;
@@ -361,13 +361,13 @@ int MenuCard_RisingEmberParticle(int mode, RoomDampedSpark *spark) {
 int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
     GteShortVector from;
     GteShortVector to;
-    MemcardJointOffset hand = D_801ED818;
-    MemcardJointOffset tipA = D_801ED820;
-    MemcardJointOffset tipB = D_801ED828;
-    MemcardJointOffset center = D_801ED830;
-    RenderColor inner = D_801ED838;
-    RenderColor outer = D_801ED83C;
-    RenderColor edge = D_801ED840;
+    MemcardJointOffset hand = g_MenuCardHandOffset;
+    MemcardJointOffset tipA = g_MenuCardCrossFlashTipAOffset;
+    MemcardJointOffset tipB = g_MenuCardCrossFlashTipBOffset;
+    MemcardJointOffset center = g_MenuCardCrossFlashCenterOffset;
+    RenderColor inner = g_MenuCardCrossFlashInnerColor;
+    RenderColor outer = g_MenuCardCrossFlashOuterColor;
+    RenderColor edge = g_MenuCardCrossFlashEdgeColor;
     RenderMatrixSlot *matrixSlot;
     RoomDampedSpark *child;
     int index;
@@ -380,7 +380,7 @@ int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
         flash->attachB = 19;
         flash->reserved04 = 0;
         flash->timer = 0;
-        D_801F1F38 = 0;
+        g_BattleCrossFlashStop = 0;
         tipA.x *= -1;
         tipB.x *= -1;
         FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 8, &hand, &from);
@@ -399,8 +399,8 @@ int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
                              (FieldFxCallbackListCallback)MenuCard_RisingEmberParticle);
     case 1:
         flash->timer++;
-        D_801F1F3A = 1;
-        if (D_801F1F38 == 0) {
+        g_MenuCardCrossFlashRaised = 1;
+        if (g_BattleCrossFlashStop == 0) {
             int phase = (s16)flash->timer % 3;
             if (phase == 0) {
                 FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, flash->attachA, &center, &from);
@@ -613,7 +613,7 @@ int MenuCard_FadingGlintParticle(int mode, RoomDampedSpark *spark) {
  * early frames and flashes a glint, ring and halo while it fades. */
 int MenuCard_GlintBurstController(int mode, MemcardGlintBurst *burst) {
     RenderColor color;
-    RenderColor flash = D_801ED844;
+    RenderColor flash = g_MenuCardGlintBurstFlashColor;
     RoomDampedSpark *child;
     RenderMatrixSlot *matrixSlot;
     int i;
@@ -700,7 +700,7 @@ int MenuCard_GlintBurstController(int mode, MemcardGlintBurst *burst) {
             FieldFx_DrawShapeQuads((GteShortVector *)burst, 0, 0x2000, 0x2000,
                           (s16)g_FieldFxSpriteParams.parameter02 * (g_FieldFxCurrentAge / 4) + 192,
                           GetClut(192, palette), 1, fade, 0);
-            FieldFx_SampleColorTrack(D_801F1CB0, &color, g_FieldFxCurrentAge);
+            FieldFx_SampleColorTrack(g_MenuCardGlintBurstColorTrack, &color, g_FieldFxCurrentAge);
             scale = rsin(angle) + 0x1000;
             if (g_FieldFxCurrentAge & 1) {
                 fade = fade * 2 / 3;
@@ -731,8 +731,8 @@ int MenuCard_GlintBurstController(int mode, MemcardGlintBurst *burst) {
 int MenuCard_SpinRingParticle(int mode, MemcardSpinParticle *p) {
     GteShortVector offset;
     RenderColor color;
-    RenderColor colorA = D_801ED848;
-    RenderColor colorB = D_801ED84C;
+    RenderColor colorA = g_MenuCardSpinRingColorA;
+    RenderColor colorB = g_MenuCardSpinRingColorB;
     MemcardModelMatrix matrix;
     MemcardModelScale scale;
     RenderMatrixSlot *matrixSlot;
@@ -769,7 +769,7 @@ int MenuCard_SpinRingParticle(int mode, MemcardSpinParticle *p) {
         switch (p->state) {
         case 0:
             size = rsin((s16)p->timer << 5);
-            FieldFx_SampleColorTrack(D_801F1CD8, &color, (s16)p->timer);
+            FieldFx_SampleColorTrack(g_MenuCardSpinRingColorTrack, &color, (s16)p->timer);
             FieldFx_DrawRingBand((GteShortVector *)p, 1400, 2200, 18, &p->rotation, size, size,
                           0, &color, 128, 1);
             break;

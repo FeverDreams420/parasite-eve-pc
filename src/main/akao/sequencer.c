@@ -5,6 +5,7 @@
 #include "pe1/akao/spu_common.h"
 #include "pe1/akao/tick.h"
 #include "pe1/akao/track.h"
+#include "pe1/akao/voice_masks.h"
 #include "pe1/akao/voice_state.h"
 #include "pe1/akao_counters.h"
 #include "pe1/akao_script.h"
@@ -17,14 +18,14 @@ void Seq_GetGlobalPitch(unsigned int *out)
 }
 
 void Seq_ApplyGlobalPitch(void) {
-    unsigned short value = D_8009D2B6;
+    unsigned short value = g_AkaoCdInputVolume;
     SpuCommonAttr *regs;
 
-    regs = (SpuCommonAttr *)D_800C0D90;
+    regs = &g_AkaoSpuCommonAttr;
     regs->mask = 0x1C0;
-    D_800C0DA4 = 0;
-    D_800C0DA2 = value;
-    D_800C0DA0 = value;
+    g_AkaoSpuCommonAttr.cd.reverb = 0;
+    g_AkaoSpuCommonAttr.cd.volume.right = value;
+    g_AkaoSpuCommonAttr.cd.volume.left = value;
     SpuSetCommonAttr(regs);
 }
 
@@ -62,23 +63,23 @@ void Spu_StepReverbLoad(void)
     int count;
     AkaoTrack *track;
     AkaoSequencerBank *bank;
-    if ((++D_8009CDEC & 3) != 0)
+    if ((++g_AkaoGlobalSlideTick & 3) != 0)
         return;
     if (g_AkaoGlobalPitchSlideCounter != 0) {
         g_AkaoGlobalPitchSlideCounter--;
-        D_8009D2B4 += g_AkaoGlobalPitchSlideStep;
+        g_AkaoCdInputVolumeAccum += g_AkaoGlobalPitchSlideStep;
         Seq_ApplyGlobalPitch();
     }
     if (g_AkaoGlobalD2D0SlideCounter != 0) {
         g_AkaoGlobalD2D0SlideCounter--;
-        D_8009D2D0 += g_AkaoGlobalD2D0SlideStep;
+        g_AkaoTempoScaleAccum += g_AkaoGlobalD2D0SlideStep;
     }
     if (g_AkaoGlobalD2CCSlideCounter != 0) {
         oldGlobalParam = g_AkaoGlobalPitchDepth;
         g_AkaoGlobalD2CCSlideCounter--;
         value = oldGlobalParam + g_AkaoGlobalD2CCSlideStep;
         if ((value & 0xFF0000) != (oldGlobalParam & 0xFF0000)) {
-            track = (AkaoTrack *)D_800B8AC0;
+            track = (AkaoTrack *)g_AkaoSequencerTracks;
             for (count = 24; count != 0; --count, ++track)
                 track->update_flags |= 0x10;
         }
@@ -90,7 +91,7 @@ void Spu_StepReverbLoad(void)
         bank->pitch_slide_duration--;
         value = oldPrimaryPitch + bank->pitch_delta;
         if ((value & 0x7F0000) != (oldPrimaryPitch & 0x7F0000))
-            Seq_MarkDirtyTracks((AkaoTrack *)D_800B8AC0);
+            Seq_MarkDirtyTracks((AkaoTrack *)g_AkaoSequencerTracks);
         ((AkaoSequencerBank *)D_8009D2C8)->pitch_current = value;
         bank = (AkaoSequencerBank *)((AkaoBankCursor *)&D_8009D2C8)->bank;
     }
@@ -107,7 +108,7 @@ void Spu_StepReverbLoad(void)
     pending = g_SpuActiveVoiceMask;
     if (pending) {
         count = 0x1000;
-        track = (AkaoTrack *)D_800BC000;
+        track = g_AkaoVoiceChannelTable;
         do {
             if (pending & count) {
                 if (track->panpot_duration) {
@@ -156,7 +157,7 @@ void Akao_Tick(void)
 
     Akao_ProcessVoiceQueue();
     if (D_8009D2C8->timing.active_voice_mask) {
-        scale = D_8009D2D2;
+        scale = g_AkaoTempoScale;
         tempo = D_8009D2C8->timing.tempo.half.integer;
         if (scale) {
             if (scale < 0x80)
@@ -169,7 +170,7 @@ void Akao_Tick(void)
             D_8009D2C8->timing.tick_accumulator &= 0xFFFF;
             do {
                 bit = 1;
-                track = D_800B8AC0;
+                track = g_AkaoSequencerTracks;
                 mask = D_8009D2C8->timing.active_voice_mask;
                 do {
                     if (mask & bit) {
@@ -207,19 +208,19 @@ void Akao_Tick(void)
                         if (++D_8009D2C8->timing.beat == D_8009D2C8->timing.beats_per_measure) {
                             D_8009D2C8->timing.beat = 0;
                             D_8009D2C8->timing.measure++;
-                            if (D_8009D22C)
-                                D_8009D22C--;
+                            if (g_AkaoSeqLoopCounter)
+                                g_AkaoSeqLoopCounter--;
                         }
                     }
                 }
-            } while (D_8009D22C);
+            } while (g_AkaoSeqLoopCounter);
         }
     }
 
     if (D_8009D2C8[1].timing.active_voice_mask) {
         D_8009D2C8 = D_8009D2C8 + 1;
         tempo = D_8009D2C8->timing.tempo.half.integer;
-        scale = D_8009D2D2;
+        scale = g_AkaoTempoScale;
         if (scale) {
             if (scale < 0x80)
                 tempo += (tempo * scale) >> 7;
@@ -230,7 +231,7 @@ void Akao_Tick(void)
         if ((D_8009D2C8->timing.tick_accumulator & 0xFFFF0000) || (g_AkaoSeqPendingFlags & 4)) {
             D_8009D2C8->timing.tick_accumulator &= 0xFFFF;
             bit = 1;
-            track = &D_800B8AC0[24];
+            track = &g_AkaoSequencerTracks[24];
             mask = D_8009D2C8->timing.active_voice_mask;
             do {
                 if (mask & bit) {
@@ -262,8 +263,8 @@ void Akao_Tick(void)
                     if (++D_8009D2C8->timing.beat == D_8009D2C8->timing.beats_per_measure) {
                         D_8009D2C8->timing.beat = 0;
                         D_8009D2C8->timing.measure++;
-                        if (D_8009D22C)
-                            D_8009D22C--;
+                        if (g_AkaoSeqLoopCounter)
+                            g_AkaoSeqLoopCounter--;
                     }
                 }
             }
@@ -274,7 +275,7 @@ void Akao_Tick(void)
     if (!D_8009D2C8->timing.active_voice_mask && !D_8009D2C8->timing.pending_restore_mask
         && D_8009D2C8[1].timing.active_voice_mask) {
         Akao_CopyWords(D_8009D2C8[1].words, D_8009D2C8->words, sizeof(AkaoTickBank));
-        Akao_CopyWords(D_800B8AC0[24].words, D_800B8AC0[0].words, sizeof(AkaoTickTrack) * 24);
+        Akao_CopyWords(g_AkaoSequencerTracks[24].words, g_AkaoSequencerTracks[0].words, sizeof(AkaoTickTrack) * 24);
         D_8009D2C8[1].timing.bank_id = 0;
         D_8009D2C8[1].timing.active_voice_mask = 0;
     }
@@ -286,7 +287,7 @@ void Akao_Tick(void)
         if ((accumulator & 0xFFFF0000) || (g_AkaoSeqPendingFlags & 4)) {
             g_AkaoSfxTickAccumulator = accumulator & 0xFFFF;
             bit = 0x1000;
-            track = D_800BC000;
+            track = (AkaoTickTrack *)g_AkaoVoiceChannelTable;
             do {
                 if (mask & bit) {
                     if (!(g_AkaoSeqPendingFlags & 2) || (track->timing.key_on_mask & 0x2000000)) {
@@ -2210,14 +2211,14 @@ void SeqOp_LoadNestedStreams(AkaoTrack *track) {
         second = 0;
     }
 
-    D_800B89D4 = 0;
-    D_800B89D8 = 0;
+    g_AkaoNestedKeyOffMask = 0;
+    g_AkaoNestedKeyOnMask = 0;
     {
         AkaoU16 *panpot = &track->panpot;
         int *expression = &track->expression_value;
 
-        D_800B89DC = *panpot >> 8;
-        D_800B89E0 = *expression >> 23;
+        g_AkaoNestedPan = *panpot >> 8;
+        g_AkaoNestedPanTarget = *expression >> 23;
     }
     Seq_StartNestedStreams(&g_AkaoNestedSource, first, second);
     *(u8 **)track += 4;

@@ -6,8 +6,9 @@
 
 /* Frames left on the menu effect timer (set to 0x5A by the main update). */
 extern unsigned char g_AyaStatusEffectTimer;
-/* Equip-slot index chosen by Menu_SetEquipSlotIndex. */
-extern unsigned char D_8009CE94;
+/* Set by Menu_SetEquipSlotIndex (1 with game-state flag 0x40000000, see
+ * Menu_FullInit): textbox glyph 0x0F then draws 7 pixels further left. */
+extern unsigned char g_TextboxKernGlyph0F;
 /* Memory-card dialog mode and the pending confirm flag. */
 extern int g_McDialogMode;
 extern int g_MenuMemCardConfirmPending;

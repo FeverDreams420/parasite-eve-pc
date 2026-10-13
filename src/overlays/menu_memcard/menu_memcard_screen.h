@@ -53,8 +53,8 @@ typedef struct MemcardTim {
 extern MemcardScreenBuffer *g_MemcardScreenBuffers[2];
 extern MemcardScreenBuffer *g_MemcardCurrentScreen;
 extern s32 g_MemcardScreenPage;
-extern u8 D_80193254[];
-extern s32 D_80193278;
+extern u8 g_MemcardImageBundle[];
+extern s32 g_MemcardImageOffsetsView4; /* separate view of g_MemcardImageOffsets[4]: a shared base folds the relocation differently */
 
 void SetDispMask(s32 mask);
 void ResetGraph(s32 mode);

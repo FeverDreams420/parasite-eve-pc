@@ -59,7 +59,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
     var_s7 = (FxCommonColoredQuad *)(((u8 *)var_t8) + resourceOffset);
     resourceOffset = var_t8->offsets[5];
     gt3Slot.cursor = (FxCommonColoredTexturedTriangle *)(((u8 *)var_t8) + resource_offset2);
-    initialDepthBias = D_801EA5E0;
+    initialDepthBias = g_FxCommonDepthBase;
     var_fp = (FxCommonTexturedQuad *)(((u8 *)var_t8) + resourceOffset);
     resourceOffset = var_t8->offsets[7];
     ((volatile FxCommonRenderScratchpad *)0x1F800000)->depthBias = initialDepthBias;
@@ -91,7 +91,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                         &scratchpad->orderingDepth, &scratchpad->transformFlags);
                     temp_a0 = scratchpad->orderingDepth;
                     if (temp_a0 > 0) {
-                        scratchpad->orderingDepth = (temp_a0 + D_801EA5E0) >> 2;
+                        scratchpad->orderingDepth = (temp_a0 + g_FxCommonDepthBase) >> 2;
                         if (temp_v1 > 0) {
                             ((FxCommonF3Packet *)(var_s1 - 0x4))->tag.bytes.length = 4;
                             ((FxCommonF3Packet *)(var_s1 - 0x4))->xy0 =
@@ -154,7 +154,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                             &scratchpad->transformFlags);
                         temp_a0 = scratchpad->orderingDepth;
                         if (temp_a0 > 0) {
-                            scratchpad->orderingDepth = (temp_a0 + D_801EA5E0) >> 2;
+                            scratchpad->orderingDepth = (temp_a0 + g_FxCommonDepthBase) >> 2;
                             if (temp_v1_3 > 0) {
                                 ((FxCommonF4Packet *)(var_s1 - 0x4))->tag.bytes.length = 5;
                                 ((FxCommonF4Packet *)(var_s1 - 0x4))->xy0 =
@@ -215,7 +215,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                         &scratchpad->orderingDepth, &scratchpad->transformFlags);
                     temp_a0 = scratchpad->orderingDepth;
                     if (temp_a0 > 0) {
-                        scratchpad->orderingDepth = (temp_a0 + D_801EA5E0) >> 2;
+                        scratchpad->orderingDepth = (temp_a0 + g_FxCommonDepthBase) >> 2;
                         if (temp_v1_5 > 0) {
                             ((FxCommonG3Packet *)(var_s1 - 0x14))->tag.bytes.length = 6;
                             ((FxCommonG3Packet *)(var_s1 - 0x14))->xy0 =
@@ -275,7 +275,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                         &scratchpad->orderingDepth, &scratchpad->transformFlags);
                     temp_a0 = scratchpad->orderingDepth;
                     if (temp_a0 > 0) {
-                        scratchpad->orderingDepth = (temp_a0 + D_801EA5E0) >> 2;
+                        scratchpad->orderingDepth = (temp_a0 + g_FxCommonDepthBase) >> 2;
                         if (temp_v1_7 > 0) {
                             ((FxCommonG4Packet *)(var_s1 - 0x1c))->tag.bytes.length = 8;
                             ((FxCommonG4Packet *)(var_s1 - 0x1c))->xy0 =
@@ -1125,7 +1125,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                         &scratchpad->screenCoordinates[1], &scratchpad->screenCoordinates[2],
                         &scratchpad->perspective, &scratchpad->orderingDepth,
                         &scratchpad->transformFlags);
-                    orderingDepth6 = (scratchpad->orderingDepth + D_801EA5E0) >> 2;
+                    orderingDepth6 = (scratchpad->orderingDepth + g_FxCommonDepthBase) >> 2;
                     scratchpad->orderingDepth = orderingDepth6;
                     if ((temp_v0_2 > 0) && (((orderingDepth6 > 0) && (orderingDepth6 < 0x1000)))) {
                         u32 gt3PreviousLink;
@@ -1206,7 +1206,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                         &scratchpad->screenCoordinates[2], &scratchpad->screenCoordinates[3],
                         &scratchpad->perspective, &scratchpad->orderingDepth,
                         &scratchpad->transformFlags);
-                    temp_v1_14 = (scratchpad->orderingDepth + D_801EA5E0) >> 2;
+                    temp_v1_14 = (scratchpad->orderingDepth + g_FxCommonDepthBase) >> 2;
                     scratchpad->orderingDepth = temp_v1_14;
                     if ((temp_v0_3 > 0) && (((temp_v1_14 > 0) && (temp_v1_14 < 0x1000)))) {
                         u32 gt4PreviousLink;
@@ -1692,9 +1692,9 @@ void FxCommon_DrawModelTinted(void *context, FxCommonPolyModel *model, int index
                 gte_stsxy3(&ft3Packet->xy0, &ft3Packet->xy1, &ft3Packet->xy2);
                 ft3Packet->tag.bytes.length = 7;
                 *(u32 *)&ft3Packet->rgb = ft3->color.word;
-                ft3Packet->rgb.r = D_801EA264[0];
-                ft3Packet->rgb.g = D_801EA264[1];
-                ft3Packet->rgb.b = D_801EA264[2];
+                ft3Packet->rgb.r = g_FxCommonFlatColor[0];
+                ft3Packet->rgb.g = g_FxCommonFlatColor[1];
+                ft3Packet->rgb.b = g_FxCommonFlatColor[2];
                 *(u32 *)&ft3Packet->uv0 = ft3->uv0;
                 *(u32 *)&ft3Packet->uv1 = ft3->uv1;
                 *(u32 *)&ft3Packet->uv2 = ft3->uv2;
@@ -1721,9 +1721,9 @@ void FxCommon_DrawModelTinted(void *context, FxCommonPolyModel *model, int index
                 gte_stsxy2(&ft4Packet->xy3);
                 ft4Packet->tag.bytes.length = 9;
                 *(u32 *)&ft4Packet->rgb = ft4->color.word;
-                ft4Packet->rgb.r = D_801EA264[0];
-                ft4Packet->rgb.g = D_801EA264[1];
-                ft4Packet->rgb.b = D_801EA264[2];
+                ft4Packet->rgb.r = g_FxCommonFlatColor[0];
+                ft4Packet->rgb.g = g_FxCommonFlatColor[1];
+                ft4Packet->rgb.b = g_FxCommonFlatColor[2];
                 *(u32 *)&ft4Packet->uv0 = ft4->uv0;
                 *(u32 *)&ft4Packet->uv1 = ft4->uv1;
                 *(u32 *)&ft4Packet->uv2 = ft4->uv23.word;
@@ -1748,10 +1748,10 @@ void FxCommon_DrawModelTinted(void *context, FxCommonPolyModel *model, int index
                 gte_stsxy3(&gt3Packet->xy0, &gt3Packet->xy1, &gt3Packet->xy2);
                 gt3Packet->tag.bytes.length = 9;
                 *(u32 *)&gt3Packet->rgb0 = gt3->colors[0].word;
-                gt3Packet->rgb0.r = D_801EA264[0];
-                gt3Packet->rgb0.g = D_801EA264[1];
-                gt3Packet->rgb0.b = D_801EA264[2];
-                *(u32 *)&gt3Packet->rgb2 = *(u32 *)&gt3Packet->rgb1 = *(u32 *)D_801EA264;
+                gt3Packet->rgb0.r = g_FxCommonFlatColor[0];
+                gt3Packet->rgb0.g = g_FxCommonFlatColor[1];
+                gt3Packet->rgb0.b = g_FxCommonFlatColor[2];
+                *(u32 *)&gt3Packet->rgb2 = *(u32 *)&gt3Packet->rgb1 = *(u32 *)g_FxCommonFlatColor;
                 *(u32 *)&gt3Packet->uv0 = gt3->uv0;
                 *(u32 *)&gt3Packet->uv1 = gt3->uv1;
                 *(u32 *)&gt3Packet->uv2 = gt3->uv2;
@@ -1778,11 +1778,11 @@ void FxCommon_DrawModelTinted(void *context, FxCommonPolyModel *model, int index
                 gte_stsxy2(&gt4Packet->xy3);
                 gt4Packet->tag.bytes.length = 12;
                 *(u32 *)&gt4Packet->rgb0 = gt4->colors[0].word;
-                gt4Packet->rgb0.r = D_801EA264[0];
-                gt4Packet->rgb0.g = D_801EA264[1];
-                gt4Packet->rgb0.b = D_801EA264[2];
+                gt4Packet->rgb0.r = g_FxCommonFlatColor[0];
+                gt4Packet->rgb0.g = g_FxCommonFlatColor[1];
+                gt4Packet->rgb0.b = g_FxCommonFlatColor[2];
                 *(u32 *)&gt4Packet->rgb3 = *(u32 *)&gt4Packet->rgb2 = *(u32 *)&gt4Packet->rgb1 =
-                    *(u32 *)D_801EA264;
+                    *(u32 *)g_FxCommonFlatColor;
                 *(u32 *)&gt4Packet->uv0 = gt4->uv0;
                 *(u32 *)&gt4Packet->uv1 = gt4->uv1;
                 *(u32 *)&gt4Packet->uv2 = gt4->uv23.word;
@@ -2020,7 +2020,7 @@ void SetGeomScreen(int);
 void FxCommon_SelectBufferAllocation(void **);
 
 void FxCommon_InitDisplay(void) {
-    char *base = &D_8019C1F8;
+    char *base = (char *)g_FxCommonFrames;
     s16 rect[4];
 
     SetDispMask(0);
@@ -2032,24 +2032,24 @@ void FxCommon_InitDisplay(void) {
 
     FxCommon_SelectBufferAllocation((void **)base);
     FxCommon_SelectBufferAllocation((void **)(base + 0x78));
-    D_8019C1FC = D_800B0E38.ordering[0];
-    D_8019C274 = D_800B0E3C;
-    ClearOTagR(D_8019C1FC, 0x1000);
-    ClearOTagR(D_8019C274, 0x1000);
+    g_FxCommonFrames[0].buffer.allocation = (FxCommonPacketTag *)g_OtBufferTable[0];
+    g_FxCommonFrames[1].buffer.allocation = (FxCommonPacketTag *)g_RenderOtBufferBaseAlt[0];
+    ClearOTagR(g_FxCommonFrames[0].buffer.allocation, 0x1000);
+    ClearOTagR(g_FxCommonFrames[1].buffer.allocation, 0x1000);
 
     SetDefDrawEnv(base + 8, 0, 0, 0x140, 0xF0);
     SetDefDispEnv(base + 0x64, 0, 0xF0, 0x140, 0xF0);
     SetDefDrawEnv(base + 0x80, 0, 0xF0, 0x140, 0xF0);
     SetDefDispEnv(base + 0xDC, 0, 0, 0x140, 0xF0);
 
-    D_8019C218 = 0;
-    D_8019C290 = 0;
-    D_8019C219 = 0;
-    D_8019C21A = 0;
-    D_8019C21B = 0;
-    D_8019C291 = 0;
-    D_8019C292 = 0;
-    D_8019C293 = 0;
+    g_FxCommonFrames[0].drawEnv[0x18] = 0;
+    g_FxCommonFrames[1].drawEnv[0x18] = 0;
+    g_FxCommonFrames[0].drawEnv[0x19] = 0;
+    g_FxCommonFrames[0].drawEnv[0x1A] = 0;
+    g_FxCommonFrames[0].drawEnv[0x1B] = 0;
+    g_FxCommonFrames[1].drawEnv[0x19] = 0;
+    g_FxCommonFrames[1].drawEnv[0x1A] = 0;
+    g_FxCommonFrames[1].drawEnv[0x1B] = 0;
 
     rect[0] = 0;
     rect[1] = 0;
@@ -2076,10 +2076,10 @@ void FxCommon_ClearActiveOrdering(void)
 
 void FxCommon_SelectBufferAllocation(void **buffer)
 {
-    if (buffer == (void **)&D_8019C1F8) {
-        *buffer = D_800B0E4C;
+    if (buffer == (void **)g_FxCommonFrames) {
+        *buffer = (FxCommonBufferRegion *)g_RenderScratchBufferBase[0];
     } else {
-        *buffer = D_800B0E4C + 1;
+        *buffer = (FxCommonBufferRegion *)g_RenderScratchBufferBase[0] + 1;
     }
 }
 

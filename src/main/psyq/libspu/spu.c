@@ -12,7 +12,7 @@ int _spu_init(int hot) {
     volatile u16 *clear;
     *_spu_sys_pcr |= 0xB0000;
     _spu_transMode = 0;
-    D_8009B41C = 0;
+    _spu_addrMode = 0;
     g_SpuTransferAddr = 0;
     _spu_RXX->master_volume_left = 0;
     _spu_RXX->master_volume_right = 0;
@@ -39,7 +39,7 @@ int _spu_init(int hot) {
     _spu_RXX->key_off[1] = 0xFFFF;
     _spu_RXX->reverb_enable[0] = 0;
     _spu_RXX->reverb_enable[1] = 0;
-    clear = D_800B6900;
+    clear = _spu_RQ;
     /* Preserve the ascending halfword writes to the shared request buffer. */
     for (; channel < 10; channel++) {
         *clear++ = 0;
@@ -54,7 +54,7 @@ int _spu_init(int hot) {
         _spu_RXX->cd_volume_right = 0;
         _spu_RXX->external_volume_left = 0;
         _spu_RXX->external_volume_right = 0;
-        _spu_FwriteByIO(D_8009B43C, 0x10);
+        _spu_FwriteByIO(_spu_dummy, 0x10);
         for (channel = 0; channel < 24; channel++) {
             _spu_RXX->voice[channel].volume_left = 0;
             _spu_RXX->voice[channel].volume_right = 0;

@@ -8,8 +8,6 @@
 #include "pe1/psyq_bios.h"
 #include "pe1/psyq_ds.h"
 
-#include "dsfile_externs.h"
-
 PE1_STATIC_ASSERT(sizeof(DslFILE) == 24, ds_search_file_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DslFILE, name) == 8, ds_search_file_name_offset);
 
@@ -104,12 +102,12 @@ DslFILE *DsSearchFile(DslFILE *output, char *input_name) {
     }
     if (CD_debug > 1) printf(g_DsSearchComponentFormat, component);
     depth = 0;
-    base = D_800A36B8[0];
+    base = g_DslFileCache[0].name;
     entry = (DslFILE *)(base - 8);
     entry_name = base;
     for (offset = zero; depth < DSL_MAX_FILE;
          entry++, entry_name += sizeof(DslFILE), depth++, offset += sizeof(DslFILE)) {
-        if (!((signed char *)D_800A36B8)[offset]) break;
+        if (!((signed char *)g_DslFileCache[0].name)[offset]) break;
         if (_cmp(entry_name, component)) {
             if (CD_debug > 1) printf(g_DsComponentFoundFormat, component);
             /* Copy the aligned 24-byte record in the retail four-word/two-word order. */

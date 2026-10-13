@@ -9,7 +9,8 @@
 /* Contiguous private routines from Psy-Q LIBDS/DSSYS_1.OBJ:
  * text_8B8 is at 0x80080220 and text_A9C follows at 0x80080404.
  * text_4A4 is non-contiguous and remains in dssys1_vsync.c. */
-/* Psy-Q LIBDS/DSSYS_1.OBJ private text_8B8. */
+/* Psy-Q LIBDS/DSSYS_1.OBJ private text_8B8.
+ * Provenance: configs/USA/psyq_provenance.json (LIBDS). */
 #define STATE_FROM_MODE(p)                                                             \
     ((CdRomEventCommandState *)((u8 *)(p) - PE1_OFFSETOF(CdRomEventCommandState,       \
                                                          command.read.commandMode)))
@@ -111,7 +112,7 @@ dispatch:
 
 void LIBDS_DSSYS_1_text_A9C(int event, u8 *inResult) {
     u8 *result = inResult;
-    u32 *command = &D_8009B578;
+    u32 *command = &g_DsReadStatusBlock.command;
     int twelve;
     int old;
     int two;

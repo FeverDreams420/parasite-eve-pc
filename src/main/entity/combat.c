@@ -10,7 +10,9 @@
 #include "pe1/player_entity.h"
 #include "pe1/render_prim.h"
 
-u16 D_8009D298;
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+u16 g_BattleHitActionPending;
 unsigned char g_AyaStatusEffectTimer;
 
 int rand(void);
@@ -92,7 +94,7 @@ void Entity_ResolveDropTable(void *arg0) {
             if ((s16)g_ActiveActor->curHP != 0) {
                 Entity_ApplyHitAndSetAnim(arg0);
                 if (!(g_PlayerEntity->flags & 0x100)) {
-                    g_BattlePendingEnemySpawn[0] = arg0;
+                    g_BattlePendingEnemySpawn = arg0;
                 }
             }
         } else if (value > 0) {
@@ -146,7 +148,7 @@ s16 Entity_ApplyHitAndSetAnim(void *arg0) {
         mode = case_actor->mode;
         g_BattleHitActionMode[0] = mode;
         submode = case_actor->action;
-        D_8009D298 = 1;
+        g_BattleHitActionPending = 1;
         g_BattleHitActionSubmode[0] = submode;
         g_BattleHitActionParam[0] = *(u32 *)&case_actor->anim;
         break;
@@ -162,7 +164,7 @@ s16 Entity_ApplyHitAndSetAnim(void *arg0) {
         mode = case_actor->mode;
         g_BattleHitActionMode[0] = mode;
         submode = case_actor->action;
-        D_8009D298 = 1;
+        g_BattleHitActionPending = 1;
         g_BattleHitActionSubmode[0] = submode;
         g_BattleHitActionParam[0] = case_actor->action << 16;
         break;
@@ -202,7 +204,7 @@ s16 Entity_ApplyHitAndSetAnim(void *arg0) {
         }
         if (flags & 0x100) {
             actor->flags = flags & ~0x100;
-            D_8009D298 = 2;
+            g_BattleHitActionPending = 2;
         }
     }
 
@@ -276,8 +278,8 @@ void Entity_UpdateTimers(void) {
         }
     }
     if ((*state_flags) & AYA_HASTE) {
-        global_timer = D_8009D228 - 1;
-        D_8009D228 = global_timer;
+        global_timer = g_ActorEffectFlag100Timer - 1;
+        g_ActorEffectFlag100Timer = global_timer;
         if ((global_timer << 0x10) <= 0) {
             (*state_flags) = ((*state_flags) & ~AYA_HASTE);
         }

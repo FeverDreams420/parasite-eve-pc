@@ -16,6 +16,8 @@
 #include "pe1/scene_room_load.h"
 #include "pe1/script_node.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 FieldActor *g_EntityFreeListHead;
 u16 g_EntityFreePoolCount;
 u32 g_EntitySerialCounter;
@@ -142,12 +144,12 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
     }
     actor->allocation_block = (int)allocation;
 
-    if (scene[0] == 0 && (areaType = D_800B0CE2)) {
+    if (scene[0] == 0 && (areaType = &g_SceneAreaType)) {
         Render_SetupEntityPrims(&actor->render_object, actor->model_state.model_header, allocation + 0x50, 0x3C0,
                                 0x100, 0, 0x1C0, 2, (s8 **)&renderSetup,
                                 allocateFull);
     } else {
-        archive = *D_800B0E64;
+        archive = *g_LoadedSceneAssetBlock;
         directory = SceneAsset_ResolveOffset(archive, archive->directoryOffset);
         entry = directory->bankRootEntries;
         bankRows = SceneAsset_ResolveOffset(archive, entry & 0x3FFFFF);
@@ -182,7 +184,7 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
         actor->render_object.lightPositiveY = 0x18;
         Render_InitRoomPrimState(&actor->render_object);
         Render_DrawWithAnim(&actor->render_object, actor->action_data,
-                            (s16)actor->anim.parts.integer, &g_RenderLightingState, D_800B89F8);
+                            (s16)actor->anim.parts.integer, &g_RenderLightingState, g_EntityRenderScratch);
         actor->render_object.header->shadow_radius = actor->render_object.hit_cylinder.radius * 2;
     }
     } else {
@@ -211,15 +213,15 @@ void Entity_FrameUpdate(void) {
         if (g_GameStateBlock.flags & 2) {
             Battle_Update();
         } else {
-            if (g_PlayerEntity != 0 && g_PlayerEntity->state != 0 && (D_8009D1F4 & 0x80) &&
+            if (g_PlayerEntity != 0 && g_PlayerEntity->state != 0 && (g_FieldPadPressed & 0x80) &&
                 !(g_GameStateBlock.flags & 0x2000) && !(g_GameState.flags & 0x3400)) {
                 Inv_OpenAyaItemList(0);
                 Render_BeginSceneLoad();
                 g_GameStateBlock.flags |= 4;
                 g_GameState.flags |= 0x9000;
             }
-            D_8009D2A4 = Menu_RunFrameWithArg((int)&g_BattleMenuActionRecord);
-            if (D_8009D2A4 != 0) {
+            g_MenuFrameCommand = Menu_RunFrameWithArg((int)&g_BattleMenuActionRecord);
+            if (g_MenuFrameCommand != 0) {
                 Render_BeginSceneLoad();
                 g_GameStateBlock.flags &= ~4;
                 g_GameState.flags &= ~0x9000;
@@ -295,7 +297,7 @@ void Entity_FrameUpdate(void) {
             }
             if (entity->flags & 0x40) {
                 if (entity->flags & 0x2000) {
-                    Render_TransformSkinnedVertices(&entity->render_object, D_800B89F8);
+                    Render_TransformSkinnedVertices(&entity->render_object, g_EntityRenderScratch);
                     entity->pos_x = (s16)entity->render_object.rotation_overrides[0].x << 16;
                     entity->pos_y = (s16)entity->render_object.rotation_overrides[0].y << 16;
                     entity->pos_z = (s16)entity->render_object.rotation_overrides[0].z << 16;
@@ -311,10 +313,10 @@ void Entity_FrameUpdate(void) {
                     Anim_BuildRotationMatrices(object, entity->action_data, (s16)entity->anim.parts.integer, 1);
                 }
                 Render_TransformVertices(object);
-                Render_TransformSkinnedVertices(object, D_800B89F8);
+                Render_TransformSkinnedVertices(object, g_EntityRenderScratch);
                 if (!(entity->flags & 0x20000000)) {
-                    Render_TransformMorphVertices(object, D_800B89F8);
-                    Render_DrawEntity(object, D_800B89F8);
+                    Render_TransformMorphVertices(object, g_EntityRenderScratch);
+                    Render_DrawEntity(object, g_EntityRenderScratch);
                     if (entity->flags & 0x8800) {
                         entity->render_object.flags_9C |= 1;
                     }

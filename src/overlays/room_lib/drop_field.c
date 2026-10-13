@@ -81,7 +81,7 @@ void RoomEffect_DropFieldInit(RoomDropFieldEntity *ent, void *unused, RoomDropFi
     RoomDropFieldMatrixWords *matrix;
 
     FieldFx_SetScriptContext(state);
-    g_RoomDropFieldModel = Asset_FindTable08ByU32Key(D_800B0E64[0], 0x118704);
+    g_RoomDropFieldModel = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0x118704);
 
     link = ent->link;
     state->link = link;

@@ -23,7 +23,9 @@ void Boot_FinishFrame(void);
 
 /* Work areas carved up by Boot_InitMemoryLayout. g_BootWorkArea follows the
  * field engine and moves with it; the other three are buffers inside the
- * overlay window block, at fixed addresses (configs/USA/main.yaml). */
+ * overlay window block, at fixed addresses (configs/USA/main.yaml): the
+ * texture load scratch after the mdec_diag window header and the scene
+ * object work and ordering tables after the menu_memcard window header. */
 extern u8 g_BootWorkArea[];
 extern u8 D_8010BD00[];
 extern u8 D_80120D08[];
@@ -33,12 +35,14 @@ extern u8 g_SceneLoadScratchArea[];
  * Boot_InitMemoryLayout writes (0x14C..0x190). */
 extern u8 *volatile g_SceneBankAssetSource;
 extern u8 *volatile g_VoiceBankBase;
-extern u8 *volatile D_800B0E2C;
+/* 0x154: Scene_LoadEntityTexture reads the entity bank (PE.IMG entry bank + 8)
+ * here and parses it (Pe1GameState.voice_bank_base_1400). */
+extern u8 *volatile g_EntityBankBuffer;
 extern u8 *volatile g_EntityTextureBlob;
 extern u8 *volatile g_SceneObjectWork;
 extern u8 *volatile D_800B0E48;
-extern u8 *volatile D_800B0E5C;
+extern u8 *volatile g_ScriptSpriteBuffer;
 extern u8 *volatile g_ScenePmSlotBanks;
-extern u8 *volatile D_800B0E68;
+extern u8 *volatile g_StrFileDirectory;
 
 #endif /* PE1_BOOT_SERVICES_H */

@@ -1,4 +1,6 @@
 #ifndef PE1_EXT_VIDEO_PLAYBACK
 #define PE1_EXT_VIDEO_PLAYBACK
-extern unsigned char D_800B0DBA;
+/* g_DrawEnabled as a plain byte: the playback loop clears, decrements and
+ * tests it directly. */
+extern unsigned char g_DrawEnabledByte;
 #endif /* PE1_EXT_VIDEO_PLAYBACK */

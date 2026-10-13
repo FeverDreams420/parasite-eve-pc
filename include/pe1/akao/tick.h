@@ -53,10 +53,8 @@ typedef union AkaoTickBank {
 PE1_STATIC_ASSERT(sizeof(AkaoTickBank) == 0x68, akao_tick_bank_size);
 
 extern AkaoTickBank *D_8009D2C8;
-extern AkaoTickTrack D_800BC000[];
-extern u8 D_8009D2D2;
+extern u8 g_AkaoTempoScale;
 extern u32 g_AkaoSeqPendingFlags;
-extern u32 D_8009D22C;
 /* Message-queue lock, also read by the timer interrupt. */
 extern volatile u32 g_AkaoMessageQueueLock;
 extern u32 g_AkaoVoiceUpdateFlags;

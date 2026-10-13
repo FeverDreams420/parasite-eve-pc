@@ -27,8 +27,8 @@ void FxCommon_UpdateCameraMatrices(void)
     GteShortVector eye;
     GteVector up;
 
-    view = D_8018EFF4;
-    rotation = D_8018EFF4;
+    view = g_FxCommonIdentityMatrix;
+    rotation = g_FxCommonIdentityMatrix;
     offset.x = g_FxCommonCameraTarget.x - g_FxCommonCameraPosition.x;
     offset.y = g_FxCommonCameraTarget.y - g_FxCommonCameraPosition.y;
     offset.z = g_FxCommonCameraTarget.z - g_FxCommonCameraPosition.z;
@@ -152,7 +152,7 @@ int FxCommon_SamplePath(u32 position, int index, void *table,
     points++;
     span = count - 2;
     if (span < segment)
-        D_8019BFCC = 1;
+        g_FxCommonPathWrapped = 1;
     segment %= span;
     if (segment < 0)
         segment += count - 2;
@@ -309,10 +309,10 @@ int FxCommon_IsPointInView(int *point)
     int secondVisible;
     int firstVisible = 0;
 
-    first = g_FxCommonFrustumNormal0.x * point[0] + D_8019CBB4 * point[1]
-          + D_8019CBB8 * point[2] + g_FxCommonFrustumDistance0;
-    second = g_FxCommonFrustumNormal1.x * point[0] + D_8019CBD4 * point[1]
-           + D_8019CBD8 * point[2] + g_FxCommonFrustumDistance1;
+    first = g_FxCommonFrustumNormal0.x * point[0] + g_FxCommonFrustumNormal0.y * point[1]
+          + g_FxCommonFrustumNormal0.z * point[2] + g_FxCommonFrustumDistance0;
+    second = g_FxCommonFrustumNormal1.x * point[0] + g_FxCommonFrustumNormal1.y * point[1]
+           + g_FxCommonFrustumNormal1.z * point[2] + g_FxCommonFrustumDistance1;
 
     secondVisible = 0;
     if (first > 0 && g_FxCommonFrustumSide0 > 0)
@@ -333,10 +333,10 @@ int FxCommon_IsShortPointInView(short *point)
     int secondVisible;
     int firstVisible = 0;
 
-    first = g_FxCommonFrustumNormal0.x * point[0] + D_8019CBB4 * point[1]
-          + D_8019CBB8 * point[2] + g_FxCommonFrustumDistance0;
-    second = g_FxCommonFrustumNormal1.x * point[0] + D_8019CBD4 * point[1]
-           + D_8019CBD8 * point[2] + g_FxCommonFrustumDistance1;
+    first = g_FxCommonFrustumNormal0.x * point[0] + g_FxCommonFrustumNormal0.y * point[1]
+          + g_FxCommonFrustumNormal0.z * point[2] + g_FxCommonFrustumDistance0;
+    second = g_FxCommonFrustumNormal1.x * point[0] + g_FxCommonFrustumNormal1.y * point[1]
+           + g_FxCommonFrustumNormal1.z * point[2] + g_FxCommonFrustumDistance1;
 
     secondVisible = 0;
     if (first > 0 && g_FxCommonFrustumSide0 > 0)
@@ -360,10 +360,10 @@ int FxCommon_CheckBoundsWithMargin(int *point, int margin)
     int secondVisible = 0;
     int firstVisible = 0;
     int threshold = margin;
-    first = g_FxCommonFrustumNormal0.x * point[0] + D_8019CBB4 * point[1]
-          + D_8019CBB8 * point[2] + g_FxCommonFrustumDistance0;
-    second = g_FxCommonFrustumNormal1.x * point[0] + D_8019CBD4 * point[1]
-           + D_8019CBD8 * point[2] + g_FxCommonFrustumDistance1;
+    first = g_FxCommonFrustumNormal0.x * point[0] + g_FxCommonFrustumNormal0.y * point[1]
+          + g_FxCommonFrustumNormal0.z * point[2] + g_FxCommonFrustumDistance0;
+    second = g_FxCommonFrustumNormal1.x * point[0] + g_FxCommonFrustumNormal1.y * point[1]
+           + g_FxCommonFrustumNormal1.z * point[2] + g_FxCommonFrustumDistance1;
     if (g_FxCommonFrustumSide0 > 0 && first >= 0)
     {
       firstVisible = 1;
@@ -422,14 +422,14 @@ int FxCommon_CheckFourBoundsWithMargin(int *point, int margin) {
     int limit;
     int fourthVisible = 0, thirdVisible = 0, secondVisible = 0, firstVisible = 0;
     int threshold = margin;
-    first = g_FxCommonFrustumNormal0.x * point[0] + D_8019CBB4 * point[1]
-          + D_8019CBB8 * point[2] + g_FxCommonFrustumDistance0;
-    second = g_FxCommonFrustumNormal1.x * point[0] + D_8019CBD4 * point[1]
-          + D_8019CBD8 * point[2] + g_FxCommonFrustumDistance1;
-    third = g_FxCommonFrustumNormal2.x * point[0] + D_8019CBF4 * point[1]
-          + D_8019CBF8 * point[2] + g_FxCommonFrustumDistance2;
-    fourth = g_FxCommonFrustumNormal3.x * point[0] + D_8019CB54 * point[1]
-          + D_8019CB58 * point[2] + g_FxCommonFrustumDistance3;
+    first = g_FxCommonFrustumNormal0.x * point[0] + g_FxCommonFrustumNormal0.y * point[1]
+          + g_FxCommonFrustumNormal0.z * point[2] + g_FxCommonFrustumDistance0;
+    second = g_FxCommonFrustumNormal1.x * point[0] + g_FxCommonFrustumNormal1.y * point[1]
+          + g_FxCommonFrustumNormal1.z * point[2] + g_FxCommonFrustumDistance1;
+    third = g_FxCommonFrustumNormal2.x * point[0] + g_FxCommonFrustumNormal2.y * point[1]
+          + g_FxCommonFrustumNormal2.z * point[2] + g_FxCommonFrustumDistance2;
+    fourth = g_FxCommonFrustumNormal3.x * point[0] + g_FxCommonFrustumNormal3.y * point[1]
+          + g_FxCommonFrustumNormal3.z * point[2] + g_FxCommonFrustumDistance3;
     if (g_FxCommonFrustumSide0 > 0 && first >= 0)
         firstVisible = 1;
     if (g_FxCommonFrustumSide0 < 0 && first <= 0)
@@ -496,28 +496,28 @@ void FxCommon_InitNodePools(void)
     char *slot;
 
     i = 1;
-    slot = D_801E4E6C;
+    slot = (char *)&g_FxCommonRecords[1];
     for (; i < 200; i++, slot += 108)
         FxCommon_ResetTransformNode(slot);
 
     FxCommon_ResetTransformNode(&g_FxCommonDefaultNode);
-    D_8019C39C = 0;
+    g_FxCommonDefaultNode.bucket = 0;
     g_FxCommonIndexFreeHead = 0;
     for (i = 0; i < 200; i++)
         g_FxCommonIndexFreeNext[i] = i + 1;
 
     i = 0;
     {
-        FxCommonNode *source = D_801EA5E8;
-        FxCommonNode *dest = D_8019CC58;
+        FxCommonNode *source = g_FxCommonListHeadNodes;
+        FxCommonNode *dest = g_FxCommonListTailNodes;
 
         for (; i < 3;) {
-            D_8019CC58[i].previous = source;
+            g_FxCommonListTailNodes[i].previous = source;
             source++;
-            D_801EA5E8[i].next = dest;
+            g_FxCommonListHeadNodes[i].next = dest;
             dest++;
-            D_801EA5E8[i].previous = 0;
-            D_8019CC58[i].next = 0;
+            g_FxCommonListHeadNodes[i].previous = 0;
+            g_FxCommonListTailNodes[i].next = 0;
             i++;
         }
     }
@@ -533,16 +533,16 @@ void FxCommon_InitNodePools(void)
     }
 
     g_FxCommonIndexLast = 200;
-    D_801E4DA8 = -1;
-    D_801E4DAA = 201;
-    D_801E4DAC = 200;
-    D_801E4DAE = -1;
+    g_FxCommonIndexLinks[200].previous = -1;
+    g_FxCommonIndexLinks[200].next = 201;
+    g_FxCommonIndexLinks[201].previous = 200;
+    g_FxCommonIndexLinks[201].next = -1;
 }
 
 int FxCommon_AllocIndexLink(void);
 void FxCommon_LinkNodeToParent(FxCommonNode *node, FxCommonNode *parent);
 
-FxCommonNode *func_80190AEC(FxCommonNode *parent, void *payload)
+FxCommonNode *FxCommon_CreateBareNode(FxCommonNode *parent, void *payload)
 {
     int index = FxCommon_AllocIndexLink();
     FxCommonNode *node = (FxCommonNode *)&g_FxCommonRecords[(s16)index];
@@ -559,7 +559,7 @@ FxCommonNode *func_80190AEC(FxCommonNode *parent, void *payload)
 
 int FxCommon_GetOffsetTableValue(void *payload, int type);
 
-FxCommonNode *func_80190B78(FxCommonNode *parent, s16 type, void *payload)
+FxCommonNode *FxCommon_CreateTypedNode(FxCommonNode *parent, s16 type, void *payload)
 {
     int index = FxCommon_AllocIndexLink();
     FxCommonNode *node = (FxCommonNode *)&g_FxCommonRecords[(s16)index];
@@ -577,7 +577,7 @@ FxCommonNode *func_80190B78(FxCommonNode *parent, s16 type, void *payload)
 
 int FxCommon_GetOffsetTableValue(void *payload, int subtype);
 
-FxCommonNode *func_80190C1C(FxCommonNode *parent, s16 subtype, s16 variant,
+FxCommonNode *FxCommon_CreateConfiguredNode(FxCommonNode *parent, s16 subtype, s16 variant,
                             s16 type, void *data38, void *data3C,
                             void *payload)
 {
@@ -626,7 +626,7 @@ void FxCommon_DrawTransformNodeCulled(FxCommonTransformNode *node, FxCommonBuffe
     GteMatrix mirror;
     int state;
 
-    mirror = D_8018F014;
+    mirror = g_FxCommonMirrorYMatrix;
     position.x = node->matrix.t[0];
     position.y = node->matrix.t[1];
     position.z = node->matrix.t[2];
@@ -664,7 +664,7 @@ void FxCommon_DrawLodNode(FxCommonLodNode *node, FxCommonBuffer *context, u8 for
     s16 margin;
     int depth;
 
-    mirror = D_8018F014;
+    mirror = g_FxCommonMirrorYMatrix;
     position.x = node->matrix.t[0];
     position.y = node->matrix.t[1];
     position.z = node->matrix.t[2];
@@ -778,7 +778,7 @@ void FxCommon_BeginRecordIteration(void)
 
 FxCommonRecord *FxCommon_NextRecord(void)
 {
-    int record = D_801E4A8A[g_FxCommonRecordCursor].record;
+    int record = g_FxCommonIndexLinks[g_FxCommonRecordCursor].next;
 
     g_FxCommonRecordCursor = record;
     if (record == 201) {
@@ -816,14 +816,14 @@ void FxCommon_SelectRoomVariant(void)
 
     FxCommon_InitDisplay();
     if (Save_GetMetadataWindowIndex() == 0)
-        D_8019C008 = 0;
+        g_FxCommonAltFogLayer = 0;
     else
-        D_8019C008 = 0xFF;
-    if (D_800B0CD8 & 0x40000000) {
-        D_8019C008 = 0xFF;
+        g_FxCommonAltFogLayer = 0xFF;
+    if (g_GameStateFlagsWord & 0x40000000) {
+        g_FxCommonAltFogLayer = 0xFF;
         Menu_SetEquipSlotIndex(1);
     } else {
-        D_8019C008 = 0;
+        g_FxCommonAltFogLayer = 0;
         Menu_SetEquipSlotIndex(0);
     }
 
@@ -864,71 +864,71 @@ void FxCommon_SelectRoomVariant(void)
         g_FxCommonRoomVariant = 7;
 
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0x80)
-        D_8019BFF4 = 0;
+        g_FxCommonStartPreset = 0;
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0x208)
-        D_8019BFF4 = 7;
+        g_FxCommonStartPreset = 7;
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0xB8) {
-        D_8019C000 = 1;
-        D_8019C004 = 9;
+        g_FxCommonConfirmExit = 1;
+        g_FxCommonConfirmExitVariant = 9;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0xC0) {
-        D_8019BFF8 = 1;
-        D_8019BFFC = 9;
+        g_FxCommonAutoPlay = 1;
+        g_FxCommonAutoVariant = 9;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0xD0) {
-        D_8019C000 = 1;
-        D_8019C004 = 7;
+        g_FxCommonConfirmExit = 1;
+        g_FxCommonConfirmExitVariant = 7;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0xD8) {
-        D_8019BFF8 = 1;
-        D_8019BFFC = 7;
+        g_FxCommonAutoPlay = 1;
+        g_FxCommonAutoVariant = 7;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0xE0) {
-        D_8019C000 = 1;
-        D_8019C004 = 8;
+        g_FxCommonConfirmExit = 1;
+        g_FxCommonConfirmExitVariant = 8;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0xE4) {
-        D_8019BFF8 = 1;
-        D_8019BFFC = 8;
+        g_FxCommonAutoPlay = 1;
+        g_FxCommonAutoVariant = 8;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0x148) {
-        D_8019C000 = 1;
-        D_8019C004 = 9;
+        g_FxCommonConfirmExit = 1;
+        g_FxCommonConfirmExitVariant = 9;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0x160) {
-        D_8019BFF8 = 1;
-        D_8019BFFC = 9;
+        g_FxCommonAutoPlay = 1;
+        g_FxCommonAutoVariant = 9;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0x178) {
-        D_8019C000 = 1;
-        D_8019C004 = 7;
+        g_FxCommonConfirmExit = 1;
+        g_FxCommonConfirmExitVariant = 7;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0x180) {
-        D_8019BFF8 = 1;
-        D_8019BFFC = 7;
+        g_FxCommonAutoPlay = 1;
+        g_FxCommonAutoVariant = 7;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0x1C0) {
-        D_8019C000 = 1;
-        D_8019C004 = 4;
+        g_FxCommonConfirmExit = 1;
+        g_FxCommonConfirmExitVariant = 4;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_AREA] == 0x1C8) {
-        D_8019BFF8 = 1;
-        D_8019BFFC = 4;
+        g_FxCommonAutoPlay = 1;
+        g_FxCommonAutoVariant = 4;
     }
     if (g_ScriptVariableBank[SCRIPT_VAR_FLAGS] & 0x2000)
-        D_8019C1F0 = 1;
+        g_FxCommonNight = 1;
     else
-        D_8019C1F0 = 0;
+        g_FxCommonNight = 0;
     FxCommon_LoadEffectSectors();
 }
 
 void FxCommon_LoadEffectSectors(void) {
-    FxAssetSource *resource = (FxAssetSource *)&D_800B0CD8;
+    FxAssetSource *resource = (FxAssetSource *)&g_GameStateFlagsWord;
     u16 *range;
     int result;
 
 first:
-    range = D_80093170;
+    range = &g_PeImageSectorTable[76];
     do {
         result = CdRom_ReadSectorsFromLba(resource->data + range[0],
                                &g_FxCommonTimTable, range[1] - range[0]);
@@ -939,13 +939,13 @@ first:
         if (result == -1) goto first;
     }
 
-    if (!(D_8019C1F0)) {
+    if (!(g_FxCommonNight)) {
 
 second:
-    range = D_80093174;
+    range = &g_PeImageSectorTable[78];
     do {
         result = CdRom_ReadSectorsFromLba(resource->data + range[0],
-                               &D_8019CE10, range[1] - range[0]);
+                               &g_FxCommonModelTable, range[1] - range[0]);
     } while (result == -1);
     for (;;) {
         result = CdRom_PollReady();
@@ -955,10 +955,10 @@ second:
 
     }
 third:
-    range = D_80093172;
+    range = &g_PeImageSectorTable[77];
     do {
         result = CdRom_ReadSectorsFromLba(resource->data + range[0],
-                               &D_8019CE10, range[1] - range[0]);
+                               &g_FxCommonModelTable, range[1] - range[0]);
     } while (result == -1);
     for (;;) {
         result = CdRom_PollReady();
@@ -976,8 +976,8 @@ void FxCommon_SetAkao3dVolumeRange(int extended)
         g_Akao3dVolumeMin = 0x10;
         g_Akao3dVolumeMax = 0x40;
     }
-    D_800B0DD0 = 0;
-    D_800B0DD2 = 0xFFF;
+    g_GameState.bank_value_f8 = 0;
+    g_GameState.bank_value_fa = 0xFFF;
 }
 
 int FxCommon_SendTableCommand3d(int id, s32 *state)

@@ -27,12 +27,12 @@ typedef union DrawPacketAddress {
     u32 word;
 } DrawPacketAddress;
 
-extern u8 *D_8009D100;                  /* packet cursor address */
-extern u8 *D_8009D104;                  /* packet arena base address */
+extern u8 *g_DrawPacketCursor;                  /* packet cursor address */
+extern u8 *g_DrawPacketArenaBase;                  /* packet arena base address */
 extern int g_DrawTextDimmed;                 /* colour select */
 extern unsigned int g_DrawPrimColor;                 /* primary colour */
 extern unsigned int g_DrawColorShaded;                 /* alternate colour */
-extern u32 *D_8009D11C;                 /* ordering-table entry */
+extern u32 *g_DrawOrderingTableEntry;                 /* ordering-table entry */
 
 void SetTexWindow(GpuCmdPacket *packet, RECT *window);
 void Draw_AllocColorTri(int width, int height, int pulse);
@@ -89,12 +89,12 @@ PE1_STATIC_ASSERT(sizeof(DrawWipeVertex) == 4, draw_wipe_vertex_size);
 /* Reserve `size` bytes of the packet arena into `packet` (0 on overflow). */
 #define DRAW_ALLOC_PACKET(packet, size)                                  \
     {                                                                    \
-        u32 old = (u32)D_8009D100;                                            \
+        u32 old = (u32)g_DrawPacketCursor;                                            \
         u32 next = old + (size);                                         \
                                                                          \
         (packet).word = 0;                                               \
-        if (next < (u32)D_8009D104 + 0x4000) {                                \
-            D_8009D100 = next;                                           \
+        if (next < (u32)g_DrawPacketArenaBase + 0x4000) {                                \
+            g_DrawPacketCursor = next;                                           \
             (packet).word = old;                                         \
         } else {                                                         \
             Inv_BoundsCheckAssertStub(1);                                   \
@@ -105,7 +105,7 @@ PE1_STATIC_ASSERT(sizeof(DrawWipeVertex) == 4, draw_wipe_vertex_size);
 #define DRAW_LINK_PACKET(packet)                                         \
     {                                                                    \
         u32 mask24 = 0xFFFFFF, maskTop = 0xFF000000;                     \
-        DrawPacketAddress *ot = D_8009D11C;                              \
+        DrawPacketAddress *ot = g_DrawOrderingTableEntry;                              \
         u32 tag = *(packet).tag;                                         \
         tag &= maskTop;                                                  \
         tag |= ot->word & mask24;                                        \

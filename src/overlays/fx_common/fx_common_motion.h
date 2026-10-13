@@ -16,33 +16,44 @@ extern FxCommonShortVec3 g_FxCommonMotionOrigin1;
 extern FxCommonShortVec3 g_FxCommonMotionTarget1;
 extern FxCommonShortVec3 g_FxCommonMotionOrigin0;
 extern FxCommonShortVec3 g_FxCommonMotionTarget0;
+/* Per-frame step of each lane and the right shift that scales its accumulator. */
+extern volatile s32 g_FxCommonMotionStep0X, g_FxCommonMotionStep0Y, g_FxCommonMotionStep0Z;
+extern volatile s32 g_FxCommonMotionStep1X, g_FxCommonMotionStep1Y, g_FxCommonMotionStep1Z;
+extern s16 g_FxCommonMotionShift0;
+extern s16 g_FxCommonMotionShift1;
+/* Volatile scalar views of the lane vectors' first components and of both
+ * accumulators; the lane initialisers store through these. */
+extern volatile s16 g_FxCommonMotionOrigin0X, g_FxCommonMotionTarget0X;
+extern volatile s16 g_FxCommonMotionOrigin1X, g_FxCommonMotionTarget1X;
+extern volatile s32 g_FxCommonMotionAccum0X, g_FxCommonMotionAccum0Y, g_FxCommonMotionAccum0Z;
+extern volatile s32 g_FxCommonMotionAccum1X, g_FxCommonMotionAccum1Y, g_FxCommonMotionAccum1Z;
 /* Ordinary counter views; legacy callers use volatile scheduling declarations. */
 extern s16 g_FxCommonMotionRemaining0;
 extern s16 g_FxCommonMotionRemaining1;
-extern u32 D_8009D1F4;
+extern u32 g_FieldPadPressed;
 extern u32 g_FieldPadBits;
 extern s8 g_SceneAudioSlot0Handle;
 extern void *g_AkaoBgmHandle[1];
-extern s32 D_8019C018;
-extern s32 D_8019C01C;
-extern s16 D_8019C024;
-extern s16 D_8019C026;
-extern s16 D_8019C028;
-extern s16 D_8019C02A;
-extern u16 D_8019C030;
-extern s16 D_8019C032;
-extern s32 D_8019C038;
-extern s32 D_8019C03C;
-extern s32 D_8019C04C;
-extern s32 D_8019C0BC;
-extern s32 D_8019C0C0;
-extern s16 D_8019C0C4;
-extern s32 D_8019C0C8;
-extern u8 D_8019C0CC;
-extern u8 D_8019C0CD;
-extern s16 D_8019C13C;
-extern s16 D_8019C13E;
-extern s32 D_8019CA68;
+extern s32 g_FxCommonPageChanged;
+extern s32 g_FxCommonPageOpen;
+extern s16 g_FxCommonExitRequested;
+extern s16 g_FxCommonExitCountdown;
+extern s16 g_FxCommonPageId;
+extern s16 g_FxCommonScreenFade;
+extern u16 g_FxCommonDemoFrame;
+extern s16 g_FxCommonDrawTintedCopies;
+extern s32 g_FxCommonTailPathPosition;
+extern s32 g_FxCommonFlyerPathPosition;
+extern s32 g_FxCommonCameraPathPosition;
+extern s32 g_FxCommonDemoTicks;
+extern s32 g_FxCommonDemoExiting;
+extern s16 g_FxCommonDemoResource;
+extern s32 g_FxCommonDemoResourceTicks;
+extern u8 g_FxCommonDemoShade;
+extern u8 g_FxCommonDemoFadePhase;
+extern s16 g_FxCommonInputLock;
+extern s16 g_FxCommonTailViewEntered;
+extern s32 g_FxCommonExitVariant;
 
 /* Double-buffered frame: packet buffer and ordering table, then the
  * DRAWENV and DISPENV handed to PutDrawEnv / PutDispEnv. */
@@ -54,24 +65,22 @@ typedef struct FxCommonFrame {
 typedef PsxSignedRect FxCommonRect;
 extern FxCommonFrame g_FxCommonFrames[2];
 extern s32 g_ActiveDrawSlot;
-extern u8 D_8019C00E;
-extern s32 D_8019CC14;
-extern u32 D_8009D280;
+extern u8 g_FxCommonResetRequested;
+extern s32 g_FxCommonHsyncCount;
 /* Plain views of the camera position and its look-at target. */
 extern FxCommonVec3 g_FxCommonCameraPosition;
 extern FxCommonVec3 g_FxCommonCameraTarget;
-extern RoomSpriteMatrix D_8018EFF4;
-/* Transform nodes animated along the camera paths (D_801EA578..D_801EA58C). */
+extern RoomSpriteMatrix g_FxCommonIdentityMatrix;
+/* Transform nodes animated along the camera paths (0x801EA578..0x801EA58C). */
 extern FxCommonTransformNode *g_FxCommonPathNodes[6];
 /* Camera rotation angles. An incomplete array, so the -G8 camera unit keeps
  * the absolute address in a as retail does. */
 extern GteShortVector g_FxCommonCameraAngles[];
 extern RoomSpriteMatrix g_FxCommonCameraMatrix;
-extern s8 D_800B0DB2;
 extern s8 g_SceneAudioSlot0Key;
 
 void Akao_Cmd_C1_WithSlot(int channel, int value, int mode);
-void func_80196498(void);
+void FxCommon_InitScene(void);
 void FxCommon_SetAkao3dVolumeRange(int enabled);
 s32 VSync(s32 value);
 void Field_HandleStateTransition(void);
@@ -91,7 +100,7 @@ extern s32 g_FxCommonFrustumSide0, g_FxCommonFrustumSide1, g_FxCommonFrustumSide
 extern s32 g_FxCommonFrustumLength0, g_FxCommonFrustumLength1, g_FxCommonFrustumLength2, g_FxCommonFrustumLength3;
 void OuterProduct0(GteVector *a, GteVector *b, GteVector *out);
 s16 FxCommon_StepFadeIntensity(s16 value);
-void func_80192740(void);
+void FxCommon_DrawNightShadeAndMarkers(void);
 void FxCommon_DrawSceneNodes(void);
 
 /* Per-frame scene draw (FxCommon_DrawSceneNodes): depth bias for the next node,
@@ -99,8 +108,7 @@ void FxCommon_DrawSceneNodes(void);
 extern s32 g_FxCommonDepthBias;
 extern FxCommonTransformNode *g_FxCommonPathTailNodes[2];
 extern s16 D_8019C0D0[2];
-extern u8 D_801EA264[3];
-extern void *D_801EA260;
+extern u8 g_FxCommonFlatColor[3];
 extern FxCommonTransformNode *g_FxCommonEchoNodes[4];
 void FxCommon_DrawTransformNodeCulled(FxCommonTransformNode *node, FxCommonBuffer *context, u8 pass,
                    u8 force, u8 mirrored);

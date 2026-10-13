@@ -5,10 +5,10 @@
 
 /* Ember family (scene_e19_2): the scene_e22 ember controller layout with
  * this overlay's spin templates, colour seeds and colour track. */
-extern GteRotation D_8018F1CC;
-extern GteRotation D_8018F1D4;
-extern RenderColor D_8018F234;
-extern RenderColor D_8018F238;
+extern GteRotation g_SceneE19ZeroSpin;
+extern GteRotation g_SceneE19FlatTilt;
+extern RenderColor g_SceneE19EmberParticleColor;
+extern RenderColor g_SceneE19EmberFlareColor;
 extern u8 g_SceneE19EmberFlareColorTrack[];
 
 extern int SceneE19_EmberFlareParticleCallback(int mode, RoomOrbitTrailParticle *p);

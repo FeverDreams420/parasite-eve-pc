@@ -7,6 +7,7 @@
 #include "pe1/field_sprite_state.h"
 #include "pe1/psyq_libc.h"
 #include "pe1/room_floor.h"
+#include "pe1/room_interface.h"
 #include "pe1/scene_archive.h"
 
 /* The effect sequence (src/overlays/room_lib/effect_sequence.c):
@@ -28,11 +29,10 @@ extern void *g_EffectSequenceModel;
 
 extern int *FieldFx_VarPtr(int index);
 extern int *FieldFx_RegPtr(int index);
-/* Per-command handler table and state size table for FieldFx_StartSlot. */
-extern int (*D_80192B5C[])(void *, void *, void *);
-extern u16 D_80192BBC[];
-extern char D_80192BFC;
-extern char D_80192BF0;
+/* The two colour ramps the variant glows fade through (FieldFx_InterpolateColorRamp
+ * records r, g, b, duration): lime for resource selector -1, amber otherwise. */
+extern char g_EffectSequenceAmberGlowRamp;
+extern char g_EffectSequenceLimeGlowRamp;
 
 /* The module's class methods (slots 3 to 5). */
 int RoomEffect_EffectSequenceRegister(void *o);

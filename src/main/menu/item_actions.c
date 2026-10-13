@@ -18,11 +18,13 @@
 #include "pe1/psyq_nop.h"
 #include "pe1/text.h"
 
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
 int g_BonusPointSpendCurrentValue;
 int g_MenuItemPrimListHandles[2];
-int D_8009CFC4;
-int D_8009CFC8;
-int D_8009CFD4;
+int g_MenuSourceItemSlot;
+int g_MenuStatItemStatIndex;
+int g_MenuSourceItemList;
 int g_BonusPointBarAnimStep;
 int g_BonusPointBarAnimProgress;
 int g_BonusPointSpendStat;
@@ -128,7 +130,7 @@ static inline void Menu_CreateScreenModeSubmenu(void) {
 
 void Menu_StepInventoryRoot(s32 arg0, s32 arg1, s32 arg2);
 void Menu_DrawItemListHeader(void);
-int D_8009CFC0;
+int g_MenuItemListHeaderGlyph;
 
 int g_MenuEquipMode;
 
@@ -494,7 +496,7 @@ void Menu_CreateItemList(void) {
     child->x = parent->grid_width - 0x44;
     child->y += 8;
 
-    D_8009CFC0 = 0x37;
+    g_MenuItemListHeaderGlyph = 0x37;
 
     if (g_InvTrackedSlots[2] >= 0) {
         Inv_SelectActiveList(0);
@@ -506,14 +508,14 @@ void Menu_CreateItemList(void) {
             }
         }
 
-        value = D_8009CFC0 - 1;
-        D_8009CFC0 = value + (data->tailData[i] & 0x1F);
+        value = g_MenuItemListHeaderGlyph - 1;
+        g_MenuItemListHeaderGlyph = value + (data->tailData[i] & 0x1F);
     }
 }
 
 void Menu_DrawItemListHeader(void) {
     Draw_OffsetCursor(4, 4);
-    Draw_AllocSprite(D_8009CFC0);
+    Draw_AllocSprite(g_MenuItemListHeaderGlyph);
     Draw_OffsetCursor(0x20, 0);
     Draw_PrintTextById(0x1C);
     Draw_OffsetCursor(-0x20, 0x10);
@@ -686,7 +688,7 @@ int Menu_SaveLoadNavigate(MenuWidgetNode *arg0, unsigned int flags) {
 
 /* Defined here so the assembler sees a small-data symbol: retail waits a
  * load-delay slot before the gp-relative store of the reserve ammo. */
-int D_8009CFCC;
+int g_MenuStatItemAmount;
 
 /* Builds the inventory screen widget tree: the optional battle command list,
  * the item list for `list` (preselecting `item` when it is present), the bonus
@@ -724,9 +726,9 @@ void Menu_StepInventoryRoot(int mode, int list, int item)
         MenuWidget_OffsetPosition(panel, 0, g_MenuItemUseMode ? -0x10 : 0x14);
         node->cursor_x = -1;
     }
-    D_8009CFD4 = Inv_IsActiveListOverrideSelected();
+    g_MenuSourceItemList = Inv_IsActiveListOverrideSelected();
     Inv_SelectActiveList(0);
-    D_8009CFC4 = list;
+    g_MenuSourceItemSlot = list;
     g_MenuItemRenameMode = list == -2;
     g_MenuItemDiscardMode = list == -3;
     if (g_MenuItemRenameMode) {
@@ -809,13 +811,13 @@ void Menu_StepInventoryRoot(int mode, int list, int item)
     }
     panel->draw = Menu_StepEquipSlotSelect2;
     if (data)
-        D_8009CFC8 = (u8)data->bonusStats[0] & 3;
+        g_MenuStatItemStatIndex = (u8)data->bonusStats[0] & 3;
     else
-        D_8009CFC8 = 0;
+        g_MenuStatItemStatIndex = 0;
     if (data)
-        D_8009CFCC = data->reserveAmmo;
+        g_MenuStatItemAmount = data->reserveAmmo;
     else
-        D_8009CFCC = 0;
+        g_MenuStatItemAmount = 0;
     g_InvItemUsableFlag = mode != 0x200;
     node = MenuWidget_GetCurrentNode();
     if (node->selected_base == 0x30 || node->selected_base == 0x36)
@@ -1114,23 +1116,23 @@ int Menu_ItemListInputHandler(MenuWidgetNode *node, unsigned int flags)
         index = MenuWidget_GridCellIndex(MenuWidget_FindByModeAndSelectedBase(2, 0xD));
         item = Inv_GetPackedListItem(index);
         data = Inv_LookupActiveListData(item);
-        if (D_8009CFC4 >= 0) {
-            switch (D_8009CFC8) {
+        if (g_MenuSourceItemSlot >= 0) {
+            switch (g_MenuStatItemStatIndex) {
             case 0:
-                data->bonusStats[0] = data->bonusStats[0] + D_8009CFCC >= 1000
-                                          ? 999 : data->bonusStats[0] + D_8009CFCC;
+                data->bonusStats[0] = data->bonusStats[0] + g_MenuStatItemAmount >= 1000
+                                          ? 999 : data->bonusStats[0] + g_MenuStatItemAmount;
                 break;
             case 1:
-                data->bonusStats[1] = data->bonusStats[1] + D_8009CFCC >= 1000
-                                          ? 999 : data->bonusStats[1] + D_8009CFCC;
+                data->bonusStats[1] = data->bonusStats[1] + g_MenuStatItemAmount >= 1000
+                                          ? 999 : data->bonusStats[1] + g_MenuStatItemAmount;
                 break;
             case 2:
-                data->bonusStats[2] = data->bonusStats[2] + D_8009CFCC >= 1000
-                                          ? 999 : data->bonusStats[2] + D_8009CFCC;
+                data->bonusStats[2] = data->bonusStats[2] + g_MenuStatItemAmount >= 1000
+                                          ? 999 : data->bonusStats[2] + g_MenuStatItemAmount;
                 break;
             }
-            Inv_SelectActiveList(D_8009CFD4);
-            Inv_RemoveActiveListItem(D_8009CFC4);
+            Inv_SelectActiveList(g_MenuSourceItemList);
+            Inv_RemoveActiveListItem(g_MenuSourceItemSlot);
             Menu_CloseItemList();
             if (g_MenuEquipMode == 1) {
                 MenuWidget_NavScrollTo(0x36);
@@ -1256,13 +1258,13 @@ int Menu_ItemListInputHandler(MenuWidgetNode *node, unsigned int flags)
 #undef g_BonusPointStatDeltas
 #define CLAMP_EQUIP_PREVIEW(out, item, stat_index, active_stat) { \
     int desired_ = (active_stat); \
-    int current_ = D_8009CFC8; \
+    int current_ = g_MenuStatItemStatIndex; \
     int raw_ = (item)->bonusStats[(stat_index)]; \
-    if ((current_ == desired_ && raw_ + D_8009CFCC < 1000) || \
+    if ((current_ == desired_ && raw_ + g_MenuStatItemAmount < 1000) || \
         (current_ != desired_ && raw_ < 1000)) { \
         (out) = (item)->bonusStats[(stat_index)]; \
-        if (D_8009CFC8 == (active_stat)) { \
-            (out) += D_8009CFCC; \
+        if (g_MenuStatItemStatIndex == (active_stat)) { \
+            (out) += g_MenuStatItemAmount; \
         } \
     } else { \
         (out) = 999; \
@@ -1327,7 +1329,7 @@ void Menu_StepEquipSlotSelect2(void) {
         Draw_AllocSprite(0x88);
     }
 
-    if (D_8009CFC4 >= 0) {
+    if (g_MenuSourceItemSlot >= 0) {
         Draw_OffsetCursor(0x28, -0x32);
         Draw_AllocSprite(0x88);
         Draw_OffsetCursor(0, 0xA);

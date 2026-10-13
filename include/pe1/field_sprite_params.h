@@ -6,8 +6,8 @@
 /* Halfword sprite parameter block at 0x800F3368. Effect controllers fill it
  * before their particles draw: the frame step pair at 0x00/0x02 (read signed
  * by the sprite draws), the CLUT and texture page, the depth and the sprite
- * extents. This is the one declaration of the block; the halfwords that older
- * units named D_800F336A..D_800F3378 are its fields. */
+ * extents. This is the one declaration of the block; the halfwords at
+ * 0x800F336A..0x800F3378 that older units declared one by one are its fields. */
 typedef struct RenderEffectParameters {
     u16 parameter00;
     u16 parameter02; /* frame step, read as (s16) */

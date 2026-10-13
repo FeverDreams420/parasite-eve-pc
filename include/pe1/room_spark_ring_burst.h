@@ -12,6 +12,7 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
 #include "pe1/room_floor.h"
+#include "pe1/room_interface.h"
 
 /* The spark ring and spark burst effects linked by ten museum rooms
  * (src/overlays/room_lib/spark_ring_burst.c). The ring controller

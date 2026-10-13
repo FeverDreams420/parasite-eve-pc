@@ -162,8 +162,8 @@ int Render_LoadFontGlyphAlt(void)
     u8 duplicate;
     u8 j;
 
-    state = &D_800B0DD8;
-    range = D_80093176;
+    state = &g_DiscLoadState;
+    range = &g_PeImageSectorTable[79];
     do {
         read_status = CdRom_ReadSectorsFromLba(state->baseLba + range[0],
                                              state->buffer,
@@ -180,7 +180,7 @@ int Render_LoadFontGlyphAlt(void)
         }
     }
 
-    D_8009ECD8.codeCount = D_800B0E6C[0];
+    g_FontActiveGlyphTable.codeCount = g_SceneLoadScratchBuffer[0][0];
     if (g_FontSelectionState.loadFailed == 0 && g_FontSelectionState.seed == 0) {
         do {
             g_FontSelectionState.seed = rand() % 0x7FFF;
@@ -211,15 +211,15 @@ int Render_LoadFontGlyphAlt(void)
             limit = 0x71;
         }
 
-        if (D_8009ECD8.codeCount - 1 < limit) {
-            limit = D_8009ECD8.codeCount;
+        if (g_FontActiveGlyphTable.codeCount - 1 < limit) {
+            limit = g_FontActiveGlyphTable.codeCount;
             limit = limit - 1;
         }
 
         glyph = (rand() % (limit - 7)) + 7;
         (g_FontGlyphCodeSequence + 2)[i] = glyph;
 
-        if (unique_count < D_8009ECD8.codeCount - 9) {
+        if (unique_count < g_FontActiveGlyphTable.codeCount - 9) {
             do {
                 duplicate = 1;
                 for (j = 0; j < i; j++) {
@@ -238,9 +238,9 @@ int Render_LoadFontGlyphAlt(void)
     g_FontSelectionState.active = 1;
     g_FontSelectionState.codeIndex = 2;
     g_FontSelectionState.code = (g_FontGlyphCodeSequence + 2)[0];
-    g_FontSelectionState.table = &D_8009ECD8;
+    g_FontSelectionState.table = &g_FontActiveGlyphTable;
 
-    g_FontSelectionSelectedSlot = find_slot((u8 *)&D_8009ECD8);
+    g_FontSelectionSelectedSlot = find_slot((u8 *)&g_FontActiveGlyphTable);
     {
         FontGlyphTable *table = g_FontSelectionState.table;
         /* Read back through a pointer: CSE would otherwise reuse the stored

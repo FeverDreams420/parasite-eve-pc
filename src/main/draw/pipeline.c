@@ -38,7 +38,7 @@ int Scene_LoadEntityTexture(void);
 void Entity_RelocateSceneData(void);
 void Render_SetupFogLayer(void *source);
 void Script_DrawSyncAndFlush(void);
-void func_800E0060(void);
+void FieldFx_ClearScriptSprites(void);
 void SetDispMask(int arg0);
 
 void Draw_InitPipeline(void) {
@@ -59,7 +59,7 @@ void Draw_InitPipeline(void) {
     Entity_InitFreePool();
     Script_InitNodeFreeList();
 
-    Boot_SetBackColor((char *)&D_800BEA42 - 2, 0x28, 0x28, 0x28);
+    Boot_SetBackColor((char *)&g_RenderLight0DirY - 2, 0x28, 0x28, 0x28);
 
     v1 = 0;
     t1 = 0;
@@ -69,8 +69,8 @@ void Draw_InitPipeline(void) {
     t0 = 0x7FFF;
     a0p = (char *)&g_RenderLightingState;
     *(s16 *)a0p = t0;
-    D_800BEA42 = t1;
-    D_800BEA44 = v1;
+    g_RenderLightingState.matrix.m[0][1] = t1;
+    g_RenderLightingState.matrix.m[0][2] = v1;
     Boot_SetLightColor(a0p, 0, 0xFF, 0xFF, 0xFF);
 
     v1 = 0;
@@ -79,10 +79,10 @@ void Draw_InitPipeline(void) {
     if (v1 < -0x7FFF) {
         v1 = -0x7FFF;
     }
-    p = (char *)&D_800BEA46;
+    p = (char *)&g_RenderLight1DirX;
     *(s16 *)p = t0;
-    D_800BEA48 = t1;
-    D_800BEA4A = v1;
+    g_RenderLightingState.matrix.m[1][1] = t1;
+    g_RenderLightingState.matrix.m[1][2] = v1;
     Boot_SetLightColor(p - 6, 1, 0x80, 0x80, 0x80);
 
     v1 = 0x10000;
@@ -99,10 +99,10 @@ void Draw_InitPipeline(void) {
             }
         }
     }
-    p = (char *)&D_800BEA4C;
+    p = (char *)&g_RenderLightingState.matrix.m[2][0];
     *(s16 *)p = t0;
-    D_800BEA4E = t1;
-    D_800BEA50 = v1;
+    g_RenderLightingState.matrix.m[2][1] = t1;
+    g_RenderLightingState.matrix.m[2][2] = v1;
     Boot_SetLightColor(p - 0xC, 2, 0x60, 0x60, 0x60);
 
     one = 1;
@@ -114,7 +114,7 @@ void Draw_InitPipeline(void) {
     }
 
     one = 1;
-    Scene_SetStoryDay(B(D_800B0CE4));
+    Scene_SetStoryDay(g_GameState.current_story_day);
     while (Scene_LoadEntityTextures() == one) {
     }
 
@@ -126,7 +126,7 @@ void Draw_InitPipeline(void) {
     }
     Render_SetupFogLayer(fogSource);
     Script_DrawSyncAndFlush();
-    func_800E0060();
+    FieldFx_ClearScriptSprites();
     g_GlobalFrameCounter[0] = 0;
     g_RoomFloorY->y = 0;
     DrawSync(0);

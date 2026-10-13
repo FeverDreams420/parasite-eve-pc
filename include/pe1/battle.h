@@ -511,8 +511,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleInitSlot, actionGeneration) == 6,
 
 extern BattleTarget g_BattleTargetList[];
 /* Incomplete array: retail reads the count absolutely in -G0 units. */
-extern s8 g_BattleTargetCount[];
-extern int D_8009D208; /* last scene asset/effect result selected by battle */
+extern int g_BattleAilmentPmSlot; /* last scene asset/effect result selected by battle */
 
 void Battle_SwapRecords(BattleTargetWords *records, int from, int to);
 void Battle_SortTargets(BattleTargetWords *records, s8 first, s8 last);
@@ -689,34 +688,14 @@ int Battle_RollEscapeChance(void);
 /* Restoring integer square root (battle/commands.c). */
 int Math_IntSqrt(int value);
 
-/* ============================================================================
- * ENTITY TINT COLOR PACKETS (battle/menu)  -- documented, not yet symbol-named.
- *
- * Two BSS regions hold GPU primitive packets whose per-vertex RGB color bytes
- * are recolored every frame to pulse battle entities and status elements. Each
- * is a 4-vertex Gouraud-style primitive (vertex = R,G,B + code byte, then XY/UV)
- * replicated once per on-screen combatant at a fixed stride, indexed by
- * g_ActiveDrawSlot (0x8009CDDC). The named D_800Bxxxx bytes are the R/G/B
- * channels; the gaps are the code byte + XY/UV words. (Per-byte symbols, not a
- * flat array: the code holds individual extern u8 handles per channel.)
- *
- * CLUSTER A -- entity tint, stride 0x48, base packet 0x800B0158 (sibling at
- *   0x800B0134). Seeded in battle/setup.c:81-104 with 4 vertices
- *   alternating {0xFF,0x3D,0x81} (pink) and {0x83,0x13,0x01} (dark orange):
- *     V0 R/G/B = 0x800B0158/59/5A   V1 = 0x800B0160/61/62
- *     V2 R/G/B = 0x800B0168/69/6A   V3 = 0x800B0170/71/72
- *   (init writes a second identical block at 0x800B01A0/A8/B0/B8.) Runtime
- *   recolor picks {0xFF,0x3D,0x81}/{0xC1,0x28,0x41}/{0x83,0x13,0x01} by
- *   g_FrameRngCounter&3 in Battle_PhaseInitEnemyTurn.c:235, Battle_PhaseEndTurn.c:214,
- *   menu/main_update.c:269 (form *(&D_800B0158 + slot*0x48)).
- *
- * CLUSTER B -- status-bar / hit-reaction tint, stride 0x24, base 0x800B00EC:
- *     V0 R/G/B = 0x800B00EC/ED/EE   V1 = 0x800B00F4/F5/F6
- *     V2 R/G/B = 0x800B00FC/FD/FE   V3 = 0x800B0104/05/06
- *   Recolored {0x46,0x82,0x9F}/{0xFF,0xF9,0x00}/{0xA3,0xBE,0x50} in
- *   Battle_PhaseHitReaction.c:66, Battle_PhaseInitEnemyTurn.c:111. (sibling
- *   packets at 0x800B0111.. and 0x800B0130..)
- * ==========================================================================*/
+/* Gauge colours. The pulsing battle colours are the vertex colours of the
+ * POLY_G4 gauge quads in battle_status.h, one set per draw buffer and written
+ * as g_X[g_ActiveDrawSlot].rN/gN/bN: g_BattlePeGauges[slot][1] is seeded by
+ * Battle_InitEntityColors with alternating {0xFF,0x3D,0x81} and
+ * {0x83,0x13,0x01} and recoloured from g_FrameRngCounter & 3 in
+ * Battle_PhaseInitEnemyTurn, Battle_PhaseEndTurn and Menu_MainUpdate;
+ * g_BattleAtbGauges[slot] takes {0x46,0x82,0x9F}/{0xFF,0xF9,0x00}/
+ * {0xA3,0xBE,0x50} in Battle_Update and Battle_PhaseInitEnemyTurn. */
 
 /* ============================================================================
  * PERSISTENT STATS (out of battle) -- see aya.h for the full AyaSaveState.

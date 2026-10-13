@@ -5,7 +5,6 @@
 #include "pe1/psyq_pad_main.h"
 
 #include "padmain_externs.h"
-#include "padmain_externs_1.h"
 #include "padmain_externs_2.h"
 #include "padmain_externs_3.h"
 
@@ -20,7 +19,7 @@ int PadEnableCom(int portMask) {
         g_MemCardServiceReady = 0;
 
         if (portMask & 1) {
-            timer1 = &D_800A5AC0[0];
+            timer1 = &g_PadPortIdleFrames[0];
             timerValue = *timer1;
             g_MemCardPort1Present = 0;
             if (timerValue >= 150) {
@@ -32,7 +31,7 @@ int PadEnableCom(int portMask) {
         }
 
         if (portMask & 2) {
-            timer2 = &D_800A5AC0[1];
+            timer2 = &g_PadPortIdleFrames[1];
             timerValue = *timer2;
             g_MemCardPort2Present = 1;
             if (timerValue >= 150) {
@@ -54,7 +53,7 @@ int MemCard_TimerReadyCallback(void);
 void _padSetVsyncParam(void) {
     void **table;
 
-    table = D_800A5AB4;
+    table = g_PadVsyncIntQueueNode.handlers;
     table[0] = MemCard_TimerCallback;
     table[1] = MemCard_TimerReadyCallback;
     table[-1] = 0;
@@ -93,7 +92,7 @@ int MemCard_TimerCallback(void) {
     one = 1;
     g_MemCardCallbackPending = one;
     if (active != 0) {
-        timer = &D_800A5AC0[0];
+        timer = &g_PadPortIdleFrames[0];
         active = *timer;
         if (active < 0x96) {
             one = active + 1;
@@ -102,7 +101,7 @@ int MemCard_TimerCallback(void) {
     }
 
     if (g_MemCardPort2Present == 0) {
-        timer = &D_800A5AC0[1];
+        timer = &g_PadPortIdleFrames[1];
         active = *timer;
         if (active < 0x96) {
             one = active + 1;
@@ -141,12 +140,13 @@ int _padChkVsync(void) {
     return old;
 }
 
-/* SDK _padStartCom (PADMAIN.OBJ). Constraints are tracked in crutch debt. */
+/* SDK _padStartCom (PADMAIN.OBJ). Constraints are tracked in crutch debt.
+ * Provenance: configs/USA/psyq_provenance.json (LIBPAD PADMAIN). */
 void _padStartCom(void) {
     g_MemCardServiceReady = 0;
     EnterCriticalSection();
-    SysDeqIntRP(2, g_PadVsyncIntQueueNode);
-    SysEnqIntRP(2, g_PadVsyncIntQueueNode);
+    SysDeqIntRP(2, &g_PadVsyncIntQueueNode);
+    SysEnqIntRP(2, &g_PadVsyncIntQueueNode);
     D_8009B784->status = -2;
     D_8009B784->mask |= 1;
     ChangeClearRCnt(3, 0);
@@ -154,7 +154,7 @@ void _padStartCom(void) {
     g_MemCardObjResetFn(g_MemCardObjArray);
     g_MemCardObjResetFn(g_MemCardObjArray + 1);
     {
-        int *clear = D_800A5AC0;
+        int *clear = g_PadPortIdleFrames;
         clear[1] = 0;
         clear[0] = 0;
     }
@@ -165,7 +165,7 @@ void _padStartCom(void) {
 void _padStopCom(void) {
     EnterCriticalSection();
     ChangeClearRCnt(3, 1);
-    SysDeqIntRP(2, g_PadVsyncIntQueueNode);
+    SysDeqIntRP(2, &g_PadVsyncIntQueueNode);
     ExitCriticalSection();
 }
 

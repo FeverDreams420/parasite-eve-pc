@@ -9,6 +9,6 @@ typedef struct MemcardJointOffset {
 } MemcardJointOffset;
 
 /* Hand offset shared by the link, trail and cross flash effects. */
-extern MemcardJointOffset D_801ED818;
+extern MemcardJointOffset g_MenuCardHandOffset;
 
 #endif /* MENU_MEMCARD_OFFSET_H */

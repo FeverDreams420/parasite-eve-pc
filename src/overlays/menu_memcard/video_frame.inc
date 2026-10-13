@@ -2,8 +2,8 @@
 #define MENUCARD_UPDATE_VIDEO_FRAME_NAME MenuCard_UpdateVideoFrame
 #define MENUCARD_VIDEO_ENTRY g_MenuCardScreenVideoEntry
 #define MENUCARD_VIDEO_LAST_TIME g_MenuCardScreenVideoLastTime
-#define MENUCARD_VIDEO_FINISHED D_801D0DBD
-#define MENUCARD_VIDEO_SIZE D_801D0DE0
+#define MENUCARD_VIDEO_FINISHED g_MenuCardScreenVideoFinished
+#define MENUCARD_VIDEO_SIZE g_MenuCardScreenVideoSize
 #endif
 
 void *MENUCARD_UPDATE_VIDEO_FRAME_NAME(VideoDisplay *display) {
@@ -47,14 +47,14 @@ void *MENUCARD_UPDATE_VIDEO_FRAME_NAME(VideoDisplay *display) {
         if (remaining < 0) {
             remaining = 0;
         }
-        Spu_SetVoiceVolume(D_800B0DBE * remaining / 14);
+        Spu_SetVoiceVolume(g_GameState.scene_audio.tracks.movie_volume * remaining / 14);
     }
     if (local.frame->time < MENUCARD_VIDEO_LAST_TIME || local.frame->time >= MENUCARD_VIDEO_ENTRY->end) {
         MENUCARD_VIDEO_FINISHED = 1;
     }
     MENUCARD_VIDEO_LAST_TIME = local.frame->time;
     if (MENUCARD_VIDEO_SIZE[0] != local.frame->width || MENUCARD_VIDEO_SIZE[1] != local.frame->height) {
-        if (D_800B0DBB) {
+        if (g_MovieWide) {
             local.clear.x = 0;
             local.clear.y = 0;
             local.clear.w = 480;
@@ -69,7 +69,7 @@ void *MENUCARD_UPDATE_VIDEO_FRAME_NAME(VideoDisplay *display) {
         MENUCARD_VIDEO_SIZE[0] = local.frame->width;
         MENUCARD_VIDEO_SIZE[1] = local.frame->height;
     }
-    if (D_800B0DBB) {
+    if (g_MovieWide) {
         display->regions[0].w = display->regions[1].w = MENUCARD_VIDEO_SIZE[0] * 3 / 2;
     } else {
         display->regions[0].w = display->regions[1].w = MENUCARD_VIDEO_SIZE[0];

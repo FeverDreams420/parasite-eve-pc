@@ -60,7 +60,7 @@ s32 *DecDCTPutEnv(s32 *source)
     return source;
 }
 
-unsigned short func_8010BF94(unsigned short *value) {
+unsigned short MdecDiag_ReadHalfword(unsigned short *value) {
     return *value;
 }
 

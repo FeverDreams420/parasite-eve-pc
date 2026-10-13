@@ -28,9 +28,9 @@ int DsInit(void) {
     state[1].result = 0;
     state[0].result = 0;
     for (; i < 8; ++i) {
-        D_800A3515[i] = 0;
-        D_800A3525[i] = 0;
-        D_800A3535[i] = 0;
+        g_CdQueuedCmdSlots[0].payload[i] = 0;
+        g_CdQueuedCmdSlots[1].payload[i] = 0;
+        g_CdQueuedCmdSlots[2].payload[i] = 0;
     }
     for (j = 0; j < 8; ++j) CQ_clear_queue(&g_CdDsReadQueue[j]);
     g_CdDsReadIndex = 0;
@@ -67,9 +67,9 @@ int DsReset(void) {
     state[1].result = 0;
     state[0].result = 0;
     for (; i < 8; ++i) {
-        D_800A3515[i] = 0;
-        D_800A3525[i] = 0;
-        D_800A3535[i] = 0;
+        g_CdQueuedCmdSlots[0].payload[i] = 0;
+        g_CdQueuedCmdSlots[1].payload[i] = 0;
+        g_CdQueuedCmdSlots[2].payload[i] = 0;
     }
     for (j = 0; j < 8; ++j) CQ_clear_queue(&g_CdDsReadQueue[j]);
     g_CdDsReadIndex = 0;

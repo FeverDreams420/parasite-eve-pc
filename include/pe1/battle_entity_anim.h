@@ -7,7 +7,7 @@
 extern u32 g_GameStateFlags;
 extern struct FieldActor *g_FieldActorListHead;
 extern BattleEntity *D_8009D254;
-extern s8 D_8009D2A0;
+extern s8 g_BattleLiveEnemyCount;
 extern u16 g_BattlePeBonusReward;
 extern u32 g_BattleExpReward;
 extern BattleRewardSlot g_BattleRewardSlots[];

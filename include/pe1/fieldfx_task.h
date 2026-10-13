@@ -120,7 +120,7 @@ extern s16 g_SpinningModelAnchorB[3];
 int FieldFx_SpinningModelEmitterB(int mode, FieldFxEmitter *state);
 
 extern u8 *D_800F32D8;
-extern s16 D_800E220C[];
+extern s16 g_SpinningModelAnchorA[3];
 /* Spinning model flare shared by FieldFx_SpinningModelFlareA and FieldFx_SpinningModelFlareB: the leader
  * (stage 0) follows an anchor point and drops stage 1 copies that shrink. */
 typedef struct FieldFxSpinningModel {

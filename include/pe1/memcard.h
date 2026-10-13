@@ -151,8 +151,8 @@ extern int g_MemCardActiveBytesRemaining;
 extern int g_MemCardActivePromptPending;
 extern int g_MemCardLoadSucceeded;
 
-extern char D_8009EE70[];
-extern s8 *D_80092224;
+extern char g_MemCardFilePath[];
+extern s8 *g_MemCardFilenameFormatPtr;
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(MemCardSaveSlot, titleStyleFlag) == 0x29,
                   memcard_save_slot_title_style_offset);

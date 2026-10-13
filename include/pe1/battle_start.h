@@ -10,16 +10,16 @@ extern BattleRewardSlot g_BattleRewardSlots[10];
 extern BattleEntity *g_BattleActionActors[7];
 extern int g_BattleFrameCounter;
 extern int g_BattleModeState;
-extern u8 D_8009CE7C, D_8009CE78, D_8009D288, g_BattleStepIndex;
-extern u8 D_8009D1CE, D_8009D235[16];
+extern u8 g_BattleSuspendedModeState, D_8009CE78, g_BattleGaugeCapLatch, g_BattleStepIndex;
+extern u8 g_BattleSaveOverlayActive, g_BattleSpritePrimCountdown;
 extern u32 g_BattleExpReward;
 extern u16 g_BattlePeBonusReward;
 
 extern unsigned int g_BattleResultFlags;
 extern unsigned int g_GameStateFlags;
 extern unsigned int D_8009D2E8;
-extern s32 D_8009D290[16];
-extern u32 D_8009D250;
+extern int g_BattleAttackAnimFrame;
+extern u32 g_FrameRngCounter;
 extern s16 g_BattlePlayerAimHeight; /* battle camera height: player's model Y - 100 */
 
 void Save_ResetGlobalFlags(void);

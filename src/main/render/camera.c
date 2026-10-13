@@ -5,6 +5,7 @@
 #include "pe1/geom_state.h"
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"
+#include "pe1/menu_background.h"
 #include "pe1/pad_state.h"
 #include "pe1/projection_slot.h"
 #include "pe1/render_camera.h"
@@ -273,7 +274,7 @@ int Render_InitViewState(void *matrix, void *screen) {
     g_GeomGroupSel = 0;
     g_CameraBaseAngleAnalog = 0;
     g_CameraBaseAngleDigital = 0;
-    D_800BD024 = 0;
+    g_GeomOtZ[0] = 0;
     g_GeomScroll.words.origin = 0;
     return 0;
 }
@@ -740,32 +741,32 @@ int Render_InitRoomPrimState(void *objectArg)
     int intensity, r, g, b;
 
     g_RenderLightingState.matrix.m[0][0] = 0;
-    D_800BEA42 = 4096;
-    D_800BEA44 = 0;
+    g_RenderLightingState.matrix.m[0][1] = 4096;
+    g_RenderLightingState.matrix.m[0][2] = 0;
     intensity = object->shade + object->lightPositiveY;
     r = g_RoomLightTint.r;
     g = g_RoomLightTint.g;
     b = g_RoomLightTint.b;
     intensity = ClampLight(intensity) << 4;
-    D_800BEA60.matrix.m[0][0] = intensity * r / 256;
-    D_800BEA66 = intensity * g / 256;
-    D_800BEA6C = intensity * b / 256;
+    g_RenderLightColorMatrix.matrix.m[0][0] = intensity * r / 256;
+    g_RenderLightColorMatrix.matrix.m[1][0] = intensity * g / 256;
+    g_RenderLightColorMatrix.matrix.m[2][0] = intensity * b / 256;
 
-    D_800BEA46 = 0;
-    D_800BEA48 = -4096;
-    D_800BEA4A = 0;
+    g_RenderLightingState.matrix.m[1][0] = 0;
+    g_RenderLightingState.matrix.m[1][1] = -4096;
+    g_RenderLightingState.matrix.m[1][2] = 0;
     intensity = object->shade + object->lightNegativeY;
     intensity = ClampLight(intensity) << 4;
-    D_800BEA62 = intensity * r / 256;
-    D_800BEA68 = intensity * g / 256;
-    D_800BEA6E = intensity * b / 256;
-    D_800BEA4C = 0;
-    D_800BEA4E = 0;
-    D_800BEA50 = 0;
-    D_800BEA64 = 0;
-    D_800BEA6A = 0;
-    D_800BEA70 = 0;
-    gte_SetColorMatrix(D_800BEA60.words);
+    g_RenderLightColorMatrix.matrix.m[0][1] = intensity * r / 256;
+    g_RenderLightColorMatrix.matrix.m[1][1] = intensity * g / 256;
+    g_RenderLightColorMatrix.matrix.m[2][1] = intensity * b / 256;
+    g_RenderLightingState.matrix.m[2][0] = 0;
+    g_RenderLightingState.matrix.m[2][1] = 0;
+    g_RenderLightingState.matrix.m[2][2] = 0;
+    g_RenderLightColorMatrix.matrix.m[0][2] = 0;
+    g_RenderLightColorMatrix.matrix.m[1][2] = 0;
+    g_RenderLightColorMatrix.matrix.m[2][2] = 0;
+    gte_SetColorMatrix(g_RenderLightColorMatrix.words);
     return 0;
 }
 

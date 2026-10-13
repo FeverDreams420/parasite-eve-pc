@@ -33,7 +33,7 @@ extern s32 g_InvPackedListCount;
 extern s32 g_InvTransferItemCount;
 extern s16 g_InvTransferItemList[];
 extern s16 *g_InvActiveItemList;
-extern s32 D_8009D080;
+extern s32 g_InvActiveListSlotCount;
 extern s16 g_InvPackedList[];
 /* Saved by inventory commands as a word; the frame loop reads its low byte. */
 typedef union SavedMenuMode {
@@ -71,8 +71,8 @@ extern s16 g_InvActiveListItems[];
  * incomplete arrays avoids the old, overlapping three-element declarations. */
 extern s32 g_InvSavedSelectionIndex[];
 extern s32 g_InvSavedSelectionFromStorage[];
-extern s32 D_8009D090, D_8009D094; /* indices 0, 1 */
-extern s32 D_8009D098, D_8009D09C; /* storage flags 0, 1 */
+extern s32 g_InvSavedSelectionIndex0, g_InvSavedSelectionIndex1; /* indices 0, 1 */
+extern s32 g_InvSavedSelectionFromStorage0, g_InvSavedSelectionFromStorage1; /* storage flags 0, 1 */
 extern s16 *g_InvActiveListOverride;
 extern s32 g_InvOverrideSlotLimit;
 extern u32 g_InvStorageSelectionBits[];
@@ -80,7 +80,7 @@ extern u32 g_InvStorageSelectionBits[];
 extern u8 D_800A1FE8[];
 extern u8 *D_8009D084;
 extern s32 D_8009D088, D_8009D08C;
-extern ItemDataRecord g_InvSavedSelectionRecord0, D_800A206C;
+extern ItemDataRecord g_InvSavedSelectionRecord0, g_InvSavedSelectionRecord1;
 /* Global fallback ammunition record, then the records of item values
  * 0x200..0x208 (the first three are the category ammunition pools);
  * storage tool IDs. */

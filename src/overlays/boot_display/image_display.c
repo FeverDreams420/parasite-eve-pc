@@ -39,10 +39,10 @@ void BootDisplay_InitDisplayBuffers(void) {
     start = base + delta;
     delta += 0x54000;
     end = g_CdLoadAreaBase + delta;
-    D_80125B88[0] = start;
-    D_80125B90 = end;
-    D_80125B98 = end;
-    D_80125BA0 = start;
+    g_BootDisplayImageBuffers[0].pixels = start;
+    g_BootDisplayImageBuffers[0].decodeTarget = end;
+    g_BootDisplayImageBuffers[1].pixels = end;
+    g_BootDisplayImageBuffers[1].decodeTarget = start;
     ClearImage(rect, 0, 0, 0);
     DrawSync(0);
     DecDCTReset(0);
@@ -76,7 +76,7 @@ void BootDisplay_PresentFrame(void) {
         rect[2] = 480;
         rect[3] = 224;
     }
-    LoadImage(rect, D_80125B88[g_BootDisplayBufferIndex * 4]);
+    LoadImage(rect, g_BootDisplayImageBuffers[g_BootDisplayBufferIndex].pixels);
     if (g_BootDisplayState == 6) {
         timer = g_BootDisplayStateTimer + 1;
         g_BootDisplayStateTimer = timer;
@@ -112,7 +112,7 @@ void BootDisplay_PresentFrame(void) {
 void BootDisplay_BrightenGlyph(s32 x, s32 y, u8 character) {
     s32 savedX = x;
     s32 row = y;
-    char *screen = D_80125B88[g_BootDisplayBufferIndex * 4];
+    char *screen = g_BootDisplayImageBuffers[g_BootDisplayBufferIndex].pixels;
     s32 glyph = BootDisplay_GetGlyphIndex(character);
     s32 low = glyph & 15;
     s32 high = glyph & 240;
@@ -204,13 +204,13 @@ void BootDisplay_StepImageDisplay(void) {
     StoreImage(rect, g_BootDisplayImageBuffers[g_BootDisplayBufferIndex].pixels);
     DrawSync(0);
     if ((int)g_FieldPadBits < 0) {
-        if (D_8009D1F4 & 0x1000000) {
+        if (g_FieldPadPressed & 0x1000000) {
             u16 timer = (u16)g_BootDisplayStateTimer;
             if (timer != 0) {
                 g_BootDisplayStateTimer = timer - 1;
                 g_BootDisplayState = 0;
             }
-        } else if (D_8009D1F4 & 0x2000000) {
+        } else if (g_FieldPadPressed & 0x2000000) {
             u16 timer = (u16)g_BootDisplayStateTimer;
             if (timer < 30) {
                 g_BootDisplayStateTimer = timer + 1;
@@ -225,7 +225,7 @@ void BootDisplay_StepImageDisplay(void) {
         s32 endOffset;
         char *base;
 
-        DecDCTvlcSize2(func_8010BF94(g_BootDisplayCreditImages[(u16)g_BootDisplayStateTimer]) >> 4);
+        DecDCTvlcSize2(MdecDiag_ReadHalfword(g_BootDisplayCreditImages[(u16)g_BootDisplayStateTimer]) >> 4);
         startOffset = 0x38800;
         endOffset = 0x43000;
         offset = (g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) * 2048;
@@ -288,7 +288,7 @@ void BootDisplay_BrightenImageRegion(void)
 {
     s16 line;
     u8 *image = (u8 *)g_BootDisplayFontImagePixels + 0x4000;
-    u8 *screen = (u8 *)D_80125B88[g_BootDisplayBufferIndex * 4] + 0x19DAC;
+    u8 *screen = (u8 *)g_BootDisplayImageBuffers[g_BootDisplayBufferIndex].pixels + 0x19DAC;
 
     for (line = 110; line < 134; line++) {
         s16 row;

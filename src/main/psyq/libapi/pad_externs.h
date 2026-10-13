@@ -10,8 +10,12 @@ typedef struct PadWork {
 
 extern void DisablePAD(void);
 extern void StopPAD2(void);
-extern int (*D_800A34B4[2])(void);
-extern int D_800A34BC;
+/* The handler pair and spare word of the pad interrupt queue node (link
+ * word g_PadIntQueueNode, layout PadIntQueueNode) as their own symbols:
+ * Sys_SetInterruptHandler addresses each word separately, which the record
+ * form folds into one base register. */
+extern int (*g_PadIntQueueHandlers[2])(void);
+extern int g_PadIntQueueSpare;
 extern PadWork *g_PadSioBasePtr;
 extern int *g_PadIntrRegsPtr;
 

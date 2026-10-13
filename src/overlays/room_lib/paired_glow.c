@@ -58,7 +58,7 @@ void *RoomLib_InitPairedGlowSprite(RoomEnt *obj, s32 arg1, RoomLibFxMatrixState 
     g_RoomPairedGlowSprite.g = 0x80;
     g_RoomPairedGlowSprite.b = 0x80;
     g_RoomPairedGlowSprite.zero = 0;
-    return g_RoomPairedGlowPacket = Asset_FindTable08ByU32Key(D_800B0E64[0], 0xCB8704);
+    return g_RoomPairedGlowPacket = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xCB8704);
 }
 
 void RoomLib_PairedGlowNopA(void) {
@@ -127,7 +127,7 @@ void RoomLib_InitPairedEmitterWithSound(void *arg0, void *arg1,
     secondary->source = state->sourceData;
     FieldFx_BuildRingGeometry(secondary);
 
-    soundOwnerSlot = D_800B0E64;
+    soundOwnerSlot = g_LoadedSceneAssetBlock;
     if (*soundOwnerSlot != 0) {
         Akao_SendTableCommand(*soundOwnerSlot, 0x57E, 0, 0x80, 0x7F);
     }

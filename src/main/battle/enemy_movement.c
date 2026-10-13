@@ -45,7 +45,7 @@ void Battle_StepEnemyMovement(BattleEntity *entity)
         stat -= 25;
         stat += g_ActiveActor->field04.fieldId04;
         base = __floatsidf(stat * 6);
-        scale = __floatsidf(D_8009D2B0 - 1);
+        scale = __floatsidf(g_BattleTargetCount - 1);
         factor.bits = 0x3FB999999999999AULL; /* 0.1 */
         scale = __muldf3(scale, factor.value);
         scale = __adddf3(scale, 1.0);
@@ -300,7 +300,7 @@ void Battle_StepEntityAnimState(BattleEntity *entity) {
 
     switch (state->deathAnimPhase) {
     case 0:
-        D_8009D2A0--;
+        g_BattleLiveEnemyCount--;
         state->deathAnimPhase++;
         /* fallthrough */
     case 1:
@@ -407,7 +407,7 @@ void Battle_StepEntityAnimState(BattleEntity *entity) {
             }
         }
 
-        if (D_8009D2A0 != 0) {
+        if (g_BattleLiveEnemyCount != 0) {
             return;
         }
 

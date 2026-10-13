@@ -13,13 +13,15 @@
 
 /* Contiguous widget construction, pool initialization, list drawing and layout. */
 
-unsigned char *D_8009D100;
-unsigned char *D_8009D104;
+/* COMMON supplies small-data metadata to MASPSX: these words are reached
+ * through $gp, every other extern stays absolute. */
+unsigned char *g_DrawPacketCursor;
+unsigned char *g_DrawPacketArenaBase;
 unsigned int g_DrawPrimColor;
 unsigned int g_DrawColorShaded;
-unsigned int *D_8009D11C;
+unsigned int *g_DrawOrderingTableEntry;
 int g_DrawTextPosX;
-int D_8009D168;
+int g_MenuListRowHeight;
 int g_DrawBufferIndex;
 int g_TextRenderMode;
 int g_DrawGlyphAdvance;
@@ -942,11 +944,11 @@ void MenuWidget_DrawList(MenuWidgetNode *node, void (*draw_callback)(int))
     GpuCmdPacket *packet;
     int row, offset, highlight;
     g_DrawTextPosX = node->draw_state;
-    D_8009D168 = node->disabled;
+    g_MenuListRowHeight = node->disabled;
     rect.x = 0; rect.y = 0; rect.w = 320; rect.h = 224;
     if (g_DrawBufferIndex) rect.y = 224;
     packet = AllocRect(&rect);
-    Draw_LinkDrawArea(D_8009D11C, packet);
+    Draw_LinkDrawArea(g_DrawOrderingTableEntry, packet);
     PushCursor();
     MoveCursor(0, node->scroll_adjust);
     if (node->scroll_adjust > 0) {
@@ -1379,8 +1381,8 @@ void Draw_SetPrimCallback(MenuWidgetNode *arg0, s32 arg1) {
         var_a2 = arg1 & 1;
     }
     t48 = arg0->cursor_y;
-    temp_v1_2 = arg0->y_limit;
     arg0->has_scroll = var_a2;
+    temp_v1_2 = arg0->y_limit;
     if (t48 >= temp_v1_2) {
         arg0->cursor_y = temp_v1_2 - 1;
     }
@@ -1552,7 +1554,7 @@ void Draw_DropShadow(void) {
     g_DrawColorShaded = 0x7F2000;
     g_DrawSpriteX -= 2;
     g_DrawSpriteY -= 2;
-    Draw_AllocColorTri(g_DrawTextPosX, D_8009D168, 0);
+    Draw_AllocColorTri(g_DrawTextPosX, g_MenuListRowHeight, 0);
     g_DrawPrimColor = 0x808080;
     g_DrawColorShaded = 0x404040;
     g_DrawSpriteX += 2;

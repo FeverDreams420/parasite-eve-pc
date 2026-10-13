@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 -fno-strength-reduce */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/field_actor.h"
@@ -10,8 +6,6 @@
 #include "pe1/script_node.h"
 #include "pe1/script_state.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 ScriptNode *g_ScriptNodeFreeListHead;
 unsigned short g_ScriptNodeSeqCounter[1];
 int g_SceneDataTable0;
@@ -38,7 +32,7 @@ void Script_InitNodePool(void) {
     g_ScriptNodeFreeListHead = 0;
 
     for (; i < 72; i++, rowOffset += sizeof(ScriptNode)) {
-        register unsigned int colOffset;
+        unsigned int colOffset;
         ScriptNodeAddress cell;
 
         j = 0;

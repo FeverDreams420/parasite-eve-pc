@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-schedule-insns */
-
 #include "common.h"
 #include "pe1/field_vector_math.h"
 
@@ -7,7 +5,7 @@ int FieldFx_TurnToward(int current, int target, int step) {
     int target_copy;
     int requestedStep;
     unsigned angleWord;
-    register int diff asm("$5");
+    int diff;
     int abs_diff;
     int step_s16;
     int delta;

@@ -6,4 +6,4 @@ u_short GetTPage(int tp, int abr, int x, int y) {
             ((x & 0x3FF) >> 6) | ((y & 0x200) << 2));
 }
 
-static unsigned int GetTPage_alignment __attribute__((section(".text"))) = 0;
+static unsigned int GetTPage_alignment = 0;

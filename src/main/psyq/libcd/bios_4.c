@@ -1,5 +1,3 @@
-/* ASSEMBLER: GNU */
-/* CC1_FLAGS: -fno-schedule-insns -fno-schedule-insns2 */
 /* Psy-Q LIBCD BIOS.OBJ, part 4 of 7: CD_initvol, CD_initintr. */
 
 #include "common.h"
@@ -11,8 +9,8 @@ typedef struct CdInitVolFrame {
     u32 pad04;
 } CdInitVolFrame;
 
-register CdInitVolFrame *g_CdInitVolFrame asm("$29");
-register int g_CdInitVolValue asm("$2");
+CdInitVolFrame *g_CdInitVolFrame;
+int g_CdInitVolValue;
 
 /* BIOS_1.OBJ state. Nothing in this executable references
  * g_CdReadCallback. */
@@ -111,10 +109,10 @@ CdCommandTables g_CdCommandTables = {
     },
 };
 
-/* Hardware register pointers: the CD controller's four ports, the common
- * delay register (written 0x1325) and the SPU base; after the interrupt
+/* Hardware pointers: the CD controller's four ports, the common
+ * delay (written 0x1325) and the SPU base; after the interrupt
  * event bytes and the init descriptor, the CD bus delay/size register, the
- * DMA control register and the channel 3 (CD) address register. */
+ * DMA control and the channel 3 (CD) address register. */
 volatile u8 *g_CdRegIndexBase = (volatile u8 *)0x1F801800;
 volatile u8 *g_CdRegPort1 = (volatile u8 *)0x1F801801;
 volatile u8 *g_CdRegDataWrite = (volatile u8 *)0x1F801802;

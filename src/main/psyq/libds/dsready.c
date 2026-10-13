@@ -1,5 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBDS DSREADY.OBJ, part 1 of 2: DsStartReadySystem, DsEndReadySystem,
  * DsReadySystemMode. This part needs GCC 2.8.1 with -mno-split-addresses,
  * the rest of the object GCC 2.7.2. */
@@ -27,7 +25,6 @@ int DsStartReadySystem(DsAsyncReadCallback callback, int callbackArg) {
     DS_ASYNC_READ_FIELD(state, retriesRemaining) = callbackArg;
     DS_ASYNC_READ_FIELD(state, savedReadyCallback) = DsReadyCallback((DsEventCallback)ER_cbready);
     DS_ASYNC_READ_FIELD(state, savedStartCallback) = DsStartCallback(LIBDS_DSREADY_text_3D8);
-    asm volatile("" : "+r"(active));
     DS_ASYNC_READ_FIELD(state, active) = active;
     return 1;
 }
@@ -44,7 +41,6 @@ void DsEndReadySystem(void) {
         DsStartCallback(DS_ASYNC_READ_FIELD(state, savedStartCallback));
         particleType = 9;
         zeroArg1 = 0;
-        asm volatile("" : "+r"(particleType), "+r"(zeroArg1));
         callback = 0;
         DsCommand(particleType, zeroArg1, callback, -1);
     }

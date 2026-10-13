@@ -1,5 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBGPU SYS.OBJ, part 10 of 11: LoadImage2, StoreImage2, MoveImage2
  * and DrawOTag2. */
 

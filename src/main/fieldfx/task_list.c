@@ -40,7 +40,7 @@ void *FieldFx_GetEffectResource(int index) {
 int FieldFx_InitCallbackList(char *out, int stride, int count, FieldFxTaskCallback callback)
 {
   int i;
-  register char *entry;
+  char *entry;
   FieldFxCallbackList *list = (FieldFxCallbackList *)out;
   stride += 4;
   entry = out;

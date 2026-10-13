@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/draw_state.h"
 #include "pe1/game_state.h"
@@ -24,11 +20,7 @@
 #include "pe1/menu_widget.h"
 #include "pe1/save.h"
 #include "pe1/text.h"
-#include "include_asm.h"
-#include "m2c_macros.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int D_8009CF4C;
 int D_8009CFA4;
 int g_InvItemUsableFlag;
@@ -305,7 +297,7 @@ void Menu_DrawContextHelpText(MenuWidgetNode *panel)
             text = Text_LookupTable10(index + 0x42);
             break;
         case 50:
-            /* Retail keeps the table base in a register for the row-4
+            /* Retail keeps the table base in a for the row-4
              * override and recomputes the row address on both paths. */
             {
                 u8 *hints = g_MenuContextHelpTextIds;
@@ -839,12 +831,12 @@ void Menu_StepItemGrid2(void) {
             Text_AppendFFTerminatedBytes(&g_MenuItemLabelBuffer[0x40], Text_LookupTable4(0x49));
             D_8009CFA4 = suffix_id;
             /* Recompute the buffer address at each measurement. */
-            asm volatile("" : "=r"(text_buf) : "0"(&g_MenuItemLabelBuffer[0x40]));
+            (text_buf = &g_MenuItemLabelBuffer[0x40]);
             width = Draw_MeasureTextWidth(text_buf);
             if (width < 0x78) {
                 width = 0x78;
             } else {
-                asm volatile("" : "=r"(text_buf) : "0"(&g_MenuItemLabelBuffer[0x40]));
+                (text_buf = &g_MenuItemLabelBuffer[0x40]);
                 width = Draw_MeasureTextWidth(text_buf);
             }
         }

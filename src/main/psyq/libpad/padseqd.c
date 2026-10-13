@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBPAD PADSEQD.OBJ: _padInitDirSeq, LIBPAD_PADSEQD_text_34, LIBPAD_PADSEQD_text_108, _dirFailAuto, CardObj_IsTransferActive. */
 
 #include "pe1/card_obj.h"
@@ -21,7 +20,7 @@ void _padCmdParaMode(CardObj *obj, unsigned char value);
 void _padSendAtLoadInfo(CardObj *obj);
 
 int LIBPAD_PADSEQD_text_34(CardObj *obj) {
-    register int compare asm("$2");
+    int compare;
     int state;
 
     compare = 0xF3;
@@ -57,12 +56,10 @@ high_state:
     else
     {
 emit_one:
-    asm volatile("" : : "r"(compare));
     _padCmdParaMode(obj, 1);
     return 0;
 
 emit_zero:
-    asm volatile("" : : "r"(compare));
     _padCmdParaMode(obj, 0);
     return 0;
 
@@ -102,16 +99,15 @@ void LIBPAD_PADSEQD_text_108(CardObj *port) {
     if ((u8)(port->sequenceStep - 2) < 252 && port->response_3c[0] != 0xf3)
         g_MemCardObjResetFn(port);
     {
-        register int state = port->sequenceStep;
-        register int one;
-        register int value asm("$2");
+        int state = port->sequenceStep;
+        int one;
+        int value;
         if (state != 0 && state != 255 && !port->command)
             return;
         one = 1;
         if (state != one) {
         if (state < 2) {
             value = 254;
-            asm("" : : "r"(value));
             if (state == 0)
                 goto idle;
             goto advance;
@@ -151,8 +147,7 @@ void LIBPAD_PADSEQD_text_108(CardObj *port) {
     }
 }
 
-/* Psy-Q LIBPAD/PADSEQD.OBJ _dirFailAuto.
- * Provenance: configs/USA/psyq_provenance.json (LIBPAD PADSEQD). */
+/* Psy-Q LIBPAD/PADSEQD.OBJ _dirFailAuto. */
 void _dirFailAuto(CardObj *port) {
     port->frameCounter++;
     switch (port->sequenceStep) {

@@ -1,5 +1,3 @@
-/* ASSEMBLER: GNU */
-
 #include "pe1/game_asm.h"
 
 /*
@@ -7,7 +5,7 @@
  * Draw_FlushPrimQueue result scaled to (high - low), i.e.
  * low + ((u16)r * (high - low) >> 16).
  *
- * Original assembler (configs/USA/original_asm_evidence.json): ra is kept in
+ * Original assembler: ra is kept in
  * $v1 with `or` instead of a stack frame across the call, and the range and
  * result use the trapping `sub` and `add`, which GCC never emits.
  */

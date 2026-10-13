@@ -308,7 +308,6 @@ void Anim_DecodeBoneRotationsShort(RenderObjectEntity *object, RenderAnimationDa
                 cursor = cursor + channelStride;
             }
             /* Keep the vector pointer live through the Y-channel store. */
-            asm volatile("" : : "r"(angle));
             angleZ[-1] = sampleY;
             sampleBase.samples = ((RenderAnimShortChannel *)cursor)->samples.unsigned_values;
             if (((RenderAnimShortChannel *)cursor)->constant_marker != 0) {

@@ -1,12 +1,10 @@
-/* ASSEMBLER: GNU */
-
 #include "pe1/psyq_asm.h"
 
 /*
  * PSY-Q LIBPRESS VLC, linked into the mdec_diag overlay:
  * DecDCTvlcSize, DecDCTvlc.
  *
- * Original SDK assembler (configs/USA/original_asm_evidence.json): no stack
+ * Original SDK assembler: no stack
  * frame, decoder state saved to static words, interrupts masked through
  * COP0 Status, and 55 trapping add/addi/sub instructions. DecDCTvlcSize is
  * identical to the PSY-Q 3.5 vlc.o routine word for word (relocations

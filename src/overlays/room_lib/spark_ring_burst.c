@@ -70,14 +70,12 @@ int RoomEffect_SparkRingParticle(int mode, RoomSparkRingParticle *state) {
          * stores the seed's angle before the colour lookup; the use and
          * the barrier keep both in place. */
         table = g_RoomSparkRingColorRamp;
-        PE1_COMPILER_USE(table);
         g_FieldFxSpriteParams.parameter00 = 0x20;
         g_FieldFxSpriteParams.parameter02 = 2;
         g_FieldFxSpriteParams.extent_x = 0x20;
         g_FieldFxSpriteParams.extent_y = 0x20;
         frame = g_FieldFxCurrentAge;
         *(unsigned short *)&seed.bytes[4] = frame * 24;
-        PE1_COMPILER_MEMORY_BARRIER();
         FieldFx_SampleColorTrack(table, &out, state->timer);
         texture = g_FieldFxPaletteTable[g_FieldFxSpriteParams.palette];
         if (g_FieldFxSpriteParams.palette == 4 && g_FieldFxAltPaletteFlag != 0) {
@@ -239,10 +237,9 @@ int RoomEffect_SparkRingController(int mode, RoomSparkRingState *state) {
             break;
         }
         /* Retail addresses the closing stores and the unit read through a
-         * register holding the tpage slot; the empty constraint keeps the
+         * holding the tpage slot; the empty constraint keeps the
          * compiler from folding it back into absolute addresses. */
         tpageSlot = &g_FieldFxSpriteParams.tpage;
-        asm("" : "=r"(tpageSlot) : "0"(tpageSlot));
         idx = TEXTURE_SLOT_RECORD(g_FieldFxTpageSlot4);
         unit = tpageSlot[-4];
         palette = g_FieldFxTpageTable[idx];
@@ -624,7 +621,7 @@ int RoomEffect_BurstSparkSpawner(int mode, int *count) {
 
         g_FieldFxSpriteParams.parameter0A = 0;
         g_FieldFxSpriteParams.depth = 4;
-    
+
     }
     return 0;
 }

@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBPAD PADENTRY.OBJ: PadChkVsync, PadStartCom, PadStopCom, PadChkMtap, PadGetState, PadInfoMode, PadInfoAct, PadInfoComb, PadSetActAlign, PadSetMainMode, PadSetAct. */
 
 #include "pe1/card_obj.h"
@@ -27,7 +26,7 @@ void PadStopCom(void) {
 
 int PadChkMtap(int arg0)
 {
-  register int index;
+  int index;
   if (g_MemCardCommandByte != 0)
   {
     index = arg0 >> 4;
@@ -150,7 +149,7 @@ void PadSetAct(int channel, u8 *payload, int size) {
     _padSetAct(g_MemCardObjLookupFn(channel), payload, size);
 }
 
-unsigned int gap_memcard_card_obj_tail_731BC[] __attribute__((section(".text"))) = {
+unsigned int gap_memcard_card_obj_tail_731BC[] = {
     0x00000000,
     0x00000000,
 };

@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 -g3 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/akao.h"
 #include "pe1/battle.h"

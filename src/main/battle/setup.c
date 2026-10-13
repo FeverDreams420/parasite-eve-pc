@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle.h"
 #include "pe1/battle_cmd.h"
@@ -19,8 +15,6 @@
 #include "pe1/random.h"
 #include "pe1/textbox.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 s8 D_8009CE30;
 u16 D_8009D298;
 u8 g_BattleActionAnimModes[4];
@@ -399,8 +393,8 @@ done:
 
 void Battle_BuildTargetList(void) {
     s32 entityFlags;
-    register s32 nextIndex asm("$5");
-    register s32 finalCount asm("$2");
+    s32 nextIndex;
+    s32 finalCount;
     s32 pad_[2];
     s32 distance;
     s16 angle;
@@ -440,7 +434,6 @@ void Battle_BuildTargetList(void) {
         Battle_SortTargets((BattleTargetWords *)g_BattleTargetList, 0, (s8) (g_BattleTargetIndex - 1));
     }
     finalCount = g_BattleTargetIndex;
-    __asm__("" : "=r"(finalCount) : "0"(finalCount));
     g_BattleTargetList[finalCount].actor = NULL;
 }
 

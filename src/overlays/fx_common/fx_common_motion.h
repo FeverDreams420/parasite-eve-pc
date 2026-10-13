@@ -64,7 +64,7 @@ extern RoomSpriteMatrix D_8018EFF4;
 /* Transform nodes animated along the camera paths (D_801EA578..D_801EA58C). */
 extern FxCommonTransformNode *g_FxCommonPathNodes[6];
 /* Camera rotation angles. An incomplete array, so the -G8 camera unit keeps
- * the absolute address in a register as retail does. */
+ * the absolute address in a as retail does. */
 extern GteShortVector g_FxCommonCameraAngles[];
 extern RoomSpriteMatrix g_FxCommonCameraMatrix;
 extern s8 D_800B0DB2;

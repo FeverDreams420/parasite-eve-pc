@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBCD SYS.OBJ, part 2 of 2: CdFlush, CdSetDebug, CdComstr, CdIntstr,
  * CdSync, CdReady, CdSyncCallback, CdReadyCallback, CdControl, CdControlF,
  * CdControlB, CdMix, CdGetSector, CdGetSector2, CdDataCallback, CdDataSync,
@@ -70,17 +69,17 @@ u32 g_CdCommandHasParam[32] = {
 int CdControl_Impl(int cmd, void *param, u8 *extra) __asm__("CdControl");
 
 int CdControl_Impl(int cmd, void *param, u8 *extra) {
-    register int tries;
-    register void *param_reg;
-    register u8 *extra_reg;
-    register int cmd_reg;
-    register int cmd_byte;
-    register CdlCB saved asm("$21");
-    register u32 *slot;
-    register int ret asm("$23");
-    register int minus_one;
-    register int one asm("$8");
-    register u32 *table;
+    int tries;
+    void *param_reg;
+    u8 *extra_reg;
+    int cmd_reg;
+    int cmd_byte;
+    CdlCB saved;
+    u32 *slot;
+    int ret;
+    int minus_one;
+    int one;
+    u32 *table;
 
     param_reg = param;
     extra_reg = extra;
@@ -100,9 +99,9 @@ int CdControl_Impl(int cmd, void *param, u8 *extra) {
         g_CdSyncCallback = 0;
         one = 1;
         if (cmd_byte != one && (*(u8 *)&g_CdStatus & 0x10) != 0) {
-            register int command = 1;
-            register void *payload;
-            register u8 *result;
+            int command = 1;
+            void *payload;
+            u8 *result;
 
             payload = 0;
             result = 0;
@@ -122,7 +121,6 @@ int CdControl_Impl(int cmd, void *param, u8 *extra) {
     } while (--tries != minus_one);
     g_CdSyncCallback = saved;
     ret = -1;
-    asm volatile("" : "=r"(ret) : "0"(ret));
     return ret + 1;
 }
 /* The public API takes a byte command; the implementation keeps its incoming

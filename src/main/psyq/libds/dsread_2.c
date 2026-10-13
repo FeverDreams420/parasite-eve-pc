@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBDS DSREAD.OBJ, part 2 of 2: DS_read_cbready, DS_read_cbdata, DsReadSync, DsReadCallback, DsReadBreak, DsReadMode. */
 
 #include "pe1/cdrom.h"
@@ -62,7 +59,6 @@ void DS_read_cbdata(void) {
     int query;
     query = -1;
     /* Keep the clock query independent of the sector decrement. */
-    asm("" : "+r"(query));
     state[0] += state[-1] * 4;
     state[1]--;
     if (VSync(query) > state[5] + 1200) state[1] = -1;
@@ -80,7 +76,7 @@ int DsReadSync(void *argument) {
 
     v0 = VSync(-1);
     state = &g_CdReadStartVsync;
-    
+
     if ((state[0] + 0x4B0) < v0) {
         DsReadBreak();
         s0 = -1;
@@ -122,13 +118,11 @@ void DsReadBreak(void) {
         DS_cw_system(1, 0);
         particleType = 9;
         zeroArg1 = 0;
-        asm volatile("" : "+r"(particleType), "+r"(zeroArg1));
         callback = 0;
         DsCommand(particleType, zeroArg1, callback, -1);
     }
 
     g_CdReadInProgress = 0;
-    asm volatile("" : : : "memory");
 }
 
 void DsReadMode(unsigned int mode) {

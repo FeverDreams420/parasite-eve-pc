@@ -183,7 +183,7 @@ void RoomLib_InitThreeTransformParticles(void *owner, void *unused,
                                          RoomDebrisTriplet *state) {
     RoomInitThreeStack stack;
     RoomSpriteMatrix *firstMatrix;
-    register RoomSpriteMatrix *secondMatrix asm("$17");
+    RoomSpriteMatrix *secondMatrix;
     RoomInitThreeVec *seed;
     void *callOwner;
     RoomDebrisClock *clock;
@@ -205,7 +205,6 @@ void RoomLib_InitThreeTransformParticles(void *owner, void *unused,
     stack.firstSeed.y = -*value;
     stack.firstSeed.z = 0;
     seed = &stack.firstSeed;
-    asm("" : : "r"(seed));
     firstMatrix = &stack.matrices[0];
     RotMatrixYXZ(seed, firstMatrix);
 
@@ -215,7 +214,6 @@ void RoomLib_InitThreeTransformParticles(void *owner, void *unused,
     stack.secondSeed.y = *value;
     stack.secondSeed.z = 0;
     seed = &stack.secondSeed;
-    asm("" : : "r"(seed));
     secondMatrix = &stack.matrices[1];
     RotMatrixYXZ(seed, secondMatrix);
 
@@ -317,7 +315,7 @@ void RoomLib_DrawThreeTransformParticles(void *unused, RoomFxControl *args, Room
     void *arg0;
     RoomSpriteMatrix *inputArg;
     int frame;
-    register RoomFxControl *callArgs asm("$7");
+    RoomFxControl *callArgs;
     RoomDebrisClock *clock;
     RoomDebrisTriplet *drawState;
     int computedScale;
@@ -355,7 +353,6 @@ void RoomLib_DrawThreeTransformParticles(void *unused, RoomFxControl *args, Room
             alpha = drawState->size[i];
             arg0 = RoomLib_ThreeParticleTable;
             RoomLib_ThreeParticleAlpha = alpha;
-            asm volatile("" : : "m"(RoomLib_ThreeParticleAlpha));
             frame = callArgs->frame;
             FieldFx_InterpolateColorRamp(arg0, frame, (unsigned char *)&RoomLib_ThreeParticlePacket);
             FieldFx_SetSpriteCellSize(0x40, 0x40);
@@ -376,8 +373,6 @@ void RoomLib_DrawThreeTransformParticles(void *unused, RoomFxControl *args, Room
                 stack.position = drawState->rotation[i];
                 arg0 = &stack.position;
                 inputArg = &stack.primaryMatrix;
-                asm("" : "=r"(arg0), "=r"(inputArg)
-                    : "0"(arg0), "1"(inputArg));
                 scaleValue = scaleValue >> 1;
                 stack.position.z += drawState->life[i] << 4;
                 RotMatrixYXZ(arg0, inputArg);
@@ -407,7 +402,7 @@ void RoomLib_DrawThreeTransformParticles(void *unused, RoomFxControl *args, Room
                 stack.secondaryMatrix.t[0] = computedScale;
                 stack.secondaryMatrix.t[1] = baseScale;
                 computedScale = (drawState->position[i].z >> 16);
-                
+
                 stack.secondaryMatrix.t[2] = computedScale;
                 alpha = drawState->size[i];
                 RoomLib_ThreeParticleFloorPacket.depth = (unsigned int)alpha >> 1;

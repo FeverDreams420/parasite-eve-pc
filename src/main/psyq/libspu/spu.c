@@ -1,6 +1,5 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBSPU SPU.OBJ, part 1 of 3: initialization, programmed I/O and DMA interrupt.
- * Transfer and register helpers retain separate compiler/assembler profiles. */
+ * Transfer and helpers retain separate compiler/assembler profiles. */
 
 #include "pe1/psyq_bios.h"
 #include "pe1/psyq_spu_internal.h"
@@ -152,7 +151,6 @@ void _spu_FiDMA(void)
         }
     }
     /* The poll counter is dead; do not compensate its speculative increment. */
-    asm volatile("" : : : "$3");
     if (_spu_transferCallback != 0) {
         _spu_transferCallback();
     } else {

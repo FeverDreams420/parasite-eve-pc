@@ -357,13 +357,12 @@ void SceneE08_DrawParticleCluster(void *unused0, void *unused1, SceneParticleClu
     Matrix matrix;
     Vec4 scratch, draw;
     SceneParticleOwner *owner;
-    register unsigned i;
+    unsigned i;
     s16 *slot = &D_801994B2;
 
     owner = FieldFx_GetScriptContext();
     i = 0;
     /* Hoist the draw state address before the cursor setup. */
-    asm("" : : "r"(slot));
     FieldFx_SetSpriteTexturePreset(owner->drawMode);
     FieldFx_SetSpriteColorMode(0x10);
     FieldFx_SetSpriteBlendMode(2);
@@ -586,12 +585,11 @@ void SceneE08_DrawFadeSlots(void *unused0, void *unused1, char *effect) {
     FieldGlowSprite *sprite;
     Ovl178Position *owner;
     SceneE08GlowSprites *base = (SceneE08GlowSprites *)effect;
-    register unsigned i;
+    unsigned i;
     int diag = 0x1000;
     s16 *slot = &D_801994C2;
     owner = FieldFx_GetScriptContext();
     i = 0;
-        asm volatile("" : : "r"(slot));
     FieldFx_SetSpriteTexturePreset(owner->spriteMode);
     FieldFx_SetSpriteColorMode(0x10);
     FieldFx_SetSpriteBlendMode(2);
@@ -823,11 +821,9 @@ void SceneE08_InitRingSprites(void *unused0, void *unused1, SceneRingSpritesStat
     int width;
     FieldRingGeometry *base;
     int first;
-    asm("" : "=r"(mid) : "0"(mid));
     base = (FieldRingGeometry *)(mid - 12);
     width = 128;
     first = 300;
-    asm volatile("" : : "r"(width));
     effect->size = first;
     effect->reserved0D = 156;
     effect->ticks = 0;
@@ -866,7 +862,7 @@ void SceneE08_InitRingSprites(void *unused0, void *unused1, SceneRingSpritesStat
 /* Draw the flash sprite while the state is younger than 12 ticks, then the
  * glow sprite and the two shaded rings, all at the state's position. The
  * untyped data argument is read through two typed views and then reused for
- * the matrix pointer of the second half, as retail's register use shows
+ * the matrix pointer of the second half, as retail's use shows
  * (the incoming copy serves the flash block, a second copy the rest). */
 void SceneE08_DrawRingSprites(void *object, void *timer, void *data)
 {
@@ -993,9 +989,9 @@ void SceneE08_InitSlotsContext(RoomEnt *ent, void *unused, SceneE08InitState *st
     void *asset;
     s16 half;
     FieldActor *player;
-    register int intensity asm("$3");
-    register int mode asm("$2");
-    register int offset asm("$5");
+    int intensity;
+    int mode;
+    int offset;
     void *volatile *sound = D_800B0E64;
     void *handle;
     int playerX;
@@ -1013,11 +1009,8 @@ void SceneE08_InitSlotsContext(RoomEnt *ent, void *unused, SceneE08InitState *st
 
     D_80199688 = offset;
     D_801996A8 = offset;
-    /* Empty compiler barriers retain the retail register lifetimes. */
-    player = g_PlayerEntity;
-    asm volatile ("" : : "r"(player));
+        player = g_PlayerEntity;
     half = 0x80;
-    asm volatile ("" : : "r"(half));
     D_80199685 = mode;
     D_801996A4 = 0x44;
     D_801996A5 = 2;
@@ -1043,7 +1036,6 @@ void SceneE08_InitSlotsContext(RoomEnt *ent, void *unused, SceneE08InitState *st
 
     handle = *sound;
     /* Keep the handle load ahead of the two player-coordinate loads. */
-    asm volatile("" : : "r"(handle));
     intensity = Pe1Fixed_Integer(&player->pos_z);
     playerX = Pe1Fixed_Integer(&player->pos_x);
     g_SceneE08CentreX = playerX;
@@ -1347,11 +1339,9 @@ void SceneE08_InitRingEffect(void *unused0, void *unused1, SceneE08RingEffectSta
     FieldRingGeometry *ring;
     FieldRingGeometry *record = (FieldRingGeometry *)((u8 *)&D_80199604 - PE1_OFFSETOF(FieldRingGeometry, mode));
     int intensity = 0x80;
-    register int span asm("$19");
-    asm("" : "=r"(mid) : "0"(mid));
+    int span;
 
     ring = (FieldRingGeometry *)(mid - PE1_OFFSETOF(FieldRingGeometry, mode));
-    asm ("" : : "r"(ring));
     effect->rotation[0] = 0;
     effect->rotation[1] = 0;
     effect->rotation[2] = 0;
@@ -1359,13 +1349,12 @@ void SceneE08_InitRingEffect(void *unused0, void *unused1, SceneE08RingEffectSta
 
     ring->mode = 0x20;
     record->offset = 0x1F4;
-    asm volatile("" : : "r"(intensity));
     record->color1[0] = 0xF0;
     record->color1[1] = 0xC8;
     span = 0x960;
     record->intensity = intensity;
     record->color1[2] = 0x78;
-    asm volatile("" : "=r"(source) : "0"(g_SceneE08RingEffectSource));
+    (source = g_SceneE08RingEffectSource);
     record->color0[0] = 0;
     record->color0[1] = 0;
     record->color0[2] = 0;
@@ -1391,7 +1380,6 @@ void SceneE08_InitRingEffect(void *unused0, void *unused1, SceneE08RingEffectSta
     FieldFx_BuildRingGeometry(ring);
 
     record = ring + 1;
-    asm ("" : : "r"(record));
     record->mode = 0x20;
     record->offset = 0x5DC;
     record->intensity = intensity;
@@ -1496,11 +1484,9 @@ void SceneE08_DrawSpiralRibbons(void *unused0, void *unused1, SceneMovingSlots *
     FieldFx_SetSpriteBlendMode(2);
 
     dst = effect->vector;
-    asm("" : : "r"(dst));
     frame = (SceneMovingHalfLane *)dst;
     step = (SceneMovingWordLane *)frame;
     while (i < 16) {
-        asm("" : "=r"(step), "=r"(frame) : "0"(step), "1"(frame));
         if (frame->active) {
             FieldFx_InterpolateColorRamp(table, step->life, scratchA);
             FieldFx_InterpolateColorRamp(table, step->life, scratchPtr);
@@ -1628,14 +1614,13 @@ void SceneE08_DrawOrbitParticles(void *unused0, void *unused1, SceneE08OrbitPart
     s16 temp[3];
     SceneE08Vector transformed, v;
     /* Keep the matrix scale live before the first rendering setup call. */
-    register s16 scale asm("$19") = 0x1000;
+    s16 scale = 0x1000;
     char *table = D_801996A0;
     Ovl178Position *owner;
     unsigned i;
 
     owner = FieldFx_GetScriptContext();
     i = 0;
-    asm volatile("" : : "r"(scale));
     FieldFx_SetSpriteTexturePreset(owner->spriteMode);
     FieldFx_SetSpriteCellSize(0x20, 0x20);
     FieldFx_SetSpriteColorMode(0x10);
@@ -1675,8 +1660,8 @@ void SceneE08_DrawOrbitParticles(void *unused0, void *unused1, SceneE08OrbitPart
 void SceneE08_UpdateOrbitParticles(void *unused, RoomFxControl *condition_arg, SceneE08OrbitParticles *effect) {
     /* The byte cursor and loop-limit base remain pinned for matching. */
     RoomFxControl *condition = condition_arg;
-    register char *base asm("$18") = (char *)effect;
-    register char *state asm("$16") = base;
+    char *base = (char *)effect;
+    char *state = base;
     int random;
     unsigned i = 0;
 
@@ -1956,7 +1941,7 @@ void SceneE08_InitLayeredSpriteContext(SceneGrabHead *actor, void *unused, Scene
     u16 half128;
     u8 byte128;
     int thirtyTwo;
-    register int two asm("$8");
+    int two;
     int minus300;
     int scratch; /* -50 offset, later the sound pan */
     int scale;
@@ -1970,13 +1955,11 @@ void SceneE08_InitLayeredSpriteContext(SceneGrabHead *actor, void *unused, Scene
         sixtyFour = 64;
     one = 1;
     state->hitReload = scale;
-    asm volatile("" : : "m"(state->hitReload));
     scratch = -50;
     half128 = 128;
     byte128 = 128;
     thirtyTwo = 32;
     two = 2;
-    asm volatile("" : : "r"(two));
     /* hitTimer and hitRequest: as field stores GCC would sink them past
      * the global stores below. */
     *(s16 *)((char *)state + 0x2A) = 0;
@@ -2085,9 +2068,9 @@ void SceneE08_DrawTrailGlow(void *arg0, void *arg1, char *effects) {
     GteVector scratch, vec;
     Ovl178Position *owner;
     s32 third;
-    register char *base asm("$20") = effects;
-    register SceneE08PositionSample *state asm("$17");
-    register SceneE08TrailLane *phase asm("$16");
+    char *base = effects;
+    SceneE08PositionSample *state;
+    SceneE08TrailLane *phase;
     s16 *alpha;
     unsigned i;
     unsigned angleOffset;
@@ -2095,7 +2078,7 @@ void SceneE08_DrawTrailGlow(void *arg0, void *arg1, char *effects) {
     i = 0;
     alpha = &D_8019955A;
     /* This single-pass block preserves the original setup scheduling. */
-    { asm volatile("" : : : "memory"); 
+    {
         state = (SceneE08PositionSample *)base;
         phase = (SceneE08TrailLane *)base;
         angleOffset = 0x30;
@@ -2226,7 +2209,6 @@ void SceneE08_DrawLayeredSprite(void *unused, u16 *phase, SceneLayeredSpriteStat
         D_80199561 = 0xFF;
     }
     D_80199562 = 0x60;
-    asm("" : : "m"(D_80199562));
 
     alphaBase = &D_8019956A;
     alpha = alphaBase;
@@ -2263,7 +2245,7 @@ void SceneE08_UpdateLayeredSprite(void *unused, RoomFxControl *control, char *st
 {
     Ovl178Position *owner = FieldFx_GetScriptContext();
     /* Keeps the later history-copy loop based at its original offset. */
-    register char *cursor asm("$6");
+    char *cursor;
     s16 point[3];
     u32 count;
     int random;
@@ -2276,11 +2258,11 @@ void SceneE08_UpdateLayeredSprite(void *unused, RoomFxControl *control, char *st
     s32 zVelocity;
     s32 yBase;
     int nextY;
-    register s32 yVelocity asm("$7");
+    s32 yVelocity;
     int nextZ;
     int zArg;
     /* The Y velocity and later screen limit share the original argument register. */
-    register u16 screenLimit asm("$7");
+    u16 screenLimit;
     int pointValue;
     s16 *ground;
     count = 4;
@@ -2339,7 +2321,6 @@ void SceneE08_UpdateLayeredSprite(void *unused, RoomFxControl *control, char *st
         else
         {
             /* Preserve the second ground-height read after clearing velocity. */
-            PE1_COMPILER_MEMORY_BARRIER();
             ((SceneLayeredSpriteState *)state)->velocity[0] = 0;
             ((SceneLayeredSpriteState *)state)->velocity[1] = 0;
             ((SceneLayeredSpriteState *)state)->velocity[2] = 0;

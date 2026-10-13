@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSSYS_4.OBJ: DsControlF, DsControl, DsControlB and the object's zero tail. */
 
 #include "pe1/psyq_ds_queue.h"
@@ -31,7 +30,7 @@ int DsControlB(unsigned char command, void *param, void *result) {
     return status == 2;
 }
 
-unsigned int LIBDS_DSSYS_4_pad[] __attribute__((section(".text"))) = {
+unsigned int LIBDS_DSSYS_4_pad[] = {
     0x00000000,
     0x00000000,
 };

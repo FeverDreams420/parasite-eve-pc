@@ -30,7 +30,7 @@
 #include "pe1/room_fx.h"
 #include "pe1/scene_assets.h"
 
-/* Matching debt: three transfer-register pins per function, plus five empty
+/* Matching debt: three transfer-pins per function, plus five empty
  * pointer/memory barriers across this TU. Matrix loads are C; each GTE
  * instruction and hazard nop uses its individual macro. */
 
@@ -221,7 +221,7 @@ void FieldFx_DrawShapeQuads(GteShortVector *position, GteRotation *rotation,
     GteMatrix *view;
     GteShortVector *vertex;
     int r;
-    register int g asm("$3");
+    int g;
     int b;
     int u, v;
     int width, height;
@@ -253,7 +253,6 @@ void FieldFx_DrawShapeQuads(GteShortVector *position, GteRotation *rotation,
         g = intensity * color->g / 128;
         b = intensity * color->b / 128;
     }
-    asm("" : : : "$5");
     template.r0 = r;
     template.g0 = g;
     template.b0 = b;
@@ -275,7 +274,6 @@ void FieldFx_DrawShapeQuads(GteShortVector *position, GteRotation *rotation,
     }
     width = g_FieldFxSpriteParams.extent_x;
     height = g_FieldFxSpriteParams.extent_y;
-    asm("" : : "r"(scale_x), "r"(scale_y));
     scale.x = scale_x * (width >> 4);
     template.u0 = template.u2 = u;
     template.v1 = template.v0 = v;
@@ -308,15 +306,13 @@ void FieldFx_DrawShapeQuads(GteShortVector *position, GteRotation *rotation,
     i = 0;
     if (i < g_FieldFxStripPacketCounts[g_FieldFxSpriteParams.parameter0A]) {
         {
-            register void *copyEnd asm("$14") = &template.x3;
-            asm("" : : "r"(copyEnd));
+            void *copyEnd = &template.x3;
         }
         depthOut = &depth;
         for (;;) {
             {
-                register GteShortVector *v1 = &vertex[1];
-                register GteShortVector *v2 asm("$2") = &vertex[2];
-                asm volatile("" : "=r"(v1), "=r"(v2) : "0"(v1), "1"(v2));
+                GteShortVector *v1 = &vertex[1];
+                GteShortVector *v2 = &vertex[2];
                 gte_lwc2_0_0(vertex);
                 gte_lwc2_1_4(vertex);
                 gte_lwc2_2_0(v1);
@@ -342,7 +338,7 @@ void FieldFx_DrawShapeQuads(GteShortVector *position, GteRotation *rotation,
                 gte_stszotz(depthOut);
             }
             {
-                register GteShortVector *v3 = &vertex[3];
+                GteShortVector *v3 = &vertex[3];
                                 gte_lwc2_0_0(v3);
                 gte_lwc2_1_4(v3);
             }
@@ -354,7 +350,7 @@ void FieldFx_DrawShapeQuads(GteShortVector *position, GteRotation *rotation,
                 FieldStripLink link;
 
                 {
-                    register s16 *p3 = &packet->x3;
+                    s16 *p3 = &packet->x3;
                                         gte_stsxy2(p3);
                 }
                 packet->tag.address = STRIP_OT(depth)->address;
@@ -379,8 +375,8 @@ int StoreImage(RECT *rect, void *pixels);
 void FieldFx_SampleColorTrack(void *key, void *color, int time)
 {
     RenderColorTrack *track = (RenderColorTrack *)key;
-    /* Matching debt: retain the retail count register across initialization. */
-    register int count asm("$8") = track->count;
+    /* Matching debt: retain the retail count across initialization. */
+    int count = track->count;
     int i, total, length;
     key = (unsigned char *)key + 8;
     if (!track->duration) {
@@ -457,10 +453,9 @@ void FieldFx_TransformTranslation(const GteShortVector *input,
     GteMatrixWords local;
     /* The slot address stays in $v0 and the loaded matrix in $v1, with the
      * load-delay nop between them. Folding the load deletes that addiu. */
-    register GteMatrixWords *matrix asm("$3");
+    GteMatrixWords *matrix;
     GteMatrix **slot = &D_800BCFA4.value;
 
-    asm volatile("" : "=r"(slot) : "0"(slot));
     matrix = (GteMatrixWords *)*slot;
         gte_ldrotmatrix(matrix);
     gte_ldtransmatrix(matrix);
@@ -482,7 +477,7 @@ void FieldFx_TransformTranslation(const GteShortVector *input,
 
 /* Build, optionally scale/compose, and install a rotation matrix.
  * Matching debt: three pinned word-transfer registers. Matrix reads are C;
- * each GTE control-register transfer uses its own instruction macro. */
+ * each GTE control-transfer uses its own instruction macro. */
 void FieldFx_LoadRotationMatrix(GteRotation *rotation, s32 *scale, GteMatrix *matrix) {
     GteMatrix local;
 
@@ -523,7 +518,7 @@ void FieldFx_LinkBlendedPacket(void *ordering, void *packet, int mode)
 
 /* Offset a point by a radius along the rotated Z axis and a roll-rotated X
  * arm, then restore the field camera matrix.
- * Matching debt: six register pins and three empty pointer barriers.
+ * Matching debt: six pins and three empty pointer barriers.
  * Matrix loads are C; GTE instructions and hazard nops use individual macros. */
 void FieldFx_OffsetPointByAngles(GteShortVector *origin, GteShortVector *out, int radius,
                    GteShortVector *angles, int arm, int roll)
@@ -535,7 +530,7 @@ void FieldFx_OffsetPointByAngles(GteShortVector *origin, GteShortVector *out, in
     GteMatrix rollMatrix;
     GteMatrixWords *matrix;
     GteMatrixWords *rolled;
-    register GteMatrixWords *camera asm("$8");
+    GteMatrixWords *camera;
     GteMatrix **slot;
     GteShortVector *rotationAngles;
 
@@ -576,7 +571,6 @@ void FieldFx_OffsetPointByAngles(GteShortVector *origin, GteShortVector *out, in
     gte_swc2_26_4(&point);
     gte_swc2_27_8(&point);
     slot = &D_800BCFA4.value;
-    asm volatile("" : "=r"(slot) : "0"(slot));
     camera = (GteMatrixWords *)*slot;
     gte_ldrotmatrix(camera);
     gte_ldtransmatrix(camera);
@@ -606,7 +600,7 @@ void FieldFx_CalculateLookAngles(GteShortVector *from, GteShortVector *to,
  * restores the shared camera matrix afterwards. The halfword distance
  * parameter makes the callee narrow it, which lets sched1 move the argument
  * copies below the constant vector copy as retail does.
- * Matching debt: four register pins and two empty constraints preserve
+ * Matching debt: four pins and two empty constraints preserve
  * pointer allocation and ordering. All matrix loads are C; each GTE transfer,
  * command and hazard nop is an individual macro. */
 void FieldFx_AnglesToVector(GteShortVector *input, s16 distance, GteShortVector *out)
@@ -652,9 +646,9 @@ void FieldFx_AnglesToVector(GteShortVector *input, s16 distance, GteShortVector 
 int FieldFx_GetTurnDirection(int from, int to, s16 *distance)
 {
   unsigned char new_var;
-  register int direction;
-  register int delta;
-  register int direction16;
+  int direction;
+  int delta;
+  int direction16;
   int diff;
   from &= 0xFFF;
   to &= 0xFFF;
@@ -802,7 +796,7 @@ void FieldFx_RandomScatterOffsetXY(s16 *out)
  * radius `width` and `height`, color0 shades the centre and color1 the
  * rim at intensity/128; a nonzero rotation->flags also applies the view
  * rotation. Drawing stops at the first triangle beyond the depth range.
- * Matching debt: twelve register pins and five empty constraints. CPU
+ * Matching debt: twelve pins and five empty constraints. CPU
  * matrix loads and depth arithmetic are C; each GTE instruction is separate. */
 void FieldFx_DrawStarFan(GteShortVector *position, int width, int height, int segments,
                    GteRotation *rotation, int scale_x, int scale_y,
@@ -897,10 +891,9 @@ void FieldFx_DrawStarFan(GteShortVector *position, int width, int height, int se
         vertices[2].x = rcos(next) * radii[(i + 1) & 1] / 4096;
         lastY = rsin(next) * radii[(i + 1) & 1] / 4096;
         /* Keep vertex-address setup after the final coordinate calculation. */
-        asm volatile("" : : : "$4");
         {
-            register GteShortVector *v0 asm("$4");
-            register GteShortVector *v1 asm("$3");
+            GteShortVector *v0;
+            GteShortVector *v1;
             GteShortVector *v2;
             v0 = &vertices[0];
             v1 = &vertices[1];
@@ -927,9 +920,8 @@ void FieldFx_DrawStarFan(GteShortVector *position, int width, int height, int se
         gte_cop2_hazard_slot();
         gte_avsz3_command();
         {
-            register s32 z asm("$12");
+            s32 z;
             u32 *out = &depth;
-            asm volatile("" : "=r"(out) : "0"(out));
             gte_getsz3(z);
             gte_cop2_hazard_slot();
             *out = z >> 2;
@@ -957,7 +949,7 @@ void FieldFx_DrawStarFan(GteShortVector *position, int width, int height, int se
  * color0) and radius `outer` (shaded by color1) at intensity/128; a
  * nonzero rotation->flags also applies the view rotation. Drawing stops at
  * the first quad beyond the depth range.
- * Matching debt: twelve register pins and four empty constraints. CPU
+ * Matching debt: twelve pins and four empty constraints. CPU
  * matrix loads and depth arithmetic are C; each GTE instruction is separate. */
 void FieldFx_DrawRingBand(GteShortVector *position, int inner, int outer, int segments,
                    GteRotation *rotation, int scale_x, int scale_y,
@@ -989,7 +981,7 @@ void FieldFx_DrawRingBand(GteShortVector *position, int inner, int outer, int se
         return;
     bias = (u16)D_800F3374;
     view = D_800BCFA4.value;
-    /* Preserve the position/color register allocation without argument pins. */
+    /* Preserve the position/color allocation without argument pins. */
         if (color0 == 0) {
         innerColor.r = innerColor.g = innerColor.b = 0;
     } else {
@@ -1056,8 +1048,8 @@ void FieldFx_DrawRingBand(GteShortVector *position, int inner, int outer, int se
         vertices[3].x = rcos(next) * inner / 4096;
         vertices[3].y = rsin(next) * inner / 4096;
         {
-            register GteShortVector *v0 asm("$4");
-            register GteShortVector *v1 asm("$3");
+            GteShortVector *v0;
+            GteShortVector *v1;
             GteShortVector *v2;
             v0 = &vertices[0];
             v1 = &vertices[1];
@@ -1140,7 +1132,7 @@ void FieldFx_DrawRotatedTriangle(GteShortVector *position, GteRotation *rotation
     black = g_FieldFxBlackColor;
     bias = (u16)g_FieldFxSpriteParams.depth;
     /* Keep intensity in s6 without pinning the later draw-mode lifetime. */
-    
+
     packet = (FieldG3Packet *)(D_800B0E38.packets[g_ActiveDrawSlot] + g_DrawPacketOffset);
     g_DrawPacketOffset += sizeof(FieldG3Packet);
     view = D_800BCFA4.value;
@@ -1550,7 +1542,6 @@ void FieldFx_DrawRotatedQuad(GteShortVector *position, GteRotation *rotation,
         packet->tpage = g_FieldFxSpriteParams.tpage | GetTPage(0, mode, 0, 0);
     }
     /* Keep rotation and length in registers across the packet setup calls. */
-    asm("" : : "r"(rotation), "r"(length));
     packet->clut = clut;
     gte_ldrotmatrix(view);
     gte_ldtransmatrix(view);
@@ -2008,7 +1999,7 @@ void FieldFx_UpdatePointHistory(RenderHistoryPoint *history, s16 count,
 }
 
 /* Matching debt: two empty barriers and five volatile stack parameters keep
- * every register save before the stack argument loads (see
+ * every save before the stack argument loads (see
  * docs/CODE_ORGANIZATION.md). */
 void FieldFx_DrawPulledSprite(GteShortVector *position, int scale_x, int scale_y,
                    int texture, volatile int input_clut, volatile int input_page,
@@ -2025,16 +2016,14 @@ void FieldFx_DrawPulledSprite(GteShortVector *position, int scale_x, int scale_y
     int clut;
     int page;
     int intensity;
-    register RenderColor *color;
+    RenderColor *color;
     int pull;
 
-    asm volatile("" : : : "memory");
     pull = input_pull;
     clut = input_clut;
     page = input_page;
     intensity = input_intensity;
     color = input_color;
-    asm volatile("" : : : "$6");
     center.x = 0xA0;
     center.y = 0x78;
     packet = (FieldStripPacket *)(D_800B0E38.packets[g_ActiveDrawSlot] + g_DrawPacketOffset);

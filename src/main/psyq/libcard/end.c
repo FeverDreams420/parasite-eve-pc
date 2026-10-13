@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBCARD END: _ExitCard. */
 /*
  * PSY-Q LIBCARD END: _ExitCard. Assembler source with the same static ra

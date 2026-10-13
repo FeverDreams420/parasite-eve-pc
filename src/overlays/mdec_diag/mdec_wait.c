@@ -1,5 +1,3 @@
-/* ASSEMBLER: GNU */
-
 #include "common.h"
 #include "pe1/mdec_diag.h"
 

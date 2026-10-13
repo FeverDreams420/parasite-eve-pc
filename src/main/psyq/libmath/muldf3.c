@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBMATH MULDF3: __muldf3 and its helper _mul_mant_d. */
 
 #include "pe1/math64.h"
@@ -41,7 +40,6 @@ double __muldf3(double x, double y)
         rightExponent = ((int)right.bits.hi >> 20) & 0x7ff;
         exponent = leftExponent + rightExponent - 1022;
         /* Keep the adjusted exponent independent of the shared sum. */
-        asm volatile("" : "=r"(exponent) : "0"(exponent));
 
         work.a.hi = (left.bits.hi & 0xfffff) | 0x100000;
         work.a.lo = left.bits.lo;
@@ -101,18 +99,16 @@ double __muldf3(double x, double y)
 MathU64 *_mul_mant_d(MathU64 *out, unsigned int left, unsigned int right) {
     volatile MathU64 result;
     MathU64 part;
-    register unsigned int low asm("$18") = left & 0xFFFF;
-    register unsigned int firstProduct;
-    register unsigned int product asm("$2");
-    register MathU64 *resultPtr;
+    unsigned int low = left & 0xFFFF;
+    unsigned int firstProduct;
+    unsigned int product;
+    MathU64 *resultPtr;
 
-    asm("" : "=r"(low), "=r"(right) : "0"(low), "1"(right));
     product = right & 0xFFFF;
     firstProduct = low * product;
     left >>= 16;
     product = left * product;
     resultPtr = (MathU64 *)&result;
-    asm("" : "=r"(resultPtr) : "0"(resultPtr));
     result.hi = 0;
     result.lo = firstProduct;
     part.hi = product >> 16;
@@ -126,18 +122,17 @@ MathU64 *_mul_mant_d(MathU64 *out, unsigned int left, unsigned int right) {
     _add_mant_d(&result, result, part);
     {
         unsigned int last = left * right;
-        register unsigned int hi = result.hi;
+        unsigned int hi = result.hi;
         hi += last;
         result.hi = hi;
     }
     {
-        register unsigned int lo;
-        register unsigned int hi;
+        unsigned int lo;
+        unsigned int hi;
         lo = result.lo;
         hi = result.hi;
         out->lo = lo;
         out->hi = hi;
     }
-    asm volatile("" : : "m"(*out));
     return out;
 }

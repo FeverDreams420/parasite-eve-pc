@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBCARD PATCH, part 1 of 4: func_8007E344. */
 /* LIBCARD PATCH stays in four units: parts 1 and 3 are SDK assembler
  * source reported as original_asm, parts 2 and 4 are C, and a unit may not

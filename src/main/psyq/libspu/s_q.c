@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBSPU S_Q: SpuQuit. */
 
 #include "pe1/psyq_bios.h"

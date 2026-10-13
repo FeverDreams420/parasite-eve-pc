@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_reset_stats.h"
 #include "pe1/battle_runtime.h"
@@ -20,7 +16,7 @@ void Battle_StepEnemyMovement(BattleEntity *entity)
     BattleAction *defenseAction;
     BattleAction *activeAction;
     EnemyCombatant *flagCore;
-    register EnemyCombatant *enemy asm("$20");
+    EnemyCombatant *enemy;
     s32 basePower;
     s32 disableResistance;
     s32 activeState;
@@ -32,7 +28,7 @@ void Battle_StepEnemyMovement(BattleEntity *entity)
     s32 stopResistance;
     s32 attackPower;
     s32 damage;
-    register unsigned char resistanceMode;
+    unsigned char resistanceMode;
     u32 *statusFlags;
     u32 flags;
     u32 *turnFlags;
@@ -42,7 +38,7 @@ void Battle_StepEnemyMovement(BattleEntity *entity)
     flagCore = enemy;
     if (activeState & 0x80000)
     {
-        register s32 stat = (u16)g_ActiveActor->stat1E;
+        s32 stat = (u16)g_ActiveActor->stat1E;
         double base, scale;
         /* Integer bit patterns avoid native GCC's broken double literal pool. */
         union { double value; unsigned long long bits; } factor;

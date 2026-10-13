@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/bounds_check.h"
 #include "pe1/draw_state.h"
@@ -10,8 +6,6 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_prim.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 unsigned char *D_8009D100;
 unsigned char *D_8009D104;
 int g_DrawTextDimmed;
@@ -386,7 +380,7 @@ void Draw_AllocColorTri(int width, int height, int pulse) {
         int w = width - 4;
         int h = height - 4;
         int y;
-        register int x asm("$2");
+        int x;
         u8 code;
         u32 linkedTag, lowTile, otValue;
         u32 *ot;
@@ -394,7 +388,6 @@ void Draw_AllocColorTri(int width, int height, int pulse) {
         tag = tile->tag.word;
         maskTop = 0xFF000000;
         tile->w = w;
-        asm volatile("" ::: "memory");
         code = tile->color.bytes.code;
         tile->h = h;
         code |= 2;
@@ -408,7 +401,6 @@ void Draw_AllocColorTri(int width, int height, int pulse) {
         linkedTag = (tag & maskTop) | (otValue & mask24);
         link.packet = tile;
         lowTile = link.word & mask24;
-        asm volatile("" : : "r"(lowTile) : "memory");
         tile->tag.word = linkedTag;
         old = D_8009D100;
         *ot = (*ot & maskTop) | lowTile;

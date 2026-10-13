@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBMATH ADDDF3: __adddf3. */
 
 #include "pe1/math64.h"
@@ -8,17 +7,16 @@ double __adddf3(double x, double y) {
         MathU64 a, b, round;
         MathDoubleBits zero;
     } w;
-    register MathDoubleBits left, right;
-    register int exponent, rexp;
-    register unsigned sign;
-    register unsigned signMask asm("$21");
-    register unsigned shift;
-    register MathU64 *bp;
-    register unsigned topMask;
-    register int one;
+    MathDoubleBits left, right;
+    int exponent, rexp;
+    unsigned sign;
+    unsigned signMask;
+    unsigned shift;
+    MathU64 *bp;
+    unsigned topMask;
+    int one;
     int amount;
     w.zero.bits.lo = 0;
-    asm("" : : "m"(w.zero.bits.lo));
     sign = 0;
     left.value = x;
     right.value = y;
@@ -27,14 +25,13 @@ double __adddf3(double x, double y) {
         return y;
     if (!(right.bits.hi & 0x7fffffff)) {
         {
-            register int raw = (int)left.bits.hi >> 20;
-            asm("" : : "r"(raw));
+            int raw = (int)left.bits.hi >> 20;
         }
         if (!right.bits.lo)
             return left.value;
     }
     {
-        register int raw = (int)left.bits.hi >> 20;
+        int raw = (int)left.bits.hi >> 20;
         exponent = raw & 0x7ff;
     }
     rexp = ((int)right.bits.hi >> 20) & 0x7ff;
@@ -50,7 +47,7 @@ double __adddf3(double x, double y) {
     if ((int)left.bits.hi < 0)
         _mainasu(&w.a, w.a);
     {
-        register unsigned negative asm("$2") = right.bits.hi & signMask;
+        unsigned negative = right.bits.hi & signMask;
         if (negative)
             _mainasu(&w.b, w.b);
     }
@@ -61,8 +58,8 @@ double __adddf3(double x, double y) {
     if (exponent > rexp)
         _dbl_shift(bp, 1, w.b, exponent - rexp);
     else {
-        register MathU64 *ptr = &w.a;
-        register int direction = 1;
+        MathU64 *ptr = &w.a;
+        int direction = 1;
         amount = rexp - exponent;
         _dbl_shift(ptr, direction, w.a, amount);
         exponent = rexp;
@@ -103,7 +100,7 @@ double __adddf3(double x, double y) {
         left.bits.lo = 0;
     } else {
         {
-            register unsigned packed = sign | ((unsigned)exponent << 20);
+            unsigned packed = sign | ((unsigned)exponent << 20);
             left.bits.hi = packed | w.a.hi;
         }
         left.bits.lo = w.a.lo;

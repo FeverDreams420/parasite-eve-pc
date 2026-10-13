@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-schedule-insns */
-
 #include "pe1/psyq_gpu.h"
 
 #include "room_m273.h"
@@ -9,7 +7,7 @@ typedef struct {
 } RoomM273PaletteSpriteState;
 
 int RoomM273_PulseSpriteCallback(int mode, RoomM273PaletteSpriteState *state) {
-    register int frame asm("$3");
+    int frame;
     int size, shade, kind, palette;
     u16 clut;
     int sample, sizeSample, sizeOffset, shadeOffset;
@@ -23,10 +21,8 @@ int RoomM273_PulseSpriteCallback(int mode, RoomM273PaletteSpriteState *state) {
         sizeOffset = (frame << 8) & 0x3F00;
         shadeOffset = (frame << 9) & 0x3E00;
         sizeSample = ((RoomM273TrigEntry *)((char *)rcossin_tbl + sizeOffset))->low;
-        asm volatile("" : : "r"(sizeSample));
         sample = *(int *)((char *)rcossin_tbl + shadeOffset);
         frame = 4;
-        asm volatile("" : "=r"(sample) : "0"(sample));
         size = sizeSample * 2 + 4096;
         shade = (s16)sample >> 5;
         kind = g_FieldFxSpriteParams.palette;
@@ -38,7 +34,6 @@ int RoomM273_PulseSpriteCallback(int mode, RoomM273PaletteSpriteState *state) {
         }
         clut = GetClut(0, palette);
         zeroRotation = 0;
-        asm volatile("" : "=r"(zeroRotation) : "0"(zeroRotation));
         FieldFx_DrawShapeQuads(state->position, zeroRotation, size, size, 100,
                        clut, 1, shade, 0);
     }

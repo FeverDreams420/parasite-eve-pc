@@ -1,0 +1,12 @@
+# Historical PE.IMG pointer locations for native asset decoding.
+# Addresses describe the original data; they are not host linker inputs.
+# Found by booting a shifted build (the former shifted-build experiment): with the
+# block 0x10 higher the second video player played the next movie, because
+# its table still named the retail address of each file name. The credits
+# table was found by its shape (715 words, every one the start of a staff
+# line when asset[71] lies at its window). The list holds what is proven; it
+# is not a scan of the whole image.
+#
+# offset      count  stride  what
+0x0022AE10    47     0x14    asset[70] (sectors 978..1111, read to OVERLAY_WINDOW_ROOM + 8): the video table at OVERLAY_WINDOW_ROOM + 0x41E18 (menu_memcard's D_801D0E00), file name pointers into menu_memcard's names ("\FMV000.STR;1" at OVERLAY_WINDOW_ROOM + 0x2EC and down)
+0x00230800    715    0x4     asset[71] (sectors 1111..1276, read to OVERLAY_WINDOW_MENU_MEMCARD): the credits line table after boot_display, pointers to the staff text at the start of asset[71]

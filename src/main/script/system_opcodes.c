@@ -1,6 +1,3 @@
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle_context.h"
 #include "pe1/battle_entity_anim.h"
@@ -36,8 +33,6 @@
 #include "pe1/script_state.h"
 #include "pe1/textbox.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_SceneDataTable0;
 ScriptNode *g_ScriptNodePool;
 
@@ -246,7 +241,7 @@ int Entity_GetField(char ***arg0) {
 
 int Entity_FindByTypeId(int **arg0) {
     FieldActor *obj;
-    register int type;
+    int type;
     int cmpType;
 
     type = *arg0[0];
@@ -291,7 +286,7 @@ int Entity_SetField(char ***arg0) {
 
 int Entity_SetFieldByTypeId(int **arg0) {
     FieldActor *obj;
-    register int type;
+    int type;
     int cmpType;
 
     type = *arg0[0];
@@ -591,10 +586,10 @@ int Pm_ScriptSendCommand0(WrapperArgs *args) {
 
 int Pm_ScriptSendCommand1(int **arg0) {
     int **base;
-    register int *op0;
-    register int *op1;
+    int *op0;
+    int *op1;
     int *stack0;
-    register int first;
+    int first;
     int second;
 
     base = arg0;
@@ -1149,7 +1144,7 @@ int Entity_PolarToPosition2(int **arg0)
   int radius;
   FieldActor *current;
   FieldActor *current_v1;
-  register int *src;
+  int *src;
   int *dst;
   int value;
   new_var = g_CurrentEntity;

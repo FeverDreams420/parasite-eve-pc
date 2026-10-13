@@ -6,9 +6,6 @@
 
 #include "spu_2_externs.h"
 
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
-
 void _spu_Fr_(void *address, u16 spuAddress, u32 blocks)
 {
     _spu_RXX->trans_addr = spuAddress;

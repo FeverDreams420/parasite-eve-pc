@@ -139,7 +139,6 @@ int RoomM350_HandSparkEmitter(int event)
             vector.y=(unsigned int)Inv_ScrambleGrid()<<4;
             vector.z=0;
             RotMatrixYXZ(&vector,&matrix);
-            asm volatile("" : : "i"(&&offset_start));
 offset_start:
             vector.x=0; vector.y=0;
             highByte=Inv_ScrambleGrid();
@@ -550,7 +549,6 @@ int RoomM350_HandSweepHitEmitter(int event) {
             particle->y=player->transforms->position[1];
             particle->z=player->transforms->position[2];
             particle->frame=0;
-            asm volatile("" : : : "memory");
         }
         g_RoomM350HandSweepHit=0;
     }
@@ -637,15 +635,13 @@ int RoomM350_HandFlashEmitter(int event) {
 
 int RoomM350_HandSweepController(int event)
 {
-    register FieldActor *instance asm("$16")=(FieldActor *)ANIM_OWNER_AS(RoomM350Actor)->instance;
+    FieldActor *instance=(FieldActor *)ANIM_OWNER_AS(RoomM350Actor)->instance;
     Vector offset;
     if(event==0) {
         Owner *owner=instance->state;
         unsigned int flags=owner->core_flags;
         owner->core_flags=flags|0x40000000;
-        asm volatile("" ::: "memory");
         g_RoomM350HandSweepRepeats=3; g_RoomM350HandSweepDone=0; g_RoomM350HandSweepHit=0;
-        asm volatile("" ::: "$2");
         return 0;
     }
     if(event==1) {
@@ -661,13 +657,13 @@ int RoomM350_HandSweepController(int event)
         base=g_RoomM350HandPoints;
         offset.x=-112; offset.y=0; offset.z=-80;
         for(;i<2;i++) {
-            register RenderMatrix *matrix asm("$2")=g_RoomM350HandActor->render_object.matrices;
+            RenderMatrix *matrix=g_RoomM350HandActor->render_object.matrices;
             Vector *out;
             if(i) matrix+=15; else matrix+=11;
             {
-                register int x asm("$12");
-                register int y asm("$13");
-                register int z asm("$14");
+                int x;
+                int y;
+                int z;
                 const GteMatrixWords *words=(const GteMatrixWords *)matrix;
                 /* Field-specific barriers preserve retail load scheduling around
                  * the individual GTE transfers; they are not hardware hazards. */
@@ -680,28 +676,20 @@ int RoomM350_HandSweepController(int event)
                 z=words->r33_pad;
                 gte_ctc2_2(x);
                 gte_ctc2_3(y);
-                asm volatile("" : : "m"(words->r33_pad));
                 gte_ctc2_4(z);
-                asm volatile("" : : "m"(words->tx));
                 x=words->tx;
-                asm volatile("" : : "m"(words->tx));
                 y=words->ty;
-                asm volatile("" : : "m"(words->ty));
                 gte_ctc2_5(x);
-                asm volatile("" : : "m"(words->tz));
                 z=words->tz;
-                asm volatile("" : : "m"(words->tz));
                 gte_ctc2_6(y);
-                asm volatile("" : : "m"(words->tz));
                 gte_ctc2_7(z);
-                asm volatile("" : : "m"(words->tz));
             }
             gte_ldv0(input); gte_rtv0tr_mac();
             out=(Vector *)((i*8)+(unsigned int)base);
             {
-                register int x asm("$12");
-                register int y asm("$13");
-                register int z asm("$14");
+                int x;
+                int y;
+                int z;
                 gte_mfc2_9(x); gte_mfc2_10(y); gte_mfc2_11(z);
                 out->x=x; out->y=y; out->z=z;
             }
@@ -725,7 +713,7 @@ int RoomM350_HandSweepController(int event)
             angle=FieldFx_VecToAngle((Vec3Fixed *)g_PlayerEntity->render_object.model_matrix.translation,(Vec3Fixed *)instance->render_object.model_matrix.translation);
             instance->rot_y=FieldFx_TurnToward(instance->rot_y,(short)(bias+angle),speed);
         } else if((short)frame>=instance->action-1) {
-            register Owner *owner asm("$4")=instance->state;
+            Owner *owner=instance->state;
             if(owner) owner->action_state[0]=4;
             g_RoomM350HandSweepDone=1;
             return 1;
@@ -781,7 +769,6 @@ int RoomM350_OrbHandSparkEmitter(int event)
             vector.y = (unsigned int)Inv_ScrambleGrid() << 4;
             vector.z = 0;
             RotMatrixYXZ(&vector, &matrix);
-            asm volatile("" : : "i"(&&offset_start));
 offset_start:
             vector.x = 0; vector.y = 0;
             highByte = Inv_ScrambleGrid();
@@ -942,13 +929,11 @@ int RoomM350_OrbCallback(int event,RoomM350Particle *p)
                 n=g_RoomM350OrbState.pointerCount;
                 if(n<4) {
                     int next=n;
-                    asm("" : "=r"(next) : "0"(next));
                     g_RoomM350OrbState.pointerCount=next+1;
                     {
                         RoomM350PointerQueue *queue=(RoomM350PointerQueue *)((char *)&g_RoomM350OrbState.pointerCount-PE1_OFFSETOF(RoomM350PointerQueue,count));
                         queue->positions[n]=&p->position;
                     }
-                    asm volatile("" : : "r"(next));
                 }
             }
         }
@@ -956,13 +941,11 @@ int RoomM350_OrbCallback(int event,RoomM350Particle *p)
             short n=g_RoomM350OrbState.pointerCount;
             if(n<4) {
                 int next=n;
-                asm("" : "=r"(next) : "0"(next));
                 g_RoomM350OrbState.pointerCount=next+1;
                 {
                     RoomM350PointerQueue *queue=(RoomM350PointerQueue *)((char *)&g_RoomM350OrbState.pointerCount-PE1_OFFSETOF(RoomM350PointerQueue,count));
                     queue->positions[n]=&p->position;
                 }
-                asm volatile("" : : "r"(next));
             }
         }
         {
@@ -1253,10 +1236,10 @@ int RoomM350_OrbController(int event) {
     FieldActor *instance=(FieldActor *)ANIM_OWNER_AS(RoomM350Actor)->instance;
     Vector offset;
     if(event==0) {
-        register int one=1;
+        int one=1;
         {
             Owner *owner=instance->state;
-            register unsigned int flags=owner->core_flags;
+            unsigned int flags=owner->core_flags;
             flags |= 0x40000000;
             owner->core_flags=flags;
         }
@@ -1264,7 +1247,6 @@ int RoomM350_OrbController(int event) {
         g_RoomM350OrbState.repeats=one;
         g_RoomM350OrbState.completionFlags[0]=0; g_RoomM350OrbState.completionFlags[1]=0; g_RoomM350OrbState.completionFlags[2]=0;
         g_RoomM350OrbState.pointerCount=0; g_RoomM350OrbState.positionCount=0; g_RoomM350OrbState.activeCount=0;
-        asm volatile("" : : : "$2");
         return 0;
     }
     if(event==1) {
@@ -1362,7 +1344,7 @@ int RoomM350_AreaSparkEmitter(int event,RoomM350RadialSpriteState *inputState)
         case 1:
     {
         int phase,sample;
-        register int i asm("$19");
+        int i;
         if(g_RoomM350AreaDone) {
             unsigned short old=*(volatile unsigned short *)&state->fade;
             phase=(short)old*64+1024;
@@ -1378,7 +1360,7 @@ int RoomM350_AreaSparkEmitter(int event,RoomM350RadialSpriteState *inputState)
         if(state->count>=16) return 0;
         i=0;
         while(i<2) {
-            register RoomM350RadialSpriteParticle *particle asm("$17")=FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM350EffectEmitter)->pool);
+            RoomM350RadialSpriteParticle *particle=FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM350EffectEmitter)->pool);
             int random;
             int highByte;
             int divisor;
@@ -1387,7 +1369,6 @@ int RoomM350_AreaSparkEmitter(int event,RoomM350RadialSpriteState *inputState)
             vector.x=(unsigned int)Inv_ScrambleGrid()<<4;
             vector.y=(unsigned int)Inv_ScrambleGrid()<<4; vector.z=0;
             RotMatrixYXZ(&vector,&local.matrix);
-            asm volatile("" : : "i"(&&radial));
 radial:
             vector.x=0; vector.y=0;
             highByte=Inv_ScrambleGrid();
@@ -1407,8 +1388,8 @@ radial:
         int i;
         int palette;
         RoomM350EffectActor *actor;
-        register int specialKind asm("$17");
-        register unsigned short *palettes asm("$19");
+        int specialKind;
+        unsigned short *palettes;
         volatile int *position;
         short *out;
         g_FieldFxSpriteParams.parameter00=16; g_FieldFxSpriteParams.parameter02=1;
@@ -1463,21 +1444,18 @@ case 0:
 case 1:
     {
         int timer=g_FieldFxCurrentAge,size;
-        register int high asm("$9");
-        register int quotient asm("$2");
+        int high;
+        int quotient;
         int intermediate;
         if(timer<16) size=((4096-rcossin_tbl[((unsigned int)timer<<6)&0xFC0].part.sin)>>1)+2048;
         else if(timer>=91) {
             int sample=rcossin_tbl[((unsigned int)(timer-90)<<6)&0xFC0].part.cos;
-            asm volatile("" : "=r"(sample) : "0"(sample));
             size=sample>>1;
         }
         else size=2048;
         /* Expose the high product; the final sign correction still implements /3. */
         intermediate=size/3+(size>>31);
-        asm("" : "=h"(intermediate) : "0"(intermediate));
         high=intermediate;
-        asm volatile("" : : "r"(high));
         quotient=high-(size>>31);
         state->size=quotient;
         if(state->size<=0) return 1;
@@ -1488,7 +1466,7 @@ case 1:
                 int angle=FieldFx_VecToAngle((Vec3Fixed *)&g_PlayerEntity->pos_x,(Vec3Fixed *)&instance->pos_x);
                 int yaw=state->yaw;
                 int rawDelta=((unsigned int)angle-(yaw>>8))&4095;
-                register int delta asm("$4")=rawDelta;
+                int delta=rawDelta;
                 int speed,factor;
                 if(rawDelta<512) { state->yaw=(unsigned int)yaw-0x20000; delta=rawDelta+512; }
                 if((short)delta>3584) { delta-=512; state->yaw=(unsigned int)state->yaw+0x20000; }
@@ -1499,7 +1477,6 @@ case 1:
                 speed=D_800966EE[((speed/4)&4095)*2]*factor/4096;
                 if(speed<0) speed=0;
                 speed+=(short)delta;
-                asm volatile("" : : "r"(delta));
                 if(((short)angle-(state->yaw>>8))&2048) speed=-speed;
                 state->turn=((int)((unsigned int)speed<<8))/128;
             } else state->turn=0;
@@ -1508,7 +1485,7 @@ case 1:
         {
             int cosine,sine,i;
             Matrix *matrix;
-            register int *out asm("$6");
+            int *out;
             state->yaw=(unsigned int)state->yaw+state->turn;
             cosine=rcos(state->yaw>>8);
             sine=rsin(state->yaw>>8);
@@ -1525,7 +1502,6 @@ case 1:
             Vector *in;
             Vector *out;
             int i;
-            asm("" : : "r"(matrix) : "$2", "$3", "$4", "$5", "$6", "$7", "$8");
             gte_ldrotmatrix(matrix);
             gte_ldtransmatrix(matrix);
             i=0; out=local.collision.vertices; in=g_RoomM350AreaCorners;
@@ -1538,7 +1514,7 @@ case 1:
         }
         {
             int i,previous,point;
-            register Vector *out asm("$6");
+            Vector *out;
             int *area;
             i=0; area=&local.collision.area; out=local.collision.vertices;
             previous=((unsigned int)local.collision.vertices[3].z<<16)|(unsigned short)local.collision.vertices[3].x;
@@ -1569,7 +1545,7 @@ case 2:
         u16 rawPage;
         int kind;
         int i;
-        register int size;
+        int size;
         int *in,*out;
         Matrix *transforms;
         i=0;
@@ -1588,25 +1564,23 @@ case 2:
         FieldFx_ModelScaleColors(state->asset,(unsigned short)state->brightness);
         i=0;
         for (;i<3;) {
-            register int next asm("$7");
-            register int product asm("$3");
-            register int high asm("$9");
+            int next;
+            int product;
+            int high;
             int intermediate;
-            register void *clearTarget asm("$4");
-            register int clearValue asm("$5");
-            register int clearLength asm("$6");
+            void *clearTarget;
+            int clearValue;
+            int clearLength;
             local.matrix=base;
             next=i+1;
             product=state->size*next;
             intermediate=product/3+(product>>31);
-            asm("" : "=h"(intermediate) : "0"(intermediate));
             clearTarget=&scale;
             clearValue=0;
             clearLength=16;
             i=next;
-            asm volatile("" : : "r"(i));
             product>>=31;
-            asm("" : "=r"(high) : "0"(intermediate));
+            (high = intermediate);
             size=high-product;
             memset(clearTarget,clearValue,clearLength);
             scale.x=size; scale.y=size; scale.z=2048;
@@ -1624,7 +1598,7 @@ case 2:
             rotation.y=(yaw>>8)+2024;
         }
         {
-            register int triple=state->size*3;
+            int triple=state->size*3;
             size=triple*2;
             for (;i<3;i++) {
                 FieldFx_DrawRotatedTriangle(&position,(GteRotation *)&rotation,size,512,(RenderColor *)D_8019A594,&D_8019A3C8,&D_8019A3C8,state->brightness,1);

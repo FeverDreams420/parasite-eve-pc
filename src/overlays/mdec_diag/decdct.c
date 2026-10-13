@@ -1,5 +1,3 @@
-/* ASSEMBLER: GNU */
-
 #include "common.h"
 #include "pe1/mdec_diag.h"
 #include "pe1/psyq_callbacks.h"
@@ -8,10 +6,10 @@
 
 /*
  * The LIBPRESS DCT object as linked into the overlay: the DecDCT entry
- * points (DecDCTReset .. DecDCToutCallback), then the MDEC register layer
+ * points (DecDCTReset .. DecDCToutCallback), then the MDEC layer
  * they sit on (reset, input and output DMA). Every function compiles with
  * GCC 2.7.2 and plain GNU as. The rest of the object follows in its own
- * units: the two busy waits (mdec_wait.c, whose global register variable
+ * units: the two busy waits (mdec_wait.c, whose global variable
  * must precede every function of its unit) and the status read with the
  * timeout handler (mdec_status.c, which needs $a0 back).
  */
@@ -45,8 +43,8 @@ s32 *DecDCTGetEnv(DecDCTEnv *env) {
 
 s32 *DecDCTPutEnv(s32 *source)
 {
-    register s32 *read = source;
-    register s32 *write = g_MdecQuantTableLuma;
+    s32 *read = source;
+    s32 *write = g_MdecQuantTableLuma;
     int index;
 
     for (index = 15; index != -1; index--)
@@ -158,4 +156,3 @@ void MdecDiag_ReceiveOutput(s32 *data, u32 size)
     *g_MdecDma1BcrPtr = ((size >> 5) << 16) | 0x20;
     *g_MdecDma1ChcrPtr = 0x1000200;
 }
-

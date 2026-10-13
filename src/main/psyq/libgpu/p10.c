@@ -7,8 +7,3 @@ void SetSemiTrans(unsigned char *packet, int enabled) {
         packet[7] &= 0xFD;
     }
 }
-
-unsigned int SetSemiTrans_alignment[] __attribute__((section(".text"))) = {
-    0x00000000,
-    0x00000000,
-};

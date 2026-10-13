@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBCARD PATCH, part 3 of 4: func_8007E3C8, _patch_card, _patch_card2. */
 /*
  * PSY-Q LIBCARD PATCH, offsets 0x84..0x19C: the second redirect template

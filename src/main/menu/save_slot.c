@@ -1,14 +1,8 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/save.h"
 #include "pe1/save_slot_metadata.h"
 #include "pe1/textbox.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 unsigned char g_MenuActiveMode;
 unsigned char g_SaveOverlayTimer;
 u8 D_8009D1CE;

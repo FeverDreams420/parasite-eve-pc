@@ -164,10 +164,10 @@ void RoomEffect_DrawAnchoredSpriteQuad(void *unused0, void *unused1,
                                             char *params) {
     RoomLibSpriteQuadStack stack;
     /* The params and packet pointers share one pinned variable. */
-    register char *fx asm("$16");
+    char *fx;
     RoomMotionInitModel *map;
     RoomSpriteMatrix *scaleMatrix;
-    register RoomSpriteMatrix *matrix asm("$19");
+    RoomSpriteMatrix *matrix;
     RoomMotionContext *root;
     short *floorY;
     int sprite;
@@ -223,7 +223,7 @@ void RoomEffect_DrawAnchoredSpriteQuad(void *unused0, void *unused1,
         gte_swc2_11_8(translation);
     }
 
-    /* Retail reuses the params register for the packet pointers. */
+    /* Retail reuses the params for the packet pointers. */
     sprite = ((RoomAnchoredSpriteState *)fx)->depth;
     fx = (char *)&g_RoomMotionQuadDepth;
     *(u16 *)fx = sprite;
@@ -298,9 +298,9 @@ void RoomEffect_InitSpritePair(void *arg0, void *arg1, RoomAnchoredSpriteState *
 void RoomEffect_DrawAnchoredSpritePair(void *unused0, void *unused1,
                                             RoomAnchoredSpriteState *params) {
     RoomLibSpriteTransformStack stack;
-    /* The GTE and draw matrix pointer still needs its register pin. */
+    /* The GTE and draw matrix pointer still needs its pin. */
     RoomSpriteMatrix *scaleMatrix;
-    register RoomSpriteMatrix *matrix asm("$17");
+    RoomSpriteMatrix *matrix;
     RoomMotionContext *root;
     RoomMotionInitModel *map;
     short *floorY;
@@ -360,8 +360,7 @@ void RoomEffect_DrawAnchoredSpritePair(void *unused0, void *unused1,
     renderState = &params->ring;
     renderState->intensity = params->depth;
     /* Both anchors sit on the shared floor height; the first block stores
-     * the height before the x coordinate, which fixes retail's register
-     * choice. */
+     * the height before the x coordinate, which fixes retail's * choice. */
     floorY = &g_RoomFloorY->y;
     firstX = map->primary.t[0];
     firstY = *floorY;

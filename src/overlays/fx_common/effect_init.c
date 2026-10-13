@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-expensive-optimizations */
-
 #include "fx_common_setup.h"
 
 #define SET_RGB(color, r, g, b) \
@@ -114,16 +112,16 @@ void func_80196498(void)
     s32 initialNodeSubtype;
     s32 initialNodeVariant;
     s32 initialNodeType;
-    register s32 variantOrMotionOffset asm("$16");
+    s32 variantOrMotionOffset;
     s16 motionBase;
-    register s32 pointCount asm("$22");
+    s32 pointCount;
     FxCommonOffsetTable *resourceTable;
     s32 nodeType;
     s32 nodeSubtype;
     s32 nextPointIndex;
     s32 pointOffset;
     s32 nodeIndex;
-    register FxCommonNode *yNode asm("$8");
+    FxCommonNode *yNode;
     s32 groupIndex;
     s32 tableIndex;
     s8 motionCount;
@@ -134,7 +132,7 @@ void func_80196498(void)
     s16 selectedMotion;
     void *nodeResource;
     void *initialResource;
-    register void *resourceData asm("$3");
+    void *resourceData;
     FxCommonPoint8 *point;
 
     FxCommon_SelectRoomVariant();
@@ -165,7 +163,6 @@ void func_80196498(void)
     secondInitialSlot = initialSlots + 10;
     initialSubtype = &g_FxCommonEffectSetup[0].subtype;
     /* Preserve the common base used by the seven setup-field cursors. */
-    asm("" : "=r"(initialSubtype) : "0"(initialSubtype));
     subtypeCursor = initialSubtype;
     rotationCursor = &((FxCommonEffectSetupRecord *)(initialSubtype - 10))->rotation;
     zCursor = &((FxCommonEffectSetupRecord *)(initialSubtype - 10))->position[2];
@@ -461,7 +458,6 @@ void func_80196498(void)
     {
         FxCommonNode *node = g_FxCommonType26Nodes[3];
         /* The counter is initialized after this scheduling-only clobber. */
-        asm volatile("" : : "r"(node) : "$23");
         groupIndex = 0;
         groupVariant = 0;
         node->state[0] = 0x2710;
@@ -469,7 +465,6 @@ void func_80196498(void)
     {
         FxCommonNode *node = g_FxCommonType26Nodes[3];
         /* Keep the resource-offset constant after the final node loads. */
-        asm("" : : "r"(subtypeFixed), "r"(node));
         resourceOffset = 4;
         node->state[1] = 0x1B58;
     }
@@ -510,7 +505,6 @@ void func_80196498(void)
                 nextPointIndex = ++pointIndex;
                 (*secondSlot)->state[3] = point->z;
                 pairedNode = *secondSlot;
-                asm("" : "=r"(nodeIndex), "=r"(point) : "0"(nodeIndex), "1"(point), "r"(pointList), "r"(pointCount), "r"(pairedNode));
                 D_8019C020 = nodeIndex + 1;
                 /* Byte view retains the retail ordering after the pool-index store. */
                 *(u16 *)((u8 *)pairedNode + PE1_OFFSETOF(FxCommonNode, value2C)) = (u16) (*(u16 *)((u8 *)pairedNode + PE1_OFFSETOF(FxCommonNode, value2C)) + 0x800);
@@ -530,7 +524,6 @@ void func_80196498(void)
     g_FxCommonMotionBlendFrames = 0;
     motionBase = (s16) (u16) g_FxCommonRoomVariant;
     /* The earlier variant is dead; the motion byte offset is assigned below. */
-    asm("" : : "r"((u16)motionBase) : "$16");
     variantOrMotionOffset = 0;
     for (; motionIndex < 10; ++motionIndex) {
         FxCommon_SamplePath(motionIndex << 8, motionBase + 0x40, Draw_GetTimTableEntry(resourceTableData, 2), &motion.vector, &shortMotion);

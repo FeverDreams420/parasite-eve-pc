@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 -fno-strength-reduce */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/game_state.h"
@@ -35,7 +31,7 @@ void Entity_ResetAllPools(void)
     int *ptr;
     EntityPoolAddress base, cell;
     unsigned int col;
-    register unsigned int offset;
+    unsigned int offset;
 
     g_FieldMoveLock = 0;
 

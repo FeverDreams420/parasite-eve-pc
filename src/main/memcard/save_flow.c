@@ -68,9 +68,9 @@ int Save_GetTitleStyleFlag(void) {
 int MemCard_HasAnyPresentFile(void) {
     unsigned char *base;
     unsigned char *port;
-    register unsigned char *end;
+    unsigned char *end;
     unsigned char *outer_end;
-    register unsigned char *entry;
+    unsigned char *entry;
     unsigned char *entry_end;
     int found;
     int state_full;
@@ -257,7 +257,7 @@ int MemCard_PollTransferDelay(void) {
     int reset;
     int value;
     int clamped;
-    register int final_value asm("$4");
+    int final_value;
 
     count = 0;
     reset = 12;
@@ -276,7 +276,6 @@ int MemCard_PollTransferDelay(void) {
     } while (count < 2);
 
     pending = g_MemCardConnectPending;
-    __asm__ volatile("" : "=r"(pending) : "0"(pending));
     if (pending[0] != 0 && g_MemCardPortStates[0].cardState != 4) {
     } else if (*(pending + 1) != 0 && g_MemCardPortStates[1].cardState != 4) {
     } else {
@@ -585,7 +584,6 @@ void MemCard_AbortActiveOperation(MemCardPortState *state) {
         state_index = state - base;
         name_buf = D_8009EE70;
         /* Scheduling dependency for the retail argument setup. */
-        asm("" : "=r"(name_buf) : "0"(name_buf), "r"(is_second));
         retry = 0;
         slot = state->selectedSlot;
 
@@ -1100,7 +1098,7 @@ void Save_StartWriteSlot(int port, int arg_slot) {
 
 int Save_StartReadSlot(int port, int slot)
 {
-  register u8 *buffer;
+  u8 *buffer;
   MemCardPortState *state;
   int saved_slot;
   state = &g_MemCardPortStates[port];

@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-schedule-insns */
-
 #include "fx_common.h"
 #include "fx_common_motion.h"
 

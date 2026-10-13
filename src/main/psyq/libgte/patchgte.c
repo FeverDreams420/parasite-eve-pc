@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /*
  * PSY-Q LIBGTE PATCHGTE: _patch_gte. Assembler source: ra is parked in a
  * static word, the B0 table is fetched inline through the t2/t1 BIOS call

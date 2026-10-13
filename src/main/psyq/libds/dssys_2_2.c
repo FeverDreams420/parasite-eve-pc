@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses -fno-schedule-insns2 */
 /* Psy-Q LIBDS DSSYS_2.OBJ, part 2 of 3: DsInit, DsReset. */
 
 #include "pe1/cdrom.h"

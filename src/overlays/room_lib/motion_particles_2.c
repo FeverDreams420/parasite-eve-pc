@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-strength-reduce */
-
 /*
  * The motion particle set, part 2 of 3: the particle draw.
  *

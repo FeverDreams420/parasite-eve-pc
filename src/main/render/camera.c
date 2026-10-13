@@ -126,7 +126,7 @@ int Render_SetEntryLimit(int arg0, int arg1)
   GeomStateAddress address, base;
   GeomCtrlEntry *entry;
   u32 positionWord;
-  register u32 flags;
+  u32 flags;
   u32 hi;
   int ret;
   entry = GEOM_CTRL_ENTRY(address, base, arg0);
@@ -215,7 +215,7 @@ int Menu_SetSlotEntry(int index, unsigned int limit, unsigned int slot)
     GeomStateAddress table, base;
     GeomCtrlEntry *entry;
     u32 positionWord;
-    register u32 flags;
+    u32 flags;
     u32 hi;
     GeomAnimationSlot *slots;
     s32 offset;
@@ -228,11 +228,10 @@ int Menu_SetSlotEntry(int index, unsigned int limit, unsigned int slot)
     positionWord &= 0xFF;
     offset = entry->slot_offset;
     hi = limit << 16;
-    
+
         entry->elapsed = 0;
         positionWord |= hi;
         {
-            asm volatile("" : : : "memory");
             flags = entry->head.b.flags;
             table.word += offset;
             slots = table.slots;
@@ -247,7 +246,7 @@ int Menu_SetSlotEntry(int index, unsigned int limit, unsigned int slot)
             entry->step = -(u16)entry->step;
         }
         return 0;
-    
+
 }
 
 /* Resets the view state at the start of a room draw: render flags, the
@@ -339,7 +338,7 @@ int Render_RestoreBounds(void) {
     view->maxY = g_GeomScroll.state.position.boundsMaxY;
     return 0;
 }
-/* Matching debt: register pins, empty scheduling constraints, a $v1 clobber
+/* Matching debt: pins, empty scheduling constraints, a $v1 clobber
  * and explicit signed-halving steps; see docs/CODE_ORGANIZATION.md. */
 
 int Render_SetViewport(s16 *position) {
@@ -350,25 +349,25 @@ int Render_SetViewport(s16 *position) {
     } local;
     GeomScrollState *camera = &g_GeomScroll.state;
     GeomStateAddress geometry, viewAddress;
-    register CameraViewport *view;
-    register unsigned int cx asm("$11");
+    CameraViewport *view;
+    unsigned int cx;
     GeomStateAddress offset_geometry;
     int flags = camera->flags;
-    register int screen_x asm("$6");
-    register int screen_y asm("$7");
-    register int sum_x;
-    register int sum_y;
+    int screen_x;
+    int screen_y;
+    int sum_x;
+    int sum_y;
     int view_x;
-    register int view_y;
-    register int half_width;
+    int view_y;
+    int half_width;
     int half_height;
-    register int axisValue asm("$2");
-    register int viewportValue asm("$3");
-    register unsigned raw_width;
-    register int target_x asm("$9");
-    register int target_y;
-    register int y_bound;
-    register int selected_x;
+    int axisValue;
+    int viewportValue;
+    unsigned raw_width;
+    int target_x;
+    int target_y;
+    int y_bound;
+    int selected_x;
 
     if (flags & 7)
         return -23;
@@ -395,17 +394,16 @@ int Render_SetViewport(s16 *position) {
         gte_SetGeomOffset(cx, cy);
     }
     {
-        register u32 **address = &camera->position.matrixWords;
-        asm("" : "=r"(address) : "0"(address));
+        u32 **address = &camera->position.matrixWords;
         {
-            register const GteMatrixWords *words asm("$11");
+            const GteMatrixWords *words;
             words = (const GteMatrixWords *)*address;
             gte_ldrotmatrix(words);
             gte_ldtransmatrix(words);
         }
     }
     {
-        register int distance = *g_GeomScroll.state.position.projectionDistance;
+        int distance = *g_GeomScroll.state.position.projectionDistance;
         gte_ctc2_26(distance);
     }
     gte_ldv0(local.point);
@@ -429,11 +427,9 @@ int Render_SetViewport(s16 *position) {
 
     screen_y = sum_y >> 1;
     g_GeomScroll.state.position.cameraOffsetY = screen_y;
-    asm volatile("" : : : "memory");
     viewAddress.word = geometry.word + offset_geometry.state->entry_offset_1C;
     view = viewAddress.viewport;
     view += g_GeomGroupSel;
-    asm("" : : "r"(view) : "$3");
     viewportValue = 224;
 
     raw_width = view->width;
@@ -469,9 +465,9 @@ int Render_SetViewport(s16 *position) {
     g_GeomScroll.state.position.screenOffsetY = view_y;
     selected_x = target_x;
     if (g_GeomScroll.state.flags & 64) {
-        register int signed_y;
+        int signed_y;
         s16 chosen_bound;
-        register int upper_y;
+        int upper_y;
         geometry.state = g_GeomState;
         viewAddress.word = geometry.word + geometry.state->entry_offset_1C;
         view = viewAddress.viewport;
@@ -502,7 +498,6 @@ int Render_SetViewport(s16 *position) {
         }
         axisValue = view->maxY;
         upper_y = axisValue;
-        asm("" : "=r"(upper_y) : "0"(upper_y));
         if (axisValue < signed_y) {
             g_GeomScroll.state.position.y = upper_y;
             return 0;
@@ -632,17 +627,15 @@ int Render_UpdateScrollPosition(void *positionArg, int duration, int mode)
     vector.y = (position[1] >> 16) - (u16)g_CameraFocusHeight[0];
     vector.z = position[2] >> 16;
     {
-        /* Matching debt: see Render_PrepareFrame; this volatile register
-         * input is the only form found that keeps the 24-byte frame. */
-        register volatile unsigned short cx asm("$10") = 160;
+        /* Matching debt: see Render_PrepareFrame; this volatile * input is the only form found that keeps the 24-byte frame. */
+        volatile unsigned short cx = 160;
 
         gte_SetGeomOffset(cx, 112);
     }
     {
         GteMatrix **slot = &g_GeomScroll.words.viewMatrix;
-        register GteMatrix *matrix asm("$10");
+        GteMatrix *matrix;
 
-        asm("" : "=r"(slot) : "0"(slot));
         matrix = *slot;
         gte_ldrotmatrix(matrix);
         gte_ldtransmatrix(matrix);

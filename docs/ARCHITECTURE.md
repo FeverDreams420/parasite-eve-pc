@@ -1,8 +1,13 @@
 # Architecture
 
-What the shipped program consists of and how this repository rebuilds it.
-Addresses come from `configs/USA/main.yaml`, the overlay configs and the
-symbol files; names are project names unless they are PsyQ names.
+The native target is a C11 executable built with CMake and linked to PsyZ.
+It currently runs the window smoke test in `pc/main.c`. Game code is added
+incrementally as its platform dependencies are replaced.
+
+The memory map and overlay addresses below describe the original game for
+asset decoding and porting research. They are not host addresses, build
+inputs or layout constraints. This project does not rebuild or byte-match
+PS1 binaries.
 
 ## Shipped binaries
 
@@ -13,8 +18,8 @@ AKAO music and samples, and the overlays: code blocks that the executable
 reads into fixed RAM windows on demand. Overlays are not relocated; each
 block is linked for one address.
 
-The repository rebuilds the executable and 190 overlay binaries and checks
-each against the retail SHA-1.
+The native port will load data from the archive and register room/scene code
+as native modules rather than execute code loaded from the disc.
 
 ## Main executable memory map
 
@@ -49,8 +54,8 @@ Entry is the PsyQ start-up (`psyq/libsn/snmain.c`): it clears BSS, sets
 
 Rooms, scene sets and the effect blocks are linked for the same window, so
 only one of them can run at a time. `boot_display` and `menu_memcard`
-contain fragments copied with their own link addresses; the Makefile links
-those with `--no-check-sections` (`OVERLAY_VMA_OVERLAP`).
+contain fragments copied with their own link addresses in the PS1 runtime.
+The native runtime must give these modules independent state and ownership.
 
 Overlays call into the executable directly by address. Each overlay is linked
 separately against the executable's symbols; nothing is shared between
@@ -86,43 +91,41 @@ templates other shared code still instantiates per overlay.
   the field effect engine segment, room- and scene-specific ones in the
   overlays.
 
-## Build
+## Native build and module integration
 
 ```
-configs/USA/main.yaml ──splat──> asm/, linkers/USA/main.ld
-src/**/*.c ──cc.sh──> PsyQ cpp ─> GCC 2.7.2 cc1 ─> maspsx ─> GNU as ─> .o
-.o + linker script + undefined_syms_manual.txt + generated aliases ──ld──> main.elf
-main.elf ──objcopy──> build/USA/main.exe ──sha1──> retail
+pc/main.c + ported C modules -> host C11 compiler -> executable linked to PsyZ/SDL
 ```
 
-- `make split` regenerates `asm/` and linker scripts from the retail
-  executable. All game code is C; the split assembly only provides data
-  subsegments.
-- `tools/scripts/cc.sh` compiles one file with the stock compiler. Markers at
-  the top of a file select per-file options (`CC1_FLAGS`, `MASPSX_FLAGS`,
-  `ASPSX_VERSION`, `GCC_VERSION: 2.8.1`, `ASSEMBLER: GNU`).
-- `gen_undefined_addr_aliases.py` emits absolute addresses only for symbols no
-  object defines; every such pin is shiftability debt.
-- Overlays: `make overlay-check OVERLAY=<name>` extracts the slice from
-  `PE.IMG` using the `extract locally with` comment in its config, splits it,
-  compiles the C units its manifest lists (its own directory and any shared
-  `src/overlays/room_lib/` unit), links it against the main symbols and
-  compares the SHA-1. `make overlay-build-all` and `make overlay-check-all`
-  cover all 190.
-- `make report` disassembles the retail binaries afresh and produces the
-  objdiff report published to decomp.dev; `make progress` renders the badges.
+The root `CMakeLists.txt` includes `pc/`. The current executable contains
+only `pc/main.c`; a passing build does not validate unported game sources.
+There is no historical compiler, splat step, PS1 linker, assembly extraction,
+retail checksum verification or decompilation report in the build.
+
+Before adding a module, replace real MIPS/GTE operations and hardware access
+with C or PsyZ, separate serialized data from host pointers, and give globals
+normal definitions. Assets may contain original addresses that need explicit
+decoding; they cannot be dereferenced as host pointers. Some initializers
+and tables previously came from the disc and are still missing from the
+standalone C source. Recover the needed data through asset loading as each
+module is integrated, without rebuilding a PS1 image.
+
+Legacy SDK implementations in `src/main/psyq/` are retained for functional
+reference. PsyZ owns the host runtime; avoid duplicate implementations when
+porting callers. Room/scene sources retain the original organization until
+native registration and state ownership are implemented.
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
-| `src/main/<subsystem>/` | executable source, one directory per subsystem (see [CONVENTIONS.md](CONVENTIONS.md)) |
-| `src/main/psyq/lib*/` | PsyQ library objects, SDK names |
-| `src/overlays/<overlay>/` | overlay source; `room_lib/` holds shared templates |
-| `include/pe1/` | game headers; `include/pe1/akao/` the sound driver |
-| `configs/USA/` | splat configs, symbols, relocations, SDK provenance, assembler evidence |
-| `tools/scripts/` | build, check and report scripts; `tools/tests/` their tests |
-| `docs/` | contracts (`CONVENTIONS.md`, `CODE_ORGANIZATION.md`, `ASM_AND_GTE_POLICY.md`), PsyQ notes, badges |
+| `pc/` | native entry point and runtime integration |
+| `src/main/<subsystem>/` | game code to port |
+| `src/main/psyq/lib*/` | legacy runtime behavior to compare with PsyZ |
+| `src/overlays/` | room, scene and effect modules, plus shared room code |
+| `include/` | shared types, asset layouts and legacy interfaces |
+| `third_party/psyz/` | host runtime and SDL dependency |
+| `docs/` | native development guidance and data-format reference |
 
-Not tracked: disc images, `PE.IMG`, the retail executable, the SDK and
-compiler binaries, and everything generated (`asm/`, `linkers/`, `build/`).
+Game data and proprietary SDK files are not distributed. The native smoke
+test builds without them. See [CONTRIBUTING.md](../CONTRIBUTING.md).

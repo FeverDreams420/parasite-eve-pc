@@ -1450,7 +1450,7 @@ int RoomM318_TwinRibbonPulseCallback(int mode, RoomM318Pulse *pulse) {
     s16 value;
     s16 *settings;
     int clutX;
-    register int clutY asm("$5");
+    int clutY;
     int width;
     int paletteIndex;
     switch (mode) {
@@ -1477,9 +1477,7 @@ int RoomM318_TwinRibbonPulseCallback(int mode, RoomM318Pulse *pulse) {
         if (sine < 0) sine += 31;
         cosine = rcos(angle);
         clutX = 16;
-        asm("" : "=r"(clutX) : "0"(clutX));
         settings = (s16 *)&g_FieldFxSpriteParams;
-        asm("" : "=r"(settings) : "0"(settings));
         clutY = g_FieldFxPaletteEntry3;
         width = 32;
         settings[0] = width;
@@ -2125,7 +2123,7 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
             FieldFx_SampleColorTrack(D_80199890, &color, (spiral->timer << 5) / 24);
             FieldFx_DrawStarFan(&position, 900, 800, 0xC, 0, 0x1000, 0x1000, &color, 0,
                           glow, 1);
-            /* The angle shares its register with the model page below. */
+            /* The angle shares its with the model page below. */
             page = (spiral->timer << 10) / 24;
             depth = rsin(page) / 2 + 0x800;
             width = rsin(page) / 4 + 0xC00;

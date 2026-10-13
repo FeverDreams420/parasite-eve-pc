@@ -6,15 +6,15 @@
 int RotAverageNclip3(const GteShortVector *v0, const GteShortVector *v1,
     const GteShortVector *v2, u32 *sxy0, u32 * volatile sxy1,
     u32 * volatile sxy2, s32 * volatile p, s32 * volatile otz, u32 * volatile flag) {
-    register u32 *flagPtr asm("$8");
-    register u32 firstFlag asm("$9");
-    register u32 *sxy1Ptr asm("$8");
-    register u32 *sxy2Ptr asm("$9");
-    register s32 *depthPtr asm("$10");
+    u32 *flagPtr;
+    u32 firstFlag;
+    u32 *sxy1Ptr;
+    u32 *sxy2Ptr;
+    s32 *depthPtr;
     s32 clip;
-    register int zero asm("$0");
-    register s32 *averagePtr asm("$9");
-    register s32 average asm("$8");
+    int zero = 0;
+    s32 *averagePtr;
+    s32 average;
     gte_lwc2_0_0(v0);
     gte_lwc2_1_4(v0);
     gte_lwc2_2_0(v1);
@@ -53,4 +53,3 @@ done:
     return clip;
 }
 /* Original trailing alignment words. */
-static u32 tail_alignment_RotAverageNclip3[] __attribute__((section(".text"))) = { 0, 0 };

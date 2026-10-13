@@ -6,15 +6,13 @@
 #include "pe1/psyq_card.h"
 
 void _copy_memcard_patch(void) {
-    register unsigned *dst = (unsigned *)0xdf80;
-    register const unsigned *src asm("$10") = func_8007E344;
-    register const unsigned *end asm("$9") = (const unsigned *)LIBCARD_PATCH_text_70;
-    register unsigned value asm("$3");
+    unsigned *dst = (unsigned *)0xdf80;
+    const unsigned *src = func_8007E344;
+    const unsigned *end = (const unsigned *)LIBCARD_PATCH_text_70;
+    unsigned value;
     do {
         value = *src;
-        asm("" : "=r"(value) : "0"(value));
         *dst = value;
-        asm("" ::: "memory");
         src++;
         dst++;
     } while (src != end);

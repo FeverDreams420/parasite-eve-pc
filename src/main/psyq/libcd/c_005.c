@@ -1,5 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBCD C_005.OBJ: StSetStream. */
 
 #include "pe1/psyq_cd.h"
@@ -15,5 +13,4 @@ void StSetStream(u32 mode, u32 startFrame, u32 endFrame,
     g_StFrameSectorIndex = 0;
     g_StCurrentFrameNumber = 0;
     g_StrEndCallback = callback2;
-    asm volatile("" : : : "memory");
 }

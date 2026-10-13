@@ -12,19 +12,19 @@
 /* Reconstructs the eight polygon streams and the FT3/FT4 subdivision paths.
  * Retail range 0x80197BA0..0x8019959C; source boundary is provisional. */
 void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
-    register u32 *gteScreen1;
-    register u32 *gteScreen0;
-    register FxCommonRenderScratchpad *scratchpad asm("$16");
+    u32 *gteScreen1;
+    u32 *gteScreen0;
+    FxCommonRenderScratchpad *scratchpad;
     FxCommonVector *quadMidpoint13;
     FxCommonBuffer *buffer;
     FxCommonBuffer *orderBuffer;
-    register s32 resourceOffset asm("$2");
+    s32 resourceOffset;
     s32 resource_offset2;
     FxGt3CursorSlot gt3Slot;
     FxGt4CursorSlot gt4Slot;
     FxCommonVector *quadMidpoint23;
     FxCommonTexturedQuad *var_fp;
-    register u8 *var_s2 asm("$18");
+    u8 *var_s2;
     u8 *var_s3;
     u8 *var_s5;
     FxCommonColoredQuad *var_s7;
@@ -36,8 +36,8 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
     s32 temp_a0;
     u32 temp_v0;
     u8 *orderingTableBase;
-    register s32 var_s4 asm("$20");
-    register u8 *var_s1 asm("$17");
+    s32 var_s4;
+    u8 *var_s1;
     FxCommonFt4Packet *var_t1_2;
     FxCommonPolyResource *var_t8;
     s32 primitiveCount;
@@ -60,11 +60,9 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
     resourceOffset = var_t8->offsets[5];
     gt3Slot.cursor = (FxCommonColoredTexturedTriangle *)(((u8 *)var_t8) + resource_offset2);
     initialDepthBias = D_801EA5E0;
-    asm volatile("" : : "r"(resourceOffset));
     var_fp = (FxCommonTexturedQuad *)(((u8 *)var_t8) + resourceOffset);
     resourceOffset = var_t8->offsets[7];
     ((volatile FxCommonRenderScratchpad *)0x1F800000)->depthBias = initialDepthBias;
-    asm volatile("" : : "r"(initialDepthBias));
     gt4Slot.cursor = (FxCommonColoredTexturedQuad *)(((u8 *)var_t8) + resourceOffset);
     (void)&gt3Slot.cursor;
     (void)&gt4Slot.cursor;
@@ -288,7 +286,6 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                                 scratchpad->screenCoordinates[2];
                             ((FxCommonG4Packet *)(var_s1 - 0x1c))->xy3 =
                                 scratchpad->screenCoordinates[3];
-                            asm("" : "=r"(var_s3) : "0"(var_s3));
                             ((FxCommonG4Packet *)(var_s1 - 0x1c))->color0 = var_s7->colors[0];
                             ((FxCommonG4Packet *)(var_s1 - 0x1c))->color1 =
                                 ((FxCommonColoredQuad *)(var_s3 - 12))->colors[1];
@@ -333,8 +330,8 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                 s32 *triangleGteScreen2;
                 FxCommonVector *triangleMidpoint02;
                 FxCommonVector *triangleMidpoint12;
-                register u8 *var_a3 asm("$7");
-                register FxCommonVector *var_t4 asm("$12");
+                u8 *var_a3;
+                FxCommonVector *var_t4;
                 u32 temp_a0_13;
 
                 s32 temp_v1_9;
@@ -342,7 +339,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                 u16 var_v0;
                 u32 triangleLength = 7;
                 u32 triangleAddressMask = 0xFFFFFF;
-                register u32 triangleLengthMask asm("$10") = 0xFF000000;
+                u32 triangleLengthMask = 0xFF000000;
                 var_a3 = (u8 *)&var_t3->textures[1].uv2;
                 var_t6 = (u8 *)&var_t3->vertices[2];
                 var_t5 = (u8 *)&var_t3->vertices[1];
@@ -368,7 +365,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                     else
                     {
                     if (temp_a0 < 0x1F4) {
-                        register FxCommonVector *triangleMidpoint01 asm("$4");
+                        FxCommonVector *triangleMidpoint01;
                         FxCommonVector *triangleNamedInput2;
                         FxCommonTextureSet *triangleTexture;
                         u32 *triangleMidpointOutput0;
@@ -398,7 +395,6 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                             (((scratchpad->vertices[1]->z)) + (scratchpad->vertices[3]->z)) >> 1;
                         triangleMidpoint01 = &scratchpad->midpoints[2];
                         triangleNamedInput2 = &scratchpad->midpoints[3];
-                        asm volatile("" : : "r"(triangleNamedInput2));
                         gte_ldvxy0_precise(triangleMidpoint01);
                         gte_ldvz0_precise(triangleMidpoint01);
                         gte_ldvxy1_precise(triangleMidpoint02);
@@ -421,13 +417,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                             1;
                         triangleMidpointScreen4Address = &scratchpad->midpointScreenCoordinates[4];
                         triangleMidpointOutput0 = &scratchpad->midpointScreenCoordinates[2];
-                        asm volatile(""
-                                     : "=r"(triangleMidpointOutput0)
-                                     : "0"(triangleMidpointOutput0));
                         triangleMidpointOutput2 = &scratchpad->midpointScreenCoordinates[3];
-                        asm(""
-                                     : "=r"(triangleMidpointOutput2)
-                                     : "0"(triangleMidpointOutput2));
                         gte_stsxy0_precise(triangleMidpointOutput0);
                         gte_stsxy1_precise(&scratchpad->midpointScreenCoordinates[4]);
                         gte_stsxy2_mem(triangleMidpointOutput2);
@@ -452,7 +442,6 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                                  1);
                         triangleScreen1Address = &scratchpad->screenCoordinates[1];
                         triangleScreen2Address = (u32 *)(&scratchpad->screenCoordinates[2]);
-                        asm volatile("" : : "r"(triangleScreen2Address));
                         gte_stsxy0_precise(&scratchpad->screenCoordinates[0]);
                         gte_stsxy1_precise(&scratchpad->screenCoordinates[1]);
                         gte_stsxy2_precise(&scratchpad->screenCoordinates[2]);
@@ -514,7 +503,6 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                                       .uv1.packed);
                         ++trianglePacketCursor;
                         *((u16 *)(triangleUv2Cursor)) = scratchpad->midpointUv[3].packed;
-                        asm("" : "=r"(triangleUv2Cursor) : "0"(triangleUv2Cursor));
                         triangleUv2Cursor += 16;
                         temp_a0 = trianglePacketCursor->tag.packed;
                         orderBuffer = g_FxCommonActiveBuffer;
@@ -666,8 +654,8 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
         primitiveCount = var_t8->counts[5];
         if (primitiveCount > 0) {
 
-            register u32 quadLengthMask asm("$17");
-            register u8 *quadTextureCursor asm("$10");
+            u32 quadLengthMask;
+            u8 *quadTextureCursor;
             u16 *quadUv3Cursor;
             FxCommonVector *quadVertex3;
 
@@ -677,10 +665,6 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
             quadLength = 9;
             quadAddressMask = 0xFFFFFF;
             quadLengthMask = 0xFF000000;
-            asm(
-                ""
-                : "=r"(scratchpad), "=r"(quadLength), "=r"(quadAddressMask), "=r"(quadLengthMask)
-                : "0"(scratchpad), "1"(quadLength), "2"(quadAddressMask), "3"(quadLengthMask));
             quadTextureCursor = (u8 *)&var_fp->textures[0].clut;
             quadVertex3 = &var_fp->vertices[3];
             var_s5 = (u8 *)&var_fp->vertices[2];
@@ -778,7 +762,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                     u32 *quadMiddleOutput1;
                     u32 *subdividedQuadGteScreen3;
                     FxCommonUv *quadUv0;
-                    register FxCommonUv *quadUv3;
+                    FxCommonUv *quadUv3;
                     u32 packetAddress24;
                     s16 midpoint13Z;
                     FxCommonUv *quadUv1;
@@ -863,7 +847,6 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                     edgeY3 = *(FxCommonVector *volatile *)&scratchpad->vertices[3];
                     midpoint02X = ((u16)((volatile FxCommonVector *)quadInput1)->x << 16);
                     quadMidpoint23->x = (edgeX2->x + edgeX3->x) >> 1;
-                    asm volatile("" : : "r"(midpoint02X));
                     midpoint02X >>= 16;
 
                     quadEdgeY2 = scratchpad->vertices[2]->y;
@@ -886,18 +869,13 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                     } while (0);
                     quadMidpointGteScreen1 = &scratchpad->midpointScreenCoordinates[1];
                     quadLifetimeOutput1 = &scratchpad->midpointScreenCoordinates[3];
-                    asm(""
-                                 : "=r"(quadLifetimeOutput1)
-                                 : "0"(quadLifetimeOutput1), "r"(quadMidpointGteScreen1));
 
                     gte_stsxy0_precise(quadLifetimeOutput0);
                     gte_stsxy1_precise(quadMidpointGteScreen1);
                     new_var = &scratchpad->midpointScreenCoordinates[3];
                     gte_stsxy2_mem(quadLifetimeOutput1);
                     quadCombinedIn0 = &scratchpad->midpoints[4];
-                    asm("" : : "r"(quadCombinedIn0));
                     quadCenterGteAddress = &scratchpad->midpoints[2];
-                    asm("" : "=r"(quadCenterGteAddress) : "0"(quadCenterGteAddress));
                     gte_ldvxy0_precise(quadCombinedIn0);
                     gte_ldvz0_precise(quadCombinedIn0);
                     gte_ldvxy1_precise(quadCenterGteAddress);
@@ -919,7 +897,6 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                         ((quadUv1->components.v + quadUv3->components.v) >> 1);
                     quadMiddleOutput0 = &scratchpad->midpointScreenCoordinates[4];
                     quadMiddleOutput1 = &scratchpad->midpointScreenCoordinates[2];
-                    asm volatile("" : : "r"(quadMiddleOutput1));
                     gte_stsxy0_precise(quadMiddleOutput0);
                     gte_stsxy1_precise(quadMiddleOutput1);
                     gte_stsxy2_precise(&scratchpad->screenCoordinates[0]);
@@ -966,7 +943,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                         quadPacket0->uv2 = scratchpad->midpointUv[1].packed;
                         {
                             quadPacket0->uv3 = scratchpad->midpointUv[2].packed;
-                         asm volatile(""); }
+                          }
                         quadUv3Cursor += 20;
                         {
                             u32 earlyQuadTag0 = var_t1_2->tag.packed;
@@ -984,7 +961,6 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                                 orderBuffer->allocation[scratchpad->orderingDepth].packed;
                             firstQuadOtWord &= quadLengthMask;
                             firstQuadOtAddress = ((u32)var_t1_2) & quadAddressMask;
-                            asm volatile("" : "=r"(firstQuadOtAddress) : "0"(firstQuadOtAddress));
                             orderBuffer->allocation[scratchpad->orderingDepth].packed =
                                 firstQuadOtWord | firstQuadOtAddress;
                         }
@@ -1008,7 +984,6 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
                         quadPacket1->uv0 = scratchpad->midpointUv[0].packed;
                         quadPacket1->uv1 = quadUv1->packed;
                         quadPacket1->uv2 = scratchpad->midpointUv[2].packed;
-                        asm volatile("" : "=r"(quadUv3Cursor) : "0"(quadUv3Cursor));
                         *quadUv3Cursor = scratchpad->midpointUv[3].packed;
                         quadUv3Cursor += 20;
                         ++var_t1_2;
@@ -1132,7 +1107,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
             primitiveCount = var_t8->counts[6];
             if (primitiveCount > 0) {
                 s32 orderingDepth6;
-                register FxCommonColoredTexturedTriangle *transientCursor asm("$25");
+                FxCommonColoredTexturedTriangle *transientCursor;
                 u32 gt3Tag;
                 s32 temp_v0_2;
                 u32 addressMask6 = 0xFFFFFF;
@@ -1208,7 +1183,7 @@ void FxCommon_DrawPolyResource(void *context, FxCommonPolyResource *resource) {
             primitiveCount = var_t8->counts[7];
             if (primitiveCount > 0) {
                 u32 gt4LengthMask = 0xFF000000u;
-                register FxCommonColoredTexturedQuad *transientCursor asm("$25");
+                FxCommonColoredTexturedQuad *transientCursor;
                 u32 gt4Tag;
                 s32 temp_v0_3;
                 s32 temp_v1_14;

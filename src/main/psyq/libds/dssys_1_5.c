@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSSYS_1.OBJ, part 5 of 10: LIBDS_DSSYS_1_text_8B8, LIBDS_DSSYS_1_text_A9C, LIBDS_DSSYS_1_text_D24. */
 
 #include "common.h"
@@ -10,8 +9,7 @@
 /* Contiguous private routines from Psy-Q LIBDS/DSSYS_1.OBJ:
  * text_8B8 is at 0x80080220 and text_A9C follows at 0x80080404.
  * text_4A4 is non-contiguous and remains in dssys1_vsync.c. */
-/* Psy-Q LIBDS/DSSYS_1.OBJ private text_8B8.
- * Provenance: configs/USA/psyq_provenance.json (LIBDS). */
+/* Psy-Q LIBDS/DSSYS_1.OBJ private text_8B8. */
 #define STATE_FROM_MODE(p)                                                             \
     ((CdRomEventCommandState *)((u8 *)(p) - PE1_OFFSETOF(CdRomEventCommandState,       \
                                                          command.read.commandMode)))
@@ -30,20 +28,18 @@
 
 void LIBDS_DSSYS_1_text_8B8(int inEvent, u8 *inResult) {
     u8 *commandByte;
-    register int event = inEvent;
-    register u8 *result = inResult;
-    register int masked = (u8)event;
-    register int two;
+    int event = inEvent;
+    u8 *result = inResult;
+    int masked = (u8)event;
+    int two;
     two = 2;
     if (masked == two) {
-        register CdRomEventCommandState *state = &g_CdRomEventCommandState;
-        register int pending;
-        register int command;
-        register int value;
-        asm("" : "=r"(state) : "0"(state) : "$2");
+        CdRomEventCommandState *state = &g_CdRomEventCommandState;
+        int pending;
+        int command;
+        int value;
         pending = state->pendingCommand;
         value = 14;
-        asm("" : "=r"(pending) : "0"(pending) : "memory");
         command = (u8)pending;
         if (command == value) {
             if ((state->command.read.commandMode ^ state->pendingParamBytes[0]) & 128) {
@@ -56,7 +52,6 @@ void LIBDS_DSSYS_1_text_8B8(int inEvent, u8 *inResult) {
             }
             {
                 commandByte = &g_CdRomEventCommandState.command.read.commandMode;
-                asm("" : "=r"(commandByte) : "0"(commandByte));
                 *commandByte = STATE_FROM_MODE(commandByte)->pendingParamBytes[0];
             }
             goto dispatch;
@@ -81,7 +76,6 @@ void LIBDS_DSSYS_1_text_8B8(int inEvent, u8 *inResult) {
         case 21:
         case 22: {
             commandByte = &g_CdRomEventCommandState.command.read.retryCount;
-            asm("" : "=r"(commandByte) : "0"(commandByte));
             *commandByte = STATE_FROM_RETRY(commandByte)->pendingCommand;
             break;
         }
@@ -89,20 +83,17 @@ void LIBDS_DSSYS_1_text_8B8(int inEvent, u8 *inResult) {
         case 6:
         case 27: {
             commandByte = &g_CdRomEventCommandState.command.read.commandParam;
-            asm("" : "=r"(commandByte) : "0"(commandByte));
             *commandByte = STATE_FROM_PARAM(commandByte)->pendingCommand;
             break;
         }
         }
         {
-            register DsReadStatusBlock *read = &g_DsReadStatusBlock;
-            asm("" : "=r"(read) : "0"(read));
+            DsReadStatusBlock *read = &g_DsReadStatusBlock;
             read->status = 1;
             read->command = 11;
         }
     } else {
-        register CdRomCommandState *state = &g_CdSeekState;
-        asm("" : "=r"(state) : "0"(state));
+        CdRomCommandState *state = &g_CdSeekState;
         if (state->eventStatus & 16) {
             state->read.status = two;
             state->read.command = 12;
@@ -113,30 +104,29 @@ void LIBDS_DSSYS_1_text_8B8(int inEvent, u8 *inResult) {
     }
 dispatch:
     if (g_DsSyncCallback && g_DsReadSysEnabled.enabled) {
-        register DsEventCallback cb = g_DsSyncCallback;
+        DsEventCallback cb = g_DsSyncCallback;
         cb(event, result);
     }
 }
 
 void LIBDS_DSSYS_1_text_A9C(int event, u8 *inResult) {
     u8 *result = inResult;
-    register u32 *command = &D_8009B578;
-    register int twelve;
-    register int old;
-    register int two;
-    register DsEventCallback callback;
-    register int callbackEvent;
-    asm("" : "=r"(command) : "0"(command));
+    u32 *command = &D_8009B578;
+    int twelve;
+    int old;
+    int two;
+    DsEventCallback callback;
+    int callbackEvent;
     old = *command;
     twelve = 12;
     if (old == twelve)
         *command = 13;
     {
-        register int masked = (u8)event;
+        int masked = (u8)event;
         two = 2;
         if (masked == two) {
-            register int current = *command;
-            register u32 range;
+            int current = *command;
+            u32 range;
             if (current == 13) {
                 if (!(STATE(command)->eventStatus & 16)) {
                     *command = 14;
@@ -147,8 +137,8 @@ void LIBDS_DSSYS_1_text_A9C(int event, u8 *inResult) {
                 return;
             } else {
                 if (current == 14) {
-                    register int step = STATE(command)->read.sector;
-                    register int next;
+                    int step = STATE(command)->read.sector;
+                    int next;
                     if (step == 21) {
                         if (!(STATE(command)->eventStatus & 16)) {
                             STATE(command)->read.status = two;
@@ -177,8 +167,8 @@ void LIBDS_DSSYS_1_text_A9C(int event, u8 *inResult) {
                         STATE(command)->read.sector = next;
                     } else if (step == 24) {
                         if (STATE(command)->eventStatus == two) {
-                            register DsEventCallback available = g_DsDispatchCallback;
-                            register int value asm("$2") = 1;
+                            DsEventCallback available = g_DsDispatchCallback;
+                            int value = 1;
                             STATE(command)->read.status = value;
                             value = 11;
                             *command = value;
@@ -197,8 +187,8 @@ void LIBDS_DSSYS_1_text_A9C(int event, u8 *inResult) {
                         if (STATE(command)->reserved34 == 0 &&
                             !(STATE(command)->eventStatus & 2)) {
                             {
-                                register DsEventCallback available = g_DsReadyCallback;
-                                register int value asm("$2") = 1;
+                                DsEventCallback available = g_DsReadyCallback;
+                                int value = 1;
                                 STATE(command)->read.status = value;
                                 value = 11;
                                 *command = value;
@@ -232,7 +222,7 @@ done:;
 
 void LIBDS_DSSYS_1_text_D24(int event, u8 *result) {
     u32 event_reg;
-    register CdRomEventCommandState *cmd_state asm("$6");
+    CdRomEventCommandState *cmd_state;
     int value;
     int status;
     CdRomCommandState *ready;
@@ -240,7 +230,6 @@ void LIBDS_DSSYS_1_text_D24(int event, u8 *result) {
     event_reg = event & 0xFF;
     if (event_reg == 2) {
         cmd_state = &g_CdRomEventCommandState;
-        asm volatile("" : "=r"(cmd_state) : "0"(cmd_state));
         status = cmd_state->pendingCommand;
         value = 0xE;
         if (status == value) {
@@ -258,7 +247,6 @@ void LIBDS_DSSYS_1_text_D24(int event, u8 *result) {
     status = event & 0xFF;
     if (status == 5) {
         ready = &g_CdSeekState;
-        asm volatile("" : "=r"(ready) : "0"(ready));
         if (ready->eventStatus & 0x10) {
             ready->read.status = 2;
             ready->read.command = 12;

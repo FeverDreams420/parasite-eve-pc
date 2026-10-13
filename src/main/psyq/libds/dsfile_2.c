@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSFILE.OBJ, part 2 of 2: DS_cachefile, DS_newmedia, DS_searchdir, ds_read. */
 
 #include "pe1/cdrom.h"

@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBETC VSYNC.OBJ: VSync, v_wait. */
 
 #include "common.h"
@@ -12,7 +11,7 @@ void v_wait(int target, int frames);
 int VSync(int mode) {
     u32 status;
     int elapsed;
-    register int target asm("$2");
+    int target;
     int frames;
     int next;
     volatile u32 sample;

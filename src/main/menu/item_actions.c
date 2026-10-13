@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/battle_modifiers.h"
@@ -21,10 +17,7 @@
 #include "pe1/menu_widget.h"
 #include "pe1/psyq_nop.h"
 #include "pe1/text.h"
-#include "m2c_macros.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_BonusPointSpendCurrentValue;
 int g_MenuItemPrimListHandles[2];
 int D_8009CFC4;
@@ -261,7 +254,7 @@ void Menu_DrawItemActionSubmenu(void) {
 }
 
 int Menu_StepSkillSelect(MenuWidgetNode *arg0, int arg1) {
-    M2C_UNK var_a0;
+    int var_a0;
     s32 *temp_a1;
     s32 pad_[1];
     s32 temp_s0;

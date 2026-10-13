@@ -12,5 +12,3 @@ int MargePrim(unsigned char *packet, int *prim) {
     *prim = 0;
     return 0;
 }
-
-static unsigned int MargePrim_alignment[] __attribute__((section(".text"))) = { 0x00000000, 0x00000000 };

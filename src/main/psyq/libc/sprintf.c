@@ -1,9 +1,6 @@
-/* GAS_VERSION: 2.8.1 */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* PSY-Q LIBC SPRINTF: sprintf. */
 /* Psy-Q SPRINTF: variadic formatter, including its private tables and template.
- * Empty scheduling barriers and register pins are tracked in the debt report. */
+ * Empty scheduling barriers and pins are tracked in the debt report. */
 
 #include "common.h"
 
@@ -71,7 +68,7 @@ s32 sprintf(char *dest, s8 *format, ...)
         }
 
         {
-            register FormatSpec *initial asm("$5") = &g_SprintfFormatSpecDefault;
+            FormatSpec *initial = &g_SprintfFormatSpecDefault;
             u32 flags = initial->header.flags;
             s32 width = initial->width;
             s32 precision = initial->precision;
@@ -81,7 +78,6 @@ s32 sprintf(char *dest, s8 *format, ...)
             work.spec.precision = precision;
         }
         /* Keep the template stores before initializing the flag parser. */
-        asm volatile("" : : "m"(work.spec));
         hash = '#';
 
         for (;;) {
@@ -179,7 +175,6 @@ conversion:
         case 'i':
             value = *(s32 *)args;
             args += 4;
-            asm volatile("" : : "m"(args));
             if ((work.spec.header.flags >> 5) & 1) {
                 value = (s16)value;
             }
@@ -194,7 +189,6 @@ conversion:
         case 'u':
             value = *(u32 *)args;
             args += 4;
-            asm volatile("" : : "m"(args));
             if ((work.spec.header.flags >> 5) & 1) {
                 value &= 0xFFFF;
             }
@@ -218,12 +212,12 @@ decimal:
                 value = q;
                 count++;
             }
-            
+
                 while (count < work.spec.precision) {
                     *--src = zero;
                     count++;
                 }
-            
+
             {
                 s32 psgn = work.spec.header.bytes.prefix;
                 s32 pch = *(u8 *)&work.spec.header.bytes.prefix;
@@ -237,7 +231,6 @@ decimal:
         case 'o':
             value = *(u32 *)args;
             args += 4;
-            asm volatile("" : : "m"(args));
             if ((work.spec.header.flags >> 5) & 1) {
                 value &= 0xFFFF;
             }
@@ -259,12 +252,12 @@ decimal:
                 *--src = zero;
                 count++;
             }
-            
+
                 while (count < work.spec.precision) {
                     *--src = zero;
                     count++;
                 }
-            
+
             break;
 
         case 'p':
@@ -283,7 +276,6 @@ decimal:
 hexadecimal:
             value = *(u32 *)args;
             args += 4;
-            asm volatile("" : : "m"(args));
             if ((work.spec.header.flags >> 5) & 1) {
                 value &= 0xFFFF;
             }
@@ -304,12 +296,12 @@ hexadecimal:
                 value >>= 4;
                 count++;
             }
-            
+
                 while (count < work.spec.precision) {
                     *--src = zero;
                     count++;
                 }
-            
+
             if ((work.spec.header.flags >> 2) & 1) {
                 --src;
                 *src = c;
@@ -350,11 +342,10 @@ hexadecimal:
             break;
 
         case 'n': {
-            register u32 isShort asm("$2");
-            register u32 nf asm("$3") = work.spec.header.flags;
+            u32 isShort;
+            u32 nf = work.spec.header.flags;
             src = *(u8 **)args;
             args += 4;
-            asm volatile("" : : "r"(nf));
             isShort = (nf >> 5) & 1;
             if (isShort) {
                 *(s16 *)src = length;
@@ -394,4 +385,3 @@ finished:
 }
 
 /* Original SPRINTF.OBJ text alignment after the return. */
-static unsigned int tail_alignment_62B08[] __attribute__((section(".text"))) = {0, 0, 0};

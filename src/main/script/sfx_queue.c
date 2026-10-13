@@ -1,6 +1,3 @@
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "pe1/field_sfx.h"
 #include "pe1/script_node.h"
 

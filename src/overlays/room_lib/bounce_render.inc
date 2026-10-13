@@ -41,7 +41,7 @@ int ROOMLIB_UPDATE_BOUNCE_RENDER_NAME(int mode, RoomLineBurstParticle *fx) {
         int vz;
         int rawVy;
         int nextVy;
-        register int y;
+        int y;
 
         fx->timer++;
         fx->x += fx->vx;
@@ -96,13 +96,12 @@ int ROOMLIB_UPDATE_BOUNCE_RENDER_NAME(int mode, RoomLineBurstParticle *fx) {
         int sinValue;
         int scale;
         /* Matching debt: the angle still needs retail's argument register. */
-        register int angle asm("$4");
+        int angle;
         int cosine;
         int texture;
 
         sinValue = rsin((fx->timer << 10) / 24);
         angle = (fx->timer * 1204) / 24;
-        PE1_COMPILER_USE(angle);
         scale = ((unsigned int)sinValue >> 31) + sinValue;
         scale >>= 1;
         saved2 = scale + 0x1000;

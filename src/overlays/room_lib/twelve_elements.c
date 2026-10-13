@@ -119,7 +119,7 @@ void RoomLib_InitTwelveElementEffect(void *owner, void *unused, char *state) {
     int depth;
     int initialValue;
     RoomLibFxMatrixState *clock;
-    register RoomSpriteMatrix *sourceMatrix asm("$3");
+    RoomSpriteMatrix *sourceMatrix;
 
     effectOwner = owner;
     workState = (RoomLibTick12Rec *)state;

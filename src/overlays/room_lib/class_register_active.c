@@ -1,5 +1,5 @@
 /*
- * Room module class, slots 3 and 4, in the modules that register their
+ * Room module class, slots 3 and 4, in the modules that their
  * lists only while the field engine runs the object (status 3) rather than
  * from status 2 on (class_register_draw_list.c, class_register_tables.c).
  * room_m034, room_m174 and room_m383 (the glow orb rooms) link both,

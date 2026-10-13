@@ -344,7 +344,7 @@ int FieldFx_JitterSpriteEmitter(int mode, GteShortVector *state)
 }
 
 /* Matching debt: 3 GTE transfer pins, 4 empty constraints, and the three
- * TU-local register reservations above. The unpinned matrix pointer lets
+ * TU-local reservations above. The unpinned matrix pointer lets
  * GCC reuse t1 for constant-division multiply-high results. */
 int FieldFx_TwinModelEffect(int mode, FieldFxTwinModel *state)
 {

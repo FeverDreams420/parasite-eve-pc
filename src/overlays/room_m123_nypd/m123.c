@@ -222,8 +222,7 @@ int RoomM123_GlowBurstParticleCallback(int mode, RoomM123PulsingParticle *partic
 /* Glow burst: spawns sixteen pulsing particles at frame 1, then draws four
  * glow layers, two flash rings and a swept flare on joint 23. The parameter
  * block fields written twice share a base register; the tile indices are
- * read as g_FieldFxTpageSlots elements so their loads stay below the base-register
- * stores, and the palette read-back follows the block's stores. */
+ * read as g_FieldFxTpageSlots elements so their loads stay below the base-* stores, and the palette read-back follows the block's stores. */
 
 int RoomM123_GlowBurst(int mode, RoomM123GlowBurst *burst) {
     GteShortVector template = D_8018F1E0;
@@ -730,13 +729,11 @@ int RoomM123_JointSwirl(int mode)
         outZ = output.z;
         context = ANIM_OWNER_AS(RoomM123Pool);
         /* Keep the context load ahead of the texture address. */
-        asm volatile("" : : "r"(context));
         texture = g_RoomM123SwirlAngles;
         D_801956B0 = outX;
         D_801956B2 = outY;
         D_801956B4 = outZ;
         /* Finish the position writes before reducing the signed scale. */
-        asm volatile("" : : : "memory");
         g_RoomM123SwirlBrightness = scale >> 5;
         FieldFx_GetTransformLookAngles(context->pool, 0, texture);
         g_FieldFxSpriteParams.parameter00 = 16;

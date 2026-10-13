@@ -1,5 +1,3 @@
-/* MASPSX_FLAGS: --no-expand-div */
-
 /* 24.8 fixed-point quotient: drops the divisor's fraction byte, then
  * restores the scale of the result. */
 int Math_FixedDivide(int a, int b) {

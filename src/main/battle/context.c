@@ -54,21 +54,21 @@ void Battle_SetEntryCoords(ScriptAnimObj *arg0, unsigned char arg1, int arg2, in
     entry->exitStep = arg3;
 }
 
-/* Three register pins preserve the initial core, retained core and parent
+/* Three pins preserve the initial core, retained core and parent
  * lifetimes with stock GCC and maspsx. */
 
 int Entity_TriggerAnimEvent(BattleEntity *entity, u8 slot)
 {
     int result = 0;
-    register EntityAnimEventCore *initial asm("$3") = entity->core;
-    register EntityAnimEventCore *core asm("$16");
+    EntityAnimEventCore *initial = entity->core;
+    EntityAnimEventCore *core;
     BattleEntity *actor;
     u32 nextFrame;
     if (!initial || !(g_GameStateFlags & 2))
         return 1;
     core = initial;
     if (core->kind == 2 || (actor = entity, core->kind == 4)) {
-        register BattleEntity *parent asm("$4") = entity->parent;
+        BattleEntity *parent = entity->parent;
         actor = parent;
         if (!parent)
             actor = entity;

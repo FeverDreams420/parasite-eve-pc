@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSREADY.OBJ, part 2 of 2: ER_cbready, LIBDS_DSREADY_text_3D8,
  * ER_retry, ER_cbsync, ER_active, ER_clear. */
 
@@ -13,15 +12,13 @@
     ((DsAsyncReadState *)((u8 *)(p) - PE1_OFFSETOF(DsAsyncReadState, retryPending)))
 void ER_cbready(int inEvent, u8 *inResult) {
     u8 detail[12];
-    register int event;
-    register u8 *result = inResult;
-    register DsAsyncReadState *state asm("$17");
-    register int one;
+    int event;
+    u8 *result = inResult;
+    DsAsyncReadState *state;
+    int one;
     /* Order prologue saves. This temporary output is used only by the next
      * empty constraint, then replaced with the incoming event. */
-    asm("" : "=r"(event));
     state = &g_DsAsyncReadState;
-    asm("" : "=r"(state) : "0"(state), "r"(event));
     event = inEvent;
     if (state->nextSector == -1)
         state->nextSector = DsPosToInt(DS_lastpos());
@@ -30,10 +27,9 @@ void ER_cbready(int inEvent, u8 *inResult) {
     if (event == one) {
         if (DS_lastmode() & 32) {
             {
-                register DsCallback cb = DsDataCallback(0);
-                register void *dest asm("$4") = detail;
-                register int count asm("$5") = 3;
-                asm("" : : "r"(dest), "r"(count));
+                DsCallback cb = DsDataCallback(0);
+                void *dest = detail;
+                int count = 3;
                 event = (int)cb;
                 DsGetSector(dest, count);
             }
@@ -47,7 +43,7 @@ void ER_cbready(int inEvent, u8 *inResult) {
             }
         } else {
             if (state->callback) {
-                register int sector = state->nextSector;
+                int sector = state->nextSector;
                 if (state->lastDeliveredSector < sector) {
                     state->callback(1, result, detail);
                     state->lastDeliveredSector = state->nextSector;
@@ -55,7 +51,7 @@ void ER_cbready(int inEvent, u8 *inResult) {
             }
         }
         {
-            register DsAsyncReadState *current = &g_DsAsyncReadState;
+            DsAsyncReadState *current = &g_DsAsyncReadState;
             current->nextSector++;
         }
     } else if (event == 4) {
@@ -79,8 +75,7 @@ void ER_cbready(int inEvent, u8 *inResult) {
         }
     }
     {
-        register int *pending asm("$16") = &g_DsAsyncReadRetryPending;
-        asm("" : "=r"(pending) : "0"(pending));
+        int *pending = &g_DsAsyncReadRetryPending;
         if (*pending == 1) {
             if (ASYNC_FROM_RETRY(pending)->retriesRemaining > 0 ||
                 ASYNC_FROM_RETRY(pending)->retriesRemaining == -1) {
@@ -173,7 +168,6 @@ void ER_clear(void) {
     int *state;
 
     state = &g_DsReadBusy;
-    asm volatile("" : "=r"(state) : "0"(state));
     if (DS_ASYNC_READ_FIELD(state, active) == 1) {
         DsReadyCallback(DS_ASYNC_READ_FIELD(state, savedReadyCallback));
         DsStartCallback(DS_ASYNC_READ_FIELD(state, savedStartCallback));

@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/field_movement.h"
@@ -15,8 +11,6 @@
 #include "pe1/render_object.h"
 #include "pe1/render_prim.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_GridCursorIndex;
 int g_GridCursorPrevious;
 int g_GridCursorX;
@@ -80,7 +74,6 @@ int Render_MoveGridCursor(PrimObj *obj, u32 *entries, u8 ascending, u8 restart) 
                 /* The output barrier keeps best's reference weight so the
                  * allocator ranks it ahead of found and later. */
                 best = i;
-                asm volatile("" : "=r"(best) : "0"(best));
             }
         }
     } else {
@@ -186,18 +179,17 @@ int Render_PrepareFrame(void) {
         local.vector[2] = z;
     } else local.vector[0] = local.vector[1] = local.vector[2] = 0;
     {
-        /* Matching debt: a volatile register input is the only form found
+        /* Matching debt: a volatile input is the only form found
          * that keeps the retail 48-byte frame (the 8 bytes above the
          * projected point are never accessed). */
-        register volatile unsigned short cx asm("$6") = 160;
+        volatile unsigned short cx = 160;
 
         gte_SetGeomOffset(cx, 112);
     }
     {
         GteMatrix **slot = &g_GeomScroll.words.viewMatrix;
-        register GteMatrix *view asm("$6");
+        GteMatrix *view;
 
-        asm("" : "=r"(slot) : "0"(slot));
         view = *slot;
         gte_ldrotmatrix(view);
         gte_ldtransmatrix(view);

@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBMATH FERR: _err_math. */
 
 #include "common.h"

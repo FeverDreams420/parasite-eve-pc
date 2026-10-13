@@ -5,7 +5,7 @@
 #include "pe1/gpu_dma_register_window.h"
 
 /*
- * GPU DMA controller state at 0x80095850.  The register pointers precede the
+ * GPU DMA controller state at 0x80095850.  The pointers precede the
  * circular queue and its interrupt/timeout bookkeeping in memory.
  */
 typedef struct GpuDmaState {

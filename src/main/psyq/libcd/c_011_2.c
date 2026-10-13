@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses -fno-schedule-insns */
 /* Psy-Q LIBCD C_011.OBJ, part 2 of 2: dma_execute. */
 
 #include "pe1/psyq_bios.h"
@@ -9,10 +6,10 @@
 void dma_execute(int channel, void *address, int blockCount, int blockSize,
                  volatile u32 control, u8 interrupt, int reserved) {
     int i = 0;
-    register CdDmaInterruptRegister *interruptRegister asm("$3");
+    CdDmaInterruptRegister *interruptRegister;
     u32 bits;
     u32 blockControl;
-    register int shift asm("$6");
+    int shift;
     volatile u32 readback;
     int priorityBit;
     volatile u32 *dma;
@@ -42,7 +39,6 @@ void dma_execute(int channel, void *address, int blockCount, int blockSize,
     }
 
     shift = channel << 2;
-    asm volatile("" : "=r"(shift) : "0"(shift));
     shift += 3;
     priorityBit = 1 << shift;
     shift = *g_CdDmaControlRegPtr;

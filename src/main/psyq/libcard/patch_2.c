@@ -3,7 +3,7 @@
 #include "pe1/psyq_card.h"
 
 /* The copied BIOS patch enters with its I/O base in v1, not in a0. */
-register CardPatchIoRegisters *cardPatchIo asm("$3");
+CardPatchIoRegisters *cardPatchIo;
 void CardPatchFunctions(void) {
     if (cardPatchIo->interruptMask & 0x80) {
         while (cardPatchIo->serialStatus & 0x80) {

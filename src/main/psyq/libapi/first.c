@@ -1,23 +1,20 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBAPI FIRST.OBJ: firstfile, Sys_FirstFileHookCallback. */
 
 #include "pe1/bios_firstfile.h"
 
-/* SDK firstfile wrapper (FIRST.OBJ). Constraints are tracked in crutch debt.
- * Provenance: configs/USA/psyq_provenance.json (LIBAPI FIRST). */
+/* SDK firstfile wrapper (FIRST.OBJ). Constraints are tracked in crutch debt. */
 int strcmp(const char *, const char *);
 void *firstfile2(const char *, void *);
 int Sys_FirstFileHookCallback(int *, unsigned, unsigned);
 void *firstfile(const char *inName, void *inResult) {
-    register const char *name = inName;
-    register void *result = inResult;
-    register const signed char *input;
-    register char *out;
-    register BiosDeviceEntry *entry;
-    register BiosDeviceEntry *end;
-    register unsigned count;
-    register int found;
-    asm("" : "=r"(name), "=r"(result) : "0"(name), "1"(result) : "memory");
+    const char *name = inName;
+    void *result = inResult;
+    const signed char *input;
+    char *out;
+    BiosDeviceEntry *entry;
+    BiosDeviceEntry *end;
+    unsigned count;
+    int found;
     out = g_FirstFileDeviceName;
     if (*(const signed char *)name >= 59) {
         input = (const signed char *)name;
@@ -31,7 +28,7 @@ void *firstfile(const char *inName, void *inResult) {
     count /= sizeof(BiosDeviceEntry);
     end = entry + count;
     if (entry < end) {
-        register BiosDeviceEntry *limit = end;
+        BiosDeviceEntry *limit = end;
         do {
             if (entry->name && strcmp(entry->name, g_FirstFileDeviceName) == 0) {
                 g_FirstFileOriginalHandler = entry->firstFile;
@@ -52,7 +49,7 @@ second:
     count /= sizeof(BiosDeviceEntry);
     end = entry + count;
     if (entry < end) {
-        register BiosDeviceEntry *limit = end;
+        BiosDeviceEntry *limit = end;
         do {
             if (entry->name && strcmp(entry->name, g_FirstFileDeviceName) == 0) {
                 entry->firstFile = Sys_FirstFileHookCallback;
@@ -70,11 +67,11 @@ call:
  * the callback used for forwarding is read again afterward. The empty
  * barriers are included in debt. */
 int Sys_FirstFileHookCallback(int *file, unsigned int arg1, unsigned int arg2) {
-    register BiosDeviceEntry *entry;
+    BiosDeviceEntry *entry;
     BiosDeviceEntry *limit;
-    register BiosFirstFileHandler original;
+    BiosFirstFileHandler original;
     unsigned int count;
-    register int *fileArg;
+    int *fileArg;
 
     if (!*file) *file = 1;
     count = BIOS_DEVICE_DIRECTORY->byteLength;
@@ -84,8 +81,7 @@ int Sys_FirstFileHookCallback(int *file, unsigned int arg1, unsigned int arg2) {
     limit = entry + count;
     fileArg = file;
     if (entry < limit) {
-        register BiosDeviceEntry *end = limit;
-        asm("" : "=r"(end) : "0"(end));
+        BiosDeviceEntry *end = limit;
         do {
             if (entry->name && strcmp(entry->name, g_FirstFileDeviceName) == 0) {
                 entry->firstFile = original;

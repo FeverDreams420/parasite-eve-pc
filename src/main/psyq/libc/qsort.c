@@ -1,4 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
 /* PSY-Q LIBC QSORT (byte-identical to LIBC2 QSORT): qsort, Mem_SwapBuffers. */
 
 #include "common.h"
@@ -9,9 +8,9 @@ void Mem_SwapBuffers(void *, void *, unsigned int);
 void qsort(void *base, unsigned int count, unsigned int size,
            PsyqSortCompare compare)
 {
-    register char *pivot asm("$20") = base;
+    char *pivot = base;
     char *current = pivot + size;
-    register unsigned int smaller asm("$22") = 0;
+    unsigned int smaller = 0;
     char *last;
     unsigned int i;
     unsigned int half;
@@ -25,7 +24,6 @@ void qsort(void *base, unsigned int count, unsigned int size,
     }
     half = count >> 1;
     /* Keep the pivot reload after the two-element path, with the shift before it. */
-    asm volatile("" : "+r"(pivot) : "r"(half));
     Mem_SwapBuffers(pivot, pivot + half * size, size);
     last = pivot;
     for (i = 1; i < count; i++, current += size) {
@@ -46,7 +44,7 @@ void Mem_SwapBuffers(void *arg0, void *arg1, u32 len) {
     i = 0;
     if (len != 0) {
         do {
-            register u8 *left = arg0;
+            u8 *left = arg0;
             u8 *left_ptr;
             u8 *right_ptr;
             u8 left_value;
@@ -65,4 +63,3 @@ void Mem_SwapBuffers(void *arg0, void *arg1, u32 len) {
 }
 
 /* Trailing word in the original 400-byte Psy-Q QSORT object. */
-static unsigned int tail_alignment_62D30[] __attribute__((section(".text"))) = { 0 };

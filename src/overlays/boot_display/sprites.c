@@ -40,9 +40,9 @@ void BootDisplay_InitDisplayResources(void) {
 }
 
 void BootDisplay_SelectFrameBuffers(void) {
-    register s32 orderingOffset asm("$4");
+    s32 orderingOffset;
     s32 primitiveOffset;
-    register s32 sectorOffset;
+    s32 sectorOffset;
     if (g_ActiveDrawSlot != 0) {
         orderingOffset = 0x581E0;
         primitiveOffset = 0x560D0;
@@ -55,8 +55,8 @@ void BootDisplay_SelectFrameBuffers(void) {
     orderingOffset = sectorOffset + orderingOffset;
 
     {
-        register u8 *base asm("$3") = g_CdLoadAreaBase;
-        register u8 *orderingBuffer;
+        u8 *base = g_CdLoadAreaBase;
+        u8 *orderingBuffer;
         sectorOffset += primitiveOffset;
         orderingBuffer = base + orderingOffset;
         base = base + sectorOffset;
@@ -162,11 +162,10 @@ void BootDisplay_StepImageSprite(void) {
         } else g_BootDisplayState = 5;
         break;
     case 5: {
-        register u32 frame asm("$2") = g_BootDisplayFrameCounter;
+        u32 frame = g_BootDisplayFrameCounter;
         u32 divisor = 450;
         u32 phase;
         /* Preserve retail hardware division rather than reciprocal multiplication. */
-        asm("" : "=r"(divisor) : "0"(divisor));
         phase = frame % divisor;
         frame = divisor - 93;
         if (phase == frame) g_BootDisplayTransition = 2;
@@ -189,11 +188,10 @@ void BootDisplay_StepImageSprite(void) {
         break;
     }
     case 7: {
-        register u32 frame asm("$2") = g_BootDisplayFrameCounter;
+        u32 frame = g_BootDisplayFrameCounter;
         u32 divisor = 450;
         u32 phase;
         /* Preserve retail hardware division rather than reciprocal multiplication. */
-        asm("" : "=r"(divisor) : "0"(divisor));
         phase = frame % divisor;
         frame = divisor - 93;
         if (phase == frame) g_BootDisplayTransition = 2;

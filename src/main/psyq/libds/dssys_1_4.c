@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBDS DSSYS_1.OBJ, part 4 of 10: LIBDS_DSSYS_1_text_368, LIBDS_DSSYS_1_text_4A4, LIBDS_DSSYS_1_text_774, LIBDS_DSSYS_1_text_7FC. */
 
 #include "pe1/psyq_cd.h"
@@ -56,10 +53,10 @@ s32 LIBDS_DSSYS_1_text_774(void);
                            PE1_OFFSETOF(CdRomCommandState, read.syncResult)))
 void LIBDS_DSSYS_1_text_4A4(void) {
     u8 parameter;
-    register int pending;
-    register int one;
-    register int *timer;
-    register int *retry = &g_CdRomCmdTimeout;
+    int pending;
+    int one;
+    int *timer;
+    int *retry = &g_CdRomCmdTimeout;
     if (*retry > 0 && --*retry == 0) {
         LIBDS_DSSYS_1_text_774();
         return;
@@ -71,12 +68,12 @@ void LIBDS_DSSYS_1_text_4A4(void) {
         --CMD(timer)->reserved34;
     one = 1;
     if (READ(timer)->status != one && READ(timer)->status == 2) {
-        register int state = READ(timer)->command;
-        register int eleven = 11;
+        int state = READ(timer)->command;
+        int eleven = 11;
         if (state != eleven) {
         if (state == 12) {
             if (g_CdReadCommandPollToggle) {
-                register u8 *arg = &parameter;
+                u8 *arg = &parameter;
                 parameter = 0;
                 if (g_CdRomCmdTimeout <= 0) {
                     CMD(timer)->eventValue = 32;
@@ -136,7 +133,6 @@ void LIBDS_DSSYS_1_text_4A4(void) {
                     LIBDS_DSSYS_1_text_368(1, 0);
                 }
             } else {
-                asm("" ::: "memory");
                 READ(timer)->status = one;
                 READ(timer)->command = eleven;
             }
@@ -176,7 +172,7 @@ done:;
 s32 LIBDS_DSSYS_1_text_774(void) {
     int *retry;
     s32 value;
-    register s32 idx;
+    s32 idx;
 
     CD_flush();
     retry = &g_CdRomCmdRetryState;

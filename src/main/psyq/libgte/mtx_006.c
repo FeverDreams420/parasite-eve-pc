@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /*
  * PSY-Q LIBGTE MTX_006: PushMatrix and PopMatrix. Assembler source: the matrix-stack pointer MSP and stack
  * MSTACK are object statics, ra is parked in SAVERA around the overflow

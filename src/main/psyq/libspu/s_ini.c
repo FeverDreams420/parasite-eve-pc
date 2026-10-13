@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBSPU S_INI: _SpuInit, SpuStart. */
 /* Complete LIBSPU S_INI.OBJ code; object alignment stays in the manifest. */
 
@@ -24,11 +23,9 @@ void _SpuInit(int mode) {
         } while (i >= 0);
     }
     SpuStart();
-    /* Keep the register selector and shared reverb base ahead of the resets. */
+    /* Keep the selector and shared reverb base ahead of the resets. */
     reverbRegister = 0xD1;
     reverb = &g_SpuReverbState;
-    asm volatile("" : "=r"(reverbRegister), "=r"(reverb)
-        : "0"(reverbRegister), "1"(reverb));
     _spu_rev_flag = 0;
     _spu_rev_reserve_wa = 0;
     reverb->mode = 0;

@@ -224,31 +224,14 @@ while their retail assets keep the `+N` file name (`target_path`).
 - An overlay with no evidenced place keeps its plain name. If one is ever
   needed, the reserved form is `unknown_a00` (area id 0 = no save label),
   never a guess.
-- The retail asset name does not change: the configuration keeps
-  `target_path: original/USA/overlays/room_mNNN.bin`. Only the source,
-  configuration, linker and build names carry the suffix.
+- Names identify the original room/scene data. Native module names and
+  source directories can change independently of asset identifiers.
 
 ### What a rename touches
 
-The overlay name is the config file stem, and every tool derives the source,
-asm, linker and build paths from it (`parallel_overlay_make.py`,
-`gen_expected.py`, `objdiff_config.py`, `check_source_policy.py` and the
-Makefile). The retail binary is the only thing addressed by `target_path`
-instead, and the Makefile reads it from the config too, so the asset files
-in `original/USA/overlays/` and in the CI asset checkout keep their names.
-A rename of `room_mNNN` to `room_mNNN_<place>`:
-
-- moves `configs/USA/overlays/<name>.yaml` and `sym.<name>.txt`, and
-  replaces the name everywhere in the config except `target_path` and the
-  `dd ... of=` extraction comment;
-- moves `src/overlays/<name>/` and, when present, `candidates/overlays/<name>/`;
-- rewrites `../<name>/` includes in other overlays and `overlays/<name>/`
-  paths in tests and candidate scripts.
-
-Generated `asm/`, `linkers/` and `build/` directories follow on the next
-split; the old ones can be deleted. Headers under `include/pe1/` that carry a
-room number in their file name (`room_m089_trail.h`) and prose in other docs
-keep the number, which still identifies the overlay.
+Move `src/overlays/<name>/` and update relative includes and native registration
+references. Preserve the map number used in game data. There are no overlay
+manifests, binary-matching targets or PS1 linker outputs to update.
 
 All 161 room overlays with a place of medium or high confidence are renamed.
 room_m350 has no save label and takes its slug from its text bank instead:

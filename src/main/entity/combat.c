@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 -g3 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/asset_find.h"
 #include "pe1/battle.h"
@@ -14,8 +10,6 @@
 #include "pe1/player_entity.h"
 #include "pe1/render_prim.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 u16 D_8009D298;
 unsigned char g_AyaStatusEffectTimer;
 

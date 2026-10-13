@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/battle_cmd.h"
@@ -14,10 +10,7 @@
 #include "pe1/menu_state.h"
 #include "pe1/random.h"
 #include "pe1/text.h"
-#include "m2c_macros.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 s16 *g_InvItemPtr;
 s32 g_InvSlotLimit;
 u32 *g_InvSelectionBits;
@@ -226,7 +219,7 @@ int Inv_CheckItemEquippable(unsigned int list_index, int modifier_index) {
                 {
                     int raw;
                     int final_mod;
-                    register int final_count asm("$6");
+                    int final_count;
                     int final_existing;
                     int bit_existing;
                     raw = item_a->tailData[mod_index];
@@ -866,7 +859,6 @@ static inline ItemDataRecord *LookupTrackedItem(int index) {
             }
         }
         /* Keep the item-ID result merge distinct from an invalid list index. */
-        asm("");
         return result;
     }
     return 0;

@@ -1,5 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* PSY-Q LIBSPU S_SR: SpuSetReverb. */
 
 #include "common.h"

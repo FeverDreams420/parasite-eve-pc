@@ -50,13 +50,11 @@ int Asset_OpenPeImage(void)
         VSync(0);
     found = DsSearchFile(&file, g_PeDisc2MarkerPath);
     if (found != 0) {
-        asm volatile("" : : "r"(found));
         if (found != (DslFILE *)-1) {
             while (DsSystemStatus() != 1 || DsQueueLen() != 0)
                 VSync(0);
             found = DsSearchFile(&file, g_PeImagePath);
             if (found != 0) {
-                asm volatile("" : : "r"(found));
                 if (found != (DslFILE *)-1) {
                     g_PeImageBaseLba = DsPosToInt(&file.pos);
                     g_PeImageMountFlags = (u8)g_PeImageMountFlags | 2;
@@ -312,7 +310,7 @@ void Boot_Shutdown(void) {
 
 int Draw_SetBaseY(int unused, u32 y)
 {
-  register u32 v;
+  u32 v;
   if (y < 16)
   {
     v = y;
@@ -462,7 +460,7 @@ void Asset_ResetGameState(void)
     AkaoVoiceBankEntry *pair;
     int pairOffset;
     u8 flags;
-    register int fill asm("$3");
+    int fill;
     u8 *voiceBase;
     u32 drawMode;
     i = 0;
@@ -471,7 +469,7 @@ void Asset_ResetGameState(void)
     base->saved_state_004 = 10;
     base->field_bg_cache_id = -1;
     base->room_type = 2;
-    PE1_COMPILER_LAUNDER_AFTER_MEM(minusOne, -1, base->room_type);
+    (minusOne = -1);
     base->requested_entity_bank = 11;
     base->field_bg_cache_bank = minusOne;
     base->loaded_entity_bank = 0;
@@ -558,9 +556,9 @@ void Asset_ResetGameState(void)
 }
 
 void Boot_InitMemoryLayout(void) {
-    register u8 *ptr asm("$2");
+    u8 *ptr;
     u8 *ptr2;
-    register s32 const_8000 asm("$4");
+    s32 const_8000;
     s32 const_48000;
     u8 *tmp;
 

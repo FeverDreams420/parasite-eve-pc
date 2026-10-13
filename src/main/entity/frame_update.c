@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/entity_animation.h"
@@ -20,8 +16,6 @@
 #include "pe1/scene_room_load.h"
 #include "pe1/script_node.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 FieldActor *g_EntityFreeListHead;
 u16 g_EntityFreePoolCount;
 u32 g_EntitySerialCounter;

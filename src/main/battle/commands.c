@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/battle.h"
@@ -17,8 +13,6 @@
 #include "pe1/player_entity.h"
 #include "pe1/weapon_list_output.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 BattleCmdEntry *g_BattleCmdStackTop;
 u8 *D_8009D1E0;
 int g_MenuCommandResult;
@@ -173,7 +167,7 @@ void Inv_SetActiveList(int mode, int *slot) {
         break;
     case 5:
         if (active) {
-            register BattleAction *data asm("$5") = active->action;
+            BattleAction *data = active->action;
             ItemDataRecord *item = *(ItemDataRecord **)selection;
             u32 word = data->attackWord;
             int kind;
@@ -186,7 +180,6 @@ void Inv_SetActiveList(int mode, int *slot) {
             kind = item->kind;
             data = active->action;
             if (kind != 0 && (unsigned)kind < 8) {
-                asm volatile("" ::: "memory");
                 encoded = kind - 4;
                 if (encoded <= 0) encoded = 1;
             } else {

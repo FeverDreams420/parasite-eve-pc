@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-strength-reduce */
-
 #include "common.h"
 #include "pe1/akao.h"
 #include "pe1/akao/commands.h"
@@ -10,7 +8,6 @@
 #include "pe1/akao/voice_masks.h"
 #include "pe1/akao/voice_state.h"
 #include "pe1/akao_counters.h"
-#include "m2c_macros.h"
 
 void Akao_SetNotePitch(AkaoTrack *track, int arg);
 
@@ -100,7 +97,7 @@ void Akao_StepSequencerVoice(void *arg0) {
     AkaoSequencerBank *p2c8b;
     AkaoSequencerBank *p2c8c;
     AkaoSequencerBank *pend;
-    register s32 all_voices;
+    s32 all_voices;
 
     arg0v = arg0;
     walk = arg0v;
@@ -692,8 +689,8 @@ void Akao_UpdateVoiceMask(AkaoU8 *new_base) {
     AkaoTrack *track;
     AkaoTrack *active;
     AkaoSequencerBank *bank;
-    register unsigned int bit asm("$7");
-    register unsigned int remaining asm("$8");
+    unsigned int bit;
+    unsigned int remaining;
     unsigned int mask;
     unsigned int voice_mask;
     unsigned int updated;
@@ -709,7 +706,7 @@ void Akao_UpdateVoiceMask(AkaoU8 *new_base) {
     AkaoSequencerBank *final_bank;
     AkaoU16 *duration;
     unsigned int magic_flags;
-    register unsigned int reset_duration asm("$10");
+    unsigned int reset_duration;
 
     Akao_CopyWords((unsigned int *)&g_AkaoTrackStateBackup,
                    (unsigned int *)g_AkaoCurTrack, 0x68);
@@ -723,13 +720,9 @@ void Akao_UpdateVoiceMask(AkaoU8 *new_base) {
     reset_duration = 4;
     duration = &track->pan_duration;
     /* Keep the loop constants live before loading the sequencer bank. */
-    asm volatile("" : "=r"(remaining), "=r"(bit), "=r"(magic_flags),
-                      "=r"(reset_duration), "=r"(duration)
-                    : "0"(remaining), "1"(bit), "2"(magic_flags),
-                      "3"(reset_duration), "4"(duration));
     loaded_bank = g_AkaoCurTrack;
     key_on_state = g_AkaoVoiceKeyOnState;
-    asm("" : "=r"(bank) : "0"(loaded_bank), "r"(key_on_state));
+    (bank = loaded_bank);
     old_status = bank->status_flags;
     allocation = bank->allocated_voice_mask;
     bank->sequence_base = new_base;
@@ -738,10 +731,8 @@ void Akao_UpdateVoiceMask(AkaoU8 *new_base) {
     bank->status_flags = old_status;
     bank->key_on_request_mask = allocation;
     backup_base = g_AkaoTrackStateBackup.sequence_base;
-    asm volatile("" : "=r"(backup_base) : "0"(backup_base));
     delta = new_base - backup_base;
     g_AkaoVoiceUpdateFlags |= 0x90;
-    asm volatile("" ::: "memory");
     voice_mask = bank->active_voice_mask;
     do {
         /* The original loop addresses these fields from pan_duration. */
@@ -760,8 +751,8 @@ void Akao_UpdateVoiceMask(AkaoU8 *new_base) {
                 active->note_pitch += 0x30;
             }
         } else {
-            register AkaoU8 *default_pc asm("$2");
-            register AkaoU16 short_duration asm("$2");
+            AkaoU8 *default_pc;
+            AkaoU16 short_duration;
             /* These pins keep the constants inside this branch. */
             active->note_length = reset_duration;
             short_duration = 2;
@@ -859,7 +850,7 @@ void Seq_RestoreSecondaryStateAndSelect(AkaoQueueEntry *entry) {
 void Seq_SelectPlaybackBankWithCountdown(AkaoQueueEntry *entry)
 {
   int raw;
-  register int value;
+  int value;
   Seq_SelectPlaybackBank(entry);
   raw = entry->arg3 & 0xFFFFFFFFFFFFFFFFu;
   value = 0;
@@ -1011,12 +1002,12 @@ void Seq_SlideTrackPitch(AkaoBankPitchSlideCommand *arg0) {
 }
 
 void Seq_TrackPitchSetup(AkaoBankPitchRangeCommand *arg0) {
-    register int raw asm("$2");
+    int raw;
     int duration;
     int selector;
     AkaoSequencerBank *track;
     int start;
-    register int delta asm("$6");
+    int delta;
     AkaoSequencerState *state;
     AkaoTrack *base;
     AkaoSequencerBank *next_track;
@@ -1114,8 +1105,8 @@ void Spu_SetVoiceVolumeImmediateMasked(int *arg0) {
     u32 i;
     u32 mask;
     u32 active;
-    register char *voice;
-    register char *base;
+    char *voice;
+    char *base;
     int value;
 
     base = (char *)g_AkaoVoiceChannelTable;
@@ -1223,7 +1214,7 @@ void Spu_SetAllVoiceVolumeImmediate(int *arg0) {
     u32 active;
     u32 i;
     u32 block_flag;
-    register char *voice;
+    char *voice;
     int value;
     int dirty;
 
@@ -1258,7 +1249,7 @@ void Spu_SlideAllVoiceVolume(int *arg0) {
     u32 active;
     u32 block_flag;
     u32 i;
-    register char *voice;
+    char *voice;
     int step;
     int delta;
 
@@ -1408,7 +1399,7 @@ void Spu_SetAllVoicePanImmediate(int *arg0) {
     u32 active;
     u32 i;
     u32 block_flag;
-    register char *voice;
+    char *voice;
     int value;
     int dirty;
 
@@ -1472,11 +1463,11 @@ void Spu_SlideAllVoicePan(int *arg0) {
 }
 
 void Spu_SetVoicePitchImmediateMasked(int *arg0) {
-    register char *base;
+    char *base;
     u32 active;
     u32 mask;
     u32 i;
-    register char *voice;
+    char *voice;
     int value;
     int dirty;
 
@@ -1592,7 +1583,7 @@ void Spu_SetAllVoicePitchImmediate(int *arg0) {
     u32 active;
     u32 i;
     u32 block_flag;
-    register char *voice;
+    char *voice;
     int value;
     int dirty;
 
@@ -1626,7 +1617,7 @@ void Spu_SlideAllVoicePitch(int *arg0) {
     u32 active;
     u32 i;
     u32 block_flag;
-    register char *voice;
+    char *voice;
     int step;
     int delta;
 
@@ -1903,7 +1894,7 @@ void Spu_VoiceStopAll(void)
   u32 pending;
   u32 bit;
   u32 voice_index;
-  register u32 *active_ptr;
+  u32 *active_ptr;
   u32 active;
   u32 new_var;
   u32 inverse;

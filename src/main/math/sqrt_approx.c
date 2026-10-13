@@ -1,12 +1,10 @@
-/* ASSEMBLER: GNU */
-
 #include "pe1/game_asm.h"
 
 /*
  * unsigned int Math_SqrtApprox3(int x, int y, int z): bits 20..51 of the
  * 64-bit sum x*x + y*y + z*z, computed on the absolute values.
  *
- * Original assembler (configs/USA/original_asm_evidence.json): no stack
+ * Original assembler: no stack
  * frame, LO read before HI, two hazard NOPs before each following `mult`,
  * unfilled `bgez` delay slots, and a carry chain that adds the carry before
  * the high words. GCC's long-long code for the same sum spills to a stack

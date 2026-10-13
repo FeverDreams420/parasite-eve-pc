@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "pe1/boot_disc_check.h"
 #include "pe1/bounds_check.h"
 #include "pe1/draw_buffers.h"
@@ -115,16 +111,14 @@ inline void Queue_DequeueByMask(int mask, MenuQueueEntry *out_arg) {
 
 typedef MenuWidgetNode MenuInputWidget;
 
-/* COMMON supplies small-data metadata to MASPSX for the words this unit
- * reaches through $gp; the other extern words stay absolute. */
 int g_MenuDrawPhase;
 int g_MenuInputRepeatTimer;
 
 /* Translate the field pad bits into the menu input status flags. */
 int Draw_RemapStatusFlags(void) {
     int pad;
-    register int lower;
-    register int select;
+    int lower;
+    int select;
     int mask;
 
     pad = g_FieldPadBits;
@@ -344,12 +338,11 @@ void Draw_InitBuffers(void) {
     SetDefDispEnv(&g_DrawFrameBuffers[1].display, 0, 0, 0x140, 0xE0);
     {
         /* Match debt: retail stores the screen rectangles relative to the
-         * register holding the first frame's packet arena field (s0), not
+         * holding the first frame's packet arena field (s0), not
          * as absolute addresses. */
-        register u8 **front asm("$16") = &g_DrawFrameBuffers[0].frontBufferBase;
+        u8 **front = &g_DrawFrameBuffers[0].frontBufferBase;
         DrawFrameBuffer *second;
 
-        PE1_COMPILER_LAUNDER(front);
         second = (DrawFrameBuffer *)(front + 1);
         second[0].display.screen.y = 8;
         second[-1].display.screen.y = 8;

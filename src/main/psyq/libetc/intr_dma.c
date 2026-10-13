@@ -1,5 +1,3 @@
-/* ASSEMBLER: GNU */
-/* CC1_FLAGS: -fno-cse-follow-jumps */
 /* Psy-Q LIBETC INTR_DMA.OBJ: startIntrDMA, trapIntrDMA, setIntrDMA, memclrIntrDMA. */
 
 #include "pe1/psyq_api_internal.h"
@@ -44,11 +42,11 @@ void trapIntrDMA(void) {
 }
 
 DmaInterruptCallback setIntrDMA(int channel, DmaInterruptCallback callback) {
-    register DmaInterruptCallback callbackReg asm("$4");
-    register DmaInterruptCallback *base;
+    DmaInterruptCallback callbackReg;
+    DmaInterruptCallback *base;
     DmaInterruptCallback *slot;
     DmaInterruptCallback old;
-    register DmaInterruptCallback ret asm("$2");
+    DmaInterruptCallback ret;
     volatile u32 *dmaReg;
     u32 tmp;
     callbackReg = callback;
@@ -60,7 +58,7 @@ DmaInterruptCallback setIntrDMA(int channel, DmaInterruptCallback callback) {
     if (callbackReg != old) {
         if (callbackReg != 0) {
             int bitSet;
-            register u32 maskSet asm("$4");
+            u32 maskSet;
 
             dmaReg = g_IntrDmaDispatchPtr;
             tmp = 0xFFFFFF;
@@ -74,11 +72,10 @@ DmaInterruptCallback setIntrDMA(int channel, DmaInterruptCallback callback) {
             tmp |= bitSet;
             maskSet |= tmp;
             *dmaReg = maskSet;
-            asm volatile("" : : "m"(*dmaReg));
             ret = old;
             return ret;
         } else {
-            register u32 maskClear asm("$3");
+            u32 maskClear;
 
             dmaReg = g_IntrDmaDispatchPtr;
             tmp = 0xFFFFFF;
@@ -90,7 +87,6 @@ DmaInterruptCallback setIntrDMA(int channel, DmaInterruptCallback callback) {
             tmp = ~(1U << (channel + 0x10));
             maskClear &= tmp;
             *dmaReg = maskClear;
-            asm volatile("" : : "m"(*dmaReg));
             ret = old;
             return ret;
         }

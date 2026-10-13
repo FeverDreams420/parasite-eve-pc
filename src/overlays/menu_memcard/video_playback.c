@@ -129,7 +129,7 @@ s32 MenuCard_PlayVideo(s32 index) {
     u8 *buffer;
     s32 entry = index;
     s32 result = 0;
-    register u32 *flags asm("$3");
+    u32 *flags;
     s32 ready;
     flags=&D_800B0CD8;
     *flags |= 0x200;
@@ -177,7 +177,7 @@ retry:
             } while(D_800B0DBA);
         }
     }
-    { register s32 returnValue asm("$2") = result;
+    { s32 returnValue = result;
         flags=&D_800B0CD8;
         *flags &= ~0x200;
         return returnValue; }

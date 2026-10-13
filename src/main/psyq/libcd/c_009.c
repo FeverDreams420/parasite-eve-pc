@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBCD C_009.OBJ: StGetNext. */
 
 #include "pe1/psyq_cd.h"
@@ -23,7 +22,6 @@ u32 StGetNext(u32 **addr, u32 **header) {
         entry = (u8 *)&StRingAddr[index];
     }
 
-    asm volatile("" : : : "memory");
     if (*(u16 *)entry == 2) {
         *(u16 *)entry = 4;
         *addr_reg = (u32 *)(&StRingAddr[StRingSize] +

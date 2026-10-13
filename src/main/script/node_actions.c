@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_runtime.h"
@@ -20,7 +16,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNodeTarget18, actor) == 0,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, target18) == 0x18,
                   script_node_target18_offset);
 
-/* COMMON supplies small-data metadata to MASPSX. */
 ScriptNode *g_ScriptNodeFreeListHead;
 u16 g_ScriptNodeSeqCounter[1];
 ScriptNode *g_ScriptNodePool;
@@ -30,11 +25,11 @@ int Script_SpawnChildNode(int **args) {
     ScriptNode *node = g_ScriptNodePool;
 
     if ((node->flags & 3) != 0) {
-        register int *value_ptr asm("$2");
-        register FieldActor *state asm("$5");
+        int *value_ptr;
+        FieldActor *state;
         ScriptNode *entry;
         u16 seq;
-        register unsigned int *script asm("$4");
+        unsigned int *script;
         int base;
         int scriptValue;
         ScriptNode *next;
@@ -45,7 +40,6 @@ int Script_SpawnChildNode(int **args) {
         seq = g_ScriptNodeSeqCounter[0];
         scriptValue = *value_ptr;
         base = (int)state->script_base;
-        asm volatile("" : "=r"(entry) : "0"(entry));
         next = entry->next;
         entry->prev = 0;
         entry->next = 0;
@@ -68,15 +62,14 @@ int Script_SpawnChildNode(int **args) {
             g_CurrentEntity->script_node_lists[2] = entry;
         }
     } else {
-        register ScriptNode *entry asm("$5") = g_ScriptNodeFreeListHead;
-        register int *value_ptr asm("$2") = args[0];
-        register FieldActor *state asm("$4") = g_CurrentEntity;
+        ScriptNode *entry = g_ScriptNodeFreeListHead;
+        int *value_ptr = args[0];
+        FieldActor *state = g_CurrentEntity;
         ScriptNode *next = entry->next;
         int value;
 
         value = *value_ptr;
         g_ScriptNodeFreeListHead = next;
-        asm volatile("" : "=m"(g_ScriptNodeFreeListHead) : "m"(g_ScriptNodeFreeListHead));
         value = (value << 1) + (int)state->script_base;
         if (node != 0) {
             entry->prev = node;

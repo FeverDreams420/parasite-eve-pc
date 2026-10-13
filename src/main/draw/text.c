@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 -fno-cse-skip-blocks */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/bounds_check.h"
 #include "pe1/draw_area.h"
@@ -12,10 +8,7 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_prim.h"
 #include "pe1/text.h"
-#include "m2c_macros.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_DrawGlyphAdvance;
 int g_TextRenderMode;
 unsigned char *D_8009D100;
@@ -323,8 +316,7 @@ void Draw_EmitGlyph(s32 arg0, s32 arg1) {
 
     packet = 0;
     glyph = Draw_LookupGlyphDescriptor(arg0);
-    /* Preserve the descriptor's register across packet setup. */
-    asm volatile("" : "=r"(glyph) : "0"(glyph));
+    /* Preserve the descriptor's across packet setup. */
     oldPacket = g_DrawPacketCursor;
     nextPacket = oldPacket + sizeof(RenderTexturedQuad);
     if (nextPacket < (g_DrawPacketArenaBase + 0x4000)) {
@@ -345,7 +337,7 @@ void Draw_EmitGlyph(s32 arg0, s32 arg1) {
     }
 
     {
-        register RenderTexturedQuad *ptr asm("$4");
+        RenderTexturedQuad *ptr;
 
         base_x = (u16)g_TextCursorX;
         base_y = (u16)g_TextCursorY;
@@ -438,7 +430,7 @@ static inline RenderTexturedQuad *AllocBarQuad(void)
 }
 
 static inline int DecodeGlyph(int input) {
-    register int code asm("$4") = input;
+    int code = input;
     int glyph;
     glyph = (u8)code;
     if (g_TextRenderMode) {
@@ -466,7 +458,7 @@ void Draw_AllocTexturedQuad(int code) {
     int spacing;
     int column;
     int row;
-    register int arg0 asm("$4");
+    int arg0;
     RenderTexturedQuad *prim;
     u8 *old, *next;
     DrawPrimLink link;
@@ -531,12 +523,11 @@ void Draw_AllocTexturedQuad(int code) {
     }
     u = column * 0xC + nibble;
     v = row * 0xC;
-    asm volatile("" : : "r"(u), "r"(v));
     {
         int uBase;
         int vBase;
-        register int half asm("$5");
-        register int cursorX asm("$6");
+        int half;
+        int cursorX;
         int cursorY;
         arg0 = 0;
         cursorX = g_TextCursorX;
@@ -547,7 +538,6 @@ void Draw_AllocTexturedQuad(int code) {
         prim->u2 = u;
         prim->u0 = u;
         prim->clut = 0x89C;
-        asm volatile("" : "=r"(spacing) : "0"(spacing));
         half = spacing >> 1;
         prim->v1 = v;
         prim->v0 = v;
@@ -558,7 +548,6 @@ void Draw_AllocTexturedQuad(int code) {
         vBase += 0xC;
         cursorX += half;
         cursorY++;
-        asm volatile("" : "=r"(cursorX), "=r"(cursorY) : "0"(cursorX), "1"(cursorY));
         prim->u3 = uBase;
         prim->u1 = prim->u3;
         prim->x0 = cursorX;

@@ -59,8 +59,7 @@ typedef struct RoomParticleEmitter {
 #define RVU16(o, off) (*(volatile unsigned short *)((char *)(o) + (off)))
 #define RWPTR(o, off) ((void *)((char *)(o) + (off)))
 
-/* Locals for the room rotation-table lookups. These used to carry register
- * pins; stock allocation now places them where retail does. */
+/* Locals for the room rotation-table lookups. These used to carry * pins; stock allocation now places them where retail does. */
 #define ROOMLIB_ROT_ENTRY_DECL \
     int *entry; \
     int *base
@@ -697,7 +696,7 @@ extern void func_800DFB20(void *state);
         return 0; \
     }
 
-/* register this entity's table with the field engine when active */
+/* this entity's table with the field engine when active */
 #define ROOMLIB_REGISTER_TABLE(name, table) \
     int name(void *o) { \
         if ((unsigned int)FieldFx_GetStatus(o) >= 2) { \
@@ -714,7 +713,7 @@ extern void func_800DFB20(void *state);
         return 0; \
     }
 
-/* start method that acts whatever the field engine's status: register the
+/* start method that acts whatever the field engine's status: the
  * update handlers and spawn from the init list and the spawn layout,
  * closing the module with `close` when either call fails */
 #define ROOMLIB_START_ANY(name, update, init, layout, close) \
@@ -726,7 +725,7 @@ extern void func_800DFB20(void *state);
     }
 
 /* start method that acts only while the field engine runs the object
- * (status 3): register the update handlers and spawn from the init list and
+ * (status 3): the update handlers and spawn from the init list and
  * the spawn layout, closing the module with `close` when either call fails
  * or the object is not running */
 #define ROOMLIB_START_AT3(name, update, init, layout, close) \

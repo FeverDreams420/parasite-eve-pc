@@ -1,15 +1,14 @@
-/* GCC_VERSION: 2.8.1 */
 /* PSY-Q LIBMATH FIXDFSI: __fixdfsi. */
 
 #include "common.h"
 #include "pe1/math64.h"
 
-s32 __fixdfsi(register double value)
+s32 __fixdfsi(double value)
 {
-    register MathDoubleBits input;
+    MathDoubleBits input;
     volatile MathU64 parts;
-    register s32 exponent;
-    register s32 shift;
+    s32 exponent;
+    s32 shift;
     s32 mantissa;
     s32 result;
 

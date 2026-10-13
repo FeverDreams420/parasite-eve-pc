@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "pe1/akao.h"
 #include "pe1/aya.h"
 #include "pe1/battle.h"
@@ -15,8 +11,6 @@
 #include "pe1/stat_modifiers.h"
 #include "pe1/textbox.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_InvBonusSlotCount;
 
 int *Battle_GetModifierTable(void) {

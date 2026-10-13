@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_status.h"
@@ -21,8 +17,6 @@
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_transition.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 u32 D_8009D280;
 int g_SceneDispatchCur;
 unsigned int g_GameStateFlags;

@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBDS DSSYS_1.OBJ, part 10 of 10: tipDsSystem and the object's zero tail. */
 
 #include "pe1/psyq_bios.h"
@@ -52,7 +49,7 @@ void tipDsSystem(void) {
     printf(g_DsReadySystemFormat, busy);
 }
 
-unsigned int LIBDS_DSSYS_1_pad[] __attribute__((section(".text"))) = {
+unsigned int LIBDS_DSSYS_1_pad[] = {
     0x00000000,
     0x00000000,
 };

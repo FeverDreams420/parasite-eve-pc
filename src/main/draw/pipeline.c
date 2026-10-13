@@ -1,6 +1,3 @@
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/boot.h"
 #include "pe1/entity_allocation.h"
@@ -29,8 +26,6 @@ unsigned int g_GameStateFlags;
 #define H(sym) (*(s16 *)(sym))
 #define B(sym) (*(s8 *)(sym))
 #define UB(sym) (*(u8 *)(sym))
-#define LAUNDER(x) asm volatile("" : "=r"(x) : "0"(x))
-#define BARRIER() 
 
 void Scene_LoadRoom(int arg0);
 s32 Scene_StreamTexturePage(void);
@@ -49,8 +44,8 @@ void SetDispMask(int arg0);
 void Draw_InitPipeline(void) {
     int one;
     int v1;
-    register int t0 asm("$8");
-    register int t1 asm("$9");
+    int t0;
+    int t1;
     char *p;
     char *a0p;
     void *fogSource;
@@ -65,11 +60,9 @@ void Draw_InitPipeline(void) {
     Script_InitNodeFreeList();
 
     Boot_SetBackColor((char *)&D_800BEA42 - 2, 0x28, 0x28, 0x28);
-    BARRIER();
 
     v1 = 0;
     t1 = 0;
-    LAUNDER(v1);
     if (v1 < -0x7FFF) {
         v1 = -0x7FFF;
     }
@@ -82,7 +75,6 @@ void Draw_InitPipeline(void) {
 
     v1 = 0;
     t0 = 0;
-    LAUNDER(v1);
     t1 = 0x7FFF;
     if (v1 < -0x7FFF) {
         v1 = -0x7FFF;
@@ -96,14 +88,12 @@ void Draw_InitPipeline(void) {
     v1 = 0x10000;
     t0 = 0;
     {
-        register int cond asm("$2");
+        int cond;
         cond = 1;
-        LAUNDER(cond);
         t1 = 0;
         if (cond != 0) {
             v1 = 0x7FFF;
         } else {
-            LAUNDER(v1);
             if (v1 < -0x7FFF) {
                 v1 = -0x7FFF;
             }

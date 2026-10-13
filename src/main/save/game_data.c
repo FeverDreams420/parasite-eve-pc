@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/draw_state.h"
@@ -23,10 +19,7 @@
 #include "pe1/scene_dispatch.h"
 #include "pe1/scene_room.h"
 #include "pe1/text.h"
-#include "include_asm.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_InvCategoryBaseItemId;
 s32 g_InvPackedListCount;
 s16 *g_InvItemPtr;

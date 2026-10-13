@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/draw_level_bar.h"
 #include "pe1/draw_state.h"
@@ -23,8 +19,6 @@
 
 void Menu_OpenItemActionSubmenu(MenuWidgetNode *, int, int);
 
-/* COMMON supplies small-data metadata to MASPSX for the words this unit
- * reaches through $gp; addresses taken with & stay absolute. */
 int g_MenuItemActionContext;
 int g_MenuSelectionLocked;
 int g_MenuActionSubmenuOpen;
@@ -139,7 +133,7 @@ int Menu_InventoryInputHandler(MenuWidgetNode *root, unsigned int flags) {
     int action_result;
     int value;
     unsigned int flags_saved = flags;
-    register int handled asm("$19") = 0;
+    int handled = 0;
     int (*action)(int);
 
     /* Both the initial child index and the return value start at zero. */
@@ -199,7 +193,6 @@ int Menu_InventoryInputHandler(MenuWidgetNode *root, unsigned int flags) {
                 if (Inv_CanAddActiveListItemToAya(index)) {
                     handled = 1;
                     Menu_PlayErrorSound();
-                    asm volatile("" : "=r"(handled) : "0"(handled));
                     return handled;
                 }
             } else {
@@ -209,7 +202,6 @@ int Menu_InventoryInputHandler(MenuWidgetNode *root, unsigned int flags) {
         }
         handled = 1;
         Menu_PlayConfirmSound();
-        asm volatile("" : "=r"(handled) : "0"(handled));
         return handled;
     }
 
@@ -236,7 +228,6 @@ int Menu_InventoryInputHandler(MenuWidgetNode *root, unsigned int flags) {
         }
         Menu_PlayCancelSound();
         handled = 1;
-        asm volatile("" : "=r"(handled) : "0"(handled));
         return handled;
     }
 

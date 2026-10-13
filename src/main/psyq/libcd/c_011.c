@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBCD C_011.OBJ, part 1 of 2: StCdInterrupt and mem2mem. C_011 stays
  * in two units: these match with GCC 2.7.2, dma_execute (c_011_2.c) only with
  * GCC 2.8.1, -mno-split-addresses and -fno-schedule-insns. */
@@ -24,10 +23,10 @@ void StCdInterrupt(void) {
     StHEADER *header;
     u32 *copyDestination;
     u32 *copySource;
-    register u32 frame;
-    register u32 subheaderIndex;
-    register u32 copyIndex asm("$4");
-    register u32 dmaControl;
+    u32 frame;
+    u32 subheaderIndex;
+    u32 copyIndex;
+    u32 dmaControl;
     u8 *subheaderByte;
 
     if (g_CdStreamDataReadyFlag != 1) {
@@ -48,7 +47,6 @@ void StCdInterrupt(void) {
             }
             header = StRingAddr + g_CdStreamRingWriteSlot;
             g_StCurrentHeader = header;
-            asm volatile("" ::: "memory");
             if (header->id != 0) {
                 if (g_CdStreamMemorySource != 0) {
                     g_CdStreamSectorSlot += 1;
@@ -64,7 +62,7 @@ void StCdInterrupt(void) {
             *g_CdStIntrComDelayRegPtr = 0x1323;
             subheaderIndex = 0;
             if (g_DsStreamNoLocFlag == 0) {
-                register u8 *sub = w.subheader;
+                u8 *sub = w.subheader;
                 do {
                     subheaderByte = sub + subheaderIndex;
                     subheaderIndex += 1;
@@ -88,9 +86,9 @@ void StCdInterrupt(void) {
                 } while (*g_CdStIntrDmaChcrPtr & 0x01000000);
             }
             {
-                register u32 control = 0x20843;
-                register StHEADER *header = g_StCurrentHeader;
-                register volatile u32 *port = g_CdStIntrDelayRegPtr;
+                u32 control = 0x20843;
+                StHEADER *header = g_StCurrentHeader;
+                volatile u32 *port = g_CdStIntrDelayRegPtr;
                 header->loc = *(CdlLOC *)w.subheader;
                 *port = control;
             }
@@ -98,7 +96,6 @@ void StCdInterrupt(void) {
             if ((g_CdStreamMask == 1) && (g_CdStreamStartFrame != 0)) {
                 if (g_CdStreamStartFrame != ST_FRAME_INDEX(g_StCurrentHeader)) {
                     g_StCurrentHeader->id = 0;
-                    asm volatile("" ::: "memory");
                     if (g_CdStreamMemorySource != 0) {
                         g_CdStreamSectorSlot += 1;
                     }
@@ -125,7 +122,6 @@ void StCdInterrupt(void) {
                     init_ring_status(g_CdStreamRingReadSlot, g_CdStreamRingWriteSlot - g_CdStreamRingReadSlot);
                     g_CdStreamRingWriteSlot = g_CdStreamRingReadSlot;
                     g_StCurrentHeader->id = 0;
-                    asm volatile("" ::: "memory");
                     if (g_CdStreamMemorySource != 0) {
                         g_CdStreamSectorSlot += 1;
                     }
@@ -133,7 +129,7 @@ void StCdInterrupt(void) {
                     return;
                 }
                 if (g_StCurrentHeader->secCount == 0) {
-                    register u32 limit;
+                    u32 limit;
                     frame = ST_FRAME_INDEX(g_StCurrentHeader);
                     limit = g_CdStreamEndState.endSector;
                     g_StFrameSectorIndex = 0;
@@ -145,7 +141,6 @@ void StCdInterrupt(void) {
                         init_ring_status(g_CdStreamRingReadSlot, g_CdStreamRingWriteSlot - g_CdStreamRingReadSlot);
                         g_CdStreamRingWriteSlot = g_CdStreamRingReadSlot;
                         g_StCurrentHeader->id = 0;
-                        asm volatile("" ::: "memory");
                         g_CdStreamMask = 1;
                         if (g_StrEndCallback != 0) {
                             g_StrEndCallback();
@@ -160,7 +155,6 @@ void StCdInterrupt(void) {
                         (u16)g_StCurrentHeader->nSectors) {
                         if (g_CdStreamEndState.endSector == 0) {
                             g_StCurrentHeader->id = 1;
-                            asm volatile("" ::: "memory");
                             g_CdStreamMask = 1;
                             if (g_StrEndCallback != 0) {
                                 g_StrEndCallback();
@@ -173,7 +167,6 @@ void StCdInterrupt(void) {
                         }
                         if ((s16)StRingAddr->id != 0) {
                             g_StCurrentHeader->id = 0;
-                            asm volatile("" ::: "memory");
                             if (g_CdStreamMemorySource != 0) {
                                 g_CdStreamSectorSlot += 1;
                             }
@@ -181,7 +174,6 @@ void StCdInterrupt(void) {
                             return;
                         }
                         g_StCurrentHeader->id = 1;
-                        asm volatile("" ::: "memory");
                         copyDestination = (u32 *)StRingAddr;
                         copySource = (u32 *)g_StCurrentHeader;
                         copyIndex = 0;
@@ -208,8 +200,8 @@ void StCdInterrupt(void) {
                     *g_CdStIntrDelayRegPtr = 0x20943;
                     *g_CdStIntrComDelayRegPtr = 0x1323;
                 } else {
-                    register u32 value = 0x21020843;
-                    register u32 *port;
+                    u32 value = 0x21020843;
+                    u32 *port;
                     dmaControl = 0x11400000;
                     port = (u32 *)g_CdStIntrDelayRegPtr;
                     *port = value;

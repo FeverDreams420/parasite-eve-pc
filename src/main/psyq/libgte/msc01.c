@@ -1,11 +1,10 @@
-/* ASSEMBLER: GNU */
 /*
  * PSY-Q LIBGTE MSC01: SquareRoot0. Assembler source:
  * leading-zero count through the GTE LZCS/LZCR registers, trapping sub/addi,
  * and a branch whose delay slot is the first instruction of the next label.
  * PSY-Q 3.5 msc01.o carries the local labels Rshift, CNTSQ and RTNSQRT at the
  * same offsets; 31 of its 33 words are identical and the other two differ
- * only in the temporary register its assembler chose to expand `and $t2,
+ * only in the temporary its assembler chose to expand `and $t2,
  * $v0, -2`.
  */
 

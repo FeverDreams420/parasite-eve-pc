@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/field_pad.h"
@@ -12,8 +8,6 @@
 #include "pe1/textbox.h"
 #include "pe1/textbox_open.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_ScriptCollisionFlag;
 u8 *g_TextboxMessageSource;
 unsigned char D_8009CE94;
@@ -70,7 +64,7 @@ void Render_SetupFogLayer(void *source) {
     int i;
     u16 *page_source;
     u8 *tile_base;
-    register u8 *draw_base asm("$23");
+    u8 *draw_base;
     u8 *tile_payload_base;
     int sentinel;
     u8 *sprite_base;
@@ -256,16 +250,16 @@ void Script_SetCollisionFlag(int value) {
 /* Opens the first free textbox for message `index`. A styled box takes the
  * current text rectangle; `values` (ended by -1, at most five) fill the
  * message's number slots as decimal digits.
- * Matching debt: five register pins and three empty barriers. The reciprocal
+ * Matching debt: five pins and three empty barriers. The reciprocal
  * operand preserves constant-hoist order; the digit memory operand keeps its
  * base across the inner loop; the final count operand preserves the counter.
- * The page-index register is reused for slot initialization. No CPU ASM. */
+ * The page-index is reused for slot initialization. No CPU ASM. */
 void Render_SetupColorTable(int inputIndex, int inputStyle, short *inputValues)
 {
     unsigned char style = inputStyle;
-    register short *values asm("$12") = inputValues;
+    short *values = inputValues;
     unsigned char i;
-    register short index asm("$9") = inputIndex;
+    short index = inputIndex;
 
     for (i = 0; i < 4; i++) {
         unsigned char slot;
@@ -285,7 +279,6 @@ void Render_SetupColorTable(int inputIndex, int inputStyle, short *inputValues)
         g_TextboxEntries[i].control.flags &= ~0x100000;
         {
             int reciprocal = 0x66666667;
-            asm("" : : "r"(reciprocal), "r"(index));
         }
         g_TextboxEntries[i].control.flags &= ~0x200000;
         if (style) {
@@ -301,16 +294,15 @@ void Render_SetupColorTable(int inputIndex, int inputStyle, short *inputValues)
 
         index = 0;
         for (slot = index; slot < 5; slot++) {
-            register unsigned short inputNumber asm("$7") = *values++;
+            unsigned short inputNumber = *values++;
             short value = inputNumber;
-            register unsigned short quotient asm("$5");
-            register unsigned char count asm("$8");
+            unsigned short quotient;
+            unsigned char count;
 
             if (value == -1)
                 return;
             count = 0;
             g_TextboxEntries[i].numbers[slot].digits[count] = value - (quotient = value / 10) * 10;
-            asm volatile("" : : "m"(g_TextboxEntries[i].numbers[slot].digits[count]) : "$6");
             value = quotient;
             while (value != 0) {
                 unsigned short quotient;
@@ -320,7 +312,6 @@ void Render_SetupColorTable(int inputIndex, int inputStyle, short *inputValues)
                 value = quotient;
             }
             g_TextboxEntries[i].numbers[slot].count = count + 1;
-            asm("" : : "r"(count));
         }
         return;
     }
@@ -346,18 +337,18 @@ void Menu_DrawTextboxEntries(void) {
     u8 backgroundDrawn;
     /* Matching debt: the exit barrier reserves the unused 0x38 stack slot. */
     long long matchingStackSlot;
-    /* Matching debt: seven register bindings and six empty barriers preserve
+    /* Matching debt: seven bindings and six empty barriers preserve
      * the retail allocation. No instruction bodies are embedded in C. */
-    register s32 nameIndex asm("$20");
+    s32 nameIndex;
     u32 *orderingTable;
-    register u32 *linkOrdering asm("$4");
+    u32 *linkOrdering;
     TextboxNumber *number;
     u8 stopDrawing;
     u16 baseX;
     s32 sectionMask;
     u16 glyphAdvance;
     u16 fontClut;
-    register TextboxGlyphPacket *linkPacket asm("$5");
+    TextboxGlyphPacket *linkPacket;
     unsigned char lineHeight;
     s32 divisionHintfb;
     s32 divisionHintfc;
@@ -384,7 +375,7 @@ void Menu_DrawTextboxEntries(void) {
     s32 temp_a0_3;
     u8 temp_a0_4;
     u8 temp_a0_5;
-    register u32 nameGlyph asm("$6");
+    u32 nameGlyph;
     u8 temp_v0;
     u8 temp_v0_2;
     u8 temp_v0_5;
@@ -398,7 +389,7 @@ void Menu_DrawTextboxEntries(void) {
     RenderSpritePacket *selectionSprite;
     void *selectionBase;
     TextboxEntry *textbox;
-    register TextboxGlyphPacket *auxiliaryPacket asm("$17");
+    TextboxGlyphPacket *auxiliaryPacket;
     TextboxGlyphPacket *currentPacket;
     TextboxGlyphPacket *nextPacket;
     TextboxNumber *numberStart;
@@ -414,7 +405,6 @@ void Menu_DrawTextboxEntries(void) {
         nextPacket = *buffers.packets;
     }
     initialBufferTable = &D_800B0E38.other_buffers[1];
-    asm("" : "=r"(initialBufferTable) : "0"(initialBufferTable), "r"(nextPacket));
     if (g_ScriptCollisionFlag != 0) {
         TextboxTableAddress ordering;
 
@@ -494,7 +484,6 @@ void Menu_DrawTextboxEntries(void) {
             lineHeight = 12;
             for (;;) {
                 font = &g_TextboxFontPages[0];
-                asm("" : "=r"(currentPacket) : "0"(currentPacket));
                 temp_v1_3 = *stream;
                 switch (temp_v1_3) {
                 case 0xF7:
@@ -528,9 +517,9 @@ void Menu_DrawTextboxEntries(void) {
                     if (g_TextboxNameGlyphs.count > 0) {
                         auxiliaryPacket = nextPacket;
                         do {
-                            register u32 fontRow asm("$5");
+                            u32 fontRow;
                             u16 nameU, nameV;
-                            register u32 spacingOffset asm("$23");
+                            u32 spacingOffset;
                             nameGlyph = g_TextboxNameGlyphs.glyphs[(s8)nameIndex];
                             spacingOffset = nameGlyph * 2;
 
@@ -570,7 +559,6 @@ void Menu_DrawTextboxEntries(void) {
                             AddPrim(orderingTable, temp_a1_2);
                             nextNameIndex = nameIndex + 1;
                             nameIndex = nextNameIndex;
-                            asm("" : "=r"(nextNameIndex) : "0"(nextNameIndex));
                             {
                                 TextboxTableAddress spacing;
 
@@ -767,7 +755,6 @@ void Menu_DrawTextboxEntries(void) {
                         uv.x = ((temp_a0_3 + 0xED) % 21) * 0xC;
                         temp_v1_10 = ((*stream + 0xED) / 21) * 0xC;
                         uv.y = temp_v1_10;
-                        asm("" : "=r"(divisionHintfb) : "0"(divisionHintfb));
                         if ((temp_v1_10 & 0xFFFF) >= 0xF1U) {
                             uv.y = temp_v1_10 - 0xFC;
                             font = &g_TextboxFontPages[1];
@@ -803,7 +790,6 @@ void Menu_DrawTextboxEntries(void) {
                     divisionHintfc = 0x30C30C31;
                     uv.x = ((*stream + 0x34) % 21) * 0xC;
                     uv.y = ((*stream + 0x34) / 21) * 0xC;
-                    asm("" : "=r"(divisionHintfc) : "0"(divisionHintfc));
                     SetDrawTPage(nextPacket, 0, 1, g_TextboxFontPages[1].tpage);
                     SetSprt(&nextPacket->sprite);
                     if (MargePrim(nextPacket, &nextPacket->sprite) != 0) {
@@ -905,11 +891,6 @@ void Menu_DrawTextboxEntries(void) {
         }
         textboxIndex += 1;
     } while (textboxIndex < 4U);
-    asm volatile(""
-                 : "=g"(matchingStackSlot)
-                 :
-                 : "$2", "$4", "$6", "$8", "$10", "$12", "$14", "$16", "$18", "$19", "$21", "$22",
-                   "$24");
 }
 
 unsigned char D_8009CEB4;

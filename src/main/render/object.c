@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/entity_frame_update.h"
 #include "pe1/field_actor.h"
@@ -14,8 +10,6 @@
 #include "pe1/render_setup.h"
 #include "pe1/render_tint.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 s16 D_8009CD9A;
 
 /* Per-frame model transforms: bone matrices from the matrix command list,
@@ -673,7 +667,6 @@ void Render_DrawObjectAlt(RenderObjectEntity *entity, s16 limit, u8 red, u8 gree
 
 #define Render_LoadObjectMatrix(matrix) \
     { \
-        asm volatile("" : "=r"(matrix) : "0"(matrix)); \
         gte_ldrotmatrix((const GteMatrixWords *)(matrix)); \
         gte_ldtransmatrix((const GteMatrixWords *)(matrix)); \
     }
@@ -690,14 +683,14 @@ void Render_DrawObjectVariant(RenderObjectEntity *input, s16 limit, s32 *project
     s32 *projectMatrix = projectionMatrix;
     s16 savedLimit = limit;
     s32 changed;
-    register volatile RenderVec3s *scratch asm("$24") = (RenderVec3s *)0x1F800000;
+    volatile RenderVec3s *scratch = (RenderVec3s *)0x1F800000;
     u32 *projected;
-    register s32 *matrix asm("$8");
-    register s32 i asm("$11");
-    register s32 offset asm("$25");
-    register s32 threshold asm("$10");
-    register RenderObjectPart *part asm("$9");
-    register RenderObjectPart *probe asm("$4");
+    s32 *matrix;
+    s32 i;
+    s32 offset;
+    s32 threshold;
+    RenderObjectPart *part;
+    RenderObjectPart *probe;
     s32 boundsOffset;
     RenderVec3s *bounds;
     s32 y;
@@ -706,9 +699,8 @@ void Render_DrawObjectVariant(RenderObjectEntity *input, s16 limit, s32 *project
     RenderVec3s *vertices;
     u32 *clut;
     s32 vertexIndex;
-    register s32 limitShift asm("$2");
+    s32 limitShift;
     changed = 0;
-    __asm__("" : "=r"(entity) : "0"(entity), "r"(changed) : "$6");
     projected = (u32 *)0x1F800008;
     if (!entity->header || !entity->draw_count)
         return;
@@ -720,7 +712,7 @@ void Render_DrawObjectVariant(RenderObjectEntity *input, s16 limit, s32 *project
         offset = 0;
         do {
             {
-                register RenderObjectPart *base asm("$2") = entity->parts;
+                RenderObjectPart *base = entity->parts;
                 probe = (RenderObjectPart *)(offset + (u32)base);
             }
             if (probe->visible == 1) {
@@ -1296,7 +1288,7 @@ void Render_DrawWithAnim(RenderObjectEntity *obj, void *animation, s16 frame,
     g_ActiveDrawSlot ^= 1;
 }
 
-/* Equivalent branches preserve the stock compiler\'s register allocation.
+/* Equivalent branches preserve the stock compiler\'s allocation.
  * No packet operation depends on which of these identical branches is taken. */
 
 void Render_InitPrimBlock(RenderObjectEntity *object, s16 x, s16 y, int unused, unsigned int palette_row)
@@ -1636,8 +1628,8 @@ void Render_OffsetObjectTextureCoordinates(RenderObjectEntity *object, int du, i
  * render/Render_Counter) and the routine works in $a0/$a1, both signs of a
  * hand-written assembler original; the two pins reproduce those registers. */
 void Render_IncrementCounter(void) {
-    register int *ptr asm("$4");
-    register int value asm("$5");
+    int *ptr;
+    int value;
 
     ptr = g_RenderCounter;
     value = *ptr;

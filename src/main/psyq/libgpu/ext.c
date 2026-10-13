@@ -1,4 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
 /* Psy-Q LIBGPU EXT.OBJ: LoadTPage, LoadClut, LoadClut2, SetDefDrawEnv and
  * SetDefDispEnv. */
 
@@ -14,10 +13,9 @@ u32 LoadTPage(u_long *pixels, int mode, int blend,
 {
     RECT rect;
     u32 tpage;
-    register int savedBlend __asm__("$18") = blend;
+    int savedBlend = blend;
 
     /* Preserve the original blend-before-x prologue schedule. */
-    __asm__ volatile("" : "+r"(savedBlend));
     rect.x = x;
     rect.y = y;
     rect.h = height;
@@ -47,7 +45,6 @@ load:
     tpage = GetTPage(mode, savedBlend, x, y);
     tpage &= 0xFFFF;
     /* Keep the result normalization ahead of the callee-save restores. */
-    __asm__ volatile("" : "+r"(tpage));
     return tpage;
 }
 
@@ -64,7 +61,6 @@ u32 LoadClut(void *pixels, int x, int y)
     clut = GetClut(x, y);
     clut &= 0xFFFF;
     /* Keep the result normalization ahead of the callee-save restores. */
-    __asm__ volatile("" : "+r"(clut));
     return clut;
 }
 
@@ -81,7 +77,6 @@ u32 LoadClut2(void *pixels, int x, int y)
     clut = GetClut(x, y);
     clut &= 0xFFFF;
     /* Keep the result normalization ahead of the callee-save restores. */
-    __asm__ volatile("" : "+r"(clut));
     return clut;
 }
 

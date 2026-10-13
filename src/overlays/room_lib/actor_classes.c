@@ -229,7 +229,6 @@ void RoomLib_HandlerD(RoomEnt *o) {
     int rot_word;
     int rot_x;
 
-    asm("" : : "r"(state) : "$18");
     scratch = (short *)0x1F800000;
 
     if (ent->t1A == 0) {
@@ -280,7 +279,6 @@ void RoomLib_HandlerD(RoomEnt *o) {
     result = ((short *)rot)[1];
     scratch[0x15] = 0;
     scratch[0x14] = result;
-    PE1_COMPILER_MEMORY_BARRIER();
     rot_word = *rot;
     rot_x = (unsigned short)scratch[0x14];
     scratch[0x17] = 0;
@@ -301,7 +299,6 @@ void RoomLib_HandlerD(RoomEnt *o) {
     gte_ldrotmatrix((void *)((int)scratch | 0x28));
     gte_ldv0((void *)scratch);
     gte_mvmva();
-    asm("" : "=r"(scratch) : "0"(scratch));
     gte_stmac(((RoomLibMotionWork *)scratch)->rotated);
     ((RoomLibHandlerDState *)state)->motion[0] += ((RoomLibMotionWork *)scratch)->rotated[0] << 12;
     ((RoomLibHandlerDState *)state)->motion[2] += ((RoomLibMotionWork *)scratch)->rotated[2] << 12;
@@ -320,19 +317,15 @@ void RoomLib_HandlerD(RoomEnt *o) {
             projected = (position + bias) >> 16;
             work = projected;
             product = work * (((RoomLibHandlerDState *)state)->speed >> 12);
-            PE1_COMPILER_MEMORY_BARRIER();
             ((RoomLibHandlerDState *)state)->value88 = position;
-            PE1_COMPILER_MEMORY_BARRIER();
             progress = ((RoomLibHandlerDState *)state)->progress.word;
         } else {
             int updated;
             projected = ((RoomLibHandlerDState *)state)->value88;
             projected = (projected + bias) >> 16;
             product = projected * (((RoomLibHandlerDState *)state)->speed >> 12);
-            PE1_COMPILER_MEMORY_BARRIER();
             updated = ((RoomLibHandlerDState *)state)->value88;
             updated -= ((RoomLibHandlerDState *)state)->value8C;
-            PE1_COMPILER_USE(updated);
             progress = work = ((RoomLibHandlerDState *)state)->progress.word;
             ((RoomLibHandlerDState *)state)->value88 = updated;
         }
@@ -1029,7 +1022,6 @@ void RoomLib_ArmHandlerB(RoomEnt *o) {
 
 #define ROOMLIB_HANDLER_B_GTE_LOAD_VECTOR(base) \
     do { \
-        asm("" : "=r"(base) : "0"(base)); \
         gte_ldv0(((RoomLibArcWork *)(base))->input); \
     } while (0)
 
@@ -1042,11 +1034,10 @@ void RoomLib_HandlerB(RoomEnt *obj) {
     RoomLibHandlerBState *state = (RoomLibHandlerBState *)&self->sub;
     RoomLink *link = self->link;
     int previousValue;
-    register int a0;
+    int a0;
     RoomLibArcWork *scratch;
     int result;
 
-    asm("" : : "r"(state) : "$19");
     scratch = (RoomLibArcWork *)0x1F800000;
 
     if (self->t1A == 0) {
@@ -1114,7 +1105,7 @@ void RoomLib_HandlerB(RoomEnt *obj) {
         return;
     }
     {
-        register int y asm("$5") = link->pos[1];
+        int y = link->pos[1];
         int phase = state->phaseValue;
         int speedRaw;
         int speed;
@@ -1153,7 +1144,7 @@ void RoomLib_HandlerB(RoomEnt *obj) {
 
     previousValue = state->phaseValue;
     {
-        register int delta asm("$2") = state->mode;
+        int delta = state->mode;
         int enabled = state->heading;
         a0 = previousValue - delta;
         state->phaseValue = a0;
@@ -1195,18 +1186,18 @@ void RoomLib_HandlerBPhase(RoomEnt *obj) {
 }
 
 void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
-    register RoomEnt *self = obj;
-    register char *state = (char *)&self->sub;
-    register RoomLink *link = self->link;
-    register short *scratch = (short *)0x1F800000;
+    RoomEnt *self = obj;
+    char *state = (char *)&self->sub;
+    RoomLink *link = self->link;
+    short *scratch = (short *)0x1F800000;
     int angle;
     int y;
 
     if (self->t1A == 0) {
         int count;
-        register int step;
-        register int targetY;
-        register int accel;
+        int step;
+        int targetY;
+        int accel;
         self->t1A = 1;
         ((RoomLibHandlerBState *)state)->finished = 0;
         if (((RoomLibHandlerBState *)state)->targetLink != 0) {
@@ -1631,18 +1622,18 @@ void RoomLib_HandlerCPhase(void) {
 }
 
 void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
-    register RoomEnt *self = obj;
-    register char *state = (char *)&self->sub;
-    register RoomLink *link = self->link;
-    register short *scratch = (short *)0x1F800000;
+    RoomEnt *self = obj;
+    char *state = (char *)&self->sub;
+    RoomLink *link = self->link;
+    short *scratch = (short *)0x1F800000;
     int angle;
     int y;
 
     if (self->t1A == 0) {
         int count;
-        register int step;
-        register int targetY;
-        register int accel;
+        int step;
+        int targetY;
+        int accel;
         self->t1A = 1;
         ((RoomLibHandlerCState *)state)->finished = 0;
         if (((RoomLibHandlerCState *)state)->targetLink == 0) {
@@ -1910,4 +1901,3 @@ int RoomLib_ReleaseHandlerA(RoomEnt *o) {
 int RoomLib_HandlerANop6(void) {
     return 0;
 }
-

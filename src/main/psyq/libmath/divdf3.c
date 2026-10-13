@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBMATH DIVDF3: __divdf3 and _comp_mant. */
 
 #include "pe1/math64.h"
@@ -7,33 +6,31 @@ double __divdf3(double numerator, double denominator) {
     struct {
         MathU64 quotient, bit, round, n, d, temp;
     } w;
-    register MathDoubleBits left, right;
-    register MathDoubleBits result;
-    register int exponent;
-    register unsigned sign;
-    register int shift asm("$16");
-    register MathU64 *savedN;
-    register unsigned absMask;
-    register MathU64 *qp asm("$4");
+    MathDoubleBits left, right;
+    MathDoubleBits result;
+    int exponent;
+    unsigned sign;
+    int shift;
+    MathU64 *savedN;
+    unsigned absMask;
+    MathU64 *qp;
     left.value = numerator;
     right.value = denominator;
-    asm("" : : "r"(left), "r"(right));
     {
-        register int e = (((int)left.bits.hi >> 20) & 0x7ff);
+        int e = (((int)left.bits.hi >> 20) & 0x7ff);
         e -= (((int)right.bits.hi >> 20) & 0x7ff);
         exponent = e + 1022;
     }
     absMask = 0x7fffffff;
     {
         unsigned mask = 0x80000000;
-        register unsigned lsign = left.bits.hi & mask;
-        register unsigned rsign = right.bits.hi & mask;
+        unsigned lsign = left.bits.hi & mask;
+        unsigned rsign = right.bits.hi & mask;
         sign = lsign ^ rsign;
     }
     if (!(right.bits.hi & absMask) && !right.bits.lo) {
         {
-            register unsigned mask asm("$2") = 0x7fff0000;
-            asm("" : : "r"(mask));
+            unsigned mask = 0x7fff0000;
         }
         result.bits.hi = 0xffffffff;
         if (!sign)
@@ -92,7 +89,7 @@ double __divdf3(double numerator, double denominator) {
             result.bits.lo = 0;
         } else {
             {
-                register unsigned packed = sign | ((unsigned)exponent << 20);
+                unsigned packed = sign | ((unsigned)exponent << 20);
                 result.bits.hi = packed | w.quotient.hi;
             }
             result.bits.lo = w.quotient.lo;
@@ -109,16 +106,14 @@ int _comp_mant(MathU64 left, MathU64 right)
     if (left.hi < right.hi) return -1;
     if (left.lo > right.lo) return 1;
     {
-        register int less asm("$3") = left.lo < right.lo;
+        int less = left.lo < right.lo;
         if (less) return -1;
     }
-    asm("");
     return 0;
     }
 greater:
     {
-        register int result asm("$2") = 1;
-        asm("" : : "r"(result));
+        int result = 1;
         return result;
     }
 }

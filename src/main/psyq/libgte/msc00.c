@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /*
  * PSY-Q LIBGTE MSC00: InitGeom. Assembler source: ra is parked in the
  * object's static SAVERA word around the PATCHGTE installer call, COP2 is

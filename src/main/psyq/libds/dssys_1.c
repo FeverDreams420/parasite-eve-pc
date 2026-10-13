@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSSYS_1.OBJ, part 1 of 10: DS_init. */
 /* DSSYS_1 is split where its functions need different options: parts 2, 4,
  * 6, 8 and 10 only match with GCC 2.8.1 and -mno-split-addresses (2.7.2

@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 -g3 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/akao.h"
 #include "pe1/asset_find.h"
@@ -21,18 +17,16 @@
 #include "pe1/pm.h"
 #include "pe1/scene_transition.h"
 #include "pe1/textbox.h"
-#include "m2c_macros.h"
 
 #define NULL ((void *)0)
 
 s8 Pad_GetMenuPressedBitOrDisabled(void);
 struct BattleStatusPanel;
 void Battle_DrawStatusPanel(s32, struct BattleStatusPanel *);
-M2C_UNK Entity_ResolveDropTable(void *);                      /* static */
+int Entity_ResolveDropTable(void *);                      /* static */
 s16 Entity_ApplyHitAndSetAnim(void *);                 /* static */
 void Entity_UpdateTimers(void);
 /* Separate declarations preserve the original GCC quantities for each tail. */
-/* COMMON supplies small-data metadata to MASPSX. */
 s8 D_8009CE30;
 unsigned char g_AyaStatusEffectTimer;
 
@@ -66,22 +60,22 @@ void Menu_MainUpdate(s32 arg0) {
     s32 temp_v1_6;
     s32 temp_v1_7;
     s32 temp_v1_9;
-    register s32 var_a2;
-    register s32 var_a1;
-    register s32 var_a3;
-    register union {
+    s32 var_a2;
+    s32 var_a1;
+    s32 var_a3;
+    union {
         s32 value;
         BattleEntity *entity;
     } var_t0;
-    register s32 var_t1;
+    s32 var_t1;
     s32 var_v0_2;
     s32 var_v0_3;
     s32 var_v0_4;
-    register s32 var_v1;
-    register u32 var_a0;
-    register u8 var_a0_2;
+    s32 var_v1;
+    u32 var_a0;
+    u8 var_a0_2;
     u16 temp_a1;
-    register union {
+    union {
         u32 value;
         BattleEntity *entity;
     } var_v0;
@@ -90,8 +84,8 @@ void Menu_MainUpdate(s32 arg0) {
     u8 temp_a0;
     u8 temp_v0_6;
     u8 temp_v1_12;
-    register Combatant *state0;
-    register Combatant *temp_a1_2;
+    Combatant *state0;
+    Combatant *temp_a1_2;
     EnemyCombatant *temp_v1_5;
     BattleEntity *var_s0;
 
@@ -157,7 +151,6 @@ void Menu_MainUpdate(s32 arg0) {
             var_a2 = 0x83;
             var_a1 = 0x13;
             {
-            asm volatile("");
             var_v1 = g_ActiveDrawSlot;
             do { } while (0);
             var_a0 = 1;
@@ -180,7 +173,6 @@ void Menu_MainUpdate(s32 arg0) {
             var_a2 = 0xC1;
             var_a1 = 0x28;
             {
-            asm volatile("");
             var_v1 = g_ActiveDrawSlot;
             do { } while (0);
             var_a0 = 0x41;
@@ -206,7 +198,6 @@ void Menu_MainUpdate(s32 arg0) {
             var_a2 = 0xFF;
             var_a1 = 0x3D;
             {
-            asm volatile("");
             var_v1 = g_ActiveDrawSlot;
             do { } while (0);
             var_a0 = 0x81;
@@ -231,7 +222,6 @@ void Menu_MainUpdate(s32 arg0) {
             var_a2 = 0xC1;
             var_a1 = 0x28;
             {
-            asm volatile("");
             var_v1 = g_ActiveDrawSlot;
             do { } while (0);
             var_a0 = 0x41;
@@ -298,7 +288,7 @@ void Menu_MainUpdate(s32 arg0) {
         }
     }
     if (!(g_GameStateFlags & 0x100)) {
-        register Combatant *timer_state;
+        Combatant *timer_state;
 
         timer_state = g_ActiveActor;
         temp_v0_4 = timer_state->atbGauge;
@@ -313,7 +303,6 @@ void Menu_MainUpdate(s32 arg0) {
                     var_a2 = 0x4A;
                     var_a1 = 0xFF;
                     {
-                    asm volatile("");
                     var_v1 = g_ActiveDrawSlot;
                     do { } while (0);
                     var_a0_2 = 0x3B;
@@ -336,7 +325,6 @@ void Menu_MainUpdate(s32 arg0) {
                     var_a2 = 0x25;
                     var_a1 = 0xC1;
                     {
-                    asm volatile("");
                     var_v1 = g_ActiveDrawSlot;
                     do { } while (0);
                     var_a0_2 = 0x39;
@@ -361,7 +349,6 @@ void Menu_MainUpdate(s32 arg0) {
                     var_a2 = 0x3B;
                     var_a1 = 0x82;
                     {
-                    asm volatile("");
                     var_v1 = g_ActiveDrawSlot;
                     do { } while (0);
                     var_a0_2 = 0x36;
@@ -384,7 +371,6 @@ void Menu_MainUpdate(s32 arg0) {
                     var_a2 = 0x25;
                     var_a1 = 0xC1;
                     {
-                    asm volatile("");
                     var_v1 = g_ActiveDrawSlot;
                     do { } while (0);
                     var_a0_2 = 0x39;
@@ -472,7 +458,7 @@ void Menu_MainUpdate(s32 arg0) {
                 do {
                     if (var_s0 != D_8009D254) {
                         {
-                        register void *entity0;
+                        void *entity0;
 
                         entity0 = var_s0->core;
                         if ((entity0 != NULL) && !(var_s0->entityFlags & 0x10)) {
@@ -510,12 +496,12 @@ void Menu_MainUpdate(s32 arg0) {
                                     }
                                 }
                                 {
-                                register Combatant *desc_state;
+                                Combatant *desc_state;
 
                                 desc_state = g_ActiveActor;
                                 temp_v1_8 = (s16) desc_state->curHP;
                                 if ((s16) desc_state->maxHP >= temp_v1_8) {
-                                    register BattleEntity *d254;
+                                    BattleEntity *d254;
 
                                     d254 = D_8009D254;
                                     desc_state->panelA_val = (s16) (desc_state->hpMirror - temp_v1_8);
@@ -527,7 +513,7 @@ void Menu_MainUpdate(s32 arg0) {
                                     }
                                     {
                                     u16 copy212;
-                                    register Combatant *desc_tail;
+                                    Combatant *desc_tail;
 
                                     copy212 = (u16)d254->renderObject.projected_y;
                                     g_ActiveActor->panelA_timer = 0x1EU;
@@ -551,7 +537,7 @@ void Menu_MainUpdate(s32 arg0) {
                                     }
                                     {
                                     s32 s2_flags2;
-                                    register Combatant *desc_state;
+                                    Combatant *desc_state;
 
                                     g_AyaStatusEffectTimer = 0x5A;
                                     s2_flags2 = *temp_s2;
@@ -559,7 +545,7 @@ void Menu_MainUpdate(s32 arg0) {
                                     *temp_s2 = s2_flags2 | 0x01000000;
                                     temp_v1_10 = (s16) desc_state->curHP;
                                     if ((s16) desc_state->maxHP >= temp_v1_10) {
-                                        register BattleEntity *d254;
+                                        BattleEntity *d254;
 
                                         d254 = D_8009D254;
                                         desc_state->panelA_val = (s16) (desc_state->hpMirror - temp_v1_10);
@@ -571,7 +557,7 @@ void Menu_MainUpdate(s32 arg0) {
                                         }
                                         {
                                         u16 copy212;
-                                        register Combatant *desc_tail;
+                                        Combatant *desc_tail;
 
                                         copy212 = (u16)d254->renderObject.projected_y;
                                         desc_state->panelA_timer = 0x1EU;
@@ -587,7 +573,7 @@ void Menu_MainUpdate(s32 arg0) {
                                     }
                                     }
                                     {
-                                    register s32 clear_flags;
+                                    s32 clear_flags;
 
                                     clear_flags = 0xFFF3FFFF;
                                     D_8009D254->motionX = 0;
@@ -607,14 +593,14 @@ void Menu_MainUpdate(s32 arg0) {
                 } while (var_s0 != NULL);
             }
             {
-            register Combatant *desc_state;
+            Combatant *desc_state;
 
             desc_state = g_ActiveActor;
             temp_v1_11 = (s16) desc_state->curHP;
             temp_v0_7 = (s16) desc_state->hpMirror;
             if (temp_v1_11 < temp_v0_7) {
                 if ((s16) desc_state->maxHP >= temp_v1_11) {
-                    register BattleEntity *d254;
+                    BattleEntity *d254;
 
                     d254 = D_8009D254;
                     desc_state->panelA_val = (s16) (temp_v0_7 - temp_v1_11);
@@ -626,7 +612,7 @@ void Menu_MainUpdate(s32 arg0) {
                     }
                     {
                     u16 copy212;
-                    register Combatant *desc_tail;
+                    Combatant *desc_tail;
 
                     copy212 = (u16)d254->renderObject.projected_y;
                     g_ActiveActor->panelA_timer = 0x1EU;
@@ -671,7 +657,7 @@ void Menu_MainUpdate(s32 arg0) {
     temp_v0_8 = (s16) state0->hpMirror;
     temp_v1_13 = (s16) state0->curHP;
     if (temp_v0_8 < temp_v1_13) {
-        register BattleEntity *d254;
+        BattleEntity *d254;
 
         d254 = D_8009D254;
         state0->panelB_val = (s16) (temp_v1_13 - temp_v0_8);
@@ -685,7 +671,7 @@ void Menu_MainUpdate(s32 arg0) {
         var_v0.value = (u16)d254->renderObject.projected_y;
         var_v1 = 0x1E;
         g_ActiveActor->panelB_timer = var_v1;
-        { register Combatant *post_state; post_state = g_ActiveActor;
+        { Combatant *post_state; post_state = g_ActiveActor;
         state0->panelB_y = (s16) (var_v0.value - 8);
         post_state->panelB_flag = 1; }
         }
@@ -900,9 +886,9 @@ void Menu_MainUpdate(s32 arg0) {
         }
         Battle_FlushScriptSounds();
         {
-        register s32 tail_mask;
-        register s32 tail_d1ac;
-        register s32 tail_a0;
+        s32 tail_mask;
+        s32 tail_d1ac;
+        s32 tail_a0;
 
         tail_a0 = 0x46B;
         tail_mask = ~0x300;
@@ -910,10 +896,10 @@ void Menu_MainUpdate(s32 arg0) {
         tail_d1ac &= tail_mask;
         g_BattleResultFlags = tail_d1ac;
         {
-            register s32 tail_a1;
-            register s32 tail_a2;
-            register s32 tail_a3;
-            register s32 tail_sp;
+            s32 tail_a1;
+            s32 tail_a2;
+            s32 tail_a3;
+            s32 tail_sp;
 
             s16 *coordinate;
 

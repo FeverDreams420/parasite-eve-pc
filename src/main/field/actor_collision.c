@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle.h"
 #include "pe1/battle_runtime.h"
@@ -19,8 +15,6 @@
 #include "pe1/player_entity.h"
 #include "pe1/scene_assets.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 RampEdge *g_SceneDataTable2;
 u16 g_FieldCollisionTriIndex;
 unsigned short g_WallPolygonVertexCount;
@@ -32,7 +26,7 @@ void Entity_AdvanceAnim(BattleEntity *entity) {
     int flags;
     int new_flags;
     int old_frame;
-    register int step;
+    int step;
     int limit;
     int next_frame;
     int end_frame;
@@ -243,7 +237,7 @@ void Entity_ResetStateGlobals(void) {
 
 void Entity_RelocateSceneData(void) {
     CollisionDatabase *base;
-    register char *loaded asm("$2");
+    char *loaded;
     char frame[8];
     u32 offset;
 
@@ -417,7 +411,7 @@ void Entity_FindFloor(BattleEntity *actor)
 void Entity_ResolvePosition(BattleEntity *actor, int index) {
     BattleEntity *actor_s2;
     CollisionPlane *table_base;
-    register int index_v1 asm("$3");
+    int index_v1;
     int arg_y;
     int arg_z;
     CollisionTriangleHeader *entry;
@@ -1212,7 +1206,7 @@ int Geo_PointInPoly(int x, int z, const PolygonVertex *vertices, unsigned short 
     unsigned short i;
     /* Matching debt: the parity accumulator remains pinned on stock GCC
      * 2.7.2. The edge comparison result is an ordinary flag. */
-    register int inside asm("$11");
+    int inside;
     int previousX, previousZ, currentX, currentZ;
     int cross, dz;
     short intersects;
@@ -1266,17 +1260,15 @@ typedef union PolygonVertexAddress {
 void Entity_SlideOnWall(BattleEntity *input, const PolygonVertex *vertices,
                        u16 count, s16 edge, int oldX, int oldZ)
 {
-    register BattleEntity *entity asm("$19");
+    BattleEntity *entity;
     GteVector vector, unit;
     s32 endX, endZ;
     s32 startX, startZ;
     s32 x, z, projection, length;
     s32 radius, direction, trialX, trialZ;
     PolygonVertexAddress base, point;
-    asm("" : "=r"(input) : "0"(input) : "$19");
     base.vertex = vertices;
     point.word = edge * sizeof(PolygonVertex) + base.word;
-    asm volatile("" : "=r"(input) : "0"(input));
     entity = input;
     endX = vertices[edge].x;
     endZ = vertices[edge].z;
@@ -1407,7 +1399,7 @@ int Geo_FindNearestEdge(int x, int z, PolygonVertex *vertices,
 
 /* Retail data at 0x8009D254; the g_PlayerEntity linker alias names this slot
  * too. Explicit .data preserves the non-GP accesses amid small-data globals. */
-BattleEntity *D_8009D254 __attribute__((section(".data"))) = 0;
+BattleEntity *D_8009D254 = 0;
 
 void Entity_ApplyCollisionResponse(struct FieldActor *player)
 {

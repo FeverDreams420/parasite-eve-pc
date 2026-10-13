@@ -255,7 +255,6 @@ int Pm_Exec(int slot) {
     }
     /* Matching debt: retail re-reads the state here; without the barrier
      * delayed-branch scheduling drops the second load. */
-    asm volatile("" ::: "memory");
     if (entry->state == 4) {
         entry->state = 5;
         return 0;

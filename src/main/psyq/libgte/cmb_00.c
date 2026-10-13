@@ -8,11 +8,11 @@ long RotTransPers4(void *v0, void *v1, void *v2, void *v3,
                    void * volatile sxy2, void * volatile sxy3,
                    void * volatile p, void * volatile flag) {
     int first_flags;
-    register int flags asm("$8");
+    int flags;
     int result;
-    register void *gte_out0 asm("$8");
-    register void *gte_out1 asm("$9");
-    register void *gte_out2 asm("$10");
+    void *gte_out0;
+    void *gte_out1;
+    void *gte_out2;
 
     gte_ldv0(v0);
     gte_ldv1(v1);
@@ -31,8 +31,5 @@ long RotTransPers4(void *v0, void *v1, void *v2, void *v3,
     gte_getsz3(result);
     flags |= first_flags;
     *(s32 *)gte_out2 = flags;
-    asm volatile("" : : : "memory");
     return result >> 2;
 }
-
-static unsigned int tail_alignment_69B7C[] __attribute__((section(".text"))) = { 0x00000000, 0x00000000 };

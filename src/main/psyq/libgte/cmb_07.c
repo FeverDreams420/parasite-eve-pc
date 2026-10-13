@@ -7,18 +7,18 @@ int RotAverageNclip4(const GteShortVector *v0, const GteShortVector *v1,
     const GteShortVector *v2, const GteShortVector *v3,
     u32 * volatile sxy0, u32 * volatile sxy1, u32 * volatile sxy2,
     u32 * sxy3, s32 * volatile p, s32 * volatile otz, u32 * volatile flag) {
-    register u32 *flagPtr asm("$8");
+    u32 *flagPtr;
     u32 firstFlag;
-    register u32 *sxy0Ptr asm("$8");
-    register u32 *sxy1Ptr asm("$9");
-    register u32 *sxy2Ptr asm("$10");
+    u32 *sxy0Ptr;
+    u32 *sxy1Ptr;
+    u32 *sxy2Ptr;
     s32 clip;
-    register int zero asm("$0");
-    register u32 *sxy3Ptr asm("$8");
-    register s32 *scalarOutput asm("$9");
-    register u32 *finalFlagPtr asm("$10");
-    register u32 finalFlag asm("$11");
-    register s32 average asm("$8");
+    int zero = 0;
+    u32 *sxy3Ptr;
+    s32 *scalarOutput;
+    u32 *finalFlagPtr;
+    u32 finalFlag;
+    s32 average;
     gte_lwc2_0_0(v0);
     gte_lwc2_1_4(v0);
     gte_lwc2_2_0(v1);

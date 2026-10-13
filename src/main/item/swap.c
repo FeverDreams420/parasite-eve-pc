@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/draw_state.h"
@@ -14,8 +10,6 @@
 #include "pe1/save.h"
 #include "pe1/text.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 s16 *g_InvItemPtr;
 s32 g_InvSlotLimit;
 u32 *g_InvSelectionBits;
@@ -244,7 +238,6 @@ static inline int FindFreeEquipmentRecord(void) {
     ItemDataRecord *p = g_InventoryRuntime.equipment;
     ItemDataRecord *end;
     /* Preserve retail's independent base reload beside the cached bound. */
-    asm("" : "=r"(p) : "0"(p));
     end = p + 128;
 
     if (p < g_InventoryRuntime.equipment + 128) {
@@ -426,7 +419,6 @@ static inline ItemDataRecord *LookupTrackedItem(int index) {
             }
         }
         /* Keep the item-ID result merge distinct from an invalid list index. */
-        asm("");
         return result;
     }
     return 0;

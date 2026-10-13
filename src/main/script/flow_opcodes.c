@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_runtime.h"
@@ -27,8 +23,6 @@
 #include "pe1/textbox.h"
 #include "pe1/vector_types.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 u32 *D_8009CE00;
 ScriptNode *g_ScriptNodePool;
 u8 g_ScriptCameraBytes[3];
@@ -505,7 +499,7 @@ int Script_Random(int **arg0) {
 }
 
 int Script_PlayFieldSfx(FieldSfxScriptArgs *arg0) {
-    register int a;
+    int a;
     int b;
     int c;
     int d;

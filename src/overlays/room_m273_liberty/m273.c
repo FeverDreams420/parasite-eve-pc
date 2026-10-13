@@ -356,8 +356,8 @@ int RoomM273_OscillationUpdate(RoomOscillationEffect *effect) {
         int frame = effect->params.frame;
         int period = effect->params.period;
         int phase = ((frame << 12) / period - 2048) & 4095;
-        register int sine;
-        register int half;
+        int sine;
+        int half;
         FieldActor *target;
 
         effect->params.frame = frame + 1;
@@ -485,7 +485,6 @@ int RoomM273_GrabPlacementFanEmitter(int mode) {
         if(!effect) break;
         transform=ANIM_OWNER_AS(RoomPlacementStateContext)->owner->map;
         effect->position.x=transform->x;
-        asm("" : : : "memory");
         effect->position.y=transform->y;
         effect->position.z=transform->z;
         effect->parameter[0]=((short *)rcossin_tbl)[((g_FieldFxCurrentAge*1024/12)&0xFFF)*2]*40/4096;
@@ -549,7 +548,6 @@ int RoomM273_GrabPlacementScaledFanEmitter(int mode) {
         if(!effect) break;
         transform=ANIM_OWNER_AS(RoomM273EffectStateContext)->state.scaled_layer->transform;
         effect->position.x=transform->x;
-        asm("" : : : "memory");
         effect->position.y=transform->y;
         effect->position.z=transform->z;
         scale=D_800966EE[((g_FieldFxCurrentAge*1024/12)&0xFFF)*2];
@@ -689,26 +687,23 @@ int RoomM273_GrabModelCallback(int mode,ThresholdTripleEffect *effect) {
     if(mode==1) {
         int frame=g_FieldFxCurrentAge;
         int *wave;
-        register int *shifted asm("$4");
-        register int *table asm("$6");
+        int *shifted;
+        int *table;
         unsigned int index;
         if(frame>=32) return 1;
         frame*=32;
         index=frame&0xFFF;
-        asm("" : : "r"(index) : "$6");
         table=(int *)rcossin_tbl;
         wave=&table[index];
         shifted=&table[(frame+1024)&0xFFF];
         {
-            register int sample asm("$2")=*wave;
+            int sample=*wave;
             effect->scaleXZ=(short)sample/2;
         }
         effect->scaleY=(((short *)shifted)[1]+4096)*2;
-        asm("" : : : "memory");
         {
             unsigned int phase=(unsigned short)effect->phase;
             int parameter=((short *)wave)[1];
-            asm("" : "=r"(phase), "=r"(parameter) : "0"(phase), "1"(parameter));
             effect->phase=phase+256;
             effect->parameter12=parameter>>6;
         }
@@ -717,7 +712,7 @@ int RoomM273_GrabModelCallback(int mode,ThresholdTripleEffect *effect) {
         int page=(unsigned short)(g_FieldFxTpageTable[g_FieldFxTpageSlot11]|flags);
         int kind=g_FieldFxSpriteParams.palette,palette;
         int cosine,sine;
-        register void **asset asm("$17");
+        void **asset;
         palette=g_FieldFxPaletteTable[kind];
         FieldFx_ModelSetTexture(page,GetClut(0, (kind == 4 && g_FieldFxAltPaletteFlag) ? palette + 11 : palette + 7));
         FieldFx_ModelSetSemiTrans(1);
@@ -754,7 +749,6 @@ int RoomM273_GrabModelEmitter(int mode) {
         FieldFx_ModelScrollUv(g_RoomM273GrabModel.asset,0,0);
         size=FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool,16,6,
                            (FieldFxCallbackListCallback)RoomM273_GrabModelCallback);
-        asm("" : : "r"(size));
         return size+FieldFx_AllocCallbackList(&g_RoomM273GrabModel.pool,size,4,2,RoomM273_GrabModelRingCallback);
     }
     case 1: {
@@ -987,7 +981,6 @@ int RoomM273_GrabStarBurstEmitter(int mode) {
     case 0: {
         int size = FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool, 8, 2,
                                  (FieldFxCallbackListCallback)RoomM273_GrabStarBurstCallback);
-        asm("" : : "r"(size));
         return size + FieldFx_AllocCallbackList(&g_RoomM273GrabSparkPool, size, 16, 9, RoomM273_GrabSparkTriangleCallback);
     }
     case 1: {
@@ -1310,12 +1303,11 @@ int RoomM273_HandTrailEmitter(int mode) {
         goto phasePattern;
 
 deterministicPattern: {
-            register s16 phase asm("$2") = D_8019AE6C;
+            s16 phase = D_8019AE6C;
             s16 offset;
             pulse = (u16)phase << 16;
             offset = (pulse >> 18) * 32 - 0x300;
             phase &= 3;
-            asm("");
             pathY[1] = offset;
             pathY[0] = offset;
             pulse = (pulse >> 15) + 0x80;
@@ -1446,12 +1438,11 @@ int RoomM273_HandTrailLandingEmitter(int mode) {
     case 0: {
         int size=FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool,12,10,
                                (FieldFxCallbackListCallback)RoomM273_HandTrailLandingPulseCallback);
-        asm("" : : "r"(size));
         return size+FieldFx_AllocCallbackList(&g_RoomM273HandTrailLandingFanPool,size,4,10,RoomM273_HandTrailLandingFanCallback);
     }
     case 1: {
         int i;
-        register unsigned char *stopped asm("$3")=&D_8019AEF8;
+        unsigned char *stopped=&D_8019AEF8;
         if(*stopped) {
             FieldFx_UpdateCallbackList(g_RoomM273HandTrailLandingFanPool);
             return 2;
@@ -1459,29 +1450,26 @@ int RoomM273_HandTrailLandingEmitter(int mode) {
         i=0;
         if(D_8019AEE8>0) {
             /* The stop symbol is the byte at offset 0x40 of this buffer. */
-            register RoomM273PairedPulseBatch *batch asm("$19")=
+            RoomM273PairedPulseBatch *batch=
                 (RoomM273PairedPulseBatch *)(stopped-PE1_OFFSETOF(RoomM273PairedPulseBatch, stopped));
             unsigned short *x=batch->x;
             int count;
             do {
                 RoomM273PulseEmitterView *effect=FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM273PoolContext)->pool);
                 RoomM273PulseEmitterView **pointer;
-                register int offset asm("$4");
+                int offset;
                 unsigned short y;
                 if(!effect) break;
                 pointer=FieldFx_AcquireCallbackSlot(g_RoomM273HandTrailLandingFanPool);
                 offset=i*2;
-                asm("" : : "r"(offset));
                 effect->x=*x;
                 y=*(unsigned short *)((char *)batch+offset+16);
-                asm("" : "=r"(offset) : "0"(offset));
                 effect->y=y-128;
                 effect->z=*(unsigned short *)((char *)batch+offset+32);
                 effect->phase=0;
                 effect->size=128;
                 *pointer=effect;
                 count=batch->count;
-                asm("" : : "r"(i), "r"(x) : "memory");
                 ++i;
                 ++x;
             } while(i<count);
@@ -1515,7 +1503,7 @@ int RoomM273_HandTrailHitCallback(int mode, Particle *particle) {
         if (g_FieldFxCurrentAge >= 16) return 1;
         else {
             unsigned short y = particle->y;
-            register int speed asm("$3") = ((volatile Particle *)particle)->speed;
+            int speed = ((volatile Particle *)particle)->speed;
             int delta = ((Particle *)particle)->speed;
             speed += 1;
             particle->y = y - delta;
@@ -1525,11 +1513,10 @@ int RoomM273_HandTrailHitCallback(int mode, Particle *particle) {
         int frame = g_FieldFxCurrentAge - 1;
         int sample = rcossin_tbl[((unsigned int)frame << 6) & 0xFC0].part.sin;
         int size, kind, palette;
-        register int specialKind asm("$3") = 4;
+        int specialKind = 4;
         unsigned short clut;
         kind = g_FieldFxSpriteParams.palette;
         size = sample * 2;
-        asm("" : : "r"(size) : "memory");
         palette = g_FieldFxPaletteTable[kind];
         if (kind == specialKind && g_FieldFxAltPaletteFlag) palette += 9;
         else palette += 5;
@@ -1557,7 +1544,6 @@ int RoomM273_HandGlowEmitter(int mode) {
     switch(mode) {
     case 0: {
         int size=FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool,4,6,RoomM273_PulseSpriteCallback);
-        asm("" : : "r"(size));
         return size+FieldFx_AllocCallbackList(&g_RoomM273HandRingBandPool,size,4,6,RoomM273_HandRingBandCallback);
     }
     case 1: {
@@ -1750,7 +1736,7 @@ int RoomM273_SweepDropEmitter(int mode) {
         return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool,24,40,
                              (FieldFxCallbackListCallback)RoomM273_SweepDropCallback);
     case 1: {
-        register unsigned char *stopped asm("$17")=&D_8019AF69;
+        unsigned char *stopped=&D_8019AF69;
         Player *player;
         int dx,dy,dz,x,y,z; short spread; short angle;
         if(*stopped) return 2;
@@ -1770,8 +1756,8 @@ int RoomM273_SweepDropEmitter(int mode) {
             short i=0;
             int width=spread;
             /* Retail address window: heading 0x8019AF60, origin 0x8019AEFC. */
-            register unsigned short *heading asm("$19")=(unsigned short *)(stopped-9);
-            register Matrix *transform asm("$16")=&matrix;
+            unsigned short *heading=(unsigned short *)(stopped-9);
+            Matrix *transform=&matrix;
             matrix.t[0]=0; matrix.t[1]=0; matrix.t[2]=0;
             do {
                 RoomM273Drop *particle=FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM273PoolContext)->pool);
@@ -1802,13 +1788,12 @@ int RoomM273_SweepDropEmitter(int mode) {
                 short *wave;
                 if(!particle) break;
                 {
-                    register int *table asm("$3")=(int *)rcossin_tbl;
+                    int *table=(int *)rcossin_tbl;
                     wave=(short *)&table[((unsigned int)i<<10)&3072];
                 }
                 particle->ring.x=angle+wave[1]*96/4096;
                 particle->ring.y=wave[0]*width/4096+(*heading+2048);
                 particle->ring.z=0; particle->ring.pad=1;
-                asm("" : : "r"(&particle->ring));
                 transform=&matrix;
                 RotMatrixYXZ(&particle->ring,transform);
                 gte_ldrotmatrix(transform);
@@ -1885,7 +1870,6 @@ int RoomM273_SweepSplashEmitter(int mode) {
                 if(!out) break;
                 out->x=*x;
                 out->y=*y++-128;
-                asm("" : "=r"(i) : "0"(i), "r"(x));
                 ++x;
                 offset=i*2;
                 out->z=*(unsigned short *)((char *)batch+offset+48);
@@ -1973,10 +1957,8 @@ int RoomM273_SweepRisingCallback(int mode, Particle *input) {
         unsigned int sampleOffset;
         int clut;
         sampleOffset = ((unsigned int)frame << 8) & 0x3F00;
-        asm("" : : "r"(sampleOffset), "r"(frame));
         paletteOffset = kind * 2;
         sample = rcossin_tbl[sampleOffset / 4].word;
-        asm("" : : "r"(sample), "r"(paletteOffset));
         sizeOffset = ((unsigned int)frame << 7) & 0x3F80;
         palette = *(unsigned short *)((char *)g_FieldFxPaletteTable + paletteOffset);
         shade = (short)sample >> 5;
@@ -2213,7 +2195,6 @@ int RoomM273_SwayShardTrailCallback(int mode, GteShortVector *position) {
         size = sample * 2;
         kind = g_FieldFxSpriteParams.palette;
         /* Keep the table read before the palette lookup. */
-        asm volatile("" ::: "memory");
         palette = g_FieldFxPaletteTable[kind];
         if (kind == 4 && g_FieldFxAltPaletteFlag) palette += 4;
 
@@ -2597,7 +2578,6 @@ int RoomM273_SwayGroundRingEmitter(int mode) {
         flags = anchor - 24;
         source = (Entry *)(anchor - 30);
         for (; i < 2; ++i) {
-            asm("" : "=r"(source) : "0"(source));
             if (*(unsigned short *)flags & 1) {
                 Entry *entry = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM273PoolContext)->pool);
                 if (!entry) return 0;
@@ -2957,7 +2937,6 @@ void *RoomM273_HandTrailConfigure(void *unused, int mode) {
         direction = (Inv_ScrambleGrid() & 1) ? 42 : -42;
         D_8019AEF2 = 2;
         D_8019AEEA = 2;
-        PE1_COMPILER_MEMORY_BARRIER();
         value = 0x61;
         D_8019AEEE = direction;
         D_8019AEF6 = value;
@@ -2966,7 +2945,6 @@ void *RoomM273_HandTrailConfigure(void *unused, int mode) {
         direction = (Inv_ScrambleGrid() & 1) ? 0x80 : -0x80;
         D_8019AEF2 = 4;
         D_8019AEEA = 5;
-        PE1_COMPILER_MEMORY_BARRIER();
         value = 0xB0;
         D_8019AEEE = direction;
         D_8019AEF6 = value;

@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-/* Observed register window relative to the BIOS patch's incoming v1.
+/* Observed window relative to the BIOS patch's incoming v1.
  * Field offsets match the PSX I/O map for a 0x1F800000 base. */
 typedef struct CardPatchIoRegisters {
     u8 reserved0000[0x1044];

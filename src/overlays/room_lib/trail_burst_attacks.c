@@ -178,12 +178,12 @@ int RoomEffect_SeekingTrailParticle(int mode, RoomSeekingTrail *trail) {
         case 2:
             scale = rcos((trail->timer << 10) / 20) / 32;
             rcos((trail->timer << 10) / 20);
-            /* Shares the loop index's register with retail (s0). */
+            /* Shares the loop index's with retail (s0). */
             i = (g_FieldFxCurrentAge & 1) << 7;
             gte_ldrotmatrix(g_ViewMatrixSlot.value);
             gte_ldtransmatrix(g_ViewMatrixSlot.value);
             /* tpage is the first parameter store, so its address stays in a
-             * register and parameter00 is later written through it. */
+             * and parameter00 is later written through it. */
             g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[g_FieldFxTpageSlot3];
             g_FieldFxSpriteParams.palette = 3;
             g_FieldFxSpriteParams.parameter06 = 0;
@@ -624,12 +624,12 @@ int RoomEffect_ScatterTrailParticle(int mode, RoomSeekingTrail *trail) {
         case 2:
             scale = rcos((trail->timer << 10) / 20) / 32;
             rcos((trail->timer << 10) / 20);
-            /* Shares the loop index's register with retail (s0). */
+            /* Shares the loop index's with retail (s0). */
             i = (g_FieldFxCurrentAge & 1) << 7;
             gte_ldrotmatrix(g_ViewMatrixSlot.value);
             gte_ldtransmatrix(g_ViewMatrixSlot.value);
             /* tpage is the first parameter store, so its address stays in a
-             * register and parameter00 is later written through it. */
+             * and parameter00 is later written through it. */
             g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[g_FieldFxTpageSlot3];
             g_FieldFxSpriteParams.palette = 3;
             g_FieldFxSpriteParams.parameter06 = 0;

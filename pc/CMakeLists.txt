@@ -4,6 +4,7 @@ project(parasite-eve-pc C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
 set(PSYZ_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/psyz)
 
@@ -11,7 +12,12 @@ add_subdirectory(${PSYZ_DIR}/psyz ${CMAKE_CURRENT_BINARY_DIR}/psyz)
 
 add_executable(parasite-eve-pc main.c)
 target_link_libraries(parasite-eve-pc PRIVATE psyz)
-target_include_directories(parasite-eve-pc PRIVATE ${PSYZ_DIR}/psyz/include)
+if(MSVC)
+    target_compile_options(parasite-eve-pc PRIVATE /W4)
+else()
+    target_compile_options(parasite-eve-pc PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+target_include_directories(parasite-eve-pc SYSTEM PRIVATE ${PSYZ_DIR}/psyz/include)
 target_compile_definitions(parasite-eve-pc PRIVATE __psyz)
 target_compile_definitions(psyz PRIVATE __psyz)
 

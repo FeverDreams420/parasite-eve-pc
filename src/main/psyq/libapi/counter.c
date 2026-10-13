@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBAPI COUNTER: SetRCnt, GetRCnt, StartRCnt, StopRCnt, ResetRCnt. */
 
 #include "pe1/psyq_api_internal.h"

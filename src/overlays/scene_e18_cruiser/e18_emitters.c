@@ -564,7 +564,7 @@ int SceneE18_WaveRingCallback(int mode, SceneE18WaveEffect *effect) {
     s16 position[4];
     s16 params[4];
     int palette;
-    register u16 index;
+    u16 index;
     if (mode == 1) {
         effect->wave = (rsin(g_FieldFxCurrentAge << 4) * effect->amplitude) >> 12;
         if (g_FieldFxCurrentAge < 8) return 0;

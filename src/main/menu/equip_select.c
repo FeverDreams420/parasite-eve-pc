@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/draw_level_bar.h"
 #include "pe1/draw_state.h"
@@ -18,8 +14,6 @@
 #include "pe1/menu_widget.h"
 #include "pe1/text.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_InvAmmoSpendActiveList;
 int g_InvItemUsableFlag;
 int g_InvSelectedItemIndex;
@@ -410,8 +404,8 @@ void Menu_DrawItemDetailPanel(MenuWidgetNode *panel) {
     /* Match debt: retail computes dx right after its two loads, in the
      * argument registers; unpinned it is scheduled after the tail-count
      * chain (lev 5). */
-    register int dx asm("$5");
-    register int dy asm("$6");
+    int dx;
+    int dy;
     int sum;
     int displayed;
     MenuWidgetNode *arg_panel;

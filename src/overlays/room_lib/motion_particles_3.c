@@ -32,7 +32,6 @@ void RoomEffect_UpdateParticleMotion(int arg0, RoomStatePair *control, RoomMotio
     s16 value;
     char scratch[0x18];
 
-    PE1_COMPILER_LAUNDER_MEM(controlReg);
 
     i = 0;
     if (stateReg->count != 0) {
@@ -47,7 +46,6 @@ void RoomEffect_UpdateParticleMotion(int arg0, RoomStatePair *control, RoomMotio
     if (controlReg->h2 >= 31) {
         amplitude = (s16)stateReg->depth;
         value = amplitude;
-        PE1_COMPILER_LAUNDER(value);
         if (amplitude >= 5) {
             stateReg->depth = value - 4;
         } else {

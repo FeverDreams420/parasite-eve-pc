@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBGPU SYS.OBJ, part 6 of 11: the private draw-offset and
  * texture-window command builders, _status, the OTC ordering-table clear, the
  * VRAM fill, upload and readback transfers, the GP1 control mirror and the
@@ -75,12 +72,9 @@ int Gpu_SendOtChain(unsigned int *table, int count)
     Gpu_ResetDmaWaitTimer();
     status = *g_GpuOtDmaChcrPtr;
     /* Keep the first status test separate from the loop's invariant mask. */
-    asm volatile("" : "+r"(status), "+r"(count));
     busyBit = 0x01000000;
     firstMask = busyBit;
-    asm volatile("" : "+r"(firstMask) : "r"(status));
     if (status & firstMask) {
-        asm volatile("" : : "r"(count));
         do {
             if (Gpu_DmaTimeoutCheck()) return -1;
         } while (*g_GpuOtDmaChcrPtr & 0x01000000);
@@ -130,7 +124,6 @@ int Gpu_DmaVramTransfer(RECT *rect, unsigned int color) {
     }
     {
         int result = 0;
-        asm volatile("" : "+r"(result));
         return result;
     }
 }
@@ -139,7 +132,7 @@ int Gpu_DmaVramTransfer(RECT *rect, unsigned int color) {
 int Gpu_WaitDmaComplete(RECT *rect, unsigned int *data)
 {
     int words, remainder, blocks;
-    register int variant asm("$21");
+    int variant;
     unsigned int status;
     unsigned int firstMask;
     int readyBit;
@@ -162,22 +155,18 @@ int Gpu_WaitDmaComplete(RECT *rect, unsigned int *data)
     words = (rect->w * rect->h + 1) / 2;
     if (words <= 0) return -1;
     remainder = words % 16;
-    /* Retail retains the variant branch and this rectangle's register lifetime. */
-    asm volatile("" : "+r"(variant), "+r"(rect));
+    /* Retail retains the variant branch and this rectangle's lifetime. */
     blocks = words / 16;
     status = *g_GpuDmaRegisterWindow.gp1;
     /* Keep the first readiness mask separate from the loop's invariant. */
-    asm volatile("" : "+r"(status));
     readyBit = 0x04000000;
     firstMask = readyBit;
-    asm volatile("" : "+r"(firstMask) : "r"(status));
     if (!(status & firstMask)) {
         do {
             if (Gpu_DmaTimeoutCheck()) return -1;
         } while (!(*g_GpuDmaRegisterWindow.gp1 & 0x04000000));
     }
     command = 0xA0000000;
-    asm volatile("" : "+r"(command));
     *g_GpuDmaRegisterWindow.gp1 = 0x04000000;
     *g_GpuGp0Ptr = 0x01000000;
     port = g_GpuGp0Ptr;
@@ -188,7 +177,6 @@ int Gpu_WaitDmaComplete(RECT *rect, unsigned int *data)
     --remainder;
     firstEnd = -1;
     /* The loop materializes its own sentinel after this first test. */
-    asm volatile("" : "+r"(firstEnd) : "r"(remainder));
     if (remainder != firstEnd) {
         do {
             *g_GpuGp0Ptr = *data++;
@@ -226,13 +214,10 @@ int Gpu_FlushDisplayBuffer(RECT *rect, unsigned int *data)
     words = (rect->w * rect->h + 1) / 2;
     if (words <= 0) return -1;
     remainder = words % 16;
-    asm volatile("" : "+r"(rect));
     blocks = words / 16;
     commandStatus = *g_GpuDmaRegisterWindow.gp1;
     /* The initial test and retry loop materialize their masks separately. */
-    asm volatile("" : "+r"(commandStatus));
     firstMask = 0x04000000;
-    asm volatile("" : "+r"(firstMask) : "r"(commandStatus));
     commandStatus &= firstMask;
     if (!commandStatus) {
         do {
@@ -245,9 +230,7 @@ int Gpu_FlushDisplayBuffer(RECT *rect, unsigned int *data)
     *g_GpuGp0Ptr = ((GpuRectWords *)rect)->position;
     *g_GpuGp0Ptr = ((GpuRectWords *)rect)->size;
     readStatus = *g_GpuDmaRegisterWindow.gp1;
-    asm volatile("" : "+r"(readStatus));
     firstMask = 0x08000000;
-    asm volatile("" : "+r"(firstMask) : "r"(readStatus));
     readStatus &= firstMask;
     if (!readStatus) {
         do {
@@ -257,7 +240,6 @@ int Gpu_FlushDisplayBuffer(RECT *rect, unsigned int *data)
     --remainder;
     firstEnd = -1;
     /* Keep the retry loop's sentinel independent of the initial test. */
-    asm volatile("" : "+r"(firstEnd) : "r"(remainder));
     if (remainder != firstEnd) {
         do {
             *data++ = *g_GpuGp0Ptr;

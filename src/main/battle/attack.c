@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/akao.h"
 #include "pe1/battle.h"
@@ -17,8 +13,6 @@
 #include "pe1/item_ids.h"
 #include "pe1/random.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 u8 g_BattleActionAnimModes[4];
 u8 D_8009CE39;
 u8 D_8009CE3A;
@@ -97,21 +91,21 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
 {
     BattleInitSlot * turnSlot = slot;
     int result = 0;
-    register BattleAction *activeAction asm("$4");
+    BattleAction *activeAction;
     Combatant * active;
     BattleEntity * caseEntity;
     BattleEntity *idleEntity;
     Combatant *idleActor;
     int retryCount;
     int indexB;
-    register int nextIndexB asm("$3");
+    int nextIndexB;
     int indexAlt;
     int indexDefault;
     int angle;
     int direction;
-    register int predicate asm("$2");
-    register int facingAngle asm("$4");
-    register int height asm("$16");
+    int predicate;
+    int facingAngle;
+    int height;
 
     switch (D_8009D254->actionMode) {
     case 6:
@@ -133,7 +127,6 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
         }
         D_8009D274 = 0;
         { u8 animMode = g_ActiveActor->action->animMode[1]; D_8009CE39 = animMode; }
-        asm volatile("");
         { height = turnSlot->actor->renderObject.target_y; angle = height - g_BattlePlayerAimHeight; }
         { facingAngle = ratan2(angle, Battle_CalcDistToPlayer(turnSlot->actor, D_8009D254));
         if (facingAngle < -0xAB) direction = 0; else { predicate = facingAngle < 0xE4; if (predicate) direction = 1; else direction = 2; } }
@@ -162,13 +155,12 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
             int pending = g_BattleRemainingActions;
             int narrow;
             predicate = 1;
-            asm volatile("" : "=r"(pending) : "0"(pending));
             narrow = (u8)pending;
             retryCount = pending;
             if (narrow != predicate) goto alternate;
         }
         nextIndexB = indexB + 1;
-        { register int offset asm("$5") = nextIndexB << 3;
+        { int offset = nextIndexB << 3;
         { int nextCode = g_BattleActionQueue[nextIndexB].command;
         g_BattleRemainingActions = 0;
         if (nextCode >= 3 || nextIndexB == g_BattleActionQueueCount) {
@@ -196,11 +188,11 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
         if (facingAngle < -0xAB) direction = 0; else { predicate = facingAngle < 0xE4; if (predicate) direction = 1; else direction = 2; } }
             Entity_SetActionMode(D_8009D254, *(direction + g_ActiveActor->targetAngleActionModes));
             result = 1;
-            { register Combatant *postActor = g_ActiveActor;
-              { register BattleEntity *postEntity = D_8009D254;
+            { Combatant *postActor = g_ActiveActor;
+              { BattleEntity *postEntity = D_8009D254;
                 postEntity->animFrame = D_8009D254->animLastFrame << 16;
                 D_8009D254->entityFlags |= 0x100; }
-              { register BattleAction *postAction = postActor->action;
+              { BattleAction *postAction = postActor->action;
                 { u32 turnWord = postAction->turnWord;
                 D_8009CE39 += D_8009CE3A;
                 g_BattleRemainingActions = turnWord & 0xF; } } }
@@ -212,7 +204,7 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
             Akao_SetPos3D(1, 0, D_8009D254->posX.parts.integer,
                           D_8009D254->posY.parts.integer, D_8009D254->posZ.parts.integer);
         action_done:
-            result = 1; asm volatile(""); break;
+            result = 1;  break;
         }
         result = 1; break;
 
@@ -223,7 +215,6 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
                 EnemyCombatant *enemy = g_BattleActionQueue[indexAlt].actor->core;
                 int nextRetry;
                 if (enemy->hpAlive > 0) {
-asm volatile("" : : "r"(enemy));
                 nextRetry = retryCount - 1;
                 if (enemy) goto target_alive;
                 }
@@ -268,8 +259,6 @@ asm volatile("" : : "r"(enemy));
     return result;
 }
 
-/* COMMON supplies small-data metadata to stock MASPSX. Existing retail
- * data/linker symbols provide storage; these do not allocate new globals. */
 u8 D_8009D274, g_BattleActionIndex, D_8009D294;
 s8 g_EvasionReaction;
 
@@ -754,9 +743,7 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
  * their field stores may alias the player's fields, which keeps retail's
  * load/store interleaving without pins.
  * Case 9 writes the evasion outcome record and the target's core flag bits
- * as fields, so the reaction byte is read back after the flag stores.
- * Matching debt: register pins and empty compiler barriers retain
- * retail allocation and scheduling in the remaining cases. */
+ * as fields, so the reaction byte is read back after the flag stores. */
 s32 Battle_StepAyaAction(void)
 {
   BattleEntity *targetEntity;
@@ -767,13 +754,13 @@ s32 Battle_StepAyaAction(void)
   s32 targetDistance;
   s32 slot;
   s32 flags;
-  register u32 scratch asm("$3");
+  u32 scratch;
   s32 finished;
   s8 attackStep;
   u32 effectId;
   u32 targetEffectId;
   int hitCountMask;
-  register s32 transfer asm("$2");
+  s32 transfer;
   EnemyCombatant *targetCore;
   finished = 0;
   switch (D_8009D25C)
@@ -892,7 +879,6 @@ s32 Battle_StepAyaAction(void)
         targetAngle = Battle_CalcAngleToTarget(&targetEntity->renderObject, &g_AyaSavedPos);
         D_8009D254->facingAngle = targetAngle;
         product = targetDistance * rsin(targetAngle);
-        asm("" : "=r"(product) : "0"(product));
         D_8009D254->posX.fixed = (g_BattleActionQueue[g_BattleActionIndex].actor->renderObject.target_x << 16) + (product * 16);
         product = targetDistance * rcos(D_8009D254->facingAngle);
         D_8009D254->posZ.fixed = (g_BattleActionQueue[g_BattleActionIndex].actor->renderObject.target_z << 16) + (product * 16);
@@ -1024,7 +1010,7 @@ s32 Battle_StepAyaAction(void)
       s32 *saved;
       s32 x;
       s32 y;
-      register int effect;
+      int effect;
       if (player->renderObject.variant_visible == 0)
       {
         effect = 0x4B6;
@@ -1108,12 +1094,11 @@ s32 Battle_StepAyaAction(void)
       {
         Entity_SetActionMode(D_8009D254, g_ActiveActor->actionMode12);
         {
-          register int rate asm("$5") = 30;
+          int rate = 30;
           BattleEntity *player;
-          register RenderObjectEntity *render asm("$4");
+          RenderObjectEntity *render;
           unsigned flags;
           scratch = ~0x100;
-          asm("" : "=r"(scratch) : "0"(scratch), "r"(rate));
           player = D_8009D254;
           D_8009D2E8 |= 4;
           player->renderObject.variant_visible = 1;

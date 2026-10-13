@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/akao.h"
 #include "pe1/akao/commands.h"
@@ -41,10 +37,7 @@
 #include "pe1/scene_transition.h"
 #include "pe1/script_node.h"
 #include "pe1/script_state.h"
-#include "m2c_macros.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 u32 *D_8009CE00;
 ScriptNode *g_ScriptNodePool;
 int g_SceneDataTable0;
@@ -830,7 +823,6 @@ int g_SceneDataTable0;
 int Boot_CheckModeSwitch(void) {
     int mode = g_RenderStateFlags & 7;
 
-    asm volatile("");
     if (mode != 4) {
         if (mode != 0) {
             goto queue_mode_script;

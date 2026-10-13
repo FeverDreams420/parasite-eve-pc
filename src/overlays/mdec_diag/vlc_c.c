@@ -1,5 +1,3 @@
-/* ASSEMBLER: GNU */
-
 #include "pe1/psyq_asm.h"
 
 /*
@@ -8,7 +6,7 @@
  * that uses the table built by MdecDiag_ExpandDecoderTable, i.e.
  * DecDCTvlcBuild). The boot display and memory-card video code call both.
  *
- * Original SDK assembler (configs/USA/original_asm_evidence.json): the same
+ * Original SDK assembler: the same
  * frameless static-state protocol as VLC, COP0 Status masking, and 57
  * trapping add/addi/sub instructions. DecDCTvlcSize2 is DecDCTvlcSize with
  * its own limit word, so its .Ldefault label follows the 3.5 VLC object.

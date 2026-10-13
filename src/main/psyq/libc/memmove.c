@@ -2,8 +2,8 @@
 void *memmove(void *dst, const void *src, int len) {
     unsigned char *out = dst;
     const unsigned char *in = src;
-    register int count asm("$6") = len;
-    register int test asm("$2");
+    int count = len;
+    int test;
     void *ret;
     if (out >= in) {
         test = count;
@@ -24,6 +24,5 @@ void *memmove(void *dst, const void *src, int len) {
     }
 
     ret = out;
-    asm volatile("" : "=r"(ret) : "0"(ret));
     return ret;
 }

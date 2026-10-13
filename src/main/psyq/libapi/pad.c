@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBAPI PAD: SetInitPadFlag, ReadInitPadFlag, PAD_init, InitPAD,
  * StartPAD, StopPAD, Sys_SetInterruptHandler, RemovePatchPad and the two
  * interrupt handlers it installs. PAD_init and InitPAD instantiate
@@ -93,8 +92,8 @@ int LIBAPI_PAD_text_254(void) {
 
 int LIBAPI_PAD_text_2BC(void)
 {
-  register int *state;
-  register int result;
+  int *state;
+  int result;
   int new_var;
   state = g_PadIntrRegsPtr;
   new_var = state[1];

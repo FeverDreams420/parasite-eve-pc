@@ -1,5 +1,3 @@
-/* ASSEMBLER: GNU */
-/* CC1_FLAGS: -fno-cse-follow-jumps */
 /* PSY-Q LIBPAD PADIF: MemCard_ReadByteWithCallbackValue,
  * CardObj_WriteCommandByte, MemCard_WriteDataAndGetSize,
  * MemCard_WriteByteWithAckCheck, LIBPAD_PADIF_text_26C. */
@@ -67,20 +65,19 @@ int MemCard_WriteDataAndGetSize(CardObj *obj) {
 }
 
 int MemCard_WriteByteWithAckCheck(CardObj *obj) {
-    register CardObj *card asm("$16");
+    CardObj *card;
     CardObj *call_obj;
     int needs_ack;
     int value;
-    register int result asm("$3");
+    int result;
     int ret;
-    register u32 zero asm("$0");
+    u32 zero = 0;
     card = obj;
     needs_ack = 0;
     if ((card->response_3c[0] >> 4) == 8) {
         needs_ack = card->command < 1;
     }
 
-    asm volatile("" : : : "$4");
     call_obj = card;
     value = g_MemCardObjReadPayloadByteFn(call_obj, needs_ack);
     call_obj = card;
@@ -88,13 +85,11 @@ int MemCard_WriteByteWithAckCheck(CardObj *obj) {
     /* Match debt: architectural zero keeps the result copy in the first
      * branch delay slot; the barriers preserve the shared return path. */
         ret = 90;
-    asm volatile("" : "=r"(ret) : "0"(ret));
     if (result == ret) {
         ret = result + zero;
         return ret;
     }
     ret = result + zero;
-    asm volatile("" : "=r"(result), "=r"(ret) : "0"(result), "1"(ret));
     if (result != 0) {
     /* Retail returns -9 for positive values other than 90, and preserves
      * negative values. The BGEZ delay slot assigns -9 before branching. */
@@ -110,22 +105,22 @@ done:
 int MemCard_WriteByte(CardObj *, int);
 void MemCard_WaitStatusBit2(void);
 int LIBPAD_PADIF_text_26C(CardObj *inPort) {
-    register CardObj *port = inPort;
-    register int mode;
-    register int index;
-    register int offset;
-    register CardObj *other asm("$19");
-    register int three;
-    register int result;
-    register CardObj *arg;
+    CardObj *port = inPort;
+    int mode;
+    int index;
+    int offset;
+    CardObj *other;
+    int three;
+    int result;
+    CardObj *arg;
     g_PadPortActuatorMapFn(inPort);
     mode = 0;
     if (g_MemCardCommandByte) {
-        register int id = port->response_3c[0];
+        int id = port->response_3c[0];
         {
-            register int eight = 8;
+            int eight = 8;
             if (id >> 4 == eight) {
-                register int command = port->command;
+                int command = port->command;
                 mode = command == 0;
             }
         }
@@ -159,19 +154,19 @@ int LIBPAD_PADIF_text_26C(CardObj *inPort) {
     }
 setup:
     {
-        register int original = g_PadActivePortIndex;
-        register int opposite;
+        int original = g_PadActivePortIndex;
+        int opposite;
         opposite = !original;
         if (g_MemCardWriteBlockCount >= 2) {
-            register int *count;
-            register CardObjAddress table;
-            register int scaled;
+            int *count;
+            CardObjAddress table;
+            int scaled;
             table.count = g_MemCardChannelCounts;
             scaled = opposite * 4;
             table.word = scaled + table.word;
             count = table.count;
             {
-                register int product = opposite * 15;
+                int product = opposite * 15;
                 offset = product * 16;
             }
             three = 3;
@@ -181,8 +176,8 @@ setup:
                     break;
                 if (remaining > 0) {
                     /* Preserve the retail multiply and interior byte cursor. */
-                    register int scaled;
-                    register CardObjAddress child asm("$3");
+                    int scaled;
+                    CardObjAddress child;
                     scaled = remaining * sizeof(CardObj);
                     child.obj = g_MemCardObjArray;
                     child.word = offset + child.word;
@@ -192,7 +187,7 @@ setup:
                     g_MemCardResponseHandler(other);
                 }
                 {
-                    register int value = *count;
+                    int value = *count;
                     if (value != three) {
                     if (value < 4) {
                         arg = port;
@@ -216,7 +211,7 @@ setup:
                     break;
                 primary:
                     {
-                        register CardObjAddress base asm("$2");
+                        CardObjAddress base;
                         base.obj = g_MemCardObjArray;
                         other = (CardObj *)(base.bytes + offset);
                     }

@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 /* cc1 -G8 makes the small texture slot word a cheap address, so its
  * volatile read stays an absolute load. */
 
@@ -35,7 +31,6 @@ int RoomM350_AreaPlayerPulseCallback(int event, void *object)
         s16 mode;
         int clutX;
         unsigned short handle;
-        asm("" : "=r"(state) : "0"(state));
         state->parameter00 = unit;
         paletteIndex = *(volatile u16 *)&g_FieldFxTpageSlot2;
         mode = 2;

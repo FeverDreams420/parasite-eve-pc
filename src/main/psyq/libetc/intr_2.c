@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* PSY-Q LIBETC INTR, part 2 of 2: Sys_InitIntrManager, Render_InitSceneGeom,
  * Sys_SetIntrCallback, Sys_SaveDisableIntr, Sys_RestoreIntr and
  * Sys_ClearWordBuf. */
@@ -16,7 +13,7 @@ int setjmp(void *env);
 void _96_remove(void *arg);
 
 u16 *Sys_InitIntrManager(void) {
-    register InterruptCallbackState *intr asm("$16");
+    InterruptCallbackState *intr;
     u32 *entrySp;
     u16 *dst;
     volatile u16 *src;
@@ -157,7 +154,7 @@ PsyqInterruptHandler Sys_SetIntrCallback(int channel, PsyqInterruptHandler handl
             ChangeClearPAD(clear);
             ChangeClearRCnt(3, clear);
         }
-        /* This loop scope preserves the SDK register allocation under GCC 2.8.1. */
+        /* This loop scope preserves the SDK allocation under GCC 2.8.1. */
         do {
             if (channel == 4) ChangeClearRCnt(0, !handler);
             if (channel == 5) ChangeClearRCnt(1, !handler);
@@ -170,8 +167,8 @@ PsyqInterruptHandler Sys_SetIntrCallback(int channel, PsyqInterruptHandler handl
 
 InterruptCallbackState *Sys_SaveDisableIntr(void) {
     InterruptCallbackState *state;
-    /* Keep the I_MASK pointer in the register used by the retail stopIntr. */
-    register volatile u16 *mask asm("$2");
+    /* Keep the I_MASK pointer in the used by the retail stopIntr. */
+    volatile u16 *mask;
     u32 *control;
     u16 *status;
     u32 value;

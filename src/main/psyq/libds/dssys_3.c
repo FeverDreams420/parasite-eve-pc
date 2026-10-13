@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSSYS_3.OBJ: DsMix, DsGetSector, DsGetSector2, DsDataSync, DsIntToPos, DsPosToInt, DsSetDebug, DsLastPos. */
 
 #include "pe1/cdrom.h"

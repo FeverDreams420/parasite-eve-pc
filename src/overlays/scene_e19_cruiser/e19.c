@@ -45,8 +45,6 @@ typedef struct SceneE19Effect {
     s16 frame;
 } SceneE19Effect;
 
-/* Full callback reconstruction; source-level register constraints are tracked
- * in crutch debt because stock GCC needs them to reproduce the retail code. */
 typedef struct SceneE19HomingParticle {
     GteShortVector position; /* position.pad is the particle index */
     GteShortVector angles;
@@ -623,12 +621,11 @@ int SceneE19_Blast(int mode, SceneE19Blast *blast)
             phase = blast->timer << 6;
             intensity = 0x80;
             params = &g_FieldFxSpriteParams;
-            asm("" : "=r"(params) : "0"(params));
             params->parameter00 = 0x40;
             g_FieldFxSpriteParams.parameter02 = 4;
             g_FieldFxSpriteParams.extent_x = 0x40;
             g_FieldFxSpriteParams.extent_y = 0x40;
-            asm("" : "=r"(pageSelector) : "0"(&g_FieldFxTpageSlots[11]) : "$16");
+            (pageSelector = &g_FieldFxTpageSlots[11]);
             g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[pageSelector[0]];
             g_FieldFxSpriteParams.palette = 3;
             g_FieldFxSpriteParams.parameter06 = 1;
@@ -1069,16 +1066,16 @@ int SceneE19_HomingParticleCallback(int mode, SceneE19HomingParticle *particle)
     RenderColor color = D_8018F218;
     GteShortVector floor_position;
     GteRotation floor_rotation;
-    register int divider asm("$16");
+    int divider;
     int bias, random;
-    register int remMagic asm("$5");
-    register int test asm("$2");
-    register int sum asm("$3");
+    int remMagic;
+    int test;
+    int sum;
     int intensity, scale, palette, pulseSum;
     u16 clut;
     u16 floorY;
     u16 floorZ;
-    register int floorIndex asm("$4");
+    int floorIndex;
     int floorTimer;
     int signedValue;
 
@@ -1103,19 +1100,15 @@ int SceneE19_HomingParticleCallback(int mode, SceneE19HomingParticle *particle)
         bias = test & 500;
         random = rand();
         remMagic = 0x66660000;
-        asm("" : : "r"(remMagic));
         random &= 1023;
-        asm volatile("" : : "r"(random));
         sum = bias + 390;
         rotation.x += random - sum;
-        asm("" : : "r"(sum));
         rotation.y += -512 + (s16)(particle->position.pad % 5) * 256;
         particle->angles.x = rotation.x;
         particle->angles.y = rotation.y;
         particle->angles.z = rotation.z;
         particle->speed = 24;
         particle->turnPhase = 0;
-        asm("" : : : "$3", "$18", "$9", "$10", "$11", "$15", "$24", "$25");
         break;
 
     case 1:
@@ -1214,7 +1207,6 @@ test_timer:
         FieldFx_DrawShapeQuads(&particle->position, (GteRotation *)&rotation, 6144, 6144,
                      68, clut, 1, intensity / 2, 0);
         g_FieldFxSpriteParams.parameter02 = 2;
-        asm volatile("" : :);
         g_FieldFxSpriteParams.parameter00 = 32;
         g_FieldFxSpriteParams.extent_x = 32;
         g_FieldFxSpriteParams.extent_y = 32;
@@ -1237,7 +1229,6 @@ temporaryPosition.x = particle->position.x;
 temporaryPosition.y = particle->position.y;
 pulseSum = 64;
 floorZ = particle->position.z;
-asm volatile("" : :);
 
 temporaryPosition.z = floorZ;
 g_FieldFxSpriteParams.parameter02 = 4;
@@ -1270,12 +1261,10 @@ if (floorIndex == 4 && g_FieldFxAltPaletteFlag) palette += 4;
         break;
     case 2:
         divider = 0x2aaa0000;
-asm("" : : "r"(divider));
         g_FieldFxSpriteParams.parameter00 = 64;
         g_FieldFxSpriteParams.parameter02 = 4;
         g_FieldFxSpriteParams.extent_x = 64;
         g_FieldFxSpriteParams.extent_y = 64;
-        asm volatile("" : :);
         intensity = rcos((particle->timer << 10) / 24) / 32;
         scale = rcos((particle->timer << 10) / 24) * 2;
         if (particle->timer & 1)

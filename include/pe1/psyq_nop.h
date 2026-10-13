@@ -1,11 +1,8 @@
 #ifndef PE1_PSYQ_NOP_H
 #define PE1_PSYQ_NOP_H
 
-/* Explicit retail scheduling slots. Each macro emits exactly one NOP.
- * Authorized exception to CPU instruction asm, and not crutch debt: the
- * slots reproduce handwritten LIBGTE FGO scheduling that stock GCC does not
- * emit. Dependencies keep the slot adjacent to the relevant calculation.
- */
+/* Hardware hazard slots for the legacy MIPS/GTE implementation.
+ * Native replacements use the timing contract of the selected runtime API. */
 #define PE1_NOP() asm volatile("nop")
 #define PE1_NOP_DEP(constraint, value) asm volatile("nop" : : constraint(value))
 #define PE1_NOP_MEMORY_DEP(constraint, value) \

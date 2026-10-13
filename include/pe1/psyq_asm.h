@@ -1,36 +1,8 @@
 #ifndef PE1_PSYQ_ASM_H
 #define PE1_PSYQ_ASM_H
 
-/*
- * Original PSY-Q SDK assembler objects.
- *
- * Some PSY-Q library objects were assembled from handwritten assembler source,
- * not compiled from C: they save ra in a static data word instead of a stack
- * frame, pass values through t0..t2 to private entries, call the BIOS tables
- * inline through t1/t2, use the trapping add/addi/sub forms that GCC never
- * emits, or carry instruction templates that are copied into the kernel.
- * For those objects, and only those, a C translation unit may reproduce the
- * original assembler text with the macros below. The per-object evidence is
- * listed in docs/ASM_AND_GTE_POLICY.md ("PSY-Q assembler objects").
- *
- * This header is never for game code (see include/pe1/game_asm.h). A source
- * using it must declare its SDK object with PSYQ_ASM_OBJECT and contain no C
- * function definitions. In the main executable it lives under src/main/psyq/
- * and its range must lie inside the object in configs/USA/psyq_provenance.json;
- * in an overlay every routine must be listed in
- * configs/USA/original_asm_evidence.json. tools/scripts/check_source_policy.py
- * enforces both.
- *
- * Bodies are the original instruction text, one instruction per string, with
- * symbolic %hi/%lo relocations and labels rather than encoded words. They are
- * assembled with .set noreorder and .set noat, so every delay slot and load
- * delay is written out exactly as in the SDK object. GTE commands use the
- * mnemonics from include/gte_macros.inc (rtps, mvmva, sqr, op, gpf, ...).
- *
- * Instruction templates that an object only compares or copies are data at
- * their link address. They stay main.yaml rodata segments in the
- * .psyq_text_data linker section, not PSYQ_ASM_FUNCTION bodies.
- */
+/* Legacy PSY-Q routines that perform real MIPS/GTE operations.
+ * Use PsyZ equivalents or native implementations when porting their callers. */
 
 /* Names the SDK library and object this file reproduces. Emits nothing. */
 #define PSYQ_ASM_OBJECT(library, object)

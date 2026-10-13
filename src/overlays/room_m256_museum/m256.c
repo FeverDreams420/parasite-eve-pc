@@ -638,7 +638,7 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
     void *historyPosition;
     GteShortVector *historySample;
     s16 *spriteFrame;
-    register int pulseExtent asm("$3");
+    int pulseExtent;
     int spriteExtent;
     unsigned spritePalette;
     int spriteClutY;
@@ -647,7 +647,7 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
     s32 random;
     s32 renderScale;
     s32 fade;
-    register int firstFade asm("$21");
+    int firstFade;
     u16 initialPitch;
     u16 initialYaw;
     int trailClutY;
@@ -820,10 +820,10 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
             return 0;
         case 2:
             {
-                register unsigned frame asm("$3") = *(volatile u16 *)&state->frame;
-                register int vx asm("$6") = state->motionX;
-                register unsigned coordinate asm("$2");
-                register unsigned vxBits asm("$5");
+                unsigned frame = *(volatile u16 *)&state->frame;
+                int vx = state->motionX;
+                unsigned coordinate;
+                unsigned vxBits;
                 int dampX;
                 unsigned z;
                 unsigned vy;
@@ -831,7 +831,6 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
                 int dampZ;
                 coordinate = *(volatile u16 *)&state->x;
                 vxBits = *(volatile u16 *)&state->motionX;
-                asm volatile("" : :);
                 dampX = vx * 63;
                 state->x = coordinate + vxBits;
                 coordinate = *(volatile u16 *)&state->y;
@@ -864,7 +863,6 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
         case 3:
             nextModelFrame = (u16) state->frame + 1;
             state->frame = nextModelFrame;
-            asm("" : "=r"(nextModelFrame) : "0"(nextModelFrame));
             alive = (s16)nextModelFrame < 0xA;
             if (alive == 0) {
                 return 1;
@@ -873,7 +871,6 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
         case 4:
             nextSpriteFrame = (u16) state->frame + 1;
             state->frame = nextSpriteFrame;
-            asm("" : "=r"(nextSpriteFrame) : "0"(nextSpriteFrame));
             alive = (s16)nextSpriteFrame < 0x10;
             if (alive == 0) {
                 return 1;
@@ -918,13 +915,10 @@ checkLifetime:
         case 1:
             firstFade = rcos(state->frame << 6) / 32;
             renderScale = rcos(state->frame << 6);
-            asm volatile("" : : "m"(g_FieldFxSpriteParams));
             params = &g_FieldFxSpriteParams;
             spriteExtent = 0x10;
             spriteClutY = g_FieldFxPaletteEntry2;
-            asm("" : "=r"(params) : "0"(params), "r"(spriteClutY), "r"(spriteExtent));
             palettes = (RoomM256TrailPalettes *)&g_FieldFxTpageSlot2;
-            asm("" : "=r"(palettes) : "0"(palettes));
             params->parameter00 = spriteExtent;
             spritePalette = palettes->first;
             g_FieldFxSpriteParams.parameter02 = 1;
@@ -936,10 +930,10 @@ checkLifetime:
             g_FieldFxSpriteParams.parameter06 = 0;
             g_FieldFxSpriteParams.tpage = renderPalette;
             {
-                register RoomM256TrailEffect *callState asm("$4");
-                register void *callRotation asm("$5");
-                register int callScaleX asm("$6");
-                register int callScaleY asm("$7");
+                RoomM256TrailEffect *callState;
+                void *callRotation;
+                int callScaleX;
+                int callScaleY;
                 int drawClut;
                 int drawOffset;
 
@@ -951,20 +945,18 @@ checkLifetime:
                 drawOffset = (s16)((const RenderEffectParameters *)params)->parameter02 * 2 + 0xD8;
                 /* Matching debt: consume CLUT and page in $2, then bound both
                  * outgoing stores before the texture-offset load. Empty ASM
-                 * only; $4..$7 preserve the ready register arguments. */
+                 * only; $4..$7 preserve the ready arguments. */
                 FieldFx_DrawShapeQuads((GteShortVector *)callState, callRotation, callScaleX, callScaleY,
                               drawOffset,
                     ({
-                        register int clutWord asm("$2") = drawClut;
+                        int clutWord = drawClut;
                         clutWord;
                     }),
                     ({
-                        register int modeWord asm("$2") = 1;
+                        int modeWord = 1;
                         modeWord;
                     }), firstFade,
                     (RenderColor *)(({
-                        asm("" : : "r"(callState), "r"(callRotation),
-                            "r"(callScaleX), "r"(callScaleY) : "$21", "$2");
                         &color.r;
                     })));
             }
@@ -1085,8 +1077,8 @@ int RoomM256_TrailEmitter(int mode, u16 *out) {
     FieldActor *actor;
     FieldActorState *state;
     u8 *action;
-    /* Keep the return register available for the retail mode dispatch. */
-    register int ret asm("$2");
+    /* Keep the return available for the retail mode dispatch. */
+    int ret;
     RoomM256TrailEffect *task;
     u16 value;
 

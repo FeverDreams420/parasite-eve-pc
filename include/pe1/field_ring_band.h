@@ -9,7 +9,7 @@
  * between two radii, scaled, turned and placed at a projected anchor. */
 
 /* TILE_OT_ADDPRIM through an ordering-table entry held as a plain tag
- * pointer: retail keeps that pointer in one register for every link. */
+ * pointer: retail keeps that pointer in one for every link. */
 #define RING_OT_ADDPRIM(entry, packet, link) \
     ((packet)->tag.address = (entry)->address, \
      (link).tag = &(packet)->tag, \

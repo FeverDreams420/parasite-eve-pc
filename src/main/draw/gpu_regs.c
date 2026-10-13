@@ -1,22 +1,18 @@
-/* CC1_FLAGS: -fno-schedule-insns */
-
-register int *g_DrawGpuReg2 asm("$10");
+int *g_DrawGpuReg2;
 
 void Draw_InitGpuHwRegs(void) {
-    register unsigned int zero asm("$0");
-    register volatile int *ptr asm("$8");
-    register unsigned int a asm("$11");
-    register unsigned int b asm("$12");
-    register unsigned int count asm("$13");
-    register volatile int *ptr1 asm("$9");
+    unsigned int zero = 0;
+    volatile int *ptr;
+    unsigned int a;
+    unsigned int b;
+    unsigned int count;
+    volatile int *ptr1;
 
     ptr = (int *)0x80070E0C;
-    asm volatile("" : "=r"(ptr) : "0"(ptr));
     a = zero | 1;
     ptr[0x10] = a;
     a = zero | 2;
     ptr[0xF] = a;
-    asm volatile("" : : "r"(ptr), "r"(a));
     count = zero | 0xE;
     do {
         a = ptr[0x10];

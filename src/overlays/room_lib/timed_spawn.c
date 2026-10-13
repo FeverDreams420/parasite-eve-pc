@@ -175,7 +175,7 @@ int RoomLib_ControlTimedSpawn(int mode, RoomTimedSpawnState *state) {
         g_FieldFxSpriteParams.depth = 0;
         g_FieldFxSpriteParams.tpage = tpage;
     }
-    
+
     }
     return 0;
 }

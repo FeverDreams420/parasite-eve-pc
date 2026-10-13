@@ -25,15 +25,14 @@
 #include "pe1/save_tail_state.h"
 #include "pe1/scene_assets.h"
 #include "pe1/scene_dispatch.h"
-#include "include_asm.h"
 
 int Draw_InitDisplay(int mode) {
     int mode_reg;
     int one;
-    register u8 **slots asm("$18");
-    register u8 *ptr asm("$2");
+    u8 **slots;
+    u8 *ptr;
     u8 *ptr2;
-    register int const_8000 asm("$4");
+    int const_8000;
     int const_48000;
     RECT rect;
     u8 *tmp;
@@ -53,7 +52,6 @@ int Draw_InitDisplay(int mode) {
 
     const_48000 = 0x48000;
     slots = g_OtBufferTable;
-    asm volatile("" : "=r"(slots) : "0"(slots));
 
     ptr = g_BootWorkArea;
     ptr2 = ptr + 0x1800;

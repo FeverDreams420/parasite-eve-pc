@@ -1,7 +1,7 @@
 #ifndef PE1_PSYQ_SPU_REVERB_H
 #define PE1_PSYQ_SPU_REVERB_H
 
-/* Reverb preset packet passed from LIBSPU's preset selector to the register writer. */
+/* Reverb preset packet passed from LIBSPU's preset selector to the writer. */
 typedef struct SpuReverbRegisterAttrs {
     unsigned int mask;
     unsigned short regs[32];

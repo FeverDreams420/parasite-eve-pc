@@ -93,7 +93,7 @@ u_short GetClut(int x, int y);
 
 /*
  * Many GPU helpers in the game code currently keep local callback-table
- * structs because register allocation is sensitive there. Centralize RECT
+ * structs because allocation is sensitive there. Centralize RECT
  * first; migrate callback declarations only after a function cluster is
  * build-checked.
  */

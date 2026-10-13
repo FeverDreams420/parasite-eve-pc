@@ -31,7 +31,6 @@ s32 MenuCard_UpdateFadeCounter(MenuMemcardFadeState *state) {
     } else {
         {
             s32 nextLevel = shifted + 0x100;
-            asm volatile("" : : "r"(nextLevel));
             state->level = nextLevel;
         }
         state->increment += (state->increment != 0);

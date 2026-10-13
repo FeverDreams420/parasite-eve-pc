@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /*
  * PSY-Q LIBGTE MTX_003: CompMatrix. Assembler source: a leaf that packs the
  * matrix columns by hand, issues mvmva directly, and adds the translation with

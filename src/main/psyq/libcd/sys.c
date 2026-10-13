@@ -1,4 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
 /* Psy-Q LIBCD SYS.OBJ, part 1 of 2: CdStatus, CdMode, CdLastCom, CdLastPos
  * and CdReset. CdReset needs GCC 2.8.1 (the call result goes through $v1). */
 

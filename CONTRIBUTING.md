@@ -1,94 +1,37 @@
 # Contributing
 
-This is a matching decompilation intended to remain workable for years. A
-retail byte match is required, but it is only one part of accepting a change.
+This is a native C11 project. Preserve the intended game behavior and data
+formats while improving the code for modern hosts. There is no byte-match
+requirement, stock PS1 compiler requirement, PS1 checksum gate, source
+manifest requirement or decompilation progress/debt ratchet.
 
-## Daily loop
+## Development workflow
 
-1. Keep experiments and non-matching reconstructions out of the tracked tree.
-2. Add C to `src/` only together with its manifest entry.
-3. Use subsystem headers for cross-unit declarations; do not add file-local
-   `extern` debt.
-4. Run the narrow object/function diff while iterating.
-5. Run `make verify` before handing work off.
+1. Use subsystem headers for shared declarations and ordinary C types and functions.
+2. Replace platform operations with PsyZ APIs or explicit native adapters.
+3. Add ported modules explicitly to the native CMake target when their dependencies work.
+4. Build with `cmake -S . -B build` and `cmake --build build --parallel`.
+5. Run `./build/pc/parasite-eve-pc` in a graphical session for runtime changes.
+6. Validate changed game behavior with focused native tests or reproducible gameplay scenarios as modules become runnable.
 
-`make verify` runs the source/manifest contract, debt ratchets, organization
-ratchet, tool tests, full main build, retail SHA-1 check and the
-shiftability ratchet (`make shift-check`, fixed program addresses). It needs
-the local retail-derived files and compiler setup. `make ci` is its source-only subset and
-runs in GitHub Actions.
+The current native target is a runtime smoke test. A successful build does
+not imply that the game modules under `src/` compile or that the game is playable.
+CI builds the host target without retail assets. Use a fresh build directory
+when changing build structure or dependencies.
 
-## Definition of done
+Do not preserve register assignments, instruction scheduling, padding,
+linker order or code addresses for compiler matching. Assembly that performs
+real work must be translated or replaced before its module is ported; do not
+replace missing functionality with successful no-op stubs.
 
-A normal main-executable change is done when:
+Serialized assets and save data retain their defined widths, offsets and
+endianness. Host pointers must use pointer types, and host structures can be
+redesigned independently of the original RAM layout. Validate layout assertions
+against serialized formats rather than forcing host pointers into 32 bits.
 
-- the intended function is semantic C under `docs/ASM_AND_GTE_POLICY.md`;
-- its stock-compiler object diff is exact;
-- `make verify` passes;
-- any debt reduction is captured with `make debt-baseline`,
-  `make organization-baseline` or `make shift-baseline` and the lowered JSON
-  is included;
-- naming, typing, or source-boundary claims have evidence, not only a byte
-  match.
+Upstream is a source of optional fixes and knowledge. Imports must fit the
+native architecture and behavior; they need no PS1 binary validation.
 
-A file is finished, not only matched, when it also meets "A finished file"
-in `docs/CONVENTIONS.md`.
-
-For a shared header, compiler wrapper, Makefile, manifest, source move, or
-translation-unit boundary change, use `make verify-clean`. This proves the
-result without stale objects. Header dependencies protect later incremental
-builds, but they do not replace the clean acceptance check for structural work.
-
-Do not add splat's complete auto-undefined files back to the linker command.
-The generated selective alias file is what lets real object definitions take
-ownership while retaining absolute pins only for unresolved layout debt.
-
-Before pushing a change that affects progress or crutch counts, regenerate
-and commit the README badges from the audited report:
-
-```sh
-make overlay-build-all OVERLAY_JOBS=8
-make overlay-check-all
-make report
-make progress
-make debt
-git add docs/badges
-```
-
-Run this after `make verify` (or `make verify-clean` when required).
-`verify-clean` removes overlay build products, so build them again before
-creating the report. `make progress` alone reads the existing report and can
-therefore reproduce stale numbers. `make verify-clean` does not check badge
-freshness; CI checks it after auditing all binaries and refuses to publish a
-report when the committed badges differ.
-
-For an overlay change, also run:
-
-```sh
-make overlay-check OVERLAY=<name>
-```
-
-The main executable checksum does not verify overlay bytes.
-
-## Ratchet discipline
-
-Debt and opaque-name baselines must equal the current tree. CI fails when debt
-increases and also when an improvement leaves a stale higher baseline. This
-makes every cleanup permanent: later work cannot silently spend it. Baseline
-updates that raise a count are policy changes and require explicit review; they
-are not a normal way to make CI green.
-
-## Matching aids
-
-- `tools/scripts/probe_match.py` compiles one main unit and compares it with
-  the retail bytes, masked or fully linked (`--linked`).
-- `tools/scripts/score_decompme.py target.o candidate.o` gives decomp.me's
-  weighted asm-differ score. Pass `--algorithm levenshtein` to
-  decomp-permuter. A zero score is a search result; only the linked SHA-1
-  proves a match.
-- `tools/scripts/audit_tu_candidates.py` lists adjacent manifest units with a
-  direct call edge, as leads for translation-unit merges.
-
-Keep experiments outside the tracked tree. The detailed rules live in
-`docs/CONVENTIONS.md`, `docs/CODE_ORGANIZATION.md` and
-`docs/ASM_AND_GTE_POLICY.md`.
+See [architecture](docs/ARCHITECTURE.md), [conventions](docs/CONVENTIONS.md),
+[code organization](docs/CODE_ORGANIZATION.md) and
+[the port plan](docs/PC_PORT_PLAN.md).

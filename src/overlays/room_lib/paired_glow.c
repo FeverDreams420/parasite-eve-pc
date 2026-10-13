@@ -351,9 +351,9 @@ void RoomLib_TransformPairedEmitter(void *unused, RoomFxControl *params,
     RoomSpriteMatrix *scaleMatrix;
     unsigned char *table;
     RoomFxPairedEmitterState *workState;
-    register RoomSpriteMatrix *matrix asm("$19");
+    RoomSpriteMatrix *matrix;
     FieldActor **root;
-    register RoomFxControl *renderParams asm("$21");
+    RoomFxControl *renderParams;
     RenderMatrix *owner;
 
     workState = state;

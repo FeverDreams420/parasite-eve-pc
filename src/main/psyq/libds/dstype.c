@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSTYPE.OBJ: DsGetDiskType, GD_cbsync, GD_cbready. */
 
 #include "pe1/cdrom.h"

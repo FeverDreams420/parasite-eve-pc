@@ -107,7 +107,7 @@ void RoomEffect_GrabStartOnProximity(RoomMotionTrigger *arg) {
         s32 v;
         s32 s;
         /* Retain the negated sine in the call-argument register. */
-        register s32 neg asm("$4");
+        s32 neg;
         FieldActor *p;
         RenderMatrix *rotationMatrix;
         FieldActor *actor;
@@ -178,14 +178,14 @@ void RoomEffect_GrabHold(RoomMotionTrigger *arg0) {
     s32 s0;
     /* PIN-DEBT: retail keeps a second live copy of the animation frame in $s4; without the
      * pin GCC copy-propagates s4=s0 away and drops the callee-saved slot. */
-    register s32 s4 asm("$20");
+    s32 s4;
     s32 kind;
     s32 val;
     /* Keep the previous animation frame unsigned until each comparison. */
     u16 raw_val;
     s32 signed_val;
     /* PIN-DEBT: the current-frame comparison still needs $v0. */
-    register s32 signed_s4 asm("$2");
+    s32 signed_s4;
     FieldActor *matrix_arg;
     s32 *p;
     void *s3v = &arg0->callback;
@@ -266,7 +266,6 @@ void RoomEffect_GrabHold(RoomMotionTrigger *arg0) {
      * its memory clobber makes the flag store below reload the player and
      * its state, as retail does. */
     raw_val = val;
-    asm volatile("" : "=r"(raw_val) : "0"(raw_val) : "memory");
     if ((s16)val >= 0xE || (s16)s0 < 0xE) {
         signed_val = (s16)raw_val;
         if (signed_val >= 3) {
@@ -426,7 +425,6 @@ int RoomEffect_GroundSweepMark(int mode, RoomGroundSweepMark *state) {
                 signed_next = (s16)next;
         if (signed_next < 16) return 0;
         /* The two return paths must stay distinct. */
-        asm volatile("" ::: "memory");
         return 1;
     }
     case 2:

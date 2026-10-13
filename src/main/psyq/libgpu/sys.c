@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBGPU SYS.OBJ, part 1 of 11: ResetGraph, SetGraphDebug,
  * SetGraphQueue, GetGraphDebug, DrawSyncCallback, SetDispMask, DrawSync,
  * ClearImage, ClearImage2, LoadImage, StoreImage, MoveImage, ClearOTag,
@@ -17,7 +14,6 @@
 #include "pe1/psyq_bios.h"
 #include "pe1/psyq_callbacks.h"
 #include "pe1/psyq_gpu.h"
-#include "include_asm.h"
 
 #include "sys_externs.h"
 
@@ -95,7 +91,7 @@ int SetGraphQueue(int mode)
     int previous = state->queue;
     if (state->debugLevel >= 2) {
         /* Keep the two prior-state paths: stock GCC merges the calls after
-         * choosing the retail register lifetimes. Both log exactly once. */
+         * choosing the retail lifetimes. Both log exactly once. */
         if (previous) {
             g_GpuDebugPrintf(g_SetGraphQueFormat, mode);
         } else {
@@ -142,7 +138,6 @@ void SetDispMask(int mask) {
     }
 
     command = 0x03000000;
-    asm("" : "+r"(command));
     callbacks = g_GpuCallbacks;
     if (mask == 0) {
         command |= 1;
@@ -187,7 +182,7 @@ void checkRECT(char *name, RECT *rect) {
         int x = rect->x;
         int y = rect->y;
         int width = rect->w;
-        register int height asm("$3") = rect->h;
+        int height = rect->h;
         g_GpuDebugPrintf(g_RectCoordsFormat, x, y, width, height);
     }
 }
@@ -236,31 +231,27 @@ int MoveImage(RECT *rect, int x, int y) {
         return -1;
     }
     {
-        register u32 *packetData asm("$3");
+        u32 *packetData;
         GpuCallbacks *callbacks;
-        register u32 sourcePosition asm("$5");
+        u32 sourcePosition;
         u32 *packet;
         int packetSize;
         u32 destinationPosition;
-        register u32 destinationX asm("$4");
+        u32 destinationX;
         u32 size;
 
         destinationPosition = y << 16;
         packetData = g_GpuMoveImagePacket;
-        asm("" : "+r"(packetData));
         destinationX = x & 0xFFFF;
         destinationPosition |= destinationX;
         sourcePosition = ((GpuRectWords *)rect)->position;
         callbacks = g_GpuCallbacks;
-        asm("" : "+r"(sourcePosition), "+r"(callbacks));
         packetSize = 20;
-        asm("" : "+r"(packetSize));
         packetData[1] = destinationPosition;
         *packetData = sourcePosition;
         size = ((GpuRectWords *)rect)->size;
         packet = packetData - 2;
         packetData[2] = size;
-        asm("" : : "r"(size) : "memory");
         return callbacks->addque2(callbacks->u18.moveImage, packet, packetSize,
                                   0);
     }
@@ -291,7 +282,6 @@ u32 *ClearOTag(u32 *ot, int count) {
 
     mask = 0xFFFFFF;
     result = ot;
-    PE1_COMPILER_LAUNDER(result);
     terminator = &g_GpuOtTerminatorWord;
     address = PSX_ADDRESS(&g_GpuOtTerminatorTarget);
     address &= mask;
@@ -318,7 +308,6 @@ u32 *ClearOTagR(u32 *ot, int count) {
 
     mask = 0xFFFFFF;
     result = ot;
-    PE1_COMPILER_LAUNDER(result);
     terminator = &g_GpuOtTerminatorWord;
     address = PSX_ADDRESS(&g_GpuOtTerminatorTarget);
     address &= mask;
@@ -348,12 +337,10 @@ int DrawOTag(u32 *table)
     }
     {
         GpuCallbacks *callbacks = g_GpuCallbacks;
-        register void *argument asm("$5") = table;
+        void *argument = table;
         int count;
         /* Keep the dispatch load before the independently materialized zeros. */
-        asm volatile("" : "+r"(callbacks) : "r"(argument));
         count = 0;
-        asm volatile("" : "+r"(count));
         return callbacks->addque2(callbacks->u18.packet, argument, count, 0);
     }
 }

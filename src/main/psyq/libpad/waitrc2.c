@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBPAD WAITRC2: setRC2wait, chkRC2wait. */
 
 #include "pe1/psyq_pad_main.h"
@@ -12,14 +11,13 @@ void setRC2wait(int limit) {
 }
 
 int chkRC2wait(void) {
-    register u32 current asm("$4");
-    register u32 raw asm("$3");
+    u32 current;
+    u32 raw;
     u32 base;
     u32 limit;
 
     raw = *(volatile u16 *)0x1F801120;
     base = g_TimerTimeoutStart;
-    asm volatile("" : "=r"(raw) : "0"(raw));
     current = raw & 0xFFFF;
     if (current < base) {
         if (*(volatile u16 *)0x1F801128 != 0) {

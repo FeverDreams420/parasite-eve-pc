@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "pe1/akao.h"
 #include "pe1/asset_find.h"
 #include "pe1/battle.h"
@@ -470,7 +466,6 @@ int Battle_StepEnemyTurn(s8 mode) {
     return mode;
 }
 
-/* COMMON supplies small-data metadata to MASPSX. */
 u8 g_BattleActionQueueCount, D_8009CE60;
 u8 D_8009D2D8, g_BattleRemainingActions;
 
@@ -869,7 +864,7 @@ int Battle_ProcessActionSlot(BattleEntity *actor)
             } else {
                 /* Matching debt: retail sets the room argument before the
                  * test, in the branch delay slot. */
-                register int room asm("$4") = 0x5B;
+                int room = 0x5B;
                 if (actor == g_BattleActionQueue[index].actor) {
                     D_8009D208 = Scene_LoadRoomAssets(room, actor);
                     g_BattleActionActorCount = 0;
@@ -957,7 +952,6 @@ void Battle_UpdateEnemy(BattleEntity *entity) {
     u32 nextStatusFlags;
     u32 actionFlags;
 
-    asm("" : "=r"(actor) : "0"(actor));
     enemy = actor->core;
     statusCore = actor->core;
     {

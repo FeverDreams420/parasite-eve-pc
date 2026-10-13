@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-cse-skip-blocks */
-
 #include "menu_memcard_image.h"
 #include "menu_memcard_menu.h"
 #include "menu_memcard_screen.h"
@@ -206,8 +204,8 @@ s32 func_801909B4(void) {
     u8 *firstMemory;
     s32 searchKind;
     s32 wantedKind;
-    register u32 prefix asm("$3");
-    register u32 packedColor asm("$2");
+    u32 prefix;
+    u32 packedColor;
     RECT rect;
     RECT overlay;
     MemcardImageNode *oldFreeHead;
@@ -230,7 +228,7 @@ s32 func_801909B4(void) {
     u32 rgb1;
     u32 rgb2;
     MemcardImage *image;
-    register u8 *secondMemory asm("$5");
+    u8 *secondMemory;
     u32 *source;
     u32 *destination;
 
@@ -400,7 +398,7 @@ s32 func_801909B4(void) {
                     MemcardImageNode *pending = g_MemcardPendingNodeHead;
                     if (pending != 0) {
                         MemcardImageNode *tail = g_MemcardActiveNodeTail;
-                        register MemcardImageNode *nextTail asm("$2");
+                        MemcardImageNode *nextTail;
 
                         if (tail != 0) {
                             nextTail = g_MemcardPendingNodeTail;

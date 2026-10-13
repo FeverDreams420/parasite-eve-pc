@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -ffixed-10 -ffixed-11 -ffixed-15 -ffixed-21 -ffixed-22 -ffixed-23 -ffixed-24 -ffixed-25 */
-
 #include "pe1/gte.h"
 #include "pe1/scene_e20_hover_orb.h"
 
@@ -7,15 +5,15 @@
 
 /* mode 0: initialize; mode 1: advance the effect; mode 2: draw.
  * Pins and empty barriers preserve retail allocation and scheduling.
- * See docs/ASM_AND_GTE_POLICY.md for the matching debt. */
+ * This callback still requires native runtime integration. */
 s32 SceneE20_HoverOrbController(s32 mode, SceneE20TrailEffect *effect, SceneEffectSlot *command) {
-    register s32 initialMode asm("$20");
-    register SceneE20Color *initColor0 asm("$17");
-    register SceneE20Color *initColor1 asm("$19");
-    register u16 headPositionZ asm("$8");
-    register u16 headPositionY asm("$7");
-    register u16 headOffsetX asm("$2");
-    register u16 headPositionX asm("$3");
+    s32 initialMode;
+    SceneE20Color *initColor0;
+    SceneE20Color *initColor1;
+    u16 headPositionZ;
+    u16 headPositionY;
+    u16 headOffsetX;
+    u16 headPositionX;
     SceneE20Vec point;
     SceneE20Vec drawRotation;
     SceneE20Color beamColor;
@@ -24,10 +22,10 @@ s32 SceneE20_HoverOrbController(s32 mode, SceneE20TrailEffect *effect, SceneEffe
     SceneE20Color flashB;
     SceneE20Matrix matrix;
     s32 scale[3];
-    register SceneE20Color *oddColor asm("$8");
-    register SceneE20Color *evenColor asm("$6");
+    SceneE20Color *oddColor;
+    SceneE20Color *evenColor;
     SceneE20Actor *temp_v1_4;
-    register SceneE20Color *flashColor asm("$20");
+    SceneE20Color *flashColor;
     SceneE20Node *temp_a0;
     SceneE20Node *temp_a0_2;
     SceneE20Node *temp_v1_3;
@@ -43,14 +41,14 @@ s32 SceneE20_HoverOrbController(s32 mode, SceneE20TrailEffect *effect, SceneEffe
     s16 temp_v1;
     s16 temp_v1_2;
     s32 var_s0;
-    register s32 modelScale asm("$17");
+    s32 modelScale;
     u32 assetKey;
     s32 paletteX;
     s32 paletteY;
     s32 translationZ;
     s32 drawAngle;
     u32 particleZ, effectZ;
-    register u16 endpointX asm("$4");
+    u16 endpointX;
     s32 temp_ret;
     s32 temp_s0;
     s32 temp_s0_3;
@@ -59,14 +57,14 @@ s32 SceneE20_HoverOrbController(s32 mode, SceneE20TrailEffect *effect, SceneEffe
     s32 temp_v0_4;
     s32 var_a0;
     s32 var_a1_2;
-    register s32 particleIndex asm("$19");
+    s32 particleIndex;
     s32 var_v0;
     u16 temp_a1;
     u16 texturePage;
     u16 *pageIndex;
-    register int pageArg0 asm("$4");
-    register int pageArg1 asm("$5");
-    register int pageArg2 asm("$6");
+    int pageArg0;
+    int pageArg1;
+    int pageArg2;
     u32 textureIndex;
     u16 temp_v0_3;
     void *temp_v0;
@@ -298,10 +296,10 @@ update: {
         return 0;
     }
 render: {
-        register GteMatrix **matrixAddress asm("$5") = &D_800BCFA4.value;
+        GteMatrix **matrixAddress = &D_800BCFA4.value;
         {
             u32 *matrixWords;
-            asm volatile("" : "=r"(matrixWords) : "0"((u32 *)*matrixAddress) : "$2", "$3", "$4", "$7");
+            (matrixWords = (u32 *)*matrixAddress);
             gte_ldrotmatrix((const GteMatrixWords *)matrixWords);
             gte_ldtransmatrix((const GteMatrixWords *)matrixWords);
         }
@@ -319,8 +317,7 @@ render: {
         g_FieldFxSpriteParams.tpage = texturePage;
         {
             u32 *matrixWords;
-            asm volatile("" : "=r"(matrixWords) : "0"((u32 *)*matrixAddress) : "$2", "$3", "$4", "$7");
-            asm volatile("" : : "r"(matrixAddress));
+            (matrixWords = (u32 *)*matrixAddress);
             gte_ldrotmatrix((const GteMatrixWords *)matrixWords);
             gte_ldtransmatrix((const GteMatrixWords *)matrixWords);
         }
@@ -349,7 +346,6 @@ block_63:
             }
             pageArg0 = 0; pageArg1 = temp_s3; pageArg2 = 0;
                         pageIndex = &g_FieldFxTpageSlot11;
-            asm volatile("" : : "r"(pageIndex));
             texturePage = g_FieldFxTpageTable[*pageIndex];
 
             g_FieldFxSpriteParams.palette = 3;

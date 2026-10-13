@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /*
  * PSY-Q LIBGTE MSC02: InvSquareRoot, VectorNormalS, VectorNormal,
  * VectorNormalSS and MatrixNormal, plus the private normalizer at the
@@ -6,7 +5,7 @@
  * public entries pass the vector
  * to the private routine in t0..t2 and receive it back there, save ra in a3
  * instead of a stack frame, and VectorNormalS branches into the middle of
- * VectorNormalSS. PSY-Q 3.5 msc02.o has the same routines, register protocol
+ * VectorNormalSS. PSY-Q 3.5 msc02.o has the same routines, protocol
  * and local labels (RshiftI, CNTISQ, RTNISQRT, VectorNormalS_entry, ...);
  * 4.0 reordered some delay slots.
  */

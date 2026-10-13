@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBDS DSFILE.OBJ, part 1 of 2: DsSearchFile, _cmp. */
 /* DSFILE is split in two: DsSearchFile and _cmp only match with GCC 2.8.1
  * and -mno-split-addresses, the directory cache in dsfile_2.c only with
@@ -57,7 +54,7 @@ int g_DsCachedDiskType = 0;
 int dsfile_data_padding[2] = {0, 0};
 
 DslFILE *DsSearchFile(DslFILE *output, char *input_name) {
-    register DslFILE *out asm("$22") = output;
+    DslFILE *out = output;
     char *name = input_name;
     char component[32];
     signed char *path;
@@ -65,11 +62,11 @@ DslFILE *DsSearchFile(DslFILE *output, char *input_name) {
     char *cursor;
     int depth, directory;
     int not_found;
-    register DslFILE *entry asm("$16");
-    register int offset;
+    DslFILE *entry;
+    int offset;
     char *base;
-    register int zero asm("$0");
-    register char *entry_name;
+    int zero = 0;
+    char *entry_name;
     /* $zero supplies the independent cache offset without a redundant move. */
         if (g_DsCachedDiskType < DsShellOpen()) {
         if (!DS_newmedia()) return 0;
@@ -118,9 +115,9 @@ DslFILE *DsSearchFile(DslFILE *output, char *input_name) {
             /* Copy the aligned 24-byte record in the retail four-word/two-word order. */
             {
                 u32 word0 = ((u32 *)entry)[0];
-                register u32 word1 = ((u32 *)entry)[1];
-                register u32 word2 asm("$4") = ((u32 *)entry)[2];
-                register u32 word3 asm("$5") = ((u32 *)entry)[3];
+                u32 word1 = ((u32 *)entry)[1];
+                u32 word2 = ((u32 *)entry)[2];
+                u32 word3 = ((u32 *)entry)[3];
                 ((u32 *)out)[0] = word0;
                 ((u32 *)out)[1] = word1;
                 ((u32 *)out)[2] = word2;
@@ -130,10 +127,8 @@ DslFILE *DsSearchFile(DslFILE *output, char *input_name) {
                 ((u32 *)out)[4] = word0;
                 ((u32 *)out)[5] = word1;
             }
-            asm volatile("" : : "m"(*out));
             return entry;
         }
-        asm volatile("" : : "r"(depth));
     }
     if (CD_debug > 0) printf(g_DsComponentNotFoundFormat, component);
     return 0;

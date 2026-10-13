@@ -1,15 +1,9 @@
-/* CC1_FLAGS: -G8 -fno-schedule-insns */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/bounds_check.h"
 #include "pe1/draw_state.h"
 #include "pe1/menu_sound.h"
 #include "pe1/render_prim.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 unsigned char *D_8009D100;
 unsigned char *D_8009D104;
 int g_DrawTextDimmed;
@@ -20,43 +14,42 @@ unsigned int *D_8009D11C;
 void Draw_AllocColorQuad(int width, int height) {
     int w = width;
     int h = height;
-    register RenderGouraudQuad *first asm("$17");
-    register RenderGouraudQuad *packet asm("$10");
+    RenderGouraudQuad *first;
+    RenderGouraudQuad *packet;
     RenderGouraudQuad *second;
-    register RenderColorTilePacket *tile asm("$16");
-    register RenderDrawModePacket *drawMode asm("$17");
-    int stackPad[2];
+    RenderColorTilePacket *tile;
+    RenderDrawModePacket *drawMode;
     u8 *old, *next;
     int shadeOffset;
     int ratio;
     int minimum;
     int widthSmaller;
-    register u32 mask24 asm("$6");
+    u32 mask24;
     u32 maskTop;
-    register u32 *ot asm("$3");
+    u32 *ot;
     u32 firstTag;
     int firstY;
-    register int firstRight asm("$4");
+    int firstRight;
     int firstBottom;
     int firstLeft;
     int secondRight;
-    register int secondTop asm("$5");
+    int secondTop;
     int secondBottom;
     int secondBound;
     int tileY;
-    register u32 tileMask24 asm("$5");
+    u32 tileMask24;
     u32 tileMaskTop;
     int tileWidth;
     int tileHeight;
     int tileCode;
-    register u32 modeMask24 asm("$4");
+    u32 modeMask24;
     u32 modeMaskTop;
-    register u32 modeColor1 asm("$8");
-    register u32 modeColor2 asm("$7");
+    u32 modeColor1;
+    u32 modeColor2;
     u32 *modeOt;
     u32 modeTag;
     u32 secondTag;
-    register u32 linkHigh asm("$2");
+    u32 linkHigh;
     int darkColor;
     int darkerColor;
     DrawPrimLink link;
@@ -98,7 +91,6 @@ void Draw_AllocColorQuad(int width, int height) {
     }
     firstY = shadeOffset + 0xAA;
     firstRight = ratio + 0xE5;
-    asm volatile("" : "=r"(firstRight) : "0"(firstRight));
     firstBottom = shadeOffset + 0xAD;
     mask24 = 0xFFFFFF;
     firstTag = packet->tag;
@@ -150,14 +142,10 @@ void Draw_AllocColorQuad(int width, int height) {
     packet = second;
     secondRight = ratio + 0xE5;
     secondTop = shadeOffset + 0xAA;
-    asm volatile("" : "=r"(secondRight), "=r"(secondTop)
-        : "0"(secondRight), "1"(secondTop));
     secondBottom = shadeOffset + 0xAD;
-    asm volatile("" : "=r"(secondBottom) : "0"(secondBottom));
     mask24 = 0xFFFFFF;
     darkColor = 0x303030;
     darkerColor = 0x181818;
-    asm volatile("" : "=r"(darkerColor) : "0"(darkerColor));
     secondTag = packet->tag;
     packet->r2 = 0xFF;
     packet->r0 = 0xFF;
@@ -241,7 +229,6 @@ void Draw_AllocColorQuad(int width, int height) {
     modeMask24 = 0xFFFFFF;
     modeColor1 = 0x808080;
     modeColor2 = 0x400000;
-    asm volatile("" : "=r"(modeColor2) : "0"(modeColor2));
     modeMaskTop = 0xFF000000;
     modeTag = drawMode->tag;
     modeOt = D_8009D11C;

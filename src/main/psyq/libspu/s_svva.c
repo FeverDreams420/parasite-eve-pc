@@ -1,5 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* PSY-Q LIBSPU S_SVVA: SpuSetVoiceVolumeAttr. */
 
 #include "common.h"
@@ -44,7 +42,6 @@ void SpuSetVoiceVolumeAttr(int voice, u16 left, u16 right, s16 leftMode, u16 rig
     ((SpuVoiceRegs *)((u16 *)_spu_RXX + voice))->volume_right = leftMode | rightFlags;
     work.value = 1;
     /* Keep the counter initialization after the delay seed store. */
-    asm volatile("" : : : "memory");
     *(int *)&work.i = 0;
     while (work.i < 2) {
         current = work.value;

@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-strength-reduce */
-
 #include "common.h"
 #include "pe1/asset_find.h"
 #include "pe1/battle.h"
@@ -17,7 +15,7 @@
 int FieldFx_UpdateStripCollision(char *data, void *unused, int *hit) {
     GteShortVector local[5];
     FieldTexturedStrip *data_s3 = (FieldTexturedStrip *)data;
-    register FieldTexturedChainNode *entry asm("$17");
+    FieldTexturedChainNode *entry;
     int *hit_s4;
     u32 i;
     u32 idx;

@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle.h"
 #include "pe1/battle_entity_anim.h"
@@ -21,8 +17,6 @@
 #include "pe1/render_prim.h"
 #include "pe1/script_state.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 s32 g_BattleStatusPanelSlot;
 u8 g_BattleSpritePrimCountdown;
 u8 g_MenuActiveMode;
@@ -42,7 +36,7 @@ u16 GetClut(int, int);
  * name is retained; this routine sets up more than the HP bar.
  * Loops that write a sprite after initializing its packet address the sprite
  * through BATTLE_SPRITE_SLOTS, which keeps the sprite base in its own
- * register as the retail code does.
+ * as the retail code does.
  */
 void Battle_DrawHPBar(void) {
     BattleHudShades shades;
@@ -333,9 +327,9 @@ void Battle_BuildStatusPrimHeader(RenderObjectEntity *, s8);
 void Battle_DrawSpellName(void);
 void Battle_DrawStatusSymbol(s8);
 void Battle_DrawStatusOverlay(RenderObjectEntity *object, int mode, int outOfRange, int entityId) {
-    register int modeArg asm("$5") = mode;
+    int modeArg = mode;
     if ((s8)modeArg != 8) {
-        register int modeMinusOne asm("$2") = modeArg - 1;
+        int modeMinusOne = modeArg - 1;
         if ((u8)modeMinusOne < 2) {
             u32 slot = g_ActiveDrawSlot;
             g_BattleStatusBarTiles[slot * 3].x0 = 0x78;
@@ -549,9 +543,9 @@ void Battle_DrawTargetHighlight(void)
     BattleGaugePrim *packets;
     int slot;
     unsigned slot_offset;
-    register unsigned first_offset asm("$4");
-    register unsigned index_offset asm("$5");
-    register unsigned char texture_v asm("$18");
+    unsigned first_offset;
+    unsigned index_offset;
+    unsigned char texture_v;
     if (((g_ActiveActor->action->turnWord >> 4) & 3) == 0) {
         return;
     }
@@ -568,7 +562,6 @@ void Battle_DrawTargetHighlight(void)
         }
         HighlightSpriteAt(base, g_ActiveDrawSlot, first_offset)->v = texture_v;
         /* Preserve the retail store before recomputing the next packet offset. */
-        __asm__ volatile("" : : : "memory");
         index_offset = index * sizeof(BattleGaugePrim);
         slot = g_ActiveDrawSlot;
         slot_offset = slot * 3 * sizeof(BattleGaugePrim);
@@ -596,8 +589,8 @@ void Battle_DrawTargetHighlight(void)
 
 void Battle_DrawSpellName(void) {
     s32 c;
-    register s32 packetOffset asm("$3");
-    register s32 workValue asm("$4");
+    s32 packetOffset;
+    s32 workValue;
     s32 c1;
     s16 ys;
     s16 xs;
@@ -617,7 +610,7 @@ void Battle_DrawSpellName(void) {
     if ((g_ActiveActor->action->attackWord & 0x300000) == 0x200000) {
         u8 *q508;
         workValue = 0x130;
-        __asm__ __volatile__("" :: "r"(workValue));
+
         q508 = D_8009E508;
         {
             RenderSpritePacket *pa;
@@ -657,7 +650,7 @@ void Battle_DrawSpellName(void) {
             eo = cD * 0x118;
             cD = cD * 4;
             *(s16 *)(D_8009E516 + eo) = clut;
-            __asm__ __volatile__("");
+
             {
                 BattleStatusPrimAddress entry;
 
@@ -748,16 +741,15 @@ void Battle_DrawSpellName(void) {
                 packetOffset = workValue * 0x118;
                 packetOffset = s0 + packetOffset;
                                 *(s16 *)(D_8009E516 + packetOffset) = clut;
-                __asm__ __volatile__("");
+
             }
             {
                 s32 j7;
                 s32 t2;
-                register s32 cJ asm("$6");
-                register s32 a2v asm("$5");
+                s32 cJ;
+                s32 a2v;
                 {
                     workValue = i;
-                    __asm__("" : "=r"(workValue) : "0"(workValue));
                     j7 = workValue * 7;
                 }
                 j7 <<= 2;
@@ -884,7 +876,7 @@ void Battle_DrawStatusValue(int value, int yOffset)
     int activeSlot;
     BattleStatusMarkerBody *marker;
     int savedValue;
-    register u64 x;
+    u64 x;
     u16 y;
     u32 drawSlotOffset;
 
@@ -990,12 +982,12 @@ void Battle_DrawStatusPanel(s32 mode, BattleStatusPanel *input) {
     u8 digits[56];
     s32 screenY;
     s16 panelValue;
-    register s32 number asm("$6");
+    s32 number;
     s32 screenX;
     s32 missFrameOffset;
     s32 panelOffset;
     s32 timer;
-    register RenderSpritePacket *missSprite asm("$2");
+    RenderSpritePacket *missSprite;
     s16 value;
     s16 quotient;
     s8 n;
@@ -1004,16 +996,14 @@ void Battle_DrawStatusPanel(s32 mode, BattleStatusPanel *input) {
     panelValue = panel->value;
     number = panelValue;
     if ((panelValue < 0) && (number = 0, ((mode & 0xFF) == 1))) {
-        register s32 frame asm("$2") = g_ActiveDrawSlot;
-        register s32 slotIndex asm("$4") = g_BattleStatusPanelSlot;
-        register s32 x asm("$6") = panel->x;
-        register s32 y asm("$7");
+        s32 frame = g_ActiveDrawSlot;
+        s32 slotIndex = g_BattleStatusPanelSlot;
+        s32 x = panel->x;
+        s32 y;
         timer = panel->timer;
         y = panel->y;
         *(D_800B01CC + ((slotIndex * 0x8C) + (frame * 0x578))) = timer * 4;
-        asm("" : : : "memory");
         screenX = x - 16;
-        asm("" : : "r"(screenX));
         timer -= 30;
         screenY = y + timer;
         *(D_800B01CD + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0;
@@ -1116,13 +1106,13 @@ void Draw_QueuePrimitive(void) {
  * back 8 bytes for the packet; see CODE_ORGANIZATION.md. */
 #define INDEX_STRIDE(i) ((((((i) << 1) + (i)) << 3) - (i)) << 2) - (i)
 
-#define EMIT_CODED(code_expr) ({ asm volatile(""); ({  \
+#define EMIT_CODED(code_expr) ({ ({  \
     int packet_code; \
-    register char *base asm("$6"); \
-    register int code_off asm("$3"); \
+    char *base; \
+    int code_off; \
     int idx; \
     int idx_off; \
-    register void *prim asm("$5"); \
+    void *prim; \
     void *packet; \
     void *ot; \
     packet_code = (code_expr); \
@@ -1163,7 +1153,7 @@ void Draw_QueuePrimitive(void) {
     int idx; \
     char *base; \
     int idx_off; \
-    register void *packet asm("$3"); \
+    void *packet; \
     idx = g_ActiveDrawSlot; \
     base = (base_sym); \
     idx_off = INDEX_STRIDE(idx) << 2; \
@@ -1178,12 +1168,12 @@ void Draw_QueuePrimitive(void) {
 void Draw_StatusIcons(void) {
     Combatant *s1;
     int s0;
-    register int s2 asm("$18");
-    register int s3 asm("$19");
+    int s2;
+    int s3;
     s32 *s4;
     u8 mode;
     int bits;
-    register int code asm("$5");
+    int code;
 
     s1 = g_ActiveActor;
     mode = g_MenuActiveMode;

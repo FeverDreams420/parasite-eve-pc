@@ -50,7 +50,7 @@ void GameTime_PackTime(u32 *src, PackedTime *out) {
 int Draw_CheckDrawStatus(void);
 
 void Scene_TickTimers(void) {
-    register GameTimerEntry *entry asm("$5");
+    GameTimerEntry *entry;
     int *current_p;
     u32 *flags_p;
     int *limit_p;

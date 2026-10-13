@@ -272,9 +272,7 @@ u8 Render_StepFontLoad(void) {
     Render_LoadFontGlyph(code);
 
     digit = (u8)(g_FontSelectionCodeIndex % 10) != 0;
-    asm("" : "=r"(digit) : "0"(digit));
     g_FontSelectionState.selected = Font_FindCodeSlot(g_FontSelectionState.table, digit);
-    __asm__ volatile("" : "=m"(g_FontSelectionState) : "m"(g_FontSelectionState));
     result = g_FontSelectionState.table;
     return result->groups.codes[result->slots.indices[g_FontSelectionSelectedSlot]];
 }
@@ -303,7 +301,6 @@ u8 Render_FindFontGlyphSlot(void) {
     g_FontSelectionState.code = code;
     Render_LoadFontGlyph(code);
     g_FontSelectionSelectedSlot = Font_FindCodeSlot(g_FontSelectionState.table, 2);
-    __asm__ volatile("" : "=m"(g_FontSelectionState) : "m"(g_FontSelectionState));
     result = g_FontSelectionState.table;
     return result->groups.codes[result->slots.indices[g_FontSelectionState.selected]];
 }
@@ -358,7 +355,6 @@ unsigned char Render_SetFontGlyphByCode(unsigned char code)
         selected = findSlot(0);
     g_FontSelectionSelectedSlot = selected;
     /* Keep retail's store and reload of the selected byte. */
-    asm volatile("" : "=m"(g_FontSelectionSelectedSlot) : "0"(g_FontSelectionSelectedSlot));
     {
         FontGlyphTable *table = g_FontSelectionState.table;
         int index = g_FontSelectionSelectedSlot;
@@ -418,7 +414,6 @@ int Menu_FindSelectedEquipSlotItem(void) {
     FontGlyphTable *result;
 
     g_FontSelectionState.selected = Font_FindCodeSlot(g_FontSelectionState.table, 3);
-    __asm__ volatile("" : "=m"(g_FontSelectionState) : "m"(g_FontSelectionState));
     result = g_FontSelectionState.table;
     return result->groups.codes[result->slots.indices[g_FontSelectionSelectedSlot]];
 }

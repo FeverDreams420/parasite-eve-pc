@@ -45,7 +45,6 @@ void Scene_UpdatePlayerEntity(BattleEntity *entity, int *actionState)
     if ((g_PadPackets[0].header & 0xF000) == 0x7000) {
         int angle;
         angle = ratan2(g_PadPackets[0].leftY - 128, g_PadPackets[0].leftX - 128) - 0x400;
-        PE1_COMPILER_LAUNDER(angle);
         if (angle < 0) angle += 0x1000;
         entity->facingAngle = g_CameraBaseAngleAnalog + angle;
         movement.x = Math_FixedMul(-speed, rsin(angle) << 4);
@@ -150,7 +149,6 @@ void Scene_UpdateEntityFacing(BattleEntity *entity, int *actionState)
     if ((g_PadPackets[0].header & 0xF000) == 0x7000) {
         int angle;
         angle = ratan2(g_PadPackets[0].leftY - 128, g_PadPackets[0].leftX - 128) - 0x400;
-        PE1_COMPILER_LAUNDER(angle);
         if (angle < 0) angle += 0x1000;
         entity->facingAngle = g_CameraBaseAngleAnalog + angle;
         movement.x = Math_FixedMul(-speed, rsin(angle) << 4);
@@ -251,7 +249,6 @@ void Scene_UpdateEntityFacingFromPad(BattleEntity *entity) {
     if ((g_PadPackets[0].header & 0xF000) == 0x7000) {
         angle = ratan2(g_PadPackets[0].leftY - 128, g_PadPackets[0].leftX - 128) - 0x400;
         /* Keep the wrapped-angle correction based on the adjusted value. */
-        asm volatile("" : "=r"(angle) : "0"(angle));
         if (angle < 0) angle += 0x1000;
         angle += g_CameraBaseAngleAnalog;
     } else {
@@ -277,7 +274,6 @@ void Scene_UpdateEntityFacingFromPad(BattleEntity *entity) {
     angle &= 0xFFF;
     entity->facingAngle = angle;
     /* Retail reloads both the mode flags and the stored facing angle. */
-    asm volatile("" : : : "memory");
     if (D_8009D2E8 & FIELD_MOVE_CONFUSED) entity->facingAngle = (0x1000 - (u16)entity->facingAngle) & 0xFFF;
 }
 

@@ -121,8 +121,7 @@ extern RoomFxSpritePacket g_RoomEruptionShadowPacket;
 extern RoomFxSpritePacket g_RoomEruptionRingPacket;
 /* The debris packet's depth as its own symbol: the debris draw stores the
  * floor shadow's depth through a separate address, and a store through the
- * packet would let the compiler keep the packet's address in a register
- * across the loop. */
+ * packet would let the compiler keep the packet's address in a * across the loop. */
 extern s16 g_RoomEruptionDebrisDepth;
 
 /* The eruption's module class (ground_eruption.c), in

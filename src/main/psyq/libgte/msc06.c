@@ -36,10 +36,10 @@ void LoadAverage0(void *first, void *second, int first_scale, int second_scale,
 void LoadAverageShort12(void *first, void *second, int first_scale,
                         int second_scale, void * volatile output) {
     int lzcr;
-    register int *out asm("$13");
-    register int gte_x asm("$8");
-    register int gte_y asm("$9");
-    register int gte_z asm("$10");
+    int *out;
+    int gte_x;
+    int gte_y;
+    int gte_z;
 
     gte_x = ((int *)first)[0];
     gte_z = ((volatile int *)first)[1];
@@ -76,10 +76,10 @@ void LoadAverageShort12(void *first, void *second, int first_scale,
 void LoadAverageShort0(void *first, void *second, int first_scale,
                        int second_scale, void * volatile output) {
     int lzcr;
-    register int *out asm("$13");
-    register int gte_x asm("$8");
-    register int gte_y asm("$9");
-    register int gte_z asm("$10");
+    int *out;
+    int gte_x;
+    int gte_y;
+    int gte_z;
 
     gte_x = ((int *)first)[0];
     gte_z = ((volatile int *)first)[1];
@@ -116,10 +116,10 @@ void LoadAverageShort0(void *first, void *second, int first_scale,
 void LoadAverageByte(void *first, void *second, int first_scale,
                      int second_scale, void * volatile output) {
     int lzcr;
-    register unsigned char *out asm("$13");
-    register int gte_x asm("$8");
-    register int gte_y asm("$9");
-    register int gte_shift asm("$11");
+    unsigned char *out;
+    int gte_x;
+    int gte_y;
+    int gte_shift;
 
     gte_load_byte2(first);
     gte_ldir0(first_scale);
@@ -139,17 +139,16 @@ void LoadAverageByte(void *first, void *second, int first_scale,
     gte_y >>= gte_shift;
     out[0] = gte_x;
     out[1] = gte_y;
-    asm volatile("" : : : "memory");
 }
 
 void LoadAverageCol(void *first, void *second, int first_scale,
                     int second_scale, void * volatile output) {
     int lzcr;
-    register unsigned char *out asm("$13");
-    register int gte_x asm("$8");
-    register int gte_y asm("$9");
-    register int gte_z asm("$10");
-    register int gte_shift asm("$11");
+    unsigned char *out;
+    int gte_x;
+    int gte_y;
+    int gte_z;
+    int gte_shift;
 
     gte_load_byte3(first);
     gte_ldir0(first_scale);
@@ -173,5 +172,4 @@ void LoadAverageCol(void *first, void *second, int first_scale,
     out[0] = gte_x;
     out[1] = gte_y;
     out[2] = gte_z;
-    asm volatile("" : : : "memory");
 }

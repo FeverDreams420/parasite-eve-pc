@@ -1,4 +1,4 @@
-name: pc
+name: native-c
 
 on:
   push:
@@ -16,5 +16,5 @@ jobs:
         run: git submodule update --init third_party/psyz third_party/psyz/external/SDL
       - name: Build the host smoke test
         run: |
-          cmake -S pc -B pc/build
-          cmake --build pc/build
+          cmake -S . -B build
+          cmake --build build --parallel

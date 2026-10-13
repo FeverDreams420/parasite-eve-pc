@@ -379,7 +379,7 @@ int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM08
 /* Bouncing glint particle callback for the room_m086 controller: mode 1
  * moves it (drift, then fall and bounce), mode 2 draws it. Both draws read
  * the palette kind back from the parameter block, which keeps the block
- * address in a saved register for the parameter02 read after the clut call.
+ * address in a saved for the parameter02 read after the clut call.
  * The switches have no default arms so the last draw falls straight into
  * the shared return label, which lets each phase 0 draw cross-jump only the
  * call. */

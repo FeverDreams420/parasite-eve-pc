@@ -1,5 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* PSY-Q LIBSPU S_SCA: SpuSetCommonAttr. */
 
 #include "common.h"
@@ -8,13 +6,12 @@
 void SpuSetCommonAttr(SpuCommonAttr *attr) {
     /* Read raw volume bits through the corresponding unsigned halfword view. */
     u16 left = 0;
-    register u16 right asm("$8");
+    u16 right;
     u32 mask;
     int all;
     u32 mode;
 
     /* Keep the initial zero values independent and before the mask read. */
-    asm volatile("" : "+r"(left));
     mask = attr->mask;
     all = mask == 0;
     right = 0;
@@ -78,5 +75,4 @@ void SpuSetCommonAttr(SpuCommonAttr *attr) {
         else _spu_RXX->spucnt |= 2;
     }
     /* Preserve the right-volume temporary and the common return block. */
-    asm volatile("" : : "r"(right));
 }

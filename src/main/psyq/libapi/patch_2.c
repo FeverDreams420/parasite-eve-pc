@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBAPI PATCH, part 2 of 2: _patch_pad. */
 
 #include "pe1/psyq_asm.h"
@@ -43,8 +42,3 @@ PSYQ_ASM_FUNCTION(_patch_pad,
     "    nop\n"
     "    jr      $ra\n"
     "    nop\n");
-
-unsigned int gap_pad_Pad_DequeueHandler_tail_6EA9C[] __attribute__((section(".text"))) = {
-    0x00000000,
-    0x00000000,
-};

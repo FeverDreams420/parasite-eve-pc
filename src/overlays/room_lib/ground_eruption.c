@@ -76,7 +76,7 @@ static const RoomFxVec4 s_EruptionDebrisScale = { 0x226, 0x226, 0x226, 0 };
 void RoomEffect_GroundEruptionInit(RoomEnt *owner, void *arg1, RoomEruptionActor *state) {
     RoomLink *entity;
     int asset;
-    register RoomEnt *callOwner asm("$4");
+    RoomEnt *callOwner;
     int depth;
     int color;
     int offset;
@@ -84,7 +84,7 @@ void RoomEffect_GroundEruptionInit(RoomEnt *owner, void *arg1, RoomEruptionActor
     RoomEruptionActor *workState;
     RoomSpriteMatrix *workMatrix;
 
-    asm("" : "=r"(workState) : "0"(state));
+    (workState = state);
     FieldFx_SetScriptContext(workState);
     workState->cooldown = 0;
     workState->collisionState = 0;
@@ -104,8 +104,7 @@ void RoomEffect_GroundEruptionInit(RoomEnt *owner, void *arg1, RoomEruptionActor
     g_RoomEruptionGlowPacket.mode = 3;
     {
         int minus50;
-        asm volatile("" : "=r"(minus50), "=r"(depth), "=r"(color)
-                     : "0"(-50), "1"(0x80), "2"(0x80));
+        (minus50 = -50, depth = 0x80, color = 0x80);
         g_RoomEruptionGlowPacket.offset = minus50;
     }
     g_RoomEruptionRingPacket.code = 0x20;
@@ -114,15 +113,12 @@ void RoomEffect_GroundEruptionInit(RoomEnt *owner, void *arg1, RoomEruptionActor
     g_RoomEruptionShadowPacket.code = 0x40;
     {
         int two;
-        asm volatile("" : "=r"(two), "=r"(offset)
-                     : "0"(2), "1"(-41));
+        (two = 2, offset = -41);
         g_RoomEruptionShadowPacket.mode = two;
     }
     g_RoomEruptionDebrisPacket.code = 0x47;
     modeB = 5;
-    PE1_COMPILER_LAUNDER(workState);
     workMatrix = &workState->matrix;
-    PE1_COMPILER_LAUNDER(workMatrix);
     g_RoomEruptionGlowPacket.depth = depth;
     g_RoomEruptionRingPacket.depth = depth;
     g_RoomEruptionShadowPacket.depth = depth;
@@ -413,13 +409,10 @@ void RoomEffect_GroundEruptionDrawRing(void *arg0, void *arg1, RoomEruptionRing 
     rawOwner = FieldFx_GetScriptContext();
     i = 0;
     depthAddress = (char *)&g_RoomEruptionRingPacket.depth;
-    PE1_COMPILER_USE(depthAddress);
     packetDepth = (s16 *)depthAddress;
     packetAddress = (char *)packetDepth - 10;
-    PE1_COMPILER_USE(packetAddress);
     packet = (RoomFxSpritePacket *)packetAddress;
     owner = rawOwner;
-    PE1_COMPILER_LAUNDER(owner);
     FieldFx_SetSpriteTexturePreset((s8)owner->asset.page);
     FieldFx_SetSpriteCellSize(0x20, 0x20);
     FieldFx_SetSpriteColorMode(0x10);

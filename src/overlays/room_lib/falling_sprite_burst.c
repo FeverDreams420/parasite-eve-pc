@@ -99,7 +99,7 @@ ROOM_REARM_TIMER_TICK(RoomEffect_FallingBurstTick, 4)
 
 
 /* Places the sprite at the actor's offset and gives it a random sideways
- * drift, or the actor's facing when script register 1 is set. */
+ * drift, or the actor's facing when script 1 is set. */
 void RoomEffect_InitFallingSprite(void *entity, void *unused,
                               RoomFallingSpriteState *state) {
     RoomFxSeed8 positionSeed;
@@ -264,8 +264,7 @@ void RoomEffect_UpdateFallingSprite(void *entity, RoomFallingBurstControl *contr
             }
         }
     } else {
-        register RoomFallingSpriteState *motion asm("$16") = state;
-        asm("" : "=r"(motion) : "0"(motion));
+        RoomFallingSpriteState *motion = state;
         motion->x += motion->velocityX;
         motion->z += motion->velocityZ;
         motion->y += motion->verticalStep >> 8;

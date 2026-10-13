@@ -77,7 +77,7 @@ typedef struct CollisionPlane {
 extern CollisionPlane *g_CollisionPlaneTable;
 /* Flat mode: per-region records that start with the region height. The
  * floor search adds the slot offset to the table address as integers, which
- * keeps the sum in the offset register as retail does. */
+ * keeps the sum in the offset as retail does. */
 typedef union CollisionRegionTable {
     CollisionRegionEntry *entries;
     u32 address;

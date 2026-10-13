@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/draw_state.h"
 #include "pe1/inventory.h"
@@ -21,10 +17,7 @@
 #include "pe1/menu_widget.h"
 #include "pe1/save_tail_state.h"
 #include "pe1/text.h"
-#include "m2c_macros.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_MenuItemPrimListHandles[2];
 int g_InvSelectedItemIndex;
 int g_InvSwapTargetIndex;
@@ -55,7 +48,7 @@ int Menu_StepEquipConfirm(MenuWidgetNode *node, int input);
 void Menu_DrawEquipSelectionList(MenuWidgetNode *node);
 
 void Menu_StepSkillList(MenuWidgetNode *arg0, s32 arg1) {
-    M2C_UNK var_a0_2;
+    int var_a0_2;
     MenuWidgetNode *saved_arg0 = arg0;
     s32 saved_arg1 = arg1;
     s32 temp_v0;
@@ -74,7 +67,6 @@ void Menu_StepSkillList(MenuWidgetNode *arg0, s32 arg1) {
                 s32 one = 1;
                 mask = one << temp_shift;
                 /* Keep the shift source separate from the resulting filter mask. */
-                asm volatile("" : : "r"(one));
             }
             Inv_BuildFilteredPackedListExcluding(mask, temp_v0);
         }
@@ -372,7 +364,7 @@ void Menu_StepItemDetailPanel2(void) {
 
     {
         u8 *suffix;
-        register u8 *text_buf asm("$4");
+        u8 *text_buf;
 
         suffix = Text_LookupTable4(0x1A);
         text_buf = g_MenuItemLabelBuffer;

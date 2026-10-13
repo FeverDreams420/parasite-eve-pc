@@ -623,7 +623,7 @@ int Akao_LookupPitchPeriod(int instrument, int note, int detune) {
     period = *(int *)offset;
     shift = octave;
 
-    /* Both paths leave the octave in its own register for the upward shift,
+    /* Both paths leave the octave in its own for the upward shift,
      * so the copy is restated on the detune path. */
     if (detune != 0) {
         period += (unsigned int)(period * detune) >> 7;
@@ -915,7 +915,7 @@ void SeqOp_SetTempo(void *ptr)
 {
   unsigned char *stream = *((unsigned char **) ptr);
   AkaoSequencerBank *track;
-  register unsigned int value;
+  unsigned int value;
   *((unsigned char **) ptr) = stream + 1;
   track = g_AkaoCurTrack;
   ;
@@ -1106,7 +1106,7 @@ void SeqOp_SlideVolume(AkaoTrack *track) {
 
 void SeqOp_SetVolumeOrExpression(AkaoTrack *track) {
     AkaoU32 new_var;
-    register unsigned char *cursor;
+    unsigned char *cursor;
     int value;
 
     if ((track->flags & AKAO_TRACK_FLAG_BRANCH_ACTIVE) != 0) {
@@ -1117,10 +1117,10 @@ void SeqOp_SetVolumeOrExpression(AkaoTrack *track) {
             track->volume = value << 7;
         }
     } else {
-        register unsigned char *cursor2;
-        register unsigned char *next;
-        register unsigned int flags;
-        register int value2;
+        unsigned char *cursor2;
+        unsigned char *next;
+        unsigned int flags;
+        int value2;
 
         cursor2 = track->pc;
         next = cursor2 + 1;
@@ -1357,7 +1357,7 @@ void SeqOp_SetReturnPoint(AkaoTrack *track) {
 void SeqOp_LoadInstrumentFromIndex(void *ptr)
 {
   int value;
-  register int base;
+  int base;
 
   base = ((AkaoTrack *)ptr)->note_pitch;
   base = ((int)&g_AkaoInstrumentTable) + (base << 6);
@@ -1780,7 +1780,7 @@ unsigned int SeqOp_SetTrack5AValue(void *ptr)
 {
   u8 *pc;
   int value;
-  register AkaoSequencerBank *track;
+  AkaoSequencerBank *track;
   pc = *((u8 **) ptr);
   *((u8 **) ptr) = pc + 1;
   value = pc[0];

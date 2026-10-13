@@ -10,7 +10,7 @@
 typedef PsyqVoidCallback SpuCallback;
 
 /*
- * SPU_RXX register map from Psy-Q libspu.  The three transfer registers are
+ * SPU_RXX map from Psy-Q libspu.  The three transfer registers are
  * at the same offsets as the SDK's trans_addr, spucnt, and spustat fields.
  */
 typedef struct SpuVoiceRegs {
@@ -99,7 +99,7 @@ extern SpuRegs *_spu_RXX;
 extern u32 *_spu_sys_pcr;
 extern volatile u32 *g_SpuDmaMadrPtr;
 /* A reverb work-area table entry as the address word SpuClearReverbWorkArea
- * keeps in the register it then reuses for the byte count. */
+ * keeps in the it then reuses for the byte count. */
 typedef union SpuReverbEntryAddress {
     u32 *entry;
     u32 word;

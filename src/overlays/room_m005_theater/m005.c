@@ -188,7 +188,7 @@ int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state) {
  * sprite at joint 20. The first draw's intensity, the streak step and its
  * width are separate variables (all land in s0), while the streak fade and
  * the final size share one, and parameter02 is written second: each of
- * these decides retail's register choice. */
+ * these decides retail's choice. */
 
 int RoomM005_CrossFlare(int mode) {
     GteShortVector position;

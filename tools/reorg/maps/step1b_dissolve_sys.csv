@@ -1,3 +1,0 @@
-old,new
-src/main/sys/Sys_GameStateAndVoiceBanks.c,src/main/asset/Sys_GameStateAndVoiceBanks.c
-src/main/sys/Sys_ReportError.c,src/main/draw/Sys_ReportError.c

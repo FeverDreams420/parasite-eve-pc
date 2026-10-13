@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/akao.h"
 #include "pe1/asset_tim.h"
@@ -28,8 +24,6 @@
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_transition.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 u8 D_8009CDC8;
 
 typedef struct { char b[16]; } __attribute__((aligned(1), packed)) Copy16u;
@@ -53,7 +47,7 @@ void Scene_LoadSceneData(void) {
     SceneCopyCursor src;
     SceneCopyCursor dst;
     u8 *end;
-    register u8 *copyEnd asm("$8");
+    u8 *copyEnd;
 
     rect.w = 0x3FF;
     rect.x = 0;
@@ -138,7 +132,7 @@ restart4:
     {
         SceneCopyCursor to, from;
         to.bytes = state->bank_work_far_end;
-        __asm__ __volatile__("" : "=r"(to.word) : "0"(to.word));
+
         from.bytes = state->scene_load_scratch;
         end = from.bytes + 0x1400;
         if ((from.word | to.word) & 3) {
@@ -791,7 +785,6 @@ retry:
             do {
                 unsigned id;
                 union { Pe1GameState *state; u32 address; } destination;
-                asm("" : "=r"(record) : "0"(record), "r"(offsetMask));
                 id = record->source.bytes.id;
                 /* The row id indexes the flattened bank row table. */
                 destination.state = state;
@@ -799,7 +792,6 @@ retry:
                 destination.state->bank_rows[0][0] = SceneAsset_ResolveOffset(
                     blob, record->source.offsetAndId & offsetMask);
                 packed = directory->bankRowEntries;
-                asm volatile("" : "=r"(packed) : "0"(packed));
                 ++i;
                 ++record;
             } while (i < (packed >> 22));
@@ -979,7 +971,7 @@ int Scene_LoadEntityTextures(void)
     /*
      * Recorded crutch debt: retail's state re-dispatch is a goto restart
      * loop, not reproducible with a structured loop in stock GCC 2.7.2
-     * (loop depth would reweight register priorities).
+     * (loop depth would reweight priorities).
      */
 retry:
     switch (state->scene_init_subphase) {

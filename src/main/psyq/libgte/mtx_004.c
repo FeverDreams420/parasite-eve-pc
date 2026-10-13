@@ -7,14 +7,14 @@
  * Empty outputs on architectural $0 retain retail's relative branches;
  * the final sign-dependent shifts deliberately preserve its wrapping path. */
 GteVector *ApplyMatrixLV(const GteMatrix *matrix, const GteVector *v, GteVector *out) {
-    register s32 x asm("$8");
-    register s32 y asm("$9");
-    register s32 z asm("$10");
-    register s32 hx asm("$11");
-    register s32 hy asm("$12");
-    register s32 hz asm("$13");
-    register int zero asm("$0");
-    register GteVector *dst asm("$6") = out;
+    s32 x;
+    s32 y;
+    s32 z;
+    s32 hx;
+    s32 hy;
+    s32 hz;
+    int zero = 0;
+    GteVector *dst = out;
     const GteMatrixWords *m = (const GteMatrixWords *)matrix;
     x = m->r11_r12;
     y = m->r13_r21;
@@ -40,7 +40,6 @@ GteVector *ApplyMatrixLV(const GteMatrix *matrix, const GteVector *v, GteVector 
     }
     }
 positive_x:
-    asm volatile("" : "=r"(x) : "0"(x));
     hx = x >> 15;
     x &= 0x7fff;
 split_x:
@@ -55,7 +54,6 @@ split_x:
     }
     }
 positive_y:
-    asm volatile("" : "=r"(y) : "0"(y));
     hy = y >> 15;
     y &= 0x7fff;
 split_y:
@@ -70,7 +68,6 @@ split_y:
     }
     }
 positive_z:
-    asm volatile("" : "=r"(z) : "0"(z));
     hz = z >> 15;
     z &= 0x7fff;
 split_z:
@@ -90,7 +87,6 @@ split_z:
     if (hx < 0) {
     hx = 0U - hx;
     hx = hx << 3;
-    asm volatile("" : "=r"(zero));
     hx = 0U - hx;
     if (zero == 0) {
         goto shifted_x;
@@ -102,7 +98,6 @@ shifted_x:
     if (hy < 0) {
     hy = 0U - hy;
     hy = hy << 3;
-    asm volatile("" : "=r"(zero));
     hy = 0U - hy;
     if (zero == 0) {
         goto shifted_y;
@@ -114,7 +109,6 @@ shifted_y:
     if (hz < 0) {
     hz = 0U - hz;
     hz = hz << 3;
-    asm volatile("" : "=r"(zero));
     hz = 0U - hz;
     if (zero == 0) {
         goto shifted_z;
@@ -132,6 +126,5 @@ shifted_z:
     dst->x = x;
     dst->y = y;
     dst->z = z;
-    asm volatile("" : "=r"(dst) : "0"(dst));
     return dst;
 }

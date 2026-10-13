@@ -8,7 +8,7 @@
 /* Script-state work area (obj+0xC, pointed at by g_FieldFxScriptState).
  * FieldFx_RunScript interprets the command table: each 32-bit command
  * carries an opcode in the high half and an operand in the low half. The int
- * register file at +0x08 and the variable file at +0x48 are also reached
+ * file at +0x08 and the variable file at +0x48 are also reached
  * through FieldFx_RegPtr/FieldFx_VarPtr; the active context
  * pointer at +0x70 is shared by FieldFx_SetScriptContext and
  * FieldFx_GetScriptContext. */

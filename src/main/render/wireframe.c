@@ -1,6 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 */
-
 /* Wireframe model pass: projects a scaled, yawed model and draws its edges
  * as LINE_G2 packets. Back faces only contribute their floor edge (both
  * vertices at y 0, cyan); front faces draw all three edges, cyan on the
@@ -10,7 +7,7 @@
  * scratch-word initialisers reproduce retail's unused 32-byte frame range
  * sp+0x50..0x6F; the dead "line_b = scale" store, the identical-arm screen
  * tests, the do-while(0) around the tpage link, and the shared far_edge
- * tail keep GCC's register allocation. */
+ * tail keep GCC's allocation. */
 
 #include "common.h"
 #include "pe1/gte.h"
@@ -181,7 +178,7 @@ s32 Render_DrawWireframeModel(RenderAnimFrame *frame, void *position, s32 scale,
     RenderAnimPacket cursor;
     u8 *output;
     /* Matching debt: see the file comment (unused sp+0x50..0x6F range). */
-    register RenderAnimScratchWord spill0 = {0}, spill1 = {0}, spill2 = {0}, spill3 = {0};
+    RenderAnimScratchWord spill0 = {0}, spill1 = {0}, spill2 = {0}, spill3 = {0};
     RenderAnimVertex *vertices;
     RenderAnimFace *face;
     GteMatrix **matrix_slot;
@@ -252,8 +249,8 @@ s32 Render_DrawWireframeModel(RenderAnimFrame *frame, void *position, s32 scale,
             {
                 /* Matching debt: retail reads SZ3 into t4 and stores it
                  * through v0 (lev 5 unpinned). */
-                register s16 *depth asm("$2") = &g_WireScratch.depth[i];
-                register int z asm("$12");
+                s16 *depth = &g_WireScratch.depth[i];
+                int z;
 
                 gte_getsz3_for_store(z, depth);
                 *depth = z;
@@ -463,14 +460,14 @@ s32 Render_DrawWireframeModel(RenderAnimFrame *frame, void *position, s32 scale,
                                 ot_edge_page = (u32 *)ot - (-positive_depth);
                                 cursor.line->tag.raw = (cursor.line->tag.raw & command_mask) | (*ot_edge_page & address_mask);
                             } while (0);
-                            
+
                                 link_word = cursor.word & address_mask;
                                 ot_word = *ot_edge_page;
                                 cursor.bytes += 8;
                                 ot_word &= command_mask;
                                 ot_word |= link_word;
                                 *ot_edge_page = ot_word;
-                            
+
                         }
                     }
                     edge += 1;

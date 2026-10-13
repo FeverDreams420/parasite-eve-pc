@@ -21,5 +21,3 @@ void SetDrawTPage(char *prim, int drawTexture, int dither, int tpage) {
 
     *command = code | packedTpage;
 }
-
-static unsigned int SetDrawTPage_alignment[] __attribute__((section(".text"))) = { 0x00000000 };

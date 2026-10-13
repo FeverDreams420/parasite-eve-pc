@@ -12,7 +12,6 @@ void MdecDiag_ExpandDecoderTable(u16 *table) {
     s32 wordCount;
     do {
         token = *source;
-        __asm__("" : : "r"(token));
         count = token;
         ++source;
         if (count < 240) {

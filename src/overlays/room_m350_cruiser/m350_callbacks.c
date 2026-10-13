@@ -74,7 +74,7 @@ int RoomM350_AreaController(int event) {
         g_RoomM350AreaPlayerInside = 0;
         g_RoomM350AreaEntered = 0;
     } else if (event == 1) {
-        register short frame;
+        short frame;
         if (animation->actor) {
             unsigned char *state = animation->actor->state;
             if (*state == 1) *state = 2;
@@ -230,11 +230,10 @@ update:
         {
             int offset = (signed char)Inv_ScrambleGrid();
             Vector *v = &vector;
-            register Vector *input asm("$4") = v;
-            register Matrix *m asm("$5") = &matrix;
+            Vector *input = v;
+            Matrix *m = &matrix;
             int yaw = (u16)instance->rot_y;
             /* Keep the rotation arguments ready before adding the yaw offset. */
-            asm("" : : "r"(input), "r"(m));
             offset += 0x800;
             yaw += offset;
             vector.y = yaw;
@@ -249,7 +248,6 @@ update:
             RoomM350Actor *actor = ANIM_OWNER_AS(RoomM350Actor);
             D_8019A855 = 0;
             /* Publish consumption before loading the sound's position and owner. */
-            asm volatile("" : : : "memory");
             {
                 int x = effect->x;
                 Asset_Find08w(0x60A, ((Instance *)actor->instance)->state->progress,
@@ -298,7 +296,7 @@ int RoomM350_DropHitEmitter(int event)
             effect[1] = D_8019A864[1];
             effect[2] = D_8019A864[2];
             effect[3] = 0;
-         asm volatile(""); }
+          }
         D_8019A857 = 0;
     }
         break;
@@ -338,7 +336,6 @@ int RoomM350_DropTrailEmitter(int event)
             effect[1] = g_RoomEffectTrailPositions.points[i].y;
             effect[2] = g_RoomEffectTrailPositions.points[i].z;
             /* Finish the copy before reloading the possibly aliased count. */
-            asm("" : "=m"(D_8019A85C) : "m"(D_8019A85C), "m"(effect[2]));
         }
         D_8019A85C = 0;
     }
@@ -406,7 +403,7 @@ int RoomM350_DropBurstEmitter(int event)
         case 1:
     if (g_RoomM350DropDone) return 2;
     if (g_RoomM350DropBurstCount) {
-        register int i asm("$18") = 0;
+        int i = 0;
         while (i < 2) {
             Matrix matrix;
             Vector vector;
@@ -421,7 +418,6 @@ int RoomM350_DropBurstEmitter(int event)
             vector.z = 0;
             RotMatrixYXZ(&vector, &matrix);
             /* Keep the two phases separate in CSE without emitting instructions. */
-            asm volatile("" : : "i"(&&offset));
 offset:
             vector.x = 0;
             vector.y = 0;
@@ -493,7 +489,6 @@ int RoomM350_DropController(int event,short *cursor) {
         if (g_RoomM350DropRepeats>0) {
         if ((short)frame>=31) {
         instance->anim.fixed=0x60000;
-        asm volatile("" ::: "memory");
         g_RoomM350DropRepeats--;
         }
         } else if ((short)frame>=instance->action-1) {
@@ -550,7 +545,7 @@ int RoomM350_RushFlareCallback(int event, RoomM350FlareParticle *particle)
         position.y = particle->y;
         position.z = particle->z;
         {
-            register GteMatrix *matrix asm("$8") = &g_RoomM350RushMatrix;
+            GteMatrix *matrix = &g_RoomM350RushMatrix;
             GteShortVector *out;
             gte_ldrotmatrix(matrix);
             gte_ldtransmatrix(matrix);
@@ -572,11 +567,10 @@ int RoomM350_RushFlareCallback(int event, RoomM350FlareParticle *particle)
         clut = GetClut(0, palette);
         {
             int timer = g_FieldFxCurrentAge;
-            register int scale asm("$4") = (s16)g_FieldFxSpriteParams.parameter02;
-            register int phase asm("$3") = timer & 7;
-            register int product asm("$8") = scale * phase;
+            int scale = (s16)g_FieldFxSpriteParams.parameter02;
+            int phase = timer & 7;
+            int product = scale * phase;
             int texture = product + 64;
-            asm("" : : "r"(product), "r"(texture));
             FieldFx_DrawShapeQuads(&position, &rotation, 0x2200, 4096,
                 texture, clut, 1, particle->shade, (struct RenderColor *)&D_8019A690[timer & 3]);
         }
@@ -635,7 +629,6 @@ int RoomM350_RushFlareEmitter(int event) {
         D_8019A8A0=((volatile FieldActor *)instance)->render_object.model_matrix.translation[0]-x;
         D_8019A8A4=((volatile FieldActor *)instance)->render_object.model_matrix.translation[2]-z;
     }
-    asm volatile("" : : "m"(D_8019A8A4));
     vertices[0]=*(GteShortVector *)&D_8019A898;
     vertices[1]=*(GteShortVector *)&D_8019A8A0;
     vertices[2]=D_8019A8B0;
@@ -660,9 +653,7 @@ int RoomM350_RushFlareEmitter(int event) {
             if(i<4) return 0;
             {
                 FieldActor *player=g_PlayerEntity;
-                asm("" : : "r"(player));
                 g_RoomM350RushPlayerHit=1;
-                asm volatile("" : : "m"(g_RoomM350RushPlayerHit));
                 player->state->flags|=0x4000;
                 if(instance->state) instance->state->core_flags|=0x80000000u;
             }
@@ -759,7 +750,6 @@ int RoomM350_RushCloudEmitter(int event)
             vector.y=(unsigned int)Inv_ScrambleGrid()<<4;
             vector.z=0;
             RotMatrixYXZ(&vector,&matrix);
-            asm volatile("" : : "i"(&&offset_start));
 offset_start:
             vector.x=0; vector.y=0;
             firstRandom=Inv_ScrambleGrid();
@@ -800,7 +790,6 @@ int RoomM350_RushController(int event,State *state)
         RenderMatrix *matrix;
         state->speed=0; state->targetSpeed=0; state->heightPhase=0; state->mode=0;
         g_RoomM350RushState.complete=0; g_RoomM350RushPlayerHit=0; D_8019A89E=0;
-        asm volatile("" : : : "memory");
         matrix=instance->render_object.matrices;
         state->asset=Asset_Find08w(0x5CB,instance->state->progress,
             (short)matrix->translation[0],(short)matrix->translation[1],(short)matrix->translation[2]);
@@ -808,13 +797,13 @@ int RoomM350_RushController(int event,State *state)
         int frame,angle,delta,cosine,sine;
         int phase;
         int target;
-        register int height asm("$2");
-        register int speed asm("$5");
+        int height;
+        int speed;
         if(instance->mode!=9) return 0;
         if(instance->state && instance->state->action_state[0]==1)
             instance->state->action_state[0]=2;
         {
-            register int current asm("$3")=instance->anim.parts.integer;
+            int current=instance->anim.parts.integer;
             frame=current;
         if(g_RoomM350RushState.repeats>0) {
             height=(short)current;
@@ -851,10 +840,9 @@ int RoomM350_RushController(int event,State *state)
             }
         }
 apply_cruise_speed:
-        asm volatile("");
         speed=state->speed; target=state->targetSpeed;
         {
-            register int next asm("$3")=speed;
+            int next=speed;
             int result;
             if(speed<target) {
                 result=next+128;
@@ -885,7 +873,6 @@ apply_cruise_speed:
         phase=state->heightPhase;
         {
         int nextPhase=phase;
-        asm("" : "=r"(nextPhase) : "0"(nextPhase));
         if(phase<16) {
             int sample,floor;
             phase=nextPhase+1;
@@ -926,7 +913,7 @@ int RoomM350_BodyDebrisCallback(int event, RoomM350FadingParticle *object)
         }
         {
             unsigned int counter = (unsigned short)object->counter;
-            register short velocity;
+            short velocity;
             velocity = object->velocity >> 1;
             object->counter = counter + 1;
             object->position.y -= velocity;
@@ -987,13 +974,12 @@ int RoomM350_BodyDebrisEmitter(int event,FadingModelState *state)
         actor=ANIM_OWNER_AS(RoomM350Actor);
         instance=(Instance *)actor->instance;
         {
-            register int low asm("$5")=random&255;
-            register int parts asm("$3")=instance->render_object.header->part_count-1;
-            register int scaled asm("$2")=low*parts;
+            int low=random&255;
+            int parts=instance->render_object.header->part_count-1;
+            int scaled=low*parts;
                         scaled=scaled/256;
                         {
                 parts=scaled+1;
-                asm volatile("" : : "r"(parts));
                 index=parts;
             }
         {
@@ -1001,31 +987,24 @@ int RoomM350_BodyDebrisEmitter(int event,FadingModelState *state)
         Instance *zSource;
         particle->position.x=instance->render_object.matrices[index].translation[0];
                 ySource=(Instance *)actor->instance;
-        asm volatile("" : : "r"(ySource));
         parts=particle->size;
-        asm volatile("" ::: "memory");
         sizeBits=(unsigned short)particle->size;
         particle->position.y=ySource->render_object.matrices[index].translation[1];
-        asm volatile("" : : : "$2");
         {
             u8 low7=random&127;
             product=low7*parts;
         }
         zSource=(Instance *)actor->instance;
-        asm volatile("" : : "r"(zSource));
         sizeBits=(unsigned int)sizeBits<<16;
                 {
         RenderMatrix *transforms=zSource->render_object.matrices;
-        asm volatile("" : : "r"(transforms));
         halfSize=sizeBits>>17;
-        asm volatile("" : : "r"(transforms));
         particle->position.z=transforms[index].translation[2];
         }
         }
         particle->velocity=0; particle->acceleration=0; particle->counter=0;
         {
             int y=(unsigned short)particle->position.y;
-            asm volatile("" : "=l"(product) : "0"(product), "r"(y), "r"(halfSize));
             particle->position.y=y-(product>>13);
         }
         offset.x=0;
@@ -1128,10 +1107,9 @@ int RoomM350_BodyRingEmitter(int event, EmissionState *state)
         instance = (FieldActor *)actor->instance;
         index = (unsigned char)random;
         {
-            register int byte asm("$4") = index;
+            int byte = index;
             int count = instance->render_object.header->part_count;
-            register int range asm("$3") = count - 1;
-            asm("" : "=r"(range) : "0"(range), "r"(count));
+            int range = count - 1;
             index = byte * range / 256 + 1;
         }
         effect->position.x = instance->render_object.matrices[index].translation[0];
@@ -1143,7 +1121,6 @@ int RoomM350_BodyRingEmitter(int event, EmissionState *state)
             effect->amplitude = count * 2048 + 2048;
         }
         /* Keep the position/amplitude stores before the delay/count update. */
-        asm volatile("" : : "m"(effect->amplitude));
         {
             int delay = random & 7;
             unsigned short count = state->count;
@@ -1152,18 +1129,15 @@ int RoomM350_BodyRingEmitter(int event, EmissionState *state)
             state->count = count + 1;
         }
         {
-            register int random asm("$4") = rand();
+            int random = rand();
             int high;
             int y;
             int rawHigh;
             int bit;
             effect->rotation.x = (random & 255) + 512;
-            asm volatile("" : : "m"(effect->rotation.x));
             rawHigh = random >> 8;
             high = rawHigh & 255;
-            asm("" : : "r"(high));
             bit = random & 2;
-            asm("" : : "r"(bit), "r"(random));
             if (bit) y = high + 768;
             else y = high - 1024;
             effect->rotation.y = y;

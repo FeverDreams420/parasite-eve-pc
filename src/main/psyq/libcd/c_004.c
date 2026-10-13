@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBCD C_004.OBJ: data_ready_callback, StGetBackloc. */
 /* Complete Psy-Q LIBCD C_004.OBJ code; trailing object alignment is in the manifest. */
 
@@ -15,7 +14,6 @@ void data_ready_callback(void) {
     __builtin_memcpy(&g_StLastFrameLoc, &base->loc, 4);
     sector_data = base->frameCount;
     /* Retain the frame load before fetching the next ring slot. */
-    asm volatile("" : "=r"(sector_data) : "0"(sector_data));
     next_slot = g_CdStreamRingWriteSlot;
     callback = g_StrDataReadyCallback;
     g_StLastFrameNumber = sector_data;

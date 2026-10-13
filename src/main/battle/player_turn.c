@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle.h"
 #include "pe1/battle_main.h"
@@ -64,7 +60,6 @@ void Battle_UpdatePlayerTurn(void)
                 u8 delta = D_8009CE3B;
                 BattleAction *effectAction = g_ActiveActor->action;
                 D_8009CE39 = count + delta;
-                asm volatile("" : : );
                 if (effectAction->attackWord & 0x3FF)
                     Battle_StartEnemyAttackEffect(slot->actor);
             }

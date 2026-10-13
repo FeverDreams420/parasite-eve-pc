@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/bounds_check.h"
 #include "pe1/draw_area.h"
@@ -17,8 +13,6 @@
 
 /* Contiguous widget construction, pool initialization, list drawing and layout. */
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 unsigned char *D_8009D100;
 unsigned char *D_8009D104;
 unsigned int g_DrawPrimColor;
@@ -1384,7 +1378,6 @@ void Draw_SetPrimCallback(MenuWidgetNode *arg0, s32 arg1) {
     if (arg0->grid_width == 2) {
         var_a2 = arg1 & 1;
     }
-    __asm__ volatile("" : "=m"(arg0->y_limit) : "m"(arg0->y_limit));
     t48 = arg0->cursor_y;
     temp_v1_2 = arg0->y_limit;
     arg0->has_scroll = var_a2;

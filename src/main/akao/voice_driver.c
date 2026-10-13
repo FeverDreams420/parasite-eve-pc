@@ -450,13 +450,10 @@ int Akao_StepNoteSequencer(unsigned char *input, unsigned available)
     if (g_AkaoStreamUploadMode & 1) {
         if (Spu_ValidateSampleHeader(input)) return -1;
         input += 0x14;
-        asm volatile("" : "=r"(input) : "0"(input));
         payload_size = *(unsigned *)input;
         input += 4;
-        asm volatile("" : "=r"(input) : "0"(input));
         start = *(unsigned *)input;
         input += 4;
-        asm volatile("" : "=r"(input) : "0"(input));
         count = *(unsigned *)input;
         if (!count) count = 256;
         count -= start;
@@ -466,7 +463,6 @@ int Akao_StepNoteSequencer(unsigned char *input, unsigned available)
         input += upload_size;
         after_header = available - 0x40;
         available = after_header - upload_size;
-        asm volatile("" : "=r"(available) : "0"(available));
         upload_size = available;
         if (upload_size >= payload_size) upload_size = payload_size;
 
@@ -548,13 +544,10 @@ int Spu_UploadStreamBlockA(unsigned bank, unsigned char *input, unsigned availab
     if (g_AkaoStreamUploadMode & 2) {
         if (Spu_ValidateSampleHeader(input)) return -1;
         input += 0x14;
-        asm volatile("" : "=r"(input) : "0"(input));
         payload_size = *(unsigned *)input;
         input += 4;
-        asm volatile("" : "=r"(input) : "0"(input));
         start = *(unsigned *)input;
         input += 4;
-        asm volatile("" : "=r"(input) : "0"(input));
         count = *(unsigned *)input;
         if (!count) count = 256;
         count -= start;
@@ -564,7 +557,6 @@ int Spu_UploadStreamBlockA(unsigned bank, unsigned char *input, unsigned availab
         input += upload_size;
         after_header = available - 0x40;
         available = after_header - upload_size;
-        asm volatile("" : "=r"(available) : "0"(available));
         upload_size = available;
         if (upload_size >= payload_size) upload_size = payload_size;
         address = ((bank * 5) << 13) + 0x4f000;
@@ -1259,7 +1251,7 @@ void Akao_SetVoiceKeyOff(AkaoTrack *voice, u32 voice_mask, int index) {
 void Akao_SetVoiceKeyOn(AkaoTrack *voice, u32 voice_mask) {
     u32 flags;
     int base_volume;
-    /* Two scratch values cover every stage, as in the retail register use:
+    /* Two scratch values cover every stage, as in the retail use:
      * value holds LFO results, the pan index and the pitch depth, operand
      * holds the wave sample and the pitch sum. */
     int value;
@@ -1399,7 +1391,7 @@ void Spu_CopyVoiceToStereoSlot(AkaoTrack *track, int stereo_voice_index) {
     int right;
     int pan;
     int new_var;
-    register int inverse_pan;
+    int inverse_pan;
     AkaoTrack *stereo;
 
     left = track->volume_left;
@@ -1514,7 +1506,7 @@ void Akao_UpdateVoiceEnvelopes(s32 protectedMask) {
     combinedMask = ((g_AkaoCurTrack[0].active_voice_mask & g_AkaoCurTrack[0].yield_voice_mask) | (g_AkaoCurTrack[1].active_voice_mask & g_AkaoCurTrack[1].yield_voice_mask)) | protectedMask;
     do {
         if (combinedMask & (mask << voiceIndex)) {
-            register s32 level = 0x7FFF;
+            s32 level = 0x7FFF;
             envelope->level = level;
         } else {
             SpuGetVoiceEnvelope(voiceIndex, (unsigned short *)envelope);
@@ -1543,7 +1535,7 @@ void Akao_ProcessVoiceQueue(void)
   unsigned primary_new;
   unsigned result = 0;
 
-  register unsigned bit asm("$18");
+  unsigned bit;
   unsigned flags;
   AkaoSequencerBank *bank;
   AkaoTrack *track;
@@ -1574,7 +1566,6 @@ void Akao_ProcessVoiceQueue(void)
     bank->key_on_request_mask &= ~bank->pending_voice_mask;
     primary &= ~bank->pending_voice_mask;
   }
-  asm("" : : "r"(secondary));
   if (secondary)
   {
     g_AkaoCurTrack++;

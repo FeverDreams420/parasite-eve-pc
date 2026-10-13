@@ -766,7 +766,7 @@ int RoomEffect_CometSparkParticle(int mode, RoomCometSpark *spark) {
                  * cse1 stops at its loop end, so the shared constant 1 only
                  * reaches the draw below in cse2, after mode and the state
                  * value have kept their own registers; cse2 also addresses
-                 * the block through a base register (la s0). */
+                 * the block through a base (la s0). */
                 do {
                     g_FieldFxSpriteParams.parameter00 = 0x20;
                     g_FieldFxSpriteParams.parameter02 = 2;

@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/battle_cmd.h"
@@ -31,8 +27,6 @@
 #include "pe1/stat_modifiers.h"
 #include "pe1/text.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_BonusPointDisplayValue;
 int g_BonusPointBarAnimStep;
 int g_BonusPointBarAnimProgress;
@@ -281,7 +275,7 @@ void Inv_FetchSelectedInventoryItem(void) {
 }
 
 void Menu_HandleInput(int arg0) {
-    register int value;
+    int value;
     int flag;
     int blocked;
 
@@ -427,7 +421,7 @@ int Save_ClassifyPlaytime(int playTime) {
 #define NULL ((void *)0)
 
 void Menu_DrawSaveSlotEntry(s32 arg0) {
-    register MemCardSaveSlot *slot;
+    MemCardSaveSlot *slot;
     s32 index;
     int dx;
     int text_id;
@@ -783,7 +777,6 @@ int Menu_StepItemSelectScreen(MenuWidgetNode *node, unsigned int buttons)
             } else {
                 Menu_PlayErrorSound();
                 index = 1;
-                asm volatile("" : "=r"(index) : "0"(index));
                 return index;
             }
             break;
@@ -813,15 +806,14 @@ int Menu_StepItemSelectScreen(MenuWidgetNode *node, unsigned int buttons)
             break;
         case 8: {
             int command;
-            register int first asm("$4");
-            register int second asm("$5");
-            register int third asm("$6");
+            int first;
+            int second;
+            int third;
             CLOSE_SELECT_VIEWS();
             first = 0x37e;
             second = -1;
             third = -1;
             command = 1;
-            asm volatile("" : "=r"(command) : "0"(command), "r"(first), "r"(second), "r"(third));
             g_MenuItemUseMode = command;
             Menu_StepInventoryRoot(first, second, third);
             g_MenuBattleStatusOverlayActive = 0;
@@ -832,7 +824,6 @@ int Menu_StepItemSelectScreen(MenuWidgetNode *node, unsigned int buttons)
         }
         Menu_PlayConfirmSound();
         index = 1;
-        asm volatile("" : "=r"(index) : "0"(index));
         return index;
     }
     if (buttons & 0x40) {
@@ -842,12 +833,10 @@ int Menu_StepItemSelectScreen(MenuWidgetNode *node, unsigned int buttons)
         Menu_PlayCancelSound();
     return_one:
         index = 1;
-        asm volatile("" : "=r"(index) : "0"(index));
         return index;
     }
     {
         int down = buttons & 2;
-        asm volatile("" : "=r"(index) : "0"(index));
         if (down) Menu_InitScrollDirection();
     }
     return index;

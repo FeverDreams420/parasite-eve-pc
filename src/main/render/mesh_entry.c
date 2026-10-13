@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-strength-reduce -fno-expensive-optimizations */
-
 #include "pe1/geom_state.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_prim.h"
@@ -99,10 +97,10 @@ int Render_LoadMeshEntry(GeomEntry *entry, RenderTilePacket *buffer, void **end)
 int Render_TransformPoint(GeomEntry *entry, int x, int y, int depth) {
     GeomEntry *current;
     int screenX;
-    register int screenY asm("$4");
+    int screenY;
     int minimum;
     int truncated;
-    register int sum asm("$3");
+    int sum;
     int bound;
     int comparison;
     unsigned int depthWord;
@@ -119,7 +117,6 @@ int Render_TransformPoint(GeomEntry *entry, int x, int y, int depth) {
     /* Keeps the unclamped x copy apart from the sum the clamp truncates;
      * the pins reproduce retail moving the entry to $t0 and reusing $a0
      * for y, which local allocation otherwise swaps. */
-    asm volatile("" : "=r"(sum) : "0"(sum));
     depthWord >>= 20;
     depth += depthWord;
 

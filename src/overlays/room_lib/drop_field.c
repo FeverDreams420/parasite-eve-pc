@@ -382,11 +382,11 @@ void RoomEffect_InitRingPair(int unused0, int unused1,
     s16 *anchor;
     char *source;
     int mode;
-    register int intensity asm("$19");
+    int intensity;
     int color1_0;
-    register int color1_1 asm("$22");
-    register int color1_2 asm("$20");
-    register int extent1 asm("$18");
+    int color1_1;
+    int color1_2;
+    int extent1;
     RoomFxEmitterParams *params;
     RoomFxEmitterParams *secondary;
     int primaryExtent;
@@ -407,7 +407,6 @@ void RoomEffect_InitRingPair(int unused0, int unused1,
     color1_2 = 30;
     primaryExtent = 0x6A4;
     extent1 = 0x514;
-    asm volatile("" : : "m"(*bounds));
     source = g_RoomDropFieldRingImages;
 
     g_RoomDropFieldRings[0].mode = mode;
@@ -426,7 +425,6 @@ void RoomEffect_InitRingPair(int unused0, int unused1,
 
     params = &g_RoomDropFieldRings[1];
     secondaryExtent = 0x226;
-    asm volatile("" : "=r"(anchor) : "0"(anchor));
     source += 0x100;
     secondary = (RoomFxEmitterParams *)(anchor + 6);
     secondary->mode = mode;
@@ -594,7 +592,7 @@ void RoomEffect_DrawStagedMotion(void *unused,
 
     if ((unsigned int)i < state->count) {
         /* Both packet views are fixed before the loop: the sprite stage
-         * then addresses the packet fields through the base register and
+         * then addresses the packet fields through the base and
          * the flat stage through the depth pointer, as retail does. */
         packet = (RoomStagedMotionPacket *)&g_RoomDropFieldMotionSprite.code;
         flatDepth = &packet->depth;
@@ -1019,13 +1017,13 @@ void RoomEffect_InitBeamPair(void *unused0, void *unused1, void *output_arg) {
     unsigned char *image;
     short *anchor;
     int mode;
-    register int offset asm("$21");
-    register int intensity asm("$20");
+    int offset;
+    int intensity;
     int primary_color;
     int blue;
-    register int extent asm("$19");
-    register RoomFxEmitterParams *params asm("$4");
-    register int white asm("$2");
+    int extent;
+    RoomFxEmitterParams *params;
+    int white;
     int primary_extent;
     RoomBeamPairActor **context;
     RoomBeamPairActor *actor;
@@ -1047,7 +1045,6 @@ void RoomEffect_InitBeamPair(void *unused0, void *unused1, void *output_arg) {
     beam->brightness = 255;
 
     primary_extent = 3200;
-    PE1_COMPILER_USE(primary_extent);
     image = g_RoomDropFieldBeamImages;
     *anchor = mode;
     g_RoomDropFieldRings[2].offset = offset;
@@ -1064,7 +1061,6 @@ void RoomEffect_InitBeamPair(void *unused0, void *unused1, void *output_arg) {
     FieldFx_BuildRingGeometry(params);
 
     params = &g_RoomDropFieldRings[3];
-    PE1_COMPILER_USE(params);
     white = 255;
     image += 0x100;
     g_RoomDropFieldRings[3].mode = mode;
@@ -1223,8 +1219,8 @@ void RoomEffect_DrawQuadSprites(void *unused0, void *unused1,
     /* Retail keeps the matrix base in s3 and the second column in s7; the
      * three sprite-array cursors are strength-reduced copies the compiler
      * places in s0..s2 after them. */
-    register RoomSpriteMatrix *matrix asm("$19");
-    register short *column1 asm("$23");
+    RoomSpriteMatrix *matrix;
+    short *column1;
     short *work;
     unsigned short *depthSlot;
 
@@ -1341,8 +1337,8 @@ void RoomEffect_DrawEightParticles(
     GteVector scaleArg;
     volatile GteVector sourceScale;
     RoomSpriteMatrix *matrixArg;
-    register int scale2 asm("$6");
-    register int scale3 asm("$7");
+    int scale2;
+    int scale3;
     RoomDropFieldState *context;
     int secondScale;
 
@@ -1376,7 +1372,6 @@ void RoomEffect_DrawEightParticles(
             memset((void *)&sourceScale, 0, sizeof(sourceScale));
             sourceScale.x = (s16)state->scale[i];
             matrixArg = &matrix;
-            asm volatile("" : "=r"(matrixArg) : "0"(matrixArg));
             secondScale = (s16)state->scale[i];
             sourceScale.z = unitScale;
             sourceScale.y = secondScale;
@@ -1386,7 +1381,6 @@ void RoomEffect_DrawEightParticles(
             scale3 = sourceScale.pad;
             scaleArg.z = scale2;
             scaleArg.pad = scale3;
-            asm volatile("" ::: "$5");
             ScaleMatrix(matrixArg, &scaleArg);
 
             *depthOut = (u16)state->fade[i];
@@ -1478,13 +1472,9 @@ void RoomEffect_UpdateEightParticles(void *unused,
             randomValue %= 20;
             zPosition = particles->position[i].z;
             zVelocity = (u16)particles->velocity[i].vector.z;
-            asm("" : "=r"(zPosition), "=r"(zVelocity)
-                   : "0"(zPosition), "1"(zVelocity));
             yValue = particles->position[i].y;
             yValue -= 20;
             zValue = zPosition + zVelocity;
-            asm("" : "=r"(yValue), "=r"(zValue)
-                   : "0"(yValue), "1"(zValue));
             particles->position[i].z = zValue;
             yValue -= randomValue;
             particles->position[i].y = yValue;

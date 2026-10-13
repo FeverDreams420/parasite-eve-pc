@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/akao_counters.h"
 #include "pe1/battle_cmd.h"
@@ -26,8 +22,6 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/text.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_MenuPendingTotalExp;
 int g_MenuSelectionLocked;
 int g_AyaFullInvHold;
@@ -387,7 +381,6 @@ void Aya_SetTotalExp(s32 exp_delta, s32 pe_bonus_delta, void *wayne_items) {
     save = &g_AyaSaveState;
     /* Match debt: retail reads the total and clears the bonus pool through
      * the save base held in s2; a known constant folds to absolute loads. */
-    PE1_COMPILER_LAUNDER(save);
     previous = save->total_exp;
     g_MenuPendingTotalExp = previous;
     g_MenuExpAllocTarget = previous + exp_delta;

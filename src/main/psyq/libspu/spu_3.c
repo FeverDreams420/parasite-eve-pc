@@ -1,4 +1,3 @@
-/* GAS_VERSION: 2.8.1 */
 /* PSY-Q LIBSPU SPU, part 3 of 3: _spu_FsetRXX, _spu_FsetRXXa, _spu_FgetRXXa,
  * _spu_FsetPCR, _spu_FsetDelayW, _spu_FsetDelayR, _spu_Fw1ts. */
 
@@ -15,7 +14,7 @@ void _spu_FsetRXX(u32 offset, u32 value, u32 mode) {
 
 u32 _spu_FsetRXXa(s32 arg0, u32 value) {
     s32 offset;
-    register u32 shifted asm("$7");
+    u32 shifted;
     u32 rem;
     u32 unit;
     u32 alignment;
@@ -35,7 +34,6 @@ u32 _spu_FsetRXXa(s32 arg0, u32 value) {
 
     alignment = _spu_mem_mode.shift;
     shifted = value >> alignment;
-    asm volatile("" : "=r"(shifted) : "0"(shifted));
     ret = shifted;
 
     switch (offset) {

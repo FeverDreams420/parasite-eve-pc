@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSSYS_1.OBJ, part 3 of 10: DS_close, DS_cw, DS_vsync_callback,
  * DS_ready_callback, DS_start_callback, DS_sync_callback, DS_system_status,
  * DS_lastcom, DS_lastmode, DS_lastpos, DS_lastread, DS_lastseek, DS_status,
@@ -21,11 +20,10 @@ void DS_close(void) {
 }
 
 int DS_cw(u8 command, void *parameter) {
-    register int *base;
-    register int *prev;
+    int *base;
+    int *prev;
 
     base = &g_CdRomCmdTimeout;
-    asm volatile("" : "=r"(base) : "0"(base));
     if (base[0] > 0) {
         return 0;
     }
@@ -34,7 +32,6 @@ int DS_cw(u8 command, void *parameter) {
         return 0;
     }
     prev = base - 0x11;
-    asm volatile("" : "=r"(prev) : "0"(prev));
     if (base[-9] != 1) {
         return 0;
     }
@@ -105,7 +102,6 @@ int DS_cw_system(int arg0, void *parameter) {
     if (*ptr > 0) {
         return 0;
     }
-    asm volatile("" : "=r"(ptr) : "0"(ptr));
     {
         volatile CdRomCommandState *command =
             (volatile CdRomCommandState *)((char *)ptr -

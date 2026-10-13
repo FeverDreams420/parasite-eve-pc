@@ -72,7 +72,7 @@ extern AkaoTrackUpdateSlot g_AkaoTrackStateArray[];
 extern AkaoNestedSource g_AkaoNestedSource;
 /* Its key_off_mask, key_on_mask, pan word and pan_target as words of their
  * own: retail stores each one absolutely, where the record keeps the field
- * address in a register and derives the record address from it. */
+ * address in a and derives the record address from it. */
 extern u32 D_800B89D4;
 extern u32 D_800B89D8;
 extern u32 D_800B89DC;

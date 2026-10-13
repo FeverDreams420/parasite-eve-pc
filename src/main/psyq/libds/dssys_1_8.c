@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBDS DSSYS_1.OBJ, part 8 of 10: DS_stop, DS_restart, DS_system_active. */
 
 #include "common.h"

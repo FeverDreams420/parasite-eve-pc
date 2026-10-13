@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle_cmd.h"
 #include "pe1/battle_modifiers.h"
@@ -22,10 +18,7 @@
 #include "pe1/menu_state.h"
 #include "pe1/menu_widget.h"
 #include "pe1/text.h"
-#include "m2c_macros.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_MenuInventoryViewMode;
 int g_MenuEquipSwapItem;
 int g_InvSelectedItemIndex;
@@ -293,12 +286,12 @@ int Menu_InventoryPageNavHandler(MenuWidgetNode *root, unsigned int flags) {
     /* Match debt: retail keeps the x shift in s2 and the target node in s1.
      * The pin-free form of Menu_AlignEquipPanels gives the shift the
      * higher global-alloc priority here and swaps them (lev 12). */
-    register int offset asm("$18");
+    int offset;
     int present;
     MenuWidgetNode *current;
     MenuWidgetNode *child;
-    register int x asm("$2");
-    register int oldx asm("$5");
+    int x;
+    int oldx;
     MenuWidget_GetChild(root, 0);
     if (flags & 0x14000) {
         if (Inv_GetPackedListCount() != 0) {
@@ -317,7 +310,6 @@ int Menu_InventoryPageNavHandler(MenuWidgetNode *root, unsigned int flags) {
                 } else x = 0xB0;
                 offset = x - oldx;
                 /* Keep the subtraction ahead of the first call argument. */
-                asm volatile("" : : "r"(offset));
                 MenuWidget_OffsetPosition(other, offset, 0);
                 MenuWidget_ClearCursorY(other);
                 other = MenuWidget_FindByModeAndSelectedBase(1, 0xB);
@@ -456,8 +448,8 @@ void Menu_DrawEquipStatsPanel(void);
 int Menu_HandleItemInput(int arg0, int arg1);
 void Menu_DrawEquipItemName(void);
 void Menu_DrawEquipItemIcon(void);
-M2C_UNK Menu_DrawSoundEffectList();
-M2C_UNK Menu_DrawEquipItemDetailPanel();
+int Menu_DrawSoundEffectList();
+int Menu_DrawEquipItemDetailPanel();
 int g_MenuItemDiscardMode;
 void Draw_PrintRawText(u8 *arg0);
 

@@ -9,16 +9,15 @@ s32 MenuCard_PulseImage(s32 mode, MemcardPulseState *state) {
     s32 angle;
     s32 scale;
     s32 palette;
-    register s16 timer;
-    register s32 twist;
-    register void *track;
+    s16 timer;
+    s32 twist;
+    void *track;
     switch (mode) {
     case 1:
         if (state->phase != 0) return 0;
         timer = state->timer + 1;
         state->timer = timer;
         if (timer < 16) return 0;
-        __asm__ volatile("" : : : "memory");
         return 1;
     case 2:
         if (state->phase != 0) return 0;
@@ -51,19 +50,16 @@ s32 MenuCard_LinkEffect(s32 mode, MemcardLinkState *state) {
     RenderColor color;
     MemcardLinkColor color1 = D_801ED850;
     MemcardLinkColor color2 = D_801ED854;
-    register MemcardJointOffset *offsetPtr asm("$6");
+    MemcardJointOffset *offsetPtr;
     switch (mode) {
     case 0: {
         s32 opacity;
         void *entity;
-        register GteShortVector *firstPtr asm("$17");
+        GteShortVector *firstPtr;
         offsetPtr = &offset;
-        __asm__("" : : "r"(offsetPtr));
         opacity = 128; entity = D_8009D254;
-        __asm__("" : "=r"(entity), "=r"(opacity) : "0"(entity), "1"(opacity) : "$17");
         firstPtr = &first;
         state->opacity = opacity; state->phase = 0; state->timer = 0;
-        __asm__("" : : : "memory");
         FieldFx_TransformMatrixPoint(entity, D_801F1D86, offsetPtr, firstPtr);
         FieldFx_TransformMatrixPoint(D_8009D254, D_801F1D88, &offset, &second);
         FieldFx_DrawHistoryTrail(&first, &second, 1016, (unsigned char *)&color2, (unsigned char *)&color1, 128, (struct FieldTrailPair *)&state->rotation, 1);
@@ -76,12 +72,10 @@ s32 MenuCard_LinkEffect(s32 mode, MemcardLinkState *state) {
             void *entity = D_8009D254;
 
             state->timer = timer;
-            __asm__("" : : : "memory");
             FieldFx_TransformMatrixPoint(entity, D_801F1D88, &offset, &unused);
         }
         if (state->timer >= 23 && state->opacity > 0) state->opacity -= 8;
         if (state->timer < 22) return 0;
-        __asm__ volatile("" : :);
         return 2;
     case 2:
         if (state->opacity >= 0) {
@@ -110,10 +104,10 @@ s32 MenuCard_LinkEffect(s32 mode, MemcardLinkState *state) {
 s32 MenuCard_CosineImage(s32 mode, MemcardPulseState *state) {
     GteRotation rotation;
     s32 angle, scale, palette;
-    register s32 intensity;
-    register s32 cosine asm("$3");
-    register s32 index;
-    register s32 four;
+    s32 intensity;
+    s32 cosine;
+    s32 index;
+    s32 four;
     s16 timer;
     s32 twist;
     switch (mode) {
@@ -122,21 +116,17 @@ s32 MenuCard_CosineImage(s32 mode, MemcardPulseState *state) {
         timer = state->timer + 1;
         state->timer = timer;
         if (timer < 12) return 0;
-        __asm__ volatile("" : : : "memory");
         return 1;
     case 2:
         if (state->phase != 0) return 0;
         angle = (state->timer << 10) / 12;
         scale = rcos(angle) + 2048;
         cosine = rcos(angle);
-        __asm__("" : : "r"(cosine));
         intensity = cosine / 32;
         rotation.x = 0; rotation.y = 0;
         twist = state->timer;
         index = g_FieldFxSpriteParams.palette;
-        __asm__ volatile("" ::: "memory");
         four = 4;
-        __asm__("" : : "r"(four));
         rotation.flags = 0;
         rotation.z = twist << 5;
         palette = g_FieldFxPaletteTable[index];
@@ -194,7 +184,6 @@ s32 MenuCard_TrailEffect(s32 mode, MemcardTrailState *state) {
         if (state->timer < 33) {
             FieldFx_SampleColorTrack(D_801F1DE8, &color, state->timer);
             scale = rsin(state->timer << 6) + 4096;
-            __asm__("" : "=r"(scale) : "0"(scale) : "memory");
             index = g_FieldFxSpriteParams.palette;
 
             four = 4;
@@ -204,7 +193,6 @@ s32 MenuCard_TrailEffect(s32 mode, MemcardTrailState *state) {
             else palette += 4;
             FieldFx_DrawShapeQuads(&position, 0, scale, scale, 64, GetClut(0,palette), 1, 128, &color);
             index = g_FieldFxSpriteParams.palette;
-            __asm__("" : "=r"(index) : "0"(index) : "$3", "memory");
             four = 4;
 
             palette = g_FieldFxPaletteTable[index];
@@ -225,20 +213,19 @@ s32 MenuCard_TrailEffect(s32 mode, MemcardTrailState *state) {
 s32 MenuCard_SineRotatingImage(s32 mode, MemcardPulseState *state) {
     GteRotation rotation;
     s32 angle, scale;
-    register s32 palette;
-    register s32 intensity;
-    register s32 cosine asm("$5");
-    register s32 index;
-    register s32 four asm("$3");
+    s32 palette;
+    s32 intensity;
+    s32 cosine;
+    s32 index;
+    s32 four;
     s16 timer;
-    register s32 twist;
+    s32 twist;
     switch (mode) {
     case 1:
         if (state->phase != 0) return 0;
         timer = state->timer + 1;
         state->timer = timer;
         if (timer < 12) return 0;
-        __asm__ volatile("" : : : "memory");
         return 1;
     case 2:
         if (state->phase != 0) return 0;
@@ -251,7 +238,6 @@ s32 MenuCard_SineRotatingImage(s32 mode, MemcardPulseState *state) {
         rotation.y = state->rotation.y;
         rotation.z = state->rotation.z;
         intensity = cosine >> 5;
-        __asm__ volatile("" ::: "memory");
         twist = state->timer;
         rotation.flags = 1;
         rotation.z = twist * 50;

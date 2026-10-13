@@ -15,5 +15,3 @@ void RotTrans(const GteShortVector *v, GteVector *out, s32 *flag) {
     gte_getflag(flagValue);
     *flag = flagValue;
 }
-
-static unsigned int tail_alignment_69AFC[] __attribute__((section(".text"))) = { 0x00000000, 0x00000000 };

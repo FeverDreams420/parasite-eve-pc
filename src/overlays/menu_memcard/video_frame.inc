@@ -20,7 +20,7 @@ void *MENUCARD_UPDATE_VIDEO_FRAME_NAME(VideoDisplay *display) {
     /* Retail never reloads $a0 after the event-sync call below: the frame
        pointer argument lives in $a0 across it, which only a $4 variable
        reproduces. */
-    register void **dataPtr asm("$4");
+    void **dataPtr;
 
     retries = 2000;
     status = DsSystemStatus();

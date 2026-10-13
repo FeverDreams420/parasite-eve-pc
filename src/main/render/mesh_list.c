@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-strength-reduce */
-
 /* Geometry sprite entries and mesh lists, the screen fade and tint, the
  * background scroll/parallax step and the room shadow and primitive colour
  * draws (G0833/G0835). */
@@ -17,7 +15,7 @@
 #include "pe1/render_prim.h"
 #include "pe1/render_shadow.h"
 
-/* Matching debt: fixed-register pins and scheduling constraints preserve the stock PSYQ instruction schedule. */
+/* Matching debt: fixed-pins and scheduling constraints preserve the stock PSYQ instruction schedule. */
 
 /* A packet or ordering-table slot address as the 24-bit link word. */
 typedef union RenderLinkAddress {
@@ -42,7 +40,7 @@ typedef union RenderLinkAddress {
 #define LINK_PAGE(packet, ordering, mask24, maskTop)                         \
     do {                                                                     \
         u32 packet_tag = *(u32 *)(packet);               \
-        register u32 ot_tag asm("$2");                                      \
+        u32 ot_tag;                                      \
         RenderLinkAddress link;                                              \
         ot_tag = *(u32 *)(ordering);                                         \
         ot_tag &= (mask24);                                                   \
@@ -56,32 +54,30 @@ typedef union RenderLinkAddress {
 
 int Render_DrawSpriteEntry(GeomEntry *input)
 {
-    register u32 *position_cursor asm("$10");
-    register s32 workValue asm("$2");
+    u32 *position_cursor;
+    s32 workValue;
     GeomEntry *entry;
     s32 active;
     RenderTilePacket *sprite;
-    register RenderTexturePagePacket *page asm("$8");
+    RenderTexturePagePacket *page;
     RenderLinkAddress ordering;
     GeomState *state;
     u32 flags;
     u32 count;
     u32 i;
-    register s32 scroll_x asm("$6");
+    s32 scroll_x;
     s32 scroll_y;
     s32 texture_base;
-    register u32 *pos asm("$25");
+    u32 *pos;
     s32 raw_x;
-    register s32 raw_y asm("$7");
-    register s32 screen_src asm("$3");
+    s32 raw_y;
+    s32 screen_src;
     char frame_pad[9];
 
     active = g_ActiveDrawSlot;
     entry = input;
     sprite = entry->u30.prim;
     count = entry->prim_count;
-    asm("" : "=r"(active), "=r"(sprite), "=r"(count)
-        : "0"(active), "1"(sprite), "2"(count));
     ordering.pointer = D_800B0E38.ordering[active];
     if (active != 0) {
         sprite += count;
@@ -102,7 +98,6 @@ int Render_DrawSpriteEntry(GeomEntry *input)
         raw_y = screen_src + screen_add;
         scroll_y = raw_y;
     }
-    asm volatile("" : : "r"(scroll_y));
     {
         workValue = *(u32 *)entry >> 8;
         workValue &= 0xFFF;
@@ -147,14 +142,14 @@ int Render_DrawSpriteEntry(GeomEntry *input)
         if (count != 0) {
             u32 mask24 = 0x00FFFFFF;
             u32 maskTop = 0xFF000000;
-            register RenderTexturePagePacket *page_cursor asm("$13") = page;
-            register RenderTilePacket *sprite_cursor asm("$8") = sprite;
+            RenderTexturePagePacket *page_cursor = page;
+            RenderTilePacket *sprite_cursor = sprite;
             position_cursor = pos;
                 do {
                 s32 draw_x;
                 {
-                    register u32 word_x asm("$2") = *position_cursor;
-                    register s32 x asm("$4") = scroll_x + (word_x >> 22);
+                    u32 word_x = *position_cursor;
+                    s32 x = scroll_x + (word_x >> 22);
                     draw_x = x;
                     if ((s16)x >= 320) {
                         s32 modulus_x = entry->anim_mod_x;
@@ -165,7 +160,7 @@ int Render_DrawSpriteEntry(GeomEntry *input)
                     }
                 }
                 if ((u16)(draw_x + 15) < 0x14F) {
-                        register s32 draw_y asm("$5");
+                        s32 draw_y;
                         {
                             u32 word_y = *position_cursor;
                             s32 y = scroll_y + ((word_y >> 12) & 0x3FF);
@@ -203,7 +198,7 @@ int Render_DrawSpriteEntry(GeomEntry *input)
         }
     } else {
         u32 mask24;
-        register u32 maskTop asm("$14");
+        u32 maskTop;
         RenderTilePacket *sprite_cursor;
         RenderTexturePagePacket *page_cursor;
         i = 0;
@@ -215,7 +210,7 @@ int Render_DrawSpriteEntry(GeomEntry *input)
             position_cursor = pos;
             do {
             u32 word = *position_cursor;
-            register s32 draw_x asm("$13");
+            s32 draw_x;
             workValue = scroll_x + (word >> 22);
             draw_x = workValue;
             if ((u16)(workValue + 15) < 0x14F) {
@@ -228,7 +223,7 @@ int Render_DrawSpriteEntry(GeomEntry *input)
                     if ((u16)(y + 15) < 0xEF) {
                         tile_u = texture_base + (*(u16 *)position_cursor & 0xFFF);
                         if (((tile_u - 8) & 0xFFFFU) < 0xFF1) {
-                            register u32 sprite_tag asm("$3");
+                            u32 sprite_tag;
                             s32 ot_index = tile_u;
                             RenderLinkAddress ot;
                             ot_index <<= 16;
@@ -423,7 +418,7 @@ s32 Render_BuildMeshList(void) {
 int Render_StartFadeIn(int arg0)
 {
   int new_var;
-  register int *flags;
+  int *flags;
   int value;
   flags = &g_RenderStateFlags;
   g_RenderFadeFrameCount = arg0;

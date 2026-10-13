@@ -1100,7 +1100,7 @@ int FourLayerGlow_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) 
 
 /* Four-layer variant of the field glow: two pairs of fixed spins, the
  * second pair pushed further out and drawn at the full depth.
- * Matching debt: 6 register pins and the remaining empty constraints.
+ * Matching debt: 6 pins and the remaining empty constraints.
  * Explicit spin address aliases retain the retail spill order. Rotation,
  * column, and translation windows use the stock GTE macros. */
 void FourLayerGlow_DrawFlareLayers(void *object, void *slot, FieldGlowLayers *glow)
@@ -1108,18 +1108,18 @@ void FourLayerGlow_DrawFlareLayers(void *object, void *slot, FieldGlowLayers *gl
     int halfBrightness;
     u16 brightness;
     GteMatrix *workMatrix;
-    register GteMatrix *stepMatrix asm("$18");
+    GteMatrix *stepMatrix;
 
     GteShortVector *spinCAddress;
     GteShortVector *spinDAddress;
 
-    register const volatile u16 *column1 asm("$19");
-    register const volatile u16 *column2 asm("$22");
-    register u16 *outColumn1 asm("$20");
+    const volatile u16 *column1;
+    const volatile u16 *column2;
+    u16 *outColumn1;
     u16 *outColumn2;
     const s32 *translation;
     s32 *outTranslation;
-    register GteShortVector *nextSpin asm("$23");
+    GteShortVector *nextSpin;
     GteShortVector *thirdSpin;
     GteShortVector *fourthSpin;
     GteMatrix matrix;
@@ -1175,7 +1175,6 @@ void FourLayerGlow_DrawFlareLayers(void *object, void *slot, FieldGlowLayers *gl
         gte_ldclmv(column2);
     gte_rtir();
     outColumn2 = (u16 *)&matrix + 2;
-    asm("" : "=r"(outColumn2) : "0"(outColumn2));
     gte_stclmv(outColumn2);
     /* Compose the translation using the current matrix. */
 

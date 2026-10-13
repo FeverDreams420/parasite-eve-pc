@@ -1,6 +1,3 @@
-/* ASSEMBLER: GNU */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
 /* Psy-Q LIBGPU SYS.OBJ, part 8 of 11: the private display-buffer swap and DMA
  * queue. */
 
@@ -34,8 +31,8 @@ int Gpu_SwapDisplayBuffers(void (*function)(u32, u32), u32 *source, int size, u3
     state = &g_GpuSystemState;
     state->syncCallbackPending = 1;
     if (state->queueState.queue) {
-        register u32 status;
-        register u32 mask;
+        u32 status;
+        u32 mask;
         if (g_GpuDmaQueueHead != g_GpuDmaQueueTail) goto queued;
         status = *(volatile u32 *)g_GpuDmaChcrPtr;
         mask = 0x01000000;
@@ -43,8 +40,8 @@ int Gpu_SwapDisplayBuffers(void (*function)(u32, u32), u32 *source, int size, u3
         if (state->drawSyncCallback) goto queued;
     }
     {
-        register volatile u32 *gp1 = (volatile u32 *)g_GpuDmaRegisterWindow.gp1;
-        register u32 ready = 0x04000000;
+        volatile u32 *gp1 = (volatile u32 *)g_GpuDmaRegisterWindow.gp1;
+        u32 ready = 0x04000000;
         do {} while (!(*gp1 & ready));
         function(PSX_ADDRESS(source), argument);
         SetIntrMask(g_GpuSavedIntrMask);
@@ -55,12 +52,12 @@ queued:
     DMACallback(2, (PsyqInterruptHandler)Gpu_SetDisplayBuffer);
     i = 0;
     if (size) {
-        register u32 *base = g_GpuDmaQueue[0].packet;
-        register u32 *cursor = source;
+        u32 *base = g_GpuDmaQueue[0].packet;
+        u32 *cursor = source;
         for (; i < size / 4;) {
-            register u32 offset = i * 4;
-            register u32 value = *cursor++;
-            register u32 head;
+            u32 offset = i * 4;
+            u32 value = *cursor++;
+            u32 head;
             u32 entry;
             head = g_GpuDmaQueueHead;
             i++;
@@ -68,16 +65,13 @@ queued:
             entry += PSX_ADDRESS(base);
             offset += entry;
             *(u32 *)offset = value;
-            asm volatile("" ::: "memory");
         }
         g_GpuDmaQueue[g_GpuDmaQueueHead].argument0 = PSX_ADDRESS(g_GpuDmaQueue[g_GpuDmaQueueHead].packet);
     } else {
         g_GpuDmaQueue[g_GpuDmaQueueHead].argument0 = PSX_ADDRESS(source);
     }
     g_GpuDmaQueue[g_GpuDmaQueueHead].argument1 = argument;
-    asm volatile("" ::: "memory");
     g_GpuDmaQueue[g_GpuDmaQueueHead].function = function;
-    asm volatile("" ::: "memory");
     g_GpuDmaQueueHead = (g_GpuDmaQueueHead + 1) & 63;
     SetIntrMask(g_GpuSavedIntrMask);
     Gpu_SetDisplayBuffer();
@@ -88,11 +82,11 @@ int SetIntrMask(int);
 
 /* LIBGPU queue drain (_exeque); the existing project name is retained.
  * Entries have a callback, two arguments, and an 84-byte packet payload.
- * Empty barriers and register pins preserve the retail scheduling and
+ * Empty barriers and pins preserve the retail scheduling and
  * interrupt-visible reads; they are included in the matching debt report. */
 int Gpu_SetDisplayBuffer(void) {
-    register u32 readyMask;
-    register u32 busyMask;
+    u32 readyMask;
+    u32 busyMask;
 
     if (*g_GpuDmaChcrPtr & 0x01000000) return 1;
     g_GpuSavedIntrMaskDrain = SetIntrMask(0);
@@ -105,21 +99,21 @@ int Gpu_SetDisplayBuffer(void) {
                 DMACallback(2, 0);
             }
             {
-                register volatile u32 *gp1 = (volatile u32 *)g_GpuDmaRegisterWindow.gp1;
+                volatile u32 *gp1 = (volatile u32 *)g_GpuDmaRegisterWindow.gp1;
                 if (!(*gp1 & readyMask)) {
-                    register u32 ready = 0x04000000;
+                    u32 ready = 0x04000000;
                     do {} while (!(*gp1 & ready));
                 }
             }
             {
-                register u32 fnIndex asm("$5");
-                register u32 argIndex;
-                register u32 argOffset asm("$2");
-                register u32 fnOffset;
-                register u32 arg0;
-                register u32 arg1Index;
+                u32 fnIndex;
+                u32 argIndex;
+                u32 argOffset;
+                u32 fnOffset;
+                u32 arg0;
+                u32 arg1Index;
                 u32 arg1Offset;
-                register u32 arg1;
+                u32 arg1;
                 void (*function)(u32, u32);
                 /* Keep the three separate reads of the interrupt-visible tail. */
                 fnIndex = g_GpuDmaQueueTail;
@@ -132,8 +126,6 @@ int Gpu_SetDisplayBuffer(void) {
                     at.word += argOffset;
                     arg0 = at.entry->argument0;
                 }
-                asm volatile("" : "=r"(arg0), "=r"(fnOffset)
-                             : "0"(arg0), "1"(fnOffset) : "memory");
                 arg1Index = g_GpuDmaQueueTail;
                 fnOffset <<= 5;
                 arg1Offset = arg1Index * sizeof(GpuQueueEntry);
@@ -156,18 +148,16 @@ int Gpu_SetDisplayBuffer(void) {
     }
     SetIntrMask(g_GpuSavedIntrMaskDrain);
     if (g_GpuDmaQueueHead == g_GpuDmaQueueTail) {
-        register u32 status = *(volatile u32 *)g_GpuDmaChcrPtr;
+        u32 status = *(volatile u32 *)g_GpuDmaChcrPtr;
         u32 mask;
         mask = 0x01000000;
         if (!(status & mask)) {
-            register u32 *pending = &g_GpuSystemState.syncCallbackPending;
+            u32 *pending = &g_GpuSystemState.syncCallbackPending;
                         if (*pending) {
                 void (*callback)(void) = *(void (**)(void))(pending + 1);
                 if (callback) {
-                    register GpuDebugState *base = (GpuDebugState *)((char *)pending - 8);
-                    asm volatile("" : "=r"(base) : "0"(base));
+                    GpuDebugState *base = (GpuDebugState *)((char *)pending - 8);
                     base->syncCallbackPending = 0;
-                    asm volatile("" ::: "memory");
                     callback();
                 }
             }

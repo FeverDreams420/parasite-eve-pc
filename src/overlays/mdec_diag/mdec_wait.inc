@@ -1,5 +1,5 @@
 #define MDECDIAG_WAIT_MDEC(name, status, mask, message) \
-    register unsigned int g_##name##_MessageArg asm("$4"); \
+    unsigned int g_##name##_MessageArg; \
     int name(void) { \
         volatile int timeout = 0x100000; \
         if ((*status & mask) != 0) { \

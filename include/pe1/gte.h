@@ -185,12 +185,10 @@
  * source is an s32 * lvalue so callers can reuse the constrained address. */
 #define gte_ldv0_word3(source) \
     { \
-        register unsigned int packed asm("$12"); \
-        register unsigned int high asm("$13"); \
-        asm volatile("" : "=r"(source) : "0"(source)); \
+        unsigned int packed; \
+        unsigned int high; \
         high = (unsigned short)(source)[1]; \
         packed = (unsigned short)(source)[0]; \
-        asm volatile("" : "=r"(high) : "0"(high), "r"(packed)); \
         high <<= 16; \
         packed |= high; \
         asm volatile("mtc2 %0,$0\n\t" \
@@ -230,9 +228,9 @@
 /* Store IR1..3 back to a strided matrix column. */
 #define gte_stir123_column(out) \
     ({ \
-        register int x asm("$12"); \
-        register int y asm("$13"); \
-        register int z asm("$14"); \
+        int x; \
+        int y; \
+        int z; \
         asm volatile("mfc2 %0,$9\n\t" \
                      "mfc2 %1,$10\n\t" \
                      "mfc2 %2,$11" \
@@ -241,7 +239,6 @@
         ((short *)(out))[0] = x; \
         ((short *)(out))[3] = y; \
         ((short *)(out))[6] = z; \
-        asm volatile(""); \
     })
 
 /* PSY-Q gte_stsv: store IR1..3 as a short vector (mfc2 into $12..$14, then
@@ -490,9 +487,9 @@
     asm volatile("swc2 $22,0(%0)" : : "r"(out) : "memory")
 
 #define gte_declare_three_outputs()                                         \
-    register void *gte_out0 asm("$8");                                      \
-    register void *gte_out1 asm("$9");                                      \
-    register void *gte_out2 asm("$10")
+    void *gte_out0;                                      \
+    void *gte_out1;                                      \
+    void *gte_out2
 
 #define gte_bind_three_outputs(out0, out1, out2)                            \
     {                                                                     \
@@ -536,9 +533,9 @@
 #define gte_getflag(out) asm volatile("cfc2 %0,$31" : "=r"(out))
 
 #define gte_declare_rt4_results(first_flags, flags, depth)                   \
-    register int first_flags asm("$3");                                     \
-    register int flags asm("$8");                                           \
-    register int depth asm("$2")
+    int first_flags;                                     \
+    int flags;                                           \
+    int depth
 
 /* IR0 is the scalar input used by GPF. */
 #define gte_ldir0(value) \
@@ -625,16 +622,16 @@
     asm volatile("nop\n\t" \
                  ".word 0x4BA8003E")
 
-/* Fixed-register staging used by the handwritten PSY-Q transfer wrappers. */
+/* Fixed-staging used by the handwritten PSY-Q transfer wrappers. */
 #define gte_declare_xy_staging()                                             \
-    register int gte_x asm("$8");                                            \
-    register int gte_y asm("$9")
+    int gte_x;                                            \
+    int gte_y
 
 #define gte_declare_xyz_staging()                                            \
     gte_declare_xy_staging();                                                \
-    register int gte_z asm("$10")
+    int gte_z
 
-#define gte_declare_shift12() register int gte_shift asm("$11")
+#define gte_declare_shift12() int gte_shift
 #define gte_set_shift12() (gte_shift = 12)
 
 #define gte_load_byte2(input)                                                \
@@ -754,12 +751,12 @@
                  ".word 0x4A280030")
 
 #define gte_declare_separate_outputs()                                      \
-    register void *gte_out1 asm("$8");                                      \
-    register void *gte_out2 asm("$9");                                      \
-    register void *gte_depth_out asm("$10");                                \
-    register void *gte_flags_out asm("$11");                                \
-    register int gte_flags asm("$3");                                       \
-    register int gte_depth_value asm("$2")
+    void *gte_out1;                                      \
+    void *gte_out2;                                      \
+    void *gte_depth_out;                                \
+    void *gte_flags_out;                                \
+    int gte_flags;                                       \
+    int gte_depth_value
 
 /* Keep the ABI-bound output registers free until RTPT has completed. */
 #define gte_rtpt_separate()                                                 \
@@ -935,8 +932,8 @@
         gte_stlvnl((char *)(r3) + 20); \
     }
 
-/* Stock PSY-Q inline_c.h (DMPSX version 3) forms, copied register for
- * register and instruction for instruction.  The SDK writes the COP2 commands
+/* Stock PSY-Q inline_c.h (DMPSX version 3) forms, copied for
+ * and instruction for instruction.  The SDK writes the COP2 commands
  * as DMPSX placeholder words; the real command words DMPSX substitutes are
  * used here.  Kept separate from the older gte_ldopv1 / gte_op12 shapes above,
  * which matched code depends on. */

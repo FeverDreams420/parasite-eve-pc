@@ -1,14 +1,8 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "pe1/battle_cmd.h"
 #include "pe1/inventory.h"
 #include "pe1/inventory_slots.h"
 #include "pe1/menu_inventory.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 s16 *g_InvItemPtr;
 s32 g_InvPackedListCount;
 s32 g_InvSlotLimit;

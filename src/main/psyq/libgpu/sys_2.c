@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBGPU SYS.OBJ, part 2 of 11: PutDispEnv. */
 
 #include "common.h"
@@ -11,43 +10,40 @@ int GetVideoMode(void);
 void *memcpy(void *, const void *, unsigned);
 #define SIGNED_HALF(p) ((short)*(volatile unsigned short *)(p))
 /* Hides the cached rectangle address so the remaining halves load from a
- * register copy instead of folded offsets. */
+ * copy instead of folded offsets. */
 static inline unsigned short *OpaqueHalfPointer(unsigned short *p) {
-    asm("" : "=r"(p) : "0"(p));
     return p;
 }
 
 static inline void Gpu_SendDisplayRange(unsigned start, unsigned end,
                                        unsigned mask, unsigned shift, unsigned command) {
-    register unsigned y asm("$3") = (end & mask) << shift;
+    unsigned y = (end & mask) << shift;
     unsigned x = start & mask;
-    register unsigned opcode = command;
+    unsigned opcode = command;
     GpuCallbacks *ops = g_GpuCallbacks;
     x |= opcode;
     ops->callback10(y | x);
 }
 
 DISPENV *PutDispEnv(DISPENV *env) {
-    register DISPENV *e = env;
-    register unsigned char *state;
+    DISPENV *e = env;
+    unsigned char *state;
     GpuSystemState *system;
-    register unsigned mode;
-    register int vstart, vend;
-    register unsigned short *rect;
+    unsigned mode;
+    int vstart, vend;
+    unsigned short *rect;
     int width;
-    register int span;
-    register int index, hstart, hend, clamp;
-    asm("" : "=r"(e) : "0"(e));
+    int span;
+    int index, hstart, hend, clamp;
     state = &g_GpuSystemState.queueState.debugLevel;
-    asm("" : "=r"(state) : "0"(state));
     mode = 0x08000000;
     if (*state >= 2)
         g_GpuDebugPrintf(g_PutDispEnvFormat, e);
     {
-        register unsigned opcode = 0x05000000;
-        register unsigned y asm("$3") = (unsigned short)e->disp.y;
-        register unsigned x asm("$4") = (unsigned short)e->disp.x;
-        register GpuCallbacks *ops asm("$5") = g_GpuCallbacks;
+        unsigned opcode = 0x05000000;
+        unsigned y = (unsigned short)e->disp.y;
+        unsigned x = (unsigned short)e->disp.x;
+        GpuCallbacks *ops = g_GpuCallbacks;
         y = (y & 0x3ff) << 10;
         x = (x & 0x3ff) | opcode;
         ops->callback10(y | x);
@@ -90,7 +86,6 @@ DISPENV *PutDispEnv(DISPENV *env) {
         e->pad0 = 8;
     }
     rect = (unsigned short *)&g_GpuActiveDispEnv.screen;
-    asm("" : "=r"(rect) : "0"(rect));
     if (SIGNED_HALF(rect) != e->screen.x || SIGNED_HALF(rect + 1) != e->screen.y ||
         SIGNED_HALF(rect + 2) != e->screen.w || SIGNED_HALF(rect + 3) != e->screen.h ||
         e->pad0 == 8) {
@@ -117,15 +112,14 @@ DISPENV *PutDispEnv(DISPENV *env) {
             int product = e->screen.x * g_GpuDotClockDividers[index];
             int video = e->pad0;
             int table = (video * 5 + index) * 2;
-            register int base = g_GpuHRangeTable[table];
-            register int screenWidth = e->screen.w;
+            int base = g_GpuHRangeTable[table];
+            int screenWidth = e->screen.w;
             span = D_80095822[table] - base;
             hstart = base + product;
             if (screenWidth)
                 span = (span * screenWidth) >> 8;
         }
         hend = hstart + span;
-        asm volatile("" : : "r"(hend) : "memory");
         if (e->pad0) {
             clamp = 540;
             if (hstart >= 540) {

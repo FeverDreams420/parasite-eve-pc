@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSREAD.OBJ, part 1 of 2: DsRead, DS_read_cbsync. */
 /* DSREAD is split in two: these functions match with GCC 2.7.2, the
  * callbacks and controls in dsread_2.c only with GCC 2.8.1 and
@@ -13,15 +12,13 @@
 #define READ_STATE(anchor, field) ((CdReadProgressState *)((char *)(anchor) - PE1_OFFSETOF(CdReadProgressState, field)))
 
 int DsRead(CdlLOC *position, int sectors, void *destination, int incomingMode) {
-    register int incoming asm("$7") = incomingMode;
+    int incoming = incomingMode;
     int mode;
     CdlLOC location;
     int *state;
-    register int result asm("$2");
+    int result;
     /* Empty constraints preserve the retail saves and incoming a3 lifetime. */
-    asm("" : "=r"(incoming) : "0"(incoming) : "$17", "$16");
     state = &g_CdReadInProgress;
-    asm volatile("" : "=r"(state), "=r"(incoming) : "0"(state), "1"(incoming));
     mode = incoming;
     if (*state == 1 || ER_active()) {
         result = 0;
@@ -46,7 +43,6 @@ int DsRead(CdlLOC *position, int sectors, void *destination, int incomingMode) {
     if (!mode) return result;
     result = VSync(-1);
     state = &g_CdReadStartVsync;
-    asm volatile("" : "=r"(state) : "0"(state));
     *state = result;
     if (READ_STATE(state, startVsync)->flags & 1)
         READ_STATE(state, startVsync)->dataCallback = DsDataCallback(DS_read_cbdata);

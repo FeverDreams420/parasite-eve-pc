@@ -27,8 +27,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(GpuDmaRegisterWindow, chcr) == 0x0C,
                   gpu_dma_register_window_chcr_offset);
 #endif
 
-/* DMA channel 2 address and control register pointers and the DMA
- * control register pointer; every access is a hardware register access. */
+/* DMA channel 2 address and control pointers and the DMA
+ * control pointer; every access is a hardware access. */
 extern volatile u32 *g_GpuDmaMadrPtr;
 extern volatile u32 *g_GpuDmaChcrPtr;
 extern volatile u32 *g_GpuDmaControlRegPtr;

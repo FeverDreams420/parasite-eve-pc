@@ -1,12 +1,10 @@
-/* ASSEMBLER: GNU */
-
 #include "pe1/game_asm.h"
 
 /*
  * int Math_FixedMul(int a, int b): the middle 32 bits of the signed 64-bit
  * product, i.e. a 16.16 fixed-point multiply.
  *
- * Original assembler (configs/USA/original_asm_evidence.json): it reads LO
+ * Original assembler: it reads LO
  * before HI and shifts both in place. GCC's mulsidi3/ashrdi3 patterns read HI
  * first and keep the dead high-word shift for `(long long)a * b >> 16`.
  */

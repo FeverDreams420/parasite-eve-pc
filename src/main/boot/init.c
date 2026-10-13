@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_status.h"
@@ -22,10 +18,7 @@
 #include "pe1/psyq_spu_api.h"
 #include "pe1/scene_dispatch.h"
 #include "pe1/scene_flags.h"
-#include "m2c_macros.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 s32 g_SceneFlagBits;
 s32 g_BattleControlFlags;
 s32 g_FieldRenderFlags;
@@ -59,16 +52,16 @@ void Boot_InitSystem(void) {
 
 #define NULL ((void *)0)
 u32 Draw_FlushPrimQueue(void);
-M2C_UNK Save_InitSystem();
-M2C_UNK Script_InitNodePool();
-M2C_UNK Entity_ResetStateGlobals();
-M2C_UNK Entity_ResetAllPools();
-M2C_UNK SsInit();
+int Save_InitSystem();
+int Script_InitNodePool();
+int Entity_ResetStateGlobals();
+int Entity_ResetAllPools();
+int SsInit();
 void Menu_SetEquipSlotIndex(int index);
 void Boot_BuildRenderFlagTable(void);
-M2C_UNK Save_PostInitStub();
-M2C_UNK CdRom_InitScreenState();
-M2C_UNK Draw_InitGpuHwRegs();
+int Save_PostInitStub();
+int CdRom_InitScreenState();
+int Draw_InitGpuHwRegs();
 #define g_FrameRngCounter (g_FrameRngCounter[0])
 
 void Boot_InitSubsystems(void) {

@@ -1,20 +1,19 @@
-/* GCC_VERSION: 2.8.1 */
 /* PSY-Q LIBMATH FLTSIDF: __floatsidf. */
 
 #include "pe1/math64.h"
 
 /* Normalize the magnitude, then pack the IEEE-754 exponent and fraction.
  * Keep the retail signed comparisons, including the nonterminating INT_MIN
- * normalization path. The zero-register binding and scheduling constraints
+ * normalization path. The zero-binding and scheduling constraints
  * below emit no instructions and are included in debt. */
 double __floatsidf(int value) {
-    register unsigned int sign = 0;
-    register int exponent = 0x41D;
-    register MathDoubleBits result asm("$16");
+    unsigned int sign = 0;
+    int exponent = 0x41D;
+    MathDoubleBits result;
     MathU64 parts;
 
     if (value == 0) {
-        register unsigned int zero asm("$0");
+        unsigned int zero = 0;
         /* Architectural zero; this empty output does not read uninitialized C storage. */
                 result.bits.lo = zero;
         result.bits.hi = zero;
@@ -35,9 +34,9 @@ double __floatsidf(int value) {
         parts.lo = 0;
         _dbl_shift_us(&parts, 1, parts, 10);
         {
-            register unsigned int high;
-            register unsigned int packed asm("$17");
-            register unsigned int mask asm("$2") = 0xFFEF0000;
+            unsigned int high;
+            unsigned int packed;
+            unsigned int mask = 0xFFEF0000;
             high = parts.hi;
             mask |= 0xFFFF;
             high &= mask;

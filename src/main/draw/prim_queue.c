@@ -7,26 +7,25 @@ typedef union DrawPrimGeneratorAddress {
 } DrawPrimGeneratorAddress;
 
 u32 Draw_FlushPrimQueue(void) {
-    register u32 *base asm("$8");
-    register u32 *head_slot asm("$15");
-    register u32 *tail_slot asm("$24");
-    register s32 head asm("$9");
-    register s32 tail asm("$10");
-    register u32 *head_ptr asm("$11");
-    register u32 *tail_ptr asm("$12");
-    register u32 head_value asm("$13");
-    register u32 tail_value asm("$14");
+    u32 *base;
+    u32 *head_slot;
+    u32 *tail_slot;
+    s32 head;
+    s32 tail;
+    u32 *head_ptr;
+    u32 *tail_ptr;
+    u32 head_value;
+    u32 tail_value;
     u32 ret;
     /* Match debt: read architectural zero without emitting an instruction;
      * OR/ORI preserve the original encodings of the return and wrap value. */
-    register u32 zero asm("$0");
+    u32 zero = 0;
         base = (u32 *)0x80070E0C;
     head_slot = (u32 *)0x80070E04;
     tail_slot = (u32 *)0x80070E08;
     head = *head_slot;
     tail = *tail_slot;
-    /* Keep the base as a register operand rather than a folded constant. */
-    asm volatile("" : "=r"(base) : "0"(base));
+    /* Keep the base as a operand rather than a folded constant. */
 
     /* Match note: preserve target operand order in the address adds. */
     {
@@ -43,7 +42,6 @@ u32 Draw_FlushPrimQueue(void) {
         entry.address += tail;
         tail_ptr = entry.pointer;
     }
-    asm volatile("" : "=r"(head_ptr), "=r"(tail_ptr) : "0"(head_ptr), "1"(tail_ptr));
 
     {
         u32 previousValue = *head_ptr;
@@ -52,9 +50,7 @@ u32 Draw_FlushPrimQueue(void) {
     }
     *head_ptr = head_value;
     /* Finish the entry write and result copy before updating queue offsets. */
-    asm volatile("" : "=r"(head_value) : "0"(head_value));
     ret = zero | head_value;
-    asm volatile("" : "=r"(head) : "0"(head));
 
     head = head - 4;
     tail = tail - 4;

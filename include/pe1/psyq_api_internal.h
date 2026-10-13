@@ -88,7 +88,7 @@ typedef PsyqInterruptHandler DmaInterruptCallback;
 typedef DmaInterruptCallback (*DmaCallbackSetter)(int channel,
                                                DmaInterruptCallback callback);
 extern DmaInterruptCallback g_IntrDmaHandlerTable[];
-/* Initialized to the DMA interrupt control register at 0x1F8010F4. */
+/* Initialized to the DMA interrupt control at 0x1F8010F4. */
 extern unsigned int *g_IntrDmaDispatchPtr;
 DmaInterruptCallback setIntrDMA(int channel, DmaInterruptCallback callback);
 DmaCallbackSetter startIntrDMA(void);
@@ -115,7 +115,7 @@ PE1_STATIC_ASSERT(sizeof(InterruptDispatchTable) == 28, intr_dispatch_size);
 extern InterruptDispatchTable *g_EventCallbackTable;
 extern PsyqInterruptHandler g_IntrVSyncCallbackTable[];
 extern volatile int g_VSyncCount;
-/* VSYNC.OBJ: GPU status and root-counter-1 (hblank) register pointers and
+/* VSYNC.OBJ: GPU status and root-counter-1 (hblank) pointers and
  * the counts sampled at the previous VSync. */
 extern volatile u32 *g_VSyncGpuStatusRegister;
 extern volatile u32 *g_VSyncHcountRegister;

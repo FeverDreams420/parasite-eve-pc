@@ -28,9 +28,7 @@ void LIBDS_DSSYS_1_text_EA4(int event, u8 *data) {
     }
     src = data_reg + index;
     value = src[0];
-    asm volatile("" : : "r"(value));
     state = &g_CdRomEventCommandState.command.read.eventFlags;
-    asm volatile("" : "=r"(state) : "0"(state));
     state->bit7 = value >> 7;
     state->bit6 = (value >> 6) & 1;
     state->bit5 = (value >> 5) & 1;

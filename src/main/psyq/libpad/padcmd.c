@@ -1,10 +1,8 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBPAD PADCMD.OBJ: _padSetAct, _padSetCmd, _padSendAtLoadInfo, _padRecvAtLoadInfo, _padGetActSize, _padLoadActInfo, _padSetActAlign, _padSetMainMode, _padCmdParaMode and the command emitters. */
 
 #include "common.h"
 #include "pe1/card_obj.h"
 #include "pe1/psyq_pad_main.h"
-#include "m2c_macros.h"
 
 #include "padcmd_externs.h"
 
@@ -50,7 +48,7 @@ int _padLoadActInfo(CardObj *obj, unsigned char *dst);
 
 int _padRecvAtLoadInfo(CardObj *obj) {
     unsigned int chunk;
-    register unsigned int next asm("$2");
+    unsigned int next;
     unsigned int responseValue;
     switch (obj->sequenceStep) {
     case 2:
@@ -129,7 +127,7 @@ int _padLoadActInfo(CardObj *obj, unsigned char *buffer) {
     int cursor;
     int result;
     int state;
-    register int (*processFn)(CardObj *);
+    int (*processFn)(CardObj *);
     int rowCount;
     int columnCount;
 
@@ -147,25 +145,20 @@ return_zero:
     }
 initialize:
     result = 1;
-    asm volatile("" : "=r"(result) : "0"(result));
     state = 4;
     cursor = ((int)buffer + 3) >> 2;
     obj->communicationState = state;
     state = 1;
     obj->sequenceStep = state;
     obj->fn_14 = (void (*)(void *))CardObj_EmitReadTransferCommand;
-    asm volatile("" ::: "memory");
     rowCount = obj->modeCount;
         processFn = LIBPAD_PADCMD_text_3A0;
     obj->fn_18 = processFn;
-    asm volatile("" ::: "memory");
     columnCount = obj->actuatorCount;
-    asm volatile("" : "=r"(rowCount), "=r"(columnCount), "=r"(result) : "0"(rowCount), "1"(columnCount), "2"(result));
 
     cursor <<= 2;
     obj->modeTable = (u16 *)cursor;
     obj->infoRecordIndex = 0;
-    asm volatile("" ::: "memory");
     cursor += ((rowCount + 1) >> 1) * 4;
     obj->capabilities = (PadCapabilityRecord *)cursor;
     cursor += (columnCount * 5 + 3) & 0xFFC;
@@ -196,10 +189,9 @@ void CardObj_EmitReadTransferCommand(CardObj *arg0) {
     }
 }
 
-/* Psy-Q LIBPAD/PADCMD.OBJ private text_3A0.
- * Provenance: configs/USA/psyq_provenance.json (LIBPAD PADCMD). */
+/* Psy-Q LIBPAD/PADCMD.OBJ private text_3A0. */
 int LIBPAD_PADCMD_text_3A0(CardObj *inPort) {
-    register CardObj *port = inPort;
+    CardObj *port = inPort;
     switch (port->sequenceStep) {
     case 2:
         port->modeTable[port->infoRecordIndex] =
@@ -218,7 +210,7 @@ int LIBPAD_PADCMD_text_3A0(CardObj *inPort) {
         record->payloadBytes = port->response_3c[6];
         record->activationCost = port->response_3c[7];
         {
-            register int high = port->response_3c[5];
+            int high = port->response_3c[5];
             record->high_bit = high >> 7;
         }
         port->infoRecordIndex++;
@@ -231,19 +223,19 @@ int LIBPAD_PADCMD_text_3A0(CardObj *inPort) {
     }
     case 4: {
         PadCombinationRecord *record = port->combinations + port->infoRecordIndex;
-        register u8 *source, *base;
-        register int bytes asm("$4");
+        u8 *source, *base;
+        int bytes;
         unsigned offset;
         if (port->combinationBytesRemaining == 0) {
             {
-                register int length = port->response_3c[4];
+                int length = port->response_3c[4];
                 bytes = 3;
                 port->combinationBytesRemaining = length;
             }
             record->length = port->combinationBytesRemaining;
             {
-                register u8 *response = port->response_3c;
-                register int index = port->infoRecordIndex;
+                u8 *response = port->response_3c;
+                int index = port->infoRecordIndex;
                 source = response + 5;
                 if (index == 0) {
                     base = (u8 *)port->combinations;
@@ -257,22 +249,21 @@ int LIBPAD_PADCMD_text_3A0(CardObj *inPort) {
             record->data = base;
             g_PadInfoWriteCursor = base;
         } else {
-            register u8 *response = port->response_3c;
+            u8 *response = port->response_3c;
             bytes = 6;
             source = response + 2;
         }
         bytes--;
         if (bytes != -1) {
-            register u8 **destination = &g_PadInfoWriteCursor;
+            u8 **destination = &g_PadInfoWriteCursor;
             do {
-                register int remaining = port->combinationBytesRemaining;
+                int remaining = port->combinationBytesRemaining;
                 bytes--;
                 if (!remaining)
                     goto exhausted;
                 {
-                    register u8 *dst = *destination;
-                    register int value = *source++;
-                    asm("" : "=r"(source) : "0"(source));
+                    u8 *dst = *destination;
+                    int value = *source++;
                     *dst = value;
                     *destination = dst + 1;
                 }
@@ -341,8 +332,8 @@ s32 Render_CheckParticleBounds(CardObj *arg0) {
     s32 remaining;
     s32 written;
     s32 needed;
-    register u8 *out asm("$6");
-    register s32 limit;
+    u8 *out;
+    s32 limit;
 
     i = 0;
     if (arg0->actuatorCount != 0) {
@@ -388,9 +379,9 @@ void CardObj_EmitReadIdCommand(CardObj *obj);
 int CardObj_CheckAbortOrDispatch(CardObj *obj);
 
 int _padSetMainMode(CardObj *obj, int byte1, int byte2) {
-    register int compareByte asm("$19");
-    register int flag asm("$3");
-    register int result;
+    int compareByte;
+    int flag;
+    int result;
 
     compareByte = byte1;
     result = g_MemCardIsTransferActiveFn(obj);
@@ -399,7 +390,6 @@ int _padSetMainMode(CardObj *obj, int byte1, int byte2) {
     }
 
     result = 1;
-    asm("" : "=r"(result) : "0"(result));
     flag = 1;
     obj->sequenceStep = flag;
     obj->fn_14 = (void (*)(void *))CardObj_EmitReadIdCommand;

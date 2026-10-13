@@ -7,12 +7,12 @@ void SpuSetReverbModeDepth(short left, short right) {
 
     _spu_RXX->reverb_volume_left = left;
     _spu_RXX->reverb_volume_right = right;
-    asm volatile("" : "=r"(vol) : "0"(&g_SpuReverbState.depth));
+    (vol = &g_SpuReverbState.depth);
     vol->left = left;
     vol->right = right;
 }
 
-unsigned int gap_akao_Akao_SetMasterVolume_tail_7A750[] __attribute__((section(".text"))) = {
+unsigned int gap_akao_Akao_SetMasterVolume_tail_7A750[] = {
     0x00000000,
     0x00000000,
 };

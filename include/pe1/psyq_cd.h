@@ -30,7 +30,7 @@ extern volatile u8 *g_CdRegIndexBase;
 extern volatile u8 *g_CdRegPort1;
 extern volatile u8 *g_CdRegDataWrite;
 extern volatile u8 *g_CdRegResponse;
-/* The common delay register (0x1F801020); LIBCD writes 0x1325 or 0x1323. */
+/* The common delay (0x1F801020); LIBCD writes 0x1325 or 0x1323. */
 extern volatile u32 *g_CdRegRequest;
 extern u16 *volatile g_CdSpuRegBase;
 
@@ -52,7 +52,7 @@ extern volatile u32 *g_CdDmaControlRegPtr;
 extern volatile u8 *g_CdStIntrIndexRegPtr;
 extern char g_CdDmaStatusErrorFormat[];
 
-/* LIBCD keeps DMA register addresses in shared pointer slots. */
+/* LIBCD keeps DMA addresses in shared pointer slots. */
 extern volatile u32 *g_CdRegDelaySize, *g_CdRegDmaPcr;
 extern void *volatile *g_CdRegDmaMadr;
 extern volatile u32 *g_CdRegDmaBcr, *g_CdRegDmaControl;

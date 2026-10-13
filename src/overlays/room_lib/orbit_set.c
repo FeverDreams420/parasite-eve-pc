@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-strength-reduce */
-
 /*
  * The orbit effect set: its module class and the effects it runs.
  *
@@ -51,7 +49,7 @@ ROOMLIB_RETURN_ZERO(RoomEffect_OrbitSetNop6)
  */
 
 /* Copies the owner's eight words into the state, allocates the set's
- * buffer and fills the four sprite records. The register pins and launders
+ * buffer and fills the four sprite records. The pins and launders
  * reproduce retail's assignment of the shared constants. */
 /* The script object the set belongs to and its owner actor. */
 typedef struct RoomOrbitSetEntity {
@@ -64,13 +62,13 @@ void RoomEffect_OrbitSetInit(RoomOrbitSetEntity *object, void *unused, RoomOrbit
     void *allocation;
     RenderMatrix *source;
     RenderMatrix *matrixArg;
-    register void *callObject asm("$4");
-    register int value asm("$2");
+    void *callObject;
+    int value;
     u16 value128a;
     u8 value128b;
     int value32;
     int packetValue;
-    register int valueNeg42 asm("$5");
+    int valueNeg42;
 
     FieldFx_SetScriptContext(state);
     owner = object->owner;
@@ -87,17 +85,11 @@ void RoomEffect_OrbitSetInit(RoomOrbitSetEntity *object, void *unused, RoomOrbit
     value32 = 0x20;
     packetValue = 1;
     valueNeg42 = -0x2A;
-    PE1_COMPILER_LAUNDER(value128a);
-    PE1_COMPILER_LAUNDER(value128b);
-    PE1_COMPILER_LAUNDER(value32);
-    PE1_COMPILER_LAUNDER(packetValue);
     g_RoomOrbitParticlePacket.offset = value;
     value = 0x60;
     g_RoomOrbitBurstPacket.r = value;
     value = 0x40;
-    asm volatile("" : "=r"(state) : "0"(state), "r"(value));
     matrixArg = &state->matrix;
-    PE1_COMPILER_USE(matrixArg);
     g_RoomOrbitBurstPacket.offset = valueNeg42;
     g_RoomOrbitShadowPacket.offset = valueNeg42;
     g_RoomOrbitSpritePacket.offset = valueNeg42;
@@ -308,7 +300,6 @@ void RoomEffect_DrawOrbitBurst(
     i = 0;
     configA = &g_RoomOrbitBurstPacket.code;
     configB = &g_RoomOrbitShadowPacket.code;
-    PE1_COMPILER_USE(configB);
     position = state->position;
     FieldFx_SetSpriteTexturePreset(owner->asset.page);
     FieldFx_SetSpriteCellSize(0x20, 0x20);

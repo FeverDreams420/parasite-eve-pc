@@ -381,15 +381,12 @@ void RoomEffect_InitEffectSequenceSprites(RoomEnt *ent, void *unused, RoomLibFxM
         depth = 0x80;
     }
     c80b = 0x80;
-    PE1_COMPILER_USE(c80b);
     c40 = 0x40;
     value = 0x20;
-    PE1_COMPILER_USE(value);
     g_EffectSequenceGlowSpriteSecondary.clut = 3;
     g_EffectSequenceGlowSpriteSecondary.offset = -100;
     g_EffectSequenceFinalGlowSprite.cell = 8;
     clut = 2;
-    asm volatile("" : : "m"(g_EffectSequenceGlowSpriteSecondary));
     primary = &g_EffectSequenceGlowSprite;
     primary->g = c40;
     g_EffectSequenceGlowSpriteSecondary.g = c40;

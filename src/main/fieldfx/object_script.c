@@ -48,8 +48,8 @@ void **FieldFx_GetSlot(FieldFxObject *obj) {
 
 int FieldFx_Register(FieldFxObject *obj, FieldFxHandler *handlers)
 {
-  register FieldFxObject *obj_s0 = obj;
-  register FieldFxHandler *handlers_s2 = handlers;
+  FieldFxObject *obj_s0 = obj;
+  FieldFxHandler *handlers_s2 = handlers;
   s16 i;
   int *table;
   i = 0;

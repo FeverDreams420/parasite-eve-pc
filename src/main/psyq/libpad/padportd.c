@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* PSY-Q LIBPAD PADPORTD: PadInitDirect, CardObj_ResetFields,
  * MemCard_DmaCompleteCallback, CardObj_SwapByteField, CardObj_ReadPayloadByte,
  * LIBPAD_PADPORTD_text_388, CardObj_GetChannelId, CardObj_LookupByChannelId. */
@@ -19,12 +18,12 @@ void _padSetVsyncParam(void);
 int PadInitDirect(u8 *output0, u8 *output1) {
     u8 *savedOutput0 = output0;
     u8 *savedOutput1 = output1;
-    register CardObj *obj asm("$16");
+    CardObj *obj;
     u8 *table3c;
     u8 *table40;
     int i;
     int fill;
-    register u8 **field40 asm("$4");
+    u8 **field40;
     u8 *cursor;
     void (*swapCommand)(CardObj *);
     CardObj *clearObj;
@@ -42,7 +41,7 @@ int PadInitDirect(u8 *output0, u8 *output1) {
     g_CardGetChannelIdFn = CardObj_GetChannelId;
     g_MemCardObjLookupFn = CardObj_LookupByChannelId;
     swapCommand = CardObj_SwapByteField;
-    asm volatile("" : "=r"(clearObj) : "0"(obj));
+    (clearObj = obj);
     g_MemCardObjArray = obj;
     g_CardSwapByteFieldFn = swapCommand;
 
@@ -117,7 +116,7 @@ void _dirFailAuto(CardObj *obj);
 int _padInitSioMode(CardObj *obj);
 
 int MemCard_DmaCompleteCallback(int result) {
-    register int callbackResult asm("$5") = result;
+    int callbackResult = result;
     CardObj *objects;
     int ignoredResult;
     int *channelResults;
@@ -148,14 +147,12 @@ int MemCard_DmaCompleteCallback(int result) {
             }
         }
 
-        asm("" : "=r"(control), "=r"(index) : "0"(g_CardSioRegsPtr), "1"(g_PadActivePortIndex));
+        (control = g_CardSioRegsPtr, index = g_PadActivePortIndex);
         g_MemCardCommandStep = 0;
-        asm volatile("" : : : "memory");
         control->control = 0;
         limit = g_MemCardPort2Present;
         index += 1;
         g_PadActivePortIndex = index;
-        asm volatile("" : : : "memory");
         if (limit >= index) {
             nextResult = _padInitSioMode(
                 (CardObj *)((((index << 4) - index) << 4) + (int)objects));
@@ -163,7 +160,6 @@ int MemCard_DmaCompleteCallback(int result) {
             nextResult = 1;
         }
         callbackResult = 0xFFFF;
-        asm("" : "=r"(callbackResult) : "0"(callbackResult));
     } while (nextResult == 0);
 
     return nextResult;
@@ -205,7 +201,6 @@ mode0:
     ptr = arg0->payload_28 + index;
 
 load:
-    asm volatile("" : "=r"(ptr) : "0"(ptr));
     return *ptr;
 
 mode4D:
@@ -225,16 +220,15 @@ other:
 
 void bzero(void *, int);
 void LIBPAD_PADPORTD_text_388(CardObj *port) {
-    register int limit, i, j, mask asm("$7"), active asm("$6");
-    register int count;
-    register int offset;
-    register int one;
-    register u8 *map, *data;
+    int limit, i, j, mask, active;
+    int count;
+    int offset;
+    int one;
+    u8 *map, *data;
     bzero(port->actuatorEnabled, 6);
     if (port->currentExtendedId && port->payload_28) {
         limit = 6;
         if (port->payload_28_len < 7) {
-            asm("" ::: "memory");
             limit = port->payload_28_len;
         }
         i = 0;
@@ -298,7 +292,6 @@ void LIBPAD_PADPORTD_text_388(CardObj *port) {
                     }
                 }
                 count = port->actuatorCount;
-                asm("" : "=r"(i) : "0"(i), "r"(count));
                 i++;
                 offset += 5;
             } while (i < count);
@@ -313,14 +306,13 @@ void LIBPAD_PADPORTD_text_388(CardObj *port) {
                 g_PadActuatorCostTotal += 10;
             }
         } else {
-            asm("" ::: "memory");
             if (port->currentId == 3)
                 port->actuatorEnabled[0] = 1;
             else if (!port->currentExtendedId) {
-                register int value = 1;
-                register int k asm("$3") = 5;
+                int value = 1;
+                int k = 5;
                 /* Byte cursor over the object, offset by the flag index. */
-                register CardObjAddress cursor;
+                CardObjAddress cursor;
                 cursor.obj = port;
                 cursor.word += 5;
                 do {

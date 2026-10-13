@@ -1,4 +1,3 @@
-/* ASSEMBLER: GNU */
 /* Psy-Q LIBDS DSSYS_2.OBJ, part 3 of 3: DsClose, DsCommand, DsReady, DsFlush, DsSystemStatus, DsQueueLen, DsStatus, DsShellOpen, DsLastCom, CQ_vsync_system, CQ_ready_system, LIBDS_DSSYS_2_text_13CC and the object's zero tail. */
 
 #include "pe1/cdrom.h"
@@ -22,18 +21,15 @@ void DsClose(void) {
 
 int DsCommand(int inCommand, void *inParameter, DslCB inCallback,
                              int inCount) {
-    register void *parameter = inParameter;
-    register DslCB callback = inCallback;
-    register int command = inCommand;
-    register int count = inCount;
+    void *parameter = inParameter;
+    DslCB callback = inCallback;
+    int command = inCommand;
+    int count = inCount;
     unsigned previous;
-    register unsigned serial;
-    register unsigned result;
-    register unsigned ticket;
-    register CdDsReadQueueEntry *entry;
-    asm(""
-        : "=r"(parameter), "=r"(callback), "=r"(command)
-        : "0"(parameter), "1"(callback), "2"(command));
+    unsigned serial;
+    unsigned result;
+    unsigned ticket;
+    CdDsReadQueueEntry *entry;
     if (g_DsCommandHasParam[command & 255] && parameter) {
 
         if (g_CdPendingReadCount < 8) {
@@ -48,7 +44,6 @@ int DsCommand(int inCommand, void *inParameter, DslCB inCallback,
             entry = CQ_last_queue();
             entry->active = ticket;
             entry->command = 2;
-            asm("" : "=r"(parameter) : "0"(parameter));
             if (parameter) {
                 parcpy(entry->payload, parameter);
                 entry->parameter = parameter;
@@ -57,7 +52,6 @@ int DsCommand(int inCommand, void *inParameter, DslCB inCallback,
             }
             entry->callback = 0;
             entry->count = 0;
-            asm("" ::: "memory");
             g_CdPendingReadCount++;
             if (DS_system_status(0) == 1 && g_CdDsReadQueue[g_CdDsReadIndex].active == ticket)
                 CQ_execute();
@@ -90,7 +84,6 @@ int DsCommand(int inCommand, void *inParameter, DslCB inCallback,
         }
         entry->callback = callback;
         entry->count = count;
-        asm("" ::: "memory");
         g_CdPendingReadCount++;
         if (DS_system_status(0) == 1 && g_CdDsReadQueue[g_CdDsReadIndex].active == ticket)
             CQ_execute();
@@ -105,38 +98,35 @@ int DsCommand(int inCommand, void *inParameter, DslCB inCallback,
 int DsPacket(int inMode, DslLOC *inPosition, int inCommand,
                               DslCB inCallback, int inCount) {
     DsPacketCommand commands[5];
-    register CdlLOC *position = inPosition;
-    register CdlLOC *callPosition asm("$4");
-    register DslCB callback = inCallback;
-    register int mode = inMode;
-    register int command asm("$17") = inCommand;
-    register unsigned count = inCount;
-    register int n;
-    register int i, total;
-    register DsPacketCommand *ptr asm("$3"), *list, *item;
-    register CdDsReadQueueEntry *entry;
-    register DslCB *field asm("$18");
-    register unsigned previous, next;
-    register unsigned ticket asm("$21");
-    register unsigned result;
-    register unsigned char *payload;
+    CdlLOC *position = inPosition;
+    CdlLOC *callPosition;
+    DslCB callback = inCallback;
+    int mode = inMode;
+    int command = inCommand;
+    unsigned count = inCount;
+    int n;
+    int i, total;
+    DsPacketCommand *ptr, *list, *item;
+    CdDsReadQueueEntry *entry;
+    DslCB *field;
+    unsigned previous, next;
+    unsigned ticket;
+    unsigned result;
+    unsigned char *payload;
     n = 0;
     ptr = commands;
     do {
         ptr->command = 0;
         ptr->parameter = 0;
         ptr->callback = 0;
-        asm("" : "=r"(n) : "0"(n) : "memory");
         n++;
         ptr++;
     } while (n < 5);
     n = 2;
     callPosition = position;
     commands[0].command = 9;
-    asm("" ::: "$3", "memory");
     next = 14;
     ptr = &commands[1];
-    asm("" : "=r"(ptr) : "0"(ptr));
     commands[1].command = next;
     ptr->payload.minute = mode;
     ptr->parameter = &commands[1].payload;
@@ -152,12 +142,10 @@ int DsPacket(int inMode, DslLOC *inPosition, int inCommand,
     case 22:
 
         item = commands;
-        asm("" : "=r"(item) : "0"(item));
         list = item;
         item = &list[n];
         item->command = command;
         item->callback = callback;
-        asm("" ::: "memory");
         total = n + 1;
         if (g_CdPendingReadCount + total >= 9) {
             result = 0; return result;
@@ -176,7 +164,6 @@ int DsPacket(int inMode, DslLOC *inPosition, int inCommand,
             field = &list->callback;
             do {
                 entry = CQ_last_queue();
-                asm("" : "=r"(entry) : "0"(entry));
                 if (!entry) {
                     result = 0; return result;
                 }
@@ -191,9 +178,7 @@ int DsPacket(int inMode, DslLOC *inPosition, int inCommand,
                 entry->callback = *field;
                 field += 4;
                 entry->count = count;
-                asm("" : "=r"(i), "=r"(list) : "0"(i), "1"(list) : "memory");
                 next = g_CdPendingReadCount;
-                asm("" : "=r"(next), "=r"(i) : "0"(next), "1"(i));
                 i++;
                 g_CdPendingReadCount = next + 1;
                 list++;
@@ -205,12 +190,10 @@ int DsPacket(int inMode, DslLOC *inPosition, int inCommand,
     case 27:
 
         item = commands;
-        asm("" : "=r"(item) : "0"(item));
         list = item;
         item = &list[n];
         item->command = command;
         item->callback = callback;
-        asm("" ::: "memory");
         total = n + 1;
         if (g_CdPendingReadCount + total >= 9) {
             result = 0; return result;
@@ -229,7 +212,6 @@ int DsPacket(int inMode, DslLOC *inPosition, int inCommand,
             field = &list->callback;
             do {
                 entry = CQ_last_queue();
-                asm("" : "=r"(entry) : "0"(entry));
                 if (!entry) {
                     result = 0; return result;
                 }
@@ -244,9 +226,7 @@ int DsPacket(int inMode, DslLOC *inPosition, int inCommand,
                 entry->callback = *field;
                 field += 4;
                 entry->count = count;
-                asm("" : "=r"(i), "=r"(list) : "0"(i), "1"(list) : "memory");
                 next = g_CdPendingReadCount;
-                asm("" : "=r"(next), "=r"(i) : "0"(next), "1"(i));
                 i++;
                 g_CdPendingReadCount = next + 1;
                 list++;
@@ -270,18 +250,18 @@ done:
 /* Empty constraints preserve the retail schedule. */
 
 s32 DsSync(s32 inId, void *inResult) {
-    register s32 id = inId;
-    register void *result = inResult;
-    register DsResult *selected asm("$16");
-    register s32 cursor;
-    register s32 scanned;
-    register s32 searched;
-    register s32 offset;
-    register s32 status;
-    register s32 entryIdOrOffset;
-    register s32 forward;
-    register s32 readiness;
-    register s32 backward;
+    s32 id = inId;
+    void *result = inResult;
+    DsResult *selected;
+    s32 cursor;
+    s32 scanned;
+    s32 searched;
+    s32 offset;
+    s32 status;
+    s32 entryIdOrOffset;
+    s32 forward;
+    s32 readiness;
+    s32 backward;
 
     if (id != 0) {
         DS_sync(0);
@@ -372,7 +352,6 @@ s32 DsSync(s32 inId, void *inResult) {
     offset = cursor * 0x10;
     if (cursor < 0) {
         cursor = 7;
-        asm("" : "=r"(cursor) : "0"(cursor));
         offset = cursor * 0x10;
     }
     selected = 0;
@@ -383,11 +362,10 @@ s32 DsSync(s32 inId, void *inResult) {
     if (*at.words != 0) {
     publishResult:
         {
-            register int *dst = g_DsSlotResultCopy.words;
-            register int first asm("$2");
-            register int second asm("$3");
-            register int third asm("$4");
-            asm("" : "=r"(dst) : "0"(dst) : "memory");
+            int *dst = g_DsSlotResultCopy.words;
+            int first;
+            int second;
+            int third;
             {
                 DsSlotAddress word0, word1, word2;
                 word0.slot = g_DsReadCallbackSlots;
@@ -400,9 +378,6 @@ s32 DsSync(s32 inId, void *inResult) {
                 word2.word += offset;
                 third = *word2.words;
             }
-            asm(""
-                : "=r"(first), "=r"(second), "=r"(third)
-                : "0"(first), "1"(second), "2"(third));
             dst[0] = first;
             dst[1] = second;
             dst[2] = third;
@@ -413,7 +388,6 @@ s32 DsSync(s32 inId, void *inResult) {
                 dst[3] = *word3.words;
             }
         }
-        asm("" ::: "$16", "memory");
         selected = &g_DsSlotResultCopy;
     }
     }
@@ -458,7 +432,7 @@ int DsReady(u8 *destination) {
 
 void DsFlush(void) {
     int i;
-    register CdDsReadQueueEntry *p asm("$4");
+    CdDsReadQueueEntry *p;
     int j;
     unsigned char *q;
 
@@ -552,8 +526,8 @@ void CQ_vsync_system(void) {
 void CQ_error_flush(int command);
 
 int CQ_ready_system(int command, u8 *payload) {
-    register int (*callbackFn)(u8, u8 *) asm("$2");
-    register CdQueuedCmdSlot *slot;
+    int (*callbackFn)(u8, u8 *);
+    CdQueuedCmdSlot *slot;
     u8 *copy_destination;
     u8 command_byte;
 
@@ -596,7 +570,7 @@ void LIBDS_DSSYS_2_text_13CC(int arg0) {
     }
 }
 
-unsigned int LIBDS_DSSYS_2_pad[] __attribute__((section(".text"))) = {
+unsigned int LIBDS_DSSYS_2_pad[] = {
     0x00000000,
     0x00000000,
 };

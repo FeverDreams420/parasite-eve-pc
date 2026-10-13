@@ -1265,7 +1265,7 @@ void func_80195994(s32 index, s32 first, s32 second, u32 source) {
     s32 secondMask;
     s16 setupIndex;
     s32 firstMask;
-    register s32 firstValue asm("$18");
+    s32 firstValue;
     s32 secondValue;
     TimRelativeTable *table = &g_FxCommonTimTable;
     GteShortVector *extraPtr;
@@ -1273,11 +1273,11 @@ void func_80195994(s32 index, s32 first, s32 second, u32 source) {
     volatile FxCommonShortVec3 *target0 = &g_FxCommonMotionTarget0;
     volatile FxCommonShortVec3 *origin1 = &g_FxCommonMotionOrigin1;
     volatile FxCommonShortVec3 *target1 = &g_FxCommonMotionTarget1;
-    register u32 sourceValue asm("$22");
-    register TimRelativeTable *lookupTable asm("$4");
-    register s32 lookupCount asm("$5");
+    u32 sourceValue;
+    TimRelativeTable *lookupTable;
+    s32 lookupCount;
     void *base;
-    register s32 bx asm("$9");
+    s32 bx;
     s32 by;
     s32 bz;
     s32 ax;
@@ -1296,7 +1296,6 @@ void func_80195994(s32 index, s32 first, s32 second, u32 source) {
     sourceValue = source;
     /* Capture the second lane index after preparing the lookup arguments. */
     secondValue = second;
-    asm("" : "=r"(secondValue) : "0"(secondValue), "r"(lookupTable), "r"(lookupCount), "r"(sourceValue));
     base = Draw_GetTimTableEntry(lookupTable, lookupCount);
     setupIndex = (s16)index;
     extraPtr = &extra;
@@ -1306,7 +1305,6 @@ void func_80195994(s32 index, s32 first, s32 second, u32 source) {
     firstValue &= 0xff;
     px = point.vector.x;
     bx = g_FxCommonCameraTarget.x;
-    asm volatile("" : : "r"(bx));
     py = point.vector.y;
     by = g_FxCommonCameraTarget.y;
     pz = point.vector.z;
@@ -1330,18 +1328,13 @@ void func_80195994(s32 index, s32 first, s32 second, u32 source) {
     base = Draw_GetTimTableEntry(lookupTable, 2);
     FxCommon_SamplePath(sourceValue, g_FxCommonEffectSetup[setupIndex].motionIndices[1], base, &point.vector, extraPtr);
 
-    asm volatile("" : : "r"(secondValue));
     secondValue &= 0xff;
     qx = point.vector.x;
     ax = g_FxCommonCameraPosition.x;
     qy = point.vector.y;
-    asm volatile("" : : "r"(qy));
     ay = g_FxCommonCameraPosition.y;
-    asm volatile("" : : "r"(ay));
     qz = point.vector.z;
-    asm volatile("" : : "r"(qz));
     az = g_FxCommonCameraPosition.z;
-    asm volatile("" : : "r"(az));
     secondMask = 1 << secondValue;
     D_8019C06C = 0;
     D_8019C070 = 0;

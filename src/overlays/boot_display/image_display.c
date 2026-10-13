@@ -8,7 +8,7 @@ void BootDisplay_InitDisplayBuffers(void) {
     s16 rect[4];
     u16 line;
     /* Keep the original buffer offset in v0 across both address calculations. */
-    register s32 delta asm("$2");
+    s32 delta;
     char *base;
     char *start;
     char *end;
@@ -98,38 +98,34 @@ void BootDisplay_PresentFrame(void) {
     u32 index = bits & (mask); \
     if (index) { \
         u32 brightness = (((u16 *)g_BootDisplayFontClutPixels)[index >> (shift)] & 31) << 3; \
-        register u32 blue asm("$5") = greenPixel[1]; \
-        register u32 green asm("$4") = greenPixel[0]; \
-        register u32 red asm("$3") = pixel->red; \
+        u32 blue = greenPixel[1]; \
+        u32 green = greenPixel[0]; \
+        u32 red = pixel->red; \
         blue += brightness; if (blue >= 256) blue = 255; \
         green += brightness; if (green >= 256) green = 255; \
         red += brightness; if (red >= 256) red = 255; \
         greenPixel[1] = blue; greenPixel[0] = green; pixel->red = red; \
     } \
     greenPixel += 3; \
-    asm("" : "=r"(greenPixel) : "0"(greenPixel)); \
     ++pixel; \
 }
 void BootDisplay_BrightenGlyph(s32 x, s32 y, u8 character) {
     s32 savedX = x;
-    register s32 row asm("$18") = y;
+    s32 row = y;
     char *screen = D_80125B88[g_BootDisplayBufferIndex * 4];
     s32 glyph = BootDisplay_GetGlyphIndex(character);
     s32 low = glyph & 15;
     s32 high = glyph & 240;
     s32 imageOffset;
     u8 *image;
-    register s32 endY asm("$16");
-    register s32 computedEnd asm("$2");
+    s32 endY;
+    s32 computedEnd;
     s32 nextRow;
     /* Empty barriers preserve retail mask, coordinate, and font-load ordering. */
     imageOffset = (low * 4 + (high << 6)) * 2;
-    asm("" : : "r"(imageOffset));
     savedX = (s16)savedX; y = (s16)y;
-    asm("" : : "r"(savedX));
     computedEnd = (s16)y * 15;
     image = (u8 *)g_BootDisplayFontImagePixels;
-    asm("" : "=r"(image) : "0"(image));
     computedEnd = (computedEnd << 6);
     image += imageOffset;
     screen += (s16)savedX * 3 + computedEnd;
@@ -162,7 +158,6 @@ void BootDisplay_BrightenGlyph(s32 x, s32 y, u8 character) {
             image += 128;
             nextRow = row + 1;
             row = nextRow;
-            asm("" : "=r"(nextRow) : "0"(nextRow));
             screen += 960;
         } while ((s16)nextRow < endY);
     }
@@ -292,8 +287,8 @@ void BootDisplay_CallInitSystem(void) {
 void BootDisplay_BrightenImageRegion(void)
 {
     s16 line;
-    register u8 *image asm("$14") = (u8 *)g_BootDisplayFontImagePixels + 0x4000;
-    register u8 *screen asm("$13") = (u8 *)D_80125B88[g_BootDisplayBufferIndex * 4] + 0x19DAC;
+    u8 *image = (u8 *)g_BootDisplayFontImagePixels + 0x4000;
+    u8 *screen = (u8 *)D_80125B88[g_BootDisplayBufferIndex * 4] + 0x19DAC;
 
     for (line = 110; line < 134; line++) {
         s16 row;
@@ -310,7 +305,7 @@ void BootDisplay_BrightenImageRegion(void)
                     if (index) {
                         int brightness = (((u16 *)g_BootDisplayFontClutPixels)[index] & 31) << 3;
                         u32 blue = pixel->blue;
-                        register u32 green asm("$5") = pixel->green;
+                        u32 green = pixel->green;
                         u32 red = pixel->red;
                         blue += brightness;
                         if (blue >= 256)

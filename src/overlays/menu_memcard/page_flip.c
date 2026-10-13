@@ -1,5 +1,3 @@
-/* CC1_FLAGS: -fno-cse-skip-blocks */
-
 #include "common.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/boot_display.h"

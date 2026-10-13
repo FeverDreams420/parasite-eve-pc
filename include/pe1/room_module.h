@@ -46,8 +46,7 @@ int RoomLib_RegisterDrawList(void *o);
 int RoomLib_RegisterPairedTables(void *o);
 int RoomLib_CloseTarget(struct RoomEnt *o);
 int RoomLib_ClassNop6(void);
-/* Variants some modules link in the registration and start slots: register
- * the draw list and start only while the engine runs the object
+/* Variants some modules link in the registration and start slots: * the draw list and start only while the engine runs the object
  * (status 3). */
 int RoomLib_RegisterDrawListActive(void *o);
 int RoomLib_RegisterPairedTablesActive(void *o);

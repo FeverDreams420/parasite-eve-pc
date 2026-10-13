@@ -1,5 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses -fno-schedule-insns */
 /* Psy-Q LIBDS DSSYS_1.OBJ, part 6 of 10: LIBDS_DSSYS_1_text_E10. */
 
 #include "common.h"

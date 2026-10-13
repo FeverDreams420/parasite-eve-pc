@@ -7,10 +7,10 @@ long RotTransPers3(void *v0, void *v1, void *v2, void *sxy0,
                    void * volatile sxy1, void * volatile sxy2,
                    void * volatile p, void * volatile flag) {
     s32 result;
-    register void *gte_out1 asm("$8");
-    register void *gte_out2 asm("$9");
-    register void *gte_depth_out asm("$10");
-    register void *gte_flags_out asm("$11");
+    void *gte_out1;
+    void *gte_out2;
+    void *gte_depth_out;
+    void *gte_flags_out;
     int gte_flags;
     int gte_depth_value;
 
@@ -24,7 +24,6 @@ long RotTransPers3(void *v0, void *v1, void *v2, void *sxy0,
     gte_getflag(gte_flags);
     gte_getsz3(gte_depth_value);
     *(s32 *)gte_flags_out = gte_flags;
-    asm volatile("" : : : "memory");
     result = gte_depth_value;
     return result >> 2;
 }

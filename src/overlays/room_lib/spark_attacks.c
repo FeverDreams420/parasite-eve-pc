@@ -447,7 +447,7 @@ int RoomEffect_BurstOrbController(int mode, void *unused, s32 *state) {
             g_FieldFxSpriteParams.depth = 8;
             g_FieldFxSpriteParams.tpage = palette;
         }
-    
+
     }
     return 0;
 }
@@ -613,7 +613,7 @@ int RoomEffect_DampedSparkController(int mode, void *unused, void *state) {
             g_FieldFxSpriteParams.depth = 8;
             g_FieldFxSpriteParams.tpage = palette;
         }
-    
+
     }
     return 0;
 }

@@ -1,4 +1,3 @@
-/* GCC_VERSION: 2.8.1 */
 /* PSY-Q LIBMATH ADDMANT: _add_mant_d. */
 
 #include "pe1/math64.h"

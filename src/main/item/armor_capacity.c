@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/battle_cmd.h"
@@ -13,8 +9,6 @@
 #include "pe1/menu_state.h"
 #include "pe1/psyq_libc.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 s32 g_InvPackedListCount;
 s16 *g_InvItemPtr;
 s32 g_InvSlotLimit;
@@ -58,7 +52,6 @@ static inline ItemDataRecord *LookupOldArmor(int index) {
             }
         }
         /* Keep the item-ID result merge distinct from an invalid list index. */
-        asm("");
         return result;
     }
     return 0;
@@ -92,7 +85,7 @@ static inline ItemDataRecord *LookupArmorTrackedItem(int index) {
     int value, saved;
     ItemDataRecord *result;
     /* Match the shared armor pointer across reserve scanning and rollback. */
-    register ItemDataRecord *output asm("$16") = 0;
+    ItemDataRecord *output = 0;
 
     if (index >= 0 && index < g_InvSlotLimit) {
         value = g_InvItemPtr[index];
@@ -490,7 +483,6 @@ int Inv_CompareItemsForSort(const void *leftElement, const void *rightElement) {
     ItemDataRecord *(*defaultLookup)(int);
     ItemDataRecord *(*lookup)(int);
     defaultLookup = Inv_LookupActiveListData;
-    asm volatile("" ::: "memory");
     leftItem = *leftIndex;
     rightItem = *rightIndex;
     lookup = g_InvSortLookup;
@@ -512,7 +504,6 @@ int Inv_CompareItemsForSort(const void *leftElement, const void *rightElement) {
         if (right == 0) {
             return -1;
         }
-        asm volatile("" ::: "memory");
 
     } else {
     if (right != 0) {

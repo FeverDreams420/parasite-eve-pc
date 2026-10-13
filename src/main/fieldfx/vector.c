@@ -41,11 +41,11 @@ void func_800DFB20(Func800DFB20State *state)
  * its child is mid-animation. */
 int FieldFx_IsOwnerBusy(FieldFxTaskOwner *arg0)
 {
-  register FieldFxTaskContext *state;
+  FieldFxTaskContext *state;
   FieldActor *obj;
-  register u32 flags;
-  register u32 masked;
-  register FieldActorState *child;
+  u32 flags;
+  u32 masked;
+  FieldActorState *child;
   u32 word;
   u32 byte;
   int phase;
@@ -170,20 +170,20 @@ s32 FieldFx_GetFixedDistance3D(Vec3Fixed *lhs, Vec3Fixed *rhs) {
 
 s32 FieldFx_GetShortDistance3D(Pe1Vec3s *lhs, Pe1Vec3s *rhs)
 {
-  register s32 lhs_x = lhs->x;
-  register s32 rhs_x = rhs->x;
-  register s32 dx = lhs_x - rhs_x;
-  register s32 dx_sq = dx * dx;
-  register s32 lhs_z = lhs->z;
-  register s32 rhs_z = rhs->z;
-  register s32 dz = lhs_z - rhs_z;
-  register s32 dz_sq = dz * dz;
-  register s32 horizontal;
-  register short rhs_y;
-  register s32 lhs_y;
-  register s32 dy;
-  register s32 distance_sq;
-  register s32 shift;
+  s32 lhs_x = lhs->x;
+  s32 rhs_x = rhs->x;
+  s32 dx = lhs_x - rhs_x;
+  s32 dx_sq = dx * dx;
+  s32 lhs_z = lhs->z;
+  s32 rhs_z = rhs->z;
+  s32 dz = lhs_z - rhs_z;
+  s32 dz_sq = dz * dz;
+  s32 horizontal;
+  short rhs_y;
+  s32 lhs_y;
+  s32 dy;
+  s32 distance_sq;
+  s32 shift;
   s32 threshold;
   horizontal = 0;
   rhs_y = rhs->y;
@@ -204,11 +204,11 @@ s32 FieldFx_GetShortDistance3D(Pe1Vec3s *lhs, Pe1Vec3s *rhs)
   }
   while (shift >= 0);
   {
-    register s32 dy_sq;
-    register s32 horizontal_sq;
-    register s32 result;
-    register s32 shift2;
-    register s32 distance_sq2;
+    s32 dy_sq;
+    s32 horizontal_sq;
+    s32 result;
+    s32 shift2;
+    s32 distance_sq2;
     dy_sq = dy * dy;
     horizontal_sq = horizontal * horizontal;
     distance_sq2 = dy_sq + horizontal_sq;

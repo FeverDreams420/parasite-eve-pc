@@ -1,7 +1,3 @@
-/* CC1_FLAGS: -G8 */
-/* MASPSX_FLAGS: -G8 --use-comm-section */
-/* MASPSX_FORCE_G0: 1 */
-
 #include "common.h"
 #include "pe1/akao/bgm.h"
 #include "pe1/akao/commands.h"
@@ -14,8 +10,6 @@
 #include "pe1/scene_archive.h"
 #include "pe1/scene_assets.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 int g_CdFadeStartTime;
 int g_CdFadeFramesLeft;
 int g_CdRangeIndex;
@@ -27,21 +21,18 @@ int g_CdStreamBankIndex;
 s16 g_CdTrackBank;
 struct SceneTrackRecord *g_CdTrackRecord;
 
-/* Matching debt: register pins and empty barriers retain the index,
-* zero extension and callback state. The duplicated ready branch preserves
-* GCC's block ordering. No ASM construct emits an instruction. */
 int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void *buffer, u32 maximum, int blocking)
 {
     /* Transfer addresses and phase changes use this scratch in separate cases. */
-    register u32 workValue asm("$3");
-    register Pe1GameState *state asm("$18") = &g_GameState;
+    u32 workValue;
+    Pe1GameState *state = &g_GameState;
     int result = -1;
     u32 *archiveLba;
     u32 transferValue;
     int busy = 0;
     unsigned int isSequence;
-    register int finished asm("$16") = 0;
-    register u32 scaledIndex asm("$5") = index * 2;
+    int finished = 0;
+    u32 scaledIndex = index * 2;
     u32 byteOffset;
     SceneSectorDirectory *root = (SceneSectorDirectory *)g_SceneSectorDirectory;
     u8 *entries;
@@ -51,7 +42,6 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
     entry = (u16 *)(scaledIndex + entries);
     do
     {
-        asm("" : "=r"(blocking), "=r"(kind) : "0"(blocking), "1"(kind));
         archiveLba = &((SceneSectorDirectory *)g_SceneSectorDirectory)->base_lba;
         switch (state->cd_read_phase)
         {
@@ -61,9 +51,7 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
                 u32 first;
                 entries = table + byteOffset;
                 first = *(u16 *)entry;
-                asm("" : "=r"(first) : "0"(first), "r"(entries) : "memory");
                 scaledIndex = ((volatile SceneSectorDirectory *)entries)->offsets[1];
-                asm("" : "=r"(scaledIndex) : "0"(scaledIndex) : "memory");
                 scaledIndex -= entry[0];
                 transferValue = *archiveLba + first;
                 workValue = state->pe_image_base_lba + transferValue;
@@ -193,7 +181,6 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
                 busy = 1;
                 remainingSnapshot = g_CdReadRemainingSectors;
                 finished = (blocking ^ 1) & 1;
-                asm("" : : "r"(busy), "r"(finished) : "memory");
                 remaining = remainingSnapshot;
                 transferred = g_CdReadChunkSectors;
                 workValue = 7;
@@ -287,7 +274,7 @@ void Akao_ResetPositionalState(void) {
 int CdRom_SeekToTrack(int key, int mode, int group, int *slot, int blocking)
 {
     int busy = 0;
-    register int finished asm("$17") = 0;
+    int finished = 0;
     Pe1GameState *state = &g_GameState;
     int bankIndex = group != 0;
     Pe1GameStateAddress selected;
@@ -308,7 +295,6 @@ int CdRom_SeekToTrack(int key, int mode, int group, int *slot, int blocking)
                                              directory->trackEntries & 0x3FFFFF);
             count = directory->trackEntries >> 22;
             g_CdTrackRecord = record;
-            asm volatile("" : "=r"(count) : "0"(count));
             for (i = 0; i < count; i++, record++) {
                 if (record->key == key) {
                     g_CdTrackBank = record->bank;

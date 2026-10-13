@@ -16,7 +16,7 @@ enum ItemKind {
 /* Common 0x20-byte item-data record returned by Inv_LookupActiveListData.
  * Equipment, consumables and key items reuse the tail differently. The
  * weapon/armor ("E-Reg") variant is confirmed by the Deconstruction Cheats
- * Wiki: the record sits 4 bytes before the register base (g_InvItemSlotArray
+ * Wiki: the record sits 4 bytes before the base (g_InvItemSlotArray
  * = 0x800C0EAC, so itemId lands on E-Reg "value" 0x800C0EB0). itemId values
  * are the ItemId enum; tailData mods are ItemMod codes (see item_ids.h).
  */

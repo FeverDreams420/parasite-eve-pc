@@ -1,9 +1,6 @@
 /* PSY-Q LIBSPU S_CRWA: SpuClearReverbWorkArea. */
 /* SPDX-License-Identifier: MIT */
 /* Adapted from sozud/psy-q-decomp src/spu/s_crwa.c; see THIRD_PARTY_NOTICES.md. */
-/* GCC_VERSION: 2.8.1 */
-/* CC1_FLAGS: -mno-split-addresses */
-
 #include "common.h"
 #include "pe1/psyq_spu_internal.h"
 
@@ -50,7 +47,6 @@ int SpuClearReverbWorkArea(int mode)
     if (_spu_transMode == 1) {
         _spu_transMode = 0;
         /* Materialize the restore flag independently of the comparison value. */
-        asm volatile("" ::: "$2");
         transmodeCleared = 1;
     }
     more = 1;

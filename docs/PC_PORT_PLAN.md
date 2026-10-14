@@ -1953,3 +1953,21 @@ uses actual file-image I/O. Build, entity-texture-assets CTest and
 ASan/UBSan/function pass; PsyZ archives are not instrumented. The PM registry is
 already-initialized fixture state here, so this does not prove native room
 handlers, full scene initialization, presentation or gameplay. No files added.
+
+
+### Original TIM loader I/O transition coverage
+
+Expanded the existing synthetic entity-textures fixture to call the restored
+Asset_LoadTimTextures function for all eight combinations of force, request bit
+and pending-texture bit. Scripted read/poll outcomes exercise initial read
+failure, repeated failure, successful submission, pending poll, poll failure,
+resubmission and completion. Assertions check exact I/O counts/destination/LBA,
+retention of the pending flag until completion, preservation of unrelated flags
+and absence of extra reads after completion. This uses the original state
+machine and original asset lookup; only the existing I/O boundary is scripted.
+The synthetic archive has no images, complementing the real 414-room VRAM test.
+
+Full build, original-game-entity-textures CTest and its ASan/UBSan/function
+run pass. No new files or game implementation were added. This proves the
+loader retry transitions, not recovery of every real device/file I/O failure,
+full room initialization or completion of the port.

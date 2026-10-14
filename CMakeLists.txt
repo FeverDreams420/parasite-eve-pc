@@ -363,6 +363,7 @@ target_include_directories(parasite-eve-original-entity-textures PRIVATE include
 
 if(BUILD_TESTING)
     add_executable(test-original-entity-textures tests/original_entity_textures.c
+        src/main/cdrom/asset_lookup.c
         $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>

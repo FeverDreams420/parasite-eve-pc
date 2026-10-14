@@ -30,7 +30,7 @@ u32 g_PeImageBaseLba, g_EntityRenderScratch[8];
 u16 g_PeImageSectorTable[64], g_PeImageSectorBoundsNext[64];
 #ifndef PE_TEST_REAL_DISC
 static int read_result, poll_result;
-static unsigned reads;
+static unsigned reads, polls;
 static u32 last_lba,last_size;
 static void *last_destination;
 /* Scripted I/O boundary only: game state transitions and relocation are original. */
@@ -38,7 +38,7 @@ int CdRom_ReadSectorsFromLba(u32 lba,void *destination,u32 size) {
     ++reads; last_lba=lba; last_destination=destination; last_size=size;
     return read_result;
 }
-int CdRom_PollReady(void) { return poll_result; }
+int CdRom_PollReady(void) { ++polls; return poll_result; }
 int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int w) { abort(); }
 #else
 #include "host_disc.h"
@@ -125,6 +125,42 @@ int main(void)
     CHECK(Scene_LoadEntityTextures()==0 && g_GameState.scene_init_subphase==13);
     g_SceneAreaType=9;
     CHECK(Scene_LoadEntityTextures()==0 && g_GameState.scene_init_subphase==13);
+    /* Only I/O outcomes are scripted; run the original TIM state machine. */
+    g_GameState.loaded_scene_assets = (SceneAssetView *)&bank;
+    g_GameState.scene_load_scratch = (SceneAssetView *)&scratch;
+    g_GameState.pe_image_base_lba = 2000;
+    for (unsigned force = 0; force < 2; ++force)
+        for (unsigned requested = 0; requested < 2; ++requested)
+            for (unsigned pending = 0; pending < 2; ++pending) {
+                g_GameStateFlags = 0x80 | (requested ? 2 : 0);
+                g_GameState.flags = 0x400 | (pending ? 8 : 0);
+                g_GameState.tim_load_state = 0;
+                reads = polls = 0; read_result = -1; poll_result = 1;
+                int needs_read = pending && (force || requested);
+                CHECK(Asset_LoadTimTextures(force) == needs_read);
+                CHECK(reads == (unsigned)needs_read && polls == 0);
+                if (!needs_read) {
+                    CHECK(g_GameState.tim_load_state == 0);
+                    CHECK(g_GameState.flags == (0x400u | (pending ? 8u : 0u)));
+                    continue;
+                }
+                CHECK(g_GameState.tim_load_state == 0x34);
+                CHECK(last_lba == 2050 && last_size == 10 && last_destination == &scratch);
+                CHECK(Asset_LoadTimTextures(force) == 1 && reads == 2 && polls == 0);
+                read_result = 0;
+                CHECK(Asset_LoadTimTextures(force) == 1 && g_GameState.tim_load_state == 0x35);
+                CHECK(Asset_LoadTimTextures(force) == 1 && reads == 3 && polls == 1);
+                CHECK(g_GameState.flags == 0x408);
+                poll_result = -1;
+                CHECK(Asset_LoadTimTextures(force) == 1 && g_GameState.tim_load_state == 0x34);
+                CHECK(reads == 3 && polls == 2 && g_GameState.flags == 0x408);
+                CHECK(Asset_LoadTimTextures(force) == 1 && reads == 4);
+                poll_result = 0;
+                CHECK(Asset_LoadTimTextures(force) == 0 && polls == 3);
+                CHECK(g_GameState.tim_load_state == 0 && g_GameState.flags == 0x400);
+                CHECK(Asset_LoadTimTextures(force) == 0 && reads == 4 && polls == 3);
+            }
+    puts("Original common TIM loader: request gates, read failure, pending poll, retry and completion flags passed");
     puts("Original entity texture loader: retry/poll transitions and native bank/stream relocation passed");
     return 0;
 }

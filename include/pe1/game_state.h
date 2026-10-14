@@ -4,7 +4,6 @@
 #include "pe1/game_state_types.h"
 
 extern Pe1GameState g_GameState;
-extern unsigned int g_GameStateFlags;
 /* Field movement lock bits tested by the frame update, the actor list update
  * and the scene scripts (0x8009D2E8). */
 extern int g_FieldMoveLock;

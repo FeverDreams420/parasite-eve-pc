@@ -1,6 +1,8 @@
 #ifndef PE1_BATTLE_LEVEL_UP_H
 #define PE1_BATTLE_LEVEL_UP_H
 
+#include "pe1/game_state_types.h"
+
 #include "pe1/entity_animation.h"
 
 extern BattleEntity *D_8009D254;
@@ -11,7 +13,6 @@ extern u32 g_BattleExpReward;
 extern u16 g_BattlePeBonusReward;
 extern int g_BattleModeState;
 
-extern u32 g_GameStateFlags;
 
 void Pm_StopAllBoth(void);
 void Aya_SetTotalExp(u32 exp, u16 pe_bonus, void *rewards);

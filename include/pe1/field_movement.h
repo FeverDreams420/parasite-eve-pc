@@ -1,6 +1,8 @@
 #ifndef PE1_FIELD_MOVEMENT_H
 #define PE1_FIELD_MOVEMENT_H
 
+#include "pe1/game_state_types.h"
+
 /* Player field movement subsystem (Aya walking the pre-rendered field).
  *
  * Verified live via DuckStation's GDB server: polled the pad, facing angle,
@@ -59,7 +61,6 @@
 
 extern u16 g_CameraBaseAngleDigital, g_CameraBaseAngleAnalog;
 extern unsigned int g_FieldPadBits;
-extern u32 g_GameStateFlags;
 
 void Scene_Init(BattleEntity *entity, int *actionState);
 void Scene_SyncEntityAction(BattleEntity *entity, int *actionState);

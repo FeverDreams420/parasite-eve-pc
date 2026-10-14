@@ -1,6 +1,8 @@
 #ifndef PE1_BATTLE_START_H
 #define PE1_BATTLE_START_H
 
+#include "pe1/game_state_types.h"
+
 #include "pe1/entity_animation.h"
 #include "pe1/save_slot_metadata.h"
 
@@ -16,7 +18,6 @@ extern u32 g_BattleExpReward;
 extern u16 g_BattlePeBonusReward;
 
 extern unsigned int g_BattleResultFlags;
-extern unsigned int g_GameStateFlags;
 extern unsigned int D_8009D2E8;
 extern int g_BattleAttackAnimFrame;
 extern u32 g_FrameRngCounter;

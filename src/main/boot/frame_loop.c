@@ -21,7 +21,6 @@
  * through $gp, every other extern stays absolute. */
 int g_SceneDispatchToken;
 int g_SceneDispatchCur;
-unsigned int g_GameStateFlags;
 u32 g_GlobalFrameCounter[1];
 
 /* Field frame loop and its scene flush: Boot_FlushSceneFast is the exit tail

@@ -7,7 +7,6 @@
 extern FieldActor *g_CurrentEntity;
 /* Controlled handler table is a test fixture, not a game implementation. */
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
-u32 g_GameStateFlags;
 static unsigned calls;
 static int record(int **args)
 {

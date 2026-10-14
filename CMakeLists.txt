@@ -24,6 +24,7 @@ add_library(parasite-eve-original OBJECT
     src/main/entity/hierarchy.c
     src/main/scene/input_rules.c
     src/main/entity/pool.c
+    src/main/entity/allocation.c
     src/main/entity/block_alloc.c
     src/main/script/node_pool.c
     src/main/script/expression.c
@@ -148,3 +149,11 @@ endif()
 # dependencies are being ported. It is not linked with replacement stubs.
 add_library(parasite-eve-original-frame OBJECT src/main/entity/frame_update.c)
 target_include_directories(parasite-eve-original-frame PRIVATE include)
+
+if(BUILD_TESTING)
+    add_executable(test-original-contact tests/original_contact.c
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-contact PRIVATE include)
+    target_link_libraries(test-original-contact PRIVATE psyz)
+    add_test(NAME original-game-contact COMMAND test-original-contact)
+endif()

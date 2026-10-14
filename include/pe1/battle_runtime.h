@@ -1,6 +1,8 @@
 #ifndef PE1_BATTLE_RUNTIME_H
 #define PE1_BATTLE_RUNTIME_H
 
+#include "pe1/game_state_types.h"
+
 #include "pe1/asset_find.h"
 #include "pe1/entity_animation.h"
 #include "pe1/pm.h"
@@ -92,7 +94,6 @@ int Akao_SetPos3D(int arg0, int arg1, int x, int y, int z);
 void Draw_ResetTextboxes(void);
 extern s8 g_BattleTargetIndex;
 extern s8 g_BattleActiveTurnSlot, g_BattleItemMenuState;
-extern unsigned int g_GameStateFlags;
 extern u8 g_BattleGaugeCapLatch;
 extern unsigned int g_FieldPadPressed;
 

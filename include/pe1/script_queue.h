@@ -1,6 +1,8 @@
 #ifndef PE1_SCRIPT_QUEUE_H
 #define PE1_SCRIPT_QUEUE_H
 
+#include "pe1/game_state_types.h"
+
 #include "common.h"
 #include "pe1/field_actor.h"
 #include "pe1/script_node.h"
@@ -8,7 +10,6 @@
 
 extern u8 *D_8009D2F0[];
 extern struct BattleEntity *D_8009D254;
-extern u32 g_GameStateFlags;
 /* The 0x200 script variables (0x800 bytes), cleared with the entity pools
  * and saved in the save tail; operand mode 2 indexes them. */
 extern u32 g_ScriptVariableBank[];

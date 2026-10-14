@@ -20,7 +20,6 @@
 
 u32 g_GlobalFrameCounter[1];
 int g_SceneDispatchToken;
-unsigned int g_GameStateFlags;
 
 #define W(sym) (*(s32 *)(sym))
 #define H(sym) (*(s16 *)(sym))

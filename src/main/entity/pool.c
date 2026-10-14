@@ -66,3 +66,5 @@ EntityAllocationBlock g_EntityAllocationTable[16];
 u32 g_ScriptVariableBank[512];
 int g_ScriptNodeActiveFlags[64];
 Pe1GameState g_GameState;
+
+GameStateBlock g_GameStateBlock;

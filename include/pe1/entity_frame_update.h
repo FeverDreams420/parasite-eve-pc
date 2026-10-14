@@ -15,11 +15,6 @@
  * player-only animation) and the word after them. g_GameStateBlock is a
  * record view of g_GameStateFlags (a relative alias in
  * linkers/USA/undefined_syms_manual.txt). */
-typedef struct GameStateBlock {
-    u32 flags;
-    u32 reserved;
-} GameStateBlock;
-extern GameStateBlock g_GameStateBlock;
 extern u32 g_FieldPadPressed;         /* pad trigger bits */
 extern s16 g_MenuFrameCommand;         /* menu frame result */
 extern BattleAction g_BattleMenuActionRecord;        /* menu frame argument */

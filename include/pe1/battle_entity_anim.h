@@ -1,10 +1,11 @@
 #ifndef PE1_BATTLE_ENTITY_ANIM_H
 #define PE1_BATTLE_ENTITY_ANIM_H
 
+#include "pe1/game_state_types.h"
+
 #include "pe1/asset_find.h"
 #include "pe1/entity_animation.h"
 
-extern u32 g_GameStateFlags;
 extern struct FieldActor *g_FieldActorListHead;
 extern BattleEntity *D_8009D254;
 extern s8 g_BattleLiveEnemyCount;

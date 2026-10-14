@@ -3,6 +3,15 @@
 
 #include "pe1/render_object.h"
 
+/* Original global mode flags and their shared record view. */
+typedef struct GameStateBlock {
+    u32 flags;
+    u32 reserved;
+    u32 reserved_tail[2];
+} GameStateBlock;
+extern GameStateBlock g_GameStateBlock;
+#define g_GameStateFlags (g_GameStateBlock.flags)
+
 typedef signed char Pe1S8;
 typedef unsigned char Pe1U8;
 typedef unsigned int Pe1U32;

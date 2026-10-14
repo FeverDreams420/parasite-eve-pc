@@ -14,6 +14,7 @@
 #include "pe1/inventory_slots.h"
 #include "pe1/inventory_sort.h"
 #include "pe1/inventory_state.h"
+#include "pe1/resident_tables.h"
 #include "pe1/menu_context_help.h"
 #include "pe1/menu_inventory.h"
 #include "pe1/menu_queue.h"
@@ -252,8 +253,8 @@ void Inv_ClearEquipFlagForKind(InvItemSlot *obj) {
         base = (u8 *)g_InvItemSlotArray;
         kind ^= 9;
         is_kind_9 = (unsigned int)kind < 1;
-        kind = (int)(base + 0x1000);
-        if (base < (u8 *)kind) {
+        end = base + 0x1000;
+        if (base < end) {
             kind_9 = 9;
             one = 1;
             entry = base + 5;
@@ -279,7 +280,6 @@ void Inv_ClearEquipFlagForKind(InvItemSlot *obj) {
     }
 }
 
-#define NULL ((void *)0)
 
 void *Inv_LookupActiveListDisplayData(s32 index);
 
@@ -315,7 +315,6 @@ void *Inv_LookupActiveListDisplayData(s32 index) {
     }
     return displayData;
 }
-#undef NULL
 
 void Inv_RebuildSelectionBitset(void) {
     ItemDataRecord *entry;
@@ -342,7 +341,7 @@ void Inv_RebuildSelectionBitset(void) {
     }
 
     start = 0;
-    list = g_InvItemArray;
+    list = (s16 *)g_InvItemArray;
     while (start < 0x52) {
         item_id = *list - 0x100;
         if ((unsigned int)item_id < 0x80) {
@@ -354,13 +353,13 @@ void Inv_RebuildSelectionBitset(void) {
 
     range = g_InvItemTableRanges;
     if (range < g_InvItemTableRanges + 8) {
-        table_base = g_ScriptVariableBank;
+        table_base = (int *)g_ScriptVariableBank;
         range_stop_ptr = &range->stop;
         do {
             start = range->start;
             stop = *range_stop_ptr;
             if (stop >= start) {
-                table = (int *)((start << 2) + (int)table_base);
+                table = table_base + start;
                 do {
                     item_id = *table - 0x100;
                     if ((unsigned int)item_id < 0x80) {
@@ -527,7 +526,6 @@ void Menu_CursorRenderData(ItemDataRecord *record) {
     Menu_DrawSlotRow(record, cursor);
 }
 
-#define NULL ((void *)0)
 
 void Menu_DrawActiveListSlot(s32 arg0) {
     s16 temp_v1;
@@ -589,7 +587,6 @@ void Menu_DrawActiveListSlot(s32 arg0) {
         Menu_DrawSlotRow(var_v0, saved_a1);
     }
 }
-#undef NULL
 
 /* Find a run of empty slots, after selecting Aya's inventory. The two
  * bindings keep the scan limits in their retail registers and
@@ -642,7 +639,7 @@ int Inv_CountByValue(int arg0) {
     if ((arg0 >= g_InvCategoryBaseItemId) && (arg0 < g_InvCategoryBaseItemId + 3)) {
         count = g_InvCategoryItemTable[arg0 - g_InvCategoryBaseItemId].count;
     } else {
-        ptr = g_InvItemPtr;
+        ptr = (u16 *)g_InvItemPtr;
         end = ptr + g_InvSlotLimit;
         if (ptr < end) {
             iter_end = end;
@@ -1072,4 +1069,342 @@ void Inv_CompactActiveListSlots(void) {
         }
         g_InvPendingCompactCount--;
     }
+}
+
+
+int g_InvCategoryBaseItemId;
+
+void Inv_BuildItemGridFromCategory(void)
+{
+    int i;
+    ItemDataRecord *src;
+    int category;
+    int base;
+    int lookup;
+
+    Inv_SelectActiveList(0);
+
+    for (i = 49; i >= 0; --i) g_AyaSaveState.inventory_items[i] = 0;
+
+    i = 0;
+    category = 0x13;
+    do {
+        lookup = i;
+        i++;
+        src = Item_LookupBaseData(lookup);
+    } while (src != 0 && src->kind != category);
+
+    g_InvCategoryBaseItemId = i;
+
+    /* Nine grid cells cycle through the three records after the first
+     * category match; each cell clears its third base stat and sets the
+     * third bonus to the 999 placeholder. */
+    i = 0;
+    do {
+        base = g_InvCategoryBaseItemId + i % 3;
+        src = Item_LookupBaseData(base - 1);
+        g_InvSpecialItemRecords[i] = *src;
+        g_InvSpecialItemRecords[i].baseStats[2] = 0;
+        g_InvSpecialItemRecords[i].bonusStats[2] = 999;
+    } while (++i < 9);
+
+    for (i = 99; i >= 0; --i) g_InventoryRuntime.storage[i] = 0;
+
+    for (i = 81; i >= 0; --i) g_InventoryRuntime.specialStorage[i] = 0;
+
+    g_InvActiveListOverride = 0;
+}
+
+
+
+static inline int FindFreeEquipmentRecord(void) {
+    int result;
+    ItemDataRecord *p = g_InventoryRuntime.equipment;
+    ItemDataRecord *end = p + 128;
+
+    if (p < end) {
+        do {
+            if (!p->iconId)
+                break;
+            p++;
+        } while (p < end);
+        if (p < g_InventoryRuntime.equipment + 128) {
+            int index = p - g_InventoryRuntime.equipment;
+            result = index;
+        } else {
+            result = -1;
+        }
+    } else {
+        result = -1;
+    }
+    return result;
+}
+
+static inline int FindFreeActiveSlot(void) {
+    s16 *p = g_InvItemPtr, *end = p + g_InvSlotLimit;
+
+    if (p < end) {
+        while (p < end && *p != 0)
+            p++;
+        if (p < g_InvItemPtr + g_InvSlotLimit)
+            return p - g_InvItemPtr;
+    }
+    return -1;
+}
+
+ItemDataRecord *Inv_FindSlotByIndex(int id) {
+    ItemDataRecord *result = 0;
+    int record = FindFreeEquipmentRecord();
+    int slot = FindFreeActiveSlot();
+
+    if (record >= 0 && slot >= 0) {
+        result = &g_InventoryRuntime.equipment[record];
+        *result = *Item_LookupBaseData(id - 1);
+        g_InvItemPtr = g_InventoryRuntime.slots;
+        g_InvSlotLimit = Inv_GetAyaSlotLimit();
+        g_InvSelectionBits = g_InvSelectionBitStorage;
+        g_InvSelectionBitWords = 2;
+        g_InvItemPtr[slot] = record + 256;
+    }
+    return result;
+}
+
+static inline int FindActiveSlot(int value) {
+    s16 *p = g_InvItemPtr, *end = p + g_InvSlotLimit;
+    if (p < end) {
+        while (p < end && *p != value)
+            p++;
+        if (p < g_InvItemPtr + g_InvSlotLimit)
+            return p - g_InvItemPtr;
+    }
+    return -1;
+}
+static inline void ClampAmmo(ItemDataRecord *item) {
+    int current = item->ammo;
+    if (item->baseStats[2] + item->bonusStats[2] < 1000 ?
+        item->baseStats[2] + item->bonusStats[2] < current : 999 < current) {
+        item->ammo = item->baseStats[2] + item->bonusStats[2] < 1000 ?
+            item->baseStats[2] + (u16)item->bonusStats[2] : 999;
+    }
+}
+
+/* Add loaded ammunition even when no empty inventory slot is available. */
+int Inv_WriteSlotById(ItemDataRecord *item) {
+    unsigned kind = item->kind;
+    int failed = 0;
+    int category;
+
+    if (kind < 16) {
+        if (kind && kind < 8)
+            category = (int)(kind - 4) > 0 ? kind - 5 : 0;
+        else
+            category = kind >= 19 ? kind - 19 : -1;
+    } else {
+        category = kind - 16;
+    }
+    if ((unsigned)category < 3) {
+        ItemDataRecord *pool;
+        if (FindActiveSlot(category + 512) < 0) {
+            int slot = FindFreeActiveSlot();
+            if (slot >= 0)
+                g_InvItemPtr[slot] = category + 512;
+            else
+                failed = 1;
+        }
+        pool = &g_InvSpecialItemRecords[category];
+        pool->ammo += item->ammo;
+        ClampAmmo(pool);
+    } else {
+        failed = 1;
+    }
+    return failed;
+}
+
+/* Insert an item into a free active slot. Non-zero means the insert failed. */
+s32 Inv_AddItem(s32 arg0) {
+    s32 ret;
+    s32 slot;
+    s32 t;
+    s16 *cur;
+    s16 *end;
+    ItemDataRecord *ent;
+
+    ret = 0;
+    cur = g_InvItemPtr;
+    end = g_InvItemPtr + g_InvSlotLimit;
+    if (cur < end) {
+        do {
+            if (*cur == 0) {
+                break;
+            }
+            cur++;
+        } while (cur < end);
+        if (cur < g_InvItemPtr + g_InvSlotLimit) {
+            t = cur - g_InvItemPtr;
+        } else {
+            t = -1;
+        }
+    } else {
+        t = -1;
+    }
+    slot = t;
+    if (arg0 < 0x100) {
+        ent = Item_LookupBaseData(arg0 - 1);
+        if (ent == NULL) {
+            return ret;
+        }
+        switch (ent->kind) {
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+            ret = Inv_FindSlotByIndex(arg0) == 0;
+            break;
+        case 10:
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+            if (slot >= 0) {
+                g_InvItemPtr[slot] = arg0;
+            } else {
+                ret = 1;
+            }
+            break;
+        case 16:
+        case 17:
+        case 18:
+            ret = Inv_WriteSlotById(ent);
+            break;
+        }
+    } else {
+        if (slot >= 0) {
+            g_InvItemPtr[slot] = arg0;
+        } else {
+            ret = 1;
+        }
+    }
+    return ret;
+}
+
+
+/* Nine native key records replace the PS1 address biased by -0x4000. */
+ItemDataRecord g_KeyItemRecords[9];
+
+/* Inventory item-ID and active-slot lookup helpers. */
+
+ItemDataRecord *Inv_LookupData(int arg0) {
+    if ((arg0 - 0x100U) < 0x80U) {
+        return &g_InventoryRuntime.equipment[arg0 - 0x100];
+    }
+
+    if ((arg0 - 1U) < 0xFFU) {
+        return Item_LookupBaseData(arg0 - 1);
+    }
+
+    if ((arg0 - 0x200U) >= 9U) {
+        return 0;
+    }
+
+    return &g_KeyItemRecords[arg0 - 0x200];
+}
+
+
+ItemDataRecord *Inv_LookupActiveListData(int index) {
+    int value;
+    int saved_value;
+    ItemDataRecord *entry;
+
+    if (index >= 0 && index < g_InvSlotLimit) {
+        value = g_InvItemPtr[index];
+        saved_value = value;
+        if (value - 0x100U < 0x80U) {
+            entry = &g_InventoryRuntime.equipment[value - 0x100];
+        } else if (value - 1U < 0xFFU) {
+            entry = Item_LookupBaseData(value - 1);
+        } else if (saved_value - 0x200U < 9U) {
+            entry = &g_KeyItemRecords[saved_value - 0x200];
+        } else {
+            entry = 0;
+        }
+    } else {
+        entry = 0;
+    }
+
+    return entry;
+}
+
+
+
+u32 *g_InvSelectionBits;
+s32 g_InvSelectionBitWords;
+s16 *g_InvActiveListOverride;
+s32 g_InvOverrideSlotLimit;
+u32 g_InvSelectionBitStorage[2];
+u32 g_InvStorageSelectionBits[4];
+
+void Inv_SelectActiveList(int useOverride) {
+    if (useOverride != 0 && g_InvActiveListOverride != 0) {
+        g_InvItemPtr = g_InvActiveListOverride;
+        g_InvSelectionBits = g_InvStorageSelectionBits;
+        g_InvSelectionBitWords = 4;
+        g_InvSlotLimit = g_InvOverrideSlotLimit;
+    } else {
+        g_InvItemPtr = g_AyaInventoryItems;
+        g_InvSlotLimit = Inv_GetAyaSlotLimit();
+        g_InvSelectionBits = g_InvSelectionBitStorage;
+        g_InvSelectionBitWords = 2;
+    }
+}
+
+void Inv_SetActiveListOverride(s16 *items, int count) {
+    g_InvActiveListOverride = items;
+    g_InvOverrideSlotLimit = count;
+}
+
+void Inv_ResetActiveList(void) {
+    g_InvActiveListOverride = 0;
+    g_InvOverrideSlotLimit = 0;
+    g_InvItemPtr = g_AyaInventoryItems;
+    g_InvSlotLimit = Inv_GetAyaSlotLimit();
+    g_InvSelectionBits = g_InvSelectionBitStorage;
+    g_InvSelectionBitWords = 2;
+}
+
+int Inv_IsActiveListOverrideSelected(void) {
+    return g_InvItemPtr != g_AyaInventoryItems;
+}
+
+
+
+s16 *g_InvItemPtr;
+s32 g_InvSlotLimit;
+int g_InvBonusSlotCount;
+
+int Inv_GetBonusSlotCount(void) {
+    return g_InvBonusSlotCount;
+}
+
+void Inv_SetAyaSlotCount(int count) {
+    if (count >= 0x33) {
+        count = 0x32;
+    }
+
+    g_AyaSaveState.inventory_slot_count = count;
+    if (g_InvItemPtr == g_AyaSaveState.inventory_items) {
+        g_InvSlotLimit = Inv_GetAyaSlotLimit();
+    }
+}
+
+int Inv_GetAyaSlotLimit(void) {
+    if (g_AyaSaveState.inventory_slot_count + Inv_GetBonusSlotCount() >= 0x33) {
+        return 0x32;
+    }
+
+    return g_AyaSaveState.inventory_slot_count + Inv_GetBonusSlotCount();
 }

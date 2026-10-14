@@ -1764,3 +1764,26 @@ and derived stats. Other game_data entry points, memory-card I/O, save/Continue
 and the full original New Game runtime remain unverified. Whole-module
 compilation with dead stripping is not proof that every entry point is linked
 or executed. Further extraction removal and elimination of pc/ remain required.
+
+
+### Restore the complete active inventory module
+
+Merged item/category_init.c, add.c, data_lookup.c, list_selection.c and capacity.c
+back into their original item/active_list.c and deleted the five extracted
+files. No new files were added. The complete active_list module now compiles in
+the original object target. Function-name audit preserves all 63 pre-merge
+names, and all 62 names from the module before the capacity extraction
+(ec026934b parent); this includes static helpers and is not runtime coverage.
+
+Preserved native storage and lookup corrections from the extracted code. Removed
+local NULL redefinitions/undefinitions, replaced a truncated pointer bound in
+Inv_ClearEquipFlagForKind, and changed script-variable indexing to native pointer
+arithmetic in Inv_RebuildSelectionBitset. These latter two whole-module entry
+points are compiled but have not yet been exercised with their full dependencies.
+
+Full build and real Disc 1 stat-assets/scene-spawn CTests pass. Stat-assets also
+passes ASan/UBSan/function, including initial and tagged carryover inventory,
+item insertion capacity/ammunition boundaries, real weapon/armor combinations
+and stat queries. Menu rendering, storage-list synchronization, random item
+selection and the remaining active_list entry points still require integration
+and execution tests. Full game and removal of pc/ remain incomplete.

@@ -21,14 +21,10 @@ endif()
 add_library(parasite-eve-original OBJECT
     src/main/battle/equipment_init.c
     src/main/aya/stats.c
-    src/main/item/category_init.c
+    src/main/item/active_list.c
     src/main/save/game_data.c
     src/main/menu/fade_init.c
-    src/main/item/add.c
     src/main/battle/commands.c
-    src/main/item/data_lookup.c
-    src/main/item/list_selection.c
-    src/main/item/capacity.c
     src/main/text/tables.c
     src/main/pm/scene_init.c
     src/main/math/fixed_mul.c

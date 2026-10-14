@@ -1256,3 +1256,21 @@ argument). Full build, both texture-loader CTests and ASan/UBSan/function checks
 of game/test sources passed, with PsyZ/SDL archives uninstrumented. Real model
 rebuild/animation attachment and mounting this path in the main game runtime
 remain pending; these results establish loading and VRAM behavior only.
+
+### Real resident scene-object rebuild and attachment
+
+The Disc 1 entity-loader integration test now loads resident bank 12 and uses
+the original keyed lookup for model 0xC4B5BA04. After each of the 14 area/day
+loads, it runs the original delayed states 11, 12 and 13 with native-sized model
+work memory. This executes Render_SetupEntityPrims, lighting initialization and
+Render_DrawWithAnim, checking state completion and binding to player bone 18.
+Both destination matrices must equal the controlled source pose. A subsequent
+Scene_UpdateBgDraw follows a changed pose and restores the GTE screen offset.
+
+The source player pose is a fixture, not a real Aya animation. The follow-up
+sets variant_visible=0, so it verifies transformation/attachment but does not
+claim a rendered background-object image. The real model bytes, loader and
+render procedures are used without replacement game handlers. Full build,
+both entity-texture CTests and game/test ASan/UBSan/function checks passed;
+PsyZ/SDL archives uninstrumented. This covers the exploration model path;
+battle stream selection/rebuild and full main scene integration remain pending.

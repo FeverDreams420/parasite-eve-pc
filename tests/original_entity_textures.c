@@ -107,6 +107,21 @@ int main(void)
         g_PeImageSectorTable[i]=catalog.sector_bounds[i];
         g_PeImageSectorBoundsNext[i]=catalog.sector_bounds[i+1];
     }
+    PeRoomBlob resident={0};
+    CHECK(pe_sector_bank_load(&catalog,12,&resident));
+    RenderObjectHeader *scene_model=Asset_FindTable08ByU32Key(resident.bytes,(int)0xC4B5BA04u);
+    CHECK(scene_model && (u8 *)scene_model>=resident.bytes && (u8 *)scene_model<resident.bytes+resident.size);
+    PeModel parsed_model; char model_error[256];
+    CHECK(pe_model_open((u8 *)scene_model,resident.size-((u8 *)scene_model-resident.bytes),&parsed_model,model_error,sizeof(model_error)));
+    CHECK(parsed_model.part_count>=2);
+    size_t model_work_bytes=2*(parsed_model.packets[0]*sizeof(RenderPacket34)+parsed_model.packets[1]*sizeof(RenderPacket28)+
+        parsed_model.packets[2]*sizeof(RenderPacket24)+parsed_model.packets[3]*sizeof(RenderPacket1C))+
+        parsed_model.part_count*(sizeof(RenderAnimationLookupEntry)+sizeof(RenderMatrix));
+    u8 *model_work=calloc(1,model_work_bytes); CHECK(model_work);
+    FieldActor player={0}; RenderMatrix pose[19]={0};
+    pose[18].rotation[0][0]=pose[18].rotation[1][1]=pose[18].rotation[2][2]=4096;
+    pose[18].translation[0]=123; pose[18].translation[1]=-456; pose[18].translation[2]=789;
+    player.render_object.matrices=pose;
     unsigned loaded=0, uploads=0;
     PeVram *expected=calloc(1,sizeof(*expected)), *actual=malloc(sizeof(*actual));
     CHECK(expected && actual);
@@ -152,10 +167,32 @@ int main(void)
         }
         DrawSync(0); StoreImage(&all,(u_long *)actual->words); DrawSync(0);
         CHECK(!memcmp(expected,actual,sizeof(*expected)));
+        /* Original delayed rebuild binds the resident scene object to the
+         * player's bone 18. The pose is controlled; the object model is real. */
+        g_PlayerEntity=&player;
+        g_GameState.scene_object_model=scene_model;
+        g_GameState.scene_object_work=model_work;
+        g_GameState.scene_init_subphase=11;
+        CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==12);
+        CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==13);
+        CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==0);
+        CHECK(g_GameState.scene_object.animation_source==&player.render_object);
+        CHECK(g_GameState.scene_object.animation_state==3 && g_GameState.scene_object.animation_id==18);
+        CHECK(!memcmp(&g_GameState.scene_object.matrices[0],&pose[18],sizeof(RenderMatrix)));
+        CHECK(!memcmp(&g_GameState.scene_object.matrices[1],&pose[18],sizeof(RenderMatrix)));
+        CHECK(!(g_GameState.story_day_flags&3));
+        player.render_object.variant_visible=0;
+        ++pose[18].translation[0];
+        CHECK(Scene_UpdateBgDraw()==0);
+        CHECK(!memcmp(&g_GameState.scene_object.matrices[0],&pose[18],sizeof(RenderMatrix)));
+        CHECK(!memcmp(&g_GameState.scene_object.matrices[1],&pose[18],sizeof(RenderMatrix)));
+        CHECK(Psyz_GteCtrlRead(24)==(160u<<16) && Psyz_GteCtrlRead(25)==(112u<<16));
+        g_PlayerEntity=NULL;
         free(scratch_buffer); pe_room_blob_close(&tim_reference);
         g_GameState.scene_load_scratch=NULL;
         free(buffer); pe_room_blob_close(&reference); ++loaded;
     }
+    free(model_work); pe_room_blob_close(&resident);
     free(expected); free(actual);
     unsigned char guard=0xa5;
     CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector-1,&guard,1)==-1 && guard==0xa5);
@@ -163,7 +200,7 @@ int main(void)
     pe_host_disc_bind(NULL,NULL);
     CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector,&guard,1)==-1 && guard==0xa5);
     pe_disc_close(&disc);
-    printf("Original entity loader: %u real area/day banks, %u TIM uploads with full VRAM comparison\n",loaded,uploads);
+    printf("Original entity loader: %u real area/day banks, %u TIM uploads with full VRAM comparison, 14 model rebuilds and attachment updates\n",loaded,uploads);
     return 0;
 }
 #endif

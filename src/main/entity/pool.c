@@ -1,23 +1,14 @@
 #include "common.h"
+#include <string.h>
 #include "pe1/entity_allocation.h"
 #include "pe1/game_state.h"
 #include "pe1/player_entity.h"
 #include "pe1/script_node.h"
 #include "pe1/script_queue.h"
 
-/* A pool record cell as the word retail adds the row and column offsets to. */
-typedef union EntityPoolAddress {
-    char *bytes;
-    int *words;
-    unsigned int word;
-} EntityPoolAddress;
-
-/* Entity pool reset and free-list construction share the pool globals and the
- * 14-entry 0x280-byte entity record block at g_EntityPool. */
-
 int g_FieldMoveLock;
 FieldActor *g_EntityFreeListHead;
-FieldActor *g_FieldActorListHead;
+extern FieldActor *g_FieldActorListHead;
 FieldActor *g_CurrentEntity;
 u16 g_EntityFreePoolCount;
 FieldActor *g_PlayerEntity;
@@ -27,11 +18,7 @@ u32 g_EntitySerialCounter;
 void Entity_ResetAllPools(void)
 {
     unsigned int i;
-    unsigned int row;
     int *ptr;
-    EntityPoolAddress base, cell;
-    unsigned int col;
-    unsigned int offset;
 
     g_FieldMoveLock = 0;
 
@@ -50,21 +37,7 @@ void Entity_ResetAllPools(void)
         *ptr = 0;
     } while (i < 0x40);
 
-    i = 0;
-    base.bytes = g_EntityPool;
-    row = 0;
-    do {
-        col = 0;
-        offset = row;
-        do {
-            cell.word = offset + base.word;
-            *cell.words = 0;
-            col++;
-            offset += 4;
-        } while (col < 0xA0);
-        i++;
-        row += 0x280;
-    } while (i < 0xE);
+    memset(g_EntityPool, 0, sizeof(g_EntityPool));
 
     g_EntityFreeListHead = 0;
     g_FieldActorListHead = 0;
@@ -77,36 +50,19 @@ void Entity_ResetAllPools(void)
 
 void Entity_InitFreePool(void)
 {
-    int i;
-    int offset;
-    char *base;
-    char *next;
-
-    i = 0;
-    base = g_EntityPool;
-    next = base + 0x280;
-    offset = 0;
+    unsigned i;
     g_EntityFreePoolCount = 0;
     g_FieldActorListHead = 0;
-    g_EntityFreeListHead = (FieldActor *)base;
-
-    do {
-        ((FieldActor *)(g_EntityPool + offset))->next = (FieldActor *)next;
-        next += 0x280;
-        i++;
-        offset += 0x280;
-    } while ((unsigned int)i < 13);
-
-    ((FieldActor *)(g_EntityPool + 13 * 0x280))->next = 0;
-    offset = 0;
-    do {
-        EntityAllocationAddress block;
-
-        block.entry = g_EntityAllocationTable;
-        block.word += offset;
-        block.entry->address = 0;
-        offset += sizeof(EntityAllocationBlock);
-    } while ((unsigned int)offset < sizeof(g_EntityAllocationTable));
-
+    g_EntityFreeListHead = g_EntityPool;
+    for (i = 0; i < 13; ++i) g_EntityPool[i].next = &g_EntityPool[i + 1];
+    g_EntityPool[13].next = 0;
+    for (i = 0; i < 16; ++i) g_EntityAllocationTable[i].address = 0;
     g_PlayerEntity = 0;
 }
+
+/* Storage formerly supplied by the PS1 linker symbol map. */
+FieldActor g_EntityPool[14];
+EntityAllocationBlock g_EntityAllocationTable[16];
+u32 g_ScriptVariableBank[512];
+int g_ScriptNodeActiveFlags[64];
+Pe1GameState g_GameState;

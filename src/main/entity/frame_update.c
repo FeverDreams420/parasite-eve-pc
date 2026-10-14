@@ -18,11 +18,7 @@
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
-FieldActor *g_EntityFreeListHead;
-u16 g_EntityFreePoolCount;
-u32 g_EntitySerialCounter;
 
-FieldActor *g_PlayerEntity;
 
 FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
 {
@@ -360,11 +356,6 @@ void Entity_FrameUpdate(void) {
 /* The actor list globals this unit owns. */
 typedef FieldActor Entity;
 
-FieldActor *g_EntityFreeListHead;
-FieldActor *g_PlayerEntity;
-u16 g_EntityFreePoolCount;
-int g_FieldMoveLock;
-FieldActor *g_CurrentEntity;
 
 void Entity_DispatchCallbacks(FieldActor *a);
 

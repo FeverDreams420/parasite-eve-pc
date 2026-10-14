@@ -37,6 +37,11 @@ int main(void) {
             CHECK(g_GeomScroll.state.position.baseAngleDigital==0 &&
                   g_GeomScroll.state.position.baseAngleAnalog==0);
             CHECK(g_GeomScroll.state.position.otZ==0);
+            CHECK(Render_LoadGeomState(group)==0);
+            CHECK(distance==camera.distance);
+            CHECK(!memcmp(matrix.m,camera.view.rotation,sizeof(matrix.m)));
+            CHECK(!memcmp(matrix.t,camera.view.translation,sizeof(matrix.t)));
+            CHECK(g_GeomScroll.state.position.groupSelect==group);
             g_GeomScroll.state.position.groupSelect=group;
             for (unsigned smooth=0;smooth<2;++smooth) {
                 PeCameraScroll oracle={0}; uint32_t flags=0x70;

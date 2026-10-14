@@ -313,7 +313,7 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-collision-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 
-add_library(parasite-eve-original-camera OBJECT src/main/render/camera_view.c)
+add_library(parasite-eve-original-camera OBJECT src/main/render/camera.c)
 target_include_directories(parasite-eve-original-camera PRIVATE include)
 if(BUILD_TESTING)
     add_executable(test-original-camera tests/original_camera.c pc/camera.c pc/disc.c pc/room.c pc/matrix.c pc/model.c

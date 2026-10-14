@@ -1683,3 +1683,20 @@ real-data camera and scene-spawn CTests and mesh/shadow ASan/UBSan/function chec
 passed (PsyZ uninstrumented). This is packet/state evidence, not rendered scene
 fidelity. Serialized geometry conversion, all wrapping/culling cases, glyph
 consumers of the shared page type and full GPU image comparison remain pending.
+
+### Restore the complete camera module
+
+camera_view.c was merged back into existing render/camera.c and removed. All
+25 historical function definitions from before extraction (fc15988f6 parent)
+are retained. The complete module compiles without source exclusions; an unused
+menu-background include was removed. No new files were created.
+
+The real-data camera test now also calls original Render_LoadGeomState for all
+509 viewports and verifies the loaded projection distance and matrix against
+independently decoded room data. Existing checks cover 30,540 transition frames.
+Full build, camera/actor-lifecycle/entity-texture-assets CTests and camera
+ASan/UBSan/function instrumentation passed (PsyZ uninstrumented). Geometry-entry
+conversion is still unresolved: viewport records remain serialized-compatible,
+but the enlarged native mesh entries require separate preparation within the
+existing loader. This change restores the whole camera module and validates
+viewport loading, not complete room initialization or all animation commands.

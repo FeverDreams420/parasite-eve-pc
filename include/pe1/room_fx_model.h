@@ -5,74 +5,31 @@
 #include "pe1/entity_frame_update.h"
 #include "pe1/gte_types.h"
 
-struct RoomFxModelOwner;
-
-/* Room model geometry that rides along a guide line next to its owner's
- * model: the line runs from (line_x0, line_z0) to (line_x1, line_z1). */
-typedef struct RoomFxModelGeom {
-    /* 0x00 */ u8 pad00[0x28];
-    /* 0x28 */ s16 mode;
-    /* 0x2A */ u8 pad2A[2];
-    /* 0x2C */ GteShortVector rotation;
-    /* 0x34 */ GteMatrix matrix;
-    /* 0x54 */ u8 pad54[0xC];
-    /* 0x60 */ struct RoomFxModelOwner *owner;
-    /* 0x64 */ u8 pad64[0x38];
-    /* 0x9C */ u16 flags;
-    /* 0x9E */ u8 pad9E[0x1E];
-    /* 0xBC */ u16 line_x0;
-    /* 0xBE */ u16 line_z0;
-    /* 0xC0 */ u16 line_x1;
-    /* 0xC2 */ u16 line_z1;
-} RoomFxModelGeom;
-
-typedef struct RoomFxModelOwner {
-    /* 0x000 */ u8 pad00[4];
-    /* 0x004 */ struct RoomFxModelOwner *next; /* field actor list */
-    /* 0x008 */ u8 pad08[4];
-    /* 0x00C */ u8 kind;
-    /* 0x00D */ u8 subKind;
-    /* 0x00E */ u8 pad0E[8];
-    /* 0x016 */ s16 matrix_count;
-    /* 0x018 */ u8 pad18[0x80];
-    /* 0x098 */ u32 status;           /* 0x10: busy */
-    /* 0x09C */ u8 pad9C[0x114];
-    /* 0x1B0 */ void *animation;
-    /* 0x1B4 */ RoomFxModelGeom geom;
-} RoomFxModelOwner;
-
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFxModelOwner, geom) == 0x1B4, room_fx_model_geom_offset);
-
-int abs(int value);
+#include "pe1/field_actor.h"
+#include "pe1/pm.h"
 
 /* The mirror room controller (src/overlays/room_lib/mirror_model.c),
  * linked by room_m017, room_m018, room_m021, room_m045, room_m102,
  * room_m151 and room_m319: it finds an actor by kind, binds a mirror model
  * to it across a guide line and redraws the reflection every frame. */
 typedef struct RoomFxMirror {
-    /* 0x00 */ u8 pad00[8];
-    /* 0x08 */ RoomFxModelOwner *object;  /* carries the mirror geometry */
-    /* 0x0C */ RoomFxModelOwner *target;  /* the reflected actor */
-    /* 0x10 */ s16 lineX0;
-    /* 0x12 */ s16 lineZ0;
-    /* 0x14 */ s16 lineX1;
-    /* 0x16 */ s16 lineZ1;
-    /* 0x18 */ u8 bound;
-    /* 0x19 */ u8 active;
+    PmSlotHeader header; /* owner is the actor carrying the mirror model */
+    FieldActor *target;
+    s16 lineX0, lineZ0, lineX1, lineZ1;
+    u8 bound, active;
 } RoomFxMirror;
 
-extern void *g_RoomFxMirrorHandlers[7];
+extern PmCommand g_RoomFxMirrorHandlers;
 extern GteMatrix g_RoomFxMirrorAxes;
-
-int RoomEffect_MirrorNoOp0(void);
-int RoomEffect_MirrorReset(RoomFxMirror *mirror);
-int RoomEffect_MirrorSelect(RoomFxMirror *mirror, int cancel, u32 mode, int a, int b);
-int RoomEffect_MirrorTick(RoomFxMirror *mirror);
-int RoomEffect_MirrorNoOp4(void);
-int RoomEffect_MirrorKill(u8 *state);
-int RoomEffect_MirrorNoOp6(void);
-void RoomEffect_ModelBind(RoomFxModelGeom *geom, RoomFxModelOwner *owner,
-                      int x0, int z0, int x1, int z1);
-void RoomEffect_ModelUpdate(RoomFxModelGeom *geom);
+void RoomEffect_MirrorNoOp0(void);
+void RoomEffect_MirrorReset(PmSlotHeader *slot);
+int RoomEffect_MirrorSelect(PmSlotHeader *slot, int cancel, int mode, intptr_t a, intptr_t b, intptr_t unused);
+int RoomEffect_MirrorTick(PmSlotHeader *slot);
+int RoomEffect_MirrorNoOp4(PmSlotHeader *slot);
+int RoomEffect_MirrorKill(PmSlotHeader *slot);
+void RoomEffect_MirrorNoOp6(void);
+void RoomEffect_ModelBind(FieldActor *actor, FieldActor *owner, int x0, int z0, int x1, int z1);
+void RoomEffect_ModelUpdate(FieldActor *actor);
+void RoomEffect_ModelDraw(RenderObjectEntity *entity);
 
 #endif

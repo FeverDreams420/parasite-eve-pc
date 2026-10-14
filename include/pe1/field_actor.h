@@ -83,7 +83,10 @@ typedef struct FieldActor {
     } model_state;
     /* 0x1B0 */ void *action_data;      /* current animation/action record */
     /* 0x1B4 */ RenderObjectEntity render_object;
-    /* 0x270 */ unsigned char pad_270[0x08];
+    /* 0x270 */ union {
+        unsigned char pad_270[0x08];
+        struct { u16 x0, z0, x1, z1; } mirror_line;
+    };
     /* 0x278 */ union {
         uintptr_t allocation_block;
         struct RenderShadowQuad *shadow_quads;

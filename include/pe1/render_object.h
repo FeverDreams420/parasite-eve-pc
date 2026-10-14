@@ -537,7 +537,10 @@ typedef struct RenderObjectEntity {
     /* 0x58 */ RenderMatrix *active_matrix;
     /* 0x5C */ s16 projected_x;
     /* 0x5E */ s16 projected_y;
-    /* 0x60 */ unsigned char pad_60[4];
+    /* 0x60 */ union {
+        unsigned char pad_60[4];
+        struct FieldActor *reflection_owner;
+    };
     /* 0x64 */ s16 projected_target_x, projected_target_y;
     /* 0x68 */ RenderAnimationLookupEntry hit_cylinder; /* anchor; x/z cylinder test */
     /* 0x74 */ RenderAnimationLookupEntry hit_body;     /* world position; body sphere test */

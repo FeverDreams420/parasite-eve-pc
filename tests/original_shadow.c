@@ -1,9 +1,12 @@
 #include "pe1/render_shadow.h"
+#include "pe1/room_fx_model.h"
+#include "pe1/render_matrix_slot.h"
 #include "pe1/render_buffers.h"
 #include "pe1/room_floor.h"
 #include "pe1/gte.h"
 #include "pe1/geom_state.h"
 #include "pe1/game_state.h"
+RenderMatrixSlot g_ViewMatrixSlot;
 GeomState * volatile g_GeomState;
 GeomScrollRecord g_GeomScroll;
 int Render_ScrollEntries(void);
@@ -31,6 +34,94 @@ _Static_assert(offsetof(RenderShadowQuad,xy3)==offsetof(POLY_FT4,x3),"native sha
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 int main(void)
 {
+    FieldActor actors[3] = {0}, reflection = {0};
+    RoomFxMirror mirror = {0};
+    mirror.header.owner = &reflection;
+    actors[0].next = &actors[1]; actors[1].next = &actors[2];
+    actors[0].type_id = actors[1].type_id = actors[2].type_id = 7;
+    actors[0].sub_id = 2; actors[1].sub_id = actors[2].sub_id = 3;
+    actors[1].flags = 0x10;
+    g_FieldActorListHead = actors;
+    g_RoomFxMirrorHandlers.init();
+    g_RoomFxMirrorHandlers.initialize(&mirror.header);
+    CHECK(mirror.header.owner == &reflection && !mirror.target && !mirror.active);
+    CHECK(!g_RoomFxMirrorHandlers.send(&mirror.header, 0, 0, 7, 3, 0));
+    CHECK(mirror.target == &actors[2]);
+    CHECK(!g_RoomFxMirrorHandlers.send(&mirror.header, 1, 0, 0, 0, 0));
+    CHECK(mirror.target == &actors[2]);
+    CHECK(!g_RoomFxMirrorHandlers.send(&mirror.header, 0, 1, -100, 30, 0));
+    CHECK(!g_RoomFxMirrorHandlers.send(&mirror.header, 0, 2, 100, 30, 0));
+    CHECK(g_RoomFxMirrorHandlers.send(&mirror.header, 0, 4, 0, 0, 0) == -6);
+    CHECK(!g_RoomFxMirrorHandlers.start(&mirror.header));
+    CHECK(mirror.bound && reflection.render_object.reflection_owner == &actors[2]);
+    CHECK(reflection.render_object.animation_state == 5 &&
+          (reflection.render_object.flags_9C & 0x1000) &&
+          (s16)reflection.mirror_line.x0 == -100 && reflection.mirror_line.z1 == 30);
+    CHECK(!g_RoomFxMirrorHandlers.execute(&mirror.header));
+    CHECK(!g_RoomFxMirrorHandlers.stop(&mirror.header) && mirror.header.state == 4);
+    g_RoomFxMirrorHandlers.unload();
+    g_FieldActorListHead = NULL;
+    actors[2].render_object.model_matrix.translation[0] = 20;
+    actors[2].render_object.model_matrix.translation[1] = 5;
+    actors[2].render_object.model_matrix.translation[2] = 50;
+    actors[2].render_object.table_value2c = 100;
+    actors[2].render_object.table_value30 = 200;
+    RoomEffect_ModelUpdate(&reflection);
+    CHECK(reflection.render_object.model_matrix.translation[0] == 20 &&
+          reflection.render_object.model_matrix.translation[1] == 5 &&
+          reflection.render_object.model_matrix.translation[2] == 90);
+    CHECK((s16)reflection.render_object.table_value2c == -100 &&
+          (s16)reflection.render_object.table_value2e == -0x800 &&
+          (s16)reflection.render_object.table_value30 == -200);
+    {
+        RenderObjectHeader header = {0};
+        RenderPrimitiveDescriptor descriptors[4] = {0};
+        struct {
+            RenderPacket34 quad[2]; RenderPacket28 tri[2];
+            RenderPacket24 flat_quad[2]; RenderPacket1C flat_tri[2];
+        } packets = {0};
+        RenderNativeTag ordering[4096] = {0};
+        RenderObjectEntity object = {0};
+        header.packet34_count = header.packet28_count = 1;
+        header.packet24_count = header.packet1c_count = 1;
+        object.header = &header; object.primitive_descriptors = descriptors;
+        object.primitive_buffer = (u8 *)&packets;
+        for (unsigned i = 0; i < 4; ++i) {
+            for (unsigned j = 0; j < 4; ++j) descriptors[i].lookup_indices[j] = j;
+            D_800A636C[i] = 64;
+        }
+        D_800B1644[0] = 0; D_800B1644[1] = 10u << 16;
+        D_800B1644[2] = 10; D_800B1644[3] = 10u | (10u << 16);
+        for (unsigned slot = 0; slot < 2; ++slot) {
+            g_ActiveDrawSlot = slot; D_800B0E38.ordering[slot] = ordering;
+            ordering[16].address = (uintptr_t)&object;
+            RoomEffect_ModelDraw(&object);
+            CHECK(ordering[16].address == (uintptr_t)&packets.flat_tri[slot]);
+            CHECK(((RenderNativeTag *)&packets.flat_tri[slot])->address == (uintptr_t)&packets.flat_quad[slot]);
+            CHECK(((RenderNativeTag *)&packets.flat_quad[slot])->address == (uintptr_t)&packets.tri[slot]);
+            CHECK(((RenderNativeTag *)&packets.tri[slot])->address == (uintptr_t)&packets.quad[slot]);
+            CHECK(((RenderNativeTag *)&packets.quad[slot])->address == (uintptr_t)&object);
+            CHECK(packets.quad[slot].sxy3 == D_800B1644[3]);
+            D_800B1644[1] = 10; D_800B1644[2] = 10u << 16;
+            ordering[16].address = (uintptr_t)&object;
+            RoomEffect_ModelDraw(&object);
+            CHECK(ordering[16].address == (uintptr_t)&object &&
+                  !((RenderNativeTag *)&packets.quad[slot])->address &&
+                  !((RenderNativeTag *)&packets.tri[slot])->address &&
+                  !((RenderNativeTag *)&packets.flat_quad[slot])->address &&
+                  !((RenderNativeTag *)&packets.flat_tri[slot])->address);
+            D_800B1644[1] = 10u << 16; D_800B1644[2] = 10;
+            for (unsigned i = 0; i < 4; ++i) D_800A636C[i] = -64;
+            RoomEffect_ModelDraw(&object);
+            CHECK(ordering[16].address == (uintptr_t)&object);
+            for (unsigned i = 0; i < 4; ++i) D_800A636C[i] = 16384;
+            RoomEffect_ModelDraw(&object);
+            CHECK(ordering[16].address == (uintptr_t)&object);
+            for (unsigned i = 0; i < 4; ++i) D_800A636C[i] = 64;
+        }
+        D_800B0E38.ordering[0] = D_800B0E38.ordering[1] = NULL;
+    }
+
     struct { GeomState header; GeomEntryView entries[3]; } scrolling={0};
     scrolling.header.entry_offset=(size_t)((u8 *)scrolling.entries-(u8 *)&scrolling);
     scrolling.header.entry_count06=3; g_GeomState=&scrolling.header;

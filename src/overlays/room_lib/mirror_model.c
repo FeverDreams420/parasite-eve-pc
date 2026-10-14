@@ -12,6 +12,8 @@
  */
 
 #include "pe1/entity_frame_update.h"
+#include <stdlib.h>
+#include <string.h>
 #include "pe1/gte.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/render_object.h"
@@ -21,7 +23,7 @@
 
 void RoomEffect_ModelDraw(RenderObjectEntity *entity);
 
-void *g_RoomFxMirrorHandlers[7] = {
+PmCommand g_RoomFxMirrorHandlers = {
     RoomEffect_MirrorNoOp0, RoomEffect_MirrorReset, RoomEffect_MirrorSelect, RoomEffect_MirrorTick,
     RoomEffect_MirrorNoOp4, RoomEffect_MirrorKill, RoomEffect_MirrorNoOp6,
 };
@@ -32,11 +34,10 @@ GteMatrix g_RoomFxMirrorAxes = {
     { 0, 0, 0 },
 };
 
-int RoomEffect_MirrorNoOp0(void) {
-    return 0;
-}
+void RoomEffect_MirrorNoOp0(void) {}
 
-int RoomEffect_MirrorReset(RoomFxMirror *mirror) {
+void RoomEffect_MirrorReset(PmSlotHeader *slot) {
+    RoomFxMirror *mirror = (RoomFxMirror *)slot;
     mirror->target = 0;
     mirror->lineZ0 = 0;
     mirror->lineX0 = 0;
@@ -44,24 +45,25 @@ int RoomEffect_MirrorReset(RoomFxMirror *mirror) {
     mirror->lineX1 = 0;
     mirror->bound = 0;
     mirror->active = 0;
-    return 0;
 }
 
 /* Script entry: mode 0 finds the first idle actor of the given kind,
  * modes 1 and 2 set the guide line's ends, mode 3 starts or stops the
  * mirror. */
-int RoomEffect_MirrorSelect(RoomFxMirror *mirror, int cancel, u32 mode, int a, int b) {
-    RoomFxModelOwner **target = &mirror->target;
+int RoomEffect_MirrorSelect(PmSlotHeader *slot, int cancel, int mode, intptr_t a, intptr_t b, intptr_t unused) {
+    RoomFxMirror *mirror = (RoomFxMirror *)slot;
+    (void)unused;
+    FieldActor **target = &mirror->target;
 
     switch (mode) {
     case 0:
         if (cancel != 0) {
             break;
         }
-        *target = (RoomFxModelOwner *)g_FieldActorListHead;
+        *target = g_FieldActorListHead;
         while (*target != 0) {
-            RoomFxModelOwner *node = *target;
-            if (node->kind == a && node->subKind == b && !(node->status & 0x10)) {
+            FieldActor *node = *target;
+            if (node->type_id == a && node->sub_id == b && !(node->flags & 0x10)) {
                 break;
             }
             *target = (*target)->next;
@@ -84,62 +86,56 @@ int RoomEffect_MirrorSelect(RoomFxMirror *mirror, int cancel, u32 mode, int a, i
     return 0;
 }
 
-int RoomEffect_MirrorTick(RoomFxMirror *mirror) {
+int RoomEffect_MirrorTick(PmSlotHeader *slot) {
+    RoomFxMirror *mirror = (RoomFxMirror *)slot;
+    FieldActor *object = mirror->header.owner;
     if (mirror->bound == 0) {
-        RoomEffect_ModelBind(&mirror->object->geom, mirror->target, mirror->lineX0,
+        RoomEffect_ModelBind(object, mirror->target, mirror->lineX0,
                          mirror->lineZ0, mirror->lineX1, mirror->lineZ1);
         mirror->bound = 1;
     }
     if (mirror->active != 0) {
-        RoomEffect_ModelUpdate(&mirror->object->geom);
-        Render_TransformVertices((RenderObjectEntity *)&mirror->object->geom);
-        Render_TransformMorphVertices((RenderObjectEntity *)&mirror->object->geom,
+        RoomEffect_ModelUpdate(object);
+        Render_TransformVertices(&object->render_object);
+        Render_TransformMorphVertices(&object->render_object,
                                       (u32 *)g_ViewMatrixSlot.value);
-        RoomEffect_ModelDraw((RenderObjectEntity *)&mirror->object->geom);
+        RoomEffect_ModelDraw(&object->render_object);
     }
     return 0;
 }
 
-int RoomEffect_MirrorNoOp4(void) {
+int RoomEffect_MirrorNoOp4(PmSlotHeader *slot) {
+    (void)slot;
     return 0;
 }
 
-int RoomEffect_MirrorKill(u8 *state) {
-    *state = 4;
+int RoomEffect_MirrorKill(PmSlotHeader *slot) {
+    slot->state = 4;
     return 0;
 }
 
-int RoomEffect_MirrorNoOp6(void) {
-    return 0;
-}
+void RoomEffect_MirrorNoOp6(void) {}
 
-/* An old-style definition, as retail: the callers pass the line ends as
- * ints, the binder reads them back as halfwords. */
-void RoomEffect_ModelBind(geom, owner, x0, z0, x1, z1)
-    RoomFxModelGeom *geom;
-    RoomFxModelOwner *owner;
-    u16 x0;
-    u16 z0;
-    u16 x1;
-    u16 z1;
+void RoomEffect_ModelBind(FieldActor *actor, FieldActor *owner, int x0, int z0, int x1, int z1)
 {
-    geom->mode = 5;
-    geom->owner = owner;
-    geom->line_x0 = x0;
-    geom->line_z0 = z0;
-    geom->flags |= 0x1000;
-    geom->line_x1 = x1;
-    geom->line_z1 = z1;
+    actor->render_object.animation_state = 5;
+    actor->render_object.reflection_owner = owner;
+    actor->mirror_line.x0 = (u16)x0;
+    actor->mirror_line.z0 = (u16)z0;
+    actor->render_object.flags_9C |= 0x1000;
+    actor->mirror_line.x1 = (u16)x1;
+    actor->mirror_line.z1 = (u16)z1;
 }
 
 /* Mirror the owner's model across the guide line: reflect its position
  * through the line, flip its rotation and point the model along the line,
  * then rebuild the animation matrices. */
-void RoomEffect_ModelUpdate(RoomFxModelGeom *geom) {
-    RoomFxModelOwner *owner = geom->owner;
-    RoomFxModelGeom *parent = &owner->geom;
-    s16 dx = -geom->line_x0 + geom->line_x1;
-    s16 dz = -geom->line_z0 + geom->line_z1;
+void RoomEffect_ModelUpdate(FieldActor *actor) {
+    RenderObjectEntity *geom = &actor->render_object;
+    FieldActor *owner = geom->reflection_owner;
+    RenderObjectEntity *parent = &owner->render_object;
+    s16 dx = -actor->mirror_line.x0 + actor->mirror_line.x1;
+    s16 dz = -actor->mirror_line.z0 + actor->mirror_line.z1;
     int slope;
     int x, z;
     int distance;
@@ -156,9 +152,9 @@ void RoomEffect_ModelUpdate(RoomFxModelGeom *geom) {
         dx = 1;
     }
     slope = dz / dx;
-    intercept = (s16)geom->line_z1 - slope * (s16)geom->line_x1;
-    x = owner->geom.matrix.t[0];
-    z = owner->geom.matrix.t[2];
+    intercept = (s16)actor->mirror_line.z1 - slope * (s16)actor->mirror_line.x1;
+    x = owner->render_object.model_matrix.translation[0];
+    z = owner->render_object.model_matrix.translation[2];
     distance = slope * x - z + intercept;
     if (distance < 0) {
         distance = -distance;
@@ -168,48 +164,51 @@ void RoomEffect_ModelUpdate(RoomFxModelGeom *geom) {
     sx = (rsin(angle) * distance) >> 12;
     sz = (rcos(angle) * distance) >> 12;
     nx = x - sx * 2;
-    geom->matrix.t[0] = nx;
-    geom->matrix.t[1] = owner->geom.matrix.t[1];
+    geom->model_matrix.translation[0] = nx;
+    geom->model_matrix.translation[1] = owner->render_object.model_matrix.translation[1];
     nz = z + sz * 2;
-    geom->matrix.t[2] = nz;
+    geom->model_matrix.translation[2] = nz;
     adx = abs(dx);
-    rx = -owner->geom.rotation.x;
+    rx = -(s16)owner->render_object.table_value2c;
     if (dz >= 0 ? dz < adx : -dz < adx) {
         if (z < nz) {
             nz = angle + 0x800;
-            yaw = parent->rotation.y + nz;
+            yaw = (s16)parent->table_value2e + nz;
         } else {
-            yaw = parent->rotation.y + angle;
+            yaw = (s16)parent->table_value2e + angle;
         }
     } else if (nx < x) {
         nz = angle + 0xC00;
-        yaw = parent->rotation.y + nz;
+        yaw = (s16)parent->table_value2e + nz;
     } else {
         nz = angle + 0x400;
-        yaw = parent->rotation.y + nz;
+        yaw = (s16)parent->table_value2e + nz;
     }
     nz = -yaw;
-    rz = -parent->rotation.z;
-    geom->rotation.x = rx;
-    geom->rotation.y = nz;
-    geom->rotation.z = rz;
-    RotMatrix(&geom->rotation, &geom->matrix);
-    gte_ldrotmatrix(&geom->matrix);
+    rz = -(s16)parent->table_value30;
+    geom->table_value2c = (u16)rx;
+    geom->table_value2e = (u16)nz;
+    geom->table_value30 = (u16)rz;
+    GteShortVector angles = {(s16)rx, (s16)nz, (s16)rz, 0};
+    GteMatrix rotated;
+    RotMatrix(&angles, &rotated);
+    memcpy(geom->model_matrix.rotation, rotated.m, sizeof(rotated.m));
+    gte_ldrotmatrix(&geom->model_matrix);
     gte_ldclmv(&g_RoomFxMirrorAxes.m[0][0]);
     gte_rtir();
-    gte_stclmv(&geom->matrix.m[0][0]);
+    gte_stclmv(&geom->model_matrix.rotation[0][0]);
     gte_ldclmv(&g_RoomFxMirrorAxes.m[0][1]);
     gte_rtir();
-    gte_stclmv(&geom->matrix.m[0][1]);
+    gte_stclmv(&geom->model_matrix.rotation[0][1]);
     gte_ldclmv(&g_RoomFxMirrorAxes.m[0][2]);
     gte_rtir();
-    gte_stclmv(&geom->matrix.m[0][2]);
-    Anim_BuildRotationMatrices(geom, owner->animation, owner->matrix_count, 1);
+    gte_stclmv(&geom->model_matrix.rotation[0][2]);
+    Anim_BuildRotationMatrices(geom, owner->action_data, (s16)owner->anim.parts.integer);
 }
 
-/* PSY-Q libgpu style ordering-table link through the 24-bit tag address. */
-#define ROOMFX_SETADDR(p, a) (((RenderGpuTag *)(p))->address = (u32)(a))
-#define ROOMFX_GETADDR(p) (((RenderGpuTag *)(p))->address)
+/* Native PsyZ packet links retain the complete host address. */
+#define ROOMFX_SETADDR(p, a) (((RenderNativeTag *)(p))->address = (uintptr_t)(a))
+#define ROOMFX_GETADDR(p) (((RenderNativeTag *)(p))->address)
 #define ROOMFX_ADDPRIM(ot, p) \
     ROOMFX_SETADDR(p, ROOMFX_GETADDR(ot)), ROOMFX_SETADDR(ot, p)
 
@@ -220,12 +219,13 @@ void RoomEffect_ModelUpdate(RoomFxModelGeom *geom) {
  * walked in turn through one shared descriptor cursor. */
 void RoomEffect_ModelDraw(RenderObjectEntity *entity) {
     int i;
-    s32 *area = (s32 *)0x1F800000;
+    s32 area_value;
+    s32 *area = &area_value;
     u32 *xy = D_800B1644;
     RenderPrimitiveDescriptor *record = entity->primitive_descriptors;
     u8 *packets = entity->primitive_buffer;
     int slot = g_ActiveDrawSlot;
-    u32 *ordering = D_800B0E38.ordering[slot];
+    RenderNativeTag *ordering = D_800B0E38.ordering[slot];
     s32 *z = D_800A636C;
     u32 xy0, xy1, xy2;
     int a, b, c, d;
@@ -253,8 +253,8 @@ void RoomEffect_ModelDraw(RenderObjectEntity *entity) {
             depth += z[c];
             depth += z[d];
             depth >>= 4;
-            if (depth < 0x1000) {
-                u32 *entry = (u32 *)(depth * 4 + (u32)ordering);
+            if (depth >= 0 && depth < 0x1000) {
+                RenderNativeTag *entry = ordering + depth;
                 ROOMFX_ADDPRIM(entry, packet);
                 ((RenderPacket34 *)packet)->sxy0 = xy0;
                 ((RenderPacket34 *)packet)->sxy1 = xy1;
@@ -288,8 +288,8 @@ void RoomEffect_ModelDraw(RenderObjectEntity *entity) {
         if (*area < 0) {
             int depth = z[a] + z[b] + z[c];
             depth = depth / 3 >> 2;
-            if (depth < 0x1000) {
-                u32 *entry = (u32 *)(depth * 4 + (u32)ordering);
+            if (depth >= 0 && depth < 0x1000) {
+                RenderNativeTag *entry = ordering + depth;
                 ROOMFX_ADDPRIM(entry, packet);
                 ((RenderPacket28 *)packet)->sxy0 = xy0;
                 ((RenderPacket28 *)packet)->sxy1 = xy1;
@@ -325,8 +325,8 @@ void RoomEffect_ModelDraw(RenderObjectEntity *entity) {
             depth += z[c];
             depth += z[d];
             depth >>= 4;
-            if (depth < 0x1000) {
-                u32 *entry = (u32 *)(depth * 4 + (u32)ordering);
+            if (depth >= 0 && depth < 0x1000) {
+                RenderNativeTag *entry = ordering + depth;
                 ROOMFX_ADDPRIM(entry, packet);
                 ((RenderPacket24 *)packet)->sxy0 = xy0;
                 ((RenderPacket24 *)packet)->sxy1 = xy1;
@@ -360,8 +360,8 @@ void RoomEffect_ModelDraw(RenderObjectEntity *entity) {
         if (*area < 0) {
             int depth = z[a] + z[b] + z[c];
             depth = depth / 3 >> 2;
-            if (depth < 0x1000) {
-                u32 *entry = (u32 *)(depth * 4 + (u32)ordering);
+            if (depth >= 0 && depth < 0x1000) {
+                RenderNativeTag *entry = ordering + depth;
                 ROOMFX_ADDPRIM(entry, packet);
                 ((RenderPacket1C *)packet)->sxy0 = xy0;
                 ((RenderPacket1C *)packet)->sxy1 = xy1;

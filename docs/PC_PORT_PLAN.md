@@ -2502,3 +2502,28 @@ backend; the buffer-routing test uses RGB=255 endpoints and does not establish
 intermediate color conversion fidelity. This discrepancy still needs investigation
 in our PsyZ fork. Movie/save-background branch presentation and full frame-loop
 execution are unverified. Complete game integration and pc/ removal remain open.
+
+
+### Correct non-dithered RGB5 conversion in our PsyZ fork
+
+Fork commit 31befd2 (pushed to khasinski/parasite-eve-psyz/main) quantizes
+non-dithered fragment colors during rasterization. Previously an untextured
+8-bit color remained normalized in the render texture, and readback rounded
+its scaled value to five bits (RGB=248 became 30 instead of 31). The shader now
+truncates each channel to five bits before storage. The GL source and generated
+Metal/SPIR-V/DXIL fragment variants are updated; no new repository files.
+
+The original-frame fixture now renders ramps covering all 256 inputs of each
+RGB channel into both draw buffers and compares VRAM with independent integer
+right-shift results. It failed against the prior fork and passes with this
+change. Metal model-gpu, model-room-gpu and entity-texture-assets pass with Disc 1
+required. Fresh ASan/UBSan/function --gpu execution passes the ramps and 878-model
+corpus (301224 packets, 2239015 visible pixels, identical slots). The pixel count
+changes with corrected quantization. PsyZ/SDL are not instrumented.
+
+GLSL 330 core and GLES 300 syntax checks pass. SPIR-V and Metal variants were
+compiled with glslang/spirv-cross; DXIL was compiled using Microsoft's release
+DXC in a Linux container. Their runtime evidence is limited to Metal: the macOS
+build explicitly rejects sdl3_gl, and Vulkan/Direct3D were not run. The normal
+Metal build configuration was restored. Dithering/blending fidelity, mask-bit
+behavior, VSync(n>1), full scene runtime and removal of pc/ remain incomplete.

@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     ResetGraph(0);
     if(gpu) {
         RenderNativeTag ordering[2][4096];
-        TILE tile[2];
+        TILE tile[2], ramp[2][256];
         Pe1GameState saved=g_GameState;
         for(unsigned slot=0;slot<2;++slot) {
             SetDefDrawEnv(&g_RenderDrawEnvArray[slot],0,slot*240,320,224);
@@ -82,6 +82,13 @@ int main(int argc, char **argv)
             setTile(&tile[slot]);setXY0(&tile[slot],7,9);setWH(&tile[slot],11,13);
             setRGB0(&tile[slot],slot?0:255,slot?255:0,0);
             addPrim(&ordering[slot][2048],&tile[slot]);
+            for(unsigned value=0;value<256;++value) {
+                memset(&ramp[slot][value],0,sizeof(TILE));
+                setTile(&ramp[slot][value]);setXY0(&ramp[slot][value],value,30);
+                setWH(&ramp[slot][value],1,1);
+                setRGB0(&ramp[slot][value],value,255-value,value^0x55);
+                addPrim(&ordering[slot][2048],&ramp[slot][value]);
+            }
         }
         g_MenuSaveBgFadeState=0;g_GameState.flags=0;
         CHECK(Draw_CheckDrawStatus()==0);
@@ -93,6 +100,15 @@ int main(int argc, char **argv)
             u16 pixels[11*13+1]={0};
             StoreImage(&probe,(u_long *)pixels);DrawSync(0);
             for(unsigned i=0;i<11*13;++i) { if((pixels[i]&0x7fff)!=(slot?0x3e0:0x1f)) fprintf(stderr,"frame slot=%u pixel=%u color=%04x expected=%04x\n",slot,i,pixels[i],slot?0x3e0:0x1f); CHECK((pixels[i]&0x7fff)==(slot?0x3e0:0x1f)); }
+            RECT ramp_rect={0,30+(int)slot*240,256,1};
+            u16 ramp_pixels[256];
+            StoreImage(&ramp_rect,(u_long *)ramp_pixels);DrawSync(0);
+            for(unsigned value=0;value<256;++value) {
+                u16 expected_color=(value>>3)|((255-value)>>3)<<5|((value^0x55)>>3)<<10;
+                if((ramp_pixels[value]&0x7fff)!=expected_color)
+                    fprintf(stderr,"RGB5 slot=%u input=%u got=%04x expected=%04x\n",slot,value,ramp_pixels[value],expected_color);
+                CHECK((ramp_pixels[value]&0x7fff)==expected_color);
+            }
         }
         g_GameState=saved;
     }

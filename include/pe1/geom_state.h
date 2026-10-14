@@ -346,8 +346,8 @@ extern GeomScrollRecord g_GeomScroll;
 /* The screen tint and fade parameters inside the scroll state. */
 #define g_ScreenTint (g_GeomScroll.state.position.tint)
 /* Screen fade length and elapsed frames (Render_StartFadeIn/StepFade). */
-extern u8 g_RenderFadeFrameCount;
-extern u8 g_RenderFadeFrameCounter;
+#define g_RenderFadeFrameCount (g_GeomScroll.state.position.tint.fadeFrameCount)
+#define g_RenderFadeFrameCounter (g_GeomScroll.state.position.tint.fadeFrameCounter)
 
 int Render_TransformPoint(GeomEntry *entry, int x, int y, int depth);
 int Render_ClipPoint(int x, int y, int z);

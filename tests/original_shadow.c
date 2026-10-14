@@ -7,6 +7,10 @@
 GeomState * volatile g_GeomState;
 GeomScrollRecord g_GeomScroll;
 int Render_ScrollEntries(void);
+int Render_StartFadeIn(int frames);
+int Render_StepFade(void);
+int Render_BeginSceneLoad(void);
+int Render_ApplyScreenTint(void);
 int Render_ClipPoint(int x,int y,int z);
 #include <libgpu.h>
 #include <stdio.h>
@@ -59,6 +63,37 @@ int main(void)
         CHECK(Render_ScrollEntries()==0 && !memcmp(saved_entries,scrolling.entries,sizeof(saved_entries)));
     }
     g_GameStateFlags=0;
+    struct { u8 prefix[4],r,g,b,padding[9]; } primitives[3][4];
+    for(unsigned i=0;i<3;++i) {
+        scrolling.entries[i].render.prim_count=2;
+        scrolling.entries[i].render.u30.prim=primitives[i];
+    }
+    for(unsigned duration=2;duration<=255;++duration) {
+        CHECK(Render_StartFadeIn(duration)==0);
+        CHECK(g_ScreenTint.fadeFrameCount==duration && g_ScreenTint.fadeFrameCounter==0);
+        for(unsigned frame=0;frame<duration;++frame) {
+            memset(primitives,0x5a,sizeof(primitives));
+            g_ActiveDrawSlot=frame&1;
+            CHECK(Render_StepFade()==0);
+            for(unsigned entry=0;entry<3;++entry)for(unsigned j=0;j<4;++j) {
+                unsigned expected=j/2==(frame&1)?128-frame*128/(duration-1):0x5a;
+                CHECK(primitives[entry][j].r==expected && primitives[entry][j].g==expected && primitives[entry][j].b==expected);
+            }
+        }
+        CHECK(!(g_GeomScroll.state.flags&0x400) && (g_GeomScroll.state.flags&0x800));
+        CHECK(scrolling.header.field26==0x1ff0);
+    }
+    g_GeomScroll.state.flags=0; g_GeomScroll.state.position.meshTintLevel=45;
+    for(unsigned phase=0;phase<2;++phase) {
+        CHECK(Render_BeginSceneLoad()==0);
+        for(unsigned slot=0;slot<2;++slot) {
+            g_ActiveDrawSlot=slot;
+            CHECK(Render_ApplyScreenTint()==0);
+            for(unsigned entry=0;entry<3;++entry)for(unsigned j=0;j<2;++j)
+                CHECK(primitives[entry][slot*2+j].r==(phase?128:45));
+        }
+        CHECK(!(g_GeomScroll.state.flags&0x1000));
+    }
     GeomState geometry={0}; g_GeomState=&geometry;
     geometry.clip_offset_x=12; geometry.clip_offset_y=-7;
     geometry.clip_min_x=-100; geometry.clip_max_x=100;

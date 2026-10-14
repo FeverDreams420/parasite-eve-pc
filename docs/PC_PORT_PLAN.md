@@ -1648,3 +1648,18 @@ camera coordinates and both pause flags. Full build, shadow and real-data camera
 CTests and the mesh/shadow ASan/UBSan/function run passed (PsyZ uninstrumented).
 Sprite packet linking and serialized-to-native geometry preparation remain
 unfinished; these synthetic runtime entries are not scene-level image evidence.
+
+### Original mesh fade counters share canonical state
+
+The original fade-count/counter names now refer to the existing tint fields in
+GeomScrollRecord, matching their shared USA addresses 0x800BCFFA/0x800BCFFB.
+This removes unresolved detached linker-only storage from the mesh fade path.
+No functions moved and no files were created.
+
+The existing mesh/shadow test executes every frame for durations 2..255 across
+three entries and both buffers, checking RGB values, inactive-buffer preservation,
+completion flags/depth and canonical counter fields. It also tests both phases
+of scene-load tint toggling. Full build, shadow/real-data camera CTests and
+ASan/UBSan/function checks passed (PsyZ uninstrumented). Duration 0/1 behavior
+and conversion of legacy sprite packets to native PsyZ packets remain pending;
+this verifies original color/state calculations, not rendered fade images.

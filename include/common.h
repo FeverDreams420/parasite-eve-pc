@@ -14,6 +14,12 @@ typedef int64_t s64;
 typedef uint64_t u64;
 typedef float f32;
 
+/* Original game calls target the PS1 BIOS generator, not host libc RNG. */
+int Psyz_Rand(void);
+void Psyz_Srand(unsigned int seed);
+#define rand Psyz_Rand
+#define srand Psyz_Srand
+
 /* Assert documented layouts of serialized data and legacy structures. */
 #define PE1_STATIC_ASSERT(expr, name) \
     _Static_assert((expr), #name)

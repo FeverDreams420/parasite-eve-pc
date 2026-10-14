@@ -20,6 +20,7 @@
 #include "pe1/menu_widget.h"
 #include "host_pad.h"
 #include <stdlib.h>
+#include <psyz/system.h>
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
 GeomScrollRecord g_GeomScroll;
 
@@ -213,6 +214,35 @@ static int glyph_asset_records(PeDisc *disc, const PeDiscFile *exe)
             }
         }
     }
+    static const u32 seeds[] = {0, 1, 32767, 0xffffffffu};
+    for (unsigned trial = 0; trial < 4 && ok; ++trial) {
+        u8 sequence[71], seen[256] = {0};
+        g_FontSelectionState.loadFailed = 1;
+        g_FontSelectionState.seed = seeds[trial];
+        int selected = Render_LoadFontGlyphAlt();
+        unsigned rng_state = Psyz_RandState();
+        memcpy(sequence, g_FontGlyphCodeSequence, sizeof(sequence));
+        if (glyph_io_failed || !g_FontSelectionState.active ||
+            g_FontSelectionState.codeIndex != 2 ||
+            g_FontSelectionState.code != sequence[2] ||
+            g_FontSelectionState.selected >= g_FontActiveGlyphTable.slots.count) {
+            ok = 0; break;
+        }
+        for (unsigned i = 2; i < 71; ++i) {
+            unsigned value = sequence[i];
+            unsigned limit = i < 10 ? 104 : i < 20 ? 109 : 113;
+            if (i % 10 == 0) {
+                if (value != i / 10 - 1) ok = 0;
+            } else {
+                if (value < 7 || value >= limit || value >= records || seen[value]) ok = 0;
+                seen[value] = 1;
+            }
+        }
+        g_FontSelectionState.seed = seeds[trial];
+        if (Render_LoadFontGlyphAlt() != selected ||
+            memcmp(sequence, g_FontGlyphCodeSequence, sizeof(sequence)) ||
+            Psyz_RandState() != rng_state) ok = 0;
+    }
     glyph_disc = NULL;
     g_GameState = saved;
     Menu_ResetEquipSlotState();
@@ -282,9 +312,34 @@ static int game_state_reset(void)
     return ok;
 }
 
+static int bios_random(void)
+{
+    static const int expected[] = {16838, 5758, 10113, 17515, 31051, 5627, 23010, 7419};
+    srand(1);
+    for (unsigned i = 0; i < sizeof(expected) / sizeof(expected[0]); ++i)
+        if (rand() != expected[i]) return 0;
+    if (Psyz_RandState() != 0x9cfbae39u) return 0;
+    unsigned saved = Psyz_RandState();
+    int next = rand();
+    srand(saved);
+    if (rand() != next) return 0;
+    static const u32 seeds[] = {0, 1, 0x80000000u, 0xffffffffu, 12345};
+    for (unsigned seed = 0; seed < sizeof(seeds) / sizeof(seeds[0]); ++seed) {
+        uint64_t reference = seeds[seed];
+        srand(seeds[seed]);
+        for (unsigned i = 0; i < 10000; ++i) {
+            reference = (reference * 1103515245ULL + 12345) % 4294967296ULL;
+            if (rand() != (int)((reference / 65536) % 32768) ||
+                Psyz_RandState() != reference) return 0;
+        }
+    }
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     (void)argv;
+    if (!bios_random()) return 58;
     if (!glyph_records()) return 55;
     if (!glyph_selection()) return 56;
     if (!boot_buffer_layout()) return 54;

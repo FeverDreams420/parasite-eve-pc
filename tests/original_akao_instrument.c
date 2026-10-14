@@ -498,6 +498,21 @@ int main(int argc, char **argv)
     dispatch_track.pc = branches + 8;
     handlers[5](&dispatch_track, 1);
     CHECK(dispatch_track.pc == branches + 2);
+    unsigned char parameters[] = {0xff, 0x80, 0xe0, 0x5a, 0x37};
+    AkaoCommandHandler parameter_handlers[] = {SeqOp_ReadExpression,
+        SeqOp_ReadDetune, Akao_SetPanpot, SeqOp_ReadVolume, Akao_SetReleaseRate,
+        SeqOp_ClearFlag3};
+    dispatch_track.pc = parameters;
+    dispatch_track.flags = AKAO_TRACK_FLAG_BRANCH_ACTIVE;
+    for (unsigned i = 0; i < 6; ++i) parameter_handlers[i](&dispatch_track, 0x800000);
+    CHECK(dispatch_track.pc == parameters + 5);
+    CHECK(dispatch_track.expression == -1);
+    CHECK(dispatch_track.detune == -128);
+    CHECK(dispatch_track.panpot == 0x2000);
+    CHECK(dispatch_track.volume_base == 0x5a00);
+    CHECK(dispatch_track.adsr_release_rate == 0x37);
+    CHECK(dispatch_track.flags == AKAO_TRACK_FLAG_RELEASE_RATE_OVERRIDE);
+    CHECK(dispatch_track.update_flags == (AKAO_VOICE_PARAM_VOLUME | AKAO_VOICE_PARAM_ADSR_RELEASE));
     puts("original AKAO: native dispatch signatures and sequencer procedures pass");
     return 0;
 }

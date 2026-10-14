@@ -1041,8 +1041,8 @@ void SeqOp_JumpRelative(AkaoTrack *script_track, u32 voice_mask) {
     *stream = cursor + 2 + displacement;
 }
 
-void SeqOp_BranchIfLoopLimitReached(AkaoTrack *track)
-{
+void SeqOp_BranchIfLoopLimitReached(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     AkaoU8 *pc;
     AkaoU8 *target;
     int value;
@@ -1063,7 +1063,8 @@ void SeqOp_BranchIfLoopLimitReached(AkaoTrack *track)
     }
 }
 
-void SeqOp_ReadVolume(AkaoTrack *track) {
+void SeqOp_ReadVolume(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *stream = track->pc;
     unsigned int flags;
     int value;
@@ -1081,7 +1082,8 @@ static inline int ReadVolumeByte(u8 **cursor) {
     return pc[0];
 }
 
-void SeqOp_SlideVolume(AkaoTrack *track) {
+void SeqOp_SlideVolume(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     u8 *pc;
     int duration;
     int current;
@@ -1102,7 +1104,8 @@ void SeqOp_SlideVolume(AkaoTrack *track) {
     track->volume_delta = (next - current) / track->volume_duration;
 }
 
-void SeqOp_SetVolumeOrExpression(AkaoTrack *track) {
+void SeqOp_SetVolumeOrExpression(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     AkaoU32 new_var;
     unsigned char *cursor;
     int value;
@@ -1137,7 +1140,8 @@ void SeqOp_SetVolumeOrExpression(AkaoTrack *track) {
 
 
 
-void Akao_SetExpressionSlide(AkaoTrack *track) {
+void Akao_SetExpressionSlide(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     u8 *pc;
     u8 *pc2;
     int duration;
@@ -1172,8 +1176,8 @@ void SeqOp_Ignore(AkaoTrack *track, u32 voice_mask)
     (void)voice_mask;
 }
 
-void Akao_SetPanTarget(AkaoTrack *track)
-{
+void Akao_SetPanTarget(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     unsigned int flags;
     unsigned char value;
@@ -1189,7 +1193,8 @@ void Akao_SetPanTarget(AkaoTrack *track)
     }
 }
 
-void Akao_SetPanTargetSlide(AkaoTrack *track) {
+void Akao_SetPanTargetSlide(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     int duration;
     int pan_base;
     int next;
@@ -1208,8 +1213,8 @@ void Akao_SetPanTargetSlide(AkaoTrack *track) {
     track->pan_delta = delta;
 }
 
-void Akao_SetPanpot(AkaoTrack *track)
-{
+void Akao_SetPanpot(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     int value;
 
@@ -1222,7 +1227,8 @@ void Akao_SetPanpot(AkaoTrack *track)
     track->panpot = value << 8;
 }
 
-void Akao_SetPanSlide(AkaoTrack *track) {
+void Akao_SetPanSlide(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     int duration;
     int panpot_base;
     int next;
@@ -1241,18 +1247,21 @@ void Akao_SetPanSlide(AkaoTrack *track) {
     track->panpot_delta = delta;
 }
 
-void SeqOp_ReadPanpot(AkaoTrack *track) {
+void SeqOp_ReadPanpot(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
 
     track->pc = cursor + 1;
     track->panpot_step = *cursor;
 }
 
-void SeqOp_IncPanpot(AkaoTrack *track) {
+void SeqOp_IncPanpot(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->panpot_step = (track->panpot_step + 1) & 0xF;
 }
 
-void SeqOp_DecPanpot(AkaoTrack *track) {
+void SeqOp_DecPanpot(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->panpot_step = (track->panpot_step - 1) & 0xF;
 }
 
@@ -1338,7 +1347,8 @@ void Akao_TieNote(AkaoTrack *track, unsigned int mask) {
     track->flags &= ~AKAO_TRACK_FLAG_PENDING_NOTE_PITCH;
 }
 
-void SeqOp_SetReturnPoint(AkaoTrack *track) {
+void SeqOp_SetReturnPoint(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor;
     unsigned char *next_cursor;
     int value;
@@ -1381,21 +1391,24 @@ void SeqOp_LoadInstrumentFromIndex(void *ptr)
   ((AkaoTrack *)ptr)->update_flags = value;
 }
 
-void SeqOp_ReadExpression(AkaoTrack *track) {
+void SeqOp_ReadExpression(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
 
     track->pc = cursor + 1;
     track->expression = (signed char)*cursor;
 }
 
-void SeqOp_AdjustExpression(AkaoTrack *track) {
+void SeqOp_AdjustExpression(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
 
     track->pc = cursor + 1;
     track->expression += (signed char)*cursor;
 }
 
-void SeqOp_SetVibratoParams(AkaoTrack *track) {
+void SeqOp_SetVibratoParams(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor;
     unsigned char *next_cursor;
     int value;
@@ -1413,7 +1426,8 @@ void SeqOp_SetVibratoParams(AkaoTrack *track) {
     track->vibrato_delta = (signed char)*next_cursor;
 }
 
-void SeqOp_SetTremoloParams(AkaoTrack *track) {
+void SeqOp_SetTremoloParams(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor;
     int value;
 
@@ -1430,18 +1444,21 @@ void SeqOp_SetTremoloParams(AkaoTrack *track) {
     track->tremolo_phase = 1;
 }
 
-void SeqOp_StopTremolo(AkaoTrack *track) {
+void SeqOp_StopTremolo(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->tremolo_duration = 0;
 }
 
-void SeqOp_ReadDetune(AkaoTrack *track) {
+void SeqOp_ReadDetune(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
 
     track->pc = cursor + 1;
     track->detune = (signed char)*cursor;
 }
 
-void SeqOp_AdjustDetune(AkaoTrack *track) {
+void SeqOp_AdjustDetune(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
 
     track->pc = cursor + 1;
@@ -1516,7 +1533,8 @@ void SeqOp_SetPitchLFO(void *ptr) {
     track->pitch_lfo_table = table;
 }
 
-void SeqOp_UpdatePitchLFOTarget(AkaoTrack *track) {
+void SeqOp_UpdatePitchLFOTarget(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     AkaoU8 *pc;
     int value;
     unsigned int masked;
@@ -1560,13 +1578,15 @@ void SeqOp_SetPanSlide(AkaoScriptState *state) {
     state->pitch_lfo_delta = delta;
 }
 
-void SeqOp_StopPitchLFO(AkaoTrack *track) {
+void SeqOp_StopPitchLFO(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->pitch_lfo_value = 0;
     track->flags &= ~AKAO_TRACK_FLAG_PITCH_LFO;
     track->update_flags |= AKAO_VOICE_PARAM_PITCH;
 }
 
-void SeqOp_SetVolumeLFO(AkaoTrack *track) {
+void SeqOp_SetVolumeLFO(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     u8 *pc;
     int value;
     int selector;
@@ -1605,7 +1625,8 @@ void SeqOp_SetVolumeLFO(AkaoTrack *track) {
     track->volume_lfo_table = entry;
 }
 
-void SeqOp_UpdateVolumeLFOTarget(AkaoTrack *track) {
+void SeqOp_UpdateVolumeLFOTarget(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
 
     track->pc = cursor + 1;
@@ -1628,13 +1649,15 @@ void SeqOp_SetExpressionSlide(AkaoScriptState *state) {
     state->volume_lfo_delta = delta;
 }
 
-void SeqOp_ResetTrack(AkaoTrack *track) {
+void SeqOp_ResetTrack(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->volume_lfo_value = 0;
     track->flags &= ~AKAO_TRACK_FLAG_VOLUME_LFO;
     track->update_flags |= AKAO_VOICE_PARAM_VOLUME;
 }
 
-void SeqOp_LoadSoundEntry(AkaoTrack *track) {
+void SeqOp_LoadSoundEntry(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     u8 *pc;
     int duration;
     int selector;
@@ -1660,7 +1683,8 @@ void SeqOp_LoadSoundEntry(AkaoTrack *track) {
     }
 }
 
-void SeqOp_SetPitchBase(AkaoTrack *track) {
+void SeqOp_SetPitchBase(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
 
     track->pc = cursor + 1;
@@ -1684,7 +1708,8 @@ void SeqOp_PitchSlide(AkaoScriptState *state) {
 }
 
 
-void SeqOp_ResetFlag4State(AkaoTrack *track) {
+void SeqOp_ResetFlag4State(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->aux_lfo_value = 0;
     track->flags &= ~AKAO_TRACK_FLAG_AUX_LFO;
     track->update_flags |= AKAO_VOICE_PARAM_VOLUME;
@@ -1762,7 +1787,8 @@ void SeqOp_ClearMask(AkaoTrack *track, u32 mask) {
     Seq_MarkTrack38MaskDirty();
 }
 
-void SeqOp_EnableField84(AkaoTrack *track) {
+void SeqOp_EnableField84(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->tremolo_phase = 1;
 }
 
@@ -1815,7 +1841,8 @@ unsigned int SeqOp_SetTrack5AValue(void *ptr)
   g_AkaoVoiceUpdateFlags |= AKAO_VOICE_PARAM_PITCH;
 }
 
-void SeqOp_ReadAdsrAttackRate(AkaoTrack *track) {
+void SeqOp_ReadAdsrAttackRate(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     unsigned int flags;
     unsigned char value;
@@ -1851,7 +1878,8 @@ void SeqOp_ReadAdsrSustainLevel(AkaoTrack *track, u32 voice_mask) {
     track->adsr_sustain_level = value;
 }
 
-void SeqOp_ReadAdsrSustainRate(AkaoTrack *track) {
+void SeqOp_ReadAdsrSustainRate(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     unsigned int flags;
     unsigned char value;
@@ -1863,7 +1891,8 @@ void SeqOp_ReadAdsrSustainRate(AkaoTrack *track) {
     track->adsr_sustain_rate = value;
 }
 
-void SeqOp_ReadAdsrReleaseRate(AkaoTrack *track) {
+void SeqOp_ReadAdsrReleaseRate(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     unsigned int flags;
     unsigned char value;
@@ -1875,7 +1904,8 @@ void SeqOp_ReadAdsrReleaseRate(AkaoTrack *track) {
     track->adsr_release_rate = value;
 }
 
-void SeqOp_ReadAdsrAttack(AkaoTrack *track) {
+void SeqOp_ReadAdsrAttack(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     unsigned int flags;
     unsigned char value;
@@ -1887,7 +1917,8 @@ void SeqOp_ReadAdsrAttack(AkaoTrack *track) {
     track->adsr_attack = value;
 }
 
-void SeqOp_ReadAdsrSustain(AkaoTrack *track) {
+void SeqOp_ReadAdsrSustain(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     unsigned int flags;
     unsigned char value;
@@ -1899,7 +1930,8 @@ void SeqOp_ReadAdsrSustain(AkaoTrack *track) {
     track->adsr_sustain = value;
 }
 
-void SeqOp_ReadAdsrRelease(AkaoTrack *track) {
+void SeqOp_ReadAdsrRelease(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     unsigned int flags;
     unsigned char value;
@@ -1911,7 +1943,8 @@ void SeqOp_ReadAdsrRelease(AkaoTrack *track) {
     track->adsr_release = value;
 }
 
-void Akao_SetReleaseRate(AkaoTrack *track) {
+void Akao_SetReleaseRate(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor;
     unsigned int flags;
     unsigned char value;
@@ -1925,13 +1958,15 @@ void Akao_SetReleaseRate(AkaoTrack *track) {
     track->adsr_release_rate = value;
 }
 
-void Akao_ResetReleaseRate(AkaoTrack *track) {
+void Akao_ResetReleaseRate(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->flags &= ~AKAO_TRACK_FLAG_RELEASE_RATE_OVERRIDE;
     track->adsr_release_rate = g_AkaoInstrumentTable[track->note_pitch].adsr_release_rate;
     track->update_flags |= AKAO_VOICE_PARAM_ADSR_RELEASE;
 }
 
-void SeqOp_PushLoopPoint(AkaoTrack *track) {
+void SeqOp_PushLoopPoint(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned short index = (track->call_stack_index + 1) & 3;
 
     track->call_stack_index = index;
@@ -1940,7 +1975,8 @@ void SeqOp_PushLoopPoint(AkaoTrack *track) {
     track->repeat_counters[index] = 0;
 }
 
-void SeqOp_LoopCounter(AkaoTrack *track) {
+void SeqOp_LoopCounter(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     int value;
     unsigned short index;
@@ -1966,7 +2002,8 @@ void SeqOp_LoopCounter(AkaoTrack *track) {
     }
 }
 
-void SeqOp_JumpIfLoopCount(AkaoTrack *track) {
+void SeqOp_JumpIfLoopCount(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     AkaoU8 *cursor;
     AkaoU8 *target;
     int count;
@@ -1991,7 +2028,8 @@ void SeqOp_JumpIfLoopCount(AkaoTrack *track) {
     track->pc = target + (s16)(low | (cursor[2] << 8));
 }
 
-void SeqOp_JumpIfLoopCountPop(AkaoTrack *track) {
+void SeqOp_JumpIfLoopCountPop(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     AkaoU8 *cursor;
     AkaoU8 *target;
     int count;
@@ -2017,14 +2055,16 @@ void SeqOp_JumpIfLoopCountPop(AkaoTrack *track) {
     track->call_stack_index = (track->call_stack_index - 1) & 3;
 }
 
-void SeqOp_Return(AkaoTrack *track) {
+void SeqOp_Return(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned short index = track->call_stack_index;
 
     track->repeat_counters[index]++;
     track->pc = track->call_stack[track->call_stack_index];
 }
 
-void SeqOp_SetVolume(AkaoTrack *track) {
+void SeqOp_SetVolume(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     int value;
 
@@ -2036,7 +2076,8 @@ void SeqOp_SetVolume(AkaoTrack *track) {
     track->default_note_length = value;
 }
 
-void SeqOp_AdjustVolumeTarget(AkaoTrack *track) {
+void SeqOp_AdjustVolumeTarget(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     char *cursor = track->pc;
     int value;
 
@@ -2074,7 +2115,8 @@ void SeqOp_SetBranchTarget(AkaoScriptState *state) {
     state->branch_target = target + offset;
 }
 
-void SeqOp_ClearFlag3(AkaoTrack *track) {
+void SeqOp_ClearFlag3(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->flags &= ~AKAO_TRACK_FLAG_BRANCH_ACTIVE;
 }
 
@@ -2130,7 +2172,8 @@ void SeqOp_SetDurationBAAndMask(AkaoTrack *track, u32 voice_mask) {
     SeqOp_SetTrack34Mask(track, voice_mask);
 }
 
-void SeqOp_SetDuration(AkaoTrack *track) {
+void SeqOp_SetDuration(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *ptr = track->pc;
     int value;
 
@@ -2159,7 +2202,8 @@ void SeqOp_SetRepeatCount(AkaoTrack *track, u32 voice_mask) {
     SeqOp_SetMask(track, voice_mask);
 }
 
-void SeqOp_SetDurationAlt(AkaoTrack *track) {
+void SeqOp_SetDurationAlt(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *ptr = track->pc;
     int value;
 
@@ -2181,23 +2225,28 @@ void SeqOp_StopAndClearTrack(AkaoTrack *track, u32 voice_mask) {
     track->tremolo_phase &= 0xFFFA;
 }
 
-void SeqOp_SetFlag4(AkaoTrack *track) {
+void SeqOp_SetFlag4(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->flags |= AKAO_TRACK_FLAG_10;
 }
 
-void SeqOp_ClearFlag10(AkaoTrack *track) {
+void SeqOp_ClearFlag10(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->flags &= ~AKAO_TRACK_FLAG_10;
 }
 
-void SeqOp_SetFlag20(AkaoTrack *track) {
+void SeqOp_SetFlag20(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->flags |= AKAO_TRACK_FLAG_20;
 }
 
-void SeqOp_ClearFlag20(AkaoTrack *track) {
+void SeqOp_ClearFlag20(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->flags &= ~AKAO_TRACK_FLAG_20;
 }
 
-void SeqOp_LoadNestedStreams(AkaoTrack *track) {
+void SeqOp_LoadNestedStreams(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     u8 *cursor;
     u32 offset;
     u8 *first;
@@ -2318,7 +2367,8 @@ void SeqOp_NoteOnWithPitchSlide(AkaoTrack *track, u32 voice_mask) {
     SeqOp_SetTrack38Mask(track, voice_mask);
 }
 
-void SeqOp_SetSustainFlag(AkaoTrack *track) {
+void SeqOp_SetSustainFlag(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     track->flags |= AKAO_TRACK_FLAG_SUSTAIN;
 }
 

@@ -567,6 +567,8 @@ LFO fixture obejmuje teraz original Akao_SetVoiceKeyOn i KeyOff oraz ujemne expr
 
 Osiem original opcode handlers (JumpRelative, StreamPair, ReadTrack64U16, Skip2 i cztery oryginalne no-op) ma canonical void(AkaoTrack*,u32) ABI. Skip2 aktualizuje pełny PC zamiast low word; JumpRelative jawnie odczytuje signed displacement i dodaje go po dwóch bajtach, usuwając unsequenced pointer increments w dawnym READ_S16. Fixture wywołuje no-op/skip/backward jump przez AkaoCommandHandler bez cast i sprawdza native cursor; rhythm handlers zachowują poprzedni dowód. CTest oraz ASan/UBSan/function przechodzą. Pozostałe sygnatury i runtime tables nie są jeszcze ujednolicone/podłączone; te no-op są zachowanymi procedurami gry, nie zastępnikami brakujących efektów.
 
+Kolejne 53 original handlers bez bezpośrednich callers mają canonical void(AkaoTrack*,u32) i deklaracje w note_step.h; argument mask jest jawnie niewykorzystywany, bodies zachowano. Fixture wywołuje ReadExpression/ReadDetune/SetPanpot/ReadVolume/SetReleaseRate/ClearFlag3 przez canonical function pointers i sprawdza signed parameters, byte wrap, PC, ADSR i flags. CTest oraz ASan/UBSan/function przechodzą. Pozostałe 47 zmienionych bodies mają dotychczas tylko build i wcześniejsze dowody tam, gdzie opisane; nie jest to test wszystkich 90 procedur. Cała tabela i wykonanie songs/SPU nadal wymagają integracji.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

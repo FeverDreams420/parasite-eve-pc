@@ -23,7 +23,7 @@ int pe_akao_channel_note_pitch(PeAkaoChannel *channel) {
     if (channel->last_note >= 0xa0) goto invalid;
     if (channel->last_note >= 0x8f) return 1; /* rest preserves current pitch */
     if ((channel->flags & 7u) ||
-        channel->tremolo_duration || channel->pitch_slide_steps) {
+        channel->tremolo_duration) {
         snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO pitch mode at 0x%x", channel->pc);
         return 0;
     }
@@ -66,6 +66,21 @@ int pe_akao_channel_note_pitch(PeAkaoChannel *channel) {
     }
     /* Ties retain pitch/key-on but advance the same phrase bookkeeping. */
     channel->tremolo_phase = (channel->tremolo_phase & (uint8_t)~2u) | ((channel->tremolo_phase & 1u) << 1);
+    if (channel->pitch_transition_delta) {
+        uint16_t note = (uint16_t)(channel->current_note + channel->pitch_transition_delta);
+        uint16_t target;
+        if (!channel->pitch_transition_duration ||
+            !pe_akao_pitch_period(channel->samples, channel->instrument,
+                (uint8_t)(note + channel->transpose), channel->detune, &target)) goto invalid;
+        uint32_t difference = ((uint32_t)target << 16) -
+            ((channel->pitch_base << 16) + channel->pitch_slide_value);
+        int64_t signed_difference = difference & UINT32_C(0x80000000) ?
+            (int64_t)difference - INT64_C(0x100000000) : difference;
+        channel->current_note = note;
+        channel->pitch_slide_step = (uint32_t)(signed_difference / channel->pitch_transition_duration);
+        channel->pitch_slide_steps = channel->pitch_transition_duration;
+        channel->pitch_transition_delta = 0;
+    }
     channel->tremolo_counter = channel->current_note;
     channel->tremolo_delta = channel->transpose;
     return 1;

@@ -263,7 +263,7 @@ synthesis remain pending; these tests validate state, not audible playback.
 tables, octave shifts, signed transpose and detune. It preserves the wrapped
 32-bit detune product and unsigned shift before the final 16-bit pitch. C0/C1
 and D8/D9 set/adjust transpose and detune; ties preserve pitch and rests avoid
-key-on. Bound channels now apply pitch handling during musical ticks. Portamento,
+key-on. Bound channels now apply pitch handling during musical ticks.
 LFO modes remain explicit
 errors. The current audit handles 5,434 initial raw note/tie/rest events and
 reports 3,447 unsupported prefixes; every full sequence still hits missing
@@ -305,3 +305,13 @@ Disc 1 room/audio audit also pass ASan/UBSan. The latest audit reaches
 8,648 initial note events, two stops and 233 unsupported channel prefixes;
 397 sequence prefixes complete four forced ticks and 202 encounter missing
 commands. Full songs, synthesis and gameplay remain unfinished.
+
+A4 configures a signed semitone pitch transition with zero duration meaning
+256 ticks. Note processing calculates the original wrapped 16.16 difference
+and signed step; musical ticks advance the offset and pitch dirty flag.
+Timing tests verify ascending/descending transitions and the zero-duration
+encoding under ASan/UBSan. These are sequencer state operations; physical
+voice application and synthesis remain pending.
+All 20 CTest tests pass headless with Disc 1. The updated initial-prefix audit
+reaches 8,649 note events and 232 unsupported commands; 398 sequence prefixes
+complete four forced ticks and 201 encounter missing commands.

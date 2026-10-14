@@ -102,7 +102,7 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
         case 0xc0: case 0xc1: case 0xd8: case 0xd9:
         case 0xad: case 0xae: case 0xaf: case 0xb1: case 0xb2:
         case 0xb7: case 0xbb: case 0xbd: case 0xbf: operands = 1; break;
-        case 0xa9: case 0xab: case 0xb0: operands = 2; break;
+        case 0xa4: case 0xa9: case 0xab: case 0xb0: operands = 2; break;
         case 0xc2: case 0xc3: case 0xc8: case 0xca: operands = 0; break;
         case 0xc9: operands = 1; break;
         case 0xfc:
@@ -143,6 +143,11 @@ truncated:
             channel->note_length = channel->pan_duration = channel->default_note_length = (uint16_t)value;
             break;
         case 0xa3: channel->volume_base = (uint16_t)(value << 8); channel->update_flags |= 3; break;
+        case 0xa4:
+            channel->pitch_transition_duration = value ? (uint16_t)value : 256;
+            value = channel->sequence.bytes[pc + prefix + 1];
+            channel->pitch_transition_delta = (uint16_t)(value & 128 ? value | 0xff00 : value);
+            break;
         case 0xa5: channel->octave = (uint8_t)value; break;
         case 0xa6: channel->octave = (channel->octave + 1) & 15; break;
         case 0xa7: channel->octave = ((unsigned)channel->octave + 15u) & 15; break;

@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+A4 ustawia signed przesunięcie pitch i czas przejścia (zero oznacza 256 ticków). Obsługa nuty oblicza krok ze zawijanego różnicowego pitch 16.16; ticki przesuwają offset i oznaczają zmiany pitch. Testy timing sprawdzają ruch w górę/w dół i kodowanie czasu, również pod ASan/UBSan. Jest to stan sekwencera; zastosowanie do fizycznych głosów oraz synteza pozostają do wdrożenia.
+
 Aktualizacja FC/14: wybór instrumentu zależny od nuty używa offsetu względnego, sprawdzanej tabeli rekordów i oryginalnej histerezy dla nut rosnących/malejących. Rekord nadpisuje attack/sustain/release; legato nie wywołuje ponownego wyboru. `akao-note-range` jest 20. testem i obejmuje progi, sąsiedni instrument, ADSR, alternatywny bank, ujemny offset i uszkodzone dane. Wszystkie 20 testów przechodzi headless z Disc 1. Audyt osiąga 8648 początkowych zdarzeń nut, dwa stop i 233 niezaimplementowane prefiksy kanałów; 397 prefiksów sekwencji przechodzi cztery wymuszone ticki, a 202 trafia na brakującą komendę. Pełne utwory, synteza oraz rozgrywka nadal wymagają implementacji i dowodów.
 
 Komendy BD/BE pomocniczego LFO zapisują głębokość i resetują bieżącą modulację wraz z flagą aktywności. Zachowują pitch nuty, a reset zachowuje ustawioną głębokość i oznacza zmianę głośności. Test kanałów obejmuje te rozróżnienia i ucięty operand BD; 19 testów headless z Disc 1 oraz ASan/UBSan testu kanałów przechodzi. Aktywne przebiegi LFO pozostają jawnie nieobsługiwane. Wyniki audytu prefiksów są takie same jak w poniższej aktualizacji ADSR/metrum.

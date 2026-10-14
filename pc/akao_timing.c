@@ -139,6 +139,13 @@ int pe_akao_channel_begin_note(PeAkaoChannel *channel, unsigned lookahead_limit)
 }
 
 void pe_akao_channel_slides(PeAkaoChannel *channel) {
+    if (channel->pitch_slide_steps) {
+        uint32_t old = channel->pitch_slide_value;
+        channel->pitch_slide_value += channel->pitch_slide_step;
+        --channel->pitch_slide_steps;
+        if ((old & UINT32_C(0xffff0000)) != (channel->pitch_slide_value & UINT32_C(0xffff0000)))
+            channel->update_flags |= 0x10;
+    }
     if (channel->expression_duration) {
         uint32_t old = channel->expression_value;
         channel->expression_value += channel->expression_delta;

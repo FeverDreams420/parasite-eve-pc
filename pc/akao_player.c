@@ -1,6 +1,22 @@
 #include "akao_player.h"
 #include <string.h>
 
+void pe_akao_player_release(PeAkaoPlayer *player) {
+    static const uint8_t stop_program[] = {0xa0};
+    if (!player->active) return;
+    player->key_off_pending = UINT32_C(0xffffff);
+    for (unsigned voice = 0; voice < 24; ++voice) {
+        PeAkaoChannel *channel = &player->channels[voice];
+        channel->note_length = 3;
+        channel->pan_duration = 1;
+        channel->sequence.bytes = stop_program;
+        channel->sequence.size = sizeof(stop_program);
+        channel->pc = 0;
+        channel->adsr[4] = 5;
+        channel->update_flags |= 0x4400;
+    }
+}
+
 int pe_akao_player_bind_samples(PeAkaoPlayer *player, const PeSpuBank *samples) {
     if (!samples || !samples->valid[0]) {
         snprintf(player->error, sizeof(player->error), "Missing AKAO initial instrument");

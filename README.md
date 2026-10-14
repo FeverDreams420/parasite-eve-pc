@@ -409,5 +409,13 @@ nested banks and audible playback remain to be integrated.
 The test obtains the actual requested music key from Tutorial M353's initial
 script command. All 21 tests pass headless; the ownership/data audit also
 passes ASan/UBSan.
+
+The primary player now implements F0 release behavior used by scene audio
+reset: request key-off for all 24 voices, set release rate 5 while preserving
+release mode, and route channels to the original stop behavior after three
+due musical ticks. Inactive banks remain unchanged. Player tests verify this
+timing and retained control state under ASan/UBSan; all 21 tests pass headless
+with Disc 1. Secondary banks, script reset dispatch and actual envelope decay
+in synthesized audio remain to be integrated.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

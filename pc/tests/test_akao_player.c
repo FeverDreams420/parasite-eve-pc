@@ -50,6 +50,24 @@ int main(void) {
     CHECK(!player.note_events && player.channels[0].pc == 0);
     previous_ticks = player.timer_ticks;
     CHECK(!pe_akao_player_tick(&player, 0, 1, 100) && player.timer_ticks == previous_ticks);
-    puts("AKAO player: ordered shared controls, timer/countdowns, event masks, stops and explicit failures passed");
+    const uint8_t released[] = {0,0xa0};
+    sequence.bytes = released; sequence.size = sizeof(released);
+    CHECK(pe_akao_player_start(&player, &sequence, &grammar, &initial));
+    player.channels[0].adsr[4] = 17; player.channels[0].adsr[7] = 9;
+    player.channels[0].update_flags = 0;
+    uint32_t previous_volume = player.control.volume;
+    pe_akao_player_release(&player);
+    CHECK(player.active == 1 && player.key_off_pending == 0xffffff);
+    CHECK(player.channels[0].adsr[4] == 5 && player.channels[0].adsr[7] == 9);
+    CHECK(player.channels[0].update_flags == 0x4400 && player.channels[0].note_length == 3);
+    CHECK(player.control.volume == previous_volume);
+    for (unsigned tick = 0; tick < 2; ++tick) {
+        CHECK(pe_akao_player_tick(&player, 0, 1, 100) && player.active == 1 && !player.note_events);
+    }
+    CHECK(pe_akao_player_tick(&player, 0, 1, 100) && !player.active && !player.bank_id);
+    player.channels[0].adsr[4] = 19; player.key_off_pending = 7;
+    pe_akao_player_release(&player);
+    CHECK(player.channels[0].adsr[4] == 19 && player.key_off_pending == 7);
+    puts("AKAO player: ordered shared controls, timer/countdowns, release, stops and explicit failures passed");
     return 0;
 }

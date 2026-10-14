@@ -23,5 +23,8 @@ int pe_akao_player_start(PeAkaoPlayer *player, const PeAkaoSequence *sequence,
  * latched until acknowledged by the future SPU consumer. */
 int pe_akao_player_tick(PeAkaoPlayer *player, uint32_t scale, int forced, unsigned instruction_limit);
 int pe_akao_player_bind_samples(PeAkaoPlayer *player, const PeSpuBank *samples);
+/* F0 primary-bank release: key-off now, fallback stop after three due ticks.
+ * Leaves inactive banks and unrelated control state unchanged. */
+void pe_akao_player_release(PeAkaoPlayer *player);
 
 #endif

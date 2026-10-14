@@ -1434,7 +1434,7 @@ int Script_GetSqrt(int **arg0) {
     return 1;
 }
 
-int Script_SetEntityFlag1000000(void) {
+int Script_SetEntityFlag1000000(int **unused) {
     g_CurrentEntity->flags |= 0x1000000;
     return 1;
 }

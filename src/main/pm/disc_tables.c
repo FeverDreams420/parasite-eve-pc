@@ -69,10 +69,11 @@ int Draw_InitDisplay(int mode) {
     g_GameState.texture_load_scratch = (union SceneAssetView *)ptr;
     ptr = ptr2 + 0x1C98;
     g_SceneObjectWork = ptr2;
-    ptr2 += 0x5C98;
+    /* Each of the two ordering tables holds 4096 native PsyZ tags. */
+    ptr2 = ptr + 0x1000 * sizeof(RenderNativeTag);
     const_8000 = 0x8000;
     g_OtBufferTable[0] = ptr;
-    ptr += const_8000;
+    ptr += 2 * 0x1000 * sizeof(RenderNativeTag);
     g_RenderOtBufferBaseAlt[0] = ptr2;
     ptr2 = ptr + 0x2400;
     g_GameState.object_texture_blob = (struct SceneAssetBlob *)ptr;

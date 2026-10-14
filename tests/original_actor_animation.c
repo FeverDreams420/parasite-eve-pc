@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "pe1/boot_services.h"
+#include "pe1/entity_allocation.h"
+#include "pe1/render_buffers.h"
+#include "pe1/render_packets.h"
 #include "pe1/geom_state.h"
 #include "pe1/field_movement.h"
 #include "pe1/pad_state.h"
@@ -17,6 +20,48 @@
 #include <stdlib.h>
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
 GeomScrollRecord g_GeomScroll;
+
+/* Backing storage for exercising the original boot buffer layout. */
+_Alignas(16) u8 g_BootWorkArea[0x20000], D_8010BD00[0x20000];
+_Alignas(16) u8 D_80120D08[0x200000], g_SceneLoadScratchArea[0x20000];
+static u8 directory[0x1000];
+u8 *g_StrFileDirBuffer = directory + 8;
+u8 *volatile g_SceneBankAssetSource, *volatile g_VoiceBankBase;
+u8 *volatile g_EntityBankBuffer, *volatile g_EntityTextureBlob;
+u8 *volatile g_SceneObjectWork, *volatile D_800B0E48;
+u8 *volatile g_ScriptSpriteBuffer, *volatile g_ScenePmSlotBanks;
+u8 *volatile g_StrFileDirectory;
+u8 *g_OtBufferTable[2], *g_RenderOtBufferBaseAlt[1];
+u8 *g_RenderFrontBufferBase[1], *g_RenderBackBufferBase[1];
+u8 *g_RenderAnimBufferBase[1], *g_SceneLoadScratchBuffer[1];
+struct SceneAssetBlob *g_LoadedSceneAssetBlock[1];
+
+static int boot_buffer_layout(void)
+{
+    Pe1GameState saved = g_GameState;
+    Boot_InitMemoryLayout();
+    RenderNativeTag *first = (RenderNativeTag *)g_OtBufferTable[0];
+    RenderNativeTag *second = (RenderNativeTag *)g_RenderOtBufferBaseAlt[0];
+    if (first + 4096 != second ||
+        (void *)(second + 4096) != (void *)g_GameState.object_texture_blob)
+        return 0;
+    first[4095].length = 0x1234;
+    second[0].length = 0x5678;
+    second[4095].length = 0x9abc;
+    memset(g_EntityAllocationTable, 0, sizeof(g_EntityAllocationTable));
+    for (unsigned i = 0; i < 16; ++i) {
+        u8 *block = Entity_AllocBlock(ENTITY_ALLOCATION_BLOCK_SIZE);
+        if (!block || block + ENTITY_ALLOCATION_BLOCK_SIZE > g_RenderFrontBufferBase[0])
+            return 0;
+        block[ENTITY_ALLOCATION_BLOCK_SIZE - 1] = (u8)i;
+    }
+    if (Entity_AllocBlock(1) || first[4095].length != 0x1234 ||
+        second[0].length != 0x5678 || second[4095].length != 0x9abc)
+        return 0;
+    memset(g_EntityAllocationTable, 0, sizeof(g_EntityAllocationTable));
+    g_GameState = saved;
+    return 1;
+}
 
 /* Record positional sound requests; no replacement audio ships with the game. */
 AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
@@ -82,6 +127,7 @@ static int game_state_reset(void)
 int main(int argc, char **argv)
 {
     (void)argv;
+    if (!boot_buffer_layout()) return 54;
     if (!game_state_reset()) return 53;
     if(!SDL_Init(SDL_INIT_EVENTS))return 43;
     const u32 lzcs[]={0,1,0x7fffffff,0x80000000,0xffffffff};

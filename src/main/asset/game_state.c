@@ -11,6 +11,7 @@
 #include "pe1/font.h"
 #include "pe1/game_state.h"
 #include "pe1/entity_animation.h"
+#include "pe1/entity_allocation.h"
 #include "pe1/player_entity.h"
 #include "pe1/pe_image.h"
 #include "pe1/psyq_ds.h"
@@ -458,7 +459,7 @@ void Boot_InitMemoryLayout(void) {
     s32 const_48000;
     u8 *tmp;
 
-    const_48000 = 0x48000;
+    const_48000 = 16 * ENTITY_ALLOCATION_BLOCK_SIZE;
 
     ptr = g_BootWorkArea;
     ptr2 = ptr + 0x1800;
@@ -474,10 +475,11 @@ void Boot_InitMemoryLayout(void) {
     g_GameState.texture_load_scratch = (union SceneAssetView *)ptr;
     ptr = ptr2 + 0x1C98;
     g_SceneObjectWork = ptr2;
-    ptr2 += 0x5C98;
+    /* Each of the two ordering tables holds 4096 native PsyZ tags. */
+    ptr2 = ptr + 0x1000 * sizeof(RenderNativeTag);
     const_8000 = 0x8000;
     g_OtBufferTable[0] = ptr;
-    ptr += const_8000;
+    ptr += 2 * 0x1000 * sizeof(RenderNativeTag);
     g_RenderOtBufferBaseAlt[0] = ptr2;
     ptr2 = ptr + 0x2400;
     g_GameState.object_texture_blob = (struct SceneAssetBlob *)ptr;

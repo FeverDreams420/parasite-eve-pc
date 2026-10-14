@@ -8,4 +8,5 @@ menu.options 1 return
 menu.selected 2 assert
 room.loading 353 assert
 room.loaded 353 assert
+room.vram.ready 353 assert
 boot.stopped 0 assert

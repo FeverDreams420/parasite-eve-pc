@@ -6,4 +6,5 @@ menu.options 0 return
 menu.selected 1 assert
 room.loading 431 assert
 room.loaded 431 assert
+room.vram.ready 431 assert
 boot.stopped 0 assert

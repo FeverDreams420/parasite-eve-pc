@@ -53,10 +53,11 @@ boot tests can use `--headless`. You can set
 variable. Enter/Space skips the intro and opens the title options. Arrows or
 W/S change the selection, Enter confirms, and Escape returns to the title
 prompt. Continue remains disabled until native save support exists. Selecting
-New Game or Tutorial loads the original starting room data (M431 or M353),
-then exits; scene execution and gameplay are not integrated.
+New Game or Tutorial loads the original starting room data (M431 or M353)
+and applies its scratch/texture-bank uploads to CPU-visible VRAM, then exits;
+scene execution and gameplay are not integrated.
 
-`make ci` builds and runs the asset-free disc-reader and automation tests. The
+`make ci` builds and runs the asset-free disc-reader, VRAM and automation tests. The
 room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
 is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
@@ -132,6 +133,9 @@ than silently skipping tests that require game assets.
 
 `room-assets` walks all 450 USA Disc 1 room table slots, including the final
 zero slot: 414 contain loadable scratch/texture/room blobs and 36 are empty. It checks directory bounds and
-transactional loading. This does not verify the payload semantics, render
+transactional loading and texture upload bounds for both initial banks
+(62,002,432 uploaded 16-bit words across the 414 rooms). `vram` checks upload
+order, secondary image offsets, zero-height rules and atomic rejection of bad
+batches without game data. This does not verify all payload semantics, render
 rooms, execute scripts or prove that maps are playable. The asset-free reader
 test also checks malformed room headers/TIM tables without disc images.

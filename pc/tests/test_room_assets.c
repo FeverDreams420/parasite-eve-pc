@@ -1,4 +1,5 @@
 #include "room.h"
+#include "vram.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -20,6 +21,9 @@ int main(void) {
     CHECK(catalog.ranges[0].texture_sectors == 74);
     CHECK(catalog.ranges[0].room_sectors == 82);
     PeRoom room = {0};
+    PeVram *vram = calloc(1, sizeof(*vram));
+    CHECK(vram);
+    uint64_t uploaded_words = 0;
     unsigned loaded = 0, absent = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -36,6 +40,14 @@ int main(void) {
             return 1;
         }
         CHECK(room.map == map && room.data.size);
+        PeVramStats stats;
+        char error[256];
+        if (!pe_room_upload_vram(&room, vram, &stats, error, sizeof(error))) {
+            fprintf(stderr, "%s\n", error);
+            return 1;
+        }
+        CHECK(stats.uploads > 0 && stats.words > 0);
+        uploaded_words += stats.words;
         ++loaded;
     }
     CHECK(loaded > 300 && loaded + absent == PE_USA_ROOM_SLOTS);
@@ -63,7 +75,8 @@ int main(void) {
     pe_room_close(&room);
     pe_room_close(&room);
     pe_disc_close(&disc);
-    printf("USA Disc 1 room directories verified: %u loaded, %u empty slots; no scripts executed\n",
-           loaded, absent);
+    free(vram);
+    printf("USA Disc 1 room directories and texture uploads verified: %u loaded, %u empty slots, %llu words; no scripts executed\n",
+           loaded, absent, (unsigned long long)uploaded_words);
     return 0;
 }

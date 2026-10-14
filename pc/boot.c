@@ -4,6 +4,7 @@
 #include "title.h"
 #include "automation.h"
 #include "room.h"
+#include "vram.h"
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -210,6 +211,7 @@ static int play_intro(BootPlayer *player) {
 static int run_boot(PeDisc *disc, int menu, int skip_intro) {
     BootPlayer player = {0};
     PeRoom active_room = {0};
+    PeVram *active_vram = NULL;
     int result = 1;
     player.disc = disc;
     player.capture = getenv("PE_INTRO_CAPTURE");
@@ -280,8 +282,21 @@ close_player:
                 result = 1;
             } else {
                 pe_runtime_emit("room.loaded", map);
-                printf("menu: selected %s; map %u assets loaded; scene execution pending\n",
-                       action == 1 ? "New Game" : "Tutorial", map);
+                active_vram = calloc(1, sizeof(*active_vram));
+                PeVramStats stats;
+                char error[256];
+                if (!active_vram) {
+                    fprintf(stderr, "Cannot allocate scene VRAM\n");
+                    result = 1;
+                } else if (!pe_room_upload_vram(&active_room, active_vram, &stats,
+                                                 error, sizeof(error))) {
+                    fprintf(stderr, "%s\n", error);
+                    result = 1;
+                } else {
+                    pe_runtime_emit("room.vram.ready", map);
+                    printf("menu: selected %s; map %u assets loaded, %u texture uploads; scene execution pending\n",
+                           action == 1 ? "New Game" : "Tutorial", map, stats.uploads);
+                }
             }
         }
     }
@@ -294,6 +309,7 @@ close_player:
     SDL_DestroyWindow(player.window);
     SDL_Quit();
 close_disc:
+    free(active_vram);
     pe_room_close(&active_room);
     pe_runtime_emit("boot.stopped", result);
     return result;

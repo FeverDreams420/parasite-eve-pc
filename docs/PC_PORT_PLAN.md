@@ -3161,3 +3161,21 @@ ASan/UBSan/function passes with original source instrumented and PsyZ/SDL
 archives uninstrumented. Real actor ownership, all player actions, texture
 uploads, room descriptor/class/spawn ABI integration, other authored effects,
 GPU image fidelity, full gameplay and deletion of pc/ remain incomplete.
+
+
+Original Spawn6 interfaces now carry the owner as intptr_t rather than int.
+The eight field effect entry points, common room macro and matching declarations
+were updated in place to avoid narrowing host addresses. FieldFx_Spawn6 has a
+complete six-argument prototype; its four meaningful arguments retain the
+original owner/unused/index/value behavior and the final two remain ignored.
+It rejects null owners and indices outside the nine-variable file before writes.
+The authored glow fixture now calls its actual GlowEffect_Spawn6 entry point.
+An additional existing-fixture check calls all four glow entry points through
+matching native function-pointer types, writes all nine variables with signed
+extreme values, verifies all other state bytes and guards, and checks invalid
+common-function inputs preserve state. Full build and four related CTests pass
+with Disc 1 required; fresh actor ASan/UBSan/function passes with original source
+instrumented and PsyZ/SDL archives uninstrumented. Burst methods and other room
+Spawn6 consumers have consistent declarations but their full modules/class
+bindings remain unverified. This is not proof of descriptor/class-table ABI,
+full gameplay or removal of pc/. No new files or extracted functions.

@@ -1028,7 +1028,7 @@ static int authored_glow_script_cycle(void)
     g_FieldFxLoadedTexturePage=0;
     unsigned seen=0, ended=0, drawn=0;
     GlowEffect_PlantScript((char *)object);
-    FieldFx_Spawn6(object,0,0,1);
+    GlowEffect_Spawn6((intptr_t)object,0,0,1,0x1234,0x5678);
     for(unsigned frame=0;frame<160;++frame) {
         unsigned slot=frame&1;
         for(unsigned i=0;i<4096;++i) { ordering[i].address=0xffffff; ordering[i].length=0; }
@@ -1050,6 +1050,29 @@ static int authored_glow_script_cycle(void)
     D_8009D254=saved_player; D_800B0E38=saved;
     g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset; g_GeomScroll.words.viewMatrix=saved_view;
     puts("Original authored glow: real command/init/draw/update tables, six handler IDs, 160 ticks and completion passed");
+    return 1;
+}
+
+static int native_effect_spawn_arguments(void)
+{
+    struct { FieldFxObject object; u8 guard[16]; } buffer;
+    int (*spawn[])(intptr_t,int,int,int,int,int)={GlowEffect_Spawn6,GlowEffectB_Spawn6,
+        GlowEffectC_Spawn6,FourLayerGlow_Spawn6};
+    for(unsigned method=0;method<4;++method) for(unsigned index=0;index<9;++index) {
+        memset(&buffer,0xa5,sizeof(buffer));
+        FieldFxState expected=buffer.object.state;
+        int value=index&1?INT_MIN:INT_MAX;
+        expected.vars[index]=value;
+        if(spawn[method]((intptr_t)&buffer.object,0x1234,index,value,0x5678,0x9abc) ||
+           memcmp(&expected,&buffer.object.state,sizeof(expected)) ||
+           g_FieldFxScriptState!=&buffer.object.state) return 0;
+        for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
+        FieldFxState saved=buffer.object.state;
+        if(FieldFx_Spawn6((intptr_t)&buffer.object,0,-1,42,0,0)!=-1 ||
+           FieldFx_Spawn6((intptr_t)&buffer.object,0,9,42,0,0)!=-1 ||
+           FieldFx_Spawn6(0,0,0,42,0,0)!=-1 || memcmp(&saved,&buffer.object.state,sizeof(saved))) return 0;
+    }
+    puts("Original spawn arguments: four glow entry points, native owner addresses, all variables, signed values and invalid bounds passed");
     return 1;
 }
 
@@ -1113,7 +1136,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !native_effect_spawn_arguments()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

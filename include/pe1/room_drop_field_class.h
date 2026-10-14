@@ -18,7 +18,7 @@ extern u8 g_RoomDropFieldSpawnData[];
 
 int RoomEffect_DropFieldNop0(void);
 int RoomEffect_DropFieldPlantScript(void *object);
-int RoomEffect_DropFieldSpawn6(int a, int b, int c, int d, int e, int f);
+int RoomEffect_DropFieldSpawn6(intptr_t a, int b, int c, int d, int e, int f);
 int RoomEffect_DropFieldRegister(struct RoomEnt *o);
 int RoomEffect_DropFieldStart(void *o);
 int RoomEffect_DropFieldClose(struct RoomEnt *o);

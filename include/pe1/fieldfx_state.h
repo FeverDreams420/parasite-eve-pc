@@ -57,7 +57,7 @@ extern char g_FieldFxUpdateThreadMissingMsg[];
 int FieldFx_Register(FieldFxObject *obj, FieldFxHandler *handlers);
 int FieldFx_UpdateSlots(FieldFxObject *obj, FieldFxHandler *handlers);
 int FieldFx_RunScript(FieldFxObject *obj, FieldFxHandler *handlers, u16 *sizes);
-int FieldFx_Spawn6();
+int FieldFx_Spawn6(intptr_t owner, int unused, int index, int value, int unused4, int unused5);
 int *FieldFx_RegPtr(int index);
 int *FieldFx_VarPtr(int index);
 void FieldFx_ActivateSlot(u16 slot, u8 id, u16 size);

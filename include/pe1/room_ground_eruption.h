@@ -136,7 +136,7 @@ extern int g_RoomEruptionSpawnLayout[];
 
 int RoomEffect_GroundEruptionNop0(void);
 int RoomEffect_GroundEruptionPlantScript(void *object);
-int RoomEffect_GroundEruptionSpawn6(int a, int b, int c, int d, int e, int f);
+int RoomEffect_GroundEruptionSpawn6(intptr_t a, int b, int c, int d, int e, int f);
 int RoomEffect_GroundEruptionRegister(void *o);
 int RoomEffect_GroundEruptionStart(void *o);
 int RoomEffect_GroundEruptionRelease(struct RoomEnt *o);

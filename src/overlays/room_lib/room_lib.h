@@ -740,7 +740,7 @@ extern void FieldFx_LoopLinkedAnimation(void *state);
 
 /* six-argument passthrough to the field engine spawn */
 #define ROOMLIB_SPAWN6(name) \
-    int name(int a, int b, int c, int d, int e, int f) { \
+    int name(intptr_t a, int b, int c, int d, int e, int f) { \
         FieldFx_Spawn6(a, b, c, d, e, f); \
         return 0; \
     }

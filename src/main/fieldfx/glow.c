@@ -79,7 +79,7 @@ int GlowEffect_PlantScript(char *object) {
     return 0;
 }
 
-int GlowEffect_Spawn6(int a, int b, int c, int d, int e, int f) {
+int GlowEffect_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
     FieldFx_Spawn6(a, b, c, d, e, f);
     return 0;
 }
@@ -530,7 +530,7 @@ int GlowEffectB_PlantScript(char *object) {
     return 0;
 }
 
-int GlowEffectB_Spawn6(int a, int b, int c, int d, int e, int f) {
+int GlowEffectB_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
     FieldFx_Spawn6(a, b, c, d, e, f);
     return 0;
 }
@@ -792,7 +792,7 @@ int GlowEffectC_PlantScript(char *object) {
 
     return 0;
 }
-int GlowEffectC_Spawn6(int a, int b, int c, int d, int e, int f) {
+int GlowEffectC_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
     FieldFx_Spawn6(a, b, c, d, e, f);
     return 0;
 }
@@ -1001,7 +1001,7 @@ int FourLayerGlow_PlantScript(char *object) {
     return 0;
 }
 
-int FourLayerGlow_Spawn6(int a, int b, int c, int d, int e, int f) {
+int FourLayerGlow_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
     FieldFx_Spawn6(a, b, c, d, e, f);
     return 0;
 }

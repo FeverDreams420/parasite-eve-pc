@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+`pc/collision_math.c` przenosi oryginalny test punktu w trójkącie podłoża: parity crossings, półotwarte granice i zawijane signed iloczyny 32-bitowe. Nowy 23. test sprawdza kolejność wierzchołków, jednoznaczność wspólnych krawędzi, degenerację i skrajne współrzędne. 23 testy headless z Disc 1 oraz ASan/UBSan collision math przechodzą. Dekodowanie bazy kolizji, wysokość płaskiego/nachylonego podłoża i integracja aktorów nadal wymagają implementacji; sam prymityw nie oznacza działającej kolizji.
+
 Odroczona kolekcja aktorów zwalnia taski przed recyklingiem slotu, wypina head/middle/tail, czyści flagę przejściową i zwalnia blokady ruchu gracza jak w oryginale. Reużyty slot dostaje nowe ID. Test obejmuje deletion, pełną/pustą listę, reuse i uszkodzone linki; 22 testy headless z Disc 1 oraz ASan/UBSan aktorów przechodzą. Hierarchie parent, modele i pełna egzekucja scen nadal wymagają implementacji.
 
 `pc/actors.c` implementuje rdzeń puli 14 aktorów ze stabilnymi adresami skryptów, wstawianiem po aktorze wywołującym/na początku listy, ID per room, pozycją i początkową grawitacją/ruchem. Tworzenie wiąże task typu; type 0 ustawia player. Nowy 22. test `actors` obejmuje kolejność, ID, defaults, borrowed task pointers oraz wyczerpanie obu pul bez utraty serial/list state. 22 testy headless z Disc 1 przechodzą; actor test przechodzi ASan/UBSan. Pełny opcode 8 pozostaje jawnie nieobsługiwany do implementacji modeli i wyszukiwania podłoża; rdzeń nie oznacza fizycznej symulacji ani działającej sceny.

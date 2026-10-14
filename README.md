@@ -499,5 +499,13 @@ the player's movement locks as in the original. Slot reuse assigns a new ID.
 Tests cover deferred deletion, complete/empty lists, reuse and corrupt links;
 all 22 tests pass headless with Disc 1, and actor tests pass ASan/UBSan.
 Parent hierarchies, model resources and complete scene execution remain pending.
+
+`pc/collision_math.c` ports the original floor triangle containment test:
+parity crossings, half-open edges and wrapped signed 32-bit products.
+`collision-math` verifies winding permutations, single ownership of shared
+edges, degenerate triangles and extreme coordinates. All 23 tests pass
+headless with Disc 1; collision math also passes ASan/UBSan. Room collision
+database decoding, flat/sloped floor-height lookup and actor integration
+remain unfinished; this primitive does not establish working collision.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

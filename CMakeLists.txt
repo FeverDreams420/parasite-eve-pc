@@ -36,6 +36,7 @@ target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 # Original AKAO units compile in place while their SPU/timer dependencies
 # are connected. They are not linked into the running game yet.
 add_library(parasite-eve-original-akao OBJECT
+    src/main/akao/state.c
     src/main/akao/opcode_dispatch.c
     src/main/akao/voice_driver.c
     src/main/akao/voice_bank.c

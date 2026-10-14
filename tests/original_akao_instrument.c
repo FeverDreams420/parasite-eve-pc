@@ -2,6 +2,7 @@
 #include "pe1/akao/globals.h"
 #include "pe1/akao/note_step.h"
 #include "pe1/akao/voice_masks.h"
+#include "pe1/akao/voice_state.h"
 #include "pe1/psyq_spu_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,10 +11,7 @@
 #include "spu_bank.h"
 
 /* Explicit input tables for isolated original procedures, not runtime audio. */
-AkaoInstrument g_AkaoInstrumentTable[256];
-AkaoSequencerState g_AkaoSequencerState;
 #define fixture_bank g_AkaoSequencerState.primary
-AkaoCurrentBankPointer g_AkaoCurrentBankPointer = {.pointer = &fixture_bank};
 static unsigned short offsets[2048];
 unsigned short *g_AkaoSampleOffsetTable = offsets;
 static char sample_data[65536];
@@ -32,25 +30,10 @@ static void record_message(AkaoQueueEntry *entry)
 AkaoMessageHandler Akao_MessageHandlers[256];
 volatile u32 g_AkaoMessageQueueLock;
 SpuReverbState g_SpuReverbState;
-unsigned g_SpuActiveVoiceMask;
-unsigned g_SpuPendingKeyOffMask;
-unsigned g_AkaoTrack34Mask, g_AkaoTrack38Mask, g_AkaoTrack3CMask;
-unsigned g_AkaoVoiceMaskScratch, g_AkaoVoiceUpdateFlags;
-AkaoSequencerBank g_AkaoTrackStateBackup;
-AkaoVoiceBank g_AkaoVoiceStateBackup;
-unsigned g_AkaoVoiceKeyOnState, g_AkaoSeqPendingFlags;
-unsigned short g_AkaoSelectedBankId;
 char g_AkaoDefaultVoiceProgram[] = {0};
 short g_AkaoPanVolumeTable[256];
-int g_AkaoPlaybackMode;
-unsigned char g_AkaoGlobalPitchScale;
-AkaoTickTrack g_AkaoSequencerTracks[60];
 AkaoU8 g_AkaoOpcodeArgLengths[96], g_AkaoExtOpcodeArgLengths[32];
 u16 g_AkaoNoteLengthTable[11] = {48, 24, 16, 12, 8, 6, 4, 3, 2, 1, 96};
-AkaoNestedSource g_AkaoNestedSource;
-int g_AkaoSeqLoopCounter;
-unsigned g_AkaoSfxAllocatedVoiceMask, g_SpuStoppedVoiceMask;
-u16 g_AkaoTrack5ATransposeValue;
 void *g_AkaoSoundEntryTable[256];
 /* This isolated command test must never request a hardware reverb change.
  * PsyZ has no SpuSetReverbModeType endpoint yet: fail instead of simulating it. */
@@ -90,7 +73,7 @@ static int asset_audit(int execute)
     PeSpuBank *resident = calloc(1, sizeof(*resident));
     CHECK(resident != NULL);
     CHECK(pe_spu_bank_load_startup(&catalog, resident, NULL));
-    memcpy(g_AkaoInstrumentTable, resident->instruments, sizeof(g_AkaoInstrumentTable));
+    memcpy(g_AkaoInstrumentTable, resident->instruments, sizeof(AkaoInstrument) * 256);
     PeSpuBank *record_samples = malloc(sizeof(*record_samples));
     CHECK(record_samples != NULL);
     unsigned rooms = 0, sequences = 0, short_records = 0, channels = 0;
@@ -115,7 +98,7 @@ static int asset_audit(int execute)
                 CHECK(pe_spu_bank_upload_rebased(record_samples, sample_bytes, sample_size,
                     0x8000, 0x20, NULL, error, sizeof(error)));
                 free(sample_bytes);
-                memcpy(g_AkaoInstrumentTable, record_samples->instruments, sizeof(g_AkaoInstrumentTable));
+                memcpy(g_AkaoInstrumentTable, record_samples->instruments, sizeof(AkaoInstrument) * 256);
             }
             unsigned char *snapshot = malloc(music.sequence.size);
             CHECK(snapshot != NULL);
@@ -164,6 +147,16 @@ int main(int argc, char **argv)
 {
     if (argc == 2 && strcmp(argv[1], "--assets") == 0) return asset_audit(0);
     if (argc == 2 && strcmp(argv[1], "--execute-assets") == 0) return asset_audit(1);
+    g_AkaoGlobalPitchDepth = 0x12345678;
+    CHECK(g_AkaoGlobalPitchScale == 0x34);
+    g_AkaoGlobalPitchScale = 0xab;
+    CHECK(g_AkaoGlobalPitchDepth == 0x12ab5678);
+    g_AkaoGlobalPitchDepth = 0;
+    g_AkaoTempoScaleAccum = 0x12345678;
+    CHECK(g_AkaoTempoScale == 0x34);
+    g_AkaoTempoScale = 0x80;
+    CHECK(g_AkaoTempoScaleAccum == 0x12805678);
+    g_AkaoTempoScaleAccum = 0;
     CHECK((void *)D_8009D2C8 == (void *)&fixture_bank);
     D_8009D2C8++;
     CHECK(g_AkaoCurTrack == &g_AkaoSequencerState.secondary);

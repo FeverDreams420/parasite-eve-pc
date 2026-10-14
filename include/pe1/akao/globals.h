@@ -18,7 +18,8 @@ extern volatile int g_AkaoSeqBusyFlags;
 /* CD audio mix volume passed to CdMix (a CdlATV). */
 extern struct CdlATV g_AkaoCdVolume;
 /* High byte of the global pitch depth word g_AkaoGlobalPitchDepth. */
-extern unsigned char g_AkaoGlobalPitchScale;
+extern int g_AkaoGlobalPitchDepth;
+#define g_AkaoGlobalPitchScale (((unsigned char *)&g_AkaoGlobalPitchDepth)[2])
 
 /* Global slides stepped every fourth tick: counters, 16.16 steps and the
  * integer half of the pitch accumulator g_AkaoCdInputVolumeAccum. */

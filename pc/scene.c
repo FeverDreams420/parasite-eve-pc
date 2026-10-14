@@ -105,6 +105,13 @@ static int32_t scene_word(uint32_t value){return (int32_t)(value&0x80000000?(int
 static int16_t scene_half(uint32_t value){value&=65535;return (int16_t)(value&32768?(int)value-65536:(int)value);}
 PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command){
     PeScene *scene=user;
+    if(command->opcode==114){
+        if(command->count<2||!scene->background_motion||scene->background_motion_count!=scene->background.count)return PE_DISPATCH_ERROR;
+        unsigned index=pe_script_arg_read(task,&command->args[0]);if(index>=scene->background_motion_count)return PE_DISPATCH_ERROR;
+        PeBackgroundMotion *motion=&scene->background_motion[index];
+        motion->flags=pe_script_arg_read(task,&command->args[1])?(uint8_t)(motion->flags|2):(uint8_t)(motion->flags&~2u);
+        return PE_DISPATCH_CONTINUE;
+    }
     if(command->opcode==230){
         if(command->count<3||!scene->actors||!scene->background_motion||scene->background_motion_count!=scene->background.count)return PE_DISPATCH_ERROR;
         unsigned index=pe_script_arg_read(task,&command->args[0]);if(index>=scene->background_motion_count)return PE_DISPATCH_ERROR;

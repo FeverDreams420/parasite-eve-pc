@@ -108,6 +108,12 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Opcode 114 controls background visibility while preserving motion modes and
+speeds. A real VM test hides a tile, advances its motion while hidden, then
+shows it at the updated position. All 35 headless tests and the ASan/UBSan
+native scene/VM fixture pass. Group animation, GPU packets and full frame/
+campaign integration remain pending.
+
 Background script opcodes 187/188/230 now control scroll/parallax speeds and
 base positions, preserving original halfword conversion, remaining flags
 and fractions. Real VM tests cover setters, resulting motion, disabling and

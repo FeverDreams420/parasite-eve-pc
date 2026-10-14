@@ -2455,3 +2455,24 @@ runtime and removal of pc/ remain incomplete.
 Fresh ASan/UBSan/function execution of the expanded real-data fixture passes.
 PsyZ/SDL are uninstrumented, and the backend still reports an unimplemented
 DMA callback.
+
+
+### Compile the original scene pipeline with canonical lighting storage
+
+The complete boot/frame_loop.c and draw/pipeline.c now compile in the original
+native target. Removed their duplicate frame-counter/dispatch-token definitions.
+A single RenderLightingState backing record in frame_loop.c owns the direction
+matrix, color matrix and three per-light colors. Existing matrix/interior names
+are field aliases, replacing the fixtures' independent matrices and unresolved
+interior symbols. Pipeline color setup passes the canonical record with the
+actual original function signatures. No new files or replacement pipeline.
+
+The model fixture calls the original Boot_SetBackColor and Boot_SetLightColor:
+it checks all nine direction cells, untouched neighboring storage after back
+color setup, all three RGB matrix columns and per-light bytes, plus interior
+alias identity. Full build and five tests pass with required Disc 1 assets:
+model-setup, model-gpu, actor-lifecycle, entity-texture-assets and scene-spawn.
+Fresh ASan/UBSan/function --gpu execution passes the lighting checks and 878-model
+corpus (301224 packets, 2239298 visible pixels, identical draw slots). PsyZ/SDL
+are not instrumented. Full Draw_InitPipeline/Boot_FinishFrame execution remains
+unverified; runtime integration and pc/ removal remain incomplete.

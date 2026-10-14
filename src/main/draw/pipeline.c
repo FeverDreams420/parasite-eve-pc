@@ -17,7 +17,7 @@
  * lowering, so the light-matrix element stores keep their own absolute
  * addresses; only its COMMON words below are gp-relative. */
 
-u32 g_GlobalFrameCounter[1];
+extern u32 g_GlobalFrameCounter[1];
 
 
 #define W(sym) (*(s32 *)(sym))
@@ -28,8 +28,6 @@ u32 g_GlobalFrameCounter[1];
 s32 Scene_StreamTexturePage(void);
 void Entity_InitFreePool(void);
 void Script_InitNodeFreeList(void);
-void Boot_SetBackColor(void *arg0, int arg1, int arg2, int arg3);
-void Boot_SetLightColor(void *arg0, int arg1, int arg2, int arg3, int arg4);
 int CdRom_DetectDiscChange(void);
 int Scene_LoadEntityTexture(void);
 void Entity_RelocateSceneData(void);
@@ -56,7 +54,7 @@ void Draw_InitPipeline(void) {
     Entity_InitFreePool();
     Script_InitNodeFreeList();
 
-    Boot_SetBackColor((char *)&g_RenderLight0DirY - 2, 0x28, 0x28, 0x28);
+    Boot_SetBackColor((u16 *)&g_RenderLightingBlock.light.matrix.m[0][0], 0x28, 0x28, 0x28);
 
     v1 = 0;
     t1 = 0;
@@ -68,7 +66,7 @@ void Draw_InitPipeline(void) {
     *(s16 *)a0p = t0;
     g_RenderLightingState.matrix.m[0][1] = t1;
     g_RenderLightingState.matrix.m[0][2] = v1;
-    Boot_SetLightColor(a0p, 0, 0xFF, 0xFF, 0xFF);
+    Boot_SetLightColor(&g_RenderLightingBlock, 0, 0xFF, 0xFF, 0xFF);
 
     v1 = 0;
     t0 = 0;
@@ -80,7 +78,7 @@ void Draw_InitPipeline(void) {
     *(s16 *)p = t0;
     g_RenderLightingState.matrix.m[1][1] = t1;
     g_RenderLightingState.matrix.m[1][2] = v1;
-    Boot_SetLightColor(p - 6, 1, 0x80, 0x80, 0x80);
+    Boot_SetLightColor(&g_RenderLightingBlock, 1, 0x80, 0x80, 0x80);
 
     v1 = 0x10000;
     t0 = 0;
@@ -100,7 +98,7 @@ void Draw_InitPipeline(void) {
     *(s16 *)p = t0;
     g_RenderLightingState.matrix.m[2][1] = t1;
     g_RenderLightingState.matrix.m[2][2] = v1;
-    Boot_SetLightColor(p - 0xC, 2, 0x60, 0x60, 0x60);
+    Boot_SetLightColor(&g_RenderLightingBlock, 2, 0x60, 0x60, 0x60);
 
     one = 1;
     Render_PrepareFrame();

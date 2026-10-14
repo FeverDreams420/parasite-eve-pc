@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 int g_ActiveDrawSlot;
-RenderLightingMatrix g_RenderLightingState, g_RenderLightColorMatrix;
 RenderLightColor g_RoomLightTint = {255,255,255};
 RenderObjectEntity g_PlayerBattleEntity;
 s32 g_IdentityMatrixSource[8] = {4096,0,4096,0,4096,0,0,0};
@@ -44,6 +43,24 @@ int main(int argc, char **argv)
     unsigned models = 0;
     unsigned long linked = 0;
     char error[256];
+    memset(&g_RenderLightingBlock,0xa5,sizeof(g_RenderLightingBlock));
+    Boot_SetBackColor((u16 *)&g_RenderLightingState.matrix.m[0][0],40,40,40);
+    for(unsigned row=0;row<3;++row)
+        for(unsigned col=0;col<3;++col)CHECK(g_RenderLightingState.matrix.m[row][col]==0);
+    const unsigned char *untouched=(const unsigned char *)&g_RenderLightingBlock+18;
+    for(size_t i=18;i<sizeof(g_RenderLightingBlock);++i)CHECK(untouched[i-18]==0xa5);
+    const unsigned colors[3][3]={{255,254,253},{128,127,126},{96,95,94}};
+    for(unsigned light=0;light<3;++light)
+        Boot_SetLightColor(&g_RenderLightingBlock,light,colors[light][0],colors[light][1],colors[light][2]);
+    for(unsigned row=0;row<3;++row)
+        for(unsigned light=0;light<3;++light) {
+            CHECK(g_RenderLightColorMatrix.matrix.m[row][light]==(int)colors[light][row]);
+            CHECK(g_RenderLightingBlock.light_colors[light][row]==colors[light][row]);
+            CHECK(g_RenderLightingState.matrix.m[row][light]==0);
+        }
+    CHECK(&g_RenderLight0DirY==&g_RenderLightingState.matrix.m[0][1]);
+    CHECK(&g_RenderLight1DirX==&g_RenderLightingState.matrix.m[1][0]);
+    memset(&g_RenderLightingBlock,0,sizeof(g_RenderLightingBlock));
     ResetGraph(0);
     if (gpu) {
         /* No VSync/PutDispEnv: the backend window stays hidden. Synthetic

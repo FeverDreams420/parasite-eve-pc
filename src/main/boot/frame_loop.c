@@ -19,9 +19,10 @@
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
-int g_SceneDispatchToken;
+extern int g_SceneDispatchToken;
 int g_SceneDispatchCur;
 u32 g_GlobalFrameCounter[1];
+RenderLightingState g_RenderLightingBlock;
 
 /* Field frame loop and its scene flush: Boot_FlushSceneFast is the exit tail
  * that Boot_RunFrame repeats after its loop. Contiguous -G8 pair. */

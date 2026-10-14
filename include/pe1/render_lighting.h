@@ -10,8 +10,6 @@ typedef union RenderLightingMatrix {
     u32 words[8];
 } RenderLightingMatrix;
 
-extern RenderLightingMatrix g_RenderLightingState, g_RenderLightColorMatrix;
-
 /* Lighting block at g_RenderLightingState: the light-direction matrix, the light
  * color matrix (one column per light) and the per-light 8-bit colors. */
 typedef struct RenderLightingState {
@@ -19,11 +17,13 @@ typedef struct RenderLightingState {
     RenderLightingMatrix color;  /* 0x20 */
     u8 light_colors[3][4];       /* 0x40: r, g, b per light */
 } RenderLightingState;
-/* One-field views of g_RenderLightingState.matrix.m[0][1] (light 0
- * direction y) and m[1][0] (light 1 direction x). Draw_InitPipeline takes
- * the light row addresses from them; written as fields, cc1 reuses the
- * that already holds the matrix base and retail does not. */
-extern s16 g_RenderLight0DirY, g_RenderLight1DirX;
+extern RenderLightingState g_RenderLightingBlock;
+#define g_RenderLightingState (g_RenderLightingBlock.light)
+#define g_RenderLightColorMatrix (g_RenderLightingBlock.color)
+#define g_RenderLight0DirY (g_RenderLightingBlock.light.matrix.m[0][1])
+#define g_RenderLight1DirX (g_RenderLightingBlock.light.matrix.m[1][0])
+void Boot_SetBackColor(u16 *destination, int r, int g, int b);
+void Boot_SetLightColor(RenderLightingState *lighting, int index, int r, int g, u16 b);
 typedef struct RenderLightColor {
     u8 r, g, b;
 } RenderLightColor;

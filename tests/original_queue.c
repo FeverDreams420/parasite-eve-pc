@@ -8,6 +8,7 @@
 #include "pe1/field_movement.h"
 #include "pe1/geom_state.h"
 #include "pe1/game_state.h"
+#include "pe1/battle_level_up.h"
 #include <stdio.h>
 extern FieldActor *g_CurrentEntity;
 /* Override selected resident entries to observe traversal in this fixture. */
@@ -356,6 +357,17 @@ int main(void)
            g_PlayerBattleEntity.flags_9C!=(player?0x82:0x80) ||
            (player && g_PlayerBattleEntity.fade_duration!=(s8)duration) ||
            task.current.script!=script+5 || task.flags!=0x10) return 36;
+    }
+    const int game_modes[]={-1,0,1,2,6,0x7fffffff};
+    for(unsigned i=0;i<6;++i) {
+        FieldActor owner={0};
+        u32 script[]={148|(1u<<13)|(2u<<17),0,44,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        g_BattleModeState=game_modes[i];g_ScriptVariableBank[44]=0x1234;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[44]!=(u32)game_modes[i] || g_BattleModeState!=game_modes[i] ||
+           task.current.script!=script+5 || task.flags!=0x10) return 37;
     }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;

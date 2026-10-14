@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 49 powiązań: oryginalny opcode 148 odczytuje wspólny battle mode state. Powiązanie potwierdzono w EXE USA. Test kolejki sprawdza sześć wartości, w tym -1 i najwyższą wartość signed word, oraz brak modyfikacji stanu. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 48 powiązań: oryginalny opcode 147 ustawia tempo interpolacji animacji i flagę renderowania 2, z synchronizacją obiektu gracza. ABI poprawiono w istniejącej funkcji, zachowując signed halfword argumentu. Test kolejki obejmuje pięć wartości tempa (zero, ujemne i zawężenie), zwykłego aktora/gracza oraz zachowanie wcześniejszych flag. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 47 powiązań: opcode'y 30/50/55/57 ustawiają i zdejmują flagi aktora 0x80 oraz 0x4000. Powiązania potwierdzono w EXE USA; ABI zmieniono w istniejących funkcjach bez wrapperów. Test kolejki odczytuje stan po każdym opcode'zie przez oryginalne zapytanie aktora i sprawdza zachowanie pozostałych bitów. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

@@ -65,6 +65,10 @@ void Akao_InitVoiceState(AkaoTrack *track, void *script);
 void Akao_InitPrimarySecondaryVoices(void);
 void Akao_InitPrimarySecondaryVoicesWithMode(AkaoValueCommand *command);
 void Akao_StepSequencerVoice(void *sequence);
+void SeqOp_SetPanSlide(AkaoTrack *track);
+void SeqOp_SetExpressionSlide(AkaoTrack *track);
+void SeqOp_PitchSlide(AkaoTrack *track);
+void SeqOp_SetBranchTarget(AkaoTrack *track);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
 static int asset_audit(void)
@@ -410,6 +414,35 @@ int main(int argc, char **argv)
             }
         }
     }
-    puts("original AKAO: commands, initialization, start and rebasing pass");
+    unsigned char slide[] = {0, 64};
+    AkaoTrack lfo = {0};
+    lfo.pc = slide;
+    lfo.pitch_lfo_target = 0x2000;
+    SeqOp_SetPanSlide(&lfo);
+    CHECK(lfo.pc == slide + 2);
+    CHECK(lfo.pitch_lfo_slide_duration == 256);
+    CHECK(lfo.pitch_lfo_delta == 32);
+    lfo.pc = slide;
+    lfo.volume_lfo_target = 0x6000;
+    SeqOp_SetExpressionSlide(&lfo);
+    CHECK(lfo.volume_lfo_slide_duration == 256);
+    CHECK(lfo.volume_lfo_delta == -32);
+    lfo.pc = slide;
+    lfo.aux_lfo_target = 0x1000;
+    SeqOp_PitchSlide(&lfo);
+    CHECK(lfo.aux_lfo_slide_duration == 256);
+    CHECK(lfo.aux_lfo_delta == 16);
+    unsigned char branches[16] = {0};
+    branches[8] = 0xf8;
+    branches[9] = 0xff;
+    lfo.pc = branches + 8;
+    lfo.expression_value = (int)0xffed1234u;
+    SeqOp_SetBranchTarget(&lfo);
+    CHECK(lfo.pc == branches + 10);
+    CHECK(lfo.branch_target == branches + 2);
+    CHECK(lfo.volume == -19);
+    CHECK(lfo.flags & AKAO_TRACK_FLAG_BRANCH_ACTIVE);
+    CHECK(lfo.pitch_lfo_target == 0x2000 && lfo.volume_lfo_target == 0x6000);
+    puts("original AKAO: commands, initialization, start, rebasing and script views pass");
     return 0;
 }

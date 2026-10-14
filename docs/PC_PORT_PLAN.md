@@ -557,6 +557,8 @@ Original Akao_StepSequencerVoice start używa typed track cursor zamiast byte-po
 
 Strict `original-game-akao-assets` wykonuje original Akao_StepSequencerVoice na prawdziwych nagłówkach Disc 1: 414 pokojów, 599 sekwencji, 8883 aktywne kanały. Test-only parser/Disc I/O ustala oczekiwane offsets/masks; original procedure ustawia runtime PC, masks i inactive defaults. Snapshot potwierdza immutable sequence data. CTest i ASan/UBSan/function pełnego corpus przechodzą (PsyZ nieinstrumentowane). Jeden short record jest jawnie policzony i niewykonany; jego runtime handling pozostaje wymagany. Test dowodzi start/header addressing, nie wykonania całego bytecode, piosenek, SPU ani PCM. Bez obrazu test zwraca SKIP 77, a PE_REQUIRE_GAME_ASSETS=1 wymusza failure; SKIP nie jest dowodem ukończenia.
 
+AkaoScriptState jest teraz aliasem canonical native AkaoTrack, nie częściową strukturą z PS1 padding. Cztery original handlers zapisują canonical pitch/volume/aux LFO fields oraz branch/volume i high-half expression value. Usunięto historyczny opis, że pc/akao_channel jest właściwym runtime. Fixture wykonuje trzy slides z duration zero→256, dodatnim/ujemnym delta oraz signed backward branch ze saved high-half; sprawdza cursor i niezmienione targets. Trzy AKAO CTests z wymaganym Disc 1 i ASan/UBSan/function fixture przechodzą (PsyZ nieinstrumentowane). Pełna opcode tabela, interpreter timing/SPU i rzeczywiste audio pozostają wymagane.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

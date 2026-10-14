@@ -1549,9 +1549,9 @@ void SeqOp_SetPanSlide(AkaoScriptState *state) {
         duration = 0x100;
     }
     state->pc = pc + 2;
-    delta = ((pc[1] << 8) - state->pan_current) / duration;
-    state->pan_duration = duration;
-    state->pan_delta = delta;
+    delta = ((pc[1] << 8) - state->pitch_lfo_target) / duration;
+    state->pitch_lfo_slide_duration = duration;
+    state->pitch_lfo_delta = delta;
 }
 
 void SeqOp_StopPitchLFO(AkaoTrack *track) {
@@ -1617,9 +1617,9 @@ void SeqOp_SetExpressionSlide(AkaoScriptState *state) {
         duration = 0x100;
     }
     state->pc = pc + 2;
-    delta = ((pc[1] << 8) - state->expr_current) / duration;
-    state->expr_duration = duration;
-    state->expr_delta = delta;
+    delta = ((pc[1] << 8) - state->volume_lfo_target) / duration;
+    state->volume_lfo_slide_duration = duration;
+    state->volume_lfo_delta = delta;
 }
 
 void SeqOp_ResetTrack(AkaoTrack *track) {
@@ -1672,9 +1672,9 @@ void SeqOp_PitchSlide(AkaoScriptState *state) {
         duration = 0x100;
     }
     state->pc = pc + 2;
-    target_delta = ((pc[1] << 7) - state->pitch_current) / duration;
-    state->pitch_duration = duration;
-    state->pitch_delta = target_delta;
+    target_delta = ((pc[1] << 7) - state->aux_lfo_target) / duration;
+    state->aux_lfo_slide_duration = duration;
+    state->aux_lfo_delta = target_delta;
 }
 
 
@@ -2050,13 +2050,13 @@ void SeqOp_SetBranchTarget(AkaoScriptState *state) {
     int hi;
     int offset;
 
-    saved = state->loop_counter;
+    saved = (s16)((u32)state->expression_value >> 16);
     state->pc = pc + 1;
     lo = pc[0];
     target = pc + 2;
     state->pc = target;
     hi = pc[1];
-    state->loop_counter_saved = saved;
+    state->volume = saved;
     state->flags |= 8;
     offset = (s16)(lo | (hi << 8));
     state->branch_target = target + offset;

@@ -443,11 +443,16 @@ int main(void) {
     CHECK(cursor == PE_AKAO_LFO_WORDS - 1 && sample == 123);
     CHECK(scene.sample_stats.bytes == 28176 && scene.spu->valid[255]);
     CHECK(scene.script_actor_count == 1 && scene.scheduler->live == 1);
-    CHECK(scene.script_actors[0].field_id == 1 && scene.scheduler->slots[0].task.sequence == 1);
-    CHECK(scene.scheduler->slots[0].task.actor == &scene.script_actors[0]);
+    CHECK(scene.actors->slots[0].script.field_id == 1 && scene.scheduler->slots[0].task.sequence == 1);
+    CHECK(scene.scheduler->slots[0].task.actor == &scene.actors->slots[0].script);
     CHECK(scene.scheduler->slots[0].task.program.blob == &scene.room.data);
     CHECK(scene.scheduler->slots[0].task.banks == &scene.script_banks);
-    CHECK(!pe_script_scheduler_tick(scene.scheduler, &scene.script_actors[0], 100));
+    CHECK(scene.scheduler->dispatch_user==&scene&&scene.scheduler->slots[0].task.dispatch_user==scene.scheduler);
+    CHECK(scene.actors->scheduler==scene.scheduler&&scene.audio.room==&scene.room&&scene.audio.game_flags==&scene.script_banks.game_flags);
+    int scene_script_ok=1;
+    for(unsigned tick=0;tick<32&&scene_script_ok;++tick)scene_script_ok=pe_scene_actor_scripts(&scene,0,&catalog,100);
+    CHECK(!scene_script_ok);
+    CHECK(!scene.audio.catalog);
     CHECK(strstr(scene.scheduler->error, "Unimplemented script opcode 234"));
     PeScriptBanks banks = {0};
     PeScriptTask task;
@@ -483,6 +488,11 @@ int main(void) {
     CHECK(scene.scripts.blob == &scene.room.data && scene.spu->ram[0x2000] == 123);
     CHECK(scene.script_banks.variables[7] == 12345);
     CHECK(scene.scheduler->slots[0].task.banks == &scene.script_banks);
+    scene_script_ok=1;
+    for(unsigned tick=0;tick<32&&scene_script_ok;++tick)scene_script_ok=pe_scene_actor_scripts(&scene,0,&catalog,100);
+    CHECK(!scene_script_ok);
+    CHECK(strstr(scene.scheduler->error,"Unimplemented script opcode 8"));
+    CHECK(scene.audio.music[0]&&!scene.audio.catalog);
     /* Failure in startup audio occurs after room allocation; roll it all back. */
     PeScene failed_scene = {0};
     catalog.sector_bounds[7] = catalog.sector_bounds[6];

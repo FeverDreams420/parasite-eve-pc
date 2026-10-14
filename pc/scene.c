@@ -3,12 +3,13 @@
 #include <string.h>
 
 void pe_scene_close(PeScene *scene) {
+    if(scene->actors){for(unsigned i=0;i<PE_ACTOR_CAPACITY;++i)pe_actor_model_close(&scene->actors->slots[i]);free(scene->actors);}
+    for(unsigned i=0;i<2;++i)pe_music_close(scene->audio.music[i]);
     pe_collision_close(&scene->collision);
     pe_room_close(&scene->room);
     free(scene->vram);
     free(scene->spu);
     free(scene->scheduler);
-    free(scene->script_actors);
     memset(scene, 0, sizeof(*scene));
 }
 
@@ -40,28 +41,22 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     next.akao = catalog->akao;
     next.scheduler = malloc(sizeof(*next.scheduler));
     next.script_actor_count = next.scripts.actors;
-    if (next.script_actor_count) next.script_actors = calloc(next.script_actor_count, sizeof(*next.script_actors));
-    if (!next.scheduler || (next.script_actor_count && !next.script_actors)) {
-        snprintf(error, error_size, "Cannot allocate script actors/task pool");
-        goto failed;
+    next.actors=malloc(sizeof(*next.actors));
+    if (!next.scheduler || !next.actors) {
+        free(next.actors);next.actors=NULL;
+        snprintf(error,error_size,"Cannot allocate actor/task pools");goto failed;
     }
-    pe_script_scheduler_init(next.scheduler, &next.scripts, &next.script_banks);
-    next.scheduler->sequence = 1;
-    for (unsigned i = 0; i < next.script_actor_count; ++i) {
-        unsigned entry, sub_id;
-        uint32_t offset;
-        if (!pe_script_actor(&next.scripts, i, &entry, &sub_id) ||
-            !pe_script_entry(&next.scripts, entry, &offset)) {
-            snprintf(error, error_size, "Invalid initial actor script");
-            goto failed;
-        }
-        pe_script_actor_init(&next.script_actors[i], offset);
-        next.script_actors[i].field_id = next.script_banks.actor_serial++;
-        next.script_actors[i].script_entry = entry;
-        next.script_actors[i].sub_id = sub_id;
-        if (pe_script_scheduler_start(next.scheduler, &next.script_actors[i], 2, offset) < 0) {
-            snprintf(error, error_size, "%s", next.scheduler->error);
-            goto failed;
+    pe_script_scheduler_init(next.scheduler,&next.scripts,&next.script_banks);
+    next.scheduler->sequence=1;
+    pe_actors_init(next.actors,next.scheduler);
+    next.scheduler->dispatch=pe_scene_dispatch;next.scheduler->dispatch_user=&next;
+    next.audio.room=&next.room;next.audio.resident=next.spu;next.audio.game_flags=&next.script_banks.game_flags;
+    pe_scene_audio_reset(&next.audio);
+    for(unsigned i=0;i<next.script_actor_count;++i){
+        unsigned entry,sub_id;
+        if(!pe_script_actor(&next.scripts,i,&entry,&sub_id)||
+           pe_actors_spawn(next.actors,(uint8_t)entry,(uint8_t)sub_id,-1,0,0,0)<0){
+            snprintf(error,error_size,"Invalid initial actor or pool exhaustion");goto failed;
         }
     }
     pe_scene_close(scene);
@@ -70,6 +65,8 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     scene->scripts.blob = &scene->room.data;
     scene->scheduler->program = scene->scripts;
     scene->scheduler->banks = &scene->script_banks;
+    scene->scheduler->dispatch_user=scene;
+    scene->audio.room=&scene->room;scene->audio.game_flags=&scene->script_banks.game_flags;
     for (unsigned i = 0; i < PE_SCRIPT_TASK_CAPACITY; ++i) {
         if (!scene->scheduler->slots[i].used) continue;
         scene->scheduler->slots[i].task.program = scene->scripts;
@@ -82,4 +79,16 @@ catalog_error:
 failed:
     pe_scene_close(&next);
     return 0;
+}
+
+PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command){
+    PeScene *scene=user;
+    PeScriptDispatchResult result=pe_actors_dispatch(scene->actors,task,command);
+    return result==PE_DISPATCH_UNSUPPORTED?pe_scene_audio_dispatch(&scene->audio,task,command):result;
+}
+int pe_scene_actor_scripts(PeScene *scene,unsigned slot,PeRoomCatalog *catalog,unsigned instruction_limit){
+    if(!scene->actors||slot>=PE_ACTOR_CAPACITY||!scene->actors->slots[slot].used)return 0;
+    scene->audio.catalog=catalog;
+    int result=pe_script_scheduler_tick(scene->scheduler,&scene->actors->slots[slot].script,instruction_limit);
+    scene->audio.catalog=NULL;return result;
 }

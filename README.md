@@ -108,6 +108,16 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Scenes now own the native actor pool and scene audio. Initial map descriptors
+create stable actor/task slots; scene teardown frees actor models and music
+before room data. The scheduler routes commands through combined actor/audio
+dispatch. `pe_scene_actor_scripts` runs one actor's task buckets with a
+loading catalog borrowed only during the call. Real New Game/Tutorial ticks
+retain explicit unsupported errors; Tutorial starts owned music and reaches
+Spawn8. All 29 headless tests and the full ASan/UBSan data audit pass. Full
+frame ordering, events, physics, bank selection, synthesis and rendering
+remain pending.
+
 Actor script dispatch now supports original opcodes 46–48: forced action
 restart with pause cleared, a u16 stop target clamped to the last frame, and
 waiting for the integer frame to match. The wait retries at the same PC,

@@ -7,6 +7,8 @@
 #include "script_scheduler.h"
 #include "collision.h"
 #include "room_banks.h"
+#include "actors.h"
+#include "scene_audio.h"
 
 /* Native scene resources, observable without devices. Script execution,
  * actor simulation and rendering will operate on this owned state. */
@@ -20,7 +22,8 @@ typedef struct PeScene {
     PeScriptBanks script_banks;
     PeAkaoGrammar akao;
     PeScriptScheduler *scheduler;
-    PeScriptActor *script_actors;
+    PeActors *actors;
+    PeSceneAudio audio;
     unsigned script_actor_count;
     PeVramStats texture_stats;
     PeSpuBankStats sample_stats;
@@ -34,5 +37,9 @@ typedef struct PeScene {
 int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
                        char *error, size_t error_size);
 void pe_scene_close(PeScene *scene);
+PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command);
+/* One actor's script buckets; loading context borrowed only for this call.
+ * Full frame ordering/events/physics/audio synthesis remain separate. */
+int pe_scene_actor_scripts(PeScene *scene,unsigned slot,PeRoomCatalog *catalog,unsigned instruction_limit);
 
 #endif

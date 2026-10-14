@@ -1,148 +1,255 @@
-# Plan portu Parasite Eve na PC
+# Plan implementacji pełnego portu Parasite Eve na PC
 
-Celem jest natywna wersja PC, która zachowuje fabułę, atmosferę, stałe ujęcia kamery i walkę ATB, a poprawia sterowanie, czytelność i wygodę. Najpierw powstaje grywalny port o zachowaniu zgodnym z oryginałem. Ulepszenia interfejsu, grafiki i balansu dochodzą po uzyskaniu stabilnej podstawy.
+Plan obejmuje całą grę, nie tylko boot i filmy. Celem jest ukończony natywny projekt C11: pełna kampania, oba dyski, wszystkie lokacje i sceny, eksploracja, walka ATB, PE, przeciwnicy, przedmioty, ekwipunek, menu, audio, zapis/odczyt, Tutorial oraz tryby i zawartość dodatkowa. Każda funkcja i każdy element zawartości mają otrzymać automatyczny test oraz mierzalny warunek odbioru.
 
-## Punkt startowy
+„Perfekcyjny” oznacza pełny uzgodniony zakres, poprawne zachowanie, brak znanych defektów i komplet wymaganych dowodów automatycznych. Sam build, procent pokrycia kodu, ekran menu albo liczba przetestowanych plików nie dowodzą ukończenia gry. Nie można udowodnić braku błędów dla wszystkich możliwych kombinacji stanu i sprzętu; dlatego jawnie definiujemy katalog funkcji, niezmienniki, warianty, obsługiwane platformy i testy błędów. Żadna pozycja zakresu nie może zniknąć z raportu przez pominięcie testu.
 
-Stan na 14 października 2026: natywny program odczytuje obraz BIN pierwszego dysku, odtwarza całe intro MDEC z dźwiękiem XA i przechodzi do oryginalnego ekranu tytułowego oraz menu. Grafiki menu pochodzą z `PE.IMG`; działają wybór klawiaturą i pomijanie intro. Zapis i rozgrywka po wyborze New Game/Tutorial nie są jeszcze dołączone. PsyZ pozostaje istniejącą warstwą runtime i ma osobny smoke test, a boot korzysta z SDL i FFmpeg. Kod gry pod `src/` nadal wymaga portowania przed dołączeniem do natywnego targetu.
+Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i adresy kodu nie są wymagane. Oryginał jest wzorcem zachowania i źródłem danych; port ma normalne typy, wskaźniki, moduły i build C. Poprawiamy błędy pamięci i przenośności. Zmiany balansu i tempa pozostają osobnymi, opcjonalnymi funkcjami.
 
-Repozytorium rozwijamy od tego miejsca jako niezależny projekt C11. Zgodność binarna, byte match, historyczne kompilatory i kontrole PS1 nie są wymagane. Źródła z `parasite-eve-decomp` są punktem startowym; ich kod można swobodnie zmieniać dla natywnego runtime. Zakres danych i działanie drugiego dysku wymagają osobnego potwierdzenia przed deklaracją pełnej grywalności.
+## 1. Stan rzeczywisty i zakres wydania
 
-## Priorytety i zależności
+Punkt audytu: commit `83aa1c5f8`, 14 października 2026.
 
-| Etap | Priorytet | Wynik | Zależność |
-| --- | --- | --- | --- |
-| 0. Audyt i kontrakt portu | P0 | Lista przeszkód, scenariusze porównawcze i zasady współdzielenia kodu | Brak |
-| 1. Natywny runtime | P0 | Kod gry działa na hoście i wczytuje dane | Etap 0 |
-| 2. Grywalny fragment | P0 | Eksploracja, walka, menu i zapis w jednej lokacji | Etap 1 |
-| 3. Sterowanie i wybór celów | P1 | Klawiatura, mysz i pad obsługują całą grę | Etap 2 |
-| 4. Ekwipunek i interfejs | P1 | Czytelne decyzje i mniej operacji w menu | Etap 3 |
-| 5. Zapisy i stabilność | P1 | Trwałe zapisy, autosave i bezpieczne wznowienie | Podstawa z etapu 2 |
-| 6. Płynność i oprawa | P2 | Wyższy FPS renderowania bez zmiany tempa gry | Etap 2 i audyt czasu |
-| 7. Opcjonalne zmiany rozgrywki | P3 | Zweryfikowane ulepszenia tempa i balansu | Stabilna wersja bazowa |
-| 8. Pełna gra i wydanie | P0 dla wydania | Przejście całej gry i powtarzalna paczka | Wszystkie wymagane elementy |
+| Obszar | Co istnieje | Czego obecne dowody nie potwierdzają |
+| --- | --- | --- |
+| Boot | `pc/disc.c`, `movie.c`, `boot.c`, `title.c`; intro i oryginalne grafiki menu | New Game i Tutorial nie uruchamiają rozgrywki; Continue jest wyłączone |
+| Logika gry | 441 plików C pod `src/`, podsystemy gry i legacy SDK | Kod gry nie jest częścią natywnego targetu; same źródła nie dowodzą kompletności implementacji ani danych |
+| Zawartość | Źródła współdzielone i 22 katalogi pod `src/overlays/`; notatki o pokojach | Katalog źródeł nie jest katalogiem wszystkich map, scen i wariantów obu dysków |
+| Testy | `disc-reader`, `boot-assets` w CTest | Brak automatycznych kampanii, walk, zapisów, referencyjnego obrazu i audio |
+| CI | Build i CTest na macOS | `boot-assets` zwraca 77 bez `PE_TEST_DISC`, więc publiczny CI nie dowodzi nawet działania bootu z danymi gry |
+| Test lokalny bootu | Zapisano wynik całego intro i podglądy w lokalnym `build/qa/` | To nie jest jeszcze wymagany, samodzielny test regresyjny obrazu, wyjścia audio i synchronizacji |
 
-P0 oznacza warunek działania lub wydania; P1 podstawową wygodę PC; P2 poprawę oprawy; P3 eksperyment. Grafika i balans nie blokują pierwszej grywalnej wersji. Nie przypisujemy terminów przed ustaleniem zakresu problemów w etapie 0.
+Założenie wydania 1.0: wersja USA obu dysków, zachowanie oryginalnej gry i pełna zawartość odblokowywana w normalnej rozgrywce. Windows x64 jest głównym celem wydania; macOS arm64/x64 i Linux x64 są pełnoprawnymi celami desktopowymi. Ich minimalne wersje systemów, GPU i konfiguracje audio ustalamy i zapisujemy w WP00. Wersje JP/PAL, mobile i web mają odrębne katalogi wymagań; nie deklarujemy ich działania na podstawie testów wersji USA.
 
-## Etap 0 Audyt i kontrakt portu
+Materiały gry pozostają lokalne/prywatne. Publiczne repo i paczka zawierają kod oraz wygenerowane syntetyczne fixture’y, bez obrazów dysków i wyodrębnionych zasobów.
 
-- Zbudować i uruchomić istniejący smoke test PsyZ; zapisać platformę, kompilator i wynik.
-- Spisać używane API PSY-Q, BIOS, GPU, GTE, SPU, CD i kart pamięci. Dla każdej grupy wskazać obsługę przez PsyZ, adapter gry albo brak implementacji.
-- Zinwentaryzować wskaźniki przechowywane w liczbach 32-bitowych, nakładające się symbole, stałe adresy, instrukcje MIPS i bariery wymagane tylko przez matching.
-- Rozdzielić formaty plików od struktur runtime: pola zapisane jako 32-bitowe dane dysku nie stają się automatycznie wskaźnikami hosta. Określić endianowość, wyrównanie, signedness i konwersje.
-- Rozwijać logikę gry w C11 i adaptery w `pc/`. Zmiany przyjmować na podstawie zachowania gry, przenośności i natywnego buildu; importy z upstream oceniać osobno, bez wymogu zgodności PS1.
-- Przygotować bazę porównań: wejście do lokacji, zmiana kamery, walka, umiejętność PE, modyfikacja przedmiotu, zapis i odczyt. Ustalić kontrolę wejścia oraz losowości tam, gdzie umożliwia ją runtime.
+## 2. Architektura docelowa
 
-**Ukończenie:** lista blokad ma właścicieli modułów, kolejność usuwania i sposób sprawdzania. Znany jest zakres pierwszego grywalnego fragmentu oraz platforma pierwszego wydania; proponowany cel to Windows x64, przy zachowaniu działającego środowiska deweloperskiego macOS.
-
-## Etap 1 Natywny runtime
-
-- Dodawać do targetu PC podsystemy gry w małych grupach, bez dołączania konsolowych bibliotek zastąpionych przez PsyZ.
-- Usunąć truncation wskaźników i zależności od mapy RAM PS1. Zastąpić dostęp do scratchpadu i sprzętu jawnymi adapterami.
-- Dostosować ordering tables i pakiety GPU do typów PsyZ. Przeprowadzić mały test renderowania tła, modelu, tekstu, przezroczystości i kolejności rysowania.
-- Udostępnić archiwum `PE.IMG` przez odczyt plików lub obsługiwany obraz dysku. Zachować sektorowe znaczenie offsetów w danych; oddzielić je od rzeczywistych opóźnień napędu.
-- Zastąpić ładowanie wykonywalnych overlayów natywnym mechanizmem rejestracji modułów. Sprawdzić kolizje nazw, inicjalizację i reset stanu przy zmianie lokacji. Dane overlayów przetwarzać niezależnie od kodu.
-- Uruchomić audio AKAO i efekty przez dostępną warstwę PsyZ; sprawdzić synchronizację. Osobno zinwentaryzować odtwarzanie FMV.
-- Wprowadzić krok symulacji zgodny z oryginałem, oddzielony od prezentacji. Sprawdzić wszystkie ścieżki VSync oraz pętle menu.
-
-**Ukończenie:** program uruchamia właściwy kod gry, ładuje wybraną lokację, rysuje ją i przetwarza wejście. Braki audio lub FMV są jawnie opisane. Nie występują znane błędy wskaźników w tej ścieżce.
-
-## Etap 2 Grywalny fragment
-
-Wybrać krótki fragment zawierający eksplorację, przejście między ujęciami, interakcję, dialog, zwykłą walkę, PE, zdobycie przedmiotu i zapis. To pierwszy kamień milowy nadający się do oceny jakości portu.
-
-- Uruchomić skrypty lokacji, aktorów, kolizje, przejścia i efekty.
-- Zweryfikować ATB, ruch, zasięg, obrażenia, zużycie amunicji i PE oraz wyjście z walki.
-- Udostępnić podstawowe menu i zapis; tymczasowy wygląd może odpowiadać PS1.
-- Porównać zdarzenia i stan gry z oryginałem, korzystając ze stałych sekwencji wejścia i kontrolowanej losowości, gdzie jest to możliwe.
-
-**Ukończenie:** fragment można przejść od początku do końca, zapisać, zamknąć program i kontynuować. Tempo ruchu i walki jest stałe przy różnych częstotliwościach prezentacji.
-
-## Etap 3 Sterowanie i wybór celów
-
-- Wprowadzić mapowanie akcji gry zamiast wiązania logiki z fizycznymi bitami pada. Zachować osobną obsługę przytrzymania, naciśnięcia i powtarzania w menu.
-- Dodać WASD, przypisywanie klawiszy, bieg jako przytrzymanie lub przełącznik, martwą strefę analoga i automatyczne podpowiedzi dla aktywnego urządzenia.
-- Sprawdzić utrzymanie kierunku przy zmianie kamery do puszczenia wejścia. Użytkownik może wybrać zachowanie oryginalne.
-- Dodać wskazanie przeciwnika myszą, przełączanie klawiszem Tab i obsługę celów zasłoniętych lub nakładających się na ekranie. Mysz wybiera cel; zasady wykonania akcji pozostają zależne od ATB.
-- Pokazywać zaznaczenie oraz stan „poza zasięgiem”. Wybór respektuje istniejącą listę legalnych celów, śmierć przeciwnika i ograniczenia umiejętności.
-- Obsłużyć utratę fokusu, odłączenie pada i powrót do okna bez zablokowanych przycisków.
-
-**Ukończenie:** cały fragment jest dostępny samą klawiaturą i samym padem; mysz działa w menu i wyborze celów. Nowe sterowanie nie omija kosztów ani ograniczeń akcji.
-
-## Etap 4 Ekwipunek i interfejs
-
-- Dodać skalowanie UI i fontów, czytelne podpowiedzi oraz układ działający w oknie i na ekranach o różnym DPI.
-- Pokazywać wyposażony i wskazany przedmiot jednocześnie, różnice statystyk i opisy właściwości. Wykorzystać istniejącą logikę porównań i zgodności wyposażenia.
-- Dodać sortowanie i filtrowanie, zachowując poprawne identyfikatory przedmiotów oraz referencje wyposażenia po zmianie widoku.
-- Wprowadzić podgląd wyniku modyfikacji: statystyki, przenoszone właściwości, zużywane narzędzia i przedmioty tracone przy zatwierdzeniu. Podgląd nie zmienia stanu gry; zatwierdzenie ponownie sprawdza warunki operacji.
-- Dodać ulubione lub blokadę przed przypadkowym wyrzuceniem oraz szybsze przenoszenie do magazynu.
-- Uczytelnić koszt PE, amunicję i statusy bez ujawniania informacji o przeciwniku, które oryginalna mechanika udostępnia dopiero po odpowiedniej akcji.
-
-**Ukończenie:** porównanie, wyposażenie i modyfikacja wymagają mniej operacji niż w interfejsie bazowym. Wynik podglądu odpowiada zatwierdzonej zmianie; sortowanie nie zmienia wyposażenia. Pojemność ekwipunku pozostaje zgodna z wersją bazową.
-
-## Etap 5 Zapisy i stabilność
-
-- Zastąpić wybór portów kart pamięci listą zapisów z lokacją, dniem fabuły i czasem gry.
-- Określić wersjonowany format zapisu i migracje; unikać zrzutów struktur zawierających wskaźniki hosta. Zgodność z zapisami PS1 ocenić osobno.
-- Stosować zapis do pliku tymczasowego, atomową podmianę i zachowanie poprzedniej kopii. Zweryfikować niepełny lub uszkodzony plik i brak miejsca na dysku.
-- Dodać rotacyjne autosave’y w bezpiecznych punktach, po zakończeniu przejścia lub zdarzenia. Nie zapisywać częściowo zmienionego stanu w trakcie ładowania.
-- Dodać „zawieś i wyjdź” początkowo wyłącznie w stanach, które można w pełni odtworzyć. Zapis w dowolnej fazie walki wymaga odtworzenia kolejki akcji, skryptów i efektów.
-- Zapisywać ustawienia sterowania, obrazu i audio niezależnie od postępu gry.
-
-**Ukończenie:** odczyt przywraca ekwipunek, fabułę i stan lokacji. Nieudany zapis nie niszczy poprzedniego; autosave nie zastępuje zapisu ręcznego. Zakres wznowienia jest jasno pokazany w UI.
-
-## Etap 6 Płynność i oprawa
-
-- Zinwentaryzować liczniki animacji, ATB, skryptów, efektów i audio. Nie usuwać po prostu oczekiwania VSync.
-- Renderować z interpolacją w 60/120 Hz przy zachowaniu oryginalnego kroku symulacji. Resetować interpolację przy zmianie pokoju, teleportacji i cięciu kamery.
-- Dodać opcje skalowania teł, ostrego lub filtrowanego obrazu, rozdzielczości renderowania modeli i efektów. Ocenić spójność tła, maskowania i geometrii.
-- Najpierw dopracować 4:3. Panoramę wdrożyć dopiero po audycie granic teł, kadrowania, masek zasłaniania, interakcji i scen fabularnych; pozwolić lokacjom wymagającym oryginalnego kadru pozostać w 4:3.
-- Sprawdzić FMV pod kątem proporcji, synchronizacji i płynnego przejścia do gry.
-
-**Ukończenie:** częstotliwość renderowania nie zmienia czasu ruchu, ATB, statusów ani skryptów. Nie występują smugi interpolacji przy cięciach; tła i modele pozostają poprawnie zasłaniane.
-
-## Etap 7 Opcjonalne zmiany rozgrywki
-
-Wprowadzać pojedynczo, z możliwością przywrócenia zachowania bazowego:
-
-- Skróty do ulubionych umiejętności i przedmiotów, respektujące ATB i koszty.
-- Historię dialogów i pomijanie obejrzanych scen tylko w zweryfikowanych punktach, z zachowaniem flag fabuły i skutków skryptów.
-- Skracanie powtarzalnych animacji bez pomijania trafień, kosztów i zdarzeń.
-- Opcjonalne ułatwienia czytelności: dodatkowe oznaczenia celu, wielkość tekstu i podpowiedzi niezależne od koloru.
-- Eksperymenty z balansem broni, tempem ATB, pojemnością ekwipunku i częstotliwością potyczek dopiero po pomiarach oraz ograniu wersji bazowej.
-
-**Ukończenie:** każda zmiana ma opis wpływu, konfigurację i porównanie z wersją bazową. Balans wymaga osobnej decyzji o zakresie; nie jest domyślnym skutkiem portowania.
-
-## Etap 8 Pełna gra i wydanie
-
-- Sprawdzić wszystkie dostępne lokacje, bossów, specjalne walki, efekty, menu i FMV, w tym różne ścieżki fabularne.
-- Potwierdzić obsługę obu dysków, zmiany dysku, końca gry i trybów dodatkowych w zakresie planowanego wydania.
-- Przejść grę od początku do końca na docelowej platformie, regularnie zapisując i wznawiając. Wykonać dłuższe sesje oraz przejścia między wieloma lokacjami, obserwując pamięć i zasoby.
-- Przygotować powtarzalny build, paczkę bez danych gry, instrukcję wskazania własnych danych i diagnostykę brakujących lub niezgodnych plików.
-- Sprawdzić uruchomienie paczki na czystym systemie oraz ścieżki zawierające spacje i znaki narodowe.
-
-**Ukończenie:** pełne przejście nie wymaga narzędzi deweloperskich ani ręcznej naprawy stanu. Lista znanych ograniczeń odpowiada rzeczywistemu zakresowi wydania.
-
-## Najważniejsze ryzyka
-
-| Ryzyko | Sposób ograniczenia |
+| Warstwa | Odpowiedzialność i kontrakt |
 | --- | --- |
-| 64-bitowe wskaźniki i formaty PS1 | Jawne typy, konwersje na granicy danych, ostrzeżenia kompilatora i sanitizery dla wspieranych ścieżek |
-| Overlaye i nakładające się symbole | Audyt nazw oraz osobny model rejestracji i inicjalizacji modułów |
-| Niepełne pokrycie API przez PsyZ | Małe scenariusze GPU, GTE, audio i odczytu danych przed pełną integracją |
-| Czas gry zależny od klatek | Stały krok symulacji oraz porównanie stanu po takim samym czasie symulacji |
-| Szybsze ładowanie zmienia kolejność zdarzeń | Zachować kontrakt zakończenia operacji i przejść skryptów |
-| Zapis w niespójnym stanie | Jawne bezpieczne punkty zapisu i test odtworzenia po ponownym uruchomieniu |
-| Panorama odsłania brakujące tła | Audyt lokacji i możliwość zachowania oryginalnego kadru |
-| Regresje przy zmianach kodu gry | Natywne testy zachowania i powtarzalne scenariusze rozgrywki; selektywne importy poprawek upstream |
+| `game_core` | Stan gry, reguły, skrypty, aktorzy, kolizje, ATB, PE, przedmioty i progresja; bez SDL, FFmpeg, ściennego zegara i adresów PS1 |
+| `game_content` | Rejestr map/scen/efektów i adaptery danych; identyfikatory z gry mapowane na jawne natywne entry pointy i stan modułów |
+| `asset_io` | Dyski, ISO9660, PE.IMG, katalog zasobów, dekodery i konwersja offsetów; wyłącznie kontrolowane odczyty i jawna endianowość |
+| `render` | Dane sceny, tła, maski, modele, animacja, tekst, UI, efekty; jedna jawna granica między frontendem SDL a runtime PsyZ, bez dwóch niezależnych właścicieli okna |
+| `audio` | AKAO, próbki, efekty, muzyka, SPU/DSP i dźwięk filmów; własny zegar i miksowanie, kontrolowane przejścia oraz wyciszanie |
+| `platform` | SDL/PsyZ, urządzenia, okno, wejście, zegary, pliki użytkownika; jawne interfejsy dające się zastąpić w testach |
+| `persistence` | Wersjonowany zapis i ustawienia; serializacja stanu domenowego, bez zrzutów struktur i wskaźników |
+| `test_runner` | Akcje wejścia na tickach, seed RNG, wirtualny czas, kontrolowane I/O, checkpointy, asercje zdarzeń/stanu/obrazu/audio i powtarzalny replay |
 
-## Pierwsze zadania do realizacji
+Kod pod `src/main/psyq/` służy do porównania funkcjonalności z PsyZ. Nie linkujemy całego legacy SDK obok jego natywnego odpowiednika. Każde używane API otrzymuje decyzję: PsyZ, adapter albo własna implementacja C, z testem kontraktu.
 
-1. Uruchomić smoke test z obecnego README i ustalić pierwszą platformę docelową.
-2. Sporządzić mapę API oraz problemów wskaźników, adresów i overlayów.
-3. Wybrać jeden pokój i jego wymagane podsystemy jako pierwszy pionowy fragment.
-4. Dołączyć minimalny kod gry do targetu PC i uruchomić odczyt jego danych.
-5. Doprowadzić fragment do eksploracji, jednej walki oraz zapisu i odczytu.
-6. Na działającej podstawie wdrożyć sterowanie PC i porównywanie wyposażenia.
+Formaty dysku zachowują szerokości pól i offsety. Stan runtime używa wskaźników hosta, `size_t`, uchwytów i typowanych struktur. Niezdefiniowane przepełnienia, przesunięcia i aliasowanie zastępujemy jawnymi operacjami o udokumentowanej semantyce. GTE może realizować renderowanie, lecz wynik kolizji i reguł gry nie może zależeć od GPU ani tempa prezentacji.
 
-Pierwszy grywalny fragment jest punktem ponownej oceny zakresu i terminów. Dostarcza też podstawy do oceny, czy proponowane ulepszenia rzeczywiście poprawiają grę.
+Symulacja korzysta ze stałego kroku i jawnych kadencji podsystemów, potwierdzonych audytem oryginału. Nie zakładamy, że każda stara pętla wykonuje się 60 razy na sekundę. Prezentacja 30/60/120/144/240 Hz, film, opóźnienia dysku i pauza nie zmieniają liczby kroków logiki. Losowość ma kontrolowany stan. Zapis i replay odtwarzają ten stan.
+
+## 3. Katalog wymagań i dowodów
+
+Pierwszym artefaktem implementacji jest maszynowo czytelny katalog, a nie procent „postępu dekompilacji”. Docelowe pliki `tests/catalog/features.json`, `content.json`, `cases.json` i `platforms.json` jeszcze nie istnieją; tworzy je WP00/WP01.
+
+Każda pozycja zawiera: stabilne ID, opis zachowania, podsystem i właściciela zadania, zależności, źródło ustalenia, pozytywne/negatywne testy, oczekiwane wyniki, obsługiwane warianty, status implementacji i ostatni wynik dla konkretnego commita. Statusy to: zinwentaryzowane, opisane, zaimplementowane, automatycznie zweryfikowane. Wyłącznie ostatni status oznacza gotowość.
+
+Katalog zawartości powstaje z obu dysków, tabel gry, skryptów i źródeł. Łączy mapy z rejestrem modułów, przejściami, scenami, bankami audio, filmami, przeciwnikami i obiektami. Musi rozróżniać wspólne pliki od różnych wariantów fabularnych tej samej lokacji. Liczby końcowe ustalamy z danych; brakującego modułu nie zastępuje „udany” pusty stub.
+
+Raport pokazuje osobno: pełną kampanię, zawartość dodatkową, każdy podsystem, błędy/awarie, obraz, audio i platformy. Brak testu, fixture’a, danych dysku, wyniku albo nieznana pozycja daje wynik **niezweryfikowane**, a na bramce wydania **FAIL**.
+
+## 4. Kolejność implementacji
+
+| Pakiet | Zależności | Wynik odbioru | Główne testy |
+| --- | --- | --- | --- |
+| WP00 — katalog i kontrakty | Brak | Pełny zakres USA/2 dyski, mapa zależności/API, docelowe platformy, referencje | Spójność katalogów i kompletność mapowania zawartości |
+| WP01 — automatyczny runner | WP00 | Deterministyczny replay, wymagane testy z danymi, raporty i diagnostyka | Obecny boot jako pierwszy przypadek; celowo uszkodzone wyniki muszą być wykryte |
+| WP02 — runtime i dane | WP00, WP01 | Przenośny stan gry, zasoby, moduły, zegar, RNG, inicjalizacja | Parsery, lifetimes, błędy I/O, formaty, powtarzalność stanu |
+| WP03 — scena i prezentacja | WP02 | Pokój z tłem, maską, modelem, kamerą, animacją i audio | Referencyjne sceny renderowania, AKAO/SPU i reset przy przejściu |
+| WP04 — eksploracja i skrypty | WP03 | New Game prowadzi do sterowanej lokacji; działają interakcje i zdarzenia | Skrypty, kolizje, aktorzy, przejścia, dialogi i puzzle |
+| WP05 — pełna walka | WP04 | ATB, PE, AI, statusy, nagrody, zwykłe i specjalne walki | Macierz mechanik i deterministyczne scenariusze bojowe |
+| WP06 — menu, przedmioty i progresja | WP04, WP05 | Wszystkie menu, wyposażenie, rozwój i transakcje | Reguły, granice, podgląd/commit, wejście i UI |
+| WP07 — trwały zapis i odczyt | WP02; pełny odbiór po WP06 | Continue, trwałe ustawienia, atomowy zapis, wznowienie procesu | Round-trip, przerwanie zapisu, migracje, uszkodzenia |
+| WP08 — pierwszy pełny fragment | WP04–WP07 | Eksploracja → dialog → walka → nagroda → zapis → restart → dalsza gra | Replay użytkownika bez ustawiania flag fabularnych przez test |
+| WP09 — cała zawartość | WP08 | Cała kampania, drugi dysk, finał, Tutorial i zawartość dodatkowa | Wszystkie lokacje/sceny/walki/filmy; kampanie od początku do końca |
+| WP10 — jakość PC i warianty | WP08; pełny odbiór po WP09 | Sterowanie, UI, ustawienia, skalowanie i opcjonalne ulepszenia | Macierz urządzeń, FPS/DPI, pauza/fokus, warianty ustawień |
+| WP11 — stabilność i pakowanie | Podstawy od WP01; pełny odbiór po WP09/WP10 | Wydajne, powtarzalne paczki dla wszystkich celów | Sanitizery, fuzzing, soak, GPU/audio, instalacja i aktualizacja |
+| WP12 — bramka pełnego wydania | WP00–WP11 | Wszystkie wymagania mają świeży dowód dla tej samej paczki/commita | Pełna macierz bez braków i pominięć |
+
+Zapis, testy i audio rozwijamy od fundamentów; nie odkładamy ich do końca kampanii. Pierwszy fragment służy do sprawdzenia architektury, nie zmniejsza zakresu pełnego portu. Pakiety otrzymują osobne PR-y o małym zakresie; do każdego dochodzą testy jego zachowania. Nie wyznaczamy dat wydania bez pomiaru kompletności danych, zależności i kosztu integracji w WP00–WP03.
+
+## 5. WP00/WP01 — audyt i testowanie od pierwszego dnia
+
+1. Zinwentaryzować każdy używany symbol/API, dane globalne bez definicji, realny MIPS/GTE, adresy sprzętu, wskaźniki w liczbach i nakładające się symbole. Wynik ma wskazać konkretną implementację i test, nie samą listę tekstowych wystąpień.
+2. Ustalić pełny katalog obu dysków i dostępność materiałów do prywatnych testów. Wybrać pierwszą lokację na podstawie pokrycia eksploracji/skryptów/walki, a nie łatwości zrobienia pustego renderu.
+3. Rozdzielić publiczne fixture’y syntetyczne od prywatnych danych i referencji oryginału. Dokumentować wersję danych i sposób uzyskania każdego oczekiwanego wyniku.
+4. Dodać runner z akcjami typu `start_new_game`, `move`, `interact`, `choose_target`, `use_pe`, `save`, `reload`, wykonywanymi przez normalne interfejsy gry. Sterowanie bazuje na tickach/stanie, bez `SDL_Delay(100)` jako dowodu gotowości.
+5. Dodać checkpointy stanu domenowego: lokacja, progresja, aktorzy, zasoby, skrypty, HP/PE/ATB, przedmioty, wyposażenie, RNG. Usunąć z porównań adresy hosta, padding i dane diagnostyczne.
+6. Dodać rozdzielne tryby: przyspieszona symulacja bez prezentacji, deterministyczny render programowy, render na prawdziwym GPU i realne urządzenie/wyjście audio. Tryb dummy nie jest dowodem poprawności pozostałych trybów.
+7. Każda porażka zapisuje replay, seed, ostatni poprawny tick, oczekiwany/uzyskany stan, stderr, obraz różnic, fragment PCM, profil i konfigurację platformy. Timeout oraz zawieszenie są błędami.
+8. Wymagany job z zasobami kończy się błędem, gdy `PE_TEST_DISC`/drugi dysk są nieobecne albo test zwraca SKIP. Zwykły publiczny build może nadal testować tylko syntetyczne dane, ale jego nazwa i status nie mogą oznaczać „pełna gra działa”.
+9. Wzmocnić istniejący boot: pełne przejście intro → menu, wszystkie klawisze i ścieżki wyjścia, uszkodzony dysk, brak pamięci/dekodera/urządzenia, anulowanie przy pustej/pełnej kolejce, obrazy i rzeczywisty sygnał audio. Nie skupiać dalszego portowania wyłącznie na tym module.
+
+**Odbiór:** ten sam replay jest powtarzalny; kontrolowane zepsucie obrazu, audio, stanu, kolejki i wyniku kampanii powoduje FAIL. Brak danych nie daje pozornego PASS. Wszystkie kolejne pakiety używają tego samego systemu dowodów.
+
+## 6. WP02/WP03 — fundament pełnej gry
+
+**Runtime i dane:** podział stanu na sesję, pokój, aktorów i zadania; jawna inicjalizacja/reset; uchwyty zamiast adresów PS1; brak globalnych aliasów pamięci między pokojami. Rejestr natywnych entry pointów zastępuje wykonywalne overlaye. Portujemy semantykę `Boot_InitGameState`, inicjalizacji podsystemów i `Boot_RunFrame`, bez konsolowego start-upu i zmiany scratchpad-stack.
+
+**Ładowanie:** katalog dysków i PE.IMG, rekordy pokojów/scen, TIM, geometria/model/animacja, skrypty, AKAO i próbki. Przenosimy wymagane stałe/tabele przez kontrolowane dekodowanie danych, nie przez zależność od PS1 linkera. Czytnik obsługuje zamknięcie, anulowanie, ponowienie i reset żądania. Brak/podmiana dysku nie może zostawić częściowo gotowej sceny.
+
+**Grafika:** ordering tables i pakiety mają typy PsyZ/hosta; tła, maski zasłaniania, modele, skóra/kości, tekstury, CLUT, tekst, transparencja, mieszanie, cienie i efekty dostają mikrotesty oraz referencyjne sceny. Oddzielamy współrzędne logiczne od renderowania i DPI. Nie używamy zgodności zrzutu pochodzącego z tego samego wadliwego renderera jako jedynego wzorca.
+
+**Audio:** cała ścieżka AKAO/SPU, nie tylko XA. Sekwencer, banki, wysokość dźwięku, obwiednie, panning, reverb, muzyka i efekty, dialog/FMV tam gdzie występują, przejścia i nakładanie kanałów. Synchronizacja ma wspólny kontrakt czasu; brak urządzenia, zmiana formatu i restart wyjścia są kontrolowanymi stanami.
+
+**Odbiór:** wybrany rzeczywisty pokój ładuje wszystkie potrzebne dane i pokazuje oryginalną scenę z aktorami oraz audio. Kolejne wejście po wyjściu nie przenosi nieprawidłowego stanu. Testy wykrywają brakujące dane/moduły, błędy masek, zgubione kanały i niewłaściwą kolejność zdarzeń.
+
+## 7. WP04 — eksploracja, fabuła i skrypty
+
+Portujemy podsystemy `scene`, `field`, `entity`, `anim`, `script`, `pm`, `text` i ich wymagane zależności. Każda instrukcja skryptowa ma test argumentów, efektu, warunku zakończenia i błędnych danych. System tekstu dekoduje oryginalne banki, podstawienia i kody sterujące; testy sprawdzają pełną treść, wybory, zawijanie, czas wyświetlania i granice buforów. Zadania, callbacki i skrypty muszą wracać do oczekiwania/zakończenia w kontrolowany sposób, zamiast wisieć na pętli konsolowej.
+
+Testy obejmują: ruch i bieg, kolizje i krawędzie, schody/wysokości, kamerę i przejście jej granicy, interakcje, rozmowy, wybory dialogowe, przedmioty/klucze, drzwi, flagi fabuły, puzzle, cutsceny, pojawianie/usuwanie aktorów, zdarzenia czasowe oraz powrót do już odwiedzonych lokacji. Katalog wylicza wszystkie odmiany pokojów wynikające z progresji.
+
+**Odbiór:** New Game przez normalny boot uruchamia sterowaną grę. Replay doprowadza do określonego zdarzenia fabularnego, a checkpointy potwierdzają stan, widocznych aktorów i poprawne odblokowanie przejść. Test nie ustawia bezpośrednio flag, które ma wytworzyć rozgrywka.
+
+## 8. WP05 — wszystkie reguły walki
+
+Portujemy `battle`, `aya`, bojowe `item`, AI aktorów, interakcje z animacją, kolizją, skryptami i efektami. Model walki ma jawne stany wejścia, ATB, wyboru, kosztu, wykonania, trafienia, reakcji, nagrody i wyjścia.
+
+Macierz testów obejmuje każdą klasę ataku/broni, celowanie/zasięg, amunicję/przeładowanie, obrażenia i obronę, trafienie/chybienie/krytyczne trafienie, statusy i odporności, umiejętności PE i koszty, przedmioty, leczenie, śmierć/wskrzeszenie gdzie mechanika na to pozwala, ucieczkę, game over, doświadczenie/poziomy/BP i nagrody. Spis mechanik pochodzi z kodu i danych; nie kończy się na „jednej zwykłej walce”.
+
+Każdy przeciwnik i boss ma test sekwencji zachowania: warunki wyboru AI, fazy, przejścia, ataki, skutki i zakończenie. Specjalne/starcia fabularne mają scenariusze z oryginalnymi ograniczeniami. Testujemy konfiguracje graniczne: zero/jeden/maksimum zasobu, ostatni przeciwnik, jednoczesne zdarzenia, zmiana statusu w trakcie akcji i przerwanie animacji.
+
+**Odbiór:** wyniki liczbowe i kolejność zdarzeń zgadzają się z udokumentowanymi regułami/referencją; każdy element katalogu walk jest wykonywany automatycznie. Identyczne akcje i seed dają ten sam wynik przy różnych FPS renderowania.
+
+## 9. WP06/WP07 — pełne menu, progresja i trwałość
+
+**Menu i przedmioty:** wszystkie ekrany, opis/przewijanie tekstu, wyposażenie, właściwości broni/pancerza, użycie/wyrzucenie/przenoszenie, magazyn, klucze, parametry i rozwój, operacje narzędziami oraz modyfikacje. Utrzymujemy spójne identyfikatory i referencje po zmianach listy. Każda transakcja ma walidację warunków, koszt i jednoznaczny wynik; anulowanie nie zmienia stanu.
+
+**Zapis:** wersjonowany format stanu domenowego i osobny format ustawień. Zapis do pliku tymczasowego, trwałe zakończenie zapisu i atomowa podmiana z kopią poprzedniej wersji. Testy zabijają osobny proces na każdym etapie zapisu, następnie rzeczywisty restart ma odczytać ostatni kompletny stan. Bez miejsca/bez uprawnień/błędna ścieżka/uszkodzony plik/nieznana wersja dają kontrolowany wynik.
+
+**Wznowienie:** Continue z procesu uruchomionego od zera; stan pokoju, progresji, ekwipunku, wyposażenia, czasu i RNG zgodny z kontraktem. Migracje testowane fixture’ami wszystkich opublikowanych wersji. Import kart PS1 należy do pełnego zakresu zgodności danych i wymaga własnych testów; zapis PC nie jest zrzutem karty ani RAM.
+
+**Odbiór:** każda operacja menu ma pozytywny test, test odrzucenia i anulowania. Zapis/odczyt odtwarza wszystkie pola kontraktu oraz pozwala kontynuować kampanię bez resetu progresji. Nieudany zapis nie niszczy poprzedniego. Tutorial i Continue uruchamiają właściwe ścieżki zamiast kończyć aplikację.
+
+## 10. WP08/WP09 — cała gra, oba dyski, zawartość dodatkowa
+
+Najpierw zamykamy krótki kompletny fragment: boot → New Game → eksploracja → fabuła/dialog → walka/PE → nagroda/przedmiot → menu → zapis → zamknięcie procesu → Continue → następna lokacja. To test całego przepływu i serializacji, nie demo renderera.
+
+Następnie integrujemy zawartość według grafu zależności fabuły, pokojów i zasobów. Każda mapa/scena/odmiana z katalogu dostaje: wejście, obraz i dźwięk, wykonanie zdarzenia/skryptu, wyjście oraz reset. Dotyczy to także lokacji opcjonalnych i ponownie odwiedzanych. Każdy film i każdy bank/sekwencja muzyczna ma automatyczny test poprawności oraz test osadzenia w odpowiednim zdarzeniu gry.
+
+Wymagane rodziny kampanii:
+
+| Trasa | Dowód końcowy |
+| --- | --- |
+| New Game → wszystkie dni fabuły → zakończenie | Prawidłowa progresja, bossowie, przejście obu dysków, zakończenie/napisy i stan końcowy |
+| Kampania z zapisami i restartami | Osobne procesy, prawdziwe Continue, ten sam dalszy przebieg |
+| Warianty wyborów, opcjonalnych lokacji i przedmiotów | Wszystkie zinwentaryzowane gałęzie mają scenariusz; nie tylko jedna optymalna ścieżka |
+| Tutorial | Pełne ukończenie i powrót do właściwego stanu |
+| New Game+/EX Game i zawartość dodatkowa, w tym Chrysler Building | Odblokowanie przez normalną progresję, pełne przejście i właściwe zakończenie |
+| Śmierć/game over/ponowienie | Właściwe menu i czysty reset; nieprzenoszenie stanu poprzedniej próby |
+| Zmiana dysku | Poprawny dysk, zły dysk, brak dysku, anulowanie i ponowienie; zachowanie sesji/zapisu |
+
+Bazowa kampania zaczyna się z czystych danych użytkownika i używa prawdziwych akcji przez cały przebieg. Testy wariantów mogą startować z wcześniej wygenerowanych checkpointów, których pochodzenie i wersja są zapisane; same checkpointy nie zastępują testu kampanii od początku. Przyspieszone przejście nie może omijać warunków skryptów, kosztów akcji ani flag. Osobno sprawdzamy nieprzyspieszone przejścia czasowe i prezentację.
+
+**Odbiór:** pełny katalog zawartości jest domknięty i automatycznie wykonywany. Obydwa dyski, kampanie i tryby dodatkowe przechodzą od początku do końca. Żadne „nieznane ID” ani brak natywnej implementacji nie wracają sukcesem.
+
+## 11. WP10 — jakość PC i opcjonalne ulepszenia
+
+Mapowanie akcji zamiast bitów pada; klawiatura/mysz/pad, przypisania klawiszy, deadzone, repeat, hotplug, fokus, podpowiedzi urządzenia. Mysz wybiera wyłącznie legalne cele i respektuje ATB/koszty. Obsługujemy pauzę, zmianę rozmiaru, fullscreen, DPI, wiele monitorów i utratę urządzenia audio.
+
+Interfejs: skalowanie tekstu/UI, porównanie wyposażenia, podgląd skutków modyfikacji, sortowanie/filtry, blokada ważnych przedmiotów i szybsze przenoszenie. Automatyczne testy sprawdzają zarówno nawigację, jak i skutek domenowy; obraz ładnego menu nie wystarcza.
+
+Autosave w bezpiecznych punktach, rotacja kopii, suspend/resume ze zdefiniowanego stanu, historia dialogów i pomijanie już obejrzanych scen mają osobne wymagania oraz testy wszystkich skutków ubocznych. Historia/skip nie pomijają progresji fabuły. Odtwarzanie zapisów po zmianie konfiguracji pozostaje poprawne.
+
+Renderowanie 60/120+ Hz i interpolacja nie zmieniają symulacji; reset interpolacji przy teleportacji, zmianie kamery i lokacji. Najpierw pełne 4:3. Panorama wymaga testów wszystkich teł, masek i scen; lokacje bez danych poza oryginalnym kadrem zachowują poprawny kadr. Ulepszenia obrazu, tempa i balansu są konfiguracją, a bazowy tryb pozostaje w pełni testowany.
+
+**Odbiór:** wszystkie funkcje działają na całej zawartości, a wyłączone ulepszenia przywracają zachowanie bazowe. Testy obejmują każdą opcję i konflikty pomiędzy opcjami; kombinacje niezależnych ustawień pokrywa macierz par, a kombinacje wpływające na reguły gry mają pełne scenariusze.
+
+## 12. Macierz automatycznych testów
+
+Każdy prefiks poniżej jest rodziną wymagań. W WP00 nadajemy ID konkretnym instancjom: instrukcji, przedmiotowi, bossowi, pokojowi, filmowi i operacji. Ta tabela jest planem, nie deklaracją istniejącego pokrycia.
+
+| ID | Zakres | Automatyczny dowód |
+| --- | --- | --- |
+| DATA | Oba dyski, ISO/BIN, PE.IMG, wszystkie dekodowane formaty | Syntetyczne i rzeczywiste fixture’y; granice, endianowość, obcięcia, złe offsety i wersje |
+| CORE | Inicjalizacja, RNG, zegar, alokacje, uchwyty, rejestr modułów | Powtarzalność, reset, utrata zasobu, błędne ID i lifetime |
+| WORLD | Każda lokacja, wariant i przejście | Replay wejście/zdarzenie/wyjście; stan aktorów, kolizji, kamery, obrazu i audio |
+| SCRIPT | Każda instrukcja, proces i zdarzenie fabularne | Efekt, kolejność, oczekiwanie, zakończenie, błąd; brak zawieszeń |
+| COMBAT | Każda mechanika, PE, klasa broni, status, AI i boss | Wyliczenia, stany graniczne, kolejność akcji, nagrody i wyjście z walki |
+| ITEM | Każda kategoria przedmiotów i operacja | Zachowanie identyfikatorów, koszty, pojemność, warunki, commit/anulowanie |
+| TEXT | Wszystkie banki tekstowe, glyphy, podstawienia i kody sterujące | Dekodowanie i layout, pełne dialogi/wybory, brak ucięcia lub przekroczenia bufora |
+| UI | Wszystkie menu, dialogi, Tutorial i wybór celu | Akcje wejścia → stan domenowy; zrzuty/maski referencyjne i czytelne skalowanie |
+| SAVE | Każdy stan zapisywany i wersja formatu | Round-trip i realny restart; przerwania, migracje i uszkodzenia |
+| AUDIO | AKAO, SPU, każdy bank/utwór/efekt i XA | Zdarzenia muzyczne, PCM, obwiednia, kanały, panning, miks i ciągłość |
+| VIDEO | Każdy FMV, skala i przejście | Klatki, kolejność, paleta/range, proporcje, PCM, zegary, koniec/skip/anulowanie |
+| INPUT | Wszystkie akcje i urządzenia | Zmapowane wejścia, repeat, hold/release, fokus, hotplug i utrata urządzenia |
+| FLOW | Wszystkie kampanie i warianty progresji | Replay od startu, checkpointy po każdym istotnym zdarzeniu, prawidłowe zakończenie |
+| FAULT | Błędy I/O, pamięci, dekodera i urządzeń | Wstrzykiwanie błędu na każdej granicy; kontrolowany wynik i zachowana sesja/zapis |
+| PLATFORM | Każda wspierana kombinacja OS/backend/sprzęt | Prawdziwy render/wyjście audio, urządzenia, paczka, instalacja i aktualizacja |
+| SOAK | Długie sesje, powroty, wielokrotne boot/zmiana pokoju | Limity pamięci/uchwytów/kolejek, brak wycieków, deadlocków i narastającego opóźnienia |
+
+## 13. Wyrocznie i mierzalne kryteria
+
+Testy nie mogą opierać się wyłącznie na wyniku wygenerowanym przez testowaną implementację. Reguły liczbowe i formaty mają niezależne fixture’y i ręcznie opisane wartości graniczne. Referencje obrazu/audio/zdarzeń oryginału zbieramy kontrolowanym replayem z własnych danych gry; przechowujemy metadane urządzenia, konfiguracji, wejść i czasu. PS1/emulator może być źródłem referencji offline, nigdy runtime portu.
+
+| Obszar | Warunek odbioru |
+| --- | --- |
+| Stan i logika | Dokładny wynik dla deterministycznej arytmetyki, zdarzeń i ID; identyczny kanoniczny stan po tym samym replayu przy różnych FPS |
+| Obraz programowy | Referencyjne sceny i assety; dokładny wynik, gdy pipeline jest deterministyczny; błędy maski/kolejności/obiektu zawsze FAIL |
+| Obraz GPU | Progi per scena/obszar skalibrowane wobec referencji przed zmianą renderera; raport różnic, nie jeden globalny średni próg ukrywający brak obiektu |
+| Audio | Poprawna lista zdarzeń, kanały, brak utraconych bloków/underrunów; porównanie wyrównanego PCM i cech dla ustalonego DSP/resamplera; cisza lub zgubiona ścieżka zawsze FAIL |
+| Synchronizacja FMV | Różnica zegarów audio/wideo na całym przebiegu najwyżej jedna źródłowa klatka; sama długość plików nie jest testem synchronizacji |
+| Pamięć/wątki | Zero raportów własnego kodu ASan/UBSan i TSan w obsługiwanych konfiguracjach; osobne uruchomienia TSan oraz ASan |
+| Powtarzalność | 100 kolejnych identycznych replayów runnera bez zmiany wyniku i bez automatycznego retry zamieniającego porażkę w PASS |
+| Pokrycie | 100% pozycji katalogu ma test i świeży wynik; wszystkie osiągalne gałęzie własnego rdzenia/serializacji/parserów testowane; kod vendorów nie inflatuje wyniku |
+| Skuteczność testów | Mutacje kluczowych reguł, flag, kosztów, zapisu i renderowania muszą być wykryte; samo wykonanie linii nie dowodzi asercji |
+| Stabilność | 1000 cykli ładowania/wyjścia/odczytu zapisu i minimum 8 h soak na referencyjnych konfiguracjach; brak wzrostu żywych zasobów po rozgrzaniu cache |
+| Wydajność | Docelowy FPS i budżet p99 czasu klatki/I/O/pamięci przypisane do jawnej konfiguracji w WP00/WP03; brak zmiany symulacji przy spadku FPS |
+
+Progi jakości obrazu i audio zapisujemy w katalogu. Zmiana progu musi opisywać rzeczywisty powód i wpływ; nie jest sposobem naprawienia czerwonego testu. Zależności i baseline’y są wersjonowane, a aktualizacja SDL/PsyZ/FFmpeg uruchamia pełne testy obszaru i paczki.
+
+Fuzzing obejmuje parsery, save, skrypty, offsety, rekordy animacji/modeli i sekwencje operacji menu. Wygenerowany crash staje się stałym testem regresyjnym. Testy własności/modelowe sprawdzają zachowanie zasobów, dozwolone przejścia i transakcje dla wielu seedów. Analiza statyczna oraz ostrzeżenia kompilatorów uzupełniają testy wykonywalne.
+
+## 14. CI, sprzęt i wydanie
+
+| Poziom | Co uruchamia | Polityka wyniku |
+| --- | --- | --- |
+| Publiczny PR | Windows/macOS/Linux build, unit, parsery syntetyczne, analiza i wybrane sanitizery | Potwierdza tylko zakres bez danych gry; zero ukrytych błędów i ostrzeżeń własnego kodu |
+| Wymagany prywatny job dla zmiany | Dane obu dysków, scenariusze dotkniętych funkcji, pierwsza kompletna trasa i boot | Brak danych/runnera, timeout, SKIP lub zaległy wynik oznacza brak gotowości |
+| Pełny nightly | Wszystkie katalogi, gałęzie kampanii, sceny, audio, fuzz/property i soak rotacyjnie | Wynik przypisany do commita; awarie tworzą konkretny replay do naprawy |
+| Realne GPU/audio | Każdy wspierany backend i reprezentatywne klasy sprzętu z `platforms.json` | Dummy nie zastępuje GPU; PCM przed urządzeniem nie zastępuje testu wyjścia/loopback |
+| Kandydat wydania | Cała macierz dla dokładnie tej paczki i kodu, bez pominięć; instalacja na czystych systemach | Wydanie blokowane do czasu pełnego PASS |
+
+Stan projektu nie może nazywać się „wszystko działa”, gdy ostatni pełny job jest czerwony albo nie obejmuje bieżącego commita. Dla PR można wybierać testy według jawnej mapy zależności; nieznany wpływ wymaga rozszerzenia zakresu. Aktualizacje wspólnego stanu, I/O, zapisu, czasu i rejestru modułów wymagają kampanii, nie tylko unit tests.
+
+Na maszynach sprzętowych automatyzujemy start procesu, akcje urządzeń, capture obrazu/loopback audio, resize/fullscreen, odłączenie i powrót kontrolera/audio, suspend/resume systemu i raport. Artefakty prywatne zawierające dane gry nie są publikowane. Ręczne ogranie może dostarczać nowej informacji, ale nie zastępuje żadnego obowiązkowego automatycznego testu.
+
+Paczka nie potrzebuje kompilatora, Pythona, repo ani narzędzi deweloperskich. Testy sprawdzają zależności SDL/FFmpeg, ścieżki ze spacjami/Unicode, wybór obu dysków, pierwsze uruchomienie, katalog użytkownika, read-only instalację, aktualizację i zgodność zapisów. Każda platforma otrzymuje własny artefakt i dowód z czystego systemu.
+
+## 15. Najbliższe PR-y
+
+| Kolejność | Konkretna zmiana | Dowód przed przejściem dalej |
+| --- | --- | --- |
+| PR01 | Katalog pełnej gry/2 dysków, mapa brakujących danych/API i zakres platform | Każda znana funkcja ma ID i zaplanowany test; nieznane obszary widoczne jako blokady |
+| PR02 | Runner ticków/RNG/replay, checkpointy stanu i wymagane testy prywatne | Boot powtarzalny bez sleeps; brak danych i celowe regresje dają FAIL |
+| PR03 | Rozdział aplikacji, game_core i platformy; stan sesji i rejestr modułów | New Game/Tutorial prowadzą do rzeczywistego dispatchera, reset ma testy |
+| PR04 | Asset manager, formaty i loader pierwszego pokoju | Prawdziwe dane, wszystkie zależności, testy błędnych rekordów i anulowania |
+| PR05 | Renderer pierwszej sceny oraz początkowa integracja AKAO/SPU | Tło + maski + model + kamera + animacja + audio zgodne z referencją |
+| PR06 | Skrypty, eksploracja, interakcje i pierwsze zdarzenia fabularne | Replay ruchu/dialogu/przejścia bez bezpośredniej manipulacji progresją |
+| PR07 | Pierwsza kompletna walka i menu przedmiotów | ATB, koszt, trafienie, PE, nagroda i wyjście potwierdzone stanem |
+| PR08 | Zapis i Continue; pierwszy fragment od startu do restartu | Drugi proces kontynuuje prawidłowy stan; fault tests zapisu przechodzą |
+
+To początek pełnego planu WP00–WP12, nie zakres końcowego wydania. Kolejne PR-y zamykają resztę mechanik i katalogów, całą kampanię, drugi dysk oraz dodatkowe tryby.
+
+## 16. Ostateczna definicja ukończenia
+
+1. New Game, Continue i Tutorial uruchamiają i kończą właściwe ścieżki; pełna kampania obu dysków oraz zawartość dodatkowa są grywalne od początku do końca.
+2. Wszystkie lokacje, sceny, przeciwnicy/bossowie, mechaniki, przedmioty, menu, filmy i audio mają działającą implementację i automatyczny scenariusz z asercjami.
+3. Zapis/odczyt i ustawienia są trwałe, wersjonowane i odporne na testowane przerwania; migracje oraz import PS1 przechodzą macierz.
+4. Sterowanie i prezentacja są poprawne na wszystkich zadeklarowanych platformach i urządzeniach, przy pełnej macierzy ustawień.
+5. Pełne replaye mają prawidłowe wyniki i progresję; testy obrazu/audio mierzą rzeczywisty rezultat, nie tylko długość plików i wyjście procesu.
+6. Cały wymagany CI, testy z danymi, hardware, sanitizer/fuzz/soak oraz testy paczek przechodzą dla tego samego kandydata. Zero pominiętych wymaganych testów, brakujących ID i znanych blokujących defektów.
+7. Raport i dokumentacja odpowiadają faktycznemu zakresowi; żaden kod tylko deklarujący sukces nie zastępuje funkcji gry.
+
+Ukończenie tego dokumentu oznacza gotowy plan implementacji. Nie oznacza, że pełny port albo opisane testy już istnieją.
+
+## Źródła techniczne do implementacji bramek
+
+Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.
+
+[CTest SKIP_RETURN_CODE](https://cmake.org/cmake/help/latest/prop_test/SKIP_RETURN_CODE.html) opisuje istniejące pomijanie testu kodem 77. Docelowa bramka wymaganego zakresu musi je traktować jako brak dowodu. [AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html) służy do wykrywania błędów pamięci, a [ThreadSanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html) do wykrywania wyścigów; wybieramy obsługiwane przez narzędzie konfiguracje zamiast deklarować jeden identyczny tryb na wszystkich systemach.

@@ -37,3 +37,8 @@ native architecture and behavior; they need no PS1 binary validation.
 See [architecture](docs/ARCHITECTURE.md), [conventions](docs/CONVENTIONS.md),
 [code organization](docs/CODE_ORGANIZATION.md) and
 [the port plan](docs/PC_PORT_PLAN.md).
+
+The full implementation roadmap and required automated acceptance evidence
+are defined in [the port plan](docs/PC_PORT_PLAN.md). Feature completion requires
+behavior assertions and a result for the affected content/platforms; a skipped
+asset test or a passing source-only build cannot establish full-game readiness.

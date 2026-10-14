@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Background draw lists now apply enabled/group filtering, original halfword
+offsets and modulus wrapping, screen clipping and ordering-table depth limits.
+The initial-camera audit produces 180,717 draw tiles. All 35 headless tests
+and ASan/UBSan background fixtures/full native audit pass, including atomic
+capacity/modulus failures. GPU packet linking, shading/fades, background
+animation and reference rendering remain pending.
+
 Background geometry now decodes checked entry-relative tile arrays, packed
 positions, UVs, CLUT/page values and transparency. Scenes retain a borrowed
 view into owned room data. The Disc 1 audit reads all 4,511 entries and

@@ -132,6 +132,7 @@ int main(void) {
     uint64_t model_world_vertices=0;
     unsigned camera_groups=0;
     uint64_t background_entries=0,background_tiles=0;
+    uint64_t background_draw_tiles=0;
     unsigned animation_streams=0,animation_short=0;
     uint64_t animation_frames=0,animation_matrices=0;
     uint64_t animated_pose_matrices=0;unsigned paired_streams=0,missing_roots=0,incompatible_streams=0;
@@ -154,15 +155,21 @@ int main(void) {
         PeCameraBank camera_bank;PeCamera room_camera;
         CHECK(pe_room_cameras(&room,&camera_bank));camera_groups+=camera_bank.count;
         PeBackground background;CHECK(pe_background_open(&camera_bank,&background));background_entries+=background.count;
+        unsigned draw_capacity=0;
         for(unsigned i=0;i<background.count;++i){PeBackgroundEntry entry;CHECK(pe_background_entry(&background,i,&entry));
+            draw_capacity+=entry.tiles;
             for(unsigned tile=0;tile<entry.tiles;++tile){PeBackgroundTile decoded;CHECK(pe_background_tile(&background,i,tile,&decoded));++background_tiles;}}
+        PeBackgroundDrawTile *draw_tiles=draw_capacity?malloc((size_t)draw_capacity*sizeof(*draw_tiles)):NULL;CHECK(draw_tiles||!draw_capacity);
         for(unsigned group=0;group<camera_bank.count;++group){
             CHECK(pe_camera_group(&camera_bank,group,&room_camera));
             PeCameraScroll scroll;pe_camera_scroll_init(&camera_bank,&room_camera,&scroll);
             CHECK(scroll.position[0]==scroll.origin[0]&&scroll.position[1]==scroll.origin[1]);
             CHECK(scroll.bounds[0]==room_camera.min_x&&scroll.bounds[3]==room_camera.max_y);
+            unsigned count=0;CHECK(pe_background_draw_tiles(&background,group,scroll.display,draw_tiles,draw_capacity,&count));
+            background_draw_tiles+=count;
         }
         CHECK(pe_camera_group(&camera_bank,0,&room_camera));
+        free(draw_tiles);
         PeProjection room_projection={160u<<16,112u<<16,0,room_camera.distance,0};
         PeRoomBanks model_banks; char bank_error[256];
         if (!pe_room_banks(&room, &model_banks, bank_error, sizeof(bank_error))) {
@@ -442,6 +449,7 @@ int main(void) {
     printf("Model neutral-input world vertices transformed: %llu; projection/rendering pending\n",(unsigned long long)model_world_vertices);
     printf("Room camera groups decoded: %u; first-camera model projections checked; scrolling/reference rendering pending\n",camera_groups);
     printf("Background geometry: %llu entries, %llu tiles decoded; packets/rendered images pending\n",(unsigned long long)background_entries,(unsigned long long)background_tiles);
+    printf("Initial-camera background draw tiles: %llu across all groups; GPU/reference images pending\n",(unsigned long long)background_draw_tiles);
     pe_collision_close(&room_collision);
     printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
            (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);

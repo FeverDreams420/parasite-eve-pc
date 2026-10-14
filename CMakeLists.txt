@@ -157,3 +157,15 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-contact PRIVATE psyz)
     add_test(NAME original-game-contact COMMAND test-original-contact)
 endif()
+
+add_library(parasite-eve-original-movement OBJECT src/main/entity/movement.c)
+target_include_directories(parasite-eve-original-movement PRIVATE include)
+if(BUILD_TESTING)
+    add_executable(test-original-movement tests/original_movement.c
+        $<TARGET_OBJECTS:parasite-eve-original>
+        $<TARGET_OBJECTS:parasite-eve-original-queue>
+        $<TARGET_OBJECTS:parasite-eve-original-movement>)
+    target_include_directories(test-original-movement PRIVATE include)
+    target_link_libraries(test-original-movement PRIVATE psyz)
+    add_test(NAME original-game-movement COMMAND test-original-movement)
+endif()

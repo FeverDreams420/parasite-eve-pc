@@ -14,8 +14,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(DRAWENV, r0) == 0x19, menu_background_drawenv_rgb
 void Menu_SaveBgApplyFadeStep(void);
 
 
-int Menu_SaveBgIsFadeActive(void);
-void Menu_SaveBgAdvanceFade(void);
+
+
 
 /* Geometry OT depth byte (0x800BD024, outside the gp window); the
  * incomplete array keeps -G8 units from treating it as small data. */

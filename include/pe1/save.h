@@ -67,13 +67,13 @@ typedef struct SaveSjisFormatArguments {
     SaveSjisFormatArgument secondary;
 } SaveSjisFormatArguments;
 
-PE1_STATIC_ASSERT(sizeof(SaveSjisFormatArgument) == 4,
+PE1_STATIC_ASSERT(sizeof(SaveSjisFormatArgument) == sizeof(void *),
                   save_sjis_format_argument_size);
-PE1_STATIC_ASSERT(sizeof(SaveSjisFormatArguments) == 0x18,
+PE1_STATIC_ASSERT(sizeof(SaveSjisFormatArguments) == 0x10 + 2 * sizeof(SaveSjisFormatArgument),
                   save_sjis_format_arguments_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(SaveSjisFormatArguments, primary) == 0x10,
                   save_sjis_primary_argument_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(SaveSjisFormatArguments, secondary) == 0x14,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(SaveSjisFormatArguments, secondary) == 0x10 + sizeof(SaveSjisFormatArgument),
                   save_sjis_secondary_argument_offset);
 
 extern SaveSjisFormatArguments g_SaveSjisFormatArguments;

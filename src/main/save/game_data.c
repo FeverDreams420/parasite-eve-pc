@@ -1,23 +1,23 @@
 #include "common.h"
+#include <string.h>
+#include "pe1/asset_table.h"
 #include "pe1/aya.h"
+#include "pe1/battle_cmd.h"
 #include "pe1/draw_state.h"
-#include "pe1/draw_wipe_rect.h"
 #include "pe1/game_state.h"
 #include "pe1/game_timers.h"
 #include "pe1/inventory_category.h"
 #include "pe1/inventory_slots.h"
 #include "pe1/inventory_state.h"
+#include "pe1/menu_fade_state.h"
 #include "pe1/memcard.h"
-#include "pe1/menu_background.h"
 #include "pe1/menu_inventory.h"
 #include "pe1/menu_queue.h"
 #include "pe1/menu_sound.h"
 #include "pe1/menu_state.h"
 #include "pe1/menu_widget.h"
-#include "pe1/psyq_bios.h"
 #include "pe1/save.h"
 #include "pe1/scene_dispatch.h"
-#include "pe1/scene_room.h"
 #include "pe1/text.h"
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
@@ -181,10 +181,10 @@ unsigned char *Save_GetMetadataCursor(void) {
 char *Save_GetActiveMetadataBuffer(void) {
     char *buffer;
 
-    buffer = g_SaveRuntimeState.windows.metadata[0].text;
+    buffer = (char *)g_SaveRuntimeState.windows.metadata[0].text;
 
     if (g_SaveMetadataWindowIndex != 0) {
-        buffer = g_SaveRuntimeState.windows.metadata[1].text;
+        buffer = (char *)g_SaveRuntimeState.windows.metadata[1].text;
     }
 
     return buffer;
@@ -732,7 +732,7 @@ static inline void InitName(u8 *buffer, int length, ItemDataRecord *item) {
 }
 
 void Save_InitMetadataState(void) {
-    bzero(&g_SaveRuntimeState, sizeof(g_SaveRuntimeState));
+    memset(&g_SaveRuntimeState, 0, sizeof(g_SaveRuntimeState));
     /* Retail initializes the same window twice, including both lookups. */
     InitName(g_SaveRuntimeState.windows.metadata[1].text, 8, 0);
     InitName(g_SaveRuntimeState.windows.metadata[1].text, 8, 0);
@@ -756,7 +756,7 @@ int Save_GetCurrentMapNumber(void) {
     char roomName[8];
 
     Text_EncodeBase32(roomName, g_SceneDispatchToken);
-    return Text_ParseMapNumber(roomName);
+    return Text_ParseMapNumber((signed char *)roomName);
 }
 
 void Menu_InitScrollDirection(void) {
@@ -813,4 +813,259 @@ void Inv_InitMaxLevelInventory(s32 arg0) {
         category += 1;
     } while (category < 7);
     Battle_SyncEquipSlots();
+}
+
+int Aya_StatBinarySearch(int value, int *table) {
+    int step;
+    int index;
+    int result;
+
+    index = 0x40;
+    step = 0x20;
+
+    while (step != 0) {
+        if (value >= table[index]) {
+            index += step;
+        } else if (value < table[index - 1]) {
+            index -= step;
+        } else {
+            step = 0;
+        }
+        step >>= 1;
+    }
+
+    index--;
+    result = 0x62;
+    if (index < 0x63) {
+        result = index;
+    }
+
+    return result;
+}
+
+static inline int InterpolateSubLevel(int value, int *cursor) {
+    int current_reg;
+    int next_reg;
+    int delta_reg;
+    int numerator_reg;
+    next_reg = cursor[1];
+    current_reg = cursor[0];
+    if (next_reg != current_reg) {
+        delta_reg = (s32)((u32)value - (u32)current_reg);
+        numerator_reg = (s32)((u32)delta_reg * 49u);
+        return numerator_reg / (next_reg - current_reg);
+    }
+    return 0;
+}
+
+void Aya_StatQueryLevelAndSubLevel(int kind, int value, int *level_out, int *sublevel_out) {
+    int saved_value;
+    int *level_ptr;
+    int *sublevel_ptr;
+    int *table;
+    int index;
+    int step;
+    int *loop_cursor;
+    int *cursor;
+    int sublevel;
+
+    saved_value = value;
+    level_ptr = level_out;
+    sublevel_ptr = sublevel_out;
+    table = Aya_GetStatGrowthTable(kind);
+
+    index = 0x40;
+    step = 0x20;
+    do {
+        loop_cursor = table + index;
+        if (saved_value >= loop_cursor[0]) {
+            index += step;
+        } else if (saved_value < loop_cursor[-1]) {
+            index -= step;
+        } else {
+            step = 0;
+        }
+        step >>= 1;
+    } while (step != 0);
+
+    index--;
+    step = 0x62;
+    if (index < 0x63) {
+        step = index;
+    }
+    index = step;
+
+    if (index < 0x62) {
+        cursor = table + index;
+        sublevel = InterpolateSubLevel(saved_value, cursor);
+    } else {
+        sublevel = 0;
+    }
+
+    if (sublevel >= 0x31) {
+        sublevel = 0x30;
+    }
+
+    if (level_ptr != 0) {
+        *level_ptr = index;
+    }
+    if (sublevel_ptr != 0) {
+        if (index < 0x62) {
+            *sublevel_ptr = sublevel;
+        } else {
+            *sublevel_ptr = 0x30;
+        }
+    }
+}
+
+void Aya_StatQueryDistanceAndSubLevel(int kind, int value, int *distance_out, int *sublevel_out) {
+    int saved_value;
+    int *distance_ptr;
+    int *sublevel_ptr;
+    int *table;
+    int index;
+    int step;
+    int *loop_cursor;
+    int *cursor;
+    int sublevel;
+    int distance;
+
+    saved_value = value;
+    distance_ptr = distance_out;
+    sublevel_ptr = sublevel_out;
+    table = Aya_GetStatGrowthTable(kind);
+
+    index = 0x40;
+    step = 0x20;
+    do {
+        loop_cursor = table + index;
+        if (saved_value >= loop_cursor[0]) {
+            index += step;
+        } else if (saved_value < loop_cursor[-1]) {
+            index -= step;
+        } else {
+            step = 0;
+        }
+        step >>= 1;
+    } while (step != 0);
+
+    index--;
+    step = 0x62;
+    if (index < 0x63) {
+        step = index;
+    }
+    index = step;
+
+    if (index < 0x62) {
+        cursor = table + index;
+        distance = cursor[1] - saved_value;
+    } else {
+        distance = 0;
+    }
+
+    if (index < 0x62) {
+        cursor = table + index;
+        sublevel = InterpolateSubLevel(saved_value, cursor);
+    } else {
+        sublevel = 0;
+    }
+
+    if (distance_ptr != 0) {
+        *distance_ptr = distance;
+    }
+    if (sublevel_ptr != 0) {
+        if (index < 0x62) {
+            *sublevel_ptr = sublevel;
+        } else {
+            *sublevel_ptr = 0x30;
+        }
+    }
+}
+
+int Aya_StatOverflowQuery(int arg0, int value) {
+    int *table;
+    int step;
+    int index;
+    int result;
+
+    table = Aya_GetStatGrowthTable(arg0);
+    index = 0x40;
+    step = 0x20;
+
+    while (step != 0) {
+        if (value >= table[index]) {
+            index += step;
+        } else if (value < table[index - 1]) {
+            index -= step;
+        } else {
+            step = 0;
+        }
+        step >>= 1;
+    }
+
+    index--;
+    result = 0x62;
+    if (index < 0x63) {
+        result = index;
+    }
+
+    if (result <= 0) {
+        return 0;
+    }
+    return value - table[result - 1];
+}
+
+
+/* Carry a tagged record forward, removing its first storage-list reference. */
+static inline int TakeTagged(int armor) {
+    ItemDataRecord *p;
+    int id = 0;
+    for (p = g_InventoryRuntime.equipment; p < g_InventoryRuntime.equipment + 128; p++) {
+        if (p->iconId && (armor ? p->kind == 9 : p->kind != 9) && (p->flags & 16)) break;
+    }
+    if (p < g_InventoryRuntime.equipment + 128) {
+        s16 *slot;
+        id = (p - g_InventoryRuntime.equipment) + 256;
+        for (slot = g_InventoryRuntime.specialStorage;
+             slot < g_InventoryRuntime.specialStorage + 82; slot++)
+            if (*slot == id) break;
+        if (slot < g_InventoryRuntime.specialStorage + 82) *slot = 0;
+    }
+    return id;
+}
+
+void Inv_InitNewGameInventory(void) {
+    int i, capacity;
+    AyaLevelStats *stats;
+    u16 *growth = g_AyaSaveState.stats.levels;
+    for (i = 0; i < 7; i++) *growth++ = (u16)((int *)Aya_GetStatGrowthTable(i))[0];
+    stats = Aya_LookupLevelStats(0);
+    g_AyaSaveState.max_hp = g_AyaSaveState.current_hp = stats->hp;
+    g_AyaSaveState.inventory_slot_count = stats->inventoryCapacity;
+    g_AyaSaveState.parasite_spell_flags = 1;
+    g_InvSpecialItemRecords[0].ammo = g_InvSpecialItemRecords[1].ammo = g_InvSpecialItemRecords[2].ammo = 0;
+    SelectAya();
+    capacity = stats->inventoryCapacity;
+    if (capacity > 50) capacity = 50;
+    g_AyaSaveState.inventory_slot_count = capacity;
+    if (g_InvItemPtr == g_AyaSaveState.inventory_items)
+        g_InvSlotLimit = Inv_GetAyaSlotLimit();
+    SelectAya();
+    for (i = 49; i >= 0; i--) g_InvItemPtr[i] = 0;
+    Inv_AddItem(0x44);
+    Inv_AddItem(0x96);
+    Inv_AddItem(0x3F);
+    Inv_AddItem(1);
+    Inv_AddItem(6);
+    i = TakeTagged(0);
+    if (i) Inv_AddItem(i);
+    i = TakeTagged(1);
+    if (i) Inv_AddItem(i);
+    g_InventoryRuntime.tracked[2] = 1;
+    g_InventoryRuntime.tracked[0] = 0;
+    g_AyaSaveState.menu_clamp_value = 61;
+    Menu_ClampRange(61);
+    g_AyaSaveState.total_exp = 0;
+    g_AyaSaveState.level = 0;
+    Menu_SaveBgInitFade();
 }

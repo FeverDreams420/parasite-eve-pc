@@ -24,12 +24,12 @@ typedef MenuQueueEntry MenuInputQueuedEvent;
 void Queue_Enqueue(int value0, int value1);
 void Queue_DequeueByMask(int mask, MenuQueueEntry *out);
 
-PE1_STATIC_ASSERT(sizeof(MenuQueueEntry) == 0x0C, menu_queue_entry_size);
+PE1_STATIC_ASSERT(sizeof(MenuQueueEntry) == sizeof(void *) + 8, menu_queue_entry_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuQueueEntry, next) == 0x00,
                   menu_queue_entry_next_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuQueueEntry, payload) == 0x04,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuQueueEntry, payload) == sizeof(void *),
                   menu_queue_entry_payload_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuQueueEntry, payload.input.flags) == 0x08,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuQueueEntry, payload.input.flags) == sizeof(void *) + 4,
                   menu_queue_input_flags_offset);
 
 #define MENU_EVENT_QUEUE_SIZE 20

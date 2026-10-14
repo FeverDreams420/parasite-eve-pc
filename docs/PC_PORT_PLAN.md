@@ -1741,3 +1741,26 @@ New Game cases. Full command execution, undo paths and unported callers remain
 unverified; the historical no-prototype CommitAmmoAndUpdate call convention
 still needs resolution. The pc/ directory and other extracted files still
 require removal through restoration of original modules and platform integration.
+
+
+### Restore complete save/game_data.c compilation
+
+Returned the stat-query functions from aya/stat_queries.c and New Game inventory
+initialization from item/new_game.c to their original save/game_data.c module;
+both extraction files were deleted, without adding files. The shared SelectAya
+helper is defined once. The definition inventory preserves all 42 names in the
+pre-merge union. CMake now compiles the entire original game_data module.
+
+Removed unused GPU/room/Bios includes and used the existing asset-table and
+battle-command declarations. Runtime menu queue, memory-card port and SJIS
+format-argument layout checks now account for native pointers. Serialized save
+record assertions remain unchanged. New Game reads the first native growth-table
+integer with an explicit u16 conversion rather than aliasing its first halfword.
+
+Full build and real Disc 1 original-game-stat-assets and original-game-scene-spawn
+pass. Stat-assets passes ASan/UBSan/function after the final change, covering
+229376 growth queries, initial and tagged carryover inventory, real equipment
+and derived stats. Other game_data entry points, memory-card I/O, save/Continue
+and the full original New Game runtime remain unverified. Whole-module
+compilation with dead stripping is not proof that every entry point is linked
+or executed. Further extraction removal and elimination of pc/ remain required.

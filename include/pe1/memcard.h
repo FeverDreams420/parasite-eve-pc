@@ -131,7 +131,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(MemCardSaveSlot, state) == 0,
                   memcard_save_slot_state_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(MemCardSaveSlot, metadataReady) == 1,
                   memcard_save_slot_metadata_ready_offset);
-PE1_STATIC_ASSERT(sizeof(MemCardPortState) == 0x418, memcard_port_state_size);
+PE1_STATIC_ASSERT(sizeof(MemCardPortState) == ((0x18 + sizeof(void *) + 15 * sizeof(MemCardSaveSlot) + _Alignof(MemCardPortState) - 1) / _Alignof(MemCardPortState)) * _Alignof(MemCardPortState), memcard_port_state_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(MemCardPortState, fileCount) == 2,
                   memcard_port_state_file_count_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(MemCardPortState, transferSize) == 0x14,
@@ -140,7 +140,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(MemCardPortState, fileDescriptor) == 0x0C,
                   memcard_port_state_file_descriptor_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(MemCardPortState, transferData) == 0x18,
                   memcard_port_state_transfer_data_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MemCardPortState, slots) == 0x1C,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(MemCardPortState, slots) == 0x18 + sizeof(void *),
                   memcard_port_state_slots_offset);
 
 extern MemCardPortState g_MemCardPortStates[];

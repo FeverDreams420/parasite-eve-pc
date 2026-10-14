@@ -15,4 +15,6 @@ extern int g_MenuItemContextFlag;
 void Menu_SaveBgInitFade(void);
 void Menu_ComputeGammaLut(int initial, int threshold);
 int Menu_ClampRange(int value);
+int Menu_SaveBgIsFadeActive(void);
+void Menu_SaveBgAdvanceFade(void);
 #endif

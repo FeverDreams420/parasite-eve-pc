@@ -164,9 +164,9 @@ PE1_STATIC_ASSERT(sizeof(BattleStatusLinePrim) == 0x10,
                   battle_status_line_prim_size);
 PE1_STATIC_ASSERT(sizeof(BattleStatusMarkerBody) == 0x1C,
                   battle_status_marker_body_stride);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleGaugePrim, sprite) == 8,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleGaugePrim, sprite) == sizeof(RenderTexturePagePacket),
                   battle_gauge_sprite_offset);
-PE1_STATIC_ASSERT(sizeof(BattleGaugePrim) == 0x1C,
+PE1_STATIC_ASSERT(sizeof(BattleGaugePrim) == sizeof(RenderPagedSpritePacket),
                   battle_gauge_prim_stride);
 
 extern s32 g_BattleStatusPanelSlot;

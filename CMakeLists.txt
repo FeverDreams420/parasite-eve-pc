@@ -19,7 +19,7 @@ endif()
 # Compile the original game sources in place. Modules join this target as
 # their platform dependencies are made portable; no duplicate game logic.
 add_library(parasite-eve-original OBJECT
-    src/main/battle/equipment_init.c
+    src/main/battle/encounter.c
     src/main/aya/stats.c
     src/main/item/active_list.c
     src/main/save/game_data.c

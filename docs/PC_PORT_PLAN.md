@@ -1787,3 +1787,21 @@ item insertion capacity/ammunition boundaries, real weapon/armor combinations
 and stat queries. Menu rendering, storage-list synchronization, random item
 selection and the remaining active_list entry points still require integration
 and execution tests. Full game and removal of pc/ remain incomplete.
+
+
+### Restore full battle encounter module
+
+Returned Battle_InitEquipLists, Battle_SaveAyaState and their native state and
+USA default templates to battle/encounter.c, deleting battle/equipment_init.c.
+CMake compiles the entire original encounter module, without adding files.
+All 16 function definitions from the pre-merge union and the historical module
+before equipment extraction (6efa75e3f parent) are retained. Battle gauge alias
+assertions now reference the existing native page/sprite packet layout rather
+than fixed PS1 offsets; this does not establish native HUD rendering support.
+
+Full build, real Disc 1 stat-assets/scene-spawn CTests and stat-assets
+ASan/UBSan/function pass, including USA executable default-state comparisons
+and 4386 weapon/armor pairs. Encounter startup, enemy reset, battle phases,
+rewards, death and HUD paths are now compiled together but remain unverified
+at runtime. Unused functions are still dead-stripped from tests; this is not
+proof of a functioning battle. Other extractions and pc/ removal remain open.

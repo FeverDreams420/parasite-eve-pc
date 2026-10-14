@@ -153,9 +153,36 @@ static int scene_initialization(void)
     g_PmTables=(PmTables){handlers,primary,secondary};
     return 0;
 }
+static int native_process_slot_capacity(void)
+{
+    static struct { PmSlotBanks banks; u8 guard[16]; } buffer;
+    for(unsigned index=0;index<11;++index) {
+        memset(&buffer,0xa5,sizeof(buffer));
+        PmPrimarySlot *slot=&buffer.banks.primary[index];
+        slot->header.state=1; slot->header.command=7; slot->header.owner=NULL;
+        slot->header.ticks=0x12345678;
+        CHECK(FieldFx_GetSlot(&slot->effect)==(void **)&slot->effect.state.commands);
+        memset(slot->effect.data,0x33,sizeof(slot->effect.data));
+        CHECK(slot->header.state==1 && slot->header.command==7 && slot->header.owner==NULL &&
+              slot->header.ticks==0x12345678);
+        CHECK(FieldFx_InitTaskContext(&slot->task)==0);
+        CHECK(slot->task.tasks.cursor==slot->task.tasks.arena && slot->header.field02==1 &&
+              slot->header.ticks==0x12345678 && slot->header.owner==NULL);
+        memset(slot->task.tasks.arena,0x44,sizeof(slot->task.tasks.arena));
+        const u8 *bytes=(const u8 *)&buffer;
+        size_t first=(const u8 *)slot-bytes, last=first+sizeof(*slot);
+        for(size_t i=0;i<sizeof(buffer);++i)
+            if(i<first || i>=last) CHECK(bytes[i]==0xa5);
+    }
+    printf("Original process slots: native scripts %zu bytes / tasks %zu bytes fit %zu-byte slots; all eleven neighbours and secondary bank protected\n",
+           sizeof(FieldFxObject),sizeof(FieldFxTaskOwner),sizeof(PmPrimarySlot));
+    return 0;
+}
+
 int main(void)
 {
     g_PmTables=(PmTables){handlers,primary,secondary};
+    CHECK(native_process_slot_capacity()==0);
     CHECK(scene_initialization()==0);
     CHECK(command_addresses()==0);
     CHECK(frame_tasks()==0);

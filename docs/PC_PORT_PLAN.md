@@ -3233,3 +3233,29 @@ remain controlled fixture inputs. This does not yet verify texture uploads,
 rendered effect pixels, production native object allocation/class sizes,
 actor-owned dispatch gates, descriptor integration, full gameplay or deletion
 of pc/.
+
+
+Primary process slots now include native union views of the existing
+FieldFxObject and FieldFxTaskOwner records, retaining the original PM header
+and legacy payload view. On this ARM64 build the former slot was 2576 bytes,
+while scripts need 2592 and task owners need 2688; the slot now has capacity
+for both (2688 bytes), with canonical command/kind/count/owner alias assertions.
+All eleven primary-bank strides and the secondary-bank boundary use sizeof
+native slots. The existing lifecycle fixture executes actual GetSlot and task
+context reset in each primary record and writes both complete payload areas,
+checking every byte outside that slot, including all neighbours/secondary bank
+and guards. Unused transitive GPU declarations were removed from two existing
+sprite-record headers so the shared PM types can coexist with native SDK users.
+No new record implementation, files or extracted functions.
+
+The whole original pm/process.c is now in parasite-eve-original; its separate
+fixture source entry was removed. Standard libc declarations replace BIOS
+ones, and the obsolete critical-section/instruction-cache-flush sequence is
+removed for statically linked native room code. Full build and six related
+CTests pass with Disc 1 required. Fresh actor-animation and actor-lifecycle
+ASan/UBSan/function runs pass with original source instrumented and PsyZ/SDL
+archives uninstrumented. Original room descriptor bindings beyond mirrors,
+effect PM callback ABI/class tables, on-demand commands 108..114 and their I/O
+failure behavior, production allocation lifetimes, full gameplay and deletion
+of pc/ remain incomplete. This fixes native pool capacity; it does not claim
+that the complete process-manager/game loop is integrated.

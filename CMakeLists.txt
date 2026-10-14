@@ -56,6 +56,7 @@ add_library(parasite-eve-original OBJECT
     src/main/draw/pipeline.c
     src/main/draw/frame.c
     src/main/pm/disc_tables.c
+    src/main/pm/process.c
     src/main/entity/pool.c
     src/main/entity/allocation.c
     src/main/script/node_pool.c
@@ -349,7 +350,6 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-actor-lifecycle tests/original_actor_lifecycle.c
-        src/main/pm/process.c
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-disc>)

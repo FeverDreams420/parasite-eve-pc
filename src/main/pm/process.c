@@ -7,7 +7,7 @@
 #include "pe1/game_state.h"
 #include "pe1/player_entity.h"
 #include "pe1/pm.h"
-#include "pe1/psyq_bios.h"
+#include "pe1/psyq_libc.h"
 #include "pe1/scene_assets.h"
 #include "pe1/scene_room_load.h"
 
@@ -87,9 +87,7 @@ retry:
             if (ready == -1)
                 goto retry;
         }
-        EnterCriticalSection();
-        FlushCache();
-        ExitCriticalSection();
+        /* Room code is statically linked; no PS1 instruction-cache flush. */
         g_FieldFxTaskPrograms[108 - 85] = g_FieldFxTaskProgramCmd108;
         g_FieldFxTaskPrograms[109 - 85] = g_FieldFxTaskProgramCmd109;
         g_FieldFxTaskPrograms[110 - 85] = g_FieldFxTaskProgramCmd110;

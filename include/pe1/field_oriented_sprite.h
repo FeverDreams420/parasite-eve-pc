@@ -2,9 +2,7 @@
 #define PE1_FIELD_ORIENTED_SPRITE_H
 
 #include "common.h"
-#include "pe1/field_shaded_quad.h"
 #include "pe1/field_sprite_state.h"
-#include "pe1/field_textured_strip.h"
 #include "pe1/fieldfx_scratch.h"
 #include "pe1/gte_types.h"
 #include "pe1/render_object.h"

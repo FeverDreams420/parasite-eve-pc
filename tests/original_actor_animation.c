@@ -17,6 +17,7 @@
 #include "pe1/field_model_draw.h"
 #include "pe1/field_oriented_sprite.h"
 #include "pe1/field_shaded_ring.h"
+#include "pe1/field_shaded_quad.h"
 #include "pe1/field_glow_layers.h"
 #include "pe1/fieldfx_state.h"
 #include "pe1/field_effect_modules.h"

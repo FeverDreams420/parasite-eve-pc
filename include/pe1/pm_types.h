@@ -41,9 +41,18 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(PmCommand, unload) == 6 * sizeof(((PmCommand *)0)
                   pm_command_unload_offset);
 PE1_STATIC_ASSERT(sizeof(PmCommand) == 7 * sizeof(((PmCommand *)0)->init), pm_command_size);
 
-typedef struct PmPrimarySlot {
-    PmSlotHeader header;
-    u8 reserved0C[0xA00];
+#include "pe1/fieldfx_state.h"
+#include "pe1/fieldfx_task.h"
+
+/* Primary slots contain either original object scripts or task owners.
+ * Their native layouts can exceed the historical 0xA0C-byte record. */
+typedef union PmPrimarySlot {
+    struct {
+        PmSlotHeader header;
+        u8 reserved0C[0xA00];
+    };
+    FieldFxObject effect;
+    FieldFxTaskOwner task;
 } PmPrimarySlot;
 
 typedef struct PmSecondarySlot {
@@ -65,7 +74,13 @@ typedef struct PmAuxiliaryPointerTable {
 PE1_STATIC_ASSERT(sizeof(PmSlotHeader) == 8 + sizeof(void *), pm_slot_header_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(PmSlotHeader, ticks) == 4, pm_slot_ticks_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(PmSlotHeader, owner) == 8, pm_slot_owner_offset);
-PE1_STATIC_ASSERT(sizeof(PmPrimarySlot) == sizeof(PmSlotHeader) + 0xA00, pm_primary_slot_size);
+PE1_STATIC_ASSERT(sizeof(PmPrimarySlot) >= sizeof(PmSlotHeader) + 0xA00, pm_primary_slot_size);
+PE1_STATIC_ASSERT(sizeof(PmPrimarySlot) >= sizeof(FieldFxObject), pm_primary_effect_capacity);
+PE1_STATIC_ASSERT(sizeof(PmPrimarySlot) >= sizeof(FieldFxTaskOwner), pm_primary_task_capacity);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(PmSlotHeader, command) == PE1_OFFSETOF(FieldFxObjectPrefix, asset_type), pm_effect_command_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(PmSlotHeader, field02) == PE1_OFFSETOF(FieldFxObjectPrefix, owner_kind), pm_effect_kind_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(PmSlotHeader, field03) == PE1_OFFSETOF(FieldFxObjectPrefix, live_slots), pm_effect_count_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(PmSlotHeader, owner) == PE1_OFFSETOF(FieldFxObjectPrefix, actor), pm_effect_owner_alias);
 PE1_STATIC_ASSERT(sizeof(PmSecondarySlot) == sizeof(PmSlotHeader) + 0x100, pm_secondary_slot_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(PmSlotBanks, secondary) == 11 * sizeof(PmPrimarySlot),
                   pm_secondary_bank_offset);

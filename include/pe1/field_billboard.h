@@ -2,7 +2,6 @@
 #define PE1_FIELD_BILLBOARD_H
 
 #include "common.h"
-#include "pe1/field_textured_strip.h"
 #include "pe1/gte_types.h"
 #include "pe1/projection_slot.h"
 #include "pe1/render_tint.h"

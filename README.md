@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+The `camera-vm` integration test runs a decoded polling program with actual
+query, branch, wait and jump instructions between camera steps. Linear and
+smooth variants stop only after transition completion, with no manual
+completion-flag changes. All 34 headless tests and the ASan/UBSan native
+camera-VM fixture pass. Full frame ordering, movement/render callbacks and
+campaign scenarios remain pending.
+
 Scene script opcodes 3/70/71/72 start linear/smooth scrolling, query completion
 and reset focus to the player. Explicit targets retain original halfword
 values without viewport clamping. Scene dispatch tests cover start, steps,

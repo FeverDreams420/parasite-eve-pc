@@ -3277,3 +3277,20 @@ and PsyZ/SDL archives uninstrumented. Native programs 108..114, their successful
 load/recovery, callers beyond the tested error path, complete scene/gameplay
 integration and deletion of pc/ remain incomplete. No new files or extracted
 functions.
+
+
+Original Asset_LoadTimTextures now rejects read errors and invalid/null/overflow
+extents in phase 0x34. A poll error returns -1 and resets to phase 0x34 so recovery
+requires a fresh read; positive pending polls still preserve phase 0x35.
+Scene_LoadRoomAssets waits for this native image-loader state machine to finish
+before looking up/allocating the process, returning -14 on texture failure.
+The existing actor fixture checks read failure, pending-then-error propagation,
+other negative read statuses, empty/reversed/overflow bounds, null scratch and
+recovery with a valid empty upload bank. Recovery clears the load flag/state and
+then reports the expected missing PM handler, without executing a fake handler
+or task program. It does not prove uploads of nonempty authored texture banks.
+Full build and five related CTests pass with Disc 1 required; fresh actor
+ASan/UBSan/function passes with original source instrumented and PsyZ/SDL
+archives uninstrumented. Real bank upload/recovery, all callers, native effect
+class/descriptor integration, full gameplay and deletion of pc/ remain
+incomplete. No new files or extracted functions.

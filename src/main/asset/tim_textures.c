@@ -76,15 +76,21 @@ restart:
         state->tim_load_state = 0;
         return 0;
     case 0x34:
-        if (CdRom_ReadSectorsFromLba(state->pe_image_base_lba + g_PeImageSectorTable[5],
-                                   state->scene_load_scratch, g_PeImageSectorTable[6] - g_PeImageSectorTable[5]) != -1)
-            state->tim_load_state = 0x35;
-        return 1;
+        {
+            u32 first=g_PeImageSectorTable[5], end=g_PeImageSectorTable[6];
+            u64 lba=(u64)state->pe_image_base_lba+first;
+            if (!state->scene_load_scratch || end<=first ||
+                lba+(end-first)>UINT64_C(0x100000000)) return -1;
+            status=CdRom_ReadSectorsFromLba((u32)lba,state->scene_load_scratch,end-first);
+            if (status<0) return -1;
+            state->tim_load_state=0x35;
+            return 1;
+        }
     case 0x35:
         status = CdRom_PollReady();
-        if (status == -1) {
+        if (status < 0) {
             state->tim_load_state = 0x34;
-            return 1;
+            return -1;
         }
         if (status != 0) return 1;
         state->tim_load_state = 0x36;

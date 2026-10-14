@@ -99,7 +99,8 @@ int Scene_LoadRoomAssets(u32 command, void *owner)
         g_FieldFxTaskPrograms[114 - 85] = g_FieldFxTaskProgramCmd114;
         g_GameState.flags |= 0x10000;
     }
-    Asset_LoadTimTextures(0);
+    while ((ready = Asset_LoadTimTextures(0)) > 0) {}
+    if (ready < 0) return -14;
     original = command;
     if (command >= 85) {
         subcommand = command - 85;

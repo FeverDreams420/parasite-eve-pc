@@ -1193,6 +1193,47 @@ static int process_task_bank_failures(void)
     return 1;
 }
 
+static int process_texture_bank_failures(void)
+{
+    Pe1GameState saved=g_GameState; PmTables tables=g_PmTables;
+    static PmCommand *handlers[86];
+    g_PmTables.handlers=handlers;
+    g_GameState.pe_image_base_lba=12345; g_GameState.scene_load_scratch=glyph_scratch;
+    g_GameState.loaded_scene_assets=(SceneAssetView *)glyph_scratch;
+    g_PeImageSectorTable[5]=7; g_PeImageSectorTable[6]=49;
+    g_GameState.flags|=8;
+    g_GameState.tim_load_state=0x34; glyph_reads=glyph_polls=0; glyph_read_retry=1;
+    if(Scene_LoadRoomAssets(0,NULL)!=-14 || g_GameState.tim_load_state!=0x34 ||
+       glyph_reads!=1 || glyph_polls || !(g_GameState.flags&8)) return 0;
+    g_GameState.tim_load_state=0x35; glyph_reads=glyph_polls=0; glyph_poll_retry=glyph_pending=1;
+    if(Scene_LoadRoomAssets(0,NULL)!=-14 || g_GameState.tim_load_state!=0x34 ||
+       glyph_reads || glyph_polls!=2 || !(g_GameState.flags&8)) return 0;
+    glyph_reads=glyph_polls=0; g_PeImageSectorTable[5]=8; g_PeImageSectorTable[6]=50;
+    if(Asset_LoadTimTextures(0)!=-1 || g_GameState.tim_load_state!=0x34 || glyph_reads!=1 || glyph_polls) return 0;
+    glyph_reads=0; g_PeImageSectorTable[6]=8;
+    if(Asset_LoadTimTextures(0)!=-1 || glyph_reads || glyph_polls) return 0;
+    g_PeImageSectorTable[6]=7;
+    if(Asset_LoadTimTextures(0)!=-1 || glyph_reads || glyph_polls) return 0;
+    g_PeImageSectorTable[5]=7; g_PeImageSectorTable[6]=49;
+    g_GameState.pe_image_base_lba=UINT32_MAX-10;
+    if(Asset_LoadTimTextures(0)!=-1 || glyph_reads || glyph_polls) return 0;
+    g_GameState.pe_image_base_lba=12345; g_GameState.scene_load_scratch=NULL;
+    if(Asset_LoadTimTextures(0)!=-1 || glyph_reads || glyph_polls) return 0;
+    g_GameState.scene_load_scratch=glyph_scratch;
+    memset(glyph_source,0,sizeof(glyph_source));
+    SceneAssetBlob empty={.directoryOffset=sizeof(SceneAssetBlob)};
+    memcpy(glyph_source,&empty,sizeof(empty));
+    glyph_pending=1;
+    /* A successful empty upload completes first; only then the missing PM
+     * handler is reported. No fake handler or program is executed. */
+    if(Scene_LoadRoomAssets(0,NULL)!=-8 || g_GameState.tim_load_state ||
+       (g_GameState.flags&8) || glyph_reads!=1 || glyph_polls!=2) return 0;
+    g_GameState=saved; g_PmTables=tables; glyph_reads=glyph_polls=0;
+    glyph_read_retry=glyph_poll_retry=glyph_pending=0;
+    puts("Original process texture I/O: read/pending-poll errors, retry phase, extent checks and empty-bank recovery passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -1253,7 +1294,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

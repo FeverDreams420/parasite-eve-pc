@@ -3,6 +3,9 @@
 #include "pe1/gte.h"
 #include "pe1/render_lighting.h"
 #include <libgpu.h>
+#include <libetc.h>
+#include <psyz/video.h>
+#include <psyz/system.h>
 #include "pe1/boot.h"
 #include "pe1/game_state.h"
 #include "room_banks.h"
@@ -30,6 +33,8 @@ _Static_assert(sizeof(RenderPacket24) == sizeof(POLY_G4), "native shaded quad");
 _Static_assert(sizeof(RenderPacket1C) == sizeof(POLY_G3), "native shaded triangle");
 _Static_assert(offsetof(RenderPacket34, sxy0) == offsetof(POLY_GT4, x0), "native payload offset");
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
+static unsigned vsync_callbacks;
+static void count_vsync(void) { ++vsync_callbacks; }
 int main(int argc, char **argv)
 {
     const char *path = getenv("PE_TEST_DISC");
@@ -68,6 +73,26 @@ int main(int argc, char **argv)
     memset(&g_RenderLightingBlock,0,sizeof(g_RenderLightingBlock));
     ResetGraph(0);
     if(gpu) {
+        PsyzVsyncMode old_mode=Psyz_VideoGetVsyncMode();
+        CHECK(Psyz_VideoSetVsyncMode(PSYZ_VSYNC_LIMITLESS)==0);
+        PsyzVSyncCb old_callback=Psyz_SetVSyncCb(count_vsync);
+        VSync(0);
+        unsigned baseline=(unsigned)VSync(-1), callbacks=vsync_callbacks;
+        VSync(1);VSync(-1);
+        CHECK((unsigned)VSync(-1)==baseline && vsync_callbacks==callbacks);
+        VSync(2);
+        CHECK((unsigned)VSync(-1)-baseline==2 && vsync_callbacks-callbacks==2);
+        baseline=(unsigned)VSync(-1);callbacks=vsync_callbacks;
+        VSync(4);
+        CHECK((unsigned)VSync(-1)-baseline==4 && vsync_callbacks-callbacks==4);
+        baseline=(unsigned)VSync(-1);callbacks=vsync_callbacks;
+        Psyz_VideoVSync(0);Psyz_VideoVSync(0);Psyz_VideoVSync(0);
+        VSync(2);
+        CHECK((unsigned)VSync(-1)-baseline==4 && vsync_callbacks-callbacks==1);
+        Psyz_SetVSyncCb(old_callback);
+        unsigned before_restore=(unsigned)VSync(-1);
+        CHECK(Psyz_VideoSetVsyncMode(old_mode)==0);
+        CHECK((int32_t)((unsigned)VSync(-1)-before_restore)>=0);
         RenderNativeTag ordering[2][4096];
         TILE tile[2], ramp[2][256];
         Pe1GameState saved=g_GameState;

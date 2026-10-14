@@ -2527,3 +2527,30 @@ DXC in a Linux container. Their runtime evidence is limited to Metal: the macOS
 build explicitly rejects sdl3_gl, and Vulkan/Direct3D were not run. The normal
 Metal build configuration was restored. Dithering/blending fidelity, mask-bit
 behavior, VSync(n>1), full scene runtime and removal of pc/ remain incomplete.
+
+
+### Synchronize original frame intervals in our PsyZ fork
+
+Fork commit f14e6c0 changes VSync(n>1) from one present plus n synthetic kernel
+notifications to counter-based waiting relative to the last blocking call,
+following the SDK implementation in decomp/src/libetc/vsync.c. Each observed
+blank advances pad sampling, the callback and kernel service; an already elapsed
+interval still waits for the next blank. Queries preserve the interval. SDL
+limitless mode advances a logical counter per explicit present, and pacing-mode
+switches keep it continuous. Mode-1 documentation now correctly identifies the
+horizontal-line query. No new files.
+
+The existing GPU fixture checks nonblocking queries, exact 2/4-blank increments
+and callback counts, late synchronization after three independent presents,
+and continuity when returning to normal pacing. Original frame rendering and
+all-channel RGB5 checks remain included. Full build and four tests pass with
+Disc 1 required: model-gpu, entity-texture-assets, boot-replay and boot-newgame.
+The two legacy boot tests do not establish original scene gameplay.
+
+Fresh ASan/UBSan/function execution passes with libapi.c and sdl3_gpu.c (including
+sdl3_common.h) instrumented alongside the original game test sources. Remaining
+Psyz/SDL objects are not instrumented. The 878-model corpus still reports
+301224 packets and 2239015 visible pixels with identical draw slots. Hardware
+scanline precision, asynchronous blanks during unsynchronized CPU work and
+other backends remain unverified. Full game runtime and removal of pc/ remain
+incomplete.

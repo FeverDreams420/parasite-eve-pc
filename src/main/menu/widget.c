@@ -29,6 +29,7 @@ int g_DrawTextBoxWidth;
 int g_DrawTextDimmed;
 int g_MenuInputActive;
 int *g_TextCursorStackPtr;
+MenuWidgetNode g_MenuWidgetNodePool[24];
 
 void MenuWidget_InitPoolUnk(void) {
     MenuWidgetNode *node;
@@ -45,18 +46,17 @@ void MenuWidget_InitPoolUnk(void) {
     }
 
     g_MenuWidgetNodePoolSentinel.next = 0;
-    g_MenuWidgetFreeListHead = &g_MenuWidgetNodePoolSentinel - 23;
+    g_MenuWidgetFreeListHead = g_MenuWidgetNodePool;
     g_MenuWidgetCurrentNode = 0;
     g_MenuWidgetActiveListHead = 0;
 }
 
-inline MenuWidgetNode *MenuWidget_AllocNode(MenuWidgetNode *arg0, MenuWidgetNode *arg1) {
+MenuWidgetNode *MenuWidget_AllocNode(MenuWidgetNode *arg0, MenuWidgetNode *arg1) {
     s32 var_a0;
     s32 var_v0;
     MenuWidgetNode *temp_s0;
     MenuWidgetNode *temp_v1;
     MenuWidgetNode *temp_next;
-    MenuWidgetNode **var_a1;
     MenuWidgetNode *temp_s2;
     MenuWidgetNode *temp_s1;
 
@@ -69,7 +69,6 @@ inline MenuWidgetNode *MenuWidget_AllocNode(MenuWidgetNode *arg0, MenuWidgetNode
     var_a0 = 3;
     temp_next = temp_s0->next;
     temp_v1 = g_MenuWidgetActiveListHead;
-    var_a1 = &temp_s0->children[1];
     g_MenuWidgetActiveListHead = temp_s0;
     temp_s0->parent = temp_s2;
     temp_s0->update = 0;
@@ -77,9 +76,8 @@ inline MenuWidgetNode *MenuWidget_AllocNode(MenuWidgetNode *arg0, MenuWidgetNode
     g_MenuWidgetFreeListHead = temp_next;
     temp_s0->next = temp_v1;
     do {
-        var_a1[2] = 0;
+        temp_s0->children[var_a0] = 0;
         var_a0 -= 1;
-        var_a1--;
     } while (var_a0 >= 0);
     temp_s0->y = 0;
     temp_s0->x = 0;
@@ -95,7 +93,7 @@ inline MenuWidgetNode *MenuWidget_AllocNode(MenuWidgetNode *arg0, MenuWidgetNode
         if (var_v0 != 0) {
             temp_s1->children[var_a0] = temp_s0;
         } else {
-            Inv_BoundsCheckAssertStub(0xB, var_a1);
+            Inv_BoundsCheckAssertStub(0xB);
         }
     }
     return temp_s0;

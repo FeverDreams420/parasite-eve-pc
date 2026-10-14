@@ -488,6 +488,20 @@ int main(int argc, char **argv)
         if(g_FieldPadPressed || g_FieldPadReleased)return 36;
         g_PadPackets[0].leftX=19;Field_HandleStateTransition();
         if(g_FieldPadBits!=(FIELD_PAD_LEFT|1))return 37;
+        MenuWidget_InitPool();
+        for (unsigned slot=0; slot<24; ++slot) {
+            MenuWidgetNode *allocated=MenuWidget_AllocNode(slot?&g_MenuWidgetNodePool[0]:NULL,
+                                                        slot>0 && slot<5?&g_MenuWidgetNodePool[0]:NULL);
+            if (allocated!=&g_MenuWidgetNodePool[slot] ||
+                allocated->next!=(slot?&g_MenuWidgetNodePool[slot-1]:NULL)) return 86;
+            for (unsigned child=0; child<4; ++child)
+                if (allocated->children[child]) return 87;
+        }
+        if (g_MenuWidgetFreeListHead || g_MenuWidgetActiveListHead!=&g_MenuWidgetNodePool[23]) return 88;
+        for (unsigned child=0; child<4; ++child)
+            if (g_MenuWidgetNodePool[0].children[child]!=&g_MenuWidgetNodePool[child+1]) return 89;
+        MenuWidget_InitPool();
+        if (g_MenuWidgetFreeListHead!=g_MenuWidgetNodePool || g_MenuWidgetNodePool[23].next) return 90;
         MenuWidgetNode menu={0};menu.mode=1;g_MenuWidgetActiveListHead=&menu;
         MenuWidgetListNavigation navigation={0};
         navigation.list=&menu;

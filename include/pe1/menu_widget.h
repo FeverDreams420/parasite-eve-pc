@@ -119,8 +119,9 @@ void MenuWidget_SaveColumnLayout(MenuWidgetNode *node);
 void MenuWidget_DestroyPopupNode(MenuWidgetNode *node);
 void MenuWidget_EaseNodePosition(MenuWidgetNode *node);
 
-extern MenuWidgetNode g_MenuWidgetNodePool[];
-extern MenuWidgetNode g_MenuWidgetNodePoolSentinel;
+extern MenuWidgetNode g_MenuWidgetNodePool[24];
+/* Historical sentinel symbol aliases the final pool element. */
+#define g_MenuWidgetNodePoolSentinel (g_MenuWidgetNodePool[23])
 
 /* Active linked-list head walked by the MenuWidget_Find* helpers. */
 extern MenuWidgetNode *g_MenuWidgetActiveListHead;

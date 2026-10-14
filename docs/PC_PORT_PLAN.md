@@ -2332,3 +2332,22 @@ actor-animation passes digital/analog movement and SDL event/focus transitions.
 PsyZ/SDL are uninstrumented. Legacy boot checks do not prove original scene
 runtime or gameplay. Other pc/ code, including the parallel scene/audio engine,
 still requires removal and original runtime integration.
+
+
+### Give the original widget pool native backing storage
+
+menu/widget.c now owns its 24 MenuWidgetNode records. The historical sentinel
+name aliases element 23, and both original initializers use the canonical pool
+base. MenuWidget_AllocNode retains its free/active-list and child-slot order,
+with ordinary indexed child clearing instead of constructing pointers before
+the children array. Its definition is externally callable under C11. No new
+files or replacement allocator.
+
+The existing actor-animation fixture executes all 24 original allocations,
+checks native record addresses, active-list order, cleared child slots and the
+four owner links, then checks reinitialization and the terminal null link.
+Full build, three input/actor CTests (Disc 1 required where applicable) and fresh
+ASan/UBSan/function actor-animation pass; PsyZ/SDL remain uninstrumented.
+Recursive release, saved layout backing, allocation failure behavior and full
+menu rendering still require work. Full game integration and pc/ removal remain
+incomplete.

@@ -11,7 +11,7 @@
 
 extern s32 g_FxCommonConfirmExit;
 extern s32 g_FxCommonConfirmExitVariant;
-extern u32 g_GameStateFlagsWord;
+#include "pe1/game_state.h"
 int Save_GetMetadataWindowIndex(void);
 void Menu_SetEquipSlotIndex(int enabled);
 void FxCommon_InitDisplay(void);

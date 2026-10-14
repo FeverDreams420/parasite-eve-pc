@@ -2700,3 +2700,35 @@ ASan/UBSan/function runs pass for both synthetic and real entity fixtures with
 original loader/archive sources instrumented. PsyZ/SDL archives remain
 uninstrumented. Full Scene_InitEntityPlayer, gameplay runtime and elimination
 of the remaining pc/ code are still incomplete.
+
+
+### Execute full original scene-player initialization with native storage
+
+Scene_InitEntityPlayer remains in the complete original room_load.c. Its model
+packet buffer now starts after two native RenderShadowQuad records, matching
+the existing original actor loader, instead of after the PS1-only 0x50 bytes.
+The original action selection, texture coordinates, lighting, animation and
+state transitions are retained. No new files or replacement initializer.
+
+Canonical game-state aliases now cover the original flags word, story flags,
+pending/current day, loaded area and background cache byte. Removed the separate
+current-day fixture storage and stale scalar declarations. This lets original
+scene initialization trigger base-bank loading and clear its loading flags in
+the same state read by the other original modules.
+
+The real fixture executes all normal initialization phases 32..39 for areas 10
+and 12, days 1..7 (14 combinations), using original sector reads, base/day
+loaders, Entity_SetActionMode, Render_SetupEntityPrims, lighting and
+Render_DrawWithAnim. Completion takes 11 or 12 calls. It checks model/action
+references, canonical area/day/loading flags, packet-buffer start and guards
+around both native shadow records and the full two-buffer packet/matrix arena.
+It subsequently runs the existing scene attachment and 9591-frame corpus.
+Battle step remains a controlled fixture input, not a replacement gameplay
+implementation.
+
+Full build and eight CTests pass with Disc 1 required: movement, actor-animation,
+entity-textures, entity-texture-assets, scene-spawn and three legacy boot checks.
+Fresh ASan/UBSan/function real-data validation passes with the original
+initializer, loaders, action and renderer code instrumented; PsyZ/SDL archives
+are uninstrumented. Resume-mode initialization, full scene scheduling, gameplay
+and removal of the remaining pc/ runtime remain incomplete.

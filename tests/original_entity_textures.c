@@ -15,6 +15,7 @@
 #include "pe1/room_fx_model.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/render_camera.h"
+#include "pe1/render_shadow.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +30,6 @@ RenderBufferPrefix D_800B0E38;
 u8 g_SceneAreaType;
 /* Controlled battle-step input for the original loading gate. */
 u8 g_AyaActionStep;
-s8 g_CurrentStoryDay[1];
 u16 g_PeImageSectorTable[64], g_PeImageSectorBoundsNext[64];
 #ifndef PE_TEST_REAL_DISC
 static int read_result, poll_result;
@@ -627,11 +627,52 @@ int main(void)
         size_t player_work_bytes=2*(player_model.packets[0]*sizeof(RenderPacket34)+player_model.packets[1]*sizeof(RenderPacket28)+
             player_model.packets[2]*sizeof(RenderPacket24)+player_model.packets[3]*sizeof(RenderPacket1C))+
             player_model.part_count*(sizeof(RenderAnimationLookupEntry)+sizeof(RenderMatrix));
-        u8 *player_work=calloc(1,player_work_bytes); CHECK(player_work);
+        size_t shadow_bytes=2*sizeof(RenderShadowQuad);
+        u8 *player_allocation=calloc(1,shadow_bytes+player_work_bytes+16); CHECK(player_allocation);
+        u8 *player_work=player_allocation+shadow_bytes;
+        memset(player_allocation,0xa5,shadow_bytes);
+        memset(player_work+player_work_bytes,0xa5,16);
         s8 *texture_data=NULL;
         memset(&player,0,sizeof(player));
         CHECK(Render_SetupEntityPrims(&player.render_object,(RenderObjectHeader *)player_banks.roots[0].bytes,
             player_work,0,0,0,0,0,&texture_data,1)==1);
+        /* Execute the full original scene player initialization, including
+         * real base/day reads and both-buffer model preparation. */
+        size_t base_model_bytes=(size_t)(catalog.sector_bounds[area+9]-catalog.sector_bounds[area+8])*2048;
+        size_t base_tim_bytes=(size_t)(catalog.sector_bounds[area+4]-catalog.sector_bounds[area+3])*2048;
+        size_t startup_scratch_bytes=base_tim_bytes;
+        if(day>=2 && day<=6) {
+            size_t daily_bytes=(size_t)(catalog.sector_bounds[day+0x27]-catalog.sector_bounds[day+0x26])*2048;
+            if(daily_bytes>startup_scratch_bytes) startup_scratch_bytes=daily_bytes;
+        }
+        u8 *base_model_buffer=malloc(base_model_bytes), *startup_scratch=malloc(startup_scratch_bytes);
+        CHECK(base_model_buffer && startup_scratch);
+        g_GameState.voice_bank_base_1400=base_model_buffer;
+        g_GameState.scene_load_scratch=startup_scratch;
+        g_GameState.scene_area_type_backup=area;
+        g_GameState.loaded_entity_bank=0;
+        g_GameState.requested_entity_bank=area;
+        g_GameState.scene_init_phase=32;
+        g_GameState.scene_init_subphase=0;
+        g_GameState.entity_texture_phase=0;
+        g_GameState.flags=0;
+        g_GameState.story_day_flags=0;
+        g_GameState.current_story_day=day;
+        player.allocation_block=(uintptr_t)player_allocation;
+        g_PlayerEntity=&player;
+        g_AyaActionStep=2;
+        unsigned init_ticks=0;
+        while(Scene_InitEntityPlayer(0)) CHECK(++init_ticks<64);
+        CHECK(g_GameState.scene_init_phase==32 && !(g_GameState.flags&0xe0000));
+        CHECK(g_GameState.loaded_entity_bank==area && g_GameState.current_story_day==day);
+        CHECK(player.model_state.model_header==g_GameState.bank_slots[0]);
+        CHECK(player.render_object.header==player.model_state.model_header);
+        CHECK(player.mode==0x15 && player.action_data==g_GameState.bank_rows[0][0x15]);
+        CHECK(player.render_object.animation_data==player.action_data);
+        CHECK(player.render_object.primitive_buffer==player_work);
+        for(size_t byte=0;byte<shadow_bytes;++byte) CHECK(player_allocation[byte]==0xa5);
+        for(unsigned byte=0;byte<16;++byte) CHECK(player_work[player_work_bytes+byte]==0xa5);
+        printf("Original scene player init: area %u, day %u, %u ticks, both packet buffers within native allocation\n",area,day,init_ticks+1);
         RenderMatrix *pose=player.render_object.matrices;
         /* Rebuild with the real player model, then follow every bank action. */
         g_PlayerEntity=&player;
@@ -663,7 +704,9 @@ int main(void)
                 ++animated_frames;
             }
         }
-        free(player_work); pe_room_blob_close(&player_bank);
+        free(player_allocation); pe_room_blob_close(&player_bank);
+        g_GameState.voice_bank_base_1400=NULL;
+        free(base_model_buffer); free(startup_scratch);
         g_PlayerEntity=NULL;
         free(scratch_buffer); pe_room_blob_close(&tim_reference);
         g_GameState.scene_load_scratch=NULL;

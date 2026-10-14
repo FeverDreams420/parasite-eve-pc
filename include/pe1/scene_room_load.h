@@ -17,6 +17,7 @@ int Render_InitRoomPrimState(void *object);
 int Scene_LoadEntityTextures(void);
 /* Base area TIM/model bank loaded before the day-specific actions. */
 int Scene_LoadEntityTexture(void);
+int Scene_InitEntityPlayer(int resume);
 /* Steps the room TIM texture loader. */
 int Asset_LoadTimTextures(int force);
 
@@ -34,7 +35,7 @@ extern unsigned char g_StartupResourceBlob[];
  */
 
 extern u8 g_SceneAreaType;
-extern s8 g_CurrentStoryDay[];
+/* g_CurrentStoryDay aliases the canonical current-day byte. */
 #include "pe1/pe_image.h"
 extern u16 g_PeImageSectorTable[], g_PeImageSectorBoundsNext[];
 extern u32 g_EntityRenderScratch[];

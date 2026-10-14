@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "pe1/geom_state.h"
+#include "pe1/render_shadow.h"
 #include "pe1/room_fx_model.h"
 #include "pe1/render_camera.h"
 #include "pe1/akao.h"
@@ -962,7 +963,7 @@ s32 Scene_InitEntityPlayer(s32 resume) {
         {
             FieldActor *player = g_PlayerEntity;
             Render_SetupEntityPrims(&player->render_object, player->model_state.model_header,
-                                    (u8 *)(player->allocation_block + 0x50), 0x3C0, 0x100, 0,
+                                    (u8 *)player->allocation_block + 2 * sizeof(RenderShadowQuad), 0x3C0, 0x100, 0,
                                     0x1C0, 2, &renderSetup, 1);
         }
         {

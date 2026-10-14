@@ -140,3 +140,83 @@ void Script_GarbageCollectNodes(void) {
 /* Original linker-allocated node and operand storage. */
 ScriptNode g_ScriptNodes[72];
 u32 g_ScriptOperandTable[16];
+
+extern FieldActor *g_CurrentEntity;
+
+int Script_SpawnChildNode(int **args) {
+    ScriptNode *node = g_ScriptNodePool;
+
+    if ((node->flags & 3) != 0) {
+        int *value_ptr;
+        FieldActor *state;
+        ScriptNode *entry;
+        u16 seq;
+        unsigned int *script;
+        u8 *base;
+        int scriptValue;
+        ScriptNode *next;
+
+        value_ptr = args[0];
+        state = g_CurrentEntity;
+        entry = g_ScriptNodeFreeListHead;
+        if (!entry) return 0;
+        seq = g_ScriptNodeSeqCounter[0];
+        scriptValue = *value_ptr;
+        base = state->script_base;
+        next = entry->next;
+        entry->prev = 0;
+        entry->next = 0;
+        entry->trigger_value = 0;
+        entry->next_value = 0;
+        entry->active = 1;
+        entry->seq = seq;
+        entry->flags = 0;
+        script = (unsigned int *)(base + (ptrdiff_t)scriptValue * 2);
+        entry->current.script = script;
+        {
+            ScriptNode *head = state->script_node_lists[2];
+            seq++;
+            g_ScriptNodeSeqCounter[0] = seq;
+            g_ScriptNodeFreeListHead = next;
+            entry->next = head;
+            if (head != 0) {
+                head->prev = entry;
+            }
+            g_CurrentEntity->script_node_lists[2] = entry;
+        }
+    } else {
+        ScriptNode *entry = g_ScriptNodeFreeListHead;
+        int *value_ptr = args[0];
+        FieldActor *state = g_CurrentEntity;
+        ScriptNode *next;
+        if (!entry) return 0;
+        next = entry->next;
+        uintptr_t value;
+
+        value = (uintptr_t)(state->script_base + (ptrdiff_t)*value_ptr * 2);
+        g_ScriptNodeFreeListHead = next;
+        if (node != 0) {
+            entry->prev = node;
+            next = node->next;
+            entry->next = next;
+            if (next != 0) {
+                next->prev = entry;
+            }
+            node->next = entry;
+        } else {
+            entry->prev = 0;
+            entry->next = 0;
+        }
+        entry->current.script = (unsigned int *)value;
+        {
+            u16 seq = g_ScriptNodeSeqCounter[0];
+            entry->trigger_value = 0;
+            entry->next_value = 0;
+            entry->active = 1;
+            entry->flags = 0;
+            g_ScriptNodeSeqCounter[0] = seq + 1;
+            entry->seq = seq;
+        }
+    }
+    return 1;
+}

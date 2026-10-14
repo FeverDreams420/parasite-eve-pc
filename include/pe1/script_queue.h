@@ -27,5 +27,7 @@ int Entity_MarkCurrentDead(int **args);
 int Entity_SetCurrentNodeActive(int **args);
 int Entity_MarkCurrentNodeFree(int **args);
 int Script_AssignValue(int **args);
+int Script_SpawnChildNode(int **args);
+int Script_JumpIfZero(int **args);
 
 #endif

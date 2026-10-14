@@ -35,8 +35,6 @@
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
-int g_ScriptCursorAddress;
-ScriptNode *g_ScriptNodePool;
 
 int Script_EncodeBarcode(int **arg0) {
     int tmp[2];
@@ -122,7 +120,6 @@ int Entity_ClearCurrentFlag40(void) {
  * inequality. Contiguous pair; the choice reader has no data, so the
  * branch's assembler options leave it unchanged. */
 
-int g_ScriptCursorAddress;
 
 int Script_GetMenuChoice(int **arg0) {
     int value;
@@ -141,7 +138,7 @@ int Script_CondBranch(int **arg0) {
     b = arg0[1];
     if (*a != *b) {
         c = arg0[2];
-        g_ScriptCursorAddress = (int)(g_CurrentEntity->script_base + (*c * 2));
+        g_ScriptCursorAddress = (uintptr_t)(g_CurrentEntity->script_base + (*c * 2));
     }
     return 1;
 }
@@ -418,7 +415,7 @@ int Entity_AdvanceNodeById(int **arg0) {
     unsigned int i;
     FieldActor *entity;
     ScriptNode *node;
-    int next_value;
+    intptr_t next_value;
     int active_value;
 
     i = 0;

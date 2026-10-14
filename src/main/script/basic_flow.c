@@ -30,3 +30,10 @@ int Script_AssignValue(int **arg0) {
     *arg0[0] = *arg0[1];
     return 1;
 }
+
+int Script_JumpIfZero(int **arg0) {
+    if (*arg0[0] == 0) {
+        g_ScriptCursorAddress = (uintptr_t)(g_CurrentEntity->script_base + (*arg0[1] * 2));
+    }
+    return 1;
+}

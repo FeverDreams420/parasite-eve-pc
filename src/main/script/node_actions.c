@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe1/script_state.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/entity_animation.h"
@@ -8,94 +9,16 @@
 #include "pe1/player_entity.h"
 #include "pe1/script_node.h"
 
-PE1_STATIC_ASSERT(sizeof(ScriptNodeTarget18) == 4, script_node_target18_view_size);
+PE1_STATIC_ASSERT(sizeof(ScriptNodeTarget18) == sizeof(void *), script_node_target18_view_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNodeTarget18, coordinate) == 0,
                   script_node_target18_coordinate_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNodeTarget18, actor) == 0,
                   script_node_target18_actor_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, target18) == 0x18,
-                  script_node_target18_offset);
+
 
 /* COMMON supplies small-data metadata to MASPSX. */
-ScriptNode *g_ScriptNodeFreeListHead;
-u16 g_ScriptNodeSeqCounter[1];
-ScriptNode *g_ScriptNodePool;
 
-int Script_SpawnChildNode(int **args) {
-    ScriptNode *node = g_ScriptNodePool;
 
-    if ((node->flags & 3) != 0) {
-        int *value_ptr;
-        FieldActor *state;
-        ScriptNode *entry;
-        u16 seq;
-        unsigned int *script;
-        int base;
-        int scriptValue;
-        ScriptNode *next;
-
-        value_ptr = args[0];
-        state = g_CurrentEntity;
-        entry = g_ScriptNodeFreeListHead;
-        seq = g_ScriptNodeSeqCounter[0];
-        scriptValue = *value_ptr;
-        base = (int)state->script_base;
-        next = entry->next;
-        entry->prev = 0;
-        entry->next = 0;
-        entry->trigger_value = 0;
-        entry->next_value = 0;
-        entry->active = 1;
-        entry->seq = seq;
-        entry->flags = 0;
-        script = (unsigned int *)((scriptValue << 1) + base);
-        entry->current.script = script;
-        {
-            ScriptNode *head = state->script_node_lists[2];
-            seq++;
-            g_ScriptNodeSeqCounter[0] = seq;
-            g_ScriptNodeFreeListHead = next;
-            entry->next = head;
-            if (head != 0) {
-                head->prev = entry;
-            }
-            g_CurrentEntity->script_node_lists[2] = entry;
-        }
-    } else {
-        ScriptNode *entry = g_ScriptNodeFreeListHead;
-        int *value_ptr = args[0];
-        FieldActor *state = g_CurrentEntity;
-        ScriptNode *next = entry->next;
-        int value;
-
-        value = *value_ptr;
-        g_ScriptNodeFreeListHead = next;
-        value = (value << 1) + (int)state->script_base;
-        if (node != 0) {
-            entry->prev = node;
-            next = node->next;
-            entry->next = next;
-            if (next != 0) {
-                next->prev = entry;
-            }
-            node->next = entry;
-        } else {
-            entry->prev = 0;
-            entry->next = 0;
-        }
-        entry->current.script = (unsigned int *)value;
-        {
-            u16 seq = g_ScriptNodeSeqCounter[0];
-            entry->trigger_value = 0;
-            entry->next_value = 0;
-            entry->active = 1;
-            entry->flags = 0;
-            g_ScriptNodeSeqCounter[0] = seq + 1;
-            entry->seq = seq;
-        }
-    }
-    return 1;
-}
 
 int Script_SetEntityActionAndWait(int **arg0) {
     ScriptNode *node = g_ScriptNodePool;
@@ -145,7 +68,7 @@ int Script_SetEntityActionAndWait(int **arg0) {
     }
 
     {
-        int cursor = g_ScriptCursorAddress;
+        uintptr_t cursor = g_ScriptCursorAddress;
         ScriptNode *active_node = g_ScriptNodePool;
         cursor -= 0xC;
         g_ScriptCursorAddress = cursor;

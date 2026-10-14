@@ -1,6 +1,8 @@
 #ifndef PE1_SCRIPT_NODE_H
 #define PE1_SCRIPT_NODE_H
 
+#include "common.h"
+
 /* Task/scene node: elements of the free list (g_ScriptNodeFreeListHead), the current-node
  * pointer (g_ScriptNodePool @ 0x8009D300), and the per-entity bucket lists
  * (FieldActor.script_node_lists @ 0xA0). Doubly-linked via next/prev. Size 0x2C. */
@@ -11,13 +13,13 @@ typedef union ScriptNodeTarget18 {
 
 /* A node carries either an event value or an interpreter script cursor. */
 typedef union ScriptNodeCurrent {
-    int value;
+    intptr_t value;
     unsigned int *script;
 } ScriptNodeCurrent;
 
 typedef struct ScriptNode {
     /* 0x00 */ ScriptNodeCurrent current;
-    /* 0x04 */ int next_value;
+    /* 0x04 */ intptr_t next_value;
     /* 0x08 */ unsigned short flags;   /* |= 0x10 marks node free */
     /* 0x0A */ unsigned short seq;      /* sequence/id, matched in Entity_FindNodeById */
     /* 0x0C */ int trigger_value;    /* event task value, or the contacting actor's field_sfx_id */

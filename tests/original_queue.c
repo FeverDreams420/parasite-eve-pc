@@ -83,6 +83,29 @@ int main(void)
         Script_RunQueue();
         if (!(actor.flags&0x10)) return 10;
     }
+    {
+        u32 fork_script[]={18|(1u<<13),0,12,2|(1u<<13),0,1,2|(1u<<13),0,5};
+        ScriptNode *child;
+        actor.flags=0;actor.script_base=(u8 *)fork_script;
+        node->flags=0;node->current.script=fork_script;node->active=1;g_ScriptNodePool=node;
+        g_ScriptQueueOpcodeHandlers[18]=Script_SpawnChildNode;
+        Script_RunQueue();
+        child=node->next;
+        if (!child || child->current.script!=fork_script+9 || child->active!=5 ||
+            node->current.script!=fork_script+6 || node->active!=1) return 11;
+    }
+    {
+        u32 branch[]={5|(2u<<13),0,0,12,10|(2u<<13)|(2u<<17),0,20,99,2|(1u<<13),0,1};
+        /* Skip assignment when zero, jumping to the yield at halfword 16. */
+        branch[3]=16;actor.script_base=(u8 *)branch;node->next=0;
+        node->current.script=branch;node->active=1;g_ScriptNodePool=node;
+        g_ScriptQueueOpcodeHandlers[5]=Script_JumpIfZero;
+        g_ScriptVariableBank[20]=0;Script_RunQueue();
+        if (g_ScriptVariableBank[20] || node->current.script!=branch+11) return 12;
+        branch[2]=1;node->current.script=branch;node->active=1;g_ScriptNodePool=node;
+        Script_RunQueue();
+        if (g_ScriptVariableBank[20]!=99) return 13;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

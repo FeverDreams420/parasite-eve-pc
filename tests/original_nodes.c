@@ -1,12 +1,14 @@
 #include "pe1/script_node.h"
 #include "pe1/script_state.h"
+#include "pe1/script_queue.h"
 #include "pe1/entity_allocation.h"
 #include <stdio.h>
 #include <string.h>
 extern FieldActor *g_FieldActorListHead;
+extern FieldActor *g_CurrentEntity;
 int main(void)
 {
-    u32 script[]={123};
+    u32 script[8]={123};
     ScriptNode *nodes[72]; FieldActor actor={0};
     memset(g_ScriptNodes,0xaa,sizeof(g_ScriptNodes));
     for (unsigned i=0;i<16;++i) g_ScriptOperandTable[i]=42;
@@ -32,6 +34,20 @@ int main(void)
     g_ScriptNodeSeqCounter[0]=65535;
     if (Script_AllocNode(script,0)->seq!=65535 || g_ScriptNodeSeqCounter[0]) return 8;
     g_FieldActorListHead=0;
+    Script_InitNodePool(); Script_InitNodeFreeList();
+    {
+        int offset=4;int *args[]={&offset};
+        ScriptNode *root=Script_AllocNode(script,0), *child, *head;
+        actor.script_base=(u8 *)script;g_CurrentEntity=&actor;g_ScriptNodePool=root;
+        if (Script_SpawnChildNode(args)!=1) return 9;
+        child=root->next;
+        if (!child || child->prev!=root || child->current.script!=script+2 || child->active!=1) return 10;
+        head=Script_AllocNode(script,0);actor.script_node_lists[2]=head;root->flags=1;
+        if (Script_SpawnChildNode(args)!=1) return 11;
+        if (actor.script_node_lists[2]->current.script!=script+2 ||
+            actor.script_node_lists[2]->next!=head || head->prev!=actor.script_node_lists[2] ||
+            root->next!=child) return 12;
+    }
     puts("Original 72-node pool, insertion, exhaustion, collection and sequence wrap passed");
     return 0;
 }

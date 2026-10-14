@@ -25,7 +25,6 @@
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
-ScriptNode *g_ScriptNodePool;
 u8 g_ScriptCameraBytes[3];
 
 typedef struct ScriptArgParts {
@@ -181,7 +180,7 @@ int Script_BeginSceneTransition(int **arg0) {
     ScriptNode *node;
     unsigned short *node_flags;
     int flags;
-    int cursor;
+    uintptr_t cursor;
 
     if (!(state->flags & 0x1000)) {
 
@@ -222,7 +221,7 @@ int Script_OpenSaveLoadMenu(int **arg0) {
     int **saved = arg0;
     ScriptNode *node;
     int flags;
-    int cursor;
+    uintptr_t cursor;
 
     if (!(state->flags & 0x1000)) {
 
@@ -279,7 +278,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, active) == 0x10, interpreter_wait_off
 
 /* Tentative COMMON declarations preserve small-data metadata for stock
  * maspsx. Storage remains at the existing data/linker addresses. */
-ScriptNode *g_ScriptNodePool;
 
 
 
@@ -291,12 +289,7 @@ ScriptNode *g_ScriptNodePool;
 
 
 
-int Script_JumpIfZero(int **arg0) {
-    if (*arg0[0] == 0) {
-        g_ScriptCursorAddress = (int)(g_CurrentEntity->script_base + (*arg0[1] * 2));
-    }
-    return 1;
-}
+
 
 int Script_SpawnEntityAt(int **arg0) {
     char local[2];
@@ -388,7 +381,7 @@ int Entity_SelectFieldSetter(int **arg0) {
             g_CurrentEntity->script_cursor_19c = (unsigned int *)(g_CurrentEntity->script_base + (value << 1));
             break;
         case 3:
-            g_ScriptNodePool->next_value = (int)(g_CurrentEntity->script_base + (value << 1));
+            g_ScriptNodePool->next_value = (intptr_t)(g_CurrentEntity->script_base + (value << 1));
             break;
         }
     }
@@ -600,7 +593,7 @@ int Script_SetEntityAnimFrame(u16 **arg0) {
 int Script_WaitAnimFrameMatch(void) {
     ScriptNode *state;
     FieldActor *entity;
-    int stack;
+    uintptr_t stack;
     int ret;
 
     state = g_ScriptNodePool;

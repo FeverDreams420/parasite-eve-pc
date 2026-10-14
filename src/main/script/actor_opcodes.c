@@ -41,8 +41,6 @@
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
 u32 *g_ScriptCursor;
-ScriptNode *g_ScriptNodePool;
-int g_ScriptCursorAddress;
 
 /* Adjacent field-actor query and distance routines share one compiled unit. */
 #define NULL ((void *)0)
@@ -198,7 +196,6 @@ s32 Entity_GetDistanceComponents(s32 *args[]) {
 #undef NULL
 
 #define NULL ((void *)0)
-s32 g_ScriptCursorAddress;
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, memcard_init_phase) == 0xF4,
                   memcard_init_phase_offset);
@@ -820,11 +817,10 @@ int Script_SetGteMatrix(int **args) {
     return 1;
 }
 
-int g_ScriptCursorAddress;
 
 int Boot_CheckModeSwitch(void) {
     int mode = g_RenderStateFlags & 7;
-    int cursor;
+    uintptr_t cursor;
     ScriptNode *node;
 
     if (mode == 4 || mode == 0)
@@ -1017,7 +1013,7 @@ int Script_OpenMemCardDialog(void) {
     ScriptNode *node;
     unsigned short *node_flags;
     int flags;
-    int cursor;
+    uintptr_t cursor;
 
     if (!(state->flags & 0x1000)) {
         node = g_ScriptNodePool;
@@ -1053,7 +1049,7 @@ int Script_ShowReceivedItem(int **arg0) {
     ScriptNode *node;
     unsigned short *node_flags;
     int flags;
-    int cursor;
+    uintptr_t cursor;
 
     if (!(state->flags & 0x1000)) {
 

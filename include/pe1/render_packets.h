@@ -56,7 +56,9 @@ typedef struct RenderBufferPrefix {
     char *other_buffers[6];
     char *packets[2];
 } RenderBufferPrefix;
-extern RenderBufferPrefix D_800B0E38;
+/* Historical buffer symbol aliases the original game state. Includers that
+ * access it must include game_state.h after renderer types are complete. */
+#define D_800B0E38 (g_GameState.render_buffers)
 
 /* A buffer-table slot addressed by the draw slot's word offset. */
 typedef union RenderBufferSlotAddress {

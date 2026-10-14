@@ -3004,3 +3004,16 @@ ASan/UBSan/function with original source instrumented; PsyZ/SDL archives are
 uninstrumented. These CPU packet checks do not establish GPU image fidelity or
 complete effect callbacks. Whole-game integration and deletion of pc/ remain
 required.
+
+
+D_800B0E38 now aliases the canonical GameState ten-slot buffer region through an
+existing RenderBufferPrefix union view. Original ordering tables, six temporary
+resource pointers and the packet pair share their original storage; no separate
+production buffer state or fixture copies remain. Static offsets and a test
+cover all ten native slots in both directions. Five existing fixtures now use
+the canonical state when executing original renderer/effect methods. Full build
+and nine related CTests pass, including original model GPU and room GPU paths,
+with Disc 1 required. Fresh actor ASan/UBSan/function passes with original
+source instrumented and PsyZ/SDL archives uninstrumented. Boot allocation,
+buffer lifetime across complete scene transitions, real effect descriptors,
+full game-loop integration and deletion of pc/ remain incomplete.

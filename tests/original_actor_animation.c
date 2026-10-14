@@ -366,7 +366,6 @@ static int bios_random(void)
 }
 
 /* Controlled draw-buffer input for the original packet linker. */
-RenderBufferPrefix D_800B0E38;
 
 static RoomEnt *expected_room_context;
 static unsigned room_callback_count;
@@ -551,6 +550,29 @@ static int native_task_cycle(void)
     return 1;
 }
 
+static int canonical_render_buffers(void)
+{
+    RenderBufferPrefix saved=D_800B0E38;
+    static RenderGpuTag tags[2];
+    static char bytes[8];
+    for(unsigned i=0;i<2;++i) {
+        g_GameState.shared_buffers.ordering_tables[i]=(unsigned char *)&tags[i];
+        if(D_800B0E38.ordering[i]!=&tags[i]) return 0;
+    }
+    g_GameState.texture_load_scratch=(union SceneAssetView *)&bytes[0];
+    g_GameState.object_texture_blob=(struct SceneAssetBlob *)&bytes[1];
+    g_GameState.unk_170=(u8 *)&bytes[2];
+    g_GameState.bg_tim=(struct TimFile *)&bytes[3];
+    g_GameState.save_background_source=(unsigned short *)&bytes[4];
+    g_GameState.save_background_destination=(unsigned short *)&bytes[5];
+    for(unsigned i=0;i<6;++i) if(D_800B0E38.other_buffers[i]!=&bytes[i]) return 0;
+    D_800B0E38.packets[0]=&bytes[6]; D_800B0E38.packets[1]=&bytes[7];
+    if((void *)g_GameState.hud_tim!=&bytes[6] || g_GameState.script_sprite_buffer!=(u8 *)&bytes[7]) return 0;
+    D_800B0E38=saved;
+    puts("Original render buffer symbol: canonical game state aliases all ten native slots");
+    return 1;
+}
+
 static int native_effect_packet_links(void)
 {
     struct { RenderTintMode mode; u8 guard[16]; } buffer;
@@ -692,7 +714,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !native_effect_packet_links() || !native_screen_tint_packets()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

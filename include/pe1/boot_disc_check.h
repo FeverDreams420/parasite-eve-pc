@@ -21,7 +21,6 @@
 extern u16 g_PeImageSectorTable[];
 extern s32 g_ActiveDrawSlot;
 /* Ordering table of each draw slot (Boot_InitMemoryLayout). */
-extern RenderBufferPrefix D_800B0E38;
 
 void Boot_BuildRenderFlagTable(void);
 void Render_SetupFogLayer(void *source);

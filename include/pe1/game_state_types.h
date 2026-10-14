@@ -117,19 +117,25 @@ typedef struct Pe1GameState {
     union SceneAssetView *entity_texture_blob; /* 0x158: voice bank base + 0x2800 */
     u8 *scene_object_work;         /* 0x15C */
     /* 0x160: the frame ordering tables (g_OtBufferTable) double as the
-     * background texture load buffer while a scene loads. */
+     * background texture load buffer while a scene loads. The complete ten-slot
+     * renderer view aliases the original load-time pointers through 0x184. */
     union {
-        unsigned char *ordering_tables[2];
-        struct SceneAssetBlob *bg_texture_blob;
-    } shared_buffers;
-    union SceneAssetView *texture_load_scratch; /* 0x168: second room read */
-    struct SceneAssetBlob *object_texture_blob; /* 0x16C */
-    u8 *unk_170;                      /* 0x170: work buffer set by the boot memory layout */
-    struct TimFile *bg_tim;                    /* 0x174 */
-    unsigned short *save_background_source;      /* 0x178 */
-    unsigned short *save_background_destination; /* 0x17C */
-    struct TimFile *hud_tim;                   /* 0x180 */
-    u8 *script_sprite_buffer;        /* 0x184: FieldFx_ClearScriptSprites starts the sprite list below it */
+        RenderBufferPrefix render_buffers;
+        struct {
+            union {
+                unsigned char *ordering_tables[2];
+                struct SceneAssetBlob *bg_texture_blob;
+            } shared_buffers;
+            union SceneAssetView *texture_load_scratch; /* 0x168: second room read */
+            struct SceneAssetBlob *object_texture_blob; /* 0x16C */
+            u8 *unk_170;                      /* 0x170: work buffer set by the boot memory layout */
+            struct TimFile *bg_tim;                    /* 0x174 */
+            unsigned short *save_background_source;      /* 0x178 */
+            unsigned short *save_background_destination; /* 0x17C */
+            struct TimFile *hud_tim;                   /* 0x180 */
+            u8 *script_sprite_buffer;        /* 0x184: FieldFx_ClearScriptSprites starts the sprite list below it */
+        };
+    };
     struct PmSlotBanks *scene_process_slots; /* 0x188 */
     union { /* 0x18C: two typed views of the same loaded archive pointer */
         union SceneAssetView *loaded_scene_assets;
@@ -156,5 +162,10 @@ PE1_STATIC_ASSERT(sizeof(Pe1SceneAudioState) == 16, scene_audio_state_size);
 PE1_STATIC_ASSERT(sizeof(Pe1PrimTag) == 2 * sizeof(uintptr_t), game_primitive_tag_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1FadeTile, r) == sizeof(Pe1PrimTag), game_fade_tile_size);
 PE1_STATIC_ASSERT(sizeof(Pe1FadeTpage) == 3 * sizeof(uintptr_t), game_fade_page_size);
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffers) == PE1_OFFSETOF(Pe1GameState, shared_buffers), game_render_ordering_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffers.other_buffers[0]) == PE1_OFFSETOF(Pe1GameState, texture_load_scratch), game_render_scratch_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffers.packets[0]) == PE1_OFFSETOF(Pe1GameState, hud_tim), game_render_packets_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffers.packets[1]) == PE1_OFFSETOF(Pe1GameState, script_sprite_buffer), game_render_sprite_alias);
 
 #endif

@@ -1094,7 +1094,6 @@ void Render_InitPrimBlock(RenderObjectEntity *object, s16 x, s16 y, int unused, 
 
 }
 
-extern RenderBufferPrefix D_800B0E38;
 
 /* Original ordering-table insertion using native PsyZ packet links. */
 /* A packet seen as bytes and as the address the DMA chain links through. */

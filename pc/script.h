@@ -4,7 +4,7 @@
 #include "room.h"
 
 typedef struct PeScriptProgram {
-    const PeRoomBlob *blob; /* borrowed, immutable archive */
+    const PeRoomBlob *blob; /* borrowed; decoder does not mutate bytes */
     uint32_t block, map_list;
     unsigned entries, actors;
 } PeScriptProgram;

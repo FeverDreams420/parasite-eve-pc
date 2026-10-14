@@ -3,6 +3,7 @@
 #include "script.h"
 #include "spu_bank.h"
 #include "scene.h"
+#include "script_vm.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -89,6 +90,17 @@ int main(void) {
     CHECK(pe_scene_prepare(&catalog, 431, &scene, scene_error, sizeof(scene_error)));
     CHECK(scene.scripts.blob == &scene.room.data);
     CHECK(scene.sample_stats.bytes == 28176 && scene.spu->valid[255]);
+    PeScriptBanks banks = {0};
+    PeScriptTask task;
+    /* Actual M431 entry zero sets its event cursor/flag and waits one tick. */
+    CHECK(pe_script_task_init(&task, &scene.scripts, 0, &banks));
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
+    CHECK(task.instructions == 3 && task.active == 1 && task.actor_flags == 0x40);
+    CHECK(task.cursors[1] == task.base + 36);
+    /* The active scene actor requires audio; report the missing opcode. */
+    CHECK(pe_script_task_init(&task, &scene.scripts, 1, &banks));
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_ERROR);
+    CHECK(strstr(task.error, "Unimplemented script opcode 234"));
     uint8_t *scene_data = scene.room.data.bytes;
     PeSpuBank *scene_spu = scene.spu;
     CHECK(!pe_scene_prepare(&catalog, PE_USA_ROOM_SLOTS, &scene, scene_error, sizeof(scene_error)));
@@ -154,7 +166,7 @@ int main(void) {
     pe_scene_close(&scene);
     pe_scene_close(&scene);
     free(vram);
-    printf("USA Disc 1: %u rooms, %u empty slots, %llu texture words, %u script entries, %u initial actors; no scripts executed\n",
+    printf("USA Disc 1: %u rooms, %u empty slots, %llu texture words, %u script entries, %u initial actors; M431 task prefix verified, full scene execution pending\n",
            loaded, absent, (unsigned long long)uploaded_words, script_entries, initial_actors);
     return 0;
 }

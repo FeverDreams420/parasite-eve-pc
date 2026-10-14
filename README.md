@@ -59,7 +59,7 @@ script entry/actor catalogs and the startup SPU sample bank are prepared in
 `PeScene`, but scene execution and gameplay are not integrated.
 
 `make ci` builds and runs the asset-free disc-reader, VRAM, script-format,
-SPU-bank and automation tests. The
+script-runtime, SPU-bank and automation tests. The
 room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
 is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
@@ -158,3 +158,15 @@ and VRAM contents before texture uploads. This is resource preparation;
 sequence execution, synthesis, mixing and room-specific audio-bank changes
 remain pending. `spu-bank` tests malformed/truncated banks and partial uploads,
 while `room-assets` tests real startup data and scene ownership/rollback.
+
+`pc/script_vm.c` executes one native script task with shared variable/operand
+banks and writable literal operands. It supports assignments, all 24 expression
+operations, unconditional jumps, wait ticks, event cursors, flags and defined
+no-ops. Signed comparisons and fixed-point operations preserve the original
+word semantics without C overflow/shift undefined behavior. Unsupported
+opcodes and instruction-limit exhaustion return explicit errors. Tests execute
+the first three commands of the actual M431 entry-zero task; the active scene
+actor still fails explicitly at AKAO opcode 234. The task runtime is compiled
+into the native target but is not yet driven by the frontend's scene loop.
+Multi-task scheduling, actor creation, subsystem dispatch and full scenes
+remain pending; these tests do not prove campaign execution.

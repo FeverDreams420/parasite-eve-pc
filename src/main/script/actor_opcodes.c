@@ -1,5 +1,6 @@
 #include "common.h"
 #include "pe1/akao.h"
+#include "pe1/akao_send.h"
 #include "pe1/akao/commands.h"
 #include "pe1/asset_find.h"
 #include "pe1/asset_table.h"
@@ -14,11 +15,9 @@
 #include "pe1/field_actor.h"
 #include "pe1/field_collision.h"
 #include "pe1/font.h"
-#include "pe1/game_audio_state.h"
 #include "pe1/game_state.h"
 #include "pe1/game_state_types.h"
 #include "pe1/geom_state.h"
-#include "pe1/global_slot.h"
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"
 #include "pe1/map_selection.h"
@@ -27,7 +26,6 @@
 #include "pe1/menu_inventory.h"
 #include "pe1/menu_item_record.h"
 #include "pe1/player_entity.h"
-#include "pe1/psyq_bios.h"
 #include "pe1/psyq_cd.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_lighting.h"
@@ -40,10 +38,8 @@
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
-u32 *g_ScriptCursor;
 
 /* Adjacent field-actor query and distance routines share one compiled unit. */
-#define NULL ((void *)0)
 
 /* Script op: look up an actor by (type id, sub id) script args and read one
  * of its fields into the out arg. args = script argument pointer array:
@@ -193,12 +189,8 @@ s32 Entity_GetDistanceComponents(s32 *args[]) {
     }
     return 1;
 }
-#undef NULL
 
-#define NULL ((void *)0)
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, memcard_init_phase) == 0xF4,
-                  memcard_init_phase_offset);
 
 s32 Boot_MemCardStepInit(u8 **arg0) {
     Pe1GameState *base;
@@ -325,17 +317,6 @@ int Entity_GetPositionByType(int **args) {
     return 1;
 }
 
-PE1_STATIC_ASSERT(sizeof(ScriptNode) == 0x2C, camera_script_node_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, flags) == 0x08,
-                  camera_script_node_flags_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, active) == 0x10,
-                  camera_script_node_active_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, target14) == 0x14,
-                  camera_script_node_target14_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, target18) == 0x18,
-                  camera_script_node_target18_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, target1c) == 0x1C,
-                  camera_script_node_target1c_offset);
 
 int Render_CameraTrackRelativeOffset(int **args) {
     FieldActor *speed_entity;
@@ -524,7 +505,6 @@ s32 Render_CameraStepAngleFade(s32 **arg0) {
     g_ScriptNodePool->active = 1;
     return 0;
 }
-#undef NULL
 
 void ResetGraph(s32);
 void SetDispMask(s32);
@@ -567,7 +547,7 @@ retry_first:
         u16 *range = g_SceneInitLbaTbl0;
         s32 minus_one = -1;
         do {
-            ret = CdRom_ReadSectorsFromLba(base[0x40] + range[0], g_MdecOverlayLoadBase, range[1] - range[0]);
+            ret = CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba + range[0], g_MdecOverlayLoadBase, range[1] - range[0]);
         } while (ret == minus_one);
     }
     {
@@ -583,16 +563,13 @@ retry_first:
         }
     }
 
-    EnterCriticalSection();
-    FlushCache();
-    ExitCriticalSection();
 
 retry_second:
     {
         u16 *range = g_SceneInitLbaTbl1;
         s32 minus_one = -1;
         do {
-            ret = CdRom_ReadSectorsFromLba(base[0x40] + range[0], g_CdLoadAreaBase, range[1] - range[0]);
+            ret = CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba + range[0], g_CdLoadAreaBase, range[1] - range[0]);
         } while (ret == minus_one);
     }
     {
@@ -608,9 +585,6 @@ retry_second:
         }
     }
 
-    EnterCriticalSection();
-    FlushCache();
-    ExitCriticalSection();
 
     sp.words[1] = 0;
     sp.buffers[0] = g_CdLoadAreaBase + ((g_SceneAssetLbaTbl - g_SceneInitLbaTbl1[0]) << 0xB);
@@ -787,7 +761,7 @@ int Script_SetGteMatrix(int **args) {
                                render_actor->action_data, 0);
     Render_TransformVertices(&g_CurrentEntity->render_object);
     Render_TransformSkinnedVertices(&g_CurrentEntity->render_object, g_EntityRenderScratch);
-    Render_DrawObject(&g_CurrentEntity->render_object, g_RenderLightingState.words);
+    Render_DrawObject(&g_CurrentEntity->render_object, &g_RenderLightingState);
     Render_UpdateClutTable(&g_CurrentEntity->render_object, 1,
                            (s16)g_ActiveDrawSlot);
 
@@ -796,7 +770,7 @@ int Script_SetGteMatrix(int **args) {
         first_draw_slot = g_ActiveDrawSlot;
         first_draw_slot ^= 1;
         g_ActiveDrawSlot = first_draw_slot;
-        Render_DrawObject(&flag_actor->render_object, g_RenderLightingState.words);
+        Render_DrawObject(&flag_actor->render_object, &g_RenderLightingState);
         Render_UpdateClutTable(&g_CurrentEntity->render_object, 1,
                                (s16)g_ActiveDrawSlot);
         second_draw_slot = g_ActiveDrawSlot;
@@ -833,7 +807,6 @@ int Boot_CheckModeSwitch(void) {
     return 0;
 }
 
-#define NULL ((void *)0)
 
 /* Script op: angle from the current entity to the actor named by
  * (args[0], args[1]), relative to the current entity's yaw, into args[2]. */
@@ -1136,14 +1109,6 @@ typedef struct AkaoArchiveSection {
     u32 asset_table;
 } AkaoArchiveSection;
 
-typedef struct AkaoCommandArgs {
-    int *opcode;
-    int *arg1;
-    int *arg2;
-    int *arg3;
-    int *arg4;
-    int *result;
-} AkaoCommandArgs;
 
 typedef struct AkaoAssetEntry {
     u8 pad0[3];
@@ -1151,8 +1116,11 @@ typedef struct AkaoAssetEntry {
     u32 data_offset;
     u8 value8;
     u8 pad9;
-    unsigned int id : 16;
+    u16 id;
 } AkaoAssetEntry;
+
+PE1_STATIC_ASSERT(sizeof(AkaoAssetEntry) == 12, actor_sound_asset_record_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoAssetEntry, id) == 10, actor_sound_asset_id_offset);
 
 typedef struct AkaoStackLocals {
     int slot;
@@ -1161,9 +1129,7 @@ typedef struct AkaoStackLocals {
     u8 pad12[8];
 } AkaoStackLocals;
 
-u32 *g_ScriptCursor;
 
-int Akao_Cmd_19_Then_C0(u8 *data, int value);
 
 int Akao_ProcessCommand(AkaoCommandArgs *args) {
     AkaoStackLocals locals;
@@ -1205,7 +1171,7 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         if (locals.slot + 2U < 2U) {
             break;
         }
-        *args->result = Akao_Cmd_10(g_AkaoRuntimeState.voice_banks[locals.slot]);
+        *args->result = Akao_Cmd_10((locals.slot == 0 ? g_GameState.bank_work_base : g_GameState.bank_work_end));
         Akao_Cmd_C0_WithSlot(0, 0x7F);
         CdRom_RegisterAudioSlot(locals.slot, *args->arg1, *args->result, 0x7F);
         break;
@@ -1221,7 +1187,7 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
             break;
         }
         *args->result = Akao_Cmd_19_Then_C0(
-            g_AkaoRuntimeState.voice_banks[locals.slot], *args->arg2);
+            (locals.slot == 0 ? g_GameState.bank_work_base : g_GameState.bank_work_end), *args->arg2);
         CdRom_RegisterAudioSlot(locals.slot, *args->arg1, *args->result,
                                   *args->arg2);
         break;
@@ -1308,7 +1274,7 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         break;
     case 0x12C:
         *args->result = Akao_SendTableCommand(
-            g_AkaoRuntimeState.archive, *args->arg1, *args->arg2, *args->arg3,
+            ((u8 *)g_GameState.loaded_scene_assets), *args->arg1, *args->arg2, *args->arg3,
             *args->arg4);
         break;
     case 0x12D:
@@ -1357,10 +1323,10 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         Akao_Cmd_F1();
         break;
     case 0x15E:
-        g_AkaoRuntimeState.position_y = *args->arg1;
-        g_AkaoRuntimeState.position_x = *args->arg2;
-        g_AkaoRuntimeState.position_w = *args->arg3;
-        g_AkaoRuntimeState.position_z = *args->arg4;
+        g_GameState.bank_value_f8 = *args->arg1;
+        g_GameState.bank_value_f6 = *args->arg2;
+        g_GameState.bank_value_fa = *args->arg3;
+        g_GameState.bank_value_f7 = *args->arg4;
         break;
     case 0x15F:
         *args->result = Asset_Find08w(
@@ -1401,9 +1367,9 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
                                      ((Pe1Fixed16_16 *)args->arg4)->parts.integer);
         break;
     case 0x190:
-        base = g_AkaoRuntimeState.archive;
+        base = ((u8 *)g_GameState.loaded_scene_assets);
         table_info = ((AkaoArchiveSection *)(base +
-            ((AkaoArchiveHeader *)g_AkaoRuntimeState.archive)->section_offset))->asset_table;
+            ((AkaoArchiveHeader *)((u8 *)g_GameState.loaded_scene_assets))->section_offset))->asset_table;
         base += table_info & 0x3FFFFF;
         count = 0;
         entry_count = table_info >> 22;
@@ -1446,12 +1412,12 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         *args->result = locals.slot;
         break;
     case 0x195:
-        g_AkaoRuntimeState.defer_enabled = 1;
+        g_GameState.bank_state_12 = 1;
         break;
     case 0x196:
     case 0x197:
-        if (g_AkaoRuntimeState.deferred_count < 0x10) {
-            deferred = &g_DeferredAkaoCommands[g_AkaoRuntimeState.deferred_count];
+        if (g_GameState.bank_state_11 < 0x10) {
+            deferred = &g_DeferredAkaoCommands[g_GameState.bank_state_11];
             deferred->actor_type = g_CurrentEntity->type_id;
             deferred->actor_id = g_CurrentEntity->sub_id;
             deferred->command = *args->arg1;
@@ -1462,7 +1428,7 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
             } else {
                 deferred->arg3 = *args->arg4;
             }
-            deferred_count = &g_AkaoRuntimeState.deferred_count;
+            deferred_count = &g_GameState.bank_state_11;
             (*deferred_count)++;
         }
         break;
@@ -1470,15 +1436,15 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         volume = *args->arg1;
         locals.volumes[3] = 0;
         locals.volumes[1] = 0;
-        g_AkaoRuntimeState.cd_volume = volume;
+        g_GameState.scene_audio.tracks.movie_volume = volume;
         locals.volumes[2] = volume;
         locals.volumes[0] = volume;
         DsMix((CdlATV *)locals.volumes);
         break;
 archive_match:
-        g_AkaoRuntimeState.selected_id = current->id;
-        g_AkaoRuntimeState.selected_value = current->value8;
-        g_AkaoRuntimeState.selected_data = g_AkaoRuntimeState.archive +
+        g_GameState.scene_audio.tracks.pending_key = current->id;
+        g_GameState.scene_audio.tracks.pending_bank = current->value8;
+        g_GameState.bank_asset_table = ((u8 *)g_GameState.loaded_scene_assets) +
                                     (current->data_offset & 0xFFFFFF);
         break;
     case 0x19A:
@@ -1487,3 +1453,6 @@ archive_match:
     }
     return 1;
 }
+
+/* Original resident deferral queue (16 eight-byte command records). */
+DeferredAkaoCommand g_DeferredAkaoCommands[16];

@@ -52,7 +52,6 @@ int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int
 #endif
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 #ifdef PE_TEST_REAL_DISC
-_Alignas(u32) u8 g_SceneSectorDirectory[4 + 2 * (PE_USA_AUDIO_BANKS + 1)];
 SceneRoomSectorRange g_RoomSectorTable[PE_USA_ROOM_SLOTS];
 AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
 static u32 image_word(const u8 *p)

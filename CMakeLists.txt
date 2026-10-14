@@ -60,6 +60,8 @@ add_library(parasite-eve-original OBJECT
     src/main/entity/pool.c
     src/main/entity/allocation.c
     src/main/script/node_pool.c
+    src/main/psyq/libds/dssys_3.c
+    src/main/script/actor_opcodes.c
     src/main/script/value_ops.c
     src/main/script/flow_opcodes.c
     src/main/script/system_opcodes.c

@@ -159,6 +159,7 @@ extern AkaoSequenceCounter g_AkaoCmd24Sequence;
 int Akao_EnqueueStagedCommand(void);
 /* Queues a voice-bank load; returns the queue result. */
 int Akao_Cmd_10(void *bank);
+int Akao_Cmd_19_Then_C0(void *bank, int volume);
 
 /* Returns the header validation difference, or the queued sequence number. */
 int Akao_Cmd_24(void *header, int arg1, int arg2, int arg3);

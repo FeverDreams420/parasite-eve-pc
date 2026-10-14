@@ -678,3 +678,7 @@ int Draw_LoadTimAsset(TimUploadRecord *asset, void *base) {
 
     return 0;
 }
+
+/* USA resident audio bank directory: archive-relative base and 251 bounds.
+ * The mounted EXE supplies these serialized data values before bank I/O. */
+_Alignas(u32) u8 g_SceneSectorDirectory[4 + 2 * 251];

@@ -18,7 +18,6 @@ Pe1GameState g_GameState;
 #include "akao_sequence.h"
 #include "spu_bank.h"
 #include "pe1/cdrom.h"
-_Alignas(u32) u8 g_SceneSectorDirectory[4 + 2 * (PE_USA_AUDIO_BANKS + 1)];
 #include <psyz/spu.h>
 
 /* Explicit input tables for isolated original procedures, not runtime audio. */

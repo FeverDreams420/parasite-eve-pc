@@ -23,6 +23,8 @@
 #include "pe1/field_effect_modules.h"
 #include "pe1/pm.h"
 #include "pe1/akao/commands.h"
+#include "pe1/akao_send.h"
+#include "pe1/script_state.h"
 #include "pe1/akao/queue.h"
 #include "pe1/fieldfx_particle.h"
 #include "pe1/field_tri_test.h"
@@ -1120,6 +1122,70 @@ static int authored_glow_script_cycle(void)
     return 1;
 }
 
+static int original_actor_audio_state(void)
+{
+    Pe1GameState previous=g_GameState;
+    FieldActor actor={.type_id=7,.sub_id=11};
+    FieldActor *previous_actor=g_CurrentEntity;
+    int op=0x15e,a=0x12345,b=0x187,c=-2,d=-129,result=123;
+    AkaoCommandArgs args={&op,&a,&b,&c,&d,&result};
+    g_CurrentEntity=&actor;
+    if(Akao_ProcessCommand(&args)!=1 || g_GameState.bank_value_f8!=(u16)a ||
+       g_GameState.bank_value_f6!=(u8)b || g_GameState.bank_value_fa!=(u16)c ||
+       g_GameState.bank_value_f7!=(u8)d || result!=123) return 0;
+    op=0x195; g_GameState.bank_state_12=0;
+    if(Akao_ProcessCommand(&args)!=1 || g_GameState.bank_state_12!=1) return 0;
+    g_GameState.bank_state_11=0;
+    for(unsigned i=0;i<18;++i) {
+        op=i&1?0x197:0x196; a=0x180+i;b=-129;c=0x12345;d=-2;
+        if(Akao_ProcessCommand(&args)!=1 || g_GameState.bank_state_11!=(i<16?i+1:16)) return 0;
+        if(i<16) {
+            DeferredAkaoCommand *command=&g_DeferredAkaoCommands[i];
+            if(command->actor_type!=7 || command->actor_id!=11 ||
+               command->command!=(s8)a || command->arg1!=(s8)b ||
+               command->arg2!=(s16)c || command->arg3!=(s16)(i&1?d:c)) return 0;
+        }
+    }
+    /* The cache hit uses the same bank pointer the original loader installs. */
+    u16 sample_bank[12]={0x4b41,0x4f41,42,0,7,0};
+    g_GameState.bank_work_base=(u8 *)sample_bank;
+    g_GameState.bank_work_end=(u8 *)sample_bank;
+    struct { u32 root[2]; SceneAssetDirectory directory; } archive={0};
+    archive.root[1]=sizeof(archive.root);
+    g_GameState.loaded_scene_assets=(SceneAssetView *)&archive;
+    for(unsigned slot=0;slot<2;++slot) {
+        g_GameState.scene_audio.tracks.keys[0][0]=slot? -1:23;
+        g_GameState.scene_audio.tracks.keys[1][0]=slot?23:-1;
+        g_GameState.flags&=~0xc0u;g_GameState.cd_track_phase=0;
+        g_AkaoMessageQueueCount=0;
+        op=0xcb;a=23;b=0x55;c=1;
+        if(Akao_ProcessCommand(&args)!=1 || result!=42 || g_AkaoMessageQueueCount!=2 ||
+           g_AkaoMessageQueue[0].opcode.word!=0x19 ||
+           g_AkaoMessageQueue[0].arg0.sample_data!=(u8 *)(sample_bank+8) ||
+           g_AkaoMessageQueue[1].opcode.word!=0xc0 ||
+           g_AkaoMessageQueue[1].arg0.value!=0x55 ||
+           g_GameState.scene_audio.tracks.keys[slot][1]!=42 ||
+           g_GameState.track_volumes[slot]!=0x55) return 0;
+    }
+    u32 sound_archive[32]={0};
+    sound_archive[1]=8;
+    sound_archive[(8+0x30)/4]=(1u<<22)|64;
+    u8 *record=(u8 *)sound_archive+64;
+    record[3]=0x10;
+    sound_archive[(64+4)/4]=96;
+    record[8]=0xff;record[10]=0x34;record[11]=0x12;
+    g_GameState.loaded_scene_assets=(SceneAssetView *)sound_archive;
+    op=0x190;a=0x1234;
+    if(Akao_ProcessCommand(&args)!=1 || (u8)g_GameState.scene_audio.tracks.pending_key!=0x34 ||
+       (u8)g_GameState.scene_audio.tracks.pending_bank!=0xff ||
+       g_GameState.bank_asset_table!=(u8 *)sound_archive+96) return 0;
+    op=0x199;a=0x198;
+    if(Akao_ProcessCommand(&args)!=1 || g_GameState.scene_audio.tracks.movie_volume!=0x98) return 0;
+    g_AkaoMessageQueueCount=0;g_GameState=previous;g_CurrentEntity=previous_actor;
+    puts("Original actor audio: canonical positional/deferral/archive/volume state, sixteen-command limit and both cached native bank pointers passed");
+    return 1;
+}
+
 static int original_burst_target_selection(void)
 {
     FieldFxHandler initialize[]={BurstEffect_InitTarget,BurstEffectB_InitTarget,BurstEffectC_InitTarget};
@@ -1411,7 +1477,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

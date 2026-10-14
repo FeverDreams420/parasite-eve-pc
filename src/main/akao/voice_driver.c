@@ -27,7 +27,7 @@ void Akao_Cmd_40(void) {
     Akao_EnqueueStagedCommand();
 }
 
-int Akao_Cmd_19_Then_C0(int arg0, int arg1) {
+int Akao_Cmd_19_Then_C0(void *arg0, int arg1) {
     int *opcode;
     int saved_arg;
     int next_opcode;
@@ -35,7 +35,7 @@ int Akao_Cmd_19_Then_C0(int arg0, int arg1) {
 
     opcode = &g_AkaoCmd.opcode;
     *opcode = 0x19;
-    g_AkaoCmd.arg0.value = arg0;
+    g_AkaoCmd.arg0.sample_header = arg0;
     saved_arg = arg1;
     ret = Akao_EnqueueStagedCommand();
 

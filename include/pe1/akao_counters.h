@@ -1,11 +1,12 @@
 #ifndef PE1_AKAO_COUNTERS_H
 #define PE1_AKAO_COUNTERS_H
 
+#include "pe1/akao/globals.h"
+
 /* Sequencer-wide slide values and SPU sample-table pointers shared by the
  * AKAO command handlers and the four-tick slide step. */
 
 /* 16.16 slide accumulators stepped by Spu_StepReverbLoad. */
-extern int g_AkaoCdInputVolumeAccum;
 extern int g_AkaoGlobalPitchDepth;
 extern int g_AkaoTempoScaleAccum;
 

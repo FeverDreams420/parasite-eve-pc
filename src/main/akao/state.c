@@ -25,6 +25,7 @@ unsigned g_AkaoSfxAllocatedVoiceMask, g_SpuStoppedVoiceMask;
 u16 g_AkaoTrack5ATransposeValue;
 int g_AkaoGlobalPitchDepth;
 int g_AkaoTempoScaleAccum;
+AkaoCdInputAccumulator g_AkaoCdInputAccumulator;
 u16 g_AkaoGlobalSlideTick;
 short g_AkaoGlobalPitchSlideCounter, g_AkaoGlobalD2D0SlideCounter, g_AkaoGlobalD2CCSlideCounter;
 int g_AkaoGlobalPitchSlideStep, g_AkaoGlobalD2D0SlideStep, g_AkaoGlobalD2CCSlideStep;

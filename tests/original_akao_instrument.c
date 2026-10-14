@@ -157,6 +157,11 @@ int main(int argc, char **argv)
     g_AkaoTempoScale = 0x80;
     CHECK(g_AkaoTempoScaleAccum == 0x12805678);
     g_AkaoTempoScaleAccum = 0;
+    g_AkaoCdInputVolumeAccum = 0x12345678;
+    CHECK(g_AkaoCdInputVolume == 0x1234);
+    g_AkaoCdInputVolume = 0x7fff;
+    CHECK(g_AkaoCdInputVolumeAccum == 0x7fff5678);
+    g_AkaoCdInputVolumeAccum = 0;
     CHECK((void *)D_8009D2C8 == (void *)&fixture_bank);
     D_8009D2C8++;
     CHECK(g_AkaoCurTrack == &g_AkaoSequencerState.secondary);

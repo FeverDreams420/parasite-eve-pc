@@ -30,7 +30,13 @@ extern short g_AkaoGlobalD2CCSlideCounter;
 extern int g_AkaoGlobalPitchSlideStep;
 extern int g_AkaoGlobalD2D0SlideStep;
 extern int g_AkaoGlobalD2CCSlideStep;
-extern unsigned short g_AkaoCdInputVolume;
+typedef union AkaoCdInputAccumulator {
+    int value;
+    unsigned short halves[2];
+} AkaoCdInputAccumulator;
+extern AkaoCdInputAccumulator g_AkaoCdInputAccumulator;
+#define g_AkaoCdInputVolumeAccum (g_AkaoCdInputAccumulator.value)
+#define g_AkaoCdInputVolume (g_AkaoCdInputAccumulator.halves[1])
 
 /* Rolling timer-callback durations, newest first, and their sum. */
 extern s32 g_AkaoTimerDeltaHist0;

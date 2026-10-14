@@ -587,6 +587,8 @@ Original Akao_WriteVoiceParam ma teraz ścisłą C11 sygnaturę (int,AkaoVoicePa
 
 `src/main/akao/state.c` jest właścicielem native original instrument/voice/bank/backup storage, current bank pointer, masks, selected IDs, nested descriptor, playback mode, global slides/accumulators, SFX tempo/tick, envelope slots i SPU common attributes. Testowe duplikaty tych globals usunięto. Original map potwierdza byte aliases PitchScale=PitchDepth+2 i TempoScale=TempoScaleAccum+2; canonical headers zachowują shared bytes, fixture sprawdza read/write bez naruszania pozostałych bitów. CTest oraz ASan/UBSan/function z halt_on_error=1 przechodzą dla procedural fixture i 599-sequence prefix corpus (PsyZ nieinstrumentowane). Moduł stanu jest w original AKAO object target, nie połączonym main runtime; grammar/sample inputs, queue/dispatch message table, CD volume alias, platform registers/endpoints i timer integration nadal pozostają wymagane. Sama własność stanu nie oznacza działania audio.
 
+CdInputVolume i CdInputVolumeAccum współdzielą native union, zgodnie z original addresses D2B6/D2B4. Górny halfword używany przez Seq_ApplyGlobalPitch nie jest już oddzielnym globalem; state.c ma canonical storage. Headless test zapisuje przez oba widoki i potwierdza zachowanie części ułamkowej. CTest i ASan/UBSan/function z halt_on_error=1 przechodzą (PsyZ nieinstrumentowane). To poprawność aliasu; actual common-volume SPU output i slides pozostają wymagane.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

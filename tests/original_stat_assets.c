@@ -8,12 +8,68 @@
 #include "pe1/inventory_slots.h"
 #include "pe1/inventory_state.h"
 #include "pe1/weapon_list_output.h"
+#include "pe1/battle_modifiers.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 int Aya_StatBinarySearch(int value,int *table);
 int Aya_StatOverflowQuery(int kind,int value);
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
+static unsigned armor_third(unsigned value)
+{
+    if(value>999)value=999;
+    if(value>=85)return (value*249/208+402)/10;
+    unsigned root=0; while((root+1)*(root+1)<=value*3000)++root;
+    return root/10;
+}
+static int armor_stats(void)
+{
+    ItemDataRecord *item=&g_InventoryRuntime.equipment[0];
+    memset(item,0,sizeof(*item)); item->kind=9;
+    g_AyaSaveState.inventory_slot_count=1; g_AyaSaveState.equipped_armor_slot=0;
+    g_AyaSaveState.inventory_items[0]=0x100;
+    for(unsigned value=0;value<=1200;++value) {
+        item->bonusStats[0]=item->bonusStats[1]=item->bonusStats[2]=value;
+        BattleAttributes out={0}; Inv_BuildArmorList(&out);
+        CHECK(out.parameterWord.fields.first==(value>999?999:value));
+        CHECK(out.parameterWord.fields.second==(value>999?999:value));
+        CHECK(out.parameterWord.fields.third==armor_third(value) && out.effectFlags==0);
+    }
+    unsigned real_armors=0;
+    for(unsigned id=0;id<255;++id) {
+        ItemDataRecord *base=Item_LookupBaseData(id);
+        if(!base || base->kind!=9)continue;
+        CHECK(base->tailCount<=sizeof(base->tailData)); *item=*base;
+        BattleAttributes out={0}; Inv_BuildArmorList(&out);
+        CHECK(out.parameterWord.fields.third==armor_third(base->baseStats[2]+base->bonusStats[2]));
+        ++real_armors;
+    }
+    CHECK(real_armors>0);
+    const unsigned flags[]={0,1,2,4,8,16,0x4000,0x8000,0x20,0x40,0x80,0x800,0x2000,0x10000,0x200,0x20000,0x400,0x1000};
+    memset(item,0,sizeof(*item)); item->kind=9; item->tailCount=1;
+    for(unsigned effect=0;effect<18;++effect) {
+        item->tailData[0]=effect;
+        BattleAttributes out={0}; Inv_BuildArmorList(&out);
+        CHECK(out.effectFlags==flags[effect]);
+        for(unsigned stat=0;stat<7;++stat) {
+            int expected=stat==0 && effect==11?3:stat==1 && effect==12?2:
+                (stat==5 && effect==13)||(stat==1 && effect==15)?-2:0;
+            CHECK(g_StatScaleBase[stat]==expected);
+        }
+        CHECK(g_InvBonusSlotCount==(effect>=8 && effect<=10 ? 1<<(effect-8):0));
+    }
+    /* Later effects win; modifier refresh restores the selected storage list. */
+    item->tailCount=4; item->tailData[0]=8; item->tailData[1]=10; item->tailData[2]=12; item->tailData[3]=15;
+    s16 storage[3]={0}; Inv_SetActiveListOverride(storage,3); Inv_SelectActiveList(1);
+    BattleCmd_LoadWeaponModifiers();
+    CHECK(g_InvBonusSlotCount==4 && g_StatScaleBase[1]==-2);
+    CHECK(g_InvItemPtr==storage && g_InvSlotLimit==3);
+    Inv_ResetActiveList(); g_AyaSaveState.equipped_armor_slot=-1;
+    BattleAttributes out={0}; Inv_BuildArmorList(&out);
+    CHECK(out.parameterWord.raw==0 && out.effectFlags==0 && g_InvBonusSlotCount==0);
+    printf("Original armor parameters: %u real records, 1201 values and modifier/reset cases passed\n",real_armors);
+    return 0;
+}
 static int weapon_stats(void)
 {
     ItemDataRecord *item=&g_InventoryRuntime.equipment[0];
@@ -196,6 +252,7 @@ int main(void)
     CHECK(!memcmp(effect_codes,g_WeaponEffectCodes,sizeof(effect_codes)));
     CHECK(item_lookups()==0);
     CHECK(weapon_stats()==0);
+    CHECK(armor_stats()==0);
     CHECK(inventory_selection()==0);
     CHECK(recalc_stats()==0);
     puts("Original player stat recalculation: 297 level/modifier combinations and inventory capacity passed");

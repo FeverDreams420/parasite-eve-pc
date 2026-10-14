@@ -12,6 +12,7 @@ add_subdirectory(pc)
 # their platform dependencies are made portable; no duplicate game logic.
 add_library(parasite-eve-original OBJECT
     src/main/aya/stat_recalc.c
+    src/main/item/armor_stats.c
     src/main/item/weapon_stats.c
     src/main/item/data_lookup.c
     src/main/item/list_selection.c

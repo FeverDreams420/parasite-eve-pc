@@ -1408,3 +1408,21 @@ game/test ASan/UBSan/function checks passed (PsyZ archive uninstrumented).
 This does not establish all effect combinations or attack gameplay. Armor
 parameters/modifier extraction and complete player equipment initialization
 remain pending.
+
+### Original armor parameters and equipment stat modifiers
+
+Inv_BuildArmorList and its integer-root/clamp helpers moved from aya/stats.c
+into item/armor_stats.c, retaining the original derivation and effect rules.
+BattleCmd_LoadWeaponModifiers moved from battle/commands.c and now reads the
+canonical shared Aya equipped-armor slot instead of a detached legacy symbol.
+Its original modifier reset, effect ordering, stat recalculation and active-list
+restoration are preserved. This links the original armor calculations into the
+native original-code target; it does not replace them with a host implementation.
+
+Verification covers 51 real resident armor records, 1201 parameter inputs,
+individual effects 0..17, overlapping effects, inventory bonuses, override-list
+restoration and unequipped reset. Full build and the stat-assets, scene-spawn and
+pool CTests passed. The stat test also passed ASan/UBSan/function instrumentation
+with the actual Disc 1 data (PsyZ archive uninstrumented). These checks establish
+parameter derivation, not armor behavior in a running battle. Complete original
+Battle_InitEquipLists/player-spawn integration and playable scenes remain pending.

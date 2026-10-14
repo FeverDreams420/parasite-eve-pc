@@ -52,8 +52,9 @@ if(BUILD_TESTING)
     target_include_directories(test-original-akao-layout PRIVATE include)
     add_test(NAME original-game-akao-layout COMMAND test-original-akao-layout)
     add_executable(test-original-akao-instrument tests/original_akao_instrument.c
+        pc/disc.c pc/room.c pc/akao_sequence.c
         $<TARGET_OBJECTS:parasite-eve-original-akao>)
-    target_include_directories(test-original-akao-instrument PRIVATE include)
+    target_include_directories(test-original-akao-instrument PRIVATE include pc)
     target_link_libraries(test-original-akao-instrument PRIVATE psyz)
     # Isolate original procedures under test. The fixture rejects any request
     # to the missing reverb-mode endpoint. Full audio must resolve it properly.
@@ -65,6 +66,8 @@ if(BUILD_TESTING)
         target_link_options(test-original-akao-instrument PRIVATE -Wl,--gc-sections)
     endif()
     add_test(NAME original-game-akao-instrument COMMAND test-original-akao-instrument)
+    add_test(NAME original-game-akao-assets COMMAND test-original-akao-instrument --assets)
+    set_tests_properties(original-game-akao-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 
 if(BUILD_TESTING)

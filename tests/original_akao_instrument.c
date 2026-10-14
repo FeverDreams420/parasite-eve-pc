@@ -5,6 +5,8 @@
 #include "pe1/psyq_spu_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include "akao_sequence.h"
 
 /* Explicit input tables for isolated original procedures, not runtime audio. */
 AkaoInstrument g_AkaoInstrumentTable[256];
@@ -65,8 +67,64 @@ void Akao_InitPrimarySecondaryVoicesWithMode(AkaoValueCommand *command);
 void Akao_StepSequencerVoice(void *sequence);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
-int main(void)
+static int asset_audit(void)
 {
+    const char *path = getenv("PE_TEST_DISC");
+    if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS") ? 1 : 77;
+    PeDisc disc;
+    PeRoomCatalog catalog;
+    CHECK(pe_disc_open(&disc, path));
+    CHECK(pe_room_catalog_open(&catalog, &disc));
+    unsigned rooms = 0, sequences = 0, short_records = 0, channels = 0;
+    for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
+        if (!catalog.ranges[map - 1].room_sectors) continue;
+        PeRoom room = {0};
+        CHECK(pe_room_load(&catalog, map, &room));
+        ++rooms;
+        const uint8_t *records;
+        unsigned count;
+        CHECK(pe_room_blob_table(&room.data, 12, 12, &records, &count));
+        for (unsigned i = 0; i < count; ++i) {
+            PeRoomMusic music;
+            char error[256];
+            CHECK(pe_room_music(&room, i, &music, error, sizeof(error)));
+            if (music.unresolved_short_record) { ++short_records; continue; }
+            unsigned char *snapshot = malloc(music.sequence.size);
+            CHECK(snapshot != NULL);
+            memcpy(snapshot, music.sequence.bytes, music.sequence.size);
+            g_AkaoSequencerState = (AkaoSequencerState){0};
+            g_AkaoSeqPendingFlags = 0;
+            g_AkaoVoiceKeyOnState = 0;
+            g_SpuActiveVoiceMask = 0;
+            Akao_StepSequencerVoice((void *)(music.sequence.bytes + 16));
+            CHECK(bank.active_voice_mask == music.sequence.active);
+            CHECK(bank.pending_voice_mask == music.sequence.pending);
+            CHECK(bank.yield_voice_mask == music.sequence.yield);
+            for (unsigned voice = 0; voice < 24; ++voice) {
+                if (music.sequence.channels[voice] == UINT32_MAX) {
+                    CHECK(g_AkaoVoiceStateTable[voice].pc == (unsigned char *)g_AkaoDefaultVoiceProgram);
+                } else {
+                    CHECK(g_AkaoVoiceStateTable[voice].pc == music.sequence.bytes + music.sequence.channels[voice]);
+                    CHECK(g_AkaoVoiceStateTable[voice].assigned_voice_index == 24);
+                    ++channels;
+                }
+            }
+            CHECK(memcmp(snapshot, music.sequence.bytes, music.sequence.size) == 0);
+            free(snapshot);
+            ++sequences;
+        }
+        pe_room_close(&room);
+    }
+    CHECK(rooms != 0 && sequences != 0 && channels != 0);
+    pe_disc_close(&disc);
+    printf("original AKAO start: %u rooms, %u sequences, %u channels; %u short records not executed\n",
+           rooms, sequences, channels, short_records);
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    if (argc == 2 && strcmp(argv[1], "--assets") == 0) return asset_audit();
     unsigned int sound_header[4] = {0x4f414b41u, 0x12345678u, 0, 0};
     for (unsigned i = 0; i < 256; ++i) Akao_MessageHandlers[i] = record_message;
     for (unsigned i = 0; i < 1025; ++i) {

@@ -555,6 +555,8 @@ Original Akao_InitVoices przyjmuje typed AkaoTrack pointer zamiast byte buffer; 
 
 Original Akao_StepSequencerVoice start używa typed track cursor zamiast byte-pointer i bias 0x116; decoding/order/defaults pozostają. Headless fixture uruchamia sparse channel mask 0/2/23 z header pending/yield masks i relative stream offsets, również paused mode. Sprawdza native PC, assigned voice sentinel, durations/pan, active/pending-restore, tempo/accumulator i allocation mask. CTest i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). To syntetyczny nagłówek; real corpus parsing, bytecode execution/tick/SPU i PCM nie mają jeszcze pełnego dowodu.
 
+Strict `original-game-akao-assets` wykonuje original Akao_StepSequencerVoice na prawdziwych nagłówkach Disc 1: 414 pokojów, 599 sekwencji, 8883 aktywne kanały. Test-only parser/Disc I/O ustala oczekiwane offsets/masks; original procedure ustawia runtime PC, masks i inactive defaults. Snapshot potwierdza immutable sequence data. CTest i ASan/UBSan/function pełnego corpus przechodzą (PsyZ nieinstrumentowane). Jeden short record jest jawnie policzony i niewykonany; jego runtime handling pozostaje wymagany. Test dowodzi start/header addressing, nie wykonania całego bytecode, piosenek, SPU ani PCM. Bez obrazu test zwraca SKIP 77, a PE_REQUIRE_GAME_ASSETS=1 wymusza failure; SKIP nie jest dowodem ukończenia.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

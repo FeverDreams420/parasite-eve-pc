@@ -37,8 +37,7 @@ add_library(parasite-eve-original OBJECT
     src/main/psyq/libgte/mtx_000.c
     src/main/psyq/libgte/cmb_06.c
     src/main/anim/bone_rotations.c
-    src/main/render/bone_transforms.c
-    src/main/render/vertex_projection.c
+    src/main/render/object.c
     src/main/entity/frame_update.c
     src/main/boot/init.c
     src/main/entity/pool.c
@@ -224,7 +223,7 @@ if(BUILD_TESTING)
     add_test(NAME original-game-nodes COMMAND test-original-nodes)
 endif()
 
-add_library(parasite-eve-original-model-setup OBJECT src/main/render/texture_upload.c src/main/render/object.c)
+add_library(parasite-eve-original-model-setup OBJECT src/main/render/texture_upload.c)
 target_include_directories(parasite-eve-original-model-setup PRIVATE include)
 target_link_libraries(parasite-eve-original-model-setup PRIVATE psyz)
 target_compile_definitions(parasite-eve-original-model-setup PRIVATE __psyz)

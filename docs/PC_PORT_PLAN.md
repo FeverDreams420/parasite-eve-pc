@@ -2139,3 +2139,22 @@ model --gpu run also passes: 878 models, 301224 visible ordering packets,
 libraries are not instrumented. This validates the model fixtures, not a
 complete scene image or running gameplay. Other renderer extractions and the
 entire pc/ directory remain to be removed.
+
+
+### Restore bone transforms and projection to the original renderer
+
+Deleted render/bone_transforms.c and render/vertex_projection.c. Their complete
+functions and backing storage now reside in render/object.c, preserving all
+existing native fixes. Only obsolete extraction comments changed. The entire
+object module now compiles in parasite-eve-original, replacing the two extracted
+sources without duplicate compilation. No new files.
+
+Fresh ASan/UBSan/function checks pass for projection-assets (878 models,
+236410 vertex slots) and model-setup --gpu (878 models, 301224 visible packets,
+2239298 pixels, identical draw slots); PsyZ/SDL remain uninstrumented. Full
+build passes. These are model-level results, not proof of complete scene output
+or a playable game. Remaining extraction files and pc/ still require removal.
+
+Ten original-game CTests also pass with required Disc 1 assets: animation,
+animation-assets, projection, projection-assets, model-setup, model-gpu,
+model-room-gpu, actor-animation, entity-texture-assets and shadow.

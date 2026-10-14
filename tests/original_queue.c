@@ -525,6 +525,16 @@ int main(void)
         if(g_ScriptVariableBank[60]!=0x80022000 || g_ScriptVariableBank[61]!=0x80002000 ||
            owner.flags!=0x80002000 || task.current.script!=script+18 || task.flags!=0x10) return 54;
     }
+    for(unsigned direction=0;direction<4;++direction) for(unsigned yaw=0;yaw<3;++yaw) {
+        FieldActor owner={.rot_y=yaws[yaw]};
+        u32 script[]={203|(3u<<13)|((2u<<6)<<17),0,
+                      (u32)(directions[direction][0]*65536),(u32)(directions[direction][1]*65536),62,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        int angle=directions[direction][2]-yaws[yaw];if(angle<0) angle+=4096;
+        if(g_ScriptVariableBank[62]!=(u32)angle || task.current.script!=script+7 || task.flags!=0x10) return 55;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

@@ -55,3 +55,15 @@ invalid:
     snprintf(channel->error, sizeof(channel->error), "Invalid AKAO instrument/pitch divisor at 0x%x", channel->pc);
     return 0;
 }
+
+int pe_akao_channel_select_sample(PeAkaoChannel *channel, unsigned encoded) {
+    if (!channel->samples || !channel->control) return 0;
+    unsigned index = encoded;
+    if ((channel->control->status_flags & 0x100) && index >= 0x20) index += 0x30;
+    if (index >= 256 || !channel->samples->valid[index]) return 0;
+    /* Drum selection only changes the instrument parameters; A1's pitch
+     * ratio and pending-pitch clear are not part of this operation. */
+    if (channel->instrument != index)
+        select_instrument(channel, index, &channel->samples->instruments[index]);
+    return 1;
+}

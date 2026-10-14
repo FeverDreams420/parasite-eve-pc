@@ -263,9 +263,17 @@ synthesis remain pending; these tests validate state, not audible playback.
 tables, octave shifts, signed transpose and detune. It preserves the wrapped
 32-bit detune product and unsigned shift before the final 16-bit pitch. C0/C1
 and D8/D9 set/adjust transpose and detune; ties preserve pitch and rests avoid
-key-on. Bound channels now apply pitch handling during musical ticks. Drum-kit,
-portamento, pending instrument-pitch changes and LFO modes remain explicit
+key-on. Bound channels now apply pitch handling during musical ticks. Portamento,
+pending instrument-pitch changes and LFO modes remain explicit
 errors. The current audit handles 5,434 initial raw note/tie/rest events and
 reports 3,447 unsupported prefixes; every full sequence still hits missing
 commands. SPU voice allocation/register application and audible synthesis remain
 pending.
+
+Drum-kit FC/04..05 now uses checked offsets to six-byte sample records. Each
+key selects its instrument without A1 pitch rescaling, then applies the record's
+pitch, gain, pan and reverb, including the alternate sample bank. `akao-drum`
+tests kit entry/exit, preserved melodic bookkeeping, malformed offsets and the
+no-rescale distinction. The current audit reaches 7,303 initial note events;
+1,578 prefixes and all complete sequences still hit unimplemented commands.
+This is state execution, not synthesized playback.

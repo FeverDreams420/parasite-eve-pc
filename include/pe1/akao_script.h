@@ -3,12 +3,11 @@
 
 /* Canonical Akao sequencer per-track script state.
  *
- * Union of the partial `ScriptState` views previously redefined inside each
- * SeqOp_*.c file. Offsets and access widths are preserved exactly so every
- * field access compiles to the same load/store (byte-match holds). Still
- * intentionally partial; gaps are explicit pads. Total 0xBA is a lower bound,
- * not the true track-struct size, but nothing does pointer arithmetic on
- * AkaoScriptState* so the trailing size is not load-bearing.
+ * Partial view of the original PS1 track state used by retained reference
+ * handlers. Offsets describe original data aliases (+0x46 is the high half
+ * of expression_value); they do not constrain native layout or compiler
+ * output. The native runtime uses pc/akao_channel.h with decoded offsets
+ * and normal pointers. Total 0xBA is only a lower bound on this view.
  */
 
 #include "common.h"

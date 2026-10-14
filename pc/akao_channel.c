@@ -73,6 +73,7 @@ int pe_akao_channel_start(PeAkaoChannel *channel, const PeAkaoSequence *sequence
     channel->panpot = 0x8000;
     channel->note_length = 4;
     channel->pan_duration = 2;
+    channel->drum_target = UINT32_MAX;
     for (unsigned i = 0; i < 4; ++i) channel->loop_points[i] = UINT32_MAX;
     if (samples) pe_akao_channel_bind_samples(channel, samples);
     return 1;
@@ -105,11 +106,12 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
             if (channel->sequence.size - pc < 2) goto truncated;
             extended = channel->sequence.bytes[pc + 1];
             prefix = 2;
-            if (extended > 3 && extended != 6 && extended != 7 && extended != 8 && extended != 9 && extended != 0x12) {
+            if (extended > 5 && extended != 6 && extended != 7 && extended != 8 && extended != 9 && extended != 0x12) {
                 snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO opcode 0xfc/0x%02x at 0x%x", extended, pc);
                 return PE_AKAO_CHANNEL_ERROR;
             }
-            operands = extended == 0 || extended == 2 || extended == 6 || extended == 0x12 ? 2 : 3;
+            operands = extended == 5 ? 0 :
+                       extended == 0 || extended == 2 || extended == 4 || extended == 6 || extended == 0x12 ? 2 : 3;
             if ((extended <= 3 || extended == 7) && !channel->control) {
                 snprintf(channel->error, sizeof(channel->error), "Missing shared AKAO control at 0x%x", pc);
                 return PE_AKAO_CHANNEL_ERROR;
@@ -220,6 +222,17 @@ truncated:
             break;
         case 0xfc: {
             const uint8_t *args = channel->sequence.bytes + pc + prefix;
+            if (extended == 4) {
+                unsigned word = args[0] | (unsigned)args[1] << 8;
+                int displacement = word & 32768 ? (int)word - 65536 : (int)word;
+                int64_t target = (int64_t)next + displacement;
+                if (target < 0 || (uint64_t)target >= channel->sequence.size) goto invalid;
+                channel->drum_volume = (uint16_t)(channel->expression_value >> 16);
+                channel->drum_target = (uint32_t)target;
+                channel->flags |= 8;
+                break;
+            }
+            if (extended == 5) { channel->flags &= ~UINT32_C(8); break; }
             if (extended == 0x12) {
                 channel->volume_duration = (uint16_t)(value ? value : 256);
                 channel->volume_base &= 0x7f00;

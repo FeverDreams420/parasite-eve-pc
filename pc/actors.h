@@ -2,6 +2,7 @@
 #define PE_PC_ACTORS_H
 #include "script_scheduler.h"
 #include "collision.h"
+#include "animation.h"
 #define PE_ACTOR_CAPACITY 14u
 typedef struct PeActor {
     PeScriptActor script;
@@ -9,6 +10,9 @@ typedef struct PeActor {
     int next, previous;
     unsigned used;
     uint32_t floor_triangle, floor_triangle_mirror; /* UINT32_MAX means no face */
+    PeAnimation animation; /* borrowed stable room/entity-bank bytes */
+    PeAnimationClock animation_clock;
+    unsigned action;
 } PeActor;
 typedef struct PeActors {
     PeActor slots[PE_ACTOR_CAPACITY];
@@ -28,4 +32,7 @@ int pe_actors_spawn(PeActors *actors, uint8_t type, uint8_t sub_id, int after,
 int pe_actors_collect(PeActors *actors);
 /* Original FindFloor state update; no match or bypass preserves face/Y. */
 int pe_actor_find_floor(PeActor *actor, const PeCollision *collision);
+/* Local action binding; parent propagation/model allocation remain separate. */
+int pe_actor_set_animation(PeActor *actor,const PeAnimation *animation,unsigned action,int force);
+int pe_actor_advance_animation(PeActor *actor);
 #endif

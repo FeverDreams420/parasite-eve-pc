@@ -4,6 +4,27 @@
 #include <string.h>
 #define CHECK(x) do{if(!(x)){fprintf(stderr,"line %d: %s\n",__LINE__,#x);exit(1);}}while(0)
 static void half(uint8_t*p,unsigned v){p[0]=(uint8_t)v;p[1]=(uint8_t)(v>>8);}
+/* Direct original control flow, restricted to bounded values without signed
+ * overflow. Independent of the portable word/shift helpers under test. */
+static int reference_advance(int old,int step,int last,int stop,unsigned *flags){
+    *flags=(*flags&~8u)|0x800000;
+    if(*flags&0x100)return old;
+    if((*flags&0x200)&&((unsigned)old>>16)==(unsigned)stop)return old;
+    int next=old+step,end=stop*65536;
+    if(*flags&0x200){
+        if(old<end&&end<next)return end;
+        if(end<old&&next<end)return end;
+    }
+    int whole=next>=0?next/65536:-((-next+65535)/65536);
+    if(last<whole){next=(whole%(last+1))*65536;old=0;*flags|=8;}
+    else if(next<0){old=last*65536;next+=(last+1)*65536;*flags|=8;}
+    if(*flags&0x200){
+        if(!(end<old)&&end<next)return end;
+        if(old<end)return next;
+        if(next<end)return end;
+    }
+    return next;
+}
 int main(void){
     uint8_t bytes[40]={0};bytes[2]=3;half(bytes+4,0x8000);half(bytes+10,42);
     half(bytes+14,65535);half(bytes+16,2);half(bytes+18,3);
@@ -42,6 +63,37 @@ int main(void){
     overrides[1].matrix_index=0;overrides[0].matrix_index=0;
     CHECK(pe_animation_matrices(&frame,overrides,matrices,2));
     CHECK(!pe_animation_matrices(&frame,NULL,matrices,1));
+    PeAnimationClock clock={0x18000,0,2,0};uint32_t flags=8;
+    CHECK(pe_animation_advance(&clock,0x20000,&flags));
+    CHECK(clock.frame==0&&clock.previous==0x18000&&(flags&8)&&(flags&0x800000));
+    clock.frame=0;flags=0;
+    CHECK(pe_animation_advance(&clock,(uint32_t)-0x8000,&flags));
+    CHECK(clock.frame==0x28000&&(flags&8));
+    clock.frame=0x8000;clock.stop=1;flags=0x200;
+    CHECK(pe_animation_advance(&clock,0x10000,&flags)&&clock.frame==0x10000);
+    CHECK(pe_animation_advance(&clock,0x10000,&flags)&&clock.frame==0x10000&&clock.previous==0x10000);
+    clock.frame=0x20000;clock.stop=1;flags=0x200;
+    CHECK(pe_animation_advance(&clock,(uint32_t)-0x18000,&flags)&&clock.frame==0x10000);
+    clock.frame=0x28000;clock.stop=1;flags=0x200;
+    CHECK(pe_animation_advance(&clock,0x18000,&flags)&&clock.frame==0x10000&&(flags&8));
+    clock.frame=0;clock.stop=1;flags=0x200;
+    CHECK(pe_animation_advance(&clock,(uint32_t)-0x28000,&flags)&&clock.frame==0x10000&&(flags&8));
+    flags=0x108;clock.frame=0x12345;
+    CHECK(pe_animation_advance(&clock,0x10000,&flags)&&clock.frame==0x12345&&!(flags&8));
+    flags=0x200000;CHECK(!pe_animation_advance(&clock,0x10000,&flags)&&clock.frame==0x12345);
+    clock.last=65535;flags=0;CHECK(!pe_animation_advance(&clock,1,&flags)&&!flags);
+    uint32_t random=0x921aca;
+    for(unsigned sample=0;sample<100000;++sample){
+        random=random*1664525u+1013904223u;unsigned last=1+random%254;
+        random=random*1664525u+1013904223u;int old=(int)(random%((last+1)*65536));
+        random=random*1664525u+1013904223u;int step=(int)(random%393217)-196608;
+        unsigned stop=(random>>16)%(last+1),reference_flags=(sample&1?0x200:0)|(sample&2?0x100:0)|8;
+        clock=(PeAnimationClock){(uint32_t)old,0,(uint16_t)last,(uint16_t)stop};flags=reference_flags;
+        int expected=reference_advance(old,step,(int)last,(int)stop,&reference_flags);
+        CHECK(pe_animation_advance(&clock,(uint32_t)step,&flags));
+        CHECK(clock.frame==(uint32_t)expected&&clock.previous==(uint32_t)old&&flags==reference_flags);
+    }
+    puts("Animation clock matches original local advance for 100000 deterministic cases");
     puts("Animation: channels, ordered overrides, root/non-root translations and transactional failure passed");
     return 0;
 }

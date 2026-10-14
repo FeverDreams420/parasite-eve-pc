@@ -39,6 +39,7 @@ int pe_actors_spawn(PeActors *actors, uint8_t type, uint8_t sub_id, int after,
     actor->position[0] = x; actor->position[1] = y; actor->position[2] = z;
     actor->floor_triangle = actor->floor_triangle_mirror = UINT32_MAX;
     actor->gravity_y = 0x4000; actor->move_speed = 0x1000; actor->animation_step = 0x10000;
+    actor->action=UINT32_MAX;
     actor->move_factor = type ? 0x50000 : 0x10000;
     actor->used = 1; actor->previous = after; actor->next = next;
     if (next >= 0) actors->slots[next].previous = index;
@@ -105,4 +106,19 @@ int pe_actor_find_floor(PeActor *actor, const PeCollision *collision) {
     actor->floor_triangle = actor->floor_triangle_mirror = hit.triangle;
     actor->position[1] = hit.height;
     return 1;
+}
+int pe_actor_set_animation(PeActor *actor,const PeAnimation *animation,unsigned action,int force){
+    if(!animation->frames||action>65535)return 0;
+    PeAnimationFrame frame;
+    if(!pe_animation_frame(animation,0,&frame))return 0;
+    if(force||actor->action!=action){
+        actor->animation=*animation;actor->action=action;
+        actor->animation_clock.frame=actor->animation_clock.previous=0;
+        actor->animation_clock.last=(uint16_t)(animation->frames-1);
+    }
+    actor->script.flags&=~UINT32_C(0x200);return 1;
+}
+int pe_actor_advance_animation(PeActor *actor){
+    if(!actor->animation.bytes)return 0;
+    return pe_animation_advance(&actor->animation_clock,actor->animation_step,&actor->script.flags);
 }

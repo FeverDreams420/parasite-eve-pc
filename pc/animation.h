@@ -26,4 +26,8 @@ typedef struct PeRotationOverride { unsigned matrix_index;uint8_t flags;uint16_t
  * Preserves non-root translations and all output on failure. */
 int pe_animation_matrices(const PeAnimationFrame *frame,const PeRotationOverride overrides[2],
                           PeMatrix *matrices,unsigned capacity);
+typedef struct PeAnimationClock { uint32_t frame,previous;uint16_t last,stop; } PeAnimationClock;
+/* Original local 16.16 advance. Parent/action synchronization and voice-bank
+ * updates are handled by the actor layer; inherited mode fails explicitly. */
+int pe_animation_advance(PeAnimationClock *clock,uint32_t step,uint32_t *flags);
 #endif

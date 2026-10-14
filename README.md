@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Actors now bind borrowed animation data and distinguish action changes from
+forced restarts, preserving the stop frame and clearing its flag. The local
+16.16 clock preserves original pause/clamp and forward/backward wrap rules;
+100,000 deterministic cases match the original control flow. All 29 headless
+tests and ASan/UBSan animation/actor fixtures pass. Parent propagation,
+voice-bank callbacks, zero-frame action binding, model allocation and full
+scene-loop integration remain pending; inherited mode fails explicitly.
+
 Headless operation is the default development and acceptance workflow. The
 finished port must expose game-state and input control, deterministic clock/RNG,
 checkpoints, and state/image/audio diagnostics so tests run without user help

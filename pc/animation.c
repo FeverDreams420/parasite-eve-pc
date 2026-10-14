@@ -1,6 +1,33 @@
 #include "animation.h"
 #include <stdio.h>
 #include <string.h>
+static int64_t signed_word(uint32_t value){return value&UINT32_C(0x80000000)?(int64_t)value-INT64_C(0x100000000):value;}
+static int32_t whole(uint32_t value){int64_t v=signed_word(value);return (int32_t)(v>=0?v/65536:-((-v+65535)/65536));}
+int pe_animation_advance(PeAnimationClock *clock,uint32_t step,uint32_t *flags){
+    if(clock->last>255||(*flags&0x200000))return 0;
+    PeAnimationClock next=*clock;uint32_t f=(*flags&~UINT32_C(8))|0x800000;
+    uint32_t old=clock->frame;next.previous=old;
+    if(f&0x100)goto done;
+    if((f&0x200)&&(old>>16)==clock->stop)goto done;
+    uint32_t value=old+step,end=(uint32_t)clock->stop<<16;
+    if(f&0x200){
+        if((signed_word(old)<signed_word(end)&&signed_word(end)<signed_word(value))||
+           (signed_word(end)<signed_word(old)&&signed_word(value)<signed_word(end))){value=end;goto store;}
+    }
+    if((int)clock->last<whole(value)){
+        int32_t limit=whole(value)%((int)clock->last+1);
+        old=0;f|=8;value=(uint32_t)limit<<16;
+    }else if(signed_word(value)<0){
+        old=(uint32_t)clock->last<<16;value+=((uint32_t)clock->last+1)<<16;f|=8;
+    }
+    if(f&0x200){
+        if(signed_word(end)>=signed_word(old)&&signed_word(end)<signed_word(value)){value=end;goto store;}
+        if(signed_word(old)<signed_word(end))goto store;
+        if(signed_word(value)<signed_word(end))value=end;
+    }
+store:next.frame=value;
+done:*clock=next;*flags=f;return 1;
+}
 int pe_animation_matrices(const PeAnimationFrame *frame,const PeRotationOverride overrides[2],
                           PeMatrix *matrices,unsigned capacity){
     if(!frame->bones||frame->bones>PE_ANIMATION_BONES||frame->bones>capacity)return 0;

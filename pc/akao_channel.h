@@ -84,10 +84,6 @@ int pe_akao_channel_set_instrument(PeAkaoChannel *channel, unsigned encoded);
 int pe_akao_channel_select_sample(PeAkaoChannel *channel, unsigned encoded);
 int pe_akao_channel_reset_adsr(PeAkaoChannel *channel, int release_only);
 int pe_akao_channel_select_note_range(PeAkaoChannel *channel, unsigned note);
-/* One voice-driver update, separate from the musical timer. */
-int pe_akao_channel_aux_lfo_step(PeAkaoChannel *channel);
-int pe_akao_channel_volume_lfo_step(PeAkaoChannel *channel, int key_on);
-int pe_akao_channel_pitch_lfo_step(PeAkaoChannel *channel, int key_on);
 void pe_akao_channel_pitch_lfo_depth(PeAkaoChannel *channel, unsigned mode);
 int pe_akao_pitch_period(const PeSpuBank *samples, unsigned instrument, uint8_t note,
                           uint16_t detune_bits, uint16_t *pitch);

@@ -1971,3 +1971,24 @@ Full build, original-game-entity-textures CTest and its ASan/UBSan/function
 run pass. No new files or game implementation were added. This proves the
 loader retry transitions, not recovery of every real device/file I/O failure,
 full room initialization or completion of the port.
+
+
+### Remove abandoned PC LFO implementation
+
+Deleted pc/akao_lfo.c and its three pe_akao_channel_*_lfo_step declarations.
+Reference audit found no production caller of those functions: the only calls
+were in their own pc/tests/test_akao_lfo_data.c fixture. Removed that duplicate
+implementation's tests and build dependencies; retained the independent waveform
+binary-data decoding/invalid-offset checks, now including room.h directly.
+No replacement gameplay implementation or new files were created.
+
+Original AKAO modulation coverage remains in original_akao_instrument.c: the
+actual key-on/key-off voice-driver paths check pitch, volume and auxiliary LFO
+values, loop positions and parameter flags, plus original slide opcodes. This
+is not a claim of exhaustive parity with every removed experimental assertion.
+Full build and five CTests pass: original AKAO instrument, real assets, menu
+assets, musical ticks and retained waveform decoder. Existing pc/background
+and test_room_assets user changes were left untouched. Remaining PC channel,
+player, music and scene-audio code is still referenced by the unfinished PC
+scene implementation and must be replaced with original modules before removal.
+The full pc/ directory removal and full-game audio integration remain open.

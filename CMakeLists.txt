@@ -75,3 +75,13 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-projection PRIVATE psyz)
     add_test(NAME original-game-projection COMMAND test-original-projection)
 endif()
+
+if(BUILD_TESTING)
+    add_executable(test-original-projection-assets tests/original_projection_assets.c
+        pc/disc.c pc/room.c pc/room_banks.c pc/projection.c pc/camera.c
+        pc/model.c pc/matrix.c $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-projection-assets PRIVATE include pc)
+    target_link_libraries(test-original-projection-assets PRIVATE psyz)
+    add_test(NAME original-game-projection-assets COMMAND test-original-projection-assets)
+    set_tests_properties(original-game-projection-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+endif()

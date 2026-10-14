@@ -624,7 +624,7 @@ void Render_DrawObjectVariant(RenderObjectEntity *input, s16 limit, s32 *project
                         s32 vertexOffset = first * 8;
                         vertices = (RenderVec3s *)((u8 *)base + vertexOffset);
                         first <<= 2;
-                        clut = (u32 *)((u32)D_800B1640 + first);
+                        clut = (u32 *)((u8 *)D_800B1640 + first);
                     }
                     Render_LoadObjectMatrix(matrix);
                     for (; vertexIndex < part->vertex_count; vertices++) {

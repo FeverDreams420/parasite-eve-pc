@@ -661,9 +661,10 @@ extern u32 g_RenderVertexWorkWords[], g_RenderClutLookupTable[];
 /* Unit vertex normals indexed by RenderVec3s.pad of a model vertex. */
 extern RenderVec3s g_RenderNormalTable[];
 /* Projected screen XY and view depth of the transformed model vertices. */
-extern u32 D_800B1640[];
-extern u32 D_800B1644[];
-extern s32 D_800A636C[];
+/* Original symbols are views into the same work buffers, not allocations. */
+#define D_800B1640 (g_RenderClutLookupTable + 2)
+#define D_800B1644 (g_RenderClutLookupTable + 3)
+#define D_800A636C ((s32 *)(g_RenderVertexWorkWords + 3))
 extern u8 g_SkinAnchorVector[];
 extern s16 g_SkinAnchorY;
 void Render_CopyFrameData(RenderObjectEntity *dst, RenderObjectEntity *src, s32 frame);

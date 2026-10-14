@@ -36,6 +36,10 @@ int main(void)
         g_RenderClutLookupTable[0] != 0x12345678 ||
         g_RenderClutLookupTable[7] != 0x12345678) return 1;
     for (unsigned i=3; i<7; ++i) if (g_RenderVertexWorkWords[i] != 512) return 2;
+    if (D_800B1644[0] != g_RenderClutLookupTable[3] ||
+        D_800B1640[1] != D_800B1644[0] || D_800A636C[0] != 512) return 4;
+    D_800B1640[1] = 12345;
+    if (D_800B1644[0] != 12345) return 5;
     parts[0].visible = parts[1].visible = 0;
     g_RenderClutLookupTable[0] = 123;
     Render_TransformMorphVertices(&object,(u32 *)&view);

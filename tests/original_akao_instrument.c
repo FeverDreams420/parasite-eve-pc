@@ -650,6 +650,14 @@ int main(int argc, char **argv)
             CHECK(conditional.call_stack_index == (pop && taken ? 0 : 1));
         }
     }
-    puts("original AKAO: full dispatch executes BGM/SFX notes and finite/256-count loops");
+    void (*write_parameters)(int, AkaoVoiceParams *) = Akao_WriteVoiceParam;
+    AkaoVoiceParams quiet = {0};
+    quiet.pitch = 4096;
+    quiet.volume_left = 17;
+    quiet.volume_right = 23;
+    write_parameters(2, &quiet);
+    CHECK(quiet.flags == 0 && quiet.pitch == 4096);
+    CHECK(quiet.volume_left == 17 && quiet.volume_right == 23);
+    puts("original AKAO: dispatch, loops and typed parameter writer pass");
     return 0;
 }

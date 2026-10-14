@@ -333,6 +333,18 @@ typedef struct AkaoVoiceBank {
 } AkaoVoiceBank;
 
 #define AKAO_TRACK_VOICE(track) (*(AkaoVoiceParams *)&(track)->assigned_voice_index)
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTrack, update_flags) -
+                  PE1_OFFSETOF(AkaoTrack, assigned_voice_index) ==
+                  PE1_OFFSETOF(AkaoVoiceParams, flags), akao_voice_flags_view);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTrack, sample_header) -
+                  PE1_OFFSETOF(AkaoTrack, assigned_voice_index) ==
+                  PE1_OFFSETOF(AkaoVoiceParams, start_address), akao_voice_start_view);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTrack, pitch) -
+                  PE1_OFFSETOF(AkaoTrack, assigned_voice_index) ==
+                  PE1_OFFSETOF(AkaoVoiceParams, pitch), akao_voice_pitch_view);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTrack, volume_right) -
+                  PE1_OFFSETOF(AkaoTrack, assigned_voice_index) ==
+                  PE1_OFFSETOF(AkaoVoiceParams, volume_right), akao_voice_volume_view);
 
 typedef void (*AkaoTrackHandler)(AkaoTrack *track);
 

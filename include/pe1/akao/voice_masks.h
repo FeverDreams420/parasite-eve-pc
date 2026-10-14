@@ -40,8 +40,8 @@ void Seq_MarkTrack38MaskDirty(void);
 void Seq_MarkTrack3CMaskDirty(void);
 void Akao_SetVoiceKeyOff(AkaoTrack *track, unsigned mask, int index);
 void Akao_StepVoiceNote(AkaoTrack *track, unsigned mask, unsigned direct, unsigned *output);
-/* Retail callers supply differing numbers of trailing, unused arguments. */
-void Akao_WriteVoiceParam();
+/* Only the two consumed arguments are retained in the native C11 ABI. */
+void Akao_WriteVoiceParam(int voice_index, AkaoVoiceParams *params);
 void Spu_WriteKeyOff(unsigned value);
 /* Mark every active track of a 24-track table for a full voice refresh. */
 void Seq_MarkDirtyTracks(AkaoTrack *tracks);

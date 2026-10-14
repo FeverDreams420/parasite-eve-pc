@@ -583,6 +583,8 @@ Original full-dispatch fixture wykonuje C8→rest→C9 dla 3 oraz zero→256 pow
 
 `original-game-akao-prefix-assets` ładuje real grammar/note lengths/LFO z Disc 1 i instrument tables z resident + właściwego audio banku (test-only sample decoder), po czym wykonuje original start i Akao_StepSampleLoader do pierwszej nuty/stopu dla 599 sekwencji/8883 kanałów z 414 pokojów. Sprawdza cursor bounds i immutable sequence data. CTest strict assets oraz ASan/UBSan/function z halt_on_error=1 przechodzą dla pełnego prefix corpus; PsyZ nieinstrumentowane. Trace opcjonalny PE_AKAO_PREFIX_TRACE identyfikuje map/record/voice. Jeden short record pozostaje jawnie niewykonany. Wynik nie dowodzi dalszych nut, pełnych utworów, timera, voice allocation, SPU czy PCM; corpus nie jest automatycznym dowodem całego audio.
 
+Original Akao_WriteVoiceParam ma teraz ścisłą C11 sygnaturę (int,AkaoVoiceParams*); usunięto K&R definition i ignorowane trailing flags z sześciu callers. Błędny int* call używa canonical voice-parameter view. Static assertions porównują flags/start/pitch/volume offsets widoku do AkaoTrack. Headless typed-pointer test wykonuje zero-dirty-flags path bez dotykania MMIO; CTest i ASan/UBSan/function przechodzą. Nie dowodzi to działającego zapisu parametrów SPU. Próba linkowania pełnego original Akao_Tick wykazała 32 brakujące symbole (log diagnostyczny /tmp/pe-akao-tick-link.log); global state i registers/timer integration nadal wymagają pracy, a bezpośrednie 1F80 MMIO nadal nie jest native-safe.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

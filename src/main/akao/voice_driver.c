@@ -749,12 +749,8 @@ void AkaoSpuVoice_SetAdsrReleaseRate(u32 index, u32 left, u32 right) {
     *ptr = current | value;
 }
 
-/* Old-style definition: the stereo and note callers pass the track flags
-   (and a mask) after the two parameters read here, so this unit keeps the
-   unprototyped call ABI that voice_masks.h declares. */
-void Akao_WriteVoiceParam(voice_index, params)
-    int voice_index;
-    AkaoVoiceParams *params;
+/* All callers use the two values consumed by the original procedure. */
+void Akao_WriteVoiceParam(int voice_index, AkaoVoiceParams *params)
 {
     unsigned int flags;
     unsigned int cur;
@@ -1408,21 +1404,21 @@ void Spu_CopyVoiceToStereoSlot(AkaoTrack *track, int stereo_voice_index) {
     stereo->volume_right = (right * (track->pan_target)) >> 16;
     stereo->pitch = track->pitch;
     stereo->update_flags |= (*track).update_flags;
-    Akao_WriteVoiceParam(track->assigned_voice_index, (AkaoVoiceParams *)(&track->assigned_voice_index), track->flags);
-    Akao_WriteVoiceParam(stereo_voice_index, (AkaoVoiceParams *)(&stereo->assigned_voice_index), track->flags);
+    Akao_WriteVoiceParam(track->assigned_voice_index, (AkaoVoiceParams *)(&track->assigned_voice_index));
+    Akao_WriteVoiceParam(stereo_voice_index, (AkaoVoiceParams *)(&stereo->assigned_voice_index));
 }
 
 void Spu_RestoreVoiceFromStereoSlot(AkaoTrack *track, int stereo_voice_index) {
     AkaoTrack *stereo;
     AkaoS16 right;
 
-    Akao_WriteVoiceParam(track->assigned_voice_index, &AKAO_TRACK_VOICE(track), track->flags);
+    Akao_WriteVoiceParam(track->assigned_voice_index, &AKAO_TRACK_VOICE(track));
     stereo = &g_AkaoVoiceStateTable[stereo_voice_index];
     track->volume_left = stereo->volume_left;
     right = stereo->volume_right;
     track->update_flags |= 0x1FF93;
     track->volume_right = right;
-    Akao_WriteVoiceParam(stereo_voice_index, &AKAO_TRACK_VOICE(track), track->flags);
+    Akao_WriteVoiceParam(stereo_voice_index, &AKAO_TRACK_VOICE(track));
 }
 
 void Akao_StepVoiceNote(AkaoTrack *track, unsigned mask, unsigned direct, unsigned *output) {
@@ -1465,7 +1461,7 @@ void Akao_StepVoiceNote(AkaoTrack *track, unsigned mask, unsigned direct, unsign
                     track->volume_left = 0;
                 }
                 if ((unsigned)track->assigned_voice_index < 24)
-                    Akao_WriteVoiceParam(track->assigned_voice_index, (AkaoVoiceParams *)&track->assigned_voice_index, track->flags);
+                    Akao_WriteVoiceParam(track->assigned_voice_index, (AkaoVoiceParams *)&track->assigned_voice_index);
             }
             mask &= ~bit;
         }
@@ -1591,7 +1587,7 @@ void Akao_ProcessVoiceQueue(void)
         Akao_SetVoiceKeyOn(track, bit);
         if (track->update_flags)
         {
-          Akao_WriteVoiceParam(track->assigned_voice_index, &track->assigned_voice_index, track->flags);
+          Akao_WriteVoiceParam(track->assigned_voice_index, &AKAO_TRACK_VOICE(track));
         }
         secondary_new = bit;
         primary &= ~secondary_new;

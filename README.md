@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Complete vertex triplets now use PsyZ RTPT, preserving FIFO screen/depth
+order, shared accumulated flags and final interpolation. All 32 headless
+tests and the ASan/UBSan native wrapper fixture pass. Source room records
+contain 8,126 visible parts with incomplete final triplets; these tails still
+use RTPS pending validation of original padded/overlapping reads. Tail flags,
+game cameras, depth sorting and rendering remain unverified.
+
 Headless perspective projection now uses our PsyZ GTE RTPS with explicit
 matrix/viewport/depth-cue parameters. It exposes screen coordinates, depth,
 interpolation and clipping flags, without GPU/window initialization. Model

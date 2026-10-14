@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Scenes also own area action overrides, selected explicitly using the original
+entity-ID/day bank formula. Loading preserves the primary root and rebuilds
+room→primary→area views transactionally. Selected ID/day remain observable;
+active bindings reject hot reload. Tests cover all 16 area banks and animation
+after disc close. All 31 headless tests and the full ASan/UBSan audit pass.
+Automatic story selection, day textures, streams, runtime rebinding and
+complete Spawn8 remain pending.
+
 Scenes own primary entity-bank bytes and explicitly load original area IDs
 10–14. Replacement before actor binding rebuilds room overrides, preserving
 the previous bank on failure. Active model/animation bindings reject replacement

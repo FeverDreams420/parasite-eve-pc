@@ -7,6 +7,7 @@ void pe_scene_close(PeScene *scene) {
     for(unsigned i=0;i<2;++i)pe_music_close(scene->audio.music[i]);
     pe_collision_close(&scene->collision);
     pe_room_blob_close(&scene->entity_bank);
+    pe_room_blob_close(&scene->area_bank);
     pe_room_close(&scene->room);
     free(scene->vram);
     free(scene->spu);
@@ -115,7 +116,25 @@ int pe_scene_primary_bank(PeScene *scene,PeRoomCatalog *catalog,unsigned area,ch
         banks=room_banks;
         if(!pe_entity_banks(&next,1,&banks,error,error_size)){pe_room_blob_close(&next);return 0;}
     }
+    pe_room_blob_close(&scene->area_bank);
     pe_room_blob_close(&scene->entity_bank);scene->entity_bank=next;scene->banks=banks;scene->entity_area=area;
+    scene->area_entity_id=scene->area_day=0;
     if(error_size)error[0]=0;return 1;
 invalid:snprintf(error,error_size,"Invalid entity area or active actor bank references");return 0;
+}
+int pe_scene_area_bank(PeScene *scene,PeRoomCatalog *catalog,unsigned entity_bank,unsigned day,char *error,size_t error_size){
+    if(entity_bank<10||entity_bank>13||day<1||day>8||!scene->entity_bank.bytes||!scene->actors)goto invalid;
+    for(unsigned i=0;i<PE_ACTOR_CAPACITY;++i)
+        if(scene->actors->slots[i].used&&(scene->actors->slots[i].render||scene->actors->slots[i].animation.bytes))goto invalid;
+    PeRoomBlob next={0};PeRoomBanks banks;
+    if(!pe_sector_bank_load(catalog,(entity_bank-10)/2*8+day+0x16,&next)){
+        snprintf(error,error_size,"%s",catalog->error);return 0;
+    }
+    if(!pe_room_banks(&scene->room,&banks,error,error_size)||
+       !pe_entity_banks(&scene->entity_bank,1,&banks,error,error_size)||
+       !pe_entity_banks(&next,0,&banks,error,error_size)){pe_room_blob_close(&next);return 0;}
+    pe_room_blob_close(&scene->area_bank);scene->area_bank=next;scene->banks=banks;
+    scene->area_entity_id=entity_bank;scene->area_day=day;
+    if(error_size)error[0]=0;return 1;
+invalid:snprintf(error,error_size,"Invalid area/day bank or active actor references");return 0;
 }

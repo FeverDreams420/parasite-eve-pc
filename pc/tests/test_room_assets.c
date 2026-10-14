@@ -496,6 +496,18 @@ int main(void) {
         CHECK(scene.entity_area==area&&scene.entity_bank.bytes&&scene.banks.roots[0].present);
     }
     CHECK(pe_scene_primary_bank(&scene,&catalog,10,scene_error,sizeof(scene_error)));
+    for(unsigned group=0;group<2;++group){
+        unsigned id=10+group*2;
+        CHECK(pe_scene_primary_bank(&scene,&catalog,id,scene_error,sizeof(scene_error)));
+        const uint8_t *primary_root=scene.banks.roots[0].bytes;
+        for(unsigned day=1;day<=8;++day){
+            CHECK(pe_scene_area_bank(&scene,&catalog,id,day,scene_error,sizeof(scene_error)));
+            CHECK(scene.banks.roots[0].bytes==primary_root&&scene.area_bank.bytes);
+            CHECK(scene.area_entity_id==id&&scene.area_day==day);
+        }
+    }
+    uint8_t *owned_area=scene.area_bank.bytes;
+    CHECK(!pe_scene_area_bank(&scene,&catalog,10,0,scene_error,sizeof(scene_error))&&scene.area_bank.bytes==owned_area);
     uint8_t *owned_entity=scene.entity_bank.bytes;
     CHECK(!pe_scene_primary_bank(&scene,&catalog,99,scene_error,sizeof(scene_error))&&scene.entity_bank.bytes==owned_entity);
     CHECK(pe_actor_model_bind(&scene.actors->slots[0],&scene.banks,0));

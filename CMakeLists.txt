@@ -47,12 +47,16 @@ add_library(parasite-eve-original OBJECT
     src/main/scene/input_rules.c
     src/main/entity/pool.c
     src/main/entity/allocation.c
-    src/main/entity/block_alloc.c
     src/main/script/node_pool.c
     src/main/script/expression.c
     src/main/script/basic_flow.c
     src/main/field/actor_collision.c)
 target_include_directories(parasite-eve-original PRIVATE include)
+if(MSVC)
+    target_compile_options(parasite-eve-original PRIVATE /Gy /Gw)
+else()
+    target_compile_options(parasite-eve-original PRIVATE -ffunction-sections -fdata-sections)
+endif()
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
 # Original AKAO units compile in place while their SPU/timer dependencies

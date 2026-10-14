@@ -1601,3 +1601,19 @@ CTests and the stat ASan/UBSan/function run passed (PsyZ uninstrumented). This
 verifies the existing exercised table/stat paths, not every newly compiled text
 or menu accessor. No new files were created. Other extractions and pc/ removal
 remain unfinished requirements.
+
+### Restore complete original allocation module
+
+Entity_AllocBlock and Entity_FreeAllocationBlock, including native storage,
+returned to entity/allocation.c; entity/block_alloc.c was removed. Compared
+against allocation.c before extraction (4bbad127f parent): all four original
+functions remain, with the previously verified signed-word helper added for
+portable MIPS arithmetic. The complete original file compiles; no source slices
+or conditional exclusions were introduced. Original-object compilation now
+explicitly enables function/data sections (or MSVC /Gy /Gw) for whole-module
+linking into individual tests; other platforms have not been validated here.
+
+Full build and pools/contact/actor-lifecycle/scene-spawn CTests passed, followed
+by contact and spawn ASan/UBSan/function runs (PsyZ archive uninstrumented).
+No new files were added. Remaining extractions and the pc/ directory are still
+pending consolidation/removal, not accepted as the final architecture.

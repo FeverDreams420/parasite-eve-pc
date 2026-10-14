@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 35 powiązań: oryginalny opcode 84 zwraca sumę bezwzględnych różnic XYZ aktorów. Powiązanie potwierdzono w EXE USA. Test kolejki obejmuje osiem kombinacji znaków, wybór gracza, pominięcie martwego wpisu i brak celu. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 34 powiązania: opcode 69 wykonuje oryginalny odczyt kąta do aktora. Powiązanie potwierdzono w EXE USA. Test kolejki obejmuje cztery kierunki, trzy yaw, wyszukiwanie z pominięciem martwego wpisu, gracza i brak celu. Zachowuje również oryginalny wynik 4096 dla pełnego obrotu, bez normalizacji do zera. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 33 powiązania: oryginalny opcode 94 zwraca wektor aktora wybranego przez type/sub-ID albo gracza. Powiązanie potwierdzono w EXE USA. Test rzeczywistej kolejki obejmuje siedem selectorów wektorów oraz nieznany selector, martwy wpis poprzedzający żywego, brak dopasowania i brak gracza. Siedem operandów sprawdza także odczyt dodatkowych trybów operandów z drugiego słowa instrukcji. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

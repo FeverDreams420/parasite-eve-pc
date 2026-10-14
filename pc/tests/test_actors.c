@@ -1,0 +1,43 @@
+#include "actors.h"
+#include <stdlib.h>
+#define CHECK(x) do { if (!(x)) { fprintf(stderr, "line %d: %s\n", __LINE__, #x); exit(1); } } while (0)
+static void word(uint8_t *p, uint32_t v) { for (unsigned i=0; i<4; ++i) p[i]=(uint8_t)(v>>(i*8)); }
+int main(void) {
+    uint8_t bytes[64] = {0}; word(bytes + 8, 32); word(bytes + 12, 32); word(bytes + 32, 32);
+    PeRoomBlob blob = {0}; blob.bytes = bytes; blob.size = sizeof(bytes);
+    PeScriptProgram program = {0}; program.blob = &blob; program.entries = 2;
+    PeScriptBanks banks = {0}; PeScriptScheduler *scheduler = malloc(sizeof(*scheduler));
+    PeActors *actors = malloc(sizeof(*actors)); CHECK(scheduler && actors);
+    pe_script_scheduler_init(scheduler, &program, &banks); pe_actors_init(actors, scheduler);
+    CHECK(pe_actors_spawn(actors, 1, 2, -1, UINT32_MAX, 123, 456) == 0);
+    CHECK(pe_actors_spawn(actors, 0, 3, 0, 11, 22, 33) == 1);
+    CHECK(pe_actors_spawn(actors, 1, 4, -1, 0, 0, 0) == 2);
+    CHECK(actors->head == 2 && actors->slots[2].next == 0 && actors->slots[0].next == 1);
+    CHECK(actors->slots[0].previous == 2 && actors->slots[1].previous == 0 && actors->player == 1);
+    CHECK(actors->slots[0].position[0] == UINT32_MAX && actors->slots[1].position[2] == 33);
+    CHECK(actors->slots[0].script.field_id == 1 && actors->slots[2].script.field_id == 3);
+    CHECK(actors->slots[0].move_factor == 0x50000 && actors->slots[1].move_factor == 0x10000);
+    CHECK(actors->slots[0].gravity_y == 0x4000 && actors->slots[0].script.flags == 0x10000000);
+    CHECK(scheduler->slots[0].task.actor == &actors->slots[0].script);
+    CHECK(pe_actors_spawn(actors, 2, 0, -1, 0, 0, 0) < 0 && actors->live == 3 && banks.actor_serial == 4);
+    while (actors->live < PE_ACTOR_CAPACITY) CHECK(pe_actors_spawn(actors, 1, 0, -1, 0, 0, 0) >= 0);
+    CHECK(pe_actors_spawn(actors, 1, 0, -1, 0, 0, 0) < 0 && actors->live == PE_ACTOR_CAPACITY);
+    CHECK(scheduler->live == PE_ACTOR_CAPACITY && banks.actor_serial == PE_ACTOR_CAPACITY + 1);
+    CHECK(pe_script_scheduler_tick(scheduler, &actors->slots[0].script, 100));
+    CHECK(pe_script_scheduler_collect(scheduler, &actors->slots[0].script));
+    for (unsigned i = 1; i < PE_ACTOR_CAPACITY; ++i) {
+        CHECK(pe_script_scheduler_tick(scheduler, &actors->slots[i].script, 100));
+        CHECK(pe_script_scheduler_collect(scheduler, &actors->slots[i].script));
+    }
+    CHECK(!scheduler->live);
+    pe_script_scheduler_init(scheduler, &program, &banks); pe_actors_init(actors, scheduler);
+    PeScriptActor dummy; pe_script_actor_init(&dummy, 32);
+    for (unsigned i = 0; i < PE_SCRIPT_TASK_CAPACITY; ++i)
+        CHECK(pe_script_scheduler_start(scheduler, &dummy, 2, 32) >= 0);
+    CHECK(pe_actors_spawn(actors, 0, 0, -1, 0, 0, 0) < 0);
+    CHECK(!actors->live && actors->head == -1 && actors->player == -1 && actors->free_head == 0);
+    CHECK(banks.actor_serial == 1 && scheduler->live == PE_SCRIPT_TASK_CAPACITY);
+    free(actors); free(scheduler);
+    puts("Actors: stable script slots, ordered insertion, position/defaults, IDs and capacity passed");
+    return 0;
+}

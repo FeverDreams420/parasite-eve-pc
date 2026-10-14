@@ -482,5 +482,15 @@ the actual Tutorial D0 operand; its task now reaches actor opcode 8 at `0x19e8`.
 All 21 tests pass headless with Disc 1 and the scene/audio data test passes
 ASan/UBSan. Applying these globals in the full audio-driver schedule and
 synthesis remains pending.
+
+`pc/actors.c` provides the original 14-slot actor/script allocation core with
+stable addresses, insertion after the spawning actor (or at the list head),
+per-room IDs and initial position/gravity/movement state. Creation binds the
+type's initial script task; player selection follows type zero. `actors`
+tests insertion order, IDs, defaults, task borrowing, pool exhaustion and
+failure when script capacity is exhausted. All 22 tests pass headless with
+Disc 1; actor tests also pass ASan/UBSan. Complete opcode 8 remains unsupported
+until model allocation and floor lookup are implemented; this core alone is
+not a physical actor simulation or playable scene.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

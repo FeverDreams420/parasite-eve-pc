@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+`pc/actors.c` implementuje rdzeń puli 14 aktorów ze stabilnymi adresami skryptów, wstawianiem po aktorze wywołującym/na początku listy, ID per room, pozycją i początkową grawitacją/ruchem. Tworzenie wiąże task typu; type 0 ustawia player. Nowy 22. test `actors` obejmuje kolejność, ID, defaults, borrowed task pointers oraz wyczerpanie obu pul bez utraty serial/list state. 22 testy headless z Disc 1 przechodzą; actor test przechodzi ASan/UBSan. Pełny opcode 8 pozostaje jawnie nieobsługiwany do implementacji modeli i wyszukiwania podłoża; rdzeń nie oznacza fizycznej symulacji ani działającej sceny.
+
 Audio D0/D3/D6 ustawiają globalną skalę tempo/pitch jako maskowany bajt w 16.16 i anulują odpowiednie czasy slide. D6 stosuje obie zmiany. Test sprawdza rozdzielne/łączne wartości, truncation i rzeczywisty operand D0 Tutorial; task dochodzi do actor opcode 8 przy `0x19e8`. 21 testów headless z Disc 1 i ASan/UBSan scen/audio przechodzi. Zastosowanie globali w pełnym harmonogramie sterownika audio i syntezie pozostaje wymagane.
 
 Audio CD stosuje natychmiastową głośność banku wybranego przez cached key/handle, zeruje czas slide, oznacza aktywne głosy i zapisuje bajt głośności/flagę slotu. Test rozróżnia 7-bit gain sterownika od pełnego bajtu slotu i sprawdza brak efektu dla nieznanego klucza. Tutorial dochodzi do audio D0 przy `0x19c0`. 21 testów headless z Disc 1 i ASan/UBSan audytu scen/audio przechodzi. Pełne odtwarzanie i egzekucja scen pozostają wymagane.

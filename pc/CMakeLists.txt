@@ -187,3 +187,13 @@ if(BUILD_TESTING)
     set_tests_properties(boot-assets PROPERTIES SKIP_RETURN_CODE 77
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy" TIMEOUT 15)
 endif()
+
+# Temporary model consumers delegate rotations to the existing PsyZ routines.
+get_property(pe_matrix_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+foreach(pe_matrix_target IN LISTS pe_matrix_targets)
+    get_target_property(pe_matrix_sources ${pe_matrix_target} SOURCES)
+    get_target_property(pe_matrix_libraries ${pe_matrix_target} LINK_LIBRARIES)
+    if("matrix.c" IN_LIST pe_matrix_sources AND NOT "psyz" IN_LIST pe_matrix_libraries)
+        target_link_libraries(${pe_matrix_target} PRIVATE psyz)
+    endif()
+endforeach()

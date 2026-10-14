@@ -1,45 +1,21 @@
 #include "matrix.h"
 #include <stdlib.h>
 #include <string.h>
-#include "sine_table.h"
+#include <libgte.h>
 static int64_t signed_word(uint32_t v){return v&UINT32_C(0x80000000)?(int64_t)v-INT64_C(0x100000000):v;}
 static int signed_half(uint32_t v){v&=65535;return v&32768?(int)v-65536:(int)v;}
 static int64_t shift12(int64_t v){return v>=0?v/4096:-((-v+4095)/4096);}
-static int sine(unsigned angle){
-    angle&=4095;unsigned quadrant=angle>>10,index=angle&1023;
-    int value=pe_sine_quarter[quadrant&1?1024-index:index];
-    return quadrant&2?-value:value;
-}
 void pe_matrix_rotation_xyz(const uint16_t angles[3],PeMatrix *matrix){
-    int sx=sine(angles[0]),cx=sine(angles[0]+1024u);
-    int sy=sine(angles[1]),cy=sine(angles[1]+1024u);
-    int sz=sine(angles[2]),cz=sine(angles[2]+1024u);
-    matrix->rotation[0][2]=(int16_t)sy;
-    matrix->rotation[1][2]=(int16_t)shift12(-cy*sx);
-    matrix->rotation[2][2]=(int16_t)shift12(cy*cx);
-    matrix->rotation[0][0]=(int16_t)shift12(cz*cy);
-    matrix->rotation[0][1]=(int16_t)shift12(-sz*cy);
-    int t=(int)shift12(-cz*sy);
-    matrix->rotation[1][0]=(int16_t)(shift12(sz*cx)-shift12(t*sx));
-    matrix->rotation[2][0]=(int16_t)(shift12(sz*sx)+shift12(t*cx));
-    t=(int)shift12(-sz*sy);
-    matrix->rotation[1][1]=(int16_t)(shift12(cz*cx)+shift12(t*sx));
-    matrix->rotation[2][1]=(int16_t)(shift12(cz*sx)-shift12(t*cx));
+    SVECTOR rotation={(int16_t)angles[0],(int16_t)angles[1],(int16_t)angles[2],0};
+    MATRIX result={0};
+    RotMatrix(&rotation,&result);
+    memcpy(matrix->rotation,result.m,sizeof(matrix->rotation));
 }
 void pe_matrix_rotation_yxz(const uint16_t angles[3],PeMatrix *matrix){
-    int sx=sine(angles[0]),cx=sine(angles[0]+1024u);
-    int sy=sine(angles[1]),cy=sine(angles[1]+1024u);
-    int sz=sine(angles[2]),cz=sine(angles[2]+1024u);
-    int sysx=(int)shift12(sy*sx),cysx=(int)shift12(cy*sx);
-    matrix->rotation[0][0]=(int16_t)(shift12(cy*cz)+shift12(sysx*sz));
-    matrix->rotation[0][1]=(int16_t)(shift12(sysx*cz)-shift12(cy*sz));
-    matrix->rotation[0][2]=(int16_t)shift12(sy*cx);
-    matrix->rotation[1][0]=(int16_t)shift12(cx*sz);
-    matrix->rotation[1][1]=(int16_t)shift12(cx*cz);
-    matrix->rotation[1][2]=(int16_t)-sx;
-    matrix->rotation[2][0]=(int16_t)(shift12(cysx*sz)-shift12(sy*cz));
-    matrix->rotation[2][1]=(int16_t)(shift12(sy*sz)+shift12(cysx*cz));
-    matrix->rotation[2][2]=(int16_t)shift12(cy*cx);
+    SVECTOR rotation={(int16_t)angles[0],(int16_t)angles[1],(int16_t)angles[2],0};
+    MATRIX result={0};
+    RotMatrixYXZ(&rotation,&result);
+    memcpy(matrix->rotation,result.m,sizeof(matrix->rotation));
 }
 void pe_matrix_identity(PeMatrix *matrix){
     memset(matrix,0,sizeof(*matrix));for(unsigned i=0;i<3;++i)matrix->rotation[i][i]=4096;

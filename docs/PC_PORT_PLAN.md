@@ -3083,3 +3083,19 @@ PsyZ/SDL archives uninstrumented). Other collision functions and out-of-range
 sprite/ring OT depths still need verification/repair. Actual GPU ring images,
 authored descriptor bindings, whole-game integration and deletion of pc/ remain
 incomplete. No new repository files were added.
+
+
+Removed pc/sine_table.h and the independent XYZ/YXZ rotation calculations from
+pc/matrix.c. Existing temporary consumers now call PsyZ RotMatrix/RotMatrixYXZ;
+the remaining matrix entry points only adapt angle/output storage and preserve
+translation. No replacement table or new source file was introduced. CMake
+links PsyZ for every existing matrix consumer, including its isolated fixtures.
+Full build and eleven related tests pass. The 65536-angle fixture now checks
+adapter outputs and translation preservation against direct PsyZ calls; it is
+not an independent proof of PsyZ rotation correctness. Its fresh
+ASan/UBSan/function run passes with temporary caller/fixture code instrumented
+and PsyZ/SDL archives uninstrumented. Original transforms, animation and actor
+paths also pass their existing tests. The remaining pc/matrix.c composition,
+point transform and model walkers are still temporary duplicate logic and must
+be replaced by whole original module integration; this deletion does not prove
+complete gameplay or removal of the entire pc/ directory.

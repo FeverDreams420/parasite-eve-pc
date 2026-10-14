@@ -3,6 +3,7 @@
 #include "pe1/akao/note_step.h"
 #include "pe1/akao/voice_masks.h"
 #include "pe1/akao/voice_state.h"
+#include "pe1/akao/spu_registers.h"
 #include "pe1/psyq_spu_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -656,6 +657,43 @@ int main(int argc, char **argv)
     write_parameters(2, &quiet);
     CHECK(quiet.flags == 0 && quiet.pitch == 4096);
     CHECK(quiet.volume_left == 17 && quiet.volume_right == 23);
+    memset(_spu_RXX, 0, sizeof(*_spu_RXX));
+    for (unsigned voice = 0; voice < 24; ++voice) {
+        AkaoVoiceParams parameters = {0};
+        parameters.flags = AKAO_VOICE_PARAM_INSTRUMENT_FULL | AKAO_VOICE_PARAM_VOLUME | AKAO_VOICE_PARAM_PITCH;
+        parameters.volume_left = -1;
+        parameters.volume_right = (short)0x8123;
+        parameters.pitch = 0x3456;
+        parameters.start_address = 0x12340;
+        parameters.loop_address = 0x56780;
+        parameters.adsr_attack_rate = 0x12;
+        parameters.adsr_attack_mode = 4;
+        parameters.adsr_decay_rate = 3;
+        parameters.adsr_sustain_level = 5;
+        parameters.adsr_sustain_rate = 0x34;
+        parameters.adsr_sustain_mode = 6;
+        parameters.adsr_release_rate = 0x11;
+        parameters.adsr_release_mode = 4;
+        write_parameters(voice, &parameters);
+        CHECK(parameters.flags == 0);
+        CHECK(_spu_RXX->voice[voice].volume_left == 0x7fff);
+        CHECK(_spu_RXX->voice[voice].volume_right == 0x123);
+        CHECK(_spu_RXX->voice[voice].pitch == 0x3456);
+        CHECK(_spu_RXX->voice[voice].start_address == 0x2468);
+        CHECK(_spu_RXX->voice[voice].repeat_address == 0xacf0);
+        CHECK(_spu_RXX->voice[voice].adsr_low == 0x9235);
+        CHECK(_spu_RXX->voice[voice].adsr_high == 0xcd31);
+    }
+    Spu_WriteKeyOn(0x12345678);
+    Spu_WriteKeyOff(0x3456789a);
+    Spu_WriteFmEnable(0x56789abc);
+    Spu_WriteNoiseEnable(0x789abcde);
+    Spu_WriteReverbEnable(0x9abcdef0);
+    CHECK(_spu_RXX->key_on[0] == 0x5678 && _spu_RXX->key_on[1] == 0x1234);
+    CHECK(_spu_RXX->key_off[0] == 0x789a && _spu_RXX->key_off[1] == 0x3456);
+    CHECK(_spu_RXX->pitch_modulation[0] == 0x9abc && _spu_RXX->pitch_modulation[1] == 0x5678);
+    CHECK(_spu_RXX->noise_enable[0] == 0xbcde && _spu_RXX->noise_enable[1] == 0x789a);
+    CHECK(_spu_RXX->reverb_enable[0] == 0xdef0 && _spu_RXX->reverb_enable[1] == 0x9abc);
     g_AkaoGlobalSlideTick = 0;
     g_AkaoGlobalD2D0SlideCounter = 2;
     g_AkaoGlobalD2D0SlideStep = 0x10000;

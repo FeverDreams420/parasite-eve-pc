@@ -1,13 +1,19 @@
 #ifndef PE1_AKAO_SPU_REGISTERS_H
 #define PE1_AKAO_SPU_REGISTERS_H
 
-/* SPU voice-mask registers the AKAO driver writes directly, as low and
- * high halfwords (SpuRegs in psyq_spu_internal.h describes the block). */
-extern volatile unsigned short g_SpuKeyOnLow, g_SpuKeyOnHigh; /* key on */
-extern volatile unsigned short g_SpuKeyOffLow, g_SpuKeyOffHigh; /* key off */
-extern volatile unsigned short g_SpuPitchModLow, g_SpuFmEnableHigh; /* FM (pitch modulation) */
-extern volatile unsigned short g_SpuNoiseEnableLow, g_SpuNoiseEnableHigh; /* noise */
-extern volatile unsigned short g_SpuReverbEnableLow, g_SpuReverbEnableHigh; /* reverb */
+#include "pe1/psyq_spu_internal.h"
+
+/* The same original register words now refer to PsyZ's native SPU map. */
+#define g_SpuKeyOnLow (_spu_RXX->key_on[0])
+#define g_SpuKeyOnHigh (_spu_RXX->key_on[1])
+#define g_SpuKeyOffLow (_spu_RXX->key_off[0])
+#define g_SpuKeyOffHigh (_spu_RXX->key_off[1])
+#define g_SpuPitchModLow (_spu_RXX->pitch_modulation[0])
+#define g_SpuFmEnableHigh (_spu_RXX->pitch_modulation[1])
+#define g_SpuNoiseEnableLow (_spu_RXX->noise_enable[0])
+#define g_SpuNoiseEnableHigh (_spu_RXX->noise_enable[1])
+#define g_SpuReverbEnableLow (_spu_RXX->reverb_enable[0])
+#define g_SpuReverbEnableHigh (_spu_RXX->reverb_enable[1])
 
 void Spu_WriteKeyOn(unsigned int value);
 void Spu_WriteKeyOff(unsigned int value);

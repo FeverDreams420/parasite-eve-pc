@@ -657,10 +657,10 @@ void Spu_WriteFmEnable(u32 value) {
 }
 
 void AkaoSpuVoice_SetVolume(u32 index, u32 left, u32 right) {
-    u16 *ptr;
+    volatile u16 *ptr;
     u32 mask;
 
-    ptr = (u16 *)(0x1F801C00 + (index * 0x10));
+    ptr = &_spu_RXX->voice[index].volume_left;
     mask = 0x7FFF;
     ptr[0] = left & mask;
     ptr++;
@@ -668,44 +668,44 @@ void AkaoSpuVoice_SetVolume(u32 index, u32 left, u32 right) {
 }
 
 void AkaoSpuVoice_SetPitch(u32 index, u32 value) {
-    u16 *ptr;
+    volatile u16 *ptr;
 
-    ptr = (u16 *)(0x1F800000 + (index * 0x10));
-    ptr[0x1C04 / 2] = value;
+    ptr = &_spu_RXX->voice[index].volume_left;
+    ptr[2] = value;
 }
 
 void AkaoSpuVoice_SetStartAddress(u32 index, u32 value) {
-    u16 *ptr;
+    volatile u16 *ptr;
 
-    ptr = (u16 *)(0x1F800000 + (index * 0x10));
-    ptr[0x1C06 / 2] = value >> 3;
+    ptr = &_spu_RXX->voice[index].volume_left;
+    ptr[3] = value >> 3;
 }
 
 void AkaoSpuVoice_SetRepeatAddress(u32 index, u32 value) {
-    u16 *ptr;
+    volatile u16 *ptr;
 
-    ptr = (u16 *)(0x1F800000 + (index * 0x10));
-    ptr[0x1C0E / 2] = value >> 3;
+    ptr = &_spu_RXX->voice[index].volume_left;
+    ptr[7] = value >> 3;
 }
 
 void AkaoSpuVoice_SetAdsrAttack(u32 index, u32 left, u32 right) {
-    u16 *ptr;
+    volatile u16 *ptr;
     u32 current;
     u32 value;
 
-    ptr = (u16 *)(0x1F801C08 + (index * 0x10));
+    ptr = &_spu_RXX->voice[index].adsr_low;
     right = (right >> 2) << 15;
     left <<= 8;
-    current = *(u8 *)ptr;
+    current = *ptr & 0xFF;
     value = right | left;
     *ptr = current | value;
 }
 
 void AkaoSpuVoice_SetAdsrDecayRate(u32 index, u32 value) {
-    u16 *ptr;
+    volatile u16 *ptr;
     u32 current;
 
-    ptr = (u16 *)(0x1F801C08 + (index * 0x10));
+    ptr = &_spu_RXX->voice[index].adsr_low;
     current = *ptr;
     value <<= 4;
     current &= 0xFF0F;
@@ -713,21 +713,21 @@ void AkaoSpuVoice_SetAdsrDecayRate(u32 index, u32 value) {
 }
 
 void AkaoSpuVoice_SetAdsrSustainLevel(u32 index, u32 value) {
-    u16 *ptr;
+    volatile u16 *ptr;
     u32 current;
 
-    ptr = (u16 *)(0x1F801C08 + (index * 0x10));
+    ptr = &_spu_RXX->voice[index].adsr_low;
     current = *ptr;
     current &= 0xFFF0;
     *ptr = current | value;
 }
 
 void AkaoSpuVoice_SetAdsrSustainRate(u32 index, u32 left, u32 right) {
-    u16 *ptr;
+    volatile u16 *ptr;
     u32 current;
     u32 value;
 
-    ptr = (u16 *)(0x1F801C0A + (index * 0x10));
+    ptr = &_spu_RXX->voice[index].adsr_high;
     right = (right >> 1) << 14;
     left <<= 6;
     current = *ptr;
@@ -737,11 +737,11 @@ void AkaoSpuVoice_SetAdsrSustainRate(u32 index, u32 left, u32 right) {
 }
 
 void AkaoSpuVoice_SetAdsrReleaseRate(u32 index, u32 left, u32 right) {
-    u16 *ptr;
+    volatile u16 *ptr;
     u32 current;
     u32 value;
 
-    ptr = (u16 *)(0x1F801C0A + (index * 0x10));
+    ptr = &_spu_RXX->voice[index].adsr_high;
     right = (right >> 2) << 5;
     current = *ptr;
     value = right | left;

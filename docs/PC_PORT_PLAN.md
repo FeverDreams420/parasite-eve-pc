@@ -591,6 +591,8 @@ CdInputVolume i CdInputVolumeAccum współdzielą native union, zgodnie z origin
 
 Original Spu_StepReverbLoad wykonuje w fixture 12 kolejnych calls, dowodząc four-tick divider, dwóch steps tempo/global pitch depth oraz przeciwnych pitch slides primary/secondary. Test sprawdza frozen results po counter expiry, current-bank restore i primary/secondary dirty flags; używa canonical native storage. Pointer-punning AkaoBankCursor zastąpiono bezpośrednim current-bank reload, a accumulator additions zachowują unsigned word wrap bez signed overflow. CTest i ASan/UBSan/function z halt_on_error=1 przechodzą (PsyZ nieinstrumentowane). CD volume SPU calls i SFX per-voice slides pozostają poza tym dowodem; pełny Akao_Tick i PCM nadal niezintegrowane.
 
+Original AkaoSpuVoice register writers adresują native PsyZ _spu_RXX zamiast 1F801C00/1F800000; zachowano mask/shift/ADSR bit composition i volatile halfword operations. Voice mask aliases również odnoszą się do PsyZ key-on/off, FM/noise/reverb words. Test rzeczywistego Akao_WriteVoiceParam sprawdza full dirty parameters dla wszystkich 24 głosów: volume masks, pitch, start/repeat >>3, ADSR low/high i clear flags; mask writes sprawdza low/high words. Cztery strict AKAO CTests i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). To native register-map integration, nie synteza SPU/PCM; envelope/reverb endpoints, samples/backend clock i main audio nadal wymagają implementacji.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

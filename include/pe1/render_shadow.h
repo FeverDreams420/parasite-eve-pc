@@ -2,6 +2,7 @@
 #define PE1_RENDER_SHADOW_H
 
 #include "common.h"
+#include "pe1/field_actor.h"
 #include "pe1/gte_types.h"
 #include "pe1/render_object.h"
 #include "pe1/render_tint.h"
@@ -22,37 +23,11 @@ typedef struct RenderShadowCoord {
     int integer : 16;
 } RenderShadowCoord;
 
-/* Field actor view used by the shadow pass: the actor record continues past
- * the common FieldActor prefix with the shadow packets and parameters. */
-typedef struct RenderShadowActor {
-    /* 0x000 */ u8 pad000[0x28];
-    /* 0x028 */ RenderShadowCoord x, y, z;
-    /* 0x034 */ u8 pad034[0x64];
-    /* 0x098 */ u32 flags;
-    /* 0x09C */ u8 pad09C[0x118];
-    /* 0x1B4 */ RenderObjectHeader *header;
-    /* 0x1B8 */ u8 pad1B8[0x80];
-    /* 0x238 */ GteMatrixStorage *matrices;
-    /* 0x23C */ u8 pad23C[0xC];
-    /* 0x248 */ u8 fade_red, fade_green, fade_blue;
-    /* 0x24B */ u8 pad24B[5];
-    /* 0x250 */ u16 render_flags;
-    /* 0x252 */ u8 visible;
-    /* 0x253 */ u8 pad253[0x25];
-    /* 0x278 */ RenderShadowQuad *shadow_quads; /* one per draw buffer */
-    /* 0x27C */ u8 shadow_matrix_index;
-    /* 0x27D */ u8 shadow_intensity;
-} RenderShadowActor;
-
+/* The shadow pass uses the same native actor as movement and battle. */
+typedef FieldActor RenderShadowActor;
 PE1_STATIC_ASSERT(sizeof(RenderShadowQuad) == 40, render_shadow_quad_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderShadowActor, flags) == 0x98,
-                  render_shadow_actor_flags);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderShadowActor, matrices) == 0x238,
-                  render_shadow_actor_matrices);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderShadowActor, render_flags) == 0x250,
-                  render_shadow_actor_render_flags);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderShadowActor, shadow_quads) == 0x278,
-                  render_shadow_actor_quads);
+PE1_STATIC_ASSERT(sizeof(((FieldActor *)0)->shadow_quads) ==
+                  sizeof(((FieldActor *)0)->allocation_block), shadow_allocation_pointer_size);
 
 int Render_DrawActorShadow(RenderShadowActor *actor);
 

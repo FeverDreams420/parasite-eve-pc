@@ -2,6 +2,7 @@
 #include "pe1/entity_animation.h"
 #include "pe1/game_state_types.h"
 #include "pe1/pm_types.h"
+#include "pe1/render_shadow.h"
 #include <string.h>
 #include <stdio.h>
 extern FieldActor *g_FieldActorListHead;
@@ -25,6 +26,11 @@ int main(void)
     memcpy(&pointer,(u8 *)&actors[0]+offsetof(BattleEntity,parent),sizeof(pointer));
     if (pointer!=(uintptr_t)&actors[2]) return 7;
     actors[0].parent=0;
+    actors[0].shadow_quads=(RenderShadowQuad *)&actors[2];
+    if (actors[0].allocation_block!=(uintptr_t)&actors[2]) return 8;
+    ((RenderShadowActor *)&actors[0])->shadow_matrix_index=3;
+    ((RenderShadowActor *)&actors[0])->shadow_intensity=128;
+    if (actors[0].shadow_matrix_index!=3 || actors[0].shadow_intensity!=128) return 9;
     for (int i=0; i<4; ++i) {
         actors[i].next=i<3?&actors[i+1]:0;
         actors[i].base_x=10+i; actors[i].base_y=20+i; actors[i].base_z=30+i;

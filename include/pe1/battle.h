@@ -463,7 +463,9 @@ typedef struct BattleEntity {
 /* 0x1B0 */ void *actionData;    /* current animation/action record */
 /* 0x1B4 */ RenderObjectEntity renderObject;
 /* 0x270 */ u8   pad_270[0x08];
-/* 0x278 */ s32  allocationBlock;
+/* 0x278 */ uintptr_t allocationBlock;
+    u8 shadowMatrixIndex;
+    u8 shadowIntensity;
 } BattleEntity;
 
 /* ----------------------------------------------------------------------------

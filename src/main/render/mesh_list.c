@@ -641,15 +641,15 @@ int Render_DrawActorShadow(RenderShadowActor *actor)
 
     if (actor->flags & 0x400)
         return 0;
-    if (!actor->visible)
+    if (!actor->render_object.variant_visible)
         return 0;
 
-    radius = actor->header->shadow_radius;
-    origin.x = actor->x.integer;
-    origin.y = actor->y.integer;
-    origin.z = actor->z.integer;
+    radius = actor->render_object.header->shadow_radius;
+    origin.x = Pe1Fixed_Integer(&actor->pos_x);
+    origin.y = Pe1Fixed_Integer(&actor->pos_y);
+    origin.z = Pe1Fixed_Integer(&actor->pos_z);
     /* The part matrix without its translation turns +Z into the facing. */
-    source = &actor->matrices[actor->shadow_matrix_index];
+    source = (GteMatrixStorage *)&actor->render_object.matrices[actor->shadow_matrix_index];
     first = source->words[0];
     local.words[1] = source->words[1];
     local.words[2] = source->words[2];
@@ -701,8 +701,8 @@ int Render_DrawActorShadow(RenderShadowActor *actor)
         local.matrix.t[1] = g_RoomFloorY->y;
     else
         local.matrix.t[1] = origin.y;
-    local.matrix.t[0] = actor->matrices[actor->shadow_matrix_index].matrix.t[0];
-    local.matrix.t[2] = actor->matrices[actor->shadow_matrix_index].matrix.t[2];
+    local.matrix.t[0] = actor->render_object.matrices[actor->shadow_matrix_index].translation[0];
+    local.matrix.t[2] = actor->render_object.matrices[actor->shadow_matrix_index].translation[2];
     gte_CompMatrix((GteMatrixWords *)g_EntityRenderScratch, &local, &world);
     SetRotMatrix(&world);
     SetTransMatrix(&world);
@@ -711,8 +711,8 @@ int Render_DrawActorShadow(RenderShadowActor *actor)
     quad = &actor->shadow_quads[g_ActiveDrawSlot];
     quad->tag.length = 9;
     quad->code = 0x2C;
-    if (actor->render_flags & 6)
-        shade = (actor->fade_red + actor->fade_green + actor->fade_blue) / 3;
+    if (actor->render_object.flags_9C & 6)
+        shade = (actor->render_object.fade_red + actor->render_object.fade_green + actor->render_object.fade_blue) / 3;
     else
         shade = 0x80;
     shade = shade * actor->shadow_intensity / 128;

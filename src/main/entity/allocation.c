@@ -66,7 +66,7 @@ void *Entity_AllocBlock(u32 size) {
     return 0;
 }
 
-void Entity_FreeAllocationBlock(int arg0) {
+void Entity_FreeAllocationBlock(uintptr_t arg0) {
     int i;
 
     i = 0;

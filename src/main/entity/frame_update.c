@@ -142,7 +142,7 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
         allocation = Entity_AllocBlock(actor->model_state.model_header->animation_entry_count * 12 + actor->model_state.model_header->part_count * 32);
         actor->flags |= 0x600000A0;
     }
-    actor->allocation_block = (int)allocation;
+    actor->allocation_block = (uintptr_t)allocation;
 
     if (scene[0] == 0 && (areaType = &g_SceneAreaType)) {
         Render_SetupEntityPrims(&actor->render_object, actor->model_state.model_header, allocation + 0x50, 0x3C0,
@@ -447,7 +447,7 @@ void Entity_IntegratePositionConditional(FieldActor *a)
  * the parent chain, following attached parents, freeing dead actors, and
  * running and advancing each actor's three script-node lists. */
 
-void Entity_FreeAllocationBlock(int arg0);
+void Entity_FreeAllocationBlock(uintptr_t arg0);
 int Render_ReturnTrue(void *unused);
 void Script_RunQueue(void);
 

@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Actor opcodes 11/12 now set/get position, saved position, motion, acceleration,
+gravity, rotation and deltas. Position writes perform floor lookup and update
+the rollback base; player writes set render flag `0x80`. Rotation reads sign
+extend 16-bit values. All 31 headless tests and the ASan/UBSan actor fixture
+pass, including all-vector roundtrips, floor adjustment and a real VM getter.
+Frame callbacks, global render flags, wall/contact response and complete
+Spawn8 remain pending.
+
 Scene scripts now query held/pressed/released masks and held-frame counters
 through original opcode 17. Input maintains 32 wrapping counters and survives
 successful scene changes. Counter queries preserve the original CLZ mask

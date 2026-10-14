@@ -34,6 +34,8 @@ typedef struct PeActors {
     int free_next[PE_ACTOR_CAPACITY], free_head, head, player;
     unsigned live;
     PeScriptScheduler *scheduler; /* borrowed stable scheduler */
+    const PeCollision *collision;
+    uint32_t render_flags;
     char error[256];
 } PeActors;
 /* Fresh room only. Owner stays at a stable address while tasks borrow slots.

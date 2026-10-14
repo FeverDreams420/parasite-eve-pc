@@ -67,6 +67,7 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     scene->scheduler->program = scene->scripts;
     scene->scheduler->banks = &scene->script_banks;
     scene->scheduler->dispatch_user=scene;
+    scene->actors->collision=&scene->collision;
     scene->audio.room=&scene->room;scene->audio.game_flags=&scene->script_banks.game_flags;
     for (unsigned i = 0; i < PE_SCRIPT_TASK_CAPACITY; ++i) {
         if (!scene->scheduler->slots[i].used) continue;

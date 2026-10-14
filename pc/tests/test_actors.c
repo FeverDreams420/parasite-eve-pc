@@ -153,6 +153,35 @@ int main(void) {
     CHECK(!pe_actor_find_floor(subject,&collision) && subject->position[1] == 0x12345678);
     subject->script.flags &= ~UINT32_C(0x80); subject->position[0] = 0x100000;
     CHECK(!pe_actor_find_floor(subject,&collision) && subject->floor_triangle == 0);
+    actors->collision=&collision;
+    PeScriptTask vector_task={0};vector_task.program=program;vector_task.banks=&banks;vector_task.actor=&subject->script;
+    PeScriptCommand vector_command={0};vector_command.count=4;
+    uint32_t vector_values[3]={UINT32_MAX,0x80000000,0x12345678};
+    subject->script.flags|=0x80;
+    for(unsigned mode=0;mode<7;++mode){
+        vector_command.opcode=11;vector_command.args[0].value=mode;
+        for(unsigned i=0;i<3;++i)vector_command.args[i+1]=(PeScriptArgument){vector_values[i],0,0};
+        CHECK(pe_actors_dispatch(actors,&vector_task,&vector_command)==PE_DISPATCH_CONTINUE);
+        vector_command.opcode=12;
+        for(unsigned i=0;i<3;++i)vector_command.args[i+1]=(PeScriptArgument){i,0,2};
+        CHECK(pe_actors_dispatch(actors,&vector_task,&vector_command)==PE_DISPATCH_CONTINUE);
+        for(unsigned i=0;i<3;++i){uint32_t expected=vector_values[i];
+            if(mode==5){expected&=65535;if(expected&32768)expected=(uint32_t)((int)expected-65536);}
+            CHECK(banks.variables[i]==expected);
+        }
+    }
+    vector_command.opcode=11;vector_command.args[0].value=0;
+    for(unsigned i=0;i<3;++i)vector_command.args[i+1]=(PeScriptArgument){i==1?0:0x10000,0,0};
+    actors->collision=NULL;
+    CHECK(pe_actors_dispatch(actors,&vector_task,&vector_command)==PE_DISPATCH_ERROR&&subject->position[0]==UINT32_MAX);
+    actors->collision=&collision;subject->script.flags&=~UINT32_C(0x82);actors->player=grounded;
+    CHECK(pe_actors_dispatch(actors,&vector_task,&vector_command)==PE_DISPATCH_CONTINUE);
+    CHECK(subject->position[1]==0x70000&&subject->saved_position[1]==0x70000&&(actors->render_flags&0x80));
+    word(bytes+32,12|(4u<<13)|(2u<<20)|(2u<<23)|(2u<<26));word(bytes+40,5);
+    word(bytes+44,0);word(bytes+48,1);word(bytes+52,2);word(bytes+56,32);
+    CHECK(pe_script_task_init(&vector_task,&program,1,&banks));vector_task.actor=&subject->script;
+    vector_task.dispatch=pe_actors_dispatch;vector_task.dispatch_user=actors;
+    CHECK(pe_script_task_tick(&vector_task,100)==PE_SCRIPT_STOPPED&&banks.variables[0]==UINT32_MAX);
     uint8_t model_bytes[100]={0};model_bytes[2]=model_bytes[3]=1;model_bytes[24]=1;model_bytes[32]=1;
     animation_bytes[14]=7;animation_bytes[10]=42;
     PeRoomBanks model_banks={0};
@@ -202,7 +231,7 @@ int main(void) {
     bad.opcode=777;CHECK(pe_actors_dispatch(actors,&animation_task,&bad)==PE_DISPATCH_UNSUPPORTED);
     CHECK(pe_actor_advance_animation(subject)&&pe_actor_model_pose(subject,&base));
     subject->position[0]=0xffff8000;subject->position[1]=0x28000;subject->position[2]=0xa8000;
-    subject->rotation[1]=1024;subject->move_speed=0x800;
+    subject->rotation[0]=subject->rotation[2]=0;subject->rotation[1]=1024;subject->move_speed=0x800;
     CHECK(pe_actor_model_world_pose(subject));
     CHECK(subject->render->world.translation[0]==UINT32_MAX&&subject->render->world.translation[1]==2);
     CHECK(subject->render->world.rotation[0][2]==2048&&subject->render->world.rotation[2][0]==-2048);

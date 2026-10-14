@@ -354,7 +354,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-entity-texture-assets tests/original_entity_textures.c
-        pc/host_disc.c pc/disc.c pc/room.c pc/vram.c pc/model.c
+        pc/host_disc.c pc/disc.c pc/room.c pc/vram.c pc/model.c pc/room_banks.c pc/animation.c pc/matrix.c
         src/main/cdrom/asset_lookup.c
         $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
         $<TARGET_OBJECTS:parasite-eve-original-camera>

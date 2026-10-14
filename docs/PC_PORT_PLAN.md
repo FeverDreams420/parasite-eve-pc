@@ -1274,3 +1274,19 @@ render procedures are used without replacement game handlers. Full build,
 both entity-texture CTests and game/test ASan/UBSan/function checks passed;
 PsyZ/SDL archives uninstrumented. This covers the exploration model path;
 battle stream selection/rebuild and full main scene integration remain pending.
+
+### Attachment driven by real player model animations
+
+The entity-loader asset test now replaces the controlled 19-matrix player pose
+with real primary models from banks 18/20 and their area/day animation overrides.
+The original Render_SetupEntityPrims builds the native player model; original
+Anim_BuildRotationMatrices and Render_TransformVertices process every frame of
+every available action, followed by original Scene_UpdateBgDraw. Both attached
+object matrices must match player bone 18 on all 9591 exercised frames. Bank
+read/TIM VRAM checks and fourteen delayed object rebuilds remain in the same run.
+
+Full build, both entity-texture CTests and game/test ASan/UBSan/function checks
+passed, with PsyZ/SDL archives uninstrumented. This replaces the earlier pose
+fixture limitation, but not the remaining image/integration limitations:
+variant_visible remains zero during attachment updates, action selection/timing
+is driven by the corpus test, and the main scene loop is not running yet.

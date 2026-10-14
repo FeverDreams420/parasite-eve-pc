@@ -8,6 +8,7 @@
 GeomState * volatile g_GeomState;
 #include "room_banks.h"
 #include "model.h"
+#include "animation.h"
 #include "vram.h"
 #include "pe1/scene_assets.h"
 #include <stdio.h>
@@ -118,10 +119,8 @@ int main(void)
         parsed_model.packets[2]*sizeof(RenderPacket24)+parsed_model.packets[3]*sizeof(RenderPacket1C))+
         parsed_model.part_count*(sizeof(RenderAnimationLookupEntry)+sizeof(RenderMatrix));
     u8 *model_work=calloc(1,model_work_bytes); CHECK(model_work);
-    FieldActor player={0}; RenderMatrix pose[19]={0};
-    pose[18].rotation[0][0]=pose[18].rotation[1][1]=pose[18].rotation[2][2]=4096;
-    pose[18].translation[0]=123; pose[18].translation[1]=-456; pose[18].translation[2]=789;
-    player.render_object.matrices=pose;
+    FieldActor player={0};
+    unsigned animated_frames=0;
     unsigned loaded=0, uploads=0;
     PeVram *expected=calloc(1,sizeof(*expected)), *actual=malloc(sizeof(*actual));
     CHECK(expected && actual);
@@ -167,8 +166,23 @@ int main(void)
         }
         DrawSync(0); StoreImage(&all,(u_long *)actual->words); DrawSync(0);
         CHECK(!memcmp(expected,actual,sizeof(*expected)));
-        /* Original delayed rebuild binds the resident scene object to the
-         * player's bone 18. The pose is controlled; the object model is real. */
+        PeRoomBlob player_bank={0}; PeRoomBanks player_banks={0};
+        CHECK(pe_sector_bank_load(&catalog,area==10?18:20,&player_bank));
+        CHECK(pe_entity_banks(&player_bank,1,&player_banks,model_error,sizeof(model_error)));
+        CHECK(pe_entity_banks(&reference,0,&player_banks,model_error,sizeof(model_error)));
+        PeModel player_model;
+        CHECK(pe_model_open(player_banks.roots[0].bytes,player_banks.roots[0].size,&player_model,model_error,sizeof(model_error)));
+        CHECK(player_model.part_count>18);
+        size_t player_work_bytes=2*(player_model.packets[0]*sizeof(RenderPacket34)+player_model.packets[1]*sizeof(RenderPacket28)+
+            player_model.packets[2]*sizeof(RenderPacket24)+player_model.packets[3]*sizeof(RenderPacket1C))+
+            player_model.part_count*(sizeof(RenderAnimationLookupEntry)+sizeof(RenderMatrix));
+        u8 *player_work=calloc(1,player_work_bytes); CHECK(player_work);
+        s8 *texture_data=NULL;
+        memset(&player,0,sizeof(player));
+        CHECK(Render_SetupEntityPrims(&player.render_object,(RenderObjectHeader *)player_banks.roots[0].bytes,
+            player_work,0,0,0,0,0,&texture_data,1)==1);
+        RenderMatrix *pose=player.render_object.matrices;
+        /* Rebuild with the real player model, then follow every bank action. */
         g_PlayerEntity=&player;
         g_GameState.scene_object_model=scene_model;
         g_GameState.scene_object_work=model_work;
@@ -182,11 +196,23 @@ int main(void)
         CHECK(!memcmp(&g_GameState.scene_object.matrices[1],&pose[18],sizeof(RenderMatrix)));
         CHECK(!(g_GameState.story_day_flags&3));
         player.render_object.variant_visible=0;
-        ++pose[18].translation[0];
-        CHECK(Scene_UpdateBgDraw()==0);
-        CHECK(!memcmp(&g_GameState.scene_object.matrices[0],&pose[18],sizeof(RenderMatrix)));
-        CHECK(!memcmp(&g_GameState.scene_object.matrices[1],&pose[18],sizeof(RenderMatrix)));
-        CHECK(Psyz_GteCtrlRead(24)==(160u<<16) && Psyz_GteCtrlRead(25)==(112u<<16));
+        for(unsigned action=0;action<48;++action) {
+            PeRoomSlice *slice=&player_banks.rows[0][action];
+            if(!slice->present) continue;
+            PeAnimation animation;
+            CHECK(pe_animation_open(slice->bytes,slice->size,&animation,model_error,sizeof(model_error)));
+            CHECK(animation.bones<=player_model.part_count);
+            for(unsigned frame=0;frame<(animation.frames?animation.frames:1);++frame) {
+                Anim_BuildRotationMatrices(&player.render_object,(RenderAnimationDataHeader *)slice->bytes,frame);
+                Render_TransformVertices(&player.render_object);
+                CHECK(Scene_UpdateBgDraw()==0);
+                CHECK(!memcmp(&g_GameState.scene_object.matrices[0],&pose[18],sizeof(RenderMatrix)));
+                CHECK(!memcmp(&g_GameState.scene_object.matrices[1],&pose[18],sizeof(RenderMatrix)));
+                CHECK(Psyz_GteCtrlRead(24)==(160u<<16) && Psyz_GteCtrlRead(25)==(112u<<16));
+                ++animated_frames;
+            }
+        }
+        free(player_work); pe_room_blob_close(&player_bank);
         g_PlayerEntity=NULL;
         free(scratch_buffer); pe_room_blob_close(&tim_reference);
         g_GameState.scene_load_scratch=NULL;
@@ -200,7 +226,7 @@ int main(void)
     pe_host_disc_bind(NULL,NULL);
     CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector,&guard,1)==-1 && guard==0xa5);
     pe_disc_close(&disc);
-    printf("Original entity loader: %u real area/day banks, %u TIM uploads with full VRAM comparison, 14 model rebuilds and attachment updates\n",loaded,uploads);
+    printf("Original entity loader: %u real area/day banks, %u TIM uploads with full VRAM comparison, 14 model rebuilds, %u real animation attachment frames\n",loaded,uploads,animated_frames);
     return 0;
 }
 #endif

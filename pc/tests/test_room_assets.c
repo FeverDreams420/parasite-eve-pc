@@ -5,6 +5,7 @@
 #include "scene.h"
 #include "script_vm.h"
 #include "akao_sequence.h"
+#include "akao_channel.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -44,6 +45,7 @@ int main(void) {
     unsigned music_records = 0;
     unsigned short_music_records = 0;
     uint8_t referenced_banks[PE_USA_AUDIO_BANKS] = {0};
+    unsigned channel_notes = 0, channel_stops = 0, channel_missing = 0;
     unsigned loaded = 0, absent = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -81,6 +83,20 @@ int main(void) {
             short_music_records += music.unresolved_short_record != 0;
             CHECK(music.bank < PE_USA_AUDIO_BANKS);
             referenced_banks[music.bank] = 1;
+            if (!music.unresolved_short_record) {
+                for (unsigned voice = 0; voice < 24; ++voice) {
+                    if (music.sequence.channels[voice] == UINT32_MAX) continue;
+                    PeAkaoChannel channel = {0};
+                    CHECK(pe_akao_channel_start(&channel, &music.sequence, voice));
+                    PeAkaoChannelResult result = pe_akao_channel_next(&channel, 1024);
+                    if (result == PE_AKAO_CHANNEL_NOTE) ++channel_notes;
+                    else if (result == PE_AKAO_CHANNEL_STOP) ++channel_stops;
+                    else {
+                        CHECK(strstr(channel.error, "Unimplemented AKAO opcode"));
+                        ++channel_missing;
+                    }
+                }
+            }
         }
         PeScriptProgram program;
         if (!pe_script_program_open(&room, &program, error, sizeof(error))) {
@@ -104,6 +120,8 @@ int main(void) {
     }
     CHECK(loaded > 300 && loaded + absent == PE_USA_ROOM_SLOTS);
     CHECK(music_records == 600 && short_music_records == 1);
+    printf("Initial AKAO channel prefixes: %u raw notes, %u stops, %u unimplemented commands\n",
+           channel_notes, channel_stops, channel_missing);
     CHECK(catalog.audio_base == 2224);
     CHECK(catalog.audio_base + catalog.audio_bounds[PE_USA_AUDIO_BANKS] == catalog.ranges[0].start);
     PeSpuBank *music_spu = calloc(1, sizeof(*music_spu)); CHECK(music_spu);

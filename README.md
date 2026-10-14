@@ -59,7 +59,7 @@ script entry/actor catalogs and the startup SPU sample bank are prepared in
 `PeScene`, but scene execution and gameplay are not integrated.
 
 `make ci` builds and runs the asset-free disc-reader, VRAM, script-format,
-script-runtime, script-scheduler, SPU-bank, AKAO-sequence and automation tests. The
+script-runtime, script-scheduler, SPU-bank, AKAO-sequence, AKAO-channel and automation tests. The
 room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
 is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
@@ -199,3 +199,12 @@ instrument start/loop addresses and uploading to a selected SPU/instrument
 bank. Tests load all 51 distinct sample banks referenced by Disc 1 room music
 records. Automatic selection between active voice banks and live playback are
 still pending; these tests upload data without synthesizing it.
+
+`pc/akao_channel.c` executes eight primary-channel command types through the
+next raw note/tie/rest byte: stop, next-note length, volume, octave set/up/down,
+expression (or drum volume) and pan. Tests preserve the original signed
+expression shift, pan wrapping and octave retention, and reject missing
+opcodes/truncated operands explicitly. The first-prefix audit of Disc 1 music
+reaches 303 raw notes and two stops; 8,578 other channels report an unsupported
+command. Note timing/pitch, instrument commands, loops/LFOs, SPU allocation and
+synthesis are still pending. Passing parser/command tests is not music playback.

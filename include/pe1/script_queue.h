@@ -52,6 +52,7 @@ int Script_RotateEntityAngle(int **args);
 int Script_GetAngleToPoint(int **args);
 int Script_SnapPosToSpawnPos(int **unused);
 int Entity_ClearParentLink(int **unused);
+int Script_ClearEntityParentLink(int **unused);
 int Script_SetNodeFlag80(int **unused);
 int Script_ClearEntityRoamFlag(int **unused);
 int Script_SetEntityRoamFlag(int **unused);

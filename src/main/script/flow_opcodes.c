@@ -731,7 +731,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [173]=Script_ClearInputFlagBit2, [174]=Script_SetInputFlagBit2,
     [172]=Script_SetAnimSlotPointer, [170]=Script_SetSceneFlag2000, [171]=Script_ClearSceneFlag2000,
     [205]=Script_SnapPosToSpawnPos, [203]=Script_GetAngleToPoint, [200]=Script_ClearEntityRoamFlag, [201]=Script_SetEntityRoamFlag,
-    [214]=Entity_ClearParentLink, [199]=Script_SetNodeFlag80, [196]=Script_RotateEntityAngle, [215]=Script_GetSin, [216]=Script_GetCos, [217]=Script_GetAtan2,
+    [213]=Script_ClearEntityParentLink, [214]=Entity_ClearParentLink, [199]=Script_SetNodeFlag80, [196]=Script_RotateEntityAngle, [215]=Script_GetSin, [216]=Script_GetCos, [217]=Script_GetAtan2,
     [227]=Script_SetInventorySlotPointer, [228]=Script_GetInventoryTotal, [229]=Script_GetInventorySlotLimit,
     [220]=Script_SetEntityFlag1000000, [225]=Script_SetMeshFadeLevel, [222]=Entity_PopCount, [223]=Script_EnableEntityGravity, [224]=Script_DisableEntityGravity,
     [184]=Script_TurnTowardPointStep, [240]=Script_GetPlayerInputFlag

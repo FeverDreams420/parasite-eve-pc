@@ -563,6 +563,17 @@ int main(void)
            first.next!=&unrelated || unrelated.next!=&second || second.next!=&owner ||
            task.current.script!=script+4 || task.flags!=0x10) return 57;
     }
+    for(unsigned variant=0;variant<4;++variant) {
+        FieldActor parent={.flags=0x80100000};
+        FieldActor owner={.flags=0x80602000,.parent=&parent};
+        FieldActor other={.parent=variant==1?&parent:NULL,.next=&owner};
+        u32 script[]={213,0,32,0};ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_FieldActorListHead=variant<2?&other:variant==2?NULL:&owner;
+        g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(owner.parent || owner.flags!=0x80002000 || parent.flags!=0x80100000 ||
+           other.parent!=(variant==1?&parent:NULL) || task.current.script!=script+4 || task.flags!=0x10) return 58;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

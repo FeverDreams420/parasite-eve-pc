@@ -1362,7 +1362,7 @@ s32 Script_SetEntityParentLink(s32 *args[]) {
     return 1;
 }
 
-int Script_ClearEntityParentLink(void) {
+int Script_ClearEntityParentLink(int **unused) {
     FieldActor *current;
     FieldActor *it;
 
@@ -1387,7 +1387,10 @@ int Script_ClearEntityParentLink(void) {
         int clear_mask;
         tail_current = g_CurrentEntity;
         clear_mask = 0xFFEFFFFF;
-        tail_current->parent->flags &= clear_mask;
+        /* Retail reaches PS1 low RAM after clearing parent. A NULL parent
+         * is not a native actor whose flags can be updated. */
+        if (tail_current->parent != NULL)
+            tail_current->parent->flags &= clear_mask;
     }
     return 1;
 }

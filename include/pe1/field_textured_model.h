@@ -144,11 +144,10 @@ typedef struct FieldModelScratch {
     /* 0x38 */ GteMatrix matrix;
 } FieldModelScratch;
 
-#define FIELD_MODEL_SCRATCH ((FieldModelScratch *)0x1F800000)
 
 /* Ordering-table entry `depth` of the active buffer. */
 #define TEXTURED_MODEL_OT(depth) \
-    ((RenderGpuTag *)(D_800B0E38.ordering[g_ActiveDrawSlot] + (depth)))
+    ((RenderGpuTag *)D_800B0E38.ordering[g_ActiveDrawSlot] + (depth))
 
 extern u16 g_FieldFxModelTpage;
 extern u16 g_FieldFxModelClut;

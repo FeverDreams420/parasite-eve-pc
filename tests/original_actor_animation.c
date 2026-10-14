@@ -13,6 +13,8 @@
 #include "pe1/render_packets.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/field_tile.h"
+#include "pe1/field_textured_model.h"
+#include "pe1/field_model_draw.h"
 #include "pe1/field_textured_strip.h"
 #include "pe1/geom_state.h"
 #include "pe1/field_movement.h"
@@ -657,6 +659,67 @@ static int native_screen_tint_packets(void)
     return 1;
 }
 
+static int native_effect_model_packets(void)
+{
+    _Alignas(16) u8 blob[128]={0}, packets[512];
+    static RenderGpuTag ordering[4096];
+    RenderBufferPrefix saved=D_800B0E38;
+    int saved_slot=g_ActiveDrawSlot, saved_offset=g_DrawPacketOffset;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    GteMatrix *saved_view=g_GeomScroll.words.viewMatrix;
+    g_GeomScroll.words.viewMatrix=&view;
+    GteMatrix placement=view; placement.t[2]=512;
+    FieldTexturedModel *model=(FieldTexturedModel *)blob;
+    model->header.flatTris=model->header.shadedTris=1;
+    model->header.flatQuads=model->header.shadedQuads=1;
+    model->header.colorOffset=104; model->header.colorCount=4;
+    FieldModelTri *tri=model->header.tris;
+    FieldModelQuad *quad=(FieldModelQuad *)(tri+2);
+    for(unsigned i=0;i<2;++i) {
+        for(unsigned j=0;j<3;++j) { tri[i].vertex[j]=72+8*j; tri[i].uv[j]=0x1000+j; }
+        for(unsigned j=0;j<4;++j) { quad[i].vertex[j]=72+8*j; quad[i].uv[j]=0x2000+j; }
+    }
+    FieldModelVertex *v=(FieldModelVertex *)(blob+72);
+    for(unsigned j=0;j<4;++j) {
+        v[j].x=(j&1)?32:-32; v[j].y=(j&2)?32:-32;
+        v[j].color=104+4*j;
+        ((u32 *)(blob+104))[j]=0x00302010+j;
+    }
+    Psyz_GteCtrlWrite(26,256); Psyz_GteCtrlWrite(29,1365); Psyz_GteCtrlWrite(30,1024);
+    gte_SetGeomOffset(160,120);
+    FieldFx_ModelSetTexture(0x123,0x456);
+    for(unsigned slot=0;slot<2;++slot) for(unsigned semi=0;semi<2;++semi) {
+        memset(packets,0xa5,sizeof(packets));
+        memset(ordering,0,sizeof(ordering));
+        for(unsigned i=0;i<4096;++i) ordering[i].address=0xffffff;
+        D_800B0E38.ordering[slot]=ordering; D_800B0E38.packets[slot]=(char *)packets;
+        g_ActiveDrawSlot=slot; g_DrawPacketOffset=0;
+        FieldFx_ModelSetSemiTrans(semi); g_FieldFxModelDepthBias=0;
+        FieldFx_ModelDraw(model,&placement);
+        size_t expected=sizeof(FieldModelFt3Packet)+sizeof(FieldModelGt3Packet)+sizeof(FieldModelFt4Packet)+sizeof(FieldModelGt4Packet);
+        if(g_DrawPacketOffset!=expected) { fprintf(stderr,"effect model bytes %d expected %zu\n",g_DrawPacketOffset,expected); return 0; }
+        unsigned sizes[4]={sizeof(FieldModelFt3Packet),sizeof(FieldModelGt3Packet),sizeof(FieldModelFt4Packet),sizeof(FieldModelGt4Packet)};
+        unsigned lengths[4]={7,9,9,12}, codes[4]={0x24,0x34,0x2c,0x3c};
+        size_t offset=0; uintptr_t previous=0xffffff;
+        for(unsigned i=0;i<4;++i) {
+            RenderGpuTag *tag=(RenderGpuTag *)(packets+offset);
+            if(tag->address!=previous || tag->length!=lengths[i] || packets[offset+sizeof(*tag)+3]!=(codes[i]|(semi?2:0))) return 0;
+            previous=(uintptr_t)tag; offset+=sizes[i];
+        }
+        unsigned used=0;
+        for(unsigned depth=0;depth<4096;++depth) if(ordering[depth].address!=0xffffff) {
+            if(ordering[depth].address!=previous) return 0;
+            ++used;
+        }
+        if(used!=1) return 0;
+        for(size_t i=expected;i<sizeof(packets);++i) if(packets[i]!=0xa5) return 0;
+    }
+    D_800B0E38=saved; g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset;
+    g_GeomScroll.words.viewMatrix=saved_view;
+    puts("Original effect model: all four packet types, both slots and transparency passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -717,7 +780,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

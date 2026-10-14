@@ -1,5 +1,6 @@
 #include "common.h"
 #include "pe1/field_textured_model.h"
+#include "pe1/field_model_draw.h"
 #include "pe1/geom_state.h"
 #include "pe1/gte.h"
 #include "pe1/render_object.h"
@@ -8,6 +9,10 @@
 /* Textured field models: UV scrolling, the texture page, CLUT,
  * semi-transparency and depth state the draw reads, the colour-table
  * save/restore and fades, and the draw itself. */
+
+u16 g_FieldFxModelTpage, g_FieldFxModelClut, g_FieldFxModelSemiTrans;
+s16 g_FieldFxModelDepthBias;
+u32 g_FieldModelColorBackup[256];
 
 #define MODEL_VERTEX(model, offset) ((FieldModelVertex *)&(model)->bytes[offset])
 #define MODEL_COLOR(model, offset) (((FieldModelColor *)&(model)->bytes[offset])->word)
@@ -57,7 +62,7 @@ void FieldFx_ModelScrollUv(FieldTexturedModel *model, u8 xOffset, u8 yOffset) {
     g_FieldFxModelDepthBias = 0;
 }
 
-void FieldFx_ModelSetTexture(short x, short y) {
+void FieldFx_ModelSetTexture(int x, int y) {
     g_FieldFxModelTpage = x;
     g_FieldFxModelClut = y;
 }
@@ -210,7 +215,8 @@ void FieldFx_ModelDraw(FieldTexturedModel *model, GteMatrix *placement)
     FieldModelScratch *sp;
     int i;
 
-    sp = FIELD_MODEL_SCRATCH;
+    FieldModelScratch workspace;
+    sp = &workspace;
     sp->tpage = g_FieldFxModelTpage;
     sp->clut = g_FieldFxModelClut;
     sp->semiTrans = g_FieldFxModelSemiTrans;
@@ -237,7 +243,7 @@ void FieldFx_ModelDraw(FieldTexturedModel *model, GteMatrix *placement)
             sp->depth += g_FieldFxModelDepthBias;
             ft3->tpage = sp->tpage;
             ft3->clut = sp->clut;
-            if (sp->depth > 0) {
+            if (sp->depth > 0 && sp->depth < 4096) {
                 FieldModelLink link;
 
                 ft3->color0.word = MODEL_COLOR(model, v0->color);
@@ -275,7 +281,7 @@ void FieldFx_ModelDraw(FieldTexturedModel *model, GteMatrix *placement)
             gt3->clut = sp->clut;
             gte_stotz(&sp->depth);
             sp->depth += g_FieldFxModelDepthBias;
-            if (sp->depth > 0) {
+            if (sp->depth > 0 && sp->depth < 4096) {
                 FieldModelLink link;
 
                 gt3->color0.word = MODEL_COLOR(model, v0->color);
@@ -317,7 +323,7 @@ void FieldFx_ModelDraw(FieldTexturedModel *model, GteMatrix *placement)
             ft4->clut = sp->clut;
             gte_stotz(&sp->depth);
             sp->depth += g_FieldFxModelDepthBias;
-            if (sp->depth > 0) {
+            if (sp->depth > 0 && sp->depth < 4096) {
                 FieldModelLink link;
 
                 ft4->color0.word = MODEL_COLOR(model, v0->color);
@@ -358,7 +364,7 @@ void FieldFx_ModelDraw(FieldTexturedModel *model, GteMatrix *placement)
             gt4->uv3 = quad->uv[3];
             gte_stotz(&sp->depth);
             sp->depth += g_FieldFxModelDepthBias;
-            if (sp->depth > 0) {
+            if (sp->depth > 0 && sp->depth < 4096) {
                 FieldModelLink link;
 
                 gt4->color0.word = MODEL_COLOR(model, v0->color);

@@ -3030,3 +3030,19 @@ Disc 1 required, including pools, actor lifecycle, original GPU model/room paths
 and room/entity assets. This does not yet prove full transition lifetimes or
 complete authored effect execution. Production boot-memory backing, integration
 of remaining original modules and removal of pc/ remain required.
+
+
+The whole original fieldfx/model.c now compiles in parasite-eve-original.
+Its physical scratchpad access is replaced in place by a local workspace;
+native OT indexing and backing for original model parameters/color backup are
+provided in the existing module. Packet insertion rejects depths outside the
+4096-entry table. The texture setter agrees with the existing int API.
+The actor fixture executes original FieldFx_ModelDraw for flat/shaded triangles
+and quads together, in both slots and both transparency modes. It checks all
+four native lengths/codes, full pointer chain, one occupied OT depth, consumed
+packet bytes and surrounding guards. Full build and four related CTests pass
+with Disc 1 required; fresh actor ASan/UBSan/function passes with original source
+instrumented and PsyZ/SDL archives uninstrumented. This fixture establishes CPU
+packet generation, not rendered effect-image fidelity. Real model descriptors,
+color/UV controllers, culling variants, full scene integration and removal of
+pc/ remain incomplete.

@@ -30,7 +30,11 @@ typedef union AkaoTickBank {
         /* 0x20 */ AkaoTickTempo tempo;
         /* 0x24 */ AkaoU32 tempo_delta;
         /* 0x28 */ AkaoU32 tick_accumulator;
-        /* 0x2C */ unsigned char pad_2C[0x14];
+        AkaoU8 *sequence_base;
+        AkaoU32 reserved_voice_mask;
+        AkaoU32 key_off_dirty_mask;
+        AkaoU32 volume_dirty_mask;
+        AkaoU32 adsr_dirty_mask;
         /* 0x40 */ AkaoU32 volume;
         /* 0x44 */ AkaoU32 volume_delta;
         /* 0x48 */ AkaoU16 pitch_fraction; /* halves of the 16.16 bank pitch */
@@ -50,7 +54,16 @@ typedef union AkaoTickBank {
     } timing;
 } AkaoTickBank;
 
-PE1_STATIC_ASSERT(sizeof(AkaoTickBank) == 0x68, akao_tick_bank_size);
+PE1_STATIC_ASSERT(sizeof(AkaoTickBank) == sizeof(AkaoSequencerBank), akao_tick_bank_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickBank, timing.tempo) ==
+                  PE1_OFFSETOF(AkaoSequencerBank, tempo), akao_tick_bank_tempo);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickBank, timing.volume) ==
+                  PE1_OFFSETOF(AkaoSequencerBank, volume), akao_tick_bank_volume);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickBank, timing.pitch_integer) ==
+                  PE1_OFFSETOF(AkaoSequencerBank, pitch_current) + 2,
+                  akao_tick_bank_pitch);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickBank, timing.measure) ==
+                  PE1_OFFSETOF(AkaoSequencerBank, measure), akao_tick_bank_measure);
 
 extern AkaoTickBank *D_8009D2C8;
 extern u8 g_AkaoTempoScale;

@@ -225,7 +225,7 @@ static int run_boot(PeDisc *disc, int menu, int skip_intro) {
         fprintf(stderr, "SDL: %s\n", SDL_GetError());
         goto close_disc;
     }
-    if (!SDL_CreateWindowAndRenderer("Parasite Eve PC", 960, 720,
+    if (!SDL_CreateWindowAndRenderer("Parasite Eve", 960, 720,
         SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY |
         (pe_runtime_headless() ? SDL_WINDOW_HIDDEN : 0),
         &player.window, &player.renderer)) goto close_player;

@@ -531,6 +531,10 @@ To początek pełnego planu WP00–WP12, nie zakres końcowego wydania. WP13 dod
 
 Ukończenie tego dokumentu oznacza gotowy plan implementacji. Nie oznacza, że pełny port albo opisane testy już istnieją.
 
+## Integracja oryginalnego audio: stan bieżący
+
+Smoke test ujawnił brak dźwięków menu: `pc/title.c` nie wywołuje komend AKAO, a strumień intro jest zamykany przed menu. Oryginalne `akao/sequencer.c` i `akao/spu_transfer.c` kompilują się jako oddzielny object target, jeszcze bez runtime linkage. Native pointer layout banku i 48 ścieżek ma zgodne widoki timera: pola po sequence pointer oraz timing counters nie używają już stałych offsetów PS1. Test `original-game-akao-layout` i ASan/UBSan sprawdzają współdzielenie stanu oraz zachowanie pełnych wskaźników; format instrumentu 64 bytes i prefiks pliku 4 bytes pozostają niezmienione. To nie jest dowód odtwarzania audio. Voice driver/bank nadal wymagają usunięcia obcinania adresów i raw strides, oryginalne MMIO SPU wymaga podłączenia backendu, a timer, kolejka komend i menu wymagają integracji oraz testów rzeczywistego PCM.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

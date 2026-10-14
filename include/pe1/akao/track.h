@@ -1,6 +1,8 @@
 #ifndef PE1_AKAO_TRACK_H
 #define PE1_AKAO_TRACK_H
 
+#include "common.h"
+
 typedef unsigned char AkaoU8;
 typedef unsigned short AkaoU16;
 typedef unsigned int AkaoU32;
@@ -186,8 +188,6 @@ typedef struct AkaoSequencerBank {
     /* 0x64 */ AkaoU16 measure;
     /* 0x66 */ AkaoU16 pad_66;
 } AkaoSequencerBank;
-typedef char AkaoSequencerBankSizeCheck[
-    (sizeof(AkaoSequencerBank) == 0x68) ? 1 : -1];
 
 typedef struct AkaoSequencerState {
     AkaoSequencerBank primary;
@@ -328,16 +328,25 @@ typedef union AkaoTickTrack {
     AkaoTrack track;
     AkaoU32 words[sizeof(AkaoTrack) / 4];
     struct {
-        /* 0x000 */ unsigned char pad_000[0x2C];
+        unsigned char pad_000[PE1_OFFSETOF(AkaoTrack, key_on_mask)];
         /* 0x02C */ AkaoU32 key_on_mask;
-        /* 0x030 */ unsigned char pad_030[0x20];
+        unsigned char pad_030[PE1_OFFSETOF(AkaoTrack, field_50_duration) -
+                             PE1_OFFSETOF(AkaoTrack, key_on_mask) - sizeof(AkaoU32)];
         /* 0x050 */ AkaoU32 tick_count;
         /* 0x054 */ AkaoU16 parent_track_id;
         /* 0x056 */ AkaoU16 note_length;
         /* 0x058 */ AkaoU16 gate_length;
     } timing;
 } AkaoTickTrack;
-typedef char AkaoTickTrackSizeCheck[sizeof(AkaoTickTrack) == 0x11C ? 1 : -1];
+PE1_STATIC_ASSERT(sizeof(AkaoTickTrack) == sizeof(AkaoTrack), akao_tick_track_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickTrack, timing.key_on_mask) ==
+                  PE1_OFFSETOF(AkaoTrack, key_on_mask), akao_tick_track_key_on);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickTrack, timing.tick_count) ==
+                  PE1_OFFSETOF(AkaoTrack, field_50_duration), akao_tick_track_count);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickTrack, timing.parent_track_id) ==
+                  PE1_OFFSETOF(AkaoTrack, parent_track_id), akao_tick_track_parent);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickTrack, timing.gate_length) ==
+                  PE1_OFFSETOF(AkaoTrack, pan_duration), akao_tick_track_gate);
 
 /* The 48 sequencer tracks: 24 for music, 24 saved or for sound effects. */
 extern AkaoTickTrack g_AkaoSequencerTracks[48];

@@ -33,6 +33,19 @@ add_library(parasite-eve-original OBJECT
 target_include_directories(parasite-eve-original PRIVATE include)
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
+# Original AKAO units compile in place while their SPU/timer dependencies
+# are connected. They are not linked into the running game yet.
+add_library(parasite-eve-original-akao OBJECT
+    src/main/akao/sequencer.c
+    src/main/akao/spu_transfer.c)
+target_include_directories(parasite-eve-original-akao PRIVATE include)
+
+if(BUILD_TESTING)
+    add_executable(test-original-akao-layout tests/original_akao_layout.c)
+    target_include_directories(test-original-akao-layout PRIVATE include)
+    add_test(NAME original-game-akao-layout COMMAND test-original-akao-layout)
+endif()
+
 if(BUILD_TESTING)
     add_executable(test-original-math tests/original_math.c
         $<TARGET_OBJECTS:parasite-eve-original>)

@@ -282,12 +282,11 @@ int CdRom_SeekToTrack(int key, int mode, int group, int *slot, int blocking)
     int finished = 0;
     Pe1GameState *state = &g_GameState;
     int bankIndex = group != 0;
-    Pe1GameStateAddress selected;
+    u8 *destination;
     volatile SceneAssetDirectory *directory;
 
     /* Group 1 copies into the second bank work bound. */
-    selected.state = state;
-    selected.word += bankIndex * 4;
+    destination = bankIndex ? state->bank_work_end : state->bank_work_base;
     directory = SceneAsset_ResolveOffset(*g_LoadedSceneAssetBlock, (*g_LoadedSceneAssetBlock)->directoryOffset);
     do {
         switch (state->cd_track_phase) {
@@ -371,7 +370,7 @@ int CdRom_SeekToTrack(int key, int mode, int group, int *slot, int blocking)
         case 9:
             *slot = bankIndex;
             if (g_CdTrackRecord) {
-                memcpy(selected.state->bank_work_base,
+                memcpy(destination,
                        SceneAsset_ResolveOffset(state->loaded_scene_assets,
                                                 g_CdTrackRecord->offset & 0xFFFFFF),
                        g_CdTrackRecord->size & 0xFFFFFF);

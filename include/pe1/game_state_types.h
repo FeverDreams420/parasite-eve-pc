@@ -10,8 +10,8 @@ typedef unsigned int Pe1U32;
 /*
  * Shared scene, field, and AKAO state at 0x800B0CD8 (g_GameState).
  * Only fields corroborated by multiple main-executable users are named;
- * padding keeps the observed retail offsets stable while the remaining
- * substructures are reconstructed.
+ * field comments document original offsets. Runtime pointers and embedded
+ * objects use host layout; this record is not serialized to a save or disc.
  */
 struct SceneAssetBlob;
 struct TimFile;
@@ -135,17 +135,10 @@ typedef struct Pe1GameState {
     Pe1U32 bank_reset_958[1];
 } Pe1GameState;
 
-/* A game-state pointer stepped by a word index: the per-slot fields
- * (ordering tables, bank work bounds) are read through the shifted state. */
-typedef union Pe1GameStateAddress {
-    Pe1GameState *state;
-    Pe1U32 word;
-} Pe1GameStateAddress;
-
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, scene_object) == 0x14,
-                  game_state_scene_object_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, scene_audio) == 0xD8,
-                  game_state_scene_audio_offset);
-PE1_STATIC_ASSERT(sizeof(Pe1GameState) == 0x95C, embedded_render_game_state_size);
+/* Fixed command/data layouts remain independent of host runtime pointers. */
+PE1_STATIC_ASSERT(sizeof(Pe1SceneAudioState) == 16, scene_audio_state_size);
+PE1_STATIC_ASSERT(sizeof(Pe1PrimTag) == 4, game_primitive_tag_size);
+PE1_STATIC_ASSERT(sizeof(Pe1FadeTile) == 16, game_fade_tile_size);
+PE1_STATIC_ASSERT(sizeof(Pe1FadeTpage) == 8, game_fade_page_size);
 
 #endif

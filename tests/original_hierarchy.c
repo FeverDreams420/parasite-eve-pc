@@ -1,4 +1,7 @@
 #include "pe1/battle.h"
+#include "pe1/entity_animation.h"
+#include "pe1/game_state_types.h"
+#include "pe1/pm_types.h"
 #include <string.h>
 #include <stdio.h>
 extern FieldActor *g_FieldActorListHead;

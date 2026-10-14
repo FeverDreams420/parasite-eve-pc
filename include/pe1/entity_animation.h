@@ -3,12 +3,12 @@
 
 #include "pe1/battle.h"
 
-/* Each model selects a 0xC0-byte row of action-record pointers. */
+/* Each model selects a row of 48 host action-record pointers. */
 typedef struct EntityActionTable {
     void *actions[48];
 } EntityActionTable;
 
-PE1_STATIC_ASSERT(sizeof(EntityActionTable) == 0xC0,
+PE1_STATIC_ASSERT(sizeof(EntityActionTable) == 48 * sizeof(void *),
                   entity_action_table_size);
 extern EntityActionTable D_800B0E98[];
 

@@ -104,13 +104,7 @@ void Boot_RunFrame(void)
 
             if (!(g_GameStateFlags & 1)) {
             if (!(state->flags & 0x200)) {
-                Pe1GameStateAddress slot;
-
-                /* The draw slot steps the state one word per slot, so the
-                 * ordering table is read from the shifted state. */
-                slot.state = state;
-                slot.word += g_ActiveDrawSlot << 2;
-                ClearOTagR((u32 *)slot.state->shared_buffers.ordering_tables[0],
+                ClearOTagR((u32 *)state->shared_buffers.ordering_tables[g_ActiveDrawSlot],
                            0x1000);
             }
             g_FrameRngCounter = g_FrameRngCounter + 1;

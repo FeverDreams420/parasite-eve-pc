@@ -102,7 +102,6 @@ inline MenuWidgetNode *MenuWidget_AllocNode(MenuWidgetNode *arg0, MenuWidgetNode
     return temp_s0;
 }
 
-MenuWidgetNode *g_MenuWidgetActiveListHead;
 MenuWidgetNode *g_MenuWidgetFreeListHead;
 void MenuWidget_DestroyNodeRecursive(MenuWidgetNode *node) {
     MenuWidgetNode *current = g_MenuWidgetActiveListHead;
@@ -229,7 +228,6 @@ void Draw_PushPrimToList(MenuWidgetNode *node) {
     Inv_BoundsCheckAssertStub(3);
 }
 
-MenuWidgetNode *g_MenuWidgetActiveListHead;
 
 int MenuWidget_HasActiveNodes(void) {
     return g_MenuWidgetActiveListHead != 0;
@@ -261,19 +259,6 @@ MenuWidgetNode *MenuWidget_FindByFieldValue(int value) {
 
 MenuWidgetNode *MenuWidget_GetChild(MenuWidgetNode *node, int index) {
     return node->children[index];
-}
-
-MenuWidgetNode *MenuWidget_FindByModeAndSelectedBase(int mode, int selected_base) {
-    MenuWidgetNode *node;
-
-    node = g_MenuWidgetActiveListHead;
-    while (node != 0) {
-        if (node->mode == mode && node->selected_base == selected_base) {
-            break;
-        }
-        node = node->next;
-    }
-    return node;
 }
 
 /* The text cursor stack holds (x, y) word pairs. */
@@ -395,7 +380,6 @@ MenuWidgetNode *g_MenuWidgetCurrentNode;
 
 MenuWidgetNode *g_MenuWidgetSavedNode;
 
-MenuWidgetNode *g_MenuWidgetActiveListHead;
 
 void MenuWidget_SetCurrentNode(MenuWidgetNode *node) {
     g_MenuWidgetCurrentNode = node;

@@ -27,5 +27,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(PadPacket, leftX) == 6, pad_packet_left_x_offset)
 
 /* The packets of controller ports 1 and 2. */
 extern PadPacket g_PadPackets[2];
+void Boot_BuildRenderFlagTable(void);
+void Field_HandleStateTransition(void);
 
 #endif /* PE1_PAD_STATE_H */

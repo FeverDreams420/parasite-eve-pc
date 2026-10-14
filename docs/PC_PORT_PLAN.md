@@ -995,3 +995,33 @@ fixture with no scripts attached in this movement scenario, and animation data
 is controlled fixture data. There is no full script/collision/SDL-input/render
 scene loop yet. Native player-rule data is a separate object target for upcoming
 runtime linkage, not a parallel gameplay implementation.
+
+### Raw pad packet to original actor movement — 2026-10-14
+
+Moved original flag-table initialization and Field_HandleStateTransition into
+scene/pad_input.c. Original remapping, menu masks, held counters, analog thresholds,
+combo sequence and press/release calculation remain intact. PS1 connection/mode/
+actuator negotiation is replaced by the host packet's receive-status byte:
+nonzero signals disconnect, valid packets reconnect immediately, and subsequent
+disconnected frames clear stale inputs. The original first-disconnect pause event
+is preserved. SDL packet production is still pending.
+
+Original MenuWidget_FindByModeAndSelectedBase now links from widget_lookup.c;
+the active-list head has one definition. Runtime MenuWidgetNode PS1 byte-offset
+asserts were removed (native pointer layout); serialized descriptor/layout asserts
+remain. The rest of the widget implementation, including legacy navigation views,
+still needs native layout migration and is not claimed functional by this change.
+
+Testing exposed unimplemented GTE data registers 30/31 in PsyZ: every original
+button-map entry was being stored at the wrong index. Own-fork commit 010004d
+implements LZCS/LZCR leading-sign count and read-only result behavior, with axis
+edge register tests. It is pushed and pinned. The original map builder now works
+without replacement button logic.
+
+The integrated actor test now supplies raw digital pad packets for walk/run/
+release, then runs original sampling, rule selection, animation selection and
+position integration. It also checks analog field/menu thresholds, repeat-frame
+edges, disconnect/reconnect and register edge cases. All 50 executable rule slots
+still match. Full build, five targeted input/movement/camera CTests and game/test
+ASan/UBSan/function checks pass (PsyZ uninstrumented; standalone SDK suite not run).
+These are injected packets, not evidence of live SDL controls or a playable scene.

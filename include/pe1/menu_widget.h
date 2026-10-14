@@ -69,36 +69,7 @@ void MenuWidget_DestroyNodeRecursive(MenuWidgetNode *node);
  * handler. Most other callers use update as a generic deferred callback. */
 typedef int (*MenuWidgetInputHandler)(MenuWidgetNode *node, int flags);
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, appearance) == 0x4C,
-                  menu_widget_appearance_offset);
-
-PE1_STATIC_ASSERT(sizeof(MenuWidgetNode) == 0x90, menu_widget_node_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, parent) == 0x04,
-                  menu_widget_parent_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, children) == 0x08,
-                  menu_widget_children_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, x) == 0x18,
-                  menu_widget_x_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, flags) == 0x28,
-                  menu_widget_input_flags_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, update) == 0x2C,
-                  menu_widget_update_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, draw) == 0x30,
-                  menu_widget_draw_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, visible_rows) == 0x38,
-                  menu_widget_visible_rows_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, cursor_x) == 0x44,
-                  menu_widget_cursor_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, cursor_y) == 0x48,
-                  menu_widget_cursor_y_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, scroll_y) == 0x5C,
-                  menu_widget_scroll_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, aux_index) == 0x70,
-                  menu_widget_aux_index_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, popup_node) == 0x80,
-                  menu_widget_popup_node_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, selectionAvailable) == 0x8C,
-                  menu_widget_selection_available_offset);
+/* Runtime widget nodes use the host pointer ABI, not serialized PS1 offsets. */
 
 /* Mode-3 list navigator: +0x34 is a managed-list pointer, whereas ordinary
  * grid widgets store grid_width there. The rest of this prefix is shared. */
@@ -109,11 +80,6 @@ typedef struct MenuWidgetListNavigation {
     int drawState;
     unsigned int flags;
 } MenuWidgetListNavigation;
-
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetListNavigation, list) == 0x34,
-                  menu_list_navigation_list_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetListNavigation, flags) == 0x40,
-                  menu_list_navigation_flags_offset);
 
 typedef struct MenuWidgetSimpleDescriptor {
 /* 0x00 */ s32 x;      /* zero requests horizontal centering */

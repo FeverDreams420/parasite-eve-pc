@@ -9,10 +9,12 @@
 #include "pe1/scene_flags.h"
 #include "pe1/entity_frame_update.h"
 #include "disc.h"
+#include "pe1/gte.h"
+#include "pe1/menu_widget.h"
 #include <stdlib.h>
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
 GeomScrollRecord g_GeomScroll;
-PadPacket g_PadPackets[2];
+int g_SceneDispatchToken;
 /* Record positional sound requests; no replacement audio ships with the game. */
 AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
 static unsigned sounds;
@@ -23,6 +25,14 @@ int Asset_Find08w(int id,int mode,int x,int y,int z)
 int main(int argc, char **argv)
 {
     (void)argv;
+    const u32 lzcs[]={0,1,0x7fffffff,0x80000000,0xffffffff};
+    const u32 lzcr[]={32,31,1,1,32};
+    for(unsigned i=0;i<5;++i) {
+        Psyz_GteDataWrite(30,lzcs[i]);
+        if(Psyz_GteDataRead(30)!=lzcs[i] || Psyz_GteDataRead(31)!=lzcr[i])return 33;
+        Psyz_GteDataWrite(31,123);
+        if(Psyz_GteDataRead(31)!=lzcr[i])return 34;
+    }
     if(argc>1) {
         const char *path=getenv("PE_TEST_DISC");
         if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
@@ -131,15 +141,43 @@ int main(int argc, char **argv)
         if(actor.actionMode!=21 || actor.motionX || actor.motionZ) return 13;
         g_PadPackets[0].header=0;
         actor.posX.fixed=actor.posY.fixed=actor.posZ.fixed=0;
-        g_FieldPadBits=FIELD_PAD_UP;
+        Boot_BuildRenderFlagTable();
+        g_PadPackets[0].header=0x4000;
+        g_PadPackets[0].buttons=(u16)~0x40;
+        Field_HandleStateTransition();
+        if(g_FieldPadBits!=FIELD_PAD_UP || g_FieldPadPressed!=FIELD_PAD_UP){fprintf(stderr,"pad %x pressed %x flags %x\n",g_FieldPadBits,g_FieldPadPressed,g_GameStateFlags);return 30;}
         Entity_IntegratePositionFull((FieldActor *)&actor);
         if(actor.posZ.fixed!=-FIELD_WALK_SPEED || actor.actionMode!=22)return 14;
-        g_FieldPadBits=FIELD_PAD_UP|1;
+        g_PadPackets[0].buttons=(u16)~(0x40|0x2000);
+        Field_HandleStateTransition();
+        if(!(g_FieldPadBits&1) || !(g_FieldPadPressed&1))return 31;
         Entity_IntegratePositionFull((FieldActor *)&actor);
         if(actor.posZ.fixed!=-FIELD_WALK_SPEED-FIELD_RUN_SPEED || actor.actionMode!=23)return 15;
-        g_FieldPadBits=0;
+        g_PadPackets[0].buttons=0xFFFF;
+        Field_HandleStateTransition();
+        if(g_FieldPadBits || !(g_FieldPadReleased&FIELD_PAD_UP))return 32;
         Entity_IntegratePositionFull((FieldActor *)&actor);
         if(actor.posZ.fixed!=-FIELD_WALK_SPEED-FIELD_RUN_SPEED || actor.actionMode!=21 || actor.motionZ)return 16;
+        g_PadPackets[0].header=0x7000;
+        g_PadPackets[0].leftX=89;g_PadPackets[0].leftY=128;
+        Field_HandleStateTransition();
+        if(g_FieldPadBits!=FIELD_PAD_LEFT)return 35;
+        Field_HandleStateTransition();
+        if(g_FieldPadPressed || g_FieldPadReleased)return 36;
+        g_PadPackets[0].leftX=19;Field_HandleStateTransition();
+        if(g_FieldPadBits!=(FIELD_PAD_LEFT|1))return 37;
+        MenuWidgetNode menu={0};menu.mode=1;g_MenuWidgetActiveListHead=&menu;
+        Field_HandleStateTransition();
+        if(g_FieldPadBits!=FIELD_PAD_LEFT)return 38;
+        g_PadPackets[0].leftX=20;Field_HandleStateTransition();
+        if(g_FieldPadBits)return 39;
+        g_MenuWidgetActiveListHead=0;
+        g_PadPackets[0].header=0x00ff;Field_HandleStateTransition();
+        if(g_FieldPadPressed!=4 || g_FieldPadBits!=4 || !(g_GameStateFlags&0x4000))return 40;
+        Field_HandleStateTransition();
+        if(g_FieldPadBits || g_FieldPadPressed)return 41;
+        g_PadPackets[0].header=0x4000;Field_HandleStateTransition();
+        if(g_FieldPadBits || (g_GameStateFlags&0x4000))return 42;
         g_PlayerEntity=0;
     }
     puts("Original action/clock/audio trigger and digital/analog player motion passed");

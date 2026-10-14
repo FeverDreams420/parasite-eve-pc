@@ -434,5 +434,13 @@ an already-playing key preserves player/result state; a missing key follows
 the original no-op path. Tests use actual decoded operands and verify these
 cases. Cached/secondary restarts and same-ID queue ordering remain explicit
 unsupported paths, alongside full scene execution and synthesized playback.
+
+The scene data test now routes the real initial Tutorial/New Game task ticks
+through audio dispatch, rather than invoking only the handler. Tutorial starts
+music and then reports pending script audio CD at `0x19a0`; New Game resets
+audio and reports actor opcode 170 at `0xac`. These expected diagnostics expose
+unfinished scene integration. Missing-key tests re-decode modified literal
+operands before dispatch. All 21 tests pass headless with Disc 1; this scene
+audit also passes ASan/UBSan. No full scene/gameplay completion is claimed.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

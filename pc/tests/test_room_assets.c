@@ -355,7 +355,14 @@ int main(void) {
     start_audio.resident = spu; start_audio.initial = music_initial;
     PeScriptTask start_task;
     CHECK(pe_script_task_init(&start_task, &owner_scripts, owner_entry, &scene.script_banks));
-    CHECK(pe_scene_audio_dispatch(&start_audio, &start_task, &owner_command) == PE_DISPATCH_CONTINUE);
+    start_task.dispatch = pe_scene_audio_dispatch; start_task.dispatch_user = &start_audio;
+    CHECK(pe_script_task_tick(&start_task, 4096) == PE_SCRIPT_ERROR);
+    CHECK(strstr(start_task.error, "Unimplemented script opcode"));
+    printf("Tutorial script after native audio start: %s\n", start_task.error);
+    PeScriptCommand pending_audio;
+    CHECK(pe_script_decode(&owner_scripts, start_task.pc, &pending_audio, scene_error, sizeof(scene_error)));
+    if (pending_audio.opcode == 234 && pending_audio.count)
+        printf("Tutorial pending audio command: 0x%x\n", pe_script_arg_read(&start_task, &pending_audio.args[0]));
     owned_music = start_audio.music[0]; CHECK(owned_music);
     CHECK(start_audio.keys[0][0] == owner_key && start_audio.keys[0][1] == owned_music->player.bank_id);
     CHECK(start_audio.flags == 0x40 && start_audio.volumes[0] == 0x7f);
@@ -366,10 +373,12 @@ int main(void) {
     CHECK(start_audio.music[0] == owned_music && !owned_music->player.timer_ticks);
     CHECK(pe_script_arg_read(&start_task, &owner_command.args[5]) == 42);
     pe_script_arg_write(&start_task, &owner_command.args[1], UINT16_MAX);
+    CHECK(pe_script_decode(&owner_scripts, owner_offset, &owner_command, scene_error, sizeof(scene_error)));
     CHECK(pe_scene_audio_dispatch(&start_audio, &start_task, &owner_command) == PE_DISPATCH_CONTINUE);
     CHECK(start_audio.music[0] == owned_music && start_audio.keys[0][0] == owner_key);
     CHECK(pe_script_arg_read(&start_task, &owner_command.args[5]) == 42);
     pe_script_arg_write(&start_task, &owner_command.args[1], owner_key);
+    CHECK(pe_script_decode(&owner_scripts, owner_offset, &owner_command, scene_error, sizeof(scene_error)));
     CHECK(owned_music->bytes != owner_room.data.bytes && owned_music->samples != spu);
     CHECK(owned_music->key == owner_key);
     PeMusic *previous_music = owned_music;
@@ -421,7 +430,10 @@ int main(void) {
     PeScriptCommand other_command = scene_command; other_command.opcode = 233;
     CHECK(pe_scene_audio_dispatch(&audio, &reset_task, &other_command) == PE_DISPATCH_UNSUPPORTED);
     CHECK(audio.flags == 0x1234ffff && audio.keys[0][0] == 10);
-    CHECK(pe_scene_audio_dispatch(&audio, &reset_task, &scene_command) == PE_DISPATCH_CONTINUE);
+    reset_task.dispatch = pe_scene_audio_dispatch; reset_task.dispatch_user = &audio;
+    CHECK(pe_script_task_tick(&reset_task, 4096) == PE_SCRIPT_ERROR);
+    CHECK(strstr(reset_task.error, "Unimplemented script opcode"));
+    printf("New Game script after native audio reset: %s\n", reset_task.error);
     CHECK(audio.flags == 0x1234ff0f);
     for (unsigned slot = 0; slot < 2; ++slot)
         CHECK(audio.keys[slot][0] == -1 && audio.keys[slot][1] == -1 && audio.banks[slot] == -1);

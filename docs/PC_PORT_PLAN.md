@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Test wykonuje teraz rzeczywiste początkowe ticki tasków Tutorial/New Game z dispatch audio. Tutorial uruchamia muzykę i zatrzymuje się na audio CD przy `0x19a0`; New Game resetuje audio i zatrzymuje się na actor opcode 170 przy `0xac`. To jawne dowody braków integracji scen, nie poprawnego przejścia gameplay. Test brakującego klucza ponownie dekoduje zmieniony literal przed dispatch. 21 testów headless z Disc 1 i ASan/UBSan audytu scen przechodzi.
+
 Dispatch audio obsługuje świeży start głównego banku C8 z rzeczywistej komendy Tutorial M353: klucz rekordu, własne dane muzyki, wynik ID banku zapisany przez operand oraz slot/volume/flags. Powtórzenie już grającego klucza zachowuje player i wynik; nieobecny klucz jest oryginalnym no-op. Test sprawdza rzeczywiste dekodowane operandy. Restart cached/secondary banków i kolejność kolejki przy tym samym ID pozostają jawnie nieobsługiwane; pełna pętla scen i synteza nadal wymagają implementacji.
 
 Dispatch `pc/scene_audio.c` obsługuje actor opcode 234 / audio D9: czyści oba zestawy kluczy/ID banków, maskę flag `0xf0` i wywołuje F0 dołączonych playerów. Test wykonuje rzeczywistą komendę M431 po zamknięciu Disc 1, sprawdza stan slotów/flag i zatrzymuje własną muzykę Tutorial po trzech kolejnych tickach. Pozostałe komendy skryptowe audio, pełna egzekucja scen i słyszalny wynik nadal pozostają nieukończone.

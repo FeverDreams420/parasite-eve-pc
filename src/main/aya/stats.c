@@ -5,6 +5,7 @@
 #include "pe1/battle_runtime.h"
 #include "pe1/game_state.h"
 #include "pe1/inventory_slots.h"
+#include "pe1/inventory.h"
 #include "pe1/inventory_state.h"
 #include "pe1/menu_sound.h"
 #include "pe1/player_entity.h"
@@ -38,8 +39,8 @@ void Battle_SyncEquipSlots(void) {
     u16 maxHP;
 
     Inv_RecalcSlotStats();
-    if (D_8009D254 != 0) {
-        actor = D_8009D254->core;
+    if (g_PlayerEntity != 0) {
+        actor = ((BattleEntity *)g_PlayerEntity)->core;
         if (actor != 0) {
             maxHP = actor->maxHP;
             actor->hpMirror = maxHP;
@@ -64,12 +65,12 @@ int Battle_GetEnemyEscapeFlag(void)
 
 int Battle_GetAgilityBonus(void)
 {
-    return g_AyaStatAgility[0];
+    return g_AyaSaveState.stats.levels[0];
 }
 
 unsigned int Aya_GetActiveTimeRate(void)
 {
-    return g_AyaStatActiveTimeRate[0];
+    return g_AyaSaveState.stats.levels[5];
 }
 
 int Battle_IsActiveWrapped(void)
@@ -106,4 +107,47 @@ void Menu_CopyPromptCodes(unsigned char *src) {
     g_TextboxNameGlyphs.count = dst - g_TextboxNameGlyphs.glyphs;
 }
 
+
+PlayerInventoryState g_PlayerInventoryState;
+int g_StatScaleBase[7];
+
+void Inv_RecalcSlotStats(void) {
+    u16 *p = g_AyaSaveState.stats.levels;
+    int level, hp;
+    Combatant *actor;
+    AyaLevelStats *row;
+
+    Aya_StatQueryLevelAndSubLevel(0, (s16)*p++, &level, 0);
+    row = Aya_LookupLevelStats(level);
+    hp = ((g_StatScaleBase[0] + 20) * row->hp) / 20;
+    g_AyaSaveState.max_hp = hp;
+    if (((BattleEntity *)g_PlayerEntity) && (actor = ((BattleEntity *)g_PlayerEntity)->core)) {
+        if ((s16)(actor->maxHP = hp) < (s16)actor->curHP)
+            actor->curHP = hp;
+        if ((s16)actor->maxHP < (s16)actor->hpMirror)
+            actor->hpMirror = actor->maxHP;
+        if (g_AyaSaveState.max_hp < g_AyaSaveState.current_hp)
+            g_AyaSaveState.current_hp = g_AyaSaveState.max_hp;
+
+        Aya_StatQueryLevelAndSubLevel(1, (s16)*p++, &level, 0);
+        actor->stat1E = Aya_LookupLevelStats(level + g_StatScaleBase[1])->offense;
+        Aya_StatQueryLevelAndSubLevel(2, (s16)*p++, &level, 0);
+        actor->stat20 = Aya_LookupLevelStats(level + g_StatScaleBase[2])->defense;
+        Aya_StatQueryLevelAndSubLevel(3, (s16)*p++, &level, 0);
+        row = Aya_LookupLevelStats(level + g_StatScaleBase[3]);
+        actor->maxAtk = row->battleMaxAtk;
+        actor->atbRate = row->battleAtbRate;
+        actor->atbStep = row->battleAtbStep;
+        Aya_StatQueryLevelAndSubLevel(4, (s16)*p++, &level, 0);
+        row = Aya_LookupLevelStats(level + g_StatScaleBase[4]);
+        actor->statusStep3C = row->statusStep3C;
+        actor->statusStep3E = row->statusStep3E;
+        Aya_StatQueryLevelAndSubLevel(5, (s16)*p++, &level, 0);
+        actor->stat22 = Aya_LookupLevelStats(level + g_StatScaleBase[5])->battleStat22;
+        Aya_StatQueryLevelAndSubLevel(6, (s16)*p, &level, 0);
+        actor->stat26 = Aya_LookupLevelStats(level)->inventoryCapacity;
+        Inv_SetAyaSlotCount(actor->stat26);
+        actor->field04.fieldId04 = g_AyaSaveState.level + 1;
+    }
+}
 

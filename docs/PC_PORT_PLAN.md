@@ -8,7 +8,9 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
-Uruchamiamy oryginalny kod `src/main/` i `src/overlays/` na PC. Modyfikujemy go w miejscu, usuwając zależności sprzętowe i dostosowując pamięć oraz wskaźniki; zachowujemy logikę, kolejność aktualizacji i zachowanie gry. Nie budujemy równoległego silnika ani nowych warstw abstrakcji. PsyZ zapewnia istniejące API platformowe. `pc/` może dostarczać potrzebne I/O i testowanie headless.
+Uruchamiamy oryginalny kod `src/main/` i `src/overlays/` na PC. Modyfikujemy go w miejscu, usuwając zależności sprzętowe i dostosowując pamięć oraz wskaźniki; zachowujemy logikę, kolejność aktualizacji i zachowanie gry. Nie budujemy równoległego silnika ani nowych warstw abstrakcji. PsyZ zapewnia istniejące API platformowe.
+
+Aktualne wiążące wymaganie użytkownika: żadnych nowych plików ani wydzielania funkcji. Naprawiamy całe istniejące moduły w miejscu. Dotychczasowe wydzielenia należy scalić z powrotem, zachowując poprawki i sprawdzając kompletność funkcji względem oryginalnych modułów. Katalog `pc/` ma zostać usunięty: nie jest docelowym miejscem ani logiki gry, ani osobnej implementacji platformowej. Potrzebne dostosowania platformy należy integrować w istniejących modułach oryginału i PsyZ. Automatyczna weryfikacja pozostaje wymagana; jej zależności od `pc/` również wymagają przebudowy. Historyczne wpisy poniżej opisujące wydzielanie funkcji lub dopuszczające `pc/` nie stanowią zgody na kontynuowanie tego podejścia.
 
 Dotychczasowe implementacje logiki w `pc/` powstały przy błędnym podejściu i nie są podstawą portu. Poniższe historyczne wyniki dotyczą tych eksperymentów, nie uruchomienia oryginalnej gry. Pierwszy audyt 99 oryginalnych jednostek gry (bez historycznych bibliotek `psyq`) wykazał 9 przechodzących syntax check; to nie dowód kompilacji ani linkowania. Główne przeszkody obejmują stare layouty struktur roboczych, instrukcje MIPS/GTE i zależności sprzętowe. Sprawdzenia layoutów danych z płyt pozostają wymagane.
 
@@ -1559,3 +1561,27 @@ This is not execution of all room scripts: only relocation is covered for the
 414-room corpus, and spawn-loop input remains a controlled descriptor. Complete
 room startup, script dispatch/callbacks and malformed-block bounds validation
 still need integration. The relocation routine expects a validated asset block.
+
+### Consolidation back into existing modules (user correction)
+
+Removed aya/stat_recalc.c and script/spawn_scene.c. Their implementations are
+back in aya/stats.c and script/reloc_block.c respectively; both complete source
+files compile. CMake uses function-level dead stripping for test links instead
+of requiring source extraction. Unused entry points are not claimed as executed.
+Compared the union of definitions immediately before consolidation with the
+merged files: all 11 stats functions and both relocation/spawn functions remain.
+This audit covers these merges only; earlier extracted armor/modifier functions
+and the other modules still need restoration and a historical completeness audit.
+
+The complete stats module now uses canonical Aya fields for the two scalar stat
+queries and the canonical player pointer for equipment HP synchronization.
+TextboxEntry's runtime assertions account for native pointer alignment; the
+textbox header no longer imports an unused PS1 draw-environment dependency.
+Full build and stat-assets/scene-spawn/actor-lifecycle CTests passed, as did
+stat and spawn ASan/UBSan/function runs (PsyZ archive uninstrumented).
+
+The pending real-map spawn test was corrected to compare player presence with
+actual descriptors. New Game map 431 has one initial descriptor and no player
+on that list; this test does not establish script-created Aya or playable startup.
+The pc/ directory and other extraction files still exist. Their removal and
+integration into existing original modules remain mandatory unfinished work.

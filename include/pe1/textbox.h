@@ -1,7 +1,7 @@
 #ifndef PE1_TEXTBOX_H
 #define PE1_TEXTBOX_H
 
-#include "pe1/draw_state.h"
+#include "common.h"
 #include "pe1/render_packets.h"
 
 /* Textbox / on-screen dialogue entry, walked by Menu_DrawTextboxEntries.
@@ -89,9 +89,17 @@ extern u8 g_TextboxHighlightColorR;
 extern u8 g_TextboxHighlightColorG;
 extern u8 g_TextboxHighlightColorB;
 
+/* Runtime entries contain a native message pointer; these are not disk records. */
+PE1_STATIC_ASSERT(PE1_OFFSETOF(TextboxEntry, control) ==
+                  PE1_OFFSETOF(TextboxEntry, message) + sizeof(void *) + 4,
+                  textbox_control_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(TextboxEntry, numbers) ==
+                  PE1_OFFSETOF(TextboxEntry, control) + 14, textbox_numbers_offset);
+#if UINTPTR_MAX == UINT32_MAX
 PE1_STATIC_ASSERT(sizeof(TextboxEntry) == 0x38, textbox_entry_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(TextboxEntry, control) == 0xC, textbox_control_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(TextboxEntry, numbers) == 0x1A, textbox_numbers_offset);
+#else
+PE1_STATIC_ASSERT(sizeof(TextboxEntry) == 0x40, textbox_entry_size);
+#endif
 PE1_STATIC_ASSERT(sizeof(TextboxNumber) == 6, textbox_number_size);
 PE1_STATIC_ASSERT(sizeof(TextboxGlyphPacket) == 28, textbox_glyph_packet_size);
 

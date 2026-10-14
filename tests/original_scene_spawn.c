@@ -145,6 +145,47 @@ int main(void)
         g_PlayerEntity=NULL;
         pe_room_blob_close(&blob);
     }
+    /* Actual New Game map 431 descriptor list and NPC metadata, with the day-one Aya bank. */
+    CHECK(pe_room_load(&catalog,431,&room));
+    PeRoomBlob aya_bank={0}; PeRoomBanks scene_banks, room_banks;
+    PeScriptProgram scene_program; char scene_error[256];
+    CHECK(pe_room_banks(&room,&room_banks,scene_error,sizeof(scene_error)));
+    memset(&scene_banks,0,sizeof(scene_banks));
+    CHECK(pe_sector_bank_load(&catalog,18,&aya_bank));
+    CHECK(pe_entity_banks(&aya_bank,1,&scene_banks,scene_error,sizeof(scene_error)));
+    for(unsigned group=0;group<10;++group) {
+        if(room_banks.roots[group].present)scene_banks.roots[group]=room_banks.roots[group];
+        for(unsigned action=0;action<48;++action) {
+            if(room_banks.rows[group][action].present)scene_banks.rows[group][action]=room_banks.rows[group][action];
+            g_GameState.bank_rows[group][action]=(void *)scene_banks.rows[group][action].bytes;
+        }
+        g_SceneMapPrimBaseTable[group]=(uintptr_t)scene_banks.roots[group].bytes;
+    }
+    CHECK(pe_script_program_open(&room,&scene_program,scene_error,sizeof(scene_error)));
+    Entity_ResetAllPools(); Entity_InitFreePool();
+    Script_InitNodePool(); Script_InitNodeFreeList();
+    Battle_SaveAyaState();
+    memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
+    Inv_BuildItemGridFromCategory(); Inv_InitNewGameInventory();
+    g_LoadedSceneAssetBlock[0]=(SceneAssetBlob *)room.data.bytes;
+    RelocBlock *scene_tasks=Script_RelocBlock(room.data.bytes+scene_program.block);
+    CHECK(scene_tasks); g_GameState.bank_reset_944[0]=(void *)scene_tasks;
+    ClearOTagR((OT_TYPE *)ordering,4096);
+    Script_DrawSyncAndFlush();
+    CHECK(g_EntityFreePoolCount==scene_program.actors);
+    FieldActor *walk=g_FieldActorListHead;
+    unsigned expected_players=0;
+    for(unsigned n=scene_program.actors;n>0;--n) {
+        unsigned entry,sub; CHECK(pe_script_actor(&scene_program,n-1,&entry,&sub));
+        CHECK(walk && walk->type_id==entry && walk->sub_id==sub);
+        if(entry==0) { ++expected_players; CHECK(walk==g_PlayerEntity); }
+        CHECK(walk->script_base==scene_tasks->offsets[entry] && walk->script_node_lists[2]);
+        if(walk->next)CHECK(walk->next->prev==walk);
+        walk=walk->next;
+    }
+    CHECK(!walk && (g_PlayerEntity!=NULL)==(expected_players!=0));
+    printf("Original New Game map 431 spawn list: %u initial descriptors matched (player presence follows data)\n",scene_program.actors);
+    pe_room_blob_close(&aya_bank); pe_room_close(&room);
     printf("Original Scene_LoadMap: %u real Aya model spawns with original equipment initialization\n",players);
     free(memory); g_RenderScratchBufferBase[0]=NULL; pe_disc_close(&disc);
     printf("Original script relocation: %u real room blocks, all entries and immutable asset bytes passed\n",relocated);

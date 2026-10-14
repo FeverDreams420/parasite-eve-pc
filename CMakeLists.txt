@@ -8,11 +8,19 @@ set(CMAKE_C_EXTENSIONS OFF)
 include(CTest)
 add_subdirectory(pc)
 
+# Whole original modules may contain entry points not yet called by each test.
+# Keep function-level linking instead of splitting source files for test targets.
+if(APPLE)
+    add_link_options(-Wl,-dead_strip)
+elseif(NOT MSVC)
+    add_link_options(-Wl,--gc-sections)
+endif()
+
 # Compile the original game sources in place. Modules join this target as
 # their platform dependencies are made portable; no duplicate game logic.
 add_library(parasite-eve-original OBJECT
     src/main/battle/equipment_init.c
-    src/main/aya/stat_recalc.c
+    src/main/aya/stats.c
     src/main/item/category_init.c
     src/main/item/new_game.c
     src/main/menu/fade_init.c
@@ -40,7 +48,6 @@ add_library(parasite-eve-original OBJECT
     src/main/entity/pool.c
     src/main/entity/allocation.c
     src/main/entity/block_alloc.c
-    src/main/script/reloc_block.c
     src/main/script/node_pool.c
     src/main/script/expression.c
     src/main/script/basic_flow.c
@@ -249,7 +256,7 @@ endif()
 # Compile the whole original actor frame module while its remaining game
 # dependencies are being ported. It is not linked with replacement stubs.
 add_library(parasite-eve-original-frame OBJECT
-    src/main/script/spawn_scene.c src/main/entity/frame_update.c)
+    src/main/script/reloc_block.c src/main/entity/frame_update.c)
 target_include_directories(parasite-eve-original-frame PRIVATE include)
 
 if(BUILD_TESTING)

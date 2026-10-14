@@ -7,6 +7,7 @@
 #include "akao_sequence.h"
 #include "akao_channel.h"
 #include "akao_player.h"
+#include "music.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -337,6 +338,26 @@ int main(void) {
     }
     CHECK(pe_room_load(&catalog, 1, &room));
     uint8_t *previous_data = room.data.bytes;
+    PeRoom owner_room = {0}; PeMusic *owned_music = NULL;
+    CHECK(pe_room_load(&catalog, 353, &owner_room));
+    PeScriptProgram owner_scripts; PeScriptCommand owner_command;
+    unsigned owner_entry, owner_sub; uint32_t owner_offset;
+    CHECK(pe_script_program_open(&owner_room, &owner_scripts, scene_error, sizeof(scene_error)));
+    CHECK(pe_script_actor(&owner_scripts, 0, &owner_entry, &owner_sub));
+    CHECK(pe_script_entry(&owner_scripts, owner_entry, &owner_offset));
+    CHECK(pe_script_decode(&owner_scripts, owner_offset, &owner_command, scene_error, sizeof(scene_error)));
+    CHECK(owner_command.opcode == 234 && owner_command.args[0].value == 200);
+    uint16_t owner_key = (uint16_t)owner_command.args[1].value;
+    PeAkaoControl music_initial = {0};
+    CHECK(pe_music_open(&catalog, &owner_room, owner_key, spu, &music_initial,
+                        &owned_music, scene_error, sizeof(scene_error)));
+    CHECK(owned_music->bytes != owner_room.data.bytes && owned_music->samples != spu);
+    CHECK(owned_music->key == owner_key);
+    PeMusic *previous_music = owned_music;
+    CHECK(!pe_music_open(&catalog, &owner_room, UINT16_MAX, spu, &music_initial,
+                         &owned_music, scene_error, sizeof(scene_error)));
+    CHECK(owned_music == previous_music && !owned_music->player.timer_ticks);
+    pe_room_close(&owner_room);
     catalog.ranges[0].start = catalog.archive.size / 2048;
     CHECK(!pe_room_load(&catalog, 1, &room));
     CHECK(room.map == 1 && room.data.bytes == previous_data);
@@ -350,6 +371,11 @@ int main(void) {
     pe_room_close(&room);
     pe_room_close(&room);
     pe_disc_close(&disc);
+    free(spu);
+    for (unsigned tick = 0; tick < 4096; ++tick)
+        CHECK(pe_akao_player_tick(&owned_music->player, 0, 1, 4096));
+    CHECK(owned_music->player.timer_ticks == 4096);
+    pe_music_close(owned_music);
     /* Owned scene bytes remain valid after closing their input image. */
     unsigned scene_entry, scene_sub_id;
     uint32_t scene_offset;
@@ -362,7 +388,6 @@ int main(void) {
     pe_scene_close(&scene);
     free(vram);
     free(record_spu);
-    free(spu);
     printf("USA Disc 1: %u rooms, %u empty slots, %llu texture words, %u script entries, %u initial actors; M431 entry-zero task branches verified, full scene execution pending\n",
            loaded, absent, (unsigned long long)uploaded_words, script_entries, initial_actors);
     return 0;

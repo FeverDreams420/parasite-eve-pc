@@ -398,5 +398,16 @@ without consuming a sample. Tests verify simultaneous descending slides,
 signed values, unchanged waveform cursors and completion under ASan/UBSan.
 All 21 tests pass headless with Disc 1. These operations still await the full
 voice-driver schedule and synthesis integration before audible validation.
+
+`pc/music.c` adds transactional primary music loading by the room record key.
+The owner copies sequence bytes, resident samples and decoded grammar, uploads
+the referenced sample bank and starts its native player at a stable address.
+It survives room/disc/resident-bank destruction; a failed key lookup preserves
+the previous music. The Disc 1 test executes 4,096 further ticks after closing
+and freeing those sources. Script command dispatch, positional audio reset,
+nested banks and audible playback remain to be integrated.
+The test obtains the actual requested music key from Tutorial M353's initial
+script command. All 21 tests pass headless; the ownership/data audit also
+passes ASan/UBSan.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

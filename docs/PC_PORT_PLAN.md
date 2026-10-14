@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+`pc/music.c` ładuje muzykę główną po kluczu rekordu sceny, transakcyjnie. Właściciel kopiuje sekwencję, resident samples i grammar, ładuje wskazany bank próbek i uruchamia player pod stabilnym adresem. Błędny klucz zachowuje poprzednią muzykę. Test Disc 1 wykonuje 4096 ticków po zwolnieniu pokoju/banku wejściowego i zamknięciu obrazu płyty. Dispatch komendy skryptowej, reset pozycyjnego audio, nested banks i słyszalne odtwarzanie nadal wymagają integracji.
+
 DE/DF konfigurują slide głębokości volume i auxiliary LFO. Kroki głosu przesuwają zawijane target i przeliczają modulację między krokami przebiegu bez zużywania próbek. Test jednoczesnych malejących slide sprawdza signed wynik, zachowanie cursor oraz zakończenie; przechodzi ASan/UBSan. 21 testów przechodzi headless z Disc 1. Pełny harmonogram sterownika głosów i synteza nadal wymagają integracji i referencyjnych testów audio.
 
 `PE_AKAO_AUDIT_TICKS` ustawia okno audytu room/audio od 4 do 65536 ticków (domyślnie 4096). Rozszerzony audyt Disc 1: 38651480 ticków muzycznych, 17315934 zdarzenia nut, dziesięć sekwencji zakończonych, 589 nadal aktywnych i zero błędów komend/stanu. Aktywne pętle nie są uznane za ukończone utwory. Harmonogram aktualizacji głosów/LFO, synteza oraz porównanie referencyjnego audio pozostają wymagane.

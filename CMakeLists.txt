@@ -39,11 +39,29 @@ add_library(parasite-eve-original-akao OBJECT
     src/main/akao/sequencer.c
     src/main/akao/spu_transfer.c)
 target_include_directories(parasite-eve-original-akao PRIVATE include)
+if(MSVC)
+    target_compile_options(parasite-eve-original-akao PRIVATE /Gy /Gw)
+else()
+    target_compile_options(parasite-eve-original-akao PRIVATE -ffunction-sections -fdata-sections)
+endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-akao-layout tests/original_akao_layout.c)
     target_include_directories(test-original-akao-layout PRIVATE include)
     add_test(NAME original-game-akao-layout COMMAND test-original-akao-layout)
+    add_executable(test-original-akao-instrument tests/original_akao_instrument.c
+        $<TARGET_OBJECTS:parasite-eve-original-akao>)
+    target_include_directories(test-original-akao-instrument PRIVATE include)
+    # Isolate the original procedures under test; unsupported audio endpoints
+    # have no stubs. Full audio integration must resolve them separately.
+    if(MSVC)
+        target_link_options(test-original-akao-instrument PRIVATE /OPT:REF)
+    elseif(APPLE)
+        target_link_options(test-original-akao-instrument PRIVATE -Wl,-dead_strip)
+    else()
+        target_link_options(test-original-akao-instrument PRIVATE -Wl,--gc-sections)
+    endif()
+    add_test(NAME original-game-akao-instrument COMMAND test-original-akao-instrument)
 endif()
 
 if(BUILD_TESTING)

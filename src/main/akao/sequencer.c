@@ -611,29 +611,24 @@ int Akao_LookupPitchPeriod(int instrument, int note, int detune) {
     int octave;
     int shift;
     int period;
-    int row_offset;
 
     note = (u8)note;
-    row_offset = instrument << 6;
-    period = (int)g_AkaoPitchPeriodTable;
     octave = (unsigned int)note / 12;
     offset = note - (octave * 12);
-    offset <<= 2;
-    row_offset += period;
-    offset += row_offset;
-    period = *(int *)offset;
+    period = g_AkaoPitchPeriodTable[instrument * 16 + offset];
     shift = octave;
 
     /* Both paths leave the octave in its own for the upward shift,
      * so the copy is restated on the detune path. */
     if (detune != 0) {
-        period += (unsigned int)(period * detune) >> 7;
+        period = (int)((unsigned int)period +
+                      ((unsigned int)period * (unsigned int)detune >> 7));
         shift = octave;
     }
 
     if ((unsigned int)shift >= 7) {
         offset = shift - 6;
-        period <<= offset;
+        period = (int)((unsigned int)period << offset);
     } else if ((unsigned int)octave < 6) {
         offset = 6 - octave;
         period = (unsigned int)period >> offset;
@@ -923,10 +918,9 @@ void SeqOp_SetTempo(void *ptr)
   track->tempo = (*stream) << 16;
   stream = *((unsigned char **) ptr);
   *((unsigned char **) ptr) = stream + 1;
-  stream = (unsigned char *) ((unsigned int) (*stream));
   value = track->tempo;
   track->tempo_slide_duration = 0;
-  value |= ((unsigned int) stream) << 24;
+  value |= (unsigned int)*stream << 24;
   track->tempo = value;
 }
 
@@ -1358,10 +1352,9 @@ void SeqOp_SetReturnPoint(AkaoTrack *track) {
 void SeqOp_LoadInstrumentFromIndex(void *ptr)
 {
   int value;
-  int base;
+  AkaoInstrument *base;
 
-  base = ((AkaoTrack *)ptr)->note_pitch;
-  base = ((int)&g_AkaoInstrumentTable) + (base << 6);
+  base = &g_AkaoInstrumentTable[((AkaoTrack *)ptr)->note_pitch];
   value = ((AkaoInstrument *)base)->adsr_attack_rate;
   ((AkaoTrack *)ptr)->adsr_attack_rate = value;
   value = ((AkaoInstrument *)base)->adsr_decay_rate;
@@ -1377,10 +1370,9 @@ void SeqOp_LoadInstrumentFromIndex(void *ptr)
   value = ((AkaoInstrument *)base)->adsr_sustain_mode;
   ((AkaoTrack *)ptr)->adsr_sustain = value;
   value = ((AkaoTrack *)ptr)->update_flags;
-  base = ((AkaoInstrument *)base)->adsr_release_mode;
+  ((AkaoTrack *)ptr)->adsr_release = base->adsr_release_mode;
   value |= AKAO_VOICE_PARAM_ADSR_ALL;
   ((AkaoTrack *)ptr)->update_flags = value;
-  ((AkaoTrack *)ptr)->adsr_release = base;
 }
 
 void SeqOp_ReadExpression(AkaoTrack *track) {

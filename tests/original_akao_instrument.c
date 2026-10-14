@@ -1,6 +1,7 @@
 #include "pe1/akao.h"
 #include "pe1/akao/globals.h"
 #include "pe1/akao/note_step.h"
+#include "pe1/akao/voice_masks.h"
 #include <stdio.h>
 
 /* Explicit input tables for isolated original procedures, not runtime audio. */
@@ -8,6 +9,10 @@ AkaoInstrument g_AkaoInstrumentTable[256];
 int g_AkaoPitchPeriodTable[256 * 16];
 static AkaoSequencerBank bank;
 AkaoSequencerBank *g_AkaoCurTrack = &bank;
+static unsigned short offsets[2048];
+unsigned short *g_AkaoSampleOffsetTable = offsets;
+static char sample_data[65536];
+char *g_AkaoSampleDataBase = sample_data;
 void SeqOp_SetTempo(void *track);
 void SeqOp_LoadInstrumentFromIndex(void *track);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
@@ -22,6 +27,20 @@ int main(void)
     CHECK(bank.tempo == 0x12340000u);
     CHECK(bank.tempo_slide_duration == 0);
     CHECK(track.pc == tempo + 2);
+    for (unsigned i = 0; i < 1024; ++i) {
+        offsets[i * 2] = i * 31;
+        offsets[i * 2 + 1] = i % 2 ? 0xffff : i * 17;
+        void *first = NULL, *second = NULL;
+        Akao_LoadSamplePairFromIndex(&first, &second, i | 0x400);
+        CHECK(first == sample_data + i * 31);
+        CHECK(second == (i % 2 ? NULL : sample_data + i * 17));
+    }
+    offsets[0] = 0xffff;
+    offsets[1] = 0;
+    void *first = sample_data, *second = NULL;
+    Akao_LoadSamplePairFromIndex(&first, &second, 0);
+    CHECK(first == NULL);
+    CHECK(second == sample_data);
     for (unsigned i = 0; i < 256; ++i) {
         AkaoInstrument *instrument = &g_AkaoInstrumentTable[i];
         instrument->adsr_attack_rate = i;

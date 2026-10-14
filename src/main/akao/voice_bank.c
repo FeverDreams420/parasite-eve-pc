@@ -8,6 +8,7 @@
 #include "pe1/akao/voice_masks.h"
 #include "pe1/akao/voice_state.h"
 #include "pe1/akao_counters.h"
+#include "pe1/psyq_spu_api.h"
 
 void Akao_SetNotePitch(AkaoTrack *track, int arg);
 
@@ -185,8 +186,8 @@ void Akao_StepSequencerVoice(void *arg0) {
         }
         kFFF5 &= ~bit;
         mask &= ~bit;
-        base += 0x11C;
-        pvoice += 0x11C;
+        base += sizeof(AkaoTrack);
+        pvoice += sizeof(AkaoTrack);
         bit *= 2;
     } while (kFFF5 != 0);
         pend = g_AkaoCurTrack;
@@ -617,10 +618,10 @@ exhausted:
     Seq_MarkTrack3CMaskDirty();
 }
 
-void Akao_LoadSamplePairFromIndex(int *out0, int *out1, int sample_id) {
+void Akao_LoadSamplePairFromIndex(void **out0, void **out1, int sample_id) {
     u32 index;
     u16 value;
-    int result;
+    void *result;
 
     index = sample_id;
     index &= 0x3FF;
@@ -628,7 +629,7 @@ void Akao_LoadSamplePairFromIndex(int *out0, int *out1, int sample_id) {
 
     value = g_AkaoSampleOffsetTable[index];
     if (value != 0xFFFF) {
-        result = (int)(g_AkaoSampleDataBase + value);
+        result = g_AkaoSampleDataBase + value;
     } else {
         result = 0;
     }
@@ -637,7 +638,7 @@ void Akao_LoadSamplePairFromIndex(int *out0, int *out1, int sample_id) {
     index++;
     value = g_AkaoSampleOffsetTable[index];
     if (value != 0xFFFF) {
-        result = (int)(g_AkaoSampleDataBase + value);
+        result = g_AkaoSampleDataBase + value;
     } else {
         result = 0;
     }
@@ -709,7 +710,7 @@ void Akao_UpdateVoiceMask(AkaoU8 *new_base) {
     unsigned int reset_duration;
 
     Akao_CopyWords((unsigned int *)&g_AkaoTrackStateBackup,
-                   (unsigned int *)g_AkaoCurTrack, 0x68);
+                   (unsigned int *)g_AkaoCurTrack, sizeof(AkaoSequencerBank));
     Akao_CopyWords((unsigned int *)&g_AkaoVoiceStateBackup,
                    (unsigned int *)&g_AkaoVoiceStateTable, sizeof(AkaoVoiceBank));
 
@@ -876,22 +877,22 @@ void Seq_StartDefaultNestedStream(AkaoNestedSource *source) {
 void Seq_StartIndexedNestedStreamWithDefaults(AkaoNestedSource *source) {
     /* Keep the word view for retail store scheduling in this wrapper. */
     int *arg0 = (int *)source;
-    int old1;
-    int old2;
+    void *old1;
+    void *old2;
 
     Akao_LoadSamplePairFromIndex(&old1, &old2, arg0[1]);
     arg0[2] = 0x2000000;
     arg0[3] = 0x80;
     arg0[4] = 0x7F;
-    Seq_StartNestedStreams(source, (void *)old1, (void *)old2);
+    Seq_StartNestedStreams(source, old1, old2);
 }
 
 void Seq_StartIndexedNestedStream(AkaoNestedSource *source) {
-    int old1;
-    int old2;
+    void *old1;
+    void *old2;
 
     Akao_LoadSamplePairFromIndex(&old1, &old2, source->key_off_mask);
-    Seq_StartNestedStreams(source, (void *)old1, (void *)old2);
+    Seq_StartNestedStreams(source, old1, old2);
 }
 
 

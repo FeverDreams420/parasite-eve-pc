@@ -537,6 +537,8 @@ Smoke test ujawnił brak dźwięków menu: `pc/title.c` nie wywołuje komend AKA
 
 Oryginalne `Akao_LookupPitchPeriod`, `SeqOp_LoadInstrumentFromIndex` i `SeqOp_SetTempo` wykonują się w izolowanym headless teście z rzeczywistym object sekwencera. Adresowanie tabel używa native pointers zamiast `int`, a detune/shift zachowuje 32-bit word wrap bez signed overflow. Test sprawdza 256 instrumentów, zakres 256 nut i 16 wartości detune, ADSR/update flags i dwubajtowy odczyt tempa z pełnym kursorem. CTest oraz ASan/UBSan/function sanitizer przechodzą. Linker usuwa nieużywane procedury zamiast dodawać testowe audio stubs; nie dowodzi to działania pełnego sekwencera ani SPU. Sterownik, próbki, timer i dźwięki menu pozostają niezintegrowane.
 
+Oryginalny `akao/voice_bank.c` dołącza do object target po dodaniu brakujących deklaracji publicznego API reverb. `Akao_LoadSamplePairFromIndex` i jego indexed-stream callers przekazują pełne native pointers. Test wykonuje 1024 indeksy obu próbek, masked IDs, sentinel `0xFFFF` i poprawny zerowy offset; CTest oraz ASan/UBSan/function przechodzą. Bank backup kopiuje native sizeof, a oryginalna pętla inicjalizacji ścieżek używa sizeof(AkaoTrack) zamiast 284 bytes. Te dwie ścieżki nie mają jeszcze pełnego runtime dowodu; inne raw command adresy/default nested stream nadal wymagają audytu. Sam object build nie oznacza sprawnego audio.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

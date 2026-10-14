@@ -34,7 +34,7 @@ void Spu_WriteKeyOff(unsigned value);
 /* Mark every active track of a 24-track table for a full voice refresh. */
 void Seq_MarkDirtyTracks(AkaoTrack *tracks);
 void Spu_MarkActiveVoicesDirty(void);
-void Akao_LoadSamplePairFromIndex(int *first, int *second, int sample_id);
+void Akao_LoadSamplePairFromIndex(void **first, void **second, int sample_id);
 void Akao_SetVoicePitch(void);
 void Akao_SetVoiceVolume(void);
 void Akao_SetVoiceAdsr(void);

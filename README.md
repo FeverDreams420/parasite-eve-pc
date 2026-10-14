@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Scenes now extract selected-group background draw lists using current camera
+position and original halfword display-offset arithmetic. Failed extraction
+preserves the previous list/count/display state. All 35 headless tests and
+the ASan/UBSan native scene fixture pass, including one-pixel scrolling.
+Automatic frame ordering, background animation and GPU/reference rendering
+remain pending.
+
 Background draw lists now apply enabled/group filtering, original halfword
 offsets and modulus wrapping, screen clipping and ordering-table depth limits.
 The initial-camera audit produces 180,717 draw tiles. All 35 headless tests

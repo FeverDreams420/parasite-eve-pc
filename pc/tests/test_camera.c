@@ -20,6 +20,8 @@ int main(void){
     PeCameraScroll scroll;pe_camera_scroll_init(&bank,&camera,&scroll);
     CHECK(scroll.position[0]==-1&&scroll.position[1]==0&&scroll.origin[0]==-1);
     CHECK(scroll.display[0]==261&&scroll.display[1]==312&&scroll.bounds[0]==-4);
+    scroll.position[0]=100;scroll.position[1]=-20;pe_camera_background_offset(&bank,&scroll);
+    CHECK(scroll.display[0]==160&&scroll.display[1]==332&&scroll.origin[0]==-1);
     scroll.start[0]=10;scroll.start[1]=20;scroll.target[0]=30;scroll.target[1]=60;scroll.elapsed=1;scroll.duration=2;
     uint32_t flags=0x41;
     CHECK(!pe_camera_transition_step(&camera,&scroll,&flags)&&scroll.position[0]==20&&scroll.position[1]==40&&flags==0x42);

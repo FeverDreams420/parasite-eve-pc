@@ -53,6 +53,17 @@ int main(void){
     CHECK(pe_script_task_tick(&task,100)==PE_SCRIPT_STOPPED&&scene.camera_scroll.duration==3&&scene.camera_scroll.target[0]==160&&scene.camera_scroll.target[1]==112);
     scene.actors->player=-1;CHECK(pe_script_task_init(&task,&program,0,&scene.script_banks));task.dispatch=pe_scene_dispatch;task.dispatch_user=&scene;
     CHECK(pe_script_task_tick(&task,100)==PE_SCRIPT_ERROR&&scene.camera_scroll.duration==3);
+    uint8_t background_bytes[160]={0};background_bytes[6]=1;background_bytes[20]=60;background_bytes[38]=8;
+    background_bytes[60]=2;background_bytes[98]=1;word(background_bytes+100,60);word(background_bytes+104,64);
+    word(background_bytes+120,(3u<<22)|(4u<<12));
+    scene.cameras=(PeCameraBank){0};scene.cameras.bytes=background_bytes;scene.cameras.size=sizeof(background_bytes);scene.cameras.count=1;
+    CHECK(pe_background_open(&scene.cameras,&scene.background));
+    scene.camera_scroll.position[0]=160;scene.camera_scroll.position[1]=112;
+    PeBackgroundDrawTile draw;unsigned count=99;
+    CHECK(pe_scene_background_tiles(&scene,&draw,1,&count)&&count==1&&draw.x==3&&draw.y==4);
+    scene.camera_scroll.position[0]=161;count=99;
+    CHECK(!pe_scene_background_tiles(&scene,&draw,0,&count)&&count==99&&draw.x==3&&scene.camera_scroll.display[0]==0);
+    CHECK(pe_scene_background_tiles(&scene,&draw,1,&count)&&draw.x==2&&scene.camera_scroll.display[0]==-1);
     pe_scene_close(&scene);
     puts("Camera VM: real polling branch/wait loop resumes only after transition completion, headless");return 0;
 }

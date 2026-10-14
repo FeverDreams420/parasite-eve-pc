@@ -12,6 +12,7 @@ int pe_camera_group(const PeCameraBank *bank,unsigned group,PeCamera *camera);
 void pe_camera_clamp(const PeCamera *camera,uint32_t flags,uint32_t x,uint32_t y,int16_t position[2]);
 /* Original DrawMeshList startup centre and display-source translation. */
 void pe_camera_scroll_init(const PeCameraBank *bank,const PeCamera *camera,PeCameraScroll *scroll);
+void pe_camera_background_offset(const PeCameraBank *bank,PeCameraScroll *scroll);
 /* -20: disabled; -1: invalid zero duration; otherwise original step result. */
 int pe_camera_transition_step(const PeCamera *camera,PeCameraScroll *scroll,uint32_t *flags);
 int pe_camera_transition_start(PeCameraScroll *scroll,uint32_t *flags,uint16_t x,uint16_t y,uint16_t duration,int smooth);

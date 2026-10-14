@@ -216,3 +216,9 @@ int pe_scene_focus_actor(PeScene *scene,unsigned slot,int32_t duration,int32_t m
     return pe_camera_focus_transition(&scene->camera,&scene->camera_scroll,&scene->actors->render_flags,
         scene->actors->slots[slot].position,scene->actors->camera_focus_height,duration,mode);
 }
+int pe_scene_background_tiles(PeScene *scene,PeBackgroundDrawTile *output,unsigned capacity,unsigned *written){
+    if(scene->camera_group>=scene->cameras.count)return 0;
+    PeCameraScroll scroll=scene->camera_scroll;pe_camera_background_offset(&scene->cameras,&scroll);
+    if(!pe_background_draw_tiles(&scene->background,scene->camera_group,scroll.display,output,capacity,written))return 0;
+    scene->camera_scroll.display[0]=scroll.display[0];scene->camera_scroll.display[1]=scroll.display[1];return 1;
+}

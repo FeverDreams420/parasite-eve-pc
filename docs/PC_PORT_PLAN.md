@@ -1426,3 +1426,24 @@ pool CTests passed. The stat test also passed ASan/UBSan/function instrumentatio
 with the actual Disc 1 data (PsyZ archive uninstrumented). These checks establish
 parameter derivation, not armor behavior in a running battle. Complete original
 Battle_InitEquipLists/player-spawn integration and playable scenes remain pending.
+
+### Original equipment initialization and native battle-state prefix
+
+Battle_InitEquipLists now compiles from battle/equipment_init.c, retaining its
+original pointer setup and stat/weapon/armor call order. Its three output records
+have canonical native storage. AyaBattleState's opaque prefix now follows the
+actual Combatant action offset, with assertions for both equipment pointers and
+total prefix size; fixed PS1 pointer offsets are not valid on a 64-bit host.
+The legacy save-flow byte copies still require explicit serialized conversion
+before that path is enabled. Initial battle defaults and Battle_SaveAyaState
+are not yet integrated into startup.
+
+The real resident-data test runs all 4386 weapon/armor pairs through this original
+initializer and checks pointers, preserved prefix/tail bytes, weapon attack and
+kind, armor third parameter and active inventory selection. This exercises the
+initializer without a live player; existing stat-recalculation tests separately
+cover a live player. The scene-spawn fixture now links this actual initializer
+instead of its former abort hook, though its corpus still spawns NPCs only.
+Full build, stat-assets/scene-spawn/pools CTests and stat ASan/UBSan/function
+checks passed (PsyZ archive uninstrumented). Player spawn and playable scene
+integration remain pending; this is not end-to-end gameplay evidence.

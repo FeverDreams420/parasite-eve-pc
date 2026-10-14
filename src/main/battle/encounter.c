@@ -33,7 +33,6 @@ u8 g_BattleStepIndex;
 u32 g_BattleExpReward;
 u16 g_BattlePeBonusReward;
 s32 g_BattleModeState;
-BattleAttributes g_BattleEquipStateBlock;
 
 void Battle_SaveAyaState(void);
 
@@ -1779,13 +1778,4 @@ void Battle_SaveAyaState(void) {
     g_AyaBattleState = aya;
     g_SavedBattleStateTail = tail;
     g_BattleEquipStateBlock = attributes;
-}
-
-void Battle_InitEquipLists(AyaBattleState **out) {
-    *out = &g_AyaBattleState;
-    g_AyaBattleState.action = &g_SavedBattleStateTail;
-    g_AyaBattleState.attributes = &g_BattleEquipStateBlock;
-    Inv_RecalcSlotStats();
-    Inv_BuildWeaponList(0, &g_AyaBattleState.action->weapon);
-    Inv_BuildArmorList(g_AyaBattleState.attributes);
 }

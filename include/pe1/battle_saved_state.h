@@ -12,16 +12,19 @@ typedef union BattleStateTail {
 } BattleStateTail;
 PE1_STATIC_ASSERT(sizeof(BattleStateTail) == 0x18, battle_state_tail_size);
 
-/* Saved 0x70-byte prefix of Aya's Combatant record; the last two words are
- * Combatant.action and Combatant.attributes. */
+/* Native prefix of Combatant through its equipment pointers. Serialized PS1
+ * records are still 0x70 bytes and require explicit conversion on save/load. */
 typedef struct AyaBattleState {
-    s32 words[26];
-/* 0x68 */ BattleStateTail *action;
-/* 0x6C */ BattleAttributes *attributes;
+    s32 words[PE1_OFFSETOF(Combatant, action) / sizeof(s32)];
+    BattleStateTail *action;
+    BattleAttributes *attributes;
 } AyaBattleState;
-PE1_STATIC_ASSERT(sizeof(AyaBattleState) == 0x70, aya_battle_state_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(AyaBattleState, action) == 0x68,
-                  aya_battle_state_action_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AyaBattleState, action) ==
+                  PE1_OFFSETOF(Combatant, action), aya_battle_state_action_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AyaBattleState, attributes) ==
+                  PE1_OFFSETOF(Combatant, attributes), aya_battle_state_attributes_offset);
+PE1_STATIC_ASSERT(sizeof(AyaBattleState) == PE1_OFFSETOF(Combatant, field70),
+                  aya_battle_state_size);
 
 /* Rodata defaults Battle_SaveAyaState loads into the saved battle records. */
 extern AyaBattleState g_AyaBattleStateInitial;

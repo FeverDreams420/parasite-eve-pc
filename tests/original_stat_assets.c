@@ -9,6 +9,7 @@
 #include "pe1/inventory_state.h"
 #include "pe1/weapon_list_output.h"
 #include "pe1/battle_modifiers.h"
+#include "pe1/battle_saved_state.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,6 +22,54 @@ static unsigned armor_third(unsigned value)
     if(value>=85)return (value*249/208+402)/10;
     unsigned root=0; while((root+1)*(root+1)<=value*3000)++root;
     return root/10;
+}
+static int equipment_init(void)
+{
+    unsigned pairs=0;
+    g_PlayerEntity=NULL;
+    memset(&g_AyaBattleState,0x5a,sizeof(g_AyaBattleState));
+    unsigned char prefix[sizeof(g_AyaBattleState.words)];
+    memcpy(prefix,g_AyaBattleState.words,sizeof(prefix));
+    for(unsigned w=0;w<255;++w) {
+        ItemDataRecord *weapon=Item_LookupBaseData(w);
+        if(!weapon || weapon->kind<1 || weapon->kind>8)continue;
+        for(unsigned a=0;a<255;++a) {
+            ItemDataRecord *armor=Item_LookupBaseData(a);
+            if(!armor || armor->kind!=9)continue;
+            g_InventoryRuntime.equipment[0]=*weapon;
+            g_InventoryRuntime.equipment[1]=*armor;
+            g_AyaSaveState.inventory_slot_count=2;
+            g_AyaSaveState.inventory_items[0]=0x100;
+            g_AyaSaveState.inventory_items[1]=0x101;
+            g_AyaSaveState.equipped_weapon_slot=0;
+            g_AyaSaveState.equipped_armor_slot=1;
+            g_SavedBattleStateTail.words[5]=0x12345678;
+            AyaBattleState *out=NULL;
+            Battle_InitEquipLists(&out);
+            CHECK(out==&g_AyaBattleState);
+            CHECK(out->action==&g_SavedBattleStateTail);
+            CHECK(out->attributes==&g_BattleEquipStateBlock);
+            CHECK(!memcmp(prefix,out->words,sizeof(prefix)));
+            CHECK(out->action->words[5]==0x12345678);
+            CHECK(out->action->weapon.kind==weapon->kind);
+            unsigned attack=weapon->baseStats[0]+weapon->bonusStats[0];
+            if(attack>999)attack=999;
+            unsigned hit=0;
+            for(unsigned e=0;e<weapon->tailCount;++e) {
+                unsigned effect=weapon->tailData[e]&31;
+                if(effect==16 || effect==17)hit=effect-15;
+            }
+            if(hit==1)attack/=2;
+            CHECK(out->action->weapon.attack==attack);
+            CHECK(out->attributes->parameterWord.fields.third==
+                  armor_third(armor->baseStats[2]+armor->bonusStats[2]));
+            CHECK(g_InvItemPtr==g_AyaSaveState.inventory_items);
+            ++pairs;
+        }
+    }
+    CHECK(pairs==86*51);
+    printf("Original equipment initialization: %u real weapon/armor pairs passed\n",pairs);
+    return 0;
 }
 static int armor_stats(void)
 {
@@ -253,6 +302,7 @@ int main(void)
     CHECK(item_lookups()==0);
     CHECK(weapon_stats()==0);
     CHECK(armor_stats()==0);
+    CHECK(equipment_init()==0);
     CHECK(inventory_selection()==0);
     CHECK(recalc_stats()==0);
     puts("Original player stat recalculation: 297 level/modifier combinations and inventory capacity passed");

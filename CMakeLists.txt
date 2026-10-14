@@ -11,6 +11,7 @@ add_subdirectory(pc)
 # Compile the original game sources in place. Modules join this target as
 # their platform dependencies are made portable; no duplicate game logic.
 add_library(parasite-eve-original OBJECT
+    src/main/battle/equipment_init.c
     src/main/aya/stat_recalc.c
     src/main/item/armor_stats.c
     src/main/item/weapon_stats.c

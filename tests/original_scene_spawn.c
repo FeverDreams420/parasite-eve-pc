@@ -30,7 +30,6 @@ SceneAssetBlob *g_LoadedSceneAssetBlock[1];
 u8 g_SceneAreaType;
 u32 g_EntityRenderScratch[9];
 /* Player equipment is outside this NPC spawn test; fail if called. */
-void Battle_InitEquipLists(struct AyaBattleState **out) { abort(); }
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 int main(void)
 {

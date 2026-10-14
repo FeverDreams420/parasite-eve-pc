@@ -34,7 +34,7 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
     u32 value;
     u32 sceneType;
     u32 serial;
-    u32 *row;
+    void **row;
     u8 **table;
     SceneAssetBlob *archive;
     SceneAssetDirectory *directory;
@@ -123,7 +123,7 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
         Entity_SetActionMode((BattleEntity *)actor, 0x15);
     } else {
         void *(*rows)[48] = g_GameState.bank_rows;
-        row = (u32 *)rows[actor->type_id];
+        row = rows[actor->type_id];
         for (i = 0; i < 0x30; ++i) {
             if (row[i]) {
                 Entity_SetActionMode((BattleEntity *)actor, i & 0xFFFF);
@@ -216,7 +216,7 @@ void Entity_FrameUpdate(void) {
                 g_GameStateBlock.flags |= 4;
                 g_GameState.flags |= 0x9000;
             }
-            g_MenuFrameCommand = Menu_RunFrameWithArg((int)&g_BattleMenuActionRecord);
+            g_MenuFrameCommand = Menu_RunFrameWithArg(&g_BattleMenuActionRecord);
             if (g_MenuFrameCommand != 0) {
                 Render_BeginSceneLoad();
                 g_GameStateBlock.flags &= ~4;

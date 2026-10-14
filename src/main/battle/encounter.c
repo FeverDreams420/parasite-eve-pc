@@ -262,7 +262,7 @@ void Battle_Update(void) {
     active = D_8009D254->core;
     g_BattleStatusPanelSlot = 0;
     g_ActiveActor = active;
-    g_MenuFrameCommand = Menu_RunFrameWithArg((int)&g_BattleMenuActionRecord);
+    g_MenuFrameCommand = Menu_RunFrameWithArg(&g_BattleMenuActionRecord);
     if (g_BattleModeState == 0 && g_BattleEnemyEscapeFlag != 0) {
         if (g_ActiveActor->hpAlive >= 0x2328U) {
             g_ActiveActor->hpAlive = 0x2328U;

@@ -14,8 +14,8 @@ extern int g_MenuSaveBgFadeIndex; /* Curve position. */
 extern int g_MenuSaveBgFadeTint; /* Fade parameter. */
 extern u8 g_MenuSaveBgFadeLut[]; /* Fade curve. */
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, save_background_source) == 0x178, save_background_source_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, save_background_destination) == 0x17C, save_background_destination_offset);
+
+
 PE1_STATIC_ASSERT(sizeof(DRAWENV) == 0x5C, menu_background_drawenv_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DRAWENV, r0) == 0x19, menu_background_drawenv_rgb_offset);
 

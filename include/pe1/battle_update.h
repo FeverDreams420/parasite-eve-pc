@@ -17,7 +17,7 @@ int Inv_CountByValue(int);
 int Inv_FindItemById(int);
 void Inv_OpenAyaItemList(unsigned int);
 void Menu_MainUpdate(int);
-int Menu_RunFrameWithArg(int);
+int Menu_RunFrameWithArg(void *);
 void Menu_SaveOverlayDraw(void);
 void Menu_SetItemContext(int);
 int Pm_SendCmd(int, int, int, int, int, int);

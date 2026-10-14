@@ -3,6 +3,7 @@
 #include "pe1/game_state_types.h"
 #include "pe1/pm_types.h"
 #include "pe1/render_shadow.h"
+#include "pe1/scene_assets.h"
 #include <string.h>
 #include <stdio.h>
 extern FieldActor *g_FieldActorListHead;

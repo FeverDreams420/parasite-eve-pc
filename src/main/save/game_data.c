@@ -605,7 +605,7 @@ void Menu_RequestErrorSound(void) {
     g_MenuErrorSoundPending = 1;
 }
 
-s32 Menu_RunFrameWithArg(s32 arg0) {
+s32 Menu_RunFrameWithArg(void *arg0) {
     if (Menu_SaveBgIsFadeActive() == 0) {
         g_MenuActiveListTarget = (u8 *)arg0;
         Menu_ClearCommandResult();

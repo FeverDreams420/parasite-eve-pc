@@ -143,3 +143,8 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-expression PRIVATE psyz)
     add_test(NAME original-game-expression COMMAND test-original-expression)
 endif()
+
+# Compile the whole original actor frame module while its remaining game
+# dependencies are being ported. It is not linked with replacement stubs.
+add_library(parasite-eve-original-frame OBJECT src/main/entity/frame_update.c)
+target_include_directories(parasite-eve-original-frame PRIVATE include)

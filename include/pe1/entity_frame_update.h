@@ -28,7 +28,7 @@ extern s16 g_CameraFocusHeight[];       /* camera height (integer part) */
 
 void Battle_Update(void);
 void Inv_OpenAyaItemList(unsigned int mode);
-int Menu_RunFrameWithArg(int arg);
+int Menu_RunFrameWithArg(void *arg);
 void Entity_UpdateList(void);
 void Entity_CopyParentPosition(void);
 int Render_StepCameraTransition(void);

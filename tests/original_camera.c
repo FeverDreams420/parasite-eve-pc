@@ -2,7 +2,7 @@
 #include "pe1/render_camera.h"
 #include "pe1/render_lighting.h"
 #include "pe1/game_state.h"
-#include "camera.h"
+#include "room.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,19 +63,28 @@ int main(void) {
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     PeDisc disc={0}; PeRoomCatalog catalog; PeRoom room={0};
     CHECK(pe_disc_open(&disc,path)); CHECK(pe_room_catalog_open(&catalog,&disc));
-    unsigned views=0, frames=0;
+    unsigned views=0, frames=0; unsigned long long trace=14695981039346656037ULL;
     for (unsigned map=1;map<=PE_USA_ROOM_SLOTS;++map) {
         if (!catalog.ranges[map-1].room_sectors) continue;
         CHECK(pe_room_load(&catalog,map,&room));
-        PeCameraBank bank; CHECK(pe_room_cameras(&room,&bank));
-        void *copy=malloc(bank.size); CHECK(copy); memcpy(copy,bank.bytes,bank.size);
+        const u8 *records; unsigned count;
+        CHECK(pe_room_blob_table(&room.data,7,8,&records,&count) && count);
+        u32 size,offset; memcpy(&size,records,4); memcpy(&offset,records+4,4);
+        size &= 0xffffff; offset &= 0xffffff;
+        CHECK(offset<=room.data.size && size<=room.data.size-offset && size>=60);
+        const u8 *bytes=room.data.bytes+offset;
+        u16 view_count; memcpy(&view_count,bytes+10,2);
+        void *copy=malloc(size); CHECK(copy); memcpy(copy,bytes,size);
         g_GeomState=copy;
-        for (unsigned group=0;group<bank.count;++group) {
-            PeCamera camera; CHECK(pe_camera_group(&bank,group,&camera));
+        CHECK(g_GeomState->entry_offset_1C>=60 && (u32)g_GeomState->entry_offset_1C<=size);
+        CHECK(view_count && view_count<=(size-g_GeomState->entry_offset_1C)/sizeof(CameraViewport));
+        for (unsigned group=0;group<view_count;++group) {
+            CameraViewport camera;
+            memcpy(&camera,(u8 *)copy+g_GeomState->entry_offset_1C+group*sizeof(camera),sizeof(camera));
             GteMatrix matrix={0};
-            memcpy(matrix.m,camera.view.rotation,sizeof(matrix.m));
-            memcpy(matrix.t,camera.view.translation,sizeof(matrix.t));
-            s32 distance=camera.distance;
+            memcpy(matrix.m,&camera.prefix.gpu.half02,sizeof(matrix.m));
+            memcpy(matrix.t,&camera.prefix.gpu.word14,sizeof(matrix.t));
+            s32 distance=camera.prefix.gpu.geom_screen;
             memset(&g_GeomScroll,0xA5,sizeof(g_GeomScroll));
             CHECK(Render_InitViewState(&matrix,&distance)==0);
             CHECK(g_GeomScroll.state.position.matrixWords==(u32 *)&matrix);
@@ -88,41 +97,36 @@ int main(void) {
                   g_GeomScroll.state.position.baseAngleAnalog==0);
             CHECK(g_GeomScroll.state.position.otZ==0);
             CHECK(Render_LoadGeomState(group)==0);
-            CHECK(distance==camera.distance);
-            CHECK(!memcmp(matrix.m,camera.view.rotation,sizeof(matrix.m)));
-            CHECK(!memcmp(matrix.t,camera.view.translation,sizeof(matrix.t)));
+            CHECK(distance==camera.prefix.gpu.geom_screen);
+            CHECK(!memcmp(matrix.m,&camera.prefix.gpu.half02,sizeof(matrix.m)));
+            CHECK(!memcmp(matrix.t,&camera.prefix.gpu.word14,sizeof(matrix.t)));
             CHECK(g_GeomScroll.state.position.groupSelect==group);
             g_GeomScroll.state.position.groupSelect=group;
             for (unsigned smooth=0;smooth<2;++smooth) {
-                PeCameraScroll oracle={0}; uint32_t flags=0x70;
-                oracle.position[0]=camera.min_x;oracle.position[1]=camera.min_y;
-                g_GeomScroll.state.flags=flags;
-                g_GeomScroll.state.position.x=camera.min_x;
-                g_GeomScroll.state.position.y=camera.min_y;
-                CHECK(Render_SetScrollMode(camera.max_x,camera.max_y,30,smooth?8:0)==0);
-                CHECK(pe_camera_transition_start(&oracle,&flags,camera.max_x,camera.max_y,30,smooth)==0);
+                g_GeomScroll.state.flags=0x70;
+                g_GeomScroll.state.position.x=camera.minX;
+                g_GeomScroll.state.position.y=camera.minY;
+                CHECK(Render_SetScrollMode(camera.maxX,camera.maxY,30,smooth?8:0)==0);
                 for(unsigned frame=0;frame<30;++frame) {
                     CHECK(Render_StepCameraTransition()==0);
-                    CHECK(pe_camera_transition_step(&camera,&oracle,&flags)==0);
-                    CHECK(g_GeomScroll.state.flags==flags);
-                    CHECK(g_GeomScroll.state.position.x==oracle.position[0]);
-                    CHECK(g_GeomScroll.state.position.y==oracle.position[1]);
-                    CHECK(g_GeomScroll.state.position.screenOffsetX==oracle.screen_offset[0]);
-                    CHECK(g_GeomScroll.state.position.screenOffsetY==oracle.screen_offset[1]);
+                    const unsigned short samples[]={g_GeomScroll.state.position.x,g_GeomScroll.state.position.y,
+                        g_GeomScroll.state.position.screenOffsetX,g_GeomScroll.state.position.screenOffsetY,
+                        g_GeomScroll.state.flags,g_GeomScroll.state.position.elapsed};
+                    for(unsigned sample=0;sample<6;++sample) for(unsigned byte=0;byte<2;++byte)
+                        trace=(trace^((samples[sample]>>(byte*8))&255))*1099511628211ULL;
                     ++frames;
                 }
             }
-            s16 expected[2];
-            pe_camera_clamp(&camera,0x40,0x8000,0x7fff,expected);
+            /* Extreme signed halfwords must clamp to the serialized bounds. */
             CHECK(Render_ClampCameraPosition(0x8000,0x7fff)==0);
-            CHECK(g_GeomScroll.state.position.x==expected[0] && g_GeomScroll.state.position.y==expected[1]);
+            CHECK(g_GeomScroll.state.position.x==camera.minX && g_GeomScroll.state.position.y==camera.maxY);
             CHECK(Render_SaveAndOpenBounds()==0); CHECK(Render_RestoreBounds()==0);
-            CHECK(!memcmp(copy,bank.bytes,bank.size));
+            CHECK(!memcmp(copy,bytes,size));
             g_GeomScroll.state.flags=0xC0;
             const s32 focus[3]={-123*65536, -45*65536, 1024*65536};
             CHECK(Render_SetViewport(focus)==0);
-            CHECK(g_GeomScroll.state.position.x>=camera.min_x && g_GeomScroll.state.position.x<=camera.max_x);
-            CHECK(g_GeomScroll.state.position.y>=camera.min_y && g_GeomScroll.state.position.y<=camera.max_y);
+            CHECK(g_GeomScroll.state.position.x>=camera.minX && g_GeomScroll.state.position.x<=camera.maxX);
+            CHECK(g_GeomScroll.state.position.y>=camera.minY && g_GeomScroll.state.position.y<=camera.maxY);
             CHECK(Render_UpdateScrollPosition((void *)focus,-1,-1)==0);
             CHECK(g_GeomScroll.state.position.duration==30);
             ++views;
@@ -130,6 +134,9 @@ int main(void) {
         free(copy);pe_room_close(&room);
     }
     pe_disc_close(&disc); CHECK(views && frames);
+    /* Regression captured while every frame also matched the former reference
+     * implementation. This proves preservation, not PS1 visual fidelity. */
+    CHECK(views==509 && frames==30540 && trace==0x4389b6b0c8d9de19ULL);
     printf("Original camera: %u viewports, %u linear/smooth transition frames\n",views,frames);
     return 0;
 }

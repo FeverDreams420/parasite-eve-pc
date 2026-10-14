@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Test `original-game-camera` nie linkuje już `pc/camera.c`, `pc/matrix.c` ani `pc/model.c`. Odczytuje widoki przez istniejące struktury `GeomState`/`CameraViewport` i wykonuje oryginalny moduł kamery. Przed odłączeniem równoległej implementacji utrwalono hash 30 540 klatek dla 509 widoków USA Disc 1, przy dotychczasowych porównaniach każdej klatki; nowy test zachowuje ten przebieg, kontrolę clamp i nienaruszenie danych pokoju. Pełny build i test z wymaganymi danymi Disc 1 przeszły. To dowód regresji, nie wizualnej zgodności z PS1. Odczyt katalogu pokojów nadal używa `pc/room.c`; katalog `pc/` pozostaje do całkowitego usunięcia. Nie dodano plików ani kodu produkcyjnego.
+
 Wiążąca zasada: podczas odtwarzania gry 1:1 nie dodajemy nowych plików ani nowych warstw logiki gry. Poprawiamy całe oryginalne moduły w ich istniejących plikach. Cały katalog `pc/` ma zostać usunięty; jego przeniesienie lub zmiana nazwy nie spełnia tego wymagania. Obecne zależności aplikacji i części testów od `pc/` są długiem do usunięcia, a nie docelową architekturą. Testy mają docelowo wykonywać oryginalny kod. Zachowujemy niezacommitowane zmiany użytkownika podczas porządkowania.
 
 Dispatcher ma 73 powiązania: opcode 213 odłącza bieżącego aktora. EXE USA potwierdza zerowanie parent przed końcowym dostępem do niskiej pamięci PS1; natywne C pomija dereferencję NULL, zachowując flagi aktora i nie zmieniając flag dawnego rodzica. Test kolejki obejmuje cztery warianty listy aktorów. Build oraz cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Ta poprawka istniejącego modułu nie dowodzi pełnej integracji gry ani usunięcia `pc/`.

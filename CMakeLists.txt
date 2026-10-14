@@ -332,7 +332,7 @@ endif()
 add_library(parasite-eve-original-camera OBJECT src/main/render/camera.c)
 target_include_directories(parasite-eve-original-camera PRIVATE include)
 if(BUILD_TESTING)
-    add_executable(test-original-camera tests/original_camera.c pc/camera.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c pc/matrix.c pc/model.c
+    add_executable(test-original-camera tests/original_camera.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-camera>)
     target_include_directories(test-original-camera PRIVATE include pc)

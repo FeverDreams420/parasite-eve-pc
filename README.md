@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Actor opcodes 101/102/223/224 clear motion/acceleration, compute X/Z velocity
+from yaw and movement scale, and toggle gravity. Velocity retains the player's
+factor of five, original fixed-point rounding/wrap and existing Y motion.
+Clearing motion retains gravity and deltas. All 31 headless tests and the
+ASan/UBSan actor fixture pass, including fractional and extreme values.
+Input callbacks and the full collision/movement driver remain pending.
+
 Actor opcodes 27/77/78/93 now set model scale, animation step, clamped frame
 position and movement factor. Player scale also updates signed-halfword camera
 focus height with original wrapped arithmetic and rounding. Opcode 78's legacy

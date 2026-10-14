@@ -192,13 +192,33 @@ int pe_actor_model_world_pose(PeActor *actor){
 static uint32_t word_shift(uint32_t value,unsigned bits){
     return value>>bits|(value&0x80000000?UINT32_MAX<<(32-bits):0);
 }
+static uint32_t motion_mul(uint32_t lhs,uint32_t rhs){
+    int64_t a=lhs&0x80000000?(int64_t)lhs-INT64_C(0x100000000):lhs;
+    int64_t b=rhs&0x80000000?(int64_t)rhs-INT64_C(0x100000000):rhs;
+    int64_t product=a*b;
+    return (uint32_t)(product>=0?product/65536:-((-product+65535)/65536));
+}
 PeScriptDispatchResult pe_actors_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command){
     if(command->opcode!=11&&command->opcode!=12&&command->opcode!=27&&command->opcode!=77&&
-       command->opcode!=78&&command->opcode!=93&&(command->opcode<46||command->opcode>48))return PE_DISPATCH_UNSUPPORTED;
+       command->opcode!=78&&command->opcode!=93&&command->opcode!=101&&command->opcode!=102&&
+       command->opcode!=223&&command->opcode!=224&&(command->opcode<46||command->opcode>48))return PE_DISPATCH_UNSUPPORTED;
     PeActors *actors=user;PeActor *actor=NULL;
     for(unsigned i=0;i<PE_ACTOR_CAPACITY;++i)
         if(actors->slots[i].used && &actors->slots[i].script==task->actor){actor=&actors->slots[i];break;}
-    if(!actor||(command->opcode!=48&&!command->count))goto invalid;
+    if(!actor)goto invalid;
+    if(command->opcode==101){memset(actor->motion,0,sizeof(actor->motion));memset(actor->acceleration,0,sizeof(actor->acceleration));return PE_DISPATCH_CONTINUE;}
+    if(command->opcode==223){actor->script.flags|=2;return PE_DISPATCH_CONTINUE;}
+    if(command->opcode==224){actor->script.flags&=~UINT32_C(2);return PE_DISPATCH_CONTINUE;}
+    if(command->opcode==102){
+        uint32_t speed=actor->move_factor;
+        if(actors->player>=0&&actor==&actors->slots[actors->player])speed=motion_mul(0x50000,speed);
+        speed=motion_mul(speed,actor->move_speed<<4);
+        uint16_t angles[3]={0,actor->rotation[1],0};PeMatrix rotation={0};pe_matrix_rotation_xyz(angles,&rotation);
+        actor->motion[0]=motion_mul(0-speed,(uint32_t)(int32_t)rotation.rotation[0][2]*16);
+        actor->motion[2]=motion_mul(0-speed,(uint32_t)(int32_t)rotation.rotation[0][0]*16);
+        return PE_DISPATCH_CONTINUE;
+    }
+    if(command->opcode!=48&&!command->count)goto invalid;
     if(command->opcode==27||command->opcode==77||command->opcode==78||command->opcode==93){
         uint32_t value=pe_script_arg_read(task,&command->args[0]);
         if(command->opcode==77)actor->animation_step=value;

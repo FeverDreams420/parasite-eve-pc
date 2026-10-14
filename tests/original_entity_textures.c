@@ -10,6 +10,7 @@
 #include "animation.h"
 #include "vram.h"
 #include "pe1/scene_assets.h"
+#include "pe1/pe_image.h"
 #include "pe1/scene_room.h"
 #include "pe1/room_fx_model.h"
 #include "pe1/render_matrix_slot.h"
@@ -27,7 +28,6 @@ RenderBufferPrefix D_800B0E38;
 
 u8 g_SceneAreaType;
 s8 g_CurrentStoryDay[1];
-u32 g_PeImageBaseLba;
 u16 g_PeImageSectorTable[64], g_PeImageSectorBoundsNext[64];
 #ifndef PE_TEST_REAL_DISC
 static int read_result, poll_result;
@@ -180,7 +180,20 @@ int main(void)
     if(!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     PeDisc disc={0}; PeRoomCatalog catalog;
     CHECK(pe_disc_open(&disc,path) && pe_room_catalog_open(&catalog,&disc));
-    CdRom_BindImage(&disc,&catalog.archive);
+    CdRom_BindImage(NULL,NULL);
+    CHECK(Asset_OpenPeImage() == -1 && g_PeImageMountFlags == 0);
+    PeDisc closed={0};
+    CdRom_BindImage(&closed,NULL);
+    CHECK(Asset_OpenPeImage() == -1 && g_PeImageMountFlags == 0);
+    PeDisc invalid=disc;
+    invalid.root.size=0;
+    CdRom_BindImage(&invalid,NULL);
+    CHECK(Asset_OpenPeImage() == -2 && g_PeImageMountFlags == 0);
+    CdRom_BindImage(&disc,NULL);
+    CHECK(Asset_OpenPeImage() == 0);
+    CHECK(g_PeImageMountFlags == 1 && g_PeImageBaseLba == catalog.archive.sector);
+    CHECK(&g_PeImageBaseLba == &g_GameState.pe_image_base_lba);
+    CHECK(&g_PeImageMountFlags == &g_GameState.display_list_modes);
     memcpy(g_SceneSectorDirectory,&catalog.audio_base,4);
     memcpy(g_SceneSectorDirectory+4,catalog.audio_bounds,sizeof(catalog.audio_bounds));
     Psyz_SpuInit();

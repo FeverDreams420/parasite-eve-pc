@@ -32,7 +32,9 @@ int pe_disc_read(PeDisc *disc, const PeDiscFile *file, uint64_t offset,
 /* Full raw sectors preserve XA audio and STR headers for the movie decoder. */
 int pe_disc_read_raw(PeDisc *disc, const PeDiscFile *file, uint32_t sector,
                      void *data);
-/* Borrow an open image and its PE.IMG extent; NULL unmounts it. */
+/* Borrow an image; a NULL archive permits Asset_OpenPeImage discovery.
+ * A NULL image unmounts it. The caller owns the stream lifetime. */
+extern PeDisc *g_CdImage;
 void CdRom_BindImage(struct PeDisc *disc, const struct PeDiscFile *archive);
 
 struct CdlLOC;

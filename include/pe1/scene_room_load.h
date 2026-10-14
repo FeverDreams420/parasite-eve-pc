@@ -33,7 +33,7 @@ extern unsigned char g_StartupResourceBlob[];
 
 extern u8 g_SceneAreaType;
 extern s8 g_CurrentStoryDay[];
-extern u32 g_PeImageBaseLba;
+#include "pe1/pe_image.h"
 extern u16 g_PeImageSectorTable[], g_PeImageSectorBoundsNext[];
 extern u32 g_EntityRenderScratch[];
 /* Aya action sequencer step (battle_runtime.h); a battle-start texture

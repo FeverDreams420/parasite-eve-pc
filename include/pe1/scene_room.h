@@ -106,7 +106,7 @@ PE1_STATIC_ASSERT(sizeof(SceneRoomSectorRange) == 8, scene_room_sector_range_siz
 
 extern u8 D_8009CDC8; /* room name prefix letter */
 extern SceneRoomSectorRange g_RoomSectorTable[];
-extern unsigned int g_PeImageBaseLba;
+#include "pe1/pe_image.h"
 
 #include "pe1/reloc_block.h"
 

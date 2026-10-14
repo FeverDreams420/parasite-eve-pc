@@ -1,5 +1,6 @@
 #include "boot.h"
 #include "pe1/cdrom.h"
+#include "pe1/pe_image.h"
 #include "movie.h"
 #include "title.h"
 #include "automation.h"
@@ -212,6 +213,11 @@ static int run_boot(PeDisc *disc, int menu, int skip_intro) {
     PeScene active_scene = {0};
     int result = 1;
     player.disc = disc;
+    CdRom_BindImage(disc, NULL);
+    if (Asset_OpenPeImage() != 0) {
+        fprintf(stderr, "Cannot mount Parasite Eve archive: %s\n", disc->error);
+        goto close_disc;
+    }
     player.capture = getenv("PE_INTRO_CAPTURE");
     if (!pe_disc_find(disc, "FMV1/FMV001.STR", &player.file)) {
         fprintf(stderr, "%s\n", disc->error);
@@ -303,6 +309,7 @@ close_player:
     SDL_DestroyWindow(player.window);
     SDL_Quit();
 close_disc:
+    CdRom_BindImage(NULL, NULL);
     pe_scene_close(&active_scene);
     pe_runtime_emit("boot.stopped", result);
     return result;

@@ -18,7 +18,7 @@ extern MemcardScreenBuffer *g_MemcardFirstDrawScreen;
 
 extern DISPENV g_MemcardListSavedDispEnv[2];
 extern DRAWENV g_MemcardListSavedDrawEnv[2];
-extern signed char g_PeImageMountFlags;
+#include "pe1/pe_image.h"
 extern s32 g_LogoFadePlayed, g_ActiveDrawSlot;
 extern u8 *g_CdLoadAreaBase;
 extern RenderBufferPrefix D_800B0E38;

@@ -21,52 +21,28 @@
 #include "pe1/scene_assets.h"
 #include "pe1/script_queue.h"
 
-int DsPosToInt(CdlLOC *position);
+/* Original USA archive/marker paths, now resolved directly in file images. */
+char g_PeDisc1MarkerPath[] = "\\FMV1\\PEDISC01.IDF;1";
+char g_PeImagePath[] = "\\PE.IMG;1";
+char g_PeDisc2MarkerPath[] = "\\FMV2\\PEDISC02.IDF;1";
 
 int Asset_OpenPeImage(void)
 {
-    DslFILE file;
-    int status;
-    int disk_type;
-    DslFILE *found;
-
+    PeDiscFile archive, marker;
+    unsigned flags = 0;
     g_PeImageMountFlags = 0;
-    status = DsSystemStatus();
-    if (status != 1) return 1;
-    if (DsQueueLen() != 0) return 1;
-    disk_type = DsGetDiskType();
-    if (disk_type == status) return 1;
-    if (disk_type != 4) return -1;
-
-    while (DsSystemStatus() != 1 || DsQueueLen() != 0)
-        VSync(0);
-    found = DsSearchFile(&file, g_PeDisc1MarkerPath);
-    if (found != 0 && found != (DslFILE *)-1) {
-        while (DsSystemStatus() != 1 || DsQueueLen() != 0)
-            VSync(0);
-        found = DsSearchFile(&file, g_PeImagePath);
-        if (found != 0 && found != (DslFILE *)-1) {
-            g_PeImageBaseLba = DsPosToInt(&file.pos);
-            g_PeImageMountFlags = (u8)g_PeImageMountFlags | 1;
-        }
-    }
-    while (DsSystemStatus() != 1 || DsQueueLen() != 0)
-        VSync(0);
-    found = DsSearchFile(&file, g_PeDisc2MarkerPath);
-    if (found != 0) {
-        if (found != (DslFILE *)-1) {
-            while (DsSystemStatus() != 1 || DsQueueLen() != 0)
-                VSync(0);
-            found = DsSearchFile(&file, g_PeImagePath);
-            if (found != 0) {
-                if (found != (DslFILE *)-1) {
-                    g_PeImageBaseLba = DsPosToInt(&file.pos);
-                    g_PeImageMountFlags = (u8)g_PeImageMountFlags | 2;
-                }
-            }
-        }
-    }
-    return (g_PeImageMountFlags == 0) ? -2 : 0;
+    if (!g_CdImage || !g_CdImage->stream) return -1;
+    if (pe_disc_find(g_CdImage, g_PeDisc1MarkerPath, &marker) && !marker.directory)
+        flags |= 1;
+    if (pe_disc_find(g_CdImage, g_PeDisc2MarkerPath, &marker) && !marker.directory)
+        flags |= 2;
+    if (!flags || !pe_disc_find(g_CdImage, g_PeImagePath, &archive) || archive.directory)
+        return -2;
+    CdRom_BindImage(g_CdImage, &archive);
+    g_PeImageBaseLba = archive.sector;
+    g_PeImageMountFlags = (u8)flags;
+    g_CdImage->error[0] = 0;
+    return 0;
 }
 
 /* Boot notice screen and disc check; mode 1 or 2 is the expected disc. */

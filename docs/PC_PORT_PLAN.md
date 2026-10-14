@@ -2642,3 +2642,36 @@ This does not prove real Disc 2 contents or automatic selection by gameplay: the
 frontend still boots from the first image. Original Asset_OpenPeImage, source
 selection in original loaders and the rest of pc/ remain to be integrated or
 removed. Full original gameplay remains incomplete.
+
+
+### Connect original archive discovery to native startup
+
+Asset_OpenPeImage remains in the complete original asset/game_state.c. Its
+physical-drive status, queue and seek loops now use ISO9660 lookups in the
+borrowed image already owned by startup. The original marker paths and PE.IMG
+path are resident data in that same module. A discovered archive is bound to
+the original sector reader. No new files or extracted implementation. Native
+boot now calls this original procedure and unmounts the borrowed binding before
+its caller closes the stream. The whole original asset/player module object is
+linked into the executable and boot fixtures.
+
+Fixed canonical aliases: g_PeImageBaseLba is g_GameState.pe_image_base_lba and
+g_PeImageMountFlags is g_GameState.display_list_modes. The latter corresponds
+to original address 800B0DCD minus game-state base 800B0CD8 = F5, and the base
+LBA address 800B0DD8 is offset 100. Removed the separate texture-fixture base
+variable and stale header declarations. This prevents archive discovery and
+original loaders from updating different storage.
+
+The real asset fixture now calls original Asset_OpenPeImage instead of manually
+binding its catalog extent. It checks successful Disc 1 marker/extent discovery,
+exact alias addresses, -1 for absent/closed images and -2 for an empty directory.
+Original room, common/entity texture, audio-bank and geometry checks then use
+that discovered binding. Full build and eight CTests pass with Disc 1 required:
+akao-assets, actor-animation, entity-textures, entity-texture-assets, disc-reader
+and the three boot checks. Fresh ASan/UBSan/function validation of the real
+entity-texture fixture passes with original discovery/archive/room code
+instrumented; PsyZ/SDL archives are uninstrumented.
+
+Actual Disc 2 contents, selection of its original offset tables, replacement of
+remaining disc-notice logic and full scene/game integration remain incomplete.
+The remaining pc/ runtime still requires elimination.

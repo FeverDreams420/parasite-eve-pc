@@ -1,6 +1,8 @@
 #ifndef PE1_PE_IMAGE_H
 #define PE1_PE_IMAGE_H
 
+#include "pe1/game_state.h"
+
 /* PE.IMG -- the game's main on-disc asset archive (~206 MB).
  *
  * Everything that is not the executable or streamed FMV/XA audio lives in
@@ -10,13 +12,13 @@
  *
  * == HOW IT IS LOCATED (boot) ==
  *   Asset_OpenPeImage() (src/main/asset/game_state.c) searches the ISO9660 volume
- *   with DsSearchFile() for these paths (verified from the data bytes at
+ *   in the bound read-only CUE/BIN image for these paths (verified from data at
  *   0x80011330 / 0x80011348 / 0x80011354):
  *     "\FMV1\PEDISC01.IDF;1"   -- CD1 marker
  *     "\PE.IMG;1"              -- the archive itself
  *     "\FMV2\PEDISC02.IDF;1"   -- CD2 marker
  *   The matched directory record's start sector is turned into an integer LBA
- *   by DsPosToInt() and stored in g_PeImageBaseLba. The FMV marker that was
+ *   from the directory extent and stored in g_PeImageBaseLba. The FMV marker that was
  *   found sets g_PeImageMountFlags (bit0 = CD1, bit1 = CD2) -- this is the
  *   CD1/CD2 disc-detection used elsewhere. So the base LBA is NOT a hardcoded
  *   constant; it is discovered at runtime (retail pressing happens to place
@@ -73,7 +75,8 @@
  *   The async "DsRead" subsystem (CdRom_*DsRead*) lets a load run across frames.
  *
  * == PORTING NOTES ==
- *   - Replace Asset_OpenPeImage with: open the extracted PE.IMG; set base = 0.
+ *   - Asset_OpenPeImage discovers PE.IMG and marker files in the bound image.
+ *     CdRom_BindImage borrows that stream; no drive polling or lid checks.
  *   - sectorOffset * 2048 == byte offset into the extracted file.
  *   - Keep the Tier-1 tables (dump them from the EXE) and the Asset_FindTable*
  *     descriptor logic verbatim; only the read primitive changes (fseek+fread).
@@ -89,8 +92,9 @@
 #define PE_DIR_RECORD_STRIDE   0xC        /* bytes per directory record */
 #define PE_DIR_PAYLOAD_MASK    0xFFFFFF   /* record +0x04 payload offset mask */
 
-extern unsigned int   g_PeImageBaseLba;    /* =0x800B0DD8: PE.IMG start sector, found at boot */
-extern signed char    g_PeImageMountFlags; /* =0x800B0DCD: bit0 CD1 (FMV1), bit1 CD2 (FMV2) */
+/* Original scalar symbols alias their canonical game-state fields. */
+#define g_PeImageBaseLba (g_GameState.pe_image_base_lba)
+#define g_PeImageMountFlags (g_GameState.display_list_modes)
 
 /* ISO9660 paths searched by Asset_OpenPeImage. */
 extern char g_PeDisc1MarkerPath[]; /* "\FMV1\PEDISC01.IDF;1" */
@@ -98,6 +102,7 @@ extern char g_PeImagePath[];       /* "\PE.IMG;1" */
 extern char g_PeDisc2MarkerPath[]; /* "\FMV2\PEDISC02.IDF;1" */
 
 int Asset_SearchByKeyType(int type);
+int Asset_OpenPeImage(void);
 
 /* Sector table address as a pointer or a word: some loaders add the scaled
  * entry index to the table address as integers, index first. */

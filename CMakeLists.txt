@@ -93,7 +93,8 @@ if(BUILD_TESTING)
     list(APPEND akao_runtime_targets test-boot-assets test-boot-replay)
 endif()
 foreach(akao_target IN LISTS akao_runtime_targets)
-    target_sources(${akao_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-akao>
+    target_sources(${akao_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
+        $<TARGET_OBJECTS:parasite-eve-original-akao>
         $<TARGET_OBJECTS:parasite-eve-original-disc>)
     target_include_directories(${akao_target} PRIVATE include)
     if(MSVC)
@@ -395,6 +396,7 @@ if(BUILD_TESTING)
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_sources(test-original-entity-texture-assets PRIVATE
+        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
         $<TARGET_OBJECTS:parasite-eve-original-shadow>
         $<TARGET_OBJECTS:parasite-eve-original-akao>)
     target_include_directories(test-original-entity-texture-assets PRIVATE include pc)

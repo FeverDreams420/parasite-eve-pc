@@ -511,13 +511,14 @@ int pe_disc_read_raw(PeDisc *disc, const PeDiscFile *file, uint32_t sector,
                       ((uint64_t)file->sector + sector) * 2352, data, 2352);
 }
 
-static PeDisc *mounted_disc;
+PeDisc *g_CdImage;
 static PeDiscFile mounted_archive;
 static int completion;
 void CdRom_BindImage(PeDisc *disc, const PeDiscFile *archive)
 {
-    mounted_disc = archive ? disc : NULL;
+    g_CdImage = disc;
     if (archive) mounted_archive = *archive;
+    else memset(&mounted_archive, 0, sizeof(mounted_archive));
     completion = 0;
     g_GameState.flags &= ~0x1004000u;
 }
@@ -528,11 +529,11 @@ int CdRom_ReadSectorsFromLba(u32 lba, void *destination, u32 sectors)
 {
     if (g_GameState.flags & 0x1000000u) return -1;
     completion = -1;
-    if (!mounted_disc || !destination || lba < mounted_archive.sector) return -1;
+    if (!g_CdImage || !destination || lba < mounted_archive.sector) return -1;
     uint64_t offset = (uint64_t)(lba - mounted_archive.sector) * 2048u;
     uint64_t bytes = (uint64_t)sectors * 2048u;
     if (offset > mounted_archive.size || bytes > mounted_archive.size - offset || bytes > SIZE_MAX) return -1;
-    if (!pe_disc_read(mounted_disc, &mounted_archive, offset, destination, (size_t)bytes)) return -1;
+    if (!pe_disc_read(g_CdImage, &mounted_archive, offset, destination, (size_t)bytes)) return -1;
     g_GameState.flags |= 0x1004000u;
     completion = 0;
     return 1;

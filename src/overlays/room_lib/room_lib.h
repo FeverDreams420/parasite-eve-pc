@@ -111,47 +111,103 @@ extern struct FieldActor *g_PlayerEntity; /* the player actor (0x8009D254) */
 extern int FieldFx_GetStatus(void *object);
 extern int func_80192BFC();
 
+/* Native views of the canonical actor and its state; no serialized pointers. */
 typedef struct RoomRenderNode {
-    int flags;                    /* 0x00: 0x3F000000 owner bits, 0xC0FFFFFF mask dance */
-    char pad04[0x14];
-    unsigned char *state;         /* 0x18: byte poked with entity state (4) */
-    char pad1C[0x90];
-    unsigned char startFlag;      /* 0xAC: opens the gated module start */
+    u32 flags;
+    u8 pad04[PE1_OFFSETOF(FieldActorState, action_state) - sizeof(u32)];
+    u8 *state;
+    u8 padAfterState[PE1_OFFSETOF(FieldActorState, reserveda8) + 4 -
+                     PE1_OFFSETOF(FieldActorState, action_state) - sizeof(void *)];
+    u8 startFlag;
 } RoomRenderNode;
 
-/* The actor/object record shared with the field engine (>= 0x254 bytes).
- * Positions are 16.16 fixed point; offsets mined from 90 canonical shapes. */
 typedef struct RoomLink {
-    RoomRenderNode *target;       /* 0x00 */
-    char pad04[0xA];
-    unsigned char variant;        /* 0x0E: matched against RoomEnt.t16 */
-    char pad0F[0x7];
-    unsigned short winLo;         /* 0x16: t17 window upper bound */
-    char pad18[0x2];
-    unsigned short winHi;         /* 0x1A: t17 window lower bound */
-    char pad1C[0xA];
-    unsigned short h26;           /* 0x26 */
-    int pos[4];                   /* 0x28: 16.16 x/y/z plus copied trailing word */
-    short rotation[3];            /* 0x38: x/y/z angles, y is the heading */
-    char pad3E[0x2];
-    int posMirror[4];             /* 0x40: optional position snapshot */
-    char pad50[0x18];
-    int vel[3];                   /* 0x68 */
-    char pad74[0x4];
-    int move[3];                  /* 0x78 */
-    char pad84[0x4];
-    int accel[3];                 /* 0x88 */
-    char pad94[0x4];
-    unsigned int flags;           /* 0x98 */
-    char pad9C[0xF0];
-    struct RoomLink *link18C;     /* 0x18C: nested link record */
-    char pad190[0x6C];
-    int modelTranslation[3];      /* 0x1FC: integer position of the model matrix */
-    char pad208[0x30];
-    void *p238;                   /* 0x238 */
-    char pad23C[0x14];
-    unsigned short h250;          /* 0x250 */
+    RoomRenderNode *target;
+    struct RoomLink *next, *prev;
+    u8 type_id, sub_id, variant, last_frame;
+    u16 step_height, stop_frame;
+    u16 anim_fraction, winLo;
+    u16 previous_fraction, winHi;
+    s32 anim_step, move_factor;
+    u16 field_sfx_id, h26;
+    s32 pos[4];
+    s16 rotation[3];
+    u8 pad3E[2];
+    s32 posMirror[4];
+    u8 pad50[0x18];
+    s32 vel[3];
+    u8 pad74[4];
+    s32 move[3];
+    u8 pad84[4];
+    s32 accel[3];
+    u8 pad94[4];
+    u32 flags;
+    u8 *script_base;
+    ScriptNode *script_node_lists[3];
+    u32 actor_work[0x38];
+    struct RoomLink *link18C;
+    void (*frame_callback)(FieldActor *);
+    void (*contact_callback)(FieldActor *, int, FieldActor *, int);
+    u32 pad198;
+    u32 *script_cursor_19c, *script_cursor_1a0;
+    void *collision_face, *collision_face_mirror;
+    RenderObjectHeader *model_header;
+    void *action_data;
+    union {
+        RenderObjectEntity render_object;
+        struct {
+            u8 beforeTranslation[PE1_OFFSETOF(RenderObjectEntity, model_matrix) +
+                                 PE1_OFFSETOF(RenderMatrix, translation)];
+            s32 modelTranslation[3];
+        };
+        struct {
+            u8 beforeMatrices[PE1_OFFSETOF(RenderObjectEntity, matrices)];
+            RenderMatrix *p238;
+        };
+        struct {
+            u8 beforeRenderFlags[PE1_OFFSETOF(RenderObjectEntity, flags_9C)];
+            u16 h250;
+        };
+    };
 } RoomLink;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, target) == PE1_OFFSETOF(FieldActor, state), room_link_native_target);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, next) == PE1_OFFSETOF(FieldActor, next), room_link_native_next);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, prev) == PE1_OFFSETOF(FieldActor, prev), room_link_native_prev);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, variant) == PE1_OFFSETOF(FieldActor, mode), room_link_native_variant);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, winLo) == PE1_OFFSETOF(FieldActor, anim.parts.integer), room_link_native_winLo);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, winHi) == PE1_OFFSETOF(FieldActor, anim_prev) + sizeof(u16), room_link_native_winHi);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, h26) == PE1_OFFSETOF(FieldActor, move_speed), room_link_native_h26);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, pos) == PE1_OFFSETOF(FieldActor, pos_x), room_link_native_pos);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, rotation) == PE1_OFFSETOF(FieldActor, rot_x), room_link_native_rotation);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, posMirror) == PE1_OFFSETOF(FieldActor, base_x), room_link_native_posMirror);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, vel) == PE1_OFFSETOF(FieldActor, motion_x), room_link_native_vel);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, move) == PE1_OFFSETOF(FieldActor, accel_x), room_link_native_move);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, accel) == PE1_OFFSETOF(FieldActor, gravity_x), room_link_native_accel);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, flags) == PE1_OFFSETOF(FieldActor, flags), room_link_native_flags);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, script_base) == PE1_OFFSETOF(FieldActor, script_base), room_link_native_script_base);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, script_node_lists) == PE1_OFFSETOF(FieldActor, script_node_lists), room_link_native_script_node_lists);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, actor_work) == PE1_OFFSETOF(FieldActor, pad_0AC), room_link_native_actor_work);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, link18C) == PE1_OFFSETOF(FieldActor, parent), room_link_native_link18C);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, frame_callback) == PE1_OFFSETOF(FieldActor, frame_callback), room_link_native_frame_callback);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, contact_callback) == PE1_OFFSETOF(FieldActor, contact_callback), room_link_native_contact_callback);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, script_cursor_19c) == PE1_OFFSETOF(FieldActor, script_cursor_19c), room_link_native_script_cursor_19c);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, script_cursor_1a0) == PE1_OFFSETOF(FieldActor, script_cursor_1a0), room_link_native_script_cursor_1a0);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, collision_face) == PE1_OFFSETOF(FieldActor, collision_face), room_link_native_collision_face);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, collision_face_mirror) == PE1_OFFSETOF(FieldActor, collision_face_mirror), room_link_native_collision_face_mirror);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, model_header) == PE1_OFFSETOF(FieldActor, model_state), room_link_native_model_header);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, action_data) == PE1_OFFSETOF(FieldActor, action_data), room_link_native_action_data);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, render_object) == PE1_OFFSETOF(FieldActor, render_object), room_link_native_render_object);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, modelTranslation) ==
+                  PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, model_matrix) +
+                  PE1_OFFSETOF(RenderMatrix, translation), room_link_native_translation);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, p238) == PE1_OFFSETOF(FieldActor, render_object) +
+                  PE1_OFFSETOF(RenderObjectEntity, matrices), room_link_native_matrices);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLink, h250) == PE1_OFFSETOF(FieldActor, render_object) +
+                  PE1_OFFSETOF(RenderObjectEntity, flags_9C), room_link_native_render_flags);
+PE1_STATIC_ASSERT(sizeof(RoomLink) == PE1_OFFSETOF(FieldActor, pad_270), room_link_native_prefix_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomRenderNode, state) == PE1_OFFSETOF(FieldActorState, action_state), room_render_node_native_state);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomRenderNode, startFlag) == PE1_OFFSETOF(FieldActorState, reserveda8) + 4, room_render_node_native_start);
 
 typedef RoomRenderNode RoomLinkByte;  /* legacy alias */
 
@@ -760,14 +816,21 @@ extern void FieldFx_LoopLinkedAnimation(void *state);
     }
 
 typedef struct FieldActorNode {
-    int w00;
-    struct FieldActorNode *next;  /* 0x04 */
-    int w08;
+    FieldActorState *w00;
+    struct FieldActorNode *next;  /* native next link */
+    struct FieldActorNode *w08;  /* native previous link */
     unsigned char b0C;            /* 0x0C: kind matched against arg */
     unsigned char b0D;            /* 0x0D: sub-kind */
     char pad0E[0x8A];
     int w98;                      /* 0x98: 0x10 = busy */
 } FieldActorNode;
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorNode, w00) == PE1_OFFSETOF(FieldActor, state), field_actor_node_native_w00);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorNode, next) == PE1_OFFSETOF(FieldActor, next), field_actor_node_native_next);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorNode, w08) == PE1_OFFSETOF(FieldActor, prev), field_actor_node_native_w08);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorNode, b0C) == PE1_OFFSETOF(FieldActor, type_id), field_actor_node_native_b0C);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorNode, b0D) == PE1_OFFSETOF(FieldActor, sub_id), field_actor_node_native_b0D);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorNode, w98) == PE1_OFFSETOF(FieldActor, flags), field_actor_node_native_w98);
+
 
 typedef struct RoomSlotRec {
     short h0;

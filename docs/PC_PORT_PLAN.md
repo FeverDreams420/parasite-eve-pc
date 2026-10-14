@@ -2853,3 +2853,31 @@ Next integration must reconcile those actor/owner views and allocation sizes
 before binding the class tables to real room descriptors. M005 and the other
 unsupported PM/effect rooms, the complete original game runtime and removal
 of the remaining pc/ code remain unfinished.
+
+
+### Reconcile original room actor views with canonical native actors
+
+Repaired the existing RoomLink, RoomRenderNode and FieldActorNode views in
+room_lib.h. RoomLink now includes all canonical pointer-bearing actor members
+through its native RenderObjectEntity prefix, rather than treating list/script/
+callback pointers as fixed PS1 padding. The existing model translation, matrix
+array and render-flag names alias their actual render-object members in the
+same storage. RoomRenderNode's action-state pointer and start byte follow the
+canonical FieldActorState layout; the actor-list node uses native state, next
+and previous pointers. No new files or runtime abstraction.
+
+Compile-time checks compare every exposed actor field, native prefix size and
+nested model/state aliases with FieldActor/FieldActorState. The existing fixture
+reads and writes positions, animation halves, motion, parent/list pointers,
+model matrices/flags and actor-state fields through the repaired views. It
+executes original B/C release methods with a real canonical actor/state, checks
+the action-state byte and completion signal, and verifies the rest of the actor
+record remains unchanged. The original A/B/C callback-context checks remain.
+
+Full build and three CTests pass with Disc 1 required: actor-animation,
+entity-texture-assets and scene-spawn. Fresh ASan/UBSan/function actor-fixture
+validation passes with original class code instrumented; PsyZ/SDL archives
+are not. This does not prove motion/configuration branches or the field-engine
+task-owner/private-state allocation layout. Those must still be reconciled
+before static room class registration. No additional PM/effect room bindings
+were enabled; complete gameplay and removal of pc/ remain incomplete.

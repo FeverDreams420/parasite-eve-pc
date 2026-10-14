@@ -370,6 +370,50 @@ static void record_room_callback(RoomEnt *context)
     ++room_callback_count;
     context->w04+=7;
 }
+static int room_actor_view(void)
+{
+    FieldActor actor={0}, parent={0};
+    FieldActorState state={0};
+    u8 action_state=1;
+    RenderMatrix matrices[2]={0};
+    actor.state=&state; state.action_state=&action_state;
+    actor.parent=&parent; actor.next=&parent; actor.prev=&parent;
+    actor.type_id=7; actor.sub_id=9; actor.flags=0x400; actor.mode=3;
+    actor.anim.parts.integer=19; actor.anim_prev=7<<16;
+    actor.pos_x=123<<16; actor.pos_y=-456*65536; actor.pos_z=789<<16;
+    actor.rot_y=0x123;
+    actor.motion_x=11; actor.accel_y=22; actor.gravity_z=33;
+    actor.render_object.matrices=matrices;
+    actor.render_object.model_matrix.translation[2]=42;
+    RoomLink *view=(RoomLink *)&actor;
+    FieldActorNode *node=(FieldActorNode *)&actor;
+    if(node->w00!=&state || node->next!=(FieldActorNode *)&parent || node->w08!=(FieldActorNode *)&parent ||
+       node->b0C!=7 || node->b0D!=9 || node->w98!=0x400) return 0;
+    if(view->variant!=3 || view->winLo!=19 || view->winHi!=7 || view->link18C!=(RoomLink *)&parent)
+        return 0;
+    if(view->pos[0]!=actor.pos_x || view->pos[1]!=actor.pos_y || view->rotation[1]!=actor.rot_y ||
+       view->vel[0]!=11 || view->move[1]!=22 || view->accel[2]!=33 || view->p238!=matrices ||
+       view->modelTranslation[2]!=42) return 0;
+    view->pos[2]=-5*65536; view->posMirror[1]=17; view->h250=0x400;
+    view->target->flags=0x40000000;
+    view->target->startFlag=9;
+    if(actor.pos_z!=-5*65536 || actor.base_y!=17 || actor.render_object.flags_9C!=0x400 ||
+       state.core_flags!=0x40000000 || state.reserveda8[4]!=9) return 0;
+    FieldActor snapshot=actor;
+    int (*release[])(RoomEnt *)={RoomLib_ReleaseHandlerB,RoomLib_ReleaseHandlerC};
+    for(unsigned method=0;method<2;++method) {
+        int signal=1;
+        RoomEnt object={0};
+        object.link=view; object.active=1; object.flag3=1; object.sub.signal=&signal;
+        action_state=1;
+        if(release[method](&object)!=0 || action_state!=4 || signal || object.flag3 || object.state!=4)
+            return 0;
+        if(memcmp(&actor,&snapshot,sizeof(actor))) return 0;
+    }
+    puts("Original room actor view: canonical position, animation, motion, parent/model pointers and B/C release state passed");
+    return 1;
+}
+
 static int room_callback_context(void)
 {
     RoomEnt object={0};
@@ -386,7 +430,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context()) return 123;
+    if(!room_callback_context() || !room_actor_view()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

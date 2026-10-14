@@ -26,3 +26,9 @@ int pe_camera_group(const PeCameraBank *bank,unsigned group,PeCamera *camera){
     next.min_x=sign(half(p+44));next.max_x=sign(half(p+46));next.min_y=sign(half(p+48));next.max_y=sign(half(p+50));
     *camera=next;return 1;
 }
+void pe_camera_clamp(const PeCamera *camera,uint32_t flags,uint32_t x,uint32_t y,int16_t position[2]){
+    if(!(flags&0x40))return;
+    int16_t sx=sign((uint16_t)x),sy=sign((uint16_t)y);
+    position[0]=sx<camera->min_x?camera->min_x:sx>camera->max_x?camera->max_x:sx;
+    position[1]=sy<camera->min_y?camera->min_y:sy>camera->max_y?camera->max_y:sy;
+}

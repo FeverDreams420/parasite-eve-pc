@@ -18,6 +18,8 @@ typedef struct PeScene {
     PeInput input;
     PeCameraBank cameras;
     PeCamera camera;
+    unsigned camera_group;
+    int16_t camera_position[2];
     PeRoom room;
     PeRoomBlob entity_bank;
     PeRoomBlob area_bank;
@@ -58,5 +60,7 @@ void pe_scene_set_input(PeScene *scene,uint32_t held);
 int pe_scene_primary_bank(PeScene *scene,PeRoomCatalog *catalog,unsigned area,char *error,size_t error_size);
 int pe_scene_area_bank(PeScene *scene,PeRoomCatalog *catalog,unsigned entity_bank,unsigned day,char *error,size_t error_size);
 int pe_scene_entity_textures(PeScene *scene,PeRoomCatalog *catalog,unsigned area,unsigned day,char *error,size_t error_size);
+int pe_scene_camera_select(PeScene *scene,unsigned group);
+void pe_scene_camera_clamp(PeScene *scene,uint32_t x,uint32_t y);
 
 #endif

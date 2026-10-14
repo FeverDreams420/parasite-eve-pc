@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Scene camera selection supports original opcode 130 and sets render refresh
+bit `0x80`. Position clamping uses selected signed-halfword viewport bounds
+only under flag `0x40`; disabled clamping preserves position. All 33 headless
+tests and ASan/UBSan camera fixtures/full native audit pass, including invalid
+group preservation. Actor focus, screen-offset/origin updates, transitions
+and dynamic bounds remain pending.
+
 Room cameras decode from the taskAux geometry block: matrix, projection
 distance, viewport dimensions and signed bounds. All 509 groups across
 414 Disc 1 rooms validate. Scene preparation retains group zero; room-model

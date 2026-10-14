@@ -456,6 +456,13 @@ int main(void) {
     CHECK(pe_scene_prepare(&catalog, 431, &scene, scene_error, sizeof(scene_error)));
     pe_scene_set_input(&scene,0x80);CHECK(scene.input.held==0x80&&scene.input.pressed==0x80);
     pe_scene_set_input(&scene,0);CHECK(scene.input.released==0x80&&!scene.input.pressed);
+    CHECK(pe_scene_camera_select(&scene,0)&&(scene.actors->render_flags&0x80));
+    CHECK(!pe_scene_camera_select(&scene,scene.cameras.count)&&scene.camera_group==0);
+    PeScriptCommand camera_command={0};camera_command.opcode=130;camera_command.count=1;
+    PeScriptTask camera_task={0};camera_task.program=scene.scripts;camera_task.banks=&scene.script_banks;
+    CHECK(pe_scene_dispatch(&scene,&camera_task,&camera_command)==PE_DISPATCH_CONTINUE);
+    camera_command.args[0].value=scene.cameras.count;
+    CHECK(pe_scene_dispatch(&scene,&camera_task,&camera_command)==PE_DISPATCH_ERROR&&scene.camera_group==0);
     CHECK(scene.scripts.blob == &scene.room.data);
     CHECK(scene.akao.note_lengths[0] == 192 && scene.akao.note_lengths[10] == 4);
     CHECK(scene.akao.lfo_valid && scene.akao.lfo_offsets[0] == 0);

@@ -90,6 +90,12 @@ failed:
 
 PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command){
     PeScene *scene=user;
+    if(command->opcode==130){
+        if(!command->count||!pe_scene_camera_select(scene,pe_script_arg_read(task,&command->args[0]))){
+            snprintf(task->error,sizeof(task->error),"Invalid camera group");return PE_DISPATCH_ERROR;
+        }
+        return PE_DISPATCH_CONTINUE;
+    }
     PeScriptDispatchResult input_result=pe_input_dispatch(&scene->input,task,command);
     if(input_result!=PE_DISPATCH_UNSUPPORTED)return input_result;
     PeScriptDispatchResult result=pe_actors_dispatch(scene->actors,task,command);
@@ -154,4 +160,11 @@ int pe_scene_entity_textures(PeScene *scene,PeRoomCatalog *catalog,unsigned area
     memcpy(scene->vram,next,sizeof(*next));scene->entity_texture_stats=total;
     pe_room_blob_close(&blob);free(next);if(error_size)error[0]=0;return 1;
 failed:pe_room_blob_close(&blob);free(next);return 0;
+}
+int pe_scene_camera_select(PeScene *scene,unsigned group){
+    PeCamera camera;if(!scene->actors||!pe_camera_group(&scene->cameras,group,&camera))return 0;
+    scene->camera=camera;scene->camera_group=group;scene->actors->render_flags|=0x80;return 1;
+}
+void pe_scene_camera_clamp(PeScene *scene,uint32_t x,uint32_t y){
+    if(scene->actors)pe_camera_clamp(&scene->camera,scene->actors->render_flags,x,y,scene->camera_position);
 }

@@ -1,0 +1,23 @@
+[package]
+name = "pe-save-editor"
+version = "0.1.0"
+edition = "2021"
+description = "Parasite Eve (PS1 / PC PsyZ port) Save Editor with GUI and CLI"
+license = "MIT"
+
+[lib]
+name = "pe_save_editor"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pe-save-editor"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+eframe = "0.31"
+encoding_rs = "0.8"
+rfd = "0.15"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

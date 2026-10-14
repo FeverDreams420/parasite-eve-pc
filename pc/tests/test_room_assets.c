@@ -84,9 +84,11 @@ int main(void) {
             CHECK(music.bank < PE_USA_AUDIO_BANKS);
             referenced_banks[music.bank] = 1;
             if (!music.unresolved_short_record) {
+                PeAkaoControl control = {0};
                 for (unsigned voice = 0; voice < 24; ++voice) {
                     if (music.sequence.channels[voice] == UINT32_MAX) continue;
                     PeAkaoChannel channel = {0};
+                    channel.control = &control;
                     CHECK(pe_akao_channel_start(&channel, &music.sequence, voice));
                     PeAkaoChannelResult result = pe_akao_channel_next(&channel, 1024);
                     if (result == PE_AKAO_CHANNEL_NOTE) ++channel_notes;

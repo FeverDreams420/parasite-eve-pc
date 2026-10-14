@@ -1,12 +1,55 @@
 #include "akao_channel.h"
 #include <string.h>
 
+int pe_akao_control_due(PeAkaoControl *control, uint32_t scale, int forced) {
+    uint32_t tempo = control->tempo >> 16;
+    if (scale) {
+        if (scale < 128) tempo += (tempo * scale) >> 7;
+        else tempo = (tempo * scale) >> 8;
+    }
+    control->accumulator += tempo;
+    if ((control->accumulator & UINT32_C(0xffff0000)) || forced) {
+        control->accumulator &= 65535;
+        return 1;
+    }
+    return 0;
+}
+
+void pe_akao_control_step(PeAkaoControl *control) {
+    ++control->musical_ticks;
+    if (control->tempo_duration) {
+        --control->tempo_duration;
+        control->tempo += control->tempo_delta;
+    }
+    if (control->volume_duration) {
+        --control->volume_duration;
+        control->volume += control->volume_delta;
+        control->volume_dirty = 1;
+    }
+    if (control->ticks_per_beat && ++control->tick == control->ticks_per_beat) {
+        control->tick = 0;
+        if (++control->beat == control->beats_per_measure) {
+            control->beat = 0;
+            ++control->measure;
+        }
+    }
+}
+
+static uint32_t slide_delta(uint32_t target, uint32_t current, unsigned duration) {
+    uint32_t difference = target - current;
+    int64_t signed_difference = difference & UINT32_C(0x80000000) ?
+        (int64_t)difference - INT64_C(4294967296) : difference;
+    return (uint32_t)(signed_difference / duration);
+}
+
 int pe_akao_channel_start(PeAkaoChannel *channel, const PeAkaoSequence *sequence, unsigned voice) {
     if (voice >= 24 || sequence->channels[voice] == UINT32_MAX ||
         sequence->channels[voice] >= sequence->size) return 0;
     uint8_t octave = channel->octave;
+    PeAkaoControl *control = channel->control;
     memset(channel, 0, sizeof(*channel));
     channel->octave = octave;
+    channel->control = control;
     channel->sequence = *sequence;
     channel->pc = sequence->channels[voice];
     channel->volume_base = 0x7f00;
@@ -43,11 +86,15 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
             if (channel->sequence.size - pc < 2) goto truncated;
             extended = channel->sequence.bytes[pc + 1];
             prefix = 2;
-            if (extended != 6 && extended != 8 && extended != 9) {
+            if (extended > 3 && extended != 6 && extended != 7 && extended != 8 && extended != 9) {
                 snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO opcode 0xfc/0x%02x at 0x%x", extended, pc);
                 return PE_AKAO_CHANNEL_ERROR;
             }
-            operands = extended == 6 ? 2 : 3;
+            operands = extended == 0 || extended == 2 || extended == 6 ? 2 : 3;
+            if ((extended <= 3 || extended == 7) && !channel->control) {
+                snprintf(channel->error, sizeof(channel->error), "Missing shared AKAO control at 0x%x", pc);
+                return PE_AKAO_CHANNEL_ERROR;
+            }
             break;
         default:
             snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO opcode 0x%02x at 0x%x", opcode, pc);
@@ -110,9 +157,31 @@ truncated:
             }
             break;
         case 0xfc: {
+            const uint8_t *args = channel->sequence.bytes + pc + prefix;
+            if (extended <= 3) {
+                int volume = extended >= 2;
+                int slide = extended & 1;
+                unsigned word_index = slide ? 1 : 0;
+                uint32_t target = (uint32_t)(args[word_index] | (unsigned)args[word_index + 1] << 8) << 16;
+                PeAkaoControl *control = channel->control;
+                uint32_t *current = volume ? &control->volume : &control->tempo;
+                uint16_t *duration = volume ? &control->volume_duration : &control->tempo_duration;
+                uint32_t *delta = volume ? &control->volume_delta : &control->tempo_delta;
+                if (slide) {
+                    *duration = (uint16_t)(value ? value : 256);
+                    *current &= UINT32_C(0xffff0000);
+                    *delta = slide_delta(target, *current, *duration);
+                } else {
+                    *duration = 0;
+                    *current = target;
+                    if (volume) control->volume_dirty = 1;
+                }
+                break;
+            }
             unsigned count = value ? value : 256;
-            if (extended == 6 || (unsigned)channel->repeats[channel->loop_index] + 1 == count) {
-                const uint8_t *args = channel->sequence.bytes + pc + prefix;
+            int taken = extended == 6 || (extended == 7 ? channel->control->condition >= value :
+                        (unsigned)channel->repeats[channel->loop_index] + 1 == count);
+            if (taken) {
                 unsigned displacement_index = extended == 6 ? 0 : 1;
                 unsigned word = args[displacement_index] | (unsigned)args[displacement_index + 1] << 8;
                 int displacement = word & 32768 ? (int)word - 65536 : (int)word;

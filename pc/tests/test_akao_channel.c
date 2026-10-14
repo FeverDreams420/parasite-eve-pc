@@ -89,6 +89,52 @@ int main(void) {
     CHECK(pe_akao_channel_start(&channel, &sequence, 0));
     CHECK(pe_akao_channel_next(&channel, 7) == PE_AKAO_CHANNEL_ERROR);
     CHECK(channel.pc == 0 && channel.commands == 7 && strstr(channel.error, "limit"));
+    PeAkaoControl control = {0};
+    channel.control = &control;
+    const uint8_t slides[] = {0xfc,0,0,0x20, 0xfc,1,4,0,0x60,
+                              0xfc,2,0,0x50, 0xfc,3,0,0,0x10, 0x11};
+    sequence.bytes = slides; sequence.size = sizeof(slides);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(control.tempo == 0x20000000 && control.tempo_duration == 4 && control.tempo_delta == 0x10000000);
+    CHECK(control.volume == 0x50000000 && control.volume_duration == 256 && control.volume_delta == 0xffc00000);
+    for (unsigned i = 0; i < 4; ++i) pe_akao_control_step(&control);
+    CHECK(control.tempo == 0x60000000 && !control.tempo_duration && control.volume == 0x4f000000);
+    for (unsigned i = 0; i < 252; ++i) pe_akao_control_step(&control);
+    CHECK(control.volume == 0x10000000 && !control.volume_duration && control.musical_ticks == 256);
+    const uint8_t quantized[] = {0xfc,1,3,5,0,0x11};
+    control.tempo = 0x10001;
+    sequence.bytes = quantized; sequence.size = sizeof(quantized);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    for (unsigned i = 0; i < 3; ++i) pe_akao_control_step(&control);
+    CHECK(control.tempo == 0x4ffff); /* preserve truncation; do not snap to target */
+    const uint8_t conditional[] = {0xfc,7,4,2,0,0xa6,0xa6,0x11};
+    for (unsigned taken = 0; taken < 2; ++taken) {
+        sequence.bytes = conditional; sequence.size = sizeof(conditional);
+        control.condition = taken ? 4 : 3; channel.octave = 4;
+        CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+        CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+        CHECK(channel.octave == (taken ? 4 : 6));
+    }
+    PeAkaoChannel second = {0}; second.control = &control;
+    CHECK(pe_akao_channel_start(&second, &sequence, 0));
+    CHECK(second.control == channel.control); /* same bank across channels */
+    memset(&control, 0, sizeof(control));
+    control.tempo = 0x80000000;
+    CHECK(!pe_akao_control_due(&control, 0, 0) && control.accumulator == 32768);
+    CHECK(pe_akao_control_due(&control, 0, 0) && !control.accumulator);
+    CHECK(pe_akao_control_due(&control, 128, 0) == 0 && control.accumulator == 16384);
+    control.accumulator = 0;
+    CHECK(pe_akao_control_due(&control, 64, 0) == 0 && control.accumulator == 49152);
+    CHECK(pe_akao_control_due(&control, 0, 1) && control.accumulator == 16384);
+    control.ticks_per_beat = control.beats_per_measure = 2;
+    for (unsigned i = 0; i < 4; ++i) pe_akao_control_step(&control);
+    CHECK(control.measure == 1 && !control.tick && !control.beat);
+    channel.control = NULL;
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_ERROR && !channel.pc);
+    CHECK(strstr(channel.error, "Missing shared AKAO control"));
     puts("AKAO channel: state commands, finite/nested loops, signed jumps, key-off and explicit errors passed");
     return 0;
 }

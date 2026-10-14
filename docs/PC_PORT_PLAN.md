@@ -12,6 +12,8 @@ Aktualizacja audio: `akao-sequence` w CTest sprawdza maski i offsety kanałów o
 
 Katalog natywny odczytuje również 250 zakresów banków audio z tabeli EXE. Wszystkie 51 różnych banków próbek wskazanych przez rekordy muzyczne pokojów Disc 1 przechodzi odczyt z PE.IMG i upload z relokacją adresów instrumentów do wybranego banku SPU. Testy sprawdzają zachowanie źródła i poprzedniego stanu po błędzie. Automatyczny dobór banku z aktywnych głosów, komendy skryptowego audio, sekwencer i synteza pozostają do wdrożenia; sam upload tych banków nie jest dowodem odtwarzania muzyki.
 
+Wspólny `PeAkaoControl` obsługuje komendy FC/00..03 (tempo i master-volume set/slide), warunek FC/07, akumulator tempa, wymuszone ticki oraz liczniki taktu/miary. Testy obejmują współdzielenie kontekstu, oba wyniki warunku, opadające i kwantyzowane slide'y, czas 256 ticków i skalowanie tempa. Te operacje nie są jeszcze połączone z odliczaniem nut, zegarem SPU i mixerem; pełny sekwencer pozostaje nieukończony.
+
 Punkt wyjściowy audytu: commit `83aa1c5f8`, 14 października 2026. Poniższy stan uwzględnia także wdrożony runner headless z WP01.
 
 | Obszar | Co istnieje | Czego obecne dowody nie potwierdzają |

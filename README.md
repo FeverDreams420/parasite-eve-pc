@@ -212,3 +212,10 @@ original four-slot ring stack and zero-as-256 repeat count. Tests also check
 invalid targets and infinite-loop limits. Note timing/pitch, instrument
 commands, remaining flow/LFOs, SPU allocation and
 synthesis are still pending. Passing parser/command tests is not music playback.
+
+Channels share `PeAkaoControl` for FC/00..03 tempo/master-volume set/slide
+commands and the FC/07 condition branch. The native control helpers preserve
+the scaled tempo accumulator, forced musical ticks, slide truncation and
+beat/measure counters. The caller must run channel processing between the due
+check and slide/meter update, as in the original timer. These helpers are not
+yet connected to note countdowns or the mixer; sequence playback is incomplete.

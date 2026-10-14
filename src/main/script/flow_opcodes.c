@@ -25,7 +25,6 @@
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
-u32 *g_ScriptCursor;
 ScriptNode *g_ScriptNodePool;
 u8 g_ScriptCameraBytes[3];
 int g_ScriptCursorAddress;
@@ -282,59 +281,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, active) == 0x10, interpreter_wait_off
 /* Tentative COMMON declarations preserve small-data metadata for stock
  * maspsx. Storage remains at the existing data/linker addresses. */
 ScriptNode *g_ScriptNodePool;
-u32 *g_ScriptCursor;
 
-void Script_RunQueue(void)
-{
-    u32 *args[16];
-    ScriptNode *node;
-    u8 *entity;
-    u32 header, modes, tail, opcode;
-    u32 *values;
-    u8 *argument_entity;
-    u16 i;
 
-    do {
-        node = g_ScriptNodePool;
-        /* Retail first reads flags and sequence together as a word. */
-        if (*(u32 *)&node->flags & 0x50) continue;
-        entity = (u8 *)g_CurrentEntity;
-        if ((((FieldActor *)entity)->flags & 0x1000) && !(node->flags & 0x80)) continue;
-        if ((g_GameStateFlags & 0x100) && entity != (u8 *)D_8009D254 && !(node->flags & 0x80)) continue;
-        node = g_ScriptNodePool;
-        if (node->active == 0) continue;
-        node->active--;
-        if (node->active != 0) continue;
-        g_ScriptCursor = node->current.script;
-        do {
-            header = *g_ScriptCursor;
-            g_ScriptCursor++;
-            values = g_ScriptCursor + 1;
-            tail = *g_ScriptCursor;
-            modes = header >> 17;
-            opcode = header & 0x1FFF;
-            header >>= 13;
-            header &= 15;
-            g_ScriptCursor = values + header;
-            for (i = 0; i < header; i++) {
-                switch (modes & 7) {
-                case 0: args[i] = &values[i]; break;
-                case 3: args[i] = &g_ScriptOperandTable[values[i]]; break;
-                case 1:
-                    /* Reload after every handler: it may switch actors. */
-                    args[i] = (u32 *)((argument_entity = D_8009D2F0[0]) + 0xAC + values[i] * 4);
-                    break;
-                case 2: args[i] = &g_ScriptVariableBank[values[i]]; break;
-                case 4: args[i] = &g_ScriptNodeActiveFlags[values[i]]; break;
-                }
-                modes >>= 3;
-                if (i == 4) modes = tail;
-            }
-        } while (g_ScriptQueueOpcodeHandlers[opcode](args));
-        /* Handlers may replace both the current node and the script cursor. */
-        g_ScriptNodePool->current.script = g_ScriptCursor;
-    } while ((g_ScriptNodePool = g_ScriptNodePool->next) != 0);
-}
 
 typedef struct {
     int value;

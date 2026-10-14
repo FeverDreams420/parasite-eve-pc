@@ -492,5 +492,12 @@ failure when script capacity is exhausted. All 22 tests pass headless with
 Disc 1; actor tests also pass ASan/UBSan. Complete opcode 8 remains unsupported
 until model allocation and floor lookup are implemented; this core alone is
 not a physical actor simulation or playable scene.
+
+Actor collection now releases script tasks before recycling deleted slots,
+unlinks head/middle/tail entries, clears the transient actor flag and releases
+the player's movement locks as in the original. Slot reuse assigns a new ID.
+Tests cover deferred deletion, complete/empty lists, reuse and corrupt links;
+all 22 tests pass headless with Disc 1, and actor tests pass ASan/UBSan.
+Parent hierarchies, model resources and complete scene execution remain pending.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

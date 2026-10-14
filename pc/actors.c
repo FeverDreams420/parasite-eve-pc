@@ -51,3 +51,48 @@ invalid:
     snprintf(actors->error, sizeof(actors->error), "Invalid actor type or list linkage");
     return -1;
 }
+
+int pe_actors_collect(PeActors *actors) {
+    unsigned visited = 0; int previous = -1, index = actors->head;
+    /* Check list linkage before unlinking or recycling any actor. */
+    while (index >= 0) {
+        if ((unsigned)index >= PE_ACTOR_CAPACITY || ++visited > PE_ACTOR_CAPACITY ||
+            !actors->slots[index].used || actors->slots[index].previous != previous) goto invalid;
+        previous = index; index = actors->slots[index].next;
+    }
+    if (index != -1 || visited != actors->live) goto invalid;
+    unsigned free_count = 0; index = actors->free_head;
+    while (index >= 0) {
+        if ((unsigned)index >= PE_ACTOR_CAPACITY || ++free_count > PE_ACTOR_CAPACITY ||
+            actors->slots[index].used) goto invalid;
+        index = actors->free_next[index];
+    }
+    if (index != -1 || free_count + actors->live != PE_ACTOR_CAPACITY) goto invalid;
+    index = actors->head;
+    while (index >= 0) {
+        PeActor *actor = &actors->slots[index]; int next = actor->next;
+        actor->script.flags &= ~UINT32_C(0x800000);
+        if (!pe_script_scheduler_collect(actors->scheduler, &actor->script)) {
+            snprintf(actors->error, sizeof(actors->error), "%s", actors->scheduler->error);
+            return 0;
+        }
+        if (actor->script.flags & 0x10) {
+            if (actor->previous < 0) actors->head = next;
+            else actors->slots[actor->previous].next = next;
+            if (next >= 0) actors->slots[next].previous = actor->previous;
+            if (actors->player == index) {
+                actors->player = -1;
+                actors->scheduler->banks->move_lock &= ~UINT32_C(0xd);
+            }
+            actor->used = 0;
+            actors->free_next[index] = actors->free_head; actors->free_head = index;
+            --actors->live;
+        }
+        index = next;
+    }
+    actors->error[0] = 0;
+    return 1;
+invalid:
+    snprintf(actors->error, sizeof(actors->error), "Invalid actor list during collection");
+    return 0;
+}

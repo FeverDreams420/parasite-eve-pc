@@ -6,15 +6,7 @@
 #include "pe1/game_state.h"
 #include "pe1/psyq_gpu.h"
 
-extern int g_MenuSaveBgFadeState; /* Fade state. */
-extern int g_MenuSaveBgFadeHeight; /* Number of 256-pixel blocks. */
-extern int g_MenuSaveBgFadeLutLen; /* Fade curve length. */
-extern int g_MenuSaveBgFadeStep; /* Signed curve step. */
-extern int g_MenuSaveBgFadeIndex; /* Curve position. */
-extern int g_MenuSaveBgFadeTint; /* Fade parameter. */
-extern u8 g_MenuSaveBgFadeLut[]; /* Fade curve. */
-
-
+#include "pe1/menu_fade_state.h"
 
 PE1_STATIC_ASSERT(sizeof(DRAWENV) == 0x5C, menu_background_drawenv_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DRAWENV, r0) == 0x19, menu_background_drawenv_rgb_offset);

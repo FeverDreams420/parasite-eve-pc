@@ -334,7 +334,6 @@ void Menu_DrawSkillItem(int arg0) {
     MenuWidget_DrawCenteredTableText(arg0 + 0x5D);
 }
 
-int g_MenuItemContextFlag;
 MenuWidgetNode *g_MenuActiveWidget;
 
 void Draw_SetTextDimmed(int value);

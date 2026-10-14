@@ -84,14 +84,6 @@ int main(void)
     }
     CHECK(pe_disc_read(&disc,&catalog.archive,(uint64_t)catalog.sector_bounds[2]*2048,
                       &g_ResidentDataPack,sizeof(g_ResidentDataPack)));
-    unsigned weapon=0,armor=0;
-    for(unsigned id=0;id<255;++id) {
-        ItemDataRecord *item=Item_LookupBaseData(id);
-        if(!item)continue;
-        if(!weapon && item->kind==1)weapon=id+1;
-        if(!armor && item->kind==9)armor=id+1;
-    }
-    CHECK(weapon && armor);
     ResetGraph(0);
     RenderNativeTag ordering[4096];
     D_800B0E38.ordering[0]=D_800B0E38.ordering[1]=ordering;
@@ -110,11 +102,7 @@ int main(void)
             Script_InitNodePool(); Script_InitNodeFreeList();
             Battle_SaveAyaState();
             memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
-            g_AyaSaveState.inventory_slot_count=2;
-            g_AyaSaveState.inventory_items[0]=weapon;
-            g_AyaSaveState.inventory_items[1]=armor;
-            g_AyaSaveState.equipped_weapon_slot=0;
-            g_AyaSaveState.equipped_armor_slot=1;
+            Inv_InitNewGameInventory();
             ClearOTagR((OT_TYPE *)ordering,4096);
             u8 scene[]={0,0};
             FieldActor *actor=Scene_LoadMap(scene,NULL,full);
@@ -125,7 +113,7 @@ int main(void)
             CHECK(actor->script_base==(u8 *)script && actor->script_node_lists[2]);
             CHECK(actor->move_factor==0x10000 && actor->render_object.matrices);
             CHECK(((Combatant *)((BattleEntity *)actor)->core)->maxHP==g_AyaSaveState.max_hp);
-            CHECK(g_AyaBattleState.action->weapon.kind==1);
+            CHECK(g_AyaBattleState.action->weapon.kind==Item_LookupBaseData(0x43)->kind);
             ++players;
         }
         g_PlayerEntity=NULL;

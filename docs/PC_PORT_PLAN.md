@@ -1500,3 +1500,22 @@ ASan/UBSan/function stat checks passed (PsyZ uninstrumented). The fixture sets
 up ammo capacity explicitly: complete Inv_InitNewGameInventory, preceding
 special-record initialization, menu fade dependencies and tagged NG+ carryover
 remain to integrate and verify.
+
+### Original New Game inventory initialization and menu setup dependencies
+
+Inv_InitNewGameInventory and its tagged-item carryover helper compile from
+item/new_game.c. Growth initialization now addresses the canonical Aya stat
+array; the original item order, HP/capacity/spell reset and tagged equipment
+selection remain unchanged. Original Menu_ClampRange, Menu_SaveBgInitFade and
+Menu_ComputeGammaLut compile independently with shared native state. Their
+state declarations are separated from unported DRAWENV layout declarations;
+no menu drawing replacement or stub was introduced.
+
+Tests cover initial stats/items/ammo, equipped selections, one tagged weapon
+and armor carried from special storage, menu range and the exact fade curve.
+The actual-model player-spawn test now calls this original New Game initializer
+instead of manually choosing equipment. Full build, stat-assets/scene-spawn/
+pools CTests and both stat/spawn ASan/UBSan/function runs passed (PsyZ archive
+uninstrumented). Earlier category-grid/special-record setup, metadata/name
+initialization, complete NG+ combinations and startup/room scripts are still
+pending; these fixtures do not prove complete New Game or menu rendering.

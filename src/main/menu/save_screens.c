@@ -33,7 +33,6 @@ int g_MenuActiveItemList;
 MenuConfirmCallback g_MenuConfirmCallback;
 void (*g_MenuDeferredCallback)(void);
 int g_MenuEquipMode;
-int g_MenuItemContextFlag;
 unsigned char *g_MenuItemIconGlyphTable;
 int g_MenuItemPrimListHandles[2];
 int g_MenuSelectionLocked;

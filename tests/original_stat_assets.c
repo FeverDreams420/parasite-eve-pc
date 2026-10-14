@@ -10,6 +10,7 @@
 #include "pe1/weapon_list_output.h"
 #include "pe1/battle_modifiers.h"
 #include "pe1/battle_saved_state.h"
+#include "pe1/menu_fade_state.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,6 +23,53 @@ static unsigned armor_third(unsigned value)
     if(value>=85)return (value*249/208+402)/10;
     unsigned root=0; while((root+1)*(root+1)<=value*3000)++root;
     return root/10;
+}
+static int new_game_inventory(void)
+{
+    for(unsigned carry=0;carry<2;++carry) {
+        memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
+        for(unsigned i=0;i<3;++i) {
+            g_InvSpecialItemRecords[i].ammo=777;
+            g_InvSpecialItemRecords[i].baseStats[2]=0;
+            g_InvSpecialItemRecords[i].bonusStats[2]=999;
+        }
+        if(carry) {
+            g_InventoryRuntime.equipment[120]=*Item_LookupBaseData(0x43);
+            g_InventoryRuntime.equipment[121]=*Item_LookupBaseData(0x95);
+            g_InventoryRuntime.equipment[120].flags|=16;
+            g_InventoryRuntime.equipment[121].flags|=16;
+            g_InventoryRuntime.specialStorage[0]=0x178;
+            g_InventoryRuntime.specialStorage[1]=0x179;
+        }
+        Inv_InitNewGameInventory();
+        AyaLevelStats *stats=Aya_LookupLevelStats(0);
+        CHECK(g_AyaSaveState.current_hp==stats->hp && g_AyaSaveState.max_hp==stats->hp);
+        CHECK(g_AyaSaveState.inventory_slot_count==stats->inventoryCapacity);
+        for(unsigned i=0;i<7;++i)
+            CHECK(g_AyaSaveState.stats.levels[i]==*(u16 *)Aya_GetStatGrowthTable(i));
+        CHECK(g_AyaSaveState.parasite_spell_flags==1 && g_AyaSaveState.level==0 && g_AyaSaveState.total_exp==0);
+        CHECK(g_AyaSaveState.equipped_weapon_slot==0 && g_AyaSaveState.equipped_armor_slot==1);
+        const s16 expected[]={0x100,0x101,0x102,0x200,6};
+        CHECK(!memcmp(g_AyaSaveState.inventory_items,expected,sizeof(expected)));
+        CHECK(g_InvSpecialItemRecords[0].ammo==Item_LookupBaseData(0)->ammo);
+        CHECK(!g_InvSpecialItemRecords[1].ammo && !g_InvSpecialItemRecords[2].ammo);
+        CHECK(g_MenuItemContextFlag==61 && g_AyaSaveState.menu_clamp_value==61);
+        CHECK(g_MenuSaveBgFadeState==0 && g_MenuSaveBgFadeStep==0 && g_MenuSaveBgFadeHeight==32 && g_MenuSaveBgFadeTint==72);
+        unsigned value=0, length=0;
+        for(unsigned i=0;i<16;++i) {
+            CHECK(g_MenuSaveBgFadeLut[i]==value);
+            length=i+1;
+            if(value>=255)break;
+            value=(144*256+112*value)/256;
+        }
+        CHECK(g_MenuSaveBgFadeLutLen==length);
+        if(carry) {
+            CHECK(g_AyaSaveState.inventory_items[5]==0x178 && g_AyaSaveState.inventory_items[6]==0x179);
+            CHECK(!g_InventoryRuntime.specialStorage[0] && !g_InventoryRuntime.specialStorage[1]);
+        }
+    }
+    puts("Original New Game inventory: stats, initial items, tagged carryover and menu fade passed");
+    return 0;
 }
 static int item_addition(void)
 {
@@ -352,6 +400,7 @@ int main(void)
     CHECK(battle_defaults(&disc,&exe)==0);
     CHECK(item_lookups()==0);
     CHECK(item_addition()==0);
+    CHECK(new_game_inventory()==0);
     CHECK(weapon_stats()==0);
     CHECK(armor_stats()==0);
     CHECK(equipment_init()==0);

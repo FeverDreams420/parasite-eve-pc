@@ -25,7 +25,6 @@ int g_InvSelectedItemIndex;
 int g_InvSwapTargetIndex;
 ItemDataRecord *g_MenuActionItemData;
 int g_MenuEquipSwapSkipRestore;
-int g_MenuItemContextFlag;
 
 /* Builders that open the equip screen (weapon and armor lists) and the
  * inventory swap screen, the equip-mode getter and the equip list container

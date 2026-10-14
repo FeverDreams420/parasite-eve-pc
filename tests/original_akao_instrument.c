@@ -17,7 +17,7 @@ Pe1GameState g_GameState;
 #include <string.h>
 #include "akao_sequence.h"
 #include "spu_bank.h"
-#include "host_disc.h"
+#include "pe1/cdrom.h"
 _Alignas(u32) u8 g_SceneSectorDirectory[4 + 2 * (PE_USA_AUDIO_BANKS + 1)];
 #include <psyz/spu.h>
 
@@ -71,7 +71,31 @@ static int asset_audit(int execute)
     PeRoomCatalog catalog;
     CHECK(pe_disc_open(&disc, path));
     CHECK(pe_room_catalog_open(&catalog, &disc));
-    pe_host_disc_bind(&disc, &catalog.archive);
+    CdRom_BindImage(&disc, &catalog.archive);
+    {
+        u8 expected[2048], actual[2050];
+        u32 saved_flags = g_GameState.flags;
+        g_GameState.flags = 0x200;
+        memset(actual, 0xa5, sizeof(actual));
+        CHECK(pe_disc_read(&disc, &catalog.archive, 3 * 2048, expected, sizeof(expected)));
+        CHECK(CdRom_ReadSectors(catalog.archive.sector + 1, 2, actual + 1, 1) == 1);
+        CHECK(g_GameState.flags == 0x1004200 && actual[0] == 0xa5 && actual[2049] == 0xa5);
+        CHECK(!memcmp(actual + 1, expected, sizeof(expected)));
+        CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector, actual + 1, 1) == -1);
+        CHECK(!memcmp(actual + 1, expected, sizeof(expected)));
+        CHECK(CdRom_PollReady() == 0 && g_GameState.flags == 0x200);
+        CHECK(CdRom_ReadSectors(UINT32_MAX, 1, actual + 1, 1) == -1);
+        CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector, actual + 1, UINT32_MAX) == -1);
+        CHECK(CdRom_PollReady() == -1 && g_GameState.flags == 0x200);
+        CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector, NULL, 1) == -1);
+        CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector + catalog.archive.size / 2048,
+                                     actual + 1, 1) == -1);
+        CHECK(!memcmp(actual + 1, expected, sizeof(expected)));
+        CdRom_BindImage(NULL, NULL);
+        CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector, actual + 1, 1) == -1);
+        CdRom_BindImage(&disc, &catalog.archive);
+        g_GameState.flags = saved_flags;
+    }
     g_GameState.pe_image_base_lba = catalog.archive.sector;
     memcpy(g_SceneSectorDirectory, &catalog.audio_base, 4);
     memcpy(g_SceneSectorDirectory + 4, catalog.audio_bounds, sizeof(catalog.audio_bounds));
@@ -127,7 +151,7 @@ static int asset_audit(int execute)
         g_AkaoBgmHandle[0] = NULL;
         pe_room_blob_close(&menu);
         free(resident);
-        pe_host_disc_bind(NULL, NULL);
+        CdRom_BindImage(NULL, NULL);
     pe_disc_close(&disc);
         return 0;
     }
@@ -243,7 +267,7 @@ static int asset_audit(int execute)
     if (execute == 2) { CHECK(chunked_banks > 0); printf("Original sector loader: %u bank loads required multiple chunks\n", chunked_banks); CHECK(audible_samples != 0); printf("nonzero PCM samples: %llu; PCM hash: %016llx\n", audible_samples, (unsigned long long)pcm_hash); }
     free(record_samples);
     free(resident);
-    pe_host_disc_bind(NULL, NULL);
+    CdRom_BindImage(NULL, NULL);
     pe_disc_close(&disc);
     printf("original AKAO %s: %u rooms, %u sequences, %u channels; %u short records not executed\n",
            execute == 2 ? "240 ticks and PCM" : execute ? "start and first note/stop" : "start", rooms, sequences, channels, short_records);

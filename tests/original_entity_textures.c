@@ -41,7 +41,7 @@ int CdRom_ReadSectorsFromLba(u32 lba,void *destination,u32 size) {
 int CdRom_PollReady(void) { ++polls; return poll_result; }
 int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int w) { abort(); }
 #else
-#include "host_disc.h"
+#include "pe1/cdrom.h"
 int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int w) { abort(); }
 #endif
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
@@ -171,7 +171,7 @@ int main(void)
     if(!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     PeDisc disc={0}; PeRoomCatalog catalog;
     CHECK(pe_disc_open(&disc,path) && pe_room_catalog_open(&catalog,&disc));
-    pe_host_disc_bind(&disc,&catalog.archive);
+    CdRom_BindImage(&disc,&catalog.archive);
     g_PeImageBaseLba=catalog.archive.sector;
     for(unsigned i=0;i<64;++i) {
         g_PeImageSectorTable[i]=catalog.sector_bounds[i];
@@ -348,7 +348,7 @@ int main(void)
     unsigned char guard=0xa5;
     CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector-1,&guard,1)==-1 && guard==0xa5);
     CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector,&guard,UINT32_MAX)==-1 && guard==0xa5);
-    pe_host_disc_bind(NULL,NULL);
+    CdRom_BindImage(NULL,NULL);
     CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector,&guard,1)==-1 && guard==0xa5);
     pe_disc_close(&disc);
     printf("Original entity loader: %u real area/day banks, %u TIM uploads with full VRAM comparison, 14 model rebuilds, %u real animation attachment frames\n",loaded,uploads,animated_frames);

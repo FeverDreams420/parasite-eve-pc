@@ -7,7 +7,6 @@
 #include "pe1/boot_disc_check.h"
 #include "pe1/boot_display.h"
 #include "pe1/boot_services.h"
-#include "pe1/cd_poll.h"
 #include "pe1/cdrom.h"
 #include "pe1/cdrom_buffers.h"
 #include "pe1/game_state.h"

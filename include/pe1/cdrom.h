@@ -3,6 +3,11 @@
 
 #include "common.h"
 
+struct PeDisc;
+struct PeDiscFile;
+/* Borrow an open image and its PE.IMG extent; NULL unmounts it. */
+void CdRom_BindImage(struct PeDisc *disc, const struct PeDiscFile *archive);
+
 struct CdlLOC;
 
 int DsControl(unsigned char command, void *param, void *result);

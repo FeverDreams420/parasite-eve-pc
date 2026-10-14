@@ -55,6 +55,15 @@ else()
 endif()
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
+# Original scene/archive module owns file-image I/O and completion flags.
+add_library(parasite-eve-original-disc OBJECT src/main/cdrom/scene_assets.c)
+target_include_directories(parasite-eve-original-disc PRIVATE include pc)
+if(MSVC)
+    target_compile_options(parasite-eve-original-disc PRIVATE /Gy /Gw)
+else()
+    target_compile_options(parasite-eve-original-disc PRIVATE -ffunction-sections -fdata-sections)
+endif()
+
 # Original AKAO units compile in place while their SPU/timer dependencies
 # are connected. The title frontend uses the original effect playback path.
 add_library(parasite-eve-original-akao OBJECT
@@ -97,7 +106,7 @@ if(BUILD_TESTING)
     target_include_directories(test-original-akao-layout PRIVATE include)
     add_test(NAME original-game-akao-layout COMMAND test-original-akao-layout)
     add_executable(test-original-akao-instrument tests/original_akao_instrument.c
-        pc/disc.c pc/room.c pc/host_disc.c pc/akao_sequence.c pc/spu_bank.c
+        pc/disc.c pc/room.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/akao_sequence.c pc/spu_bank.c
         $<TARGET_OBJECTS:parasite-eve-original-akao>)
     target_include_directories(test-original-akao-instrument PRIVATE include pc)
     target_link_libraries(test-original-akao-instrument PRIVATE psyz)
@@ -389,7 +398,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-entity-texture-assets tests/original_entity_textures.c
-        pc/host_disc.c pc/disc.c pc/room.c pc/vram.c pc/model.c pc/room_banks.c pc/animation.c pc/matrix.c
+        $<TARGET_OBJECTS:parasite-eve-original-disc> pc/disc.c pc/room.c pc/vram.c pc/model.c pc/room_banks.c pc/animation.c pc/matrix.c
         src/main/cdrom/asset_lookup.c
         $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
         $<TARGET_OBJECTS:parasite-eve-original-camera>

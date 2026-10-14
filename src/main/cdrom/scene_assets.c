@@ -1,20 +1,18 @@
 #include "common.h"
+#include "disc.h"
 #include "pe1/akao.h"
 #include "pe1/akao/commands.h"
 #include "pe1/akao/pan3d.h"
 #include "pe1/asset_key_record.h"
-#include "pe1/cd_poll.h"
 #include "pe1/cdrom.h"
 #include "pe1/cdrom_buffers.h"
 #include "pe1/entity_frame_update.h"
-#include "pe1/game_audio_state.h"
 #include "pe1/game_state.h"
 #include "pe1/game_state_types.h"
 #include "pe1/geom_state.h"
 #include "pe1/gpu_image.h"
 #include "pe1/gte.h"
 #include "pe1/pe_image.h"
-#include "pe1/psyq_bios.h"
 #include "pe1/psyq_cd.h"
 #include "pe1/psyq_ds_queue.h"
 #include "pe1/psyq_gpu.h"
@@ -71,8 +69,8 @@ s32 Akao_SetPos3D(s32 arg0, s32 arg1, u16 arg2, u16 arg3, u16 arg4) {
     Akao_Calc3DPan(&local.rect, &local.out1, &local.out2);
 
     {
-        if (g_AkaoRuntimeState.reset_pending != 0) {
-            u8 **table = &g_AkaoRuntimeState.voice_banks[3];
+        if (g_GameState.cd_range_read_mode != 0) {
+            void **table = g_GameState.scene_object_tables;
 
             ret = Akao_Cmd_24(table[arg0], arg1, local.out1, local.out2);
         }
@@ -259,53 +257,44 @@ void Draw_ClearOnFlag(void) {
     }
 }
 
-int CdRom_ReadSectorsFromLba(u32 lba, void *destination, u32 size) {
-    return CdRom_ReadSectors(lba, 0, destination, size);
+static PeDisc *mounted_disc;
+static PeDiscFile mounted_archive;
+static int completion;
+void CdRom_BindImage(PeDisc *disc, const PeDiscFile *archive)
+{
+    mounted_disc = archive ? disc : NULL;
+    if (archive) mounted_archive = *archive;
+    completion = 0;
+    g_GameState.flags &= ~0x1004000u;
 }
 
-int CdRom_ReadSectors(u32 lba, u32 offset, void *destination, u32 size) {
-    Pe1GameState *state;
-    CdlLOC loc;
-    int ret;
-
-    state = &g_GameState;
-
-    if ((state->flags & 0x1000000) != 0) {
-        return -1;
-    }
-    if (DsSystemStatus() != 1) {
-        return -1;
-    }
-    if (DsQueueLen() != 0) {
-        return -1;
-    }
-    if (DsShellOpen() != g_CdDiskType) {
-        exit(1);
-    }
-
-    state->flags |= 0x1004000;
-    lba += offset;
-    DsIntToPos(lba, &loc);
-    ret = DsRead(&loc, size, destination, 0x80);
-    if (ret != 0) {
-        return ret;
-    }
-
-    state->flags &= 0xFEFFBFFF;
-    printf(g_CdReadErrorFormat, lba, size);
-    return -1;
+/* Host I/O replaces drive negotiation and queues. Data is read immediately;
+ * the original completion poll still releases the game's read-in-progress flags. */
+int CdRom_ReadSectorsFromLba(u32 lba, void *destination, u32 sectors)
+{
+    if (g_GameState.flags & 0x1000000u) return -1;
+    completion = -1;
+    if (!mounted_disc || !destination || lba < mounted_archive.sector) return -1;
+    uint64_t offset = (uint64_t)(lba - mounted_archive.sector) * 2048u;
+    uint64_t bytes = (uint64_t)sectors * 2048u;
+    if (offset > mounted_archive.size || bytes > mounted_archive.size - offset || bytes > SIZE_MAX) return -1;
+    if (!pe_disc_read(mounted_disc, &mounted_archive, offset, destination, (size_t)bytes)) return -1;
+    g_GameState.flags |= 0x1004000u;
+    completion = 0;
+    return 1;
 }
-int CdRom_PollReady(void) {
-    int scratch;
-    int status;
-    Pe1GameState *state;
 
-    status = DsReadSync(&scratch);
-    if (status + 1U < 2U) {
-        state = &g_GameState;
-        state->flags &= 0xFEFFBFFF;
-    }
-    return status;
+int CdRom_PollReady(void)
+{
+    g_GameState.flags &= ~0x1004000u;
+    return completion;
+}
+
+/* The original callers address an image sector plus an optional offset. */
+int CdRom_ReadSectors(u32 lba, u32 offset, void *destination, u32 size)
+{
+    if (offset > UINT32_MAX - lba) return -1;
+    return CdRom_ReadSectorsFromLba(lba + offset, destination, size);
 }
 
 s32 CdRom_LoadInitialImage(void) {
@@ -335,9 +324,6 @@ restart:
         }
     }
 
-    EnterCriticalSection();
-    FlushCache();
-    ExitCriticalSection();
     VSync(0);
     SetDispMask(0);
     SetDefDispEnv(&sp18, 0, 0, 0x140, 0xF0);

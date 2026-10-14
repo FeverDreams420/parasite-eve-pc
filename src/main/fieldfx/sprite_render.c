@@ -633,8 +633,8 @@ void FieldFx_DrawShadedRing(FieldShadedRing *ring, GteMatrix *placement, u8 mode
 {
     FieldRingPacket *packet;
     char *drawMode;
-    u8 outer[4];
-    u8 inner[4];
+    u8 outer[4] = {0};
+    u8 inner[4] = {0};
     GteShortVector position;
     s32 flag;
     s32 p;
@@ -692,12 +692,11 @@ void FieldFx_DrawShadedRing(FieldShadedRing *ring, GteMatrix *placement, u8 mode
         g_FieldFxScratch->depth = RotTransPers4(&points[a], &points[next], &points[c],
                                           &points[d], &packet->x0, &packet->x1,
                                           &packet->x2, &packet->x3, &p, &flag);
-        /* Word copies through plain pointers (not struct fields), so the
-         * g_FieldFxSpriteSemiTrans load below stays after them. */
-        *(u32 *)&packet->c0 = *(u32 *)outer;
-        *(u32 *)&packet->c1 = *(u32 *)outer;
-        *(u32 *)&packet->c2 = *(u32 *)inner;
-        *(u32 *)&packet->c3 = *(u32 *)inner;
+        /* Copy complete colour payloads without alignment or aliasing assumptions. */
+        memcpy(&packet->c0, outer, sizeof(packet->c0));
+        memcpy(&packet->c1, outer, sizeof(packet->c1));
+        memcpy(&packet->c2, inner, sizeof(packet->c2));
+        memcpy(&packet->c3, inner, sizeof(packet->c3));
         packet->tag.length = 8;
         packet->c0.rgb[3] = 0x38;
         /* PSY-Q setSemiTrans(packet, g_FieldFxSpriteSemiTrans). */

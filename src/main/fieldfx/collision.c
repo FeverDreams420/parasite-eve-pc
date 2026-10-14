@@ -12,6 +12,9 @@
 #include "pe1/gte_types.h"
 #include "pe1/psyq_libc.h"
 
+static FieldTriScratch s_FieldTriWorkspace;
+FieldTriScratch *g_FieldFxTriScratch = &s_FieldTriWorkspace;
+
 int FieldFx_UpdateStripCollision(char *data, void *unused, int *hit) {
     GteShortVector local[5];
     FieldTexturedStrip *data_s3 = (FieldTexturedStrip *)data;
@@ -175,7 +178,6 @@ int FieldFx_IsPointInTriangleXZ(GteShortVector *point, GteShortVector *tri)
     FIELD_TRI_SCRATCH->rel[2].y = 0;
     FIELD_TRI_SCRATCH->edge[0].x = tri[1].x - tri[0].x;
     FIELD_TRI_SCRATCH->edge[0].z = tri[1].z - tri[0].z;
-    g_FieldFxTriScratch = FIELD_TRI_SCRATCH;
     FIELD_TRI_SCRATCH->rel[0].x = point->x - tri[0].x;
     FIELD_TRI_SCRATCH->rel[0].z = point->z - tri[0].z;
     gte_ldopv1_psyq(&g_FieldFxTriScratch->edge[0]);
@@ -295,9 +297,9 @@ int FieldFx_IsPlayerInTriangleXZ(GteShortVector *tri)
     FieldTriScratch *third;
     FieldTriScratch *result;
 
-    point.x = ((FieldTriEntity *)D_8009D254)->pos[0].integer;
-    point.y = ((FieldTriEntity *)D_8009D254)->pos[1].integer;
-    point.z = ((FieldTriEntity *)D_8009D254)->pos[2].integer;
+    point.x = D_8009D254->posX.parts.integer;
+    point.y = D_8009D254->posY.parts.integer;
+    point.z = D_8009D254->posZ.parts.integer;
     FIELD_TRI_SCRATCH->edge[0].y = 0;
     FIELD_TRI_SCRATCH->edge[1].y = 0;
     FIELD_TRI_SCRATCH->edge[2].y = 0;
@@ -306,7 +308,6 @@ int FieldFx_IsPlayerInTriangleXZ(GteShortVector *tri)
     FIELD_TRI_SCRATCH->rel[2].y = 0;
     FIELD_TRI_SCRATCH->edge[0].x = tri[1].x - tri[0].x;
     FIELD_TRI_SCRATCH->edge[0].z = tri[1].z - tri[0].z;
-    g_FieldFxTriScratch = FIELD_TRI_SCRATCH;
     FIELD_TRI_SCRATCH->rel[0].x = point.x - tri[0].x;
     FIELD_TRI_SCRATCH->rel[0].z = point.z - tri[0].z;
     gte_ldopv1_psyq(&g_FieldFxTriScratch->edge[0]);
@@ -344,13 +345,13 @@ int FieldFx_IsPlayerInTriangleXZ(GteShortVector *tri)
 
 int FieldFx_IsPlayerInQuadXZ(GteShortVector *arg0) {
     GteShortVector pos;
-    FieldActor *entity = (FieldActor *)D_8009D254;
+    BattleEntity *entity = D_8009D254;
     GteShortVector *point = &pos;
     int first;
 
-    point->x = entity->pos_x >> 16;
-    point->y = entity->pos_y >> 16;
-    point->z = entity->pos_z >> 16;
+    point->x = entity->posX.parts.integer;
+    point->y = entity->posY.parts.integer;
+    point->z = entity->posZ.parts.integer;
     first = FieldFx_IsPointInTriangleXZ(point, arg0);
     return first | FieldFx_IsPointInTriangleXZ(point, arg0 + 1);
 }

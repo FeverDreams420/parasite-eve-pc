@@ -3064,3 +3064,22 @@ archives uninstrumented. Other draws in this module, authored layer constants,
 out-of-range depths, GPU image fidelity, complete scene integration and removal
 of pc/ remain unverified or incomplete; compiling whole modules is not proof of
 full gameplay.
+
+
+Original ring generation/draw now has an executed native packet fixture:
+four segments, both slots, both placement modes and five blend modes. It
+checks builder coordinates, every mode/quad link, command/length/RGB words,
+the final OT head, consumed arena bytes and guard bytes. Colour payload copies
+use memcpy with initialized ignored padding instead of unaligned word casts.
+The entire original fieldfx/collision.c compiles to supply its actual colour
+scaler. Triangle scratch uses ordinary module storage, and player triangle/quad
+queries read canonical BattleEntity position fields instead of a sparse PS1
+view. The obsolete unused view was removed. A 441-position fixture checks that
+player triangle/quad queries agree with their original point-query counterparts;
+this is coordinate-path equivalence, not an independent collision oracle.
+Full build and six related CTests pass with Disc 1 required. Fresh actor
+ASan/UBSan/function passes for the tested paths (original source instrumented,
+PsyZ/SDL archives uninstrumented). Other collision functions and out-of-range
+sprite/ring OT depths still need verification/repair. Actual GPU ring images,
+authored descriptor bindings, whole-game integration and deletion of pc/ remain
+incomplete. No new repository files were added.

@@ -16,6 +16,9 @@
 #include "pe1/field_textured_model.h"
 #include "pe1/field_model_draw.h"
 #include "pe1/field_oriented_sprite.h"
+#include "pe1/field_shaded_ring.h"
+#include "pe1/field_tri_test.h"
+#include "pe1/field_collision.h"
 #include "pe1/field_textured_strip.h"
 #include "pe1/geom_state.h"
 #include "pe1/field_movement.h"
@@ -769,6 +772,75 @@ static int native_oriented_sprite_packets(void)
     return 1;
 }
 
+static int native_ring_packets(void)
+{
+    struct RingPair { FieldRingPacket packet; RenderTintMode mode; };
+    struct { struct RingPair pairs[4]; u8 guard[16]; } buffer;
+    static RenderGpuTag ordering[4096];
+    GteShortVector points[8]={0};
+    FieldShadedRing ring={.source=points,.color0={80,40,20},.color1={200,100,50},
+        .mode=4,.extent0=16,.extent1=32,.intensity=64};
+    RenderBufferPrefix saved=D_800B0E38;
+    int saved_slot=g_ActiveDrawSlot, saved_offset=g_DrawPacketOffset;
+    GteMatrix *saved_view=g_GeomScroll.words.viewMatrix;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    g_GeomScroll.words.viewMatrix=&view;
+    Psyz_GteCtrlWrite(26,256); Psyz_GteCtrlWrite(29,1365); Psyz_GteCtrlWrite(30,1024);
+    gte_SetGeomOffset(160,120);
+    FieldFx_BuildRingGeometry(&ring);
+    if(points[0].x || points[0].y!=32 || points[4].x || points[4].y!=16) return 0;
+    for(unsigned slot=0;slot<2;++slot) for(unsigned transform=0;transform<2;++transform)
+    for(unsigned blend=0;blend<5;++blend) {
+        memset(&buffer,0xa5,sizeof(buffer)); memset(ordering,0,sizeof(ordering));
+        for(unsigned i=0;i<4096;++i) ordering[i].address=0xffffff;
+        D_800B0E38.ordering[slot]=ordering; D_800B0E38.packets[slot]=(char *)&buffer;
+        g_ActiveDrawSlot=slot; g_DrawPacketOffset=0;
+        FieldFx_SetSpriteBlendMode(blend);
+        GteMatrix placement=view; placement.t[2]=512;
+        FieldFx_DrawShadedRing(&ring,&placement,transform);
+        if(g_DrawPacketOffset!=sizeof(buffer.pairs)) return 0;
+        uintptr_t previous=0xffffff;
+        for(unsigned i=0;i<4;++i) {
+            FieldRingPacket *p=&buffer.pairs[i].packet;
+            RenderTintMode *m=&buffer.pairs[i].mode;
+            if(p->tag.address!=previous || p->tag.length!=8 ||
+               m->tag.address!=(uintptr_t)p || m->tag.length!=1 ||
+               m->command!=(u32)(0xe1000000|((blend?blend-1:0)<<5)) ||
+               p->c0.word!=(u32)((blend?0x3a:0x38)<<24|25<<16|50<<8|100) ||
+               p->c1.word!=(u32)(25<<16|50<<8|100) ||
+               p->c2.word!=(u32)(10<<16|20<<8|40) || p->c3.word!=p->c2.word) return 0;
+            previous=(uintptr_t)m;
+        }
+        unsigned used=0;
+        for(unsigned i=0;i<4096;++i) if(ordering[i].address!=0xffffff) {
+            if(ordering[i].address!=previous) return 0;
+            ++used;
+        }
+        if(used!=1) return 0;
+        for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
+    }
+    D_800B0E38=saved; g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset;
+    g_GeomScroll.words.viewMatrix=saved_view;
+    puts("Original rings: builder, both slots/transforms, all blend modes, paired packet links and guards passed");
+    return 1;
+}
+
+static int native_effect_collision_coordinates(void)
+{
+    BattleEntity player={0}, *saved=D_8009D254;
+    GteShortVector quad[4]={{0,0,0},{16,0,0},{0,0,16},{16,0,16}};
+    D_8009D254=&player;
+    for(int x=-2;x<=18;++x) for(int z=-2;z<=18;++z) {
+        GteShortVector point={x,99,z};
+        player.posX.parts.integer=x; player.posY.parts.integer=99; player.posZ.parts.integer=z;
+        if(FieldFx_IsPlayerInTriangleXZ(quad)!=FieldFx_IsPointInTriangleXZ(&point,quad) ||
+           FieldFx_IsPlayerInQuadXZ(quad)!=FieldFx_IsPointInQuadXZ(&point,quad)) return 0;
+    }
+    D_8009D254=saved;
+    puts("Original effect collision: player/native coordinate paths agree across 441 triangle/quad positions");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -829,7 +901,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

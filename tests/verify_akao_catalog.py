@@ -28,12 +28,21 @@ def main():
 
     handlers = set()
     entries = 0
+    dispatch = (root / "src/main/akao/opcode_dispatch.c").read_text()
     for page in catalog["pages"]:
         extended = page["page"] == "extended"
         expected_opcodes = list(range(32)) if extended else list(range(0xA0, 256))
         if [e["opcode"] for e in page["entries"]] != expected_opcodes:
             raise ValueError("Missing or reordered opcode entries")
         length_address = 0x8009B8BC if extended else 0x8009B85C
+        table_name = "g_AkaoExtOpcodeHandlers" if extended else "g_AkaoOpcodeHandlers"
+        table = re.search(table_name + r"\[\d+\]\s*=\s*\{([^}]+)\}", dispatch)
+        if not table:
+            raise ValueError("Missing native dispatch table")
+        native = {int(op, 16): name for op, name in re.findall(
+            r"\[(0x[0-9A-Fa-f]+)\]\s*=\s*(\w+)", table[1])}
+        if len(native) != len(expected_opcodes):
+            raise ValueError("Native dispatch entry count mismatch")
         for index, entry in enumerate(page["entries"]):
             address = int(page["table_address"], 16) + entry["opcode"] * 4
             actual = struct.unpack_from("<I", data, offset(address, 4))[0]
@@ -43,6 +52,8 @@ def main():
                 raise ValueError("Lookahead skip mismatch")
             if not entry["handler"] or not entry["source_files"]:
                 raise ValueError("Unresolved handler")
+            if native.get(entry["opcode"]) != entry["handler"]:
+                raise ValueError("Native dispatch handler mismatch")
             for source in entry["source_files"]:
                 pattern = r"\b" + re.escape(entry["handler"]) + r"\s*\([^;{}]*\)\s*\{"
                 if not re.search(pattern, (root / source).read_text()):

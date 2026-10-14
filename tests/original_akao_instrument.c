@@ -56,8 +56,6 @@ int SpuSetReverbModeType(unsigned int mode)
     fprintf(stderr, "unexpected hardware reverb request %u\n", mode);
     abort();
 }
-void SeqOp_SetTempo(void *track);
-void SeqOp_LoadInstrumentFromIndex(void *track);
 void Seq_SetCurrentTrackField56(AkaoValueCommand *command);
 void SeqOp_StreamPair(AkaoTrack *track, u32 voice_mask);
 void SeqOp_ReadTrack64U16(AkaoTrack *track, u32 voice_mask);
@@ -69,10 +67,6 @@ void Akao_InitVoiceState(AkaoTrack *track, void *script);
 void Akao_InitPrimarySecondaryVoices(void);
 void Akao_InitPrimarySecondaryVoicesWithMode(AkaoValueCommand *command);
 void Akao_StepSequencerVoice(void *sequence);
-void SeqOp_SetPanSlide(AkaoTrack *track);
-void SeqOp_SetExpressionSlide(AkaoTrack *track);
-void SeqOp_PitchSlide(AkaoTrack *track);
-void SeqOp_SetBranchTarget(AkaoTrack *track);
 void Akao_SetVoiceKeyOff(AkaoTrack *track, u32 voice_mask, int index);
 void Akao_SetVoiceKeyOn(AkaoTrack *track, u32 voice_mask);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
@@ -219,7 +213,7 @@ int main(int argc, char **argv)
     AkaoTrack track = {0};
     track.pc = tempo;
     bank.tempo_slide_duration = 37;
-    SeqOp_SetTempo(&track);
+    SeqOp_SetTempo(&track, 1);
     CHECK(bank.tempo == 0x12340000u);
     bank.key_off_dirty_mask = 4;
     track.parent_track_id = 0;
@@ -291,7 +285,7 @@ int main(int argc, char **argv)
         instrument->adsr_release_mode = (i >> 2) & 1;
         track.note_pitch = i;
         track.update_flags = 3;
-        SeqOp_LoadInstrumentFromIndex(&track);
+        SeqOp_LoadInstrumentFromIndex(&track, 1);
         CHECK(track.adsr_attack_rate == instrument->adsr_attack_rate);
         CHECK(track.adsr_decay_rate == instrument->adsr_decay_rate);
         CHECK(track.adsr_sustain_level == instrument->adsr_sustain_level);
@@ -428,18 +422,18 @@ int main(int argc, char **argv)
     AkaoTrack lfo = {0};
     lfo.pc = slide;
     lfo.pitch_lfo_target = 0x2000;
-    SeqOp_SetPanSlide(&lfo);
+    SeqOp_SetPanSlide(&lfo, 1);
     CHECK(lfo.pc == slide + 2);
     CHECK(lfo.pitch_lfo_slide_duration == 256);
     CHECK(lfo.pitch_lfo_delta == 32);
     lfo.pc = slide;
     lfo.volume_lfo_target = 0x6000;
-    SeqOp_SetExpressionSlide(&lfo);
+    SeqOp_SetExpressionSlide(&lfo, 1);
     CHECK(lfo.volume_lfo_slide_duration == 256);
     CHECK(lfo.volume_lfo_delta == -32);
     lfo.pc = slide;
     lfo.aux_lfo_target = 0x1000;
-    SeqOp_PitchSlide(&lfo);
+    SeqOp_PitchSlide(&lfo, 1);
     CHECK(lfo.aux_lfo_slide_duration == 256);
     CHECK(lfo.aux_lfo_delta == 16);
     unsigned char branches[16] = {0};
@@ -447,7 +441,7 @@ int main(int argc, char **argv)
     branches[9] = 0xff;
     lfo.pc = branches + 8;
     lfo.expression_value = (int)0xffed1234u;
-    SeqOp_SetBranchTarget(&lfo);
+    SeqOp_SetBranchTarget(&lfo, 1);
     CHECK(lfo.pc == branches + 10);
     CHECK(lfo.branch_target == branches + 2);
     CHECK(lfo.volume == -19);

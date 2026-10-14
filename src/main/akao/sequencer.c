@@ -907,8 +907,8 @@ void SeqOp_DeactivateVoice(AkaoTrack *ptr, int mask) {
     *key_off = 0;
 }
 
-void SeqOp_SetTempo(void *ptr)
-{
+void SeqOp_SetTempo(AkaoTrack *ptr, u32 unused_mask) {
+    (void)unused_mask;
   unsigned char *stream = *((unsigned char **) ptr);
   AkaoSequencerBank *track;
   unsigned int value;
@@ -924,7 +924,8 @@ void SeqOp_SetTempo(void *ptr)
   track->tempo = value;
 }
 
-void SeqOp_SetPitchSlideTarget(void *ptr) {
+void SeqOp_SetPitchSlideTarget(AkaoTrack *ptr, u32 unused_mask) {
+    (void)unused_mask;
     u8 *pc;
 
     {
@@ -966,8 +967,8 @@ void SeqOp_SetPitchSlideTarget(void *ptr) {
     }
 }
 
-void SeqOp_SetTempoSlide(void *ptr)
-{
+void SeqOp_SetTempoSlide(AkaoTrack *ptr, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *stream = *(unsigned char **)ptr;
     AkaoSequencerBank *track;
     unsigned int value;
@@ -1002,7 +1003,8 @@ static inline u8 **SetDuration(u8 **cursor) {
     return cursor;
 }
 
-void SeqOp_SetVolumeSlideTarget(void *ptr) {
+void SeqOp_SetVolumeSlideTarget(AkaoTrack *ptr, u32 unused_mask) {
+    (void)unused_mask;
     void *stream;
     u8 *pc;
     int value;
@@ -1365,8 +1367,8 @@ void SeqOp_SetReturnPoint(AkaoTrack *track, u32 unused_mask) {
     track->repeat_target = next_cursor + (short)value;
 }
 
-void SeqOp_LoadInstrumentFromIndex(void *ptr)
-{
+void SeqOp_LoadInstrumentFromIndex(AkaoTrack *ptr, u32 unused_mask) {
+    (void)unused_mask;
   int value;
   AkaoInstrument *base;
 
@@ -1465,7 +1467,8 @@ void SeqOp_AdjustDetune(AkaoTrack *track, u32 unused_mask) {
     track->detune += (signed char)*cursor;
 }
 
-void SeqOp_SetPitchLFO(void *ptr) {
+void SeqOp_SetPitchLFO(AkaoTrack *ptr, u32 unused_mask) {
+    (void)unused_mask;
     AkaoTrack *track;
     AkaoU8 *pc;
     void *table;
@@ -1562,7 +1565,8 @@ void SeqOp_UpdatePitchLFOTarget(AkaoTrack *track, u32 unused_mask) {
     track->pitch_lfo_depth = (unsigned int)product >> 7;
 }
 
-void SeqOp_SetPanSlide(AkaoScriptState *state) {
+void SeqOp_SetPanSlide(AkaoTrack *state, u32 unused_mask) {
+    (void)unused_mask;
     u8 *pc = state->pc;
     int duration;
     int delta;
@@ -1633,7 +1637,8 @@ void SeqOp_UpdateVolumeLFOTarget(AkaoTrack *track, u32 unused_mask) {
     track->volume_lfo_target = *cursor << 8;
 }
 
-void SeqOp_SetExpressionSlide(AkaoScriptState *state) {
+void SeqOp_SetExpressionSlide(AkaoTrack *state, u32 unused_mask) {
+    (void)unused_mask;
     u8 *pc = state->pc;
     int duration;
     int delta;
@@ -1691,7 +1696,8 @@ void SeqOp_SetPitchBase(AkaoTrack *track, u32 unused_mask) {
     track->aux_lfo_target = *cursor << 7;
 }
 
-void SeqOp_PitchSlide(AkaoScriptState *state) {
+void SeqOp_PitchSlide(AkaoTrack *state, u32 unused_mask) {
+    (void)unused_mask;
     u8 *pc = state->pc;
     int duration;
     int target_delta;
@@ -1807,8 +1813,8 @@ void SeqOp_Noop_904BC(AkaoTrack *track, u32 voice_mask) {
     (void)voice_mask;
 }
 
-unsigned int SeqOp_SetTrack5AValue(void *ptr)
-{
+void SeqOp_SetTrack5AValue(AkaoTrack *ptr, u32 unused_mask) {
+    (void)unused_mask;
   u8 *pc;
   int value;
   AkaoSequencerBank *track;
@@ -1854,7 +1860,8 @@ void SeqOp_ReadAdsrAttackRate(AkaoTrack *track, u32 unused_mask) {
     track->adsr_attack_rate = value;
 }
 
-void SeqOp_ReadAdsrDecayRate(AkaoTrack *track) {
+void SeqOp_ReadAdsrDecayRate(AkaoTrack *track, u32 unused_mask) {
+    (void)unused_mask;
     unsigned char *cursor = track->pc;
     unsigned int flags;
     unsigned char value;
@@ -2095,7 +2102,8 @@ void SeqOp_AdjustVolumeTarget(AkaoTrack *track, u32 unused_mask) {
     track->fixed_note_length = value;
 }
 
-void SeqOp_SetBranchTarget(AkaoScriptState *state) {
+void SeqOp_SetBranchTarget(AkaoTrack *state, u32 unused_mask) {
+    (void)unused_mask;
     u8 *pc = state->pc;
     u8 *target;
     int saved;
@@ -2153,7 +2161,7 @@ void SeqOp_ReadTrack64U16(AkaoTrack *script_track, u32 voice_mask) {
 }
 
 void SeqOp_ReadAdsrDecayAndSustain(AkaoTrack *track, u32 voice_mask) {
-    SeqOp_ReadAdsrDecayRate(track);
+    SeqOp_ReadAdsrDecayRate(track, voice_mask);
     SeqOp_ReadAdsrSustainLevel(track, voice_mask);
 }
 

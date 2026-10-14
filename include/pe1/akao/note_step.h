@@ -70,6 +70,37 @@ void SeqOp_StopTremolo(AkaoTrack *track, u32 voice_mask);
 void SeqOp_UpdatePitchLFOTarget(AkaoTrack *track, u32 voice_mask);
 void SeqOp_UpdateVolumeLFOTarget(AkaoTrack *track, u32 voice_mask);
 
+void SeqOp_LoadInstrumentFromIndex(AkaoTrack *track, u32 voice_mask);
+void SeqOp_PitchSlide(AkaoTrack *track, u32 voice_mask);
+void SeqOp_ReadAdsrDecayRate(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetBranchTarget(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetExpressionSlide(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetPanSlide(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetPitchLFO(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetPitchSlideTarget(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetTempo(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetTempoSlide(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetTrack5AValue(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetVolumeSlideTarget(AkaoTrack *track, u32 voice_mask);
+
+void Akao_PlayNote(AkaoTrack *track, u32 voice_mask);
+void Akao_TieNote(AkaoTrack *track, u32 voice_mask);
+void SeqOp_ClearMask(AkaoTrack *track, u32 voice_mask);
+void SeqOp_ClearTrack34Mask(AkaoTrack *track, u32 voice_mask);
+void SeqOp_ClearTrack3CMask(AkaoTrack *track, u32 voice_mask);
+void SeqOp_Noop(AkaoTrack *track, u32 voice_mask);
+void SeqOp_NoteOnWithPitchSlide(AkaoTrack *track, u32 voice_mask);
+void SeqOp_NoteOnWithVoiceAlloc(AkaoTrack *track, u32 voice_mask);
+void SeqOp_ReadAdsrDecayAndSustain(AkaoTrack *track, u32 voice_mask);
+void SeqOp_ReadAdsrSustainLevel(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetDurationBAAndMask(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetMask(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetRepeatCount(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetTrack34Mask(AkaoTrack *track, u32 voice_mask);
+void SeqOp_SetTrack38Mask(AkaoTrack *track, u32 voice_mask);
+void SeqOp_StopAndClearTrack(AkaoTrack *track, u32 voice_mask);
+void SeqOp_StopVoice(AkaoTrack *track, u32 voice_mask);
+
 /* Opcode handlers: 0xA0..0xFF, and the 0xFC extended page. */
 extern AkaoCommandHandler g_AkaoOpcodeHandlers[];
 extern AkaoCommandHandler g_AkaoExtOpcodeHandlers[];

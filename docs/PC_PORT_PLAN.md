@@ -569,6 +569,8 @@ Osiem original opcode handlers (JumpRelative, StreamPair, ReadTrack64U16, Skip2 
 
 Kolejne 53 original handlers bez bezpośrednich callers mają canonical void(AkaoTrack*,u32) i deklaracje w note_step.h; argument mask jest jawnie niewykorzystywany, bodies zachowano. Fixture wywołuje ReadExpression/ReadDetune/SetPanpot/ReadVolume/SetReleaseRate/ClearFlag3 przez canonical function pointers i sprawdza signed parameters, byte wrap, PC, ADSR i flags. CTest oraz ASan/UBSan/function przechodzą. Pozostałe 47 zmienionych bodies mają dotychczas tylko build i wcześniejsze dowody tam, gdzie opisane; nie jest to test wszystkich 90 procedur. Cała tabela i wykonanie songs/SPU nadal wymagają integracji.
 
+Wszystkie 90 original opcode procedures mają teraz zgodny void(AkaoTrack*,u32) ABI. Dostosowano ostatnie 12 sygnatur i bezpośredni caller ReadAdsrDecayRate; SetTrack5AValue nie deklaruje już nieistniejącego return value. `src/main/akao/opcode_dispatch.c` odtwarza 128 wpisów obu tablic wskazując bezpośrednio original functions, bez casts/adapters. Object target kompiluje tabelę. Verifier porównuje każdy native dispatch entry z katalogiem i private USA EXE; trzy AKAO CTests z wymaganym Disc 1 przechodzą po zmianie. Test linker usuwa nieużywaną pełną tabelę, więc pełne powiązanie handler dependencies i wykonanie bytecode przez tę tabelę nie mają jeszcze runtime dowodu. Global state, grammar tables, nested streams, SPU i PCM pozostają niezintegrowane.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

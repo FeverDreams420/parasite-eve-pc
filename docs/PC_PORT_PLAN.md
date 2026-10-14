@@ -765,3 +765,21 @@ the on-disc layout while allowing its actual alignment. The complete corpus
 passes ASan/UBSan/function on original/test sources; PsyZ is uninstrumented.
 The standalone floor test also passes. This is not proof of playable scenes:
 scene frame execution, scripts and player control still require integration.
+
+### Original actor model setup executable on PC (2026-10-14)
+
+First-location integration is blocked by original scene/frame dependencies,
+including actor model setup and GPU submission. Render_SetupEntityPrims,
+Anim_SetInterpRate and Render_InitPrimBlock are moved unchanged from object.c
+to render/model_setup.c and compile as an original-source object target.
+This isolates existing procedures, without replacement model/render logic.
+
+New required-asset test runs original model setup on writable copies of all
+878 Disc 1 models. It verifies native section pointers, bounded animation/
+matrix storage, identity matrices, both primitive buffers, command/length
+bytes, blend kinds and UV/CLUT/page values against the independent model
+reader. This uses setup=1 and initCount=0; texture relocation variants are not
+yet covered. Original/test-source ASan/UBSan/function passes with PsyZ
+uninstrumented, and the existing projection corpus test passes.
+The target is not yet in the live scene: GPU submission, scene loading,
+script/frame integration and playable actor control remain required.

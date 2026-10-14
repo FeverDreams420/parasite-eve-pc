@@ -192,6 +192,18 @@ if(BUILD_TESTING)
     add_test(NAME original-game-nodes COMMAND test-original-nodes)
 endif()
 
+add_library(parasite-eve-original-model-setup OBJECT src/main/render/model_setup.c)
+target_include_directories(parasite-eve-original-model-setup PRIVATE include)
+if(BUILD_TESTING)
+    add_executable(test-original-model-setup tests/original_model_setup.c
+        pc/disc.c pc/room.c pc/room_banks.c pc/model.c
+        $<TARGET_OBJECTS:parasite-eve-original-model-setup>)
+    target_include_directories(test-original-model-setup PRIVATE include pc)
+    target_link_libraries(test-original-model-setup PRIVATE psyz)
+    add_test(NAME original-game-model-setup COMMAND test-original-model-setup)
+    set_tests_properties(original-game-model-setup PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+endif()
+
 add_library(parasite-eve-original-queue OBJECT src/main/script/queue.c)
 target_include_directories(parasite-eve-original-queue PRIVATE include)
 if(BUILD_TESTING)

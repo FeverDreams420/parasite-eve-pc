@@ -33,4 +33,6 @@ extern BattleStateTail g_SavedBattleStateTailInitial;
 extern AyaBattleState g_AyaBattleState;
 extern BattleStateTail g_SavedBattleStateTail;
 
+void Battle_SaveAyaState(void);
+
 #endif /* PE1_BATTLE_SAVED_STATE_H */

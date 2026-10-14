@@ -1766,16 +1766,3 @@ void Battle_StartDeathAnim(void) {
                         D_8009D254->posZ.parts.integer);
     }
 }
-
-
-void Battle_SaveAyaState(void) {
-    AyaBattleState aya = g_AyaBattleStateInitial;
-    BattleStateTail tail = g_SavedBattleStateTailInitial;
-    BattleAttributes attributes;
-
-    attributes.parameterWord.raw = 0;
-    attributes.effectFlags = 0;
-    g_AyaBattleState = aya;
-    g_SavedBattleStateTail = tail;
-    g_BattleEquipStateBlock = attributes;
-}

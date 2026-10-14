@@ -23,6 +23,27 @@ static unsigned armor_third(unsigned value)
     unsigned root=0; while((root+1)*(root+1)<=value*3000)++root;
     return root/10;
 }
+static int battle_defaults(PeDisc *disc, PeDiscFile *exe)
+{
+    unsigned char original[0x70], tail[0x18];
+    CHECK(pe_disc_read(disc,exe,0x10928-0x10000+0x800,original,sizeof(original)));
+    CHECK(pe_disc_read(disc,exe,0x10998-0x10000+0x800,tail,sizeof(tail)));
+    for(unsigned pass=0;pass<2;++pass) {
+        memset(&g_AyaBattleState,0xa5,sizeof(g_AyaBattleState));
+        memset(&g_SavedBattleStateTail,0xa5,sizeof(g_SavedBattleStateTail));
+        memset(&g_BattleEquipStateBlock,0xa5,sizeof(g_BattleEquipStateBlock));
+        Battle_SaveAyaState();
+        const unsigned char *native=(const unsigned char *)&g_AyaBattleState;
+        CHECK(!memcmp(native,original,0x1c));
+        CHECK(!memcmp(native+PE1_OFFSETOF(Combatant,maxHP),original+0x1c,0x68-0x1c));
+        CHECK(!g_AyaBattleState.action && !g_AyaBattleState.attributes);
+        for(unsigned i=0x68;i<sizeof(original);++i)CHECK(original[i]==0);
+        CHECK(!memcmp(&g_SavedBattleStateTail,tail,sizeof(tail)));
+        CHECK(g_BattleEquipStateBlock.parameterWord.raw==0 && g_BattleEquipStateBlock.effectFlags==0);
+    }
+    puts("Original battle defaults: native reset matches USA executable fields and tail");
+    return 0;
+}
 static int equipment_init(void)
 {
     unsigned pairs=0;
@@ -299,6 +320,7 @@ int main(void)
     u8 effect_codes[6];
     CHECK(pe_disc_read(&disc,&exe,0x923d0-0x10000+0x800,effect_codes,sizeof(effect_codes)));
     CHECK(!memcmp(effect_codes,g_WeaponEffectCodes,sizeof(effect_codes)));
+    CHECK(battle_defaults(&disc,&exe)==0);
     CHECK(item_lookups()==0);
     CHECK(weapon_stats()==0);
     CHECK(armor_stats()==0);

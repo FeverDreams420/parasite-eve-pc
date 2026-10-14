@@ -1447,3 +1447,19 @@ instead of its former abort hook, though its corpus still spawns NPCs only.
 Full build, stat-assets/scene-spawn/pools CTests and stat ASan/UBSan/function
 checks passed (PsyZ archive uninstrumented). Player spawn and playable scene
 integration remain pending; this is not end-to-end gameplay evidence.
+
+### Original saved battle-state reset and USA defaults
+
+Battle_SaveAyaState now compiles alongside Battle_InitEquipLists. The original
+copy/reset procedure is unchanged. Native initial records reproduce the USA
+0x80010928/0x80010998 templates; designated word indices follow Combatant field
+offsets across native padding, rather than copying PS1 bytes over host pointers.
+The stat-assets test reads both source templates directly from the supplied USA
+executable and compares every meaningful prefix byte, both null pointers and
+the full action tail after poisoning and resetting the native records twice.
+
+Full build, stat-assets/scene-spawn/pools CTests and the instrumented stat test
+(ASan/UBSan/function; PsyZ archive uninstrumented) passed. Startup still needs to
+call this original reset in the full player/scene initialization sequence; this
+change alone does not initialize New Game inventory, implement save conversion
+or establish a playable player spawn.

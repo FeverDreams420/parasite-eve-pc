@@ -24,13 +24,13 @@ _Alignas(u32) u8 g_SceneSectorDirectory[4 + 2 * (PE_USA_AUDIO_BANKS + 1)];
 /* Explicit input tables for isolated original procedures, not runtime audio. */
 #define fixture_bank g_AkaoSequencerState.primary
 static unsigned short offsets[2048];
-unsigned short *g_AkaoSampleOffsetTable = offsets;
+extern unsigned short *g_AkaoSampleOffsetTable;
 static char sample_data[65536];
-char *g_AkaoSampleDataBase = sample_data;
-AkaoStagedCommand g_AkaoCmd;
-AkaoSequenceCounter g_AkaoCmd24Sequence = {0x400};
-AkaoQueueEntry g_AkaoMessageQueue[16];
-int g_AkaoMessageQueueCount;
+extern char *g_AkaoSampleDataBase;
+extern AkaoStagedCommand g_AkaoCmd;
+extern AkaoSequenceCounter g_AkaoCmd24Sequence;
+extern AkaoQueueEntry g_AkaoMessageQueue[16];
+extern int g_AkaoMessageQueueCount;
 static AkaoQueueEntry received[16];
 static unsigned received_count;
 static void record_message(AkaoQueueEntry *entry)
@@ -38,14 +38,14 @@ static void record_message(AkaoQueueEntry *entry)
     if (received_count >= 16) abort();
     received[received_count++] = *entry;
 }
-AkaoMessageHandler Akao_MessageHandlers[256];
-volatile u32 g_AkaoMessageQueueLock;
-char g_AkaoDefaultVoiceProgram[4] = {0};
-short g_AkaoPanVolumeTable[256];
-AkaoU8 g_AkaoOpcodeArgLengths[96], g_AkaoExtOpcodeArgLengths[32];
-u16 g_AkaoNoteLengthTable[11] = {48, 24, 16, 12, 8, 6, 4, 3, 2, 1, 96};
-void *g_AkaoSoundEntryTable[256];
-void *g_AkaoBgmHandle[2];
+extern AkaoMessageHandler Akao_MessageHandlers[256];
+extern volatile u32 g_AkaoMessageQueueLock;
+extern char g_AkaoDefaultVoiceProgram[4];
+extern short g_AkaoPanVolumeTable[256];
+extern AkaoU8 g_AkaoOpcodeArgLengths[96], g_AkaoExtOpcodeArgLengths[32];
+extern u16 g_AkaoNoteLengthTable[11];
+extern void *g_AkaoSoundEntryTable[256];
+extern void *g_AkaoBgmHandle[2];
 void Seq_GetGlobalPitch(unsigned int *out);
 void Seq_ApplyGlobalPitch(void);
 void Seq_SetCurrentTrackField56(AkaoValueCommand *command);
@@ -276,6 +276,13 @@ static int asset_audit(int execute)
 
 int main(int argc, char **argv)
 {
+    /* Use production storage; supply only the fixture's input data. */
+    CHECK(Akao_MessageHandlers[0x24] == Seq_StartRelativeNestedStream);
+    g_AkaoSampleOffsetTable = offsets;
+    g_AkaoSampleDataBase = sample_data;
+    const u16 fixture_lengths[11] = {48,24,16,12,8,6,4,3,2,1,96};
+    memcpy(g_AkaoNoteLengthTable, fixture_lengths, sizeof(fixture_lengths));
+    memset(Akao_MessageHandlers, 0, sizeof(Akao_MessageHandlers));
     if (argc == 2 && strcmp(argv[1], "--menu-assets") == 0) return asset_audit(3);
     if (argc == 2 && strcmp(argv[1], "--tick-assets") == 0) return asset_audit(2);
     if (argc == 2 && strcmp(argv[1], "--assets") == 0) return asset_audit(0);

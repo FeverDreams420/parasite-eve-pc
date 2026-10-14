@@ -87,8 +87,7 @@ if(BUILD_TESTING)
 endif()
 foreach(akao_target IN LISTS akao_runtime_targets)
     target_sources(${akao_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-akao>
-        $<TARGET_OBJECTS:parasite-eve-original-disc>
-        src/main/akao/assets.c)
+        $<TARGET_OBJECTS:parasite-eve-original-disc>)
     target_include_directories(${akao_target} PRIVATE include)
     if(MSVC)
         target_link_options(${akao_target} PRIVATE /OPT:REF)

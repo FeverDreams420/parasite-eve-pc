@@ -2270,3 +2270,20 @@ for 44c/44d/44e/44f: 30172/23184/7834/41810. PsyZ is uninstrumented, including i
 unimplemented DMA callback. This verifies those original sound paths, not all
 game audio. Remaining extractions/data files, full runtime integration and
 elimination of pc/ remain incomplete.
+
+
+### Use original driver storage in both runtime and audio tests
+
+Deleted akao/assets.c and placed its unchanged asset/queue/global definitions
+in the existing akao/voice_driver.c. Removed the fixture's duplicate definitions;
+it now supplies input buffers and tables to production storage. It checks the
+production relative-message handler before installing test handlers. No new
+files; the still-partial production message-handler table is unchanged.
+
+Full build and all six original-game-akao CTests pass with Disc 1 required.
+The 240-tick corpus retains 579 multi-chunk bank loads, 51102257 nonzero PCM
+samples and hash 25836548e09d8a00. Fresh ASan/UBSan/function instrument and
+menu-assets runs pass; the four menu sample counts remain unchanged. PsyZ is
+uninstrumented. This does not establish all audio commands or integration with
+the full game. Remaining asset-lookup/texture extractions and the pc/ directory
+still require removal.

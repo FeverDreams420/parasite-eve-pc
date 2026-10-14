@@ -33,6 +33,8 @@ files and no extracting selected functions. The entire `pc/` directory must be
 removed, including its platform and test dependencies, by integrating required
 changes into existing original modules and PsyZ. Renaming or relocating the
 parallel implementation does not satisfy this requirement.
+There is no exception for a temporary frontend, platform adapter or test
+harness in `pc/`: its continued presence is an unresolved architectural defect.
 Existing `pc/` gameplay implementations are experimental
 work from an abandoned approach; their tests do not establish that the
 original game runs. `parasite-eve-original` now compiles the first original

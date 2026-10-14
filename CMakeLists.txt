@@ -303,7 +303,7 @@ if(BUILD_TESTING)
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
-    target_include_directories(test-original-actor-animation PRIVATE include pc)
+    target_include_directories(test-original-actor-animation PRIVATE include)
     target_link_libraries(test-original-actor-animation PRIVATE psyz)
     add_test(NAME original-game-actor-animation COMMAND test-original-actor-animation)
     add_test(NAME original-game-player-input-assets COMMAND test-original-actor-animation --assets)
@@ -337,7 +337,7 @@ endif()
 
 
 add_library(parasite-eve-original-pad OBJECT src/main/menu/widget.c src/main/menu/input_queue.c)
-target_include_directories(parasite-eve-original-pad PRIVATE include pc)
+target_include_directories(parasite-eve-original-pad PRIVATE include)
 target_link_libraries(parasite-eve-original-pad PRIVATE psyz)
 foreach(pad_target IN LISTS akao_runtime_targets)
     target_sources(${pad_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-pad>)
@@ -453,9 +453,9 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING)
-    add_executable(test-original-stat-assets tests/original_stat_assets.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c
+    add_executable(test-original-stat-assets tests/original_stat_assets.c $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original>)
-    target_include_directories(test-original-stat-assets PRIVATE include pc)
+    target_include_directories(test-original-stat-assets PRIVATE include)
     target_link_libraries(test-original-stat-assets PRIVATE psyz)
     add_test(NAME original-game-stat-assets COMMAND test-original-stat-assets)
     set_tests_properties(original-game-stat-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)

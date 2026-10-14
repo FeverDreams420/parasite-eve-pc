@@ -1,6 +1,6 @@
 #include "pe1/aya.h"
 #include "pe1/resident_tables.h"
-#include "room.h"
+#include "pe1/cdrom.h"
 #include "pe1/battle.h"
 #include "pe1/battle_cmd.h"
 #include "pe1/player_entity.h"
@@ -475,14 +475,28 @@ int main(void)
     CHECK(menu_fade_pixels() == 0);
     const char *path=getenv("PE_TEST_DISC");
     if(!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
-    PeDisc disc={0}; PeRoomCatalog catalog;
-    CHECK(pe_disc_open(&disc,path) && pe_room_catalog_open(&catalog,&disc));
-    CHECK(pe_disc_read(&disc,&catalog.archive,(uint64_t)catalog.sector_bounds[2]*2048,
-                       &g_ResidentDataPack,sizeof(g_ResidentDataPack)));
+    PeDisc disc={0}; PeDiscFile archive, exe;
+    unsigned char resident_range[4];
+    CHECK(pe_disc_open(&disc,path));
+    CHECK(pe_disc_find(&disc,"PE.IMG",&archive));
+    CHECK(pe_disc_find(&disc,"SLUS_006.62",&exe));
+    /* Serialized USA sector-table entries 2..3 identify the resident bank.
+     * Read the data coordinates directly; no parallel room runtime is needed. */
+    CHECK(pe_disc_read(&disc,&exe,0x930d8-0x10000+0x800+2*2,
+                       resident_range,sizeof(resident_range)));
+    unsigned first=resident_range[0] | (unsigned)resident_range[1]<<8;
+    unsigned last=resident_range[2] | (unsigned)resident_range[3]<<8;
+    CHECK(last>first);
+    size_t resident_bytes=(size_t)(last-first)*2048;
+    CHECK(resident_bytes<=sizeof(g_ResidentDataPack));
+    CHECK((uint64_t)last*2048<=archive.size);
+    memset(&g_ResidentDataPack,0,sizeof(g_ResidentDataPack));
+    CHECK(pe_disc_read(&disc,&archive,(uint64_t)first*2048,
+                       &g_ResidentDataPack,resident_bytes));
     CHECK(g_ResidentDataPack.directory.statGrowth>=0);
-    CHECK((unsigned)g_ResidentDataPack.directory.statGrowth+7*512<=sizeof(g_ResidentDataPack));
+    CHECK((unsigned)g_ResidentDataPack.directory.statGrowth+7*512<=resident_bytes);
     CHECK(g_ResidentDataPack.directory.levelStats>=0);
-    CHECK((unsigned)g_ResidentDataPack.directory.levelStats+99*sizeof(AyaLevelStats)<=sizeof(g_ResidentDataPack));
+    CHECK((unsigned)g_ResidentDataPack.directory.levelStats+99*sizeof(AyaLevelStats)<=resident_bytes);
     unsigned queries=0;
     for(int kind=0;kind<7;++kind) {
         int *table=Aya_GetStatGrowthTable(kind);
@@ -509,8 +523,7 @@ int main(void)
     }
     CHECK(Aya_LookupLevelStats(-1)==Aya_LookupLevelStats(0));
     CHECK(Aya_LookupLevelStats(99)==Aya_LookupLevelStats(98));
-    PeDiscFile exe; ItemDataRecord key_records[9];
-    CHECK(pe_disc_find(&disc,"SLUS_006.62",&exe));
+    ItemDataRecord key_records[9];
     CHECK(pe_disc_read(&disc,&exe,0xa1e64-0x10000+0x800,key_records,sizeof(key_records)));
     memcpy(g_KeyItemRecords,key_records,sizeof(key_records));
     u8 effect_codes[6];

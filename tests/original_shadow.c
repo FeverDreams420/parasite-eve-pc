@@ -2,6 +2,9 @@
 #include "pe1/render_buffers.h"
 #include "pe1/room_floor.h"
 #include "pe1/gte.h"
+#include "pe1/geom_state.h"
+GeomState * volatile g_GeomState;
+int Render_ClipPoint(int x,int y,int z);
 #include <libgpu.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,6 +17,19 @@ _Static_assert(offsetof(RenderShadowQuad,xy3)==offsetof(POLY_FT4,x3),"native sha
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 int main(void)
 {
+    GeomState geometry={0}; g_GeomState=&geometry;
+    geometry.clip_offset_x=12; geometry.clip_offset_y=-7;
+    geometry.clip_min_x=-100; geometry.clip_max_x=100;
+    geometry.clip_min_y=-80; geometry.clip_max_y=80; geometry.depth_offset=20;
+    for(int x=-150;x<=150;++x)for(int y=-100;y<=100;++y) {
+        int expected_x=x+12,expected_y=y-7;
+        if(expected_x < -100)expected_x=-100;
+        if(expected_x > 100)expected_x=100;
+        if(expected_y < -80)expected_y=-80;
+        if(expected_y > 80)expected_y=80;
+        CHECK(Render_ClipPoint(x,y,30)==0);
+        CHECK((s16)geometry.disp_src_x==expected_x && (s16)geometry.disp_src_y==expected_y && geometry.field26==50);
+    }
     RenderShadowActor actor={0}; RenderObjectHeader model={0};
     RenderMatrix bone={0}; RenderShadowQuad packets[2]={0};
     RenderNativeTag ordering[4096];
@@ -43,6 +59,7 @@ int main(void)
     actor.flags=0x400; CHECK(Render_DrawActorShadow(&actor)==0 && !memcmp(&saved,&packets[1],sizeof(saved)));
     actor.flags=0; actor.render_object.variant_visible=0;
     CHECK(Render_DrawActorShadow(&actor)==0 && !memcmp(&saved,&packets[1],sizeof(saved)));
+    puts("Original mesh module: 60501 clip points passed");
     puts("Original shadow: native FT4 layout, both slots, projection, shade and ordering links passed");
     return 0;
 }

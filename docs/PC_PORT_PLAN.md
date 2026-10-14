@@ -1617,3 +1617,19 @@ Full build and pools/contact/actor-lifecycle/scene-spawn CTests passed, followed
 by contact and spawn ASan/UBSan/function runs (PsyZ archive uninstrumented).
 No new files were added. Remaining extractions and the pc/ directory are still
 pending consolidation/removal, not accepted as the final architecture.
+
+### Restore shadows to the original mesh-list module
+
+Render_DrawActorShadow returned to render/mesh_list.c and actor_shadow.c was
+removed. The complete mesh-list file compiles; unused field-tile/task includes
+were removed rather than importing unrelated legacy GPU and task-layout types.
+Comparison with mesh_list.c before extraction (39da513f7 parent) confirms all
+15 historical function definitions remain. No new files or source exclusions.
+
+Full build, shadow and real-data camera CTests passed. The existing shadow test
+also exercises the original Render_ClipPoint over 60,501 input pairs, and the
+combined test passed ASan/UBSan/function instrumentation (PsyZ uninstrumented).
+This is not validation of the entire renderer: sprite/mesh packet linking still
+contains legacy 24-bit address assumptions, and those paths need native packet
+repair and scene-level image evidence. Consolidation preserves them for work in
+place; successful compilation is not counted as functional completion.

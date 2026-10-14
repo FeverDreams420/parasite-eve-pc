@@ -11,6 +11,8 @@ add_subdirectory(pc)
 # Compile the original game sources in place. Modules join this target as
 # their platform dependencies are made portable; no duplicate game logic.
 add_library(parasite-eve-original OBJECT
+    src/main/aya/stat_recalc.c
+    src/main/item/capacity.c
     src/main/aya/stat_queries.c
     src/main/aya/stat_tables.c
     src/main/pm/scene_init.c

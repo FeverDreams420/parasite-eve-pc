@@ -18,7 +18,6 @@
 BattleCmdEntry *g_BattleCmdStackTop;
 u8 *g_MenuActiveListTarget;
 int g_MenuCommandResult;
-int g_InvBonusSlotCount;
 
 void BattleCmd_InitTableCursor(void) {
     g_BattleCmdStackTop = g_BattleCmdStack;

@@ -11,8 +11,6 @@
 #include "pe1/random.h"
 #include "pe1/text.h"
 
-s16 *g_InvItemPtr;
-s32 g_InvSlotLimit;
 u32 *g_InvSelectionBits;
 s32 g_InvSelectionBitWords;
 s32 g_InvPendingCompactCount;

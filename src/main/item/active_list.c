@@ -27,8 +27,6 @@
  * through $gp, every other extern stays absolute. */
 s32 g_ItemDropRngIndex;
 s32 g_InvPackedListCount;
-s16 *g_InvItemPtr;
-s32 g_InvSlotLimit;
 u32 *g_InvSelectionBits;
 s32 g_InvSelectionBitWords;
 s32 g_InvPackedListCursor;
@@ -193,9 +191,7 @@ int Inv_ScrambleGrid(void)
 /* Text byte-string helpers, the item grid rebuild and the active inventory
  * list selection (Aya's list or a storage override) with its slot limit. */
 
-s16 *g_InvItemPtr;
 s16 *g_InvActiveListOverride;
-int g_InvSlotLimit;
 int g_InvOverrideSlotLimit;
 u32 *g_InvSelectionBits;
 int g_InvSelectionBitWords;
@@ -340,25 +336,6 @@ void Inv_ResetActiveList(void) {
 
 int Inv_IsActiveListOverrideSelected(void) {
     return g_InvItemPtr != g_AyaInventoryItems;
-}
-
-void Inv_SetAyaSlotCount(int count) {
-    if (count >= 0x33) {
-        count = 0x32;
-    }
-
-    g_AyaInventorySlotCount[0] = count;
-    if (g_InvItemPtr == (s16 *)(g_AyaInventorySlotCount + 0x3C)) {
-        g_InvSlotLimit = Inv_GetAyaSlotLimit();
-    }
-}
-
-int Inv_GetAyaSlotLimit(void) {
-    if (g_AyaInventorySlotCount[0] + Inv_GetBonusSlotCount() >= 0x33) {
-        return 0x32;
-    }
-
-    return g_AyaInventorySlotCount[0] + Inv_GetBonusSlotCount();
 }
 
 void Inv_ClearEquipFlagForKind(InvItemSlot *obj) {
@@ -532,8 +509,6 @@ ItemDataRecord *Inv_LookupData(int arg0) {
     return (ItemDataRecord *)&g_KeyItemDataTable[arg0 << 5];
 }
 
-int g_InvSlotLimit;
-s16 *g_InvItemPtr;
 
 ItemDataRecord *Inv_LookupActiveListData(int index) {
     int value;
@@ -973,8 +948,6 @@ s32 Inv_AddItem(s32 arg0) {
 }
 
 int g_InvCategoryBaseItemId;
-s16 *g_InvItemPtr;
-int g_InvSlotLimit;
 
 int Inv_CountByValue(int arg0) {
     int count;
@@ -1011,8 +984,6 @@ int Inv_CountByValue(int arg0) {
 /* Contiguous inventory counts, removal-by-ID, active-item kind lookup, base
  * item kinds, the equipped-slot reservation test and the packed-list
  * accessors. */
-s16 *g_InvItemPtr;
-int g_InvSlotLimit;
 u32 *g_InvSelectionBits;
 int g_InvSelectionBitWords;
 

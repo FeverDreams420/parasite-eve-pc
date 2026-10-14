@@ -3,9 +3,7 @@
 #include "pe1/inventory_slots.h"
 #include "pe1/menu_inventory.h"
 
-s16 *g_InvItemPtr;
 s32 g_InvPackedListCount;
-s32 g_InvSlotLimit;
 
 static inline ItemDataRecord *LookupTrackedItem(int index) {
     int value;

@@ -1348,3 +1348,23 @@ Full build, stat-assets/scene-spawn/entity-textures CTests and game/test
 ASan/UBSan/function checks passed (PsyZ archive uninstrumented). This establishes
 stat query prerequisites; equipment lists, complete stat recalculation and
 Battle_InitEquipLists/player spawn are still pending.
+
+### Original player stat recalculation and inventory capacity
+
+Inv_RecalcSlotStats now compiles independently in aya/stat_recalc.c and reads
+the canonical g_PlayerEntity instead of the detached D_8009D254 symbol. Its
+original signed-halfword growth inputs and HP/stat/ATB mappings remain intact.
+AyaSaveState and seven modifier words now have native storage. The original
+capacity setter/getters moved to item/capacity.c, using the actual save-state
+capacity and inventory fields rather than linker-relative address arithmetic.
+Duplicate definitions of the active-list pointer, limit and bonus count were
+removed so the migrated paths share one state.
+
+The resident-data test exercises all 99 levels with three modifier sets (297
+combinations), checking derived HP, existing-HP clamping/preservation, combat
+stats, ATB parameters, displayed level and inventory capacity. It also checks
+that an override list retains its own limit and recalculation without a player
+does not change current HP. Full build, stat-assets/scene-spawn/pools CTests and
+game/test ASan/UBSan/function checks passed (PsyZ archive uninstrumented).
+Weapon/armor item decoding, modifier extraction and Battle_InitEquipLists are
+still needed before the original player-spawn path can run.

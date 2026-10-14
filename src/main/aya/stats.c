@@ -11,14 +11,9 @@
 #include "pe1/stat_modifiers.h"
 #include "pe1/textbox.h"
 
-int g_InvBonusSlotCount;
 
 int *Battle_GetModifierTable(void) {
     return g_StatScaleBase;
-}
-
-int Inv_GetBonusSlotCount(void) {
-    return g_InvBonusSlotCount;
 }
 
 static inline int ClampStat(ItemDataRecord *item, int which) {
@@ -87,46 +82,6 @@ void Inv_BuildArmorList(BattleAttributes *out) {
         out->parameterWord.fields.third = 0;
     }
     BattleCmd_LoadWeaponModifiers();
-}
-
-void Inv_RecalcSlotStats(void) {
-    s16 *p = g_AyaSaveState.stats.levels;
-    int level, hp;
-    Combatant *actor;
-    AyaLevelStats *row;
-
-    Aya_StatQueryLevelAndSubLevel(0, *p++, &level, 0);
-    row = Aya_LookupLevelStats(level);
-    hp = ((g_StatScaleBase[0] + 20) * row->hp) / 20;
-    g_AyaSaveState.max_hp = hp;
-    if (D_8009D254 && (actor = D_8009D254->core)) {
-        if ((s16)(actor->maxHP = hp) < (s16)actor->curHP)
-            actor->curHP = hp;
-        if ((s16)actor->maxHP < (s16)actor->hpMirror)
-            actor->hpMirror = actor->maxHP;
-        if (g_AyaSaveState.max_hp < g_AyaSaveState.current_hp)
-            g_AyaSaveState.current_hp = g_AyaSaveState.max_hp;
-
-        Aya_StatQueryLevelAndSubLevel(1, *p++, &level, 0);
-        actor->stat1E = Aya_LookupLevelStats(level + g_StatScaleBase[1])->offense;
-        Aya_StatQueryLevelAndSubLevel(2, *p++, &level, 0);
-        actor->stat20 = Aya_LookupLevelStats(level + g_StatScaleBase[2])->defense;
-        Aya_StatQueryLevelAndSubLevel(3, *p++, &level, 0);
-        row = Aya_LookupLevelStats(level + g_StatScaleBase[3]);
-        actor->maxAtk = row->battleMaxAtk;
-        actor->atbRate = row->battleAtbRate;
-        actor->atbStep = row->battleAtbStep;
-        Aya_StatQueryLevelAndSubLevel(4, *p++, &level, 0);
-        row = Aya_LookupLevelStats(level + g_StatScaleBase[4]);
-        actor->statusStep3C = row->statusStep3C;
-        actor->statusStep3E = row->statusStep3E;
-        Aya_StatQueryLevelAndSubLevel(5, *p++, &level, 0);
-        actor->stat22 = Aya_LookupLevelStats(level + g_StatScaleBase[5])->battleStat22;
-        Aya_StatQueryLevelAndSubLevel(6, *p, &level, 0);
-        actor->stat26 = Aya_LookupLevelStats(level)->inventoryCapacity;
-        Inv_SetAyaSlotCount(actor->stat26);
-        actor->field04.fieldId04 = g_AyaSaveState.level + 1;
-    }
 }
 
 /* Reports the active-time step and rate of the current PE energy level. */

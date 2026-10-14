@@ -7,6 +7,10 @@
 #include "model.h"
 #include "vram.h"
 #include "pe1/scene_assets.h"
+#include "pe1/battle_saved_state.h"
+#include "pe1/resident_tables.h"
+#include "pe1/inventory_slots.h"
+#include "pe1/player_entity.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,7 +33,7 @@ FieldActorCallbacks g_FieldActorTypeCallbacks[256];
 SceneAssetBlob *g_LoadedSceneAssetBlock[1];
 u8 g_SceneAreaType;
 u32 g_EntityRenderScratch[9];
-/* Player equipment is outside this NPC spawn test; fail if called. */
+
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 int main(void)
 {
@@ -78,6 +82,56 @@ int main(void)
         }
         pe_room_close(&room);
     }
+    CHECK(pe_disc_read(&disc,&catalog.archive,(uint64_t)catalog.sector_bounds[2]*2048,
+                      &g_ResidentDataPack,sizeof(g_ResidentDataPack)));
+    unsigned weapon=0,armor=0;
+    for(unsigned id=0;id<255;++id) {
+        ItemDataRecord *item=Item_LookupBaseData(id);
+        if(!item)continue;
+        if(!weapon && item->kind==1)weapon=id+1;
+        if(!armor && item->kind==9)armor=id+1;
+    }
+    CHECK(weapon && armor);
+    ResetGraph(0);
+    RenderNativeTag ordering[4096];
+    D_800B0E38.ordering[0]=D_800B0E38.ordering[1]=ordering;
+    unsigned players=0;
+    for(unsigned bank=18;bank<=20;bank+=2) {
+        PeRoomBlob blob={0}; PeRoomBanks banks; char error[256];
+        CHECK(pe_sector_bank_load(&catalog,bank,&blob));
+        CHECK(pe_entity_banks(&blob,1,&banks,error,sizeof(error)));
+        CHECK(banks.roots[0].present && banks.rows[0][0x15].present);
+        g_SceneMapPrimBaseTable[0]=(uintptr_t)banks.roots[0].bytes;
+        for(unsigned action=0;action<48;++action)
+            g_GameState.bank_rows[0][action]=(void *)banks.rows[0][action].bytes;
+        scripts[2]=(u8 *)script;
+        for(unsigned full=0;full<2;++full) {
+            Entity_ResetAllPools(); Entity_InitFreePool();
+            Script_InitNodePool(); Script_InitNodeFreeList();
+            Battle_SaveAyaState();
+            memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
+            g_AyaSaveState.inventory_slot_count=2;
+            g_AyaSaveState.inventory_items[0]=weapon;
+            g_AyaSaveState.inventory_items[1]=armor;
+            g_AyaSaveState.equipped_weapon_slot=0;
+            g_AyaSaveState.equipped_armor_slot=1;
+            ClearOTagR((OT_TYPE *)ordering,4096);
+            u8 scene[]={0,0};
+            FieldActor *actor=Scene_LoadMap(scene,NULL,full);
+            CHECK(actor && actor==g_PlayerEntity && actor==g_FieldActorListHead);
+            CHECK((void *)actor->state==&g_AyaBattleState);
+            CHECK(g_AyaBattleState.action==&g_SavedBattleStateTail);
+            CHECK(actor->action_data==banks.rows[0][0x15].bytes && actor->mode==0x15);
+            CHECK(actor->script_base==(u8 *)script && actor->script_node_lists[2]);
+            CHECK(actor->move_factor==0x10000 && actor->render_object.matrices);
+            CHECK(((Combatant *)((BattleEntity *)actor)->core)->maxHP==g_AyaSaveState.max_hp);
+            CHECK(g_AyaBattleState.action->weapon.kind==1);
+            ++players;
+        }
+        g_PlayerEntity=NULL;
+        pe_room_blob_close(&blob);
+    }
+    printf("Original Scene_LoadMap: %u real Aya model spawns with original equipment initialization\n",players);
     free(memory); g_RenderScratchBufferBase[0]=NULL; pe_disc_close(&disc);
     printf("Original Scene_LoadMap: %u NPC model spawns, full/non-full native allocations and script nodes\n",spawned);
     return 0;

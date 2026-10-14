@@ -1463,3 +1463,22 @@ Full build, stat-assets/scene-spawn/pools CTests and the instrumented stat test
 call this original reset in the full player/scene initialization sequence; this
 change alone does not initialize New Game inventory, implement save conversion
 or establish a playable player spawn.
+
+### Original player spawn with actual Aya model banks
+
+The scene-spawn test now exercises the player branch of original Scene_LoadMap
+using actual entity banks 18 and 20, their model roots and action 0x15 records.
+It loads the real resident stat/item tables, resets battle state through the
+original procedure, then checks full and non-full allocation (four player
+spawns). Checks cover the shared player/list/state pointers, equipment storage,
+initial action, script node/base, movement factor, render matrices and derived
+maximum HP. The original model setup and initial animation/draw path execute.
+PsyZ is initialized without presenting a window; no pixel comparison is claimed.
+
+This passed alongside the existing 1756 NPC spawns and stat-assets/pool CTests,
+and under game/test ASan/UBSan/function instrumentation (PsyZ uninstrumented).
+The player fixture deliberately supplies one valid weapon and armor plus a
+minimal script: it is not the actual New Game inventory or room script startup.
+This establishes that the migrated original player-spawn dependencies work
+together, not that scene initialization/frame progression or gameplay is ready.
+The next integration gap is the original New Game/scene data setup and callbacks.

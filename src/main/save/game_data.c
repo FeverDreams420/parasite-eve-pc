@@ -9,7 +9,7 @@
 #include "pe1/inventory_category.h"
 #include "pe1/inventory_slots.h"
 #include "pe1/inventory_state.h"
-#include "pe1/menu_fade_state.h"
+#include "pe1/menu_background.h"
 #include "pe1/memcard.h"
 #include "pe1/menu_inventory.h"
 #include "pe1/menu_queue.h"

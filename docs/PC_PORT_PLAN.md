@@ -1827,3 +1827,24 @@ scene-spawn, camera and shadow CTests pass; stat-assets ASan/UBSan/function
 passes after the changes. Menu image transfer, visual fading, widget dispatch
 and the full status renderer remain unverified. Other extractions and pc/
 removal remain required.
+
+
+### Restore fade declarations and verify original pixel processing
+
+Merged menu_fade_state.h declarations back into the existing menu_background.h
+and removed the extracted header. Updated the save module and existing stat
+fixture to use the original header; no files added.
+
+The existing stat-assets fixture now calls original Menu_SaveBgApplyFadeStep
+on all 65536 PS1 pixel values, in eight legal 8192-pixel blocks, for every
+entry of the default gamma curve and tint values 0, 72 and 255. An independently
+rearranged channel formula checks output, transparent zero, preservation of
+bit 15 and both native DRAWENV RGB fields. Forward completion reaches state 7;
+backward completion reaches state 0 and restores the source pixels exactly.
+The test restores the canonical background-buffer pointers before continuing.
+
+Full build, Disc 1 stat-assets/scene-spawn CTests and stat-assets
+ASan/UBSan/function pass. This validates the original CPU color transform and
+completion boundaries, not StoreImage/LoadImage integration, an on-screen fade
+or comparison against captured console frames. Full game, remaining extracted
+files and removal of pc/ remain open.

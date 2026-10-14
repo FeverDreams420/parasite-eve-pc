@@ -11,7 +11,7 @@
 #include "pe1/weapon_list_output.h"
 #include "pe1/battle_modifiers.h"
 #include "pe1/battle_saved_state.h"
-#include "pe1/menu_fade_state.h"
+#include "pe1/menu_background.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -65,6 +65,62 @@ static int menu_fade_parameters(void)
         int expected = (unsigned)value % 512;
         CHECK(g_MenuItemContextFlag == (expected ? expected : 511));
     }
+    Menu_SaveBgInitFade();
+    return 0;
+}
+
+DRAWENV g_RenderDrawEnvArray[2];
+
+static int menu_fade_pixels(void)
+{
+    static u16 source[8192], destination[8192];
+    u16 *oldSource = g_GameState.save_background_source;
+    u16 *oldDestination = g_GameState.save_background_destination;
+    g_GameState.save_background_source = source;
+    g_GameState.save_background_destination = destination;
+    Menu_SaveBgInitFade();
+    g_MenuSaveBgFadeHeight = 32;
+    const int tints[] = {0, 72, 255};
+    for (unsigned tint = 0; tint < 3; ++tint) {
+        g_MenuSaveBgFadeTint = tints[tint];
+        for (int frame = 0; frame < g_MenuSaveBgFadeLutLen; ++frame) {
+            g_MenuSaveBgFadeStep = 0;
+            g_MenuSaveBgFadeIndex = frame;
+            unsigned level = g_MenuSaveBgFadeLut[frame];
+            for (unsigned block = 0; block < 8; ++block) {
+                for (unsigned i = 0; i < 8192; ++i) source[i] = block * 8192 + i;
+                Menu_SaveBgApplyFadeStep();
+                for (unsigned i = 0; i < 8192; ++i) {
+                    unsigned pixel = source[i], expected = pixel & 0x8000;
+                    if (pixel) {
+                        for (unsigned channel = 0; channel < 3; ++channel) {
+                            unsigned component = (pixel >> (channel * 5)) & 31;
+                            unsigned scaled = (component * (65536 - level * 256) +
+                                level * tints[tint] * (32 - component)) / 65536;
+                            expected |= scaled << (channel * 5);
+                        }
+                    }
+                    CHECK(destination[i] == expected);
+                }
+                unsigned shade = level * tints[tint] / 256;
+                for (unsigned slot = 0; slot < 2; ++slot) {
+                    CHECK(g_RenderDrawEnvArray[slot].r0 == shade);
+                    CHECK(g_RenderDrawEnvArray[slot].g0 == shade);
+                    CHECK(g_RenderDrawEnvArray[slot].b0 == shade);
+                }
+            }
+        }
+    }
+    g_MenuSaveBgFadeStep = 1;
+    Menu_SaveBgApplyFadeStep();
+    CHECK(g_MenuSaveBgFadeState == 7 && g_MenuSaveBgFadeStep == 0);
+    g_MenuSaveBgFadeIndex = 0;
+    g_MenuSaveBgFadeStep = -1;
+    Menu_SaveBgApplyFadeStep();
+    CHECK(g_MenuSaveBgFadeState == 0 && g_MenuSaveBgFadeIndex == 0);
+    CHECK(!memcmp(source, destination, sizeof(source)));
+    g_GameState.save_background_source = oldSource;
+    g_GameState.save_background_destination = oldDestination;
     Menu_SaveBgInitFade();
     return 0;
 }
@@ -416,6 +472,7 @@ int main(void)
 {
     CHECK(pending_command_stack() == 0);
     CHECK(menu_fade_parameters() == 0);
+    CHECK(menu_fade_pixels() == 0);
     const char *path=getenv("PE_TEST_DISC");
     if(!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     PeDisc disc={0}; PeRoomCatalog catalog;

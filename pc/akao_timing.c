@@ -137,6 +137,28 @@ int pe_akao_channel_begin_note(PeAkaoChannel *channel, unsigned lookahead_limit)
     return 1;
 }
 
+void pe_akao_channel_slides(PeAkaoChannel *channel) {
+    if (channel->expression_duration) {
+        uint32_t old = channel->expression_value;
+        channel->expression_value += channel->expression_delta;
+        --channel->expression_duration;
+        if ((old & UINT32_C(0xffe00000)) != (channel->expression_value & UINT32_C(0xffe00000)))
+            channel->update_flags |= 3;
+    }
+    if (channel->volume_duration) {
+        uint16_t old = channel->volume_base;
+        channel->volume_base = (uint16_t)(old + channel->volume_delta);
+        --channel->volume_duration;
+        if ((old & 0x7f00) != (channel->volume_base & 0x7f00)) channel->update_flags |= 3;
+    }
+    if (channel->pan_slide_duration) {
+        uint16_t old = channel->panpot;
+        channel->panpot = (uint16_t)(old + channel->pan_delta);
+        --channel->pan_slide_duration;
+        if ((old & 0xff00) != (channel->panpot & 0xff00)) channel->update_flags |= 3;
+    }
+}
+
 PeAkaoChannelResult pe_akao_channel_tick(PeAkaoChannel *channel, unsigned instruction_limit) {
     if (channel->error[0]) return PE_AKAO_CHANNEL_ERROR;
     if (channel->stopped) return PE_AKAO_CHANNEL_STOP;
@@ -145,10 +167,13 @@ PeAkaoChannelResult pe_akao_channel_tick(PeAkaoChannel *channel, unsigned instru
     --channel->pan_duration;
     if (!channel->note_length) {
         PeAkaoChannelResult result = pe_akao_channel_next(channel, instruction_limit);
-        if (result != PE_AKAO_CHANNEL_NOTE) return result;
-        return pe_akao_channel_begin_note(channel, instruction_limit) ?
-               PE_AKAO_CHANNEL_NOTE : PE_AKAO_CHANNEL_ERROR;
+        if (result == PE_AKAO_CHANNEL_ERROR) return result;
+        if (result == PE_AKAO_CHANNEL_NOTE && !pe_akao_channel_begin_note(channel, instruction_limit))
+            return PE_AKAO_CHANNEL_ERROR;
+        pe_akao_channel_slides(channel);
+        return result;
     }
     if (!channel->pan_duration) channel->key_off_requested = 1;
+    pe_akao_channel_slides(channel);
     return PE_AKAO_CHANNEL_WAIT;
 }

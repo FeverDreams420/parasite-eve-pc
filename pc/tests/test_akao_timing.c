@@ -71,6 +71,14 @@ int main(void) {
     CHECK(pe_akao_channel_tick(&channel, 100) == PE_AKAO_CHANNEL_WAIT);
     CHECK(pe_akao_channel_tick(&channel, 100) == PE_AKAO_CHANNEL_STOP);
     CHECK(channel.musical_ticks == 16);
+    const uint8_t timed_slide[] = {0xa9,4,0,0x04,0xa0};
+    sequence.bytes = timed_slide; sequence.size = sizeof(timed_slide);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    for (unsigned i = 0; i < 3; ++i) CHECK(pe_akao_channel_tick(&channel, 100) == PE_AKAO_CHANNEL_WAIT);
+    CHECK(pe_akao_channel_tick(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(channel.expression_duration == 3 && channel.expression_value == 0x2fff4000);
+    for (unsigned i = 0; i < 3; ++i) CHECK(pe_akao_channel_tick(&channel, 100) == PE_AKAO_CHANNEL_WAIT);
+    CHECK(!channel.expression_duration && !channel.expression_value && channel.note_length == 9);
     puts("AKAO timing: lookahead skips, ties/rests, gate lengths, virtual loops and bounds passed");
     return 0;
 }

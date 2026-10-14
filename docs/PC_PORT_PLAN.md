@@ -18,6 +18,8 @@ Wspólny `PeAkaoControl` obsługuje komendy FC/00..03 (tempo i master-volume set
 
 `akao-player` dodaje 15. test CTest. Natywny driver czasu łączy akumulator banku, odliczanie aktywnych kanałów w kolejności głosów, komendy, slides/meter oraz zatrzaskiwane key-off. Test dwukanałowy sprawdza kolejność zmian wspólnego tempa, bramki, zakończenie banku i zachowanie stanu przy błędnym starcie. Audyt czterech wymuszonych ticków nadal zatrzymuje wszystkie 599 pełnych sekwencji Disc 1 na niezaimplementowanym opcode — żadna nie jest oznaczona jako odtwarzana poprawnie. Rejestry SPU, alokacja głosów, nakładające się banki, synteza i połączenie z komendami audio scen pozostają do wdrożenia.
 
+Kanał wykonuje także A9 (expression slide), AB (pan slide) i FC/12 (volume slide). Aktualizacja parametrów następuje po komendach bieżącego ticku, jak w `Spu_UpdateVoiceRegisters`. Testy sprawdzają spadki, czas 256 ticków, signed delty zapisane jako bity u16, maski zmian `7F00`/`FF00`/`FFE00000` i brak anulowania wcześniejszego slide'u przez A3. Flagowanie zmian parametrów nie jest jeszcze zapisem rejestrów ani syntezą wyjścia SPU.
+
 Punkt wyjściowy audytu: commit `83aa1c5f8`, 14 października 2026. Poniższy stan uwzględnia także wdrożony runner headless z WP01.
 
 | Obszar | Co istnieje | Czego obecne dowody nie potwierdzają |

@@ -19,9 +19,10 @@ typedef struct PeAkaoChannel {
     PeAkaoSequence sequence; /* borrowed bytes must outlive this channel */
     PeAkaoControl *control; /* shared bank state; never a per-channel copy */
     const PeAkaoGrammar *grammar; /* decoded original skip/duration tables */
-    uint32_t pc, flags, expression_value;
+    uint32_t pc, flags, expression_value, expression_delta, update_flags;
     uint16_t volume_base, panpot, note_length, default_note_length, fixed_note_length;
     uint16_t pan_duration, pan_slide_duration, expression_duration, drum_volume;
+    uint16_t volume_duration, volume_delta, pan_delta; /* signed deltas stored as bits */
     uint8_t octave, stopped, last_note;
     uint8_t loop_index, key_off_requested;
     uint8_t tremolo_phase;
@@ -52,6 +53,7 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
 int pe_akao_channel_peek(PeAkaoChannel *channel, unsigned limit, uint8_t *period);
 /* Apply length/gate semantics after next() returns a raw note byte. */
 int pe_akao_channel_begin_note(PeAkaoChannel *channel, unsigned lookahead_limit);
+void pe_akao_channel_slides(PeAkaoChannel *channel);
 /* One due musical tick, not a host frame. SPU application acknowledges the
  * latched key_off_requested flag; pitch/voice-register updates are pending. */
 PeAkaoChannelResult pe_akao_channel_tick(PeAkaoChannel *channel, unsigned instruction_limit);

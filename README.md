@@ -239,3 +239,11 @@ four-forced-tick audit still reports an unsupported opcode for all 599 full
 Disc 1 sequences; none is claimed playable. SPU registers/voice allocation,
 overlapping banks, waveform synthesis and integration with scene audio commands
 remain pending. Sequence bytes are borrowed and must outlive the player.
+
+Channel slides now execute after the current musical tick's commands:
+A9 changes expression, AB changes pan and FC/12 changes channel volume. The
+native state preserves 16-bit signed-delta wrapping, zero-as-256 durations and
+the original change masks for pending volume-register updates. Tests also
+preserve A3's behavior of changing volume without cancelling a running slide.
+This models parameter changes; it does not yet apply SPU registers or produce
+audio samples.

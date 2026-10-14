@@ -82,17 +82,18 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
         switch (opcode) {
         case 0xa0: case 0xa6: case 0xa7: operands = 0; break;
         case 0xa2: case 0xa3: case 0xa5: case 0xa8: case 0xaa: operands = 1; break;
+        case 0xa9: case 0xab: operands = 2; break;
         case 0xc8: case 0xca: operands = 0; break;
         case 0xc9: operands = 1; break;
         case 0xfc:
             if (channel->sequence.size - pc < 2) goto truncated;
             extended = channel->sequence.bytes[pc + 1];
             prefix = 2;
-            if (extended > 3 && extended != 6 && extended != 7 && extended != 8 && extended != 9) {
+            if (extended > 3 && extended != 6 && extended != 7 && extended != 8 && extended != 9 && extended != 0x12) {
                 snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO opcode 0xfc/0x%02x at 0x%x", extended, pc);
                 return PE_AKAO_CHANNEL_ERROR;
             }
-            operands = extended == 0 || extended == 2 || extended == 6 ? 2 : 3;
+            operands = extended == 0 || extended == 2 || extended == 6 || extended == 0x12 ? 2 : 3;
             if ((extended <= 3 || extended == 7) && !channel->control) {
                 snprintf(channel->error, sizeof(channel->error), "Missing shared AKAO control at 0x%x", pc);
                 return PE_AKAO_CHANNEL_ERROR;
@@ -111,12 +112,12 @@ truncated:
         uint32_t next = pc + prefix + operands;
         if (channel->loop_index > 3) goto invalid;
         switch (opcode) {
-        case 0xa0: channel->stopped = 1; break;
+        case 0xa0: channel->stopped = 1; channel->flags = 0; break;
         case 0xa2:
             channel->fixed_note_length = 0;
             channel->note_length = channel->pan_duration = channel->default_note_length = (uint16_t)value;
             break;
-        case 0xa3: channel->volume_base = (uint16_t)(value << 8); break;
+        case 0xa3: channel->volume_base = (uint16_t)(value << 8); channel->update_flags |= 3; break;
         case 0xa5: channel->octave = (uint8_t)value; break;
         case 0xa6: channel->octave = (channel->octave + 1) & 15; break;
         case 0xa7: channel->octave = ((unsigned)channel->octave + 15u) & 15; break;
@@ -126,12 +127,31 @@ truncated:
                 channel->expression_duration = 0;
                 uint32_t signed_byte = value & 128 ? UINT32_C(0xffffff00) | value : value;
                 channel->expression_value = signed_byte << 23;
+                channel->update_flags |= 3;
             }
             break;
+        case 0xa9: {
+            unsigned target_byte = channel->sequence.bytes[pc + prefix + 1];
+            uint32_t signed_byte = target_byte & 128 ? UINT32_C(0xffffff00) | target_byte : target_byte;
+            channel->expression_duration = (uint16_t)(value ? value : 256);
+            channel->expression_value &= UINT32_C(0xffff0000);
+            channel->expression_delta = slide_delta(signed_byte << 23, channel->expression_value,
+                                                     channel->expression_duration);
+            break;
+        }
         case 0xaa:
             channel->pan_slide_duration = 0;
             channel->panpot = (uint16_t)(((value + 0x40) & 255) << 8);
+            channel->update_flags |= 3;
             break;
+        case 0xab: {
+            unsigned target_byte = channel->sequence.bytes[pc + prefix + 1];
+            channel->pan_slide_duration = (uint16_t)(value ? value : 256);
+            channel->panpot &= 0xff00;
+            int target = ((target_byte + 0x40) & 255) << 8;
+            channel->pan_delta = (uint16_t)((target - (int)channel->panpot) / channel->pan_slide_duration);
+            break;
+        }
         case 0xc8:
             if (next >= channel->sequence.size) goto invalid;
             channel->loop_index = (channel->loop_index + 1) & 3;
@@ -152,6 +172,7 @@ truncated:
         case 0xca:
             if (channel->flags & (UINT32_C(1) << 21)) {
                 channel->key_off_requested = channel->stopped = 1;
+                channel->flags = 0;
             } else {
                 next = channel->loop_points[channel->loop_index];
                 if (next >= channel->sequence.size) goto invalid;
@@ -160,6 +181,13 @@ truncated:
             break;
         case 0xfc: {
             const uint8_t *args = channel->sequence.bytes + pc + prefix;
+            if (extended == 0x12) {
+                channel->volume_duration = (uint16_t)(value ? value : 256);
+                channel->volume_base &= 0x7f00;
+                int target = args[1] << 8;
+                channel->volume_delta = (uint16_t)((target - (int)channel->volume_base) / channel->volume_duration);
+                break;
+            }
             if (extended <= 3) {
                 int volume = extended >= 2;
                 int slide = extended & 1;

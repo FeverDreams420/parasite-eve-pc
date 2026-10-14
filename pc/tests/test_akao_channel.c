@@ -135,6 +135,40 @@ int main(void) {
     CHECK(pe_akao_channel_start(&channel, &sequence, 0));
     CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_ERROR && !channel.pc);
     CHECK(strstr(channel.error, "Missing shared AKAO control"));
+    const uint8_t channel_slides[] = {0xa9,4,0, 0xab,4,0, 0xfc,0x12,4,0, 0x04,0xa0};
+    sequence.bytes = channel_slides; sequence.size = sizeof(channel_slides);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(channel.expression_duration == 4 && channel.volume_duration == 4 && channel.pan_slide_duration == 4);
+    CHECK(channel.volume_delta == 0xe040 && channel.pan_delta == 0xf000);
+    for (unsigned i = 0; i < 4; ++i) pe_akao_channel_slides(&channel);
+    CHECK(!channel.expression_value && !channel.volume_base && channel.panpot == 0x4000);
+    CHECK(!channel.expression_duration && !channel.volume_duration && !channel.pan_slide_duration);
+    CHECK(channel.update_flags == 3);
+    const uint8_t long_pan[] = {0xab,0,0xc0,0x11};
+    sequence.bytes = long_pan; sequence.size = sizeof(long_pan);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(channel.pan_slide_duration == 256 && channel.pan_delta == 0xff80);
+    for (unsigned i = 0; i < 256; ++i) pe_akao_channel_slides(&channel);
+    CHECK(!channel.panpot && !channel.pan_slide_duration);
+    const uint8_t override[] = {0xfc,0x12,4,0,0xa3,20,0x11};
+    sequence.bytes = override; sequence.size = sizeof(override);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(channel.volume_base == 0x1400 && channel.volume_duration == 4 && channel.volume_delta == 0xe040);
+    pe_akao_channel_slides(&channel);
+    CHECK(channel.volume_base == 0xf440); /* A3 does not cancel the old slide */
+    memset(&channel, 0, sizeof(channel));
+    channel.volume_duration = 2; channel.volume_delta = 1;
+    pe_akao_channel_slides(&channel);
+    CHECK(channel.volume_base == 1 && !channel.update_flags);
+    channel.volume_duration = 1; channel.volume_base = 0; channel.volume_delta = 0x8000;
+    pe_akao_channel_slides(&channel);
+    CHECK(channel.volume_base == 0x8000 && !channel.update_flags); /* original 7F00 mask */
+    channel.pan_slide_duration = 1; channel.panpot = 0; channel.pan_delta = 0x8000;
+    pe_akao_channel_slides(&channel);
+    CHECK(channel.panpot == 0x8000 && channel.update_flags == 3); /* FF00 mask */
     puts("AKAO channel: state commands, finite/nested loops, signed jumps, key-off and explicit errors passed");
     return 0;
 }

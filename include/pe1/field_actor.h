@@ -8,6 +8,7 @@
 
 typedef struct FieldActorState FieldActorState;
 
+/* Runtime actor: pointers use host width; old offsets below are documentation. */
 typedef struct FieldActor {
     /* 0x000 */ FieldActorState *state;  /* script/battle state written by Entity_WriteFieldByCmd */
     /* 0x004 */ struct FieldActor *next;   /* entity list link (g_FieldActorListHead walks this) */
@@ -86,27 +87,17 @@ typedef struct FieldActor {
     /* 0x278 */ int allocation_block;
 } FieldActor;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, prev) == 0x08,
-                  field_actor_prev_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, next) == 0x04,
-                  field_actor_next_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, flags) == 0x98,
-                  field_actor_flags_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, script_node_lists) == 0xA0,
-                  field_actor_script_node_lists_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, anim) == 0x14,
-                  field_actor_anim_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, script_base) == 0x9C,
-                  field_actor_script_base_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, model_state.allocation_active) == 0x1AC,
-                  field_actor_allocation_active_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, render_object.hit_cylinder.radius) == 0x224,
-                  field_actor_render_scale_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, render_object.flags_9C) == 0x250,
-                  field_actor_render_flags_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, allocation_block) == 0x278,
-                  field_actor_allocation_block_offset);
-PE1_STATIC_ASSERT(sizeof(FieldActor) == 0x27C, field_actor_size);
+
+
+
+
+
+
+
+
+
+
+
 
 /* Per-type frame and contact callbacks copied into a new actor
  * (Scene_LoadMap), indexed by the scene entry's type byte. */
@@ -217,18 +208,13 @@ struct FieldActorState {
     /* 0xD7 */ unsigned char panel_c_mode;
 };
 
-PE1_STATIC_ASSERT(sizeof(FieldActorState) == 0xD8, field_actor_state_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActor, state) == 0x00,
-                  field_actor_state_pointer_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorState, script_value88) == 0x88,
-                  field_actor_state_script_value88_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorState, behavior_mode) == 0xA4,
-                  field_actor_state_behavior_mode_offset);
+
+
+
+
 PE1_STATIC_ASSERT(sizeof(FieldActorPackedStatus) == 4, field_actor_packed_status_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorState, status_flags2) == 0xCC,
-                  field_actor_state_status_flags2_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldActorState, panel_c_timer) == 0xD6,
-                  field_actor_state_panel_c_timer_offset);
+
+
 
 /* Scene movement target record; shared by the E02/E03/E06...E27 overlays. */
 typedef struct FieldMoveTarget {

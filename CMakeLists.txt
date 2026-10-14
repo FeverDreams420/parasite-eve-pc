@@ -20,7 +20,8 @@ add_library(parasite-eve-original OBJECT
     src/main/psyq/libgte/cmb_06.c
     src/main/anim/bone_rotations.c
     src/main/render/bone_transforms.c
-    src/main/render/vertex_projection.c)
+    src/main/render/vertex_projection.c
+    src/main/entity/hierarchy.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
@@ -84,4 +85,12 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-projection-assets PRIVATE psyz)
     add_test(NAME original-game-projection-assets COMMAND test-original-projection-assets)
     set_tests_properties(original-game-projection-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test-original-hierarchy tests/original_hierarchy.c
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-hierarchy PRIVATE include)
+    target_link_libraries(test-original-hierarchy PRIVATE psyz)
+    add_test(NAME original-game-hierarchy COMMAND test-original-hierarchy)
 endif()

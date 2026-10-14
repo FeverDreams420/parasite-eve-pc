@@ -21,26 +21,44 @@ Punkt audytu: commit `83aa1c5f8`, 14 października 2026.
 
 Założenie wydania 1.0: wersja USA obu dysków, zachowanie oryginalnej gry i pełna zawartość odblokowywana w normalnej rozgrywce. Windows x64 jest głównym celem wydania; macOS arm64/x64 i Linux x64 są pełnoprawnymi celami desktopowymi. Ich minimalne wersje systemów, GPU i konfiguracje audio ustalamy i zapisujemy w WP00. Wersje JP/PAL, mobile i web mają odrębne katalogi wymagań; nie deklarujemy ich działania na podstawie testów wersji USA.
 
+Obecne CLI bootu nadal przyjmuje jeden BIN pierwszego dysku. Wymóg obu CUE/BIN i wspólnego katalogu jest zmianą planowaną w WP02/PR04, nie funkcją już wdrożoną. Własny fork udostępnia hi-res, ale integracja hi-res z pełnym rendererem Parasite Eve wymaga WP03.
+
 Materiały gry pozostają lokalne/prywatne. Publiczne repo i paczka zawierają kod oraz wygenerowane syntetyczne fixture’y, bez obrazów dysków i wyodrębnionych zasobów.
+
+## 1.1. Przyjęte zasady portowania
+
+**Wierność rozgrywce jest ważniejsza od zgodności z API PS1.** Zachowujemy reguły, progresję, kolizje, AI, animacyjne zdarzenia, koszty i kolejność istotnych zdarzeń. API PS1 można usuwać, scalać, upraszczać i zastępować zwykłym C; nie trzeba utrzymywać kompatybilnej fasady PSY-Q, BIOS, przerwań, DMA ani CD, jeśli nie jest potrzebna do zachowania gry. Testy sprawdzają rezultat domenowy, nie odtworzenie mechaniki sprzętu.
+
+**Oba CUE/BIN tworzą jeden logiczny zestaw danych.** Docelowa konfiguracja wymaga wskazania i zweryfikowania obu obrazów przed rozpoczęciem pełnej gry. Warstwa zasobów automatycznie wybiera źródło; gracz nie zmienia płyt i nie ogląda komunikatu o włożeniu CD2. To logiczne scalenie katalogów, nie obowiązek tworzenia dużego nowego BIN ani ładowania całych obrazów do RAM. Nazwy i LBA mogą kolidować między obrazami: katalog musi zachować pochodzenie, wersję i jawne reguły wyboru zasobu. Audyt obu dysków w WP00 potwierdza mapowanie i różnice zawartości, a WP02 wdraża ten model.
+
+**Nie obsługujemy fizycznego napędu CD.** Pozostają odczyt plików, parser CUE/tracków i sektorów BIN, dane XA/STR oraz kontrolowana obsługa uszkodzonego lub niedostępnego pliku. Nie implementujemy otwierania pokrywy, wysuwania tacki, prędkości/seek napędu, sprzętowych komend CD ani ich kolejek. Stare testy zmiany fizycznej płyty zastępują testy kompletności zestawu i płynnego przejścia między zawartością obrazów. Skrócenie ładowania nie może zmienić progresji ani pominąć zdarzenia skryptowego.
+
+**Overlaye są statycznymi modułami C.** Kod linkujemy raz do programu, wspólne procedury współdzielimy, a pokoje/sceny wybieramy rejestrem. Nie trzeba ładować/wykonywać kodu z obrazu, relokować overlayów ani odtwarzać okien RAM PS1. Dane nadal są ładowane według potrzeb. Każdy moduł ma jawny stan, wejście, wyjście i reset; statyczne linkowanie nie może przypadkiem zachować stanu, który znikał przy wymianie overlayu.
+
+**Scratchpad zastępujemy zwykłą pamięcią hosta.** Używamy lokalnych zmiennych, buforów kontekstu lub kontrolowanego obszaru roboczego; nie odtwarzamy adresu scratchpadu ani przełączania stosu. Zachowujemy potrzebne rozmiary danych, lifetime i znaczenie współdzielenia, a testy wykrywają stare dane oraz aliasowanie wpływające na gameplay.
+
+**Hi-res od początku, hi-FPS później.** Korzystamy z istniejącego skalowania wewnętrznej rozdzielczości PsyZ (`Psyz_VideoSetInternalResolution` w `psyz/video.h`, obecnie mnożniki 1–8). WP03 integruje je z rendererem gry i testuje tła, maski, modele, efekty, UI oraz niezmieniony stan symulacji. Samo powiększenie okna nie wystarcza. Pierwsze pełne wydanie zachowuje właściwe kadencje oryginału; wysokie FPS i interpolacja są osobnym WP13, który nie blokuje pełnej gry z hi-res. Od początku oddzielamy zegar symulacji od prezentacji, aby późniejszy hi-FPS nie wymagał zmiany reguł gry.
+
+**Utrzymujemy własny PsyZ.** Źródłem submodułu jest [khasinski/parasite-eve-psyz](https://github.com/khasinski/parasite-eve-psyz), z `Xeeynamo/psyz` jako upstream. Fork zachowuje historię kodu i jest osobnym repozytorium GitHub; nie współdzieli repozytorium Rage Racer. Możemy dopisywać brakujące możliwości oraz upraszczać integrację. Generyczne GPU/GTE/audio/runtime trafiają do forka z testami; reguły Parasite Eve i dekodowanie jej danych pozostają w projekcie gry. Nie rozbudowujemy PS1 API tylko po to, by zachować stare nazwy wywołań.
 
 ## 2. Architektura docelowa
 
 | Warstwa | Odpowiedzialność i kontrakt |
 | --- | --- |
 | `game_core` | Stan gry, reguły, skrypty, aktorzy, kolizje, ATB, PE, przedmioty i progresja; bez SDL, FFmpeg, ściennego zegara i adresów PS1 |
-| `game_content` | Rejestr map/scen/efektów i adaptery danych; identyfikatory z gry mapowane na jawne natywne entry pointy i stan modułów |
-| `asset_io` | Dyski, ISO9660, PE.IMG, katalog zasobów, dekodery i konwersja offsetów; wyłącznie kontrolowane odczyty i jawna endianowość |
-| `render` | Dane sceny, tła, maski, modele, animacja, tekst, UI, efekty; jedna jawna granica między frontendem SDL a runtime PsyZ, bez dwóch niezależnych właścicieli okna |
+| `game_content` | Statycznie linkowane moduły map/scen/efektów i adaptery danych; identyfikatory mapowane na natywne entry pointy i jawny stan/reset |
+| `asset_io` | Jeden logiczny katalog obu CUE/BIN, ISO9660, PE.IMG i dekodery; jawne pochodzenie zasobu/offsetu, bez napędu CD i ręcznej zmiany płyt |
+| `render` | Tła, maski, modele, animacja, tekst, UI, efekty i hi-res własnego PsyZ; jeden właściciel okna, logiczne współrzędne niezależne od rozdzielczości |
 | `audio` | AKAO, próbki, efekty, muzyka, SPU/DSP i dźwięk filmów; własny zegar i miksowanie, kontrolowane przejścia oraz wyciszanie |
 | `platform` | SDL/PsyZ, urządzenia, okno, wejście, zegary, pliki użytkownika; jawne interfejsy dające się zastąpić w testach |
 | `persistence` | Wersjonowany zapis i ustawienia; serializacja stanu domenowego, bez zrzutów struktur i wskaźników |
 | `test_runner` | Akcje wejścia na tickach, seed RNG, wirtualny czas, kontrolowane I/O, checkpointy, asercje zdarzeń/stanu/obrazu/audio i powtarzalny replay |
 
-Kod pod `src/main/psyq/` służy do porównania funkcjonalności z PsyZ. Nie linkujemy całego legacy SDK obok jego natywnego odpowiednika. Każde używane API otrzymuje decyzję: PsyZ, adapter albo własna implementacja C, z testem kontraktu.
+Kod pod `src/main/psyq/` służy do porównania funkcjonalności z PsyZ. Nie linkujemy całego legacy SDK obok jego natywnego odpowiednika. Każde używane API otrzymuje decyzję: usunąć po zmianie call-site, uprościć/scalić, zastąpić C, użyć PsyZ albo rozszerzyć własny fork. Testujemy zachowanie wymagane przez grę; nie portujemy niepotrzebnych kontraktów sprzętowych.
 
 Formaty dysku zachowują szerokości pól i offsety. Stan runtime używa wskaźników hosta, `size_t`, uchwytów i typowanych struktur. Niezdefiniowane przepełnienia, przesunięcia i aliasowanie zastępujemy jawnymi operacjami o udokumentowanej semantyce. GTE może realizować renderowanie, lecz wynik kolizji i reguł gry nie może zależeć od GPU ani tempa prezentacji.
 
-Symulacja korzysta ze stałego kroku i jawnych kadencji podsystemów, potwierdzonych audytem oryginału. Nie zakładamy, że każda stara pętla wykonuje się 60 razy na sekundę. Prezentacja 30/60/120/144/240 Hz, film, opóźnienia dysku i pauza nie zmieniają liczby kroków logiki. Losowość ma kontrolowany stan. Zapis i replay odtwarzają ten stan.
+Symulacja korzysta ze stałego kroku i jawnych kadencji podsystemów, potwierdzonych audytem oryginału. Nie zakładamy, że każda stara pętla wykonuje się 60 razy na sekundę. Rozdzielczość renderowania, film, czas odczytu pliku i pauza nie zmieniają liczby kroków logiki. WP13 dopiero rozszerza prezentację do wysokich FPS, z testami 60/120/144/240 Hz; nie jest to wymaganie gotowości pierwszej pełnej wersji. Losowość ma kontrolowany stan. Zapis i replay odtwarzają ten stan.
 
 ## 3. Katalog wymagań i dowodów
 
@@ -59,22 +77,23 @@ Raport pokazuje osobno: pełną kampanię, zawartość dodatkową, każdy podsys
 | WP00 — katalog i kontrakty | Brak | Pełny zakres USA/2 dyski, mapa zależności/API, docelowe platformy, referencje | Spójność katalogów i kompletność mapowania zawartości |
 | WP01 — automatyczny runner | WP00 | Deterministyczny replay, wymagane testy z danymi, raporty i diagnostyka | Obecny boot jako pierwszy przypadek; celowo uszkodzone wyniki muszą być wykryte |
 | WP02 — runtime i dane | WP00, WP01 | Przenośny stan gry, zasoby, moduły, zegar, RNG, inicjalizacja | Parsery, lifetimes, błędy I/O, formaty, powtarzalność stanu |
-| WP03 — scena i prezentacja | WP02 | Pokój z tłem, maską, modelem, kamerą, animacją i audio | Referencyjne sceny renderowania, AKAO/SPU i reset przy przejściu |
+| WP03 — scena i prezentacja | WP02 | Pokój z tłem, maską, modelem, kamerą, animacją, audio i hi-res PsyZ | Referencyjne sceny w różnych rozdzielczościach, AKAO/SPU i reset przy przejściu |
 | WP04 — eksploracja i skrypty | WP03 | New Game prowadzi do sterowanej lokacji; działają interakcje i zdarzenia | Skrypty, kolizje, aktorzy, przejścia, dialogi i puzzle |
 | WP05 — pełna walka | WP04 | ATB, PE, AI, statusy, nagrody, zwykłe i specjalne walki | Macierz mechanik i deterministyczne scenariusze bojowe |
 | WP06 — menu, przedmioty i progresja | WP04, WP05 | Wszystkie menu, wyposażenie, rozwój i transakcje | Reguły, granice, podgląd/commit, wejście i UI |
 | WP07 — trwały zapis i odczyt | WP02; pełny odbiór po WP06 | Continue, trwałe ustawienia, atomowy zapis, wznowienie procesu | Round-trip, przerwanie zapisu, migracje, uszkodzenia |
 | WP08 — pierwszy pełny fragment | WP04–WP07 | Eksploracja → dialog → walka → nagroda → zapis → restart → dalsza gra | Replay użytkownika bez ustawiania flag fabularnych przez test |
 | WP09 — cała zawartość | WP08 | Cała kampania, drugi dysk, finał, Tutorial i zawartość dodatkowa | Wszystkie lokacje/sceny/walki/filmy; kampanie od początku do końca |
-| WP10 — jakość PC i warianty | WP08; pełny odbiór po WP09 | Sterowanie, UI, ustawienia, skalowanie i opcjonalne ulepszenia | Macierz urządzeń, FPS/DPI, pauza/fokus, warianty ustawień |
+| WP10 — jakość PC i warianty | WP08; pełny odbiór po WP09 | Sterowanie, UI, ustawienia, hi-res i opcjonalne ulepszenia | Macierz urządzeń, rozdzielczości/DPI, pauza/fokus, warianty ustawień |
 | WP11 — stabilność i pakowanie | Podstawy od WP01; pełny odbiór po WP09/WP10 | Wydajne, powtarzalne paczki dla wszystkich celów | Sanitizery, fuzzing, soak, GPU/audio, instalacja i aktualizacja |
-| WP12 — bramka pełnego wydania | WP00–WP11 | Wszystkie wymagania mają świeży dowód dla tej samej paczki/commita | Pełna macierz bez braków i pominięć |
+| WP12 — bramka pełnego wydania | WP00–WP11 | Cała gra z hi-res ma świeży dowód dla tej samej paczki/commita | Pełna macierz zakresu bazowego bez braków i pominięć |
+| WP13 — hi-FPS, późniejszy etap | Stabilny WP09–WP12 | Wyższe FPS i interpolacja przy niezmienionej symulacji | Replaye przy 60/120/144/240 Hz, czas zdarzeń i obraz na cięciach |
 
 Zapis, testy i audio rozwijamy od fundamentów; nie odkładamy ich do końca kampanii. Pierwszy fragment służy do sprawdzenia architektury, nie zmniejsza zakresu pełnego portu. Pakiety otrzymują osobne PR-y o małym zakresie; do każdego dochodzą testy jego zachowania. Nie wyznaczamy dat wydania bez pomiaru kompletności danych, zależności i kosztu integracji w WP00–WP03.
 
 ## 5. WP00/WP01 — audyt i testowanie od pierwszego dnia
 
-1. Zinwentaryzować każdy używany symbol/API, dane globalne bez definicji, realny MIPS/GTE, adresy sprzętu, wskaźniki w liczbach i nakładające się symbole. Wynik ma wskazać konkretną implementację i test, nie samą listę tekstowych wystąpień.
+1. Zinwentaryzować każdy używany symbol/API, dane globalne bez definicji, realny MIPS/GTE, adresy sprzętu, wskaźniki w liczbach i nakładające się symbole. Wynik ma wskazać usunięcie/uproszczenie albo potrzebną implementację i test zachowania gry, nie samą listę tekstowych wystąpień.
 2. Ustalić pełny katalog obu dysków i dostępność materiałów do prywatnych testów. Wybrać pierwszą lokację na podstawie pokrycia eksploracji/skryptów/walki, a nie łatwości zrobienia pustego renderu.
 3. Rozdzielić publiczne fixture’y syntetyczne od prywatnych danych i referencji oryginału. Dokumentować wersję danych i sposób uzyskania każdego oczekiwanego wyniku.
 4. Dodać runner z akcjami typu `start_new_game`, `move`, `interact`, `choose_target`, `use_pe`, `save`, `reload`, wykonywanymi przez normalne interfejsy gry. Sterowanie bazuje na tickach/stanie, bez `SDL_Delay(100)` jako dowodu gotowości.
@@ -88,11 +107,11 @@ Zapis, testy i audio rozwijamy od fundamentów; nie odkładamy ich do końca kam
 
 ## 6. WP02/WP03 — fundament pełnej gry
 
-**Runtime i dane:** podział stanu na sesję, pokój, aktorów i zadania; jawna inicjalizacja/reset; uchwyty zamiast adresów PS1; brak globalnych aliasów pamięci między pokojami. Rejestr natywnych entry pointów zastępuje wykonywalne overlaye. Portujemy semantykę `Boot_InitGameState`, inicjalizacji podsystemów i `Boot_RunFrame`, bez konsolowego start-upu i zmiany scratchpad-stack.
+**Runtime i dane:** podział stanu na sesję, pokój, aktorów i zadania; jawna inicjalizacja/reset; uchwyty zamiast adresów PS1; brak globalnych aliasów pamięci między pokojami. Statyczne linkowanie i rejestr natywnych entry pointów zastępują wykonywalne overlaye; stan każdego pokoju resetujemy zgodnie z kontraktem gry. Scratchpad i specjalny stos zastępują normalne bufory i stos hosta. Portujemy semantykę `Boot_InitGameState`, inicjalizacji podsystemów i `Boot_RunFrame`, bez konsolowego start-upu i zmiany scratchpad-stack.
 
-**Ładowanie:** katalog dysków i PE.IMG, rekordy pokojów/scen, TIM, geometria/model/animacja, skrypty, AKAO i próbki. Przenosimy wymagane stałe/tabele przez kontrolowane dekodowanie danych, nie przez zależność od PS1 linkera. Czytnik obsługuje zamknięcie, anulowanie, ponowienie i reset żądania. Brak/podmiana dysku nie może zostawić częściowo gotowej sceny.
+**Ładowanie:** parser CUE/BIN i jeden katalog zasobów obu obrazów, PE.IMG, rekordy pokojów/scen, TIM, geometria/model/animacja, skrypty, AKAO i próbki. Przy starcie weryfikujemy oba źródła, ich role/wersje oraz kompletność; oryginalne numery sektorów odnoszą się do właściwego obrazu, nigdy do jednego globalnego LBA bez pochodzenia. Przenosimy wymagane stałe/tabele przez kontrolowane dekodowanie danych, nie przez zależność od PS1 linkera. Odczyt plików obsługuje zamknięcie, anulowanie, ponowienie i reset żądania. Brak/uszkodzenie pliku obrazu nie może zostawić częściowo gotowej sceny. Komendy, opóźnienia i kolejki fizycznego CD usuwamy; kolejność zdarzeń wymagana przez gameplay zostaje jawna.
 
-**Grafika:** ordering tables i pakiety mają typy PsyZ/hosta; tła, maski zasłaniania, modele, skóra/kości, tekstury, CLUT, tekst, transparencja, mieszanie, cienie i efekty dostają mikrotesty oraz referencyjne sceny. Oddzielamy współrzędne logiczne od renderowania i DPI. Nie używamy zgodności zrzutu pochodzącego z tego samego wadliwego renderera jako jedynego wzorca.
+**Grafika:** ordering tables i pakiety mają typy PsyZ/hosta; tła, maski zasłaniania, modele, skóra/kości, tekstury, CLUT, tekst, transparencja, mieszanie, cienie i efekty dostają mikrotesty oraz referencyjne sceny. Oddzielamy współrzędne logiczne od renderowania i DPI; od razu używamy hi-res własnego PsyZ. Testy przy każdym wspieranym mnożniku sprawdzają dopasowanie tła/masek/modeli i niezmieniony stan gry, zamiast powiększać logikę wraz z pikselami. Nie używamy zgodności zrzutu pochodzącego z tego samego wadliwego renderera jako jedynego wzorca.
 
 **Audio:** cała ścieżka AKAO/SPU, nie tylko XA. Sekwencer, banki, wysokość dźwięku, obwiednie, panning, reverb, muzyka i efekty, dialog/FMV tam gdzie występują, przejścia i nakładanie kanałów. Synchronizacja ma wspólny kontrakt czasu; brak urządzenia, zmiana formatu i restart wyjścia są kontrolowanymi stanami.
 
@@ -114,7 +133,7 @@ Macierz testów obejmuje każdą klasę ataku/broni, celowanie/zasięg, amunicj�
 
 Każdy przeciwnik i boss ma test sekwencji zachowania: warunki wyboru AI, fazy, przejścia, ataki, skutki i zakończenie. Specjalne/starcia fabularne mają scenariusze z oryginalnymi ograniczeniami. Testujemy konfiguracje graniczne: zero/jeden/maksimum zasobu, ostatni przeciwnik, jednoczesne zdarzenia, zmiana statusu w trakcie akcji i przerwanie animacji.
 
-**Odbiór:** wyniki liczbowe i kolejność zdarzeń zgadzają się z udokumentowanymi regułami/referencją; każdy element katalogu walk jest wykonywany automatycznie. Identyczne akcje i seed dają ten sam wynik przy różnych FPS renderowania.
+**Odbiór:** wyniki liczbowe i kolejność zdarzeń zgadzają się z udokumentowanymi regułami/referencją; każdy element katalogu walk jest wykonywany automatycznie. Identyczne akcje i seed dają ten sam wynik przy różnych rozdzielczościach i tempie hosta; po wdrożeniu WP13 również przy różnych FPS renderowania.
 
 ## 9. WP06/WP07 — pełne menu, progresja i trwałość
 
@@ -122,7 +141,7 @@ Każdy przeciwnik i boss ma test sekwencji zachowania: warunki wyboru AI, fazy, 
 
 **Zapis:** wersjonowany format stanu domenowego i osobny format ustawień. Zapis do pliku tymczasowego, trwałe zakończenie zapisu i atomowa podmiana z kopią poprzedniej wersji. Testy zabijają osobny proces na każdym etapie zapisu, następnie rzeczywisty restart ma odczytać ostatni kompletny stan. Bez miejsca/bez uprawnień/błędna ścieżka/uszkodzony plik/nieznana wersja dają kontrolowany wynik.
 
-**Wznowienie:** Continue z procesu uruchomionego od zera; stan pokoju, progresji, ekwipunku, wyposażenia, czasu i RNG zgodny z kontraktem. Migracje testowane fixture’ami wszystkich opublikowanych wersji. Import kart PS1 należy do pełnego zakresu zgodności danych i wymaga własnych testów; zapis PC nie jest zrzutem karty ani RAM.
+**Wznowienie:** Continue z procesu uruchomionego od zera; stan pokoju, progresji, ekwipunku, wyposażenia, czasu i RNG zgodny z kontraktem. Migracje testowane fixture’ami wszystkich opublikowanych wersji. Import kart PS1 może być osobną opcjonalną funkcją z własnymi testami; nie wymaga emulacji API kart, portów ani ich ekranów. Wymagany zapis PC nie jest zrzutem karty ani RAM.
 
 **Odbiór:** każda operacja menu ma pozytywny test, test odrzucenia i anulowania. Zapis/odczyt odtwarza wszystkie pola kontraktu oraz pozwala kontynuować kampanię bez resetu progresji. Nieudany zapis nie niszczy poprzedniego. Tutorial i Continue uruchamiają właściwe ścieżki zamiast kończyć aplikację.
 
@@ -142,7 +161,7 @@ Wymagane rodziny kampanii:
 | Tutorial | Pełne ukończenie i powrót do właściwego stanu |
 | New Game+/EX Game i zawartość dodatkowa, w tym Chrysler Building | Odblokowanie przez normalną progresję, pełne przejście i właściwe zakończenie |
 | Śmierć/game over/ponowienie | Właściwe menu i czysty reset; nieprzenoszenie stanu poprzedniej próby |
-| Zmiana dysku | Poprawny dysk, zły dysk, brak dysku, anulowanie i ponowienie; zachowanie sesji/zapisu |
+| Jeden zestaw obu obrazów | Weryfikacja obu CUE/BIN przy starcie; automatyczne przejście między zawartością bez promptu o zmianie CD; błędna para i brak/uszkodzenie pliku mają testy |
 
 Bazowa kampania zaczyna się z czystych danych użytkownika i używa prawdziwych akcji przez cały przebieg. Testy wariantów mogą startować z wcześniej wygenerowanych checkpointów, których pochodzenie i wersja są zapisane; same checkpointy nie zastępują testu kampanii od początku. Przyspieszone przejście nie może omijać warunków skryptów, kosztów akcji ani flag. Osobno sprawdzamy nieprzyspieszone przejścia czasowe i prezentację.
 
@@ -156,9 +175,9 @@ Interfejs: skalowanie tekstu/UI, porównanie wyposażenia, podgląd skutków mod
 
 Autosave w bezpiecznych punktach, rotacja kopii, suspend/resume ze zdefiniowanego stanu, historia dialogów i pomijanie już obejrzanych scen mają osobne wymagania oraz testy wszystkich skutków ubocznych. Historia/skip nie pomijają progresji fabuły. Odtwarzanie zapisów po zmianie konfiguracji pozostaje poprawne.
 
-Renderowanie 60/120+ Hz i interpolacja nie zmieniają symulacji; reset interpolacji przy teleportacji, zmianie kamery i lokacji. Najpierw pełne 4:3. Panorama wymaga testów wszystkich teł, masek i scen; lokacje bez danych poza oryginalnym kadrem zachowują poprawny kadr. Ulepszenia obrazu, tempa i balansu są konfiguracją, a bazowy tryb pozostaje w pełni testowany.
+Hi-res należy do bazowej wersji: używamy istniejącego skalowania PsyZ, testujemy wszystkie wspierane mnożniki i oddzielamy je od FPS. Hi-res nie tworzy dodatkowych szczegółów w oryginalnych tłach/FMV; ich filtrowanie i ewentualne ulepszenie jest osobną opcją. Najpierw pełne 4:3. Panorama wymaga testów wszystkich teł, masek i scen; lokacje bez danych poza oryginalnym kadrem zachowują poprawny kadr. Ulepszenia obrazu, tempa i balansu są konfiguracją, a bazowy tryb pozostaje w pełni testowany.
 
-**Odbiór:** wszystkie funkcje działają na całej zawartości, a wyłączone ulepszenia przywracają zachowanie bazowe. Testy obejmują każdą opcję i konflikty pomiędzy opcjami; kombinacje niezależnych ustawień pokrywa macierz par, a kombinacje wpływające na reguły gry mają pełne scenariusze.
+**Odbiór:** wszystkie funkcje bazowe i hi-res działają na całej zawartości, a wyłączone ulepszenia przywracają zachowanie bazowe. Hi-FPS nie blokuje WP10/WP12; jego osobny odbiór obejmuje wszystkie zadeklarowane później częstotliwości, interpolację i reset przy teleportacji/cięciu kamery. Testy obejmują każdą opcję i konflikty pomiędzy opcjami; kombinacje niezależnych ustawień pokrywa macierz par, a kombinacje wpływające na reguły gry mają pełne scenariusze.
 
 ## 12. Macierz automatycznych testów
 
@@ -166,8 +185,8 @@ Każdy prefiks poniżej jest rodziną wymagań. W WP00 nadajemy ID konkretnym in
 
 | ID | Zakres | Automatyczny dowód |
 | --- | --- | --- |
-| DATA | Oba dyski, ISO/BIN, PE.IMG, wszystkie dekodowane formaty | Syntetyczne i rzeczywiste fixture’y; granice, endianowość, obcięcia, złe offsety i wersje |
-| CORE | Inicjalizacja, RNG, zegar, alokacje, uchwyty, rejestr modułów | Powtarzalność, reset, utrata zasobu, błędne ID i lifetime |
+| DATA | Jeden zestaw obu CUE/BIN, ISO9660, PE.IMG i dekodowane formaty | Pochodzenie/kolizje ID, pary obrazów, tracki/sektory, granice, endianowość, obcięcia i złe wersje; bez testów fizycznego napędu |
+| CORE | Inicjalizacja, RNG, zegar, zwykłe bufory, uchwyty i statyczne moduły | Powtarzalność, reset po zmianie pokoju, brak starego scratchpad-stanu, błędne ID i lifetime |
 | WORLD | Każda lokacja, wariant i przejście | Replay wejście/zdarzenie/wyjście; stan aktorów, kolizji, kamery, obrazu i audio |
 | SCRIPT | Każda instrukcja, proces i zdarzenie fabularne | Efekt, kolejność, oczekiwanie, zakończenie, błąd; brak zawieszeń |
 | COMBAT | Każda mechanika, PE, klasa broni, status, AI i boss | Wyliczenia, stany graniczne, kolejność akcji, nagrody i wyjście z walki |
@@ -189,9 +208,9 @@ Testy nie mogą opierać się wyłącznie na wyniku wygenerowanym przez testowan
 
 | Obszar | Warunek odbioru |
 | --- | --- |
-| Stan i logika | Dokładny wynik dla deterministycznej arytmetyki, zdarzeń i ID; identyczny kanoniczny stan po tym samym replayu przy różnych FPS |
+| Stan i logika | Dokładny wynik dla deterministycznej arytmetyki, zdarzeń i ID; identyczny kanoniczny stan po tym samym replayu przy różnych rozdzielczościach i tempie hosta; dodatkowo przy różnych FPS po wdrożeniu WP13 |
 | Obraz programowy | Referencyjne sceny i assety; dokładny wynik, gdy pipeline jest deterministyczny; błędy maski/kolejności/obiektu zawsze FAIL |
-| Obraz GPU | Progi per scena/obszar skalibrowane wobec referencji przed zmianą renderera; raport różnic, nie jeden globalny średni próg ukrywający brak obiektu |
+| Obraz GPU/hi-res | Wszystkie wspierane mnożniki PsyZ i niezmieniony stan gameplay; progi per scena/obszar skalibrowane wobec referencji przed zmianą renderera; raport różnic, nie jeden globalny średni próg ukrywający brak obiektu |
 | Audio | Poprawna lista zdarzeń, kanały, brak utraconych bloków/underrunów; porównanie wyrównanego PCM i cech dla ustalonego DSP/resamplera; cisza lub zgubiona ścieżka zawsze FAIL |
 | Synchronizacja FMV | Różnica zegarów audio/wideo na całym przebiegu najwyżej jedna źródłowa klatka; sama długość plików nie jest testem synchronizacji |
 | Pamięć/wątki | Zero raportów własnego kodu ASan/UBSan i TSan w obsługiwanych konfiguracjach; osobne uruchomienia TSan oraz ASan |
@@ -201,7 +220,7 @@ Testy nie mogą opierać się wyłącznie na wyniku wygenerowanym przez testowan
 | Stabilność | 1000 cykli ładowania/wyjścia/odczytu zapisu i minimum 8 h soak na referencyjnych konfiguracjach; brak wzrostu żywych zasobów po rozgrzaniu cache |
 | Wydajność | Docelowy FPS i budżet p99 czasu klatki/I/O/pamięci przypisane do jawnej konfiguracji w WP00/WP03; brak zmiany symulacji przy spadku FPS |
 
-Progi jakości obrazu i audio zapisujemy w katalogu. Zmiana progu musi opisywać rzeczywisty powód i wpływ; nie jest sposobem naprawienia czerwonego testu. Zależności i baseline’y są wersjonowane, a aktualizacja SDL/PsyZ/FFmpeg uruchamia pełne testy obszaru i paczki.
+Progi jakości obrazu i audio zapisujemy w katalogu. Zmiana progu musi opisywać rzeczywisty powód i wpływ; nie jest sposobem naprawienia czerwonego testu. Zależności i baseline’y są wersjonowane, a aktualizacja SDL/własnego PsyZ/FFmpeg uruchamia pełne testy obszaru i paczki. Zmiany we własnym PsyZ mają najpierw testy biblioteki, potem regresję Parasite Eve i dopiero nowy pin submodułu; współdzielonych zmian nie uznajemy za poprawne tylko dlatego, że jeden mikrotest przeszedł.
 
 Fuzzing obejmuje parsery, save, skrypty, offsety, rekordy animacji/modeli i sekwencje operacji menu. Wygenerowany crash staje się stałym testem regresyjnym. Testy własności/modelowe sprawdzają zachowanie zasobów, dozwolone przejścia i transakcje dla wielu seedów. Analiza statyczna oraz ostrzeżenia kompilatorów uzupełniają testy wykonywalne.
 
@@ -219,7 +238,7 @@ Stan projektu nie może nazywać się „wszystko działa”, gdy ostatni pełny
 
 Na maszynach sprzętowych automatyzujemy start procesu, akcje urządzeń, capture obrazu/loopback audio, resize/fullscreen, odłączenie i powrót kontrolera/audio, suspend/resume systemu i raport. Artefakty prywatne zawierające dane gry nie są publikowane. Ręczne ogranie może dostarczać nowej informacji, ale nie zastępuje żadnego obowiązkowego automatycznego testu.
 
-Paczka nie potrzebuje kompilatora, Pythona, repo ani narzędzi deweloperskich. Testy sprawdzają zależności SDL/FFmpeg, ścieżki ze spacjami/Unicode, wybór obu dysków, pierwsze uruchomienie, katalog użytkownika, read-only instalację, aktualizację i zgodność zapisów. Każda platforma otrzymuje własny artefakt i dowód z czystego systemu.
+Paczka nie potrzebuje kompilatora, Pythona, repo ani narzędzi deweloperskich. Testy sprawdzają zależności SDL/FFmpeg, ścieżki ze spacjami/Unicode, wybór i trwałą konfigurację obu CUE/BIN jako jednego zestawu, pierwsze uruchomienie, katalog użytkownika, read-only instalację, aktualizację i zgodność zapisów. Każda platforma otrzymuje własny artefakt i dowód z czystego systemu.
 
 ## 15. Najbliższe PR-y
 
@@ -227,21 +246,21 @@ Paczka nie potrzebuje kompilatora, Pythona, repo ani narzędzi deweloperskich. T
 | --- | --- | --- |
 | PR01 | Katalog pełnej gry/2 dysków, mapa brakujących danych/API i zakres platform | Każda znana funkcja ma ID i zaplanowany test; nieznane obszary widoczne jako blokady |
 | PR02 | Runner ticków/RNG/replay, checkpointy stanu i wymagane testy prywatne | Boot powtarzalny bez sleeps; brak danych i celowe regresje dają FAIL |
-| PR03 | Rozdział aplikacji, game_core i platformy; stan sesji i rejestr modułów | New Game/Tutorial prowadzą do rzeczywistego dispatchera, reset ma testy |
-| PR04 | Asset manager, formaty i loader pierwszego pokoju | Prawdziwe dane, wszystkie zależności, testy błędnych rekordów i anulowania |
-| PR05 | Renderer pierwszej sceny oraz początkowa integracja AKAO/SPU | Tło + maski + model + kamera + animacja + audio zgodne z referencją |
+| PR03 | Rozdział aplikacji, game_core i platformy; statyczne moduły, normalne bufory i usunięcie zbędnego PS1 API | New Game/Tutorial prowadzą do rzeczywistego dispatchera, reset ma testy |
+| PR04 | Oba CUE/BIN jako jeden zestaw, asset manager i loader pierwszego pokoju | Poprawne pochodzenie/wybór danych bez zmiany CD; błędne pary, rekordy i anulowanie mają testy |
+| PR05 | Renderer pierwszej sceny z hi-res własnego PsyZ oraz AKAO/SPU | Tło + maski + model + kamera + animacja + audio zgodne z referencją; rozdzielczość nie zmienia gameplay |
 | PR06 | Skrypty, eksploracja, interakcje i pierwsze zdarzenia fabularne | Replay ruchu/dialogu/przejścia bez bezpośredniej manipulacji progresją |
 | PR07 | Pierwsza kompletna walka i menu przedmiotów | ATB, koszt, trafienie, PE, nagroda i wyjście potwierdzone stanem |
 | PR08 | Zapis i Continue; pierwszy fragment od startu do restartu | Drugi proces kontynuuje prawidłowy stan; fault tests zapisu przechodzą |
 
-To początek pełnego planu WP00–WP12, nie zakres końcowego wydania. Kolejne PR-y zamykają resztę mechanik i katalogów, całą kampanię, drugi dysk oraz dodatkowe tryby.
+To początek pełnego planu WP00–WP12, nie zakres końcowego wydania. WP13 dodaje hi-FPS później i ma osobną bramkę jakości. Kolejne PR-y zamykają resztę mechanik i katalogów, całą kampanię, drugi dysk oraz dodatkowe tryby.
 
 ## 16. Ostateczna definicja ukończenia
 
-1. New Game, Continue i Tutorial uruchamiają i kończą właściwe ścieżki; pełna kampania obu dysków oraz zawartość dodatkowa są grywalne od początku do końca.
+1. New Game, Continue i Tutorial uruchamiają i kończą właściwe ścieżki; pełna kampania z danych obu obrazów oraz zawartość dodatkowa są grywalne od początku do końca bez ręcznej zmiany CD.
 2. Wszystkie lokacje, sceny, przeciwnicy/bossowie, mechaniki, przedmioty, menu, filmy i audio mają działającą implementację i automatyczny scenariusz z asercjami.
-3. Zapis/odczyt i ustawienia są trwałe, wersjonowane i odporne na testowane przerwania; migracje oraz import PS1 przechodzą macierz.
-4. Sterowanie i prezentacja są poprawne na wszystkich zadeklarowanych platformach i urządzeniach, przy pełnej macierzy ustawień.
+3. Zapis/odczyt i ustawienia są trwałe, wersjonowane i odporne na testowane przerwania; migracje przechodzą macierz; ewentualny opcjonalny import PS1 ma własny odbiór.
+4. Sterowanie i prezentacja, w tym hi-res PsyZ, są poprawne na wszystkich zadeklarowanych platformach i urządzeniach, przy pełnej macierzy ustawień. Hi-FPS jest późniejszym rozszerzeniem; jego odroczenie nie odracza żadnej części kampanii ani funkcji rozgrywki.
 5. Pełne replaye mają prawidłowe wyniki i progresję; testy obrazu/audio mierzą rzeczywisty rezultat, nie tylko długość plików i wyjście procesu.
 6. Cały wymagany CI, testy z danymi, hardware, sanitizer/fuzz/soak oraz testy paczek przechodzą dla tego samego kandydata. Zero pominiętych wymaganych testów, brakujących ID i znanych blokujących defektów.
 7. Raport i dokumentacja odpowiadają faktycznemu zakresowi; żaden kod tylko deklarujący sukces nie zastępuje funkcji gry.

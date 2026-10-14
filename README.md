@@ -1,7 +1,7 @@
 # Parasite Eve PC
 
 A native C11 PC port of the North American PlayStation release of Parasite Eve
-(`SLUS-006.62`), using [PsyZ](https://github.com/Xeeynamo/psyz) for the
+(`SLUS-006.62`), using [our PsyZ source fork](https://github.com/khasinski/parasite-eve-psyz) for the
 PlayStation runtime APIs.
 
 The code was imported from
@@ -61,10 +61,10 @@ A direct `cmake -S pc -B pc/build` build remains supported.
 
 - `pc/` — native executable and PsyZ integration.
 - `src/main/` — game logic to port; `psyq/` holds legacy runtime implementations
-  whose functionality must be checked against PsyZ before replacement.
+  whose gameplay-relevant behavior guides native replacement or removal.
 - `src/overlays/` — room, scene and effect modules to register natively.
 - `include/` — game types, data formats and legacy platform interfaces.
-- `third_party/psyz/` — PsyZ and its SDL dependency.
+- `third_party/psyz/` — our maintained PsyZ source fork and its SDL dependency.
 - `docs/` — native architecture, conventions, port plan and data-format notes.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and
@@ -83,3 +83,10 @@ only the intro, or start directly at the title menu. Normal boot uses `--disc`.
 An ordinary 2048-byte ISO preserves data files but loses the XA sectors needed
 for movie audio. Use the original single-track MODE2/2352 BIN for full boot.
 No game assets are copied into this repository.
+
+The full-game roadmap favors gameplay fidelity and native simplification: PS1
+APIs can be removed, room modules linked statically, and scratchpad work moved
+to normal buffers. Both user-supplied CUE/BIN images will form one logical asset
+set, without a physical drive or manual disc swapping. That combined layer is
+planned; the current boot command still takes Disc 1 only. Hi-res uses PsyZ's
+existing rendering support during game integration; high FPS is a later stage.

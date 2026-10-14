@@ -8,7 +8,7 @@ manifest requirement or decompilation progress/debt ratchet.
 ## Development workflow
 
 1. Use subsystem headers for shared declarations and ordinary C types and functions.
-2. Replace platform operations with PsyZ APIs or explicit native adapters.
+2. Remove or simplify unnecessary PS1 APIs; use native C or our PsyZ fork where needed, preserving gameplay behavior.
 3. Add ported modules explicitly to the native CMake target when their dependencies work.
 4. Build with `cmake -S . -B build` and `cmake --build build --parallel`.
 5. Run `./build/pc/parasite-eve-pc --disc <Disc 1.bin>` in a graphical session for boot changes; `--smoke-test` checks PsyZ independently.
@@ -42,3 +42,18 @@ The full implementation roadmap and required automated acceptance evidence
 are defined in [the port plan](docs/PC_PORT_PLAN.md). Feature completion requires
 behavior assertions and a result for the affected content/platforms; a skipped
 asset test or a passing source-only build cannot establish full-game readiness.
+
+PS1 hardware fidelity is not an acceptance requirement. Statically linked room
+modules and ordinary host buffers may replace overlays and scratchpad memory.
+The planned asset layer mounts both user-supplied CUE/BIN images as one logical
+set; no physical CD drive or manual disc swapping is required. Preserve logical
+asset identity, state/reset semantics and gameplay-visible event ordering.
+Hi-res through PsyZ is part of the base renderer; high FPS is a later milestone.
+
+The PsyZ submodule points to
+[khasinski/parasite-eve-psyz](https://github.com/khasinski/parasite-eve-psyz).
+Generic missing runtime/render/audio features can be implemented there with
+library tests and game regression tests. Pin an explicitly verified commit in
+the parent project; do not consume a moving branch implicitly. Fetch upstream
+from `Xeeynamo/psyz`, integrate deliberately, and send reusable fixes upstream
+as patches or through a fork-network PR branch when appropriate.

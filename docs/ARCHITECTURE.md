@@ -16,6 +16,23 @@ asset decoding and porting research. They are not host addresses, build
 inputs or layout constraints. This project does not rebuild or byte-match
 PS1 binaries.
 
+## Native simplification policy
+
+Gameplay fidelity is the contract. PS1 APIs may be simplified or removed; room
+and scene code is linked statically with explicit state/reset, and scratchpad
+work uses ordinary host buffers and the host stack. We do not emulate a CD drive.
+The planned asset layer validates both CUE/BIN images once and exposes one
+logical asset set, resolving source-specific IDs/offsets without disc-swap UI.
+This combined layer is planned; the current boot CLI still reads Disc 1 only.
+
+The maintained PsyZ source fork is
+[khasinski/parasite-eve-psyz](https://github.com/khasinski/parasite-eve-psyz),
+with `Xeeynamo/psyz` as upstream. Missing generic capabilities can be added
+there instead of retaining unnecessary PS1 compatibility machinery. Its existing
+`Psyz_VideoSetInternalResolution` scaling is used for hi-res during scene
+integration. High-FPS presentation/interpolation is a later milestone; resolution
+and presentation cadence must never alter simulation/gameplay.
+
 ## Shipped binaries
 
 Parasite Eve (USA, disc 1) boots `SLUS_006.62`, a PS-X EXE. Almost everything

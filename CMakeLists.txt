@@ -192,7 +192,7 @@ if(BUILD_TESTING)
     add_test(NAME original-game-nodes COMMAND test-original-nodes)
 endif()
 
-add_library(parasite-eve-original-model-setup OBJECT src/main/render/model_setup.c src/main/render/model_draw.c)
+add_library(parasite-eve-original-model-setup OBJECT src/main/render/model_setup.c src/main/render/model_draw.c src/main/render/model_lighting.c)
 target_include_directories(parasite-eve-original-model-setup PRIVATE include)
 if(BUILD_TESTING)
     add_executable(test-original-model-setup tests/original_model_setup.c

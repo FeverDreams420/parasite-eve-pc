@@ -818,3 +818,25 @@ The test supplies synthetic white VRAM and neutral vertex colours: it verifies
 actual geometry packet execution, not room texture placement, original lighting,
 or visual fidelity against PS1 captures. No playable scene is implied. Original
 lighting, room texture uploads, actor/script/input frame integration remain next.
+
+### Original model lighting on native packets — 2026-10-14
+
+Moved the original `Render_DrawObject` and `Render_UpdateClutTable` procedures
+from `render/object.c` into `render/model_lighting.c`, built with the native model
+renderer. The lighting procedure now uses a local colour word and matrix instead
+of PS1 scratchpad addresses. Colour packet updates now use native structure sizes
+and full pointer links instead of PS1 byte strides and 24-bit address masks.
+The NCCT lighting and original per-vertex colour selection remain unchanged.
+
+The GPU corpus test now reads the 240 normal vectors at executable address
+0x80091A58 and runs original lighting and colour packet updates before submission.
+All 878 models still produce visible pixels; both slots match (2,239,490 lit
+pixels total). It regenerates projection before each slot because original
+projection and lighting intentionally reuse the same work arrays. Setup/GPU
+CTest checks and full build pass. ASan/UBSan/function instrumentation of original
+and test sources also passes the GPU corpus (PsyZ/SDL archives uninstrumented).
+
+The fixture still supplies identity lighting matrices, ambient shade 64 and white
+texture VRAM. This is original lighting execution evidence, not validation of
+room light parameters or original textured appearance. Scene integration remains
+incomplete; this does not make New Game playable yet.

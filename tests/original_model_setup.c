@@ -1,5 +1,6 @@
 #include "pe1/render_setup.h"
 #include "pe1/gte.h"
+#include "pe1/render_lighting.h"
 #include <libgpu.h>
 #include "room_banks.h"
 #include "model.h"
@@ -7,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 int g_ActiveDrawSlot;
+RenderVec3s g_RenderNormalTable[240];
 RenderBufferPrefix D_800B0E38;
 _Static_assert(sizeof(RenderNativeTag) == sizeof(OT_TYPE), "native ordering tag");
 _Static_assert(sizeof(RenderPacket34) == sizeof(POLY_GT4), "native textured quad");
@@ -42,6 +44,10 @@ int main(int argc, char **argv)
         PutDrawEnv(&draw); DrawSync(0);
     }
     CHECK(pe_disc_open(&disc,path)); CHECK(pe_room_catalog_open(&catalog,&disc));
+    PeDiscFile executable;
+    CHECK(pe_disc_find(&disc,"SLUS_006.62",&executable));
+    CHECK(pe_disc_read(&disc,&executable,0x91a58-0x10000+0x800,
+                       g_RenderNormalTable,sizeof(g_RenderNormalTable)));
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         if (!catalog.ranges[map-1].room_sectors) continue;
         PeRoomBanks banks;
@@ -91,14 +97,6 @@ int main(int argc, char **argv)
                         CHECK((packet[extra+14] | (unsigned)packet[extra+15]<<8) == texture.clut);
                         CHECK((packet[extra+26] | (unsigned)packet[extra+27]<<8) == texture.page);
                     }
-                    if (gpu) {
-                        /* Lighting is outside this setup/ordering test. */
-                        unsigned vertices = (kind == 0 || kind == 2) ? 4 : 3;
-                        unsigned stride = kind < 2 ? 12 : 8;
-                        for (unsigned slot=0;slot<2;++slot)
-                            for (unsigned v=0;v<vertices;++v)
-                                memset(packet + slot*sizes[kind] + sizeof(RenderNativeTag) + v*stride,128,3);
-                    }
                     packet += sizes[kind]*2;
                 }
             }
@@ -111,9 +109,9 @@ int main(int argc, char **argv)
             GteMatrix view = {0};
             view.m[0][0] = view.m[1][1] = view.m[2][2] = 4096;
             gte_SetGeomOffset(160,112); gte_ctc2_26(256); gte_lddqa(0); gte_lddqb(0);
-            Render_TransformMorphVertices(&object,(u32 *)&view);
             RenderNativeTag ordering[4096];
             for (unsigned slot=0;slot<2;++slot) {
+                Render_TransformMorphVertices(&object,(u32 *)&view);
                 g_ActiveDrawSlot = slot;
                 ClearOTagR((OT_TYPE *)ordering,4096);
                 uintptr_t end_chain = ordering[0].address;
@@ -134,6 +132,14 @@ int main(int argc, char **argv)
                     cursor = tag->address;
                 }
                 if (gpu) {
+                    RenderLightingMatrix light = {0};
+                    light.matrix.m[0][0] = light.matrix.m[1][1] = light.matrix.m[2][2] = 4096;
+                    gte_SetColorMatrix(&light);
+                    object.shade = 64;
+                    for (unsigned v=0;v<model.vertex_count;++v)
+                        CHECK(object.vertices[v].pad >= 0 && object.vertices[v].pad < 240);
+                    Render_DrawObject(&object,&light);
+                    Render_UpdateClutTable(&object,0,slot);
                     ClearImage(&viewport,0,0,0);
                     DrawOTag((OT_TYPE *)&ordering[4095]);
                     DrawSync(0);

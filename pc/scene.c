@@ -105,6 +105,25 @@ static int32_t scene_word(uint32_t value){return (int32_t)(value&0x80000000?(int
 static int16_t scene_half(uint32_t value){value&=65535;return (int16_t)(value&32768?(int)value-65536:(int)value);}
 PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command){
     PeScene *scene=user;
+    if(command->opcode==230){
+        if(command->count<3||!scene->actors||!scene->background_motion||scene->background_motion_count!=scene->background.count)return PE_DISPATCH_ERROR;
+        unsigned index=pe_script_arg_read(task,&command->args[0]);if(index>=scene->background_motion_count)return PE_DISPATCH_ERROR;
+        for(unsigned axis=0;axis<2;++axis){int16_t value=scene_half(pe_script_arg_read(task,&command->args[axis+1]));
+            scene->background_motion[index].position[axis]=scene->background_motion[index].base[axis]=value;}
+        scene->actors->render_flags|=0x80;return PE_DISPATCH_CONTINUE;
+    }
+    if(command->opcode==187||command->opcode==188){
+        if(command->count<4||!scene->background_motion||scene->background_motion_count!=scene->background.count)return PE_DISPATCH_ERROR;
+        unsigned index=pe_script_arg_read(task,&command->args[0]);
+        if(index>=scene->background_motion_count)return PE_DISPATCH_ERROR;
+        PeBackgroundMotion next=scene->background_motion[index];unsigned bit=command->opcode==187?4:8;
+        next.flags=pe_script_arg_read(task,&command->args[1])?(uint8_t)(next.flags|bit):(uint8_t)(next.flags&~bit);
+        for(unsigned axis=0;axis<2;++axis){uint32_t value=pe_script_arg_read(task,&command->args[axis+2]);
+            if(command->opcode==188)value=0x10000-value;
+            next.speed[axis]=scene_half(value>>8);
+        }
+        scene->background_motion[index]=next;return PE_DISPATCH_CONTINUE;
+    }
     if(command->opcode==237){
         if(!command->count)return PE_DISPATCH_ERROR;
         uint32_t mode=pe_script_arg_read(task,&command->args[0]);

@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Background script opcodes 187/188/230 now control scroll/parallax speeds and
+base positions, preserving original halfword conversion, remaining flags
+and fractions. Real VM tests cover setters, resulting motion, disabling and
+invalid indices. All 35 headless tests and the ASan/UBSan native scene/VM
+fixture pass. Group animation, visibility commands, frame scheduling and
+GPU/reference rendering remain pending.
+
 Scenes own persistent background motion arrays and apply them to draw lists.
 Steps preserve authored blobs, commit atomically, and retain original pause
 and saved-camera behavior. Tests verify half-pixel motion becoming a visible

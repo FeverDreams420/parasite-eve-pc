@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Visible model vertices now transform through their part pose matrices in
+original part order, exposing full RT words and saturated coordinates.
+Hidden/unreferenced slots retain output; invalid pose/capacity preserves the
+batch. The audit transforms 2,630,446 vertices across external animation frames
+and 231,890 visible vertices in neutral room-model poses. All 31 headless tests
+and ASan/UBSan fixtures/full data audit pass. View/perspective projection,
+lighting, packets, GPU drawing and reference images remain pending.
+
 Entity textures load from the primary area bank and the original extra bank
 for days 2–6. Both uploads commit atomically to CPU VRAM; a failed second bank
 preserves VRAM and stats. The 40 area/day selections produce 570 uploads and

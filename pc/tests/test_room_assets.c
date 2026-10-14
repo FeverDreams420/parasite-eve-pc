@@ -37,7 +37,7 @@ int main(void) {
     CHECK(pe_disc_open(&disc, path));
     PeRoomCatalog catalog;
     CHECK(pe_room_catalog_open(&catalog, &disc));
-    uint64_t external_frames=0,external_matrices=0;unsigned external_rows=0;
+    uint64_t external_frames=0,external_matrices=0,external_vertices=0;unsigned external_rows=0;
     PeRoomBlob entity_blob={0},base_blob={0};char entity_error[128];
     for(unsigned bank=18;bank<=38;++bank){
         CHECK(pe_sector_bank_load(&catalog,bank,&entity_blob));
@@ -56,9 +56,13 @@ int main(void) {
             CHECK(pe_actor_set_action(&actor,action,1));
             PeMatrix base,sources[PE_ANIMATION_BONES],pose[PE_ANIMATION_BONES];pe_matrix_identity(&base);
             for(unsigned i=0;i<model.part_count;++i)pe_matrix_identity(&sources[i]);
+            PeTransformedPoint *world_vertices=calloc(model.vertex_count,sizeof(*world_vertices));CHECK(world_vertices||!model.vertex_count);
             for(unsigned frame=0;frame<(animation.frames?animation.frames:1);++frame){unsigned written=0;
                 CHECK(pe_animation_pose(&model,&animation,frame,NULL,&base,sources,model.part_count,pose,PE_ANIMATION_BONES,&written));
                 actor.animation_clock.frame=frame<<16;CHECK(pe_actor_model_pose(&actor,&base));
+                unsigned transformed=0;
+                CHECK(pe_model_world_vertices(&model,actor.render->pose,actor.render->pose_count,world_vertices,model.vertex_count,&transformed));
+                external_vertices+=transformed;
                 CHECK(actor.render->pose_count==written);
                 for(unsigned matrix=0;matrix<written;++matrix)for(unsigned row=0;row<3;++row){
                     CHECK(actor.render->pose[matrix].translation[row]==pose[matrix].translation[row]);
@@ -68,6 +72,7 @@ int main(void) {
                 ++external_frames;external_matrices+=written;
             }
             ++external_rows;
+            free(world_vertices);
         }
         pe_actor_model_close(&actor);
     }
@@ -76,6 +81,7 @@ int main(void) {
     CHECK(!pe_sector_bank_load(&catalog,10,&entity_blob)&&entity_blob.bytes==previous_entity);
     pe_room_blob_close(&entity_blob);pe_room_blob_close(&base_blob);
     printf("External entity banks: 5 primary models and 16 area overrides, %u actions, %llu frames, %llu pose matrices; scene selection pending\n",external_rows,(unsigned long long)external_frames,(unsigned long long)external_matrices);
+    printf("Animated external world vertices transformed: %llu; projection/rendered images pending\n",(unsigned long long)external_vertices);
     PeSpuBank *spu = calloc(1, sizeof(*spu));
     CHECK(spu);
     PeSpuBankStats bank_stats;
@@ -115,6 +121,7 @@ int main(void) {
     uint64_t matrix_commands=0,matrix_outputs=0;unsigned matrix_depth=0;
     uint64_t computed_matrices=0;
     uint64_t model_hitvolumes=0;
+    uint64_t model_world_vertices=0;
     unsigned animation_streams=0,animation_short=0;
     uint64_t animation_frames=0,animation_matrices=0;
     uint64_t animated_pose_matrices=0;unsigned paired_streams=0,missing_roots=0,incompatible_streams=0;
@@ -183,6 +190,9 @@ int main(void) {
             for(unsigned part=0;part<model.part_count;++part)pe_matrix_identity(&sources[part]);
             CHECK(pe_model_matrices(&model,&base,sources,model.part_count,pose,255,&written));
             CHECK(written==model.matrix_outputs);computed_matrices+=written;
+            PeTransformedPoint *vertices=calloc(model.vertex_count,sizeof(*vertices));CHECK(vertices||!model.vertex_count);
+            unsigned transformed=0;CHECK(pe_model_world_vertices(&model,pose,written,vertices,model.vertex_count,&transformed));
+            model_world_vertices+=transformed;free(vertices);
             PeHitVolume volumes[255];unsigned volume_count=0;
             CHECK(pe_model_hitvolumes(&model,pose,written,volumes,255,&volume_count));
             model_hitvolumes+=volume_count;
@@ -403,6 +413,7 @@ int main(void) {
            (unsigned long long)computed_matrices);
     printf("Model neutral-input hit volumes computed: %llu; gameplay contact integration pending\n",
            (unsigned long long)model_hitvolumes);
+    printf("Model neutral-input world vertices transformed: %llu; projection/rendering pending\n",(unsigned long long)model_world_vertices);
     pe_collision_close(&room_collision);
     printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
            (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);

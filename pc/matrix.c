@@ -104,6 +104,30 @@ failed:
 static int volume_part(const PeModel *model,unsigned index,PeModelPart *part,PeModelBounds *bounds){
     return pe_model_part(model,index,part)&&pe_model_bounds(model,index,bounds);
 }
+int pe_model_world_vertices(const PeModel *model,const PeMatrix *pose,unsigned pose_count,
+                            PeTransformedPoint *output,unsigned capacity,unsigned *written){
+    if(capacity<model->vertex_count)return 0;
+    for(unsigned i=0;i<model->part_count;++i){
+        PeModelPart part;if(!pe_model_part(model,i,&part))return 0;
+        if(part.visible==1&&(i>=pose_count||(unsigned)part.first+part.count>model->vertex_count))return 0;
+    }
+    PeTransformedPoint *next=model->vertex_count?malloc((size_t)model->vertex_count*sizeof(*next)):NULL;
+    if(model->vertex_count&&!next)return 0;
+    if(model->vertex_count)memcpy(next,output,(size_t)model->vertex_count*sizeof(*next));
+    unsigned transformed=0;
+    for(unsigned i=0;i<model->part_count;++i){
+        PeModelPart part;if(!pe_model_part(model,i,&part))goto failed;
+        if(part.visible!=1)continue;
+        for(unsigned j=0;j<part.count;++j){
+            unsigned index=part.first+j;PeModelVertex vertex;
+            if(!pe_model_vertex(model,index,&vertex))goto failed;
+            int16_t point[3]={vertex.x,vertex.y,vertex.z};pe_matrix_point(&pose[i],point,&next[index]);++transformed;
+        }
+    }
+    if(model->vertex_count)memcpy(output,next,(size_t)model->vertex_count*sizeof(*next));
+    *written=transformed;free(next);return 1;
+failed:free(next);return 0;
+}
 int pe_model_hitvolumes(const PeModel *model,const PeMatrix *pose,unsigned pose_count,
                          PeHitVolume *output,unsigned capacity,unsigned *written){
     unsigned count=0;

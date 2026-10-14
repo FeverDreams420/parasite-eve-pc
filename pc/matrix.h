@@ -24,4 +24,8 @@ typedef struct PeHitVolume { int16_t center[3]; uint16_t part; int16_t radius,at
  * Requires a complete set of eligible centres. Failure preserves output. */
 int pe_model_hitvolumes(const PeModel *model,const PeMatrix *pose,unsigned pose_count,
                          PeHitVolume *output,unsigned capacity,unsigned *written);
+/* Visible part vertices in global vertex slots; hidden slots retain output.
+ * RT coordinates only: view composition/perspective projection are separate. */
+int pe_model_world_vertices(const PeModel *model,const PeMatrix *pose,unsigned pose_count,
+                            PeTransformedPoint *output,unsigned capacity,unsigned *written);
 #endif

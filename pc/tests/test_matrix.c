@@ -57,6 +57,18 @@ int main(void){
     CHECK(!memcmp(&previous_volume,&volumes[0],sizeof(previous_volume)));
     bytes[44]=2;
     CHECK(pe_model_hitvolumes(&model,output,3,volumes,2,&volume_count) && volume_count==1);
+    uint8_t geometry[132]={0};geometry[2]=1;half(geometry+6,2);half(geometry+24,1);
+    half(geometry+28,0);half(geometry+30,1);geometry[32]=1;
+    half(geometry+40,1);half(geometry+42,65535);half(geometry+44,123);
+    CHECK(pe_model_open(geometry,sizeof(geometry),&model,error,sizeof(error)));
+    PeTransformedPoint vertices[2]={0};vertices[1].word[0]=77;
+    pe_matrix_identity(&parent);parent.translation[0]=40000;
+    written=99;CHECK(pe_model_world_vertices(&model,&parent,1,vertices,2,&written));
+    CHECK(written==1&&vertices[0].word[0]==40001&&vertices[0].saturated[0]==32767&&vertices[0].saturated[1]==-1);
+    CHECK(vertices[1].word[0]==77);
+    written=99;CHECK(!pe_model_world_vertices(&model,&parent,0,vertices,2,&written)&&written==99&&vertices[0].word[0]==40001);
+    CHECK(!pe_model_world_vertices(&model,&parent,1,vertices,1,&written)&&written==99);
+    geometry[32]=0;CHECK(pe_model_world_vertices(&model,&parent,0,vertices,2,&written)&&!written&&vertices[0].word[0]==40001);
     puts("Matrices: fixed rotation saturation, signed input, wrapped translation and transactional command hierarchy passed");
     return 0;
 }

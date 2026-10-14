@@ -1482,3 +1482,21 @@ minimal script: it is not the actual New Game inventory or room script startup.
 This establishes that the migrated original player-spawn dependencies work
 together, not that scene initialization/frame progression or gameplay is ready.
 The next integration gap is the original New Game/scene data setup and callbacks.
+
+### Original inventory insertion prerequisite for New Game
+
+Inv_AddItem, Inv_FindSlotByIndex, Inv_WriteSlotById and their original slot,
+record and ammo helpers now compile from item/add.c. The algorithms retain
+original equipment cloning, active-slot behavior and ammo pooling/capping.
+g_InvSpecialItemRecords aliases the canonical g_KeyItemRecords: the historical
+USA symbol is 0x800A1E64, also the actual base of the biased key-item table.
+This prevents ammo writes from diverging from inventory lookup storage.
+
+The stat-assets test inserts the original five starting IDs (0x44, 0x96, 0x3F,
+1, 6), checks cloned equipment and pooled ammunition, then tests full inventory,
+continued ammo pooling, the 999 cap, exhausted equipment records and direct
+special-item insertion. Full build, stat-assets/scene-spawn/pools CTests and
+ASan/UBSan/function stat checks passed (PsyZ uninstrumented). The fixture sets
+up ammo capacity explicitly: complete Inv_InitNewGameInventory, preceding
+special-record initialization, menu fade dependencies and tagged NG+ carryover
+remain to integrate and verify.

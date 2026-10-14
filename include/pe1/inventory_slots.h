@@ -65,7 +65,8 @@ extern ItemDataRecord g_InvSavedSelectionRecord0, g_InvSavedSelectionRecord1;
  * 0x200..0x208 (the first three are the category ammunition pools);
  * storage tool IDs. */
 extern ItemDataRecord g_InvFallbackAmmoRecord;
-extern ItemDataRecord g_InvSpecialItemRecords[];
+/* Both names addressed 0x800A1E64 in the USA executable. */
+#define g_InvSpecialItemRecords g_KeyItemRecords
 extern s16 g_WayneStorageItems[];
 
 void Inv_InitWayneStorage(void);

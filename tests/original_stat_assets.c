@@ -23,6 +23,35 @@ static unsigned armor_third(unsigned value)
     unsigned root=0; while((root+1)*(root+1)<=value*3000)++root;
     return root/10;
 }
+static int item_addition(void)
+{
+    memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
+    g_AyaSaveState.inventory_slot_count=10;
+    Inv_SelectActiveList(0);
+    g_InvSpecialItemRecords[0].ammo=0;
+    g_InvSpecialItemRecords[0].baseStats[2]=0;
+    g_InvSpecialItemRecords[0].bonusStats[2]=999;
+    const int initial[]={0x44,0x96,0x3f,1,6};
+    for(unsigned i=0;i<5;++i)CHECK(Inv_AddItem(initial[i])==0);
+    CHECK(g_InvItemPtr[0]==0x100 && g_InvItemPtr[1]==0x101);
+    CHECK(!memcmp(&g_InventoryRuntime.equipment[0],Item_LookupBaseData(0x43),sizeof(ItemDataRecord)));
+    CHECK(!memcmp(&g_InventoryRuntime.equipment[1],Item_LookupBaseData(0x95),sizeof(ItemDataRecord)));
+    CHECK(g_InvItemPtr[2]==0x102 && g_InvItemPtr[3]==0x200 && g_InvItemPtr[4]==6);
+    CHECK(g_InvSpecialItemRecords[0].ammo==Item_LookupBaseData(0)->ammo);
+    for(unsigned i=5;i<10;++i)CHECK(Inv_AddItem(6)==0);
+    CHECK(Inv_AddItem(6)==1 && Inv_AddItem(0x44)==1);
+    unsigned before=g_InvSpecialItemRecords[0].ammo;
+    CHECK(Inv_AddItem(1)==0);
+    CHECK(g_InvSpecialItemRecords[0].ammo==before+Item_LookupBaseData(0)->ammo);
+    g_InvSpecialItemRecords[0].ammo=998;
+    CHECK(Inv_AddItem(1)==0 && g_InvSpecialItemRecords[0].ammo==999);
+    g_InvItemPtr[9]=0;
+    for(unsigned i=0;i<128;++i)g_InventoryRuntime.equipment[i].iconId=1;
+    CHECK(Inv_AddItem(0x44)==1 && g_InvItemPtr[9]==0);
+    CHECK(Inv_AddItem(0x203)==0 && g_InvItemPtr[9]==0x203);
+    puts("Original item insertion: starting equipment/items/ammo, full inventory, ammo cap and full record pool passed");
+    return 0;
+}
 static int battle_defaults(PeDisc *disc, PeDiscFile *exe)
 {
     unsigned char original[0x70], tail[0x18];
@@ -322,6 +351,7 @@ int main(void)
     CHECK(!memcmp(effect_codes,g_WeaponEffectCodes,sizeof(effect_codes)));
     CHECK(battle_defaults(&disc,&exe)==0);
     CHECK(item_lookups()==0);
+    CHECK(item_addition()==0);
     CHECK(weapon_stats()==0);
     CHECK(armor_stats()==0);
     CHECK(equipment_init()==0);

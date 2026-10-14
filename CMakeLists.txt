@@ -13,6 +13,7 @@ add_subdirectory(pc)
 add_library(parasite-eve-original OBJECT
     src/main/battle/equipment_init.c
     src/main/aya/stat_recalc.c
+    src/main/item/add.c
     src/main/item/armor_stats.c
     src/main/item/weapon_stats.c
     src/main/item/data_lookup.c

@@ -9,7 +9,8 @@
 /* Explicit input tables for isolated original procedures, not runtime audio. */
 AkaoInstrument g_AkaoInstrumentTable[256];
 int g_AkaoPitchPeriodTable[256 * 16];
-static AkaoSequencerBank bank;
+AkaoSequencerState g_AkaoSequencerState;
+#define bank g_AkaoSequencerState.primary
 AkaoSequencerBank *g_AkaoCurTrack = &bank;
 static unsigned short offsets[2048];
 unsigned short *g_AkaoSampleOffsetTable = offsets;
@@ -36,6 +37,12 @@ unsigned g_SpuActiveVoiceMask;
 unsigned g_SpuPendingKeyOffMask;
 unsigned g_AkaoTrack34Mask, g_AkaoTrack38Mask, g_AkaoTrack3CMask;
 unsigned g_AkaoVoiceMaskScratch, g_AkaoVoiceUpdateFlags;
+AkaoTrack g_AkaoVoiceStateTable[48], g_AkaoVoiceStateTable2[24];
+AkaoSequencerBank g_AkaoTrackStateBackup;
+AkaoVoiceBank g_AkaoVoiceStateBackup;
+unsigned g_AkaoVoiceKeyOnState, g_AkaoSeqPendingFlags;
+unsigned short g_AkaoSelectedBankId;
+char g_AkaoDefaultVoiceProgram[] = {0};
 /* This isolated command test must never request a hardware reverb change.
  * PsyZ has no SpuSetReverbModeType endpoint yet: fail instead of simulating it. */
 int SpuSetReverbModeType(unsigned int mode)
@@ -51,6 +58,7 @@ void SeqOp_ReadTrack64U16(unsigned char **stream);
 void SeqOp_SetTrack34Mask(AkaoTrack *track, u32 mask);
 void SeqOp_ClearTrack34Mask(AkaoTrack *track, u32 mask);
 void Spu_StopActiveVoices(void);
+void Akao_UpdateVoiceMask(AkaoU8 *new_base);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
 int main(void)
@@ -235,6 +243,35 @@ int main(void)
             }
         }
     }
-    puts("original AKAO: tempo cursor and 256 instrument/pitch entries pass");
+    unsigned char old_sequence[256] = {0}, new_sequence[256] = {0};
+    g_AkaoTrackStateBackup = (AkaoSequencerBank){0};
+    g_AkaoTrackStateBackup.sequence_base = old_sequence;
+    g_AkaoTrackStateBackup.active_voice_mask = 0x555555;
+    g_AkaoTrackStateBackup.volume = 0x12345678;
+    for (unsigned i = 0; i < 24; ++i) {
+        AkaoTrack *voice = &g_AkaoVoiceStateBackup.tracks[i];
+        *voice = (AkaoTrack){0};
+        voice->pc = old_sequence + i;
+        voice->branch_target = old_sequence + i + 24;
+        for (unsigned j = 0; j < 4; ++j) voice->call_stack[j] = old_sequence + i + 48 + j;
+        voice->note_length = 11;
+        voice->pan_duration = 13;
+    }
+    Akao_UpdateVoiceMask(new_sequence);
+    CHECK(bank.sequence_base == new_sequence);
+    CHECK(bank.volume == 0x12345678);
+    for (unsigned i = 0; i < 24; ++i) {
+        AkaoTrack *voice = &g_AkaoVoiceStateTable[i];
+        if (i % 2 == 0) {
+            CHECK(voice->pc == new_sequence + i);
+            CHECK(voice->branch_target == new_sequence + i + 24);
+            for (unsigned j = 0; j < 4; ++j) CHECK(voice->call_stack[j] == new_sequence + i + 48 + j);
+            CHECK(voice->note_length == 13 && voice->pan_duration == 15);
+        } else {
+            CHECK(voice->pc == (unsigned char *)g_AkaoDefaultVoiceProgram);
+            CHECK(voice->note_length == 4 && voice->pan_duration == 2);
+        }
+    }
+    puts("original AKAO: commands, native voice state and sequence rebasing pass");
     return 0;
 }

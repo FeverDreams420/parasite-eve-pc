@@ -653,13 +653,13 @@ void Seq_MarkDirtyTracks(AkaoTrack *track) {
     mask = D_8009D2C8->timing.active_voice_mask;
     if (mask != 0) {
         bit = 1;
-        flags = (unsigned int *)track + 0x3D;
+        flags = &track->update_flags;
         do {
             if (mask & bit) {
                 mask ^= bit;
                 *flags |= AKAO_VOICE_PARAM_VOLUME;
             }
-            flags += 0x47;
+            flags += sizeof(AkaoTrack) / sizeof(*flags);
             bit <<= 1;
         } while (mask != 0);
     }
@@ -674,13 +674,13 @@ void Spu_MarkActiveVoicesDirty(void) {
     track = g_AkaoVoiceChannelTable;
         if (mask != 0) {
         bit = 0x1000;
-        flags = (unsigned int *)track + 0x3D;
+        flags = &track->update_flags;
         do {
             if (mask & bit) {
                 mask ^= bit;
                 *flags |= AKAO_VOICE_PARAM_VOLUME;
             }
-            flags += 0x47;
+            flags += sizeof(AkaoTrack) / sizeof(*flags);
             bit <<= 1;
         } while (mask != 0);
     }
@@ -695,7 +695,7 @@ void Akao_UpdateVoiceMask(AkaoU8 *new_base) {
     unsigned int mask;
     unsigned int voice_mask;
     unsigned int updated;
-    int delta;
+    uintptr_t delta;
     AkaoU8 *backup_base;
     unsigned int old_status, allocation;
     AkaoSequencerBank *loaded_bank;
@@ -732,19 +732,19 @@ void Akao_UpdateVoiceMask(AkaoU8 *new_base) {
     bank->status_flags = old_status;
     bank->key_on_request_mask = allocation;
     backup_base = g_AkaoTrackStateBackup.sequence_base;
-    delta = new_base - backup_base;
+    delta = (uintptr_t)new_base - (uintptr_t)backup_base;
     g_AkaoVoiceUpdateFlags |= 0x90;
     voice_mask = bank->active_voice_mask;
     do {
         /* The original loop addresses these fields from pan_duration. */
         active = AKAO_TRACK_OF(duration, pan_duration);
         if (voice_mask & bit) {
-            track->pc += delta;
-            active->branch_target += delta;
-            active->call_stack[0] += delta;
-            active->call_stack[1] += delta;
-            active->call_stack[2] += delta;
-            active->call_stack[3] += delta;
+            track->pc = (AkaoU8 *)((uintptr_t)track->pc + delta);
+            active->branch_target = (AkaoU8 *)((uintptr_t)active->branch_target + delta);
+            active->call_stack[0] = (AkaoU8 *)((uintptr_t)active->call_stack[0] + delta);
+            active->call_stack[1] = (AkaoU8 *)((uintptr_t)active->call_stack[1] + delta);
+            active->call_stack[2] = (AkaoU8 *)((uintptr_t)active->call_stack[2] + delta);
+            active->call_stack[3] = (AkaoU8 *)((uintptr_t)active->call_stack[3] + delta);
             active->note_length += 2;
             active->pan_duration += 2;
             active->update_flags |= magic_flags;

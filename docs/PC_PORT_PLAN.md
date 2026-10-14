@@ -549,6 +549,8 @@ Trzynaście original bank handlers dla manage voices oraz immediate/slides volum
 
 Alias views bank→track nie używają już niezgodnych native track offsets: playback selection zapisuje canonical bank_id, track34 mask zapisuje bank key_off_dirty_mask, stream-pair/read64 opcodes zapisują ticks_per_beat/beats_per_measure/beat/tick/measure. StopActiveVoices odzyskuje track z offsetof(flags), nie 0x38. Test wykonuje original rhythm decoders/cursor, primary/secondary mask selection i zatrzymanie 12 głosów z protected 0x02000000 mask; sprawdza active/pending-keyoff i flags. CTest oraz ASan/UBSan/function przechodzą, PsyZ nieinstrumentowane. Playback selection nadal nie ma pełnego dowodu (wymaga start/rebase engine i rzeczywistych sekwencji); audio runtime pozostaje nieukończone.
 
+Original Akao_UpdateVoiceMask restore/rebase używa pointer-width modular address delta zamiast int i odejmowania wskaźników różnych allocations. Native backup bank/24 tracks jest odtwarzany przez oryginalne CopyWords; test potwierdza przeniesienie pc/branch/four call-stack pointers aktywnych głosów, duration increments, default program/durations nieaktywnych i zachowanie volume. Seq_MarkDirtyTracks oraz Spu_MarkActiveVoicesDirty używają offsetof-derived field pointer/native stride zamiast 0xF4/0x11C. Rebase fixture, CTest i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). Dowód dotyczy syntetycznych danych dla oryginalnej procedury; native dirty-loop behavior, real sequence corpus i pełne odtwarzanie nadal wymagają weryfikacji.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

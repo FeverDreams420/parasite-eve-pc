@@ -539,6 +539,8 @@ Oryginalne `Akao_LookupPitchPeriod`, `SeqOp_LoadInstrumentFromIndex` i `SeqOp_Se
 
 Oryginalny `akao/voice_bank.c` dołącza do object target po dodaniu brakujących deklaracji publicznego API reverb. `Akao_LoadSamplePairFromIndex` i jego indexed-stream callers przekazują pełne native pointers. Test wykonuje 1024 indeksy obu próbek, masked IDs, sentinel `0xFFFF` i poprawny zerowy offset; CTest oraz ASan/UBSan/function przechodzą. Bank backup kopiuje native sizeof, a oryginalna pętla inicjalizacji ścieżek używa sizeof(AkaoTrack) zamiast 284 bytes. Te dwie ścieżki nie mają jeszcze pełnego runtime dowodu; inne raw command adresy/default nested stream nadal wymagają audytu. Sam object build nie oznacza sprawnego audio.
 
+Wszystkie cztery oryginalne jednostki AKAO kompilują się teraz w object target: sekwencer, transfer, bank i voice driver. Driver potrzebuje tylko deklaracji CD audio mixing, wydzielonej z nagłówka obejmującego GPU/DMA/drive; publiczne CdMix/CdlATV pozostają tym samym API. Dwa istniejące testy AKAO przechodzą po dodaniu drivera, ale usuwają jego nieużywane procedury podczas linkowania i nie dowodzą poprawności sprzętowego wyjścia. Driver nadal ma bezpośrednie MMIO, ostrzeżenia ABI i niezintegrowane global state/dispatch tables. Kolejka oraz relative/default nested commands nadal wymagają dostosowania wskaźników.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

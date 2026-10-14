@@ -5,6 +5,7 @@
 #include "pe1/psyq_callbacks.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/psyq_types.h"
+#include "pe1/psyq_cd_audio.h"
 
 typedef PsyqEventCallback CdlCB;
 
@@ -154,12 +155,6 @@ CdlLOC *CdIntToPos(int i, CdlLOC *p);
 void data_ready_callback(void);
 int StGetBackloc(CdlLOC *position);
 
-typedef struct CdlATV {
-    u_char val0;
-    u_char val1;
-    u_char val2;
-    u_char val3;
-} CdlATV;
 
 typedef struct DsDecodedEventFlags {
     u_char bit7;

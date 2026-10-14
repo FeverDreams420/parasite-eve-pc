@@ -7,7 +7,7 @@
 #include "pe1/akao/track.h"
 #include "pe1/akao/voice_masks.h"
 #include "pe1/akao/voice_state.h"
-#include "pe1/psyq_cd.h"
+#include "pe1/psyq_cd_audio.h"
 #include "pe1/psyq_spu_internal.h"
 
 int Akao_Cmd_10(void *bank) {

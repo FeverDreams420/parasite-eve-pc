@@ -130,6 +130,7 @@ int main(void) {
     uint64_t computed_matrices=0;
     uint64_t model_hitvolumes=0;
     uint64_t model_world_vertices=0;
+    unsigned camera_groups=0;
     unsigned animation_streams=0,animation_short=0;
     uint64_t animation_frames=0,animation_matrices=0;
     uint64_t animated_pose_matrices=0;unsigned paired_streams=0,missing_roots=0,incompatible_streams=0;
@@ -149,6 +150,11 @@ int main(void) {
             return 1;
         }
         CHECK(room.map == map && room.data.size);
+        PeCameraBank camera_bank;PeCamera room_camera;
+        CHECK(pe_room_cameras(&room,&camera_bank));camera_groups+=camera_bank.count;
+        for(unsigned group=0;group<camera_bank.count;++group)CHECK(pe_camera_group(&camera_bank,group,&room_camera));
+        CHECK(pe_camera_group(&camera_bank,0,&room_camera));
+        PeProjection room_projection={160u<<16,112u<<16,0,room_camera.distance,0};
         PeRoomBanks model_banks; char bank_error[256];
         if (!pe_room_banks(&room, &model_banks, bank_error, sizeof(bank_error))) {
             fprintf(stderr,"%s\n",bank_error); return 1;
@@ -202,7 +208,7 @@ int main(void) {
             unsigned transformed=0;CHECK(pe_model_world_vertices(&model,pose,written,vertices,model.vertex_count,&transformed));
             model_world_vertices+=transformed;free(vertices);
             PeProjectedVertex *projected=calloc(model.vertex_count,sizeof(*projected));CHECK(projected||!model.vertex_count);
-            unsigned projected_count=0;CHECK(pe_model_project(&model,&view,pose,written,&projection,projected,model.vertex_count,&projected_count));
+            unsigned projected_count=0;CHECK(pe_model_project(&model,&room_camera.view,pose,written,&room_projection,projected,model.vertex_count,&projected_count));
             CHECK(projected_count==transformed);free(projected);
             PeHitVolume volumes[255];unsigned volume_count=0;
             CHECK(pe_model_hitvolumes(&model,pose,written,volumes,255,&volume_count));
@@ -425,6 +431,7 @@ int main(void) {
     printf("Model neutral-input hit volumes computed: %llu; gameplay contact integration pending\n",
            (unsigned long long)model_hitvolumes);
     printf("Model neutral-input world vertices transformed: %llu; projection/rendering pending\n",(unsigned long long)model_world_vertices);
+    printf("Room camera groups decoded: %u; first-camera model projections checked; scrolling/reference rendering pending\n",camera_groups);
     pe_collision_close(&room_collision);
     printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
            (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);

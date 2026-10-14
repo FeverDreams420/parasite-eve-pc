@@ -20,6 +20,9 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     PeScene next = {0};
     next.input=scene->input;
     if (!pe_room_load(catalog, map, &next.room)) goto catalog_error;
+    if(!pe_room_cameras(&next.room,&next.cameras)||!pe_camera_group(&next.cameras,0,&next.camera)){
+        snprintf(error,error_size,"Invalid room camera bank");goto failed;
+    }
     if (!pe_room_collision(&next.room, &next.collision, error, error_size)) goto failed;
     if (!pe_room_banks(&next.room, &next.banks, error, error_size)) goto failed;
     next.vram = malloc(sizeof(*next.vram));

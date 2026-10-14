@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Room cameras decode from the taskAux geometry block: matrix, projection
+distance, viewport dimensions and signed bounds. All 509 groups across
+414 Disc 1 rooms validate. Scene preparation retains group zero; room-model
+projection now uses its actual matrix/distance with initial screen centre
+160/112. All 33 headless tests and ASan/UBSan camera fixtures/full native audit
+pass. Group switching, scrolling, focus/transitions, depth cue, backgrounds
+and reference images remain pending.
+
 RTPT tails now reproduce original packed reads into following vertices or
 colour-section bytes, with bounds checked against the owned model blob.
 Overlapping writes retain original part order; writes beyond the declared

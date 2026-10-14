@@ -70,8 +70,6 @@ add_library(parasite-eve-original-akao OBJECT
     src/main/akao/menu_sound.c
     src/main/cdrom/track_read.c
     src/main/cdrom/asset_lookup.c
-    src/main/akao/state.c
-    src/main/akao/opcode_dispatch.c
     src/main/akao/voice_driver.c
     src/main/akao/voice_bank.c
     src/main/akao/sequencer.c

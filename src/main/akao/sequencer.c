@@ -2431,3 +2431,179 @@ void SeqOp_StopVoice(AkaoTrack *track, u32 arg1) {
 void SeqOp_Noop(AkaoTrack *track, u32 mask) {
     SeqOp_StopVoice(track, mask);
 }
+
+/* Native storage for the original driver. Asset tables and platform SPU
+ * registers are initialized by their own loading/platform endpoints. */
+AkaoInstrument g_AkaoInstrumentTable[256];
+AkaoSequencerState g_AkaoSequencerState;
+AkaoCurrentBankPointer g_AkaoCurrentBankPointer = {.pointer = &g_AkaoSequencerState.primary};
+unsigned g_SpuActiveVoiceMask;
+unsigned g_SpuPendingKeyOffMask;
+unsigned g_AkaoTrack34Mask, g_AkaoTrack38Mask, g_AkaoTrack3CMask;
+unsigned g_AkaoVoiceMaskScratch, g_AkaoVoiceUpdateFlags;
+AkaoSequencerBank g_AkaoTrackStateBackup;
+AkaoVoiceBank g_AkaoVoiceStateBackup;
+unsigned g_AkaoVoiceKeyOnState, g_AkaoSeqPendingFlags;
+unsigned short g_AkaoSelectedBankId;
+int g_AkaoPlaybackMode;
+AkaoTickTrack g_AkaoSequencerTracks[60];
+AkaoNestedSource g_AkaoNestedSource;
+int g_AkaoSeqLoopCounter;
+unsigned g_AkaoSfxAllocatedVoiceMask, g_SpuStoppedVoiceMask;
+u16 g_AkaoTrack5ATransposeValue;
+int g_AkaoGlobalPitchDepth;
+int g_AkaoTempoScaleAccum;
+AkaoCdInputAccumulator g_AkaoCdInputAccumulator;
+u16 g_AkaoGlobalSlideTick;
+short g_AkaoGlobalPitchSlideCounter, g_AkaoGlobalD2D0SlideCounter, g_AkaoGlobalD2CCSlideCounter;
+int g_AkaoGlobalPitchSlideStep, g_AkaoGlobalD2D0SlideStep, g_AkaoGlobalD2CCSlideStep;
+unsigned g_AkaoFmEnableMask, g_AkaoNoiseEnableMask, g_AkaoReverbEnableMask;
+unsigned g_AkaoVoicePortamentoResetMask;
+AkaoTickTempo g_AkaoSfxTempo;
+u32 g_AkaoSfxTickAccumulator;
+AkaoVoiceEnvelopeSlot g_AkaoVoiceEnvelopeTable[24];
+SpuCommonAttr g_AkaoSpuCommonAttr;
+
+volatile int g_AkaoSeqBusyFlags;
+volatile int g_SpuTransferStatus;
+unsigned g_AkaoStreamUploadMode, g_AkaoInstrumentUploadAddress, g_AkaoInstrumentUploadRemaining;
+
+/* Original 0x2000-byte stream instrument cache (USA 0x800B4900). */
+AkaoInstrument g_AkaoStreamInstrumentCacheB[128];
+unsigned g_AkaoStreamAAddress, g_AkaoStreamARemaining;
+
+/* Original USA dispatch order; each entry calls the original procedure.
+ * Verified against docs/AKAO_OPCODE_TABLE.json and the supplied executable. */
+AkaoCommandHandler g_AkaoOpcodeHandlers[256] = {
+    [0xA0] = SeqOp_StopVoice,
+    [0xA1] = Akao_PlayNote,
+    [0xA2] = SeqOp_SetVolume,
+    [0xA3] = SeqOp_ReadVolume,
+    [0xA4] = SeqOp_SetVibratoParams,
+    [0xA5] = SeqOp_ReadPanpot,
+    [0xA6] = SeqOp_IncPanpot,
+    [0xA7] = SeqOp_DecPanpot,
+    [0xA8] = SeqOp_SetVolumeOrExpression,
+    [0xA9] = Akao_SetExpressionSlide,
+    [0xAA] = Akao_SetPanpot,
+    [0xAB] = Akao_SetPanSlide,
+    [0xAC] = SeqOp_SetTrack5AValue,
+    [0xAD] = SeqOp_ReadAdsrAttackRate,
+    [0xAE] = SeqOp_ReadAdsrDecayRate,
+    [0xAF] = SeqOp_ReadAdsrSustainLevel,
+    [0xB0] = SeqOp_ReadAdsrDecayAndSustain,
+    [0xB1] = SeqOp_ReadAdsrSustainRate,
+    [0xB2] = SeqOp_ReadAdsrReleaseRate,
+    [0xB3] = SeqOp_LoadInstrumentFromIndex,
+    [0xB4] = SeqOp_SetPitchLFO,
+    [0xB5] = SeqOp_UpdatePitchLFOTarget,
+    [0xB6] = SeqOp_StopPitchLFO,
+    [0xB7] = SeqOp_ReadAdsrAttack,
+    [0xB8] = SeqOp_SetVolumeLFO,
+    [0xB9] = SeqOp_UpdateVolumeLFOTarget,
+    [0xBA] = SeqOp_ResetTrack,
+    [0xBB] = SeqOp_ReadAdsrSustain,
+    [0xBC] = SeqOp_LoadSoundEntry,
+    [0xBD] = SeqOp_SetPitchBase,
+    [0xBE] = SeqOp_ResetFlag4State,
+    [0xBF] = SeqOp_ReadAdsrRelease,
+    [0xC0] = SeqOp_ReadExpression,
+    [0xC1] = SeqOp_AdjustExpression,
+    [0xC2] = SeqOp_SetTrack38Mask,
+    [0xC3] = SeqOp_ClearMask,
+    [0xC4] = SeqOp_SetTrack34Mask,
+    [0xC5] = SeqOp_ClearTrack34Mask,
+    [0xC6] = SeqOp_SetMask,
+    [0xC7] = SeqOp_ClearTrack3CMask,
+    [0xC8] = SeqOp_PushLoopPoint,
+    [0xC9] = SeqOp_LoopCounter,
+    [0xCA] = SeqOp_Return,
+    [0xCB] = SeqOp_StopAndClearTrack,
+    [0xCC] = SeqOp_EnableField84,
+    [0xCD] = SeqOp_Noop_904AC,
+    [0xCE] = SeqOp_SetDurationBAAndMask,
+    [0xCF] = SeqOp_SetDuration,
+    [0xD0] = SeqOp_Noop_904B4,
+    [0xD1] = SeqOp_Noop_904BC,
+    [0xD2] = SeqOp_SetRepeatCount,
+    [0xD3] = SeqOp_SetDurationAlt,
+    [0xD4] = SeqOp_SetFlag4,
+    [0xD5] = SeqOp_ClearFlag10,
+    [0xD6] = SeqOp_SetFlag20,
+    [0xD7] = SeqOp_ClearFlag20,
+    [0xD8] = SeqOp_ReadDetune,
+    [0xD9] = SeqOp_AdjustDetune,
+    [0xDA] = SeqOp_SetTremoloParams,
+    [0xDB] = SeqOp_StopTremolo,
+    [0xDC] = SeqOp_AdjustVolumeTarget,
+    [0xDD] = SeqOp_SetPanSlide,
+    [0xDE] = SeqOp_SetExpressionSlide,
+    [0xDF] = SeqOp_PitchSlide,
+    [0xE0] = SeqOp_SetSustainFlag,
+    [0xE1] = SeqOp_Noop,
+    [0xE2] = SeqOp_Noop,
+    [0xE3] = SeqOp_Noop,
+    [0xE4] = SeqOp_Noop,
+    [0xE5] = SeqOp_Noop,
+    [0xE6] = SeqOp_Noop,
+    [0xE7] = SeqOp_Noop,
+    [0xE8] = SeqOp_Noop,
+    [0xE9] = SeqOp_Noop,
+    [0xEA] = SeqOp_Noop,
+    [0xEB] = SeqOp_Noop,
+    [0xEC] = SeqOp_Noop,
+    [0xED] = SeqOp_Noop,
+    [0xEE] = SeqOp_Noop,
+    [0xEF] = SeqOp_Noop,
+    [0xF0] = SeqOp_Noop,
+    [0xF1] = SeqOp_Noop,
+    [0xF2] = SeqOp_Noop,
+    [0xF3] = SeqOp_Noop,
+    [0xF4] = SeqOp_Noop,
+    [0xF5] = SeqOp_Noop,
+    [0xF6] = SeqOp_Noop,
+    [0xF7] = SeqOp_Noop,
+    [0xF8] = SeqOp_Noop,
+    [0xF9] = SeqOp_Noop,
+    [0xFA] = SeqOp_Noop,
+    [0xFB] = SeqOp_Noop,
+    [0xFC] = SeqOp_Noop,
+    [0xFD] = SeqOp_Noop,
+    [0xFE] = SeqOp_Noop,
+    [0xFF] = SeqOp_Noop,
+};
+
+AkaoCommandHandler g_AkaoExtOpcodeHandlers[32] = {
+    [0x00] = SeqOp_SetTempo,
+    [0x01] = SeqOp_SetPitchSlideTarget,
+    [0x02] = SeqOp_SetTempoSlide,
+    [0x03] = SeqOp_SetVolumeSlideTarget,
+    [0x04] = SeqOp_SetBranchTarget,
+    [0x05] = SeqOp_ClearFlag3,
+    [0x06] = SeqOp_JumpRelative,
+    [0x07] = SeqOp_BranchIfLoopLimitReached,
+    [0x08] = SeqOp_JumpIfLoopCount,
+    [0x09] = SeqOp_JumpIfLoopCountPop,
+    [0x0A] = Akao_TieNote,
+    [0x0B] = SeqOp_LoadNestedStreams,
+    [0x0C] = SeqOp_Skip2,
+    [0x0D] = SeqOp_Ignore,
+    [0x0E] = Akao_SetPanTarget,
+    [0x0F] = Akao_SetPanTargetSlide,
+    [0x10] = Akao_SetReleaseRate,
+    [0x11] = Akao_ResetReleaseRate,
+    [0x12] = SeqOp_SlideVolume,
+    [0x13] = SeqOp_Noop,
+    [0x14] = SeqOp_SetReturnPoint,
+    [0x15] = SeqOp_StreamPair,
+    [0x16] = SeqOp_ReadTrack64U16,
+    [0x17] = SeqOp_NoteOnWithVoiceAlloc,
+    [0x18] = SeqOp_NoteOnWithPitchSlide,
+    [0x19] = SeqOp_Noop,
+    [0x1A] = SeqOp_Noop,
+    [0x1B] = SeqOp_Noop,
+    [0x1C] = SeqOp_Noop,
+    [0x1D] = SeqOp_Noop,
+    [0x1E] = SeqOp_Noop,
+    [0x1F] = SeqOp_Noop,
+};

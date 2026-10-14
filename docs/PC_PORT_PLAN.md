@@ -2235,3 +2235,21 @@ PsyZ/SDL remain uninstrumented. Other widget construction/drawing paths remain
 unverified, with known legacy packet-pointer narrowing and old callback
 prototypes still present. This is not a completed native menu renderer. Full
 runtime integration and removal of pc/ remain incomplete.
+
+
+### Consolidate original AKAO data in the existing sequencer module
+
+Deleted akao/state.c and akao/opcode_dispatch.c. Native storage for the original
+AKAO driver and both USA instruction dispatch tables now reside in the existing
+akao/sequencer.c. Full definitions compare unchanged, preserving initializers,
+array sizes and dispatch order. No new files or gameplay implementation.
+
+Full build passes. Fresh ASan/UBSan/function runs pass for the original complete
+tick/headless PCM fixture and menu-assets: commands 44c/44d/44e/44f produce
+30172/23184/7834/41810 nonzero samples respectively. PsyZ is uninstrumented and
+its DMA callback remains unimplemented; these tests do not establish complete
+audio/runtime integration. Remaining extraction/data files and all of pc/ still
+require removal.
+
+All six original-game-akao CTests pass with required Disc 1 assets: layout,
+instrument, assets, menu-assets, tick-assets and prefix-assets.

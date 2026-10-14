@@ -1866,3 +1866,28 @@ The source merge was reverted pending an explicit mapping to original native
 procedures. Boot-disc header dependencies additionally pull in PS1-only CD
 runtime layouts; the file-image backend should replace the relevant dependencies.
 Do not claim the full room loader or room script callbacks are functional.
+
+
+### Disc 1 room handler descriptor audit
+
+Clarification of the loader prerequisite: the trailing room-record address
+points to a descriptor, not directly to a function. PM slots below 85 use a
+seven-function PmCommand descriptor; slots at/above 85 select FieldFxTaskProgram
+(table, initializer and script). Native binding must account for each descriptor's
+contents and the owning overlay, including relocated copies of shared routines.
+Different addresses alone do not establish different behavior.
+
+The existing original_scene_spawn test now audits all 414 Disc 1 room blobs:
+479 records comprise 298 PM descriptors and 181 field-effect programs, with 98
+slot IDs and 212 distinct slot/address pairs. Every source offset is 8 and all
+aligned descriptor spans (28/56 serialized bytes) lie inside their room at the
+USA load base 0x8018efe0. The historical M023 overlay config at 1d20afe62 places
+its code at 0x8018efe8, consistent with that eight-byte archive prefix.
+The test explicitly labels native dispatch unverified; no PS1 address is invoked.
+
+Build, Disc 1 scene-spawn CTest and scene-spawn ASan/UBSan/function pass, retaining
+all 414 relocation/immutable-asset checks and 1756 NPC plus four Aya spawn cases.
+This is a data-format inventory and prerequisite for original module integration,
+not implementation of native handler registration or completion of room loading.
+No files were added. Next required work is resolving the descriptor function/data
+references to the original linked overlay modules, then restoring room_load.c.

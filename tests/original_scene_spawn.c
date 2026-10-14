@@ -37,6 +37,11 @@ u8 g_SceneAreaType;
 u32 g_EntityRenderScratch[9];
 
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
+static u32 room_word(const u8 *bytes)
+{
+    return (u32)bytes[0] | (u32)bytes[1] << 8 | (u32)bytes[2] << 16 | (u32)bytes[3] << 24;
+}
+
 int main(void)
 {
     const char *path=getenv("PE_TEST_DISC");
@@ -53,9 +58,40 @@ int main(void)
     u32 script[]={0}; u8 *scripts[12]={0}; scripts[3]=(u8 *)script;
     g_GameState.bank_reset_944[0]=scripts;
     unsigned spawned=0, relocated=0;
+    struct { unsigned slot; u32 address; } handler_variants[512];
+    unsigned variant_count = 0, handler_count = 0, pm_count = 0, effect_count = 0;
+    unsigned char handler_slots[192] = {0};
     for(unsigned map=1;map<=PE_USA_ROOM_SLOTS;++map) {
         if(!catalog.ranges[map-1].room_sectors) continue;
         CHECK(pe_room_load(&catalog,map,&room));
+        const u8 *handler_records;
+        unsigned record_count;
+        CHECK(pe_room_blob_table(&room.data, 1, 12, &handler_records, &record_count));
+        for (unsigned record = 0; record < record_count; ++record) {
+            const u8 *entry = handler_records + record * 12;
+            unsigned slot = entry[7];
+            u32 address = room_word(entry + 8);
+            /* USA room payload is loaded at 0x8018efe0; overlay code starts
+             * eight bytes later. These are serialized descriptor addresses,
+             * never callable native pointers. */
+            CHECK(slot >= 8 && slot < sizeof(handler_slots));
+            CHECK(address >= 0x8018efe0u && !(address & 3));
+            size_t offset = address - 0x8018efe0u;
+            size_t descriptor_size = slot < 85 ? 7 * 4 : 14 * 4;
+            CHECK(offset <= room.data.size && descriptor_size <= room.data.size - offset);
+            CHECK((room_word(entry + 4) & 0xffffff) == 8);
+            handler_slots[slot] = 1;
+            ++handler_count;
+            if (slot < 85) ++pm_count; else ++effect_count;
+            unsigned variant = 0;
+            while (variant < variant_count &&
+                   (handler_variants[variant].slot != slot || handler_variants[variant].address != address)) ++variant;
+            if (variant == variant_count) {
+                CHECK(variant_count < sizeof(handler_variants) / sizeof(handler_variants[0]));
+                handler_variants[variant].slot = slot;
+                handler_variants[variant_count++].address = address;
+            }
+        }
         PeRoomBanks banks; char error[256];
         CHECK(pe_room_banks(&room,&banks,error,sizeof(error)));
         PeScriptProgram program;
@@ -187,6 +223,12 @@ int main(void)
     printf("Original New Game map 431 spawn list: %u initial descriptors matched (player presence follows data)\n",scene_program.actors);
     pe_room_blob_close(&aya_bank); pe_room_close(&room);
     printf("Original Scene_LoadMap: %u real Aya model spawns with original equipment initialization\n",players);
+    unsigned slot_count = 0;
+    for (unsigned slot = 0; slot < sizeof(handler_slots); ++slot) slot_count += handler_slots[slot];
+    CHECK(handler_count == 479 && pm_count == 298 && effect_count == 181);
+    CHECK(slot_count == 98 && variant_count == 212);
+    printf("USA room handler data: %u records (%u PM, %u effects), %u slots, %u slot/address variants within room bounds; native dispatch not verified\n",
+           handler_count, pm_count, effect_count, slot_count, variant_count);
     free(memory); g_RenderScratchBufferBase[0]=NULL; pe_disc_close(&disc);
     printf("Original script relocation: %u real room blocks, all entries and immutable asset bytes passed\n",relocated);
     printf("Original Scene_LoadMap: %u NPC model spawns, full/non-full native allocations and script nodes\n",spawned);

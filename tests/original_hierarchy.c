@@ -1,16 +1,32 @@
-#include "pe1/field_actor.h"
+#include "pe1/battle.h"
+#include <string.h>
 #include <stdio.h>
 extern FieldActor *g_FieldActorListHead;
 void Entity_RollbackPositionHierarchy(FieldActor *);
 void Entity_CopyParentPosition(void);
+PE1_STATIC_ASSERT(offsetof(EnemyCombatant, statusFlags2) == offsetof(FieldActorState, status_flags2), enemy_state_status_host_match);
+PE1_STATIC_ASSERT(offsetof(EnemyCombatant, lootItemId) == offsetof(FieldActorState, loot_item_id), enemy_state_loot_host_match);
+PE1_STATIC_ASSERT(sizeof(EnemyCombatant) == sizeof(FieldActorState), enemy_state_host_size_match);
+
 int main(void)
 {
     FieldActor actors[4]={0};
+    BattleTarget target={0}; BattleTargetWords words;
+    uintptr_t pointer;
+    target.actor=(BattleEntity *)&actors[3];
+    memcpy(&words,&target,sizeof(words));
+    if (words.word_00!=(uintptr_t)&actors[3]) return 5;
+    actors[0].model_state.model_header=(RenderObjectHeader *)&actors[1];
+    if (actors[0].model_state.allocation_active!=(uintptr_t)&actors[1]) return 6;
+    actors[0].parent=&actors[2];
+    memcpy(&pointer,(u8 *)&actors[0]+offsetof(BattleEntity,parent),sizeof(pointer));
+    if (pointer!=(uintptr_t)&actors[2]) return 7;
+    actors[0].parent=0;
     for (int i=0; i<4; ++i) {
         actors[i].next=i<3?&actors[i+1]:0;
         actors[i].base_x=10+i; actors[i].base_y=20+i; actors[i].base_z=30+i;
         actors[i].pos_x=100+i; actors[i].pos_y=200+i; actors[i].pos_z=300+i;
-        actors[i].collision_face_mirror=5+i;
+        actors[i].collision_face_mirror=(void *)(uintptr_t)(5+i);
     }
     actors[1].parent=&actors[0];
     actors[2].parent=&actors[0];
@@ -19,7 +35,7 @@ int main(void)
     Entity_RollbackPositionHierarchy(&actors[3]);
     for (int i=0; i<4; ++i)
         if (actors[i].pos_x!=10+i || actors[i].pos_y!=20+i ||
-            actors[i].pos_z!=30+i || actors[i].collision_face!=5+i) return 1;
+            actors[i].pos_z!=30+i || actors[i].collision_face!=(void *)(uintptr_t)(5+i)) return 1;
     if (actors[0].flags!=0x40000 || actors[1].flags || actors[2].flags || actors[3].flags) return 2;
     actors[0].pos_x=999; actors[0].rot_y=123;
     actors[1].flags=actors[3].flags=0x400000;

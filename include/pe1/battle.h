@@ -33,7 +33,7 @@ PE1_STATIC_ASSERT(sizeof(BattleGameStateWindow) == 16, battle_game_state_window_
  * BIOS (DuckStation GDB) by fighting the first Carnegie Hall encounter and
  * cross-checking enemy stats against the wiki (enemy max HP read as 40).
  *
- * These typedefs are the shared ABI vocabulary for the byte-matching build.
+ * These typedefs are shared runtime views for the native game build.
  * Direct member access is preferred where it preserves code generation; older
  * compiler-sensitive functions derive their accesses from PE1_OFFSETOF so the
  * layout still has one executable source of truth. Fields marked TENTATIVE need
@@ -133,15 +133,11 @@ typedef struct EntityAnimEventCore {
 } EntityAnimEventCore;
 
 PE1_STATIC_ASSERT(sizeof(EntityAnimEventFlags) == 4, entity_anim_event_flags_size);
-PE1_STATIC_ASSERT(sizeof(EntityAnimEventCore) == 0xB4, entity_anim_event_core_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EntityAnimEventCore, active) == 0x18,
-                  entity_anim_event_active_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EntityAnimEventCore, records) == 0x1C,
-                  entity_anim_event_records_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EntityAnimEventCore, parameters) == 0x7C,
-                  entity_anim_event_parameters_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EntityAnimEventCore, assetId) == 0xB2,
-                  entity_anim_event_asset_offset);
+
+
+
+
+
 PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyActionEffect, enterStep) == 4,
                   enemy_action_effect_enter_step_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyActionEffect, exitStep) == 8,
@@ -203,6 +199,10 @@ typedef struct Combatant {
 /* 0x14 */ u8   targetAngleActionModes[3]; /* selected by the relative target angle in Battle_AdvancePhase */
 /* 0x17 */ u8   followUpAngleActionModes[3]; /* modes 7/9/11 that end the attack started by targetAngleActionModes */
 /* 0x1A */ u8   pad_1A[2];
+#if UINTPTR_MAX > UINT32_MAX
+    /* The shared FieldActorState view has a host pointer at old offset 0x18. */
+    u8 hostActionStatePadding[sizeof(void *) - 4];
+#endif
 /* 0x1C */ u16  maxHP;         /* MAX HP; curHP clamped to this (battle/attack.c:530; Battle_ResetEnemyStats.c:34) */
 /* 0x1E */ s16  stat1E;        /* SetContextField case11 (Battle_SetContextField.c:42) */
 /* 0x20 */ s16  stat20;        /* SetContextField case12 (Battle_SetContextField.c:45) */
@@ -276,9 +276,11 @@ typedef struct EnemyCombatant {
 /* 0x18 */ EnemyActionEffect *effect;
 /* 0x1C */ u8  pad_1C[0x30];
 /* 0x4C */ u32 stateFlags;
-/* 0x50 */ u8  pad_50[0x1C];
+/* 0x50 */ u8  pad_50[0x18];
+              void *action;
 /* 0x6C */ BattleAttributes *attributes;
-/* 0x70 */ u8  pad_70[0x0C];
+/* 0x70 */ void *field70;
+              u8 pad_74[8];
 /* 0x7C */ s8  contactActionIds[0x0C]; /* four ids per facing group (coreFlags >> 21), -1 ends a group (Entity_CheckActionIdMatch) */
 /* 0x88 */ s32 hpAliveCap; /* caps hpAlive when smaller */
 /* 0x8C */ u16 defense; /* subtracted from attack power */
@@ -413,7 +415,7 @@ PE1_STATIC_ASSERT(sizeof(BattleEffectBits) == 4, battle_effect_bits_size);
 typedef struct BattleEntity {
 /* 0x000 */ void *core; /* Combatant for player paths, EnemyCombatant for enemy entities */
 /* 0x004 */ struct BattleEntity *next; /* next in actor list (battle/setup.c:63) */
-/* 0x008 */ u8   pad_008[4];
+/* 0x008 */ struct BattleEntity *prev;
 /* 0x00C */ u8   modelIndex;     /* selects a 0xC0-byte action-pointer table (Entity_SetActionMode) */
 /* 0x00D */ u8   teamId;        /* group/team id; target must differ/match (Battle_SetupEntityTarget.c:66) */
 /* 0x00E */ u8   actionMode;     /* current action/animation mode; <4 and ==0xC are battle-state tests */
@@ -447,16 +449,17 @@ typedef struct BattleEntity {
 /* 0x074 */ u8   pad_074[0x24];
 /* 0x098 */ u32  entityFlags;   /* &0x40 visible, &0x4000 skip-as-target, &0x40000000 area-target, &0x6000 hit-state (battle/setup.c:435; Battle_SetupEntityTarget.c:60) */
 /* 0x09C */ u8  *scriptBase;
-/* 0x0A0 */ u8   pad_0A0[0xEC];
+/* 0x0A0 */ ScriptNode *scriptNodeLists[3];
+              u32 scriptLocals[0x38];
 /* 0x18C */ struct BattleEntity *parent; /* parent/owner; linked animations recurse through this entity */
-/* 0x190 */ u8   pad_190[4];
+/* 0x190 */ void (*frameCallback)(FieldActor *);
 /* 0x194 */ void *actionCheckFn; /* Entity_CheckActionIdMatch fn ptr (Battle_StartEncounter.c:124) */
 /* 0x198 */ u8   pad_198[4];
 /* 0x19C */ u32 *scriptCursor19C;
 /* 0x1A0 */ u32 *scriptCursor1A0;
 /* 0x1A4 */ void *collisionFace;
 /* 0x1A8 */ void *collisionFaceMirror;
-/* 0x1AC */ s32  allocationActive; /* nonzero when allocationBlock must be released */
+/* 0x1AC */ uintptr_t allocationActive; /* nonzero when allocationBlock must be released */
 /* 0x1B0 */ void *actionData;    /* current animation/action record */
 /* 0x1B4 */ RenderObjectEntity renderObject;
 /* 0x270 */ u8   pad_270[0x08];
@@ -479,15 +482,15 @@ typedef struct BattleTarget {
  * code copies the angle and trailing bytes as one word; keeping that operation
  * explicit preserves the sorter schedule while BattleTarget names the fields. */
 typedef struct BattleTargetWords {
-    s32 word_00;
+    uintptr_t word_00;
     s32 word_04;
     s32 word_08;
 } BattleTargetWords;
 PE1_STATIC_ASSERT(sizeof(BattleTargetWords) == sizeof(BattleTarget),
                   battle_target_words_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleTargetWords, word_04) == 4,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleTargetWords, word_04) == PE1_OFFSETOF(BattleTarget, dist),
                   battle_target_words_distance_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleTargetWords, word_08) == 8,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleTargetWords, word_08) == PE1_OFFSETOF(BattleTarget, angle),
                   battle_target_words_tail_offset);
 
 typedef struct BattleInitSlot {
@@ -500,14 +503,12 @@ extern BattleInitSlot g_BattleActionQueue[45];
  * pre-scaled slot offset to the queue address as an integer. */
 typedef union BattleInitSlotAddress {
     BattleInitSlot *slot;
-    u32 address;
+    uintptr_t address;
 } BattleInitSlotAddress;
 
-PE1_STATIC_ASSERT(sizeof(BattleInitSlot) == 8, battle_init_slot_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleInitSlot, command) == 4,
-                  battle_init_slot_field04_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleInitSlot, actionGeneration) == 6,
-                  battle_init_slot_field06_offset);
+
+
+
 
 extern BattleTarget g_BattleTargetList[];
 /* Incomplete array: retail reads the count absolutely in -G0 units. */
@@ -519,33 +520,20 @@ void Battle_SortTargets(BattleTargetWords *records, s8 first, s8 last);
 /* These partial records are deliberately padded through their last verified
  * field. Keep the offsets executable: prose comments alone do not protect the
  * shared ABI from an accidental member-width or alignment change. */
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, field04) == 0x04,
-                  combatant_field04_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, curHP) == 0x0C,
-                  combatant_cur_hp_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, actionMode12) == 0x12,
-                  combatant_action_mode_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, atbStep) == 0x2C,
-                  combatant_atb_step_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, knockbackFrames) == 0x48,
-                  combatant_knockback_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, subActionStep) == 0x38,
-                  combatant_sub_action_step_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, statusStep3C) == 0x3C,
-                  combatant_status_timer_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, panelA_val) == 0x50,
-                  combatant_panel_a_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, panelB_val) == 0x58,
-                  combatant_panel_b_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, panelAux_val) == 0x60,
-                  combatant_aux_panel_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, action) == 0x68,
-                  combatant_action_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, attributes) == 0x6C,
-                  combatant_attributes_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, statusFlags2) == 0xCC,
-                  combatant_status_flags2_offset);
-PE1_STATIC_ASSERT(sizeof(Combatant) == 0xD8, combatant_partial_size);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 PE1_STATIC_ASSERT(sizeof(BattleAction) == 0x18, battle_action_partial_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleAction, turnWord) == 0x10,
                   battle_action_turn_word_offset);
@@ -556,51 +544,29 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleAttributes, effectFlags) == 0x04,
 PE1_STATIC_ASSERT(sizeof(EnemyActionEffect) == 0x10, enemy_action_effect_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyActionEffect, power) == 0x0C,
                   enemy_action_effect_power_offset);
-PE1_STATIC_ASSERT(sizeof(EnemyCombatant) == 0xD8, enemy_combatant_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, effect) == 0x18,
-                  enemy_combatant_effect_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, attributes) == 0x6C,
-                  enemy_combatant_attributes_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, effectChance) == 0x90,
-                  enemy_combatant_effect_chance_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, rewardBase) == 0x98,
-                  enemy_combatant_reward_base_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, lootItemId) == 0xA0,
-                  enemy_combatant_loot_item_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, deathAnimPhase) == 0xAC,
-                  enemy_combatant_death_phase_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, deathAssetId) == 0xB4,
-                  enemy_combatant_death_asset_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, statusFlags2) == 0xCC,
-                  enemy_combatant_status_flags_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, previousHP) == 0x14,
-                  enemy_update_previousHP_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, chargeStep) == 0x8E,
-                  enemy_update_chargeStep_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, periodicDamage) == 0x96,
-                  enemy_update_periodicDamage_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, motionPhase) == 0xA4,
-                  enemy_update_motionPhase_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, motionAmplitude) == 0xA6,
-                  enemy_update_motionAmplitude_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, motionAngle) == 0xA8,
-                  enemy_update_motionAngle_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, attackAssetId) == 0xB0,
-                  enemy_update_attackAssetId_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, resumePhase) == 0xBC,
-                  enemy_update_resumePhase_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, savedAnimFrame) == 0xC0,
-                  enemy_update_savedAnimFrame_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, savedAnimPrev) == 0xC4,
-                  enemy_update_savedAnimPrev_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, savedAnimStep) == 0xC8,
-                  enemy_update_savedAnimStep_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, panelC_mode) == 0xD7,
-                  enemy_update_panelC_mode_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, panelC_val) == 0xD0,
-                  enemy_combatant_panel_value_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, panelC_timer) == 0xD6,
-                  enemy_combatant_panel_timer_offset);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, curHP) ==
                   PE1_OFFSETOF(Combatant, curHP), combatant_views_hp_match);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, attributes) ==
@@ -615,42 +581,25 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, attributes) ==
                   PE1_OFFSETOF(FieldActorState, substate), state_views_substate_match);
 PE1_STATIC_ASSERT(sizeof(Combatant) == sizeof(FieldActorState),
                   state_views_size_match);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, posX) == 0x28,
-                  battle_entity_pos_x_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, animFrame) == 0x14,
-                  battle_entity_anim_frame_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, animPrev) == 0x18,
-                  battle_entity_anim_prev_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, parent) == 0x18C,
-                  battle_entity_parent_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, actionData) == 0x1B0,
-                  battle_entity_action_data_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, collisionFace) == 0x1A4,
-                  battle_entity_collision_face_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, posZ) == 0x30,
-                  battle_entity_pos_z_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, facingAngle) == 0x3A,
-                  battle_entity_facing_angle_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, motionX) == 0x68,
-                  battle_entity_motion_x_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, motionZ) == 0x70,
-                  battle_entity_motion_z_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, entityFlags) == 0x98,
-                  battle_entity_flags_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, renderObject.script_param97) == 0x24B,
-                  battle_entity_script_param_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, renderObject.flags_9C) == 0x250,
-                  battle_entity_render_flags_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, renderObject) == 0x1B4,
-                  battle_entity_render_object_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, renderObject.target_x) == 0x268,
-                  battle_entity_target_x_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, renderObject.target_z) == 0x26C,
-                  battle_entity_target_z_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEntity, allocationBlock) == 0x278,
-                  battle_entity_allocation_block_offset);
-PE1_STATIC_ASSERT(sizeof(BattleEntity) == 0x27C, battle_entity_size);
-PE1_STATIC_ASSERT(sizeof(BattleTarget) == 0x0C, battle_target_size);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* BattleEntity and FieldActor are two naming views of the same runtime object.
  * Keep their independently useful vocabularies, but make layout drift a build

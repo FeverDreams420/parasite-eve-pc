@@ -380,3 +380,24 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-shadow PRIVATE psyz)
     add_test(NAME original-game-shadow COMMAND test-original-shadow)
 endif()
+
+if(BUILD_TESTING)
+    add_executable(test-original-scene-spawn tests/original_scene_spawn.c
+        pc/disc.c pc/room.c pc/room_banks.c pc/model.c src/main/entity/animation.c
+        $<TARGET_OBJECTS:parasite-eve-original-frame>
+        $<TARGET_OBJECTS:parasite-eve-original-model-setup>
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-scene-spawn PRIVATE include pc)
+    target_compile_definitions(test-original-scene-spawn PRIVATE __psyz)
+    target_link_libraries(test-original-scene-spawn PRIVATE psyz)
+    if(APPLE)
+        target_link_options(test-original-scene-spawn PRIVATE -Wl,-dead_strip)
+    elseif(MSVC)
+        target_link_options(test-original-scene-spawn PRIVATE /OPT:REF)
+    else()
+        target_compile_options(test-original-scene-spawn PRIVATE -ffunction-sections -fdata-sections)
+        target_link_options(test-original-scene-spawn PRIVATE -Wl,--gc-sections)
+    endif()
+    add_test(NAME original-game-scene-spawn COMMAND test-original-scene-spawn)
+    set_tests_properties(original-game-scene-spawn PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+endif()

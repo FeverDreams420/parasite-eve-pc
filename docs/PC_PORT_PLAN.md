@@ -1307,3 +1307,24 @@ hierarchy CTests and game/test ASan/UBSan/function checks passed; PsyZ archive
 uninstrumented. It checks packet construction, not an actual shadow texture
 image or complete scene draw. The Scene_LoadMap allocation change is compiled
 but still awaits full actor-spawn integration coverage.
+
+### Original Scene_LoadMap native model spawn coverage
+
+The model-address table g_SceneMapPrimBaseTable now holds uintptr_t rather than
+32-bit words. Render-buffer declarations now use the canonical typed scene
+archive pointer. The original block allocator retains its sixteen slots and
+1/2/4/8-block policy, with block bytes scaled by native pointer width. This is
+required by native packet heads: map 23/group 2 used 174784 bytes while the old
+maximum allocation reserved only 147200. The legacy display scratch reservation
+now uses the same block-size constant; its full native arena setup is not yet
+runtime-integrated.
+
+The new original-game-scene-spawn test calls actual Scene_LoadMap for all 878
+Disc 1 room models, with full and non-full allocation (1756 spawns). It verifies
+native model pointers, actor-list insertion, model workspace bounds, native
+shadow prefix, actor defaults and actual original Script_AllocNode results.
+Full build, spawn/pools/lifecycle/shadow CTests and game/test ASan/UBSan/function
+checks passed. PsyZ archive uninstrumented. Actors are tested as NPC type 1 with
+no action rows; the player-equipment hook aborts if reached and is test-only.
+Player spawn, animated spawn, multi-actor memory pressure and the complete
+Scene_LoadMap runtime path remain unverified.

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe1/entity_allocation.h"
 #include "pe1/akao/commands.h"
 #include "pe1/asset_tim.h"
 #include "pe1/battle_status.h"
@@ -51,7 +52,7 @@ int Draw_InitDisplay(int mode) {
     ClearImage(&rect, 0, 0, one);
     DrawSync(0);
 
-    const_48000 = 0x48000;
+    const_48000 = 16 * ENTITY_ALLOCATION_BLOCK_SIZE;
     slots = g_OtBufferTable;
 
     ptr = g_BootWorkArea;

@@ -15,7 +15,9 @@ typedef struct EntityAllocationBlock {
 
 extern EntityAllocationBlock g_EntityAllocationTable[16];
 /* Bytes per allocation block in the render scratch buffer. */
-#define ENTITY_ALLOCATION_BLOCK_SIZE 0x47E0
+/* Native packet links are wider than PS1 DMA words. Keep the original
+ * sixteen-slot/1-2-4-8-block allocation policy with room for native packets. */
+#define ENTITY_ALLOCATION_BLOCK_SIZE (0x47E0u * (sizeof(uintptr_t) / sizeof(u32)))
 
 /* Fourteen original actor slots, stored at the native actor stride. */
 extern FieldActor g_EntityPool[14];

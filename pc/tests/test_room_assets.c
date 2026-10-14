@@ -131,6 +131,7 @@ int main(void) {
     uint64_t model_hitvolumes=0;
     uint64_t model_world_vertices=0;
     unsigned camera_groups=0;
+    uint64_t background_entries=0,background_tiles=0;
     unsigned animation_streams=0,animation_short=0;
     uint64_t animation_frames=0,animation_matrices=0;
     uint64_t animated_pose_matrices=0;unsigned paired_streams=0,missing_roots=0,incompatible_streams=0;
@@ -152,6 +153,9 @@ int main(void) {
         CHECK(room.map == map && room.data.size);
         PeCameraBank camera_bank;PeCamera room_camera;
         CHECK(pe_room_cameras(&room,&camera_bank));camera_groups+=camera_bank.count;
+        PeBackground background;CHECK(pe_background_open(&camera_bank,&background));background_entries+=background.count;
+        for(unsigned i=0;i<background.count;++i){PeBackgroundEntry entry;CHECK(pe_background_entry(&background,i,&entry));
+            for(unsigned tile=0;tile<entry.tiles;++tile){PeBackgroundTile decoded;CHECK(pe_background_tile(&background,i,tile,&decoded));++background_tiles;}}
         for(unsigned group=0;group<camera_bank.count;++group){
             CHECK(pe_camera_group(&camera_bank,group,&room_camera));
             PeCameraScroll scroll;pe_camera_scroll_init(&camera_bank,&room_camera,&scroll);
@@ -437,6 +441,7 @@ int main(void) {
            (unsigned long long)model_hitvolumes);
     printf("Model neutral-input world vertices transformed: %llu; projection/rendering pending\n",(unsigned long long)model_world_vertices);
     printf("Room camera groups decoded: %u; first-camera model projections checked; scrolling/reference rendering pending\n",camera_groups);
+    printf("Background geometry: %llu entries, %llu tiles decoded; packets/rendered images pending\n",(unsigned long long)background_entries,(unsigned long long)background_tiles);
     pe_collision_close(&room_collision);
     printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
            (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);

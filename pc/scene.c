@@ -25,6 +25,7 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
         snprintf(error,error_size,"Invalid room camera bank");goto failed;
     }
     pe_camera_scroll_init(&next.cameras,&next.camera,&next.camera_scroll);
+    if(!pe_background_open(&next.cameras,&next.background)){snprintf(error,error_size,"Invalid room background geometry");goto failed;}
     if (!pe_room_collision(&next.room, &next.collision, error, error_size)) goto failed;
     if (!pe_room_banks(&next.room, &next.banks, error, error_size)) goto failed;
     next.vram = malloc(sizeof(*next.vram));

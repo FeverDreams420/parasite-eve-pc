@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Background geometry now decodes checked entry-relative tile arrays, packed
+positions, UVs, CLUT/page values and transparency. Scenes retain a borrowed
+view into owned room data. The Disc 1 audit reads all 4,511 entries and
+362,647 tiles. All 35 headless tests and ASan/UBSan background fixtures/full
+native audit pass. Runtime scrolling, visibility, GPU packets and rendered
+background/reference images remain pending.
+
 Compound opcode 237 supports player-focus scroll, halfword origin writes,
 the original explicit no-op and game flag `0x800`. Unsupported subcommands
 still fail visibly. Real VM tests verify projected targets, origin wrapping,

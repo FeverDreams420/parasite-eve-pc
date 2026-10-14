@@ -11,6 +11,7 @@
 #include "scene_audio.h"
 #include "input.h"
 #include "camera.h"
+#include "background.h"
 
 /* Native scene resources, observable without devices. Script execution,
  * actor simulation and rendering will operate on this owned state. */
@@ -18,6 +19,7 @@ typedef struct PeScene {
     PeInput input;
     PeCameraBank cameras;
     PeCamera camera;
+    PeBackground background;
     unsigned camera_group;
     PeCameraScroll camera_scroll;
     PeRoom room;

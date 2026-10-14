@@ -507,5 +507,14 @@ edges, degenerate triangles and extreme coordinates. All 23 tests pass
 headless with Disc 1; collision math also passes ASan/UBSan. Room collision
 database decoding, flat/sloped floor-height lookup and actor integration
 remain unfinished; this primitive does not establish working collision.
+
+`pc/collision.c` adds an owned, checked relative collision database and the
+original first-match floor lookup for flat and sloped regions. Plane height
+uses wrapped 16.16 products; flags retain bypass/preserve-Y semantics. Fixture
+tests verify negative/fractional heights, region order, malformed references,
+transactional loading and independence from source bytes. All 24 tests pass
+headless with Disc 1; collision tests also pass ASan/UBSan. Selecting the actual
+room collision asset and comparing game geometry, actor integration and wall
+traversal remain pending, so these fixtures do not prove game collision.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

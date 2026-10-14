@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+`pc/collision.c` posiada sprawdzaną bazę kolizji z offsetami względnymi i oryginalne wyszukiwanie pierwszego podłoża dla regionów płaskich/nachylonych. Plane height zachowuje wrap 16.16; flagi bypass/preserve-Y są obsłużone. Nowy 24. test fixture sprawdza ujemne/ułamkowe wysokości, kolejność regionów, złe referencje, transakcyjne ładowanie i niezależność danych. 24 testy headless z Disc 1 oraz ASan/UBSan collision przechodzą. Wybór rzeczywistego assetu kolizji pokoju, referencyjne dane geometrii, integracja aktorów i ściany nadal wymagają pracy; fixture nie dowodzi kolizji gry.
+
 `pc/collision_math.c` przenosi oryginalny test punktu w trójkącie podłoża: parity crossings, półotwarte granice i zawijane signed iloczyny 32-bitowe. Nowy 23. test sprawdza kolejność wierzchołków, jednoznaczność wspólnych krawędzi, degenerację i skrajne współrzędne. 23 testy headless z Disc 1 oraz ASan/UBSan collision math przechodzą. Dekodowanie bazy kolizji, wysokość płaskiego/nachylonego podłoża i integracja aktorów nadal wymagają implementacji; sam prymityw nie oznacza działającej kolizji.
 
 Odroczona kolekcja aktorów zwalnia taski przed recyklingiem slotu, wypina head/middle/tail, czyści flagę przejściową i zwalnia blokady ruchu gracza jak w oryginale. Reużyty slot dostaje nowe ID. Test obejmuje deletion, pełną/pustą listę, reuse i uszkodzone linki; 22 testy headless z Disc 1 oraz ASan/UBSan aktorów przechodzą. Hierarchie parent, modele i pełna egzekucja scen nadal wymagają implementacji.

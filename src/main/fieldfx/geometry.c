@@ -1619,8 +1619,7 @@ void FieldFx_DrawRotatedQuad(GteShortVector *position, GteRotation *rotation,
             packet->v0 = packet->v2 = v;
             packet->v1 = packet->v3 = v + texture_height - 1;
             gte_stsxy2(&packet->x3);
-            AddPrim((unsigned int *)D_800B0E38.ordering[g_ActiveDrawSlot] + depth,
-                    (unsigned int *)packet);
+            link_packet((RenderGpuTag *)D_800B0E38.ordering[g_ActiveDrawSlot] + depth, packet);
         }
     }
 }
@@ -1797,8 +1796,7 @@ void FieldFx_DrawGlowLine(GteShortVector *from, GteShortVector *to, u8 *color0,
         glow->r3 = line->r1;
         glow->g3 = line->g1;
         glow->b3 = line->b1;
-        AddPrim((unsigned int *)D_800B0E38.ordering[g_ActiveDrawSlot] + depth[0],
-                (unsigned int *)glow);
+        link_packet((RenderGpuTag *)D_800B0E38.ordering[g_ActiveDrawSlot] + depth[0], glow);
     }
 }
 
@@ -1915,8 +1913,7 @@ void FieldFx_DrawTexturedRibbon(GteShortVector *points, s16 count, int width, in
             packet[-1].v3 = v + height;
             packet[-1].u2 = packet[-1].u3 = u + du * i / count;
             gte_stsxy3(&packet[-1].p2, &packet[-1].p3, &unused);
-            AddPrim((unsigned int *)D_800B0E38.ordering[g_ActiveDrawSlot] + previousDepth,
-                    (unsigned int *)&packet[-1]);
+            link_packet((RenderGpuTag *)D_800B0E38.ordering[g_ActiveDrawSlot] + previousDepth, &packet[-1]);
             packet->p0.word = packet[-1].p2.word;
             packet->p1.word = packet[-1].p3.word;
             packet->c0.bytes.rgb[0] = packet->c1.bytes.rgb[0] = color.bytes.rgb[0];
@@ -1945,8 +1942,7 @@ void FieldFx_DrawTexturedRibbon(GteShortVector *points, s16 count, int width, in
             packet[-1].v3 = v + height;
             packet[-1].u2 = packet[-1].u3 = u + du * i / count;
             gte_stsxy3(&packet[-1].p2, &packet[-1].p3, &unused);
-            AddPrim((unsigned int *)D_800B0E38.ordering[g_ActiveDrawSlot] + previousDepth,
-                    (unsigned int *)&packet[-1]);
+            link_packet((RenderGpuTag *)D_800B0E38.ordering[g_ActiveDrawSlot] + previousDepth, &packet[-1]);
             packet->p0.word = packet[-1].p2.word;
             packet->p1.word = packet[-1].p3.word;
             packet->c0.bytes.rgb[0] = packet->c1.bytes.rgb[0] = color.bytes.rgb[0];
@@ -1971,8 +1967,7 @@ void FieldFx_DrawTexturedRibbon(GteShortVector *points, s16 count, int width, in
             packet->u2 = packet->u3 = u + du;
             packet->v3 = v + height;
             gte_stsxy3(&packet->p2, &packet->p3, &unused);
-            AddPrim((unsigned int *)D_800B0E38.ordering[g_ActiveDrawSlot] + depth,
-                    (unsigned int *)packet);
+            link_packet((RenderGpuTag *)D_800B0E38.ordering[g_ActiveDrawSlot] + depth, packet);
         }
         point++;
     }
@@ -2094,7 +2089,7 @@ void FieldFx_DrawPulledSprite(GteShortVector *position, int scale_x, int scale_y
         packet->y0 = packet->y1 = screen.y - height;
         packet->x1 = packet->x3 = screen.x + width;
         packet->y2 = packet->y3 = screen.y + height;
-        AddPrim((unsigned int *)STRIP_OT(depth), (unsigned int *)packet);
+        link_packet(STRIP_OT(depth), packet);
     }
 }
 

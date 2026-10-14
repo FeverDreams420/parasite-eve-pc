@@ -12,8 +12,8 @@
 
 /* Flat colour tiles linked straight into the active ordering table. */
 
-/* An ordering-table entry or packet seen both as its tag and as the 32-bit
- * address the GPU DMA chain links through. */
+/* An ordering-table entry or packet seen both as its tag and as the native
+ * address the GPU packet chain links through. */
 typedef union FieldTileAddress {
     RenderGpuTag *tag;
     char *bytes;

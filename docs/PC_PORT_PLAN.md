@@ -2989,3 +2989,18 @@ The two point/glow paths also use native OT strides. No new files were added.
 This is packet-layout and link verification, not evidence of rendered effect
 fidelity or complete room-effect bindings. The pc/ runtime still has to be
 replaced by the whole original modules and removed.
+
+
+The remaining five direct effect OT insertions (textured quad, glow and ribbon)
+and the textured-strip helper now index native tags instead of four-byte words
+or single bytes. No AddPrim calls with legacy OT strides remain in geometry.c.
+The existing actor fixture executes the original FieldFx_DrawScreenTint for all
+4096 depths, both slots and four blend modes plus opaque mode: full pointer
+chains, command words, RGB scaling, dimensions, consumed bytes and guards are
+checked. Depth 4096 does not alter the OT. The strip helper is checked against
+the same native table at every valid depth. Full build and four related CTests
+pass with Disc 1 required. A freshly rebuilt actor fixture passes
+ASan/UBSan/function with original source instrumented; PsyZ/SDL archives are
+uninstrumented. These CPU packet checks do not establish GPU image fidelity or
+complete effect callbacks. Whole-game integration and deletion of pc/ remain
+required.

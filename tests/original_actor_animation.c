@@ -13,6 +13,7 @@
 #include "pe1/render_packets.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/field_tile.h"
+#include "pe1/field_textured_strip.h"
 #include "pe1/geom_state.h"
 #include "pe1/field_movement.h"
 #include "pe1/pad_state.h"
@@ -578,6 +579,59 @@ static int native_effect_packet_links(void)
     return 1;
 }
 
+static int native_screen_tint_packets(void)
+{
+    static RenderGpuTag ordering[4096];
+    struct { RenderTintTile tile; RenderTintMode mode; u8 guard[16]; } buffer;
+    RenderBufferPrefix saved=D_800B0E38;
+    int saved_slot=g_ActiveDrawSlot, saved_offset=g_DrawPacketOffset;
+    u8 rgb[3]={200,100,50};
+    for(unsigned slot=0;slot<2;++slot) {
+        D_800B0E38.ordering[slot]=(char *)ordering;
+        D_800B0E38.packets[slot]=(char *)&buffer;
+        g_ActiveDrawSlot=slot;
+        for(unsigned depth=0;depth<4096;++depth) {
+            ordering[depth].address=0xffffff;
+            ordering[depth].length=0;
+        }
+        for(int blend=0;blend<5;++blend) for(unsigned depth=0;depth<4096;++depth) {
+            memset(&buffer,0xa5,sizeof(buffer));
+            g_DrawPacketOffset=0;
+            ordering[depth].address=0xffffff;
+            if(STRIP_OT(depth)!=&ordering[depth]) return 0;
+            FieldFx_DrawScreenTint(rgb,64,blend==4?255:blend,depth);
+            RenderTintTile *tile=&buffer.tile;
+            if(tile->tag.address!=0xffffff || tile->tag.length!=3 ||
+               tile->r!=100 || tile->g!=50 || tile->b!=25 ||
+               tile->x || tile->y || tile->width!=320 || tile->height!=240) return 0;
+            if(blend==4) {
+                if(ordering[depth].address!=(uintptr_t)tile || tile->command!=0x60 ||
+                   g_DrawPacketOffset!=sizeof(*tile)) return 0;
+                const u8 *unused=(const u8 *)&buffer.mode;
+                for(unsigned i=0;i<sizeof(buffer.mode);++i) if(unused[i]!=0xa5) return 0;
+            } else {
+                if(ordering[depth].address!=(uintptr_t)&buffer.mode ||
+                   buffer.mode.tag.address!=(uintptr_t)tile || buffer.mode.tag.length!=1 ||
+                   buffer.mode.command!=(u32)(0xe1000200|GetTPage(0,blend,0,0)) ||
+                   tile->command!=0x62 ||
+                   g_DrawPacketOffset!=sizeof(*tile)+sizeof(buffer.mode)) return 0;
+            }
+            for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
+            ordering[depth].address=0xffffff;
+        }
+        for(unsigned depth=0;depth<4096;++depth)
+            if(ordering[depth].address!=0xffffff || ordering[depth].length) return 0;
+        memset(&buffer,0xa5,sizeof(buffer)); g_DrawPacketOffset=0;
+        FieldFx_DrawScreenTint(rgb,64,0,4096);
+        if(g_DrawPacketOffset!=sizeof(RenderTintTile)) return 0;
+        for(unsigned depth=0;depth<4096;++depth)
+            if(ordering[depth].address!=0xffffff || ordering[depth].length) return 0;
+    }
+    D_800B0E38=saved; g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset;
+    puts("Original screen tint: all 4096 OT depths, both slots, blend modes, RGB and packet guards passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -638,7 +692,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !native_effect_packet_links()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !native_effect_packet_links() || !native_screen_tint_packets()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

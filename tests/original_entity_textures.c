@@ -250,11 +250,16 @@ int main(void)
     CHECK(expected && actual);
     ResetGraph(0);
     RECT all={0,0,1024,512};
-    const unsigned mirror_maps[] = {17, 18, 21, 45, 102, 151, 319, 5};
-    for (unsigned test = 0; test < sizeof(mirror_maps) / sizeof(mirror_maps[0]); ++test) {
+    unsigned native_rooms=0, native_geometry_entries=0;
+    int new_game_room_loaded=0;
+    size_t native_packet_bytes=0;
+    for (unsigned map=1;map<=PE_USA_ROOM_SLOTS;++map) {
+        if(!catalog.ranges[map-1].room_sectors) continue;
         PeRoom room = {0};
-        const unsigned map = mirror_maps[test];
-        CHECK(pe_room_load(&catalog, map, &room));
+        CHECK(pe_room_load(&catalog,map,&room));
+        unsigned descriptor_count=room.data.directory[1]>>22;
+        int mirror=map==17 || map==18 || map==21 || map==45 || map==102 || map==151 || map==319;
+        if(descriptor_count && !mirror && map!=5) { pe_room_close(&room); continue; }
         PeRoomRange *range = &catalog.ranges[map - 1];
         g_RoomSectorTable[map - 1].start = range->start;
         g_RoomSectorTable[map - 1].scratchSectors = range->scratch_sectors;
@@ -301,7 +306,7 @@ int main(void)
             CHECK(!handlers[69] && g_GameState.bank_slots[0] == scratch);
         } else {
             CHECK(Scene_LoadRoom(room_id) == 0);
-            CHECK(handlers[69] == &g_RoomFxMirrorHandlers);
+            CHECK(handlers[69] == (mirror ? &g_RoomFxMirrorHandlers : NULL));
             CHECK(g_GameState.cd_read_phase==0 && g_CdReadRemainingSectors==0);
             for(unsigned i=0;i<count;++i) {
                 const u8 *entry=streams+i*8;
@@ -447,6 +452,10 @@ int main(void)
                 for(unsigned component=0;component<3;++component)
                     CHECK(g_EntityRenderScratch[5+component]==image_word(view+20+component*4));
             }
+            ++native_rooms;
+            if(map==431) new_game_room_loaded=1;
+            native_geometry_entries+=g_GeomState->entry_count06;
+            native_packet_bytes+=packet_bytes;
             g_GeomScroll=saved_scroll;
             free(packet_arena);
             const u8 *entries; unsigned entries_count;
@@ -469,8 +478,12 @@ int main(void)
         free(scratch); free(textures); free(data); free(spu_expected);
         pe_room_close(&room);
         printf("Original Scene_LoadRoom M%03u: %s (cold + cached audio)\n", map,
-               map == 5 ? "unsupported descriptor rejected" : "native mirror binding and script/bank relocation passed");
+               map == 5 ? "unsupported descriptor rejected" : "native room and script/bank relocation passed");
     }
+
+    CHECK(new_game_room_loaded && native_rooms==236 && native_geometry_entries==2763);
+    CHECK(native_packet_bytes==23350656);
+    printf("Original full room loading corpus: %u rooms, %u native geometry entries, %zu packet bytes\n",native_rooms,native_geometry_entries,native_packet_bytes);
 
     {
         PeRoomBlob common = {0};

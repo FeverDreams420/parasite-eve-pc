@@ -2732,3 +2732,35 @@ Fresh ASan/UBSan/function real-data validation passes with the original
 initializer, loaders, action and renderer code instrumented; PsyZ/SDL archives
 are uninstrumented. Resume-mode initialization, full scene scheduling, gameplay
 and removal of the remaining pc/ runtime remain incomplete.
+
+
+### Verify original loading for every currently bindable Disc 1 room
+
+A direct audit of the serialized room directory shows that New Game room M431
+has no room-specific PM/effect descriptor entries. It therefore already uses
+the original native loader without an additional overlay binding; the missing
+descriptor restriction does not apply to that startup room. M001 and M002
+also have no such entries. No placeholder handler or new implementation was
+added to make these rooms pass.
+
+Expanded the existing real-data fixture from seven mirror rooms to all 229
+Disc 1 rooms without descriptor entries plus the seven bound mirror rooms.
+It executes complete original Scene_LoadRoom cold and cached loading, validates
+script/bank relocation and immutable serialized room data, compares the full
+SPU RAM and loaded instrument records, runs original Render_PrepareFrame and
+compares all native sprite/tpage payloads in both buffers with guards. It also
+checks every camera viewport using the production GTE scratch array.
+
+The verified corpus is 236 rooms, 2763 native geometry entries and 23350656
+packet bytes; M431 is required explicitly and has one geometry entry with
+33600 packet bytes. M005 remains an explicit unsupported-descriptor failure.
+The other 178 of 414 nonempty Disc 1 rooms still require static native PM/effect
+bindings; this corpus does not count them as loaded or replace their behavior.
+
+Full build and three CTests pass with Disc 1 required: entity-textures,
+entity-texture-assets and scene-spawn. Fresh ASan/UBSan/function validation
+passes for the expanded real-data corpus with original loader/render/action
+sources instrumented; PsyZ/SDL archives remain uninstrumented. Packet preparation
+and loading are not proof of rendered background fidelity, executed room
+scripts or playable New Game. Full original pipeline/frame integration and
+elimination of the remaining pc/ runtime remain open.

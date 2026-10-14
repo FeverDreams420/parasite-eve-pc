@@ -10,7 +10,7 @@ typedef struct EntityActionTable {
 
 PE1_STATIC_ASSERT(sizeof(EntityActionTable) == 48 * sizeof(void *),
                   entity_action_table_size);
-extern EntityActionTable D_800B0E98[];
+/* Action rows live in g_GameState.bank_rows; no separate linker storage. */
 
 /* Battle state the entity hit and drop handlers read and write. */
 extern Combatant *g_ActiveActor;

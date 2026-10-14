@@ -169,3 +169,15 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-movement PRIVATE psyz)
     add_test(NAME original-game-movement COMMAND test-original-movement)
 endif()
+
+add_library(parasite-eve-original-actor-animation OBJECT
+    src/main/entity/animation.c src/main/scene/actor_sound.c)
+target_include_directories(parasite-eve-original-actor-animation PRIVATE include)
+if(BUILD_TESTING)
+    add_executable(test-original-actor-animation tests/original_actor_animation.c
+        $<TARGET_OBJECTS:parasite-eve-original>
+        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
+    target_include_directories(test-original-actor-animation PRIVATE include)
+    target_link_libraries(test-original-actor-animation PRIVATE psyz)
+    add_test(NAME original-game-actor-animation COMMAND test-original-actor-animation)
+endif()

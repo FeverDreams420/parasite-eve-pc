@@ -500,6 +500,43 @@ int main(int argc, char **argv)
         if (g_MenuWidgetFreeListHead || g_MenuWidgetActiveListHead!=&g_MenuWidgetNodePool[23]) return 88;
         for (unsigned child=0; child<4; ++child)
             if (g_MenuWidgetNodePool[0].children[child]!=&g_MenuWidgetNodePool[child+1]) return 89;
+        memset(g_MenuWidgetColumnLayoutTable, 0x5a, sizeof(g_MenuWidgetColumnLayoutTable));
+        Menu_InitStateBuffer();
+        for (unsigned slot=0;slot<72;++slot) {
+            int unsaved=slot==6 || slot==16 || slot==20 || slot==22 ||
+                        slot==24 || slot==25 || slot==49 || slot==53;
+            MenuWidgetSavedLayout *layout=&g_MenuWidgetColumnLayoutTable[slot];
+            if (layout->cursorX!=(unsaved?-1:0) || layout->cursorY ||
+                layout->scrollY || layout->reserved) return 98;
+        }
+        MenuWidgetNode *root=&g_MenuWidgetNodePool[0], *child=&g_MenuWidgetNodePool[1];
+        child->mode=2; child->aux_index=6; child->layout_flags=0x20;
+        child->cursor_x=1; child->cursor_y=9; child->scroll_y=7;
+        g_MenuWidgetCurrentNode=&g_MenuWidgetNodePool[2];
+        g_MenuWidgetNodePool[23].mode=2;
+        g_MenuWidgetNodePool[23].linkedNext=root;
+        g_MenuWidgetNodePool[23].linkedPrevious=child;
+        MenuWidget_DestroyNodeRecursive(root);
+        if (g_MenuWidgetCurrentNode || g_MenuWidgetNodePool[23].linkedNext ||
+            g_MenuWidgetNodePool[23].linkedPrevious) return 91;
+        if (g_MenuWidgetColumnLayoutTable[6].cursorX!=1 ||
+            g_MenuWidgetColumnLayoutTable[6].cursorY!=9 ||
+            g_MenuWidgetColumnLayoutTable[6].scrollY!=7) return 92;
+        unsigned remaining=0;
+        for (MenuWidgetNode *node=g_MenuWidgetActiveListHead;node;node=node->next) {
+            if (node->parent || ++remaining>19) return 93;
+        }
+        if (remaining!=19) return 94;
+        for (unsigned slot=0;slot<5;++slot)
+            if (MenuWidget_AllocNode(NULL,NULL)!=&g_MenuWidgetNodePool[4-slot]) return 95;
+        while (g_MenuWidgetActiveListHead) MenuWidget_DestroyNodeRecursive(g_MenuWidgetActiveListHead);
+        unsigned free_mask=0;
+        for (MenuWidgetNode *node=g_MenuWidgetFreeListHead;node;node=node->next) {
+            unsigned slot=(unsigned)(node-g_MenuWidgetNodePool);
+            if (slot>=24 || (free_mask & (1u<<slot))) return 96;
+            free_mask|=1u<<slot;
+        }
+        if (free_mask!=0xffffff) return 97;
         MenuWidget_InitPool();
         if (g_MenuWidgetFreeListHead!=g_MenuWidgetNodePool || g_MenuWidgetNodePool[23].next) return 90;
         MenuWidgetNode menu={0};menu.mode=1;g_MenuWidgetActiveListHead=&menu;

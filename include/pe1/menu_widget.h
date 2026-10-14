@@ -51,7 +51,7 @@ typedef struct MenuWidgetSavedLayout {
     s8 cursorX, cursorY, scrollY, reserved;
 } MenuWidgetSavedLayout;
 PE1_STATIC_ASSERT(sizeof(MenuWidgetSavedLayout) == 4, menu_widget_saved_layout_size);
-extern MenuWidgetSavedLayout g_MenuWidgetColumnLayoutTable[];
+extern MenuWidgetSavedLayout g_MenuWidgetColumnLayoutTable[72];
 
 MenuWidgetNode *MenuWidget_AllocNode(MenuWidgetNode *parent, MenuWidgetNode *attachTo);
 
@@ -168,6 +168,7 @@ void MenuWidget_NavScrollTo(int selectedBase);
 void MenuWidget_SetCurrentNode(MenuWidgetNode *node);
 void MenuWidget_SetCursorY(MenuWidgetNode *node);
 int MenuWidget_IsCursorYClear(MenuWidgetNode *node);
+void Menu_InitStateBuffer(void);
 int MenuWidget_GetColumnLayoutMode(void);
 /* Draws the text-table entry's primitive list (0 clears). */
 void Draw_FlushPrimList(int text_id);

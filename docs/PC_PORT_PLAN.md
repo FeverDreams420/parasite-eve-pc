@@ -2351,3 +2351,22 @@ ASan/UBSan/function actor-animation pass; PsyZ/SDL remain uninstrumented.
 Recursive release, saved layout backing, allocation failure behavior and full
 menu rendering still require work. Full game integration and pc/ removal remain
 incomplete.
+
+
+### Execute original recursive widget release and saved layouts
+
+menu/widget.c now owns the original 72 four-byte saved cursor/scroll records,
+matching the existing 0x120 reset and 0x48 save bound. Both reset paths use
+memset with the actual array size instead of a historical bzero declaration.
+The original recursive release algorithm remains unchanged. No new files.
+
+The existing fixture resets all 72 records and checks the eight unsaved-column
+sentinels, deletes a root with four attached children while 19 other nodes
+remain, checks current-node fallback and parent/reciprocal-link cleanup, verifies
+saved cursor/scroll values, reuses the five released nodes in original order,
+and frees everything with an exact 24-record uniqueness check. Full build and
+the actor-animation fixture pass. Failure/exhaustion handling and full menu
+rendering remain unverified; full runtime integration and pc/ removal remain open.
+
+The expanded fixture also passes fresh ASan/UBSan/function checks; PsyZ/SDL
+are not instrumented.

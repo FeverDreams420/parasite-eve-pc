@@ -1,4 +1,5 @@
 #include "common.h"
+#include <string.h>
 #include "pe1/bounds_check.h"
 #include "pe1/draw_area.h"
 #include "pe1/draw_state.h"
@@ -1401,7 +1402,7 @@ void Draw_SetPrimCallback(MenuWidgetNode *arg0, s32 arg1) {
 }
 
 int g_MenuWidgetColumnLayoutMode;
-void bzero(void *ptr, int size);
+MenuWidgetSavedLayout g_MenuWidgetColumnLayoutTable[72];
 
 /* Saved cursor/scroll positions of menu widgets (one 4-byte slot per
  * aux_index): reset, mode, save and restore. Menu_InitStateBuffer (historical
@@ -1409,7 +1410,7 @@ void bzero(void *ptr, int size);
  * saved column. */
 
 void Menu_InitStateBuffer(void) {
-    bzero(g_MenuWidgetColumnLayoutTable, 0x120);
+    memset(g_MenuWidgetColumnLayoutTable, 0, sizeof(g_MenuWidgetColumnLayoutTable));
     g_MenuWidgetColumnLayoutTable[6].cursorX = -1;
     g_MenuWidgetColumnLayoutTable[16].cursorX = -1;
     g_MenuWidgetColumnLayoutTable[20].cursorX = -1;
@@ -1423,7 +1424,7 @@ void Menu_InitStateBuffer(void) {
 void MenuWidget_SetColumnLayoutMode(int arg0) {
     g_MenuWidgetColumnLayoutMode = arg0;
     if (arg0 == 0) {
-        bzero(g_MenuWidgetColumnLayoutTable, 0x120);
+        memset(g_MenuWidgetColumnLayoutTable, 0, sizeof(g_MenuWidgetColumnLayoutTable));
         g_MenuWidgetColumnLayoutTable[6].cursorX = -1;
         g_MenuWidgetColumnLayoutTable[16].cursorX = -1;
         g_MenuWidgetColumnLayoutTable[20].cursorX = -1;

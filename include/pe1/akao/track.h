@@ -194,6 +194,15 @@ typedef struct AkaoSequencerState {
     AkaoSequencerBank secondary;
 } AkaoSequencerState;
 
+/* Both original pointer names refer to the word at 0x8009D2C8. */
+typedef union AkaoCurrentBankPointer {
+    AkaoSequencerBank *pointer;
+    union AkaoTickBank *tick;
+} AkaoCurrentBankPointer;
+extern AkaoCurrentBankPointer g_AkaoCurrentBankPointer;
+#define g_AkaoCurTrack (g_AkaoCurrentBankPointer.pointer)
+#define D_8009D2C8 (g_AkaoCurrentBankPointer.tick)
+
 typedef struct AkaoTrack {
     /* 0x000 */ AkaoU8 *pc;
     /* 0x004 */ AkaoU8 *call_stack[4];
@@ -315,7 +324,7 @@ typedef struct AkaoTrackUpdateSlot {
 #define AKAO_VOICE_COUNT 24
 
 /* Original contiguous storage: primary 24, secondary 24, nested SFX 12. */
-extern AkaoTrack g_AkaoVoiceStateTable[60];
+#define g_AkaoVoiceStateTable ((AkaoTrack *)g_AkaoSequencerTracks)
 #define g_AkaoVoiceStateTable2 (g_AkaoVoiceStateTable + AKAO_VOICE_COUNT)
 #define g_AkaoVoiceChannelTable (g_AkaoVoiceStateTable + 2 * AKAO_VOICE_COUNT)
 
@@ -354,7 +363,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickTrack, timing.gate_length) ==
                   PE1_OFFSETOF(AkaoTrack, pan_duration), akao_tick_track_gate);
 
 /* The 48 sequencer tracks: 24 for music, 24 saved or for sound effects. */
-extern AkaoTickTrack g_AkaoSequencerTracks[48];
+extern AkaoTickTrack g_AkaoSequencerTracks[60];
+#define g_AkaoTrackStateArray ((AkaoTrackUpdateSlot *)&g_AkaoSequencerTracks[0].track.update_flags)
 
 void Seq_StartNestedStreams(AkaoNestedSource *source, void *first, void *second);
 

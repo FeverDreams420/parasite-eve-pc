@@ -11,7 +11,6 @@
 /* Primary (music) and secondary (sound effect) sequencer banks, and the
  * one the commands act on. */
 extern AkaoSequencerState g_AkaoSequencerState;
-extern AkaoSequencerBank *g_AkaoCurTrack;
 
 /* Set while the voice driver is busy; the sequencer polls it. */
 extern volatile int g_AkaoSeqBusyFlags;
@@ -64,7 +63,6 @@ extern int g_AkaoSeqLoopCounter;
 extern unsigned int g_AkaoSfxAllocatedVoiceMask;
 
 /* update_flags of the sequencer tracks. */
-extern AkaoTrackUpdateSlot g_AkaoTrackStateArray[];
 
 /* Nested-stream source filled by SeqOp_LoadNestedStreams and passed to
  * Seq_StartNestedStreams. */

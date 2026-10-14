@@ -12,7 +12,7 @@
 AkaoInstrument g_AkaoInstrumentTable[256];
 AkaoSequencerState g_AkaoSequencerState;
 #define bank g_AkaoSequencerState.primary
-AkaoSequencerBank *g_AkaoCurTrack = &bank;
+AkaoCurrentBankPointer g_AkaoCurrentBankPointer = {.pointer = &bank};
 static unsigned short offsets[2048];
 unsigned short *g_AkaoSampleOffsetTable = offsets;
 static char sample_data[65536];
@@ -30,14 +30,11 @@ static void record_message(AkaoQueueEntry *entry)
 }
 AkaoMessageHandler Akao_MessageHandlers[256];
 volatile u32 g_AkaoMessageQueueLock;
-static AkaoTickBank tick_bank;
-AkaoTickBank *D_8009D2C8 = &tick_bank;
 SpuReverbState g_SpuReverbState;
 unsigned g_SpuActiveVoiceMask;
 unsigned g_SpuPendingKeyOffMask;
 unsigned g_AkaoTrack34Mask, g_AkaoTrack38Mask, g_AkaoTrack3CMask;
 unsigned g_AkaoVoiceMaskScratch, g_AkaoVoiceUpdateFlags;
-AkaoTrack g_AkaoVoiceStateTable[60];
 AkaoSequencerBank g_AkaoTrackStateBackup;
 AkaoVoiceBank g_AkaoVoiceStateBackup;
 unsigned g_AkaoVoiceKeyOnState, g_AkaoSeqPendingFlags;
@@ -46,7 +43,7 @@ char g_AkaoDefaultVoiceProgram[] = {0};
 short g_AkaoPanVolumeTable[256];
 int g_AkaoPlaybackMode;
 unsigned char g_AkaoGlobalPitchScale;
-AkaoTickTrack g_AkaoSequencerTracks[48];
+AkaoTickTrack g_AkaoSequencerTracks[60];
 /* This isolated command test must never request a hardware reverb change.
  * PsyZ has no SpuSetReverbModeType endpoint yet: fail instead of simulating it. */
 int SpuSetReverbModeType(unsigned int mode)
@@ -127,6 +124,19 @@ static int asset_audit(void)
 int main(int argc, char **argv)
 {
     if (argc == 2 && strcmp(argv[1], "--assets") == 0) return asset_audit();
+    CHECK((void *)D_8009D2C8 == (void *)&bank);
+    D_8009D2C8++;
+    CHECK(g_AkaoCurTrack == &g_AkaoSequencerState.secondary);
+    --g_AkaoCurTrack;
+    CHECK((void *)D_8009D2C8 == (void *)&bank);
+    for (unsigned i = 0; i < 60; ++i) {
+        g_AkaoVoiceStateTable[i].flags = i + 1;
+        CHECK(g_AkaoSequencerTracks[i].track.flags == i + 1);
+        g_AkaoTrackStateArray[i].update_flags = i + 73;
+        CHECK(g_AkaoVoiceStateTable[i].update_flags == i + 73);
+    }
+    CHECK(g_AkaoVoiceStateTable2 == &g_AkaoSequencerTracks[24].track);
+    CHECK(g_AkaoVoiceChannelTable == &g_AkaoSequencerTracks[48].track);
     unsigned int sound_header[4] = {0x4f414b41u, 0x12345678u, 0, 0};
     for (unsigned i = 0; i < 256; ++i) Akao_MessageHandlers[i] = record_message;
     for (unsigned i = 0; i < 1025; ++i) {
@@ -458,7 +468,7 @@ int main(int argc, char **argv)
     modulated.expression_value = 128 << 16;
     modulated.volume_base = 0x4000;
     modulated.pitch_base = 4096;
-    tick_bank.timing.pitch_integer = 127;
+    bank.pitch_current = 127 << 16;
     AkaoTrack modulation_start = modulated;
     for (unsigned path = 0; path < 3; ++path) {
     modulated = modulation_start;

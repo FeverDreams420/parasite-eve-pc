@@ -18,7 +18,6 @@ void Spu_SlideVoicePitchMasked(AkaoQueueEntry *command);
 void Spu_SetAllVoicePitchImmediate(AkaoQueueEntry *command);
 void Spu_SlideAllVoicePitch(AkaoQueueEntry *command);
 
-extern AkaoSequencerBank *g_AkaoCurTrack;
 extern unsigned g_SpuActiveVoiceMask, g_SpuStoppedVoiceMask;
 extern unsigned g_SpuPendingKeyOffMask;
 extern AkaoVoiceEnvelopeSlot g_AkaoVoiceEnvelopeTable[];

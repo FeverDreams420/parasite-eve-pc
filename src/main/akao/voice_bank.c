@@ -709,7 +709,7 @@ void Akao_UpdateVoiceMask(AkaoU8 *new_base) {
     Akao_CopyWords((unsigned int *)&g_AkaoTrackStateBackup,
                    (unsigned int *)g_AkaoCurTrack, sizeof(AkaoSequencerBank));
     Akao_CopyWords((unsigned int *)&g_AkaoVoiceStateBackup,
-                   (unsigned int *)&g_AkaoVoiceStateTable, sizeof(AkaoVoiceBank));
+                   (unsigned int *)g_AkaoVoiceStateTable, sizeof(AkaoVoiceBank));
 
     track = g_AkaoVoiceStateTable;
     remaining = AKAO_VOICE_COUNT;

@@ -65,7 +65,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickBank, timing.pitch_integer) ==
 PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoTickBank, timing.measure) ==
                   PE1_OFFSETOF(AkaoSequencerBank, measure), akao_tick_bank_measure);
 
-extern AkaoTickBank *D_8009D2C8;
 extern u8 g_AkaoTempoScale;
 extern u32 g_AkaoSeqPendingFlags;
 /* Message-queue lock, also read by the timer interrupt. */

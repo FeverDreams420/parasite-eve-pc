@@ -5,7 +5,6 @@
 
 extern AkaoSequencerBank g_AkaoTrackStateBackup;
 extern AkaoVoiceBank g_AkaoVoiceStateBackup;
-extern AkaoSequencerBank *g_AkaoCurTrack;
 extern unsigned int g_AkaoVoiceKeyOnState;
 extern unsigned int g_AkaoVoiceUpdateFlags;
 extern char g_AkaoDefaultVoiceProgram[];

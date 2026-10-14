@@ -1934,3 +1934,22 @@ CTests pass. Entity-texture-assets ASan/UBSan/function passes with the common
 bank plus 14 area/day banks, 180 existing TIM uploads, 14 model rebuilds and
 9591 animation attachment frames. PsyZ itself is not instrumented. The native
 room descriptor registry, complete room loader and removal of pc/ remain open.
+
+
+### Verify original room-keyed TIM uploads across Disc 1
+
+Extended existing original_entity_textures real-disc test to execute the full
+Asset_LoadTimTextures read/poll/upload path for every populated Disc 1 room.
+An independent byte-oriented test decoder scans the 12-byte keyed record table,
+resolves each packed image's self-relative pixel source and checks bounds before
+copying its pixels to expected VRAM. It overlays these images after the common
+bank in original key order (0x73DECD80, increasing by four until the first miss).
+The production path remains the original loader and original asset lookup.
+
+All 414 rooms pass complete VRAM comparisons: 123 rooms contain 296 keyed images.
+The other rooms exercise the missing-key termination path. The test also checks
+completion flags, retains common bank, area/day bank and animation checks, and
+uses actual file-image I/O. Build, entity-texture-assets CTest and
+ASan/UBSan/function pass; PsyZ archives are not instrumented. The PM registry is
+already-initialized fixture state here, so this does not prove native room
+handlers, full scene initialization, presentation or gameplay. No files added.

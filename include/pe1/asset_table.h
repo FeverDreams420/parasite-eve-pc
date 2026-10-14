@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-/* Finds the 8-byte record with a 32-bit key in an asset table. */
+/* Returns the payload of a 12-byte record with a 32-bit key in an asset table. */
 void *Asset_FindTable08ByU32Key(void *base, int key);
 
 /* Room names are six base-32 digits drawn from this 32-character alphabet. */

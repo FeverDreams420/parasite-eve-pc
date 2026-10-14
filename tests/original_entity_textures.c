@@ -45,6 +45,39 @@ int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int
 int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int w) { abort(); }
 #endif
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
+#ifdef PE_TEST_REAL_DISC
+static u32 image_word(const u8 *p)
+{
+    return (u32)p[0] | (u32)p[1] << 8 | (u32)p[2] << 16 | (u32)p[3] << 24;
+}
+static int room_key_images(const PeRoomBlob *room, PeVram *expected, unsigned *uploads)
+{
+    const u8 *records; unsigned count;
+    CHECK(pe_room_blob_table(room, 2, 12, &records, &count));
+    for (u32 key = 0x73decd80; ; key += 4) {
+        unsigned i = 0;
+        while (i < count && image_word(records + i * 12 + 8) != key) ++i;
+        if (i == count) break;
+        size_t image = image_word(records + i * 12 + 4) & 0xffffff;
+        CHECK(image <= room->size && room->size - image >= 12);
+        u32 source = image_word(room->bytes + image + 4);
+        u32 geometry = image_word(room->bytes + image + 8);
+        size_t pixels = image + (source & 0xffffff);
+        unsigned width = geometry & 1023, height = source >> 24;
+        if (!height) height = 256;
+        unsigned x = (geometry >> 10) & 2047, y = geometry >> 21;
+        CHECK(x <= 1024 && y <= 512 && width <= 1024 - x && height <= 512 - y);
+        CHECK(pixels <= room->size && (size_t)width * height * 2 <= room->size - pixels);
+        for (unsigned row = 0; row < height; ++row)
+            for (unsigned col = 0; col < width; ++col) {
+                const u8 *p = room->bytes + pixels + 2 * ((size_t)row * width + col);
+                expected->words[(y + row) * 1024 + x + col] = p[0] | (u16)p[1] << 8;
+            }
+        ++*uploads;
+    }
+    return 0;
+}
+#endif
 #ifndef PE_TEST_REAL_DISC
 int main(void)
 {
@@ -153,6 +186,30 @@ int main(void)
         CHECK(!memcmp(expected->words, actual->words, sizeof(expected->words)));
         CHECK(Asset_LoadTimTextures(0) == 0 && g_GameState.tim_load_state == 0);
         printf("Original common TIM loader: %u real uploads, file-backed read and full VRAM comparison passed\n", stats.uploads);
+        unsigned rooms = 0, keyed_uploads = 0, textured_rooms = 0;
+        PeRoom room = {0};
+        for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
+            if (!catalog.ranges[map - 1].room_sectors) continue;
+            CHECK(pe_room_load(&catalog, map, &room));
+            memset(expected, 0, sizeof(*expected));
+            LoadImage(&all, (u_long *)expected->words); DrawSync(0);
+            CHECK(pe_blob_upload_vram(&common, expected, &stats, error, sizeof(error)));
+            unsigned before = keyed_uploads;
+            CHECK(room_key_images(&room.data, expected, &keyed_uploads) == 0);
+            textured_rooms += keyed_uploads != before;
+            g_GameState.loaded_scene_assets = (SceneAssetView *)room.data.bytes;
+            g_GameState.flags = 8;
+            g_GameState.tim_load_state = 0;
+            CHECK(Asset_LoadTimTextures(1) == 1);
+            CHECK(Asset_LoadTimTextures(1) == 0 && !(g_GameState.flags & 8));
+            DrawSync(0); StoreImage(&all, (u_long *)actual->words); DrawSync(0);
+            CHECK(!memcmp(expected->words, actual->words, sizeof(expected->words)));
+            ++rooms;
+        }
+        CHECK(rooms == 414 && textured_rooms == 123 && keyed_uploads == 296);
+        printf("Original room TIM loader: %u rooms, %u keyed images in %u rooms, full VRAM comparison passed\n",
+               rooms, keyed_uploads, textured_rooms);
+        pe_room_close(&room);
         g_GameStateFlags = 0;
         g_GameState.loaded_scene_assets = NULL;
         g_GameState.scene_load_scratch = NULL;

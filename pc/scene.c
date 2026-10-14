@@ -6,6 +6,7 @@ void pe_scene_close(PeScene *scene) {
     if(scene->actors){for(unsigned i=0;i<PE_ACTOR_CAPACITY;++i)pe_actor_model_close(&scene->actors->slots[i]);free(scene->actors);}
     for(unsigned i=0;i<2;++i)pe_music_close(scene->audio.music[i]);
     pe_collision_close(&scene->collision);
+    pe_room_blob_close(&scene->entity_bank);
     pe_room_close(&scene->room);
     free(scene->vram);
     free(scene->spu);
@@ -98,3 +99,23 @@ int pe_scene_actor_scripts(PeScene *scene,unsigned slot,PeRoomCatalog *catalog,u
 }
 int pe_scene_events(PeScene *scene){return scene->actors&&pe_actors_events(scene->actors);}
 void pe_scene_set_input(PeScene *scene,uint32_t held){pe_input_update(&scene->input,held);}
+int pe_scene_primary_bank(PeScene *scene,PeRoomCatalog *catalog,unsigned area,char *error,size_t error_size){
+    if(area<10||area>14||!scene->actors)goto invalid;
+    for(unsigned i=0;i<PE_ACTOR_CAPACITY;++i)
+        if(scene->actors->slots[i].used&&(scene->actors->slots[i].render||scene->actors->slots[i].animation.bytes))goto invalid;
+    PeRoomBlob next={0};PeRoomBanks banks=scene->banks;
+    if(!pe_sector_bank_load(catalog,area+8,&next)){
+        snprintf(error,error_size,"%s",catalog->error);return 0;
+    }
+    if(!pe_entity_banks(&next,1,&banks,error,error_size)){pe_room_blob_close(&next);return 0;}
+    /* Drop old primary views that were not overridden by the new bank. */
+    if(scene->entity_bank.bytes){
+        PeRoomBanks room_banks;
+        if(!pe_room_banks(&scene->room,&room_banks,error,error_size)){pe_room_blob_close(&next);return 0;}
+        banks=room_banks;
+        if(!pe_entity_banks(&next,1,&banks,error,error_size)){pe_room_blob_close(&next);return 0;}
+    }
+    pe_room_blob_close(&scene->entity_bank);scene->entity_bank=next;scene->banks=banks;scene->entity_area=area;
+    if(error_size)error[0]=0;return 1;
+invalid:snprintf(error,error_size,"Invalid entity area or active actor bank references");return 0;
+}

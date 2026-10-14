@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Scenes own primary entity-bank bytes and explicitly load original area IDs
+10–14. Replacement before actor binding rebuilds room overrides, preserving
+the previous bank on failure. Active model/animation bindings reject replacement
+until hot reload is implemented. Tests load all five primary banks, bind a
+Tutorial actor and compute its next pose after closing the disc source. All
+31 headless tests and the full ASan/UBSan audit pass. Automatic area/day selection,
+textures, area overrides, hot reload and complete Spawn8 remain pending.
+
 Actor opcodes 101/102/223/224 clear motion/acceleration, compute X/Z velocity
 from yaw and movement scale, and toggle gravity. Velocity retains the player's
 factor of five, original fixed-point rounding/wrap and existing Y motion.

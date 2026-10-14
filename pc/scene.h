@@ -16,6 +16,8 @@
 typedef struct PeScene {
     PeInput input;
     PeRoom room;
+    PeRoomBlob entity_bank;
+    unsigned entity_area;
     PeCollision collision;
     PeRoomBanks banks;
     PeVram *vram;
@@ -45,5 +47,8 @@ PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeS
 int pe_scene_actor_scripts(PeScene *scene,unsigned slot,PeRoomCatalog *catalog,unsigned instruction_limit);
 int pe_scene_events(PeScene *scene);
 void pe_scene_set_input(PeScene *scene,uint32_t held);
+/* Initial primary model bank, original area IDs 10..14. Owned bytes survive
+ * catalog close. Rebinding active models/animations requires later hot reload. */
+int pe_scene_primary_bank(PeScene *scene,PeRoomCatalog *catalog,unsigned area,char *error,size_t error_size);
 
 #endif

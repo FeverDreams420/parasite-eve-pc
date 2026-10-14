@@ -491,6 +491,17 @@ int main(void) {
     CHECK(scene.scripts.blob == &scene.room.data && scene.spu->ram[0x2000] == 123);
     CHECK(scene.script_banks.variables[7] == 12345);
     CHECK(scene.scheduler->slots[0].task.banks == &scene.script_banks);
+    for(unsigned area=10;area<=14;++area){
+        CHECK(pe_scene_primary_bank(&scene,&catalog,area,scene_error,sizeof(scene_error)));
+        CHECK(scene.entity_area==area&&scene.entity_bank.bytes&&scene.banks.roots[0].present);
+    }
+    CHECK(pe_scene_primary_bank(&scene,&catalog,10,scene_error,sizeof(scene_error)));
+    uint8_t *owned_entity=scene.entity_bank.bytes;
+    CHECK(!pe_scene_primary_bank(&scene,&catalog,99,scene_error,sizeof(scene_error))&&scene.entity_bank.bytes==owned_entity);
+    CHECK(pe_actor_model_bind(&scene.actors->slots[0],&scene.banks,0));
+    CHECK(pe_actor_set_action(&scene.actors->slots[0],0,1));
+    CHECK(pe_actor_model_world_pose(&scene.actors->slots[0]));
+    CHECK(!pe_scene_primary_bank(&scene,&catalog,11,scene_error,sizeof(scene_error))&&scene.entity_bank.bytes==owned_entity);
     scene_script_ok=1;
     for(unsigned tick=0;tick<32&&scene_script_ok;++tick)scene_script_ok=pe_scene_actor_scripts(&scene,0,&catalog,100);
     CHECK(!scene_script_ok);
@@ -622,6 +633,7 @@ int main(void) {
     CHECK(pe_room_load(&catalog, 431, &reset_room));
     CHECK(pe_script_program_open(&reset_room, &reset_program, scene_error, sizeof(scene_error)));
     pe_disc_close(&disc);
+    CHECK(pe_actor_advance_animation(&scene.actors->slots[0])&&pe_actor_model_world_pose(&scene.actors->slots[0]));
     free(spu);
     for (unsigned tick = 0; tick < 4096; ++tick)
         CHECK(pe_akao_player_tick(&owned_music->player, 0, 1, 4096));

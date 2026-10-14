@@ -178,6 +178,29 @@ int main(void)
         if(g_ScriptVariableBank[28]!=(variant==1||variant==4?UINT32_MAX:expected[field]) ||
            task.flags!=0x10 || task.current.script!=script+8) return 21;
     }
+    for(unsigned variant=0;variant<4;++variant) for(unsigned vector=0;vector<8;++vector) {
+        FieldActor live={.type_id=7,.sub_id=3,
+            .pos_x=11,.pos_y=-12,.pos_z=13,.base_x=21,.base_y=-22,.base_z=23,
+            .motion_x=31,.motion_y=-32,.motion_z=33,.accel_x=41,.accel_y=-42,.accel_z=43,
+            .gravity_x=51,.gravity_y=-52,.gravity_z=53,.rot_x=61,.rot_y=62,.rot_z=63,
+            .delta_x=71,.delta_y=-72,.delta_z=73};
+        FieldActor dead=live,owner={0};dead.flags=0x10;dead.next=&live;
+        u32 modes=((2u<<9)|(2u<<12))<<17;
+        u32 script[]={94|(7u<<13)|modes,2|(2u<<3),vector,
+                      variant==1||variant==3?0:variant==2?99:7,3,29,30,31,32,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_PlayerEntity=variant==3?NULL:&live;g_FieldActorListHead=&dead;
+        g_ScriptNodePool=&task;g_GameStateFlags=0;
+        for(unsigned i=29;i<=32;++i) g_ScriptVariableBank[i]=0x1234;
+        Script_RunQueue();
+        int expected[3]={0x1234,0x1234,0x1234};
+        if(variant<2 && vector<7) {
+            expected[0]=11+10*vector;expected[1]=vector==5?62:-(12+10*(int)vector);expected[2]=13+10*vector;
+        }
+        if(g_ScriptVariableBank[29]!=(u32)expected[0] || g_ScriptVariableBank[30]!=(u32)expected[1] ||
+           g_ScriptVariableBank[31]!=(u32)expected[2] || g_ScriptVariableBank[32]!=(variant<2?1u:UINT32_MAX) ||
+           task.flags!=0x10 || task.current.script!=script+11) return 22;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

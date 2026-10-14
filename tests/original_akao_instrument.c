@@ -40,6 +40,7 @@ int SpuSetReverbModeType(unsigned int mode)
 }
 void SeqOp_SetTempo(void *track);
 void SeqOp_LoadInstrumentFromIndex(void *track);
+void Seq_SetCurrentTrackField56(AkaoValueCommand *command);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
 int main(void)
@@ -81,6 +82,26 @@ int main(void)
         CHECK(received[i].arg1 == 23);
         CHECK(received[i].arg2 == 31);
     }
+    g_AkaoCmd.opcode = 0x80;
+    g_AkaoCmd.arg0.value = 0x12345678;
+    g_AkaoCmd.arg1 = 37;
+    g_AkaoCmd.arg2 = 0x44556677;
+    g_AkaoCmd.arg3 = 53;
+    Akao_EnqueueStagedCommand();
+    CHECK(g_AkaoMessageQueueCount == 1);
+    AkaoQueueEntry *message = &g_AkaoMessageQueue[0];
+    Seq_SetCurrentTrackField56((AkaoValueCommand *)message);
+    CHECK(bank.condition_value == 0x5678);
+    CHECK(((AkaoBankPitchCommand *)message)->pitch == 0x12345678);
+    CHECK(((AkaoBankPitchCommand *)message)->bank_selector == 53);
+    CHECK(((AkaoBankPitchSlideCommand *)message)->target == 37);
+    CHECK(((AkaoGlobalParamCommand *)message)->value == 0x78);
+    CHECK(((AkaoGlobalSlideRangeCommand *)message)->target == 0x77);
+    CHECK(((AkaoGlobalPitchCommand *)message)->pitch == 0x5678);
+    CHECK(((AkaoGlobalPitchSlideCommand *)message)->target == 37);
+    CHECK(((AkaoGlobalPitchRangeCommand *)message)->start == 37);
+    CHECK(((AkaoGlobalPitchRangeCommand *)message)->target == 0x6677);
+    g_AkaoMessageQueueCount = 0;
     unsigned char tempo[] = {0x34, 0x12};
     AkaoTrack track = {0};
     track.pc = tempo;

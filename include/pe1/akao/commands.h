@@ -58,14 +58,14 @@ enum AkaoSequenceOpcode {
  * The bank selector is at +0x10 in all three message layouts. */
 typedef struct AkaoBankPitchCommand {
     int opcode;
-    int pitch;
+    union { uintptr_t argument_storage; int pitch; };
     int reserved[2];
     int bank_selector;
 } AkaoBankPitchCommand;
 
 typedef struct AkaoBankPitchSlideCommand {
     int opcode;
-    int duration;
+    union { uintptr_t argument_storage; int duration; };
     int target;
     int reserved;
     int bank_selector;
@@ -73,7 +73,7 @@ typedef struct AkaoBankPitchSlideCommand {
 
 typedef struct AkaoBankPitchRangeCommand {
     int opcode;
-    int duration;
+    union { uintptr_t argument_storage; int duration; };
     int start;
     int target;
     int bank_selector;
@@ -85,46 +85,58 @@ void Seq_TrackPitchSetup(AkaoBankPitchRangeCommand *command);
 
 typedef struct AkaoValueCommand {
     int pad_0;
-    int value;
+    union { uintptr_t argument_storage; int value; };
 } AkaoValueCommand;
 
 typedef struct AkaoGlobalSlideCommand {
     int pad_0;
-    int duration;
+    union { uintptr_t argument_storage; int duration; };
     AkaoCommandS8 target;
 } AkaoGlobalSlideCommand;
 
 typedef struct AkaoGlobalSlideRangeCommand {
     int pad_0;
-    int duration;
+    union { uintptr_t argument_storage; int duration; };
     int start;
     AkaoCommandS8 target;
 } AkaoGlobalSlideRangeCommand;
 
 typedef struct AkaoGlobalParamCommand {
     int pad_0;
-    AkaoCommandS8 value;
+    union { uintptr_t argument_storage; AkaoCommandS8 value; };
 } AkaoGlobalParamCommand;
 
 /* Global pitch messages carry the pitch in the low half of each word. */
 typedef struct AkaoGlobalPitchCommand {
     int opcode;
-    unsigned short pitch;
+    union { uintptr_t argument_storage; unsigned short pitch; };
 } AkaoGlobalPitchCommand;
 
 typedef struct AkaoGlobalPitchSlideCommand {
     int opcode;
-    int duration;
+    union { uintptr_t argument_storage; int duration; };
     unsigned short target;
 } AkaoGlobalPitchSlideCommand;
 
 typedef struct AkaoGlobalPitchRangeCommand {
     int opcode;
-    int duration;
+    union { uintptr_t argument_storage; int duration; };
     unsigned short start;
     unsigned short start_high;
     unsigned short target;
 } AkaoGlobalPitchRangeCommand;
+
+/* These records are views of a native message, not serialized PS1 data. */
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoValueCommand, value) ==
+                  PE1_OFFSETOF(AkaoQueueEntry, arg0), akao_value_argument);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoBankPitchCommand, bank_selector) ==
+                  PE1_OFFSETOF(AkaoQueueEntry, arg3), akao_pitch_bank);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoBankPitchSlideCommand, target) ==
+                  PE1_OFFSETOF(AkaoQueueEntry, arg1), akao_pitch_slide_target);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoGlobalSlideRangeCommand, target) ==
+                  PE1_OFFSETOF(AkaoQueueEntry, arg2), akao_global_slide_target);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoGlobalPitchRangeCommand, target) ==
+                  PE1_OFFSETOF(AkaoQueueEntry, arg2), akao_global_pitch_target);
 
 /*
  * Staging area for the public AKAO command wrappers at 0x800864xx..0x800870xx

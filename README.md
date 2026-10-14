@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Headless perspective projection now uses our PsyZ GTE RTPS with explicit
+matrix/viewport/depth-cue parameters. It exposes screen coordinates, depth,
+interpolation and clipping flags, without GPU/window initialization. Model
+batches compose view/pose matrices and preserve output on invalid input.
+All 32 tests pass; the native projection wrapper and fixture pass ASan/UBSan
+against an uninstrumented PsyZ library. Game cameras, RTPT batch behavior,
+depth sorting, GPU packets and reference rendered images remain pending.
+
 Visible model vertices now transform through their part pose matrices in
 original part order, exposing full RT words and saturated coordinates.
 Hidden/unreferenced slots retain output; invalid pose/capacity preserves the

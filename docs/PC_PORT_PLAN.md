@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Dłuższy audyt muzyki Disc 1 uruchamia każdą pełną sekwencję przez maksymalnie 4096 wymuszonych ticków muzycznych. Wynik: 2447792 ticki, 1077926 zdarzeń nut, 589 sekwencji nadal aktywnych, dziesięć błędów brakujących komend (B4: jedna, CC: dziewięć), zero zakończonych sekwencji w tym oknie. Audyt ujawnia dalsze braki; nie potwierdza pełnych utworów, syntezy, referencyjnego audio ani sterownika głosów. Wyniki i histogram pozostają jawne w logu `room-assets`.
+
 B8/B9/BA konfigurują opóźnienie, przebieg, głębokość i reset volume-LFO kanału głównego. Osobny krok głosu zachowuje gating opóźnienia, obejście przy key-on i signed arytmetykę fixed-point z wrap. Nowe nuty restartują przebieg i zerują bieżącą wartość. Testy obejmują fazę, wartości dodatnie/ujemne, reset i key-on oraz przechodzą ASan/UBSan. Slide głębokości, pitch-LFO, harmonogram sterownika głosów i słyszalna synteza pozostają wymagane.
 
 BC ustawia czas, selektor i fazę pomocniczego LFO. Osobny krok sterownika głosu odczytuje przebieg i liczy signed modulację z oryginalnym zaokrągleniem arithmetic shift. Nuty restartują przebieg, tie go zachowuje; nowe nuty zerują także offset pitch-slide. Test obejmuje fazę, wartości ujemne, restart, błędne cursor i brak mutacji przy błędzie, również pod ASan/UBSan. Harmonogram sterownika głosów i zastosowanie modulacji w syntezie pozostają wymagane. Audyt osiąga 8869 początkowych zdarzeń nut i 12 brakujących komend volume-LFO; 588 prefiksów sekwencji przechodzi cztery wymuszone ticki, a 11 trafia na brakującą komendę. Nie jest to dowód pełnych utworów ani słyszalnej modulacji.

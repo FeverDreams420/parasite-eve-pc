@@ -48,6 +48,9 @@ int main(void) {
     uint8_t referenced_banks[PE_USA_AUDIO_BANKS] = {0};
     unsigned channel_notes = 0, channel_stops = 0, channel_missing = 0;
     unsigned player_prefix_ok = 0, player_prefix_missing = 0;
+    unsigned long_stopped = 0, long_window = 0, long_missing = 0, long_state_errors = 0;
+    unsigned long_opcodes[512] = {0};
+    uint64_t long_ticks = 0, long_notes = 0;
     unsigned unsupported[512] = {0};
     unsigned loaded = 0, absent = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
@@ -107,6 +110,41 @@ int main(void) {
                 }
                 if (success) ++player_prefix_ok;
                 else ++player_prefix_missing;
+                CHECK(pe_akao_player_start(&player, &music.sequence, &catalog.akao, &initial));
+                CHECK(pe_akao_player_bind_samples(&player, record_spu));
+                int long_failed = 0;
+                for (unsigned tick = 0; tick < 4096 && player.active; ++tick) {
+                    ++long_ticks;
+                    if (!pe_akao_player_tick(&player, 0, 1, 4096)) {
+                        long_failed = 1;
+                        ++long_missing;
+                        unsigned voice = 0;
+                        while (voice < 24 && !player.channels[voice].error[0]) ++voice;
+                        CHECK(voice < 24);
+                        PeAkaoChannel *failed = &player.channels[voice];
+                        if (strstr(failed->error, "Unimplemented AKAO opcode")) {
+                            CHECK(failed->pc < failed->sequence.size);
+                            unsigned opcode = failed->sequence.bytes[failed->pc];
+                            unsigned index = opcode;
+                            if (opcode == 0xfc) {
+                                CHECK(failed->pc + 1 < failed->sequence.size);
+                                index = 256u + failed->sequence.bytes[failed->pc + 1];
+                            }
+                            ++long_opcodes[index];
+                        } else {
+                            ++long_state_errors;
+                            if (long_state_errors <= 10)
+                                printf("Long AKAO state diagnostic: map %u track %u voice %u tick %u: %s\n",
+                                       map, i, voice, tick, failed->error);
+                        }
+                        break;
+                    }
+                    for (unsigned mask = player.note_events; mask; mask &= mask - 1) ++long_notes;
+                }
+                if (!long_failed) {
+                    if (player.active) ++long_window;
+                    else ++long_stopped;
+                }
                 PeAkaoControl control = {0};
                 for (unsigned voice = 0; voice < 24; ++voice) {
                     if (music.sequence.channels[voice] == UINT32_MAX) continue;
@@ -187,6 +225,15 @@ int main(void) {
         CHECK(stats.address == 0x8000 && stats.first == 0x20);
         free(bytes);
         ++verified_banks;
+    }
+    CHECK(long_stopped + long_window + long_missing == music_records - short_music_records);
+    printf("4096 forced AKAO tick audit: %u stopped, %u still active, %u failed (%u state errors); %llu ticks, %llu note events; not synthesized\n",
+           long_stopped, long_window, long_missing, long_state_errors,
+           (unsigned long long)long_ticks, (unsigned long long)long_notes);
+    for (unsigned opcode = 0; opcode < 512; ++opcode) {
+        if (!long_opcodes[opcode]) continue;
+        if (opcode >= 256) printf("Long audit unsupported FC/%02X: %u sequences\n", opcode - 256, long_opcodes[opcode]);
+        else printf("Long audit unsupported %02X: %u sequences\n", opcode, long_opcodes[opcode]);
     }
     free(music_spu);
     printf("Referenced music sample banks uploaded: %u (not synthesized)\n", verified_banks);

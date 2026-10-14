@@ -350,5 +350,13 @@ wrapped fixed-point volume arithmetic. New notes restart the waveform and
 clear its current value. Tests cover delay/phase spacing, positive/negative
 modulation, reset and key-on behavior under ASan/UBSan. Depth slides, pitch
 LFO, voice-driver scheduling and audible synthesis remain pending.
+
+The Disc 1 data audit now runs every full sequence for up to 4,096 forced
+musical ticks, beyond the initial prefix. It records 2,447,792 ticks and
+1,077,926 note events: 589 sequences remain active at the limit, while ten
+hit unsupported commands (one B4 and nine CC). No sequence stops within this
+window. This diagnostic deliberately reports missing work; a passing data
+audit does not prove full songs or audio fidelity. Voice-driver modulation,
+register application and synthesis are not exercised by these musical ticks.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

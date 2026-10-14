@@ -419,6 +419,16 @@ int main(void)
         if(g_ScriptVariableBank[49]!=(u32)sine[quarter] || g_ScriptVariableBank[50]!=(u32)cosine[quarter] ||
            task.current.script!=script+10 || task.flags!=0x10) return 43;
     }
+    const int atan_cases[][3]={{0,1,0},{1,0,1024},{0,-1,2048},{-1,0,-1024}};
+    for(unsigned i=0;i<4;++i) {
+        FieldActor owner={0};
+        u32 script[]={217|(3u<<13)|((2u<<6)<<17),0,(u32)atan_cases[i][0],(u32)atan_cases[i][1],51,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[51]!=(u32)atan_cases[i][2] ||
+           task.current.script!=script+7 || task.flags!=0x10) return 44;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

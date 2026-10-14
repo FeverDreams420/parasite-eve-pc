@@ -31,19 +31,12 @@ static void record_message(AkaoQueueEntry *entry)
 }
 AkaoMessageHandler Akao_MessageHandlers[256];
 volatile u32 g_AkaoMessageQueueLock;
-SpuReverbState g_SpuReverbState;
 char g_AkaoDefaultVoiceProgram[] = {0};
 short g_AkaoPanVolumeTable[256];
 AkaoU8 g_AkaoOpcodeArgLengths[96], g_AkaoExtOpcodeArgLengths[32];
 u16 g_AkaoNoteLengthTable[11] = {48, 24, 16, 12, 8, 6, 4, 3, 2, 1, 96};
 void *g_AkaoSoundEntryTable[256];
-/* This isolated command test must never request a hardware reverb change.
- * PsyZ has no SpuSetReverbModeType endpoint yet: fail instead of simulating it. */
-int SpuSetReverbModeType(unsigned int mode)
-{
-    fprintf(stderr, "unexpected hardware reverb request %u\n", mode);
-    abort();
-}
+void Seq_GetGlobalPitch(unsigned int *out);
 void Seq_SetCurrentTrackField56(AkaoValueCommand *command);
 void SeqOp_StreamPair(AkaoTrack *track, u32 voice_mask);
 void SeqOp_ReadTrack64U16(AkaoTrack *track, u32 voice_mask);
@@ -704,6 +697,20 @@ int main(int argc, char **argv)
     SpuSetReverbModeDepth(-1234, 5678);
     CHECK(Psyz_SpuRead(0x184) == (u16)-1234);
     CHECK(Psyz_SpuRead(0x186) == 5678);
+    SpuInit();
+    for (unsigned mode = 0; mode < 10; ++mode) {
+        unsigned actual;
+        SpuReverbAttr attr;
+        CHECK(SpuSetReverbModeType(mode | 0x100) == 0);
+        Seq_GetGlobalPitch(&actual);
+        CHECK(actual == mode);
+        SpuGetReverbModeParam(&attr);
+        CHECK(attr.depth.left == 0 && attr.depth.right == 0);
+        CHECK(attr.delay == ((mode == 7 || mode == 8) ? 127 : 0));
+        CHECK(attr.feedback == (mode == 7 ? 127 : 0));
+    }
+    CHECK(SpuSetReverbModeType(10) == -1);
+    CHECK(SpuSetReverbModeType(0) == 0);
     g_AkaoGlobalSlideTick = 0;
     g_AkaoGlobalD2D0SlideCounter = 2;
     g_AkaoGlobalD2D0SlideStep = 0x10000;

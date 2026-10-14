@@ -14,7 +14,9 @@
 
 void Seq_GetGlobalPitch(unsigned int *out)
 {
-    *out = g_SpuReverbState.mode;
+    SpuReverbAttr attr;
+    SpuGetReverbModeParam(&attr);
+    *out = attr.mode;
 }
 
 void Seq_ApplyGlobalPitch(void) {

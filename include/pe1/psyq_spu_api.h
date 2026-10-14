@@ -1,6 +1,8 @@
 #ifndef PE1_PSYQ_SPU_API_H
 #define PE1_PSYQ_SPU_API_H
 
+#include <stdint.h>
+
 /* Psy-Q LIBSPU public stereo volume and external-input attributes. */
 typedef struct SpuVolume {
     short left, right;
@@ -20,6 +22,15 @@ typedef struct SpuCommonAttr {
 typedef char SpuVolumeSizeCheck[(sizeof(SpuVolume) == 4) ? 1 : -1];
 typedef char SpuExtAttrSizeCheck[(sizeof(SpuExtAttr) == 12) ? 1 : -1];
 typedef char SpuCommonAttrSizeCheck[(sizeof(SpuCommonAttr) == 40) ? 1 : -1];
+
+/* PsyZ uses a native-width u_long for this public SDK attribute mask. */
+typedef struct SpuReverbAttr {
+    uintptr_t mask;
+    int mode;
+    SpuVolume depth;
+    int delay, feedback;
+} SpuReverbAttr;
+void SpuGetReverbModeParam(SpuReverbAttr *attr);
 
 void SpuSetCommonAttr(SpuCommonAttr *attr);
 int SpuSetReverb(int on_off);

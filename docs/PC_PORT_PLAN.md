@@ -602,3 +602,16 @@ Procedural fixture generuje teraz actual stereo PCM przez Psyz_SpuPullSamples po
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.
 
 [CTest SKIP_RETURN_CODE](https://cmake.org/cmake/help/latest/prop_test/SKIP_RETURN_CODE.html) opisuje istniejące pomijanie testu kodem 77. Docelowa bramka wymaganego zakresu musi je traktować jako brak dowodu. [AddressSanitizer](https://clang.llvm.org/docs/AddressSanitizer.html) służy do wykrywania błędów pamięci, a [ThreadSanitizer](https://clang.llvm.org/docs/ThreadSanitizer.html) do wykrywania wyścigów; wybieramy obsługiwane przez narzędzie konfiguracje zamiast deklarować jeden identyczny tryb na wszystkich systemach.
+
+### Original AKAO reverb mode integration (2026-10-14)
+
+PsyZ fork c05349b implements SpuSetReverbModeType using its existing
+SpuSetReverbModeParam implementation. Original Seq_GetGlobalPitch reads the
+backend reverb state rather than a separate fixture variable. The abort-only
+test endpoint is removed. All ten modes, clear-work-area requests, mode
+readback, reset depths, echo/delay defaults and invalid mode rejection pass
+in the headless original instrument test. The SDK reverb attribute mask is
+native pointer width; using the original 32-bit layout corrupts memory on
+64-bit hosts and has been corrected for this API. All four original AKAO
+CTest entries pass with required Disc 1 assets. This does not yet connect
+menu sounds or music to the frontend; full campaign integration remains open.

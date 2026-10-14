@@ -2034,3 +2034,5 @@ Full build, original instrument/assets/menu/tick CTests and the complete
 chunked tick-assets ASan/UBSan/function run pass. PsyZ archives are not
 instrumented. Modes 1/2/3, SeekToTrack, scene command dispatch, XA and removal
 of the temporary pc/host_disc backend still require integration. No new files.
+
+Przywrócono `Entity_AdvanceAnim`, `Entity_SetActionMode` i `Entity_SetAction` do całego oryginalnego modułu `src/main/field/actor_collision.c`; usunięto wydzielony `src/main/entity/animation.c` i jego zależności CMake. Treść trzech procedur zachowano dokładnie wraz z dotychczasowymi poprawkami natywnymi. Pełny build oraz pięć testów original-game: movement, actor-animation, player-input-assets, floor i scene-spawn przechodzą; testy danych użyły rzeczywistego Disc 1 z wymaganymi assets (bez SKIP). To przywrócenie struktury oryginału, nie dowód pełnej integracji gry. `scene/actor_sound.c` nadal wymaga scalenia do `asset/game_state.c`, którego kompilację blokują między innymi nagłówki struktur fizycznego CD. Katalog `pc/` nadal pozostaje do usunięcia.

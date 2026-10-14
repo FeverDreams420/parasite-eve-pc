@@ -279,7 +279,7 @@ if(BUILD_TESTING)
 endif()
 
 add_library(parasite-eve-original-actor-animation OBJECT
-    src/main/entity/animation.c src/main/scene/actor_sound.c src/main/scene/player_input.c src/main/psyq/libgte/mtx_004.c)
+    src/main/scene/actor_sound.c src/main/scene/player_input.c src/main/psyq/libgte/mtx_004.c)
 target_include_directories(parasite-eve-original-actor-animation PRIVATE include)
 if(BUILD_TESTING)
     add_executable(test-original-actor-animation tests/original_actor_animation.c pc/disc.c
@@ -406,7 +406,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-scene-spawn tests/original_scene_spawn.c
-        pc/disc.c pc/room.c pc/room_banks.c pc/model.c pc/script.c src/main/entity/animation.c
+        pc/disc.c pc/room.c pc/room_banks.c pc/model.c pc/script.c
         $<TARGET_OBJECTS:parasite-eve-original-frame>
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>
         $<TARGET_OBJECTS:parasite-eve-original>)

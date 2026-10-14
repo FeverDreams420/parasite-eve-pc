@@ -366,3 +366,17 @@ if(BUILD_TESTING)
     add_test(NAME original-game-entity-texture-assets COMMAND test-original-entity-texture-assets)
     set_tests_properties(original-game-entity-texture-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "gpu;game-assets")
 endif()
+
+add_library(parasite-eve-original-shadow OBJECT src/main/render/actor_shadow.c)
+target_include_directories(parasite-eve-original-shadow PRIVATE include)
+target_compile_definitions(parasite-eve-original-shadow PRIVATE __psyz)
+target_link_libraries(parasite-eve-original-shadow PRIVATE psyz)
+if(BUILD_TESTING)
+    add_executable(test-original-shadow tests/original_shadow.c
+        $<TARGET_OBJECTS:parasite-eve-original-shadow>
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-shadow PRIVATE include)
+    target_compile_definitions(test-original-shadow PRIVATE __psyz)
+    target_link_libraries(test-original-shadow PRIVATE psyz)
+    add_test(NAME original-game-shadow COMMAND test-original-shadow)
+endif()

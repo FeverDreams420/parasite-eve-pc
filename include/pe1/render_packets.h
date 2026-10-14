@@ -56,6 +56,7 @@ typedef struct RenderBufferPrefix {
     char *other_buffers[6];
     char *packets[2];
 } RenderBufferPrefix;
+extern RenderBufferPrefix D_800B0E38;
 
 /* A buffer-table slot addressed by the draw slot's word offset. */
 typedef union RenderBufferSlotAddress {

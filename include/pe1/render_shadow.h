@@ -9,7 +9,7 @@
 
 /* Ground shadow quad drawn under a field actor (POLY_FT4 layout). */
 typedef struct RenderShadowQuad {
-    RenderGpuTag tag;
+    RenderNativeTag tag;
     u8 r0, g0, b0, code;
     s32 xy0; u8 u0, v0; u16 clut;
     s32 xy1; u8 u1, v1; u16 tpage;
@@ -25,7 +25,7 @@ typedef struct RenderShadowCoord {
 
 /* The shadow pass uses the same native actor as movement and battle. */
 typedef FieldActor RenderShadowActor;
-PE1_STATIC_ASSERT(sizeof(RenderShadowQuad) == 40, render_shadow_quad_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderShadowQuad, r0) == sizeof(RenderNativeTag), render_shadow_payload_offset);
 PE1_STATIC_ASSERT(sizeof(((FieldActor *)0)->shadow_quads) ==
                   sizeof(((FieldActor *)0)->allocation_block), shadow_allocation_pointer_size);
 

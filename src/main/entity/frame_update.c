@@ -139,15 +139,15 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
             actor->model_state.model_header->packet24_count * sizeof(RenderPacket24) +
             actor->model_state.model_header->packet1c_count * sizeof(RenderPacket1C)) +
             actor->model_state.model_header->animation_entry_count * sizeof(RenderAnimationLookupEntry) +
-            actor->model_state.model_header->part_count * sizeof(RenderMatrix) + 0x50);
+            actor->model_state.model_header->part_count * sizeof(RenderMatrix) + 2 * sizeof(RenderShadowQuad));
     } else {
-        allocation = Entity_AllocBlock(actor->model_state.model_header->animation_entry_count * sizeof(RenderAnimationLookupEntry) + actor->model_state.model_header->part_count * sizeof(RenderMatrix));
+        allocation = Entity_AllocBlock(actor->model_state.model_header->animation_entry_count * sizeof(RenderAnimationLookupEntry) + actor->model_state.model_header->part_count * sizeof(RenderMatrix) + 2 * sizeof(RenderShadowQuad));
         actor->flags |= 0x600000A0;
     }
     actor->allocation_block = (uintptr_t)allocation;
 
     if (scene[0] == 0 && (areaType = &g_SceneAreaType)) {
-        Render_SetupEntityPrims(&actor->render_object, actor->model_state.model_header, allocation + 0x50, 0x3C0,
+        Render_SetupEntityPrims(&actor->render_object, actor->model_state.model_header, allocation + 2 * sizeof(RenderShadowQuad), 0x3C0,
                                 0x100, 0, 0x1C0, 2, (s8 **)&renderSetup,
                                 allocateFull);
     } else {
@@ -173,7 +173,7 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
 
         allocation = (u8 *)actor->allocation_block;
         value = bankRows[i].trailing;
-        Render_SetupEntityPrims(&actor->render_object, actor->model_state.model_header, allocation + 0x50,
+        Render_SetupEntityPrims(&actor->render_object, actor->model_state.model_header, allocation + 2 * sizeof(RenderShadowQuad),
                                 (value >> 6) & 0x3C0, (value >> 9) & 0x180,
                                 0, ((bankRows[i].trailing >> 18) & 0xFF) + 0x1C0,
                                 (bankRows[i].trailing >> 8) & 0xF, (s8 **)&renderSetup,

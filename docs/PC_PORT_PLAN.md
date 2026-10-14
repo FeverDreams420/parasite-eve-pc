@@ -1290,3 +1290,20 @@ passed, with PsyZ/SDL archives uninstrumented. This replaces the earlier pose
 fixture limitation, but not the remaining image/integration limitations:
 variant_visible remains zero during attachment updates, action selection/timing
 is driven by the corpus test, and the main scene loop is not running yet.
+
+### Native original actor shadow packets
+
+Render_DrawActorShadow now compiles independently in render/actor_shadow.c.
+The original transform, shading and projection are preserved; its packet uses
+a native PsyZ tag and links directly through native ordering-table pointers.
+Scene_LoadMap reserves and skips two sizeof(RenderShadowQuad) packets instead
+of the PS1-only 0x50 bytes, including its non-full allocation path. This avoids
+placing model work over the enlarged native shadow packet prefix.
+
+The new original-game-shadow test checks exact SDK POLY_FT4 layout, projected
+corners, texture fields, ordinary/faded shading, one ordering link in each draw
+slot, and disabled/invisible no-write paths. Full build, shadow/lifecycle/
+hierarchy CTests and game/test ASan/UBSan/function checks passed; PsyZ archive
+uninstrumented. It checks packet construction, not an actual shadow texture
+image or complete scene draw. The Scene_LoadMap allocation change is compiled
+but still awaits full actor-spawn integration coverage.

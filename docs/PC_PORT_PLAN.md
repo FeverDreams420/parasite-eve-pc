@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 64 powiązania: oryginalne opcode'y 228/229 odczytują liczbę przedmiotów i limit slotów przez istniejący moduł inventory. Powiązania potwierdzono w EXE USA. Test kolejki obejmuje dziewięć kombinacji bazowego limitu/bonusu, clamp do 50 oraz pominięcie zajętych slotów poza aktywnym limitem. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 62 powiązania: oryginalny opcode 220 ustawia flagę aktora 0x1000000. Powiązanie potwierdzono w EXE USA; ABI poprawiono w istniejącej funkcji. Test kolejki odczytuje wynik przez oryginalny query opcode i sprawdza zachowanie pozostałych bitów. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 61 powiązań: oryginalny opcode 225 zapisuje mesh tint level we wspólnym stanie geometrii. Powiązanie potwierdzono w EXE USA. Test kolejki sprawdza sześć wartości, signed byte narrowing i zachowanie sąsiedniego stanu kamery. To sprawdzenie stanu, nie nowy dowód obrazu sceny. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

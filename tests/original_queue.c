@@ -10,6 +10,9 @@
 #include "pe1/game_state.h"
 #include "pe1/battle_level_up.h"
 #include "pe1/field_collision.h"
+#include "pe1/aya.h"
+#include "pe1/inventory_slots.h"
+#include "pe1/inventory_state.h"
 #include <stdio.h>
 extern FieldActor *g_CurrentEntity;
 /* Override selected resident entries to observe traversal in this fixture. */
@@ -459,6 +462,20 @@ int main(void)
         Script_RunQueue();
         if(owner.flags!=0x81002000 || g_ScriptVariableBank[53]!=0x81002000 ||
            task.current.script!=script+10 || task.flags!=0x10) return 47;
+    }
+    const unsigned capacities[]={0,10,50},bonuses[]={0,3,60};
+    for(unsigned i=0;i<3;++i) for(unsigned j=0;j<3;++j) {
+        unsigned limit=capacities[i]+bonuses[j];if(limit>50) limit=50;
+        g_AyaSaveState.inventory_slot_count=capacities[i];g_InvBonusSlotCount=bonuses[j];
+        for(unsigned slot=0;slot<50;++slot) g_AyaInventoryItems[slot]=slot>=limit||slot%3==0?1:0;
+        FieldActor owner={0};
+        u32 script[]={229|(1u<<13)|(2u<<17),0,54,228|(1u<<13)|(2u<<17),0,55,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[54]!=limit || g_ScriptVariableBank[55]!=(limit+2)/3 ||
+           g_InvItemPtr!=g_AyaInventoryItems || g_InvSlotLimit!=(int)limit ||
+           task.current.script!=script+8 || task.flags!=0x10) return 48;
     }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;

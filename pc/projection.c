@@ -3,6 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 static int16_t signed_half(unsigned value){value&=65535;return (int16_t)(value&32768?(int)value-65536:(int)value);}
+/* Retail loads three packed vectors even at a part tail, including bytes
+ * after the declared vertex array. Read only within the owned model blob. */
+static int raw_triplet(const PeModel *model,unsigned index,int16_t points[3][3]){
+    uint64_t offset=model->vertices+(uint64_t)index*8;
+    if(offset>model->size||22>model->size-offset)return 0;
+    for(unsigned i=0;i<3;++i)for(unsigned axis=0;axis<3;++axis){
+        const uint8_t *p=model->bytes+(size_t)offset+i*8+axis*2;
+        points[i][axis]=signed_half(p[0]|(unsigned)p[1]<<8);
+    }
+    return 1;
+}
 static void configure(const PeProjection *projection,const PeMatrix *matrix){
     uint16_t coefficients[10]={0};
     for(unsigned i=0;i<9;++i)coefficients[i]=(uint16_t)matrix->rotation[i/3][i%3];
@@ -33,6 +44,8 @@ int pe_model_project(const PeModel *model,const PeMatrix *view,const PeMatrix *p
     if(capacity<model->vertex_count)return 0;
     for(unsigned i=0;i<model->part_count;++i){PeModelPart part;
         if(!pe_model_part(model,i,&part)||(part.visible==1&&(i>=pose_count||(unsigned)part.first+part.count>model->vertex_count)))return 0;
+        if(part.visible==1&&part.count){int16_t points[3][3];
+            if(!raw_triplet(model,part.first+(part.count-1)/3*3,points))return 0;}
     }
     PeProjectedVertex *next=model->vertex_count?malloc((size_t)model->vertex_count*sizeof(*next)):NULL;
     if(model->vertex_count&&!next)return 0;
@@ -40,17 +53,13 @@ int pe_model_project(const PeModel *model,const PeMatrix *view,const PeMatrix *p
     for(unsigned i=0;i<model->part_count;++i){PeModelPart part;if(!pe_model_part(model,i,&part))goto failed;
         if(part.visible!=1)continue;
         PeMatrix matrix;pe_matrix_compose(view,&pose[i],&matrix);
-        for(unsigned j=0;j<part.count;){unsigned index=part.first+j;
-            if(part.count-j>=3){
-                int16_t points[3][3];PeProjectedVertex projected[3];
-                for(unsigned k=0;k<3;++k){PeModelVertex vertex;if(!pe_model_vertex(model,index+k,&vertex))goto failed;
-                    points[k][0]=vertex.x;points[k][1]=vertex.y;points[k][2]=vertex.z;}
-                pe_project_triplet(projection,&matrix,points,projected);
-                memcpy(next+index,projected,sizeof(projected));j+=3;count+=3;continue;
-            }
-            PeModelVertex vertex;
-            if(!pe_model_vertex(model,index,&vertex))goto failed;
-            int16_t point[3]={vertex.x,vertex.y,vertex.z};pe_project_point(projection,&matrix,point,&next[index]);++count;++j;
+        for(unsigned j=0;j<part.count;j+=3){unsigned index=part.first+j;
+            int16_t points[3][3];PeProjectedVertex projected[3];
+            if(!raw_triplet(model,index,points))goto failed;
+            pe_project_triplet(projection,&matrix,points,projected);
+            unsigned available=model->vertex_count-index;if(available>3)available=3;
+            memcpy(next+index,projected,(size_t)available*sizeof(*projected));
+            count+=part.count-j<3?part.count-j:3;
         }
     }
     if(model->vertex_count)memcpy(output,next,(size_t)model->vertex_count*sizeof(*next));*written=count;free(next);return 1;

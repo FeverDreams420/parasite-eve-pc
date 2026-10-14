@@ -20,10 +20,15 @@ int main(void){
     for(unsigned i=0;i<3;++i)CHECK(batch[i].interpolation==4096);projection.dqb=0;
     uint8_t bytes[132]={0};bytes[2]=1;bytes[6]=2;bytes[24]=1;bytes[30]=1;bytes[32]=1;
     bytes[40]=100;bytes[42]=50;bytes[44]=244;bytes[45]=1;
+    bytes[52]=244;bytes[53]=1; /* second declared vertex has valid depth */
     PeModel model;char error[128];CHECK(pe_model_open(bytes,sizeof(bytes),&model,error,sizeof(error)));
     PeProjectedVertex output[2]={0};output[1].screen[0]=77;unsigned written=99;
     CHECK(pe_model_project(&model,&matrix,&matrix,1,&projection,output,2,&written));
-    CHECK(written==1&&output[0].screen[0]==199&&output[1].screen[0]==77);
+    CHECK(written==1&&output[0].screen[0]==199&&output[1].screen[0]==160&&output[1].depth==500);
+    CHECK(output[0].flags&(1u<<17)); /* zero-depth colour bytes contribute batch flags */
+    size_t size=model.size;model.size=56;written=77;
+    CHECK(!pe_model_project(&model,&matrix,&matrix,1,&projection,output,2,&written)&&written==77&&output[0].screen[0]==199);
+    model.size=size;
     written=99;CHECK(!pe_model_project(&model,&matrix,&matrix,0,&projection,output,2,&written)&&written==99&&output[0].screen[0]==199);
     bytes[6]=3;bytes[30]=3;
     for(unsigned i=0;i<3;++i)for(unsigned axis=0;axis<3;++axis){unsigned v=(uint16_t)points[i][axis];

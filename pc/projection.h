@@ -10,4 +10,7 @@ void pe_project_point(const PeProjection *projection,const PeMatrix *matrix,cons
 void pe_project_triplet(const PeProjection *projection,const PeMatrix *matrix,const int16_t points[3][3],PeProjectedVertex output[3]);
 int pe_model_project(const PeModel *model,const PeMatrix *view,const PeMatrix *pose,unsigned pose_count,
                      const PeProjection *projection,PeProjectedVertex *output,unsigned capacity,unsigned *written);
+/* Model part tails use original packed RTPT reads and can overwrite following
+ * declared vertex slots. Stores outside the declared array are discarded;
+ * written counts logical visible vertices, not padding/overlap stores. */
 #endif

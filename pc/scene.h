@@ -19,7 +19,7 @@ typedef struct PeScene {
     PeCameraBank cameras;
     PeCamera camera;
     unsigned camera_group;
-    int16_t camera_position[2];
+    PeCameraScroll camera_scroll;
     PeRoom room;
     PeRoomBlob entity_bank;
     PeRoomBlob area_bank;

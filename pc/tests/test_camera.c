@@ -16,6 +16,10 @@ int main(void){
     pe_camera_clamp(&camera,0,0x8000,123,position);CHECK(position[0]==123&&position[1]==456);
     pe_camera_clamp(&camera,0x40,0x8000,123,position);CHECK(position[0]==-1&&position[1]==20);
     pe_camera_clamp(&camera,0x40,0x10064,0xffffffe2,position);CHECK(position[0]==100&&position[1]==-20);
+    bank.source_x=100;bank.source_y=200;camera.min_x=-4;camera.max_x=1;camera.min_y=-32768;camera.max_y=32767;
+    PeCameraScroll scroll;pe_camera_scroll_init(&bank,&camera,&scroll);
+    CHECK(scroll.position[0]==-1&&scroll.position[1]==0&&scroll.origin[0]==-1);
+    CHECK(scroll.display[0]==261&&scroll.display[1]==312&&scroll.bounds[0]==-4);
     bytes[10]=2;CHECK(!pe_camera_bank_open(bytes,sizeof(bytes),&bank)&&bank.count==1);
     puts("Camera: group matrix, projection distance, viewport bounds and transactional truncation passed");return 0;
 }

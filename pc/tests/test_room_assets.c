@@ -152,7 +152,12 @@ int main(void) {
         CHECK(room.map == map && room.data.size);
         PeCameraBank camera_bank;PeCamera room_camera;
         CHECK(pe_room_cameras(&room,&camera_bank));camera_groups+=camera_bank.count;
-        for(unsigned group=0;group<camera_bank.count;++group)CHECK(pe_camera_group(&camera_bank,group,&room_camera));
+        for(unsigned group=0;group<camera_bank.count;++group){
+            CHECK(pe_camera_group(&camera_bank,group,&room_camera));
+            PeCameraScroll scroll;pe_camera_scroll_init(&camera_bank,&room_camera,&scroll);
+            CHECK(scroll.position[0]==scroll.origin[0]&&scroll.position[1]==scroll.origin[1]);
+            CHECK(scroll.bounds[0]==room_camera.min_x&&scroll.bounds[3]==room_camera.max_y);
+        }
         CHECK(pe_camera_group(&camera_bank,0,&room_camera));
         PeProjection room_projection={160u<<16,112u<<16,0,room_camera.distance,0};
         PeRoomBanks model_banks; char bank_error[256];

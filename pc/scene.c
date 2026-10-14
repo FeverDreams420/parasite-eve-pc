@@ -23,6 +23,7 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     if(!pe_room_cameras(&next.room,&next.cameras)||!pe_camera_group(&next.cameras,0,&next.camera)){
         snprintf(error,error_size,"Invalid room camera bank");goto failed;
     }
+    pe_camera_scroll_init(&next.cameras,&next.camera,&next.camera_scroll);
     if (!pe_room_collision(&next.room, &next.collision, error, error_size)) goto failed;
     if (!pe_room_banks(&next.room, &next.banks, error, error_size)) goto failed;
     next.vram = malloc(sizeof(*next.vram));
@@ -166,5 +167,5 @@ int pe_scene_camera_select(PeScene *scene,unsigned group){
     scene->camera=camera;scene->camera_group=group;scene->actors->render_flags|=0x80;return 1;
 }
 void pe_scene_camera_clamp(PeScene *scene,uint32_t x,uint32_t y){
-    if(scene->actors)pe_camera_clamp(&scene->camera,scene->actors->render_flags,x,y,scene->camera_position);
+    if(scene->actors)pe_camera_clamp(&scene->camera,scene->actors->render_flags,x,y,scene->camera_scroll.position);
 }

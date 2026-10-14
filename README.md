@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Camera startup now initializes position/origin, saved bounds and background
+display translation from the room geometry header. It preserves original
+truncation for negative viewport midpoints and halfword offset wrap. All
+509 camera groups are initialized in the audit; all 33 headless tests and
+ASan/UBSan fixtures/full native audit pass. Background packets, per-frame
+scroll offsets, actor focus and transitions remain pending.
+
 Scene camera selection supports original opcode 130 and sets render refresh
 bit `0x80`. Position clamping uses selected signed-halfword viewport bounds
 only under flag `0x40`; disabled clamping preserves position. All 33 headless

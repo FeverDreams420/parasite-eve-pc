@@ -6,7 +6,7 @@ int pe_camera_bank_open(const uint8_t *bytes,size_t size,PeCameraBank *bank){
     if(size<60)return 0;
     uint32_t declared=word(bytes),offset=word(bytes+28);unsigned count=half(bytes+10);
     if(declared<60||declared>size||offset<60||offset>declared||!count||count>(declared-offset)/52)return 0;
-    *bank=(PeCameraBank){bytes,declared,offset,count};return 1;
+    *bank=(PeCameraBank){bytes,declared,offset,count,half(bytes+44),half(bytes+46)};return 1;
 }
 int pe_room_cameras(const PeRoom *room,PeCameraBank *bank){
     const uint8_t *records;unsigned count;
@@ -31,4 +31,10 @@ void pe_camera_clamp(const PeCamera *camera,uint32_t flags,uint32_t x,uint32_t y
     int16_t sx=sign((uint16_t)x),sy=sign((uint16_t)y);
     position[0]=sx<camera->min_x?camera->min_x:sx>camera->max_x?camera->max_x:sx;
     position[1]=sy<camera->min_y?camera->min_y:sy>camera->max_y?camera->max_y:sy;
+}
+void pe_camera_scroll_init(const PeCameraBank *bank,const PeCamera *camera,PeCameraScroll *scroll){
+    int x=((int)camera->min_x+camera->max_x)/2,y=((int)camera->min_y+camera->max_y)/2;
+    *scroll=(PeCameraScroll){{(int16_t)x,(int16_t)y},{(int16_t)x,(int16_t)y},
+        {camera->min_x,camera->max_x,camera->min_y,camera->max_y},
+        {sign((uint16_t)(bank->source_x-(x-160))),sign((uint16_t)(bank->source_y-(y-112)))}};
 }

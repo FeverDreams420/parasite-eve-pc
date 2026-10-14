@@ -80,13 +80,9 @@ int Render_GetOrLoadFontGlyph(unsigned char action);
 unsigned char Render_FindFontGlyphSlot(void);
 unsigned char Render_StepFontLoad(void);
 
-/* Byte views of g_FontSelectionState.codeIndex and .selected. The step load
- * and the shuffled and by-code loads keep retail's instruction order only
- * when these bytes are read outside the record. */
-extern unsigned char g_FontSelectionCodeIndex, g_FontSelectionSelectedSlot;
 /* The code list: codes from index 2 on are shuffled by
  * Render_LoadFontGlyphAlt. */
-extern unsigned char g_FontGlyphCodeSequence[];
+extern unsigned char g_FontGlyphCodeSequence[71];
 int Render_LoadFontGlyph(int code);
 unsigned char Render_SetFontGlyphByCode(unsigned char code);
 int Render_LoadFontGlyphAlt(void);

@@ -73,7 +73,6 @@ static int boot_buffer_layout(void)
 }
 
 /* Scripted I/O exercises the original glyph-record loader, including retries. */
-FontGlyphTable g_FontActiveGlyphTable;
 u16 g_PeImageSectorTable[81];
 static u8 glyph_source[42 * 2048], glyph_scratch[42 * 2048];
 static unsigned glyph_reads, glyph_polls;
@@ -111,6 +110,46 @@ static int glyph_records(void)
     }
     g_GameState = saved;
     return glyph_reads == 258 && glyph_polls == 258;
+}
+
+static int glyph_selection(void)
+{
+    Pe1GameState saved = g_GameState;
+    FontGlyphRecord record = {0};
+    const u8 indices[6] = {2, 0, 3, 1, 4, 3};
+    const u8 groups[6] = {1, 1, 2, 2, 1, 2};
+    record.groups.count = 5;
+    for (unsigned i = 0; i < 5; ++i) record.groups.codes[i] = i;
+    record.slots.count = 6;
+    memcpy(record.slots.indices, indices, sizeof(indices));
+    memcpy(record.slots.groupKeys, groups, sizeof(groups));
+    memcpy(glyph_source + 1 + 328, &record, sizeof(record));
+    memcpy(glyph_source + 1 + 656, &record, sizeof(record));
+    g_GameState.pe_image_base_lba = 12345;
+    g_GameState.scene_load_scratch = glyph_scratch;
+    g_FontGlyphCodeSequence[2] = 1;
+    g_FontGlyphCodeSequence[3] = 2;
+    g_FontSelectionState.table = &g_FontActiveGlyphTable;
+    g_FontSelectionState.active = 1;
+    if (Render_SetFontGlyphByCode(2) != 3 || g_FontSelectionState.selected != 2 ||
+        Render_DrawTextDigit(NULL, 0) != 2 || Render_GetFontSlotCode(4) != 4 ||
+        Menu_GetEquipSlotStateOrIndex() != 2 || !Menu_IsEquipSlotActive()) return 0;
+    if (Render_GetOrLoadFontGlyph(22) != 1 || g_FontSelectionState.selected != 3 ||
+        Render_GetOrLoadFontGlyph(23) != 4 || g_FontSelectionState.selected != 4 ||
+        Render_GetOrLoadFontGlyph(20) != 0 || g_FontSelectionState.selected != 1 ||
+        Render_GetOrLoadFontGlyph(21) != 2 || g_FontSelectionState.selected != 0) return 0;
+    if (Menu_FindSelectedEquipSlotItem() != 3 || g_FontSelectionState.selected != 2 ||
+        Render_FindFontGlyphSlot() != 2 || g_FontSelectionState.codeIndex != 3 ||
+        Render_StepFontLoad() != 1 || g_FontSelectionState.codeIndex != 2) return 0;
+    g_FontSelectionState.codeIndex = 70;
+    if (Render_FindFontGlyphSlot() != 255 || !g_FontSelectionState.loadFailed ||
+        Menu_ConsumeEquipSlotFlag() != 0 || Menu_ConsumeEquipSlotFlag() != 255) return 0;
+    g_FontSelectionState.seed = 123;
+    if (Render_ConsumeFontShuffleSeed() != 0 || Render_ConsumeFontShuffleSeed() != 255 ||
+        Menu_ResetEquipSlotState() || Menu_IsEquipSlotActive() ||
+        g_FontSelectionState.table || g_FontSelectionState.selected != 255) return 0;
+    g_GameState = saved;
+    return 1;
 }
 
 /* Record positional sound requests; no replacement audio ships with the game. */
@@ -178,6 +217,7 @@ int main(int argc, char **argv)
 {
     (void)argv;
     if (!glyph_records()) return 55;
+    if (!glyph_selection()) return 56;
     if (!boot_buffer_layout()) return 54;
     if (!game_state_reset()) return 53;
     if(!SDL_Init(SDL_INIT_EVENTS))return 43;

@@ -8,10 +8,10 @@
 #include "pe1/font.h"
 #include <stdlib.h>
 
-/* The slot-search tails store the selected byte and reload it through the
- * other symbol for that byte (g_FontSelectionState.selected or g_FontSelectionSelectedSlot)
- * after a memory barrier, as retail does: without the barrier the reload is
- * scheduled before the store (lev 10..25). */
+/* Resident initial values from the USA executable. */
+FontGlyphSelectionState g_FontSelectionState = { .selected = 0xff };
+FontGlyphTable g_FontActiveGlyphTable;
+unsigned char g_FontGlyphCodeSequence[71];
 
 /* Slot of the first glyph group whose code matches, or 255. */
 static inline unsigned char Font_FindCodeSlot(FontGlyphTable *table, unsigned short code)
@@ -240,12 +240,12 @@ int Render_LoadFontGlyphAlt(void)
     g_FontSelectionState.code = (g_FontGlyphCodeSequence + 2)[0];
     g_FontSelectionState.table = &g_FontActiveGlyphTable;
 
-    g_FontSelectionSelectedSlot = find_slot((u8 *)&g_FontActiveGlyphTable);
+    g_FontSelectionState.selected = find_slot((u8 *)&g_FontActiveGlyphTable);
     {
         FontGlyphTable *table = g_FontSelectionState.table;
         /* Read back through a pointer: CSE would otherwise reuse the stored
          * slot instead of reloading it as retail does. */
-        return table->groups.codes[table->slots.indices[*(u8 *)&g_FontSelectionSelectedSlot]];
+        return table->groups.codes[table->slots.indices[*(u8 *)&g_FontSelectionState.selected]];
     }
 }
 
@@ -258,7 +258,7 @@ u8 Render_StepFontLoad(void) {
     u16 digit;
     u8 *statep;
 
-    statep = &g_FontSelectionCodeIndex;
+    statep = &g_FontSelectionState.codeIndex;
     state = *statep;
     if (state < 3U) {
         *statep = 1;
@@ -271,10 +271,10 @@ u8 Render_StepFontLoad(void) {
     g_FontSelectionState.code = code;
     Render_LoadFontGlyph(code);
 
-    digit = (u8)(g_FontSelectionCodeIndex % 10) != 0;
+    digit = (u8)(g_FontSelectionState.codeIndex % 10) != 0;
     g_FontSelectionState.selected = Font_FindCodeSlot(g_FontSelectionState.table, digit);
     result = g_FontSelectionState.table;
-    return result->groups.codes[result->slots.indices[g_FontSelectionSelectedSlot]];
+    return result->groups.codes[result->slots.indices[g_FontSelectionState.selected]];
 }
 
 int Menu_GetEquipSlotStateOrIndex(void) {
@@ -300,7 +300,7 @@ u8 Render_FindFontGlyphSlot(void) {
     g_FontSelectionState.loadFailed = 0;
     g_FontSelectionState.code = code;
     Render_LoadFontGlyph(code);
-    g_FontSelectionSelectedSlot = Font_FindCodeSlot(g_FontSelectionState.table, 2);
+    g_FontSelectionState.selected = Font_FindCodeSlot(g_FontSelectionState.table, 2);
     result = g_FontSelectionState.table;
     return result->groups.codes[result->slots.indices[g_FontSelectionState.selected]];
 }
@@ -353,11 +353,11 @@ unsigned char Render_SetFontGlyphByCode(unsigned char code)
         selected = findSlot(1);
     else
         selected = findSlot(0);
-    g_FontSelectionSelectedSlot = selected;
+    g_FontSelectionState.selected = selected;
     /* Keep retail's store and reload of the selected byte. */
     {
         FontGlyphTable *table = g_FontSelectionState.table;
-        int index = g_FontSelectionSelectedSlot;
+        int index = g_FontSelectionState.selected;
         g_FontSelectionState.loadFailed = 0;
         return table->groups.codes[table->slots.indices[index]];
     }
@@ -415,7 +415,7 @@ int Menu_FindSelectedEquipSlotItem(void) {
 
     g_FontSelectionState.selected = Font_FindCodeSlot(g_FontSelectionState.table, 3);
     result = g_FontSelectionState.table;
-    return result->groups.codes[result->slots.indices[g_FontSelectionSelectedSlot]];
+    return result->groups.codes[result->slots.indices[g_FontSelectionState.selected]];
 }
 
 int Menu_ResetEquipSlotState(void) {

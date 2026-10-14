@@ -22,6 +22,15 @@ extern u32 g_ScriptVariableBank[];
 #define SCRIPT_VAR_AREA 0x4A
 extern int (*g_ScriptQueueOpcodeHandlers[])(int **);
 
+/* Resident callbacks use the interpreter's decoded operand-pointer array. */
+int Script_MoveTowardPoint(int **args);
+int Render_CameraTrackRelativeOffset(int **args);
+int Render_CameraStepAngleFade(int **args);
+int Script_TurnTowardPointStep(int **args);
+int Script_PlayEntityAnim(int **args);
+int Script_WaitAnimRange(int **unused);
+int Script_WaitAnimFrameMatch(int **unused);
+
 void Script_RunQueue(void);
 int Script_JumpToEntityOffset(int **args);
 int Entity_MarkCurrentDead(int **args);

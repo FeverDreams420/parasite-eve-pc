@@ -1,4 +1,7 @@
 #include "common.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "pe1/script_expression.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_update.h"
@@ -590,7 +593,7 @@ int Script_SetEntityAnimFrame(u16 **arg0) {
     return 1;
 }
 
-int Script_WaitAnimFrameMatch(void) {
+int Script_WaitAnimFrameMatch(int **unused) {
     ScriptNode *state;
     FieldActor *entity;
     uintptr_t stack;
@@ -694,8 +697,28 @@ void Script_RunQueue(void)
                 modes >>= 3;
                 if (i == 4) modes = tail;
             }
+            if (!g_ScriptQueueOpcodeHandlers[opcode]) {
+                fprintf(stderr, "Unbound original script opcode %u\n", opcode);
+                abort();
+            }
         } while (g_ScriptQueueOpcodeHandlers[opcode](args));
         /* Handlers may replace both the current node and the script cursor. */
         g_ScriptNodePool->current.script = g_ScriptCursor;
     } while ((g_ScriptNodePool = g_ScriptNodePool->next) != 0);
 }
+
+/* USA resident dispatcher at 0x800910A0. Unbound entries remain NULL;
+ * they must be ported before scenes using them can execute. */
+int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
+    [0]=Script_JumpToEntityOffset, [1]=Entity_MarkCurrentDead,
+    [2]=Entity_SetCurrentNodeActive, [5]=Script_JumpIfZero,
+    [9]=Script_EvalExpr, [10]=Script_AssignValue,
+    [18]=Script_SpawnChildNode,
+    [31]=Script_GetNodeTarget14, [32]=Entity_MarkCurrentNodeFree,
+    [36]=Script_GetNodeTargets18_1C, [40]=Script_ClearBit,
+    [41]=Script_TestBit, [42]=Script_SetBit,
+    [48]=Script_WaitAnimFrameMatch, [68]=Script_MoveTowardPoint,
+    [97]=Render_CameraTrackRelativeOffset, [118]=Render_CameraStepAngleFade,
+    [131]=Script_WaitAnimRange, [146]=Script_PlayEntityAnim,
+    [184]=Script_TurnTowardPointStep
+};

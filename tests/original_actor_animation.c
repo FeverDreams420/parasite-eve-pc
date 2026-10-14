@@ -25,6 +25,7 @@
 #include "pe1/akao/commands.h"
 #include "pe1/akao_send.h"
 #include "pe1/script_state.h"
+#include "pe1/script_queue.h"
 #include "pe1/akao/queue.h"
 #include "pe1/fieldfx_particle.h"
 #include "pe1/field_tri_test.h"
@@ -44,7 +45,6 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <psyz/system.h>
-int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
 
 /* Observe the original traversal while deliberately changing cursor state. */
 static int widget_draw_order[4], widget_draw_x[4], widget_draw_y[4];
@@ -1122,7 +1122,6 @@ static int authored_glow_script_cycle(void)
     return 1;
 }
 
-int Script_PlayEntityAnim(s16 **args);
 int Script_CopyEntityRenderObject(int **args);
 static int original_actor_render_opcodes(void)
 {
@@ -1134,7 +1133,7 @@ static int original_actor_render_opcodes(void)
     s16 rates[]={0,1,32,-2,32767};
     for(unsigned player=0;player<2;++player) for(unsigned i=0;i<5;++i) {
         FieldActor actor={.flags=0x8040};ScriptNode node={.flags=0x8000};
-        s16 rate=rates[i];s16 *args[]={&rate};
+        int rate=rates[i];int *args[]={&rate};
         g_CurrentEntity=&actor;g_PlayerEntity=player?&actor:NULL;g_ScriptNodePool=&node;
         g_PlayerBattleEntity=(RenderObjectEntity){0};g_FieldMoveLock=0x82;
         g_ScriptCursor=script+8;
@@ -1177,10 +1176,6 @@ static int original_actor_render_opcodes(void)
     return 1;
 }
 
-int Script_MoveTowardPoint(int **args);
-int Script_WaitAnimRange(void);
-int Render_CameraTrackRelativeOffset(int **args);
-s32 Render_CameraStepAngleFade(s32 **args);
 static int original_actor_camera_opcodes(void)
 {
     FieldActor *previous=g_CurrentEntity,*previous_player=g_PlayerEntity;
@@ -1268,7 +1263,7 @@ static int original_absolute_movement_opcode(void)
         actor.anim.fixed=ranges[i][0]*65536;
         ScriptNode node={.flags=0x8000};
         g_CurrentEntity=&actor;g_ScriptNodePool=&node;g_ScriptCursor=script+8;
-        if(Script_WaitAnimRange()!=0 || node.active!=1 || node.flags!=0x8000 ||
+        if(Script_WaitAnimRange(NULL)!=0 || node.active!=1 || node.flags!=0x8000 ||
            g_ScriptCursor!=script+(ranges[i][3]?6:8)) return 0;
     }
     for(unsigned player=0;player<2;++player) for(unsigned turns=0;turns<2;++turns) {
@@ -1307,6 +1302,42 @@ static int original_absolute_movement_opcode(void)
     }
     g_CurrentEntity=previous;g_PlayerEntity=previous_player;g_ScriptNodePool=previous_node;g_ScriptCursor=previous_cursor;
     puts("Original absolute movement opcode: relative/absolute targets agree across player speed, turning, yields, cached operands and completion");
+    return 1;
+}
+
+static int original_resident_script_program(void)
+{
+    FieldActor *previous=g_CurrentEntity,*previous_player=g_PlayerEntity;
+    ScriptNode *previous_node=g_ScriptNodePool;u32 *previous_cursor=g_ScriptCursor;
+    u32 previous_variable=g_ScriptVariableBank[7];
+    if(g_ScriptQueueOpcodeHandlers[68]!=Script_MoveTowardPoint ||
+       g_ScriptQueueOpcodeHandlers[97]!=Render_CameraTrackRelativeOffset ||
+       g_ScriptQueueOpcodeHandlers[146]!=Script_PlayEntityAnim) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
+    for(unsigned player=0;player<2;++player) {
+        u32 script[]={68|(3u<<13),0,98*65536,203*65536,0,
+                      10|(2u<<13)|(2u<<17),0,7,77,32,0};
+        FieldActor actor={.pos_x=100*65536,.pos_z=200*65536,.rot_y=4095,
+                          .move_factor=65536,.move_speed=4096};
+        ScriptNode node={.current.script=script,.active=1};
+        g_CurrentEntity=&actor;g_PlayerEntity=player?&actor:NULL;g_ScriptVariableBank[7]=0;
+        unsigned ticks=0;
+        while(!(node.flags&0x10)) {
+            if(++ticks>80) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
+            g_ScriptNodePool=&node;Script_RunQueue();
+            if(g_ScriptNodePool!=NULL) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
+            if(node.flags&0x10) {
+                if(actor.pos_x!=98*65536 || actor.pos_z!=203*65536 || actor.motion_x || actor.motion_z ||
+                   g_ScriptVariableBank[7]!=77 || node.current.script!=script+11) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
+            } else {
+                if(node.current.script!=script || node.active!=1 || g_ScriptVariableBank[7]) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
+                actor.pos_x=(s32)((u32)actor.pos_x+(u32)actor.motion_x);
+                actor.pos_z=(s32)((u32)actor.pos_z+(u32)actor.motion_z);
+            }
+        }
+    }
+    g_CurrentEntity=previous;g_PlayerEntity=previous_player;g_ScriptNodePool=previous_node;
+    g_ScriptCursor=previous_cursor;g_ScriptVariableBank[7]=previous_variable;
+    puts("Original resident interpreter: real dispatcher, movement, assignment, yields and node termination passed");
     return 1;
 }
 
@@ -1665,7 +1696,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

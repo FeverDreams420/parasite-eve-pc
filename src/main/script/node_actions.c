@@ -1,5 +1,6 @@
 #include "common.h"
 #include "pe1/script_state.h"
+#include "pe1/script_queue.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/entity_animation.h"
@@ -77,7 +78,7 @@ int Script_SetEntityActionAndWait(int **arg0) {
 }
 
 /* Animation-range wait consumes the active ScriptNode and FieldActor view. */
-int Script_WaitAnimRange(void) {
+int Script_WaitAnimRange(int **unused) {
     FieldActor *entity;
     ScriptNode *node;
     int current;

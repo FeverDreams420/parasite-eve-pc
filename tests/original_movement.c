@@ -5,7 +5,6 @@
 #include "pe1/scene_flags.h"
 #include <stdio.h>
 /* Controlled input/dispatch tables are fixtures; game code is unchanged. */
-int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
 SceneFlagRecord *g_EntityInputRulesByMode[18];
 static unsigned rule_calls;
 static void input(struct BattleEntity *ctx,int *mode)

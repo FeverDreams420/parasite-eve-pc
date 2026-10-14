@@ -5,8 +5,7 @@
 #include "pe1/player_entity.h"
 #include <stdio.h>
 extern FieldActor *g_CurrentEntity;
-/* Controlled handler table is a test fixture, not a game implementation. */
-int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
+/* Override selected resident entries to observe traversal in this fixture. */
 static unsigned calls;
 static int record(int **args)
 {

@@ -35,6 +35,7 @@
 #include "pe1/scene_transition.h"
 #include "pe1/script_node.h"
 #include "pe1/script_state.h"
+#include "pe1/script_queue.h"
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
@@ -595,7 +596,7 @@ retry_second:
     return 1;
 }
 
-int Script_PlayEntityAnim(s16 **args) {
+int Script_PlayEntityAnim(int **args) {
     ScriptNode *script_state;
     FieldActor *actor;
     FieldActor *post_actor;
@@ -614,7 +615,7 @@ int Script_PlayEntityAnim(s16 **args) {
         actor = g_CurrentEntity;
         actor->flags &= ~0x40;
         script_state->flags |= 0x20;
-        Anim_SetInterpRate(&actor->render_object, *args[0]);
+        Anim_SetInterpRate(&actor->render_object, (s16)*args[0]);
         post_actor = g_CurrentEntity;
         player = g_PlayerEntity;
         post_actor->render_object.flags_9C |= 4;
@@ -623,7 +624,7 @@ int Script_PlayEntityAnim(s16 **args) {
             control_flags = g_FieldMoveLock;
             control_flags &= ~2;
             g_FieldMoveLock = control_flags;
-            Anim_SetInterpRate(&g_PlayerBattleEntity, *args[0]);
+            Anim_SetInterpRate(&g_PlayerBattleEntity, (s16)*args[0]);
             g_PlayerBattleEntity.flags_9C |= 4;
         }
     }

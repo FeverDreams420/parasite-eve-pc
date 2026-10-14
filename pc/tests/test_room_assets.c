@@ -97,6 +97,16 @@ int main(void) {
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
     CHECK(task.instructions == 3 && task.active == 1 && task.actor_flags == 0x40);
     CHECK(task.cursors[1] == task.base + 36);
+    task.target14 = 123;
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
+    CHECK(task.instructions == 7 && task.locals[3] == 123 && banks.operands[0] == 0);
+    CHECK(task.flags == 0x10 && task.actor_flags == 0x40);
+    CHECK(pe_script_task_init(&task, &scene.scripts, 0, &banks));
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
+    task.target14 = 251;
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
+    CHECK(task.instructions == 7 && banks.operands[0] == 1);
+    CHECK(!task.flags && task.actor_flags == 0x50);
     /* The active scene actor requires audio; report the missing opcode. */
     CHECK(pe_script_task_init(&task, &scene.scripts, 1, &banks));
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_ERROR);
@@ -166,7 +176,7 @@ int main(void) {
     pe_scene_close(&scene);
     pe_scene_close(&scene);
     free(vram);
-    printf("USA Disc 1: %u rooms, %u empty slots, %llu texture words, %u script entries, %u initial actors; M431 task prefix verified, full scene execution pending\n",
+    printf("USA Disc 1: %u rooms, %u empty slots, %llu texture words, %u script entries, %u initial actors; M431 entry-zero task branches verified, full scene execution pending\n",
            loaded, absent, (unsigned long long)uploaded_words, script_entries, initial_actors);
     return 0;
 }

@@ -9,6 +9,28 @@ static void word(uint8_t *p, uint32_t value) {
     for (unsigned i = 0; i < 4; ++i) p[i] = (uint8_t)(value >> (i * 8));
 }
 
+typedef struct DispatchCheck { unsigned calls, mode; } DispatchCheck;
+
+static PeScriptDispatchResult subsystem(void *opaque, PeScriptTask *task,
+                                        const PeScriptCommand *command) {
+    DispatchCheck *check = opaque;
+    CHECK(command->opcode == 777 && command->count == 1);
+    ++check->calls;
+    if (check->mode == 1) {
+        task->active = 3;
+        return PE_DISPATCH_YIELD;
+    }
+    if (check->mode == 2) {
+        snprintf(task->error, sizeof(task->error), "Injected resource failure");
+        return PE_DISPATCH_ERROR;
+    }
+    if (check->mode == 3) return PE_DISPATCH_UNSUPPORTED;
+    CHECK(pe_script_arg_read(task, &command->args[0]) == 10 + check->calls);
+    if (check->calls < 3) return PE_DISPATCH_RETRY;
+    pe_script_arg_write(task, &command->args[0], 88);
+    return PE_DISPATCH_CONTINUE;
+}
+
 int main(void) {
     uint8_t bytes[256] = {0};
     PeRoomBlob blob = {0};
@@ -99,6 +121,65 @@ int main(void) {
         CHECK((mode == 1 ? task.locals[0] : mode == 2 ? banks.variables[0] :
                mode == 3 ? banks.operands[0] : banks.node_flags[0]) == 123);
     }
-    puts("Script runtime: tick waits, arithmetic, shared literals, explicit unsupported commands and loop limits passed");
+    memset(bytes + 16, 0, sizeof(bytes) - 16);
+    word(bytes + 16, 777 | (1u << 13) | (2u << 17));
+    word(bytes + 24, 7);
+    word(bytes + 28, 32);
+    DispatchCheck check = {0};
+    CHECK(pe_script_task_init(&task, &program, 0, &banks));
+    task.dispatch = subsystem;
+    task.dispatch_user = &check;
+    for (unsigned i = 0; i < 2; ++i) {
+        banks.variables[7] = 11 + i;
+        CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
+        CHECK(task.pc == 16 && !task.instructions && task.active == 1);
+    }
+    banks.variables[7] = 13;
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
+    CHECK(check.calls == 3 && task.ticks == 3 && task.instructions == 2);
+    CHECK(banks.variables[7] == 88);
+    check.calls = 0; check.mode = 1;
+    CHECK(pe_script_task_init(&task, &program, 0, &banks));
+    task.dispatch = subsystem; task.dispatch_user = &check;
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
+    CHECK(task.pc == 28 && task.active == 3 && task.instructions == 1);
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
+    CHECK(check.calls == 1 && task.ticks == 4);
+    for (unsigned mode = 2; mode <= 3; ++mode) {
+        check.calls = 0; check.mode = mode;
+        CHECK(pe_script_task_init(&task, &program, 0, &banks));
+        task.dispatch = subsystem; task.dispatch_user = &check;
+        CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_ERROR);
+        CHECK(task.pc == 16 && !task.instructions && check.calls == 1);
+        CHECK(strstr(task.error, mode == 2 ? "resource failure" : "Unimplemented"));
+        CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_ERROR && check.calls == 1);
+    }
+    /* Scene flags test any masked bit, not equality with the full mask. */
+    memset(bytes + 16, 0, sizeof(bytes) - 16);
+    word(bytes + 16, 82 | (1u << 13)); word(bytes + 24, 0x2000);
+    word(bytes + 28, 81 | (2u << 13) | (2u << 20));
+    word(bytes + 36, 0x3000); word(bytes + 40, 8);
+    word(bytes + 44, 83 | (1u << 13)); word(bytes + 52, 0x2000);
+    word(bytes + 56, 25 | (1u << 13) | (2u << 17)); word(bytes + 64, 9);
+    word(bytes + 68, 31 | (1u << 13) | (2u << 17)); word(bytes + 76, 10);
+    word(bytes + 80, 32);
+    CHECK(pe_script_task_init(&task, &program, 0, &banks));
+    task.sequence = 65535; task.target14 = 456;
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
+    CHECK(!banks.scene_flags && banks.variables[8] == 1);
+    CHECK(banks.variables[9] == 65535 && banks.variables[10] == 456);
+    banks.scene_flags = 0x100;
+    CHECK(pe_script_task_init(&task, &program, 0, &banks));
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
+    CHECK(!task.instructions && task.active == 1 && task.pc == 16);
+    task.is_battle_actor = 1;
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
+    CHECK(banks.scene_flags == 0x100);
+    CHECK(pe_script_task_init(&task, &program, 0, &banks));
+    task.flags = 0x80; /* original node flag bypasses the pause gates */
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
+    puts("Script runtime: waits, arithmetic, banks/flags, subsystem retries/errors and instruction limits passed");
     return 0;
 }

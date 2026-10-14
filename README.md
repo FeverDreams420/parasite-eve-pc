@@ -161,12 +161,16 @@ while `room-assets` tests real startup data and scene ownership/rollback.
 
 `pc/script_vm.c` executes one native script task with shared variable/operand
 banks and writable literal operands. It supports assignments, all 24 expression
-operations, unconditional jumps, wait ticks, event cursors, flags and defined
+operations, conditional/unconditional jumps, wait ticks, event cursors, scene
+flags, node metadata and defined
 no-ops. Signed comparisons and fixed-point operations preserve the original
 word semantics without C overflow/shift undefined behavior. Unsupported
 opcodes and instruction-limit exhaustion return explicit errors. Tests execute
-the first three commands of the actual M431 entry-zero task; the active scene
+both event branches of the complete actual M431 entry-zero task; the active scene
 actor still fails explicitly at AKAO opcode 234. The task runtime is compiled
 into the native target but is not yet driven by the frontend's scene loop.
-Multi-task scheduling, actor creation, subsystem dispatch and full scenes
-remain pending; these tests do not prove campaign execution.
+Subsystem dispatch supports continue, yield, retry and explicit errors, with
+operand reads/writes through the original binding. Tests check live operands
+between retry ticks and the original battle/actor pause gates. Audio/render
+handlers, multi-task scheduling, actor creation and full scenes remain pending;
+these tests do not prove campaign execution.

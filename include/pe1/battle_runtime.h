@@ -1,6 +1,8 @@
 #ifndef PE1_BATTLE_RUNTIME_H
 #define PE1_BATTLE_RUNTIME_H
 
+#include "pe1/game_state.h"
+
 #include "pe1/game_state_types.h"
 
 #include "pe1/asset_find.h"
@@ -47,7 +49,6 @@ extern u16 g_ActorEffectFlag100Timer;
 extern u8 g_BattleSlotCancelPending;
 extern u8 g_BattleActionIndex;
 extern u8 g_BattleActionQueueCount;
-extern unsigned int D_8009D2E8;
 extern int g_BattleModeState;
 /* Action record the battle menu fills in (Menu_RunFrameWithArg). Its packed
  * words are also declared on their own: retail reads each of them through
@@ -132,8 +133,8 @@ int Inv_GetWeaponCategoryAmmoBase(unsigned int category);
 s8 Pad_GetMenuPressedBitOrDisabled(void);
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEnemySlot, active) == 0, battle_enemy_slot_active_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEnemySlot, combatant) == 4, battle_enemy_slot_combatant_offset);
-PE1_STATIC_ASSERT(sizeof(BattleEnemySlot) == 0xDC, battle_enemy_slot_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleEnemySlot, combatant) % _Alignof(EnemyCombatant) == 0, battle_enemy_slot_combatant_offset);
+PE1_STATIC_ASSERT(sizeof(BattleEnemySlot) == PE1_OFFSETOF(BattleEnemySlot, combatant) + sizeof(EnemyCombatant), battle_enemy_slot_size);
 
 /* Aya action sequencer state and its render/scene dependencies. */
 extern u8 g_AyaActionStep;

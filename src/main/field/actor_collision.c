@@ -1,4 +1,5 @@
 #include "common.h"
+#include <string.h>
 #include "pe1/battle.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/collision_database.h"
@@ -78,73 +79,38 @@ void Entity_ResetStateGlobals(void) {
     g_FloorPolygonVertexCount = 0;
 }
 
-void Entity_RelocateSceneData(void) {
-    CollisionDatabase *base;
-    char *loaded;
-    char frame[8];
-    u32 offset;
+/* Ordinary memory holds the relocated header and region pointers. Disc bytes
+ * remain immutable; data tables retain their original packed layouts. */
+static CollisionDatabase g_CollisionRuntime;
+static CollisionRegionEntry g_CollisionRegions[65535];
 
-    loaded = g_RoomCollisionData[0];
-    base = (CollisionDatabase *)loaded;
-    offset = *(u32 *)&base->vertices;
-    g_CollisionDb = base;
-
-    if (0x80000000U < offset) {
-        struct CollisionPlane *planes;
-        CollisionRegionEntry *heights;
-
-        planes = base->planes.pointer;
-        heights = base->regions;
-        g_RegionHeightTable.entries = heights;
-        g_CollisionPlaneTable = planes;
+void Entity_RelocateSceneData(void)
+{
+    const u8 *loaded = g_RoomCollisionData[0];
+    const CollisionDatabaseFile *file = (const CollisionDatabaseFile *)loaded;
+    CollisionDatabase *base = &g_CollisionRuntime;
+    if (!loaded) {
+        g_CollisionDb = 0;
+        g_RegionHeightTable.entries = 0;
+        g_CollisionPlaneTable = 0;
+        g_SceneDataTable2 = 0;
         return;
     }
-
-    base->vertices.pointer = SceneAsset_ResolveOffset(base, offset);
-    base->triangles.pointer = SceneAsset_ResolveOffset(base, base->triangles.word);
-    base->rampEdges.pointer = SceneAsset_ResolveOffset(base, base->rampEdges.word);
-    if (base->planes.word != 0) {
-        base->planes.pointer = SceneAsset_ResolveOffset(base, base->planes.word);
-    }
-
-    {
-        CollisionDatabaseAddress actor;
-        u32 *dst;
-        u32 i;
-        u32 *cursor;
-        u16 wordCount;
-        u16 *regionCountAddress;
-        u32 count;
-        u32 entry;
-
-        actor.db = g_CollisionDb;
-        i = 0;
-        cursor = (u32 *)actor.db->planes.pointer;
-        wordCount = actor.db->visitedWordCount;
-        entry = actor.db->rampEdges.word;
-        dst = (u32 *)actor.db->regions;
-        wordCount >>= 5;
-        g_CollisionPlaneTable = (struct CollisionPlane *)cursor;
-        regionCountAddress = &actor.db->regionCount;
-        g_RegionHeightTable.entries = (CollisionRegionEntry *)dst;
-        count = *regionCountAddress;
-        wordCount++;
-        g_SceneDataTable2 = (RampEdge *)entry;
-        actor.db->visitedWordCount = wordCount;
-
-        if (count != 0) {
-            cursor = (u32 *)actor.db;
-            do {
-                entry = cursor[10];
-                cursor++;
-                i++;
-                entry = entry + actor.word;
-                *dst = entry;
-                dst++;
-            } while (i < actor.db->regionCount);
-        }
-    }
+    memcpy(base, file, 24);
+    base->vertices.pointer = (u8 *)loaded + file->vertices;
+    base->triangles.pointer = (u8 *)loaded + file->triangles;
+    base->planes.pointer = file->planes ? (struct CollisionPlane *)(loaded + file->planes) : 0;
+    base->rampEdges.pointer = (struct RampEdge *)(loaded + file->rampEdges);
+    base->regions = g_CollisionRegions;
+    base->visitedWordCount = (file->visitedBits >> 5) + 1;
+    for (u32 i = 0; i < file->regionCount; ++i)
+        base->regions[i].height = (s16 *)(loaded + file->regions[i]);
+    g_CollisionDb = base;
+    g_RegionHeightTable.entries = base->regions;
+    g_CollisionPlaneTable = base->planes.pointer;
+    g_SceneDataTable2 = base->rampEdges.pointer;
 }
+
 
 void Entity_UpdateList(void) {
     FieldActor *node;
@@ -507,8 +473,9 @@ void Entity_UpdateAndRender(BattleEntity *actor)
  * maspsx: with MASPSX_FORCE_G0 only these words are $gp-relative and the
  * other extern words stay absolute. Storage remains at the existing
  * data/linker addresses. */
-FloorEdgePoint g_FloorBlockedEdgePointA;
-FloorEdgePoint g_FloorBlockedEdgePrev;
+FloorEdgePoint g_FloorBlockedEdges[2];
+u32 g_FloorEdgeVisitedBitmap[2048];
+FloorNeighbours g_FloorNeighboursInit = {{-1, -1, -1}};
 RampEdge *g_SceneDataTable2;
 u16 g_FieldCollisionTriIndex;
 u16 g_FloorBlockedEdgeMaxX, g_FloorBlockedEdgeMinX, g_FloorBlockedEdgeMaxZ, g_FloorBlockedEdgeMinZ;

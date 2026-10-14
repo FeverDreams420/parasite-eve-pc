@@ -11,9 +11,11 @@ typedef union FloorEdgePoint {
     } point;
     u32 packed;
 } FloorEdgePoint;
-extern FloorEdgePoint g_FloorBlockedEdgePointA, g_FloorBlockedEdgePrev;
+extern FloorEdgePoint g_FloorBlockedEdges[2];
+#define g_FloorBlockedEdgePointA (g_FloorBlockedEdges[0])
+#define g_FloorBlockedEdgePrev (g_FloorBlockedEdges[1])
 /* Byte view of the z halves, which Entity_ResetStateGlobals clears by
  * byte offset together with the x halves. */
-extern char g_FloorBlockedEdgeZHalves[];
+#define g_FloorBlockedEdgeZHalves ((char *)g_FloorBlockedEdges + 2)
 
 #endif /* PE1_FLOOR_EDGE_POINT_H */

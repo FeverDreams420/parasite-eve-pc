@@ -1,6 +1,8 @@
 #ifndef PE1_BATTLE_START_H
 #define PE1_BATTLE_START_H
 
+#include "pe1/game_state.h"
+
 #include "pe1/game_state_types.h"
 
 #include "pe1/entity_animation.h"
@@ -18,7 +20,6 @@ extern u32 g_BattleExpReward;
 extern u16 g_BattlePeBonusReward;
 
 extern unsigned int g_BattleResultFlags;
-extern unsigned int D_8009D2E8;
 extern int g_BattleAttackAnimFrame;
 extern u32 g_FrameRngCounter;
 extern s16 g_BattlePlayerAimHeight; /* battle camera height: player's model Y - 100 */

@@ -7,6 +7,7 @@ extern Pe1GameState g_GameState;
 /* Field movement lock bits tested by the frame update, the actor list update
  * and the scene scripts (0x8009D2E8). */
 extern int g_FieldMoveLock;
+#define D_8009D2E8 g_FieldMoveLock
 
 /* g_GameState.story_day_flags as its own byte symbol: Scene_SetStoryDay and
  * the battle update read and set it with absolute byte loads and stores. */

@@ -28,7 +28,8 @@ add_library(parasite-eve-original OBJECT
     src/main/entity/block_alloc.c
     src/main/script/node_pool.c
     src/main/script/expression.c
-    src/main/script/basic_flow.c)
+    src/main/script/basic_flow.c
+    src/main/field/actor_collision.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
@@ -180,4 +181,13 @@ if(BUILD_TESTING)
     target_include_directories(test-original-actor-animation PRIVATE include)
     target_link_libraries(test-original-actor-animation PRIVATE psyz)
     add_test(NAME original-game-actor-animation COMMAND test-original-actor-animation)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test-original-collision-assets tests/original_collision_assets.c
+        pc/disc.c pc/room.c $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-collision-assets PRIVATE include pc)
+    target_link_libraries(test-original-collision-assets PRIVATE psyz)
+    add_test(NAME original-game-collision-assets COMMAND test-original-collision-assets)
+    set_tests_properties(original-game-collision-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()

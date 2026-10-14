@@ -1,6 +1,8 @@
 #ifndef PE1_ENTITY_FLOOR_H
 #define PE1_ENTITY_FLOOR_H
 
+#include "pe1/game_state.h"
+
 /* Declarations used by the per-actor floor tracking driver
  * Entity_UpdateAndRender. */
 
@@ -10,7 +12,6 @@
 /* The floor driver reads the player and the field flags word (8: the player
  * stands on a ramp edge) absolutely; its unit runs under MASPSX_FORCE_G0. */
 extern BattleEntity *D_8009D254;
-extern unsigned int D_8009D2E8;
 
 int abs(int value);
 int Geo_ClipToFloorBoundary(s16 x, s16 z, void *face);

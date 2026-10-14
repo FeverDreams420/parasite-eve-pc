@@ -2,6 +2,7 @@
 #define PE1_COLLISION_DATABASE_H
 
 #include "common.h"
+#include "pe1/game_state.h"
 
 /* Packed vertex tables used by the flat and sloped triangle formats.
  * Coordinates are loaded as halfwords and interpreted as signed for geometry. */
@@ -17,7 +18,7 @@ typedef union CollisionVertexTable {
     void *pointer;
     CollisionVertexXZ *xz;
     CollisionVertexXYZ *xyz;
-    u32 word;
+    uintptr_t word;
 } CollisionVertexTable;
 /* The first word is byte-addressed in both triangle formats. Keeping this
  * two-byte view separate from the sloped face also describes the 22-byte
@@ -77,18 +78,18 @@ typedef union CollisionTriangleTable {
     CollisionTriangleHeader *header; /* Common prefix of either triangle format. */
     CollisionTriangleXZ *xz;
     CollisionTriangleXYZ *xyz;
-    u32 word;
+    uintptr_t word;
 } CollisionTriangleTable;
 /* Per-region triangle index lists; the database selects one height mode. */
 typedef struct CollisionFlatRegion {
     s16 height;
     u16 triangleCount;
-    u16 triangleIndices[0];
+    u16 triangleIndices[];
 } CollisionFlatRegion;
 typedef struct CollisionPlaneRegion {
     u32 reserved;
     u16 triangleCount;
-    u16 triangleIndices[0];
+    u16 triangleIndices[];
 } CollisionPlaneRegion;
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionFlatRegion, triangleIndices) == 4,
@@ -98,7 +99,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionPlaneRegion, triangleIndices) == 6,
 
 /* A relative byte offset on disk, or a region pointer after relocation. */
 typedef union CollisionRegionEntry {
-    u32 word;
+    uintptr_t word;
     s16 *height;
     CollisionFlatRegion *flat;
     CollisionPlaneRegion *plane;
@@ -114,21 +115,21 @@ typedef struct CollisionDatabase {
     u32 reserved0C[3];
     CollisionVertexTable vertices;   /* 0x18: XZ or XYZ array. */
     CollisionTriangleTable triangles; /* 0x1C: XZ or XYZ triangles. */
-    union { struct CollisionPlane *pointer; u32 word; } planes; /* 0x20 */
-    union { struct RampEdge *pointer; u32 word; } rampEdges; /* 0x24 */
-    CollisionRegionEntry regions[0]; /* 0x28: variable-length tail. */
+    union { struct CollisionPlane *pointer; uintptr_t word; } planes; /* 0x20 */
+    union { struct RampEdge *pointer; uintptr_t word; } rampEdges; /* 0x24 */
+    CollisionRegionEntry *regions; /* 0x28: variable-length tail. */
 } CollisionDatabase;
 
 /* The database address as the word added to each relative region offset. */
 typedef union CollisionDatabaseAddress {
     CollisionDatabase *db;
-    u32 word;
+    uintptr_t word;
 } CollisionDatabaseAddress;
 
 
 extern CollisionDatabase *g_CollisionDb;
 /* Loaded scene blocks; entry 0 is the room collision database. */
-extern char *g_RoomCollisionData[];
+#define g_RoomCollisionData (g_GameState.bank_reset_948)
 /* Active views published by the scene-data relocator. */
 extern struct CollisionPlane *g_CollisionPlaneTable;
 
@@ -136,9 +137,19 @@ PE1_STATIC_ASSERT(sizeof(CollisionTriangleHeader) == 2, collision_triangle_heade
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionTriangleHeader, region) == 1,
                   collision_triangle_region_offset);
 
-PE1_STATIC_ASSERT(sizeof(CollisionDatabase) == 0x28, collision_database_header_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionDatabase, regions) == 0x28,
-                  collision_database_regions_offset);
+/* Immutable 32-bit offset header stored on disc, distinct from runtime pointers. */
+typedef struct CollisionDatabaseFile {
+    u16 reserved00, regionCount, triangleCount, planeCount;
+    u16 visitedBits, reserved0A;
+    u32 reserved0C[3];
+    u32 vertices, triangles, planes, rampEdges;
+    u32 regions[];
+} CollisionDatabaseFile;
+PE1_STATIC_ASSERT(sizeof(CollisionDatabaseFile) == 0x28, collision_database_file_header_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionDatabase, vertices) ==
+                  PE1_OFFSETOF(CollisionDatabaseFile, vertices), collision_database_count_prefix_match);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionDatabaseFile, regions) == 0x28,
+                  collision_database_file_regions_offset);
 
 /* Script word that receives the wall slot hit by the current entity. */
 extern short *g_EntityCollisionWallSlot;

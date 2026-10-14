@@ -546,6 +546,13 @@ full room/model audit pass ASan/UBSan. Matrix execution, texture/packet decoding
 animation and rendering remain unfinished; prefix validation is not rendered
 model validation.
 
+Model parsing now checks quad/triangle texture spans and decodes UV pairs,
+CLUT and page words. The Disc 1 audit reads all 338,857 texture records across
+878 room models. Tests verify both layouts, exact bit values, truncation and
+unchanged output on invalid access. All 26 tests pass headless with Disc 1;
+model fixtures and the full model/scene audit pass ASan/UBSan. Matrix commands,
+packet generation, animation and rendered image validation remain pending.
+
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one
 lists the other 75 faces). The original lookup only searches listed faces.

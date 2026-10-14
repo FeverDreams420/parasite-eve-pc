@@ -69,7 +69,7 @@ int main(void) {
     uint64_t floor_regions = 0, floor_triangles = 0;
     uint64_t floor_probes_found = 0;
     uint64_t bank_root_records = 0, bank_row_records = 0;
-    unsigned model_prefixes=0; uint64_t model_vertices=0, model_primitives=0;
+    unsigned model_prefixes=0; uint64_t model_vertices=0, model_primitives=0, model_textures=0;
     unsigned floor_probe_outside = 0, floor_probe_unindexed = 0, floor_probe_contained_missing = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -99,6 +99,11 @@ int main(void) {
             }
             ++model_prefixes; model_vertices+=model.vertex_count;
             for(unsigned kind=0;kind<4;++kind) model_primitives+=model.packets[kind];
+            for(unsigned kind=0;kind<2;++kind) for(unsigned texture=0;texture<model.packets[kind];++texture) {
+                PeModelTexture decoded;
+                CHECK(pe_model_texture(&model,kind,texture,&decoded));
+                CHECK(decoded.vertices==(kind ? 3 : 4)); ++model_textures;
+            }
         }
         char collision_error[256];
         if (!pe_room_collision(&room, &room_collision, collision_error, sizeof(collision_error))) {
@@ -288,6 +293,7 @@ int main(void) {
            (unsigned long long)bank_root_records, (unsigned long long)bank_row_records);
     printf("Room model prefixes: %u, %llu vertices, %llu primitive descriptors; rendering pending\n",
            model_prefixes,(unsigned long long)model_vertices,(unsigned long long)model_primitives);
+    printf("Model texture records decoded: %llu; not rendered\n",(unsigned long long)model_textures);
     pe_collision_close(&room_collision);
     printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
            (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);

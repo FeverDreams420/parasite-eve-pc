@@ -8,7 +8,13 @@ typedef struct PeModel {
     uint8_t part_count, animation_entries;
     uint32_t parts, vertices, colors, descriptors, section, bounds, origin, commands, textures;
 } PeModel;
+typedef struct PeModelTexture {
+    uint8_t uv[4][2], vertices;
+    uint16_t clut, page;
+} PeModelTexture;
 /* Checked RenderObjectHeader and contiguous data prefix, borrowing bytes.
- * Matrix command execution, texture records and rendering are separate work. */
+ * Texture records are decoded separately; matrix execution/rendering pending. */
 int pe_model_open(const uint8_t *bytes, size_t size, PeModel *model, char *error, size_t error_size);
+/* Packet classes 0/1: quad/triangle UV, CLUT and texture page. */
+int pe_model_texture(const PeModel *model, unsigned kind, unsigned index, PeModelTexture *texture);
 #endif

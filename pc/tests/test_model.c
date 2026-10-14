@@ -18,6 +18,23 @@ int main(void){
     CHECK(!pe_model_open(bytes,sizeof(bytes),&model,error,sizeof(error)) && model.vertices==40);
     half(bytes+28,0);half(bytes+30,3);half(bytes+24,65535);
     CHECK(!pe_model_open(bytes,sizeof(bytes),&model,error,sizeof(error)) && model.matrix_bytes==3);
-    puts("Model prefix: contiguous sections, matrix-byte rounding, part bounds and transactional failure passed");
+    uint8_t textured[200]={0}; textured[2]=1;half(textured+6,3);half(textured+8,1);half(textured+10,1);
+    half(textured+24,3);half(textured+30,3);
+    for(unsigned i=0;i<4;++i){textured[144+i*4]=(uint8_t)(i*2+1);textured[145+i*4]=(uint8_t)(i*2+2);}
+    half(textured+146,0xabcd);half(textured+150,0x1234);
+    for(unsigned i=0;i<3;++i){textured[160+i*4]=(uint8_t)(i*2+10);textured[161+i*4]=(uint8_t)(i*2+11);}
+    half(textured+162,0x5678);half(textured+166,0x9abc);
+    CHECK(pe_model_open(textured,sizeof(textured),&model,error,sizeof(error)) && model.textures==144);
+    PeModelTexture texture;
+    CHECK(pe_model_texture(&model,0,0,&texture) && texture.vertices==4 && texture.uv[3][0]==7);
+    CHECK(texture.clut==0xabcd && texture.page==0x1234);
+    CHECK(pe_model_texture(&model,1,0,&texture) && texture.vertices==3 && texture.uv[2][1]==15);
+    CHECK(texture.clut==0x5678 && texture.page==0x9abc);
+    CHECK(!pe_model_texture(&model,1,1,&texture) && texture.clut==0x5678);
+    model.textures=200;
+    CHECK(!pe_model_texture(&model,0,0,&texture) && texture.clut==0x5678);
+    model.textures=144;
+    CHECK(!pe_model_open(textured,171,&model,error,sizeof(error)) && model.size==sizeof(textured));
+    puts("Model: checked sections, texture records, matrix rounding and transactional bounds passed");
     return 0;
 }

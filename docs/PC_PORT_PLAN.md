@@ -2196,3 +2196,22 @@ A fresh ASan/UBSan/function actor-lifecycle run passes, including existing PM
 script send/state checks; PsyZ is not instrumented. Other system-opcode paths
 are compiled but not established as working by these checks. Full script runtime,
 remaining extraction removal and elimination of pc/ remain incomplete.
+
+
+### Restore pad sampling and player movement to original modules
+
+Deleted scene/pad_input.c, scene/player_input.c and scene/player_input_rules.c.
+The entire pad-sampling implementation and its backing globals return to
+boot/init.c. Player movement handlers return to scene/player_movement.c;
+the USA input tables now reside alongside those handlers in the same original
+module. Full extracted bodies and table contents compare unchanged. Removed
+the separate rules object target. The expression fixture now references the
+real held-frame array instead of supplying duplicate storage. No new files.
+
+Full build and six original-game tests pass with required Disc 1 assets where
+applicable: akao-menu-assets, input-rules, expression, movement, actor-animation
+and player-input-assets. Fresh ASan/UBSan/function actor-animation execution
+passes digital/analog movement, action/clock/audio-trigger checks; PsyZ/SDL are
+not instrumented. The remaining TIM helper procedures in player_movement.c
+compile but are not verified by these movement checks. Full boot/game runtime,
+remaining extraction removal and elimination of pc/ are still incomplete.

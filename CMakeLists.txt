@@ -277,7 +277,7 @@ if(BUILD_TESTING)
 endif()
 
 add_library(parasite-eve-original-actor-animation OBJECT
-    src/main/asset/game_state.c src/main/scene/player_input.c src/main/psyq/libgte/mtx_004.c)
+    src/main/asset/game_state.c src/main/scene/player_movement.c src/main/psyq/libgte/mtx_004.c)
 target_include_directories(parasite-eve-original-actor-animation PRIVATE include)
 if(MSVC)
     target_compile_options(parasite-eve-original-actor-animation PRIVATE /Gy /Gw)
@@ -286,7 +286,6 @@ else()
 endif()
 if(BUILD_TESTING)
     add_executable(test-original-actor-animation tests/original_actor_animation.c pc/disc.c
-        $<TARGET_OBJECTS:parasite-eve-original-player-rules>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
     target_include_directories(test-original-actor-animation PRIVATE include pc)
@@ -321,10 +320,8 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-camera PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 
-add_library(parasite-eve-original-player-rules OBJECT src/main/scene/player_input_rules.c)
-target_include_directories(parasite-eve-original-player-rules PRIVATE include)
 
-add_library(parasite-eve-original-pad OBJECT src/main/scene/pad_input.c src/main/menu/widget_lookup.c pc/host_pad.c)
+add_library(parasite-eve-original-pad OBJECT src/main/menu/widget_lookup.c pc/host_pad.c)
 target_include_directories(parasite-eve-original-pad PRIVATE include pc)
 target_link_libraries(parasite-eve-original-pad PRIVATE psyz)
 foreach(pad_target IN LISTS akao_runtime_targets)

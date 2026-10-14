@@ -1,7 +1,7 @@
 #include "pe1/script_expression.h"
 #include "pe1/pad_state.h"
 #include <stdint.h>
-u32 g_FieldPadHeldFrameCounts[32];
+extern u32 g_FieldPadHeldFrameCounts[32];
 int Script_DispatchCmd(int **args);
 #include <limits.h>
 #include <stdio.h>

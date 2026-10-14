@@ -232,6 +232,17 @@ int main(void)
         if(g_ScriptVariableBank[34]!=(variant<2?distance:UINT32_MAX) ||
            task.flags!=0x10 || task.current.script!=script+7) return 24;
     }
+    {
+        FieldActor owner={.flags=0x8000,.pos_x=10*65536,.pos_y=20*65536,.pos_z=30*65536,.gravity_y=-2*65536};
+        u32 script[]={23|(4u<<13),0,6*65536,10*65536,14*65536,2,22,0,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(owner.flags!=0x8002 || owner.motion_x!=2*65536 || owner.motion_y!=2*65536 ||
+           owner.motion_z!=8*65536 || task.current.script!=script+6 || task.active!=1 || task.flags) return 25;
+        owner.flags&=~2u;g_ScriptNodePool=&task;Script_RunQueue();
+        if(task.current.script!=script+10 || task.flags!=0x10) return 26;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

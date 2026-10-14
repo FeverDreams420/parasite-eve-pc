@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 37 powiązań: oryginalne opcode'y 22/23 obliczają prędkość do punktu i oczekują na zakończenie ruchu. W istniejącym module ujednolicono ABI oczekiwania i przesunięcie czasu do 16.16 wykonuje się na unsigned word. Test kolejki sprawdza trzy składowe prędkości z wpływem gravity Y, flagę ruchu, cofanie kursora i kontynuację po zdjęciu flagi przez fixture. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełne sterowanie ruchem przez frame loop i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 35 powiązań: oryginalny opcode 84 zwraca sumę bezwzględnych różnic XYZ aktorów. Powiązanie potwierdzono w EXE USA. Test kolejki obejmuje osiem kombinacji znaków, wybór gracza, pominięcie martwego wpisu i brak celu. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 34 powiązania: opcode 69 wykonuje oryginalny odczyt kąta do aktora. Powiązanie potwierdzono w EXE USA. Test kolejki obejmuje cztery kierunki, trzy yaw, wyszukiwanie z pominięciem martwego wpisu, gracza i brak celu. Zachowuje również oryginalny wynik 4096 dla pełnego obrotu, bez normalizacji do zera. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

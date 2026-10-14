@@ -35,6 +35,8 @@ int Entity_QueryField(int **args);
 int Entity_GetPositionByType(int **args);
 int Script_GetAngleToEntity(int **args);
 int Entity_GetDistanceComponents(int **args);
+int Entity_YieldWhileMoving(int **unused);
+int Entity_ComputeVelocityToTarget(int **args);
 
 void Script_RunQueue(void);
 int Script_JumpToEntityOffset(int **args);

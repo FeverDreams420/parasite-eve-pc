@@ -333,7 +333,7 @@ int Entity_ComputeVelocityToTarget(int **arg0) {
     delta28 = state->pos_x - *arg0[0];
     delta2C = state->pos_y - *arg0[1];
     delta30 = state->pos_z - *arg0[2];
-    scale = *arg0[3] << 16;
+    scale = (s32)((u32)*arg0[3] << 16);
 
     g_CurrentEntity->motion_x = Math_FixedDivide(delta28, scale);
     g_CurrentEntity->motion_z = Math_FixedDivide(delta30, scale);
@@ -344,7 +344,7 @@ int Entity_ComputeVelocityToTarget(int **arg0) {
     return 1;
 }
 
-int Entity_YieldWhileMoving(void) {
+int Entity_YieldWhileMoving(int **unused) {
     int ret;
 
     ret = 0;
@@ -714,6 +714,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [2]=Entity_SetCurrentNodeActive, [4]=Entity_MarkNodeFree, [5]=Script_JumpIfZero,
     [9]=Script_EvalExpr, [10]=Script_AssignValue, [14]=Entity_QueryField,
     [18]=Script_SpawnChildNode, [19]=Entity_SetCurrentFlags,
+    [22]=Entity_YieldWhileMoving, [23]=Entity_ComputeVelocityToTarget,
     [24]=Entity_FindNodeById, [25]=Entity_GetCurrentNodeId,
     [31]=Script_GetNodeTarget14, [32]=Entity_MarkCurrentNodeFree,
     [36]=Script_GetNodeTargets18_1C, [37]=Script_GetCurrentEntityField24,

@@ -1309,16 +1309,18 @@ static int original_resident_script_program(void)
 {
     FieldActor *previous=g_CurrentEntity,*previous_player=g_PlayerEntity;
     ScriptNode *previous_node=g_ScriptNodePool;u32 *previous_cursor=g_ScriptCursor;
-    u32 previous_variable=g_ScriptVariableBank[7];
+    u32 previous_variable=g_ScriptVariableBank[7],previous_id=g_ScriptVariableBank[8],previous_sfx=g_ScriptVariableBank[9];
     if(g_ScriptQueueOpcodeHandlers[68]!=Script_MoveTowardPoint ||
        g_ScriptQueueOpcodeHandlers[97]!=Render_CameraTrackRelativeOffset ||
        g_ScriptQueueOpcodeHandlers[146]!=Script_PlayEntityAnim) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
     for(unsigned player=0;player<2;++player) {
-        u32 script[]={68|(3u<<13),0,98*65536,203*65536,0,
+        u32 script[]={39|(1u<<13),0,300,38|(1u<<13)|(2u<<17),0,8,
+                      37|(1u<<13)|(2u<<17),0,9,68|(3u<<13),0,98*65536,203*65536,0,
                       10|(2u<<13)|(2u<<17),0,7,77,32,0};
         FieldActor actor={.pos_x=100*65536,.pos_z=200*65536,.rot_y=4095,
                           .move_factor=65536,.move_speed=4096};
         ScriptNode node={.current.script=script,.active=1};
+        actor.field_sfx_id=54321;
         g_CurrentEntity=&actor;g_PlayerEntity=player?&actor:NULL;g_ScriptVariableBank[7]=0;
         unsigned ticks=0;
         while(!(node.flags&0x10)) {
@@ -1327,9 +1329,10 @@ static int original_resident_script_program(void)
             if(g_ScriptNodePool!=NULL) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
             if(node.flags&0x10) {
                 if(actor.pos_x!=98*65536 || actor.pos_z!=203*65536 || actor.motion_x || actor.motion_z ||
-                   g_ScriptVariableBank[7]!=77 || node.current.script!=script+11) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
+                   g_ScriptVariableBank[7]!=77 || node.current.script!=script+20 ||
+                   actor.sub_id!=44 || g_ScriptVariableBank[8]!=44 || g_ScriptVariableBank[9]!=54321) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
             } else {
-                if(node.current.script!=script || node.active!=1 || g_ScriptVariableBank[7]) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
+                if(node.current.script!=script+9 || node.active!=1 || g_ScriptVariableBank[7]) do { fprintf(stderr,"resident script failure line %d\n",__LINE__); return 0; } while(0);
                 actor.pos_x=(s32)((u32)actor.pos_x+(u32)actor.motion_x);
                 actor.pos_z=(s32)((u32)actor.pos_z+(u32)actor.motion_z);
             }
@@ -1337,6 +1340,7 @@ static int original_resident_script_program(void)
     }
     g_CurrentEntity=previous;g_PlayerEntity=previous_player;g_ScriptNodePool=previous_node;
     g_ScriptCursor=previous_cursor;g_ScriptVariableBank[7]=previous_variable;
+    g_ScriptVariableBank[8]=previous_id;g_ScriptVariableBank[9]=previous_sfx;
     puts("Original resident interpreter: real dispatcher, movement, assignment, yields and node termination passed");
     return 1;
 }

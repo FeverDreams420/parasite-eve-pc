@@ -10,7 +10,7 @@
 #include "pe1/geom_state.h"
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"
-#include "pe1/psyq_bios.h"
+#include "pe1/psyq_libc.h"
 #include "pe1/render_object.h"
 #include "pe1/render_prim.h"
 
@@ -20,6 +20,20 @@
  * quad, shaded ring, textured strip and the particle chain. They share the
  * draw state and scratch pointers private to this range (main_tu_evidence
  * G1390). */
+
+static union {
+    FieldFxScratch sprite;
+    FieldBillboardScratch billboard;
+} s_FieldSpriteWorkspace;
+FieldFxScratch *g_FieldFxScratch = &s_FieldSpriteWorkspace.sprite;
+FieldBillboardScratch *g_FieldFxBillboardScratch = &s_FieldSpriteWorkspace.billboard;
+u8 g_FieldFxSpriteColorMode, g_FieldFxSpriteBlendRate, g_FieldFxSpriteBlendMode;
+u8 g_FieldFxSpriteSemiTrans, g_FieldFxSpriteCellVBase;
+u8 g_FieldFxSpriteCellUMax, g_FieldFxSpriteCellVExtent;
+u16 g_FieldFxSpriteTpageX, g_FieldFxSpriteTpageY, g_FieldFxSpriteTpageValue;
+u16 g_FieldFxSpriteClutX, g_FieldFxSpriteClutY;
+GteShortVector g_FieldFxCellQuad[4];
+char g_FieldSpriteWrongColorModeMsg[] = "Wrong Color Mode\n";
 
 void FieldFx_SetSpriteTexturePreset(u8 mode) {
     if (mode == 0) {
@@ -174,7 +188,7 @@ void FieldFx_DrawOrientedSprite(FieldOrientedSprite *sprite)
     FieldStripLink link;
 
     packet = (FieldStripPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
-    g_FieldFxScratch = FIELDFX_SCRATCH;
+    g_FieldFxScratch = &s_FieldSpriteWorkspace.sprite;
     g_FieldFxScratch->v = sprite->cell & 0xF0;
     g_FieldFxScratch->u = (sprite->cell - g_FieldFxScratch->v) << 4;
     g_FieldFxScratch->clutX = sprite->clut << 4;
@@ -270,7 +284,7 @@ void FieldFx_DrawBillboard(FieldBillboard *board)
     int projectedHeight;
     FieldStripLink link;
 
-    g_FieldFxBillboardScratch = FIELD_BILLBOARD_SCRATCH;
+    g_FieldFxBillboardScratch = &s_FieldSpriteWorkspace.billboard;
     g_FieldFxBillboardScratch->v = board->cell & 0xF0;
     g_FieldFxBillboardScratch->u = (board->cell - g_FieldFxBillboardScratch->v) << 4;
     g_FieldFxBillboardScratch->clutX = board->clut << 4;
@@ -412,7 +426,7 @@ void FieldFx_DrawGlowSprite(FieldGlowSprite *sprite, GteMatrix *placement, u8 mo
     FieldStripLink link;
 
     packet = (FieldStripPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
-    g_FieldFxScratch = FIELDFX_SCRATCH;
+    g_FieldFxScratch = &s_FieldSpriteWorkspace.sprite;
     if (mode == 0) {
         /* Compose camera rotation with each placement column. */
         gte_ldrotmatrix(g_ViewMatrixSlot.value);
@@ -522,7 +536,7 @@ void FieldFx_DrawShadedQuad(FieldShadedQuadColors *colors, GteMatrix *placement,
     FieldShadedQuadLink link;
 
     packet = (FieldShadedQuadPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
-    g_FieldFxScratch = FIELDFX_SCRATCH;
+    g_FieldFxScratch = &s_FieldSpriteWorkspace.sprite;
     if (mode == 0) {
         /* Compose camera rotation with each placement column. */
         gte_ldrotmatrix(g_ViewMatrixSlot.value);
@@ -632,7 +646,7 @@ void FieldFx_DrawShadedRing(FieldShadedRing *ring, GteMatrix *placement, u8 mode
     u16 d;
     FieldRingLink link;
 
-    g_FieldFxScratch = FIELDFX_SCRATCH;
+    g_FieldFxScratch = &s_FieldSpriteWorkspace.sprite;
     if (mode == 0) {
         /* Compose camera rotation with each placement column. */
         gte_ldrotmatrix(g_ViewMatrixSlot.value);
@@ -669,7 +683,7 @@ void FieldFx_DrawShadedRing(FieldShadedRing *ring, GteMatrix *placement, u8 mode
         packet = (FieldRingPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
         g_DrawPacketOffset += sizeof(FieldRingPacket);
         drawMode = g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset;
-        g_DrawPacketOffset += 8;
+        g_DrawPacketOffset += sizeof(RenderTintMode);
         SetDrawTPage(drawMode, 0, 0, (g_FieldFxSpriteBlendRate & 3) << 5);
         next = (i + 1) % ring->mode;
         a = i;
@@ -795,7 +809,7 @@ void FieldFx_DrawTexturedStrip(FieldTexturedStrip *strip)
 
     node = strip->nodes;
     i = 0;
-    g_FieldFxScratch = FIELDFX_SCRATCH;
+    g_FieldFxScratch = &s_FieldSpriteWorkspace.sprite;
     packet = (FieldStripPacket *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
     g_FieldFxScratch->clutX = strip->clut << 4;
     g_FieldFxScratch->clutY = strip->clut >> 4;

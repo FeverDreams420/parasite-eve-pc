@@ -21,7 +21,6 @@ typedef struct FieldFxScratch {
     /* 0x3C */ GteMatrix local;
 } FieldFxScratch;
 
-#define FIELDFX_SCRATCH ((FieldFxScratch *)0x1F800000)
 
 extern FieldFxScratch *g_FieldFxScratch;
 

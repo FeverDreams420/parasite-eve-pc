@@ -40,7 +40,6 @@ typedef struct FieldBillboardScratch {
     /* 0x84 */ GteMatrix rotation;
 } FieldBillboardScratch;
 
-#define FIELD_BILLBOARD_SCRATCH ((FieldBillboardScratch *)0x1F800000)
 
 extern FieldBillboardScratch *g_FieldFxBillboardScratch;
 

@@ -15,6 +15,7 @@
 #include "pe1/field_tile.h"
 #include "pe1/field_textured_model.h"
 #include "pe1/field_model_draw.h"
+#include "pe1/field_oriented_sprite.h"
 #include "pe1/field_textured_strip.h"
 #include "pe1/geom_state.h"
 #include "pe1/field_movement.h"
@@ -720,6 +721,54 @@ static int native_effect_model_packets(void)
     return 1;
 }
 
+static int native_oriented_sprite_packets(void)
+{
+    struct { FieldStripPacket packet; u8 guard[16]; } buffer;
+    static RenderGpuTag ordering[4096];
+    RenderBufferPrefix saved=D_800B0E38;
+    int saved_slot=g_ActiveDrawSlot, saved_offset=g_DrawPacketOffset;
+    GteMatrix *saved_view=g_GeomScroll.words.viewMatrix;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    g_GeomScroll.words.viewMatrix=&view;
+    FieldOrientedSprite sprite={.position={0,0,512},.scale={4096,4096,4096},
+        .rgb={80,40,20},.cell=0x23,.clut=0x12,.brightness=128};
+    Psyz_GteCtrlWrite(26,256); Psyz_GteCtrlWrite(29,1365); Psyz_GteCtrlWrite(30,1024);
+    gte_SetGeomOffset(160,120);
+    FieldFx_SetSpriteCellSize(2,3);
+    if(g_FieldFxCellQuad[0].x!=-32 || g_FieldFxCellQuad[0].y!=-48 ||
+       g_FieldFxCellQuad[3].x!=32 || g_FieldFxCellQuad[3].y!=48) return 0;
+    for(unsigned slot=0;slot<2;++slot) for(unsigned preset=0;preset<4;++preset)
+    for(unsigned color=0;color<2;++color) for(unsigned blend=0;blend<5;++blend) {
+        memset(&buffer,0xa5,sizeof(buffer));
+        memset(ordering,0,sizeof(ordering));
+        for(unsigned i=0;i<4096;++i) ordering[i].address=0xffffff;
+        D_800B0E38.ordering[slot]=ordering;
+        D_800B0E38.packets[slot]=(char *)&buffer;
+        g_ActiveDrawSlot=slot; g_DrawPacketOffset=0;
+        FieldFx_SetSpriteTexturePreset(preset); FieldFx_SetSpriteColorMode(color?256:16);
+        FieldFx_SetSpriteBlendMode(blend);
+        FieldFx_DrawOrientedSprite(&sprite);
+        FieldStripPacket *p=&buffer.packet;
+        if(g_DrawPacketOffset!=sizeof(*p) || p->tag.length!=9 || p->tag.address!=0xffffff ||
+           p->code!=(blend?0x2e:0x2c) || p->r0!=80 || p->g0!=40 || p->b0!=20 ||
+           p->u0!=48 || p->u1!=49 || p->u2!=48 || p->u3!=49 ||
+           p->v0!=32 || p->v1!=32 || p->v2!=34 || p->v3!=34 ||
+           p->tpage!=GetTPage(color,blend?blend-1:0,preset<3?0x340:0x380,preset==1?0x160:0x100) ||
+           p->clut!=GetClut(32,(int[]){0x1d7,0x1db,0x1d6,0x1c8}[preset]+1)) return 0;
+        unsigned used=0;
+        for(unsigned depth=0;depth<4096;++depth) if(ordering[depth].address!=0xffffff) {
+            if(ordering[depth].address!=(uintptr_t)p) return 0;
+            ++used;
+        }
+        if(used!=1) return 0;
+        for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
+    }
+    D_800B0E38=saved; g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset;
+    g_GeomScroll.words.viewMatrix=saved_view;
+    puts("Original oriented sprites: both buffers, all texture presets, colour depths and blend modes passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -780,7 +829,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

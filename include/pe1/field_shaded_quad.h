@@ -44,7 +44,7 @@ typedef union FieldShadedQuadLink {
 
 /* Ordering-table entry `depth` of the active buffer. */
 #define SHADED_QUAD_OT(depth) \
-    ((RenderGpuTag *)(D_800B0E38.ordering[g_ActiveDrawSlot] + (depth)))
+    ((RenderGpuTag *)D_800B0E38.ordering[g_ActiveDrawSlot] + (depth))
 
 void FieldFx_ScaleColor(int scale, u8 *src, u8 *dst);
 

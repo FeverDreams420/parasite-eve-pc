@@ -3046,3 +3046,21 @@ instrumented and PsyZ/SDL archives uninstrumented. This fixture establishes CPU
 packet generation, not rendered effect-image fidelity. Real model descriptors,
 color/UV controllers, culling variants, full scene integration and removal of
 pc/ remain incomplete.
+
+
+The whole original fieldfx/sprite_render.c now compiles in the native target.
+Its two physical scratchpad views share ordinary module-owned union storage,
+retaining shared work-area semantics without dangling local pointers. Original
+sprite state and cell corners are backed in the same module; the diagnostic
+string matches the supplied USA EXE. Standard C library declarations replace
+the BIOS declarations. Shaded-quad/ring OT helpers index native tags, and ring
+draw modes consume sizeof(RenderTintMode), rather than eight bytes.
+The existing actor fixture executes original oriented-sprite draw in both slots,
+all four texture presets, both color depths and five blend modes, checking cell
+geometry, RGB, UV, texture/CLUT, command, length, pointer chain and buffer guards.
+Full build and four related CTests pass with Disc 1 required. Fresh actor
+ASan/UBSan/function passes with original source instrumented and PsyZ/SDL
+archives uninstrumented. Other draws in this module, authored layer constants,
+out-of-range depths, GPU image fidelity, complete scene integration and removal
+of pc/ remain unverified or incomplete; compiling whole modules is not proof of
+full gameplay.

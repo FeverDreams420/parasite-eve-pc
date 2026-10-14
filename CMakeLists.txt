@@ -63,6 +63,7 @@ add_library(parasite-eve-original OBJECT
     src/main/script/system_opcodes.c
     src/main/fieldfx/geometry.c
     src/main/fieldfx/model.c
+    src/main/fieldfx/sprite_render.c
     src/main/fieldfx/task_list.c
     src/main/fieldfx/vector.c
     src/main/field/actor_collision.c

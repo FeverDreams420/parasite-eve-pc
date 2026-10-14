@@ -15,6 +15,7 @@
 #include "pe1/fieldfx_slot.h"
 #include "pe1/fieldfx_state.h"
 #include "pe1/fieldfx_task_pool.h"
+#include "pe1/fieldfx_task.h"
 #include "pe1/gte.h"
 #include "pe1/gte_sine_table.h"
 #include "pe1/gte_types.h"
@@ -260,6 +261,9 @@ typedef struct RoomEnt {
     char padB9[0x3];
     unsigned short hBC[4];        /* 0xBC..0xC2 */
 } RoomEnt;
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, link) == PE1_OFFSETOF(FieldFxTaskOwner, prefix.actor), room_task_owner_actor);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, t19) == PE1_OFFSETOF(FieldFxTaskOwner, tasks.flags), room_task_owner_flags);
+
 
 /* Working records used while rotating scripted room motion vectors. */
 typedef struct RoomLibMotionState {

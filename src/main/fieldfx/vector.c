@@ -9,32 +9,23 @@
  * left (-1 repeats forever) and the frame an animation restarts from. */
 typedef struct {
     char pad0[0x8];
-    void *actor;          /* 0x08: RoomEnt.link */
-    char padC[0x8];
+    FieldActor *actor;          /* 0x08: RoomEnt.link */
+    char padC[2 * sizeof(void *)];
     s16 repeats;          /* 0x14: RoomEnt.active */
     char pad16[0x2];
     s8 restartFrame;      /* 0x18: RoomEnt.t18 */
 } FieldFxAnimLoopController;
 
-/* The FieldActor fields the loop reads and writes. */
-typedef struct {
-    char pad0[0xF];
-    u8 lastFrame;         /* 0x0F: FieldActor.action, the animation's last frame */
-    char pad10[0x4];
-    int anim;             /* 0x14: FieldActor.anim, 16.16 position */
-    char pad18[0x2];
-    u16 prevFrame;        /* 0x1A: integer half of FieldActor.anim_prev */
-} FieldFxAnimLoopActor;
-
 /* Called by the room_lib actor handlers each frame: once the linked actor's
  * animation has reached its last frame, restart it at restartFrame and use
  * up one repeat. */
-void FieldFx_LoopLinkedAnimation(FieldFxAnimLoopController *state)
+void FieldFx_LoopLinkedAnimation(void *context)
 {
-    FieldFxAnimLoopActor *target = state->actor;
+    FieldFxAnimLoopController *state = context;
+    FieldActor *target = state->actor;
 
-    if (state->repeats != 0 && target->prevFrame >= target->lastFrame) {
-        target->anim = state->restartFrame;
+    if (state->repeats != 0 && (u16)((u32)target->anim_prev >> 16) >= target->action) {
+        target->anim.fixed = state->restartFrame;
         if (state->repeats != -1) {
             state->repeats--;
         }

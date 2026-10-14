@@ -23,6 +23,7 @@
 #include "pe1/draw_state.h"
 #include <SDL3/SDL.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <psyz/system.h>
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
 GeomScrollRecord g_GeomScroll;
@@ -370,6 +371,98 @@ static void record_room_callback(RoomEnt *context)
     ++room_callback_count;
     context->w04+=7;
 }
+static int room_owner_state(void)
+{
+    FieldActor actor={0}; FieldActorState child={0};
+    RoomEnt room={0}; room.link=(RoomLink *)&actor; actor.state=&child;
+    struct FieldFxTaskOwner *owner=(struct FieldFxTaskOwner *)&room;
+    room.t19=4; actor.mode=1;
+    if(FieldFx_IsOwnerBusy(owner)!=1) return 0;
+    actor.mode=2; room.t19=2; actor.flags=0x88000;
+    if(FieldFx_IsOwnerBusy(owner)!=1 || actor.flags!=0x8000 || FieldFx_IsOwnerBusy(owner)!=0) return 0;
+    room.t19=1; actor.flags=0x48000;
+    if(FieldFx_IsOwnerBusy(owner)!=1 || actor.flags!=0x8000 || FieldFx_IsOwnerBusy(owner)!=0) return 0;
+    room.t19=0;
+    child.core_flags=0x1800;
+    if(FieldFx_IsOwnerBusy(owner)!=1) return 0;
+    for(unsigned phase=1;phase<8;++phase) {
+        child.core_flags=phase<<1;
+        if(FieldFx_IsOwnerBusy(owner)!=1) return 0;
+    }
+    child.core_flags=0;
+    if(FieldFx_IsOwnerBusy(owner)!=0) return 0;
+    actor.action=10; actor.anim_prev=10<<16;
+    room.active=2; room.t18=3;
+    FieldFx_LoopLinkedAnimation(&room);
+    if(room.active!=1 || actor.anim.fixed!=3) return 0;
+    room.active=-1; room.t18=-1;
+    FieldFx_LoopLinkedAnimation(&room);
+    if(room.active!=-1 || actor.anim.fixed!=-1) return 0;
+    room.active=0; actor.anim.fixed=123;
+    FieldFx_LoopLinkedAnimation(&room);
+    if(actor.anim.fixed!=123) return 0;
+    room.active=2; actor.anim_prev=9<<16;
+    FieldFx_LoopLinkedAnimation(&room);
+    if(room.active!=2 || actor.anim.fixed!=123) return 0;
+    puts("Original room owner: native busy flags, child phases and linked animation repeats passed");
+    return 1;
+}
+
+typedef struct NativeListState { void *identity; int id, ticks; } NativeListState;
+static unsigned list_draws;
+static int record_list_callback(int mode,void *payload,int argument)
+{
+    NativeListState *state=payload;
+    if(state->identity!=state || argument!=42 || (uintptr_t)payload%_Alignof(NativeListState)) abort();
+    if(mode==1) {
+        if(g_FieldFxCurrentAge!=state->ticks) abort();
+        ++state->ticks;
+        return state->id==1 && state->ticks==2;
+    }
+    if(mode!=2 || g_FieldFxCurrentAge!=state->ticks) abort();
+    ++list_draws;
+    return 0;
+}
+static int callback_list_storage(void)
+{
+    _Alignas(void *) u8 arena[256]; memset(arena,0xa5,sizeof(arena));
+    int bytes=FieldFx_InitCallbackList((char *)arena,sizeof(NativeListState),3,record_list_callback);
+    size_t stride=(sizeof(FieldFxCallbackListEntry)+sizeof(NativeListState)+_Alignof(FieldFxCallbackListEntry)-1)/
+                  _Alignof(FieldFxCallbackListEntry)*_Alignof(FieldFxCallbackListEntry);
+    if(bytes!=(int)(sizeof(FieldFxCallbackList)+3*stride)) return 0;
+    NativeListState *states[3];
+    for(unsigned i=0;i<3;++i) {
+        states[i]=FieldFx_AcquireCallbackSlot((char *)arena);
+        if((u8 *)states[i]!=arena+sizeof(FieldFxCallbackList)+i*stride+sizeof(FieldFxCallbackListEntry)) return 0;
+        states[i]->identity=states[i]; states[i]->id=i+1; states[i]->ticks=0;
+    }
+    if(FieldFx_AcquireCallbackSlot((char *)arena)) return 0;
+    FieldFxTaskContext context={0}; context.argument=42;
+    g_FieldFxTaskContext=&context; g_FieldFxCurrentAge=91;
+    if(FieldFx_UpdateCallbackList(arena)!=3 || g_FieldFxCurrentAge!=91) return 0;
+    if(FieldFx_DrawCallbackList((char *)arena)!=3 || list_draws!=3 || g_FieldFxCurrentAge!=91) return 0;
+    if(FieldFx_UpdateCallbackList(arena)!=3 || g_FieldFxCurrentAge!=91) return 0;
+    if(FieldFx_DrawCallbackList((char *)arena)!=2 || list_draws!=5 || g_FieldFxCurrentAge!=91) return 0;
+    NativeListState *reused=FieldFx_AcquireCallbackSlot((char *)arena);
+    if(reused!=states[0] || reused->ticks!=2) return 0;
+    FieldFxCallbackListEntry *entry=(FieldFxCallbackListEntry *)((u8 *)reused-sizeof(FieldFxCallbackListEntry));
+    if(entry->age!=0 || entry->active!=1) return 0;
+    for(size_t i=bytes;i<sizeof(arena);++i) if(arena[i]!=0xa5) return 0;
+    FieldFxTaskSlot slot={0}; slot.end=(char *)arena;
+    g_FieldFxActiveTaskSlot=&slot;
+    char *out=NULL;
+    if(FieldFx_AllocCallbackList(&out,0,sizeof(NativeListState),3,record_list_callback)!=bytes || out!=(char *)arena) return 0;
+    if(FieldFx_InitCallbackList((char *)arena,-1,3,record_list_callback)!=-1 ||
+       FieldFx_InitCallbackList((char *)arena,16,-1,record_list_callback)!=-1 ||
+       FieldFx_InitCallbackList((char *)arena,16,INT_MAX,record_list_callback)!=-1 ||
+       FieldFx_InitCallbackList((char *)arena+1,16,3,record_list_callback)!=-1) return 0;
+    g_FieldFxActiveTaskSlot=NULL;
+    if(FieldFx_AllocCallbackList(&out,0,16,3,record_list_callback)!=-1) return 0;
+    g_FieldFxTaskContext=NULL;
+    puts("Original callback lists: aligned pointer payloads, update/draw ages, completion/reuse and guards passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -430,7 +523,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

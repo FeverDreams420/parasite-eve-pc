@@ -22,7 +22,7 @@ typedef struct FieldTexturedStrip {
     /* 0x11 */ u8 clut;
 } FieldTexturedStrip;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldTexturedStrip, collision_step) == 0x0E,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldTexturedStrip, collision_step) == sizeof(void *) + 10,
                   field_textured_strip_collision_step_offset);
 
 /* PSY-Q POLY_FT4. */

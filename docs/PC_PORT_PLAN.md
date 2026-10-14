@@ -2881,3 +2881,37 @@ are not. This does not prove motion/configuration branches or the field-engine
 task-owner/private-state allocation layout. Those must still be reconciled
 before static room class registration. No additional PM/effect room bindings
 were enabled; complete gameplay and removal of pc/ remain incomplete.
+
+
+### Execute original owner and callback-list helpers with native task storage
+
+The complete original fieldfx/vector.c and fieldfx/task_list.c now compile in
+parasite-eve-original. Linked animation looping reads canonical FieldActor
+fields, with the existing repeat/restart algorithm retained; its controller
+prefix accounts for both native callback/signal pointers. Compile-time checks
+prove RoomEnt.link and t19 alias the owner actor and busy flags consumed by
+FieldFx_IsOwnerBusy. No new files or extracted routines.
+
+Runtime task/program/slot assertions now account for native pointer width;
+the script-address union uses intptr_t. Callback-list entries use C11 flexible
+arrays with aligned payloads. Original list construction/allocation/acquisition
+now uses native header sizes and aligned strides. Constructor failures reject
+negative sizes/counts, integer size overflow and misaligned output before
+writing the list. Allocation uses a typed callback pointer. The original list
+walkers retain update/draw order, completion counts, age restoration and
+first-free reuse; their globals have canonical storage in the same module.
+
+The existing fixture exercises owner busy/one-shot flags and all child wait
+phases, finite/infinite/disabled animation repeats and the pre-terminal frame.
+It executes real callback-list allocation, three pointer-bearing payloads,
+update/draw callbacks, completion and reuse, verifies alignment/ages/arguments,
+checks the arena guard and malformed constructor requests. No replacement
+field-effect gameplay was introduced.
+
+Full build and three CTests pass with Disc 1 required: actor-animation,
+entity-texture-assets and scene-spawn. Fresh ASan/UBSan/function actor-fixture
+validation passes with original owner/vector/list/class code instrumented;
+PsyZ/SDL archives are not. Full generic task spawning, arena wrapping/capacity,
+program-table relocation, script execution and remaining effect callback
+signatures still require integration and verification before enabling room
+handlers. The complete game and elimination of pc/ remain unfinished.

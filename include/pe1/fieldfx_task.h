@@ -30,9 +30,9 @@ typedef struct FieldFxTaskProgram {
     int (*initialize)(int, int, int, int);
     u16 *script;
 } FieldFxTaskProgram;
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, initialize) == 0x30,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, initialize) == sizeof(FieldFxTaskTable),
                   fieldfx_program_initializer);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, script) == 0x34,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, script) == sizeof(FieldFxTaskTable) + sizeof(void *),
                   fieldfx_program_script);
 extern char g_FieldFxTaskProgramMissingMsg[]; /* "TS No Thread No.%d\n" */
 
@@ -40,7 +40,7 @@ typedef struct FieldFxTaskContext {
     /* Opcode 3 loads its 16-bit operand as the new script address. */
     union {
         u16 *script;
-        int address;
+        intptr_t address;
     } pc;
     char *cursor;
     int argument;
@@ -51,31 +51,35 @@ typedef struct FieldFxTaskContext {
     s16 variables[7];
     FieldFxTaskSlot slots[8];
     FieldFxTaskTable *table;
-    char arena[0x97C];
+    _Alignas(void *) char arena[0x97C];
 } FieldFxTaskContext;
 
-PE1_STATIC_ASSERT(sizeof(FieldFxTaskSlot) == 0xC, fieldfx_task_slot_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskSlot, start) == 4,
+PE1_STATIC_ASSERT(sizeof(FieldFxTaskSlot) == 3 * sizeof(void *), fieldfx_task_slot_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskSlot, start) == sizeof(void *),
                   fieldfx_task_slot_start);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskTable, sizes) == 0x20,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskTable, sizes) == 8 * sizeof(void *),
                   fieldfx_task_table_sizes);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxCallbackList, callback) == 8,
                   fieldfx_callback_list_callback);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxCallbackList, entries) == 0xC,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxCallbackList, entries) == 8 + sizeof(void *),
                   fieldfx_callback_list_entries);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxCallbackListEntry, state) == 4,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxCallbackListEntry, state) == sizeof(void *),
                   fieldfx_callback_list_entry_state);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, count) == 0xC,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, count) == 2 * sizeof(void *) + sizeof(int),
                   fieldfx_task_context_count);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, used) == 0x10,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, used) == PE1_OFFSETOF(FieldFxTaskContext, count) + 4,
                   fieldfx_task_context_used);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, slots) == 0x20,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, slots) ==
+                  ((PE1_OFFSETOF(FieldFxTaskContext, variables) + 7 * sizeof(s16) +
+                    _Alignof(FieldFxTaskSlot) - 1) / _Alignof(FieldFxTaskSlot)) * _Alignof(FieldFxTaskSlot),
                   fieldfx_task_context_slots);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, table) == 0x80,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, table) == PE1_OFFSETOF(FieldFxTaskContext, slots) + 8 * sizeof(FieldFxTaskSlot),
                   fieldfx_task_context_table);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, arena) == 0x84,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, arena) == PE1_OFFSETOF(FieldFxTaskContext, table) + sizeof(void *),
                   fieldfx_task_context_arena);
-PE1_STATIC_ASSERT(sizeof(FieldFxTaskContext) == 0xA00,
+PE1_STATIC_ASSERT(sizeof(FieldFxTaskContext) ==
+                  ((PE1_OFFSETOF(FieldFxTaskContext, arena) + 0x97C + _Alignof(FieldFxTaskContext) - 1) /
+                   _Alignof(FieldFxTaskContext)) * _Alignof(FieldFxTaskContext),
                   fieldfx_task_context_size);
 
 int FieldFx_SpawnTask(int id);
@@ -104,13 +108,13 @@ typedef struct FieldFxTaskOwner {
 #include "pe1/fieldfx_task_api.h"
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxObjectPrefix, asset_type) == 1,
                   fieldfx_owner_asset_type);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks) == 0xC,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks) == sizeof(FieldFxObjectPrefix),
                   fieldfx_owner_tasks);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks.slots) == 0x2C,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks.slots) == sizeof(FieldFxObjectPrefix) + PE1_OFFSETOF(FieldFxTaskContext, slots),
                   fieldfx_owner_slots);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks.flags) == 0x19,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks.flags) == sizeof(FieldFxObjectPrefix) + PE1_OFFSETOF(FieldFxTaskContext, flags),
                   fieldfx_owner_flags);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks.table) == 0x8C,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks.table) == sizeof(FieldFxObjectPrefix) + PE1_OFFSETOF(FieldFxTaskContext, table),
                   fieldfx_owner_table);
 int FieldFx_InitTaskContext(FieldFxTaskOwner *owner);
 int FieldFx_InitTaskProgram(FieldFxTaskOwner *owner, int skip,

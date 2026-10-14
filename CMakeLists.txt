@@ -61,6 +61,8 @@ add_library(parasite-eve-original OBJECT
     src/main/script/value_ops.c
     src/main/script/flow_opcodes.c
     src/main/script/system_opcodes.c
+    src/main/fieldfx/task_list.c
+    src/main/fieldfx/vector.c
     src/main/field/actor_collision.c
     src/overlays/room_lib/actor_classes.c)
 target_include_directories(parasite-eve-original PRIVATE include)

@@ -6,14 +6,14 @@ typedef int (*FieldFxCallbackListCallback)(int mode, void *state, int argument);
 typedef struct FieldFxCallbackListEntry {
     signed short active;
     signed short age;
-    unsigned char state[1];
+    _Alignas(void *) unsigned char state[];
 } FieldFxCallbackListEntry;
 
 typedef struct FieldFxCallbackList {
     int stride;
     int count;
     FieldFxCallbackListCallback callback;
-    unsigned char entries[1];
+    unsigned char entries[];
 } FieldFxCallbackList;
 
 /* Effect task pools: FieldFx_InitCallbackList lays out a list of count entries of
@@ -28,7 +28,8 @@ void *FieldFx_AcquireCallbackSlot(char *list);
  * each list walk; callbacks read it as their elapsed frame count. */
 extern int g_FieldFxCurrentAge;
 
-int FieldFx_AllocCallbackList(void *arg0, int arg1, int arg2, int arg3, void *arg4);
+int FieldFx_AllocCallbackList(void *arg0, int arg1, int arg2, int arg3,
+                            FieldFxCallbackListCallback callback);
 
 int FieldFx_DrawCallbackList(char *list);
 

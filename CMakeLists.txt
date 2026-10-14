@@ -192,11 +192,13 @@ if(BUILD_TESTING)
     add_test(NAME original-game-nodes COMMAND test-original-nodes)
 endif()
 
-add_library(parasite-eve-original-model-setup OBJECT src/main/render/model_setup.c src/main/render/model_draw.c src/main/render/model_lighting.c)
+add_library(parasite-eve-original-model-setup OBJECT src/main/render/model_setup.c src/main/render/model_draw.c src/main/render/model_lighting.c src/main/render/texture_upload.c)
 target_include_directories(parasite-eve-original-model-setup PRIVATE include)
+target_link_libraries(parasite-eve-original-model-setup PRIVATE psyz)
+target_compile_definitions(parasite-eve-original-model-setup PRIVATE __psyz)
 if(BUILD_TESTING)
     add_executable(test-original-model-setup tests/original_model_setup.c
-        pc/disc.c pc/room.c pc/room_banks.c pc/model.c
+        pc/disc.c pc/room.c pc/room_banks.c pc/model.c pc/vram.c
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-model-setup PRIVATE include pc)
@@ -204,6 +206,8 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-model-setup PRIVATE psyz)
     add_test(NAME original-game-model-setup COMMAND test-original-model-setup)
     add_test(NAME original-game-model-gpu COMMAND test-original-model-setup --gpu)
+    add_test(NAME original-game-model-room-gpu COMMAND test-original-model-setup --room-gpu)
+    set_tests_properties(original-game-model-room-gpu PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "gpu;game-assets")
     set_tests_properties(original-game-model-gpu PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "gpu;game-assets")
     set_tests_properties(original-game-model-setup PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()

@@ -840,3 +840,31 @@ The fixture still supplies identity lighting matrices, ambient shade 64 and whit
 texture VRAM. This is original lighting execution evidence, not validation of
 room light parameters or original textured appearance. Scene integration remains
 incomplete; this does not make New Game playable yet.
+
+### Original room texture uploads through GPU — 2026-10-14
+
+Moved the unchanged `Draw_LoadTimAsset` procedure from `cdrom/scene_assets.c`
+to `render/texture_upload.c`, using PsyZ's native GPU declaration and explicit
+payload casts. The original primary-image height rule and secondary offsets
+relative to the primary image are preserved. No replacement upload algorithm
+was added to the runtime.
+
+`original-game-model-room-gpu` executes this procedure for scratch and texture
+banks in all 414 populated Disc 1 rooms: 9,017 uploads. Full 1024x512 VRAM readback
+matches the independent byte-oriented `pc/vram.c` oracle after each room's batch.
+The model test then uses that room VRAM, original lighting and original geometry
+packets. 732/878 models produce visible pixels in the fixture (1,542,996 pixels);
+both draw slots match for every model. Room VRAM is restored before each draw to
+prevent feedback from the test framebuffer. The existing white-texture corpus
+still requires all 878 models to produce visible geometry.
+
+Full build and all three model CTests pass. ASan/UBSan/function instrumented
+original/test code also passes the room-GPU test; PsyZ/SDL archives remain
+uninstrumented. These are hidden-window Metal runs, not software-only rendering.
+
+This does not certify final model appearance: the fixture still uses a fixed
+camera and light matrices, skips actor-specific texture relocation and resident
+entity-bank selection, and 146 models have no visible pixels with just their room
+banks. Those models remain unverified for textured appearance, not waived. The
+actual scene/frame loop and controls still need integration before a location is
+playable.

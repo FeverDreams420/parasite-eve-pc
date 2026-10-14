@@ -4,6 +4,8 @@
 #include <libgpu.h>
 #include "room_banks.h"
 #include "model.h"
+#include "vram.h"
+#include "pe1/scene_assets.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +24,12 @@ int main(int argc, char **argv)
     const char *path = getenv("PE_TEST_DISC");
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS") ? 1 : 77;
     PeDisc disc = {0}; PeRoomCatalog catalog; PeRoom room = {0};
-    int gpu = argc == 2 && !strcmp(argv[1], "--gpu");
+    int room_gpu = argc == 2 && !strcmp(argv[1], "--room-gpu");
+    int gpu = room_gpu || (argc == 2 && !strcmp(argv[1], "--gpu"));
+    PeVram *expected = room_gpu ? calloc(1,sizeof(PeVram)) : NULL;
+    PeVram *actual = room_gpu ? malloc(sizeof(PeVram)) : NULL;
+    unsigned uploads = 0, rooms = 0;
+    CHECK(!room_gpu || (expected && actual));
     unsigned rendered = 0;
     unsigned long pixels = 0;
     unsigned short image[320*224], previous[320*224];
@@ -53,6 +60,27 @@ int main(int argc, char **argv)
         PeRoomBanks banks;
         CHECK(pe_room_load(&catalog,map,&room));
         CHECK(pe_room_banks(&room,&banks,error,sizeof(error)));
+        if (room_gpu) {
+            RECT all = {0,0,1024,512};
+            memset(expected,0,sizeof(*expected));
+            LoadImage(&all,(u_long *)expected->words); DrawSync(0);
+            PeVramStats stats;
+            CHECK(pe_room_upload_vram(&room,expected,&stats,error,sizeof(error)));
+            const PeRoomBlob *blobs[] = {&room.scratch,&room.textures};
+            for (unsigned b=0;b<2;++b) {
+                const uint8_t *records; unsigned count;
+                CHECK(pe_room_blob_table(blobs[b],10,sizeof(TimUploadRecord),&records,&count));
+                for (unsigned i=0;i<count;++i) {
+                    TimUploadRecord record;
+                    memcpy(&record,records+i*sizeof(record),sizeof(record));
+                    Draw_LoadTimAsset(&record,blobs[b]->bytes);
+                }
+            }
+            DrawSync(0);
+            StoreImage(&all,(u_long *)actual->words); DrawSync(0);
+            CHECK(!memcmp(expected,actual,sizeof(*expected)));
+            uploads += stats.uploads; ++rooms;
+        }
         for (unsigned group = 0; group < 10; ++group) {
             PeRoomSlice *slice = &banks.roots[group];
             if (!slice->present) continue;
@@ -140,6 +168,10 @@ int main(int argc, char **argv)
                         CHECK(object.vertices[v].pad >= 0 && object.vertices[v].pad < 240);
                     Render_DrawObject(&object,&light);
                     Render_UpdateClutTable(&object,0,slot);
+                    if (room_gpu) {
+                        RECT all = {0,0,1024,512};
+                        LoadImage(&all,(u_long *)expected->words); DrawSync(0);
+                    }
                     ClearImage(&viewport,0,0,0);
                     DrawOTag((OT_TYPE *)&ordering[4095]);
                     DrawSync(0);
@@ -159,9 +191,14 @@ int main(int argc, char **argv)
         pe_room_close(&room);
     }
     pe_disc_close(&disc);
+    if (room_gpu) {
+        CHECK(rooms == 414 && uploads == 9017);
+        printf("Original texture uploads: %u rooms, %u uploads, complete VRAM matches oracle\n",rooms,uploads);
+    }
+    free(actual); free(expected);
     CHECK(models == 878 && linked != 0);
     if (gpu) {
-        CHECK(rendered == models && pixels != 0);
+        CHECK((room_gpu ? rendered != 0 : rendered == models) && pixels != 0);
         printf("Original GPU packets: %u models with visible pixels, %lu pixels; both slots identical\n",rendered,pixels);
     }
     printf("Original native ordering chains: %lu visible packets\n",linked);

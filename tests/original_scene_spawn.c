@@ -9,6 +9,7 @@
 #include "pe1/reloc_block.h"
 #include "vram.h"
 #include "pe1/scene_assets.h"
+#include "pe1/scene_room.h"
 #include "pe1/battle_saved_state.h"
 #include "pe1/resident_tables.h"
 #include "pe1/inventory_slots.h"
@@ -71,6 +72,9 @@ int main(void)
             const u8 *entry = handler_records + record * 12;
             unsigned slot = entry[7];
             u32 address = room_word(entry + 8);
+            SceneRoomRecord serialized;
+            memcpy(&serialized, entry, sizeof(serialized));
+            CHECK(serialized.u.handlerAddress == address && serialized.source.bytes.slot == slot);
             /* USA room payload is loaded at 0x8018efe8, including
              * its eight-byte archive prefix. These are serialized descriptor addresses,
              * never callable native pointers. */
@@ -89,6 +93,9 @@ int main(void)
             }
             if (slot == 69) {
                 ++mirror_descriptors;
+                CHECK(address == 0x8018fb44u);
+                CHECK(map == 17 || map == 18 || map == 21 || map == 45 ||
+                      map == 102 || map == 151 || map == 319);
                 /* Historical M017 symbols: all seven entries, in PM order,
                  * agree with the original mirror_model.c handler table. */
                 static const u32 mirror_methods[7] = {

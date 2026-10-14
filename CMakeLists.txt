@@ -366,8 +366,13 @@ if(BUILD_TESTING)
 endif()
 
 # Original area-bank state machine; native I/O binding is still pending.
-add_library(parasite-eve-original-entity-textures OBJECT src/main/scene/entity_textures.c)
+add_library(parasite-eve-original-entity-textures OBJECT src/main/scene/room_load.c)
 target_include_directories(parasite-eve-original-entity-textures PRIVATE include)
+if(MSVC)
+    target_compile_options(parasite-eve-original-entity-textures PRIVATE /Gy /Gw)
+else()
+    target_compile_options(parasite-eve-original-entity-textures PRIVATE -ffunction-sections -fdata-sections)
+endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-entity-textures tests/original_entity_textures.c

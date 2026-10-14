@@ -3,8 +3,6 @@
 
 #include "common.h"
 #include "pe1/asset_table.h"
-#include "pe1/psyq_bios.h"
-#include "pe1/psyq_libc.h"
 #include "pe1/scene_assets.h"
 
 /*
@@ -46,7 +44,7 @@ typedef struct SceneRoomRecord {
     u8 flags;             /* 0x03 */
     SceneRoomPayload source; /* 0x04 */
     union {
-        void *handler;    /* 0x08: script handler */
+        u32 handlerAddress; /* 0x08: PS1 descriptor address, never a host pointer */
         struct {
             u8 bank;      /* 0x08 */
             u8 reserved;

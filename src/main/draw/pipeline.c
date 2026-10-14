@@ -25,7 +25,6 @@ u32 g_GlobalFrameCounter[1];
 #define B(sym) (*(s8 *)(sym))
 #define UB(sym) (*(u8 *)(sym))
 
-void Scene_LoadRoom(int arg0);
 s32 Scene_StreamTexturePage(void);
 void Entity_InitFreePool(void);
 void Script_InitNodeFreeList(void);
@@ -50,7 +49,7 @@ void Draw_InitPipeline(void) {
     int frame_pad[6];
 
     Akao_LoadVoiceBankAlt();
-    Scene_LoadRoom(g_SceneDispatchToken);
+    if (Scene_LoadRoom(g_SceneDispatchToken) < 0) return;
     Scene_StreamTexturePage();
     g_EntitySerialCounter = 1;
     H(g_ScriptNodeSeqCounter) = 1;

@@ -10,6 +10,8 @@
 #include "pe1/scene_assets.h"
 
 /* Room load steps shared by the boot, scene and render code. */
+/* Returns -2 when a serialized room descriptor has no native binding. */
+int Scene_LoadRoom(unsigned int roomId);
 int Render_InitRoomPrimState(void *object);
 /* 14-state loader for the area entity texture bank. */
 int Scene_LoadEntityTextures(void);

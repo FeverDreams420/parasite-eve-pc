@@ -20,6 +20,19 @@ int main(void){
     PeCameraScroll scroll;pe_camera_scroll_init(&bank,&camera,&scroll);
     CHECK(scroll.position[0]==-1&&scroll.position[1]==0&&scroll.origin[0]==-1);
     CHECK(scroll.display[0]==261&&scroll.display[1]==312&&scroll.bounds[0]==-4);
+    scroll.start[0]=10;scroll.start[1]=20;scroll.target[0]=30;scroll.target[1]=60;scroll.elapsed=1;scroll.duration=2;
+    uint32_t flags=0x41;
+    CHECK(!pe_camera_transition_step(&camera,&scroll,&flags)&&scroll.position[0]==20&&scroll.position[1]==40&&flags==0x42);
+    CHECK(scroll.screen_offset[0]==460&&scroll.screen_offset[1]==192&&scroll.elapsed==2);
+    CHECK(!pe_camera_transition_step(&camera,&scroll,&flags)&&scroll.position[0]==30&&scroll.position[1]==60&&flags==0xc4);
+    CHECK(!pe_camera_transition_step(&camera,&scroll,&flags)&&scroll.elapsed==3);
+    flags=0x4b;scroll.elapsed=1;scroll.duration=2;
+    CHECK(!pe_camera_transition_step(&camera,&scroll,&flags)&&scroll.position[0]==20&&scroll.position[1]==40);
+    CHECK(!pe_camera_transition_step(&camera,&scroll,&flags)&&flags==0xc8);
+    flags=0x43;scroll.duration=0;CHECK(pe_camera_transition_step(&camera,&scroll,&flags)==-1&&flags==0x43);
+    flags=3;CHECK(pe_camera_transition_step(&camera,&scroll,&flags)==-20&&flags==3);
+    flags=0x43;scroll.start[0]=32760;scroll.target[0]=(uint16_t)-32760;scroll.duration=2;scroll.elapsed=1;
+    CHECK(!pe_camera_transition_step(&camera,&scroll,&flags)&&scroll.position[0]==-32768);
     bytes[10]=2;CHECK(!pe_camera_bank_open(bytes,sizeof(bytes),&bank)&&bank.count==1);
     puts("Camera: group matrix, projection distance, viewport bounds and transactional truncation passed");return 0;
 }

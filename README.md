@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Camera transition stepping now preserves original linear/cosine interpolation,
+halfword wrap, screen offsets and completion flags. Disabled transitions leave
+state untouched; zero duration fails safely. All 33 headless tests and
+ASan/UBSan camera fixtures/full native audit pass, including midpoint/endpoints
+and signed-boundary movement. Projected actor-focus targets, script scroll/wait
+commands and frame-driver calls remain pending.
+
 Camera startup now initializes position/origin, saved bounds and background
 display translation from the room geometry header. It preserves original
 truncation for negative viewport midpoints and halfword offset wrap. All

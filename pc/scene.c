@@ -169,3 +169,6 @@ int pe_scene_camera_select(PeScene *scene,unsigned group){
 void pe_scene_camera_clamp(PeScene *scene,uint32_t x,uint32_t y){
     if(scene->actors)pe_camera_clamp(&scene->camera,scene->actors->render_flags,x,y,scene->camera_scroll.position);
 }
+int pe_scene_camera_transition_step(PeScene *scene){
+    return scene->actors?pe_camera_transition_step(&scene->camera,&scene->camera_scroll,&scene->actors->render_flags):-1;
+}

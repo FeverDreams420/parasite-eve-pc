@@ -34,7 +34,28 @@ void pe_camera_clamp(const PeCamera *camera,uint32_t flags,uint32_t x,uint32_t y
 }
 void pe_camera_scroll_init(const PeCameraBank *bank,const PeCamera *camera,PeCameraScroll *scroll){
     int x=((int)camera->min_x+camera->max_x)/2,y=((int)camera->min_y+camera->max_y)/2;
-    *scroll=(PeCameraScroll){{(int16_t)x,(int16_t)y},{(int16_t)x,(int16_t)y},
-        {camera->min_x,camera->max_x,camera->min_y,camera->max_y},
-        {sign((uint16_t)(bank->source_x-(x-160))),sign((uint16_t)(bank->source_y-(y-112)))}};
+    *scroll=(PeCameraScroll){.position={(int16_t)x,(int16_t)y},.origin={(int16_t)x,(int16_t)y},
+        .bounds={camera->min_x,camera->max_x,camera->min_y,camera->max_y},
+        .display={sign((uint16_t)(bank->source_x-(x-160))),sign((uint16_t)(bank->source_y-(y-112)))}};
+}
+int pe_camera_transition_step(const PeCamera *camera,PeCameraScroll *scroll,uint32_t *flags){
+    if(!(*flags&0x40))return -20;
+    unsigned mode=*flags&7;if(mode<1||mode>3)return 0;
+    int duration=sign(scroll->duration),time=sign(scroll->elapsed);if(!duration)return -1;
+    int weight=0;
+    if(*flags&8){
+        uint16_t angles[3]={0,(uint16_t)(time*2048/duration+2048),0};PeMatrix rotation={0};
+        pe_matrix_rotation_xyz(angles,&rotation);weight=rotation.rotation[0][0]+4096;
+    }
+    for(unsigned axis=0;axis<2;++axis){
+        int delta=sign((uint16_t)(scroll->target[axis]-scroll->start[axis]));
+        int moved=*flags&8?delta*weight/8192:delta*time/duration;
+        scroll->position[axis]=sign((uint16_t)(scroll->start[axis]+moved));
+    }
+    scroll->screen_offset[0]=(uint16_t)(160-(scroll->position[0]-sign(camera->width)/2));
+    scroll->screen_offset[1]=(uint16_t)(112-(scroll->position[1]-sign(camera->height)/2));
+    if(mode==1)*flags=(*flags&~UINT32_C(7))|2;
+    scroll->elapsed=(uint16_t)(scroll->elapsed+1);
+    if(sign(scroll->elapsed)>duration)*flags=(*flags&~UINT32_C(7))|((*flags&7)==2?0x84:0x80);
+    return 0;
 }

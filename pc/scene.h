@@ -62,5 +62,6 @@ int pe_scene_area_bank(PeScene *scene,PeRoomCatalog *catalog,unsigned entity_ban
 int pe_scene_entity_textures(PeScene *scene,PeRoomCatalog *catalog,unsigned area,unsigned day,char *error,size_t error_size);
 int pe_scene_camera_select(PeScene *scene,unsigned group);
 void pe_scene_camera_clamp(PeScene *scene,uint32_t x,uint32_t y);
+int pe_scene_camera_transition_step(PeScene *scene);
 
 #endif

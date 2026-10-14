@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 30 powiązań: opcode'y 19/25/43/44/45 zachowują oryginalne flagi aktora, numer węzła oraz ustawianie/czyszczenie/odczyt movement lock. Powiązania potwierdzono w tablicy EXE USA. Test rzeczywistej kolejki wykonuje sekwencję z zachowaniem istniejących bitów, odczytem do zmiennych skryptowych i zakończeniem węzła. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 25 powiązań: oryginalne opcode'y 4 i 24 oznaczają węzły do usunięcia. W istniejącym module ujednolicono ABI callbacków, zachowując 16-bitowy odczyt numeru węzła. Test rzeczywistej kolejki sprawdza wszystkie trzy listy aktora, pominięcie bieżącego węzła przez opcode 4, usunięcie siebie/wybranego innego węzła i brak dopasowania przez opcode 24, zachowanie flag oraz pozycję kursora. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełny interpreter lokacji i pętla gry nadal wymagają integracji.
 
 Dispatcher ma 23 powiązania: dodano oryginalne opcode'y 37/38/39 odczytu identyfikatora field SFX oraz odczytu/zapisu sub-ID aktora. Program wykonywany przez oryginalną kolejkę sprawdza teraz także zapis 300 jako byte 44, odczyt sub-ID i field SFX do zmiennych skryptowych, następnie ruch/yield i zakończenie. Pełny build i trzy testy kolejki/ruchu/aktorów przeszły. Nie dodano plików ani funkcji produkcyjnych. Pozostałe opcode'y oraz pełna pętla gry pozostają niezintegrowane.

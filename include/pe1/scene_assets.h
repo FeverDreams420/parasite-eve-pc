@@ -88,7 +88,7 @@ typedef struct CdRange {
  * the scaled index to the table address as an integer, index first. */
 typedef union CdRangeAddress {
     CdRange *range;
-    u32 word;
+    uintptr_t word;
 } CdRangeAddress;
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneSectorDirectory, offsets) == 4,

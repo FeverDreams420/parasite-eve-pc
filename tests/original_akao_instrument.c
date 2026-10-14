@@ -1,4 +1,7 @@
 #include "pe1/akao.h"
+#include "pe1/game_state.h"
+#include "pe1/cdrom.h"
+Pe1GameState g_GameState;
 #include "pe1/menu_sound.h"
 #include "pe1/akao/init_state.h"
 #include "pe1/akao/stream.h"
@@ -231,6 +234,19 @@ int main(int argc, char **argv)
     if (argc == 2 && strcmp(argv[1], "--tick-assets") == 0) return asset_audit(2);
     if (argc == 2 && strcmp(argv[1], "--assets") == 0) return asset_audit(0);
     if (argc == 2 && strcmp(argv[1], "--execute-assets") == 0) return asset_audit(1);
+    memset(&g_GameState.scene_audio, 0x5a, sizeof(g_GameState.scene_audio));
+    g_GameState.flags = 0x123456ff;
+    g_AkaoMessageQueueCount = 0;
+    Akao_ResetPositionalState();
+    CHECK(g_GameState.flags == 0x1234560f);
+    for (unsigned slot = 0; slot < 2; ++slot) {
+        CHECK(g_GameState.scene_audio.tracks.keys[slot][0] == -1);
+        CHECK(g_GameState.scene_audio.tracks.keys[slot][1] == -1);
+        CHECK(g_GameState.scene_audio.tracks.banks[slot] == -1);
+    }
+    CHECK(g_AkaoMessageQueueCount == 1 && g_AkaoMessageQueue[0].opcode.word == 0xf0);
+    g_AkaoMessageQueueCount = 0;
+    memset(&g_GameState, 0, sizeof(g_GameState));
     g_AkaoGlobalPitchDepth = 0x12345678;
     CHECK(g_AkaoGlobalPitchScale == 0x34);
     g_AkaoGlobalPitchScale = 0xab;

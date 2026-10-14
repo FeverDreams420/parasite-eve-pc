@@ -57,6 +57,7 @@ target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 # are connected. The title frontend uses the original effect playback path.
 add_library(parasite-eve-original-akao OBJECT
     src/main/akao/menu_sound.c
+    src/main/cdrom/track_read.c
     src/main/cdrom/asset_lookup.c
     src/main/akao/state.c
     src/main/akao/opcode_dispatch.c

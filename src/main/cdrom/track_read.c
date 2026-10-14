@@ -6,7 +6,7 @@
 #include "pe1/boot.h"
 #include "pe1/cdrom.h"
 #include "pe1/game_state.h"
-#include "pe1/psyq_bios.h"
+#include <string.h>
 #include "pe1/scene_archive.h"
 #include "pe1/scene_assets.h"
 

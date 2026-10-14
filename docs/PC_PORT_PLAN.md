@@ -1992,3 +1992,22 @@ and test_room_assets user changes were left untouched. Remaining PC channel,
 player, music and scene-audio code is still referenced by the unfinished PC
 scene implementation and must be replaced with original modules before removal.
 The full pc/ directory removal and full-game audio integration remain open.
+
+
+### Compile the original scene-audio track loader in place
+
+Added the complete existing cdrom/track_read.c module to the original AKAO
+object target. Replaced its legacy memcpy declaration with string.h and made
+CdRangeAddress's integer view native-width to avoid truncating range pointers.
+No functions were extracted and no files were added.
+
+Existing original_akao_instrument now executes Akao_ResetPositionalState against
+the canonical game-state layout and the real original command queue. It verifies
+both slots' keys/banks reset to -1, clearing exactly flag bits 0xf0 and enqueueing
+F0. Build, original AKAO instrument/assets/menu/tick CTests and the instrument
+ASan/UBSan/function fixture pass. This tests reset and queueing, not completion
+of the queued stop command or the track-loading state machine. SeekToTrack,
+ReadAssetSectors and stream/sequence transfer paths are compiled together but
+still need end-to-end file-image tests before replacing PC scene-audio calls.
+PsyZ is not instrumented; range pointer arithmetic has not yet been exercised
+through the complete audio range loader. Full audio and pc/ removal remain open.

@@ -31,6 +31,21 @@ int main(void) {
     actors->slots[0].parent_id++;
     CHECK(!pe_actors_copy_parent_positions(actors)&&actors->slots[2].position[0]==UINT32_MAX);
     actors->slots[0].parent_id--;
+    for(unsigned i=0;i<3;++i){
+        actors->slots[i].saved_position[0]=100+i;actors->slots[i].saved_position[1]=200+i;
+        actors->slots[i].floor_triangle=77;actors->slots[i].floor_triangle_mirror=9+i;
+    }
+    uint16_t retained_rotation=actors->slots[0].rotation[1];
+    CHECK(pe_actors_rollback_position(actors,2));
+    for(unsigned i=0;i<3;++i)CHECK(actors->slots[i].position[0]==100+i&&actors->slots[i].position[1]==200+i&&actors->slots[i].floor_triangle==9+i);
+    CHECK((actors->slots[1].script.flags&0x40000)&&!(actors->slots[0].script.flags&0x40000));
+    CHECK(actors->slots[0].rotation[1]==retained_rotation);
+    CHECK(pe_actors_set_parent(actors,2,1));actors->slots[0].position[0]=555;
+    CHECK(pe_actors_rollback_position(actors,2)&&actors->slots[0].position[0]==100);
+    actors->slots[2].parent_id++;
+    actors->slots[0].position[0]=555;
+    CHECK(!pe_actors_rollback_position(actors,2)&&actors->slots[0].position[0]==555);
+    actors->slots[2].parent_id--;
     CHECK(pe_actors_set_parent(actors,0,-1)&&pe_actors_set_parent(actors,2,-1));
     PeActor motion_actor={0};motion_actor.position[0]=UINT32_MAX;motion_actor.rotation[1]=65535;
     motion_actor.motion[0]=1;motion_actor.acceleration[0]=1;motion_actor.delta[0]=2;

@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Actor collision rollback restores the root's saved position/floor mirror and
+sets its `0x40000` flag, then restores siblings at each level of the caller's
+parent chain. Rotation and motion are retained. Bounded hierarchy validation
+precedes mutation. All 30 headless tests and the ASan/UBSan actor fixture pass,
+including nested and sibling rollback. Wall/contact detection, floor response
+and full physics-driver integration remain pending.
+
 Native parent links retain an actor ID alongside the slot index to reject
 recycled references. Parent position/rotation copying follows original list
 order under flag `0x400000`, including child-before-parent behavior. Hierarchy

@@ -250,7 +250,7 @@ int pe_actors_set_parent(PeActors *actors,unsigned child,int parent){
     actors->slots[child].parent=parent;
     actors->slots[child].parent_id=parent>=0?actors->slots[parent].script.field_id:0;return 1;
 }
-int pe_actors_copy_parent_positions(PeActors *actors){
+static int validate_hierarchy(PeActors *actors){
     unsigned count=0,seen=0;int index=actors->head,previous=-1;
     while(index>=0){
         if((unsigned)index>=PE_ACTOR_CAPACITY||(seen&(1u<<index))||!actors->slots[index].used||
@@ -261,6 +261,12 @@ int pe_actors_copy_parent_positions(PeActors *actors){
         previous=index;index=actor->next;
     }
     if(index!=-1||count!=actors->live)goto invalid;
+    actors->error[0]=0;return 1;
+invalid:snprintf(actors->error,sizeof(actors->error),"Invalid actor parent hierarchy");return 0;
+}
+int pe_actors_copy_parent_positions(PeActors *actors){
+    if(!validate_hierarchy(actors))return 0;
+    int index;
     for(index=actors->head;index>=0;index=actors->slots[index].next){
         PeActor *actor=&actors->slots[index];
         if(actor->parent>=0&&(actor->script.flags&0x400000)){
@@ -269,5 +275,22 @@ int pe_actors_copy_parent_positions(PeActors *actors){
         }
     }
     actors->error[0]=0;return 1;
-invalid:snprintf(actors->error,sizeof(actors->error),"Invalid actor parent hierarchy");return 0;
+}
+static void restore_position(PeActor *actor){
+    memcpy(actor->position,actor->saved_position,sizeof(actor->position));
+    actor->floor_triangle=actor->floor_triangle_mirror;
+}
+int pe_actors_rollback_position(PeActors *actors,unsigned slot){
+    if(slot>=PE_ACTOR_CAPACITY||!actors->slots[slot].used||!validate_hierarchy(actors))return 0;
+    int member=0;for(int index=actors->head;index>=0;index=actors->slots[index].next)if((unsigned)index==slot)member=1;
+    if(!member){snprintf(actors->error,sizeof(actors->error),"Rollback actor absent from list");return 0;}
+    int chain[PE_ACTOR_CAPACITY];unsigned depth=0;
+    for(int index=(int)slot;index>=0;index=actors->slots[index].parent)chain[depth++]=index;
+    PeActor *root=&actors->slots[chain[depth-1]];restore_position(root);root->script.flags|=0x40000;
+    while(--depth){
+        int parent=actors->slots[chain[depth-1]].parent;
+        for(int index=actors->head;index>=0;index=actors->slots[index].next)
+            if(actors->slots[index].parent==parent)restore_position(&actors->slots[index]);
+    }
+    actors->error[0]=0;return 1;
 }

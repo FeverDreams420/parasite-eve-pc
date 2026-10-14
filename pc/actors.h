@@ -67,4 +67,5 @@ void pe_actor_motion_snapshot(PeActor *actor);
 void pe_actor_motion_apply(PeActor *actor);
 int pe_actors_set_parent(PeActors *actors,unsigned child,int parent);
 int pe_actors_copy_parent_positions(PeActors *actors);
+int pe_actors_rollback_position(PeActors *actors,unsigned slot);
 #endif

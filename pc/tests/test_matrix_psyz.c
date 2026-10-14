@@ -24,7 +24,22 @@ int main(void){
             CHECK(result.word[r]==Psyz_GteDataRead(25+r));
             CHECK((uint16_t)result.saturated[r]==(uint16_t)Psyz_GteDataRead(9+r));
         }
+        PeMatrix source={0},composed;
+        for(unsigned r=0;r<3;++r){
+            source.translation[r]=random_word();
+            for(unsigned c=0;c<3;++c)source.rotation[r][c]=half(random_word());
+        }
+        pe_matrix_compose(&matrix,&source,&composed);
+        for(unsigned column=0;column<3;++column){
+            for(unsigned row=0;row<3;++row)Psyz_GteDataWrite(9+row,(uint16_t)source.rotation[row][column]);
+            Psyz_GteRtir();
+            for(unsigned row=0;row<3;++row)
+                CHECK((uint16_t)composed.rotation[row][column]==(uint16_t)Psyz_GteDataRead(9+row));
+        }
+        Psyz_GteDataWrite(0,(uint16_t)source.translation[0]|(uint32_t)(uint16_t)source.translation[1]<<16);
+        Psyz_GteDataWrite(1,(uint16_t)source.translation[2]);Psyz_GteRt();
+        for(unsigned row=0;row<3;++row)CHECK(composed.translation[row]==Psyz_GteDataRead(25+row));
     }
-    puts("Native point transforms match PsyZ RT MAC/IR for 10000 deterministic extreme inputs, headless");
+    puts("Native point and matrix composition match PsyZ RT/RTIR for 10000 deterministic extreme cases, headless");
     return 0;
 }

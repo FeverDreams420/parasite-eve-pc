@@ -587,6 +587,12 @@ matches. Native matrix fixtures also pass ASan/UBSan, and all 28 tests pass
 headless with Disc 1. Hit-volume integration, view/perspective projection,
 lighting and reference game images remain unfinished.
 
+The PsyZ comparison now also verifies native matrix composition: all three
+rotation columns against RTIR and the translated vector against RT. Both
+point transformation and composition match for 10,000 deterministic extreme
+cases, headless. All 28 tests pass with Disc 1. This validates those arithmetic
+operations; animated model poses and reference images remain unverified.
+
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one
 lists the other 75 faces). The original lookup only searches listed faces.

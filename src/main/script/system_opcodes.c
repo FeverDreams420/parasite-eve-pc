@@ -1008,14 +1008,14 @@ int Entity_InitWithTimeout(int **arg0) {
     return 0;
 }
 
-int Script_SetSceneFlag2000(void) {
+int Script_SetSceneFlag2000(int **unused) {
     u32 *ptr = &g_GameState.flags;
 
     *ptr |= 0x2000;
     return 1;
 }
 
-int Script_ClearSceneFlag2000(void) {
+int Script_ClearSceneFlag2000(int **unused) {
     u32 *ptr = &g_GameState.flags;
 
     *ptr &= -0x2001;

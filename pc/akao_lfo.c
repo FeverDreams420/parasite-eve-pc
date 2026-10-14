@@ -6,6 +6,27 @@ static int32_t shift_word(uint32_t word, unsigned bits) {
     return (int32_t)(value >= 0 ? value / divisor : -((-value + divisor - 1) / divisor));
 }
 
+int pe_akao_channel_pitch_lfo_step(PeAkaoChannel *channel, int key_on) {
+    if (!key_on && channel->pitch_lfo_counter) --channel->pitch_lfo_counter;
+    if (!(channel->flags & 1) || (!key_on && channel->pitch_lfo_counter)) return 1;
+    uint16_t phase = (uint16_t)(channel->pitch_lfo_phase - 1);
+    if (phase) { channel->pitch_lfo_phase = phase; return 1; }
+    uint16_t cursor = channel->pitch_lfo_cursor; int16_t sample;
+    if (!channel->pitch_lfo_duration || !pe_akao_lfo_next(channel->grammar, &cursor, &sample)) {
+        snprintf(channel->error, sizeof(channel->error), "Invalid AKAO pitch LFO state at 0x%x", channel->pc);
+        return 0;
+    }
+    int value = shift_word((uint32_t)((int)channel->pitch_lfo_depth * sample), 16);
+    /* Retail compares the undoubled value, then doubles nonnegative output. */
+    if ((uint16_t)value != channel->pitch_lfo_value) {
+        channel->pitch_lfo_value = (uint16_t)(value >= 0 ? value * 2 : value);
+        channel->update_flags |= 0x10;
+    }
+    channel->pitch_lfo_cursor = cursor;
+    channel->pitch_lfo_phase = channel->pitch_lfo_duration;
+    return 1;
+}
+
 int pe_akao_channel_volume_lfo_step(PeAkaoChannel *channel, int key_on) {
     if (!key_on && channel->volume_lfo_counter) --channel->volume_lfo_counter;
     if (!(channel->flags & 2) || (!key_on && channel->volume_lfo_counter)) return 1;

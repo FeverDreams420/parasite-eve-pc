@@ -4,6 +4,17 @@ static int signed16(uint16_t value) {
     return value & 32768 ? (int)value - 65536 : value;
 }
 
+void pe_akao_channel_pitch_lfo_depth(PeAkaoChannel *channel, unsigned mode) {
+    uint32_t scale = mode == 1 ? (uint16_t)channel->pitch_base : channel->pitch_base;
+    uint32_t depth = (channel->pitch_lfo_target & 0x7f00) >> 8;
+    if (!(channel->pitch_lfo_target & 0x8000)) {
+        scale = (scale << 4) - scale;
+        if (mode == 2 && (scale & UINT32_C(0x80000000))) scale = (scale >> 8) | UINT32_C(0xff000000);
+        else scale >>= 8;
+    }
+    channel->pitch_lfo_depth = (uint16_t)((depth * scale) >> 7);
+}
+
 int pe_akao_pitch_period(const PeSpuBank *samples, unsigned instrument, uint8_t note,
                           uint16_t detune_bits, uint16_t *pitch) {
     if (!samples || instrument >= 256 || !samples->valid[instrument]) return 0;
@@ -22,8 +33,7 @@ int pe_akao_pitch_period(const PeSpuBank *samples, unsigned instrument, uint8_t 
 int pe_akao_channel_note_pitch(PeAkaoChannel *channel) {
     if (channel->last_note >= 0xa0) goto invalid;
     if (channel->last_note >= 0x8f) return 1; /* rest preserves current pitch */
-    if ((channel->flags & 1u) ||
-        channel->tremolo_duration) {
+    if (channel->tremolo_duration) {
         snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO pitch mode at 0x%x", channel->pc);
         return 0;
     }
@@ -65,6 +75,14 @@ int pe_akao_channel_note_pitch(PeAkaoChannel *channel) {
         channel->update_flags |= 0x13;
         channel->pitch_slide_value = 0;
         channel->volume_lfo_value = 0;
+        channel->pitch_lfo_value = 0;
+        if (channel->flags & 1) {
+            if (!channel->grammar || !channel->grammar->lfo_valid || channel->pitch_lfo_selector >= 16) goto invalid;
+            channel->pitch_lfo_cursor = channel->grammar->lfo_offsets[channel->pitch_lfo_selector];
+            channel->pitch_lfo_counter = channel->pitch_lfo_delay;
+            channel->pitch_lfo_phase = 1;
+            pe_akao_channel_pitch_lfo_depth(channel, 0);
+        }
         if (channel->flags & 2) {
             if (!channel->grammar || !channel->grammar->lfo_valid || channel->volume_lfo_selector >= 16) goto invalid;
             channel->volume_lfo_cursor = channel->grammar->lfo_offsets[channel->volume_lfo_selector];

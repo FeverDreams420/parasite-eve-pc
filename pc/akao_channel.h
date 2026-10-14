@@ -41,6 +41,9 @@ typedef struct PeAkaoChannel {
     uint16_t volume_lfo_delay, volume_lfo_counter, volume_lfo_duration, volume_lfo_phase;
     uint16_t volume_lfo_cursor, volume_lfo_target, volume_lfo_value;
     uint8_t volume_lfo_selector;
+    uint16_t pitch_lfo_delay, pitch_lfo_counter, pitch_lfo_duration, pitch_lfo_phase;
+    uint16_t pitch_lfo_cursor, pitch_lfo_target, pitch_lfo_depth, pitch_lfo_value;
+    uint8_t pitch_lfo_selector;
     uint16_t pitch_transition_duration, pitch_transition_delta;
     uint32_t pitch_slide_value, pitch_slide_step;
     uint8_t octave, stopped, last_note;
@@ -82,10 +85,12 @@ int pe_akao_channel_select_note_range(PeAkaoChannel *channel, unsigned note);
 /* One voice-driver update, separate from the musical timer. */
 int pe_akao_channel_aux_lfo_step(PeAkaoChannel *channel);
 int pe_akao_channel_volume_lfo_step(PeAkaoChannel *channel, int key_on);
+int pe_akao_channel_pitch_lfo_step(PeAkaoChannel *channel, int key_on);
+void pe_akao_channel_pitch_lfo_depth(PeAkaoChannel *channel, unsigned mode);
 int pe_akao_pitch_period(const PeSpuBank *samples, unsigned instrument, uint8_t note,
                           uint16_t detune_bits, uint16_t *pitch);
-/* Melodic/drum-kit pitch and A4 pitch transitions. LFO modes are rejected
- * explicitly until their original behavior is ported. */
+/* Melodic/drum-kit pitch, A4 transitions and LFO restart/depth state.
+ * Tremolo/portamento duration handling remains unsupported. */
 int pe_akao_channel_note_pitch(PeAkaoChannel *channel);
 /* One due musical tick, not a host frame. SPU application acknowledges the
  * latched key_off_requested flag; pitch/voice-register updates are pending. */

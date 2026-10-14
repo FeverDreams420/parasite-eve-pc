@@ -364,5 +364,14 @@ preserved and subsequent notes can avoid retriggering. CD is the original
 empty handler and consumes no operands. Timing tests verify both commands
 and key-on behavior under ASan/UBSan. The extended audit continues to report
 later missing commands explicitly; these changes do not prove audible legato.
+
+B4/B5/B6 now initialize, adjust and reset pitch LFO. Depth calculation retains
+both original scaling modes and the low-word scale used at initialization.
+The separate voice step preserves delay gating, key-on bypass, signed samples
+and the original doubling of nonnegative results. Tests cover both depth
+modes, zero-as-256 duration, delay, signed output and reset under ASan/UBSan.
+All 21 tests pass headless with Disc 1. Its 4,096-tick audit now reaches DD in
+one sequence; 598 remain active at the limit. Depth slides, complete voice
+scheduling/application and synthesized reference audio remain unfinished.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

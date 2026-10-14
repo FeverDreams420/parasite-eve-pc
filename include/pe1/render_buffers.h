@@ -9,7 +9,7 @@ extern unsigned char *g_RenderScratchBufferBase[];
 extern unsigned char *g_RenderFrontBufferBase[];
 extern unsigned char *g_RenderBackBufferBase[];
 #include "pe1/scene_archive.h"
-extern unsigned char *g_SceneLoadScratchBuffer[];
+
 /* Double-buffer slot (0 or 1) selecting the per-slot tables below and the
  * display/draw environments. */
 extern int g_ActiveDrawSlot;

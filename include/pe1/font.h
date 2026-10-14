@@ -2,6 +2,7 @@
 #define PE1_FONT_H
 
 #include "common.h"
+#include "pe1/scene_archive.h"
 #include "pe1/disc_load_state.h"
 
 /* Partial glyph-table layout recovered from the slot lookup at 0x80038BC0.
@@ -70,7 +71,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(FontGlyphLoadState, buffer) == 0x94,
 
 extern FontGlyphSelectionState g_FontSelectionState;
 extern FontGlyphTable g_FontActiveGlyphTable;
-extern unsigned char *g_SceneLoadScratchBuffer[];
+
 extern u16 g_PeImageSectorTable[];
 
 /* Historical name: returns a slot index, or 0xFF; performs no drawing.

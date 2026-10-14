@@ -1,12 +1,11 @@
 #ifndef PE1_SCENE_ARCHIVE_H
 #define PE1_SCENE_ARCHIVE_H
 
-#include "common.h"
+#include "pe1/game_state.h"
 
-/* 0x800B0E64: the loaded scene archive. The map loader reads its directory;
- * room and scene effects look their models and sounds up in it. Readers
- * load element 0, a record read; the incomplete array keeps the absolute
- * address in -G8 units. */
-extern struct SceneAssetBlob *g_LoadedSceneAssetBlock[];
+/* Historical address aliases of the scene pointer slots. Keep both readers
+ * and writers on the canonical state; these are not separate arrays. */
+#define g_LoadedSceneAssetBlock (&g_GameState.loaded_scene_archive)
+#define g_SceneLoadScratchBuffer (&g_GameState.scene_load_scratch)
 
 #endif

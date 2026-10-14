@@ -32,7 +32,6 @@ RenderBufferPrefix D_800B0E38;
 #include "pe1/scene_archive.h"
 uintptr_t g_SceneMapPrimBaseTable[10];
 FieldActorCallbacks g_FieldActorTypeCallbacks[256];
-SceneAssetBlob *g_LoadedSceneAssetBlock[1];
 u8 g_SceneAreaType;
 u32 g_EntityRenderScratch[9];
 

@@ -28,8 +28,7 @@ static u8 directory[0x1000];
 u8 *g_StrFileDirBuffer = directory + 8;
 u8 *g_OtBufferTable[2], *g_RenderOtBufferBaseAlt[1];
 u8 *g_RenderFrontBufferBase[1], *g_RenderBackBufferBase[1];
-u8 *g_RenderAnimBufferBase[1], *g_SceneLoadScratchBuffer[1];
-struct SceneAssetBlob *g_LoadedSceneAssetBlock[1];
+u8 *g_RenderAnimBufferBase[1];
 
 static int boot_buffer_layout(void)
 {
@@ -41,6 +40,8 @@ static int boot_buffer_layout(void)
         (void *)g_GameState.entity_texture_blob != g_BootWorkArea + 0x14000 ||
         g_GameState.scene_object_work != D_80120D08 ||
         g_GameState.str_file_directory != directory + 8 ||
+        (void *)g_GameState.loaded_scene_assets != directory ||
+        g_GameState.scene_load_scratch != g_SceneLoadScratchArea ||
         g_GameState.bank_work_base != g_GameState.voice_bank_base ||
         g_GameState.bank_work_end != g_GameState.voice_bank_base + 0x1400 ||
         g_GameState.bank_work_far_end != g_GameState.voice_bank_base + 0x2800 ||

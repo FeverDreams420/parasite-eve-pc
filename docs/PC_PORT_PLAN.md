@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+`pc/model.c` dekoduje RenderObjectHeader i sprawdza sekcje parts/vertices/colors/primitive descriptors/bounds oraz zaokrąglony span matrix commands. Waliduje się 878 model prefixes Disc 1 z 236410 vertices i 346985 descriptors. Nowy 26. test sprawdza offsets, zakresy części, truncation i zachowanie starego widoku przy błędzie. 26 testów headless z Disc 1 oraz ASan/UBSan model fixture i pełnego audytu przechodzi. Matrix execution, textures/packets, animation i rendering pozostają wymagane; prefix validation nie oznacza rendered model validation.
+
 `pc/room_banks.c` wiąże sprawdzane room overrides do dziesięciu model root slots i dziesięciu grup po 48 animation slots. Zachowuje kolejność/last-write, pożycza owned room bytes sceny i nie niszczy starego widoku przy błędzie. Walidują się wszystkie 414 lokacje Disc 1: 878 root records, 9042 animation-row records. Nowy 25. test sprawdza granice slot/group/payload i duplicate overrides; headless suite oraz ASan/UBSan fixture i pełnego audytu scen przechodzą. External entity banks, dekodowanie modeli/animacji i renderowanie pozostają wymagane.
 
 Natywny aktor stosuje FindFloor do Y i obu ID powierzchni; bypass/no-match zachowuje poprzednie wartości, a flaga preserve-Y jest respektowana. Scena posiada dane kolizji transakcyjnie, z zachowaniem starej geometrii przy nieudanym przejściu. Headless boot emituje `room.collision.ready`, wymagane w replay New Game i Tutorial. 24 testy z Disc 1 oraz ASan/UBSan aktorów i scen/kolizji przechodzą. Pełne spawn/model setup, ruch fizyczny i gameplay collision pozostają nieukończone.

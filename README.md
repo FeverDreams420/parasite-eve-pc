@@ -536,6 +536,16 @@ bounds, payload bounds and duplicate overrides. All 25 tests pass headless;
 the binding fixture and full scene data audit pass ASan/UBSan. External entity
 banks, model/animation decoding and rendering remain unfinished.
 
+`pc/model.c` decodes the RenderObjectHeader and checks contiguous part,
+vertex, color, primitive-descriptor and bounding-vector sections, plus the
+rounded matrix-command span. All 878 Disc 1 room model prefixes validate,
+containing 236,410 vertices and 346,985 descriptors. The `model` test verifies
+section offsets, part ranges, truncation and failure without replacing the
+previous view. All 26 tests pass headless with Disc 1; model fixtures and the
+full room/model audit pass ASan/UBSan. Matrix execution, texture/packet decoding,
+animation and rendering remain unfinished; prefix validation is not rendered
+model validation.
+
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one
 lists the other 75 faces). The original lookup only searches listed faces.

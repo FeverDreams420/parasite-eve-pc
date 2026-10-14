@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 47 powiązań: opcode'y 30/50/55/57 ustawiają i zdejmują flagi aktora 0x80 oraz 0x4000. Powiązania potwierdzono w EXE USA; ABI zmieniono w istniejących funkcjach bez wrapperów. Test kolejki odczytuje stan po każdym opcode'zie przez oryginalne zapytanie aktora i sprawdza zachowanie pozostałych bitów. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 43 powiązania: oryginalny opcode 27 ustawia prędkość aktora i aktualizuje focus height kamery dla gracza. Przesunięcie wartości ujemnej poprawiono w istniejącym module na operację bitową word. Test kolejki obejmuje sześć prędkości, wartości ujemne/zero, zawężenie halfword i zachowanie stanu kamery dla zwykłego aktora. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Świeża regresja po integracji 42 powiązań dispatchera: wszystkie 35 testów `original-game-*` przeszły z wymaganym obrazem Disc 1, bez SKIP. Cały rozszerzony fixture kolejki, z oryginalnymi modułami kompilowanymi z bieżących źródeł, przeszedł ASan/UBSan/function. To dowód objętych scenariuszy modułowych, nie pełnej kampanii: brak pełnego bootstrapu/frame loop, pozostałych opcode'ów i usunięcia `pc/` nadal uniemożliwia uznanie portu za ukończony.

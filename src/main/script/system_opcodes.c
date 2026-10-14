@@ -1022,22 +1022,22 @@ int Script_ClearSceneFlag2000(void) {
     return 1;
 }
 
-int Entity_SetCurrentFlag80(void) {
+int Entity_SetCurrentFlag80(int **unused) {
     g_CurrentEntity->flags |= 0x80;
     return 1;
 }
 
-int Entity_ClearCurrentFlag80(void) {
+int Entity_ClearCurrentFlag80(int **unused) {
     g_CurrentEntity->flags &= -0x81;
     return 1;
 }
 
-int Entity_SetCurrentFlag4000(void) {
+int Entity_SetCurrentFlag4000(int **unused) {
     g_CurrentEntity->flags |= 0x4000;
     return 1;
 }
 
-int Entity_ClearCurrentFlag4000(void) {
+int Entity_ClearCurrentFlag4000(int **unused) {
     g_CurrentEntity->flags &= -0x4001;
     return 1;
 }

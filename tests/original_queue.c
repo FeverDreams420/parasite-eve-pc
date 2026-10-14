@@ -329,6 +329,18 @@ int main(void)
            g_GeomScroll.state.position.focusHeight!=(player?focus:0x1234) ||
            task.current.script!=script+5 || task.flags!=0x10) return 34;
     }
+    {
+        FieldActor owner={.type_id=8,.sub_id=3,.flags=0x80002000};
+        u32 query=14|(4u<<13)|((2u<<9)<<17);
+        u32 script[]={30,0,query,0,1,8,3,40,50,0,query,0,1,8,3,41,
+                      55,0,query,0,1,8,3,42,57,0,query,0,1,8,3,43,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[40]!=0x80002080 || g_ScriptVariableBank[41]!=0x80002000 ||
+           g_ScriptVariableBank[42]!=0x80006000 || g_ScriptVariableBank[43]!=0x80002000 ||
+           owner.flags!=0x80002000 || task.current.script!=script+34 || task.flags!=0x10) return 35;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

@@ -41,6 +41,10 @@ int Script_DispatchCmd(int **args);
 int Script_SetEntityVec3(int **args);
 int Script_GetEntityVec3(int **args);
 int Script_SetEntityMoveSpeed(int **args);
+int Entity_SetCurrentFlag80(int **unused);
+int Entity_ClearCurrentFlag80(int **unused);
+int Entity_SetCurrentFlag4000(int **unused);
+int Entity_ClearCurrentFlag4000(int **unused);
 
 void Script_RunQueue(void);
 int Script_JumpToEntityOffset(int **args);

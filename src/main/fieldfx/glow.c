@@ -14,6 +14,26 @@
 #include "pe1/gte_types.h"
 #include "pe1/psyq_libc.h"
 
+/* Original resident spins/scales (USA 800C2154..800C2203). */
+GteShortVector g_GlowEffectLayersSpinA = {0,3072,0,0};
+GteShortVector g_GlowLayers1SpinB = {1024,3072,0,0};
+GteVector g_GlowLayers1Scale = {1168,1168,1168,0};
+GteShortVector g_GlowEffectBLayersSpinA = {0,3072,0,0};
+GteShortVector g_GlowEffectBSpinB = {1024,3072,0,0};
+GteVector g_GlowEffectBLayersScale = {968,968,968,0};
+GteShortVector g_GlowEffectCLayersSpinA = {0,3072,0,0};
+GteShortVector g_GlowEffectCLayersSpinB = {1024,3072,0,0};
+GteVector g_GlowLayers3Scale = {768,768,768,0};
+GteShortVector g_FourLayerGlowSpinA = {0,3072,0,0};
+GteShortVector g_FourLayerGlowSpinB = {1024,3072,0,0};
+GteShortVector g_FourLayerGlowSpinC = {0,1024,0,0};
+GteShortVector g_FourLayerGlowSpinD = {1024,1024,0,0};
+GteVector g_FourLayerGlowScale = {1168,1168,1168,0};
+FieldGlowSprite g_GlowEffectSprite0, g_GlowEffectSprite1, g_GlowEffectSprite2, g_GlowEffectSprite3;
+FieldGlowSprite g_GlowEffectBSprite0, g_GlowEffectBSprite1, g_GlowEffectBSprite2;
+FieldGlowSprite g_GlowEffectCSprite0, g_GlowEffectCSprite1;
+FieldGlowSprite g_FourLayerGlowSprite0, g_FourLayerGlowSprite1, g_FourLayerGlowSprite2, g_FourLayerGlowSprite3;
+
 int GlowEffect_PlantScript(char *object) {
     void **slot;
 

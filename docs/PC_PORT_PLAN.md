@@ -3099,3 +3099,20 @@ paths also pass their existing tests. The remaining pc/matrix.c composition,
 point transform and model walkers are still temporary duplicate logic and must
 be replaced by whole original module integration; this deletion does not prove
 complete gameplay or removal of the entire pc/ directory.
+
+
+The entire original fieldfx/glow.c now compiles in the native target. Its
+fourteen resident layer spin/scale records and original zero-initialized sprite
+parameter storage are backed in that same module. The existing actor fixture
+reads SLUS_006.62 directly from the supplied CUE/BIN and compares all fourteen
+compiled records to the original executable bytes using its load-base header.
+It executes the three paired flare draw variants and the four-layer variant
+through original composition, scale and sprite methods in both slots, checking
+packet count, unique native chains, commands/lengths, layer brightness and
+arena guards. Sprite input records are controlled fixtures; authored script
+setup and full effect lifecycle are not yet bound. Full build and four related
+CTests pass with Disc 1 required, and fresh actor ASan/UBSan/function passes
+with original source instrumented and PsyZ/SDL archives uninstrumented.
+Remaining glow callbacks, GPU image fidelity, authored task tables, full scene
+integration and deletion of pc/ remain incomplete. No new source files were
+added or functions extracted.

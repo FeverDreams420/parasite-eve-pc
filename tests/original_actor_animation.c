@@ -17,6 +17,7 @@
 #include "pe1/field_model_draw.h"
 #include "pe1/field_oriented_sprite.h"
 #include "pe1/field_shaded_ring.h"
+#include "pe1/field_glow_layers.h"
 #include "pe1/field_tri_test.h"
 #include "pe1/field_collision.h"
 #include "pe1/field_textured_strip.h"
@@ -841,6 +842,93 @@ static int native_effect_collision_coordinates(void)
     return 1;
 }
 
+static int original_glow_resident_constants(void)
+{
+    const char *path=getenv("PE_TEST_DISC");
+    if(!path) return !getenv("PE_REQUIRE_GAME_ASSETS");
+    struct { u32 address; const void *value; size_t size; } rows[]={
+        {0x800c2154,&g_GlowEffectLayersSpinA,sizeof(GteShortVector)},
+        {0x800c215c,&g_GlowLayers1SpinB,sizeof(GteShortVector)},
+        {0x800c2164,&g_GlowLayers1Scale,sizeof(GteVector)},
+        {0x800c2184,&g_GlowEffectBLayersSpinA,sizeof(GteShortVector)},
+        {0x800c218c,&g_GlowEffectBSpinB,sizeof(GteShortVector)},
+        {0x800c2194,&g_GlowEffectBLayersScale,sizeof(GteVector)},
+        {0x800c21a4,&g_GlowEffectCLayersSpinA,sizeof(GteShortVector)},
+        {0x800c21ac,&g_GlowEffectCLayersSpinB,sizeof(GteShortVector)},
+        {0x800c21b4,&g_GlowLayers3Scale,sizeof(GteVector)},
+        {0x800c21d4,&g_FourLayerGlowSpinA,sizeof(GteShortVector)},
+        {0x800c21dc,&g_FourLayerGlowSpinB,sizeof(GteShortVector)},
+        {0x800c21e4,&g_FourLayerGlowSpinC,sizeof(GteShortVector)},
+        {0x800c21ec,&g_FourLayerGlowSpinD,sizeof(GteShortVector)},
+        {0x800c21f4,&g_FourLayerGlowScale,sizeof(GteVector)}
+    };
+    PeDisc disc={0}; PeDiscFile file;
+    u8 header[32], raw[16];
+    if(!pe_disc_open(&disc,path)) return 0;
+    if(!pe_disc_find(&disc,"SLUS_006.62",&file) ||
+       !pe_disc_read(&disc,&file,0,header,sizeof(header))) { pe_disc_close(&disc); return 0; }
+    u32 base=(u32)header[24]|(u32)header[25]<<8|(u32)header[26]<<16|(u32)header[27]<<24;
+    for(unsigned i=0;i<sizeof(rows)/sizeof(rows[0]);++i) {
+        if(rows[i].address<base || !pe_disc_read(&disc,&file,0x800ull+rows[i].address-base,raw,rows[i].size) ||
+           memcmp(raw,rows[i].value,rows[i].size)) { pe_disc_close(&disc); return 0; }
+    }
+    pe_disc_close(&disc);
+    puts("Original glow constants: fourteen resident spin/scale records match the supplied USA disc");
+    return 1;
+}
+
+static int native_glow_layer_packets(void)
+{
+    struct { FieldStripPacket packets[4]; u8 guard[16]; } buffer;
+    static RenderGpuTag ordering[4096];
+    RenderBufferPrefix saved=D_800B0E38;
+    int saved_slot=g_ActiveDrawSlot, saved_offset=g_DrawPacketOffset;
+    GteMatrix *saved_view=g_GeomScroll.words.viewMatrix;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    g_GeomScroll.words.viewMatrix=&view;
+    FieldGlowLayers glow={.depth=128,.z=1024,.matrix=view};
+    void (*draws[])(void *,void *,FieldGlowLayers *)={GlowEffect_DrawFlareLayers,
+        GlowEffectB_DrawFlareLayers,GlowEffectC_DrawFlareLayers,FourLayerGlow_DrawFlareLayers};
+    FieldGlowSprite *sprites[]={&g_GlowEffectSprite2,&g_GlowEffectBSprite2,&g_GlowEffectCSprite1,&g_FourLayerGlowSprite2};
+    Psyz_GteCtrlWrite(26,256); Psyz_GteCtrlWrite(29,1365); Psyz_GteCtrlWrite(30,1024);
+    gte_SetGeomOffset(160,120);
+    for(unsigned slot=0;slot<2;++slot) for(unsigned kind=0;kind<4;++kind) {
+        memset(&buffer,0xa5,sizeof(buffer)); memset(ordering,0,sizeof(ordering));
+        for(unsigned i=0;i<4096;++i) ordering[i].address=0xffffff;
+        *sprites[kind]=(FieldGlowSprite){.r=80,.g=80,.b=80,.cell=0xae,.clut=7,.offset=-50};
+        D_800B0E38.ordering[slot]=ordering; D_800B0E38.packets[slot]=(char *)&buffer;
+        g_ActiveDrawSlot=slot; g_DrawPacketOffset=0;
+        draws[kind](NULL,NULL,&glow);
+        unsigned count=kind==3?4:2;
+        if(g_DrawPacketOffset!=count*sizeof(FieldStripPacket)) { fprintf(stderr,"glow kind %u slot %u bytes %d expected %zu\n",kind,slot,g_DrawPacketOffset,count*sizeof(FieldStripPacket)); return 0; }
+        unsigned linked=0, seen=0;
+        for(unsigned depth=0;depth<4096;++depth) {
+            uintptr_t address=ordering[depth].address;
+            while(address!=0xffffff) {
+                if(address<(uintptr_t)buffer.packets || address>=(uintptr_t)&buffer.packets[count] ||
+                   (address-(uintptr_t)buffer.packets)%sizeof(FieldStripPacket) || linked>=count) return 0;
+                FieldStripPacket *packet=(FieldStripPacket *)address;
+                unsigned bit=1u<<(unsigned)(packet-buffer.packets);
+                if(seen&bit) return 0;
+                seen|=bit;
+                unsigned brightness=(kind==3 && packet<&buffer.packets[2])?40:80;
+                if(packet->tag.length!=9 || packet->code!=0x2e ||
+                   packet->r0!=brightness || packet->g0!=brightness || packet->b0!=brightness) {
+                    fprintf(stderr,"glow kind %u packet %td RGB %u/%u/%u code %x\n",kind,packet-buffer.packets,packet->r0,packet->g0,packet->b0,packet->code); return 0;
+                }
+                ++linked; address=packet->tag.address;
+            }
+        }
+        if(linked!=count) return 0;
+        const u8 *bytes=(const u8 *)&buffer;
+        for(size_t i=count*sizeof(FieldStripPacket);i<sizeof(buffer);++i) if(bytes[i]!=0xa5) return 0;
+    }
+    D_800B0E38=saved; g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset;
+    g_GeomScroll.words.viewMatrix=saved_view;
+    puts("Original glow layers: three paired variants and four-layer variant, both slots, native chains and guards passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -901,7 +989,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

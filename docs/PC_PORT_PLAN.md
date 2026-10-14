@@ -2179,3 +2179,20 @@ assets. Fresh ASan/UBSan/function runs pass for expression, queue and movement;
 PsyZ is not instrumented. Other newly compiled opcode paths are not yet verified
 by these fixtures, and this is not a complete scene script runtime. No new files;
 remaining extractions and the entire pc/ directory remain to be removed.
+
+
+### Restore PM script commands to system_opcodes.c
+
+Deleted script/pm_commands.c and restored its complete wrappers and operand
+record to script/system_opcodes.c, preserving their bodies exactly. The whole
+system-opcode module now compiles in parasite-eve-original. Removed its stale
+conflicting Render_SetScrollMode declaration in favor of the existing camera
+header; the barcode encoder uses a char[8] buffer and scene flag pointers use
+u32. Removed the redundant NULL macro. No new files.
+
+Full build and six original-game tests pass: queue, expression, movement,
+actor-animation, camera and actor-lifecycle (Disc 1 assets required where used).
+A fresh ASan/UBSan/function actor-lifecycle run passes, including existing PM
+script send/state checks; PsyZ is not instrumented. Other system-opcode paths
+are compiled but not established as working by these checks. Full script runtime,
+remaining extraction removal and elimination of pc/ remain incomplete.

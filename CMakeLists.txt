@@ -45,6 +45,7 @@ add_library(parasite-eve-original OBJECT
     src/main/script/node_pool.c
     src/main/script/value_ops.c
     src/main/script/flow_opcodes.c
+    src/main/script/system_opcodes.c
     src/main/field/actor_collision.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 if(MSVC)
@@ -338,7 +339,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-actor-lifecycle tests/original_actor_lifecycle.c
-        src/main/pm/process.c src/main/script/pm_commands.c
+        src/main/pm/process.c
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>)

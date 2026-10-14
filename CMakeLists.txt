@@ -54,8 +54,9 @@ if(BUILD_TESTING)
     add_executable(test-original-akao-instrument tests/original_akao_instrument.c
         $<TARGET_OBJECTS:parasite-eve-original-akao>)
     target_include_directories(test-original-akao-instrument PRIVATE include)
-    # Isolate the original procedures under test; unsupported audio endpoints
-    # have no stubs. Full audio integration must resolve them separately.
+    target_link_libraries(test-original-akao-instrument PRIVATE psyz)
+    # Isolate original procedures under test. The fixture rejects any request
+    # to the missing reverb-mode endpoint. Full audio must resolve it properly.
     if(MSVC)
         target_link_options(test-original-akao-instrument PRIVATE /OPT:REF)
     elseif(APPLE)

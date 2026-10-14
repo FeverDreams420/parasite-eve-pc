@@ -541,6 +541,8 @@ Oryginalny `akao/voice_bank.c` dołącza do object target po dodaniu brakującyc
 
 Wszystkie cztery oryginalne jednostki AKAO kompilują się teraz w object target: sekwencer, transfer, bank i voice driver. Driver potrzebuje tylko deklaracji CD audio mixing, wydzielonej z nagłówka obejmującego GPU/DMA/drive; publiczne CdMix/CdlATV pozostają tym samym API. Dwa istniejące testy AKAO przechodzą po dodaniu drivera, ale usuwają jego nieużywane procedury podczas linkowania i nie dowodzą poprawności sprzętowego wyjścia. Driver nadal ma bezpośrednie MMIO, ostrzeżenia ABI i niezintegrowane global state/dispatch tables. Kolejka oraz relative/default nested commands nadal wymagają dostosowania wskaźników.
 
+Komenda efektu `0x24` kopiuje teraz native sequence pointer do kolejki, zamiast tylko niskiego 32-bit word. Test wykonuje oryginalne `Akao_Cmd_24`, validator, enqueue i message dispatch: 1025 komend obejmuje dwukrotne zawinięcie identyfikatora 0x400..0x5FF, masks parametrów, pointer preservation, odblokowanie kolejki i reset count. Para komend `0xDA` zachowuje kolejność D2/D6 i parametry. Dispatch fixture rejestruje żądania; nie odtwarza audio. PsyZ nie udostępnia jeszcze SpuSetReverbModeType, więc testowy endpoint przerywa test przy jakimkolwiek takim wywołaniu. CTest przechodzi; ASan/UBSan/function przed rozszerzeniem dispatch fixture sprawdził enqueue i pointer path, PsyZ nieinstrumentowane. Queue capacity/reentrancy/fault audit, oryginalna tabela handlerów i rzeczywisty PCM nadal pozostają wymagane.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

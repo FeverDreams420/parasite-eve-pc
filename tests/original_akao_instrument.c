@@ -2,7 +2,9 @@
 #include "pe1/akao/globals.h"
 #include "pe1/akao/note_step.h"
 #include "pe1/akao/voice_masks.h"
+#include "pe1/psyq_spu_internal.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Explicit input tables for isolated original procedures, not runtime audio. */
 AkaoInstrument g_AkaoInstrumentTable[256];
@@ -13,12 +15,72 @@ static unsigned short offsets[2048];
 unsigned short *g_AkaoSampleOffsetTable = offsets;
 static char sample_data[65536];
 char *g_AkaoSampleDataBase = sample_data;
+AkaoStagedCommand g_AkaoCmd;
+AkaoSequenceCounter g_AkaoCmd24Sequence = {0x400};
+AkaoQueueEntry g_AkaoMessageQueue[16];
+int g_AkaoMessageQueueCount;
+static AkaoQueueEntry received[16];
+static unsigned received_count;
+static void record_message(AkaoQueueEntry *entry)
+{
+    if (received_count >= 16) abort();
+    received[received_count++] = *entry;
+}
+AkaoMessageHandler Akao_MessageHandlers[256];
+volatile u32 g_AkaoMessageQueueLock;
+static AkaoTickBank tick_bank;
+AkaoTickBank *D_8009D2C8 = &tick_bank;
+SpuReverbState g_SpuReverbState;
+/* This isolated command test must never request a hardware reverb change.
+ * PsyZ has no SpuSetReverbModeType endpoint yet: fail instead of simulating it. */
+int SpuSetReverbModeType(unsigned int mode)
+{
+    fprintf(stderr, "unexpected hardware reverb request %u\n", mode);
+    abort();
+}
 void SeqOp_SetTempo(void *track);
 void SeqOp_LoadInstrumentFromIndex(void *track);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
 int main(void)
 {
+    unsigned int sound_header[4] = {0x4f414b41u, 0x12345678u, 0, 0};
+    for (unsigned i = 0; i < 256; ++i) Akao_MessageHandlers[i] = record_message;
+    for (unsigned i = 0; i < 1025; ++i) {
+        g_AkaoMessageQueueCount = 0;
+        int sequence = Akao_Cmd_24(sound_header, 0x12345678, 0x180, 0xff);
+        CHECK(sequence == (int)(0x400 + (i & 0x1ff)));
+        CHECK(g_AkaoMessageQueueCount == 1);
+        CHECK(g_AkaoMessageQueue[0].opcode.word == 0x24);
+        CHECK(g_AkaoMessageQueue[0].arg0.sequence == (unsigned char *)(sound_header + 1));
+        CHECK(g_AkaoMessageQueue[0].arg1 == 0x345678);
+        CHECK(g_AkaoMessageQueue[0].arg2 == 0x80);
+        CHECK(g_AkaoMessageQueue[0].arg3 == 0x7f);
+        CHECK(g_AkaoMessageQueue[0].sequence == sequence);
+        CHECK(g_AkaoMessageQueueLock == 0);
+        received_count = 0;
+        Akao_ProcessMessageQueue();
+        CHECK(g_AkaoMessageQueueCount == 0);
+        CHECK(received_count == 1);
+        CHECK(received[0].arg0.sequence == (unsigned char *)(sound_header + 1));
+        CHECK(received[0].sequence == sequence);
+    }
+    g_AkaoCmd.opcode = 0xda;
+    g_AkaoCmd.arg0.value = 19;
+    g_AkaoCmd.arg1 = 23;
+    g_AkaoCmd.arg2 = 31;
+    Akao_EnqueueStagedCommand();
+    CHECK(g_AkaoMessageQueueCount == 2);
+    received_count = 0;
+    Akao_ProcessMessageQueue();
+    CHECK(received_count == 2);
+    CHECK(received[0].opcode.word == 0xd2);
+    CHECK(received[1].opcode.word == 0xd6);
+    for (unsigned i = 0; i < 2; ++i) {
+        CHECK(received[i].arg0.value == 19);
+        CHECK(received[i].arg1 == 23);
+        CHECK(received[i].arg2 == 31);
+    }
     unsigned char tempo[] = {0x34, 0x12};
     AkaoTrack track = {0};
     track.pc = tempo;

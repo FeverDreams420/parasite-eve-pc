@@ -2055,7 +2055,7 @@ int Akao_EnqueueStagedCommand(void) {
         break;
     case 0x24:
         Akao_AllocMessageSlot(&msg);
-        msg->arg0.value = g_AkaoCmd.arg0.value;
+        msg->arg0.sequence = g_AkaoCmd.arg0.command_data;
         msg->arg1 = g_AkaoCmd.arg1;
         sequence = g_AkaoCmd24Sequence;
         msg->arg2 = g_AkaoCmd.arg2;

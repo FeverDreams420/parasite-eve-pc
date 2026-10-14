@@ -19,6 +19,7 @@ typedef union DsResult {
     int words[4];
 } DsResult;
 
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(sizeof(DsPacketCommand) == 16, ds_packet_command_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DsPacketCommand, payload) == 1,
                   ds_packet_payload_offset);
@@ -26,6 +27,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(DsPacketCommand, parameter) == 8,
                   ds_packet_parameter_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DsPacketCommand, callback) == 12,
                   ds_packet_callback_offset);
+#endif
 PE1_STATIC_ASSERT(sizeof(DsResult) == 16, ds_result_size);
 
 /* DSSYS_2.OBJ collects one callback per consecutive command identifier
@@ -37,9 +39,11 @@ typedef struct DsQueueCallback {
 typedef struct DsQueueIndices {
     int start, current, count;
 } DsQueueIndices;
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(sizeof(DsQueueCallback) == 8, ds_queue_callback_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DsQueueCallback, callback) == 4,
                   ds_queue_callback_pointer_offset);
+#endif
 PE1_STATIC_ASSERT(sizeof(DsQueueIndices) == 12, ds_queue_indices_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DsQueueIndices, count) == 8, ds_queue_count_offset);
 void CQ_add_result(u32 id, u8 event, u8 *result);

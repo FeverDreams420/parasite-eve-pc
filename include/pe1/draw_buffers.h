@@ -5,7 +5,7 @@
 #include "pe1/psyq_gpu.h"
 
 /* Game double-buffer records: SDK environments followed by the ordering-table
- * and packet-arena pointers. Selection advances by one 0x78-byte record. */
+ * and packet-arena pointers. Selection advances by one native record. */
 typedef struct DrawFrameBuffer {
     DRAWENV draw;
     DISPENV display;
@@ -13,12 +13,12 @@ typedef struct DrawFrameBuffer {
     u8 *frontBufferBase;
 } DrawFrameBuffer;
 
-PE1_STATIC_ASSERT(sizeof(DrawFrameBuffer) == 0x78, draw_frame_buffer_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(DrawFrameBuffer, display) == 0x5C,
+PE1_STATIC_ASSERT(sizeof(DrawFrameBuffer) == PE1_OFFSETOF(DrawFrameBuffer, frontBufferBase) + sizeof(u8 *), draw_frame_buffer_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(DrawFrameBuffer, display) == sizeof(DRAWENV),
                   draw_frame_buffer_display_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(DrawFrameBuffer, orderingTableBase) == 0x70,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(DrawFrameBuffer, orderingTableBase) >= sizeof(DRAWENV) + sizeof(DISPENV),
                   draw_frame_buffer_ordering_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(DrawFrameBuffer, frontBufferBase) == 0x74,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(DrawFrameBuffer, frontBufferBase) == PE1_OFFSETOF(DrawFrameBuffer, orderingTableBase) + sizeof(u32 *),
                   draw_frame_buffer_packets_offset);
 /* Double buffer: environments, ordering table and packet arena per frame. */
 extern DrawFrameBuffer g_DrawFrameBuffers[2];

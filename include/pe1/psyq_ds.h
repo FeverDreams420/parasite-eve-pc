@@ -45,7 +45,9 @@ typedef union DsCallbackValue {
     u32 word;
 } DsCallbackValue;
 
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(sizeof(DsCallbackValue) == 4, ds_callback_value_size);
+#endif
 
 /* Runtime callback pointers at g_DsPollCallback are a contiguous four-word window. */
 typedef struct DsRuntimeCallbacks {
@@ -55,6 +57,7 @@ typedef struct DsRuntimeCallbacks {
     DsEventCallback volatile dispatch;
 } DsRuntimeCallbacks;
 
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(sizeof(DsRuntimeCallbacks) == 16,
                   ds_runtime_callbacks_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DsRuntimeCallbacks, sync) == 4,
@@ -63,6 +66,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(DsRuntimeCallbacks, ready) == 8,
                   ds_runtime_ready_callback_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DsRuntimeCallbacks, dispatch) == 12,
                   ds_runtime_dispatch_callback_offset);
+#endif
 
 typedef struct CdQueuedCmdSlot {
     u_int state;
@@ -88,12 +92,14 @@ typedef union CdDsQueueEntryAddress {
     u8 *bytes;
     u32 word;
 } CdDsQueueEntryAddress;
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(sizeof(CdDsReadQueueEntry) == 0x18,
                   ds_command_entry_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdDsReadQueueEntry, callback) == 0x10,
                   ds_command_callback_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdDsReadQueueEntry, count) == 0x14,
                   ds_command_retry_count_offset);
+#endif
 
 /* Contiguous queue storage and bookkeeping, anchored by the pending count. */
 typedef struct CdDsReadQueueWindow {
@@ -102,8 +108,10 @@ typedef struct CdDsReadQueueWindow {
     int read_index;
     int pending_count;
 } CdDsReadQueueWindow;
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdDsReadQueueWindow, pending_count) == 0xC8,
                   ds_queue_pending_count_offset);
+#endif
 #define CD_DS_QUEUE_FROM_PENDING(pointer) \
     ((CdDsReadQueueWindow *)((char *)(pointer) - \
                             PE1_OFFSETOF(CdDsReadQueueWindow, pending_count)))
@@ -129,7 +137,9 @@ typedef struct DsCallbackRegistry {
     DsEventCallback ready;
     DsEventCallback start;
 } DsCallbackRegistry;
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(sizeof(DsCallbackRegistry) == 12, ds_callback_registry_size);
+#endif
 
 extern DsCallbackRegistry g_DsReadCallbackState;
 extern CdQueuedCmdSlot g_CdQueuedCmdSlots[3];
@@ -249,6 +259,7 @@ typedef struct DsAsyncReadState {
 
 int DsStartReadySystem(DsAsyncReadCallback callback, int callbackArg);
 
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(sizeof(DsAsyncReadState) == 0x24, ds_async_read_state_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DsAsyncReadState, retryPending) == 0x0C,
                   ds_async_read_retry_offset);
@@ -260,6 +271,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(DsAsyncReadState, savedStartCallback) == 0x18,
                   ds_async_read_saved_start_callback_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DsAsyncReadState, active) == 0x20,
                   ds_async_read_active_offset);
+#endif
 
 /* LIBCD callback page contains LIBDS async-read state in its reserved span. */
 typedef struct CdReadCompleteCallbackPage {
@@ -280,6 +292,7 @@ typedef struct CdCallbackDataPage {
     CdReadCompleteCallbackPage readComplete;
 } CdCallbackDataPage;
 
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(sizeof(CdReadCompleteCallbackPage) == 0x4930,
                   cd_read_callback_page_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdReadCompleteCallbackPage, asyncRead) == 0x1C,
@@ -302,6 +315,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CdCallbackDataPage, readComplete) +
                       PE1_OFFSETOF(CdReadCompleteCallbackPage, asyncRead) ==
                       0x738,
                   cd_callback_data_page_async_state_offset);
+#endif
 
 extern DsAsyncReadState g_DsAsyncReadState;
 #define g_DsAsyncReadRetryPending (g_DsAsyncReadState.retryPending)
@@ -333,7 +347,7 @@ void DsEndReadySystem(void);
 int _cmp(char *left, char *right);
 DslFILE *DsSearchFile(DslFILE *file, char *name);
 int DsGetDiskType(void);
-int strncmp(const char *left, const char *right, unsigned int count);
+int strncmp(const char *left, const char *right, size_t count);
 int strcmp(const char *left, const char *right);
 
 /* Pending async-read callback slot polled by the DSREADY callbacks. */

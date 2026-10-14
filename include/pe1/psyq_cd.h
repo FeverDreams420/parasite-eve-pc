@@ -74,6 +74,7 @@ typedef struct CdReadProgressState {
     int inProgress;
 } CdReadProgressState;
 
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdReadProgressState, dataCallback) == 0x1C,
                   cd_read_progress_data_callback_offset);
 PE1_STATIC_ASSERT(sizeof(CdReadProgressState) == 0x2C,
@@ -90,6 +91,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CdReadProgressState, currentVsync) == 0x24,
                   cd_read_progress_current_vsync_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdReadProgressState, inProgress) == 0x28,
                   cd_read_progress_in_progress_offset);
+#endif
 
 /* Optional 2048-byte-sector staging buffer used by the streaming CD path. */
 extern u8 *g_CdStreamMemorySource;
@@ -246,12 +248,15 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomCommandState, read) == 0x08,
                   cdrom_command_read_offset);
 PE1_STATIC_ASSERT(sizeof(CdRomSystemFields) == 0x4C,
                   cdrom_system_fields_size);
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(sizeof(CdRomEventCommandState) == 0x4C,
                   cdrom_event_command_state_size);
 PE1_STATIC_ASSERT(sizeof(CdRomSystemViews) == 0x4C,
                   cdrom_system_views_size);
+#endif
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomSystemFields, command) == 0x14,
                   cdrom_system_fields_command_offset);
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomSystemViews, event) == 0,
                   cdrom_system_views_event_offset);
 PE1_STATIC_ASSERT(sizeof(CdRomSystemState) == 0x50,
@@ -287,6 +292,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomEventCommandState, command) +
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdRomEventCommandState, command) +
                       PE1_OFFSETOF(CdRomCommandState, retryAttempts) == 0x44,
                   cdrom_retry_attempts_address_offset);
+#endif
 
 extern CdRomSystemState g_DsReadSysEnabled;
 extern DsReadStatusBlock g_DsReadStatusBlock;
@@ -414,12 +420,14 @@ typedef struct CdStreamEndState {
     s32 endSectorPending;
     u8 *dmaBuffer;
 } CdStreamEndState;
+#if UINTPTR_MAX == UINT32_MAX /* Historical runtime layout; not a disc format. */
 PE1_STATIC_ASSERT(sizeof(CdStreamEndState) == 0x0C,
                   cd_stream_end_state_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdStreamEndState, endSectorPending) == 0x04,
                   cd_stream_end_pending_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CdStreamEndState, dmaBuffer) == 0x08,
                   cd_stream_dma_buffer_offset);
+#endif
 extern CdStreamEndState g_CdStreamEndState;
 typedef union CdStreamReadyState {
     s32 word;

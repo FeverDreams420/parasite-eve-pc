@@ -27,7 +27,7 @@ typedef struct FieldSfxScriptArgs {
     const FieldSfxU8 *subId;
     const FieldSfxU8 *taskArgument;
 } FieldSfxScriptArgs;
-PE1_STATIC_ASSERT(sizeof(FieldSfxScriptArgs) == 12, field_sfx_script_args_size);
+PE1_STATIC_ASSERT(sizeof(FieldSfxScriptArgs) == sizeof(void *) * 3, field_sfx_script_args_size);
 
 void Scene_UpdateEntityList(void);
 void Script_ClearSfxTable(void);

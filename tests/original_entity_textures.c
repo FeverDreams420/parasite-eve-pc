@@ -11,6 +11,9 @@ GeomState * volatile g_GeomState;
 #include "animation.h"
 #include "vram.h"
 #include "pe1/scene_assets.h"
+#include "pe1/scene_room.h"
+#include "pe1/room_fx_model.h"
+#include "pe1/render_matrix_slot.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,6 +49,9 @@ int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int
 #endif
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 #ifdef PE_TEST_REAL_DISC
+SceneRoomSectorRange g_RoomSectorTable[PE_USA_ROOM_SLOTS];
+AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
+RenderMatrixSlot g_ViewMatrixSlot;
 static u32 image_word(const u8 *p)
 {
     return (u32)p[0] | (u32)p[1] << 8 | (u32)p[2] << 16 | (u32)p[3] << 24;
@@ -98,7 +104,7 @@ int main(void)
     g_SceneAreaType=10; g_CurrentStoryDay[0]=2; g_PeImageBaseLba=1000;
     for(unsigned i=0;i<64;++i) { g_PeImageSectorTable[i]=i*10; g_PeImageSectorBoundsNext[i]=i*10+5; }
     g_GameState.requested_entity_bank=10;
-    g_GameState.scene_load_scratch=(SceneAssetView *)&scratch;
+    g_GameState.scene_load_scratch=(u8 *)&scratch;
     g_GameState.entity_texture_blob=(SceneAssetView *)&bank;
     g_GameState.story_day_flags=1;
     CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==2);
@@ -127,7 +133,7 @@ int main(void)
     CHECK(Scene_LoadEntityTextures()==0 && g_GameState.scene_init_subphase==13);
     /* Only I/O outcomes are scripted; run the original TIM state machine. */
     g_GameState.loaded_scene_assets = (SceneAssetView *)&bank;
-    g_GameState.scene_load_scratch = (SceneAssetView *)&scratch;
+    g_GameState.scene_load_scratch = (u8 *)&scratch;
     g_GameState.pe_image_base_lba = 2000;
     for (unsigned force = 0; force < 2; ++force)
         for (unsigned requested = 0; requested < 2; ++requested)
@@ -195,6 +201,79 @@ int main(void)
     CHECK(expected && actual);
     ResetGraph(0);
     RECT all={0,0,1024,512};
+    const unsigned mirror_maps[] = {17, 18, 21, 45, 102, 151, 319, 5};
+    for (unsigned test = 0; test < sizeof(mirror_maps) / sizeof(mirror_maps[0]); ++test) {
+        PeRoom room = {0};
+        const unsigned map = mirror_maps[test];
+        CHECK(pe_room_load(&catalog, map, &room));
+        PeRoomRange *range = &catalog.ranges[map - 1];
+        g_RoomSectorTable[map - 1].start = range->start;
+        g_RoomSectorTable[map - 1].scratchSectors = range->scratch_sectors;
+        g_RoomSectorTable[map - 1].textureSectors = range->texture_sectors;
+        g_RoomSectorTable[map - 1].roomSectors = range->room_sectors;
+        u8 *scratch = calloc(range->scratch_sectors, 2048);
+        u8 *textures = calloc(range->texture_sectors, 2048);
+        u8 *data = calloc(range->room_sectors, 2048);
+        CHECK(scratch && textures && data);
+        Pe1GameState saved = g_GameState;
+        PmTables tables = g_PmTables;
+        PmCommand *handlers[85] = {0};
+        g_PmTables.handlers = handlers;
+        g_GameState.scene_load_scratch = scratch;
+        g_GameState.texture_load_scratch = (SceneAssetView *)textures;
+        g_GameState.loaded_scene_assets = (SceneAssetView *)data;
+        g_GameState.pe_image_base_lba = catalog.archive.sector;
+        /* Exercise the original already-cached audio branch; unexpected uploads abort. */
+        g_GameState.pending_stream_banks[0] = g_GameState.pending_stream_banks[1] = 0;
+        g_GameState.pending_sample_bank = -1;
+        const u8 *streams; unsigned count;
+        CHECK(pe_room_blob_table(&room.data, 9, 8, &streams, &count));
+        for (unsigned i = 0; i < count; ++i) {
+            const u8 *entry = streams + i * 8;
+            if (entry[3] & 0x10) continue;
+            u16 bank = entry[4] | (u16)entry[5] << 8;
+            if (entry[3] & 0x20) {
+                u16 channel = entry[6] | (u16)entry[7] << 8;
+                CHECK(channel < 2 && bank <= 255);
+                g_GameState.pending_stream_banks[channel] = bank;
+            } else g_GameState.pending_sample_bank = bank;
+        }
+        char name[8], encoded[8];
+        snprintf(name, sizeof(name), "m0%03u0", map);
+        unsigned room_id = Text_ParseBase32Id((signed char *)name);
+        Text_EncodeBase32(encoded, room_id);
+        CHECK(encoded[0] == 'M' && Text_ParseMapNumber((signed char *)encoded) == (int)map);
+        g_GameState.bank_slots[0] = scratch;
+        if (map == 5) {
+            CHECK(Scene_LoadRoom(room_id) == -2);
+            CHECK(!handlers[69] && g_GameState.bank_slots[0] == scratch);
+        } else {
+            CHECK(Scene_LoadRoom(room_id) == 0);
+            CHECK(handlers[69] == &g_RoomFxMirrorHandlers);
+            CHECK(g_GameState.bank_reset_944[0] != NULL);
+            const u8 *entries; unsigned entries_count;
+            CHECK(pe_room_blob_table(&room.data, 3, 12, &entries, &entries_count));
+            for (unsigned i = 0; i < entries_count; ++i) {
+                const u8 *entry = entries + i * 12;
+                CHECK(entry[7] < 10);
+                CHECK(g_GameState.bank_slots[entry[7]] == data + (image_word(entry + 4) & 0xffffff));
+            }
+            CHECK(pe_room_blob_table(&room.data, 4, 12, &entries, &entries_count));
+            for (unsigned i = 0; i < entries_count; ++i) {
+                const u8 *entry = entries + i * 12;
+                CHECK(entry[11] < 10 && entry[7] < 48);
+                CHECK(g_GameState.bank_rows[entry[11]][entry[7]] == data + (image_word(entry + 4) & 0xffffff));
+            }
+        }
+        CHECK(!memcmp(data, room.data.bytes, room.data.size));
+        g_GameState = saved;
+        g_PmTables = tables;
+        free(scratch); free(textures); free(data);
+        pe_room_close(&room);
+        printf("Original Scene_LoadRoom M%03u: %s (cached audio)\n", map,
+               map == 5 ? "unsupported descriptor rejected" : "native mirror binding and script/bank relocation passed");
+    }
+
     {
         PeRoomBlob common = {0};
         CHECK(pe_sector_bank_load(&catalog, 5, &common));
@@ -203,7 +282,7 @@ int main(void)
         struct { SceneAssetBlob header; SceneAssetDirectory directory; } empty_scene = {0};
         empty_scene.header.directoryOffset = sizeof(SceneAssetBlob);
         g_GameState.loaded_scene_assets = (SceneAssetView *)&empty_scene;
-        g_GameState.scene_load_scratch = (SceneAssetView *)scratch;
+        g_GameState.scene_load_scratch = scratch;
         g_GameState.pe_image_base_lba = catalog.archive.sector;
         /* PM initialization has its own original actor-lifecycle fixture. */
         g_GameStateFlags = 0x80;
@@ -271,7 +350,7 @@ int main(void)
             size_t scratch_bytes=(size_t)(catalog.sector_bounds[tim_index+1]-catalog.sector_bounds[tim_index])*2048u;
             CHECK(scratch_bytes>=tim_reference.size);
             scratch_buffer=malloc(scratch_bytes); CHECK(scratch_buffer);
-            g_GameState.scene_load_scratch=(SceneAssetView *)scratch_buffer;
+            g_GameState.scene_load_scratch=scratch_buffer;
             PeVramStats stats; char error[256];
             CHECK(pe_blob_upload_vram(&tim_reference,expected,&stats,error,sizeof(error)));
             uploads+=stats.uploads;

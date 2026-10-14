@@ -25,7 +25,12 @@ the host build.
 The port must run the original game code in `src/main/` and `src/overlays/`.
 Modify those sources in place for host pointers, memory, PsyZ and disc-image
 access. Do not recreate gameplay feature by feature in `pc/` or introduce a
-parallel engine. Existing `pc/` gameplay implementations are experimental
+parallel engine. Repair whole original modules in their existing files: no new
+files and no extracting selected functions. The entire `pc/` directory must be
+removed, including its platform and test dependencies, by integrating required
+changes into existing original modules and PsyZ. Renaming or relocating the
+parallel implementation does not satisfy this requirement.
+Existing `pc/` gameplay implementations are experimental
 work from an abandoned approach; their tests do not establish that the
 original game runs. `parasite-eve-original` now compiles the first original
 modules directly and links them into the executable. Full integration is pending.
@@ -82,7 +87,7 @@ A direct `cmake -S pc -B pc/build` build remains supported.
 
 ## Layout
 
-- `pc/` — native executable and PsyZ integration.
+- `pc/` — temporary, abandoned port implementation and dependencies awaiting removal.
 - `src/main/` — game logic to port; `psyq/` holds legacy runtime implementations
   whose gameplay-relevant behavior guides native replacement or removal.
 - `src/overlays/` — room, scene and effect modules to register natively.

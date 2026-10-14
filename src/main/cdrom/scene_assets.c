@@ -22,6 +22,9 @@
 #include "pe1/render_object.h"
 #include "pe1/scene_assets.h"
 
+/* Resident USA key alphabet; room identifiers encode six five-bit digits. */
+u8 g_Base32CharTable[32] = "0123456789abcdefghiklmnoprstuvwy";
+
 /* Returns whether the TIM image of `type` placed at VRAM x = 832 sits off
  * row 256, or -1 when the scene has no such image. */
 int Asset_SearchByKeyType(int type)

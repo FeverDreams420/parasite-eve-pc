@@ -40,7 +40,7 @@ add_library(parasite-eve-original OBJECT
     src/main/render/bone_transforms.c
     src/main/render/vertex_projection.c
     src/main/entity/hierarchy.c
-    src/main/scene/input_rules.c
+    src/main/boot/init.c
     src/main/entity/pool.c
     src/main/entity/allocation.c
     src/main/script/node_pool.c
@@ -404,6 +404,9 @@ if(BUILD_TESTING)
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>
         $<TARGET_OBJECTS:parasite-eve-original>)
+    target_sources(test-original-entity-texture-assets PRIVATE
+        $<TARGET_OBJECTS:parasite-eve-original-frame>
+        $<TARGET_OBJECTS:parasite-eve-original-shadow>)
     target_include_directories(test-original-entity-texture-assets PRIVATE include pc)
     target_compile_definitions(test-original-entity-texture-assets PRIVATE __psyz PE_TEST_REAL_DISC)
     target_link_libraries(test-original-entity-texture-assets PRIVATE psyz)

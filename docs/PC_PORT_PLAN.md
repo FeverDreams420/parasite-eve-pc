@@ -2062,3 +2062,27 @@ Cały oryginalny room_lib/mirror_model.c kompiluje się natywnie, bez wydzielani
 Scalono Scene_LoadEntityTextures i Scene_UpdateBgDraw bez zmiany treści z wydzielonego scene/entity_textures.c do całego oryginalnego scene/room_load.c; wydzielony plik usunięto. Cały room_load.c jest kompilowany. SceneRoomRecord ma rzeczywisty 12-bajtowy format z u32 handlerAddress zamiast wskaźnika hosta. Scene_LoadRoom rozpoznaje descriptor lustra (slot 69, 0x8018FB44) w M017/M018/M021/M045/M102/M151/M319 i przypisuje natywny PmCommand; pozostałe descriptory jawnie zwracają -2 z diagnostyką, zanim zmienione zostaną banki sceny. Nie ma konwersji adresu MIPS na wywoływalny wskaźnik. Draw_InitPipeline ma zgodną deklarację i przerywa dalszą inicjalizację po błędzie loadera; przeszedł syntax check, lecz nie jest jeszcze wykonywany w natywnym runtime. Audyt danych scene-spawn potwierdza format rekordów oraz adres i whitelistę siedmiu pokojów. Pełny build i sześć testów original-game (model-setup, actor-lifecycle, entity-textures, entity-texture-assets, shadow, scene-spawn) przechodzą. ASan/UBSan/function scalanego loadera tekstur przechodzi 414 pokoi/296 obrazów, 14 banków/180 TIM/9591 klatek animacji; PsyZ nieinstrumentowane. Pełna Scene_LoadRoom wraz z rejestracją descriptora nie została jeszcze wykonana w teście; inne descriptory nadal są niezaimplementowane. To cofnięcie wydzielenia i częściowe wiązanie overlayu, nie działająca scena ani zakończenie portu.
 
 Cały oryginalny cdrom/scene_assets.c kompiluje się w natywnym targetcie. CdRom_ReadSectorsFromLba/CdRom_ReadSectors/CdRom_PollReady korzystają z obrazu pliku i oryginalnych flag zajętości, bez negocjacji fizycznego napędu, kontroli pokrywy ani zakończenia procesu przy zmianie dysku. CdRom_BindImage wiąże istniejący otwarty obraz i zakres PE.IMG; offset sektorowy jest sprawdzany pod kątem przepełnienia. Usunięto pc/host_disc.c, pc/host_disc.h i powielający poll include/pe1/cd_poll.h. Czytnik ISO/CUE/BIN pc/disc.c nadal jest zależnością i pozostaje do integracji w oryginalnym kodzie/platformie. Akao_SetPos3D w tym module odczytuje flagę i tabelę bezpośrednio z g_GameState zamiast starego widoku AkaoRuntimeState. Testy odczytu obejmują rzeczywiste dane, niewyrównany bufor z wartownikami, bazę+offset, zajętość, poll, przepełnienie, brak bufora, zakres poza obrazem i odmontowanie. Pełny build i pięć testów original-game (akao-instrument, akao-assets, akao-menu-assets, akao-tick-assets, entity-texture-assets) przechodzą na Disc 1. To weryfikuje odczyt używany przez oryginalne loadery banków audio/tekstur; pełna Scene_LoadRoom, pozycjonowanie dźwięku i reszta modułu nie zostały jeszcze wykonane.
+
+
+### Execute the original room loader and restore boot input rules
+
+Scene_LoadRoom now has an execution fixture against Disc 1 for M017, M018,
+M021, M045, M102, M151 and M319. It checks the original room-name codec,
+file-image reads, mirror descriptor binding, native bank roots/rows and script
+relocation without modifying serialized room bytes. M005 returns -2 for its
+unimplemented descriptor before altering bank pointers. The fixture presets
+cached audio IDs: cold bank loading and a playable scene are not established.
+The original resident base32 alphabet was restored from USA EXE data.
+The real-data texture fixture passes ASan/UBSan/function, including its existing
+414-room texture corpus; PsyZ/SDL libraries are not instrumented.
+
+Restored the full Scene_CheckFlagBits body and five input globals unchanged to
+src/main/boot/init.c; deleted src/main/scene/input_rules.c. The entire original
+boot module now compiles, using RECT for ClearImage and correctly typed pad
+buffer arguments. Removed an unused card-internals include; FieldSfxScriptArgs
+checks three native pointers, while scalar queue layout assertions remain.
+Full build and five original-game tests (input-rules, actor-animation,
+player-input-assets, entity-textures, entity-texture-assets) pass with required
+Disc 1 assets. The input-rule fixture also passes ASan/UBSan/function.
+Boot_InitSystem and the full boot sequence have not been executed by these
+checks. Remaining extractions and the entire pc/ directory still require removal.

@@ -3,6 +3,11 @@
 #include "pe1/player_entity.h"
 #include "pe1/scene_assets.h"
 #include <stdio.h>
+#include "pe1/geom_state.h"
+#include "pe1/field_movement.h"
+#include "pe1/pad_state.h"
+GeomScrollRecord g_GeomScroll;
+PadPacket g_PadPackets[2];
 /* Record positional sound requests; no replacement audio ships with the game. */
 AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
 static unsigned sounds;
@@ -49,6 +54,45 @@ int main(void)
     Entity_AdvanceAnim(&parent);
     if(sounds!=2) return 8;
     g_GameState.bank_state_11=0;g_GameState.bank_state_12=0;g_FieldActorListHead=0;
-    puts("Original action propagation, parent clock, loop, clamp and sound trigger passed");
+    {
+        BattleEntity actor={0}; Combatant core={0};
+        RenderAnimationDataHeader action={0};action.frame_count=8;
+        for(unsigned mode=0;mode<24;++mode) g_GameState.bank_rows[0][mode]=&action;
+        actor.core=&core;actor.moveFactor=0xCCC0;actor.moveSpeed=4096;
+        g_PlayerEntity=(FieldActor *)&actor;
+        g_GeomScroll.state.position.cameraBasis.m[0][0]=4096;
+        g_GeomScroll.state.position.cameraBasis.m[1][1]=4096;
+        g_GeomScroll.state.position.cameraBasis.m[2][2]=4096;
+        const unsigned pads[]={FIELD_PAD_UP,FIELD_PAD_LEFT,FIELD_PAD_DOWN,FIELD_PAD_RIGHT};
+        const int dx[]={0,-1,0,1},dz[]={-1,0,1,0};
+        for(unsigned run=0;run<2;++run) for(unsigned dir=0;dir<4;++dir) {
+            int state=-1, speed=run?FIELD_RUN_SPEED:FIELD_WALK_SPEED;
+            g_FieldPadBits=pads[dir];
+            if(run)Scene_UpdateEntityFacing(&actor,&state);
+            else Scene_UpdatePlayerEntity(&actor,&state);
+            if(actor.motionX!=dx[dir]*speed || actor.motionZ!=dz[dir]*speed || actor.motionY ||
+               actor.facingAngle!=dir*1024 || actor.actionMode!=(run?23:22) ||
+               actor.actionData!=&action) return 9;
+        }
+        int state=22;g_FieldPadBits=0;
+        Scene_UpdatePlayerEntity(&actor,&state);
+        if(actor.motionX || actor.motionY || actor.motionZ) return 10;
+        g_FieldPadBits=FIELD_PAD_LEFT;g_FieldMoveLock=FIELD_MOVE_CONFUSED;
+        Scene_UpdatePlayerEntity(&actor,&state);
+        if(actor.motionX!=FIELD_WALK_SPEED || actor.facingAngle!=1024) return 11;
+        g_FieldMoveLock=0;
+        g_PadPackets[0].header=0x7000;
+        const unsigned ax[]={0,128,255,128},ay[]={128,0,128,255};
+        const int mx[]={-1,0,1,0},mz[]={0,1,0,-1};
+        for(unsigned dir=0;dir<4;++dir) {
+            g_PadPackets[0].leftX=ax[dir];g_PadPackets[0].leftY=ay[dir];
+            Scene_UpdatePlayerEntity(&actor,&state);
+            if(actor.motionX!=mx[dir]*FIELD_WALK_SPEED || actor.motionZ!=mz[dir]*FIELD_WALK_SPEED) return 12;
+        }
+        Scene_Init(&actor,&state);
+        if(actor.actionMode!=21 || actor.motionX || actor.motionZ) return 13;
+        g_PlayerEntity=0;
+    }
+    puts("Original action/clock/audio trigger and digital/analog player motion passed");
     return 0;
 }

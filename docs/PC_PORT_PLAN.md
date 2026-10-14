@@ -943,3 +943,30 @@ original/test sources; GPU model regression and full build pass. Some changed
 legacy mesh/overlay/script units are not yet part of a linked native scene, so
 this is not execution evidence for those paths. Room light tint and projection/
 view-slot aliases still need integration; the full scene remains incomplete.
+
+### Original player input and native atan ABI — 2026-10-14
+
+Moved the five original idle/walk/run/facing handlers from player_movement.c
+(the unrelated TIM helpers stay there) into player_input.c and linked them with
+original action selection/animation. The original ApplyMatrixLV SDK procedure is
+also linked. Input handlers use the canonical player pointer and shared camera
+basis/angles. Negative sine/cosine scaling uses multiplication rather than an
+undefined signed left shift. A call without a directional digital bit now has
+a zero-initialized motion vector instead of reading indeterminate stack data.
+
+Digital walk/run tests pass for all four axes using the observed retail speeds,
+and verify original action selection. Idle, no-input and Confusion reversal also
+pass. Analog left initially failed: the game's int/int ratan2 declaration called
+PsyZ's LP64 long/long function, turning a negative axis into a positive 64-bit
+value. Our PsyZ fork commit bf37e56 makes the native signature signed int/int,
+matching PS1 coordinate width, and adds SDK signature/axis regression cases.
+The root end-to-end analog tests now pass for all four axes. The fork is pushed
+to khasinski/parasite-eve-psyz and pinned by the root submodule.
+
+Full build, original movement/action-animation CTests and ASan/UBSan/function
+instrumented game/test sources pass. PsyZ archive remains uninstrumented; its
+new standalone SDK test suite was not run here. Existing positional-audio test
+recording remains a test fixture, not a runtime replacement. SDL input sampling,
+original input-rule selection, movement/collision integration and scene rendering
+are still not wired together in a playable location. Battle movement variants,
+diagonals and arbitrary camera rotations require further integration evidence.

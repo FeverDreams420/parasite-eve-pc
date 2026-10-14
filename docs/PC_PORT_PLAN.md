@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+`pc/matrix.c` wykonuje command-mode poses w C: 12-bit fractional rotation, signed-halfword input, saturated rotation i wrapped word translation. Push/pop używa zwykłej pamięci; child translation pochodzi z Z części, root z source matrix. Błąd komendy/capacity zachowuje output. Audyt wylicza 17748 neutral-input matrices dla 878 modeli. 27 testów headless z Disc 1 oraz ASan/UBSan matrix fixture i pełnego audytu przechodzi. Animated inputs, alternate animation modes, hit-volume/view transforms i reference pose/image validation pozostają wymagane.
+
 Model parser dekoduje matrix commands (part/push/pop), odrzuca stack underflow, błędne signed part indices i output-buffer overflow oraz zapisuje stack depth. Audyt Disc 1 waliduje 24942 komendy, 17748 matrix outputs w 878 modelach; maksymalna głębokość wynosi 4. Test sprawdza rodzaje, referencje i zachowanie output przy błędzie. 26 testów headless oraz ASan/UBSan fixture i pełnego audytu przechodzi. Egzekucja fixed-point transforms i rendering wyników pozostają wymagane.
 
 Model accessors dekodują signed vertex positions, raw normal/color words, part visibility/ranges/translations i cztery klasy primitive descriptors. Open sprawdza vertex references trójkątów/quadów; accessor zachowuje output przy błędnym indeksie lub zmienionych malformed data. Audyt Disc 1 dekoduje 236410 vertices i 346985 descriptors w 878 modelach. 26 testów headless oraz ASan/UBSan model fixture i pełnego scene/model audit przechodzi. Lighting, transforms, matrix commands i rendering pozostają wymagane; decoded geometry nie dowodzi wyrenderowanej gry.

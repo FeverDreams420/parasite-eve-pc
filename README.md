@@ -570,6 +570,16 @@ kinds, references and failure preservation. All 26 tests pass headless;
 fixtures and the full model/scene audit pass ASan/UBSan. Executing fixed-point
 matrix transforms and rendering their results remain unfinished.
 
+`pc/matrix.c` executes command-mode model poses in C with 12-bit fractional
+rotation, signed-halfword input vectors, saturated rotation output and wrapped
+word translations. Hierarchy push/pop uses ordinary memory; child translation
+comes from the part's Z offset, while root uses the source matrix translation.
+Output remains unchanged on command/capacity failure. The audit computes
+17,748 neutral-input matrices across all 878 models. All 27 tests pass headless
+with Disc 1; matrix fixtures and the full model/scene audit pass ASan/UBSan.
+Animated inputs, alternate animation modes, hit-volume/view transforms and
+reference pose/image validation remain unfinished.
+
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one
 lists the other 75 faces). The original lookup only searches listed faces.

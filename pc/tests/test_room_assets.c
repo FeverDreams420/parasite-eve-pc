@@ -11,6 +11,7 @@
 #include "scene_audio.h"
 #include "collision.h"
 #include "model.h"
+#include "matrix.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -71,6 +72,7 @@ int main(void) {
     uint64_t bank_root_records = 0, bank_row_records = 0;
     unsigned model_prefixes=0; uint64_t model_vertices=0, model_primitives=0, model_textures=0;
     uint64_t matrix_commands=0,matrix_outputs=0;unsigned matrix_depth=0;
+    uint64_t computed_matrices=0;
     unsigned floor_probe_outside = 0, floor_probe_unindexed = 0, floor_probe_contained_missing = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -104,6 +106,11 @@ int main(void) {
             for(unsigned instruction=0;instruction<model.matrix_bytes;++instruction) {
                 PeMatrixCommand decoded;CHECK(pe_model_matrix_command(&model,instruction,&decoded));
             }
+            PeMatrix base,sources[255],pose[255];unsigned written=0;
+            pe_matrix_identity(&base);
+            for(unsigned part=0;part<model.part_count;++part)pe_matrix_identity(&sources[part]);
+            CHECK(pe_model_matrices(&model,&base,sources,model.part_count,pose,255,&written));
+            CHECK(written==model.matrix_outputs);computed_matrices+=written;
             for(unsigned vertex=0;vertex<model.vertex_count;++vertex) {
                 PeModelVertex decoded; CHECK(pe_model_vertex(&model,vertex,&decoded));
             }
@@ -313,6 +320,8 @@ int main(void) {
     printf("Model texture records decoded: %llu; not rendered\n",(unsigned long long)model_textures);
     printf("Model matrix commands: %llu, %llu outputs, maximum stack depth %u; transforms pending\n",
            (unsigned long long)matrix_commands,(unsigned long long)matrix_outputs,matrix_depth);
+    printf("Model neutral-input pose matrices computed: %llu; animation/reference pose validation pending\n",
+           (unsigned long long)computed_matrices);
     pe_collision_close(&room_collision);
     printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
            (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);

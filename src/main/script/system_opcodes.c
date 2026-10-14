@@ -1050,12 +1050,12 @@ int Script_SetAnimSlotPointer(int **arg0) {
     return 1;
 }
 
-int Script_SetInputFlagBit2(void) {
+int Script_SetInputFlagBit2(int **unused) {
     g_FieldMoveLock |= 4;
     return 1;
 }
 
-int Script_ClearInputFlagBit2(void) {
+int Script_ClearInputFlagBit2(int **unused) {
     g_FieldMoveLock &= -5;
     return 1;
 }

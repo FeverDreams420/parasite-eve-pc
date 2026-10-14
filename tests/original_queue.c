@@ -389,6 +389,15 @@ int main(void)
         if(g_EntityCollisionWallSlot!=(short *)(entries+3) || g_EntityCollisionWallParam!=(s16)0x12345 ||
            task.current.script!=script+6 || task.flags!=0x10) return 40;
     }
+    {
+        FieldActor owner={0};
+        u32 script[]={174,0,44|(1u<<13)|(2u<<17),0,45,173,0,44|(1u<<13)|(2u<<17),0,46,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;g_FieldMoveLock=(s32)0x80000081u;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[45]!=0x80000085 || g_ScriptVariableBank[46]!=0x80000081 ||
+           (u32)g_FieldMoveLock!=0x80000081 || task.current.script!=script+12 || task.flags!=0x10) return 41;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

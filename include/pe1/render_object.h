@@ -764,7 +764,9 @@ extern u8 g_FadeParticleColorTrack[];
 int FieldFx_FadeParticle(int mode, RenderFadeParticle *particle);
 int FieldFx_FadeEmitter(int mode, RenderFadeEmitter *state);
 
-extern RenderObjectEntity g_PlayerBattleEntity;
+/* Original 0x800B0CEC is the embedded object at game state +0x14.
+ * Callers use the canonical state declared by pe1/game_state.h. */
+#define g_PlayerBattleEntity (g_GameState.scene_object)
 
 void Render_InitObjectFromTable(RenderObjectEntity *object,
                                 RenderObjectEntity *source, int index);

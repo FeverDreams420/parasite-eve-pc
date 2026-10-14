@@ -682,11 +682,11 @@ int Script_CopyEntityRenderObject(int **args) {
 
     g_CurrentEntity->parent = source;
     g_CurrentEntity->pos_x =
-        (s16)g_CurrentEntity->render_object.rotation_overrides[0].x << 16;
+        (s32)((u32)(s16)g_CurrentEntity->render_object.rotation_overrides[0].x << 16);
     g_CurrentEntity->pos_y =
-        (s16)g_CurrentEntity->render_object.rotation_overrides[0].y << 16;
+        (s32)((u32)(s16)g_CurrentEntity->render_object.rotation_overrides[0].y << 16);
     g_CurrentEntity->pos_z =
-        (s16)g_CurrentEntity->render_object.rotation_overrides[0].z << 16;
+        (s32)((u32)(s16)g_CurrentEntity->render_object.rotation_overrides[0].z << 16);
     g_CurrentEntity->flags |= 0x2000;
 
     return 1;

@@ -1122,6 +1122,61 @@ static int authored_glow_script_cycle(void)
     return 1;
 }
 
+int Script_PlayEntityAnim(s16 **args);
+int Script_CopyEntityRenderObject(int **args);
+static int original_actor_render_opcodes(void)
+{
+    FieldActor *previous=g_CurrentEntity,*previous_player=g_PlayerEntity,*previous_head=g_FieldActorListHead;
+    ScriptNode *previous_node=g_ScriptNodePool;u32 *previous_cursor=g_ScriptCursor;
+    RenderObjectEntity previous_battle=g_PlayerBattleEntity;
+    int previous_lock=g_FieldMoveLock;
+    u32 script[16]={0};
+    s16 rates[]={0,1,32,-2,32767};
+    for(unsigned player=0;player<2;++player) for(unsigned i=0;i<5;++i) {
+        FieldActor actor={.flags=0x8040};ScriptNode node={.flags=0x8000};
+        s16 rate=rates[i];s16 *args[]={&rate};
+        g_CurrentEntity=&actor;g_PlayerEntity=player?&actor:NULL;g_ScriptNodePool=&node;
+        g_PlayerBattleEntity=(RenderObjectEntity){0};g_FieldMoveLock=0x82;
+        g_ScriptCursor=script+8;
+        int duration=rate?rate:1;
+        if(Script_PlayEntityAnim(args)!=0 || actor.flags!=0x8000 || node.flags!=0x8020 || node.active!=1 ||
+           g_ScriptCursor!=script+5 || !(actor.render_object.flags_9C&4) ||
+           actor.render_object.fade_duration!=(s8)duration || actor.render_object.fade_red_step!=(u8)(128/duration)) do { fprintf(stderr,"render opcode failure line %d\n",__LINE__); return 0; } while(0);
+        if(player && (g_FieldMoveLock!=0x80 || g_PlayerBattleEntity.fade_duration!=(s8)duration ||
+           !(g_PlayerBattleEntity.flags_9C&4))) do { fprintf(stderr,"render opcode failure line %d\n",__LINE__); return 0; } while(0);
+        if(!player && (g_FieldMoveLock!=0x82 || g_PlayerBattleEntity.flags_9C)) do { fprintf(stderr,"render opcode failure line %d\n",__LINE__); return 0; } while(0);
+        rate=123;g_ScriptCursor=script+8;
+        if(Script_PlayEntityAnim(args)!=0 || g_ScriptCursor!=script+5 || actor.render_object.fade_duration!=(s8)duration) do { fprintf(stderr,"render opcode failure line %d\n",__LINE__); return 0; } while(0);
+        actor.render_object.flags_9C&=~4u;g_ScriptCursor=script+8;
+        if(Script_PlayEntityAnim(args)!=1 || node.flags!=0x8000 || g_ScriptCursor!=script+8) do { fprintf(stderr,"render opcode failure line %d\n",__LINE__); return 0; } while(0);
+    }
+    u32 saved_view[9];memcpy(saved_view,g_EntityRenderScratch,sizeof(saved_view));
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    memset(g_EntityRenderScratch,0,sizeof(saved_view));memcpy(g_EntityRenderScratch,&view,sizeof(view));
+    for(unsigned player=0;player<2;++player) for(unsigned index=0;index<2;++index) {
+        RenderMatrix matrices[2]={0};RenderVec3s bounds[4]={0};
+        for(unsigned j=0;j<2;++j) {
+            for(unsigned k=0;k<3;++k) matrices[j].rotation[k][k]=4096;
+            matrices[j].translation[0]=-100-j*10;matrices[j].translation[1]=200+j*10;matrices[j].translation[2]=-300-j*10;
+            bounds[2*j]=(RenderVec3s){-7,9,-11,10};
+        }
+        FieldActor owner={.type_id=7,.sub_id=11},dead={.type_id=7,.sub_id=11,.flags=0x10,.next=&owner};
+        FieldActor actor={.flags=0x8000};
+        owner.render_object.bounds_vertices=bounds;owner.render_object.matrices=matrices;
+        g_CurrentEntity=&actor;g_PlayerEntity=player?&owner:NULL;g_FieldActorListHead=&dead;
+        int type=player?0:7,id=11,part=index;int *args[]={&type,&id,&part};
+        if(Script_CopyEntityRenderObject(args)!=1 || actor.parent!=&owner || actor.flags!=0xa000 ||
+           actor.render_object.animation_source!=&owner.render_object || actor.render_object.table_index!=index ||
+           actor.pos_x!=(-107-(int)index*10)*65536 || actor.pos_y!=(209+(int)index*10)*65536 ||
+           actor.pos_z!=(-311-(int)index*10)*65536) do { fprintf(stderr,"render opcode failure line %d\n",__LINE__); return 0; } while(0);
+    }
+    memcpy(g_EntityRenderScratch,saved_view,sizeof(saved_view));
+    g_CurrentEntity=previous;g_PlayerEntity=previous_player;g_FieldActorListHead=previous_head;
+    g_ScriptNodePool=previous_node;g_ScriptCursor=previous_cursor;g_PlayerBattleEntity=previous_battle;g_FieldMoveLock=previous_lock;
+    puts("Original actor render opcodes: animation start/wait/finish, player battle mirror and native inherited transforms with negative coordinates passed");
+    return 1;
+}
+
 int Render_CameraTrackRelativeOffset(int **args);
 s32 Render_CameraStepAngleFade(s32 **args);
 static int original_actor_camera_opcodes(void)
@@ -1555,7 +1610,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_actor_camera_opcodes() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

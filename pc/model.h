@@ -12,9 +12,15 @@ typedef struct PeModelTexture {
     uint8_t uv[4][2], vertices;
     uint16_t clut, page;
 } PeModelTexture;
+typedef struct PeModelVertex { int16_t x,y,z; uint16_t normal; uint32_t color; } PeModelVertex;
+typedef struct PeModelPart { uint16_t first,count; uint8_t visible; uint32_t translation_z; } PeModelPart;
+typedef struct PeModelPrimitive { uint16_t vertex[4]; uint8_t vertices,kind; } PeModelPrimitive;
 /* Checked RenderObjectHeader and contiguous data prefix, borrowing bytes.
  * Texture records are decoded separately; matrix execution/rendering pending. */
 int pe_model_open(const uint8_t *bytes, size_t size, PeModel *model, char *error, size_t error_size);
 /* Packet classes 0/1: quad/triangle UV, CLUT and texture page. */
 int pe_model_texture(const PeModel *model, unsigned kind, unsigned index, PeModelTexture *texture);
+int pe_model_vertex(const PeModel *model,unsigned index,PeModelVertex *vertex);
+int pe_model_part(const PeModel *model,unsigned index,PeModelPart *part);
+int pe_model_primitive(const PeModel *model,unsigned kind,unsigned index,PeModelPrimitive *primitive);
 #endif

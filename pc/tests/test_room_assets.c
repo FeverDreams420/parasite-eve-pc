@@ -98,7 +98,18 @@ int main(void) {
                 fprintf(stderr,"Map %u model slot %u: %s\n",map,slot,bank_error); return 1;
             }
             ++model_prefixes; model_vertices+=model.vertex_count;
+            for(unsigned vertex=0;vertex<model.vertex_count;++vertex) {
+                PeModelVertex decoded; CHECK(pe_model_vertex(&model,vertex,&decoded));
+            }
+            for(unsigned part=0;part<model.part_count;++part) {
+                PeModelPart decoded; CHECK(pe_model_part(&model,part,&decoded));
+                CHECK((unsigned)decoded.first+decoded.count<=model.vertex_count);
+            }
             for(unsigned kind=0;kind<4;++kind) model_primitives+=model.packets[kind];
+            for(unsigned kind=0;kind<4;++kind) for(unsigned primitive=0;primitive<model.packets[kind];++primitive) {
+                PeModelPrimitive decoded; CHECK(pe_model_primitive(&model,kind,primitive,&decoded));
+                CHECK(decoded.vertices==(kind&1 ? 3 : 4));
+            }
             for(unsigned kind=0;kind<2;++kind) for(unsigned texture=0;texture<model.packets[kind];++texture) {
                 PeModelTexture decoded;
                 CHECK(pe_model_texture(&model,kind,texture,&decoded));

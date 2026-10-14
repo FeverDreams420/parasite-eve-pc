@@ -553,6 +553,15 @@ unchanged output on invalid access. All 26 tests pass headless with Disc 1;
 model fixtures and the full model/scene audit pass ASan/UBSan. Matrix commands,
 packet generation, animation and rendered image validation remain pending.
 
+Model accessors now decode signed vertex positions, raw normal/color words,
+part visibility/ranges/translations and all four primitive descriptor classes.
+Opening a model validates the vertices referenced by each triangle/quad.
+Accessors preserve output on invalid indices or changed malformed data. The
+Disc 1 audit decodes 236,410 vertices and 346,985 descriptors across all 878
+models. All 26 tests pass headless; model fixtures and the full scene/model
+audit pass ASan/UBSan. Lighting, transforms, matrix commands and rendering
+remain unfinished; decoded geometry does not prove the rendered game.
+
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one
 lists the other 75 faces). The original lookup only searches listed faces.

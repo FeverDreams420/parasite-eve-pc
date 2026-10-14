@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Model accessors dekodują signed vertex positions, raw normal/color words, part visibility/ranges/translations i cztery klasy primitive descriptors. Open sprawdza vertex references trójkątów/quadów; accessor zachowuje output przy błędnym indeksie lub zmienionych malformed data. Audyt Disc 1 dekoduje 236410 vertices i 346985 descriptors w 878 modelach. 26 testów headless oraz ASan/UBSan model fixture i pełnego scene/model audit przechodzi. Lighting, transforms, matrix commands i rendering pozostają wymagane; decoded geometry nie dowodzi wyrenderowanej gry.
+
 Model parser sprawdza quad/triangle texture spans i dekoduje UV pairs, CLUT oraz page words. Audyt Disc 1 odczytuje 338857 texture records w 878 modelach lokacji. Test obejmuje oba layouts, dokładne bit values, truncation i brak mutacji output przy błędnym dostępie. 26 testów headless z Disc 1 i ASan/UBSan model fixture oraz całego audytu scen/modeli przechodzi. Matrix commands, packet generation, animation i rendered image validation pozostają wymagane.
 
 `pc/model.c` dekoduje RenderObjectHeader i sprawdza sekcje parts/vertices/colors/primitive descriptors/bounds oraz zaokrąglony span matrix commands. Waliduje się 878 model prefixes Disc 1 z 236410 vertices i 346985 descriptors. Nowy 26. test sprawdza offsets, zakresy części, truncation i zachowanie starego widoku przy błędzie. 26 testów headless z Disc 1 oraz ASan/UBSan model fixture i pełnego audytu przechodzi. Matrix execution, textures/packets, animation i rendering pozostają wymagane; prefix validation nie oznacza rendered model validation.

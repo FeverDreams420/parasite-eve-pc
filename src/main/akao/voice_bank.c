@@ -215,7 +215,7 @@ void Akao_StepSequencerVoice(void *arg0) {
     Seq_MarkTrack3CMaskDirty();
 }
 
-void Akao_InitVoices(int arg0, char *arg1) {
+void Akao_InitVoices(int arg0, AkaoTrack *arg1) {
     unsigned int i;
     int mode3;
     int mode1;
@@ -242,7 +242,7 @@ init_voices_continue:
     mode1 = 1;
     fallback = g_AkaoDefaultVoiceProgram;
     mode5 = 5;
-    voice = (AkaoTrack *)arg1;
+    voice = arg1;
     field = &voice->adsr_release_rate;
     do {
         AkaoTrack *parameters = AKAO_TRACK_OF(field, adsr_release_rate);
@@ -1694,7 +1694,7 @@ void Akao_SetGlobalD2CCImmediate(AkaoGlobalParamCommand *cmd) {
     g_AkaoGlobalPitchDepth = value << 16;
 }
 
-void Akao_InitVoices(int arg0, char *arg1);
+void Akao_InitVoices(int arg0, AkaoTrack *arg1);
 
 void Akao_SlideGlobalD2CCToTarget(AkaoGlobalSlideCommand *cmd) {
     int raw_duration = cmd->duration;
@@ -1732,9 +1732,9 @@ void Akao_SlideGlobalD2CCFromStartToTarget(AkaoGlobalSlideRangeCommand *cmd) {
 void Akao_InitPrimarySecondaryVoices(void) {
     AkaoTrack *base = g_AkaoVoiceStateTable;
 
-    Akao_InitVoices(0, (char *)&base[0]);
+    Akao_InitVoices(0, &base[0]);
     g_AkaoCurTrack++;
-    Akao_InitVoices(0, (char *)&base[AKAO_VOICE_COUNT]);
+    Akao_InitVoices(0, &base[AKAO_VOICE_COUNT]);
     g_AkaoCurTrack--;
 }
 
@@ -1742,10 +1742,10 @@ void Akao_InitPrimarySecondaryVoicesWithMode(AkaoValueCommand *cmd) {
     AkaoTrack *base = g_AkaoVoiceStateTable;
     int value = cmd->value;
 
-    Akao_InitVoices(value, (char *)&base[0]);
+    Akao_InitVoices(value, &base[0]);
     if (cmd->value != 0) {
         g_AkaoCurTrack++;
-        Akao_InitVoices(cmd->value, (char *)&base[AKAO_VOICE_COUNT]);
+        Akao_InitVoices(cmd->value, &base[AKAO_VOICE_COUNT]);
         g_AkaoCurTrack--;
     }
 }

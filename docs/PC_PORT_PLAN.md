@@ -551,6 +551,8 @@ Alias views bank→track nie używają już niezgodnych native track offsets: pl
 
 Original Akao_UpdateVoiceMask restore/rebase używa pointer-width modular address delta zamiast int i odejmowania wskaźników różnych allocations. Native backup bank/24 tracks jest odtwarzany przez oryginalne CopyWords; test potwierdza przeniesienie pc/branch/four call-stack pointers aktywnych głosów, duration increments, default program/durations nieaktywnych i zachowanie volume. Seq_MarkDirtyTracks oraz Spu_MarkActiveVoicesDirty używają offsetof-derived field pointer/native stride zamiast 0xF4/0x11C. Rebase fixture, CTest i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). Dowód dotyczy syntetycznych danych dla oryginalnej procedury; native dirty-loop behavior, real sequence corpus i pełne odtwarzanie nadal wymagają weryfikacji.
 
+Original Akao_InitVoices przyjmuje typed AkaoTrack pointer zamiast byte buffer; callers nie rzutują native track arrays na char. Test wykonuje Akao_InitVoiceState→Akao_SetNotePitch→SeqOp_SetVoiceInstrument oraz oba primary/secondary init wrappers dla 48 ścieżek, matching/nonmatching bank IDs i reset-all. Sprawdza program pointer, release ADSR, durations, instrument fields/dirty flags, zachowanie assigned voice i przywrócenie current bank. CTest i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). Initialize procedures mają dowód izolowanego zachowania, nie odtwarzania sekwencji/timera ani faktycznego PCM.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

@@ -59,6 +59,9 @@ void SeqOp_SetTrack34Mask(AkaoTrack *track, u32 mask);
 void SeqOp_ClearTrack34Mask(AkaoTrack *track, u32 mask);
 void Spu_StopActiveVoices(void);
 void Akao_UpdateVoiceMask(AkaoU8 *new_base);
+void Akao_InitVoiceState(AkaoTrack *track, void *script);
+void Akao_InitPrimarySecondaryVoices(void);
+void Akao_InitPrimarySecondaryVoicesWithMode(AkaoValueCommand *command);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
 int main(void)
@@ -272,6 +275,47 @@ int main(void)
             CHECK(voice->note_length == 4 && voice->pan_duration == 2);
         }
     }
-    puts("original AKAO: commands, native voice state and sequence rebasing pass");
+    AkaoTrack initialized = {0};
+    initialized.flags = 0xffffffff;
+    initialized.assigned_voice_index = 19;
+    initialized.update_flags = 3;
+    Akao_InitVoiceState(&initialized, new_sequence);
+    CHECK(initialized.pc == new_sequence);
+    CHECK(initialized.flags == 0);
+    CHECK(initialized.volume_base == 0x6e00);
+    CHECK(initialized.expression_value == 0x32000000);
+    CHECK(initialized.sample_header == g_AkaoInstrumentTable[0].start_address);
+    CHECK(initialized.adsr_release_rate == g_AkaoInstrumentTable[0].adsr_release_rate);
+    CHECK(initialized.update_flags == (3 | AKAO_VOICE_PARAM_INSTRUMENT_FULL));
+    CHECK(initialized.assigned_voice_index == 19);
+    for (unsigned mode = 0; mode < 3; ++mode) {
+        bank.active_voice_mask = 1;
+        bank.bank_id = 73;
+        g_AkaoSequencerState.secondary.active_voice_mask = 1;
+        g_AkaoSequencerState.secondary.bank_id = 74;
+        for (unsigned i = 0; i < 48; ++i) {
+            g_AkaoVoiceStateTable[i] = (AkaoTrack){0};
+            g_AkaoVoiceStateTable[i].pc = new_sequence;
+            g_AkaoVoiceStateTable[i].note_length = 11;
+            g_AkaoVoiceStateTable[i].pan_duration = 13;
+            g_AkaoVoiceStateTable[i].adsr_release_rate = 17;
+        }
+        if (mode == 0) Akao_InitPrimarySecondaryVoices();
+        else {
+            AkaoValueCommand command = {0};
+            command.value = mode == 1 ? 73 : 75;
+            Akao_InitPrimarySecondaryVoicesWithMode(&command);
+        }
+        CHECK(g_AkaoCurTrack == &bank);
+        for (unsigned i = 0; i < 48; ++i) {
+            int reset = mode == 0 || (mode == 1 && i < 24);
+            AkaoTrack *voice = &g_AkaoVoiceStateTable[i];
+            CHECK(voice->pc == (reset ? (unsigned char *)g_AkaoDefaultVoiceProgram : new_sequence));
+            CHECK(voice->note_length == (reset ? 3 : 11));
+            CHECK(voice->pan_duration == (reset ? 1 : 13));
+            CHECK(voice->adsr_release_rate == (reset ? 5 : 17));
+        }
+    }
+    puts("original AKAO: commands, initialization and sequence rebasing pass");
     return 0;
 }

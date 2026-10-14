@@ -755,7 +755,7 @@ int Script_SetEntityMoveSpeed(int **arg0) {
     if (current == selected) {
         int scaled;
 
-        scaled = ((*args[0] >> 4) * 3) << 7;
+        scaled = (s32)(((u32)(*args[0] >> 4) * 3u) << 7);
 
         if (scaled < 0) {
             scaled += 0xFFF;

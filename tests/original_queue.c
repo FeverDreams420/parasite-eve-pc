@@ -316,6 +316,19 @@ int main(void)
            task.current.script!=script+14 || task.flags!=0x10) return 32;
         if(vector==0 && (owner.base_x!=owner.pos_x || owner.base_y!=owner.pos_y || owner.base_z!=owner.pos_z)) return 33;
     }
+    const int speeds[]={0,16,4096,-16,-4096,65536};
+    for(unsigned player=0;player<2;++player) for(unsigned i=0;i<6;++i) {
+        FieldActor owner={0};
+        u32 script[]={27|(1u<<13),0,(u32)speeds[i],32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_PlayerEntity=player?&owner:NULL;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        g_GeomScroll.state.position.focusHeight=0x1234;
+        Script_RunQueue();
+        int focus=((speeds[i]>>4)*3*128)/4096;
+        if(owner.move_speed!=(u16)(speeds[i]>>4) ||
+           g_GeomScroll.state.position.focusHeight!=(player?focus:0x1234) ||
+           task.current.script!=script+5 || task.flags!=0x10) return 34;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

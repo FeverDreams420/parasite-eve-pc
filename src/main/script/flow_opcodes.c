@@ -716,7 +716,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [11]=Script_SetEntityVec3, [12]=Script_GetEntityVec3, [14]=Entity_QueryField,
     [17]=Script_DispatchCmd, [18]=Script_SpawnChildNode, [19]=Entity_SetCurrentFlags, [20]=Entity_SelectFieldSetter,
     [22]=Entity_YieldWhileMoving, [23]=Entity_ComputeVelocityToTarget,
-    [24]=Entity_FindNodeById, [25]=Entity_GetCurrentNodeId,
+    [24]=Entity_FindNodeById, [25]=Entity_GetCurrentNodeId, [27]=Script_SetEntityMoveSpeed,
     [31]=Script_GetNodeTarget14, [32]=Entity_MarkCurrentNodeFree,
     [36]=Script_GetNodeTargets18_1C, [37]=Script_GetCurrentEntityField24,
     [38]=Script_GetCurrentEntityFieldD, [39]=Script_SetCurrentEntityFieldD,

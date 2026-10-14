@@ -40,6 +40,7 @@ int Entity_ComputeVelocityToTarget(int **args);
 int Script_DispatchCmd(int **args);
 int Script_SetEntityVec3(int **args);
 int Script_GetEntityVec3(int **args);
+int Script_SetEntityMoveSpeed(int **args);
 
 void Script_RunQueue(void);
 int Script_JumpToEntityOffset(int **args);

@@ -8,6 +8,7 @@
 #include "akao_channel.h"
 #include "akao_player.h"
 #include "music.h"
+#include "scene_audio.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -370,12 +371,14 @@ int main(void) {
     CHECK(!pe_room_blob_table(&room.data, 3, 0, &records, &count));
     pe_room_close(&room);
     pe_room_close(&room);
+    PeRoom reset_room = {0}; PeScriptProgram reset_program;
+    CHECK(pe_room_load(&catalog, 431, &reset_room));
+    CHECK(pe_script_program_open(&reset_room, &reset_program, scene_error, sizeof(scene_error)));
     pe_disc_close(&disc);
     free(spu);
     for (unsigned tick = 0; tick < 4096; ++tick)
         CHECK(pe_akao_player_tick(&owned_music->player, 0, 1, 4096));
     CHECK(owned_music->player.timer_ticks == 4096);
-    pe_music_close(owned_music);
     /* Owned scene bytes remain valid after closing their input image. */
     unsigned scene_entry, scene_sub_id;
     uint32_t scene_offset;
@@ -384,6 +387,32 @@ int main(void) {
     CHECK(pe_script_entry(&scene.scripts, scene_entry, &scene_offset));
     CHECK(pe_script_decode(&scene.scripts, scene_offset, &scene_command, scene_error, sizeof(scene_error)));
     CHECK(scene_command.opcode == 234);
+    CHECK(pe_script_actor(&reset_program, 0, &scene_entry, &scene_sub_id));
+    CHECK(pe_script_entry(&reset_program, scene_entry, &scene_offset));
+    CHECK(pe_script_decode(&reset_program, scene_offset, &scene_command, scene_error, sizeof(scene_error)));
+    CHECK(scene_command.args[0].value == 217);
+    PeScriptTask reset_task;
+    CHECK(pe_script_task_init(&reset_task, &reset_program, scene_entry, &scene.script_banks));
+    PeSceneAudio audio = {0};
+    audio.music[0] = owned_music;
+    CHECK(owned_music->player.active);
+    audio.flags = 0x1234ffff;
+    for (unsigned slot = 0; slot < 2; ++slot) {
+        audio.keys[slot][0] = 10; audio.keys[slot][1] = 20; audio.banks[slot] = 30;
+    }
+    PeScriptCommand other_command = scene_command; other_command.opcode = 233;
+    CHECK(pe_scene_audio_dispatch(&audio, &reset_task, &other_command) == PE_DISPATCH_UNSUPPORTED);
+    CHECK(audio.flags == 0x1234ffff && audio.keys[0][0] == 10);
+    CHECK(pe_scene_audio_dispatch(&audio, &reset_task, &scene_command) == PE_DISPATCH_CONTINUE);
+    CHECK(audio.flags == 0x1234ff0f);
+    for (unsigned slot = 0; slot < 2; ++slot)
+        CHECK(audio.keys[slot][0] == -1 && audio.keys[slot][1] == -1 && audio.banks[slot] == -1);
+    CHECK(owned_music->player.key_off_pending == 0xffffff);
+    for (unsigned tick = 0; tick < 3; ++tick)
+        CHECK(pe_akao_player_tick(&owned_music->player, 0, 1, 4096));
+    CHECK(!owned_music->player.active);
+    pe_music_close(owned_music);
+    pe_room_close(&reset_room);
     pe_scene_close(&scene);
     pe_scene_close(&scene);
     free(vram);

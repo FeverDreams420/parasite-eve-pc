@@ -417,5 +417,14 @@ due musical ticks. Inactive banks remain unchanged. Player tests verify this
 timing and retained control state under ASan/UBSan; all 21 tests pass headless
 with Disc 1. Secondary banks, script reset dispatch and actual envelope decay
 in synthesized audio remain to be integrated.
+
+`pc/scene_audio.c` dispatches actor opcode 234 / audio D9 to native reset:
+clear both slot key pairs and bank IDs, clear the original `0xf0` state bits,
+and request F0 release on attached players. The data test dispatches the real
+New Game M431 command after closing Disc 1, verifies slot/flag state and lets
+the owned Tutorial music stop after three further ticks. Other script audio
+commands, full scene execution and audible output remain unfinished.
+The full 21-test headless suite passes with Disc 1; the scene/audio data test
+also passes ASan/UBSan, including unchanged state for unsupported dispatch.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

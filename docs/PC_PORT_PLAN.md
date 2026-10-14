@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Dispatch `pc/scene_audio.c` obsługuje actor opcode 234 / audio D9: czyści oba zestawy kluczy/ID banków, maskę flag `0xf0` i wywołuje F0 dołączonych playerów. Test wykonuje rzeczywistą komendę M431 po zamknięciu Disc 1, sprawdza stan slotów/flag i zatrzymuje własną muzykę Tutorial po trzech kolejnych tickach. Pozostałe komendy skryptowe audio, pełna egzekucja scen i słyszalny wynik nadal pozostają nieukończone.
+
 Player banku głównego obsługuje F0 używane przez reset audio sceny: key-off dla 24 głosów, release rate 5 z zachowanym trybem release oraz przejście do stop po trzech należnych tickach muzycznych. Bank nieaktywny pozostaje bez zmian. Test playera sprawdza czas i zachowany control pod ASan/UBSan; 21 testów przechodzi headless z Disc 1. Bank wtórny, dispatch resetu skryptowego i rzeczywisty decay obwiedni w syntezie nadal wymagają integracji.
 
 `pc/music.c` ładuje muzykę główną po kluczu rekordu sceny, transakcyjnie. Właściciel kopiuje sekwencję, resident samples i grammar, ładuje wskazany bank próbek i uruchamia player pod stabilnym adresem. Błędny klucz zachowuje poprzednią muzykę. Test Disc 1 wykonuje 4096 ticków po zwolnieniu pokoju/banku wejściowego i zamknięciu obrazu płyty. Dispatch komendy skryptowej, reset pozycyjnego audio, nested banks i słyszalne odtwarzanie nadal wymagają integracji.

@@ -18,7 +18,7 @@
 #include "disc.h"
 #include "pe1/gte.h"
 #include "pe1/menu_widget.h"
-#include "host_pad.h"
+#include <SDL3/SDL.h>
 #include <stdlib.h>
 #include <psyz/system.h>
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
@@ -261,7 +261,7 @@ int Asset_Find08w(int id,int mode,int x,int y,int z)
 static int host_event(Uint32 type, SDL_Scancode key) {
     SDL_Event event={0};event.type=type;event.key.scancode=key;
     if(!SDL_PushEvent(&event))return 0;
-    while(SDL_PollEvent(&event))pe_host_pad_event(&event);
+    while(SDL_PollEvent(&event))Boot_HandlePadEvent(&event);
     return 1;
 }
 /* Reset must clear the whole native render object while keeping mounted data
@@ -463,7 +463,7 @@ int main(int argc, char **argv)
         g_PadPackets[0].header=0;
         actor.posX.fixed=actor.posY.fixed=actor.posZ.fixed=0;
         Boot_BuildRenderFlagTable();
-        pe_host_pad_reset();
+        Boot_ResetPadInput();
         if(!host_event(SDL_EVENT_KEY_DOWN,SDL_SCANCODE_S))return 44;
         Field_HandleStateTransition();
         if(g_FieldPadBits!=FIELD_PAD_UP || g_FieldPadPressed!=FIELD_PAD_UP){fprintf(stderr,"pad %x pressed %x flags %x\n",g_FieldPadBits,g_FieldPadPressed,g_GameStateFlags);return 30;}
@@ -506,7 +506,7 @@ int main(int argc, char **argv)
         if(g_FieldPadBits || g_FieldPadPressed)return 41;
         g_PadPackets[0].header=0x4000;Field_HandleStateTransition();
         if(g_FieldPadBits || (g_GameStateFlags&0x4000))return 42;
-        pe_host_pad_reset();
+        Boot_ResetPadInput();
         if(!host_event(SDL_EVENT_KEY_DOWN,SDL_SCANCODE_W) ||
            !host_event(SDL_EVENT_KEY_DOWN,SDL_SCANCODE_UP) ||
            !host_event(SDL_EVENT_KEY_UP,SDL_SCANCODE_W))return 47;

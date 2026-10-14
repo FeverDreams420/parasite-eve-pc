@@ -48,6 +48,8 @@ add_library(parasite-eve-original OBJECT
     src/main/script/system_opcodes.c
     src/main/field/actor_collision.c)
 target_include_directories(parasite-eve-original PRIVATE include)
+set_property(SOURCE src/main/boot/init.c APPEND PROPERTY INCLUDE_DIRECTORIES
+    "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
 if(MSVC)
     target_compile_options(parasite-eve-original PRIVATE /Gy /Gw)
 else()
@@ -314,7 +316,7 @@ if(BUILD_TESTING)
 endif()
 
 
-add_library(parasite-eve-original-pad OBJECT src/main/menu/widget.c pc/host_pad.c)
+add_library(parasite-eve-original-pad OBJECT src/main/menu/widget.c)
 target_include_directories(parasite-eve-original-pad PRIVATE include pc)
 target_link_libraries(parasite-eve-original-pad PRIVATE psyz)
 foreach(pad_target IN LISTS akao_runtime_targets)

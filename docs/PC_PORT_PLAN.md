@@ -2313,3 +2313,22 @@ pc/ directory and its dependencies still require removal.
 Ten CTests pass with required Disc 1 assets: AKAO instrument/assets/menu-assets,
 model setup/GPU/room-GPU, actor lifecycle, synthetic/real entity textures and
 scene spawn.
+
+
+### Remove the separate PC keyboard adapter
+
+Deleted pc/host_pad.c and pc/host_pad.h. Their platform packet producer now
+belongs to the existing boot/init.c beside the original controller decoder,
+exposed as Boot_ResetPadInput/Boot_HandlePadEvent in the existing pad header.
+Keyboard mappings, multiple-key held state, focus-loss clearing, disconnected
+second port and centered analog axes are preserved. Frontend and existing
+fixture call these endpoints directly. SDL include paths apply only to the boot
+source, without changing definitions on the other original modules. No new files.
+
+Full build and six tests pass with required Disc 1 assets where applicable:
+original input-rules, actor-animation, player-input-assets and the legacy
+boot-menu-audio, boot-replay, boot-newgame checks. Fresh ASan/UBSan/function
+actor-animation passes digital/analog movement and SDL event/focus transitions.
+PsyZ/SDL are uninstrumented. Legacy boot checks do not prove original scene
+runtime or gameplay. Other pc/ code, including the parallel scene/audio engine,
+still requires removal and original runtime integration.

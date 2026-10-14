@@ -1,4 +1,4 @@
-#include "host_pad.h"
+#include <SDL3/SDL.h>
 #include "pe1/pad_state.h"
 #include "title.h"
 #include "automation.h"
@@ -149,7 +149,7 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
     int reported_prompt = -1, reported_selection = -1;
     int audio_reported = 1;
     uint64_t leaving_at = 0;
-    pe_host_pad_reset();
+    Boot_ResetPadInput();
     Boot_BuildRenderFlagTable();
     printf("boot: main menu ready\n");
     fflush(stdout);
@@ -161,7 +161,7 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
         if (leaving_at && SDL_GetTicks() >= leaving_at) goto cleanup;
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            pe_host_pad_event(&event);
+            Boot_HandlePadEvent(&event);
             if (event.type == SDL_EVENT_QUIT) { result = 0; goto cleanup; }
             if (leaving_at) continue;
             if (event.type != SDL_EVENT_KEY_DOWN || event.key.repeat) continue;

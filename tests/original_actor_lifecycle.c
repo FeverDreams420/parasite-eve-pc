@@ -16,8 +16,43 @@ PmCommand **g_PmCmdHandlerTable=handlers;
 void *g_FieldFxTaskPrograms[104];
 static unsigned stopped;
 static int stop(PmSlotHeader *slot) { ++stopped; return 0; }
+int Pm_ScriptSendCommand1(int **args);
+int Pm_ScriptSetState(int **args);
+int Pm_ScriptGetState(int **args);
+static intptr_t sent[3];
+static int send_command(PmSlotHeader *slot, int mode, int command,
+                        intptr_t a, intptr_t b, intptr_t c)
+{
+    sent[0]=a; sent[1]=b; sent[2]=c;
+    return 42;
+}
+static int command_addresses(void)
+{
+    PmCommand command={0}; command.send=send_command;
+    handlers[0]=handlers[85]=&command;
+    primary[0].header=(PmSlotHeader){.state=2,.command=0,.field02=17,.field03=29,.ticks=123456};
+    int slot=0, subcommand=0, a=-1,b=-1,c=-1;
+    int *args[]={&slot,&subcommand,&a,&b,&c};
+    CHECK(Pm_ScriptSendCommand1(args)==1);
+    CHECK(a==17 && b==29 && c==123456);
+    CHECK(sent[0]==(intptr_t)&a && sent[1]==(intptr_t)&b && sent[2]==(intptr_t)&c);
+    CHECK(Pm_SendCmd(0,0,1,-17,0,123)==42 && sent[0]==-17 && sent[2]==123);
+    subcommand=3;
+    CHECK(Pm_ScriptSetState(args)==1 && primary[0].header.state==3);
+    subcommand=-1;
+    CHECK(Pm_ScriptGetState(args)==1 && subcommand==3);
+    CHECK(Pm_SetGetState(0,0,6)==3 && Pm_SetGetState(0,0,-1)==3);
+    primary[0].header.command=114;
+    CHECK(Pm_SendCmd(0,0,1,(intptr_t)&a,0,0)==42 && sent[0]==(intptr_t)&a);
+    CHECK(Pm_SendCmd(-1,0,0,0,0,0)==-10);
+    CHECK(Pm_SetGetState(22,0,0)==-13);
+    memset(primary,0,sizeof(primary));
+    handlers[0]=handlers[85]=NULL;
+    return 0;
+}
 int main(void)
 {
+    CHECK(command_addresses()==0);
     unsigned char *memory=malloc(16u*ENTITY_ALLOCATION_BLOCK_SIZE);
     CHECK(memory);
     g_RenderScratchBufferBase[0]=memory;

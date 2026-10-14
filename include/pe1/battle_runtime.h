@@ -90,7 +90,7 @@ void Battle_StepScriptEntry(void);
 void Battle_FlushScriptSounds(void);
 int Battle_GetAgilityBonus(void);
 void Pm_StopAll(void);
-int Pm_SendCmd(int command, int arg1, int arg2, int arg3, int arg4, int arg5);
+int Pm_SendCmd(int command, int arg1, int arg2, intptr_t arg3, intptr_t arg4, intptr_t arg5);
 int Akao_SetPos3D(int arg0, int arg1, int x, int y, int z);
 void Draw_ResetTextboxes(void);
 extern s8 g_BattleTargetIndex;

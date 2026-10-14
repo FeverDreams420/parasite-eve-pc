@@ -406,7 +406,7 @@ void Battle_Update(void) {
             } while (entity != 0);
         }
         if (g_BattleActionActorCount != 0) {
-            Pm_SendCmd(g_BattleImpactPmSlot, 0, 1, (int)&(g_BattleActionActors[0]), 0, 0);
+            Pm_SendCmd(g_BattleImpactPmSlot, 0, 1, (intptr_t)&(g_BattleActionActors[0]), 0, 0);
             Pm_SendCmd(g_BattleImpactPmSlot, 0, 0, 1, 0, 0);
             g_BattleActionActorCount = 0;
         }

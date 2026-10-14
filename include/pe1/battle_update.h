@@ -20,7 +20,7 @@ void Menu_MainUpdate(int);
 int Menu_RunFrameWithArg(void *);
 void Menu_SaveOverlayDraw(void);
 void Menu_SetItemContext(int);
-int Pm_SendCmd(int, int, int, int, int, int);
+#include "pe1/pm.h"
 void Save_DrawSlotMetadata(void);
 void srand(unsigned int);
 

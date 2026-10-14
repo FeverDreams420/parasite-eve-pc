@@ -131,7 +131,7 @@ retry:
     return slot;
 }
 
-int Pm_SendCmd(int slot, int arg1, int arg2, int arg3, int arg4, int arg5) {
+int Pm_SendCmd(int slot, int arg1, int arg2, intptr_t arg3, intptr_t arg4, intptr_t arg5) {
     PmSlotHeader *entry;
     int cmd;
     PmCommand *handler;
@@ -162,7 +162,7 @@ int Pm_SendCmd(int slot, int arg1, int arg2, int arg3, int arg4, int arg5) {
     return g_PmCmdHandlerTable[cmd]->send(entry, arg1, arg2, arg3, arg4, arg5);
 }
 
-int Pm_SetGetState(int slot, int set, int value) {
+int Pm_SetGetState(int slot, int set, intptr_t value) {
     PmSlotHeader *entry;
     int cmd;
 

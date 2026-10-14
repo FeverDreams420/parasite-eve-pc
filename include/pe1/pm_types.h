@@ -14,7 +14,7 @@ typedef struct PmSlotHeader {
     void *owner;
 } PmSlotHeader;
 
-typedef int (*PmSendCallback)(PmSlotHeader *, int, int, int, int, int);
+typedef int (*PmSendCallback)(PmSlotHeader *, int, int, intptr_t, intptr_t, intptr_t);
 
 /* Handler table entries expose both scene-asset and process-manager callbacks. */
 typedef struct PmCommand {

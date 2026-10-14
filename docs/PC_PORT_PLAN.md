@@ -1131,3 +1131,22 @@ No runtime replacement handlers were added. Full build and actor-lifecycle,
 pools and hierarchy CTests passed, as did ASan/UBSan/function instrumentation
 of game/test sources (PsyZ/SDL archives uninstrumented). This is lifecycle
 coverage, not evidence of a running full scene.
+
+### Native PM command/result addresses
+
+`Pm_SendCmd` payload arguments and `Pm_SetGetState` value/address argument now
+use `intptr_t`, as does `PmSendCallback`. Numeric game values remain signed
+32-bit values at their sources; result destinations remain `int *`. The four
+original PM script wrappers moved unchanged in behavior from system_opcodes.c
+to script/pm_commands.c, with explicit native address casts. The battle actor
+address sent to the impact task also no longer narrows to int.
+
+The lifecycle test now calls the original script wrappers and PM dispatcher
+with real native stack addresses, verifies all three header result writes,
+state set/get, rejected state values, invalid slot errors, negative numeric
+payloads, and command-114 dispatch via handler 85. Full build, five related
+CTests and game/test ASan/UBSan/function checks passed. Task callbacks in this
+test are fixture callbacks; the actual effect-handler registry and its callback
+signatures still require integration against the native `PmSendCallback` type.
+The previously recorded integer-result-pointer issue is fixed for these PM APIs;
+this does not imply the effect implementations or full scene runner are ready.

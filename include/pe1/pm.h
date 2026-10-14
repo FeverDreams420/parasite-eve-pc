@@ -33,10 +33,10 @@ int Pm_AllocSlot(unsigned int command);
 int Pm_FreeSlot(int slot);
 int Scene_LoadRoomAssets(u32 command, void *owner);
 /* arg3..arg5 are values, or result addresses when arg1 == 1 and arg2 == 0. */
-int Pm_SendCmd(int slot, int arg1, int arg2, int arg3, int arg4, int arg5);
+int Pm_SendCmd(int slot, int arg1, int arg2, intptr_t arg3, intptr_t arg4, intptr_t arg5);
 /* set == 0 stores value (< 6) as the slot state; otherwise value is the
  * address that receives the state. Returns the state. */
-int Pm_SetGetState(int slot, int set, int value);
+int Pm_SetGetState(int slot, int set, intptr_t value);
 int Pm_Start(int slot);
 int Pm_Exec(int slot);
 /* Stops the process in a slot; unless forced, only when owner matches. */

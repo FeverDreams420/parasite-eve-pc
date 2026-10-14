@@ -579,6 +579,8 @@ Pełna tabela opcode dispatch jest teraz rzeczywiście linkowana i wywoływana p
 
 Original Akao_StepSampleLoader przechodzi fixture note→tie→rest→stop dla parent BGM i child SFX, przez pełną tablicę opcode. Test sprawdza octave/pitch lookup 4096, current note 72, duration/gate 48/46, brak retrigger przy tie, key-on/key-off, primary versus SFX allocation masks i stop behavior. CTest i ASan/UBSan/function pełnego original dispatch przechodzą (PsyZ nieinstrumentowane). Wyzerowanie note_length między wywołaniami jest jawne fixture input zamiast symulowania działającego timera; dowód nie obejmuje timing drivera, rzeczywistych songs ani PCM.
 
+Original full-dispatch fixture wykonuje C8→rest→C9 dla 3 oraz zero→256 powtórzeń, potem A0; sprawdza pointer stosu, liczniki, pop i koniec banku. Extended opcode 8/9 testuje taken/not-taken signed backward branch oraz conditional pop. CTest z timeout 15s i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). Lookahead skip C8=1 jest jawnym fixture input zgodnym z katalogiem; nie udajemy załadowania całej grammar table. Full songs, wszystkie nested/conditional variants, timer oraz PCM pozostają wymagane.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

@@ -581,6 +581,42 @@ int main(int argc, char **argv)
         if (child) CHECK(g_SpuActiveVoiceMask == 0);
         else CHECK(bank.active_voice_mask == 0);
     }
-    puts("original AKAO: full dispatch executes notes, ties, rests and stop for BGM/SFX");
+    for (unsigned encoded_count = 0; encoded_count <= 3; encoded_count += 3) {
+        unsigned char loop[] = {0xc8, 0x8f, 0xc9, encoded_count, 0xa0};
+        unsigned repetitions = encoded_count ? encoded_count : 256;
+        AkaoTrack repeated = {0};
+        repeated.pc = loop;
+        bank.active_voice_mask = 1;
+        g_AkaoOpcodeArgLengths[0xc8 - 0xa0] = 1;
+        for (unsigned i = 0; i < repetitions; ++i) {
+            repeated.note_length = 0;
+            Akao_StepSampleLoader(&repeated, 1);
+            CHECK(repeated.pc == loop + 2);
+            CHECK(repeated.call_stack_index == 1);
+            CHECK(repeated.call_stack[1] == loop + 1);
+            CHECK(repeated.repeat_counters[1] == i);
+        }
+        Akao_StepSampleLoader(&repeated, 1);
+        CHECK(repeated.pc == loop + 5);
+        CHECK(repeated.call_stack_index == 0);
+        CHECK(repeated.repeat_counters[1] == repetitions);
+        CHECK(bank.active_voice_mask == 0);
+    }
+    for (unsigned pop = 0; pop < 2; ++pop) {
+        for (unsigned taken = 0; taken < 2; ++taken) {
+            unsigned char branch[16] = {0};
+            branch[8] = 2;
+            branch[9] = 0xf8;
+            branch[10] = 0xff;
+            AkaoTrack conditional = {0};
+            conditional.pc = branch + 8;
+            conditional.call_stack_index = 1;
+            conditional.repeat_counters[1] = taken;
+            g_AkaoExtOpcodeHandlers[pop ? 9 : 8](&conditional, 1);
+            CHECK(conditional.pc == branch + (taken ? 3 : 11));
+            CHECK(conditional.call_stack_index == (pop && taken ? 0 : 1));
+        }
+    }
+    puts("original AKAO: full dispatch executes BGM/SFX notes and finite/256-count loops");
     return 0;
 }

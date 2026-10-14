@@ -474,5 +474,13 @@ gain from the retained slot byte and verify missing-key no-op behavior. The
 real Tutorial task now reaches audio D0 at `0x19c0`. All 21 tests pass headless
 with Disc 1 and the scene/audio audit passes ASan/UBSan; full playback and
 scene execution remain unfinished.
+
+Scene audio D0/D3/D6 now set global tempo/pitch scales as byte-masked 16.16
+values and cancel their corresponding slide durations. D6 applies both
+immediate changes. Tests verify independent and combined state, truncation and
+the actual Tutorial D0 operand; its task now reaches actor opcode 8 at `0x19e8`.
+All 21 tests pass headless with Disc 1 and the scene/audio data test passes
+ASan/UBSan. Applying these globals in the full audio-driver schedule and
+synthesis remains pending.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

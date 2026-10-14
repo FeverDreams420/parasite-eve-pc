@@ -25,6 +25,14 @@ PeScriptDispatchResult pe_scene_audio_dispatch(void *user, PeScriptTask *task,
                                                const PeScriptCommand *command) {
     if (command->opcode != 234 || !command->count) return PE_DISPATCH_UNSUPPORTED;
     unsigned opcode = pe_script_arg_read(task, &command->args[0]);
+    if (opcode == 0xd0 || opcode == 0xd3 || opcode == 0xd6) {
+        PeSceneAudio *audio = user;
+        if (command->count < 2) return PE_DISPATCH_ERROR;
+        uint32_t value = (pe_script_arg_read(task, &command->args[1]) & 255u) << 16;
+        if (opcode != 0xd3) { audio->tempo_scale = value; audio->tempo_scale_duration = 0; }
+        if (opcode != 0xd0) { audio->pitch_scale = value; audio->pitch_scale_duration = 0; }
+        return PE_DISPATCH_CONTINUE;
+    }
     if (opcode == 0xcd) {
         PeSceneAudio *audio = user;
         if (command->count < 3) return PE_DISPATCH_ERROR;

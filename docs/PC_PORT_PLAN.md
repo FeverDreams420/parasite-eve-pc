@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Audio D0/D3/D6 ustawiają globalną skalę tempo/pitch jako maskowany bajt w 16.16 i anulują odpowiednie czasy slide. D6 stosuje obie zmiany. Test sprawdza rozdzielne/łączne wartości, truncation i rzeczywisty operand D0 Tutorial; task dochodzi do actor opcode 8 przy `0x19e8`. 21 testów headless z Disc 1 i ASan/UBSan scen/audio przechodzi. Zastosowanie globali w pełnym harmonogramie sterownika audio i syntezie pozostaje wymagane.
+
 Audio CD stosuje natychmiastową głośność banku wybranego przez cached key/handle, zeruje czas slide, oznacza aktywne głosy i zapisuje bajt głośności/flagę slotu. Test rozróżnia 7-bit gain sterownika od pełnego bajtu slotu i sprawdza brak efektu dla nieznanego klucza. Tutorial dochodzi do audio D0 przy `0x19c0`. 21 testów headless z Disc 1 i ASan/UBSan audytu scen/audio przechodzi. Pełne odtwarzanie i egzekucja scen pozostają wymagane.
 
 Opcode 28 kolejkuje zdarzenia skryptowe, mimo nazwy SFX w referencji. Kolejka zachowuje 28 wpisów, u8/u16 argumenty i ID nadawcy. Scheduler dostarcza je przez type/sub-ID lub selector aktora, tworzy taski grupy 2 z flagą 4, argumentem i trigger value oraz sprawdza cursor/pojemność przed alokacją. Test obejmuje wielu odbiorców, selector i brak częściowego dostarczenia przy przepełnieniu pod ASan/UBSan. ID aktorów i sekwencja tasków sceny zaczynają się od 1 jak w Draw_InitPipeline. New Game dochodzi do następnej komendy audio przy `0x394`. Dostarczanie zdarzeń w pełnej pętli scen i fizyczna symulacja aktorów pozostają wymagane.

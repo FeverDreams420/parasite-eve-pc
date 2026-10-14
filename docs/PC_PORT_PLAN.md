@@ -1219,3 +1219,24 @@ those branches and the background draw path still need integration coverage.
 The I/O functions are test fixtures only; this target is not the native runtime
 I/O binding. Full build, entity-textures/lifecycle/contact CTests and game/test
 ASan/UBSan/function checks passed, with PsyZ/SDL archives uninstrumented.
+
+### Native archive sector I/O used by the original entity loader
+
+pc/host_disc.c binds an open CUE/BIN disc and PE.IMG extent to the original
+CdRom_ReadSectorsFromLba/CdRom_PollReady API. Host reads are synchronous; the
+original read-in-progress flags remain set until the completion poll. Busy
+reads are rejected, archive bounds and arithmetic are checked before copying,
+and unmounted reads fail. This is I/O only, with no rewritten loader logic.
+Callers must allocate the complete requested sectors, including bank padding.
+
+The new original-game-entity-texture-assets test drives the original loader
+through four actual area/day banks (areas 10/12, days 1/7) from Disc 1, compares
+the bytes with the existing archive reader, and checks the original relocated
+bank pointers and completion flags. It also rejects reads before the archive,
+oversized requests and unmounted reads without changing a sentinel byte.
+ASan caught an undersized test allocation based on logical bank bytes instead
+of full sectors; the corrected fixture allocates the entire sector range.
+Full build, both entity-texture CTests and game/test ASan/UBSan/function checks
+passed. PsyZ/SDL archives remain uninstrumented. This adapter is not yet mounted
+by the main scene runtime; keyed stream reads, TIM-loading days, model rebuild,
+Disc 2 selection and full gameplay integration remain outstanding.

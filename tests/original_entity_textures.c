@@ -27,6 +27,7 @@ u8 g_SceneAreaType;
 s8 g_CurrentStoryDay[1];
 u32 g_PeImageBaseLba, g_EntityRenderScratch[8];
 u16 g_PeImageSectorTable[64], g_PeImageSectorBoundsNext[64];
+#ifndef PE_TEST_REAL_DISC
 static int read_result, poll_result;
 static unsigned reads;
 static u32 last_lba,last_size;
@@ -38,7 +39,12 @@ int CdRom_ReadSectorsFromLba(u32 lba,void *destination,u32 size) {
 }
 int CdRom_PollReady(void) { return poll_result; }
 int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int w) { abort(); }
+#else
+#include "host_disc.h"
+int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int w) { abort(); }
+#endif
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
+#ifndef PE_TEST_REAL_DISC
 int main(void)
 {
     struct Bank {
@@ -88,3 +94,51 @@ int main(void)
     puts("Original entity texture loader: retry/poll transitions and native bank/stream relocation passed");
     return 0;
 }
+#else
+int main(void)
+{
+    const char *path=getenv("PE_TEST_DISC");
+    if(!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+    PeDisc disc={0}; PeRoomCatalog catalog;
+    CHECK(pe_disc_open(&disc,path) && pe_room_catalog_open(&catalog,&disc));
+    pe_host_disc_bind(&disc,&catalog.archive);
+    g_PeImageBaseLba=catalog.archive.sector;
+    for(unsigned i=0;i<64;++i) {
+        g_PeImageSectorTable[i]=catalog.sector_bounds[i];
+        g_PeImageSectorBoundsNext[i]=catalog.sector_bounds[i+1];
+    }
+    unsigned loaded=0;
+    for(unsigned area=10;area<=12;area+=2) for(unsigned day=1;day<=7;day+=6) {
+        unsigned index=(area-10)/2*8+day+0x16;
+        PeRoomBlob reference={0};
+        CHECK(pe_sector_bank_load(&catalog,index,&reference));
+        size_t read_bytes=(size_t)(catalog.sector_bounds[index+1]-catalog.sector_bounds[index])*2048u;
+        CHECK(read_bytes>=reference.size);
+        u8 *buffer=calloc(1,read_bytes); CHECK(buffer);
+        g_SceneAreaType=area; g_CurrentStoryDay[0]=day;
+        g_GameState.requested_entity_bank=area;
+        g_GameState.entity_texture_blob=(SceneAssetView *)buffer;
+        g_GameState.story_day_flags=1; g_GameState.scene_init_subphase=0;
+        CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==5);
+        CHECK((g_GameState.flags&0x1004000u)==0x1004000u);
+        CHECK(!memcmp(buffer,reference.bytes,reference.size));
+        CHECK(Scene_LoadEntityTextures()==0 && g_GameState.scene_init_subphase==0);
+        CHECK(!(g_GameState.flags&0x1004000u));
+        const u8 *records; unsigned count;
+        CHECK(pe_room_blob_table(&reference,4,sizeof(SceneBankAssetRecord),&records,&count));
+        for(unsigned i=0;i<count;++i) {
+            SceneBankAssetRecord row; memcpy(&row,records+i*sizeof(row),sizeof(row));
+            CHECK(g_GameState.bank_rows[0][row.source.bytes.id]==buffer+(row.source.offsetAndId&0xffffff));
+        }
+        free(buffer); pe_room_blob_close(&reference); ++loaded;
+    }
+    unsigned char guard=0xa5;
+    CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector-1,&guard,1)==-1 && guard==0xa5);
+    CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector,&guard,UINT32_MAX)==-1 && guard==0xa5);
+    pe_host_disc_bind(NULL,NULL);
+    CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector,&guard,1)==-1 && guard==0xa5);
+    pe_disc_close(&disc);
+    printf("Original entity loader: %u real area/day banks read through native CUE/BIN I/O\n",loaded);
+    return 0;
+}
+#endif

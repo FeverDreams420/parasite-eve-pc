@@ -537,11 +537,10 @@ static __inline__ void identity_matrix(GteMatrix *matrix)
         matrix->t[0] = matrix->t[1] = matrix->t[2] = 0;
 }
 
-int BurstEffect_PlantScript(char *object)
-{
+void BurstEffect_PlantScript(PmSlotHeader *object) {
     GteVector first, second, third;
 
-    *FieldFx_GetSlot(object) = g_BurstEffectScript;
+    *FieldFx_GetSlot((FieldFxObject *)object) = g_BurstEffectScript;
     first = g_BurstEffectScaleA;
     identity_matrix(&g_BurstEffectScaleMatrix0);
     ScaleMatrix(&g_BurstEffectScaleMatrix0, &first);
@@ -583,26 +582,25 @@ int BurstEffect_PlantScript(char *object)
     g_BurstEffectSprite3.r = 128;
     g_BurstEffectSprite3.g = 128;
     g_BurstEffectSprite3.b = 128;
+}
+
+int BurstEffect_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)a, b, c, d, (int)e, (int)f);
     return 0;
 }
 
-int BurstEffect_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f) {
-    FieldFx_Spawn6(a, b, c, d, e, f);
+int BurstEffect_RegisterDrawList(PmSlotHeader *o) {
+    FieldFx_Register((FieldFxObject *)o, g_BurstEffectDrawList);
     return 0;
 }
 
-int BurstEffect_RegisterDrawList(void *o) {
-    FieldFx_Register(o, g_BurstEffectDrawList);
-    return 0;
-}
-
-int BurstEffect_RegisterPairedTables(void *obj) {
+int BurstEffect_RegisterPairedTables(PmSlotHeader *obj) {
     int first;
     int second;
     int status;
 
-    first = FieldFx_UpdateSlots(obj, g_BurstEffectUpdateList);
-    second = FieldFx_RunScript(obj, g_BurstEffectInitList, g_BurstEffectSlotSizes);
+    first = FieldFx_UpdateSlots((FieldFxObject *)obj, g_BurstEffectUpdateList);
+    second = FieldFx_RunScript((FieldFxObject *)obj, g_BurstEffectInitList, g_BurstEffectSlotSizes);
     status = first | second;
     if (status == -1) {
         BurstEffect_CloseTarget(obj);
@@ -610,20 +608,21 @@ int BurstEffect_RegisterPairedTables(void *obj) {
     return 0;
 }
 
-int BurstEffect_CloseTarget(u8 *state) {
-    state[0] = 4;
+int BurstEffect_CloseTarget(PmSlotHeader *state) {
+    state->state = 4;
     return 0;
 }
 
-int BurstEffect_ClassNop6(void) {
-    return 0;
+void BurstEffect_ClassNop6(void) {
 }
 
-int BurstEffect_ClassNop0(void) {
-    return 0;
+void BurstEffect_ClassNop0(void) {
 }
 
-int BurstEffect_InitTarget(void *object, void *slot, void *data_unused) {
+int BurstEffect_InitTarget(void *argument0, void *argument1, void *argument2) {
+    void *object = argument0;
+    void *slot = argument1;
+    void *data_unused = argument2;
     int index;
     FieldActor **targets;
     FieldActor *target;
@@ -656,7 +655,10 @@ int BurstEffect_InitTarget(void *object, void *slot, void *data_unused) {
     return 0;
 }
 
-int BurstEffect_InitGroundGlow(void *arg0, void *arg1, FieldFxBurstData *anim) {
+int BurstEffect_InitGroundGlow(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxBurstData *anim = argument2;
     u16 x = g_BurstEffectTargetPosition.x;
     BattleEntity *entity = D_8009D254;
     int y;
@@ -669,10 +671,14 @@ int BurstEffect_InitGroundGlow(void *arg0, void *arg1, FieldFxBurstData *anim) {
     anim->header.scale = 0x7F;
     anim->header.duration = 0x60C;
     anim->header.origin_z = z;
+
+    return 0;
 }
 
-void FieldFx_InitRandomOffsetPairs(void *arg0, void *arg1,
-                                     FieldFxBurstData *anim) {
+int FieldFx_InitRandomOffsetPairs(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxBurstData *anim = argument2;
     FieldFxPointTriple *base;
     u16 *base_values;
     FieldFxBurstWindow *window;
@@ -703,9 +709,14 @@ void FieldFx_InitRandomOffsetPairs(void *arg0, void *arg1,
         i++;
         window->offset.z = 0;
     } while (((unsigned int)i & 0xFFFF) < 2);
+
+    return 0;
 }
 
-int BurstEffect_InitSparkPoint(void *arg0, void *arg1, FieldFxBurstData *anim) {
+int BurstEffect_InitSparkPoint(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxBurstData *anim = argument2;
     u16 z;
 
     anim->header.origin_x = (g_BurstEffectTargetPosition.x + (rand() % 201)) - 0x64;
@@ -714,16 +725,27 @@ int BurstEffect_InitSparkPoint(void *arg0, void *arg1, FieldFxBurstData *anim) {
     anim->header.scale = 0x7F;
     anim->header.duration = 0x544;
     anim->header.origin_z = z;
+
+    return 0;
 }
 
 /* Two empty field effect callbacks. */
-void BurstEffect_InitNop4(void) {
+int BurstEffect_InitNop4(void *argument0, void *argument1, void *argument2) {
+
+
+    return 0;
 }
 
-void BurstEffect_DrawNop0(void) {
+int BurstEffect_DrawNop0(void *argument0, void *argument1, void *argument2) {
+
+
+    return 0;
 }
 
-int BurstEffect_DrawGroundGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
+int BurstEffect_DrawGroundGlow(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxGlowPoint *anim = argument2;
     u16 *field = &g_BurstEffectSprite1.depth;
     GteMatrix matrix;
     GteShortVector rot;
@@ -752,9 +774,14 @@ int BurstEffect_DrawGroundGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
 
     ScaleMatrix(&matrix, &scaleCopy);
     FieldFx_DrawGlowSprite(&g_BurstEffectSprite1, &matrix, 0);
+
+    return 0;
 }
 
-int BurstEffect_DrawSparkPairs(void *arg0, void *arg1, FieldFxBurstData *anim) {
+int BurstEffect_DrawSparkPairs(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxBurstData *anim = argument2;
     FieldFxBurstWindow *window;
     u16 i;
 
@@ -778,11 +805,16 @@ int BurstEffect_DrawSparkPairs(void *arg0, void *arg1, FieldFxBurstData *anim) {
         g_BurstEffectScaleMatrix2.t[2] = (s16)window->point.z;
         FieldFx_DrawGlowSprite(&g_BurstEffectSprite3, &g_BurstEffectScaleMatrix2, 1);
     }
+
+    return 0;
 }
 
 /* Burst and spark effect setup, draw and lifecycle callbacks. */
 
-int BurstEffect_DrawSparkPoint(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
+int BurstEffect_DrawSparkPoint(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxGlowPoint *anim = argument2;
     int *base_a1;
     u16 *field_v1;
 
@@ -798,27 +830,42 @@ int BurstEffect_DrawSparkPoint(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
     g_BurstEffectScaleMatrix0.t[2] = (s16)anim->position.z;
     *field_v1 = anim->brightness;
     FieldFx_DrawGlowSprite(&g_BurstEffectSprite2, &g_BurstEffectScaleMatrix0, 1);
+
+    return 0;
 }
 
-void BurstEffect_DrawNop4(void) {
+int BurstEffect_DrawNop4(void *argument0, void *argument1, void *argument2) {
+
+
+    return 0;
 }
 
-int BurstEffect_UpdateEnd(void *arg0, FieldFxSlot *state) {
+int BurstEffect_UpdateEnd(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    FieldFxSlot *state = argument1;
     int ret = 2;
     state->flag = ret;
     return ret;
 }
 
-int BurstEffect_UpdateGroundGlow(void *arg0, FieldFxSlot *state, FieldFxGlowPoint *anim) {
+int BurstEffect_UpdateGroundGlow(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    FieldFxSlot *state = argument1;
+    FieldFxGlowPoint *anim = argument2;
     anim->brightness = anim->brightness - 0xA;
     anim->scale += 0x3C;
     if ((s16)anim->brightness < 0x14) {
         anim->brightness = 0;
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int BurstEffect_UpdateSparkPairs(void *arg0, FieldFxSlot *state, FieldFxTwoPointMotion *anim) {
+int BurstEffect_UpdateSparkPairs(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    FieldFxSlot *state = argument1;
+    FieldFxTwoPointMotion *anim = argument2;
     unsigned int i = 0;
 
     do {
@@ -834,9 +881,14 @@ int BurstEffect_UpdateSparkPairs(void *arg0, FieldFxSlot *state, FieldFxTwoPoint
     if ((signed char)anim->age >= 8) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int BurstEffect_UpdateSparkPoint(void *arg0, FieldFxSlot *state, FieldFxGlowPoint *anim) {
+int BurstEffect_UpdateSparkPoint(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    FieldFxSlot *state = argument1;
+    FieldFxGlowPoint *anim = argument2;
     int value = rand() % 11;
     int jitter;
     FieldFxGlowPoint *output;
@@ -856,16 +908,20 @@ int BurstEffect_UpdateSparkPoint(void *arg0, FieldFxSlot *state, FieldFxGlowPoin
     if (value > (short)brightness) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int BurstEffect_UpdateEnd4(void *arg0, FieldFxSlot *state) {
+int BurstEffect_UpdateEnd4(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    FieldFxSlot *state = argument1;
     int ret = 2;
     state->flag = ret;
     return ret;
 }
 
-int BurstEffectB_PlantScript(char *object) {
-    void **slot = FieldFx_GetSlot(object);
+void BurstEffectB_PlantScript(PmSlotHeader *object) {
+    void **slot = FieldFx_GetSlot((FieldFxObject *)object);
 
     *slot = &g_BurstEffectBScript;
 
@@ -905,26 +961,25 @@ int BurstEffectB_PlantScript(char *object) {
     g_BurstEffectBState0.oriented.rgb[1] = 0x80;
     g_BurstEffectBState0.oriented.rgb[2] = 0x80;
 
+}
+
+int BurstEffectB_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)a, b, c, d, (int)e, (int)f);
     return 0;
 }
 
-int BurstEffectB_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f) {
-    FieldFx_Spawn6(a, b, c, d, e, f);
+int BurstEffectB_RegisterDrawList(PmSlotHeader *o) {
+    FieldFx_Register((FieldFxObject *)o, g_BurstEffectBDrawList);
     return 0;
 }
 
-int BurstEffectB_RegisterDrawList(void *o) {
-    FieldFx_Register(o, g_BurstEffectBDrawList);
-    return 0;
-}
-
-int BurstEffectB_RegisterPairedTables(void *obj) {
+int BurstEffectB_RegisterPairedTables(PmSlotHeader *obj) {
     int first;
     int second;
     int status;
 
-    first = FieldFx_UpdateSlots(obj, g_BurstEffectBUpdateList);
-    second = FieldFx_RunScript(obj, g_BurstEffectBInitList, g_BurstEffectBSlotSizes);
+    first = FieldFx_UpdateSlots((FieldFxObject *)obj, g_BurstEffectBUpdateList);
+    second = FieldFx_RunScript((FieldFxObject *)obj, g_BurstEffectBInitList, g_BurstEffectBSlotSizes);
     status = first | second;
     if (status == -1) {
         BurstEffectB_CloseTarget(obj);
@@ -932,20 +987,21 @@ int BurstEffectB_RegisterPairedTables(void *obj) {
     return 0;
 }
 
-int BurstEffectB_CloseTarget(u8 *state) {
-    state[0] = 4;
+int BurstEffectB_CloseTarget(PmSlotHeader *state) {
+    state->state = 4;
     return 0;
 }
 
-int BurstEffectB_ClassNop6(void) {
-    return 0;
+void BurstEffectB_ClassNop6(void) {
 }
 
-int BurstEffectB_ClassNop0(void) {
-    return 0;
+void BurstEffectB_ClassNop0(void) {
 }
 
-int BurstEffectB_InitTarget(void *object, void *slot, void *data_unused) {
+int BurstEffectB_InitTarget(void *argument0, void *argument1, void *argument2) {
+    void *object = argument0;
+    void *slot = argument1;
+    void *data_unused = argument2;
     int index;
     FieldActor **targets;
     FieldActor *target;
@@ -978,7 +1034,10 @@ int BurstEffectB_InitTarget(void *object, void *slot, void *data_unused) {
     return 0;
 }
 
-int BurstEffectB_InitSparkCloud(void *arg0, void *arg1, FieldFxSparkCloud *anim) {
+int BurstEffectB_InitSparkCloud(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxSparkCloud *anim = argument2;
     u16 *base = &g_BurstEffectBTargetPosition.x;
     u16 *base_s4;
     int i = 0;
@@ -1006,9 +1065,14 @@ int BurstEffectB_InitSparkCloud(void *arg0, void *arg1, FieldFxSparkCloud *anim)
         anim->velocity[2][slot] = 0;
         anim->velocity[1][slot] = value;
     } while ((unsigned int)(i & 0xFFFF) < 8U);
+
+    return 0;
 }
 
-int BurstEffectB_InitSparkPoint(void *arg0, void *arg1, FieldFxSparkPoint *anim) {
+int BurstEffectB_InitSparkPoint(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxSparkPoint *anim = argument2;
     int value;
 
     anim->position.x = g_BurstEffectBTargetPosition.x;
@@ -1019,12 +1083,20 @@ int BurstEffectB_InitSparkPoint(void *arg0, void *arg1, FieldFxSparkPoint *anim)
     value = rand();
     anim->displacement.z = 0;
     anim->displacement.y = (value % 101) - 0x32;
+
+    return 0;
 }
 
-void BurstEffectB_DrawNop(void) {
+int BurstEffectB_DrawNop(void *argument0, void *argument1, void *argument2) {
+
+
+    return 0;
 }
 
-int BurstEffectB_DrawSparkCloud(void *arg0, void *arg1, FieldFxSparkCloud *anim) {
+int BurstEffectB_DrawSparkCloud(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxSparkCloud *anim = argument2;
     u16 lhs_v0;
     FieldBillboard *output;
     u16 rhs_v1;
@@ -1060,9 +1132,14 @@ int BurstEffectB_DrawSparkCloud(void *arg0, void *arg1, FieldFxSparkCloud *anim)
         g_BurstEffectBState0.billboard.brightness = (s8)anim->center.brightness;
         FieldFx_DrawBillboard(&g_BurstEffectBState0.billboard);
     } while ((i & 0xFFFF) < 8);
+
+    return 0;
 }
 
-int BurstEffectB_DrawSparkPoint(void *arg0, void *arg1, FieldFxSparkPoint *anim) {
+int BurstEffectB_DrawSparkPoint(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxSparkPoint *anim = argument2;
     u16 lhs_v0;
     FieldBillboard *output;
     u16 rhs_v1;
@@ -1081,15 +1158,22 @@ int BurstEffectB_DrawSparkPoint(void *arg0, void *arg1, FieldFxSparkPoint *anim)
     g_BurstEffectBState2.oriented.position.z = anim->position.z + anim->displacement.z;
     g_BurstEffectBState2.oriented.brightness = (s8)anim->brightness;
     FieldFx_DrawBillboard(output);
+
+    return 0;
 }
 
-int BurstEffectB_UpdateEnd(void *arg0, FieldFxSlot *state) {
+int BurstEffectB_UpdateEnd(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    FieldFxSlot *state = argument1;
     int ret = 2;
     state->flag = ret;
     return ret;
 }
 
-int BurstEffectB_UpdateSparkCloud(void *arg0, FieldFxSlot *state, FieldFxSparkCloud *anim) {
+int BurstEffectB_UpdateSparkCloud(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    FieldFxSlot *state = argument1;
+    FieldFxSparkCloud *anim = argument2;
     unsigned int i = 0;
 
     anim->center.brightness -= 0x10;
@@ -1107,9 +1191,14 @@ int BurstEffectB_UpdateSparkCloud(void *arg0, FieldFxSlot *state, FieldFxSparkCl
     if ((signed char)anim->center.brightness < 0x10) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int BurstEffectB_UpdateSparkPoint(void *arg0, FieldFxSlot *state, FieldFxSparkPoint *anim) {
+int BurstEffectB_UpdateSparkPoint(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    FieldFxSlot *state = argument1;
+    FieldFxSparkPoint *anim = argument2;
     int value = rand() % 11;
     int jitter;
     FieldFxSparkPoint *output;
@@ -1129,10 +1218,12 @@ int BurstEffectB_UpdateSparkPoint(void *arg0, FieldFxSlot *state, FieldFxSparkPo
     if (value > (signed char)brightness) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int BurstEffectC_PlantScript(char *object) {
-    void **slot = FieldFx_GetSlot(object);
+void BurstEffectC_PlantScript(PmSlotHeader *object) {
+    void **slot = FieldFx_GetSlot((FieldFxObject *)object);
 
     *slot = &g_BurstEffectCScript;
     g_BurstEffectCState.oriented.scale.x = 0x300;
@@ -1146,26 +1237,25 @@ int BurstEffectC_PlantScript(char *object) {
     g_BurstEffectCState.oriented.rgb[0] = 0x80;
     g_BurstEffectCState.oriented.rgb[1] = 0x80;
     g_BurstEffectCState.oriented.rgb[2] = 0x80;
+}
+
+int BurstEffectC_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)a, b, c, d, (int)e, (int)f);
     return 0;
 }
 
-int BurstEffectC_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f) {
-    FieldFx_Spawn6(a, b, c, d, e, f);
+int BurstEffectC_RegisterDrawList(PmSlotHeader *o) {
+    FieldFx_Register((FieldFxObject *)o, g_BurstEffectCDrawList);
     return 0;
 }
 
-int BurstEffectC_RegisterDrawList(void *o) {
-    FieldFx_Register(o, g_BurstEffectCDrawList);
-    return 0;
-}
-
-int BurstEffectC_RegisterPairedTables(void *obj) {
+int BurstEffectC_RegisterPairedTables(PmSlotHeader *obj) {
     int first;
     int second;
     int status;
 
-    first = FieldFx_UpdateSlots(obj, g_BurstEffectCUpdateList);
-    second = FieldFx_RunScript(obj, g_BurstEffectCInitList, g_BurstEffectCSlotSizes);
+    first = FieldFx_UpdateSlots((FieldFxObject *)obj, g_BurstEffectCUpdateList);
+    second = FieldFx_RunScript((FieldFxObject *)obj, g_BurstEffectCInitList, g_BurstEffectCSlotSizes);
     status = first | second;
     if (status == -1) {
         BurstEffectC_CloseTarget(obj);
@@ -1173,20 +1263,21 @@ int BurstEffectC_RegisterPairedTables(void *obj) {
     return 0;
 }
 
-int BurstEffectC_CloseTarget(char *arg0) {
-    *arg0 = 4;
+int BurstEffectC_CloseTarget(PmSlotHeader *arg0) {
+    arg0->state = 4;
     return 0;
 }
 
-int BurstEffectC_ClassNop6(void) {
-    return 0;
+void BurstEffectC_ClassNop6(void) {
 }
 
-int BurstEffectC_ClassNop0(void) {
-    return 0;
+void BurstEffectC_ClassNop0(void) {
 }
 
-int BurstEffectC_InitTarget(void *object, void *slot, void *data_unused) {
+int BurstEffectC_InitTarget(void *argument0, void *argument1, void *argument2) {
+    void *object = argument0;
+    void *slot = argument1;
+    void *data_unused = argument2;
     int index;
     FieldActor **targets;
     FieldActor *target;
@@ -1215,7 +1306,10 @@ int BurstEffectC_InitTarget(void *object, void *slot, void *data_unused) {
     return 0;
 }
 
-int BurstEffectC_InitTimedSpark(void *arg0, void *arg1, FieldFxTimedSpark *anim) {
+int BurstEffectC_InitTimedSpark(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxTimedSpark *anim = argument2;
     int randomX;
     int randomY;
     u16 base;
@@ -1237,12 +1331,20 @@ int BurstEffectC_InitTimedSpark(void *arg0, void *arg1, FieldFxTimedSpark *anim)
     anim->age = 0;
     base -= 0x28;
     anim->position.z = base + (randomZ % 80);
+
+    return 0;
 }
 
-void BurstEffectC_DrawNop(void) {
+int BurstEffectC_DrawNop(void *argument0, void *argument1, void *argument2) {
+
+
+    return 0;
 }
 
-int BurstEffectC_DrawTimedSpark(void *arg0, void *arg1, FieldFxTimedSpark *anim) {
+int BurstEffectC_DrawTimedSpark(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    void *arg1 = argument1;
+    FieldFxTimedSpark *anim = argument2;
     u16 x;
     FieldBillboard *output;
     FieldFx_SetSpriteTexturePreset(3);
@@ -1260,9 +1362,13 @@ int BurstEffectC_DrawTimedSpark(void *arg0, void *arg1, FieldFxTimedSpark *anim)
 
     FieldFx_DrawBillboard(output);
     FieldFx_SetSpriteColorMode(0x10);
+
+    return 0;
 }
 
-int BurstEffectC_UpdateEnd(void *arg0, char *arg1) {
+int BurstEffectC_UpdateEnd(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    char *arg1 = argument1;
     int value;
 
     value = 2;
@@ -1270,11 +1376,16 @@ int BurstEffectC_UpdateEnd(void *arg0, char *arg1) {
     return value;
 }
 
-void BurstEffectC_UpdateTimedSpark(void *arg0, char *arg1, FieldFxTimedSpark *anim) {
+int BurstEffectC_UpdateTimedSpark(void *argument0, void *argument1, void *argument2) {
+    void *arg0 = argument0;
+    char *arg1 = argument1;
+    FieldFxTimedSpark *anim = argument2;
     anim->age++;
     if ((signed char)anim->age == 6) {
         arg1[1] = 2;
     }
+
+    return 0;
 }
 
 FieldActor *g_PointSpriteOwner;
@@ -1290,3 +1401,32 @@ PmCommand g_PointSpriteClass = {.init=PointSprite_ClassNop0,.initialize=PointSpr
 FieldActor *g_BurstEffectTarget, *g_BurstEffectBTarget, *g_BurstEffectCTarget;
 FieldFxPointTriple g_BurstEffectTargetPosition;
 FieldFxParticlePosition g_BurstEffectBTargetPosition, g_BurstEffectCTargetPosition;
+
+FieldFxHandler g_BurstEffectInitList[] = {BurstEffect_InitTarget,BurstEffect_InitGroundGlow,FieldFx_InitRandomOffsetPairs,BurstEffect_InitSparkPoint,BurstEffect_InitNop4,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_BurstEffectDrawList[] = {BurstEffect_DrawNop0,BurstEffect_DrawGroundGlow,BurstEffect_DrawSparkPairs,BurstEffect_DrawSparkPoint,BurstEffect_DrawNop4,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_BurstEffectUpdateList[] = {BurstEffect_UpdateEnd,BurstEffect_UpdateGroundGlow,BurstEffect_UpdateSparkPairs,BurstEffect_UpdateSparkPoint,BurstEffect_UpdateEnd4,(FieldFxHandler)(intptr_t)-1};
+u16 g_BurstEffectSlotSizes[] = {0,16,48,16,65535};
+int g_BurstEffectScript[] = {1835008,5177344,521273347,521338882,520224769,131072,821690368,2031616,6225920,1966080,1900544,65536,738328576,65537,65539,65538,2883585,738263044,1835008,519503872,820772864,-3,820641792,-1};
+PmCommand g_BurstEffectClass = {.init=BurstEffect_ClassNop0,.initialize=BurstEffect_PlantScript,.send=BurstEffect_Spawn6,.start=BurstEffect_RegisterDrawList,.execute=BurstEffect_RegisterPairedTables,.stop=BurstEffect_CloseTarget,.unload=BurstEffect_ClassNop6};
+
+FieldFxHandler g_BurstEffectBInitList[] = {BurstEffectB_InitTarget,BurstEffectB_InitSparkCloud,BurstEffectB_InitSparkPoint,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_BurstEffectBDrawList[] = {BurstEffectB_DrawNop,BurstEffectB_DrawSparkCloud,BurstEffectB_DrawSparkPoint,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_BurstEffectBUpdateList[] = {BurstEffectB_UpdateEnd,BurstEffectB_UpdateSparkCloud,BurstEffectB_UpdateSparkPoint,(FieldFxHandler)(intptr_t)-1};
+u16 g_BurstEffectBSlotSizes[] = {0,112,16,65535};
+int g_BurstEffectBScript[] = {5177344,520945667,521011202,520224769,131072,821690368,2031616,6225920,1966080,1900544,65536,65537,65538,519831552,821100544,-3,820969472,-1};
+PmCommand g_BurstEffectBClass = {.init=BurstEffectB_ClassNop0,.initialize=BurstEffectB_PlantScript,.send=BurstEffectB_Spawn6,.start=BurstEffectB_RegisterDrawList,.execute=BurstEffectB_RegisterPairedTables,.stop=BurstEffectB_CloseTarget,.unload=BurstEffectB_ClassNop6};
+
+FieldFxHandler g_BurstEffectCInitList[] = {BurstEffectC_InitTarget,BurstEffectC_InitTimedSpark,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_BurstEffectCDrawList[] = {BurstEffectC_DrawNop,BurstEffectC_DrawTimedSpark,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_BurstEffectCUpdateList[] = {BurstEffectC_UpdateEnd,BurstEffectC_UpdateTimedSpark,(FieldFxHandler)(intptr_t)-1};
+u16 g_BurstEffectCSlotSizes[] = {0,12,65535};
+int g_BurstEffectCScript[] = {5177344,521076738,520224769,131072,821755904,2031616,6225920,1966080,1900544,65536,65537,131074,65537,131074,65537,519634944,820969472,-1};
+PmCommand g_BurstEffectCClass = {.init=BurstEffectC_ClassNop0,.initialize=BurstEffectC_PlantScript,.send=BurstEffectC_Spawn6,.start=BurstEffectC_RegisterDrawList,.execute=BurstEffectC_RegisterPairedTables,.stop=BurstEffectC_CloseTarget,.unload=BurstEffectC_ClassNop6};
+
+GteVector g_BurstEffectScaleA = {1348,1348,1348,0};
+GteVector g_BurstEffectScaleB = {948,948,948,0};
+GteVector g_BurstEffectScaleC = {100,100,100,0};
+GteShortVector g_BurstEffectSpriteRotation = {3072,0,0,0};
+GteMatrix g_BurstEffectScaleMatrix0, g_BurstEffectScaleMatrix1, g_BurstEffectScaleMatrix2;
+FieldGlowSprite g_BurstEffectSprite0, g_BurstEffectSprite1, g_BurstEffectSprite2, g_BurstEffectSprite3;
+FieldFxSpriteState g_BurstEffectBState0, g_BurstEffectBState1, g_BurstEffectBState2, g_BurstEffectCState;

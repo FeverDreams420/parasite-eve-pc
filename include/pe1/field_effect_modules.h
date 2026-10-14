@@ -130,6 +130,7 @@ void PointSprite_ClassNop6(void);
 
 /* Burst effect (fieldfx/burst.c); its script and setup
  * are declared with the burst records in pe1/fieldfx_task.h. */
+extern PmCommand g_BurstEffectClass;
 extern FieldFxHandler g_BurstEffectInitList[];
 extern FieldFxHandler g_BurstEffectDrawList[];
 extern FieldFxHandler g_BurstEffectUpdateList[];
@@ -137,43 +138,45 @@ extern u16 g_BurstEffectSlotSizes[];
 extern GteShortVector g_BurstEffectSpriteRotation;
 extern struct FieldActor *g_BurstEffectTarget;
 int BurstEffect_InitTarget(void *object, void *slot, void *data);
-int BurstEffect_ClassNop0(void);
-int BurstEffect_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
-int BurstEffect_RegisterDrawList(void *object);
-int BurstEffect_RegisterPairedTables(void *object);
-int BurstEffect_CloseTarget(u8 *object);
-int BurstEffect_ClassNop6(void);
+void BurstEffect_ClassNop0(void);
+int BurstEffect_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int BurstEffect_RegisterDrawList(PmSlotHeader *object);
+int BurstEffect_RegisterPairedTables(PmSlotHeader *object);
+int BurstEffect_CloseTarget(PmSlotHeader *object);
+void BurstEffect_ClassNop6(void);
 
 /* Second burst effect (fieldfx/burst.c). */
 extern int g_BurstEffectBScript[];
+extern PmCommand g_BurstEffectBClass;
 extern FieldFxHandler g_BurstEffectBInitList[];
 extern FieldFxHandler g_BurstEffectBDrawList[];
 extern FieldFxHandler g_BurstEffectBUpdateList[];
 extern u16 g_BurstEffectBSlotSizes[];
 extern struct FieldActor *g_BurstEffectBTarget;
 int BurstEffectB_InitTarget(void *object, void *slot, void *data);
-int BurstEffectB_ClassNop0(void);
-int BurstEffectB_PlantScript(char *object);
-int BurstEffectB_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
-int BurstEffectB_RegisterDrawList(void *object);
-int BurstEffectB_RegisterPairedTables(void *object);
-int BurstEffectB_CloseTarget(u8 *object);
-int BurstEffectB_ClassNop6(void);
+void BurstEffectB_ClassNop0(void);
+void BurstEffectB_PlantScript(PmSlotHeader *object);
+int BurstEffectB_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int BurstEffectB_RegisterDrawList(PmSlotHeader *object);
+int BurstEffectB_RegisterPairedTables(PmSlotHeader *object);
+int BurstEffectB_CloseTarget(PmSlotHeader *object);
+void BurstEffectB_ClassNop6(void);
 
 /* Third burst effect (fieldfx/burst.c). */
 extern int g_BurstEffectCScript[];
+extern PmCommand g_BurstEffectCClass;
 extern FieldFxHandler g_BurstEffectCInitList[];
 extern FieldFxHandler g_BurstEffectCDrawList[];
 extern FieldFxHandler g_BurstEffectCUpdateList[];
 extern u16 g_BurstEffectCSlotSizes[];
 extern struct FieldActor *g_BurstEffectCTarget;
 int BurstEffectC_InitTarget(void *object, void *slot, void *data);
-int BurstEffectC_ClassNop0(void);
-int BurstEffectC_PlantScript(char *object);
-int BurstEffectC_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
-int BurstEffectC_RegisterDrawList(void *object);
-int BurstEffectC_RegisterPairedTables(void *object);
-int BurstEffectC_CloseTarget(char *object);
-int BurstEffectC_ClassNop6(void);
+void BurstEffectC_ClassNop0(void);
+void BurstEffectC_PlantScript(PmSlotHeader *object);
+int BurstEffectC_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int BurstEffectC_RegisterDrawList(PmSlotHeader *object);
+int BurstEffectC_RegisterPairedTables(PmSlotHeader *object);
+int BurstEffectC_CloseTarget(PmSlotHeader *object);
+void BurstEffectC_ClassNop6(void);
 
 #endif /* PE1_FIELD_EFFECT_MODULES_H */

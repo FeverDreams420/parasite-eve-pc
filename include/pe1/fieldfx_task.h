@@ -13,8 +13,9 @@
 
 extern GteMatrix g_BurstEffectScaleMatrix0, g_BurstEffectScaleMatrix1, g_BurstEffectScaleMatrix2;
 extern GteVector g_BurstEffectScaleA, g_BurstEffectScaleB, g_BurstEffectScaleC;
-extern char g_BurstEffectScript[];
-int BurstEffect_PlantScript(char *object);
+extern int g_BurstEffectScript[];
+struct PmSlotHeader;
+void BurstEffect_PlantScript(struct PmSlotHeader *object);
 
 typedef FieldFxCallbackListCallback FieldFxTaskCallback;
 

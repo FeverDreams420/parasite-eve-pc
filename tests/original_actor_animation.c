@@ -1028,9 +1028,9 @@ static int native_object_script_cycle(void)
 
 static int authored_glow_script_cycle(void)
 {
-    PmCommand *classes[]={&g_GlowEffectClass,&g_GlowEffectBClass,&g_GlowEffectCClass,&g_FourLayerGlowClass,&g_PointSpriteClass};
-    unsigned commands[]={0,1,2,3,7};
-    for(unsigned variant=0;variant<5;++variant) for(unsigned player_action=1;player_action<=7;++player_action) {
+    PmCommand *classes[]={&g_GlowEffectClass,&g_GlowEffectBClass,&g_GlowEffectCClass,&g_FourLayerGlowClass,&g_PointSpriteClass,&g_BurstEffectClass,&g_BurstEffectBClass,&g_BurstEffectCClass};
+    unsigned commands[]={0,1,2,3,7,5,4,6};
+    for(unsigned variant=0;variant<8;++variant) for(unsigned player_action=1;player_action<=7;++player_action) {
     struct { PmPrimarySlot primary[11]; u8 guard[16]; } buffer={0};
     RenderMatrix matrices[20]={0};
     FieldActor owner={0}; FieldActorState owner_state={0}; u8 owner_action=1;
@@ -1041,6 +1041,12 @@ static int authored_glow_script_cycle(void)
         matrices[i].translation[2]=1024;
     }
     owner.render_object.matrices=matrices; owner.pos_z=1024*65536;
+    FieldActor targets_data[2]={0}; FieldActor *targets[]={&targets_data[0],&targets_data[1],NULL};
+    for(unsigned i=0;i<2;++i) {
+        targets_data[i].render_object.target_x=20+i*40;
+        targets_data[i].render_object.target_y=0;
+        targets_data[i].render_object.target_z=1024+i*100;
+    }
     owner.state=&owner_state; owner_state.control10.command_value=1;
     owner_state.action_state=&owner_action;
     player.core=&core; core.action=&action; action.actionCode.actionId=player_action;
@@ -1063,51 +1069,54 @@ static int authored_glow_script_cycle(void)
     PmTables previous=g_PmTables; Pe1GameState previous_game=g_GameState;
     u32 previous_flags=g_GameStateFlags;
     g_PmTables=(PmTables){g_PmCmdHandlerArray,buffer.primary,NULL};
-    if(g_PmCmdHandlerArray[commands[variant]]!=classes[variant]) return 0;
+    if(g_PmCmdHandlerArray[commands[variant]]!=classes[variant]) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
     g_GameStateFlags=0x80; g_GameState.flags&=~8u; g_GameState.tim_load_state=0;
+    g_GameState.cd_range_read_mode=0;
     classes[variant]->init();
     if(Scene_LoadRoomAssets(commands[variant],&owner)!=0 || buffer.primary[0].header.owner!=&owner ||
-       buffer.primary[0].header.command!=commands[variant]) return 0;
+       buffer.primary[0].header.command!=commands[variant]) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
     unsigned seen=0, drawn=0;
-    if(Pm_SendCmd(0,0,0,variant==4?0:1,0x1234,0x5678)) return 0;
+    if(variant>=5 && Pm_SendCmd(0,0,1,(intptr_t)targets,0,0)) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
+    if(Pm_SendCmd(0,0,0,variant==4?0:1,0x1234,0x5678)) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
     for(unsigned frame=0;frame<160;++frame) {
         unsigned slot=frame&1;
         for(unsigned i=0;i<4096;++i) { ordering[i].address=0xffffff; ordering[i].length=0; }
         D_800B0E38.ordering[slot]=ordering; D_800B0E38.packets[slot]=(char *)packets;
         g_ActiveDrawSlot=slot; g_DrawPacketOffset=0;
-        if(variant<4 && frame==20 && Pm_SendCmd(0,0,0,variant==4?0:1,0,0)) return 0;
-        if(variant<4 && frame==40 && Pm_SendCmd(0,0,0,2,0,0)) return 0;
-        if(Pm_Start(0) || Pm_Exec(0)) return 0;
-        if(frame==0 && owner_action!=(variant==4?1:2)) return 0;
+        if(variant<4 && frame==20 && Pm_SendCmd(0,0,0,variant==4?0:1,0,0)) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
+        if(variant!=4 && frame==40 && Pm_SendCmd(0,0,0,2,0,0)) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
+        if(Pm_Start(0) || Pm_Exec(0)) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
+        if(frame==0 && owner_action!=((variant==4)?1:2)) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
         for(unsigned i=0;i<64;++i) if(object->slots[i].flag==1) {
             seen|=1u<<object->slots[i].handler_id;
             if(variant==4 && object->slots[i].handler_id==1) {
                 FieldFxRadialParticles *data=(void *)(object->data+object->slots[i].data_offset);
-                if(data->count!=(player_action==3?8:16)) return 0;
+                if(data->count!=(player_action==3?8:16)) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
             }
             if(variant==4 && object->slots[i].handler_id==4) {
                 FieldFxScatteredParticles *data=(void *)(object->data+object->slots[i].data_offset);
-                if(data->points.count!=(player_action==3?4:16)) return 0;
+                if(data->points.count!=(player_action==3?4:16)) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
             }
         }
         if(g_DrawPacketOffset) ++drawn;
-        if(g_DrawPacketOffset>sizeof(packets)) return 0;
-        for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
+        if(g_DrawPacketOffset>sizeof(packets)) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
+        for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
     }
-    if(seen!=(unsigned[]){0x3f,0xf,0x7,0x3f,0x3f}[variant] || !object->state.halted || object->state.slot_count || !drawn || buffer.primary[0].header.state || buffer.primary[0].header.owner) {
-        fprintf(stderr,"authored glow handlers %x halted %d slots %d drawn %u\n",seen,object->state.halted,object->state.slot_count,drawn); return 0;
+    if(seen!=(unsigned[]){0x3f,0xf,0x7,0x3f,0x3f,0xf,0x7,0x3}[variant] || !object->state.halted || object->state.slot_count || !drawn || buffer.primary[0].header.state || buffer.primary[0].header.owner) {
+        fprintf(stderr,"authored effect %u handlers %x halted %d slots %d drawn %u\n",variant,seen,object->state.halted,object->state.slot_count,drawn); do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
     }
-    if(Scene_LoadRoomAssets(commands[variant],&owner)!=0) return 0;
-    if(Pm_SendCmd(0,0,0,variant==4?0:1,0,0) || Pm_Exec(0) || !object->state.slot_count) return 0;
-    if(Pm_Stop(0,&player,0) || buffer.primary[0].header.state!=2) return 0;
-    if(Pm_Stop(0,&owner,0) || buffer.primary[0].header.state || buffer.primary[0].header.owner) return 0;
+    if(Scene_LoadRoomAssets(commands[variant],&owner)!=0) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
+    if(variant>=5 && Pm_SendCmd(0,0,1,(intptr_t)targets,0,0)) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
+    if(Pm_SendCmd(0,0,0,variant==4?0:1,0,0) || Pm_Exec(0) || !object->state.slot_count) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
+    if(Pm_Stop(0,&player,0) || buffer.primary[0].header.state!=2) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
+    if(Pm_Stop(0,&owner,0) || buffer.primary[0].header.state || buffer.primary[0].header.owner) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
     classes[variant]->unload(); g_PmTables=previous;
     g_GameState=previous_game; g_GameStateFlags=previous_flags;
     D_8009D254=saved_player; D_800B0E38=saved;
     g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset; g_GeomScroll.words.viewMatrix=saved_view;
     g_GeomScroll.words.projectionDistance=saved_projection;
     }
-    puts("Original authored glows: five resident PM IDs and native factory allocations, seven actions, send/start/exec/close/release passed");
+    puts("Original authored effects: eight resident PM IDs and native factory allocations, seven actions, send/start/exec/close/release passed");
     return 1;
 }
 
@@ -1155,8 +1164,8 @@ static int native_effect_spawn_arguments(void)
 {
     struct { FieldFxObject object; u8 guard[16]; } buffer;
     PmSendCallback spawn[]={GlowEffect_Spawn6,GlowEffectB_Spawn6,
-        GlowEffectC_Spawn6,FourLayerGlow_Spawn6,PointSprite_Spawn6};
-    for(unsigned method=0;method<5;++method) for(unsigned index=0;index<9;++index) {
+        GlowEffectC_Spawn6,FourLayerGlow_Spawn6,PointSprite_Spawn6,BurstEffect_Spawn6,BurstEffectB_Spawn6,BurstEffectC_Spawn6};
+    for(unsigned method=0;method<8;++method) for(unsigned index=0;index<9;++index) {
         memset(&buffer,0xa5,sizeof(buffer));
         FieldFxState expected=buffer.object.state;
         int value=index&1?INT_MIN:INT_MAX;
@@ -1175,7 +1184,7 @@ static int native_effect_spawn_arguments(void)
            FieldFx_Spawn6((intptr_t)&buffer.object,0,9,42,0,0)!=-1 ||
            FieldFx_Spawn6(0,0,0,42,0,0)!=-1 || memcmp(&saved,&buffer.object.state,sizeof(saved))) return 0;
     }
-    puts("Original spawn arguments: five entry points, native owners/target-list addresses, all variables, signed values and invalid bounds passed");
+    puts("Original spawn arguments: eight entry points, native owners/target-list addresses, all variables, signed values and invalid bounds passed");
     return 1;
 }
 

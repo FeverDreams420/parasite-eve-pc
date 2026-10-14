@@ -352,6 +352,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-actor-lifecycle tests/original_actor_lifecycle.c
+        $<TARGET_OBJECTS:parasite-eve-original-akao>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-disc>)
@@ -392,6 +393,8 @@ if(BUILD_TESTING)
         target_compile_options(parasite-eve-test-disc PRIVATE -ffunction-sections -fdata-sections)
     endif()
     add_executable(test-original-entity-textures tests/original_entity_textures.c
+        # This fixture already controls CdRom_ReadAssetSectors outcomes.
+        $<FILTER:$<TARGET_OBJECTS:parasite-eve-original-akao>,EXCLUDE,track_read[.]c[.]>
         $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-test-disc>

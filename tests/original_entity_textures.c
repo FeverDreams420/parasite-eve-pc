@@ -209,7 +209,7 @@ int main(void)
                 g_GameState.tim_load_state = 0;
                 reads = polls = 0; read_result = -1; poll_result = 1;
                 int needs_read = pending && (force || requested);
-                CHECK(Asset_LoadTimTextures(force) == needs_read);
+                CHECK(Asset_LoadTimTextures(force) == (needs_read ? -1 : 0));
                 CHECK(reads == (unsigned)needs_read && polls == 0);
                 if (!needs_read) {
                     CHECK(g_GameState.tim_load_state == 0);
@@ -218,13 +218,13 @@ int main(void)
                 }
                 CHECK(g_GameState.tim_load_state == 0x34);
                 CHECK(last_lba == 2050 && last_size == 10 && last_destination == &scratch);
-                CHECK(Asset_LoadTimTextures(force) == 1 && reads == 2 && polls == 0);
+                CHECK(Asset_LoadTimTextures(force) == -1 && reads == 2 && polls == 0);
                 read_result = 0;
                 CHECK(Asset_LoadTimTextures(force) == 1 && g_GameState.tim_load_state == 0x35);
                 CHECK(Asset_LoadTimTextures(force) == 1 && reads == 3 && polls == 1);
                 CHECK(g_GameState.flags == 0x408);
                 poll_result = -1;
-                CHECK(Asset_LoadTimTextures(force) == 1 && g_GameState.tim_load_state == 0x34);
+                CHECK(Asset_LoadTimTextures(force) == -1 && g_GameState.tim_load_state == 0x34);
                 CHECK(reads == 3 && polls == 2 && g_GameState.flags == 0x408);
                 CHECK(Asset_LoadTimTextures(force) == 1 && reads == 4);
                 poll_result = 0;

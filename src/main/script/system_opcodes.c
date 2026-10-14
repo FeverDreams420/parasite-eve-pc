@@ -1512,12 +1512,12 @@ int Entity_PopCount(int **arg0) {
     return 1;
 }
 
-int Script_EnableEntityGravity(void) {
+int Script_EnableEntityGravity(int **unused) {
     g_CurrentEntity->flags |= 2;
     return 1;
 }
 
-int Script_DisableEntityGravity(void) {
+int Script_DisableEntityGravity(int **unused) {
     g_CurrentEntity->flags &= -3;
     return 1;
 }

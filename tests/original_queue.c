@@ -398,6 +398,16 @@ int main(void)
         if(g_ScriptVariableBank[45]!=0x80000085 || g_ScriptVariableBank[46]!=0x80000081 ||
            (u32)g_FieldMoveLock!=0x80000081 || task.current.script!=script+12 || task.flags!=0x10) return 41;
     }
+    {
+        FieldActor owner={.type_id=8,.sub_id=3,.flags=0x80002000};
+        u32 query=14|(4u<<13)|((2u<<9)<<17);
+        u32 script[]={223,0,query,0,1,8,3,47,224,0,query,0,1,8,3,48,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[47]!=0x80002002 || g_ScriptVariableBank[48]!=0x80002000 ||
+           owner.flags!=0x80002000 || task.current.script!=script+18 || task.flags!=0x10) return 42;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

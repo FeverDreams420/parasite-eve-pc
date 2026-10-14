@@ -46,6 +46,8 @@ int Menu_GetModeState(int **args);
 int Script_SetAnimSlotPointer(int **args);
 int Script_SetInputFlagBit2(int **unused);
 int Script_ClearInputFlagBit2(int **unused);
+int Script_EnableEntityGravity(int **unused);
+int Script_DisableEntityGravity(int **unused);
 int Script_SetSceneFlag2000(int **unused);
 int Script_ClearSceneFlag2000(int **unused);
 int Entity_SetCurrentFlag80(int **unused);

@@ -6,11 +6,9 @@
 #include "pe1/gte_types.h"
 #include "pe1/render_object.h"
 
-/* GPU packet head shared by every primitive class: the word count byte of
- * the tag and the command byte after the first colour. */
+/* PsyZ native packet head: pointer, command-word count and first colour. */
 typedef struct RenderPrimHead {
-    u8 address[3];
-    u8 length;
+    uintptr_t address, length;
     RenderPacketValue colour;
 } RenderPrimHead;
 

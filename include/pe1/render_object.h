@@ -2,6 +2,7 @@
 #define PE1_RENDER_OBJECT_H
 
 #include "common.h"
+#include "pe1/render_packets.h"
 #include "pe1/field_color.h"
 #include "pe1/field_sprite_draw.h"
 #include "pe1/field_sprite_params.h"
@@ -383,10 +384,9 @@ typedef struct RenderPrimitiveDescriptor {
     /* 0x04 */ u16 lookup_indices[4];
 } RenderPrimitiveDescriptor;
 
-/* Shared prefix through the page/depth selector used by the 0x34- and
- * 0x28-byte double-buffered packet classes. */
+/* Native model-packet prefix through the texture-page selector. */
 typedef struct RenderPacketState {
-    /* 0x00 */ unsigned char reserved00[0x1A];
+    /* 0x00 */ unsigned char reserved00[sizeof(RenderNativeTag) + 0x16];
     /* 0x1A */ u16 page_bits;
 } RenderPacketState;
 
@@ -401,61 +401,61 @@ typedef union RenderPacketValue {
 } RenderPacketValue;
 
 typedef struct RenderPacket34 {
-    /* 0x00 */ u32 tag;
-    /* 0x04 */ RenderPacketValue values0;
-    /* 0x08 */ u32 sxy0;
-    /* 0x0C */ u8 u0, v0;
-    /* 0x0E */ u16 clut;
-    /* 0x10 */ u32 value1;
-    /* 0x14 */ u32 sxy1;
-    /* 0x18 */ u8 u1, v1;
-    /* 0x1A */ u16 page_bits;
-    /* 0x1C */ u32 value2;
-    /* 0x20 */ u32 sxy2;
-    /* 0x24 */ u8 u2, v2;
-    /* 0x26 */ u16 reserved26;
-    /* 0x28 */ u32 value3;
-    /* 0x2C */ u32 sxy3;
-    /* 0x30 */ u8 u3, v3;
-    /* 0x32 */ u16 reserved32;
+    uintptr_t tag, length;
+    RenderPacketValue values0;
+    u32 sxy0;
+    u8 u0, v0;
+    u16 clut;
+    u32 value1;
+    u32 sxy1;
+    u8 u1, v1;
+    u16 page_bits;
+    u32 value2;
+    u32 sxy2;
+    u8 u2, v2;
+    u16 reserved26;
+    u32 value3;
+    u32 sxy3;
+    u8 u3, v3;
+    u16 reserved32;
 } RenderPacket34;
 
 typedef struct RenderPacket28 {
-    /* 0x00 */ u32 tag;
-    /* 0x04 */ RenderPacketValue values0;
-    /* 0x08 */ u32 sxy0;
-    /* 0x0C */ u8 u0, v0;
-    /* 0x0E */ u16 clut;
-    /* 0x10 */ u32 value1;
-    /* 0x14 */ u32 sxy1;
-    /* 0x18 */ u8 u1, v1;
-    /* 0x1A */ u16 page_bits;
-    /* 0x1C */ u32 value2;
-    /* 0x20 */ u32 sxy2;
-    /* 0x24 */ u8 u2, v2;
-    /* 0x26 */ u16 reserved26;
+    uintptr_t tag, length;
+    RenderPacketValue values0;
+    u32 sxy0;
+    u8 u0, v0;
+    u16 clut;
+    u32 value1;
+    u32 sxy1;
+    u8 u1, v1;
+    u16 page_bits;
+    u32 value2;
+    u32 sxy2;
+    u8 u2, v2;
+    u16 reserved26;
 } RenderPacket28;
 
 typedef struct RenderPacket24 {
-    /* 0x00 */ u32 tag;
-    /* 0x04 */ RenderPacketValue values0;
-    /* 0x08 */ u32 sxy0;
-    /* 0x0C */ u32 value1;
-    /* 0x10 */ u32 sxy1;
-    /* 0x14 */ u32 value2;
-    /* 0x18 */ u32 sxy2;
-    /* 0x1C */ u32 value3;
-    /* 0x20 */ u32 sxy3;
+    uintptr_t tag, length;
+    RenderPacketValue values0;
+    u32 sxy0;
+    u32 value1;
+    u32 sxy1;
+    u32 value2;
+    u32 sxy2;
+    u32 value3;
+    u32 sxy3;
 } RenderPacket24;
 
 typedef struct RenderPacket1C {
-    /* 0x00 */ u32 tag;
-    /* 0x04 */ RenderPacketValue values0;
-    /* 0x08 */ u32 sxy0;
-    /* 0x0C */ u32 value1;
-    /* 0x10 */ u32 sxy1;
-    /* 0x14 */ u32 value2;
-    /* 0x18 */ u32 sxy2;
+    uintptr_t tag, length;
+    RenderPacketValue values0;
+    u32 sxy0;
+    u32 value1;
+    u32 sxy1;
+    u32 value2;
+    u32 sxy2;
 } RenderPacket1C;
 
 /* Hit sphere keyed by a part id: Render_FindAnimEntry looks one up by id, and
@@ -572,20 +572,13 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPrimitiveDescriptor, kind) == 3,
                   render_primitive_descriptor_kind_offset);
 PE1_STATIC_ASSERT(sizeof(RenderPrimitiveDescriptor) == 0x0C,
                   render_primitive_descriptor_size);
-PE1_STATIC_ASSERT(sizeof(RenderPacketState) == 0x1C,
+PE1_STATIC_ASSERT(sizeof(RenderPacketState) == sizeof(RenderNativeTag) + 24,
                   render_packet_state_prefix_size);
 PE1_STATIC_ASSERT(sizeof(RenderPacketValue) == 0x04, render_packet_value_size);
-PE1_STATIC_ASSERT(sizeof(RenderPacket34) == 0x34, render_packet34_size);
-PE1_STATIC_ASSERT(sizeof(RenderPacket28) == 0x28, render_packet28_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, clut) == 0x0E, render_packet34_clut);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, u1) == 0x18, render_packet34_uv1);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, u2) == 0x24, render_packet34_uv2);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, v3) == 0x31, render_packet34_v3);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket28, clut) == 0x0E, render_packet28_clut);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket28, u1) == 0x18, render_packet28_uv1);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket28, u2) == 0x24, render_packet28_uv2);
-PE1_STATIC_ASSERT(sizeof(RenderPacket24) == 0x24, render_packet24_size);
-PE1_STATIC_ASSERT(sizeof(RenderPacket1C) == 0x1C, render_packet1c_size);
+/* Model packets have native pointer/length headers; GPU payload stays 32-bit. */
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, values0) == sizeof(RenderNativeTag), model_packet_native_header);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, clut) == sizeof(RenderNativeTag) + 10, model_packet_clut);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket28, page_bits) == sizeof(RenderNativeTag) + 22, model_packet_page);
 PE1_STATIC_ASSERT(sizeof(RenderAnimationDataHeader) == 0x0C,
                   render_animation_data_header_size);
 PE1_STATIC_ASSERT(sizeof(RenderAnimByteChannel) == 0x04,
@@ -680,20 +673,20 @@ void Anim_DecodeBoneRotationsShort(RenderObjectEntity *object, RenderAnimationDa
 void Render_AnimationFrame(void);
 
 /* Packed screen coordinates written by Render_DrawTexturedQuads. */
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, sxy0) == 0x08, render_packet34_sxy0);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, sxy1) == 0x14, render_packet34_sxy1);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, sxy2) == 0x20, render_packet34_sxy2);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, sxy3) == 0x2C, render_packet34_sxy3);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket28, sxy0) == 0x08, render_packet28_sxy0);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket28, sxy1) == 0x14, render_packet28_sxy1);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket28, sxy2) == 0x20, render_packet28_sxy2);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket24, sxy0) == 0x08, render_packet24_sxy0);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket24, sxy1) == 0x10, render_packet24_sxy1);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket24, sxy2) == 0x18, render_packet24_sxy2);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket24, sxy3) == 0x20, render_packet24_sxy3);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket1C, sxy0) == 0x08, render_packet1c_sxy0);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket1C, sxy1) == 0x10, render_packet1c_sxy1);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket1C, sxy2) == 0x18, render_packet1c_sxy2);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, sxy0) == sizeof(RenderNativeTag) + 0x08 - 4, render_packet34_sxy0);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, sxy1) == sizeof(RenderNativeTag) + 0x14 - 4, render_packet34_sxy1);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, sxy2) == sizeof(RenderNativeTag) + 0x20 - 4, render_packet34_sxy2);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket34, sxy3) == sizeof(RenderNativeTag) + 0x2C - 4, render_packet34_sxy3);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket28, sxy0) == sizeof(RenderNativeTag) + 0x08 - 4, render_packet28_sxy0);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket28, sxy1) == sizeof(RenderNativeTag) + 0x14 - 4, render_packet28_sxy1);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket28, sxy2) == sizeof(RenderNativeTag) + 0x20 - 4, render_packet28_sxy2);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket24, sxy0) == sizeof(RenderNativeTag) + 0x08 - 4, render_packet24_sxy0);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket24, sxy1) == sizeof(RenderNativeTag) + 0x10 - 4, render_packet24_sxy1);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket24, sxy2) == sizeof(RenderNativeTag) + 0x18 - 4, render_packet24_sxy2);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket24, sxy3) == sizeof(RenderNativeTag) + 0x20 - 4, render_packet24_sxy3);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket1C, sxy0) == sizeof(RenderNativeTag) + 0x08 - 4, render_packet1c_sxy0);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket1C, sxy1) == sizeof(RenderNativeTag) + 0x10 - 4, render_packet1c_sxy1);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPacket1C, sxy2) == sizeof(RenderNativeTag) + 0x18 - 4, render_packet1c_sxy2);
 
 /* Position and velocity words wrap at 16 bits in this particle update. */
 typedef struct RenderRisingEffect {

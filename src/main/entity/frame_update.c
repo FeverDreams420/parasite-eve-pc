@@ -133,9 +133,14 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
     }
 
     if (allocateFull) {
-        allocation = Entity_AllocBlock(actor->model_state.model_header->prim_block_count * 8 + actor->model_state.model_header->animation_entry_count * 12 + actor->model_state.model_header->part_count * 32 + 0x50);
+        allocation = Entity_AllocBlock(2 * (actor->model_state.model_header->packet34_count * sizeof(RenderPacket34) +
+            actor->model_state.model_header->packet28_count * sizeof(RenderPacket28) +
+            actor->model_state.model_header->packet24_count * sizeof(RenderPacket24) +
+            actor->model_state.model_header->packet1c_count * sizeof(RenderPacket1C)) +
+            actor->model_state.model_header->animation_entry_count * sizeof(RenderAnimationLookupEntry) +
+            actor->model_state.model_header->part_count * sizeof(RenderMatrix) + 0x50);
     } else {
-        allocation = Entity_AllocBlock(actor->model_state.model_header->animation_entry_count * 12 + actor->model_state.model_header->part_count * 32);
+        allocation = Entity_AllocBlock(actor->model_state.model_header->animation_entry_count * sizeof(RenderAnimationLookupEntry) + actor->model_state.model_header->part_count * sizeof(RenderMatrix));
         actor->flags |= 0x600000A0;
     }
     actor->allocation_block = (uintptr_t)allocation;

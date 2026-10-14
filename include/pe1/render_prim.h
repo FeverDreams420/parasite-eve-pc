@@ -157,9 +157,9 @@ PE1_STATIC_ASSERT(sizeof(RenderDrawModePacket) == 8,
                   render_draw_mode_packet_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderLinePacket, x0) == 8,
                   render_line_packet_points);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderBufferPrefix, packets) == 0x20,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderBufferPrefix, packets) == 8 * sizeof(void *),
                   render_buffer_prefix_packets);
-PE1_STATIC_ASSERT(sizeof(RenderBufferPrefix) == 0x28,
+PE1_STATIC_ASSERT(sizeof(RenderBufferPrefix) == 10 * sizeof(void *),
                   render_buffer_prefix_size);
 extern RenderBufferPrefix D_800B0E38;
 extern int g_DrawPacketOffset, g_ActiveDrawSlot;

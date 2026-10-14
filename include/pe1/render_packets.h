@@ -3,6 +3,11 @@
 
 #include "common.h"
 
+/* PsyZ native ordering-table entry and model packet prefix. */
+typedef struct RenderNativeTag {
+    uintptr_t address, length;
+} RenderNativeTag;
+
 /* GPU DMA link: 24-bit next-packet address and an 8-bit command length. */
 typedef union RenderPacketTag {
     u32 word;
@@ -47,7 +52,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderSpritePacket, width) == 16, render_sprite_w
  * The active draw slot selects one of the two ordering/packet buffers.
  * Six unrelated buffer pointers separate the two pairs. */
 typedef struct RenderBufferPrefix {
-    u32 *ordering[2];
+    RenderNativeTag *ordering[2];
     char *other_buffers[6];
     char *packets[2];
 } RenderBufferPrefix;

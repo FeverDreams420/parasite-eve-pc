@@ -783,3 +783,22 @@ yet covered. Original/test-source ASan/UBSan/function passes with PsyZ
 uninstrumented, and the existing projection corpus test passes.
 The target is not yet in the live scene: GPU submission, scene loading,
 script/frame integration and playable actor control remain required.
+
+### Native model packets and original ordering-table insertion (2026-10-14)
+
+The four runtime model packet classes now use PsyZ native pointer/length
+headers. Their GPU command payloads remain 32-bit, and the test asserts ABI
+size/coordinate offsets against actual PsyZ POLY_GT4/GT3/G4/G3 and OT_TYPE.
+Original Render_DrawTexturedQuads moves to model_draw.c with native links and
+a local NCLIP result replacing scratchpad address 1F800000. Its winding and
+depth selection remain unchanged. Scene_LoadMap allocation sizes now account
+for native packets rather than PS1 primitive-block bytes. Other old renderer
+packet classes still need porting before complete scene drawing can run.
+
+The model corpus test performs original setup, projection and insertion into
+SDK ClearOTagR ordering tables for both draw slots: 878 models, 301224 visible
+packets, bounded complete native chains. ASan/UBSan/function passes for
+original/test sources; PsyZ remains uninstrumented. Full build passes, as do
+model setup, existing projection corpus and headless menu-audio tests.
+This verifies packet construction and ordering, not GPU rasterization or an
+on-screen actor. Actual GPU submission and scene frame integration remain open.

@@ -310,7 +310,7 @@ void Entity_FrameUpdate(void) {
                 object = &entity->render_object;
                 Render_InitRoomPrimState(object);
                 if (entity->action_data != 0) {
-                    Anim_BuildRotationMatrices(object, entity->action_data, (s16)entity->anim.parts.integer, 1);
+                    Anim_BuildRotationMatrices(object, entity->action_data, (s16)entity->anim.parts.integer);
                 }
                 Render_TransformVertices(object);
                 Render_TransformSkinnedVertices(object, g_EntityRenderScratch);
@@ -360,7 +360,6 @@ void Entity_FrameUpdate(void) {
 /* The actor list globals this unit owns. */
 typedef FieldActor Entity;
 
-FieldActor *g_FieldActorListHead;
 FieldActor *g_EntityFreeListHead;
 FieldActor *g_PlayerEntity;
 u16 g_EntityFreePoolCount;

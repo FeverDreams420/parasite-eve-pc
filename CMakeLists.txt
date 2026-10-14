@@ -21,7 +21,8 @@ add_library(parasite-eve-original OBJECT
     src/main/anim/bone_rotations.c
     src/main/render/bone_transforms.c
     src/main/render/vertex_projection.c
-    src/main/entity/hierarchy.c)
+    src/main/entity/hierarchy.c
+    src/main/scene/input_rules.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
@@ -93,4 +94,12 @@ if(BUILD_TESTING)
     target_include_directories(test-original-hierarchy PRIVATE include)
     target_link_libraries(test-original-hierarchy PRIVATE psyz)
     add_test(NAME original-game-hierarchy COMMAND test-original-hierarchy)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test-original-input-rules tests/original_input_rules.c
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-input-rules PRIVATE include)
+    target_link_libraries(test-original-input-rules PRIVATE psyz)
+    add_test(NAME original-game-input-rules COMMAND test-original-input-rules)
 endif()

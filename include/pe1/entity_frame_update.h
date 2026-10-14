@@ -35,7 +35,6 @@ int Render_StepCameraTransition(void);
 void Render_SetViewport(int *camera);
 void Render_SetGteScreenOffset(void);
 void Render_ResetGteScreenOffset(void);
-int Anim_BuildRotationMatrices(RenderObjectEntity *object, void *action, int frame, int mode);
 void Render_DrawEntity(RenderObjectEntity *object, void *viewMatrix);
 void Scene_UpdateEntityPositions(void);
 void Script_GarbageCollectNodes(void);

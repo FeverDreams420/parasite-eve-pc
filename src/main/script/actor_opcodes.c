@@ -787,7 +787,7 @@ int Script_SetGteMatrix(int **args) {
     Render_InitRoomPrimState(&g_CurrentEntity->render_object);
     render_actor = g_CurrentEntity;
     Anim_BuildRotationMatrices(&render_actor->render_object,
-                               render_actor->action_data, 0, 1);
+                               render_actor->action_data, 0);
     Render_TransformVertices(&g_CurrentEntity->render_object);
     Render_TransformSkinnedVertices(&g_CurrentEntity->render_object, g_EntityRenderScratch);
     Render_DrawObject(&g_CurrentEntity->render_object, g_RenderLightingState.words);

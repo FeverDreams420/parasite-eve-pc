@@ -245,9 +245,6 @@ void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
     }
 }
 
-/* Callers pass a fourth argument the definition in anim/bone_rotations.c
- * does not declare (see entity_frame_update.h). */
-int Anim_BuildRotationMatrices(RenderObjectEntity *object, void *action, int frame, int mode);
 
 /* A GTE matrix copied as its eight 32-bit words. */
 typedef union RenderMatrixWords {
@@ -284,7 +281,7 @@ void Render_BuildEntityMatrix(RenderObjectEntity *object, s16 bufferIndex)
         model->words[5] = g_IdentityMatrixSource[5];
         model->words[6] = g_IdentityMatrixSource[6];
         model->words[7] = g_IdentityMatrixSource[7];
-        Anim_BuildRotationMatrices(object, animation, 0, 1);
+        Anim_BuildRotationMatrices(object, animation, 0);
         Render_TransformVertices(object);
         Render_InitRoomPrimState(object);
         Render_DrawObject(object, &g_RenderLightingState);
@@ -298,7 +295,7 @@ void Render_BuildEntityMatrix(RenderObjectEntity *object, s16 bufferIndex)
         model->words[6] = saved[6];
         model->words[7] = saved[7];
         actor = (FieldActor *)((char *)object - PE1_OFFSETOF(FieldActor, render_object));
-        Anim_BuildRotationMatrices(object, actor->action_data, (s16)actor->anim.parts.integer, 1);
+        Anim_BuildRotationMatrices(object, actor->action_data, (s16)actor->anim.parts.integer);
         Render_TransformVertices(object);
         return;
     }
@@ -1117,7 +1114,7 @@ void Render_DrawWithAnim(RenderObjectEntity *obj, void *animation, s16 frame,
         obj->animation_data = animation;
         Render_CopyMatrixBlock(&obj->model_matrix, (RenderMatrix *)g_RenderClutLookupTable, 1);
         Render_CopyMatrixBlock((RenderMatrix *)g_IdentityMatrixSource, &obj->model_matrix, 1);
-        Anim_BuildRotationMatrices(obj, animation, frame, 0);
+        Anim_BuildRotationMatrices(obj, animation, frame);
     }
     Render_TransformVertices(obj);
     Render_CopyMatrixBlock((RenderMatrix *)g_RenderClutLookupTable, &obj->model_matrix, 1);

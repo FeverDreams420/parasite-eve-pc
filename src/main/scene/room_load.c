@@ -800,14 +800,14 @@ retry:
         index = bank + 3;
         if (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[index],
                 state->scene_load_scratch,
-                g_PeImageSectorBoundsNext[index] - g_PeImageSectorTable[index]) != -1)
-            state->entity_texture_phase = 2;
+                g_PeImageSectorBoundsNext[index] - g_PeImageSectorTable[index]) == -1) return -1;
+        state->entity_texture_phase = 2;
         return 1;
     case 2:
         result = CdRom_PollReady();
         if (result == -1) {
             state->entity_texture_phase = 1;
-            return 1;
+            return -1;
         }
         if (result != 0)
             return 1;
@@ -839,14 +839,14 @@ retry:
         index = bank + 8;
         if (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[index],
                 state->voice_bank_base_1400,
-                g_PeImageSectorBoundsNext[index] - g_PeImageSectorTable[index]) != -1)
-            state->entity_texture_phase = 5;
+                g_PeImageSectorBoundsNext[index] - g_PeImageSectorTable[index]) == -1) return -1;
+        state->entity_texture_phase = 5;
         return 1;
     case 5:
         result = CdRom_PollReady();
         if (result == -1) {
             state->entity_texture_phase = 4;
-            return 1;
+            return -1;
         }
         /* Reuse the counter scratch for readiness before the next loop phase. */
         i = result != 0;
@@ -895,6 +895,7 @@ s32 Scene_InitEntityPlayer(s32 resume) {
     s8 *renderSetup;
     u32 area;
     u8 saved;
+    int result;
 
     switch (g_GameState.scene_init_phase) {
     case 32:
@@ -928,7 +929,9 @@ s32 Scene_InitEntityPlayer(s32 resume) {
         gameState->scene_init_phase = 0x24;
         return 1;
     case 36:
-        if (Scene_LoadEntityTexture() == 1) {
+        result = Scene_LoadEntityTexture();
+        if (result < 0) return result;
+        if (result == 1) {
             return 1;
         }
         if (resume) {
@@ -943,7 +946,9 @@ s32 Scene_InitEntityPlayer(s32 resume) {
         gameState->scene_init_phase = 0x26;
         return 1;
     case 38:
-        if (Scene_LoadEntityTextures() == 1 && gameState->scene_init_subphase < 0xB) {
+        result = Scene_LoadEntityTextures();
+        if (result < 0) return result;
+        if (result == 1 && gameState->scene_init_subphase < 0xB) {
             return 1;
         }
         gameState->scene_init_phase = 0x27;
@@ -1074,14 +1079,14 @@ retry:
             state->scene_load_scratch,
             g_PeImageSectorBoundsNext[sectorIndex] - g_PeImageSectorTable[sectorIndex]);
         Scene_UpdateBgDraw();
-        if (result != -1)
-            state->scene_init_subphase = 2;
+        if (result == -1) return -1;
+        state->scene_init_subphase = 2;
         return 1;
     case 2:
         result = CdRom_PollReady();
         if (result == -1) {
             state->scene_init_subphase = 1;
-            return 1;
+            return -1;
         }
         if (result != 0) {
             if (!(g_GameStateFlags & 2))
@@ -1110,8 +1115,8 @@ retry:
         sectorIndex = (state->requested_entity_bank - 10) / 2 * 8 + day + 0x16;
         if (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[sectorIndex],
                 state->entity_texture_blob,
-                g_PeImageSectorBoundsNext[sectorIndex] - g_PeImageSectorTable[sectorIndex]) != -1)
-            state->scene_init_subphase = 5;
+                g_PeImageSectorBoundsNext[sectorIndex] - g_PeImageSectorTable[sectorIndex]) == -1) return -1;
+        state->scene_init_subphase = 5;
         if (!(g_GameStateFlags & 2))
             Scene_UpdateBgDraw();
         return 1;
@@ -1119,7 +1124,7 @@ retry:
         result = CdRom_PollReady();
         if (result == -1) {
             state->scene_init_subphase = 4;
-            return 1;
+            return -1;
         }
         if (result != 0) {
             if (!(g_GameStateFlags & 2))

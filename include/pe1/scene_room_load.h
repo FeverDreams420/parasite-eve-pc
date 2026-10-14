@@ -14,6 +14,8 @@
  * -3: invalid or unallocatable room geometry. */
 int Scene_LoadRoom(unsigned int roomId);
 int Render_InitRoomPrimState(void *object);
+/* Entity loaders return -1 on texture/model I/O failure,
+ * 1 while pending, 0 when complete. */
 /* 14-state loader for the area entity texture bank. */
 int Scene_LoadEntityTextures(void);
 /* Base area TIM/model bank loaded before the day-specific actions. */

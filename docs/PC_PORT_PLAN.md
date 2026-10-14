@@ -2794,3 +2794,31 @@ entity-texture-assets and scene-spawn. Fresh ASan/UBSan/function validation
 passes for these errors and the complete 236-room corpus; PsyZ/SDL archives
 remain uninstrumented. The original complete game loop, remaining helper error
 propagation and removal of pc/ remain incomplete.
+
+
+### Propagate original entity texture/model loading failures
+
+The complete original Scene_LoadEntityTexture and Scene_LoadEntityTextures
+now return -1 for failed texture/model reads and completion polls instead of
+reporting those failures as pending work. Read failures retain their request
+phase; poll failures restore the matching request phase. Genuine pending polls
+still return 1. Successful original loading/upload/action behavior is retained.
+Scene_InitEntityPlayer propagates failures without advancing its phase, and
+Draw_InitPipeline checks both entity loaders before continuing scene setup.
+All changes remain in existing original modules; no new files or abstraction.
+
+The existing synthetic fixture checks read failure, pending poll, failed poll
+and the retained retry phase for both base and day texture/model requests, plus
+error propagation at player-init phases 36 and 38. Real-data checks restrict
+the borrowed archive extent for both reads of all five base banks, daily TIM
+reads for days 2..6 in areas 10/12, and all 14 day-model banks. Each request
+fails before its next phase; restoring the complete archive permits normal
+loading and existing VRAM/model/animation verification.
+
+Full build and three CTests pass with Disc 1 required: entity-textures,
+entity-texture-assets and scene-spawn. Fresh ASan/UBSan/function runs pass for
+both synthetic and real fixtures, including the 236-room and 14 player-init
+corpora. Original loaders and player initialization are instrumented; PsyZ/SDL
+archives are not. Full pipeline execution, audio-streamer error paths, battle
+callers of player initialization and the complete original game remain
+unverified/incomplete. Removal of the remaining pc/ runtime remains required.

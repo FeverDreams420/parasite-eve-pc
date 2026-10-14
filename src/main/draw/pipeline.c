@@ -106,13 +106,15 @@ int Draw_InitPipeline(void) {
     SetGeomScreen(W(g_RenderProjectionDistance));
     UB(g_ScreenTransitionState) |= 0x40;
     CdRom_DetectDiscChange();
-    while (Scene_LoadEntityTexture() == one) {
+    while ((room_status = Scene_LoadEntityTexture()) == one) {
     }
+    if (room_status < 0) return room_status;
 
     one = 1;
     Scene_SetStoryDay(g_GameState.current_story_day);
-    while (Scene_LoadEntityTextures() == one) {
+    while ((room_status = Scene_LoadEntityTextures()) == one) {
     }
+    if (room_status < 0) return room_status;
 
     Entity_RelocateSceneData();
     if (g_GameState.flags & 0x40000000) {

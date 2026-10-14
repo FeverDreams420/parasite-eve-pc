@@ -117,9 +117,9 @@ int main(void)
     poll_result=1;
     CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==2);
     poll_result=-1;
-    CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==1);
+    CHECK(Scene_LoadEntityTextures()==-1 && g_GameState.scene_init_subphase==1);
     read_result=-1;
-    CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==1);
+    CHECK(Scene_LoadEntityTextures()==-1 && g_GameState.scene_init_subphase==1);
     read_result=0; poll_result=0;
     CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==2);
     CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==5);
@@ -163,6 +163,42 @@ int main(void)
     CHECK(Scene_LoadEntityTexture()==1 && g_GameState.entity_texture_phase==5);
     CHECK(g_GameState.flags&0x40000);
     CHECK(Scene_LoadEntityTexture()==0 && g_GameState.entity_texture_phase==0);
+    /* Native image errors remain visible through both entity loaders and
+     * their original player-initialization caller. Pending polls still wait. */
+    g_SceneAreaType=10;
+    const unsigned base_read_phases[]={1,4};
+    const unsigned base_poll_phases[]={2,5};
+    for(unsigned test=0;test<2;++test) {
+        g_GameState.entity_texture_phase=base_read_phases[test];
+        read_result=-1;
+        CHECK(Scene_LoadEntityTexture()==-1 && g_GameState.entity_texture_phase==base_read_phases[test]);
+        read_result=0;
+        CHECK(Scene_LoadEntityTexture()==1 && g_GameState.entity_texture_phase==base_poll_phases[test]);
+        poll_result=1;
+        CHECK(Scene_LoadEntityTexture()==1 && g_GameState.entity_texture_phase==base_poll_phases[test]);
+        poll_result=-1;
+        CHECK(Scene_LoadEntityTexture()==-1 && g_GameState.entity_texture_phase==base_read_phases[test]);
+    }
+    const unsigned day_read_phases[]={1,4};
+    const unsigned day_poll_phases[]={2,5};
+    for(unsigned test=0;test<2;++test) {
+        g_GameState.scene_init_subphase=day_read_phases[test];
+        read_result=-1;
+        CHECK(Scene_LoadEntityTextures()==-1 && g_GameState.scene_init_subphase==day_read_phases[test]);
+        read_result=0;
+        CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==day_poll_phases[test]);
+        poll_result=1;
+        CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==day_poll_phases[test]);
+        poll_result=-1;
+        CHECK(Scene_LoadEntityTextures()==-1 && g_GameState.scene_init_subphase==day_read_phases[test]);
+    }
+    read_result=-1; poll_result=0;
+    g_GameState.scene_init_phase=36; g_GameState.entity_texture_phase=1;
+    CHECK(Scene_InitEntityPlayer(0)==-1 && g_GameState.scene_init_phase==36);
+    g_GameState.scene_init_phase=38; g_GameState.scene_init_subphase=1;
+    CHECK(Scene_InitEntityPlayer(0)==-1 && g_GameState.scene_init_phase==38);
+    read_result=0;
+    puts("Original entity initialization: read/poll errors propagated, retry phases retained, pending polls preserved");
     /* Only I/O outcomes are scripted; run the original TIM state machine. */
     g_GameState.loaded_scene_assets = (SceneAssetView *)&bank;
     g_GameState.scene_load_scratch = (u8 *)&scratch;
@@ -590,8 +626,19 @@ int main(void)
         g_GameState.entity_texture_phase=0;
         g_GameState.scene_load_scratch=tim_buffer;
         g_GameState.voice_bank_base_1400=model_buffer;
+        PeDiscFile limited=catalog.archive;
+        limited.size=(u32)((size_t)catalog.sector_bounds[area+3]*2048);
+        CdRom_BindImage(&disc,&limited);
+        CHECK(Scene_LoadEntityTexture()==-1 && g_GameState.entity_texture_phase==1);
+        CdRom_BindImage(&disc,&catalog.archive);
         CHECK(Scene_LoadEntityTexture()==1 && g_GameState.entity_texture_phase==2);
         CHECK(!memcmp(tim_buffer,tim_bank.bytes,tim_bank.size));
+        g_GameState.entity_texture_phase=4;
+        limited.size=(u32)((size_t)catalog.sector_bounds[area+8]*2048);
+        CdRom_BindImage(&disc,&limited);
+        CHECK(Scene_LoadEntityTexture()==-1 && g_GameState.entity_texture_phase==4);
+        CdRom_BindImage(&disc,&catalog.archive);
+        g_GameState.entity_texture_phase=2;
         CHECK(Scene_LoadEntityTexture()==1 && g_GameState.entity_texture_phase==5);
         CHECK(!memcmp(model_buffer,model_bank.bytes,model_bank.size));
         CHECK(Scene_LoadEntityTexture()==0 && g_GameState.entity_texture_phase==0);
@@ -643,9 +690,22 @@ int main(void)
             PeVramStats stats; char error[256];
             CHECK(pe_blob_upload_vram(&tim_reference,expected,&stats,error,sizeof(error)));
             uploads+=stats.uploads;
+            PeDiscFile limited=catalog.archive;
+            limited.size=(u32)((size_t)catalog.sector_bounds[tim_index]*2048);
+            CdRom_BindImage(&disc,&limited);
+            CHECK(Scene_LoadEntityTextures()==-1 && g_GameState.scene_init_subphase==1);
+            CdRom_BindImage(&disc,&catalog.archive);
             CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==2);
             CHECK(!memcmp(scratch_buffer,tim_reference.bytes,tim_reference.size));
         }
+        unsigned previous_phase=g_GameState.scene_init_subphase;
+        g_GameState.scene_init_subphase=4;
+        PeDiscFile limited=catalog.archive;
+        limited.size=(u32)((size_t)catalog.sector_bounds[index]*2048);
+        CdRom_BindImage(&disc,&limited);
+        CHECK(Scene_LoadEntityTextures()==-1 && g_GameState.scene_init_subphase==4);
+        CdRom_BindImage(&disc,&catalog.archive);
+        g_GameState.scene_init_subphase=previous_phase;
         CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==5);
         CHECK((g_GameState.flags&0x1004000u)==0x1004000u);
         CHECK(!memcmp(buffer,reference.bytes,reference.size));

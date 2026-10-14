@@ -249,6 +249,10 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING)
+    add_executable(test-original-floor tests/original_floor.c $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-floor PRIVATE include)
+    target_link_libraries(test-original-floor PRIVATE psyz)
+    add_test(NAME original-game-floor COMMAND test-original-floor)
     add_executable(test-original-collision-assets tests/original_collision_assets.c
         pc/disc.c pc/room.c $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-collision-assets PRIVATE include pc)

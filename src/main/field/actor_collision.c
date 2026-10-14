@@ -144,7 +144,6 @@ void Entity_FindFloor(BattleEntity *actor)
     s16 z;
     int x_height;
     int z_height;
-    CollisionRegionTable slot;
     u8 scratch[8];
 
     if ((actor->entityFlags & 0x80) != 0) {
@@ -160,11 +159,7 @@ void Entity_FindFloor(BattleEntity *actor)
     floor_index = 0;
     do {
         if (g_CollisionPlaneTable == 0) {
-            /* The slot offset is summed with the table address as integers;
-             * g_RegionHeightTable.entries[floor_index] swaps $v0 and $v1. */
-            slot.address = floor_index << 2;
-            slot.address += g_RegionHeightTable.address;
-            floor_data = (u8 *)slot.entries->flat;
+            floor_data = (u8 *)g_RegionHeightTable.entries[floor_index].flat;
             triangle_index = 0;
             floor_value = ((CollisionFlatRegion *)floor_data)->height;
             triangle_count = ((CollisionFlatRegion *)floor_data)->triangleCount;
@@ -178,15 +173,13 @@ void Entity_FindFloor(BattleEntity *actor)
                         actor->collisionFace = simple_triangle;
                         actor->collisionFaceMirror = simple_triangle;
                         if ((actor->entityFlags & 2) == 0) {
-                            actor->posY.fixed = floor_value << 16;
+                            actor->posY.fixed = (s32)((u32)floor_value << 16);
                         }
                         return;
                     }
             }
         } else {
-            slot.address = floor_index << 2;
-            slot.address += g_RegionHeightTable.address;
-            floor_data = (u8 *)slot.entries->plane;
+            floor_data = (u8 *)g_RegionHeightTable.entries[floor_index].plane;
             triangle_index = 0;
             triangle_count = ((CollisionPlaneRegion *)floor_data)->triangleCount;
             initial_indices = ((CollisionPlaneRegion *)floor_data)->triangleIndices;
@@ -206,7 +199,7 @@ void Entity_FindFloor(BattleEntity *actor)
                                 g_CollisionPlaneTable[complex_triangle->plane].c,
                                 actor->posZ.fixed);
                             actor->posY.fixed = Math_FixedMul(
-                                complex_triangle->distance - x_height - z_height,
+                                (s32)((u32)complex_triangle->distance - (u32)x_height - (u32)z_height),
                                 g_CollisionPlaneTable[complex_triangle->plane].inverseB);
                         }
                         return;

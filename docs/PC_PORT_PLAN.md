@@ -736,3 +736,16 @@ input. An independent run of the main executable passed the same replay.
 All nine targeted tests pass with required Disc 1 assets: six original AKAO
 tests plus menu-audio, Tutorial and New Game boot replays. The latter two
 prove the existing asset-preparation transitions, not playable scenes.
+
+### Original floor query native indexing (2026-10-14)
+
+Entity_FindFloor now indexes relocated region pointers directly instead of
+adding floor_index*4 to a 32-bit address. Both flat and sloped paths use the
+native table. Negative flat heights and plane-D subtraction preserve 32-bit
+word arithmetic without signed-shift/subtraction undefined behavior.
+New original-game-floor test executes the original query for a second region,
+negative flat height, miss, flags 2/80, and sloped height with integer and
+fractional X/Z coordinates. ASan/UBSan/function pass for this original-source
+test; PsyZ remains uninstrumented. The 414-room immutable collision relocation
+test and actual headless menu-audio replay also pass. Corpus-wide floor query
+comparisons and movement integration remain pending; scenes are not yet playable.

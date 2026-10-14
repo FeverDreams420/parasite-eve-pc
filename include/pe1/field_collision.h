@@ -75,12 +75,10 @@ typedef struct CollisionPlane {
 
 /* Plane-table pointer; existing floor queries require a fresh read. */
 extern CollisionPlane *g_CollisionPlaneTable;
-/* Flat mode: per-region records that start with the region height. The
- * floor search adds the slot offset to the table address as integers, which
- * keeps the sum in the offset as retail does. */
+/* Native per-region pointers, indexed in both flat and sloped modes. */
 typedef union CollisionRegionTable {
     CollisionRegionEntry *entries;
-    u32 address;
+    uintptr_t address;
 } CollisionRegionTable;
 extern CollisionRegionTable g_RegionHeightTable;
 /* Bounding box of the ramp edge the player last crossed. */

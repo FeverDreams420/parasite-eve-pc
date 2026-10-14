@@ -219,3 +219,16 @@ int pe_actors_events(PeActors *actors){
     actors->error[0]=0;return 1;
 invalid:snprintf(actors->error,sizeof(actors->error),"Invalid actor list during event delivery");return 0;
 }
+void pe_actor_motion_snapshot(PeActor *actor){
+    memcpy(actor->saved_position,actor->position,sizeof(actor->position));
+    memcpy(actor->saved_rotation,actor->rotation,sizeof(actor->rotation));
+}
+void pe_actor_motion_apply(PeActor *actor){
+    if(actor->script.flags&2){
+        actor->motion[0]+=actor->gravity_x;actor->motion[1]+=actor->gravity_y;actor->motion[2]+=actor->gravity_z;
+    }
+    for(unsigned i=0;i<3;++i){
+        actor->motion[i]+=actor->acceleration[i];
+        actor->position[i]+=actor->motion[i];actor->position[i]+=actor->delta[i];
+    }
+}

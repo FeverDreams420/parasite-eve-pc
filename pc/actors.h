@@ -23,6 +23,8 @@ typedef struct PeActor {
     PeAnimationClock animation_clock;
     unsigned action;
     uint16_t rotation[3];
+    uint32_t saved_position[3],motion[3],acceleration[3],delta[3],gravity_x,gravity_z;
+    uint16_t saved_rotation[3];
     PeActorModel *render; /* owned matrices; model/action bytes remain borrowed */
 } PeActor;
 typedef struct PeActors {
@@ -57,4 +59,8 @@ int pe_actor_model_pose(PeActor *actor,const PeMatrix *base);
 int pe_actor_model_world_pose(PeActor *actor);
 PeScriptDispatchResult pe_actors_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command);
 int pe_actors_events(PeActors *actors);
+/* Snapshot precedes callbacks/input; apply follows them. Conditional freeze
+ * skips both operations in the frame driver, but still runs callbacks. */
+void pe_actor_motion_snapshot(PeActor *actor);
+void pe_actor_motion_apply(PeActor *actor);
 #endif

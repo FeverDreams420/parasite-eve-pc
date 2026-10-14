@@ -19,6 +19,25 @@ int main(void) {
     CHECK(actors->slots[0].move_factor == 0x50000 && actors->slots[1].move_factor == 0x10000);
     CHECK(actors->slots[0].gravity_y == 0x4000 && actors->slots[0].script.flags == 0x10000000);
     CHECK(scheduler->slots[0].task.actor == &actors->slots[0].script);
+    PeActor motion_actor={0};motion_actor.position[0]=UINT32_MAX;motion_actor.rotation[1]=65535;
+    motion_actor.motion[0]=1;motion_actor.acceleration[0]=1;motion_actor.delta[0]=2;
+    motion_actor.gravity_y=0x4000;
+    pe_actor_motion_snapshot(&motion_actor);pe_actor_motion_apply(&motion_actor);
+    CHECK(motion_actor.saved_position[0]==UINT32_MAX&&motion_actor.saved_rotation[1]==65535);
+    CHECK(motion_actor.position[0]==3&&motion_actor.motion[0]==2&&!motion_actor.motion[1]);
+    motion_actor.script.flags=2;pe_actor_motion_apply(&motion_actor);
+    CHECK(motion_actor.motion[1]==0x4000&&motion_actor.position[1]==0x4000&&motion_actor.position[0]==8);
+    uint32_t seed=0x42193;
+    for(unsigned sample=0;sample<100000;++sample){
+        uint32_t values[15];for(unsigned i=0;i<15;++i){seed=seed*1664525u+1013904223u;values[i]=seed;}
+        for(unsigned i=0;i<3;++i){motion_actor.position[i]=values[i];motion_actor.motion[i]=values[3+i];
+            motion_actor.acceleration[i]=values[6+i];motion_actor.delta[i]=values[9+i];}
+        motion_actor.gravity_x=values[12];motion_actor.gravity_y=values[13];motion_actor.gravity_z=values[14];
+        motion_actor.script.flags=sample&1?2:0;pe_actor_motion_snapshot(&motion_actor);pe_actor_motion_apply(&motion_actor);
+        for(unsigned i=0;i<3;++i){uint32_t expected_motion=(uint32_t)((uint64_t)values[3+i]+values[6+i]+(sample&1?values[12+i]:0));
+            uint32_t expected_position=(uint32_t)((uint64_t)values[i]+expected_motion+values[9+i]);
+            CHECK(motion_actor.saved_position[i]==values[i]&&motion_actor.motion[i]==expected_motion&&motion_actor.position[i]==expected_position);}
+    }
     uint8_t animation_bytes[36]={0};animation_bytes[2]=3;
     for(unsigned c=0;c<6;++c)animation_bytes[12+c*4]=1;
     PeAnimation animation;char animation_error[128];

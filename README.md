@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+The actor motion core snapshots previous position/rotation and applies
+flag-gated gravity, acceleration, motion and deltas in original order with
+explicit 32-bit wrap. Tests cover gravity gating, overflow, cumulative steps
+and 100,000 deterministic extreme inputs against a 64-bit modular arithmetic
+oracle. All 29 headless tests and the ASan/UBSan actor fixture pass. Callback
+and input rules, driver freeze, wall/contact response, parent rollback and
+full scene-loop integration remain pending.
+
 Script event delivery accepts stable actor pointers and works with the native
 actor pool in linked-list order. It rejects cycles, invalid linkage and
 duplicate/null targets before changing the queue. New tasks retain the

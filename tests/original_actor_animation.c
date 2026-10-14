@@ -76,10 +76,24 @@ static int boot_buffer_layout(void)
 u16 g_PeImageSectorTable[81];
 static u8 glyph_source[42 * 2048], glyph_scratch[42 * 2048];
 static unsigned glyph_reads, glyph_polls;
+static PeDisc *glyph_disc;
+static PeDiscFile glyph_archive;
+static int glyph_io_failed;
 static int glyph_read_retry, glyph_poll_retry, glyph_pending;
 int CdRom_ReadSectorsFromLba(u32 lba, void *buffer, u32 count)
 {
     ++glyph_reads;
+    if (glyph_disc) {
+        if (lba < glyph_archive.sector || buffer != glyph_scratch ||
+            count > sizeof(glyph_scratch) / 2048 ||
+            !pe_disc_read(glyph_disc, &glyph_archive,
+                          (uint64_t)(lba - glyph_archive.sector) * 2048,
+                          buffer, (size_t)count * 2048)) {
+            glyph_io_failed = 1;
+            return -2;
+        }
+        return 1;
+    }
     if (lba != 12352 || buffer != glyph_scratch || count != 42) return -2;
     if (glyph_read_retry) { glyph_read_retry = 0; return -1; }
     memcpy(buffer, glyph_source, sizeof(glyph_source));
@@ -150,6 +164,61 @@ static int glyph_selection(void)
         g_FontSelectionState.table || g_FontSelectionState.selected != 255) return 0;
     g_GameState = saved;
     return 1;
+}
+
+static int glyph_asset_records(PeDisc *disc, const PeDiscFile *exe)
+{
+    Pe1GameState saved = g_GameState;
+    u16 range[2];
+    unsigned slots = 0;
+    if (!pe_disc_find(disc, "PE.IMG", &glyph_archive) ||
+        !pe_disc_read(disc, exe, 0x800930d8u - 0x80010000u + 0x800 + 79 * 2,
+                      range, sizeof(range)) || range[1] <= range[0]) return 0;
+    size_t bytes = (size_t)(range[1] - range[0]) * 2048;
+    if (bytes > sizeof(glyph_source) ||
+        !pe_disc_read(disc, &glyph_archive, (uint64_t)range[0] * 2048,
+                      glyph_source, bytes)) return 0;
+    unsigned records = glyph_source[0];
+    if (!records || 1 + records * 328 > bytes) return 0;
+    g_PeImageSectorTable[79] = range[0];
+    g_PeImageSectorTable[80] = range[1];
+    g_GameState.pe_image_base_lba = glyph_archive.sector;
+    g_GameState.scene_load_scratch = glyph_scratch;
+    g_FontSelectionState.table = &g_FontActiveGlyphTable;
+    g_FontActiveGlyphTable.codeCount = records;
+    glyph_disc = disc;
+    int ok = 1;
+    for (unsigned code = 0; code < records && ok; ++code) {
+        const u8 *raw = glyph_source + 1 + code * 328;
+        if (Render_LoadFontGlyph(code) || glyph_io_failed ||
+            memcmp(&g_FontActiveGlyphTable.groups, raw, 328) ||
+            raw[2] > 24 || raw[27] > 100) { ok = 0; break; }
+        for (unsigned slot = 0; slot < raw[27]; ++slot) {
+            unsigned index = raw[28 + slot];
+            if (index >= raw[2] || Render_GetFontSlotCode(slot) != raw[3 + index]) {
+                ok = 0; break;
+            }
+            ++slots;
+        }
+        for (unsigned mode = 0; mode < 5; ++mode) {
+            for (unsigned digit = 0; digit < 10; ++digit) {
+                unsigned sought = mode == 0 ? 3 : mode == 1 ? (digit != 0) : mode == 2 ? 2 : 4;
+                unsigned group = 0, expected = 255;
+                g_FontSelectionState.codeIndex = digit;
+                for (unsigned i = 0; i < raw[2]; ++i)
+                    if (raw[3 + i] == sought) { group = i; break; }
+                for (unsigned i = 0; i < raw[27]; ++i)
+                    if (raw[28 + i] == group) { expected = i; break; }
+                if (Render_DrawTextDigit(NULL, mode) != expected) ok = 0;
+            }
+        }
+    }
+    glyph_disc = NULL;
+    g_GameState = saved;
+    Menu_ResetEquipSlotState();
+    if (ok) printf("Original glyph loader: %u real records, %u slots, %u mode queries\n",
+                   records, slots, records * 50);
+    return ok;
 }
 
 /* Record positional sound requests; no replacement audio ships with the game. */
@@ -235,6 +304,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};PeDiscFile exe;u32 pointers[50];
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
+        if (!glyph_asset_records(&disc, &exe)) return 57;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];
             if(!pointers[mode]) {if(native)return 21;continue;}

@@ -33,6 +33,7 @@ int Script_WaitAnimFrameMatch(int **unused);
 int Script_SetEntityAnimFrame(int **args);
 int Entity_QueryField(int **args);
 int Entity_GetPositionByType(int **args);
+int Script_GetAngleToEntity(int **args);
 
 void Script_RunQueue(void);
 int Script_JumpToEntityOffset(int **args);

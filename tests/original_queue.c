@@ -201,6 +201,23 @@ int main(void)
            g_ScriptVariableBank[31]!=(u32)expected[2] || g_ScriptVariableBank[32]!=(variant<2?1u:UINT32_MAX) ||
            task.flags!=0x10 || task.current.script!=script+11) return 22;
     }
+    const int directions[][3]={{-100,0,1024},{0,100,2048},{100,0,3072},{0,-100,4096}};
+    const int yaws[]={0,512,4095};
+    for(unsigned variant=0;variant<4;++variant) for(unsigned direction=0;direction<4;++direction)
+        for(unsigned yaw=0;yaw<3;++yaw) {
+        FieldActor live={.type_id=7,.sub_id=3,.pos_x=directions[direction][0]*65536,
+                         .pos_z=directions[direction][1]*65536};
+        FieldActor dead=live,owner={.rot_y=yaws[yaw]};dead.flags=0x10;dead.next=&live;
+        u32 script[]={69|(3u<<13)|((2u<<6)<<17),0,
+                      variant==1||variant==3?0:variant==2?99:7,3,33,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_PlayerEntity=variant==3?NULL:&live;g_FieldActorListHead=&dead;
+        g_ScriptNodePool=&task;g_GameStateFlags=0;g_ScriptVariableBank[33]=0x1234;
+        Script_RunQueue();
+        int angle=directions[direction][2]-yaws[yaw];if(angle<0) angle+=4096;
+        if(g_ScriptVariableBank[33]!=(variant<2?(u32)angle:UINT32_MAX) ||
+           task.flags!=0x10 || task.current.script!=script+7) return 23;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

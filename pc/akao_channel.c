@@ -103,7 +103,7 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
         case 0xad: case 0xae: case 0xaf: case 0xb1: case 0xb2:
         case 0xb5: case 0xb7: case 0xb9: case 0xbb: case 0xbd: case 0xbf: operands = 1; break;
         case 0xb4: case 0xb8: operands = 3; break;
-        case 0xa4: case 0xa9: case 0xab: case 0xb0: case 0xbc: case 0xdd: operands = 2; break;
+        case 0xa4: case 0xa9: case 0xab: case 0xb0: case 0xbc: case 0xdd: case 0xde: case 0xdf: operands = 2; break;
         case 0xc2: case 0xc3: case 0xc8: case 0xca: operands = 0; break;
         case 0xc9: operands = 1; break;
         case 0xfc:
@@ -262,6 +262,15 @@ truncated:
             channel->pitch_lfo_slide_duration = value ? (uint16_t)value : 256;
             channel->pitch_lfo_delta = (uint16_t)(((int)target - channel->pitch_lfo_target) /
                                                  channel->pitch_lfo_slide_duration);
+            break;
+        }
+        case 0xde: case 0xdf: {
+            uint16_t *duration = opcode == 0xde ? &channel->volume_lfo_slide_duration : &channel->aux_lfo_slide_duration;
+            uint16_t *delta = opcode == 0xde ? &channel->volume_lfo_delta : &channel->aux_lfo_delta;
+            unsigned current = opcode == 0xde ? channel->volume_lfo_target : channel->aux_lfo_target;
+            unsigned target = channel->sequence.bytes[pc + prefix + 1] << (opcode == 0xde ? 8 : 7);
+            *duration = value ? (uint16_t)value : 256;
+            *delta = (uint16_t)(((int)target - (int)current) / *duration);
             break;
         }
         case 0xb9: channel->volume_lfo_target = (uint16_t)(value << 8); break;

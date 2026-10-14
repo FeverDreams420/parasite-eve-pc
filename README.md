@@ -391,5 +391,12 @@ loops are not declared completed, and LFO voice updates, synthesis and audio
 comparison are still required.
 All 21 tests pass headless with the extended setting; the same 65,536-tick
 room/audio audit also passes ASan/UBSan with identical counts.
+
+DE/DF now configure volume and auxiliary LFO depth slides. Voice updates
+advance their wrapped targets and resample modulation between waveform steps
+without consuming a sample. Tests verify simultaneous descending slides,
+signed values, unchanged waveform cursors and completion under ASan/UBSan.
+All 21 tests pass headless with Disc 1. These operations still await the full
+voice-driver schedule and synthesis integration before audible validation.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

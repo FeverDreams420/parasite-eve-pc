@@ -85,6 +85,22 @@ int main(void) {
     CHECK(pe_akao_channel_pitch_lfo_step(&channel, 0));
     CHECK(pe_akao_channel_pitch_lfo_step(&channel, 0));
     CHECK(!channel.pitch_lfo_slide_duration && channel.pitch_lfo_target == 0x8000 && !channel.pitch_lfo_depth);
+    const uint8_t mixed_slides[] = {0xb8,0,2,0,0xb9,128,0xbc,2,0,0xbd,128,0xde,4,0,0xdf,4,0,0};
+    sequence.bytes = mixed_slides; sequence.size = sizeof(mixed_slides);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 30) == PE_AKAO_CHANNEL_NOTE);
+    channel.expression_value = 0x10000000; channel.volume_base = 0x8000;
+    CHECK(channel.volume_lfo_delta == (uint16_t)-8192 && channel.aux_lfo_delta == (uint16_t)-4096);
+    CHECK(pe_akao_channel_volume_lfo_step(&channel, 0) && pe_akao_channel_aux_lfo_step(&channel));
+    CHECK(channel.volume_lfo_target == 0x6000 && channel.volume_lfo_value == 3071);
+    CHECK(channel.aux_lfo_target == 0x3000 && channel.aux_lfo_value == 47);
+    CHECK(pe_akao_channel_volume_lfo_step(&channel, 0) && pe_akao_channel_aux_lfo_step(&channel));
+    CHECK(channel.volume_lfo_value == (uint16_t)-2048 && channel.aux_lfo_value == (uint16_t)-32);
+    CHECK(channel.volume_lfo_cursor == 1 && channel.aux_lfo_cursor == 1);
+    for (unsigned i = 0; i < 2; ++i)
+        CHECK(pe_akao_channel_volume_lfo_step(&channel, 0) && pe_akao_channel_aux_lfo_step(&channel));
+    CHECK(!channel.volume_lfo_slide_duration && !channel.aux_lfo_slide_duration);
+    CHECK(!channel.volume_lfo_target && !channel.aux_lfo_target);
     free(samples);
     puts("AKAO LFO data: signed samples, relative loops, auxiliary phase/modulation and bounds passed");
     return 0;

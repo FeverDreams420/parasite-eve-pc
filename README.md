@@ -332,5 +332,16 @@ selectors complete 1,000 traversal steps in the Disc 1 audit; `akao-lfo-data`
 tests signed samples, bad jumps and failure without cursor/output mutation.
 Waveform data and traversal are available, but active channel modulation and
 synthesis remain pending.
+
+BC now initializes auxiliary LFO duration, selector and phase. Its separate
+voice-driver step samples the waveform and calculates signed modulation with
+the original arithmetic shift; notes restart the waveform and ties preserve
+it. Tests verify phase spacing, negative rounding, restart, malformed cursors
+and unchanged state on failed reads under ASan/UBSan. New notes also clear the
+pitch-slide offset as in the original. Voice-driver scheduling and applying
+modulation to synthesized audio remain pending. The limited Disc 1 audit now
+reaches 8,869 initial note events and 12 unsupported volume-LFO commands;
+588 sequence prefixes complete four forced musical ticks and 11 hit missing
+commands. These results do not validate full songs or audible modulation.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

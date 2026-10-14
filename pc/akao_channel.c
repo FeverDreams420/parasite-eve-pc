@@ -102,7 +102,7 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
         case 0xc0: case 0xc1: case 0xd8: case 0xd9:
         case 0xad: case 0xae: case 0xaf: case 0xb1: case 0xb2:
         case 0xb7: case 0xbb: case 0xbd: case 0xbf: operands = 1; break;
-        case 0xa4: case 0xa9: case 0xab: case 0xb0: operands = 2; break;
+        case 0xa4: case 0xa9: case 0xab: case 0xb0: case 0xbc: operands = 2; break;
         case 0xc2: case 0xc3: case 0xc8: case 0xca: operands = 0; break;
         case 0xc9: operands = 1; break;
         case 0xfc:
@@ -222,6 +222,16 @@ truncated:
             /* SeqOp_SetPitchBase actually writes aux_lfo_target (+B4). */
             channel->aux_lfo_target = (uint16_t)(value << 7);
             break;
+        case 0xbc: {
+            unsigned selector = channel->sequence.bytes[pc + prefix + 1];
+            if (!channel->grammar || !channel->grammar->lfo_valid || selector >= 16) goto invalid;
+            channel->aux_lfo_duration = value ? (uint16_t)value : 256;
+            channel->aux_lfo_phase = 1;
+            channel->aux_lfo_selector = (uint8_t)selector;
+            channel->aux_lfo_cursor = channel->grammar->lfo_offsets[selector];
+            channel->flags |= 4;
+            break;
+        }
         case 0xbe:
             channel->aux_lfo_value = 0;
             channel->flags &= ~UINT32_C(4);

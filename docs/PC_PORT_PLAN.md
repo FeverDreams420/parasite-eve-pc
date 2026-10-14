@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+BC ustawia czas, selektor i fazę pomocniczego LFO. Osobny krok sterownika głosu odczytuje przebieg i liczy signed modulację z oryginalnym zaokrągleniem arithmetic shift. Nuty restartują przebieg, tie go zachowuje; nowe nuty zerują także offset pitch-slide. Test obejmuje fazę, wartości ujemne, restart, błędne cursor i brak mutacji przy błędzie, również pod ASan/UBSan. Harmonogram sterownika głosów i zastosowanie modulacji w syntezie pozostają wymagane. Audyt osiąga 8869 początkowych zdarzeń nut i 12 brakujących komend volume-LFO; 588 prefiksów sekwencji przechodzi cztery wymuszone ticki, a 11 trafia na brakującą komendę. Nie jest to dowód pełnych utworów ani słyszalnej modulacji.
+
 Katalog scen posiada teraz 16 offsetów przebiegów LFO i 708 słów próbek, dekodowanych z danych EXE do własnej pamięci C. Odczyt próbki obsługuje signed wartości i względne znaczniki pętli z kontrolą granic, bez wskaźników PS1. Audyt Disc 1 wykonuje po 1000 kroków każdego selektora. `akao-lfo-data` jest 21. testem; sprawdza błędne skoki i zachowanie cursor/output przy błędzie. Dane i odczyt przebiegów są gotowe; aktywna modulacja kanałów oraz synteza pozostają do wdrożenia.
 
 FC/0A wybiera instrument ze stałym adresem początku próbki `0x1010`, zachowując jego loop, ADSR, przesunięcie banku i reguły przeliczenia pitch z A1. Test ADSR obejmuje release override, aktywne głosy, alternatywny bank oraz ucięty operand i przechodzi ASan/UBSan. Jest to obsługa stanu sekwencera; synteza i dowody pełnych utworów nadal pozostają wymagane.

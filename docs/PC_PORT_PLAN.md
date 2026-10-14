@@ -3259,3 +3259,21 @@ effect PM callback ABI/class tables, on-demand commands 108..114 and their I/O
 failure behavior, production allocation lifetimes, full gameplay and deletion
 of pc/ remain incomplete. This fixes native pool capacity; it does not claim
 that the complete process-manager/game loop is integrated.
+
+
+Scene_LoadRoomAssets in the original process manager now returns -13 for an
+on-demand task-bank read/poll error instead of retrying indefinitely. Empty or
+reversed sector bounds, null destination and a 64-bit LBA extent exceeding
+2^32 are rejected before I/O. Registry installation/ready flag/slot allocation
+remain after successful reads only. The existing actor fixture covers commands
+108..114 with read rejection and a pending poll followed by failure, plus invalid
+extents and other negative read statuses, checking exact call counts, unchanged
+program registry and no loaded flag. The still-unbound program labels/buffer
+are controlled fixture addresses; no successful load or native program binding
+is claimed. The missing task-program diagnostic now has its original USA
+string backed in task_list.c. Full build and five related CTests pass with Disc 1
+required, plus fresh actor ASan/UBSan/function with original source instrumented
+and PsyZ/SDL archives uninstrumented. Native programs 108..114, their successful
+load/recovery, callers beyond the tested error path, complete scene/gameplay
+integration and deletion of pc/ remain incomplete. No new files or extracted
+functions.

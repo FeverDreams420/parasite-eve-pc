@@ -21,6 +21,7 @@
 #include "pe1/field_glow_layers.h"
 #include "pe1/fieldfx_state.h"
 #include "pe1/field_effect_modules.h"
+#include "pe1/pm.h"
 #include "pe1/field_tri_test.h"
 #include "pe1/field_collision.h"
 #include "pe1/field_textured_strip.h"
@@ -1154,6 +1155,44 @@ static int native_object_slot_bounds(void)
     return 1;
 }
 
+/* Controlled addresses for the still-unbound on-demand task-program bank.
+ * Error cases return before these records can be installed or executed. */
+u16 g_SceneAssetLbaTbl[2];
+void *g_PmTaskProgramBuffer;
+void *g_FieldFxTaskPrograms[104];
+u8 g_FieldFxTaskProgramCmd108[1], g_FieldFxTaskProgramCmd109[1], g_FieldFxTaskProgramCmd110[1];
+u8 g_FieldFxTaskProgramCmd111[1], g_FieldFxTaskProgramCmd112[1], g_FieldFxTaskProgramCmd113[1], g_FieldFxTaskProgramCmd114[1];
+static int process_task_bank_failures(void)
+{
+    Pe1GameState saved=g_GameState;
+    void *programs[104]; memcpy(programs,g_FieldFxTaskPrograms,sizeof(programs));
+    g_GameState.pe_image_base_lba=12345; g_GameState.flags&=~0x10000u;
+    g_SceneAssetLbaTbl[0]=7; g_SceneAssetLbaTbl[1]=49;
+    g_PmTaskProgramBuffer=glyph_scratch;
+    for(unsigned command=108;command<=114;++command) {
+        glyph_reads=glyph_polls=0; glyph_read_retry=1; glyph_poll_retry=glyph_pending=0;
+        if(Scene_LoadRoomAssets(command,NULL)!=-13 || glyph_reads!=1 || glyph_polls ||
+           (g_GameState.flags&0x10000) || memcmp(programs,g_FieldFxTaskPrograms,sizeof(programs))) return 0;
+        glyph_reads=glyph_polls=0; glyph_poll_retry=1; glyph_pending=1;
+        if(Scene_LoadRoomAssets(command,NULL)!=-13 || glyph_reads!=1 || glyph_polls!=2 ||
+           (g_GameState.flags&0x10000) || memcmp(programs,g_FieldFxTaskPrograms,sizeof(programs))) return 0;
+    }
+    glyph_reads=glyph_polls=0;
+    g_SceneAssetLbaTbl[1]=7;
+    if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads || glyph_polls) return 0;
+    g_SceneAssetLbaTbl[1]=6;
+    if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads || glyph_polls) return 0;
+    g_SceneAssetLbaTbl[1]=49; g_GameState.pe_image_base_lba=UINT32_MAX-10;
+    if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads || glyph_polls) return 0;
+    g_GameState.pe_image_base_lba=12345; g_PmTaskProgramBuffer=NULL;
+    if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads || glyph_polls) return 0;
+    g_PmTaskProgramBuffer=glyph_scratch; g_SceneAssetLbaTbl[0]=8; g_SceneAssetLbaTbl[1]=50;
+    if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads!=1 || glyph_polls) return 0;
+    g_GameState=saved; glyph_reads=glyph_polls=0; glyph_read_retry=glyph_poll_retry=glyph_pending=0;
+    puts("Original process task-bank I/O: seven commands, read/poll failures and invalid extents return without retry or registry mutation");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -1214,7 +1253,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !native_effect_spawn_arguments() || !native_object_slot_bounds()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

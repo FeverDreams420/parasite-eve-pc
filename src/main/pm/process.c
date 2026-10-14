@@ -80,12 +80,14 @@ int Scene_LoadRoomAssets(u32 command, void *owner)
     if (command >= 192)
         return -7;
     if (command - 108 < 7 && !(g_GameState.flags & 0x10000)) {
-retry:
-        while (CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba + g_SceneAssetLbaTbl[0],
-                g_PmTaskProgramBuffer, g_SceneAssetLbaTbl[1] - g_SceneAssetLbaTbl[0]) == -1) {}
+        u32 first = g_SceneAssetLbaTbl[0], end = g_SceneAssetLbaTbl[1];
+        u64 lba = (u64)g_GameState.pe_image_base_lba + first;
+        if (!g_PmTaskProgramBuffer || end <= first ||
+            lba + (end - first) > UINT64_C(0x100000000)) return -13;
+        if (CdRom_ReadSectorsFromLba((u32)lba, g_PmTaskProgramBuffer, end - first) < 0)
+            return -13;
         while ((ready = CdRom_PollReady()) != 0) {
-            if (ready == -1)
-                goto retry;
+            if (ready < 0) return -13;
         }
         /* Room code is statically linked; no PS1 instruction-cache flush. */
         g_FieldFxTaskPrograms[108 - 85] = g_FieldFxTaskProgramCmd108;

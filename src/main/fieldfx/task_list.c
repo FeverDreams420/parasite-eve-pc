@@ -9,6 +9,7 @@
 FieldFxTaskContext *g_FieldFxTaskContext;
 FieldFxTaskSlot *g_FieldFxActiveTaskSlot;
 int g_FieldFxCurrentAge;
+char g_FieldFxTaskProgramMissingMsg[] = "TS No Thread No.%d\n";
 
 /* Binds task program `index` to the owner's task context. */
 int FieldFx_BindTaskProgram(FieldFxTaskOwner *owner, int index)

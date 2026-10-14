@@ -57,6 +57,22 @@ int main(void) {
     word(data + 28, 0); /* original end-zero encoding means 256 */
     CHECK(pe_spu_bank_upload(bank, data, sizeof(data), &stats, error, sizeof(error)));
     CHECK(stats.first == 255 && stats.end == 256 && bank->valid[255]);
+    uint8_t source_copy[144]; memcpy(source_copy, data, sizeof(data));
+    CHECK(pe_spu_bank_upload_rebased(bank, data, sizeof(data), 0x38000, 0x50,
+                                    &stats, error, sizeof(error)));
+    CHECK(stats.address == 0x38000 && stats.first == 0x50 && stats.end == 0x51);
+    CHECK(bank->instruments[0x50].start == 0x38000 && bank->instruments[0x50].loop == 0x38008);
+    CHECK(bank->instruments[0x50].pitch[11] == 267);
+    CHECK(!memcmp(data, source_copy, sizeof(data)));
+    CHECK(!memcmp(bank->ram + 0x38000, data + 128, 16));
+    memcpy(previous, bank, sizeof(*bank));
+    CHECK(!pe_spu_bank_upload_rebased(bank, data, sizeof(data), PE_SPU_RAM_SIZE, 0x20,
+                                     &stats, error, sizeof(error)));
+    CHECK(!memcmp(previous, bank, sizeof(*bank)));
+    word(data + 68, 0); /* negative relocation for the loop is invalid */
+    CHECK(!pe_spu_bank_upload_rebased(bank, data, sizeof(data), 0x1000, 0x20,
+                                     &stats, error, sizeof(error)));
+    CHECK(!memcmp(previous, bank, sizeof(*bank)));
     free(previous);
     free(bank);
     puts("SPU bank: instruments, partial RAM writes, end-zero and atomic malformed-bank rejection passed");

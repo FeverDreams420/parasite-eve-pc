@@ -28,5 +28,10 @@ int pe_spu_bank_upload(PeSpuBank *bank, const uint8_t *bytes, size_t size,
                         PeSpuBankStats *stats, char *error, size_t error_size);
 int pe_spu_bank_load_startup(PeRoomCatalog *catalog, PeSpuBank *bank,
                              PeSpuBankStats *stats);
+/* Sequence/sample-bank relocation used by Akao_StepNoteSequencer. The caller
+ * selects the destination and instrument bank from active voice state. */
+int pe_spu_bank_upload_rebased(PeSpuBank *bank, const uint8_t *bytes, size_t size,
+                                uint32_t address, unsigned first, PeSpuBankStats *stats,
+                                char *error, size_t error_size);
 
 #endif

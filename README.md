@@ -191,3 +191,11 @@ offset. Disc 1 contains 600 room music records: 599 validate as full sequences;
 one ID-zero short record remains explicitly unresolved and has no parsed
 sequence. This is metadata/offset validation, not sequence command execution
 or audio output. The unresolved record is retained for further porting.
+
+The native catalog also decodes the 250 audio-bank ranges from the supplied
+executable. `pe_audio_bank_read` reads complete banks from PE.IMG with bounds
+checks. `pe_spu_bank_upload_rebased` preserves the source bytes while relocating
+instrument start/loop addresses and uploading to a selected SPU/instrument
+bank. Tests load all 51 distinct sample banks referenced by Disc 1 room music
+records. Automatic selection between active voice banks and live playback are
+still pending; these tests upload data without synthesizing it.

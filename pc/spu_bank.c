@@ -7,6 +7,53 @@ static uint32_t read32(const uint8_t *p) {
            (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24;
 }
 
+static void write32(uint8_t *p, uint32_t value) {
+    for (unsigned i = 0; i < 4; ++i) p[i] = (uint8_t)(value >> (i * 8));
+}
+
+int pe_spu_bank_upload_rebased(PeSpuBank *bank, const uint8_t *bytes, size_t size,
+                                uint32_t address, unsigned first, PeSpuBankStats *stats,
+                                char *error, size_t error_size) {
+    if (size < 128 || memcmp(bytes, "AKAO", 4)) goto malformed;
+    unsigned start = read32(bytes + 24), end = read32(bytes + 28);
+    if (!end) end = 256;
+    if (start >= end || end > 256 || first >= 256 || end - start > 256 - first ||
+        (size_t)(end - start) * 64 > size - 64) goto malformed;
+    unsigned count = end - start;
+    uint32_t payload = read32(bytes + 20);
+    size_t required = 64 + (size_t)count * 64;
+    if (address > PE_SPU_RAM_SIZE || (address & 7) || payload > PE_SPU_RAM_SIZE - address ||
+        payload > size - required) goto malformed;
+    required += payload;
+    int64_t delta = (int64_t)address - read32(bytes + 64);
+    /* Validate every relocated address before allocating or changing RAM. */
+    for (unsigned i = 0; i < count; ++i) {
+        for (unsigned field = 0; field < 2; ++field) {
+            int64_t relocated = (int64_t)read32(bytes + 64 + i * 64 + field * 4) + delta;
+            if (relocated < 0 || relocated >= PE_SPU_RAM_SIZE) goto malformed;
+        }
+    }
+    uint8_t *copy = malloc(required);
+    if (!copy) {
+        snprintf(error, error_size, "Cannot allocate relocated sample bank");
+        return 0;
+    }
+    memcpy(copy, bytes, required);
+    write32(copy + 16, address);
+    write32(copy + 24, first);
+    write32(copy + 28, first + count);
+    for (unsigned i = 0; i < count; ++i)
+        for (unsigned field = 0; field < 2; ++field)
+            write32(copy + 64 + i * 64 + field * 4,
+                    (uint32_t)((int64_t)read32(bytes + 64 + i * 64 + field * 4) + delta));
+    int ok = pe_spu_bank_upload(bank, copy, required, stats, error, error_size);
+    free(copy);
+    return ok;
+malformed:
+    snprintf(error, error_size, "Invalid relocated sample bank");
+    return 0;
+}
+
 int pe_spu_bank_upload(PeSpuBank *bank, const uint8_t *bytes, size_t size,
                         PeSpuBankStats *stats, char *error, size_t error_size) {
     if (size < 64 || memcmp(bytes, "AKAO", 4)) goto malformed;

@@ -10,6 +10,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 Aktualizacja audio: `akao-sequence` w CTest sprawdza maski i offsety kanałów oraz uszkodzone dane. `room-assets` kataloguje 600 rekordów muzycznych Disc 1: 599 pełnych sekwencji z poprawnymi granicami i jeden jawnie nierozpoznany krótki rekord ID 0. Nie wykonujemy jeszcze instrukcji sekwencera ani syntezy; ten nierozpoznany rekord nie jest uznany za obsłużoną zawartość. Łącznie CTest rejestruje obecnie 12 testów.
 
+Katalog natywny odczytuje również 250 zakresów banków audio z tabeli EXE. Wszystkie 51 różnych banków próbek wskazanych przez rekordy muzyczne pokojów Disc 1 przechodzi odczyt z PE.IMG i upload z relokacją adresów instrumentów do wybranego banku SPU. Testy sprawdzają zachowanie źródła i poprzedniego stanu po błędzie. Automatyczny dobór banku z aktywnych głosów, komendy skryptowego audio, sekwencer i synteza pozostają do wdrożenia; sam upload tych banków nie jest dowodem odtwarzania muzyki.
+
 Punkt wyjściowy audytu: commit `83aa1c5f8`, 14 października 2026. Poniższy stan uwzględnia także wdrożony runner headless z WP01.
 
 | Obszar | Co istnieje | Czego obecne dowody nie potwierdzają |

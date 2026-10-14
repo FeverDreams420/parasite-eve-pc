@@ -81,7 +81,22 @@ static void test_image(int raw) {
     CHECK(pe_disc_find(&disc, "FMV1/INTRO.STR", &file));
     CHECK(pe_disc_read_raw(&disc, &file, 0, bytes) == raw);
     CHECK(!pe_disc_read_raw(&disc, &file, 2, bytes));
+    PeRoomCatalog catalog = {0};
+    catalog.disc = &disc;
+    catalog.archive.size = 24 * 2048;
+    catalog.audio_bounds[0] = 20;
+    catalog.audio_bounds[1] = 22;
+    uint8_t *bank = NULL; size_t bank_size = 0;
+    CHECK(pe_audio_bank_read(&catalog, 0, &bank, &bank_size));
+    CHECK(bank_size == 4096 && bank[0] == 0 && bank[2048] == 7);
+    free(bank);
+    bank = NULL; bank_size = 123;
+    CHECK(!pe_audio_bank_read(&catalog, PE_USA_AUDIO_BANKS, &bank, &bank_size));
+    CHECK(!bank && bank_size == 123);
+    catalog.audio_bounds[1] = 20;
+    CHECK(!pe_audio_bank_read(&catalog, 0, &bank, &bank_size));
     pe_disc_close(&disc);
+    CHECK(!pe_audio_bank_read(&catalog, 0, &bank, &bank_size));
     /* Truncated records must fail rather than escape their directory sector. */
     FILE *image = fopen(name, "r+b");
     CHECK(image);

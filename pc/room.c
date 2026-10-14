@@ -8,6 +8,7 @@
  * native addresses, function pointers or requirements on the host linker. */
 #define ROOM_TABLE_VA UINT32_C(0x80093378)
 #define SECTOR_TABLE_VA UINT32_C(0x800930d8)
+#define AUDIO_TABLE_VA UINT32_C(0x8009317c)
 
 static uint32_t read32(const uint8_t *p) {
     return (uint32_t)p[0] | (uint32_t)p[1] << 8 |
@@ -24,6 +25,7 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
     catalog->disc = disc;
     PeDiscFile executable;
     uint8_t header[0x800], table[PE_USA_ROOM_SLOTS * 8], bounds[162];
+    uint8_t audio[4 + (PE_USA_AUDIO_BANKS + 1) * 2];
     if (!pe_disc_find(disc, "PE.IMG", &catalog->archive) ||
         !pe_disc_find(disc, "SLUS_006.62", &executable) ||
         !pe_disc_read(disc, &executable, 0, header, sizeof(header)))
@@ -42,6 +44,18 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
     for (unsigned i = 0; i < 81; ++i)
         catalog->sector_bounds[i] = (uint16_t)bounds[i * 2] |
                                     (uint16_t)bounds[i * 2 + 1] << 8;
+    if (!pe_disc_read(disc, &executable, (uint64_t)AUDIO_TABLE_VA - base + 0x800,
+                      audio, sizeof(audio))) return disc_error(catalog);
+    catalog->audio_base = read32(audio);
+    for (unsigned i = 0; i <= PE_USA_AUDIO_BANKS; ++i) {
+        catalog->audio_bounds[i] = (uint16_t)audio[4 + i * 2] |
+                                  (uint16_t)audio[5 + i * 2] << 8;
+        if ((i && catalog->audio_bounds[i] < catalog->audio_bounds[i - 1]) ||
+            ((uint64_t)catalog->audio_base + catalog->audio_bounds[i]) * 2048 > catalog->archive.size) {
+            snprintf(catalog->error, sizeof(catalog->error), "Invalid audio bank boundary %u", i);
+            return 0;
+        }
+    }
     for (unsigned i = 0; i < PE_USA_ROOM_SLOTS; ++i) {
         PeRoomRange *range = &catalog->ranges[i];
         range->start = read32(table + i * 8);
@@ -56,6 +70,32 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
             return 0;
         }
     }
+    return 1;
+}
+
+int pe_audio_bank_read(PeRoomCatalog *catalog, unsigned index, uint8_t **bytes, size_t *size) {
+    if (!catalog->disc || !catalog->disc->stream) {
+        snprintf(catalog->error, sizeof(catalog->error), "Audio source is not mounted");
+        return 0;
+    }
+    if (index >= PE_USA_AUDIO_BANKS || catalog->audio_bounds[index + 1] <= catalog->audio_bounds[index]) {
+        snprintf(catalog->error, sizeof(catalog->error), "Audio bank %u is missing", index);
+        return 0;
+    }
+    size_t length = (size_t)(catalog->audio_bounds[index + 1] - catalog->audio_bounds[index]) * 2048;
+    uint8_t *next = malloc(length);
+    if (!next) {
+        snprintf(catalog->error, sizeof(catalog->error), "Cannot allocate audio bank");
+        return 0;
+    }
+    uint64_t offset = ((uint64_t)catalog->audio_base + catalog->audio_bounds[index]) * 2048;
+    if (!pe_disc_read(catalog->disc, &catalog->archive, offset, next, length)) {
+        free(next);
+        return disc_error(catalog);
+    }
+    *bytes = next;
+    *size = length;
+    catalog->error[0] = 0;
     return 1;
 }
 

@@ -43,6 +43,7 @@ int main(void) {
     unsigned script_entries = 0, initial_actors = 0;
     unsigned music_records = 0;
     unsigned short_music_records = 0;
+    uint8_t referenced_banks[PE_USA_AUDIO_BANKS] = {0};
     unsigned loaded = 0, absent = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -78,6 +79,8 @@ int main(void) {
             }
             ++music_records;
             short_music_records += music.unresolved_short_record != 0;
+            CHECK(music.bank < PE_USA_AUDIO_BANKS);
+            referenced_banks[music.bank] = 1;
         }
         PeScriptProgram program;
         if (!pe_script_program_open(&room, &program, error, sizeof(error))) {
@@ -101,6 +104,27 @@ int main(void) {
     }
     CHECK(loaded > 300 && loaded + absent == PE_USA_ROOM_SLOTS);
     CHECK(music_records == 600 && short_music_records == 1);
+    CHECK(catalog.audio_base == 2224);
+    CHECK(catalog.audio_base + catalog.audio_bounds[PE_USA_AUDIO_BANKS] == catalog.ranges[0].start);
+    PeSpuBank *music_spu = calloc(1, sizeof(*music_spu)); CHECK(music_spu);
+    unsigned verified_banks = 0;
+    for (unsigned index = 0; index < PE_USA_AUDIO_BANKS; ++index) {
+        if (!referenced_banks[index]) continue;
+        uint8_t *bytes = NULL; size_t size = 0;
+        CHECK(pe_audio_bank_read(&catalog, index, &bytes, &size));
+        PeSpuBankStats stats;
+        char error[256];
+        if (!pe_spu_bank_upload_rebased(music_spu, bytes, size, 0x8000, 0x20,
+                                        &stats, error, sizeof(error))) {
+            fprintf(stderr, "Music bank %u: %s\n", index, error);
+            return 1;
+        }
+        CHECK(stats.address == 0x8000 && stats.first == 0x20);
+        free(bytes);
+        ++verified_banks;
+    }
+    free(music_spu);
+    printf("Referenced music sample banks uploaded: %u (not synthesized)\n", verified_banks);
     printf("Room music records: %u, including %u unresolved short records (not played)\n",
            music_records, short_music_records);
     PeScene scene = {0};

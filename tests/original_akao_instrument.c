@@ -59,8 +59,8 @@ int SpuSetReverbModeType(unsigned int mode)
 void SeqOp_SetTempo(void *track);
 void SeqOp_LoadInstrumentFromIndex(void *track);
 void Seq_SetCurrentTrackField56(AkaoValueCommand *command);
-void SeqOp_StreamPair(unsigned char **stream);
-void SeqOp_ReadTrack64U16(unsigned char **stream);
+void SeqOp_StreamPair(AkaoTrack *track, u32 voice_mask);
+void SeqOp_ReadTrack64U16(AkaoTrack *track, u32 voice_mask);
 void SeqOp_SetTrack34Mask(AkaoTrack *track, u32 mask);
 void SeqOp_ClearTrack34Mask(AkaoTrack *track, u32 mask);
 void Spu_StopActiveVoices(void);
@@ -251,16 +251,20 @@ int main(int argc, char **argv)
     bank.sequence_base = timing;
     bank.tick = 19;
     bank.beat = 23;
-    SeqOp_StreamPair(&timing_cursor);
+    track.pc = timing_cursor;
+    SeqOp_StreamPair(&track, 1);
+    timing_cursor = track.pc;
     CHECK(timing_cursor == timing + 2);
     CHECK(bank.ticks_per_beat == 48);
     CHECK(bank.beats_per_measure == 7);
     CHECK(bank.tick == 0 && bank.beat == 0);
-    SeqOp_ReadTrack64U16(&timing_cursor);
+    SeqOp_ReadTrack64U16(&track, 1);
+    timing_cursor = track.pc;
     CHECK(timing_cursor == timing + 4);
     CHECK(bank.measure == 0x1234);
     CHECK(bank.sequence_base == timing);
     CHECK(bank.tempo == 0x12340000u);
+    track.pc = tempo + 2;
     for (unsigned i = 0; i < 1024; ++i) {
         offsets[i * 2] = i * 31;
         offsets[i * 2 + 1] = i % 2 ? 0xffff : i * 17;
@@ -481,6 +485,19 @@ int main(int argc, char **argv)
         CHECK(modulated.aux_lfo_table == wave + (i % 2 ? 2 : 1));
     }
     }
-    puts("original AKAO: commands, start, rebasing, script views and LFO stepping pass");
+    AkaoCommandHandler handlers[] = {SeqOp_Ignore, SeqOp_Noop_904AC,
+        SeqOp_Noop_904B4, SeqOp_Noop_904BC, SeqOp_Skip2, SeqOp_JumpRelative};
+    AkaoTrack dispatch_track = {0};
+    dispatch_track.pc = branches + 8;
+    for (unsigned i = 0; i < 4; ++i) {
+        handlers[i](&dispatch_track, 1);
+        CHECK(dispatch_track.pc == branches + 8);
+    }
+    handlers[4](&dispatch_track, 1);
+    CHECK(dispatch_track.pc == branches + 10);
+    dispatch_track.pc = branches + 8;
+    handlers[5](&dispatch_track, 1);
+    CHECK(dispatch_track.pc == branches + 2);
+    puts("original AKAO: native dispatch signatures and sequencer procedures pass");
     return 0;
 }

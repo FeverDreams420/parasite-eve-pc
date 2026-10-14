@@ -1032,10 +1032,13 @@ void SeqOp_SetVolumeSlideTarget(void *ptr) {
     }
 }
 
-#define READ_S16(addr) ((short)(*(addr)++ | (*(addr)++ << 8)))
 
-void SeqOp_JumpRelative(unsigned char **stream) {
-    *stream += READ_S16(*stream);
+void SeqOp_JumpRelative(AkaoTrack *script_track, u32 voice_mask) {
+    unsigned char **stream = &script_track->pc;
+    (void)voice_mask;
+    unsigned char *cursor = *stream;
+    s16 displacement = (s16)(cursor[0] | (cursor[1] << 8));
+    *stream = cursor + 2 + displacement;
 }
 
 void SeqOp_BranchIfLoopLimitReached(AkaoTrack *track)
@@ -1157,13 +1160,16 @@ void Akao_SetExpressionSlide(AkaoTrack *track) {
     track->expression_delta = (next - current) / track->expression_duration;
 }
 
-void SeqOp_Skip2(int *arg0)
+void SeqOp_Skip2(AkaoTrack *track, u32 voice_mask)
 {
-    *arg0 += 2;
+    (void)voice_mask;
+    track->pc += 2;
 }
 
-void SeqOp_Ignore(void)
+void SeqOp_Ignore(AkaoTrack *track, u32 voice_mask)
 {
+    (void)track;
+    (void)voice_mask;
 }
 
 void Akao_SetPanTarget(AkaoTrack *track)
@@ -1760,13 +1766,19 @@ void SeqOp_EnableField84(AkaoTrack *track) {
     track->tremolo_phase = 1;
 }
 
-void SeqOp_Noop_904AC(void) {
+void SeqOp_Noop_904AC(AkaoTrack *track, u32 voice_mask) {
+    (void)track;
+    (void)voice_mask;
 }
 
-void SeqOp_Noop_904B4(void) {
+void SeqOp_Noop_904B4(AkaoTrack *track, u32 voice_mask) {
+    (void)track;
+    (void)voice_mask;
 }
 
-void SeqOp_Noop_904BC(void) {
+void SeqOp_Noop_904BC(AkaoTrack *track, u32 voice_mask) {
+    (void)track;
+    (void)voice_mask;
 }
 
 unsigned int SeqOp_SetTrack5AValue(void *ptr)
@@ -2066,7 +2078,9 @@ void SeqOp_ClearFlag3(AkaoTrack *track) {
     track->flags &= ~AKAO_TRACK_FLAG_BRANCH_ACTIVE;
 }
 
-void SeqOp_StreamPair(unsigned char **stream) {
+void SeqOp_StreamPair(AkaoTrack *script_track, u32 voice_mask) {
+    unsigned char **stream = &script_track->pc;
+    (void)voice_mask;
     unsigned char *cursor = *stream;
     unsigned char value;
     AkaoSequencerBank *track = g_AkaoCurTrack;
@@ -2082,7 +2096,9 @@ void SeqOp_StreamPair(unsigned char **stream) {
     track->beats_per_measure = value;
 }
 
-void SeqOp_ReadTrack64U16(unsigned char **stream) {
+void SeqOp_ReadTrack64U16(AkaoTrack *script_track, u32 voice_mask) {
+    unsigned char **stream = &script_track->pc;
+    (void)voice_mask;
     unsigned char *cursor = *stream;
     AkaoSequencerBank *track = g_AkaoCurTrack;
 

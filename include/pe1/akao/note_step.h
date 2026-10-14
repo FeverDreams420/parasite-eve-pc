@@ -7,6 +7,14 @@
 #include "pe1/akao/track.h"
 
 typedef void (*AkaoCommandHandler)(AkaoTrack *track, u32 voice_mask);
+void SeqOp_JumpRelative(AkaoTrack *track, u32 voice_mask);
+void SeqOp_StreamPair(AkaoTrack *track, u32 voice_mask);
+void SeqOp_ReadTrack64U16(AkaoTrack *track, u32 voice_mask);
+void SeqOp_Skip2(AkaoTrack *track, u32 voice_mask);
+void SeqOp_Ignore(AkaoTrack *track, u32 voice_mask);
+void SeqOp_Noop_904AC(AkaoTrack *track, u32 voice_mask);
+void SeqOp_Noop_904B4(AkaoTrack *track, u32 voice_mask);
+void SeqOp_Noop_904BC(AkaoTrack *track, u32 voice_mask);
 
 /* Opcode handlers: 0xA0..0xFF, and the 0xFC extended page. */
 extern AkaoCommandHandler g_AkaoOpcodeHandlers[];

@@ -565,6 +565,8 @@ LFO fixture obejmuje teraz original Akao_SetVoiceKeyOn i KeyOff oraz ujemne expr
 
 `docs/AKAO_OPCODE_TABLE.json` kataloguje oryginalne USA tables: main 0x8009C8F0, opcode A0..FF (96 entries), extended 0x8009CCF0 (32 entries), 90 różnych source procedures, zero unresolved names. Pole lookahead_skip jest wartością oryginalnej tablicy skanera, nie liczbą argumentów handlera (main skip zawiera opcode, extended scanner już konsumuje FC). `python3 tests/verify_akao_catalog.py <SLUS_006.62>` sprawdza wszystkie adresy/skip values w prywatnym EXE, zakres sekcji oraz obecność oryginalnych definicji w źródłach; wykonane na lokalnym Disc 1 przechodzi. Katalog nie zawiera kodu/data payload gry i nie jest jeszcze runtime dispatch table. Native ABI handlerów, ich kolejność/semantyka i full bytecode/tick execution pozostają wymagane.
 
+Osiem original opcode handlers (JumpRelative, StreamPair, ReadTrack64U16, Skip2 i cztery oryginalne no-op) ma canonical void(AkaoTrack*,u32) ABI. Skip2 aktualizuje pełny PC zamiast low word; JumpRelative jawnie odczytuje signed displacement i dodaje go po dwóch bajtach, usuwając unsequenced pointer increments w dawnym READ_S16. Fixture wywołuje no-op/skip/backward jump przez AkaoCommandHandler bez cast i sprawdza native cursor; rhythm handlers zachowują poprzedni dowód. CTest oraz ASan/UBSan/function przechodzą. Pozostałe sygnatury i runtime tables nie są jeszcze ujednolicone/podłączone; te no-op są zachowanymi procedurami gry, nie zastępnikami brakujących efektów.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

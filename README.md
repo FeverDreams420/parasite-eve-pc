@@ -22,6 +22,14 @@ instructions, hardware access, address aliases and 32-bit pointer assumptions
 need C implementations or PsyZ adapters before the affected modules can join
 the host build.
 
+The port must run the original game code in `src/main/` and `src/overlays/`.
+Modify those sources in place for host pointers, memory, PsyZ and disc-image
+access. Do not recreate gameplay feature by feature in `pc/` or introduce a
+parallel engine. Existing `pc/` gameplay implementations are experimental
+work from an abandoned approach; their tests do not establish that the
+original game runs. `parasite-eve-original` now compiles the first original
+modules directly and links them into the executable. Full integration is pending.
+
 ## Build and run
 
 Use a C11 compiler, CMake 3.21 or newer, Git, pkg-config and FFmpeg development

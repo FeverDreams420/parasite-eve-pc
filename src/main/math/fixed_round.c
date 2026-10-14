@@ -1,22 +1,15 @@
-#include "pe1/game_asm.h"
+#include "pe1/fixed_point.h"
 
-/*
- * Round a 16.16 (or 24.8) fixed-point value to its integer part:
- * (value + half) >> shift.
- *
- * Original assembler: both are the
- * assembler's expansion of `add $v0, $a0, 0x8000`, which loads the constant
- * into $at and uses the trapping `add`. GCC never allocates $at and always
- * emits `addu` for C addition.
- */
-GAME_ASM_FUNCTION(Math_FixedRoundToInt,
-    "    ori     $at, $zero, 0x8000\n"
-    "    add     $v0, $a0, $at\n"
-    "    jr      $ra\n"
-    "    sra     $v0, $v0, 16\n");
+int Math_FixedRoundToInt(int value)
+{
+    s64 rounded = (s64)value + 0x8000;
+    return rounded >= 0 ? (int)(rounded / 0x10000)
+                        : (int)(-1 - (-1 - rounded) / 0x10000);
+}
 
-GAME_ASM_FUNCTION(Math_FixedRoundToByte,
-    "    ori     $at, $zero, 0x8000\n"
-    "    add     $v0, $a0, $at\n"
-    "    jr      $ra\n"
-    "    sra     $v0, $v0, 8\n");
+int Math_FixedRoundToByte(int value)
+{
+    s64 rounded = (s64)value + 0x8000;
+    return rounded >= 0 ? (int)(rounded / 0x100)
+                        : (int)(-1 - (-1 - rounded) / 0x100);
+}

@@ -7,3 +7,21 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 include(CTest)
 add_subdirectory(pc)
+
+# Compile the original game sources in place. Modules join this target as
+# their platform dependencies are made portable; no duplicate game logic.
+add_library(parasite-eve-original OBJECT
+    src/main/math/fixed_mul.c
+    src/main/math/fixed_div.c
+    src/main/math/fixed_round.c
+    src/main/math/sqrt_approx.c
+    src/main/fieldfx/angle.c)
+target_include_directories(parasite-eve-original PRIVATE include)
+target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
+
+if(BUILD_TESTING)
+    add_executable(test-original-math tests/original_math.c
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-math PRIVATE include)
+    add_test(NAME original-game-math COMMAND test-original-math)
+endif()

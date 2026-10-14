@@ -37,5 +37,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1Fixed16_16, parts.integer) == 2,
                   fixed_16_16_integer_offset);
 
 int Math_FixedDivide(int a, int b);
+int Math_FixedRoundToInt(int value);
+int Math_FixedRoundToByte(int value);
+unsigned int Math_SqrtApprox3(int x, int y, int z);
 
 #endif

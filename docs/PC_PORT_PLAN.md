@@ -6,6 +6,12 @@ Plan obejmuje całą grę, nie tylko boot i filmy. Celem jest ukończony natywny
 
 Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i adresy kodu nie są wymagane. Oryginał jest wzorcem zachowania i źródłem danych; port ma normalne typy, wskaźniki, moduły i build C. Poprawiamy błędy pamięci i przenośności. Zmiany balansu i tempa pozostają osobnymi, opcjonalnymi funkcjami.
 
+## Obowiązujący kierunek portowania
+
+Uruchamiamy oryginalny kod `src/main/` i `src/overlays/` na PC. Modyfikujemy go w miejscu, usuwając zależności sprzętowe i dostosowując pamięć oraz wskaźniki; zachowujemy logikę, kolejność aktualizacji i zachowanie gry. Nie budujemy równoległego silnika ani nowych warstw abstrakcji. PsyZ zapewnia istniejące API platformowe. `pc/` może dostarczać potrzebne I/O i testowanie headless.
+
+Dotychczasowe implementacje logiki w `pc/` powstały przy błędnym podejściu i nie są podstawą portu. Poniższe historyczne wyniki dotyczą tych eksperymentów, nie uruchomienia oryginalnej gry. Pierwszy audyt 99 oryginalnych jednostek gry (bez historycznych bibliotek `psyq`) wykazał 9 przechodzących syntax check; to nie dowód kompilacji ani linkowania. Główne przeszkody obejmują stare layouty struktur roboczych, instrukcje MIPS/GTE i zależności sprzętowe. Sprawdzenia layoutów danych z płyt pozostają wymagane.
+
 ## 1. Stan rzeczywisty i zakres wydania
 
 Opcode 114 / SetRenderEntryEnabled zmienia tylko bit 2 native background flags, zachowując prędkości i pozostałe tryby. Real VM fixture ukrywa tile, wykonuje motion step na ukrytym wpisie, ponownie go pokazuje i potwierdza zmienioną draw position. Niezerowe enabled values są true; invalid index nie zmienia stanu. 35 headless testów i ASan/UBSan native scene/VM fixture przechodzą. Controller/group animation, GPU packets oraz pełna frame/campaign integration pozostają wymagane.

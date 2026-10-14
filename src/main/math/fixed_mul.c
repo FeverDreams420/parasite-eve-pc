@@ -1,18 +1,8 @@
-#include "pe1/game_asm.h"
+#include "pe1/fixed_point.h"
 
-/*
- * int Math_FixedMul(int a, int b): the middle 32 bits of the signed 64-bit
- * product, i.e. a 16.16 fixed-point multiply.
- *
- * Original assembler: it reads LO
- * before HI and shifts both in place. GCC's mulsidi3/ashrdi3 patterns read HI
- * first and keep the dead high-word shift for `(long long)a * b >> 16`.
- */
-GAME_ASM_FUNCTION(Math_FixedMul,
-    "    mult    $a0, $a1\n"
-    "    mflo    $v0\n"
-    "    mfhi    $v1\n"
-    "    srl     $v0, $v0, 16\n"
-    "    sll     $v1, $v1, 16\n"
-    "    jr      $ra\n"
-    "    or      $v0, $v1, $v0\n");
+/* Preserve the middle 32 bits of the original MIPS signed product. */
+int Math_FixedMul(int a, int b)
+{
+    u32 bits = (u32)((u64)((s64)a * b) >> 16);
+    return bits <= INT32_MAX ? (s32)bits : -1 - (s32)(UINT32_MAX - bits);
+}

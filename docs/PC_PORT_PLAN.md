@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 65 powiązań: oryginalny opcode 227 zapisuje wskaźnik floor polygon do danych skryptu i licznik halfword (dotychczasowa nazwa funkcji inventory pozostaje historyczna). Powiązanie potwierdzono w EXE USA. Offset oblicza się w natywnej szerokości; test kolejki sprawdza pełny adres hosta i zawężenie licznika. Ten dowód nie obejmuje wykonania geometrii polygonu. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 64 powiązania: oryginalne opcode'y 228/229 odczytują liczbę przedmiotów i limit slotów przez istniejący moduł inventory. Powiązania potwierdzono w EXE USA. Test kolejki obejmuje dziewięć kombinacji bazowego limitu/bonusu, clamp do 50 oraz pominięcie zajętych slotów poza aktywnym limitem. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 62 powiązania: oryginalny opcode 220 ustawia flagę aktora 0x1000000. Powiązanie potwierdzono w EXE USA; ABI poprawiono w istniejącej funkcji. Test kolejki odczytuje wynik przez oryginalny query opcode i sprawdza zachowanie pozostałych bitów. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

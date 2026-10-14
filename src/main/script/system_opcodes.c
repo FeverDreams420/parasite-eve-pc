@@ -1547,7 +1547,7 @@ int Entity_CallAction(int **arg0)
 }
 
 int Script_SetInventorySlotPointer(int **arg0) {
-    g_FloorPolygonVertices = (PolygonVertex *)(g_CurrentEntity->script_base + (*arg0[0] << 1));
+    g_FloorPolygonVertices = (PolygonVertex *)(g_CurrentEntity->script_base + (ptrdiff_t)*arg0[0] * 2);
     g_FloorPolygonVertexCount = *arg0[1];
     return 1;
 }

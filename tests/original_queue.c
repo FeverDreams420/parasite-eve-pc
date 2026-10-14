@@ -13,6 +13,7 @@
 #include "pe1/aya.h"
 #include "pe1/inventory_slots.h"
 #include "pe1/inventory_state.h"
+#include "pe1/floor_polygon.h"
 #include <stdio.h>
 extern FieldActor *g_CurrentEntity;
 /* Override selected resident entries to observe traversal in this fixture. */
@@ -476,6 +477,15 @@ int main(void)
         if(g_ScriptVariableBank[54]!=limit || g_ScriptVariableBank[55]!=(limit+2)/3 ||
            g_InvItemPtr!=g_AyaInventoryItems || g_InvSlotLimit!=(int)limit ||
            task.current.script!=script+8 || task.flags!=0x10) return 48;
+    }
+    {
+        u16 entries[32]={0};FieldActor owner={.script_base=(u8 *)entries};
+        u32 script[]={227|(2u<<13),0,3,0x10003,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if((void *)g_FloorPolygonVertices!=(void *)(entries+3) || g_FloorPolygonVertexCount!=3 ||
+           task.current.script!=script+6 || task.flags!=0x10) return 49;
     }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;

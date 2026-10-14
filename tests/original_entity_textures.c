@@ -3,7 +3,7 @@
 #include "pe1/gte.h"
 #include "pe1/render_lighting.h"
 #include <libgpu.h>
-#include "pe1/scene_entity_textures.h"
+#include "pe1/scene_room_load.h"
 #include "pe1/geom_state.h"
 GeomState * volatile g_GeomState;
 #include "room_banks.h"

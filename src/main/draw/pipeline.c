@@ -8,7 +8,6 @@
 #include "pe1/room_floor.h"
 #include "pe1/save_tail_state.h"
 #include "pe1/scene_dispatch.h"
-#include "pe1/scene_entity_textures.h"
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_transition.h"
 #include "pe1/script_state.h"

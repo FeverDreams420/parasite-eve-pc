@@ -1848,3 +1848,21 @@ ASan/UBSan/function pass. This validates the original CPU color transform and
 completion boundaries, not StoreImage/LoadImage integration, an on-screen fade
 or comparison against captured console frames. Full game, remaining extracted
 files and removal of pc/ remain open.
+
+
+### Scene loader consolidation prerequisite
+
+Removed the extracted scene_entity_textures.h header, restoring its declarations
+to existing scene_room_load.h and updating consumers. No new files added.
+Full build and Disc 1 entity-textures, entity-texture-assets and scene-spawn
+CTests pass. Source consolidation of entity_textures.c is still outstanding.
+
+An attempted whole room_load.c compilation exposed an essential unresolved
+format issue: SceneRoomRecord is serialized as 12 bytes but embeds a native
+handler pointer in its trailing word. On 64-bit hosts this changes the record
+stride; merely changing its size assertion would misread archives. Its two
+handler installations also currently treat PS1 addresses as native callbacks.
+The source merge was reverted pending an explicit mapping to original native
+procedures. Boot-disc header dependencies additionally pull in PS1-only CD
+runtime layouts; the file-image backend should replace the relevant dependencies.
+Do not claim the full room loader or room script callbacks are functional.

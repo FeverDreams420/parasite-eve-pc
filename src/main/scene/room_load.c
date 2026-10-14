@@ -19,9 +19,8 @@
 #include "pe1/resident_tables.h"
 #include "pe1/save_tail_state.h"
 #include "pe1/scene_assets.h"
-#include "pe1/scene_entity_textures.h"
-#include "pe1/scene_room.h"
 #include "pe1/scene_room_load.h"
+#include "pe1/scene_room.h"
 #include "pe1/scene_transition.h"
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached

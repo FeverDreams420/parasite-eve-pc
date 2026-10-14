@@ -6,10 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 GeomState *volatile g_GeomState;
-u8 g_GeomGroupSel;
-s16 g_CameraFocusHeight[1];
-u16 g_CameraBaseAngleAnalog, g_CameraBaseAngleDigital;
-char g_RenderMeshTintLevel;
 RenderLightColor g_RoomLightTint;
 #define CHECK(x) do { if (!(x)) {fprintf(stderr,"line %d: %s\n",__LINE__,#x);return 1;} } while(0)
 int main(void) {
@@ -35,7 +31,13 @@ int main(void) {
             CHECK(g_GeomScroll.state.position.matrixWords==(u32 *)&matrix);
             CHECK(g_GeomScroll.state.position.projectionDistance==&distance);
             CHECK(g_GeomScroll.state.position.x==0 && g_GeomScroll.state.position.originX==0);
-            g_GeomGroupSel=group;
+            CHECK(g_GeomScroll.state.position.focusHeight==0x180);
+            CHECK(g_GeomScroll.state.position.meshTintLevel==0x60);
+            CHECK(g_GeomScroll.state.position.groupSelect==0);
+            CHECK(g_GeomScroll.state.position.baseAngleDigital==0 &&
+                  g_GeomScroll.state.position.baseAngleAnalog==0);
+            CHECK(g_GeomScroll.state.position.otZ==0);
+            g_GeomScroll.state.position.groupSelect=group;
             for (unsigned smooth=0;smooth<2;++smooth) {
                 PeCameraScroll oracle={0}; uint32_t flags=0x70;
                 oracle.position[0]=camera.min_x;oracle.position[1]=camera.min_y;

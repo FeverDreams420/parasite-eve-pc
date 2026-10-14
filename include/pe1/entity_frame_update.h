@@ -19,7 +19,6 @@ extern u32 g_FieldPadPressed;         /* pad trigger bits */
 extern s16 g_MenuFrameCommand;         /* menu frame result */
 extern BattleAction g_BattleMenuActionRecord;        /* menu frame argument */
 extern u32 g_EntityRenderScratch[]; /* view matrix packet */
-extern s16 g_CameraFocusHeight[];       /* camera height (integer part) */
 
 void Battle_Update(void);
 void Inv_OpenAyaItemList(unsigned int mode);

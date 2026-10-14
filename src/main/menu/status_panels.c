@@ -1,3 +1,4 @@
+#include "pe1/geom_state.h"
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/battle_cmd.h"
@@ -174,7 +175,7 @@ int Menu_SaveBgIsFadeActive(void) {
 }
 
 void MemCard_InitSlotState(void) {
-    int value = g_GeomOtZ[0];
+    int value = g_GeomScroll.state.position.otZ;
 
     g_MenuSaveBgFadeState = 1;
     g_MenuSaveBgFadeStep = 1;

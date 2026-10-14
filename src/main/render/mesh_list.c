@@ -295,7 +295,7 @@ int Render_SetEntryMirrored(int index, int enabled, unsigned int arg2, unsigned 
 int Render_SetEntryPosition(int index, int x, int y) {
     GeomStateAddress table, base;
     GeomEntry *entry = (GEOM_STATE_OFFSET(table, base, entry_offset, 0), table.entry) + index;
-    int *flags = &g_RenderStateFlags;
+    int *flags = &g_GeomScroll.state.flags;
 
     entry->scr_x = x;
     entry->base_x = x;
@@ -311,7 +311,7 @@ int Render_LoadGeomState(int);
 int Render_DrawMeshList(void *buffer, void **end)
 {
     GeomState *state = g_GeomState;
-    u8 *group = &g_GeomGroupSel;
+    u8 *group = &g_GeomScroll.state.position.groupSelect;
     GeomStateAddress address;
     CameraViewport *view;
     GeomEntry *entry;
@@ -354,7 +354,7 @@ int Render_DrawMeshList(void *buffer, void **end)
         } while (++i < count);
     }
     {
-        int *flags = &g_RenderStateFlags;
+        int *flags = &g_GeomScroll.state.flags;
 
         g_RenderFadeFrameCount = g_RenderFadeFrameCounter = 0;
         *flags &= ~0xC00;
@@ -406,7 +406,7 @@ s32 Render_BuildMeshList(void) {
     if (i < count) {
         entry = base.entry;
         do {
-            if ((entry->head.b.flags & 2) && entry->group == g_GeomGroupSel)
+            if ((entry->head.b.flags & 2) && entry->group == g_GeomScroll.state.position.groupSelect)
                 Render_DrawSpriteEntry(entry);
             i++;
             entry++;
@@ -420,7 +420,7 @@ int Render_StartFadeIn(int arg0)
   int new_var;
   int *flags;
   int value;
-  flags = &g_RenderStateFlags;
+  flags = &g_GeomScroll.state.flags;
   g_RenderFadeFrameCount = arg0;
   g_RenderFadeFrameCounter = 0;
   new_var = *flags;
@@ -443,7 +443,7 @@ int Render_StepFade(void) {
     int count;
     int i;
 
-    if (!(g_RenderStateFlags & 0x400))
+    if (!(g_GeomScroll.state.flags & 0x400))
         return 0;
     level = (g_RenderFadeFrameCounter << 7) / (g_RenderFadeFrameCount - 1);
     state = g_GeomState;
@@ -469,7 +469,7 @@ int Render_StepFade(void) {
     }
     counter = &g_RenderFadeFrameCounter;
     if (++*counter >= g_RenderFadeFrameCount) {
-        g_RenderStateFlags = (g_RenderStateFlags & ~0xC00) | 0x800;
+        g_GeomScroll.state.flags = (g_GeomScroll.state.flags & ~0xC00) | 0x800;
         g_GeomState->field26 = 0x1FF0;
     }
     return 0;
@@ -479,7 +479,7 @@ int Render_StepFade(void) {
  * phase bit) and selects tint mode 1. */
 int Render_BeginSceneLoad(void) {
     {
-        int *flags = &g_RenderStateFlags;
+        int *flags = &g_GeomScroll.state.flags;
         int old = *flags;
         int value = old | 0x1000;
 
@@ -490,7 +490,7 @@ int Render_BeginSceneLoad(void) {
             *flags = old | 0x3000;
     }
     {
-        int *flags = &g_RenderStateFlags;
+        int *flags = &g_GeomScroll.state.flags;
 
         *flags = (*flags & ~0xC000) | 0x4000;
     }
@@ -510,11 +510,11 @@ int Render_ApplyScreenTint(void) {
     int count;
     int i;
 
-    if (!(g_RenderStateFlags & 0x1000))
+    if (!(g_GeomScroll.state.flags & 0x1000))
         return 0;
     level = 0x80;
-    if (g_RenderStateFlags & 0x2000)
-        level = g_RenderMeshTintLevel;
+    if (g_GeomScroll.state.flags & 0x2000)
+        level = g_GeomScroll.state.position.meshTintLevel;
     state = g_GeomState;
     entries.state = g_GeomState;
     entries.word += state->entry_offset;
@@ -535,7 +535,7 @@ int Render_ApplyScreenTint(void) {
             prim++;
         }
     }
-    flags = &g_RenderStateFlags;
+    flags = &g_GeomScroll.state.flags;
     mode = *flags;
     masked = mode & ~0xC000;
     *flags = masked;

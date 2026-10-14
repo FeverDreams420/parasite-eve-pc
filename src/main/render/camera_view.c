@@ -12,8 +12,8 @@ GeomScrollRecord g_GeomScroll;
  * points the view at the given matrix and projection distance. */
 int Render_InitViewState(void *matrix, void *screen) {
     g_GeomScroll.words.flags = 0x70;
-    g_RenderMeshTintLevel = 0x60;
-    g_CameraFocusHeight[0] = 0x180;
+    g_GeomScroll.state.position.meshTintLevel = 0x60;
+    g_GeomScroll.state.position.focusHeight = 0x180;
     g_RoomLightTint.b = 0xFF;
     g_RoomLightTint.g = 0xFF;
     g_RoomLightTint.r = 0xFF;
@@ -28,9 +28,9 @@ int Render_InitViewState(void *matrix, void *screen) {
     g_GeomScroll.words.savedBoundsX = 0;
     g_GeomScroll.words.savedBoundsY = 0;
     g_GeomScroll.words.cameraOffset = 0;
-    g_GeomGroupSel = 0;
-    g_CameraBaseAngleAnalog = 0;
-    g_CameraBaseAngleDigital = 0;
+    g_GeomScroll.state.position.groupSelect = 0;
+    g_GeomScroll.state.position.baseAngleAnalog = 0;
+    g_GeomScroll.state.position.baseAngleDigital = 0;
     g_GeomScroll.state.position.otZ = 0;
     g_GeomScroll.words.origin = 0;
     return 0;
@@ -46,7 +46,7 @@ s32 Render_ClampCameraPosition(s32 x, s32 y)
         CameraViewport *view;
 
         GEOM_STATE_OFFSET(address, base, entry_offset_1C, 0);
-        view = &address.viewport[g_GeomGroupSel];
+        view = &address.viewport[g_GeomScroll.state.position.groupSelect];
         if ((s16)cameraX < view->minX)
             g_GeomScroll.state.position.x = view->minX;
         else if (view->maxX < (s16)cameraX)
@@ -71,7 +71,7 @@ int Render_SaveAndOpenBounds(void) {
     CameraViewport *view;
 
     GEOM_STATE_OFFSET(address, base, entry_offset_1C, 0);
-    view = &address.viewport[g_GeomGroupSel];
+    view = &address.viewport[g_GeomScroll.state.position.groupSelect];
     g_GeomScroll.state.position.boundsMinX = view->minX;
     g_GeomScroll.state.position.boundsMaxX = view->maxX;
     g_GeomScroll.state.position.boundsMinY = view->minY;
@@ -89,7 +89,7 @@ int Render_RestoreBounds(void) {
     CameraViewport *view;
 
     GEOM_STATE_OFFSET(address, base, entry_offset_1C, 0);
-    view = &address.viewport[g_GeomGroupSel];
+    view = &address.viewport[g_GeomScroll.state.position.groupSelect];
     view->minX = g_GeomScroll.state.position.boundsMinX;
     view->maxX = g_GeomScroll.state.position.boundsMaxX;
     view->minY = g_GeomScroll.state.position.boundsMinY;
@@ -186,7 +186,7 @@ int Render_SetViewport(const s32 *position) {
     g_GeomScroll.state.position.cameraOffsetY = screen_y;
     viewAddress.word = geometry.word + offset_geometry.state->entry_offset_1C;
     view = viewAddress.viewport;
-    view += g_GeomGroupSel;
+    view += g_GeomScroll.state.position.groupSelect;
     viewportValue = 224;
 
     raw_width = view->width;
@@ -228,7 +228,7 @@ int Render_SetViewport(const s32 *position) {
         geometry.state = g_GeomState;
         viewAddress.word = geometry.word + geometry.state->entry_offset_1C;
         view = viewAddress.viewport;
-        view += g_GeomGroupSel;
+        view += g_GeomScroll.state.position.groupSelect;
         viewportValue = (s16)target_x;
         axisValue = view->minX;
         chosen_bound = axisValue;
@@ -279,7 +279,7 @@ int Render_ResetGteScreenOffset(void) {
 /* Starts a camera scroll from the current position to (x, y) over
  * `duration` frames; mode 8 selects the smoothed step. */
 int Render_SetScrollMode(int x, int y, int duration, int mode) {
-    u32 *flags = &g_GeomScroll.state.flags;
+    s32 *flags = &g_GeomScroll.state.flags;
     int value = *flags;
     u32 position;
     int bits;
@@ -337,7 +337,7 @@ int Render_StepCameraTransition(void)
         GeomStateAddress views, base;
         CameraViewport *view;
         GEOM_STATE_OFFSET(views, base, entry_offset_1C, 0);
-        view = &views.viewport[g_GeomGroupSel];
+        view = &views.viewport[g_GeomScroll.state.position.groupSelect];
         {
             unsigned int offset = 160 - (g_GeomScroll.state.position.x - (short)view->width / 2);
             g_GeomScroll.state.position.screenOffsetX = offset;
@@ -381,7 +381,7 @@ int Render_UpdateScrollPosition(void *positionArg, int duration, int mode)
     g_GeomScroll.state.position.startX = g_GeomScroll.state.position.x;
     g_GeomScroll.state.position.startY = (u16)g_GeomScroll.state.position.y;
     vector.x = position[0] >> 16;
-    vector.y = (position[1] >> 16) - (u16)g_CameraFocusHeight[0];
+    vector.y = (position[1] >> 16) - (u16)g_GeomScroll.state.position.focusHeight;
     vector.z = position[2] >> 16;
     {
         /* Matching debt: see Render_PrepareFrame; this volatile * input is the only form found that keeps the 24-byte frame. */
@@ -406,7 +406,7 @@ int Render_UpdateScrollPosition(void *positionArg, int duration, int mode)
 
         table.state = g_GeomState;
         table.word += state->entry_offset_1C;
-        view = &table.viewport[g_GeomGroupSel];
+        view = &table.viewport[g_GeomScroll.state.position.groupSelect];
     }
     {
         u16 width = view->width,height = view->height;

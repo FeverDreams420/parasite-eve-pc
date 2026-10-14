@@ -10,13 +10,9 @@
  *   - CameraViewport[]: 0x34-byte viewport records, base =
  *                       header->entry_offset_1C (+0x1C).
  *
- * Layout reverse-engineered from the ~28 files that touch g_GeomState; offsets
- * verified at 32-bit pointer width. Several offsets are reused with different
- * widths across files (the entry holds array pointers during build, camera
- * bounds during clamp/render) -- those are modeled as unions so each file keeps
- * its exact load/store width and the byte-match holds. Many g_GeomState files
- * still access it via raw M2C_FIELD() casts; those
- * are intentionally NOT migrated to this header yet (see notes in the files).
+ * Viewport/header layouts remain serialized PS1 data. GeomEntry contains
+ * native runtime pointers and needs relocation before use by the mesh renderer.
+ * GeomScrollRecord is host-owned state shared by camera, scripts and effects.
  */
 
 #include "common.h"
@@ -158,7 +154,7 @@ typedef struct GeomScrollCoordinates {
     /* Projected screen position of the active actor. */
     s16 cameraOffsetX, cameraOffsetY;
     RenderTintState tint;
-    u8 meshTintLevel;           /* 0x70: g_RenderMeshTintLevel */
+    s8 meshTintLevel;           /* 0x70: g_RenderMeshTintLevel */
     u8 groupSelect;             /* 0x71: g_GeomGroupSel, selected viewport */
     s16 focusHeight;            /* 0x72: g_CameraFocusHeight */
     GteMatrix cameraBasis;      /* 0x74: g_CameraBasisMatrix */
@@ -170,7 +166,7 @@ typedef struct GeomScrollCoordinates {
 } GeomScrollCoordinates;
 
 typedef struct GeomScrollState {
-    u32 flags;
+    s32 flags;
     GeomScrollCoordinates position;
 } GeomScrollState;
 
@@ -179,7 +175,7 @@ typedef struct GeomScrollState {
  * timer point at the current view matrix (the RenderMatrixSlot g_ViewMatrixSlot)
  * and at its projection distance (g_ProjectionSlot). */
 typedef struct GeomScrollWords {
-    u32 flags;
+    s32 flags;
 #if UINTPTR_MAX > UINT32_MAX
     u32 nativeAlignment; /* Match the pointer-aligned coordinates record. */
 #endif
@@ -273,7 +269,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomState, entry_offset_1C) == 0x1C,
 
 extern GeomState * volatile g_GeomState;
 
-extern u8 g_GeomGroupSel;
 int Render_StepGroupAnimations(void);
 int Render_ScrollEntries(void);
 int Render_StepCameraTransition(void);
@@ -346,20 +341,10 @@ typedef union GeomStateAddress {
      (address).word = (base).word + (address).state->field + (extra))
 
 int Render_UpdateScrollPosition(void *position, int duration, int mode);
-extern s16 g_CameraFocusHeight[];
-extern int g_RenderStateFlags;
-/* g_GeomScroll.state.position.screenOffsetX as its own symbol:
- * Render_StepCameraTransition stores it through this name; with the record
- * view cc1 schedules the following screenOffsetY computation differently. */
-extern u16 g_CameraScreenOffsetX;
-
-/* Native camera storage. The legacy scalar name is still referenced by
- * unintegrated overlay effects; it must not serve as backing for this record. */
-extern volatile int D_800BCF88;
+/* One native record shared by camera, scripts, and overlay effects. */
 extern GeomScrollRecord g_GeomScroll;
 /* The screen tint and fade parameters inside the scroll state. */
 #define g_ScreenTint (g_GeomScroll.state.position.tint)
-extern char g_RenderMeshTintLevel;
 /* Screen fade length and elapsed frames (Render_StartFadeIn/StepFade). */
 extern u8 g_RenderFadeFrameCount;
 extern u8 g_RenderFadeFrameCounter;

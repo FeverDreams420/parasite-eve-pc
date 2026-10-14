@@ -70,7 +70,7 @@ int Script_SetFogParamsAlt(short **arg0) {
 }
 
 int Script_IsBattlePhase4(int **arg0) {
-    *arg0[0] = ((g_RenderStateFlags & 7) == 4);
+    *arg0[0] = ((g_GeomScroll.state.flags & 7) == 4);
     return 1;
 }
 
@@ -80,7 +80,7 @@ int Script_ResetPlayerCameraPos(void) {
 }
 
 int Script_SetBattleStateMode(void) {
-    int *ptr = &g_RenderStateFlags;
+    int *ptr = &g_GeomScroll.state.flags;
 
     *ptr = (*ptr & -8) | 0x80;
     return 1;
@@ -316,14 +316,14 @@ int Entity_SetFieldByTypeId(int **arg0) {
 }
 
 int Script_ClearBattleFlags(void) {
-    int *ptr = &g_RenderStateFlags;
+    int *ptr = &g_GeomScroll.state.flags;
 
     *ptr &= -0xC1;
     return 1;
 }
 
 int Script_SetBattleFlags(void) {
-    int *ptr = &g_RenderStateFlags;
+    int *ptr = &g_GeomScroll.state.flags;
 
     *ptr |= 0xC0;
     return 1;
@@ -490,7 +490,7 @@ int Entity_ComputeVelocity(void) {
     return 1;
 }
 
-/* Camera base angles at 0x800BD020 (g_CameraBaseAngleDigital, g_CameraBaseAngleAnalog). The script
+/* Camera base angles at 0x800BD020 (g_GeomScroll.state.position.baseAngleDigital, g_GeomScroll.state.position.baseAngleAnalog). The script
  * opcode stores them as one record, so the second argument load stays behind
  * the first store: GCC 2.7 lets a varying array load pass a store to a fixed
  * scalar, but not to a structure member. */
@@ -775,8 +775,8 @@ int Script_LoadGeomState(int **arg0) {
 }
 
 int Script_SetScreenScrollPos(int **arg0) {
-    ((CameraBaseAngles *)&g_CameraBaseAngleDigital)->x = *arg0[0];
-    ((CameraBaseAngles *)&g_CameraBaseAngleDigital)->y = *arg0[1];
+    ((CameraBaseAngles *)&g_GeomScroll.state.position.baseAngleDigital)->x = *arg0[0];
+    ((CameraBaseAngles *)&g_GeomScroll.state.position.baseAngleDigital)->y = *arg0[1];
     return 1;
 }
 
@@ -816,7 +816,7 @@ int Script_SetEntityMoveSpeed(int **arg0) {
         if (scaled < 0) {
             scaled += 0xFFF;
         }
-        g_CameraFocusHeight[0] = scaled >> 12;
+        g_GeomScroll.state.position.focusHeight = scaled >> 12;
     }
     return 1;
 }
@@ -1580,7 +1580,7 @@ int Script_DisableEntityGravity(void) {
 }
 
 int Script_SetMeshFadeLevel(int **arg0) {
-    g_RenderMeshTintLevel = *arg0[0];
+    g_GeomScroll.state.position.meshTintLevel = *arg0[0];
     return 1;
 }
 

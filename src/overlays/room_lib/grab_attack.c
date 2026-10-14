@@ -1,3 +1,4 @@
+#include "pe1/geom_state.h"
 /*
  * The grab attack set: an actor class that seizes the player when it comes
  * within reach, holds the player through its own animation and lets go,
@@ -319,7 +320,7 @@ void RoomEffect_GrabResetPlayer(FieldActor *unused, RoomGrabStateTail *state) {
         int x = actor->pos_x;
         int y = actor->pos_y;
         int z = actor->pos_z;
-        int *flags = (int *)&D_800BCF88;
+        int *flags = (int *)&g_GeomScroll.state.flags;
 
         actor->motion_x = 0;
         actor->motion_y = 0;
@@ -391,7 +392,7 @@ int RoomEffect_GrabRelease(RoomMotionTrigger *entity) {
             actor->base_x = x;
             actor->base_y = y;
             actor->base_z = z;
-            D_800BCF88 |= 0x80;
+            g_GeomScroll.state.flags |= 0x80;
             entity->activated = 0;
         }
     }

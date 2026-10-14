@@ -194,7 +194,7 @@ void SceneE19_ResetPlayerMotion(void *arg0, unsigned char *state) {
         int x = actor->pos[0];
         int y = actor->pos[1];
         int z = actor->pos[2];
-        int *flags = (int *)&D_800BCF88;
+        int *flags = (int *)&g_GeomScroll.state.flags;
 
         actor->vel[0] = 0;
         actor->vel[1] = 0;
@@ -271,7 +271,7 @@ int SceneE19_GrabRelease(SceneE19ResetTarget *ent) {
             actor->base_pos[0] = x;
             actor->base_pos[1] = y;
             actor->base_pos[2] = z;
-            D_800BCF88 |= 0x80;
+            g_GeomScroll.state.flags |= 0x80;
             state[0x38] = 0;
         }
     }
@@ -313,7 +313,7 @@ s32 SceneE19_ResetGrabTarget(char *obj)
     *out = *((s32 *) (e + 0x28));
     *((s32 *) (e + 0x44)) = *((s32 *) (e + 0x2C));
     *((s32 *) (e + 0x48)) = *((s32 *) (e + 0x30));
-    D_800BCF88 |= 0x80;
+    g_GeomScroll.state.flags |= 0x80;
     sub[0x38] = 0;
   }
   return 0;

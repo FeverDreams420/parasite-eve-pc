@@ -922,3 +922,24 @@ D_800BCF88) have not all been unified with this record. Native GeomEntry runtime
 pointer fields are not a serialized room-entry layout; mesh loading still needs
 its own relocation work. The camera target is not yet wired into the running
 scene, and no whole-frame/playable-location claim follows from these tests.
+
+### Shared camera state in original callers — 2026-10-14
+
+Removed the remaining original-source references/declarations for the detached
+camera flags (including D_800BCF88), screen-X, group, focus height, digital/analog
+base angles, basis matrix, mesh tint and ordering-depth scalar aliases. Their
+callers now address fields in the single native GeomScrollRecord directly:
+camera, mesh rendering, script commands, player movement, entity frames, menu
+and grab/cruiser effects. This avoids separate globals silently diverging when
+those units are linked. Flags retain the original signed word type used by
+script pointer writes; mesh tint retains its signed-byte behavior. Entity focus
+height conversion uses unsigned word arithmetic to preserve wrapping without
+left-shifting a negative signed value.
+
+Camera tests additionally verify initialization of the actual record's focus,
+tint, group, angles and ordering depth after poisoning all storage. The 509-view,
+30,540-frame corpus still passes under ASan/UBSan/function instrumentation of
+original/test sources; GPU model regression and full build pass. Some changed
+legacy mesh/overlay/script units are not yet part of a linked native scene, so
+this is not execution evidence for those paths. Room light tint and projection/
+view-slot aliases still need integration; the full scene remains incomplete.

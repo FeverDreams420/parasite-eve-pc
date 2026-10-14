@@ -3,7 +3,6 @@
 
 #include "pe1/gte_types.h"
 
-extern GteMatrix g_CameraBasisMatrix;
 int Render_DrawSprite(void);
 
 /* Camera initialization scratch: matrix words followed by projection distance. */

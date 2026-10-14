@@ -819,7 +819,7 @@ int Script_SetGteMatrix(int **args) {
 
 
 int Boot_CheckModeSwitch(void) {
-    int mode = g_RenderStateFlags & 7;
+    int mode = g_GeomScroll.state.flags & 7;
     uintptr_t cursor;
     ScriptNode *node;
 

@@ -27,7 +27,6 @@ void Menu_SaveBgAdvanceFade(void);
 
 /* Geometry OT depth byte (0x800BD024, outside the gp window); the
  * incomplete array keeps -G8 units from treating it as small data. */
-extern unsigned char g_GeomOtZ[];
 
 void Menu_DrawSaveBg(void);
 

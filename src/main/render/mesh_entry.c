@@ -12,7 +12,7 @@ typedef union GeomEntryAddress {
 /* Build both frame buffers of room-tile sprites and texture-page packets. */
 int Render_LoadMeshEntry(GeomEntry *entry, RenderTilePacket *buffer, void **end)
 {
-    unsigned int paletteStart = g_GeomOtZ[0];
+    unsigned int paletteStart = g_GeomScroll.state.position.otZ;
     GeomEntryAddress base;
     unsigned int count;
     u32 *positions;
@@ -89,7 +89,7 @@ int Render_LoadMeshEntry(GeomEntry *entry, RenderTilePacket *buffer, void **end)
         pages += count;
     } while (++pass < 2);
     *end = pages;
-    g_GeomOtZ[0] = paletteMax + 33;
+    g_GeomScroll.state.position.otZ = paletteMax + 33;
     return 0;
 }
 

@@ -62,7 +62,7 @@ int Render_StepGroupAnimations(void)
 
             if ((control->head.b.flags & 2) &&
                 (control->head.b.flags & 0x14) &&
-                control->position.bits.group == g_GeomGroupSel) {
+                control->position.bits.group == g_GeomScroll.state.position.groupSelect) {
                 unsigned int j;
                 GeomStateAddress slotTable;
                 GeomAnimationSlot *slots;
@@ -288,9 +288,9 @@ int Render_LoadGeomState(int index) {
     dst = (u16 *)g_GeomScroll.words.viewMatrix;
     ((u32 *)dst)[7] = entry->prefix.gpu.word1C;
 
-    g_GeomGroupSel = index;
-    value = g_RenderStateFlags;
-    g_RenderStateFlags = value | 0x80;
+    g_GeomScroll.state.position.groupSelect = index;
+    value = g_GeomScroll.state.flags;
+    g_GeomScroll.state.flags = value | 0x80;
     return 0;
 }
 
@@ -383,9 +383,9 @@ int Render_DrawSprite(void)
     GteVector up, right, newUp, forward;
     int angle, cosine, sine;
     if ((g_PadPackets[0].header & 0xF000) == 0x7000)
-        angle = g_CameraBaseAngleAnalog;
+        angle = g_GeomScroll.state.position.baseAngleAnalog;
     else
-        angle = g_CameraBaseAngleDigital;
+        angle = g_GeomScroll.state.position.baseAngleDigital;
     {
         int masked = angle & 4095;
         if (D_8009D254 && (D_8009D2E8 & 16)) {
@@ -422,17 +422,17 @@ int Render_DrawSprite(void)
     gte_ldopv2(&right);
     gte_op12_psyq();
     gte_stlvnl(&newUp);
-    g_CameraBasisMatrix.t[0] = 0;
-    g_CameraBasisMatrix.t[1] = 0;
-    g_CameraBasisMatrix.t[2] = 0;
-    g_CameraBasisMatrix.m[0][0] = right.x;
-    g_CameraBasisMatrix.m[0][1] = newUp.x;
-    g_CameraBasisMatrix.m[0][2] = forward.x;
-    g_CameraBasisMatrix.m[1][0] = right.y;
-    g_CameraBasisMatrix.m[1][1] = newUp.y;
-    g_CameraBasisMatrix.m[1][2] = forward.y;
-    g_CameraBasisMatrix.m[2][0] = right.z;
-    g_CameraBasisMatrix.m[2][1] = newUp.z;
-    g_CameraBasisMatrix.m[2][2] = forward.z;
+    g_GeomScroll.state.position.cameraBasis.t[0] = 0;
+    g_GeomScroll.state.position.cameraBasis.t[1] = 0;
+    g_GeomScroll.state.position.cameraBasis.t[2] = 0;
+    g_GeomScroll.state.position.cameraBasis.m[0][0] = right.x;
+    g_GeomScroll.state.position.cameraBasis.m[0][1] = newUp.x;
+    g_GeomScroll.state.position.cameraBasis.m[0][2] = forward.x;
+    g_GeomScroll.state.position.cameraBasis.m[1][0] = right.y;
+    g_GeomScroll.state.position.cameraBasis.m[1][1] = newUp.y;
+    g_GeomScroll.state.position.cameraBasis.m[1][2] = forward.y;
+    g_GeomScroll.state.position.cameraBasis.m[2][0] = right.z;
+    g_GeomScroll.state.position.cameraBasis.m[2][1] = newUp.z;
+    g_GeomScroll.state.position.cameraBasis.m[2][2] = forward.z;
     return 0;
 }

@@ -1,3 +1,4 @@
+#include "pe1/geom_state.h"
 #include "common.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/entity_animation.h"
@@ -239,7 +240,7 @@ void Entity_FrameUpdate(void) {
         focus = g_PlayerEntity;
         if (focus != 0) {
             camera[0] = focus->pos_x;
-            camera[1] = focus->pos_y - (g_CameraFocusHeight[0] << 16);
+            camera[1] = (s32)((u32)focus->pos_y - ((u32)(s32)g_GeomScroll.state.position.focusHeight << 16));
             camera[2] = focus->pos_z;
         } else {
             camera[2] = 0;
@@ -248,7 +249,7 @@ void Entity_FrameUpdate(void) {
             for (focus = g_FieldActorListHead; focus != 0; focus = focus->next) {
                 if (focus->model_state.allocation_active != 0) {
                     camera[0] = focus->pos_x;
-                    camera[1] = focus->pos_y - (g_CameraFocusHeight[0] << 16);
+                    camera[1] = (s32)((u32)focus->pos_y - ((u32)(s32)g_GeomScroll.state.position.focusHeight << 16));
                     camera[2] = focus->pos_z;
                     break;
                 }

@@ -59,7 +59,6 @@
  *   Camera base angle: g_CameraBaseAngleDigital/g_CameraBaseAngleAnalog ; analog stick: g_PadPackets[0]
  */
 
-extern u16 g_CameraBaseAngleDigital, g_CameraBaseAngleAnalog;
 extern unsigned int g_FieldPadBits;
 
 void Scene_Init(BattleEntity *entity, int *actionState);

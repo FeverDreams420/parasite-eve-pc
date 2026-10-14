@@ -1,3 +1,4 @@
+#include "pe1/geom_state.h"
 #include "pe1/asset_tim.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/field_movement.h"
@@ -46,14 +47,14 @@ void Scene_UpdatePlayerEntity(BattleEntity *entity, int *actionState)
         int angle;
         angle = ratan2(g_PadPackets[0].leftY - 128, g_PadPackets[0].leftX - 128) - 0x400;
         if (angle < 0) angle += 0x1000;
-        entity->facingAngle = g_CameraBaseAngleAnalog + angle;
+        entity->facingAngle = g_GeomScroll.state.position.baseAngleAnalog + angle;
         movement.x = Math_FixedMul(-speed, rsin(angle) << 4);
         movement.y = 0;
         movement.z = Math_FixedMul(-speed, rcos(angle) << 4);
     } else {
         diagonal = Math_FixedMul(speed, 0xB504);
         pad = g_FieldPadBits;
-        entity->facingAngle = g_CameraBaseAngleDigital;
+        entity->facingAngle = g_GeomScroll.state.position.baseAngleDigital;
         if (pad & FIELD_PAD_DOWN) {
             if (pad & FIELD_PAD_LEFT) {
                 entity->facingAngle += 0x600;
@@ -83,7 +84,7 @@ void Scene_UpdatePlayerEntity(BattleEntity *entity, int *actionState)
                 movement.y = 0;
                 movement.z = -diagonal;
             } else {
-                entity->facingAngle = g_CameraBaseAngleDigital;
+                entity->facingAngle = g_GeomScroll.state.position.baseAngleDigital;
                 movement.x = 0;
                 movement.y = 0;
                 movement.z = -speed;
@@ -109,7 +110,7 @@ void Scene_UpdatePlayerEntity(BattleEntity *entity, int *actionState)
     }
     facing &= 0xFFF;
     entity->facingAngle = facing;
-    ApplyMatrixLV(&g_CameraBasisMatrix, &movement, (GteVector *)&entity->motionX);
+    ApplyMatrixLV(&g_GeomScroll.state.position.cameraBasis, &movement, (GteVector *)&entity->motionX);
     if (D_8009D2E8 & FIELD_MOVE_CONFUSED) {
         entity->facingAngle = (0x1000 - (u16)entity->facingAngle) & 0xFFF;
         entity->motionX = -entity->motionX;
@@ -150,14 +151,14 @@ void Scene_UpdateEntityFacing(BattleEntity *entity, int *actionState)
         int angle;
         angle = ratan2(g_PadPackets[0].leftY - 128, g_PadPackets[0].leftX - 128) - 0x400;
         if (angle < 0) angle += 0x1000;
-        entity->facingAngle = g_CameraBaseAngleAnalog + angle;
+        entity->facingAngle = g_GeomScroll.state.position.baseAngleAnalog + angle;
         movement.x = Math_FixedMul(-speed, rsin(angle) << 4);
         movement.y = 0;
         movement.z = Math_FixedMul(-speed, rcos(angle) << 4);
     } else {
         diagonal = Math_FixedMul(speed, 0xB504);
         pad = g_FieldPadBits;
-        entity->facingAngle = g_CameraBaseAngleDigital;
+        entity->facingAngle = g_GeomScroll.state.position.baseAngleDigital;
         if (pad & FIELD_PAD_DOWN) {
             if (pad & FIELD_PAD_LEFT) {
                 entity->facingAngle += 0x600;
@@ -187,7 +188,7 @@ void Scene_UpdateEntityFacing(BattleEntity *entity, int *actionState)
                 movement.y = 0;
                 movement.z = -diagonal;
             } else {
-                entity->facingAngle = g_CameraBaseAngleDigital;
+                entity->facingAngle = g_GeomScroll.state.position.baseAngleDigital;
                 movement.x = 0;
                 movement.y = 0;
                 movement.z = -speed;
@@ -213,7 +214,7 @@ void Scene_UpdateEntityFacing(BattleEntity *entity, int *actionState)
     }
     facing &= 0xFFF;
     entity->facingAngle = facing;
-    ApplyMatrixLV(&g_CameraBasisMatrix, &movement, (GteVector *)&entity->motionX);
+    ApplyMatrixLV(&g_GeomScroll.state.position.cameraBasis, &movement, (GteVector *)&entity->motionX);
     if (D_8009D2E8 & FIELD_MOVE_CONFUSED) {
         entity->facingAngle = (0x1000 - (u16)entity->facingAngle) & 0xFFF;
         entity->motionX = -entity->motionX;
@@ -250,7 +251,7 @@ void Scene_UpdateEntityFacingFromPad(BattleEntity *entity) {
         angle = ratan2(g_PadPackets[0].leftY - 128, g_PadPackets[0].leftX - 128) - 0x400;
         /* Keep the wrapped-angle correction based on the adjusted value. */
         if (angle < 0) angle += 0x1000;
-        angle += g_CameraBaseAngleAnalog;
+        angle += g_GeomScroll.state.position.baseAngleAnalog;
     } else {
         if (g_FieldPadBits & FIELD_PAD_DOWN) {
             if (g_FieldPadBits & FIELD_PAD_LEFT) entity->facingAngle = 0x600;
@@ -262,7 +263,7 @@ void Scene_UpdateEntityFacingFromPad(BattleEntity *entity) {
             else entity->facingAngle = 0;
         } else if (g_FieldPadBits & FIELD_PAD_LEFT) entity->facingAngle = 0x400;
         else if (g_FieldPadBits & FIELD_PAD_RIGHT) entity->facingAngle = 0xC00;
-        angle = entity->facingAngle + g_CameraBaseAngleDigital;
+        angle = entity->facingAngle + g_GeomScroll.state.position.baseAngleDigital;
     }
     if (D_8009D254 && (D_8009D2E8 & FIELD_MOVE_CONFUSED)) {
         angle += 0x800;

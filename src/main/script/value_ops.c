@@ -33,7 +33,7 @@ int Script_SetEntityVec3(int **args) {
         g_CurrentEntity->base_y = g_CurrentEntity->pos_y;
         g_CurrentEntity->base_z = g_CurrentEntity->pos_z;
         if (g_CurrentEntity == g_PlayerEntity) {
-            int *flags = &g_RenderStateFlags;
+            int *flags = &g_GeomScroll.state.flags;
 
             *flags |= 0x80;
         }

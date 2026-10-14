@@ -415,8 +415,9 @@ int Render_CameraTrackRelativeOffset(int **args) {
         g_CurrentEntity->rot_y = target_angle;
     }
 
-    g_CurrentEntity->motion_x = Math_FixedMul(-movement_speed, rsin(target_angle) << 4);
-    movement_z = Math_FixedMul(-movement_speed, rcos(target_angle) << 4);
+    /* MIPS shifts the word bits even when the sine/cosine is negative. */
+    g_CurrentEntity->motion_x = Math_FixedMul(-movement_speed, (s32)((u32)rsin(target_angle) << 4));
+    movement_z = Math_FixedMul(-movement_speed, (s32)((u32)rcos(target_angle) << 4));
     current_x = (target_x - current_x) >> 16;
     current_z = (target_z - current_z) >> 16;
     remaining_distance = current_x * current_x + current_z * current_z;

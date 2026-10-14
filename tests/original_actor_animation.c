@@ -1122,6 +1122,84 @@ static int authored_glow_script_cycle(void)
     return 1;
 }
 
+int Render_CameraTrackRelativeOffset(int **args);
+s32 Render_CameraStepAngleFade(s32 **args);
+static int original_actor_camera_opcodes(void)
+{
+    FieldActor *previous=g_CurrentEntity,*previous_player=g_PlayerEntity;
+    ScriptNode *previous_node=g_ScriptNodePool;
+    u32 *previous_cursor=g_ScriptCursor;
+    u32 script[16]={0};
+    unsigned angles[]={0,1,511,1024,2047,2048,2049,3584,4095};
+    for(unsigned from=0;from<9;++from) for(unsigned to=0;to<9;++to) {
+        unsigned start=angles[from],end=angles[to];
+        FieldActor actor={.rot_y=start}; ScriptNode node={.flags=0x8000};
+        int target=end,step=64;int *args[]={&target,&step};
+        g_CurrentEntity=&actor;g_ScriptNodePool=&node;
+        unsigned calls=0;
+        for(;;) {
+            unsigned before=actor.rot_y&0xfff;
+            g_ScriptCursor=script+8;
+            int finished=Render_CameraStepAngleFade(args);
+            if(++calls>80) do { fprintf(stderr,"camera opcode failure line %d\n",__LINE__); return 0; } while(0);
+            if(finished) {
+                if(actor.rot_y!=end || node.flags!=0x8000 || g_ScriptCursor!=script+8) do { fprintf(stderr,"camera opcode failure line %d\n",__LINE__); return 0; } while(0);
+                break;
+            }
+            if(calls==1) {
+                int span=(int)end-(int)start;
+                int direction=span<0?-1:1;
+                if(span>2048 || span<-2048) direction=-direction;
+                if(node.target14!=64*direction) return 0;
+            }
+            if(!(node.flags&0x20) || node.target18.coordinate!=(int)end || node.active!=1 ||
+               g_ScriptCursor!=script+4 || (actor.rot_y&0xfff)!=((before+node.target14)&0xfff)) do { fprintf(stderr,"camera opcode failure line %d\n",__LINE__); return 0; } while(0);
+            target=123;step=1; /* A yielded opcode retains its original operands. */
+        }
+    }
+    for(unsigned player=0;player<2;++player) {
+        FieldActor actor={.pos_x=100*65536,.pos_z=200*65536,.rot_y=4095,
+                          .move_factor=65536,.move_speed=4096};
+        ScriptNode node={.flags=0x8000};
+        int x=-2*65536,z=3*65536,turn=0;int *args[]={&x,&z,&turn};
+        g_CurrentEntity=&actor;g_PlayerEntity=player?&actor:NULL;g_ScriptNodePool=&node;
+        unsigned calls=0;
+        for(;;) {
+            g_ScriptCursor=script+8;
+            int finished=Render_CameraTrackRelativeOffset(args);
+            if(++calls>200 || node.target18.coordinate!=98*65536 || node.target1c!=203*65536) do { fprintf(stderr,"camera opcode failure line %d\n",__LINE__); return 0; } while(0);
+            if(finished) {
+                if(actor.pos_x!=98*65536 || actor.pos_z!=203*65536 || actor.motion_x || actor.motion_z ||
+                   node.flags!=0x8000 || g_ScriptCursor!=script+8) do { fprintf(stderr,"camera opcode failure line %d\n",__LINE__); return 0; } while(0);
+                break;
+            }
+            if(!(node.flags&0x20) || node.active!=1 || g_ScriptCursor!=script+3) do { fprintf(stderr,"camera opcode failure line %d\n",__LINE__); return 0; } while(0);
+            actor.pos_x=(s32)((u32)actor.pos_x+(u32)actor.motion_x);
+            actor.pos_z=(s32)((u32)actor.pos_z+(u32)actor.motion_z);
+            x=z=0;turn=1;
+        }
+    }
+    for(unsigned player=0;player<2;++player) {
+        FieldActor actor={.pos_x=100*65536,.pos_z=200*65536,.rot_y=4095,
+                          .move_factor=65536,.move_speed=4096};
+        ScriptNode node={.flags=0x8000};
+        int x=-100*65536,z=150*65536,turn=64;int *args[]={&x,&z,&turn};
+        g_CurrentEntity=&actor;g_PlayerEntity=player?&actor:NULL;g_ScriptNodePool=&node;
+        for(unsigned frame=0;frame<3;++frame) {
+            g_ScriptCursor=script+8;
+            if(Render_CameraTrackRelativeOffset(args)!=0 || actor.rot_y!=63+64*frame ||
+               node.target18.coordinate!=0 || node.target1c!=350*65536 || node.target14!=64 ||
+               node.flags!=0x8020 || node.active!=1 || g_ScriptCursor!=script+3) return 0;
+            actor.pos_x=(s32)((u32)actor.pos_x+(u32)actor.motion_x);
+            actor.pos_z=(s32)((u32)actor.pos_z+(u32)actor.motion_z);
+            x=z=0;turn=1;
+        }
+    }
+    g_CurrentEntity=previous;g_PlayerEntity=previous_player;g_ScriptNodePool=previous_node;g_ScriptCursor=previous_cursor;
+    puts("Original actor camera opcodes: angle wrap, retained operands, native cursor rewinds, relative movement and player speed path passed");
+    return 1;
+}
+
 static int original_actor_audio_state(void)
 {
     Pe1GameState previous=g_GameState;
@@ -1477,7 +1555,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_actor_camera_opcodes() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Świeża regresja po integracji 42 powiązań dispatchera: wszystkie 35 testów `original-game-*` przeszły z wymaganym obrazem Disc 1, bez SKIP. Cały rozszerzony fixture kolejki, z oryginalnymi modułami kompilowanymi z bieżących źródeł, przeszedł ASan/UBSan/function. To dowód objętych scenariuszy modułowych, nie pełnej kampanii: brak pełnego bootstrapu/frame loop, pozostałych opcode'ów i usunięcia `pc/` nadal uniemożliwia uznanie portu za ukończony.
+
 Dispatcher ma 42 powiązania: opcode'y 11/12 wykonują oryginalny zapis/odczyt siedmiu wektorów aktora. Test kolejki sprawdza również nieznany selector, zawężenie rotacji do signed halfword, synchronizację base position i ustawienie flagi kamery wyłącznie dla gracza. W scenariuszu pozycji floor lock jest aktywny, więc ten dowód nie obejmuje nowego wyszukiwania podłogi. Testy kolejki i ruchu linkują cały oryginalny moduł kamery jako źródło wspólnego stanu. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Test oryginalnego opcode 17 obejmuje już każdy z 32 pojedynczych bitów licznika held, przycisk aktywny/nieaktywny oraz oryginalną zmianę operandu przez LZCR. Zachowuje osobny przypadek bitu 31, którego operand nie jest nadpisywany. Wszystkie te maski trafiają do prawidłowego elementu tablicy liczników. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Zerowa i złożone maski trybu licznika nadal wymagają analizy; nie uznano ich za zweryfikowane. Nie dodano plików ani kodu produkcyjnego. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

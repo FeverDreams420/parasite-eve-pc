@@ -30,7 +30,7 @@ typedef struct FieldShadedQuadPacket {
     s16 x3, y3;
 } FieldShadedQuadPacket;
 
-extern unsigned char *g_RenderAnimBufferBase[];
+#include "pe1/render_buffers.h"
 
 /* Corners of the sprite quad around its centre, 16 units per texel; set by
  * FieldFx_SetSpriteCellSize: top left, top right, bottom left, bottom right. */

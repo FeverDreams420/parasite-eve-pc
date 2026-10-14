@@ -1,20 +1,20 @@
 #ifndef PE1_RENDER_BUFFERS_H
 #define PE1_RENDER_BUFFERS_H
 
-/* Work-buffer bases carved out by Draw_InitDisplay. The -G8 menu units read
- * them with absolute addresses, so they are incomplete arrays used at
- * element 0. */
-extern unsigned char *g_RenderOtBufferBaseAlt[];
-extern unsigned char *g_RenderScratchBufferBase[];
-extern unsigned char *g_RenderFrontBufferBase[];
-extern unsigned char *g_RenderBackBufferBase[];
 #include "pe1/scene_archive.h"
+
+/* Original absolute buffer symbols are views of the canonical game state.
+ * Array syntax preserves the original callers without separate storage. */
+#define g_RenderOtBufferBaseAlt (&g_GameState.shared_buffers.ordering_tables[1])
+#define g_RenderScratchBufferBase (g_GameState.render_buffer_names.scratch)
+#define g_RenderFrontBufferBase (g_GameState.render_buffer_names.front)
+#define g_RenderBackBufferBase (g_GameState.render_buffer_names.back)
 
 /* Double-buffer slot (0 or 1) selecting the per-slot tables below and the
  * display/draw environments. */
 extern int g_ActiveDrawSlot;
 /* Per-slot ordering tables and animation buffers. */
-extern unsigned char *g_OtBufferTable[];
-extern unsigned char *g_RenderAnimBufferBase[];
+#define g_OtBufferTable (g_GameState.shared_buffers.ordering_tables)
+#define g_RenderAnimBufferBase (g_GameState.render_buffer_names.animation)
 
 #endif

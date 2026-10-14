@@ -51,7 +51,7 @@ typedef union FieldStripLink {
 #define STRIP_OT(depth) \
     ((RenderGpuTag *)D_800B0E38.ordering[g_ActiveDrawSlot] + (depth))
 
-extern unsigned char *g_RenderAnimBufferBase[];
+#include "pe1/render_buffers.h"
 
 void FieldFx_ScaleColor(int scale, u8 *src, u8 *dst);
 long RotTransPers4(void *v0, void *v1, void *v2, void *v3, void *sxy0,

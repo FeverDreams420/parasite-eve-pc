@@ -58,9 +58,6 @@ _Alignas(16) u8 g_BootWorkArea[0x20000], D_8010BD00[0x20000];
 _Alignas(16) u8 D_80120D08[0x200000], g_SceneLoadScratchArea[0x20000];
 static u8 directory[0x1000];
 u8 *g_StrFileDirBuffer = directory + 8;
-u8 *g_OtBufferTable[2], *g_RenderOtBufferBaseAlt[1];
-u8 *g_RenderFrontBufferBase[1], *g_RenderBackBufferBase[1];
-u8 *g_RenderAnimBufferBase[1];
 
 static int boot_buffer_layout(void)
 {
@@ -81,7 +78,13 @@ static int boot_buffer_layout(void)
         !g_GameState.unk_170) return 0;
     RenderNativeTag *first = (RenderNativeTag *)g_OtBufferTable[0];
     RenderNativeTag *second = (RenderNativeTag *)g_RenderOtBufferBaseAlt[0];
-    if (first + 4096 != second ||
+    if (D_800B0E38.ordering[0]!=first || D_800B0E38.ordering[1]!=second ||
+        (void *)g_GameState.bg_tim!=g_RenderScratchBufferBase[0] ||
+        (void *)g_GameState.save_background_source!=g_RenderFrontBufferBase[0] ||
+        (void *)g_GameState.save_background_destination!=g_RenderBackBufferBase[0] ||
+        (void *)g_GameState.hud_tim!=g_RenderAnimBufferBase[0] ||
+        (void *)g_GameState.script_sprite_buffer!=g_RenderAnimBufferBase[1] ||
+        first + 4096 != second ||
         (void *)(second + 4096) != (void *)g_GameState.object_texture_blob)
         return 0;
     first[4095].length = 0x1234;

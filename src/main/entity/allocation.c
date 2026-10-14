@@ -214,7 +214,6 @@ void Scene_UpdateEntityPositions(void)
     }
 }
 
-unsigned char *g_RenderScratchBufferBase[1];
 
 void *Entity_AllocBlock(u32 size) {
     s32 blocks;

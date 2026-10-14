@@ -3017,3 +3017,16 @@ with Disc 1 required. Fresh actor ASan/UBSan/function passes with original
 source instrumented and PsyZ/SDL archives uninstrumented. Boot allocation,
 buffer lifetime across complete scene transitions, real effect descriptors,
 full game-loop integration and deletion of pc/ remain incomplete.
+
+
+The remaining original buffer names now alias canonical GameState slots:
+OT at USA 800B0E38/3C, scratch at 800B0E4C, front/back at 800B0E50/54 and
+animation packets at 800B0E58/5C, corroborated by the historical symbol map.
+Entity allocation no longer owns separate scratch storage. Original boot
+initialization now sets the actual shared renderer/effect/allocation buffers;
+its existing fixture checks both OTs, packet slots and all allocation bounds.
+All changes are in existing files. Full build and ten related CTests pass with
+Disc 1 required, including pools, actor lifecycle, original GPU model/room paths
+and room/entity assets. This does not yet prove full transition lifetimes or
+complete authored effect execution. Production boot-memory backing, integration
+of remaining original modules and removal of pc/ remain required.

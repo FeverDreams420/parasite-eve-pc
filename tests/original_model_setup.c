@@ -21,7 +21,6 @@ s32 g_IdentityMatrixSource[8] = {4096,0,4096,0,4096,0,0,0};
 s16 g_RenderTexturePageDeltas[4][4];
 int g_RenderCounter[1];
 RenderVec3s g_RenderNormalTable[240];
-u8 *g_RenderBackBufferBase[1];
 extern DRAWENV g_RenderDrawEnvArray[2];
 extern DISPENV g_RenderDispEnvArray[2];
 extern int g_MenuSaveBgFadeState;

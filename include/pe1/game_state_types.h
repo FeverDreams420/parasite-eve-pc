@@ -122,6 +122,14 @@ typedef struct Pe1GameState {
     union {
         RenderBufferPrefix render_buffers;
         struct {
+            u8 *ordering[2];
+            u8 *load_buffers[3];
+            u8 *scratch[1];
+            u8 *front[1];
+            u8 *back[1];
+            u8 *animation[2];
+        } render_buffer_names;
+        struct {
             union {
                 unsigned char *ordering_tables[2];
                 struct SceneAssetBlob *bg_texture_blob;
@@ -167,5 +175,11 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffers) == PE1_OFFSETOF(Pe1
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffers.other_buffers[0]) == PE1_OFFSETOF(Pe1GameState, texture_load_scratch), game_render_scratch_alias);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffers.packets[0]) == PE1_OFFSETOF(Pe1GameState, hud_tim), game_render_packets_alias);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffers.packets[1]) == PE1_OFFSETOF(Pe1GameState, script_sprite_buffer), game_render_sprite_alias);
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffer_names.ordering) == PE1_OFFSETOF(Pe1GameState, shared_buffers), game_render_named_ordering_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffer_names.scratch) == PE1_OFFSETOF(Pe1GameState, bg_tim), game_render_named_scratch_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffer_names.front) == PE1_OFFSETOF(Pe1GameState, save_background_source), game_render_named_front_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffer_names.back) == PE1_OFFSETOF(Pe1GameState, save_background_destination), game_render_named_back_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, render_buffer_names.animation) == PE1_OFFSETOF(Pe1GameState, render_buffers.packets), game_render_named_animation_alias);
 
 #endif

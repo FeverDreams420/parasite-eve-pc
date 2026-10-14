@@ -17,7 +17,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
     libavformat libavcodec libavutil libswscale libswresample)
 
-add_executable(parasite-eve-pc main.c $<TARGET_OBJECTS:parasite-eve-original-disc> assets.c room.c vram.c script.c script_vm.c script_scheduler.c spu_bank.c akao_sequence.c akao_channel.c akao_instrument.c akao_pitch.c akao_timing.c akao_player.c scene.c movie.c boot.c title.c automation.c)
+add_executable(parasite-eve-pc main.c $<TARGET_OBJECTS:parasite-eve-original-disc> room.c vram.c script.c script_vm.c script_scheduler.c spu_bank.c akao_sequence.c akao_channel.c akao_instrument.c akao_pitch.c akao_timing.c akao_player.c scene.c movie.c boot.c title.c automation.c)
 target_link_libraries(parasite-eve-pc PRIVATE psyz PkgConfig::FFMPEG)
 target_sources(parasite-eve-pc PRIVATE music.c)
 target_sources(parasite-eve-pc PRIVATE scene_audio.c)
@@ -47,7 +47,7 @@ psyz_ios_configure_target(parasite-eve-pc
     DISPLAY_NAME "Parasite Eve")
 
 if(BUILD_TESTING)
-    add_executable(test-disc tests/test_disc.c $<TARGET_OBJECTS:parasite-eve-original-disc> assets.c room.c)
+    add_executable(test-disc tests/test_disc.c $<TARGET_OBJECTS:parasite-eve-original-disc> room.c)
     target_include_directories(test-disc PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME disc-reader COMMAND test-disc)
     add_executable(test-vram tests/test_vram.c vram.c room.c $<TARGET_OBJECTS:parasite-eve-original-disc>)

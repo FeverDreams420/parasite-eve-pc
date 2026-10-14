@@ -55,8 +55,9 @@ cmake --build build --parallel
 ```
 
 `--discs "/path/to/Disc 1.cue" "/path/to/Disc 2.cue"` mounts both sources
-throughout boot. `pc/assets.h` keeps source provenance for identically named
-files and allows reads from either image without a disc-swap operation. CUE
+throughout boot. Each image has its own file extents and reader; identical file
+names do not merge their contents. The frontend currently boots from Disc 1;
+automatic source selection by original game loaders remains pending. CUE
 support currently covers a single BINARY MODE2/2352 track, relative quoted
 FILE paths and INDEX 01 offsets. Other layouts fail explicitly. Disc role/version
 validation and the game-wide asset catalog are still pending; this is not yet

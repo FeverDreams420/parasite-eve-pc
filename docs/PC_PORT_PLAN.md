@@ -2618,3 +2618,27 @@ in these runs. The legacy boot tests do not prove original gameplay.
 The rest of pc/, including scene/script/audio/frontend implementations and
 their test dependencies, still requires elimination. Full original scene/frame
 integration and the complete game remain unfinished.
+
+
+### Remove the redundant asset-source wrapper
+
+Deleted pc/assets.c and pc/assets.h without relocating their API or adding
+files. The existing frontend opens both PeDisc images directly through the
+original archive module, closes both on startup failure and keeps both open
+through boot. Consumers retain separate image and file-extent pairs.
+
+The original image reader now rejects reads after close before calling stdio
+with a null stream. The existing disc fixture alternates payload and raw-sector
+reads from two simultaneously mounted synthetic images with identical file
+names but different bytes; closing source 0 leaves source 1 readable. Closed
+payload/raw/directory reads and out-of-extent reads fail. Full build, five
+CTests (disc-reader, original entity-texture assets and three boot checks) pass
+with Disc 1 assets required. After the final fixture additions, disc-reader
+and a fresh ASan/UBSan/function build of the original image module and fixture
+pass again. A headless executable invocation with a valid Disc 1 and missing
+Disc 2 exits with code 1 before boot.
+
+This does not prove real Disc 2 contents or automatic selection by gameplay: the
+frontend still boots from the first image. Original Asset_OpenPeImage, source
+selection in original loaders and the rest of pc/ remain to be integrated or
+removed. Full original gameplay remains incomplete.

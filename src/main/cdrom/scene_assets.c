@@ -287,6 +287,8 @@ static uint32_t le32(const unsigned char *p) {
 }
 
 static int read_image(PeDisc *disc, uint64_t offset, void *data, size_t size) {
+    if (!disc->stream)
+        return fail(disc, "Disc image is not mounted");
     if (offset > disc->image_size || size > disc->image_size - offset)
         return fail(disc, "Read exceeds the disc image");
     if (pe_seek(disc->stream, (int64_t)offset, SEEK_SET) != 0 ||

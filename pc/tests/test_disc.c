@@ -1,5 +1,4 @@
 #include "pe1/cdrom.h"
-#include "assets.h"
 #include "room.h"
 #include <stdlib.h>
 #include <string.h>
@@ -164,32 +163,32 @@ static void test_assets(void) {
     CHECK(fseek(image, 20 * 2352 + 24, SEEK_SET) == 0);
     CHECK(fputc(42, image) != EOF);
     CHECK(fclose(image) == 0);
-    PeAssets assets;
-    CHECK(pe_assets_open(&assets, "pe-source1.bin", "pe-source2.bin"));
-    PeAssetFile files[2];
+    PeDisc discs[2] = {0};
+    CHECK(pe_disc_open(&discs[0], "pe-source1.bin"));
+    CHECK(pe_disc_open(&discs[1], "pe-source2.bin"));
+    PeDiscFile files[2];
     unsigned char bytes[2352];
-    for (unsigned source = 0; source < 2; ++source) {
-        CHECK(pe_assets_find(&assets, source, "FMV1/INTRO.STR", &files[source]));
-        CHECK(files[source].source == source);
-    }
+    for (unsigned source = 0; source < 2; ++source)
+        CHECK(pe_disc_find(&discs[source], "FMV1/INTRO.STR", &files[source]));
     for (unsigned pass = 0; pass < 10; ++pass) {
         for (unsigned source = 0; source < 2; ++source) {
-            CHECK(pe_assets_read(&assets, &files[source], 0, bytes, 1));
+            CHECK(pe_disc_read(&discs[source], &files[source], 0, bytes, 1));
             CHECK(bytes[0] == (source ? 42 : 0));
-            CHECK(pe_assets_read_raw(&assets, &files[source], 0, bytes));
+            CHECK(pe_disc_read_raw(&discs[source], &files[source], 0, bytes));
             CHECK(bytes[24] == (source ? 42 : 0));
         }
     }
-    CHECK(!pe_assets_find(&assets, 2, "FMV1/INTRO.STR", &files[0]));
-    CHECK(!pe_assets_read(&assets, &files[1], 3000, bytes, 1));
-    CHECK(strstr(assets.error, "Disc 2"));
-    pe_assets_close(&assets);
-    CHECK(!pe_assets_read(&assets, &files[1], 0, bytes, 1));
-    CHECK(!pe_assets_open(&assets, "pe-source1.bin", NULL));
-    CHECK(!assets.discs[0].stream && !assets.discs[1].stream);
-    CHECK(!pe_assets_open(&assets, "pe-source1.bin", "missing-source.bin"));
-    CHECK(!assets.discs[0].stream && !assets.discs[1].stream);
-    CHECK(strstr(assets.error, "Disc 2"));
+    CHECK(!pe_disc_read(&discs[1], &files[1], 3000, bytes, 1));
+    pe_disc_close(&discs[0]);
+    CHECK(pe_disc_read(&discs[1], &files[1], 0, bytes, 1));
+    CHECK(bytes[0] == 42);
+    CHECK(!pe_disc_read(&discs[0], &files[0], 0, bytes, 1));
+    CHECK(!pe_disc_read_raw(&discs[0], &files[0], 0, bytes));
+    CHECK(!pe_disc_find(&discs[0], "FMV1/INTRO.STR", &files[0]));
+    pe_disc_close(&discs[1]);
+    CHECK(!pe_disc_read(&discs[1], &files[1], 0, bytes, 1));
+    CHECK(!pe_disc_open(&discs[1], "missing-source.bin"));
+    CHECK(!discs[0].stream && !discs[1].stream);
     CHECK(remove("pe-source1.bin") == 0);
     CHECK(remove("pe-source2.bin") == 0);
 }

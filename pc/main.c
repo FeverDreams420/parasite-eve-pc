@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "pe1/cdrom.h"
-#include "assets.h"
 #include "movie.h"
 #include "boot.h"
 #include "automation.h"
@@ -94,14 +93,19 @@ int main(int argc, char **argv) {
         return 1;
     }
     if (argc == 4 && strcmp(argv[1], "--discs") == 0) {
-        PeAssets assets;
-        if (!pe_assets_open(&assets, argv[2], argv[3])) {
-            fprintf(stderr, "%s\n", assets.error);
-            return pe_runtime_finish(1);
+        PeDisc discs[2] = {0};
+        for (unsigned source = 0; source < 2; ++source) {
+            if (!pe_disc_open(&discs[source], argv[source + 2])) {
+                fprintf(stderr, "Disc %u: %s\n", source + 1, discs[source].error);
+                for (unsigned opened = 0; opened < 2; ++opened)
+                    pe_disc_close(&discs[opened]);
+                return pe_runtime_finish(1);
+            }
         }
         pe_runtime_emit("assets.mounted", 2);
-        int result = pe_boot_game_source(&assets.discs[0], 0);
-        pe_assets_close(&assets);
+        int result = pe_boot_game_source(&discs[0], 0);
+        for (unsigned source = 0; source < 2; ++source)
+            pe_disc_close(&discs[source]);
         return pe_runtime_finish(result);
     }
     if (argc == 3 && strcmp(argv[1], "--disc") == 0)

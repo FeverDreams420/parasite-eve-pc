@@ -314,6 +314,11 @@ typedef struct AkaoTrackUpdateSlot {
 
 #define AKAO_VOICE_COUNT 24
 
+/* Original contiguous storage: primary 24, secondary 24, nested SFX 12. */
+extern AkaoTrack g_AkaoVoiceStateTable[60];
+#define g_AkaoVoiceStateTable2 (g_AkaoVoiceStateTable + AKAO_VOICE_COUNT)
+#define g_AkaoVoiceChannelTable (g_AkaoVoiceStateTable + 2 * AKAO_VOICE_COUNT)
+
 typedef struct AkaoVoiceBank {
     AkaoTrack tracks[AKAO_VOICE_COUNT];
 } AkaoVoiceBank;

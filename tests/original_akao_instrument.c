@@ -10,7 +10,6 @@
 
 /* Explicit input tables for isolated original procedures, not runtime audio. */
 AkaoInstrument g_AkaoInstrumentTable[256];
-int g_AkaoPitchPeriodTable[256 * 16];
 AkaoSequencerState g_AkaoSequencerState;
 #define bank g_AkaoSequencerState.primary
 AkaoSequencerBank *g_AkaoCurTrack = &bank;
@@ -34,12 +33,11 @@ volatile u32 g_AkaoMessageQueueLock;
 static AkaoTickBank tick_bank;
 AkaoTickBank *D_8009D2C8 = &tick_bank;
 SpuReverbState g_SpuReverbState;
-AkaoTrack g_AkaoVoiceChannelTable[12];
 unsigned g_SpuActiveVoiceMask;
 unsigned g_SpuPendingKeyOffMask;
 unsigned g_AkaoTrack34Mask, g_AkaoTrack38Mask, g_AkaoTrack3CMask;
 unsigned g_AkaoVoiceMaskScratch, g_AkaoVoiceUpdateFlags;
-AkaoTrack g_AkaoVoiceStateTable[48], g_AkaoVoiceStateTable2[24];
+AkaoTrack g_AkaoVoiceStateTable[60];
 AkaoSequencerBank g_AkaoTrackStateBackup;
 AkaoVoiceBank g_AkaoVoiceStateBackup;
 unsigned g_AkaoVoiceKeyOnState, g_AkaoSeqPendingFlags;
@@ -297,7 +295,7 @@ int main(int argc, char **argv)
         CHECK(track.update_flags == (3 | AKAO_VOICE_PARAM_ADSR_ALL));
         CHECK(track.pc == tempo + 2);
         for (unsigned note = 0; note < 12; ++note)
-            g_AkaoPitchPeriodTable[i * 16 + note] = 4096 + note * 32 + i;
+            g_AkaoInstrumentTable[i].pitch[note] = 4096 + note * 32 + i;
         CHECK(Akao_LookupPitchPeriod(i, 72, 0) == 4096 + i);
         CHECK(Akao_LookupPitchPeriod(i, 60, 0) == (4096 + i) / 2);
         CHECK(Akao_LookupPitchPeriod(i, 84, 0) == (4096 + i) * 2);
@@ -305,7 +303,7 @@ int main(int argc, char **argv)
         for (unsigned note = 0; note < 256; ++note) {
             for (int detune = -128; detune <= 127; detune += 17) {
                 unsigned octave = note / 12;
-                unsigned period = g_AkaoPitchPeriodTable[i * 16 + note % 12];
+                unsigned period = g_AkaoInstrumentTable[i].pitch[note % 12];
                 period += (period * (unsigned)detune) >> 7;
                 if (octave >= 7) period <<= octave - 6;
                 else if (octave < 6) period >>= 6 - octave;

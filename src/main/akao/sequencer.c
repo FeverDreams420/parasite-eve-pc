@@ -615,7 +615,7 @@ int Akao_LookupPitchPeriod(int instrument, int note, int detune) {
     note = (u8)note;
     octave = (unsigned int)note / 12;
     offset = note - (octave * 12);
-    period = g_AkaoPitchPeriodTable[instrument * 16 + offset];
+    period = g_AkaoInstrumentTable[instrument].pitch[offset];
     shift = octave;
 
     /* Both paths leave the octave in its own for the upward shift,
@@ -1294,13 +1294,13 @@ void Akao_PlayNote(AkaoTrack *track, unsigned int mask) {
                 track->update_flags |= AKAO_VOICE_PARAM_PITCH;
                 track->pitch_base =
                     (track->pitch_base * instrument->pitch[0]) /
-                    (unsigned int)g_AkaoPitchPeriodTable[old_note * 16];
+                    (unsigned int)g_AkaoInstrumentTable[old_note].pitch[0];
             }
         } else {
             track->update_flags |= AKAO_VOICE_PARAM_PITCH;
             track->pitch_base =
                 (track->pitch_base * instrument->pitch[0]) /
-                (unsigned int)g_AkaoPitchPeriodTable[old_note * 16];
+                (unsigned int)g_AkaoInstrumentTable[old_note].pitch[0];
         }
     }
 
@@ -1335,13 +1335,13 @@ void Akao_TieNote(AkaoTrack *track, unsigned int mask) {
                 track->update_flags |= AKAO_VOICE_PARAM_PITCH;
                 track->pitch_base =
                     (track->pitch_base * instrument->pitch[0]) /
-                    (unsigned int)g_AkaoPitchPeriodTable[old_note * 16];
+                    (unsigned int)g_AkaoInstrumentTable[old_note].pitch[0];
             }
         } else {
             track->update_flags |= AKAO_VOICE_PARAM_PITCH;
             track->pitch_base =
                 (track->pitch_base * instrument->pitch[0]) /
-                (unsigned int)g_AkaoPitchPeriodTable[old_note * 16];
+                (unsigned int)g_AkaoInstrumentTable[old_note].pitch[0];
         }
     }
 

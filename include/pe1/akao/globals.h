@@ -43,8 +43,7 @@ extern s32 g_AkaoTimerDeltaSum;
 extern AkaoU8 g_AkaoOpcodeArgLengths[];
 extern AkaoU8 g_AkaoExtOpcodeArgLengths[];
 
-/* Pitch table of the instrument records, viewed as words. */
-extern int g_AkaoPitchPeriodTable[];
+/* Pitch values reside in the canonical instrument records. */
 extern void *g_AkaoSoundEntryTable[];
 
 /* Voice masks. */

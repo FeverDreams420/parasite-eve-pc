@@ -5,9 +5,6 @@
 
 extern AkaoSequencerBank g_AkaoTrackStateBackup;
 extern AkaoVoiceBank g_AkaoVoiceStateBackup;
-/* Two contiguous 24-voice banks; the secondary bank starts at track 24. */
-extern AkaoTrack g_AkaoVoiceStateTable[2 * AKAO_VOICE_COUNT];
-extern AkaoTrack g_AkaoVoiceStateTable2[];
 extern AkaoSequencerBank *g_AkaoCurTrack;
 extern unsigned int g_AkaoVoiceKeyOnState;
 extern unsigned int g_AkaoVoiceUpdateFlags;

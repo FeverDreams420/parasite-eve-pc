@@ -470,7 +470,7 @@ int Script_GetNodeTargets18_1C(int **arg0) {
     return 1;
 }
 
-int Entity_FindNodeById(unsigned short **arg0) {
+int Entity_FindNodeById(int **arg0) {
     ScriptNode *node;
     ScriptNode *cur;
     unsigned short id;
@@ -478,7 +478,7 @@ int Entity_FindNodeById(unsigned short **arg0) {
     unsigned int search_id;
     FieldActor *base;
 
-    id = *arg0[0];
+    id = (u16)*arg0[0];
     node = g_ScriptNodePool;
     if (node->seq == id) {
         node->flags |= 0x10;
@@ -509,7 +509,7 @@ int Script_GetCurrentEntityFieldD(int **arg0) {
 }
 
 int Script_SetCurrentEntityFieldD(int **arg0) {
-    g_CurrentEntity->sub_id = *arg0[0];
+    g_CurrentEntity->sub_id = (u16)*arg0[0];
     return 1;
 }
 
@@ -518,7 +518,7 @@ int Script_GetCurrentEntityField24(int **arg0) {
     return 1;
 }
 
-int Entity_MarkNodeFree(void) {
+int Entity_MarkNodeFree(int **unused) {
     u8 i;
     ScriptNode *skip;
     FieldActor *entity;
@@ -711,9 +711,9 @@ void Script_RunQueue(void)
  * they must be ported before scenes using them can execute. */
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [0]=Script_JumpToEntityOffset, [1]=Entity_MarkCurrentDead,
-    [2]=Entity_SetCurrentNodeActive, [5]=Script_JumpIfZero,
+    [2]=Entity_SetCurrentNodeActive, [4]=Entity_MarkNodeFree, [5]=Script_JumpIfZero,
     [9]=Script_EvalExpr, [10]=Script_AssignValue,
-    [18]=Script_SpawnChildNode,
+    [18]=Script_SpawnChildNode, [24]=Entity_FindNodeById,
     [31]=Script_GetNodeTarget14, [32]=Entity_MarkCurrentNodeFree,
     [36]=Script_GetNodeTargets18_1C, [37]=Script_GetCurrentEntityField24,
     [38]=Script_GetCurrentEntityFieldD, [39]=Script_SetCurrentEntityFieldD,

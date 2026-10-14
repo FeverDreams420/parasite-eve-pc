@@ -104,6 +104,22 @@ int main(void)
         Script_RunQueue();
         if (g_ScriptVariableBank[20]!=99) return 13;
     }
+    for(unsigned mode=0;mode<4;++mode) {
+        FieldActor owner={0};
+        ScriptNode self={.seq=2,.active=1},peer={.seq=77,.flags=0x8000},other={.seq=88,.flags=0x2000};
+        owner.script_node_lists[0]=&self;owner.script_node_lists[1]=&peer;owner.script_node_lists[2]=&other;
+        self.next=&peer;peer.next=&other;
+        u32 all[]={4,0,32,0};
+        u32 by_id[]={24|(1u<<13),0,mode==1?0x10002:mode==2?0x1004d:99,32,0};
+        self.current.script=mode?by_id:all;
+        g_CurrentEntity=&owner;g_ScriptNodePool=&self;g_GameStateFlags=0;
+        if(g_ScriptQueueOpcodeHandlers[4]!=Entity_MarkNodeFree ||
+           g_ScriptQueueOpcodeHandlers[24]!=Entity_FindNodeById) return 14;
+        Script_RunQueue();
+        if(!(self.flags&0x10) || peer.flags!=(mode==0||mode==2?0x8010:0x8000) ||
+           other.flags!=(mode==0?0x2010:0x2000) ||
+           self.current.script!=(mode?by_id+(mode==1?3:5):all+4)) return 15;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

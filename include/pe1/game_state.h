@@ -30,7 +30,6 @@ extern u32 g_GameStateFlagsWord;
 
 /* g_GameState.scene_object.animation_source as its own scalar symbol:
  * Scene_UpdateBgDraw tests and sets it with absolute loads and stores. */
-extern struct RenderObjectEntity *g_SceneObjectAnimationSource;
 
 void Boot_Shutdown(void);
 

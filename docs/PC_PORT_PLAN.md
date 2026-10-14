@@ -1201,3 +1201,21 @@ Full build and contact/hierarchy/lifecycle CTests passed, along with game/test
 ASan/UBSan/function checks (PsyZ archive uninstrumented). This preserves original
 word arithmetic rather than changing collision rules to an unbounded-distance
 solver. It is not proof of all campaign actor interactions or frame integration.
+
+### Original area entity texture state machine
+
+`Scene_LoadEntityTextures` and `Scene_UpdateBgDraw` now compile independently in
+scene/entity_textures.c. Their original state machine is retained. The model
+setup result uses an actual native pointer instead of casting an int array to
+s8 **, and background animation binding uses the canonical scene_object field
+rather than a detached linker-era global.
+
+The new original-game-entity-textures test links the original loader, renderer
+and camera. Its synthetic bank and scripted I/O boundary verify day-bank sector
+selection, busy polling, read/poll retry transitions, bank-row and three stream
+pointer relocation, stream index selection, delayed rebuild states, missing
+player behavior and area gating. The test has no TIM uploads or model rebuild:
+those branches and the background draw path still need integration coverage.
+The I/O functions are test fixtures only; this target is not the native runtime
+I/O binding. Full build, entity-textures/lifecycle/contact CTests and game/test
+ASan/UBSan/function checks passed, with PsyZ/SDL archives uninstrumented.

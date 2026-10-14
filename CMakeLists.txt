@@ -335,3 +335,19 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME original-game-actor-lifecycle COMMAND test-original-actor-lifecycle)
 endif()
+
+# Original area-bank state machine; native I/O binding is still pending.
+add_library(parasite-eve-original-entity-textures OBJECT src/main/scene/entity_textures.c)
+target_include_directories(parasite-eve-original-entity-textures PRIVATE include)
+
+if(BUILD_TESTING)
+    add_executable(test-original-entity-textures tests/original_entity_textures.c
+        $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
+        $<TARGET_OBJECTS:parasite-eve-original-model-setup>
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-entity-textures PRIVATE include pc)
+    target_compile_definitions(test-original-entity-textures PRIVATE __psyz)
+    target_link_libraries(test-original-entity-textures PRIVATE psyz)
+    add_test(NAME original-game-entity-textures COMMAND test-original-entity-textures)
+endif()

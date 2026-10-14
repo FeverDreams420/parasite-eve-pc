@@ -18,6 +18,6 @@ extern u16 g_FieldFxStripPacketCounts[];
 /* Rotation used when the caller passes none. */
 extern GteRotation g_FieldFxZeroRotation;
 
-void MulRotMatrix(GteMatrix *matrix);
+GteMatrix *MulRotMatrix(GteMatrix *matrix);
 
 #endif

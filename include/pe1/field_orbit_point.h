@@ -6,6 +6,6 @@
 /* Identity rotation with zero translation used as the roll matrix seed. */
 extern GteMatrix g_FieldFxIdentityMatrix;
 
-void MulRotMatrix(GteMatrix *matrix);
+GteMatrix *MulRotMatrix(GteMatrix *matrix);
 
 #endif /* PE1_FIELD_ORBIT_POINT_H */

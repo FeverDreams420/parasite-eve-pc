@@ -28,6 +28,6 @@ PE1_STATIC_ASSERT(sizeof(FieldG3Packet) == ((sizeof(RenderGpuTag) + 24 + _Aligno
 extern RenderColor g_FieldFxBlackColor;
 
 void SetPolyG3(FieldG3Packet *packet);
-void MulRotMatrix(GteMatrix *matrix);
+GteMatrix *MulRotMatrix(GteMatrix *matrix);
 
 #endif /* PE1_FIELD_ROTATED_TRIANGLE_H */

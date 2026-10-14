@@ -1,5 +1,6 @@
 #include "pe1/entity_animation.h"
 #include "pe1/room_m005_drifting_sprite.h"
+#include "pe1/room_m005.h"
 #include "pe1/field_sprite_params.h"
 #include "pe1/field_rotated_quad.h"
 #include "pe1/field_texture_tables.h"
@@ -804,9 +805,72 @@ static int native_oriented_sprite_packets(void)
         if(used!=1) return 0;
         for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
     }
+    struct { FieldGt4Packet packet; u8 guard[16]; } rotated;
+    Psyz_GteCtrlWrite(27,1); Psyz_GteCtrlWrite(28,0);
+    GteShortVector anchor={0,0,512}; GteRotation rotation={1024,0,0,0};
+    RenderColor first={80,40,20,0},second={60,30,10,0};
+    RenderEffectParameters saved_params=g_FieldFxSpriteParams;
+    g_FieldFxSpriteParams.tpage=0x100;g_FieldFxSpriteParams.depth=0;
+    for(unsigned slot=0;slot<2;++slot) for(unsigned mode=0;mode<5;++mode) {
+        memset(&rotated,0xa5,sizeof(rotated));
+        for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
+        D_800B0E38.ordering[slot]=ordering;D_800B0E38.packets[slot]=(char *)&rotated;
+        g_ActiveDrawSlot=slot;g_DrawPacketOffset=0;
+        FieldFx_DrawRotatedQuad(&anchor,&rotation,100,100,7,11,12,16,123,&first,&second,128,mode==4?255:mode);
+        FieldGt4Packet *p=&rotated.packet;
+        if(g_DrawPacketOffset!=sizeof(*p) || p->tag.length!=12 || p->tag.address!=0xffffff ||
+            p->code!=(mode==4?0x3c:0x3e) || p->r0!=80 || p->g0!=40 || p->b0!=20 ||
+            p->r1!=80 || p->r2!=60 || p->g2!=30 || p->b2!=10 || p->r3!=60 ||
+            p->u0!=7 || p->u1!=7 || p->u2!=18 || p->u3!=18 ||
+            p->v0!=11 || p->v2!=11 || p->v1!=26 || p->v3!=26 || p->clut!=123 ||
+            p->tpage!=(mode==4?0x100:0x100|GetTPage(0,mode,0,0))) return 0;
+        unsigned linked=0;
+        for(unsigned depth=0;depth<4096;++depth)if(ordering[depth].address!=0xffffff) {
+            if(ordering[depth].address!=(uintptr_t)p)return 0;
+            ++linked;
+        }
+        if(linked!=1)return 0;
+        for(unsigned i=0;i<sizeof(rotated.guard);++i)if(rotated.guard[i]!=0xa5)return 0;
+    }
+    GteShortVector old_center=g_RoomM005BeaconCenter,old_offset=g_RoomM005BeaconOffset;
+    int old_alt=g_FieldFxAltPaletteFlag,old_age=g_FieldFxCurrentAge;
+    FieldFxTaskContext context={0},*old_context=g_FieldFxTaskContext;
+    g_FieldFxTaskContext=&context;
+    g_RoomM005BeaconCenter=(GteShortVector){0,0,512};g_RoomM005BeaconOffset=(GteShortVector){0};
+    _Alignas(void *) u8 drift_arena[128];
+    FieldFx_InitCallbackList((char *)drift_arena,sizeof(RoomM005DriftingSpriteState),1,RoomM005_BeaconDriftCallback);
+    RoomM005DriftingSpriteState *drift=FieldFx_AcquireCallbackSlot((char *)drift_arena);
+    *drift=(RoomM005DriftingSpriteState){1024,0,0,0,0,0,0};
+    FieldFxCallbackListEntry *entry=(void *)((u8 *)drift-sizeof(FieldFxCallbackListEntry));
+    for(unsigned slot=0;slot<2;++slot)for(unsigned kind=3;kind<=4;++kind)
+    for(unsigned alt=0;alt<2;++alt)for(unsigned age=0;age<=6;++age) {
+        memset(&rotated,0xa5,sizeof(rotated));
+        for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
+        D_800B0E38.ordering[slot]=ordering;D_800B0E38.packets[slot]=(char *)&rotated;
+        g_ActiveDrawSlot=slot;g_DrawPacketOffset=0;
+        g_FieldFxSpriteParams.palette=kind;g_FieldFxAltPaletteFlag=alt;entry->age=age;
+        if(FieldFx_DrawCallbackList((char *)drift_arena)!=1)return 0;
+        FieldGt4Packet *p=&rotated.packet;
+        u8 intensity=rcos((age<<10)/6)/24;
+        unsigned u=(age&1)<<7,v=((age<<3)&16)+32;
+        if(p->tag.length!=12 || p->tag.address!=0xffffff || p->code!=0x3e ||
+            p->r0!=intensity || p->g0!=intensity || p->b0!=intensity || p->r3!=intensity ||
+            p->clut!=GetClut(0,g_FieldFxPaletteTable[kind]+(kind==4&&alt?4:0)) ||
+            p->u0!=u || p->u2!=(u8)(u+126) || p->v0!=v || p->v1!=v+14)return 0;
+        unsigned linked=0;
+        for(unsigned depth=0;depth<4096;++depth)if(ordering[depth].address!=0xffffff) {
+            if(ordering[depth].address!=(uintptr_t)p)return 0;
+            ++linked;
+        }
+        if(linked!=1 || g_DrawPacketOffset!=sizeof(*p))return 0;
+        for(unsigned i=0;i<sizeof(rotated.guard);++i)if(rotated.guard[i]!=0xa5)return 0;
+    }
+    g_FieldFxTaskContext=old_context;g_FieldFxCurrentAge=old_age;
+    g_FieldFxAltPaletteFlag=old_alt;g_RoomM005BeaconCenter=old_center;g_RoomM005BeaconOffset=old_offset;
+    g_FieldFxSpriteParams=saved_params;
     D_800B0E38=saved; g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset;
     g_GeomScroll.words.viewMatrix=saved_view;
-    puts("Original oriented sprites: both buffers, all texture presets, colour depths and blend modes passed");
+    puts("Original sprites: both buffers, presets/blends, native rotated-quad payloads and M005 drift ages/palettes passed");
     return 1;
 }
 

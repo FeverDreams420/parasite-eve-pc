@@ -4,7 +4,7 @@
 #include "common.h"
 #include "pe1/gte_types.h"
 
-/* Shared 24-byte record used by room emitters and the field ring builder /
+/* Native runtime record used by room emitters and the field ring builder /
  * renderer. The room-side names describe the producer view; in the field
  * ring view, mode is the point count, extent0/1 are inner/outer radii, and
  * offset/intensity are depth/brightness. */
@@ -26,23 +26,23 @@ typedef FieldRingGeometry RoomFxEmitterParams;
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, source) == 0,
                   field_ring_geometry_source_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, color0) == 4,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, color0) == sizeof(void *) + 0,
                   field_ring_geometry_color0_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, color1) == 8,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, color1) == sizeof(void *) + 4,
                   field_ring_geometry_color1_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, mode) == 0x0C,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, mode) == sizeof(void *) + 8,
                   field_ring_geometry_mode_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, extent0) == 0x0E,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, extent0) == sizeof(void *) + 10,
                   field_ring_geometry_extent0_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, extent1) == 0x10,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, extent1) == sizeof(void *) + 12,
                   field_ring_geometry_extent1_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, offset) == 0x12,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, offset) == sizeof(void *) + 14,
                   field_ring_geometry_offset_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, intensity) == 0x14,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, intensity) == sizeof(void *) + 16,
                   field_ring_geometry_intensity_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, pad16) == 0x16,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldRingGeometry, pad16) == sizeof(void *) + 18,
                   field_ring_geometry_pad16_offset);
-PE1_STATIC_ASSERT(sizeof(FieldRingGeometry) == 0x18,
+PE1_STATIC_ASSERT(sizeof(FieldRingGeometry) == ((sizeof(void *) + 20 + _Alignof(void *) - 1) / _Alignof(void *)) * _Alignof(void *),
                   field_ring_geometry_size);
 
 /* Field engine: builds and draws one ring through placement; mode 0

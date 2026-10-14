@@ -56,7 +56,7 @@ int RoomLib_InitHandlerD(RoomEnt *o) {
     state->copyRotation = 0;
     return 0;
 }
-int RoomLib_ConfigureHandlerD(RoomEnt *o, int query, unsigned int op, int arg0, int arg1, int arg2) {
+int RoomLib_ConfigureHandlerD(RoomEnt *o, int query, unsigned int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
     RoomLibHandlerDState *state = (RoomLibHandlerDState *)&o->sub;
     FieldActorNode *node;
     switch (op) {
@@ -90,7 +90,7 @@ int RoomLib_ConfigureHandlerD(RoomEnt *o, int query, unsigned int op, int arg0, 
         state->target[0] = arg0;
         state->target[2] = arg2;
         if (arg1 == -1) {
-            state->target[1] = ((RoomLink *)D_8009D254)->pos[1];
+            state->target[1] = D_8009D254->posY.fixed;
         } else {
             state->target[1] = arg1;
         }
@@ -176,7 +176,7 @@ int RoomLib_HandlerDNop3(void) {
     return 0;
 }
 int RoomLib_UpdateHandlerD(RoomEnt *o) {
-    switch (FieldFx_IsOwnerBusy()) {
+    switch (FieldFx_IsOwnerBusy((struct FieldFxTaskOwner *)o)) {
     case 0:
         if (o->link->variant < 2) {
             return 0;
@@ -195,7 +195,7 @@ void RoomLib_ArmHandlerD(RoomEnt *o) {
     int t;
     unsigned short lo;
     if (o->bB4 != 0) {
-        RoomLib_FxNotify(o->link, &o->sub, 0x1F800000);
+        RoomLib_FxNotify(o->link, &o->sub, 0);
     }
     c = o->t16;
     if (c >= 0) {
@@ -218,6 +218,7 @@ void RoomLib_ArmHandlerD(RoomEnt *o) {
 void RoomLib_HandlerD(RoomEnt *o) {
     RoomEnt *ent = o;
     RoomLibHandlerDState *state = (RoomLibHandlerDState *)&o->sub;
+    _Alignas(4) short scratchMemory[128] = {0};
     short *scratch;
     RoomLink *link = o->link;
     char *left;
@@ -228,7 +229,7 @@ void RoomLib_HandlerD(RoomEnt *o) {
     int work;
     int rot_word;
 
-    scratch = (short *)0x1F800000;
+    scratch = scratchMemory;
 
     if (ent->t1A == 0) {
         ent->t1A = 1;
@@ -260,7 +261,7 @@ void RoomLib_HandlerD(RoomEnt *o) {
             state->speed = initial_velocity;
             state->progress.word = initial_velocity >> 3;
             FieldFx_FixedVecToLookAngles((Vec3Fixed *)left, targetPosition, state->angles);
-            RotMatrixYXZ(state->angles, state->matrix);
+            RotMatrixYXZ((GteShortVector *)state->angles, (GteMatrix *)state->matrix);
         }
     }
 
@@ -294,7 +295,7 @@ void RoomLib_HandlerD(RoomEnt *o) {
         scratch[0x1A] = negated;
     }
     scratch[0x02] = state->value88 >> 12;
-    gte_ldrotmatrix((void *)((int)scratch | 0x28));
+    gte_ldrotmatrix((void *)((u8 *)scratch + 0x28));
     gte_ldv0((void *)scratch);
     gte_mvmva();
     gte_stmac(((RoomLibMotionWork *)scratch)->rotated);
@@ -380,16 +381,16 @@ void RoomLib_HandlerD(RoomEnt *o) {
             state->angles[1] = FieldFx_TurnToward(
                 (short)*(volatile unsigned short *)&scratch[1],
                 state->angles[1], state->range[0]) & 0xFFF;
-            RotMatrixYXZ(state->angles, state->matrix);
+            RotMatrixYXZ((GteShortVector *)state->angles, (GteMatrix *)state->matrix);
         }
     }
     if (state->lockY == 0) {
-        RoomLib_FxNotify(link, (struct RoomSub *)state, (int)scratch);
+        RoomLib_FxNotify(link, (struct RoomSub *)state, (intptr_t)scratch);
     }
     FieldFx_LoopLinkedAnimation(ent);
 }
 
-void RoomLib_FxNotify(RoomLink *arg0, struct RoomSub *arg1, int scratch) {
+void RoomLib_FxNotify(RoomLink *arg0, struct RoomSub *arg1, intptr_t scratch) {
     RoomLink *ent = arg0;
     RoomLibHandlerDState *rec = (RoomLibHandlerDState *)arg1;
     if (rec->heading > 0) {
@@ -536,7 +537,7 @@ int RoomLib_InitHandlerE(RoomEnt *o) {
     state->copyPosition = 0;
     return 0;
 }
-int RoomLib_ConfigureHandlerE(RoomEnt *o, int query, unsigned int op, int arg0, int arg1, int arg2) {
+int RoomLib_ConfigureHandlerE(RoomEnt *o, int query, unsigned int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
     RoomLibHandlerEState *state = (RoomLibHandlerEState *)&o->sub;
     FieldActorNode *node;
     switch (op) {
@@ -569,7 +570,7 @@ int RoomLib_ConfigureHandlerE(RoomEnt *o, int query, unsigned int op, int arg0, 
         state->target[0] = arg0;
         state->target[2] = arg2;
         if (arg1 == -1) {
-            state->target[1] = ((RoomLink *)D_8009D254)->pos[1];
+            state->target[1] = D_8009D254->posY.fixed;
         } else {
             state->target[1] = arg1;
         }
@@ -659,7 +660,7 @@ int RoomLib_HandlerENop3(void) {
     return 0;
 }
 int RoomLib_UpdateHandlerE(RoomEnt *o) {
-    switch (FieldFx_IsOwnerBusy()) {
+    switch (FieldFx_IsOwnerBusy((struct FieldFxTaskOwner *)o)) {
     case 0:
         if (o->link->variant < 2) {
             return 0;
@@ -702,7 +703,8 @@ void RoomLib_HandlerE(RoomEnt *o) {
     RoomLink *link = o->link;
     RoomLink *targetLink;
     RoomLibHandlerEState *state = (RoomLibHandlerEState *)&o->sub;
-    volatile short *scratch = (volatile short *)0x1F800000;
+    _Alignas(4) short scratchMemory[128] = {0};
+        volatile short *scratch = scratchMemory;
     int remain;
     int scale;
     int angle;
@@ -754,7 +756,7 @@ void RoomLib_HandlerE(RoomEnt *o) {
         localZ = state->localOffset[2];
         do {
             scratch[2] = localZ >> 12;
-            gte_ldrotmatrix((void *)((int)scratch | 0x28));
+            gte_ldrotmatrix((void *)((u8 *)scratch + 0x28));
         } while (0);
         gte_ldv0((void *)scratch);
         gte_mvmva();
@@ -810,7 +812,7 @@ void RoomLib_HandlerE(RoomEnt *o) {
     RoomLib_HandlerESteerToward(link, state);
     FieldFx_LoopLinkedAnimation(o);
 }
-void RoomLib_HandlerESteerToward(char *entArg, char *recArg) {
+void RoomLib_HandlerESteerToward(RoomLink *entArg, RoomLibHandlerEState *recArg) {
     RoomLink *ent = (RoomLink *)entArg;
     RoomLibHandlerEState *rec = (RoomLibHandlerEState *)recArg;
     if (rec->secondaryHeading > 0) {
@@ -884,7 +886,7 @@ int RoomLib_InitHandlerB(RoomEnt *o) {
     l->move[2] = 0;
     return 0;
 }
-int RoomLib_ConfigureHandlerB(RoomEnt *o, int query, unsigned int op, int arg0, int arg1, int arg2) {
+int RoomLib_ConfigureHandlerB(RoomEnt *o, int query, unsigned int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
     RoomLibHandlerBState *state = (RoomLibHandlerBState *)&o->sub;
     FieldActorNode *node;
     switch (op) {
@@ -965,7 +967,7 @@ int RoomLib_ConfigureHandlerB(RoomEnt *o, int query, unsigned int op, int arg0, 
         if (arg1 != -1) {
             state->target[1] = arg1;
         } else {
-            state->target[1] = ((RoomLink *)D_8009D254)->pos[1];
+            state->target[1] = D_8009D254->posY.fixed;
         }
         state->targetLink = 0;
         break;
@@ -993,8 +995,8 @@ int RoomLib_ConfigureHandlerB(RoomEnt *o, int query, unsigned int op, int arg0, 
 int RoomLib_HandlerBNop3(void) {
     return 0;
 }
-int RoomLib_UpdateHandlerB(RoomObj *obj) {
-    obj->callback();
+int RoomLib_UpdateHandlerB(RoomEnt *obj) {
+    obj->sub.cb(obj);
     return 0;
 }
 void RoomLib_ArmHandlerB(RoomEnt *o) {
@@ -1033,10 +1035,11 @@ void RoomLib_HandlerB(RoomEnt *obj) {
     RoomLink *link = self->link;
     int previousValue;
     int a0;
+    RoomLibArcWork nativeScratch = {0};
     RoomLibArcWork *scratch;
     int result;
 
-    scratch = (RoomLibArcWork *)0x1F800000;
+    scratch = &nativeScratch;
 
     if (self->t1A == 0) {
         int v0;
@@ -1081,7 +1084,7 @@ void RoomLib_HandlerB(RoomEnt *obj) {
 
     scratch->landed = 0;
     if (state->finished == 0) {
-        switch (FieldFx_IsOwnerBusy(self)) {
+        switch (FieldFx_IsOwnerBusy((struct FieldFxTaskOwner *)self)) {
         case 0:
             break;
         case 1:
@@ -1184,7 +1187,8 @@ void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
     RoomEnt *self = obj;
     char *state = (char *)&self->sub;
     RoomLink *link = self->link;
-    short *scratch = (short *)0x1F800000;
+    _Alignas(4) short scratchMemory[128] = {0};
+    short *scratch = scratchMemory;
     int angle;
     int y;
 
@@ -1196,16 +1200,16 @@ void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
         self->t1A = 1;
         ((RoomLibHandlerBState *)state)->finished = 0;
         if (((RoomLibHandlerBState *)state)->targetLink != 0) {
-            ((RoomLibArcWork *)0x1F800000)->point[0] =
+            ((RoomLibArcWork *)scratch)->point[0] =
                 ((RoomLibHandlerBState *)state)->targetLink->pos[0];
-            ((RoomLibArcWork *)0x1F800000)->point[1] =
+            ((RoomLibArcWork *)scratch)->point[1] =
                 ((RoomLibHandlerBState *)state)->targetLink->pos[1];
-            ((RoomLibArcWork *)0x1F800000)->point[2] =
+            ((RoomLibArcWork *)scratch)->point[2] =
                 ((RoomLibHandlerBState *)state)->targetLink->pos[2];
         } else {
-            ((RoomLibArcWork *)0x1F800000)->point[0] = ((RoomLibHandlerBState *)state)->target[0];
-            ((RoomLibArcWork *)0x1F800000)->point[1] = ((RoomLibHandlerBState *)state)->target[1];
-            ((RoomLibArcWork *)0x1F800000)->point[2] = ((RoomLibHandlerBState *)state)->target[2];
+            ((RoomLibArcWork *)scratch)->point[0] = ((RoomLibHandlerBState *)state)->target[0];
+            ((RoomLibArcWork *)scratch)->point[1] = ((RoomLibHandlerBState *)state)->target[1];
+            ((RoomLibArcWork *)scratch)->point[2] = ((RoomLibHandlerBState *)state)->target[2];
         }
 
         angle = FieldFx_VecToAngle((Vec3Fixed *)link->pos, (Vec3Fixed *)&scratch[20]) & 0xFFF;
@@ -1231,9 +1235,9 @@ void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
         scratch[17] = 0;
         scratch[18] = ((RoomLibHandlerBState *)state)->localOffset[2] >> 12;
         gte_ldrotmatrix((void *)scratch);
-        gte_ldv0((void *)((int)scratch + 0x20));
+        gte_ldv0((void *)((u8 *)scratch + 0x20));
         gte_mvmva();
-        gte_stmac((void *)((int)scratch + 0x38));
+        gte_stmac((void *)((u8 *)scratch + 0x38));
 
         ((RoomLibHandlerBState *)state)->target[0] = ((RoomLibArcWork *)scratch)->point[0] +
                             (((RoomLibArcWork *)scratch)->offset[0] << 12);
@@ -1263,7 +1267,7 @@ void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
 
     ((RoomLibArcWork *)scratch)->landed = 0;
     if (((RoomLibHandlerBState *)state)->finished == 0) {
-        switch (FieldFx_IsOwnerBusy(self)) {
+        switch (FieldFx_IsOwnerBusy((struct FieldFxTaskOwner *)self)) {
         case 0:
             break;
         case 1:
@@ -1288,7 +1292,7 @@ void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
     link->pos[1] += ((RoomLibHandlerBState *)state)->phaseValue;
     link->pos[2] += ((RoomLibHandlerBState *)state)->horizontalVelocity[1];
     ((RoomLibHandlerBState *)state)->phaseValue += ((RoomLibHandlerBState *)state)->mode;
-    if (RW16(link, 0x2E) >= RW16(state, 0x36)) {
+    if (Pe1Fixed_Integer(&link->pos[1]) >= Pe1Fixed_Integer(&((RoomLibHandlerBState *)state)->target[1])) {
         ((RoomLibArcWork *)scratch)->landed = 1;
         link->pos[0] = ((RoomLibHandlerBState *)state)->target[0];
         link->pos[1] = ((RoomLibHandlerBState *)state)->target[1];
@@ -1353,7 +1357,7 @@ int RoomLib_InitHandlerC(RoomEnt *o) {
     l->move[2] = 0;
     return 0;
 }
-int RoomLib_ConfigureHandlerC(RoomEnt *o, int query, unsigned int op, int arg0, int arg1, int arg2) {
+int RoomLib_ConfigureHandlerC(RoomEnt *o, int query, unsigned int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
     RoomLibHandlerCState *state = (RoomLibHandlerCState *)&o->sub;
     FieldActorNode *node;
     switch (op) {
@@ -1386,7 +1390,7 @@ int RoomLib_ConfigureHandlerC(RoomEnt *o, int query, unsigned int op, int arg0, 
         state->target[0] = arg0;
         state->target[2] = arg2;
         if (arg1 == -1) {
-            state->target[1] = ((RoomLink *)D_8009D254)->pos[1];
+            state->target[1] = D_8009D254->posY.fixed;
         } else {
             state->target[1] = arg1;
         }
@@ -1456,8 +1460,8 @@ int RoomLib_ConfigureHandlerC(RoomEnt *o, int query, unsigned int op, int arg0, 
 int RoomLib_HandlerCNop3(void) {
     return 0;
 }
-int RoomLib_UpdateHandlerC(RoomObj *obj) {
-    obj->callback();
+int RoomLib_UpdateHandlerC(RoomEnt *obj) {
+    obj->sub.cb(obj);
     return 0;
 }
 void RoomLib_ArmHandlerC(RoomEnt *o) {
@@ -1486,9 +1490,10 @@ void RoomLib_HandlerC(RoomEnt *obj) {
     RoomLibHandlerCState *state =
         (RoomLibHandlerCState *)((char *)&self->sub);
     RoomLink *link = self->link;
+    _Alignas(4) short scratchMemory[128] = {0};
     short *scratch;
     int angle;
-    scratch = (short *)0x1F800000;
+    scratch = scratchMemory;
     if (self->t1A == 0) {
         self->t1A = 1;
         (state)->finished = 0;
@@ -1502,7 +1507,7 @@ void RoomLib_HandlerC(RoomEnt *obj) {
             ((RoomLibArcWork *)scratch)->point[1] = state->target[1];
             ((RoomLibArcWork *)scratch)->point[2] = state->target[2];
             if (((RoomLibArcWork *)scratch)->point[1] == -1) {
-                ((RoomLibArcWork *)scratch)->point[1] = ((RoomLink *)D_8009D254)->pos[1];
+                ((RoomLibArcWork *)scratch)->point[1] = D_8009D254->posY.fixed;
             }
         } else {
             ((RoomLibArcWork *)scratch)->point[0] = state->targetLink->pos[0];
@@ -1510,7 +1515,7 @@ void RoomLib_HandlerC(RoomEnt *obj) {
             ((RoomLibArcWork *)scratch)->point[2] = state->targetLink->pos[2];
         }
 
-        angle = FieldFx_VecToAngle((Vec3Fixed *)link->pos, (Vec3Fixed *)((int)scratch | 0x28)) &
+        angle = FieldFx_VecToAngle((Vec3Fixed *)link->pos, (Vec3Fixed *)((u8 *)scratch + 0x28)) &
                 0xFFF;
         {
             int *rotBase = (int *)rcossin_tbl;
@@ -1552,7 +1557,7 @@ void RoomLib_HandlerC(RoomEnt *obj) {
 
     ((RoomLibArcWork *)scratch)->landed = 0;
     if ((state)->finished == 0) {
-        switch (FieldFx_IsOwnerBusy(self)) {
+        switch (FieldFx_IsOwnerBusy((struct FieldFxTaskOwner *)self)) {
         case 0:
             break;
         case 1:
@@ -1613,14 +1618,15 @@ void RoomLib_HandlerC(RoomEnt *obj) {
     }
 }
 
-void RoomLib_HandlerCPhase(void) {
+void RoomLib_HandlerCPhase(RoomEnt *unused) {
 }
 
 void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
     RoomEnt *self = obj;
     char *state = (char *)&self->sub;
     RoomLink *link = self->link;
-    short *scratch = (short *)0x1F800000;
+    _Alignas(4) short scratchMemory[128] = {0};
+    short *scratch = scratchMemory;
     int angle;
     int y;
 
@@ -1632,15 +1638,15 @@ void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
         self->t1A = 1;
         ((RoomLibHandlerCState *)state)->finished = 0;
         if (((RoomLibHandlerCState *)state)->targetLink == 0) {
-            ((RoomLibArcWork *)0x1F800000)->point[0] = ((RoomLibHandlerCState *)state)->target[0];
-            ((RoomLibArcWork *)0x1F800000)->point[1] = ((RoomLibHandlerCState *)state)->target[1];
-            ((RoomLibArcWork *)0x1F800000)->point[2] = ((RoomLibHandlerCState *)state)->target[2];
+            ((RoomLibArcWork *)scratch)->point[0] = ((RoomLibHandlerCState *)state)->target[0];
+            ((RoomLibArcWork *)scratch)->point[1] = ((RoomLibHandlerCState *)state)->target[1];
+            ((RoomLibArcWork *)scratch)->point[2] = ((RoomLibHandlerCState *)state)->target[2];
         } else {
-            ((RoomLibArcWork *)0x1F800000)->point[0] =
+            ((RoomLibArcWork *)scratch)->point[0] =
                 ((RoomLibHandlerCState *)state)->targetLink->pos[0];
-            ((RoomLibArcWork *)0x1F800000)->point[1] =
+            ((RoomLibArcWork *)scratch)->point[1] =
                 ((RoomLibHandlerCState *)state)->targetLink->pos[1];
-            ((RoomLibArcWork *)0x1F800000)->point[2] =
+            ((RoomLibArcWork *)scratch)->point[2] =
                 ((RoomLibHandlerCState *)state)->targetLink->pos[2];
         }
 
@@ -1667,9 +1673,9 @@ void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
         scratch[17] = 0;
         scratch[18] = ((RoomLibHandlerCState *)state)->localOffset[2] >> 12;
         gte_ldrotmatrix((void *)scratch);
-        gte_ldv0((void *)((int)scratch + 0x20));
+        gte_ldv0((void *)((u8 *)scratch + 0x20));
         gte_mvmva();
-        gte_stmac((void *)((int)scratch + 0x38));
+        gte_stmac((void *)((u8 *)scratch + 0x38));
 
         ((RoomLibHandlerCState *)state)->arcTarget[0] = ((RoomLibArcWork *)scratch)->point[0] +
                             (((RoomLibArcWork *)scratch)->offset[0] << 12);
@@ -1699,7 +1705,7 @@ void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
 
     ((RoomLibArcWork *)scratch)->landed = 0;
     if (((RoomLibHandlerCState *)state)->finished == 0) {
-        switch (FieldFx_IsOwnerBusy(self)) {
+        switch (FieldFx_IsOwnerBusy((struct FieldFxTaskOwner *)self)) {
         case 0:
             break;
         case 1:
@@ -1724,7 +1730,7 @@ void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
     link->pos[1] += ((RoomLibHandlerCState *)state)->phaseValue;
     link->pos[2] += ((RoomLibHandlerCState *)state)->horizontalVelocity[1];
     ((RoomLibHandlerCState *)state)->phaseValue += ((RoomLibHandlerCState *)state)->mode;
-    if (RW16(link, 0x2E) >= RW16(state, 0x46)) {
+    if (Pe1Fixed_Integer(&link->pos[1]) >= Pe1Fixed_Integer(&((RoomLibHandlerCState *)state)->arcTarget[1])) {
         ((RoomLibArcWork *)scratch)->landed = 1;
         link->pos[1] = ((RoomLibHandlerCState *)state)->arcTarget[1];
     }
@@ -1768,7 +1774,7 @@ int RoomLib_InitHandlerA(RoomEnt *o) {
     o->h46 = 0;
     return 0;
 }
-int RoomLib_ConfigureHandlerA(RoomEnt *o, int arg1, unsigned int op, int arg3, int sp10, int sp14) {
+int RoomLib_ConfigureHandlerA(RoomEnt *o, int arg1, unsigned int op, intptr_t arg3, intptr_t sp10, intptr_t sp14) {
     if (op != 0xA) {
         if (op < 0xB) {
         if (op != 4) {
@@ -1810,8 +1816,8 @@ done:
 int RoomLib_HandlerANop3(void) {
     return 0;
 }
-int RoomLib_UpdateHandlerA(RoomObj *obj) {
-    obj->callback();
+int RoomLib_UpdateHandlerA(RoomEnt *obj) {
+    obj->sub.cb(obj);
     return 0;
 }
 void RoomLib_RearmHandlerA(RoomEnt *o) {
@@ -1832,7 +1838,7 @@ void RoomLib_HandlerA(RoomEnt *o) {
         if (o->h44 == -1) {
             o->h44 = FieldFx_VecToAngle(
                 (Vec3Fixed *)o->link->pos,
-                (Vec3Fixed *)((RoomLink *)D_8009D254)->pos);
+                (Vec3Fixed *)&D_8009D254->posX.fixed);
         }
         if (o->h48 == -1) {
             o->h48 = (unsigned short)o->h44 + 0x800;
@@ -1842,29 +1848,30 @@ void RoomLib_HandlerA(RoomEnt *o) {
             int hi = ((short *)e)[1];
             int lo;
             int savedHi;
-            RVW16(o, 0x1E) = 0;
-            RVW16(o, 0x1C) = hi;
+            o->mat[1] = 0;
+            o->mat[0] = hi;
             lo = *e;
             savedHi = (unsigned short)o->mat[0];
-            RVW16(o, 0x22) = 0;
-            RVW16(o, 0x26) = 0;
-            RVW16(o, 0x2A) = 0;
-            RVW16(o, 0x20) = lo;
-            RVW16(o, 0x24) = 0x1000;
-            RVW16(o, 0x2C) = savedHi;
-            RVW16(o, 0x28) = -(unsigned short)o->mat[2];
+            o->mat[3] = 0;
+            o->mat[5] = 0;
+            o->mat[7] = 0;
+            o->mat[2] = lo;
+            o->mat[4] = 0x1000;
+            o->mat[8] = savedHi;
+            o->mat[6] = -(unsigned short)o->mat[2];
         }
     }
 }
 void RoomLib_HandlerF(RoomEnt *o) {
     int height;
-    if (RW8(D_8009D254, 0xE) >= 4) {
+    if (D_8009D254->actionMode >= 4) {
         RoomLib_ReleaseHandlerA(o);
-    } else if (RW32(D_8009D254, 0x98) & 0xC0000) {
-        RW32(D_8009D254, 0x98) &= 0xFFF3FFFF;
+    } else if (D_8009D254->entityFlags & 0xC0000) {
+        D_8009D254->entityFlags &= 0xFFF3FFFF;
         RoomLib_ReleaseHandlerA(o);
     } else {
-        volatile short *scratch = (volatile short *)0x1F800000;
+        _Alignas(4) short scratchMemory[128] = {0};
+        volatile short *scratch = scratchMemory;
         scratch[0] = 0;
         scratch[1] = 0;
         scratch[2] = o->pos[0] >> 12;
@@ -1872,16 +1879,16 @@ void RoomLib_HandlerF(RoomEnt *o) {
         gte_ldv0((void *)scratch);
         gte_mvmva();
         gte_stmac((void *)&scratch[4]);
-        RW32(D_8009D254, 0x28) += *(int *)&scratch[4] << 12;
-        RW32(D_8009D254, 0x30) += *(int *)&scratch[8] << 12;
+        D_8009D254->posX.fixed += *(int *)&scratch[4] << 12;
+        D_8009D254->posZ.fixed += *(int *)&scratch[8] << 12;
         height = o->pos[0] - o->pos[1];
         o->pos[0] = height;
         if (height < 0) {
             RoomLib_ReleaseHandlerA(o);
         }
         if (o->h46 != 0) {
-            RW16(D_8009D254, 0x3A) = FieldFx_TurnToward(
-                RW16(D_8009D254, 0x3A), o->h48, o->h46);
+            D_8009D254->facingAngle = FieldFx_TurnToward(
+                D_8009D254->facingAngle, o->h48, o->h46);
         }
     }
 }

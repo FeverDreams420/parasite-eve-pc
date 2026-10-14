@@ -268,7 +268,7 @@ PE1_STATIC_ASSERT(sizeof(RoomLibStepRecords) == 0x80,
 
 /* Motion state addressed by HandlerE through RoomEnt + 0x0C. */
 typedef struct RoomLibHandlerEState {
-    void (*callback)(void);       /* 0x00 */
+    void (*callback)(struct RoomEnt *); /* native callback context */
     int *signal;                  /* 0x04 */
     short active;                 /* 0x08 */
     signed char variant;          /* 0x0A */
@@ -304,7 +304,7 @@ typedef struct RoomLibHandlerEState {
 
 /* Argument-controlled state used by HandlerD through RoomEnt + 0x0C. */
 typedef struct RoomLibHandlerDState {
-    void (*callback)(void);       /* 0x00 */
+    void (*callback)(struct RoomEnt *); /* native callback context */
     int *signal;                  /* 0x04 */
     short active;                 /* 0x08 */
     signed char variant;          /* 0x0A */
@@ -353,7 +353,7 @@ typedef struct RoomLibHandlerDState {
 
 /* Argument-controlled state used by HandlerB through RoomEnt + 0x0C. */
 typedef struct RoomLibHandlerBState {
-    void (*callback)(void);       /* 0x00 */
+    void (*callback)(struct RoomEnt *); /* native callback context */
     int *signal;                  /* 0x04 */
     short active;                 /* 0x08 */
     signed char variant;          /* 0x0A */
@@ -389,7 +389,7 @@ typedef struct RoomLibHandlerBState {
 
 /* Argument-controlled state used by HandlerC through RoomEnt + 0x0C. */
 typedef struct RoomLibHandlerCState {
-    void (*callback)(void);       /* 0x00 */
+    void (*callback)(struct RoomEnt *); /* native callback context */
     int *signal;                  /* 0x04 */
     short active;                 /* 0x08 */
     signed char variant;          /* 0x0A */
@@ -632,7 +632,7 @@ extern unsigned char RoomLib_TwelveEffectTable[];
 #define ROOMLIB_JOIN_RAW(a, b) a##b
 #define ROOMLIB_JOIN(a, b) ROOMLIB_JOIN_RAW(a, b)
 
-extern void RoomLib_FxNotify(RoomLink *l, struct RoomSub *s, int scratch);
+extern void RoomLib_FxNotify(RoomLink *l, struct RoomSub *s, intptr_t scratch);
 extern void FieldFx_LoopLinkedAnimation(void *state);
 
 /* state=4 and clear the signal word */
@@ -923,7 +923,8 @@ extern char RoomLib_TimedRenderTable;
     }
 
 /* Field engine state query used by the actor class update handlers. */
-extern int FieldFx_IsOwnerBusy();
+struct FieldFxTaskOwner;
+extern int FieldFx_IsOwnerBusy(struct FieldFxTaskOwner *owner);
 
 typedef struct RoomTimer {
     char pad0[0x24];
@@ -1027,7 +1028,7 @@ struct RoomLibMotionWork;
 int RoomLib_HandlerDNop0(void);
 int RoomLib_InitHandlerD(RoomEnt *o);
 int RoomLib_ConfigureHandlerD(RoomEnt *o, int query, unsigned int op,
-                              int arg0, int arg1, int arg2);
+                              intptr_t arg0, intptr_t arg1, intptr_t arg2);
 int RoomLib_HandlerDNop3(void);
 int RoomLib_UpdateHandlerD(RoomEnt *o);
 void RoomLib_ArmHandlerD(RoomEnt *o);
@@ -1038,19 +1039,19 @@ int RoomLib_HandlerDNop6(void);
 int RoomLib_HandlerENop0(void);
 int RoomLib_InitHandlerE(RoomEnt *o);
 int RoomLib_ConfigureHandlerE(RoomEnt *o, int query, unsigned int op,
-                              int arg0, int arg1, int arg2);
+                              intptr_t arg0, intptr_t arg1, intptr_t arg2);
 int RoomLib_HandlerENop3(void);
 int RoomLib_UpdateHandlerE(RoomEnt *o);
 void RoomLib_ArmHandlerE(RoomEnt *o);
-void RoomLib_HandlerESteerToward(char *entity, char *state);
+void RoomLib_HandlerESteerToward(RoomLink *entity, RoomLibHandlerEState *state);
 int RoomLib_ReleaseHandlerE(RoomEnt *o);
 int RoomLib_HandlerENop6(void);
 int RoomLib_HandlerBNop0(void);
 int RoomLib_InitHandlerB(RoomEnt *o);
 int RoomLib_ConfigureHandlerB(RoomEnt *o, int query, unsigned int op,
-                              int arg0, int arg1, int arg2);
+                              intptr_t arg0, intptr_t arg1, intptr_t arg2);
 int RoomLib_HandlerBNop3(void);
-int RoomLib_UpdateHandlerB(RoomObj *obj);
+int RoomLib_UpdateHandlerB(RoomEnt *obj);
 void RoomLib_ArmHandlerB(RoomEnt *o);
 void RoomLib_HandlerBPhase(RoomEnt *obj);
 void RoomLib_AdvanceArcToTarget(RoomEnt *obj);
@@ -1059,20 +1060,20 @@ int RoomLib_HandlerBNop6(void);
 int RoomLib_HandlerCNop0(void);
 int RoomLib_InitHandlerC(RoomEnt *o);
 int RoomLib_ConfigureHandlerC(RoomEnt *o, int query, unsigned int op,
-                              int arg0, int arg1, int arg2);
+                              intptr_t arg0, intptr_t arg1, intptr_t arg2);
 int RoomLib_HandlerCNop3(void);
-int RoomLib_UpdateHandlerC(RoomObj *obj);
+int RoomLib_UpdateHandlerC(RoomEnt *obj);
 void RoomLib_ArmHandlerC(RoomEnt *o);
-void RoomLib_HandlerCPhase(void);
+void RoomLib_HandlerCPhase(RoomEnt *unused);
 void RoomLib_AdvanceArcToTargetY(RoomEnt *obj);
 int RoomLib_ReleaseHandlerC(RoomEnt *o);
 int RoomLib_HandlerCNop6(void);
 int RoomLib_HandlerANop0(void);
 int RoomLib_InitHandlerA(RoomEnt *o);
 int RoomLib_ConfigureHandlerA(RoomEnt *o, int arg1, unsigned int op,
-                              int arg3, int sp10, int sp14);
+                              intptr_t arg3, intptr_t sp10, intptr_t sp14);
 int RoomLib_HandlerANop3(void);
-int RoomLib_UpdateHandlerA(RoomObj *obj);
+int RoomLib_UpdateHandlerA(RoomEnt *obj);
 void RoomLib_RearmHandlerA(RoomEnt *o);
 int RoomLib_ReleaseHandlerA(RoomEnt *o);
 int RoomLib_HandlerANop6(void);

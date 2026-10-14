@@ -61,7 +61,8 @@ add_library(parasite-eve-original OBJECT
     src/main/script/value_ops.c
     src/main/script/flow_opcodes.c
     src/main/script/system_opcodes.c
-    src/main/field/actor_collision.c)
+    src/main/field/actor_collision.c
+    src/overlays/room_lib/actor_classes.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 set_property(SOURCE src/main/boot/init.c APPEND PROPERTY INCLUDE_DIRECTORIES
     "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")

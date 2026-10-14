@@ -1,4 +1,5 @@
 #include "pe1/entity_animation.h"
+#include "../src/overlays/room_lib/room_lib.h"
 #include "pe1/game_state.h"
 #include "pe1/player_entity.h"
 #include "pe1/scene_assets.h"
@@ -361,8 +362,31 @@ static int bios_random(void)
     return 1;
 }
 
+static RoomEnt *expected_room_context;
+static unsigned room_callback_count;
+static void record_room_callback(RoomEnt *context)
+{
+    if(context!=expected_room_context) abort();
+    ++room_callback_count;
+    context->w04+=7;
+}
+static int room_callback_context(void)
+{
+    RoomEnt object={0};
+    expected_room_context=&object;
+    object.sub.cb=record_room_callback;
+    int (*updates[])(RoomEnt *)={RoomLib_UpdateHandlerA,RoomLib_UpdateHandlerB,RoomLib_UpdateHandlerC};
+    for(unsigned method=0;method<3;++method) {
+        if(updates[method](&object)!=0 || room_callback_count!=method+1 || object.w04!=(int)(method+1)*7)
+            return 0;
+    }
+    puts("Original room actor classes: A/B/C update callbacks received their native object context");
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
+    if(!room_callback_context()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

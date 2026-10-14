@@ -2822,3 +2822,34 @@ corpora. Original loaders and player initialization are instrumented; PsyZ/SDL
 archives are not. Full pipeline execution, audio-streamer error paths, battle
 callers of player initialization and the complete original game remain
 unverified/incomplete. Removal of the remaining pc/ runtime remains required.
+
+
+### Compile the whole original room actor-class library in place
+
+The complete 53-function actor_classes.c is now part of parasite-eve-original;
+no functions were extracted and no files added. Removed its physical scratchpad
+addresses, pointer-to-int scratch arithmetic and fixed-offset accesses to the
+active BattleEntity. Matrix/coordinate accesses now use named native fields.
+Configuration arguments carrying pointers use intptr_t. Native callback types
+carry RoomEnt context, and original A/B/C update methods explicitly pass their
+object to the callback. Owner-busy checks also receive their explicit context.
+
+Pointer-bearing runtime geometry/context/emitter layout assertions now account
+for native pointer width; scalar serialized-record checks remain unchanged.
+The whole actor-class source passes C11 syntax checking without diagnostics and
+the full build passes. These changes do not establish native compatibility of
+the remaining RoomLink/RoomRenderNode views, private-state allocation sizes or
+field-engine task-owner overlays. No additional room handler was registered.
+
+The existing actor-animation fixture executes the three original A/B/C update
+methods and verifies callback identity/context and mutation of the same object.
+Three CTests pass with Disc 1 required: actor-animation, entity-texture-assets
+and scene-spawn; actor-animation passes again after final type cleanup. Fresh
+ASan/UBSan/function validation of the actor fixture passes with original source
+instrumented; PsyZ/SDL archives are not. Motion/state-machine/GTE branches in
+this newly compiled module were not exercised by that callback fixture.
+
+Next integration must reconcile those actor/owner views and allocation sizes
+before binding the class tables to real room descriptors. M005 and the other
+unsupported PM/effect rooms, the complete original game runtime and removal
+of the remaining pc/ code remain unfinished.

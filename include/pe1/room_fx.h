@@ -362,7 +362,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEightParticleState, active) == 0xB4,
                   room_eight_particle_active_offset);
 PE1_STATIC_ASSERT(sizeof(RoomEightParticleState) == 0xBC,
                   room_eight_particle_state_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEightParticleContext, baseX) == 0x38,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEightParticleContext, baseX) == sizeof(void *) + 0x34,
                   room_eight_particle_context_base_x_offset);
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFxGroundSpriteParams, depth) == 0x82,
@@ -395,13 +395,17 @@ typedef struct RoomFxPairedEmitterState {
     short phase;
 } RoomFxPairedEmitterState;
 
-PE1_STATIC_ASSERT(sizeof(RoomFxEmitterParams) == 0x18,
+PE1_STATIC_ASSERT(sizeof(RoomFxEmitterParams) == sizeof(FieldRingGeometry),
                   room_fx_emitter_params_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFxPairedEmitterState, primary) == 0x108,
                   room_fx_paired_primary_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFxPairedEmitterState, secondary) == 0x120,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFxPairedEmitterState, secondary) ==
+                  PE1_OFFSETOF(RoomFxPairedEmitterState, primary) + sizeof(RoomFxEmitterParams),
                   room_fx_paired_secondary_offset);
-PE1_STATIC_ASSERT(sizeof(RoomFxPairedEmitterState) == 0x140,
+PE1_STATIC_ASSERT(sizeof(RoomFxPairedEmitterState) ==
+                  ((PE1_OFFSETOF(RoomFxPairedEmitterState, phase) + sizeof(short) +
+                    _Alignof(RoomFxPairedEmitterState) - 1) / _Alignof(RoomFxPairedEmitterState)) *
+                  _Alignof(RoomFxPairedEmitterState),
                   room_fx_paired_state_size);
 
 /* Each room that links room_lib/three_particles.c defines its sprite

@@ -382,5 +382,14 @@ All 21 tests pass headless with Disc 1. The 4,096-tick musical audit now reports
 one stopped sequence, 598 still active and no missing commands (2,449,892
 ticks and 1,079,209 note events). This bounded sequencer audit does not exercise
 the voice-step schedule or prove full songs, synthesized audio or gameplay.
+
+Set `PE_AKAO_AUDIT_TICKS` to a value from 4 to 65,536 to extend the room/audio
+audit (default 4,096). The 65,536-tick Disc 1 run executes 38,651,480 musical
+ticks and 17,315,934 note events, with ten sequences stopped, 589 still active
+and no command/state errors. This remains a bounded sequencer test: active
+loops are not declared completed, and LFO voice updates, synthesis and audio
+comparison are still required.
+All 21 tests pass headless with the extended setting; the same 65,536-tick
+room/audio audit also passes ASan/UBSan with identical counts.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

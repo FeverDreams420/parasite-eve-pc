@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+`PE_AKAO_AUDIT_TICKS` ustawia okno audytu room/audio od 4 do 65536 ticków (domyślnie 4096). Rozszerzony audyt Disc 1: 38651480 ticków muzycznych, 17315934 zdarzenia nut, dziesięć sekwencji zakończonych, 589 nadal aktywnych i zero błędów komend/stanu. Aktywne pętle nie są uznane za ukończone utwory. Harmonogram aktualizacji głosów/LFO, synteza oraz porównanie referencyjnego audio pozostają wymagane.
+
 DD ustawia slide głębokości pitch-LFO (zero czasu oznacza 256). Aktualizacja głosu przesuwa zawijany target, przelicza głębokość i ponownie odczytuje bieżący przebieg bez przesuwania cursor między krokami fazy. Test malejącego slide, resamplingu i końca przechodzi ASan/UBSan; 21 testów przechodzi headless z Disc 1. Audyt 4096 ticków: jedna sekwencja zakończona, 598 nadal aktywnych, zero brakujących komend, 2449892 ticki i 1079209 zdarzeń nut. To ograniczony audyt sekwencera, bez harmonogramu kroków głosów, syntezy i dowodów pełnych utworów.
 
 B4/B5/B6 obsługują konfigurację, głębokość i reset pitch-LFO. Obliczenia zachowują dwa tryby skalowania, low-word pitch przy inicjalizacji, opóźnienie, obejście przy key-on oraz oryginalne podwojenie nieujemnego wyniku. Testy obu trybów, czasu zero=256, signed wartości i resetu przechodzą ASan/UBSan; 21 testów przechodzi headless z Disc 1. Audyt 4096 ticków trafia teraz na DD w jednej sekwencji; 598 pozostaje aktywnych. Slide głębokości, harmonogram/zastosowanie głosów i referencyjna synteza nadal wymagają implementacji.

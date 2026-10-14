@@ -14,6 +14,13 @@
     fprintf(stderr, "line %d: %s\n", __LINE__, #expr); exit(1); } } while (0)
 
 int main(void) {
+    unsigned audit_ticks = 4096;
+    const char *audit_setting = getenv("PE_AKAO_AUDIT_TICKS");
+    if (audit_setting) {
+        char *end; unsigned long value = strtoul(audit_setting, &end, 10);
+        CHECK(*audit_setting && !*end && value >= 4 && value <= 65536);
+        audit_ticks = (unsigned)value;
+    }
     const char *path = getenv("PE_TEST_DISC");
     if (!path || !*path) {
         puts("Set PE_TEST_DISC to the USA Disc 1 image for room asset verification.");
@@ -113,7 +120,7 @@ int main(void) {
                 CHECK(pe_akao_player_start(&player, &music.sequence, &catalog.akao, &initial));
                 CHECK(pe_akao_player_bind_samples(&player, record_spu));
                 int long_failed = 0;
-                for (unsigned tick = 0; tick < 4096 && player.active; ++tick) {
+                for (unsigned tick = 0; tick < audit_ticks && player.active; ++tick) {
                     ++long_ticks;
                     if (!pe_akao_player_tick(&player, 0, 1, 4096)) {
                         long_failed = 1;
@@ -227,8 +234,8 @@ int main(void) {
         ++verified_banks;
     }
     CHECK(long_stopped + long_window + long_missing == music_records - short_music_records);
-    printf("4096 forced AKAO tick audit: %u stopped, %u still active, %u failed (%u state errors); %llu ticks, %llu note events; not synthesized\n",
-           long_stopped, long_window, long_missing, long_state_errors,
+    printf("%u forced AKAO tick audit: %u stopped, %u still active, %u failed (%u state errors); %llu ticks, %llu note events; not synthesized\n",
+           audit_ticks, long_stopped, long_window, long_missing, long_state_errors,
            (unsigned long long)long_ticks, (unsigned long long)long_notes);
     for (unsigned opcode = 0; opcode < 512; ++opcode) {
         if (!long_opcodes[opcode]) continue;

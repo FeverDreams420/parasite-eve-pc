@@ -45,10 +45,15 @@ int CdRom_PollReady(void) { ++polls; return poll_result; }
 int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int w) { abort(); }
 #else
 #include "pe1/cdrom.h"
-int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int w) { abort(); }
+#include "pe1/akao.h"
+#include "pe1/akao/stream.h"
+#include "pe1/akao/globals.h"
+#include <psyz/spu.h>
+#include "pe1/psyq_spu_api.h"
 #endif
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 #ifdef PE_TEST_REAL_DISC
+_Alignas(u32) u8 g_SceneSectorDirectory[4 + 2 * (PE_USA_AUDIO_BANKS + 1)];
 SceneRoomSectorRange g_RoomSectorTable[PE_USA_ROOM_SLOTS];
 AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
 RenderMatrixSlot g_ViewMatrixSlot;
@@ -178,6 +183,10 @@ int main(void)
     PeDisc disc={0}; PeRoomCatalog catalog;
     CHECK(pe_disc_open(&disc,path) && pe_room_catalog_open(&catalog,&disc));
     CdRom_BindImage(&disc,&catalog.archive);
+    memcpy(g_SceneSectorDirectory,&catalog.audio_base,4);
+    memcpy(g_SceneSectorDirectory+4,catalog.audio_bounds,sizeof(catalog.audio_bounds));
+    Psyz_SpuInit();
+    SpuInit();
     g_PeImageBaseLba=catalog.archive.sector;
     for(unsigned i=0;i<64;++i) {
         g_PeImageSectorTable[i]=catalog.sector_bounds[i];
@@ -215,6 +224,9 @@ int main(void)
         u8 *textures = calloc(range->texture_sectors, 2048);
         u8 *data = calloc(range->room_sectors, 2048);
         CHECK(scratch && textures && data);
+        u8 *spu_expected=malloc(0x80000); CHECK(spu_expected);
+        memset(spu_expected,0xa5,0x80000);
+        memset(Psyz_SpuGetRam(),0xa5,0x80000);
         Pe1GameState saved = g_GameState;
         PmTables tables = g_PmTables;
         PmCommand *handlers[85] = {0};
@@ -223,7 +235,7 @@ int main(void)
         g_GameState.texture_load_scratch = (SceneAssetView *)textures;
         g_GameState.loaded_scene_assets = (SceneAssetView *)data;
         g_GameState.pe_image_base_lba = catalog.archive.sector;
-        /* Exercise the original already-cached audio branch; unexpected uploads abort. */
+        /* First load starts with empty audio caches and uses original uploads. */
         g_GameState.pending_stream_banks[0] = g_GameState.pending_stream_banks[1] = 0;
         g_GameState.pending_sample_bank = -1;
         const u8 *streams; unsigned count;
@@ -235,8 +247,8 @@ int main(void)
             if (entry[3] & 0x20) {
                 u16 channel = entry[6] | (u16)entry[7] << 8;
                 CHECK(channel < 2 && bank <= 255);
-                g_GameState.pending_stream_banks[channel] = bank;
-            } else g_GameState.pending_sample_bank = bank;
+                /* The loader fills the stream cache from the disc image. */
+            }
         }
         char name[8], encoded[8];
         snprintf(name, sizeof(name), "m0%03u0", map);
@@ -250,6 +262,49 @@ int main(void)
         } else {
             CHECK(Scene_LoadRoom(room_id) == 0);
             CHECK(handlers[69] == &g_RoomFxMirrorHandlers);
+            CHECK(g_GameState.cd_read_phase==0 && g_CdReadRemainingSectors==0);
+            for(unsigned i=0;i<count;++i) {
+                const u8 *entry=streams+i*8;
+                if(entry[3]&0x10)continue;
+                unsigned bank=entry[4]|(unsigned)entry[5]<<8;
+                unsigned channel=entry[6]|(unsigned)entry[7]<<8;
+                u8 *bytes=NULL;size_t size=0;
+                CHECK(pe_audio_bank_read(&catalog,bank,&bytes,&size));
+                CHECK(size>=0x40 && size<=(size_t)range->scratch_sectors*2048);
+                unsigned first=image_word(bytes+0x18),end=image_word(bytes+0x1c);
+                if(!end)end=256;
+                CHECK(first<end && end<=256);
+                unsigned instruments=end-first,payload=image_word(bytes+0x14);
+                size_t offset=0x40+(size_t)instruments*0x40;
+                CHECK(offset<=size && payload<=size-offset);
+                unsigned address=image_word(bytes+0x10);
+                if(entry[3]&0x20) {
+                    address=0x68000+(channel<<13);
+                    CHECK(channel<2 && instruments<=16);
+                    CHECK(g_GameState.pending_stream_banks[channel]==bank);
+                    unsigned delta=address-image_word(bytes+0x40);
+                    for(unsigned instrument=0;instrument<instruments;++instrument) {
+                        AkaoInstrument expected_instrument;
+                        memcpy(&expected_instrument,bytes+0x40+instrument*0x40,0x40);
+                        expected_instrument.start_address+=delta;
+                        expected_instrument.loop_address+=delta;
+                        CHECK(!memcmp(&g_AkaoStreamInstrumentCacheB[channel*16+instrument],
+                                      &expected_instrument,sizeof(expected_instrument)));
+                    }
+                } else {
+                    CHECK(g_GameState.pending_sample_bank==(int)bank);
+                    CHECK(!memcmp(&g_AkaoInstrumentTable[first],bytes+0x40,instruments*0x40));
+                }
+                CHECK(address<=0x80000 && payload<=0x80000-address);
+                memcpy(spu_expected+address,bytes+offset,payload);
+                free(bytes);
+            }
+            CHECK(!memcmp(Psyz_SpuGetRam(),spu_expected,0x80000));
+            /* Same bank IDs must take the original cache-hit path. */
+            memset(spu_expected,0x6d,0x80000);
+            memset(Psyz_SpuGetRam(),0x6d,0x80000);
+            CHECK(Scene_LoadRoom(room_id)==0);
+            CHECK(!memcmp(Psyz_SpuGetRam(),spu_expected,0x80000));
             CHECK(g_GameState.bank_reset_944[0] != NULL);
             const u8 *entries; unsigned entries_count;
             CHECK(pe_room_blob_table(&room.data, 3, 12, &entries, &entries_count));
@@ -268,9 +323,9 @@ int main(void)
         CHECK(!memcmp(data, room.data.bytes, room.data.size));
         g_GameState = saved;
         g_PmTables = tables;
-        free(scratch); free(textures); free(data);
+        free(scratch); free(textures); free(data); free(spu_expected);
         pe_room_close(&room);
-        printf("Original Scene_LoadRoom M%03u: %s (cached audio)\n", map,
+        printf("Original Scene_LoadRoom M%03u: %s (cold + cached audio)\n", map,
                map == 5 ? "unsupported descriptor rejected" : "native mirror binding and script/bank relocation passed");
     }
 

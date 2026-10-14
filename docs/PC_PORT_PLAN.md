@@ -2426,3 +2426,32 @@ removal of pc/ remain incomplete.
 
 Fresh ASan/UBSan/function execution also passes; PsyZ/SDL libraries are not
 instrumented.
+
+
+### Execute cold room audio loading through original archive and SPU code
+
+The real-data entity-texture fixture now links the complete original AKAO
+modules instead of aborting at CdRom_ReadAssetSectors. It binds the real audio
+sector directory and initializes the PsyZ SPU backend without installing the
+unintegrated original timer bootstrap. For M017, M018, M021, M045, M102, M151
+and M319 it begins with empty stream/sample IDs and executes Scene_LoadRoom,
+including kind-2 stream-bank and kind-1 sample-bank uploads.
+
+An independent raw-bank decoder checks payload extents, every uploaded instrument
+record (including stream address relocation), final cache IDs, completed read
+phase and the entire 512 KiB SPU RAM. Each supported room is loaded again with
+cached IDs and sentinel-filled SPU memory to prove the cache-hit path performs
+no upload. M005 still rejects its unimplemented native descriptor before audio
+loading. All room bank payloads in this fixture fit the original 33-sector
+scratch capacity; it does not establish larger-bank kind-1/2 chunk behavior.
+
+Full build and four original-game tests pass with required Disc 1 assets:
+entity-textures, entity-texture-assets, akao-assets and akao-menu-assets. The
+existing 414-room VRAM and 14-area animation/texture corpus remains included.
+No new files or replacement game code. This establishes integrated loading,
+not starting scene audio, a running scene frame or playable gameplay. Full
+runtime and removal of pc/ remain incomplete.
+
+Fresh ASan/UBSan/function execution of the expanded real-data fixture passes.
+PsyZ/SDL are uninstrumented, and the backend still reports an unimplemented
+DMA callback.

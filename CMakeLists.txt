@@ -388,7 +388,8 @@ if(BUILD_TESTING)
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_sources(test-original-entity-texture-assets PRIVATE
-        $<TARGET_OBJECTS:parasite-eve-original-shadow>)
+        $<TARGET_OBJECTS:parasite-eve-original-shadow>
+        $<TARGET_OBJECTS:parasite-eve-original-akao>)
     target_include_directories(test-original-entity-texture-assets PRIVATE include pc)
     target_compile_definitions(test-original-entity-texture-assets PRIVATE __psyz PE_TEST_REAL_DISC)
     target_link_libraries(test-original-entity-texture-assets PRIVATE psyz)

@@ -22,7 +22,7 @@ typedef struct FieldG3Packet {
     /* 0x18 */ s16 x2, y2;
 } FieldG3Packet;
 
-PE1_STATIC_ASSERT(sizeof(FieldG3Packet) == 0x1C, field_g3_packet_size);
+PE1_STATIC_ASSERT(sizeof(FieldG3Packet) == ((sizeof(RenderGpuTag) + 24 + _Alignof(FieldG3Packet) - 1) / _Alignof(FieldG3Packet)) * _Alignof(FieldG3Packet), field_g3_packet_size);
 
 /* Black default for a missing corner colour. */
 extern RenderColor g_FieldFxBlackColor;

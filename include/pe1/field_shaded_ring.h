@@ -34,7 +34,7 @@ typedef struct FieldRingPacket {
 typedef union FieldRingLink {
     RenderGpuTag *tag;
     char *bytes;
-    u32 word;
+    uintptr_t word;
 } FieldRingLink;
 
 #define RING_OT(depth) \

@@ -2978,3 +2978,14 @@ actor-animation and scene-spawn. Fresh ASan/UBSan/function runs pass for both
 fixtures with original interpreter/source code instrumented; PsyZ/SDL archives
 are uninstrumented. GPU effect packet porting, native descriptor bindings,
 complete gameplay and removal of pc/ remain incomplete.
+
+
+Native field-effect packet headers now use the existing RenderNativeTag with
+full host addresses and lengths. Existing packet structures, scroll-state views,
+OT strides and geometry.c linking were corrected in place; GPU payload words
+remain unchanged. The existing actor fixture checks packet chains in both slots,
+four blend modes, semitransparency, mode packet size and surrounding guards.
+The two point/glow paths also use native OT strides. No new files were added.
+This is packet-layout and link verification, not evidence of rendered effect
+fidelity or complete room-effect bindings. The pc/ runtime still has to be
+replaced by the whole original modules and removed.

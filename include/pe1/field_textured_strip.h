@@ -45,7 +45,7 @@ typedef struct FieldStripPacket {
 
 typedef union FieldStripLink {
     RenderGpuTag *tag;
-    u32 word;
+    uintptr_t word;
 } FieldStripLink;
 
 #define STRIP_OT(depth) \

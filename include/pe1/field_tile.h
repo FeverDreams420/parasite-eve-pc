@@ -17,16 +17,16 @@
 typedef union FieldTileAddress {
     RenderGpuTag *tag;
     char *bytes;
-    u32 word;
+    uintptr_t word;
 } FieldTileAddress;
 
 /* Entry `depth` of the table held in `base`: retail adds the scaled depth
  * to the table address as an integer, index first. */
 #define TILE_OT_ENTRY(entry, base, table, depth) \
-    ((base).bytes = (table), (entry).word = (depth) * 4 + (base).word)
+    ((base).bytes = (table), (entry).word = (depth) * sizeof(RenderGpuTag) + (base).word)
 
 /* PSY-Q addPrim: link `packet` (with a RenderGpuTag tag) in front of the
- * chain at `entry`, storing the low 24 address bits in each tag. */
+ * chain at `entry`, storing full native addresses in each tag. */
 #define TILE_OT_ADDPRIM(entry, packet, link) \
     ((packet)->tag.address = (entry).tag->address, \
      (link).tag = &(packet)->tag, \
@@ -52,7 +52,7 @@ typedef struct FieldG4Packet {
     /* 0x20 */ s16 x3, y3;
 } FieldG4Packet;
 
-PE1_STATIC_ASSERT(sizeof(FieldG4Packet) == 0x24, field_g4_packet_size);
+PE1_STATIC_ASSERT(sizeof(FieldG4Packet) == ((sizeof(RenderGpuTag) + 32 + _Alignof(FieldG4Packet) - 1) / _Alignof(FieldG4Packet)) * _Alignof(FieldG4Packet), field_g4_packet_size);
 
 /* Matches render_object.h, for includers that do not include that header. */
 

@@ -39,7 +39,7 @@ extern GteShortVector g_FieldFxCellQuad[4];
 /* A packet tag seen as the 32-bit address the DMA chain links through. */
 typedef union FieldShadedQuadLink {
     RenderGpuTag *tag;
-    u32 word;
+    uintptr_t word;
 } FieldShadedQuadLink;
 
 /* Ordering-table entry `depth` of the active buffer. */

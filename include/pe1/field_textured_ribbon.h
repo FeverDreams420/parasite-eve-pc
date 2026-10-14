@@ -57,6 +57,6 @@ typedef struct FieldRibbonPacket {
 } FieldRibbonPacket;
 
 PE1_STATIC_ASSERT(sizeof(FieldRibbonColor) == 4, field_ribbon_color_size);
-PE1_STATIC_ASSERT(sizeof(FieldRibbonPacket) == 0x34, field_ribbon_packet_size);
+PE1_STATIC_ASSERT(sizeof(FieldRibbonPacket) == ((sizeof(RenderGpuTag) + 48 + _Alignof(FieldRibbonPacket) - 1) / _Alignof(FieldRibbonPacket)) * _Alignof(FieldRibbonPacket), field_ribbon_packet_size);
 
 #endif /* PE1_FIELD_TEXTURED_RIBBON_H */

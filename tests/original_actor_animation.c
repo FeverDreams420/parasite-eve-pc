@@ -12,6 +12,7 @@
 #include "pe1/render_buffers.h"
 #include "pe1/render_packets.h"
 #include "pe1/render_matrix_slot.h"
+#include "pe1/field_tile.h"
 #include "pe1/geom_state.h"
 #include "pe1/field_movement.h"
 #include "pe1/pad_state.h"
@@ -363,6 +364,9 @@ static int bios_random(void)
     return 1;
 }
 
+/* Controlled draw-buffer input for the original packet linker. */
+RenderBufferPrefix D_800B0E38;
+
 static RoomEnt *expected_room_context;
 static unsigned room_callback_count;
 static void record_room_callback(RoomEnt *context)
@@ -546,6 +550,34 @@ static int native_task_cycle(void)
     return 1;
 }
 
+static int native_effect_packet_links(void)
+{
+    struct { RenderTintMode mode; u8 guard[16]; } buffer;
+    RenderTintMode *modes=&buffer.mode;
+    RenderBufferPrefix saved=D_800B0E38;
+    int saved_slot=g_ActiveDrawSlot, saved_offset=g_DrawPacketOffset;
+    for(unsigned slot=0;slot<2;++slot) for(int mode=0;mode<4;++mode) {
+        memset(&buffer,0xa5,sizeof(buffer));
+        RenderGpuTag ordering={.address=(uintptr_t)0xffffff,.length=0};
+        FieldTilePoint packet={0}; SetTile1(&packet);
+        packet.r=128; packet.g=64; packet.b=32; packet.x=7; packet.y=9;
+        D_800B0E38.packets[slot]=(char *)modes;
+        g_ActiveDrawSlot=slot; g_DrawPacketOffset=0;
+        FieldFx_LinkBlendedPacket(&ordering,&packet,mode);
+        if(ordering.address!=(uintptr_t)modes || modes->tag.address!=(uintptr_t)&packet ||
+           packet.tag.address!=0xffffff || modes->tag.length!=1 || packet.tag.length!=2 ||
+           packet.command!=0x6a || g_DrawPacketOffset!=sizeof(RenderTintMode)) return 0;
+        if(modes->command!=(u32)(0xe1000200|GetTPage(0,mode,0,0))) return 0;
+        for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
+        ordering.address=0xffffff; g_DrawPacketOffset=0;
+        FieldFx_LinkBlendedPacket(&ordering,&packet,255);
+        if(ordering.address!=(uintptr_t)&packet || packet.tag.address!=0xffffff || g_DrawPacketOffset) return 0;
+    }
+    D_800B0E38=saved; g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset;
+    puts("Original effect packets: full native links, both slots, four blend modes, payload offsets and arena guards passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -606,7 +638,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !native_effect_packet_links()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

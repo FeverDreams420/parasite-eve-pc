@@ -191,7 +191,8 @@ typedef struct GeomScrollWords {
     u32 savedBoundsX;           /* saved viewport X bounds */
     u32 savedBoundsY;           /* saved viewport Y bounds */
     u32 cameraOffset;           /* cameraOffsetX, cameraOffsetY */
-    u8 reserved30[0x70];
+    u8 reserved30[PE1_OFFSETOF(GeomScrollCoordinates, originX) -
+                   PE1_OFFSETOF(GeomScrollCoordinates, cameraOffsetX) - 4];
     u32 origin;                 /* originX, originY */
 } GeomScrollWords;
 
@@ -215,16 +216,16 @@ PE1_STATIC_ASSERT(sizeof(GeomEntryView) == sizeof(GeomEntry), geom_entry_view_si
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollState, position) == sizeof(void *),
                   geom_scroll_position_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, originX) == 0x9C + 2*(sizeof(void *)-4),
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, originX) == PE1_OFFSETOF(GeomScrollCoordinates, otZ) + 4,
                   geom_scroll_origin_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, meshTintLevel) == 0x70 + 2*(sizeof(void *)-4),
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, meshTintLevel) == PE1_OFFSETOF(GeomScrollCoordinates, tint) + sizeof(RenderTintState),
                   geom_scroll_mesh_tint_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, cameraBasis) == 0x74 + 2*(sizeof(void *)-4),
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, cameraBasis) == PE1_OFFSETOF(GeomScrollCoordinates, meshTintLevel) + 4,
                   geom_scroll_camera_basis_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, otZ) == 0x98 + 2*(sizeof(void *)-4),
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, otZ) == PE1_OFFSETOF(GeomScrollCoordinates, cameraBasis) + sizeof(GteMatrix) + 4,
                   geom_scroll_ot_z_offset);
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollState, position.tint) == 0x30 + 3*(sizeof(void *)-4),
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollState, position.tint) == PE1_OFFSETOF(GeomScrollState, position) + ((PE1_OFFSETOF(GeomScrollCoordinates, cameraOffsetX) + 4 + _Alignof(RenderTintState) - 1) / _Alignof(RenderTintState)) * _Alignof(RenderTintState),
                   geom_scroll_tint_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollWords, viewMatrix) ==
                   PE1_OFFSETOF(GeomScrollState, position.matrixWords),

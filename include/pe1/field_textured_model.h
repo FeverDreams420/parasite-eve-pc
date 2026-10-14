@@ -127,7 +127,7 @@ typedef struct FieldModelGt4Packet {
 
 typedef union FieldModelLink {
     RenderGpuTag *tag;
-    u32 word;
+    uintptr_t word;
 } FieldModelLink;
 
 /* Scratchpad work area of the model draw. */

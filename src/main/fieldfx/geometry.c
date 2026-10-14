@@ -33,6 +33,7 @@
 /* Active owner of the original task engine. */
 FieldFxObjectPrefix *g_FieldFxOwner;
 int g_FieldFxAltPaletteFlag;
+int g_DrawPacketOffset;
 
 /* Matching debt: three transfer-pins per function, plus five empty
  * pointer/memory barriers across this TU. Matrix loads are C; each GTE
@@ -500,18 +501,19 @@ void FieldFx_LoadRotationMatrix(GteRotation *rotation, s32 *scale, GteMatrix *ma
 
 static __inline__ void link_packet(void *ordering, void *packet)
 {
-    *(u32 *)packet = (*(u32 *)packet & 0xff000000) | (*(u32 *)ordering & 0xffffff);
-    *(u32 *)ordering = (*(u32 *)ordering & 0xff000000) | ((u32)packet & 0xffffff);
+    RenderGpuTag *head = ordering, *tag = packet;
+    tag->address = head->address;
+    head->address = (uintptr_t)tag;
 }
 void FieldFx_LinkBlendedPacket(void *ordering, void *packet, int mode)
 {
     void *drawMode;
     if (mode != 255) {
         drawMode = D_800B0E38.packets[g_ActiveDrawSlot] + g_DrawPacketOffset;
-        g_DrawPacketOffset += 8;
+        g_DrawPacketOffset += sizeof(RenderTintMode);
         SetDrawTPage(drawMode, 0, 1, GetTPage(0, mode, 0, 0));
         if (packet) {
-            ((u8 *)packet)[7] |= 2;
+            ((u8 *)packet)[sizeof(RenderGpuTag) + 3] |= 2;
             link_packet(ordering, packet);
         }
         link_packet(ordering, drawMode);
@@ -1447,7 +1449,7 @@ void FieldFx_DrawHaloedPoint(void *position, void *colorArg, int scale, int abr)
         glow->y = point->y - 1;
         glow->height = 3;
         glow->width = 3;
-        AddPrim((u32 *)D_800B0E38.ordering[g_ActiveDrawSlot] + depth, (u32 *)point);
+        link_packet((RenderGpuTag *)D_800B0E38.ordering[g_ActiveDrawSlot] + depth, point);
         TILE_OT_ENTRY(ot, table, D_800B0E38.ordering[g_ActiveDrawSlot], depth);
         if (abr != 0xFF) {
             mode = (RenderTintMode *)(D_800B0E38.packets[g_ActiveDrawSlot] + g_DrawPacketOffset);
@@ -1673,7 +1675,7 @@ void FieldFx_DrawOrbitPoint(int x, int y, void *color, int scale, int mode)
         glow->y = point->y - 1;
         glow->height = 3;
         glow->width = 3;
-        AddPrim((u32 *)D_800B0E38.ordering[g_ActiveDrawSlot] + depth, (u32 *)point);
+        link_packet((RenderGpuTag *)D_800B0E38.ordering[g_ActiveDrawSlot] + depth, point);
         TILE_OT_ENTRY(ot, table, D_800B0E38.ordering[g_ActiveDrawSlot], depth);
         blend = (RenderTintMode *)(D_800B0E38.packets[g_ActiveDrawSlot] + g_DrawPacketOffset);
         g_DrawPacketOffset += sizeof(RenderTintMode);

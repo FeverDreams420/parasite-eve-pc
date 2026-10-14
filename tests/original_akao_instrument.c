@@ -1,5 +1,6 @@
 #include "pe1/akao.h"
 #include "pe1/akao/init_state.h"
+#include "pe1/akao/stream.h"
 #include "pe1/akao/globals.h"
 #include "pe1/akao/note_step.h"
 #include "pe1/akao/voice_masks.h"
@@ -784,6 +785,22 @@ int main(int argc, char **argv)
         CHECK(voice->parent_track_id == (i < 48 ? 0 : 1));
         CHECK(voice->flags == 0);
     }
+    unsigned sample_block[36] = {0};
+    sample_block[0] = 0x4f414b41;
+    sample_block[4] = 0x2000;
+    sample_block[5] = 16;
+    sample_block[6] = 3;
+    sample_block[7] = 4;
+    for (unsigned i = 16; i < 36; ++i) sample_block[i] = i * 0x01010101u;
+    SpuSetTransferMode(0);
+    CHECK(Spu_UploadSampleBlock((int *)sample_block, 0) == 0);
+    CHECK(g_SpuTransferStatus == 0);
+    CHECK(memcmp(&g_AkaoInstrumentTable[3], sample_block + 16, 64) == 0);
+    unsigned sample_readback[4];
+    Psyz_SpuMemRead(0x2000, sample_readback, 16);
+    CHECK(memcmp(sample_readback, sample_block + 32, 16) == 0);
+    CHECK(Spu_UploadSampleBlock((int *)sample_block, 1) == 0);
+    CHECK(g_SpuTransferStatus == 0);
     short reference_pcm[1024];
     for (unsigned run = 0; run < 2; ++run) {
         Psyz_SpuInit();

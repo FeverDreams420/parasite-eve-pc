@@ -633,3 +633,15 @@ All four original AKAO tests pass with required Disc 1 assets. Instrument
 test passes ASan/UBSan/function instrumentation of original source and test
 code (the linked PsyZ archive is still uninstrumented). This is initialization
 and PCM evidence, not frontend menu audio or full-game completion.
+
+### Original sample upload completion (2026-10-14)
+
+Original Spu_UploadSampleBlock now runs against native SPU RAM in the
+instrument test. Before the fix the nonblocking transfer left status 1: PsyZ
+copied bytes but omitted the registered completion callback, so the original
+blocking transfer would spin indefinitely. Fork c0275f5 delivers that callback
+after its synchronous copy, preserving the no-callback kernel event path.
+The regression checks completion, exact 16-byte ADPCM RAM contents, the
+64-byte instrument record and a second blocking upload. All four original
+AKAO tests pass with required Disc 1 assets. The transfer status is owned by
+original runtime state. This does not yet integrate frontend menu audio.

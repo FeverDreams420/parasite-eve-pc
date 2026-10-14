@@ -37,3 +37,4 @@ AkaoVoiceEnvelopeSlot g_AkaoVoiceEnvelopeTable[24];
 SpuCommonAttr g_AkaoSpuCommonAttr;
 
 volatile int g_AkaoSeqBusyFlags;
+volatile int g_SpuTransferStatus;

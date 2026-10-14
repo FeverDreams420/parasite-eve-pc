@@ -34,6 +34,7 @@ typedef struct PeAkaoChannel {
     uint16_t volume_base, panpot, note_length, default_note_length, fixed_note_length;
     uint16_t pan_duration, pan_slide_duration, expression_duration, drum_volume;
     uint16_t volume_duration, volume_delta, pan_delta; /* signed deltas stored as bits */
+    uint16_t aux_lfo_target, aux_lfo_value;
     uint8_t octave, stopped, last_note;
     uint8_t loop_index, key_off_requested;
     uint8_t tremolo_phase;

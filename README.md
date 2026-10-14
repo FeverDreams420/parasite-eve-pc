@@ -289,3 +289,8 @@ The latest audit reaches 7,987 initial note events, two stops and 894 unsupporte
 channel prefixes. 266 sequence prefixes complete four forced timer ticks;
 333 encounter missing commands. This limited audit does not prove full songs,
 ADSR envelope synthesis or gameplay, which remain unfinished.
+
+BD writes the auxiliary LFO depth without changing note pitch; BE clears its
+current modulation value and active flag while preserving the configured depth.
+Channel tests verify these distinctions, volume dirty flags and truncated
+operands. Active LFO waveform execution remains unsupported and explicit.

@@ -96,11 +96,11 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
         }
         unsigned operands, prefix = 1, extended = 0;
         switch (opcode) {
-        case 0xa0: case 0xa6: case 0xa7: case 0xb3: operands = 0; break;
+        case 0xa0: case 0xa6: case 0xa7: case 0xb3: case 0xbe: operands = 0; break;
         case 0xa1: case 0xa2: case 0xa3: case 0xa5: case 0xa8: case 0xaa:
         case 0xc0: case 0xc1: case 0xd8: case 0xd9:
         case 0xad: case 0xae: case 0xaf: case 0xb1: case 0xb2:
-        case 0xb7: case 0xbb: case 0xbf: operands = 1; break;
+        case 0xb7: case 0xbb: case 0xbd: case 0xbf: operands = 1; break;
         case 0xa9: case 0xab: case 0xb0: operands = 2; break;
         case 0xc2: case 0xc3: case 0xc8: case 0xca: operands = 0; break;
         case 0xc9: operands = 1; break;
@@ -212,6 +212,15 @@ truncated:
         case 0xb7: channel->adsr[5] = (uint8_t)value; channel->update_flags |= 0x0100; break;
         case 0xbb: channel->adsr[6] = (uint8_t)value; channel->update_flags |= 0x0200; break;
         case 0xbf: channel->adsr[7] = (uint8_t)value; channel->update_flags |= 0x0400; break;
+        case 0xbd:
+            /* SeqOp_SetPitchBase actually writes aux_lfo_target (+B4). */
+            channel->aux_lfo_target = (uint16_t)(value << 7);
+            break;
+        case 0xbe:
+            channel->aux_lfo_value = 0;
+            channel->flags &= ~UINT32_C(4);
+            channel->update_flags |= 3;
+            break;
         case 0xc8:
             if (next >= channel->sequence.size) goto invalid;
             channel->loop_index = (channel->loop_index + 1) & 3;

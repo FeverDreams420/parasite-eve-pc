@@ -201,6 +201,20 @@ int main(void) {
     sequence.bytes = measure; sequence.size = sizeof(measure);
     CHECK(pe_akao_channel_start(&channel, &sequence, 0));
     CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE && control.measure == 0x1234);
+    const uint8_t auxiliary[] = {0xbd,255,0x11,0xbe,0x11};
+    sequence.bytes = auxiliary; sequence.size = sizeof(auxiliary);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    channel.pitch_base = 12345; channel.update_flags = 0;
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(channel.aux_lfo_target == 32640 && channel.pitch_base == 12345 && !channel.update_flags);
+    channel.aux_lfo_value = 0xfffe; channel.flags = 0x1004;
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(!channel.aux_lfo_value && channel.flags == 0x1000 && channel.update_flags == 3);
+    CHECK(channel.aux_lfo_target == 32640 && channel.pitch_base == 12345);
+    const uint8_t short_auxiliary[] = {0xbd};
+    sequence.bytes = short_auxiliary; sequence.size = sizeof(short_auxiliary);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_ERROR && !channel.pc);
     puts("AKAO channel: state commands, finite/nested loops, signed jumps, key-off and explicit errors passed");
     return 0;
 }

@@ -527,6 +527,15 @@ All 24 tests pass headless with Disc 1; fixtures and the full room/collision
 audit pass ASan/UBSan. Actor integration and reference geometry checks remain
 unfinished.
 
+`pc/room_banks.c` binds checked room overrides into the original ten model
+root slots and ten groups of 48 animation slots. It keeps record order and
+last-write behavior, borrowing the scene's owned room bytes; failed binding
+preserves the previous view. All 414 Disc 1 rooms validate, containing 878
+root records and 9,042 animation-row records. `room-banks` tests slot/group
+bounds, payload bounds and duplicate overrides. All 25 tests pass headless;
+the binding fixture and full scene data audit pass ASan/UBSan. External entity
+banks, model/animation decoding and rendering remain unfinished.
+
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one
 lists the other 75 faces). The original lookup only searches listed faces.

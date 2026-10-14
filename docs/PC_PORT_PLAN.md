@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+`pc/room_banks.c` wiąże sprawdzane room overrides do dziesięciu model root slots i dziesięciu grup po 48 animation slots. Zachowuje kolejność/last-write, pożycza owned room bytes sceny i nie niszczy starego widoku przy błędzie. Walidują się wszystkie 414 lokacje Disc 1: 878 root records, 9042 animation-row records. Nowy 25. test sprawdza granice slot/group/payload i duplicate overrides; headless suite oraz ASan/UBSan fixture i pełnego audytu scen przechodzą. External entity banks, dekodowanie modeli/animacji i renderowanie pozostają wymagane.
+
 Natywny aktor stosuje FindFloor do Y i obu ID powierzchni; bypass/no-match zachowuje poprzednie wartości, a flaga preserve-Y jest respektowana. Scena posiada dane kolizji transakcyjnie, z zachowaniem starej geometrii przy nieudanym przejściu. Headless boot emituje `room.collision.ready`, wymagane w replay New Game i Tutorial. 24 testy z Disc 1 oraz ASan/UBSan aktorów i scen/kolizji przechodzą. Pełne spawn/model setup, ruch fizyczny i gameplay collision pozostają nieukończone.
 
 31 braków centroid hit jest sklasyfikowane: M90 pomija trójkąty 0–30 w początkowych listach regionów (region 0 pusty, region 1 zawiera pozostałe 75). Oryginalny lookup szuka tylko wpisanych faces. Audyt sprawdza dokładnie to pominięcie i zero niewyjaśnionych braków; fixture potwierdza, że sama geometria bez referencji regionu nie daje floor hit. 24 testy headless z Disc 1 i ASan/UBSan collision fixture przechodzą. To wyjaśnia początkowy audyt danych, nie runtime geometry changes ani gameplay collision.

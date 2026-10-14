@@ -67,6 +67,7 @@ int main(void) {
     unsigned flat_rooms = 0, sloped_rooms = 0;
     uint64_t floor_regions = 0, floor_triangles = 0;
     uint64_t floor_probes_found = 0;
+    uint64_t bank_root_records = 0, bank_row_records = 0;
     unsigned floor_probe_outside = 0, floor_probe_unindexed = 0, floor_probe_contained_missing = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -83,6 +84,11 @@ int main(void) {
             return 1;
         }
         CHECK(room.map == map && room.data.size);
+        PeRoomBanks model_banks; char bank_error[256];
+        if (!pe_room_banks(&room, &model_banks, bank_error, sizeof(bank_error))) {
+            fprintf(stderr,"%s\n",bank_error); return 1;
+        }
+        bank_root_records += model_banks.root_records; bank_row_records += model_banks.row_records;
         char collision_error[256];
         if (!pe_room_collision(&room, &room_collision, collision_error, sizeof(collision_error))) {
             fprintf(stderr, "Map %u collision: %s\n", map, collision_error); return 1;
@@ -267,6 +273,8 @@ int main(void) {
     }
     printf("Room collision databases: %u flat, %u sloped; %llu regions, %llu triangles; floor integration pending\n",
            flat_rooms, sloped_rooms, (unsigned long long)floor_regions, (unsigned long long)floor_triangles);
+    printf("Room bank records: %llu roots, %llu animation rows; model decoding pending\n",
+           (unsigned long long)bank_root_records, (unsigned long long)bank_row_records);
     pe_collision_close(&room_collision);
     printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
            (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);

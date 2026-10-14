@@ -17,6 +17,7 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     PeScene next = {0};
     if (!pe_room_load(catalog, map, &next.room)) goto catalog_error;
     if (!pe_room_collision(&next.room, &next.collision, error, error_size)) goto failed;
+    if (!pe_room_banks(&next.room, &next.banks, error, error_size)) goto failed;
     next.vram = malloc(sizeof(*next.vram));
     next.spu = malloc(sizeof(*next.spu));
     if (!next.vram || !next.spu) {

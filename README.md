@@ -55,10 +55,11 @@ W/S change the selection, Enter confirms, and Escape returns to the title
 prompt. Continue remains disabled until native save support exists. Selecting
 New Game or Tutorial loads the original starting room data (M431 or M353)
 and applies its scratch/texture-bank uploads to CPU-visible VRAM, then exits;
-script entry/actor catalogs are validated, but scene execution and gameplay
-are not integrated.
+script entry/actor catalogs and the startup SPU sample bank are prepared in
+`PeScene`, but scene execution and gameplay are not integrated.
 
-`make ci` builds and runs the asset-free disc-reader, VRAM, script-format and automation tests. The
+`make ci` builds and runs the asset-free disc-reader, VRAM, script-format,
+SPU-bank and automation tests. The
 room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
 is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
@@ -147,3 +148,13 @@ tests validate 2,411 entry offsets and 594 initial actor descriptors, and decode
 each initial actor's first command. These checks do not traverse every branch
 or execute scripts. The active starting actors of M431/M353 begin with opcode
 234 (`Akao_ProcessCommand`), whose native execution remains pending.
+
+`pc/spu_bank.c` uploads the original AKAO sample-bank format to CPU-visible
+512 KiB SPU RAM and decodes instrument addresses, ADSR fields and pitches.
+The startup bank comes from the executable's PE.IMG range table, with 28,176
+sample bytes and 256 instrument records. Uploads and scene preparation reject
+bad data before replacing existing state. Room changes preserve existing SPU
+and VRAM contents before texture uploads. This is resource preparation;
+sequence execution, synthesis, mixing and room-specific audio-bank changes
+remain pending. `spu-bank` tests malformed/truncated banks and partial uploads,
+while `room-assets` tests real startup data and scene ownership/rollback.

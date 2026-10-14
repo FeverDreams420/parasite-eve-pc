@@ -1,6 +1,8 @@
 #include "room.h"
 #include "vram.h"
 #include "script.h"
+#include "spu_bank.h"
+#include "scene.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -17,6 +19,17 @@ int main(void) {
     CHECK(pe_disc_open(&disc, path));
     PeRoomCatalog catalog;
     CHECK(pe_room_catalog_open(&catalog, &disc));
+    PeSpuBank *spu = calloc(1, sizeof(*spu));
+    CHECK(spu);
+    PeSpuBankStats bank_stats;
+    CHECK(catalog.sector_bounds[6] == 131 && catalog.sector_bounds[7] == 153);
+    CHECK(pe_spu_bank_load_startup(&catalog, spu, &bank_stats));
+    CHECK(bank_stats.address == 4144 && bank_stats.bytes == 28176);
+    CHECK(bank_stats.first == 0 && bank_stats.end == 256);
+    CHECK(spu->valid[0] && spu->valid[255]);
+    CHECK(spu->instruments[0].start == 4144 && spu->instruments[0].loop == 4176);
+    CHECK(spu->instruments[0].pitch[0] == 2722);
+    free(spu);
     CHECK(catalog.ranges[0].start == 8945);
     CHECK(catalog.ranges[0].scratch_sectors == 33);
     CHECK(catalog.ranges[0].texture_sectors == 74);
@@ -71,6 +84,24 @@ int main(void) {
         ++loaded;
     }
     CHECK(loaded > 300 && loaded + absent == PE_USA_ROOM_SLOTS);
+    PeScene scene = {0};
+    char scene_error[256];
+    CHECK(pe_scene_prepare(&catalog, 431, &scene, scene_error, sizeof(scene_error)));
+    CHECK(scene.scripts.blob == &scene.room.data);
+    CHECK(scene.sample_stats.bytes == 28176 && scene.spu->valid[255]);
+    uint8_t *scene_data = scene.room.data.bytes;
+    PeSpuBank *scene_spu = scene.spu;
+    CHECK(!pe_scene_prepare(&catalog, PE_USA_ROOM_SLOTS, &scene, scene_error, sizeof(scene_error)));
+    CHECK(scene.room.map == 431 && scene.room.data.bytes == scene_data && scene.spu == scene_spu);
+    scene.spu->ram[0x2000] = 123;
+    CHECK(pe_scene_prepare(&catalog, 353, &scene, scene_error, sizeof(scene_error)));
+    CHECK(scene.scripts.blob == &scene.room.data && scene.spu->ram[0x2000] == 123);
+    /* Failure in startup audio occurs after room allocation; roll it all back. */
+    PeScene failed_scene = {0};
+    catalog.sector_bounds[7] = catalog.sector_bounds[6];
+    CHECK(!pe_scene_prepare(&catalog, 431, &failed_scene, scene_error, sizeof(scene_error)));
+    CHECK(!failed_scene.room.data.bytes && !failed_scene.vram && !failed_scene.spu);
+    catalog.sector_bounds[7] = 153;
     CHECK(pe_room_load(&catalog, 1, &room));
     CHECK(room.data.size == 166084);
     const uint8_t *records;
@@ -112,6 +143,16 @@ int main(void) {
     pe_room_close(&room);
     pe_room_close(&room);
     pe_disc_close(&disc);
+    /* Owned scene bytes remain valid after closing their input image. */
+    unsigned scene_entry, scene_sub_id;
+    uint32_t scene_offset;
+    PeScriptCommand scene_command;
+    CHECK(pe_script_actor(&scene.scripts, 0, &scene_entry, &scene_sub_id));
+    CHECK(pe_script_entry(&scene.scripts, scene_entry, &scene_offset));
+    CHECK(pe_script_decode(&scene.scripts, scene_offset, &scene_command, scene_error, sizeof(scene_error)));
+    CHECK(scene_command.opcode == 234);
+    pe_scene_close(&scene);
+    pe_scene_close(&scene);
     free(vram);
     printf("USA Disc 1: %u rooms, %u empty slots, %llu texture words, %u script entries, %u initial actors; no scripts executed\n",
            loaded, absent, (unsigned long long)uploaded_words, script_entries, initial_actors);

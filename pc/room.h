@@ -15,6 +15,7 @@ typedef struct PeRoomRange {
 typedef struct PeRoomCatalog {
     PeDisc *disc; /* borrowed; must remain open */
     PeDiscFile archive;
+    uint16_t sector_bounds[81]; /* resident/startup/UI data ranges */
     PeRoomRange ranges[PE_USA_ROOM_SLOTS];
     char error[256];
 } PeRoomCatalog;

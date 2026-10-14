@@ -7,6 +7,7 @@
  * These are file-data coordinates translated through the EXE header, not
  * native addresses, function pointers or requirements on the host linker. */
 #define ROOM_TABLE_VA UINT32_C(0x80093378)
+#define SECTOR_TABLE_VA UINT32_C(0x800930d8)
 
 static uint32_t read32(const uint8_t *p) {
     return (uint32_t)p[0] | (uint32_t)p[1] << 8 |
@@ -22,13 +23,13 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
     memset(catalog, 0, sizeof(*catalog));
     catalog->disc = disc;
     PeDiscFile executable;
-    uint8_t header[0x800], table[PE_USA_ROOM_SLOTS * 8];
+    uint8_t header[0x800], table[PE_USA_ROOM_SLOTS * 8], bounds[162];
     if (!pe_disc_find(disc, "PE.IMG", &catalog->archive) ||
         !pe_disc_find(disc, "SLUS_006.62", &executable) ||
         !pe_disc_read(disc, &executable, 0, header, sizeof(header)))
         return disc_error(catalog);
     uint32_t base = read32(header + 0x18), size = read32(header + 0x1c);
-    if (memcmp(header, "PS-X EXE", 8) || base > ROOM_TABLE_VA ||
+    if (memcmp(header, "PS-X EXE", 8) || base > SECTOR_TABLE_VA ||
         size < sizeof(table) || ROOM_TABLE_VA - base > size - sizeof(table) ||
         (uint64_t)size + 0x800 > executable.size) {
         snprintf(catalog->error, sizeof(catalog->error), "Unsupported USA room table layout");
@@ -36,6 +37,11 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
     }
     if (!pe_disc_read(disc, &executable, (uint64_t)ROOM_TABLE_VA - base + 0x800,
                       table, sizeof(table))) return disc_error(catalog);
+    if (!pe_disc_read(disc, &executable, (uint64_t)SECTOR_TABLE_VA - base + 0x800,
+                      bounds, sizeof(bounds))) return disc_error(catalog);
+    for (unsigned i = 0; i < 81; ++i)
+        catalog->sector_bounds[i] = (uint16_t)bounds[i * 2] |
+                                    (uint16_t)bounds[i * 2 + 1] << 8;
     for (unsigned i = 0; i < PE_USA_ROOM_SLOTS; ++i) {
         PeRoomRange *range = &catalog->ranges[i];
         range->start = read32(table + i * 8);

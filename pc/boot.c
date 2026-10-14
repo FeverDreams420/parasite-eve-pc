@@ -3,9 +3,7 @@
 #include "movie.h"
 #include "title.h"
 #include "automation.h"
-#include "room.h"
-#include "vram.h"
-#include "script.h"
+#include "scene.h"
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -211,8 +209,7 @@ static int play_intro(BootPlayer *player) {
 
 static int run_boot(PeDisc *disc, int menu, int skip_intro) {
     BootPlayer player = {0};
-    PeRoom active_room = {0};
-    PeVram *active_vram = NULL;
+    PeScene active_scene = {0};
     int result = 1;
     player.disc = disc;
     player.capture = getenv("PE_INTRO_CAPTURE");
@@ -277,35 +274,21 @@ close_player:
             unsigned map = action == 1 ? 431u : 353u;
             PeRoomCatalog catalog;
             pe_runtime_emit("room.loading", map);
-            if (!pe_room_catalog_open(&catalog, disc) ||
-                !pe_room_load(&catalog, map, &active_room)) {
-                fprintf(stderr, "Room: %s\n", catalog.error);
+            char error[256];
+            int ready = pe_room_catalog_open(&catalog, disc);
+            if (!ready) snprintf(error, sizeof(error), "%s", catalog.error);
+            else ready = pe_scene_prepare(&catalog, map, &active_scene, error, sizeof(error));
+            if (!ready) {
+                fprintf(stderr, "Scene: %s\n", error);
                 result = 1;
             } else {
                 pe_runtime_emit("room.loaded", map);
-                active_vram = calloc(1, sizeof(*active_vram));
-                PeVramStats stats;
-                char error[256];
-                if (!active_vram) {
-                    fprintf(stderr, "Cannot allocate scene VRAM\n");
-                    result = 1;
-                } else if (!pe_room_upload_vram(&active_room, active_vram, &stats,
-                                                 error, sizeof(error))) {
-                    fprintf(stderr, "%s\n", error);
-                    result = 1;
-                } else {
-                    pe_runtime_emit("room.vram.ready", map);
-                    PeScriptProgram program;
-                    if (!pe_script_program_open(&active_room, &program, error, sizeof(error))) {
-                        fprintf(stderr, "%s\n", error);
-                        result = 1;
-                    } else {
-                        pe_runtime_emit("room.scripts.ready", map);
-                        printf("menu: selected %s; map %u assets loaded, %u texture uploads, %u scripts, %u initial actors; scene execution pending\n",
-                               action == 1 ? "New Game" : "Tutorial", map, stats.uploads,
-                               program.entries, program.actors);
-                    }
-                }
+                pe_runtime_emit("room.vram.ready", map);
+                pe_runtime_emit("room.scripts.ready", map);
+                pe_runtime_emit("audio.samples.ready", active_scene.sample_stats.bytes);
+                printf("menu: selected %s; map %u assets loaded, %u texture uploads, %u scripts, %u initial actors, %u sample bytes; scene execution pending\n",
+                       action == 1 ? "New Game" : "Tutorial", map, active_scene.texture_stats.uploads,
+                       active_scene.scripts.entries, active_scene.scripts.actors, active_scene.sample_stats.bytes);
             }
         }
     }
@@ -318,8 +301,7 @@ close_player:
     SDL_DestroyWindow(player.window);
     SDL_Quit();
 close_disc:
-    free(active_vram);
-    pe_room_close(&active_room);
+    pe_scene_close(&active_scene);
     pe_runtime_emit("boot.stopped", result);
     return result;
 }

@@ -487,6 +487,17 @@ int main(void)
         if((void *)g_FloorPolygonVertices!=(void *)(entries+3) || g_FloorPolygonVertexCount!=3 ||
            task.current.script!=script+6 || task.flags!=0x10) return 49;
     }
+    const int rotations[][3]={{4095,2,1},{4095,1,4096},{0,-1,4095},{0,8193,4097},{0,1024,1024},{-1,0,4095}};
+    for(unsigned i=0;i<6;++i) {
+        FieldActor owner={.rot_x=-123,.rot_y=rotations[i][0],.rot_z=321};
+        u32 modes=((2u<<3)|(2u<<6)|(2u<<9))<<17;
+        u32 script[]={196|(1u<<13),0,(u32)rotations[i][1],12|(4u<<13)|modes,0,5,56,57,58,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[56]!=(u32)-123 || g_ScriptVariableBank[57]!=(u32)rotations[i][2] ||
+           g_ScriptVariableBank[58]!=321 || task.current.script!=script+11 || task.flags!=0x10) return 50;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

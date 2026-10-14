@@ -48,6 +48,7 @@ int Script_GetCos(int **args);
 int Script_GetAtan2(int **args);
 int Entity_PopCount(int **args);
 int Script_SetMeshFadeLevel(int **args);
+int Script_RotateEntityAngle(int **args);
 int Script_GetInventoryTotal(int **args);
 int Script_SetInventorySlotPointer(int **args);
 int Script_GetInventorySlotLimit(int **args);

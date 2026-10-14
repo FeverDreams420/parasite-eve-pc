@@ -749,3 +749,19 @@ fractional X/Z coordinates. ASan/UBSan/function pass for this original-source
 test; PsyZ remains uninstrumented. The 414-room immutable collision relocation
 test and actual headless menu-audio replay also pass. Corpus-wide floor query
 comparisons and movement integration remain pending; scenes are not yet playable.
+
+### Disc 1 floor-query corpus comparison (2026-10-14)
+
+The original collision asset test now compares Entity_FindFloor with the
+independent byte-decoding test oracle over every triangle's three vertices
+and centroid, including fractional coordinates and normal/preserve-Y/bypass
+flags. All 414 rooms pass: 202296 queries, 99614 hits, 40274 sloped hits.
+It checks selected face, mirror pointer, height and unchanged state on misses,
+as well as immutable source bytes. The oracle is test-only.
+
+UBSan found that real sloped region records can be halfword-aligned. Their
+opaque four-byte prefix is now two u16 fields rather than a u32, preserving
+the on-disc layout while allowing its actual alignment. The complete corpus
+passes ASan/UBSan/function on original/test sources; PsyZ is uninstrumented.
+The standalone floor test also passes. This is not proof of playable scenes:
+scene frame execution, scripts and player control still require integration.

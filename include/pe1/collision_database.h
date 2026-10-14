@@ -87,13 +87,15 @@ typedef struct CollisionFlatRegion {
     u16 triangleIndices[];
 } CollisionFlatRegion;
 typedef struct CollisionPlaneRegion {
-    u32 reserved;
+    /* Disc regions are halfword-aligned, including this opaque prefix. */
+    u16 reserved[2];
     u16 triangleCount;
     u16 triangleIndices[];
 } CollisionPlaneRegion;
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionFlatRegion, triangleIndices) == 4,
                   collision_flat_region_indices_offset);
+_Static_assert(_Alignof(CollisionPlaneRegion) == 2, "disc region halfword alignment");
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionPlaneRegion, triangleIndices) == 6,
                   collision_plane_region_indices_offset);
 

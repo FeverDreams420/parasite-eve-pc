@@ -111,19 +111,20 @@ int FourLayerGlow_CloseTarget(PmSlotHeader *object);
 void FourLayerGlow_ClassNop6(void);
 
 /* Point sprite effect (fieldfx/burst.c). */
-extern u8 g_PointSpriteScript[];
+extern PmCommand g_PointSpriteClass;
+extern int g_PointSpriteScript[];
 extern FieldFxHandler g_PointSpriteInitList[];
 extern FieldFxHandler g_PointSpriteDrawList[];
 extern FieldFxHandler g_PointSpriteUpdateList[];
 extern u16 g_PointSpriteSlotSizes[];
 extern struct FieldActor *g_PointSpriteOwner;
-int PointSprite_ClassNop0(void);
-int PointSprite_PlantScript(char *object);
-int PointSprite_Spawn6(intptr_t a, int b, int c, int d, int e, int f);
-int PointSprite_RegisterDrawList(void *object);
-int PointSprite_RegisterPairedTables(void *object);
-int PointSprite_CloseTarget(char *object);
-int PointSprite_ClassNop6(void);
+void PointSprite_ClassNop0(void);
+void PointSprite_PlantScript(PmSlotHeader *object);
+int PointSprite_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int PointSprite_RegisterDrawList(PmSlotHeader *object);
+int PointSprite_RegisterPairedTables(PmSlotHeader *object);
+int PointSprite_CloseTarget(PmSlotHeader *object);
+void PointSprite_ClassNop6(void);
 
 /* Burst effect (fieldfx/burst.c); its script and setup
  * are declared with the burst records in pe1/fieldfx_task.h. */

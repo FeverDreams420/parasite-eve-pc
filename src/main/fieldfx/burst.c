@@ -18,11 +18,11 @@
 #include "pe1/psyq_libc.h"
 #include "pe1/random.h"
 
-int PointSprite_PlantScript(char *object) {
+void PointSprite_PlantScript(PmSlotHeader *object) {
     FieldActor *actor;
     void **slot;
 
-    slot = FieldFx_GetSlot(object);
+    slot = FieldFx_GetSlot((FieldFxObject *)object);
     *slot = g_PointSpriteScript;
     actor = ((FieldFxObjectPrefix *)object)->actor;
 
@@ -88,26 +88,26 @@ int PointSprite_PlantScript(char *object) {
     g_PointSpriteState3.oriented.rgb[1] = 0x80;
     g_PointSpriteState3.oriented.rgb[2] = 0x80;
 
+
+}
+
+int PointSprite_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)a, b, c, (int)d, (int)e, (int)f);
     return 0;
 }
 
-int PointSprite_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
-    FieldFx_Spawn6(a, b, c, d, e, f);
+int PointSprite_RegisterDrawList(PmSlotHeader *o) {
+    FieldFx_Register((FieldFxObject *)o, g_PointSpriteDrawList);
     return 0;
 }
 
-int PointSprite_RegisterDrawList(void *o) {
-    FieldFx_Register(o, g_PointSpriteDrawList);
-    return 0;
-}
-
-int PointSprite_RegisterPairedTables(void *obj) {
+int PointSprite_RegisterPairedTables(PmSlotHeader *obj) {
     int first;
     int second;
     int status;
 
-    first = FieldFx_UpdateSlots(obj, g_PointSpriteUpdateList);
-    second = FieldFx_RunScript(obj, g_PointSpriteInitList, g_PointSpriteSlotSizes);
+    first = FieldFx_UpdateSlots((FieldFxObject *)obj, g_PointSpriteUpdateList);
+    second = FieldFx_RunScript((FieldFxObject *)obj, g_PointSpriteInitList, g_PointSpriteSlotSizes);
     status = first | second;
     if (status == -1) {
         PointSprite_CloseTarget(obj);
@@ -115,20 +115,19 @@ int PointSprite_RegisterPairedTables(void *obj) {
     return 0;
 }
 
-int PointSprite_CloseTarget(char *arg0) {
-    *arg0 = 4;
+int PointSprite_CloseTarget(PmSlotHeader *arg0) {
+    arg0->state = 4;
     return 0;
 }
 
-int PointSprite_ClassNop6(void) {
-    return 0;
-}
+void PointSprite_ClassNop6(void) {}
 
-int PointSprite_ClassNop0(void) {
-    return 0;
-}
+void PointSprite_ClassNop0(void) {}
 
-int PointSprite_InitRisingStreak(void *arg0, void *arg1, FieldFxPointSprite *anim) {
+int PointSprite_InitRisingStreak(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxPointSprite * anim=argument2;
     int x_base_a1;
     int z_base_a1;
     int x_rand;
@@ -148,9 +147,14 @@ int PointSprite_InitRisingStreak(void *arg0, void *arg1, FieldFxPointSprite *ani
     anim->extent = 0x20C;
     anim->scale = 0x7F;
     anim->point.z = z_base_a1 + (z_rand % 201);
+
+    return 0;
 }
 
-void FieldFx_InitRadialEntries(void *arg0, void *arg1, FieldFxRadialParticles *anim) {
+int FieldFx_InitRadialEntries(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxRadialParticles * anim=argument2;
     int i;
     int angle;
     int lift;
@@ -183,9 +187,14 @@ void FieldFx_InitRadialEntries(void *arg0, void *arg1, FieldFxRadialParticles *a
         anim->velocity[i].z = rcos(angle);
         anim->extent[i] = 0x258;
     }
+
+    return 0;
 }
 
-int PointSprite_InitGroundRing(void *arg0, void *arg1, FieldFxPointSprite *anim) {
+int PointSprite_InitGroundRing(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxPointSprite * anim=argument2;
     u16 z;
 
     anim->point.x = g_PointSpriteActorPosition.x;
@@ -194,9 +203,14 @@ int PointSprite_InitGroundRing(void *arg0, void *arg1, FieldFxPointSprite *anim)
     anim->extent = 0xBE8;
     anim->scale = 0x7F;
     anim->point.z = z;
+
+    return 0;
 }
 
-int PointSprite_InitBillboard(void *arg0, void *arg1, FieldFxPointSprite *anim) {
+int PointSprite_InitBillboard(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxPointSprite * anim=argument2;
     u16 z;
 
     anim->point.x = g_PointSpriteActorPosition.x;
@@ -205,10 +219,14 @@ int PointSprite_InitBillboard(void *arg0, void *arg1, FieldFxPointSprite *anim) 
     anim->extent = 0;
     anim->scale = 0x7F;
     anim->point.z = z;
+
+    return 0;
 }
 
-void FieldFx_InitScatteredParticles(void *arg0, void *arg1, FieldFxScatteredParticles *state)
-{
+int FieldFx_InitScatteredParticles(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxScatteredParticles * state=argument2;
     int i;
 
     state->points.scale = 127;
@@ -225,12 +243,17 @@ void FieldFx_InitScatteredParticles(void *arg0, void *arg1, FieldFxScatteredPart
         state->velocity_y[i] = -(rand() % 16 + 20) * 256;
         state->velocity_z[i] = (rand() % 11 - 5) * 256;
     }
+
+    return 0;
 }
 
 /* Point sprite setup, draw and update callbacks, including radial and
  * scattered particle arrays. Shared payloads are declared in fieldfx_task.h. */
 
-int PointSprite_InitOrientedFlash(void *arg0, void *arg1, FieldFxPointSprite *anim) {
+int PointSprite_InitOrientedFlash(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxPointSprite * anim=argument2;
     u16 z;
 
     anim->point.x = g_PointSpriteActorPosition.x;
@@ -239,9 +262,14 @@ int PointSprite_InitOrientedFlash(void *arg0, void *arg1, FieldFxPointSprite *an
     anim->extent = 0x224;
     anim->scale = 0x7F;
     anim->point.z = z;
+
+    return 0;
 }
 
-int PointSprite_DrawRisingStreak(void *arg0, FieldFxSlot *params, FieldFxPointSprite *anim) {
+int PointSprite_DrawRisingStreak(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * params=argument1;
+    FieldFxPointSprite * anim=argument2;
     short *base_a0;
     FieldBillboard *output;
     FieldFxPointSprite *pointData = anim;
@@ -275,9 +303,14 @@ int PointSprite_DrawRisingStreak(void *arg0, FieldFxSlot *params, FieldFxPointSp
     g_PointSpriteStreakSprite.oriented.scale.y = pointData->extent * 2;
     g_PointSpriteStreakSprite.oriented.scale.z = pointData->extent;
     FieldFx_DrawBillboard(output);
+
+    return 0;
 }
 
-void FieldFx_ProcessInterleavedPoints(void *arg0, void *arg1, FieldFxRadialParticles *anim) {
+int FieldFx_ProcessInterleavedPoints(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxRadialParticles * anim=argument2;
     unsigned int i;
 
     FieldFx_SetSpriteTexturePreset(3);
@@ -296,9 +329,14 @@ void FieldFx_ProcessInterleavedPoints(void *arg0, void *arg1, FieldFxRadialParti
         g_PointSpriteState0.billboard.position.z = anim->points[i].position.z;
         FieldFx_DrawBillboard(&g_PointSpriteState0.billboard);
     }
+
+    return 0;
 }
 
-int PointSprite_DrawGroundRing(void *arg0, void *arg1, FieldFxPointSprite *anim) {
+int PointSprite_DrawGroundRing(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxPointSprite * anim=argument2;
     u16 value_v0;
     FieldOrientedSprite *output;
     FieldFx_SetSpriteTexturePreset(3);
@@ -316,9 +354,14 @@ int PointSprite_DrawGroundRing(void *arg0, void *arg1, FieldFxPointSprite *anim)
     g_PointSpriteGroundRingSprite.oriented.scale.z = anim->extent;
     g_PointSpriteGroundRingSprite.oriented.brightness = (signed char)anim->scale;
     FieldFx_DrawOrientedSprite(output);
+
+    return 0;
 }
 
-int PointSprite_DrawBillboardFlash(void *arg0, void *arg1, FieldFxPointSprite *anim) {
+int PointSprite_DrawBillboardFlash(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxPointSprite * anim=argument2;
     u16 value_v0;
     FieldBillboard *output;
     FieldFx_SetSpriteTexturePreset(3);
@@ -336,10 +379,14 @@ int PointSprite_DrawBillboardFlash(void *arg0, void *arg1, FieldFxPointSprite *a
     g_PointSpriteState4.oriented.scale.z = anim->extent;
     g_PointSpriteState4.oriented.brightness = (signed char)anim->scale;
     FieldFx_DrawBillboard(output);
+
+    return 0;
 }
 
-void FieldFx_ProcessPointTriples(void *arg0, void *arg1,
-                                   FieldFxPointData *points) {
+int FieldFx_ProcessPointTriples(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxPointData * points=argument2;
     unsigned int i;
 
     FieldFx_SetSpriteTexturePreset(3);
@@ -355,9 +402,14 @@ void FieldFx_ProcessPointTriples(void *arg0, void *arg1,
         g_PointSpriteState1.billboard.position.z = points->z[i];
         FieldFx_DrawBillboard(&g_PointSpriteState1.billboard);
     }
+
+    return 0;
 }
 
-int PointSprite_DrawOrientedFlash(void *arg0, void *arg1, FieldFxPointSprite *anim) {
+int PointSprite_DrawOrientedFlash(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxPointSprite * anim=argument2;
     u16 value_v0;
     FieldOrientedSprite *output;
     FieldFx_SetSpriteTexturePreset(3);
@@ -375,9 +427,14 @@ int PointSprite_DrawOrientedFlash(void *arg0, void *arg1, FieldFxPointSprite *an
     g_PointSpriteState3.oriented.scale.z = anim->extent;
     g_PointSpriteState3.oriented.brightness = (signed char)anim->scale;
     FieldFx_DrawOrientedSprite(output);
+
+    return 0;
 }
 
-void PointSprite_UpdateRisingStreak(void *arg0, FieldFxSlot *state, FieldFxPointSprite *anim) {
+int PointSprite_UpdateRisingStreak(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxPointSprite * anim=argument2;
     anim->point.x += 0; /* no horizontal drift, but the record is rewritten */
     anim->point.y -= 10;
     anim->scale -= 2;
@@ -385,9 +442,14 @@ void PointSprite_UpdateRisingStreak(void *arg0, FieldFxSlot *state, FieldFxPoint
     if ((s8)anim->scale < 0x1E) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-void PointSprite_UpdateRadialParticles(void *arg0, FieldFxSlot *state, FieldFxRadialParticles *anim) {
+int PointSprite_UpdateRadialParticles(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxRadialParticles * anim=argument2;
     int i;
 
     for (i = 0; i < anim->count; i++) {
@@ -402,25 +464,40 @@ void PointSprite_UpdateRadialParticles(void *arg0, FieldFxSlot *state, FieldFxRa
     if (anim->scale < 2) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int PointSprite_UpdateGroundRing(void *arg0, FieldFxSlot *state, FieldFxPointSprite *anim) {
+int PointSprite_UpdateGroundRing(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxPointSprite * anim=argument2;
     anim->scale -= 2;
     anim->extent = (u16)anim->extent + 0x28;
     if ((s8)anim->scale < 0x1E) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int PointSprite_UpdateBillboardFlash(void *arg0, FieldFxSlot *state, FieldFxPointSprite *anim) {
+int PointSprite_UpdateBillboardFlash(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxPointSprite * anim=argument2;
     anim->scale -= 6;
     anim->extent = (u16)anim->extent + 0xB4;
     if ((s8)anim->scale < 0x1E) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-void PointSprite_UpdateScatteredParticles(void *arg0, FieldFxSlot *state, FieldFxScatteredParticles *anim) {
+int PointSprite_UpdateScatteredParticles(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxScatteredParticles * anim=argument2;
     int i;
 
     for (i = 0; i < anim->points.count; i++) {
@@ -434,15 +511,22 @@ void PointSprite_UpdateScatteredParticles(void *arg0, FieldFxSlot *state, FieldF
     if ((s8)anim->points.scale < 2) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int PointSprite_UpdateOrientedFlash(void *arg0, FieldFxSlot *state, FieldFxPointSprite *anim) {
+int PointSprite_UpdateOrientedFlash(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxPointSprite * anim=argument2;
     anim->scale -= 8;
     anim->extent = (u16)anim->extent + 0x1A4;
     if ((s8)anim->scale < 0x14) {
         anim->scale = 0;
         state->flag = 2;
     }
+
+    return 0;
 }
 
 static __inline__ void identity_matrix(GteMatrix *matrix)
@@ -1189,3 +1273,13 @@ void BurstEffectC_UpdateTimedSpark(void *arg0, char *arg1, FieldFxTimedSpark *an
         arg1[1] = 2;
     }
 }
+
+FieldActor *g_PointSpriteOwner;
+FieldFxPointTriple g_PointSpriteActorPosition;
+FieldFxSpriteState g_PointSpriteGroundRingSprite, g_PointSpriteState3, g_PointSpriteState4, g_PointSpriteStreakSprite, g_PointSpriteState0, g_PointSpriteState1;
+int g_PointSpriteScript[22] = {4194304,268566528,269680641,270663682,65541,131076,65538,1245216,1310752,1376288,65537,131076,1048704,1114240,1179776,65536,131074,65539,65540,131080,65536,-1};
+FieldFxHandler g_PointSpriteInitList[7] = {PointSprite_InitRisingStreak,FieldFx_InitRadialEntries,PointSprite_InitGroundRing,PointSprite_InitBillboard,FieldFx_InitScatteredParticles,PointSprite_InitOrientedFlash,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_PointSpriteDrawList[7] = {PointSprite_DrawRisingStreak,FieldFx_ProcessInterleavedPoints,PointSprite_DrawGroundRing,PointSprite_DrawBillboardFlash,FieldFx_ProcessPointTriples,PointSprite_DrawOrientedFlash,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_PointSpriteUpdateList[7] = {PointSprite_UpdateRisingStreak,PointSprite_UpdateRadialParticles,PointSprite_UpdateGroundRing,PointSprite_UpdateBillboardFlash,PointSprite_UpdateScatteredParticles,PointSprite_UpdateOrientedFlash,(FieldFxHandler)(intptr_t)-1};
+u16 g_PointSpriteSlotSizes[7] = {12,294,12,12,200,12,65535};
+PmCommand g_PointSpriteClass = {.init=PointSprite_ClassNop0,.initialize=PointSprite_PlantScript,.send=PointSprite_Spawn6,.start=PointSprite_RegisterDrawList,.execute=PointSprite_RegisterPairedTables,.stop=PointSprite_CloseTarget,.unload=PointSprite_ClassNop6};

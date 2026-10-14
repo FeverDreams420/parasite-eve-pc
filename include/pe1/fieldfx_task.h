@@ -207,7 +207,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxScatteredParticles, velocity_z) == 0xA8,
 PE1_STATIC_ASSERT(sizeof(FieldFxScatteredParticles) == 0xC8,
                   fieldfx_scattered_particles_size);
 
-void FieldFx_InitScatteredParticles(void *arg0, void *arg1, FieldFxScatteredParticles *state);
+int FieldFx_InitScatteredParticles(void *arg0, void *arg1, void *state);
 
 /* Radial emitter: sixteen halfword extents followed by two arrays of
  * eight-byte XYZ records. Setup selects eight or sixteen active points;

@@ -11,7 +11,7 @@
 /* Native storage for the original shared PM table record. */
 PmCommand *g_PmCmdHandlerArray[86] = {
     [0]=&g_GlowEffectClass, [1]=&g_GlowEffectBClass,
-    [2]=&g_GlowEffectCClass, [3]=&g_FourLayerGlowClass
+    [2]=&g_GlowEffectCClass, [3]=&g_FourLayerGlowClass, [7]=&g_PointSpriteClass
 };
 PmTables g_PmTables = {.handlers=g_PmCmdHandlerArray};
 

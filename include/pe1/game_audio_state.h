@@ -24,8 +24,8 @@ typedef struct AkaoRuntimeState {
     u8 *archive;
 } AkaoRuntimeState;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoRuntimeState, voice_banks) == 0x118, game_audio_voice_bank_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoRuntimeState, archive) == 0x17C, game_audio_archive_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoRuntimeState, voice_banks) == PE1_OFFSETOF(AkaoRuntimeState, selected_data) + sizeof(void *), game_audio_voice_bank_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(AkaoRuntimeState, archive) == PE1_OFFSETOF(AkaoRuntimeState, voice_banks) + 25 * sizeof(void *), game_audio_archive_offset);
 
 extern AkaoRuntimeState g_AkaoRuntimeState;
 

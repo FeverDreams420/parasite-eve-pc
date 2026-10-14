@@ -3366,3 +3366,27 @@ Disc 1 required, plus fresh actor ASan/UBSan/function with original source
 instrumented and PsyZ/SDL archives uninstrumented. Real actor-state semantics
 for all selectors, room descriptors, complete scene/gameplay integration and
 deletion of pc/ remain incomplete. No new files or extracted functions.
+
+
+The entire original fieldfx/burst.c now compiles in the native target. Pointer-
+bearing game_audio_state.h assertions describe native pointer offsets instead
+of fixed PS1 offsets; no substitute audio-state backing was introduced.
+PointSprite's original six init/draw/update callbacks and seven class methods
+were normalized in place to the existing native dispatch ABI, with its actual
+22-word script, seven slot sizes and sprite-state storage backed in burst.c.
+The shared scatter callback declaration agrees with its handler ABI. Resident
+PM ID 7 now points to the original PointSprite class. The unnamed USA update
+entry 800CCA40 is confirmed by disassembly as ground-ring fading/expansion
+(scale -= 2, extent += 0x28, teardown below 0x1E).
+
+The existing factory/lifecycle fixture now covers five resident effects x action
+indices 1..7 x 160 ticks (35 cycles), plus restarts/owner-checked stops. PointSprite
+uses its original one-shot trigger and all six handler IDs; action 3's reduced
+radial/scattered counts (8/4 versus 16/16) are checked. The source executable's
+resident registry words, PointSprite script and sizes are compared to the
+supplied disc. Full build and five related CTests pass with Disc 1 required;
+fresh actor ASan/UBSan/function passes with original source instrumented and
+PsyZ/SDL archives uninstrumented. Other burst classes/audio-state routing,
+texture residency, scene descriptors, live inputs, GPU effect pixels, full
+gameplay and removal of pc/ remain incomplete. No new files, wrapper handlers
+or extracted functions.

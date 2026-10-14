@@ -1519,3 +1519,20 @@ pools CTests and both stat/spawn ASan/UBSan/function runs passed (PsyZ archive
 uninstrumented). Earlier category-grid/special-record setup, metadata/name
 initialization, complete NG+ combinations and startup/room scripts are still
 pending; these fixtures do not prove complete New Game or menu rendering.
+
+### Original category-grid and storage preparation
+
+Inv_BuildItemGridFromCategory now compiles from item/category_init.c and uses
+canonical Aya inventory, Wayne storage and special-storage arrays. Its original
+category search and nine cyclic record copies are retained. Descending clears
+use array indices to avoid forming a pointer before the start of an array.
+The category base ID has one native definition.
+
+New Game tests now call this original preparation, verify all nine records
+against resident item data (including the original 999 ammo capacity), verify
+both cleared storage arrays and override reset, then exercise original New Game
+and tagged carryover. The real-model player-spawn test also uses this preparation
+instead of leaving special records uninitialized. Full build, stat-assets and
+scene-spawn CTests plus both ASan/UBSan/function runs passed (PsyZ archive
+uninstrumented). Complete startup metadata, room scripts/callbacks and scene
+frame integration remain pending; no full New Game or gameplay claim follows.

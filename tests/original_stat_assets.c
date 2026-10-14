@@ -28,10 +28,18 @@ static int new_game_inventory(void)
 {
     for(unsigned carry=0;carry<2;++carry) {
         memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
-        for(unsigned i=0;i<3;++i) {
-            g_InvSpecialItemRecords[i].ammo=777;
-            g_InvSpecialItemRecords[i].baseStats[2]=0;
-            g_InvSpecialItemRecords[i].bonusStats[2]=999;
+        memset(g_InventoryRuntime.storage,0xa5,sizeof(g_InventoryRuntime.storage));
+        memset(g_InventoryRuntime.specialStorage,0xa5,sizeof(g_InventoryRuntime.specialStorage));
+        s16 override[2]={1,6};
+        Inv_SetActiveListOverride(override,2);
+        Inv_BuildItemGridFromCategory();
+        CHECK(g_InvActiveListOverride==NULL);
+        for(unsigned i=0;i<100;++i)CHECK(g_InventoryRuntime.storage[i]==0);
+        for(unsigned i=0;i<82;++i)CHECK(g_InventoryRuntime.specialStorage[i]==0);
+        for(unsigned i=0;i<9;++i) {
+            ItemDataRecord expected=*Item_LookupBaseData(g_InvCategoryBaseItemId-1+i%3);
+            expected.baseStats[2]=0; expected.bonusStats[2]=999;
+            CHECK(!memcmp(&expected,&g_InvSpecialItemRecords[i],sizeof(expected)));
         }
         if(carry) {
             g_InventoryRuntime.equipment[120]=*Item_LookupBaseData(0x43);

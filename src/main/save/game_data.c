@@ -22,7 +22,6 @@
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
-int g_InvCategoryBaseItemId;
 s32 g_InvPackedListCount;
 s32 g_InvPackedListCursor;
 s32 g_InvRebuildFilterMode;

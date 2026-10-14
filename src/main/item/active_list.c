@@ -238,66 +238,6 @@ void Text_AppendFFTerminatedBytes(u8 *dst, u8 *src)
     }
 }
 
-void Inv_BuildItemGridFromCategory(void)
-{
-    int i;
-    s16 *clear;
-    ItemDataRecord *src;
-    int category;
-    int base;
-    int lookup;
-
-    Inv_SelectActiveList(0);
-
-    i = 0x31;
-    clear = &g_AyaInventoryItems[0x31];
-    do {
-        *clear = 0;
-        i--;
-        clear--;
-    } while (i >= 0);
-
-    i = 0;
-    category = 0x13;
-    do {
-        lookup = i;
-        i++;
-        src = Item_LookupBaseData(lookup);
-    } while (src != 0 && src->kind != category);
-
-    g_InvCategoryBaseItemId = i;
-
-    /* Nine grid cells cycle through the three records after the first
-     * category match; each cell clears its third base stat and sets the
-     * third bonus to the 999 placeholder. */
-    i = 0;
-    do {
-        base = g_InvCategoryBaseItemId + i % 3;
-        src = Item_LookupBaseData(base - 1);
-        g_InvSpecialItemRecords[i] = *src;
-        g_InvSpecialItemRecords[i].baseStats[2] = 0;
-        g_InvSpecialItemRecords[i].bonusStats[2] = 999;
-    } while (++i < 9);
-
-    i = 0x63;
-    clear = &g_WayneStorageItems[0x63];
-    do {
-        *clear = 0;
-        i--;
-        clear--;
-    } while (i >= 0);
-
-    i = 0x51;
-    clear = (s16 *)&g_InvItemArray[0x51];
-    do {
-        *clear = 0;
-        i--;
-        clear--;
-    } while (i >= 0);
-
-    g_InvActiveListOverride = 0;
-}
-
 void Inv_ClearEquipFlagForKind(InvItemSlot *obj) {
     u8 *base;
     u8 *entry;
@@ -689,7 +629,6 @@ int Inv_FindFirstEmptySlot(int count) {
 }
 
 
-int g_InvCategoryBaseItemId;
 
 int Inv_CountByValue(int arg0) {
     int count;

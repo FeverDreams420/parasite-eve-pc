@@ -102,6 +102,7 @@ int main(void)
             Script_InitNodePool(); Script_InitNodeFreeList();
             Battle_SaveAyaState();
             memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
+            Inv_BuildItemGridFromCategory();
             Inv_InitNewGameInventory();
             ClearOTagR((OT_TYPE *)ordering,4096);
             u8 scene[]={0,0};

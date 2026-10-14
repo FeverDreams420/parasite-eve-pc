@@ -698,9 +698,9 @@ void Akao_StepSampleLoader(AkaoTrack *track, u32 voice_mask)
     } while (opcode >= 0xA0 && opcode != 0xA0);
 
     if (opcode == 0xA0) {
-        if (track->parent_track_id == 0 && (D_8009D2C8->words[5] & voice_mask)
+        if (track->parent_track_id == 0 && (g_AkaoCurTrack->allocated_voice_mask & voice_mask)
             && track->assigned_voice_index < 0x18U)
-            D_8009D2C8->words[6] |= voice_mask;
+            g_AkaoCurTrack->key_off_request_mask |= voice_mask;
         return;
     }
 
@@ -729,9 +729,9 @@ void Akao_StepSampleLoader(AkaoTrack *track, u32 voice_mask)
         track->flags |= 0x40;
 
     if (opcode >= 0x8F) {
-        if (track->parent_track_id == 0 && (D_8009D2C8->words[5] & voice_mask)
+        if (track->parent_track_id == 0 && (g_AkaoCurTrack->allocated_voice_mask & voice_mask)
             && track->assigned_voice_index < 0x18U)
-            D_8009D2C8->words[6] |= voice_mask;
+            g_AkaoCurTrack->key_off_request_mask |= voice_mask;
         track->tremolo_duration = 0;
         track->pitch_lfo_value = 0;
         track->volume_lfo_value = 0;
@@ -746,13 +746,13 @@ void Akao_StepSampleLoader(AkaoTrack *track, u32 voice_mask)
             u8 *sample;
             u32 offset;
 
-            D_8009D2C8->words[4] |= voice_mask;
-            if ((D_8009D2C8->words[5] & voice_mask)
+            g_AkaoCurTrack->key_on_request_mask |= voice_mask;
+            if ((g_AkaoCurTrack->allocated_voice_mask & voice_mask)
                 && track->assigned_voice_index < 0x18U)
-                D_8009D2C8->words[6] |= voice_mask;
+                g_AkaoCurTrack->key_off_request_mask |= voice_mask;
             sample = track->branch_target;
             sample += opcode % 12 * 6;
-            offset = (D_8009D2C8->words[0] & 0x100) ? 0x30 : 0;
+            offset = (g_AkaoCurTrack->status_flags & 0x100) ? 0x30 : 0;
             Akao_SelectSampleInstrument(track, sample, offset);
             period = Akao_LookupPitchPeriod(track->note_pitch, sample[1], track->detune);
             value = (u16)track->volume;
@@ -760,9 +760,9 @@ void Akao_StepSampleLoader(AkaoTrack *track, u32 voice_mask)
             track->expression_value = value << 2;
             track->panpot = ((sample[4] + 0x40) & 0xFF) << 8;
             if (sample[5])
-                D_8009D2C8->words[14] |= voice_mask;
+                g_AkaoCurTrack->volume_dirty_mask |= voice_mask;
             else
-                D_8009D2C8->words[14] &= ~voice_mask;
+                g_AkaoCurTrack->volume_dirty_mask &= ~voice_mask;
             Seq_MarkTrack38MaskDirty();
         } else {
             opcode += track->panpot_step * 12;
@@ -770,10 +770,10 @@ void Akao_StepSampleLoader(AkaoTrack *track, u32 voice_mask)
                 if (track->parent_track_id == 0) {
                     if (flags & AKAO_TRACK_FLAG_PENDING_NOTE_PITCH)
                         Akao_SetNotePitchBounded(track, opcode);
-                    D_8009D2C8->words[4] |= voice_mask;
-                    if ((D_8009D2C8->words[5] & voice_mask)
+                    g_AkaoCurTrack->key_on_request_mask |= voice_mask;
+                    if ((g_AkaoCurTrack->allocated_voice_mask & voice_mask)
                         && track->assigned_voice_index < 0x18U)
-                        D_8009D2C8->words[6] |= voice_mask;
+                        g_AkaoCurTrack->key_off_request_mask |= voice_mask;
                 } else {
                     g_AkaoVoiceMaskScratch |= voice_mask;
                 }
@@ -795,7 +795,7 @@ void Akao_StepSampleLoader(AkaoTrack *track, u32 voice_mask)
 
         track->pitch_base = period;
         if (track->parent_track_id == 0)
-            D_8009D2C8->words[5] |= voice_mask;
+            g_AkaoCurTrack->allocated_voice_mask |= voice_mask;
         else
             g_AkaoSfxAllocatedVoiceMask |= voice_mask;
         track->update_flags |= 0x13;

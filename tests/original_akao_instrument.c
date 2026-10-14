@@ -44,6 +44,13 @@ short g_AkaoPanVolumeTable[256];
 int g_AkaoPlaybackMode;
 unsigned char g_AkaoGlobalPitchScale;
 AkaoTickTrack g_AkaoSequencerTracks[60];
+AkaoU8 g_AkaoOpcodeArgLengths[96], g_AkaoExtOpcodeArgLengths[32];
+u16 g_AkaoNoteLengthTable[11] = {48, 24, 16, 12, 8, 6, 4, 3, 2, 1, 96};
+AkaoNestedSource g_AkaoNestedSource;
+int g_AkaoSeqLoopCounter;
+unsigned g_AkaoSfxAllocatedVoiceMask, g_SpuStoppedVoiceMask;
+u16 g_AkaoTrack5ATransposeValue;
+void *g_AkaoSoundEntryTable[256];
 /* This isolated command test must never request a hardware reverb change.
  * PsyZ has no SpuSetReverbModeType endpoint yet: fail instead of simulating it. */
 int SpuSetReverbModeType(unsigned int mode)
@@ -515,6 +522,22 @@ int main(int argc, char **argv)
     CHECK(dispatch_track.adsr_release_rate == 0x37);
     CHECK(dispatch_track.flags == AKAO_TRACK_FLAG_RELEASE_RATE_OVERRIDE);
     CHECK(dispatch_track.update_flags == (AKAO_VOICE_PARAM_VOLUME | AKAO_VOICE_PARAM_ADSR_RELEASE));
-    puts("original AKAO: native dispatch signatures and sequencer procedures pass");
+    unsigned char bytecode[] = {0xa3, 0x5a, 0xc0, 0xff, 0x8f, 0xa0};
+    AkaoTrack interpreted = {0};
+    interpreted.pc = bytecode;
+    interpreted.assigned_voice_index = 2;
+    bank.active_voice_mask = 1;
+    bank.allocated_voice_mask = 1;
+    bank.key_off_request_mask = 0;
+    Akao_StepSampleLoader(&interpreted, 1);
+    CHECK(interpreted.pc == bytecode + 5);
+    CHECK(interpreted.volume_base == 0x5a00);
+    CHECK(interpreted.expression == -1);
+    CHECK(interpreted.flags & 0x40);
+    CHECK(bank.key_off_request_mask == 1);
+    Akao_StepSampleLoader(&interpreted, 1);
+    CHECK(interpreted.pc == bytecode + 6);
+    CHECK(bank.active_voice_mask == 0);
+    puts("original AKAO: full opcode dispatch executes commands, rest and stop");
     return 0;
 }

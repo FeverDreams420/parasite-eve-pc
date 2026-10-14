@@ -70,9 +70,9 @@ extern AkaoNestedSource g_AkaoNestedSource;
 /* Its key_off_mask, key_on_mask, pan word and pan_target as words of their
  * own: retail stores each one absolutely, where the record keeps the field
  * address in a and derives the record address from it. */
-extern u32 g_AkaoNestedKeyOffMask;
-extern u32 g_AkaoNestedKeyOnMask;
-extern u32 g_AkaoNestedPan;
-extern u32 g_AkaoNestedPanTarget;
+#define g_AkaoNestedKeyOffMask (g_AkaoNestedSource.key_off_mask)
+#define g_AkaoNestedKeyOnMask (g_AkaoNestedSource.key_on_mask)
+#define g_AkaoNestedPan (g_AkaoNestedSource.pan.word)
+#define g_AkaoNestedPanTarget (g_AkaoNestedSource.pan_target)
 
 #endif

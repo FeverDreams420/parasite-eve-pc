@@ -2764,3 +2764,33 @@ sources instrumented; PsyZ/SDL archives remain uninstrumented. Packet preparatio
 and loading are not proof of rendered background fidelity, executed room
 scripts or playable New Game. Full original pipeline/frame integration and
 elimination of the remaining pc/ runtime remain open.
+
+
+### Return original room I/O errors instead of drive retry loops
+
+Scene_LoadRoom now validates the USA room index and nonempty range before
+addressing its 450-entry table, checks the complete LBA range in 64-bit
+arithmetic, and returns -1 on failed scratch/texture/room reads or polls. The
+original range order and interleaved TIM uploads remain unchanged. Physical
+drive retry jumps and busy retry loops were removed from these three reads;
+native image failures can be observed and recovered by the caller. No new files
+or replacement loader.
+
+Draw_InitPipeline now returns the original room-load status, and Boot_RunFrame
+returns before its gameplay loop when pipeline initialization fails. Both whole
+original modules compile with the corrected prototype. Full pipeline execution
+and its other loading helpers are not covered by this fixture; their remaining
+retry/error paths still require work.
+
+The real fixture restricts the borrowed archive extent at each of the three
+M017 read boundaries, checks immediate -1 and retained geometry/bank pointers,
+then successfully reloads the complete archive after every failure. It also
+rejects room IDs 0, 451 and the empty final slot 450, an overflowing base LBA
+and an unmounted image. This is not a general rollback guarantee for partially
+read buffers or uploaded VRAM.
+
+Full build and three CTests pass with Disc 1 required: entity-textures,
+entity-texture-assets and scene-spawn. Fresh ASan/UBSan/function validation
+passes for these errors and the complete 236-room corpus; PsyZ/SDL archives
+remain uninstrumented. The original complete game loop, remaining helper error
+propagation and removal of pc/ remain incomplete.

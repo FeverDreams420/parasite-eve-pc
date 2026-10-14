@@ -30,7 +30,6 @@ RenderLightingState g_RenderLightingBlock;
 /* Late include: its g_GlobalFrameCounter[] would make the COMMON word above large. */
 #include "pe1/boot.h"
 
-void Draw_InitPipeline(void);
 void Field_HandleStateTransition(void);
 void Scene_UpdateEntityList(void);
 void Entity_FrameUpdate(void);
@@ -82,7 +81,7 @@ void Boot_RunFrame(void)
     u8 *scene_flags;
     RenderTintTargetView *fade;
 
-    Draw_InitPipeline();
+    if (Draw_InitPipeline() < 0) return;
     if (g_SceneDispatchCur == g_SceneDispatchToken) {
         scene_flags = &g_GameState.bank_state_12;
         state = &g_GameState;

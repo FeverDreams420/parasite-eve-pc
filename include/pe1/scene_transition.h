@@ -42,7 +42,7 @@
  *   s32  Scene_LoadSceneData(...);            // 0x8006A9E4
  *   int  Text_EncodeBase32(char *out, u32 v);  // room id -> 6-char name
  *   int  Text_ParseMapNumber(char *name);      // 0x8006E454; name -> map number
- *   void Draw_InitPipeline(void);              // calls Scene_LoadRoom(g_SceneDispatchToken)
+ *   int Draw_InitPipeline(void);              // calls Scene_LoadRoom(g_SceneDispatchToken)
  *   int  Render_BeginSceneLoad(void);          // updates render transition flags
  *   g_PeImageBaseLba   base LBA of PE.IMG (room data source)
  *   g_MapIdTable = 0x800917E4

@@ -424,29 +424,28 @@ int Scene_LoadRoom(unsigned int roomId)
     base = g_GameState.pe_image_base_lba;
     Text_EncodeBase32(name, roomId);
 
-retry_scratch:
     {
         map = Text_ParseMapNumber((signed char *)name) - 1;
-        while ((ready = CdRom_ReadSectorsFromLba(base + g_RoomSectorTable[map].start,
+        if (map < 0 || map >= SCENE_ROOM_COUNT || !g_RoomSectorTable[map].roomSectors) return -1;
+        if ((u64)base + g_RoomSectorTable[map].start + g_RoomSectorTable[map].scratchSectors +
+            g_RoomSectorTable[map].textureSectors + g_RoomSectorTable[map].roomSectors >
+            UINT64_C(0x100000000)) return -1;
+        if ((ready = CdRom_ReadSectorsFromLba(base + g_RoomSectorTable[map].start,
                                         state->scene_load_scratch,
-                                        g_RoomSectorTable[map].scratchSectors)) == -1) {
-        }
+                                        g_RoomSectorTable[map].scratchSectors)) == -1) return -1;
         for (ready = 1; ready != 0; ready = CdRom_PollReady()) {
             if (ready == -1) {
-                /* Recorded debt: CD retry restart (goto). */
-                goto retry_scratch;
+                return -1;
             }
         }
     }
 
     loaded = 0;
-retry_texture:
     {
-        while ((ready = CdRom_ReadSectorsFromLba(base + g_RoomSectorTable[map].start +
+        if ((ready = CdRom_ReadSectorsFromLba(base + g_RoomSectorTable[map].start +
                                             g_RoomSectorTable[map].scratchSectors,
                                         state->texture_load_scratch,
-                                        g_RoomSectorTable[map].textureSectors)) == -1) {
-        }
+                                        g_RoomSectorTable[map].textureSectors)) == -1) return -1;
         for (ready = 1; ready != 0; ready = CdRom_PollReady()) {
             if (!loaded) {
                 room = (SceneAssetView *)state->scene_load_scratch;
@@ -458,21 +457,18 @@ retry_texture:
                 loaded = 1;
             }
             if (ready == -1) {
-                /* Recorded debt: CD retry restart (goto). */
-                goto retry_texture;
+                return -1;
             }
         }
     }
 
     loaded = 0;
-retry_room:
     {
-        while ((ready = CdRom_ReadSectorsFromLba(base + g_RoomSectorTable[map].start +
+        if ((ready = CdRom_ReadSectorsFromLba(base + g_RoomSectorTable[map].start +
                                             g_RoomSectorTable[map].scratchSectors +
                                             g_RoomSectorTable[map].textureSectors,
                                         state->loaded_scene_assets,
-                                        g_RoomSectorTable[map].roomSectors)) == -1) {
-        }
+                                        g_RoomSectorTable[map].roomSectors)) == -1) return -1;
         for (ready = 1; ready != 0; ready = CdRom_PollReady()) {
             if (!loaded) {
                 room = state->texture_load_scratch;
@@ -484,8 +480,7 @@ retry_room:
                 loaded = 1;
             }
             if (ready == -1) {
-                /* Recorded debt: CD retry restart (goto). */
-                goto retry_room;
+                return -1;
             }
         }
     }

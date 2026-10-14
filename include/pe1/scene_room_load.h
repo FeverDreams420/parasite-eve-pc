@@ -10,7 +10,8 @@
 #include "pe1/scene_assets.h"
 
 /* Room load steps shared by the boot, scene and render code. */
-/* -2: missing native descriptor; -3: invalid or unallocatable room geometry. */
+/* -1: invalid room or I/O failure; -2: missing native descriptor;
+ * -3: invalid or unallocatable room geometry. */
 int Scene_LoadRoom(unsigned int roomId);
 int Render_InitRoomPrimState(void *object);
 /* 14-state loader for the area entity texture bank. */

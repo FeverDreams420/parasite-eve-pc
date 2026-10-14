@@ -352,6 +352,35 @@ int main(void)
             CHECK(!memcmp(Psyz_SpuGetRam(),spu_expected,0x80000));
             CHECK(g_GameState.bank_reset_944[0] != NULL);
             if(map==17) {
+                /* Restrict the borrowed archive extent at each read boundary.
+                 * A file error must return, not spin waiting for a drive. */
+                for(unsigned stage=0;stage<3;++stage) {
+                    PeDiscFile limited=catalog.archive;
+                    size_t limit=range->start;
+                    if(stage>0) limit+=range->scratch_sectors;
+                    if(stage>1) limit+=range->texture_sectors;
+                    limited.size=(u32)(limit*2048);
+                    Pe1GameState previous=g_GameState;
+                    CdRom_BindImage(&disc,&limited);
+                    CHECK(Scene_LoadRoom(room_id)==-1);
+                    CHECK(g_GameState.geometry_state==previous.geometry_state);
+                    CHECK(!memcmp(g_GameState.bank_slots,previous.bank_slots,sizeof(previous.bank_slots)));
+                    CdRom_BindImage(&disc,&catalog.archive);
+                    CHECK(Scene_LoadRoom(room_id)==0);
+                }
+                Pe1GameState before_invalid=g_GameState;
+                const char *invalid_rooms[]={"m00000","m04510","m04500"};
+                for(unsigned invalid=0;invalid<3;++invalid)
+                    CHECK(Scene_LoadRoom(Text_ParseBase32Id((signed char *)invalid_rooms[invalid]))==-1);
+                CHECK(g_GameState.geometry_state==before_invalid.geometry_state);
+                g_GameState.pe_image_base_lba=UINT32_MAX;
+                CHECK(Scene_LoadRoom(room_id)==-1);
+                g_GameState.pe_image_base_lba=before_invalid.pe_image_base_lba;
+                CdRom_BindImage(NULL,NULL);
+                CHECK(Scene_LoadRoom(room_id)==-1);
+                CdRom_BindImage(&disc,&catalog.archive);
+                CHECK(Scene_LoadRoom(room_id)==0);
+                puts("Original Scene_LoadRoom: three extent failures, invalid/empty room IDs, LBA overflow, unmount and reload recovery passed");
                 /* Corrupt a temporary copy, never the user's disc image. */
                 size_t image_bytes=(size_t)(range->scratch_sectors+range->texture_sectors+range->room_sectors)*2048;
                 u8 *bad=malloc(image_bytes);CHECK(bad);

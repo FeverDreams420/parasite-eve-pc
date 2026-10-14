@@ -36,7 +36,7 @@ void Script_DrawSyncAndFlush(void);
 void FieldFx_ClearScriptSprites(void);
 void SetDispMask(int arg0);
 
-void Draw_InitPipeline(void) {
+int Draw_InitPipeline(void) {
     int one;
     int v1;
     int t0;
@@ -44,10 +44,11 @@ void Draw_InitPipeline(void) {
     char *p;
     char *a0p;
     void *fogSource;
-    int frame_pad[6];
+    int room_status;
 
     Akao_LoadVoiceBankAlt();
-    if (Scene_LoadRoom(g_SceneDispatchToken) < 0) return;
+    room_status = Scene_LoadRoom(g_SceneDispatchToken);
+    if (room_status < 0) return room_status;
     Scene_StreamTexturePage();
     g_EntitySerialCounter = 1;
     H(g_ScriptNodeSeqCounter) = 1;
@@ -135,4 +136,5 @@ void Draw_InitPipeline(void) {
     }
     D_8009D2E8 &= ~0xCu;
     W(a0p) &= ~0x402;
+    return 0;
 }

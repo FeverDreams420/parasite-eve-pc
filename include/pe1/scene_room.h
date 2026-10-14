@@ -105,7 +105,9 @@ PE1_STATIC_ASSERT(sizeof(SceneRoomStreamRecord) == 8, scene_room_stream_record_s
 PE1_STATIC_ASSERT(sizeof(SceneRoomSectorRange) == 8, scene_room_sector_range_size);
 
 extern u8 D_8009CDC8; /* room name prefix letter */
-extern SceneRoomSectorRange g_RoomSectorTable[];
+/* USA resident room range table, including its empty final slot. */
+#define SCENE_ROOM_COUNT 450
+extern SceneRoomSectorRange g_RoomSectorTable[SCENE_ROOM_COUNT];
 #include "pe1/pe_image.h"
 
 #include "pe1/reloc_block.h"

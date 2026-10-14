@@ -542,17 +542,17 @@ int Entity_MarkNodeFree(int **unused) {
 }
 
 int Script_ClearBit(int **arg0) {
-    *arg0[0] &= ~(1 << *arg0[1]);
+    *arg0[0] = (s32)((u32)*arg0[0] & ~(1u << ((u32)*arg0[1] & 31u)));
     return 1;
 }
 
 int Script_TestBit(int **arg0) {
-    *arg0[2] = *arg0[0] & (1 << *arg0[1]);
+    *arg0[2] = (s32)((u32)*arg0[0] & (1u << ((u32)*arg0[1] & 31u)));
     return 1;
 }
 
 int Script_SetBit(int **arg0) {
-    *arg0[0] |= 1 << *arg0[1];
+    *arg0[0] = (s32)((u32)*arg0[0] | (1u << ((u32)*arg0[1] & 31u)));
     return 1;
 }
 

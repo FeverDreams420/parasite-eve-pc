@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Oryginalne opcode'y bitowe 40/41/42 używają unsigned word mask i pięciu najmłodszych bitów indeksu, zgodnie z instrukcjami SLLV potwierdzonymi w EXE USA. Usunięto signed-shift UB dla bitu 31 oraz indeksów poza 0..31. Test rzeczywistego interpretera sprawdza ustawianie/testowanie/czyszczenie dla indeksów -2..65, zachowanie pozostałych bitów, wynik maski i zakończenie węzła. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 30 powiązań: opcode'y 19/25/43/44/45 zachowują oryginalne flagi aktora, numer węzła oraz ustawianie/czyszczenie/odczyt movement lock. Powiązania potwierdzono w tablicy EXE USA. Test rzeczywistej kolejki wykonuje sekwencję z zachowaniem istniejących bitów, odczytem do zmiennych skryptowych i zakończeniem węzła. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 25 powiązań: oryginalne opcode'y 4 i 24 oznaczają węzły do usunięcia. W istniejącym module ujednolicono ABI callbacków, zachowując 16-bitowy odczyt numeru węzła. Test rzeczywistej kolejki sprawdza wszystkie trzy listy aktora, pominięcie bieżącego węzła przez opcode 4, usunięcie siebie/wybranego innego węzła i brak dopasowania przez opcode 24, zachowanie flag oraz pozycję kursora. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełny interpreter lokacji i pętla gry nadal wymagają integracji.

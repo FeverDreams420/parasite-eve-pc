@@ -133,6 +133,22 @@ int main(void)
            g_ScriptVariableBank[22]!=0x480 || g_ScriptVariableBank[23]!=0x9876 ||
            task.flags!=0x10 || task.current.script!=script+17) return 16;
     }
+    for(int bit=-2;bit<66;++bit) {
+        FieldActor owner={0};
+        u32 modes=(2u|(2u<<6))<<17;
+        u32 script[]={42|(2u<<13)|(2u<<17),0,24,(u32)bit,
+                      41|(3u<<13)|modes,0,24,(u32)bit,25,
+                      40|(2u<<13)|(2u<<17),0,24,(u32)bit,
+                      41|(3u<<13)|modes,0,24,(u32)bit,26,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        g_ScriptVariableBank[24]=0x55555555;g_ScriptVariableBank[25]=g_ScriptVariableBank[26]=0xffffffff;
+        Script_RunQueue();
+        u32 mask=UINT32_C(1)<<((unsigned)bit&31);
+        if(g_ScriptVariableBank[24]!=(0x55555555u&~mask) ||
+           g_ScriptVariableBank[25]!=mask || g_ScriptVariableBank[26] ||
+           task.flags!=0x10 || task.current.script!=script+20) return 17;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

@@ -12,9 +12,11 @@ typedef struct {
     FieldActor *actor;          /* 0x08: RoomEnt.link */
     char padC[2 * sizeof(void *)];
     s16 repeats;          /* 0x14: RoomEnt.active */
-    char pad16[0x2];
+    char pad16[sizeof(intptr_t)-sizeof(s16)];
     s8 restartFrame;      /* 0x18: RoomEnt.t18 */
 } FieldFxAnimLoopController;
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxAnimLoopController, restartFrame) ==
+    PE1_OFFSETOF(FieldFxTaskOwner, tasks.count), fieldfx_loop_native_count);
 
 /* Called by the room_lib actor handlers each frame: once the linked actor's
  * animation has reached its last frame, restart it at restartFrame and use

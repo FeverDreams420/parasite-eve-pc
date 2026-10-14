@@ -2329,9 +2329,9 @@ int FieldFx_InitTaskContext(FieldFxTaskOwner *owner)
     return 0;
 }
 
-int FieldFx_InitTaskProgram(FieldFxTaskOwner *owner, int skip, int arg2, int arg3, int arg4, int arg5) {
+int FieldFx_InitTaskProgram(FieldFxTaskOwner *owner, int skip, int arg2, intptr_t arg3, intptr_t arg4, intptr_t arg5) {
     FieldFxTaskContext *ctx;
-    int (*callback)(int, int, int, int);
+    intptr_t (*callback)(int, intptr_t, intptr_t, intptr_t);
 
     ctx = &owner->tasks;
     if (skip == 0) {

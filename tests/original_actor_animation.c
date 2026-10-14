@@ -438,7 +438,7 @@ static int room_owner_state(void)
 
 typedef struct NativeListState { void *identity; int id, ticks; } NativeListState;
 static unsigned list_draws;
-static int record_list_callback(int mode,void *payload,int argument)
+static int record_list_callback(int mode,void *payload,intptr_t argument)
 {
     NativeListState *state=payload;
     if(state->identity!=state || argument!=42 || (uintptr_t)payload%_Alignof(NativeListState)) abort();
@@ -517,9 +517,20 @@ static int callback_list_storage(void)
 
 typedef struct NativeTaskState { void *identity; int ticks; } NativeTaskState;
 static unsigned task_draws;
-static int observe_native_task(int mode,void *payload,int argument)
+static int task_pointer_value;
+static intptr_t record_native_task_argument(int mode,intptr_t value,intptr_t b,intptr_t c)
+{
+    if(mode!=7 || value!=(intptr_t)&task_pointer_value || b!=value+sizeof(int) || c!=-9)abort();
+    return value;
+}
+static int observe_native_task(int mode,void *payload,intptr_t argument)
 {
     NativeTaskState *state=payload;
+    if(argument==(intptr_t)&task_pointer_value) {
+        if(mode==1)++*(int *)argument;
+        if(mode==2)*(int *)argument+=10;
+        return 0;
+    }
     if(argument!=42 || (uintptr_t)payload%_Alignof(NativeTaskState)) abort();
     if(mode==0) { state->identity=state; state->ticks=0; return 0; }
     if(state->identity!=state) abort();
@@ -530,7 +541,7 @@ static int observe_native_task(int mode,void *payload,int argument)
     if(mode!=2 || g_FieldFxCurrentAge!=state->ticks) abort();
     ++task_draws; return 0;
 }
-static int reject_task_allocation(int mode,void *payload,int argument)
+static int reject_task_allocation(int mode,void *payload,intptr_t argument)
 {
     (void)mode; (void)argument;
     return FieldFx_InitCallbackList((char *)payload,16,1000,record_list_callback);
@@ -560,6 +571,24 @@ static int native_task_cycle(void)
         return 0;
     if(FieldFx_UpdateTasks(owner)!=0 || owner->prefix.reserved00!=4 || owner->tasks.delay) return 0;
     g_ViewMatrixSlot.value=saved_view;
+    FieldFxTaskProgram program={0};
+    program.table.callbacks[0]=observe_native_task;program.table.sizes[0]=sizeof(NativeTaskState);
+    program.initialize=record_native_task_argument;program.script=script;
+    void *old_program=g_FieldFxTaskPrograms[32];g_FieldFxTaskPrograms[32]=&program;
+    if(FieldFx_BindTaskProgram(owner,32)!=0 || owner->tasks.table!=&program.table || owner->tasks.pc.script!=script)return 0;
+    FieldFx_InitTaskContext(owner);owner->tasks.argument=42;
+    if(FieldFx_InitTaskProgram(owner,1,0,0,0,0)!=0 || owner->tasks.argument!=42)return 0;
+    if(FieldFx_InitTaskProgram(owner,0,7,(intptr_t)&task_pointer_value,(intptr_t)&task_pointer_value+sizeof(int),-9)!=0 ||
+        owner->tasks.argument!=(intptr_t)&task_pointer_value)return 0;
+    task_pointer_value=0;
+    if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState))return 0;
+    owner->tasks.pc.script=script+9;
+    if(FieldFx_UpdateTasks(owner)!=0 || task_pointer_value!=1)return 0;
+    g_ViewMatrixSlot.value=&identity;
+    if(FieldFx_DrawTasks(owner)!=0 || task_pointer_value!=11)return 0;
+    g_ViewMatrixSlot.value=saved_view;
+    g_FieldFxTaskPrograms[32]=old_program;
+    FieldFx_InitTaskContext(owner);owner->tasks.table=&table;owner->tasks.argument=42;
     u16 bad_scripts[][6]={{1,7,99,0,0,0},{1,(u16)-1,99,0,0,0},{4,7,1,0,0,0},{3,0,7,0,0,0}};
     for(unsigned invalid=0;invalid<sizeof(bad_scripts)/sizeof(bad_scripts[0]);++invalid) {
         FieldFx_InitTaskContext(owner); owner->tasks.pc.script=bad_scripts[invalid];

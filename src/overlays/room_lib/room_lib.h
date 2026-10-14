@@ -228,6 +228,9 @@ typedef struct RoomEnt {
     short active;                 /* 0x14 */
     signed char t16;              /* 0x16: variant gate */
     signed char t17;              /* 0x17: window gate */
+#if INTPTR_MAX > INT32_MAX
+    u8 argumentHigh[sizeof(intptr_t)-sizeof(s32)]; /* native task argument high word */
+#endif
     signed char t18;
     unsigned char t19;            /* 0x19: phase (3/7) */
     unsigned char t1A;

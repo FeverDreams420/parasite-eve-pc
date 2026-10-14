@@ -21,14 +21,14 @@ typedef FieldFxCallbackListCallback FieldFxTaskCallback;
 
 /* Task dispatch prefix; the owning table also has later lifecycle callbacks. */
 typedef struct FieldFxTaskTable {
-    int (*callbacks[8])(int mode, void *state, int argument);
+    int (*callbacks[8])(int mode, void *state, intptr_t argument);
     u16 sizes[8];
 } FieldFxTaskTable;
 
 /* Task program registered in g_FieldFxTaskPrograms: dispatch table, initializer and script. */
 typedef struct FieldFxTaskProgram {
     FieldFxTaskTable table;
-    int (*initialize)(int, int, int, int);
+    intptr_t (*initialize)(int, intptr_t, intptr_t, intptr_t);
     u16 *script;
 } FieldFxTaskProgram;
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, initialize) == sizeof(FieldFxTaskTable),
@@ -44,7 +44,7 @@ typedef struct FieldFxTaskContext {
         intptr_t address;
     } pc;
     char *cursor;
-    int argument;
+    intptr_t argument;
     u8 count;
     u8 flags;
     u16 delay;
@@ -66,7 +66,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxCallbackList, entries) == 8 + sizeof(void 
                   fieldfx_callback_list_entries);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxCallbackListEntry, state) == sizeof(void *),
                   fieldfx_callback_list_entry_state);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, count) == 2 * sizeof(void *) + sizeof(int),
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, count) == 2 * sizeof(void *) + sizeof(intptr_t),
                   fieldfx_task_context_count);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, used) == PE1_OFFSETOF(FieldFxTaskContext, count) + 4,
                   fieldfx_task_context_used);
@@ -119,7 +119,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks.table) == sizeof(FieldFxO
                   fieldfx_owner_table);
 int FieldFx_InitTaskContext(FieldFxTaskOwner *owner);
 int FieldFx_InitTaskProgram(FieldFxTaskOwner *owner, int skip,
-                  int arg2, int arg3, int arg4, int arg5);
+                  int arg2, intptr_t arg3, intptr_t arg4, intptr_t arg5);
 int FieldFx_DrawTasks(FieldFxTaskOwner *owner);
 int FieldFx_UpdateTasks(FieldFxTaskOwner *owner);
 extern s16 g_SpinningModelAnchorB[3];

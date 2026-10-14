@@ -1,7 +1,9 @@
 #ifndef PE1_FIELDFX_CALLBACK_LIST_H
 #define PE1_FIELDFX_CALLBACK_LIST_H
 
-typedef int (*FieldFxCallbackListCallback)(int mode, void *state, int argument);
+#include <stdint.h>
+
+typedef int (*FieldFxCallbackListCallback)(int mode, void *state, intptr_t argument);
 
 typedef struct FieldFxCallbackListEntry {
     signed short active;

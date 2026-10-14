@@ -38,7 +38,7 @@ typedef struct RoomM005_Dialog {
 /* Dialog anchor room_m005 keeps in its scene script record. */
 #define RoomM005_ScriptDialog (*(RoomM005_Dialog *)&g_RoomScriptRecord)
 
-int RoomM005_FxOrbiter(int mode, void *data, int argument) {
+int RoomM005_FxOrbiter(int mode, void *data, intptr_t argument) {
     RoomM005_OrbRec *r = data;
     unsigned short anchor[3];
     short q[4];
@@ -297,7 +297,7 @@ int RoomM005_CrossFlare(int mode) {
 
 /* Sprite that drifts by a fixed velocity for six frames, then draws itself
  * at a room offset with a cosine-driven intensity. */
-int RoomM005_BeaconDriftCallback(int mode, void *data, int argument) {
+int RoomM005_BeaconDriftCallback(int mode, void *data, intptr_t argument) {
     RoomM005DriftingSpriteState *state = data;
     GteShortVector position;
     RenderColor color;

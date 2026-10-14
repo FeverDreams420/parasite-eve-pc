@@ -489,6 +489,12 @@ int main(int argc, char **argv)
         g_PadPackets[0].leftX=19;Field_HandleStateTransition();
         if(g_FieldPadBits!=(FIELD_PAD_LEFT|1))return 37;
         MenuWidgetNode menu={0};menu.mode=1;g_MenuWidgetActiveListHead=&menu;
+        MenuWidgetListNavigation navigation={0};
+        navigation.list=&menu;
+        menu.visible_rows=4; menu.y_limit=16; menu.disabled=8; menu.scroll_y=4;
+        MenuWidget_EaseNodePosition(&navigation);
+        if (navigation.draw_state!=8 || navigation.visible_rows!=8 ||
+            navigation.list!=&menu || navigation.mode!=0) return 85;
         Field_HandleStateTransition();
         if(g_FieldPadBits!=FIELD_PAD_LEFT)return 38;
         g_PadPackets[0].leftX=20;Field_HandleStateTransition();

@@ -16,10 +16,10 @@ typedef struct MenuWidgetNode {
     int flags;
     int (*update)(struct MenuWidgetNode *, unsigned int); /* input handler */
     void (*draw)();            /* +0x30 draw callback */
-    int grid_width;
-    int visible_rows;
-    int draw_state;
-    int disabled;
+    union { int grid_width; struct MenuWidgetNode *list; };
+    union { int visible_rows; int visibleRows; };
+    union { int draw_state; int drawState; };
+    union { int disabled; unsigned int navigation_flags; };
     int cursor_x;
     int cursor_y;
     /* Mode-1 panel polygon; grid widgets reuse the same word for cursor motion. */
@@ -73,13 +73,7 @@ typedef int (*MenuWidgetInputHandler)(MenuWidgetNode *node, unsigned int flags);
 
 /* Mode-3 list navigator: +0x34 is a managed-list pointer, whereas ordinary
  * grid widgets store grid_width there. The rest of this prefix is shared. */
-typedef struct MenuWidgetListNavigation {
-    u8 widgetPrefix[0x34];
-    MenuWidgetNode *list;
-    int visibleRows;
-    int drawState;
-    unsigned int flags;
-} MenuWidgetListNavigation;
+typedef MenuWidgetNode MenuWidgetListNavigation;
 
 typedef struct MenuWidgetSimpleDescriptor {
 /* 0x00 */ s32 x;      /* zero requests horizontal centering */
@@ -123,6 +117,7 @@ void MenuWidget_ApplyColumnLayout(MenuWidgetNode *node);
 void MenuWidget_ClearColumnLayout(MenuWidgetNode *node);
 void MenuWidget_SaveColumnLayout(MenuWidgetNode *node);
 void MenuWidget_DestroyPopupNode(MenuWidgetNode *node);
+void MenuWidget_EaseNodePosition(MenuWidgetNode *node);
 
 extern MenuWidgetNode g_MenuWidgetNodePool[];
 extern MenuWidgetNode g_MenuWidgetNodePoolSentinel;

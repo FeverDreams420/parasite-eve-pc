@@ -49,7 +49,6 @@ void MenuWidget_InitPoolUnk(void) {
     g_MenuWidgetCurrentNode = 0;
     g_MenuWidgetActiveListHead = 0;
 }
-#define NULL ((void *)0)
 
 inline MenuWidgetNode *MenuWidget_AllocNode(MenuWidgetNode *arg0, MenuWidgetNode *arg1) {
     s32 var_a0;
@@ -148,7 +147,6 @@ void MenuWidget_DestroyNodeRecursive(MenuWidgetNode *node) {
     }
 }
 
-#define NULL ((void *)0)
 
 /* Draws a widget and its children, each relative to its parent's origin,
  * saving the text cursor on the cursor stack around it. */
@@ -1598,7 +1596,7 @@ void Draw_SwapPrimBuffers(MenuWidgetNode *list)
     node->draw = Draw_FlushFrontBuffer;
     node->update = Menu_StepListNavigate;
     navigation->list = list;
-    navigation->flags = list->layout_flags;
+    navigation->navigation_flags = list->layout_flags;
     list->popup_node = node;
 }
 
@@ -1682,10 +1680,9 @@ int Menu_StepListNavigate(MenuWidgetListNavigation *node, unsigned int flags) {
         if (Move(list, list->visible_rows)) Menu_PlayMoveSound();
         handled = 1;
     }
-    return handled || !(node->flags & 0x40);
+    return handled || !(node->navigation_flags & 0x40);
 }
 
-#define NULL ((void *)0)
 void MenuWidget_EaseNodePosition(MenuWidgetNode *arg0) {
     s32 temp_a2;
     s32 temp_v1;
@@ -1703,4 +1700,19 @@ void MenuWidget_EaseNodePosition(MenuWidgetNode *arg0) {
             navigation->visibleRows = ((temp_v1_2 * temp_a1->visible_rows * ((temp_v1_2 * temp_a1->scroll_y) - temp_a1->scroll_adjust)) / (temp_a1->y_limit * temp_v1_2));
         }
     }
+}
+
+MenuWidgetNode *g_MenuWidgetActiveListHead;
+
+MenuWidgetNode *MenuWidget_FindByModeAndSelectedBase(int mode, int selected_base) {
+    MenuWidgetNode *node;
+
+    node = g_MenuWidgetActiveListHead;
+    while (node != 0) {
+        if (node->mode == mode && node->selected_base == selected_base) {
+            break;
+        }
+        node = node->next;
+    }
+    return node;
 }

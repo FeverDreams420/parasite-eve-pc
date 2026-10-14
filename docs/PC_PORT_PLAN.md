@@ -2215,3 +2215,23 @@ passes digital/analog movement, action/clock/audio-trigger checks; PsyZ/SDL are
 not instrumented. The remaining TIM helper procedures in player_movement.c
 compile but are not verified by these movement checks. Full boot/game runtime,
 remaining extraction removal and elimination of pc/ are still incomplete.
+
+
+### Restore widget lookup and use native navigation records
+
+Deleted menu/widget_lookup.c and restored its lookup function and active-list
+head to the original menu/widget.c. The whole widget module now compiles in
+place. MenuWidgetListNavigation is the canonical MenuWidgetNode, with shared
+unions for the managed-list pointer, visible-row/draw-state fields and the
+navigation flags stored in the disabled slot. This removes its fixed 0x34-byte
+PS1 prefix and makes its update callback signature agree with the node. The
+existing fixture verifies native list-pointer preservation and scrollbar
+position/size computed by MenuWidget_EaseNodePosition. No new files.
+
+Full build and four tests pass: akao-menu-assets, input-rules, actor-animation
+and player-input-assets (Disc 1 required where used). Fresh ASan/UBSan/function
+actor-animation execution also passes including the navigation layout check;
+PsyZ/SDL remain uninstrumented. Other widget construction/drawing paths remain
+unverified, with known legacy packet-pointer narrowing and old callback
+prototypes still present. This is not a completed native menu renderer. Full
+runtime integration and removal of pc/ remain incomplete.

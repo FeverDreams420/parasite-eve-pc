@@ -10,6 +10,7 @@
 #include <string.h>
 #include "akao_sequence.h"
 #include "spu_bank.h"
+#include <psyz/spu.h>
 
 /* Explicit input tables for isolated original procedures, not runtime audio. */
 #define fixture_bank g_AkaoSequencerState.primary
@@ -759,6 +760,46 @@ int main(int argc, char **argv)
     CHECK(g_AkaoVoiceStateTable[0].pc == end_note + 1);
     CHECK(g_AkaoGlobalSlideTick == 2);
     CHECK(g_AkaoCurTrack == &fixture_bank);
-    puts("original AKAO: full tick advances gate/note clocks and stops through native dispatch");
+    short reference_pcm[1024];
+    for (unsigned run = 0; run < 2; ++run) {
+        Psyz_SpuInit();
+        Psyz_SpuReset(0);
+        unsigned char adpcm[16];
+        memset(adpcm, 0x11, sizeof(adpcm));
+        adpcm[0] = 0;
+        adpcm[1] = 7;
+        Psyz_SpuMemWrite(0x1000, adpcm, sizeof(adpcm));
+        Psyz_SpuWrite(0x180, 0x3fff);
+        Psyz_SpuWrite(0x182, 0x3fff);
+        Psyz_SpuWrite(0x1aa, 0xc000);
+        AkaoVoiceParams audible = {0};
+        audible.flags = AKAO_VOICE_PARAM_INSTRUMENT_FULL | AKAO_VOICE_PARAM_VOLUME | AKAO_VOICE_PARAM_PITCH;
+        audible.start_address = audible.loop_address = 0x1000;
+        audible.pitch = 0x1000;
+        audible.volume_left = 0x3fff;
+        audible.volume_right = 0x2000;
+        audible.adsr_attack_rate = 0;
+        audible.adsr_sustain_level = 15;
+        audible.adsr_release_rate = 0;
+        Akao_WriteVoiceParam(0, &audible);
+        short pcm[1024];
+        Psyz_SpuPullSamples(pcm, 512);
+        for (unsigned i = 0; i < 1024; ++i) CHECK(pcm[i] == 0);
+        Spu_WriteKeyOn(1);
+        Psyz_SpuPullSamples(pcm, 512);
+        int peak_left = 0, peak_right = 0;
+        for (unsigned i = 0; i < 512; ++i) {
+            if (abs(pcm[i * 2]) > peak_left) peak_left = abs(pcm[i * 2]);
+            if (abs(pcm[i * 2 + 1]) > peak_right) peak_right = abs(pcm[i * 2 + 1]);
+        }
+        CHECK(peak_left > 100 && peak_right > 50);
+        CHECK(abs(peak_left - peak_right * 2) <= 2);
+        if (run == 0) memcpy(reference_pcm, pcm, sizeof(pcm));
+        else CHECK(memcmp(reference_pcm, pcm, sizeof(pcm)) == 0);
+        Spu_WriteKeyOff(1);
+        Psyz_SpuPullSamples(pcm, 512);
+        for (unsigned i = 768; i < 1024; ++i) CHECK(pcm[i] == 0);
+    }
+    puts("original AKAO: full tick and deterministic headless key-on/off PCM pass");
     return 0;
 }

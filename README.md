@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Scenes own persistent background motion arrays and apply them to draw lists.
+Steps preserve authored blobs, commit atomically, and retain original pause
+and saved-camera behavior. Tests verify half-pixel motion becoming a visible
+tile-coordinate change and failure preservation. All 35 headless tests and
+ASan/UBSan native scene fixtures/full audit pass. Script setters, group
+animation, frame ordering and GPU/reference images remain pending.
+
 Background motion now decodes authored 8.8 state and steps scrolling/parallax
 with original signed remainder, wrap and pause behavior. Tests cover fractional
 carry, negative motion, parallax precedence and overflowing products; the data

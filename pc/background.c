@@ -68,12 +68,15 @@ int pe_background_motion_step(PeBackgroundMotion *motion,const PeCameraScroll *c
     }
     *motion=next;return 1;
 }
-int pe_background_draw_tiles(const PeBackground *bg,unsigned group,const int16_t display[2],
+int pe_background_draw_tiles_moving(const PeBackground *bg,const PeBackgroundMotion *motion,unsigned motion_count,unsigned group,const int16_t display[2],
                               PeBackgroundDrawTile *output,unsigned capacity,unsigned *written){
+    if(motion&&motion_count<bg->count)return 0;
     if((uint64_t)capacity*sizeof(*output)>SIZE_MAX)return 0;
     PeBackgroundDrawTile *next=capacity?malloc((size_t)capacity*sizeof(*next)):NULL;
     if(capacity&&!next)return 0;unsigned count=0;
     for(unsigned i=0;i<bg->count;++i){PeBackgroundEntry entry;if(!pe_background_entry(bg,i,&entry))goto failed;
+        if(motion){entry.flags=(entry.flags&~UINT32_C(255))|motion[i].flags;
+            for(unsigned axis=0;axis<2;++axis){entry.screen[axis]=(uint16_t)motion[i].position[axis];entry.modulus[axis]=motion[i].modulus[axis];}}
         if(!(entry.flags&2)||entry.group!=group)continue;
         int scroll[2]={entry.screen[0]+(uint16_t)display[0],entry.screen[1]+(uint16_t)display[1]};
         if(entry.flags&4)for(unsigned axis=0;axis<2;++axis){
@@ -94,4 +97,9 @@ int pe_background_draw_tiles(const PeBackground *bg,unsigned group,const int16_t
     }
     if(count)memcpy(output,next,(size_t)count*sizeof(*next));*written=count;free(next);return 1;
 failed:free(next);return 0;
+}
+
+int pe_background_draw_tiles(const PeBackground *bg,unsigned group,const int16_t display[2],
+                              PeBackgroundDrawTile *output,unsigned capacity,unsigned *written){
+    return pe_background_draw_tiles_moving(bg,NULL,0,group,display,output,capacity,written);
 }

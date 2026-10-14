@@ -9,6 +9,7 @@ void pe_scene_close(PeScene *scene) {
     pe_collision_close(&scene->collision);
     pe_room_blob_close(&scene->entity_bank);
     pe_room_blob_close(&scene->area_bank);
+    free(scene->background_motion);
     pe_room_close(&scene->room);
     free(scene->vram);
     free(scene->spu);
@@ -26,6 +27,14 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     }
     pe_camera_scroll_init(&next.cameras,&next.camera,&next.camera_scroll);
     if(!pe_background_open(&next.cameras,&next.background)){snprintf(error,error_size,"Invalid room background geometry");goto failed;}
+    next.background_motion_count=next.background.count;
+    if(next.background.count){
+        next.background_motion=malloc((size_t)next.background.count*sizeof(*next.background_motion));
+        if(!next.background_motion){snprintf(error,error_size,"Cannot allocate background motion");goto failed;}
+        for(unsigned i=0;i<next.background.count;++i)if(!pe_background_motion(&next.background,i,&next.background_motion[i])){
+            snprintf(error,error_size,"Invalid background motion entry");goto failed;
+        }
+    }
     if (!pe_room_collision(&next.room, &next.collision, error, error_size)) goto failed;
     if (!pe_room_banks(&next.room, &next.banks, error, error_size)) goto failed;
     next.vram = malloc(sizeof(*next.vram));
@@ -218,7 +227,21 @@ int pe_scene_focus_actor(PeScene *scene,unsigned slot,int32_t duration,int32_t m
 }
 int pe_scene_background_tiles(PeScene *scene,PeBackgroundDrawTile *output,unsigned capacity,unsigned *written){
     if(scene->camera_group>=scene->cameras.count)return 0;
+    if(scene->background_motion_count!=scene->background.count||(scene->background.count&&!scene->background_motion))return 0;
     PeCameraScroll scroll=scene->camera_scroll;pe_camera_background_offset(&scene->cameras,&scroll);
-    if(!pe_background_draw_tiles(&scene->background,scene->camera_group,scroll.display,output,capacity,written))return 0;
+    if(!pe_background_draw_tiles_moving(&scene->background,scene->background_motion,scene->background_motion_count,scene->camera_group,scroll.display,output,capacity,written))return 0;
     scene->camera_scroll.display[0]=scroll.display[0];scene->camera_scroll.display[1]=scroll.display[1];return 1;
+}
+int pe_scene_background_step(PeScene *scene){
+    if(scene->script_banks.scene_flags&0x104)return 1;
+    unsigned count=scene->background_motion_count;
+    if(count!=scene->background.count||(count&&!scene->background_motion))return 0;
+    PeBackgroundMotion *next=count?malloc((size_t)count*sizeof(*next)):NULL;
+    if(count&&!next)return 0;
+    if(count)memcpy(next,scene->background_motion,(size_t)count*sizeof(*next));
+    for(unsigned i=0;i<count;++i)if(!pe_background_motion_step(&next[i],&scene->camera_scroll,scene->script_banks.scene_flags)){free(next);return 0;}
+    if(count)memcpy(scene->background_motion,next,(size_t)count*sizeof(*next));free(next);
+    if(scene->camera_scroll.flags&0x80){scene->camera_scroll.flags&=~UINT32_C(0x80);
+        for(unsigned i=0;i<2;++i)scene->camera_scroll.saved[i]=(uint16_t)scene->camera_scroll.position[i];}
+    return 1;
 }

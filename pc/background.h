@@ -13,4 +13,6 @@ int pe_background_draw_tiles(const PeBackground *background,unsigned group,const
                               PeBackgroundDrawTile *output,unsigned capacity,unsigned *written);
 int pe_background_motion(const PeBackground *background,unsigned index,PeBackgroundMotion *motion);
 int pe_background_motion_step(PeBackgroundMotion *motion,const PeCameraScroll *camera,uint32_t scene_flags);
+int pe_background_draw_tiles_moving(const PeBackground *background,const PeBackgroundMotion *motion,unsigned motion_count,
+                                     unsigned group,const int16_t display[2],PeBackgroundDrawTile *output,unsigned capacity,unsigned *written);
 #endif

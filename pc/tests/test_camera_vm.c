@@ -58,12 +58,25 @@ int main(void){
     word(background_bytes+120,(3u<<22)|(4u<<12));
     scene.cameras=(PeCameraBank){0};scene.cameras.bytes=background_bytes;scene.cameras.size=sizeof(background_bytes);scene.cameras.count=1;
     CHECK(pe_background_open(&scene.cameras,&scene.background));
+    scene.background_motion=malloc(sizeof(*scene.background_motion));CHECK(scene.background_motion);scene.background_motion_count=1;
+    CHECK(pe_background_motion(&scene.background,0,scene.background_motion));
     scene.camera_scroll.position[0]=160;scene.camera_scroll.position[1]=112;
     PeBackgroundDrawTile draw;unsigned count=99;
     CHECK(pe_scene_background_tiles(&scene,&draw,1,&count)&&count==1&&draw.x==3&&draw.y==4);
     scene.camera_scroll.position[0]=161;count=99;
     CHECK(!pe_scene_background_tiles(&scene,&draw,0,&count)&&count==99&&draw.x==3&&scene.camera_scroll.display[0]==0);
     CHECK(pe_scene_background_tiles(&scene,&draw,1,&count)&&draw.x==2&&scene.camera_scroll.display[0]==-1);
+    PeBackgroundMotion *motion=scene.background_motion;motion->flags=6;motion->modulus[0]=320;motion->modulus[1]=224;motion->speed[0]=128;
+    CHECK(pe_scene_background_step(&scene)&&motion->position[0]==0&&motion->fraction[0]==128);
+    CHECK(pe_scene_background_step(&scene)&&motion->position[0]==1&&!motion->fraction[0]);
+    CHECK(pe_scene_background_tiles(&scene,&draw,1,&count)&&draw.x==3);
+    CHECK(background_bytes[72]==0); /* authored screen position remains immutable */
+    scene.script_banks.scene_flags|=4;scene.camera_scroll.flags|=0x80;
+    CHECK(pe_scene_background_step(&scene)&&!motion->fraction[0]&&(scene.camera_scroll.flags&0x80));
+    scene.script_banks.scene_flags&=~UINT32_C(4);
+    CHECK(pe_scene_background_step(&scene)&&motion->fraction[0]==128&&!(scene.camera_scroll.flags&0x80)&&scene.camera_scroll.saved[0]==161);
+    motion->modulus[0]=0;scene.camera_scroll.flags|=0x80;
+    CHECK(!pe_scene_background_step(&scene)&&motion->position[0]==1&&motion->fraction[0]==128&&(scene.camera_scroll.flags&0x80));
     pe_scene_close(&scene);
     puts("Camera VM: real polling branch/wait loop resumes only after transition completion, headless");return 0;
 }

@@ -131,18 +131,7 @@ void Psyz_GteCommand(unsigned int command);
 /* Load V0 from an s32[3] translation (a matrix's t): the low halfwords of
  * t[0] and t[1] packed into VXY0 (narrowed to lhu), t[2] by lwc2 into VZ0.
  * source is an s32 * lvalue so callers can reuse the constrained address. */
-#define gte_ldv0_word3(source) \
-    { \
-        unsigned int packed; \
-        unsigned int high; \
-        high = (unsigned short)(source)[1]; \
-        packed = (unsigned short)(source)[0]; \
-        high <<= 16; \
-        packed |= high; \
-        asm volatile("mtc2 %0,$0\n\t" \
-                     "lwc2 $1,8(%1)" \
-                     : : "r"(packed), "r"(source) : "memory"); \
-    }
+#define gte_ldv0_word3(source) do { const u8 *pe_gte_src = (const u8 *)(source); u16 pe_gte_x, pe_gte_y; u32 pe_gte_z; memcpy(&pe_gte_x, pe_gte_src, 2); memcpy(&pe_gte_y, pe_gte_src + 4, 2); memcpy(&pe_gte_z, pe_gte_src + 8, 4); Psyz_GteDataWrite(0, pe_gte_x | ((u32)pe_gte_y << 16)); Psyz_GteDataWrite(1, pe_gte_z); } while (0)
 
 #define gte_ldv0_word3_at(vec) \
     { \
@@ -157,44 +146,14 @@ void Psyz_GteCommand(unsigned int command);
 #define gte_mvmva_light_ir_sf0() Psyz_GteCommand(0x4A49E012u & 0x01ffffffu)
 
 /* Load a strided matrix column into IR1..3 and apply RTIR12. */
-#define gte_ldrtir12_matrix_column(column) \
-    asm volatile("lhu $12,0(%0)\n\t" \
-                 "lhu $13,6(%0)\n\t" \
-                 "lhu $14,12(%0)\n\t" \
-                 "mtc2 $12,$9\n\t" \
-                 "mtc2 $13,$10\n\t" \
-                 "mtc2 $14,$11\n\t" \
-                 "nop\n\t" \
-                 "nop\n\t" \
-                 ".word 0x4A49E012" \
-                 : : "r"(column) : "$12", "$13", "$14", "memory")
+#define gte_ldrtir12_matrix_column(column) do { gte_ldclmv(column); gte_rtir(); } while (0)
 
 /* Store IR1..3 back to a strided matrix column. */
-#define gte_stir123_column(out) \
-    ({ \
-        int x; \
-        int y; \
-        int z; \
-        asm volatile("mfc2 %0,$9\n\t" \
-                     "mfc2 %1,$10\n\t" \
-                     "mfc2 %2,$11" \
-                     : "=r"(x), "=r"(y), "=r"(z), "=r"(out) \
-                     : "3"(out)); \
-        ((short *)(out))[0] = x; \
-        ((short *)(out))[3] = y; \
-        ((short *)(out))[6] = z; \
-    })
+#define gte_stir123_column(out) do { u8 *pe_gte_dst = (u8 *)(out); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u16 pe_gte_half = (u16)Psyz_GteDataRead(9 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 6, &pe_gte_half, 2); } } while (0)
 
 /* PSY-Q gte_stsv: store IR1..3 as a short vector (mfc2 into $12..$14, then
  * three halfword stores inside the same statement, as the SDK macro does). */
-#define gte_stsv(out) \
-    asm volatile("mfc2 $12,$9\n\t" \
-                 "mfc2 $13,$10\n\t" \
-                 "mfc2 $14,$11\n\t" \
-                 "sh $12,0(%0)\n\t" \
-                 "sh $13,2(%0)\n\t" \
-                 "sh $14,4(%0)" \
-                 : : "r"(out) : "$12", "$13", "$14", "memory")
+#define gte_stsv(out) do { u8 *pe_gte_dst = (u8 *)(out); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u16 pe_gte_half = (u16)Psyz_GteDataRead(9 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 2, &pe_gte_half, 2); } } while (0)
 
 #define gte_stir123_column_at(column) \
     { \
@@ -205,28 +164,10 @@ void Psyz_GteCommand(unsigned int command);
 #define gte_rtv0tr_sf0() Psyz_GteCommand(0x4A480012u & 0x01ffffffu)
 
 /* Load the five packed words which hold R11..R33. */
-#define gte_ldrotmatrix(matrix) \
-    asm volatile("lw $12,0(%0)\n\t" \
-                 "lw $13,4(%0)\n\t" \
-                 "ctc2 $12,$0\n\t" \
-                 "ctc2 $13,$1\n\t" \
-                 "lw $12,8(%0)\n\t" \
-                 "lw $13,12(%0)\n\t" \
-                 "lw $14,16(%0)\n\t" \
-                 "ctc2 $12,$2\n\t" \
-                 "ctc2 $13,$3\n\t" \
-                 "ctc2 $14,$4" \
-                 : : "r"(matrix) : "$12", "$13", "$14")
+#define gte_ldrotmatrix(matrix) do { const u8 *pe_gte_src = (const u8 *)(matrix); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 5; ++pe_gte_i) { u32 pe_gte_word; memcpy(&pe_gte_word, pe_gte_src + 0 + pe_gte_i * 4, 4); Psyz_GteCtrlWrite(0 + pe_gte_i, pe_gte_word); } } while (0)
 
 /* Load the three translation-vector words into TRX, TRY, and TRZ. */
-#define gte_ldtransmatrix(matrix) \
-    asm volatile("lw $12,20(%0)\n\t" \
-                 "lw $13,24(%0)\n\t" \
-                 "ctc2 $12,$5\n\t" \
-                 "lw $14,28(%0)\n\t" \
-                 "ctc2 $13,$6\n\t" \
-                 "ctc2 $14,$7" \
-                 : : "r"(matrix) : "$12", "$13", "$14")
+#define gte_ldtransmatrix(matrix) do { const u8 *pe_gte_src = (const u8 *)(matrix); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u32 pe_gte_word; memcpy(&pe_gte_word, pe_gte_src + 20 + pe_gte_i * 4, 4); Psyz_GteCtrlWrite(5 + pe_gte_i, pe_gte_word); } } while (0)
 
 /* Preserve and replace the first column of the rotation matrix. */
 #define gte_getrotcol0(x, y, z) \
@@ -254,44 +195,22 @@ void Psyz_GteCommand(unsigned int command);
                  "ctc2 %2,$4" \
                  : : "r"(x), "r"(y), "r"(z))
 
-#define gte_ldv0(vec) \
-    asm volatile(GTE_INSN_LWC2_0_0 "\n\t" \
-                 GTE_INSN_LWC2_1_4 \
-                 : : "r"(vec) : "memory")
+#define gte_ldv0(vec) do { const u8 *pe_gte_src = (const u8 *)(vec); u32 pe_gte_word; memcpy(&pe_gte_word, pe_gte_src, 4); Psyz_GteDataWrite(0, pe_gte_word); memcpy(&pe_gte_word, pe_gte_src + 4, 4); Psyz_GteDataWrite(1, pe_gte_word); } while (0)
 
-#define gte_ldv1(vec) \
-    asm volatile("lwc2 $2,0(%0)\n\t" \
-                 "lwc2 $3,4(%0)" \
-                 : : "r"(vec) : "memory")
+#define gte_ldv1(vec) do { const u8 *pe_gte_src = (const u8 *)(vec); u32 pe_gte_word; memcpy(&pe_gte_word, pe_gte_src, 4); Psyz_GteDataWrite(2, pe_gte_word); memcpy(&pe_gte_word, pe_gte_src + 4, 4); Psyz_GteDataWrite(3, pe_gte_word); } while (0)
 
-#define gte_ldv2(vec) \
-    asm volatile("lwc2 $4,0(%0)\n\t" \
-                 "lwc2 $5,4(%0)" \
-                 : : "r"(vec) : "memory")
+#define gte_ldv2(vec) do { const u8 *pe_gte_src = (const u8 *)(vec); u32 pe_gte_word; memcpy(&pe_gte_word, pe_gte_src, 4); Psyz_GteDataWrite(4, pe_gte_word); memcpy(&pe_gte_word, pe_gte_src + 4, 4); Psyz_GteDataWrite(5, pe_gte_word); } while (0)
 
 /* MVMVA: rotation matrix, V0, no translation, SF=1 (12-bit fraction), LM=0. */
-#define gte_mvmva() \
-    asm volatile("nop\n\t" \
-                 "nop\n\t" \
-                 ".word 0x4A486012")
+#define gte_mvmva() do { Psyz_GteCommand(0x4A486012u & 0x01ffffffu); } while (0)
 
 /* MVMVA: light matrix, IR vector, no translation, SF=1, LM=1. */
-#define gte_lightcolor() \
-    asm volatile("nop\n\t" \
-                 ".word 0x4A4DA412")
+#define gte_lightcolor() do { Psyz_GteCommand(0x4A4DA412u & 0x01ffffffu); } while (0)
 
-#define gte_stmac(out) \
-    asm volatile("swc2 $25,0(%0)\n\t" \
-                 "swc2 $26,4(%0)\n\t" \
-                 "swc2 $27,8(%0)" \
-                 : : "r"(out) : "memory")
+#define gte_stmac(out) do { u8 *pe_gte_dst = (u8 *)(out); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u32 pe_gte_word = Psyz_GteDataRead(25 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 4, &pe_gte_word, 4); } } while (0)
 
 /* MAC stores followed by a pointer return leave v0 available to the caller. */
-#define gte_stmac_return(out) \
-    asm volatile("swc2 $25,0(%0)\n\t" \
-                 "swc2 $26,4(%0)\n\t" \
-                 "swc2 $27,8(%0)" \
-                 : : "r"(out) : "$2", "memory")
+#define gte_stmac_return(out) do { u8 *pe_gte_dst = (u8 *)(out); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u32 pe_gte_word = Psyz_GteDataRead(25 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 4, &pe_gte_word, 4); } } while (0)
 
 /* LZCS/LZCR: count leading zeroes in a 32-bit value. */
 #define gte_ldlzcs(value) Psyz_GteDataWrite(30, (u32)(value))
@@ -318,10 +237,7 @@ void Psyz_GteCommand(unsigned int command);
                  "mtc2 %1,$13" \
                  : : "r"(r0), "r"(r1), "r"(r2))
 
-#define gte_nclip() \
-    asm volatile("nop\n\t" \
-                 "nop\n\t" \
-                 ".word 0x4B400006")
+#define gte_nclip() do { Psyz_GteCommand(0x4B400006u & 0x01ffffffu); } while (0)
 
 #define gte_nclip_now() Psyz_GteCommand(0x4B400006u & 0x01ffffffu)
 
@@ -729,14 +645,7 @@ void Psyz_GteCommand(unsigned int command);
 
 /* PSY-Q style three-operand transfers: load V0..V2 from three vectors and
  * store SXY0..SXY2 to three addresses in one statement. */
-#define gte_ldv3(r1, r2, r3) \
-    asm volatile("lwc2 $0,0(%0)\n\t" \
-                 "lwc2 $1,4(%0)\n\t" \
-                 "lwc2 $2,0(%1)\n\t" \
-                 "lwc2 $3,4(%1)\n\t" \
-                 "lwc2 $4,0(%2)\n\t" \
-                 "lwc2 $5,4(%2)" \
-                 : : "r"(r1), "r"(r2), "r"(r3) : "memory")
+#define gte_ldv3(r1, r2, r3) do { gte_ldv0(r1); gte_ldv1(r2); gte_ldv2(r3); } while (0)
 
 #define gte_stsxy3(r1, r2, r3) \
     asm volatile("swc2 $12,0(%0)\n\t" \
@@ -758,45 +667,20 @@ void Psyz_GteCommand(unsigned int command);
 
 /* PSY-Q gte_ldclmv / gte_rtir / gte_stclmv: one strided matrix column through
  * RTIR (sf=1), the three steps of the SDK's inline gte_MulMatrix0. */
-#define gte_ldclmv(column) \
-    asm volatile("lhu $12,0(%0)\n\t" \
-                 "lhu $13,6(%0)\n\t" \
-                 "lhu $14,12(%0)\n\t" \
-                 "mtc2 $12,$9\n\t" \
-                 "mtc2 $13,$10\n\t" \
-                 "mtc2 $14,$11" \
-                 : : "r"(column) : "$12", "$13", "$14")
+#define gte_ldclmv(column) do { const u8 *pe_gte_src = (const u8 *)(column); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u16 pe_gte_half; memcpy(&pe_gte_half, pe_gte_src + pe_gte_i * 6, 2); Psyz_GteDataWrite(9 + pe_gte_i, pe_gte_half); } } while (0)
 
 #define gte_rtir() Psyz_GteCommand(0x4A49E012u & 0x01ffffffu)
 
-#define gte_stclmv(column) \
-    asm volatile("mfc2 $12,$9\n\t" \
-                 "mfc2 $13,$10\n\t" \
-                 "mfc2 $14,$11\n\t" \
-                 "sh $12,0(%0)\n\t" \
-                 "sh $13,6(%0)\n\t" \
-                 "sh $14,12(%0)" \
-                 : : "r"(column) : "$12", "$13", "$14", "memory")
+#define gte_stclmv(column) do { u8 *pe_gte_dst = (u8 *)(column); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u16 pe_gte_half = (u16)Psyz_GteDataRead(9 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 6, &pe_gte_half, 2); } } while (0)
 
 /* PSY-Q gte_ldlv0 / gte_rt / gte_stlvl: a long vector through RT with
  * translation (sf=1), as used by the SDK's inline gte_CompMatrix. */
-#define gte_ldlv0(vector) \
-    asm volatile("lhu $13,4(%0)\n\t" \
-                 "lhu $12,0(%0)\n\t" \
-                 "sll $13,$13,16\n\t" \
-                 "or $12,$12,$13\n\t" \
-                 "mtc2 $12,$0\n\t" \
-                 "lwc2 $1,8(%0)" \
-                 : : "r"(vector) : "$12", "$13")
+#define gte_ldlv0(vector) do { const u8 *pe_gte_src = (const u8 *)(vector); u16 pe_gte_x, pe_gte_y; u32 pe_gte_z; memcpy(&pe_gte_x, pe_gte_src, 2); memcpy(&pe_gte_y, pe_gte_src + 4, 2); memcpy(&pe_gte_z, pe_gte_src + 8, 4); Psyz_GteDataWrite(0, pe_gte_x | ((u32)pe_gte_y << 16)); Psyz_GteDataWrite(1, pe_gte_z); } while (0)
 
 #define gte_rt() Psyz_GteCommand(0x4A480012u & 0x01ffffffu)
 
 /* PSY-Q inline_c.h gte_stlvl: store IR1..3 as a long vector. */
-#define gte_stlvl(vector) \
-    asm volatile("swc2 $9,0(%0)\n\t" \
-                 "swc2 $10,4(%0)\n\t" \
-                 "swc2 $11,8(%0)" \
-                 : : "r"(vector) : "memory")
+#define gte_stlvl(vector) do { u8 *pe_gte_dst = (u8 *)(vector); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u32 pe_gte_word = Psyz_GteDataRead(9 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 4, &pe_gte_word, 4); } } while (0)
 
 /* PSY-Q inline_c.h gte_MulMatrix0 / gte_CompMatrix (r3 = r1 * r2, with
  * the composed translation for CompMatrix). */
@@ -866,10 +750,7 @@ void Psyz_GteCommand(unsigned int command);
                  : : "r"(r0))
 
 /* PSY-Q gte_op12: two hazard nops, then OP with sf=1. */
-#define gte_op12_psyq() \
-    asm volatile("nop\n\t" \
-                 "nop\n\t" \
-                 ".word 0x4B78000C")
+#define gte_op12_psyq() do { Psyz_GteCommand(0x4B78000Cu & 0x01ffffffu); } while (0)
 
 /* PSY-Q gte_SetBackColor: BK from three colour components scaled by 16. */
 #define gte_SetBackColor(r0, r1, r2) \
@@ -882,18 +763,7 @@ void Psyz_GteCommand(unsigned int command);
                  : : "r"(r0), "r"(r1), "r"(r2) : "$12", "$13", "$14")
 
 /* PSY-Q gte_SetLightMatrix: the five packed words of L11..L33. */
-#define gte_SetLightMatrix(r0) \
-    asm volatile("lw $12,0(%0)\n\t" \
-                 "lw $13,4(%0)\n\t" \
-                 "ctc2 $12,$8\n\t" \
-                 "ctc2 $13,$9\n\t" \
-                 "lw $12,8(%0)\n\t" \
-                 "lw $13,12(%0)\n\t" \
-                 "lw $14,16(%0)\n\t" \
-                 "ctc2 $12,$10\n\t" \
-                 "ctc2 $13,$11\n\t" \
-                 "ctc2 $14,$12" \
-                 : : "r"(r0) : "$12", "$13", "$14")
+#define gte_SetLightMatrix(r0) do { const u8 *pe_gte_src = (const u8 *)(r0); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 5; ++pe_gte_i) { u32 pe_gte_word; memcpy(&pe_gte_word, pe_gte_src + 0 + pe_gte_i * 4, 4); Psyz_GteCtrlWrite(8 + pe_gte_i, pe_gte_word); } } while (0)
 
 /* PSY-Q gte_ncct: two hazard nops, then NCCT. */
 #define gte_ncct() Psyz_GteCommand(0x4B18043Fu & 0x01ffffffu)
@@ -906,67 +776,20 @@ void Psyz_GteCommand(unsigned int command);
                  : : "r"(r0), "r"(r1), "r"(r2) : "memory")
 
 /* PSY-Q gte_stlvnl: store MAC1..3 as a long vector. */
-#define gte_stlvnl(r0) \
-    asm volatile("swc2 $25,0(%0)\n\t" \
-                 "swc2 $26,4(%0)\n\t" \
-                 "swc2 $27,8(%0)" \
-                 : : "r"(r0) : "memory")
+#define gte_stlvnl(r0) do { u8 *pe_gte_dst = (u8 *)(r0); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u32 pe_gte_word = Psyz_GteDataRead(25 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 4, &pe_gte_word, 4); } } while (0)
 
 /* Store the whole GTE matrix: R11..R33 as five packed words (PSY-Q
  * gte_ReadRotMatrix) followed by TRX, TRY, TRZ at +20. */
-#define gte_ReadMatrix(r0) \
-    asm volatile("cfc2 $12,$0\n\t" \
-                 "cfc2 $13,$1\n\t" \
-                 "sw $12,0(%0)\n\t" \
-                 "sw $13,4(%0)\n\t" \
-                 "cfc2 $12,$2\n\t" \
-                 "cfc2 $13,$3\n\t" \
-                 "cfc2 $14,$4\n\t" \
-                 "sw $12,8(%0)\n\t" \
-                 "sw $13,12(%0)\n\t" \
-                 "sw $14,16(%0)\n\t" \
-                 "cfc2 $12,$5\n\t" \
-                 "cfc2 $13,$6\n\t" \
-                 "cfc2 $14,$7\n\t" \
-                 "sw $12,20(%0)\n\t" \
-                 "sw $13,24(%0)\n\t" \
-                 "sw $14,28(%0)" \
-                 : : "r"(r0) : "$12", "$13", "$14", "memory")
+#define gte_ReadMatrix(r0) do { u8 *pe_gte_dst = (u8 *)(r0); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 8; ++pe_gte_i) { u32 pe_gte_word = Psyz_GteCtrlRead(pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 4, &pe_gte_word, 4); } } while (0)
 
 /* PSY-Q gte_ldv3c: V0..V2 from three consecutive short vectors. */
-#define gte_ldv3c(r0) \
-    asm volatile("lwc2 $0,0(%0)\n\t" \
-                 "lwc2 $1,4(%0)\n\t" \
-                 "lwc2 $2,8(%0)\n\t" \
-                 "lwc2 $3,12(%0)\n\t" \
-                 "lwc2 $4,16(%0)\n\t" \
-                 "lwc2 $5,20(%0)" \
-                 : : "r"(r0) : "memory")
+#define gte_ldv3c(r0) do { const u8 *pe_gte_vectors = (const u8 *)(r0); gte_ldv0(pe_gte_vectors); gte_ldv1(pe_gte_vectors + 8); gte_ldv2(pe_gte_vectors + 16); } while (0)
 
 /* PSY-Q gte_stsxy3c / gte_stsz3c: SXY0..2 and SZ1..3 to consecutive words. */
-#define gte_stsxy3c(r0) \
-    asm volatile("swc2 $12,0(%0)\n\t" \
-                 "swc2 $13,4(%0)\n\t" \
-                 "swc2 $14,8(%0)" \
-                 : : "r"(r0) : "memory")
-#define gte_stsz3c(r0) \
-    asm volatile("swc2 $17,0(%0)\n\t" \
-                 "swc2 $18,4(%0)\n\t" \
-                 "swc2 $19,8(%0)" \
-                 : : "r"(r0) : "memory")
+#define gte_stsxy3c(r0) do { u8 *pe_gte_dst = (u8 *)(r0); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u32 pe_gte_word = Psyz_GteDataRead(12 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 4, &pe_gte_word, 4); } } while (0)
+#define gte_stsz3c(r0) do { u8 *pe_gte_dst = (u8 *)(r0); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u32 pe_gte_word = Psyz_GteDataRead(17 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 4, &pe_gte_word, 4); } } while (0)
 
 /* PSY-Q gte_SetColorMatrix: the five packed words of LR1..LB3. */
-#define gte_SetColorMatrix(r0) \
-    asm volatile("lw $12,0(%0)\n\t" \
-                 "lw $13,4(%0)\n\t" \
-                 "ctc2 $12,$16\n\t" \
-                 "ctc2 $13,$17\n\t" \
-                 "lw $12,8(%0)\n\t" \
-                 "lw $13,12(%0)\n\t" \
-                 "lw $14,16(%0)\n\t" \
-                 "ctc2 $12,$18\n\t" \
-                 "ctc2 $13,$19\n\t" \
-                 "ctc2 $14,$20" \
-                 : : "r"(r0) : "$12", "$13", "$14")
+#define gte_SetColorMatrix(r0) do { const u8 *pe_gte_src = (const u8 *)(r0); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 5; ++pe_gte_i) { u32 pe_gte_word; memcpy(&pe_gte_word, pe_gte_src + 0 + pe_gte_i * 4, 4); Psyz_GteCtrlWrite(16 + pe_gte_i, pe_gte_word); } } while (0)
 
 #endif

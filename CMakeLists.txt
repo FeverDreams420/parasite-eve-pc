@@ -263,6 +263,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-queue tests/original_queue.c
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-queue PRIVATE include)
     target_link_libraries(test-original-queue PRIVATE psyz)
@@ -287,6 +288,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-movement tests/original_movement.c
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-movement PRIVATE include)
     target_link_libraries(test-original-movement PRIVATE psyz)

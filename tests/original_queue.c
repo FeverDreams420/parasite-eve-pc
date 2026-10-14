@@ -6,6 +6,7 @@
 #include "pe1/pad_state.h"
 #include "pe1/boot.h"
 #include "pe1/field_movement.h"
+#include "pe1/geom_state.h"
 #include <stdio.h>
 extern FieldActor *g_CurrentEntity;
 /* Override selected resident entries to observe traversal in this fixture. */
@@ -297,6 +298,23 @@ int main(void)
         u32 operand=held&&bit!=31?31-bit:mask;
         if(g_ScriptVariableBank[36]!=(held?100+bit:0) || script[3]!=operand ||
            task.current.script!=script+7 || task.flags!=0x10) return 31;
+    }
+    for(unsigned player=0;player<2;++player) for(unsigned vector=0;vector<8;++vector) {
+        FieldActor owner={.flags=0x80};
+        u32 modes=((2u<<3)|(2u<<6)|(2u<<9))<<17;
+        u32 script[]={11|(4u<<13),0,vector,65547,(u32)-22,65549,
+                      12|(4u<<13)|modes,0,vector,37,38,39,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_PlayerEntity=player?&owner:NULL;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        g_GeomScroll.state.flags=0x40;
+        for(unsigned i=37;i<=39;++i) g_ScriptVariableBank[i]=0x1234;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[37]!=(vector<7?(vector==5?11u:65547u):0x1234u) ||
+           g_ScriptVariableBank[38]!=(vector<7?(u32)-22:0x1234u) ||
+           g_ScriptVariableBank[39]!=(vector<7?(vector==5?13u:65549u):0x1234u) ||
+           g_GeomScroll.state.flags!=(player&&vector==0?0xc0:0x40) ||
+           task.current.script!=script+14 || task.flags!=0x10) return 32;
+        if(vector==0 && (owner.base_x!=owner.pos_x || owner.base_y!=owner.pos_y || owner.base_z!=owner.pos_z)) return 33;
     }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;

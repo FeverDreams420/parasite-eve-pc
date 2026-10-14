@@ -800,7 +800,7 @@ void Seq_SelectPlaybackBank(AkaoQueueEntry *entry) {
         Akao_UpdateVoiceMask(entry->arg0.sequence);
     } else {
         Akao_StepSequencerVoice(entry->arg0.sequence);
-        ((AkaoTrack *)g_AkaoCurTrack)->parent_track_id = entry->arg2;
+        g_AkaoCurTrack->bank_id = entry->arg2;
     }
 }
 
@@ -845,7 +845,7 @@ void Seq_RestoreSecondaryStateAndSelect(AkaoQueueEntry *entry) {
     }
 
     Akao_StepSequencerVoice(entry->arg0.sequence);
-    ((AkaoTrack *)g_AkaoCurTrack)->parent_track_id = entry->arg2;
+    g_AkaoCurTrack->bank_id = entry->arg2;
 }
 
 void Seq_SelectPlaybackBankWithCountdown(AkaoQueueEntry *entry)
@@ -1759,7 +1759,7 @@ void Spu_StopActiveVoices(void) {
 
     do {
         if (g_SpuActiveVoiceMask & mask) {
-            AkaoTrack *fields = (AkaoTrack *)((AkaoU8 *)track_flags - 0x38);
+            AkaoTrack *fields = AKAO_TRACK_OF(track_flags, flags);
 
             if ((fields->key_on_mask & skip_flag) == 0) {
                 g_SpuPendingKeyOffMask |= mask;

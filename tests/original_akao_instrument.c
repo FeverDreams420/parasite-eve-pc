@@ -33,6 +33,9 @@ AkaoTickBank *D_8009D2C8 = &tick_bank;
 SpuReverbState g_SpuReverbState;
 AkaoTrack g_AkaoVoiceChannelTable[12];
 unsigned g_SpuActiveVoiceMask;
+unsigned g_SpuPendingKeyOffMask;
+unsigned g_AkaoTrack34Mask, g_AkaoTrack38Mask, g_AkaoTrack3CMask;
+unsigned g_AkaoVoiceMaskScratch, g_AkaoVoiceUpdateFlags;
 /* This isolated command test must never request a hardware reverb change.
  * PsyZ has no SpuSetReverbModeType endpoint yet: fail instead of simulating it. */
 int SpuSetReverbModeType(unsigned int mode)
@@ -43,6 +46,11 @@ int SpuSetReverbModeType(unsigned int mode)
 void SeqOp_SetTempo(void *track);
 void SeqOp_LoadInstrumentFromIndex(void *track);
 void Seq_SetCurrentTrackField56(AkaoValueCommand *command);
+void SeqOp_StreamPair(unsigned char **stream);
+void SeqOp_ReadTrack64U16(unsigned char **stream);
+void SeqOp_SetTrack34Mask(AkaoTrack *track, u32 mask);
+void SeqOp_ClearTrack34Mask(AkaoTrack *track, u32 mask);
+void Spu_StopActiveVoices(void);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
 int main(void)
@@ -133,8 +141,46 @@ int main(void)
     bank.tempo_slide_duration = 37;
     SeqOp_SetTempo(&track);
     CHECK(bank.tempo == 0x12340000u);
+    bank.key_off_dirty_mask = 4;
+    track.parent_track_id = 0;
+    SeqOp_SetTrack34Mask(&track, 8);
+    CHECK(bank.key_off_dirty_mask == 12);
+    SeqOp_ClearTrack34Mask(&track, 4);
+    CHECK(bank.key_off_dirty_mask == 8);
+    track.parent_track_id = 1;
+    SeqOp_SetTrack34Mask(&track, 16);
+    CHECK(g_AkaoTrack34Mask == 16);
+    CHECK(bank.key_off_dirty_mask == 8);
+    SeqOp_ClearTrack34Mask(&track, 16);
+    CHECK(g_AkaoTrack34Mask == 0);
+    for (unsigned i = 0; i < 12; ++i) {
+        g_AkaoVoiceChannelTable[i] = (AkaoTrack){0};
+        g_AkaoVoiceChannelTable[i].key_on_mask = i % 3 == 0 ? 0x02000000 : 1;
+        g_AkaoVoiceChannelTable[i].flags = 0xffff;
+    }
+    g_SpuActiveVoiceMask = 0xfff000;
+    Spu_StopActiveVoices();
+    CHECK(g_SpuActiveVoiceMask == 0x249000);
+    CHECK(g_SpuPendingKeyOffMask == 0xdb6000);
+    for (unsigned i = 0; i < 12; ++i)
+        CHECK(g_AkaoVoiceChannelTable[i].flags == (i % 3 == 0 ? 0xffff : 0));
     CHECK(bank.tempo_slide_duration == 0);
     CHECK(track.pc == tempo + 2);
+    unsigned char timing[] = {48, 7, 0x34, 0x12};
+    unsigned char *timing_cursor = timing;
+    bank.sequence_base = timing;
+    bank.tick = 19;
+    bank.beat = 23;
+    SeqOp_StreamPair(&timing_cursor);
+    CHECK(timing_cursor == timing + 2);
+    CHECK(bank.ticks_per_beat == 48);
+    CHECK(bank.beats_per_measure == 7);
+    CHECK(bank.tick == 0 && bank.beat == 0);
+    SeqOp_ReadTrack64U16(&timing_cursor);
+    CHECK(timing_cursor == timing + 4);
+    CHECK(bank.measure == 0x1234);
+    CHECK(bank.sequence_base == timing);
+    CHECK(bank.tempo == 0x12340000u);
     for (unsigned i = 0; i < 1024; ++i) {
         offsets[i * 2] = i * 31;
         offsets[i * 2 + 1] = i % 2 ? 0xffff : i * 17;

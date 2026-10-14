@@ -547,6 +547,8 @@ Native message views dla value, bank pitch/slide/range, global param/slide/range
 
 Trzynaście original bank handlers dla manage voices oraz immediate/slides volume/pan/pitch odczytuje canonical AkaoQueueEntry zamiast int[1..4] i byte offsets 4/8/C/10. Sygnatury mają wspólny message pointer; mask filtering i original loops pozostają. Fixture wykonuje trzy masked immediate procedures dla 12 kanałów, obu trybów wyboru (key-on mask/key-off ID), aktywnych/nieaktywnych głosów i low-byte versus 7-bit parametrów; sprawdza target/pan/pitch i dirty flags. CTest oraz ASan/UBSan/function przechodzą. Slides, manage/all-voice paths obecnie mają dowód kompilacji, nie pełnego zachowania. Pozostają relative/default stream addressing, dispatch catalog/globals i rzeczywisty SPU/PCM.
 
+Alias views bank→track nie używają już niezgodnych native track offsets: playback selection zapisuje canonical bank_id, track34 mask zapisuje bank key_off_dirty_mask, stream-pair/read64 opcodes zapisują ticks_per_beat/beats_per_measure/beat/tick/measure. StopActiveVoices odzyskuje track z offsetof(flags), nie 0x38. Test wykonuje original rhythm decoders/cursor, primary/secondary mask selection i zatrzymanie 12 głosów z protected 0x02000000 mask; sprawdza active/pending-keyoff i flags. CTest oraz ASan/UBSan/function przechodzą, PsyZ nieinstrumentowane. Playback selection nadal nie ma pełnego dowodu (wymaga start/rebase engine i rzeczywistych sekwencji); audio runtime pozostaje nieukończone.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

@@ -1686,7 +1686,7 @@ void SeqOp_ResetFlag4State(AkaoTrack *track) {
 
 void SeqOp_SetTrack34Mask(AkaoTrack *track, u32 mask) {
     if (track->parent_track_id == 0) {
-        ((AkaoTrack *)g_AkaoCurTrack)->voice_mask_a |= mask;
+        g_AkaoCurTrack->key_off_dirty_mask |= mask;
     } else {
         g_AkaoTrack34Mask |= mask;
     }
@@ -1697,7 +1697,7 @@ void SeqOp_SetTrack34Mask(AkaoTrack *track, u32 mask) {
 
 void SeqOp_ClearTrack34Mask(AkaoTrack *track, u32 mask) {
     if (track->parent_track_id == 0) {
-        ((AkaoTrack *)g_AkaoCurTrack)->voice_mask_a &= ~mask;
+        g_AkaoCurTrack->key_off_dirty_mask &= ~mask;
     } else {
         g_AkaoTrack34Mask &= ~mask;
     }
@@ -2069,29 +2069,29 @@ void SeqOp_ClearFlag3(AkaoTrack *track) {
 void SeqOp_StreamPair(unsigned char **stream) {
     unsigned char *cursor = *stream;
     unsigned char value;
-    AkaoTrack *track = (AkaoTrack *)g_AkaoCurTrack;
+    AkaoSequencerBank *track = g_AkaoCurTrack;
 
     *stream = cursor + 1;
-    track->pitch_slide_duration = cursor[0];
+    track->ticks_per_beat = cursor[0];
 
     cursor = *stream;
     *stream = cursor + 1;
     value = cursor[0];
-    track->repeat_counters[0] = 0;
-    track->pitch_slide_current = 0;
-    track->voice_index = value;
+    track->tick = 0;
+    track->beat = 0;
+    track->beats_per_measure = value;
 }
 
 void SeqOp_ReadTrack64U16(unsigned char **stream) {
     unsigned char *cursor = *stream;
-    AkaoTrack *track = (AkaoTrack *)g_AkaoCurTrack;
+    AkaoSequencerBank *track = g_AkaoCurTrack;
 
     *stream = cursor + 1;
-    track->repeat_counters[1] = cursor[0];
+    track->measure = cursor[0];
 
     cursor = *stream;
     *stream = cursor + 1;
-    track->repeat_counters[1] |= cursor[0] << 8;
+    track->measure |= cursor[0] << 8;
 }
 
 void SeqOp_ReadAdsrDecayAndSustain(AkaoTrack *track, u32 voice_mask) {

@@ -429,6 +429,16 @@ int main(void)
         if(g_ScriptVariableBank[51]!=(u32)atan_cases[i][2] ||
            task.current.script!=script+7 || task.flags!=0x10) return 44;
     }
+    const u32 pop_words[]={0,1,0x80000000,0xffffffff,0x55555555,0xaaaaaaaa,0x7fffffff,0xff00ff00};
+    const u32 pop_counts[]={0,1,1,32,16,16,31,16};
+    for(unsigned i=0;i<8;++i) {
+        FieldActor owner={0};
+        u32 script[]={222|(2u<<13)|((2u<<3)<<17),0,pop_words[i],52,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[52]!=pop_counts[i] || task.current.script!=script+6 || task.flags!=0x10) return 45;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

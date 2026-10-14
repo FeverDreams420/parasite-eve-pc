@@ -1498,7 +1498,7 @@ int Entity_PolarToPosition(int **arg0)
 }
 
 int Entity_PopCount(int **arg0) {
-    int value;
+    u32 value;
     int count;
 
     value = *arg0[0];

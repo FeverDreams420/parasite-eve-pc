@@ -46,6 +46,7 @@ int Menu_GetModeState(int **args);
 int Script_GetSin(int **args);
 int Script_GetCos(int **args);
 int Script_GetAtan2(int **args);
+int Entity_PopCount(int **args);
 int Script_SetAnimSlotPointer(int **args);
 int Script_SetInputFlagBit2(int **unused);
 int Script_ClearInputFlagBit2(int **unused);

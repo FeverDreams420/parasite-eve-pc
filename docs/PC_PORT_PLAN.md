@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 60 powiązań: oryginalny opcode 222 liczy ustawione bity word. Powiązanie potwierdzono w EXE USA; wartość robocza ma unsigned typ, zachowując modulo-32-bitowe odejmowanie dla bitu 31 bez signed overflow. Test kolejki obejmuje osiem wzorców, w tym zero, wszystkie bity i sam najwyższy bit. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 59 powiązań: oryginalny opcode 217 zwraca atan2 w jednostkach kąta PS1. Powiązanie potwierdzono w EXE USA; test kolejki sprawdza cztery kierunki osiowe i wynik ujemny bez normalizacji. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 58 powiązań: oryginalne opcode'y 215/216 zwracają sin/cos w 16.16. Powiązania potwierdzono w EXE USA; przesunięcie ujemnego wyniku poprawiono w istniejących funkcjach na unsigned word shift. Test kolejki sprawdza cztery kąty ćwiartkowe, w tym wyniki ujemne. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

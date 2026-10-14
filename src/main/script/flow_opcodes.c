@@ -378,13 +378,13 @@ int Entity_SelectFieldSetter(int **arg0) {
         selector = *arg0[0];
         switch (selector) {
         case 1:
-            g_CurrentEntity->script_cursor_1a0 = (unsigned int *)(g_CurrentEntity->script_base + (value << 1));
+            g_CurrentEntity->script_cursor_1a0 = (unsigned int *)(g_CurrentEntity->script_base + ((size_t)(u32)value * 2));
             break;
         case 2:
-            g_CurrentEntity->script_cursor_19c = (unsigned int *)(g_CurrentEntity->script_base + (value << 1));
+            g_CurrentEntity->script_cursor_19c = (unsigned int *)(g_CurrentEntity->script_base + ((size_t)(u32)value * 2));
             break;
         case 3:
-            g_ScriptNodePool->next_value = (intptr_t)(g_CurrentEntity->script_base + (value << 1));
+            g_ScriptNodePool->next_value = (intptr_t)(g_CurrentEntity->script_base + ((size_t)(u32)value * 2));
             break;
         }
     }
@@ -713,7 +713,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [0]=Script_JumpToEntityOffset, [1]=Entity_MarkCurrentDead,
     [2]=Entity_SetCurrentNodeActive, [4]=Entity_MarkNodeFree, [5]=Script_JumpIfZero,
     [9]=Script_EvalExpr, [10]=Script_AssignValue, [14]=Entity_QueryField,
-    [18]=Script_SpawnChildNode, [19]=Entity_SetCurrentFlags,
+    [18]=Script_SpawnChildNode, [19]=Entity_SetCurrentFlags, [20]=Entity_SelectFieldSetter,
     [22]=Entity_YieldWhileMoving, [23]=Entity_ComputeVelocityToTarget,
     [24]=Entity_FindNodeById, [25]=Entity_GetCurrentNodeId,
     [31]=Script_GetNodeTarget14, [32]=Entity_MarkCurrentNodeFree,

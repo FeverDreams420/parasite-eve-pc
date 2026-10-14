@@ -243,6 +243,24 @@ int main(void)
         owner.flags&=~2u;g_ScriptNodePool=&task;Script_RunQueue();
         if(task.current.script!=script+10 || task.flags!=0x10) return 26;
     }
+    for(unsigned selector=1;selector<=4;++selector) {
+        u32 entries[10]={0};
+        FieldActor owner={.script_base=(u8 *)entries,.script_cursor_1a0=entries+1,.script_cursor_19c=entries+2};
+        u32 script[]={20|(2u<<13),0,selector,6,2|(1u<<13),0,1,
+                      20|(2u<<13),0,selector,UINT32_MAX,32,0};
+        ScriptNode task={.current.script=script,.active=1,.next_value=(intptr_t)(entries+4)};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(owner.script_cursor_1a0!=(selector==1?entries+3:entries+1) ||
+           owner.script_cursor_19c!=(selector==2?entries+3:entries+2) ||
+           task.next_value!=(intptr_t)(selector==3?entries+3:entries+4) ||
+           task.current.script!=script+7 || task.active!=1) return 27;
+        g_ScriptNodePool=&task;Script_RunQueue();
+        if(owner.script_cursor_1a0!=(selector==1?NULL:entries+1) ||
+           owner.script_cursor_19c!=(selector==2?NULL:entries+2) ||
+           task.next_value!=(selector==3?0:(intptr_t)(entries+4)) ||
+           task.current.script!=script+13 || task.flags!=0x10) return 28;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 38 powiązań: oryginalny opcode 20 ustawia/wyłącza kursory skryptów aktora i next value węzła. Dodatnie offsety halfword są przeliczane w natywnej szerokości adresu, a ujemne argumenty wyłączają wybrany slot. Test rzeczywistej kolejki sprawdza wszystkie trzy sloty, nieznany selector, pełny adres hosta, zachowanie pozostałych slotów i dwa ticki ustawienia/wyłączenia. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 37 powiązań: oryginalne opcode'y 22/23 obliczają prędkość do punktu i oczekują na zakończenie ruchu. W istniejącym module ujednolicono ABI oczekiwania i przesunięcie czasu do 16.16 wykonuje się na unsigned word. Test kolejki sprawdza trzy składowe prędkości z wpływem gravity Y, flagę ruchu, cofanie kursora i kontynuację po zdjęciu flagi przez fixture. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełne sterowanie ruchem przez frame loop i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 35 powiązań: oryginalny opcode 84 zwraca sumę bezwzględnych różnic XYZ aktorów. Powiązanie potwierdzono w EXE USA. Test kolejki obejmuje osiem kombinacji znaków, wybór gracza, pominięcie martwego wpisu i brak celu. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

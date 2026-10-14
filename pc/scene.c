@@ -93,6 +93,22 @@ failed:
 
 PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command){
     PeScene *scene=user;
+    if(command->opcode==3||command->opcode==70){
+        if(command->count<3||!scene->actors)return PE_DISPATCH_ERROR;
+        int result=pe_camera_transition_start(&scene->camera_scroll,&scene->actors->render_flags,
+            (uint16_t)pe_script_arg_read(task,&command->args[0]),(uint16_t)pe_script_arg_read(task,&command->args[1]),
+            (uint16_t)pe_script_arg_read(task,&command->args[2]),command->opcode==70);
+        return result==-1?PE_DISPATCH_ERROR:PE_DISPATCH_CONTINUE;
+    }
+    if(command->opcode==71){
+        if(!command->count||!scene->actors)return PE_DISPATCH_ERROR;
+        pe_script_arg_write(task,&command->args[0],(scene->actors->render_flags&7)==4);return PE_DISPATCH_CONTINUE;
+    }
+    if(command->opcode==72){
+        if(!scene->actors||scene->actors->player<0)return PE_DISPATCH_ERROR;
+        int result=pe_scene_focus_actor(scene,(unsigned)scene->actors->player,-1,-1);
+        return result==-1?PE_DISPATCH_ERROR:PE_DISPATCH_CONTINUE;
+    }
     if(command->opcode==130){
         if(!command->count||!pe_scene_camera_select(scene,pe_script_arg_read(task,&command->args[0]))){
             snprintf(task->error,sizeof(task->error),"Invalid camera group");return PE_DISPATCH_ERROR;

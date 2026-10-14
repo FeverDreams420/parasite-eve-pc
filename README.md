@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Scene script opcodes 3/70/71/72 start linear/smooth scrolling, query completion
+and reset focus to the player. Explicit targets retain original halfword
+values without viewport clamping. Scene dispatch tests cover start, steps,
+completion and missing/fixture-player reset. All 33 headless tests and
+ASan/UBSan camera fixtures/full native audit pass. VM polling scenarios,
+continuous frame calls, compound scroll commands and background updates
+remain pending.
+
 Camera transitions can now target a live actor's projected position, retaining
 original focus-height wrapping, viewport clamping, default duration and mode
 masks. Scroller enable flags remain distinct from render transition flags;

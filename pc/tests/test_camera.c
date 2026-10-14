@@ -33,6 +33,11 @@ int main(void){
     flags=3;CHECK(pe_camera_transition_step(&camera,&scroll,&flags)==-20&&flags==3);
     flags=0x43;scroll.start[0]=32760;scroll.target[0]=(uint16_t)-32760;scroll.duration=2;scroll.elapsed=1;
     CHECK(!pe_camera_transition_step(&camera,&scroll,&flags)&&scroll.position[0]==-32768);
+    flags=0x4b;CHECK(!pe_camera_transition_start(&scroll,&flags,65000,112,2,0)&&flags==0x41&&scroll.start[0]==0x8000);
+    CHECK(scroll.target[0]==65000&&scroll.target[1]==112&&scroll.elapsed==1);
+    CHECK(!pe_camera_transition_start(&scroll,&flags,160,112,2,1)&&flags==0x49);
+    flags=0;CHECK(pe_camera_transition_start(&scroll,&flags,0,0,2,0)==-19&&scroll.target[0]==160);
+    flags=0x40;CHECK(pe_camera_transition_start(&scroll,&flags,0,0,0,0)==-1&&scroll.target[0]==160);
     bytes[10]=2;CHECK(!pe_camera_bank_open(bytes,sizeof(bytes),&bank)&&bank.count==1);
     puts("Camera: group matrix, projection distance, viewport bounds and transactional truncation passed");return 0;
 }

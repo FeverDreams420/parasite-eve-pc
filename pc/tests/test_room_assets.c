@@ -472,6 +472,18 @@ int main(void) {
     CHECK(pe_scene_dispatch(&scene,&camera_task,&camera_command)==PE_DISPATCH_CONTINUE);
     camera_command.args[0].value=scene.cameras.count;
     CHECK(pe_scene_dispatch(&scene,&camera_task,&camera_command)==PE_DISPATCH_ERROR&&scene.camera_group==0);
+    camera_command.opcode=3;camera_command.count=3;camera_command.args[0].value=160;camera_command.args[1].value=112;camera_command.args[2].value=2;
+    scene.actors->render_flags|=0x40;
+    CHECK(pe_scene_dispatch(&scene,&camera_task,&camera_command)==PE_DISPATCH_CONTINUE);
+    camera_command.opcode=71;camera_command.count=1;camera_command.args[0]=(PeScriptArgument){9,0,2};
+    CHECK(pe_scene_dispatch(&scene,&camera_task,&camera_command)==PE_DISPATCH_CONTINUE&&!scene.script_banks.variables[9]);
+    CHECK(!pe_scene_camera_transition_step(&scene)&&!pe_scene_camera_transition_step(&scene));
+    CHECK(pe_scene_dispatch(&scene,&camera_task,&camera_command)==PE_DISPATCH_CONTINUE&&scene.script_banks.variables[9]==1);
+    camera_command.opcode=72;camera_command.count=0;
+    CHECK(scene.actors->player==-1&&pe_scene_dispatch(&scene,&camera_task,&camera_command)==PE_DISPATCH_ERROR&&scene.camera_scroll.duration==2);
+    scene.actors->player=0; /* Explicit player fixture before Spawn8 exists. */
+    CHECK(pe_scene_dispatch(&scene,&camera_task,&camera_command)==PE_DISPATCH_CONTINUE&&scene.camera_scroll.duration==30);
+    scene.actors->player=-1;
     CHECK(scene.scripts.blob == &scene.room.data);
     CHECK(scene.akao.note_lengths[0] == 192 && scene.akao.note_lengths[10] == 4);
     CHECK(scene.akao.lfo_valid && scene.akao.lfo_offsets[0] == 0);

@@ -59,3 +59,10 @@ int pe_camera_transition_step(const PeCamera *camera,PeCameraScroll *scroll,uint
     if(sign(scroll->elapsed)>duration)*flags=(*flags&~UINT32_C(7))|((*flags&7)==2?0x84:0x80);
     return 0;
 }
+int pe_camera_transition_start(PeCameraScroll *scroll,uint32_t *flags,uint16_t x,uint16_t y,uint16_t duration,int smooth){
+    if(!(*flags&0x40))return -19;
+    if(!duration)return -1;
+    for(unsigned i=0;i<2;++i)scroll->start[i]=(uint16_t)scroll->position[i];
+    scroll->target[0]=x;scroll->target[1]=y;scroll->duration=duration;scroll->elapsed=1;
+    *flags=(*flags&~UINT32_C(15))|(smooth?9:1);return 0;
+}

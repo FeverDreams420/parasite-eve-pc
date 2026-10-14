@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Entity textures load from the primary area bank and the original extra bank
+for days 2–6. Both uploads commit atomically to CPU VRAM; a failed second bank
+preserves VRAM and stats. The 40 area/day selections produce 570 uploads and
+727,210 words. All 31 headless tests and ASan/UBSan VRAM fixtures/full data audit
+pass. Automatic loading stages, GPU synchronization and rendered model/image
+validation remain pending.
+
 Scenes also own area action overrides, selected explicitly using the original
 entity-ID/day bank formula. Loading preserves the primary root and rebuilds
 room→primary→area views transactionally. Selected ID/day remain observable;

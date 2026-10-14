@@ -65,3 +65,8 @@ int pe_room_upload_vram(const PeRoom *room, PeVram *vram, PeVramStats *stats,
     if (error_size) error[0] = 0;
     return 1;
 }
+int pe_blob_upload_vram(const PeRoomBlob *blob,PeVram *vram,PeVramStats *stats,char *error,size_t error_size){
+    if(!bank(blob,NULL,NULL)){snprintf(error,error_size,"Invalid asset-bank texture upload");return 0;}
+    PeVramStats next={0};bank(blob,vram,&next);
+    if(stats)*stats=next;if(error_size)error[0]=0;return 1;
+}

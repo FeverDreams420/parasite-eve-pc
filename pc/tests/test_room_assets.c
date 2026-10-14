@@ -496,6 +496,18 @@ int main(void) {
         CHECK(scene.entity_area==area&&scene.entity_bank.bytes&&scene.banks.roots[0].present);
     }
     CHECK(pe_scene_primary_bank(&scene,&catalog,10,scene_error,sizeof(scene_error)));
+    uint64_t entity_texture_words=0;unsigned entity_texture_uploads=0;
+    for(unsigned area=10;area<=14;++area)for(unsigned day=1;day<=8;++day){
+        CHECK(pe_scene_entity_textures(&scene,&catalog,area,day,scene_error,sizeof(scene_error)));
+        entity_texture_words+=scene.entity_texture_stats.words;entity_texture_uploads+=scene.entity_texture_stats.uploads;
+    }
+    PeVram *texture_snapshot=malloc(sizeof(*texture_snapshot));CHECK(texture_snapshot);
+    memcpy(texture_snapshot,scene.vram,sizeof(*texture_snapshot));PeVramStats old_texture_stats=scene.entity_texture_stats;
+    uint16_t old_texture_end=catalog.sector_bounds[41];catalog.sector_bounds[41]=catalog.sector_bounds[40];
+    CHECK(!pe_scene_entity_textures(&scene,&catalog,10,2,scene_error,sizeof(scene_error)));
+    CHECK(!memcmp(texture_snapshot,scene.vram,sizeof(*texture_snapshot))&&scene.entity_texture_stats.words==old_texture_stats.words);
+    catalog.sector_bounds[41]=old_texture_end;free(texture_snapshot);
+    printf("Entity texture selections: 40; %u uploads, %llu words; rendered model validation pending\n",entity_texture_uploads,(unsigned long long)entity_texture_words);
     for(unsigned group=0;group<2;++group){
         unsigned id=10+group*2;
         CHECK(pe_scene_primary_bank(&scene,&catalog,id,scene_error,sizeof(scene_error)));

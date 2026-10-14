@@ -20,5 +20,6 @@ typedef struct PeVramStats {
  * relative to the primary image (not relative to the archive). */
 int pe_room_upload_vram(const PeRoom *room, PeVram *vram, PeVramStats *stats,
                         char *error, size_t error_size);
+int pe_blob_upload_vram(const PeRoomBlob *blob,PeVram *vram,PeVramStats *stats,char *error,size_t error_size);
 
 #endif

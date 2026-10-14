@@ -59,6 +59,9 @@ int main(void) {
     CHECK(pe_room_upload_vram(&room, vram, &stats, error, sizeof(error)));
     CHECK(stats.uploads == 2 && stats.words == 257);
     CHECK(vram->words[21 * PE_VRAM_WIDTH + 10] == 0x8063);
+    memcpy(previous,vram,sizeof(*vram));word(scratch+16,2|(1023u<<10));
+    CHECK(!pe_blob_upload_vram(&room.scratch,vram,&stats,error,sizeof(error)));
+    CHECK(stats.words==257&&!memcmp(previous,vram,sizeof(*vram)));
     free(previous);
     free(vram);
     puts("VRAM: upload order, secondary-relative offsets, zero heights and atomic failures passed");

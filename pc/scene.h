@@ -32,6 +32,7 @@ typedef struct PeScene {
     PeSceneAudio audio;
     unsigned script_actor_count;
     PeVramStats texture_stats;
+    PeVramStats entity_texture_stats;
     PeSpuBankStats sample_stats;
 } PeScene;
 
@@ -53,5 +54,6 @@ void pe_scene_set_input(PeScene *scene,uint32_t held);
  * catalog close. Rebinding active models/animations requires later hot reload. */
 int pe_scene_primary_bank(PeScene *scene,PeRoomCatalog *catalog,unsigned area,char *error,size_t error_size);
 int pe_scene_area_bank(PeScene *scene,PeRoomCatalog *catalog,unsigned entity_bank,unsigned day,char *error,size_t error_size);
+int pe_scene_entity_textures(PeScene *scene,PeRoomCatalog *catalog,unsigned area,unsigned day,char *error,size_t error_size);
 
 #endif

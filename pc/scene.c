@@ -138,3 +138,17 @@ int pe_scene_area_bank(PeScene *scene,PeRoomCatalog *catalog,unsigned entity_ban
     if(error_size)error[0]=0;return 1;
 invalid:snprintf(error,error_size,"Invalid area/day bank or active actor references");return 0;
 }
+int pe_scene_entity_textures(PeScene *scene,PeRoomCatalog *catalog,unsigned area,unsigned day,char *error,size_t error_size){
+    if(!scene->vram||area<10||area>14||day<1||day>8){snprintf(error,error_size,"Invalid entity texture selection");return 0;}
+    PeVram *next=malloc(sizeof(*next));if(!next){snprintf(error,error_size,"Cannot allocate texture staging");return 0;}
+    memcpy(next,scene->vram,sizeof(*next));PeRoomBlob blob={0};PeVramStats total={0},stats;
+    unsigned indices[2]={area+3,day+0x26};unsigned count=day>=2&&day<=6?2:1;
+    for(unsigned i=0;i<count;++i){
+        if(!pe_sector_bank_load(catalog,indices[i],&blob)){snprintf(error,error_size,"%s",catalog->error);goto failed;}
+        if(!pe_blob_upload_vram(&blob,next,&stats,error,error_size))goto failed;
+        total.uploads+=stats.uploads;total.words+=stats.words;
+    }
+    memcpy(scene->vram,next,sizeof(*next));scene->entity_texture_stats=total;
+    pe_room_blob_close(&blob);free(next);if(error_size)error[0]=0;return 1;
+failed:pe_room_blob_close(&blob);free(next);return 0;
+}

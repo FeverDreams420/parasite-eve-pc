@@ -1,4 +1,5 @@
 #include "common.h"
+#include <string.h>
 #include "pe1/akao.h"
 #include "pe1/asset_find.h"
 #include "pe1/asset_tim.h"
@@ -350,10 +351,8 @@ void Boot_InitGameState(void)
 
 void Asset_ResetGameState(void)
 {
-    int i;
     int j;
     Pe1GameState *base = &g_GameState;
-    u32 *p;
     int minusOne;
     AkaoVoiceBankEntry *pair;
     int pairOffset;
@@ -361,8 +360,6 @@ void Asset_ResetGameState(void)
     int fill;
     u8 *voiceBase;
     u32 drawMode;
-    i = 0;
-    p = (u32 *)base;
     base->flags = 3;
     base->saved_state_004 = 10;
     base->field_bg_cache_id = -1;
@@ -379,9 +376,10 @@ void Asset_ResetGameState(void)
     base->bank_state_11 = 0;
     base->bank_state_12 = 0;
     base->scene_area_type_backup = 0;
-    /* Clear the embedded scene object and its tail, 49 words from 0x14. */
-    for (; (unsigned int)i < 49; i++, p++)
-        p[5] = 0;
+    /* Retail clears the complete render object and its eight-byte tail.
+     * Native pointers enlarge the object; PS1 word offsets cannot address it. */
+    memset(&base->scene_object, 0, sizeof(base->scene_object));
+    memset(base->reserved_scene_object_tail, 0, sizeof(base->reserved_scene_object_tail));
     base->scene_audio.tracks.reserved[1] = 8;
     base->scene_audio.tracks.reserved[0] = 0;
     base->scene_audio.tracks.banks[1] = -1;

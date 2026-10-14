@@ -52,7 +52,7 @@ int main(void) {
     word(bytes + 52, 32);
     CHECK(pe_script_task_init(&task, &program, 0, &banks));
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
-    CHECK(banks.variables[3] == 77 && task.actor_flags == 0x40);
+    CHECK(banks.variables[3] == 77 && task.actor->flags == 0x40);
     CHECK(task.pc == 52 && task.active == 2 && task.instructions == 3);
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
     CHECK(task.pc == 52 && task.instructions == 3);
@@ -118,7 +118,7 @@ int main(void) {
         word(bytes + 28, 123);
         CHECK(pe_script_task_init(&task, &program, 0, &banks));
         CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
-        CHECK((mode == 1 ? task.locals[0] : mode == 2 ? banks.variables[0] :
+        CHECK((mode == 1 ? task.actor->locals[0] : mode == 2 ? banks.variables[0] :
                mode == 3 ? banks.operands[0] : banks.node_flags[0]) == 123);
     }
     memset(bytes + 16, 0, sizeof(bytes) - 16);
@@ -174,7 +174,7 @@ int main(void) {
     CHECK(pe_script_task_init(&task, &program, 0, &banks));
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
     CHECK(!task.instructions && task.active == 1 && task.pc == 16);
-    task.is_battle_actor = 1;
+    task.actor->is_battle_actor = 1;
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
     CHECK(banks.scene_flags == 0x100);
     CHECK(pe_script_task_init(&task, &program, 0, &banks));

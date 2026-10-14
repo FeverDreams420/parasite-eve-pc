@@ -4,6 +4,7 @@
 #include "script.h"
 #include "vram.h"
 #include "spu_bank.h"
+#include "script_scheduler.h"
 
 /* Native scene resources, observable without devices. Script execution,
  * actor simulation and rendering will operate on this owned state. */
@@ -12,6 +13,10 @@ typedef struct PeScene {
     PeVram *vram;
     PeSpuBank *spu;
     PeScriptProgram scripts;
+    PeScriptBanks script_banks;
+    PeScriptScheduler *scheduler;
+    PeScriptActor *script_actors;
+    unsigned script_actor_count;
     PeVramStats texture_stats;
     PeSpuBankStats sample_stats;
 } PeScene;

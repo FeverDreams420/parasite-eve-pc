@@ -3,7 +3,7 @@
 
 static uint32_t *bank_word(PeScriptTask *task, const PeScriptArgument *arg) {
     switch (arg->mode) {
-    case 1: return &task->locals[arg->value];
+    case 1: return &task->actor->locals[arg->value];
     case 2: return &task->banks->variables[arg->value];
     case 3: return &task->banks->operands[arg->value];
     case 4: return &task->banks->node_flags[arg->value];
@@ -95,18 +95,30 @@ int pe_script_task_init(PeScriptTask *task, const PeScriptProgram *program,
     task->program = *program;
     task->banks = banks;
     task->base = task->pc = offset;
+    pe_script_actor_init(&task->storage, offset);
+    task->actor = &task->storage;
     task->active = 1;
-    for (unsigned i = 0; i < 3; ++i) task->cursors[i] = UINT32_MAX;
     return 1;
+}
+
+void pe_script_actor_init(PeScriptActor *actor, uint32_t base) {
+    memset(actor, 0, sizeof(*actor));
+    actor->base = base;
+    for (unsigned i = 0; i < 3; ++i) {
+        actor->cursors[i] = UINT32_MAX;
+        actor->heads[i] = -1;
+    }
 }
 
 PeScriptStep pe_script_task_tick(PeScriptTask *task, unsigned instruction_limit) {
     if (task->error[0]) return PE_SCRIPT_ERROR;
-    if ((task->flags & 0x10) || (task->actor_flags & 0x10)) return PE_SCRIPT_STOPPED;
+    /* Actor deletion is deferred to collection. Other nodes already on its
+     * lists still run during this callback pass, as in Script_RunQueue. */
+    if (task->flags & 0x10) return PE_SCRIPT_STOPPED;
     ++task->ticks;
     if ((task->flags & 0x40) ||
-        (((task->actor_flags & 0x1000) ||
-          ((task->banks->scene_flags & 0x100) && !task->is_battle_actor)) && !(task->flags & 0x80)))
+        (((task->actor->flags & 0x1000) ||
+          ((task->banks->scene_flags & 0x100) && !task->actor->is_battle_actor)) && !(task->flags & 0x80)))
         return PE_SCRIPT_WAIT;
     if (!task->active || --task->active) return PE_SCRIPT_WAIT;
     unsigned current_opcode = 0;
@@ -161,7 +173,7 @@ PeScriptStep pe_script_task_tick(PeScriptTask *task, unsigned instruction_limit)
         int yield = 0;
         switch (command.opcode) {
         case 0: if (!target(task, args[0], &next)) goto invalid; break;
-        case 1: task->actor_flags |= 0x10; yield = 1; break;
+        case 1: task->actor->flags |= 0x10; yield = 1; break;
         case 2: task->active = (uint16_t)args[0]; yield = 1; break;
         case 5:
             /* Script_JumpIfZero writes the interpreter cursor address;
@@ -173,16 +185,16 @@ PeScriptStep pe_script_task_tick(PeScriptTask *task, unsigned instruction_limit)
             pe_script_arg_write(task, &command.args[1], result);
             break;
         case 10: pe_script_arg_write(task, &command.args[0], args[1]); break;
-        case 19: task->actor_flags |= args[0]; break;
+        case 19: task->actor->flags |= args[0]; break;
         case 20:
             if (args[0] >= 1 && args[0] <= 3) {
                 result = UINT32_MAX;
                 if (signed_word(args[1]) >= 0 && !target(task, args[1], &result)) goto invalid;
-                task->cursors[args[0] - 1] = result;
+                task->actor->cursors[args[0] - 1] = result;
             }
             break;
         case 25: pe_script_arg_write(task, &command.args[0], task->sequence); break;
-        case 30: task->actor_flags |= 0x80; break;
+        case 30: task->actor->flags |= 0x80; break;
         case 31: pe_script_arg_write(task, &command.args[0], task->target14); break;
         case 32: task->flags |= 0x10; yield = 1; break;
         case 40: case 41: case 42:
@@ -194,23 +206,23 @@ PeScriptStep pe_script_task_tick(PeScriptTask *task, unsigned instruction_limit)
         case 43: task->banks->move_lock &= ~args[0]; break;
         case 44: pe_script_arg_write(task, &command.args[0], task->banks->move_lock); break;
         case 45: task->banks->move_lock |= args[0]; break;
-        case 50: task->actor_flags &= ~UINT32_C(0x80); break;
-        case 55: task->actor_flags |= 0x4000; break;
-        case 57: task->actor_flags &= ~UINT32_C(0x4000); break;
+        case 50: task->actor->flags &= ~UINT32_C(0x80); break;
+        case 55: task->actor->flags |= 0x4000; break;
+        case 57: task->actor->flags &= ~UINT32_C(0x4000); break;
         case 63: task->banks->move_lock &= ~UINT32_C(1); break;
         case 64: task->banks->move_lock |= 1; break;
-        case 65: task->actor_flags |= 0x40; break;
-        case 66: task->actor_flags &= ~UINT32_C(0x40); break;
+        case 65: task->actor->flags |= 0x40; break;
+        case 66: task->actor->flags &= ~UINT32_C(0x40); break;
         case 76: break; /* Original Script_Noop, explicitly defined. */
-        case 79: task->actor_flags |= 0x100; break;
-        case 80: task->actor_flags &= ~UINT32_C(0x100); break;
+        case 79: task->actor->flags |= 0x100; break;
+        case 80: task->actor->flags &= ~UINT32_C(0x100); break;
         case 81: pe_script_arg_write(task, &command.args[1], (task->banks->scene_flags & args[0]) != 0); break;
         case 82: task->banks->scene_flags |= args[0]; break;
         case 83: task->banks->scene_flags &= ~args[0]; break;
         }
         task->pc = next;
         ++task->instructions;
-        if (yield) return (task->flags & 0x10) || (task->actor_flags & 0x10) ?
+        if (yield) return (task->flags & 0x10) || (task->actor->flags & 0x10) ?
                           PE_SCRIPT_STOPPED : PE_SCRIPT_WAIT;
     }
     snprintf(task->error, sizeof(task->error), "Script instruction limit %u exceeded at 0x%x",

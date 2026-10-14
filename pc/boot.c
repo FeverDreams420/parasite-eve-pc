@@ -285,6 +285,7 @@ close_player:
                 pe_runtime_emit("room.loaded", map);
                 pe_runtime_emit("room.vram.ready", map);
                 pe_runtime_emit("room.scripts.ready", map);
+                pe_runtime_emit("room.tasks.bound", map);
                 pe_runtime_emit("audio.samples.ready", active_scene.sample_stats.bytes);
                 printf("menu: selected %s; map %u assets loaded, %u texture uploads, %u scripts, %u initial actors, %u sample bytes; scene execution pending\n",
                        action == 1 ? "New Game" : "Tutorial", map, active_scene.texture_stats.uploads,

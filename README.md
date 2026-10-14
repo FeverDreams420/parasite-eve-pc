@@ -59,7 +59,7 @@ script entry/actor catalogs and the startup SPU sample bank are prepared in
 `PeScene`, but scene execution and gameplay are not integrated.
 
 `make ci` builds and runs the asset-free disc-reader, VRAM, script-format,
-script-runtime, SPU-bank and automation tests. The
+script-runtime, script-scheduler, SPU-bank and automation tests. The
 room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
 is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
@@ -172,5 +172,15 @@ into the native target but is not yet driven by the frontend's scene loop.
 Subsystem dispatch supports continue, yield, retry and explicit errors, with
 operand reads/writes through the original binding. Tests check live operands
 between retry ticks and the original battle/actor pause gates. Audio/render
-handlers, multi-task scheduling, actor creation and full scenes remain pending;
+handlers, physical actor creation and full scenes remain pending;
 these tests do not prove campaign execution.
+
+`pc/script_scheduler.c` implements the original 72-node pool, three actor task
+lists, child spawning, 16-bit sequence IDs and deferred collection. Tasks share
+actor locals/flags/event cursors rather than copying them into independent
+nodes. Tests cover insertion order within a tick, actor deletion after callback
+processing, pool exhaustion/reuse and invalid links. `PeScene` owns the initial
+script actor bindings and scheduler, and preserves script banks across room
+changes. The frontend prepares these bindings but does not yet tick the scene;
+models, movement, collision and rendering still need integration. The real
+initial M431 actor reports missing AKAO opcode 234 through the scheduler.

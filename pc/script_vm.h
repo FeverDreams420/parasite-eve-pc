@@ -8,6 +8,14 @@ typedef struct PeScriptBanks {
     uint32_t move_lock, scene_flags;
 } PeScriptBanks;
 
+typedef struct PeScriptActor {
+    uint32_t locals[56], flags, base, cursors[3];
+    unsigned is_battle_actor;
+    unsigned script_entry, sub_id;
+    int heads[3]; /* scheduler slots, -1 means no task */
+} PeScriptActor;
+void pe_script_actor_init(PeScriptActor *actor, uint32_t base);
+
 struct PeScriptTask;
 typedef enum PeScriptDispatchResult {
     PE_DISPATCH_ERROR = -1,
@@ -22,11 +30,11 @@ typedef PeScriptDispatchResult (*PeScriptDispatch)(void *user,
 typedef struct PeScriptTask {
     PeScriptProgram program;
     PeScriptBanks *banks;
-    uint32_t locals[56], actor_flags;
-    uint32_t base, pc, cursors[3];
+    PeScriptActor storage; /* standalone default; shared actor for scheduled tasks */
+    PeScriptActor *actor;
+    uint32_t base, pc;
     uint32_t target14;
     uint16_t active, flags, sequence;
-    unsigned is_battle_actor; /* identity selected by the actor scheduler */
     PeScriptDispatch dispatch;
     void *dispatch_user;
     uint64_t ticks, instructions;
@@ -44,7 +52,8 @@ typedef enum PeScriptStep {
  * Subsystem handlers receive decoded operand references. RETRY preserves PC
  * and waits one tick; YIELD advances PC (active defaults to one tick unless
  * the handler sets it). Unsupported/error handlers must not mutate state.
- * Actor/node allocation is not yet implemented. */
+ * The task borrows its actor; after initialization it must not be moved by
+ * copying the struct (standalone actor points to its storage member). */
 int pe_script_task_init(PeScriptTask *task, const PeScriptProgram *program,
                          unsigned entry, PeScriptBanks *banks);
 PeScriptStep pe_script_task_tick(PeScriptTask *task, unsigned instruction_limit);

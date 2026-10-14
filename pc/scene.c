@@ -6,6 +6,8 @@ void pe_scene_close(PeScene *scene) {
     pe_room_close(&scene->room);
     free(scene->vram);
     free(scene->spu);
+    free(scene->scheduler);
+    free(scene->script_actors);
     memset(scene, 0, sizeof(*scene));
 }
 
@@ -30,10 +32,42 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     }
     if (!pe_room_upload_vram(&next.room, next.vram, &next.texture_stats, error, error_size) ||
         !pe_script_program_open(&next.room, &next.scripts, error, error_size)) goto failed;
+    next.script_banks = scene->script_banks;
+    next.scheduler = malloc(sizeof(*next.scheduler));
+    next.script_actor_count = next.scripts.actors;
+    if (next.script_actor_count) next.script_actors = calloc(next.script_actor_count, sizeof(*next.script_actors));
+    if (!next.scheduler || (next.script_actor_count && !next.script_actors)) {
+        snprintf(error, error_size, "Cannot allocate script actors/task pool");
+        goto failed;
+    }
+    pe_script_scheduler_init(next.scheduler, &next.scripts, &next.script_banks);
+    for (unsigned i = 0; i < next.script_actor_count; ++i) {
+        unsigned entry, sub_id;
+        uint32_t offset;
+        if (!pe_script_actor(&next.scripts, i, &entry, &sub_id) ||
+            !pe_script_entry(&next.scripts, entry, &offset)) {
+            snprintf(error, error_size, "Invalid initial actor script");
+            goto failed;
+        }
+        pe_script_actor_init(&next.script_actors[i], offset);
+        next.script_actors[i].script_entry = entry;
+        next.script_actors[i].sub_id = sub_id;
+        if (pe_script_scheduler_start(next.scheduler, &next.script_actors[i], 2, offset) < 0) {
+            snprintf(error, error_size, "%s", next.scheduler->error);
+            goto failed;
+        }
+    }
     pe_scene_close(scene);
     *scene = next;
     /* The program borrows the room member; rebind after moving the owner. */
     scene->scripts.blob = &scene->room.data;
+    scene->scheduler->program = scene->scripts;
+    scene->scheduler->banks = &scene->script_banks;
+    for (unsigned i = 0; i < PE_SCRIPT_TASK_CAPACITY; ++i) {
+        if (!scene->scheduler->slots[i].used) continue;
+        scene->scheduler->slots[i].task.program = scene->scripts;
+        scene->scheduler->slots[i].task.banks = &scene->script_banks;
+    }
     if (error_size) error[0] = 0;
     return 1;
 catalog_error:

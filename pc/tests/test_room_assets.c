@@ -90,23 +90,29 @@ int main(void) {
     CHECK(pe_scene_prepare(&catalog, 431, &scene, scene_error, sizeof(scene_error)));
     CHECK(scene.scripts.blob == &scene.room.data);
     CHECK(scene.sample_stats.bytes == 28176 && scene.spu->valid[255]);
+    CHECK(scene.script_actor_count == 1 && scene.scheduler->live == 1);
+    CHECK(scene.scheduler->slots[0].task.actor == &scene.script_actors[0]);
+    CHECK(scene.scheduler->slots[0].task.program.blob == &scene.room.data);
+    CHECK(scene.scheduler->slots[0].task.banks == &scene.script_banks);
+    CHECK(!pe_script_scheduler_tick(scene.scheduler, &scene.script_actors[0], 100));
+    CHECK(strstr(scene.scheduler->error, "Unimplemented script opcode 234"));
     PeScriptBanks banks = {0};
     PeScriptTask task;
     /* Actual M431 entry zero sets its event cursor/flag and waits one tick. */
     CHECK(pe_script_task_init(&task, &scene.scripts, 0, &banks));
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
-    CHECK(task.instructions == 3 && task.active == 1 && task.actor_flags == 0x40);
-    CHECK(task.cursors[1] == task.base + 36);
+    CHECK(task.instructions == 3 && task.active == 1 && task.actor->flags == 0x40);
+    CHECK(task.actor->cursors[1] == task.base + 36);
     task.target14 = 123;
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
-    CHECK(task.instructions == 7 && task.locals[3] == 123 && banks.operands[0] == 0);
-    CHECK(task.flags == 0x10 && task.actor_flags == 0x40);
+    CHECK(task.instructions == 7 && task.actor->locals[3] == 123 && banks.operands[0] == 0);
+    CHECK(task.flags == 0x10 && task.actor->flags == 0x40);
     CHECK(pe_script_task_init(&task, &scene.scripts, 0, &banks));
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
     task.target14 = 251;
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
     CHECK(task.instructions == 7 && banks.operands[0] == 1);
-    CHECK(!task.flags && task.actor_flags == 0x50);
+    CHECK(!task.flags && task.actor->flags == 0x50);
     /* The active scene actor requires audio; report the missing opcode. */
     CHECK(pe_script_task_init(&task, &scene.scripts, 1, &banks));
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_ERROR);
@@ -116,8 +122,11 @@ int main(void) {
     CHECK(!pe_scene_prepare(&catalog, PE_USA_ROOM_SLOTS, &scene, scene_error, sizeof(scene_error)));
     CHECK(scene.room.map == 431 && scene.room.data.bytes == scene_data && scene.spu == scene_spu);
     scene.spu->ram[0x2000] = 123;
+    scene.script_banks.variables[7] = 12345;
     CHECK(pe_scene_prepare(&catalog, 353, &scene, scene_error, sizeof(scene_error)));
     CHECK(scene.scripts.blob == &scene.room.data && scene.spu->ram[0x2000] == 123);
+    CHECK(scene.script_banks.variables[7] == 12345);
+    CHECK(scene.scheduler->slots[0].task.banks == &scene.script_banks);
     /* Failure in startup audio occurs after room allocation; roll it all back. */
     PeScene failed_scene = {0};
     catalog.sector_bounds[7] = catalog.sector_bounds[6];

@@ -439,6 +439,17 @@ int main(void)
         Script_RunQueue();
         if(g_ScriptVariableBank[52]!=pop_counts[i] || task.current.script!=script+6 || task.flags!=0x10) return 45;
     }
+    const int mesh_levels[]={0,96,127,128,-1,0x160};
+    for(unsigned i=0;i<6;++i) {
+        FieldActor owner={0};
+        u32 script[]={225|(1u<<13),0,(u32)mesh_levels[i],32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        g_GeomScroll.state.position.meshTintLevel=1;g_GeomScroll.state.position.focusHeight=123;
+        Script_RunQueue();
+        if(g_GeomScroll.state.position.meshTintLevel!=(s8)mesh_levels[i] ||
+           g_GeomScroll.state.position.focusHeight!=123 || task.current.script!=script+5 || task.flags!=0x10) return 46;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

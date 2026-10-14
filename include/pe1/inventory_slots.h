@@ -5,28 +5,8 @@
 #include "pe1/inventory.h"
 #include "pe1/inventory_queries.h"
 
-extern s16 g_AyaInventoryItems[];
-/* Retail adjacency: tracked selections at C0E20, 50 item IDs at C0E48,
- * and 128 equipment records at C0EAC. Reserved bytes are not interpreted. */
-typedef struct InventoryRuntime {
-    s8 tracked[4];
-    u8 reserved04[0x24];
-    s16 slots[50];
-    ItemDataRecord equipment[128];
-    u8 reserved108C[12];
-    s16 storage[100];
-    s16 specialStorage[82];
-} InventoryRuntime;
-
-PE1_STATIC_ASSERT(PE1_OFFSETOF(InventoryRuntime, slots) == 0x28,
-                  inventory_runtime_slots_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(InventoryRuntime, equipment) == 0x8C,
-                  inventory_runtime_equipment_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(InventoryRuntime, storage) == 0x1098,
-                  inventory_runtime_storage_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(InventoryRuntime, specialStorage) == 0x1160,
-                  inventory_runtime_special_storage_offset);
-extern InventoryRuntime g_InventoryRuntime;
+#include "pe1/aya.h"
+#define g_AyaInventoryItems (g_AyaSaveState.inventory_items)
 /* Count of filtered slot indices in g_InvPackedList; distinct from the
  * pending item-ID list at g_InvActiveListItems (count g_InvActiveListCount). */
 extern s32 g_InvPackedListCount;

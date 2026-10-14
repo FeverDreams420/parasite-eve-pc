@@ -24,8 +24,6 @@
  * through $gp, every other extern stays absolute. */
 int g_InvCategoryBaseItemId;
 s32 g_InvPackedListCount;
-u32 *g_InvSelectionBits;
-s32 g_InvSelectionBitWords;
 s32 g_InvPackedListCursor;
 s32 g_InvRebuildFilterMode;
 s32 g_InvRebuildMinFirstStat;

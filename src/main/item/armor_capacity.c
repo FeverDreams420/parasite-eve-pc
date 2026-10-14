@@ -12,8 +12,6 @@
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
 s32 g_InvPackedListCount;
-u32 *g_InvSelectionBits;
-s32 g_InvSelectionBitWords;
 u8 *D_8009D084;
 s32 D_8009D088;
 s32 D_8009D08C;
@@ -21,8 +19,6 @@ s32 g_InvSavedSelectionIndex0;
 s32 g_InvSavedSelectionIndex1;
 s32 g_InvSavedSelectionFromStorage0;
 s32 g_InvSavedSelectionFromStorage1;
-s16 *g_InvActiveListOverride;
-s32 g_InvOverrideSlotLimit;
 s32 g_InvWeaponSortStatIndex;
 s32 g_InvAmmoSortStatIndex;
 unsigned char *g_InvSortRankTable;

@@ -1368,3 +1368,22 @@ does not change current HP. Full build, stat-assets/scene-spawn/pools CTests and
 game/test ASan/UBSan/function checks passed (PsyZ archive uninstrumented).
 Weapon/armor item decoding, modifier extraction and Battle_InitEquipLists are
 still needed before the original player-spawn path can run.
+
+### Shared Aya save/inventory storage and original list selection
+
+AyaSaveState and InventoryRuntime now share one union-backed native allocation,
+matching the original overlap at equipment selections and the 50 inventory IDs.
+The independent character storage would otherwise let equipped slots and item
+lists diverge between stat and inventory procedures. Layout assertions and
+bidirectional writes in the test verify both equipped slots and all 50 IDs.
+InventoryRuntime remains the original serialized layout; no save-format expansion
+or gameplay-level inventory abstraction was introduced.
+
+The original select/reset/override/query list functions compile independently
+in item/list_selection.c. Active-list selection pointers, counts and the two
+selection bitmaps have canonical native storage instead of duplicate tentative
+definitions. Tests cover ordinary/override selection, capacities, bitmap banks,
+reset and missing-override fallback alongside the real stat corpus. Full build,
+stat-assets/scene-spawn CTests and game/test ASan/UBSan/function checks passed
+(PsyZ archive uninstrumented). Item record lookup and weapon/armor derivation
+remain prerequisites for complete player equipment initialization.

@@ -13,6 +13,34 @@
 int Aya_StatBinarySearch(int value,int *table);
 int Aya_StatOverflowQuery(int kind,int value);
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
+static int inventory_selection(void)
+{
+    g_AyaSaveState.equipped_weapon_slot=3; g_AyaSaveState.equipped_armor_slot=7;
+    CHECK(g_InventoryRuntime.tracked[0]==3 && g_InventoryRuntime.tracked[2]==7);
+    g_InventoryRuntime.tracked[0]=9; g_InventoryRuntime.tracked[2]=11;
+    CHECK(g_AyaSaveState.equipped_weapon_slot==9 && g_AyaSaveState.equipped_armor_slot==11);
+    for(unsigned i=0;i<50;++i) {
+        g_AyaSaveState.inventory_items[i]=i+1;
+        CHECK(g_InventoryRuntime.slots[i]==i+1);
+        g_InventoryRuntime.slots[i]=i+0x100;
+        CHECK(g_AyaSaveState.inventory_items[i]==i+0x100);
+    }
+    g_AyaSaveState.inventory_slot_count=10; g_InvBonusSlotCount=2;
+    Inv_ResetActiveList();
+    CHECK(g_InvItemPtr==g_AyaSaveState.inventory_items && g_InvSlotLimit==12);
+    CHECK(g_InvSelectionBits==g_InvSelectionBitStorage && g_InvSelectionBitWords==2);
+    CHECK(!Inv_IsActiveListOverrideSelected());
+    s16 storage[100]={0};
+    Inv_SetActiveListOverride(storage,100); Inv_SelectActiveList(1);
+    CHECK(g_InvItemPtr==storage && g_InvSlotLimit==100 && Inv_IsActiveListOverrideSelected());
+    CHECK(g_InvSelectionBits==g_InvStorageSelectionBits && g_InvSelectionBitWords==4);
+    Inv_SelectActiveList(0);
+    CHECK(g_InvItemPtr==g_InventoryRuntime.slots && g_InvSlotLimit==12);
+    Inv_SelectActiveList(1); Inv_ResetActiveList();
+    CHECK(!g_InvActiveListOverride && !g_InvOverrideSlotLimit && !Inv_IsActiveListOverrideSelected());
+    Inv_SelectActiveList(1); CHECK(g_InvItemPtr==g_AyaSaveState.inventory_items);
+    return 0;
+}
 static int recalc_stats(void)
 {
     BattleEntity player={0}; Combatant core={0};
@@ -91,6 +119,7 @@ int main(void)
     }
     CHECK(Aya_LookupLevelStats(-1)==Aya_LookupLevelStats(0));
     CHECK(Aya_LookupLevelStats(99)==Aya_LookupLevelStats(98));
+    CHECK(inventory_selection()==0);
     CHECK(recalc_stats()==0);
     puts("Original player stat recalculation: 297 level/modifier combinations and inventory capacity passed");
     pe_disc_close(&disc);

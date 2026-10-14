@@ -4,7 +4,7 @@
 #include "pe1/inventory.h"
 #include "pe1/stat_modifiers.h"
 
-AyaSaveState g_AyaSaveState;
+PlayerInventoryState g_PlayerInventoryState;
 int g_StatScaleBase[7];
 
 void Inv_RecalcSlotStats(void) {

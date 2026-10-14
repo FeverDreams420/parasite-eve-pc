@@ -27,13 +27,9 @@
  * through $gp, every other extern stays absolute. */
 s32 g_ItemDropRngIndex;
 s32 g_InvPackedListCount;
-u32 *g_InvSelectionBits;
-s32 g_InvSelectionBitWords;
 s32 g_InvPackedListCursor;
 s32 g_InvPendingCompactCount;
 int g_SaveMetadataWindowIndex;
-s16 *g_InvActiveListOverride;
-s32 g_InvOverrideSlotLimit;
 int g_AkaoPendingBgmVolumeFade;
 int g_MemCardDialogState;
 unsigned int g_MenuActionSubmenuSel;
@@ -191,10 +187,6 @@ int Inv_ScrambleGrid(void)
 /* Text byte-string helpers, the item grid rebuild and the active inventory
  * list selection (Aya's list or a storage override) with its slot limit. */
 
-s16 *g_InvActiveListOverride;
-int g_InvOverrideSlotLimit;
-u32 *g_InvSelectionBits;
-int g_InvSelectionBitWords;
 
 void Text_CopyFFTerminatedBytes(u8 *dst, u8 *src)
 {
@@ -304,38 +296,6 @@ void Inv_BuildItemGridFromCategory(void)
     } while (i >= 0);
 
     g_InvActiveListOverride = 0;
-}
-
-void Inv_SelectActiveList(int useOverride) {
-    if (useOverride != 0 && g_InvActiveListOverride != 0) {
-        g_InvItemPtr = g_InvActiveListOverride;
-        g_InvSelectionBits = g_InvStorageSelectionBits;
-        g_InvSelectionBitWords = 4;
-        g_InvSlotLimit = g_InvOverrideSlotLimit;
-    } else {
-        g_InvItemPtr = g_AyaInventoryItems;
-        g_InvSlotLimit = Inv_GetAyaSlotLimit();
-        g_InvSelectionBits = g_InvSelectionBitStorage;
-        g_InvSelectionBitWords = 2;
-    }
-}
-
-void Inv_SetActiveListOverride(s16 *items, int count) {
-    g_InvActiveListOverride = items;
-    g_InvOverrideSlotLimit = count;
-}
-
-void Inv_ResetActiveList(void) {
-    g_InvActiveListOverride = 0;
-    g_InvOverrideSlotLimit = 0;
-    g_InvItemPtr = g_AyaInventoryItems;
-    g_InvSlotLimit = Inv_GetAyaSlotLimit();
-    g_InvSelectionBits = g_InvSelectionBitStorage;
-    g_InvSelectionBitWords = 2;
-}
-
-int Inv_IsActiveListOverrideSelected(void) {
-    return g_InvItemPtr != g_AyaInventoryItems;
 }
 
 void Inv_ClearEquipFlagForKind(InvItemSlot *obj) {
@@ -984,8 +944,6 @@ int Inv_CountByValue(int arg0) {
 /* Contiguous inventory counts, removal-by-ID, active-item kind lookup, base
  * item kinds, the equipped-slot reservation test and the packed-list
  * accessors. */
-u32 *g_InvSelectionBits;
-int g_InvSelectionBitWords;
 
 /* The equipped-slot bytes live at 0x800C0E20/0x800C0E22, outside the gp
  * window; incomplete array types keep -G8 from making them small data. */

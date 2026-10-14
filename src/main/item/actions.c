@@ -11,8 +11,6 @@
 #include "pe1/random.h"
 #include "pe1/text.h"
 
-u32 *g_InvSelectionBits;
-s32 g_InvSelectionBitWords;
 s32 g_InvPendingCompactCount;
 int g_InvCategoryBaseItemId;
 s32 g_ItemDropRngIndex;
@@ -342,7 +340,6 @@ int g_InvPackedListCount;
 short g_InvPackedList[];
 
 unsigned int *g_InvSelectionBits;
-int g_InvSelectionBitWords;
 
 int Inv_GetPackedListItem(int arg0) {
     if (arg0 >= 0 && arg0 < g_InvPackedListCount) {
@@ -364,8 +361,6 @@ void Inv_ClearSelectionBitset(void) {
  * 0x80055760 and joined by the comparison records and list state. */
 
 ItemDataRecord *g_InvCompareLeftItem, *g_InvCompareRightItem;
-s16 *g_InvActiveListOverride;
-s32 g_InvOverrideSlotLimit;
 int g_InvActiveListCount;
 int g_MenuBattleEquipMode;
 void Menu_DrawSlotRow(ItemDataRecord *entry, u8 *text);

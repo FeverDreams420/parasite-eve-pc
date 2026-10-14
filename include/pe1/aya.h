@@ -23,6 +23,7 @@
  */
 
 #include "common.h"
+#include "pe1/inventory_runtime_types.h"
 
 /* Four-byte entries traversed by Aya_UnlockParasiteSpellById and read by
  * Inv_GetSlotHighlightState. The table has 20 entries. */
@@ -93,7 +94,18 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(AyaSaveState, blend_color) == 0x44,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(AyaSaveState, stats.levels) == 0x28,
                   aya_stat_allocations_offset);
 PE1_STATIC_ASSERT(sizeof(AyaSaveState) == 0xAC, aya_save_state_prefix_size);
-extern AyaSaveState g_AyaSaveState;
+/* The original character prefix and inventory view overlap in saved RAM.
+ * Keep one backing object so equipped slots and item IDs cannot diverge. */
+typedef union PlayerInventoryState {
+    AyaSaveState aya;
+    struct { u8 prefix[0x20]; InventoryRuntime inventory; } runtime;
+} PlayerInventoryState;
+extern PlayerInventoryState g_PlayerInventoryState;
+#define g_AyaSaveState (g_PlayerInventoryState.aya)
+#define g_InventoryRuntime (g_PlayerInventoryState.runtime.inventory)
+PE1_STATIC_ASSERT(offsetof(PlayerInventoryState, runtime.inventory.slots) == offsetof(AyaSaveState, inventory_items), player_inventory_slots_alias);
+PE1_STATIC_ASSERT(offsetof(PlayerInventoryState, runtime.inventory.tracked) == offsetof(AyaSaveState, equipped_weapon_slot), player_inventory_weapon_alias);
+PE1_STATIC_ASSERT(offsetof(PlayerInventoryState, runtime.inventory.tracked) + 2 == offsetof(AyaSaveState, equipped_armor_slot), player_inventory_armor_alias);
 /* AyaSaveState.pe_bonus_pool as a one-field record: a small word that
  * -G8 units with MASPSX_FORCE_G0 address directly (Aya_SetTotalExp). */
 typedef struct AyaBonusPoolRecord {

@@ -280,6 +280,10 @@ void *FieldFx_StartSlot(void *obj, u8 id, u16 *sizes, FieldFxHandler *handlers) 
     void *data;
     FieldFxHandler handler;
 
+    if (!obj || !sizes || !handlers || !g_FieldFxScriptState ||
+        !g_FieldFxSlotTable || !g_FieldFxScriptData || sizes[id] > FIELDFX_DATA_SIZE ||
+        g_FieldFxScriptState->data_next < 0 ||
+        g_FieldFxScriptState->data_next > FIELDFX_DATA_SIZE) return NULL;
     base = g_FieldFxSlotTable;
     for (i = 0; i < 0x40; i++) {
         if (base[i].flag == 0) {
@@ -297,6 +301,7 @@ void *FieldFx_StartSlot(void *obj, u8 id, u16 *sizes, FieldFxHandler *handlers) 
         FieldFx_ActivateSlot(slot, id, sizes[id]);
 
         entry = &g_FieldFxSlotTable[slot];
+        if (((FieldFxSlot *)entry)->flag != 1) return NULL;
         data = g_FieldFxScriptData + ((FieldFxSlot *)entry)->data_offset;
         handler = handlers[id];
         if (handler != (void *)-1) {
@@ -314,6 +319,11 @@ void FieldFx_ActivateSlot(u16 slot, u8 id, u16 size) {
     FieldFxState *state;
     s16 offset;
 
+    if (!g_FieldFxScriptState || !g_FieldFxSlotTable || slot >= 64 ||
+        g_FieldFxSlotTable[slot].flag != 0 || size > FIELDFX_DATA_SIZE ||
+        g_FieldFxScriptState->data_next < 0 ||
+        g_FieldFxScriptState->data_next > FIELDFX_DATA_SIZE ||
+        g_FieldFxScriptState->slot_count < 0 || g_FieldFxScriptState->slot_count >= 64) return;
     g_FieldFxSlotTable[slot].flag = 1;
     g_FieldFxSlotTable[slot].handler_id = id;
     g_FieldFxSlotTable[slot].counter = 0;
@@ -329,6 +339,8 @@ void FieldFx_ActivateSlot(u16 slot, u8 id, u16 size) {
 }
 
 int FieldFx_FreeSlot(u16 slot) {
+    if (!g_FieldFxScriptState || !g_FieldFxSlotTable || slot >= 64 ||
+        g_FieldFxSlotTable[slot].flag == 0 || g_FieldFxScriptState->slot_count <= 0) return 0;
     g_FieldFxSlotTable[slot].flag = 0;
     g_FieldFxScriptState->slot_count--;
 

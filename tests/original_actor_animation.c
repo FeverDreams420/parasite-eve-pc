@@ -1076,6 +1076,59 @@ static int native_effect_spawn_arguments(void)
     return 1;
 }
 
+static size_t slot_write_size;
+static unsigned slot_write_calls;
+static int object_slot_write(void *object, void *slot, void *data)
+{
+    FieldFxObject *owner=object; FieldFxSlot *entry=slot;
+    if(data!=owner->data+entry->data_offset || entry->data_offset<0 ||
+       entry->data_offset+slot_write_size>sizeof(owner->data)) abort();
+    memset(data,0x6c,slot_write_size); ++slot_write_calls;
+    return 0;
+}
+static int native_object_slot_bounds(void)
+{
+    struct { FieldFxObject object; u8 guard[16]; } buffer={0};
+    FieldFxObject *object=&buffer.object;
+    FieldFxHandler handlers[]={object_slot_write,object_slot_write};
+    u16 sizes[]={1,FIELDFX_DATA_SIZE+1};
+    object->prefix.asset_type=7;
+    memset(buffer.guard,0xa5,sizeof(buffer.guard));
+    FieldFx_GetSlot(object); slot_write_size=1; slot_write_calls=0;
+    for(unsigned i=0;i<64;++i) {
+        if(FieldFx_StartSlot(object,0,sizes,handlers)!=&object->data[i] ||
+           object->slots[i].flag!=1 || object->slots[i].data_offset!=i) return 0;
+    }
+    if(object->state.slot_count!=64 || FieldFx_StartSlot(object,0,sizes,handlers) ||
+       object->state.regs[14]!=1 || slot_write_calls!=64) return 0;
+    object->state.halted=1;
+    if(FieldFx_FreeAllSlots()!=-1 || object->state.slot_count || FieldFx_FreeSlot(0) ||
+       FieldFx_FreeSlot(64) || object->state.slot_count) return 0;
+    FieldFx_GetSlot(object); slot_write_calls=0;
+    FieldFxState saved=object->state;
+    if(FieldFx_StartSlot(object,1,sizes,handlers) || slot_write_calls ||
+       memcmp(&saved,&object->state,sizeof(saved)) || object->slots[0].flag) return 0;
+    FieldFx_ActivateSlot(64,0,1); FieldFx_ActivateSlot(0,0,FIELDFX_DATA_SIZE+1);
+    if(memcmp(&saved,&object->state,sizeof(saved)) || object->slots[0].flag) return 0;
+    object->state.data_next=-1; saved=object->state;
+    if(FieldFx_StartSlot(object,0,sizes,handlers) || memcmp(&saved,&object->state,sizeof(saved))) return 0;
+    FieldFx_GetSlot(object);
+    sizes[0]=FIELDFX_DATA_SIZE-1; slot_write_size=sizes[0];
+    if(FieldFx_StartSlot(object,0,sizes,handlers)!=object->data ||
+       object->state.data_next!=FIELDFX_DATA_SIZE-1) return 0;
+    sizes[0]=2; slot_write_size=2;
+    if(FieldFx_StartSlot(object,0,sizes,handlers)!=object->data || object->state.data_next!=2 ||
+       object->slots[1].data_offset) return 0;
+    FieldFx_GetSlot(object); object->state.data_next=8;
+    sizes[0]=FIELDFX_DATA_SIZE; slot_write_size=sizes[0];
+    if(FieldFx_StartSlot(object,0,sizes,handlers)!=object->data ||
+       object->state.data_next!=FIELDFX_DATA_SIZE) return 0;
+    for(unsigned i=0;i<FIELDFX_DATA_SIZE;++i) if((u8)object->data[i]!=0x6c) return 0;
+    for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
+    puts("Original object slots: 64-slot limit, full arena write, original wrap, invalid reservations and double-free guards passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -1136,7 +1189,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !native_effect_spawn_arguments()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !native_effect_spawn_arguments() || !native_object_slot_bounds()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

@@ -3179,3 +3179,20 @@ instrumented and PsyZ/SDL archives uninstrumented. Burst methods and other room
 Spawn6 consumers have consistent declarations but their full modules/class
 bindings remain unverified. This is not proof of descriptor/class-table ABI,
 full gameplay or removal of pc/. No new files or extracted functions.
+
+
+Original object-script slot allocation now checks available context, the
+64-slot bound, free-slot state, data cursor range and reservation size before
+writes. Oversized data reservations do not call init callbacks. FreeSlot ignores
+out-of-range/already-free slots instead of decrementing the live count again.
+The original >=0x80C wrap policy is preserved, including wrapping back onto
+existing data; this does not add an overlapping-allocation policy or padding
+that could change authored behavior. The existing actor fixture covers all 64
+slots and the full-table register signal, exact full-area writes, wrap at the
+end, invalid cursor/reservation/slot inputs and repeated frees with object guards.
+The authored 160-tick GlowEffect cycle still passes. Full build and four related
+CTests pass with Disc 1 required, plus fresh actor ASan/UBSan/function with
+original source instrumented and PsyZ/SDL archives uninstrumented. Unknown
+handler-list lengths/IDs, all authored allocation lifetimes and native alignment
+requirements, complete descriptor integration, full gameplay and deletion of
+pc/ remain incomplete. No new files or extracted functions.

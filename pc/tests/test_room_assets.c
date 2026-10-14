@@ -350,8 +350,26 @@ int main(void) {
     CHECK(owner_command.opcode == 234 && owner_command.args[0].value == 200);
     uint16_t owner_key = (uint16_t)owner_command.args[1].value;
     PeAkaoControl music_initial = {0};
-    CHECK(pe_music_open(&catalog, &owner_room, owner_key, spu, &music_initial,
-                        &owned_music, scene_error, sizeof(scene_error)));
+    PeSceneAudio start_audio = {0}; pe_scene_audio_reset(&start_audio);
+    start_audio.catalog = &catalog; start_audio.room = &owner_room;
+    start_audio.resident = spu; start_audio.initial = music_initial;
+    PeScriptTask start_task;
+    CHECK(pe_script_task_init(&start_task, &owner_scripts, owner_entry, &scene.script_banks));
+    CHECK(pe_scene_audio_dispatch(&start_audio, &start_task, &owner_command) == PE_DISPATCH_CONTINUE);
+    owned_music = start_audio.music[0]; CHECK(owned_music);
+    CHECK(start_audio.keys[0][0] == owner_key && start_audio.keys[0][1] == owned_music->player.bank_id);
+    CHECK(start_audio.flags == 0x40 && start_audio.volumes[0] == 0x7f);
+    CHECK(owned_music->player.control.volume == 0x7f0000);
+    CHECK(pe_script_arg_read(&start_task, &owner_command.args[5]) == owned_music->player.bank_id);
+    pe_script_arg_write(&start_task, &owner_command.args[5], 42);
+    CHECK(pe_scene_audio_dispatch(&start_audio, &start_task, &owner_command) == PE_DISPATCH_CONTINUE);
+    CHECK(start_audio.music[0] == owned_music && !owned_music->player.timer_ticks);
+    CHECK(pe_script_arg_read(&start_task, &owner_command.args[5]) == 42);
+    pe_script_arg_write(&start_task, &owner_command.args[1], UINT16_MAX);
+    CHECK(pe_scene_audio_dispatch(&start_audio, &start_task, &owner_command) == PE_DISPATCH_CONTINUE);
+    CHECK(start_audio.music[0] == owned_music && start_audio.keys[0][0] == owner_key);
+    CHECK(pe_script_arg_read(&start_task, &owner_command.args[5]) == 42);
+    pe_script_arg_write(&start_task, &owner_command.args[1], owner_key);
     CHECK(owned_music->bytes != owner_room.data.bytes && owned_music->samples != spu);
     CHECK(owned_music->key == owner_key);
     PeMusic *previous_music = owned_music;

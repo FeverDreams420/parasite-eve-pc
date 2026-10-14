@@ -426,5 +426,13 @@ the owned Tutorial music stop after three further ticks. Other script audio
 commands, full scene execution and audible output remain unfinished.
 The full 21-test headless suite passes with Disc 1; the scene/audio data test
 also passes ASan/UBSan, including unchanged state for unsupported dispatch.
+
+Scene audio dispatch now handles a fresh primary C8 start from the original
+Tutorial M353 command: resolve the key, load owned music, return its bank ID
+through the decoded result operand and register slot/volume flags. Repeating
+an already-playing key preserves player/result state; a missing key follows
+the original no-op path. Tests use actual decoded operands and verify these
+cases. Cached/secondary restarts and same-ID queue ordering remain explicit
+unsupported paths, alongside full scene execution and synthesized playback.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

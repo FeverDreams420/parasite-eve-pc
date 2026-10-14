@@ -1,5 +1,6 @@
 #include "pe1/script_queue.h"
 #include "pe1/script_state.h"
+#include "pe1/script_expression.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/player_entity.h"
 #include <stdio.h>
@@ -16,6 +17,12 @@ static int record(u32 **args)
     return 1;
 }
 static int yield(u32 **args) { (void)args; ++calls; return 0; }
+/* Test-only ABI adaptation to the real original expression function. */
+static int expression(u32 **raw)
+{
+    ExprOpArgs args={(int *)raw[0],(int *)raw[1],(int *)raw[2],(int *)raw[3]};
+    return Script_EvalExpr(&args);
+}
 static int six(u32 **args)
 {
     if (*args[0]!=1 || *args[4]!=5 || args[5]!=&g_ScriptVariableBank[9]) return 0;
@@ -50,6 +57,13 @@ int main(void)
         g_ScriptQueueOpcodeHandlers[3]=six;g_ScriptNodePool=node;
         Script_RunQueue();
         if (calls!=1 || g_ScriptVariableBank[9]!=99 || node->current.script!=extended+8) return 6;
+    }
+    {
+        u32 arithmetic[]={9|(4u<<13)|((2u<<3)<<17),0,0,7,0x7fffffff,1,2,0};
+        node->current.script=arithmetic;node->active=1;calls=0;
+        g_ScriptQueueOpcodeHandlers[9]=expression;g_ScriptNodePool=node;
+        Script_RunQueue();
+        if (g_ScriptVariableBank[7]!=0x80000000 || calls!=1 || node->current.script!=arithmetic+8) return 7;
     }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;

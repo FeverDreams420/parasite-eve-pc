@@ -25,7 +25,8 @@ add_library(parasite-eve-original OBJECT
     src/main/scene/input_rules.c
     src/main/entity/pool.c
     src/main/entity/block_alloc.c
-    src/main/script/node_pool.c)
+    src/main/script/node_pool.c
+    src/main/script/expression.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
@@ -132,4 +133,12 @@ if(BUILD_TESTING)
     target_include_directories(test-original-queue PRIVATE include)
     target_link_libraries(test-original-queue PRIVATE psyz)
     add_test(NAME original-game-queue COMMAND test-original-queue)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test-original-expression tests/original_expression.c
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-expression PRIVATE include)
+    target_link_libraries(test-original-expression PRIVATE psyz)
+    add_test(NAME original-game-expression COMMAND test-original-expression)
 endif()

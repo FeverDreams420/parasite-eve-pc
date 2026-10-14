@@ -1,0 +1,1210 @@
+{
+  "source": "USA executable table 0x800910A0, ends before text at 0x80091464",
+  "entries": [
+    {
+      "opcode": 0,
+      "function": "Script_JumpToEntityOffset",
+      "original_address": "0x80017294"
+    },
+    {
+      "opcode": 1,
+      "function": "Entity_MarkCurrentDead",
+      "original_address": "0x800172bc"
+    },
+    {
+      "opcode": 2,
+      "function": "Entity_SetCurrentNodeActive",
+      "original_address": "0x800172e0"
+    },
+    {
+      "opcode": 3,
+      "function": "Script_SetFogParams",
+      "original_address": "0x80017c54"
+    },
+    {
+      "opcode": 4,
+      "function": "Entity_MarkNodeFree",
+      "original_address": "0x80017988"
+    },
+    {
+      "opcode": 5,
+      "function": "Script_JumpIfZero",
+      "original_address": "0x8001731c"
+    },
+    {
+      "opcode": 6,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 7,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 8,
+      "function": "Script_SpawnEntityAt",
+      "original_address": "0x8001735c"
+    },
+    {
+      "opcode": 9,
+      "function": "Script_EvalExpr",
+      "original_address": "0x80012850"
+    },
+    {
+      "opcode": 10,
+      "function": "Script_AssignValue",
+      "original_address": "0x800173f4"
+    },
+    {
+      "opcode": 11,
+      "function": "Script_SetEntityVec3",
+      "original_address": "0x80012c20"
+    },
+    {
+      "opcode": 12,
+      "function": "Script_GetEntityVec3",
+      "original_address": "0x80012e7c"
+    },
+    {
+      "opcode": 13,
+      "function": "Script_StopEntityAnim",
+      "original_address": "0x80017410"
+    },
+    {
+      "opcode": 14,
+      "function": "Entity_QueryField",
+      "original_address": "0x80014228"
+    },
+    {
+      "opcode": 15,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 16,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 17,
+      "function": "Script_DispatchCmd",
+      "original_address": "0x800130b4"
+    },
+    {
+      "opcode": 18,
+      "function": "Script_SpawnChildNode",
+      "original_address": "0x800131e8"
+    },
+    {
+      "opcode": 19,
+      "function": "Entity_SetCurrentFlags",
+      "original_address": "0x800176b8"
+    },
+    {
+      "opcode": 20,
+      "function": "Entity_SelectFieldSetter",
+      "original_address": "0x80017588"
+    },
+    {
+      "opcode": 21,
+      "function": "Script_PlayerPointInPoly",
+      "original_address": "0x800188c4"
+    },
+    {
+      "opcode": 22,
+      "function": "Entity_YieldWhileMoving",
+      "original_address": "0x80017540"
+    },
+    {
+      "opcode": 23,
+      "function": "Entity_ComputeVelocityToTarget",
+      "original_address": "0x80017444"
+    },
+    {
+      "opcode": 24,
+      "function": "Entity_FindNodeById",
+      "original_address": "0x8001787c"
+    },
+    {
+      "opcode": 25,
+      "function": "Entity_GetCurrentNodeId",
+      "original_address": "0x800176e0"
+    },
+    {
+      "opcode": 26,
+      "function": "Script_Random",
+      "original_address": "0x800176fc"
+    },
+    {
+      "opcode": 27,
+      "function": "Script_SetEntityMoveSpeed",
+      "original_address": "0x80018f74"
+    },
+    {
+      "opcode": 28,
+      "function": "Script_PlayFieldSfx",
+      "original_address": "0x80017764"
+    },
+    {
+      "opcode": 29,
+      "function": "Script_CondBranch",
+      "original_address": "0x80017e20"
+    },
+    {
+      "opcode": 30,
+      "function": "Entity_SetCurrentFlag80",
+      "original_address": "0x80019658"
+    },
+    {
+      "opcode": 31,
+      "function": "Script_GetNodeTarget14",
+      "original_address": "0x800177ac"
+    },
+    {
+      "opcode": 32,
+      "function": "Entity_MarkCurrentNodeFree",
+      "original_address": "0x800172fc"
+    },
+    {
+      "opcode": 33,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 34,
+      "function": "Script_YieldWhileTableEntrySet",
+      "original_address": "0x800177c8"
+    },
+    {
+      "opcode": 35,
+      "function": "Script_ClearTableEntry",
+      "original_address": "0x80017820"
+    },
+    {
+      "opcode": 36,
+      "function": "Script_GetNodeTargets18_1C",
+      "original_address": "0x8001784c"
+    },
+    {
+      "opcode": 37,
+      "function": "Script_GetCurrentEntityField24",
+      "original_address": "0x80017968"
+    },
+    {
+      "opcode": 38,
+      "function": "Script_GetCurrentEntityFieldD",
+      "original_address": "0x80017928"
+    },
+    {
+      "opcode": 39,
+      "function": "Script_SetCurrentEntityFieldD",
+      "original_address": "0x80017948"
+    },
+    {
+      "opcode": 40,
+      "function": "Script_ClearBit",
+      "original_address": "0x800179f8"
+    },
+    {
+      "opcode": 41,
+      "function": "Script_TestBit",
+      "original_address": "0x80017a24"
+    },
+    {
+      "opcode": 42,
+      "function": "Script_SetBit",
+      "original_address": "0x80017a50"
+    },
+    {
+      "opcode": 43,
+      "function": "Entity_ClearGlobalFlags",
+      "original_address": "0x80017a78"
+    },
+    {
+      "opcode": 44,
+      "function": "Entity_GetGlobalFlags",
+      "original_address": "0x80017aa4"
+    },
+    {
+      "opcode": 45,
+      "function": "Entity_SetGlobalFlags",
+      "original_address": "0x80017ac0"
+    },
+    {
+      "opcode": 46,
+      "function": "Entity_SetCurrentActionMode",
+      "original_address": "0x80017ae8"
+    },
+    {
+      "opcode": 47,
+      "function": "Script_SetEntityAnimFrame",
+      "original_address": "0x80017b34"
+    },
+    {
+      "opcode": 48,
+      "function": "Script_WaitAnimFrameMatch",
+      "original_address": "0x80017b74"
+    },
+    {
+      "opcode": 49,
+      "function": "Script_EncodeBarcode",
+      "original_address": "0x80017bb4"
+    },
+    {
+      "opcode": 50,
+      "function": "Entity_ClearCurrentFlag80",
+      "original_address": "0x8001967c"
+    },
+    {
+      "opcode": 51,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 52,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 53,
+      "function": "Script_LoadSceneData",
+      "original_address": "0x80014e30"
+    },
+    {
+      "opcode": 54,
+      "function": "Render_CameraTrackEntityZoom",
+      "original_address": "0x80013e84"
+    },
+    {
+      "opcode": 55,
+      "function": "Entity_SetCurrentFlag4000",
+      "original_address": "0x800196a0"
+    },
+    {
+      "opcode": 56,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 57,
+      "function": "Entity_ClearCurrentFlag4000",
+      "original_address": "0x800196c4"
+    },
+    {
+      "opcode": 58,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 59,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 60,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 61,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 62,
+      "function": "Script_SetEntityField224",
+      "original_address": "0x80017d3c"
+    },
+    {
+      "opcode": 63,
+      "function": "Entity_ClearGlobalFlag1",
+      "original_address": "0x80017d5c"
+    },
+    {
+      "opcode": 64,
+      "function": "Entity_SetGlobalFlag1",
+      "original_address": "0x80017d7c"
+    },
+    {
+      "opcode": 65,
+      "function": "Entity_SetCurrentFlag40",
+      "original_address": "0x80017d9c"
+    },
+    {
+      "opcode": 66,
+      "function": "Entity_ClearCurrentFlag40",
+      "original_address": "0x80017dc0"
+    },
+    {
+      "opcode": 67,
+      "function": "Script_GetMenuChoice",
+      "original_address": "0x80017de4"
+    },
+    {
+      "opcode": 68,
+      "function": "Script_MoveTowardPoint",
+      "original_address": "0x800136c0"
+    },
+    {
+      "opcode": 69,
+      "function": "Script_GetAngleToEntity",
+      "original_address": "0x80015648"
+    },
+    {
+      "opcode": 70,
+      "function": "Script_SetFogParamsAlt",
+      "original_address": "0x80017c8c"
+    },
+    {
+      "opcode": 71,
+      "function": "Script_IsBattlePhase4",
+      "original_address": "0x80017cc4"
+    },
+    {
+      "opcode": 72,
+      "function": "Script_ResetPlayerCameraPos",
+      "original_address": "0x80017ce8"
+    },
+    {
+      "opcode": 73,
+      "function": "Script_SetBattleStateMode",
+      "original_address": "0x80017d18"
+    },
+    {
+      "opcode": 74,
+      "function": "Entity_TestCurrentFlags",
+      "original_address": "0x80017e68"
+    },
+    {
+      "opcode": 75,
+      "function": "Render_CameraSnapToEntity",
+      "original_address": "0x80013c34"
+    },
+    {
+      "opcode": 76,
+      "function": "Script_Noop",
+      "original_address": "0x80017e9c"
+    },
+    {
+      "opcode": 77,
+      "function": "Script_SetEntityField1C",
+      "original_address": "0x80017ea4"
+    },
+    {
+      "opcode": 78,
+      "function": "Script_SetEntityAnimSpeed",
+      "original_address": "0x80017ec4"
+    },
+    {
+      "opcode": 79,
+      "function": "Entity_SetCurrentFlag100",
+      "original_address": "0x80017efc"
+    },
+    {
+      "opcode": 80,
+      "function": "Entity_ClearCurrentFlag100",
+      "original_address": "0x80017f20"
+    },
+    {
+      "opcode": 81,
+      "function": "Scene_TestGlobalFlags",
+      "original_address": "0x80017f44"
+    },
+    {
+      "opcode": 82,
+      "function": "Scene_SetGlobalFlags",
+      "original_address": "0x80017f88"
+    },
+    {
+      "opcode": 83,
+      "function": "Scene_ClearGlobalFlags",
+      "original_address": "0x80017fb0"
+    },
+    {
+      "opcode": 84,
+      "function": "Entity_GetDistanceComponents",
+      "original_address": "0x800143b0"
+    },
+    {
+      "opcode": 85,
+      "function": "Boot_MemCardStepInit",
+      "original_address": "0x800144fc"
+    },
+    {
+      "opcode": 86,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 87,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 88,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 89,
+      "function": "Entity_GetField",
+      "original_address": "0x80018004"
+    },
+    {
+      "opcode": 90,
+      "function": "Entity_SetField",
+      "original_address": "0x80018164"
+    },
+    {
+      "opcode": 91,
+      "function": "Script_ClearBattleFlags",
+      "original_address": "0x800182a0"
+    },
+    {
+      "opcode": 92,
+      "function": "Script_SetBattleFlags",
+      "original_address": "0x800182c0"
+    },
+    {
+      "opcode": 93,
+      "function": "Script_SetCurrentEntityField20",
+      "original_address": "0x800182e0"
+    },
+    {
+      "opcode": 94,
+      "function": "Entity_GetPositionByType",
+      "original_address": "0x80014694"
+    },
+    {
+      "opcode": 95,
+      "function": "Entity_MarkAnimPending",
+      "original_address": "0x80018300"
+    },
+    {
+      "opcode": 96,
+      "function": "Entity_AdvancePendingAnim",
+      "original_address": "0x80018364"
+    },
+    {
+      "opcode": 97,
+      "function": "Render_CameraTrackRelativeOffset",
+      "original_address": "0x800148e0"
+    },
+    {
+      "opcode": 98,
+      "function": "Entity_MarkNodeAnimPendingById",
+      "original_address": "0x800183e8"
+    },
+    {
+      "opcode": 99,
+      "function": "Entity_AdvanceNodeById",
+      "original_address": "0x80018460"
+    },
+    {
+      "opcode": 100,
+      "function": "Script_RunEntityCommand",
+      "original_address": "0x800184ec"
+    },
+    {
+      "opcode": 101,
+      "function": "Entity_ClearMotionVectors",
+      "original_address": "0x8001856c"
+    },
+    {
+      "opcode": 102,
+      "function": "Entity_ComputeVelocity",
+      "original_address": "0x80018598"
+    },
+    {
+      "opcode": 103,
+      "function": "Script_ComputeAudioTimer",
+      "original_address": "0x80018660"
+    },
+    {
+      "opcode": 104,
+      "function": "Script_GetCombatModeFlag",
+      "original_address": "0x80018718"
+    },
+    {
+      "opcode": 105,
+      "function": "Script_SetCombatModeFlag",
+      "original_address": "0x80018754"
+    },
+    {
+      "opcode": 106,
+      "function": "Script_GetEntityEffect",
+      "original_address": "0x80018774"
+    },
+    {
+      "opcode": 107,
+      "function": "Pm_ScriptSendCommand0",
+      "original_address": "0x800187c0"
+    },
+    {
+      "opcode": 108,
+      "function": "Pm_ScriptSendCommand1",
+      "original_address": "0x80018818"
+    },
+    {
+      "opcode": 109,
+      "function": "Pm_ScriptSetState",
+      "original_address": "0x80018864"
+    },
+    {
+      "opcode": 110,
+      "function": "Pm_ScriptGetState",
+      "original_address": "0x80018894"
+    },
+    {
+      "opcode": 111,
+      "function": "Script_InitEntityMoveState",
+      "original_address": "0x80018954"
+    },
+    {
+      "opcode": 112,
+      "function": "Script_SetEntityAnim12Args",
+      "original_address": "0x8001897c"
+    },
+    {
+      "opcode": 113,
+      "function": "Script_SetSceneEntryAnim",
+      "original_address": "0x80018a9c"
+    },
+    {
+      "opcode": 114,
+      "function": "Script_SetRenderEntryEnabled",
+      "original_address": "0x80018b00"
+    },
+    {
+      "opcode": 115,
+      "function": "Script_SetRenderEntryPos",
+      "original_address": "0x80018b30"
+    },
+    {
+      "opcode": 116,
+      "function": "Script_SetObjEntryLimit",
+      "original_address": "0x80018b68"
+    },
+    {
+      "opcode": 117,
+      "function": "Script_SetFlagSlot",
+      "original_address": "0x80018b98"
+    },
+    {
+      "opcode": 118,
+      "function": "Render_CameraStepAngleFade",
+      "original_address": "0x80014ba0"
+    },
+    {
+      "opcode": 119,
+      "function": "Script_PointInPoly",
+      "original_address": "0x80014da0"
+    },
+    {
+      "opcode": 120,
+      "function": "Entity_ClearCurrentFlag20",
+      "original_address": "0x80018bc8"
+    },
+    {
+      "opcode": 121,
+      "function": "Entity_SetCurrentFlag20",
+      "original_address": "0x80018bec"
+    },
+    {
+      "opcode": 122,
+      "function": "Script_GetObjEntryField6",
+      "original_address": "0x80018c10"
+    },
+    {
+      "opcode": 123,
+      "function": "Script_SetObjEntryField8",
+      "original_address": "0x80018c58"
+    },
+    {
+      "opcode": 124,
+      "function": "Script_FillObjEntrySlotValues",
+      "original_address": "0x80018c88"
+    },
+    {
+      "opcode": 125,
+      "function": "Script_SetObjEntrySlotValue",
+      "original_address": "0x80018cb8"
+    },
+    {
+      "opcode": 126,
+      "function": "Script_SetObjEntryFlags",
+      "original_address": "0x80018cf0"
+    },
+    {
+      "opcode": 127,
+      "function": "Script_ClearObjEntryFlags",
+      "original_address": "0x80018d20"
+    },
+    {
+      "opcode": 128,
+      "function": "Script_SetObjEntryFlag80",
+      "original_address": "0x80018d50"
+    },
+    {
+      "opcode": 129,
+      "function": "Script_ClearObjEntryFlag80",
+      "original_address": "0x80018dd4"
+    },
+    {
+      "opcode": 130,
+      "function": "Script_LoadGeomState",
+      "original_address": "0x80018e58"
+    },
+    {
+      "opcode": 131,
+      "function": "Script_WaitAnimRange",
+      "original_address": "0x800133e8"
+    },
+    {
+      "opcode": 132,
+      "function": "Script_SetScreenScrollPos",
+      "original_address": "0x80018e84"
+    },
+    {
+      "opcode": 133,
+      "function": "Script_SetCdRomSeekPos",
+      "original_address": "0x80018eb4"
+    },
+    {
+      "opcode": 134,
+      "function": "Script_SetFogColor",
+      "original_address": "0x80018ee0"
+    },
+    {
+      "opcode": 135,
+      "function": "Script_SetCdRomScreenPos",
+      "original_address": "0x80018f0c"
+    },
+    {
+      "opcode": 136,
+      "function": "Script_ClearEntityFlag40",
+      "original_address": "0x80018f54"
+    },
+    {
+      "opcode": 137,
+      "function": "Menu_SetModeState6",
+      "original_address": "0x80017ff0"
+    },
+    {
+      "opcode": 138,
+      "function": "Menu_SetModeState5",
+      "original_address": "0x80017fdc"
+    },
+    {
+      "opcode": 139,
+      "function": "Entity_FindByTypeId",
+      "original_address": "0x80018080"
+    },
+    {
+      "opcode": 140,
+      "function": "Script_WaitFrameOrDraw",
+      "original_address": "0x80018fdc"
+    },
+    {
+      "opcode": 141,
+      "function": "Script_Noop1",
+      "original_address": "0x80019050"
+    },
+    {
+      "opcode": 142,
+      "function": "Script_Noop2",
+      "original_address": "0x80019058"
+    },
+    {
+      "opcode": 143,
+      "function": "Entity_YieldOnDrawBusy",
+      "original_address": "0x80019060"
+    },
+    {
+      "opcode": 144,
+      "function": "Script_Noop4",
+      "original_address": "0x800190b4"
+    },
+    {
+      "opcode": 145,
+      "function": "Script_Noop3",
+      "original_address": "0x800190ac"
+    },
+    {
+      "opcode": 146,
+      "function": "Script_PlayEntityAnim",
+      "original_address": "0x80014fd8"
+    },
+    {
+      "opcode": 147,
+      "function": "Script_SetAnimInterpRate",
+      "original_address": "0x800190bc"
+    },
+    {
+      "opcode": 148,
+      "function": "Menu_GetModeState",
+      "original_address": "0x80019154"
+    },
+    {
+      "opcode": 149,
+      "function": "Menu_ClearModeState",
+      "original_address": "0x800192b8"
+    },
+    {
+      "opcode": 150,
+      "function": "Menu_SetModeState8",
+      "original_address": "0x800192c8"
+    },
+    {
+      "opcode": 151,
+      "function": "Pm_ScriptStopCurrentEntity",
+      "original_address": "0x800192dc"
+    },
+    {
+      "opcode": 152,
+      "function": "Script_SetEntityTarget",
+      "original_address": "0x8001930c"
+    },
+    {
+      "opcode": 153,
+      "function": "Script_ResetRenderState",
+      "original_address": "0x800193b8"
+    },
+    {
+      "opcode": 154,
+      "function": "Script_SetMenuSlotEntry",
+      "original_address": "0x800193d8"
+    },
+    {
+      "opcode": 155,
+      "function": "Script_SetGteMatrix",
+      "original_address": "0x80015240"
+    },
+    {
+      "opcode": 156,
+      "function": "Entity_YieldOnLoading",
+      "original_address": "0x80019410"
+    },
+    {
+      "opcode": 157,
+      "function": "Script_ScaleAnimValue",
+      "original_address": "0x80019450"
+    },
+    {
+      "opcode": 158,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 159,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 160,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 161,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 162,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 163,
+      "function": null,
+      "original_address": "0x00000000"
+    },
+    {
+      "opcode": 164,
+      "function": "Script_CopyEntityRenderObject",
+      "original_address": "0x80015108"
+    },
+    {
+      "opcode": 165,
+      "function": "Boot_CheckModeSwitch",
+      "original_address": "0x800155fc"
+    },
+    {
+      "opcode": 166,
+      "function": "Script_ClampMenuRange",
+      "original_address": "0x80019484"
+    },
+    {
+      "opcode": 167,
+      "function": "Script_GiveItem",
+      "original_address": "0x800194b0"
+    },
+    {
+      "opcode": 168,
+      "function": "Script_CountItemsByValue",
+      "original_address": "0x800194f8"
+    },
+    {
+      "opcode": 169,
+      "function": "Entity_InitWithTimeout",
+      "original_address": "0x80019540"
+    },
+    {
+      "opcode": 170,
+      "function": "Script_SetSceneFlag2000",
+      "original_address": "0x80019618"
+    },
+    {
+      "opcode": 171,
+      "function": "Script_ClearSceneFlag2000",
+      "original_address": "0x80019638"
+    },
+    {
+      "opcode": 172,
+      "function": "Script_SetAnimSlotPointer",
+      "original_address": "0x800196e8"
+    },
+    {
+      "opcode": 173,
+      "function": "Script_ClearInputFlagBit2",
+      "original_address": "0x80019748"
+    },
+    {
+      "opcode": 174,
+      "function": "Script_SetInputFlagBit2",
+      "original_address": "0x80019728"
+    },
+    {
+      "opcode": 175,
+      "function": "Entity_ResolveCurrentPosition",
+      "original_address": "0x80019768"
+    },
+    {
+      "opcode": 176,
+      "function": "Script_SetBattleEntryCoords",
+      "original_address": "0x800198c4"
+    },
+    {
+      "opcode": 177,
+      "function": "Scene_SelectMapById",
+      "original_address": "0x80015790"
+    },
+    {
+      "opcode": 178,
+      "function": "Script_GetFloorNumber",
+      "original_address": "0x80019798"
+    },
+    {
+      "opcode": 179,
+      "function": "Script_SetFloorByEntityRoll",
+      "original_address": "0x80015964"
+    },
+    {
+      "opcode": 180,
+      "function": "Script_SetMoveFlag",
+      "original_address": "0x800197d0"
+    },
+    {
+      "opcode": 181,
+      "function": "Script_ClearMoveFlag",
+      "original_address": "0x800197f0"
+    },
+    {
+      "opcode": 182,
+      "function": "Entity_PolarToPosition2",
+      "original_address": "0x80019810"
+    },
+    {
+      "opcode": 183,
+      "function": "Script_SetEntityAnim5Args",
+      "original_address": "0x80018a48"
+    },
+    {
+      "opcode": 184,
+      "function": "Script_TurnTowardPointStep",
+      "original_address": "0x80013514"
+    },
+    {
+      "opcode": 185,
+      "function": "Script_ClearEntityFlag1",
+      "original_address": "0x80019904"
+    },
+    {
+      "opcode": 186,
+      "function": "Script_SetEntityFlag1",
+      "original_address": "0x80019928"
+    },
+    {
+      "opcode": 187,
+      "function": "Script_SetEntryScrolled",
+      "original_address": "0x8001994c"
+    },
+    {
+      "opcode": 188,
+      "function": "Script_SetEntryMirrored",
+      "original_address": "0x8001998c"
+    },
+    {
+      "opcode": 189,
+      "function": "Script_SetRenderFlag8Params",
+      "original_address": "0x80019a1c"
+    },
+    {
+      "opcode": 190,
+      "function": "Script_ClearRenderFlag8",
+      "original_address": "0x80019a9c"
+    },
+    {
+      "opcode": 191,
+      "function": "Script_SetRenderFlag10Value",
+      "original_address": "0x800199cc"
+    },
+    {
+      "opcode": 192,
+      "function": "Script_ClearRenderFlag10",
+      "original_address": "0x800199f8"
+    },
+    {
+      "opcode": 193,
+      "function": "Script_SetEntityFlag400",
+      "original_address": "0x80019ac0"
+    },
+    {
+      "opcode": 194,
+      "function": "Script_ClearEntityFlag400",
+      "original_address": "0x80019ae4"
+    },
+    {
+      "opcode": 195,
+      "function": "Script_WaitEntityFlags8",
+      "original_address": "0x80019b08"
+    },
+    {
+      "opcode": 196,
+      "function": "Script_RotateEntityAngle",
+      "original_address": "0x80019b78"
+    },
+    {
+      "opcode": 197,
+      "function": "Entity_CopyAttachmentData",
+      "original_address": "0x80019170"
+    },
+    {
+      "opcode": 198,
+      "function": "Script_SetEntityActionAndWait",
+      "original_address": "0x80013300"
+    },
+    {
+      "opcode": 199,
+      "function": "Script_SetNodeFlag80",
+      "original_address": "0x80019be4"
+    },
+    {
+      "opcode": 200,
+      "function": "Script_ClearEntityRoamFlag",
+      "original_address": "0x80019c04"
+    },
+    {
+      "opcode": 201,
+      "function": "Script_SetEntityRoamFlag",
+      "original_address": "0x80019c28"
+    },
+    {
+      "opcode": 202,
+      "function": "Script_SetEntityField1E6",
+      "original_address": "0x80019298"
+    },
+    {
+      "opcode": 203,
+      "function": "Script_GetAngleToPoint",
+      "original_address": "0x80019c4c"
+    },
+    {
+      "opcode": 204,
+      "function": "Script_ResetEntityRenderObj",
+      "original_address": "0x80019260"
+    },
+    {
+      "opcode": 205,
+      "function": "Script_SnapPosToSpawnPos",
+      "original_address": "0x80019cec"
+    },
+    {
+      "opcode": 206,
+      "function": "Entity_SetFieldByTypeId",
+      "original_address": "0x800181cc"
+    },
+    {
+      "opcode": 207,
+      "function": "Script_SignalSceneExit",
+      "original_address": "0x80019d24"
+    },
+    {
+      "opcode": 208,
+      "function": "Script_DrawSaveOverlay",
+      "original_address": "0x80019d44"
+    },
+    {
+      "opcode": 209,
+      "function": "Script_ResetEntityAnimSlot",
+      "original_address": "0x80019d84"
+    },
+    {
+      "opcode": 210,
+      "function": "Script_GetFloorTableValue",
+      "original_address": "0x80019db8"
+    },
+    {
+      "opcode": 211,
+      "function": "GameTime_ConvertSecondsToHMS",
+      "original_address": "0x80019df4"
+    },
+    {
+      "opcode": 212,
+      "function": "Script_SetEntityParentLink",
+      "original_address": "0x80019f04"
+    },
+    {
+      "opcode": 213,
+      "function": "Script_ClearEntityParentLink",
+      "original_address": "0x80019fe0"
+    },
+    {
+      "opcode": 214,
+      "function": "Entity_ClearParentLink",
+      "original_address": "0x8001a064"
+    },
+    {
+      "opcode": 215,
+      "function": "Script_GetSin",
+      "original_address": "0x8001a0cc"
+    },
+    {
+      "opcode": 216,
+      "function": "Script_GetCos",
+      "original_address": "0x8001a114"
+    },
+    {
+      "opcode": 217,
+      "function": "Script_GetAtan2",
+      "original_address": "0x8001a15c"
+    },
+    {
+      "opcode": 218,
+      "function": "Script_GetSqrt",
+      "original_address": "0x8001a1a8"
+    },
+    {
+      "opcode": 219,
+      "function": "Render_CameraTrackEntityAngle",
+      "original_address": "0x80013988"
+    },
+    {
+      "opcode": 220,
+      "function": "Script_SetEntityFlag1000000",
+      "original_address": "0x8001a1f0"
+    },
+    {
+      "opcode": 221,
+      "function": "Entity_PolarToPosition",
+      "original_address": "0x8001a214"
+    },
+    {
+      "opcode": 222,
+      "function": "Entity_PopCount",
+      "original_address": "0x8001a2f0"
+    },
+    {
+      "opcode": 223,
+      "function": "Script_EnableEntityGravity",
+      "original_address": "0x8001a32c"
+    },
+    {
+      "opcode": 224,
+      "function": "Script_DisableEntityGravity",
+      "original_address": "0x8001a350"
+    },
+    {
+      "opcode": 225,
+      "function": "Script_SetMeshFadeLevel",
+      "original_address": "0x8001a374"
+    },
+    {
+      "opcode": 226,
+      "function": "Entity_CallAction",
+      "original_address": "0x8001a390"
+    },
+    {
+      "opcode": 227,
+      "function": "Script_SetInventorySlotPointer",
+      "original_address": "0x8001a3fc"
+    },
+    {
+      "opcode": 228,
+      "function": "Script_GetInventoryTotal",
+      "original_address": "0x8001a43c"
+    },
+    {
+      "opcode": 229,
+      "function": "Script_GetInventorySlotLimit",
+      "original_address": "0x8001a474"
+    },
+    {
+      "opcode": 230,
+      "function": "Script_SetActorScreenPos",
+      "original_address": "0x80015ab8"
+    },
+    {
+      "opcode": 231,
+      "function": "Script_OpenMemCardDialog",
+      "original_address": "0x80015af0"
+    },
+    {
+      "opcode": 232,
+      "function": "Script_ShowReceivedItem",
+      "original_address": "0x80015bac"
+    },
+    {
+      "opcode": 233,
+      "function": "Script_RunInvCommand",
+      "original_address": "0x80015c7c"
+    },
+    {
+      "opcode": 234,
+      "function": "Akao_ProcessCommand",
+      "original_address": "0x80015dac"
+    },
+    {
+      "opcode": 235,
+      "function": "Script_SetEntityShadowFlag",
+      "original_address": "0x80016df8"
+    },
+    {
+      "opcode": 236,
+      "function": "Script_ClearEntityShadowFlag",
+      "original_address": "0x80016e1c"
+    },
+    {
+      "opcode": 237,
+      "function": "Script_DispatchScriptCmd",
+      "original_address": "0x80016910"
+    },
+    {
+      "opcode": 238,
+      "function": "Script_BeginSceneTransition",
+      "original_address": "0x80016e40"
+    },
+    {
+      "opcode": 239,
+      "function": "Script_OpenSaveLoadMenu",
+      "original_address": "0x80016f10"
+    },
+    {
+      "opcode": 240,
+      "function": "Script_GetPlayerInputFlag",
+      "original_address": "0x80016fe0"
+    }
+  ]
+}

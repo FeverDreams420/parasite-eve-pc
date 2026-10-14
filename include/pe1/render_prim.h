@@ -109,10 +109,10 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTexturedQuad, clut) == 14, render_quad_clut
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTexturedQuad, tpage) == 22, render_quad_tpage_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTexturedQuad, x3) == 32, render_quad_x3_offset);
 
-/* Fixed-size textured sprite and texture-page packets built for room tiles.
- * The three-byte address is preserved while the packet length is initialized. */
+/* Native PsyZ sprite and texture-page packets built for room tiles.
+ * Address and command length occupy full native tag words. */
 typedef struct RenderTilePacket {
-    u8 address[3], length;
+    uintptr_t address, length;
     u8 r, g, b, code;
     u16 x, y;
     u8 u, v;
@@ -120,7 +120,7 @@ typedef struct RenderTilePacket {
 } RenderTilePacket;
 
 typedef struct RenderTexturePagePacket {
-    u8 address[3], length;
+    uintptr_t address, length;
     u32 command;
 } RenderTexturePagePacket;
 
@@ -130,9 +130,9 @@ typedef struct RenderPagedSpritePacket {
     RenderSpritePacket sprite;
 } RenderPagedSpritePacket;
 
-PE1_STATIC_ASSERT(sizeof(RenderPagedSpritePacket) == 0x1C,
+PE1_STATIC_ASSERT(sizeof(RenderPagedSpritePacket) == sizeof(RenderTexturePagePacket) + sizeof(RenderSpritePacket) + (sizeof(void *) == 8 ? 4 : 0),
                   render_paged_sprite_packet_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPagedSpritePacket, sprite) == 8,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPagedSpritePacket, sprite) == sizeof(RenderTexturePagePacket),
                   render_paged_sprite_packet_sprite_offset);
 
 typedef union RenderTileTexture {
@@ -140,9 +140,9 @@ typedef union RenderTileTexture {
     u8 bytes[8];
 } RenderTileTexture;
 
-PE1_STATIC_ASSERT(sizeof(RenderTilePacket) == 16, render_tile_packet_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTilePacket, clut) == 14, render_tile_clut_offset);
-PE1_STATIC_ASSERT(sizeof(RenderTexturePagePacket) == 8, render_texture_page_packet_size);
+PE1_STATIC_ASSERT(sizeof(RenderTilePacket) == ((sizeof(RenderNativeTag) + 12 + sizeof(void *) - 1) / sizeof(void *)) * sizeof(void *), render_tile_packet_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTilePacket, clut) == sizeof(RenderNativeTag) + 10, render_tile_clut_offset);
+PE1_STATIC_ASSERT(sizeof(RenderTexturePagePacket) == sizeof(RenderNativeTag) + sizeof(uintptr_t), render_texture_page_packet_size);
 PE1_STATIC_ASSERT(sizeof(RenderTileTexture) == 8, render_tile_texture_size);
 
 PE1_STATIC_ASSERT(sizeof(RenderLinePacket) == 16, render_line_packet_size);

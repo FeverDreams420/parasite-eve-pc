@@ -1663,3 +1663,23 @@ of scene-load tint toggling. Full build, shadow/real-data camera CTests and
 ASan/UBSan/function checks passed (PsyZ uninstrumented). Duration 0/1 behavior
 and conversion of legacy sprite packets to native PsyZ packets remain pending;
 this verifies original color/state calculations, not rendered fade images.
+
+### Native room-sprite packets and links in original renderer modules
+
+mesh_list.c now links sprite/page packets using full native addresses and
+RenderNativeTag ordering entries instead of 24-bit masks and four-byte OT
+strides. Self-relative position addressing uses uintptr_t. Existing room tile
+and texture-page structs carry native tags; fade/tint loops now use the actual
+sprite stride/color offsets. mesh_entry.c compiles as a complete original module
+and builds both packet buffers with native pointer arithmetic. No files added
+or functions extracted.
+
+The existing mesh/shadow test verifies two sprites linked at one depth in both
+buffers (page/sprite order, preserved command lengths, full pointers and screen
+coordinates), then calls original Render_LoadMeshEntry and checks the resulting
+work-buffer extent, native PsyZ SPRT_16 fields and both page buffers. Existing
+scroll/fade/tint tests use the enlarged packet layout. Full build, shadow,
+real-data camera and scene-spawn CTests and mesh/shadow ASan/UBSan/function checks
+passed (PsyZ uninstrumented). This is packet/state evidence, not rendered scene
+fidelity. Serialized geometry conversion, all wrapping/culling cases, glyph
+consumers of the shared page type and full GPU image comparison remain pending.

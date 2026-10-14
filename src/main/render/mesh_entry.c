@@ -1,12 +1,13 @@
 #include "pe1/geom_state.h"
-#include "pe1/menu_background.h"
-#include "pe1/psyq_gpu.h"
+#include "common.h"
+u16 GetClut(int x, int y);
+u16 GetTPage(int tp, int abr, int x, int y);
 #include "pe1/render_prim.h"
 
 /* A mesh entry seen as the address its self-relative array offsets add to. */
 typedef union GeomEntryAddress {
     GeomEntry *entry;
-    u32 address;
+    uintptr_t address;
 } GeomEntryAddress;
 
 /* Build both frame buffers of room-tile sprites and texture-page packets. */

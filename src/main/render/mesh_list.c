@@ -22,34 +22,17 @@ typedef union RenderLinkAddress {
     u8 *bytes;
     u32 *words;
     GeomEntry *entry;
-    u32 word;
+    uintptr_t word;
 } RenderLinkAddress;
 
 #define LINK_PACKET_PRELOADED(packet, ordering, packet_tag, mask24, maskTop) \
-    do {                                                                    \
-        u32 ot_tag;                                      \
-        RenderLinkAddress link;                                             \
-        ot_tag = *(u32 *)(ordering);                                        \
-        *(u32 *)(packet) = ((packet_tag) & (maskTop)) | (ot_tag & (mask24)); \
-        ot_tag = *(u32 *)(ordering);                                        \
-        link.pointer = (packet);                                            \
-        *(u32 *)(ordering) = (ot_tag & (maskTop)) | (link.word & (mask24)); \
+    do { \
+        RenderNativeTag *slot = (RenderNativeTag *)(ordering); \
+        (packet)->address = slot->address; \
+        slot->address = (uintptr_t)(packet); \
     } while (0)
-
-#define LINK_PAGE(packet, ordering, mask24, maskTop)                         \
-    do {                                                                     \
-        u32 packet_tag = *(u32 *)(packet);               \
-        u32 ot_tag;                                      \
-        RenderLinkAddress link;                                              \
-        ot_tag = *(u32 *)(ordering);                                         \
-        ot_tag &= (mask24);                                                   \
-        packet_tag &= (maskTop);                                              \
-        packet_tag |= ot_tag;                                                 \
-        *(u32 *)(packet) = packet_tag;                                        \
-        ot_tag = *(u32 *)(ordering);                                         \
-        link.pointer = (packet);                                             \
-        *(u32 *)(ordering) = (ot_tag & (maskTop)) | (link.word & (mask24)); \
-    } while (0)
+#define LINK_PAGE(packet, ordering, mask24, maskTop) \
+    LINK_PACKET_PRELOADED(packet, ordering, 0, 0, 0)
 
 int Render_DrawSpriteEntry(GeomEntry *input)
 {
@@ -178,9 +161,7 @@ int Render_DrawSpriteEntry(GeomEntry *input)
                                 u32 sprite_tag;
                                 s32 ot_index = tile_u;
                                 RenderLinkAddress ot;
-                                ot_index <<= 16;
-                                ot_index >>= 14;
-                                ot.word = ot_index + ordering.word;
+                                ot.pointer = &((RenderNativeTag *)ordering.pointer)[(s16)ot_index];
                                 sprite_tag = *(u32 *)sprite_cursor;
                                 (sprite_cursor)->x = draw_x;
                                 (sprite_cursor)->y = draw_y;
@@ -225,9 +206,7 @@ int Render_DrawSpriteEntry(GeomEntry *input)
                             u32 sprite_tag;
                             s32 ot_index = tile_u;
                             RenderLinkAddress ot;
-                            ot_index <<= 16;
-                            ot_index >>= 14;
-                            ot.word = ot_index + ordering.word;
+                            ot.pointer = &((RenderNativeTag *)ordering.pointer)[(s16)ot_index];
                             sprite_tag = *(u32 *)sprite_cursor;
                             (sprite_cursor)->x = draw_x;
                             (sprite_cursor)->y = draw_y;
@@ -452,7 +431,7 @@ int Render_StepFade(void) {
     level = 0x80 - level;
     entry = entries.entry;
     for (i = 0; i < count; i++, entry++) {
-        PrimEntry *prim = entry->u30.prim;
+        RenderTilePacket *prim = entry->u30.prim;
         u32 primCount = entry->prim_count;
         u8 grey = level;
         u32 j;
@@ -520,7 +499,7 @@ int Render_ApplyScreenTint(void) {
     count = state->entry_count06;
     entry = entries.entry;
     for (i = 0; i < count; i++, entry++) {
-        PrimEntry *prim = entry->u30.prim;
+        RenderTilePacket *prim = entry->u30.prim;
         u32 primCount = entry->prim_count;
         u8 grey = level;
         u32 j;

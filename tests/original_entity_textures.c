@@ -126,6 +126,38 @@ int main(void)
     CHECK(expected && actual);
     ResetGraph(0);
     RECT all={0,0,1024,512};
+    {
+        PeRoomBlob common = {0};
+        CHECK(pe_sector_bank_load(&catalog, 5, &common));
+        size_t bytes = (size_t)(catalog.sector_bounds[6] - catalog.sector_bounds[5]) * 2048;
+        u8 *scratch = malloc(bytes); CHECK(scratch && bytes >= common.size);
+        struct { SceneAssetBlob header; SceneAssetDirectory directory; } empty_scene = {0};
+        empty_scene.header.directoryOffset = sizeof(SceneAssetBlob);
+        g_GameState.loaded_scene_assets = (SceneAssetView *)&empty_scene;
+        g_GameState.scene_load_scratch = (SceneAssetView *)scratch;
+        g_GameState.pe_image_base_lba = catalog.archive.sector;
+        /* PM initialization has its own original actor-lifecycle fixture. */
+        g_GameStateFlags = 0x80;
+        g_GameState.flags = 8;
+        g_GameState.tim_load_state = 0;
+        memset(expected, 0, sizeof(*expected));
+        LoadImage(&all, (u_long *)expected->words); DrawSync(0);
+        PeVramStats stats; char error[256];
+        CHECK(pe_blob_upload_vram(&common, expected, &stats, error, sizeof(error)));
+        CHECK(stats.uploads > 0);
+        CHECK(Asset_LoadTimTextures(1) == 1 && g_GameState.tim_load_state == 0x35);
+        CHECK(!memcmp(scratch, common.bytes, common.size));
+        CHECK(Asset_LoadTimTextures(1) == 0 && g_GameState.tim_load_state == 0);
+        CHECK(!(g_GameState.flags & 8));
+        DrawSync(0); StoreImage(&all, (u_long *)actual->words); DrawSync(0);
+        CHECK(!memcmp(expected->words, actual->words, sizeof(expected->words)));
+        CHECK(Asset_LoadTimTextures(0) == 0 && g_GameState.tim_load_state == 0);
+        printf("Original common TIM loader: %u real uploads, file-backed read and full VRAM comparison passed\n", stats.uploads);
+        g_GameStateFlags = 0;
+        g_GameState.loaded_scene_assets = NULL;
+        g_GameState.scene_load_scratch = NULL;
+        free(scratch); pe_room_blob_close(&common);
+    }
     for(unsigned area=10;area<=12;area+=2) for(unsigned day=1;day<=7;++day) {
         unsigned index=(area-10)/2*8+day+0x16;
         PeRoomBlob reference={0};

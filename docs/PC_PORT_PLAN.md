@@ -1911,3 +1911,26 @@ checks identify serialized function references; no native PM registry or mirror
 runtime has been implemented by this change. Binding additionally requires
 correct typed callbacks, native actor/model structures and renderer integration.
 No files added.
+
+
+### Restore PM initialization to the complete TIM loader
+
+Merged pm/scene_init.c back into asset/tim_textures.c, its original module,
+and removed the extraction file. The canonical PM storage, InitHandler helper,
+Pm_InitScene and Asset_LoadTimTextures are retained; the whole module now
+compiles in the original object target. No new files added.
+
+Extended existing original_entity_textures real-disc fixture to execute
+Asset_LoadTimTextures from state 0 through the actual sector-bank-5 read,
+poll and upload. It checks the scratch bytes against an independent bank load,
+completion flags and the complete VRAM contents against pc/vram's byte decoder.
+Disc 1 bank 5 contains one upload. This fixture uses an empty scene key table;
+room-specific 0x73DECD80 keyed image uploads remain unverified. PM initialization
+is exercised separately by original_actor_lifecycle (22 slots, handler init
+selection and the once-only flag), not by a stub in this test.
+
+Full build, actor-lifecycle, entity-textures and real entity-texture-assets
+CTests pass. Entity-texture-assets ASan/UBSan/function passes with the common
+bank plus 14 area/day banks, 180 existing TIM uploads, 14 model rebuilds and
+9591 animation attachment frames. PsyZ itself is not instrumented. The native
+room descriptor registry, complete room loader and removal of pc/ remain open.

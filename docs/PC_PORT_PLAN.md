@@ -895,3 +895,30 @@ branches are compiled and linked but not yet comprehensively exercised.
 `Entity_FrameUpdate` still requires real battle/menu dispatch, script batches,
 actor callbacks, camera, shadows and scene-state wiring. No runtime stubs were
 introduced to hide those dependencies, and New Game is still not playable.
+
+### Native original camera view and transitions — 2026-10-14
+
+Moved the original view initialization, clamping/bounds, follow projection,
+scroll and transition procedures from `render/camera.c` to `camera_view.c`.
+A complete `GeomScrollRecord` now backs the camera rather than a cast over a
+single scalar. Its paired-word view has explicit native alignment; header
+assertions check native runtime sizes while serialized viewport layout remains
+52 bytes. Geometry offset arithmetic now uses uintptr_t. `Render_SetViewport`
+accepts the caller's actual fixed-point s32[3], extracts high halves by shifts,
+and has a consistent int return declaration. GTE scratch vectors are initialized.
+Camera flags and screen-X writes in these procedures access the real record.
+
+`original-game-camera` loads all 509 viewports across the 414 populated Disc 1
+rooms. Linear and cosine transitions (30 frames each) agree with the independent
+byte-reader/reference for 30,540 frames, including flags and screen offsets.
+Clamp and bounds save/restore checks preserve the original geometry blob;
+follow projection stays within each viewport and world-target scroll defaults
+to 30 frames. Native word/field alias and matrix-pointer checks pass. Full build,
+camera/model-setup CTests, and ASan/UBSan/function camera tests pass; PsyZ is not
+instrumented. These tests are headless and do not initialize a GPU window.
+
+Remaining integration: other legacy scalar aliases (including overlay reads of
+D_800BCF88) have not all been unified with this record. Native GeomEntry runtime
+pointer fields are not a serialized room-entry layout; mesh loading still needs
+its own relocation work. The camera target is not yet wired into the running
+scene, and no whole-frame/playable-location claim follows from these tests.

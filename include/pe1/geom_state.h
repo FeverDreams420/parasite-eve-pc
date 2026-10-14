@@ -117,8 +117,8 @@ typedef struct GeomEntry {                /* 0x38 */
     } u34;
 } GeomEntry;
 
-PE1_STATIC_ASSERT(sizeof(GeomEntry) == 0x38, geom_entry_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomEntry, u34) == 0x34, geom_entry_page_offset);
+PE1_STATIC_ASSERT(sizeof(GeomEntry) == 0x30 + 2*sizeof(void *), geom_entry_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomEntry, u34) == 0x30 + sizeof(void *), geom_entry_page_offset);
 struct RenderTilePacket;
 int Render_LoadMeshEntry(GeomEntry *entry, struct RenderTilePacket *buffer, void **end);
 
@@ -180,6 +180,9 @@ typedef struct GeomScrollState {
  * and at its projection distance (g_ProjectionSlot). */
 typedef struct GeomScrollWords {
     u32 flags;
+#if UINTPTR_MAX > UINT32_MAX
+    u32 nativeAlignment; /* Match the pointer-aligned coordinates record. */
+#endif
     u32 position;               /* x, y */
     u32 saved;                  /* savedX, savedY */
     u32 screenOffset;           /* screenOffsetX, screenOffsetY */
@@ -211,20 +214,20 @@ typedef union GeomEntryView {
     GeomEntry render;
     GeomScrollEntry scroll;
 } GeomEntryView;
-PE1_STATIC_ASSERT(sizeof(GeomEntryView) == 0x38, geom_entry_view_size);
+PE1_STATIC_ASSERT(sizeof(GeomEntryView) == sizeof(GeomEntry), geom_entry_view_size);
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollState, position) == 4,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollState, position) == sizeof(void *),
                   geom_scroll_position_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, originX) == 0x9C,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, originX) == 0x9C + 2*(sizeof(void *)-4),
                   geom_scroll_origin_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, meshTintLevel) == 0x70,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, meshTintLevel) == 0x70 + 2*(sizeof(void *)-4),
                   geom_scroll_mesh_tint_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, cameraBasis) == 0x74,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, cameraBasis) == 0x74 + 2*(sizeof(void *)-4),
                   geom_scroll_camera_basis_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, otZ) == 0x98,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollCoordinates, otZ) == 0x98 + 2*(sizeof(void *)-4),
                   geom_scroll_ot_z_offset);
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollState, position.tint) == 0x30,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollState, position.tint) == 0x30 + 3*(sizeof(void *)-4),
                   geom_scroll_tint_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollWords, viewMatrix) ==
                   PE1_OFFSETOF(GeomScrollState, position.matrixWords),
@@ -333,7 +336,7 @@ typedef union GeomStateAddress {
     CameraViewport *viewport;
     GeomAnimationSlot *slots;
     u8 *bytes;
-    u32 word;
+    uintptr_t word;
 } GeomStateAddress;
 
 /* address = g_GeomState + g_GeomState->field + extra, as a GeomStateAddress. */
@@ -350,14 +353,10 @@ extern int g_RenderStateFlags;
  * view cc1 schedules the following screenOffsetY computation differently. */
 extern u16 g_CameraScreenOffsetX;
 
-/* Existing absolute symbols expose overlapping views of the scroll state.
- * The symbol is the leading flags word, a volatile scalar: the grab effects
- * (room_lib/grab_attack.c, scene_e19) read-modify-write it with
- * absolute loads and stores, which any record view would turn into an
- * address kept in a register. The renderer reads the whole state through
- * g_GeomScroll, which generates the same code as a record declaration. */
+/* Native camera storage. The legacy scalar name is still referenced by
+ * unintegrated overlay effects; it must not serve as backing for this record. */
 extern volatile int D_800BCF88;
-#define g_GeomScroll (*(GeomScrollRecord *)&D_800BCF88)
+extern GeomScrollRecord g_GeomScroll;
 /* The screen tint and fade parameters inside the scroll state. */
 #define g_ScreenTint (g_GeomScroll.state.position.tint)
 extern char g_RenderMeshTintLevel;

@@ -8,6 +8,11 @@ int Render_DrawSprite(void);
 
 /* Camera initialization scratch: matrix words followed by projection distance. */
 extern u32 g_EntityRenderScratch[];
+int Render_SetViewport(const s32 *position);
+int Render_SetScrollMode(int x, int y, int duration, int mode);
+int Render_SaveAndOpenBounds(void);
+int Render_RestoreBounds(void);
+s32 Render_ClampCameraPosition(s32 x, s32 y);
 int Render_InitViewState(void *matrix, void *screen);
 int Render_DrawMeshList(void *buffer, void **end);
 int Render_ResetAllEntries(void);

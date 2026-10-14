@@ -30,7 +30,7 @@ void Entity_IntegratePositionFull(FieldActor *actor);
 void Entity_IntegratePositionConditional(FieldActor *actor);
 void Entity_CopyParentPosition(void);
 int Render_StepCameraTransition(void);
-void Render_SetViewport(int *camera);
+int Render_SetViewport(const s32 *camera);
 void Render_SetGteScreenOffset(void);
 void Render_ResetGteScreenOffset(void);
 void Render_DrawEntity(RenderObjectEntity *object, void *viewMatrix);

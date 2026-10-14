@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 52 powiązania: oryginalny opcode 172 ustawia wskaźnik wall-slot do fragmentu skryptu i parametr halfword. Powiązanie potwierdzono w EXE USA. Offset oblicza się w natywnej szerokości; test kolejki sprawdza pełny adres hosta i zawężenie parametru. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 51 powiązań: oryginalne opcode'y 170/171 ustawiają i zdejmują flagę sceny 0x2000 w kanonicznym game state. Powiązania potwierdzono w EXE USA; ABI poprawiono w istniejących funkcjach. Test kolejki sprawdza oba kroki z yield między nimi i zachowanie pozostałych bitów, w tym bitu 31. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 49 powiązań: oryginalny opcode 148 odczytuje wspólny battle mode state. Powiązanie potwierdzono w EXE USA. Test kolejki sprawdza sześć wartości, w tym -1 i najwyższą wartość signed word, oraz brak modyfikacji stanu. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

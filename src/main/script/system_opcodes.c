@@ -1045,7 +1045,7 @@ int Entity_ClearCurrentFlag4000(int **unused) {
 int Script_SetAnimSlotPointer(int **arg0) {
     int index = *arg0[0];
 
-    g_EntityCollisionWallSlot = (short *)(g_CurrentEntity->script_base + index * 2);
+    g_EntityCollisionWallSlot = (short *)(g_CurrentEntity->script_base + (ptrdiff_t)index * 2);
     g_EntityCollisionWallParam = *arg0[1];
     return 1;
 }

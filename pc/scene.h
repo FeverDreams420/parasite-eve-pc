@@ -9,10 +9,12 @@
 #include "room_banks.h"
 #include "actors.h"
 #include "scene_audio.h"
+#include "input.h"
 
 /* Native scene resources, observable without devices. Script execution,
  * actor simulation and rendering will operate on this owned state. */
 typedef struct PeScene {
+    PeInput input;
     PeRoom room;
     PeCollision collision;
     PeRoomBanks banks;
@@ -42,5 +44,6 @@ PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeS
  * Full frame ordering/events/physics/audio synthesis remain separate. */
 int pe_scene_actor_scripts(PeScene *scene,unsigned slot,PeRoomCatalog *catalog,unsigned instruction_limit);
 int pe_scene_events(PeScene *scene);
+void pe_scene_set_input(PeScene *scene,uint32_t held);
 
 #endif

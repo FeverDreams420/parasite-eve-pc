@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Native input stores held/pressed/released bits and scenes accept explicit
+`pe_scene_set_input` calls without SDL. Bounded input rules preserve original
+all/any filters, press-before-release priority, unconditional callbacks,
+continuation and fallback behavior. Invalid tables fail before callbacks.
+All 30 headless tests and the ASan/UBSan input fixture pass. Original rule-table
+decoding, movement callbacks, input locks/remapping and full frame integration
+remain pending; injection alone does not prove controllable gameplay.
+
 The actor motion core snapshots previous position/rotation and applies
 flag-gated gravity, acceleration, motion and deltas in original order with
 explicit 32-bit wrap. Tests cover gravity gating, overflow, cumulative steps

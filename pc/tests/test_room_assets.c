@@ -425,6 +425,8 @@ int main(void) {
     PeScene scene = {0};
     char scene_error[256];
     CHECK(pe_scene_prepare(&catalog, 431, &scene, scene_error, sizeof(scene_error)));
+    pe_scene_set_input(&scene,0x80);CHECK(scene.input.held==0x80&&scene.input.pressed==0x80);
+    pe_scene_set_input(&scene,0);CHECK(scene.input.released==0x80&&!scene.input.pressed);
     CHECK(scene.scripts.blob == &scene.room.data);
     CHECK(scene.akao.note_lengths[0] == 192 && scene.akao.note_lengths[10] == 4);
     CHECK(scene.akao.lfo_valid && scene.akao.lfo_offsets[0] == 0);

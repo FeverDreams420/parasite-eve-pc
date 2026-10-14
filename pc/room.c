@@ -9,6 +9,7 @@
 #define ROOM_TABLE_VA UINT32_C(0x80093378)
 #define SECTOR_TABLE_VA UINT32_C(0x800930d8)
 #define AUDIO_TABLE_VA UINT32_C(0x8009317c)
+#define AKAO_GRAMMAR_VA UINT32_C(0x8009b85c)
 
 static uint32_t read32(const uint8_t *p) {
     return (uint32_t)p[0] | (uint32_t)p[1] << 8 |
@@ -26,6 +27,7 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
     PeDiscFile executable;
     uint8_t header[0x800], table[PE_USA_ROOM_SLOTS * 8], bounds[162];
     uint8_t audio[4 + (PE_USA_AUDIO_BANKS + 1) * 2];
+    uint8_t grammar[150];
     if (!pe_disc_find(disc, "PE.IMG", &catalog->archive) ||
         !pe_disc_find(disc, "SLUS_006.62", &executable) ||
         !pe_disc_read(disc, &executable, 0, header, sizeof(header)))
@@ -33,7 +35,8 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
     uint32_t base = read32(header + 0x18), size = read32(header + 0x1c);
     if (memcmp(header, "PS-X EXE", 8) || base > SECTOR_TABLE_VA ||
         size < sizeof(table) || ROOM_TABLE_VA - base > size - sizeof(table) ||
-        (uint64_t)size + 0x800 > executable.size) {
+        (uint64_t)size + 0x800 > executable.size || size < sizeof(grammar) ||
+        AKAO_GRAMMAR_VA - base > size - sizeof(grammar)) {
         snprintf(catalog->error, sizeof(catalog->error), "Unsupported USA room table layout");
         return 0;
     }
@@ -47,6 +50,13 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
     if (!pe_disc_read(disc, &executable, (uint64_t)AUDIO_TABLE_VA - base + 0x800,
                       audio, sizeof(audio))) return disc_error(catalog);
     catalog->audio_base = read32(audio);
+    if (!pe_disc_read(disc, &executable, (uint64_t)AKAO_GRAMMAR_VA - base + 0x800,
+                      grammar, sizeof(grammar))) return disc_error(catalog);
+    memcpy(catalog->akao.lengths, grammar, 96);
+    memcpy(catalog->akao.extended_lengths, grammar + 96, 32);
+    for (unsigned i = 0; i < 11; ++i)
+        catalog->akao.note_lengths[i] = (uint16_t)grammar[128 + i * 2] |
+                                       (uint16_t)grammar[129 + i * 2] << 8;
     for (unsigned i = 0; i <= PE_USA_AUDIO_BANKS; ++i) {
         catalog->audio_bounds[i] = (uint16_t)audio[4 + i * 2] |
                                   (uint16_t)audio[5 + i * 2] << 8;

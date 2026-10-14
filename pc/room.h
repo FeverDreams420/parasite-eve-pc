@@ -8,6 +8,11 @@
 #define PE_USA_ROOM_SLOTS 450u
 #define PE_USA_AUDIO_BANKS 250u
 
+typedef struct PeAkaoGrammar {
+    uint8_t lengths[96], extended_lengths[32];
+    uint16_t note_lengths[11];
+} PeAkaoGrammar;
+
 typedef struct PeRoomRange {
     uint32_t start;
     uint16_t scratch_sectors, texture_sectors, room_sectors;
@@ -19,6 +24,7 @@ typedef struct PeRoomCatalog {
     uint16_t sector_bounds[81]; /* resident/startup/UI data ranges */
     uint32_t audio_base;
     uint16_t audio_bounds[PE_USA_AUDIO_BANKS + 1];
+    PeAkaoGrammar akao;
     PeRoomRange ranges[PE_USA_ROOM_SLOTS];
     char error[256];
 } PeRoomCatalog;

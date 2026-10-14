@@ -14,6 +14,7 @@ typedef struct PeScene {
     PeSpuBank *spu;
     PeScriptProgram scripts;
     PeScriptBanks script_banks;
+    PeAkaoGrammar akao;
     PeScriptScheduler *scheduler;
     PeScriptActor *script_actors;
     unsigned script_actor_count;

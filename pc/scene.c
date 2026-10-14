@@ -33,6 +33,7 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     if (!pe_room_upload_vram(&next.room, next.vram, &next.texture_stats, error, error_size) ||
         !pe_script_program_open(&next.room, &next.scripts, error, error_size)) goto failed;
     next.script_banks = scene->script_banks;
+    next.akao = catalog->akao;
     next.scheduler = malloc(sizeof(*next.scheduler));
     next.script_actor_count = next.scripts.actors;
     if (next.script_actor_count) next.script_actors = calloc(next.script_actor_count, sizeof(*next.script_actors));

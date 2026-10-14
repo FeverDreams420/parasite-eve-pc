@@ -89,9 +89,18 @@ int main(void) {
                     if (music.sequence.channels[voice] == UINT32_MAX) continue;
                     PeAkaoChannel channel = {0};
                     channel.control = &control;
+                    channel.grammar = &catalog.akao;
                     CHECK(pe_akao_channel_start(&channel, &music.sequence, voice));
+                    /* Elapsed initial delay, before command-set lengths. */
+                    channel.note_length = 0;
                     PeAkaoChannelResult result = pe_akao_channel_next(&channel, 1024);
-                    if (result == PE_AKAO_CHANNEL_NOTE) ++channel_notes;
+                    if (result == PE_AKAO_CHANNEL_NOTE) {
+                        if (!pe_akao_channel_begin_note(&channel, 4096)) {
+                            fprintf(stderr, "Map %u voice %u: %s\n", map, voice, channel.error);
+                            return 1;
+                        }
+                        ++channel_notes;
+                    }
                     else if (result == PE_AKAO_CHANNEL_STOP) ++channel_stops;
                     else {
                         CHECK(strstr(channel.error, "Unimplemented AKAO opcode"));
@@ -151,6 +160,7 @@ int main(void) {
     char scene_error[256];
     CHECK(pe_scene_prepare(&catalog, 431, &scene, scene_error, sizeof(scene_error)));
     CHECK(scene.scripts.blob == &scene.room.data);
+    CHECK(scene.akao.note_lengths[0] == 192 && scene.akao.note_lengths[10] == 4);
     CHECK(scene.sample_stats.bytes == 28176 && scene.spu->valid[255]);
     CHECK(scene.script_actor_count == 1 && scene.scheduler->live == 1);
     CHECK(scene.scheduler->slots[0].task.actor == &scene.script_actors[0]);

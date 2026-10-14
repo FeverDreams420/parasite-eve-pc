@@ -47,9 +47,11 @@ int pe_akao_channel_start(PeAkaoChannel *channel, const PeAkaoSequence *sequence
         sequence->channels[voice] >= sequence->size) return 0;
     uint8_t octave = channel->octave;
     PeAkaoControl *control = channel->control;
+    const PeAkaoGrammar *grammar = channel->grammar;
     memset(channel, 0, sizeof(*channel));
     channel->octave = octave;
     channel->control = control;
+    channel->grammar = grammar;
     channel->sequence = *sequence;
     channel->pc = sequence->channels[voice];
     channel->volume_base = 0x7f00;

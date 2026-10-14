@@ -18,21 +18,26 @@ void pe_akao_control_step(PeAkaoControl *control);
 typedef struct PeAkaoChannel {
     PeAkaoSequence sequence; /* borrowed bytes must outlive this channel */
     PeAkaoControl *control; /* shared bank state; never a per-channel copy */
+    const PeAkaoGrammar *grammar; /* decoded original skip/duration tables */
     uint32_t pc, flags, expression_value;
     uint16_t volume_base, panpot, note_length, default_note_length, fixed_note_length;
     uint16_t pan_duration, pan_slide_duration, expression_duration, drum_volume;
     uint8_t octave, stopped, last_note;
     uint8_t loop_index, key_off_requested;
+    uint8_t tremolo_phase;
+    uint16_t tremolo_duration;
     uint16_t repeats[4];
     uint32_t loop_points[4];
     uint64_t commands;
+    uint64_t musical_ticks;
     char error[192];
 } PeAkaoChannel;
 
 typedef enum PeAkaoChannelResult {
     PE_AKAO_CHANNEL_ERROR = -1,
     PE_AKAO_CHANNEL_NOTE = 0,
-    PE_AKAO_CHANNEL_STOP = 1
+    PE_AKAO_CHANNEL_STOP = 1,
+    PE_AKAO_CHANNEL_WAIT = 2
 } PeAkaoChannelResult;
 
 /* Initialize the command-state subset of a primary track. Octave is retained
@@ -42,5 +47,13 @@ int pe_akao_channel_start(PeAkaoChannel *channel, const PeAkaoSequence *sequence
 /* Execute supported commands up to a raw note/tie/rest byte or stop.
  * Note timing/pitch, instrument changes, remaining flow/LFOs and mixing are pending. */
 PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit);
+/* Look ahead without executing channel commands or changing the real PC,
+ * loop stack/counters, tempo or volume. Original tremolo clears are retained. */
+int pe_akao_channel_peek(PeAkaoChannel *channel, unsigned limit, uint8_t *period);
+/* Apply length/gate semantics after next() returns a raw note byte. */
+int pe_akao_channel_begin_note(PeAkaoChannel *channel, unsigned lookahead_limit);
+/* One due musical tick, not a host frame. SPU application acknowledges the
+ * latched key_off_requested flag; pitch/voice-register updates are pending. */
+PeAkaoChannelResult pe_akao_channel_tick(PeAkaoChannel *channel, unsigned instruction_limit);
 
 #endif

@@ -59,7 +59,8 @@ script entry/actor catalogs and the startup SPU sample bank are prepared in
 `PeScene`, but scene execution and gameplay are not integrated.
 
 `make ci` builds and runs the asset-free disc-reader, VRAM, script-format,
-script-runtime, script-scheduler, SPU-bank, AKAO-sequence, AKAO-channel and automation tests. The
+script-runtime, script-scheduler, SPU-bank, AKAO-sequence, AKAO-channel,
+AKAO-timing and automation tests. The
 room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
 is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
@@ -218,4 +219,14 @@ commands and the FC/07 condition branch. The native control helpers preserve
 the scaled tempo accumulator, forced musical ticks, slide truncation and
 beat/measure counters. The caller must run channel processing between the due
 check and slide/meter update, as in the original timer. These helpers are not
-yet connected to note countdowns or the mixer; sequence playback is incomplete.
+connected to the complete playback driver or mixer; sequence playback is incomplete.
+
+`pc/akao_timing.c` ports the original next-note lookahead separately from
+command execution, including its different virtual loop behavior. Skip and
+duration tables are decoded from the supplied executable and retained by
+`PeScene`. Note/gate lengths preserve tie/rest rules, overrides and 16-bit
+wrapping. A musical-tick helper advances the channel countdown, starts the next
+note and latches key-off requests. Tests check exact tick boundaries and apply
+length/lookahead processing to the 1,055 reachable initial notes of Disc 1.
+Pitch, instrument/voice allocation, full-song scheduling and synthesized audio
+remain pending; these are timing-state tests, not playback comparisons.

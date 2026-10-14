@@ -14,6 +14,8 @@ Katalog natywny odczytuje również 250 zakresów banków audio z tabeli EXE. Ws
 
 Wspólny `PeAkaoControl` obsługuje komendy FC/00..03 (tempo i master-volume set/slide), warunek FC/07, akumulator tempa, wymuszone ticki oraz liczniki taktu/miary. Testy obejmują współdzielenie kontekstu, oba wyniki warunku, opadające i kwantyzowane slide'y, czas 256 ticków i skalowanie tempa. Te operacje nie są jeszcze połączone z odliczaniem nut, zegarem SPU i mixerem; pełny sekwencer pozostaje nieukończony.
 
+`akao-timing` (14. test CTest) sprawdza oryginalny podgląd następnej nuty, osobny od wykonawcy komend, wraz z jego różnicami w wirtualnym przechodzeniu pętli. `PeScene` przechowuje odczytane z EXE tablice długości komend i nut. Helpers obliczają długość/bramkę nuty, odliczają pojedynczy tick muzyczny, uruchamiają następną nutę i zatrzaskują żądanie key-off; testy obejmują granice czasu, tie/rest, override, u16 wrap, błędne dane i limit podglądu. Obliczanie długości przechodzi dla 1055 osiągalnych początkowych nut Disc 1. Połączenie tych helpers w pełny driver odtwarzania, pitch, instrumenty, alokacja głosów i synteza pozostają do wdrożenia. Te testy nie są referencyjnymi porównaniami wyjścia audio.
+
 Punkt wyjściowy audytu: commit `83aa1c5f8`, 14 października 2026. Poniższy stan uwzględnia także wdrożony runner headless z WP01.
 
 | Obszar | Co istnieje | Czego obecne dowody nie potwierdzają |

@@ -1,0 +1,1171 @@
+{
+  "version": "USA",
+  "source": "user supplied SLUS_006.62, original symbol map at 1d20afe62",
+  "kind": "catalog only; not runtime dispatch implementation",
+  "pages": [
+    {
+      "page": "main",
+      "table_address": "0x8009C8F0",
+      "entries": [
+        {
+          "opcode": 160,
+          "address": "0x80090F68",
+          "handler": "SeqOp_StopVoice",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 161,
+          "address": "0x8008F898",
+          "handler": "Akao_PlayNote",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 162,
+          "address": "0x80090948",
+          "handler": "SeqOp_SetVolume",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 163,
+          "address": "0x8008F4E8",
+          "handler": "SeqOp_ReadVolume",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 164,
+          "address": "0x8008FC28",
+          "handler": "SeqOp_SetVibratoParams",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 165,
+          "address": "0x8008F84C",
+          "handler": "SeqOp_ReadPanpot",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 166,
+          "address": "0x8008F868",
+          "handler": "SeqOp_IncPanpot",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 167,
+          "address": "0x8008F880",
+          "handler": "SeqOp_DecPanpot",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 168,
+          "address": "0x8008F59C",
+          "handler": "SeqOp_SetVolumeOrExpression",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 169,
+          "address": "0x8008F608",
+          "handler": "Akao_SetExpressionSlide",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 170,
+          "address": "0x8008F784",
+          "handler": "Akao_SetPanpot",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 171,
+          "address": "0x8008F7BC",
+          "handler": "Akao_SetPanSlide",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 172,
+          "address": "0x800904C4",
+          "handler": "SeqOp_SetTrack5AValue",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 173,
+          "address": "0x80090574",
+          "handler": "SeqOp_ReadAdsrAttackRate",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 174,
+          "address": "0x8009059C",
+          "handler": "SeqOp_ReadAdsrDecayRate",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 175,
+          "address": "0x800905C4",
+          "handler": "SeqOp_ReadAdsrSustainLevel",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 176,
+          "address": "0x80090AAC",
+          "handler": "SeqOp_ReadAdsrDecayAndSustain",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 177,
+          "address": "0x800905EC",
+          "handler": "SeqOp_ReadAdsrSustainRate",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 178,
+          "address": "0x80090614",
+          "handler": "SeqOp_ReadAdsrReleaseRate",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 179,
+          "address": "0x8008FB54",
+          "handler": "SeqOp_LoadInstrumentFromIndex",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 180,
+          "address": "0x8008FD10",
+          "handler": "SeqOp_SetPitchLFO",
+          "lookahead_skip": 4,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 181,
+          "address": "0x8008FE10",
+          "handler": "SeqOp_UpdatePitchLFOTarget",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 182,
+          "address": "0x8008FED8",
+          "handler": "SeqOp_StopPitchLFO",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 183,
+          "address": "0x8009063C",
+          "handler": "SeqOp_ReadAdsrAttack",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 184,
+          "address": "0x8008FEFC",
+          "handler": "SeqOp_SetVolumeLFO",
+          "lookahead_skip": 4,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 185,
+          "address": "0x8008FFC0",
+          "handler": "SeqOp_UpdateVolumeLFOTarget",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 186,
+          "address": "0x80090054",
+          "handler": "SeqOp_ResetTrack",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 187,
+          "address": "0x80090664",
+          "handler": "SeqOp_ReadAdsrSustain",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 188,
+          "address": "0x80090078",
+          "handler": "SeqOp_LoadSoundEntry",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 189,
+          "address": "0x800900E4",
+          "handler": "SeqOp_SetPitchBase",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 190,
+          "address": "0x80090178",
+          "handler": "SeqOp_ResetFlag4State",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 191,
+          "address": "0x8009068C",
+          "handler": "SeqOp_ReadAdsrRelease",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 192,
+          "address": "0x8008FBD4",
+          "handler": "SeqOp_ReadExpression",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 193,
+          "address": "0x8008FBFC",
+          "handler": "SeqOp_AdjustExpression",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 194,
+          "address": "0x800903A0",
+          "handler": "SeqOp_SetTrack38Mask",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 195,
+          "address": "0x80090408",
+          "handler": "SeqOp_ClearMask",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 196,
+          "address": "0x8009019C",
+          "handler": "SeqOp_SetTrack34Mask",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 197,
+          "address": "0x8009021C",
+          "handler": "SeqOp_ClearTrack34Mask",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 198,
+          "address": "0x800902AC",
+          "handler": "SeqOp_SetMask",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 199,
+          "address": "0x80090328",
+          "handler": "SeqOp_ClearTrack3CMask",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 200,
+          "address": "0x8009071C",
+          "handler": "SeqOp_PushLoopPoint",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 201,
+          "address": "0x80090754",
+          "handler": "SeqOp_LoopCounter",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 202,
+          "address": "0x8009090C",
+          "handler": "SeqOp_Return",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 203,
+          "address": "0x80090BCC",
+          "handler": "SeqOp_StopAndClearTrack",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 204,
+          "address": "0x800904A0",
+          "handler": "SeqOp_EnableField84",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 205,
+          "address": "0x800904AC",
+          "handler": "SeqOp_Noop_904AC",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 206,
+          "address": "0x80090AEC",
+          "handler": "SeqOp_SetDurationBAAndMask",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 207,
+          "address": "0x80090B30",
+          "handler": "SeqOp_SetDuration",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 208,
+          "address": "0x800904B4",
+          "handler": "SeqOp_Noop_904B4",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 209,
+          "address": "0x800904BC",
+          "handler": "SeqOp_Noop_904BC",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 210,
+          "address": "0x80090B5C",
+          "handler": "SeqOp_SetRepeatCount",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 211,
+          "address": "0x80090BA0",
+          "handler": "SeqOp_SetDurationAlt",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 212,
+          "address": "0x80090C38",
+          "handler": "SeqOp_SetFlag4",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 213,
+          "address": "0x80090C4C",
+          "handler": "SeqOp_ClearFlag10",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 214,
+          "address": "0x80090C60",
+          "handler": "SeqOp_SetFlag20",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 215,
+          "address": "0x80090C74",
+          "handler": "SeqOp_ClearFlag20",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 216,
+          "address": "0x8008FCBC",
+          "handler": "SeqOp_ReadDetune",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 217,
+          "address": "0x8008FCE4",
+          "handler": "SeqOp_AdjustDetune",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 218,
+          "address": "0x8008FC78",
+          "handler": "SeqOp_SetTremoloParams",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 219,
+          "address": "0x8008FCB4",
+          "handler": "SeqOp_StopTremolo",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 220,
+          "address": "0x80090970",
+          "handler": "SeqOp_AdjustVolumeTarget",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 221,
+          "address": "0x8008FE68",
+          "handler": "SeqOp_SetPanSlide",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 222,
+          "address": "0x8008FFE4",
+          "handler": "SeqOp_SetExpressionSlide",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 223,
+          "address": "0x80090108",
+          "handler": "SeqOp_PitchSlide",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 224,
+          "address": "0x80090F54",
+          "handler": "SeqOp_SetSustainFlag",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 225,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 226,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 227,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 228,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 229,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 230,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 231,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 232,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 233,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 234,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 235,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 236,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 237,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 238,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 239,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 240,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 241,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 242,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 243,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 244,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 245,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 246,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 247,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 248,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 249,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 250,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 251,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 252,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 253,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 254,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 255,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        }
+      ]
+    },
+    {
+      "page": "extended",
+      "table_address": "0x8009CCF0",
+      "entries": [
+        {
+          "opcode": 0,
+          "address": "0x8008F224",
+          "handler": "SeqOp_SetTempo",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 1,
+          "address": "0x8008F274",
+          "handler": "SeqOp_SetPitchSlideTarget",
+          "lookahead_skip": 4,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 2,
+          "address": "0x8008F328",
+          "handler": "SeqOp_SetTempoSlide",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 3,
+          "address": "0x8008F37C",
+          "handler": "SeqOp_SetVolumeSlideTarget",
+          "lookahead_skip": 4,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 4,
+          "address": "0x800909C0",
+          "handler": "SeqOp_SetBranchTarget",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 5,
+          "address": "0x80090A0C",
+          "handler": "SeqOp_ClearFlag3",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 6,
+          "address": "0x8008F430",
+          "handler": "SeqOp_JumpRelative",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 7,
+          "address": "0x8008F470",
+          "handler": "SeqOp_BranchIfLoopLimitReached",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 8,
+          "address": "0x800907DC",
+          "handler": "SeqOp_JumpIfLoopCount",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 9,
+          "address": "0x8009086C",
+          "handler": "SeqOp_JumpIfLoopCountPop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 10,
+          "address": "0x8008F9CC",
+          "handler": "Akao_TieNote",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 11,
+          "address": "0x80090C88",
+          "handler": "SeqOp_LoadNestedStreams",
+          "lookahead_skip": 5,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 12,
+          "address": "0x8008F694",
+          "handler": "SeqOp_Skip2",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 13,
+          "address": "0x8008F6A8",
+          "handler": "SeqOp_Ignore",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 14,
+          "address": "0x8008F6B0",
+          "handler": "Akao_SetPanTarget",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 15,
+          "address": "0x8008F6F4",
+          "handler": "Akao_SetPanTargetSlide",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 16,
+          "address": "0x800906B4",
+          "handler": "Akao_SetReleaseRate",
+          "lookahead_skip": 2,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 17,
+          "address": "0x800906E4",
+          "handler": "Akao_ResetReleaseRate",
+          "lookahead_skip": 1,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 18,
+          "address": "0x8008F514",
+          "handler": "SeqOp_SlideVolume",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 19,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 20,
+          "address": "0x8008FB00",
+          "handler": "SeqOp_SetReturnPoint",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 21,
+          "address": "0x80090A20",
+          "handler": "SeqOp_StreamPair",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 22,
+          "address": "0x80090A64",
+          "handler": "SeqOp_ReadTrack64U16",
+          "lookahead_skip": 3,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 23,
+          "address": "0x80090D54",
+          "handler": "SeqOp_NoteOnWithVoiceAlloc",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 24,
+          "address": "0x80090E20",
+          "handler": "SeqOp_NoteOnWithPitchSlide",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 25,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 26,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 27,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 28,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 29,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 30,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        },
+        {
+          "opcode": 31,
+          "address": "0x80091080",
+          "handler": "SeqOp_Noop",
+          "lookahead_skip": 0,
+          "source_files": [
+            "src/main/akao/sequencer.c"
+          ]
+        }
+      ]
+    }
+  ]
+}

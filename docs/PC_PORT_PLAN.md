@@ -563,6 +563,8 @@ Original voice-driver Akao_SetVoiceKeyOff wykonuje w headless fixture 16 kolejny
 
 LFO fixture obejmuje teraz original Akao_SetVoiceKeyOn i KeyOff oraz ujemne expression. Sterownik robi left shifts LFO products i previous-voice pitch w unsigned word przed signed arithmetic shift, zachowując PS1 wrap bez signed-left-shift UB. Test potwierdza positive/negative waveform, loop marker, output pitch i dirty flags w obu procedurach; signed expression daje poprawny opposite volume LFO. CTest i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). Pozostałe dwa miejsca shift w wcześniejszych driver routines oraz previous-voice branch mają obecnie tylko dowód kompilacji; nie rozszerzamy tego wyniku na pełny driver/audio.
 
+`docs/AKAO_OPCODE_TABLE.json` kataloguje oryginalne USA tables: main 0x8009C8F0, opcode A0..FF (96 entries), extended 0x8009CCF0 (32 entries), 90 różnych source procedures, zero unresolved names. Pole lookahead_skip jest wartością oryginalnej tablicy skanera, nie liczbą argumentów handlera (main skip zawiera opcode, extended scanner już konsumuje FC). `python3 tests/verify_akao_catalog.py <SLUS_006.62>` sprawdza wszystkie adresy/skip values w prywatnym EXE, zakres sekcji oraz obecność oryginalnych definicji w źródłach; wykonane na lokalnym Disc 1 przechodzi. Katalog nie zawiera kodu/data payload gry i nie jest jeszcze runtime dispatch table. Native ABI handlerów, ich kolejność/semantyka i full bytecode/tick execution pozostają wymagane.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

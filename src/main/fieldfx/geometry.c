@@ -34,6 +34,7 @@
 FieldFxObjectPrefix *g_FieldFxOwner;
 int g_FieldFxAltPaletteFlag;
 int g_DrawPacketOffset;
+s16 g_FieldFxLoadedTexturePage;
 
 /* Matching debt: three transfer-pins per function, plus five empty
  * pointer/memory barriers across this TU. Matrix loads are C; each GTE

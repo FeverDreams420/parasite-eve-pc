@@ -111,7 +111,8 @@ int GlowEffect_ClassNop0(void) {
     return 0;
 }
 
-int GlowEffect_InitOwner(FieldFxObjectPrefix *obj) {
+int GlowEffect_InitOwner(void *argument0, void *argument1, void *argument2) {
+    FieldFxObjectPrefix * obj=argument0;
     FieldActor *data = obj->actor;
 
     g_GlowEffectPosition.x = data->render_object.matrices[19].translation[0];
@@ -119,9 +120,14 @@ int GlowEffect_InitOwner(FieldFxObjectPrefix *obj) {
     g_GlowEffectPosition.z = data->render_object.matrices[19].translation[2];
     g_GlowEffectOwner = data;
     FieldFx_EnsureEffectTexturePage(0);
+
+    return 0;
 }
 
-int GlowEffect_InitParticle(void *arg0, void *arg1, FieldFxMovingParticle *anim) {
+int GlowEffect_InitParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMovingParticle * anim=argument2;
     GteShortVector vec;
     RenderMatrix *model;
 
@@ -137,9 +143,14 @@ int GlowEffect_InitParticle(void *arg0, void *arg1, FieldFxMovingParticle *anim)
     anim->position.z = g_GlowEffectPosition.z;
     anim->lifetime = 0x14;
     anim->age = 0;
+
+    return 0;
 }
 
-int GlowEffect_InitFlareLayers(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int GlowEffect_InitFlareLayers(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     FieldFxMatrixGlow *anim_s0 = anim;
     GteShortVector out;
     GteShortVector *entry;
@@ -157,9 +168,14 @@ int GlowEffect_InitFlareLayers(void *arg0, void *arg1, FieldFxMatrixGlow *anim) 
     model = data->render_object.matrices;
     anim_s0->transform = *(GteMatrixStorage *)&model[19];
     anim_s0->brightness = 0x7F;
+
+    return 0;
 }
 
-int GlowEffect_InitCoreGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
+int GlowEffect_InitCoreGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxGlowPoint * anim=argument2;
     GteShortVector in;
     GteShortVector out;
     RenderMatrix *model;
@@ -174,9 +190,14 @@ int GlowEffect_InitCoreGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
     anim->position.z = g_GlowEffectPosition.z + out.z;
     anim->brightness = 0x7F;
     anim->scale = 0;
+
+    return 0;
 }
 
-int GlowEffect_InitGroundGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
+int GlowEffect_InitGroundGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxGlowPoint * anim=argument2;
     BattleEntity *entity_v1 = D_8009D254;
     int value;
     int z_v1;
@@ -188,9 +209,14 @@ int GlowEffect_InitGroundGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
     anim->brightness = 0x7F;
     anim->scale = 0x224;
     anim->position.z = z_v1;
+
+    return 0;
 }
 
-int GlowEffect_InitHaloGlow(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int GlowEffect_InitHaloGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     FieldFxMatrixGlow *anim_s0 = anim;
     GteShortVector out;
     FieldActor *data;
@@ -209,12 +235,20 @@ int GlowEffect_InitHaloGlow(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
     anim_s0->transform = *(GteMatrixStorage *)&model[19];
     anim_s0->brightness = 0x7F;
     anim_s0->scale = 0x224;
+
+    return 0;
 }
 
-void GlowEffect_DrawNop(void) {
+int GlowEffect_DrawNop(void *argument0, void *argument1, void *argument2) {
+
+
+    return 0;
 }
 
-int GlowEffect_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int GlowEffect_DrawParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     GteMatrix matrix;
     GteShortVector rot;
     GteVector scaleCopy;
@@ -246,6 +280,8 @@ int GlowEffect_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
 
     ScaleMatrix(&matrix, &scaleCopy);
     FieldFx_DrawGlowSprite(&g_GlowEffectSprite0, &matrix, 1);
+
+    return 0;
 }
 
 #define GLOW_LAYERS_FUNC GlowEffect_DrawFlareLayers
@@ -255,7 +291,10 @@ int GlowEffect_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
 #define GLOW_LAYERS_SPRITE g_GlowEffectSprite2
 #include "glow_layers.inc"
 
-int GlowEffect_DrawPointGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
+int GlowEffect_DrawPointGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxGlowPoint * anim=argument2;
     GteMatrix matrix;
     int scale;
     u16 field;
@@ -295,9 +334,14 @@ int GlowEffect_DrawPointGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
 
     ScaleMatrix(&matrix, (const GteVector *)localScale);
     FieldFx_DrawGlowSprite(&g_GlowEffectSprite1, &matrix, 1);
+
+    return 0;
 }
 
-int GlowEffect_DrawGroundGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
+int GlowEffect_DrawGroundGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxGlowPoint * anim=argument2;
     u16 *field = &g_GlowEffectSprite3.depth;
     GteMatrix matrix;
     GteShortVector rot;
@@ -326,9 +370,14 @@ int GlowEffect_DrawGroundGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
 
     ScaleMatrix(&matrix, &scaleCopy);
     FieldFx_DrawGlowSprite(&g_GlowEffectSprite3, &matrix, 0);
+
+    return 0;
 }
 
-int GlowEffect_DrawHaloGlow(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int GlowEffect_DrawHaloGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     u16 *field = &g_GlowEffectSprite3.depth;
     GteMatrix matrix;
     GteVector scaleCopy;
@@ -354,15 +403,22 @@ int GlowEffect_DrawHaloGlow(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
 
     ScaleMatrix(&matrix, &scaleCopy);
     FieldFx_DrawGlowSprite(&g_GlowEffectSprite3, &matrix, 0);
+
+    return 0;
 }
 
-int GlowEffect_UpdateEnd(void *arg0, u8 *state) {
+int GlowEffect_UpdateEnd(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    u8 * state=argument1;
     int ret = 2;
 
     state[1] = ret;
     return ret;
 }
-int GlowEffect_UpdateParticle(void *arg0, FieldFxSlot *state, FieldFxMovingParticle *anim) {
+int GlowEffect_UpdateParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxMovingParticle * anim=argument2;
     FieldFxMovingParticle *particle = anim;
     u16 vy = anim->velocity.y;
     u16 vz = anim->velocity.z;
@@ -383,37 +439,59 @@ int GlowEffect_UpdateParticle(void *arg0, FieldFxSlot *state, FieldFxMovingParti
     if (lifetime == 0) {
         state->flag = 2;
     }
+
+    return 0;
 }
-void GlowEffect_UpdateFlareLayers(char *arg0, char *arg1, short *arg2) {
+int GlowEffect_UpdateFlareLayers(void *argument0, void *argument1, void *argument2) {
+    char * arg0=argument0;
+    char * arg1=argument1;
+    short * arg2=argument2;
     arg2[2] -= 0x14;
     if (arg2[2] < 0x14) {
         arg2[2] = 0;
         arg1[1] = 2;
     }
+
+    return 0;
 }
-void GlowEffect_UpdateCoreGlow(char *arg0, char *arg1, short *arg2) {
+int GlowEffect_UpdateCoreGlow(void *argument0, void *argument1, void *argument2) {
+    char * arg0=argument0;
+    char * arg1=argument1;
+    short * arg2=argument2;
     arg2[2] -= 8;
     arg2[3] += 0x3C;
     if (arg2[2] < 0x14) {
         arg2[2] = 0;
         arg1[1] = 2;
     }
+
+    return 0;
 }
-void GlowEffect_UpdateGroundGlow(char *arg0, char *arg1, short *arg2) {
+int GlowEffect_UpdateGroundGlow(void *argument0, void *argument1, void *argument2) {
+    char * arg0=argument0;
+    char * arg1=argument1;
+    short * arg2=argument2;
     arg2[2] -= 8;
     arg2[3] += 0x78;
     if (arg2[2] < 0x14) {
         arg2[2] = 0;
         arg1[1] = 2;
     }
+
+    return 0;
 }
-void GlowEffect_UpdateHaloGlow(char *arg0, char *arg1, short *arg2) {
+int GlowEffect_UpdateHaloGlow(void *argument0, void *argument1, void *argument2) {
+    char * arg0=argument0;
+    char * arg1=argument1;
+    short * arg2=argument2;
     arg2[2] -= 8;
     arg2[3] += 0xA;
     if (arg2[2] < 0x14) {
         arg2[2] = 0;
         arg1[1] = 2;
     }
+
+    return 0;
 }
 
 int GlowEffectB_PlantScript(char *object) {
@@ -1505,3 +1583,16 @@ int FourLayerGlow_UpdateHaloGlow(void *arg0, FieldFxSlot *state, FieldFxGlowPoin
         state->flag = 2;
     }
 }
+
+FieldActor *g_GlowEffectOwner;
+FieldFxParticlePosition g_GlowEffectPosition;
+GteShortVector g_GlowEffectPointOffset = {0,0,-150,0};
+GteShortVector g_GlowEffectSpriteRotation = {1024,0,0,0};
+s16 g_GlowEffectScaleByAction[16] = {150,190,150,180,200,250,150,0,0,0,0,0,0,0,0,0};
+GteShortVector g_GlowEffectFlareOffsets[8] = {{0,0,-150,0},{0,-15,-250,0},{0,-15,-220,0},{0,-15,-300,0},{0,0,-300,0},{0,0,-300,0},{0,0,-150,0},{0,0,0,0}};
+GteShortVector g_GlowEffectHaloOffsets[8] = {{0,0,-100,0},{0,-15,-200,0},{0,-15,-170,0},{0,-15,-250,0},{0,-15,-250,0},{0,-15,-250,0},{0,0,-100,0},{0,0,0,0}};
+int g_GlowEffectScript[25] = {1703936,1769472,1835008,5177344,521338882,520552449,131072,721092608,2818049,737738762,1703937,1769472,821428224,2031616,6225920,65536,65537,65538,65539,436338688,65540,65541,1703936,820707328,-1};
+FieldFxHandler g_GlowEffectInitList[7] = {GlowEffect_InitOwner,GlowEffect_InitParticle,GlowEffect_InitFlareLayers,GlowEffect_InitCoreGlow,GlowEffect_InitGroundGlow,GlowEffect_InitHaloGlow,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_GlowEffectDrawList[7] = {GlowEffect_DrawNop,GlowEffect_DrawParticle,GlowEffect_DrawFlareLayers,GlowEffect_DrawPointGlow,GlowEffect_DrawGroundGlow,GlowEffect_DrawHaloGlow,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_GlowEffectUpdateList[7] = {GlowEffect_UpdateEnd,GlowEffect_UpdateParticle,GlowEffect_UpdateFlareLayers,GlowEffect_UpdateCoreGlow,GlowEffect_UpdateGroundGlow,GlowEffect_UpdateHaloGlow,(FieldFxHandler)(intptr_t)-1};
+u16 g_GlowEffectSlotSizes[7] = {0,24,48,16,16,48,65535};

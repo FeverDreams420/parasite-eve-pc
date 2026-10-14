@@ -10,8 +10,9 @@
 
 /* Two layers: the effect's axis matrix composed with each spin
  * (gte_CompMatrix), scaled, and drawn as the glow sprite. */
-void GLOW_LAYERS_FUNC(void *object, void *slot, FieldGlowLayers *glow)
+int GLOW_LAYERS_FUNC(void *object, void *slot, void *payload)
 {
+    FieldGlowLayers *glow=payload;
     GteMatrix matrix;
     GteMatrix rotation;
     GteShortVector spinA;
@@ -49,6 +50,7 @@ void GLOW_LAYERS_FUNC(void *object, void *slot, FieldGlowLayers *glow)
     scaleB = GLOW_LAYERS_SCALE;
     ScaleMatrix(&matrix, &scaleB);
     FieldFx_DrawGlowSprite(&GLOW_LAYERS_SPRITE, &matrix, 0);
+    return 0;
 }
 
 #undef GLOW_LAYERS_FUNC

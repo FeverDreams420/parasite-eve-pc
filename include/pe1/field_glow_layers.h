@@ -37,9 +37,9 @@ extern GteShortVector g_FourLayerGlowSpinC;
 extern GteShortVector g_FourLayerGlowSpinD;
 extern GteVector g_FourLayerGlowScale;
 
-void GlowEffect_DrawFlareLayers(void *object, void *slot, FieldGlowLayers *glow);
-void GlowEffectB_DrawFlareLayers(void *object, void *slot, FieldGlowLayers *glow);
-void GlowEffectC_DrawFlareLayers(void *object, void *slot, FieldGlowLayers *glow);
+int GlowEffect_DrawFlareLayers(void *object, void *slot, void *glow);
+int GlowEffectB_DrawFlareLayers(void *object, void *slot, void *glow);
+int GlowEffectC_DrawFlareLayers(void *object, void *slot, void *glow);
 void FourLayerGlow_DrawFlareLayers(void *object, void *slot, FieldGlowLayers *glow);
 
 #endif

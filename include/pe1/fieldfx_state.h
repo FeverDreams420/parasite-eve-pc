@@ -73,8 +73,10 @@ extern struct FieldFxPointTriple g_PointSpriteActorPosition;
 /* Shape helpers (fieldfx/geometry.c): the two CLUT pixel blocks
  * FieldFx_LoadEffectTexturePage uploads and the index of the loaded one, the colour-key table
  * and a word of the direction helpers. */
-extern void *g_FieldEffectTexturePage0;
-extern void *g_FieldEffectTexturePage1;
+
+#include "pe1/game_state.h"
+#define g_FieldEffectTexturePage0 (g_GameState.startup_resource_tables[0])
+#define g_FieldEffectTexturePage1 (g_GameState.startup_resource_tables[1])
 extern s16 g_FieldFxLoadedTexturePage;
 extern u16 D_800E21A8[];
 extern u16 g_FieldFxRandomPhaseCounter;

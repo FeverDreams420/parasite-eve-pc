@@ -3135,3 +3135,29 @@ archives uninstrumented. Actor-owned dispatch gates, malformed commands,
 allocation bounds/alignment/wrap across authored sizes, original handler-table
 ABI, full effect lifecycle integration and deletion of pc/ remain incomplete.
 No functions were extracted and no new files were added.
+
+
+The original GlowEffect now has its native init/draw/update lists, 25-word
+command script, seven slot sizes, action scales and flare/halo offsets backed
+in glow.c. Existing callbacks were modified in place to the same three-void-
+pointer/int-return ABI used by FieldFxHandler; missing ignored returns are
+explicit zero. No wrapper handlers or extracted functions were added. The
+shared paired-layer template uses that ABI too; four-layer drawing remains a
+direct method. The previously unnamed update entry at USA 800C8CBC is confirmed
+by disassembly to be the ground fade/expansion method (brightness -= 8,
+scale += 0x78, teardown below 0x14). Original ApplyMatrixSV (whole mtx_06.c)
+is compiled for the initializers. Effect texture pointers alias canonical
+GameState startup_resource_tables at USA 800B0E18/1C instead of separate state.
+
+The actor fixture compares resident script, slot sizes, action scales and all
+flare/halo offsets to the supplied USA EXE in addition to layer constants.
+It plants the authored script and executes actual init/draw/update tables for
+160 ticks with a controlled actor, player action 1, matrix state and two trigger
+requests, followed by stop. All six handler IDs execute and slots finish; both
+packet buffers are used and object guards remain intact. Texture page 0 is
+already marked resident in this fixture, so actual texture loading is excluded.
+Full build and four related CTests pass with Disc 1 required. Fresh actor
+ASan/UBSan/function passes with original source instrumented and PsyZ/SDL
+archives uninstrumented. Real actor ownership, all player actions, texture
+uploads, room descriptor/class/spawn ABI integration, other authored effects,
+GPU image fidelity, full gameplay and deletion of pc/ remain incomplete.

@@ -19,6 +19,7 @@
 #include "pe1/field_shaded_ring.h"
 #include "pe1/field_glow_layers.h"
 #include "pe1/fieldfx_state.h"
+#include "pe1/field_effect_modules.h"
 #include "pe1/field_tri_test.h"
 #include "pe1/field_collision.h"
 #include "pe1/field_textured_strip.h"
@@ -861,10 +862,17 @@ static int original_glow_resident_constants(void)
         {0x800c21dc,&g_FourLayerGlowSpinB,sizeof(GteShortVector)},
         {0x800c21e4,&g_FourLayerGlowSpinC,sizeof(GteShortVector)},
         {0x800c21ec,&g_FourLayerGlowSpinD,sizeof(GteShortVector)},
-        {0x800c21f4,&g_FourLayerGlowScale,sizeof(GteVector)}
+        {0x800c21f4,&g_FourLayerGlowScale,sizeof(GteVector)},
+        {0x800c214c,&g_GlowEffectPointOffset,sizeof(GteShortVector)},
+        {0x800c2174,&g_GlowEffectSpriteRotation,sizeof(GteShortVector)},
+        {0x800e085c,g_GlowEffectSlotSizes,7*sizeof(u16)},
+        {0x800e0888,g_GlowEffectScaleByAction,16*sizeof(s16)},
+        {0x800e08a8,g_GlowEffectFlareOffsets,8*sizeof(GteShortVector)},
+        {0x800e08e8,g_GlowEffectHaloOffsets,8*sizeof(GteShortVector)},
+        {0x800e0928,g_GlowEffectScript,25*sizeof(int)}
     };
     PeDisc disc={0}; PeDiscFile file;
-    u8 header[32], raw[16];
+    u8 header[32], raw[128];
     if(!pe_disc_open(&disc,path)) return 0;
     if(!pe_disc_find(&disc,"SLUS_006.62",&file) ||
        !pe_disc_read(&disc,&file,0,header,sizeof(header))) { pe_disc_close(&disc); return 0; }
@@ -874,7 +882,7 @@ static int original_glow_resident_constants(void)
            memcmp(raw,rows[i].value,rows[i].size)) { pe_disc_close(&disc); return 0; }
     }
     pe_disc_close(&disc);
-    puts("Original glow constants: fourteen resident spin/scale records match the supplied USA disc");
+    puts("Original glow constants: resident spins, scales, offsets, slot sizes and authored script match the supplied USA disc");
     return 1;
 }
 
@@ -888,8 +896,8 @@ static int native_glow_layer_packets(void)
     GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
     g_GeomScroll.words.viewMatrix=&view;
     FieldGlowLayers glow={.depth=128,.z=1024,.matrix=view};
-    void (*draws[])(void *,void *,FieldGlowLayers *)={GlowEffect_DrawFlareLayers,
-        GlowEffectB_DrawFlareLayers,GlowEffectC_DrawFlareLayers,FourLayerGlow_DrawFlareLayers};
+    int (*draws[])(void *,void *,void *)={GlowEffect_DrawFlareLayers,
+        GlowEffectB_DrawFlareLayers,GlowEffectC_DrawFlareLayers};
     FieldGlowSprite *sprites[]={&g_GlowEffectSprite2,&g_GlowEffectBSprite2,&g_GlowEffectCSprite1,&g_FourLayerGlowSprite2};
     Psyz_GteCtrlWrite(26,256); Psyz_GteCtrlWrite(29,1365); Psyz_GteCtrlWrite(30,1024);
     gte_SetGeomOffset(160,120);
@@ -899,7 +907,8 @@ static int native_glow_layer_packets(void)
         *sprites[kind]=(FieldGlowSprite){.r=80,.g=80,.b=80,.cell=0xae,.clut=7,.offset=-50};
         D_800B0E38.ordering[slot]=ordering; D_800B0E38.packets[slot]=(char *)&buffer;
         g_ActiveDrawSlot=slot; g_DrawPacketOffset=0;
-        draws[kind](NULL,NULL,&glow);
+        if(kind==3) FourLayerGlow_DrawFlareLayers(NULL,NULL,&glow);
+        else draws[kind](NULL,NULL,&glow);
         unsigned count=kind==3?4:2;
         if(g_DrawPacketOffset!=count*sizeof(FieldStripPacket)) { fprintf(stderr,"glow kind %u slot %u bytes %d expected %zu\n",kind,slot,g_DrawPacketOffset,count*sizeof(FieldStripPacket)); return 0; }
         unsigned linked=0, seen=0;
@@ -991,6 +1000,59 @@ static int native_object_script_cycle(void)
     return 1;
 }
 
+static int authored_glow_script_cycle(void)
+{
+    struct { FieldFxObject object; u8 guard[16]; } buffer={0};
+    RenderMatrix matrices[20]={0};
+    FieldActor owner={0}; BattleEntity player={0}, *saved_player=D_8009D254;
+    Combatant core={0}; BattleAction action={0};
+    for(unsigned i=0;i<20;++i) {
+        for(unsigned j=0;j<3;++j) matrices[i].rotation[j][j]=4096;
+        matrices[i].translation[2]=1024;
+    }
+    owner.render_object.matrices=matrices;
+    player.core=&core; core.action=&action; action.actionCode.actionId=1;
+    D_8009D254=&player;
+    FieldFxObject *object=&buffer.object;
+    object->prefix.asset_type=7; object->prefix.actor=&owner;
+    memset(buffer.guard,0xa5,sizeof(buffer.guard));
+    RenderBufferPrefix saved=D_800B0E38;
+    int saved_slot=g_ActiveDrawSlot, saved_offset=g_DrawPacketOffset;
+    GteMatrix *saved_view=g_GeomScroll.words.viewMatrix;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    g_GeomScroll.words.viewMatrix=&view;
+    static RenderGpuTag ordering[4096];
+    _Alignas(16) u8 packets[32768];
+    Psyz_GteCtrlWrite(26,256); Psyz_GteCtrlWrite(29,1365); Psyz_GteCtrlWrite(30,1024);
+    gte_SetGeomOffset(160,120);
+    g_FieldFxLoadedTexturePage=0;
+    unsigned seen=0, ended=0, drawn=0;
+    GlowEffect_PlantScript((char *)object);
+    FieldFx_Spawn6(object,0,0,1);
+    for(unsigned frame=0;frame<160;++frame) {
+        unsigned slot=frame&1;
+        for(unsigned i=0;i<4096;++i) { ordering[i].address=0xffffff; ordering[i].length=0; }
+        D_800B0E38.ordering[slot]=ordering; D_800B0E38.packets[slot]=(char *)packets;
+        g_ActiveDrawSlot=slot; g_DrawPacketOffset=0;
+        FieldFx_UpdateSlots(object,g_GlowEffectUpdateList);
+        if(frame==20) object->state.vars[0]=1;
+        if(frame==40) object->state.vars[0]=2;
+        if(!ended && FieldFx_RunScript(object,g_GlowEffectInitList,g_GlowEffectSlotSizes)==-1) ended=1;
+        for(unsigned i=0;i<64;++i) if(object->slots[i].flag==1) seen|=1u<<object->slots[i].handler_id;
+        FieldFx_Register(object,g_GlowEffectDrawList);
+        if(g_DrawPacketOffset) ++drawn;
+        if(g_DrawPacketOffset>sizeof(packets)) return 0;
+        for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
+    }
+    if(seen!=0x3f || !object->state.halted || object->state.slot_count || !drawn) {
+        fprintf(stderr,"authored glow handlers %x halted %d slots %d drawn %u\n",seen,object->state.halted,object->state.slot_count,drawn); return 0;
+    }
+    D_8009D254=saved_player; D_800B0E38=saved;
+    g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset; g_GeomScroll.words.viewMatrix=saved_view;
+    puts("Original authored glow: real command/init/draw/update tables, six handler IDs, 160 ticks and completion passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -1051,7 +1113,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

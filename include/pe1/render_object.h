@@ -107,10 +107,8 @@ typedef struct RenderOrbitingEmitter {
     char *particles;
 } RenderOrbitingEmitter;
 
-PE1_STATIC_ASSERT(sizeof(RenderOrbitingEmitter) == 8,
-                  render_orbiting_emitter_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderOrbitingEmitter, particles) == 4,
-                  render_orbiting_emitter_particles);
+
+
 int FieldFx_OrbitingSpriteBurst(int mode, RenderOrbitingEmitter *state);
 extern GteShortVector g_OrbitingEffectAnchor;
 extern char *g_OrbitingEffectParticlePool;
@@ -515,6 +513,8 @@ typedef struct RenderMatrix {
     /* 0x14 */ s32 translation[3];
 } RenderMatrix;
 
+/* Host runtime object: pointer-bearing layout is not a disc record.
+ * Comments below document old PS1 offsets, not host offsets. */
 typedef struct RenderObjectEntity {
     /* 0x00 */ RenderObjectHeader *header;
     /* 0x04 */ RenderObjectPart *parts;
@@ -598,57 +598,35 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectHeader, packet34_count) == 0x08,
                   render_object_header_primitive_counts_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderMatrix, translation) == 0x14,
                   render_matrix_translation_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, model_matrix) == 0x34,
-                  render_object_model_matrix_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, matrices) == 0x84,
-                  render_object_matrices_offset);
+
+
 PE1_STATIC_ASSERT(sizeof(RenderAnimationLookupEntry) == 0x0C,
                   render_animation_lookup_entry_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, animation_data) == 0xB0,
-                  render_object_animation_data_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, target_x) == 0xB4,
-                  render_object_target_x_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, target_z) == 0xB8,
-                  render_object_target_z_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, primitive_red) == 0x90,
-                  render_object_primitive_red_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, primitive_green) == 0x91,
-                  render_object_primitive_green_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, primitive_blue) == 0x92,
-                  render_object_primitive_blue_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, fade_remaining) == 0x8C,
-                  render_object_fade_remaining_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, fade_duration) == 0x8D,
-                  render_object_fade_duration_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, fade_red_step) == 0x8E,
-                  render_object_fade_red_step_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, fade_green_step) == 0x8F,
-                  render_object_fade_green_step_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, fade_blue_step) == 0x93,
-                  render_object_fade_blue_step_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, fade_red) == 0x94,
-                  render_object_fade_red_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, fade_green) == 0x95,
-                  render_object_fade_green_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, fade_blue) == 0x96,
-                  render_object_fade_blue_offset);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectHeader, anchor_y) == 0x10,
                   render_object_header_anchor_y);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectHeader, anchor_matrix_index) == 0x12,
                   render_object_header_anchor_matrix_index);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, projection_origin) == 0x1C,
-                  render_object_projection_origin);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, projected_target_x) == 0x64,
-                  render_object_projected_target);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, hit_cylinder) == 0x68,
-                  render_object_hit_cylinder);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, hit_cylinder.radius) == 0x70,
-                  render_object_hit_cylinder_radius);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, hit_body) == 0x74,
-                  render_object_hit_body);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderObjectEntity, hit_body.radius) == 0x7C,
-                  render_object_hit_body_radius);
-PE1_STATIC_ASSERT(sizeof(RenderObjectEntity) == 0xBC, render_object_entity_size);
+
+
+
+
+
+
+
 
 union RenderLightingMatrix;
 void Render_DrawObject(RenderObjectEntity *object, union RenderLightingMatrix *matrix);

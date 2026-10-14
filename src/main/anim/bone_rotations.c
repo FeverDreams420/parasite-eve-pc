@@ -104,21 +104,14 @@ void Scene_CheckFlagBits(void *ctx, SceneFlagRecord **table, int *index_ptr)
     }
 }
 
-/* Bone angles are decoded into scratchpad vectors indexed by matrix slot. */
-#define ANIM_BONE_ANGLES 0x1F800000
-
-/* A halfword sample base seen as the address retail adds the frame's byte
- * offset to; indexing the samples by frame hoists the scaling below the angle
- * pointer setup instead. */
-typedef union AnimSampleAddress {
-    u16 *samples;
-    u32 address;
-} AnimSampleAddress;
+/* Shared work vectors replace the PS1 scratchpad. The original routines
+ * execute serially and address slots by the unsigned-byte bone index. */
+static GteShortVector g_AnimBoneAngles[256];
 
 /* Apply the two per-object rotation overrides on top of the decoded keyframe
  * angles, then rebuild the affected bone matrices. */
 void Anim_BuildRotationMatrices(RenderObjectEntity *object, RenderAnimationDataHeader *data, int frame) {
-    u32 angles = ANIM_BONE_ANGLES;
+    GteShortVector *angles = g_AnimBoneAngles;
     int i;
 
     if (data == 0) {
@@ -155,8 +148,8 @@ void Anim_BuildRotationMatrices(RenderObjectEntity *object, RenderAnimationDataH
             } else if (object->rotation_overrides[i].flags & 0x04) {
                 ((GteShortVector *)angles)[index].z += object->rotation_overrides[i].z;
             }
-            /* Retail ORs the slot offset into the scratchpad base here. */
-            RotMatrixYXZ((GteShortVector *)(angles | (index << 3)),
+            /* The original slot offset selects the same work vector. */
+            RotMatrixYXZ(&angles[index],
                          (GteMatrix *)&object->active_matrix[index]);
         }
     }
@@ -182,7 +175,7 @@ void Anim_DecodeBoneRotationsByte(RenderObjectEntity *object, RenderAnimationDat
     u8 *byteSamples;
     s16 *shortSamples;
 
-    angle = (GteShortVector *)ANIM_BONE_ANGLES;
+    angle = g_AnimBoneAngles;
     cursor = (u8 *)(data + 1);
     bone = 0;
     matrix = object->matrices;
@@ -263,9 +256,9 @@ void Anim_DecodeBoneRotationsShort(RenderObjectEntity *object, RenderAnimationDa
     u8 *cursor;
     s16 *angleZ;
     s16 *samples;
-    AnimSampleAddress sampleBase;
+    u16 *sampleBase;
 
-    angle = (GteShortVector *)ANIM_BONE_ANGLES;
+    angle = g_AnimBoneAngles;
     cursor = (u8 *)(data + 1);
     bone = 0;
     matrix = object->matrices;
@@ -290,32 +283,32 @@ void Anim_DecodeBoneRotationsShort(RenderObjectEntity *object, RenderAnimationDa
         channelStride = stride * 4;
         angleZ = &angle->z;
         do {
-            sampleBase.samples = ((RenderAnimShortChannel *)cursor)->samples.unsigned_values;
+            sampleBase = ((RenderAnimShortChannel *)cursor)->samples.unsigned_values;
             if (((RenderAnimShortChannel *)cursor)->constant_marker != 0) {
                 sampleX = ((RenderAnimShortChannel *)cursor)->samples.unsigned_values[0];
                 cursor = cursor + 4;
             } else {
-                sampleX = *(u16 *)(frameOffset + sampleBase.address);
+                sampleX = *(u16 *)((u8 *)sampleBase + frameOffset);
                 cursor = cursor + channelStride;
             }
             angle->x = sampleX;
-            sampleBase.samples = ((RenderAnimShortChannel *)cursor)->samples.unsigned_values;
+            sampleBase = ((RenderAnimShortChannel *)cursor)->samples.unsigned_values;
             if (((RenderAnimShortChannel *)cursor)->constant_marker != 0) {
                 sampleY = ((RenderAnimShortChannel *)cursor)->samples.unsigned_values[0];
                 cursor = cursor + 4;
             } else {
-                sampleY = *(u16 *)(frameOffset + sampleBase.address);
+                sampleY = *(u16 *)((u8 *)sampleBase + frameOffset);
                 cursor = cursor + channelStride;
             }
             /* Keep the vector pointer live through the Y-channel store. */
             angleZ[-1] = sampleY;
-            sampleBase.samples = ((RenderAnimShortChannel *)cursor)->samples.unsigned_values;
+            sampleBase = ((RenderAnimShortChannel *)cursor)->samples.unsigned_values;
             if (((RenderAnimShortChannel *)cursor)->constant_marker != 0) {
                 sampleZ = ((RenderAnimShortChannel *)cursor)->samples.unsigned_values[0];
                 cursor = cursor + 4;
                 angleZ[0] = sampleZ;
             } else {
-                sampleZ = *(u16 *)(frameOffset + sampleBase.address);
+                sampleZ = *(u16 *)((u8 *)sampleBase + frameOffset);
                 cursor = cursor + channelStride;
                 angleZ[0] = sampleZ;
             }

@@ -36,3 +36,14 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-gte PRIVATE psyz)
     add_test(NAME original-game-gte COMMAND test-original-gte)
 endif()
+
+add_library(parasite-eve-original-animation OBJECT
+    src/main/anim/bone_rotations.c)
+target_include_directories(parasite-eve-original-animation PRIVATE include)
+if(BUILD_TESTING)
+    add_executable(test-original-animation tests/original_animation.c
+        $<TARGET_OBJECTS:parasite-eve-original-animation>)
+    target_include_directories(test-original-animation PRIVATE include)
+    target_link_libraries(test-original-animation PRIVATE psyz)
+    add_test(NAME original-game-animation COMMAND test-original-animation)
+endif()

@@ -567,14 +567,35 @@ int main(void)
         PeVramStats stats; char error[256];
         CHECK(pe_blob_upload_vram(&common, expected, &stats, error, sizeof(error)));
         CHECK(stats.uploads > 0);
+        memset(scratch,0xa5,bytes);
+        PeDiscFile limited=catalog.archive;
+        limited.size=(u32)((size_t)catalog.sector_bounds[5]*2048);
+        CdRom_BindImage(&disc,&limited);
+        CHECK(Asset_LoadTimTextures(1)==-1 && g_GameState.tim_load_state==0x34 && (g_GameState.flags&8));
+        for(size_t i=0;i<bytes;++i) CHECK(scratch[i]==0xa5);
+        DrawSync(0); StoreImage(&all,(u_long *)actual->words); DrawSync(0);
+        for(size_t i=0;i<sizeof(actual->words)/sizeof(actual->words[0]);++i) CHECK(actual->words[i]==0);
+        CdRom_BindImage(&disc,&catalog.archive);
         CHECK(Asset_LoadTimTextures(1) == 1 && g_GameState.tim_load_state == 0x35);
         CHECK(!memcmp(scratch, common.bytes, common.size));
+        /* Force an actual backend error between read and loader completion.
+         * Valid scratch bytes must not be uploaded after a failed poll. */
+        CHECK(CdRom_PollReady()==0);
+        u8 read_guard=0xa5;
+        CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector,&read_guard,UINT32_MAX)==-1 && read_guard==0xa5);
+        CHECK(Asset_LoadTimTextures(1)==-1 && g_GameState.tim_load_state==0x34 && (g_GameState.flags&8));
+        DrawSync(0); StoreImage(&all,(u_long *)actual->words); DrawSync(0);
+        for(size_t i=0;i<sizeof(actual->words)/sizeof(actual->words[0]);++i) CHECK(actual->words[i]==0);
+        CdRom_BindImage(&disc,&catalog.archive);
+        memset(scratch,0xa5,bytes);
+        CHECK(Asset_LoadTimTextures(1)==1 && g_GameState.tim_load_state==0x35);
+        CHECK(!memcmp(scratch,common.bytes,common.size));
         CHECK(Asset_LoadTimTextures(1) == 0 && g_GameState.tim_load_state == 0);
         CHECK(!(g_GameState.flags & 8));
         DrawSync(0); StoreImage(&all, (u_long *)actual->words); DrawSync(0);
         CHECK(!memcmp(expected->words, actual->words, sizeof(expected->words)));
         CHECK(Asset_LoadTimTextures(0) == 0 && g_GameState.tim_load_state == 0);
-        printf("Original common TIM loader: %u real uploads, file-backed read and full VRAM comparison passed\n", stats.uploads);
+        printf("Original common TIM loader: %u real uploads, archive/poll failures, fresh-read recovery and full VRAM comparison passed\n", stats.uploads);
         unsigned rooms = 0, keyed_uploads = 0, textured_rooms = 0;
         PeRoom room = {0};
         for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {

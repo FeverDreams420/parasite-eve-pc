@@ -3294,3 +3294,20 @@ ASan/UBSan/function passes with original source instrumented and PsyZ/SDL
 archives uninstrumented. Real bank upload/recovery, all callers, native effect
 class/descriptor integration, full gameplay and deletion of pc/ remain
 incomplete. No new files or extracted functions.
+
+
+Real Asset_LoadTimTextures failure/recovery is now exercised against the USA
+common bank (one actual upload), using the original image backend and GPU VRAM
+readback. Restricting the mounted PE.IMG extent rejects the bank read without
+changing scratch bytes or VRAM. A deliberate backend error injected between a
+successful read and completion makes the loader reject polling, reset to read
+phase and avoid uploading the valid-but-uncommitted scratch. A fresh file-backed
+read is then required and its upload matches the full VRAM reference. This
+extends the existing real TIM fixture, which also compares all 414 room-bank
+loads and 296 keyed images in 123 rooms. Full build and three related CTests
+pass with Disc 1 required. A freshly compiled real entity-assets fixture passes
+ASan/UBSan/function with original/test source instrumented and PsyZ/SDL archives
+uninstrumented. This proves the tested TIM upload data and error protocol, not
+rendered effect/gameplay fidelity or complete PM/descriptor integration. Full
+gameplay and deletion of pc/ remain incomplete. No new source files or game
+functions were added.

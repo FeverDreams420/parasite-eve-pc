@@ -18,7 +18,8 @@ add_library(parasite-eve-original OBJECT
     src/main/fieldfx/angle.c
     src/main/psyq/libgte/mtx_000.c
     src/main/psyq/libgte/cmb_06.c
-    src/main/anim/bone_rotations.c)
+    src/main/anim/bone_rotations.c
+    src/main/render/bone_transforms.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
@@ -56,4 +57,12 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-animation-assets PRIVATE psyz)
     add_test(NAME original-game-animation-assets COMMAND test-original-animation-assets)
     set_tests_properties(original-game-animation-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test-original-transforms tests/original_transforms.c
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-transforms PRIVATE include)
+    target_link_libraries(test-original-transforms PRIVATE psyz)
+    add_test(NAME original-game-transforms COMMAND test-original-transforms)
 endif()

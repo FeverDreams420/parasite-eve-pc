@@ -26,7 +26,7 @@ extern AkaoInstrument g_AkaoStreamInstrumentCacheB[];
 typedef union AkaoInstrumentAddress {
     AkaoInstrument *instrument;
     unsigned *words;
-    unsigned word;
+    uintptr_t word;
 } AkaoInstrumentAddress;
 /* Instrument records replaced by Spu_UploadSampleBlock. */
 extern AkaoInstrument g_AkaoInstrumentTable[];

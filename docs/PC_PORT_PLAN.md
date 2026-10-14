@@ -645,3 +645,19 @@ The regression checks completion, exact 16-byte ADPCM RAM contents, the
 64-byte instrument record and a second blocking upload. All four original
 AKAO tests pass with required Disc 1 assets. The transfer status is owned by
 original runtime state. This does not yet integrate frontend menu audio.
+
+### Original streaming upload on Disc 1 banks (2026-10-14)
+
+The private prefix test now executes original Spu_SetStreamModeA and
+Akao_StepNoteSequencer for every playable music record instead of copying
+fixture-decoded instruments into runtime state. It compares all 256 instrument
+records and the uploaded SPU RAM range against the independent fixture reader,
+then executes the original sequence prefix. AkaoInstrumentAddress.word now
+uses uintptr_t so byte offsets cannot truncate/carry-wrap native pointers.
+Stream-upload mode/address/remaining counters belong to runtime state.
+
+Required Disc 1 run passes: 414 rooms, 599 sequences, 8883 channel prefixes;
+one unresolved short record remains unexecuted. All four AKAO CTest entries
+pass. The asset run also passes ASan/UBSan/function on original/test sources
+with the uninstrumented PsyZ archive. This proves sample transfer and first
+note/stop prefixes, not complete music playback or audible frontend menus.

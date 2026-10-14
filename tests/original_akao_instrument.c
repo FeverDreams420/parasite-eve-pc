@@ -93,10 +93,23 @@ static int asset_audit(int execute)
                 uint8_t *sample_bytes = NULL;
                 size_t sample_size = 0;
                 CHECK(pe_audio_bank_read(&catalog, music.bank, &sample_bytes, &sample_size));
+                PeSpuBankStats stats;
                 CHECK(pe_spu_bank_upload_rebased(record_samples, sample_bytes, sample_size,
-                    0x8000, 0x20, NULL, error, sizeof(error)));
+                    0x8000, 0x20, &stats, error, sizeof(error)));
+                g_AkaoSequencerState = (AkaoSequencerState){0};
+                g_AkaoCurTrack = &fixture_bank;
+                memcpy(g_AkaoInstrumentTable, resident->instruments, sizeof(AkaoInstrument) * 256);
+                Spu_SetStreamModeA();
+                CHECK(Akao_StepNoteSequencer(sample_bytes, (unsigned)sample_size) == 0);
+                CHECK(g_SpuTransferStatus == 0);
+                CHECK(memcmp(g_AkaoInstrumentTable, record_samples->instruments,
+                    sizeof(AkaoInstrument) * 256) == 0);
+                uint8_t *ram = malloc(stats.bytes);
+                CHECK(ram != NULL);
+                Psyz_SpuMemRead(stats.address, ram, stats.bytes);
+                CHECK(memcmp(ram, record_samples->ram + stats.address, stats.bytes) == 0);
+                free(ram);
                 free(sample_bytes);
-                memcpy(g_AkaoInstrumentTable, record_samples->instruments, sizeof(AkaoInstrument) * 256);
             }
             unsigned char *snapshot = malloc(music.sequence.size);
             CHECK(snapshot != NULL);

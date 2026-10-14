@@ -38,3 +38,4 @@ SpuCommonAttr g_AkaoSpuCommonAttr;
 
 volatile int g_AkaoSeqBusyFlags;
 volatile int g_SpuTransferStatus;
+unsigned g_AkaoStreamUploadMode, g_AkaoInstrumentUploadAddress, g_AkaoInstrumentUploadRemaining;

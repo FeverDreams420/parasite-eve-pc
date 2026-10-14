@@ -12,6 +12,8 @@ Uruchamiamy oryginalny kod `src/main/` i `src/overlays/` na PC. Modyfikujemy go 
 
 Dotychczasowe implementacje logiki w `pc/` powstały przy błędnym podejściu i nie są podstawą portu. Poniższe historyczne wyniki dotyczą tych eksperymentów, nie uruchomienia oryginalnej gry. Pierwszy audyt 99 oryginalnych jednostek gry (bez historycznych bibliotek `psyq`) wykazał 9 przechodzących syntax check; to nie dowód kompilacji ani linkowania. Główne przeszkody obejmują stare layouty struktur roboczych, instrukcje MIPS/GTE i zależności sprzętowe. Sprawdzenia layoutów danych z płyt pozostają wymagane.
 
+Oryginalny nagłówek `include/pe1/gte.h` ma 143 makra przeniesione z pojedynczych transferów/poleceń MIPS na bezpośrednie endpointy PsyZ. Test `original-game-gte` wywołuje te makra bez okna, sprawdza projekcję, MAC, rejestry kontrolne i niewyrównane host buffers; przechodzi także ASan/UBSan dla kodu testu i makr (biblioteka PsyZ nie jest instrumentowana). Złożone makra i oryginalny renderer nadal wymagają dostosowania. Oryginalne procedury matematyczne są linkowane przez `parasite-eve-original`; 100000 deterministycznych przypadków przechodzi `original-game-math` oraz ASan/UBSan. To postęp w kompilacji kodu źródłowego, nie działająca rozgrywka.
+
 ## 1. Stan rzeczywisty i zakres wydania
 
 Opcode 114 / SetRenderEntryEnabled zmienia tylko bit 2 native background flags, zachowując prędkości i pozostałe tryby. Real VM fixture ukrywa tile, wykonuje motion step na ukrytym wpisie, ponownie go pokazuje i potwierdza zmienioną draw position. Niezerowe enabled values są true; invalid index nie zmienia stanu. 35 headless testów i ASan/UBSan native scene/VM fixture przechodzą. Controller/group animation, GPU packets oraz pełna frame/campaign integration pozostają wymagane.

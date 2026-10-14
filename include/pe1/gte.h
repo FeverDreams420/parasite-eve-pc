@@ -2,6 +2,14 @@
 #define PE1_GTE_H
 
 #include "pe1/gte_types.h"
+#include <string.h>
+
+/* Existing PsyZ endpoints, without importing conflicting SDK types. */
+unsigned int Psyz_GteDataRead(unsigned reg);
+void Psyz_GteDataWrite(unsigned reg, unsigned int value);
+unsigned int Psyz_GteCtrlRead(unsigned reg);
+void Psyz_GteCtrlWrite(unsigned reg, unsigned int value);
+void Psyz_GteCommand(unsigned int command);
 
 /*
  * PSY-Q-style GTE operations.  Keep these macros limited to COP2 state and
@@ -13,172 +21,112 @@
 #define GTE_INSN_LWC2_0_0 "lwc2 $0,0(%0)"
 #define GTE_INSN_LWC2_1_4 "lwc2 $1,4(%0)"
 #define gte_lwc2_0_0(ptr) \
-    asm volatile(GTE_INSN_LWC2_0_0 : : "r"(ptr) : "memory")
+    do { u32 word; memcpy(&word, (ptr), 4); Psyz_GteDataWrite(0, word); } while (0)
 #define gte_lwc2_1_4(ptr) \
-    asm volatile(GTE_INSN_LWC2_1_4 : : "r"(ptr) : "memory")
-#define gte_lwc2_2_0(p) \
-    asm volatile("lwc2 $2,0(%0)" : : "r"(p) : "memory")
-#define gte_lwc2_3_4(p) \
-    asm volatile("lwc2 $3,4(%0)" : : "r"(p) : "memory")
-#define gte_lwc2_4_0(p) \
-    asm volatile("lwc2 $4,0(%0)" : : "r"(p) : "memory")
-#define gte_lwc2_5_4(p) \
-    asm volatile("lwc2 $5,4(%0)" : : "r"(p) : "memory")
-#define gte_rtpt_command() \
-    asm volatile(".word 0x4A280030")
-#define gte_avsz3_command() \
-    asm volatile(".word 0x4B58002D")
-#define gte_avsz4_command() \
-    asm volatile(".word 0x4B68002E")
+    do { u32 word; memcpy(&word, (const u8 *)(ptr) + 4, 4); Psyz_GteDataWrite(1, word); } while (0)
+#define gte_lwc2_2_0(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 0, 4); Psyz_GteDataWrite(2, word); } while (0)
+#define gte_lwc2_3_4(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 4, 4); Psyz_GteDataWrite(3, word); } while (0)
+#define gte_lwc2_4_0(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 0, 4); Psyz_GteDataWrite(4, word); } while (0)
+#define gte_lwc2_5_4(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 4, 4); Psyz_GteDataWrite(5, word); } while (0)
+#define gte_rtpt_command() Psyz_GteCommand(0x4A280030u & 0x01ffffffu)
+#define gte_avsz3_command() Psyz_GteCommand(0x4B58002Du & 0x01ffffffu)
+#define gte_avsz4_command() Psyz_GteCommand(0x4B68002Eu & 0x01ffffffu)
 
-#define gte_swc2_11_16(ptr) \
-    asm volatile("swc2 $11,16(%0)" : : "r"(ptr) : "memory")
+#define gte_swc2_11_16(ptr) do { u32 word = Psyz_GteDataRead(11); memcpy((u8 *)(ptr) + 16, &word, 4); } while (0)
 
-#define gte_swc2_25_0(ptr) \
-    asm volatile("swc2 $25,0(%0)" : : "r"(ptr) : "memory")
-#define gte_swc2_26_4(ptr) \
-    asm volatile("swc2 $26,4(%0)" : : "r"(ptr) : "memory")
-#define gte_swc2_27_8(ptr) \
-    asm volatile("swc2 $27,8(%0)" : : "r"(ptr) : "memory")
+#define gte_swc2_25_0(ptr) do { u32 word = Psyz_GteDataRead(25); memcpy((u8 *)(ptr) + 0, &word, 4); } while (0)
+#define gte_swc2_26_4(ptr) do { u32 word = Psyz_GteDataRead(26); memcpy((u8 *)(ptr) + 4, &word, 4); } while (0)
+#define gte_swc2_27_8(ptr) do { u32 word = Psyz_GteDataRead(27); memcpy((u8 *)(ptr) + 8, &word, 4); } while (0)
 
 /* MVMVA: SF=1, rotation matrix, V0, no translation, LM=0. */
-#define gte_mvmva_rotation_v0_sf12() \
-    asm volatile(".word 0x4A486012")
+#define gte_mvmva_rotation_v0_sf12() Psyz_GteCommand(0x4A486012u & 0x01ffffffu)
 
 /* Single commands; callers place their required transfer hazard slots. */
-#define gte_rtps_command() \
-    asm volatile(".word 0x4A180001")
-#define gte_mvmva_rotation_v0_translation_sf12() \
-    asm volatile(".word 0x4A480012")
+#define gte_rtps_command() Psyz_GteCommand(0x4A180001u & 0x01ffffffu)
+#define gte_mvmva_rotation_v0_translation_sf12() Psyz_GteCommand(0x4A480012u & 0x01ffffffu)
 
 /* Individual MAC transfers and rotation commands for long-vector inputs. */
-#define gte_mfc2_25(value) \
-    asm volatile("mfc2 %0,$25" : "=r"(value))
-#define gte_mfc2_26(value) \
-    asm volatile("mfc2 %0,$26" : "=r"(value))
-#define gte_mfc2_27(value) \
-    asm volatile("mfc2 %0,$27" : "=r"(value))
-#define gte_mvmva_rotation_ir_sf0() \
-    asm volatile(".word 0x4A41E012")
-#define gte_mvmva_rotation_ir_sf12() \
-    asm volatile(".word 0x4A49E012")
+#define gte_mfc2_25(value) ((value) = Psyz_GteDataRead(25))
+#define gte_mfc2_26(value) ((value) = Psyz_GteDataRead(26))
+#define gte_mfc2_27(value) ((value) = Psyz_GteDataRead(27))
+#define gte_mvmva_rotation_ir_sf0() Psyz_GteCommand(0x4A41E012u & 0x01ffffffu)
+#define gte_mvmva_rotation_ir_sf12() Psyz_GteCommand(0x4A49E012u & 0x01ffffffu)
 
 /* Far-colour controls and three-vertex colour output for NCCT.
  * Each macro contains exactly one GTE instruction. */
-#define gte_ctc2_13(v) asm volatile("ctc2 %0,$13" : : "r"(v))
-#define gte_ctc2_14(v) asm volatile("ctc2 %0,$14" : : "r"(v))
-#define gte_ctc2_15(v) asm volatile("ctc2 %0,$15" : : "r"(v))
-#define gte_lwc2_6_0(p) asm volatile("lwc2 $6,0(%0)" : : "r"(p))
-#define gte_ncct_command() asm volatile(".word 0x4B18043F")
-#define gte_swc2_20_0(p) asm volatile("swc2 $20,0(%0)" : : "r"(p) : "memory")
-#define gte_swc2_21_0(p) asm volatile("swc2 $21,0(%0)" : : "r"(p) : "memory")
-#define gte_swc2_22_0(p) asm volatile("swc2 $22,0(%0)" : : "r"(p) : "memory")
+#define gte_ctc2_13(v) Psyz_GteCtrlWrite(13, (u32)(v))
+#define gte_ctc2_14(v) Psyz_GteCtrlWrite(14, (u32)(v))
+#define gte_ctc2_15(v) Psyz_GteCtrlWrite(15, (u32)(v))
+#define gte_lwc2_6_0(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 0, 4); Psyz_GteDataWrite(6, word); } while (0)
+#define gte_ncct_command() Psyz_GteCommand(0x4B18043Fu & 0x01ffffffu)
+#define gte_swc2_20_0(p) do { u32 word = Psyz_GteDataRead(20); memcpy((u8 *)(p) + 0, &word, 4); } while (0)
+#define gte_swc2_21_0(p) do { u32 word = Psyz_GteDataRead(21); memcpy((u8 *)(p) + 0, &word, 4); } while (0)
+#define gte_swc2_22_0(p) do { u32 word = Psyz_GteDataRead(22); memcpy((u8 *)(p) + 0, &word, 4); } while (0)
 
 /* Read the current packed rotation/translation control words. */
-#define gte_cfc2_0(v) asm volatile("cfc2 %0,$0" : "=r"(v))
-#define gte_cfc2_1(v) asm volatile("cfc2 %0,$1" : "=r"(v))
-#define gte_cfc2_2(v) asm volatile("cfc2 %0,$2" : "=r"(v))
-#define gte_cfc2_3(v) asm volatile("cfc2 %0,$3" : "=r"(v))
-#define gte_cfc2_4(v) asm volatile("cfc2 %0,$4" : "=r"(v))
-#define gte_cfc2_5(v) asm volatile("cfc2 %0,$5" : "=r"(v))
-#define gte_cfc2_6(v) asm volatile("cfc2 %0,$6" : "=r"(v))
-#define gte_cfc2_7(v) asm volatile("cfc2 %0,$7" : "=r"(v))
+#define gte_cfc2_0(v) ((v) = Psyz_GteCtrlRead(0))
+#define gte_cfc2_1(v) ((v) = Psyz_GteCtrlRead(1))
+#define gte_cfc2_2(v) ((v) = Psyz_GteCtrlRead(2))
+#define gte_cfc2_3(v) ((v) = Psyz_GteCtrlRead(3))
+#define gte_cfc2_4(v) ((v) = Psyz_GteCtrlRead(4))
+#define gte_cfc2_5(v) ((v) = Psyz_GteCtrlRead(5))
+#define gte_cfc2_6(v) ((v) = Psyz_GteCtrlRead(6))
+#define gte_cfc2_7(v) ((v) = Psyz_GteCtrlRead(7))
 
-#define gte_cop2_hazard_slot() \
-    asm volatile("nop")
+#define gte_cop2_hazard_slot() ((void)0)
 
 /* Perspective center in signed 16.16 screen coordinates. */
-#define gte_ctc2_24(value) \
-    asm volatile("ctc2 %0,$24" : : "r"(value))
-#define gte_ctc2_25(value) \
-    asm volatile("ctc2 %0,$25" : : "r"(value))
+#define gte_ctc2_24(value) Psyz_GteCtrlWrite(24, (u32)(value))
+#define gte_ctc2_25(value) Psyz_GteCtrlWrite(25, (u32)(value))
 
 /* Projection distance (H). */
-#define gte_ctc2_26(value) \
-    asm volatile("ctc2 %0,$26" : : "r"(value))
+#define gte_ctc2_26(value) Psyz_GteCtrlWrite(26, (u32)(value))
 
-#define gte_ctc2_0(value) \
-    asm volatile("ctc2 %0,$0" : : "r"(value))
-#define gte_ctc2_1(value) \
-    asm volatile("ctc2 %0,$1" : : "r"(value))
-#define gte_ctc2_2(value) \
-    asm volatile("ctc2 %0,$2" : : "r"(value))
-#define gte_ctc2_3(value) \
-    asm volatile("ctc2 %0,$3" : : "r"(value))
-#define gte_ctc2_4(value) \
-    asm volatile("ctc2 %0,$4" : : "r"(value))
-#define gte_ctc2_5(value) \
-    asm volatile("ctc2 %0,$5" : : "r"(value))
-#define gte_ctc2_6(value) \
-    asm volatile("ctc2 %0,$6" : : "r"(value))
-#define gte_ctc2_7(value) \
-    asm volatile("ctc2 %0,$7" : : "r"(value))
+#define gte_ctc2_0(value) Psyz_GteCtrlWrite(0, (u32)(value))
+#define gte_ctc2_1(value) Psyz_GteCtrlWrite(1, (u32)(value))
+#define gte_ctc2_2(value) Psyz_GteCtrlWrite(2, (u32)(value))
+#define gte_ctc2_3(value) Psyz_GteCtrlWrite(3, (u32)(value))
+#define gte_ctc2_4(value) Psyz_GteCtrlWrite(4, (u32)(value))
+#define gte_ctc2_5(value) Psyz_GteCtrlWrite(5, (u32)(value))
+#define gte_ctc2_6(value) Psyz_GteCtrlWrite(6, (u32)(value))
+#define gte_ctc2_7(value) Psyz_GteCtrlWrite(7, (u32)(value))
 
 /* Packed light-matrix words L11..L33 (control registers 8..12). */
-#define gte_ctc2_8(value) \
-    asm volatile("ctc2 %0,$8" : : "r"(value))
-#define gte_ctc2_9(value) \
-    asm volatile("ctc2 %0,$9" : : "r"(value))
-#define gte_ctc2_10(value) \
-    asm volatile("ctc2 %0,$10" : : "r"(value))
-#define gte_ctc2_11(value) \
-    asm volatile("ctc2 %0,$11" : : "r"(value))
-#define gte_ctc2_12(value) \
-    asm volatile("ctc2 %0,$12" : : "r"(value))
+#define gte_ctc2_8(value) Psyz_GteCtrlWrite(8, (u32)(value))
+#define gte_ctc2_9(value) Psyz_GteCtrlWrite(9, (u32)(value))
+#define gte_ctc2_10(value) Psyz_GteCtrlWrite(10, (u32)(value))
+#define gte_ctc2_11(value) Psyz_GteCtrlWrite(11, (u32)(value))
+#define gte_ctc2_12(value) Psyz_GteCtrlWrite(12, (u32)(value))
 
 /* Packed light-color matrix words (control registers 16..20). */
-#define gte_ctc2_16(value) \
-    asm volatile("ctc2 %0,$16" : : "r"(value))
-#define gte_ctc2_17(value) \
-    asm volatile("ctc2 %0,$17" : : "r"(value))
-#define gte_ctc2_18(value) \
-    asm volatile("ctc2 %0,$18" : : "r"(value))
-#define gte_ctc2_19(value) \
-    asm volatile("ctc2 %0,$19" : : "r"(value))
-#define gte_ctc2_20(value) \
-    asm volatile("ctc2 %0,$20" : : "r"(value))
+#define gte_ctc2_16(value) Psyz_GteCtrlWrite(16, (u32)(value))
+#define gte_ctc2_17(value) Psyz_GteCtrlWrite(17, (u32)(value))
+#define gte_ctc2_18(value) Psyz_GteCtrlWrite(18, (u32)(value))
+#define gte_ctc2_19(value) Psyz_GteCtrlWrite(19, (u32)(value))
+#define gte_ctc2_20(value) Psyz_GteCtrlWrite(20, (u32)(value))
 
-#define gte_mtc2_1(value) \
-    asm volatile("mtc2 %0,$1" : : "r"(value))
+#define gte_mtc2_1(value) Psyz_GteDataWrite(1, (u32)(value))
 
-#define gte_mtc2_0(value) \
-    asm volatile("mtc2 %0,$0" : : "r"(value))
-#define gte_mtc2_9(value) \
-    asm volatile("mtc2 %0,$9" : : "r"(value))
-#define gte_mtc2_10(value) \
-    asm volatile("mtc2 %0,$10" : : "r"(value))
-#define gte_mtc2_11(value) \
-    asm volatile("mtc2 %0,$11" : : "r"(value))
+#define gte_mtc2_0(value) Psyz_GteDataWrite(0, (u32)(value))
+#define gte_mtc2_9(value) Psyz_GteDataWrite(9, (u32)(value))
+#define gte_mtc2_10(value) Psyz_GteDataWrite(10, (u32)(value))
+#define gte_mtc2_11(value) Psyz_GteDataWrite(11, (u32)(value))
 
-#define gte_mfc2_9(out) \
-    asm volatile("mfc2 %0,$9" : "=r"(out))
-#define gte_mfc2_10(out) \
-    asm volatile("mfc2 %0,$10" : "=r"(out))
-#define gte_mfc2_11(out) \
-    asm volatile("mfc2 %0,$11" : "=r"(out))
+#define gte_mfc2_9(out) ((out) = Psyz_GteDataRead(9))
+#define gte_mfc2_10(out) ((out) = Psyz_GteDataRead(10))
+#define gte_mfc2_11(out) ((out) = Psyz_GteDataRead(11))
 
-#define gte_lwc2_9_0(ptr) \
-    asm volatile("lwc2 $9,0(%0)" : : "r"(ptr) : "memory")
-#define gte_lwc2_10_4(ptr) \
-    asm volatile("lwc2 $10,4(%0)" : : "r"(ptr) : "memory")
-#define gte_lwc2_11_8(ptr) \
-    asm volatile("lwc2 $11,8(%0)" : : "r"(ptr) : "memory")
+#define gte_lwc2_9_0(ptr) do { u32 word; memcpy(&word, (const u8 *)(ptr) + 0, 4); Psyz_GteDataWrite(9, word); } while (0)
+#define gte_lwc2_10_4(ptr) do { u32 word; memcpy(&word, (const u8 *)(ptr) + 4, 4); Psyz_GteDataWrite(10, word); } while (0)
+#define gte_lwc2_11_8(ptr) do { u32 word; memcpy(&word, (const u8 *)(ptr) + 8, 4); Psyz_GteDataWrite(11, word); } while (0)
 /* IR vector loads with precise read operands, preserving unrelated locals. */
-#define gte_ldir1_precise(ptr) \
-    asm volatile("lwc2 $9,0(%0)" : : "r"(ptr), \
-                 "m"(*(const s32 *)((const u8 *)(ptr) + 0)))
-#define gte_ldir2_precise(ptr) \
-    asm volatile("lwc2 $10,4(%0)" : : "r"(ptr), \
-                 "m"(*(const s32 *)((const u8 *)(ptr) + 4)))
-#define gte_ldir3_precise(ptr) \
-    asm volatile("lwc2 $11,8(%0)" : : "r"(ptr), \
-                 "m"(*(const s32 *)((const u8 *)(ptr) + 8)))
+#define gte_ldir1_precise(ptr) do { u32 word; memcpy(&word, (const u8 *)(ptr) + 0, 4); Psyz_GteDataWrite(9, word); } while (0)
+#define gte_ldir2_precise(ptr) do { u32 word; memcpy(&word, (const u8 *)(ptr) + 4, 4); Psyz_GteDataWrite(10, word); } while (0)
+#define gte_ldir3_precise(ptr) do { u32 word; memcpy(&word, (const u8 *)(ptr) + 8, 4); Psyz_GteDataWrite(11, word); } while (0)
 
-#define gte_op_sf12_command() \
-    asm volatile(".word 0x4B78000C")
+#define gte_op_sf12_command() Psyz_GteCommand(0x4B78000Cu & 0x01ffffffu)
 
-#define gte_lwc2_1_8(ptr) \
-    asm volatile("lwc2 $1,8(%0)" : : "r"(ptr) : "memory")
+#define gte_lwc2_1_8(ptr) do { u32 word; memcpy(&word, (const u8 *)(ptr) + 8, 4); Psyz_GteDataWrite(1, word); } while (0)
 
 /* Load V0 from an s32[3] translation (a matrix's t): the low halfwords of
  * t[0] and t[1] packed into VXY0 (narrowed to lhu), t[2] by lwc2 into VZ0.
@@ -202,15 +150,11 @@
         gte_ldv0_word3(source); \
     }
 
-#define gte_swc2_9_0(ptr) \
-    asm volatile("swc2 $9,0(%0)" : : "r"(ptr) : "memory")
-#define gte_swc2_10_4(ptr) \
-    asm volatile("swc2 $10,4(%0)" : : "r"(ptr) : "memory")
-#define gte_swc2_11_8(ptr) \
-    asm volatile("swc2 $11,8(%0)" : : "r"(ptr) : "memory")
+#define gte_swc2_9_0(ptr) do { u32 word = Psyz_GteDataRead(9); memcpy((u8 *)(ptr) + 0, &word, 4); } while (0)
+#define gte_swc2_10_4(ptr) do { u32 word = Psyz_GteDataRead(10); memcpy((u8 *)(ptr) + 4, &word, 4); } while (0)
+#define gte_swc2_11_8(ptr) do { u32 word = Psyz_GteDataRead(11); memcpy((u8 *)(ptr) + 8, &word, 4); } while (0)
 
-#define gte_mvmva_light_ir_sf0() \
-    asm volatile(".word 0x4A49E012")
+#define gte_mvmva_light_ir_sf0() Psyz_GteCommand(0x4A49E012u & 0x01ffffffu)
 
 /* Load a strided matrix column into IR1..3 and apply RTIR12. */
 #define gte_ldrtir12_matrix_column(column) \
@@ -258,8 +202,7 @@
         gte_stir123_column(out); \
     }
 
-#define gte_rtv0tr_sf0() \
-    asm volatile(".word 0x4A480012")
+#define gte_rtv0tr_sf0() Psyz_GteCommand(0x4A480012u & 0x01ffffffu)
 
 /* Load the five packed words which hold R11..R33. */
 #define gte_ldrotmatrix(matrix) \
@@ -351,11 +294,9 @@
                  : : "r"(out) : "$2", "memory")
 
 /* LZCS/LZCR: count leading zeroes in a 32-bit value. */
-#define gte_ldlzcs(value) \
-    asm volatile("mtc2 %0,$30" : : "r"(value))
+#define gte_ldlzcs(value) Psyz_GteDataWrite(30, (u32)(value))
 
-#define gte_stlzcr(out) \
-    asm volatile("swc2 $31,0(%0)" : : "r"(out) : "memory")
+#define gte_stlzcr(out) do { u32 word = Psyz_GteDataRead(31); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
 
 /* The LZCR-to-GPR transfer needs two COP2 hazard slots. */
 #define gte_getlzcr(out) \
@@ -364,14 +305,11 @@
                  "mfc2 %0,$31" : "=r"(out))
 
 /* NCLIP: signed screen-space triangle area from SXY0, SXY1, and SXY2. */
-#define gte_ldsxy0(value) \
-    asm volatile("mtc2 %0,$12" : : "r"(value))
+#define gte_ldsxy0(value) Psyz_GteDataWrite(12, (u32)(value))
 
-#define gte_ldsxy1(value) \
-    asm volatile("mtc2 %0,$13" : : "r"(value))
+#define gte_ldsxy1(value) Psyz_GteDataWrite(13, (u32)(value))
 
-#define gte_ldsxy2(value) \
-    asm volatile("mtc2 %0,$14" : : "r"(value))
+#define gte_ldsxy2(value) Psyz_GteDataWrite(14, (u32)(value))
 
 /* PSY-Q gte_ldsxy3: load SXY0, SXY2 and SXY1 in the SDK's order. */
 #define gte_ldsxy3(r0, r1, r2) \
@@ -385,32 +323,25 @@
                  "nop\n\t" \
                  ".word 0x4B400006")
 
-#define gte_nclip_now() \
-    asm volatile(".word 0x4B400006")
+#define gte_nclip_now() Psyz_GteCommand(0x4B400006u & 0x01ffffffu)
 
-#define gte_getmac0(out) \
-    asm volatile("mfc2 %0,$24" : "=r"(out))
+#define gte_getmac0(out) ((out) = Psyz_GteDataRead(24))
 
-#define gte_stmac0(out) \
-    asm volatile("swc2 $24,0(%0)" : : "r"(out) : "memory")
+#define gte_stmac0(out) do { u32 word = Psyz_GteDataRead(24); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
 
 /* PSY-Q gte_stotz: store the averaged OTZ. */
-#define gte_stotz(r0) \
-    asm volatile("swc2 $7,0(%0)" : : "r"(r0) : "memory")
+#define gte_stotz(r0) do { u32 word = Psyz_GteDataRead(7); memcpy((u8 *)(r0) + 0, &word, 4); } while (0)
 
 /* RTV0TR: rotate V0 and add the translation vector. */
 #define gte_rtv0tr() \
     asm volatile("nop\n\t" \
                  ".word 0x4A480012")
 
-#define gte_getir1(out) \
-    asm volatile("mfc2 %0,$9" : "=r"(out))
+#define gte_getir1(out) ((out) = Psyz_GteDataRead(9))
 
-#define gte_getir2(out) \
-    asm volatile("mfc2 %0,$10" : "=r"(out))
+#define gte_getir2(out) ((out) = Psyz_GteDataRead(10))
 
-#define gte_getir3(out) \
-    asm volatile("mfc2 %0,$11" : "=r"(out))
+#define gte_getir3(out) ((out) = Psyz_GteDataRead(11))
 
 #define gte_rtv0tr_mac() \
     asm volatile("nop\n\t" \
@@ -462,29 +393,21 @@
                  : : "r"(vec) : "$8", "$9", "$10", "memory")
 
 /* RGB is the colour input used by the colour interpolation commands. */
-#define gte_ldrgb(rgb) \
-    asm volatile("lwc2 $6,0(%0)" : : "r"(rgb) : "memory")
+#define gte_ldrgb(rgb) do { u32 word; memcpy(&word, (const u8 *)(rgb) + 0, 4); Psyz_GteDataWrite(6, word); } while (0)
 
-#define gte_strgb(out) \
-    asm volatile("swc2 $22,0(%0)" : : "r"(out) : "memory")
+#define gte_strgb(out) do { u32 word = Psyz_GteDataRead(22); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
 
-#define gte_ldrgb0(rgb) \
-    asm volatile("lwc2 $20,0(%0)" : : "r"(rgb) : "memory")
+#define gte_ldrgb0(rgb) do { u32 word; memcpy(&word, (const u8 *)(rgb) + 0, 4); Psyz_GteDataWrite(20, word); } while (0)
 
-#define gte_ldrgb1(rgb) \
-    asm volatile("lwc2 $21,0(%0)" : : "r"(rgb) : "memory")
+#define gte_ldrgb1(rgb) do { u32 word; memcpy(&word, (const u8 *)(rgb) + 0, 4); Psyz_GteDataWrite(21, word); } while (0)
 
-#define gte_ldrgb2(rgb) \
-    asm volatile("lwc2 $22,0(%0)" : : "r"(rgb) : "memory")
+#define gte_ldrgb2(rgb) do { u32 word; memcpy(&word, (const u8 *)(rgb) + 0, 4); Psyz_GteDataWrite(22, word); } while (0)
 
-#define gte_strgb0(out) \
-    asm volatile("swc2 $20,0(%0)" : : "r"(out) : "memory")
+#define gte_strgb0(out) do { u32 word = Psyz_GteDataRead(20); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
 
-#define gte_strgb1(out) \
-    asm volatile("swc2 $21,0(%0)" : : "r"(out) : "memory")
+#define gte_strgb1(out) do { u32 word = Psyz_GteDataRead(21); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
 
-#define gte_strgb2(out) \
-    asm volatile("swc2 $22,0(%0)" : : "r"(out) : "memory")
+#define gte_strgb2(out) do { u32 word = Psyz_GteDataRead(22); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
 
 #define gte_declare_three_outputs()                                         \
     void *gte_out0;                                      \
@@ -530,7 +453,7 @@
 #define gte_stir0_three_1()                                                 \
     asm volatile("swc2 $8,0($9)" : : "r"(gte_out1) : "memory")
 
-#define gte_getflag(out) asm volatile("cfc2 %0,$31" : "=r"(out))
+#define gte_getflag(out) ((out) = Psyz_GteCtrlRead(31))
 
 #define gte_declare_rt4_results(first_flags, flags, depth)                   \
     int first_flags;                                     \
@@ -538,8 +461,7 @@
     int depth
 
 /* IR0 is the scalar input used by GPF. */
-#define gte_ldir0(value) \
-    asm volatile("mtc2 %0,$8" : : "r"(value))
+#define gte_ldir0(value) Psyz_GteDataWrite(8, (u32)(value))
 
 #define gte_ldmac123(x, y, z) \
     asm volatile("mtc2 %0,$25\n\t" \
@@ -547,11 +469,9 @@
                  "mtc2 %2,$27" \
                  : : "r"(x), "r"(y), "r"(z))
 
-#define gte_lddqa(value) \
-    asm volatile("ctc2 %0,$27" : : "r"(value))
+#define gte_lddqa(value) Psyz_GteCtrlWrite(27, (u32)(value))
 
-#define gte_lddqb(value) \
-    asm volatile("ctc2 %0,$28" : : "r"(value))
+#define gte_lddqb(value) Psyz_GteCtrlWrite(28, (u32)(value))
 
 /* SQR squares IR1..IR3 into MAC1..MAC3. */
 #define gte_sqr() \
@@ -585,11 +505,9 @@
     asm volatile("nop\n\t" \
                  ".word 0x4B68002E")
 
-#define gte_getotz(out) \
-    asm volatile("mfc2 %0,$7" : "=r"(out))
+#define gte_getotz(out) ((out) = Psyz_GteDataRead(7))
 
-#define gte_getflag(out) \
-    asm volatile("cfc2 %0,$31" : "=r"(out))
+#define gte_getflag(out) ((out) = Psyz_GteCtrlRead(31))
 
 /* Colour interpolation commands with the current IR vector and IR0. */
 #define gte_dpcl() \
@@ -660,8 +578,8 @@
                  : : "r"(scale), "r"(gte_x), "r"(gte_y), "r"(gte_z))
 
 /* GPL without an inserted hazard slot, for wrappers which already provide it. */
-#define gte_gpl0_now() asm volatile(".word 0x4BA0003E")
-#define gte_gpl12_now() asm volatile(".word 0x4BA8003E")
+#define gte_gpl0_now() Psyz_GteCommand(0x4BA0003Eu & 0x01ffffffu)
+#define gte_gpl12_now() Psyz_GteCommand(0x4BA8003Eu & 0x01ffffffu)
 
 /* The extra inputs keep the caller's output/shift setup before MAC reads. */
 #define gte_getmac12_staged(out)                                             \
@@ -685,8 +603,7 @@
     asm volatile("nop\n\t" \
                  ".word 0x4B78000C")
 
-#define gte_getlzcr_now(out) \
-    asm volatile("mfc2 %0,$31" : "=r"(out))
+#define gte_getlzcr_now(out) ((out) = Psyz_GteDataRead(31))
 
 #define gte_getmac123(x, y, z) \
     asm volatile("mfc2 %0,$25\n\t" \
@@ -699,26 +616,16 @@
                  ".word 0x4A49E012")
 
 /* Individual triple-vertex transfers for the morph projection path. */
-#define gte_lwc2_2_8(p) \
-    asm volatile("lwc2 $2,8(%0)" : : "r"(p) : "memory")
-#define gte_lwc2_3_12(p) \
-    asm volatile("lwc2 $3,12(%0)" : : "r"(p) : "memory")
-#define gte_lwc2_4_16(p) \
-    asm volatile("lwc2 $4,16(%0)" : : "r"(p) : "memory")
-#define gte_lwc2_5_20(p) \
-    asm volatile("lwc2 $5,20(%0)" : : "r"(p) : "memory")
-#define gte_swc2_12_0(p) \
-    asm volatile("swc2 $12,0(%0)" : : "r"(p) : "memory")
-#define gte_swc2_13_4(p) \
-    asm volatile("swc2 $13,4(%0)" : : "r"(p) : "memory")
-#define gte_swc2_14_8(p) \
-    asm volatile("swc2 $14,8(%0)" : : "r"(p) : "memory")
-#define gte_swc2_17_0(p) \
-    asm volatile("swc2 $17,0(%0)" : : "r"(p) : "memory")
-#define gte_swc2_18_4(p) \
-    asm volatile("swc2 $18,4(%0)" : : "r"(p) : "memory")
-#define gte_swc2_19_8(p) \
-    asm volatile("swc2 $19,8(%0)" : : "r"(p) : "memory")
+#define gte_lwc2_2_8(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 8, 4); Psyz_GteDataWrite(2, word); } while (0)
+#define gte_lwc2_3_12(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 12, 4); Psyz_GteDataWrite(3, word); } while (0)
+#define gte_lwc2_4_16(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 16, 4); Psyz_GteDataWrite(4, word); } while (0)
+#define gte_lwc2_5_20(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 20, 4); Psyz_GteDataWrite(5, word); } while (0)
+#define gte_swc2_12_0(p) do { u32 word = Psyz_GteDataRead(12); memcpy((u8 *)(p) + 0, &word, 4); } while (0)
+#define gte_swc2_13_4(p) do { u32 word = Psyz_GteDataRead(13); memcpy((u8 *)(p) + 4, &word, 4); } while (0)
+#define gte_swc2_14_8(p) do { u32 word = Psyz_GteDataRead(14); memcpy((u8 *)(p) + 8, &word, 4); } while (0)
+#define gte_swc2_17_0(p) do { u32 word = Psyz_GteDataRead(17); memcpy((u8 *)(p) + 0, &word, 4); } while (0)
+#define gte_swc2_18_4(p) do { u32 word = Psyz_GteDataRead(18); memcpy((u8 *)(p) + 4, &word, 4); } while (0)
+#define gte_swc2_19_8(p) do { u32 word = Psyz_GteDataRead(19); memcpy((u8 *)(p) + 8, &word, 4); } while (0)
 
 /* RTPS: project V0 and update SXY2/SZ3. */
 #define gte_rtps() \
@@ -726,11 +633,9 @@
                  "nop\n\t" \
                  ".word 0x4A180001")
 
-#define gte_stsxy2(out) \
-    asm volatile("swc2 $14,0(%0)" : : "r"(out) : "memory")
+#define gte_stsxy2(out) do { u32 word = Psyz_GteDataRead(14); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
 
-#define gte_getsz3(out) \
-    asm volatile("mfc2 %0,$19" : "=r"(out))
+#define gte_getsz3(out) ((out) = Psyz_GteDataRead(19))
 
 #define gte_getsz3_for_store(value, out) \
     asm volatile("mfc2 %0,$19\n\t" \
@@ -772,16 +677,13 @@
         gte_flags_out = (flags);                                             \
     }
 
-#define gte_stsxy0(out)                                                     \
-    asm volatile("swc2 $12,0(%0)" : : "r"(out) : "memory")
-#define gte_stsxy1(out)                                                     \
-    asm volatile("swc2 $13,0(%0)" : : "r"(out) : "memory")
+#define gte_stsxy0(out) do { u32 word = Psyz_GteDataRead(12); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
+#define gte_stsxy1(out) do { u32 word = Psyz_GteDataRead(13); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
 #define gte_stsxy1_bound()                                                  \
     asm volatile("swc2 $13,0($8)" : : "r"(gte_out1) : "memory")
 #define gte_stsxy2_bound()                                                  \
     asm volatile("swc2 $14,0($9)" : : "r"(gte_out2) : "memory")
-#define gte_stir0(out)                                                      \
-    asm volatile("swc2 $8,0(%0)" : : "r"(out) : "memory")
+#define gte_stir0(out) do { u32 word = Psyz_GteDataRead(8); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
 #define gte_stir0_bound()                                                   \
     asm volatile("swc2 $8,0($10)" : : "r"(gte_depth_out) : "memory")
 #define gte_getflag_bound()                                                 \
@@ -806,24 +708,24 @@
  * SXY1 address input, three extra SXY2 address inputs); these are matching
  * debt, not additional hardware operations. Padded commands retain the two
  * retail transfer-hazard slots. */
-#define gte_ldvxy0_precise_keep(address, keep) asm volatile("lwc2 $0,0(%0)" : : "r"(address), "m"(*(const u32 *)((const u8 *)(address) + 0)), "r"(keep))
-#define gte_stsxy1_precise_keep_address(address) asm volatile("swc2 $13,0(%1)" : "=m"(*(u32 *)(address)) : "r"(address), "r"(address))
-#define gte_stsxy2_precise_keep_address(address) asm volatile("swc2 $14,0(%1)" : "=m"(*(u32 *)(address)) : "r"(address), "r"(address), "r"(address), "r"(address))
+#define gte_ldvxy0_precise_keep(address, keep) do { u32 word; memcpy(&word, (const u8 *)(address) + 0, 4); Psyz_GteDataWrite(0, word); } while (0)
+#define gte_stsxy1_precise_keep_address(address) do { u32 word = Psyz_GteDataRead(13); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
+#define gte_stsxy2_precise_keep_address(address) do { u32 word = Psyz_GteDataRead(14); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
 #define gte_ldvxy0_mem(address) asm volatile("lwc2 $0,%0" : : "m"(*(const u32 *)(address)))
 #define gte_ldvz0_mem(address) asm volatile("lwc2 $1,%0" : : "m"(*(const u32 *)((const u8 *)(address) + 4)))
-#define gte_ldvxy0_precise(address) asm volatile("lwc2 $0,0(%0)" : : "r"(address), "m"(*(const u32 *)((const u8 *)(address) + 0)))
-#define gte_ldvz0_precise(address) asm volatile("lwc2 $1,4(%0)" : : "r"(address), "m"(*(const u32 *)((const u8 *)(address) + 4)))
-#define gte_ldvxy1_precise(address) asm volatile("lwc2 $2,0(%0)" : : "r"(address), "m"(*(const u32 *)((const u8 *)(address) + 0)))
-#define gte_ldvz1_precise(address) asm volatile("lwc2 $3,4(%0)" : : "r"(address), "m"(*(const u32 *)((const u8 *)(address) + 4)))
-#define gte_ldvxy2_precise(address) asm volatile("lwc2 $4,0(%0)" : : "r"(address), "m"(*(const u32 *)((const u8 *)(address) + 0)))
-#define gte_ldvz2_precise(address) asm volatile("lwc2 $5,4(%0)" : : "r"(address), "m"(*(const u32 *)((const u8 *)(address) + 4)))
-#define gte_stsxy2_precise(address) asm volatile("swc2 $14,0(%1)" : "=m"(*(u32 *)(address)) : "r"(address))
+#define gte_ldvxy0_precise(address) do { u32 word; memcpy(&word, (const u8 *)(address) + 0, 4); Psyz_GteDataWrite(0, word); } while (0)
+#define gte_ldvz0_precise(address) do { u32 word; memcpy(&word, (const u8 *)(address) + 4, 4); Psyz_GteDataWrite(1, word); } while (0)
+#define gte_ldvxy1_precise(address) do { u32 word; memcpy(&word, (const u8 *)(address) + 0, 4); Psyz_GteDataWrite(2, word); } while (0)
+#define gte_ldvz1_precise(address) do { u32 word; memcpy(&word, (const u8 *)(address) + 4, 4); Psyz_GteDataWrite(3, word); } while (0)
+#define gte_ldvxy2_precise(address) do { u32 word; memcpy(&word, (const u8 *)(address) + 0, 4); Psyz_GteDataWrite(4, word); } while (0)
+#define gte_ldvz2_precise(address) do { u32 word; memcpy(&word, (const u8 *)(address) + 4, 4); Psyz_GteDataWrite(5, word); } while (0)
+#define gte_stsxy2_precise(address) do { u32 word = Psyz_GteDataRead(14); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
 #define gte_ldvxy1_mem(address) asm volatile("lwc2 $2,%0" : : "m"(*(const u32 *)((const u8 *)(address) + 0)))
 #define gte_stsxy2_mem(address) asm volatile("swc2 $14,%0" : "=m"(*(u32 *)(address)) :)
-#define gte_stmac0_precise(address) asm volatile("swc2 $24,0(%1)" : "=m"(*(u32 *)(address)) : "r"(address))
-#define gte_stotz_precise(address) asm volatile("swc2 $7,0(%1)" : "=m"(*(u32 *)(address)) : "r"(address))
-#define gte_stsxy0_precise(address) asm volatile("swc2 $12,0(%1)" : "=m"(*(u32 *)(address)) : "r"(address))
-#define gte_stsxy1_precise(address) asm volatile("swc2 $13,0(%1)" : "=m"(*(u32 *)(address)) : "r"(address))
+#define gte_stmac0_precise(address) do { u32 word = Psyz_GteDataRead(24); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
+#define gte_stotz_precise(address) do { u32 word = Psyz_GteDataRead(7); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
+#define gte_stsxy0_precise(address) do { u32 word = Psyz_GteDataRead(12); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
+#define gte_stsxy1_precise(address) do { u32 word = Psyz_GteDataRead(13); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
 
 /* PSY-Q style three-operand transfers: load V0..V2 from three vectors and
  * store SXY0..SXY2 to three addresses in one statement. */
@@ -851,8 +753,8 @@
                  "sw $12,0(%0)" \
                  : : "r"(out) : "$12", "memory")
 
-#define gte_rtpt_padded() asm volatile("nop\n\tnop\n\t.word 0x4A280030")
-#define gte_avsz3_padded() asm volatile("nop\n\tnop\n\t.word 0x4B58002D")
+#define gte_rtpt_padded() Psyz_GteCommand(0x4A280030u & 0x01ffffffu)
+#define gte_avsz3_padded() Psyz_GteCommand(0x4B58002Du & 0x01ffffffu)
 
 /* PSY-Q gte_ldclmv / gte_rtir / gte_stclmv: one strided matrix column through
  * RTIR (sf=1), the three steps of the SDK's inline gte_MulMatrix0. */
@@ -865,7 +767,7 @@
                  "mtc2 $14,$11" \
                  : : "r"(column) : "$12", "$13", "$14")
 
-#define gte_rtir() asm volatile("nop\n\tnop\n\t.word 0x4A49E012")
+#define gte_rtir() Psyz_GteCommand(0x4A49E012u & 0x01ffffffu)
 
 #define gte_stclmv(column) \
     asm volatile("mfc2 $12,$9\n\t" \
@@ -887,7 +789,7 @@
                  "lwc2 $1,8(%0)" \
                  : : "r"(vector) : "$12", "$13")
 
-#define gte_rt() asm volatile("nop\n\tnop\n\t.word 0x4A480012")
+#define gte_rt() Psyz_GteCommand(0x4A480012u & 0x01ffffffu)
 
 /* PSY-Q inline_c.h gte_stlvl: store IR1..3 as a long vector. */
 #define gte_stlvl(vector) \
@@ -994,7 +896,7 @@
                  : : "r"(r0) : "$12", "$13", "$14")
 
 /* PSY-Q gte_ncct: two hazard nops, then NCCT. */
-#define gte_ncct() asm volatile("nop\n\tnop\n\t.word 0x4B18043F")
+#define gte_ncct() Psyz_GteCommand(0x4B18043Fu & 0x01ffffffu)
 
 /* PSY-Q gte_strgb3: store RGB0..RGB2 to three addresses. */
 #define gte_strgb3(r0, r1, r2) \

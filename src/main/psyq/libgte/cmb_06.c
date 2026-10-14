@@ -1,9 +1,9 @@
-/* PSY-Q LIBGTE CMB_06: RotAverageNclip3. */
+/* PSY-Q LIBGTE CMB_06: Pe1_RotAverageNclip3. */
 
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"
 
-int RotAverageNclip3(const GteShortVector *v0, const GteShortVector *v1,
+int Pe1_RotAverageNclip3(const GteShortVector *v0, const GteShortVector *v1,
     const GteShortVector *v2, u32 *sxy0, u32 * volatile sxy1,
     u32 * volatile sxy2, s32 * volatile p, s32 * volatile otz, u32 * volatile flag) {
     u32 *flagPtr;

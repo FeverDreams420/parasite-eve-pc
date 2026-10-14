@@ -16,7 +16,8 @@ add_library(parasite-eve-original OBJECT
     src/main/math/fixed_round.c
     src/main/math/sqrt_approx.c
     src/main/fieldfx/angle.c
-    src/main/psyq/libgte/mtx_000.c)
+    src/main/psyq/libgte/mtx_000.c
+    src/main/psyq/libgte/cmb_06.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 

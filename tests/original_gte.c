@@ -3,6 +3,38 @@
 
 GteMatrix *MulMatrix0(const GteMatrix *, const GteMatrix *, GteMatrix *);
 
+int Pe1_RotAverageNclip3(const GteShortVector *, const GteShortVector *,
+    const GteShortVector *, u32 *, u32 *, u32 *, s32 *, s32 *, u32 *);
+
+static int triangle_checks(void)
+{
+    GteMatrix identity = {{{4096,0,0},{0,4096,0},{0,0,4096}}, {0,0,0}};
+    GteShortVector v[3] = {{0,0,512,0},{100,0,512,0},{0,100,512,0}};
+    u32 xy[3] = {0}, flags;
+    s32 depth = -1, interpolation = -1;
+    int area;
+    gte_ldrotmatrix(&identity);
+    gte_ldtransmatrix(&identity);
+    gte_SetGeomOffset(160,112);
+    gte_ctc2_26(256);
+    Psyz_GteCtrlWrite(29, 0x555);
+    gte_lddqa(0);
+    gte_lddqb(0);
+    area = Pe1_RotAverageNclip3(v, v+1, v+2, xy, xy+1, xy+2,
+                           &interpolation, &depth, &flags);
+    if (area != 2500 || depth != 511 || interpolation != 0 || flags ||
+        xy[0] != (112u<<16|160u) || xy[1] != (112u<<16|210u) ||
+        xy[2] != (162u<<16|160u)) return 10;
+    xy[0] = xy[1] = xy[2] = 0xabcdef01;
+    depth = interpolation = -123;
+    area = Pe1_RotAverageNclip3(v, v+2, v+1, xy, xy+1, xy+2,
+                           &interpolation, &depth, &flags);
+    if (area != -2500 || xy[0] != 0xabcdef01 || xy[1] != 0xabcdef01 ||
+        xy[2] != 0xabcdef01 || depth != -123 || interpolation != -123)
+        return 11;
+    return 0;
+}
+
 static int matrix_checks(void)
 {
     GteMatrix left = {{{0, 0, 4096}, {0, 4096, 0}, {-4096, 0, 0}},
@@ -68,6 +100,7 @@ int main(void)
     gte_cfc2_5(output);
     if (output != (u32)-123) return 3;
     { int error = matrix_checks(); if (error) return error; }
+    { int error = triangle_checks(); if (error) return error; }
     puts("Original GTE macros run through PsyZ without a window");
     return 0;
 }

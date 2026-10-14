@@ -577,6 +577,8 @@ Timer/driver/sequencer track views mają jedno canonical storage AkaoTickTrack[6
 
 Pełna tabela opcode dispatch jest teraz rzeczywiście linkowana i wywoływana przez original Akao_StepSampleLoader w headless fixture. Program A3(volume)→C0(expression)→8F(rest)→A0(stop) sprawdza PC, parametry, key-off i active masks. Brakujące driver globals są explicit input state w fixture; brak zastępczych handlerów. Nested source word names współdzielą canonical descriptor, zgodnie z original symbol aliases B89D0..E0. Note loader używa named bank fields zamiast words[14], które po native pointer expansion wskazywało złe pole. Trzy strict Disc 1 CTests i ASan/UBSan/function (teraz z całą dispatch table) przechodzą; PsyZ nieinstrumentowane. Test wykonuje tylko wskazane opcode path; pełne sequence execution, real grammar/state loading, timer, nested streams i SPU/PCM pozostają wymagane.
 
+Original Akao_StepSampleLoader przechodzi fixture note→tie→rest→stop dla parent BGM i child SFX, przez pełną tablicę opcode. Test sprawdza octave/pitch lookup 4096, current note 72, duration/gate 48/46, brak retrigger przy tie, key-on/key-off, primary versus SFX allocation masks i stop behavior. CTest i ASan/UBSan/function pełnego original dispatch przechodzą (PsyZ nieinstrumentowane). Wyzerowanie note_length między wywołaniami jest jawne fixture input zamiast symulowania działającego timera; dowód nie obejmuje timing drivera, rzeczywistych songs ani PCM.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

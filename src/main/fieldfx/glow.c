@@ -562,7 +562,8 @@ int GlowEffectB_ClassNop0(void) {
     return 0;
 }
 
-int GlowEffectB_InitOwner(FieldFxObjectPrefix *obj) {
+int GlowEffectB_InitOwner(void *argument0, void *argument1, void *argument2) {
+    FieldFxObjectPrefix * obj=argument0;
     FieldActor *data = obj->actor;
 
     g_GlowEffectBPosition.x = data->render_object.matrices[19].translation[0];
@@ -570,9 +571,14 @@ int GlowEffectB_InitOwner(FieldFxObjectPrefix *obj) {
     g_GlowEffectBPosition.z = data->render_object.matrices[19].translation[2];
     g_GlowEffectBOwner = data;
     FieldFx_EnsureEffectTexturePage(0);
+
+    return 0;
 }
 
-int GlowEffectB_InitParticle(void *arg0, void *arg1, FieldFxMovingParticle *anim) {
+int GlowEffectB_InitParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMovingParticle * anim=argument2;
     GteShortVector vec;
 
     vec.x = -((rand() % 3) + 9);
@@ -591,9 +597,14 @@ int GlowEffectB_InitParticle(void *arg0, void *arg1, FieldFxMovingParticle *anim
         anim->age = 0;
         anim->position.z = z;
     }
+
+    return 0;
 }
 
-int GlowEffectB_InitFlareLayers(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int GlowEffectB_InitFlareLayers(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     FieldFxMatrixGlow *anim_s0 = anim;
     GteShortVector out;
     FieldActor *data;
@@ -611,9 +622,14 @@ int GlowEffectB_InitFlareLayers(void *arg0, void *arg1, FieldFxMatrixGlow *anim)
     model = data->render_object.matrices;
     anim_s0->transform = *(GteMatrixStorage *)&model[19];
     anim_s0->brightness = 0x7F;
+
+    return 0;
 }
 
-int GlowEffectB_InitPointGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
+int GlowEffectB_InitPointGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxGlowPoint * anim=argument2;
     GteShortVector in;
     GteShortVector out;
 
@@ -632,12 +648,20 @@ int GlowEffectB_InitPointGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
         anim->scale = 0;
         anim->position.z = z;
     }
+
+    return 0;
 }
 
-void GlowEffectB_DrawNop(void) {
+int GlowEffectB_DrawNop(void *argument0, void *argument1, void *argument2) {
+
+
+    return 0;
 }
 
-int GlowEffectB_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int GlowEffectB_DrawParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     GteMatrix matrix;
     GteShortVector rot;
     GteVector scaleCopy;
@@ -669,6 +693,8 @@ int GlowEffectB_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
 
     ScaleMatrix(&matrix, &scaleCopy);
     FieldFx_DrawGlowSprite(&g_GlowEffectBSprite0, &matrix, 1);
+
+    return 0;
 }
 
 #define GLOW_LAYERS_FUNC GlowEffectB_DrawFlareLayers
@@ -678,7 +704,10 @@ int GlowEffectB_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
 #define GLOW_LAYERS_SPRITE g_GlowEffectBSprite2
 #include "glow_layers.inc"
 
-int GlowEffectB_DrawPointGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
+int GlowEffectB_DrawPointGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxGlowPoint * anim=argument2;
     u16 *field_s3 = &g_GlowEffectBSprite1.depth;
     GteMatrix matrix;
     int scale;
@@ -718,15 +747,22 @@ int GlowEffectB_DrawPointGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
 
     ScaleMatrix(&matrix, (const GteVector *)localScale);
     FieldFx_DrawGlowSprite(&g_GlowEffectBSprite1, &matrix, 1);
+
+    return 0;
 }
 
-int GlowEffectB_UpdateEnd(void *arg0, u8 *state) {
+int GlowEffectB_UpdateEnd(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    u8 * state=argument1;
     int ret = 2;
 
     state[1] = ret;
     return ret;
 }
-int GlowEffectB_UpdateParticle(void *arg0, FieldFxSlot *state, FieldFxMovingParticle *anim) {
+int GlowEffectB_UpdateParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxMovingParticle * anim=argument2;
     FieldFxMovingParticle *particle = anim;
     u16 vy = anim->velocity.y;
     u16 vz = anim->velocity.z;
@@ -747,8 +783,13 @@ int GlowEffectB_UpdateParticle(void *arg0, FieldFxSlot *state, FieldFxMovingPart
     if (lifetime == 0) {
         state->flag = 2;
     }
+
+    return 0;
 }
-int GlowEffectB_UpdateFlareLayers(void *arg0, FieldFxSlot *state, FieldFxGlowPoint *anim) {
+int GlowEffectB_UpdateFlareLayers(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxGlowPoint * anim=argument2;
     s16 value = anim->brightness - 0x14;
 
     anim->brightness = value;
@@ -756,14 +797,21 @@ int GlowEffectB_UpdateFlareLayers(void *arg0, FieldFxSlot *state, FieldFxGlowPoi
         anim->brightness = 0;
         state->flag = 2;
     }
+
+    return 0;
 }
-int GlowEffectB_UpdatePointGlow(void *arg0, FieldFxSlot *state, FieldFxGlowPoint *anim) {
+int GlowEffectB_UpdatePointGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxGlowPoint * anim=argument2;
     anim->brightness = anim->brightness - 8;
     anim->scale = (u16)anim->scale + 0x28;
     if ((s16)anim->brightness < 0x14) {
         anim->brightness = 0;
         state->flag = 2;
     }
+
+    return 0;
 }
 
 int GlowEffectC_PlantScript(char *object) {
@@ -824,7 +872,8 @@ int GlowEffectC_ClassNop0(void) {
     return 0;
 }
 
-int GlowEffectC_InitOwner(FieldFxObjectPrefix *obj) {
+int GlowEffectC_InitOwner(void *argument0, void *argument1, void *argument2) {
+    FieldFxObjectPrefix * obj=argument0;
     FieldActor *data = obj->actor;
 
     g_GlowEffectCPosition.x = data->render_object.matrices[19].translation[0];
@@ -832,9 +881,14 @@ int GlowEffectC_InitOwner(FieldFxObjectPrefix *obj) {
     g_GlowEffectCPosition.z = data->render_object.matrices[19].translation[2];
     g_GlowEffectCOwner = data;
     FieldFx_EnsureEffectTexturePage(0);
+
+    return 0;
 }
 
-int GlowEffectC_InitParticle(void *arg0, void *arg1, FieldFxMovingParticle *anim) {
+int GlowEffectC_InitParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMovingParticle * anim=argument2;
     GteShortVector vec;
     RenderMatrix *model;
 
@@ -850,9 +904,14 @@ int GlowEffectC_InitParticle(void *arg0, void *arg1, FieldFxMovingParticle *anim
     anim->position.z = g_GlowEffectCPosition.z;
     anim->lifetime = 0x14;
     anim->age = 0;
+
+    return 0;
 }
 
-int GlowEffectC_InitFlareLayers(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int GlowEffectC_InitFlareLayers(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     FieldFxMatrixGlow *anim_s0 = anim;
     GteShortVector out;
     FieldActor *data;
@@ -870,12 +929,20 @@ int GlowEffectC_InitFlareLayers(void *arg0, void *arg1, FieldFxMatrixGlow *anim)
     model = data->render_object.matrices;
     anim_s0->transform = *(GteMatrixStorage *)&model[19];
     anim_s0->brightness = 0x7F;
+
+    return 0;
 }
 
-void GlowEffectC_DrawNop(void) {
+int GlowEffectC_DrawNop(void *argument0, void *argument1, void *argument2) {
+
+
+    return 0;
 }
 
-int GlowEffectC_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int GlowEffectC_DrawParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     GteMatrix matrix;
     GteShortVector rot;
     GteVector scaleCopy;
@@ -907,6 +974,8 @@ int GlowEffectC_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
 
     ScaleMatrix(&matrix, &scaleCopy);
     FieldFx_DrawGlowSprite(&g_GlowEffectCSprite0, &matrix, 1);
+
+    return 0;
 }
 
 #define GLOW_LAYERS_FUNC GlowEffectC_DrawFlareLayers
@@ -916,14 +985,19 @@ int GlowEffectC_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
 #define GLOW_LAYERS_SPRITE g_GlowEffectCSprite1
 #include "glow_layers.inc"
 
-int GlowEffectC_UpdateEnd(void *arg0, FieldFxSlot *state) {
+int GlowEffectC_UpdateEnd(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
     int ret = 2;
 
     state->flag = ret;
     return ret;
 }
 
-int GlowEffectC_UpdateParticle(void *arg0, FieldFxSlot *state, FieldFxMovingParticle *anim) {
+int GlowEffectC_UpdateParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxMovingParticle * anim=argument2;
     FieldFxMovingParticle *particle = anim;
     u16 vy = anim->velocity.y;
     u16 vz = anim->velocity.z;
@@ -944,9 +1018,14 @@ int GlowEffectC_UpdateParticle(void *arg0, FieldFxSlot *state, FieldFxMovingPart
     if (lifetime == 0) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int GlowEffectC_UpdateFlareLayers(void *arg0, FieldFxSlot *state, FieldFxGlowPoint *anim) {
+int GlowEffectC_UpdateFlareLayers(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxGlowPoint * anim=argument2;
     s16 value = anim->brightness - 0x14;
 
     anim->brightness = value;
@@ -954,6 +1033,8 @@ int GlowEffectC_UpdateFlareLayers(void *arg0, FieldFxSlot *state, FieldFxGlowPoi
         anim->brightness = 0;
         state->flag = 2;
     }
+
+    return 0;
 }
 
 int FourLayerGlow_PlantScript(char *object) {
@@ -1596,3 +1677,22 @@ FieldFxHandler g_GlowEffectInitList[7] = {GlowEffect_InitOwner,GlowEffect_InitPa
 FieldFxHandler g_GlowEffectDrawList[7] = {GlowEffect_DrawNop,GlowEffect_DrawParticle,GlowEffect_DrawFlareLayers,GlowEffect_DrawPointGlow,GlowEffect_DrawGroundGlow,GlowEffect_DrawHaloGlow,(FieldFxHandler)(intptr_t)-1};
 FieldFxHandler g_GlowEffectUpdateList[7] = {GlowEffect_UpdateEnd,GlowEffect_UpdateParticle,GlowEffect_UpdateFlareLayers,GlowEffect_UpdateCoreGlow,GlowEffect_UpdateGroundGlow,GlowEffect_UpdateHaloGlow,(FieldFxHandler)(intptr_t)-1};
 u16 g_GlowEffectSlotSizes[7] = {0,24,48,16,16,48,65535};
+FieldActor *g_GlowEffectBOwner;
+FieldFxParticlePosition g_GlowEffectBPosition;
+s16 g_GlowEffectBScaleByAction[16] = {150,190,150,180,200,250,150,0,0,0,0,0,0,0,0,0};
+GteShortVector g_GlowEffectBFlareOffsets[8] = {{0,0,-150,0},{0,-15,-250,0},{0,-15,-220,0},{0,-15,-300,0},{0,0,-300,0},{0,0,-300,0},{0,0,-150,0},{0,0,0,0}};
+int g_GlowEffectBScript[13] = {5177344,520749058,520224769,131072,821755904,2031616,6225920,65536,65537,65538,65539,821297152,-1};
+FieldFxHandler g_GlowEffectBInitList[5] = {GlowEffectB_InitOwner,GlowEffectB_InitParticle,GlowEffectB_InitFlareLayers,GlowEffectB_InitPointGlow,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_GlowEffectBDrawList[5] = {GlowEffectB_DrawNop,GlowEffectB_DrawParticle,GlowEffectB_DrawFlareLayers,GlowEffectB_DrawPointGlow,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_GlowEffectBUpdateList[5] = {GlowEffectB_UpdateEnd,GlowEffectB_UpdateParticle,GlowEffectB_UpdateFlareLayers,GlowEffectB_UpdatePointGlow,(FieldFxHandler)(intptr_t)-1};
+u16 g_GlowEffectBSlotSizes[5] = {0,24,48,16,65535};
+FieldActor *g_GlowEffectCOwner;
+FieldFxParticlePosition g_GlowEffectCPosition;
+s16 g_GlowEffectCScaleByAction[16] = {150,190,150,180,200,250,150,0,0,0,0,0,0,0,0,0};
+GteShortVector g_GlowEffectCFlareOffsets[8] = {{0,0,-150,0},{0,-15,-250,0},{0,-15,-220,0},{0,-15,-300,0},{0,0,-300,0},{0,0,-300,0},{0,0,-150,0},{0,0,0,0}};
+int g_GlowEffectCScript[12] = {5177344,520683522,520224769,131072,821755904,2031616,6225920,65536,65537,65538,821362688,-1};
+FieldFxHandler g_GlowEffectCInitList[4] = {GlowEffectC_InitOwner,GlowEffectC_InitParticle,GlowEffectC_InitFlareLayers,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_GlowEffectCDrawList[4] = {GlowEffectC_DrawNop,GlowEffectC_DrawParticle,GlowEffectC_DrawFlareLayers,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_GlowEffectCUpdateList[4] = {GlowEffectC_UpdateEnd,GlowEffectC_UpdateParticle,GlowEffectC_UpdateFlareLayers,(FieldFxHandler)(intptr_t)-1};
+u16 g_GlowEffectCSlotSizes[4] = {0,24,48,65535};
+GteShortVector g_GlowEffectBPointOffset = {0,0,-200,0};

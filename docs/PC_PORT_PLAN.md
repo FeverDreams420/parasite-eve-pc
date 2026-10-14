@@ -3196,3 +3196,21 @@ original source instrumented and PsyZ/SDL archives uninstrumented. Unknown
 handler-list lengths/IDs, all authored allocation lifetimes and native alignment
 requirements, complete descriptor integration, full gameplay and deletion of
 pc/ remain incomplete. No new files or extracted functions.
+
+
+GlowEffectB and GlowEffectC now use their original native init/draw/update lists,
+slot sizes, authored scripts, action scales and flare offsets, backed in the
+existing glow.c. Their existing leaf callbacks use the same three-pointer/int
+ABI in place, with explicit ignored return values; no wrapper functions or new
+files were introduced. The fixture reads the additional resident data directly
+from SLUS_006.62 inside the supplied USA CUE/BIN and compares the compiled bytes.
+The authored lifecycle fixture now runs three glow variants across action
+indices 1..7, 160 ticks each (21 controlled cycles), including start/retrigger,
+all respective handler IDs, native drawing to both packet slots, stop and final
+slot release. Controlled actor/player/matrix inputs and resident texture-page
+status remain fixtures; this does not establish scene ownership or GPU pixels.
+Full build and four related CTests pass with Disc 1 required. Fresh actor
+ASan/UBSan/function passes with original source instrumented and PsyZ/SDL
+archives uninstrumented. Four-layer authored callback tables, other actions,
+texture uploads, class/descriptor integration, full gameplay and deletion of
+pc/ remain incomplete.

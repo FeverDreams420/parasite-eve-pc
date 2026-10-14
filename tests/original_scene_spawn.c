@@ -60,6 +60,7 @@ int main(void)
     unsigned spawned=0, relocated=0;
     struct { unsigned slot; u32 address; } handler_variants[512];
     unsigned variant_count = 0, handler_count = 0, pm_count = 0, effect_count = 0;
+    unsigned pm_methods = 0, mirror_descriptors = 0;
     unsigned char handler_slots[192] = {0};
     for(unsigned map=1;map<=PE_USA_ROOM_SLOTS;++map) {
         if(!catalog.ranges[map-1].room_sectors) continue;
@@ -71,14 +72,33 @@ int main(void)
             const u8 *entry = handler_records + record * 12;
             unsigned slot = entry[7];
             u32 address = room_word(entry + 8);
-            /* USA room payload is loaded at 0x8018efe0; overlay code starts
-             * eight bytes later. These are serialized descriptor addresses,
+            /* USA room payload is loaded at 0x8018efe8, including
+             * its eight-byte archive prefix. These are serialized descriptor addresses,
              * never callable native pointers. */
             CHECK(slot >= 8 && slot < sizeof(handler_slots));
-            CHECK(address >= 0x8018efe0u && !(address & 3));
-            size_t offset = address - 0x8018efe0u;
+            CHECK(address >= 0x8018efe8u && !(address & 3));
+            size_t offset = address - 0x8018efe8u;
             size_t descriptor_size = slot < 85 ? 7 * 4 : 14 * 4;
             CHECK(offset <= room.data.size && descriptor_size <= room.data.size - offset);
+            if (slot < 85) {
+                for (unsigned method = 0; method < 7; ++method) {
+                    u32 target = room_word(room.data.bytes + offset + method * 4);
+                    CHECK(!(target & 3) && target >= 0x8018efe8u);
+                    CHECK(target - 0x8018efe8u < room.data.size);
+                    ++pm_methods;
+                }
+            }
+            if (slot == 69) {
+                ++mirror_descriptors;
+                /* Historical M017 symbols: all seven entries, in PM order,
+                 * agree with the original mirror_model.c handler table. */
+                static const u32 mirror_methods[7] = {
+                    0x8018eff4, 0x8018effc, 0x8018f020, 0x8018f0f0,
+                    0x8018f1a4, 0x8018f1ac, 0x8018f1bc
+                };
+                for (unsigned method = 0; method < 7; ++method)
+                    CHECK(room_word(room.data.bytes + offset + method * 4) == mirror_methods[method]);
+            }
             CHECK((room_word(entry + 4) & 0xffffff) == 8);
             handler_slots[slot] = 1;
             ++handler_count;
@@ -227,6 +247,7 @@ int main(void)
     for (unsigned slot = 0; slot < sizeof(handler_slots); ++slot) slot_count += handler_slots[slot];
     CHECK(handler_count == 479 && pm_count == 298 && effect_count == 181);
     CHECK(slot_count == 98 && variant_count == 212);
+    CHECK(pm_methods == 2086 && mirror_descriptors == 7);
     printf("USA room handler data: %u records (%u PM, %u effects), %u slots, %u slot/address variants within room bounds; native dispatch not verified\n",
            handler_count, pm_count, effect_count, slot_count, variant_count);
     free(memory); g_RenderScratchBufferBase[0]=NULL; pe_disc_close(&disc);

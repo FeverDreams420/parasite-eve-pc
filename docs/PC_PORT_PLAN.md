@@ -1881,8 +1881,8 @@ The existing original_scene_spawn test now audits all 414 Disc 1 room blobs:
 479 records comprise 298 PM descriptors and 181 field-effect programs, with 98
 slot IDs and 212 distinct slot/address pairs. Every source offset is 8 and all
 aligned descriptor spans (28/56 serialized bytes) lie inside their room at the
-USA load base 0x8018efe0. The historical M023 overlay config at 1d20afe62 places
-its code at 0x8018efe8, consistent with that eight-byte archive prefix.
+USA load base 0x8018efe8 (corrected by the subsequent descriptor-content audit).
+The archive prefix is included at that base, not placed before it.
 The test explicitly labels native dispatch unverified; no PS1 address is invoked.
 
 Build, Disc 1 scene-spawn CTest and scene-spawn ASan/UBSan/function pass, retaining
@@ -1891,3 +1891,23 @@ This is a data-format inventory and prerequisite for original module integration
 not implementation of native handler registration or completion of room loading.
 No files were added. Next required work is resolving the descriptor function/data
 references to the original linked overlay modules, then restoring room_load.c.
+
+
+### Correct room descriptor base using actual callback contents
+
+The previous span-only audit used a base eight bytes too low. Corrected the
+room archive base to 0x8018efe8: the historical overlay extraction includes
+the archive prefix. At the old base, the apparent first mirror method was
+MirrorSelect and the last two words were data (0xf000, 0), despite passing bounds.
+The actual M017 table at 0x8018fb44 contains MirrorNoOp0, MirrorReset,
+MirrorSelect, MirrorTick, MirrorNoOp4, MirrorKill and MirrorNoOp6, matching
+mirror_model.c and historical sym.room_m017_theater.txt at 1d20afe62.
+
+The existing scene-spawn audit now checks all seven exact method addresses for
+all seven mirror descriptors and validates all 2086 PM method addresses as
+aligned and inside their owning room blob. This catches the old eight-byte
+base error. Full build, Disc 1 scene-spawn and ASan/UBSan/function pass. These
+checks identify serialized function references; no native PM registry or mirror
+runtime has been implemented by this change. Binding additionally requires
+correct typed callbacks, native actor/model structures and renderer integration.
+No files added.

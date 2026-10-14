@@ -63,3 +63,50 @@ int pe_model_matrices(const PeModel *model,const PeMatrix *base,const PeMatrix *
 failed:
     free(next);free(stack);return 0;
 }
+
+static int volume_part(const PeModel *model,unsigned index,PeModelPart *part,PeModelBounds *bounds){
+    return pe_model_part(model,index,part)&&pe_model_bounds(model,index,bounds);
+}
+int pe_model_hitvolumes(const PeModel *model,const PeMatrix *pose,unsigned pose_count,
+                         PeHitVolume *output,unsigned capacity,unsigned *written){
+    unsigned count=0;
+    for(unsigned i=0;i<model->part_count;++i){
+        PeModelPart part;PeModelBounds bounds;if(!volume_part(model,i,&part,&bounds))return 0;
+        if(part.visible==1&&bounds.attributes>=0)++count;
+    }
+    if(count>capacity||count>model->animation_entries)return 0;
+    unsigned transformed=0,pose_index=0;
+    for(unsigned i=0;i<model->matrix_bytes;++i){
+        PeMatrixCommand command;if(!pe_model_matrix_command(model,i,&command))return 0;
+        if(command.kind!=PE_MATRIX_PART)continue;
+        if(pose_index++>=pose_count)return 0;
+        PeModelPart part;PeModelBounds bounds;if(!volume_part(model,command.part,&part,&bounds))return 0;
+        if(part.visible==1&&bounds.attributes>=0)++transformed;
+    }
+    if(transformed!=count)return 0;
+    PeHitVolume *next=count?calloc(count,sizeof(*next)):NULL;if(count&&!next)return 0;
+    unsigned emitted=0;
+    for(unsigned i=0;i<model->part_count;++i){
+        PeModelPart part;PeModelBounds bounds;if(!volume_part(model,i,&part,&bounds))goto failed_volume;
+        if(part.visible==1&&bounds.attributes>=0){
+            next[emitted].part=(uint16_t)i;next[emitted].radius=bounds.radius;next[emitted++].attributes=bounds.attributes;
+        }
+    }
+    emitted=0;pose_index=0;
+    for(unsigned i=0;i<model->matrix_bytes;++i){
+        PeMatrixCommand command;if(!pe_model_matrix_command(model,i,&command))goto failed_volume;
+        if(command.kind!=PE_MATRIX_PART)continue;
+        if(pose_index>=pose_count)goto failed_volume;
+        PeModelPart part;PeModelBounds bounds;if(!volume_part(model,command.part,&part,&bounds))goto failed_volume;
+        if(part.visible==1&&bounds.attributes>=0){
+            if(emitted>=count)goto failed_volume;
+            PeTransformedPoint point;pe_matrix_point(&pose[pose_index],bounds.lower,&point);
+            memcpy(next[emitted++].center,point.saturated,sizeof(point.saturated));
+        }
+        ++pose_index;
+    }
+    if(count)memcpy(output,next,(size_t)count*sizeof(*next));
+    *written=count;free(next);return 1;
+failed_volume:
+    free(next);return 0;
+}

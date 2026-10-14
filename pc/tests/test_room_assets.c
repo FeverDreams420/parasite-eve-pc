@@ -73,6 +73,7 @@ int main(void) {
     unsigned model_prefixes=0; uint64_t model_vertices=0, model_primitives=0, model_textures=0;
     uint64_t matrix_commands=0,matrix_outputs=0;unsigned matrix_depth=0;
     uint64_t computed_matrices=0;
+    uint64_t model_hitvolumes=0;
     unsigned floor_probe_outside = 0, floor_probe_unindexed = 0, floor_probe_contained_missing = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -111,6 +112,9 @@ int main(void) {
             for(unsigned part=0;part<model.part_count;++part)pe_matrix_identity(&sources[part]);
             CHECK(pe_model_matrices(&model,&base,sources,model.part_count,pose,255,&written));
             CHECK(written==model.matrix_outputs);computed_matrices+=written;
+            PeHitVolume volumes[255];unsigned volume_count=0;
+            CHECK(pe_model_hitvolumes(&model,pose,written,volumes,255,&volume_count));
+            model_hitvolumes+=volume_count;
             for(unsigned vertex=0;vertex<model.vertex_count;++vertex) {
                 PeModelVertex decoded; CHECK(pe_model_vertex(&model,vertex,&decoded));
             }
@@ -322,6 +326,8 @@ int main(void) {
            (unsigned long long)matrix_commands,(unsigned long long)matrix_outputs,matrix_depth);
     printf("Model neutral-input pose matrices computed: %llu; animation/reference pose validation pending\n",
            (unsigned long long)computed_matrices);
+    printf("Model neutral-input hit volumes computed: %llu; gameplay contact integration pending\n",
+           (unsigned long long)model_hitvolumes);
     pe_collision_close(&room_collision);
     printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
            (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);

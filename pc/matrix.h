@@ -15,4 +15,9 @@ void pe_matrix_point(const PeMatrix *matrix,const int16_t point[3],PeTransformed
  * modes, hit-volume transforms and view projection are separate work. */
 int pe_model_matrices(const PeModel *model,const PeMatrix *base,const PeMatrix *sources,
                        unsigned source_count,PeMatrix *output,unsigned capacity,unsigned *written);
+typedef struct PeHitVolume { int16_t center[3]; uint16_t part; int16_t radius,attributes; } PeHitVolume;
+/* Command-mode centres in original command order; metadata in part order.
+ * Requires a complete set of eligible centres. Failure preserves output. */
+int pe_model_hitvolumes(const PeModel *model,const PeMatrix *pose,unsigned pose_count,
+                         PeHitVolume *output,unsigned capacity,unsigned *written);
 #endif

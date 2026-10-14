@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Command-mode hit volumes dekodują bounds i transformują eligible centres przez pose matrices z saturated RT coordinates. Metadata zachowuje part order, unscaled radius i bounds attributes; centres używają command order. Hidden/disabled entries są wyłączone, capacity/incomplete-pose error zachowuje output. Neutral-input audyt Disc 1 wylicza 4300 volumes w 878 modelach. 28 headless testów oraz ASan/UBSan fixture i pełnego scene/model audit przechodzi. Animated/alternate modes, scaling/contact integration i reference gameplay validation pozostają wymagane.
+
 Porównanie PsyZ obejmuje teraz także matrix composition: trzy rotation columns względem RTIR i translation względem RT. Point transform i composition zgadzają się dla 10000 deterministycznych skrajnych przypadków, headless. 28 testów z Disc 1 przechodzi. Dowód dotyczy tych operacji arytmetycznych; animated poses i reference images pozostają nieweryfikowane.
 
 Natywna transformacja punktu udostępnia pełne MAC words i saturated IR halfwords operacji RT. Headless `matrix-psyz` porównuje obie wartości z GTE przypiętego forka PsyZ dla 10000 deterministycznych skrajnych wejść; wszystkie są zgodne. Native matrix fixture przechodzi ASan/UBSan, a 28 testów headless z Disc 1 przechodzi. Hit-volume integration, view/perspective projection, lighting i referencyjne obrazy gry pozostają wymagane.

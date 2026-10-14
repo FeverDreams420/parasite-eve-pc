@@ -593,6 +593,15 @@ point transformation and composition match for 10,000 deterministic extreme
 cases, headless. All 28 tests pass with Disc 1. This validates those arithmetic
 operations; animated model poses and reference images remain unverified.
 
+Command-mode hit volumes now decode model bounds and transform eligible
+centres through their pose matrices using RT's saturated coordinates. Metadata
+keeps original part order, unscaled radius and bounds attributes; coordinates
+follow command order. Hidden/disabled volumes are excluded, and capacity or
+incomplete-pose failure preserves output. The neutral-input Disc 1 audit
+computes 4,300 volumes across 878 models. All 28 headless tests pass; fixtures
+and the full scene/model audit pass ASan/UBSan. Animated/alternate modes,
+scaling/contact integration and reference gameplay validation remain pending.
+
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one
 lists the other 75 faces). The original lookup only searches listed faces.

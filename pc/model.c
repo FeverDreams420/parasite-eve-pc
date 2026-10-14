@@ -77,6 +77,14 @@ int pe_model_part(const PeModel *model,unsigned index,PeModelPart *part) {
     if((unsigned)half(record)+half(record+2)>model->vertex_count) return 0;
     *part=(PeModelPart){half(record),half(record+2),record[4],word(record+8)}; return 1;
 }
+int pe_model_bounds(const PeModel *model,unsigned part,PeModelBounds *bounds){
+    if(part>=model->part_count)return 0;
+    const uint8_t *record=record_at(model,(uint64_t)model->bounds+part*16u,16);
+    if(!record)return 0;
+    PeModelBounds next={0};
+    for(unsigned i=0;i<3;++i){next.lower[i]=signed_half(half(record+i*2));next.upper[i]=signed_half(half(record+8+i*2));}
+    next.radius=signed_half(half(record+6));next.attributes=signed_half(half(record+14));*bounds=next;return 1;
+}
 int pe_model_primitive(const PeModel *model,unsigned kind,unsigned index,PeModelPrimitive *primitive) {
     if(kind>3 || index>=model->packets[kind]) return 0;
     unsigned preceding=0; for(unsigned i=0;i<kind;++i) preceding+=model->packets[i];

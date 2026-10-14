@@ -40,6 +40,23 @@ int main(void){
     CHECK(written==77 && !memcmp(&saved,&output[0],sizeof(saved)));
     bytes[136]=254;
     CHECK(!pe_model_matrices(&model,&parent,sources,3,output,3,&written) && written==77);
+    bytes[136]=0;bytes[3]=2;
+    bytes[32]=bytes[44]=bytes[56]=1;
+    half(bytes+80,1);half(bytes+82,2);half(bytes+84,3);half(bytes+86,12);half(bytes+94,4);
+    half(bytes+96,65531);half(bytes+98,65530);half(bytes+100,65529);half(bytes+102,13);half(bytes+110,5);
+    half(bytes+126,65535);
+    CHECK(pe_model_open(bytes,sizeof(bytes),&model,error,sizeof(error)));
+    CHECK(pe_model_matrices(&model,&parent,sources,3,output,3,&written));
+    PeHitVolume volumes[2];unsigned volume_count=99;
+    CHECK(pe_model_hitvolumes(&model,output,3,volumes,2,&volume_count));
+    CHECK(volume_count==2 && volumes[0].part==0 && volumes[0].radius==12 && volumes[0].attributes==4);
+    CHECK(volumes[0].center[0]==1 && volumes[0].center[1]==2 && volumes[0].center[2]==108);
+    CHECK(volumes[1].part==1 && volumes[1].radius==13 && volumes[1].center[0]==-5 && volumes[1].center[2]==108);
+    PeHitVolume previous_volume=volumes[0];volume_count=77;
+    CHECK(!pe_model_hitvolumes(&model,output,3,volumes,1,&volume_count) && volume_count==77);
+    CHECK(!memcmp(&previous_volume,&volumes[0],sizeof(previous_volume)));
+    bytes[44]=2;
+    CHECK(pe_model_hitvolumes(&model,output,3,volumes,2,&volume_count) && volume_count==1);
     puts("Matrices: fixed rotation saturation, signed input, wrapped translation and transactional command hierarchy passed");
     return 0;
 }

@@ -18,6 +18,7 @@ typedef struct PeModelPart { uint16_t first,count; uint8_t visible; uint32_t tra
 typedef struct PeModelPrimitive { uint16_t vertex[4]; uint8_t vertices,kind; } PeModelPrimitive;
 typedef enum PeMatrixCommandKind { PE_MATRIX_PART, PE_MATRIX_PUSH, PE_MATRIX_POP } PeMatrixCommandKind;
 typedef struct PeMatrixCommand { PeMatrixCommandKind kind; uint8_t part; } PeMatrixCommand;
+typedef struct PeModelBounds { int16_t lower[3],upper[3],radius,attributes; } PeModelBounds;
 /* Checked RenderObjectHeader and contiguous data prefix, borrowing bytes.
  * Texture records are decoded separately; matrix execution/rendering pending. */
 int pe_model_open(const uint8_t *bytes, size_t size, PeModel *model, char *error, size_t error_size);
@@ -27,4 +28,5 @@ int pe_model_vertex(const PeModel *model,unsigned index,PeModelVertex *vertex);
 int pe_model_part(const PeModel *model,unsigned index,PeModelPart *part);
 int pe_model_primitive(const PeModel *model,unsigned kind,unsigned index,PeModelPrimitive *primitive);
 int pe_model_matrix_command(const PeModel *model,unsigned index,PeMatrixCommand *command);
+int pe_model_bounds(const PeModel *model,unsigned part,PeModelBounds *bounds);
 #endif

@@ -40,6 +40,6 @@ extern GteVector g_FourLayerGlowScale;
 int GlowEffect_DrawFlareLayers(void *object, void *slot, void *glow);
 int GlowEffectB_DrawFlareLayers(void *object, void *slot, void *glow);
 int GlowEffectC_DrawFlareLayers(void *object, void *slot, void *glow);
-void FourLayerGlow_DrawFlareLayers(void *object, void *slot, FieldGlowLayers *glow);
+int FourLayerGlow_DrawFlareLayers(void *object, void *slot, void *glow);
 
 #endif

@@ -878,7 +878,15 @@ static int original_glow_resident_constants(void)
         {0x800e0ab4,g_GlowEffectCSlotSizes,4*sizeof(u16)},
         {0x800e0ad8,g_GlowEffectCScaleByAction,16*sizeof(s16)},
         {0x800e0af8,g_GlowEffectCFlareOffsets,8*sizeof(GteShortVector)},
-        {0x800e0b38,g_GlowEffectCScript,12*sizeof(int)}
+        {0x800e0b38,g_GlowEffectCScript,12*sizeof(int)},
+        {0x800c21c4,&g_FourLayerGlowPointOffsetA,sizeof(GteShortVector)},
+        {0x800c21cc,&g_FourLayerGlowPointOffsetB,sizeof(GteShortVector)},
+        {0x800c2204,&g_FourLayerGlowSpriteRotation,sizeof(GteShortVector)},
+        {0x800e0bbc,g_FourLayerGlowSlotSizes,7*sizeof(u16)},
+        {0x800e0be8,g_FourLayerGlowScaleByAction,16*sizeof(s16)},
+        {0x800e0c08,g_FourLayerGlowFlareOffsets,8*sizeof(GteShortVector)},
+        {0x800e0c48,g_FourLayerGlowHaloOffsets,8*sizeof(GteShortVector)},
+        {0x800e0c88,g_FourLayerGlowScript,25*sizeof(int)}
     };
     PeDisc disc={0}; PeDiscFile file;
     u8 header[32], raw[128];
@@ -906,7 +914,7 @@ static int native_glow_layer_packets(void)
     g_GeomScroll.words.viewMatrix=&view;
     FieldGlowLayers glow={.depth=128,.z=1024,.matrix=view};
     int (*draws[])(void *,void *,void *)={GlowEffect_DrawFlareLayers,
-        GlowEffectB_DrawFlareLayers,GlowEffectC_DrawFlareLayers};
+        GlowEffectB_DrawFlareLayers,GlowEffectC_DrawFlareLayers,FourLayerGlow_DrawFlareLayers};
     FieldGlowSprite *sprites[]={&g_GlowEffectSprite2,&g_GlowEffectBSprite2,&g_GlowEffectCSprite1,&g_FourLayerGlowSprite2};
     Psyz_GteCtrlWrite(26,256); Psyz_GteCtrlWrite(29,1365); Psyz_GteCtrlWrite(30,1024);
     gte_SetGeomOffset(160,120);
@@ -916,8 +924,7 @@ static int native_glow_layer_packets(void)
         *sprites[kind]=(FieldGlowSprite){.r=80,.g=80,.b=80,.cell=0xae,.clut=7,.offset=-50};
         D_800B0E38.ordering[slot]=ordering; D_800B0E38.packets[slot]=(char *)&buffer;
         g_ActiveDrawSlot=slot; g_DrawPacketOffset=0;
-        if(kind==3) FourLayerGlow_DrawFlareLayers(NULL,NULL,&glow);
-        else draws[kind](NULL,NULL,&glow);
+        draws[kind](NULL,NULL,&glow);
         unsigned count=kind==3?4:2;
         if(g_DrawPacketOffset!=count*sizeof(FieldStripPacket)) { fprintf(stderr,"glow kind %u slot %u bytes %d expected %zu\n",kind,slot,g_DrawPacketOffset,count*sizeof(FieldStripPacket)); return 0; }
         unsigned linked=0, seen=0;
@@ -1011,13 +1018,13 @@ static int native_object_script_cycle(void)
 
 static int authored_glow_script_cycle(void)
 {
-    FieldFxHandler *inits[]={g_GlowEffectInitList,g_GlowEffectBInitList,g_GlowEffectCInitList};
-    FieldFxHandler *draws[]={g_GlowEffectDrawList,g_GlowEffectBDrawList,g_GlowEffectCDrawList};
-    FieldFxHandler *updates[]={g_GlowEffectUpdateList,g_GlowEffectBUpdateList,g_GlowEffectCUpdateList};
-    u16 *sizes[]={g_GlowEffectSlotSizes,g_GlowEffectBSlotSizes,g_GlowEffectCSlotSizes};
-    int (*plant[])(char *)={GlowEffect_PlantScript,GlowEffectB_PlantScript,GlowEffectC_PlantScript};
-    int (*spawn[])(intptr_t,int,int,int,int,int)={GlowEffect_Spawn6,GlowEffectB_Spawn6,GlowEffectC_Spawn6};
-    for(unsigned variant=0;variant<3;++variant) for(unsigned player_action=1;player_action<=7;++player_action) {
+    FieldFxHandler *inits[]={g_GlowEffectInitList,g_GlowEffectBInitList,g_GlowEffectCInitList,g_FourLayerGlowInitList};
+    FieldFxHandler *draws[]={g_GlowEffectDrawList,g_GlowEffectBDrawList,g_GlowEffectCDrawList,g_FourLayerGlowDrawList};
+    FieldFxHandler *updates[]={g_GlowEffectUpdateList,g_GlowEffectBUpdateList,g_GlowEffectCUpdateList,g_FourLayerGlowUpdateList};
+    u16 *sizes[]={g_GlowEffectSlotSizes,g_GlowEffectBSlotSizes,g_GlowEffectCSlotSizes,g_FourLayerGlowSlotSizes};
+    int (*plant[])(char *)={GlowEffect_PlantScript,GlowEffectB_PlantScript,GlowEffectC_PlantScript,FourLayerGlow_PlantScript};
+    int (*spawn[])(intptr_t,int,int,int,int,int)={GlowEffect_Spawn6,GlowEffectB_Spawn6,GlowEffectC_Spawn6,FourLayerGlow_Spawn6};
+    for(unsigned variant=0;variant<4;++variant) for(unsigned player_action=1;player_action<=7;++player_action) {
     struct { FieldFxObject object; u8 guard[16]; } buffer={0};
     RenderMatrix matrices[20]={0};
     FieldActor owner={0}; BattleEntity player={0}, *saved_player=D_8009D254;
@@ -1060,13 +1067,13 @@ static int authored_glow_script_cycle(void)
         if(g_DrawPacketOffset>sizeof(packets)) return 0;
         for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
     }
-    if(seen!=(unsigned[]){0x3f,0xf,0x7}[variant] || !object->state.halted || object->state.slot_count || !drawn) {
+    if(seen!=(unsigned[]){0x3f,0xf,0x7,0x3f}[variant] || !object->state.halted || object->state.slot_count || !drawn) {
         fprintf(stderr,"authored glow handlers %x halted %d slots %d drawn %u\n",seen,object->state.halted,object->state.slot_count,drawn); return 0;
     }
     D_8009D254=saved_player; D_800B0E38=saved;
     g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset; g_GeomScroll.words.viewMatrix=saved_view;
     }
-    puts("Original authored glows: three real table/script sets, seven actions, 160 ticks per cycle and completion passed");
+    puts("Original authored glows: four real table/script sets, seven actions, 160 ticks per cycle and completion passed");
     return 1;
 }
 

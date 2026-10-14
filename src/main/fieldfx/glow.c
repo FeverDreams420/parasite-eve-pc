@@ -1119,7 +1119,8 @@ int FourLayerGlow_ClassNop0(void) {
     return 0;
 }
 
-int FourLayerGlow_InitOwner(FieldFxObjectPrefix *obj) {
+int FourLayerGlow_InitOwner(void *argument0, void *argument1, void *argument2) {
+    FieldFxObjectPrefix * obj=argument0;
     FieldActor *data = obj->actor;
 
     g_FourLayerGlowPosition.x = data->render_object.matrices[19].translation[0];
@@ -1127,9 +1128,14 @@ int FourLayerGlow_InitOwner(FieldFxObjectPrefix *obj) {
     g_FourLayerGlowPosition.z = data->render_object.matrices[19].translation[2];
     g_FourLayerGlowOwner = data;
     FieldFx_EnsureEffectTexturePage(0);
+
+    return 0;
 }
 
-int FourLayerGlow_InitParticle(void *arg0, void *arg1, FieldFxMovingParticle *anim) {
+int FourLayerGlow_InitParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMovingParticle * anim=argument2;
     GteShortVector vec;
 
     vec.x = -((rand() % 3) + 9);
@@ -1148,9 +1154,14 @@ int FourLayerGlow_InitParticle(void *arg0, void *arg1, FieldFxMovingParticle *an
         anim->age = 0;
         anim->position.z = z;
     }
+
+    return 0;
 }
 
-int FourLayerGlow_InitFlareLayers(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int FourLayerGlow_InitFlareLayers(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     FieldFxMatrixGlow *anim_s0 = anim;
     GteShortVector out;
     FieldActor *data;
@@ -1168,9 +1179,14 @@ int FourLayerGlow_InitFlareLayers(void *arg0, void *arg1, FieldFxMatrixGlow *ani
     model = data->render_object.matrices;
     anim_s0->transform = *(GteMatrixStorage *)&model[19];
     anim_s0->brightness = 0x7F;
+
+    return 0;
 }
 
-int FourLayerGlow_InitTwinGlow(void *arg0, void *arg1, FieldFxTwinGlow *anim) {
+int FourLayerGlow_InitTwinGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxTwinGlow * anim=argument2;
     FieldFxTwinGlow *anim_s0;
     u16 *field_s1;
     GteShortVector *out_s2;
@@ -1202,9 +1218,14 @@ int FourLayerGlow_InitTwinGlow(void *arg0, void *arg1, FieldFxTwinGlow *anim) {
     anim_s0->brightness = 0x7F;
     anim_s0->scale = 0;
     anim_s0->position[1].z = z_base_v1 + z_out_a0;
+
+    return 0;
 }
 
-int FourLayerGlow_InitGroundGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim) {
+int FourLayerGlow_InitGroundGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxGlowPoint * anim=argument2;
     u16 x = g_FourLayerGlowPosition.x;
     BattleEntity *data = D_8009D254;
     int y;
@@ -1217,9 +1238,14 @@ int FourLayerGlow_InitGroundGlow(void *arg0, void *arg1, FieldFxGlowPoint *anim)
     anim->brightness = 0x7F;
     anim->scale = 0x224;
     anim->position.z = z;
+
+    return 0;
 }
 
-int FourLayerGlow_InitHaloGlow(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int FourLayerGlow_InitHaloGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     FieldFxMatrixGlow *anim_s0 = anim;
     GteShortVector out;
     FieldActor *data;
@@ -1238,12 +1264,20 @@ int FourLayerGlow_InitHaloGlow(void *arg0, void *arg1, FieldFxMatrixGlow *anim) 
     anim_s0->transform = *(GteMatrixStorage *)&model[19];
     anim_s0->brightness = 0x7F;
     anim_s0->scale = 0x224;
+
+    return 0;
 }
 
-void FourLayerGlow_DrawNop(void) {
+int FourLayerGlow_DrawNop(void *argument0, void *argument1, void *argument2) {
+
+
+    return 0;
 }
 
-int FourLayerGlow_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int FourLayerGlow_DrawParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     GteMatrix matrix;
     GteShortVector rot;
     GteVector scaleCopy;
@@ -1275,6 +1309,8 @@ int FourLayerGlow_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) 
 
     ScaleMatrix(&matrix, &scaleCopy);
     FieldFx_DrawGlowSprite(&g_FourLayerGlowSprite0, &matrix, 1);
+
+    return 0;
 }
 
 /* Four-layer variant of the field glow: two pairs of fixed spins, the
@@ -1282,8 +1318,10 @@ int FourLayerGlow_DrawParticle(void *arg0, void *arg1, FieldFxMatrixGlow *anim) 
  * Matching debt: 6 pins and the remaining empty constraints.
  * Explicit spin address aliases retain the retail spill order. Rotation,
  * column, and translation windows use the stock GTE macros. */
-void FourLayerGlow_DrawFlareLayers(void *object, void *slot, FieldGlowLayers *glow)
-{
+int FourLayerGlow_DrawFlareLayers(void *argument0, void *argument1, void *argument2) {
+    void * object=argument0;
+    void * slot=argument1;
+    FieldGlowLayers * glow=argument2;
     int halfBrightness;
     u16 brightness;
     GteMatrix *workMatrix;
@@ -1467,9 +1505,14 @@ void FourLayerGlow_DrawFlareLayers(void *object, void *slot, FieldGlowLayers *gl
             scaleD = g_FourLayerGlowScale;
     ScaleMatrix(workMatrix, &scaleD);
     FieldFx_DrawGlowSprite(&g_FourLayerGlowSprite2, workMatrix, 0);
+
+    return 0;
 }
 
-int FourLayerGlow_DrawTwinGlow(void *arg0, void *arg1, FieldFxTwinGlow *anim) {
+int FourLayerGlow_DrawTwinGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxTwinGlow * anim=argument2;
     u16 *field_s4 = &g_FourLayerGlowSprite1.depth;
     GteMatrix matrix;
     int scale;
@@ -1535,9 +1578,14 @@ int FourLayerGlow_DrawTwinGlow(void *arg0, void *arg1, FieldFxTwinGlow *anim) {
 
     ScaleMatrix(&matrix, (const GteVector *)localScale2);
     FieldFx_DrawGlowSprite(&g_FourLayerGlowSprite1, &matrix, 1);
+
+    return 0;
 }
 
-int FourLayerGlow_DrawGroundGlow(void *arg0, void *arg1, FieldFxMovingParticle *anim) {
+int FourLayerGlow_DrawGroundGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMovingParticle * anim=argument2;
     s16 *position;
     u16 *field = &g_FourLayerGlowSprite3.depth;
     GteMatrix matrix;
@@ -1568,9 +1616,14 @@ int FourLayerGlow_DrawGroundGlow(void *arg0, void *arg1, FieldFxMovingParticle *
 
     ScaleMatrix(&matrix, &scaleCopy);
     FieldFx_DrawGlowSprite(&g_FourLayerGlowSprite3, &matrix, 0);
+
+    return 0;
 }
 
-int FourLayerGlow_DrawHaloGlow(void *arg0, void *arg1, FieldFxMatrixGlow *anim) {
+int FourLayerGlow_DrawHaloGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    void * arg1=argument1;
+    FieldFxMatrixGlow * anim=argument2;
     u16 *field = &g_FourLayerGlowSprite3.depth;
     GteMatrix matrix;
     GteVector scaleCopy;
@@ -1596,16 +1649,23 @@ int FourLayerGlow_DrawHaloGlow(void *arg0, void *arg1, FieldFxMatrixGlow *anim) 
 
     ScaleMatrix(&matrix, &scaleCopy);
     FieldFx_DrawGlowSprite(&g_FourLayerGlowSprite3, &matrix, 0);
+
+    return 0;
 }
 
-int FourLayerGlow_UpdateEnd(void *arg0, FieldFxSlot *state) {
+int FourLayerGlow_UpdateEnd(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
     int ret = 2;
 
     state->flag = ret;
     return ret;
 }
 
-int FourLayerGlow_UpdateParticle(void *arg0, FieldFxSlot *state, FieldFxMovingParticle *anim) {
+int FourLayerGlow_UpdateParticle(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxMovingParticle * anim=argument2;
     FieldFxMovingParticle *particle = anim;
     u16 vy = anim->velocity.y;
     u16 vz = anim->velocity.z;
@@ -1626,9 +1686,14 @@ int FourLayerGlow_UpdateParticle(void *arg0, FieldFxSlot *state, FieldFxMovingPa
     if (lifetime == 0) {
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int FourLayerGlow_UpdateFlareLayers(void *arg0, FieldFxSlot *state, FieldFxGlowPoint *anim) {
+int FourLayerGlow_UpdateFlareLayers(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxGlowPoint * anim=argument2;
     s16 value = anim->brightness - 0x14;
 
     anim->brightness = value;
@@ -1636,33 +1701,50 @@ int FourLayerGlow_UpdateFlareLayers(void *arg0, FieldFxSlot *state, FieldFxGlowP
         anim->brightness = 0;
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int FourLayerGlow_UpdateTwinGlow(void *arg0, FieldFxSlot *state, FieldFxGlowPoint *anim) {
+int FourLayerGlow_UpdateTwinGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxGlowPoint * anim=argument2;
     anim->brightness = anim->brightness - 8;
     anim->scale = (u16)anim->scale + 0x3C;
     if ((s16)anim->brightness < 0x14) {
         anim->brightness = 0;
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int FourLayerGlow_UpdateGroundGlow(void *arg0, FieldFxSlot *state, FieldFxGlowPoint *anim) {
+int FourLayerGlow_UpdateGroundGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxGlowPoint * anim=argument2;
     anim->brightness = anim->brightness - 8;
     anim->scale = (u16)anim->scale + 0x78;
     if ((s16)anim->brightness < 0x14) {
         anim->brightness = 0;
         state->flag = 2;
     }
+
+    return 0;
 }
 
-int FourLayerGlow_UpdateHaloGlow(void *arg0, FieldFxSlot *state, FieldFxGlowPoint *anim) {
+int FourLayerGlow_UpdateHaloGlow(void *argument0, void *argument1, void *argument2) {
+    void * arg0=argument0;
+    FieldFxSlot * state=argument1;
+    FieldFxGlowPoint * anim=argument2;
     anim->brightness = anim->brightness - 8;
     anim->scale = (u16)anim->scale + 0xA;
     if ((s16)anim->brightness < 0x14) {
         anim->brightness = 0;
         state->flag = 2;
     }
+
+    return 0;
 }
 
 FieldActor *g_GlowEffectOwner;
@@ -1696,3 +1778,16 @@ FieldFxHandler g_GlowEffectCDrawList[4] = {GlowEffectC_DrawNop,GlowEffectC_DrawP
 FieldFxHandler g_GlowEffectCUpdateList[4] = {GlowEffectC_UpdateEnd,GlowEffectC_UpdateParticle,GlowEffectC_UpdateFlareLayers,(FieldFxHandler)(intptr_t)-1};
 u16 g_GlowEffectCSlotSizes[4] = {0,24,48,65535};
 GteShortVector g_GlowEffectBPointOffset = {0,0,-200,0};
+FieldActor *g_FourLayerGlowOwner;
+FieldFxParticlePosition g_FourLayerGlowPosition;
+GteShortVector g_FourLayerGlowPointOffsetA = {0,0,-150,0};
+GteShortVector g_FourLayerGlowPointOffsetB = {0,0,150,0};
+GteShortVector g_FourLayerGlowSpriteRotation = {1024,0,0,0};
+s16 g_FourLayerGlowScaleByAction[16] = {150,190,150,180,200,250,150,0,0,0,0,0,0,0,0,0};
+GteShortVector g_FourLayerGlowFlareOffsets[8] = {{0,0,-150,0},{0,-15,-250,0},{0,-15,-220,0},{0,-15,-300,0},{0,0,-300,0},{0,0,200,0},{0,0,-150,0},{0,0,0,0}};
+GteShortVector g_FourLayerGlowHaloOffsets[8] = {{0,0,-100,0},{0,-15,-200,0},{0,-15,-170,0},{0,-15,-250,0},{0,-15,-250,0},{0,-15,-250,0},{0,0,-100,0},{0,0,0,0}};
+int g_FourLayerGlowScript[25] = {1703936,1769472,1835008,5177344,521338882,520552449,131072,721092608,2818049,737738762,1703937,1769472,821428224,2031616,6225920,65536,65537,65538,65539,436338688,65540,65541,1703936,820707328,-1};
+FieldFxHandler g_FourLayerGlowInitList[7] = {FourLayerGlow_InitOwner,FourLayerGlow_InitParticle,FourLayerGlow_InitFlareLayers,FourLayerGlow_InitTwinGlow,FourLayerGlow_InitGroundGlow,FourLayerGlow_InitHaloGlow,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_FourLayerGlowDrawList[7] = {FourLayerGlow_DrawNop,FourLayerGlow_DrawParticle,FourLayerGlow_DrawFlareLayers,FourLayerGlow_DrawTwinGlow,FourLayerGlow_DrawGroundGlow,FourLayerGlow_DrawHaloGlow,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_FourLayerGlowUpdateList[7] = {FourLayerGlow_UpdateEnd,FourLayerGlow_UpdateParticle,FourLayerGlow_UpdateFlareLayers,FourLayerGlow_UpdateTwinGlow,FourLayerGlow_UpdateGroundGlow,FourLayerGlow_UpdateHaloGlow,(FieldFxHandler)(intptr_t)-1};
+u16 g_FourLayerGlowSlotSizes[7] = {0,24,48,24,16,48,65535};

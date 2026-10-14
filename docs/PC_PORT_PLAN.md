@@ -3214,3 +3214,22 @@ ASan/UBSan/function passes with original source instrumented and PsyZ/SDL
 archives uninstrumented. Four-layer authored callback tables, other actions,
 texture uploads, class/descriptor integration, full gameplay and deletion of
 pc/ remain incomplete.
+
+
+FourLayerGlow now has its original init/draw/update lists, slot sizes, script,
+action scales, point/flare/halo offsets and sprite rotation backed in glow.c.
+Existing callbacks, including the four-layer draw, use the native three-pointer
+handler ABI in place with explicit ignored returns. The previously unnamed
+update entry at USA 800CBBF0 is confirmed by disassembly as twin-glow fading
+(brightness -= 8, scale += 0x3C, teardown below 0x14). No new wrappers or files.
+The resident-data fixture compares these additional compiled records to the
+supplied USA EXE. Authored lifecycle coverage is now four variants x action
+indices 1..7 x 160 ticks = 28 controlled cycles (4480 ticks), including start,
+retrigger, all respective handler IDs, native packet generation to both slots,
+stop and release. Full build and four related CTests pass with Disc 1 required,
+plus fresh actor ASan/UBSan/function with original source instrumented and
+PsyZ/SDL archives uninstrumented. Texture residency, actor/player/matrix state
+remain controlled fixture inputs. This does not yet verify texture uploads,
+rendered effect pixels, production native object allocation/class sizes,
+actor-owned dispatch gates, descriptor integration, full gameplay or deletion
+of pc/.

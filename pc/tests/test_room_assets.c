@@ -77,6 +77,7 @@ int main(void) {
     uint64_t model_hitvolumes=0;
     unsigned animation_streams=0,animation_short=0;
     uint64_t animation_frames=0,animation_matrices=0;
+    uint64_t animated_pose_matrices=0;unsigned paired_streams=0,missing_roots=0,incompatible_streams=0;
     unsigned floor_probe_outside = 0, floor_probe_unindexed = 0, floor_probe_contained_missing = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -104,11 +105,24 @@ int main(void) {
             if(!pe_animation_open(slice->bytes,slice->size,&animation,bank_error,sizeof(bank_error))){
                 fprintf(stderr,"Map %u animation %u/%u: %s\n",map,group,slot,bank_error);return 1;
             }
+            PeModel paired_model;PeMatrix base,sources[PE_ANIMATION_BONES],pose[PE_ANIMATION_BONES];
+            int paired=0;
+            if(!model_banks.roots[group].present)++missing_roots;
+            else{
+                CHECK(pe_model_open(model_banks.roots[group].bytes,model_banks.roots[group].size,&paired_model,bank_error,sizeof(bank_error)));
+                if(animation.bones>paired_model.part_count)++incompatible_streams;
+                else{paired=1;++paired_streams;pe_matrix_identity(&base);
+                    for(unsigned part=0;part<paired_model.part_count;++part)pe_matrix_identity(&sources[part]);}
+            }
             for(unsigned sample=0;sample<(animation.frames?animation.frames:1);++sample){
                 CHECK(pe_animation_frame(&animation,sample,&frame));++animation_frames;
                 PeMatrix matrices[PE_ANIMATION_BONES]={0};
                 CHECK(pe_animation_matrices(&frame,NULL,matrices,PE_ANIMATION_BONES));
                 animation_matrices+=frame.bones;
+                if(paired){unsigned written=0;
+                    CHECK(pe_animation_pose(&paired_model,&animation,sample,NULL,&base,sources,paired_model.part_count,pose,PE_ANIMATION_BONES,&written));
+                    CHECK(written==paired_model.matrix_outputs);animated_pose_matrices+=written;
+                }
             }
             ++animation_streams;animation_short+=(animation.encoding&3)==2;
         }
@@ -338,6 +352,7 @@ int main(void) {
            (unsigned long long)bank_root_records, (unsigned long long)bank_row_records);
     printf("Animation channel streams decoded: %u (%u halfword); timing/interpolation pending\n",animation_streams,animation_short);
     printf("Animation bone matrices computed: %llu; model binding/reference poses pending\n",(unsigned long long)animation_matrices);
+    printf("Animated room-root poses: %u paired streams, %u missing roots, %u incompatible streams; %llu matrices; external banks/reference poses pending\n",paired_streams,missing_roots,incompatible_streams,(unsigned long long)animated_pose_matrices);
     printf("Animation frames decoded: %llu; animated pose/reference validation pending\n",(unsigned long long)animation_frames);
     printf("Room model prefixes: %u, %llu vertices, %llu primitive descriptors; rendering pending\n",
            model_prefixes,(unsigned long long)model_vertices,(unsigned long long)model_primitives);

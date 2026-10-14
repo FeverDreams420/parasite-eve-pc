@@ -108,6 +108,16 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+`pe_animation_pose` connects keyframes and ordered overrides to persistent
+source matrices and the model's command hierarchy. Unanimated parts retain
+their matrices; failures preserve sources, pose and count. The Disc 1 audit
+computes 7,105,103 pose matrices for every stored frame of 7,126 streams with
+local model roots, with no incompatible streams. The other 1,916 streams
+lack local roots and still require external entity banks. All 29 headless
+tests and ASan/UBSan fixtures/full data audit pass. Actor model allocation,
+world/view transforms, scene-loop timing and reference rendered poses remain
+pending.
+
 Actors now bind borrowed animation data and distinguish action changes from
 forced restarts, preserving the stop frame and clearing its flag. The local
 16.16 clock preserves original pause/clamp and forward/backward wrap rules;

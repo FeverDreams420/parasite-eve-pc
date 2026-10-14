@@ -46,6 +46,17 @@ int pe_animation_matrices(const PeAnimationFrame *frame,const PeRotationOverride
     return 1;
 }
 static uint16_t half(const uint8_t *p){return (uint16_t)(p[0]|(unsigned)p[1]<<8);}
+int pe_animation_pose(const PeModel *model,const PeAnimation *animation,unsigned frame,
+                      const PeRotationOverride overrides[2],const PeMatrix *base,
+                      PeMatrix *sources,unsigned source_count,PeMatrix *pose,unsigned capacity,unsigned *written){
+    if(source_count<model->part_count||animation->bones>model->part_count)return 0;
+    PeAnimationFrame decoded;PeMatrix next[PE_ANIMATION_BONES];
+    if(!pe_animation_frame(animation,frame,&decoded))return 0;
+    memcpy(next,sources,(size_t)model->part_count*sizeof(*next));
+    if(!pe_animation_matrices(&decoded,overrides,next,model->part_count))return 0;
+    if(!pe_model_matrices(model,base,next,model->part_count,pose,capacity,written))return 0;
+    memcpy(sources,next,(size_t)model->part_count*sizeof(*next));return 1;
+}
 int pe_animation_open(const uint8_t *bytes,size_t size,PeAnimation *animation,char *error,size_t error_size){
     if(size<12||size>UINT32_MAX)goto malformed;
     PeAnimation next={0};next.bytes=bytes;next.size=size;next.encoding=bytes[0];next.bones=(unsigned)bytes[1]+1;next.frames=bytes[2];

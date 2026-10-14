@@ -51,6 +51,26 @@ int main(void){
     for(unsigned c=0;c<3;++c){half(constants+12+c*4,1);half(constants+14+c*4,c+1);constants[24+c*4]=1;constants[25+c*4]=(uint8_t)(c+2);}
     CHECK(pe_animation_open(constants,sizeof(constants),&animation,error,sizeof(error)));
     CHECK(pe_animation_frame(&animation,999,&frame)&&frame.translation[0]==1&&frame.angles[0][2]==64);
+    uint8_t model_bytes[100]={0};model_bytes[2]=1;half(model_bytes+24,1);
+    PeModel model;CHECK(pe_model_open(model_bytes,sizeof(model_bytes),&model,error,sizeof(error)));
+    PeMatrix base,sources[1],pose[1];pe_matrix_identity(&base);pe_matrix_identity(sources);
+    unsigned written=77;
+    CHECK(pe_animation_pose(&model,&animation,0,NULL,&base,sources,1,pose,1,&written));
+    CHECK(written==1&&pose[0].translation[0]==1&&pose[0].translation[1]==2&&pose[0].translation[2]==3);
+    PeMatrix saved_source=sources[0],saved_pose=pose[0];written=99;
+    CHECK(!pe_animation_pose(&model,&animation,0,NULL,&base,sources,1,pose,0,&written));
+    CHECK(written==99&&!memcmp(&saved_source,sources,sizeof(saved_source))&&!memcmp(&saved_pose,pose,sizeof(saved_pose)));
+    uint8_t partial_bytes[180]={0};partial_bytes[2]=3;half(partial_bytes+24,3);
+    partial_bytes[136]=0;partial_bytes[137]=1;partial_bytes[138]=2;
+    CHECK(pe_model_open(partial_bytes,sizeof(partial_bytes),&model,error,sizeof(error)));
+    PeMatrix partial_sources[3],partial_pose[3];
+    for(unsigned i=0;i<3;++i)pe_matrix_identity(&partial_sources[i]);
+    uint16_t extra_angles[3]={512,1024,0};pe_matrix_rotation_yxz(extra_angles,&partial_sources[2]);
+    PeMatrix saved_extra=partial_sources[2];
+    CHECK(pe_animation_pose(&model,&animation,0,NULL,&base,partial_sources,3,partial_pose,3,&written));
+    CHECK(written==3&&!memcmp(&saved_extra,&partial_sources[2],sizeof(saved_extra)));
+    animation.bones=4;written=99;
+    CHECK(!pe_animation_pose(&model,&animation,0,NULL,&base,partial_sources,3,partial_pose,3,&written)&&written==99);
     memset(&frame,0,sizeof(frame));frame.bones=2;frame.translation[0]=-7;
     frame.angles[1][0]=65535;
     PeMatrix matrices[2]={0};matrices[1].translation[2]=123;

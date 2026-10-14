@@ -108,6 +108,12 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Headless operation is the default development and acceptance workflow. The
+finished port must expose game-state and input control, deterministic clock/RNG,
+checkpoints, and state/image/audio diagnostics so tests run without user help
+or a visible window. The separate save-editor project may supply fixtures;
+the port's test runner must work independently of it.
+
 The boot frontend can run without a visible window or audio device, using a
 software renderer and dummy audio. Replays react to actual presented states,
 not timed key presses, and write machine-readable JSONL events:
@@ -601,6 +607,14 @@ incomplete-pose failure preserves output. The neutral-input Disc 1 audit
 computes 4,300 volumes across 878 models. All 28 headless tests pass; fixtures
 and the full scene/model audit pass ASan/UBSan. Animated/alternate modes,
 scaling/contact integration and reference gameplay validation remain pending.
+
+`pc/animation.c` decodes original byte/halfword animation channels, including
+signed root translations, constant channels, padded stride and angle scaling.
+Invalid ranges preserve output. The Disc 1 audit decodes all 374,431 stored
+frames from 9,042 room streams (1,675 halfword). All 29 headless tests pass;
+animation fixtures and the full data audit pass ASan/UBSan. Rotation-matrix
+construction, overrides, timing/interpolation and animated pose/reference
+validation remain pending.
 
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one

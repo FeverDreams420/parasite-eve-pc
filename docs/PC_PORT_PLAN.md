@@ -8,6 +8,10 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Domyślny tryb pracy i odbioru portu to headless, bez widocznego okna i bez ingerencji użytkownika. Każdy podsystem musi udostępniać sterowanie stanem, inputem, czasem i RNG oraz obserwację stanu, obrazu, audio i błędów. Runner ma umożliwiać samodzielne uruchamianie scenariuszy, zapis/odczyt checkpointów i reprodukcję awarii. Save editor pozostaje osobnym projektem Gemini; może dostarczać fixtures, ale nie jest zależnością automatycznych testów portu. Obecny runner steruje boot/title; pełne sterowanie gameplay nadal wymaga implementacji.
+
+`pc/animation.c` dekoduje kanały translacji i rotacji z oryginalnych strumieni byte/halfword, zachowując signed translacje, constant channels, stride i skalę kątów. Błędy zakresów zachowują output. Audyt odczytuje wszystkie 374431 zapisane klatki z 9042 strumieni lokacji Disc 1 (1675 halfword). Wszystkie 29 testów headless przechodzą; fixture animacji i pełny audyt danych przechodzą ASan/UBSan. Budowa macierzy z kątów, overrides, timing/interpolacja i weryfikacja rzeczywistych animated poses pozostają wymagane.
+
 Command-mode hit volumes dekodują bounds i transformują eligible centres przez pose matrices z saturated RT coordinates. Metadata zachowuje part order, unscaled radius i bounds attributes; centres używają command order. Hidden/disabled entries są wyłączone, capacity/incomplete-pose error zachowuje output. Neutral-input audyt Disc 1 wylicza 4300 volumes w 878 modelach. 28 headless testów oraz ASan/UBSan fixture i pełnego scene/model audit przechodzi. Animated/alternate modes, scaling/contact integration i reference gameplay validation pozostają wymagane.
 
 Porównanie PsyZ obejmuje teraz także matrix composition: trzy rotation columns względem RTIR i translation względem RT. Point transform i composition zgadzają się dla 10000 deterministycznych skrajnych przypadków, headless. 28 testów z Disc 1 przechodzi. Dowód dotyczy tych operacji arytmetycznych; animated poses i reference images pozostają nieweryfikowane.

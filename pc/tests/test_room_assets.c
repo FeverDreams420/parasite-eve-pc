@@ -12,6 +12,7 @@
 #include "collision.h"
 #include "model.h"
 #include "matrix.h"
+#include "animation.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -74,6 +75,8 @@ int main(void) {
     uint64_t matrix_commands=0,matrix_outputs=0;unsigned matrix_depth=0;
     uint64_t computed_matrices=0;
     uint64_t model_hitvolumes=0;
+    unsigned animation_streams=0,animation_short=0;
+    uint64_t animation_frames=0;
     unsigned floor_probe_outside = 0, floor_probe_unindexed = 0, floor_probe_contained_missing = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -95,6 +98,17 @@ int main(void) {
             fprintf(stderr,"%s\n",bank_error); return 1;
         }
         bank_root_records += model_banks.root_records; bank_row_records += model_banks.row_records;
+        for(unsigned group=0;group<10;++group)for(unsigned slot=0;slot<48;++slot){
+            PeRoomSlice *slice=&model_banks.rows[group][slot];if(!slice->present)continue;
+            PeAnimation animation;PeAnimationFrame frame;
+            if(!pe_animation_open(slice->bytes,slice->size,&animation,bank_error,sizeof(bank_error))){
+                fprintf(stderr,"Map %u animation %u/%u: %s\n",map,group,slot,bank_error);return 1;
+            }
+            for(unsigned sample=0;sample<(animation.frames?animation.frames:1);++sample){
+                CHECK(pe_animation_frame(&animation,sample,&frame));++animation_frames;
+            }
+            ++animation_streams;animation_short+=(animation.encoding&3)==2;
+        }
         for(unsigned slot=0;slot<10;++slot) {
             if(!model_banks.roots[slot].present) continue;
             PeModel model;
@@ -319,6 +333,8 @@ int main(void) {
            flat_rooms, sloped_rooms, (unsigned long long)floor_regions, (unsigned long long)floor_triangles);
     printf("Room bank records: %llu roots, %llu animation rows; model decoding pending\n",
            (unsigned long long)bank_root_records, (unsigned long long)bank_row_records);
+    printf("Animation channel streams decoded: %u (%u halfword); matrices/interpolation pending\n",animation_streams,animation_short);
+    printf("Animation frames decoded: %llu; animated pose/reference validation pending\n",(unsigned long long)animation_frames);
     printf("Room model prefixes: %u, %llu vertices, %llu primitive descriptors; rendering pending\n",
            model_prefixes,(unsigned long long)model_vertices,(unsigned long long)model_primitives);
     printf("Model texture records decoded: %llu; not rendered\n",(unsigned long long)model_textures);

@@ -1,7 +1,7 @@
 #ifndef PE1_MENU_SOUND_H
 #define PE1_MENU_SOUND_H
 
-/* Menu feedback sounds (akao/menu_sound.c). */
+/* Menu feedback sounds (aya/stats.c). */
 void Menu_PlayMoveSound(void);
 void Menu_PlayConfirmSound(void);
 void Menu_PlayCancelSound(void);

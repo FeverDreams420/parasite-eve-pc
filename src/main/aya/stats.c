@@ -1,4 +1,6 @@
 #include "pe1/akao.h"
+#include "pe1/akao_send.h"
+#include "pe1/scene_assets.h"
 #include "pe1/aya.h"
 #include "pe1/battle.h"
 #include "pe1/battle_modifiers.h"
@@ -220,3 +222,27 @@ void Inv_BuildArmorList(BattleAttributes *out) {
     BattleCmd_LoadWeaponModifiers();
 }
 
+
+void Menu_PlayConfirmSound(void) {
+    if (g_AkaoBgmHandle[0] != 0) {
+        Akao_SendTableCommand(g_AkaoBgmHandle[0], 0x44C, 0x100, 0x80, 0x7F);
+    }
+}
+
+void Menu_PlayCancelSound(void) {
+    if (g_AkaoBgmHandle[0] != 0) {
+        Akao_SendTableCommand(g_AkaoBgmHandle[0], 0x44D, 0x100, 0x80, 0x7F);
+    }
+}
+
+void Menu_PlayMoveSound(void) {
+    if (g_AkaoBgmHandle[0] != 0) {
+        Akao_SendTableCommand(g_AkaoBgmHandle[0], 0x44E, 0x100, 0x80, 0x7F);
+    }
+}
+
+void Menu_PlayErrorSound(void) {
+    if (g_AkaoBgmHandle[0] != 0) {
+        Akao_SendTableCommand(g_AkaoBgmHandle[0], 0x44F, 0x100, 0x80, 0x7F);
+    }
+}

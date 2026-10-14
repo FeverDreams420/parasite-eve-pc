@@ -2253,3 +2253,20 @@ require removal.
 
 All six original-game-akao CTests pass with required Disc 1 assets: layout,
 instrument, assets, menu-assets, tick-assets and prefix-assets.
+
+
+### Restore menu sound procedures to their original modules
+
+Deleted akao/menu_sound.c. The four Menu_Play*Sound functions return to
+aya/stats.c, and Akao_SendTableCommand returns to cdrom/scene_assets.c, matching
+their extraction history. Complete bodies compare unchanged. Frontend audio
+targets now link the complete original scene/archive object; the audio fixture
+compiles the complete original stats module. No new files.
+
+Full build and five original-game tests pass with required Disc 1 assets:
+akao-instrument, akao-assets, akao-menu-assets, actor-animation and stat-assets.
+A fresh ASan/UBSan/function menu-assets run produces the same nonzero PCM counts
+for 44c/44d/44e/44f: 30172/23184/7834/41810. PsyZ is uninstrumented, including its
+unimplemented DMA callback. This verifies those original sound paths, not all
+game audio. Remaining extractions/data files, full runtime integration and
+elimination of pc/ remain incomplete.

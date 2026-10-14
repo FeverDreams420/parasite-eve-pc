@@ -67,7 +67,6 @@ endif()
 # Original AKAO units compile in place while their SPU/timer dependencies
 # are connected. The title frontend uses the original effect playback path.
 add_library(parasite-eve-original-akao OBJECT
-    src/main/akao/menu_sound.c
     src/main/cdrom/track_read.c
     src/main/cdrom/asset_lookup.c
     src/main/akao/voice_driver.c
@@ -88,6 +87,7 @@ if(BUILD_TESTING)
 endif()
 foreach(akao_target IN LISTS akao_runtime_targets)
     target_sources(${akao_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-akao>
+        $<TARGET_OBJECTS:parasite-eve-original-disc>
         src/main/akao/assets.c)
     target_include_directories(${akao_target} PRIVATE include)
     if(MSVC)
@@ -104,6 +104,7 @@ if(BUILD_TESTING)
     target_include_directories(test-original-akao-layout PRIVATE include)
     add_test(NAME original-game-akao-layout COMMAND test-original-akao-layout)
     add_executable(test-original-akao-instrument tests/original_akao_instrument.c
+        src/main/aya/stats.c
         pc/disc.c pc/room.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/akao_sequence.c pc/spu_bank.c
         $<TARGET_OBJECTS:parasite-eve-original-akao>)
     target_include_directories(test-original-akao-instrument PRIVATE include pc)

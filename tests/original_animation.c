@@ -1,9 +1,7 @@
 #include "pe1/render_object.h"
-#include "pe1/scene_flags.h"
 #include <stdio.h>
 #include <string.h>
 
-u32 g_FieldPadBits, g_FieldPadPressed, g_FieldPadReleased;
 void Anim_BuildRotationMatrices(RenderObjectEntity *, RenderAnimationDataHeader *, int);
 
 static int check(int short_encoding)

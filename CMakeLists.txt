@@ -17,7 +17,8 @@ add_library(parasite-eve-original OBJECT
     src/main/math/sqrt_approx.c
     src/main/fieldfx/angle.c
     src/main/psyq/libgte/mtx_000.c
-    src/main/psyq/libgte/cmb_06.c)
+    src/main/psyq/libgte/cmb_06.c
+    src/main/anim/bone_rotations.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
@@ -37,13 +38,22 @@ if(BUILD_TESTING)
     add_test(NAME original-game-gte COMMAND test-original-gte)
 endif()
 
-add_library(parasite-eve-original-animation OBJECT
-    src/main/anim/bone_rotations.c)
-target_include_directories(parasite-eve-original-animation PRIVATE include)
 if(BUILD_TESTING)
     add_executable(test-original-animation tests/original_animation.c
-        $<TARGET_OBJECTS:parasite-eve-original-animation>)
+        $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-animation PRIVATE include)
     target_link_libraries(test-original-animation PRIVATE psyz)
     add_test(NAME original-game-animation COMMAND test-original-animation)
+endif()
+
+if(BUILD_TESTING)
+    # Disc I/O and the earlier decoder are test fixtures only. The function
+    # under test is the original game procedure linked into the executable.
+    add_executable(test-original-animation-assets tests/original_animation_assets.c
+        pc/disc.c pc/room.c pc/room_banks.c pc/animation.c pc/matrix.c pc/model.c
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-animation-assets PRIVATE include pc)
+    target_link_libraries(test-original-animation-assets PRIVATE psyz)
+    add_test(NAME original-game-animation-assets COMMAND test-original-animation-assets)
+    set_tests_properties(original-game-animation-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()

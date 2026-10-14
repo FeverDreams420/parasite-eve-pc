@@ -2287,3 +2287,29 @@ menu-assets runs pass; the four menu sample counts remain unchanged. PsyZ is
 uninstrumented. This does not establish all audio commands or integration with
 the full game. Remaining asset-lookup/texture extractions and the pc/ directory
 still require removal.
+
+
+### Restore asset lookup and TIM upload to the original archive module
+
+Deleted cdrom/asset_lookup.c and render/texture_upload.c. All keyed lookup
+procedures and Draw_LoadTimAsset return to cdrom/scene_assets.c. Complete bodies
+are preserved except pixel-pointer casts now match the original header's void*
+LoadImage argument. Removed the obsolete model-setup object target; its consumers
+use the complete original archive module.
+
+The scripted retry/poll fixture compiles that same whole module with only its
+real read/poll symbols renamed at compile time, keeping them distinct from the
+fixture doubles. Production code has no conditional test path or new I/O layer.
+The real-data fixture uses the ordinary archive object and file-image reads.
+
+Full build passes. Fresh ASan/UBSan/function real-data execution passes the
+seven cached-audio mirror room loads, unsupported M005 rejection, full VRAM
+comparisons across 414 rooms, 14 area/day banks and 9591 attachment frames.
+PsyZ/SDL remain uninstrumented. These are not complete playable scene tests.
+No added source files remain under src/main relative to commit eadcfc73f;
+this structural comparison does not establish functional completeness. The
+pc/ directory and its dependencies still require removal.
+
+Ten CTests pass with required Disc 1 assets: AKAO instrument/assets/menu-assets,
+model setup/GPU/room-GPU, actor lifecycle, synthetic/real entity textures and
+scene spawn.

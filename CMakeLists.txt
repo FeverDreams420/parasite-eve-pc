@@ -68,7 +68,6 @@ endif()
 # are connected. The title frontend uses the original effect playback path.
 add_library(parasite-eve-original-akao OBJECT
     src/main/cdrom/track_read.c
-    src/main/cdrom/asset_lookup.c
     src/main/akao/voice_driver.c
     src/main/akao/voice_bank.c
     src/main/akao/sequencer.c
@@ -222,14 +221,10 @@ if(BUILD_TESTING)
     add_test(NAME original-game-nodes COMMAND test-original-nodes)
 endif()
 
-add_library(parasite-eve-original-model-setup OBJECT src/main/render/texture_upload.c)
-target_include_directories(parasite-eve-original-model-setup PRIVATE include)
-target_link_libraries(parasite-eve-original-model-setup PRIVATE psyz)
-target_compile_definitions(parasite-eve-original-model-setup PRIVATE __psyz)
 if(BUILD_TESTING)
     add_executable(test-original-model-setup tests/original_model_setup.c
         pc/disc.c pc/room.c pc/room_banks.c pc/model.c pc/vram.c
-        $<TARGET_OBJECTS:parasite-eve-original-model-setup>
+        $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-model-setup PRIVATE include pc)
     target_compile_definitions(test-original-model-setup PRIVATE __psyz)
@@ -337,7 +332,7 @@ if(BUILD_TESTING)
         src/main/pm/process.c
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>
-        $<TARGET_OBJECTS:parasite-eve-original-model-setup>)
+        $<TARGET_OBJECTS:parasite-eve-original-disc>)
     target_include_directories(test-original-actor-lifecycle PRIVATE include)
     target_link_libraries(test-original-actor-lifecycle PRIVATE psyz)
     if(MSVC)
@@ -346,7 +341,6 @@ if(BUILD_TESTING)
         target_link_options(test-original-actor-lifecycle PRIVATE -Wl,-dead_strip)
     else()
         target_compile_options(test-original-actor-lifecycle PRIVATE -ffunction-sections -fdata-sections)
-        target_compile_options(parasite-eve-original-model-setup PRIVATE -ffunction-sections -fdata-sections)
         target_link_options(test-original-actor-lifecycle PRIVATE -Wl,--gc-sections)
     endif()
     add_test(NAME original-game-actor-lifecycle COMMAND test-original-actor-lifecycle)
@@ -362,11 +356,22 @@ else()
 endif()
 
 if(BUILD_TESTING)
+    # Compile the whole module; only this fixture replaces read/poll outcomes.
+    # Rename its real I/O symbols to keep them distinct from the fixture doubles.
+    add_library(parasite-eve-test-disc OBJECT src/main/cdrom/scene_assets.c)
+    target_include_directories(parasite-eve-test-disc PRIVATE include pc)
+    target_compile_definitions(parasite-eve-test-disc PRIVATE
+        CdRom_ReadSectorsFromLba=CdRom_ImageReadSectorsFromLba
+        CdRom_PollReady=CdRom_ImagePollReady)
+    if(MSVC)
+        target_compile_options(parasite-eve-test-disc PRIVATE /Gy /Gw)
+    else()
+        target_compile_options(parasite-eve-test-disc PRIVATE -ffunction-sections -fdata-sections)
+    endif()
     add_executable(test-original-entity-textures tests/original_entity_textures.c
-        src/main/cdrom/asset_lookup.c
         $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
-        $<TARGET_OBJECTS:parasite-eve-original-model-setup>
+        $<TARGET_OBJECTS:parasite-eve-test-disc>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-entity-textures PRIVATE include pc)
     target_compile_definitions(test-original-entity-textures PRIVATE __psyz)
@@ -377,10 +382,8 @@ endif()
 if(BUILD_TESTING)
     add_executable(test-original-entity-texture-assets tests/original_entity_textures.c
         $<TARGET_OBJECTS:parasite-eve-original-disc> pc/disc.c pc/room.c pc/vram.c pc/model.c pc/room_banks.c pc/animation.c pc/matrix.c
-        src/main/cdrom/asset_lookup.c
         $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
-        $<TARGET_OBJECTS:parasite-eve-original-model-setup>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_sources(test-original-entity-texture-assets PRIVATE
         $<TARGET_OBJECTS:parasite-eve-original-shadow>)
@@ -408,7 +411,7 @@ endif()
 if(BUILD_TESTING)
     add_executable(test-original-scene-spawn tests/original_scene_spawn.c
         pc/disc.c pc/room.c pc/room_banks.c pc/model.c pc/script.c
-        $<TARGET_OBJECTS:parasite-eve-original-model-setup>
+        $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-scene-spawn PRIVATE include pc)
     target_compile_definitions(test-original-scene-spawn PRIVATE __psyz)

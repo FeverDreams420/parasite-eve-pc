@@ -581,6 +581,8 @@ Original Akao_StepSampleLoader przechodzi fixture note→tie→rest→stop dla p
 
 Original full-dispatch fixture wykonuje C8→rest→C9 dla 3 oraz zero→256 powtórzeń, potem A0; sprawdza pointer stosu, liczniki, pop i koniec banku. Extended opcode 8/9 testuje taken/not-taken signed backward branch oraz conditional pop. CTest z timeout 15s i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). Lookahead skip C8=1 jest jawnym fixture input zgodnym z katalogiem; nie udajemy załadowania całej grammar table. Full songs, wszystkie nested/conditional variants, timer oraz PCM pozostają wymagane.
 
+`original-game-akao-prefix-assets` ładuje real grammar/note lengths/LFO z Disc 1 i instrument tables z resident + właściwego audio banku (test-only sample decoder), po czym wykonuje original start i Akao_StepSampleLoader do pierwszej nuty/stopu dla 599 sekwencji/8883 kanałów z 414 pokojów. Sprawdza cursor bounds i immutable sequence data. CTest strict assets oraz ASan/UBSan/function z halt_on_error=1 przechodzą dla pełnego prefix corpus; PsyZ nieinstrumentowane. Trace opcjonalny PE_AKAO_PREFIX_TRACE identyfikuje map/record/voice. Jeden short record pozostaje jawnie niewykonany. Wynik nie dowodzi dalszych nut, pełnych utworów, timera, voice allocation, SPU czy PCM; corpus nie jest automatycznym dowodem całego audio.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

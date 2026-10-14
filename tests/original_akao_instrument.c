@@ -7,12 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "akao_sequence.h"
+#include "spu_bank.h"
 
 /* Explicit input tables for isolated original procedures, not runtime audio. */
 AkaoInstrument g_AkaoInstrumentTable[256];
 AkaoSequencerState g_AkaoSequencerState;
-#define bank g_AkaoSequencerState.primary
-AkaoCurrentBankPointer g_AkaoCurrentBankPointer = {.pointer = &bank};
+#define fixture_bank g_AkaoSequencerState.primary
+AkaoCurrentBankPointer g_AkaoCurrentBankPointer = {.pointer = &fixture_bank};
 static unsigned short offsets[2048];
 unsigned short *g_AkaoSampleOffsetTable = offsets;
 static char sample_data[65536];
@@ -73,7 +74,7 @@ void Akao_SetVoiceKeyOff(AkaoTrack *track, u32 voice_mask, int index);
 void Akao_SetVoiceKeyOn(AkaoTrack *track, u32 voice_mask);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
-static int asset_audit(void)
+static int asset_audit(int execute)
 {
     const char *path = getenv("PE_TEST_DISC");
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS") ? 1 : 77;
@@ -81,6 +82,17 @@ static int asset_audit(void)
     PeRoomCatalog catalog;
     CHECK(pe_disc_open(&disc, path));
     CHECK(pe_room_catalog_open(&catalog, &disc));
+    memcpy(g_AkaoOpcodeArgLengths, catalog.akao.lengths, 96);
+    memcpy(g_AkaoExtOpcodeArgLengths, catalog.akao.extended_lengths, 32);
+    memcpy(g_AkaoNoteLengthTable, catalog.akao.note_lengths, sizeof(g_AkaoNoteLengthTable));
+    for (unsigned i = 0; i < 16; ++i)
+        g_AkaoSoundEntryTable[i] = catalog.akao.lfo_words + catalog.akao.lfo_offsets[i];
+    PeSpuBank *resident = calloc(1, sizeof(*resident));
+    CHECK(resident != NULL);
+    CHECK(pe_spu_bank_load_startup(&catalog, resident, NULL));
+    memcpy(g_AkaoInstrumentTable, resident->instruments, sizeof(g_AkaoInstrumentTable));
+    PeSpuBank *record_samples = malloc(sizeof(*record_samples));
+    CHECK(record_samples != NULL);
     unsigned rooms = 0, sequences = 0, short_records = 0, channels = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         if (!catalog.ranges[map - 1].room_sectors) continue;
@@ -95,6 +107,16 @@ static int asset_audit(void)
             char error[256];
             CHECK(pe_room_music(&room, i, &music, error, sizeof(error)));
             if (music.unresolved_short_record) { ++short_records; continue; }
+            if (execute) {
+                *record_samples = *resident;
+                uint8_t *sample_bytes = NULL;
+                size_t sample_size = 0;
+                CHECK(pe_audio_bank_read(&catalog, music.bank, &sample_bytes, &sample_size));
+                CHECK(pe_spu_bank_upload_rebased(record_samples, sample_bytes, sample_size,
+                    0x8000, 0x20, NULL, error, sizeof(error)));
+                free(sample_bytes);
+                memcpy(g_AkaoInstrumentTable, record_samples->instruments, sizeof(g_AkaoInstrumentTable));
+            }
             unsigned char *snapshot = malloc(music.sequence.size);
             CHECK(snapshot != NULL);
             memcpy(snapshot, music.sequence.bytes, music.sequence.size);
@@ -103,15 +125,23 @@ static int asset_audit(void)
             g_AkaoVoiceKeyOnState = 0;
             g_SpuActiveVoiceMask = 0;
             Akao_StepSequencerVoice((void *)(music.sequence.bytes + 16));
-            CHECK(bank.active_voice_mask == music.sequence.active);
-            CHECK(bank.pending_voice_mask == music.sequence.pending);
-            CHECK(bank.yield_voice_mask == music.sequence.yield);
+            CHECK(fixture_bank.active_voice_mask == music.sequence.active);
+            CHECK(fixture_bank.pending_voice_mask == music.sequence.pending);
+            CHECK(fixture_bank.yield_voice_mask == music.sequence.yield);
             for (unsigned voice = 0; voice < 24; ++voice) {
                 if (music.sequence.channels[voice] == UINT32_MAX) {
                     CHECK(g_AkaoVoiceStateTable[voice].pc == (unsigned char *)g_AkaoDefaultVoiceProgram);
                 } else {
                     CHECK(g_AkaoVoiceStateTable[voice].pc == music.sequence.bytes + music.sequence.channels[voice]);
                     CHECK(g_AkaoVoiceStateTable[voice].assigned_voice_index == 24);
+                    if (execute) {
+                        if (getenv("PE_AKAO_PREFIX_TRACE"))
+                            fprintf(stderr, "original prefix: map %u sequence %u voice %u\n", map, i, voice);
+                        Akao_StepSampleLoader(&g_AkaoVoiceStateTable[voice], 1u << voice);
+                        uintptr_t pc = (uintptr_t)g_AkaoVoiceStateTable[voice].pc;
+                        CHECK(pc >= (uintptr_t)music.sequence.bytes);
+                        CHECK(pc <= (uintptr_t)music.sequence.bytes + music.sequence.size);
+                    }
                     ++channels;
                 }
             }
@@ -122,20 +152,23 @@ static int asset_audit(void)
         pe_room_close(&room);
     }
     CHECK(rooms != 0 && sequences != 0 && channels != 0);
+    free(record_samples);
+    free(resident);
     pe_disc_close(&disc);
-    printf("original AKAO start: %u rooms, %u sequences, %u channels; %u short records not executed\n",
-           rooms, sequences, channels, short_records);
+    printf("original AKAO %s: %u rooms, %u sequences, %u channels; %u short records not executed\n",
+           execute ? "start and first note/stop" : "start", rooms, sequences, channels, short_records);
     return 0;
 }
 
 int main(int argc, char **argv)
 {
-    if (argc == 2 && strcmp(argv[1], "--assets") == 0) return asset_audit();
-    CHECK((void *)D_8009D2C8 == (void *)&bank);
+    if (argc == 2 && strcmp(argv[1], "--assets") == 0) return asset_audit(0);
+    if (argc == 2 && strcmp(argv[1], "--execute-assets") == 0) return asset_audit(1);
+    CHECK((void *)D_8009D2C8 == (void *)&fixture_bank);
     D_8009D2C8++;
     CHECK(g_AkaoCurTrack == &g_AkaoSequencerState.secondary);
     --g_AkaoCurTrack;
-    CHECK((void *)D_8009D2C8 == (void *)&bank);
+    CHECK((void *)D_8009D2C8 == (void *)&fixture_bank);
     for (unsigned i = 0; i < 60; ++i) {
         g_AkaoVoiceStateTable[i].flags = i + 1;
         CHECK(g_AkaoSequencerTracks[i].track.flags == i + 1);
@@ -190,7 +223,7 @@ int main(int argc, char **argv)
     CHECK(g_AkaoMessageQueueCount == 1);
     AkaoQueueEntry *message = &g_AkaoMessageQueue[0];
     Seq_SetCurrentTrackField56((AkaoValueCommand *)message);
-    CHECK(bank.condition_value == 0x5678);
+    CHECK(fixture_bank.condition_value == 0x5678);
     CHECK(((AkaoBankPitchCommand *)message)->pitch == 0x12345678);
     CHECK(((AkaoBankPitchCommand *)message)->bank_selector == 53);
     CHECK(((AkaoBankPitchSlideCommand *)message)->target == 37);
@@ -227,19 +260,19 @@ int main(int argc, char **argv)
     unsigned char tempo[] = {0x34, 0x12};
     AkaoTrack track = {0};
     track.pc = tempo;
-    bank.tempo_slide_duration = 37;
+    fixture_bank.tempo_slide_duration = 37;
     SeqOp_SetTempo(&track, 1);
-    CHECK(bank.tempo == 0x12340000u);
-    bank.key_off_dirty_mask = 4;
+    CHECK(fixture_bank.tempo == 0x12340000u);
+    fixture_bank.key_off_dirty_mask = 4;
     track.parent_track_id = 0;
     SeqOp_SetTrack34Mask(&track, 8);
-    CHECK(bank.key_off_dirty_mask == 12);
+    CHECK(fixture_bank.key_off_dirty_mask == 12);
     SeqOp_ClearTrack34Mask(&track, 4);
-    CHECK(bank.key_off_dirty_mask == 8);
+    CHECK(fixture_bank.key_off_dirty_mask == 8);
     track.parent_track_id = 1;
     SeqOp_SetTrack34Mask(&track, 16);
     CHECK(g_AkaoTrack34Mask == 16);
-    CHECK(bank.key_off_dirty_mask == 8);
+    CHECK(fixture_bank.key_off_dirty_mask == 8);
     SeqOp_ClearTrack34Mask(&track, 16);
     CHECK(g_AkaoTrack34Mask == 0);
     for (unsigned i = 0; i < 12; ++i) {
@@ -253,26 +286,26 @@ int main(int argc, char **argv)
     CHECK(g_SpuPendingKeyOffMask == 0xdb6000);
     for (unsigned i = 0; i < 12; ++i)
         CHECK(g_AkaoVoiceChannelTable[i].flags == (i % 3 == 0 ? 0xffff : 0));
-    CHECK(bank.tempo_slide_duration == 0);
+    CHECK(fixture_bank.tempo_slide_duration == 0);
     CHECK(track.pc == tempo + 2);
     unsigned char timing[] = {48, 7, 0x34, 0x12};
     unsigned char *timing_cursor = timing;
-    bank.sequence_base = timing;
-    bank.tick = 19;
-    bank.beat = 23;
+    fixture_bank.sequence_base = timing;
+    fixture_bank.tick = 19;
+    fixture_bank.beat = 23;
     track.pc = timing_cursor;
     SeqOp_StreamPair(&track, 1);
     timing_cursor = track.pc;
     CHECK(timing_cursor == timing + 2);
-    CHECK(bank.ticks_per_beat == 48);
-    CHECK(bank.beats_per_measure == 7);
-    CHECK(bank.tick == 0 && bank.beat == 0);
+    CHECK(fixture_bank.ticks_per_beat == 48);
+    CHECK(fixture_bank.beats_per_measure == 7);
+    CHECK(fixture_bank.tick == 0 && fixture_bank.beat == 0);
     SeqOp_ReadTrack64U16(&track, 1);
     timing_cursor = track.pc;
     CHECK(timing_cursor == timing + 4);
-    CHECK(bank.measure == 0x1234);
-    CHECK(bank.sequence_base == timing);
-    CHECK(bank.tempo == 0x12340000u);
+    CHECK(fixture_bank.measure == 0x1234);
+    CHECK(fixture_bank.sequence_base == timing);
+    CHECK(fixture_bank.tempo == 0x12340000u);
     track.pc = tempo + 2;
     for (unsigned i = 0; i < 1024; ++i) {
         offsets[i * 2] = i * 31;
@@ -343,8 +376,8 @@ int main(int argc, char **argv)
         voice->pan_duration = 13;
     }
     Akao_UpdateVoiceMask(new_sequence);
-    CHECK(bank.sequence_base == new_sequence);
-    CHECK(bank.volume == 0x12345678);
+    CHECK(fixture_bank.sequence_base == new_sequence);
+    CHECK(fixture_bank.volume == 0x12345678);
     for (unsigned i = 0; i < 24; ++i) {
         AkaoTrack *voice = &g_AkaoVoiceStateTable[i];
         if (i % 2 == 0) {
@@ -371,8 +404,8 @@ int main(int argc, char **argv)
     CHECK(initialized.update_flags == (3 | AKAO_VOICE_PARAM_INSTRUMENT_FULL));
     CHECK(initialized.assigned_voice_index == 19);
     for (unsigned mode = 0; mode < 3; ++mode) {
-        bank.active_voice_mask = 1;
-        bank.bank_id = 73;
+        fixture_bank.active_voice_mask = 1;
+        fixture_bank.bank_id = 73;
         g_AkaoSequencerState.secondary.active_voice_mask = 1;
         g_AkaoSequencerState.secondary.bank_id = 74;
         for (unsigned i = 0; i < 48; ++i) {
@@ -388,7 +421,7 @@ int main(int argc, char **argv)
             command.value = mode == 1 ? 73 : 75;
             Akao_InitPrimarySecondaryVoicesWithMode(&command);
         }
-        CHECK(g_AkaoCurTrack == &bank);
+        CHECK(g_AkaoCurTrack == &fixture_bank);
         for (unsigned i = 0; i < 48; ++i) {
             int reset = mode == 0 || (mode == 1 && i < 24);
             AkaoTrack *voice = &g_AkaoVoiceStateTable[i];
@@ -404,21 +437,21 @@ int main(int argc, char **argv)
     sequence_bytes[18] = 32;
     sequence_bytes[20] = 34;
     for (unsigned paused = 0; paused < 2; ++paused) {
-        bank = (AkaoSequencerBank){0};
+        fixture_bank = (AkaoSequencerBank){0};
         g_AkaoSequencerState.secondary = (AkaoSequencerBank){0};
         g_AkaoSeqPendingFlags = paused;
         g_SpuActiveVoiceMask = 0;
         g_AkaoVoiceKeyOnState = 0;
         for (unsigned i = 0; i < 48; ++i) g_AkaoVoiceStateTable[i] = (AkaoTrack){0};
         Akao_StepSequencerVoice(sequence_bytes);
-        CHECK(bank.sequence_base == sequence_bytes);
-        CHECK(bank.active_voice_mask == (paused ? 0 : 0x800005));
-        CHECK(bank.pending_restore_mask == (paused ? 0x800005 : 0));
-        CHECK(bank.pending_voice_mask == 0x123);
-        CHECK(bank.yield_voice_mask == 0x456);
-        CHECK(bank.tempo == 0xffff0000u);
-        CHECK(bank.tick_accumulator == 1);
-        CHECK(bank.allocated_voice_mask == 0xffffff);
+        CHECK(fixture_bank.sequence_base == sequence_bytes);
+        CHECK(fixture_bank.active_voice_mask == (paused ? 0 : 0x800005));
+        CHECK(fixture_bank.pending_restore_mask == (paused ? 0x800005 : 0));
+        CHECK(fixture_bank.pending_voice_mask == 0x123);
+        CHECK(fixture_bank.yield_voice_mask == 0x456);
+        CHECK(fixture_bank.tempo == 0xffff0000u);
+        CHECK(fixture_bank.tick_accumulator == 1);
+        CHECK(fixture_bank.allocated_voice_mask == 0xffffff);
         for (unsigned i = 0; i < 24; ++i) {
             AkaoTrack *voice = &g_AkaoVoiceStateTable[i];
             if (i == 0 || i == 2 || i == 23) {
@@ -475,7 +508,7 @@ int main(int argc, char **argv)
     modulated.expression_value = 128 << 16;
     modulated.volume_base = 0x4000;
     modulated.pitch_base = 4096;
-    bank.pitch_current = 127 << 16;
+    fixture_bank.pitch_current = 127 << 16;
     AkaoTrack modulation_start = modulated;
     for (unsigned path = 0; path < 3; ++path) {
     modulated = modulation_start;
@@ -526,18 +559,18 @@ int main(int argc, char **argv)
     AkaoTrack interpreted = {0};
     interpreted.pc = bytecode;
     interpreted.assigned_voice_index = 2;
-    bank.active_voice_mask = 1;
-    bank.allocated_voice_mask = 1;
-    bank.key_off_request_mask = 0;
+    fixture_bank.active_voice_mask = 1;
+    fixture_bank.allocated_voice_mask = 1;
+    fixture_bank.key_off_request_mask = 0;
     Akao_StepSampleLoader(&interpreted, 1);
     CHECK(interpreted.pc == bytecode + 5);
     CHECK(interpreted.volume_base == 0x5a00);
     CHECK(interpreted.expression == -1);
     CHECK(interpreted.flags & 0x40);
-    CHECK(bank.key_off_request_mask == 1);
+    CHECK(fixture_bank.key_off_request_mask == 1);
     Akao_StepSampleLoader(&interpreted, 1);
     CHECK(interpreted.pc == bytecode + 6);
-    CHECK(bank.active_voice_mask == 0);
+    CHECK(fixture_bank.active_voice_mask == 0);
     unsigned char phrase[] = {0x00, 0x84, 0x8f, 0xa0};
     g_AkaoInstrumentTable[0].pitch[0] = 4096;
     for (unsigned child = 0; child < 2; ++child) {
@@ -547,8 +580,8 @@ int main(int argc, char **argv)
         note.parent_track_id = child;
         note.panpot_step = 6;
         note.assigned_voice_index = 2;
-        bank = (AkaoSequencerBank){0};
-        bank.active_voice_mask = 1;
+        fixture_bank = (AkaoSequencerBank){0};
+        fixture_bank.active_voice_mask = 1;
         g_AkaoVoiceMaskScratch = 0;
         g_AkaoSfxAllocatedVoiceMask = 0;
         g_SpuActiveVoiceMask = mask;
@@ -557,36 +590,36 @@ int main(int argc, char **argv)
         CHECK(note.pitch_base == 4096);
         CHECK(note.current_note == 72);
         CHECK(note.note_length == 48 && note.pan_duration == 48);
-        CHECK(bank.key_on_request_mask == (child ? 0 : 1));
-        CHECK(bank.allocated_voice_mask == (child ? 0 : 1));
+        CHECK(fixture_bank.key_on_request_mask == (child ? 0 : 1));
+        CHECK(fixture_bank.allocated_voice_mask == (child ? 0 : 1));
         CHECK(g_AkaoVoiceMaskScratch == (child ? mask : 0));
         CHECK(g_AkaoSfxAllocatedVoiceMask == (child ? mask : 0));
         note.note_length = 0;
-        bank.key_on_request_mask = 0;
+        fixture_bank.key_on_request_mask = 0;
         g_AkaoVoiceMaskScratch = 0;
         Akao_StepSampleLoader(&note, mask);
         CHECK(note.pc == phrase + 2);
         CHECK(note.pitch_base == 4096);
         CHECK(note.note_length == 48 && note.pan_duration == 46);
-        CHECK(bank.key_on_request_mask == 0 && g_AkaoVoiceMaskScratch == 0);
+        CHECK(fixture_bank.key_on_request_mask == 0 && g_AkaoVoiceMaskScratch == 0);
         note.note_length = 0;
         Akao_StepSampleLoader(&note, mask);
         CHECK(note.pc == phrase + 3);
         CHECK(note.flags & 0x40);
         CHECK(note.note_length == 48 && note.pan_duration == 46);
-        if (!child) CHECK(bank.key_off_request_mask == 1);
+        if (!child) CHECK(fixture_bank.key_off_request_mask == 1);
         Akao_StepSampleLoader(&note, mask);
         CHECK(note.pc == phrase + 4);
         CHECK(note.flags == 0);
         if (child) CHECK(g_SpuActiveVoiceMask == 0);
-        else CHECK(bank.active_voice_mask == 0);
+        else CHECK(fixture_bank.active_voice_mask == 0);
     }
     for (unsigned encoded_count = 0; encoded_count <= 3; encoded_count += 3) {
         unsigned char loop[] = {0xc8, 0x8f, 0xc9, encoded_count, 0xa0};
         unsigned repetitions = encoded_count ? encoded_count : 256;
         AkaoTrack repeated = {0};
         repeated.pc = loop;
-        bank.active_voice_mask = 1;
+        fixture_bank.active_voice_mask = 1;
         g_AkaoOpcodeArgLengths[0xc8 - 0xa0] = 1;
         for (unsigned i = 0; i < repetitions; ++i) {
             repeated.note_length = 0;
@@ -600,7 +633,7 @@ int main(int argc, char **argv)
         CHECK(repeated.pc == loop + 5);
         CHECK(repeated.call_stack_index == 0);
         CHECK(repeated.repeat_counters[1] == repetitions);
-        CHECK(bank.active_voice_mask == 0);
+        CHECK(fixture_bank.active_voice_mask == 0);
     }
     for (unsigned pop = 0; pop < 2; ++pop) {
         for (unsigned taken = 0; taken < 2; ++taken) {

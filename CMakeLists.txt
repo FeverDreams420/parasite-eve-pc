@@ -53,7 +53,7 @@ if(BUILD_TESTING)
     target_include_directories(test-original-akao-layout PRIVATE include)
     add_test(NAME original-game-akao-layout COMMAND test-original-akao-layout)
     add_executable(test-original-akao-instrument tests/original_akao_instrument.c
-        pc/disc.c pc/room.c pc/akao_sequence.c
+        pc/disc.c pc/room.c pc/akao_sequence.c pc/spu_bank.c
         $<TARGET_OBJECTS:parasite-eve-original-akao>)
     target_include_directories(test-original-akao-instrument PRIVATE include pc)
     target_link_libraries(test-original-akao-instrument PRIVATE psyz)
@@ -69,6 +69,8 @@ if(BUILD_TESTING)
     add_test(NAME original-game-akao-instrument COMMAND test-original-akao-instrument)
     add_test(NAME original-game-akao-assets COMMAND test-original-akao-instrument --assets)
     set_tests_properties(original-game-akao-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+    add_test(NAME original-game-akao-prefix-assets COMMAND test-original-akao-instrument --execute-assets)
+    set_tests_properties(original-game-akao-prefix-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 
 if(BUILD_TESTING)

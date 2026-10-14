@@ -324,3 +324,13 @@ sample playback and complete songs still require synthesis and validation.
 All 20 tests pass headless with Disc 1. The initial-prefix audit now reaches
 8,718 note events and 163 unsupported commands (B8/BC LFO setup); four forced
 ticks complete for 467 sequence prefixes, while 132 hit missing commands.
+
+The room catalog now owns the original 16 LFO waveform offsets and 708 signed
+sample words decoded from executable data. Native waveform traversal follows
+checked relative loop markers without retaining console pointers. All 16
+selectors complete 1,000 traversal steps in the Disc 1 audit; `akao-lfo-data`
+tests signed samples, bad jumps and failure without cursor/output mutation.
+Waveform data and traversal are available, but active channel modulation and
+synthesis remain pending.
+All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
+the full room/audio data audit also pass ASan/UBSan.

@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Katalog scen posiada teraz 16 offsetów przebiegów LFO i 708 słów próbek, dekodowanych z danych EXE do własnej pamięci C. Odczyt próbki obsługuje signed wartości i względne znaczniki pętli z kontrolą granic, bez wskaźników PS1. Audyt Disc 1 wykonuje po 1000 kroków każdego selektora. `akao-lfo-data` jest 21. testem; sprawdza błędne skoki i zachowanie cursor/output przy błędzie. Dane i odczyt przebiegów są gotowe; aktywna modulacja kanałów oraz synteza pozostają do wdrożenia.
+
 FC/0A wybiera instrument ze stałym adresem początku próbki `0x1010`, zachowując jego loop, ADSR, przesunięcie banku i reguły przeliczenia pitch z A1. Test ADSR obejmuje release override, aktywne głosy, alternatywny bank oraz ucięty operand i przechodzi ASan/UBSan. Jest to obsługa stanu sekwencera; synteza i dowody pełnych utworów nadal pozostają wymagane.
 
 A4 ustawia signed przesunięcie pitch i czas przejścia (zero oznacza 256 ticków). Obsługa nuty oblicza krok ze zawijanego różnicowego pitch 16.16; ticki przesuwają offset i oznaczają zmiany pitch. Testy timing sprawdzają ruch w górę/w dół i kodowanie czasu, również pod ASan/UBSan. Jest to stan sekwencera; zastosowanie do fizycznych głosów oraz synteza pozostają do wdrożenia.

@@ -7,11 +7,18 @@
  * eight-byte slot is all zero, but is still included in the data audit. */
 #define PE_USA_ROOM_SLOTS 450u
 #define PE_USA_AUDIO_BANKS 250u
+#define PE_AKAO_LFO_WORDS 708u
 
 typedef struct PeAkaoGrammar {
     uint8_t lengths[96], extended_lengths[32];
     uint16_t note_lengths[11];
+    uint16_t lfo_offsets[16], lfo_words[PE_AKAO_LFO_WORDS];
+    uint8_t lfo_valid;
 } PeAkaoGrammar;
+
+/* Advance one original waveform sample, including its relative loop marker.
+ * Cursor is a word offset; failed reads preserve cursor and output. */
+int pe_akao_lfo_next(const PeAkaoGrammar *grammar, uint16_t *cursor, int16_t *sample);
 
 typedef struct PeRoomRange {
     uint32_t start;

@@ -10,6 +10,8 @@
 #define SECTOR_TABLE_VA UINT32_C(0x800930d8)
 #define AUDIO_TABLE_VA UINT32_C(0x8009317c)
 #define AKAO_GRAMMAR_VA UINT32_C(0x8009b85c)
+#define AKAO_LFO_VA UINT32_C(0x8009baf8)
+#define AKAO_LFO_TABLE_VA UINT32_C(0x8009c080)
 
 static uint32_t read32(const uint8_t *p) {
     return (uint32_t)p[0] | (uint32_t)p[1] << 8 |
@@ -28,6 +30,7 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
     uint8_t header[0x800], table[PE_USA_ROOM_SLOTS * 8], bounds[162];
     uint8_t audio[4 + (PE_USA_AUDIO_BANKS + 1) * 2];
     uint8_t grammar[150];
+    uint8_t lfo[PE_AKAO_LFO_WORDS * 2], lfo_table[64];
     if (!pe_disc_find(disc, "PE.IMG", &catalog->archive) ||
         !pe_disc_find(disc, "SLUS_006.62", &executable) ||
         !pe_disc_read(disc, &executable, 0, header, sizeof(header)))
@@ -36,7 +39,8 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
     if (memcmp(header, "PS-X EXE", 8) || base > SECTOR_TABLE_VA ||
         size < sizeof(table) || ROOM_TABLE_VA - base > size - sizeof(table) ||
         (uint64_t)size + 0x800 > executable.size || size < sizeof(grammar) ||
-        AKAO_GRAMMAR_VA - base > size - sizeof(grammar)) {
+        AKAO_GRAMMAR_VA - base > size - sizeof(grammar) ||
+        size < sizeof(lfo_table) || AKAO_LFO_TABLE_VA - base > size - sizeof(lfo_table)) {
         snprintf(catalog->error, sizeof(catalog->error), "Unsupported USA room table layout");
         return 0;
     }
@@ -57,6 +61,20 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
     for (unsigned i = 0; i < 11; ++i)
         catalog->akao.note_lengths[i] = (uint16_t)grammar[128 + i * 2] |
                                        (uint16_t)grammar[129 + i * 2] << 8;
+    if (!pe_disc_read(disc, &executable, (uint64_t)AKAO_LFO_VA - base + 0x800, lfo, sizeof(lfo)) ||
+        !pe_disc_read(disc, &executable, (uint64_t)AKAO_LFO_TABLE_VA - base + 0x800, lfo_table, sizeof(lfo_table)))
+        return disc_error(catalog);
+    for (unsigned i = 0; i < PE_AKAO_LFO_WORDS; ++i)
+        catalog->akao.lfo_words[i] = (uint16_t)(lfo[i * 2] | (unsigned)lfo[i * 2 + 1] << 8);
+    for (unsigned i = 0; i < 16; ++i) {
+        uint32_t address = read32(lfo_table + i * 4);
+        if (address < AKAO_LFO_VA || address >= AKAO_LFO_TABLE_VA || (address & 1)) {
+            snprintf(catalog->error, sizeof(catalog->error), "Invalid AKAO LFO table entry %u", i);
+            return 0;
+        }
+        catalog->akao.lfo_offsets[i] = (uint16_t)((address - AKAO_LFO_VA) / 2);
+    }
+    catalog->akao.lfo_valid = 1;
     for (unsigned i = 0; i <= PE_USA_AUDIO_BANKS; ++i) {
         catalog->audio_bounds[i] = (uint16_t)audio[4 + i * 2] |
                                   (uint16_t)audio[5 + i * 2] << 8;
@@ -80,6 +98,24 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc) {
             return 0;
         }
     }
+    return 1;
+}
+
+int pe_akao_lfo_next(const PeAkaoGrammar *grammar, uint16_t *cursor, int16_t *sample) {
+    if (!grammar || !grammar->lfo_valid) return 0;
+    unsigned offset = *cursor;
+    if (offset + 1 >= PE_AKAO_LFO_WORDS) return 0;
+    if (!grammar->lfo_words[offset] && !grammar->lfo_words[offset + 1]) {
+        if (offset + 2 >= PE_AKAO_LFO_WORDS) return 0;
+        unsigned word = grammar->lfo_words[offset + 2];
+        int delta = word & 32768 ? (int)word - 65536 : (int)word;
+        int target = (int)offset + delta;
+        if (target < 0 || target >= (int)PE_AKAO_LFO_WORDS - 1) return 0;
+        offset = (unsigned)target;
+    }
+    unsigned word = grammar->lfo_words[offset];
+    *sample = (int16_t)(word & 32768 ? (int)word - 65536 : (int)word);
+    *cursor = (uint16_t)(offset + 1);
     return 1;
 }
 

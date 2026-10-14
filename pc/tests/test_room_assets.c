@@ -197,6 +197,20 @@ int main(void) {
     CHECK(pe_scene_prepare(&catalog, 431, &scene, scene_error, sizeof(scene_error)));
     CHECK(scene.scripts.blob == &scene.room.data);
     CHECK(scene.akao.note_lengths[0] == 192 && scene.akao.note_lengths[10] == 4);
+    CHECK(scene.akao.lfo_valid && scene.akao.lfo_offsets[0] == 0);
+    CHECK(scene.akao.lfo_offsets[13] == scene.akao.lfo_offsets[15]);
+    for (unsigned selector = 0; selector < 16; ++selector) {
+        uint16_t cursor = scene.akao.lfo_offsets[selector]; int16_t sample;
+        for (unsigned step = 0; step < 1000; ++step)
+            CHECK(pe_akao_lfo_next(&scene.akao, &cursor, &sample));
+    }
+    uint16_t cursor = scene.akao.lfo_offsets[1]; int16_t sample;
+    CHECK(pe_akao_lfo_next(&scene.akao, &cursor, &sample) && sample == 32767);
+    CHECK(pe_akao_lfo_next(&scene.akao, &cursor, &sample) && sample == -32767);
+    CHECK(pe_akao_lfo_next(&scene.akao, &cursor, &sample) && sample == 32767);
+    cursor = PE_AKAO_LFO_WORDS - 1; sample = 123;
+    CHECK(!pe_akao_lfo_next(&scene.akao, &cursor, &sample));
+    CHECK(cursor == PE_AKAO_LFO_WORDS - 1 && sample == 123);
     CHECK(scene.sample_stats.bytes == 28176 && scene.spu->valid[255]);
     CHECK(scene.script_actor_count == 1 && scene.scheduler->live == 1);
     CHECK(scene.scheduler->slots[0].task.actor == &scene.script_actors[0]);

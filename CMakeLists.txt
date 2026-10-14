@@ -39,7 +39,7 @@ add_library(parasite-eve-original OBJECT
     src/main/anim/bone_rotations.c
     src/main/render/bone_transforms.c
     src/main/render/vertex_projection.c
-    src/main/entity/hierarchy.c
+    src/main/entity/frame_update.c
     src/main/boot/init.c
     src/main/entity/pool.c
     src/main/entity/allocation.c
@@ -263,10 +263,9 @@ if(BUILD_TESTING)
     add_test(NAME original-game-expression COMMAND test-original-expression)
 endif()
 
-# Compile the whole original actor frame module while its remaining game
-# dependencies are being ported. It is not linked with replacement stubs.
+# Script relocation used by the original actor frame module.
 add_library(parasite-eve-original-frame OBJECT
-    src/main/script/reloc_block.c src/main/entity/frame_update.c)
+    src/main/script/reloc_block.c)
 target_include_directories(parasite-eve-original-frame PRIVATE include)
 
 if(BUILD_TESTING)

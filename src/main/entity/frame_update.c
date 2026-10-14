@@ -456,3 +456,50 @@ void Entity_TickAnimSequences(FieldActor *arg0) {
         i++;
     } while (i < 3U);
 }
+
+FieldActor *g_FieldActorListHead;
+
+void Entity_RollbackPositionHierarchy(FieldActor *arg0)
+{
+    FieldActor *cur;
+    FieldActor *child;
+
+    child = arg0->parent;
+    if (child != 0) {
+        Entity_RollbackPositionHierarchy(child);
+        cur = g_FieldActorListHead;
+        if (cur != 0) {
+            do {
+                if (cur->parent == arg0->parent) {
+                    cur->pos_x = cur->base_x;
+                    cur->pos_y = cur->base_y;
+                    cur->pos_z = cur->base_z;
+                    cur->collision_face = cur->collision_face_mirror;
+                }
+                cur = cur->next;
+            } while (cur != 0);
+        }
+    } else {
+        arg0->pos_x = arg0->base_x;
+        arg0->pos_y = arg0->base_y;
+        arg0->pos_z = arg0->base_z;
+        arg0->collision_face = arg0->collision_face_mirror;
+        arg0->flags |= 0x40000;
+    }
+}
+
+void Entity_CopyParentPosition(void) {
+    FieldActor *cur = g_FieldActorListHead;
+
+    while (cur != 0) {
+        if (cur->parent != 0 && (cur->flags & 0x400000) != 0) {
+            cur->pos_x = cur->parent->pos_x;
+            cur->pos_y = cur->parent->pos_y;
+            cur->pos_z = cur->parent->pos_z;
+            cur->rot_x = cur->parent->rot_x;
+            cur->rot_y = cur->parent->rot_y;
+            cur->rot_z = cur->parent->rot_z;
+        }
+        cur = cur->next;
+    }
+}

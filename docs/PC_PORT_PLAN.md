@@ -2086,3 +2086,18 @@ player-input-assets, entity-textures, entity-texture-assets) pass with required
 Disc 1 assets. The input-rule fixture also passes ASan/UBSan/function.
 Boot_InitSystem and the full boot sequence have not been executed by these
 checks. Remaining extractions and the entire pc/ directory still require removal.
+
+
+### Restore actor hierarchy to the complete original frame module
+
+Deleted src/main/entity/hierarchy.c and restored Entity_RollbackPositionHierarchy,
+Entity_CopyParentPosition and g_FieldActorListHead to src/main/entity/frame_update.c.
+The complete restored text matches the former extraction exactly. The whole
+frame module now belongs to parasite-eve-original; CMake no longer compiles a
+separate hierarchy implementation or duplicates the frame module across targets.
+Full build and six original-game tests (hierarchy, actor-animation,
+actor-lifecycle, entity-texture-assets, shadow, scene-spawn) pass with required
+Disc 1 assets. Hierarchy rollback, attachments and list ordering also pass
+ASan/UBSan/function; PsyZ remains uninstrumented. This does not establish a
+working full Entity_FrameUpdate game loop. No new files; remaining extractions
+and removal of pc/ remain open.

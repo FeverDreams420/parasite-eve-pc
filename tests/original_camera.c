@@ -2,7 +2,8 @@
 #include "pe1/render_camera.h"
 #include "pe1/render_lighting.h"
 #include "pe1/game_state.h"
-#include "room.h"
+#include "pe1/cdrom.h"
+#include "pe1/scene_room.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,18 +62,41 @@ int main(void) {
     CHECK(animation_controls()==0);
     const char *path=getenv("PE_TEST_DISC");
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
-    PeDisc disc={0}; PeRoomCatalog catalog; PeRoom room={0};
-    CHECK(pe_disc_open(&disc,path)); CHECK(pe_room_catalog_open(&catalog,&disc));
+    PeDisc disc={0}; PeDiscFile archive,executable;
+    CHECK(pe_disc_open(&disc,path));
+    CHECK(pe_disc_find(&disc,"PE.IMG",&archive) && pe_disc_find(&disc,"SLUS_006.62",&executable));
+    u8 exe_header[0x800]; u32 base,exe_size;
+    CHECK(pe_disc_read(&disc,&executable,0,exe_header,sizeof(exe_header)));
+    CHECK(!memcmp(exe_header,"PS-X EXE",8));
+    memcpy(&base,exe_header+0x18,4); memcpy(&exe_size,exe_header+0x1c,4);
+    SceneRoomSectorRange ranges[SCENE_ROOM_COUNT];
+    /* Fixture data from the resident USA table, not a second room loader. */
+    CHECK(base<=0x80093378u && exe_size>=sizeof(ranges) &&
+        0x80093378u-base<=exe_size-sizeof(ranges) && (u64)exe_size+0x800<=executable.size);
+    CHECK(pe_disc_read(&disc,&executable,(u64)0x80093378u-base+0x800,ranges,sizeof(ranges)));
+    CdRom_BindImage(&disc,&archive);
     unsigned views=0, frames=0; unsigned long long trace=14695981039346656037ULL;
-    for (unsigned map=1;map<=PE_USA_ROOM_SLOTS;++map) {
-        if (!catalog.ranges[map-1].room_sectors) continue;
-        CHECK(pe_room_load(&catalog,map,&room));
-        const u8 *records; unsigned count;
-        CHECK(pe_room_blob_table(&room.data,7,8,&records,&count) && count);
-        u32 size,offset; memcpy(&size,records,4); memcpy(&offset,records+4,4);
+    for (unsigned map=1;map<=SCENE_ROOM_COUNT;++map) {
+        SceneRoomSectorRange *range=&ranges[map-1];
+        if (!range->roomSectors) continue;
+        u64 sector=(u64)range->start+range->scratchSectors+range->textureSectors;
+        size_t room_bytes=(size_t)range->roomSectors*2048;
+        CHECK((sector+range->roomSectors)*2048<=archive.size && sector+archive.sector<=UINT32_MAX);
+        SceneAssetView *room=malloc(room_bytes); CHECK(room);
+        CHECK(CdRom_ReadSectorsFromLba((u32)(sector+archive.sector),room,range->roomSectors)==1);
+        CHECK(CdRom_PollReady()==0);
+        u32 declared; memcpy(&declared,room,4);
+        CHECK(declared>=8 && declared<=room_bytes && room->header.directoryOffset<=declared &&
+            sizeof(SceneRoomDirectory)<=declared-room->header.directoryOffset);
+        SceneRoomDirectory *directory=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+        u32 table_offset=directory->taskAux&0x3fffff;
+        unsigned count=directory->taskAux>>22;
+        CHECK(count && table_offset<=declared && count<=(declared-table_offset)/8);
+        SceneRoomRecord *record=SceneRoom_FirstRecord(room,directory->taskAux);
+        u32 size,offset; memcpy(&size,record,4); offset=record->source.offsetAndSlot;
         size &= 0xffffff; offset &= 0xffffff;
-        CHECK(offset<=room.data.size && size<=room.data.size-offset && size>=60);
-        const u8 *bytes=room.data.bytes+offset;
+        CHECK(offset<=declared && size<=declared-offset && size>=60);
+        const u8 *bytes=SCENE_ROOM_PAYLOAD(room,record);
         u16 view_count; memcpy(&view_count,bytes+10,2);
         void *copy=malloc(size); CHECK(copy); memcpy(copy,bytes,size);
         g_GeomState=copy;
@@ -131,8 +155,9 @@ int main(void) {
             CHECK(g_GeomScroll.state.position.duration==30);
             ++views;
         }
-        free(copy);pe_room_close(&room);
+        free(copy);free(room);
     }
+    CdRom_BindImage(NULL,NULL);
     pe_disc_close(&disc); CHECK(views && frames);
     /* Regression captured while every frame also matched the former reference
      * implementation. This proves preservation, not PS1 visual fidelity. */

@@ -28,6 +28,7 @@
 #include "pe1/scene_assets.h"
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_room.h"
+#include "../../overlays/room_m272_liberty/room_m272.h"
 #include "pe1/scene_transition.h"
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
@@ -503,6 +504,8 @@ int Scene_LoadRoom(unsigned int roomId)
                 break;
             }
         }
+        if (map + 1 == 272 && slot == 15 && record[i].u.handlerAddress == 0x8018f1a8u)
+            native = &g_RoomM272Handlers;
         if (!native) {
             fprintf(stderr, "Scene_LoadRoom: native descriptor missing for M%03d slot %u (PS1 %08x)\n",
                     map + 1, slot, record[i].u.handlerAddress);
@@ -609,10 +612,19 @@ int Scene_LoadRoom(unsigned int roomId)
             SCENE_ROOM_PAYLOAD(room, &shortRecord[i]);
     }
 
+    /* A reread of M272 also restores the original zero-initialized overlay
+     * data, even though its code remains linked on the host. */
+    if (map + 1 == 272) {
+        g_RoomM272Phase = 0;
+        memset(RoomM272_Rec, 0, sizeof(RoomM272_Rec));
+    }
+
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
         slot = record[i].source.bytes.slot;
-        if (!g_PmCmdHandlerTable[slot]) g_PmCmdHandlerTable[slot] = &g_RoomFxMirrorHandlers;
+        /* Validation above resolves the room-specific descriptor. Assign even
+         * when a prior statically linked room used this same slot. */
+        g_PmCmdHandlerTable[slot] = map + 1 == 272 ? &g_RoomM272Handlers : &g_RoomFxMirrorHandlers;
     }
 
     if (directory->samples & 0xFFC00000) {

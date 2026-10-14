@@ -13,6 +13,7 @@
 #include "pe1/pe_image.h"
 #include "pe1/scene_room.h"
 #include "pe1/room_fx_model.h"
+#include "../src/overlays/room_m272_liberty/room_m272.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/render_camera.h"
 #include "pe1/render_shadow.h"
@@ -291,7 +292,7 @@ int main(void)
         CHECK(pe_room_load(&catalog,map,&room));
         unsigned descriptor_count=room.data.directory[1]>>22;
         int mirror=map==17 || map==18 || map==21 || map==45 || map==102 || map==151 || map==319;
-        if(descriptor_count && !mirror && map!=5) { pe_room_close(&room); continue; }
+        if(descriptor_count && !mirror && map!=5 && map!=272) { pe_room_close(&room); continue; }
         PeRoomRange *range = &catalog.ranges[map - 1];
         g_RoomSectorTable[map - 1].start = range->start;
         g_RoomSectorTable[map - 1].scratchSectors = range->scratch_sectors;
@@ -339,6 +340,41 @@ int main(void)
         } else {
             CHECK(Scene_LoadRoom(room_id) == 0);
             CHECK(handlers[69] == (mirror ? &g_RoomFxMirrorHandlers : NULL));
+            if(map==272) {
+                CHECK(handlers[15]==&g_RoomM272Handlers);
+                const u8 *descriptor_records; unsigned descriptors;
+                CHECK(pe_room_blob_table(&room.data,1,12,&descriptor_records,&descriptors) && descriptors==1);
+                CHECK(descriptor_records[7]==15 && image_word(descriptor_records+8)==0x8018f1a8u);
+                const u32 addresses[]={0x8018f00c,0x8018f014,0x8018f178,0x8018f188,0x8018f190,0x8018f198,0x8018f1a0};
+                for(unsigned method=0;method<7;++method)
+                    CHECK(image_word(room.data.bytes+0x1c0+method*4)==addresses[method]);
+                CHECK(!memcmp(room.data.bytes+12,&RoomM272_BlobA,8) &&
+                    !memcmp(room.data.bytes+20,&RoomM272_BlobB,8) &&
+                    !memcmp(room.data.bytes+28,&RoomM272_BlobC,8));
+                u16 *strip=malloc(320*64*2), *image=malloc(192*256*2), *readback=malloc(192*256*2);
+                CHECK(strip && image && readback);
+                for(unsigned pixel=0;pixel<320*64;++pixel)strip[pixel]=(u16)(pixel*17+3);
+                for(unsigned pixel=0;pixel<192*256;++pixel)image[pixel]=(u16)(pixel*29+7);
+                LoadImage(&RoomM272_BlobA,strip); LoadImage(&RoomM272_BlobB,image); DrawSync(0);
+                handlers[15]->init();
+                CHECK(handlers[15]->send(NULL,0,0,0,0,0)==0);
+                handlers[15]->initialize(NULL);
+                CHECK(!memcmp(RoomM272_Rec,strip,320*64*2));
+                StoreImage(&RoomM272_BlobC,readback); DrawSync(0);
+                CHECK(!memcmp(readback,image,192*256*2));
+                memset(readback,0,192*256*2);
+                LoadImage(&RoomM272_BlobA,readback); LoadImage(&RoomM272_BlobB,readback); DrawSync(0);
+                CHECK(handlers[15]->send(NULL,0,0,1,0,0)==0);
+                handlers[15]->initialize(NULL);
+                StoreImage(&RoomM272_BlobA,readback); DrawSync(0);
+                CHECK(!memcmp(readback,strip,320*64*2));
+                StoreImage(&RoomM272_BlobB,readback); DrawSync(0);
+                CHECK(!memcmp(readback,image,192*256*2));
+                CHECK(handlers[15]->start(NULL)==0 && handlers[15]->execute(NULL)==0 && handlers[15]->stop(NULL)==0);
+                handlers[15]->unload();
+                free(strip);free(image);free(readback);
+                puts("Original M272 cinematic: resident descriptor and both VRAM copy phases passed headless");
+            }
             CHECK(g_GameState.cd_read_phase==0 && g_CdReadRemainingSectors==0);
             for(unsigned i=0;i<count;++i) {
                 const u8 *entry=streams+i*8;
@@ -381,6 +417,11 @@ int main(void)
             memset(spu_expected,0x6d,0x80000);
             memset(Psyz_SpuGetRam(),0x6d,0x80000);
             CHECK(Scene_LoadRoom(room_id)==0);
+            if(map==272) {
+                CHECK(g_RoomM272Phase==0);
+                for(unsigned pixel=0;pixel<320*64;++pixel)CHECK(RoomM272_Rec[pixel]==0);
+                CHECK(handlers[15]==&g_RoomM272Handlers);
+            }
             CHECK(!memcmp(Psyz_SpuGetRam(),spu_expected,0x80000));
             CHECK(g_GameState.bank_reset_944[0] != NULL);
             if(map==17) {
@@ -542,8 +583,8 @@ int main(void)
                map == 5 ? "unsupported descriptor rejected" : "native room and script/bank relocation passed");
     }
 
-    CHECK(new_game_room_loaded && native_rooms==236 && native_geometry_entries==2763);
-    CHECK(native_packet_bytes==23350656);
+    CHECK(new_game_room_loaded && native_rooms==237 && native_geometry_entries==2785);
+    CHECK(native_packet_bytes==23501072);
     printf("Original full room loading corpus: %u rooms, %u native geometry entries, %zu packet bytes\n",native_rooms,native_geometry_entries,native_packet_bytes);
 
     {

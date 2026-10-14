@@ -8,6 +8,23 @@ static int32_t shift_word(uint32_t word, unsigned bits) {
 
 int pe_akao_channel_pitch_lfo_step(PeAkaoChannel *channel, int key_on) {
     if (!key_on && channel->pitch_lfo_counter) --channel->pitch_lfo_counter;
+    if (!key_on && channel->pitch_lfo_slide_duration) {
+        channel->pitch_lfo_target = (uint16_t)(channel->pitch_lfo_target + channel->pitch_lfo_delta);
+        --channel->pitch_lfo_slide_duration;
+        pe_akao_channel_pitch_lfo_depth(channel, 0);
+        if (!channel->pitch_lfo_counter && channel->pitch_lfo_phase != 1) {
+            uint16_t cursor = channel->pitch_lfo_cursor; int16_t sample;
+            if (!pe_akao_lfo_next(channel->grammar, &cursor, &sample)) {
+                snprintf(channel->error, sizeof(channel->error), "Invalid AKAO pitch LFO slide at 0x%x", channel->pc);
+                return 0;
+            }
+            int value = shift_word((uint32_t)((int)channel->pitch_lfo_depth * sample), 16);
+            if ((uint16_t)value != channel->pitch_lfo_value) {
+                channel->pitch_lfo_value = (uint16_t)(value >= 0 ? value * 2 : value);
+                channel->update_flags |= 0x10;
+            }
+        }
+    }
     if (!(channel->flags & 1) || (!key_on && channel->pitch_lfo_counter)) return 1;
     uint16_t phase = (uint16_t)(channel->pitch_lfo_phase - 1);
     if (phase) { channel->pitch_lfo_phase = phase; return 1; }

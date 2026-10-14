@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+DD ustawia slide głębokości pitch-LFO (zero czasu oznacza 256). Aktualizacja głosu przesuwa zawijany target, przelicza głębokość i ponownie odczytuje bieżący przebieg bez przesuwania cursor między krokami fazy. Test malejącego slide, resamplingu i końca przechodzi ASan/UBSan; 21 testów przechodzi headless z Disc 1. Audyt 4096 ticków: jedna sekwencja zakończona, 598 nadal aktywnych, zero brakujących komend, 2449892 ticki i 1079209 zdarzeń nut. To ograniczony audyt sekwencera, bez harmonogramu kroków głosów, syntezy i dowodów pełnych utworów.
+
 B4/B5/B6 obsługują konfigurację, głębokość i reset pitch-LFO. Obliczenia zachowują dwa tryby skalowania, low-word pitch przy inicjalizacji, opóźnienie, obejście przy key-on oraz oryginalne podwojenie nieujemnego wyniku. Testy obu trybów, czasu zero=256, signed wartości i resetu przechodzą ASan/UBSan; 21 testów przechodzi headless z Disc 1. Audyt 4096 ticków trafia teraz na DD w jednej sekwencji; 598 pozostaje aktywnych. Slide głębokości, harmonogram/zastosowanie głosów i referencyjna synteza nadal wymagają implementacji.
 
 CC ustawia oryginalną fazę frazy dla legato: pierwsza nuta żąda key-on, kolejne zachowują ciągłość głosu. CD odpowiada pustemu handlerowi oryginału i nie ma operandów ani efektów. Test timing sprawdza fazę i key-on oraz przechodzi ASan/UBSan. Audyt nadal jawnie zgłasza dalsze brakujące komendy; słyszalne legato wymaga integracji syntezy i porównania referencyjnego.

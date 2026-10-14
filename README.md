@@ -373,5 +373,14 @@ modes, zero-as-256 duration, delay, signed output and reset under ASan/UBSan.
 All 21 tests pass headless with Disc 1. Its 4,096-tick audit now reaches DD in
 one sequence; 598 remain active at the limit. Depth slides, complete voice
 scheduling/application and synthesized reference audio remain unfinished.
+
+DD now configures pitch-LFO depth slides, including zero duration as 256.
+Voice updates advance the wrapped depth target, recalculate scale and resample
+the pending waveform value without advancing its cursor between phase steps.
+Tests verify descending slides, resampling and completion under ASan/UBSan.
+All 21 tests pass headless with Disc 1. The 4,096-tick musical audit now reports
+one stopped sequence, 598 still active and no missing commands (2,449,892
+ticks and 1,079,209 note events). This bounded sequencer audit does not exercise
+the voice-step schedule or prove full songs, synthesized audio or gameplay.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

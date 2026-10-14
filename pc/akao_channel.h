@@ -44,6 +44,7 @@ typedef struct PeAkaoChannel {
     uint16_t pitch_lfo_delay, pitch_lfo_counter, pitch_lfo_duration, pitch_lfo_phase;
     uint16_t pitch_lfo_cursor, pitch_lfo_target, pitch_lfo_depth, pitch_lfo_value;
     uint8_t pitch_lfo_selector;
+    uint16_t pitch_lfo_slide_duration, pitch_lfo_delta;
     uint16_t pitch_transition_duration, pitch_transition_delta;
     uint32_t pitch_slide_value, pitch_slide_step;
     uint8_t octave, stopped, last_note;

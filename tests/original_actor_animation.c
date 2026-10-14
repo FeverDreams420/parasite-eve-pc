@@ -639,6 +639,36 @@ int main(int argc, char **argv)
            !host_event(SDL_EVENT_WINDOW_FOCUS_GAINED,SDL_SCANCODE_UNKNOWN))return 51;
         Field_HandleStateTransition();
         if(g_FieldPadBits)return 52;
+        /* SDL events -> original pad mapper -> original menu repeat/dispatch. */
+        Boot_ResetPadInput(); Boot_BuildRenderFlagTable(); MenuInput_InitQueue();
+        menu_event_count=0;
+        event_parent.flags=0; g_MenuWidgetCurrentNode=&event_parent;
+        Field_HandleStateTransition(); MenuInput_DispatchQueuedEvents();
+        if(menu_event_count || !g_MenuInputActive)return 108;
+        if(!host_event(SDL_EVENT_KEY_DOWN,SDL_SCANCODE_UP))return 109;
+        Field_HandleStateTransition(); MenuInput_DispatchQueuedEvents();
+        if(menu_event_count!=1 || menu_event_flags[0]!=0x1000)return 110;
+        for(unsigned frame=1;frame<=9;++frame) {
+            Field_HandleStateTransition(); MenuInput_DispatchQueuedEvents();
+            if(menu_event_count!=(frame<9?1u:2u))return 111;
+        }
+        if(menu_event_flags[1]!=0x21000)return 112;
+        if(!host_event(SDL_EVENT_KEY_UP,SDL_SCANCODE_UP))return 113;
+        Field_HandleStateTransition(); MenuInput_DispatchQueuedEvents();
+        if(menu_event_count!=2)return 114;
+        if(!host_event(SDL_EVENT_KEY_DOWN,SDL_SCANCODE_X))return 115;
+        Field_HandleStateTransition(); MenuInput_DispatchQueuedEvents();
+        if(menu_event_count!=3 || menu_event_flags[2]!=0x20) { fprintf(stderr,"X press: count=%u flags=%x pad=%x\n",menu_event_count,menu_event_flags[2],g_FieldPadBits); return 116; }
+        if(!host_event(SDL_EVENT_KEY_UP,SDL_SCANCODE_X))return 117;
+        Field_HandleStateTransition(); MenuInput_DispatchQueuedEvents();
+        if(menu_event_count!=4 || menu_event_flags[3]!=0x10000)return 118;
+        if(!host_event(SDL_EVENT_KEY_DOWN,SDL_SCANCODE_V))return 119;
+        Field_HandleStateTransition(); MenuInput_DispatchQueuedEvents();
+        if(menu_event_count!=5 || menu_event_flags[4]!=0x80)return 120;
+        if(!host_event(SDL_EVENT_WINDOW_FOCUS_LOST,SDL_SCANCODE_UNKNOWN))return 121;
+        Field_HandleStateTransition(); MenuInput_DispatchQueuedEvents();
+        if(menu_event_count!=5 || g_MenuInputHeldStatusMask || g_FieldPadBits)return 122;
+        g_MenuWidgetCurrentNode=NULL;
         g_PlayerEntity=0;
     }
     puts("Original action/clock/audio trigger and digital/analog player motion passed");

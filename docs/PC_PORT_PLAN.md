@@ -2406,3 +2406,23 @@ original/legacy input and boot tests, and fresh ASan/UBSan/function fixture pass
 PsyZ/SDL remain uninstrumented. Draw/present routines in the same module are
 compiled but unverified and retain legacy pointer assumptions. No claim of full
 menu visuals or original game runtime; pc/ removal remains pending.
+
+
+### Verify keyboard-to-original-menu dispatch end to end
+
+Expanded the existing actor-animation fixture to feed SDL events through
+Boot_HandlePadEvent, Field_HandleStateTransition and
+MenuInput_DispatchQueuedEvents into a real widget update callback. It verifies
+idle activation, immediate Up (0x1000), no early repeats, the first repeat on
+the ninth held update (0x21000), ignored direction release, X press (0x20) and
+release (0x10000), V/high-bit input (0x80), and clearing held state on focus loss.
+The original pad decoder deliberately swaps raw 0x2000/0x4000 before field
+mapping, so Z produces menu 0x40 and X produces 0x20; no gameplay mapping was
+changed to accommodate the test. No new files or replacement runtime logic.
+
+The rebuilt ordinary fixture passes. This establishes the input path through
+an update callback, not complete rendered menus or gameplay. Full runtime and
+removal of pc/ remain incomplete.
+
+Fresh ASan/UBSan/function execution also passes; PsyZ/SDL libraries are not
+instrumented.

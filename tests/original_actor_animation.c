@@ -1247,6 +1247,37 @@ static int process_texture_bank_failures(void)
     return 1;
 }
 
+static int native_actor_effect_gates(void)
+{
+    FieldFxObject object={0}; FieldActor actor={0}; FieldActorState state={0};
+    u8 action=1; FieldFxHandler handlers[1]={0};
+    actor.state=&state; state.control10.command_value=1; state.action_state=&action;
+    object.prefix.actor=&actor;
+    FieldFx_GetSlot(&object);
+    for(unsigned selector=0;selector<8;++selector) for(unsigned enabled=0;enabled<2;++enabled)
+    for(unsigned value=0;value<2;++value) {
+        state.count_limit=state.progress_step=0; state.flags=0;
+        memset(state.transition_timers,0,sizeof(state.transition_timers));
+        memset(state.number_desc_1,0,sizeof(state.number_desc_1));
+        memset(state.reserved74,0,sizeof(state.reserved74));
+        state.substate=NULL; state.script_value8c=0;
+        switch(selector) {
+        case 0: state.count_limit=value; break;
+        case 1: state.progress_step=value; break;
+        case 2: state.transition_timers[0]=value; break;
+        case 3: state.flags=value; break;
+        case 4: state.number_desc_1[4]=value; break;
+        case 5: state.substate=(void *)(uintptr_t)(0x100+value); break;
+        case 6: state.reserved74[8]=value; break;
+        case 7: state.script_value8c=value; break;
+        }
+        state.core_flags=(selector<<21)|(enabled?2:0); action=1;
+        if(FieldFx_UpdateSlots(&object,handlers)!=(enabled && !value?-1:0) || action!=2) return 0;
+    }
+    puts("Original actor effect gates: all eight native fields, active masks, zero/nonzero values and action transition passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -1307,7 +1338,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

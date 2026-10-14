@@ -3351,3 +3351,18 @@ uninstrumented. Actor gates with other core flags, remaining resident handlers,
 room-local descriptor bindings, live scene inputs, GPU effect pixels, full
 gameplay and deletion of pc/ remain incomplete. No new files or extracted
 functions.
+
+
+The original actor-owned effect termination gate in FieldFx_UpdateSlots now
+selects native named fields instead of byte offsets 0x1C + selector*0x10 from
+the PS1 state layout. Its eight byte views map to count_limit, progress_step,
+transition_timers[0], flags, number_desc_1[4], substate, reserved74[8] and
+script_value8c; the original flag mask/zero-byte predicate remain. Inactive masks
+skip the read. The existing fixture tests all selectors with mask off/on and
+zero/nonzero values, plus the action-state 1-to-2 transition. The substate test
+checks the original low-byte-of-pointer representation; its meaning for real
+actor data remains unverified. Full build and five related CTests pass with
+Disc 1 required, plus fresh actor ASan/UBSan/function with original source
+instrumented and PsyZ/SDL archives uninstrumented. Real actor-state semantics
+for all selectors, room descriptors, complete scene/gameplay integration and
+deletion of pc/ remain incomplete. No new files or extracted functions.

@@ -138,11 +138,22 @@ int FieldFx_UpdateSlots(FieldFxObject *obj, FieldFxHandler *handlers) {
     }
 
     if (FieldFx_GetStatus(obj) == 3) {
-        char *inner = (char *)data->state;
-        u32 flags = ((FieldActorState *)inner)->core_flags;
-
-        if (*(u8 *)(inner + ((flags >> 17) & 0x70) + 0x1C) == 0 && (flags & 0x180E) != 0) {
-            result = -1;
+        FieldActorState *inner = data->state;
+        u32 flags = inner->core_flags;
+        if (flags & 0x180E) {
+            const u8 *gate;
+            /* Original byte at 0x1C + selector*0x10, through native fields. */
+            switch ((flags >> 21) & 7) {
+            case 0: gate = (const u8 *)&inner->count_limit; break;
+            case 1: gate = (const u8 *)&inner->progress_step; break;
+            case 2: gate = &inner->transition_timers[0]; break;
+            case 3: gate = (const u8 *)&inner->flags; break;
+            case 4: gate = &inner->number_desc_1[4]; break;
+            case 5: gate = (const u8 *)&inner->substate; break;
+            case 6: gate = &inner->reserved74[8]; break;
+            default: gate = (const u8 *)&inner->script_value8c; break;
+            }
+            if (*gate == 0) result = -1;
         }
     }
 

@@ -263,11 +263,6 @@ if(BUILD_TESTING)
     add_test(NAME original-game-expression COMMAND test-original-expression)
 endif()
 
-# Script relocation used by the original actor frame module.
-add_library(parasite-eve-original-frame OBJECT
-    src/main/script/reloc_block.c)
-target_include_directories(parasite-eve-original-frame PRIVATE include)
-
 if(BUILD_TESTING)
     add_executable(test-original-contact tests/original_contact.c
         $<TARGET_OBJECTS:parasite-eve-original>)
@@ -276,13 +271,10 @@ if(BUILD_TESTING)
     add_test(NAME original-game-contact COMMAND test-original-contact)
 endif()
 
-add_library(parasite-eve-original-movement OBJECT src/main/entity/movement.c)
-target_include_directories(parasite-eve-original-movement PRIVATE include)
 if(BUILD_TESTING)
     add_executable(test-original-movement tests/original_movement.c
         $<TARGET_OBJECTS:parasite-eve-original>
-        $<TARGET_OBJECTS:parasite-eve-original-queue>
-        $<TARGET_OBJECTS:parasite-eve-original-movement>)
+        $<TARGET_OBJECTS:parasite-eve-original-queue>)
     target_include_directories(test-original-movement PRIVATE include)
     target_link_libraries(test-original-movement PRIVATE psyz)
     add_test(NAME original-game-movement COMMAND test-original-movement)
@@ -299,7 +291,6 @@ endif()
 if(BUILD_TESTING)
     add_executable(test-original-actor-animation tests/original_actor_animation.c pc/disc.c
         $<TARGET_OBJECTS:parasite-eve-original-player-rules>
-        $<TARGET_OBJECTS:parasite-eve-original-movement>
         $<TARGET_OBJECTS:parasite-eve-original-queue>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
@@ -353,10 +344,9 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-actor-lifecycle tests/original_actor_lifecycle.c
-        src/main/pm/process.c src/main/pm/frame.c src/main/script/pm_commands.c
+        src/main/pm/process.c src/main/script/pm_commands.c
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>
-        $<TARGET_OBJECTS:parasite-eve-original-frame>
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>)
     target_include_directories(test-original-actor-lifecycle PRIVATE include)
     target_link_libraries(test-original-actor-lifecycle PRIVATE psyz)
@@ -366,7 +356,6 @@ if(BUILD_TESTING)
         target_link_options(test-original-actor-lifecycle PRIVATE -Wl,-dead_strip)
     else()
         target_compile_options(test-original-actor-lifecycle PRIVATE -ffunction-sections -fdata-sections)
-        target_compile_options(parasite-eve-original-frame PRIVATE -ffunction-sections -fdata-sections)
         target_compile_options(parasite-eve-original-model-setup PRIVATE -ffunction-sections -fdata-sections)
         target_link_options(test-original-actor-lifecycle PRIVATE -Wl,--gc-sections)
     endif()
@@ -404,7 +393,6 @@ if(BUILD_TESTING)
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_sources(test-original-entity-texture-assets PRIVATE
-        $<TARGET_OBJECTS:parasite-eve-original-frame>
         $<TARGET_OBJECTS:parasite-eve-original-shadow>)
     target_include_directories(test-original-entity-texture-assets PRIVATE include pc)
     target_compile_definitions(test-original-entity-texture-assets PRIVATE __psyz PE_TEST_REAL_DISC)
@@ -430,7 +418,6 @@ endif()
 if(BUILD_TESTING)
     add_executable(test-original-scene-spawn tests/original_scene_spawn.c
         pc/disc.c pc/room.c pc/room_banks.c pc/model.c pc/script.c
-        $<TARGET_OBJECTS:parasite-eve-original-frame>
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-scene-spawn PRIVATE include pc)

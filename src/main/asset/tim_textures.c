@@ -1,6 +1,7 @@
 #include "pe1/cdrom.h"
 #include "pe1/game_state.h"
 #include "pe1/pm.h"
+#include "pe1/render_camera.h"
 #include "pe1/psyq_tim.h"
 #include "pe1/render_animation_frame.h"
 #include "pe1/scene_assets.h"
@@ -90,7 +91,7 @@ restart:
         goto restart;
     case 0x36:
         {
-            SceneAssetBlob *blob = state->scene_load_scratch;
+            SceneAssetBlob *blob = (SceneAssetBlob *)state->scene_load_scratch;
             SceneAssetDirectory *directory = SceneAsset_ResolveOffset(blob, blob->directoryOffset);
             TimUploadRecord *entry = SceneAsset_ResolveOffset(blob, directory->timEntries & 0x3FFFFF);
             u32 key;
@@ -116,3 +117,54 @@ restart:
     }
 }
 
+
+int Pm_RunPrimary(void) {
+    int i;
+    int slot;
+    u32 command;
+
+    if (g_GameStateFlags & 0x80) {
+        i = 0;
+        Render_SetGteScreenOffset();
+        do {
+            Pm_Start(i);
+            i += 1;
+        } while (i < 11);
+        Render_ResetGteScreenOffset();
+        if (!(g_GameStateFlags & 4)) {
+            slot = 0;
+            do {
+                command = g_PmSlotTable[slot].header.command;
+                if (!(g_GameStateFlags & 0x100) || command - 0x55 < 0x1E) {
+                    Pm_Exec(slot);
+                }
+                slot += 1;
+            } while (slot < 11);
+        }
+    }
+    return 0;
+}
+
+int Pm_RunBatch(void) {
+    int i;
+
+    if (g_GameStateFlags & 0x80) {
+        Render_SetGteScreenOffset();
+
+        for (i = 0; i < 11; i++) {
+            Pm_Start(i + 0xB);
+        }
+
+        Render_ResetGteScreenOffset();
+
+        if (g_GameStateFlags & 0x104) {
+            return 0;
+        }
+
+        for (i = 0; i < 11; i++) {
+            Pm_Exec(i + 0xB);
+        }
+    }
+
+    return 0;
+}

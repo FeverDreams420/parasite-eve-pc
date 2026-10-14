@@ -2101,3 +2101,22 @@ Disc 1 assets. Hierarchy rollback, attachments and list ordering also pass
 ASan/UBSan/function; PsyZ remains uninstrumented. This does not establish a
 working full Entity_FrameUpdate game loop. No new files; remaining extractions
 and removal of pc/ remain open.
+
+
+### Restore movement, script relocation and PM passes to original modules
+
+Deleted entity/movement.c, script/reloc_block.c and pm/frame.c. Restored all
+movement/callback procedures to entity/frame_update.c, both relocation/scene
+spawn procedures to script/node_pool.c and both PM frame passes to
+asset/tim_textures.c, following their extraction history. Complete function
+bodies compare unchanged; native word-wrap arithmetic and pointer relocation
+remain intact. Removed redundant CMake object targets and their references.
+The TIM scratch pointer now has an explicit SceneAssetBlob view.
+
+Full build and eight original-game tests (hierarchy, nodes, movement,
+actor-animation, actor-lifecycle, entity-textures, entity-texture-assets,
+scene-spawn) pass with Disc 1 required. Fresh ASan/UBSan/function runs pass for
+movement, actor-lifecycle (including the PM frame fixture) and the real texture
+corpus/room-loader fixture. PsyZ/SDL are not instrumented. This establishes the
+restored paths, not full scene/frame runtime integration or cold audio bank
+loading. No new files; removal of pc/ and the remaining extractions is pending.

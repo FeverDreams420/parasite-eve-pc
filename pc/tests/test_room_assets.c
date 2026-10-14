@@ -6,6 +6,7 @@
 #include "script_vm.h"
 #include "akao_sequence.h"
 #include "akao_channel.h"
+#include "akao_player.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -46,6 +47,7 @@ int main(void) {
     unsigned short_music_records = 0;
     uint8_t referenced_banks[PE_USA_AUDIO_BANKS] = {0};
     unsigned channel_notes = 0, channel_stops = 0, channel_missing = 0;
+    unsigned player_prefix_ok = 0, player_prefix_missing = 0;
     unsigned loaded = 0, absent = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -84,6 +86,19 @@ int main(void) {
             CHECK(music.bank < PE_USA_AUDIO_BANKS);
             referenced_banks[music.bank] = 1;
             if (!music.unresolved_short_record) {
+                PeAkaoPlayer player = {0};
+                PeAkaoControl initial = {0};
+                CHECK(pe_akao_player_start(&player, &music.sequence, &catalog.akao, &initial));
+                int success = 1;
+                for (unsigned tick = 0; tick < 4; ++tick) {
+                    if (!pe_akao_player_tick(&player, 0, 1, 4096)) {
+                        CHECK(strstr(player.error, "Unimplemented AKAO opcode"));
+                        success = 0;
+                        break;
+                    }
+                }
+                if (success) ++player_prefix_ok;
+                else ++player_prefix_missing;
                 PeAkaoControl control = {0};
                 for (unsigned voice = 0; voice < 24; ++voice) {
                     if (music.sequence.channels[voice] == UINT32_MAX) continue;
@@ -131,6 +146,9 @@ int main(void) {
     }
     CHECK(loaded > 300 && loaded + absent == PE_USA_ROOM_SLOTS);
     CHECK(music_records == 600 && short_music_records == 1);
+    CHECK(player_prefix_ok + player_prefix_missing == 599);
+    printf("Four forced AKAO timer ticks: %u sequence prefixes completed, %u unimplemented (not full songs)\n",
+           player_prefix_ok, player_prefix_missing);
     printf("Initial AKAO channel prefixes: %u raw notes, %u stops, %u unimplemented commands\n",
            channel_notes, channel_stops, channel_missing);
     CHECK(catalog.audio_base == 2224);

@@ -60,7 +60,7 @@ script entry/actor catalogs and the startup SPU sample bank are prepared in
 
 `make ci` builds and runs the asset-free disc-reader, VRAM, script-format,
 script-runtime, script-scheduler, SPU-bank, AKAO-sequence, AKAO-channel,
-AKAO-timing and automation tests. The
+AKAO-timing, AKAO-player and automation tests. The
 room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
 is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
@@ -230,3 +230,12 @@ note and latches key-off requests. Tests check exact tick boundaries and apply
 length/lookahead processing to the 1,055 reachable initial notes of Disc 1.
 Pitch, instrument/voice allocation, full-song scheduling and synthesized audio
 remain pending; these are timing-state tests, not playback comparisons.
+
+`pc/akao_player.c` combines the bank accumulator, active-channel countdowns,
+ordered command execution, slides/meter and latched key-off events in one
+headless timing driver. Tests cover two channels changing shared tempo in the
+same tick, gate boundaries, bank completion and failed-start rollback. The
+four-forced-tick audit still reports an unsupported opcode for all 599 full
+Disc 1 sequences; none is claimed playable. SPU registers/voice allocation,
+overlapping banks, waveform synthesis and integration with scene audio commands
+remain pending. Sequence bytes are borrowed and must outlive the player.

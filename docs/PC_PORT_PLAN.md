@@ -16,6 +16,8 @@ Wspólny `PeAkaoControl` obsługuje komendy FC/00..03 (tempo i master-volume set
 
 `akao-timing` (14. test CTest) sprawdza oryginalny podgląd następnej nuty, osobny od wykonawcy komend, wraz z jego różnicami w wirtualnym przechodzeniu pętli. `PeScene` przechowuje odczytane z EXE tablice długości komend i nut. Helpers obliczają długość/bramkę nuty, odliczają pojedynczy tick muzyczny, uruchamiają następną nutę i zatrzaskują żądanie key-off; testy obejmują granice czasu, tie/rest, override, u16 wrap, błędne dane i limit podglądu. Obliczanie długości przechodzi dla 1055 osiągalnych początkowych nut Disc 1. Połączenie tych helpers w pełny driver odtwarzania, pitch, instrumenty, alokacja głosów i synteza pozostają do wdrożenia. Te testy nie są referencyjnymi porównaniami wyjścia audio.
 
+`akao-player` dodaje 15. test CTest. Natywny driver czasu łączy akumulator banku, odliczanie aktywnych kanałów w kolejności głosów, komendy, slides/meter oraz zatrzaskiwane key-off. Test dwukanałowy sprawdza kolejność zmian wspólnego tempa, bramki, zakończenie banku i zachowanie stanu przy błędnym starcie. Audyt czterech wymuszonych ticków nadal zatrzymuje wszystkie 599 pełnych sekwencji Disc 1 na niezaimplementowanym opcode — żadna nie jest oznaczona jako odtwarzana poprawnie. Rejestry SPU, alokacja głosów, nakładające się banki, synteza i połączenie z komendami audio scen pozostają do wdrożenia.
+
 Punkt wyjściowy audytu: commit `83aa1c5f8`, 14 października 2026. Poniższy stan uwzględnia także wdrożony runner headless z WP01.
 
 | Obszar | Co istnieje | Czego obecne dowody nie potwierdzają |

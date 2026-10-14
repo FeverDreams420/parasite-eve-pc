@@ -11,6 +11,7 @@ add_subdirectory(pc)
 # Compile the original game sources in place. Modules join this target as
 # their platform dependencies are made portable; no duplicate game logic.
 add_library(parasite-eve-original OBJECT
+    src/main/pm/scene_init.c
     src/main/math/fixed_mul.c
     src/main/math/fixed_div.c
     src/main/math/fixed_round.c

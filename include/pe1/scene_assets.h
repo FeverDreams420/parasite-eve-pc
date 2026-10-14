@@ -4,7 +4,7 @@
 #include "common.h"
 #include "pe1/asset_table.h"
 #include "pe1/game_state.h"
-#include "pe1/pm_types.h"
+#include "pe1/pm.h"
 #include "pe1/scene_room_load.h"
 
 /* Scene startup and teardown callbacks; other handlers remain unidentified. */
@@ -209,7 +209,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneAssetBlob, directoryOffset) == 4,
 
 
 /* Opaque handler pointers; the unload path reads the prefix declared above. */
-extern PmCommand **g_PmCmdHandlerTable;
 extern void *g_FieldFxTaskPrograms[104];
 
 int CdRom_ReadAssetSectors(unsigned int kind, unsigned int index, int channel,

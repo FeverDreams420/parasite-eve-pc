@@ -6,9 +6,6 @@
 /* Process manager: 11 primary slots (0..10) and 11 secondary slots (11..21).
  * Commands 0..84 dispatch through g_PmCmdHandlerTable; commands 85..191 all
  * use handler 85, which runs field-animation task program (command - 85). */
-extern PmCommand **g_PmCmdHandlerTable;
-extern PmPrimarySlot *g_PmSlotTable;
-extern PmSecondarySlot *g_PmSlotTable2;
 
 /* The three tables are adjacent words; this record views them together.
  * Asset_LoadTimTextures stores the slot bank pointers through it and reads
@@ -21,6 +18,10 @@ typedef struct PmTables {
 } PmTables;
 
 extern PmTables g_PmTables;
+#define g_PmCmdHandlerTable (g_PmTables.handlers)
+#define g_PmSlotTable (g_PmTables.primary)
+#define g_PmSlotTable2 (g_PmTables.secondary)
+void Pm_InitScene(void);
 
 /* Task programs of commands 108..114 (g_FieldFxTaskPrograms[23..29]) are
  * read on demand from PE.IMG sectors g_SceneAssetLbaTbl[0..1] to g_PmTaskProgramBuffer. */

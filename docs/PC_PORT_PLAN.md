@@ -1169,3 +1169,21 @@ original integer return type. Full build, three related CTests and ASan/UBSan/
 function checks on game/test sources passed; PsyZ/SDL archives uninstrumented.
 Command-specific handlers remain fixtures here; full effect execution and
 Entity_FrameUpdate runtime integration are not established by this test.
+
+### Shared native PM tables and scene initialization
+
+The original three PM pointers now alias the members of one native `g_PmTables`
+record. This preserves the PS1 shared-storage relationship: initialization through
+`g_PmTables.primary/secondary` is immediately visible through `g_PmSlotTable` and
+`g_PmSlotTable2`; handler writes also share the same record. Duplicate extern
+views were removed. Original scene initialization was extracted from
+Asset_LoadTimTextures to `Pm_InitScene`, compiled in the original game target;
+the loader calls it at the same point and with unchanged flag gating.
+
+The lifecycle test initializes actual native slot banks from a synthetic scene
+record, checks all 22 header resets and the original handler-ID filtering,
+verifies flag changes, and allocates through the original `Pm_AllocSlot` to prove
+it reads those same banks. A second initialization preserves occupied slots and
+does not rerun handlers. Full build, lifecycle/pools/hierarchy CTests and game/test
+ASan/UBSan/function checks passed (PsyZ/SDL archives uninstrumented). The fixture
+registry is not the final room handler registry; scene execution remains pending.

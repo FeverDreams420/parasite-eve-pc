@@ -3,6 +3,7 @@
 #include "pe1/pm.h"
 #include "pe1/geom_state.h"
 #include "pe1/gte.h"
+#include "pe1/scene_assets.h"
 #include "pe1/render_buffers.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,10 +12,7 @@
 /* Fixture task registry; cleanup itself is the original process manager. */
 PmPrimarySlot primary[11];
 PmSecondarySlot secondary[11];
-PmPrimarySlot *g_PmSlotTable=primary;
-PmSecondarySlot *g_PmSlotTable2=secondary;
 static PmCommand *handlers[86];
-PmCommand **g_PmCmdHandlerTable=handlers;
 void *g_FieldFxTaskPrograms[104];
 static unsigned stopped;
 static int stop(PmSlotHeader *slot) { ++stopped; return 0; }
@@ -112,8 +110,53 @@ static int frame_tasks(void)
     handlers[0]=handlers[85]=NULL; g_GameStateFlags=0;
     return 0;
 }
+static unsigned initialized;
+static void init_task(void) { ++initialized; }
+static int scene_initialization(void)
+{
+    static PmSlotBanks banks;
+    struct SceneFixture {
+        SceneAssetBlob header;
+        SceneAssetDirectory directory;
+        SceneAssetRecord records[4];
+    } fixture={0};
+    fixture.header.directoryOffset=offsetof(struct SceneFixture,directory);
+    fixture.directory.entries=(4u<<22)|offsetof(struct SceneFixture,records);
+    fixture.records[0].handlerId=9;
+    fixture.records[1].handlerId=85;
+    fixture.records[2].handlerId=7;
+    fixture.records[3].handlerId=84;
+    PmCommand handler={0}; handler.init=init_task;
+    for(unsigned i=0;i<86;++i) handlers[i]=&handler;
+    memset(&banks,0xa5,sizeof(banks));
+    g_GameState.scene_process_slots=&banks;
+    g_GameState.loaded_scene_assets=(SceneAssetView *)&fixture;
+    g_GameState.flags=0x10002; g_GameStateFlags=0;
+    Pm_InitScene();
+    CHECK(g_PmSlotTable==banks.primary && g_PmSlotTable2==banks.secondary);
+    CHECK(initialized==11 && g_GameState.flags==10 && g_GameStateFlags==0x80);
+    for(unsigned i=0;i<11;++i) {
+        PmSlotHeader *slots[]={&g_PmSlotTable[i].header,&g_PmSlotTable2[i].header};
+        for(unsigned j=0;j<2;++j) {
+            CHECK(!slots[j]->state && !slots[j]->owner && !slots[j]->ticks);
+            CHECK(slots[j]->command==255 && slots[j]->field02==255 && slots[j]->field03==255);
+        }
+    }
+    CHECK(Pm_AllocSlot(0)==0 && Pm_AllocSlot(70)==11);
+    g_PmSlotTable[0].header.state=2; g_PmSlotTable2[0].header.state=2;
+    CHECK(Pm_AllocSlot(0)==1 && Pm_AllocSlot(70)==12);
+    Pm_InitScene();
+    CHECK(initialized==11 && g_PmSlotTable[0].header.state==2 && g_PmSlotTable2[0].header.state==2);
+    memset(handlers,0,sizeof(handlers));
+    g_GameState.scene_process_slots=NULL; g_GameState.loaded_scene_assets=NULL;
+    g_GameState.flags=0; g_GameStateFlags=0;
+    g_PmTables=(PmTables){handlers,primary,secondary};
+    return 0;
+}
 int main(void)
 {
+    g_PmTables=(PmTables){handlers,primary,secondary};
+    CHECK(scene_initialization()==0);
     CHECK(command_addresses()==0);
     CHECK(frame_tasks()==0);
     unsigned char *memory=malloc(16u*ENTITY_ALLOCATION_BLOCK_SIZE);

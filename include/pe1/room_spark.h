@@ -40,7 +40,7 @@ typedef struct RoomSparkChannel {
     char *pool;                   /* 0x08 */
 } RoomSparkChannel;
 
-extern struct PmPrimarySlot *g_PmSlotTable; /* running process slot (pm/process.c) */
+#include "pe1/pm.h"
 extern int rand(void);
 
 /* Heading helpers and the trail history: turn the angles towards a target,

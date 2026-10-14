@@ -63,5 +63,6 @@ int pe_scene_entity_textures(PeScene *scene,PeRoomCatalog *catalog,unsigned area
 int pe_scene_camera_select(PeScene *scene,unsigned group);
 void pe_scene_camera_clamp(PeScene *scene,uint32_t x,uint32_t y);
 int pe_scene_camera_transition_step(PeScene *scene);
+int pe_scene_focus_actor(PeScene *scene,unsigned slot,int32_t duration,int32_t mode);
 
 #endif

@@ -463,6 +463,10 @@ int main(void) {
     pe_scene_set_input(&scene,0);CHECK(scene.input.released==0x80&&!scene.input.pressed);
     CHECK(pe_scene_camera_select(&scene,0)&&(scene.actors->render_flags&0x80));
     CHECK(!pe_scene_camera_select(&scene,scene.cameras.count)&&scene.camera_group==0);
+    CHECK(scene.actors->camera_focus_height==0x180&&scene.camera_scroll.flags==0x70);
+    CHECK(!pe_scene_focus_actor(&scene,0,-1,-1)&&scene.camera_scroll.duration==30&&scene.camera_scroll.elapsed==1);
+    CHECK(!pe_scene_focus_actor(&scene,0,4,8)&&(scene.actors->render_flags&15)==11);
+    CHECK(pe_scene_focus_actor(&scene,PE_ACTOR_CAPACITY,4,8)==-1&&scene.camera_scroll.duration==4);
     PeScriptCommand camera_command={0};camera_command.opcode=130;camera_command.count=1;
     PeScriptTask camera_task={0};camera_task.program=scene.scripts;camera_task.banks=&scene.script_banks;
     CHECK(pe_scene_dispatch(&scene,&camera_task,&camera_command)==PE_DISPATCH_CONTINUE);

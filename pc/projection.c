@@ -39,6 +39,22 @@ void pe_project_triplet(const PeProjection *projection,const PeMatrix *matrix,co
         output[i]=(PeProjectedVertex){{signed_half(screen),signed_half(screen>>16)},(uint16_t)Psyz_GteDataRead(17+i),interpolation,flags};
     }
 }
+int pe_camera_focus_transition(const PeCamera *camera,PeCameraScroll *scroll,uint32_t *flags,
+                               const uint32_t position[3],int16_t focus_height,int32_t duration,int32_t mode){
+    if(!(scroll->flags&0x40))return -21;
+    uint16_t ticks=duration==-1?30:(uint16_t)duration;if(!ticks)return -1;
+    int16_t point[3]={signed_half(position[0]>>16),signed_half((position[1]>>16)-(uint16_t)focus_height),signed_half(position[2]>>16)};
+    PeProjection projection={160u<<16,112u<<16,0,camera->distance,0};PeProjectedVertex projected;
+    pe_project_point(&projection,&camera->view,point,&projected);
+    int x=signed_half(camera->width)/2-160+projected.screen[0];
+    int y=signed_half(camera->height)/2-112+projected.screen[1];
+    if(x<camera->min_x)x=camera->min_x;else if(x>camera->max_x)x=camera->max_x;
+    if(y<camera->min_y)y=camera->min_y;else if(y>camera->max_y)y=camera->max_y;
+    for(unsigned i=0;i<2;++i)scroll->start[i]=(uint16_t)scroll->position[i];
+    scroll->target[0]=(uint16_t)x;scroll->target[1]=(uint16_t)y;scroll->elapsed=1;scroll->duration=ticks;
+    *flags=mode==-1?(*flags&~UINT32_C(7))|3:(*flags&~UINT32_C(15))|((uint32_t)mode|3);
+    return 0;
+}
 int pe_model_project(const PeModel *model,const PeMatrix *view,const PeMatrix *pose,unsigned pose_count,
                      const PeProjection *projection,PeProjectedVertex *output,unsigned capacity,unsigned *written){
     if(capacity<model->vertex_count)return 0;

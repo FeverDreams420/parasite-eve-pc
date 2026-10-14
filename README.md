@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Camera transitions can now target a live actor's projected position, retaining
+original focus-height wrapping, viewport clamping, default duration and mode
+masks. Scroller enable flags remain distinct from render transition flags;
+scene startup initializes original scroll flags and focus height. All 33
+headless tests and ASan/UBSan native fixtures/full audit pass. Script scroll/wait
+commands, continuous focus and background drawing remain pending.
+
 Camera transition stepping now preserves original linear/cosine interpolation,
 halfword wrap, screen offsets and completion flags. Disabled transitions leave
 state untouched; zero duration fails safely. All 33 headless tests and

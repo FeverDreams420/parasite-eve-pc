@@ -37,5 +37,16 @@ int main(void){
     PeProjectedVertex projected_model[3]={0};
     CHECK(pe_model_project(&model,&matrix,&matrix,1,&projection,projected_model,3,&written)&&written==3);
     for(unsigned i=0;i<3;++i)CHECK(projected_model[i].flags==combined_flags&&projected_model[i].depth==singles[i].depth);
+    PeCamera camera={0};camera.view=matrix;camera.distance=200;camera.width=640;camera.height=240;
+    camera.min_x=-500;camera.max_x=500;camera.min_y=-500;camera.max_y=500;
+    PeCameraScroll scroll={0};scroll.flags=0x40;scroll.position[0]=10;scroll.position[1]=20;
+    uint32_t flags=0x40;uint32_t focus[3]={100u<<16,50u<<16,500u<<16};
+    CHECK(!pe_camera_focus_transition(&camera,&scroll,&flags,focus,50,-1,-1));
+    CHECK(scroll.start[0]==10&&scroll.start[1]==20&&scroll.target[0]==359&&scroll.target[1]==120&&scroll.duration==30&&scroll.elapsed==1&&flags==0x43);
+    flags=0x48;CHECK(!pe_camera_focus_transition(&camera,&scroll,&flags,focus,-1,4,-1)&&scroll.target[1]==140&&flags==0x4b);
+    camera.max_x=321;flags=0x40;
+    CHECK(!pe_camera_focus_transition(&camera,&scroll,&flags,focus,50,4,8)&&scroll.target[0]==321&&flags==0x4b);
+    scroll.flags=0;flags=0x40;CHECK(pe_camera_focus_transition(&camera,&scroll,&flags,focus,50,4,8)==-21&&flags==0x40);
+    scroll.flags=0x40;CHECK(pe_camera_focus_transition(&camera,&scroll,&flags,focus,50,65536,8)==-1&&flags==0x40&&scroll.duration==4);
     puts("Headless projection: reciprocal rounding, screen/depth saturation, flags and transactional model batch passed");return 0;
 }

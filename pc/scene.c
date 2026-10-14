@@ -1,4 +1,5 @@
 #include "scene.h"
+#include "projection.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -56,6 +57,7 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     pe_script_scheduler_init(next.scheduler,&next.scripts,&next.script_banks);
     next.scheduler->sequence=1;
     pe_actors_init(next.actors,next.scheduler);
+    next.actors->camera_focus_height=0x180;
     next.scheduler->dispatch=pe_scene_dispatch;next.scheduler->dispatch_user=&next;
     next.audio.room=&next.room;next.audio.resident=next.spu;next.audio.game_flags=&next.script_banks.game_flags;
     pe_scene_audio_reset(&next.audio);
@@ -171,4 +173,9 @@ void pe_scene_camera_clamp(PeScene *scene,uint32_t x,uint32_t y){
 }
 int pe_scene_camera_transition_step(PeScene *scene){
     return scene->actors?pe_camera_transition_step(&scene->camera,&scene->camera_scroll,&scene->actors->render_flags):-1;
+}
+int pe_scene_focus_actor(PeScene *scene,unsigned slot,int32_t duration,int32_t mode){
+    if(!scene->actors||slot>=PE_ACTOR_CAPACITY||!scene->actors->slots[slot].used)return -1;
+    return pe_camera_focus_transition(&scene->camera,&scene->camera_scroll,&scene->actors->render_flags,
+        scene->actors->slots[slot].position,scene->actors->camera_focus_height,duration,mode);
 }

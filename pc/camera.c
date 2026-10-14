@@ -36,7 +36,7 @@ void pe_camera_scroll_init(const PeCameraBank *bank,const PeCamera *camera,PeCam
     int x=((int)camera->min_x+camera->max_x)/2,y=((int)camera->min_y+camera->max_y)/2;
     *scroll=(PeCameraScroll){.position={(int16_t)x,(int16_t)y},.origin={(int16_t)x,(int16_t)y},
         .bounds={camera->min_x,camera->max_x,camera->min_y,camera->max_y},
-        .display={sign((uint16_t)(bank->source_x-(x-160))),sign((uint16_t)(bank->source_y-(y-112)))}};
+        .display={sign((uint16_t)(bank->source_x-(x-160))),sign((uint16_t)(bank->source_y-(y-112)))},.flags=0x70};
 }
 int pe_camera_transition_step(const PeCamera *camera,PeCameraScroll *scroll,uint32_t *flags){
     if(!(*flags&0x40))return -20;

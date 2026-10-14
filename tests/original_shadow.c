@@ -19,7 +19,6 @@ int Render_ClipPoint(int x,int y,int z);
 #include <libgpu.h>
 #include <stdio.h>
 #include <string.h>
-int g_ActiveDrawSlot;
 RenderBufferPrefix D_800B0E38;
 u32 g_EntityRenderScratch[9];
 RoomFloorY g_RoomFloorY[1];

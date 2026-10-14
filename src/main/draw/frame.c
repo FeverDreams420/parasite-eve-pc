@@ -8,6 +8,8 @@
 #include "pe1/render_packets.h"
 
 int g_ActiveDrawSlot;
+DISPENV g_RenderDispEnvArray[2];
+DRAWENV g_RenderDrawEnvArray[2];
 
 short Seq_GetElapsed(void);
 
@@ -20,12 +22,10 @@ static inline DRAWENV *DrawAddress(int index) {
 }
 
 void Draw_RenderFrame(void) {
-    RenderBufferPrefix *buffers;
     int displayFlags;
     int idx;
     int state;
     int status;
-    RenderFrameState *state_ptr;
 
     DrawSync(0);
     Menu_DrawSaveBg();
@@ -46,10 +46,8 @@ void Draw_RenderFrame(void) {
     PutDispEnv(DispAddress(idx));
 
     status = Draw_CheckDrawStatus();
-    if ((status << 24) != 0 ||
-        (state_ptr = (RenderFrameState *)&g_GameState,
-         state = state_ptr->flags,
-         (state & 0x200) != 0)) {
+    state = g_GameState.flags;
+    if ((status & 0xff) != 0 || (state & 0x200) != 0) {
         idx = g_ActiveDrawSlot;
         PutDrawEnv(DrawAddress(idx));
         g_ActiveDrawSlot = g_ActiveDrawSlot < 1U;
@@ -58,12 +56,11 @@ void Draw_RenderFrame(void) {
 draw_buffer:
     {
         int drawSlot;
-        char *orderingTable;
+        RenderNativeTag *orderingTable;
 
         drawSlot = g_ActiveDrawSlot;
-        buffers = &state_ptr->buffers;
-        orderingTable = buffers->ordering[drawSlot];
-        DrawOTagEnv(orderingTable + 0x3FFC, &g_RenderDrawEnvArray[drawSlot]);
+        orderingTable = g_GameState.shared_buffers.ordering_tables[drawSlot];
+        DrawOTagEnv(orderingTable + 4095, &g_RenderDrawEnvArray[drawSlot]);
     }
 
 done:

@@ -2476,3 +2476,29 @@ Fresh ASan/UBSan/function --gpu execution passes the lighting checks and 878-mod
 corpus (301224 packets, 2239298 visible pixels, identical draw slots). PsyZ/SDL
 are not instrumented. Full Draw_InitPipeline/Boot_FinishFrame execution remains
 unverified; runtime integration and pc/ removal remain incomplete.
+
+
+### Submit original double-buffered frames through native ordering tables
+
+The complete draw/frame.c and pm/disc_tables.c now compile in the original
+target. Draw_RenderFrame uses canonical g_GameState.shared_buffers rather than
+the removed fixed-offset RenderFrameState view. Its final OT entry is native
+entry 4095 instead of byte offset 0x3ffc. The frame module owns the active slot
+and both display/draw environments; fixtures no longer supply duplicate slots.
+The draw-status queries use normal C11 definitions and native storage. Removed
+three pointer-to-int conversions at the existing sector-read calls in the disc
+module; other initialization paths remain unverified. No new files.
+
+The GPU fixture sends a tile at OT entry 2048 through the original frame
+function for each draw slot, verifies slot switching and exact red/green pixels
+in separate VRAM regions. Full build and five tests pass with required Disc 1:
+model-gpu, model-room-gpu, entity-texture-assets, shadow and scene-spawn. Fresh
+ASan/UBSan/function --gpu execution passes, including the 878-model corpus;
+PsyZ/SDL are not instrumented.
+
+Known presentation fidelity limits: PsyZ reports VSync(n>1) as not fully
+implemented. An RGB=248 solid tile produced 15-bit channel value 30 in this
+backend; the buffer-routing test uses RGB=255 endpoints and does not establish
+intermediate color conversion fidelity. This discrepancy still needs investigation
+in our PsyZ fork. Movie/save-background branch presentation and full frame-loop
+execution are unverified. Complete game integration and pc/ removal remain open.

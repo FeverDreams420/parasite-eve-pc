@@ -3,6 +3,8 @@
 #include "pe1/gte.h"
 #include "pe1/render_lighting.h"
 #include <libgpu.h>
+#include "pe1/boot.h"
+#include "pe1/game_state.h"
 #include "room_banks.h"
 #include "model.h"
 #include "vram.h"
@@ -10,7 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-int g_ActiveDrawSlot;
 RenderLightColor g_RoomLightTint = {255,255,255};
 RenderObjectEntity g_PlayerBattleEntity;
 s32 g_IdentityMatrixSource[8] = {4096,0,4096,0,4096,0,0,0};
@@ -18,6 +19,10 @@ s16 g_RenderTexturePageDeltas[4][4];
 int g_RenderCounter[1];
 RenderVec3s g_RenderNormalTable[240];
 RenderBufferPrefix D_800B0E38;
+u8 *g_RenderBackBufferBase[1];
+extern DRAWENV g_RenderDrawEnvArray[2];
+extern DISPENV g_RenderDispEnvArray[2];
+extern int g_MenuSaveBgFadeState;
 _Static_assert(sizeof(RenderNativeTag) == sizeof(OT_TYPE), "native ordering tag");
 _Static_assert(sizeof(RenderPacket34) == sizeof(POLY_GT4), "native textured quad");
 _Static_assert(sizeof(RenderPacket28) == sizeof(POLY_GT3), "native textured triangle");
@@ -62,6 +67,35 @@ int main(int argc, char **argv)
     CHECK(&g_RenderLight1DirX==&g_RenderLightingState.matrix.m[1][0]);
     memset(&g_RenderLightingBlock,0,sizeof(g_RenderLightingBlock));
     ResetGraph(0);
+    if(gpu) {
+        RenderNativeTag ordering[2][4096];
+        TILE tile[2];
+        Pe1GameState saved=g_GameState;
+        for(unsigned slot=0;slot<2;++slot) {
+            SetDefDrawEnv(&g_RenderDrawEnvArray[slot],0,slot*240,320,224);
+            SetDefDispEnv(&g_RenderDispEnvArray[slot],0,(1-slot)*240,320,224);
+            g_RenderDrawEnvArray[slot].isbg=1;
+            g_RenderDrawEnvArray[slot].dtd=0;
+            g_GameState.shared_buffers.ordering_tables[slot]=ordering[slot];
+            ClearOTagR((OT_TYPE *)ordering[slot],4096);
+            memset(&tile[slot],0,sizeof(tile[slot]));
+            setTile(&tile[slot]);setXY0(&tile[slot],7,9);setWH(&tile[slot],11,13);
+            setRGB0(&tile[slot],slot?0:255,slot?255:0,0);
+            addPrim(&ordering[slot][2048],&tile[slot]);
+        }
+        g_MenuSaveBgFadeState=0;g_GameState.flags=0;
+        CHECK(Draw_CheckDrawStatus()==0);
+        g_ActiveDrawSlot=0;
+        for(unsigned slot=0;slot<2;++slot) {
+            Draw_RenderFrame();DrawSync(0);
+            CHECK(g_ActiveDrawSlot==(int)(1-slot));
+            RECT probe={7,9+(int)slot*240,11,13};
+            u16 pixels[11*13+1]={0};
+            StoreImage(&probe,(u_long *)pixels);DrawSync(0);
+            for(unsigned i=0;i<11*13;++i) { if((pixels[i]&0x7fff)!=(slot?0x3e0:0x1f)) fprintf(stderr,"frame slot=%u pixel=%u color=%04x expected=%04x\n",slot,i,pixels[i],slot?0x3e0:0x1f); CHECK((pixels[i]&0x7fff)==(slot?0x3e0:0x1f)); }
+        }
+        g_GameState=saved;
+    }
     if (gpu) {
         /* No VSync/PutDispEnv: the backend window stays hidden. Synthetic
          * white texture data isolates packet execution from room uploads. */

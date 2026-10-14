@@ -27,6 +27,9 @@
 #include "pe1/scene_dispatch.h"
 #include "pe1/script_queue.h"
 
+GpuDrawEnabledFlag g_DrawEnabled;
+short g_SeqElapsed;
+
 int Draw_InitDisplay(int mode) {
     int mode_reg;
     int one;
@@ -114,11 +117,11 @@ int Draw_InitDisplay(int mode) {
     return 0;
 }
 
-inline int Draw_GetDrawEnabled(void) {
+int Draw_GetDrawEnabled(void) {
     return g_DrawEnabled.value;
 }
 
-inline short Seq_GetElapsed(void) {
+short Seq_GetElapsed(void) {
     if (g_DrawEnabled.bits != 0) {
         return g_SeqElapsed;
     }
@@ -176,7 +179,7 @@ int Boot_LoadOverlayTables(void) {
 retry_first_load:
     range = g_MainAssetLbaTbl;
     do {
-        status = CdRom_ReadSectors(imageBase + range[0], 0, (int)state->scene_object_work, range[1] - range[0]);
+        status = CdRom_ReadSectors(imageBase + range[0], 0, state->scene_object_work, range[1] - range[0]);
     } while (status == -1);
     while ((status = CdRom_PollReady()) != 0) {
         if (status == -1) {
@@ -193,7 +196,7 @@ retry_first_load:
 retry_large_load_a:
         range = g_LargeTexLbaTbl;
         do {
-            status = CdRom_ReadSectors(imageBase + range[0], 0, (int)state->object_texture_blob, range[1] - range[0]);
+            status = CdRom_ReadSectors(imageBase + range[0], 0, state->object_texture_blob, range[1] - range[0]);
         } while (status == -1);
         while ((status = CdRom_PollReady()) != 0) {
             if (status == -1) {
@@ -204,7 +207,7 @@ retry_large_load_a:
 retry_large_load_b:
         range = g_SmallTexLbaTbl;
         do {
-            status = CdRom_ReadSectors(imageBase + range[0], 0, (int)state->object_texture_blob, range[1] - range[0]);
+            status = CdRom_ReadSectors(imageBase + range[0], 0, state->object_texture_blob, range[1] - range[0]);
         } while (status == -1);
         while ((status = CdRom_PollReady()) != 0) {
             if (status == -1) {

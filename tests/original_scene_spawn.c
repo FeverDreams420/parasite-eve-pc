@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-int g_ActiveDrawSlot;
 RenderLightColor g_RoomLightTint = {255,255,255};
 RenderObjectEntity g_PlayerBattleEntity;
 s32 g_IdentityMatrixSource[8] = {4096,0,4096,0,4096,0,0,0};

@@ -132,3 +132,47 @@ void Render_UpdateClutTable(RenderObjectEntity *arg0, s16 arg1, s16 arg2) {
     }
 }
 
+
+static inline int ClampLight(int value)
+{
+    if (value < 0) return 0;
+    if (value > 255) return 255;
+    return value;
+}
+
+/* Build two opposite Y lights and upload their color matrix to the GTE. */
+int Render_InitRoomPrimState(void *objectArg)
+{
+    RenderObjectEntity *object = objectArg;
+    int intensity, r, g, b;
+
+    g_RenderLightingState.matrix.m[0][0] = 0;
+    g_RenderLightingState.matrix.m[0][1] = 4096;
+    g_RenderLightingState.matrix.m[0][2] = 0;
+    intensity = object->shade + object->lightPositiveY;
+    r = g_RoomLightTint.r;
+    g = g_RoomLightTint.g;
+    b = g_RoomLightTint.b;
+    intensity = ClampLight(intensity) << 4;
+    g_RenderLightColorMatrix.matrix.m[0][0] = intensity * r / 256;
+    g_RenderLightColorMatrix.matrix.m[1][0] = intensity * g / 256;
+    g_RenderLightColorMatrix.matrix.m[2][0] = intensity * b / 256;
+
+    g_RenderLightingState.matrix.m[1][0] = 0;
+    g_RenderLightingState.matrix.m[1][1] = -4096;
+    g_RenderLightingState.matrix.m[1][2] = 0;
+    intensity = object->shade + object->lightNegativeY;
+    intensity = ClampLight(intensity) << 4;
+    g_RenderLightColorMatrix.matrix.m[0][1] = intensity * r / 256;
+    g_RenderLightColorMatrix.matrix.m[1][1] = intensity * g / 256;
+    g_RenderLightColorMatrix.matrix.m[2][1] = intensity * b / 256;
+    g_RenderLightingState.matrix.m[2][0] = 0;
+    g_RenderLightingState.matrix.m[2][1] = 0;
+    g_RenderLightingState.matrix.m[2][2] = 0;
+    g_RenderLightColorMatrix.matrix.m[0][2] = 0;
+    g_RenderLightColorMatrix.matrix.m[1][2] = 0;
+    g_RenderLightColorMatrix.matrix.m[2][2] = 0;
+    gte_SetColorMatrix(g_RenderLightColorMatrix.words);
+    return 0;
+}
+

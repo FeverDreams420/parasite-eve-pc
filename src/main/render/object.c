@@ -6,7 +6,6 @@
 #include "pe1/render_lighting.h"
 #include "pe1/render_matrix_copy.h"
 #include "pe1/render_object.h"
-#include "pe1/render_prim.h"
 #include "pe1/render_setup.h"
 #include "pe1/render_tint.h"
 
@@ -159,7 +158,8 @@ void Render_BuildEntityMatrix(RenderObjectEntity *object, s16 bufferIndex)
     }
 
 void Render_DrawObjectAlt(RenderObjectEntity *entity, s16 limit, u8 red, u8 green, u8 blue) {
-    RenderVec3s *scratch = (RenderVec3s *)0x1F800000;
+    RenderVec3s scratchStorage;
+    RenderVec3s *scratch = &scratchStorage;
     RenderMatrix *matrix;
     int i, j;
 
@@ -220,7 +220,8 @@ void Render_DrawObjectVariant(RenderObjectEntity *input, s16 limit, s32 *project
     s32 *projectMatrix = projectionMatrix;
     s16 savedLimit = limit;
     s32 changed;
-    volatile RenderVec3s *scratch = (RenderVec3s *)0x1F800000;
+    RenderVec3s scratchStorage;
+    RenderVec3s *scratch = &scratchStorage;
     u32 *projected;
     s32 *matrix;
     s32 i;
@@ -238,19 +239,20 @@ void Render_DrawObjectVariant(RenderObjectEntity *input, s16 limit, s32 *project
     s32 vertexIndex;
     s32 limitShift;
     changed = 0;
-    projected = (u32 *)0x1F800008;
+    u32 projectedStorage;
+    projected = &projectedStorage;
     if (!entity->header || !entity->draw_count)
         return;
     matrix = (s32 *)entity->matrices;
     i = 0;
     if (changed < entity->header->part_count) {
-        limitShift = limit << 16;
+        limitShift = (s32)((u32)(s32)limit << 16);
         threshold = limitShift >> 16;
         offset = 0;
         do {
             {
                 RenderObjectPart *base = entity->parts;
-                probe = (RenderObjectPart *)(offset + (u32)base);
+                probe = (RenderObjectPart *)((u8 *)base + offset);
             }
             if (probe->visible == 1) {
                 part = probe;
@@ -263,7 +265,7 @@ void Render_DrawObjectVariant(RenderObjectEntity *input, s16 limit, s32 *project
                     y = (s16)yy;
                 }
                 if (threshold < y ||
-                    (bounds = (RenderVec3s *)(boundsOffset + (u32)entity->bounds_vertices),
+                    (bounds = (RenderVec3s *)((u8 *)entity->bounds_vertices + boundsOffset),
                      radius = bounds->pad,
                      threshold < y - radius || threshold < (sum = y + radius))) {
                     scratch->y = savedLimit;
@@ -517,7 +519,6 @@ void Render_SetEntityBlendMode(RenderObjectEntity *object, int mode) {
     }
 }
 
-#define NULL ((void *)0)
 
 /* Texture-page transition deltas, indexed by old and requested page. */
 

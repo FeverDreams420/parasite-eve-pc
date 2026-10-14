@@ -868,3 +868,30 @@ entity-bank selection, and 146 models have no visible pixels with just their roo
 banks. Those models remain unverified for textured appearance, not waived. The
 actual scene/frame loop and controls still need integration before a location is
 playable.
+
+### Original actor draw entry point — 2026-10-14
+
+The native model target now compiles the remaining original `render/object.c`,
+including `Render_DrawEntity`, animation draw setup, fades and texture-page
+updates. `Render_InitRoomPrimState` moved unchanged from `camera.c` to the linked
+model lighting unit. The two height-effect routines use local scratch storage;
+`Render_DrawObjectVariant` no longer truncates part/bounds pointers to 32 bits or
+left-shifts a negative signed height. An unused legacy GPU header was removed.
+
+GPU corpus tests now call `Render_InitRoomPrimState` and `Render_DrawEntity`, the
+same actor draw entry used by `Entity_FrameUpdate`. Fixture lighting remains
+explicit (shade 64, positive/negative Y contributions 24/12, white room tint), not
+actual room/script state. Slot 0 uses ordinary lighting; slot 1 additionally runs
+both height effects at limit 32767 and must produce the same pixels. This covers
+their native pointer/scratch traversal, not clipping/tinting below that limit.
+The fixture reads the original texture-page delta table from the executable.
+
+All 878 white-texture models render (2,239,298 pixels). The instrumented room-GPU
+run retains complete VRAM equality for 9,017 uploads/414 rooms and 732 visible
+models (1,518,643 pixels), with identical draw slots. Full build and ASan/UBSan/
+function checks pass; PsyZ/SDL archives are not instrumented. Other fade/animation
+branches are compiled and linked but not yet comprehensively exercised.
+
+`Entity_FrameUpdate` still requires real battle/menu dispatch, script batches,
+actor callbacks, camera, shadows and scene-state wiring. No runtime stubs were
+introduced to hide those dependencies, and New Game is still not playable.

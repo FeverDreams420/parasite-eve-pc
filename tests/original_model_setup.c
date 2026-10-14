@@ -1,4 +1,5 @@
 #include "pe1/render_setup.h"
+#include "pe1/entity_frame_update.h"
 #include "pe1/gte.h"
 #include "pe1/render_lighting.h"
 #include <libgpu.h>
@@ -10,6 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 int g_ActiveDrawSlot;
+RenderLightingMatrix g_RenderLightingState, g_RenderLightColorMatrix;
+RenderLightColor g_RoomLightTint = {255,255,255};
+RenderObjectEntity g_PlayerBattleEntity;
+s32 g_IdentityMatrixSource[8] = {4096,0,4096,0,4096,0,0,0};
+s16 g_RenderTexturePageDeltas[4][4];
+int g_RenderCounter[1];
 RenderVec3s g_RenderNormalTable[240];
 RenderBufferPrefix D_800B0E38;
 _Static_assert(sizeof(RenderNativeTag) == sizeof(OT_TYPE), "native ordering tag");
@@ -53,6 +60,8 @@ int main(int argc, char **argv)
     CHECK(pe_disc_open(&disc,path)); CHECK(pe_room_catalog_open(&catalog,&disc));
     PeDiscFile executable;
     CHECK(pe_disc_find(&disc,"SLUS_006.62",&executable));
+    CHECK(pe_disc_read(&disc,&executable,0x921d8-0x10000+0x800,
+                       g_RenderTexturePageDeltas,sizeof(g_RenderTexturePageDeltas)));
     CHECK(pe_disc_read(&disc,&executable,0x91a58-0x10000+0x800,
                        g_RenderNormalTable,sizeof(g_RenderNormalTable)));
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
@@ -144,7 +153,19 @@ int main(int argc, char **argv)
                 ClearOTagR((OT_TYPE *)ordering,4096);
                 uintptr_t end_chain = ordering[0].address;
                 D_800B0E38.ordering[slot] = ordering;
-                Render_DrawTexturedQuads(&object);
+                if (gpu) {
+                    object.shade = 64;
+                    object.lightPositiveY = 24;
+                    object.lightNegativeY = 12;
+                    /* At this upper limit both height effects must preserve
+                     * ordinary drawing; exercise their native scratch/pointers. */
+                    object.flags_9C = slot ? 0x19 : 1;
+                    object.script_value9a = 32767;
+                    for (unsigned v=0;v<model.vertex_count;++v)
+                        CHECK(object.vertices[v].pad >= 0 && object.vertices[v].pad < 240);
+                    Render_InitRoomPrimState(&object);
+                    Render_DrawEntity(&object,&view);
+                } else Render_DrawTexturedQuads(&object);
                 uintptr_t cursor = (uintptr_t)&ordering[4095];
                 unsigned steps = 0;
                 while (cursor != end_chain) {
@@ -160,14 +181,6 @@ int main(int argc, char **argv)
                     cursor = tag->address;
                 }
                 if (gpu) {
-                    RenderLightingMatrix light = {0};
-                    light.matrix.m[0][0] = light.matrix.m[1][1] = light.matrix.m[2][2] = 4096;
-                    gte_SetColorMatrix(&light);
-                    object.shade = 64;
-                    for (unsigned v=0;v<model.vertex_count;++v)
-                        CHECK(object.vertices[v].pad >= 0 && object.vertices[v].pad < 240);
-                    Render_DrawObject(&object,&light);
-                    Render_UpdateClutTable(&object,0,slot);
                     if (room_gpu) {
                         RECT all = {0,0,1024,512};
                         LoadImage(&all,(u_long *)expected->words); DrawSync(0);

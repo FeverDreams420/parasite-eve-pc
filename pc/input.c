@@ -2,6 +2,7 @@
 void pe_input_update(PeInput *input,uint32_t held){
     uint32_t changed=input->held^held;
     input->pressed=changed&held;input->released=changed&input->held;input->held=held;
+    for(unsigned bit=0;bit<32;++bit)input->held_frames[bit]=held&(UINT32_C(1)<<bit)?input->held_frames[bit]+1:0;
 }
 static int matches(const PeInput *input,const PeInputRule *rule){
     uint32_t flags=rule->flags;

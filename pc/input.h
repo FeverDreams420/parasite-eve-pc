@@ -2,7 +2,8 @@
 #define PE_PC_INPUT_H
 #include <stddef.h>
 #include <stdint.h>
-typedef struct PeInput { uint32_t held,pressed,released; } PeInput;
+#include "script_vm.h"
+typedef struct PeInput { uint32_t held,pressed,released,held_frames[32]; } PeInput;
 void pe_input_update(PeInput *input,uint32_t held);
 typedef void (*PeInputCallback)(void *context,int *mode);
 typedef struct PeInputRule { uint32_t flags,all,any;PeInputCallback callback; } PeInputRule;
@@ -11,4 +12,5 @@ typedef struct PeInputRules { const PeInputRule *records;size_t count; } PeInput
  * a null callback stops traversal. Validate the bounded table before calls.
  * Callback mode changes do not redirect the current traversal. */
 int pe_input_rules(const PeInput *input,void *context,const PeInputRules *table,unsigned count,int *mode);
+PeScriptDispatchResult pe_input_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command);
 #endif

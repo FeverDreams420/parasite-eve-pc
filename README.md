@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Scene scripts now query held/pressed/released masks and held-frame counters
+through original opcode 17. Input maintains 32 wrapping counters and survives
+successful scene changes. Counter queries preserve the original CLZ mask
+operand writeback and high-bit exception. All 31 headless tests and ASan/UBSan
+input/VM fixtures pass. Input remapping/locks, movement callbacks and full
+tick integration remain pending.
+
 Collection now follows original direct-parent deletion: an actor is removed
 when it or its immediate parent has flag `0x10`. Its tasks and model state
 are freed while retaining its original flags, so further descendants can

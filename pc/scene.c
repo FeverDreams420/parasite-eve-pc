@@ -16,6 +16,7 @@ void pe_scene_close(PeScene *scene) {
 int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
                        char *error, size_t error_size) {
     PeScene next = {0};
+    next.input=scene->input;
     if (!pe_room_load(catalog, map, &next.room)) goto catalog_error;
     if (!pe_room_collision(&next.room, &next.collision, error, error_size)) goto failed;
     if (!pe_room_banks(&next.room, &next.banks, error, error_size)) goto failed;
@@ -83,6 +84,8 @@ failed:
 
 PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command){
     PeScene *scene=user;
+    PeScriptDispatchResult input_result=pe_input_dispatch(&scene->input,task,command);
+    if(input_result!=PE_DISPATCH_UNSUPPORTED)return input_result;
     PeScriptDispatchResult result=pe_actors_dispatch(scene->actors,task,command);
     return result==PE_DISPATCH_UNSUPPORTED?pe_scene_audio_dispatch(&scene->audio,task,command):result;
 }

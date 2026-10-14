@@ -15,6 +15,8 @@ int Scene_LoadRoom(unsigned int roomId);
 int Render_InitRoomPrimState(void *object);
 /* 14-state loader for the area entity texture bank. */
 int Scene_LoadEntityTextures(void);
+/* Base area TIM/model bank loaded before the day-specific actions. */
+int Scene_LoadEntityTexture(void);
 /* Steps the room TIM texture loader. */
 int Asset_LoadTimTextures(int force);
 

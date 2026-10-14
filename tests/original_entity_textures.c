@@ -27,6 +27,8 @@ RenderVec3s g_RenderNormalTable[240];
 RenderBufferPrefix D_800B0E38;
 
 u8 g_SceneAreaType;
+/* Controlled battle-step input for the original loading gate. */
+u8 g_AyaActionStep;
 s8 g_CurrentStoryDay[1];
 u16 g_PeImageSectorTable[64], g_PeImageSectorBoundsNext[64];
 #ifndef PE_TEST_REAL_DISC
@@ -134,6 +136,33 @@ int main(void)
     CHECK(Scene_LoadEntityTextures()==0 && g_GameState.scene_init_subphase==13);
     g_SceneAreaType=9;
     CHECK(Scene_LoadEntityTextures()==0 && g_GameState.scene_init_subphase==13);
+    /* The original row byte indexes the flattened native table, including
+     * the next group and the highest representable id. */
+    const unsigned row_ids[2][2]={{47,48},{0,255}};
+    bank.directory.bankRootEntries=(1u<<22)|offsetof(struct Bank,rows);
+    g_GameState.voice_bank_base_1400=(u8 *)&bank;
+    for(unsigned pair=0;pair<2;++pair) {
+        memset(g_GameState.bank_rows,0,sizeof(g_GameState.bank_rows));
+        for(unsigned row=0;row<2;++row)
+            bank.rows[row].source.offsetAndId=(row_ids[pair][row]<<24)|(offsetof(struct Bank,payload)+row*4);
+        g_GameState.flags=0x200000;
+        g_GameState.entity_texture_phase=6;
+        CHECK(Scene_LoadEntityTexture()==0 && g_GameState.entity_texture_phase==0);
+        CHECK(g_GameState.bank_slots[0]==&bank.payload[0]);
+        for(unsigned row=0;row<2;++row)
+            CHECK(g_GameState.bank_rows[row_ids[pair][row]/48][row_ids[pair][row]%48]==&bank.payload[row]);
+        CHECK(!(g_GameState.flags&0x200000));
+    }
+    g_GameState.flags=0x220000;
+    g_GameState.entity_texture_phase=2;
+    g_GameState.scene_load_scratch=(u8 *)&scratch;
+    poll_result=0; read_result=0; g_AyaActionStep=0;
+    CHECK(Scene_LoadEntityTexture()==1 && g_GameState.entity_texture_phase==2);
+    CHECK(!(g_GameState.flags&0x40000));
+    g_AyaActionStep=2;
+    CHECK(Scene_LoadEntityTexture()==1 && g_GameState.entity_texture_phase==5);
+    CHECK(g_GameState.flags&0x40000);
+    CHECK(Scene_LoadEntityTexture()==0 && g_GameState.entity_texture_phase==0);
     /* Only I/O outcomes are scripted; run the original TIM state machine. */
     g_GameState.loaded_scene_assets = (SceneAssetView *)&bank;
     g_GameState.scene_load_scratch = (u8 *)&scratch;
@@ -499,6 +528,55 @@ int main(void)
         g_GameState.scene_load_scratch = NULL;
         free(scratch); pe_room_blob_close(&common);
     }
+    unsigned base_banks=0, base_uploads=0;
+    for(unsigned area=10;area<=14;++area) {
+        PeRoomBlob tim_bank={0}, model_bank={0};
+        CHECK(pe_sector_bank_load(&catalog,area+3,&tim_bank));
+        CHECK(pe_sector_bank_load(&catalog,area+8,&model_bank));
+        size_t tim_bytes=(size_t)(catalog.sector_bounds[area+4]-catalog.sector_bounds[area+3])*2048;
+        size_t model_bytes=(size_t)(catalog.sector_bounds[area+9]-catalog.sector_bounds[area+8])*2048;
+        u8 *tim_buffer=malloc(tim_bytes), *model_buffer=malloc(model_bytes);
+        CHECK(tim_buffer && model_buffer);
+        memset(expected,0,sizeof(*expected));
+        LoadImage(&all,(u_long *)expected->words); DrawSync(0);
+        PeVramStats stats; char error[256];
+        CHECK(pe_blob_upload_vram(&tim_bank,expected,&stats,error,sizeof(error)));
+        base_uploads+=stats.uploads;
+        g_SceneAreaType=area;
+        g_GameState.requested_entity_bank=area;
+        g_GameState.flags=0x200000;
+        g_GameState.entity_texture_phase=0;
+        g_GameState.scene_load_scratch=tim_buffer;
+        g_GameState.voice_bank_base_1400=model_buffer;
+        CHECK(Scene_LoadEntityTexture()==1 && g_GameState.entity_texture_phase==2);
+        CHECK(!memcmp(tim_buffer,tim_bank.bytes,tim_bank.size));
+        CHECK(Scene_LoadEntityTexture()==1 && g_GameState.entity_texture_phase==5);
+        CHECK(!memcmp(model_buffer,model_bank.bytes,model_bank.size));
+        CHECK(Scene_LoadEntityTexture()==0 && g_GameState.entity_texture_phase==0);
+        CHECK(g_GameState.loaded_entity_bank==area && !(g_GameState.flags&0x1204000));
+        const u8 *roots,*rows; unsigned root_count,row_count;
+        CHECK(pe_room_blob_table(&model_bank,3,sizeof(SceneBankAssetRecord),&roots,&root_count));
+        CHECK(root_count>0);
+        CHECK(g_GameState.bank_slots[0]==model_buffer+(image_word(roots+4)&0xffffff));
+        CHECK(pe_room_blob_table(&model_bank,4,sizeof(SceneBankAssetRecord),&rows,&row_count));
+        for(unsigned row=0;row<row_count;++row) {
+            const u8 *record=rows+row*sizeof(SceneBankAssetRecord);
+            unsigned id=record[7];
+            CHECK(g_GameState.bank_rows[id/48][id%48]==model_buffer+(image_word(record+4)&0xffffff));
+        }
+        DrawSync(0); StoreImage(&all,(u_long *)actual->words); DrawSync(0);
+        CHECK(!memcmp(expected,actual,sizeof(*expected)));
+        printf("Original base entity loader area %u: %u TIM uploads, %u model/action rows, native state phases passed\n",area,stats.uploads,row_count);
+        memset(g_GameState.bank_rows,0,sizeof(g_GameState.bank_rows));
+        g_GameState.bank_slots[0]=NULL;
+        g_GameState.scene_load_scratch=NULL;
+        g_GameState.voice_bank_base_1400=NULL;
+        free(tim_buffer); free(model_buffer);
+        pe_room_blob_close(&tim_bank); pe_room_blob_close(&model_bank);
+        ++base_banks;
+    }
+    CHECK(base_banks==5);
+    printf("Original base entity loader: %u banks, %u TIM uploads with full VRAM comparison\n",base_banks,base_uploads);
     for(unsigned area=10;area<=12;area+=2) for(unsigned day=1;day<=7;++day) {
         unsigned index=(area-10)/2*8+day+0x16;
         PeRoomBlob reference={0};

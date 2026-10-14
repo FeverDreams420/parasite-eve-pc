@@ -2675,3 +2675,28 @@ instrumented; PsyZ/SDL archives are uninstrumented.
 Actual Disc 2 contents, selection of its original offset tables, replacement of
 remaining disc-notice logic and full scene/game integration remain incomplete.
 The remaining pc/ runtime still requires elimination.
+
+
+### Repair the original base entity-bank loader in place
+
+Scene_LoadEntityTexture in the complete scene/room_load.c no longer computes
+a bank-row destination by modifying the low 32 bits of a Pe1GameState pointer
+and adding id*4. The original flattened byte id now indexes native bank_rows
+by group/column, preserving its meaning with eight-byte pointers. Removed the
+unused matching-only stack reserve and stale matching comment. No new files,
+extracted routines or replacement loader.
+
+The real Disc 1 fixture executes the original read/poll/upload/bank-binding
+phases for all five base area banks (10..14), compares the loaded bytes and
+83 model/action row references to independent serialized records, and compares
+all VRAM words after 15 real TIM uploads. The existing synthetic fixture checks
+ids 0, 47, 48 and 255 across native group boundaries, root binding and the
+original Aya action-step gate before texture upload. Aya action step is a
+controlled fixture input; original battle integration is not established.
+
+Full build and four CTests pass: original entity-textures, entity-texture-assets,
+scene-spawn and actor-animation, with Disc 1 required. Fresh
+ASan/UBSan/function runs pass for both synthetic and real entity fixtures with
+original loader/archive sources instrumented. PsyZ/SDL archives remain
+uninstrumented. Full Scene_InitEntityPlayer, gameplay runtime and elimination
+of the remaining pc/ code are still incomplete.

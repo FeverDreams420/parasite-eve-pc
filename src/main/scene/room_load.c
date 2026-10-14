@@ -774,9 +774,7 @@ int CdRom_DetectDiscChange(void) {
     return 0;
 }
 
-/* Matching debt: empty barriers, one retry jump, and a
- * 32-byte unused stack reserve retain retail allocation and scheduling.
- * The shifted state view preserves the bank-row address calculation. */
+/* Load the area textures and model/action bank through the original phases. */
 int Scene_LoadEntityTexture(void)
 {
     int bank = g_SceneAreaType;
@@ -794,7 +792,6 @@ int Scene_LoadEntityTexture(void)
     u32 offsetMask;
     int index;
     int result;
-    u32 matchingStackReserve[8];
 retry:
     switch (state->entity_texture_phase) {
     case 0:
@@ -875,12 +872,10 @@ retry:
             record = firstRecord;
             do {
                 unsigned id;
-                union { Pe1GameState *state; u32 address; } destination;
                 id = record->source.bytes.id;
                 /* The row id indexes the flattened bank row table. */
-                destination.state = state;
-                destination.address = id * 4 + destination.address;
-                destination.state->bank_rows[0][0] = SceneAsset_ResolveOffset(
+                size_t columns = sizeof(state->bank_rows[0]) / sizeof(state->bank_rows[0][0]);
+                state->bank_rows[id / columns][id % columns] = SceneAsset_ResolveOffset(
                     blob, record->source.offsetAndId & offsetMask);
                 packed = directory->bankRowEntries;
                 ++i;

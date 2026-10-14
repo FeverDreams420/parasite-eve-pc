@@ -36,6 +36,7 @@ typedef struct PeActors {
     PeScriptScheduler *scheduler; /* borrowed stable scheduler */
     const PeCollision *collision;
     uint32_t render_flags;
+    int16_t camera_focus_height;
     char error[256];
 } PeActors;
 /* Fresh room only. Owner stays at a stable address while tasks borrow slots.

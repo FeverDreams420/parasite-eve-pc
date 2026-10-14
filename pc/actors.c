@@ -189,12 +189,34 @@ int pe_actor_model_world_pose(PeActor *actor){
     if(!pe_actor_model_pose(actor,&world))return 0;
     actor->render->world=world;return 1;
 }
+static uint32_t word_shift(uint32_t value,unsigned bits){
+    return value>>bits|(value&0x80000000?UINT32_MAX<<(32-bits):0);
+}
 PeScriptDispatchResult pe_actors_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command){
-    if(command->opcode!=11&&command->opcode!=12&&(command->opcode<46||command->opcode>48))return PE_DISPATCH_UNSUPPORTED;
+    if(command->opcode!=11&&command->opcode!=12&&command->opcode!=27&&command->opcode!=77&&
+       command->opcode!=78&&command->opcode!=93&&(command->opcode<46||command->opcode>48))return PE_DISPATCH_UNSUPPORTED;
     PeActors *actors=user;PeActor *actor=NULL;
     for(unsigned i=0;i<PE_ACTOR_CAPACITY;++i)
         if(actors->slots[i].used && &actors->slots[i].script==task->actor){actor=&actors->slots[i];break;}
     if(!actor||(command->opcode!=48&&!command->count))goto invalid;
+    if(command->opcode==27||command->opcode==77||command->opcode==78||command->opcode==93){
+        uint32_t value=pe_script_arg_read(task,&command->args[0]);
+        if(command->opcode==77)actor->animation_step=value;
+        else if(command->opcode==93)actor->move_factor=value;
+        else if(command->opcode==78){
+            value&=65535;if(value>actor->animation_clock.last)value=actor->animation_clock.last;
+            actor->animation_clock.frame=value<<16;
+        }else{
+            actor->move_speed=word_shift(value,4);
+            if(actors->player>=0&&actor==&actors->slots[actors->player]){
+                uint32_t scaled=(actor->move_speed*3)<<7;
+                if(scaled&0x80000000)scaled+=0xfff;
+                unsigned half=word_shift(scaled,12)&65535;
+                actors->camera_focus_height=(int16_t)(half&32768?(int)half-65536:(int)half);
+            }
+        }
+        return PE_DISPATCH_CONTINUE;
+    }
     if(command->opcode==11||command->opcode==12){
         uint32_t mode=pe_script_arg_read(task,&command->args[0]);
         if(mode>6)return PE_DISPATCH_CONTINUE;

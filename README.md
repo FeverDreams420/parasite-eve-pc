@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Actor opcodes 27/77/78/93 now set model scale, animation step, clamped frame
+position and movement factor. Player scale also updates signed-halfword camera
+focus height with original wrapped arithmetic and rounding. Opcode 78's legacy
+name suggests speed, but it selects a frame. All 31 headless tests and the
+ASan/UBSan actor fixture pass, including negative/extreme values and truncation.
+Camera integration, movement callbacks and the full frame driver remain pending.
+
 Actor opcodes 11/12 now set/get position, saved position, motion, acceleration,
 gravity, rotation and deltas. Position writes perform floor lookup and update
 the rollback base; player writes set render flag `0x80`. Rotation reads sign

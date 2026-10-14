@@ -20,6 +20,12 @@ int g_ActiveDrawSlot;
 RenderBufferPrefix D_800B0E38;
 u32 g_EntityRenderScratch[9];
 RoomFloorY g_RoomFloorY[1];
+_Static_assert(sizeof(Pe1FadeTile)==sizeof(TILE),"native game fade tile size");
+_Static_assert(offsetof(Pe1FadeTile,r)==offsetof(TILE,r0),"native game fade colour");
+_Static_assert(offsetof(Pe1FadeTile,x)==offsetof(TILE,x0),"native game fade geometry");
+_Static_assert(sizeof(Pe1FadeTpage)==sizeof(DR_TPAGE),"native game fade page size");
+_Static_assert(offsetof(Pe1FadeTpage,mode)==offsetof(DR_TPAGE,code),"native game fade page command");
+_Static_assert(sizeof(((Pe1FadeTpage *)0)->mode)==sizeof(((DR_TPAGE *)0)->code[0]),"native game fade command width");
 _Static_assert(sizeof(RenderShadowQuad)==sizeof(POLY_FT4),"native shadow packet size");
 _Static_assert(offsetof(RenderShadowQuad,xy3)==offsetof(POLY_FT4,x3),"native shadow payload");
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)

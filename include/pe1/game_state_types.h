@@ -44,10 +44,10 @@ typedef union Pe1SceneAudioState {
     } tracks;
 } Pe1SceneAudioState;
 
-/* GPU primitive tag: 24-bit next-primitive link and the word count. */
+/* Native PsyZ primitive tag; these packets are runtime state, not disc data. */
 typedef struct Pe1PrimTag {
-    Pe1U8 addr[3];
-    Pe1U8 len;
+    uintptr_t addr;
+    uintptr_t len;
 } Pe1PrimTag;
 
 /* Full-screen fade primitive pair drawn by the end-of-frame pass. */
@@ -60,7 +60,7 @@ typedef struct Pe1FadeTile {
 
 typedef struct Pe1FadeTpage {
     Pe1PrimTag tag;
-    Pe1U32 mode;
+    uintptr_t mode;
 } Pe1FadeTpage;
 
 typedef struct Pe1GameState {
@@ -144,10 +144,10 @@ typedef struct Pe1GameState {
     Pe1U32 bank_reset_958[1];
 } Pe1GameState;
 
-/* Fixed command/data layouts remain independent of host runtime pointers. */
+/* Audio records keep their fixed scalar format; GPU packets use native tags. */
 PE1_STATIC_ASSERT(sizeof(Pe1SceneAudioState) == 16, scene_audio_state_size);
-PE1_STATIC_ASSERT(sizeof(Pe1PrimTag) == 4, game_primitive_tag_size);
-PE1_STATIC_ASSERT(sizeof(Pe1FadeTile) == 16, game_fade_tile_size);
-PE1_STATIC_ASSERT(sizeof(Pe1FadeTpage) == 8, game_fade_page_size);
+PE1_STATIC_ASSERT(sizeof(Pe1PrimTag) == 2 * sizeof(uintptr_t), game_primitive_tag_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1FadeTile, r) == sizeof(Pe1PrimTag), game_fade_tile_size);
+PE1_STATIC_ASSERT(sizeof(Pe1FadeTpage) == 3 * sizeof(uintptr_t), game_fade_page_size);
 
 #endif

@@ -68,6 +68,13 @@ static int game_state_reset(void)
     if (!(g_GameState.scene_init_phase == 0x20)) { fprintf(stderr, "game-state reset check 18 failed\n"); ok = 0; }
     if (!(g_GameState.track_volumes[0] == 0x7f)) { fprintf(stderr, "game-state reset check 19 failed\n"); ok = 0; }
     if (!(g_GameState.track_volumes[1] == 0x7f)) { fprintf(stderr, "game-state reset check 20 failed\n"); ok = 0; }
+    if (g_GameState.fade_tile.tag.len != 3 || g_GameState.fade_tpage.tag.len != 1 ||
+        g_GameState.fade_tpage.mode != 0xe1000440u || g_GameState.fade_tile.code != 0x62 ||
+        g_GameState.fade_tile.r != 32 || g_GameState.fade_tile.g != 32 ||
+        g_GameState.fade_tile.b != 32 || g_GameState.fade_tile.x || g_GameState.fade_tile.y ||
+        g_GameState.fade_tile.w != 320 || g_GameState.fade_tile.h != 224) {
+        fprintf(stderr, "game-state fade packet initialization failed\n"); ok = 0;
+    }
     g_GameState = saved;
     return ok;
 }

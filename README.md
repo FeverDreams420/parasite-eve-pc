@@ -442,5 +442,12 @@ audio and reports actor opcode 170 at `0xac`. These expected diagnostics expose
 unfinished scene integration. Missing-key tests re-decode modified literal
 operands before dispatch. All 21 tests pass headless with Disc 1; this scene
 audit also passes ASan/UBSan. No full scene/gameplay completion is claimed.
+
+Actor opcodes 170/171 now set/clear game-state flag `0x2000`, using a separate
+native word from script global flags (81–83). Scene audio can bind this shared
+game-state word instead of keeping a separate copy. Tests verify preservation
+of unrelated flags and the reset→set sequence from the real New Game script,
+which now reaches unsupported opcode 136 at `0xb4`. All 21 headless tests pass
+with Disc 1; VM and scene/audio data tests also pass ASan/UBSan.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

@@ -11,6 +11,7 @@ typedef struct PeSceneAudio {
     int keys[2][2], banks[2];
     unsigned volumes[2];
     uint32_t flags;
+    uint32_t *game_flags; /* optional shared g_GameState.flags; otherwise flags */
 } PeSceneAudio;
 void pe_scene_audio_reset(PeSceneAudio *audio);
 /* Decoded actor opcode 234. Unsupported commands preserve audio state. */

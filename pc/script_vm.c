@@ -138,6 +138,7 @@ PeScriptStep pe_script_task_tick(PeScriptTask *task, unsigned instruction_limit)
         case 9: required = 4; break;
         case 1: case 30: case 32: case 50: case 55: case 57: case 63: case 64:
         case 65: case 66: case 76: case 79: case 80: required = 0; break;
+        case 170: case 171: required = 0; break;
         default:
             if (task->dispatch) {
                 PeScriptDispatchResult status = task->dispatch(task->dispatch_user, task, &command);
@@ -219,6 +220,8 @@ PeScriptStep pe_script_task_tick(PeScriptTask *task, unsigned instruction_limit)
         case 81: pe_script_arg_write(task, &command.args[1], (task->banks->scene_flags & args[0]) != 0); break;
         case 82: task->banks->scene_flags |= args[0]; break;
         case 83: task->banks->scene_flags &= ~args[0]; break;
+        case 170: task->banks->game_flags |= 0x2000; break;
+        case 171: task->banks->game_flags &= ~UINT32_C(0x2000); break;
         }
         task->pc = next;
         ++task->instructions;

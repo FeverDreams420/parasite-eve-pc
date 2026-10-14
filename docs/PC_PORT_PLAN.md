@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Opcodes 170/171 ustawiają/czyszczą `0x2000` w osobnym natywnym `game_flags` odpowiadającym `g_GameState.flags`, a nie globalnym flagom skryptowym 81–83. Audio może wiązać ten wspólny stan. Test VM sprawdza zachowanie pozostałych bitów i oddzielenie obu pól; rzeczywisty New Game wykonuje reset→set i dochodzi do brakującego opcode 136 przy `0xb4`. 21 testów headless z Disc 1 przechodzi; VM i audyt scen/audio przechodzą ASan/UBSan.
+
 Test wykonuje teraz rzeczywiste początkowe ticki tasków Tutorial/New Game z dispatch audio. Tutorial uruchamia muzykę i zatrzymuje się na audio CD przy `0x19a0`; New Game resetuje audio i zatrzymuje się na actor opcode 170 przy `0xac`. To jawne dowody braków integracji scen, nie poprawnego przejścia gameplay. Test brakującego klucza ponownie dekoduje zmieniony literal przed dispatch. 21 testów headless z Disc 1 i ASan/UBSan audytu scen przechodzi.
 
 Dispatch audio obsługuje świeży start głównego banku C8 z rzeczywistej komendy Tutorial M353: klucz rekordu, własne dane muzyki, wynik ID banku zapisany przez operand oraz slot/volume/flags. Powtórzenie już grającego klucza zachowuje player i wynik; nieobecny klucz jest oryginalnym no-op. Test sprawdza rzeczywiste dekodowane operandy. Restart cached/secondary banków i kolejność kolejki przy tym samym ID pozostają jawnie nieobsługiwane; pełna pętla scen i synteza nadal wymagają implementacji.

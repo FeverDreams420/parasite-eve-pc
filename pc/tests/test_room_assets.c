@@ -423,18 +423,20 @@ int main(void) {
     PeSceneAudio audio = {0};
     audio.music[0] = owned_music;
     CHECK(owned_music->player.active);
-    audio.flags = 0x1234ffff;
+    audio.game_flags = &scene.script_banks.game_flags;
+    *audio.game_flags = 0x1234dfff;
     for (unsigned slot = 0; slot < 2; ++slot) {
         audio.keys[slot][0] = 10; audio.keys[slot][1] = 20; audio.banks[slot] = 30;
     }
     PeScriptCommand other_command = scene_command; other_command.opcode = 233;
     CHECK(pe_scene_audio_dispatch(&audio, &reset_task, &other_command) == PE_DISPATCH_UNSUPPORTED);
-    CHECK(audio.flags == 0x1234ffff && audio.keys[0][0] == 10);
+    CHECK(*audio.game_flags == 0x1234dfff && audio.keys[0][0] == 10);
     reset_task.dispatch = pe_scene_audio_dispatch; reset_task.dispatch_user = &audio;
     CHECK(pe_script_task_tick(&reset_task, 4096) == PE_SCRIPT_ERROR);
     CHECK(strstr(reset_task.error, "Unimplemented script opcode"));
     printf("New Game script after native audio reset: %s\n", reset_task.error);
-    CHECK(audio.flags == 0x1234ff0f);
+    CHECK(scene.script_banks.game_flags & 0x2000);
+    CHECK(*audio.game_flags == 0x1234ff0f);
     for (unsigned slot = 0; slot < 2; ++slot)
         CHECK(audio.keys[slot][0] == -1 && audio.keys[slot][1] == -1 && audio.banks[slot] == -1);
     CHECK(owned_music->player.key_off_pending == 0xffffff);

@@ -1,12 +1,16 @@
 #include "scene_audio.h"
 
+static uint32_t *audio_flags(PeSceneAudio *audio) {
+    return audio->game_flags ? audio->game_flags : &audio->flags;
+}
+
 void pe_scene_audio_reset(PeSceneAudio *audio) {
     for (unsigned slot = 0; slot < 2; ++slot) {
         audio->keys[slot][0] = audio->keys[slot][1] = -1;
         audio->banks[slot] = -1;
         if (audio->music[slot]) pe_akao_player_release(&audio->music[slot]->player);
     }
-    audio->flags &= ~UINT32_C(0xf0);
+    *audio_flags(audio) &= ~UINT32_C(0xf0);
 }
 
 PeScriptDispatchResult pe_scene_audio_dispatch(void *user, PeScriptTask *task,
@@ -20,7 +24,7 @@ PeScriptDispatchResult pe_scene_audio_dispatch(void *user, PeScriptTask *task,
         unsigned key = pe_script_arg_read(task, &command->args[1]);
         for (unsigned slot = 0; slot < 2; ++slot) {
             if (audio->keys[slot][0] != (int)key) continue;
-            if (audio->flags & (0x40u << slot)) return PE_DISPATCH_CONTINUE;
+            if (*audio_flags(audio) & (0x40u << slot)) return PE_DISPATCH_CONTINUE;
             /* Cached/secondary-bank restarting requires its own implementation. */
             return PE_DISPATCH_UNSUPPORTED;
         }
@@ -49,7 +53,7 @@ PeScriptDispatchResult pe_scene_audio_dispatch(void *user, PeScriptTask *task,
         audio->keys[0][1] = player->bank_id;
         audio->banks[0] = audio->music[0]->bank;
         audio->volumes[0] = 0x7f;
-        audio->flags |= 0x40;
+        *audio_flags(audio) |= 0x40;
         pe_script_arg_write(task, &command->args[5], player->bank_id);
         return PE_DISPATCH_CONTINUE;
     }

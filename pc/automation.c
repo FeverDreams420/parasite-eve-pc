@@ -133,7 +133,11 @@ void pe_runtime_emit(const char *event, int64_t value) {
                     SDL_Event input;
                     SDL_zero(input);
                     input.type = step->close ? SDL_EVENT_QUIT : SDL_EVENT_KEY_DOWN;
-                    if (!step->close) input.key.key = step->key;
+                    if (!step->close) {
+                        input.key.key = step->key;
+                        input.key.scancode = SDL_GetScancodeFromKey(step->key, &input.key.mod);
+                        input.key.down = true;
+                    }
                     if (!SDL_PushEvent(&input)) fail("Cannot inject replay input");
                 }
             }

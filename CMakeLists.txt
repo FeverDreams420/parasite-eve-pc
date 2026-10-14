@@ -257,7 +257,7 @@ if(BUILD_TESTING)
 endif()
 
 add_library(parasite-eve-original-actor-animation OBJECT
-    src/main/entity/animation.c src/main/scene/actor_sound.c src/main/scene/player_input.c src/main/psyq/libgte/mtx_004.c src/main/scene/pad_input.c src/main/menu/widget_lookup.c)
+    src/main/entity/animation.c src/main/scene/actor_sound.c src/main/scene/player_input.c src/main/psyq/libgte/mtx_004.c)
 target_include_directories(parasite-eve-original-actor-animation PRIVATE include)
 if(BUILD_TESTING)
     add_executable(test-original-actor-animation tests/original_actor_animation.c pc/disc.c
@@ -299,3 +299,16 @@ endif()
 
 add_library(parasite-eve-original-player-rules OBJECT src/main/scene/player_input_rules.c)
 target_include_directories(parasite-eve-original-player-rules PRIVATE include)
+
+add_library(parasite-eve-original-pad OBJECT src/main/scene/pad_input.c src/main/menu/widget_lookup.c pc/host_pad.c)
+target_include_directories(parasite-eve-original-pad PRIVATE include pc)
+target_link_libraries(parasite-eve-original-pad PRIVATE psyz)
+foreach(pad_target IN LISTS akao_runtime_targets)
+    target_sources(${pad_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-pad>)
+    if(NOT pad_target STREQUAL "parasite-eve-pc")
+        target_sources(${pad_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
+    endif()
+endforeach()
+if(BUILD_TESTING)
+    target_sources(test-original-actor-animation PRIVATE $<TARGET_OBJECTS:parasite-eve-original-pad>)
+endif()

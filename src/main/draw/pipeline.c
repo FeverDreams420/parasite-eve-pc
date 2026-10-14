@@ -19,7 +19,7 @@
  * addresses; only its COMMON words below are gp-relative. */
 
 u32 g_GlobalFrameCounter[1];
-int g_SceneDispatchToken;
+
 
 #define W(sym) (*(s32 *)(sym))
 #define H(sym) (*(s16 *)(sym))

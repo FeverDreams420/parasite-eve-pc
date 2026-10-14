@@ -1,3 +1,5 @@
+#include "host_pad.h"
+#include "pe1/pad_state.h"
 #include "title.h"
 #include "automation.h"
 #include "room.h"
@@ -147,6 +149,8 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
     int reported_prompt = -1, reported_selection = -1;
     int audio_reported = 1;
     uint64_t leaving_at = 0;
+    pe_host_pad_reset();
+    Boot_BuildRenderFlagTable();
     printf("boot: main menu ready\n");
     fflush(stdout);
     for (;;) {
@@ -157,6 +161,7 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
         if (leaving_at && SDL_GetTicks() >= leaving_at) goto cleanup;
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
+            pe_host_pad_event(&event);
             if (event.type == SDL_EVENT_QUIT) { result = 0; goto cleanup; }
             if (leaving_at) continue;
             if (event.type != SDL_EVENT_KEY_DOWN || event.key.repeat) continue;
@@ -186,6 +191,7 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
                 prompt = 1;
             }
         }
+        Field_HandleStateTransition();
         /* Run the original 240 Hz timer on the main thread; SDL only consumes
          * PCM, so input and sequence state cannot race an audio callback. */
         uint64_t target_tick = (SDL_GetTicks() - start) * 240 / 1000 + 4;

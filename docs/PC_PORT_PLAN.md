@@ -1025,3 +1025,28 @@ edges, disconnect/reconnect and register edge cases. All 50 executable rule slot
 still match. Full build, five targeted input/movement/camera CTests and game/test
 ASan/UBSan/function checks pass (PsyZ uninstrumented; standalone SDK suite not run).
 These are injected packets, not evidence of live SDL controls or a playable scene.
+
+### SDL keyboard packet input — 2026-10-14
+
+Added host-only SDL keyboard packet production in pc/host_pad.c. It maintains
+per-scancode held state, so releasing W while Up is still held does not release
+the shared PS1 button. Focus loss/quit clears all held state; events while
+unfocused are ignored, and focus regain cannot resurrect stale presses. It
+publishes a ready digital packet and centered axes, leaving game remapping,
+thresholds and movement to the original code. Current bindings are arrows/WASD,
+Shift/Z (Circle), X/Space (Cross), C (Triangle), V (Square), Enter/Escape (Start),
+Tab (Select), Q/E (L1/R1). Gamepad devices and configurable mappings remain pending.
+
+The runtime title event loop feeds this packet and runs original pad sampling;
+its existing title controls/audio remain in place. The pad units now have their
+own object target shared by main and boot/input tests. Replay keydown injection
+also supplies scancode/modifier/down fields, matching the input boundary.
+
+The integrated movement test initializes SDL events only, pushes real SDL events
+through its queue, and reaches original walk/run/release position updates without
+a window. Shared-key aliases and focus loss/regain pass. Full build, original
+actor/input-assets tests, menu-audio replay CTest, and game/test ASan/UBSan/function
+checks pass; SDL/PsyZ archives uninstrumented. The actual main executable also
+passed the headless menu-audio replay before the scancode injection refinement;
+the boot replay CTest passed after it. This is input wiring and regression
+coverage, not a playable location or end-to-end scene evidence.

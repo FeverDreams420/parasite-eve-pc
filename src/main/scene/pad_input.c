@@ -6,6 +6,7 @@
 #include "pe1/scene_dispatch.h"
 
 PadPacket g_PadPackets[2];
+int g_SceneDispatchToken;
 s32 g_FieldRenderFlagTable[32];
 u32 g_FieldPadHeldFrameCounts[32];
 u32 g_PadComboSequence[9] = {0x10000000,0x20000000,0x40000000,0x40,8,0x10,0x20,2,4};

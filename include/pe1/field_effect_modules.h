@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "pe1/fieldfx_state.h"
+#include "pe1/pm_types.h"
 #include "pe1/gte_types.h"
 
 /* The eight field effect modules the descriptor table at 0x80094188 lists
@@ -30,6 +31,7 @@ extern void *g_FieldEffectAssetTable;
 void *FieldFx_GetEffectResource(int index);
 
 /* Glow effect (fieldfx/glow.c). */
+extern PmCommand g_GlowEffectClass;
 extern int g_GlowEffectScript[];
 extern FieldFxHandler g_GlowEffectInitList[];
 extern FieldFxHandler g_GlowEffectDrawList[];
@@ -41,15 +43,16 @@ extern GteShortVector g_GlowEffectHaloOffsets[];
 extern GteShortVector g_GlowEffectPointOffset;
 extern GteShortVector g_GlowEffectSpriteRotation;
 extern struct FieldActor *g_GlowEffectOwner;
-int GlowEffect_ClassNop0(void);
-int GlowEffect_PlantScript(char *object);
-int GlowEffect_Spawn6(intptr_t a, int b, int c, int d, int e, int f);
-int GlowEffect_RegisterDrawList(void *object);
-int GlowEffect_RegisterPairedTables(void *object);
-int GlowEffect_CloseTarget(char *object);
-int GlowEffect_ClassNop6(void);
+void GlowEffect_ClassNop0(void);
+void GlowEffect_PlantScript(PmSlotHeader *object);
+int GlowEffect_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int GlowEffect_RegisterDrawList(PmSlotHeader *object);
+int GlowEffect_RegisterPairedTables(PmSlotHeader *object);
+int GlowEffect_CloseTarget(PmSlotHeader *object);
+void GlowEffect_ClassNop6(void);
 
 /* Second glow effect (fieldfx/glow.c). */
+extern PmCommand g_GlowEffectBClass;
 extern int g_GlowEffectBScript[];
 extern FieldFxHandler g_GlowEffectBInitList[];
 extern FieldFxHandler g_GlowEffectBDrawList[];
@@ -59,15 +62,16 @@ extern s16 g_GlowEffectBScaleByAction[];
 extern GteShortVector g_GlowEffectBFlareOffsets[];
 extern GteShortVector g_GlowEffectBPointOffset;
 extern struct FieldActor *g_GlowEffectBOwner;
-int GlowEffectB_ClassNop0(void);
-int GlowEffectB_PlantScript(char *object);
-int GlowEffectB_Spawn6(intptr_t a, int b, int c, int d, int e, int f);
-int GlowEffectB_RegisterDrawList(void *object);
-int GlowEffectB_RegisterPairedTables(void *object);
-int GlowEffectB_CloseTarget(char *object);
-int GlowEffectB_ClassNop6(void);
+void GlowEffectB_ClassNop0(void);
+void GlowEffectB_PlantScript(PmSlotHeader *object);
+int GlowEffectB_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int GlowEffectB_RegisterDrawList(PmSlotHeader *object);
+int GlowEffectB_RegisterPairedTables(PmSlotHeader *object);
+int GlowEffectB_CloseTarget(PmSlotHeader *object);
+void GlowEffectB_ClassNop6(void);
 
 /* Third glow effect (fieldfx/glow.c). */
+extern PmCommand g_GlowEffectCClass;
 extern int g_GlowEffectCScript[];
 extern FieldFxHandler g_GlowEffectCInitList[];
 extern FieldFxHandler g_GlowEffectCDrawList[];
@@ -76,15 +80,16 @@ extern u16 g_GlowEffectCSlotSizes[];
 extern s16 g_GlowEffectCScaleByAction[];
 extern GteShortVector g_GlowEffectCFlareOffsets[];
 extern struct FieldActor *g_GlowEffectCOwner;
-int GlowEffectC_ClassNop0(void);
-int GlowEffectC_PlantScript(char *object);
-int GlowEffectC_Spawn6(intptr_t a, int b, int c, int d, int e, int f);
-int GlowEffectC_RegisterDrawList(void *object);
-int GlowEffectC_RegisterPairedTables(void *object);
-int GlowEffectC_CloseTarget(char *object);
-int GlowEffectC_ClassNop6(void);
+void GlowEffectC_ClassNop0(void);
+void GlowEffectC_PlantScript(PmSlotHeader *object);
+int GlowEffectC_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int GlowEffectC_RegisterDrawList(PmSlotHeader *object);
+int GlowEffectC_RegisterPairedTables(PmSlotHeader *object);
+int GlowEffectC_CloseTarget(PmSlotHeader *object);
+void GlowEffectC_ClassNop6(void);
 
 /* Four-layer glow effect (fieldfx/glow.c). */
+extern PmCommand g_FourLayerGlowClass;
 extern int g_FourLayerGlowScript[];
 extern FieldFxHandler g_FourLayerGlowInitList[];
 extern FieldFxHandler g_FourLayerGlowDrawList[];
@@ -97,13 +102,13 @@ extern GteShortVector g_FourLayerGlowPointOffsetA;
 extern GteShortVector g_FourLayerGlowPointOffsetB;
 extern GteShortVector g_FourLayerGlowSpriteRotation;
 extern struct FieldActor *g_FourLayerGlowOwner;
-int FourLayerGlow_ClassNop0(void);
-int FourLayerGlow_PlantScript(char *object);
-int FourLayerGlow_Spawn6(intptr_t a, int b, int c, int d, int e, int f);
-int FourLayerGlow_RegisterDrawList(void *object);
-int FourLayerGlow_RegisterPairedTables(void *object);
-int FourLayerGlow_CloseTarget(char *object);
-int FourLayerGlow_ClassNop6(void);
+void FourLayerGlow_ClassNop0(void);
+void FourLayerGlow_PlantScript(PmSlotHeader *object);
+int FourLayerGlow_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int FourLayerGlow_RegisterDrawList(PmSlotHeader *object);
+int FourLayerGlow_RegisterPairedTables(PmSlotHeader *object);
+int FourLayerGlow_CloseTarget(PmSlotHeader *object);
+void FourLayerGlow_ClassNop6(void);
 
 /* Point sprite effect (fieldfx/burst.c). */
 extern u8 g_PointSpriteScript[];

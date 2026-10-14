@@ -1020,14 +1020,9 @@ static int native_object_script_cycle(void)
 
 static int authored_glow_script_cycle(void)
 {
-    FieldFxHandler *inits[]={g_GlowEffectInitList,g_GlowEffectBInitList,g_GlowEffectCInitList,g_FourLayerGlowInitList};
-    FieldFxHandler *draws[]={g_GlowEffectDrawList,g_GlowEffectBDrawList,g_GlowEffectCDrawList,g_FourLayerGlowDrawList};
-    FieldFxHandler *updates[]={g_GlowEffectUpdateList,g_GlowEffectBUpdateList,g_GlowEffectCUpdateList,g_FourLayerGlowUpdateList};
-    u16 *sizes[]={g_GlowEffectSlotSizes,g_GlowEffectBSlotSizes,g_GlowEffectCSlotSizes,g_FourLayerGlowSlotSizes};
-    int (*plant[])(char *)={GlowEffect_PlantScript,GlowEffectB_PlantScript,GlowEffectC_PlantScript,FourLayerGlow_PlantScript};
-    int (*spawn[])(intptr_t,int,int,int,int,int)={GlowEffect_Spawn6,GlowEffectB_Spawn6,GlowEffectC_Spawn6,FourLayerGlow_Spawn6};
+    PmCommand *classes[]={&g_GlowEffectClass,&g_GlowEffectBClass,&g_GlowEffectCClass,&g_FourLayerGlowClass};
     for(unsigned variant=0;variant<4;++variant) for(unsigned player_action=1;player_action<=7;++player_action) {
-    struct { FieldFxObject object; u8 guard[16]; } buffer={0};
+    struct { PmPrimarySlot primary[11]; u8 guard[16]; } buffer={0};
     RenderMatrix matrices[20]={0};
     FieldActor owner={0}; BattleEntity player={0}, *saved_player=D_8009D254;
     Combatant core={0}; BattleAction action={0};
@@ -1038,7 +1033,7 @@ static int authored_glow_script_cycle(void)
     owner.render_object.matrices=matrices;
     player.core=&core; core.action=&action; action.actionCode.actionId=player_action;
     D_8009D254=&player;
-    FieldFxObject *object=&buffer.object;
+    FieldFxObject *object=&buffer.primary[0].effect;
     object->prefix.asset_type=7; object->prefix.actor=&owner;
     memset(buffer.guard,0xa5,sizeof(buffer.guard));
     RenderBufferPrefix saved=D_800B0E38;
@@ -1051,45 +1046,54 @@ static int authored_glow_script_cycle(void)
     Psyz_GteCtrlWrite(26,256); Psyz_GteCtrlWrite(29,1365); Psyz_GteCtrlWrite(30,1024);
     gte_SetGeomOffset(160,120);
     g_FieldFxLoadedTexturePage=0;
-    unsigned seen=0, ended=0, drawn=0;
-    plant[variant]((char *)object);
-    spawn[variant]((intptr_t)object,0,0,1,0x1234,0x5678);
+    PmTables previous=g_PmTables;
+    PmCommand *handlers[86]={0}; handlers[7]=classes[variant];
+    g_PmTables=(PmTables){handlers,buffer.primary,NULL};
+    buffer.primary[0].header.state=1;
+    classes[variant]->init();
+    classes[variant]->initialize(&buffer.primary[0].header);
+    unsigned seen=0, drawn=0;
+    if(Pm_SendCmd(0,0,0,1,0x1234,0x5678)) return 0;
     for(unsigned frame=0;frame<160;++frame) {
         unsigned slot=frame&1;
         for(unsigned i=0;i<4096;++i) { ordering[i].address=0xffffff; ordering[i].length=0; }
         D_800B0E38.ordering[slot]=ordering; D_800B0E38.packets[slot]=(char *)packets;
         g_ActiveDrawSlot=slot; g_DrawPacketOffset=0;
-        FieldFx_UpdateSlots(object,updates[variant]);
-        if(frame==20) object->state.vars[0]=1;
-        if(frame==40) object->state.vars[0]=2;
-        if(!ended && FieldFx_RunScript(object,inits[variant],sizes[variant])==-1) ended=1;
+        if(frame==20 && Pm_SendCmd(0,0,0,1,0,0)) return 0;
+        if(frame==40 && Pm_SendCmd(0,0,0,2,0,0)) return 0;
+        if(Pm_Start(0) || Pm_Exec(0)) return 0;
         for(unsigned i=0;i<64;++i) if(object->slots[i].flag==1) seen|=1u<<object->slots[i].handler_id;
-        FieldFx_Register(object,draws[variant]);
         if(g_DrawPacketOffset) ++drawn;
         if(g_DrawPacketOffset>sizeof(packets)) return 0;
         for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
     }
-    if(seen!=(unsigned[]){0x3f,0xf,0x7,0x3f}[variant] || !object->state.halted || object->state.slot_count || !drawn) {
+    if(seen!=(unsigned[]){0x3f,0xf,0x7,0x3f}[variant] || !object->state.halted || object->state.slot_count || !drawn || buffer.primary[0].header.state || buffer.primary[0].header.owner) {
         fprintf(stderr,"authored glow handlers %x halted %d slots %d drawn %u\n",seen,object->state.halted,object->state.slot_count,drawn); return 0;
     }
+    buffer.primary[0].header=(PmSlotHeader){.state=1,.command=7,.owner=&owner};
+    classes[variant]->initialize(&buffer.primary[0].header);
+    if(Pm_SendCmd(0,0,0,1,0,0) || Pm_Exec(0) || !object->state.slot_count) return 0;
+    if(Pm_Stop(0,&player,0) || buffer.primary[0].header.state!=2) return 0;
+    if(Pm_Stop(0,&owner,0) || buffer.primary[0].header.state || buffer.primary[0].header.owner) return 0;
+    classes[variant]->unload(); g_PmTables=previous;
     D_8009D254=saved_player; D_800B0E38=saved;
     g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset; g_GeomScroll.words.viewMatrix=saved_view;
     }
-    puts("Original authored glows: four real table/script sets, seven actions, 160 ticks per cycle and completion passed");
+    puts("Original authored glows: four native PM class/script sets, seven actions, send/start/exec/close/release passed");
     return 1;
 }
 
 static int native_effect_spawn_arguments(void)
 {
     struct { FieldFxObject object; u8 guard[16]; } buffer;
-    int (*spawn[])(intptr_t,int,int,int,int,int)={GlowEffect_Spawn6,GlowEffectB_Spawn6,
+    PmSendCallback spawn[]={GlowEffect_Spawn6,GlowEffectB_Spawn6,
         GlowEffectC_Spawn6,FourLayerGlow_Spawn6};
     for(unsigned method=0;method<4;++method) for(unsigned index=0;index<9;++index) {
         memset(&buffer,0xa5,sizeof(buffer));
         FieldFxState expected=buffer.object.state;
         int value=index&1?INT_MIN:INT_MAX;
         expected.vars[index]=value;
-        if(spawn[method]((intptr_t)&buffer.object,0x1234,index,value,0x5678,0x9abc) ||
+        if(spawn[method]((PmSlotHeader *)&buffer.object,0x1234,index,value,0x5678,0x9abc) ||
            memcmp(&expected,&buffer.object.state,sizeof(expected)) ||
            g_FieldFxScriptState!=&buffer.object.state) return 0;
         for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;

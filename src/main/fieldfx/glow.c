@@ -34,10 +34,10 @@ FieldGlowSprite g_GlowEffectBSprite0, g_GlowEffectBSprite1, g_GlowEffectBSprite2
 FieldGlowSprite g_GlowEffectCSprite0, g_GlowEffectCSprite1;
 FieldGlowSprite g_FourLayerGlowSprite0, g_FourLayerGlowSprite1, g_FourLayerGlowSprite2, g_FourLayerGlowSprite3;
 
-int GlowEffect_PlantScript(char *object) {
+void GlowEffect_PlantScript(PmSlotHeader *object) {
     void **slot;
 
-    slot = FieldFx_GetSlot(object);
+    slot = FieldFx_GetSlot((FieldFxObject *)object);
     *slot = &g_GlowEffectScript;
 
     g_GlowEffectSprite0.cell = 0xBD;
@@ -76,40 +76,36 @@ int GlowEffect_PlantScript(char *object) {
     g_GlowEffectSprite3.b = 0x80;
     g_GlowEffectSprite3.flip = 0;
 
-    return 0;
+
 }
 
-int GlowEffect_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
-    FieldFx_Spawn6(a, b, c, d, e, f);
+int GlowEffect_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)a, b, c, (int)d, (int)e, (int)f);
     return 0;
 }
-int GlowEffect_RegisterDrawList(void *o) {
-    FieldFx_Register(o, g_GlowEffectDrawList);
+int GlowEffect_RegisterDrawList(PmSlotHeader *o) {
+    FieldFx_Register((FieldFxObject *)o, g_GlowEffectDrawList);
     return 0;
 }
-int GlowEffect_RegisterPairedTables(void *obj) {
+int GlowEffect_RegisterPairedTables(PmSlotHeader *obj) {
     int first;
     int second;
     int status;
 
-    first = FieldFx_UpdateSlots(obj, g_GlowEffectUpdateList);
-    second = FieldFx_RunScript(obj, g_GlowEffectInitList, g_GlowEffectSlotSizes);
+    first = FieldFx_UpdateSlots((FieldFxObject *)obj, g_GlowEffectUpdateList);
+    second = FieldFx_RunScript((FieldFxObject *)obj, g_GlowEffectInitList, g_GlowEffectSlotSizes);
     status = first | second;
     if (status == -1) {
         GlowEffect_CloseTarget(obj);
     }
     return 0;
 }
-int GlowEffect_CloseTarget(char *arg0) {
-    *arg0 = 4;
+int GlowEffect_CloseTarget(PmSlotHeader *arg0) {
+    arg0->state = 4;
     return 0;
 }
-int GlowEffect_ClassNop6(void) {
-    return 0;
-}
-int GlowEffect_ClassNop0(void) {
-    return 0;
-}
+void GlowEffect_ClassNop6(void) {}
+void GlowEffect_ClassNop0(void) {}
 
 int GlowEffect_InitOwner(void *argument0, void *argument1, void *argument2) {
     FieldFxObjectPrefix * obj=argument0;
@@ -494,10 +490,10 @@ int GlowEffect_UpdateHaloGlow(void *argument0, void *argument1, void *argument2)
     return 0;
 }
 
-int GlowEffectB_PlantScript(char *object) {
+void GlowEffectB_PlantScript(PmSlotHeader *object) {
     void **slot;
 
-    slot = FieldFx_GetSlot(object);
+    slot = FieldFx_GetSlot((FieldFxObject *)object);
     *slot = &g_GlowEffectBScript;
 
     g_GlowEffectBSprite0.cell = 0xBD;
@@ -527,40 +523,36 @@ int GlowEffectB_PlantScript(char *object) {
     g_GlowEffectBSprite1.b = 0x50;
     g_GlowEffectBSprite1.flip = 0;
 
-    return 0;
+
 }
 
-int GlowEffectB_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
-    FieldFx_Spawn6(a, b, c, d, e, f);
+int GlowEffectB_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)a, b, c, (int)d, (int)e, (int)f);
     return 0;
 }
-int GlowEffectB_RegisterDrawList(void *o) {
-    FieldFx_Register(o, g_GlowEffectBDrawList);
+int GlowEffectB_RegisterDrawList(PmSlotHeader *o) {
+    FieldFx_Register((FieldFxObject *)o, g_GlowEffectBDrawList);
     return 0;
 }
-int GlowEffectB_RegisterPairedTables(void *obj) {
+int GlowEffectB_RegisterPairedTables(PmSlotHeader *obj) {
     int first;
     int second;
     int status;
 
-    first = FieldFx_UpdateSlots(obj, g_GlowEffectBUpdateList);
-    second = FieldFx_RunScript(obj, g_GlowEffectBInitList, g_GlowEffectBSlotSizes);
+    first = FieldFx_UpdateSlots((FieldFxObject *)obj, g_GlowEffectBUpdateList);
+    second = FieldFx_RunScript((FieldFxObject *)obj, g_GlowEffectBInitList, g_GlowEffectBSlotSizes);
     status = first | second;
     if (status == -1) {
         GlowEffectB_CloseTarget(obj);
     }
     return 0;
 }
-int GlowEffectB_CloseTarget(char *arg0) {
-    *arg0 = 4;
+int GlowEffectB_CloseTarget(PmSlotHeader *arg0) {
+    arg0->state = 4;
     return 0;
 }
-int GlowEffectB_ClassNop6(void) {
-    return 0;
-}
-int GlowEffectB_ClassNop0(void) {
-    return 0;
-}
+void GlowEffectB_ClassNop6(void) {}
+void GlowEffectB_ClassNop0(void) {}
 
 int GlowEffectB_InitOwner(void *argument0, void *argument1, void *argument2) {
     FieldFxObjectPrefix * obj=argument0;
@@ -814,10 +806,10 @@ int GlowEffectB_UpdatePointGlow(void *argument0, void *argument1, void *argument
     return 0;
 }
 
-int GlowEffectC_PlantScript(char *object) {
+void GlowEffectC_PlantScript(PmSlotHeader *object) {
     void **slot;
 
-    slot = FieldFx_GetSlot(object);
+    slot = FieldFx_GetSlot((FieldFxObject *)object);
     *slot = &g_GlowEffectCScript;
 
     g_GlowEffectCSprite0.cell = 0xBD;
@@ -838,39 +830,35 @@ int GlowEffectC_PlantScript(char *object) {
     g_GlowEffectCSprite1.b = 0x50;
     g_GlowEffectCSprite1.flip = 0;
 
+
+}
+int GlowEffectC_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)a, b, c, (int)d, (int)e, (int)f);
     return 0;
 }
-int GlowEffectC_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
-    FieldFx_Spawn6(a, b, c, d, e, f);
+int GlowEffectC_RegisterDrawList(PmSlotHeader *o) {
+    FieldFx_Register((FieldFxObject *)o, g_GlowEffectCDrawList);
     return 0;
 }
-int GlowEffectC_RegisterDrawList(void *o) {
-    FieldFx_Register(o, g_GlowEffectCDrawList);
-    return 0;
-}
-int GlowEffectC_RegisterPairedTables(void *obj) {
+int GlowEffectC_RegisterPairedTables(PmSlotHeader *obj) {
     int first;
     int second;
     int status;
 
-    first = FieldFx_UpdateSlots(obj, g_GlowEffectCUpdateList);
-    second = FieldFx_RunScript(obj, g_GlowEffectCInitList, g_GlowEffectCSlotSizes);
+    first = FieldFx_UpdateSlots((FieldFxObject *)obj, g_GlowEffectCUpdateList);
+    second = FieldFx_RunScript((FieldFxObject *)obj, g_GlowEffectCInitList, g_GlowEffectCSlotSizes);
     status = first | second;
     if (status == -1) {
         GlowEffectC_CloseTarget(obj);
     }
     return 0;
 }
-int GlowEffectC_CloseTarget(char *arg0) {
-    *arg0 = 4;
+int GlowEffectC_CloseTarget(PmSlotHeader *arg0) {
+    arg0->state = 4;
     return 0;
 }
-int GlowEffectC_ClassNop6(void) {
-    return 0;
-}
-int GlowEffectC_ClassNop0(void) {
-    return 0;
-}
+void GlowEffectC_ClassNop6(void) {}
+void GlowEffectC_ClassNop0(void) {}
 
 int GlowEffectC_InitOwner(void *argument0, void *argument1, void *argument2) {
     FieldFxObjectPrefix * obj=argument0;
@@ -1037,10 +1025,10 @@ int GlowEffectC_UpdateFlareLayers(void *argument0, void *argument1, void *argume
     return 0;
 }
 
-int FourLayerGlow_PlantScript(char *object) {
+void FourLayerGlow_PlantScript(PmSlotHeader *object) {
     void **slot;
 
-    slot = FieldFx_GetSlot(object);
+    slot = FieldFx_GetSlot((FieldFxObject *)object);
     *slot = &g_FourLayerGlowScript;
 
     g_FourLayerGlowSprite0.cell = 0xBD;
@@ -1079,26 +1067,26 @@ int FourLayerGlow_PlantScript(char *object) {
     g_FourLayerGlowSprite3.b = 0x80;
     g_FourLayerGlowSprite3.flip = 0;
 
+
+}
+
+int FourLayerGlow_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)a, b, c, (int)d, (int)e, (int)f);
     return 0;
 }
 
-int FourLayerGlow_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
-    FieldFx_Spawn6(a, b, c, d, e, f);
+int FourLayerGlow_RegisterDrawList(PmSlotHeader *o) {
+    FieldFx_Register((FieldFxObject *)o, g_FourLayerGlowDrawList);
     return 0;
 }
 
-int FourLayerGlow_RegisterDrawList(void *o) {
-    FieldFx_Register(o, g_FourLayerGlowDrawList);
-    return 0;
-}
-
-int FourLayerGlow_RegisterPairedTables(void *obj) {
+int FourLayerGlow_RegisterPairedTables(PmSlotHeader *obj) {
     int first;
     int second;
     int status;
 
-    first = FieldFx_UpdateSlots(obj, g_FourLayerGlowUpdateList);
-    second = FieldFx_RunScript(obj, g_FourLayerGlowInitList, g_FourLayerGlowSlotSizes);
+    first = FieldFx_UpdateSlots((FieldFxObject *)obj, g_FourLayerGlowUpdateList);
+    second = FieldFx_RunScript((FieldFxObject *)obj, g_FourLayerGlowInitList, g_FourLayerGlowSlotSizes);
     status = first | second;
     if (status == -1) {
         FourLayerGlow_CloseTarget(obj);
@@ -1106,18 +1094,14 @@ int FourLayerGlow_RegisterPairedTables(void *obj) {
     return 0;
 }
 
-int FourLayerGlow_CloseTarget(char *arg0) {
-    *arg0 = 4;
+int FourLayerGlow_CloseTarget(PmSlotHeader *arg0) {
+    arg0->state = 4;
     return 0;
 }
 
-int FourLayerGlow_ClassNop6(void) {
-    return 0;
-}
+void FourLayerGlow_ClassNop6(void) {}
 
-int FourLayerGlow_ClassNop0(void) {
-    return 0;
-}
+void FourLayerGlow_ClassNop0(void) {}
 
 int FourLayerGlow_InitOwner(void *argument0, void *argument1, void *argument2) {
     FieldFxObjectPrefix * obj=argument0;
@@ -1791,3 +1775,11 @@ FieldFxHandler g_FourLayerGlowInitList[7] = {FourLayerGlow_InitOwner,FourLayerGl
 FieldFxHandler g_FourLayerGlowDrawList[7] = {FourLayerGlow_DrawNop,FourLayerGlow_DrawParticle,FourLayerGlow_DrawFlareLayers,FourLayerGlow_DrawTwinGlow,FourLayerGlow_DrawGroundGlow,FourLayerGlow_DrawHaloGlow,(FieldFxHandler)(intptr_t)-1};
 FieldFxHandler g_FourLayerGlowUpdateList[7] = {FourLayerGlow_UpdateEnd,FourLayerGlow_UpdateParticle,FourLayerGlow_UpdateFlareLayers,FourLayerGlow_UpdateTwinGlow,FourLayerGlow_UpdateGroundGlow,FourLayerGlow_UpdateHaloGlow,(FieldFxHandler)(intptr_t)-1};
 u16 g_FourLayerGlowSlotSizes[7] = {0,24,48,24,16,48,65535};
+
+PmCommand g_GlowEffectClass = {.init=GlowEffect_ClassNop0,.initialize=GlowEffect_PlantScript,.send=GlowEffect_Spawn6,.start=GlowEffect_RegisterDrawList,.execute=GlowEffect_RegisterPairedTables,.stop=GlowEffect_CloseTarget,.unload=GlowEffect_ClassNop6};
+
+PmCommand g_GlowEffectBClass = {.init=GlowEffectB_ClassNop0,.initialize=GlowEffectB_PlantScript,.send=GlowEffectB_Spawn6,.start=GlowEffectB_RegisterDrawList,.execute=GlowEffectB_RegisterPairedTables,.stop=GlowEffectB_CloseTarget,.unload=GlowEffectB_ClassNop6};
+
+PmCommand g_GlowEffectCClass = {.init=GlowEffectC_ClassNop0,.initialize=GlowEffectC_PlantScript,.send=GlowEffectC_Spawn6,.start=GlowEffectC_RegisterDrawList,.execute=GlowEffectC_RegisterPairedTables,.stop=GlowEffectC_CloseTarget,.unload=GlowEffectC_ClassNop6};
+
+PmCommand g_FourLayerGlowClass = {.init=FourLayerGlow_ClassNop0,.initialize=FourLayerGlow_PlantScript,.send=FourLayerGlow_Spawn6,.start=FourLayerGlow_RegisterDrawList,.execute=FourLayerGlow_RegisterPairedTables,.stop=FourLayerGlow_CloseTarget,.unload=FourLayerGlow_ClassNop6};

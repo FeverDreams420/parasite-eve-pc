@@ -3311,3 +3311,23 @@ uninstrumented. This proves the tested TIM upload data and error protocol, not
 rendered effect/gameplay fidelity or complete PM/descriptor integration. Full
 gameplay and deletion of pc/ remain incomplete. No new source files or game
 functions were added.
+
+
+All four original glow classes now have native PmCommand seven-method tables
+backed in glow.c. Their existing methods were modified in place to match init,
+initialize, send, start, execute, stop and unload callback signatures exactly;
+no adapter functions or relocated game methods were added. Send preserves full
+native owner/result-word widths and explicitly stores the original 32-bit script
+variable value. Close writes the named PM state field. Original USA class
+records at 800E086C/09D4/0ABC/0BCC confirm the same seven method ordering.
+
+The authored fixture now runs the 28 glow/action cycles in actual native
+PmPrimarySlot records through Pm_SendCmd, Pm_Start and Pm_Exec, with init/unload
+and state-driven close/release. It also restarts each variant and tests Pm_Stop
+ownership rejection and owner-authorized stop. Handler row 7, actor/player/
+matrix state and texture residency are controlled fixture inputs; this does not
+bind the real resident/room descriptor IDs. Full build and five related CTests
+pass with Disc 1 required; fresh actor ASan/UBSan/function passes with original
+source instrumented and PsyZ/SDL archives uninstrumented. Actual descriptor
+registration/factory allocation, actor-owned gates, GPU pixels, full gameplay
+and deletion of pc/ remain incomplete.

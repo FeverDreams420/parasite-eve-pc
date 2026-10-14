@@ -171,6 +171,10 @@ if(BUILD_TESTING)
     target_link_libraries(test-boot-replay PRIVATE psyz SDL3::SDL3 PkgConfig::FFMPEG)
     target_sources(test-boot-replay PRIVATE collision.c collision_math.c collision_room.c)
     target_sources(test-boot-replay PRIVATE background.c projection.c input.c input_script.c camera.c room_banks.c actors.c animation.c matrix.c model.c scene_audio.c music.c akao_sequence.c akao_channel.c akao_instrument.c akao_pitch.c akao_timing.c akao_player.c)
+    add_test(NAME boot-menu-audio COMMAND test-boot-replay
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/replays/menu-audio.replay
+        ${CMAKE_CURRENT_BINARY_DIR}/boot-menu-audio.jsonl --menu)
+    set_tests_properties(boot-menu-audio PROPERTIES TIMEOUT 10 SKIP_RETURN_CODE 77)
     add_test(NAME boot-replay COMMAND test-boot-replay
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/replays/boot-tutorial.replay
         ${CMAKE_CURRENT_BINARY_DIR}/boot-replay.jsonl)

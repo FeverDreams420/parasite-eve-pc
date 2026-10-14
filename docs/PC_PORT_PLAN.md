@@ -712,3 +712,27 @@ setup. Unsigned 32-bit shifts now preserve its machine-word arithmetic. The
 menu test passes ASan/UBSan/function on original/test code (PsyZ uninstrumented),
 and all six AKAO CTest entries pass. The frontend still needs to retain an
 audio stream and invoke these original helpers when processing menu input.
+
+### Title menu now uses original AKAO audio (2026-10-14)
+
+The running parasite-eve-pc executable now links the original AKAO object
+modules. The title frontend loads the original grammar, pan/default/LFO tables,
+sector-bank 7 menu sequences and uploads resident bank 6 using original
+Spu_UploadSampleBlock. Menu input calls original confirm/move/cancel helpers,
+then original queue dispatch. A 240 Hz main-thread timer drives Akao_Tick and
+44100 Hz SPU PCM into an SDL S16 stereo stream. SDL does not mutate sequencer
+state on its audio thread. Selection leaves 500 ms for confirmation feedback
+before the existing scene preparation transition.
+
+Native asset/queue storage is in src/main/akao/assets.c. Only the 0x24 message
+handler is connected in the frontend dispatch table; the full gameplay audio
+message catalog, indexed effect sources and scene audio lifetime still need
+integration. The title does not use the abandoned pc/akao_player implementation
+for its menu sounds. This is not a claim that gameplay itself runs.
+
+New boot-menu-audio replay drives confirm, cursor movement and cancel in the
+actual headless SDL frontend and requires nonzero PCM submission after each
+input. An independent run of the main executable passed the same replay.
+All nine targeted tests pass with required Disc 1 assets: six original AKAO
+tests plus menu-audio, Tutorial and New Game boot replays. The latter two
+prove the existing asset-preparation transitions, not playable scenes.

@@ -1,5 +1,13 @@
 #include "title.h"
 #include "automation.h"
+#include "room.h"
+#include "pe1/akao.h"
+#include "pe1/akao/globals.h"
+#include "pe1/akao/note_step.h"
+#include "pe1/akao/voice_state.h"
+#include "pe1/akao/init_state.h"
+#include "pe1/menu_sound.h"
+#include <psyz/spu.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -79,8 +87,53 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
     TitleImage images[8];
     uint8_t pixels[320 * 240 * 3];
     SDL_Texture *texture = NULL;
+    SDL_AudioStream *audio = NULL;
+    PeRoomCatalog catalog;
+    PeRoomBlob menu_sounds = {0};
+    unsigned char *samples = NULL;
     int result = -1;
     if (!load_images(disc, &assets, images, error, error_size)) goto cleanup;
+    if (!pe_room_catalog_open(&catalog, disc) || !pe_sector_bank_load(&catalog, 7, &menu_sounds)) {
+        snprintf(error, error_size, "%s", catalog.error);
+        goto cleanup;
+    }
+    PeDiscFile executable;
+    unsigned char tables[516];
+    if (!pe_disc_find(disc, "SLUS_006.62", &executable) ||
+        !pe_disc_read(disc, &executable, 0x9b8f4 - 0x10000 + 0x800, tables, sizeof(tables))) {
+        snprintf(error, error_size, "%s", disc->error);
+        goto cleanup;
+    }
+    memcpy(g_AkaoDefaultVoiceProgram, tables, 4);
+    for (unsigned i = 0; i < 256; ++i)
+        g_AkaoPanVolumeTable[i] = (short)(tables[4 + i * 2] | (unsigned)tables[5 + i * 2] << 8);
+    memcpy(g_AkaoOpcodeArgLengths, catalog.akao.lengths, 96);
+    memcpy(g_AkaoExtOpcodeArgLengths, catalog.akao.extended_lengths, 32);
+    memcpy(g_AkaoNoteLengthTable, catalog.akao.note_lengths, sizeof(catalog.akao.note_lengths));
+    for (unsigned i = 0; i < 16; ++i)
+        g_AkaoSoundEntryTable[i] = catalog.akao.lfo_words + catalog.akao.lfo_offsets[i];
+    size_t sample_size = (size_t)(catalog.sector_bounds[7] - catalog.sector_bounds[6]) * 2048;
+    samples = malloc(sample_size);
+    if (!samples || !pe_disc_read(disc, &catalog.archive,
+        (uint64_t)catalog.sector_bounds[6] * 2048, samples, sample_size)) {
+        snprintf(error, error_size, "Cannot load startup sound samples");
+        goto cleanup;
+    }
+    Psyz_SpuInit();
+    Psyz_SpuReset(0);
+    SpuInit();
+    SpuSetTransferMode(0);
+    if (Spu_UploadSampleBlock((int *)samples, 1) != 0) {
+        snprintf(error, error_size, "Invalid startup sound samples");
+        goto cleanup;
+    }
+    Spu_InitVoiceState();
+    Psyz_SpuWrite(0x1aa, Psyz_SpuRead(0x1aa) | 0xc000);
+    g_AkaoBgmHandle[0] = menu_sounds.bytes;
+    SDL_AudioSpec spec = {SDL_AUDIO_S16, 2, 44100};
+    audio = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, NULL, NULL);
+    if (!audio || !SDL_ResumeAudioStreamDevice(audio)) goto sdl_error;
+    uint64_t audio_tick = 0;
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24,
                                SDL_TEXTUREACCESS_STREAMING, 320, 240);
     if (!texture) goto sdl_error;
@@ -92,6 +145,8 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
     unsigned timeout_ms = timeout ? (unsigned)strtoul(timeout, NULL, 10) : 0;
     int prompt = 1, selection = 0, captured = 0;
     int reported_prompt = -1, reported_selection = -1;
+    int audio_reported = 1;
+    uint64_t leaving_at = 0;
     printf("boot: main menu ready\n");
     fflush(stdout);
     for (;;) {
@@ -99,24 +154,57 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
             snprintf(error, error_size, "Automation: %s", pe_runtime_error());
             goto cleanup;
         }
+        if (leaving_at && SDL_GetTicks() >= leaving_at) goto cleanup;
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) { result = 0; goto cleanup; }
+            if (leaving_at) continue;
             if (event.type != SDL_EVENT_KEY_DOWN || event.key.repeat) continue;
             SDL_Keycode key = event.key.key;
             if (key == SDLK_RETURN || key == SDLK_SPACE || key == SDLK_Z) {
+                audio_reported = 0;
+                Menu_PlayConfirmSound();
+                Akao_ProcessMessageQueue();
                 if (prompt) prompt = 0;
                 else {
                     result = selection == 0 ? 1 : 2;
                     pe_runtime_emit("menu.selected", result);
-                    goto cleanup;
+                    leaving_at = SDL_GetTicks() + 500;
                 }
             } else if (key == SDLK_UP || key == SDLK_DOWN || key == SDLK_W || key == SDLK_S) {
-                if (!prompt) selection = 1 - selection;
+                if (!prompt) {
+                    selection = 1 - selection;
+                    audio_reported = 0;
+                    Menu_PlayMoveSound();
+                    Akao_ProcessMessageQueue();
+                }
             } else if (key == SDLK_ESCAPE) {
                 if (prompt) { result = 0; goto cleanup; }
+                audio_reported = 0;
+                Menu_PlayCancelSound();
+                Akao_ProcessMessageQueue();
                 prompt = 1;
             }
+        }
+        /* Run the original 240 Hz timer on the main thread; SDL only consumes
+         * PCM, so input and sequence state cannot race an audio callback. */
+        uint64_t target_tick = (SDL_GetTicks() - start) * 240 / 1000 + 4;
+        while (audio_tick < target_tick) {
+            short pcm[368];
+            Akao_Tick();
+            unsigned frames = (unsigned)(((audio_tick + 1) * 44100 / 240) - (audio_tick * 44100 / 240));
+            Psyz_SpuPullSamples(pcm, frames);
+            if (!SDL_PutAudioStreamData(audio, pcm, frames * 2 * sizeof(short))) goto sdl_error;
+            if (!audio_reported) {
+                for (unsigned i = 0; i < frames * 2; ++i) {
+                    if (pcm[i]) {
+                        audio_reported = 1;
+                        pe_runtime_emit("audio.menu.pcm", 1);
+                        break;
+                    }
+                }
+            }
+            ++audio_tick;
         }
         memset(pixels, 0, sizeof(pixels));
         blend(pixels, &images[0], 0, 20, 256);
@@ -162,6 +250,11 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
 sdl_error:
     snprintf(error, error_size, "SDL title: %s", SDL_GetError());
 cleanup:
+    g_AkaoBgmHandle[0] = NULL;
+    memset(g_AkaoSoundEntryTable, 0, 16 * sizeof(void *));
+    SDL_DestroyAudioStream(audio);
+    pe_room_blob_close(&menu_sounds);
+    free(samples);
     SDL_DestroyTexture(texture);
     free(assets);
     return result;

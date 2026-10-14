@@ -18,6 +18,7 @@
 #include "pe1/field_oriented_sprite.h"
 #include "pe1/field_shaded_ring.h"
 #include "pe1/field_glow_layers.h"
+#include "pe1/fieldfx_state.h"
 #include "pe1/field_tri_test.h"
 #include "pe1/field_collision.h"
 #include "pe1/field_textured_strip.h"
@@ -929,6 +930,67 @@ static int native_glow_layer_packets(void)
     return 1;
 }
 
+static unsigned object_init_calls, object_draw_calls, object_update_calls;
+static FieldFxObject *expected_effect_object;
+static int object_slot_init(void *object, void *slot, void *data)
+{
+    FieldFxSlot *entry=slot;
+    if(object!=expected_effect_object || entry!=&expected_effect_object->slots[0] ||
+       data!=expected_effect_object->data || entry->counter || entry->flag!=1) abort();
+    memcpy(data,&object,sizeof(object)); ++object_init_calls;
+    return 0;
+}
+static int object_slot_draw(void *object, void *slot, void *data)
+{
+    void *saved=NULL; memcpy(&saved,data,sizeof(saved));
+    if(saved!=object || object!=expected_effect_object || slot!=&expected_effect_object->slots[0]) abort();
+    ++object_draw_calls; return 0;
+}
+static int object_slot_update(void *object, void *slot, void *data)
+{
+    object_slot_draw(object,slot,data); --object_draw_calls;
+    FieldFxSlot *entry=slot;
+    if(entry->counter==1) entry->flag=2;
+    ++object_update_calls; return 0;
+}
+static int native_object_script_cycle(void)
+{
+    struct { FieldFxObject object; u8 guard[16]; } buffer;
+    FieldActor actor={0};
+    FieldFxHandler init[]={object_slot_init},draw[]={object_slot_draw},update[]={object_slot_update};
+    u16 sizes[]={sizeof(void *)};
+    int commands[]={0x100009,0x10000,0x20002,-1};
+    memset(&buffer,0xa5,sizeof(buffer));
+    FieldFxObject *object=&buffer.object;
+    object->prefix.asset_type=7; object->prefix.actor=&actor;
+    expected_effect_object=object;
+    void **script=FieldFx_GetSlot(object);
+    if(script!=(void **)&object->state.commands || object->prefix.asset_type!=7 ||
+       object->prefix.actor!=&actor || object->prefix.owner_kind || object->prefix.live_slots) return 0;
+    for(size_t i=0;i<sizeof(object->data);++i) if(object->data[i]) return 0;
+    for(unsigned i=0;i<64;++i) if(object->slots[i].flag || object->slots[i].counter || object->slots[i].data_offset) return 0;
+    object->state.commands=commands;
+    object_init_calls=object_draw_calls=object_update_calls=0;
+    if(FieldFx_RunScript(object,init,sizes) || object_init_calls!=1 ||
+       object->state.regs[0]!=9 || object->state.slot_count!=1 || object->state.pc!=3 || object->state.wait!=2) return 0;
+    FieldFx_SetScriptContext(&actor);
+    if(FieldFx_GetScriptContext()!=&actor || FieldFx_RegPtr(0)!=&object->state.regs[0] ||
+       FieldFx_VarPtr(0)!=&object->state.vars[0]) return 0;
+    if(FieldFx_Register(object,draw) || object_draw_calls!=1) return 0;
+    if(FieldFx_UpdateSlots(object,update) || object_update_calls!=1 || object->slots[0].counter!=1) return 0;
+    if(FieldFx_RunScript(object,init,sizes) || object->state.wait!=1 || object_init_calls!=1) return 0;
+    if(FieldFx_UpdateSlots(object,update) || object_update_calls!=2 || object->slots[0].flag || object->state.slot_count) return 0;
+    if(FieldFx_RunScript(object,init,sizes) || object->state.wait) return 0;
+    if(FieldFx_RunScript(object,init,sizes)!=-1 || !object->state.halted || object->state.pc!=3) return 0;
+    FieldFx_GetSlot(object);
+    int immediate[]={0x10000,-1}; object->state.commands=immediate;
+    if(FieldFx_RunScript(object,init,sizes) || !FieldFx_IsLastSlotHalted()) return 0;
+    if(FieldFx_FreeAllSlots()!=-1 || FieldFx_IsLastSlotHalted() || object->state.slot_count) return 0;
+    for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
+    puts("Original object scripts: native reset, init/draw/update/free callbacks, wait/halt, context and guards passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -989,7 +1051,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

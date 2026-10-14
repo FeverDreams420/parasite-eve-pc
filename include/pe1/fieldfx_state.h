@@ -25,23 +25,17 @@ typedef struct FieldFxState {
     /* 0x70 */ void *current_context;   /* active field object or its effect context */
 } FieldFxState;
 
-/* Word view of the same work area: the halt tests compare slot_count and
- * halted (the high half of the word at +4) in one load. */
-typedef struct FieldFxStateWords {
-    /* 0x00 */ u32 timing;  /* wait and pc */
-    /* 0x04 */ u32 status;  /* data_next, slot_count, halted */
-} FieldFxStateWords;
+/* Bytes of slot data after the dispatch slots. */
+#define FIELDFX_DATA_SIZE 0x80C
 
 /* Field engine object: header, script state, dispatch slots, slot data. */
 typedef struct FieldFxObject {
     /* 0x000 */ FieldFxObjectPrefix prefix;
     /* 0x00C */ FieldFxState state;
     /* 0x080 */ FieldFxSlot slots[0x40];
-    /* 0x200 */ char data[1];
+    /* 0x200 */ char data[FIELDFX_DATA_SIZE];
 } FieldFxObject;
 
-/* Bytes of slot data after the dispatch slots (object size 0xA0C). */
-#define FIELDFX_DATA_SIZE 0x80C
 
 /* The object the engine is running and its parts, set by every pass. */
 extern FieldFxState *g_FieldFxScriptState;

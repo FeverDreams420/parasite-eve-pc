@@ -3116,3 +3116,22 @@ with original source instrumented and PsyZ/SDL archives uninstrumented.
 Remaining glow callbacks, GPU image fidelity, authored task tables, full scene
 integration and deletion of pc/ remain incomplete. No new source files were
 added or functions extracted.
+
+
+The whole original fieldfx/object_script.c now compiles in the native target.
+Slot address arithmetic uses uintptr_t; FieldFxObject owns its complete 0x80C
+slot-data array instead of a one-byte placeholder. Original script globals and
+USA diagnostic strings are backed in that module. Halt/free checks read named
+slot_count/halted fields instead of aliasing a different word structure; the
+unused word-view type was removed. Standard C library declarations replace
+BIOS declarations. The existing actor fixture executes GetSlot, RunScript,
+Register, UpdateSlots and FreeAllSlots with native pointer-bearing payloads,
+checking original callback order/count, init/draw/update/free, wait/end PCs,
+context/register/variable views, one-live-slot halt and object guards.
+Handlers and command tables are controlled fixtures, not authored effect
+bindings. Full build and four related CTests pass with Disc 1 required; fresh
+actor ASan/UBSan/function passes with original source instrumented and PsyZ/SDL
+archives uninstrumented. Actor-owned dispatch gates, malformed commands,
+allocation bounds/alignment/wrap across authored sizes, original handler-table
+ABI, full effect lifecycle integration and deletion of pc/ remain incomplete.
+No functions were extracted and no new files were added.

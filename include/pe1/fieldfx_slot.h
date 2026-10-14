@@ -17,7 +17,7 @@ typedef struct FieldFxSlot {
  * slot index to the table address as an integer, index first. */
 typedef union FieldFxSlotAddress {
     FieldFxSlot *slot;
-    u32 word;
+    uintptr_t word;
 } FieldFxSlotAddress;
 
 PE1_STATIC_ASSERT(sizeof(FieldFxSlot) == 6, fieldfx_slot_size);

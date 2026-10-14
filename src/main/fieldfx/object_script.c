@@ -2,10 +2,18 @@
 #include "pe1/field_actor.h"
 #include "pe1/fieldfx_state.h"
 #include "pe1/fieldfx_task_pool.h"
-#include "pe1/psyq_bios.h"
+#include "pe1/psyq_libc.h"
 
 /* Field engine objects: clearing an object's script state and dispatch
  * slots, and the two per-frame passes over the 0x40 dispatch slots. */
+
+FieldFxState *g_FieldFxScriptState;
+FieldFxObject *g_FieldFxScriptObject;
+char *g_FieldFxScriptData;
+int *g_FieldFxCommandTable;
+FieldFxSlot *g_FieldFxSlotTable;
+char g_FieldFxServiceThreadMissingMsg[] = "error : service thread not found\n";
+char g_FieldFxUpdateThreadMissingMsg[] = "error : update thread not found\n";
 
 void **FieldFx_GetSlot(FieldFxObject *obj) {
     u8 *p;
@@ -259,7 +267,7 @@ void *FieldFx_GetScriptContext(void) {
 }
 
 int FieldFx_IsLastSlotHalted(void) {
-    return ((((FieldFxStateWords *)g_FieldFxScriptState)->status & 0xFFFF0000U) ^ 0x01010000U) < 1;
+    return g_FieldFxScriptState->slot_count == 1 && g_FieldFxScriptState->halted == 1;
 }
 
 void *FieldFx_StartSlot(void *obj, u8 id, u16 *sizes, FieldFxHandler *handlers) {
@@ -322,26 +330,21 @@ int FieldFx_FreeSlot(u16 slot) {
     g_FieldFxSlotTable[slot].flag = 0;
     g_FieldFxScriptState->slot_count--;
 
-    return -((((((FieldFxStateWords *)g_FieldFxScriptState)->status & 0xFFFF0000) ^ 0x01000000) < 1));
+    return -(g_FieldFxScriptState->slot_count == 0 && g_FieldFxScriptState->halted == 1);
 }
 
 int FieldFx_FreeAllSlots(void) {
     int i;
     int result;
-    u32 andMask;
-    u32 xorMask;
 
     result = 0;
     i = 0;
-    andMask = 0xFFFF0000;
-    xorMask = 0x01000000;
     for (; i < 0x40; i++) {
         if (g_FieldFxSlotTable[i].flag != 0) {
             u32 check;
             g_FieldFxSlotTable[(u16)i].flag = 0;
             g_FieldFxScriptState->slot_count--;
-            check = ((FieldFxStateWords *)g_FieldFxScriptState)->status & andMask;
-            check = check == xorMask;
+            check = g_FieldFxScriptState->slot_count == 0 && g_FieldFxScriptState->halted == 1;
             result |= -check;
         }
     }

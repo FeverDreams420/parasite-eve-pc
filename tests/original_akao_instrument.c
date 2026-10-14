@@ -1,4 +1,5 @@
 #include "pe1/akao.h"
+#include "pe1/akao/init_state.h"
 #include "pe1/akao/globals.h"
 #include "pe1/akao/note_step.h"
 #include "pe1/akao/voice_masks.h"
@@ -37,6 +38,7 @@ AkaoU8 g_AkaoOpcodeArgLengths[96], g_AkaoExtOpcodeArgLengths[32];
 u16 g_AkaoNoteLengthTable[11] = {48, 24, 16, 12, 8, 6, 4, 3, 2, 1, 96};
 void *g_AkaoSoundEntryTable[256];
 void Seq_GetGlobalPitch(unsigned int *out);
+void Seq_ApplyGlobalPitch(void);
 void Seq_SetCurrentTrackField56(AkaoValueCommand *command);
 void SeqOp_StreamPair(AkaoTrack *track, u32 voice_mask);
 void SeqOp_ReadTrack64U16(AkaoTrack *track, u32 voice_mask);
@@ -767,6 +769,21 @@ int main(int argc, char **argv)
     CHECK(g_AkaoVoiceStateTable[0].pc == end_note + 1);
     CHECK(g_AkaoGlobalSlideTick == 2);
     CHECK(g_AkaoCurTrack == &fixture_bank);
+    Spu_InitVoiceState();
+    CHECK(Psyz_SpuRead(0x180) == 0x3fff && Psyz_SpuRead(0x182) == 0x3fff);
+    CHECK(Psyz_SpuRead(0x1b0) == 0x7fff && Psyz_SpuRead(0x1b2) == 0x7fff);
+    CHECK((Psyz_SpuRead(0x1aa) & 0x8f) == 0x81);
+    unsigned initialized_mode;
+    Seq_GetGlobalPitch(&initialized_mode);
+    CHECK(initialized_mode == 4);
+    CHECK(g_AkaoCurTrack == &fixture_bank);
+    CHECK(g_AkaoSeqBusyFlags == 0 && g_AkaoMessageQueueCount == 0);
+    for (unsigned i = 0; i < 60; ++i) {
+        AkaoTrack *voice = &g_AkaoSequencerTracks[i].track;
+        CHECK(voice->assigned_voice_index == (i < 48 ? 24 : i - 36));
+        CHECK(voice->parent_track_id == (i < 48 ? 0 : 1));
+        CHECK(voice->flags == 0);
+    }
     short reference_pcm[1024];
     for (unsigned run = 0; run < 2; ++run) {
         Psyz_SpuInit();
@@ -776,8 +793,18 @@ int main(int argc, char **argv)
         adpcm[0] = 0;
         adpcm[1] = 7;
         Psyz_SpuMemWrite(0x1000, adpcm, sizeof(adpcm));
-        Psyz_SpuWrite(0x180, 0x3fff);
-        Psyz_SpuWrite(0x182, 0x3fff);
+        SpuCommonAttr common = {0};
+        common.mask = 3;
+        common.mvol.left = common.mvol.right = 0x3fff;
+        SpuSetCommonAttr(&common);
+        CHECK(Psyz_SpuRead(0x180) == 0x3fff);
+        CHECK(Psyz_SpuRead(0x182) == 0x3fff);
+        g_AkaoCdInputVolumeAccum = 0x12340000;
+        Seq_ApplyGlobalPitch();
+        CHECK(Psyz_SpuRead(0x1b0) == 0x1234);
+        CHECK(Psyz_SpuRead(0x1b2) == 0x1234);
+        CHECK(Psyz_SpuRead(0x180) == 0x3fff);
+        CHECK(Psyz_SpuRead(0x182) == 0x3fff);
         Psyz_SpuWrite(0x1aa, 0xc000);
         AkaoVoiceParams audible = {0};
         audible.flags = AKAO_VOICE_PARAM_INSTRUMENT_FULL | AKAO_VOICE_PARAM_VOLUME | AKAO_VOICE_PARAM_PITCH;

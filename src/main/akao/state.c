@@ -35,3 +35,5 @@ AkaoTickTempo g_AkaoSfxTempo;
 u32 g_AkaoSfxTickAccumulator;
 AkaoVoiceEnvelopeSlot g_AkaoVoiceEnvelopeTable[24];
 SpuCommonAttr g_AkaoSpuCommonAttr;
+
+volatile int g_AkaoSeqBusyFlags;

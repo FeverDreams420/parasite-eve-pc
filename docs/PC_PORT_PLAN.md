@@ -615,3 +615,21 @@ native pointer width; using the original 32-bit layout corrupts memory on
 64-bit hosts and has been corrected for this API. All four original AKAO
 CTest entries pass with required Disc 1 assets. This does not yet connect
 menu sounds or music to the frontend; full campaign integration remains open.
+
+### Original sound initialization and native common attributes (2026-10-14)
+
+SpuCommonAttr now matches PsyZ's native-width mask. A regression first
+failed on the master-volume register with the PS1 layout; it now passes
+through SpuSetCommonAttr, including deterministic nonzero stereo PCM.
+Seq_ApplyGlobalPitch is exercised against actual CD-volume registers and
+checked not to alter master volume. The original Spu_InitVoiceState now
+links and runs headlessly: master/CD levels, enabled reverb mode 4, queue
+reset and all 60 channel assignments are checked. Its missing voice-volume
+helper is linked from the existing original s_svva.c with the public SDK's
+signed-short signature; no replacement initialization logic was added.
+The busy flag now belongs to original AKAO runtime state.
+
+All four original AKAO tests pass with required Disc 1 assets. Instrument
+test passes ASan/UBSan/function instrumentation of original source and test
+code (the linked PsyZ archive is still uninstrumented). This is initialization
+and PCM evidence, not frontend menu audio or full-game completion.

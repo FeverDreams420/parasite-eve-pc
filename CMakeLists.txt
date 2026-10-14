@@ -41,7 +41,8 @@ add_library(parasite-eve-original-akao OBJECT
     src/main/akao/voice_driver.c
     src/main/akao/voice_bank.c
     src/main/akao/sequencer.c
-    src/main/akao/spu_transfer.c)
+    src/main/akao/spu_transfer.c
+    src/main/psyq/libspu/s_svva.c)
 target_include_directories(parasite-eve-original-akao PRIVATE include)
 if(MSVC)
     target_compile_options(parasite-eve-original-akao PRIVATE /Gy /Gw)

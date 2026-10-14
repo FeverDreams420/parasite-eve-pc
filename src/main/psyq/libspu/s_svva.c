@@ -8,7 +8,7 @@ typedef struct SpuVoiceWaitWork {
     volatile int value;
 } SpuVoiceWaitWork;
 
-void SpuSetVoiceVolumeAttr(int voice, u16 left, u16 right, s16 leftMode, u16 rightMode) {
+void SpuSetVoiceVolumeAttr(int voice, s16 left, s16 right, s16 leftMode, s16 rightMode) {
     SpuVoiceWaitWork work;
     unsigned int leftFlags;
     unsigned int rightFlags;

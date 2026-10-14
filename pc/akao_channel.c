@@ -97,11 +97,12 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
         }
         unsigned operands, prefix = 1, extended = 0;
         switch (opcode) {
-        case 0xa0: case 0xa6: case 0xa7: case 0xb3: case 0xbe: operands = 0; break;
+        case 0xa0: case 0xa6: case 0xa7: case 0xb3: case 0xba: case 0xbe: operands = 0; break;
         case 0xa1: case 0xa2: case 0xa3: case 0xa5: case 0xa8: case 0xaa:
         case 0xc0: case 0xc1: case 0xd8: case 0xd9:
         case 0xad: case 0xae: case 0xaf: case 0xb1: case 0xb2:
-        case 0xb7: case 0xbb: case 0xbd: case 0xbf: operands = 1; break;
+        case 0xb7: case 0xb9: case 0xbb: case 0xbd: case 0xbf: operands = 1; break;
+        case 0xb8: operands = 3; break;
         case 0xa4: case 0xa9: case 0xab: case 0xb0: case 0xbc: operands = 2; break;
         case 0xc2: case 0xc3: case 0xc8: case 0xca: operands = 0; break;
         case 0xc9: operands = 1; break;
@@ -221,6 +222,24 @@ truncated:
         case 0xbd:
             /* SeqOp_SetPitchBase actually writes aux_lfo_target (+B4). */
             channel->aux_lfo_target = (uint16_t)(value << 7);
+            break;
+        case 0xb8: {
+            const uint8_t *args = channel->sequence.bytes + pc + prefix;
+            unsigned selector = args[2];
+            if (!channel->grammar || !channel->grammar->lfo_valid || selector >= 16) goto invalid;
+            channel->volume_lfo_delay = channel->volume_lfo_counter = (uint16_t)value;
+            channel->volume_lfo_duration = args[1] ? args[1] : 256;
+            channel->volume_lfo_phase = 1;
+            channel->volume_lfo_selector = (uint8_t)selector;
+            channel->volume_lfo_cursor = channel->grammar->lfo_offsets[selector];
+            channel->flags |= 2;
+            break;
+        }
+        case 0xb9: channel->volume_lfo_target = (uint16_t)(value << 8); break;
+        case 0xba:
+            channel->volume_lfo_value = 0;
+            channel->flags &= ~UINT32_C(2);
+            channel->update_flags |= 3;
             break;
         case 0xbc: {
             unsigned selector = channel->sequence.bytes[pc + prefix + 1];

@@ -22,7 +22,7 @@ int pe_akao_pitch_period(const PeSpuBank *samples, unsigned instrument, uint8_t 
 int pe_akao_channel_note_pitch(PeAkaoChannel *channel) {
     if (channel->last_note >= 0xa0) goto invalid;
     if (channel->last_note >= 0x8f) return 1; /* rest preserves current pitch */
-    if ((channel->flags & 3u) ||
+    if ((channel->flags & 1u) ||
         channel->tremolo_duration) {
         snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO pitch mode at 0x%x", channel->pc);
         return 0;
@@ -64,6 +64,13 @@ int pe_akao_channel_note_pitch(PeAkaoChannel *channel) {
         channel->control->allocated_voice_mask |= channel->voice_mask;
         channel->update_flags |= 0x13;
         channel->pitch_slide_value = 0;
+        channel->volume_lfo_value = 0;
+        if (channel->flags & 2) {
+            if (!channel->grammar || !channel->grammar->lfo_valid || channel->volume_lfo_selector >= 16) goto invalid;
+            channel->volume_lfo_cursor = channel->grammar->lfo_offsets[channel->volume_lfo_selector];
+            channel->volume_lfo_counter = channel->volume_lfo_delay;
+            channel->volume_lfo_phase = 1;
+        }
         if (channel->flags & 4) {
             if (!channel->grammar || !channel->grammar->lfo_valid || channel->aux_lfo_selector >= 16) goto invalid;
             channel->aux_lfo_cursor = channel->grammar->lfo_offsets[channel->aux_lfo_selector];

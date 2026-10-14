@@ -38,6 +38,9 @@ typedef struct PeAkaoChannel {
     uint16_t aux_lfo_target, aux_lfo_value;
     uint16_t aux_lfo_duration, aux_lfo_phase, aux_lfo_cursor;
     uint8_t aux_lfo_selector;
+    uint16_t volume_lfo_delay, volume_lfo_counter, volume_lfo_duration, volume_lfo_phase;
+    uint16_t volume_lfo_cursor, volume_lfo_target, volume_lfo_value;
+    uint8_t volume_lfo_selector;
     uint16_t pitch_transition_duration, pitch_transition_delta;
     uint32_t pitch_slide_value, pitch_slide_step;
     uint8_t octave, stopped, last_note;
@@ -78,6 +81,7 @@ int pe_akao_channel_reset_adsr(PeAkaoChannel *channel, int release_only);
 int pe_akao_channel_select_note_range(PeAkaoChannel *channel, unsigned note);
 /* One voice-driver update, separate from the musical timer. */
 int pe_akao_channel_aux_lfo_step(PeAkaoChannel *channel);
+int pe_akao_channel_volume_lfo_step(PeAkaoChannel *channel, int key_on);
 int pe_akao_pitch_period(const PeSpuBank *samples, unsigned instrument, uint8_t note,
                           uint16_t detune_bits, uint16_t *pitch);
 /* Melodic/drum-kit pitch and A4 pitch transitions. LFO modes are rejected

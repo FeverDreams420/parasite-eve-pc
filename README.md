@@ -343,5 +343,12 @@ modulation to synthesized audio remain pending. The limited Disc 1 audit now
 reaches 8,869 initial note events and 12 unsupported volume-LFO commands;
 588 sequence prefixes complete four forced musical ticks and 11 hit missing
 commands. These results do not validate full songs or audible modulation.
+
+B8/B9/BA configure primary-channel volume LFO delay, waveform, depth and reset.
+The separate voice step preserves delay gating, key-on bypass and signed,
+wrapped fixed-point volume arithmetic. New notes restart the waveform and
+clear its current value. Tests cover delay/phase spacing, positive/negative
+modulation, reset and key-on behavior under ASan/UBSan. Depth slides, pitch
+LFO, voice-driver scheduling and audible synthesis remain pending.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

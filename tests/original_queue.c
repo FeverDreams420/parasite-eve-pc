@@ -7,6 +7,7 @@
 #include "pe1/boot.h"
 #include "pe1/field_movement.h"
 #include "pe1/geom_state.h"
+#include "pe1/game_state.h"
 #include <stdio.h>
 extern FieldActor *g_CurrentEntity;
 /* Override selected resident entries to observe traversal in this fixture. */
@@ -340,6 +341,21 @@ int main(void)
         if(g_ScriptVariableBank[40]!=0x80002080 || g_ScriptVariableBank[41]!=0x80002000 ||
            g_ScriptVariableBank[42]!=0x80006000 || g_ScriptVariableBank[43]!=0x80002000 ||
            owner.flags!=0x80002000 || task.current.script!=script+34 || task.flags!=0x10) return 35;
+    }
+    const int interp_rates[]={0,1,32,-2,0x10020};
+    for(unsigned player=0;player<2;++player) for(unsigned i=0;i<5;++i) {
+        FieldActor owner={.flags=0x8040};owner.render_object.flags_9C=0x40;
+        g_PlayerBattleEntity=(RenderObjectEntity){.flags_9C=0x80};
+        u32 script[]={147|(1u<<13),0,(u32)interp_rates[i],32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_PlayerEntity=player?&owner:NULL;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        int duration=(s16)interp_rates[i];if(!duration) duration=1;
+        if(owner.render_object.fade_duration!=(s8)duration || owner.render_object.fade_red_step!=(u8)(128/duration) ||
+           owner.render_object.flags_9C!=0x42 || owner.flags!=0x8040 ||
+           g_PlayerBattleEntity.flags_9C!=(player?0x82:0x80) ||
+           (player && g_PlayerBattleEntity.fade_duration!=(s8)duration) ||
+           task.current.script!=script+5 || task.flags!=0x10) return 36;
     }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;

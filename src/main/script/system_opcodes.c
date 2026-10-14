@@ -808,13 +808,13 @@ int Script_Noop4(void) {
     return 1;
 }
 
-int Script_SetAnimInterpRate(short **arg0) {
-    short **args = arg0;
+int Script_SetAnimInterpRate(int **arg0) {
+    int **args = arg0;
     FieldActor *current;
     FieldActor *selected;
     unsigned short flags;
 
-    Anim_SetInterpRate(&g_CurrentEntity->render_object, *args[0]);
+    Anim_SetInterpRate(&g_CurrentEntity->render_object, (s16)*args[0]);
 
     current = g_CurrentEntity;
     flags = current->render_object.flags_9C;
@@ -822,7 +822,7 @@ int Script_SetAnimInterpRate(short **arg0) {
     current->render_object.flags_9C = flags | 2;
 
     if (current == selected) {
-        Anim_SetInterpRate(&g_PlayerBattleEntity, *args[0]);
+        Anim_SetInterpRate(&g_PlayerBattleEntity, (s16)*args[0]);
         g_PlayerBattleEntity.flags_9C |= 2;
     }
 

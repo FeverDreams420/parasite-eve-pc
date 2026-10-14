@@ -107,8 +107,12 @@ int main(void)
         g_PeImageSectorTable[i]=catalog.sector_bounds[i];
         g_PeImageSectorBoundsNext[i]=catalog.sector_bounds[i+1];
     }
-    unsigned loaded=0;
-    for(unsigned area=10;area<=12;area+=2) for(unsigned day=1;day<=7;day+=6) {
+    unsigned loaded=0, uploads=0;
+    PeVram *expected=calloc(1,sizeof(*expected)), *actual=malloc(sizeof(*actual));
+    CHECK(expected && actual);
+    ResetGraph(0);
+    RECT all={0,0,1024,512};
+    for(unsigned area=10;area<=12;area+=2) for(unsigned day=1;day<=7;++day) {
         unsigned index=(area-10)/2*8+day+0x16;
         PeRoomBlob reference={0};
         CHECK(pe_sector_bank_load(&catalog,index,&reference));
@@ -119,6 +123,22 @@ int main(void)
         g_GameState.requested_entity_bank=area;
         g_GameState.entity_texture_blob=(SceneAssetView *)buffer;
         g_GameState.story_day_flags=1; g_GameState.scene_init_subphase=0;
+        PeRoomBlob tim_reference={0}; u8 *scratch_buffer=NULL;
+        memset(expected,0,sizeof(*expected));
+        LoadImage(&all,(u_long *)expected->words); DrawSync(0);
+        if(day>=2 && day<=6) {
+            unsigned tim_index=day+0x26;
+            CHECK(pe_sector_bank_load(&catalog,tim_index,&tim_reference));
+            size_t scratch_bytes=(size_t)(catalog.sector_bounds[tim_index+1]-catalog.sector_bounds[tim_index])*2048u;
+            CHECK(scratch_bytes>=tim_reference.size);
+            scratch_buffer=malloc(scratch_bytes); CHECK(scratch_buffer);
+            g_GameState.scene_load_scratch=(SceneAssetView *)scratch_buffer;
+            PeVramStats stats; char error[256];
+            CHECK(pe_blob_upload_vram(&tim_reference,expected,&stats,error,sizeof(error)));
+            uploads+=stats.uploads;
+            CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==2);
+            CHECK(!memcmp(scratch_buffer,tim_reference.bytes,tim_reference.size));
+        }
         CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==5);
         CHECK((g_GameState.flags&0x1004000u)==0x1004000u);
         CHECK(!memcmp(buffer,reference.bytes,reference.size));
@@ -130,15 +150,20 @@ int main(void)
             SceneBankAssetRecord row; memcpy(&row,records+i*sizeof(row),sizeof(row));
             CHECK(g_GameState.bank_rows[0][row.source.bytes.id]==buffer+(row.source.offsetAndId&0xffffff));
         }
+        DrawSync(0); StoreImage(&all,(u_long *)actual->words); DrawSync(0);
+        CHECK(!memcmp(expected,actual,sizeof(*expected)));
+        free(scratch_buffer); pe_room_blob_close(&tim_reference);
+        g_GameState.scene_load_scratch=NULL;
         free(buffer); pe_room_blob_close(&reference); ++loaded;
     }
+    free(expected); free(actual);
     unsigned char guard=0xa5;
     CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector-1,&guard,1)==-1 && guard==0xa5);
     CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector,&guard,UINT32_MAX)==-1 && guard==0xa5);
     pe_host_disc_bind(NULL,NULL);
     CHECK(CdRom_ReadSectorsFromLba(catalog.archive.sector,&guard,1)==-1 && guard==0xa5);
     pe_disc_close(&disc);
-    printf("Original entity loader: %u real area/day banks read through native CUE/BIN I/O\n",loaded);
+    printf("Original entity loader: %u real area/day banks, %u TIM uploads with full VRAM comparison\n",loaded,uploads);
     return 0;
 }
 #endif

@@ -1240,3 +1240,19 @@ Full build, both entity-texture CTests and game/test ASan/UBSan/function checks
 passed. PsyZ/SDL archives remain uninstrumented. This adapter is not yet mounted
 by the main scene runtime; keyed stream reads, TIM-loading days, model rebuild,
 Disc 2 selection and full gameplay integration remain outstanding.
+
+### Real day TIM uploads through the original loader
+
+The native CUE/BIN integration test now covers all days 1..7 for entity-bank
+areas 10 and 12: 14 bank selections and 180 original TIM uploads. Days 2..6
+traverse the original scratch read/poll/upload states before the entity-bank
+read. After each selection the entire PsyZ VRAM is read back and compared with
+the independent blob TIM decoder. The test uses a hidden Metal backend; it
+never presents a window, but still requires GPU access.
+
+Render_DrawWithAnim declarations/call sites now match the actual original
+implementation (typed object, s16 frame, lighting pointer; no unused fifth
+argument). Full build, both texture-loader CTests and ASan/UBSan/function checks
+of game/test sources passed, with PsyZ/SDL archives uninstrumented. Real model
+rebuild/animation attachment and mounting this path in the main game runtime
+remain pending; these results establish loading and VRAM behavior only.

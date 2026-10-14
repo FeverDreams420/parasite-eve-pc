@@ -27,7 +27,7 @@ extern u32 g_EntityRenderScratch[];
 extern u8 g_AyaActionStep;
 
 int Scene_UpdateBgDraw(void);
-void Render_DrawWithAnim(void *object, void *animation, int frame,
-                         void *matrices, void *scratch);
+void Render_DrawWithAnim(RenderObjectEntity *object, void *animation, s16 frame,
+                         RenderLightingMatrix *light);
 
 #endif

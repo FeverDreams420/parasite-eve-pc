@@ -354,7 +354,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-entity-texture-assets tests/original_entity_textures.c
-        pc/host_disc.c pc/disc.c pc/room.c
+        pc/host_disc.c pc/disc.c pc/room.c pc/vram.c
         $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>
@@ -363,5 +363,5 @@ if(BUILD_TESTING)
     target_compile_definitions(test-original-entity-texture-assets PRIVATE __psyz PE_TEST_REAL_DISC)
     target_link_libraries(test-original-entity-texture-assets PRIVATE psyz)
     add_test(NAME original-game-entity-texture-assets COMMAND test-original-entity-texture-assets)
-    set_tests_properties(original-game-entity-texture-assets PROPERTIES SKIP_RETURN_CODE 77)
+    set_tests_properties(original-game-entity-texture-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "gpu;game-assets")
 endif()

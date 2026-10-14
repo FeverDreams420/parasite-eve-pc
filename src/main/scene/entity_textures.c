@@ -202,8 +202,7 @@ retry:
         state->scene_object.lightNegativeY = 0xC;
         state->scene_object.lightPositiveY = 0x18;
         Render_InitRoomPrimState(&state->scene_object);
-        Render_DrawWithAnim(&state->scene_object, 0, 0, &g_RenderLightingState,
-            g_EntityRenderScratch);
+        Render_DrawWithAnim(&state->scene_object, 0, 0, &g_RenderLightingState);
         state->scene_init_subphase = 0;
         state->story_day_flags &= ~3;
         return 1;

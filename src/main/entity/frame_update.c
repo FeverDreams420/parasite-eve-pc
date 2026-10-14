@@ -186,7 +186,7 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
         actor->render_object.lightPositiveY = 0x18;
         Render_InitRoomPrimState(&actor->render_object);
         Render_DrawWithAnim(&actor->render_object, actor->action_data,
-                            (s16)actor->anim.parts.integer, &g_RenderLightingState, g_EntityRenderScratch);
+                            (s16)actor->anim.parts.integer, &g_RenderLightingState);
         actor->render_object.header->shadow_radius = actor->render_object.hit_cylinder.radius * 2;
     }
     } else {

@@ -890,7 +890,7 @@ s32 Scene_InitEntityPlayer(s32 resume) {
         {
             FieldActor *player = g_PlayerEntity;
             Render_DrawWithAnim(&player->render_object, player->action_data, 0,
-                                &g_RenderLightingState, g_EntityRenderScratch);
+                                &g_RenderLightingState);
         }
         {
             FieldActor *player = g_PlayerEntity;

@@ -1150,3 +1150,22 @@ test are fixture callbacks; the actual effect-handler registry and its callback
 signatures still require integration against the native `PmSendCallback` type.
 The previously recorded integer-result-pointer issue is fixed for these PM APIs;
 this does not imply the effect implementations or full scene runner are ready.
+
+### Original PM per-frame passes
+
+Moved the original `Pm_RunPrimary` and `Pm_RunBatch` procedures out of the TIM
+loader into pm/frame.c so they can link independently of disc/texture loading.
+No scheduling algorithm changed. The lifecycle integration test now exercises
+both eleven-slot banks through the real `Pm_Start`/`Pm_Exec`, including callback
+order, initialized-to-running transitions and tick increments. It verifies
+uninitialized, normal, menu-paused and player-only flags: start callbacks still
+run when execution is paused, while player-only mode executes only eligible
+primary effect commands. Deferred deletion still takes two execution passes.
+
+Callbacks also record the real PsyZ GTE offset registers, proving the original
+camera functions select the room offset for start callbacks and restore
+(160,112) for execute callbacks. Their declarations now consistently match the
+original integer return type. Full build, three related CTests and ASan/UBSan/
+function checks on game/test sources passed; PsyZ/SDL archives uninstrumented.
+Command-specific handlers remain fixtures here; full effect execution and
+Entity_FrameUpdate runtime integration are not established by this test.

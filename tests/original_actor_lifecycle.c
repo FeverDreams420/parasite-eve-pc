@@ -1,6 +1,8 @@
 #include "pe1/entity_frame_update.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/pm.h"
+#include "pe1/geom_state.h"
+#include "pe1/gte.h"
 #include "pe1/render_buffers.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,9 +52,70 @@ static int command_addresses(void)
     handlers[0]=handlers[85]=NULL;
     return 0;
 }
+static unsigned event_count;
+static struct { PmSlotHeader *slot; int start; u32 x,y; } events[44];
+static int start_task(PmSlotHeader *slot)
+{
+    events[event_count].x=Psyz_GteCtrlRead(24);
+    events[event_count].y=Psyz_GteCtrlRead(25);
+    events[event_count].slot=slot; events[event_count++].start=1;
+    return 0;
+}
+static int execute_task(PmSlotHeader *slot)
+{
+    events[event_count].x=Psyz_GteCtrlRead(24);
+    events[event_count].y=Psyz_GteCtrlRead(25);
+    events[event_count].slot=slot; events[event_count++].start=0;
+    return 0;
+}
+static int frame_tasks(void)
+{
+    PmCommand handler={0}; handler.start=start_task; handler.execute=execute_task;
+    handlers[0]=handlers[85]=&handler;
+    g_GeomScroll.state.position.screenOffsetX=125;
+    g_GeomScroll.state.position.screenOffsetY=93;
+    const u32 flags[]={0,0x80,0x84,0x180};
+    for(unsigned trial=0;trial<4;++trial) {
+        memset(primary,0,sizeof(primary)); memset(secondary,0,sizeof(secondary));
+        for(unsigned i=0;i<11;++i) {
+            primary[i].header.state=secondary[i].header.state=1;
+        }
+        primary[1].header.command=85;
+        g_GameStateFlags=flags[trial]; event_count=0;
+        CHECK(Pm_RunBatch()==0 && Pm_RunPrimary()==0);
+        unsigned cursor=0;
+        if(flags[trial]&0x80) {
+            for(unsigned bank=0;bank<2;++bank) {
+                for(unsigned i=0;i<11;++i) {
+                    PmSlotHeader *slot=bank?&primary[i].header:&secondary[i].header;
+                    CHECK(events[cursor].slot==slot && events[cursor].start==1);
+                    CHECK(events[cursor].x==(125u<<16) && events[cursor].y==(93u<<16)); ++cursor;
+                }
+                for(unsigned i=0;i<11;++i) {
+                    int runs=!(flags[trial]&4) && (!(flags[trial]&0x100) || (bank && i==1));
+                    PmSlotHeader *slot=bank?&primary[i].header:&secondary[i].header;
+                    if(runs) {
+                        CHECK(events[cursor].slot==slot && events[cursor].start==0);
+                        CHECK(events[cursor].x==(160u<<16) && events[cursor].y==(112u<<16)); ++cursor;
+                    }
+                    CHECK(slot->ticks==(unsigned)runs && slot->state==(runs?2:1));
+                }
+            }
+        }
+        CHECK(event_count==cursor);
+    }
+    /* Deferred deletion occupies two execution passes, without callbacks. */
+    primary[0].header=(PmSlotHeader){.state=4,.command=0,.ticks=20};
+    CHECK(Pm_Exec(0)==0 && primary[0].header.state==5 && primary[0].header.ticks==20);
+    CHECK(Pm_Exec(0)==0 && primary[0].header.state==0 && primary[0].header.ticks==0);
+    memset(primary,0,sizeof(primary)); memset(secondary,0,sizeof(secondary));
+    handlers[0]=handlers[85]=NULL; g_GameStateFlags=0;
+    return 0;
+}
 int main(void)
 {
     CHECK(command_addresses()==0);
+    CHECK(frame_tasks()==0);
     unsigned char *memory=malloc(16u*ENTITY_ALLOCATION_BLOCK_SIZE);
     CHECK(memory);
     g_RenderScratchBufferBase[0]=memory;

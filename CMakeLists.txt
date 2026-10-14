@@ -315,7 +315,8 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-actor-lifecycle tests/original_actor_lifecycle.c
-        src/main/pm/process.c src/main/script/pm_commands.c
+        src/main/pm/process.c src/main/pm/frame.c src/main/script/pm_commands.c
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-frame>
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>)

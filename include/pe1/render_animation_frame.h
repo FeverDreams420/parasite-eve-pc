@@ -58,11 +58,11 @@ typedef struct RenderWireScratch {
 } RenderWireScratch;
 extern RenderWireScratch g_WireScratch;
 
-void Render_SetGteScreenOffset(void);
+int Render_SetGteScreenOffset(void);
 struct RenderAnimFrame;
 int Render_DrawWireframeModel(struct RenderAnimFrame *frame, void *position, int scale,
                               int yaw, void *ot, u8 *buffer);
-void Render_ResetGteScreenOffset(void);
+int Render_ResetGteScreenOffset(void);
 void Render_AnimationFrame(void);
 
 #endif

@@ -4,6 +4,8 @@
 #include "pe1/gte_types.h"
 
 int Render_DrawSprite(void);
+int Render_SetGteScreenOffset(void);
+int Render_ResetGteScreenOffset(void);
 
 /* Camera initialization scratch: matrix words followed by projection distance. */
 extern u32 g_EntityRenderScratch[];

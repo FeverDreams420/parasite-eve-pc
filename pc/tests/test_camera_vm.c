@@ -33,6 +33,26 @@ int main(void){
     CHECK(!pe_scene_camera_transition_step(&scene));
     CHECK(pe_script_task_tick(&task,100)==PE_SCRIPT_STOPPED&&task.ticks==3&&task.instructions==12);
     CHECK(scene.camera_scroll.position[0]==100&&scene.camera_scroll.position[1]==200);
+    word(bytes+16,237|(3u<<13));word(bytes+24,2201);word(bytes+28,0x8000);word(bytes+32,0x12345678);
+    CHECK(pe_script_task_init(&task,&program,0,&scene.script_banks));task.dispatch=pe_scene_dispatch;task.dispatch_user=&scene;
+    CHECK(pe_script_task_tick(&task,100)==PE_SCRIPT_STOPPED&&scene.camera_scroll.origin[0]==-32768&&scene.camera_scroll.origin[1]==0x5678);
+    CHECK(scene.camera_scroll.position[0]==100&&scene.camera_scroll.position[1]==200);
+    uint32_t render_flags=scene.actors->render_flags;
+    word(bytes+16,237|(1u<<13));word(bytes+24,2101);word(bytes+28,32);
+    CHECK(pe_script_task_init(&task,&program,0,&scene.script_banks));task.dispatch=pe_scene_dispatch;task.dispatch_user=&scene;
+    CHECK(pe_script_task_tick(&task,100)==PE_SCRIPT_STOPPED&&(scene.script_banks.game_flags&0x800)&&scene.actors->render_flags==render_flags);
+    word(bytes+24,9999);CHECK(pe_script_task_init(&task,&program,0,&scene.script_banks));task.dispatch=pe_scene_dispatch;task.dispatch_user=&scene;
+    CHECK(pe_script_task_tick(&task,100)==PE_SCRIPT_ERROR&&scene.camera_scroll.origin[0]==-32768);
+    word(bytes+24,2100);CHECK(pe_script_task_init(&task,&program,0,&scene.script_banks));task.dispatch=pe_scene_dispatch;task.dispatch_user=&scene;
+    CHECK(pe_script_task_tick(&task,100)==PE_SCRIPT_STOPPED&&scene.actors->render_flags==render_flags);
+    scene.actors->player=0;scene.actors->slots[0].used=1;scene.actors->slots[0].position[2]=500u<<16;
+    pe_matrix_identity(&scene.camera.view);scene.camera.distance=200;
+    scene.camera.min_x=scene.camera.min_y=-500;scene.camera.max_x=scene.camera.max_y=500;scene.camera_scroll.flags=0x70;
+    word(bytes+16,237|(3u<<13));word(bytes+24,2200);word(bytes+28,3);word(bytes+32,0);word(bytes+36,32);
+    CHECK(pe_script_task_init(&task,&program,0,&scene.script_banks));task.dispatch=pe_scene_dispatch;task.dispatch_user=&scene;
+    CHECK(pe_script_task_tick(&task,100)==PE_SCRIPT_STOPPED&&scene.camera_scroll.duration==3&&scene.camera_scroll.target[0]==160&&scene.camera_scroll.target[1]==112);
+    scene.actors->player=-1;CHECK(pe_script_task_init(&task,&program,0,&scene.script_banks));task.dispatch=pe_scene_dispatch;task.dispatch_user=&scene;
+    CHECK(pe_script_task_tick(&task,100)==PE_SCRIPT_ERROR&&scene.camera_scroll.duration==3);
     pe_scene_close(&scene);
     puts("Camera VM: real polling branch/wait loop resumes only after transition completion, headless");return 0;
 }

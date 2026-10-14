@@ -91,8 +91,28 @@ failed:
     return 0;
 }
 
+static int32_t scene_word(uint32_t value){return (int32_t)(value&0x80000000?(int64_t)value-INT64_C(0x100000000):value);}
+static int16_t scene_half(uint32_t value){value&=65535;return (int16_t)(value&32768?(int)value-65536:(int)value);}
 PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command){
     PeScene *scene=user;
+    if(command->opcode==237){
+        if(!command->count)return PE_DISPATCH_ERROR;
+        uint32_t mode=pe_script_arg_read(task,&command->args[0]);
+        if(mode==2100)return PE_DISPATCH_CONTINUE;
+        if(mode==2101){scene->script_banks.game_flags|=0x800;return PE_DISPATCH_CONTINUE;}
+        if(mode==2200){
+            if(command->count<3||!scene->actors||scene->actors->player<0)return PE_DISPATCH_ERROR;
+            int result=pe_scene_focus_actor(scene,(unsigned)scene->actors->player,
+                scene_word(pe_script_arg_read(task,&command->args[1])),scene_word(pe_script_arg_read(task,&command->args[2])));
+            return result==-1?PE_DISPATCH_ERROR:PE_DISPATCH_CONTINUE;
+        }
+        if(mode==2201){
+            if(command->count<3)return PE_DISPATCH_ERROR;
+            scene->camera_scroll.origin[0]=scene_half(pe_script_arg_read(task,&command->args[1]));
+            scene->camera_scroll.origin[1]=scene_half(pe_script_arg_read(task,&command->args[2]));return PE_DISPATCH_CONTINUE;
+        }
+        return PE_DISPATCH_UNSUPPORTED;
+    }
     if(command->opcode==3||command->opcode==70){
         if(command->count<3||!scene->actors)return PE_DISPATCH_ERROR;
         int result=pe_camera_transition_start(&scene->camera_scroll,&scene->actors->render_flags,

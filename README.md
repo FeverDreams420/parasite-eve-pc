@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Compound opcode 237 supports player-focus scroll, halfword origin writes,
+the original explicit no-op and game flag `0x800`. Unsupported subcommands
+still fail visibly. Real VM tests verify projected targets, origin wrapping,
+game/render flag separation and missing-player failure. All 34 headless tests
+and the ASan/UBSan native camera-VM fixture pass. Remaining compound actions,
+player creation and full frame/background integration remain pending.
+
 The `camera-vm` integration test runs a decoded polling program with actual
 query, branch, wait and jump instructions between camera steps. Linear and
 smooth variants stop only after transition completion, with no manual

@@ -20,6 +20,8 @@ Wspólny `PeAkaoControl` obsługuje komendy FC/00..03 (tempo i master-volume set
 
 Kanał wykonuje także A9 (expression slide), AB (pan slide) i FC/12 (volume slide). Aktualizacja parametrów następuje po komendach bieżącego ticku, jak w `Spu_UpdateVoiceRegisters`. Testy sprawdzają spadki, czas 256 ticków, signed delty zapisane jako bity u16, maski zmian `7F00`/`FF00`/`FFE00000` i brak anulowania wcześniejszego slide'u przez A3. Flagowanie zmian parametrów nie jest jeszcze zapisem rejestrów ani syntezą wyjścia SPU.
 
+`akao-instrument` dodaje 16. test CTest. A1 odczytuje instrumenty z rzeczywistego banku SPU: adresy start/loop, ADSR, zachowany release override, przesunięcie alternatywnego banku i pitch ratio z wrap mnożenia 32-bitowego. Tablica pitch-period jest aliasem pól instrumentów, nie osobnym plikiem. C2/C3 i stop aktualizują żądany reverb/reserved-voice mask bez zapisywania sprzętowych rejestrów. Najnowszy audyt osiąga 5036 surowych początkowych nut i dwa stop; 3845 kanałów zgłasza pozostały opcode. Histogram obejmuje numery i liczbę wystąpień brakujących komend. Wszystkie 599 pełnych sekwencji nadal trafia na brakującą komendę w teście czterech wymuszonych ticków. Generowanie pitch nut, rejestry głosów, synteza i referencyjne audio pozostają nieukończone.
+
 Punkt wyjściowy audytu: commit `83aa1c5f8`, 14 października 2026. Poniższy stan uwzględnia także wdrożony runner headless z WP01.
 
 | Obszar | Co istnieje | Czego obecne dowody nie potwierdzają |

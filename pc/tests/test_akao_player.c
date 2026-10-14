@@ -46,7 +46,7 @@ int main(void) {
     CHECK(pe_akao_player_start(&player, &sequence, &grammar, &initial));
     for (unsigned i = 0; i < 3; ++i) CHECK(pe_akao_player_tick(&player, 0, 1, 100));
     CHECK(!pe_akao_player_tick(&player, 0, 1, 100));
-    CHECK(strstr(player.error, "Voice 0: Unimplemented AKAO opcode 0xa1"));
+    CHECK(strstr(player.error, "Voice 0: Missing AKAO instrument context"));
     CHECK(!player.note_events && player.channels[0].pc == 0);
     previous_ticks = player.timer_ticks;
     CHECK(!pe_akao_player_tick(&player, 0, 1, 100) && player.timer_ticks == previous_ticks);

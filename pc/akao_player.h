@@ -22,5 +22,6 @@ int pe_akao_player_start(PeAkaoPlayer *player, const PeAkaoSequence *sequence,
  * meter. note_events includes raw note/tie/rest events; key_off_pending is
  * latched until acknowledged by the future SPU consumer. */
 int pe_akao_player_tick(PeAkaoPlayer *player, uint32_t scale, int forced, unsigned instruction_limit);
+int pe_akao_player_bind_samples(PeAkaoPlayer *player, const PeSpuBank *samples);
 
 #endif

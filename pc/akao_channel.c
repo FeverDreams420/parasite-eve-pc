@@ -42,16 +42,30 @@ static uint32_t slide_delta(uint32_t target, uint32_t current, unsigned duration
     return (uint32_t)(signed_difference / duration);
 }
 
+static void stop_channel(PeAkaoChannel *channel) {
+    if (channel->control) {
+        channel->control->reverb_mask &= ~channel->voice_mask;
+        if (channel->flags & (UINT32_C(1) << 11))
+            channel->control->reserved_voice_mask &= ~(UINT32_C(1) << (channel->voice_index & 31));
+        channel->control->voice_modes_dirty = 1;
+    }
+    channel->stopped = 1;
+    channel->flags = 0;
+}
+
 int pe_akao_channel_start(PeAkaoChannel *channel, const PeAkaoSequence *sequence, unsigned voice) {
     if (voice >= 24 || sequence->channels[voice] == UINT32_MAX ||
         sequence->channels[voice] >= sequence->size) return 0;
     uint8_t octave = channel->octave;
     PeAkaoControl *control = channel->control;
     const PeAkaoGrammar *grammar = channel->grammar;
+    const PeSpuBank *samples = channel->samples;
+    if (samples && !samples->valid[0]) return 0;
     memset(channel, 0, sizeof(*channel));
     channel->octave = octave;
     channel->control = control;
     channel->grammar = grammar;
+    channel->voice_mask = UINT32_C(1) << voice;
     channel->sequence = *sequence;
     channel->pc = sequence->channels[voice];
     channel->volume_base = 0x7f00;
@@ -60,6 +74,7 @@ int pe_akao_channel_start(PeAkaoChannel *channel, const PeAkaoSequence *sequence
     channel->note_length = 4;
     channel->pan_duration = 2;
     for (unsigned i = 0; i < 4; ++i) channel->loop_points[i] = UINT32_MAX;
+    if (samples) pe_akao_channel_bind_samples(channel, samples);
     return 1;
 }
 
@@ -81,9 +96,9 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
         unsigned operands, prefix = 1, extended = 0;
         switch (opcode) {
         case 0xa0: case 0xa6: case 0xa7: operands = 0; break;
-        case 0xa2: case 0xa3: case 0xa5: case 0xa8: case 0xaa: operands = 1; break;
+        case 0xa1: case 0xa2: case 0xa3: case 0xa5: case 0xa8: case 0xaa: operands = 1; break;
         case 0xa9: case 0xab: operands = 2; break;
-        case 0xc8: case 0xca: operands = 0; break;
+        case 0xc2: case 0xc3: case 0xc8: case 0xca: operands = 0; break;
         case 0xc9: operands = 1; break;
         case 0xfc:
             if (channel->sequence.size - pc < 2) goto truncated;
@@ -112,7 +127,10 @@ truncated:
         uint32_t next = pc + prefix + operands;
         if (channel->loop_index > 3) goto invalid;
         switch (opcode) {
-        case 0xa0: channel->stopped = 1; channel->flags = 0; break;
+        case 0xa0: stop_channel(channel); break;
+        case 0xa1:
+            if (!pe_akao_channel_set_instrument(channel, value)) return PE_AKAO_CHANNEL_ERROR;
+            break;
         case 0xa2:
             channel->fixed_note_length = 0;
             channel->note_length = channel->pan_duration = channel->default_note_length = (uint16_t)value;
@@ -152,6 +170,19 @@ truncated:
             channel->pan_delta = (uint16_t)((target - (int)channel->panpot) / channel->pan_slide_duration);
             break;
         }
+        case 0xc2: case 0xc3:
+            if (!channel->control) {
+                snprintf(channel->error, sizeof(channel->error), "Missing AKAO reverb bank context at 0x%x", pc);
+                return PE_AKAO_CHANNEL_ERROR;
+            }
+            if (opcode == 0xc2) channel->control->reverb_mask |= channel->voice_mask;
+            else {
+                channel->control->reverb_mask &= ~channel->voice_mask;
+                if (channel->flags & (UINT32_C(1) << 11))
+                    channel->control->reserved_voice_mask &= ~(UINT32_C(1) << (channel->voice_index & 31));
+            }
+            channel->control->voice_modes_dirty = 1;
+            break;
         case 0xc8:
             if (next >= channel->sequence.size) goto invalid;
             channel->loop_index = (channel->loop_index + 1) & 3;
@@ -171,8 +202,8 @@ truncated:
         }
         case 0xca:
             if (channel->flags & (UINT32_C(1) << 21)) {
-                channel->key_off_requested = channel->stopped = 1;
-                channel->flags = 0;
+                channel->key_off_requested = 1;
+                stop_channel(channel);
             } else {
                 next = channel->loop_points[channel->loop_index];
                 if (next >= channel->sequence.size) goto invalid;

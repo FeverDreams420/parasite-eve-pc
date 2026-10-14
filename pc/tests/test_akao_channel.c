@@ -26,7 +26,7 @@ int main(void) {
     sequence.bytes = missing; sequence.size = sizeof(missing);
     CHECK(pe_akao_channel_start(&channel, &sequence, 0));
     CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_ERROR);
-    CHECK(!channel.pc && !channel.commands && strstr(channel.error, "Unimplemented"));
+    CHECK(!channel.pc && !channel.commands && strstr(channel.error, "Missing AKAO instrument context"));
     const uint8_t truncated[] = {0xa3};
     sequence.bytes = truncated; sequence.size = sizeof(truncated);
     CHECK(pe_akao_channel_start(&channel, &sequence, 0));
@@ -169,6 +169,21 @@ int main(void) {
     channel.pan_slide_duration = 1; channel.panpot = 0; channel.pan_delta = 0x8000;
     pe_akao_channel_slides(&channel);
     CHECK(channel.panpot == 0x8000 && channel.update_flags == 3); /* FF00 mask */
+    memset(&control, 0, sizeof(control)); channel.control = &control;
+    const uint8_t reverb[] = {0xc2,0x11,0xc3,0x11};
+    sequence.bytes = reverb; sequence.size = sizeof(reverb);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(control.reverb_mask == 1 && control.voice_modes_dirty);
+    control.reserved_voice_mask = 32; channel.voice_index = 5; channel.flags = UINT32_C(1) << 11;
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(!control.reverb_mask && !control.reserved_voice_mask);
+    const uint8_t stop[] = {0xa0}; sequence.bytes = stop; sequence.size = sizeof(stop);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    channel.voice_index = 5; channel.flags = UINT32_C(1) << 11;
+    control.reverb_mask = 1; control.reserved_voice_mask = 32;
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_STOP);
+    CHECK(!channel.flags && !control.reverb_mask && !control.reserved_voice_mask);
     puts("AKAO channel: state commands, finite/nested loops, signed jumps, key-off and explicit errors passed");
     return 0;
 }

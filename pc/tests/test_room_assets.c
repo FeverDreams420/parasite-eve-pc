@@ -33,7 +33,7 @@ int main(void) {
     CHECK(spu->valid[0] && spu->valid[255]);
     CHECK(spu->instruments[0].start == 4144 && spu->instruments[0].loop == 4176);
     CHECK(spu->instruments[0].pitch[0] == 2722);
-    free(spu);
+    PeSpuBank *record_spu = malloc(sizeof(*record_spu)); CHECK(record_spu);
     CHECK(catalog.ranges[0].start == 8945);
     CHECK(catalog.ranges[0].scratch_sectors == 33);
     CHECK(catalog.ranges[0].texture_sectors == 74);
@@ -48,6 +48,7 @@ int main(void) {
     uint8_t referenced_banks[PE_USA_AUDIO_BANKS] = {0};
     unsigned channel_notes = 0, channel_stops = 0, channel_missing = 0;
     unsigned player_prefix_ok = 0, player_prefix_missing = 0;
+    unsigned unsupported[512] = {0};
     unsigned loaded = 0, absent = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -86,9 +87,16 @@ int main(void) {
             CHECK(music.bank < PE_USA_AUDIO_BANKS);
             referenced_banks[music.bank] = 1;
             if (!music.unresolved_short_record) {
+                memcpy(record_spu, spu, sizeof(*spu));
+                uint8_t *bank_bytes = NULL; size_t bank_size = 0;
+                CHECK(pe_audio_bank_read(&catalog, music.bank, &bank_bytes, &bank_size));
+                CHECK(pe_spu_bank_upload_rebased(record_spu, bank_bytes, bank_size, 0x8000, 0x20,
+                                                NULL, error, sizeof(error)));
+                free(bank_bytes);
                 PeAkaoPlayer player = {0};
                 PeAkaoControl initial = {0};
                 CHECK(pe_akao_player_start(&player, &music.sequence, &catalog.akao, &initial));
+                CHECK(pe_akao_player_bind_samples(&player, record_spu));
                 int success = 1;
                 for (unsigned tick = 0; tick < 4; ++tick) {
                     if (!pe_akao_player_tick(&player, 0, 1, 4096)) {
@@ -105,6 +113,7 @@ int main(void) {
                     PeAkaoChannel channel = {0};
                     channel.control = &control;
                     channel.grammar = &catalog.akao;
+                    channel.samples = record_spu;
                     CHECK(pe_akao_channel_start(&channel, &music.sequence, voice));
                     /* Elapsed initial delay, before command-set lengths. */
                     channel.note_length = 0;
@@ -120,6 +129,9 @@ int main(void) {
                     else {
                         CHECK(strstr(channel.error, "Unimplemented AKAO opcode"));
                         ++channel_missing;
+                        unsigned opcode = channel.sequence.bytes[channel.pc];
+                        unsigned index = opcode == 0xfc ? 256u + channel.sequence.bytes[channel.pc + 1] : opcode;
+                        ++unsupported[index];
                     }
                 }
             }
@@ -151,6 +163,11 @@ int main(void) {
            player_prefix_ok, player_prefix_missing);
     printf("Initial AKAO channel prefixes: %u raw notes, %u stops, %u unimplemented commands\n",
            channel_notes, channel_stops, channel_missing);
+    for (unsigned i = 0; i < 512; ++i) {
+        if (!unsupported[i]) continue;
+        if (i < 256) printf("Unsupported initial opcode %02X: %u channels\n", i, unsupported[i]);
+        else printf("Unsupported initial opcode FC/%02X: %u channels\n", i - 256, unsupported[i]);
+    }
     CHECK(catalog.audio_base == 2224);
     CHECK(catalog.audio_base + catalog.audio_bounds[PE_USA_AUDIO_BANKS] == catalog.ranges[0].start);
     PeSpuBank *music_spu = calloc(1, sizeof(*music_spu)); CHECK(music_spu);
@@ -275,6 +292,8 @@ int main(void) {
     pe_scene_close(&scene);
     pe_scene_close(&scene);
     free(vram);
+    free(record_spu);
+    free(spu);
     printf("USA Disc 1: %u rooms, %u empty slots, %llu texture words, %u script entries, %u initial actors; M431 entry-zero task branches verified, full scene execution pending\n",
            loaded, absent, (unsigned long long)uploaded_words, script_entries, initial_actors);
     return 0;

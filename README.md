@@ -60,7 +60,7 @@ script entry/actor catalogs and the startup SPU sample bank are prepared in
 
 `make ci` builds and runs the asset-free disc-reader, VRAM, script-format,
 script-runtime, script-scheduler, SPU-bank, AKAO-sequence, AKAO-channel,
-AKAO-timing, AKAO-player and automation tests. The
+AKAO-timing, AKAO-player, AKAO-instrument and automation tests. The
 room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
 is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
@@ -247,3 +247,14 @@ the original change masks for pending volume-register updates. Tests also
 preserve A3's behavior of changing volume without cancelling a running slide.
 This models parameter changes; it does not yet apply SPU registers or produce
 audio samples.
+
+`pc/akao_instrument.c` implements A1 instrument changes against the loaded
+SPU bank: sample/loop addresses, ADSR with release overrides, alternate-bank
+offsets and the original wrapped pitch rescaling when the voice is unallocated.
+The pitch-period table is an alias of each instrument's pitch array, not a
+separate asset. C2/C3 update the bank's requested reverb mask and release
+reserved voices; stop clears these requests before clearing channel flags.
+The latest prefix audit reaches 5,036 raw notes and two stops, with 3,845
+unsupported channel prefixes. Four forced ticks still fail on a missing opcode
+for every full sequence. Note pitch generation, voice registers and audio
+synthesis remain pending; these tests validate state, not audible playback.

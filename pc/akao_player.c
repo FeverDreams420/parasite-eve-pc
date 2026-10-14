@@ -1,6 +1,18 @@
 #include "akao_player.h"
 #include <string.h>
 
+int pe_akao_player_bind_samples(PeAkaoPlayer *player, const PeSpuBank *samples) {
+    if (!samples || !samples->valid[0]) {
+        snprintf(player->error, sizeof(player->error), "Missing AKAO initial instrument");
+        return 0;
+    }
+    for (unsigned voice = 0; voice < 24; ++voice) {
+        if (!(player->active & (UINT32_C(1) << voice))) continue;
+        pe_akao_channel_bind_samples(&player->channels[voice], samples);
+    }
+    return 1;
+}
+
 int pe_akao_player_start(PeAkaoPlayer *player, const PeAkaoSequence *sequence,
                           const PeAkaoGrammar *grammar, const PeAkaoControl *initial) {
     if (!grammar || !initial || (sequence->active & UINT32_C(0xff000000))) return 0;
@@ -50,6 +62,7 @@ int pe_akao_player_tick(PeAkaoPlayer *player, uint32_t scale, int forced, unsign
             player->active &= ~bit;
             player->pending &= ~bit;
             player->yield &= ~bit;
+            player->control.reverb_mask &= ~bit;
             channel->flags = 0; /* SeqOp_StopVoice */
             if (!player->active) player->bank_id = 0;
         }

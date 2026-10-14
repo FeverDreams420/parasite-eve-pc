@@ -179,3 +179,27 @@ int pe_actor_model_world_pose(PeActor *actor){
     if(!pe_actor_model_pose(actor,&world))return 0;
     actor->render->world=world;return 1;
 }
+PeScriptDispatchResult pe_actors_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command){
+    if(command->opcode<46||command->opcode>48)return PE_DISPATCH_UNSUPPORTED;
+    PeActors *actors=user;PeActor *actor=NULL;
+    for(unsigned i=0;i<PE_ACTOR_CAPACITY;++i)
+        if(actors->slots[i].used && &actors->slots[i].script==task->actor){actor=&actors->slots[i];break;}
+    if(!actor||(command->opcode!=48&&!command->count))goto invalid;
+    if(command->opcode==46){
+        if(actor->script.flags&0x100000)goto invalid; /* parent propagation pending */
+        unsigned action=pe_script_arg_read(task,&command->args[0])&65535;
+        if(!pe_actor_set_action(actor,action,1))goto invalid;
+        actor->script.flags&=~UINT32_C(0x100);return PE_DISPATCH_CONTINUE;
+    }
+    if(command->opcode==47){
+        unsigned stop=pe_script_arg_read(task,&command->args[0])&65535;
+        if(stop>actor->animation_clock.last)stop=actor->animation_clock.last;
+        actor->animation_clock.stop=(uint16_t)stop;actor->script.flags|=0x200;
+        return PE_DISPATCH_CONTINUE;
+    }
+    task->active=1;
+    return (actor->animation_clock.frame>>16)==actor->animation_clock.stop?PE_DISPATCH_YIELD:PE_DISPATCH_RETRY;
+invalid:
+    snprintf(task->error,sizeof(task->error),"Invalid or unsupported actor animation opcode %u",command->opcode);
+    return PE_DISPATCH_ERROR;
+}

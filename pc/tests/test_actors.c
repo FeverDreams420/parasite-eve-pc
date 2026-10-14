@@ -108,6 +108,23 @@ int main(void) {
     subject->render->overrides[0].matrix_index=1;
     CHECK(!pe_actor_model_pose(subject,&base)&&subject->render->pose[0].translation[0]==107);
     subject->render->overrides[0].matrix_index=0;
+    /* Real VM dispatch: select action, clamp stop, retry until frame match,
+     * then yield past the wait instruction. */
+    word(bytes+32,46|(1u<<13));word(bytes+40,0);
+    word(bytes+44,47|(1u<<13));word(bytes+52,65535);
+    word(bytes+56,48); /* extends to the exact end of the 64-byte fixture */
+    PeScriptTask animation_task;CHECK(pe_script_task_init(&animation_task,&program,1,&banks));
+    animation_task.actor=&subject->script;animation_task.dispatch=pe_actors_dispatch;animation_task.dispatch_user=actors;
+    subject->script.flags|=0x100;
+    CHECK(pe_script_task_tick(&animation_task,100)==PE_SCRIPT_WAIT);
+    CHECK(animation_task.pc==56&&subject->animation_clock.stop==2&&!(subject->script.flags&0x100));
+    CHECK(pe_actor_advance_animation(subject));
+    CHECK(pe_script_task_tick(&animation_task,100)==PE_SCRIPT_WAIT&&animation_task.pc==56);
+    CHECK(pe_actor_advance_animation(subject));
+    CHECK(pe_script_task_tick(&animation_task,100)==PE_SCRIPT_WAIT&&animation_task.pc==64);
+    PeScriptCommand bad={0};bad.opcode=46;
+    CHECK(pe_actors_dispatch(actors,&animation_task,&bad)==PE_DISPATCH_ERROR&&subject->action==0);
+    bad.opcode=777;CHECK(pe_actors_dispatch(actors,&animation_task,&bad)==PE_DISPATCH_UNSUPPORTED);
     CHECK(pe_actor_advance_animation(subject)&&pe_actor_model_pose(subject,&base));
     subject->position[0]=0xffff8000;subject->position[1]=0x28000;subject->position[2]=0xa8000;
     subject->rotation[1]=1024;subject->move_speed=0x800;

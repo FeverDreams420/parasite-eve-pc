@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Actor script dispatch now supports original opcodes 46–48: forced action
+restart with pause cleared, a u16 stop target clamped to the last frame, and
+waiting for the integer frame to match. The wait retries at the same PC,
+then advances and yields for one tick. A real VM test exercises the sequence
+with animation advances. All 29 headless tests and the ASan/UBSan actor test
+pass. Parent action propagation, combined scene dispatch and complete Spawn8
+remain pending.
+
 Actor world poses now use signed integer coordinates from 16.16 position,
 the original actor rotation order, and signed-halfword move-speed scale via
 GTE-style composition. Flags `0x10040` retain the previous world matrix;

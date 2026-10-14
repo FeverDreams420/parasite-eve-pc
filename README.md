@@ -562,6 +562,14 @@ models. All 26 tests pass headless; model fixtures and the full scene/model
 audit pass ASan/UBSan. Lighting, transforms, matrix commands and rendering
 remain unfinished; decoded geometry does not prove the rendered game.
 
+Model parsing now decodes matrix commands (part, push and pop), rejects stack
+underflow, invalid signed part indices and output-buffer overflow, and records
+required stack depth. The Disc 1 audit validates 24,942 commands with 17,748
+matrix outputs across 878 models; maximum depth is four. Tests verify command
+kinds, references and failure preservation. All 26 tests pass headless;
+fixtures and the full model/scene audit pass ASan/UBSan. Executing fixed-point
+matrix transforms and rendering their results remain unfinished.
+
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one
 lists the other 75 faces). The original lookup only searches listed faces.

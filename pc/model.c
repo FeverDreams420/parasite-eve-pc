@@ -23,6 +23,16 @@ int pe_model_open(const uint8_t *bytes, size_t size, PeModel *model, char *error
     next.textures=(uint32_t)cursor;
     size_t texture_bytes=(size_t)next.packets[0]*16+(size_t)next.packets[1]*12;
     if(texture_bytes>size-cursor) goto malformed;
+    unsigned depth=0,outputs=0,max_depth=0;
+    for(unsigned i=0;i<next.matrix_bytes;++i) {
+        unsigned command=bytes[next.commands+i];
+        if(command==255) { ++depth;if(depth>max_depth)max_depth=depth; }
+        else if(command==254) { if(!depth)goto malformed;--depth; }
+        else {
+            if(command>=128 || command>=next.part_count || ++outputs>next.part_count)goto malformed;
+        }
+    }
+    next.matrix_outputs=(uint16_t)outputs; next.max_stack_depth=(uint16_t)max_depth;
     for(unsigned i=0;i<next.part_count;++i) {
         const uint8_t *part=bytes+next.parts+i*12;
         if ((unsigned)half(part)+half(part+2)>next.vertex_count) goto malformed;
@@ -41,6 +51,16 @@ malformed:
 static const uint8_t *record_at(const PeModel *model,uint64_t offset,unsigned length) {
     if(offset>model->size || length>model->size-offset) return NULL;
     return model->bytes+(size_t)offset;
+}
+int pe_model_matrix_command(const PeModel *model,unsigned index,PeMatrixCommand *command) {
+    if(index>=model->matrix_bytes)return 0;
+    const uint8_t *record=record_at(model,(uint64_t)model->commands+index,1);
+    if(!record)return 0;
+    PeMatrixCommand next={PE_MATRIX_PART,*record};
+    if(*record==255){next.kind=PE_MATRIX_PUSH;next.part=0;}
+    else if(*record==254){next.kind=PE_MATRIX_POP;next.part=0;}
+    else if(*record>=128 || *record>=model->part_count)return 0;
+    *command=next;return 1;
 }
 int pe_model_vertex(const PeModel *model,unsigned index,PeModelVertex *vertex) {
     if(index>=model->vertex_count) return 0;

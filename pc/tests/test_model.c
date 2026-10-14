@@ -11,11 +11,25 @@ int main(void){
     half(bytes+40,0x8000);half(bytes+42,0x7fff);half(bytes+44,0xffff);half(bytes+46,0xff00);
     half(bytes+64,0x3344);half(bytes+66,0x1122);
     bytes[79]=0x1a;half(bytes+80,0);half(bytes+82,1);half(bytes+84,2);half(bytes+86,65535);
+    bytes[128]=0;bytes[129]=255;bytes[130]=254;
     CHECK(pe_model_open(bytes,sizeof(bytes),&model,error,sizeof(error)));
     CHECK(model.part_count==1 && model.animation_entries==3 && model.vertex_count==3 && model.packets[3]==1);
     CHECK(model.parts==28 && model.vertices==40 && model.colors==64 && model.descriptors==76);
     CHECK(model.section==88 && model.bounds==104 && model.origin==120 && model.commands==128 && model.textures==132);
     CHECK(model.bytes==bytes && model.primitive_blocks==8);
+    CHECK(model.matrix_outputs==1 && model.max_stack_depth==1);
+    PeMatrixCommand command;
+    CHECK(pe_model_matrix_command(&model,0,&command) && command.kind==PE_MATRIX_PART && command.part==0);
+    CHECK(pe_model_matrix_command(&model,1,&command) && command.kind==PE_MATRIX_PUSH);
+    CHECK(pe_model_matrix_command(&model,2,&command) && command.kind==PE_MATRIX_POP);
+    CHECK(!pe_model_matrix_command(&model,3,&command) && command.kind==PE_MATRIX_POP);
+    bytes[128]=254;
+    CHECK(!pe_model_open(bytes,sizeof(bytes),&model,error,sizeof(error)) && model.matrix_outputs==1);
+    bytes[128]=1;
+    CHECK(!pe_model_open(bytes,sizeof(bytes),&model,error,sizeof(error)) && model.matrix_outputs==1);
+    bytes[128]=0;bytes[129]=0;
+    CHECK(!pe_model_open(bytes,sizeof(bytes),&model,error,sizeof(error)) && model.max_stack_depth==1);
+    bytes[129]=255;
     PeModelVertex vertex;PeModelPart part;PeModelPrimitive primitive;
     CHECK(pe_model_vertex(&model,0,&vertex) && vertex.x==INT16_MIN && vertex.y==INT16_MAX && vertex.z==-1);
     CHECK(vertex.normal==0xff00 && vertex.color==0x11223344);
@@ -36,6 +50,7 @@ int main(void){
     CHECK(!pe_model_open(bytes,sizeof(bytes),&model,error,sizeof(error)) && model.matrix_bytes==3);
     uint8_t textured[200]={0}; textured[2]=1;half(textured+6,3);half(textured+8,1);half(textured+10,1);
     half(textured+24,3);half(textured+30,3);
+    textured[140]=0;textured[141]=255;textured[142]=254;
     for(unsigned i=0;i<4;++i){textured[144+i*4]=(uint8_t)(i*2+1);textured[145+i*4]=(uint8_t)(i*2+2);}
     half(textured+146,0xabcd);half(textured+150,0x1234);
     for(unsigned i=0;i<3;++i){textured[160+i*4]=(uint8_t)(i*2+10);textured[161+i*4]=(uint8_t)(i*2+11);}

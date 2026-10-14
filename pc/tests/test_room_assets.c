@@ -70,6 +70,7 @@ int main(void) {
     uint64_t floor_probes_found = 0;
     uint64_t bank_root_records = 0, bank_row_records = 0;
     unsigned model_prefixes=0; uint64_t model_vertices=0, model_primitives=0, model_textures=0;
+    uint64_t matrix_commands=0,matrix_outputs=0;unsigned matrix_depth=0;
     unsigned floor_probe_outside = 0, floor_probe_unindexed = 0, floor_probe_contained_missing = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -98,6 +99,11 @@ int main(void) {
                 fprintf(stderr,"Map %u model slot %u: %s\n",map,slot,bank_error); return 1;
             }
             ++model_prefixes; model_vertices+=model.vertex_count;
+            matrix_commands+=model.matrix_bytes;matrix_outputs+=model.matrix_outputs;
+            if(model.max_stack_depth>matrix_depth)matrix_depth=model.max_stack_depth;
+            for(unsigned instruction=0;instruction<model.matrix_bytes;++instruction) {
+                PeMatrixCommand decoded;CHECK(pe_model_matrix_command(&model,instruction,&decoded));
+            }
             for(unsigned vertex=0;vertex<model.vertex_count;++vertex) {
                 PeModelVertex decoded; CHECK(pe_model_vertex(&model,vertex,&decoded));
             }
@@ -305,6 +311,8 @@ int main(void) {
     printf("Room model prefixes: %u, %llu vertices, %llu primitive descriptors; rendering pending\n",
            model_prefixes,(unsigned long long)model_vertices,(unsigned long long)model_primitives);
     printf("Model texture records decoded: %llu; not rendered\n",(unsigned long long)model_textures);
+    printf("Model matrix commands: %llu, %llu outputs, maximum stack depth %u; transforms pending\n",
+           (unsigned long long)matrix_commands,(unsigned long long)matrix_outputs,matrix_depth);
     pe_collision_close(&room_collision);
     printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
            (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);

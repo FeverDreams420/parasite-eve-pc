@@ -2,6 +2,7 @@
 #include "pe1/resident_tables.h"
 #include "room.h"
 #include "pe1/battle.h"
+#include "pe1/battle_cmd.h"
 #include "pe1/player_entity.h"
 #include "pe1/stat_modifiers.h"
 #include "pe1/inventory.h"
@@ -17,6 +18,33 @@
 int Aya_StatBinarySearch(int value,int *table);
 int Aya_StatOverflowQuery(int kind,int value);
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
+static int pending_command_stack(void)
+{
+    ItemDataRecord records[3] = {0};
+    BattleCmd_InitTableCursor();
+    for (unsigned i = 0; i < 12; ++i) {
+        BattleCmdEntry *entry = BattleCmd_AllocSlot();
+        CHECK(entry == g_BattleCmdStack + (i < 4 ? i : 3));
+        entry->header.word = i;
+        entry->payload.ammo_restore.item_data0 = &records[0];
+        entry->payload.ammo_restore.item_data1 = &records[1];
+        entry->payload.ammo_restore.item_data2 = &records[2];
+        entry->payload.ammo_restore.ammo2 = 100 + i;
+        unsigned count = i < 4 ? i + 1 : 4;
+        CHECK(g_BattleCmdStackTop == g_BattleCmdStack + count);
+        for (unsigned j = 0; j < count; ++j) {
+            CHECK(g_BattleCmdStack[j].header.word == i + 1 - count + j);
+            CHECK(g_BattleCmdStack[j].payload.ammo_restore.item_data0 == &records[0]);
+            CHECK(g_BattleCmdStack[j].payload.ammo_restore.item_data1 == &records[1]);
+            CHECK(g_BattleCmdStack[j].payload.ammo_restore.item_data2 == &records[2]);
+            CHECK(g_BattleCmdStack[j].payload.ammo_restore.ammo2 == (int)(101 + i - count + j));
+        }
+    }
+    BattleCmd_InitTableCursor();
+    CHECK(g_BattleCmdStackTop == g_BattleCmdStack);
+    return 0;
+}
+
 static unsigned armor_third(unsigned value)
 {
     if(value>999)value=999;
@@ -362,6 +390,7 @@ static int recalc_stats(void)
 }
 int main(void)
 {
+    CHECK(pending_command_stack() == 0);
     const char *path=getenv("PE_TEST_DISC");
     if(!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     PeDisc disc={0}; PeRoomCatalog catalog;

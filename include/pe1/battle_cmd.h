@@ -1,6 +1,8 @@
 #ifndef PE1_BATTLE_CMD_H
 #define PE1_BATTLE_CMD_H
 
+#include <stddef.h>
+
 struct ItemDataRecord;
 
 typedef struct SquareMessageEntry {
@@ -63,9 +65,9 @@ typedef union BattleCmdPayload {
     } equip_restore;
     /* opcode 4: restore ammo values across three item-data records. */
     struct {
-        int item_data0;
-        int item_data1;
-        int item_data2;
+        struct ItemDataRecord *item_data0;
+        struct ItemDataRecord *item_data1;
+        struct ItemDataRecord *item_data2;
         int reserved10;
         int ammo0;
         int reserved18;
@@ -79,24 +81,15 @@ typedef struct BattleCmdEntry {
     /* 0x04 */ BattleCmdPayload payload;
 } BattleCmdEntry;
 
-#define BATTLE_CMD_OFFSETOF(type, member) \
-    ((unsigned int)&(((type *)0)->member))
-#define BATTLE_CMD_STATIC_ASSERT(condition, name) \
-    typedef char battle_cmd_static_assert_##name[(condition) ? 1 : -1]
+/* Runtime records contain native pointers; they are not serialized data. */
+_Static_assert(sizeof(BattleCmdHeader) == 4, "command header");
+_Static_assert(offsetof(BattleCmdEntry, payload.ammo_spend.amount) ==
+               offsetof(BattleCmdEntry, payload) + sizeof(int), "ammo amount");
+_Static_assert(offsetof(BattleCmdPayload, ammo_restore.ammo2) ==
+               3 * sizeof(void *) + 4 * sizeof(int), "restore tail");
 
-BATTLE_CMD_STATIC_ASSERT(sizeof(BattleCmdHeader) == 0x04, header_size);
-BATTLE_CMD_STATIC_ASSERT(sizeof(BattleCmdPayload) == 0x20, payload_size);
-BATTLE_CMD_STATIC_ASSERT(
-    BATTLE_CMD_OFFSETOF(BattleCmdEntry, payload.ammo_spend.amount) == 0x08,
-    ammo_amount_offset);
-BATTLE_CMD_STATIC_ASSERT(
-    BATTLE_CMD_OFFSETOF(BattleCmdEntry, payload.ammo_restore.ammo2) == 0x20,
-    restore_tail_offset);
-BATTLE_CMD_STATIC_ASSERT(sizeof(BattleCmdEntry) == 0x24, entry_size);
-
-/* Undo stack of pending battle commands: four entries that end where the
- * equipment modifier words (g_StatScaleBase) begin, and the next free entry. */
-extern BattleCmdEntry g_BattleCmdStack[];
+/* Four pending commands, independent of the host's global-variable layout. */
+extern BattleCmdEntry g_BattleCmdStack[4];
 extern BattleCmdEntry *g_BattleCmdStackTop;
 
 void BattleCmd_InitTableCursor(void);
@@ -111,8 +104,6 @@ void BattleCmd_CommitAndSyncAmmo(int item);
 int BattleCmd_CommitAmmoAndUpdate();
 void BattleCmd_ChangeWeaponAndSync(int item);
 
-#undef BATTLE_CMD_STATIC_ASSERT
-#undef BATTLE_CMD_OFFSETOF
 
 void BattleCmd_SetCurrentHP(int value);
 void BattleCmd_SetCurrentMP(int value);

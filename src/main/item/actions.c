@@ -725,11 +725,11 @@ void Inv_StepScrollDisplay(void) {
     entry = BattleCmd_AllocSlot();
     entry->header.word = 4;
     entry->payload.ammo_restore.item_data2 = 0;
-    entry->payload.ammo_restore.item_data0 = (int)g_InvCompareLeftItem;
-    entry->payload.ammo_restore.item_data1 = (int)g_InvCompareRightItem;
+    entry->payload.ammo_restore.item_data0 = g_InvCompareLeftItem;
+    entry->payload.ammo_restore.item_data1 = g_InvCompareRightItem;
     if (g_InvCompareSlotLeft.reserveAmmo) {
         pool = &g_InvFallbackAmmoRecord + g_InvCompareSlotLeft.tailData[10];
-        entry->payload.ammo_restore.item_data2 = (int)pool;
+        entry->payload.ammo_restore.item_data2 = pool;
         if (pool) {
             entry->payload.ammo_restore.ammo2 = pool->ammo;
             {
@@ -747,7 +747,7 @@ void Inv_StepScrollDisplay(void) {
         }
     } else if (g_InvCompareSlotRight.reserveAmmo) {
         pool = &g_InvFallbackAmmoRecord + g_InvCompareSlotRight.tailData[10];
-        entry->payload.ammo_restore.item_data2 = (int)pool;
+        entry->payload.ammo_restore.item_data2 = pool;
         if (pool) {
             entry->payload.ammo_restore.ammo2 = pool->ammo;
             {

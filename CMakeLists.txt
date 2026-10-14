@@ -25,8 +25,7 @@ add_library(parasite-eve-original OBJECT
     src/main/item/new_game.c
     src/main/menu/fade_init.c
     src/main/item/add.c
-    src/main/item/armor_stats.c
-    src/main/item/weapon_stats.c
+    src/main/battle/commands.c
     src/main/item/data_lookup.c
     src/main/item/list_selection.c
     src/main/item/capacity.c

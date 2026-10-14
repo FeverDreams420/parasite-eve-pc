@@ -1716,3 +1716,28 @@ ASan/UBSan/function checks passed (PsyZ uninstrumented), including existing
 509-viewport/30,540-transition-frame coverage. This does not establish all
 animation flag combinations or actual room animation playback; serialized
 geometry preparation and full scene integration remain pending.
+
+
+### Original armor/weapon module restoration
+
+Restored Inv_BuildArmorList to src/main/aya/stats.c, and Inv_BuildWeaponList,
+its effect data and BattleCmd_LoadWeaponModifiers to src/main/battle/commands.c.
+Deleted item/armor_stats.c and item/weapon_stats.c; no new files were added.
+The full commands module now compiles in the original object target. Definition
+inventory retains all 35 names in the pre-merge union and all 22 historical
+commands functions (fc07c19cd parent) and 13 historical stats functions
+(53dcc5af2 parent), including local helpers. This establishes preservation of
+entry points, not verified runtime behavior of every function.
+
+Battle command payloads now retain native item pointers, including the producer
+in item/actions.c. The four-entry pending-command stack owns actual array
+storage and uses its own end, rather than assuming adjacency to modifier globals.
+Inv_SetActiveList obtains the actor core through the native player pointer.
+Existing stat-assets tests exercise twelve successive allocations/overflow shifts,
+checking order, capacity and all three full pointers after each allocation.
+Full build, real Disc 1 stat-assets and scene-spawn CTests pass. Stat-assets
+also passes ASan/UBSan/function, including real weapon/armor/equipment data and
+New Game cases. Full command execution, undo paths and unported callers remain
+unverified; the historical no-prototype CommitAmmoAndUpdate call convention
+still needs resolution. The pc/ directory and other extracted files still
+require removal through restoration of original modules and platform integration.

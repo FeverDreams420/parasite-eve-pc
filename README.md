@@ -526,5 +526,14 @@ floor triangles. Integer centroid probes find floor for 16,827 points; the
 All 24 tests pass headless with Disc 1; fixtures and the full room/collision
 audit pass ASan/UBSan. Actor integration and reference geometry checks remain
 unfinished.
+
+The 31 centroid no-matches are now classified: M90's triangles 0–30 are
+absent from its initial floor-region lists (region zero is empty; region one
+lists the other 75 faces). The original lookup only searches listed faces.
+The audit checks this exact omission and reports zero unexplained misses;
+a fixture confirms that retained triangle geometry without a region reference
+does not produce a floor hit. All 24 tests pass headless with Disc 1 and the
+collision fixture passes ASan/UBSan. This explains the initial data audit;
+runtime geometry changes and gameplay collision remain unverified.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

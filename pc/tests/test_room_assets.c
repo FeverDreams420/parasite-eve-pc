@@ -67,6 +67,7 @@ int main(void) {
     unsigned flat_rooms = 0, sloped_rooms = 0;
     uint64_t floor_regions = 0, floor_triangles = 0;
     uint64_t floor_probes_found = 0;
+    unsigned floor_probe_outside = 0, floor_probe_unindexed = 0, floor_probe_contained_missing = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
         if (!range->room_sectors) {
@@ -96,6 +97,14 @@ int main(void) {
             if (pe_collision_find_floor(&room_collision, (uint32_t)x << 16, 0, (uint32_t)z << 16, 0, &hit)) {
                 CHECK(hit.triangle < room_collision.triangle_count && hit.region < room_collision.region_count);
                 ++floor_probes_found;
+            } else if (!pe_collision_point_in_tri(vertices, (int16_t)x, (int16_t)z)) {
+                ++floor_probe_outside;
+            } else if (!pe_collision_triangle_in_regions(&room_collision, triangle)) {
+                ++floor_probe_unindexed;
+                CHECK(map == 90 && triangle < 31); /* M90's initial region lists omit these faces. */
+            } else {
+                ++floor_probe_contained_missing;
+                printf("Contained centroid without floor: map %u triangle %u point %d,%d\n", map, triangle, x, z);
             }
         }
         PeVramStats stats;
@@ -261,6 +270,9 @@ int main(void) {
     pe_collision_close(&room_collision);
     printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
            (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);
+    printf("Centroid no-match classification: %u outside source triangle, %u absent from region lists, %u unexplained\n",
+           floor_probe_outside, floor_probe_unindexed, floor_probe_contained_missing);
+    CHECK(!floor_probe_contained_missing && floor_probe_unindexed == 31);
     CHECK(long_stopped + long_window + long_missing == music_records - short_music_records);
     printf("%u forced AKAO tick audit: %u stopped, %u still active, %u failed (%u state errors); %llu ticks, %llu note events; not synthesized\n",
            audit_ticks, long_stopped, long_window, long_missing, long_state_errors,

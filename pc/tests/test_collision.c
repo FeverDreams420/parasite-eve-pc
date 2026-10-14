@@ -18,6 +18,13 @@ int main(void) {
     CHECK(pe_collision_find_floor(&db,0x10000,0x12345678,0x10000,2,&hit) && hit.height == 0x12345678);
     CHECK(!pe_collision_find_floor(&db,0x10000,0,0x10000,0x80,&hit) && hit.height == 0x12345678);
     CHECK(!pe_collision_find_floor(&db,0x100000,0,0x100000,0,&hit) && hit.height == 0x12345678);
+    CHECK(pe_collision_triangle_in_regions(&db,0));
+    half(bytes+50,0); /* Geometry remains, but its region no longer lists it. */
+    CHECK(pe_collision_open(&db,bytes,sizeof(bytes),error,sizeof(error)));
+    CHECK(!pe_collision_triangle_in_regions(&db,0));
+    CHECK(!pe_collision_find_floor(&db,0x10000,0,0x10000,0,&hit) && hit.height == 0x12345678);
+    half(bytes+50,1);
+    CHECK(pe_collision_open(&db,bytes,sizeof(bytes),error,sizeof(error)));
     uint8_t *previous = db.bytes;
     word(bytes+40,159);
     CHECK(!pe_collision_open(&db,bytes,sizeof(bytes),error,sizeof(error)) && db.bytes == previous);

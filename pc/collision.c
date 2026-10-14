@@ -57,6 +57,16 @@ int pe_collision_triangle_xz(const PeCollision *db, unsigned id, PeCollisionXZ v
     return 1;
 }
 
+int pe_collision_triangle_in_regions(const PeCollision *db, unsigned id) {
+    if (id >= db->triangle_count) return 0;
+    for (unsigned region=0; region<db->region_count; ++region) {
+        const uint8_t *record = db->bytes+u32(db->bytes+40+region*4);
+        unsigned header = db->planes ? 6 : 4, count = u16(record+(db->planes ? 4 : 2));
+        for (unsigned i=0; i<count; ++i) if (u16(record+header+i*2) == id) return 1;
+    }
+    return 0;
+}
+
 int pe_collision_find_floor(const PeCollision *db, uint32_t x, uint32_t y, uint32_t z,
                             uint32_t flags, PeFloorHit *hit) {
     if (flags & 0x80) return 0;

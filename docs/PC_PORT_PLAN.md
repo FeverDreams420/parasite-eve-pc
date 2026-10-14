@@ -1805,3 +1805,25 @@ and 4386 weapon/armor pairs. Encounter startup, enemy reset, battle phases,
 rewards, death and HUD paths are now compiled together but remain unverified
 at runtime. Unused functions are still dead-stripped from tests; this is not
 proof of a functioning battle. Other extractions and pc/ removal remain open.
+
+
+### Restore complete status panel module
+
+Returned the fade initialization, gamma curve and clamp functions/storage to
+menu/status_panels.c and deleted menu/fade_init.c. All 25 pre-merge function
+names remain, and the whole original module compiles. No new files were added.
+Fixed selected-widget pointer truncation and gave widget input callbacks their
+node/buttons signature; remaining unported callback assignments need auditing
+as their modules are brought into the build. Native widget field checks are
+relative to pointer-bearing fields rather than fixed PS1 offsets.
+
+DR_ENV now has PsyZ's native address/length prefix and native command words.
+Independent compilation against both local and PsyZ headers verifies DR_ENV
+size 136, DRAWENV size 168, packet offset 32 and RGB offset 25 on this 64-bit
+host. This verifies layout only, not GPU execution or other platforms.
+Existing stat-assets tests now cover all 65536 byte-valued gamma input/threshold
+pairs and clamp inputs -1024..1024. Full build, real Disc 1 stat-assets,
+scene-spawn, camera and shadow CTests pass; stat-assets ASan/UBSan/function
+passes after the changes. Menu image transfer, visual fading, widget dispatch
+and the full status renderer remain unverified. Other extractions and pc/
+removal remain required.

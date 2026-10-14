@@ -2,10 +2,12 @@
 #define PE1_PSYQ_GPU_H
 
 #include "pe1/psyq_types.h"
+#include <stddef.h>
+#include <stdint.h>
 
 #define PE1_GPU_STATIC_ASSERT(expr, name) \
     typedef char pe1_gpu_static_assert_##name[(expr) ? 1 : -1]
-#define PE1_GPU_OFFSETOF(type, member) ((unsigned int)&(((type *)0)->member))
+#define PE1_GPU_OFFSETOF(type, member) offsetof(type, member)
 
 typedef struct RECT {
     short x;
@@ -42,8 +44,8 @@ typedef struct GpuCmdPacket {
 } GpuCmdPacket;
 
 typedef struct DR_ENV {
-    u_long tag;
-    u_long code[15];
+    uintptr_t tag, len;
+    uintptr_t code[15];
 } DR_ENV;
 
 typedef struct DRAWENV {
@@ -69,7 +71,7 @@ typedef struct DISPENV {
     u_char pad1;
 } DISPENV;
 
-PE1_GPU_STATIC_ASSERT(sizeof(DRAWENV) == 0x5C, drawenv_size);
+PE1_GPU_STATIC_ASSERT(sizeof(DRAWENV) == offsetof(DRAWENV, dr_env) + sizeof(DR_ENV), drawenv_size);
 PE1_GPU_STATIC_ASSERT(sizeof(DISPENV) == 0x14, dispenv_size);
 #undef PE1_GPU_OFFSETOF
 #undef PE1_GPU_STATIC_ASSERT

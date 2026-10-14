@@ -18,9 +18,9 @@ int Inv_TransferItem(int arg0, int arg1, int arg2, int arg3);
 int Menu_GetBattleCount(void);
 void MenuWidget_ClampCursor(MenuWidgetNode *node, int x, int y);
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, itemAction) == 0x84,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, itemAction) == PE1_OFFSETOF(MenuWidgetNode, popup_node) + sizeof(void *),
                   menu_widget_item_action_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, refreshItems) == 0x88,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuWidgetNode, refreshItems) == PE1_OFFSETOF(MenuWidgetNode, itemAction) + sizeof(MenuWidgetItemAction),
                   menu_widget_refresh_items_offset);
 
 void Menu_OpenEquipScreen(int mode);

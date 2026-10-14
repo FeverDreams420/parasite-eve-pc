@@ -14,7 +14,7 @@ typedef struct MenuWidgetNode {
     int mode;
     int selected_base;
     int flags;
-    void (*update)();          /* +0x2C callback/handler (generic: holds void(void) or int(int,int) etc.) */
+    int (*update)(struct MenuWidgetNode *, unsigned int); /* input handler */
     void (*draw)();            /* +0x30 draw callback */
     int grid_width;
     int visible_rows;
@@ -67,7 +67,7 @@ void MenuWidget_DestroyNodeRecursive(MenuWidgetNode *node);
 
 /* Input dispatch walks the parent chain and treats update as a status-returning
  * handler. Most other callers use update as a generic deferred callback. */
-typedef int (*MenuWidgetInputHandler)(MenuWidgetNode *node, int flags);
+typedef int (*MenuWidgetInputHandler)(MenuWidgetNode *node, unsigned int flags);
 
 /* Runtime widget nodes use the host pointer ABI, not serialized PS1 offsets. */
 

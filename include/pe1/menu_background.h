@@ -8,7 +8,7 @@
 
 #include "pe1/menu_fade_state.h"
 
-PE1_STATIC_ASSERT(sizeof(DRAWENV) == 0x5C, menu_background_drawenv_size);
+PE1_STATIC_ASSERT(sizeof(DRAWENV) == PE1_OFFSETOF(DRAWENV, dr_env) + sizeof(DR_ENV), menu_background_drawenv_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(DRAWENV, r0) == 0x19, menu_background_drawenv_rgb_offset);
 
 void Menu_SaveBgApplyFadeStep(void);

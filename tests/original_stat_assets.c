@@ -45,6 +45,30 @@ static int pending_command_stack(void)
     return 0;
 }
 
+static int menu_fade_parameters(void)
+{
+    for (int initial = 0; initial < 256; ++initial) {
+        for (int threshold = 0; threshold < 256; ++threshold) {
+            unsigned char expected[16] = {0};
+            int count = 1;
+            while (count < 16 && expected[count - 1] < threshold) {
+                expected[count] = (initial * 256 + (256 - initial) * expected[count - 1]) / 256;
+                ++count;
+            }
+            Menu_ComputeGammaLut(initial, threshold);
+            CHECK(g_MenuSaveBgFadeLutLen == count);
+            CHECK(!memcmp(expected, g_MenuSaveBgFadeLut, (size_t)count));
+        }
+    }
+    for (int value = -1024; value <= 1024; ++value) {
+        Menu_ClampRange(value);
+        int expected = (unsigned)value % 512;
+        CHECK(g_MenuItemContextFlag == (expected ? expected : 511));
+    }
+    Menu_SaveBgInitFade();
+    return 0;
+}
+
 static unsigned armor_third(unsigned value)
 {
     if(value>999)value=999;
@@ -391,6 +415,7 @@ static int recalc_stats(void)
 int main(void)
 {
     CHECK(pending_command_stack() == 0);
+    CHECK(menu_fade_parameters() == 0);
     const char *path=getenv("PE_TEST_DISC");
     if(!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     PeDisc disc={0}; PeRoomCatalog catalog;

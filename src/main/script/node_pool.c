@@ -1,7 +1,6 @@
 #include "common.h"
-#include "pe1/battle_entity_anim.h"
+#include <string.h>
 #include "pe1/field_actor.h"
-#include "pe1/psyq_gpu.h"
 #include "pe1/reloc_block.h"
 #include "pe1/script_node.h"
 #include "pe1/script_state.h"
@@ -14,36 +13,16 @@ int g_ScriptCursorAddress;
 RelocBlock *g_SceneDataTable1;
 ScriptNode *g_ScriptNodePool;
 
-/* Task-node pool and scene relocation-block setup. Pool initialization,
- * scene data relocation, the scene-map flush and free-list construction are
- * contiguous and share the node pool and g_SceneDataTable1 state. */
+/* Original task-node pool; scene relocation routines are in reloc_block.c. */
 
 void Script_InitNodePool(void) {
     unsigned int i;
-    unsigned int j;
-    unsigned int rowOffset;
-    ScriptNodeAddress base;
     u32 *ptr;
-
-    i = 0;
-    base.node = g_ScriptNodes;
-    rowOffset = 0;
-
     g_ScriptNodePool = 0;
     g_ScriptNodeSeqCounter[0] = 0;
     g_ScriptNodeFreeListHead = 0;
 
-    for (; i < 72; i++, rowOffset += sizeof(ScriptNode)) {
-        unsigned int colOffset;
-        ScriptNodeAddress cell;
-
-        j = 0;
-        colOffset = rowOffset;
-        for (; j < 11; j++, colOffset += 4) {
-            cell.word = colOffset + base.word;
-            *cell.words = 0;
-        }
-    }
+    memset(g_ScriptNodes, 0, sizeof(g_ScriptNodes));
 
     g_ScriptCursorAddress = 0;
 
@@ -55,59 +34,6 @@ void Script_InitNodePool(void) {
     }
 
     g_SceneDataTable1 = 0;
-}
-
-/* Turn a loaded block's self-relative base and offsets into addresses;
- * a base already above 0x80000000 means the block was relocated before. */
-RelocBlock *Script_RelocBlock(RelocBlock *block) {
-    RelocAddress address;
-    RelocU32 offset;
-    RelocU32 i;
-    RelocU32 count;
-    RelocU32 *ptr;
-    char frame[8];
-
-    address.block = block;
-    offset = address.block->u0.baseOffset;
-    g_SceneDataTable1 = address.block;
-    if (0x80000000U < offset) {
-        return address.block;
-    }
-
-    i = 0;
-    count = address.block->count;
-    address.block->u0.baseOffset = address.word + offset;
-    if (count != 0) {
-        ptr = &address.block->u0.baseOffset;
-        do {
-            ptr[2] += address.word;
-            i++;
-            ptr++;
-        } while (i < address.block->count);
-    }
-
-    return g_SceneDataTable1;
-}
-
-void Script_DrawSyncAndFlush(void) {
-    unsigned int i;
-    int offset;
-    RelocBlock *block;
-    char frame[8];
-
-    DrawSync(0);
-    block = g_SceneDataTable1;
-    i = (unsigned char)block->u0.base[0] != 0;
-    if (i != 0) {
-        i = 0;
-        offset = 1;
-        do {
-            Scene_LoadMap(block->u0.base + offset, 0, 1);
-            block = g_SceneDataTable1;
-            i++;
-            offset += 2;
-        } while (i < (unsigned char)block->u0.base[0]);
-    }
 }
 
 void Script_InitNodeFreeList(void) {
@@ -138,6 +64,7 @@ ScriptNode *Script_AllocNode(unsigned int *script, ScriptNode *arg1) {
     unsigned short value;
 
     node = g_ScriptNodeFreeListHead;
+    if (!node) return 0;
     next = node->next;
     g_ScriptNodeFreeListHead = next;
 
@@ -210,3 +137,7 @@ void Script_GarbageCollectNodes(void) {
         } while (group != 0);
     }
 }
+
+/* Original linker-allocated node and operand storage. */
+ScriptNode g_ScriptNodes[72];
+u32 g_ScriptOperandTable[16];

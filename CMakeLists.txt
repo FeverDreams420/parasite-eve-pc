@@ -24,7 +24,8 @@ add_library(parasite-eve-original OBJECT
     src/main/entity/hierarchy.c
     src/main/scene/input_rules.c
     src/main/entity/pool.c
-    src/main/entity/block_alloc.c)
+    src/main/entity/block_alloc.c
+    src/main/script/node_pool.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
@@ -112,4 +113,12 @@ if(BUILD_TESTING)
     target_include_directories(test-original-pools PRIVATE include)
     target_link_libraries(test-original-pools PRIVATE psyz)
     add_test(NAME original-game-pools COMMAND test-original-pools)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test-original-nodes tests/original_nodes.c
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-nodes PRIVATE include)
+    target_link_libraries(test-original-nodes PRIVATE psyz)
+    add_test(NAME original-game-nodes COMMAND test-original-nodes)
 endif()

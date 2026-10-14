@@ -50,9 +50,9 @@ void Boot_InitSystem(void) {
 #define NULL ((void *)0)
 u32 Draw_FlushPrimQueue(void);
 int Save_InitSystem();
-int Script_InitNodePool();
+void Script_InitNodePool(void);
 int Entity_ResetStateGlobals();
-int Entity_ResetAllPools();
+void Entity_ResetAllPools(void);
 int SsInit();
 void Menu_SetEquipSlotIndex(int index);
 void Boot_BuildRenderFlagTable(void);

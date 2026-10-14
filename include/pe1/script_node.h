@@ -42,6 +42,9 @@ extern ScriptNode *g_ScriptNodePool;
 extern ScriptNode g_ScriptNodes[72];
 
 ScriptNode *Script_AllocNode(unsigned int *script, ScriptNode *previous);
+void Script_InitNodePool(void);
+void Script_InitNodeFreeList(void);
+void Script_GarbageCollectNodes(void);
 
 /* One word per script node, cleared when the pools are reset. */
 extern int g_ScriptNodeActiveFlags[64];

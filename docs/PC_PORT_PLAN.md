@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+FC/0A wybiera instrument ze stałym adresem początku próbki `0x1010`, zachowując jego loop, ADSR, przesunięcie banku i reguły przeliczenia pitch z A1. Test ADSR obejmuje release override, aktywne głosy, alternatywny bank oraz ucięty operand i przechodzi ASan/UBSan. Jest to obsługa stanu sekwencera; synteza i dowody pełnych utworów nadal pozostają wymagane.
+
 A4 ustawia signed przesunięcie pitch i czas przejścia (zero oznacza 256 ticków). Obsługa nuty oblicza krok ze zawijanego różnicowego pitch 16.16; ticki przesuwają offset i oznaczają zmiany pitch. Testy timing sprawdzają ruch w górę/w dół i kodowanie czasu, również pod ASan/UBSan. Jest to stan sekwencera; zastosowanie do fizycznych głosów oraz synteza pozostają do wdrożenia.
 
 Aktualizacja FC/14: wybór instrumentu zależny od nuty używa offsetu względnego, sprawdzanej tabeli rekordów i oryginalnej histerezy dla nut rosnących/malejących. Rekord nadpisuje attack/sustain/release; legato nie wywołuje ponownego wyboru. `akao-note-range` jest 20. testem i obejmuje progi, sąsiedni instrument, ADSR, alternatywny bank, ujemny offset i uszkodzone dane. Wszystkie 20 testów przechodzi headless z Disc 1. Audyt osiąga 8648 początkowych zdarzeń nut, dwa stop i 233 niezaimplementowane prefiksy kanałów; 397 prefiksów sekwencji przechodzi cztery wymuszone ticki, a 202 trafia na brakującą komendę. Pełne utwory, synteza oraz rozgrywka nadal wymagają implementacji i dowodów.

@@ -110,11 +110,11 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
             extended = channel->sequence.bytes[pc + 1];
             prefix = 2;
             if (extended > 5 && extended != 6 && extended != 7 && extended != 8 && extended != 9 &&
-                extended != 0x10 && extended != 0x11 && extended != 0x12 && extended != 0x14 && extended != 0x15 && extended != 0x16) {
+                extended != 0x0a && extended != 0x10 && extended != 0x11 && extended != 0x12 && extended != 0x14 && extended != 0x15 && extended != 0x16) {
                 snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO opcode 0xfc/0x%02x at 0x%x", extended, pc);
                 return PE_AKAO_CHANNEL_ERROR;
             }
-            operands = extended == 5 || extended == 0x11 ? 0 : extended == 0x10 ? 1 :
+            operands = extended == 5 || extended == 0x11 ? 0 : extended == 0x0a || extended == 0x10 ? 1 :
                        extended == 0 || extended == 2 || extended == 4 || extended == 6 || extended == 0x12 || extended == 0x14 || extended == 0x15 || extended == 0x16 ? 2 : 3;
             if ((extended <= 3 || extended == 7 || extended == 0x15 || extended == 0x16) && !channel->control) {
                 snprintf(channel->error, sizeof(channel->error), "Missing shared AKAO control at 0x%x", pc);
@@ -256,6 +256,12 @@ truncated:
             break;
         case 0xfc: {
             const uint8_t *args = channel->sequence.bytes + pc + prefix;
+            if (extended == 0x0a) {
+                /* Akao_TieNote differs from A1 only in sample start. */
+                if (!pe_akao_channel_set_instrument(channel, value)) return PE_AKAO_CHANNEL_ERROR;
+                channel->sample_start = 0x1010;
+                break;
+            }
             if (extended == 0x14) {
                 unsigned word = args[0] | (unsigned)args[1] << 8;
                 int displacement = word & 32768 ? (int)word - 65536 : (int)word;

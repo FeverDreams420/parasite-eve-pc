@@ -315,3 +315,12 @@ voice application and synthesis remain pending.
 All 20 CTest tests pass headless with Disc 1. The updated initial-prefix audit
 reaches 8,649 note events and 232 unsupported commands; 398 sequence prefixes
 complete four forced ticks and 201 encounter missing commands.
+
+FC/0A applies the original fixed sample start (`0x1010`) while retaining the
+selected instrument's loop, ADSR, bank offset and A1 pitch-rescaling rules.
+Tests cover release overrides, active voices, alternate-bank selection and
+truncated operands under ASan/UBSan. This command updates sequencer state;
+sample playback and complete songs still require synthesis and validation.
+All 20 tests pass headless with Disc 1. The initial-prefix audit now reaches
+8,718 note events and 163 unsupported commands (B8/BC LFO setup); four forced
+ticks complete for 467 sequence prefixes, while 132 hit missing commands.

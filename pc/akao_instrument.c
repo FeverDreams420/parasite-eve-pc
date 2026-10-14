@@ -67,3 +67,21 @@ int pe_akao_channel_select_sample(PeAkaoChannel *channel, unsigned encoded) {
         select_instrument(channel, index, &channel->samples->instruments[index]);
     return 1;
 }
+
+int pe_akao_channel_reset_adsr(PeAkaoChannel *channel, int release_only) {
+    if (!channel->samples || channel->instrument >= 256 || !channel->samples->valid[channel->instrument]) {
+        snprintf(channel->error, sizeof(channel->error), "Missing AKAO ADSR instrument at 0x%x", channel->pc);
+        return 0;
+    }
+    const uint8_t *adsr = channel->samples->instruments[channel->instrument].adsr;
+    if (release_only) {
+        channel->flags &= ~(UINT32_C(1) << 9);
+        channel->adsr[4] = adsr[4];
+        channel->update_flags |= 0x4400;
+    } else {
+        /* B3 restores all fields even when release override remains set. */
+        memcpy(channel->adsr, adsr, 8);
+        channel->update_flags |= 0xff00;
+    }
+    return 1;
+}

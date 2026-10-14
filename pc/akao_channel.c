@@ -96,23 +96,26 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
         }
         unsigned operands, prefix = 1, extended = 0;
         switch (opcode) {
-        case 0xa0: case 0xa6: case 0xa7: operands = 0; break;
+        case 0xa0: case 0xa6: case 0xa7: case 0xb3: operands = 0; break;
         case 0xa1: case 0xa2: case 0xa3: case 0xa5: case 0xa8: case 0xaa:
-        case 0xc0: case 0xc1: case 0xd8: case 0xd9: operands = 1; break;
-        case 0xa9: case 0xab: operands = 2; break;
+        case 0xc0: case 0xc1: case 0xd8: case 0xd9:
+        case 0xad: case 0xae: case 0xaf: case 0xb1: case 0xb2:
+        case 0xb7: case 0xbb: case 0xbf: operands = 1; break;
+        case 0xa9: case 0xab: case 0xb0: operands = 2; break;
         case 0xc2: case 0xc3: case 0xc8: case 0xca: operands = 0; break;
         case 0xc9: operands = 1; break;
         case 0xfc:
             if (channel->sequence.size - pc < 2) goto truncated;
             extended = channel->sequence.bytes[pc + 1];
             prefix = 2;
-            if (extended > 5 && extended != 6 && extended != 7 && extended != 8 && extended != 9 && extended != 0x12) {
+            if (extended > 5 && extended != 6 && extended != 7 && extended != 8 && extended != 9 &&
+                extended != 0x10 && extended != 0x11 && extended != 0x12 && extended != 0x15 && extended != 0x16) {
                 snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO opcode 0xfc/0x%02x at 0x%x", extended, pc);
                 return PE_AKAO_CHANNEL_ERROR;
             }
-            operands = extended == 5 ? 0 :
-                       extended == 0 || extended == 2 || extended == 4 || extended == 6 || extended == 0x12 ? 2 : 3;
-            if ((extended <= 3 || extended == 7) && !channel->control) {
+            operands = extended == 5 || extended == 0x11 ? 0 : extended == 0x10 ? 1 :
+                       extended == 0 || extended == 2 || extended == 4 || extended == 6 || extended == 0x12 || extended == 0x15 || extended == 0x16 ? 2 : 3;
+            if ((extended <= 3 || extended == 7 || extended == 0x15 || extended == 0x16) && !channel->control) {
                 snprintf(channel->error, sizeof(channel->error), "Missing shared AKAO control at 0x%x", pc);
                 return PE_AKAO_CHANNEL_ERROR;
             }
@@ -193,6 +196,22 @@ truncated:
             else *field = (uint16_t)((unsigned)*field + (uint32_t)signed_byte);
             break;
         }
+        case 0xad: channel->adsr[0] = (uint8_t)value; channel->update_flags |= 0x0900; break;
+        case 0xae: channel->adsr[1] = (uint8_t)value; channel->update_flags |= 0x1000; break;
+        case 0xaf: channel->adsr[2] = (uint8_t)value; channel->update_flags |= 0x8000; break;
+        case 0xb0:
+            channel->adsr[1] = (uint8_t)value;
+            channel->adsr[2] = channel->sequence.bytes[pc + prefix + 1];
+            channel->update_flags |= 0x9000;
+            break;
+        case 0xb1: channel->adsr[3] = (uint8_t)value; channel->update_flags |= 0x2200; break;
+        case 0xb2: channel->adsr[4] = (uint8_t)value; channel->update_flags |= 0x4400; break;
+        case 0xb3:
+            if (!pe_akao_channel_reset_adsr(channel, 0)) return PE_AKAO_CHANNEL_ERROR;
+            break;
+        case 0xb7: channel->adsr[5] = (uint8_t)value; channel->update_flags |= 0x0100; break;
+        case 0xbb: channel->adsr[6] = (uint8_t)value; channel->update_flags |= 0x0200; break;
+        case 0xbf: channel->adsr[7] = (uint8_t)value; channel->update_flags |= 0x0400; break;
         case 0xc8:
             if (next >= channel->sequence.size) goto invalid;
             channel->loop_index = (channel->loop_index + 1) & 3;
@@ -222,6 +241,30 @@ truncated:
             break;
         case 0xfc: {
             const uint8_t *args = channel->sequence.bytes + pc + prefix;
+            if (extended == 0x16) {
+                /* +64 in the bank alias is measure, not a voice loop count. */
+                channel->control->measure = (uint16_t)(args[0] | (unsigned)args[1] << 8);
+                break;
+            }
+            if (extended == 0x15) {
+                /* SeqOp_StreamPair's track pointer aliases the bank:
+                 * +60 = ticks_per_beat, +62 = tick, +5E = beat,
+                 * +5C = beats_per_measure. No voice allocation occurs. */
+                channel->control->ticks_per_beat = (uint16_t)value;
+                channel->control->beats_per_measure = args[1];
+                channel->control->tick = channel->control->beat = 0;
+                break;
+            }
+            if (extended == 0x10) {
+                channel->flags |= UINT32_C(1) << 9;
+                channel->adsr[4] = (uint8_t)value;
+                channel->update_flags |= 0x4400;
+                break;
+            }
+            if (extended == 0x11) {
+                if (!pe_akao_channel_reset_adsr(channel, 1)) return PE_AKAO_CHANNEL_ERROR;
+                break;
+            }
             if (extended == 4) {
                 unsigned word = args[0] | (unsigned)args[1] << 8;
                 int displacement = word & 32768 ? (int)word - 65536 : (int)word;

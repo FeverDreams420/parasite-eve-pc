@@ -68,6 +68,7 @@ void pe_akao_channel_slides(PeAkaoChannel *channel);
 int pe_akao_channel_bind_samples(PeAkaoChannel *channel, const PeSpuBank *samples);
 int pe_akao_channel_set_instrument(PeAkaoChannel *channel, unsigned encoded);
 int pe_akao_channel_select_sample(PeAkaoChannel *channel, unsigned encoded);
+int pe_akao_channel_reset_adsr(PeAkaoChannel *channel, int release_only);
 int pe_akao_pitch_period(const PeSpuBank *samples, unsigned instrument, uint8_t note,
                           uint16_t detune_bits, uint16_t *pitch);
 /* Melodic/drum-kit pitch. Portamento and LFO modes are rejected

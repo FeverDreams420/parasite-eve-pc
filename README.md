@@ -277,3 +277,15 @@ tests kit entry/exit, preserved melodic bookkeeping, malformed offsets and the
 no-rescale distinction. The current audit reaches 7,303 initial note events;
 1,578 prefixes and all complete sequences still hit unimplemented commands.
 This is state execution, not synthesized playback.
+
+AKAO ADSR commands now update attack, decay, sustain and release parameters
+and their dirty masks. Full instrument reset and release-only reset preserve
+their distinct original semantics; `akao-adsr` verifies these operations.
+FC/15 configures musical meter and FC/16 sets the measure counter. These
+commands address shared bank state, despite misleading track aliases in the
+reference code. All 19 CTest tests pass headless with Disc 1 data; ADSR and
+channel tests also pass AddressSanitizer and UndefinedBehaviorSanitizer.
+The latest audit reaches 7,987 initial note events, two stops and 894 unsupported
+channel prefixes. 266 sequence prefixes complete four forced timer ticks;
+333 encounter missing commands. This limited audit does not prove full songs,
+ADSR envelope synthesis or gameplay, which remain unfinished.

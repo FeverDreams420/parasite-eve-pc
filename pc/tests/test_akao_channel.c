@@ -189,6 +189,18 @@ int main(void) {
     CHECK(pe_akao_channel_start(&channel, &sequence, 0));
     CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
     CHECK(channel.transpose == 0xff7f && channel.detune == 128);
+    const uint8_t meter[] = {0xfc,0x15,3,2,0x11};
+    sequence.bytes = meter; sequence.size = sizeof(meter);
+    control.tick = control.beat = 99; control.measure = 7;
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(control.ticks_per_beat == 3 && control.beats_per_measure == 2 && !control.tick && !control.beat);
+    for (unsigned i = 0; i < 6; ++i) pe_akao_control_step(&control);
+    CHECK(control.measure == 8 && !control.tick && !control.beat);
+    const uint8_t measure[] = {0xfc,0x16,0x34,0x12,0x11};
+    sequence.bytes = measure; sequence.size = sizeof(measure);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE && control.measure == 0x1234);
     puts("AKAO channel: state commands, finite/nested loops, signed jumps, key-off and explicit errors passed");
     return 0;
 }

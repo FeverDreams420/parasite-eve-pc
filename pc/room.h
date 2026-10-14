@@ -54,6 +54,10 @@ int pe_room_catalog_open(PeRoomCatalog *catalog, PeDisc *disc);
 int pe_audio_bank_read(PeRoomCatalog *catalog, unsigned index, uint8_t **bytes, size_t *size);
 /* Room starts zero-initialized. On failure the previous room is preserved. */
 int pe_room_load(PeRoomCatalog *catalog, unsigned map, PeRoom *room);
+/* Owned archive bank selected by the original resident sector boundaries.
+ * Starts zeroed; failure preserves the old blob. */
+int pe_sector_bank_load(PeRoomCatalog *catalog,unsigned index,PeRoomBlob *blob);
+void pe_room_blob_close(PeRoomBlob *blob);
 void pe_room_close(PeRoom *room);
 /* Packed count/offset table, with explicit record stride and bounds checks. */
 int pe_room_blob_table(const PeRoomBlob *blob, unsigned word, size_t stride,

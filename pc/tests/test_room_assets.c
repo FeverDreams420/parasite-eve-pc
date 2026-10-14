@@ -36,6 +36,35 @@ int main(void) {
     CHECK(pe_disc_open(&disc, path));
     PeRoomCatalog catalog;
     CHECK(pe_room_catalog_open(&catalog, &disc));
+    uint64_t external_frames=0,external_matrices=0;unsigned external_rows=0;
+    PeRoomBlob entity_blob={0},base_blob={0};char entity_error[128];
+    for(unsigned bank=18;bank<=38;++bank){
+        CHECK(pe_sector_bank_load(&catalog,bank,&entity_blob));
+        PeRoomBanks entities={0};
+        if(bank>=23){CHECK(pe_sector_bank_load(&catalog,bank<31?18:20,&base_blob));
+            CHECK(pe_entity_banks(&base_blob,1,&entities,entity_error,sizeof(entity_error)));
+            /* Audit only records supplied by this area override. */
+            memset(entities.rows,0,sizeof(entities.rows));
+        }
+        CHECK(pe_entity_banks(&entity_blob,bank<23,&entities,entity_error,sizeof(entity_error)));
+        PeModel model;CHECK(pe_model_open(entities.roots[0].bytes,entities.roots[0].size,&model,entity_error,sizeof(entity_error)));
+        for(unsigned action=0;action<48;++action){
+            PeRoomSlice *slice=&entities.rows[0][action];if(!slice->present)continue;
+            PeAnimation animation;CHECK(pe_animation_open(slice->bytes,slice->size,&animation,entity_error,sizeof(entity_error)));
+            PeMatrix base,sources[PE_ANIMATION_BONES],pose[PE_ANIMATION_BONES];pe_matrix_identity(&base);
+            for(unsigned i=0;i<model.part_count;++i)pe_matrix_identity(&sources[i]);
+            for(unsigned frame=0;frame<(animation.frames?animation.frames:1);++frame){unsigned written=0;
+                CHECK(pe_animation_pose(&model,&animation,frame,NULL,&base,sources,model.part_count,pose,PE_ANIMATION_BONES,&written));
+                ++external_frames;external_matrices+=written;
+            }
+            ++external_rows;
+        }
+    }
+    uint8_t *previous_entity=entity_blob.bytes;
+    CHECK(!pe_sector_bank_load(&catalog,80,&entity_blob)&&entity_blob.bytes==previous_entity);
+    CHECK(!pe_sector_bank_load(&catalog,10,&entity_blob)&&entity_blob.bytes==previous_entity);
+    pe_room_blob_close(&entity_blob);pe_room_blob_close(&base_blob);
+    printf("External entity banks: 5 primary models and 16 area overrides, %u actions, %llu frames, %llu pose matrices; scene selection pending\n",external_rows,(unsigned long long)external_frames,(unsigned long long)external_matrices);
     PeSpuBank *spu = calloc(1, sizeof(*spu));
     CHECK(spu);
     PeSpuBankStats bank_stats;

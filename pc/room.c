@@ -165,7 +165,7 @@ int pe_room_blob_table(const PeRoomBlob *blob, unsigned word, size_t stride,
 }
 
 static int load_blob(PeRoomCatalog *catalog, uint32_t sector, unsigned sectors,
-                      PeRoomBlob *blob) {
+                      PeRoomBlob *blob, int room_layout) {
     size_t size = (size_t)sectors * 2048;
     if (!sectors) return 0;
     blob->bytes = malloc(size);
@@ -184,11 +184,12 @@ static int load_blob(PeRoomCatalog *catalog, uint32_t sector, unsigned sectors,
     /* Task roots/data/aux/slots and streams use eight-byte records; TIM
      * uploads twenty-byte records; scripts/banks/audio twelve-byte records.
      * The old task-root casts to SceneRoomRecord only read its +4 payload. */
-    const unsigned words[] = {1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    const unsigned words[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
     for (unsigned i = 0; i < sizeof(words) / sizeof(words[0]); ++i) {
         const uint8_t *records;
         unsigned count, word = words[i];
-        size_t stride = word == 10 ? 20 : word >= 5 && word <= 9 ? 8 : 12;
+        if ((room_layout && word == 2) || (!room_layout && word >= 5 && word <= 9)) continue;
+        size_t stride = word == 10 ? 20 : room_layout && word >= 5 && word <= 9 ? 8 : 12;
         if (!pe_room_blob_table(blob, word, stride,
                                  &records, &count)) goto malformed;
     }
@@ -211,11 +212,11 @@ int pe_room_load(PeRoomCatalog *catalog, unsigned map, PeRoom *room) {
     PeRoom next = {0};
     next.map = map;
     uint32_t sector = range->start;
-    if (!load_blob(catalog, sector, range->scratch_sectors, &next.scratch)) goto failed;
+    if (!load_blob(catalog, sector, range->scratch_sectors, &next.scratch, 1)) goto failed;
     sector += range->scratch_sectors;
-    if (!load_blob(catalog, sector, range->texture_sectors, &next.textures)) goto failed;
+    if (!load_blob(catalog, sector, range->texture_sectors, &next.textures, 1)) goto failed;
     sector += range->texture_sectors;
-    if (!load_blob(catalog, sector, range->room_sectors, &next.data)) goto failed;
+    if (!load_blob(catalog, sector, range->room_sectors, &next.data, 1)) goto failed;
     pe_room_close(room);
     *room = next;
     catalog->error[0] = 0;
@@ -223,4 +224,16 @@ int pe_room_load(PeRoomCatalog *catalog, unsigned map, PeRoom *room) {
 failed:
     pe_room_close(&next);
     return 0;
+}
+void pe_room_blob_close(PeRoomBlob *blob){free(blob->bytes);memset(blob,0,sizeof(*blob));}
+int pe_sector_bank_load(PeRoomCatalog *catalog,unsigned index,PeRoomBlob *blob){
+    if(index>=80||!catalog->disc||!catalog->disc->stream||
+       catalog->sector_bounds[index+1]<=catalog->sector_bounds[index]){
+        snprintf(catalog->error,sizeof(catalog->error),"Invalid sector bank %u",index);return 0;
+    }
+    PeRoomBlob next={0};
+    if(!load_blob(catalog,catalog->sector_bounds[index],catalog->sector_bounds[index+1]-catalog->sector_bounds[index],&next,0)){
+        pe_room_blob_close(&next);return 0;
+    }
+    pe_room_blob_close(blob);*blob=next;catalog->error[0]=0;return 1;
 }

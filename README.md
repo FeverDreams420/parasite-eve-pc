@@ -108,6 +108,15 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+External entity banks now have an owned sector-boundary loader and checked
+bank views. Primary banks install slot-zero models; area overrides retain
+the primary root and replace group-zero actions by source ID. The Disc 1
+audit covers five primary models and 16 area overrides: 225 supplied actions,
+5,901 frames and 173,941 pose matrices. Area poses use base models 18/20;
+runtime scene/day selection, scene ownership, texture upload and actor model
+allocation remain pending. All 29 headless tests and ASan/UBSan fixtures/full
+data audit pass, including preservation after invalid bank/header loads.
+
 `pe_animation_pose` connects keyframes and ordered overrides to persistent
 source matrices and the model's command hierarchy. Unanimated parts retain
 their matrices; failures preserve sources, pose and count. The Disc 1 audit

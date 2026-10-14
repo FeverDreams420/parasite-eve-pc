@@ -19,6 +19,13 @@ int main(void) {
     CHECK(!pe_room_banks(&room,&banks,error,sizeof(error)) && banks.rows[9][47].bytes==bytes+80);
     bytes[51]=9; word(bytes+40,17);
     CHECK(!pe_room_banks(&room,&banks,error,sizeof(error)) && banks.roots[2].offset==68);
+    word(bytes+40,8);bytes[51]=255;bytes[47]=7;
+    CHECK(pe_entity_banks(&room.data,1,&banks,error,sizeof(error)));
+    CHECK(banks.roots[0].bytes==bytes+64&&banks.rows[0][7].bytes==bytes+80&&banks.roots[2].bytes==bytes+68);
+    bytes[47]=48;
+    CHECK(!pe_entity_banks(&room.data,1,&banks,error,sizeof(error))&&banks.rows[0][7].bytes==bytes+80);
+    bytes[47]=7;room.data.directory[3]=0;
+    CHECK(pe_entity_banks(&room.data,0,&banks,error,sizeof(error))&&banks.roots[0].bytes==bytes+64);
     puts("Room banks: slot/group mapping, last override, borrowed data and transactional bounds passed");
     return 0;
 }

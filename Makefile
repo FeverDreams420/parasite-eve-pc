@@ -2,7 +2,7 @@
 BUILD_DIR ?= build
 CMAKE ?= cmake
 
-.PHONY: all configure build run ci clean
+.PHONY: all configure build run test ci clean
 all: build
 
 configure:
@@ -14,7 +14,10 @@ build: configure
 run: build
 	./$(BUILD_DIR)/pc/parasite-eve-pc
 
-ci: build
+test: build
+	ctest --test-dir $(BUILD_DIR) --output-on-failure
+
+ci: test
 
 clean:
 	$(CMAKE) --build $(BUILD_DIR) --target clean

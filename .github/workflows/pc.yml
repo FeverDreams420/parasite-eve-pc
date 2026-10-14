@@ -14,7 +14,10 @@ jobs:
           submodules: false
       - name: Fetch PsyZ and SDL
         run: git submodule update --init third_party/psyz third_party/psyz/external/SDL
-      - name: Build the host smoke test
+      - name: Install movie decoder dependencies
+        run: brew install ffmpeg pkg-config
+      - name: Build the native target
         run: |
           cmake -S . -B build
           cmake --build build --parallel
+          ctest --test-dir build --output-on-failure

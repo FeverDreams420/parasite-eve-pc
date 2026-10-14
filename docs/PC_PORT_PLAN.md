@@ -4,7 +4,7 @@ Celem jest natywna wersja PC, która zachowuje fabułę, atmosferę, stałe uję
 
 ## Punkt startowy
 
-Stan planu na 13 października 2026: README opisuje port jako niegrywalny. Główny `CMakeLists.txt` dołącza target w `pc/CMakeLists.txt`, który buduje `pc/main.c` i łączy PsyZ; kod gry nie jest jeszcze częścią tego programu. PsyZ jest istniejącą warstwą zastępującą środowisko PSY-Q i należy najpierw ocenić jej pokrycie potrzeb gry, zanim powstanie dodatkowy backend.
+Stan na 14 października 2026: natywny program odczytuje obraz BIN pierwszego dysku, odtwarza całe intro MDEC z dźwiękiem XA i przechodzi do oryginalnego ekranu tytułowego oraz menu. Grafiki menu pochodzą z `PE.IMG`; działają wybór klawiaturą i pomijanie intro. Zapis i rozgrywka po wyborze New Game/Tutorial nie są jeszcze dołączone. PsyZ pozostaje istniejącą warstwą runtime i ma osobny smoke test, a boot korzysta z SDL i FFmpeg. Kod gry pod `src/` nadal wymaga portowania przed dołączeniem do natywnego targetu.
 
 Repozytorium rozwijamy od tego miejsca jako niezależny projekt C11. Zgodność binarna, byte match, historyczne kompilatory i kontrole PS1 nie są wymagane. Źródła z `parasite-eve-decomp` są punktem startowym; ich kod można swobodnie zmieniać dla natywnego runtime. Zakres danych i działanie drugiego dysku wymagają osobnego potwierdzenia przed deklaracją pełnej grywalności.
 

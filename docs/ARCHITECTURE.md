@@ -1,7 +1,14 @@
 # Architecture
 
 The native target is a C11 executable built with CMake and linked to PsyZ.
-It currently runs the window smoke test in `pc/main.c`. Game code is added
+`pc/main.c` starts the native boot frontend: read-only ISO9660 access to a
+MODE2/2352 BIN, FFmpeg MDEC/XA decoding on a producer thread, SDL presentation
+and audio, then the original `PE.IMG` title artwork and menu input.
+The bounded video queue and audio prebuffer keep decoding ahead of playback.
+Frames retain the original 15 Hz timing and 4:3 aspect; the audio device stays
+alive through the final samples before entering the menu.
+
+The PsyZ smoke test remains available separately. Game code is added
 incrementally as its platform dependencies are replaced.
 
 The memory map and overlay addresses below describe the original game for
@@ -94,11 +101,12 @@ templates other shared code still instantiates per overlay.
 ## Native build and module integration
 
 ```
-pc/main.c + ported C modules -> host C11 compiler -> executable linked to PsyZ/SDL
+pc/ boot + disc + movie + title -> host C11 compiler -> SDL/FFmpeg frontend + PsyZ
 ```
 
 The root `CMakeLists.txt` includes `pc/`. The current executable contains
-only `pc/main.c`; a passing build does not validate unported game sources.
+the native boot modules under `pc/`; a passing build does not validate unported
+game sources.
 There is no historical compiler, splat step, PS1 linker, assembly extraction,
 retail checksum verification or decompilation report in the build.
 
@@ -128,4 +136,4 @@ native registration and state ownership are implemented.
 | `docs/` | native development guidance and data-format reference |
 
 Game data and proprietary SDK files are not distributed. The native smoke
-test builds without them. See [CONTRIBUTING.md](../CONTRIBUTING.md).
+test builds without them; full boot requires a user-supplied USA Disc 1 BIN. See [CONTRIBUTING.md](../CONTRIBUTING.md).

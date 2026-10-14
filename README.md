@@ -12,16 +12,21 @@ compiler output, fixed code addresses and PS1 binary builds are no longer
 acceptance requirements. Changes are evaluated by behavior, portability,
 readability and native builds.
 
-The port is not playable yet. The executable opens a small PsyZ window,
-draws a frame counter and exits after eight frames. The game sources under
-`src/` are retained for porting and are not yet linked into that executable.
-Remaining MIPS/GTE instructions, hardware access, address aliases and
-32-bit pointer assumptions need C implementations or PsyZ adapters before
-the affected modules can join the host build.
+The native executable boots through the opening movie to the original title
+screen and main menu. MDEC video and stereo XA audio are decoded directly from
+a user-supplied Disc 1 BIN; menu artwork comes from `PE.IMG`.
+
+Gameplay is not playable yet. The game sources under `src/` are retained for
+porting and are not yet linked into that executable. Remaining MIPS/GTE
+instructions, hardware access, address aliases and 32-bit pointer assumptions
+need C implementations or PsyZ adapters before the affected modules can join
+the host build.
 
 ## Build and run
 
-Use a C11 compiler, CMake 3.21 or newer and Git. PsyZ and SDL are source
+Use a C11 compiler, CMake 3.21 or newer, Git, pkg-config and FFmpeg development
+libraries (`libavformat`, `libavcodec`, `libavutil`, `libswscale`, `libswresample`).
+On macOS install them with `brew install ffmpeg pkg-config`. PsyZ and SDL are source
 submodules; no historical PS1 compiler, Sony SDK, Python packages or extracted
 game executable is needed for this build.
 
@@ -31,13 +36,26 @@ cd parasite-eve-pc
 git submodule update --init third_party/psyz third_party/psyz/external/SDL
 cmake -S . -B build
 cmake --build build --parallel
-./build/pc/parasite-eve-pc
+./build/pc/parasite-eve-pc --disc "/path/to/Parasite Eve (Disc 1).bin"
 ```
 
-The smoke test requires a graphical session. `make`, `make run` and `make ci`
-wrap the native build. `make ci` builds the current host target; it does not
-verify or compile the unported game modules. A direct `cmake -S pc -B pc/build`
-build remains supported.
+The application requires a graphical session and an audio device. You can set
+`PE_DISC_IMAGE` instead of passing `--disc`; `make run` uses that environment
+variable. Enter/Space skips the intro and opens the title options. Arrows or
+W/S change the selection, Enter confirms, and Escape returns to the title
+prompt. Continue remains disabled until native save support exists. Selecting
+New Game or Tutorial currently exits; their gameplay is not integrated.
+
+`make ci` builds and runs the asset-free disc-reader test. The boot integration
+test skips when no image is supplied. To verify complete movie decoding and
+menu input with your own image:
+
+```sh
+PE_TEST_DISC="/path/to/Parasite Eve (Disc 1).bin" ctest --test-dir build --output-on-failure
+```
+
+The optional PsyZ window test is `./build/pc/parasite-eve-pc --smoke-test`.
+A direct `cmake -S pc -B pc/build` build remains supported.
 
 ## Layout
 
@@ -55,3 +73,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and
 This repository contains source only. Disc images, game assets, FMV, memory
 cards and proprietary SDK files are excluded. Running disc-backed game
 features will require the user's own legal copy of the game.
+
+## Diagnostic commands
+
+`--inspect-disc`, `--decode-intro`, `--play-intro` and `--menu` each take a
+Disc 1 BIN path. They inspect boot assets, decode without presentation, play
+only the intro, or start directly at the title menu. Normal boot uses `--disc`.
+
+An ordinary 2048-byte ISO preserves data files but loses the XA sectors needed
+for movie audio. Use the original single-track MODE2/2352 BIN for full boot.
+No game assets are copied into this repository.

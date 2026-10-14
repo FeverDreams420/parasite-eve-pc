@@ -11,13 +11,15 @@ manifest requirement or decompilation progress/debt ratchet.
 2. Replace platform operations with PsyZ APIs or explicit native adapters.
 3. Add ported modules explicitly to the native CMake target when their dependencies work.
 4. Build with `cmake -S . -B build` and `cmake --build build --parallel`.
-5. Run `./build/pc/parasite-eve-pc` in a graphical session for runtime changes.
+5. Run `./build/pc/parasite-eve-pc --disc <Disc 1.bin>` in a graphical session for boot changes; `--smoke-test` checks PsyZ independently.
 6. Validate changed game behavior with focused native tests or reproducible gameplay scenarios as modules become runnable.
 
-The current native target is a runtime smoke test. A successful build does
-not imply that the game modules under `src/` compile or that the game is playable.
-CI builds the host target without retail assets. Use a fresh build directory
-when changing build structure or dependencies.
+The native target reads the disc, plays the intro and renders the title/menu.
+A successful build does not imply that the game modules under `src/` compile
+or that gameplay works. CI builds the target and tests the disc reader without
+retail assets. Set `PE_TEST_DISC` when running CTest to exercise full movie
+decoding, title selection, intro cancellation and frontend shutdown.
+Use a fresh build directory when changing build structure or dependencies.
 
 Do not preserve register assignments, instruction scheduling, padding,
 linker order or code addresses for compiler matching. Assembly that performs

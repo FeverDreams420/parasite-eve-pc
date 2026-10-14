@@ -107,8 +107,9 @@ typedef union CollisionRegionEntry {
 typedef struct CollisionDatabase {
     u16 reserved00;
     u16 regionCount;                  /* 0x02: inline height-table references. */
-    u32 reserved04;
-    u16 visitedWordCount;             /* 0x08: triangle count on disk; bitmap words after relocation. */
+    u16 triangleCount;                /* 0x04: floor triangle array length. */
+    u16 planeCount;                   /* 0x06: slope plane array length. */
+    u16 visitedWordCount;             /* 0x08: traversal bitmap bits on disk; words after relocation. */
     u16 reserved0A;
     u32 reserved0C[3];
     CollisionVertexTable vertices;   /* 0x18: XZ or XYZ array. */

@@ -7,7 +7,7 @@ static void half(uint8_t *p, unsigned v) { p[0]=(uint8_t)v; p[1]=(uint8_t)(v>>8)
 static void word(uint8_t *p, uint32_t v) { half(p,v); half(p+2,v>>16); }
 int main(void) {
     uint8_t bytes[160] = {0}; char error[128]; PeCollision db = {0};
-    half(bytes+2,1); half(bytes+8,1); word(bytes+24,80); word(bytes+28,96); word(bytes+40,48);
+    half(bytes+2,1); word(bytes+4,1); half(bytes+8,2); word(bytes+24,80); word(bytes+28,96); word(bytes+40,48);
     half(bytes+48,65534); half(bytes+50,1); half(bytes+52,0);
     half(bytes+84,10); half(bytes+90,10);
     half(bytes+98,0); half(bytes+100,1); half(bytes+102,2);
@@ -30,7 +30,8 @@ int main(void) {
     half(bytes+56,7); half(bytes+58,1); half(bytes+60,0);
     CHECK(pe_collision_open(&db,bytes,sizeof(bytes),error,sizeof(error)));
     CHECK(pe_collision_find_floor(&db,0x10000,0,0x10000,0,&hit) && hit.height == 0x30000 && !hit.region);
-    memset(bytes,0,sizeof(bytes)); half(bytes+2,1); half(bytes+8,1);
+    memset(bytes,0,sizeof(bytes)); half(bytes+2,1); word(bytes+4,1); half(bytes+8,2);
+    half(bytes+6,1);
     word(bytes+24,80); word(bytes+28,110); word(bytes+32,140); word(bytes+40,48);
     half(bytes+52,1); half(bytes+54,0);
     half(bytes+86,10); half(bytes+96,10);

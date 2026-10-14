@@ -9,6 +9,7 @@
 #include "akao_player.h"
 #include "music.h"
 #include "scene_audio.h"
+#include "collision.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -62,6 +63,10 @@ int main(void) {
     uint64_t long_ticks = 0, long_notes = 0;
     unsigned unsupported[512] = {0};
     unsigned loaded = 0, absent = 0;
+    PeCollision room_collision = {0};
+    unsigned flat_rooms = 0, sloped_rooms = 0;
+    uint64_t floor_regions = 0, floor_triangles = 0;
+    uint64_t floor_probes_found = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
         if (!range->room_sectors) {
@@ -77,6 +82,22 @@ int main(void) {
             return 1;
         }
         CHECK(room.map == map && room.data.size);
+        char collision_error[256];
+        if (!pe_room_collision(&room, &room_collision, collision_error, sizeof(collision_error))) {
+            fprintf(stderr, "Map %u collision: %s\n", map, collision_error); return 1;
+        }
+        if (room_collision.planes) ++sloped_rooms; else ++flat_rooms;
+        floor_regions += room_collision.region_count; floor_triangles += room_collision.triangle_count;
+        for (unsigned triangle = 0; triangle < room_collision.triangle_count; ++triangle) {
+            PeCollisionXZ vertices[3]; PeFloorHit hit;
+            CHECK(pe_collision_triangle_xz(&room_collision, triangle, vertices));
+            int x = ((int)vertices[0].x + vertices[1].x + vertices[2].x) / 3;
+            int z = ((int)vertices[0].z + vertices[1].z + vertices[2].z) / 3;
+            if (pe_collision_find_floor(&room_collision, (uint32_t)x << 16, 0, (uint32_t)z << 16, 0, &hit)) {
+                CHECK(hit.triangle < room_collision.triangle_count && hit.region < room_collision.region_count);
+                ++floor_probes_found;
+            }
+        }
         PeVramStats stats;
         char error[256];
         if (!pe_room_upload_vram(&room, vram, &stats, error, sizeof(error))) {
@@ -235,6 +256,11 @@ int main(void) {
         free(bytes);
         ++verified_banks;
     }
+    printf("Room collision databases: %u flat, %u sloped; %llu regions, %llu triangles; floor integration pending\n",
+           flat_rooms, sloped_rooms, (unsigned long long)floor_regions, (unsigned long long)floor_triangles);
+    pe_collision_close(&room_collision);
+    printf("Collision centroid probes finding floor: %llu / %llu (not reference geometry validation)\n",
+           (unsigned long long)floor_probes_found, (unsigned long long)floor_triangles);
     CHECK(long_stopped + long_window + long_missing == music_records - short_music_records);
     printf("%u forced AKAO tick audit: %u stopped, %u still active, %u failed (%u state errors); %llu ticks, %llu note events; not synthesized\n",
            audit_ticks, long_stopped, long_window, long_missing, long_state_errors,

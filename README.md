@@ -516,5 +516,15 @@ transactional loading and independence from source bytes. All 24 tests pass
 headless with Disc 1; collision tests also pass ASan/UBSan. Selecting the actual
 room collision asset and comparing game geometry, actor integration and wall
 traversal remain pending, so these fixtures do not prove game collision.
+
+Room collision loading now resolves the actual taskData short record. Real
+Disc 1 data corrected the header interpretation: floor triangle count is the
+halfword at +04, plane count at +06; +08 describes the traversal bitmap.
+All 414 databases decode (300 flat, 114 sloped), with 423 regions and 16,858
+floor triangles. Integer centroid probes find floor for 16,827 points; the
+31 misses remain visible and do not count as validated gameplay collision.
+All 24 tests pass headless with Disc 1; fixtures and the full room/collision
+audit pass ASan/UBSan. Actor integration and reference geometry checks remain
+unfinished.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

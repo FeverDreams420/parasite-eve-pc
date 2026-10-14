@@ -1,5 +1,5 @@
 #include "boot.h"
-#include "disc.h"
+#include "pe1/cdrom.h"
 #include "movie.h"
 #include "title.h"
 #include "automation.h"

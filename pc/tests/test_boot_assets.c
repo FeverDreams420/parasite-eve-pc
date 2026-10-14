@@ -1,4 +1,4 @@
-#include "disc.h"
+#include "pe1/cdrom.h"
 #include "boot.h"
 #include "automation.h"
 #include "movie.h"

@@ -1,7 +1,7 @@
 #ifndef PE_PC_MOVIE_H
 #define PE_PC_MOVIE_H
 
-#include "disc.h"
+#include "pe1/cdrom.h"
 
 typedef struct PeMovieStats {
     unsigned video_frames;

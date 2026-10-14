@@ -1,6 +1,8 @@
 #include "common.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include "pe1/geom_state.h"
 #include "pe1/room_fx_model.h"
 #include "pe1/render_camera.h"
 #include "pe1/akao.h"
@@ -397,6 +399,8 @@ void Akao_LoadVoiceBankAlt(void)
 
 int Scene_LoadRoom(unsigned int roomId)
 {
+    static GeomState *geometry_owner;
+    GeomState *next_geometry = NULL;
     char name[8];
     unsigned int base;
     int map;
@@ -511,6 +515,74 @@ retry_room:
 
     }
 
+    /* Expand disk mesh records to native pointer width. Keep the original
+     * byte arrays and view/control offsets, and append the native entries. */
+    {
+        SceneRoomRecord *aux = SceneRoom_FirstRecord(room, directory->taskAux);
+        size_t offset = aux->source.offsetAndSlot & 0xffffff;
+        u32 payload_bytes, declared;
+        memcpy(&payload_bytes, aux, 4); payload_bytes &= 0xffffff;
+        size_t room_bytes = (size_t)g_RoomSectorTable[map].roomSectors * 2048;
+        if (offset > room_bytes || payload_bytes > room_bytes - offset || payload_bytes < sizeof(GeomState))
+            goto invalid_geometry;
+        const u8 *source = (const u8 *)room + offset;
+        GeomState header;
+        memcpy(&header, source, sizeof(header));
+        memcpy(&declared, source, 4);
+        if (declared < sizeof(GeomState) || declared > payload_bytes || header.entry_offset < 0 ||
+            (size_t)header.entry_offset > declared ||
+            header.entry_count06 > (declared - (size_t)header.entry_offset) / 0x38)
+            goto invalid_geometry;
+        u16 view_count;
+        memcpy(&view_count, source + 10, sizeof(view_count));
+        if (!view_count || header.entry_offset_1C < (s32)sizeof(GeomState) ||
+            (size_t)header.entry_offset_1C > declared ||
+            view_count > (declared - (size_t)header.entry_offset_1C) / sizeof(CameraViewport) ||
+            header.ctrl_offset < 0 || (size_t)header.ctrl_offset > declared ||
+            header.entry_count > (declared - (size_t)header.ctrl_offset) / sizeof(GeomCtrlEntry))
+            goto invalid_geometry;
+        for (unsigned control_index = 0; control_index < header.entry_count; ++control_index) {
+            size_t control_offset = (size_t)header.ctrl_offset + control_index * sizeof(GeomCtrlEntry);
+            GeomCtrlEntry control;
+            memcpy(&control, source + control_offset, sizeof(control));
+            s64 slots_offset = (s64)control_offset + control.slot_offset;
+            u32 slots = control.head.packed >> 8;
+            if (!slots) slots = 1; /* Reset reads the first slot even for an idle control. */
+            if (slots_offset < 0 || (u64)slots_offset > declared ||
+                slots > (declared - (size_t)slots_offset) / sizeof(GeomAnimationSlot))
+                goto invalid_geometry;
+            for (u32 slot_index = 0; slot_index < slots; ++slot_index)
+                if (source[slots_offset + slot_index * sizeof(GeomAnimationSlot)] >= header.entry_count06)
+                    goto invalid_geometry;
+        }
+        size_t entries_offset = (declared + _Alignof(GeomEntry) - 1) & ~((size_t)_Alignof(GeomEntry) - 1);
+        size_t native_bytes = entries_offset + (size_t)header.entry_count06 * sizeof(GeomEntry);
+        if (native_bytes > INT32_MAX) goto invalid_geometry;
+        next_geometry = calloc(1, native_bytes);
+        if (!next_geometry) goto invalid_geometry;
+        memcpy(next_geometry, source, declared);
+        next_geometry->entry_offset = (s32)entries_offset;
+        u32 native_size = (u32)native_bytes;
+        memcpy(next_geometry, &native_size, 4);
+        GeomEntry *entries = (GeomEntry *)((u8 *)next_geometry + entries_offset);
+        for (unsigned entry = 0; entry < header.entry_count06; ++entry) {
+            size_t old_offset = (size_t)header.entry_offset + entry * 0x38;
+            GeomEntry *native = &entries[entry];
+            memcpy(native, source + old_offset, 0x30);
+            if (native->prim_count) {
+                s64 position = (s64)old_offset + native->u28.pos_ptr;
+                s64 texture = (s64)old_offset + native->u2C.uv_ptr;
+                if (position < 0 || texture < 0 || (position & 3) || (texture & 3) ||
+                    (u64)position > declared || (u64)texture > declared ||
+                    native->prim_count > (declared - (size_t)position) / sizeof(u32) ||
+                    native->prim_count > (declared - (size_t)texture) / 8)
+                    goto invalid_geometry;
+                native->u28.pos_ptr = (s32)(position - ((u8 *)native - (u8 *)next_geometry));
+                native->u2C.uv_ptr = (s32)(texture - ((u8 *)native - (u8 *)next_geometry));
+            }
+        }
+    }
+
     state->requested_entity_bank = directory->entityBank;
     state->room_type = directory->roomType;
 
@@ -530,7 +602,10 @@ retry_room:
     state->bank_reset_944[0] =
         Script_RelocBlock(SCENE_ROOM_PAYLOAD(room, SceneRoom_FirstRecord(room, directory->taskBlock)));
     state->bank_reset_948[0] = SCENE_ROOM_PAYLOAD(room, SceneRoom_FirstRecord(room, directory->taskData));
-    state->geometry_state = SCENE_ROOM_PAYLOAD(room, SceneRoom_FirstRecord(room, directory->taskAux));
+    free(geometry_owner);
+    geometry_owner = next_geometry;
+    next_geometry = NULL;
+    state->geometry_state = geometry_owner;
 
     shortRecord = SceneAsset_ResolveOffset(room, directory->taskSlots & 0x3FFFFF);
     for (i = 0; i < directory->taskSlots >> 22; i++) {
@@ -628,6 +703,11 @@ retry_room:
         state->pending_sample_bank = -1;
     }
     return 0;
+
+invalid_geometry:
+    free(next_geometry);
+    fprintf(stderr, "Scene_LoadRoom: invalid native geometry for M%03d\n", map + 1);
+    return -3;
 }
 
 s32 Scene_StreamTexturePage(void)

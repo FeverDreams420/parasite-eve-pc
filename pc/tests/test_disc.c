@@ -1,4 +1,4 @@
-#include "disc.h"
+#include "pe1/cdrom.h"
 #include "assets.h"
 #include "room.h"
 #include <stdlib.h>

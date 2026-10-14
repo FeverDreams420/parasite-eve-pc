@@ -15,7 +15,7 @@
 #include "pe1/pad_state.h"
 #include "pe1/scene_flags.h"
 #include "pe1/entity_frame_update.h"
-#include "disc.h"
+#include "pe1/cdrom.h"
 #include "pe1/gte.h"
 #include "pe1/menu_widget.h"
 #include "pe1/menu_queue.h"

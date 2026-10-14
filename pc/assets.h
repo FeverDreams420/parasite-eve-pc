@@ -1,7 +1,7 @@
 #ifndef PE_PC_ASSETS_H
 #define PE_PC_ASSETS_H
 
-#include "disc.h"
+#include "pe1/cdrom.h"
 
 /* Both sources stay mounted for the lifetime of the game. A source number is
  * asset provenance, not an emulated drive or a request to swap discs. */

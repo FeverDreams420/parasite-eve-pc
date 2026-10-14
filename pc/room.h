@@ -1,7 +1,7 @@
 #ifndef PE_PC_ROOM_H
 #define PE_PC_ROOM_H
 
-#include "disc.h"
+#include "pe1/cdrom.h"
 
 /* Table ends at 0x80094188, the documented PM handler array. The last
  * eight-byte slot is all zero, but is still included in the data audit. */

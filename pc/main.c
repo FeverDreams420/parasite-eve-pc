@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include "disc.h"
+#include "pe1/cdrom.h"
 #include "assets.h"
 #include "movie.h"
 #include "boot.h"

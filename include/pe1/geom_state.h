@@ -78,7 +78,7 @@ PE1_STATIC_ASSERT(sizeof(GeomCoordinateBounds) == 8, geom_coordinate_bounds_size
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomCoordinateBounds, minY) == 4,
                   geom_coordinate_bounds_y);
 
-/* 56-byte render/mesh entry. Base = entry_offset (+0x14). */
+/* Native mesh entry, expanded from the 56-byte disk record. */
 typedef struct GeomEntry {                /* 0x38 */
     GeomPackedFlags head;                /* +0x00: flags/depth */
     u16 anim_mod_x;                       /* +0x04 */
@@ -120,7 +120,7 @@ struct RenderTilePacket;
 int Render_LoadMeshEntry(GeomEntry *entry, struct RenderTilePacket *buffer, void **end);
 
 
-/* Scrolling view of a 56-byte GeomEntry. Fractions are read as bytes but
+/* Scrolling view of the native GeomEntry. Fractions are read as bytes but
  * stored as halfwords, clearing the unused high byte. */
 typedef union GeomScrollFraction {
     u16 word;
@@ -134,7 +134,7 @@ typedef struct GeomScrollEntry {
     u8 reserved10[12];
     s16 speedX, speedY;
     GeomScrollFraction fractionX, fractionY;
-    u8 reserved24[20];
+    u8 reserved24[sizeof(GeomEntry) - 0x24];
 } GeomScrollEntry;
 
 /* Camera and view part of the scroll state (from 0x800BCF8C), with the
@@ -200,7 +200,7 @@ typedef union GeomScrollRecord {
     GeomScrollWords words;
 } GeomScrollRecord;
 
-PE1_STATIC_ASSERT(sizeof(GeomScrollEntry) == 0x38, geom_scroll_entry_size);
+PE1_STATIC_ASSERT(sizeof(GeomScrollEntry) == sizeof(GeomEntry), geom_scroll_entry_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollEntry, x) == 0x0C,
                   geom_scroll_x_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomScrollEntry, speedX) == 0x1C,

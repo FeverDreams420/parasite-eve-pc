@@ -19,7 +19,8 @@ a user-supplied Disc 1 CUE/BIN; menu artwork comes from `PE.IMG`.
 Gameplay is not playable yet. Native targets compile original modules in place;
 tests execute connected paths for room assets, audio banks, cameras, actor models,
 input and frame submission. The executable still uses temporary boot/frontend
-code in `pc/`. Full original scene/frame integration, native geometry relocation,
+code in `pc/`. Native geometry relocation is verified for seven rooms; image I/O
+now belongs to the original archive module. Full original scene/frame integration,
 unsupported room descriptors and remaining hardware/address assumptions still
 need work.
 

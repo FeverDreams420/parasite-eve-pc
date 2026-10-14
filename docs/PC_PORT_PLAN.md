@@ -12,6 +12,8 @@ Uruchamiamy oryginalny kod `src/main/` i `src/overlays/` na PC. Modyfikujemy go 
 
 Aktualne wiążące wymaganie użytkownika: żadnych nowych plików ani wydzielania funkcji. Naprawiamy całe istniejące moduły w miejscu. Dotychczasowe wydzielenia należy scalić z powrotem, zachowując poprawki i sprawdzając kompletność funkcji względem oryginalnych modułów. Katalog `pc/` ma zostać usunięty: nie jest docelowym miejscem ani logiki gry, ani osobnej implementacji platformowej. Potrzebne dostosowania platformy należy integrować w istniejących modułach oryginału i PsyZ. Automatyczna weryfikacja pozostaje wymagana; jej zależności od `pc/` również wymagają przebudowy. Historyczne wpisy poniżej opisujące wydzielanie funkcji lub dopuszczające `pc/` nie stanowią zgody na kontynuowanie tego podejścia.
 
+Usunięcie `pc/` jest obowiązkiem bieżącej integracji, a nie porządkowaniem odkładanym do końca portu. Kolejne prace mają zastępować jego zależności wywołaniami całych oryginalnych modułów i usuwać zbędne implementacje. Samo kompilowanie lub testowanie oryginalnych funkcji obok równoległego runtime nie spełnia tego wymagania. Wierność 1:1 dotyczy zachowania oryginalnej gry; nie oznacza byte match ani wymogu zachowania sprzętowych ograniczeń PS1.
+
 Dotychczasowe implementacje logiki w `pc/` powstały przy błędnym podejściu i nie są podstawą portu. Poniższe historyczne wyniki dotyczą tych eksperymentów, nie uruchomienia oryginalnej gry. Pierwszy audyt 99 oryginalnych jednostek gry (bez historycznych bibliotek `psyq`) wykazał 9 przechodzących syntax check; to nie dowód kompilacji ani linkowania. Główne przeszkody obejmują stare layouty struktur roboczych, instrukcje MIPS/GTE i zależności sprzętowe. Sprawdzenia layoutów danych z płyt pozostają wymagane.
 
 Oryginalny nagłówek `include/pe1/gte.h` ma 143 makra przeniesione z pojedynczych transferów/poleceń MIPS na bezpośrednie endpointy PsyZ. Test `original-game-gte` wywołuje te makra bez okna, sprawdza projekcję, MAC, rejestry kontrolne i niewyrównane host buffers; przechodzi także ASan/UBSan dla kodu testu i makr (biblioteka PsyZ nie jest instrumentowana). Złożone makra i oryginalny renderer nadal wymagają dostosowania. Oryginalne procedury matematyczne są linkowane przez `parasite-eve-original`; 100000 deterministycznych przypadków przechodzi `original-game-math` oraz ASan/UBSan. To postęp w kompilacji kodu źródłowego, nie działająca rozgrywka.
@@ -2578,3 +2580,41 @@ ASan/UBSan/function real-data execution pass with required Disc 1 assets. PsyZ/S
 are not instrumented. Render_PrepareFrame as a whole is compiled but not executed
 by these checks: native mesh-entry relocation and full scene/frame runtime are
 still incomplete. Removal of pc/ remains pending.
+
+
+### Native geometry in the original room loader and removal of pc/disc
+
+Scene_LoadRoom now expands the 56-byte serialized mesh records into native
+GeomEntry records in owned memory, preserving the original raw room bytes,
+view/control arrays and relative position/texture references. GeomScrollEntry
+uses the same native stride as GeomEntry. The complete original
+Render_PrepareFrame executes with canonical game state and focus storage; no
+new source files or replacement frame preparation were introduced.
+
+The real-data fixture verifies 190 entries in M017, M018, M021, M045, M102, M151
+and M319. It compares all sprite/tpage packets in both buffers against the
+serialized positions, UV, CLUT, page and transparency values, with a guard
+after the 597184 total packet bytes. An invalid geometry offset in a temporary
+image is rejected with -3 before bank/geometry state replacement; reloading
+the original image succeeds. Rendering those packets to reference background
+images, production packet-arena capacity/lifetime and other room descriptors
+remain unverified.
+
+Deleted pc/disc.c and pc/disc.h. Image I/O is integrated into the existing
+cdrom/scene_assets.c and its original cdrom.h header, used by the original
+sector reader and by native image consumers. The build links the whole original
+archive module instead of compiling a separate platform reader. Existing
+fixture read/poll and sound-request doubles remain isolated through renamed
+symbols in the existing test object. No parallel gameplay engine was moved.
+
+Full build and ten CTests pass with Disc 1 assets required: disc-reader, original
+actor-animation, camera, entity-textures, entity-texture-assets, shadow,
+scene-spawn, boot-menu-audio, boot-replay and boot-newgame. Fresh
+ASan/UBSan/function runs pass for the disc fixture (ISO, raw BIN, CUE, extent
+boundaries and malformed input) and the real entity-texture fixture, including
+the original archive and room modules. PsyZ/SDL archives were not instrumented
+in these runs. The legacy boot tests do not prove original gameplay.
+
+The rest of pc/, including scene/script/audio/frontend implementations and
+their test dependencies, still requires elimination. Full original scene/frame
+integration and the complete game remain unfinished.

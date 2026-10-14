@@ -6,7 +6,6 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 include(CTest)
-add_subdirectory(pc)
 
 # Whole original modules may contain entry points not yet called by each test.
 # Keep function-level linking instead of splitting source files for test targets.
@@ -15,6 +14,17 @@ if(APPLE)
 elseif(NOT MSVC)
     add_link_options(-Wl,--gc-sections)
 endif()
+
+# Original scene/archive module owns file-image I/O and completion flags.
+add_library(parasite-eve-original-disc OBJECT src/main/cdrom/scene_assets.c)
+target_include_directories(parasite-eve-original-disc PRIVATE include)
+if(MSVC)
+    target_compile_options(parasite-eve-original-disc PRIVATE /Gy /Gw)
+else()
+    target_compile_options(parasite-eve-original-disc PRIVATE -ffunction-sections -fdata-sections)
+endif()
+
+add_subdirectory(pc)
 
 # Compile the original game sources in place. Modules join this target as
 # their platform dependencies are made portable; no duplicate game logic.
@@ -62,15 +72,6 @@ else()
 endif()
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 
-# Original scene/archive module owns file-image I/O and completion flags.
-add_library(parasite-eve-original-disc OBJECT src/main/cdrom/scene_assets.c)
-target_include_directories(parasite-eve-original-disc PRIVATE include pc)
-if(MSVC)
-    target_compile_options(parasite-eve-original-disc PRIVATE /Gy /Gw)
-else()
-    target_compile_options(parasite-eve-original-disc PRIVATE -ffunction-sections -fdata-sections)
-endif()
-
 # Original AKAO units compile in place while their SPU/timer dependencies
 # are connected. The title frontend uses the original effect playback path.
 add_library(parasite-eve-original-akao OBJECT
@@ -110,7 +111,7 @@ if(BUILD_TESTING)
     add_test(NAME original-game-akao-layout COMMAND test-original-akao-layout)
     add_executable(test-original-akao-instrument tests/original_akao_instrument.c
         src/main/aya/stats.c
-        pc/disc.c pc/room.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/akao_sequence.c pc/spu_bank.c
+        pc/room.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/akao_sequence.c pc/spu_bank.c
         $<TARGET_OBJECTS:parasite-eve-original-akao>)
     target_include_directories(test-original-akao-instrument PRIVATE include pc)
     target_link_libraries(test-original-akao-instrument PRIVATE psyz)
@@ -162,7 +163,7 @@ if(BUILD_TESTING)
     # Disc I/O and the earlier decoder are test fixtures only. The function
     # under test is the original game procedure linked into the executable.
     add_executable(test-original-animation-assets tests/original_animation_assets.c
-        pc/disc.c pc/room.c pc/room_banks.c pc/animation.c pc/matrix.c pc/model.c
+        $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c pc/room_banks.c pc/animation.c pc/matrix.c pc/model.c
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-animation-assets PRIVATE include pc)
     target_link_libraries(test-original-animation-assets PRIVATE psyz)
@@ -188,7 +189,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-projection-assets tests/original_projection_assets.c
-        pc/disc.c pc/room.c pc/room_banks.c pc/projection.c pc/camera.c
+        $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c pc/room_banks.c pc/projection.c pc/camera.c
         pc/model.c pc/matrix.c $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-projection-assets PRIVATE include pc)
     target_link_libraries(test-original-projection-assets PRIVATE psyz)
@@ -230,7 +231,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-model-setup tests/original_model_setup.c
-        pc/disc.c pc/room.c pc/room_banks.c pc/model.c pc/vram.c
+        pc/room.c pc/room_banks.c pc/model.c pc/vram.c
         $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-model-setup PRIVATE include pc)
@@ -285,7 +286,7 @@ else()
     target_compile_options(parasite-eve-original-actor-animation PRIVATE -ffunction-sections -fdata-sections)
 endif()
 if(BUILD_TESTING)
-    add_executable(test-original-actor-animation tests/original_actor_animation.c pc/disc.c
+    add_executable(test-original-actor-animation tests/original_actor_animation.c $<TARGET_OBJECTS:parasite-eve-test-disc>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
     target_include_directories(test-original-actor-animation PRIVATE include pc)
@@ -301,7 +302,7 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-floor PRIVATE psyz)
     add_test(NAME original-game-floor COMMAND test-original-floor)
     add_executable(test-original-collision-assets tests/original_collision_assets.c
-        pc/collision.c pc/collision_math.c pc/disc.c pc/room.c $<TARGET_OBJECTS:parasite-eve-original>)
+        pc/collision.c pc/collision_math.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-collision-assets PRIVATE include pc)
     target_link_libraries(test-original-collision-assets PRIVATE psyz)
     add_test(NAME original-game-collision-assets COMMAND test-original-collision-assets)
@@ -311,7 +312,7 @@ endif()
 add_library(parasite-eve-original-camera OBJECT src/main/render/camera.c)
 target_include_directories(parasite-eve-original-camera PRIVATE include)
 if(BUILD_TESTING)
-    add_executable(test-original-camera tests/original_camera.c pc/camera.c pc/disc.c pc/room.c pc/matrix.c pc/model.c
+    add_executable(test-original-camera tests/original_camera.c pc/camera.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c pc/matrix.c pc/model.c
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-camera>)
     target_include_directories(test-original-camera PRIVATE include pc)
@@ -366,10 +367,11 @@ if(BUILD_TESTING)
     # Compile the whole module; only this fixture replaces read/poll outcomes.
     # Rename its real I/O symbols to keep them distinct from the fixture doubles.
     add_library(parasite-eve-test-disc OBJECT src/main/cdrom/scene_assets.c)
-    target_include_directories(parasite-eve-test-disc PRIVATE include pc)
+    target_include_directories(parasite-eve-test-disc PRIVATE include)
     target_compile_definitions(parasite-eve-test-disc PRIVATE
         CdRom_ReadSectorsFromLba=CdRom_ImageReadSectorsFromLba
-        CdRom_PollReady=CdRom_ImagePollReady)
+        CdRom_PollReady=CdRom_ImagePollReady
+        Asset_Find08w=Asset_ImageFind08w)
     if(MSVC)
         target_compile_options(parasite-eve-test-disc PRIVATE /Gy /Gw)
     else()
@@ -388,7 +390,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-entity-texture-assets tests/original_entity_textures.c
-        $<TARGET_OBJECTS:parasite-eve-original-disc> pc/disc.c pc/room.c pc/vram.c pc/model.c pc/room_banks.c pc/animation.c pc/matrix.c
+        $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c pc/vram.c pc/model.c pc/room_banks.c pc/animation.c pc/matrix.c
         $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>)
@@ -418,7 +420,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-scene-spawn tests/original_scene_spawn.c
-        pc/disc.c pc/room.c pc/room_banks.c pc/model.c pc/script.c
+        pc/room.c pc/room_banks.c pc/model.c pc/script.c
         $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-scene-spawn PRIVATE include pc)
@@ -437,7 +439,7 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING)
-    add_executable(test-original-stat-assets tests/original_stat_assets.c pc/disc.c pc/room.c
+    add_executable(test-original-stat-assets tests/original_stat_assets.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-stat-assets PRIVATE include pc)
     target_link_libraries(test-original-stat-assets PRIVATE psyz)

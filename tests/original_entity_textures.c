@@ -304,13 +304,42 @@ int main(void)
             CHECK(Scene_LoadRoom(room_id)==0);
             CHECK(!memcmp(Psyz_SpuGetRam(),spu_expected,0x80000));
             CHECK(g_GameState.bank_reset_944[0] != NULL);
+            if(map==17) {
+                /* Corrupt a temporary copy, never the user's disc image. */
+                size_t image_bytes=(size_t)(range->scratch_sectors+range->texture_sectors+range->room_sectors)*2048;
+                u8 *bad=malloc(image_bytes);CHECK(bad);
+                CHECK(pe_disc_read(&disc,&catalog.archive,(uint64_t)range->start*2048,bad,image_bytes));
+                const u8 *aux;unsigned aux_count;
+                CHECK(pe_room_blob_table(&room.data,7,8,&aux,&aux_count) && aux_count);
+                size_t geometry_offset=image_word(aux+4)&0xffffff;
+                u32 invalid_entries=0x7fffffff;
+                memcpy(bad+(size_t)(range->scratch_sectors+range->texture_sectors)*2048+geometry_offset+20,
+                       &invalid_entries,sizeof(invalid_entries));
+                FILE *temporary=tmpfile();CHECK(temporary);
+                CHECK(fwrite(bad,1,image_bytes,temporary)==image_bytes && fflush(temporary)==0);
+                PeDisc bad_disc={.stream=temporary,.image_size=image_bytes,.sector_size=2048};
+                PeDiscFile bad_archive={.size=(u32)image_bytes};
+                SceneRoomSectorRange original_range=g_RoomSectorTable[map-1];
+                Pe1GameState previous=g_GameState;
+                g_RoomSectorTable[map-1].start=0;
+                g_GameState.pe_image_base_lba=0;
+                CdRom_BindImage(&bad_disc,&bad_archive);
+                CHECK(Scene_LoadRoom(room_id)==-3);
+                CHECK(g_GameState.geometry_state==previous.geometry_state);
+                CHECK(!memcmp(g_GameState.bank_slots,previous.bank_slots,sizeof(previous.bank_slots)));
+                CdRom_BindImage(&disc,&catalog.archive);
+                g_RoomSectorTable[map-1]=original_range;
+                g_GameState.pe_image_base_lba=previous.pe_image_base_lba;
+                fclose(temporary);free(bad);
+                CHECK(Scene_LoadRoom(room_id)==0);
+            }
             const u8 *geometry_records;unsigned geometry_count;
             CHECK(pe_room_blob_table(&room.data,7,8,&geometry_records,&geometry_count));
             CHECK(geometry_count>0);
             unsigned geometry_offset=image_word(geometry_records+4)&0xffffff;
             unsigned geometry_size=image_word(geometry_records)&0xffffff;
             CHECK(geometry_offset<=room.data.size && geometry_size<=room.data.size-geometry_offset);
-            CHECK(g_GeomState==(GeomState *)(data+geometry_offset));
+            CHECK(g_GeomState && g_GeomState!=(GeomState *)(data+geometry_offset));
             CHECK((void *)g_GeomState==g_GameState.bank_reset_94c[0]);
             const u8 *geometry=room.data.bytes+geometry_offset;
             CHECK(geometry_size>=60);
@@ -319,6 +348,53 @@ int main(void)
             CHECK(declared<=geometry_size && view_offset>=60 && view_offset<=declared);
             CHECK(views>0 && views<=(declared-view_offset)/52);
             GeomScrollRecord saved_scroll=g_GeomScroll;
+            unsigned wire_entries=image_word(geometry+20);
+            size_t packet_bytes=0;
+            GeomEntry *native_entries=(GeomEntry *)((u8 *)g_GeomState+g_GeomState->entry_offset);
+            for(unsigned entry=0;entry<g_GeomState->entry_count06;++entry) {
+                const u8 *wire=geometry+wire_entries+entry*0x38;
+                GeomEntry *native=&native_entries[entry];
+                CHECK(!memcmp(native,wire,0x28));
+                if(native->prim_count) {
+                    s32 old_pos=(s32)image_word(wire+0x28),old_tex=(s32)image_word(wire+0x2c);
+                    CHECK(!memcmp((u8 *)native+native->u28.pos_ptr,wire+old_pos,native->prim_count*4));
+                    CHECK(!memcmp((u8 *)native+native->u2C.uv_ptr,wire+old_tex,native->prim_count*8));
+                }
+                packet_bytes+=(size_t)native->prim_count*2*(sizeof(SPRT_16)+sizeof(DR_TPAGE));
+            }
+            u8 *packet_arena=malloc(packet_bytes+16);CHECK(packet_arena);
+            memset(packet_arena,0xa5,packet_bytes+16);
+            SceneAssetView *saved_texture=g_GameState.texture_load_scratch;
+            g_GameState.texture_load_scratch=(SceneAssetView *)packet_arena;
+            CHECK(Render_PrepareFrame()==0);
+            for(unsigned guard=0;guard<16;++guard)CHECK(packet_arena[packet_bytes+guard]==0xa5);
+            for(unsigned entry=0;entry<g_GeomState->entry_count06;++entry) {
+                GeomEntry *native=&native_entries[entry];
+                CHECK((u8 *)native->u30.prim>=packet_arena && (u8 *)native->u30.prim<=packet_arena+packet_bytes);
+                CHECK((u8 *)native->u34.pagePackets>=packet_arena && (u8 *)native->u34.pagePackets<=packet_arena+packet_bytes);
+                const u8 *wire=geometry+wire_entries+entry*0x38;
+                const u8 *positions=native->prim_count?wire+(s32)image_word(wire+0x28):wire;
+                const u8 *textures=native->prim_count?wire+(s32)image_word(wire+0x2c):wire;
+                SPRT_16 *sprites=native->u30.prim;
+                DR_TPAGE *pages=(DR_TPAGE *)native->u34.pagePackets;
+                for(unsigned pass=0;pass<2;++pass)for(unsigned primitive=0;primitive<native->prim_count;++primitive) {
+                    unsigned index=pass*native->prim_count+primitive;
+                    const u8 *texture=textures+primitive*8;
+                    u32 position=image_word(positions+primitive*4),word=image_word(texture);
+                    CHECK(getlen(&sprites[index])==3 && getlen(&pages[index])==1);
+                    CHECK(sprites[index].r0==128 && sprites[index].g0==128 && sprites[index].b0==128);
+                    CHECK(sprites[index].code==(texture[7]&0x10?0x7e:0x7c));
+                    CHECK((u16)sprites[index].x0==(u16)(native->disp_x+(position>>22)));
+                    CHECK((u16)sprites[index].y0==(u16)(native->disp_y+((position>>12)&1023)));
+                    CHECK(sprites[index].u0==texture[4] && sprites[index].v0==texture[3]);
+                    CHECK(sprites[index].clut==(((word&511)<<6)|((word>>9)&63)));
+                    u32 page=0xe1000600|0x80|((word>>22)&3)<<5|((word>>16)&15)|((word>>15)&1)<<4;
+                    CHECK((u32)pages[index].code[0]==page);
+                }
+            }
+            printf("Original room geometry M%03u: %u native entries, %zu packet bytes, full preparation passed\n",
+                   map,g_GeomState->entry_count06,packet_bytes);
+            g_GameState.texture_load_scratch=saved_texture;
             for(unsigned group=0;group<views;++group) {
                 const u8 *view=geometry+view_offset+group*52;
                 memset(g_EntityRenderScratch,0,sizeof(g_EntityRenderScratch));
@@ -330,6 +406,7 @@ int main(void)
                     CHECK(g_EntityRenderScratch[5+component]==image_word(view+20+component*4));
             }
             g_GeomScroll=saved_scroll;
+            free(packet_arena);
             const u8 *entries; unsigned entries_count;
             CHECK(pe_room_blob_table(&room.data, 3, 12, &entries, &entries_count));
             for (unsigned i = 0; i < entries_count; ++i) {

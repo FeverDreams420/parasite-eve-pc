@@ -10,6 +10,7 @@ int g_FieldMoveLock;
 FieldActor *g_EntityFreeListHead;
 extern FieldActor *g_FieldActorListHead;
 FieldActor *g_CurrentEntity;
+struct BattleEntity *D_8009D254;
 u16 g_EntityFreePoolCount;
 FieldActor *g_PlayerEntity;
 u32 g_EntitySerialCounter;

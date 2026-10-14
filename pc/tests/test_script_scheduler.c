@@ -92,6 +92,31 @@ int main(void) {
     actor.heads[0] = -1;
     scheduler->free_head = 999;
     CHECK(pe_script_scheduler_start(scheduler, &actor, 0, 80) == -1);
+    pe_script_scheduler_init(scheduler, &program, &banks);
+    PeScriptActor actors[3];
+    for (unsigned i = 0; i < 3; ++i) {
+        pe_script_actor_init(&actors[i], 16);
+        actors[i].cursors[2] = 80; actors[i].script_entry = 7;
+        actors[i].sub_id = i < 2 ? 3 : 4; actors[i].field_id = 11 + i;
+    }
+    banks.events[0] = (PeScriptEvent){7,3,6,0,99};
+    banks.events[1] = (PeScriptEvent){0,0,9,13,55}; banks.event_count = 2;
+    CHECK(pe_script_scheduler_events(scheduler, actors, 3));
+    CHECK(!banks.event_count && scheduler->live == 3);
+    for (unsigned i = 0; i < 3; ++i) {
+        PeScriptTask *event_task = &scheduler->slots[i].task;
+        CHECK(event_task->actor == &actors[i] && event_task->flags == 4);
+        CHECK(event_task->target14 == (i < 2 ? 6u : 9u));
+        CHECK(event_task->trigger_value == (i < 2 ? 99u : 55u));
+        CHECK(!event_task->ticks && event_task->pc == 80);
+    }
+    while (scheduler->live < PE_SCRIPT_TASK_CAPACITY - 1)
+        CHECK(pe_script_scheduler_start(scheduler, &actors[0], 2, 80) >= 0);
+    int previous_head = actors[0].heads[2];
+    banks.event_count = 1;
+    CHECK(!pe_script_scheduler_events(scheduler, actors, 3));
+    CHECK(banks.event_count == 1 && scheduler->live == PE_SCRIPT_TASK_CAPACITY - 1);
+    CHECK(actors[0].heads[2] == previous_head);
     free(scheduler);
     puts("Script scheduler: same-tick child order, shared actors, deferred collection, pool exhaustion and sequence wrap passed");
     return 0;

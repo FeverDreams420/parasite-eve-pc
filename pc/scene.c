@@ -33,6 +33,7 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
     if (!pe_room_upload_vram(&next.room, next.vram, &next.texture_stats, error, error_size) ||
         !pe_script_program_open(&next.room, &next.scripts, error, error_size)) goto failed;
     next.script_banks = scene->script_banks;
+    next.script_banks.actor_serial = 1; /* Draw_InitPipeline starts room actor IDs at one. */
     next.akao = catalog->akao;
     next.scheduler = malloc(sizeof(*next.scheduler));
     next.script_actor_count = next.scripts.actors;
@@ -42,6 +43,7 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
         goto failed;
     }
     pe_script_scheduler_init(next.scheduler, &next.scripts, &next.script_banks);
+    next.scheduler->sequence = 1;
     for (unsigned i = 0; i < next.script_actor_count; ++i) {
         unsigned entry, sub_id;
         uint32_t offset;
@@ -51,6 +53,7 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
             goto failed;
         }
         pe_script_actor_init(&next.script_actors[i], offset);
+        next.script_actors[i].field_id = next.script_banks.actor_serial++;
         next.script_actors[i].script_entry = entry;
         next.script_actors[i].sub_id = sub_id;
         if (pe_script_scheduler_start(next.scheduler, &next.script_actors[i], 2, offset) < 0) {

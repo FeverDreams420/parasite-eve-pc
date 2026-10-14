@@ -134,7 +134,7 @@ PeScriptStep pe_script_task_tick(PeScriptTask *task, unsigned instruction_limit)
         case 0: case 2: case 19: case 25: case 31: case 43: case 44: case 45:
         case 82: case 83: required = 1; break;
         case 5: case 10: case 20: case 40: case 42: case 81: required = 2; break;
-        case 41: required = 3; break;
+        case 28: case 41: required = 3; break;
         case 9: required = 4; break;
         case 1: case 30: case 32: case 50: case 55: case 57: case 63: case 64:
         case 65: case 66: case 76: case 79: case 80: required = 0; break;
@@ -222,6 +222,15 @@ PeScriptStep pe_script_task_tick(PeScriptTask *task, unsigned instruction_limit)
         case 82: task->banks->scene_flags |= args[0]; break;
         case 83: task->banks->scene_flags &= ~args[0]; break;
         case 170: task->banks->game_flags |= 0x2000; break;
+        case 28: {
+            if (task->banks->event_count >= PE_SCRIPT_EVENT_CAPACITY) {
+                snprintf(task->error, sizeof(task->error), "Script event queue exhausted (%u)", PE_SCRIPT_EVENT_CAPACITY);
+                return PE_SCRIPT_ERROR;
+            }
+            PeScriptEvent event = {(uint16_t)args[0], (uint8_t)args[1], (uint8_t)args[2], 0, task->actor->field_id};
+            task->banks->events[task->banks->event_count++] = event;
+            break;
+        }
         case 171: task->banks->game_flags &= ~UINT32_C(0x2000); break;
         case 136: task->banks->screen_fade_mode &= (uint8_t)~0x40u; break;
         }

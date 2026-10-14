@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Opcode 28 kolejkuje zdarzenia skryptowe, mimo nazwy SFX w referencji. Kolejka zachowuje 28 wpisów, u8/u16 argumenty i ID nadawcy. Scheduler dostarcza je przez type/sub-ID lub selector aktora, tworzy taski grupy 2 z flagą 4, argumentem i trigger value oraz sprawdza cursor/pojemność przed alokacją. Test obejmuje wielu odbiorców, selector i brak częściowego dostarczenia przy przepełnieniu pod ASan/UBSan. ID aktorów i sekwencja tasków sceny zaczynają się od 1 jak w Draw_InitPipeline. New Game dochodzi do następnej komendy audio przy `0x394`. Dostarczanie zdarzeń w pełnej pętli scen i fizyczna symulacja aktorów pozostają wymagane.
+
 Opcode 136 czyści bit `0x40` we wspólnym trybie fade ekranu. Nazwa handlera w referencji mylnie sugeruje zmianę flag aktora. Test VM sprawdza zachowanie pozostałych bitów i actor flags; rzeczywisty New Game wykonuje zmianę przed następnym brakującym opcode. 21 testów headless z Disc 1 i ASan/UBSan testu VM przechodzi. Zastosowanie stanu fade do renderowania scen pozostaje nieukończone.
 
 Opcodes 170/171 ustawiają/czyszczą `0x2000` w osobnym natywnym `game_flags` odpowiadającym `g_GameState.flags`, a nie globalnym flagom skryptowym 81–83. Audio może wiązać ten wspólny stan. Test VM sprawdza zachowanie pozostałych bitów i oddzielenie obu pól; rzeczywisty New Game wykonuje reset→set i dochodzi do brakującego opcode 136 przy `0xb4`. 21 testów headless z Disc 1 przechodzi; VM i audyt scen/audio przechodzą ASan/UBSan.

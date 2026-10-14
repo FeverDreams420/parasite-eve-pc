@@ -3,17 +3,27 @@
 
 #include "script.h"
 
+#define PE_SCRIPT_EVENT_CAPACITY 28u
+typedef struct PeScriptEvent {
+    uint16_t type;
+    uint8_t sub_id, argument, selector;
+    uint32_t value;
+} PeScriptEvent;
 typedef struct PeScriptBanks {
     uint32_t variables[512], operands[16], node_flags[64];
     uint32_t move_lock, scene_flags;
     uint32_t game_flags; /* g_GameState.flags, distinct from g_GameStateFlags */
     uint8_t screen_fade_mode; /* g_ScreenTint.fadeMode, not actor flags */
+    uint32_t actor_serial;
+    PeScriptEvent events[PE_SCRIPT_EVENT_CAPACITY];
+    unsigned event_count;
 } PeScriptBanks;
 
 typedef struct PeScriptActor {
     uint32_t locals[56], flags, base, cursors[3];
     unsigned is_battle_actor;
     unsigned script_entry, sub_id;
+    uint32_t field_id;
     int heads[3]; /* scheduler slots, -1 means no task */
 } PeScriptActor;
 void pe_script_actor_init(PeScriptActor *actor, uint32_t base);
@@ -36,6 +46,7 @@ typedef struct PeScriptTask {
     PeScriptActor *actor;
     uint32_t base, pc;
     uint32_t target14;
+    uint32_t trigger_value;
     uint16_t active, flags, sequence;
     PeScriptDispatch dispatch;
     void *dispatch_user;

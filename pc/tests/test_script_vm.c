@@ -193,6 +193,18 @@ int main(void) {
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
     CHECK(banks.game_flags == 0x80000001 && banks.scene_flags == 0x40);
     CHECK(banks.screen_fade_mode == 0xbf && task.actor->flags == 0x40);
+    memset(bytes + 16, 0, sizeof(bytes) - 16);
+    word(bytes + 16, 28 | (3u << 13));
+    word(bytes + 24, 0x12345); word(bytes + 28, 0x102); word(bytes + 32, 0x103); word(bytes + 36, 32);
+    CHECK(pe_script_task_init(&task, &program, 0, &banks));
+    task.actor->field_id = 0xdeadbeef;
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
+    CHECK(banks.event_count == 1 && banks.events[0].type == 0x2345 && banks.events[0].sub_id == 2);
+    CHECK(banks.events[0].argument == 3 && banks.events[0].value == 0xdeadbeef && !banks.events[0].selector);
+    banks.event_count = PE_SCRIPT_EVENT_CAPACITY;
+    CHECK(pe_script_task_init(&task, &program, 0, &banks));
+    CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_ERROR && task.pc == 16);
+    CHECK(banks.event_count == PE_SCRIPT_EVENT_CAPACITY && banks.events[0].value == 0xdeadbeef);
     puts("Script runtime: waits, arithmetic, banks/flags, subsystem retries/errors and instruction limits passed");
     return 0;
 }

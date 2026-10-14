@@ -33,5 +33,8 @@ int pe_script_scheduler_start(PeScriptScheduler *scheduler, PeScriptActor *actor
 int pe_script_scheduler_tick(PeScriptScheduler *scheduler, PeScriptActor *actor,
                               unsigned instruction_limit);
 int pe_script_scheduler_collect(PeScriptScheduler *scheduler, PeScriptActor *actor);
+/* Drain events after actor callbacks; matches type/sub-ID or low-byte selector.
+ * Validate all matches/capacity before allocating any task. */
+int pe_script_scheduler_events(PeScriptScheduler *scheduler, PeScriptActor *actors, unsigned count);
 
 #endif

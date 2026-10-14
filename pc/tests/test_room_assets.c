@@ -269,6 +269,7 @@ int main(void) {
     CHECK(cursor == PE_AKAO_LFO_WORDS - 1 && sample == 123);
     CHECK(scene.sample_stats.bytes == 28176 && scene.spu->valid[255]);
     CHECK(scene.script_actor_count == 1 && scene.scheduler->live == 1);
+    CHECK(scene.script_actors[0].field_id == 1 && scene.scheduler->slots[0].task.sequence == 1);
     CHECK(scene.scheduler->slots[0].task.actor == &scene.script_actors[0]);
     CHECK(scene.scheduler->slots[0].task.program.blob == &scene.room.data);
     CHECK(scene.scheduler->slots[0].task.banks == &scene.script_banks);
@@ -420,6 +421,7 @@ int main(void) {
     CHECK(scene_command.args[0].value == 217);
     PeScriptTask reset_task;
     CHECK(pe_script_task_init(&reset_task, &reset_program, scene_entry, &scene.script_banks));
+    reset_task.actor->field_id = 1;
     PeSceneAudio audio = {0};
     audio.music[0] = owned_music;
     CHECK(owned_music->player.active);
@@ -439,6 +441,7 @@ int main(void) {
     CHECK(reset_result == PE_SCRIPT_ERROR);
     CHECK(strstr(reset_task.error, "Unimplemented script opcode"));
     printf("New Game script after native audio reset: %s\n", reset_task.error);
+    CHECK(scene.script_banks.event_count && scene.script_banks.events[0].value == 1);
     CHECK(scene.script_banks.game_flags & 0x2000);
     CHECK(scene.script_banks.screen_fade_mode == 0xbf);
     CHECK(*audio.game_flags == 0x1234ff0f);

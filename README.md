@@ -456,5 +456,15 @@ other fade bits and actor flags are preserved; the real New Game task confirms
 the state change before reporting the next unsupported opcode. All 21 tests
 pass headless with Disc 1 and VM tests pass ASan/UBSan. Applying fade state to
 scene rendering remains unfinished.
+
+Actor opcode 28 queues script events, despite its reference SFX name. The
+native queue retains the original 28-entry limit and byte/halfword arguments,
+plus the sender's actor ID. Scheduler draining matches type/sub-ID or an actor
+selector, creates group-2 tasks with event argument/value and flag 4, and checks
+cursors and capacity before allocating. Tests cover multiple receivers,
+selector routing and exhaustion without partial delivery under ASan/UBSan.
+Room actor IDs and task sequences now start at one as in Draw_InitPipeline.
+The New Game task reaches the next unsupported audio command at `0x394`;
+scene-loop event delivery and physical actor simulation remain unfinished.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

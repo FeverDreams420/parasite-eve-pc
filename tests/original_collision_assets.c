@@ -2,6 +2,7 @@
 #include "pe1/battle.h"
 #include "collision.h"
 #include "pe1/field_collision.h"
+#include "pe1/player_entity.h"
 #include "room.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +18,7 @@ int main(void)
 {
     const char *path=getenv("PE_TEST_DISC");
     PeDisc disc={0};PeRoomCatalog catalog;PeRoom room={0};unsigned maps=0;
-    unsigned long queries=0, hits=0, sloped_hits=0, moves=0, rollbacks=0;
+    unsigned long queries=0, hits=0, sloped_hits=0, moves=0, rollbacks=0, slides=0;
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     CHECK(pe_disc_open(&disc,path));CHECK(pe_room_catalog_open(&catalog,&disc));
     for (unsigned map=1;map<=PE_USA_ROOM_SLOTS;++map) {
@@ -79,19 +80,28 @@ int main(void)
                             actor.moveSpeed=4096;
                             actor.stepHeight=64;
 
-                            for(unsigned trial=0;trial<8;++trial) {
+                            for(unsigned trial=0;trial<16;++trial) {
                                 unsigned direction=trial&3;
                                 BattleEntity moved=actor;
-                                moved.renderObject.hit_cylinder.radius=trial<4?0:32;
-                                moved.posX.fixed=(s32)((u32)moved.posX.fixed + (direction==0?65536u:direction==1?0xffff0000u:0));
-                                moved.posZ.fixed=(s32)((u32)moved.posZ.fixed + (direction==2?65536u:direction==3?0xffff0000u:0));
-                                Entity_UpdateAndRender(&moved);
-                                CHECK(moved.collisionFace);
-                                if(moved.entityFlags&0x80000) {
-                                    CHECK(moved.posX.fixed==actor.baseX && moved.posY.fixed==actor.baseY && moved.posZ.fixed==actor.baseZ);
-                                    ++rollbacks;
-                                } else CHECK(Geo_PointInTri(moved.collisionFace,moved.posX.parts.integer,moved.posZ.parts.integer));
-                                ++moves;
+                                moved.renderObject.hit_cylinder.radius=(trial&4)?32:0;
+                                g_PlayerEntity=trial>=8?(FieldActor *)&moved:NULL;
+                                g_FieldMoveLock=0;
+                                for(unsigned frame=0;frame<(trial>=8?2u:1u);++frame) {
+                                    moved.baseX=moved.posX.fixed;
+                                    moved.baseY=moved.posY.fixed;
+                                    moved.baseZ=moved.posZ.fixed;
+                                    moved.posX.fixed=(s32)((u32)moved.posX.fixed + (direction==0?65536u:direction==1?0xffff0000u:0));
+                                    moved.posZ.fixed=(s32)((u32)moved.posZ.fixed + (direction==2?65536u:direction==3?0xffff0000u:0));
+                                    Entity_UpdateAndRender(&moved);
+                                    CHECK(moved.collisionFace);
+                                    if(moved.entityFlags&0x80000) {
+                                        CHECK(moved.posX.fixed==moved.baseX && moved.posY.fixed==moved.baseY && moved.posZ.fixed==moved.baseZ);
+                                        ++rollbacks;
+                                    } else CHECK(Geo_PointInTri(moved.collisionFace,moved.posX.parts.integer,moved.posZ.parts.integer));
+                                    slides += (g_FieldMoveLock&8)!=0;
+                                    ++moves;
+                                }
+                                g_PlayerEntity=NULL;
                             }
                         }
                     } else {
@@ -108,7 +118,8 @@ int main(void)
     g_RoomCollisionData[0]=0;Entity_RelocateSceneData();CHECK(!g_CollisionDb);
     pe_disc_close(&disc);CHECK(maps==414);
     CHECK(queries && hits && sloped_hits);
-    printf("Original floor movement: %lu steps, %lu rollbacks\n",moves,rollbacks);
+    CHECK(slides>0);
+    printf("Original floor movement: %lu steps, %lu rollbacks, %lu player edge-contact frames\n",moves,rollbacks,slides);
     printf("Original floor queries: %lu queries, %lu hits, %lu sloped hits\n", queries, hits, sloped_hits);
     printf("Original collision relocation: %u rooms, immutable disc records and native region pointers\n",maps);
     return 0;

@@ -1074,3 +1074,24 @@ floor/collision/movement/input regressions pass; ASan/UBSan/function instrumente
 game/test sources also pass the entire corpus (PsyZ uninstrumented). Player ramp
 sliding, larger moves, authored actor radii and collision connected to the running
 SDL scene remain to be verified. No full playable-location claim is made.
+
+### Player ramp sliding uses canonical actor — 2026-10-14
+
+The floor-motion corpus now selects the actor as the player as well as testing
+NPC movement. This exposed a separate D_8009D254 pointer definition inside the
+collision unit: setting canonical g_PlayerEntity had not activated any player
+collision branches. Removed that duplicate storage; original collision/ramp/wall
+response procedures now reference the same canonical player used by input and
+movement. Other legacy battle units still declaring the old symbol need migration
+when linked; no second storage is retained to conceal this integration issue.
+
+Player cases execute two consecutive movement frames while retaining the original
+edge-contact state between frames, exercising the initial slide and the next
+frame's blocked-edge checks. Across 414 rooms, radii 0/32 and four directions:
+403,848 total player/NPC steps, 3,559 rollbacks and 5,270 player edge-contact frames.
+Accepted moves remain in their returned floor triangle; rejected moves restore
+all three saved coordinates. The earlier floor-query corpus remains unchanged.
+Full build and collision/floor/movement/input regressions pass. ASan/UBSan/function
+instrumented game/test code passes the expanded corpus; PsyZ uninstrumented.
+This covers small local steps and player ramp sliding, not wall polygons, large
+moves, collision fidelity against PS1 traces, or the full interactive scene.

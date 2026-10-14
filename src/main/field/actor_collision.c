@@ -300,7 +300,7 @@ void Entity_UpdateAndRender(BattleEntity *actor)
     oldX = actor->baseX >> 16;
     oldZ = actor->baseZ >> 16;
     if (oldX == x && oldZ == z && actor->posY.fixed == actor->baseY) {
-        if (actor == D_8009D254)
+        if (actor == ((BattleEntity *)g_PlayerEntity))
             D_8009D2E8 &= ~8;
         return;
     }
@@ -311,7 +311,7 @@ void Entity_UpdateAndRender(BattleEntity *actor)
     g_CollisionRadius = radius;
     g_CollisionRadius = radius * actor->moveSpeed / 4096;
 
-    if (actor == D_8009D254) {
+    if (actor == ((BattleEntity *)g_PlayerEntity)) {
         if (D_8009D2E8 & 8) {
             int area, oldArea, a, b;
             int sxy;
@@ -369,7 +369,7 @@ void Entity_UpdateAndRender(BattleEntity *actor)
     for (i = 0; i < g_CollisionDb->visitedWordCount; i++)
         g_FloorEdgeVisitedBitmap[i] = 0;
     if (!Geo_ClipToFloorBoundary(x, z, face)) {
-        if (actor != D_8009D254) {
+        if (actor != ((BattleEntity *)g_PlayerEntity)) {
             Entity_RevertMove(actor);
             return;
         }
@@ -1206,13 +1206,12 @@ int Geo_FindNearestEdge(int x, int z, PolygonVertex *vertices,
     return -1;
 }
 
-/* Retail data at 0x8009D254; the g_PlayerEntity linker alias names this slot
- * too. Explicit .data preserves the non-GP accesses amid small-data globals. */
-BattleEntity *D_8009D254 = 0;
+/* Collision response uses the same active player as movement and scripts. */
+
 
 void Entity_ApplyCollisionResponse(struct FieldActor *player)
 {
-    BattleEntity *actor = D_8009D254;
+    BattleEntity *actor = ((BattleEntity *)g_PlayerEntity);
     int oldX, oldZ;
     short edge;
     int radius = (u16)actor->renderObject.hit_cylinder.radius;
@@ -1227,12 +1226,12 @@ void Entity_ApplyCollisionResponse(struct FieldActor *player)
     if (edge >= 0) {
         BattleEntity *current;
 
-        Entity_SlideOnWall(D_8009D254, g_WallPolygonVertices, g_WallPolygonVertexCount, edge, oldX, oldZ);
-        current = D_8009D254;
+        Entity_SlideOnWall(((BattleEntity *)g_PlayerEntity), g_WallPolygonVertices, g_WallPolygonVertexCount, edge, oldX, oldZ);
+        current = ((BattleEntity *)g_PlayerEntity);
         if ((short)Geo_FindNearestEdge(current->posX.parts.integer,
                                       current->posZ.parts.integer,
                                       g_WallPolygonVertices, g_WallPolygonVertexCount) >= 0) {
-            BattleEntity *restore = D_8009D254;
+            BattleEntity *restore = ((BattleEntity *)g_PlayerEntity);
             restore->posX.fixed = restore->baseX;
             restore->posY.fixed = restore->baseY;
             restore->posZ.fixed = restore->baseZ;

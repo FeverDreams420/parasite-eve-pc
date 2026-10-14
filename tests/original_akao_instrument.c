@@ -1,6 +1,7 @@
 #include "pe1/akao.h"
 #include "pe1/game_state.h"
 #include "pe1/cdrom.h"
+#include "pe1/scene_assets.h"
 Pe1GameState g_GameState;
 #include "pe1/menu_sound.h"
 #include "pe1/akao/init_state.h"
@@ -16,6 +17,8 @@ Pe1GameState g_GameState;
 #include <string.h>
 #include "akao_sequence.h"
 #include "spu_bank.h"
+#include "host_disc.h"
+_Alignas(u32) u8 g_SceneSectorDirectory[4 + 2 * (PE_USA_AUDIO_BANKS + 1)];
 #include <psyz/spu.h>
 
 /* Explicit input tables for isolated original procedures, not runtime audio. */
@@ -68,6 +71,10 @@ static int asset_audit(int execute)
     PeRoomCatalog catalog;
     CHECK(pe_disc_open(&disc, path));
     CHECK(pe_room_catalog_open(&catalog, &disc));
+    pe_host_disc_bind(&disc, &catalog.archive);
+    g_GameState.pe_image_base_lba = catalog.archive.sector;
+    memcpy(g_SceneSectorDirectory, &catalog.audio_base, 4);
+    memcpy(g_SceneSectorDirectory + 4, catalog.audio_bounds, sizeof(catalog.audio_bounds));
     memcpy(g_AkaoOpcodeArgLengths, catalog.akao.lengths, 96);
     memcpy(g_AkaoExtOpcodeArgLengths, catalog.akao.extended_lengths, 32);
     memcpy(g_AkaoNoteLengthTable, catalog.akao.note_lengths, sizeof(g_AkaoNoteLengthTable));
@@ -120,12 +127,14 @@ static int asset_audit(int execute)
         g_AkaoBgmHandle[0] = NULL;
         pe_room_blob_close(&menu);
         free(resident);
-        pe_disc_close(&disc);
+        pe_host_disc_bind(NULL, NULL);
+    pe_disc_close(&disc);
         return 0;
     }
     PeSpuBank *record_samples = malloc(sizeof(*record_samples));
     CHECK(record_samples != NULL);
     unsigned rooms = 0, sequences = 0, short_records = 0, channels = 0;
+    unsigned chunked_banks = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         if (!catalog.ranges[map - 1].room_sectors) continue;
         PeRoom room = {0};
@@ -154,8 +163,20 @@ static int asset_audit(int execute)
                     Psyz_SpuReset(0);
                     Psyz_SpuMemWrite(0, resident->ram, sizeof(resident->ram));
                 }
-                Spu_SetStreamModeA();
-                CHECK(Akao_StepNoteSequencer(sample_bytes, (unsigned)sample_size) == 0);
+                if (execute == 2) {
+                    unsigned char *chunk = malloc(33 * 2048); CHECK(chunk);
+                    g_GameState.cd_read_phase = 0;
+                    unsigned steps = 0;
+                    while (CdRom_ReadAssetSectors(0, music.bank, 0, chunk, 33, 0) == 1)
+                        CHECK(++steps < 1024);
+                    CHECK(g_GameState.cd_read_phase == 0 && g_CdReadRemainingSectors == 0);
+                    CHECK(g_CdReadTotalSectors == sample_size / 2048);
+                    chunked_banks += g_CdReadTotalSectors > 33;
+                    free(chunk);
+                } else {
+                    Spu_SetStreamModeA();
+                    CHECK(Akao_StepNoteSequencer(sample_bytes, (unsigned)sample_size) == 0);
+                }
                 CHECK(g_SpuTransferStatus == 0);
                 CHECK(memcmp(g_AkaoInstrumentTable, record_samples->instruments,
                     sizeof(AkaoInstrument) * 256) == 0);
@@ -219,9 +240,10 @@ static int asset_audit(int execute)
         pe_room_close(&room);
     }
     CHECK(rooms != 0 && sequences != 0 && channels != 0);
-    if (execute == 2) { CHECK(audible_samples != 0); printf("nonzero PCM samples: %llu; PCM hash: %016llx\n", audible_samples, (unsigned long long)pcm_hash); }
+    if (execute == 2) { CHECK(chunked_banks > 0); printf("Original sector loader: %u bank loads required multiple chunks\n", chunked_banks); CHECK(audible_samples != 0); printf("nonzero PCM samples: %llu; PCM hash: %016llx\n", audible_samples, (unsigned long long)pcm_hash); }
     free(record_samples);
     free(resident);
+    pe_host_disc_bind(NULL, NULL);
     pe_disc_close(&disc);
     printf("original AKAO %s: %u rooms, %u sequences, %u channels; %u short records not executed\n",
            execute == 2 ? "240 ticks and PCM" : execute ? "start and first note/stop" : "start", rooms, sequences, channels, short_records);

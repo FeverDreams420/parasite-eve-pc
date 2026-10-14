@@ -97,7 +97,7 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
                     count = maximum;
                 }
                 g_CdReadChunkSectors = count;
-                result = CdRom_ReadSectors(g_CdReadStartLba, g_CdReadTotalSectors - g_CdReadRemainingSectors, buffer, count);
+                result = CdRom_ReadSectorsFromLba(g_CdReadStartLba + (g_CdReadTotalSectors - g_CdReadRemainingSectors), buffer, count);
                 if (result != (-1))
                 {
                     state->cd_read_phase = 8;

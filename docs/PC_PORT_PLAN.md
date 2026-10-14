@@ -2011,3 +2011,26 @@ ReadAssetSectors and stream/sequence transfer paths are compiled together but
 still need end-to-end file-image tests before replacing PC scene-audio calls.
 PsyZ is not instrumented; range pointer arithmetic has not yet been exercised
 through the complete audio range loader. Full audio and pc/ removal remain open.
+
+
+### Original sector-to-SPU audio bank path
+
+CdRom_ReadAssetSectors now passes its computed absolute chunk sector directly
+to CdRom_ReadSectorsFromLba, allowing the existing CUE/BIN backend to serve the
+original loader without drive negotiation. The original phases, chunk limits,
+polling and SPU upload procedures remain in track_read.c. Restored missing
+stream A counters and the 0x2000-byte stream instrument cache in original
+akao/state.c (128 records; historical USA symbol 0x800B4900).
+
+The existing AKAO tick-assets fixture now supplies the actual audio-sector
+directory and executes the original sector loader with 33-sector chunks before
+its instrument/SPU-RAM comparisons and 240 playback ticks. All 599 supported
+sequence cases across 414 rooms pass, including 579 multi-chunk bank loads and
+8883 channels. Comparison with the previously built whole-bank path gives the
+same 51102257 nonzero PCM samples and hash 25836548e09d8a00. One short record
+remains explicitly unexecuted, so this is not complete audio coverage.
+
+Full build, original instrument/assets/menu/tick CTests and the complete
+chunked tick-assets ASan/UBSan/function run pass. PsyZ archives are not
+instrumented. Modes 1/2/3, SeekToTrack, scene command dispatch, XA and removal
+of the temporary pc/host_disc backend still require integration. No new files.

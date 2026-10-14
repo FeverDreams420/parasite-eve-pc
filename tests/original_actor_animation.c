@@ -26,11 +26,6 @@ _Alignas(16) u8 g_BootWorkArea[0x20000], D_8010BD00[0x20000];
 _Alignas(16) u8 D_80120D08[0x200000], g_SceneLoadScratchArea[0x20000];
 static u8 directory[0x1000];
 u8 *g_StrFileDirBuffer = directory + 8;
-u8 *volatile g_SceneBankAssetSource, *volatile g_VoiceBankBase;
-u8 *volatile g_EntityBankBuffer, *volatile g_EntityTextureBlob;
-u8 *volatile g_SceneObjectWork, *volatile D_800B0E48;
-u8 *volatile g_ScriptSpriteBuffer, *volatile g_ScenePmSlotBanks;
-u8 *volatile g_StrFileDirectory;
 u8 *g_OtBufferTable[2], *g_RenderOtBufferBaseAlt[1];
 u8 *g_RenderFrontBufferBase[1], *g_RenderBackBufferBase[1];
 u8 *g_RenderAnimBufferBase[1], *g_SceneLoadScratchBuffer[1];
@@ -39,7 +34,18 @@ struct SceneAssetBlob *g_LoadedSceneAssetBlock[1];
 static int boot_buffer_layout(void)
 {
     Pe1GameState saved = g_GameState;
-    Boot_InitMemoryLayout();
+    Boot_InitGameState();
+    if (g_GameState.bank_asset_source != g_BootWorkArea ||
+        g_GameState.voice_bank_base != g_BootWorkArea + 0x1800 ||
+        g_GameState.voice_bank_base_1400 != g_BootWorkArea + 0x6000 ||
+        (void *)g_GameState.entity_texture_blob != g_BootWorkArea + 0x14000 ||
+        g_GameState.scene_object_work != D_80120D08 ||
+        g_GameState.str_file_directory != directory + 8 ||
+        g_GameState.bank_work_base != g_GameState.voice_bank_base ||
+        g_GameState.bank_work_end != g_GameState.voice_bank_base + 0x1400 ||
+        g_GameState.bank_work_far_end != g_GameState.voice_bank_base + 0x2800 ||
+        !g_GameState.scene_process_slots || !g_GameState.script_sprite_buffer ||
+        !g_GameState.unk_170) return 0;
     RenderNativeTag *first = (RenderNativeTag *)g_OtBufferTable[0];
     RenderNativeTag *second = (RenderNativeTag *)g_RenderOtBufferBaseAlt[0];
     if (first + 4096 != second ||

@@ -57,18 +57,18 @@ int Draw_InitDisplay(int mode) {
 
     ptr = g_BootWorkArea;
     ptr2 = ptr + 0x1800;
-    g_SceneBankAssetSource = ptr;
+    g_GameState.bank_asset_source = ptr;
     ptr += 0x6000;
-    g_VoiceBankBase = ptr2;
-    g_EntityBankBuffer = ptr;
+    g_GameState.voice_bank_base = ptr2;
+    g_GameState.voice_bank_base_1400 = ptr;
     ptr += 0xE000;
-    g_EntityTextureBlob = ptr;
+    g_GameState.entity_texture_blob = (union SceneAssetView *)ptr;
 
     ptr = D_8010BD00;
     ptr2 = D_80120D08;
     g_GameState.texture_load_scratch = (union SceneAssetView *)ptr;
     ptr = ptr2 + 0x1C98;
-    g_SceneObjectWork = ptr2;
+    g_GameState.scene_object_work = ptr2;
     /* Each of the two ordering tables holds 4096 native PsyZ tags. */
     ptr2 = ptr + 0x1000 * sizeof(RenderNativeTag);
     const_8000 = 0x8000;
@@ -80,20 +80,20 @@ int Draw_InitDisplay(int mode) {
     ptr += 0x4800;
     g_RenderScratchBufferBase[0] = ptr;
     ptr += const_48000;
-    D_800B0E48 = ptr2;
+    g_GameState.unk_170 = ptr2;
     ptr2 = ptr + 0x4000;
     g_RenderFrontBufferBase[0] = ptr;
     ptr += const_8000;
     g_RenderBackBufferBase[0] = ptr2;
     ptr2 = ptr + 0x3800;
-    g_ScriptSpriteBuffer = ptr2;
+    g_GameState.script_sprite_buffer = ptr2;
     tmp = g_StrFileDirBuffer;
     g_RenderAnimBufferBase[0] = ptr;
     ptr += 0x7000;
-    g_ScenePmSlotBanks = ptr;
+    g_GameState.scene_process_slots = (struct PmSlotBanks *)ptr;
     g_SceneLoadScratchBuffer[0] = g_SceneLoadScratchArea;
     g_LoadedSceneAssetBlock[0] = tmp - 8;
-    g_StrFileDirectory = tmp;
+    g_GameState.str_file_directory = tmp;
 
     Draw_InitBuffers();
     CdRom_SetSeekPos(2);

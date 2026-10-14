@@ -31,18 +31,4 @@ extern u8 D_8010BD00[];
 extern u8 D_80120D08[];
 extern u8 g_SceneLoadScratchArea[];
 
-/* Absolute views of the g_GameState buffer-pointer fields that
- * Boot_InitMemoryLayout writes (0x14C..0x190). */
-extern u8 *volatile g_SceneBankAssetSource;
-extern u8 *volatile g_VoiceBankBase;
-/* 0x154: Scene_LoadEntityTexture reads the entity bank (PE.IMG entry bank + 8)
- * here and parses it (Pe1GameState.voice_bank_base_1400). */
-extern u8 *volatile g_EntityBankBuffer;
-extern u8 *volatile g_EntityTextureBlob;
-extern u8 *volatile g_SceneObjectWork;
-extern u8 *volatile D_800B0E48;
-extern u8 *volatile g_ScriptSpriteBuffer;
-extern u8 *volatile g_ScenePmSlotBanks;
-extern u8 *volatile g_StrFileDirectory;
-
 #endif /* PE1_BOOT_SERVICES_H */

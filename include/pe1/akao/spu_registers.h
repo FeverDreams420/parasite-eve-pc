@@ -3,6 +3,10 @@
 
 #include "pe1/psyq_spu_internal.h"
 
+/* PsyZ native register access includes key-on/off backend side effects. */
+void Psyz_SpuWrite(unsigned int offset, unsigned short value);
+unsigned short Psyz_SpuRead(unsigned int offset);
+
 /* The same original register words now refer to PsyZ's native SPU map. */
 #define g_SpuKeyOnLow (_spu_RXX->key_on[0])
 #define g_SpuKeyOnHigh (_spu_RXX->key_on[1])

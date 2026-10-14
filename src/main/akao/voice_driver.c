@@ -627,33 +627,28 @@ int Spu_UploadStreamBlockB(unsigned bank, unsigned char *cursor)
 }
 
 void Spu_WriteKeyOn(u32 value) {
-    g_SpuKeyOnLow = value;
-    value >>= 16;
-    g_SpuKeyOnHigh = value;
+    Psyz_SpuWrite(PE1_OFFSETOF(SpuRegs, key_on[0]), (u16)value);
+    Psyz_SpuWrite(PE1_OFFSETOF(SpuRegs, key_on[1]), (u16)(value >> 16));
 }
 
 void Spu_WriteKeyOff(u32 value) {
-    g_SpuKeyOffLow = value;
-    value >>= 16;
-    g_SpuKeyOffHigh = value;
+    Psyz_SpuWrite(PE1_OFFSETOF(SpuRegs, key_off[0]), (u16)value);
+    Psyz_SpuWrite(PE1_OFFSETOF(SpuRegs, key_off[1]), (u16)(value >> 16));
 }
 
 void Spu_WriteReverbEnable(u32 value) {
-    g_SpuReverbEnableLow = value;
-    value >>= 16;
-    g_SpuReverbEnableHigh = value;
+    Psyz_SpuWrite(PE1_OFFSETOF(SpuRegs, reverb_enable[0]), (u16)value);
+    Psyz_SpuWrite(PE1_OFFSETOF(SpuRegs, reverb_enable[1]), (u16)(value >> 16));
 }
 
 void Spu_WriteNoiseEnable(u32 value) {
-    g_SpuNoiseEnableLow = value;
-    value >>= 16;
-    g_SpuNoiseEnableHigh = value;
+    Psyz_SpuWrite(PE1_OFFSETOF(SpuRegs, noise_enable[0]), (u16)value);
+    Psyz_SpuWrite(PE1_OFFSETOF(SpuRegs, noise_enable[1]), (u16)(value >> 16));
 }
 
 void Spu_WriteFmEnable(u32 value) {
-    g_SpuPitchModLow = value;
-    value >>= 16;
-    g_SpuFmEnableHigh = value;
+    Psyz_SpuWrite(PE1_OFFSETOF(SpuRegs, pitch_modulation[0]), (u16)value);
+    Psyz_SpuWrite(PE1_OFFSETOF(SpuRegs, pitch_modulation[1]), (u16)(value >> 16));
 }
 
 void AkaoSpuVoice_SetVolume(u32 index, u32 left, u32 right) {
@@ -1505,7 +1500,7 @@ void Akao_UpdateVoiceEnvelopes(s32 protectedMask) {
             s32 level = 0x7FFF;
             envelope->level = level;
         } else {
-            SpuGetVoiceEnvelope(voiceIndex, (unsigned short *)envelope);
+            SpuGetVoiceEnvelope(voiceIndex, (short *)envelope);
             if (envelope->level == 0) {
                 if (envelope) {
                     Akao_RemoveVoice(voiceBase, voiceIndex);

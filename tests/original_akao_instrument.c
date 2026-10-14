@@ -694,6 +694,15 @@ int main(int argc, char **argv)
     CHECK(_spu_RXX->pitch_modulation[0] == 0x9abc && _spu_RXX->pitch_modulation[1] == 0x5678);
     CHECK(_spu_RXX->noise_enable[0] == 0xbcde && _spu_RXX->noise_enable[1] == 0x789a);
     CHECK(_spu_RXX->reverb_enable[0] == 0xdef0 && _spu_RXX->reverb_enable[1] == 0x9abc);
+    for (int voice = 0; voice < 24; ++voice) {
+        short level = -1;
+        Psyz_SpuWrite(voice * 16 + 12, 0x1234 + voice);
+        SpuGetVoiceEnvelope(voice, &level);
+        CHECK(level == 0x1234 + voice);
+    }
+    SpuSetReverbModeDepth(-1234, 5678);
+    CHECK(Psyz_SpuRead(0x184) == (u16)-1234);
+    CHECK(Psyz_SpuRead(0x186) == 5678);
     g_AkaoGlobalSlideTick = 0;
     g_AkaoGlobalD2D0SlideCounter = 2;
     g_AkaoGlobalD2D0SlideStep = 0x10000;
@@ -726,6 +735,30 @@ int main(int argc, char **argv)
     CHECK(g_AkaoVoiceStateTable[1].update_flags == AKAO_VOICE_PARAM_PITCH);
     CHECK(g_AkaoVoiceStateTable[24].update_flags == AKAO_VOICE_PARAM_VOLUME);
     CHECK(g_AkaoVoiceStateTable[25].update_flags == 0);
-    puts("original AKAO: dispatch and original four-tick parameter slides pass");
+    unsigned char end_note[] = {0xa0};
+    g_AkaoSequencerState = (AkaoSequencerState){0};
+    memset(g_AkaoSequencerTracks, 0, sizeof(g_AkaoSequencerTracks));
+    g_AkaoVoiceStateTable[0].pc = end_note;
+    g_AkaoVoiceStateTable[0].assigned_voice_index = 24;
+    g_AkaoVoiceStateTable[0].note_length = 2;
+    g_AkaoVoiceStateTable[0].pan_duration = 1;
+    fixture_bank.active_voice_mask = fixture_bank.allocated_voice_mask = 1;
+    fixture_bank.tempo = 1 << 16;
+    g_AkaoSeqPendingFlags = 4;
+    g_SpuActiveVoiceMask = g_SpuPendingKeyOffMask = g_SpuStoppedVoiceMask = 0;
+    g_AkaoVoiceUpdateFlags = 0;
+    g_AkaoGlobalSlideTick = 0;
+    g_AkaoGlobalPitchDepth = g_AkaoTempoScaleAccum = 0;
+    Akao_Tick();
+    CHECK(g_AkaoVoiceStateTable[0].note_length == 1);
+    CHECK(g_AkaoVoiceStateTable[0].pan_duration == 0);
+    CHECK(fixture_bank.allocated_voice_mask == 0);
+    CHECK(fixture_bank.active_voice_mask == 1);
+    Akao_Tick();
+    CHECK(fixture_bank.active_voice_mask == 0);
+    CHECK(g_AkaoVoiceStateTable[0].pc == end_note + 1);
+    CHECK(g_AkaoGlobalSlideTick == 2);
+    CHECK(g_AkaoCurTrack == &fixture_bank);
+    puts("original AKAO: full tick advances gate/note clocks and stops through native dispatch");
     return 0;
 }

@@ -40,13 +40,6 @@ void Akao_CopyWords(unsigned int *src, unsigned int *dst, unsigned int size)
     } while (size != 0);
 }
 
-/* The bank cursor is one field of the sequencer state block. Read as a
- * member, the reload after the bank store stays a separate load: GCC 2.7.2
- * lets a structure store clobber structure reads but not scalar ones. */
-typedef struct AkaoBankCursor {
-    AkaoTickBank *bank;
-} AkaoBankCursor;
-
 /* Advance global, bank and voice slides every fourth tick.
  * Each slide keeps its own previous value so stock GCC can allocate its
  * registers without a pin. */
@@ -67,12 +60,12 @@ void Spu_StepReverbLoad(void)
         return;
     if (g_AkaoGlobalPitchSlideCounter != 0) {
         g_AkaoGlobalPitchSlideCounter--;
-        g_AkaoCdInputVolumeAccum += g_AkaoGlobalPitchSlideStep;
+        g_AkaoCdInputVolumeAccum = (s32)((u32)g_AkaoCdInputVolumeAccum + (u32)g_AkaoGlobalPitchSlideStep);
         Seq_ApplyGlobalPitch();
     }
     if (g_AkaoGlobalD2D0SlideCounter != 0) {
         g_AkaoGlobalD2D0SlideCounter--;
-        g_AkaoTempoScaleAccum += g_AkaoGlobalD2D0SlideStep;
+        g_AkaoTempoScaleAccum = (s32)((u32)g_AkaoTempoScaleAccum + (u32)g_AkaoGlobalD2D0SlideStep);
     }
     if (g_AkaoGlobalD2CCSlideCounter != 0) {
         oldGlobalParam = g_AkaoGlobalPitchDepth;
@@ -93,7 +86,7 @@ void Spu_StepReverbLoad(void)
         if ((value & 0x7F0000) != (oldPrimaryPitch & 0x7F0000))
             Seq_MarkDirtyTracks((AkaoTrack *)g_AkaoSequencerTracks);
         ((AkaoSequencerBank *)D_8009D2C8)->pitch_current = value;
-        bank = (AkaoSequencerBank *)((AkaoBankCursor *)&D_8009D2C8)->bank;
+        bank = g_AkaoCurTrack;
     }
     D_8009D2C8 = (AkaoTickBank *)(bank + 1);
     if (bank[1].active_voice_mask && bank[1].pitch_slide_duration) {

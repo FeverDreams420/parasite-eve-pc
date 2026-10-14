@@ -656,6 +656,38 @@ int main(int argc, char **argv)
     write_parameters(2, &quiet);
     CHECK(quiet.flags == 0 && quiet.pitch == 4096);
     CHECK(quiet.volume_left == 17 && quiet.volume_right == 23);
-    puts("original AKAO: dispatch, loops and typed parameter writer pass");
+    g_AkaoGlobalSlideTick = 0;
+    g_AkaoGlobalD2D0SlideCounter = 2;
+    g_AkaoGlobalD2D0SlideStep = 0x10000;
+    g_AkaoTempoScaleAccum = 0x400000;
+    g_AkaoGlobalD2CCSlideCounter = 2;
+    g_AkaoGlobalD2CCSlideStep = 0x10000;
+    g_AkaoGlobalPitchDepth = 0;
+    g_SpuActiveVoiceMask = 0;
+    fixture_bank = (AkaoSequencerBank){0};
+    g_AkaoSequencerState.secondary = (AkaoSequencerBank){0};
+    fixture_bank.active_voice_mask = g_AkaoSequencerState.secondary.active_voice_mask = 1;
+    fixture_bank.pitch_current = 0x200000;
+    fixture_bank.pitch_delta = 0x10000;
+    fixture_bank.pitch_slide_duration = 2;
+    g_AkaoSequencerState.secondary.pitch_current = 0x300000;
+    g_AkaoSequencerState.secondary.pitch_delta = -0x10000;
+    g_AkaoSequencerState.secondary.pitch_slide_duration = 2;
+    for (unsigned i = 0; i < 60; ++i) g_AkaoVoiceStateTable[i].update_flags = 0;
+    for (unsigned tick = 1; tick <= 12; ++tick) {
+        Spu_StepReverbLoad();
+        unsigned steps = tick / 4;
+        if (steps > 2) steps = 2;
+        CHECK(g_AkaoTempoScaleAccum == (int)(0x400000 + steps * 0x10000));
+        CHECK(g_AkaoGlobalPitchDepth == (int)(steps * 0x10000));
+        CHECK(fixture_bank.pitch_current == (int)(0x200000 + steps * 0x10000));
+        CHECK(g_AkaoSequencerState.secondary.pitch_current == (int)(0x300000 - steps * 0x10000));
+        CHECK(g_AkaoCurTrack == &fixture_bank);
+    }
+    CHECK(g_AkaoVoiceStateTable[0].update_flags == (AKAO_VOICE_PARAM_PITCH | AKAO_VOICE_PARAM_VOLUME));
+    CHECK(g_AkaoVoiceStateTable[1].update_flags == AKAO_VOICE_PARAM_PITCH);
+    CHECK(g_AkaoVoiceStateTable[24].update_flags == AKAO_VOICE_PARAM_VOLUME);
+    CHECK(g_AkaoVoiceStateTable[25].update_flags == 0);
+    puts("original AKAO: dispatch and original four-tick parameter slides pass");
     return 0;
 }

@@ -589,6 +589,8 @@ Original Akao_WriteVoiceParam ma teraz ścisłą C11 sygnaturę (int,AkaoVoicePa
 
 CdInputVolume i CdInputVolumeAccum współdzielą native union, zgodnie z original addresses D2B6/D2B4. Górny halfword używany przez Seq_ApplyGlobalPitch nie jest już oddzielnym globalem; state.c ma canonical storage. Headless test zapisuje przez oba widoki i potwierdza zachowanie części ułamkowej. CTest i ASan/UBSan/function z halt_on_error=1 przechodzą (PsyZ nieinstrumentowane). To poprawność aliasu; actual common-volume SPU output i slides pozostają wymagane.
 
+Original Spu_StepReverbLoad wykonuje w fixture 12 kolejnych calls, dowodząc four-tick divider, dwóch steps tempo/global pitch depth oraz przeciwnych pitch slides primary/secondary. Test sprawdza frozen results po counter expiry, current-bank restore i primary/secondary dirty flags; używa canonical native storage. Pointer-punning AkaoBankCursor zastąpiono bezpośrednim current-bank reload, a accumulator additions zachowują unsigned word wrap bez signed overflow. CTest i ASan/UBSan/function z halt_on_error=1 przechodzą (PsyZ nieinstrumentowane). CD volume SPU calls i SFX per-voice slides pozostają poza tym dowodem; pełny Akao_Tick i PCM nadal niezintegrowane.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

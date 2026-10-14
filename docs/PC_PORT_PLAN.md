@@ -1536,3 +1536,26 @@ instead of leaving special records uninitialized. Full build, stat-assets and
 scene-spawn CTests plus both ASan/UBSan/function runs passed (PsyZ archive
 uninstrumented). Complete startup metadata, room scripts/callbacks and scene
 frame integration remain pending; no full New Game or gameplay claim follows.
+
+### Native relocation of original scene task blocks
+
+Script_RelocBlock resolves the original base/count/offset table into a native
+pointer view instead of overwriting asset offset words with truncated pointers.
+The single active scene view is replaced on subsequent relocation; passing the
+resolved view again is idempotent. Disk offsets remain 32-bit and unmodified.
+The native view retains the original pointer-table indexing used by Scene_LoadMap.
+Script_DrawSyncAndFlush retains its original descriptor iteration and now compiles
+with the scene/frame target in script/spawn_scene.c.
+
+All 414 real room task blocks were checked against the independent asset decoder:
+base pointer, every script entry, repeat relocation and unchanged asset bytes.
+The player-spawn fixture also calls the original sync/spawn loop for its full
+allocation cases using a minimal one-player descriptor, real Aya model/action
+banks and original New Game/equipment initialization. Full build, scene-spawn,
+stat-assets and actor-lifecycle CTests passed, as did the updated spawn test under
+ASan/UBSan/function instrumentation (PsyZ archive uninstrumented).
+
+This is not execution of all room scripts: only relocation is covered for the
+414-room corpus, and spawn-loop input remains a controlled descriptor. Complete
+room startup, script dispatch/callbacks and malformed-block bounds validation
+still need integration. The relocation routine expects a validated asset block.

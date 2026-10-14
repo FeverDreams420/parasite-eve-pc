@@ -40,6 +40,7 @@ add_library(parasite-eve-original OBJECT
     src/main/entity/pool.c
     src/main/entity/allocation.c
     src/main/entity/block_alloc.c
+    src/main/script/reloc_block.c
     src/main/script/node_pool.c
     src/main/script/expression.c
     src/main/script/basic_flow.c
@@ -247,7 +248,8 @@ endif()
 
 # Compile the whole original actor frame module while its remaining game
 # dependencies are being ported. It is not linked with replacement stubs.
-add_library(parasite-eve-original-frame OBJECT src/main/entity/frame_update.c)
+add_library(parasite-eve-original-frame OBJECT
+    src/main/script/spawn_scene.c src/main/entity/frame_update.c)
 target_include_directories(parasite-eve-original-frame PRIVATE include)
 
 if(BUILD_TESTING)
@@ -396,7 +398,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-scene-spawn tests/original_scene_spawn.c
-        pc/disc.c pc/room.c pc/room_banks.c pc/model.c src/main/entity/animation.c
+        pc/disc.c pc/room.c pc/room_banks.c pc/model.c pc/script.c src/main/entity/animation.c
         $<TARGET_OBJECTS:parasite-eve-original-frame>
         $<TARGET_OBJECTS:parasite-eve-original-model-setup>
         $<TARGET_OBJECTS:parasite-eve-original>)

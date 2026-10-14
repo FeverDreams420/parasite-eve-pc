@@ -110,6 +110,6 @@ extern u8 D_8009CDC8; /* room name prefix letter */
 extern SceneRoomSectorRange g_RoomSectorTable[];
 extern unsigned int g_PeImageBaseLba;
 
-void *Script_RelocBlock(void *block);
+#include "pe1/reloc_block.h"
 
 #endif

@@ -1,23 +1,16 @@
 #ifndef PE1_RELOC_BLOCK_H
 #define PE1_RELOC_BLOCK_H
+#include "common.h"
 
-typedef unsigned int RelocU32;
-
+/* Native view of a disk block: base offset, count, then count 32-bit offsets.
+ * The offset words stay in the asset; resolved pointers live in this view. */
 typedef struct RelocBlock {
-    union {
-        char *base;
-        RelocU32 baseOffset;
-    } u0;
-    RelocU32 count;
-    RelocU32 offsets[1];
+    union { u8 *base; } u0;
+    uintptr_t count;
+    u8 *offsets[];
 } RelocBlock;
-
-/* A block's own address, added to the offsets it holds on disk. */
-typedef union RelocAddress {
-    RelocBlock *block;
-    RelocU32 word;
-} RelocAddress;
-
+PE1_STATIC_ASSERT(offsetof(RelocBlock, offsets) == 2 * sizeof(void *), reloc_pointer_table_offset);
 extern RelocBlock *g_SceneDataTable1;
-
-#endif /* PE1_RELOC_BLOCK_H */
+RelocBlock *Script_RelocBlock(void *block);
+void Script_DrawSyncAndFlush(void);
+#endif

@@ -5,6 +5,8 @@
 #include <libgpu.h>
 #include "room_banks.h"
 #include "model.h"
+#include "script.h"
+#include "pe1/reloc_block.h"
 #include "vram.h"
 #include "pe1/scene_assets.h"
 #include "pe1/battle_saved_state.h"
@@ -50,12 +52,26 @@ int main(void)
     g_LoadedSceneAssetBlock[0]=&archive.header;
     u32 script[]={0}; u8 *scripts[12]={0}; scripts[3]=(u8 *)script;
     g_GameState.bank_reset_944[0]=scripts;
-    unsigned spawned=0;
+    unsigned spawned=0, relocated=0;
     for(unsigned map=1;map<=PE_USA_ROOM_SLOTS;++map) {
         if(!catalog.ranges[map-1].room_sectors) continue;
         CHECK(pe_room_load(&catalog,map,&room));
         PeRoomBanks banks; char error[256];
         CHECK(pe_room_banks(&room,&banks,error,sizeof(error)));
+        PeScriptProgram program;
+        CHECK(pe_script_program_open(&room,&program,error,sizeof(error)));
+        u8 *original=malloc(room.data.size); CHECK(original);
+        memcpy(original,room.data.bytes,room.data.size);
+        RelocBlock *block=Script_RelocBlock(room.data.bytes+program.block);
+        CHECK(block && block==g_SceneDataTable1 && block->count==program.entries);
+        CHECK(block->u0.base==room.data.bytes+program.map_list);
+        for(unsigned entry=0;entry<program.entries;++entry) {
+            uint32_t offset; CHECK(pe_script_entry(&program,entry,&offset));
+            CHECK(block->offsets[entry]==room.data.bytes+offset);
+        }
+        CHECK(Script_RelocBlock(block)==block);
+        CHECK(!memcmp(original,room.data.bytes,room.data.size));
+        free(original); ++relocated;
         for(unsigned group=0;group<10;++group) {
             PeRoomSlice *root=&banks.roots[group]; if(!root->present) continue;
             PeModel parsed; CHECK(pe_model_open(root->bytes,root->size,&parsed,error,sizeof(error)));
@@ -106,12 +122,21 @@ int main(void)
             Inv_InitNewGameInventory();
             ClearOTagR((OT_TYPE *)ordering,4096);
             u8 scene[]={0,0};
-            FieldActor *actor=Scene_LoadMap(scene,NULL,full);
+            /* One-player scene descriptor, with a real native relocation view. */
+            u32 task_block[8]={20,1,24,0,0,1,0,0};
+            RelocBlock *tasks=Script_RelocBlock(task_block);
+            CHECK(tasks);
+            g_GameState.bank_reset_944[0]=(void *)tasks;
+            FieldActor *actor;
+            if(full) {
+                Script_DrawSyncAndFlush();
+                actor=g_FieldActorListHead;
+            } else actor=Scene_LoadMap(scene,NULL,full);
             CHECK(actor && actor==g_PlayerEntity && actor==g_FieldActorListHead);
             CHECK((void *)actor->state==&g_AyaBattleState);
             CHECK(g_AyaBattleState.action==&g_SavedBattleStateTail);
             CHECK(actor->action_data==banks.rows[0][0x15].bytes && actor->mode==0x15);
-            CHECK(actor->script_base==(u8 *)script && actor->script_node_lists[2]);
+            CHECK(actor->script_base==(u8 *)&task_block[6] && actor->script_node_lists[2]);
             CHECK(actor->move_factor==0x10000 && actor->render_object.matrices);
             CHECK(((Combatant *)((BattleEntity *)actor)->core)->maxHP==g_AyaSaveState.max_hp);
             CHECK(g_AyaBattleState.action->weapon.kind==Item_LookupBaseData(0x43)->kind);
@@ -122,6 +147,7 @@ int main(void)
     }
     printf("Original Scene_LoadMap: %u real Aya model spawns with original equipment initialization\n",players);
     free(memory); g_RenderScratchBufferBase[0]=NULL; pe_disc_close(&disc);
+    printf("Original script relocation: %u real room blocks, all entries and immutable asset bytes passed\n",relocated);
     printf("Original Scene_LoadMap: %u NPC model spawns, full/non-full native allocations and script nodes\n",spawned);
     return 0;
 }

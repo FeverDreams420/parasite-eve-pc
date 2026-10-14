@@ -45,6 +45,7 @@ add_library(parasite-eve-original OBJECT
     src/main/math/sqrt_approx.c
     src/main/fieldfx/angle.c
     src/main/psyq/libgte/mtx_000.c
+    src/main/psyq/libgte/mtx_001.c
     src/main/psyq/libgte/mtx_06.c
     src/main/psyq/libgte/cmb_06.c
     src/main/anim/bone_rotations.c
@@ -77,7 +78,8 @@ add_library(parasite-eve-original OBJECT
     src/main/fieldfx/vector.c
     src/main/field/actor_collision.c
     src/overlays/room_lib/actor_classes.c
-    src/overlays/room_m272_liberty/m272.c)
+    src/overlays/room_m272_liberty/m272.c
+    src/overlays/room_m005_theater/m005.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 set_property(SOURCE src/main/boot/init.c APPEND PROPERTY INCLUDE_DIRECTORIES
     "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")

@@ -1,4 +1,8 @@
 #include "pe1/entity_animation.h"
+#include "pe1/room_m005_drifting_sprite.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_rotated_quad.h"
+#include "pe1/field_texture_tables.h"
 #include "../src/overlays/room_lib/room_lib.h"
 #include "pe1/game_state.h"
 #include "pe1/player_entity.h"
@@ -481,6 +485,30 @@ static int callback_list_storage(void)
        FieldFx_InitCallbackList((char *)arena+1,16,3,record_list_callback)!=-1) return 0;
     g_FieldFxActiveTaskSlot=NULL;
     if(FieldFx_AllocCallbackList(&out,0,16,3,record_list_callback)!=-1) return 0;
+    if(&D_800F336C!=&g_FieldFxSpriteParams.palette || &D_800F3374!=&g_FieldFxSpriteParams.depth) return 0;
+    /* Run the real M005 drift callback through the original list dispatcher:
+     * age 6 moves once more before terminating; halfword motion wraps. */
+    memset(arena,0xa5,sizeof(arena));
+    bytes=FieldFx_InitCallbackList((char *)arena,sizeof(RoomM005DriftingSpriteState),3,RoomM005_BeaconDriftCallback);
+    RoomM005DriftingSpriteState *drifts[3];
+    for(unsigned i=0;i<3;++i) {
+        drifts[i]=FieldFx_AcquireCallbackSlot((char *)arena);
+        *drifts[i]=(RoomM005DriftingSpriteState){65530,3,32767,0,13,65534,32769};
+    }
+    for(unsigned frame=1;frame<=7;++frame) {
+        if(FieldFx_UpdateCallbackList(arena)!=3 || g_FieldFxCurrentAge!=91) return 0;
+        for(unsigned i=0;i<3;++i) {
+            if(drifts[i]->x!=(u16)(65530+13*frame) || drifts[i]->y!=(u16)(3+65534*frame) ||
+                drifts[i]->z!=(u16)(32767+32769*frame)) return 0;
+        }
+    }
+    if(FieldFx_UpdateCallbackList(arena)!=0) return 0;
+    RoomM005DriftingSpriteState *drift_reused=FieldFx_AcquireCallbackSlot((char *)arena);
+    if(drift_reused!=drifts[0]) return 0;
+    FieldFxCallbackListEntry *drift_entry=(void *)((u8 *)drift_reused-sizeof(FieldFxCallbackListEntry));
+    if(drift_entry->age || drift_entry->active!=1) return 0;
+    for(size_t i=bytes;i<sizeof(arena);++i)if(arena[i]!=0xa5)return 0;
+    puts("Original M005 drift: native callback ABI, halfword motion, terminal frame and slot reuse passed");
     g_FieldFxTaskContext=NULL;
     puts("Original callback lists: aligned pointer payloads, update/draw ages, completion/reuse and guards passed");
     return 1;
@@ -895,7 +923,9 @@ static int original_glow_resident_constants(void)
         {0x800e0c48,g_FourLayerGlowHaloOffsets,8*sizeof(GteShortVector)},
         {0x800e0c88,g_FourLayerGlowScript,25*sizeof(int)},
         {0x800e0d40,g_PointSpriteSlotSizes,7*sizeof(u16)},
-        {0x800e0d6c,g_PointSpriteScript,22*sizeof(int)}
+        {0x800e0d6c,g_PointSpriteScript,22*sizeof(int)},
+        {0x800c22a0,&g_FieldFxBlackColor,sizeof(RenderColor)},
+        {0x800e1204,g_FieldFxPaletteTable,6*sizeof(u16)}
     };
     PeDisc disc={0}; PeDiscFile file;
     u8 header[32], raw[128];

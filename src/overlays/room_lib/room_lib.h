@@ -4,6 +4,8 @@
 #define ROOM_LIB_H
 
 #include "common.h"
+#include "pe1/field_actor.h"
+#include "pe1/script_queue.h"
 #include "pe1/battle_context.h"
 #include "pe1/field_glow_sprite.h"
 #include "pe1/field_owner_actor.h"

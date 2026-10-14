@@ -1,4 +1,6 @@
 #include "common.h"
+#include "pe1/field_sprite_params.h"
+#include "pe1/field_texture_tables.h"
 #include "pe1/asset_find.h"
 #include "pe1/field_actor.h"
 #include "pe1/field_effect_modules.h"
@@ -2390,3 +2392,8 @@ int FieldFx_InitEffectResources(void) {
 
     return 0;
 }
+
+/* Original resident draw parameters and palette rows shared by field effects. */
+RenderEffectParameters g_FieldFxSpriteParams;
+RenderColor g_FieldFxBlackColor = {0,0,0,0};
+u16 g_FieldFxPaletteTable[6] = {0x1c8,0x1cf,0x1d6,0x1d7,0x1d7,0};

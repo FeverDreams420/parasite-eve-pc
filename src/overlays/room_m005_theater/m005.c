@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe1/geom_state.h"
 #include "pe1/field_sprite_params.h"
 #include "pe1/field_texture_tables.h"
 #include "pe1/fieldfx_callback_list.h"
@@ -37,7 +38,8 @@ typedef struct RoomM005_Dialog {
 /* Dialog anchor room_m005 keeps in its scene script record. */
 #define RoomM005_ScriptDialog (*(RoomM005_Dialog *)&g_RoomScriptRecord)
 
-int RoomM005_FxOrbiter(int mode, RoomM005_OrbRec *r) {
+int RoomM005_FxOrbiter(int mode, void *data, int argument) {
+    RoomM005_OrbRec *r = data;
     unsigned short anchor[3];
     short q[4];
     char out[8];
@@ -124,7 +126,7 @@ int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state) {
         state->frame = 0;
         pool = ANIM_POOL_AS(RoomM005Channel)->pool;
         return FieldFx_InitCallbackList(pool, 16, 24,
-                             (FieldFxCallbackListCallback)RoomM005_FxOrbiter);
+                             RoomM005_FxOrbiter);
     case 1:
         if (g_FieldFxCurrentAge == 7) {
             soundSlot = (RoomSoundSlot *)g_LoadedSceneAssetBlock;
@@ -295,7 +297,8 @@ int RoomM005_CrossFlare(int mode) {
 
 /* Sprite that drifts by a fixed velocity for six frames, then draws itself
  * at a room offset with a cosine-driven intensity. */
-int RoomM005_BeaconDriftCallback(int mode, RoomM005DriftingSpriteState *state) {
+int RoomM005_BeaconDriftCallback(int mode, void *data, int argument) {
+    RoomM005DriftingSpriteState *state = data;
     GteShortVector position;
     RenderColor color;
     RenderMatrixSlot *matrixSlot;
@@ -376,7 +379,7 @@ int RoomM005_JointBeacon(int mode, RoomM005Beacon *state) {
         g_RoomM005BeaconModel1 = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5862704);
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM005BeaconModel1, 0, 0);
         return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM005BeaconSpawnChannel)->pool, 0x10, 8,
-                             (FieldFxCallbackListCallback)RoomM005_BeaconDriftCallback);
+                             RoomM005_BeaconDriftCallback);
     case 1:
         if (g_FieldFxCurrentAge < 10) {
             sprite = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM005BeaconSpawnChannel)->pool);
@@ -576,3 +579,9 @@ int RoomM005_JointBeacon(int mode, RoomM005Beacon *state) {
     }
     return 0;
 }
+
+/* Original M005 drift tint at 8018F00C and overlay-owned vectors at
+ * 80190BA0/80190BA8; ordinary native storage retains their halfword data. */
+RenderColor g_RoomM005BeaconTint = {128,128,128,0};
+GteShortVector g_RoomM005BeaconOffset;
+GteShortVector g_RoomM005BeaconCenter;

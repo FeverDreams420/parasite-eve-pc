@@ -28,12 +28,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderEffectParameters, depth) == 0xC,
                   render_effect_parameters_depth);
 extern RenderEffectParameters g_FieldFxSpriteParams;
 
-/* Standalone names for two of the halfwords. Retail reloads the palette
- * with a fresh lui/lhu after calls, which the field form does not give: a
- * field reached twice across a call keeps its address in a callee-saved
- * register. Units with that reload read D_800F336C. The depth name is still
- * used by fieldfx/geometry.c. */
-extern u16 D_800F336C; /* g_FieldFxSpriteParams.palette */
-extern s16 D_800F3374; /* g_FieldFxSpriteParams.depth */
+/* Historical halfword names alias the canonical native parameter block. */
+#define D_800F336C (g_FieldFxSpriteParams.palette)
+#define D_800F3374 (g_FieldFxSpriteParams.depth)
 
 #endif /* PE1_FIELD_SPRITE_PARAMS_H */

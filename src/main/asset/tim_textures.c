@@ -1,6 +1,7 @@
 #include "pe1/cdrom.h"
 #include "pe1/game_state.h"
 #include "pe1/pm.h"
+#include "pe1/field_effect_modules.h"
 #include "pe1/render_camera.h"
 #include "pe1/psyq_tim.h"
 #include "pe1/render_animation_frame.h"
@@ -8,7 +9,11 @@
 
 
 /* Native storage for the original shared PM table record. */
-PmTables g_PmTables;
+PmCommand *g_PmCmdHandlerArray[86] = {
+    [0]=&g_GlowEffectClass, [1]=&g_GlowEffectBClass,
+    [2]=&g_GlowEffectCClass, [3]=&g_FourLayerGlowClass
+};
+PmTables g_PmTables = {.handlers=g_PmCmdHandlerArray};
 
 static inline void InitHandler(int index)
 {

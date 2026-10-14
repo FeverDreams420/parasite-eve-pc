@@ -17,6 +17,7 @@ typedef struct PmTables {
     PmSecondarySlot *secondary;
 } PmTables;
 
+extern PmCommand *g_PmCmdHandlerArray[86];
 extern PmTables g_PmTables;
 #define g_PmCmdHandlerTable (g_PmTables.handlers)
 #define g_PmSlotTable (g_PmTables.primary)

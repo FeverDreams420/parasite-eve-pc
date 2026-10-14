@@ -3331,3 +3331,23 @@ pass with Disc 1 required; fresh actor ASan/UBSan/function passes with original
 source instrumented and PsyZ/SDL archives uninstrumented. Actual descriptor
 registration/factory allocation, actor-owned gates, GPU pixels, full gameplay
 and deletion of pc/ remain incomplete.
+
+
+The original PM handler-array symbol now has native storage in the existing
+asset/tim_textures.c, and g_PmTables starts with that registry. USA executable
+records confirm resident IDs 0..3 map to the four original glow classes;
+compiled native entries use those exact IDs. Other unbound entries remain null,
+not fabricated handlers. The resident fixture compares the first four original
+pointer words directly to the supplied EXE. The authored cycles now create
+actual native PM slots via Scene_LoadRoomAssets with those resident IDs, a live
+actor state and real class constructor; no manually chosen handler row or direct
+constructor call. The owner action-state transition is also checked. Init,
+send/start/execute, natural close/release and owner-checked forced stop still
+pass for four variants x seven actions. Texture/scene-ready flags and actor/
+matrix state remain controlled fixture inputs.
+Full build and five related CTests pass with Disc 1 required, plus fresh actor
+ASan/UBSan/function with original source instrumented and PsyZ/SDL archives
+uninstrumented. Actor gates with other core flags, remaining resident handlers,
+room-local descriptor bindings, live scene inputs, GPU effect pixels, full
+gameplay and deletion of pc/ remain incomplete. No new files or extracted
+functions.

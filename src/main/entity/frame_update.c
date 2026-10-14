@@ -415,7 +415,7 @@ void Entity_CollectGarbage(void) {
                     free_head = g_EntityFreeListHead;
                     g_EntityFreeListHead = cur;
                     g_FieldActorListHead = head_next;
-                    head_next->prev = 0;
+                    if (head_next != 0) head_next->prev = 0;
                     cur->next = free_head;
                 } else {
                     cur->prev->next = cur->next;

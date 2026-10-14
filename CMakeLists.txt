@@ -312,3 +312,24 @@ endforeach()
 if(BUILD_TESTING)
     target_sources(test-original-actor-animation PRIVATE $<TARGET_OBJECTS:parasite-eve-original-pad>)
 endif()
+
+if(BUILD_TESTING)
+    add_executable(test-original-actor-lifecycle tests/original_actor_lifecycle.c
+        src/main/pm/process.c
+        $<TARGET_OBJECTS:parasite-eve-original>
+        $<TARGET_OBJECTS:parasite-eve-original-frame>
+        $<TARGET_OBJECTS:parasite-eve-original-model-setup>)
+    target_include_directories(test-original-actor-lifecycle PRIVATE include)
+    target_link_libraries(test-original-actor-lifecycle PRIVATE psyz)
+    if(MSVC)
+        target_link_options(test-original-actor-lifecycle PRIVATE /OPT:REF)
+    elseif(APPLE)
+        target_link_options(test-original-actor-lifecycle PRIVATE -Wl,-dead_strip)
+    else()
+        target_compile_options(test-original-actor-lifecycle PRIVATE -ffunction-sections -fdata-sections)
+        target_compile_options(parasite-eve-original-frame PRIVATE -ffunction-sections -fdata-sections)
+        target_compile_options(parasite-eve-original-model-setup PRIVATE -ffunction-sections -fdata-sections)
+        target_link_options(test-original-actor-lifecycle PRIVATE -Wl,--gc-sections)
+    endif()
+    add_test(NAME original-game-actor-lifecycle COMMAND test-original-actor-lifecycle)
+endif()

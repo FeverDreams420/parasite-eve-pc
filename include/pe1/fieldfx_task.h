@@ -101,7 +101,7 @@ typedef struct FieldFxTaskOwner {
     FieldFxTaskContext tasks;
 } FieldFxTaskOwner;
 /* Binds task program `index` (g_FieldFxTaskPrograms) to the owner's tasks. */
-int FieldFx_BindTaskProgram(FieldFxTaskOwner *owner, int index);
+#include "pe1/fieldfx_task_api.h"
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxObjectPrefix, asset_type) == 1,
                   fieldfx_owner_asset_type);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks) == 0xC,

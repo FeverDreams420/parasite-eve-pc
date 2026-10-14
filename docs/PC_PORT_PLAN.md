@@ -1110,3 +1110,24 @@ checks passed for game/test sources, including 403848 floor movement steps acros
 414 Disc 1 rooms; the PsyZ archive remains uninstrumented. Wall tests are synthetic,
 not coverage of every scripted room polygon or proof of PS1 trace equivalence.
 Playable scene integration remains incomplete.
+
+### Original actor cleanup and owned process cleanup
+
+`Entity_CollectGarbage` now checks whether the new list head exists before
+clearing its previous link. The new `original-game-actor-lifecycle` test reproduced
+a crash before this fix when deleting the last live actor. It exercises head,
+middle, tail and last deletion, player pointer/movement-lock cleanup, actual
+model block release, restoration of all 14 free actor records, and empty-list
+collection. Owned tasks in both PM banks are removed by the original
+`Scene_FreeEntityTable` / `Pm_Stop`, using a fixture handler that counts stops.
+The renderer cleanup endpoint is the original `Render_ReturnTrue`.
+
+Process dispatch now includes an opaque field-task binding declaration instead
+of depending on the unported field-effect renderer payload layouts. The test
+links only the exercised procedures; unused scene loading, PM send/state APIs
+and effect handlers are not runtime-integrated by this change. In particular,
+legacy integer-carried result pointers in PM send/state remain to be ported.
+No runtime replacement handlers were added. Full build and actor-lifecycle,
+pools and hierarchy CTests passed, as did ASan/UBSan/function instrumentation
+of game/test sources (PsyZ/SDL archives uninstrumented). This is lifecycle
+coverage, not evidence of a running full scene.

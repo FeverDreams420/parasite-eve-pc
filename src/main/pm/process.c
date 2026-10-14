@@ -3,7 +3,7 @@
 
 #include "pe1/cdrom.h"
 #include "pe1/disc_load_state.h"
-#include "pe1/fieldfx_task.h"
+#include "pe1/fieldfx_task_api.h"
 #include "pe1/game_state.h"
 #include "pe1/player_entity.h"
 #include "pe1/pm.h"
@@ -126,7 +126,7 @@ retry:
     entry->ticks = 0;
     entry->owner = owner;
     if (command == 85)
-        FieldFx_BindTaskProgram((FieldFxTaskOwner *)entry, subcommand);
+        FieldFx_BindTaskProgram((struct FieldFxTaskOwner *)entry, subcommand);
     g_PmCmdHandlerTable[command]->initialize(entry);
     return slot;
 }

@@ -164,6 +164,20 @@ int main(void)
         g_ScriptNodePool=&task;Script_RunQueue();
         if(task.current.script!=script+7 || task.flags!=0x10) return 20;
     }
+    for(unsigned variant=0;variant<5;++variant) for(unsigned field=0;field<5;++field) {
+        FieldActor live={.type_id=7,.sub_id=3,.mode=123,.flags=0x80000000,.action=4};
+        live.anim.fixed=-2*65536+123;
+        FieldActor dead=live,owner={.type_id=8};dead.flags|=0x10;dead.next=&live;
+        if(variant==2) { owner=live;owner.flags|=0x10; }
+        u32 script[]={14|(4u<<13)|((2u<<9)<<17),0,field,variant>=3?0:7,variant==1?99:3,28,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_PlayerEntity=variant==4?NULL:&live;g_FieldActorListHead=&dead;
+        g_ScriptNodePool=&task;g_GameStateFlags=0;g_ScriptVariableBank[28]=0x1234;
+        Script_RunQueue();
+        u32 expected[]={123,variant==2?0x80000010u:0x80000000u,(u32)-2,4,0x1234};
+        if(g_ScriptVariableBank[28]!=(variant==1||variant==4?UINT32_MAX:expected[field]) ||
+           task.flags!=0x10 || task.current.script!=script+8) return 21;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

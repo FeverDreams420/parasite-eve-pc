@@ -63,7 +63,7 @@ s32 Entity_QueryField(s32 *args[]) {
         if ((key != node->type_id) || (*args[2] != node->sub_id)) {
             node = g_FieldActorListHead;
             if (node != NULL) {
-                s32 k = *(s32 *)*(s32 * volatile *)&args[1];
+                s32 k = *args[1];
                 while (node != NULL && ((node->type_id != k) ||
                        (node->sub_id != *args[2]) || (node->flags & 0x10))) {
                     node = node->next;

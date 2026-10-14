@@ -4,7 +4,6 @@
 #include "pe1/battle_runtime.h"
 #include "pe1/entity_animation.h"
 #include "pe1/field_actor.h"
-#include "pe1/global_slot.h"
 #include "pe1/gte_types.h"
 #include "pe1/player_entity.h"
 #include "pe1/script_node.h"
@@ -99,7 +98,7 @@ int Script_WaitAnimRange(void) {
         return 0;
     }
 
-    target <<= 16;
+    target = (s32)((u32)target << 16);
     max_frame = current;
     next = max_frame + entity->anim_step;
     if (max_frame < target && target < next) {
@@ -113,18 +112,18 @@ int Script_WaitAnimRange(void) {
     max_frame = g_CurrentEntity->action;
     frame = next >> 16;
     if (max_frame < frame) {
-        next = (frame % (max_frame + 1)) << 16;
+        next = (s32)((u32)(frame % (max_frame + 1)) << 16);
         cmp = target < next;
         if (cmp) {
             return 0;
         }
     } else {
         divisor = max_frame + 1;
-        max_frame <<= 16;
+        max_frame = (s32)((u32)max_frame << 16);
         if (next < 0) {
             /* The original frame comparison is complete; reuse its scratch. */
             current = divisor;
-            next = (current + (frame % divisor)) << 16;
+            next = (s32)((u32)(current + (frame % divisor)) << 16);
             if (max_frame >= target) {
                 cmp = next < target;
                 if (cmp) {
@@ -320,8 +319,8 @@ int Script_MoveTowardPoint(int **args) {
         g_CurrentEntity->rot_y = target_angle;
     }
 
-    g_CurrentEntity->motion_x = Math_FixedMul(-movement_speed, rsin(target_angle) << 4);
-    movement_z = Math_FixedMul(-movement_speed, rcos(target_angle) << 4);
+    g_CurrentEntity->motion_x = Math_FixedMul(-movement_speed, (s32)((u32)rsin(target_angle) << 4));
+    movement_z = Math_FixedMul(-movement_speed, (s32)((u32)rcos(target_angle) << 4));
     current_x = (target_x - current_x) >> 16;
     current_z = (target_z - current_z) >> 16;
     remaining_distance = current_x * current_x + current_z * current_z;
@@ -403,8 +402,8 @@ int Render_CameraTrackEntityAngle(int **args) {
 
     target_angle = (u16)(0x1400 - ratan2(current_z - target_z, current_x - target_x));
     target_angle &= 0xFFF;
-    g_CurrentEntity->motion_x = Math_FixedMul(-base_speed, rsin(target_angle) << 4);
-    base_speed = Math_FixedMul(-base_speed, rcos(target_angle) << 4);
+    g_CurrentEntity->motion_x = Math_FixedMul(-base_speed, (s32)((u32)rsin(target_angle) << 4));
+    base_speed = Math_FixedMul(-base_speed, (s32)((u32)rcos(target_angle) << 4));
 
     current = g_CurrentEntity;
     angle_difference = current->rot_y;
@@ -676,8 +675,8 @@ int Render_CameraTrackEntityZoom(int **args) {
         g_CurrentEntity->rot_y = target_angle;
     }
 
-    g_CurrentEntity->motion_x = Math_FixedMul(-movement_speed, rsin(target_angle) << 4);
-    movement_z = Math_FixedMul(-movement_speed, rcos(target_angle) << 4);
+    g_CurrentEntity->motion_x = Math_FixedMul(-movement_speed, (s32)((u32)rsin(target_angle) << 4));
+    movement_z = Math_FixedMul(-movement_speed, (s32)((u32)rcos(target_angle) << 4));
     current_x = (target_x - current_x) >> 16;
     current_z = (target_z - current_z) >> 16;
     remaining_distance = current_x * current_x + current_z * current_z;

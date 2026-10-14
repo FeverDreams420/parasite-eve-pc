@@ -1177,6 +1177,8 @@ static int original_actor_render_opcodes(void)
     return 1;
 }
 
+int Script_MoveTowardPoint(int **args);
+int Script_WaitAnimRange(void);
 int Render_CameraTrackRelativeOffset(int **args);
 s32 Render_CameraStepAngleFade(s32 **args);
 static int original_actor_camera_opcodes(void)
@@ -1252,6 +1254,59 @@ static int original_actor_camera_opcodes(void)
     }
     g_CurrentEntity=previous;g_PlayerEntity=previous_player;g_ScriptNodePool=previous_node;g_ScriptCursor=previous_cursor;
     puts("Original actor camera opcodes: angle wrap, retained operands, native cursor rewinds, relative movement and player speed path passed");
+    return 1;
+}
+
+static int original_absolute_movement_opcode(void)
+{
+    FieldActor *previous=g_CurrentEntity,*previous_player=g_PlayerEntity;
+    ScriptNode *previous_node=g_ScriptNodePool;u32 *previous_cursor=g_ScriptCursor;
+    u32 script[16]={0};
+    const int ranges[][4]={{0,0,1,0},{0,1,2,0},{2,1,-2,0},{1,3,1,1},{3,0,1,1},{0,3,-1,1},{2,2,-1,0}};
+    for(unsigned i=0;i<7;++i) {
+        FieldActor actor={.action=3,.anim_step=ranges[i][2]*65536,.anim_frame_target=ranges[i][1]};
+        actor.anim.fixed=ranges[i][0]*65536;
+        ScriptNode node={.flags=0x8000};
+        g_CurrentEntity=&actor;g_ScriptNodePool=&node;g_ScriptCursor=script+8;
+        if(Script_WaitAnimRange()!=0 || node.active!=1 || node.flags!=0x8000 ||
+           g_ScriptCursor!=script+(ranges[i][3]?6:8)) return 0;
+    }
+    for(unsigned player=0;player<2;++player) for(unsigned turns=0;turns<2;++turns) {
+        FieldActor absolute={.pos_x=100*65536,.pos_z=200*65536,.rot_y=4095,
+                             .move_factor=65536,.move_speed=4096};
+        FieldActor relative=absolute;
+        ScriptNode absolute_node={.flags=0x8000},relative_node=absolute_node;
+        int dx=-2*65536,dz=3*65536,turn=turns?64:0;
+        int x=98*65536,z=203*65536,absolute_turn=turn;
+        int *abs_args[]={&x,&z,&absolute_turn},*rel_args[]={&dx,&dz,&turn};
+        for(unsigned frame=0;frame<80;++frame) {
+            g_CurrentEntity=&absolute;g_PlayerEntity=player?&absolute:NULL;
+            g_ScriptNodePool=&absolute_node;g_ScriptCursor=script+8;
+            int abs_result=Script_MoveTowardPoint(abs_args);
+            u32 *abs_cursor=g_ScriptCursor;
+            g_CurrentEntity=&relative;g_PlayerEntity=player?&relative:NULL;
+            g_ScriptNodePool=&relative_node;g_ScriptCursor=script+8;
+            int rel_result=Render_CameraTrackRelativeOffset(rel_args);
+            if(abs_result!=rel_result || abs_cursor!=g_ScriptCursor ||
+               absolute.pos_x!=relative.pos_x || absolute.pos_z!=relative.pos_z ||
+               absolute.motion_x!=relative.motion_x || absolute.motion_z!=relative.motion_z ||
+               absolute.rot_y!=relative.rot_y || absolute_node.flags!=relative_node.flags ||
+               absolute_node.active!=relative_node.active) return 0;
+            if(abs_result) {
+                if(absolute.pos_x!=98*65536 || absolute.pos_z!=203*65536 || absolute.motion_x || absolute.motion_z) return 0;
+                break;
+            }
+            if(abs_cursor!=script+3 || absolute_node.target14!=98*65536 ||
+               absolute_node.target18.coordinate!=203*65536 || absolute_node.target1c!=(turns?64:0) || absolute_node.active!=1) return 0;
+            if(!turns && frame==79) return 0;
+            absolute.pos_x=(s32)((u32)absolute.pos_x+(u32)absolute.motion_x);
+            absolute.pos_z=(s32)((u32)absolute.pos_z+(u32)absolute.motion_z);
+            relative.pos_x=absolute.pos_x;relative.pos_z=absolute.pos_z;
+            x=z=dx=dz=0;turn=absolute_turn=1;
+        }
+    }
+    g_CurrentEntity=previous;g_PlayerEntity=previous_player;g_ScriptNodePool=previous_node;g_ScriptCursor=previous_cursor;
+    puts("Original absolute movement opcode: relative/absolute targets agree across player speed, turning, yields, cached operands and completion");
     return 1;
 }
 
@@ -1610,7 +1665,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

@@ -183,13 +183,16 @@ int main(void) {
     memset(bytes + 16, 0, sizeof(bytes) - 16);
     word(bytes + 16, 170);
     word(bytes + 24, 2 | (1u << 13)); word(bytes + 32, 1);
-    word(bytes + 36, 171); word(bytes + 44, 32);
+    word(bytes + 36, 171); word(bytes + 44, 136); word(bytes + 52, 32);
     banks.game_flags = 0x80000001; banks.scene_flags = 0x40;
+    banks.screen_fade_mode = 0xff;
     CHECK(pe_script_task_init(&task, &program, 0, &banks));
+    task.actor->flags = 0x40;
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_WAIT);
     CHECK(banks.game_flags == 0x80002001 && banks.scene_flags == 0x40);
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_STOPPED);
     CHECK(banks.game_flags == 0x80000001 && banks.scene_flags == 0x40);
+    CHECK(banks.screen_fade_mode == 0xbf && task.actor->flags == 0x40);
     puts("Script runtime: waits, arithmetic, banks/flags, subsystem retries/errors and instruction limits passed");
     return 0;
 }

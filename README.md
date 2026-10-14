@@ -449,5 +449,12 @@ game-state word instead of keeping a separate copy. Tests verify preservation
 of unrelated flags and the reset→set sequence from the real New Game script,
 which now reaches unsupported opcode 136 at `0xb4`. All 21 headless tests pass
 with Disc 1; VM and scene/audio data tests also pass ASan/UBSan.
+
+Actor opcode 136 clears bit `0x40` of the shared screen fade mode. Despite its
+reference handler name, it does not modify actor flags. VM tests verify the
+other fade bits and actor flags are preserved; the real New Game task confirms
+the state change before reporting the next unsupported opcode. All 21 tests
+pass headless with Disc 1 and VM tests pass ASan/UBSan. Applying fade state to
+scene rendering remains unfinished.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

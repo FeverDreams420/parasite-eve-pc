@@ -432,10 +432,15 @@ int main(void) {
     CHECK(pe_scene_audio_dispatch(&audio, &reset_task, &other_command) == PE_DISPATCH_UNSUPPORTED);
     CHECK(*audio.game_flags == 0x1234dfff && audio.keys[0][0] == 10);
     reset_task.dispatch = pe_scene_audio_dispatch; reset_task.dispatch_user = &audio;
-    CHECK(pe_script_task_tick(&reset_task, 4096) == PE_SCRIPT_ERROR);
+    scene.script_banks.screen_fade_mode = 0xff;
+    PeScriptStep reset_result = PE_SCRIPT_WAIT;
+    for (unsigned tick = 0; tick < 1024 && reset_result == PE_SCRIPT_WAIT; ++tick)
+        reset_result = pe_script_task_tick(&reset_task, 4096);
+    CHECK(reset_result == PE_SCRIPT_ERROR);
     CHECK(strstr(reset_task.error, "Unimplemented script opcode"));
     printf("New Game script after native audio reset: %s\n", reset_task.error);
     CHECK(scene.script_banks.game_flags & 0x2000);
+    CHECK(scene.script_banks.screen_fade_mode == 0xbf);
     CHECK(*audio.game_flags == 0x1234ff0f);
     for (unsigned slot = 0; slot < 2; ++slot)
         CHECK(audio.keys[slot][0] == -1 && audio.keys[slot][1] == -1 && audio.banks[slot] == -1);

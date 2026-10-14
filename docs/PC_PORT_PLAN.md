@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Opcode 136 czyści bit `0x40` we wspólnym trybie fade ekranu. Nazwa handlera w referencji mylnie sugeruje zmianę flag aktora. Test VM sprawdza zachowanie pozostałych bitów i actor flags; rzeczywisty New Game wykonuje zmianę przed następnym brakującym opcode. 21 testów headless z Disc 1 i ASan/UBSan testu VM przechodzi. Zastosowanie stanu fade do renderowania scen pozostaje nieukończone.
+
 Opcodes 170/171 ustawiają/czyszczą `0x2000` w osobnym natywnym `game_flags` odpowiadającym `g_GameState.flags`, a nie globalnym flagom skryptowym 81–83. Audio może wiązać ten wspólny stan. Test VM sprawdza zachowanie pozostałych bitów i oddzielenie obu pól; rzeczywisty New Game wykonuje reset→set i dochodzi do brakującego opcode 136 przy `0xb4`. 21 testów headless z Disc 1 przechodzi; VM i audyt scen/audio przechodzą ASan/UBSan.
 
 Test wykonuje teraz rzeczywiste początkowe ticki tasków Tutorial/New Game z dispatch audio. Tutorial uruchamia muzykę i zatrzymuje się na audio CD przy `0x19a0`; New Game resetuje audio i zatrzymuje się na actor opcode 170 przy `0xac`. To jawne dowody braków integracji scen, nie poprawnego przejścia gameplay. Test brakującego klucza ponownie dekoduje zmieniony literal przed dispatch. 21 testów headless z Disc 1 i ASan/UBSan audytu scen przechodzi.

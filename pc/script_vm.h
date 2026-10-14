@@ -7,6 +7,7 @@ typedef struct PeScriptBanks {
     uint32_t variables[512], operands[16], node_flags[64];
     uint32_t move_lock, scene_flags;
     uint32_t game_flags; /* g_GameState.flags, distinct from g_GameStateFlags */
+    uint8_t screen_fade_mode; /* g_ScreenTint.fadeMode, not actor flags */
 } PeScriptBanks;
 
 typedef struct PeScriptActor {

@@ -43,6 +43,8 @@ int Script_GetEntityVec3(int **args);
 int Script_SetEntityMoveSpeed(int **args);
 int Script_SetAnimInterpRate(int **args);
 int Menu_GetModeState(int **args);
+int Script_GetSin(int **args);
+int Script_GetCos(int **args);
 int Script_SetAnimSlotPointer(int **args);
 int Script_SetInputFlagBit2(int **unused);
 int Script_ClearInputFlagBit2(int **unused);

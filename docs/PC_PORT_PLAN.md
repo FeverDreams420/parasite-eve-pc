@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 58 powiązań: oryginalne opcode'y 215/216 zwracają sin/cos w 16.16. Powiązania potwierdzono w EXE USA; przesunięcie ujemnego wyniku poprawiono w istniejących funkcjach na unsigned word shift. Test kolejki sprawdza cztery kąty ćwiartkowe, w tym wyniki ujemne. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 56 powiązań: oryginalne opcode'y 223/224 ustawiają i zdejmują bit 1 flag aktora, używany przez stan ruchu/grawitacji. Powiązania potwierdzono w EXE USA; ABI poprawiono w istniejących funkcjach. Test kolejki odczytuje flagi po obu zmianach przez oryginalny query opcode i sprawdza zachowanie pozostałych bitów. Nie jest to nowy dowód działania fizyki w pełnej scenie. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 54 powiązania: oryginalne opcode'y 173/174 zdejmują/ustawiają bit 2 movement lock. Powiązania potwierdzono w EXE USA; ABI poprawiono w istniejących funkcjach. Test kolejki odczytuje lock po obu zmianach przez oryginalny opcode 44 i sprawdza zachowanie pozostałych bitów. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

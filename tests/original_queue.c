@@ -408,6 +408,17 @@ int main(void)
         if(g_ScriptVariableBank[47]!=0x80002002 || g_ScriptVariableBank[48]!=0x80002000 ||
            owner.flags!=0x80002000 || task.current.script!=script+18 || task.flags!=0x10) return 42;
     }
+    const int sine[]={0,65536,0,-65536},cosine[]={65536,0,-65536,0};
+    for(unsigned quarter=0;quarter<4;++quarter) {
+        FieldActor owner={0};
+        u32 script[]={215|(2u<<13)|((2u<<3)<<17),0,quarter*1024,49,
+                      216|(2u<<13)|((2u<<3)<<17),0,quarter*1024,50,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[49]!=(u32)sine[quarter] || g_ScriptVariableBank[50]!=(u32)cosine[quarter] ||
+           task.current.script!=script+10 || task.flags!=0x10) return 43;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

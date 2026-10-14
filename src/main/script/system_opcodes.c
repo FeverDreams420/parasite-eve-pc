@@ -1415,12 +1415,12 @@ int Entity_ClearParentLink(void) {
 }
 
 int Script_GetSin(int **arg0) {
-    *arg0[1] = rsin(*arg0[0]) << 4;
+    *arg0[1] = (s32)((u32)rsin(*arg0[0]) << 4);
     return 1;
 }
 
 int Script_GetCos(int **arg0) {
-    *arg0[1] = rcos(*arg0[0]) << 4;
+    *arg0[1] = (s32)((u32)rcos(*arg0[0]) << 4);
     return 1;
 }
 

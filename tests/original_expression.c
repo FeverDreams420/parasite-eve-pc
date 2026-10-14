@@ -5,8 +5,8 @@
 static int evaluate(int op,int lhs,int rhs)
 {
     int result=123456;
-    ExprOpArgs args={&op,&result,&lhs,&rhs};
-    if (Script_EvalExpr(&args)!=1) return 0;
+    int *args[]={&op,&result,&lhs,&rhs};
+    if (Script_EvalExpr(args)!=1) return 0;
     return result;
 }
 int main(void)

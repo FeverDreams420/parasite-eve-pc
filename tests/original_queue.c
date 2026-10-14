@@ -6,26 +6,20 @@
 #include <stdio.h>
 extern FieldActor *g_CurrentEntity;
 /* Controlled handler table is a test fixture, not a game implementation. */
-int (*g_ScriptQueueOpcodeHandlers[8192])(u32 **);
+int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
 u32 g_GameStateFlags;
 static unsigned calls;
-static int record(u32 **args)
+static int record(int **args)
 {
-    if (args[0]!=&g_CurrentEntity->pad_0AC[5] || args[1]!=&g_ScriptVariableBank[7] ||
-        args[2]!=&g_ScriptOperandTable[3] || args[3]!=(u32 *)&g_ScriptNodeActiveFlags[9]) return 0;
+    if (args[0]!=(int *)&g_CurrentEntity->pad_0AC[5] || args[1]!=(int *)&g_ScriptVariableBank[7] ||
+        args[2]!=(int *)&g_ScriptOperandTable[3] || args[3]!=&g_ScriptNodeActiveFlags[9]) return 0;
     ++calls; *args[0]=11;*args[1]=22;*args[2]=33;*args[3]=44;
     return 1;
 }
-static int yield(u32 **args) { (void)args; ++calls; return 0; }
-/* Test-only ABI adaptation to the real original expression function. */
-static int expression(u32 **raw)
+static int yield(int **args) { (void)args; ++calls; return 0; }
+static int six(int **args)
 {
-    ExprOpArgs args={(int *)raw[0],(int *)raw[1],(int *)raw[2],(int *)raw[3]};
-    return Script_EvalExpr(&args);
-}
-static int six(u32 **args)
-{
-    if (*args[0]!=1 || *args[4]!=5 || args[5]!=&g_ScriptVariableBank[9]) return 0;
+    if (*args[0]!=1 || *args[4]!=5 || args[5]!=(int *)&g_ScriptVariableBank[9]) return 0;
     *args[5]=99; ++calls; return 0;
 }
 int main(void)
@@ -61,9 +55,33 @@ int main(void)
     {
         u32 arithmetic[]={9|(4u<<13)|((2u<<3)<<17),0,0,7,0x7fffffff,1,2,0};
         node->current.script=arithmetic;node->active=1;calls=0;
-        g_ScriptQueueOpcodeHandlers[9]=expression;g_ScriptNodePool=node;
+        g_ScriptQueueOpcodeHandlers[9]=Script_EvalExpr;g_ScriptNodePool=node;
         Script_RunQueue();
         if (g_ScriptVariableBank[7]!=0x80000000 || calls!=1 || node->current.script!=arithmetic+8) return 7;
+    }
+    {
+        u32 flow[]={10|(2u<<13)|(2u<<17),0,12,77,2|(1u<<13),0,3};
+        node->current.script=flow;node->active=1;g_ScriptNodePool=node;
+        g_ScriptQueueOpcodeHandlers[10]=Script_AssignValue;
+        g_ScriptQueueOpcodeHandlers[2]=Entity_SetCurrentNodeActive;
+        Script_RunQueue();
+        if (g_ScriptVariableBank[12]!=77 || node->active!=3 ||
+            g_ScriptCursorAddress!=(uintptr_t)(flow+7)) return 8;
+    }
+    {
+        u32 jump[]={1u<<13,0,6,2|(1u<<13),0,1};
+        actor.script_base=(u8 *)jump;
+        node->current.script=jump;node->active=1;g_ScriptNodePool=node;
+        g_ScriptQueueOpcodeHandlers[0]=Script_JumpToEntityOffset;
+        Script_RunQueue();
+        if (node->current.script!=jump+6 || node->active!=1) return 9;
+    }
+    {
+        u32 death[]={1,0};
+        node->current.script=death;node->active=1;g_ScriptNodePool=node;
+        g_ScriptQueueOpcodeHandlers[1]=Entity_MarkCurrentDead;
+        Script_RunQueue();
+        if (!(actor.flags&0x10)) return 10;
     }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;

@@ -27,7 +27,6 @@
  * through $gp, every other extern stays absolute. */
 ScriptNode *g_ScriptNodePool;
 u8 g_ScriptCameraBytes[3];
-int g_ScriptCursorAddress;
 
 typedef struct ScriptArgParts {
     s16 low;
@@ -284,30 +283,13 @@ ScriptNode *g_ScriptNodePool;
 
 
 
-typedef struct {
-    int value;
-} ScriptJumpOffsetEntry;
 
-int Script_JumpToEntityOffset(ScriptJumpOffsetEntry **arg0)
-{
-    g_ScriptCursor = (u32 *)(g_CurrentEntity->script_base + ((*arg0)->value * 2));
-    return 1;
-}
 
-int Entity_MarkCurrentDead(void) {
-    g_CurrentEntity->flags |= 0x10;
-    return 0;
-}
 
-int Entity_SetCurrentNodeActive(int **arg0) {
-    g_ScriptNodePool->active = *(unsigned short *)arg0[0];
-    return 0;
-}
 
-int Entity_MarkCurrentNodeFree(void) {
-    g_ScriptNodePool->flags |= 0x10;
-    return 0;
-}
+
+
+
 
 int Script_JumpIfZero(int **arg0) {
     if (*arg0[0] == 0) {
@@ -329,10 +311,7 @@ int Script_SpawnEntityAt(int **arg0) {
     Entity_FindFloor((struct BattleEntity *)entity);
     return 1;
 }
-int Script_AssignValue(int **arg0) {
-    *arg0[0] = *arg0[1];
-    return 1;
-}
+
 
 int Script_StopEntityAnim(s16 **arg0) {
     s16 value[5];

@@ -7,7 +7,14 @@
 /* Task script interpreter state and the tables its opcodes read
  * (src/main/script). */
 
-extern int g_ScriptCursorAddress;
+/* Two original linker aliases share one native cursor value. */
+typedef union ScriptCursorValue {
+    u32 *pointer;
+    uintptr_t address;
+} ScriptCursorValue;
+extern ScriptCursorValue g_ScriptCursorValue;
+#define g_ScriptCursor (g_ScriptCursorValue.pointer)
+#define g_ScriptCursorAddress (g_ScriptCursorValue.address)
 extern short g_EntityCollisionWallParam;
 extern ScriptNode *g_ScriptNodeFreeListHead;
 /* Sequence number stamped into each allocated script node (a one-element

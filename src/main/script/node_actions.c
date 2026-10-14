@@ -20,7 +20,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, target18) == 0x18,
 ScriptNode *g_ScriptNodeFreeListHead;
 u16 g_ScriptNodeSeqCounter[1];
 ScriptNode *g_ScriptNodePool;
-int g_ScriptCursorAddress;
 
 int Script_SpawnChildNode(int **args) {
     ScriptNode *node = g_ScriptNodePool;

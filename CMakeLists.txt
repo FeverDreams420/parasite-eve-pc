@@ -26,7 +26,8 @@ add_library(parasite-eve-original OBJECT
     src/main/entity/pool.c
     src/main/entity/block_alloc.c
     src/main/script/node_pool.c
-    src/main/script/expression.c)
+    src/main/script/expression.c
+    src/main/script/basic_flow.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 

@@ -12,79 +12,79 @@ static s32 shift_right(s32 value, unsigned shift)
     return value >= 0 ? (s32)(value / divisor) : (s32)(-1 - (-1 - (s64)value) / divisor);
 }
 
-int Script_EvalExpr(ExprOpArgs *args) {
-    switch (*args->op) {
+int Script_EvalExpr(int **args) {
+    switch (*args[0]) {
     case 0:
-        *args->dst = signed_word((u32)*args->lhs + (u32)*args->rhs);
+        *args[1] = signed_word((u32)*args[2] + (u32)*args[3]);
         break;
     case 1:
-        *args->dst = signed_word((u32)*args->lhs - (u32)*args->rhs);
+        *args[1] = signed_word((u32)*args[2] - (u32)*args[3]);
         break;
     case 2:
-        *args->dst = *args->lhs | *args->rhs;
+        *args[1] = *args[2] | *args[3];
         break;
     case 3:
-        *args->dst = *args->lhs & *args->rhs;
+        *args[1] = *args[2] & *args[3];
         break;
     case 4:
-        *args->dst = *args->lhs ^ *args->rhs;
+        *args[1] = *args[2] ^ *args[3];
         break;
     case 5:
-        *args->dst = (*args->lhs || *args->rhs);
+        *args[1] = (*args[2] || *args[3]);
         break;
     case 6:
-        *args->dst = (*args->lhs && *args->rhs);
+        *args[1] = (*args[2] && *args[3]);
         break;
     case 7:
-        *args->dst = !*args->lhs;
+        *args[1] = !*args[2];
         break;
     case 8:
-        *args->dst = ~*args->lhs;
+        *args[1] = ~*args[2];
         break;
     case 9:
-        *args->dst = *args->lhs > *args->rhs;
+        *args[1] = *args[2] > *args[3];
         break;
     case 10:
-        *args->dst = *args->lhs < *args->rhs;
+        *args[1] = *args[2] < *args[3];
         break;
     case 11:
-        *args->dst = *args->lhs == *args->rhs;
+        *args[1] = *args[2] == *args[3];
         break;
     case 12:
-        *args->dst = *args->lhs >= *args->rhs;
+        *args[1] = *args[2] >= *args[3];
         break;
     case 13:
-        *args->dst = *args->lhs <= *args->rhs;
+        *args[1] = *args[2] <= *args[3];
         break;
     case 14:
-        *args->dst = *args->lhs != *args->rhs;
+        *args[1] = *args[2] != *args[3];
         break;
     case 15:
-        *args->dst = signed_word((u32)*args->lhs * (u32)*args->rhs);
+        *args[1] = signed_word((u32)*args[2] * (u32)*args[3]);
         break;
     case 16:
-        *args->dst = (*args->lhs == INT32_MIN && *args->rhs == -1) ? INT32_MIN : *args->lhs / *args->rhs;
+        *args[1] = (*args[2] == INT32_MIN && *args[3] == -1) ? INT32_MIN : *args[2] / *args[3];
         break;
     case 17:
-        *args->dst = signed_word((u32)*args->lhs << ((u32)*args->rhs & 31));
+        *args[1] = signed_word((u32)*args[2] << ((u32)*args[3] & 31));
         break;
     case 18:
-        *args->dst = shift_right(*args->lhs, (u32)*args->rhs & 31);
+        *args[1] = shift_right(*args[2], (u32)*args[3] & 31);
         break;
     case 19:
-        *args->dst = *args->lhs;
+        *args[1] = *args[2];
         break;
     case 20:
-        *args->dst = Math_FixedMul(*args->lhs, *args->rhs);
+        *args[1] = Math_FixedMul(*args[2], *args[3]);
         break;
     case 21:
-        *args->dst = Math_FixedDivide(*args->lhs, *args->rhs);
+        *args[1] = Math_FixedDivide(*args[2], *args[3]);
         break;
     case 22:
-        *args->dst = (*args->lhs == INT32_MIN && *args->rhs == -1) ? 0 : *args->lhs % *args->rhs;
+        *args[1] = (*args[2] == INT32_MIN && *args[3] == -1) ? 0 : *args[2] % *args[3];
         break;
     case 23:
-        *args->dst = signed_word(0u - (u32)*args->lhs);
+        *args[1] = signed_word(0u - (u32)*args[2]);
         break;
     }
     return 1;

@@ -9,7 +9,6 @@
  * through $gp, every other extern stays absolute. */
 ScriptNode *g_ScriptNodeFreeListHead;
 unsigned short g_ScriptNodeSeqCounter[1];
-int g_ScriptCursorAddress;
 RelocBlock *g_SceneDataTable1;
 ScriptNode *g_ScriptNodePool;
 

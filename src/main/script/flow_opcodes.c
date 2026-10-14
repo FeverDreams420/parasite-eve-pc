@@ -713,7 +713,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [0]=Script_JumpToEntityOffset, [1]=Entity_MarkCurrentDead,
     [2]=Entity_SetCurrentNodeActive, [4]=Entity_MarkNodeFree, [5]=Script_JumpIfZero,
     [9]=Script_EvalExpr, [10]=Script_AssignValue, [14]=Entity_QueryField,
-    [18]=Script_SpawnChildNode, [19]=Entity_SetCurrentFlags, [20]=Entity_SelectFieldSetter,
+    [17]=Script_DispatchCmd, [18]=Script_SpawnChildNode, [19]=Entity_SetCurrentFlags, [20]=Entity_SelectFieldSetter,
     [22]=Entity_YieldWhileMoving, [23]=Entity_ComputeVelocityToTarget,
     [24]=Entity_FindNodeById, [25]=Entity_GetCurrentNodeId,
     [31]=Script_GetNodeTarget14, [32]=Entity_MarkCurrentNodeFree,

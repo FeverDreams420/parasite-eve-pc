@@ -3,6 +3,9 @@
 #include "pe1/script_expression.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/player_entity.h"
+#include "pe1/pad_state.h"
+#include "pe1/boot.h"
+#include "pe1/field_movement.h"
 #include <stdio.h>
 extern FieldActor *g_CurrentEntity;
 /* Override selected resident entries to observe traversal in this fixture. */
@@ -270,6 +273,17 @@ int main(void)
         Script_RunQueue();
         if(g_ScriptVariableBank[35]!=(flags&1?0u:1u) || (u32)g_FieldMoveLock!=(0x80000000u|flags) ||
            task.current.script!=script+5 || task.flags!=0x10) return 29;
+    }
+    for(unsigned mode=0;mode<4;++mode) for(unsigned held=0;held<2;++held) {
+        FieldActor owner={0};
+        u32 script[]={17|(3u<<13)|((2u<<6)<<17),0,mode,0x80000000,36,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        g_FieldPadBits=g_FieldPadPressed=g_FieldPadReleased=held?0x80000000u:0;
+        g_FieldPadHeldFrameCounts[31]=123;g_ScriptVariableBank[36]=0x1234;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[36]!=(held?(mode==3?123u:1u):0u) ||
+           task.current.script!=script+7 || task.flags!=0x10) return 30;
     }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;

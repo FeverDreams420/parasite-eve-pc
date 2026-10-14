@@ -79,9 +79,8 @@ void Akao_StepSequencerVoice(void *arg0) {
     u8 *walk;
     s32 mask;
     s32 bit;
-    u8 *pvoice;
+    AkaoTrack *pvoice;
     s32 kFFF5;
-    u8 *base;
     s32 kFFFa;
     s32 tret;
     s32 tnor;
@@ -127,7 +126,7 @@ void Akao_StepSequencerVoice(void *arg0) {
     tw1 = *(s32 *)walk;
     walk += 4;
         bit = 1;
-    pvoice = (u8 *)g_AkaoVoiceStateTable;
+    pvoice = g_AkaoVoiceStateTable;
     km102 = -0x102;
         p2c8c = g_AkaoCurTrack;
     p2c8c->pending_voice_mask = tw1 & kFFFb;
@@ -135,15 +134,14 @@ void Akao_StepSequencerVoice(void *arg0) {
     walk += 8;
     p2c8c->yield_voice_mask = tw2 & kFFFb;
     kFFF5 = 0xFFFFFF;
-    base = pvoice + 0x116;
     p2c8c->status_flags &= km102;
     p2c8c->status_flags |= g_AkaoVoiceKeyOnState & 0x100;
     do {
-        AkaoTrack *voice = (AkaoTrack *)(base - 0x116);
+        AkaoTrack *voice = pvoice;
         if (mask & bit) {
             tlhu = *(u16 *)walk;
             walk += 2;
-            *(u8 **)pvoice = walk + tlhu;
+            pvoice->pc = walk + tlhu;
             voice->assigned_voice_index = 0x18;
             voice->note_length = 4;
             voice->pan_duration = 2;
@@ -180,14 +178,13 @@ void Akao_StepSequencerVoice(void *arg0) {
         } else {
             voice->note_length = 3;
             voice->pan_duration = 1;
-            *(void **)pvoice = g_AkaoDefaultVoiceProgram;
+            pvoice->pc = (u8 *)g_AkaoDefaultVoiceProgram;
             voice->adsr_release_rate = 5;
             voice->update_flags = (voice->update_flags | 0x4400);
         }
         kFFF5 &= ~bit;
         mask &= ~bit;
-        base += sizeof(AkaoTrack);
-        pvoice += sizeof(AkaoTrack);
+        ++pvoice;
         bit *= 2;
     } while (kFFF5 != 0);
         pend = g_AkaoCurTrack;

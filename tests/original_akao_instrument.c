@@ -62,6 +62,7 @@ void Akao_UpdateVoiceMask(AkaoU8 *new_base);
 void Akao_InitVoiceState(AkaoTrack *track, void *script);
 void Akao_InitPrimarySecondaryVoices(void);
 void Akao_InitPrimarySecondaryVoicesWithMode(AkaoValueCommand *command);
+void Akao_StepSequencerVoice(void *sequence);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
 int main(void)
@@ -316,6 +317,41 @@ int main(void)
             CHECK(voice->adsr_release_rate == (reset ? 5 : 17));
         }
     }
-    puts("original AKAO: commands, initialization and sequence rebasing pass");
+    unsigned int sequence_words[64] = {0x800005, 0x123, 0x456, 0};
+    unsigned char *sequence_bytes = (unsigned char *)sequence_words;
+    sequence_bytes[16] = 30;
+    sequence_bytes[18] = 32;
+    sequence_bytes[20] = 34;
+    for (unsigned paused = 0; paused < 2; ++paused) {
+        bank = (AkaoSequencerBank){0};
+        g_AkaoSequencerState.secondary = (AkaoSequencerBank){0};
+        g_AkaoSeqPendingFlags = paused;
+        g_SpuActiveVoiceMask = 0;
+        g_AkaoVoiceKeyOnState = 0;
+        for (unsigned i = 0; i < 48; ++i) g_AkaoVoiceStateTable[i] = (AkaoTrack){0};
+        Akao_StepSequencerVoice(sequence_bytes);
+        CHECK(bank.sequence_base == sequence_bytes);
+        CHECK(bank.active_voice_mask == (paused ? 0 : 0x800005));
+        CHECK(bank.pending_restore_mask == (paused ? 0x800005 : 0));
+        CHECK(bank.pending_voice_mask == 0x123);
+        CHECK(bank.yield_voice_mask == 0x456);
+        CHECK(bank.tempo == 0xffff0000u);
+        CHECK(bank.tick_accumulator == 1);
+        CHECK(bank.allocated_voice_mask == 0xffffff);
+        for (unsigned i = 0; i < 24; ++i) {
+            AkaoTrack *voice = &g_AkaoVoiceStateTable[i];
+            if (i == 0 || i == 2 || i == 23) {
+                unsigned index = i == 0 ? 0 : i == 2 ? 1 : 2;
+                CHECK(voice->pc == sequence_bytes + 18 + index * 2 + 30 + index * 2);
+                CHECK(voice->assigned_voice_index == 24);
+                CHECK(voice->note_length == 4 && voice->pan_duration == 2);
+                CHECK(voice->panpot == 0x8000);
+            } else {
+                CHECK(voice->pc == (unsigned char *)g_AkaoDefaultVoiceProgram);
+                CHECK(voice->note_length == 3 && voice->pan_duration == 1);
+            }
+        }
+    }
+    puts("original AKAO: commands, initialization, start and rebasing pass");
     return 0;
 }

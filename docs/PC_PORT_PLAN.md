@@ -553,6 +553,8 @@ Original Akao_UpdateVoiceMask restore/rebase używa pointer-width modular addres
 
 Original Akao_InitVoices przyjmuje typed AkaoTrack pointer zamiast byte buffer; callers nie rzutują native track arrays na char. Test wykonuje Akao_InitVoiceState→Akao_SetNotePitch→SeqOp_SetVoiceInstrument oraz oba primary/secondary init wrappers dla 48 ścieżek, matching/nonmatching bank IDs i reset-all. Sprawdza program pointer, release ADSR, durations, instrument fields/dirty flags, zachowanie assigned voice i przywrócenie current bank. CTest i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). Initialize procedures mają dowód izolowanego zachowania, nie odtwarzania sekwencji/timera ani faktycznego PCM.
 
+Original Akao_StepSequencerVoice start używa typed track cursor zamiast byte-pointer i bias 0x116; decoding/order/defaults pozostają. Headless fixture uruchamia sparse channel mask 0/2/23 z header pending/yield masks i relative stream offsets, również paused mode. Sprawdza native PC, assigned voice sentinel, durations/pan, active/pending-restore, tempo/accumulator i allocation mask. CTest i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). To syntetyczny nagłówek; real corpus parsing, bytecode execution/tick/SPU i PCM nie mają jeszcze pełnego dowodu.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

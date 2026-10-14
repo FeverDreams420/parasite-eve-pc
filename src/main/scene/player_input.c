@@ -242,7 +242,8 @@ void Scene_SyncEntityAction(BattleEntity *entity, int *actionState) {
     }
 }
 
-void Scene_UpdateEntityFacingFromPad(BattleEntity *entity) {
+void Scene_UpdateEntityFacingFromPad(BattleEntity *entity, int *actionState) {
+    (void)actionState;
     int angle;
     Entity_SetAction(entity, 0x11);
     if ((g_PadPackets[0].header & 0xF000) == 0x7000) {

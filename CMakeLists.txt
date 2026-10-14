@@ -260,12 +260,17 @@ add_library(parasite-eve-original-actor-animation OBJECT
     src/main/entity/animation.c src/main/scene/actor_sound.c src/main/scene/player_input.c src/main/psyq/libgte/mtx_004.c)
 target_include_directories(parasite-eve-original-actor-animation PRIVATE include)
 if(BUILD_TESTING)
-    add_executable(test-original-actor-animation tests/original_actor_animation.c
+    add_executable(test-original-actor-animation tests/original_actor_animation.c pc/disc.c
+        $<TARGET_OBJECTS:parasite-eve-original-player-rules>
+        $<TARGET_OBJECTS:parasite-eve-original-movement>
+        $<TARGET_OBJECTS:parasite-eve-original-queue>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
-    target_include_directories(test-original-actor-animation PRIVATE include)
+    target_include_directories(test-original-actor-animation PRIVATE include pc)
     target_link_libraries(test-original-actor-animation PRIVATE psyz)
     add_test(NAME original-game-actor-animation COMMAND test-original-actor-animation)
+    add_test(NAME original-game-player-input-assets COMMAND test-original-actor-animation --assets)
+    set_tests_properties(original-game-player-input-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 
 if(BUILD_TESTING)
@@ -291,3 +296,6 @@ if(BUILD_TESTING)
     add_test(NAME original-game-camera COMMAND test-original-camera)
     set_tests_properties(original-game-camera PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
+
+add_library(parasite-eve-original-player-rules OBJECT src/main/scene/player_input_rules.c)
+target_include_directories(parasite-eve-original-player-rules PRIVATE include)

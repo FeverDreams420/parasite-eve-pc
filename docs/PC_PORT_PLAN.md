@@ -970,3 +970,28 @@ recording remains a test fixture, not a runtime replacement. SDL input sampling,
 original input-rule selection, movement/collision integration and scene rendering
 are still not wired together in a playable location. Battle movement variants,
 diagonals and arbitrary camera rotations require further integration evidence.
+
+### Original input rules drive position integration — 2026-10-14
+
+Added the native data definition of the original 50-slot USA player input rule
+table (0x800943C0..0x80094487), preserving all null slots, shared record lists,
+masks, ordering and fallbacks from 0x800942F0 onward. This binds the original
+movement handlers rather than supplying a test-only input callback. Callback
+types now match BattleEntity/int-pointer functions; the turn-in-place handler
+accepts and ignores the second dispatcher argument, avoiding an incompatible
+function-pointer call on native C.
+
+`original-game-player-input-assets` reads the executable from the disc and checks
+all 50 table slots plus every record's masks, flags and mapped callback identity.
+The integrated test calls original Entity_IntegratePositionFull: held Up selects
+walk/action 22 and moves by the original fixed-point speed, Up+bit 1 selects
+run/action 23, and release selects idle/action 21 without further displacement.
+It uses real action selection and original rule filtering/movement integration.
+
+Full build and all four input-rule/movement/action/input-assets CTests pass;
+ASan/UBSan/function instrumentation of game/test sources passes the disc-backed
+integrated test. PsyZ is uninstrumented. The script handler table remains a test
+fixture with no scripts attached in this movement scenario, and animation data
+is controlled fixture data. There is no full script/collision/SDL-input/render
+scene loop yet. Native player-rule data is a separate object target for upcoming
+runtime linkage, not a parallel gameplay implementation.

@@ -63,7 +63,7 @@ extern unsigned int g_FieldPadBits;
 
 void Scene_Init(BattleEntity *entity, int *actionState);
 void Scene_SyncEntityAction(BattleEntity *entity, int *actionState);
-void Scene_UpdateEntityFacingFromPad(BattleEntity *entity);
+void Scene_UpdateEntityFacingFromPad(BattleEntity *entity, int *actionState);
 void Scene_UpdateEntityFacing(BattleEntity *entity, int *actionState);
 void Scene_UpdatePlayerEntity(BattleEntity *entity, int *actionState);
 int Math_FixedMul(int lhs, int rhs);

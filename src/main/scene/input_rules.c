@@ -25,7 +25,7 @@ void Scene_CheckFlagBits(void *ctx, SceneFlagRecord **table, int *index_ptr)
 
     if (flags != 0) {
         do {
-            void (*callback)(void *, void *);
+            void (*callback)(struct BattleEntity *, int *);
             u32 mask;
             u32 value;
 

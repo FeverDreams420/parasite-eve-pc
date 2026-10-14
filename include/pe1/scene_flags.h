@@ -5,11 +5,12 @@
 
 /* Host callback pointers; this is not a serialized disc record. */
 /* Callback-filter record consumed by the entity position integration path. */
+struct BattleEntity;
 typedef struct SceneFlagRecord {
     u32 flags;
     u32 mask_all;
     u32 mask_any;
-    void (*callback)(void *, void *);
+    void (*callback)(struct BattleEntity *, int *);
 } SceneFlagRecord;
 
 

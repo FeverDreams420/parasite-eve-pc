@@ -6,6 +6,11 @@
 #include "pe1/geom_state.h"
 #include "pe1/field_movement.h"
 #include "pe1/pad_state.h"
+#include "pe1/scene_flags.h"
+#include "pe1/entity_frame_update.h"
+#include "disc.h"
+#include <stdlib.h>
+int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
 GeomScrollRecord g_GeomScroll;
 PadPacket g_PadPackets[2];
 /* Record positional sound requests; no replacement audio ships with the game. */
@@ -15,8 +20,41 @@ int Asset_Find08w(int id,int mode,int x,int y,int z)
 {
     (void)mode;(void)x;(void)y;(void)z;if(id==1000)++sounds;return 0;
 }
-int main(void)
+int main(int argc, char **argv)
 {
+    (void)argv;
+    if(argc>1) {
+        const char *path=getenv("PE_TEST_DISC");
+        if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe;u32 pointers[50];
+        if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
+           !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
+        for(unsigned mode=0;mode<50;++mode) {
+            SceneFlagRecord *native=g_EntityInputRulesByMode[mode];
+            if(!pointers[mode]) {if(native)return 21;continue;}
+            if(!native)return 22;
+            for(unsigned i=0;i<4;++i) {
+                u32 raw[4];
+                if(!pe_disc_read(&disc,&exe,pointers[mode]-0x80010000+0x800+i*16,raw,sizeof(raw)))return 23;
+                void (*callback)(BattleEntity *,int *)=0;
+                switch(raw[3]) {
+                case 0:break;
+                case 0x80071034:callback=Scene_Init;break;
+                case 0x800710a4:callback=Scene_UpdatePlayerEntity;break;
+                case 0x8007136c:callback=Scene_UpdateEntityFacing;break;
+                case 0x800716a4:callback=Scene_SyncEntityAction;break;
+                case 0x80071754:callback=Scene_UpdateEntityFacingFromPad;break;
+                default:return 24;
+                }
+                if(native[i].flags!=raw[0] || native[i].mask_all!=raw[1] ||
+                   native[i].mask_any!=raw[2] || native[i].callback!=callback)return 25;
+                if(!raw[0])break;
+                if(i==3)return 26;
+            }
+        }
+        pe_disc_close(&disc);
+        puts("All 50 original input table slots match executable records");
+    }
     BattleEntity parent={0},child={0};
     RenderAnimationDataHeader actions[2]={{0}};
     actions[0].frame_count=4;actions[1].frame_count=8;
@@ -91,6 +129,17 @@ int main(void)
         }
         Scene_Init(&actor,&state);
         if(actor.actionMode!=21 || actor.motionX || actor.motionZ) return 13;
+        g_PadPackets[0].header=0;
+        actor.posX.fixed=actor.posY.fixed=actor.posZ.fixed=0;
+        g_FieldPadBits=FIELD_PAD_UP;
+        Entity_IntegratePositionFull((FieldActor *)&actor);
+        if(actor.posZ.fixed!=-FIELD_WALK_SPEED || actor.actionMode!=22)return 14;
+        g_FieldPadBits=FIELD_PAD_UP|1;
+        Entity_IntegratePositionFull((FieldActor *)&actor);
+        if(actor.posZ.fixed!=-FIELD_WALK_SPEED-FIELD_RUN_SPEED || actor.actionMode!=23)return 15;
+        g_FieldPadBits=0;
+        Entity_IntegratePositionFull((FieldActor *)&actor);
+        if(actor.posZ.fixed!=-FIELD_WALK_SPEED-FIELD_RUN_SPEED || actor.actionMode!=21 || actor.motionZ)return 16;
         g_PlayerEntity=0;
     }
     puts("Original action/clock/audio trigger and digital/analog player motion passed");

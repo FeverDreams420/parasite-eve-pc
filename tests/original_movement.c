@@ -8,9 +8,9 @@
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
 SceneFlagRecord *g_EntityInputRulesByMode[18];
 static unsigned rule_calls;
-static void input(void *ctx,void *mode)
+static void input(struct BattleEntity *ctx,int *mode)
 {
-    FieldActor *actor=ctx;(void)mode;
+    FieldActor *actor=(FieldActor *)ctx;(void)mode;
     ++rule_calls;actor->accel_x=actor->pad_0AC[5];
 }
 int main(void)

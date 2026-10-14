@@ -802,3 +802,19 @@ original/test sources; PsyZ remains uninstrumented. Full build passes, as do
 model setup, existing projection corpus and headless menu-audio tests.
 This verifies packet construction and ordering, not GPU rasterization or an
 on-screen actor. Actual GPU submission and scene frame integration remain open.
+
+### Original model GPU execution — 2026-10-14
+
+`original-game-model-gpu` now submits the original setup/projection/face-ordering
+packets to PsyZ's SDL GPU backend and reads native VRAM back with `StoreImage`.
+No display environment or VSync is submitted, so the backend window remains
+hidden. This requires a functioning host GPU backend; missing disc data remains
+a skip unless `PE_REQUIRE_GAME_ASSETS=1` is set.
+
+Disc 1 corpus evidence: all 878 models produced visible pixels (2,239,579 total),
+301,224 face packets were linked across both draw slots, and each model's two
+slots produced identical readback. Both setup and GPU CTests passed on Metal.
+The test supplies synthetic white VRAM and neutral vertex colours: it verifies
+actual geometry packet execution, not room texture placement, original lighting,
+or visual fidelity against PS1 captures. No playable scene is implied. Original
+lighting, room texture uploads, actor/script/input frame integration remain next.

@@ -15,15 +15,32 @@ _Static_assert(sizeof(RenderPacket24) == sizeof(POLY_G4), "native shaded quad");
 _Static_assert(sizeof(RenderPacket1C) == sizeof(POLY_G3), "native shaded triangle");
 _Static_assert(offsetof(RenderPacket34, sxy0) == offsetof(POLY_GT4, x0), "native payload offset");
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
-int main(void)
+int main(int argc, char **argv)
 {
     const char *path = getenv("PE_TEST_DISC");
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS") ? 1 : 77;
     PeDisc disc = {0}; PeRoomCatalog catalog; PeRoom room = {0};
+    int gpu = argc == 2 && !strcmp(argv[1], "--gpu");
+    unsigned rendered = 0;
+    unsigned long pixels = 0;
+    unsigned short image[320*224], previous[320*224];
+    RECT viewport = {0,0,320,224};
     unsigned models = 0;
     unsigned long linked = 0;
     char error[256];
     ResetGraph(0);
+    if (gpu) {
+        /* No VSync/PutDispEnv: the backend window stays hidden. Synthetic
+         * white texture data isolates packet execution from room uploads. */
+        unsigned short *vram = malloc(1024*512*sizeof(*vram));
+        CHECK(vram);
+        for (unsigned i=0;i<1024*512;++i) vram[i] = 0x7fff;
+        RECT all = {0,0,1024,512};
+        LoadImage(&all,(u_long *)vram); DrawSync(0); free(vram);
+        DRAWENV draw;
+        SetDefDrawEnv(&draw,0,0,320,224); draw.dtd = 0;
+        PutDrawEnv(&draw); DrawSync(0);
+    }
     CHECK(pe_disc_open(&disc,path)); CHECK(pe_room_catalog_open(&catalog,&disc));
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         if (!catalog.ranges[map-1].room_sectors) continue;
@@ -74,6 +91,14 @@ int main(void)
                         CHECK((packet[extra+14] | (unsigned)packet[extra+15]<<8) == texture.clut);
                         CHECK((packet[extra+26] | (unsigned)packet[extra+27]<<8) == texture.page);
                     }
+                    if (gpu) {
+                        /* Lighting is outside this setup/ordering test. */
+                        unsigned vertices = (kind == 0 || kind == 2) ? 4 : 3;
+                        unsigned stride = kind < 2 ? 12 : 8;
+                        for (unsigned slot=0;slot<2;++slot)
+                            for (unsigned v=0;v<vertices;++v)
+                                memset(packet + slot*sizes[kind] + sizeof(RenderNativeTag) + v*stride,128,3);
+                    }
                     packet += sizes[kind]*2;
                 }
             }
@@ -108,6 +133,20 @@ int main(void)
                     }
                     cursor = tag->address;
                 }
+                if (gpu) {
+                    ClearImage(&viewport,0,0,0);
+                    DrawOTag((OT_TYPE *)&ordering[4095]);
+                    DrawSync(0);
+                    memset(image,0,sizeof(image));
+                    StoreImage(&viewport,(u_long *)image); DrawSync(0);
+                    if (!slot) memcpy(previous,image,sizeof(image));
+                    else {
+                        CHECK(!memcmp(previous,image,sizeof(image)));
+                        unsigned lit = 0;
+                        for (unsigned i=0;i<320*224;++i) lit += (image[i]&0x7fff) != 0;
+                        rendered += lit != 0; pixels += lit;
+                    }
+                }
             }
             ++models; free(work); free(copy);
         }
@@ -115,6 +154,10 @@ int main(void)
     }
     pe_disc_close(&disc);
     CHECK(models == 878 && linked != 0);
+    if (gpu) {
+        CHECK(rendered == models && pixels != 0);
+        printf("Original GPU packets: %u models with visible pixels, %lu pixels; both slots identical\n",rendered,pixels);
+    }
     printf("Original native ordering chains: %lu visible packets\n",linked);
     printf("Original model setup: %u model packet buffers and matrix tables\n",models);
     return 0;

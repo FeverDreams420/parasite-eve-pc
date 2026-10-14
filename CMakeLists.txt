@@ -203,6 +203,8 @@ if(BUILD_TESTING)
     target_compile_definitions(test-original-model-setup PRIVATE __psyz)
     target_link_libraries(test-original-model-setup PRIVATE psyz)
     add_test(NAME original-game-model-setup COMMAND test-original-model-setup)
+    add_test(NAME original-game-model-gpu COMMAND test-original-model-setup --gpu)
+    set_tests_properties(original-game-model-gpu PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "gpu;game-assets")
     set_tests_properties(original-game-model-setup PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 

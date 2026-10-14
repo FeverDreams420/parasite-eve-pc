@@ -8,15 +8,15 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
-Punkt audytu: commit `83aa1c5f8`, 14 października 2026.
+Punkt wyjściowy audytu: commit `83aa1c5f8`, 14 października 2026. Poniższy stan uwzględnia także wdrożony runner headless z WP01.
 
 | Obszar | Co istnieje | Czego obecne dowody nie potwierdzają |
 | --- | --- | --- |
 | Boot | `pc/disc.c`, `movie.c`, `boot.c`, `title.c`; intro i oryginalne grafiki menu | New Game i Tutorial nie uruchamiają rozgrywki; Continue jest wyłączone |
 | Logika gry | 441 plików C pod `src/`, podsystemy gry i legacy SDK | Kod gry nie jest częścią natywnego targetu; same źródła nie dowodzą kompletności implementacji ani danych |
 | Zawartość | Źródła współdzielone i 22 katalogi pod `src/overlays/`; notatki o pokojach | Katalog źródeł nie jest katalogiem wszystkich map, scen i wariantów obu dysków |
-| Testy | `disc-reader`, `boot-assets` w CTest | Brak automatycznych kampanii, walk, zapisów, referencyjnego obrazu i audio |
-| CI | Build i CTest na macOS | `boot-assets` zwraca 77 bez `PE_TEST_DISC`, więc publiczny CI nie dowodzi nawet działania bootu z danymi gry |
+| Testy | `disc-reader`, `automation`, `boot-assets`, `boot-replay` w CTest | Brak automatycznych kampanii, walk, zapisów, referencyjnego obrazu i audio |
+| CI | Build i CTest na macOS; testy `disc-reader` i `automation` bez danych gry | `boot-assets` i `boot-replay` zwracają 77 bez `PE_TEST_DISC`, więc publiczny CI nie dowodzi działania bootu z danymi gry; `PE_REQUIRE_GAME_ASSETS=1` zamienia brak danych w błąd |
 | Test lokalny bootu | Zapisano wynik całego intro i podglądy w lokalnym `build/qa/` | To nie jest jeszcze wymagany, samodzielny test regresyjny obrazu, wyjścia audio i synchronizacji |
 
 Założenie wydania 1.0: wersja USA obu dysków, zachowanie oryginalnej gry i pełna zawartość odblokowywana w normalnej rozgrywce. Windows x64 jest głównym celem wydania; macOS arm64/x64 i Linux x64 są pełnoprawnymi celami desktopowymi. Ich minimalne wersje systemów, GPU i konfiguracje audio ustalamy i zapisujemy w WP00. Wersje JP/PAL, mobile i web mają odrębne katalogi wymagań; nie deklarujemy ich działania na podstawie testów wersji USA.
@@ -40,6 +40,32 @@ Materiały gry pozostają lokalne/prywatne. Publiczne repo i paczka zawierają k
 **Hi-res od początku, hi-FPS później.** Korzystamy z istniejącego skalowania wewnętrznej rozdzielczości PsyZ (`Psyz_VideoSetInternalResolution` w `psyz/video.h`, obecnie mnożniki 1–8). WP03 integruje je z rendererem gry i testuje tła, maski, modele, efekty, UI oraz niezmieniony stan symulacji. Samo powiększenie okna nie wystarcza. Pierwsze pełne wydanie zachowuje właściwe kadencje oryginału; wysokie FPS i interpolacja są osobnym WP13, który nie blokuje pełnej gry z hi-res. Od początku oddzielamy zegar symulacji od prezentacji, aby późniejszy hi-FPS nie wymagał zmiany reguł gry.
 
 **Utrzymujemy własny PsyZ.** Źródłem submodułu jest [khasinski/parasite-eve-psyz](https://github.com/khasinski/parasite-eve-psyz), z `Xeeynamo/psyz` jako upstream. Fork zachowuje historię kodu i jest osobnym repozytorium GitHub; nie współdzieli repozytorium Rage Racer. Możemy dopisywać brakujące możliwości oraz upraszczać integrację. Generyczne GPU/GTE/audio/runtime trafiają do forka z testami; reguły Parasite Eve i dekodowanie jej danych pozostają w projekcie gry. Nie rozbudowujemy PS1 API tylko po to, by zachować stare nazwy wywołań.
+
+## 1.2. Samodzielne testowanie i widoczność
+
+Agent musi móc wykonać i ocenić każdy wymagany test bez działania użytkownika.
+Headless jest domyślnym trybem testowania: brak widocznego okna i syntetyczne
+urządzenia wejścia/wyjścia. Sprzętowe testy backendów także mają działać bez
+ręcznego klikania, przez kontrolowany proces i capture, nie przez prośbę o ocenę
+obrazu lub dźwięku. Żaden test nie czeka bezterminowo na input.
+
+Runner ma pełne sterowanie akcjami i stanem: inicjalizacja sesji, seed RNG,
+czas/ticki, hold/release i akcje urządzeń, fixture/checkpoint stanu, zapis/odczyt,
+I/O i wstrzyknięte błędy. Pełne kampanie nadal używają zwykłej rozgrywki, nie
+bezpośredniego przestawiania flag. Obserwacje obejmują kanoniczny stan gry,
+zdarzenia/skrypty, aktorów, input, render, audio i kolejki. Oczekiwanie na stan,
+asercje, trace i timeout są częścią interfejsu programu, nie automatyzacją pulpitu.
+
+Obecny frontend ma `--headless`, `--replay`, `--trace` i konfigurowany timeout;
+`pc/automation.h` publikuje rzeczywiste stany prezentacji i pozwala sterować
+wejściem testu. To początek WP01, nie dowód pełnego sterowania niepodłączoną
+jeszcze logiką gry. Stan domenowy i wirtualny zegar zostaną dołączone przy WP02.
+
+`save-editor/` to osobny projekt prowadzony przez Gemini. Nie jest zależnością
+buildu ani częścią prac nad portem. Gdy jego interfejs będzie dostępny, można
+wykorzystać go do generowania fixture’ów zapisów o zadanych parametrach;
+fixture’y i ich oczekiwany wynik trzeba niezależnie zweryfikować. Nie zastępują
+one kampanii od New Game ani testów serializacji w rzeczywistym runtime.
 
 ## 2. Architektura docelowa
 
@@ -245,7 +271,7 @@ Paczka nie potrzebuje kompilatora, Pythona, repo ani narzędzi deweloperskich. T
 | Kolejność | Konkretna zmiana | Dowód przed przejściem dalej |
 | --- | --- | --- |
 | PR01 | Katalog pełnej gry/2 dysków, mapa brakujących danych/API i zakres platform | Każda znana funkcja ma ID i zaplanowany test; nieznane obszary widoczne jako blokady |
-| PR02 | Runner ticków/RNG/replay, checkpointy stanu i wymagane testy prywatne | Boot powtarzalny bez sleeps; brak danych i celowe regresje dają FAIL |
+| PR02 | Rozszerzenie headless runnera o ticki/RNG i checkpointy stanu gry oraz wymagane testy prywatne | Boot powtarzalny bez sleeps; brak danych i celowe regresje dają FAIL |
 | PR03 | Rozdział aplikacji, game_core i platformy; statyczne moduły, normalne bufory i usunięcie zbędnego PS1 API | New Game/Tutorial prowadzą do rzeczywistego dispatchera, reset ma testy |
 | PR04 | Oba CUE/BIN jako jeden zestaw, asset manager i loader pierwszego pokoju | Poprawne pochodzenie/wybór danych bez zmiany CD; błędne pary, rekordy i anulowanie mają testy |
 | PR05 | Renderer pierwszej sceny z hi-res własnego PsyZ oraz AKAO/SPU | Tło + maski + model + kamera + animacja + audio zgodne z referencją; rozdzielczość nie zmienia gameplay |

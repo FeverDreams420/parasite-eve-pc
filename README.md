@@ -39,15 +39,16 @@ cmake --build build --parallel
 ./build/pc/parasite-eve-pc --disc "/path/to/Parasite Eve (Disc 1).bin"
 ```
 
-The application requires a graphical session and an audio device. You can set
+Interactive mode requires a graphical session and an audio device; automated
+boot tests can use `--headless`. You can set
 `PE_DISC_IMAGE` instead of passing `--disc`; `make run` uses that environment
 variable. Enter/Space skips the intro and opens the title options. Arrows or
 W/S change the selection, Enter confirms, and Escape returns to the title
 prompt. Continue remains disabled until native save support exists. Selecting
 New Game or Tutorial currently exits; their gameplay is not integrated.
 
-`make ci` builds and runs the asset-free disc-reader test. The boot integration
-test skips when no image is supplied. To verify complete movie decoding and
+`make ci` builds and runs the asset-free disc-reader and automation tests. The
+boot-assets and boot-replay tests skip when no image is supplied. To verify complete movie decoding and
 menu input with your own image:
 
 ```sh
@@ -90,3 +91,31 @@ to normal buffers. Both user-supplied CUE/BIN images will form one logical asset
 set, without a physical drive or manual disc swapping. That combined layer is
 planned; the current boot command still takes Disc 1 only. Hi-res uses PsyZ's
 existing rendering support during game integration; high FPS is a later stage.
+
+## Headless automation
+
+The boot frontend can run without a visible window or audio device, using a
+software renderer and dummy audio. Replays react to actual presented states,
+not timed key presses, and write machine-readable JSONL events:
+
+```sh
+./build/pc/parasite-eve-pc --headless \
+  --replay pc/tests/replays/boot-tutorial.replay \
+  --trace build/boot.jsonl --replay-timeout-ms 5000 \
+  --disc "/path/to/Parasite Eve (Disc 1).bin"
+```
+
+Each replay line is `event expected_integer action`. Actions currently cover
+the title inputs (`return`, `space`, `escape`, `up`, `down`, `z`), `close`, and
+`assert`. A mismatched value, incomplete replay, trace failure or timeout returns
+failure. Trace values include the displayed movie-frame index, menu selection
+and exit result; timestamps stay monotonic through SDL shutdown.
+
+This interface currently covers boot/title state. Complete game-state snapshots,
+input actions, RNG/clock control, scenario checkpoints and save fixture loading
+will be added with `game_core`; the gameplay port remains incomplete.
+`--headless` does not emulate the PsyZ GPU smoke test.
+
+For mandatory asset tests, set both `PE_TEST_DISC` and
+`PE_REQUIRE_GAME_ASSETS=1` before running CTest. Missing data then fails rather
+than silently skipping `boot-assets` or `boot-replay`.

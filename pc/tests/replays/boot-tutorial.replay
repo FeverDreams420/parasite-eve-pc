@@ -1,0 +1,9 @@
+# Await semantic state, check its value, then inject an actual frontend input.
+backend.ready 1 assert
+intro.frame 0 space
+intro.skipped 1 assert
+menu.prompt 0 return
+menu.options 0 down
+menu.options 1 return
+menu.selected 2 assert
+boot.stopped 0 assert

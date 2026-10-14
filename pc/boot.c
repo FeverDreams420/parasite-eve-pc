@@ -2,6 +2,7 @@
 #include "disc.h"
 #include "movie.h"
 #include "title.h"
+#include "automation.h"
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,9 +38,11 @@ typedef struct BootPlayer {
     char error[256];
     const char *capture;
     int captured;
+    unsigned presented;
 } BootPlayer;
 
 static int poll_input(BootPlayer *player) {
+    if (pe_runtime_should_stop()) player->quit = 1;
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_EVENT_QUIT) player->quit = 1;
@@ -140,10 +143,13 @@ static int render_frame(BootPlayer *player, const VideoFrame *frame) {
         if (!ok) return 0;
         player->captured = 1;
     }
-    return SDL_RenderPresent(player->renderer);
+    if (!SDL_RenderPresent(player->renderer)) return 0;
+    pe_runtime_emit("intro.frame", player->presented++);
+    return 1;
 }
 
 static int play_intro(BootPlayer *player) {
+    pe_runtime_emit("intro.buffering", 0);
     player->worker = SDL_CreateThread(decode_worker, "intro-decode", player);
     if (!player->worker) return 0;
     /* Prebuffer half a second before starting the common playback clock. */
@@ -214,16 +220,22 @@ static int run_boot(const char *disc_path, int menu, int skip_intro) {
         fprintf(stderr, "%s\n", disc.error);
         goto close_disc;
     }
+    if (!pe_runtime_prepare()) {
+        fprintf(stderr, "Automation: %s\n", pe_runtime_error());
+        goto close_disc;
+    }
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         fprintf(stderr, "SDL: %s\n", SDL_GetError());
         goto close_disc;
     }
     if (!SDL_CreateWindowAndRenderer("Parasite Eve PC", 960, 720,
-        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY,
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY |
+        (pe_runtime_headless() ? SDL_WINDOW_HIDDEN : 0),
         &player.window, &player.renderer)) goto close_player;
     SDL_AudioSpec audio_spec = {SDL_AUDIO_F32, AUDIO_CHANNELS, AUDIO_RATE};
     player.audio = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
                                              &audio_spec, NULL, NULL);
+    pe_runtime_emit("backend.ready", pe_runtime_headless());
     player.mutex = SDL_CreateMutex();
     player.space = SDL_CreateCondition();
     if (!player.audio || !player.mutex || !player.space) goto close_player;
@@ -243,6 +255,8 @@ close_player:
             fprintf(stderr, "Intro: %s\n", player.error);
             result = 1;
         } else {
+            pe_runtime_emit(player.quit ? "intro.closed" : player.skipped ?
+                            "intro.skipped" : "intro.finished", player.presented);
             printf("intro: %s after %u frames; %llu decoded audio samples\n",
                    player.quit ? "window closed" : player.skipped ? "skipped" : "finished",
                    player.stats.video_frames, (unsigned long long)player.stats.audio_samples);
@@ -272,6 +286,7 @@ close_player:
     SDL_Quit();
 close_disc:
     pe_disc_close(&disc);
+    pe_runtime_emit("boot.stopped", result);
     return result;
 }
 

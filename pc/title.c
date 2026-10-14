@@ -1,4 +1,5 @@
 #include "title.h"
+#include "automation.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -90,9 +91,14 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
     uint64_t start = SDL_GetTicks();
     unsigned timeout_ms = timeout ? (unsigned)strtoul(timeout, NULL, 10) : 0;
     int prompt = 1, selection = 0, captured = 0;
+    int reported_prompt = -1, reported_selection = -1;
     printf("boot: main menu ready\n");
     fflush(stdout);
     for (;;) {
+        if (pe_runtime_should_stop()) {
+            snprintf(error, error_size, "Automation: %s", pe_runtime_error());
+            goto cleanup;
+        }
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) { result = 0; goto cleanup; }
@@ -100,7 +106,11 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
             SDL_Keycode key = event.key.key;
             if (key == SDLK_RETURN || key == SDLK_SPACE || key == SDLK_Z) {
                 if (prompt) prompt = 0;
-                else { result = selection == 0 ? 1 : 2; goto cleanup; }
+                else {
+                    result = selection == 0 ? 1 : 2;
+                    pe_runtime_emit("menu.selected", result);
+                    goto cleanup;
+                }
             } else if (key == SDLK_UP || key == SDLK_DOWN || key == SDLK_W || key == SDLK_S) {
                 if (!prompt) selection = 1 - selection;
             } else if (key == SDLK_ESCAPE) {
@@ -140,6 +150,11 @@ int pe_title_menu(PeDisc *disc, SDL_Renderer *renderer, char *error, size_t erro
             captured = 1;
         }
         if (!SDL_RenderPresent(renderer)) goto sdl_error;
+        if (prompt != reported_prompt || (!prompt && selection != reported_selection)) {
+            pe_runtime_emit(prompt ? "menu.prompt" : "menu.options", prompt ? 0 : selection);
+            reported_prompt = prompt;
+            reported_selection = selection;
+        }
         if (timeout_ms && SDL_GetTicks() - start >= timeout_ms) { result = 0; break; }
         SDL_Delay(16);
     }

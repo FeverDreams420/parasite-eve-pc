@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Natywna transformacja punktu udostępnia pełne MAC words i saturated IR halfwords operacji RT. Headless `matrix-psyz` porównuje obie wartości z GTE przypiętego forka PsyZ dla 10000 deterministycznych skrajnych wejść; wszystkie są zgodne. Native matrix fixture przechodzi ASan/UBSan, a 28 testów headless z Disc 1 przechodzi. Hit-volume integration, view/perspective projection, lighting i referencyjne obrazy gry pozostają wymagane.
+
 `pc/matrix.c` wykonuje command-mode poses w C: 12-bit fractional rotation, signed-halfword input, saturated rotation i wrapped word translation. Push/pop używa zwykłej pamięci; child translation pochodzi z Z części, root z source matrix. Błąd komendy/capacity zachowuje output. Audyt wylicza 17748 neutral-input matrices dla 878 modeli. 27 testów headless z Disc 1 oraz ASan/UBSan matrix fixture i pełnego audytu przechodzi. Animated inputs, alternate animation modes, hit-volume/view transforms i reference pose/image validation pozostają wymagane.
 
 Model parser dekoduje matrix commands (part/push/pop), odrzuca stack underflow, błędne signed part indices i output-buffer overflow oraz zapisuje stack depth. Audyt Disc 1 waliduje 24942 komendy, 17748 matrix outputs w 878 modelach; maksymalna głębokość wynosi 4. Test sprawdza rodzaje, referencje i zachowanie output przy błędzie. 26 testów headless oraz ASan/UBSan fixture i pełnego audytu przechodzi. Egzekucja fixed-point transforms i rendering wyników pozostają wymagane.

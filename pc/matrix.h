@@ -7,6 +7,9 @@ void pe_matrix_identity(PeMatrix *matrix);
  * saturated signed-halfword rotation, signed-halfword source translation,
  * wrapped full-word output translation. Inputs may alias output. */
 void pe_matrix_compose(const PeMatrix *parent,const PeMatrix *source,PeMatrix *output);
+/* RT point result: full MAC words and saturated IR halfwords, sf=1/lm=0. */
+typedef struct PeTransformedPoint { uint32_t word[3]; int16_t saturated[3]; } PeTransformedPoint;
+void pe_matrix_point(const PeMatrix *matrix,const int16_t point[3],PeTransformedPoint *output);
 /* Core command-mode pose. Root uses source translation; other parts use
  * (0,0,part.translation_z). Failure preserves output/written. Animation
  * modes, hit-volume transforms and view projection are separate work. */

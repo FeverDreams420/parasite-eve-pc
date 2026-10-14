@@ -580,6 +580,13 @@ with Disc 1; matrix fixtures and the full model/scene audit pass ASan/UBSan.
 Animated inputs, alternate animation modes, hit-volume/view transforms and
 reference pose/image validation remain unfinished.
 
+Native point transformation now exposes RT's full MAC words and saturated
+IR halfwords. The headless `matrix-psyz` test compares both against our pinned
+PsyZ GTE implementation for 10,000 deterministic extreme inputs; every value
+matches. Native matrix fixtures also pass ASan/UBSan, and all 28 tests pass
+headless with Disc 1. Hit-volume integration, view/perspective projection,
+lighting and reference game images remain unfinished.
+
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one
 lists the other 75 faces). The original lookup only searches listed faces.

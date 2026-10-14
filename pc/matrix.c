@@ -21,6 +21,19 @@ void pe_matrix_compose(const PeMatrix *parent,const PeMatrix *source,PeMatrix *o
     }
     *output=next;
 }
+void pe_matrix_point(const PeMatrix *matrix,const int16_t point[3],PeTransformedPoint *output){
+    PeTransformedPoint next={0};
+    for(unsigned row=0;row<3;++row){
+        int64_t sum=signed_word(matrix->translation[row])*4096;
+        for(unsigned k=0;k<3;++k)sum+=(int64_t)matrix->rotation[row][k]*point[k];
+        uint32_t word=(uint32_t)shift12(sum);
+        int64_t value=signed_word(word);
+        next.word[row]=word;
+        if(value>32767)value=32767;else if(value<-32768)value=-32768;
+        next.saturated[row]=(int16_t)value;
+    }
+    *output=next;
+}
 int pe_model_matrices(const PeModel *model,const PeMatrix *base,const PeMatrix *sources,
                        unsigned source_count,PeMatrix *output,unsigned capacity,unsigned *written){
     unsigned depth=0,max_depth=0,count=0;

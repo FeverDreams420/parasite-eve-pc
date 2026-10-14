@@ -16,6 +16,15 @@ int main(void){
     pe_matrix_compose(&parent,&source,&source);CHECK(source.rotation[0][0]==-1);
     pe_matrix_identity(&parent);pe_matrix_identity(&source);parent.translation[0]=0x7fffffff;source.translation[0]=1;
     pe_matrix_compose(&parent,&source,&result);CHECK(result.translation[0]==0x80000000);
+    pe_matrix_identity(&parent);parent.translation[0]=40000;parent.translation[1]=(uint32_t)-40000;
+    const int16_t point[3]={1,-1,123};PeTransformedPoint transformed;
+    pe_matrix_point(&parent,point,&transformed);
+    CHECK(transformed.word[0]==40001 && transformed.saturated[0]==32767);
+    CHECK(transformed.word[1]==(uint32_t)-40001 && transformed.saturated[1]==-32768);
+    CHECK(transformed.word[2]==123 && transformed.saturated[2]==123);
+    parent.translation[0]=0x7fffffff;
+    pe_matrix_point(&parent,point,&transformed);
+    CHECK(transformed.word[0]==0x80000000 && transformed.saturated[0]==-32768);
     uint8_t bytes[180]={0};bytes[2]=3;half(bytes+24,5);
     word(bytes+48,10);word(bytes+60,20); /* translations of parts 1 and 2 */
     bytes[136]=0;bytes[137]=255;bytes[138]=1;bytes[139]=254;bytes[140]=2;

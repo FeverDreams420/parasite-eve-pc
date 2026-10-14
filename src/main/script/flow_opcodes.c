@@ -580,9 +580,9 @@ int Entity_SetCurrentActionMode(u16 **arg0) {
     return 1;
 }
 
-int Script_SetEntityAnimFrame(u16 **arg0) {
+int Script_SetEntityAnimFrame(int **arg0) {
     FieldActor *entity = g_CurrentEntity;
-    u16 value = *arg0[0];
+    u16 value = (u16)*arg0[0];
 
     if (entity->action < value) {
         value = entity->action;
@@ -721,7 +721,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [40]=Script_ClearBit,
     [41]=Script_TestBit, [42]=Script_SetBit,
     [43]=Entity_ClearGlobalFlags, [44]=Entity_GetGlobalFlags, [45]=Entity_SetGlobalFlags,
-    [48]=Script_WaitAnimFrameMatch, [68]=Script_MoveTowardPoint,
+    [47]=Script_SetEntityAnimFrame, [48]=Script_WaitAnimFrameMatch, [68]=Script_MoveTowardPoint,
     [97]=Render_CameraTrackRelativeOffset, [118]=Render_CameraStepAngleFade,
     [131]=Script_WaitAnimRange, [146]=Script_PlayEntityAnim,
     [184]=Script_TurnTowardPointStep

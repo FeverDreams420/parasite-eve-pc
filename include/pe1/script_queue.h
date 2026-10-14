@@ -30,6 +30,7 @@ int Script_TurnTowardPointStep(int **args);
 int Script_PlayEntityAnim(int **args);
 int Script_WaitAnimRange(int **unused);
 int Script_WaitAnimFrameMatch(int **unused);
+int Script_SetEntityAnimFrame(int **args);
 
 void Script_RunQueue(void);
 int Script_JumpToEntityOffset(int **args);

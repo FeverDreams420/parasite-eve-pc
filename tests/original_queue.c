@@ -149,6 +149,21 @@ int main(void)
            g_ScriptVariableBank[25]!=mask || g_ScriptVariableBank[26] ||
            task.flags!=0x10 || task.current.script!=script+20) return 17;
     }
+    const u32 frame_requests[]={0,3,7,0x10003};
+    for(unsigned i=0;i<4;++i) {
+        FieldActor owner={.flags=0x8000,.action=6};owner.anim.fixed=-65536;
+        u32 script[]={47|(1u<<13),0,frame_requests[i],48,0,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        u16 target=(u16)frame_requests[i];if(target>6) target=6;
+        if(owner.anim_frame_target!=target || owner.flags!=0x8200 || task.active!=1 ||
+           task.current.script!=script+3 || task.flags) return 18;
+        owner.anim.fixed=(int)target*65536;g_ScriptNodePool=&task;Script_RunQueue();
+        if(task.current.script!=script+5 || task.active!=1 || task.flags) return 19;
+        g_ScriptNodePool=&task;Script_RunQueue();
+        if(task.current.script!=script+7 || task.flags!=0x10) return 20;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

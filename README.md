@@ -358,5 +358,11 @@ hit unsupported commands (one B4 and nine CC). No sequence stops within this
 window. This diagnostic deliberately reports missing work; a passing data
 audit does not prove full songs or audio fidelity. Voice-driver modulation,
 register application and synthesis are not exercised by these musical ticks.
+
+CC sets the original phrase phase used for legato: first-note key-on is
+preserved and subsequent notes can avoid retriggering. CD is the original
+empty handler and consumes no operands. Timing tests verify both commands
+and key-on behavior under ASan/UBSan. The extended audit continues to report
+later missing commands explicitly; these changes do not prove audible legato.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

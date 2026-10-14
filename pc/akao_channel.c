@@ -97,7 +97,7 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
         }
         unsigned operands, prefix = 1, extended = 0;
         switch (opcode) {
-        case 0xa0: case 0xa6: case 0xa7: case 0xb3: case 0xba: case 0xbe: operands = 0; break;
+        case 0xa0: case 0xa6: case 0xa7: case 0xb3: case 0xba: case 0xbe: case 0xcc: case 0xcd: operands = 0; break;
         case 0xa1: case 0xa2: case 0xa3: case 0xa5: case 0xa8: case 0xaa:
         case 0xc0: case 0xc1: case 0xd8: case 0xd9:
         case 0xad: case 0xae: case 0xaf: case 0xb1: case 0xb2:
@@ -256,6 +256,8 @@ truncated:
             channel->flags &= ~UINT32_C(4);
             channel->update_flags |= 3;
             break;
+        case 0xcc: channel->tremolo_phase = 1; break;
+        case 0xcd: break; /* Original SeqOp_Noop_904AC has no effects. */
         case 0xc8:
             if (next >= channel->sequence.size) goto invalid;
             channel->loop_index = (channel->loop_index + 1) & 3;

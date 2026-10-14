@@ -108,6 +108,15 @@ int main(void) {
     CHECK(pe_akao_channel_start(&channel, &sequence, 0));
     CHECK(pe_akao_channel_next(&channel, 10) == PE_AKAO_CHANNEL_NOTE);
     CHECK(channel.pitch_transition_duration == 256 && channel.pitch_transition_delta == 0xff80);
+    const uint8_t legato[] = {0xcc,0,0xcd,0,0xa0};
+    sequence.bytes = legato; sequence.size = sizeof(legato);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    channel.octave = 6; channel.tremolo_phase = 5; control.key_on_requests = 0;
+    CHECK(pe_akao_channel_next(&channel, 10) == PE_AKAO_CHANNEL_NOTE && channel.tremolo_phase == 1);
+    CHECK(pe_akao_channel_note_pitch(&channel) && control.key_on_requests == 1 && channel.tremolo_phase == 3);
+    control.key_on_requests = 0;
+    CHECK(pe_akao_channel_next(&channel, 10) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(pe_akao_channel_note_pitch(&channel) && !control.key_on_requests && channel.tremolo_phase == 3);
     free(samples);
     puts("AKAO timing: lookahead skips, ties/rests, gate lengths, virtual loops and bounds passed");
     return 0;

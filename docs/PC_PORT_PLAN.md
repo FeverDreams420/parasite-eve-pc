@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+CC ustawia oryginalną fazę frazy dla legato: pierwsza nuta żąda key-on, kolejne zachowują ciągłość głosu. CD odpowiada pustemu handlerowi oryginału i nie ma operandów ani efektów. Test timing sprawdza fazę i key-on oraz przechodzi ASan/UBSan. Audyt nadal jawnie zgłasza dalsze brakujące komendy; słyszalne legato wymaga integracji syntezy i porównania referencyjnego.
+
 Dłuższy audyt muzyki Disc 1 uruchamia każdą pełną sekwencję przez maksymalnie 4096 wymuszonych ticków muzycznych. Wynik: 2447792 ticki, 1077926 zdarzeń nut, 589 sekwencji nadal aktywnych, dziesięć błędów brakujących komend (B4: jedna, CC: dziewięć), zero zakończonych sekwencji w tym oknie. Audyt ujawnia dalsze braki; nie potwierdza pełnych utworów, syntezy, referencyjnego audio ani sterownika głosów. Wyniki i histogram pozostają jawne w logu `room-assets`.
 
 B8/B9/BA konfigurują opóźnienie, przebieg, głębokość i reset volume-LFO kanału głównego. Osobny krok głosu zachowuje gating opóźnienia, obejście przy key-on i signed arytmetykę fixed-point z wrap. Nowe nuty restartują przebieg i zerują bieżącą wartość. Testy obejmują fazę, wartości dodatnie/ujemne, reset i key-on oraz przechodzą ASan/UBSan. Slide głębokości, pitch-LFO, harmonogram sterownika głosów i słyszalna synteza pozostają wymagane.

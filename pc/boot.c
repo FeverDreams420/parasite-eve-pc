@@ -5,6 +5,7 @@
 #include "automation.h"
 #include "room.h"
 #include "vram.h"
+#include "script.h"
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -294,8 +295,16 @@ close_player:
                     result = 1;
                 } else {
                     pe_runtime_emit("room.vram.ready", map);
-                    printf("menu: selected %s; map %u assets loaded, %u texture uploads; scene execution pending\n",
-                           action == 1 ? "New Game" : "Tutorial", map, stats.uploads);
+                    PeScriptProgram program;
+                    if (!pe_script_program_open(&active_room, &program, error, sizeof(error))) {
+                        fprintf(stderr, "%s\n", error);
+                        result = 1;
+                    } else {
+                        pe_runtime_emit("room.scripts.ready", map);
+                        printf("menu: selected %s; map %u assets loaded, %u texture uploads, %u scripts, %u initial actors; scene execution pending\n",
+                               action == 1 ? "New Game" : "Tutorial", map, stats.uploads,
+                               program.entries, program.actors);
+                    }
                 }
             }
         }

@@ -7,4 +7,5 @@ menu.selected 1 assert
 room.loading 431 assert
 room.loaded 431 assert
 room.vram.ready 431 assert
+room.scripts.ready 431 assert
 boot.stopped 0 assert

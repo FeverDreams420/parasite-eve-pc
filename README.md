@@ -55,9 +55,10 @@ W/S change the selection, Enter confirms, and Escape returns to the title
 prompt. Continue remains disabled until native save support exists. Selecting
 New Game or Tutorial loads the original starting room data (M431 or M353)
 and applies its scratch/texture-bank uploads to CPU-visible VRAM, then exits;
-scene execution and gameplay are not integrated.
+script entry/actor catalogs are validated, but scene execution and gameplay
+are not integrated.
 
-`make ci` builds and runs the asset-free disc-reader, VRAM and automation tests. The
+`make ci` builds and runs the asset-free disc-reader, VRAM, script-format and automation tests. The
 room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
 is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
@@ -139,3 +140,10 @@ order, secondary image offsets, zero-height rules and atomic rejection of bad
 batches without game data. This does not verify all payload semantics, render
 rooms, execute scripts or prove that maps are playable. The asset-free reader
 test also checks malformed room headers/TIM tables without disc images.
+
+`pc/script.c` preserves self-relative script offsets and decodes the original
+operand modes, including the tail word for arguments after the fifth. Disc 1
+tests validate 2,411 entry offsets and 594 initial actor descriptors, and decode
+each initial actor's first command. These checks do not traverse every branch
+or execute scripts. The active starting actors of M431/M353 begin with opcode
+234 (`Akao_ProcessCommand`), whose native execution remains pending.

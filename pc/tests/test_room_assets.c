@@ -1,5 +1,6 @@
 #include "room.h"
 #include "vram.h"
+#include "script.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -24,6 +25,7 @@ int main(void) {
     PeVram *vram = calloc(1, sizeof(*vram));
     CHECK(vram);
     uint64_t uploaded_words = 0;
+    unsigned script_entries = 0, initial_actors = 0;
     unsigned loaded = 0, absent = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -48,6 +50,24 @@ int main(void) {
         }
         CHECK(stats.uploads > 0 && stats.words > 0);
         uploaded_words += stats.words;
+        PeScriptProgram program;
+        if (!pe_script_program_open(&room, &program, error, sizeof(error))) {
+            fprintf(stderr, "%s\n", error);
+            return 1;
+        }
+        script_entries += program.entries;
+        initial_actors += program.actors;
+        for (unsigned actor = 0; actor < program.actors; ++actor) {
+            unsigned entry, sub_id;
+            uint32_t offset;
+            PeScriptCommand command;
+            CHECK(pe_script_actor(&program, actor, &entry, &sub_id));
+            CHECK(pe_script_entry(&program, entry, &offset));
+            if (!pe_script_decode(&program, offset, &command, error, sizeof(error))) {
+                fprintf(stderr, "Map %u actor %u: %s\n", map, actor, error);
+                return 1;
+            }
+        }
         ++loaded;
     }
     CHECK(loaded > 300 && loaded + absent == PE_USA_ROOM_SLOTS);
@@ -61,6 +81,23 @@ int main(void) {
     CHECK(count == 12);
     CHECK(pe_room_blob_table(&room.data, 3, 12, &records, &count));
     CHECK(count == 3);
+    for (unsigned start = 0; start < 2; ++start) {
+        CHECK(pe_room_load(&catalog, start ? 353 : 431, &room));
+        PeScriptProgram program;
+        char error[256];
+        CHECK(pe_script_program_open(&room, &program, error, sizeof(error)));
+        CHECK(program.actors == 1);
+        unsigned entry, sub_id;
+        uint32_t offset;
+        CHECK(pe_script_actor(&program, 0, &entry, &sub_id));
+        CHECK(entry == (start ? 2u : 1u) && sub_id == 0);
+        CHECK(pe_script_entry(&program, entry, &offset));
+        PeScriptCommand command;
+        CHECK(pe_script_decode(&program, offset, &command, error, sizeof(error)));
+        CHECK(command.opcode == 234 && command.count == 6);
+        CHECK(command.args[0].value == (start ? 200u : 217u));
+    }
+    CHECK(pe_room_load(&catalog, 1, &room));
     uint8_t *previous_data = room.data.bytes;
     catalog.ranges[0].start = catalog.archive.size / 2048;
     CHECK(!pe_room_load(&catalog, 1, &room));
@@ -76,7 +113,7 @@ int main(void) {
     pe_room_close(&room);
     pe_disc_close(&disc);
     free(vram);
-    printf("USA Disc 1 room directories and texture uploads verified: %u loaded, %u empty slots, %llu words; no scripts executed\n",
-           loaded, absent, (unsigned long long)uploaded_words);
+    printf("USA Disc 1: %u rooms, %u empty slots, %llu texture words, %u script entries, %u initial actors; no scripts executed\n",
+           loaded, absent, (unsigned long long)uploaded_words, script_entries, initial_actors);
     return 0;
 }

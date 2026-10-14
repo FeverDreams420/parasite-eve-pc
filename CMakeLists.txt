@@ -317,6 +317,7 @@ add_library(parasite-eve-original-camera OBJECT src/main/render/camera.c)
 target_include_directories(parasite-eve-original-camera PRIVATE include)
 if(BUILD_TESTING)
     add_executable(test-original-camera tests/original_camera.c pc/camera.c pc/disc.c pc/room.c pc/matrix.c pc/model.c
+        $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-camera>)
     target_include_directories(test-original-camera PRIVATE include pc)
     target_link_libraries(test-original-camera PRIVATE psyz)

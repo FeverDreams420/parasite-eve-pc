@@ -1,6 +1,7 @@
 #include "pe1/geom_state.h"
 #include "pe1/render_camera.h"
 #include "pe1/render_lighting.h"
+#include "pe1/game_state.h"
 #include "camera.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,7 +9,57 @@
 GeomState *volatile g_GeomState;
 RenderLightColor g_RoomLightTint;
 #define CHECK(x) do { if (!(x)) {fprintf(stderr,"line %d: %s\n",__LINE__,#x);return 1;} } while(0)
+int Render_SetEntryLimit(int index,int frame);
+int Render_SetFlagSlot(int index,int enabled);
+s16 Render_GetEntryField6(int index);
+int Render_FillEntrySlotValues(int index,u8 duration);
+int Render_SetEntrySlotValue(int index,int slot,u8 duration);
+int Render_SetEntryField8(int index,unsigned value);
+int Menu_SetSlotEntry(int index,unsigned limit,unsigned slot);
+static int animation_controls(void) {
+    struct { GeomState header; GeomCtrlEntry controls[2]; GeomEntryView entries[4]; GeomAnimationSlot slots[2][2]; } data={0};
+    g_GeomState=&data.header;
+    data.header.ctrl_offset=(u8 *)data.controls-(u8 *)&data;
+    data.header.entry_offset=(u8 *)data.entries-(u8 *)&data;
+    data.header.entry_count=2; data.header.entry_count06=4;
+    for(unsigned i=0;i<2;++i) {
+        data.controls[i].slot_offset=(u8 *)data.slots[i]-(u8 *)&data.controls[i];
+        data.controls[i].head.packed=2<<8;
+        data.controls[i].position.parts.groupFraction=i;
+        data.slots[i][0]=(GeomAnimationSlot){2*i,1};
+        data.slots[i][1]=(GeomAnimationSlot){2*i+1,1};
+    }
+    CHECK(Render_ResetAllEntries()==0);
+    for(unsigned i=0;i<2;++i) {
+        CHECK(data.controls[i].step==256 && data.controls[i].head.b.flags==1);
+        CHECK(data.entries[2*i].render.head.b.flags==2);
+    }
+    g_GeomScroll.state.position.groupSelect=0; g_GameStateFlags=0; g_GameState.flags=0;
+    CHECK(Render_SetFlagSlot(0,1)==0 && Render_SetFlagSlot(1,1)==0);
+    CHECK(Render_StepGroupAnimations()==0);
+    CHECK(data.controls[0].position.parts.frame==1 && data.controls[1].position.parts.frame==0);
+    CHECK(Render_StepGroupAnimations()==0);
+    CHECK(!(data.entries[0].render.head.b.flags&2) && (data.entries[1].render.head.b.flags&2));
+    CHECK(data.controls[0].position.parts.frame==0 && !(data.controls[0].head.b.flags&4));
+    CHECK(Render_FillEntrySlotValues(1,3)==0);
+    CHECK(data.slots[1][0].duration==3 && data.slots[1][1].duration==3);
+    CHECK(Render_SetEntrySlotValue(1,1,5)==0 && data.slots[1][1].duration==5);
+    CHECK(Render_SetEntryField8(1,0xffff0000u)==0 && data.controls[1].step==-256);
+    CHECK(Render_SetEntryLimit(1,-1)==0 && Render_GetEntryField6(1)==-1);
+    CHECK(Render_SetEntryLimit(1,0)==0);
+    CHECK(Menu_SetSlotEntry(1,0,1)==0 && data.controls[1].step==256 && data.slots[1][1].duration==-1);
+    g_GeomScroll.state.position.groupSelect=1;
+    for(unsigned i=0;i<4;++i)CHECK(Render_StepGroupAnimations()==0);
+    CHECK(data.slots[1][1].duration==0 && !(data.controls[1].head.b.flags&4));
+    CHECK(Render_SetFlagSlot(1,1)==0);
+    g_GameStateFlags=4; GeomCtrlEntry saved=data.controls[1];
+    CHECK(Render_StepGroupAnimations()==0 && !memcmp(&saved,&data.controls[1],sizeof(saved)));
+    g_GameStateFlags=0; g_GeomState=NULL;
+    puts("Original geometry animation: native multi-entry reset, group selection, timing, stop marker and pause passed");
+    return 0;
+}
 int main(void) {
+    CHECK(animation_controls()==0);
     const char *path=getenv("PE_TEST_DISC");
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     PeDisc disc={0}; PeRoomCatalog catalog; PeRoom room={0};

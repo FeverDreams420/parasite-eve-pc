@@ -134,7 +134,7 @@ int Render_SetEntryLimit(int arg0, int arg1)
   positionWord &= 0xFF;
   ret = entry->head.b.flags;
   flags = ret;
-  hi = arg1 << 16;
+  hi = (u32)arg1 << 16;
   entry->elapsed = 0;
   positionWord |= hi;
   flags |= 2;

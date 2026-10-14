@@ -1700,3 +1700,19 @@ conversion is still unresolved: viewport records remain serialized-compatible,
 but the enlarged native mesh entries require separate preparation within the
 existing loader. This change restores the whole camera module and validates
 viewport loading, not complete room initialization or all animation commands.
+
+### Exercise original geometry animation commands in place
+
+The existing camera test now links canonical game-state storage and runs the
+original geometry reset, group animation and control commands on two controls
+and four native entries. It verifies group gating, visibility selection,
+frame timing/wrap, duration writes, reverse-step selection, negative frame
+encoding, stop-marker consumption and pause. Render_SetEntryLimit shifts an
+unsigned word when encoding signed frame input, preserving PS1 bits without C
+signed-left-shift undefined behavior. No files added or functions moved.
+
+Full build, real-data camera/shadow/actor-lifecycle CTests and camera
+ASan/UBSan/function checks passed (PsyZ uninstrumented), including existing
+509-viewport/30,540-transition-frame coverage. This does not establish all
+animation flag combinations or actual room animation playback; serialized
+geometry preparation and full scene integration remain pending.

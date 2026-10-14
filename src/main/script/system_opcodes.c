@@ -1392,7 +1392,7 @@ int Script_ClearEntityParentLink(void) {
     return 1;
 }
 
-int Entity_ClearParentLink(void) {
+int Entity_ClearParentLink(int **unused) {
     int clear_current = 0xFFEFFFFF;
     FieldActor *current = g_CurrentEntity;
     FieldActor *it = g_FieldActorListHead;

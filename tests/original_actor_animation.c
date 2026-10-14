@@ -508,6 +508,16 @@ static int native_task_cycle(void)
         return 0;
     if(FieldFx_UpdateTasks(owner)!=0 || owner->prefix.reserved00!=4 || owner->tasks.delay) return 0;
     g_ViewMatrixSlot.value=saved_view;
+    u16 bad_scripts[][6]={{1,7,99,0,0,0},{1,(u16)-1,99,0,0,0},{4,7,1,0,0,0},{3,0,7,0,0,0}};
+    for(unsigned invalid=0;invalid<sizeof(bad_scripts)/sizeof(bad_scripts[0]);++invalid) {
+        FieldFx_InitTaskContext(owner); owner->tasks.pc.script=bad_scripts[invalid];
+        if(FieldFx_UpdateTasks(owner)!=-1 || owner->tasks.count || owner->tasks.used) return 0;
+    }
+    u16 decrement[]={3,0,0,0,0,0};
+    FieldFx_InitTaskContext(owner); owner->tasks.pc.script=decrement; owner->tasks.variables[0]=2;
+    if(FieldFx_UpdateTasks(owner)!=-1 || owner->tasks.variables[0]!=1 || owner->tasks.pc.script!=decrement+3) return 0;
+    owner->tasks.pc.script=decrement; owner->tasks.variables[0]=1;
+    if(FieldFx_UpdateTasks(owner)!=0 || owner->tasks.variables[0] || owner->tasks.pc.script!=decrement+3) return 0;
     FieldFx_InitTaskContext(owner); g_FieldFxTaskContext=&owner->tasks;
     for(unsigned slot=0;slot<8;++slot)
         if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState)) return 0;

@@ -2951,3 +2951,30 @@ primitives in geometry.c. Its PS1 packet layouts/linking, script opcode 3
 address semantics, complete effect callback signatures and native program-table
 bindings still require work. No new room effect handlers were enabled. Full
 gameplay and elimination of the remaining pc/ runtime remain incomplete.
+
+
+### Audit retail effect scripts and reject invalid native pointer jumps
+
+Disassembly of the supplied USA executable confirms opcode 3's positive
+countdown branch: 800D42EC jumps to 800D432C, its delay slot sign-extends the
+16-bit operand, and 800D432C/4334 subtract 6 and store it as the script PC.
+A halfword cannot preserve a native script pointer. The existing interpreter
+now returns -1 on that branch rather than forging a host address; its
+nonpositive countdown/yield behavior remains unchanged. Variable accesses in
+opcodes 1, 3 and variable-wait opcode 4 reject indices outside the seven-word
+array. This does not implement a guessed relative jump.
+
+The existing real scene-spawn fixture now audits all 181 room effect-program
+scripts in Disc 1, reading their descriptor script address directly from the
+serialized 56-byte records. All 1188 instructions are bounded, end in opcode
+0, have valid variable/task indices and contain no opcode 3. The corpus is
+required, not skipped. This is data inspection, not execution of those effects
+or proof about Disc 2/resident program scripts.
+
+The actor fixture verifies invalid variable indices, rejection of the positive
+opcode 3 branch without replacing the native PC, and the original terminating
+countdown behavior. Full build and two CTests pass with Disc 1 required:
+actor-animation and scene-spawn. Fresh ASan/UBSan/function runs pass for both
+fixtures with original interpreter/source code instrumented; PsyZ/SDL archives
+are uninstrumented. GPU effect packet porting, native descriptor bindings,
+complete gameplay and removal of pc/ remain incomplete.

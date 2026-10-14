@@ -58,6 +58,7 @@ int main(void)
     struct { unsigned slot; u32 address; } handler_variants[512];
     unsigned variant_count = 0, handler_count = 0, pm_count = 0, effect_count = 0;
     unsigned pm_methods = 0, mirror_descriptors = 0;
+    unsigned effect_scripts=0, effect_instructions=0;
     unsigned char handler_slots[192] = {0};
     for(unsigned map=1;map<=PE_USA_ROOM_SLOTS;++map) {
         if(!catalog.ranges[map-1].room_sectors) continue;
@@ -87,6 +88,25 @@ int main(void)
                     CHECK(target - 0x8018efe8u < room.data.size);
                     ++pm_methods;
                 }
+            }
+            if(slot>=85) {
+                u32 script_address=room_word(room.data.bytes+offset+52);
+                CHECK(script_address>=0x8018efe8u);
+                size_t cursor=script_address-0x8018efe8u;
+                int stopped=0;
+                for(unsigned instruction=0;instruction<256;++instruction,cursor+=6) {
+                    CHECK(cursor<=room.data.size && 6<=room.data.size-cursor);
+                    const u8 *code=room.data.bytes+cursor;
+                    s16 op=(s16)(code[0]|(u16)code[1]<<8);
+                    s16 a=(s16)(code[2]|(u16)code[3]<<8);
+                    s16 b=(s16)(code[4]|(u16)code[5]<<8);
+                    CHECK(op>=0 && op<=5 && op!=3);
+                    if(op==1 || (op==4 && b==1)) CHECK(a>=0 && a<7);
+                    if(op==2) CHECK(a>=0 && a<8);
+                    ++effect_instructions;
+                    if(op==0) { stopped=1; break; }
+                }
+                CHECK(stopped); ++effect_scripts;
             }
             if (slot == 69) {
                 ++mirror_descriptors;
@@ -255,6 +275,8 @@ int main(void)
            handler_count, pm_count, effect_count, slot_count, variant_count);
     free(memory); g_RenderScratchBufferBase[0]=NULL; pe_disc_close(&disc);
     printf("Original script relocation: %u real room blocks, all entries and immutable asset bytes passed\n",relocated);
+    CHECK(effect_scripts==181);
+    printf("USA effect scripts: %u programs, %u bounded instructions, valid variable/task indices, no opcode 3\n",effect_scripts,effect_instructions);
     printf("Original Scene_LoadMap: %u NPC model spawns, full/non-full native allocations and script nodes\n",spawned);
     return 0;
 }

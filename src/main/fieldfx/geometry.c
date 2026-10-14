@@ -2214,24 +2214,30 @@ int FieldFx_UpdateTasks(FieldFxTaskOwner *owner)
             running = 0;
             break;
         case 1:
+            if ((unsigned)a >= sizeof(context->variables)/sizeof(context->variables[0])) return -1;
             context->variables[a] = b;
             break;
         case 2:
             FieldFx_SpawnTask(a);
             break;
         case 3:
+            if ((unsigned)b >= sizeof(context->variables)/sizeof(context->variables[0])) return -1;
             if ((s16)--context->variables[b] <= 0) {
                 context->variables[b] = 0;
                 running = 0;
             } else {
-                /* Retail takes the operand as an absolute address. */
-                context->pc.address = a - 6;
+                /* USA 800D42EC..4334 stores signed operand a minus 6 as
+                 * the PC. It cannot name a native script; no audited Disc 1
+                 * room effect script uses this branch. Never forge a pointer. */
+                return -1;
             }
             break;
         case 4:
             if (b != 1) {
                 context->delay = a;
                 running = 0;
+            } else if ((unsigned)a >= sizeof(context->variables)/sizeof(context->variables[0])) {
+                return -1;
             } else if (context->variables[a] == 0) {
                 running = 0;
                 context->pc.script -= 3;

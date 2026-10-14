@@ -2,6 +2,21 @@
 #define PE1_AKAO_VOICE_MASKS_H
 
 #include "pe1/akao/track.h"
+#include "pe1/akao/queue.h"
+
+void Spu_ManageVoicesCmd(AkaoQueueEntry *command);
+void Spu_SetVoiceVolumeImmediateMasked(AkaoQueueEntry *command);
+void Spu_ParameterSlide(AkaoQueueEntry *command);
+void Spu_SetAllVoiceVolumeImmediate(AkaoQueueEntry *command);
+void Spu_SlideAllVoiceVolume(AkaoQueueEntry *command);
+void Spu_SetVoicePanImmediateMasked(AkaoQueueEntry *command);
+void Spu_SlideVoicePanMasked(AkaoQueueEntry *command);
+void Spu_SetAllVoicePanImmediate(AkaoQueueEntry *command);
+void Spu_SlideAllVoicePan(AkaoQueueEntry *command);
+void Spu_SetVoicePitchImmediateMasked(AkaoQueueEntry *command);
+void Spu_SlideVoicePitchMasked(AkaoQueueEntry *command);
+void Spu_SetAllVoicePitchImmediate(AkaoQueueEntry *command);
+void Spu_SlideAllVoicePitch(AkaoQueueEntry *command);
 
 extern AkaoSequencerBank *g_AkaoCurTrack;
 extern AkaoTrack g_AkaoVoiceStateTable[], g_AkaoVoiceStateTable2[];

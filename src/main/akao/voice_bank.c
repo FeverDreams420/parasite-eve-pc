@@ -925,8 +925,8 @@ void Seq_StartRelativeNestedStream(AkaoRelativeNestedCommand *cmd) {
     Seq_StartNestedStreams(&cmd->source, arg1, arg2);
 }
 
-void Spu_ManageVoicesCmd(int *arg0) {
-    Spu_ManageVoices(arg0[1], arg0[2]);
+void Spu_ManageVoicesCmd(AkaoQueueEntry *arg0) {
+    Spu_ManageVoices(arg0->arg0.value, arg0->arg1);
 }
 
 void Seq_SetTrackPitchImmediate(AkaoBankPitchCommand *arg0) {
@@ -1102,7 +1102,7 @@ void Seq_SlideGlobalPitchFromStartToTarget(AkaoGlobalPitchRangeCommand *arg0) {
     g_AkaoGlobalPitchSlideStep = (target - start) / duration;
 }
 
-void Spu_SetVoiceVolumeImmediateMasked(int *arg0) {
+void Spu_SetVoiceVolumeImmediateMasked(AkaoQueueEntry *arg0) {
     u32 i;
     u32 mask;
     u32 active;
@@ -1113,14 +1113,14 @@ void Spu_SetVoiceVolumeImmediateMasked(int *arg0) {
     base = (char *)g_AkaoVoiceChannelTable;
     active = g_SpuActiveVoiceMask;
     mask = AKAO_SPU_VOICE_SFX_START_MASK;
-    if (arg0[2] != 0) {
+    if (arg0->arg1 != 0) {
         i = 0;
         voice = base + 0xF4;
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0xF4);
             if ((active & mask) != 0) {
-                if ((parameters->key_on_mask & arg0[2]) != 0) {
-                    value = (arg0[3] & 0x7F) << 8;
+                if ((parameters->key_on_mask & arg0->arg1) != 0) {
+                    value = (arg0->arg2 & 0x7F) << 8;
                     parameters->panpot_duration = 0;
                     parameters->pan_target = value;
                     parameters->update_flags |= AKAO_VOICE_PARAM_VOLUME;
@@ -1136,8 +1136,8 @@ void Spu_SetVoiceVolumeImmediateMasked(int *arg0) {
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0xF4);
             if ((active & mask) != 0) {
-                if (parameters->key_off_mask == arg0[1]) {
-                    value = (arg0[3] & 0x7F) << 8;
+                if (parameters->key_off_mask == arg0->arg0.value) {
+                    value = (arg0->arg2 & 0x7F) << 8;
                     parameters->panpot_duration = 0;
                     parameters->pan_target = value;
                     parameters->update_flags |= AKAO_VOICE_PARAM_VOLUME;
@@ -1154,7 +1154,7 @@ static inline int ParameterDelta(int target, int current, int step) {
     return (short)(((target & 0x7F) << 8) - current) / (short)step;
 }
 
-void Spu_ParameterSlide(int *arg0) {
+void Spu_ParameterSlide(AkaoQueueEntry *arg0) {
     char *base;
     u32 active;
     u32 mask;
@@ -1167,18 +1167,18 @@ void Spu_ParameterSlide(int *arg0) {
     active = g_SpuActiveVoiceMask;
     mask = AKAO_SPU_VOICE_SFX_START_MASK;
 
-    if (arg0[2] != 0) {
+    if (arg0->arg1 != 0) {
         i = 0;
         voice = base + 0x74;
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0x74);
             if ((active & mask) != 0) {
-                if ((parameters->key_on_mask & arg0[2]) != 0) {
+                if ((parameters->key_on_mask & arg0->arg1) != 0) {
                     step = 1;
-                    if (arg0[3] != 0) {
-                        step = arg0[3];
+                    if (arg0->arg2 != 0) {
+                        step = arg0->arg2;
                     }
-                    delta = ParameterDelta(arg0[4], (u16)parameters->pan_target, step);
+                    delta = ParameterDelta(arg0->arg3, (u16)parameters->pan_target, step);
                     parameters->pan_delta = delta;
                     parameters->panpot_duration = step;
                 }
@@ -1193,12 +1193,12 @@ void Spu_ParameterSlide(int *arg0) {
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0x74);
             if ((active & mask) != 0) {
-                if (parameters->key_off_mask == arg0[1]) {
+                if (parameters->key_off_mask == arg0->arg0.value) {
                     step = 1;
-                    if (arg0[3] != 0) {
-                        step = arg0[3];
+                    if (arg0->arg2 != 0) {
+                        step = arg0->arg2;
                     }
-                    delta = ParameterDelta(arg0[4], (u16)parameters->pan_target, step);
+                    delta = ParameterDelta(arg0->arg3, (u16)parameters->pan_target, step);
                     parameters->pan_delta = delta;
                     parameters->panpot_duration = step;
                 }
@@ -1210,7 +1210,7 @@ void Spu_ParameterSlide(int *arg0) {
     }
 }
 
-void Spu_SetAllVoiceVolumeImmediate(int *arg0) {
+void Spu_SetAllVoiceVolumeImmediate(AkaoQueueEntry *arg0) {
     u32 mask;
     u32 active;
     u32 i;
@@ -1229,7 +1229,7 @@ void Spu_SetAllVoiceVolumeImmediate(int *arg0) {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0xF4);
         if ((active & mask) != 0) {
             if ((parameters->key_on_mask & block_flag) == 0) {
-                value = arg0[1];
+                value = arg0->arg0.value;
                 dirty = parameters->update_flags;
                 parameters->panpot_duration = 0;
                 value &= 0x7F;
@@ -1245,7 +1245,7 @@ void Spu_SetAllVoiceVolumeImmediate(int *arg0) {
     } while (i < 12);
 }
 
-void Spu_SlideAllVoiceVolume(int *arg0) {
+void Spu_SlideAllVoiceVolume(AkaoQueueEntry *arg0) {
     u32 mask;
     u32 active;
     u32 block_flag;
@@ -1265,10 +1265,10 @@ void Spu_SlideAllVoiceVolume(int *arg0) {
         if ((active & mask) != 0) {
             if ((parameters->key_on_mask & block_flag) == 0) {
                 step = 1;
-                if (arg0[1] != 0) {
-                    step = arg0[1];
+                if (arg0->arg0.value != 0) {
+                    step = arg0->arg0.value;
                 }
-                delta = (short)(((arg0[2] & 0x7F) << 8) - (u16)parameters->pan_target);
+                delta = (short)(((arg0->arg1 & 0x7F) << 8) - (u16)parameters->pan_target);
                 parameters->panpot_duration = step;
                 parameters->pan_delta = delta / (short)step;
             }
@@ -1279,7 +1279,7 @@ void Spu_SlideAllVoiceVolume(int *arg0) {
     } while (i < 12);
 }
 
-void Spu_SetVoicePanImmediateMasked(int *arg0) {
+void Spu_SetVoicePanImmediateMasked(AkaoQueueEntry *arg0) {
     char *base;
     u32 active;
     u32 mask;
@@ -1292,14 +1292,14 @@ void Spu_SetVoicePanImmediateMasked(int *arg0) {
     active = g_SpuActiveVoiceMask;
     mask = AKAO_SPU_VOICE_SFX_START_MASK;
 
-    if (arg0[2] != 0) {
+    if (arg0->arg1 != 0) {
         i = 0;
         voice = base + 0xF4;
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0xF4);
             if ((active & mask) != 0) {
-                if ((parameters->key_on_mask & arg0[2]) != 0) {
-                    value = ((u8 *)arg0)[0xC];
+                if ((parameters->key_on_mask & arg0->arg1) != 0) {
+                    value = (u8)arg0->arg2;
                     dirty = parameters->update_flags;
                     parameters->panpot_slide_duration = 0;
                     value <<= 8;
@@ -1318,8 +1318,8 @@ void Spu_SetVoicePanImmediateMasked(int *arg0) {
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0xF4);
             if ((active & mask) != 0) {
-                if (parameters->key_off_mask == arg0[1]) {
-                    value = ((u8 *)arg0)[0xC];
+                if (parameters->key_off_mask == arg0->arg0.value) {
+                    value = (u8)arg0->arg2;
                     dirty = parameters->update_flags;
                     parameters->panpot_slide_duration = 0;
                     value <<= 8;
@@ -1339,7 +1339,7 @@ static inline int PanDelta(int target, int current, int step) {
     return (short)((target << 8) - current) / (short)step;
 }
 
-void Spu_SlideVoicePanMasked(int *arg0) {
+void Spu_SlideVoicePanMasked(AkaoQueueEntry *arg0) {
     char *base;
     u32 active;
     u32 mask;
@@ -1352,18 +1352,18 @@ void Spu_SlideVoicePanMasked(int *arg0) {
     active = g_SpuActiveVoiceMask;
     mask = AKAO_SPU_VOICE_SFX_START_MASK;
 
-    if (arg0[2] != 0) {
+    if (arg0->arg1 != 0) {
         i = 0;
         voice = base + 0x78;
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0x78);
             if ((active & mask) != 0) {
-                if ((parameters->key_on_mask & arg0[2]) != 0) {
+                if ((parameters->key_on_mask & arg0->arg1) != 0) {
                     step = 1;
-                    if (arg0[3] != 0) {
-                        step = arg0[3];
+                    if (arg0->arg2 != 0) {
+                        step = arg0->arg2;
                     }
-                    delta = PanDelta(((u8 *)arg0)[0x10], parameters->panpot, step);
+                    delta = PanDelta((u8)arg0->arg3, parameters->panpot, step);
                     parameters->panpot_delta = delta;
                     parameters->panpot_slide_duration = step;
                 }
@@ -1378,12 +1378,12 @@ void Spu_SlideVoicePanMasked(int *arg0) {
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0x78);
             if ((active & mask) != 0) {
-                if (parameters->key_off_mask == arg0[1]) {
+                if (parameters->key_off_mask == arg0->arg0.value) {
                     step = 1;
-                    if (arg0[3] != 0) {
-                        step = arg0[3];
+                    if (arg0->arg2 != 0) {
+                        step = arg0->arg2;
                     }
-                    delta = PanDelta(((u8 *)arg0)[0x10], parameters->panpot, step);
+                    delta = PanDelta((u8)arg0->arg3, parameters->panpot, step);
                     parameters->panpot_delta = delta;
                     parameters->panpot_slide_duration = step;
                 }
@@ -1395,7 +1395,7 @@ void Spu_SlideVoicePanMasked(int *arg0) {
     }
 }
 
-void Spu_SetAllVoicePanImmediate(int *arg0) {
+void Spu_SetAllVoicePanImmediate(AkaoQueueEntry *arg0) {
     u32 mask;
     u32 active;
     u32 i;
@@ -1414,7 +1414,7 @@ void Spu_SetAllVoicePanImmediate(int *arg0) {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0xF4);
         if ((active & mask) != 0) {
             if ((parameters->key_on_mask & block_flag) == 0) {
-                value = ((u8 *)arg0)[4];
+                value = (u8)arg0->arg0.value;
                 dirty = parameters->update_flags;
                 parameters->panpot_slide_duration = 0;
                 value <<= 8;
@@ -1429,7 +1429,7 @@ void Spu_SetAllVoicePanImmediate(int *arg0) {
     } while (i < 12);
 }
 
-void Spu_SlideAllVoicePan(int *arg0) {
+void Spu_SlideAllVoicePan(AkaoQueueEntry *arg0) {
     u32 mask;
     u32 active;
     u32 i;
@@ -1449,10 +1449,10 @@ void Spu_SlideAllVoicePan(int *arg0) {
         if ((active & mask) != 0) {
             if ((parameters->key_on_mask & block_flag) == 0) {
                 step = 1;
-                if (arg0[1] != 0) {
-                    step = arg0[1];
+                if (arg0->arg0.value != 0) {
+                    step = arg0->arg0.value;
                 }
-                delta = PanDelta(((u8 *)arg0)[8], parameters->panpot, step);
+                delta = PanDelta((u8)arg0->arg1, parameters->panpot, step);
                 parameters->panpot_delta = delta;
                 parameters->panpot_slide_duration = step;
             }
@@ -1463,7 +1463,7 @@ void Spu_SlideAllVoicePan(int *arg0) {
     } while (i < 12);
 }
 
-void Spu_SetVoicePitchImmediateMasked(int *arg0) {
+void Spu_SetVoicePitchImmediateMasked(AkaoQueueEntry *arg0) {
     char *base;
     u32 active;
     u32 mask;
@@ -1476,14 +1476,14 @@ void Spu_SetVoicePitchImmediateMasked(int *arg0) {
     active = g_SpuActiveVoiceMask;
     mask = AKAO_SPU_VOICE_SFX_START_MASK;
 
-    if (arg0[2] != 0) {
+    if (arg0->arg1 != 0) {
         i = 0;
         voice = base + 0xF4;
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0xF4);
             if ((active & mask) != 0) {
-                if ((parameters->key_on_mask & arg0[2]) != 0) {
-                    value = ((u8 *)arg0)[0xC];
+                if ((parameters->key_on_mask & arg0->arg1) != 0) {
+                    value = (u8)arg0->arg2;
                     dirty = parameters->update_flags;
                     parameters->pitch_offset_duration = 0;
                     value <<= 8;
@@ -1502,8 +1502,8 @@ void Spu_SetVoicePitchImmediateMasked(int *arg0) {
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0xF4);
             if ((active & mask) != 0) {
-                if (parameters->key_off_mask == arg0[1]) {
-                    value = ((u8 *)arg0)[0xC];
+                if (parameters->key_off_mask == arg0->arg0.value) {
+                    value = (u8)arg0->arg2;
                     dirty = parameters->update_flags;
                     parameters->pitch_offset_duration = 0;
                     value <<= 8;
@@ -1523,7 +1523,7 @@ static inline short PitchDelta(int target, int current, int step) {
     return (short)((target << 8) - current) / (short)step;
 }
 
-void Spu_SlideVoicePitchMasked(int *arg0) {
+void Spu_SlideVoicePitchMasked(AkaoQueueEntry *arg0) {
     char *base;
     u32 active;
     u32 mask;
@@ -1536,18 +1536,18 @@ void Spu_SlideVoicePitchMasked(int *arg0) {
     active = g_SpuActiveVoiceMask;
     mask = AKAO_SPU_VOICE_SFX_START_MASK;
 
-    if (arg0[2] != 0) {
+    if (arg0->arg1 != 0) {
         i = 0;
         voice = base + 0x70;
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0x70);
             if ((active & mask) != 0) {
-                if ((parameters->key_on_mask & arg0[2]) != 0) {
+                if ((parameters->key_on_mask & arg0->arg1) != 0) {
                     step = 1;
-                    if (arg0[3] != 0) {
-                        step = arg0[3];
+                    if (arg0->arg2 != 0) {
+                        step = arg0->arg2;
                     }
-                    delta = PitchDelta(((u8 *)arg0)[0x10], parameters->pitch_offset, step);
+                    delta = PitchDelta((u8)arg0->arg3, parameters->pitch_offset, step);
                     parameters->pitch_offset_duration = step;
                     parameters->pitch_offset_step = (short)delta;
                 }
@@ -1562,12 +1562,12 @@ void Spu_SlideVoicePitchMasked(int *arg0) {
         do {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0x70);
             if ((active & mask) != 0) {
-                if (parameters->key_off_mask == arg0[1]) {
+                if (parameters->key_off_mask == arg0->arg0.value) {
                     step = 1;
-                    if (arg0[3] != 0) {
-                        step = arg0[3];
+                    if (arg0->arg2 != 0) {
+                        step = arg0->arg2;
                     }
-                    delta = PitchDelta(((u8 *)arg0)[0x10], parameters->pitch_offset, step);
+                    delta = PitchDelta((u8)arg0->arg3, parameters->pitch_offset, step);
                     parameters->pitch_offset_duration = step;
                     parameters->pitch_offset_step = (short)delta;
                 }
@@ -1579,7 +1579,7 @@ void Spu_SlideVoicePitchMasked(int *arg0) {
     }
 }
 
-void Spu_SetAllVoicePitchImmediate(int *arg0) {
+void Spu_SetAllVoicePitchImmediate(AkaoQueueEntry *arg0) {
     u32 mask;
     u32 active;
     u32 i;
@@ -1598,7 +1598,7 @@ void Spu_SetAllVoicePitchImmediate(int *arg0) {
             AkaoTrack *parameters = (AkaoTrack *)(voice - 0xF4);
         if ((active & mask) != 0) {
             if ((parameters->key_on_mask & block_flag) == 0) {
-                value = ((u8 *)arg0)[4];
+                value = (u8)arg0->arg0.value;
                 dirty = parameters->update_flags;
                 parameters->pitch_offset_duration = 0;
                 value <<= 8;
@@ -1613,7 +1613,7 @@ void Spu_SetAllVoicePitchImmediate(int *arg0) {
     } while (i < 12);
 }
 
-void Spu_SlideAllVoicePitch(int *arg0) {
+void Spu_SlideAllVoicePitch(AkaoQueueEntry *arg0) {
     u32 mask;
     u32 active;
     u32 i;
@@ -1633,10 +1633,10 @@ void Spu_SlideAllVoicePitch(int *arg0) {
         if ((active & mask) != 0) {
             if ((parameters->key_on_mask & block_flag) == 0) {
                 step = 1;
-                if (arg0[1] != 0) {
-                    step = arg0[1];
+                if (arg0->arg0.value != 0) {
+                    step = arg0->arg0.value;
                 }
-                delta = (short)((((u8 *)arg0)[8] << 8) - parameters->pitch_offset);
+                delta = (short)(((u8)arg0->arg1 << 8) - parameters->pitch_offset);
                 parameters->pitch_offset_duration = step;
                 parameters->pitch_offset_step = (short)(delta / (short)step);
             }

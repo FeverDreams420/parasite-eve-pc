@@ -31,6 +31,8 @@ volatile u32 g_AkaoMessageQueueLock;
 static AkaoTickBank tick_bank;
 AkaoTickBank *D_8009D2C8 = &tick_bank;
 SpuReverbState g_SpuReverbState;
+AkaoTrack g_AkaoVoiceChannelTable[12];
+unsigned g_SpuActiveVoiceMask;
 /* This isolated command test must never request a hardware reverb change.
  * PsyZ has no SpuSetReverbModeType endpoint yet: fail instead of simulating it. */
 int SpuSetReverbModeType(unsigned int mode)
@@ -102,6 +104,29 @@ int main(void)
     CHECK(((AkaoGlobalPitchRangeCommand *)message)->start == 37);
     CHECK(((AkaoGlobalPitchRangeCommand *)message)->target == 0x6677);
     g_AkaoMessageQueueCount = 0;
+    for (unsigned mode = 0; mode < 2; ++mode) {
+        g_SpuActiveVoiceMask = 0x555000;
+        for (unsigned i = 0; i < 12; ++i) {
+            g_AkaoVoiceChannelTable[i] = (AkaoTrack){0};
+            g_AkaoVoiceChannelTable[i].key_on_mask = i % 3 == 0 ? 8 : 4;
+            g_AkaoVoiceChannelTable[i].key_off_mask = i % 3 == 0 ? 73 : 72;
+        }
+        AkaoQueueEntry command = {0};
+        command.arg0.value = 73;
+        command.arg1 = mode ? 8 : 0;
+        command.arg2 = 0x15a;
+        Spu_SetVoiceVolumeImmediateMasked(&command);
+        Spu_SetVoicePanImmediateMasked(&command);
+        Spu_SetVoicePitchImmediateMasked(&command);
+        for (unsigned i = 0; i < 12; ++i) {
+            AkaoTrack *voice = &g_AkaoVoiceChannelTable[i];
+            int selected = i % 2 == 0 && i % 3 == 0;
+            CHECK(voice->pan_target == (selected ? 0x5a00 : 0));
+            CHECK(voice->panpot == (selected ? 0x5a00 : 0));
+            CHECK(voice->pitch_offset == (selected ? 0x5a00 : 0));
+            CHECK(voice->update_flags == (selected ? (AKAO_VOICE_PARAM_VOLUME | AKAO_VOICE_PARAM_PITCH) : 0));
+        }
+    }
     unsigned char tempo[] = {0x34, 0x12};
     AkaoTrack track = {0};
     track.pc = tempo;

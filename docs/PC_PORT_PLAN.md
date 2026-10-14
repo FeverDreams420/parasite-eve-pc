@@ -545,6 +545,8 @@ Komenda efektu `0x24` kopiuje teraz native sequence pointer do kolejki, zamiast 
 
 Native message views dla value, bank pitch/slide/range, global param/slide/range i global pitch/slide/range uwzględniają pointer-width argument slot kolejki. Static assertions porównują argument/bank/target offsets do canonical AkaoQueueEntry zamiast PS1 constants. Test enqueue→oryginalny Seq_SetCurrentTrackField56 potwierdza odczyt właściwego low halfword i dodatkowo sprawdza byte/halfword/word views pozostałych komend. CTest oraz ASan/UBSan/function przechodzą dla całego bieżącego fixture (w tym effect dispatch); PsyZ nieinstrumentowane. Raw int-pointer handlers i relative/default nested commands pozostają nieprzeniesione; brak pełnej tabeli dispatch oraz SPU runtime nadal uniemożliwia uznanie audio za działające.
 
+Trzynaście original bank handlers dla manage voices oraz immediate/slides volume/pan/pitch odczytuje canonical AkaoQueueEntry zamiast int[1..4] i byte offsets 4/8/C/10. Sygnatury mają wspólny message pointer; mask filtering i original loops pozostają. Fixture wykonuje trzy masked immediate procedures dla 12 kanałów, obu trybów wyboru (key-on mask/key-off ID), aktywnych/nieaktywnych głosów i low-byte versus 7-bit parametrów; sprawdza target/pan/pitch i dirty flags. CTest oraz ASan/UBSan/function przechodzą. Slides, manage/all-voice paths obecnie mają dowód kompilacji, nie pełnego zachowania. Pozostają relative/default stream addressing, dispatch catalog/globals i rzeczywisty SPU/PCM.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

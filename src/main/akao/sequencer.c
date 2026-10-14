@@ -830,10 +830,10 @@ void Akao_StepSampleLoader(AkaoTrack *track, u32 voice_mask)
         int slope;
 
         track->current_note = pitch;
-        period = Akao_LookupPitchPeriod(track->note_pitch, pitch + track->expression,
+        period = (u32)Akao_LookupPitchPeriod(track->note_pitch, pitch + track->expression,
                                         track->detune) << 16;
         steps = track->vibrato_duration;
-        slope = (int)(period - ((track->pitch_base << 16) + track->voice_mask_a)) / steps;
+        slope = (int)(period - (((u32)track->pitch_base << 16) + track->voice_mask_a)) / steps;
 
         track->vibrato_delta = 0;
         track->pitch_slide_steps = steps;

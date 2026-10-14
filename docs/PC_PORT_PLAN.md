@@ -693,3 +693,22 @@ script pointers, generated sound identifier, pan and volume, and checks absent
 stream sentinels. Instrument test passes ASan/UBSan/function; the other four
 AKAO asset/layout tests also pass. This still uses controlled effect data;
 menu asset lookup and frontend playback are not yet integrated.
+
+### Original menu helpers through real assets to PCM (2026-10-14)
+
+Original menu sound helpers and Akao_SendTableCommand are moved unchanged
+to akao/menu_sound.c; the original three keyed lookup macro instantiations
+are moved unchanged to cdrom/asset_lookup.c so they can link independently
+of unrelated game/CD procedures. No replacement menu/audio logic was added.
+Disc 1 sector bank 7 contains all four menu keys 044C..044F. The new required-
+asset menu test loads that blob and executes each original helper through
+lookup, command enqueue, original 0x24 dispatch, tick and SPU PCM synthesis.
+Confirm/cancel/move/error produce respectively 30172/23184/7834/41810 nonzero
+channel samples in a one-second window each. Resident samples are still loaded
+by the test fixture reader; runtime audio integration remains incomplete.
+
+Sanitizers exposed a signed left-shift overflow in the original pitch-slide
+setup. Unsigned 32-bit shifts now preserve its machine-word arithmetic. The
+menu test passes ASan/UBSan/function on original/test code (PsyZ uninstrumented),
+and all six AKAO CTest entries pass. The frontend still needs to retain an
+audio stream and invoke these original helpers when processing menu input.

@@ -36,6 +36,8 @@ target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original>)
 # Original AKAO units compile in place while their SPU/timer dependencies
 # are connected. They are not linked into the running game yet.
 add_library(parasite-eve-original-akao OBJECT
+    src/main/akao/menu_sound.c
+    src/main/cdrom/asset_lookup.c
     src/main/akao/state.c
     src/main/akao/opcode_dispatch.c
     src/main/akao/voice_driver.c
@@ -71,6 +73,8 @@ if(BUILD_TESTING)
     add_test(NAME original-game-akao-instrument COMMAND test-original-akao-instrument)
     add_test(NAME original-game-akao-assets COMMAND test-original-akao-instrument --assets)
     set_tests_properties(original-game-akao-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+    add_test(NAME original-game-akao-menu-assets COMMAND test-original-akao-instrument --menu-assets)
+    set_tests_properties(original-game-akao-menu-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
     add_test(NAME original-game-akao-tick-assets COMMAND test-original-akao-instrument --tick-assets)
     set_tests_properties(original-game-akao-tick-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
     add_test(NAME original-game-akao-prefix-assets COMMAND test-original-akao-instrument --execute-assets)

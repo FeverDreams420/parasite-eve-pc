@@ -219,26 +219,4 @@ void Menu_CopyPromptCodes(unsigned char *src) {
     g_TextboxNameGlyphs.count = dst - g_TextboxNameGlyphs.glyphs;
 }
 
-void Menu_PlayConfirmSound(void) {
-    if (g_AkaoBgmHandle[0] != 0) {
-        Akao_SendTableCommand(g_AkaoBgmHandle[0], 0x44C, 0x100, 0x80, 0x7F);
-    }
-}
 
-void Menu_PlayCancelSound(void) {
-    if (g_AkaoBgmHandle[0] != 0) {
-        Akao_SendTableCommand(g_AkaoBgmHandle[0], 0x44D, 0x100, 0x80, 0x7F);
-    }
-}
-
-void Menu_PlayMoveSound(void) {
-    if (g_AkaoBgmHandle[0] != 0) {
-        Akao_SendTableCommand(g_AkaoBgmHandle[0], 0x44E, 0x100, 0x80, 0x7F);
-    }
-}
-
-void Menu_PlayErrorSound(void) {
-    if (g_AkaoBgmHandle[0] != 0) {
-        Akao_SendTableCommand(g_AkaoBgmHandle[0], 0x44F, 0x100, 0x80, 0x7F);
-    }
-}

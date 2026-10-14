@@ -1,4 +1,5 @@
 #include "pe1/akao.h"
+#include "pe1/menu_sound.h"
 #include "pe1/akao/init_state.h"
 #include "pe1/akao/stream.h"
 #include "pe1/akao/globals.h"
@@ -38,6 +39,7 @@ short g_AkaoPanVolumeTable[256];
 AkaoU8 g_AkaoOpcodeArgLengths[96], g_AkaoExtOpcodeArgLengths[32];
 u16 g_AkaoNoteLengthTable[11] = {48, 24, 16, 12, 8, 6, 4, 3, 2, 1, 96};
 void *g_AkaoSoundEntryTable[256];
+void *g_AkaoBgmHandle[2];
 void Seq_GetGlobalPitch(unsigned int *out);
 void Seq_ApplyGlobalPitch(void);
 void Seq_SetCurrentTrackField56(AkaoValueCommand *command);
@@ -68,7 +70,7 @@ static int asset_audit(int execute)
     memcpy(g_AkaoNoteLengthTable, catalog.akao.note_lengths, sizeof(g_AkaoNoteLengthTable));
     for (unsigned i = 0; i < 16; ++i)
         g_AkaoSoundEntryTable[i] = catalog.akao.lfo_words + catalog.akao.lfo_offsets[i];
-    if (execute == 2) {
+    if (execute >= 2) {
         PeDiscFile executable;
         unsigned char tables[516];
         CHECK(pe_disc_find(&disc, "SLUS_006.62", &executable));
@@ -85,6 +87,39 @@ static int asset_audit(int execute)
     CHECK(resident != NULL);
     CHECK(pe_spu_bank_load_startup(&catalog, resident, NULL));
     memcpy(g_AkaoInstrumentTable, resident->instruments, sizeof(AkaoInstrument) * 256);
+    if (execute == 3) {
+        PeRoomBlob menu = {0};
+        CHECK(pe_sector_bank_load(&catalog, 7, &menu));
+        g_AkaoBgmHandle[0] = menu.bytes;
+        Akao_MessageHandlers[0x24] = Seq_StartRelativeNestedStream;
+        void (*sounds[])(void) = {Menu_PlayConfirmSound, Menu_PlayCancelSound,
+                                 Menu_PlayMoveSound, Menu_PlayErrorSound};
+        for (unsigned sound = 0; sound < 4; ++sound) {
+            Psyz_SpuReset(0);
+            Psyz_SpuMemWrite(0, resident->ram, sizeof(resident->ram));
+            Spu_InitVoiceState();
+            Psyz_SpuWrite(0x1aa, Psyz_SpuRead(0x1aa) | 0xc000);
+            sounds[sound]();
+            CHECK(g_AkaoMessageQueueCount == 1);
+            Akao_ProcessMessageQueue();
+            CHECK(g_SpuActiveVoiceMask != 0);
+            unsigned nonzero = 0;
+            for (unsigned tick = 0; tick < 240; ++tick) {
+                short pcm[368];
+                Akao_Tick();
+                unsigned frames = ((tick + 1) * 44100 / 240) - (tick * 44100 / 240);
+                Psyz_SpuPullSamples(pcm, frames);
+                for (unsigned j = 0; j < frames * 2; ++j) nonzero += pcm[j] != 0;
+            }
+            CHECK(nonzero != 0);
+            printf("original menu sound %x: %u nonzero samples\n", 0x44c + sound, nonzero);
+        }
+        g_AkaoBgmHandle[0] = NULL;
+        pe_room_blob_close(&menu);
+        free(resident);
+        pe_disc_close(&disc);
+        return 0;
+    }
     PeSpuBank *record_samples = malloc(sizeof(*record_samples));
     CHECK(record_samples != NULL);
     unsigned rooms = 0, sequences = 0, short_records = 0, channels = 0;
@@ -192,6 +227,7 @@ static int asset_audit(int execute)
 
 int main(int argc, char **argv)
 {
+    if (argc == 2 && strcmp(argv[1], "--menu-assets") == 0) return asset_audit(3);
     if (argc == 2 && strcmp(argv[1], "--tick-assets") == 0) return asset_audit(2);
     if (argc == 2 && strcmp(argv[1], "--assets") == 0) return asset_audit(0);
     if (argc == 2 && strcmp(argv[1], "--execute-assets") == 0) return asset_audit(1);

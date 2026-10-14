@@ -205,6 +205,10 @@ next raw note/tie/rest byte: stop, next-note length, volume, octave set/up/down,
 expression (or drum volume) and pan. Tests preserve the original signed
 expression shift, pan wrapping and octave retention, and reject missing
 opcodes/truncated operands explicitly. The first-prefix audit of Disc 1 music
-reaches 303 raw notes and two stops; 8,578 other channels report an unsupported
-command. Note timing/pitch, instrument commands, loops/LFOs, SPU allocation and
+reaches 1,055 raw notes and two stops; 7,826 other channels report an unsupported
+command. Finite/nested loops C8/C9, repeating CA with deferred key-off, signed
+relative jumps FC/06 and repeat-count branches FC/08/09 now preserve the
+original four-slot ring stack and zero-as-256 repeat count. Tests also check
+invalid targets and infinite-loop limits. Note timing/pitch, instrument
+commands, remaining flow/LFOs, SPU allocation and
 synthesis are still pending. Passing parser/command tests is not music playback.

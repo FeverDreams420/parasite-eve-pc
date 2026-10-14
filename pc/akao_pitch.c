@@ -22,7 +22,7 @@ int pe_akao_pitch_period(const PeSpuBank *samples, unsigned instrument, uint8_t 
 int pe_akao_channel_note_pitch(PeAkaoChannel *channel) {
     if (channel->last_note >= 0xa0) goto invalid;
     if (channel->last_note >= 0x8f) return 1; /* rest preserves current pitch */
-    if ((channel->flags & 7u) || (!(channel->flags & 8) && (channel->flags & (UINT32_C(1) << 12))) ||
+    if ((channel->flags & 7u) ||
         channel->tremolo_duration || channel->pitch_slide_steps) {
         snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO pitch mode at 0x%x", channel->pc);
         return 0;
@@ -48,6 +48,8 @@ int pe_akao_channel_note_pitch(PeAkaoChannel *channel) {
             channel->pitch_base = pitch;
         } else {
             unsigned note = channel->last_note / 11 + (unsigned)channel->octave * 12;
+            if (!(channel->tremolo_phase & 2) && (channel->flags & (UINT32_C(1) << 12)) &&
+                !pe_akao_channel_select_note_range(channel, note)) goto invalid;
             uint8_t transposed = (uint8_t)((int)note + signed16(channel->transpose));
             uint16_t pitch;
             if (!channel->control || !pe_akao_pitch_period(channel->samples, channel->instrument,

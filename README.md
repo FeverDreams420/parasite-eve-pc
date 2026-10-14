@@ -264,7 +264,7 @@ tables, octave shifts, signed transpose and detune. It preserves the wrapped
 32-bit detune product and unsigned shift before the final 16-bit pitch. C0/C1
 and D8/D9 set/adjust transpose and detune; ties preserve pitch and rests avoid
 key-on. Bound channels now apply pitch handling during musical ticks. Portamento,
-pending instrument-pitch changes and LFO modes remain explicit
+LFO modes remain explicit
 errors. The current audit handles 5,434 initial raw note/tie/rest events and
 reports 3,447 unsupported prefixes; every full sequence still hits missing
 commands. SPU voice allocation/register application and audible synthesis remain
@@ -294,3 +294,14 @@ BD writes the auxiliary LFO depth without changing note pitch; BE clears its
 current modulation value and active flag while preserving the configured depth.
 Channel tests verify these distinctions, volume dirty flags and truncated
 operands. Active LFO waveform execution remains unsupported and explicit.
+
+FC/14 enables note-range instrument selection through a checked relative
+table offset. Ascending and descending notes use the original range thresholds
+and neighbouring-instrument hysteresis; selected records override attack,
+sustain and release parameters. `akao-note-range` verifies table bounds,
+signed offsets, bank relocation, ADSR overrides and legato suppression.
+All 20 CTest tests pass headless with Disc 1 data; note-range tests and the
+Disc 1 room/audio audit also pass ASan/UBSan. The latest audit reaches
+8,648 initial note events, two stops and 233 unsupported channel prefixes;
+397 sequence prefixes complete four forced ticks and 202 encounter missing
+commands. Full songs, synthesis and gameplay remain unfinished.

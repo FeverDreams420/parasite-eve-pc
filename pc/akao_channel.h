@@ -28,6 +28,7 @@ typedef struct PeAkaoChannel {
     uint32_t voice_mask, pitch_base, sample_start, sample_loop;
     uint16_t instrument, voice_index;
     uint32_t drum_target;
+    uint32_t note_range_target;
     uint16_t transpose, detune, current_note, tremolo_counter, tremolo_delta, pitch_slide_steps;
     uint8_t adsr[8];
     uint32_t pc, flags, expression_value, expression_delta, update_flags;
@@ -70,6 +71,7 @@ int pe_akao_channel_bind_samples(PeAkaoChannel *channel, const PeSpuBank *sample
 int pe_akao_channel_set_instrument(PeAkaoChannel *channel, unsigned encoded);
 int pe_akao_channel_select_sample(PeAkaoChannel *channel, unsigned encoded);
 int pe_akao_channel_reset_adsr(PeAkaoChannel *channel, int release_only);
+int pe_akao_channel_select_note_range(PeAkaoChannel *channel, unsigned note);
 int pe_akao_pitch_period(const PeSpuBank *samples, unsigned instrument, uint8_t note,
                           uint16_t detune_bits, uint16_t *pitch);
 /* Melodic/drum-kit pitch. Portamento and LFO modes are rejected

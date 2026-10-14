@@ -85,3 +85,46 @@ int pe_akao_channel_reset_adsr(PeAkaoChannel *channel, int release_only) {
     }
     return 1;
 }
+
+int pe_akao_channel_select_note_range(PeAkaoChannel *channel, unsigned note) {
+    if (note == channel->current_note) return 1;
+    uint32_t base = channel->note_range_target;
+    size_t size = channel->sequence.size;
+    if (!channel->control || !channel->samples || base >= size) return 0;
+    const uint8_t *table = channel->sequence.bytes + base;
+    size_t available = (size - base) / 8, end = 0;
+    /* The high-bit entry terminates the scan and is also read as a neighbour
+     * by the original hysteresis rules. Require its complete record. */
+    while (end < available && table[end * 8] < 0x80) ++end;
+    if (!end || end == available) return 0;
+    size_t selected;
+    const uint8_t *neighbour;
+    if (channel->current_note < note) {
+        selected = 0;
+        while (selected < end && table[selected * 8 + 2] < note) ++selected;
+        if (selected + 1 >= available) return 0;
+        neighbour = table + (selected + 1) * 8;
+    } else {
+        selected = end;
+        while (note < table[selected * 8 + 1]) {
+            if (!selected) return 0;
+            --selected;
+        }
+        if (!selected && base < 8) return 0;
+        neighbour = channel->sequence.bytes + base + selected * 8 - 8;
+    }
+    unsigned index = table[selected * 8], other = neighbour[0];
+    unsigned bank_offset = (channel->control->status_flags & 0x100) ? 0x30 : 0;
+    if (index >= 0x20) index += bank_offset;
+    if (other >= 0x20) other += bank_offset;
+    if (channel->instrument == index || channel->instrument == other) return 1;
+    if (index >= 256 || !channel->samples->valid[index]) return 0;
+    select_instrument(channel, index, &channel->samples->instruments[index]);
+    const uint8_t *range = table + selected * 8;
+    channel->adsr[0] = range[3];
+    channel->adsr[3] = range[4];
+    channel->adsr[6] = range[5];
+    channel->adsr[4] = range[6];
+    channel->update_flags |= 0x4000;
+    return 1;
+}

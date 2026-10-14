@@ -74,6 +74,7 @@ int pe_akao_channel_start(PeAkaoChannel *channel, const PeAkaoSequence *sequence
     channel->note_length = 4;
     channel->pan_duration = 2;
     channel->drum_target = UINT32_MAX;
+    channel->note_range_target = UINT32_MAX;
     for (unsigned i = 0; i < 4; ++i) channel->loop_points[i] = UINT32_MAX;
     if (samples) pe_akao_channel_bind_samples(channel, samples);
     return 1;
@@ -109,12 +110,12 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
             extended = channel->sequence.bytes[pc + 1];
             prefix = 2;
             if (extended > 5 && extended != 6 && extended != 7 && extended != 8 && extended != 9 &&
-                extended != 0x10 && extended != 0x11 && extended != 0x12 && extended != 0x15 && extended != 0x16) {
+                extended != 0x10 && extended != 0x11 && extended != 0x12 && extended != 0x14 && extended != 0x15 && extended != 0x16) {
                 snprintf(channel->error, sizeof(channel->error), "Unimplemented AKAO opcode 0xfc/0x%02x at 0x%x", extended, pc);
                 return PE_AKAO_CHANNEL_ERROR;
             }
             operands = extended == 5 || extended == 0x11 ? 0 : extended == 0x10 ? 1 :
-                       extended == 0 || extended == 2 || extended == 4 || extended == 6 || extended == 0x12 || extended == 0x15 || extended == 0x16 ? 2 : 3;
+                       extended == 0 || extended == 2 || extended == 4 || extended == 6 || extended == 0x12 || extended == 0x14 || extended == 0x15 || extended == 0x16 ? 2 : 3;
             if ((extended <= 3 || extended == 7 || extended == 0x15 || extended == 0x16) && !channel->control) {
                 snprintf(channel->error, sizeof(channel->error), "Missing shared AKAO control at 0x%x", pc);
                 return PE_AKAO_CHANNEL_ERROR;
@@ -250,6 +251,17 @@ truncated:
             break;
         case 0xfc: {
             const uint8_t *args = channel->sequence.bytes + pc + prefix;
+            if (extended == 0x14) {
+                unsigned word = args[0] | (unsigned)args[1] << 8;
+                int displacement = word & 32768 ? (int)word - 65536 : (int)word;
+                int64_t target = (int64_t)next + displacement;
+                if (target < 0 || (uint64_t)target >= channel->sequence.size) goto invalid;
+                channel->note_range_target = (uint32_t)target;
+                channel->instrument = 255;
+                channel->current_note = 0;
+                channel->flags |= UINT32_C(1) << 12;
+                break;
+            }
             if (extended == 0x16) {
                 /* +64 in the bank alias is measure, not a voice loop count. */
                 channel->control->measure = (uint16_t)(args[0] | (unsigned)args[1] << 8);

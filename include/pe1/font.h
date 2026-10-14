@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "pe1/scene_archive.h"
-#include "pe1/disc_load_state.h"
+#include "pe1/game_state.h"
 
 /* Partial glyph-table layout recovered from the slot lookup at 0x80038BC0.
  * The first list begins at +4; the second list's count is at +0x1C.
@@ -65,8 +65,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(FontGlyphSelectionState, table) == 0xC,
                   font_selection_table_offset);
 PE1_STATIC_ASSERT(sizeof(FontGlyphSelectionState) == 0x10,
                   font_selection_state_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(FontGlyphLoadState, buffer) == 0x94,
-                  font_glyph_load_buffer_offset);
 #endif
 
 extern FontGlyphSelectionState g_FontSelectionState;

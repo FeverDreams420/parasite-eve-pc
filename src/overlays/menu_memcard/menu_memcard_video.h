@@ -4,7 +4,7 @@
 #include "common.h"
 #include "pe1/cdrom.h"
 #include "pe1/cdrom_buffers.h"
-#include "pe1/disc_load_state.h"
+#include "pe1/game_state.h"
 #include "pe1/display_env.h"
 #include "pe1/draw_state.h"
 #include "pe1/game_state.h"

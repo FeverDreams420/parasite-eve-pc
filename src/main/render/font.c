@@ -6,7 +6,7 @@
 #include "common.h"
 #include "pe1/cdrom.h"
 #include "pe1/font.h"
-#include "pe1/psyq_libc.h"
+#include <stdlib.h>
 
 /* The slot-search tails store the selected byte and reload it through the
  * other symbol for that byte (g_FontSelectionState.selected or g_FontSelectionSelectedSlot)
@@ -151,7 +151,7 @@ static inline int find_slot(u8 *table)
 int Render_LoadFontGlyphAlt(void)
 {
     u16 *range;
-    FontGlyphLoadState *state;
+    Pe1GameState *state;
     int read_status;
     int poll_status;
     u8 i;
@@ -162,11 +162,11 @@ int Render_LoadFontGlyphAlt(void)
     u8 duplicate;
     u8 j;
 
-    state = &g_DiscLoadState;
+    state = &g_GameState;
     range = &g_PeImageSectorTable[79];
     do {
-        read_status = CdRom_ReadSectorsFromLba(state->baseLba + range[0],
-                                             state->buffer,
+        read_status = CdRom_ReadSectorsFromLba(state->pe_image_base_lba + range[0],
+                                             state->scene_load_scratch,
                                              range[1] - range[0]);
     } while (read_status == -1);
 

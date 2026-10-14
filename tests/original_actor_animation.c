@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "pe1/boot_services.h"
+#include "pe1/font.h"
+#include "pe1/cdrom.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/render_buffers.h"
 #include "pe1/render_packets.h"
@@ -68,6 +70,47 @@ static int boot_buffer_layout(void)
     memset(g_EntityAllocationTable, 0, sizeof(g_EntityAllocationTable));
     g_GameState = saved;
     return 1;
+}
+
+/* Scripted I/O exercises the original glyph-record loader, including retries. */
+FontGlyphTable g_FontActiveGlyphTable;
+u16 g_PeImageSectorTable[81];
+static u8 glyph_source[42 * 2048], glyph_scratch[42 * 2048];
+static unsigned glyph_reads, glyph_polls;
+static int glyph_read_retry, glyph_poll_retry, glyph_pending;
+int CdRom_ReadSectorsFromLba(u32 lba, void *buffer, u32 count)
+{
+    ++glyph_reads;
+    if (lba != 12352 || buffer != glyph_scratch || count != 42) return -2;
+    if (glyph_read_retry) { glyph_read_retry = 0; return -1; }
+    memcpy(buffer, glyph_source, sizeof(glyph_source));
+    return 1;
+}
+int CdRom_PollReady(void)
+{
+    ++glyph_polls;
+    if (glyph_pending) { glyph_pending = 0; return 1; }
+    if (glyph_poll_retry) { glyph_poll_retry = 0; return -1; }
+    return 0;
+}
+static int glyph_records(void)
+{
+    Pe1GameState saved = g_GameState;
+    g_GameState.pe_image_base_lba = 12345;
+    g_GameState.scene_load_scratch = glyph_scratch;
+    g_PeImageSectorTable[79] = 7;
+    g_PeImageSectorTable[80] = 49;
+    for (unsigned i = 0; i < sizeof(glyph_source); ++i)
+        glyph_source[i] = (u8)((i * 37 + i / 328) ^ (i >> 8));
+    g_FontActiveGlyphTable.codeCount = 113;
+    glyph_read_retry = glyph_poll_retry = glyph_pending = 1;
+    for (unsigned code = 0; code < 256; ++code) {
+        if (Render_LoadFontGlyph(code) || g_FontActiveGlyphTable.codeCount != 113 ||
+            memcmp(&g_FontActiveGlyphTable.groups, glyph_source + 1 + code * 328, 328))
+            return 0;
+    }
+    g_GameState = saved;
+    return glyph_reads == 258 && glyph_polls == 258;
 }
 
 /* Record positional sound requests; no replacement audio ships with the game. */
@@ -134,6 +177,7 @@ static int game_state_reset(void)
 int main(int argc, char **argv)
 {
     (void)argv;
+    if (!glyph_records()) return 55;
     if (!boot_buffer_layout()) return 54;
     if (!game_state_reset()) return 53;
     if(!SDL_Init(SDL_INIT_EVENTS))return 43;

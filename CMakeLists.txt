@@ -23,6 +23,8 @@ add_library(parasite-eve-original OBJECT
     src/main/aya/stats.c
     src/main/item/active_list.c
     src/main/save/game_data.c
+    src/main/render/font.c
+    src/main/render/font_load.c
     src/main/menu/status_panels.c
     src/main/battle/commands.c
     src/main/text/tables.c

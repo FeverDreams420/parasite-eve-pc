@@ -2,7 +2,7 @@
  * handler callbacks, and loads the task programs of commands 108..114. */
 
 #include "pe1/cdrom.h"
-#include "pe1/disc_load_state.h"
+#include "pe1/game_state.h"
 #include "pe1/fieldfx_task_api.h"
 #include "pe1/game_state.h"
 #include "pe1/player_entity.h"
@@ -81,7 +81,7 @@ int Scene_LoadRoomAssets(u32 command, void *owner)
         return -7;
     if (command - 108 < 7 && !(g_GameState.flags & 0x10000)) {
 retry:
-        while (CdRom_ReadSectorsFromLba(g_DiscLoadState.baseLba + g_SceneAssetLbaTbl[0],
+        while (CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba + g_SceneAssetLbaTbl[0],
                 g_PmTaskProgramBuffer, g_SceneAssetLbaTbl[1] - g_SceneAssetLbaTbl[0]) == -1) {}
         while ((ready = CdRom_PollReady()) != 0) {
             if (ready == -1)

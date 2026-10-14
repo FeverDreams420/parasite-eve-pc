@@ -3,7 +3,7 @@
 #include "pe1/asset_tim.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/cdrom.h"
-#include "pe1/disc_load_state.h"
+#include "pe1/game_state.h"
 #include "pe1/entity_animation.h"
 #include "pe1/entity_frame_update.h"
 #include "pe1/field_actor.h"
@@ -692,7 +692,7 @@ int CdRom_DetectDiscChange(void) {
 int Scene_LoadEntityTexture(void)
 {
     int bank = g_SceneAreaType;
-    u32 lba = g_DiscLoadState.baseLba;
+    u32 lba = g_GameState.pe_image_base_lba;
     Pe1GameState *state = &g_GameState;
     SceneAssetBlob *blob;
     SceneAssetDirectory *directory;

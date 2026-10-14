@@ -15,12 +15,12 @@ int Render_LoadFontGlyph(int code)
     int i;
     u8 *source;
     u8 *bytePtr;
-    FontGlyphLoadState *state;
+    Pe1GameState *state;
     u16 *range;
-    state = &g_DiscLoadState;
+    state = &g_GameState;
     range = &g_PeImageSectorTable[79];
     do {
-        status = CdRom_ReadSectorsFromLba(state->baseLba + range[0], state->buffer,
+        status = CdRom_ReadSectorsFromLba(state->pe_image_base_lba + range[0], state->scene_load_scratch,
                                             range[1] - range[0]);
     } while (status == -1);
     while ((status = CdRom_PollReady()) != 0) {

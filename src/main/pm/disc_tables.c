@@ -10,7 +10,7 @@
 #include "pe1/cd_poll.h"
 #include "pe1/cdrom.h"
 #include "pe1/cdrom_buffers.h"
-#include "pe1/disc_load_state.h"
+#include "pe1/game_state.h"
 #include "pe1/draw_buffers.h"
 #include "pe1/draw_state.h"
 #include "pe1/font.h"
@@ -256,7 +256,7 @@ retry_first:
     range = g_SceneInitLbaTbl0;
     retry = -1;
     do {
-        status = CdRom_ReadSectors(g_DiscLoadState.baseLba + range[0], 0, g_MdecOverlayLoadBase, range[1] - range[0]);
+        status = CdRom_ReadSectors(g_GameState.pe_image_base_lba + range[0], 0, g_MdecOverlayLoadBase, range[1] - range[0]);
     } while (status == retry);
 
     while ((status = CdRom_PollReady()) != 0) {
@@ -273,7 +273,7 @@ retry_second:
     range = &g_BootDisplayDataLbaTbl;
     retry = -1;
     do {
-        status = CdRom_ReadSectors(g_DiscLoadState.baseLba + range[0], 0, g_CdLoadAreaBase, range[1] - range[0]);
+        status = CdRom_ReadSectors(g_GameState.pe_image_base_lba + range[0], 0, g_CdLoadAreaBase, range[1] - range[0]);
     } while (status == retry);
 
     while ((status = CdRom_PollReady()) != 0) {

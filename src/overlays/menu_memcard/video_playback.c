@@ -140,7 +140,7 @@ retry:
         VideoDiscRange *range = (VideoDiscRange *)g_SceneInitLbaTbl0;
         s32 readError = -1;
         s32 pollError;
-        do {} while(CdRom_ReadSectorsFromLba(g_DiscLoadState.baseLba+range->start,g_MdecOverlayLoadBase,range->end-range->start)==readError);
+        do {} while(CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba+range->start,g_MdecOverlayLoadBase,range->end-range->start)==readError);
         pollError=-1;
         for (;;) {
             ready=CdRom_PollReady();

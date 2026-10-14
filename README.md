@@ -16,11 +16,12 @@ The native executable boots through the opening movie to the original title
 screen and main menu. MDEC video and stereo XA audio are decoded directly from
 a user-supplied Disc 1 CUE/BIN; menu artwork comes from `PE.IMG`.
 
-Gameplay is not playable yet. The game sources under `src/` are retained for
-porting and are not yet linked into that executable. Remaining MIPS/GTE
-instructions, hardware access, address aliases and 32-bit pointer assumptions
-need C implementations or PsyZ adapters before the affected modules can join
-the host build.
+Gameplay is not playable yet. Native targets compile original modules in place;
+tests execute connected paths for room assets, audio banks, cameras, actor models,
+input and frame submission. The executable still uses temporary boot/frontend
+code in `pc/`. Full original scene/frame integration, native geometry relocation,
+unsupported room descriptors and remaining hardware/address assumptions still
+need work.
 
 The port must run the original game code in `src/main/` and `src/overlays/`.
 Modify those sources in place for host pointers, memory, PsyZ and disc-image

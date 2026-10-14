@@ -2554,3 +2554,27 @@ Psyz/SDL objects are not instrumented. The 878-model corpus still reports
 scanline precision, asynchronous blanks during unsynchronized CPU work and
 other backends remain unverified. Full game runtime and removal of pc/ remain
 incomplete.
+
+
+### Bind loaded room geometry to the canonical camera state
+
+The historical USA map places g_GeomState at 0x800B1624 and g_GameState at
+0x800B0CD8: exactly the existing taskAux/bank_reset_94c slot. Pe1GameState now
+provides a typed geometry_state view of that slot, and g_GeomState aliases it.
+Scene_LoadRoom writes the typed field; removed three independent fixture globals.
+The real loader now supplies the same geometry pointer the camera reads.
+
+The full render/frame_update.c compiles in the original target and owns the
+nine-word camera workspace. The historical projection-distance symbol is an
+alias of word 8 (USA 0x800B8A18 vs matrix 0x800B89F8). Removed the fixtures' separate
+arrays, including an undersized eight-word buffer. No new files.
+
+The real-room fixture checks the taskAux payload address and loads every camera
+view in the seven supported mirror rooms into the actual workspace. Distances,
+nine rotation cells and three translations match independent serialized reads;
+room bytes remain unchanged. Full build, five original tests (camera,
+entity-textures, entity-texture-assets, shadow, scene-spawn) and fresh
+ASan/UBSan/function real-data execution pass with required Disc 1 assets. PsyZ/SDL
+are not instrumented. Render_PrepareFrame as a whole is compiled but not executed
+by these checks: native mesh-entry relocation and full scene/frame runtime are
+still incomplete. Removal of pc/ remains pending.

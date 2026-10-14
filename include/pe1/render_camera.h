@@ -8,7 +8,7 @@ int Render_SetGteScreenOffset(void);
 int Render_ResetGteScreenOffset(void);
 
 /* Camera initialization scratch: matrix words followed by projection distance. */
-extern u32 g_EntityRenderScratch[];
+extern u32 g_EntityRenderScratch[9];
 int Render_SetViewport(const s32 *position);
 int Render_SetScrollMode(int x, int y, int duration, int mode);
 int Render_SaveAndOpenBounds(void);

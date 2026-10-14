@@ -5,7 +5,6 @@
 #include <libgpu.h>
 #include "pe1/scene_room_load.h"
 #include "pe1/geom_state.h"
-GeomState * volatile g_GeomState;
 #include "room_banks.h"
 #include "model.h"
 #include "animation.h"
@@ -14,6 +13,7 @@ GeomState * volatile g_GeomState;
 #include "pe1/scene_room.h"
 #include "pe1/room_fx_model.h"
 #include "pe1/render_matrix_slot.h"
+#include "pe1/render_camera.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,7 +27,7 @@ RenderBufferPrefix D_800B0E38;
 
 u8 g_SceneAreaType;
 s8 g_CurrentStoryDay[1];
-u32 g_PeImageBaseLba, g_EntityRenderScratch[8];
+u32 g_PeImageBaseLba;
 u16 g_PeImageSectorTable[64], g_PeImageSectorBoundsNext[64];
 #ifndef PE_TEST_REAL_DISC
 static int read_result, poll_result;
@@ -304,6 +304,32 @@ int main(void)
             CHECK(Scene_LoadRoom(room_id)==0);
             CHECK(!memcmp(Psyz_SpuGetRam(),spu_expected,0x80000));
             CHECK(g_GameState.bank_reset_944[0] != NULL);
+            const u8 *geometry_records;unsigned geometry_count;
+            CHECK(pe_room_blob_table(&room.data,7,8,&geometry_records,&geometry_count));
+            CHECK(geometry_count>0);
+            unsigned geometry_offset=image_word(geometry_records+4)&0xffffff;
+            unsigned geometry_size=image_word(geometry_records)&0xffffff;
+            CHECK(geometry_offset<=room.data.size && geometry_size<=room.data.size-geometry_offset);
+            CHECK(g_GeomState==(GeomState *)(data+geometry_offset));
+            CHECK((void *)g_GeomState==g_GameState.bank_reset_94c[0]);
+            const u8 *geometry=room.data.bytes+geometry_offset;
+            CHECK(geometry_size>=60);
+            unsigned declared=image_word(geometry),view_offset=image_word(geometry+28);
+            unsigned views=geometry[10]|(unsigned)geometry[11]<<8;
+            CHECK(declared<=geometry_size && view_offset>=60 && view_offset<=declared);
+            CHECK(views>0 && views<=(declared-view_offset)/52);
+            GeomScrollRecord saved_scroll=g_GeomScroll;
+            for(unsigned group=0;group<views;++group) {
+                const u8 *view=geometry+view_offset+group*52;
+                memset(g_EntityRenderScratch,0,sizeof(g_EntityRenderScratch));
+                CHECK(Render_InitViewState(g_EntityRenderScratch,g_EntityRenderScratch+8)==0);
+                CHECK(Render_LoadGeomState(group)==0);
+                CHECK(g_EntityRenderScratch[8]==(view[0]|(unsigned)view[1]<<8));
+                CHECK(!memcmp(g_EntityRenderScratch,view+2,18));
+                for(unsigned component=0;component<3;++component)
+                    CHECK(g_EntityRenderScratch[5+component]==image_word(view+20+component*4));
+            }
+            g_GeomScroll=saved_scroll;
             const u8 *entries; unsigned entries_count;
             CHECK(pe_room_blob_table(&room.data, 3, 12, &entries, &entries_count));
             for (unsigned i = 0; i < entries_count; ++i) {

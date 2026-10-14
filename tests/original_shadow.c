@@ -7,7 +7,6 @@
 #include "pe1/geom_state.h"
 #include "pe1/game_state.h"
 RenderMatrixSlot g_ViewMatrixSlot;
-GeomState * volatile g_GeomState;
 GeomScrollRecord g_GeomScroll;
 int Render_ScrollEntries(void);
 int Render_StartFadeIn(int frames);
@@ -20,7 +19,6 @@ int Render_ClipPoint(int x,int y,int z);
 #include <stdio.h>
 #include <string.h>
 RenderBufferPrefix D_800B0E38;
-u32 g_EntityRenderScratch[9];
 RoomFloorY g_RoomFloorY[1];
 _Static_assert(sizeof(Pe1FadeTile)==sizeof(TILE),"native game fade tile size");
 _Static_assert(offsetof(Pe1FadeTile,r)==offsetof(TILE,r0),"native game fade colour");

@@ -32,7 +32,6 @@ RenderBufferPrefix D_800B0E38;
 uintptr_t g_SceneMapPrimBaseTable[10];
 FieldActorCallbacks g_FieldActorTypeCallbacks[256];
 u8 g_SceneAreaType;
-u32 g_EntityRenderScratch[9];
 
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 static u32 room_word(const u8 *bytes)

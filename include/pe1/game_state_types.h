@@ -23,6 +23,7 @@ typedef unsigned int Pe1U32;
  * objects use host layout; this record is not serialized to a save or disc.
  */
 struct SceneAssetBlob;
+struct GeomState;
 struct TimFile;
 struct PmSlotBanks;
 struct RenderObjectEntity;
@@ -142,7 +143,10 @@ typedef struct Pe1GameState {
     Pe1U32 bank_reset_940[1];
     void *bank_reset_944[1];         /* 0x944: relocated task block */
     void *bank_reset_948[1];
-    void *bank_reset_94c[1];
+    union { /* 0x94C: room geometry/camera block */
+        void *bank_reset_94c[1];
+        struct GeomState *volatile geometry_state;
+    };
     void *bank_reset_950[2];
     Pe1U32 bank_reset_958[1];
 } Pe1GameState;

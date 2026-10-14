@@ -48,7 +48,8 @@ extern u32 g_PadComboSequence[];
 
 /* Render pipeline set-up (draw/pipeline.c): the projection distances
  * of the field and battle views. */
-extern char g_RenderProjectionDistance[];
+extern u32 g_EntityRenderScratch[9];
+#define g_RenderProjectionDistance (g_EntityRenderScratch + 8)
 
 void Draw_RenderFrame(void);
 int Draw_CheckDrawStatus(void);

@@ -16,6 +16,7 @@
  */
 
 #include "common.h"
+#include "pe1/game_state.h"
 #include "pe1/gte_types.h"
 #include "pe1/render_tint.h"
 
@@ -267,7 +268,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomState, clip_offset_y) == 0x2A,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomState, entry_offset_1C) == 0x1C,
                   geom_camera_viewport_offset);
 
-extern GeomState * volatile g_GeomState;
+/* Resident alias at g_GameState + 0x94C in the USA executable. */
+#define g_GeomState (g_GameState.geometry_state)
 
 int Render_StepGroupAnimations(void);
 int Render_ScrollEntries(void);

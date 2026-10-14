@@ -13,6 +13,10 @@
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
+/* Eight matrix words followed by the projection distance (USA +0x20). */
+u32 g_EntityRenderScratch[9];
+PE1_STATIC_ASSERT(sizeof(g_EntityRenderScratch) == sizeof(GteMatrix) + sizeof(u32), frame_camera_workspace_size);
+
 int g_GridCursorIndex;
 int g_GridCursorPrevious;
 int g_GridCursorX;

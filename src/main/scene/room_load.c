@@ -530,7 +530,7 @@ retry_room:
     state->bank_reset_944[0] =
         Script_RelocBlock(SCENE_ROOM_PAYLOAD(room, SceneRoom_FirstRecord(room, directory->taskBlock)));
     state->bank_reset_948[0] = SCENE_ROOM_PAYLOAD(room, SceneRoom_FirstRecord(room, directory->taskData));
-    state->bank_reset_94c[0] = SCENE_ROOM_PAYLOAD(room, SceneRoom_FirstRecord(room, directory->taskAux));
+    state->geometry_state = SCENE_ROOM_PAYLOAD(room, SceneRoom_FirstRecord(room, directory->taskAux));
 
     shortRecord = SceneAsset_ResolveOffset(room, directory->taskSlots & 0x3FFFFF);
     for (i = 0; i < directory->taskSlots >> 22; i++) {

@@ -38,6 +38,7 @@ add_library(parasite-eve-original OBJECT
     src/main/psyq/libgte/cmb_06.c
     src/main/anim/bone_rotations.c
     src/main/render/object.c
+    src/main/render/frame_update.c
     src/main/entity/frame_update.c
     src/main/boot/init.c
     src/main/boot/frame_loop.c

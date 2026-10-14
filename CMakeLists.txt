@@ -43,8 +43,8 @@ add_library(parasite-eve-original OBJECT
     src/main/entity/pool.c
     src/main/entity/allocation.c
     src/main/script/node_pool.c
-    src/main/script/expression.c
-    src/main/script/basic_flow.c
+    src/main/script/value_ops.c
+    src/main/script/flow_opcodes.c
     src/main/field/actor_collision.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 if(MSVC)
@@ -243,12 +243,9 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-model-setup PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 
-add_library(parasite-eve-original-queue OBJECT src/main/script/queue.c)
-target_include_directories(parasite-eve-original-queue PRIVATE include)
 if(BUILD_TESTING)
     add_executable(test-original-queue tests/original_queue.c
-        $<TARGET_OBJECTS:parasite-eve-original>
-        $<TARGET_OBJECTS:parasite-eve-original-queue>)
+        $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-queue PRIVATE include)
     target_link_libraries(test-original-queue PRIVATE psyz)
     add_test(NAME original-game-queue COMMAND test-original-queue)
@@ -272,8 +269,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-movement tests/original_movement.c
-        $<TARGET_OBJECTS:parasite-eve-original>
-        $<TARGET_OBJECTS:parasite-eve-original-queue>)
+        $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-movement PRIVATE include)
     target_link_libraries(test-original-movement PRIVATE psyz)
     add_test(NAME original-game-movement COMMAND test-original-movement)
@@ -290,7 +286,6 @@ endif()
 if(BUILD_TESTING)
     add_executable(test-original-actor-animation tests/original_actor_animation.c pc/disc.c
         $<TARGET_OBJECTS:parasite-eve-original-player-rules>
-        $<TARGET_OBJECTS:parasite-eve-original-queue>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
     target_include_directories(test-original-actor-animation PRIVATE include pc)

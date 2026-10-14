@@ -2158,3 +2158,24 @@ or a playable game. Remaining extraction files and pc/ still require removal.
 Ten original-game CTests also pass with required Disc 1 assets: animation,
 animation-assets, projection, projection-assets, model-setup, model-gpu,
 model-room-gpu, actor-animation, entity-texture-assets and shadow.
+
+
+### Restore script interpreter and arithmetic to original opcode modules
+
+Deleted script/basic_flow.c, script/queue.c and script/expression.c. Restored
+all interpreter/basic-flow bodies and cursor storage to script/flow_opcodes.c,
+and expression evaluation plus word-arithmetic helpers to script/value_ops.c.
+Restored bodies compare unchanged. Both complete original modules now compile
+in parasite-eve-original; removed the separate queue object target. Interpreter
+layout assertions now check native cursor width and adjacent trigger/wait fields
+rather than fixed PS1 runtime offsets.
+
+Script_DispatchCmd in value_ops.c no longer narrows its mask operand pointer to
+int before dereferencing it. The existing expression fixture covers stack
+operands, the held-frame result and original mask mutation, missing input and
+the high-bit special case. Full build and six CTests pass: nodes, queue,
+expression, movement, actor-animation and scene-spawn, with required Disc 1
+assets. Fresh ASan/UBSan/function runs pass for expression, queue and movement;
+PsyZ is not instrumented. Other newly compiled opcode paths are not yet verified
+by these fixtures, and this is not a complete scene script runtime. No new files;
+remaining extractions and the entire pc/ directory remain to be removed.

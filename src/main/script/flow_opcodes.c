@@ -272,9 +272,9 @@ int Script_GetPlayerInputFlag(int **args) {
 /* Script interpreter main loop and the jump-to-actor-script opcode; a
  * contiguous -G8 pair sharing the script cursor g_ScriptCursor. */
 
-PE1_STATIC_ASSERT(sizeof(ScriptNode) == 0x2C, interpreter_script_node_size);
+PE1_STATIC_ASSERT(sizeof(((ScriptNode *)0)->current) == sizeof(intptr_t), interpreter_cursor_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, current) == 0, interpreter_script_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, active) == 0x10, interpreter_wait_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, active) == PE1_OFFSETOF(ScriptNode, trigger_value) + sizeof(int), interpreter_wait_offset);
 
 /* Tentative COMMON declarations preserve small-data metadata for stock
  * maspsx. Storage remains at the existing data/linker addresses. */
@@ -608,4 +608,94 @@ int Script_WaitAnimFrameMatch(void) {
     stack -= 8;
     g_ScriptCursorAddress = stack;
     return ret;
+}
+
+ScriptCursorValue g_ScriptCursorValue;
+
+int Script_JumpToEntityOffset(int **arg0)
+{
+    g_ScriptCursor = (u32 *)(g_CurrentEntity->script_base + (*arg0[0] * 2));
+    return 1;
+}
+
+int Entity_MarkCurrentDead(int **unused) {
+    (void)unused;
+    g_CurrentEntity->flags |= 0x10;
+    return 0;
+}
+
+int Entity_SetCurrentNodeActive(int **arg0) {
+    g_ScriptNodePool->active = (u16)*arg0[0];
+    return 0;
+}
+
+int Entity_MarkCurrentNodeFree(int **unused) {
+    (void)unused;
+    g_ScriptNodePool->flags |= 0x10;
+    return 0;
+}
+
+int Script_AssignValue(int **arg0) {
+    *arg0[0] = *arg0[1];
+    return 1;
+}
+
+int Script_JumpIfZero(int **arg0) {
+    if (*arg0[0] == 0) {
+        g_ScriptCursorAddress = (uintptr_t)(g_CurrentEntity->script_base + (*arg0[1] * 2));
+    }
+    return 1;
+}
+
+void Script_RunQueue(void)
+{
+    int *args[16];
+    ScriptNode *node;
+    u8 *entity;
+    u32 header, modes, tail, opcode;
+    u32 *values;
+    FieldActor *argument_entity;
+    u16 i;
+
+    do {
+        node = g_ScriptNodePool;
+        /* Retail first reads flags and sequence together as a word. */
+        if (node->flags & 0x50) continue;
+        entity = (u8 *)g_CurrentEntity;
+        if ((((FieldActor *)entity)->flags & 0x1000) && !(node->flags & 0x80)) continue;
+        if ((g_GameStateFlags & 0x100) && entity != (u8 *)g_PlayerEntity && !(node->flags & 0x80)) continue;
+        node = g_ScriptNodePool;
+        if (node->active == 0) continue;
+        node->active--;
+        if (node->active != 0) continue;
+        g_ScriptCursor = node->current.script;
+        do {
+            header = *g_ScriptCursor;
+            g_ScriptCursor++;
+            values = g_ScriptCursor + 1;
+            tail = *g_ScriptCursor;
+            modes = header >> 17;
+            opcode = header & 0x1FFF;
+            header >>= 13;
+            header &= 15;
+            g_ScriptCursor = values + header;
+            for (i = 0; i < header; i++) {
+                switch (modes & 7) {
+                case 0: args[i] = (int *)&values[i]; break;
+                case 3: args[i] = (int *)&g_ScriptOperandTable[values[i]]; break;
+                case 1:
+                    /* Reload after every handler: it may switch actors. */
+                    argument_entity = g_CurrentEntity;
+                    args[i] = (int *)&argument_entity->pad_0AC[values[i]];
+                    break;
+                case 2: args[i] = (int *)&g_ScriptVariableBank[values[i]]; break;
+                case 4: args[i] = &g_ScriptNodeActiveFlags[values[i]]; break;
+                }
+                modes >>= 3;
+                if (i == 4) modes = tail;
+            }
+        } while (g_ScriptQueueOpcodeHandlers[opcode](args));
+        /* Handlers may replace both the current node and the script cursor. */
+        g_ScriptNodePool->current.script = g_ScriptCursor;
+    } while ((g_ScriptNodePool = g_ScriptNodePool->next) != 0);
 }

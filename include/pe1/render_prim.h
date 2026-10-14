@@ -3,7 +3,6 @@
 
 #include "common.h"
 #include "pe1/gte_types.h"
-#include "pe1/psyq_gpu.h"
 #include "pe1/render_packets.h"
 
 /* A render primitive list and its 0x10-byte color records (Render_SetPrimColour).

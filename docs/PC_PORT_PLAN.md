@@ -1585,3 +1585,19 @@ actual descriptors. New Game map 431 has one initial descriptor and no player
 on that list; this test does not establish script-created Aya or playable startup.
 The pc/ directory and other extraction files still exist. Their removal and
 integration into existing original modules remain mandatory unfinished work.
+
+### Restore resident-table functions to text/tables.c
+
+The three Aya table accessors and resident-data storage are back in the existing
+text/tables.c; aya/stat_tables.c was removed. Item_LookupBaseData also returned
+to text/tables.c from item/data_lookup.c. The whole original tables module now
+compiles, including its text, map-name, glyph and menu-descriptor accessors.
+An unused psyq_gpu.h dependency was removed from render_prim.h; its declarations
+only require the existing common, GTE and packet headers.
+
+Comparing function-definition sets across all affected files before/after the
+merge retained all 19 functions. Full build, stat-assets/scene-spawn/actor-lifecycle
+CTests and the stat ASan/UBSan/function run passed (PsyZ uninstrumented). This
+verifies the existing exercised table/stat paths, not every newly compiled text
+or menu accessor. No new files were created. Other extractions and pc/ removal
+remain unfinished requirements.

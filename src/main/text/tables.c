@@ -164,3 +164,36 @@ u8 *Text_GetMapLocationName(int map) {
 u8 *Text_GetSaveIconData(void) {
     return RESIDENT_TABLE(u8, saveIcon);
 }
+
+
+ResidentDataPack g_ResidentDataPack;
+
+void *Aya_GetStatGrowthTable(int category) {
+    return &RESIDENT_TABLE(u8, statGrowth)[category << 9];
+}
+
+AyaLevelStats *Aya_LookupLevelStats(int level) {
+    if (level < 0) {
+        level = 0;
+    } else if (level >= 0x63) {
+        level = 0x62;
+    }
+
+    return &RESIDENT_TABLE(AyaLevelStats, levelStats)[level];
+}
+
+void *Aya_GetLevelExpTable(void) {
+    return RESIDENT_TABLE(s32, levelExp);
+}
+
+
+ItemDataRecord *Item_LookupBaseData(unsigned int index) {
+    s32 *endSlot = &g_ResidentDataPack.directory.statGrowth;
+    s32 end = *endSlot;
+    s32 begin = g_ResidentDataPack.directory.itemBaseData;
+
+    if (index >= (unsigned int)(end - begin) / sizeof(ItemDataRecord)) {
+        return 0;
+    }
+    return (ItemDataRecord *)&g_ResidentDataPack.bytes[begin] + index;
+}

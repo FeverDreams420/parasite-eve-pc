@@ -4,17 +4,6 @@
 /* Nine native key records replace the PS1 address biased by -0x4000. */
 ItemDataRecord g_KeyItemRecords[9];
 
-ItemDataRecord *Item_LookupBaseData(unsigned int index) {
-    s32 *endSlot = &g_ResidentDataPack.directory.statGrowth;
-    s32 end = *endSlot;
-    s32 begin = g_ResidentDataPack.directory.itemBaseData;
-
-    if (index >= (unsigned int)(end - begin) / sizeof(ItemDataRecord)) {
-        return 0;
-    }
-    return (ItemDataRecord *)&g_ResidentDataPack.bytes[begin] + index;
-}
-
 /* Inventory item-ID and active-slot lookup helpers. */
 
 ItemDataRecord *Inv_LookupData(int arg0) {

@@ -31,7 +31,7 @@ add_library(parasite-eve-original OBJECT
     src/main/item/list_selection.c
     src/main/item/capacity.c
     src/main/aya/stat_queries.c
-    src/main/aya/stat_tables.c
+    src/main/text/tables.c
     src/main/pm/scene_init.c
     src/main/math/fixed_mul.c
     src/main/math/fixed_div.c

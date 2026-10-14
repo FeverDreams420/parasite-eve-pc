@@ -120,6 +120,7 @@ int FieldFx_InitTaskContext(FieldFxTaskOwner *owner);
 int FieldFx_InitTaskProgram(FieldFxTaskOwner *owner, int skip,
                   int arg2, int arg3, int arg4, int arg5);
 int FieldFx_DrawTasks(FieldFxTaskOwner *owner);
+int FieldFx_UpdateTasks(FieldFxTaskOwner *owner);
 extern s16 g_SpinningModelAnchorB[3];
 int FieldFx_SpinningModelEmitterB(int mode, FieldFxEmitter *state);
 

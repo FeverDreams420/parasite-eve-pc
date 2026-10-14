@@ -61,6 +61,7 @@ add_library(parasite-eve-original OBJECT
     src/main/script/value_ops.c
     src/main/script/flow_opcodes.c
     src/main/script/system_opcodes.c
+    src/main/fieldfx/geometry.c
     src/main/fieldfx/task_list.c
     src/main/fieldfx/vector.c
     src/main/field/actor_collision.c
@@ -291,6 +292,7 @@ else()
 endif()
 if(BUILD_TESTING)
     add_executable(test-original-actor-animation tests/original_actor_animation.c $<TARGET_OBJECTS:parasite-eve-test-disc>
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
     target_include_directories(test-original-actor-animation PRIVATE include pc)

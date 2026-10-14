@@ -11,6 +11,7 @@
 #include "pe1/entity_allocation.h"
 #include "pe1/render_buffers.h"
 #include "pe1/render_packets.h"
+#include "pe1/render_matrix_slot.h"
 #include "pe1/geom_state.h"
 #include "pe1/field_movement.h"
 #include "pe1/pad_state.h"
@@ -26,7 +27,6 @@
 #include <limits.h>
 #include <psyz/system.h>
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
-GeomScrollRecord g_GeomScroll;
 
 /* Observe the original traversal while deliberately changing cursor state. */
 static int widget_draw_order[4], widget_draw_x[4], widget_draw_y[4];
@@ -463,6 +463,79 @@ static int callback_list_storage(void)
     return 1;
 }
 
+typedef struct NativeTaskState { void *identity; int ticks; } NativeTaskState;
+static unsigned task_draws;
+static int observe_native_task(int mode,void *payload,int argument)
+{
+    NativeTaskState *state=payload;
+    if(argument!=42 || (uintptr_t)payload%_Alignof(NativeTaskState)) abort();
+    if(mode==0) { state->identity=state; state->ticks=0; return 0; }
+    if(state->identity!=state) abort();
+    if(mode==1) {
+        if(g_FieldFxCurrentAge!=state->ticks) abort();
+        return ++state->ticks==2;
+    }
+    if(mode!=2 || g_FieldFxCurrentAge!=state->ticks) abort();
+    ++task_draws; return 0;
+}
+static int reject_task_allocation(int mode,void *payload,int argument)
+{
+    (void)mode; (void)argument;
+    return FieldFx_InitCallbackList((char *)payload,16,1000,record_list_callback);
+}
+static int native_task_cycle(void)
+{
+    struct { FieldFxTaskOwner owner; u8 guard[16]; } storage;
+    memset(&storage,0xa5,sizeof(storage));
+    FieldFxTaskOwner *owner=&storage.owner;
+    FieldFxTaskTable table={0};
+    u16 script[]={1,0,9,2,0,0,4,2,0,0,0,0};
+    table.callbacks[0]=observe_native_task; table.sizes[0]=sizeof(NativeTaskState);
+    owner->tasks.table=&table; owner->tasks.pc.script=script; owner->tasks.argument=42;
+    owner->prefix.actor=NULL; owner->prefix.reserved00=0;
+    if(FieldFx_InitTaskContext(owner)!=0 || owner->tasks.cursor!=owner->tasks.arena || owner->tasks.used || owner->tasks.count)
+        return 0;
+    for(unsigned slot=0;slot<8;++slot)
+        if(owner->tasks.slots[slot].id!=0xffff || owner->tasks.slots[slot].start || owner->tasks.slots[slot].end)
+            return 0;
+    if(owner->tasks.table!=&table || owner->tasks.pc.script!=script) return 0;
+    GteMatrix identity={0}; identity.m[0][0]=identity.m[1][1]=identity.m[2][2]=4096;
+    GteMatrix *saved_view=g_ViewMatrixSlot.value; g_ViewMatrixSlot.value=&identity;
+    if(FieldFx_UpdateTasks(owner)!=0 || owner->tasks.variables[0]!=9 || owner->tasks.count!=1 ||
+       owner->tasks.delay!=2 || owner->tasks.slots[0].age!=1) return 0;
+    if(FieldFx_DrawTasks(owner)!=0 || task_draws!=1) return 0;
+    if(FieldFx_UpdateTasks(owner)!=0 || owner->tasks.count || owner->tasks.delay!=1 || owner->tasks.slots[0].id!=0xffff)
+        return 0;
+    if(FieldFx_UpdateTasks(owner)!=0 || owner->prefix.reserved00!=4 || owner->tasks.delay) return 0;
+    g_ViewMatrixSlot.value=saved_view;
+    FieldFx_InitTaskContext(owner); g_FieldFxTaskContext=&owner->tasks;
+    for(unsigned slot=0;slot<8;++slot)
+        if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState)) return 0;
+    if(owner->tasks.count!=8 || FieldFx_SpawnTask(0)!=-1 || FieldFx_SpawnTask(8)!=-1 || FieldFx_SpawnTask(-1)!=-1)
+        return 0;
+    FieldFx_InitTaskContext(owner);
+    table.sizes[0]=sizeof(owner->tasks.arena)+1;
+    if(FieldFx_SpawnTask(0)!=-1 || owner->tasks.count || owner->tasks.used) return 0;
+    table.sizes[0]=sizeof(NativeTaskState);
+    owner->tasks.used=sizeof(owner->tasks.arena)-1;
+    owner->tasks.cursor=owner->tasks.arena+owner->tasks.used;
+    if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState) || owner->tasks.used!=sizeof(NativeTaskState) ||
+       owner->tasks.slots[0].start!=owner->tasks.arena) return 0;
+    FieldFx_InitTaskContext(owner);
+    owner->tasks.used=1; owner->tasks.cursor=owner->tasks.arena+1;
+    int padding=(int)_Alignof(void *)-1;
+    if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState)+padding ||
+       owner->tasks.slots[0].start!=owner->tasks.arena+_Alignof(void *)) return 0;
+    FieldFx_InitTaskContext(owner);
+    table.callbacks[0]=reject_task_allocation;
+    if(FieldFx_SpawnTask(0)!=-1 || owner->tasks.count || owner->tasks.used || owner->tasks.cursor!=owner->tasks.arena ||
+       owner->tasks.slots[0].id!=0xffff) return 0;
+    for(unsigned byte=0;byte<sizeof(storage.guard);++byte) if(storage.guard[byte]!=0xa5) return 0;
+    g_FieldFxTaskContext=NULL; g_FieldFxActiveTaskSlot=NULL; g_FieldFxOwner=NULL;
+    puts("Original effect tasks: init, script spawn/wait/stop, update/draw/completion, eight-slot limit, native alignment/wrap and allocation failure passed");
+    return 1;
+}
+
 static int room_actor_view(void)
 {
     FieldActor actor={0}, parent={0};
@@ -523,7 +596,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

@@ -13,8 +13,9 @@ typedef struct RenderMatrixSlot {
     u8 reserved[8];
 } RenderMatrixSlot;
 
-extern RenderMatrixSlot g_ViewMatrixSlot;
+/* Include geom_state.h at the access site once renderer types are complete. */
+#define g_ViewMatrixSlot (*(RenderMatrixSlot *)(void *)&g_GeomScroll.words.viewMatrix)
 /* The old address spelling, still used by fieldfx/geometry.c. */
-extern RenderMatrixSlot D_800BCFA4;
+#define D_800BCFA4 g_ViewMatrixSlot
 
 #endif /* PE1_RENDER_MATRIX_SLOT_H */

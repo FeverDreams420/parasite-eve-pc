@@ -30,6 +30,10 @@
 #include "pe1/room_fx.h"
 #include "pe1/scene_assets.h"
 
+/* Active owner of the original task engine. */
+FieldFxObjectPrefix *g_FieldFxOwner;
+int g_FieldFxAltPaletteFlag;
+
 /* Matching debt: three transfer-pins per function, plus five empty
  * pointer/memory barriers across this TU. Matrix loads are C; each GTE
  * instruction and hazard nop uses its individual macro. */
@@ -437,7 +441,7 @@ void FieldFx_LoadRotatedClutRow(int arg0, int arg1, u16 *pixels) {
     do {
         source_offset = (u16)i * 2;
         i++;
-        dst[(arg1 % 15) + 1] = *(u16 *)(source_offset + (int)pixels);
+        dst[(arg1 % 15) + 1] = pixels[source_offset / sizeof(*pixels)];
         arg1++;
     } while ((unsigned int)(u16)i < 0x10U);
 
@@ -2122,38 +2126,46 @@ int FieldFx_GetOwnerProgress(void) {
 
 int FieldFx_SpawnTask(int id)
 {
-    /* Reused for the callback's additional payload size after the slot scan. */
-    int result;
     FieldFxTaskContext *ctx = g_FieldFxTaskContext;
+    if (!ctx || !ctx->table || id < 0 || id >= 8 || !ctx->table->callbacks[id]) return -1;
     FieldFxTaskSlot *slot = ctx->slots;
-    int size;
-    char *payload;
-    for (result = 0; result < 8; result++, slot++) {
-        if (slot->id == 0xFFFF)
-            break;
+    unsigned index;
+    for (index = 0; index < 8; ++index, ++slot)
+        if (slot->id == 0xFFFF) break;
+    if (index == 8) return -1;
+    size_t alignment = _Alignof(void *);
+    size_t size = ((size_t)ctx->table->sizes[id] + alignment - 1) / alignment * alignment;
+    size_t capacity = sizeof(ctx->arena);
+    if (size > capacity || ctx->used > capacity || ctx->cursor != ctx->arena + ctx->used) return -1;
+    char *previous_cursor = ctx->cursor;
+    u16 previous_used = ctx->used;
+    FieldFxTaskSlot *previous_slot = g_FieldFxActiveTaskSlot;
+    size_t padding = (alignment - (uintptr_t)ctx->cursor % alignment) % alignment;
+    if (size + padding > capacity - ctx->used) {
+        ctx->cursor = ctx->arena;
+        ctx->used = 0;
+        padding = 0;
     }
-    if (result == 8)
-        return -1;
-    ctx->count++;
-    slot->id = id;
+    char *payload = ctx->cursor + padding;
+    ++ctx->count;
+    slot->id = (u16)id;
     slot->age = 0;
-    size = ctx->table->sizes[id];
-    payload = ctx->cursor;
-    ctx->used += size;
-    if (ctx->used > 0x97C) {
-        payload = ctx->arena;
-        ctx->used = size;
-        ctx->cursor = payload;
-    }
-    slot->end = payload + size;
     slot->start = payload;
+    slot->end = payload + size;
+    ctx->used += (u16)(padding + size);
     g_FieldFxActiveTaskSlot = slot;
-    result = ctx->table->callbacks[slot->id](0, payload, ctx->argument);
-    if (!result)
-        slot->end = 0;
-    ctx->cursor += size + result;
-    ctx->used += result;
-    return size + result;
+    int extra = ctx->table->callbacks[id](0, payload, ctx->argument);
+    if (extra < 0 || (size_t)extra > capacity - ctx->used) {
+        slot->id = 0xFFFF; slot->start = slot->end = NULL;
+        --ctx->count;
+        ctx->cursor = previous_cursor; ctx->used = previous_used;
+        g_FieldFxActiveTaskSlot = previous_slot;
+        return -1;
+    }
+    if (!extra) slot->end = NULL;
+    ctx->cursor = payload + size + extra;
+    ctx->used += (u16)extra;
+    return (int)(padding + size + extra);
 }
 
 /* Runs the owner's task script until it yields, then steps every live task.
@@ -2305,6 +2317,7 @@ int FieldFx_InitTaskContext(FieldFxTaskOwner *owner)
         slot->id = 0xFFFF;
         slot->age = 0;
         slot->start = 0;
+        slot->end = 0;
     }
 
     return 0;

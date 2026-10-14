@@ -2915,3 +2915,39 @@ PsyZ/SDL archives are not. Full generic task spawning, arena wrapping/capacity,
 program-table relocation, script execution and remaining effect callback
 signatures still require integration and verification before enabling room
 handlers. The complete game and elimination of pc/ remain unfinished.
+
+
+### Compile original effect geometry and execute the real task cycle
+
+The entire original fieldfx/geometry.c now compiles in parasite-eve-original;
+no functions were extracted or files added. Replaced incompatible legacy libc
+declarations with native standard declarations and removed pointer truncation
+in the palette lookup. The task spawner retains the eight-slot scan and ring
+wrap policy with native payload alignment, validates IDs/table callbacks and
+capacity, and releases the selected slot/restores cursor bookkeeping when
+initialization fails. Callback-list construction rejects insufficient remaining
+space in the current task arena before writes. Task initialization clears both
+start/end pointers while retaining its bound program.
+
+Fixed the view-matrix alias: g_ViewMatrixSlot and its D_800BCFA4 spelling refer
+to the canonical g_GeomScroll matrix pointer, not separate fixture variables.
+The historical flags base BCF88 and matrix BCFA4 differ by 1C, matching the
+original scroll record. Removed duplicate matrix fixture storage and the actor
+fixture's separate scroll record; that fixture links the whole original camera
+module. Existing mirror code imports the complete geometry state for access.
+
+The existing actor fixture executes actual InitTaskContext, SpawnTask,
+UpdateTasks and DrawTasks with observing callbacks: script variable assignment,
+spawn, timer wait and stop, update/draw ages, completion, eight-slot exhaustion,
+invalid IDs, oversize payload, native alignment, arena wrap and failed callback
+allocation rollback. Guards outside the owner storage remain intact. No
+replacement effect gameplay is used in production.
+
+Full build and four CTests pass with Disc 1 required: actor-animation, camera,
+entity-texture-assets and shadow. Fresh ASan/UBSan/function actor-fixture
+validation passes with the original task engine, helpers and camera sources
+instrumented; PsyZ/SDL archives are not. These tests do not execute GPU drawing
+primitives in geometry.c. Its PS1 packet layouts/linking, script opcode 3
+address semantics, complete effect callback signatures and native program-table
+bindings still require work. No new room effect handlers were enabled. Full
+gameplay and elimination of the remaining pc/ runtime remain incomplete.

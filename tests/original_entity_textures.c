@@ -56,7 +56,6 @@ int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int
 _Alignas(u32) u8 g_SceneSectorDirectory[4 + 2 * (PE_USA_AUDIO_BANKS + 1)];
 SceneRoomSectorRange g_RoomSectorTable[PE_USA_ROOM_SLOTS];
 AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
-RenderMatrixSlot g_ViewMatrixSlot;
 static u32 image_word(const u8 *p)
 {
     return (u32)p[0] | (u32)p[1] << 8 | (u32)p[2] << 16 | (u32)p[3] << 24;

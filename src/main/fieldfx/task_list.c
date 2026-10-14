@@ -52,6 +52,13 @@ int FieldFx_InitCallbackList(char *out, int stride, int count, FieldFxTaskCallba
     native_stride = (native_stride + alignment - 1) / alignment * alignment;
     if (native_stride > INT_MAX || (size_t)count > (INT_MAX - sizeof(FieldFxCallbackList)) / native_stride)
         return -1;
+    size_t bytes = sizeof(FieldFxCallbackList) + native_stride * (size_t)count;
+    if (g_FieldFxTaskContext) {
+        uintptr_t begin = (uintptr_t)g_FieldFxTaskContext->arena;
+        uintptr_t end = begin + sizeof(g_FieldFxTaskContext->arena);
+        uintptr_t address = (uintptr_t)out;
+        if (address >= begin && address <= end && bytes > end - address) return -1;
+    }
     FieldFxCallbackList *list = (FieldFxCallbackList *)out;
     list->callback = callback;
     list->stride = (int)native_stride;
@@ -59,7 +66,7 @@ int FieldFx_InitCallbackList(char *out, int stride, int count, FieldFxTaskCallba
     char *entry = (char *)list->entries;
     for (int i = 0; i < count; ++i, entry += native_stride)
         ((FieldFxCallbackListEntry *)entry)->active = 0;
-    return (int)(sizeof(FieldFxCallbackList) + native_stride * (size_t)count);
+    return (int)bytes;
 }
 
 int FieldFx_AllocCallbackList(void *out, int offset, int stride, int count,

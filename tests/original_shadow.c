@@ -6,7 +6,6 @@
 #include "pe1/gte.h"
 #include "pe1/geom_state.h"
 #include "pe1/game_state.h"
-RenderMatrixSlot g_ViewMatrixSlot;
 GeomScrollRecord g_GeomScroll;
 int Render_ScrollEntries(void);
 int Render_StartFadeIn(int frames);

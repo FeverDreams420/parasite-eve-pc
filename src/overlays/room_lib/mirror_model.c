@@ -1,3 +1,4 @@
+#include "pe1/geom_state.h"
 /*
  * The mirror room controller: seven script handlers (three of them empty)
  * that find an actor by kind, bind a mirror model to it across a guide

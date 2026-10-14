@@ -88,6 +88,6 @@ int RoomEffect_GlowOrbSetup(void *object);
 int FieldFx_IsPointInSpriteQuad(GteShortVector *point, GteMatrix *matrix);
 int FieldFx_GetStatus(void *object);
 int *FieldFx_RegPtr(int index);
-int *FieldFx_VarPtr(int index);
+intptr_t *FieldFx_VarPtr(int index);
 
 #endif

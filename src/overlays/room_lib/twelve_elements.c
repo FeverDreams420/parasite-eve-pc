@@ -105,7 +105,7 @@ typedef struct RoomTwelveEffectStack {
     RoomSpriteMatrix localMatrix;
 } RoomTwelveEffectStack;
 
-int *FieldFx_VarPtr(int index);
+intptr_t *FieldFx_VarPtr(int index);
 int FieldFx_PlaySoundAtMatrixPosition(void *object, int message, void *state);
 
 /* Retail marks this function handwritten; only its COP2 windows remain ASM. */

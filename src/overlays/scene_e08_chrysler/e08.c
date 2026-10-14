@@ -1054,7 +1054,7 @@ void Battle_InitEntityColors(void);
 int FieldFx_GetStatus(void *arg0);
 
 void SceneE08_UpdateSlotsContext(SceneGrabHead *arg0, RoomFxControl *arg1) {
-    int *status;
+    intptr_t *status;
     int *flags;
     int *objectFlags;
 

@@ -80,7 +80,7 @@ void GlowEffect_PlantScript(PmSlotHeader *object) {
 }
 
 int GlowEffect_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
-    FieldFx_Spawn6((intptr_t)a, b, c, (int)d, (int)e, (int)f);
+    FieldFx_Spawn6((intptr_t)a, b, c, d, (int)e, (int)f);
     return 0;
 }
 int GlowEffect_RegisterDrawList(PmSlotHeader *o) {
@@ -527,7 +527,7 @@ void GlowEffectB_PlantScript(PmSlotHeader *object) {
 }
 
 int GlowEffectB_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
-    FieldFx_Spawn6((intptr_t)a, b, c, (int)d, (int)e, (int)f);
+    FieldFx_Spawn6((intptr_t)a, b, c, d, (int)e, (int)f);
     return 0;
 }
 int GlowEffectB_RegisterDrawList(PmSlotHeader *o) {
@@ -833,7 +833,7 @@ void GlowEffectC_PlantScript(PmSlotHeader *object) {
 
 }
 int GlowEffectC_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
-    FieldFx_Spawn6((intptr_t)a, b, c, (int)d, (int)e, (int)f);
+    FieldFx_Spawn6((intptr_t)a, b, c, d, (int)e, (int)f);
     return 0;
 }
 int GlowEffectC_RegisterDrawList(PmSlotHeader *o) {
@@ -1071,7 +1071,7 @@ void FourLayerGlow_PlantScript(PmSlotHeader *object) {
 }
 
 int FourLayerGlow_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
-    FieldFx_Spawn6((intptr_t)a, b, c, (int)d, (int)e, (int)f);
+    FieldFx_Spawn6((intptr_t)a, b, c, d, (int)e, (int)f);
     return 0;
 }
 

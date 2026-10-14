@@ -43,7 +43,7 @@ extern int g_RoomSpawnLayout[];
 
 int RoomLib_ClassNop0(void);
 int RoomLib_PlantScript(void *object);
-int RoomLib_Spawn6(intptr_t a, int b, int c, int d, int e, int f);
+int RoomLib_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
 int RoomLib_RegisterDrawList(void *o);
 int RoomLib_RegisterPairedTables(void *o);
 int RoomLib_CloseTarget(struct RoomEnt *o);

@@ -1112,8 +1112,8 @@ static int native_effect_spawn_arguments(void)
 {
     struct { FieldFxObject object; u8 guard[16]; } buffer;
     PmSendCallback spawn[]={GlowEffect_Spawn6,GlowEffectB_Spawn6,
-        GlowEffectC_Spawn6,FourLayerGlow_Spawn6};
-    for(unsigned method=0;method<4;++method) for(unsigned index=0;index<9;++index) {
+        GlowEffectC_Spawn6,FourLayerGlow_Spawn6,PointSprite_Spawn6};
+    for(unsigned method=0;method<5;++method) for(unsigned index=0;index<9;++index) {
         memset(&buffer,0xa5,sizeof(buffer));
         FieldFxState expected=buffer.object.state;
         int value=index&1?INT_MIN:INT_MAX;
@@ -1122,12 +1122,17 @@ static int native_effect_spawn_arguments(void)
            memcmp(&expected,&buffer.object.state,sizeof(expected)) ||
            g_FieldFxScriptState!=&buffer.object.state) return 0;
         for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
+        FieldActor target={0}; FieldActor *targets[2]={&target,NULL};
+        if(spawn[method]((PmSlotHeader *)&buffer.object,0,index,(intptr_t)targets,0,0) ||
+           *FieldFx_VarPtr(index)!=(intptr_t)targets) return 0;
+        FieldActor **received=(FieldActor **)*FieldFx_VarPtr(index);
+        if(received[0]!=&target || received[1]!=NULL) return 0;
         FieldFxState saved=buffer.object.state;
         if(FieldFx_Spawn6((intptr_t)&buffer.object,0,-1,42,0,0)!=-1 ||
            FieldFx_Spawn6((intptr_t)&buffer.object,0,9,42,0,0)!=-1 ||
            FieldFx_Spawn6(0,0,0,42,0,0)!=-1 || memcmp(&saved,&buffer.object.state,sizeof(saved))) return 0;
     }
-    puts("Original spawn arguments: four glow entry points, native owner addresses, all variables, signed values and invalid bounds passed");
+    puts("Original spawn arguments: five entry points, native owners/target-list addresses, all variables, signed values and invalid bounds passed");
     return 1;
 }
 

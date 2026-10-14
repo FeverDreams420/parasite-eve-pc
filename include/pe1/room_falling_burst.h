@@ -109,6 +109,6 @@ extern RoomFxSpritePacket g_RoomFallingBurstPulse;
 extern RoomFxSpritePacket g_RoomFallingBurstParticle;
 
 int *FieldFx_RegPtr(int index);
-int *FieldFx_VarPtr(int index);
+intptr_t *FieldFx_VarPtr(int index);
 
 #endif

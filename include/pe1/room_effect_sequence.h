@@ -27,7 +27,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEffectSequenceSprite, depth) == 0xA, effect_s
 extern RoomEffectSequenceSprite g_EffectSequenceGlowSprite, g_EffectSequenceGlowSpriteSecondary, g_EffectSequenceFinalGlowSprite, g_EffectSequenceSparkleSprite;
 extern void *g_EffectSequenceModel;
 
-extern int *FieldFx_VarPtr(int index);
+extern intptr_t *FieldFx_VarPtr(int index);
 extern int *FieldFx_RegPtr(int index);
 /* The two colour ramps the variant glows fade through (FieldFx_InterpolateColorRamp
  * records r, g, b, duration): lime for resource selector -1, amber otherwise. */

@@ -92,7 +92,7 @@ void PointSprite_PlantScript(PmSlotHeader *object) {
 }
 
 int PointSprite_Spawn6(PmSlotHeader *a, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
-    FieldFx_Spawn6((intptr_t)a, b, c, (int)d, (int)e, (int)f);
+    FieldFx_Spawn6((intptr_t)a, b, c, d, (int)e, (int)f);
     return 0;
 }
 
@@ -586,7 +586,7 @@ int BurstEffect_PlantScript(char *object)
     return 0;
 }
 
-int BurstEffect_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
+int BurstEffect_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f) {
     FieldFx_Spawn6(a, b, c, d, e, f);
     return 0;
 }
@@ -907,7 +907,7 @@ int BurstEffectB_PlantScript(char *object) {
     return 0;
 }
 
-int BurstEffectB_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
+int BurstEffectB_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f) {
     FieldFx_Spawn6(a, b, c, d, e, f);
     return 0;
 }
@@ -1147,7 +1147,7 @@ int BurstEffectC_PlantScript(char *object) {
     return 0;
 }
 
-int BurstEffectC_Spawn6(intptr_t a, int b, int c, int d, int e, int f) {
+int BurstEffectC_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f) {
     FieldFx_Spawn6(a, b, c, d, e, f);
     return 0;
 }

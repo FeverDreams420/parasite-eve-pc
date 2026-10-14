@@ -49,7 +49,7 @@ extern int g_RoomOrbitSetSpawnLayout[];
 
 int RoomEffect_OrbitSetNop0(void);
 int RoomEffect_OrbitSetPlantScript(void *object);
-int RoomEffect_OrbitSetSpawn6(intptr_t a, int b, int c, int d, int e, int f);
+int RoomEffect_OrbitSetSpawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
 int RoomEffect_OrbitSetRegister(void *o);
 int RoomEffect_OrbitSetStart(void *o);
 int RoomEffect_OrbitSetClose(struct RoomEnt *o);

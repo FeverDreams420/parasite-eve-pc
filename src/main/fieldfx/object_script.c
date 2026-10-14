@@ -253,7 +253,7 @@ int FieldFx_RunScript(FieldFxObject *obj, FieldFxHandler *handlers, u16 *sizes) 
     return result;
 }
 
-int FieldFx_Spawn6(intptr_t owner, int unused, int index, int value, int unused4, int unused5) {
+int FieldFx_Spawn6(intptr_t owner, int unused, int index, intptr_t value, int unused4, int unused5) {
     FieldFxObject *obj = (FieldFxObject *)owner;
     if (!obj || index < 0 || index >= 9) return -1;
     FieldFxState *state = &obj->state;
@@ -267,7 +267,7 @@ int *FieldFx_RegPtr(int index) {
     return &g_FieldFxScriptState->regs[index];
 }
 
-int *FieldFx_VarPtr(int index) {
+intptr_t *FieldFx_VarPtr(int index) {
     return &g_FieldFxScriptState->vars[index];
 }
 

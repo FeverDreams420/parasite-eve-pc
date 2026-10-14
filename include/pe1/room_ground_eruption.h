@@ -136,13 +136,13 @@ extern int g_RoomEruptionSpawnLayout[];
 
 int RoomEffect_GroundEruptionNop0(void);
 int RoomEffect_GroundEruptionPlantScript(void *object);
-int RoomEffect_GroundEruptionSpawn6(intptr_t a, int b, int c, int d, int e, int f);
+int RoomEffect_GroundEruptionSpawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
 int RoomEffect_GroundEruptionRegister(void *o);
 int RoomEffect_GroundEruptionStart(void *o);
 int RoomEffect_GroundEruptionRelease(struct RoomEnt *o);
 int RoomEffect_GroundEruptionNop6(void);
 
-int *FieldFx_VarPtr(int index);
+intptr_t *FieldFx_VarPtr(int index);
 int FieldFx_PlaySoundAtMatrixPosition(void *object, int message, void *state);
 void FieldFx_BuildRingGeometry(void *params);
 

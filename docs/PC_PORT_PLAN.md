@@ -3390,3 +3390,23 @@ PsyZ/SDL archives uninstrumented. Other burst classes/audio-state routing,
 texture residency, scene descriptors, live inputs, GPU effect pixels, full
 gameplay and removal of pc/ remain incomplete. No new files, wrapper handlers
 or extracted functions.
+
+
+Burst target lists reveal that the original effect variable file holds both
+scalar words and addresses: three target initializers dereference VarPtr(1) as
+FieldActor**. FieldFxState.vars and VarPtr now use intptr_t, and Spawn6's value
+argument carries a native word. Existing normalized class methods no longer
+narrow that value before storing it. Matching room/module declarations and the
+common spawn macro were updated in place, including the two consumers that
+retain a variable-file pointer. Numeric registers remain the original int
+file; their existing script operations have not been redesigned.
+The existing spawn fixture now checks native target-list round trips through
+five real class entry points, dereferences the received list, and verifies all
+nine variable slots with signed numeric extremes. Existing authored cycles and
+native PM slot-capacity checks still pass. Full build and five related CTests
+pass with Disc 1 required, plus fresh actor ASan/UBSan/function with original
+source instrumented and PsyZ/SDL archives uninstrumented. Remaining burst
+callback/class bindings, audio-state alias/routing, all uncompiled room consumers,
+numeric-register pointer transport/arithmetic beyond tested scripts, scene
+integration, full gameplay and removal of pc/ remain incomplete. No new files
+or extracted functions.

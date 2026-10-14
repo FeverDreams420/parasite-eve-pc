@@ -112,7 +112,7 @@ typedef struct {
 } Ovl178MotionState;
 
 s32 *FieldFx_RegPtr(int index);
-s32 *FieldFx_VarPtr(int index);
+intptr_t *FieldFx_VarPtr(int index);
 extern s16 g_SceneE08LimbBeamUnusedAngles[];
 extern u16 g_SceneE08LimbBeamAngles[];
 extern s32 g_SceneE08CentreX;

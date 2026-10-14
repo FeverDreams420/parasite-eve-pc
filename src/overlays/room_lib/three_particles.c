@@ -191,7 +191,7 @@ void RoomLib_InitThreeTransformParticles(void *owner, void *unused,
     RoomSpriteMatrix *projectionMatrix;
     int parameterIndex;
     RoomDebrisClock *clockResult;
-    int *value;
+    intptr_t *value;
     RoomDebrisTriplet *particles;
     int randomValue;
 

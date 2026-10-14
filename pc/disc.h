@@ -14,13 +14,15 @@ typedef struct PeDiscFile {
 typedef struct PeDisc {
     FILE *stream;
     uint64_t image_size;
+    uint64_t track_offset;
     uint32_t sector_size;
     uint32_t payload_offset;
     PeDiscFile root;
     char error[192];
 } PeDisc;
 
-/* Read-only ISO9660 access to a 2048-byte ISO or MODE2/2352 BIN. */
+/* Read-only ISO9660 access to ISO, MODE2/2352 BIN or a single-track CUE.
+ * CUE FILE paths are relative to the descriptor, INDEX 01 sets sector zero. */
 int pe_disc_open(PeDisc *disc, const char *path);
 void pe_disc_close(PeDisc *disc);
 int pe_disc_find(PeDisc *disc, const char *path, PeDiscFile *file);

@@ -206,18 +206,13 @@ static int play_intro(BootPlayer *player) {
     return 1;
 }
 
-static int run_boot(const char *disc_path, int menu, int skip_intro) {
-    PeDisc disc;
+static int run_boot(PeDisc *disc, int menu, int skip_intro) {
     BootPlayer player = {0};
     int result = 1;
-    if (!pe_disc_open(&disc, disc_path)) {
-        fprintf(stderr, "%s\n", disc.error);
-        return 1;
-    }
-    player.disc = &disc;
+    player.disc = disc;
     player.capture = getenv("PE_INTRO_CAPTURE");
-    if (!pe_disc_find(&disc, "FMV1/FMV001.STR", &player.file)) {
-        fprintf(stderr, "%s\n", disc.error);
+    if (!pe_disc_find(disc, "FMV1/FMV001.STR", &player.file)) {
+        fprintf(stderr, "%s\n", disc->error);
         goto close_disc;
     }
     if (!pe_runtime_prepare()) {
@@ -267,7 +262,7 @@ close_player:
         SDL_DestroyAudioStream(player.audio);
         player.audio = NULL;
         char menu_error[256] = {0};
-        int action = pe_title_menu(&disc, player.renderer, menu_error, sizeof(menu_error));
+        int action = pe_title_menu(disc, player.renderer, menu_error, sizeof(menu_error));
         if (action < 0) {
             fprintf(stderr, "%s\n", menu_error);
             result = 1;
@@ -285,15 +280,29 @@ close_player:
     SDL_DestroyWindow(player.window);
     SDL_Quit();
 close_disc:
-    pe_disc_close(&disc);
     pe_runtime_emit("boot.stopped", result);
     return result;
 }
 
+static int open_boot(const char *path, int menu, int skip_intro) {
+    PeDisc disc;
+    if (!pe_disc_open(&disc, path)) {
+        fprintf(stderr, "%s\n", disc.error);
+        return 1;
+    }
+    int result = run_boot(&disc, menu, skip_intro);
+    pe_disc_close(&disc);
+    return result;
+}
+
 int pe_boot_intro(const char *disc_path) {
-    return run_boot(disc_path, 0, 0);
+    return open_boot(disc_path, 0, 0);
 }
 
 int pe_boot_game(const char *disc_path, int skip_intro) {
-    return run_boot(disc_path, 1, skip_intro);
+    return open_boot(disc_path, 1, skip_intro);
+}
+
+int pe_boot_game_source(PeDisc *disc, int skip_intro) {
+    return run_boot(disc, 1, skip_intro);
 }

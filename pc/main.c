@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "disc.h"
+#include "assets.h"
 #include "movie.h"
 #include "boot.h"
 #include "automation.h"
@@ -88,9 +89,20 @@ int main(int argc, char **argv) {
     if (argc == 1) {
         const char *disc_path = getenv("PE_DISC_IMAGE");
         if (disc_path && *disc_path) return pe_runtime_finish(pe_boot_game(disc_path, 0));
-        fprintf(stderr, "Usage: %s --disc <Disc 1.bin>\n"
-                        "Or set PE_DISC_IMAGE to your MODE2/2352 BIN.\n", argv[0]);
+        fprintf(stderr, "Usage: %s --discs <Disc 1.cue> <Disc 2.cue>\n"
+                        "Boot diagnostics: --disc <Disc 1.cue/bin> or PE_DISC_IMAGE.\n", argv[0]);
         return 1;
+    }
+    if (argc == 4 && strcmp(argv[1], "--discs") == 0) {
+        PeAssets assets;
+        if (!pe_assets_open(&assets, argv[2], argv[3])) {
+            fprintf(stderr, "%s\n", assets.error);
+            return pe_runtime_finish(1);
+        }
+        pe_runtime_emit("assets.mounted", 2);
+        int result = pe_boot_game_source(&assets.discs[0], 0);
+        pe_assets_close(&assets);
+        return pe_runtime_finish(result);
     }
     if (argc == 3 && strcmp(argv[1], "--disc") == 0)
         return pe_runtime_finish(pe_boot_game(argv[2], 0));
@@ -137,7 +149,7 @@ int main(int argc, char **argv) {
         return 0;
     }
     if (argc != 2 || strcmp(argv[1], "--smoke-test") != 0) {
-        fprintf(stderr, "Unknown arguments. Use --disc <Disc 1.bin> or --smoke-test.\n");
+        fprintf(stderr, "Unknown arguments. Use --discs <Disc 1.cue> <Disc 2.cue>, --disc <Disc 1.cue/bin> or --smoke-test.\n");
         return 1;
     }
     if (pe_runtime_headless()) {

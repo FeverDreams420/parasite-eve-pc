@@ -21,7 +21,7 @@ Punkt wyjściowy audytu: commit `83aa1c5f8`, 14 października 2026. Poniższy st
 
 Założenie wydania 1.0: wersja USA obu dysków, zachowanie oryginalnej gry i pełna zawartość odblokowywana w normalnej rozgrywce. Windows x64 jest głównym celem wydania; macOS arm64/x64 i Linux x64 są pełnoprawnymi celami desktopowymi. Ich minimalne wersje systemów, GPU i konfiguracje audio ustalamy i zapisujemy w WP00. Wersje JP/PAL, mobile i web mają odrębne katalogi wymagań; nie deklarujemy ich działania na podstawie testów wersji USA.
 
-Obecne CLI bootu nadal przyjmuje jeden BIN pierwszego dysku. Wymóg obu CUE/BIN i wspólnego katalogu jest zmianą planowaną w WP02/PR04, nie funkcją już wdrożoną. Własny fork udostępnia hi-res, ale integracja hi-res z pełnym rendererem Parasite Eve wymaga WP03.
+CLI `--discs <Disc 1.cue/bin> <Disc 2.cue/bin>` montuje oba źródła przez cały boot; diagnostyczne `--disc` nadal przyjmuje jedno. `pc/assets.c` zachowuje pochodzenie i pozwala czytać oba źródła bez zmiany płyty, a `disc.c` obsługuje jednotrackowy CUE BINARY MODE2/2352 z relatywną ścieżką FILE i offsetem INDEX 01. Testy syntetyczne potwierdzają kolizje nazw, odczyty naprzemienne, offset pregapu i błędy otwierania; rzeczywisty CUE Disc 1 przechodzi testy bootu. Weryfikacja ról/wersji pary, pełny katalog i rzeczywiste dane Disc 2 pozostają do sprawdzenia w WP02/PR04. Własny fork udostępnia hi-res, ale integracja hi-res z pełnym rendererem Parasite Eve wymaga WP03.
 
 Materiały gry pozostają lokalne/prywatne. Publiczne repo i paczka zawierają kod oraz wygenerowane syntetyczne fixture’y, bez obrazów dysków i wyodrębnionych zasobów.
 

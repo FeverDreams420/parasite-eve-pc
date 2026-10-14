@@ -35,7 +35,7 @@ static int read_image(PeDisc *disc, uint64_t offset, void *data, size_t size) {
 }
 
 static int sector_payload(PeDisc *disc, uint32_t sector, void *data) {
-    return read_image(disc, (uint64_t)sector * disc->sector_size +
+    return read_image(disc, disc->track_offset + (uint64_t)sector * disc->sector_size +
                       disc->payload_offset, data, 2048);
 }
 
@@ -50,14 +50,91 @@ static int decode_record(PeDisc *disc, const unsigned char *record,
     file->size = le32(record + 10);
     file->directory = (record[25] & 2) != 0;
     uint64_t end = (uint64_t)file->sector + ((uint64_t)file->size + 2047) / 2048;
-    if (end > disc->image_size / disc->sector_size)
+    if (end > (disc->image_size - disc->track_offset) / disc->sector_size)
         return fail(disc, "ISO9660 file extent exceeds the disc image");
+    return 1;
+}
+
+/* Deliberately reject layouts we cannot interpret instead of silently reading
+ * the wrong track. The USA game uses one MODE2/2352 data track per disc. */
+static int cue_image(PeDisc *disc, const char *path, char *image, size_t capacity) {
+    FILE *cue = fopen(path, "rb");
+    if (!cue) return fail(disc, "Cannot open CUE: %s", path);
+    char line[4096], filename[4096] = {0};
+    int have_file = 0, have_track = 0, have_index = 0, valid = 1;
+    while (valid && fgets(line, sizeof(line), cue)) {
+        if (!strchr(line, '\n') && !feof(cue)) { valid = 0; break; }
+        char *p = line;
+        while (isspace((unsigned char)*p)) ++p;
+        char extra;
+        if (!*p || strncmp(p, "REM ", 4) == 0) continue;
+        if (strncmp(p, "FILE ", 5) == 0) {
+            p += 5;
+            while (isspace((unsigned char)*p)) ++p;
+            char *start = p;
+            if (*p == '"') { start = ++p; while (*p && *p != '"') ++p; }
+            else while (*p && !isspace((unsigned char)*p)) ++p;
+            size_t length = (size_t)(p - start);
+            if (!length || length >= sizeof(filename) || have_file || have_track) {
+                valid = 0; break;
+            }
+            memcpy(filename, start, length);
+            filename[length] = 0;
+            if (*p == '"') ++p;
+            char type[16];
+            if (sscanf(p, " %15s %c", type, &extra) != 1 || strcmp(type, "BINARY"))
+                valid = 0;
+            have_file = 1;
+        } else if (strncmp(p, "TRACK ", 6) == 0) {
+            unsigned number; char mode[32];
+            if (!have_file || have_track ||
+                sscanf(p + 6, "%2u %31s %c", &number, mode, &extra) != 2 ||
+                number != 1 || strcmp(mode, "MODE2/2352")) valid = 0;
+            have_track = 1;
+        } else if (strncmp(p, "INDEX ", 6) == 0) {
+            unsigned index, minutes, seconds, frames;
+            if (!have_track || sscanf(p + 6, "%2u %2u:%2u:%2u %c", &index,
+                    &minutes, &seconds, &frames, &extra) != 4 ||
+                minutes > 99 || seconds >= 60 || frames >= 75 || index > 1 || have_index) {
+                valid = 0; break;
+            }
+            if (index == 1) {
+                disc->track_offset = ((uint64_t)minutes * 60 * 75 +
+                                      seconds * 75 + frames) * 2352;
+                have_index = 1;
+            }
+        } else valid = 0;
+    }
+    if (ferror(cue)) valid = 0;
+    fclose(cue);
+    if (!valid || !have_file || !have_track || !have_index)
+        return fail(disc, "Expected single-track BINARY MODE2/2352 CUE with INDEX 01");
+    size_t prefix = 0;
+    if (filename[0] != '/' && filename[0] != '\\' &&
+        !(isalpha((unsigned char)filename[0]) && filename[1] == ':')) {
+        for (const char *p = path; *p; ++p)
+            if (*p == '/' || *p == '\\') prefix = (size_t)(p - path + 1);
+    }
+    if (prefix + strlen(filename) + 1 > capacity)
+        return fail(disc, "CUE image path is too long");
+    memcpy(image, path, prefix);
+    strcpy(image + prefix, filename);
     return 1;
 }
 
 int pe_disc_open(PeDisc *disc, const char *path) {
     unsigned char sector[2048];
     memset(disc, 0, sizeof(*disc));
+    char image_path[8192];
+    size_t length = strlen(path);
+    int cue = length >= 4 && path[length - 4] == '.' &&
+              tolower((unsigned char)path[length - 3]) == 'c' &&
+              tolower((unsigned char)path[length - 2]) == 'u' &&
+              tolower((unsigned char)path[length - 1]) == 'e';
+    if (cue) {
+        if (!cue_image(disc, path, image_path, sizeof(image_path))) return 0;
+        path = image_path;
+    }
     disc->stream = fopen(path, "rb");
     if (!disc->stream) return fail(disc, "Cannot open disc image: %s", path);
     if (pe_seek(disc->stream, 0, SEEK_END) != 0 || pe_tell(disc->stream) < 0) {
@@ -65,8 +142,12 @@ int pe_disc_open(PeDisc *disc, const char *path) {
         return fail(disc, "Cannot measure disc image");
     }
     disc->image_size = (uint64_t)pe_tell(disc->stream);
+    if (disc->track_offset > disc->image_size) {
+        pe_disc_close(disc);
+        return fail(disc, "CUE INDEX 01 exceeds the disc image");
+    }
     const uint32_t sizes[] = {2352, 2048};
-    for (unsigned kind = 0; kind < 2; ++kind) {
+    for (unsigned kind = 0; kind < (cue ? 1u : 2u); ++kind) {
         disc->sector_size = sizes[kind];
         disc->payload_offset = kind == 0 ? 24 : 0;
         if (!sector_payload(disc, 16, sector)) continue;
@@ -163,5 +244,6 @@ int pe_disc_read_raw(PeDisc *disc, const PeDiscFile *file, uint32_t sector,
         return fail(disc, "Movie audio requires a raw MODE2/2352 disc image");
     if (sector >= ((uint64_t)file->size + 2047) / 2048)
         return fail(disc, "Raw sector exceeds the file extent");
-    return read_image(disc, ((uint64_t)file->sector + sector) * 2352, data, 2352);
+    return read_image(disc, disc->track_offset +
+                      ((uint64_t)file->sector + sector) * 2352, data, 2352);
 }

@@ -1,4 +1,5 @@
 #include "disc.h"
+#include "assets.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -89,11 +90,101 @@ static void test_image(int raw) {
     CHECK(remove(name) == 0);
 }
 
+static void test_assets(void) {
+    make_image("pe-source1.bin", 1);
+    make_image("pe-source2.bin", 1);
+    FILE *image = fopen("pe-source2.bin", "r+b");
+    CHECK(image);
+    CHECK(fseek(image, 20 * 2352 + 24, SEEK_SET) == 0);
+    CHECK(fputc(42, image) != EOF);
+    CHECK(fclose(image) == 0);
+    PeAssets assets;
+    CHECK(pe_assets_open(&assets, "pe-source1.bin", "pe-source2.bin"));
+    PeAssetFile files[2];
+    unsigned char bytes[2352];
+    for (unsigned source = 0; source < 2; ++source) {
+        CHECK(pe_assets_find(&assets, source, "FMV1/INTRO.STR", &files[source]));
+        CHECK(files[source].source == source);
+    }
+    for (unsigned pass = 0; pass < 10; ++pass) {
+        for (unsigned source = 0; source < 2; ++source) {
+            CHECK(pe_assets_read(&assets, &files[source], 0, bytes, 1));
+            CHECK(bytes[0] == (source ? 42 : 0));
+            CHECK(pe_assets_read_raw(&assets, &files[source], 0, bytes));
+            CHECK(bytes[24] == (source ? 42 : 0));
+        }
+    }
+    CHECK(!pe_assets_find(&assets, 2, "FMV1/INTRO.STR", &files[0]));
+    CHECK(!pe_assets_read(&assets, &files[1], 3000, bytes, 1));
+    CHECK(strstr(assets.error, "Disc 2"));
+    pe_assets_close(&assets);
+    CHECK(!pe_assets_read(&assets, &files[1], 0, bytes, 1));
+    CHECK(!pe_assets_open(&assets, "pe-source1.bin", NULL));
+    CHECK(!assets.discs[0].stream && !assets.discs[1].stream);
+    CHECK(!pe_assets_open(&assets, "pe-source1.bin", "missing-source.bin"));
+    CHECK(!assets.discs[0].stream && !assets.discs[1].stream);
+    CHECK(strstr(assets.error, "Disc 2"));
+    CHECK(remove("pe-source1.bin") == 0);
+    CHECK(remove("pe-source2.bin") == 0);
+}
+
+static void write_cue(const char *text) {
+    FILE *cue = fopen("pe-disc-test.cue", "wb");
+    CHECK(cue);
+    CHECK(fputs(text, cue) >= 0);
+    CHECK(fclose(cue) == 0);
+}
+
+static void test_cue(void) {
+    make_image("pe cue image.bin", 1);
+    /* A stored pregap must offset both ISO reads and raw movie sectors. */
+    FILE *input = fopen("pe cue image.bin", "rb");
+    FILE *output = fopen("pe shifted image.bin", "wb");
+    CHECK(input && output);
+    unsigned char bytes[2352] = {0};
+    CHECK(fwrite(bytes, 1, sizeof(bytes), output) == sizeof(bytes));
+    while (fread(bytes, 1, sizeof(bytes), input) == sizeof(bytes))
+        CHECK(fwrite(bytes, 1, sizeof(bytes), output) == sizeof(bytes));
+    CHECK(!ferror(input));
+    CHECK(fclose(input) == 0 && fclose(output) == 0);
+    write_cue("REM generated fixture\nFILE \"pe shifted image.bin\" BINARY\n"
+              "  TRACK 01 MODE2/2352\n    INDEX 00 00:00:00\n    INDEX 01 00:00:01\n");
+    PeDisc disc;
+    PeDiscFile file;
+    CHECK(pe_disc_open(&disc, "./pe-disc-test.cue"));
+    CHECK(disc.track_offset == 2352);
+    CHECK(pe_disc_find(&disc, "FMV1/INTRO.STR", &file));
+    CHECK(pe_disc_read(&disc, &file, 2048, bytes, 16));
+    for (unsigned i = 0; i < 16; ++i) CHECK(bytes[i] == i + 7);
+    CHECK(pe_disc_read_raw(&disc, &file, 0, bytes));
+    CHECK(bytes[15] == 2 && bytes[24] == 0 && bytes[25] == 1);
+    pe_disc_close(&disc);
+    const char *bad[] = {
+        "FILE \"pe cue image.bin\" BINARY\nTRACK 01 AUDIO\nINDEX 01 00:00:00\n",
+        "FILE \"pe cue image.bin\" BINARY\nTRACK 01 MODE2/2352\n",
+        "FILE \"pe cue image.bin\" BINARY\nTRACK 01 MODE2/2352\nINDEX 01 00:60:00\n",
+        "FILE \"pe cue image.bin\" BINARY\nTRACK 01 MODE2/2352\nINDEX 01 01:00:00\n",
+        "FILE \"pe cue image.bin\" BINARY\nTRACK 01 MODE2/2352\nINDEX 01 4294967296:00:00\n",
+        "FILE \"pe cue image.bin\" BINARY\nTRACK 01 MODE2/2352\nINDEX 01 00:00:00\nTRACK 02 AUDIO\n",
+        "FILE \"missing cue image.bin\" BINARY\nTRACK 01 MODE2/2352\nINDEX 01 00:00:00\n"
+    };
+    for (unsigned i = 0; i < sizeof(bad) / sizeof(bad[0]); ++i) {
+        write_cue(bad[i]);
+        CHECK(!pe_disc_open(&disc, "pe-disc-test.cue"));
+        CHECK(!disc.stream && disc.error[0]);
+    }
+    CHECK(remove("pe-disc-test.cue") == 0);
+    CHECK(remove("pe cue image.bin") == 0);
+    CHECK(remove("pe shifted image.bin") == 0);
+}
+
 int main(void) {
     test_image(0);
     test_image(1);
+    test_cue();
+    test_assets();
     PeDisc disc;
     CHECK(!pe_disc_open(&disc, "missing-disc-file.bin"));
-    puts("disc: ISO, raw BIN, boundary reads and malformed records passed");
+    puts("disc: ISO, raw BIN, CUE, boundary reads and malformed inputs passed");
     return 0;
 }

@@ -14,7 +14,7 @@ readability and native builds.
 
 The native executable boots through the opening movie to the original title
 screen and main menu. MDEC video and stereo XA audio are decoded directly from
-a user-supplied Disc 1 BIN; menu artwork comes from `PE.IMG`.
+a user-supplied Disc 1 CUE/BIN; menu artwork comes from `PE.IMG`.
 
 Gameplay is not playable yet. The game sources under `src/` are retained for
 porting and are not yet linked into that executable. Remaining MIPS/GTE
@@ -38,6 +38,14 @@ cmake -S . -B build
 cmake --build build --parallel
 ./build/pc/parasite-eve-pc --disc "/path/to/Parasite Eve (Disc 1).bin"
 ```
+
+`--discs "/path/to/Disc 1.cue" "/path/to/Disc 2.cue"` mounts both sources
+throughout boot. `pc/assets.h` keeps source provenance for identically named
+files and allows reads from either image without a disc-swap operation. CUE
+support currently covers a single BINARY MODE2/2352 track, relative quoted
+FILE paths and INDEX 01 offsets. Other layouts fail explicitly. Disc role/version
+validation and the game-wide asset catalog are still pending; this is not yet
+proof of gameplay or correct Disc 2 content. `--disc` remains a boot diagnostic.
 
 Interactive mode requires a graphical session and an audio device; automated
 boot tests can use `--headless`. You can set

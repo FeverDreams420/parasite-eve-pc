@@ -14,7 +14,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
     libavformat libavcodec libavutil libswscale libswresample)
 
-add_executable(parasite-eve-pc main.c disc.c movie.c boot.c title.c automation.c)
+add_executable(parasite-eve-pc main.c disc.c assets.c movie.c boot.c title.c automation.c)
 target_link_libraries(parasite-eve-pc PRIVATE psyz PkgConfig::FFMPEG)
 if(MSVC)
     target_compile_options(parasite-eve-pc PRIVATE /W4)
@@ -32,7 +32,7 @@ psyz_ios_configure_target(parasite-eve-pc
     DISPLAY_NAME "Parasite Eve")
 
 if(BUILD_TESTING)
-    add_executable(test-disc tests/test_disc.c disc.c)
+    add_executable(test-disc tests/test_disc.c disc.c assets.c)
     target_include_directories(test-disc PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME disc-reader COMMAND test-disc)
     add_executable(test-automation tests/test_automation.c automation.c)

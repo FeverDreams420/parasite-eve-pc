@@ -1266,12 +1266,12 @@ int Script_GetAngleToPoint(int **arg0) {
     return 1;
 }
 
-int Script_SnapPosToSpawnPos(void) {
+int Script_SnapPosToSpawnPos(int **unused) {
     FieldActor *actor = g_CurrentEntity;
 
-    actor->pos_x = actor->render_object.hit_cylinder.value0 << 16;
-    actor->pos_y = actor->render_object.hit_cylinder.value1 << 16;
-    actor->pos_z = actor->render_object.hit_cylinder.value2 << 16;
+    actor->pos_x = (s32)((u32)actor->render_object.hit_cylinder.value0 << 16);
+    actor->pos_y = (s32)((u32)actor->render_object.hit_cylinder.value1 << 16);
+    actor->pos_z = (s32)((u32)actor->render_object.hit_cylinder.value2 << 16);
     return 1;
 }
 

@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 71 powiązań: oryginalny opcode 205 kopiuje współrzędne hit-cylinder do pozycji aktora w 16.16. Powiązanie potwierdzono w EXE USA; ABI i przesunięcia wartości ujemnych poprawiono w istniejącej funkcji. Test kolejki odczytuje pozycję przez oryginalny vector query i sprawdza zachowanie base position, prędkości oraz flag. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 70 powiązań: oryginalny opcode 203 zwraca kąt do punktu względem yaw bieżącego aktora. Powiązanie potwierdzono w EXE USA. Test kolejki obejmuje cztery kierunki osiowe i trzy yaw, zachowując wynik 4096 zgodnie z oryginalnymi porównaniami. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 69 powiązań: oryginalne opcode'y 200/201 zdejmują/ustawiają flagę aktora 0x20000. Powiązania potwierdzono w EXE USA; ABI poprawiono w istniejących funkcjach. Test kolejki odczytuje flagi po obu krokach przez oryginalny query opcode i sprawdza zachowanie pozostałych bitów. Nie jest to dowód całego zachowania roam w scenie. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

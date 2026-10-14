@@ -535,6 +535,20 @@ int main(void)
         int angle=directions[direction][2]-yaws[yaw];if(angle<0) angle+=4096;
         if(g_ScriptVariableBank[62]!=(u32)angle || task.current.script!=script+7 || task.flags!=0x10) return 55;
     }
+    {
+        FieldActor owner={.flags=0x80,.base_x=101,.base_y=102,.base_z=103,.motion_x=201,.motion_y=202,.motion_z=203};
+        owner.render_object.hit_cylinder.value0=-7;owner.render_object.hit_cylinder.value1=9;owner.render_object.hit_cylinder.value2=-11;
+        u32 modes=((2u<<3)|(2u<<6)|(2u<<9))<<17;
+        u32 script[]={205,0,12|(4u<<13)|modes,0,0,63,64,65,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[63]!=(u32)(-7*65536) || g_ScriptVariableBank[64]!=9*65536 ||
+           g_ScriptVariableBank[65]!=(u32)(-11*65536) || owner.flags!=0x80 ||
+           owner.base_x!=101 || owner.base_y!=102 || owner.base_z!=103 ||
+           owner.motion_x!=201 || owner.motion_y!=202 || owner.motion_z!=203 ||
+           task.current.script!=script+10 || task.flags!=0x10) return 56;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

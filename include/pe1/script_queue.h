@@ -50,6 +50,7 @@ int Entity_PopCount(int **args);
 int Script_SetMeshFadeLevel(int **args);
 int Script_RotateEntityAngle(int **args);
 int Script_GetAngleToPoint(int **args);
+int Script_SnapPosToSpawnPos(int **unused);
 int Script_SetNodeFlag80(int **unused);
 int Script_ClearEntityRoamFlag(int **unused);
 int Script_SetEntityRoamFlag(int **unused);

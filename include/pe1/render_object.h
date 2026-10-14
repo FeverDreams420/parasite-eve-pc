@@ -665,8 +665,9 @@ extern RenderVec3s g_RenderNormalTable[];
 #define D_800B1640 (g_RenderClutLookupTable + 2)
 #define D_800B1644 (g_RenderClutLookupTable + 3)
 #define D_800A636C ((s32 *)(g_RenderVertexWorkWords + 3))
-extern u8 g_SkinAnchorVector[];
-extern s16 g_SkinAnchorY;
+extern GteShortVector g_SkinAnchor;
+#define g_SkinAnchorVector ((u8 *)&g_SkinAnchor)
+#define g_SkinAnchorY (g_SkinAnchor.y)
 void Render_CopyFrameData(RenderObjectEntity *dst, RenderObjectEntity *src, s32 frame);
 void Render_CopyFrameDataDouble(RenderObjectEntity *dst, RenderObjectEntity *src, s32 frame);
 void Render_UpdateClutTable(RenderObjectEntity *object, s16 force, s16 buffer_index);

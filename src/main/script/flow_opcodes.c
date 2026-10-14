@@ -726,5 +726,5 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [69]=Script_GetAngleToEntity,
     [84]=Entity_GetDistanceComponents, [94]=Entity_GetPositionByType, [97]=Render_CameraTrackRelativeOffset, [118]=Render_CameraStepAngleFade,
     [131]=Script_WaitAnimRange, [146]=Script_PlayEntityAnim,
-    [184]=Script_TurnTowardPointStep
+    [184]=Script_TurnTowardPointStep, [240]=Script_GetPlayerInputFlag
 };

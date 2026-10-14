@@ -261,6 +261,16 @@ int main(void)
            task.next_value!=(selector==3?0:(intptr_t)(entries+4)) ||
            task.current.script!=script+13 || task.flags!=0x10) return 28;
     }
+    for(unsigned flags=0;flags<16;++flags) {
+        FieldActor owner={0};
+        u32 script[]={240|(1u<<13)|(2u<<17),0,35,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        g_FieldMoveLock=(s32)(0x80000000u|flags);g_ScriptVariableBank[35]=0x1234;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[35]!=(flags&1?0u:1u) || (u32)g_FieldMoveLock!=(0x80000000u|flags) ||
+           task.current.script!=script+5 || task.flags!=0x10) return 29;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

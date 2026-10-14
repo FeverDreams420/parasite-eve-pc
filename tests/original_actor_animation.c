@@ -22,6 +22,9 @@
 #include "pe1/fieldfx_state.h"
 #include "pe1/field_effect_modules.h"
 #include "pe1/pm.h"
+#include "pe1/akao/commands.h"
+#include "pe1/akao/queue.h"
+#include "pe1/fieldfx_particle.h"
 #include "pe1/field_tri_test.h"
 #include "pe1/field_collision.h"
 #include "pe1/field_textured_strip.h"
@@ -1108,6 +1111,46 @@ static int authored_glow_script_cycle(void)
     return 1;
 }
 
+static int original_burst_target_selection(void)
+{
+    FieldFxHandler initialize[]={BurstEffect_InitTarget,BurstEffectB_InitTarget,BurstEffectC_InitTarget};
+    FieldActor **selected[]={&g_BurstEffectTarget,&g_BurstEffectBTarget,&g_BurstEffectCTarget};
+    FieldActor actors[2]={0}; FieldActor *targets[]={&actors[0],&actors[1],NULL};
+    unsigned int sound_header[4]={0x4f414b41u,0,0,0};
+    Pe1GameState previous=g_GameState;
+    int previous_page=g_FieldFxLoadedTexturePage;
+    for(unsigned variant=0;variant<3;++variant) for(unsigned gate=0;gate<3;++gate) {
+        FieldFxObject object={0};
+        FieldFx_GetSlot(&object);
+        *FieldFx_VarPtr(1)=(intptr_t)targets;
+        g_GameState.cd_range_read_mode=(u8[]){0,1,255}[gate];
+        g_GameState.scene_object_tables[2]=sound_header;
+        g_FieldFxLoadedTexturePage=0;
+        for(unsigned index=0;index<2;++index) {
+            actors[index].render_object.target_x=0x1234+index;
+            actors[index].render_object.target_y=0xabcd-index;
+            actors[index].render_object.target_z=0x8000+index;
+            g_AkaoMessageQueueCount=0;
+            if(initialize[variant](&object,NULL,NULL) || *selected[variant]!=&actors[index] ||
+               *FieldFx_RegPtr(13)!=(int)index+1 || *FieldFx_RegPtr(14)!=(int)index) return 0;
+            u16 x=variant==0?g_BurstEffectTargetPosition.x:variant==1?g_BurstEffectBTargetPosition.x:g_BurstEffectCTargetPosition.x;
+            u16 y=variant==0?g_BurstEffectTargetPosition.y:variant==1?g_BurstEffectBTargetPosition.y:g_BurstEffectCTargetPosition.y;
+            u16 z=variant==0?g_BurstEffectTargetPosition.z:variant==1?g_BurstEffectBTargetPosition.z:g_BurstEffectCTargetPosition.z;
+            if(x!=(u16)(0x1234+index) || y!=(u16)(0xabcd-index) || z!=(u16)(0x8000+index)) return 0;
+            int expected=variant<2 && gate!=0;
+            if(g_AkaoMessageQueueCount!=expected) return 0;
+            if(expected && (g_AkaoMessageQueue[0].opcode.word!=0x24 ||
+               g_AkaoMessageQueue[0].arg0.sequence!=(u8 *)(sound_header+1) ||
+               g_AkaoMessageQueue[0].arg1!=0 || g_AkaoMessageQueue[0].arg2!=0x80 ||
+               g_AkaoMessageQueue[0].arg3!=0x7f)) return 0;
+        }
+    }
+    g_AkaoMessageQueueCount=0; g_GameState=previous; g_FieldFxLoadedTexturePage=previous_page;
+    g_BurstEffectTarget=g_BurstEffectBTarget=g_BurstEffectCTarget=NULL;
+    puts("Original bursts: native target lists, coordinates, final-target marker and canonical sound gate enqueue through original AKAO passed");
+    return 1;
+}
+
 static int native_effect_spawn_arguments(void)
 {
     struct { FieldFxObject object; u8 guard[16]; } buffer;
@@ -1359,7 +1402,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

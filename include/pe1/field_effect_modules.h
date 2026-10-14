@@ -5,6 +5,7 @@
 #include "pe1/fieldfx_state.h"
 #include "pe1/pm_types.h"
 #include "pe1/gte_types.h"
+#include "pe1/game_state.h"
 
 /* The eight field effect modules the descriptor table at 0x80094188 lists
  * (fieldfx/glow.c .. fieldfx/burst.c). Each module is a class
@@ -25,7 +26,8 @@ extern struct BattleEntity *D_8009D254;
  * burst modules start, the two texture pages the effect engine loads into
  * VRAM (0x380, 0x100), the third resource the task pool hands out with them, and the
  * asset table the task spawner searches. */
-extern void *g_FieldEffectSoundHeader;
+/* Original address 0x800B0E14 is game state +0x13C. */
+#define g_FieldEffectSoundHeader (g_GameState.scene_object_tables[2])
 extern void *g_FieldEffectResource2;
 extern void *g_FieldEffectAssetTable;
 void *FieldFx_GetEffectResource(int index);
@@ -134,6 +136,7 @@ extern FieldFxHandler g_BurstEffectUpdateList[];
 extern u16 g_BurstEffectSlotSizes[];
 extern GteShortVector g_BurstEffectSpriteRotation;
 extern struct FieldActor *g_BurstEffectTarget;
+int BurstEffect_InitTarget(void *object, void *slot, void *data);
 int BurstEffect_ClassNop0(void);
 int BurstEffect_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
 int BurstEffect_RegisterDrawList(void *object);
@@ -148,6 +151,7 @@ extern FieldFxHandler g_BurstEffectBDrawList[];
 extern FieldFxHandler g_BurstEffectBUpdateList[];
 extern u16 g_BurstEffectBSlotSizes[];
 extern struct FieldActor *g_BurstEffectBTarget;
+int BurstEffectB_InitTarget(void *object, void *slot, void *data);
 int BurstEffectB_ClassNop0(void);
 int BurstEffectB_PlantScript(char *object);
 int BurstEffectB_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
@@ -163,6 +167,7 @@ extern FieldFxHandler g_BurstEffectCDrawList[];
 extern FieldFxHandler g_BurstEffectCUpdateList[];
 extern u16 g_BurstEffectCSlotSizes[];
 extern struct FieldActor *g_BurstEffectCTarget;
+int BurstEffectC_InitTarget(void *object, void *slot, void *data);
 int BurstEffectC_ClassNop0(void);
 int BurstEffectC_PlantScript(char *object);
 int BurstEffectC_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);

@@ -13,7 +13,7 @@
 #include "pe1/fieldfx_state.h"
 #include "pe1/fieldfx_task.h"
 #include "pe1/fixed_point.h"
-#include "pe1/game_audio_state.h"
+#include "pe1/game_state.h"
 #include "pe1/gte_types.h"
 #include "pe1/psyq_libc.h"
 #include "pe1/random.h"
@@ -623,7 +623,7 @@ int BurstEffect_ClassNop0(void) {
     return 0;
 }
 
-int BurstEffect_InitTarget(void) {
+int BurstEffect_InitTarget(void *object, void *slot, void *data_unused) {
     int index;
     FieldActor **targets;
     FieldActor *target;
@@ -648,11 +648,12 @@ int BurstEffect_InitTarget(void) {
     g_BurstEffectTargetPosition.y = data->render_object.target_y;
     g_BurstEffectTargetPosition.z = data->render_object.target_z;
 
-    if (g_AkaoRuntimeState.reset_pending != 0) {
+    if (g_GameState.cd_range_read_mode != 0) {
         Akao_Cmd_24(g_FieldEffectSoundHeader, 0, 0x80, 0x7F);
     }
 
     FieldFx_EnsureEffectTexturePage(0);
+    return 0;
 }
 
 int BurstEffect_InitGroundGlow(void *arg0, void *arg1, FieldFxBurstData *anim) {
@@ -944,7 +945,7 @@ int BurstEffectB_ClassNop0(void) {
     return 0;
 }
 
-int BurstEffectB_InitTarget(void) {
+int BurstEffectB_InitTarget(void *object, void *slot, void *data_unused) {
     int index;
     FieldActor **targets;
     FieldActor *target;
@@ -969,11 +970,12 @@ int BurstEffectB_InitTarget(void) {
     g_BurstEffectBTargetPosition.y = data->render_object.target_y;
     g_BurstEffectBTargetPosition.z = data->render_object.target_z;
 
-    if (g_AkaoRuntimeState.reset_pending != 0) {
+    if (g_GameState.cd_range_read_mode != 0) {
         Akao_Cmd_24(g_FieldEffectSoundHeader, 0, 0x80, 0x7F);
     }
 
     FieldFx_EnsureEffectTexturePage(0);
+    return 0;
 }
 
 int BurstEffectB_InitSparkCloud(void *arg0, void *arg1, FieldFxSparkCloud *anim) {
@@ -1184,7 +1186,7 @@ int BurstEffectC_ClassNop0(void) {
     return 0;
 }
 
-int BurstEffectC_InitTarget(void) {
+int BurstEffectC_InitTarget(void *object, void *slot, void *data_unused) {
     int index;
     FieldActor **targets;
     FieldActor *target;
@@ -1210,6 +1212,7 @@ int BurstEffectC_InitTarget(void) {
     g_BurstEffectCTargetPosition.z = data->render_object.target_z;
 
     FieldFx_EnsureEffectTexturePage(0);
+    return 0;
 }
 
 int BurstEffectC_InitTimedSpark(void *arg0, void *arg1, FieldFxTimedSpark *anim) {
@@ -1283,3 +1286,7 @@ FieldFxHandler g_PointSpriteDrawList[7] = {PointSprite_DrawRisingStreak,FieldFx_
 FieldFxHandler g_PointSpriteUpdateList[7] = {PointSprite_UpdateRisingStreak,PointSprite_UpdateRadialParticles,PointSprite_UpdateGroundRing,PointSprite_UpdateBillboardFlash,PointSprite_UpdateScatteredParticles,PointSprite_UpdateOrientedFlash,(FieldFxHandler)(intptr_t)-1};
 u16 g_PointSpriteSlotSizes[7] = {12,294,12,12,200,12,65535};
 PmCommand g_PointSpriteClass = {.init=PointSprite_ClassNop0,.initialize=PointSprite_PlantScript,.send=PointSprite_Spawn6,.start=PointSprite_RegisterDrawList,.execute=PointSprite_RegisterPairedTables,.stop=PointSprite_CloseTarget,.unload=PointSprite_ClassNop6};
+
+FieldActor *g_BurstEffectTarget, *g_BurstEffectBTarget, *g_BurstEffectCTarget;
+FieldFxPointTriple g_BurstEffectTargetPosition;
+FieldFxParticlePosition g_BurstEffectBTargetPosition, g_BurstEffectCTargetPosition;

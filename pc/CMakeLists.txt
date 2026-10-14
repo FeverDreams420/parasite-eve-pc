@@ -14,7 +14,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
     libavformat libavcodec libavutil libswscale libswresample)
 
-add_executable(parasite-eve-pc main.c disc.c assets.c movie.c boot.c title.c automation.c)
+add_executable(parasite-eve-pc main.c disc.c assets.c room.c movie.c boot.c title.c automation.c)
 target_link_libraries(parasite-eve-pc PRIVATE psyz PkgConfig::FFMPEG)
 if(MSVC)
     target_compile_options(parasite-eve-pc PRIVATE /W4)
@@ -32,25 +32,33 @@ psyz_ios_configure_target(parasite-eve-pc
     DISPLAY_NAME "Parasite Eve")
 
 if(BUILD_TESTING)
-    add_executable(test-disc tests/test_disc.c disc.c assets.c)
+    add_executable(test-disc tests/test_disc.c disc.c assets.c room.c)
     target_include_directories(test-disc PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME disc-reader COMMAND test-disc)
+    add_executable(test-room-assets tests/test_room_assets.c room.c disc.c)
+    target_include_directories(test-room-assets PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME room-assets COMMAND test-room-assets)
+    set_tests_properties(room-assets PROPERTIES TIMEOUT 30 SKIP_RETURN_CODE 77)
     add_executable(test-automation tests/test_automation.c automation.c)
     target_include_directories(test-automation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(test-automation PRIVATE SDL3::SDL3)
     add_test(NAME automation COMMAND test-automation)
-    add_executable(test-boot-assets tests/test_boot_assets.c disc.c movie.c title.c boot.c automation.c)
+    add_executable(test-boot-assets tests/test_boot_assets.c disc.c room.c movie.c title.c boot.c automation.c)
     target_include_directories(test-boot-assets PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(test-boot-assets PRIVATE SDL3::SDL3 PkgConfig::FFMPEG)
     add_test(NAME boot-assets COMMAND test-boot-assets)
     add_executable(test-boot-replay tests/test_boot_replay.c
-        disc.c movie.c title.c boot.c automation.c)
+        disc.c room.c movie.c title.c boot.c automation.c)
     target_include_directories(test-boot-replay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(test-boot-replay PRIVATE SDL3::SDL3 PkgConfig::FFMPEG)
     add_test(NAME boot-replay COMMAND test-boot-replay
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/replays/boot-tutorial.replay
         ${CMAKE_CURRENT_BINARY_DIR}/boot-replay.jsonl)
     set_tests_properties(boot-replay PROPERTIES TIMEOUT 10 SKIP_RETURN_CODE 77)
+    add_test(NAME boot-newgame COMMAND test-boot-replay
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/replays/boot-newgame.replay
+        ${CMAKE_CURRENT_BINARY_DIR}/boot-newgame.jsonl)
+    set_tests_properties(boot-newgame PROPERTIES TIMEOUT 10 SKIP_RETURN_CODE 77)
     set_tests_properties(boot-assets PROPERTIES SKIP_RETURN_CODE 77
         ENVIRONMENT "SDL_VIDEODRIVER=dummy;SDL_AUDIODRIVER=dummy" TIMEOUT 15)
 endif()

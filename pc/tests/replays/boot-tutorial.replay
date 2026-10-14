@@ -6,4 +6,6 @@ menu.prompt 0 return
 menu.options 0 down
 menu.options 1 return
 menu.selected 2 assert
+room.loading 353 assert
+room.loaded 353 assert
 boot.stopped 0 assert

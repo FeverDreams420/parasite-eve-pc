@@ -53,10 +53,12 @@ boot tests can use `--headless`. You can set
 variable. Enter/Space skips the intro and opens the title options. Arrows or
 W/S change the selection, Enter confirms, and Escape returns to the title
 prompt. Continue remains disabled until native save support exists. Selecting
-New Game or Tutorial currently exits; their gameplay is not integrated.
+New Game or Tutorial loads the original starting room data (M431 or M353),
+then exits; scene execution and gameplay are not integrated.
 
 `make ci` builds and runs the asset-free disc-reader and automation tests. The
-boot-assets and boot-replay tests skip when no image is supplied. To verify complete movie decoding and
+room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
+is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
 
 ```sh
@@ -126,4 +128,10 @@ will be added with `game_core`; the gameplay port remains incomplete.
 
 For mandatory asset tests, set both `PE_TEST_DISC` and
 `PE_REQUIRE_GAME_ASSETS=1` before running CTest. Missing data then fails rather
-than silently skipping `boot-assets` or `boot-replay`.
+than silently skipping tests that require game assets.
+
+`room-assets` walks all 450 USA Disc 1 room table slots, including the final
+zero slot: 414 contain loadable scratch/texture/room blobs and 36 are empty. It checks directory bounds and
+transactional loading. This does not verify the payload semantics, render
+rooms, execute scripts or prove that maps are playable. The asset-free reader
+test also checks malformed room headers/TIM tables without disc images.

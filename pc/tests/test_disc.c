@@ -1,5 +1,6 @@
 #include "disc.h"
 #include "assets.h"
+#include "room.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,6 +12,10 @@ static void store32(unsigned char *p, unsigned value) {
         p[i] = (unsigned char)(value >> (i * 8));
         p[4 + i] = (unsigned char)(value >> ((3 - i) * 8));
     }
+}
+
+static void store_le32(unsigned char *p, unsigned value) {
+    for (unsigned i = 0; i < 4; ++i) p[i] = (unsigned char)(value >> (i * 8));
 }
 
 static unsigned record(unsigned char *p, const char *name,
@@ -86,6 +91,52 @@ static void test_image(int raw) {
     CHECK(pe_disc_open(&disc, name));
     CHECK(!pe_disc_find(&disc, "FMV1/INTRO.STR", &file));
     CHECK(strstr(disc.error, "Malformed"));
+    pe_disc_close(&disc);
+    CHECK(remove(name) == 0);
+}
+
+static void test_room_failures(void) {
+    const char *name = "pe-room-fixture.bin";
+    FILE *stream = fopen(name, "wb");
+    CHECK(stream);
+    uint8_t block[2048] = {0};
+    store_le32(block, 84);
+    store_le32(block + 4, 8);
+    for (unsigned word = 0; word < 13; ++word)
+        store_le32(block + 8 + word * 4, word == 10 ? (1u << 22) | 64u : 64u);
+    for (unsigned i = 0; i < 3; ++i)
+        CHECK(fwrite(block, 1, sizeof(block), stream) == sizeof(block));
+    CHECK(fclose(stream) == 0);
+    PeDisc disc = {0};
+    disc.stream = fopen(name, "r+b");
+    CHECK(disc.stream);
+    disc.image_size = 3 * 2048;
+    disc.sector_size = 2048;
+    PeRoomCatalog catalog = {0};
+    catalog.disc = &disc;
+    catalog.archive.size = 3 * 2048;
+    catalog.ranges[0].scratch_sectors = 1;
+    catalog.ranges[0].texture_sectors = 1;
+    catalog.ranges[0].room_sectors = 1;
+    PeRoom room = {0};
+    CHECK(pe_room_load(&catalog, 1, &room));
+    uint8_t *previous = room.data.bytes;
+    /* Corrupt the second block, after a new scratch block is allocated. */
+    CHECK(fseek(disc.stream, 2048 + 4, SEEK_SET) == 0);
+    CHECK(fputc(83, disc.stream) != EOF);
+    CHECK(fflush(disc.stream) == 0);
+    CHECK(!pe_room_load(&catalog, 1, &room));
+    CHECK(strstr(catalog.error, "Malformed"));
+    CHECK(room.data.bytes == previous && room.map == 1);
+    /* A valid header with an out-of-bounds TIM table must also fail. */
+    CHECK(fseek(disc.stream, 2048 + 4, SEEK_SET) == 0);
+    CHECK(fputc(8, disc.stream) != EOF);
+    CHECK(fseek(disc.stream, 2048 + 8 + 10 * 4, SEEK_SET) == 0);
+    CHECK(fputc(83, disc.stream) != EOF);
+    CHECK(fflush(disc.stream) == 0);
+    CHECK(!pe_room_load(&catalog, 1, &room));
+    CHECK(room.data.bytes == previous && room.map == 1);
+    pe_room_close(&room);
     pe_disc_close(&disc);
     CHECK(remove(name) == 0);
 }
@@ -183,6 +234,7 @@ int main(void) {
     test_image(1);
     test_cue();
     test_assets();
+    test_room_failures();
     PeDisc disc;
     CHECK(!pe_disc_open(&disc, "missing-disc-file.bin"));
     puts("disc: ISO, raw BIN, CUE, boundary reads and malformed inputs passed");

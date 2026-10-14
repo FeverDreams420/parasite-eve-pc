@@ -3,6 +3,7 @@
 #include "movie.h"
 #include "title.h"
 #include "automation.h"
+#include "room.h"
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -208,6 +209,7 @@ static int play_intro(BootPlayer *player) {
 
 static int run_boot(PeDisc *disc, int menu, int skip_intro) {
     BootPlayer player = {0};
+    PeRoom active_room = {0};
     int result = 1;
     player.disc = disc;
     player.capture = getenv("PE_INTRO_CAPTURE");
@@ -267,8 +269,20 @@ close_player:
             fprintf(stderr, "%s\n", menu_error);
             result = 1;
         } else if (action > 0) {
-            printf("menu: selected %s; gameplay integration pending\n",
-                   action == 1 ? "New Game" : "Tutorial");
+            /* Original dispatch tokens A80830C8 (M0431I) and A80651C8
+             * (M0353I). Load the genuine starting data, not an invented room. */
+            unsigned map = action == 1 ? 431u : 353u;
+            PeRoomCatalog catalog;
+            pe_runtime_emit("room.loading", map);
+            if (!pe_room_catalog_open(&catalog, disc) ||
+                !pe_room_load(&catalog, map, &active_room)) {
+                fprintf(stderr, "Room: %s\n", catalog.error);
+                result = 1;
+            } else {
+                pe_runtime_emit("room.loaded", map);
+                printf("menu: selected %s; map %u assets loaded; scene execution pending\n",
+                       action == 1 ? "New Game" : "Tutorial", map);
+            }
         }
     }
     for (unsigned i = 0; i < VIDEO_QUEUE_SIZE; ++i) free(player.frames[i].rgb);
@@ -280,6 +294,7 @@ close_player:
     SDL_DestroyWindow(player.window);
     SDL_Quit();
 close_disc:
+    pe_room_close(&active_room);
     pe_runtime_emit("boot.stopped", result);
     return result;
 }

@@ -1,0 +1,9 @@
+backend.ready 1 assert
+intro.frame 0 space
+intro.skipped 1 assert
+menu.prompt 0 return
+menu.options 0 return
+menu.selected 1 assert
+room.loading 431 assert
+room.loaded 431 assert
+boot.stopped 0 assert

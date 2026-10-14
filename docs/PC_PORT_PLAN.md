@@ -1633,3 +1633,18 @@ This is not validation of the entire renderer: sprite/mesh packet linking still
 contains legacy 24-bit address assumptions, and those paths need native packet
 repair and scene-level image evidence. Consolidation preserves them for work in
 place; successful compilation is not counted as functional completion.
+
+### Repair native mesh scrolling in place
+
+Render_ScrollEntries now indexes the existing GeomEntryView array before using
+its scroll member. Incrementing a GeomScrollEntry pointer used the old 56-byte
+stride while native GeomEntryView occupies 64 bytes on this host, misaddressing
+all entries after the first. Scroll/parallax calculations and pause flags are
+unchanged. No functions moved and no files were added.
+
+The existing shadow/mesh test checks three consecutive entries across fractional
+positive/negative scrolling, a second update, camera-relative parallax, saved
+camera coordinates and both pause flags. Full build, shadow and real-data camera
+CTests and the mesh/shadow ASan/UBSan/function run passed (PsyZ uninstrumented).
+Sprite packet linking and serialized-to-native geometry preparation remain
+unfinished; these synthetic runtime entries are not scene-level image evidence.

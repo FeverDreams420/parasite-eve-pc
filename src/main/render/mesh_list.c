@@ -571,8 +571,8 @@ int Render_ScrollEntries(void)
         if (i < count) {
             GeomScrollCoordinates *camera = &g_GeomScroll.state.position;
 
-            entry = &entries->scroll;
             do {
+                entry = &entries[i].scroll;
                 int position;
 
                 if (entry->flags & 4) {
@@ -600,7 +600,6 @@ int Render_ScrollEntries(void)
                     entry->y = position >> 8;
                     entry->fractionY.word = position & 255;
                 }
-                entry++;
             } while (++i < count);
         }
         if (g_GeomScroll.state.flags & 0x80) {

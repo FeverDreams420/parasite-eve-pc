@@ -3,7 +3,10 @@
 #include "pe1/room_floor.h"
 #include "pe1/gte.h"
 #include "pe1/geom_state.h"
+#include "pe1/game_state.h"
 GeomState * volatile g_GeomState;
+GeomScrollRecord g_GeomScroll;
+int Render_ScrollEntries(void);
 int Render_ClipPoint(int x,int y,int z);
 #include <libgpu.h>
 #include <stdio.h>
@@ -17,6 +20,45 @@ _Static_assert(offsetof(RenderShadowQuad,xy3)==offsetof(POLY_FT4,x3),"native sha
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 int main(void)
 {
+    struct { GeomState header; GeomEntryView entries[3]; } scrolling={0};
+    scrolling.header.entry_offset=(size_t)((u8 *)scrolling.entries-(u8 *)&scrolling);
+    scrolling.header.entry_count06=3; g_GeomState=&scrolling.header;
+    for(unsigned i=0;i<3;++i) {
+        GeomScrollEntry *e=&scrolling.entries[i].scroll;
+        e->flags=4; e->modulusX=64; e->modulusY=32;
+        e->x=10+i; e->y=20+i; e->speedX=384; e->speedY=-128;
+    }
+    CHECK(Render_ScrollEntries()==0);
+    for(unsigned i=0;i<3;++i) {
+        GeomScrollEntry *e=&scrolling.entries[i].scroll;
+        CHECK(e->x==11+i && e->y==19+i && e->fractionX.word==128 && e->fractionY.word==128);
+    }
+    CHECK(Render_ScrollEntries()==0);
+    for(unsigned i=0;i<3;++i) {
+        GeomScrollEntry *e=&scrolling.entries[i].scroll;
+        CHECK(e->x==13+i && e->y==19+i && e->fractionX.word==0 && e->fractionY.word==0);
+    }
+    g_GeomScroll.state.position.x=50; g_GeomScroll.state.position.originX=10;
+    g_GeomScroll.state.position.y=-30; g_GeomScroll.state.position.originY=10;
+    for(unsigned i=0;i<3;++i) {
+        GeomScrollEntry *e=&scrolling.entries[i].scroll;
+        e->flags=8; e->baseX=100+i; e->baseY=200+i;
+        e->speedX=128; e->speedY=64;
+    }
+    g_GeomScroll.state.flags=0x80;
+    CHECK(Render_ScrollEntries()==0);
+    for(unsigned i=0;i<3;++i) {
+        GeomScrollEntry *e=&scrolling.entries[i].scroll;
+        CHECK(e->x==120+i && e->y==190+i);
+    }
+    CHECK(!(g_GeomScroll.state.flags&0x80));
+    CHECK(g_GeomScroll.state.position.savedX==50 && (s16)g_GeomScroll.state.position.savedY==-30);
+    GeomEntryView saved_entries[3]; memcpy(saved_entries,scrolling.entries,sizeof(saved_entries));
+    for(unsigned flag=4;flag<=0x100;flag<<=6) {
+        g_GameStateFlags=flag; g_GeomScroll.state.position.x++;
+        CHECK(Render_ScrollEntries()==0 && !memcmp(saved_entries,scrolling.entries,sizeof(saved_entries)));
+    }
+    g_GameStateFlags=0;
     GeomState geometry={0}; g_GeomState=&geometry;
     geometry.clip_offset_x=12; geometry.clip_offset_y=-7;
     geometry.clip_min_x=-100; geometry.clip_max_x=100;

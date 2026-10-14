@@ -561,6 +561,8 @@ AkaoScriptState jest teraz aliasem canonical native AkaoTrack, nie częściową 
 
 Original voice-driver Akao_SetVoiceKeyOff wykonuje w headless fixture 16 kolejnych aktualizacji wszystkich trzech LFO na dodatniej/ujemnej fali z relative loop marker. Test sprawdza zachowanie native waveform pointers, pitch/volume/aux values, wynikowy pitch i dirty flags; nie implementuje zastępczego LFO. CTest i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). Dowód obejmuje tę procedurę na kontrolowanym waveform; real waveform corpus, key-on variant, timing gates/stereo i PCM nadal pozostają wymagane.
 
+LFO fixture obejmuje teraz original Akao_SetVoiceKeyOn i KeyOff oraz ujemne expression. Sterownik robi left shifts LFO products i previous-voice pitch w unsigned word przed signed arithmetic shift, zachowując PS1 wrap bez signed-left-shift UB. Test potwierdza positive/negative waveform, loop marker, output pitch i dirty flags w obu procedurach; signed expression daje poprawny opposite volume LFO. CTest i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). Pozostałe dwa miejsca shift w wcześniejszych driver routines oraz previous-voice branch mają obecnie tylko dowód kompilacji; nie rozszerzamy tego wyniku na pełny driver/audio.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

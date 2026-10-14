@@ -941,7 +941,7 @@ void Spu_UpdateVoiceRegisters(AkaoTrack *voice, u32 voice_mask) {
                 table += table[2];
             }
             { int product = (((s16)(voice->expression_value >> 16) * (voice->volume_base >> 8)) >> 7) * (voice->volume_lfo_target >> 8);
-              new_value = (product << 9) >> 16;
+              new_value = (s32)((u32)product << 9) >> 16;
               new_value = (new_value * table[0]) >> 15; }
             if (new_value != voice->volume_lfo_value) {
                 voice->volume_lfo_value = new_value;
@@ -1051,7 +1051,7 @@ void Spu_TickVoiceEnvelopes(AkaoTrack *track, unsigned voice_mask)
             {
                 int product = (((s16)(track->expression_value >> 16) * (track->volume_base >> 8)) >> 7) *
                               (track->volume_lfo_target >> 8);
-                new_value = (product << 9) >> 16;
+                new_value = (s32)((u32)product << 9) >> 16;
                 new_value = (new_value * table[0]) >> 15;
             }
             if (new_value != track->volume_lfo_value) {
@@ -1133,7 +1133,7 @@ void Akao_SetVoiceKeyOff(AkaoTrack *voice, u32 voice_mask, int index) {
             table = voice->volume_lfo_table;
             voice->volume_lfo_table = table + 1;
             sample = *table;
-            value = (product << 9) >> 16;
+            value = (s32)((u32)product << 9) >> 16;
             value = (value * sample) >> 15;
             if (value != voice->volume_lfo_value) {
                 voice->volume_lfo_value = value;
@@ -1161,7 +1161,7 @@ void Akao_SetVoiceKeyOff(AkaoTrack *voice, u32 voice_mask, int index) {
     }
 
     if ((flags & AKAO_TRACK_FLAG_20) != 0) {
-        base_volume = (((voice[-1].pitch << 17) >> 16) * (voice->volume_base >> 8)) >> 7;
+        base_volume = (((s32)((u32)voice[-1].pitch << 17) >> 16) * (voice->volume_base >> 8)) >> 7;
         voice->update_flags |= AKAO_VOICE_PARAM_VOLUME;
     }
 
@@ -1294,7 +1294,7 @@ void Akao_SetVoiceKeyOn(AkaoTrack *voice, u32 voice_mask) {
             table = voice->volume_lfo_table;
             voice->volume_lfo_table = table + 1;
             operand = *table;
-            value = (product << 9) >> 16;
+            value = (s32)((u32)product << 9) >> 16;
             value = (value * operand) >> 15;
             if (value != voice->volume_lfo_value) {
                 voice->volume_lfo_value = value;
@@ -1322,7 +1322,7 @@ void Akao_SetVoiceKeyOn(AkaoTrack *voice, u32 voice_mask) {
     }
 
     if ((flags & AKAO_TRACK_FLAG_20) != 0) {
-        base_volume = (((voice[-1].pitch << 17) >> 16) * (voice->volume_base >> 8)) >> 7;
+        base_volume = (((s32)((u32)voice[-1].pitch << 17) >> 16) * (voice->volume_base >> 8)) >> 7;
         voice->update_flags |= AKAO_VOICE_PARAM_VOLUME;
     }
 

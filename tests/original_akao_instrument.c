@@ -74,6 +74,7 @@ void SeqOp_SetExpressionSlide(AkaoTrack *track);
 void SeqOp_PitchSlide(AkaoTrack *track);
 void SeqOp_SetBranchTarget(AkaoTrack *track);
 void Akao_SetVoiceKeyOff(AkaoTrack *track, u32 voice_mask, int index);
+void Akao_SetVoiceKeyOn(AkaoTrack *track, u32 voice_mask);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
 static int asset_audit(void)
@@ -462,17 +463,23 @@ int main(int argc, char **argv)
     modulated.volume_base = 0x4000;
     modulated.pitch_base = 4096;
     tick_bank.timing.pitch_integer = 127;
+    AkaoTrack modulation_start = modulated;
+    for (unsigned path = 0; path < 3; ++path) {
+    modulated = modulation_start;
+    if (path == 2) modulated.expression_value = (int)0xff800000u;
     for (unsigned i = 0; i < 16; ++i) {
         modulated.update_flags = 0;
-        Akao_SetVoiceKeyOff(&modulated, 1, 0);
+        if (path == 0) Akao_SetVoiceKeyOff(&modulated, 1, 0);
+        else Akao_SetVoiceKeyOn(&modulated, 1);
         CHECK(modulated.pitch_lfo_value == (i % 2 ? -128 : 254));
-        CHECK(modulated.volume_lfo_value == (i % 2 ? -32 : 31));
+        CHECK(modulated.volume_lfo_value == (path == 2 ? (i % 2 ? 32 : -32) : (i % 2 ? -32 : 31)));
         CHECK(modulated.aux_lfo_value == (i % 2 ? -64 : 63));
         CHECK(modulated.pitch == (i % 2 ? 3968 : 4350));
         CHECK(modulated.update_flags == (AKAO_VOICE_PARAM_VOLUME | AKAO_VOICE_PARAM_PITCH));
         CHECK(modulated.pitch_lfo_table == wave + (i % 2 ? 2 : 1));
         CHECK(modulated.volume_lfo_table == wave + (i % 2 ? 2 : 1));
         CHECK(modulated.aux_lfo_table == wave + (i % 2 ? 2 : 1));
+    }
     }
     puts("original AKAO: commands, start, rebasing, script views and LFO stepping pass");
     return 0;

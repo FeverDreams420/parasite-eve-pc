@@ -7,12 +7,80 @@
 #include "pe1/inventory.h"
 #include "pe1/inventory_slots.h"
 #include "pe1/inventory_state.h"
+#include "pe1/weapon_list_output.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 int Aya_StatBinarySearch(int value,int *table);
 int Aya_StatOverflowQuery(int kind,int value);
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
+static int weapon_stats(void)
+{
+    ItemDataRecord *item=&g_InventoryRuntime.equipment[0];
+    memset(item,0,sizeof(*item)); item->kind=1;
+    g_AyaSaveState.inventory_slot_count=1; g_InvBonusSlotCount=0;
+    g_AyaSaveState.inventory_items[0]=0x100; g_AyaSaveState.equipped_weapon_slot=0;
+    for(int value=0;value<=1200;++value) {
+        item->bonusStats[0]=value; item->bonusStats[1]=value; item->bonusStats[2]=value;
+        item->ammo=value%1024;
+        WeaponListOutput out={0}; Inv_BuildWeaponList(0,&out);
+        unsigned capped=value>999?999:value, square=capped*22500;
+        CHECK(out.attack==capped && out.packed.bits.power==capped);
+        CHECK(out.kind==1 && out.packed.bits.category==1 && out.packed.bits.count==item->ammo);
+        CHECK((u32)out.range*out.range<=square && (u32)(out.range+1)*(out.range+1)>square);
+        CHECK(out.effects.word==0x11);
+    }
+    unsigned real_weapons=0;
+    for(unsigned id=0;id<255;++id) {
+        ItemDataRecord *base=Item_LookupBaseData(id);
+        if(!base || base->kind<1 || base->kind>8) continue;
+        CHECK(base->tailCount<=sizeof(base->tailData));
+        *item=*base;
+        WeaponListOutput out={0}; Inv_BuildWeaponList(0,&out);
+        unsigned range=base->baseStats[1]+base->bonusStats[1]; if(range>999)range=999;
+        unsigned square=range*22500;
+        CHECK((u32)out.range*out.range<=square && (u32)(out.range+1)*(out.range+1)>square);
+        CHECK(out.kind==base->kind);
+        ++real_weapons;
+    }
+    CHECK(real_weapons>0);
+    printf("Original weapon parameters: %u real weapon records and 1201 boundary values passed\n",real_weapons);
+    memset(item,0,sizeof(*item)); item->kind=1;
+    item->bonusStats[0]=100; item->tailCount=1;
+    for(unsigned effect=1;effect<=20;++effect) {
+        item->tailData[0]=effect;
+        WeaponListOutput out={0}; Inv_BuildWeaponList(0,&out);
+        CHECK(out.attack==(effect==16?50:100));
+        if(effect<=5) CHECK(out.effects.bits.actions==g_WeaponEffectCodes[effect]);
+        if(effect>=6 && effect<=8) CHECK(out.effects.bits.mode==effect-5);
+        if(effect==16 || effect==17) CHECK(out.effects.bits.hitState==effect-15);
+        if(effect>=19) CHECK(out.effects.bits.slot==effect-17);
+    }
+    return 0;
+}
+static int item_lookups(void)
+{
+    unsigned base_count=(g_ResidentDataPack.directory.statGrowth-g_ResidentDataPack.directory.itemBaseData)/sizeof(ItemDataRecord);
+    CHECK(base_count>0 && base_count<=255);
+    ItemDataRecord *base=(ItemDataRecord *)(g_ResidentDataPack.bytes+g_ResidentDataPack.directory.itemBaseData);
+    for(unsigned i=0;i<base_count;++i) CHECK(Item_LookupBaseData(i)==&base[i]);
+    CHECK(Item_LookupBaseData(base_count)==NULL && Item_LookupBaseData(UINT32_MAX)==NULL);
+    g_AyaSaveState.inventory_slot_count=1; g_InvBonusSlotCount=0; Inv_ResetActiveList();
+    for(int id=-1;id<=0x209;++id) {
+        ItemDataRecord *expected=NULL;
+        if(id>=1 && (unsigned)id<=base_count) expected=&base[id-1];
+        else if(id>=0x100 && id<0x180) expected=&g_InventoryRuntime.equipment[id-0x100];
+        else if(id>=0x200 && id<=0x208) expected=&g_KeyItemRecords[id-0x200];
+        g_AyaSaveState.inventory_items[0]=id;
+        CHECK(Inv_LookupData(id)==expected && Inv_LookupActiveListData(0)==expected);
+    }
+    CHECK(Inv_LookupActiveListData(-1)==NULL && Inv_LookupActiveListData(1)==NULL);
+    s16 override[]={0x100,0x208}; Inv_SetActiveListOverride(override,2); Inv_SelectActiveList(1);
+    CHECK(Inv_LookupActiveListData(0)==&g_InventoryRuntime.equipment[0]);
+    CHECK(Inv_LookupActiveListData(1)==&g_KeyItemRecords[8]);
+    Inv_ResetActiveList();
+    return 0;
+}
 static int inventory_selection(void)
 {
     g_AyaSaveState.equipped_weapon_slot=3; g_AyaSaveState.equipped_armor_slot=7;
@@ -119,6 +187,15 @@ int main(void)
     }
     CHECK(Aya_LookupLevelStats(-1)==Aya_LookupLevelStats(0));
     CHECK(Aya_LookupLevelStats(99)==Aya_LookupLevelStats(98));
+    PeDiscFile exe; ItemDataRecord key_records[9];
+    CHECK(pe_disc_find(&disc,"SLUS_006.62",&exe));
+    CHECK(pe_disc_read(&disc,&exe,0xa1e64-0x10000+0x800,key_records,sizeof(key_records)));
+    memcpy(g_KeyItemRecords,key_records,sizeof(key_records));
+    u8 effect_codes[6];
+    CHECK(pe_disc_read(&disc,&exe,0x923d0-0x10000+0x800,effect_codes,sizeof(effect_codes)));
+    CHECK(!memcmp(effect_codes,g_WeaponEffectCodes,sizeof(effect_codes)));
+    CHECK(item_lookups()==0);
+    CHECK(weapon_stats()==0);
     CHECK(inventory_selection()==0);
     CHECK(recalc_stats()==0);
     puts("Original player stat recalculation: 297 level/modifier combinations and inventory capacity passed");

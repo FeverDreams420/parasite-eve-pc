@@ -39,7 +39,8 @@ typedef struct ItemDataRecord {
 typedef ItemDataRecord InvItemSlot;
 
 extern u8 g_EquipItemDataTable[];
-extern u8 g_KeyItemDataTable[];
+extern u8 g_KeyItemDataTable[]; /* legacy consumers not yet ported */
+extern ItemDataRecord g_KeyItemRecords[9];
 extern ItemDataRecord g_InvCompareSlotLeft;
 extern ItemDataRecord g_InvCompareSlotRight;
 extern ItemDataRecord *g_InvCompareLeftItem, *g_InvCompareRightItem;

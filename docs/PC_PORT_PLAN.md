@@ -1387,3 +1387,24 @@ reset and missing-override fallback alongside the real stat corpus. Full build,
 stat-assets/scene-spawn CTests and game/test ASan/UBSan/function checks passed
 (PsyZ archive uninstrumented). Item record lookup and weapon/armor derivation
 remain prerequisites for complete player equipment initialization.
+
+### Original item lookup and weapon parameter derivation
+
+Original Item_LookupBaseData, Inv_LookupData and Inv_LookupActiveListData now
+compile in item/data_lookup.c against shared character/inventory storage. The
+migrated key-item lookup indexes nine actual records instead of the PS1 base
+biased by -0x4000. Other legacy key-table consumers remain to migrate; startup
+loading of these nine records is not yet in the main runtime. The test reads
+them from the USA executable and covers base/equipment/key/invalid IDs and
+active/override slot boundaries.
+
+Inv_BuildWeaponList moved from battle/commands.c to item/weapon_stats.c without
+changing its derivation rules. Its six native effect-count constants are checked
+against the supplied executable. Tests exercise all 86 resident weapon records,
+1201 range/stat values across the 999 cap, integer-square-root bounds, ammunition
+and category fields, plus individual effect inputs (including half-attack and
+hit-count/mode selections). Full build, stat-assets/scene-spawn CTests and
+game/test ASan/UBSan/function checks passed (PsyZ archive uninstrumented).
+This does not establish all effect combinations or attack gameplay. Armor
+parameters/modifier extraction and complete player equipment initialization
+remain pending.

@@ -41,17 +41,6 @@ void *Text_LookupTable0(unsigned int index) {
     return 0;
 }
 
-ItemDataRecord *Item_LookupBaseData(unsigned int index) {
-    s32 *endSlot = &g_ResidentDataPack.directory.statGrowth;
-    s32 end = *endSlot;
-    s32 begin = g_ResidentDataPack.directory.itemBaseData;
-
-    if (index >= (unsigned int)(end - begin) / sizeof(ItemDataRecord)) {
-        return 0;
-    }
-    return (ItemDataRecord *)&g_ResidentDataPack.bytes[begin] + index;
-}
-
 void *Aya_GetParasiteSpellUnlockTable(void) {
     return RESIDENT_TABLE(ParasiteSpellEntry, parasiteSpells);
 }

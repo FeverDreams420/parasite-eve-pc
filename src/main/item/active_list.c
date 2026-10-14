@@ -451,49 +451,6 @@ void Inv_RebuildSelectionBitset(void) {
     }
 }
 
-/* Inventory item-ID and active-slot lookup helpers. */
-
-ItemDataRecord *Inv_LookupData(int arg0) {
-    if ((arg0 - 0x100U) < 0x80U) {
-        return &g_InventoryRuntime.equipment[arg0 - 0x100];
-    }
-
-    if ((arg0 - 1U) < 0xFFU) {
-        return Item_LookupBaseData(arg0 - 1);
-    }
-
-    if ((arg0 - 0x200U) >= 9U) {
-        return 0;
-    }
-
-    return (ItemDataRecord *)&g_KeyItemDataTable[arg0 << 5];
-}
-
-
-ItemDataRecord *Inv_LookupActiveListData(int index) {
-    int value;
-    int saved_value;
-    ItemDataRecord *entry;
-
-    if (index >= 0 && index < g_InvSlotLimit) {
-        value = g_InvItemPtr[index];
-        saved_value = value;
-        if (value - 0x100U < 0x80U) {
-            entry = &g_InventoryRuntime.equipment[value - 0x100];
-        } else if (value - 1U < 0xFFU) {
-            entry = Item_LookupBaseData(value - 1);
-        } else if (saved_value - 0x200U < 9U) {
-            entry = (ItemDataRecord *)(g_KeyItemDataTable + (saved_value << 5));
-        } else {
-            entry = 0;
-        }
-    } else {
-        entry = 0;
-    }
-
-    return entry;
-}
-
 int Inv_FindIndexByData(void *needle) {
     int limit;
     int index;

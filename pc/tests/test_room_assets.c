@@ -123,6 +123,7 @@ int main(void) {
                             fprintf(stderr, "Map %u voice %u: %s\n", map, voice, channel.error);
                             return 1;
                         }
+                        CHECK(pe_akao_channel_note_pitch(&channel));
                         ++channel_notes;
                     }
                     else if (result == PE_AKAO_CHANNEL_STOP) ++channel_stops;

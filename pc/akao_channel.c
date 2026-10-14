@@ -96,7 +96,8 @@ PeAkaoChannelResult pe_akao_channel_next(PeAkaoChannel *channel, unsigned limit)
         unsigned operands, prefix = 1, extended = 0;
         switch (opcode) {
         case 0xa0: case 0xa6: case 0xa7: operands = 0; break;
-        case 0xa1: case 0xa2: case 0xa3: case 0xa5: case 0xa8: case 0xaa: operands = 1; break;
+        case 0xa1: case 0xa2: case 0xa3: case 0xa5: case 0xa8: case 0xaa:
+        case 0xc0: case 0xc1: case 0xd8: case 0xd9: operands = 1; break;
         case 0xa9: case 0xab: operands = 2; break;
         case 0xc2: case 0xc3: case 0xc8: case 0xca: operands = 0; break;
         case 0xc9: operands = 1; break;
@@ -183,6 +184,13 @@ truncated:
             }
             channel->control->voice_modes_dirty = 1;
             break;
+        case 0xc0: case 0xc1: case 0xd8: case 0xd9: {
+            int signed_byte = value & 128 ? (int)value - 256 : (int)value;
+            uint16_t *field = opcode < 0xd0 ? &channel->transpose : &channel->detune;
+            if (opcode == 0xc0 || opcode == 0xd8) *field = (uint16_t)signed_byte;
+            else *field = (uint16_t)((unsigned)*field + (uint32_t)signed_byte);
+            break;
+        }
         case 0xc8:
             if (next >= channel->sequence.size) goto invalid;
             channel->loop_index = (channel->loop_index + 1) & 3;

@@ -184,6 +184,11 @@ int main(void) {
     control.reverb_mask = 1; control.reserved_voice_mask = 32;
     CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_STOP);
     CHECK(!channel.flags && !control.reverb_mask && !control.reserved_voice_mask);
+    const uint8_t tuning[] = {0xc0,128,0xc1,255,0xd8,127,0xd9,1,0x11};
+    sequence.bytes = tuning; sequence.size = sizeof(tuning);
+    CHECK(pe_akao_channel_start(&channel, &sequence, 0));
+    CHECK(pe_akao_channel_next(&channel, 100) == PE_AKAO_CHANNEL_NOTE);
+    CHECK(channel.transpose == 0xff7f && channel.detune == 128);
     puts("AKAO channel: state commands, finite/nested loops, signed jumps, key-off and explicit errors passed");
     return 0;
 }

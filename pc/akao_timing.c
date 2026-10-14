@@ -127,6 +127,7 @@ int pe_akao_channel_begin_note(PeAkaoChannel *channel, unsigned lookahead_limit)
             gate = (uint16_t)(gate - 2);
     }
     channel->note_length = channel->default_note_length = length;
+    channel->update_flags |= 0x4000;
     channel->pan_duration = gate;
     if (period < 0x8f) channel->flags &= ~UINT32_C(0x40);
     else channel->flags |= 0x40;
@@ -169,6 +170,8 @@ PeAkaoChannelResult pe_akao_channel_tick(PeAkaoChannel *channel, unsigned instru
         PeAkaoChannelResult result = pe_akao_channel_next(channel, instruction_limit);
         if (result == PE_AKAO_CHANNEL_ERROR) return result;
         if (result == PE_AKAO_CHANNEL_NOTE && !pe_akao_channel_begin_note(channel, instruction_limit))
+            return PE_AKAO_CHANNEL_ERROR;
+        if (result == PE_AKAO_CHANNEL_NOTE && channel->samples && !pe_akao_channel_note_pitch(channel))
             return PE_AKAO_CHANNEL_ERROR;
         pe_akao_channel_slides(channel);
         return result;

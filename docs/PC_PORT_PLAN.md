@@ -1328,3 +1328,23 @@ checks passed. PsyZ archive uninstrumented. Actors are tested as NPC type 1 with
 no action rows; the player-equipment hook aborts if reached and is test-only.
 Player spawn, animated spawn, multi-actor memory pressure and the complete
 Scene_LoadMap runtime path remain unverified.
+
+### Original stat-growth queries for player initialization
+
+The four original stat query procedures moved from save/game_data.c to
+aya/stat_queries.c, and the growth/level/EXP table accessors from text/tables.c
+to aya/stat_tables.c. They compile in the original game target. Pointer lookup
+now uses native table indexing instead of adding a truncated 32-bit address;
+sublevel numerator arithmetic preserves 32-bit word multiplication without
+left-shifting a potentially negative value. The original search, caps and
+level/distance/overflow behavior remain intact. ResidentDataPack has native
+storage for the original startup data.
+
+original-game-stat-assets reads resident bank 2 directly from the supplied
+Disc 1 archive. Across all seven growth tables it compares every value 0..32767
+(229376 cases) with an independent linear interval calculation, including
+sublevels, distance and overflow, plus nullable outputs and level-row clamping.
+Full build, stat-assets/scene-spawn/entity-textures CTests and game/test
+ASan/UBSan/function checks passed (PsyZ archive uninstrumented). This establishes
+stat query prerequisites; equipment lists, complete stat recalculation and
+Battle_InitEquipLists/player spawn are still pending.

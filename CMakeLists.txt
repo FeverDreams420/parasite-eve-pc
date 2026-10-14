@@ -11,6 +11,8 @@ add_subdirectory(pc)
 # Compile the original game sources in place. Modules join this target as
 # their platform dependencies are made portable; no duplicate game logic.
 add_library(parasite-eve-original OBJECT
+    src/main/aya/stat_queries.c
+    src/main/aya/stat_tables.c
     src/main/pm/scene_init.c
     src/main/math/fixed_mul.c
     src/main/math/fixed_div.c
@@ -400,4 +402,13 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME original-game-scene-spawn COMMAND test-original-scene-spawn)
     set_tests_properties(original-game-scene-spawn PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test-original-stat-assets tests/original_stat_assets.c pc/disc.c pc/room.c
+        $<TARGET_OBJECTS:parasite-eve-original>)
+    target_include_directories(test-original-stat-assets PRIVATE include pc)
+    target_link_libraries(test-original-stat-assets PRIVATE psyz)
+    add_test(NAME original-game-stat-assets COMMAND test-original-stat-assets)
+    set_tests_properties(original-game-stat-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()

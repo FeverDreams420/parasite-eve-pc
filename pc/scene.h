@@ -5,11 +5,13 @@
 #include "vram.h"
 #include "spu_bank.h"
 #include "script_scheduler.h"
+#include "collision.h"
 
 /* Native scene resources, observable without devices. Script execution,
  * actor simulation and rendering will operate on this owned state. */
 typedef struct PeScene {
     PeRoom room;
+    PeCollision collision;
     PeVram *vram;
     PeSpuBank *spu;
     PeScriptProgram scripts;

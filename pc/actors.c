@@ -37,6 +37,7 @@ int pe_actors_spawn(PeActors *actors, uint8_t type, uint8_t sub_id, int after,
     }
     ++actors->scheduler->banks->actor_serial;
     actor->position[0] = x; actor->position[1] = y; actor->position[2] = z;
+    actor->floor_triangle = actor->floor_triangle_mirror = UINT32_MAX;
     actor->gravity_y = 0x4000; actor->move_speed = 0x1000; actor->animation_step = 0x10000;
     actor->move_factor = type ? 0x50000 : 0x10000;
     actor->used = 1; actor->previous = after; actor->next = next;
@@ -95,4 +96,13 @@ int pe_actors_collect(PeActors *actors) {
 invalid:
     snprintf(actors->error, sizeof(actors->error), "Invalid actor list during collection");
     return 0;
+}
+
+int pe_actor_find_floor(PeActor *actor, const PeCollision *collision) {
+    PeFloorHit hit;
+    if (!pe_collision_find_floor(collision, actor->position[0], actor->position[1],
+                                 actor->position[2], actor->script.flags, &hit)) return 0;
+    actor->floor_triangle = actor->floor_triangle_mirror = hit.triangle;
+    actor->position[1] = hit.height;
+    return 1;
 }

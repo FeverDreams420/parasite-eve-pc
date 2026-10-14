@@ -335,9 +335,12 @@ int main(void) {
     CHECK(pe_script_task_tick(&task, 100) == PE_SCRIPT_ERROR);
     CHECK(strstr(task.error, "Unimplemented script opcode 234"));
     uint8_t *scene_data = scene.room.data.bytes;
+    uint8_t *scene_collision = scene.collision.bytes;
+    CHECK(scene_collision && scene.collision.size);
     PeSpuBank *scene_spu = scene.spu;
     CHECK(!pe_scene_prepare(&catalog, PE_USA_ROOM_SLOTS, &scene, scene_error, sizeof(scene_error)));
     CHECK(scene.room.map == 431 && scene.room.data.bytes == scene_data && scene.spu == scene_spu);
+    CHECK(scene.collision.bytes == scene_collision);
     scene.spu->ram[0x2000] = 123;
     scene.script_banks.variables[7] = 12345;
     CHECK(pe_scene_prepare(&catalog, 353, &scene, scene_error, sizeof(scene_error)));

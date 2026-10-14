@@ -3,6 +3,7 @@
 #include <string.h>
 
 void pe_scene_close(PeScene *scene) {
+    pe_collision_close(&scene->collision);
     pe_room_close(&scene->room);
     free(scene->vram);
     free(scene->spu);
@@ -15,6 +16,7 @@ int pe_scene_prepare(PeRoomCatalog *catalog, unsigned map, PeScene *scene,
                        char *error, size_t error_size) {
     PeScene next = {0};
     if (!pe_room_load(catalog, map, &next.room)) goto catalog_error;
+    if (!pe_room_collision(&next.room, &next.collision, error, error_size)) goto failed;
     next.vram = malloc(sizeof(*next.vram));
     next.spu = malloc(sizeof(*next.spu));
     if (!next.vram || !next.spu) {

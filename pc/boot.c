@@ -284,6 +284,7 @@ close_player:
             } else {
                 pe_runtime_emit("room.loaded", map);
                 pe_runtime_emit("room.vram.ready", map);
+                pe_runtime_emit("room.collision.ready", map);
                 pe_runtime_emit("room.scripts.ready", map);
                 pe_runtime_emit("room.tasks.bound", map);
                 pe_runtime_emit("audio.samples.ready", active_scene.sample_stats.bytes);

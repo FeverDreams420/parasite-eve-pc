@@ -535,5 +535,14 @@ a fixture confirms that retained triangle geometry without a region reference
 does not produce a floor hit. All 24 tests pass headless with Disc 1 and the
 collision fixture passes ASan/UBSan. This explains the initial data audit;
 runtime geometry changes and gameplay collision remain unverified.
+
+Native actors now apply FindFloor results to Y and both collision-face IDs,
+preserving old values on bypass/no match and respecting preserve-Y flags.
+Scenes own collision data transactionally alongside their room resources;
+failed transitions retain the previous geometry. Headless boot emits
+`room.collision.ready`, asserted by both New Game and Tutorial replays.
+All 24 tests pass with Disc 1; actor and scene/collision tests pass ASan/UBSan.
+Complete spawn/model setup, physical movement and gameplay collision remain
+unfinished.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

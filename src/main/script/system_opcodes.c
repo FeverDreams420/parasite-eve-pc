@@ -1226,7 +1226,7 @@ int Script_RotateEntityAngle(int **arg0) {
     return 1;
 }
 
-int Script_SetNodeFlag80(void) {
+int Script_SetNodeFlag80(int **unused) {
     g_ScriptNodePool->flags |= 0x80;
     return 1;
 }

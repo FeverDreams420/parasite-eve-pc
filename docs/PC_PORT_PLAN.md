@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 67 powiązań: oryginalny opcode 199 ustawia flagę węzła 0x80. Powiązanie potwierdzono w EXE USA; ABI poprawiono w istniejącej funkcji. Test kolejki sprawdza dalsze wykonanie takiego węzła po yield przy blokadzie aktora 0x1000 i globalnym player-only gate 0x100. Kontrolny węzeł bez flagi zachowuje kursor/licznik i rusza po zdjęciu blokad. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 66 powiązań: oryginalny opcode 196 dodaje kąt yaw aktora z oryginalnymi halfword porównaniami i jednokrotnym zawinięciem. Powiązanie potwierdzono w EXE USA. Test kolejki obejmuje sześć przypadków, granice 4095/4096, krok ujemny i krok większy niż pełny obrót; wynik odczytuje przez oryginalny vector query. Nie zastąpiono zachowania normalizacją modulo 4096. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 65 powiązań: oryginalny opcode 227 zapisuje wskaźnik floor polygon do danych skryptu i licznik halfword (dotychczasowa nazwa funkcji inventory pozostaje historyczna). Powiązanie potwierdzono w EXE USA. Offset oblicza się w natywnej szerokości; test kolejki sprawdza pełny adres hosta i zawężenie licznika. Ten dowód nie obejmuje wykonania geometrii polygonu. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

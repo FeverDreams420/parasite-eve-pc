@@ -498,6 +498,23 @@ int main(void)
         if(g_ScriptVariableBank[56]!=(u32)-123 || g_ScriptVariableBank[57]!=(u32)rotations[i][2] ||
            g_ScriptVariableBank[58]!=321 || task.current.script!=script+11 || task.flags!=0x10) return 50;
     }
+    for(unsigned exempt=0;exempt<2;++exempt) {
+        FieldActor owner={0};
+        u32 normal[]={2|(1u<<13),0,1,10|(2u<<13)|(2u<<17),0,59,99,32,0};
+        u32 enabled[]={199,0,2|(1u<<13),0,1,10|(2u<<13)|(2u<<17),0,59,99,32,0};
+        ScriptNode task={.current.script=exempt?enabled:normal,.active=1};
+        g_CurrentEntity=&owner;g_PlayerEntity=NULL;g_ScriptNodePool=&task;g_GameStateFlags=0;g_ScriptVariableBank[59]=0;
+        Script_RunQueue();
+        if(task.flags!=(exempt?0x80:0) || task.active!=1) return 50;
+        owner.flags=0x1000;g_GameStateFlags=0x100;g_ScriptNodePool=&task;Script_RunQueue();
+        if(exempt) {
+            if(task.flags!=0x90 || task.current.script!=enabled+11 || g_ScriptVariableBank[59]!=99) return 51;
+        } else {
+            if(task.flags || task.current.script!=normal+3 || task.active!=1 || g_ScriptVariableBank[59]) return 52;
+            owner.flags=0;g_GameStateFlags=0;g_ScriptNodePool=&task;Script_RunQueue();
+            if(task.flags!=0x10 || task.current.script!=normal+9 || g_ScriptVariableBank[59]!=99) return 53;
+        }
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

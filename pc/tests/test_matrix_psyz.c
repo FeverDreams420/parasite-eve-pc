@@ -17,8 +17,11 @@ int main(void){
         RotMatrixYXZ(&vector,&oracle);pe_matrix_rotation_yxz(angles,&matrix);
         for(unsigned r=0;r<3;++r)for(unsigned c=0;c<3;++c)CHECK(matrix.rotation[r][c]==oracle.m[r][c]);
         CHECK(matrix.translation[0]==0x12345678);
+        RotMatrix(&vector,&oracle);pe_matrix_rotation_xyz(angles,&matrix);
+        for(unsigned r=0;r<3;++r)for(unsigned c=0;c<3;++c)CHECK(matrix.rotation[r][c]==oracle.m[r][c]);
+        CHECK(matrix.translation[0]==0x12345678);
     }
-    puts("Native YXZ rotations match PsyZ for 65536 signed-angle cases, headless");
+    puts("Native YXZ/XYZ rotations match PsyZ for 65536 signed-angle cases, headless");
     for(unsigned sample=0;sample<10000;++sample){
         PeMatrix matrix={0};MATRIX oracle={0};int16_t point[3];
         for(unsigned r=0;r<3;++r){

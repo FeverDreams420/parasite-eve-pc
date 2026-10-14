@@ -10,6 +10,22 @@ static int sine(unsigned angle){
     int value=pe_sine_quarter[quadrant&1?1024-index:index];
     return quadrant&2?-value:value;
 }
+void pe_matrix_rotation_xyz(const uint16_t angles[3],PeMatrix *matrix){
+    int sx=sine(angles[0]),cx=sine(angles[0]+1024u);
+    int sy=sine(angles[1]),cy=sine(angles[1]+1024u);
+    int sz=sine(angles[2]),cz=sine(angles[2]+1024u);
+    matrix->rotation[0][2]=(int16_t)sy;
+    matrix->rotation[1][2]=(int16_t)shift12(-cy*sx);
+    matrix->rotation[2][2]=(int16_t)shift12(cy*cx);
+    matrix->rotation[0][0]=(int16_t)shift12(cz*cy);
+    matrix->rotation[0][1]=(int16_t)shift12(-sz*cy);
+    int t=(int)shift12(-cz*sy);
+    matrix->rotation[1][0]=(int16_t)(shift12(sz*cx)-shift12(t*sx));
+    matrix->rotation[2][0]=(int16_t)(shift12(sz*sx)+shift12(t*cx));
+    t=(int)shift12(-sz*sy);
+    matrix->rotation[1][1]=(int16_t)(shift12(cz*cx)+shift12(t*sx));
+    matrix->rotation[2][1]=(int16_t)(shift12(cz*sx)-shift12(t*cx));
+}
 void pe_matrix_rotation_yxz(const uint16_t angles[3],PeMatrix *matrix){
     int sx=sine(angles[0]),cx=sine(angles[0]+1024u);
     int sy=sine(angles[1]),cy=sine(angles[1]+1024u);

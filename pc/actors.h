@@ -11,6 +11,7 @@ typedef struct PeActorModel {
     PeHitVolume volumes[PE_ANIMATION_BONES];
     PeRotationOverride overrides[2];uint16_t body[4];
     unsigned pose_count,volume_count,slot;
+    PeMatrix world;
 } PeActorModel;
 typedef struct PeActor {
     PeScriptActor script;
@@ -21,6 +22,7 @@ typedef struct PeActor {
     PeAnimation animation; /* borrowed stable room/entity-bank bytes */
     PeAnimationClock animation_clock;
     unsigned action;
+    uint16_t rotation[3];
     PeActorModel *render; /* owned matrices; model/action bytes remain borrowed */
 } PeActor;
 typedef struct PeActors {
@@ -50,4 +52,7 @@ int pe_actor_model_bind(PeActor *actor,const PeRoomBanks *banks,unsigned slot);
 void pe_actor_model_close(PeActor *actor);
 int pe_actor_set_action(PeActor *actor,unsigned action,int force);
 int pe_actor_model_pose(PeActor *actor,const PeMatrix *base);
+/* Original signed integer position, actor rotation and halfword scale.
+ * Flags 0x10040 preserve the last world matrix. */
+int pe_actor_model_world_pose(PeActor *actor);
 #endif

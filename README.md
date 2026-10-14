@@ -108,6 +108,15 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Actor world poses now use signed integer coordinates from 16.16 position,
+the original actor rotation order, and signed-halfword move-speed scale via
+GTE-style composition. Flags `0x10040` retain the previous world matrix;
+failed pose refresh also preserves it. Both actor XYZ and bone YXZ rotations
+match PsyZ for 65,536 signed-angle cases. All 29 headless tests and the
+ASan/UBSan actor fixture pass, including fractional negative positions,
+quarter-turn rotation and half scale. Scene-loop calls, parent transforms,
+view/projection and rendered reference validation remain pending.
+
 Actors now own model matrix/hit-volume state, bind checked borrowed model and
 action views, and refresh poses from their current integer animation frame
 and an explicit base matrix. Failures preserve prior pose state; deletion

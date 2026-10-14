@@ -134,6 +134,7 @@ int pe_actor_model_bind(PeActor *actor,const PeRoomBanks *banks,unsigned slot){
     char error[128];
     if(!pe_model_open(banks->roots[slot].bytes,banks->roots[slot].size,&next->model,error,sizeof(error))){free(next);return 0;}
     memcpy(next->actions,banks->rows[slot],sizeof(next->actions));next->slot=slot;
+    pe_matrix_identity(&next->world);
     for(unsigned i=0;i<next->model.part_count;++i)pe_matrix_identity(&next->sources[i]);
     pe_actor_model_close(actor);actor->render=next;return 1;
 }
@@ -160,4 +161,21 @@ int pe_actor_model_pose(PeActor *actor,const PeMatrix *base){
     memcpy(render->volumes,volumes,(size_t)volume_count*sizeof(*volumes));
     memcpy(render->body,frame.body,sizeof(render->body));render->pose_count=pose_count;render->volume_count=volume_count;
     return 1;
+}
+int pe_actor_model_world_pose(PeActor *actor){
+    if(!actor->render)return 0;
+    PeMatrix world=actor->render->world;
+    if(!(actor->script.flags&0x10040)){
+        pe_matrix_rotation_xyz(actor->rotation,&world);
+        for(unsigned i=0;i<3;++i){
+            unsigned value=actor->position[i]>>16;
+            world.translation[i]=value&32768?(uint32_t)((int)value-65536):value;
+        }
+        PeMatrix scale={0};unsigned half=actor->move_speed&65535;
+        int16_t value=(int16_t)(half&32768?(int)half-65536:(int)half);
+        for(unsigned i=0;i<3;++i)scale.rotation[i][i]=value;
+        pe_matrix_compose(&world,&scale,&world);
+    }
+    if(!pe_actor_model_pose(actor,&world))return 0;
+    actor->render->world=world;return 1;
 }

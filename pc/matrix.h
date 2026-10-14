@@ -5,6 +5,8 @@ typedef struct PeMatrix { int16_t rotation[3][3]; uint32_t translation[3]; } PeM
 void pe_matrix_identity(PeMatrix *matrix);
 /* Signed 16-bit angles, 4096 units per turn. Preserves translation. */
 void pe_matrix_rotation_yxz(const uint16_t angles[3],PeMatrix *matrix);
+/* Actor/world rotation order used by the original RotMatrix. */
+void pe_matrix_rotation_xyz(const uint16_t angles[3],PeMatrix *matrix);
 /* RTIR/RT composition used by model commands: 12 fractional rotation bits,
  * saturated signed-halfword rotation, signed-halfword source translation,
  * wrapped full-word output translation. Inputs may alias output. */

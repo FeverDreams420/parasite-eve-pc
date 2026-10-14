@@ -2,12 +2,47 @@
 #include "pe1/entity_frame_update.h"
 #include "pe1/script_state.h"
 #include <stdio.h>
+#include <string.h>
+#include <stdint.h>
 extern FieldActor *g_FieldActorListHead;
 static unsigned callbacks;
 static void contact(FieldActor *self,int part,FieldActor *other,int other_part)
 {
     (void)self;(void)other;
     if ((part==7 && other_part==9) || (part==9 && other_part==7)) ++callbacks;
+}
+static int wide_contacts(void)
+{
+    const int positions[]={-32768,-20000,-1,0,1,20000,32767};
+    for(unsigned a=0;a<7;++a) for(unsigned b=0;b<7;++b) {
+        FieldActor actors[2]={0};
+        u32 script[]={0};
+        Script_InitNodePool(); Script_InitNodeFreeList();
+        actors[0].next=&actors[1];
+        for(unsigned i=0;i<2;++i) {
+            actors[i].move_speed=4096;
+            actors[i].script_cursor_1a0=script;
+            actors[i].render_object.hit_body.radius=20000;
+            actors[i].field_sfx_id=i+1;
+        }
+        actors[0].render_object.hit_body.value0=positions[a];
+        actors[1].render_object.hit_body.value0=positions[b];
+        actors[0].render_object.hit_body.value1=positions[b];
+        actors[1].render_object.hit_body.value1=positions[a];
+        actors[0].render_object.hit_body.value2=positions[a];
+        actors[1].render_object.hit_body.value2=positions[b];
+        g_FieldActorListHead=actors;
+        Scene_UpdateEntityPositions();
+        /* MIPS multiplies/adds modulo 2^32, then compares signed words. */
+        int64_t delta=(int64_t)positions[a]-positions[b];
+        uint32_t bits=(uint32_t)(3*delta*delta);
+        int64_t distance=bits<=INT32_MAX?bits:(int64_t)bits-4294967296LL;
+        int expected=distance<=1600000000;
+        if (!!actors[0].script_node_lists[1]!=expected ||
+            !!actors[1].script_node_lists[1]!=expected) return 1;
+    }
+    g_FieldActorListHead=NULL;
+    return 0;
 }
 int main(void)
 {
@@ -67,6 +102,7 @@ int main(void)
         if (callbacks) return 9;
     }
     g_PlayerEntity=0;
+    if(wide_contacts()) return 10;
     /* Native scalar and record aliases must observe identical flags. */
     g_GameStateBlock.flags=2;
     if (g_GameStateFlags!=2) return 6;

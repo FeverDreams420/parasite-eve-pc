@@ -4,8 +4,12 @@
 #include "pe1/render_buffers.h"
 #include "pe1/script_node.h"
 
-/* Allocates a run of 0x47E0-byte blocks from the render scratch buffer, sized
- * 1, 2, 4 or 8 blocks by the request; returns 0 when no run is free. */
+/* MIPS word arithmetic wraps before signed comparisons and shifts. */
+static s32 signed_word(u32 value)
+{
+    return value <= INT32_MAX ? (s32)value : -1 - (s32)(UINT32_MAX - value);
+}
+
 typedef RenderAnimationLookupEntry HitSphere;
 
 void Entity_RollbackPositionHierarchy(FieldActor *actor);
@@ -106,14 +110,14 @@ void Scene_UpdateEntityPositions(void)
             }
             otherRadius = other->render_object.hit_body.radius * other->move_speed / 4096;
             bx = body->value0 - other->render_object.hit_body.value0;
-            bx *= bx;
+            bx = signed_word((u32)bx * (u32)bx);
             by = body->value1 - other->render_object.hit_body.value1;
-            by *= by;
+            by = signed_word((u32)by * (u32)by);
             bz = body->value2 - other->render_object.hit_body.value2;
-            bz *= bz;
+            bz = signed_word((u32)bz * (u32)bz);
             reach = otherRadius + selfTop;
-            reach = reach * reach;
-            distance = bx + by + bz;
+            reach = signed_word((u32)reach * (u32)reach);
+            distance = signed_word((u32)bx + (u32)by + (u32)bz);
             if (self->model_state.allocation_active == 0 || other->model_state.allocation_active == 0) {
                 if (distance <= reach) {
                 link:
@@ -128,26 +132,26 @@ void Scene_UpdateEntityPositions(void)
             if (cylinder->radius != 0 && other->render_object.hit_cylinder.radius != 0) {
                 otherRadius = other->render_object.hit_cylinder.radius * other->move_speed / 4096;
                 cx = cylinder->value0 - other->render_object.hit_cylinder.value0;
-                cx *= cx;
+                cx = signed_word((u32)cx * (u32)cx);
                 cz = cylinder->value2 - other->render_object.hit_cylinder.value2;
-                cz *= cz;
+                cz = signed_word((u32)cz * (u32)cz);
                 reach = otherRadius + selfSide;
-                reach = reach * reach;
-                distance = cx + cz;
+                reach = signed_word((u32)reach * (u32)reach);
+                distance = signed_word((u32)cx + (u32)cz);
                 if (distance <= reach) {
-                    heading[0] = (self->pos_x - self->base_x) >> 16;
-                    heading[1] = (self->pos_z - self->base_z) >> 16;
+                    heading[0] = signed_word((u32)self->pos_x - (u32)self->base_x) >> 16;
+                    heading[1] = signed_word((u32)self->pos_z - (u32)self->base_z) >> 16;
                     offset[0] = cylinder->value0 - other->render_object.hit_cylinder.value0;
                     offset[1] = cylinder->value2 - other->render_object.hit_cylinder.value2;
-                    dot = heading[0] * offset[0];
-                    dot += heading[1] * offset[1];
+                    dot = signed_word((u32)heading[0] * (u32)offset[0]);
+                    dot = signed_word((u32)dot + (u32)heading[1] * (u32)offset[1]);
                     if (dot < 0) {
                         Entity_RollbackPositionHierarchy(self);
                     }
-                    heading[0] = (other->pos_x - other->base_x) >> 16;
-                    heading[1] = (other->pos_z - other->base_z) >> 16;
-                    dot = heading[0] * offset[0];
-                    dot += heading[1] * offset[1];
+                    heading[0] = signed_word((u32)other->pos_x - (u32)other->base_x) >> 16;
+                    heading[1] = signed_word((u32)other->pos_z - (u32)other->base_z) >> 16;
+                    dot = signed_word((u32)heading[0] * (u32)offset[0]);
+                    dot = signed_word((u32)dot + (u32)heading[1] * (u32)offset[1]);
                     if (dot > 0) {
                         Entity_RollbackPositionHierarchy(other);
                     }
@@ -167,7 +171,7 @@ void Scene_UpdateEntityPositions(void)
                     if (!(g_GameStateBlock.flags & 2)) {
                         continue;
                     }
-                } else if (!(g_GameStateBlock.flags & 2) && distance <= reach + 10000) {
+                } else if (!(g_GameStateBlock.flags & 2) && distance <= signed_word((u32)reach + 10000u)) {
                     /* Recorded crutch debt: retail's near miss jumps back into
                      * the contact-task block of the no-allocation case; no
                      * structured form places that block first. */
@@ -186,14 +190,14 @@ void Scene_UpdateEntityPositions(void)
                 for (j = 0; j < other->render_object.header->animation_entry_count; j++, otherPart++) {
                     otherRadius = otherPart->radius * other->move_speed / 4096;
                     px = selfPart->value0 - otherPart->value0;
-                    px *= px;
+                    px = signed_word((u32)px * (u32)px);
                     py = selfPart->value1 - otherPart->value1;
-                    py *= py;
+                    py = signed_word((u32)py * (u32)py);
                     pz = selfPart->value2 - otherPart->value2;
-                    pz *= pz;
+                    pz = signed_word((u32)pz * (u32)pz);
                     reach = otherRadius + selfRadius;
-                    reach = reach * reach;
-                    distance = px + py + pz;
+                    reach = signed_word((u32)reach * (u32)reach);
+                    distance = signed_word((u32)px + (u32)py + (u32)pz);
                     if (distance <= reach) {
                         if (self->contact_callback != 0) {
                             self->contact_callback(self, selfPart->animation_id, other,

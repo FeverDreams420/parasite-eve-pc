@@ -1187,3 +1187,17 @@ it reads those same banks. A second initialization preserves occupied slots and
 does not rerun handlers. Full build, lifecycle/pools/hierarchy CTests and game/test
 ASan/UBSan/function checks passed (PsyZ/SDL archives uninstrumented). The fixture
 registry is not the final room handler registry; scene execution remains pending.
+
+### Actor contact arithmetic on native C
+
+The original Scene_UpdateEntityPositions contact pass now explicitly preserves
+MIPS modulo-2^32 square/sum, movement-difference and dot-product arithmetic before
+signed comparisons. UBSan reproduced signed overflow in the body distance sum
+before the fix. A 49-pair synthetic test spanning signed 16-bit coordinate limits
+compares the original contact-task decisions with a wide-integer calculation
+that explicitly applies the original signed-word comparison. Existing body,
+cylinder rollback, part callback and parent exclusion cases remain covered.
+Full build and contact/hierarchy/lifecycle CTests passed, along with game/test
+ASan/UBSan/function checks (PsyZ archive uninstrumented). This preserves original
+word arithmetic rather than changing collision rules to an unbounded-distance
+solver. It is not proof of all campaign actor interactions or frame integration.

@@ -68,37 +68,7 @@ void Render_TransformSkinnedVertices(RenderObjectEntity *actor, u32 *view) {
 
 /* Projects every vertex triple of the object's visible parts through the
  * view-composed part matrix into the screen and depth buffers. */
-void Render_TransformMorphVertices(RenderObjectEntity *entity, u32 *view) {
-    GteMatrix *scratch = (GteMatrix *)0x1F800000;
-    RenderMatrix *matrix = entity->matrices;
-    int i;
 
-    for (i = 0; i < entity->header->part_count; i++) {
-        RenderObjectPart *part = &entity->parts[i];
-
-        gte_CompMatrixMac(view, matrix, scratch);
-        gte_ldrotmatrix(scratch);
-        gte_ldtransmatrix(scratch);
-        matrix++;
-        if (part->visible == 1) {
-            RenderVec3s *vertices = &entity->vertices[part->vertex_start];
-            u32 *screen = &g_RenderClutLookupTable[part->vertex_start];
-            u32 *depth = &g_RenderVertexWorkWords[part->vertex_start];
-            int j;
-
-            for (j = 0; j < part->vertex_count; ) {
-                gte_ldv3c(vertices);
-                gte_rtpt_padded();
-                vertices += 3;
-                j += 3;
-                screen += 3;
-                depth += 3;
-                gte_stsxy3c(screen);
-                gte_stsz3c(depth);
-            }
-        }
-    }
-}
 
 void Render_DrawEntity(RenderObjectEntity *object, void *viewMatrix) {
     u16 flags;

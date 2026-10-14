@@ -4,6 +4,14 @@ static uint32_t *audio_flags(PeSceneAudio *audio) {
     return audio->game_flags ? audio->game_flags : &audio->flags;
 }
 
+static void set_volume(PeAkaoPlayer *player, unsigned volume) {
+    player->control.volume = (volume & 0x7f) << 16;
+    player->control.volume_duration = 0;
+    player->control.volume_dirty = 1;
+    for (unsigned voice = 0; voice < 24; ++voice)
+        if (player->active & (UINT32_C(1) << voice)) player->channels[voice].update_flags |= 3;
+}
+
 void pe_scene_audio_reset(PeSceneAudio *audio) {
     for (unsigned slot = 0; slot < 2; ++slot) {
         audio->keys[slot][0] = audio->keys[slot][1] = -1;
@@ -17,6 +25,26 @@ PeScriptDispatchResult pe_scene_audio_dispatch(void *user, PeScriptTask *task,
                                                const PeScriptCommand *command) {
     if (command->opcode != 234 || !command->count) return PE_DISPATCH_UNSUPPORTED;
     unsigned opcode = pe_script_arg_read(task, &command->args[0]);
+    if (opcode == 0xcd) {
+        PeSceneAudio *audio = user;
+        if (command->count < 3) return PE_DISPATCH_ERROR;
+        unsigned key = pe_script_arg_read(task, &command->args[1]);
+        unsigned volume = pe_script_arg_read(task, &command->args[2]);
+        unsigned slot = 0;
+        while (slot < 2 && audio->keys[slot][0] != (int)key) ++slot;
+        if (slot == 2 || audio->keys[slot][1] == -1) return PE_DISPATCH_CONTINUE;
+        unsigned selector = (unsigned)audio->keys[slot][1];
+        for (unsigned bank = 0; bank < 2; ++bank) {
+            PeMusic *music = audio->music[bank];
+            if (music && (selector ? selector == music->player.bank_id : !bank)) {
+                set_volume(&music->player, volume);
+                break;
+            }
+        }
+        audio->volumes[slot] = (uint8_t)volume;
+        *audio_flags(audio) |= 0x40u << slot;
+        return PE_DISPATCH_CONTINUE;
+    }
     if (opcode == 0xc8) {
         PeSceneAudio *audio = user;
         if (command->count < 6 || !audio->catalog || !audio->room || !audio->resident)
@@ -44,11 +72,7 @@ PeScriptDispatchResult pe_scene_audio_dispatch(void *user, PeScriptTask *task,
             return PE_DISPATCH_ERROR;
         }
         PeAkaoPlayer *player = &audio->music[0]->player;
-        player->control.volume = UINT32_C(0x7f0000);
-        player->control.volume_duration = 0;
-        player->control.volume_dirty = 1;
-        for (unsigned voice = 0; voice < 24; ++voice)
-            if (player->active & (UINT32_C(1) << voice)) player->channels[voice].update_flags |= 3;
+        set_volume(player, 0x7f);
         audio->keys[0][0] = (int)key;
         audio->keys[0][1] = player->bank_id;
         audio->banks[0] = audio->music[0]->bank;

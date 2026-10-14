@@ -466,5 +466,13 @@ selector routing and exhaustion without partial delivery under ASan/UBSan.
 Room actor IDs and task sequences now start at one as in Draw_InitPipeline.
 The New Game task reaches the next unsupported audio command at `0x394`;
 scene-loop event delivery and physical actor simulation remain unfinished.
+
+Scene audio CD now applies immediate bank volume selected through the cached
+key/handle. It clears the volume-slide duration, marks active voices dirty and
+registers the byte-sized slot volume/flag. Tests distinguish the 7-bit control
+gain from the retained slot byte and verify missing-key no-op behavior. The
+real Tutorial task now reaches audio D0 at `0x19c0`. All 21 tests pass headless
+with Disc 1 and the scene/audio audit passes ASan/UBSan; full playback and
+scene execution remain unfinished.
 All 21 CTest tests pass headless with Disc 1 data; waveform traversal tests and
 the full room/audio data audit also pass ASan/UBSan.

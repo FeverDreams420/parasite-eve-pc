@@ -9,7 +9,7 @@ typedef struct PeSceneAudio {
     const PeSpuBank *resident;
     PeAkaoControl initial;
     int keys[2][2], banks[2];
-    unsigned volumes[2];
+    uint8_t volumes[2];
     uint32_t flags;
     uint32_t *game_flags; /* optional shared g_GameState.flags; otherwise flags */
 } PeSceneAudio;

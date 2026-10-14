@@ -59,7 +59,7 @@ script entry/actor catalogs and the startup SPU sample bank are prepared in
 `PeScene`, but scene execution and gameplay are not integrated.
 
 `make ci` builds and runs the asset-free disc-reader, VRAM, script-format,
-script-runtime, script-scheduler, SPU-bank and automation tests. The
+script-runtime, script-scheduler, SPU-bank, AKAO-sequence and automation tests. The
 room-assets, boot-assets, boot-replay and boot-newgame tests skip when no image
 is supplied. To verify complete movie decoding, room directory bounds and
 menu input with your own image:
@@ -184,3 +184,10 @@ script actor bindings and scheduler, and preserves script banks across room
 changes. The frontend prepares these bindings but does not yet tick the scene;
 models, movement, collision and rendering still need integration. The real
 initial M431 actor reports missing AKAO opcode 234 through the scheduler.
+
+`pc/akao_sequence.c` reads room music records and validates AKAO sequence
+headers, 24-voice masks and channel offsets relative to the word following each
+offset. Disc 1 contains 600 room music records: 599 validate as full sequences;
+one ID-zero short record remains explicitly unresolved and has no parsed
+sequence. This is metadata/offset validation, not sequence command execution
+or audio output. The unresolved record is retained for further porting.

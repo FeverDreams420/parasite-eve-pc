@@ -4,6 +4,7 @@
 #include "spu_bank.h"
 #include "scene.h"
 #include "script_vm.h"
+#include "akao_sequence.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -40,6 +41,8 @@ int main(void) {
     CHECK(vram);
     uint64_t uploaded_words = 0;
     unsigned script_entries = 0, initial_actors = 0;
+    unsigned music_records = 0;
+    unsigned short_music_records = 0;
     unsigned loaded = 0, absent = 0;
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         const PeRoomRange *range = &catalog.ranges[map - 1];
@@ -64,6 +67,18 @@ int main(void) {
         }
         CHECK(stats.uploads > 0 && stats.words > 0);
         uploaded_words += stats.words;
+        const uint8_t *tracks;
+        unsigned tracks_count;
+        CHECK(pe_room_blob_table(&room.data, 12, 12, &tracks, &tracks_count));
+        for (unsigned i = 0; i < tracks_count; ++i) {
+            PeRoomMusic music;
+            if (!pe_room_music(&room, i, &music, error, sizeof(error))) {
+                fprintf(stderr, "Map %u track %u: %s\n", map, i, error);
+                return 1;
+            }
+            ++music_records;
+            short_music_records += music.unresolved_short_record != 0;
+        }
         PeScriptProgram program;
         if (!pe_script_program_open(&room, &program, error, sizeof(error))) {
             fprintf(stderr, "%s\n", error);
@@ -85,6 +100,9 @@ int main(void) {
         ++loaded;
     }
     CHECK(loaded > 300 && loaded + absent == PE_USA_ROOM_SLOTS);
+    CHECK(music_records == 600 && short_music_records == 1);
+    printf("Room music records: %u, including %u unresolved short records (not played)\n",
+           music_records, short_music_records);
     PeScene scene = {0};
     char scene_error[256];
     CHECK(pe_scene_prepare(&catalog, 431, &scene, scene_error, sizeof(scene_error)));

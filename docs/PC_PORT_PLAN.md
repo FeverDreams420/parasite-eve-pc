@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## 1. Stan rzeczywisty i zakres wydania
 
+Aktualizacja audio: `akao-sequence` w CTest sprawdza maski i offsety kanałów oraz uszkodzone dane. `room-assets` kataloguje 600 rekordów muzycznych Disc 1: 599 pełnych sekwencji z poprawnymi granicami i jeden jawnie nierozpoznany krótki rekord ID 0. Nie wykonujemy jeszcze instrukcji sekwencera ani syntezy; ten nierozpoznany rekord nie jest uznany za obsłużoną zawartość. Łącznie CTest rejestruje obecnie 12 testów.
+
 Punkt wyjściowy audytu: commit `83aa1c5f8`, 14 października 2026. Poniższy stan uwzględnia także wdrożony runner headless z WP01.
 
 | Obszar | Co istnieje | Czego obecne dowody nie potwierdzają |

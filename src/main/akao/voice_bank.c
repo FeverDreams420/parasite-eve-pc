@@ -896,30 +896,26 @@ void Seq_StartIndexedNestedStream(AkaoNestedSource *source) {
 
 void Seq_ApplyGlobalPitch(void);
 
-void Seq_StartRelativeNestedStream(AkaoRelativeNestedCommand *cmd) {
-    AkaoU32 table;
+void Seq_StartRelativeNestedStream(AkaoQueueEntry *cmd) {
+    AkaoU8 *table = cmd->arg0.sequence;
     u16 offset;
     void *arg1;
     void *arg2;
+    AkaoNestedSource source = {0};
 
-    /* The command's key-off word carries the stream table address here;
-     * each table entry is a byte offset from the table to a stream. */
-    table = cmd->source.key_off_mask;
-    offset = ((AkaoU16 *)table)[0];
-    if (offset != 0xFFFF) {
-        arg1 = (AkaoU8 *)(offset + table) + 4;
-    } else {
-        arg1 = 0;
-    }
+    offset = (u16)(table[0] | (u16)table[1] << 8);
+    arg1 = offset != 0xFFFF ? table + offset + 4 : 0;
+    offset = (u16)(table[2] | (u16)table[3] << 8);
+    arg2 = offset != 0xFFFF ? table + offset + 4 : 0;
 
-    offset = ((AkaoU16 *)table)[1];
-    arg2 = 0;
-    if (offset != 0xFFFF) {
-        arg2 = (AkaoU8 *)(offset + cmd->source.key_off_mask) + 4;
-    }
-
-    cmd->source.key_off_mask = cmd->key_off_mask;
-    Seq_StartNestedStreams(&cmd->source, arg1, arg2);
+    /* Message 0x24 carries a native table pointer in arg0 and the generated
+     * sound identifier in sequence. Keep masks scalar when starting voices. */
+    cmd->arg0.value = cmd->sequence;
+    source.key_off_mask = cmd->sequence;
+    source.key_on_mask = cmd->arg1;
+    source.pan.word = cmd->arg2;
+    source.pan_target = cmd->arg3;
+    Seq_StartNestedStreams(&source, arg1, arg2);
 }
 
 void Spu_ManageVoicesCmd(AkaoQueueEntry *arg0) {

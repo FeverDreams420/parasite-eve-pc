@@ -680,3 +680,16 @@ little-endian PCM FNV-1a hash 25836548e09d8a00. PsyZ remains uninstrumented.
 This is an early playback smoke, not full-song fidelity evidence: no original
 hardware PCM reference comparison, full duration, menu integration or campaign
 completion is claimed.
+
+### Native sound-effect command 0x24 (2026-10-14)
+
+The original USA dispatch table identifies 0x24 as Seq_StartRelativeNestedStream.
+That handler now consumes AkaoQueueEntry directly, keeping its relative-stream
+table pointer native-width and materializing the original scalar nested-source
+fields after decoding both offsets. The obsolete pointer-in-u32 command view
+is removed. The regression executes Akao_Cmd_24, original enqueue and queue
+dispatch into that handler, checks both allocated effect channels, native
+script pointers, generated sound identifier, pan and volume, and checks absent
+stream sentinels. Instrument test passes ASan/UBSan/function; the other four
+AKAO asset/layout tests also pass. This still uses controlled effect data;
+menu asset lookup and frontend playback are not yet integrated.

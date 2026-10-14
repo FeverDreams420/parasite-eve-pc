@@ -835,6 +835,29 @@ int main(int argc, char **argv)
         CHECK(voice->parent_track_id == (i < 48 ? 0 : 1));
         CHECK(voice->flags == 0);
     }
+    /* Dispatch the original 0x24 handler with native pointers and both
+     * relative streams, then the absent-stream sentinel. */
+    unsigned relative_header[3] = {0x4f414b41, 0x00010000, 0x0000a0a0};
+    unsigned char *relative_streams = (unsigned char *)(relative_header + 1);
+    Akao_MessageHandlers[0x24] = Seq_StartRelativeNestedStream;
+    AkaoQueueEntry *relative = &g_AkaoMessageQueue[0];
+    int sound_id = Akao_Cmd_24(relative_header, 0x100, 0x80, 0x7f);
+    CHECK(sound_id >= 0x400 && sound_id < 0x600);
+    CHECK(g_AkaoMessageQueueCount == 1);
+    Akao_ProcessMessageQueue();
+    CHECK(g_AkaoMessageQueueCount == 0);
+    CHECK(g_SpuActiveVoiceMask == 0xc00000);
+    for (unsigned i = 10; i < 12; ++i) {
+        AkaoTrack *voice = &g_AkaoVoiceChannelTable[i];
+        CHECK(voice->pc == relative_streams + 4 + i - 10);
+        CHECK(voice->key_off_mask == (unsigned)sound_id && voice->key_on_mask == 0x100);
+        CHECK(voice->panpot == 0x8000 && voice->pan_target == 0x7f00);
+    }
+    Spu_InitVoiceState();
+    unsigned char absent_streams[] = {255, 255, 255, 255};
+    relative->arg0.sequence = absent_streams;
+    Seq_StartRelativeNestedStream(relative);
+    CHECK(g_SpuActiveVoiceMask == 0);
     unsigned sample_block[36] = {0};
     sample_block[0] = 0x4f414b41;
     sample_block[4] = 0x2000;

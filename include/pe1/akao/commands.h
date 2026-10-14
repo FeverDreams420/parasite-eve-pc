@@ -5,20 +5,10 @@
 #include "pe1/akao/queue.h"
 #include "pe1/akao/track.h"
 
-/* The relative-stream command initially holds an offset-table address in
- * source.key_off_mask; the handler replaces it with the saved mask before
- * passing the source descriptor to Seq_StartNestedStreams. */
-typedef struct AkaoRelativeNestedCommand {
-    AkaoNestedSource source;
-    unsigned int key_off_mask;
-} AkaoRelativeNestedCommand;
-typedef char AkaoRelativeNestedCommandSizeCheck[
-    (sizeof(AkaoRelativeNestedCommand) == 0x18) ? 1 : -1];
-
 void Seq_StartDefaultNestedStream(AkaoNestedSource *source);
 void Seq_StartIndexedNestedStreamWithDefaults(AkaoNestedSource *source);
 void Seq_StartIndexedNestedStream(AkaoNestedSource *source);
-void Seq_StartRelativeNestedStream(AkaoRelativeNestedCommand *command);
+void Seq_StartRelativeNestedStream(AkaoQueueEntry *command);
 
 typedef signed char AkaoCommandS8;
 

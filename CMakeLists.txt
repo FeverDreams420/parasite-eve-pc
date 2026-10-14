@@ -316,7 +316,7 @@ if(BUILD_TESTING)
 endif()
 
 
-add_library(parasite-eve-original-pad OBJECT src/main/menu/widget.c)
+add_library(parasite-eve-original-pad OBJECT src/main/menu/widget.c src/main/menu/input_queue.c)
 target_include_directories(parasite-eve-original-pad PRIVATE include pc)
 target_link_libraries(parasite-eve-original-pad PRIVATE psyz)
 foreach(pad_target IN LISTS akao_runtime_targets)

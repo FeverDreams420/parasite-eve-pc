@@ -2388,3 +2388,21 @@ and untouched adjacent vertex scratch. Full build and fresh ordinary plus
 ASan/UBSan/function actor-animation runs pass. PsyZ/SDL remain uninstrumented.
 This tests traversal, not GPU menu packets, text or complete menu visuals. Full
 renderer integration, game runtime and pc/ removal remain incomplete.
+
+
+### Execute the original menu event queue and callback dispatch
+
+The complete menu/input_queue.c now compiles in place. It owns its original
+20-entry native event pool, references existing shared draw/input globals and
+exports enqueue/dequeue normally under C11. Field-pad bit remapping uses unsigned
+word shifts. Dispatch handles a missing current widget and skips absent update
+callbacks while preserving child-to-parent propagation. No new files.
+
+The existing fixture fills all 20 entries, verifies full-queue drop behavior,
+masked removal/reuse and FIFO order, then sends press/repeat/release events
+through child and parent callbacks and checks exact flag translation. Empty
+current-widget dispatch executes without dereferencing NULL. Full build, four
+original/legacy input and boot tests, and fresh ASan/UBSan/function fixture pass;
+PsyZ/SDL remain uninstrumented. Draw/present routines in the same module are
+compiled but unverified and retain legacy pointer assumptions. No claim of full
+menu visuals or original game runtime; pc/ removal remains pending.

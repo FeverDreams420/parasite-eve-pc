@@ -10,10 +10,11 @@
 #include "pe1/psyq_tim.h"
 #include "pe1/render_buffers.h"
 
+MenuQueueEntry g_MenuEventQueuePool[MENU_EVENT_QUEUE_SIZE];
 MenuQueueEntry *g_MenuEventQueueFreeList;
 MenuQueueEntry *g_MenuEventQueueHead;
 MenuQueueEntry *g_MenuEventQueueTail;
-int g_MenuInputActive;
+extern int g_MenuInputActive;
 int g_MenuInputPollingPaused;
 int g_MenuInputHeldStatusMask;
 
@@ -39,7 +40,7 @@ void MenuInput_InitQueue(void) {
     g_MenuInputHeldStatusMask = 0;
 }
 
-inline void Queue_Enqueue(int arg0, int arg1) {
+void Queue_Enqueue(int arg0, int arg1) {
     MenuQueueEntry *entry;
     MenuQueueEntry *tail;
 
@@ -62,7 +63,7 @@ inline void Queue_Enqueue(int arg0, int arg1) {
     }
 }
 
-inline void Queue_DequeueByMask(int mask, MenuQueueEntry *out_arg) {
+void Queue_DequeueByMask(int mask, MenuQueueEntry *out_arg) {
     MenuQueueEntry *out;
     MenuQueueEntry *entry;
     MenuQueueEntry *prev;
@@ -118,8 +119,8 @@ int g_MenuInputRepeatTimer;
 
 /* Translate the field pad bits into the menu input status flags. */
 int Draw_RemapStatusFlags(void) {
-    int pad;
-    int lower;
+    u32 pad;
+    u32 lower;
     int select;
     int mask;
 
@@ -143,7 +144,7 @@ int Draw_RemapStatusFlags(void) {
     if (pad & 0x10000000) {
         mask |= 0x10;
     }
-    if (pad < 0) {
+    if (pad & 0x80000000u) {
         mask |= 0x80;
     }
     if (pad & 0x04000000) {
@@ -228,7 +229,7 @@ void MenuInput_DispatchQueuedEvents(void) {
 
     node = MenuWidget_GetCurrentNode();
     if (g_MenuInputPollingPaused == 0) {
-        MenuInput_EnqueueStatusChanges(node->flags);
+        MenuInput_EnqueueStatusChanges(node ? node->flags : 0);
     }
 
     Queue_DequeueByMask(-1, &local);
@@ -250,7 +251,7 @@ void MenuInput_DispatchQueuedEvents(void) {
             if (local.payload.input.type == 2) {
                 flags |= 0x20000;
             }
-            handled = ((MenuWidgetInputHandler)node->update)(node, flags);
+            handled = node->update ? node->update(node, flags) : 0;
             if (handled != 0) {
                 return;
             }
@@ -265,7 +266,7 @@ void MenuInput_DispatchQueuedEvents(void) {
             return;
         }
         do {
-            handled = ((MenuWidgetInputHandler)node->update)(node, 0x10000);
+            handled = node->update ? node->update(node, 0x10000) : 0;
             if (handled != 0) {
                 return;
             }
@@ -311,17 +312,16 @@ void Draw_SetPresentEnabled(int arg0) {
     g_DrawPresentEnabled = arg0;
 }
 
-#define NULL ((void *)0)
 
-int g_TextCursorX;
-int g_TextCursorY;
+extern int g_TextCursorX;
+extern int g_TextCursorY;
 int g_DrawGradientBlendColor;
-int *g_TextCursorStackPtr;
+extern int *g_TextCursorStackPtr;
 DrawFrameBuffer *g_DrawCurrentFrameBuffer;
-u8 *g_DrawPacketCursor;
-u8 *g_DrawPacketArenaBase;
+extern u8 *g_DrawPacketCursor;
+extern u8 *g_DrawPacketArenaBase;
 u32 *g_DrawOrderingTableBase;
-u32 *g_DrawOrderingTableEntry;
+extern u32 *g_DrawOrderingTableEntry;
 void Draw_InitBuffers(void) {
     g_DrawFrameBuffers[0].frontBufferBase = g_RenderFrontBufferBase[0];
     g_DrawFrameBuffers[1].frontBufferBase = g_RenderBackBufferBase[0];
@@ -362,7 +362,7 @@ void Draw_InitBuffers(void) {
 
 int g_DrawPresentImage;
 
-int g_DrawBufferIndex;
+extern int g_DrawBufferIndex;
 
 void Draw_SetPresentImage(int arg0) {
     g_DrawPresentImage = arg0;

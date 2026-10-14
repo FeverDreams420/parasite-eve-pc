@@ -18,6 +18,7 @@
 #include "disc.h"
 #include "pe1/gte.h"
 #include "pe1/menu_widget.h"
+#include "pe1/menu_queue.h"
 #include "pe1/draw_state.h"
 #include <SDL3/SDL.h>
 #include <stdlib.h>
@@ -36,6 +37,16 @@ static void record_widget_draw(MenuWidgetNode *node)
     widget_draw_x[i]=g_TextCursorX;
     widget_draw_y[i]=g_TextCursorY;
     g_TextCursorX=900; g_TextCursorY=-700;
+}
+
+static unsigned menu_event_count;
+static int menu_event_nodes[8], menu_event_flags[8];
+static int record_menu_event(MenuWidgetNode *node,unsigned flags)
+{
+    if(menu_event_count>=8)abort();
+    menu_event_nodes[menu_event_count]=node->mode;
+    menu_event_flags[menu_event_count++]=(int)flags;
+    return node->mode==2;
 }
 
 /* Backing storage for exercising the original boot buffer layout. */
@@ -572,6 +583,32 @@ int main(int argc, char **argv)
         for(unsigned i=0;i<4;++i)
             if(widget_draw_order[i]!=(int)i || widget_draw_x[i]!=want_x[i] || widget_draw_y[i]!=want_y[i])return 100;
         for(unsigned i=0;i<12;++i)if(g_TextCursorStackTop[i]!=0x12345678)return 101;
+        MenuInput_InitQueue();
+        for(int i=0;i<20;++i)Queue_Enqueue(i&1?2:1,100+i);
+        if(g_MenuEventQueueFreeList)return 102;
+        Queue_Enqueue(1,999);
+        MenuQueueEntry event;
+        Queue_DequeueByMask(2,&event);
+        if(event.payload.input.flags!=101)return 103;
+        Queue_Enqueue(4,123);
+        for(int i=0;i<20;++i) {
+            Queue_DequeueByMask(-1,&event);
+            int want=i==19?123:100+i+(i>0);
+            if(event.payload.input.flags!=want)return 104;
+        }
+        if(g_MenuEventQueueHead || g_MenuEventQueueTail)return 105;
+        MenuWidgetNode event_parent={0},event_child={0};
+        event_parent.mode=2;event_parent.update=record_menu_event;
+        event_child.mode=1;event_child.update=record_menu_event;event_child.parent=&event_parent;
+        g_MenuWidgetCurrentNode=&event_child;g_MenuInputPollingPaused=1;
+        Queue_Enqueue(1,0x40);MenuInput_DispatchQueuedEvents();
+        Queue_Enqueue(2,0x1000);MenuInput_DispatchQueuedEvents();
+        Queue_Enqueue(4,0x20);MenuInput_DispatchQueuedEvents();
+        if(menu_event_count!=6)return 106;
+        for(unsigned i=0;i<6;++i)
+            if(menu_event_nodes[i]!=(i%2?2:1) || menu_event_flags[i]!=(i<2?0x40:i<4?0x21000:0x10000))return 107;
+        g_MenuWidgetCurrentNode=NULL;g_MenuInputPollingPaused=0;
+        MenuInput_DispatchQueuedEvents();
         MenuWidgetNode menu={0};menu.mode=1;g_MenuWidgetActiveListHead=&menu;
         MenuWidgetListNavigation navigation={0};
         navigation.list=&menu;

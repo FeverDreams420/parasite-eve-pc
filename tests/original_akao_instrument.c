@@ -45,6 +45,10 @@ AkaoVoiceBank g_AkaoVoiceStateBackup;
 unsigned g_AkaoVoiceKeyOnState, g_AkaoSeqPendingFlags;
 unsigned short g_AkaoSelectedBankId;
 char g_AkaoDefaultVoiceProgram[] = {0};
+short g_AkaoPanVolumeTable[256];
+int g_AkaoPlaybackMode;
+unsigned char g_AkaoGlobalPitchScale;
+AkaoTickTrack g_AkaoSequencerTracks[48];
 /* This isolated command test must never request a hardware reverb change.
  * PsyZ has no SpuSetReverbModeType endpoint yet: fail instead of simulating it. */
 int SpuSetReverbModeType(unsigned int mode)
@@ -69,6 +73,7 @@ void SeqOp_SetPanSlide(AkaoTrack *track);
 void SeqOp_SetExpressionSlide(AkaoTrack *track);
 void SeqOp_PitchSlide(AkaoTrack *track);
 void SeqOp_SetBranchTarget(AkaoTrack *track);
+void Akao_SetVoiceKeyOff(AkaoTrack *track, u32 voice_mask, int index);
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 
 static int asset_audit(void)
@@ -443,6 +448,32 @@ int main(int argc, char **argv)
     CHECK(lfo.volume == -19);
     CHECK(lfo.flags & AKAO_TRACK_FLAG_BRANCH_ACTIVE);
     CHECK(lfo.pitch_lfo_target == 0x2000 && lfo.volume_lfo_target == 0x6000);
-    puts("original AKAO: commands, initialization, start, rebasing and script views pass");
+    short wave[] = {32767, -32768, 0, 0, -2};
+    AkaoTrack modulated = {0};
+    modulated.flags = AKAO_TRACK_FLAG_PITCH_LFO | AKAO_TRACK_FLAG_VOLUME_LFO | AKAO_TRACK_FLAG_AUX_LFO;
+    modulated.pitch_lfo_table = wave;
+    modulated.volume_lfo_table = wave;
+    modulated.aux_lfo_table = wave;
+    modulated.pitch_lfo_phase = modulated.volume_lfo_phase = modulated.aux_lfo_phase = 1;
+    modulated.pitch_lfo_duration = modulated.volume_lfo_duration = modulated.aux_lfo_duration = 1;
+    modulated.pitch_lfo_depth = 256;
+    modulated.volume_lfo_target = modulated.aux_lfo_target = 0x4000;
+    modulated.expression_value = 128 << 16;
+    modulated.volume_base = 0x4000;
+    modulated.pitch_base = 4096;
+    tick_bank.timing.pitch_integer = 127;
+    for (unsigned i = 0; i < 16; ++i) {
+        modulated.update_flags = 0;
+        Akao_SetVoiceKeyOff(&modulated, 1, 0);
+        CHECK(modulated.pitch_lfo_value == (i % 2 ? -128 : 254));
+        CHECK(modulated.volume_lfo_value == (i % 2 ? -32 : 31));
+        CHECK(modulated.aux_lfo_value == (i % 2 ? -64 : 63));
+        CHECK(modulated.pitch == (i % 2 ? 3968 : 4350));
+        CHECK(modulated.update_flags == (AKAO_VOICE_PARAM_VOLUME | AKAO_VOICE_PARAM_PITCH));
+        CHECK(modulated.pitch_lfo_table == wave + (i % 2 ? 2 : 1));
+        CHECK(modulated.volume_lfo_table == wave + (i % 2 ? 2 : 1));
+        CHECK(modulated.aux_lfo_table == wave + (i % 2 ? 2 : 1));
+    }
+    puts("original AKAO: commands, start, rebasing, script views and LFO stepping pass");
     return 0;
 }

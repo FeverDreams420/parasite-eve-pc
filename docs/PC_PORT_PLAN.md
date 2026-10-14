@@ -559,6 +559,8 @@ Strict `original-game-akao-assets` wykonuje original Akao_StepSequencerVoice na 
 
 AkaoScriptState jest teraz aliasem canonical native AkaoTrack, nie częściową strukturą z PS1 padding. Cztery original handlers zapisują canonical pitch/volume/aux LFO fields oraz branch/volume i high-half expression value. Usunięto historyczny opis, że pc/akao_channel jest właściwym runtime. Fixture wykonuje trzy slides z duration zero→256, dodatnim/ujemnym delta oraz signed backward branch ze saved high-half; sprawdza cursor i niezmienione targets. Trzy AKAO CTests z wymaganym Disc 1 i ASan/UBSan/function fixture przechodzą (PsyZ nieinstrumentowane). Pełna opcode tabela, interpreter timing/SPU i rzeczywiste audio pozostają wymagane.
 
+Original voice-driver Akao_SetVoiceKeyOff wykonuje w headless fixture 16 kolejnych aktualizacji wszystkich trzech LFO na dodatniej/ujemnej fali z relative loop marker. Test sprawdza zachowanie native waveform pointers, pitch/volume/aux values, wynikowy pitch i dirty flags; nie implementuje zastępczego LFO. CTest i ASan/UBSan/function przechodzą (PsyZ nieinstrumentowane). Dowód obejmuje tę procedurę na kontrolowanym waveform; real waveform corpus, key-on variant, timing gates/stereo i PCM nadal pozostają wymagane.
+
 ## Źródła techniczne do implementacji bramek
 
 Audyt bieżącego projektu: `pc/CMakeLists.txt`, `pc/tests/test_disc.c`, `pc/tests/test_boot_assets.c`, `.github/workflows/pc.yml`, `docs/ARCHITECTURE.md`, `docs/ROOMS.md` i źródła `src/`.

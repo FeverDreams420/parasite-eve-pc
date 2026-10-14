@@ -203,3 +203,19 @@ invalid:
     snprintf(task->error,sizeof(task->error),"Invalid or unsupported actor animation opcode %u",command->opcode);
     return PE_DISPATCH_ERROR;
 }
+int pe_actors_events(PeActors *actors){
+    PeScriptActor *targets[PE_ACTOR_CAPACITY];unsigned count=0,seen=0;
+    int index=actors->head,previous=-1;
+    while(index>=0){
+        if((unsigned)index>=PE_ACTOR_CAPACITY||count>=PE_ACTOR_CAPACITY||
+           (seen&(1u<<index))||!actors->slots[index].used||actors->slots[index].previous!=previous)goto invalid;
+        seen|=1u<<index;targets[count++]=&actors->slots[index].script;
+        previous=index;index=actors->slots[index].next;
+    }
+    if(index!=-1||count!=actors->live)goto invalid;
+    if(!pe_script_scheduler_event_targets(actors->scheduler,targets,count)){
+        snprintf(actors->error,sizeof(actors->error),"%s",actors->scheduler->error);return 0;
+    }
+    actors->error[0]=0;return 1;
+invalid:snprintf(actors->error,sizeof(actors->error),"Invalid actor list during event delivery");return 0;
+}

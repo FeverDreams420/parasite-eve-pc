@@ -41,5 +41,6 @@ PeScriptDispatchResult pe_scene_dispatch(void *user,PeScriptTask *task,const PeS
 /* One actor's script buckets; loading context borrowed only for this call.
  * Full frame ordering/events/physics/audio synthesis remain separate. */
 int pe_scene_actor_scripts(PeScene *scene,unsigned slot,PeRoomCatalog *catalog,unsigned instruction_limit);
+int pe_scene_events(PeScene *scene);
 
 #endif

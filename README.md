@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Script event delivery accepts stable actor pointers and works with the native
+actor pool in linked-list order. It rejects cycles, invalid linkage and
+duplicate/null targets before changing the queue. New tasks retain the
+receiver's actual actor pointer, trigger value and argument. Scene event
+delivery is explicit; full frame ordering remains pending. All 29 headless
+tests and ASan/UBSan actor/scheduler fixtures pass, including queue preservation
+on malformed actor lists and delivery to a native receiver.
+
 Scenes now own the native actor pool and scene audio. Initial map descriptors
 create stable actor/task slots; scene teardown frees actor models and music
 before room data. The scheduler routes commands through combined actor/audio

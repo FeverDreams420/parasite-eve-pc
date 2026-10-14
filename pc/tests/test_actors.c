@@ -108,6 +108,18 @@ int main(void) {
     subject->render->overrides[0].matrix_index=1;
     CHECK(!pe_actor_model_pose(subject,&base)&&subject->render->pose[0].translation[0]==107);
     subject->render->overrides[0].matrix_index=0;
+    subject->script.cursors[2]=32;
+    banks.events[0]=(PeScriptEvent){0,0,7,(uint8_t)subject->script.field_id,123};banks.event_count=1;
+    unsigned tasks_before=scheduler->live;int saved_next=subject->next;
+    subject->next=(int)(subject-actors->slots);
+    CHECK(!pe_actors_events(actors)&&banks.event_count==1&&scheduler->live==tasks_before);
+    subject->next=saved_next;
+    PeScriptActor *duplicate_targets[2]={&subject->script,&subject->script};
+    CHECK(!pe_script_scheduler_event_targets(scheduler,duplicate_targets,2)&&banks.event_count==1);
+    CHECK(pe_actors_events(actors)&&!banks.event_count&&scheduler->live==tasks_before+1);
+    int event_slot=subject->script.heads[2];
+    CHECK(scheduler->slots[event_slot].task.actor==&subject->script&&scheduler->slots[event_slot].task.trigger_value==123);
+    CHECK(scheduler->slots[event_slot].task.target14==7);
     /* Real VM dispatch: select action, clamp stop, retry until frame match,
      * then yield past the wait instruction. */
     word(bytes+32,46|(1u<<13));word(bytes+40,0);

@@ -37,4 +37,6 @@ int pe_script_scheduler_collect(PeScriptScheduler *scheduler, PeScriptActor *act
  * Validate all matches/capacity before allocating any task. */
 int pe_script_scheduler_events(PeScriptScheduler *scheduler, PeScriptActor *actors, unsigned count);
 
+/* Stable non-contiguous targets, in original actor list order. */
+int pe_script_scheduler_event_targets(PeScriptScheduler *scheduler,PeScriptActor *const *actors,unsigned count);
 #endif

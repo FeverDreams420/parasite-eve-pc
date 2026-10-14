@@ -92,3 +92,4 @@ int pe_scene_actor_scripts(PeScene *scene,unsigned slot,PeRoomCatalog *catalog,u
     int result=pe_script_scheduler_tick(scene->scheduler,&scene->actors->slots[slot].script,instruction_limit);
     scene->audio.catalog=NULL;return result;
 }
+int pe_scene_events(PeScene *scene){return scene->actors&&pe_actors_events(scene->actors);}

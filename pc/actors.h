@@ -56,4 +56,5 @@ int pe_actor_model_pose(PeActor *actor,const PeMatrix *base);
  * Flags 0x10040 preserve the last world matrix. */
 int pe_actor_model_world_pose(PeActor *actor);
 PeScriptDispatchResult pe_actors_dispatch(void *user,PeScriptTask *task,const PeScriptCommand *command);
+int pe_actors_events(PeActors *actors);
 #endif

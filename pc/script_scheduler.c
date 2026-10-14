@@ -76,20 +76,25 @@ static int event_matches(const PeScriptEvent *event, const PeScriptActor *actor)
         actor->script_entry == event->type && actor->sub_id == event->sub_id);
 }
 
-int pe_script_scheduler_events(PeScriptScheduler *scheduler, PeScriptActor *actors, unsigned count) {
+int pe_script_scheduler_event_targets(PeScriptScheduler *scheduler, PeScriptActor *const *actors, unsigned count) {
     unsigned needed = 0;
+    if(count>PE_SCRIPT_TASK_CAPACITY)goto invalid_events;
+    for(unsigned i=0;i<count;++i){
+        if(!actors[i])goto invalid_events;
+        for(unsigned j=0;j<i;++j)if(actors[j]==actors[i])goto invalid_events;
+    }
     if (scheduler->banks->event_count > PE_SCRIPT_EVENT_CAPACITY || scheduler->live > PE_SCRIPT_TASK_CAPACITY) goto invalid_events;
     for (unsigned event = 0; event < scheduler->banks->event_count; ++event) {
         for (unsigned actor = 0; actor < count; ++actor) {
-            if (!event_matches(&scheduler->banks->events[event], &actors[actor])) continue;
-            uint32_t offset = actors[actor].cursors[2];
+            if (!event_matches(&scheduler->banks->events[event], actors[actor])) continue;
+            uint32_t offset = actors[actor]->cursors[2];
             if ((offset & 1) || offset > scheduler->program.blob->size ||
                 scheduler->program.blob->size - offset < 8 || ++needed > PE_SCRIPT_TASK_CAPACITY - scheduler->live)
                 goto invalid_events;
-            int head = actors[actor].heads[2];
+            int head = actors[actor]->heads[2];
             if (head < -1 || (head >= 0 && ((unsigned)head >= PE_SCRIPT_TASK_CAPACITY ||
                 !scheduler->slots[head].used || scheduler->slots[head].group != 2 ||
-                scheduler->slots[head].task.actor != &actors[actor]))) goto invalid_events;
+                scheduler->slots[head].task.actor != actors[actor]))) goto invalid_events;
             if (scheduler->banks->events[event].selector) break;
         }
     }
@@ -102,8 +107,8 @@ int pe_script_scheduler_events(PeScriptScheduler *scheduler, PeScriptActor *acto
     for (unsigned event = 0; event < scheduler->banks->event_count; ++event) {
         const PeScriptEvent *entry = &scheduler->banks->events[event];
         for (unsigned actor = 0; actor < count; ++actor) {
-            if (!event_matches(entry, &actors[actor])) continue;
-            int slot = allocate(scheduler, &actors[actor], 2, actors[actor].cursors[2], -1);
+            if (!event_matches(entry, actors[actor])) continue;
+            int slot = allocate(scheduler, actors[actor], 2, actors[actor]->cursors[2], -1);
             if (slot < 0) return 0;
             scheduler->slots[slot].task.flags |= 4;
             scheduler->slots[slot].task.trigger_value = entry->value;
@@ -116,6 +121,13 @@ int pe_script_scheduler_events(PeScriptScheduler *scheduler, PeScriptActor *acto
 invalid_events:
     snprintf(scheduler->error, sizeof(scheduler->error), "Invalid script event cursor or insufficient task capacity");
     return 0;
+}
+
+int pe_script_scheduler_events(PeScriptScheduler *scheduler,PeScriptActor *actors,unsigned count){
+    if(count>PE_SCRIPT_TASK_CAPACITY){snprintf(scheduler->error,sizeof(scheduler->error),"Too many script event targets");return 0;}
+    PeScriptActor *targets[PE_SCRIPT_TASK_CAPACITY];
+    for(unsigned i=0;i<count;++i)targets[i]=&actors[i];
+    return pe_script_scheduler_event_targets(scheduler,targets,count);
 }
 
 static PeScriptDispatchResult dispatch(void *user, PeScriptTask *task,

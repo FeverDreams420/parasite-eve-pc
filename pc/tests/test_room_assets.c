@@ -454,6 +454,7 @@ int main(void) {
     CHECK(!scene_script_ok);
     CHECK(!scene.audio.catalog);
     CHECK(strstr(scene.scheduler->error, "Unimplemented script opcode 234"));
+    CHECK(pe_scene_events(&scene)&&!scene.script_banks.event_count);
     PeScriptBanks banks = {0};
     PeScriptTask task;
     /* Actual M431 entry zero sets its event cursor/flag and waits one tick. */

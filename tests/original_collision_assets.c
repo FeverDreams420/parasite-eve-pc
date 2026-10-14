@@ -8,13 +8,16 @@
 #include <string.h>
 void Entity_RelocateSceneData(void);
 void Entity_ResetStateGlobals(void);
+void Entity_ResolvePosition(BattleEntity *, int);
+void Entity_UpdateAndRender(BattleEntity *);
+int Geo_PointInTri(void *, s16, s16);
 static u32 word(const u8 *p) { return p[0]|(u32)p[1]<<8|(u32)p[2]<<16|(u32)p[3]<<24; }
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x);return 1; } } while (0)
 int main(void)
 {
     const char *path=getenv("PE_TEST_DISC");
     PeDisc disc={0};PeRoomCatalog catalog;PeRoom room={0};unsigned maps=0;
-    unsigned long queries=0, hits=0, sloped_hits=0;
+    unsigned long queries=0, hits=0, sloped_hits=0, moves=0, rollbacks=0;
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     CHECK(pe_disc_open(&disc,path));CHECK(pe_room_catalog_open(&catalog,&disc));
     for (unsigned map=1;map<=PE_USA_ROOM_SLOTS;++map) {
@@ -69,6 +72,28 @@ int main(void)
                         CHECK((u32)actor.posY.fixed == expected.height);
                         ++hits;
                         sloped_hits += g_CollisionPlaneTable != NULL;
+                        if(point==3 && mode==0) {
+                            Entity_ResolvePosition(&actor,expected.triangle);
+                            CHECK((u32)actor.posY.fixed==expected.height);
+                            CHECK(Geo_PointInTri(actor.collisionFace,actor.posX.parts.integer,actor.posZ.parts.integer));
+                            actor.moveSpeed=4096;
+                            actor.stepHeight=64;
+
+                            for(unsigned trial=0;trial<8;++trial) {
+                                unsigned direction=trial&3;
+                                BattleEntity moved=actor;
+                                moved.renderObject.hit_cylinder.radius=trial<4?0:32;
+                                moved.posX.fixed=(s32)((u32)moved.posX.fixed + (direction==0?65536u:direction==1?0xffff0000u:0));
+                                moved.posZ.fixed=(s32)((u32)moved.posZ.fixed + (direction==2?65536u:direction==3?0xffff0000u:0));
+                                Entity_UpdateAndRender(&moved);
+                                CHECK(moved.collisionFace);
+                                if(moved.entityFlags&0x80000) {
+                                    CHECK(moved.posX.fixed==actor.baseX && moved.posY.fixed==actor.baseY && moved.posZ.fixed==actor.baseZ);
+                                    ++rollbacks;
+                                } else CHECK(Geo_PointInTri(moved.collisionFace,moved.posX.parts.integer,moved.posZ.parts.integer));
+                                ++moves;
+                            }
+                        }
                     } else {
                         CHECK(actor.collisionFace == NULL && actor.collisionFaceMirror == NULL);
                         CHECK(actor.posY.fixed == -1234567);
@@ -83,6 +108,7 @@ int main(void)
     g_RoomCollisionData[0]=0;Entity_RelocateSceneData();CHECK(!g_CollisionDb);
     pe_disc_close(&disc);CHECK(maps==414);
     CHECK(queries && hits && sloped_hits);
+    printf("Original floor movement: %lu steps, %lu rollbacks\n",moves,rollbacks);
     printf("Original floor queries: %lu queries, %lu hits, %lu sloped hits\n", queries, hits, sloped_hits);
     printf("Original collision relocation: %u rooms, immutable disc records and native region pointers\n",maps);
     return 0;

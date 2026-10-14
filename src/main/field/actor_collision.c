@@ -238,7 +238,7 @@ void Entity_ResolvePosition(BattleEntity *actor, int index) {
         value = table[entry->region].flat->height;
         arg_y = actor_s2->posX.parts.integer;
         arg_z = actor_s2->posZ.parts.integer;
-        value <<= 16;
+        value = (s32)((u32)value << 16);
         actor_s2->posY.fixed = value;
     } else {
         CollisionFace *entry_s0;
@@ -318,11 +318,11 @@ void Entity_UpdateAndRender(BattleEntity *actor)
 
             /* Signed areas of the ramp edge against the new and the old
              * position. */
-            sxy = (z << 16) | (u16)x;
+            sxy = ((s32)((u32)z << 16)) | (u16)x;
             gte_ldsxy3(g_FloorBlockedEdgePointA.packed, g_FloorBlockedEdgePrev.packed, sxy);
             gte_nclip();
             gte_stmac0(&area);
-            sxy = (oldZ << 16) | (u16)oldX;
+            sxy = ((s32)((u32)oldZ << 16)) | (u16)oldX;
             gte_ldsxy2(sxy);
             gte_nclip();
             gte_stmac0(&oldArea);
@@ -385,7 +385,7 @@ void Entity_UpdateAndRender(BattleEntity *actor)
             if (saved == g_FieldCollisionTriIndex) {
                 for (j = 0; j < g_CollisionDb->visitedWordCount; j++)
                     g_FloorEdgeVisitedBitmap[j] = 0;
-                g_FloorEdgeVisitedBitmap[g_FieldCollisionTriIndex >> 5] = 1 << (g_FieldCollisionTriIndex & 0x1F);
+                g_FloorEdgeVisitedBitmap[g_FieldCollisionTriIndex >> 5] = 1u << (g_FieldCollisionTriIndex & 0x1F);
                 i = Geo_ClipToFloorBoundary(x, z, face);
                 if (i) {
                     Entity_RevertMove(actor);
@@ -407,6 +407,12 @@ void Entity_UpdateAndRender(BattleEntity *actor)
 
     if (!Geo_PointInTri(face, x, z))
         face = Geo_ClipToFloorBoundarySub(face, 0, x, z, oldX, oldZ);
+    /* A boundary/degenerate crossing may have no reachable neighbour. Keep
+     * the last valid position, as for an unsuccessful boundary search above. */
+    if (!face) {
+        Entity_RevertMove(actor);
+        return;
+    }
 
     if ((planes = g_CollisionPlaneTable) != 0) {
         CollisionFace *floor = face;
@@ -451,12 +457,12 @@ void Entity_UpdateAndRender(BattleEntity *actor)
             step = actor->stepHeight;
             if (delta < 0)
                 delta = -delta;
-            step <<= 16;
+            step = (s32)((u32)step << 16);
             if (delta >= step) {
                 Entity_RevertMove(actor);
                 return;
             }
-            actor->posY.fixed = height << 16;
+            actor->posY.fixed = (s32)((u32)height << 16);
         }
     }
     actor->collisionFace = face;
@@ -517,7 +523,7 @@ int Geo_ClipToFloorBoundary(s16 x, s16 z, void *triangle)
             prevX = nextX;
             prevZ = nextZ;
             bits = &g_FloorEdgeVisitedBitmap[bit >> 5];
-            bit = 1 << (bit & 0x1F);
+            bit = 1u << (bit & 0x1F);
             nextIndex = tri->layout.links.vertices[slot];
             COLLISION_VERTEX(vertex, nextIndex, CollisionVertexXZ);
             nextX = vertex.xz->x;
@@ -551,8 +557,8 @@ int Geo_ClipToFloorBoundary(s16 x, s16 z, void *triangle)
                 if (d > r)
                     continue;
                 if (nextIndex < prevIndex) {
-                    d = Math_FixedMul(g_SceneDataTable2[edgeId].directionX, dx << 16);
-                    d += Math_FixedMul(g_SceneDataTable2[edgeId].directionZ, dz << 16);
+                    d = Math_FixedMul(g_SceneDataTable2[edgeId].directionX, (s32)((u32)dx << 16));
+                    d += Math_FixedMul(g_SceneDataTable2[edgeId].directionZ, (s32)((u32)dz << 16));
                     if (d < 0) {
                         d = dx * dx + dz * dz;
                         if (d > g_CollisionRadius * g_CollisionRadius)
@@ -570,8 +576,8 @@ int Geo_ClipToFloorBoundary(s16 x, s16 z, void *triangle)
                     int ex = px - (s16)prevX;
                     int ez = pz - (s16)prevZ;
 
-                    d = Math_FixedMul(g_SceneDataTable2[edgeId].directionX, ex << 16);
-                    d += Math_FixedMul(g_SceneDataTable2[edgeId].directionZ, ez << 16);
+                    d = Math_FixedMul(g_SceneDataTable2[edgeId].directionX, (s32)((u32)ex << 16));
+                    d += Math_FixedMul(g_SceneDataTable2[edgeId].directionZ, (s32)((u32)ez << 16));
                     if (d < 0) {
                         d = ex * ex + ez * ez;
                         if (d > g_CollisionRadius * g_CollisionRadius)
@@ -638,7 +644,7 @@ int Geo_ClipToFloorBoundary(s16 x, s16 z, void *triangle)
             prevX = nextX;
             prevZ = nextZ;
             bits = &g_FloorEdgeVisitedBitmap[bit >> 5];
-            bit = 1 << (bit & 0x1F);
+            bit = 1u << (bit & 0x1F);
             nextIndex = tri->layout.links.vertices[slot];
             COLLISION_VERTEX(vertex, nextIndex, CollisionVertexXYZ);
             nextX = vertex.xyz->x;
@@ -672,8 +678,8 @@ int Geo_ClipToFloorBoundary(s16 x, s16 z, void *triangle)
                 if (d > r)
                     continue;
                 if (nextIndex < prevIndex) {
-                    d = Math_FixedMul(g_SceneDataTable2[edgeId].directionX, dx << 16);
-                    d += Math_FixedMul(g_SceneDataTable2[edgeId].directionZ, dz << 16);
+                    d = Math_FixedMul(g_SceneDataTable2[edgeId].directionX, (s32)((u32)dx << 16));
+                    d += Math_FixedMul(g_SceneDataTable2[edgeId].directionZ, (s32)((u32)dz << 16));
                     if (d < 0) {
                         d = dx * dx + dz * dz;
                         if (d > g_CollisionRadius * g_CollisionRadius)
@@ -691,8 +697,8 @@ int Geo_ClipToFloorBoundary(s16 x, s16 z, void *triangle)
                     int ex = px - (s16)prevX;
                     int ez = pz - (s16)prevZ;
 
-                    d = Math_FixedMul(g_SceneDataTable2[edgeId].directionX, ex << 16);
-                    d += Math_FixedMul(g_SceneDataTable2[edgeId].directionZ, ez << 16);
+                    d = Math_FixedMul(g_SceneDataTable2[edgeId].directionX, (s32)((u32)ex << 16));
+                    d += Math_FixedMul(g_SceneDataTable2[edgeId].directionZ, (s32)((u32)ez << 16));
                     if (d < 0) {
                         d = ex * ex + ez * ez;
                         if (d > g_CollisionRadius * g_CollisionRadius)
@@ -1182,8 +1188,8 @@ int Geo_FindNearestEdge(int x, int z, PolygonVertex *vertices,
         if (distance > g_CollisionRadius)
             continue;
         VectorNormal(&edge, &edge);
-        distance = Math_FixedMul(edge.x << 4, offsetX << 16);
-        distance += Math_FixedMul(edge.z << 4, offsetZ << 16);
+        distance = Math_FixedMul(edge.x << 4, (s32)((u32)offsetX << 16));
+        distance += Math_FixedMul(edge.z << 4, (s32)((u32)offsetZ << 16));
         if (distance < 0) {
             distance = offsetX * offsetX + offsetZ * offsetZ;
             if (distance > g_CollisionRadius * g_CollisionRadius)

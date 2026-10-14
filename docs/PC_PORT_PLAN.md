@@ -1050,3 +1050,27 @@ checks pass; SDL/PsyZ archives uninstrumented. The actual main executable also
 passed the headless menu-audio replay before the scancode injection refinement;
 the boot replay CTest passed after it. This is input wiring and regression
 coverage, not a playable location or end-to-end scene evidence.
+
+### Original floor movement and boundary rollback corpus — 2026-10-14
+
+Extended the existing 414-room collision corpus beyond FindFloor: each eligible
+triangle-centroid hit now runs original Entity_ResolvePosition and four one-unit
+steps through Entity_UpdateAndRender, with both zero and 32-unit cylinder radii.
+The test checks resolved height, unchanged source records, a valid containing
+triangle after accepted movement, and exact last-position restoration on rejected
+movement. This is the non-player path (no player ramp sliding).
+
+The new path exposed signed-shift UB in boundary visited bits, negative floor
+heights and edge-coordinate fixed-point conversion. These now use unsigned word
+shifts while preserving the PS1 bit patterns. It also exposed a null neighbouring
+face on a zero-radius boundary crossing (first reproduced in map 24). The caller
+now reverts to the last valid position if the original neighbour walk returns no
+face, rather than dereferencing null. This is a defensive native behavior for an
+unreachable crossing, not a claim of PS1 trace equivalence for that edge case.
+
+All 134,616 movement trials pass, including 3,227 rollbacks. The prior 202,296
+floor queries / 99,614 hits / 40,274 sloped hits remain intact. Full build and
+floor/collision/movement/input regressions pass; ASan/UBSan/function instrumented
+game/test sources also pass the entire corpus (PsyZ uninstrumented). Player ramp
+sliding, larger moves, authored actor radii and collision connected to the running
+SDL scene remain to be verified. No full playable-location claim is made.

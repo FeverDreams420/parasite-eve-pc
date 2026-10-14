@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Dispatcher ma 69 powiązań: oryginalne opcode'y 200/201 zdejmują/ustawiają flagę aktora 0x20000. Powiązania potwierdzono w EXE USA; ABI poprawiono w istniejących funkcjach. Test kolejki odczytuje flagi po obu krokach przez oryginalny query opcode i sprawdza zachowanie pozostałych bitów. Nie jest to dowód całego zachowania roam w scenie. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 67 powiązań: oryginalny opcode 199 ustawia flagę węzła 0x80. Powiązanie potwierdzono w EXE USA; ABI poprawiono w istniejącej funkcji. Test kolejki sprawdza dalsze wykonanie takiego węzła po yield przy blokadzie aktora 0x1000 i globalnym player-only gate 0x100. Kontrolny węzeł bez flagi zachowuje kursor/licznik i rusza po zdjęciu blokad. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 66 powiązań: oryginalny opcode 196 dodaje kąt yaw aktora z oryginalnymi halfword porównaniami i jednokrotnym zawinięciem. Powiązanie potwierdzono w EXE USA. Test kolejki obejmuje sześć przypadków, granice 4095/4096, krok ujemny i krok większy niż pełny obrót; wynik odczytuje przez oryginalny vector query. Nie zastąpiono zachowania normalizacją modulo 4096. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

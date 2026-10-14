@@ -1237,12 +1237,12 @@ int Script_SetNodeFlag80(int **unused) {
  * read the current actor through absolute addresses. */
 
 
-int Script_ClearEntityRoamFlag(void) {
+int Script_ClearEntityRoamFlag(int **unused) {
     g_CurrentEntity->flags &= 0xFFFDFFFF;
     return 1;
 }
 
-int Script_SetEntityRoamFlag(void) {
+int Script_SetEntityRoamFlag(int **unused) {
     g_CurrentEntity->flags |= 0x20000;
     return 1;
 }

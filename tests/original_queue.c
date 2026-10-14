@@ -285,6 +285,19 @@ int main(void)
         if(g_ScriptVariableBank[36]!=(held?(mode==3?123u:1u):0u) ||
            task.current.script!=script+7 || task.flags!=0x10) return 30;
     }
+    for(unsigned bit=0;bit<32;++bit) for(unsigned held=0;held<2;++held) {
+        FieldActor owner={0};u32 mask=UINT32_C(1)<<bit;
+        u32 script[]={17|(3u<<13)|((2u<<6)<<17),0,3,mask,36,32,0};
+        ScriptNode task={.current.script=script,.active=1};
+        g_CurrentEntity=&owner;g_ScriptNodePool=&task;g_GameStateFlags=0;
+        g_FieldPadBits=held?mask:0;
+        for(unsigned i=0;i<32;++i) g_FieldPadHeldFrameCounts[i]=100+i;
+        g_ScriptVariableBank[36]=0x1234;
+        Script_RunQueue();
+        u32 operand=held&&bit!=31?31-bit:mask;
+        if(g_ScriptVariableBank[36]!=(held?100+bit:0) || script[3]!=operand ||
+           task.current.script!=script+7 || task.flags!=0x10) return 31;
+    }
     puts("Original interpreter operand addressing, yield, delay and player gating passed");
     return 0;
 }

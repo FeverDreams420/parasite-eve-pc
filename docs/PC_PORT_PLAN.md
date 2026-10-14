@@ -8,6 +8,8 @@ Byte match, odbudowa EXE PS1, historyczne kompilatory, kolejność instrukcji i 
 
 ## Obowiązujący kierunek portowania
 
+Test oryginalnego opcode 17 obejmuje już każdy z 32 pojedynczych bitów licznika held, przycisk aktywny/nieaktywny oraz oryginalną zmianę operandu przez LZCR. Zachowuje osobny przypadek bitu 31, którego operand nie jest nadpisywany. Wszystkie te maski trafiają do prawidłowego elementu tablicy liczników. Build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Zerowa i złożone maski trybu licznika nadal wymagają analizy; nie uznano ich za zweryfikowane. Nie dodano plików ani kodu produkcyjnego. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
+
 Dispatcher ma 40 powiązań: oryginalny opcode 17 czyta held/pressed/released oraz licznik trzymania przycisku ze wspólnego stanu pada. Test kolejki sprawdza cztery tryby dla najwyższego bitu maski, przycisk aktywny/nieaktywny i wynik zapisany do zmiennej skryptowej. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Zerowa maska w trybie licznika pozostaje niezweryfikowaną ścieżką starego kodu, nie objętą tym dowodem. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.
 
 Dispatcher ma 39 powiązań: opcode 240 pyta, czy sterowanie graczem jest odblokowane, na podstawie bitu 0 kanonicznego movement lock. Powiązanie potwierdzono w EXE USA. Test rzeczywistej kolejki obejmuje 16 kombinacji niższych flag, zachowanie najwyższego bitu i odczyt bez modyfikacji lock. Pełny build i cztery testy kolejki/ruchu/aktorów/lifecycle przeszły. Nie dodano plików ani funkcji produkcyjnych. Pełna pętla gry i usunięcie `pc/` pozostają niezakończone.

@@ -33,7 +33,7 @@ static void record_message(AkaoQueueEntry *entry)
 }
 AkaoMessageHandler Akao_MessageHandlers[256];
 volatile u32 g_AkaoMessageQueueLock;
-char g_AkaoDefaultVoiceProgram[] = {0};
+char g_AkaoDefaultVoiceProgram[4] = {0};
 short g_AkaoPanVolumeTable[256];
 AkaoU8 g_AkaoOpcodeArgLengths[96], g_AkaoExtOpcodeArgLengths[32];
 u16 g_AkaoNoteLengthTable[11] = {48, 24, 16, 12, 8, 6, 4, 3, 2, 1, 96};
@@ -68,6 +68,19 @@ static int asset_audit(int execute)
     memcpy(g_AkaoNoteLengthTable, catalog.akao.note_lengths, sizeof(g_AkaoNoteLengthTable));
     for (unsigned i = 0; i < 16; ++i)
         g_AkaoSoundEntryTable[i] = catalog.akao.lfo_words + catalog.akao.lfo_offsets[i];
+    if (execute == 2) {
+        PeDiscFile executable;
+        unsigned char tables[516];
+        CHECK(pe_disc_find(&disc, "SLUS_006.62", &executable));
+        CHECK(pe_disc_read(&disc, &executable, 0x9b8f4 - 0x10000 + 0x800, tables, sizeof(tables)));
+        memcpy(g_AkaoDefaultVoiceProgram, tables, 4);
+        for (unsigned j = 0; j < 256; ++j)
+            g_AkaoPanVolumeTable[j] = (short)(tables[4 + j * 2] | (unsigned)tables[5 + j * 2] << 8);
+        Psyz_SpuInit();
+        SpuInit();
+    }
+    unsigned long long audible_samples = 0;
+    uint64_t pcm_hash = UINT64_C(14695981039346656037);
     PeSpuBank *resident = calloc(1, sizeof(*resident));
     CHECK(resident != NULL);
     CHECK(pe_spu_bank_load_startup(&catalog, resident, NULL));
@@ -99,6 +112,10 @@ static int asset_audit(int execute)
                 g_AkaoSequencerState = (AkaoSequencerState){0};
                 g_AkaoCurTrack = &fixture_bank;
                 memcpy(g_AkaoInstrumentTable, resident->instruments, sizeof(AkaoInstrument) * 256);
+                if (execute == 2) {
+                    Psyz_SpuReset(0);
+                    Psyz_SpuMemWrite(0, resident->ram, sizeof(resident->ram));
+                }
                 Spu_SetStreamModeA();
                 CHECK(Akao_StepNoteSequencer(sample_bytes, (unsigned)sample_size) == 0);
                 CHECK(g_SpuTransferStatus == 0);
@@ -118,6 +135,10 @@ static int asset_audit(int execute)
             g_AkaoSeqPendingFlags = 0;
             g_AkaoVoiceKeyOnState = 0;
             g_SpuActiveVoiceMask = 0;
+            if (execute == 2) {
+                Spu_InitVoiceState();
+                Psyz_SpuWrite(0x1aa, Psyz_SpuRead(0x1aa) | 0xc000);
+            }
             Akao_StepSequencerVoice((void *)(music.sequence.bytes + 16));
             CHECK(fixture_bank.active_voice_mask == music.sequence.active);
             CHECK(fixture_bank.pending_voice_mask == music.sequence.pending);
@@ -128,7 +149,7 @@ static int asset_audit(int execute)
                 } else {
                     CHECK(g_AkaoVoiceStateTable[voice].pc == music.sequence.bytes + music.sequence.channels[voice]);
                     CHECK(g_AkaoVoiceStateTable[voice].assigned_voice_index == 24);
-                    if (execute) {
+                    if (execute == 1) {
                         if (getenv("PE_AKAO_PREFIX_TRACE"))
                             fprintf(stderr, "original prefix: map %u sequence %u voice %u\n", map, i, voice);
                         Akao_StepSampleLoader(&g_AkaoVoiceStateTable[voice], 1u << voice);
@@ -139,6 +160,20 @@ static int asset_audit(int execute)
                     ++channels;
                 }
             }
+            if (execute == 2) {
+                if (getenv("PE_AKAO_PREFIX_TRACE")) fprintf(stderr, "tick map %u sequence %u\n", map, i);
+                for (unsigned tick = 0; tick < 240; ++tick) {
+                    short pcm[368];
+                    Akao_Tick();
+                    unsigned frames = ((tick + 1) * 44100 / 240) - (tick * 44100 / 240);
+                    Psyz_SpuPullSamples(pcm, frames);
+                    for (unsigned j = 0; j < frames * 2; ++j) {
+                        audible_samples += pcm[j] != 0;
+                        pcm_hash = (pcm_hash ^ ((uint16_t)pcm[j] & 255)) * UINT64_C(1099511628211);
+                        pcm_hash = (pcm_hash ^ ((uint16_t)pcm[j] >> 8)) * UINT64_C(1099511628211);
+                    }
+                }
+            }
             CHECK(memcmp(snapshot, music.sequence.bytes, music.sequence.size) == 0);
             free(snapshot);
             ++sequences;
@@ -146,16 +181,18 @@ static int asset_audit(int execute)
         pe_room_close(&room);
     }
     CHECK(rooms != 0 && sequences != 0 && channels != 0);
+    if (execute == 2) { CHECK(audible_samples != 0); printf("nonzero PCM samples: %llu; PCM hash: %016llx\n", audible_samples, (unsigned long long)pcm_hash); }
     free(record_samples);
     free(resident);
     pe_disc_close(&disc);
     printf("original AKAO %s: %u rooms, %u sequences, %u channels; %u short records not executed\n",
-           execute ? "start and first note/stop" : "start", rooms, sequences, channels, short_records);
+           execute == 2 ? "240 ticks and PCM" : execute ? "start and first note/stop" : "start", rooms, sequences, channels, short_records);
     return 0;
 }
 
 int main(int argc, char **argv)
 {
+    if (argc == 2 && strcmp(argv[1], "--tick-assets") == 0) return asset_audit(2);
     if (argc == 2 && strcmp(argv[1], "--assets") == 0) return asset_audit(0);
     if (argc == 2 && strcmp(argv[1], "--execute-assets") == 0) return asset_audit(1);
     g_AkaoGlobalPitchDepth = 0x12345678;

@@ -661,3 +661,22 @@ one unresolved short record remains unexecuted. All four AKAO CTest entries
 pass. The asset run also passes ASan/UBSan/function on original/test sources
 with the uninstrumented PsyZ archive. This proves sample transfer and first
 note/stop prefixes, not complete music playback or audible frontend menus.
+
+### Original tick-to-PCM corpus smoke (2026-10-14)
+
+New original-game-akao-tick-assets test loads the original four-byte default
+voice program and 256-entry pan table from the supplied USA executable.
+It runs original initialization, streaming sample upload and sequence start,
+then 240 Akao_Tick calls with 44100 stereo PCM frames per music record.
+Fractional samples per 240 Hz tick are carried by integer frame boundaries.
+Resident sample RAM is fixture-loaded; music-bank RAM comes from the original
+streaming procedure, not the fixture decoder. All 599 playable records in
+414 rooms complete this one-second smoke; the known short record is still
+unresolved. Across the corpus 51,102,257 channel samples are nonzero.
+
+Five required-asset CTest entries pass. Independent repeated process and
+ASan/UBSan/function-instrumented original/test source runs produce identical
+little-endian PCM FNV-1a hash 25836548e09d8a00. PsyZ remains uninstrumented.
+This is an early playback smoke, not full-song fidelity evidence: no original
+hardware PCM reference comparison, full duration, menu integration or campaign
+completion is claimed.

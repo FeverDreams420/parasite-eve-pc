@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Native parent links retain an actor ID alongside the slot index to reject
+recycled references. Parent position/rotation copying follows original list
+order under flag `0x400000`, including child-before-parent behavior. Hierarchy
+validation rejects cycles and stale IDs before changing positions. All 30
+headless tests and the ASan/UBSan actor fixture pass. Parent animation,
+attachment transforms, collision rollback, deletion cascade and full frame
+integration remain pending.
+
 Native input stores held/pressed/released bits and scenes accept explicit
 `pe_scene_set_input` calls without SDL. Bounded input rules preserve original
 all/any filters, press-before-release priority, unconditional callbacks,

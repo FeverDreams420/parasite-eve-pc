@@ -19,6 +19,19 @@ int main(void) {
     CHECK(actors->slots[0].move_factor == 0x50000 && actors->slots[1].move_factor == 0x10000);
     CHECK(actors->slots[0].gravity_y == 0x4000 && actors->slots[0].script.flags == 0x10000000);
     CHECK(scheduler->slots[0].task.actor == &actors->slots[0].script);
+    CHECK(pe_actors_set_parent(actors,0,1)&&pe_actors_set_parent(actors,2,0));
+    CHECK(!pe_actors_set_parent(actors,1,2)&&actors->slots[1].parent==-1);
+    CHECK(pe_actors_copy_parent_positions(actors)&&actors->slots[0].position[0]==UINT32_MAX);
+    actors->slots[0].script.flags|=0x400000;actors->slots[2].script.flags|=0x400000;
+    actors->slots[1].rotation[1]=1024;
+    CHECK(pe_actors_copy_parent_positions(actors));
+    /* List order is 2,0,1: child 2 receives parent 0's previous position. */
+    CHECK(actors->slots[2].position[0]==UINT32_MAX&&actors->slots[0].position[0]==11);
+    CHECK(actors->slots[0].rotation[1]==1024&&actors->slots[2].rotation[1]==0);
+    actors->slots[0].parent_id++;
+    CHECK(!pe_actors_copy_parent_positions(actors)&&actors->slots[2].position[0]==UINT32_MAX);
+    actors->slots[0].parent_id--;
+    CHECK(pe_actors_set_parent(actors,0,-1)&&pe_actors_set_parent(actors,2,-1));
     PeActor motion_actor={0};motion_actor.position[0]=UINT32_MAX;motion_actor.rotation[1]=65535;
     motion_actor.motion[0]=1;motion_actor.acceleration[0]=1;motion_actor.delta[0]=2;
     motion_actor.gravity_y=0x4000;

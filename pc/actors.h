@@ -25,6 +25,8 @@ typedef struct PeActor {
     uint16_t rotation[3];
     uint32_t saved_position[3],motion[3],acceleration[3],delta[3],gravity_x,gravity_z;
     uint16_t saved_rotation[3];
+    int parent;
+    uint32_t parent_id; /* prevents following a recycled actor slot */
     PeActorModel *render; /* owned matrices; model/action bytes remain borrowed */
 } PeActor;
 typedef struct PeActors {
@@ -63,4 +65,6 @@ int pe_actors_events(PeActors *actors);
  * skips both operations in the frame driver, but still runs callbacks. */
 void pe_actor_motion_snapshot(PeActor *actor);
 void pe_actor_motion_apply(PeActor *actor);
+int pe_actors_set_parent(PeActors *actors,unsigned child,int parent);
+int pe_actors_copy_parent_positions(PeActors *actors);
 #endif

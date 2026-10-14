@@ -41,6 +41,7 @@ int pe_actors_spawn(PeActors *actors, uint8_t type, uint8_t sub_id, int after,
     actor->floor_triangle = actor->floor_triangle_mirror = UINT32_MAX;
     actor->gravity_y = 0x4000; actor->move_speed = 0x1000; actor->animation_step = 0x10000;
     actor->action=UINT32_MAX;
+    actor->parent=-1;
     actor->move_factor = type ? 0x50000 : 0x10000;
     actor->used = 1; actor->previous = after; actor->next = next;
     if (next >= 0) actors->slots[next].previous = index;
@@ -231,4 +232,42 @@ void pe_actor_motion_apply(PeActor *actor){
         actor->motion[i]+=actor->acceleration[i];
         actor->position[i]+=actor->motion[i];actor->position[i]+=actor->delta[i];
     }
+}
+static int parent_chain(const PeActors *actors,unsigned child,int parent){
+    unsigned seen=1u<<child;
+    while(parent>=0){
+        if((unsigned)parent>=PE_ACTOR_CAPACITY||!actors->slots[parent].used||(seen&(1u<<parent)))return 0;
+        seen|=1u<<parent;
+        const PeActor *actor=&actors->slots[parent];int next=actor->parent;
+        if(next>=0&&((unsigned)next>=PE_ACTOR_CAPACITY||!actors->slots[next].used||
+                     actors->slots[next].script.field_id!=actor->parent_id))return 0;
+        parent=next;
+    }
+    return parent==-1;
+}
+int pe_actors_set_parent(PeActors *actors,unsigned child,int parent){
+    if(child>=PE_ACTOR_CAPACITY||!actors->slots[child].used||!parent_chain(actors,child,parent))return 0;
+    actors->slots[child].parent=parent;
+    actors->slots[child].parent_id=parent>=0?actors->slots[parent].script.field_id:0;return 1;
+}
+int pe_actors_copy_parent_positions(PeActors *actors){
+    unsigned count=0,seen=0;int index=actors->head,previous=-1;
+    while(index>=0){
+        if((unsigned)index>=PE_ACTOR_CAPACITY||(seen&(1u<<index))||!actors->slots[index].used||
+           actors->slots[index].previous!=previous)goto invalid;
+        PeActor *actor=&actors->slots[index];seen|=1u<<index;++count;
+        if(!parent_chain(actors,(unsigned)index,actor->parent))goto invalid;
+        if(actor->parent>=0&&actors->slots[actor->parent].script.field_id!=actor->parent_id)goto invalid;
+        previous=index;index=actor->next;
+    }
+    if(index!=-1||count!=actors->live)goto invalid;
+    for(index=actors->head;index>=0;index=actors->slots[index].next){
+        PeActor *actor=&actors->slots[index];
+        if(actor->parent>=0&&(actor->script.flags&0x400000)){
+            memcpy(actor->position,actors->slots[actor->parent].position,sizeof(actor->position));
+            memcpy(actor->rotation,actors->slots[actor->parent].rotation,sizeof(actor->rotation));
+        }
+    }
+    actors->error[0]=0;return 1;
+invalid:snprintf(actors->error,sizeof(actors->error),"Invalid actor parent hierarchy");return 0;
 }

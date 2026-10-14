@@ -108,6 +108,14 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Collection now follows original direct-parent deletion: an actor is removed
+when it or its immediate parent has flag `0x10`. Its tasks and model state
+are freed while retaining its original flags, so further descendants can
+survive as in the original control flow. All 30 headless tests and the
+ASan/UBSan actor fixture pass, including task counts and stale-ID failure.
+Surviving links to removed parents, attachment/animation state and full frame
+integration remain pending; hierarchy transforms currently reject dead targets.
+
 Actor collision rollback restores the root's saved position/floor mirror and
 sets its `0x40000` flag, then restores siblings at each level of the caller's
 parent chain. Rotation and motion are retained. Bounded hierarchy validation

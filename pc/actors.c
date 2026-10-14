@@ -57,11 +57,16 @@ invalid:
 }
 
 int pe_actors_collect(PeActors *actors) {
+    unsigned remove=0;
     unsigned visited = 0; int previous = -1, index = actors->head;
     /* Check list linkage before unlinking or recycling any actor. */
     while (index >= 0) {
         if ((unsigned)index >= PE_ACTOR_CAPACITY || ++visited > PE_ACTOR_CAPACITY ||
             !actors->slots[index].used || actors->slots[index].previous != previous) goto invalid;
+        PeActor *actor=&actors->slots[index];
+        if(actor->parent < -1 || (actor->parent>=0&&((unsigned)actor->parent>=PE_ACTOR_CAPACITY||
+           actors->slots[actor->parent].script.field_id!=actor->parent_id)))goto invalid;
+        if((actor->script.flags&0x10)||(actor->parent>=0&&(actors->slots[actor->parent].script.flags&0x10)))remove|=1u<<index;
         previous = index; index = actors->slots[index].next;
     }
     if (index != -1 || visited != actors->live) goto invalid;
@@ -76,11 +81,15 @@ int pe_actors_collect(PeActors *actors) {
     while (index >= 0) {
         PeActor *actor = &actors->slots[index]; int next = actor->next;
         actor->script.flags &= ~UINT32_C(0x800000);
+        uint32_t saved_flags=actor->script.flags;
+        if(remove&(1u<<index))actor->script.flags|=0x10;
         if (!pe_script_scheduler_collect(actors->scheduler, &actor->script)) {
+            actor->script.flags=saved_flags;
             snprintf(actors->error, sizeof(actors->error), "%s", actors->scheduler->error);
             return 0;
         }
-        if (actor->script.flags & 0x10) {
+        actor->script.flags=saved_flags;
+        if (remove&(1u<<index)) {
             pe_actor_model_close(actor);
             if (actor->previous < 0) actors->head = next;
             else actors->slots[actor->previous].next = next;

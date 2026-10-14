@@ -13,6 +13,7 @@
 #include "model.h"
 #include "matrix.h"
 #include "animation.h"
+#include "actors.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -47,18 +48,28 @@ int main(void) {
             memset(entities.rows,0,sizeof(entities.rows));
         }
         CHECK(pe_entity_banks(&entity_blob,bank<23,&entities,entity_error,sizeof(entity_error)));
+        PeActor actor={0};CHECK(pe_actor_model_bind(&actor,&entities,0));
         PeModel model;CHECK(pe_model_open(entities.roots[0].bytes,entities.roots[0].size,&model,entity_error,sizeof(entity_error)));
         for(unsigned action=0;action<48;++action){
             PeRoomSlice *slice=&entities.rows[0][action];if(!slice->present)continue;
             PeAnimation animation;CHECK(pe_animation_open(slice->bytes,slice->size,&animation,entity_error,sizeof(entity_error)));
+            CHECK(pe_actor_set_action(&actor,action,1));
             PeMatrix base,sources[PE_ANIMATION_BONES],pose[PE_ANIMATION_BONES];pe_matrix_identity(&base);
             for(unsigned i=0;i<model.part_count;++i)pe_matrix_identity(&sources[i]);
             for(unsigned frame=0;frame<(animation.frames?animation.frames:1);++frame){unsigned written=0;
                 CHECK(pe_animation_pose(&model,&animation,frame,NULL,&base,sources,model.part_count,pose,PE_ANIMATION_BONES,&written));
+                actor.animation_clock.frame=frame<<16;CHECK(pe_actor_model_pose(&actor,&base));
+                CHECK(actor.render->pose_count==written);
+                for(unsigned matrix=0;matrix<written;++matrix)for(unsigned row=0;row<3;++row){
+                    CHECK(actor.render->pose[matrix].translation[row]==pose[matrix].translation[row]);
+                    for(unsigned column=0;column<3;++column)
+                        CHECK(actor.render->pose[matrix].rotation[row][column]==pose[matrix].rotation[row][column]);
+                }
                 ++external_frames;external_matrices+=written;
             }
             ++external_rows;
         }
+        pe_actor_model_close(&actor);
     }
     uint8_t *previous_entity=entity_blob.bytes;
     CHECK(!pe_sector_bank_load(&catalog,80,&entity_blob)&&entity_blob.bytes==previous_entity);

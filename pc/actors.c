@@ -1,5 +1,6 @@
 #include "actors.h"
 #include <string.h>
+#include <stdlib.h>
 
 void pe_actors_init(PeActors *actors, PeScriptScheduler *scheduler) {
     memset(actors, 0, sizeof(*actors));
@@ -79,6 +80,7 @@ int pe_actors_collect(PeActors *actors) {
             return 0;
         }
         if (actor->script.flags & 0x10) {
+            pe_actor_model_close(actor);
             if (actor->previous < 0) actors->head = next;
             else actors->slots[actor->previous].next = next;
             if (next >= 0) actors->slots[next].previous = actor->previous;
@@ -121,4 +123,41 @@ int pe_actor_set_animation(PeActor *actor,const PeAnimation *animation,unsigned 
 int pe_actor_advance_animation(PeActor *actor){
     if(!actor->animation.bytes)return 0;
     return pe_animation_advance(&actor->animation_clock,actor->animation_step,&actor->script.flags);
+}
+void pe_actor_model_close(PeActor *actor){
+    free(actor->render);actor->render=NULL;memset(&actor->animation,0,sizeof(actor->animation));
+    actor->action=UINT32_MAX;
+}
+int pe_actor_model_bind(PeActor *actor,const PeRoomBanks *banks,unsigned slot){
+    if(slot>=10||!banks->roots[slot].present)return 0;
+    PeActorModel *next=calloc(1,sizeof(*next));if(!next)return 0;
+    char error[128];
+    if(!pe_model_open(banks->roots[slot].bytes,banks->roots[slot].size,&next->model,error,sizeof(error))){free(next);return 0;}
+    memcpy(next->actions,banks->rows[slot],sizeof(next->actions));next->slot=slot;
+    for(unsigned i=0;i<next->model.part_count;++i)pe_matrix_identity(&next->sources[i]);
+    pe_actor_model_close(actor);actor->render=next;return 1;
+}
+int pe_actor_set_action(PeActor *actor,unsigned action,int force){
+    if(!actor->render||action>=48||!actor->render->actions[action].present)return 0;
+    PeRoomSlice *slice=&actor->render->actions[action];PeAnimation animation;char error[128];
+    if(!pe_animation_open(slice->bytes,slice->size,&animation,error,sizeof(error))||
+       animation.bones>actor->render->model.part_count)return 0;
+    return pe_actor_set_animation(actor,&animation,action,force);
+}
+int pe_actor_model_pose(PeActor *actor,const PeMatrix *base){
+    if(!actor->render||!actor->animation.bytes)return 0;
+    PeActorModel *render=actor->render;
+    PeMatrix sources[PE_ANIMATION_BONES],pose[PE_ANIMATION_BONES];PeHitVolume volumes[PE_ANIMATION_BONES];
+    unsigned pose_count=0,volume_count=0;PeAnimationFrame frame;
+    unsigned index=actor->animation_clock.frame>>16;
+    if(!pe_animation_frame(&actor->animation,index,&frame))return 0;
+    memcpy(sources,render->sources,(size_t)render->model.part_count*sizeof(*sources));
+    if(!pe_animation_pose(&render->model,&actor->animation,index,render->overrides,base,
+                          sources,render->model.part_count,pose,PE_ANIMATION_BONES,&pose_count)||
+       !pe_model_hitvolumes(&render->model,pose,pose_count,volumes,PE_ANIMATION_BONES,&volume_count))return 0;
+    memcpy(render->sources,sources,(size_t)render->model.part_count*sizeof(*sources));
+    memcpy(render->pose,pose,(size_t)pose_count*sizeof(*pose));
+    memcpy(render->volumes,volumes,(size_t)volume_count*sizeof(*volumes));
+    memcpy(render->body,frame.body,sizeof(render->body));render->pose_count=pose_count;render->volume_count=volume_count;
+    return 1;
 }

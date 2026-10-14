@@ -108,6 +108,15 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Actors now own model matrix/hit-volume state, bind checked borrowed model and
+action views, and refresh poses from their current integer animation frame
+and an explicit base matrix. Failures preserve prior pose state; deletion
+frees owned model state before slot reuse. The actor path processes all 5,901
+frames of 225 external actions and matches direct pose arithmetic. All 29
+headless tests and ASan/UBSan actor fixtures/full data audit pass. Scene bank
+selection/ownership, world transforms, parent propagation, physical movement,
+render packets and complete Spawn8 remain pending.
+
 External entity banks now have an owned sector-boundary loader and checked
 bank views. Primary banks install slot-zero models; area overrides retain
 the primary root and replace group-zero actions by source ID. The Disc 1

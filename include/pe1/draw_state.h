@@ -58,7 +58,9 @@ extern unsigned int *g_DrawOrderingTableEntry;
 #define g_DrawSpriteX g_TextCursorX
 #define g_DrawSpriteY g_TextCursorY
 
-extern int g_TextCursorStackBottom[], g_TextCursorStackTop[];
+/* Eight cursor pairs, followed by the shared 0x30-byte vertex scratch. */
+extern int g_TextCursorStackBottom[28];
+#define g_TextCursorStackTop (g_TextCursorStackBottom + 16)
 extern int *g_TextCursorStackPtr;
 
 /* Byte (x, y) pairs terminated by 0xFF, followed by polygon edges. */

@@ -18,11 +18,25 @@
 #include "disc.h"
 #include "pe1/gte.h"
 #include "pe1/menu_widget.h"
+#include "pe1/draw_state.h"
 #include <SDL3/SDL.h>
 #include <stdlib.h>
 #include <psyz/system.h>
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **);
 GeomScrollRecord g_GeomScroll;
+
+/* Observe the original traversal while deliberately changing cursor state. */
+static int widget_draw_order[4], widget_draw_x[4], widget_draw_y[4];
+static unsigned widget_draw_count;
+static void record_widget_draw(MenuWidgetNode *node)
+{
+    if (widget_draw_count>=4) abort();
+    unsigned i=widget_draw_count++;
+    widget_draw_order[i]=node->mode;
+    widget_draw_x[i]=g_TextCursorX;
+    widget_draw_y[i]=g_TextCursorY;
+    g_TextCursorX=900; g_TextCursorY=-700;
+}
 
 /* Backing storage for exercising the original boot buffer layout. */
 _Alignas(16) u8 g_BootWorkArea[0x20000], D_8010BD00[0x20000];
@@ -539,6 +553,25 @@ int main(int argc, char **argv)
         if (free_mask!=0xffffff) return 97;
         MenuWidget_InitPool();
         if (g_MenuWidgetFreeListHead!=g_MenuWidgetNodePool || g_MenuWidgetNodePool[23].next) return 90;
+        MenuWidgetNode draw_nodes[4]={0};
+        draw_nodes[0].children[0]=&draw_nodes[1];
+        draw_nodes[0].children[2]=&draw_nodes[3];
+        draw_nodes[1].children[1]=&draw_nodes[2];
+        for (unsigned i=0;i<4;++i) {
+            draw_nodes[i].mode=i;
+            draw_nodes[i].x=(int)i+1; draw_nodes[i].y=-((int)i+1);
+            draw_nodes[i].draw=record_widget_draw;
+        }
+        g_TextCursorX=10; g_TextCursorY=20;
+        g_TextCursorStackPtr=g_TextCursorStackBottom;
+        for(unsigned i=0;i<12;++i)g_TextCursorStackTop[i]=0x12345678;
+        Draw_PushPrimToList(draw_nodes);
+        const int want_x[4]={11,13,16,15},want_y[4]={19,17,14,15};
+        if(widget_draw_count!=4 || g_TextCursorX!=10 || g_TextCursorY!=20 ||
+           g_TextCursorStackPtr!=g_TextCursorStackBottom)return 99;
+        for(unsigned i=0;i<4;++i)
+            if(widget_draw_order[i]!=(int)i || widget_draw_x[i]!=want_x[i] || widget_draw_y[i]!=want_y[i])return 100;
+        for(unsigned i=0;i<12;++i)if(g_TextCursorStackTop[i]!=0x12345678)return 101;
         MenuWidgetNode menu={0};menu.mode=1;g_MenuWidgetActiveListHead=&menu;
         MenuWidgetListNavigation navigation={0};
         navigation.list=&menu;

@@ -64,6 +64,7 @@ MenuWidgetNode *MenuWidget_CreateNode(int mode, MenuWidgetNode *parent,
 
 void MenuWidget_DestroyNode(MenuWidgetNode *node);
 void MenuWidget_DestroyNodeRecursive(MenuWidgetNode *node);
+void Draw_PushPrimToList(MenuWidgetNode *node);
 
 /* Input dispatch walks the parent chain and treats update as a status-returning
  * handler. Most other callers use update as a generic deferred callback. */

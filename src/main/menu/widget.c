@@ -29,6 +29,7 @@ int g_DrawGlyphAdvance;
 int g_DrawTextBoxWidth;
 int g_DrawTextDimmed;
 int g_MenuInputActive;
+int g_TextCursorStackBottom[28];
 int *g_TextCursorStackPtr;
 MenuWidgetNode g_MenuWidgetNodePool[24];
 

@@ -2370,3 +2370,21 @@ rendering remain unverified; full runtime integration and pc/ removal remain ope
 
 The expanded fixture also passes fresh ASan/UBSan/function checks; PsyZ/SDL
 are not instrumented.
+
+
+### Back the original menu cursor stack and execute tree drawing
+
+The historical USA symbol map before eadcfc73f places cursor-stack bottom/top
+at 0x800A2270/0x800A22B0: eight coordinate pairs. Existing draw code also uses
+0x30 bytes beginning at the top address for vertex scratch. menu/widget.c now
+owns one contiguous 28-int array preserving both regions; the top name aliases
+element 16. This replaces linker-only storage without altering Draw_PushPrimToList.
+No new files.
+
+The existing fixture executes the original traversal on a three-level tree with
+four draw callbacks. Callbacks deliberately change both cursor coordinates;
+checks confirm preorder, parent-relative positions, final cursor/stack restoration
+and untouched adjacent vertex scratch. Full build and fresh ordinary plus
+ASan/UBSan/function actor-animation runs pass. PsyZ/SDL remain uninstrumented.
+This tests traversal, not GPU menu packets, text or complete menu visuals. Full
+renderer integration, game runtime and pc/ removal remain incomplete.

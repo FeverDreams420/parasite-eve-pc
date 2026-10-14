@@ -1,5 +1,23 @@
 #include "animation.h"
 #include <stdio.h>
+#include <string.h>
+int pe_animation_matrices(const PeAnimationFrame *frame,const PeRotationOverride overrides[2],
+                          PeMatrix *matrices,unsigned capacity){
+    if(!frame->bones||frame->bones>PE_ANIMATION_BONES||frame->bones>capacity)return 0;
+    uint16_t angles[PE_ANIMATION_BONES][3];memcpy(angles,frame->angles,sizeof(angles));
+    if(overrides)for(unsigned i=0;i<2;++i){
+        unsigned index=overrides[i].matrix_index;
+        if(!index)continue;
+        if(index>=frame->bones)return 0;
+        for(unsigned axis=0;axis<3;++axis){
+            if(overrides[i].flags&(8u<<axis))angles[index][axis]=overrides[i].angles[axis];
+            else if(overrides[i].flags&(1u<<axis))angles[index][axis]=(uint16_t)(angles[index][axis]+overrides[i].angles[axis]);
+        }
+    }
+    for(unsigned i=0;i<frame->bones;++i)pe_matrix_rotation_yxz(angles[i],&matrices[i]);
+    for(unsigned axis=0;axis<3;++axis)matrices[0].translation[axis]=(uint32_t)frame->translation[axis];
+    return 1;
+}
 static uint16_t half(const uint8_t *p){return (uint16_t)(p[0]|(unsigned)p[1]<<8);}
 int pe_animation_open(const uint8_t *bytes,size_t size,PeAnimation *animation,char *error,size_t error_size){
     if(size<12||size>UINT32_MAX)goto malformed;

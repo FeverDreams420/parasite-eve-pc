@@ -616,6 +616,16 @@ animation fixtures and the full data audit pass ASan/UBSan. Rotation-matrix
 construction, overrides, timing/interpolation and animated pose/reference
 validation remain pending.
 
+Animation angles now produce native fixed-point YXZ bone matrices using a
+mathematical quarter-wave table, without runtime floating point. The headless
+PsyZ comparison matches 65,536 signed-angle cases and checks preserved
+translation. Two ordered overrides retain replace-before-add and halfword
+wrap semantics; invalid indices/capacity preserve output. Only the root's
+translation is replaced. The Disc 1 audit computes 10,064,925 bone matrices
+across all stored frames. All 29 tests and ASan/UBSan animation fixtures and
+the full data audit pass. Actor/model binding, timing/interpolation and
+reference animated poses remain pending.
+
 The 31 centroid no-matches are now classified: M90's triangles 0–30 are
 absent from its initial floor-region lists (region zero is empty; region one
 lists the other 75 faces). The original lookup only searches listed faces.

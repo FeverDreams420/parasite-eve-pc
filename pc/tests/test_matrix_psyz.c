@@ -10,6 +10,15 @@ static int16_t half(uint32_t v){v&=65535;return (int16_t)(v&32768?(int)v-65536:(
 static int word(uint32_t v){return (int)(v&0x80000000?(int64_t)v-INT64_C(0x100000000):v);}
 int main(void){
     InitGeom();
+    for(unsigned sample=0;sample<65536;++sample){
+        uint16_t angles[3]={(uint16_t)sample,(uint16_t)random_word(),(uint16_t)random_word()};
+        SVECTOR vector={half(angles[0]),half(angles[1]),half(angles[2]),0};
+        MATRIX oracle={0};PeMatrix matrix={0};matrix.translation[0]=0x12345678;
+        RotMatrixYXZ(&vector,&oracle);pe_matrix_rotation_yxz(angles,&matrix);
+        for(unsigned r=0;r<3;++r)for(unsigned c=0;c<3;++c)CHECK(matrix.rotation[r][c]==oracle.m[r][c]);
+        CHECK(matrix.translation[0]==0x12345678);
+    }
+    puts("Native YXZ rotations match PsyZ for 65536 signed-angle cases, headless");
     for(unsigned sample=0;sample<10000;++sample){
         PeMatrix matrix={0};MATRIX oracle={0};int16_t point[3];
         for(unsigned r=0;r<3;++r){

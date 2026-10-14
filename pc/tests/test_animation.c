@@ -30,6 +30,18 @@ int main(void){
     for(unsigned c=0;c<3;++c){half(constants+12+c*4,1);half(constants+14+c*4,c+1);constants[24+c*4]=1;constants[25+c*4]=(uint8_t)(c+2);}
     CHECK(pe_animation_open(constants,sizeof(constants),&animation,error,sizeof(error)));
     CHECK(pe_animation_frame(&animation,999,&frame)&&frame.translation[0]==1&&frame.angles[0][2]==64);
-    puts("Animation: byte/halfword channels, constants, strides, signed roots, frame bounds and transactional failure passed");
+    memset(&frame,0,sizeof(frame));frame.bones=2;frame.translation[0]=-7;
+    frame.angles[1][0]=65535;
+    PeMatrix matrices[2]={0};matrices[1].translation[2]=123;
+    PeRotationOverride overrides[2]={{1,9,{1024,0,0}},{1,1,{3072,0,0}}};
+    CHECK(pe_animation_matrices(&frame,overrides,matrices,2));
+    CHECK(matrices[0].translation[0]==(uint32_t)-7&&matrices[1].translation[2]==123);
+    CHECK(matrices[1].rotation[0][0]==4096&&matrices[1].rotation[1][1]==4096);
+    PeMatrix saved[2];memcpy(saved,matrices,sizeof(saved));overrides[1].matrix_index=2;
+    CHECK(!pe_animation_matrices(&frame,overrides,matrices,2)&&!memcmp(saved,matrices,sizeof(saved)));
+    overrides[1].matrix_index=0;overrides[0].matrix_index=0;
+    CHECK(pe_animation_matrices(&frame,overrides,matrices,2));
+    CHECK(!pe_animation_matrices(&frame,NULL,matrices,1));
+    puts("Animation: channels, ordered overrides, root/non-root translations and transactional failure passed");
     return 0;
 }

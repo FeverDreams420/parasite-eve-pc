@@ -2,6 +2,7 @@
 #define PE_PC_ANIMATION_H
 #include <stddef.h>
 #include <stdint.h>
+#include "matrix.h"
 #define PE_ANIMATION_BONES 256u
 #define PE_ANIMATION_CHANNELS (3u+PE_ANIMATION_BONES*3u)
 typedef struct PeAnimation {
@@ -20,4 +21,9 @@ typedef struct PeAnimationFrame {
  * its original channel stride still stores one sample. Timing is separate. */
 int pe_animation_open(const uint8_t *bytes,size_t size,PeAnimation *animation,char *error,size_t error_size);
 int pe_animation_frame(const PeAnimation *animation,unsigned frame,PeAnimationFrame *output);
+typedef struct PeRotationOverride { unsigned matrix_index;uint8_t flags;uint16_t angles[3]; } PeRotationOverride;
+/* Two ordered overrides; index zero is ignored as in the original.
+ * Preserves non-root translations and all output on failure. */
+int pe_animation_matrices(const PeAnimationFrame *frame,const PeRotationOverride overrides[2],
+                          PeMatrix *matrices,unsigned capacity);
 #endif

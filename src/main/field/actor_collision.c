@@ -1057,15 +1057,6 @@ int Geo_PointInPoly(int x, int z, const PolygonVertex *vertices, unsigned short 
     return inside;
 }
 
-/* A vertex pointer seen as the address retail adds the scaled edge to. */
-typedef union PolygonVertexAddress {
-    const PolygonVertex *vertex;
-    u32 word;
-} PolygonVertexAddress;
-
-/* One pin and two empty barriers preserve the retail prologue with stock
- * GCC/maspsx. The first barrier clobbers s3 before the entity is assigned;
- * it emits no instructions. */
 void Entity_SlideOnWall(BattleEntity *input, const PolygonVertex *vertices,
                        u16 count, s16 edge, int oldX, int oldZ)
 {
@@ -1075,9 +1066,6 @@ void Entity_SlideOnWall(BattleEntity *input, const PolygonVertex *vertices,
     s32 startX, startZ;
     s32 x, z, projection, length;
     s32 radius, direction, trialX, trialZ;
-    PolygonVertexAddress base, point;
-    base.vertex = vertices;
-    point.word = edge * sizeof(PolygonVertex) + base.word;
     entity = input;
     endX = vertices[edge].x;
     endZ = vertices[edge].z;
@@ -1092,8 +1080,8 @@ void Entity_SlideOnWall(BattleEntity *input, const PolygonVertex *vertices,
     vector.y = 0;
     vector.z = endZ - startZ;
     VectorNormal(&vector, &unit);
-    unit.x <<= 4;
-    unit.z <<= 4;
+    unit.x *= 16;
+    unit.z *= 16;
     x = entity->baseX;
     z = entity->baseZ;
     projection = Math_FixedMul(unit.x, entity->posX.fixed - x);
@@ -1188,8 +1176,8 @@ int Geo_FindNearestEdge(int x, int z, PolygonVertex *vertices,
         if (distance > g_CollisionRadius)
             continue;
         VectorNormal(&edge, &edge);
-        distance = Math_FixedMul(edge.x << 4, (s32)((u32)offsetX << 16));
-        distance += Math_FixedMul(edge.z << 4, (s32)((u32)offsetZ << 16));
+        distance = Math_FixedMul(edge.x * 16, (s32)((u32)offsetX << 16));
+        distance += Math_FixedMul(edge.z * 16, (s32)((u32)offsetZ << 16));
         if (distance < 0) {
             distance = offsetX * offsetX + offsetZ * offsetZ;
             if (distance > g_CollisionRadius * g_CollisionRadius)

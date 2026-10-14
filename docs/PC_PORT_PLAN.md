@@ -1095,3 +1095,18 @@ Full build and collision/floor/movement/input regressions pass. ASan/UBSan/funct
 instrumented game/test code passes the expanded corpus; PsyZ uninstrumented.
 This covers small local steps and player ramp sliding, not wall polygons, large
 moves, collision fidelity against PS1 traces, or the full interactive scene.
+
+### Original wall response: native arithmetic check
+
+The original `Geo_FindNearestEdge` and `Entity_SlideOnWall` now multiply
+signed normalized components by 16 instead of left-shifting negative values.
+Removed an unused 32-bit pointer union and obsolete matching-only commentary
+from the wall routine. No replacement collision solver was introduced.
+`original-game-collision-assets` now also exercises the canonical player wall
+response against all four sides of a rectangle, checking clearance and preserved
+tangential movement (within 1/256 world unit of the requested step).
+Full build and collision-assets/floor/movement CTests passed. ASan/UBSan/function
+checks passed for game/test sources, including 403848 floor movement steps across
+414 Disc 1 rooms; the PsyZ archive remains uninstrumented. Wall tests are synthetic,
+not coverage of every scripted room polygon or proof of PS1 trace equivalence.
+Playable scene integration remains incomplete.

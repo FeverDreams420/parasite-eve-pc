@@ -14,8 +14,43 @@ void Entity_UpdateAndRender(BattleEntity *);
 int Geo_PointInTri(void *, s16, s16);
 static u32 word(const u8 *p) { return p[0]|(u32)p[1]<<8|(u32)p[2]<<16|(u32)p[3]<<24; }
 #define CHECK(x) do { if (!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x);return 1; } } while (0)
+/* Exercise both signs of each wall normal with a tangential player step.
+ * These are original polygon queries and response routines, not a PC solver. */
+static int wall_motion(void)
+{
+    PolygonVertex walls[4]={{0,-100,0,-100},{0,100,0,-100},
+                            {0,100,0,100},{0,-100,0,100}};
+    g_WallPolygonVertices=walls;
+    g_WallPolygonVertexCount=4;
+    for (unsigned side=0; side<4; ++side) {
+        BattleEntity actor={0};
+        int x=side==0?-95:side==2?95:0;
+        int z=side==1?-95:side==3?95:0;
+        actor.baseX=(s32)((u32)x<<16);
+        actor.baseZ=(s32)((u32)z<<16);
+        actor.posX.fixed=actor.baseX+(side&1?65536:0);
+        actor.posZ.fixed=actor.baseZ+(side&1?0:65536);
+        actor.moveSpeed=4096;
+        actor.renderObject.hit_cylinder.radius=8;
+        g_PlayerEntity=(FieldActor *)&actor;
+        g_CollisionRadius=8;
+        CHECK(Geo_FindNearestEdge(x,z,walls,4)==(int)side);
+        Entity_ApplyCollisionResponse((FieldActor *)&actor);
+        CHECK(Geo_FindNearestEdge(actor.posX.parts.integer,
+                                  actor.posZ.parts.integer,walls,4)==-1);
+        /* Original VectorNormal quantizes the tangent; allow 1/256 world
+         * unit while requiring the requested direction to survive. */
+        int tangent=side&1 ? actor.posX.fixed : actor.posZ.fixed;
+        CHECK(abs(tangent-65536)<=256);
+    }
+    g_PlayerEntity=NULL;
+    g_WallPolygonVertices=NULL;
+    g_WallPolygonVertexCount=0;
+    return 0;
+}
 int main(void)
 {
+    CHECK(wall_motion()==0);
     const char *path=getenv("PE_TEST_DISC");
     PeDisc disc={0};PeRoomCatalog catalog;PeRoom room={0};unsigned maps=0;
     unsigned long queries=0, hits=0, sloped_hits=0, moves=0, rollbacks=0, slides=0;

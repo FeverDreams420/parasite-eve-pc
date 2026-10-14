@@ -108,6 +108,13 @@ existing rendering support during game integration; high FPS is a later stage.
 
 ## Headless automation
 
+Background motion now decodes authored 8.8 state and steps scrolling/parallax
+with original signed remainder, wrap and pause behavior. Tests cover fractional
+carry, negative motion, parallax precedence and overflowing products; the data
+audit steps all entries for starting cameras. All 35 headless tests and
+ASan/UBSan fixtures/full native audit pass. Persistent scene state, draw-list
+application, script setters and frame integration remain pending.
+
 Scenes now extract selected-group background draw lists using current camera
 position and original halfword display-offset arithmetic. Failed extraction
 preserves the previous list/count/display state. All 35 headless tests and

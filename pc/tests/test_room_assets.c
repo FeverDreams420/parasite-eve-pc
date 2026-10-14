@@ -165,6 +165,8 @@ int main(void) {
             PeCameraScroll scroll;pe_camera_scroll_init(&camera_bank,&room_camera,&scroll);
             CHECK(scroll.position[0]==scroll.origin[0]&&scroll.position[1]==scroll.origin[1]);
             CHECK(scroll.bounds[0]==room_camera.min_x&&scroll.bounds[3]==room_camera.max_y);
+            for(unsigned entry=0;entry<background.count;++entry){PeBackgroundMotion motion;
+                CHECK(pe_background_motion(&background,entry,&motion));CHECK(pe_background_motion_step(&motion,&scroll,0));}
             unsigned count=0;CHECK(pe_background_draw_tiles(&background,group,scroll.display,draw_tiles,draw_capacity,&count));
             background_draw_tiles+=count;
         }

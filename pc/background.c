@@ -39,6 +39,35 @@ int pe_background_tile(const PeBackground *bg,unsigned index,unsigned tile,PeBac
     *output=next;return 1;
 }
 static int signed_half(unsigned value){value&=65535;return value&32768?(int)value-65536:(int)value;}
+int pe_background_motion(const PeBackground *bg,unsigned index,PeBackgroundMotion *motion){
+    PeBackgroundEntry entry;if(!pe_background_entry(bg,index,&entry))return 0;
+    const uint8_t *p=bg->bank.bytes+bg->entries+(size_t)index*56;PeBackgroundMotion next={0};next.flags=p[0];
+    for(unsigned i=0;i<2;++i){next.modulus[i]=(uint16_t)half(p+4+i*2);next.base[i]=(int16_t)signed_half(half(p+8+i*2));
+        next.position[i]=(int16_t)signed_half(half(p+12+i*2));next.speed[i]=(int16_t)signed_half(half(p+28+i*2));next.fraction[i]=(uint16_t)half(p+32+i*2);}
+    *motion=next;return 1;
+}
+static int32_t shift8(uint32_t value){
+    int64_t v=value&0x80000000?(int64_t)value-INT64_C(0x100000000):value;
+    return (int32_t)(v>=0?v/256:-((-v+255)/256));
+}
+int pe_background_motion_step(PeBackgroundMotion *motion,const PeCameraScroll *camera,uint32_t scene_flags){
+    if(scene_flags&0x104)return 1;
+    if((motion->flags&4)&&(!motion->modulus[0]||!motion->modulus[1]))return 0;
+    PeBackgroundMotion next=*motion;
+    for(unsigned axis=0;axis<2;++axis){
+        if(motion->flags&4){
+            uint32_t position=((uint32_t)(int32_t)motion->position[axis]*256)|(motion->fraction[axis]&255);
+            position+=(uint32_t)(int32_t)motion->speed[axis];
+            next.position[axis]=(int16_t)signed_half((unsigned)(shift8(position)%motion->modulus[axis]));next.fraction[axis]=(uint16_t)(position&255);
+        }
+        if(motion->flags&8){
+            int delta=(int)camera->position[axis]-camera->origin[axis];
+            uint32_t position=(uint32_t)(int32_t)motion->base[axis]*256+(uint32_t)delta*(uint32_t)(int32_t)motion->speed[axis];
+            next.position[axis]=(int16_t)signed_half((unsigned)shift8(position));next.fraction[axis]=(uint16_t)(position&255);
+        }
+    }
+    *motion=next;return 1;
+}
 int pe_background_draw_tiles(const PeBackground *bg,unsigned group,const int16_t display[2],
                               PeBackgroundDrawTile *output,unsigned capacity,unsigned *written){
     if((uint64_t)capacity*sizeof(*output)>SIZE_MAX)return 0;

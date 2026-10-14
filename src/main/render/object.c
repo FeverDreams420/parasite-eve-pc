@@ -714,3 +714,732 @@ void Render_IncrementCounter(void) {
     value++;
     *ptr = value;
 }
+
+void Anim_SetInterpRate(RenderObjectEntity *obj, int arg1) {
+    short value = arg1;
+    int divisor;
+
+    if ((short)arg1 == 0) {
+        value = 1;
+    }
+    divisor = 0x80 / value;
+
+    obj->fade_duration = value;
+    obj->fade_red_step = divisor;
+    obj->fade_green_step = divisor;
+    obj->fade_blue_step = divisor;
+}
+
+int Render_SetupEntityPrims(RenderObjectEntity *obj, RenderObjectHeader *model,
+                            u8 *packetBuffer, s16 x, s16 y, s16 unused,
+                            s16 paletteRow, s16 initCount, s8 **textureOut,
+                            int setup)
+{
+    RenderModelCursor src;
+    RenderPrimitiveDescriptor *desc;
+    RenderPrimCursor prim;
+    RenderModelCursor cursor;
+    RenderObjectHeader *header;
+    RenderAnimationLookupEntry *entry;
+    RenderMatrix *matrix;
+    int bytes, words;
+    s16 skipped;
+    s16 i, j;
+
+    cursor.header = model;
+    obj->header = model;
+    header = model;
+    i = 0;
+    skipped = 0;
+    cursor.header++;
+    obj->parts = cursor.parts;
+    cursor.parts += model->part_count;
+    obj->vertices = cursor.vectors;
+    cursor.vectors += header->vertex_count;
+    obj->vertex_colours = cursor.colours;
+    cursor.colours += header->vertex_count;
+    obj->primitive_descriptors = cursor.descriptors;
+    prim.bytes = packetBuffer;
+    obj->primitive_buffer = packetBuffer;
+    desc = cursor.descriptors;
+    obj->draw_count = setup;
+
+    if (setup) {
+        for (; i < header->packet34_count; i++, desc++) {
+            prim.head->length = 12;
+            prim.head->colour.bytes.command = 0x3C;
+            if (desc->kind == 0x0B)
+                prim.head->colour.bytes.command = 0x3E;
+            prim.p34++;
+            prim.head->length = 12;
+            prim.head->colour.bytes.command = 0x3C;
+            if (desc->kind == 0x0B)
+                prim.head->colour.bytes.command = 0x3E;
+            prim.p34++;
+        }
+        for (i = 0; i < header->packet28_count; i++, desc++) {
+            prim.head->length = 9;
+            prim.head->colour.bytes.command = 0x34;
+            if (desc->kind == 0x10)
+                prim.head->colour.bytes.command = 0x36;
+            prim.p28++;
+            prim.head->length = 9;
+            prim.head->colour.bytes.command = 0x34;
+            if (desc->kind == 0x10)
+                prim.head->colour.bytes.command = 0x36;
+            prim.p28++;
+        }
+        for (i = 0; i < header->packet24_count; i++, desc++) {
+            prim.head->length = 8;
+            prim.head->colour.bytes.command = 0x38;
+            if (desc->kind == 0x15)
+                prim.head->colour.bytes.command = 0x3A;
+            prim.p24++;
+            prim.head->length = 8;
+            prim.head->colour.bytes.command = 0x38;
+            if (desc->kind == 0x15)
+                prim.head->colour.bytes.command = 0x3A;
+            prim.p24++;
+        }
+        for (i = 0; i < header->packet1c_count; i++, desc++) {
+            prim.head->length = 6;
+            prim.head->colour.bytes.command = 0x30;
+            if (desc->kind == 0x1A)
+                prim.head->colour.bytes.command = 0x32;
+            prim.p1c++;
+            prim.head->length = 6;
+            prim.head->colour.bytes.command = 0x30;
+            if (desc->kind == 0x1A)
+                prim.head->colour.bytes.command = 0x32;
+            prim.p1c++;
+        }
+    } else {
+        desc += header->packet34_count + header->packet28_count
+              + header->packet24_count + header->packet1c_count;
+    }
+    cursor.descriptors = desc;
+
+    obj->model_section14 = cursor.vectors;
+    cursor.vectors += 2;
+    obj->bounds_vertices = cursor.vectors;
+    cursor.vectors += header->part_count * 2;
+    obj->projection_origin = cursor.vectors;
+    cursor.vectors++;
+    obj->matrix_commands = cursor.commands;
+    /* Matrix command block, rounded up to whole words. */
+    bytes = header->matrix_command_bytes;
+    words = (u16)bytes;
+    words >>= 2;
+    if ((bytes & 3) > 0) {
+        bytes = words;
+        bytes++;
+        bytes *= 4;
+    } else {
+        bytes = words;
+        bytes *= 4;
+    }
+    cursor.commands += bytes;
+
+    if (setup) {
+        RenderPrimCursor out;
+
+        src = cursor;
+        *textureOut = src.commands;
+        out.bytes = obj->primitive_buffer;
+        for (i = 0; i < header->packet34_count; i++) {
+            src.quad = cursor.quad;
+
+            for (j = 0; j < 2; j++) {
+                out.p34->u0 = src.quad->u0;
+                out.p34->v0 = src.quad->v0;
+                out.p34->u1 = src.quad->u1;
+                out.p34->v1 = src.quad->v1;
+                out.p34->u2 = src.quad->u2;
+                out.p34->v2 = src.quad->v2;
+                out.p34->u3 = src.quad->u3;
+                out.p34->v3 = src.quad->v3;
+                out.p34->clut = src.quad->clut;
+                out.p34->page_bits = src.quad->page_bits;
+                out.p34++;
+            }
+            cursor.quad++;
+        }
+        for (i = 0; i < header->packet28_count; i++) {
+            src.tri = cursor.tri;
+
+            for (j = 0; j < 2; j++) {
+                out.p28->u0 = src.tri->u0;
+                out.p28->v0 = src.tri->v0;
+                out.p28->u1 = src.tri->u1;
+                out.p28->v1 = src.tri->v1;
+                out.p28->u2 = src.tri->u2;
+                out.p28->v2 = src.tri->v2;
+                out.p28->clut = src.tri->clut;
+                out.p28->page_bits = src.tri->page_bits;
+                out.p28++;
+            }
+            cursor.tri++;
+        }
+        for (i = 0; i < header->packet24_count; i++) {
+        }
+        for (i = 0; i < header->packet1c_count; i++) {
+        }
+        if (initCount > 0)
+            Render_InitPrimBlock(obj, x, y, unused, paletteRow);
+    }
+
+    {
+        RenderVec3s *section = obj->model_section14;
+
+        obj->hit_cylinder.radius = section->pad;
+    }
+    obj->hit_cylinder.bounds_value1 = obj->projection_origin->pad;
+    obj->animation_entries = (RenderAnimationLookupEntry *)prim.head;
+    entry = (RenderAnimationLookupEntry *)prim.head;
+    for (i = 0; i < obj->header->part_count; i++) {
+        if (obj->parts[i].visible == 1) {
+            RenderVec3s *bounds = &obj->bounds_vertices[i * 2];
+
+            if (bounds[1].pad >= 0) {
+                entry->radius = bounds[0].pad;
+                entry->bounds_value1 = bounds[1].pad;
+                entry->animation_id = i;
+                entry++;
+            }
+        } else {
+            skipped++;
+        }
+    }
+
+    obj->matrices = (RenderMatrix *)entry;
+    matrix = (RenderMatrix *)entry;
+    for (i = 0; i < obj->header->part_count;) {
+        i++;
+        matrix->rotation[0][0] = 0x1000;
+        matrix->rotation[0][1] = 0;
+        matrix->rotation[0][2] = 0;
+        matrix->rotation[1][0] = 0;
+        matrix->rotation[1][1] = 0x1000;
+        matrix->rotation[1][2] = 0;
+        matrix->rotation[2][0] = 0;
+        matrix->rotation[2][1] = 0;
+        matrix->rotation[2][2] = 0x1000;
+        matrix->translation[0] = 0;
+        matrix->translation[1] = 0;
+        matrix->translation[2] = 0;
+        matrix++;
+    }
+
+    obj->header->shadow_radius = 0;
+    obj->table_value2c = 0;
+    obj->table_value2e = 0;
+    obj->table_value30 = 0;
+    obj->table_index = 1;
+    obj->table_value2c = 0;
+    obj->table_value2e = 0;
+    obj->table_value30 = 0;
+    RotMatrix((GteShortVector *)&obj->table_value2c, (GteMatrix *)&obj->model_matrix);
+    obj->fade_remaining = -1;
+    Anim_SetInterpRate(obj, 0x32);
+    obj->primitive_red = 0x80;
+    obj->primitive_green = 0x80;
+    obj->primitive_blue = 0x80;
+    obj->flags_9C = 0;
+    obj->variant_visible = 1;
+    obj->reserved9f = g_ActiveDrawSlot;
+    obj->animation_state = 0;
+    obj->animation_source = 0;
+    obj->animation_id = 0;
+    obj->header->visible_part_count = obj->header->vertex_count - skipped;
+    obj->hit_cylinder.animation_id = obj->projection_origin->y + (obj->hit_cylinder.bounds_value1 >> 4);
+    for (i = 0; i < 2; i++) {
+        obj->rotation_overrides[i].matrix_index = 0;
+        obj->rotation_overrides[i].flags = 0;
+    }
+    obj->animation_data = 0;
+    return 1;
+}
+
+void Render_InitPrimBlock(RenderObjectEntity *object, s16 x, s16 y, int unused, unsigned int palette_row)
+{
+    unsigned int page;
+    int page_offset;
+    unsigned int scaled;
+    u16 signed_page;
+    unsigned int palette_offset;
+    unsigned int row_copy;
+    s16 half_page;
+    int flag_copy;
+    RenderPacket34 *quad;
+    RenderPacket28 *tri;
+    s16 i;
+    s16 side;
+    half_page = y == 128;
+    page = ((((x >> 6) - 8) * 2) + (y >> 7)) + ((y >> 8) * 30);
+    signed_page = page;
+    row_copy = palette_row;
+    quad = (RenderPacket34 *) object->primitive_buffer;
+    if (x != 960)
+    {
+        page_offset = page >> 1;
+        scaled = palette_row * 64;
+    }
+    else
+    {
+        if (quad->page_bits == 31)
+        {
+            return;
+        }
+        if (quad)
+        {
+            page_offset = ((int) (((unsigned int) signed_page) << 16)) >> 17;
+        }
+        else
+        {
+            page_offset = ((int) (((unsigned int) signed_page) << 16)) >> 17;
+        }
+        if (quad)
+        {
+            scaled = row_copy * 64;
+        }
+        else
+        {
+            scaled = row_copy * 64;
+        }
+    }
+    signed_page = page;
+    if (signed_page)
+    {
+        palette_offset = scaled - 0x7080;
+    }
+    else
+    {
+        palette_offset = scaled - 0x7080;
+    }
+    for (i = 0; i < object->header->packet34_count; i++)
+    {
+        flag_copy = half_page;
+        for (side = 0; side < 2; side++, quad++)
+        {
+            if (flag_copy)
+            {
+                u8 v = quad->v0;
+                if (v < 128)
+                {
+                    quad->v0 = v + 128;
+                    quad->v1 += 128;
+                    quad->v2 += 128;
+                    quad->v3 += 128;
+                    quad->page_bits += page_offset;
+                }
+                else
+                    if (object)
+                {
+                    quad->v0 = v + 128;
+                    quad->v1 += 128;
+                    quad->v2 += 128;
+                    quad->v3 += 128;
+                    quad->page_bits += page_offset + 1;
+                }
+                else
+                {
+                    quad->v0 = v + 128;
+                    quad->v1 += 128;
+                    quad->v2 += 128;
+                    quad->v3 += 128;
+                    quad->page_bits += page_offset + 1;
+                }
+            }
+            else
+            {
+                quad->page_bits += page_offset;
+            }
+            quad->clut += palette_offset;
+        }
+
+    }
+
+    tri = (RenderPacket28 *) quad;
+    for (i = 0; i < object->header->packet28_count; i++)
+    {
+        for (side = 0; side < 2; side++, tri++)
+        {
+            if (half_page)
+            {
+                u8 v = tri->v0;
+                if (v < 128)
+                {
+                    tri->v0 = v + 128;
+                    tri->v1 += 128;
+                    tri->v2 += 128;
+                    scaled = palette_row * 64;
+                    tri->page_bits += page_offset;
+                }
+                else
+                {
+                    tri->v0 = v + 128;
+                    tri->v1 = tri->v1 + 128;
+                    tri->v2 += 128;
+                    tri->page_bits += page_offset + 1;
+                }
+            }
+            else
+            {
+                tri->page_bits += page_offset;
+            }
+            tri->clut += palette_offset;
+        }
+
+    }
+
+}
+
+extern RenderBufferPrefix D_800B0E38;
+
+/* Original ordering-table insertion using native PsyZ packet links. */
+/* A packet seen as bytes and as the address the DMA chain links through. */
+typedef union RenderPacketAddress {
+    u8 *bytes;
+    uintptr_t word;
+} RenderPacketAddress;
+
+#define RENDER_TAG(p) ((RenderNativeTag *)(p))
+#define RENDER_ADDPRIM(ot, packet) \
+    (RENDER_TAG((packet).bytes)->address = RENDER_TAG(ot)->address, \
+     RENDER_TAG(ot)->address = (packet).word)
+
+/* NCLIP-tests each model face on the projected vertices and links the
+ * faces with positive winding into the active ordering table at their
+ * average depth; culled faces get a null link. Quads and triangles of both
+ * packet classes are walked in turn through one shared descriptor cursor.
+ * The room overlays carry a copy that keeps the negative winding instead. */
+void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
+    int i;
+    s32 clip_area;
+    s32 *area = &clip_area;
+    u32 *xy = D_800B1644;
+    RenderPrimitiveDescriptor *record = entity->primitive_descriptors;
+    u8 *packets = entity->primitive_buffer;
+    int slot = g_ActiveDrawSlot;
+    RenderNativeTag *ordering = D_800B0E38.ordering[slot];
+    s32 *z = D_800A636C;
+    u32 xy0, xy1, xy2;
+    int a, b, c, d;
+    RenderPacketAddress packet;
+
+    i = 0;
+    while (i < entity->header->packet34_count) {
+        a = record->lookup_indices[0];
+        b = record->lookup_indices[1];
+        c = record->lookup_indices[2];
+        xy0 = xy[a];
+        xy1 = xy[b];
+        xy2 = xy[c];
+        gte_ldsxy0(xy0);
+        gte_ldsxy2(xy2);
+        gte_ldsxy1(xy1);
+        gte_cop2_hazard_slot();
+        gte_cop2_hazard_slot();
+        gte_nclip_now();
+        packet.bytes = (u8 *)((RenderPacket34 *)packets + slot);
+        d = record->lookup_indices[3];
+        gte_stmac0(area);
+        if (*area > 0) {
+            int depth = z[a] + z[b];
+            depth += z[c];
+            depth += z[d];
+            depth >>= 4;
+            if (depth < 0x1000) {
+                RENDER_ADDPRIM(&ordering[depth], packet);
+                ((RenderPacket34 *)packet.bytes)->sxy0 = xy0;
+                ((RenderPacket34 *)packet.bytes)->sxy1 = xy1;
+                ((RenderPacket34 *)packet.bytes)->sxy2 = xy2;
+                ((RenderPacket34 *)packet.bytes)->sxy3 = xy[d];
+            }
+        } else {
+            RENDER_TAG(packet.bytes)->address = 0;
+        }
+        packets += 2 * sizeof(RenderPacket34);
+        i++;
+        record++;
+    }
+
+    i = 0;
+    while (i < entity->header->packet28_count) {
+        a = record->lookup_indices[0];
+        b = record->lookup_indices[1];
+        c = record->lookup_indices[2];
+        xy0 = xy[a];
+        xy1 = xy[b];
+        xy2 = xy[c];
+        gte_ldsxy0(xy0);
+        gte_ldsxy2(xy2);
+        gte_ldsxy1(xy1);
+        gte_cop2_hazard_slot();
+        gte_cop2_hazard_slot();
+        gte_nclip_now();
+        packet.bytes = (u8 *)((RenderPacket28 *)packets + slot);
+        gte_stmac0(area);
+        if (*area > 0) {
+            int depth = z[a] + z[b] + z[c];
+            depth = depth / 3 >> 2;
+            if (depth < 0x1000) {
+                RENDER_ADDPRIM(&ordering[depth], packet);
+                ((RenderPacket28 *)packet.bytes)->sxy0 = xy0;
+                ((RenderPacket28 *)packet.bytes)->sxy1 = xy1;
+                ((RenderPacket28 *)packet.bytes)->sxy2 = xy2;
+            }
+        } else {
+            RENDER_TAG(packet.bytes)->address = 0;
+        }
+        packets += 2 * sizeof(RenderPacket28);
+        i++;
+        record++;
+    }
+
+    i = 0;
+    while (i < entity->header->packet24_count) {
+        a = record->lookup_indices[0];
+        b = record->lookup_indices[1];
+        c = record->lookup_indices[2];
+        xy0 = xy[a];
+        xy1 = xy[b];
+        xy2 = xy[c];
+        gte_ldsxy0(xy0);
+        gte_ldsxy2(xy2);
+        gte_ldsxy1(xy1);
+        gte_cop2_hazard_slot();
+        gte_cop2_hazard_slot();
+        gte_nclip_now();
+        packet.bytes = (u8 *)((RenderPacket24 *)packets + slot);
+        d = record->lookup_indices[3];
+        gte_stmac0(area);
+        if (*area > 0) {
+            int depth = z[a] + z[b];
+            depth += z[c];
+            depth += z[d];
+            depth >>= 4;
+            if (depth < 0x1000) {
+                RENDER_ADDPRIM(&ordering[depth], packet);
+                ((RenderPacket24 *)packet.bytes)->sxy0 = xy0;
+                ((RenderPacket24 *)packet.bytes)->sxy1 = xy1;
+                ((RenderPacket24 *)packet.bytes)->sxy2 = xy2;
+                ((RenderPacket24 *)packet.bytes)->sxy3 = xy[d];
+            }
+        } else {
+            RENDER_TAG(packet.bytes)->address = 0;
+        }
+        packets += 2 * sizeof(RenderPacket24);
+        i++;
+        record++;
+    }
+
+    i = 0;
+    while (i < entity->header->packet1c_count) {
+        a = record->lookup_indices[0];
+        b = record->lookup_indices[1];
+        c = record->lookup_indices[2];
+        xy0 = xy[a];
+        xy1 = xy[b];
+        xy2 = xy[c];
+        gte_ldsxy0(xy0);
+        gte_ldsxy2(xy2);
+        gte_ldsxy1(xy1);
+        gte_cop2_hazard_slot();
+        gte_cop2_hazard_slot();
+        gte_nclip_now();
+        packet.bytes = (u8 *)((RenderPacket1C *)packets + slot);
+        gte_stmac0(area);
+        if (*area > 0) {
+            int depth = z[a] + z[b] + z[c];
+            depth = depth / 3 >> 2;
+            if (depth < 0x1000) {
+                RENDER_ADDPRIM(&ordering[depth], packet);
+                ((RenderPacket1C *)packet.bytes)->sxy0 = xy0;
+                ((RenderPacket1C *)packet.bytes)->sxy1 = xy1;
+                ((RenderPacket1C *)packet.bytes)->sxy2 = xy2;
+            }
+        } else {
+            RENDER_TAG(packet.bytes)->address = 0;
+        }
+        packets += 2 * sizeof(RenderPacket1C);
+        i++;
+        record++;
+    }
+}
+
+
+
+u32 g_RenderFadeColour = 0x808080;
+
+/* Lights an object's visible parts: each part's light matrix is the view
+ * light matrix times the part matrix, every vertex triple gets an NCCT colour
+ * from the base colour, and the first coded vertex colour of the triple gets
+ * a second NCCT into the alternate colour table. */
+void Render_DrawObject(RenderObjectEntity *entity, union RenderLightingMatrix *view) {
+    u32 baseColourStorage;
+    GteMatrix lightMatrixStorage = {0};
+    u32 *baseColour = &baseColourStorage;
+    s16 *lightMatrix = &lightMatrixStorage.m[0][0];
+    RenderMatrix *matrix;
+    int i, j;
+
+    if (!entity->header || !entity->draw_count)
+        return;
+    *baseColour = g_RenderFadeColour;
+    matrix = entity->matrices;
+    gte_SetBackColor(entity->shade, entity->shade, entity->shade);
+    for (i = 0; i < entity->header->part_count; matrix++, i++) {
+        RenderObjectPart *part = &entity->parts[i];
+        int first;
+        u32 *mainColours;
+        u32 *altColours;
+        RenderVec3s *vertex;
+
+        if (part->visible != 1)
+            continue;
+        gte_MulMatrix0(view, matrix, lightMatrix);
+        gte_SetLightMatrix(lightMatrix);
+        first = part->vertex_start;
+        mainColours = &g_RenderClutLookupTable[first];
+        altColours = &g_RenderVertexWorkWords[first];
+        vertex = &entity->vertices[first];
+        for (j = 0; j < part->vertex_count; j += 3, mainColours += 3, altColours += 3) {
+            RenderColor *colours;
+            int k;
+
+            gte_ldv3(&g_RenderNormalTable[vertex[0].pad], &g_RenderNormalTable[vertex[1].pad],
+                     &g_RenderNormalTable[vertex[2].pad]);
+            gte_ldrgb(baseColour);
+            gte_ncct();
+            vertex += 3;
+            gte_strgb3(mainColours, mainColours + 1, mainColours + 2);
+            k = first + j;
+            colours = (RenderColor *)entity->vertex_colours;
+            if (colours[k].code)
+                gte_ldrgb(&colours[k]);
+            else if (colours[k + 1].code)
+                gte_ldrgb(&colours[k + 1]);
+            else if (colours[k + 2].code)
+                gte_ldrgb(&colours[k + 2]);
+            else
+                continue;
+            gte_ncct();
+            gte_strgb3(altColours, altColours + 1, altColours + 2);
+        }
+    }
+}
+
+
+void Render_UpdateClutTable(RenderObjectEntity *arg0, s16 arg1, s16 arg2) {
+    RenderObjectHeader *hdr;
+    u32 *clutTbl;
+    u32 *tpageTbl;
+    RenderPrimitiveDescriptor *src;
+    u8 *prim;
+    u8 *p;
+    s32 i;
+    u8 cmd;
+
+    hdr = arg0->header;
+    if ((hdr != NULL) && (arg0->draw_count != 0)) {
+        clutTbl = g_RenderClutLookupTable;
+        tpageTbl = g_RenderVertexWorkWords;
+        src = arg0->primitive_descriptors;
+        prim = arg0->primitive_buffer;
+        for (i = 0; i < arg0->header->packet34_count; src++) {
+            p = prim + (arg2 * sizeof(RenderPacket34));
+            if ((((RenderPacket34 *)p)->tag) != 0 || (arg1 != 0)) {
+                cmd = ((RenderPacket34 *)p)->values0.bytes.command;
+                ((RenderPacket34 *)p)->values0.value = clutTbl[src->lookup_indices[0]];
+                ((RenderPacket34 *)p)->value1 = clutTbl[src->lookup_indices[1]];
+                ((RenderPacket34 *)p)->value2 = clutTbl[src->lookup_indices[2]];
+                ((RenderPacket34 *)p)->value3 = clutTbl[src->lookup_indices[3]];
+                ((RenderPacket34 *)p)->values0.bytes.command = cmd;
+            }
+            prim += 2 * sizeof(RenderPacket34);
+            i++;
+        }
+        for (i = 0; i < arg0->header->packet28_count; src++) {
+            p = prim + (arg2 * sizeof(RenderPacket28));
+            if ((((RenderPacket28 *)p)->tag) != 0 || (arg1 != 0)) {
+                cmd = ((RenderPacket28 *)p)->values0.bytes.command;
+                ((RenderPacket28 *)p)->values0.value = clutTbl[src->lookup_indices[0]];
+                ((RenderPacket28 *)p)->value1 = clutTbl[src->lookup_indices[1]];
+                ((RenderPacket28 *)p)->value2 = clutTbl[src->lookup_indices[2]];
+                ((RenderPacket28 *)p)->values0.bytes.command = cmd;
+            }
+            prim += 2 * sizeof(RenderPacket28);
+            i++;
+        }
+        for (i = 0; i < arg0->header->packet24_count; src++) {
+            p = prim + (arg2 * sizeof(RenderPacket24));
+            if ((((RenderPacket24 *)p)->tag) != 0 || (arg1 != 0)) {
+                cmd = ((RenderPacket24 *)p)->values0.bytes.command;
+                ((RenderPacket24 *)p)->values0.value = tpageTbl[src->lookup_indices[0]];
+                ((RenderPacket24 *)p)->value1 = tpageTbl[src->lookup_indices[1]];
+                ((RenderPacket24 *)p)->value2 = tpageTbl[src->lookup_indices[2]];
+                ((RenderPacket24 *)p)->value3 = tpageTbl[src->lookup_indices[3]];
+                ((RenderPacket24 *)p)->values0.bytes.command = cmd;
+            }
+            prim += 2 * sizeof(RenderPacket24);
+            i++;
+        }
+        for (i = 0; i < arg0->header->packet1c_count; src++) {
+            p = prim + (arg2 * sizeof(RenderPacket1C));
+            if ((((RenderPacket1C *)p)->tag) != 0 || (arg1 != 0)) {
+                cmd = ((RenderPacket1C *)p)->values0.bytes.command;
+                ((RenderPacket1C *)p)->values0.value = tpageTbl[src->lookup_indices[0]];
+                ((RenderPacket1C *)p)->value1 = tpageTbl[src->lookup_indices[1]];
+                ((RenderPacket1C *)p)->value2 = tpageTbl[src->lookup_indices[2]];
+                ((RenderPacket1C *)p)->values0.bytes.command = cmd;
+            }
+            prim += 2 * sizeof(RenderPacket1C);
+            i++;
+        }
+    }
+}
+
+
+static inline int ClampLight(int value)
+{
+    if (value < 0) return 0;
+    if (value > 255) return 255;
+    return value;
+}
+
+/* Build two opposite Y lights and upload their color matrix to the GTE. */
+int Render_InitRoomPrimState(void *objectArg)
+{
+    RenderObjectEntity *object = objectArg;
+    int intensity, r, g, b;
+
+    g_RenderLightingState.matrix.m[0][0] = 0;
+    g_RenderLightingState.matrix.m[0][1] = 4096;
+    g_RenderLightingState.matrix.m[0][2] = 0;
+    intensity = object->shade + object->lightPositiveY;
+    r = g_RoomLightTint.r;
+    g = g_RoomLightTint.g;
+    b = g_RoomLightTint.b;
+    intensity = ClampLight(intensity) << 4;
+    g_RenderLightColorMatrix.matrix.m[0][0] = intensity * r / 256;
+    g_RenderLightColorMatrix.matrix.m[1][0] = intensity * g / 256;
+    g_RenderLightColorMatrix.matrix.m[2][0] = intensity * b / 256;
+
+    g_RenderLightingState.matrix.m[1][0] = 0;
+    g_RenderLightingState.matrix.m[1][1] = -4096;
+    g_RenderLightingState.matrix.m[1][2] = 0;
+    intensity = object->shade + object->lightNegativeY;
+    intensity = ClampLight(intensity) << 4;
+    g_RenderLightColorMatrix.matrix.m[0][1] = intensity * r / 256;
+    g_RenderLightColorMatrix.matrix.m[1][1] = intensity * g / 256;
+    g_RenderLightColorMatrix.matrix.m[2][1] = intensity * b / 256;
+    g_RenderLightingState.matrix.m[2][0] = 0;
+    g_RenderLightingState.matrix.m[2][1] = 0;
+    g_RenderLightingState.matrix.m[2][2] = 0;
+    g_RenderLightColorMatrix.matrix.m[0][2] = 0;
+    g_RenderLightColorMatrix.matrix.m[1][2] = 0;
+    g_RenderLightColorMatrix.matrix.m[2][2] = 0;
+    gte_SetColorMatrix(g_RenderLightColorMatrix.words);
+    return 0;
+}

@@ -2120,3 +2120,22 @@ movement, actor-lifecycle (including the PM frame fixture) and the real texture
 corpus/room-loader fixture. PsyZ/SDL are not instrumented. This establishes the
 restored paths, not full scene/frame runtime integration or cold audio bank
 loading. No new files; removal of pc/ and the remaining extractions is pending.
+
+
+### Restore model setup, ordering and lighting to render/object.c
+
+Deleted render/model_setup.c, render/model_draw.c and render/model_lighting.c.
+Their complete bodies, native packet types/macros and lighting state now reside
+in the original render/object.c. Extraction history confirms the original
+location; function text was preserved, including native pointer arithmetic,
+local scratch and lighting clamps. CMake compiles the whole object module.
+No new files were added.
+
+Full build and eight original-game checks pass with required Disc 1 assets:
+model-setup, model-gpu, model-room-gpu, actor-lifecycle, entity-textures,
+entity-texture-assets, shadow and scene-spawn. A fresh ASan/UBSan/function
+model --gpu run also passes: 878 models, 301224 visible ordering packets,
+2239298 visible pixels and identical results for both draw slots. PsyZ/SDL
+libraries are not instrumented. This validates the model fixtures, not a
+complete scene image or running gameplay. Other renderer extractions and the
+entire pc/ directory remain to be removed.

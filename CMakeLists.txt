@@ -224,7 +224,7 @@ if(BUILD_TESTING)
     add_test(NAME original-game-nodes COMMAND test-original-nodes)
 endif()
 
-add_library(parasite-eve-original-model-setup OBJECT src/main/render/model_setup.c src/main/render/model_draw.c src/main/render/model_lighting.c src/main/render/texture_upload.c src/main/render/object.c)
+add_library(parasite-eve-original-model-setup OBJECT src/main/render/texture_upload.c src/main/render/object.c)
 target_include_directories(parasite-eve-original-model-setup PRIVATE include)
 target_link_libraries(parasite-eve-original-model-setup PRIVATE psyz)
 target_compile_definitions(parasite-eve-original-model-setup PRIVATE __psyz)

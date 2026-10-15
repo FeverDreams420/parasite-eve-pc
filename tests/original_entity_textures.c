@@ -1,8 +1,10 @@
 #include "pe1/render_setup.h"
+#include "pe1/battle.h"
 #include "pe1/entity_frame_update.h"
 #include "pe1/gte.h"
 #include "pe1/render_lighting.h"
 #include <libgpu.h>
+#include <psyz/system.h>
 #include "pe1/scene_room_load.h"
 #include "pe1/geom_state.h"
 #include "room_banks.h"
@@ -15,6 +17,7 @@
 #include "pe1/room_fx_model.h"
 #include "pe1/field_effect_pool.h"
 extern u8 *g_FieldFxModel83ACD504;
+extern int g_DrawPacketOffset;
 #include "pe1/field_effect_modules.h"
 #include "pe1/field_texture_tables.h"
 extern FieldFxTaskProgram g_RoomM005Effects;
@@ -418,6 +421,58 @@ int main(void)
                 CHECK(g_RoomM005BeaconModel0==Asset_FindTable08ByU32Key(g_GameState.loaded_scene_assets,(int)0xc5462704u));
                 CHECK(g_RoomM005BeaconModel1==Asset_FindTable08ByU32Key(g_GameState.loaded_scene_assets,(int)0xc5862704u));
                 CHECK(g_RoomM005BeaconModel0 && g_RoomM005BeaconModel1);
+                BattleEntity distant_player={0},*old_player=D_8009D254;FieldActorState hit_state={0};
+                distant_player.core=(Combatant *)&hit_state;effect_state.core_flags=0x01000005;
+                distant_player.posX.parts.integer=30000;distant_player.posZ.parts.integer=30000;D_8009D254=&distant_player;
+                RenderBufferPrefix previous_buffers=D_800B0E38;
+                GteMatrix camera={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+                GteMatrix *previous_view=g_GeomScroll.words.viewMatrix;g_GeomScroll.words.viewMatrix=&camera;
+                int previous_draw_slot=g_ActiveDrawSlot,previous_offset=g_DrawPacketOffset,previous_age=g_FieldFxCurrentAge;
+                static RenderGpuTag effect_ot[4096];
+                struct {_Alignas(void *) u8 bytes[65536];u8 guard[16];} effect_packets;
+                u16 *header0=(void *)g_RoomM005BeaconModel0,*header1=(void *)g_RoomM005BeaconModel1;
+                u32 colors0[256],colors1[256];CHECK(header0[5]<=256 && header1[5]<=256);
+                memcpy(colors0,g_RoomM005BeaconModel0+header0[4],header0[5]*4);
+                memcpy(colors1,g_RoomM005BeaconModel1+header1[4],header1[5]*4);
+                Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(27,1);Psyz_GteCtrlWrite(28,0);
+                Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
+                unsigned emitted=0,linked_packets=0;u32 previous_random=Psyz_RandState();srand(1);
+                for(unsigned frame=0;frame<12;++frame) {
+                    memset(&effect_packets,0xa5,sizeof(effect_packets));
+                    for(unsigned depth=0;depth<4096;++depth)effect_ot[depth]=(RenderGpuTag){.address=0xffffff};
+                    g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;g_FieldFxCurrentAge=frame;
+                    D_800B0E38.ordering[g_ActiveDrawSlot]=effect_ot;
+                    D_800B0E38.packets[g_ActiveDrawSlot]=(char *)effect_packets.bytes;
+                    distant_player.posX.parts.integer=frame==8?0:30000;
+                    distant_player.posZ.parts.integer=frame==8?0:30000;
+                    CHECK(RoomM005_JointBeacon(1,beacon_state,0)==0);
+                    if(frame<8)CHECK(!(hit_state.flags&0x4000));
+                    if(frame==8)CHECK((hit_state.flags&0x4000) && effect_state.core_flags==0x91000005);
+                    CHECK(FieldFx_UpdateCallbackList(beacon_pool)>=0);
+                    CHECK(RoomM005_JointBeacon(2,beacon_state,0)==0);
+                    CHECK(FieldFx_DrawCallbackList((char *)beacon_pool)>=0);
+                    CHECK(g_DrawPacketOffset>0 && g_DrawPacketOffset<=sizeof(effect_packets.bytes));
+                    emitted+=g_DrawPacketOffset;
+                    for(unsigned depth=0;depth<4096;++depth) {
+                        uintptr_t address=effect_ot[depth].address;unsigned links=0;
+                        while(address!=0xffffff) {
+                            CHECK(address>=(uintptr_t)effect_packets.bytes &&
+                                address+sizeof(RenderGpuTag)<=(uintptr_t)effect_packets.bytes+g_DrawPacketOffset &&
+                                address%_Alignof(RenderGpuTag)==0 && ++links<1024);
+                            RenderGpuTag *tag=(void *)address;
+                            CHECK(tag->length==1 || tag->length==8 || tag->length==9 || tag->length==12);
+                            CHECK(address+sizeof(*tag)+tag->length*4<=(uintptr_t)effect_packets.bytes+g_DrawPacketOffset);
+                            ++linked_packets;address=tag->address;
+                        }
+                    }
+                    CHECK(!memcmp(colors0,g_RoomM005BeaconModel0+header0[4],header0[5]*4));
+                    CHECK(!memcmp(colors1,g_RoomM005BeaconModel1+header1[4],header1[5]*4));
+                    for(unsigned byte=0;byte<16;++byte)CHECK(effect_packets.guard[byte]==0xa5);
+                }
+                CHECK(emitted && linked_packets);srand(previous_random);
+                g_FieldFxCurrentAge=12;CHECK(RoomM005_JointBeacon(1,beacon_state,0)==1);
+                D_8009D254=old_player;D_800B0E38=previous_buffers;g_GeomScroll.words.viewMatrix=previous_view;
+                g_ActiveDrawSlot=previous_draw_slot;g_DrawPacketOffset=previous_offset;g_FieldFxCurrentAge=previous_age;
                 g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_slot;
                 puts("Original M005 beacon init: two real models, native joint 20, actor action and eight-child list passed");
                 memset(g_RoomM005ScriptAnchorView-4,0x5a,20);

@@ -16,11 +16,11 @@ PE1_STATIC_ASSERT(sizeof(EnemyCombatant) == sizeof(FieldActorState), enemy_state
 int main(void)
 {
     FieldActor actors[4]={0};
-    BattleTarget target={0}; BattleTargetWords words;
+    BattleTarget target={0};
     uintptr_t pointer;
     target.actor=(BattleEntity *)&actors[3];
-    memcpy(&words,&target,sizeof(words));
-    if (words.word_00!=(uintptr_t)&actors[3]) return 5;
+    memcpy(&pointer,&target.actor,sizeof(pointer));
+    if (pointer!=(uintptr_t)&actors[3]) return 5;
     actors[0].model_state.model_header=(RenderObjectHeader *)&actors[1];
     if (actors[0].model_state.allocation_active!=(uintptr_t)&actors[1]) return 6;
     actors[0].parent=&actors[2];

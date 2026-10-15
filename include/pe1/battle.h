@@ -498,31 +498,18 @@ typedef struct BattleEntity {
 } BattleEntity;
 
 /* ----------------------------------------------------------------------------
- * BattleTarget -- g_BattleTargetList (0x8009E000) entry, CONFIRMED 0xC stride.
+ * BattleTarget -- native target records; original USA entries had a 0xC stride.
  * Built by Battle_BuildTargetList, sorted by Battle_SortTargets, cycled by
  * Battle_CycleTarget. g_BattleTargetCount entries; g_BattleTargetIndex selects.
  * --------------------------------------------------------------------------*/
 typedef struct BattleTarget {
-/* 0x00 */ struct BattleEntity *actor; /* target entity (battle/setup.c:438) */
-/* 0x04 */ s32  dist;                  /* distance to player (Battle_CycleTarget.c:90) */
-/* 0x08 */ s16  angle;                 /* ratan2 angle to player (battle/setup.c:447) */
-/* 0x0A */ u8   pad_0A[2];
-} BattleTarget;                        /* sizeof == 0xC */
+    struct BattleEntity *actor;
+    s32 dist;
+    s16 angle;
+    u8 pad_0A[2];
+} BattleTarget;
 
-/* Word-oriented alias used by Battle_TargetSort's whole-entry swap. Retail
- * code copies the angle and trailing bytes as one word; keeping that operation
- * explicit preserves the sorter schedule while BattleTarget names the fields. */
-typedef struct BattleTargetWords {
-    uintptr_t word_00;
-    s32 word_04;
-    s32 word_08;
-} BattleTargetWords;
-PE1_STATIC_ASSERT(sizeof(BattleTargetWords) == sizeof(BattleTarget),
-                  battle_target_words_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleTargetWords, word_04) == PE1_OFFSETOF(BattleTarget, dist),
-                  battle_target_words_distance_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleTargetWords, word_08) == PE1_OFFSETOF(BattleTarget, angle),
-                  battle_target_words_tail_offset);
+enum { BATTLE_TARGET_CAPACITY = 7 };
 
 typedef struct BattleInitSlot {
     BattleEntity *actor;
@@ -535,12 +522,11 @@ extern BattleInitSlot g_BattleActionQueue[45];
 
 
 
-extern BattleTarget g_BattleTargetList[];
-/* Incomplete array: retail reads the count absolutely in -G0 units. */
+extern BattleTarget g_BattleTargetList[BATTLE_TARGET_CAPACITY + 1];
 extern int g_BattleAilmentPmSlot; /* last scene asset/effect result selected by battle */
 
-void Battle_SwapRecords(BattleTargetWords *records, int from, int to);
-void Battle_SortTargets(BattleTargetWords *records, s8 first, s8 last);
+void Battle_SwapRecords(BattleTarget *records, int from, int to);
+void Battle_SortTargets(BattleTarget *records, s8 first, s8 last);
 
 /* These partial records are deliberately padded through their last verified
  * field. Keep the offsets executable: prose comments alone do not protect the

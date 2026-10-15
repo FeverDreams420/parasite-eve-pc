@@ -741,6 +741,8 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
     ACTOR->exp_or_acc = (s32)((u32)ACTOR->exp_or_acc - (u32)((dmg * 2) / 3));
 }
 
+BattleSavedPosition g_AyaSavedPos;
+
 /* Advances Aya's 17-state action, visiting the selected targets and restoring
  * her saved pose, animation and visibility when the action completes. */
 s32 Battle_StepAyaAction(void)

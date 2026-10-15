@@ -2531,6 +2531,68 @@ static int original_color_quad_packets(void)
 /* CPU algorithm from USA 8007041C with COP2 forwarded to the same PsyZ GTE;
  * this isolates CPU/layout fidelity, not independent hardware GTE accuracy. */
 
+
+static int original_battle_target_list(void)
+{
+    BattleTarget saved_targets[BATTLE_TARGET_CAPACITY+1];memcpy(saved_targets,g_BattleTargetList,sizeof(saved_targets));
+    BattleSavedPosition saved_position=g_AyaSavedPos;
+    s8 saved_index=g_BattleTargetIndex;
+    FieldActor *saved_head=g_FieldActorListHead,*saved_player=g_PlayerEntity;
+    BattleEntity player={0},entities[9]={{0}};EnemyCombatant cores[9]={{0}};
+    const u32 flag_patterns[]={0,0x40,0x2040,0x4000,0x4040,0x2000,0x80,UINT32_MAX};
+    const unsigned missing_masks[]={0,0x55,0x7F};
+    const s16 players[][2]={{0,0},{-32768,32767},{100,-100}};
+    const s16 points[][7][2]={
+        {{100,100},{100,100},{100,100},{100,100},{100,100},{100,100},{100,100}},
+        {{700,50},{600,-50},{500,50},{400,-50},{300,50},{200,-50},{100,50}},
+        {{-32768,32767},{32767,-32768},{-32768,-32768},{32767,32767},{0,32767},{-32768,0},{0,0}},
+        {{100,0},{0,100},{-100,0},{0,-100},{70,70},{-70,70},{70,-70}}};
+    g_PlayerEntity=(FieldActor *)&player;
+    uint64_t hash=UINT64_C(14695981039346656037);int valid=1;unsigned cases=0,histogram[8]={0};
+#define TARGET_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+    for(unsigned mask=0;mask<128;++mask)for(unsigned pattern=0;pattern<9;++pattern)
+    for(unsigned missing=0;missing<3;++missing)for(unsigned layout=0;layout<4;++layout)
+    for(unsigned origin=0;origin<3;++origin)for(unsigned insert=0;insert<2;++insert){
+        memset(g_BattleTargetList,0xA5,sizeof(g_BattleTargetList));
+        g_AyaSavedPos=(BattleSavedPosition){0x11223344,0x55667788,(s32)UINT32_C(0x99AABBCC)};
+        player.posX.parts.integer=players[origin][0];player.posZ.parts.integer=players[origin][1];
+        BattleEntity *sequence[8];unsigned candidate=0;
+        for(unsigned i=0;i<8;++i)sequence[i]=i==(insert?3:0)?&player:&entities[candidate++];
+        for(unsigned i=0;i<8;++i)sequence[i]->next=i<7?sequence[i+1]:NULL;
+        g_FieldActorListHead=(FieldActor *)sequence[0];
+        for(unsigned i=0;i<7;++i){
+            entities[i].core=missing_masks[missing]>>i&1?NULL:&cores[i];
+            cores[i].hpAlive=mask>>i&1?(int)i*10+1:(i&1?-1:0);
+            entities[i].entityFlags=pattern==8?0:flag_patterns[(i+pattern)%8];
+            entities[i].renderObject.target_x=points[layout][i][0];entities[i].renderObject.target_z=points[layout][i][1];
+        }
+        int returned=Battle_BuildTargetList();unsigned n=(u8)g_BattleTargetIndex;
+        if(returned!=(int)n)valid=0;
+        if(n>7){valid=0;goto targets_restore;}++histogram[n];TARGET_PUT(n,1);
+        for(unsigned i=0;i<n;++i){
+            unsigned id=0;for(unsigned j=0;j<7;++j)if(g_BattleTargetList[i].actor==&entities[j])id=j+1;
+            if(!id)valid=0;TARGET_PUT(id,1);TARGET_PUT(g_BattleTargetList[i].dist,4);TARGET_PUT(g_BattleTargetList[i].angle,2);
+            TARGET_PUT(g_BattleTargetList[i].pad_0A[0],1);TARGET_PUT(g_BattleTargetList[i].pad_0A[1],1);
+        }
+        TARGET_PUT(g_BattleTargetList[n].actor==NULL,1);
+        TARGET_PUT(g_AyaSavedPos.x,4);TARGET_PUT(g_AyaSavedPos.y,4);TARGET_PUT(g_AyaSavedPos.z,4);++cases;
+    }
+    /* Invalid population cannot overwrite the saved pose or the sentinel. */
+    for(unsigned i=0;i<9;++i){entities[i].core=&cores[i];cores[i].hpAlive=1;entities[i].entityFlags=0;entities[i].next=i<8?&entities[i+1]:NULL;}
+    g_FieldActorListHead=(FieldActor *)entities;
+    g_AyaSavedPos=(BattleSavedPosition){1,2,3};Battle_BuildTargetList();
+    if(g_BattleTargetIndex!=7 || g_BattleTargetList[7].actor || g_AyaSavedPos.x || g_AyaSavedPos.y!=2 || g_AyaSavedPos.z!=3)valid=0;
+    g_PlayerEntity=NULL;Battle_BuildTargetList();if(g_BattleTargetIndex || g_BattleTargetList[0].actor)valid=0;
+targets_restore:
+#undef TARGET_PUT
+    memcpy(g_BattleTargetList,saved_targets,sizeof(saved_targets));g_AyaSavedPos=saved_position;
+    g_BattleTargetIndex=saved_index;g_FieldActorListHead=saved_head;g_PlayerEntity=saved_player;
+    if(!valid || hash!=UINT64_C(0xcd7e48e9d9318f85)){
+        fprintf(stderr,"Original battle targets: cases=%u hash=%016llx valid=%d\n",cases,(unsigned long long)hash,valid);return 0;}
+    puts("Original battle targets: 82944 unhooked USA cases, filtering, null/dead cores, distances, angles, ordering/ties, full seven-target sentinel and saved-X alias match");return 1;
+}
+
 static int original_script_sprites(void)
 {
     Pe1GameState saved_state=g_GameState;GeomScrollRecord saved_scroll=g_GeomScroll;
@@ -4797,7 +4859,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
-    if(!original_script_sprites() || !original_wireframe_renderer() || !original_wireframe_animation() || !original_textbox_renderer(disc,executable) || !original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
+    if(!original_battle_target_list() || !original_script_sprites() || !original_wireframe_renderer() || !original_wireframe_animation() || !original_textbox_renderer(disc,executable) || !original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

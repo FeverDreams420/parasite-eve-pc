@@ -3,9 +3,9 @@
 
 #include "pe1/asset_find.h"
 #include "pe1/battle_turn.h"
+#include "pe1/battle_setup.h"
 
 int Akao_SendTableCommand(void *, int, int, int, int);
-int Battle_BuildTargetList(void);
 void Battle_ResolveHitOnTimer(void);
 void Battle_RollEnemySpawn(void *);
 void Battle_StepEscapeOrDeath(void);

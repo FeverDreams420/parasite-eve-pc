@@ -16,12 +16,11 @@
 #include "pe1/random.h"
 #include "pe1/textbox.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 s8 g_BattleHaltTimer;
 BattleEnemySlot g_BattleEnemySlots[7];
 /* Original 45-entry action queue, widened only for native actor pointers. */
 BattleInitSlot g_BattleActionQueue[45];
+BattleTarget g_BattleTargetList[BATTLE_TARGET_CAPACITY + 1];
 u16 g_BattleHitActionPending;
 u8 g_BattleActionAnimModes[4];
 s8 g_BattleTargetCycleMode;
@@ -234,9 +233,6 @@ int Pad_IsMenuConfirmAvailable(void) {
     return 0;
 }
 
-/* MASPSX_FORCE_G0 keeps the battle pointers and the effect result absolute,
- * as retail; the COMMON asset result supplies the small-data metadata of the
- * one $gp-relative word. */
 int g_BattleAttackPmSlot;
 
 void Battle_DispatchEntityEffect(void) {
@@ -391,13 +387,10 @@ done:
     return;
 }
 
-#define NULL ((void *)0)
-
-void Battle_BuildTargetList(void) {
+int Battle_BuildTargetList(void) {
     s32 entityFlags;
     s32 nextIndex;
     s32 finalCount;
-    s32 pad_[2];
     s32 distance;
     s16 angle;
     EnemyCombatant *candidateCore;
@@ -406,6 +399,7 @@ void Battle_BuildTargetList(void) {
 
     candidate = (BattleEntity *)g_FieldActorListHead;
     g_BattleTargetIndex = 0;
+    if (!D_8009D254) { g_BattleTargetList[0].actor = NULL; return 0; }
     if (candidate != NULL) {
         do {
             player = D_8009D254;
@@ -414,7 +408,7 @@ void Battle_BuildTargetList(void) {
                 if (candidateCore != NULL) {
                     entityFlags = candidate->entityFlags;
                     if (((entityFlags & 0x2040) != 0x40) && !(entityFlags & 0x4000) &&
-                        (candidateCore->hpAlive > 0)) {
+                        (candidateCore->hpAlive > 0) && g_BattleTargetIndex < BATTLE_TARGET_CAPACITY) {
                         g_BattleTargetList[g_BattleTargetIndex].actor = candidate;
                         distance = Battle_CalcDistToPlayer(candidate, player);
                         g_BattleTargetList[g_BattleTargetIndex].dist = distance;
@@ -434,13 +428,17 @@ void Battle_BuildTargetList(void) {
         } while (candidate != NULL);
     }
     if (g_BattleTargetIndex >= 2) {
-        Battle_SortTargets((BattleTargetWords *)g_BattleTargetList, 0, (s8) (g_BattleTargetIndex - 1));
+        Battle_SortTargets(g_BattleTargetList, 0, (s8) (g_BattleTargetIndex - 1));
     }
     finalCount = g_BattleTargetIndex;
     g_BattleTargetList[finalCount].actor = NULL;
+    /* USA's seventh terminator cleared only the shared saved-X word. Keep
+     * that observable store without an eight-byte pointer overwriting Y. */
+    if (finalCount == BATTLE_TARGET_CAPACITY) g_AyaSavedPos.x = 0;
+    return finalCount;
 }
 
-void Battle_SortTargets(BattleTargetWords *records, signed char first, signed char last)
+void Battle_SortTargets(BattleTarget *records, signed char first, signed char last)
 {
     signed char pivot;
     signed char scan;
@@ -460,8 +458,8 @@ void Battle_SortTargets(BattleTargetWords *records, signed char first, signed ch
     }
 }
 
-void Battle_SwapRecords(BattleTargetWords *records, int from_arg, int to_arg) {
-    BattleTargetWords tmp;
+void Battle_SwapRecords(BattleTarget *records, int from_arg, int to_arg) {
+    BattleTarget tmp;
     int from_index;
     int to_index;
 
@@ -542,9 +540,6 @@ void Battle_SyncEnemyAttributes(void) {
     memcpy(&attributes->effectFlags, &effect_value, sizeof(effect_value));
 }
 
-/* MASPSX_FORCE_G0 keeps the game-state flags absolute, as retail; the COMMON
- * script sound cursor and count supply the small-data metadata of the two
- * $gp-relative bytes. */
 u8 g_BattleActionIndex;
 u8 g_BattleActionQueueCount;
 

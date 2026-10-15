@@ -109,7 +109,8 @@ void FxCommon_DrawSceneNodes(void);
 /* Per-frame scene draw (FxCommon_DrawSceneNodes): depth bias for the next node,
  * echo copies of the camera path nodes and the flicker colour. */
 extern s32 g_FxCommonDepthBias;
-extern FxCommonTransformNode *g_FxCommonPathTailNodes[2];
+/* USA 801EA588 is the final two slots of the array at 801EA578. */
+#define g_FxCommonPathTailNodes (g_FxCommonPathNodes + 4)
 extern s16 D_8019C0D0[2];
 extern u8 g_FxCommonFlatColor[4];
 extern FxCommonTransformNode *g_FxCommonEchoNodes[4];

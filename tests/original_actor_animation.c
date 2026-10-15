@@ -3255,6 +3255,19 @@ static int original_fx_camera_motion(PeDisc *disc)
 {
     PeDiscFile archive;if(!pe_disc_find(disc,"PE.IMG",&archive) ||
        !pe_disc_read(disc,&archive,1975u*2048,g_FxCommonTimTable,41*2048))return 0;
+    /* Compare authored data beyond the old scanner's 26-sector code slice.
+     * The real InitScene loads these addresses, not identity matrices. */
+    u8 sceneData[0x68];
+    if(!pe_disc_read(disc,&archive,1792u*2048+(0x8019c0d4u-0x8018eff0u),sceneData,sizeof(sceneData)) ||
+       memcmp(sceneData,g_FxCommonRouteFarDepths,20) ||
+       memcmp(sceneData+20,g_FxCommonRouteNearDepths,20) ||
+       memcmp(sceneData+40,&g_FxCommonColorMatrix,32) ||
+       memcmp(sceneData+72,&g_FxCommonLightMatrix,32))return 0;
+    g_FxCommonPathTailNodes[0]=(FxCommonTransformNode *)&g_FxCommonDefaultNode;
+    g_FxCommonPathNodes[5]=(FxCommonTransformNode *)&g_FxCommonDefaultNode;
+    if(g_FxCommonPathNodes[4]!=(FxCommonTransformNode *)&g_FxCommonDefaultNode ||
+       g_FxCommonPathTailNodes[1]!=(FxCommonTransformNode *)&g_FxCommonDefaultNode)return 0;
+    g_FxCommonPathNodes[4]=g_FxCommonPathNodes[5]=NULL;
     FxCommonShortVec3 external[2];FxCommonShortVec3 *shorts[]={external,external+1,&g_FxCommonMotionOrigin0,&g_FxCommonMotionTarget0,&g_FxCommonMotionOrigin1,&g_FxCommonMotionTarget1};
     const s32 shifts[]={0,1,2,14,15,16,31,32,63,255,256,-1};
     const u32 sources[]={0,1,255,256,0xffffff80};

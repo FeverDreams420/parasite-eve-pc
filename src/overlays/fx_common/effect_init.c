@@ -568,3 +568,13 @@ FxCommonGradientQuad g_FxCommonSkyQuads[2],g_FxCommonShadeQuads[2];
 FxCommonGradientQuad g_FxCommonFloorFadeQuads[2],g_FxCommonTopFadeQuads[2];
 FxCommonDrawModePacket g_FxCommonDrawModes0[2],g_FxCommonDrawModes1[2],g_FxCommonDrawModes2[2];
 FxCommonEffectSetupRecord g_FxCommonEffectSetup[10];
+
+/* Authored scene data at USA 8019C0D4..8019C13B. These are not identity
+ * matrices: all three colour channels use the first light. */
+s16 g_FxCommonRouteFarDepths[10]={12000,12000,12000,11000,12000,11000,12000,12000,16000,12000};
+s16 g_FxCommonRouteNearDepths[10]={4500,5500,5500,4500,5500,4500,5500,5500,7500,5500};
+GteMatrix g_FxCommonColorMatrix={.m={{4096,0,0},{4096,0,0},{4096,0,0}}};
+GteMatrix g_FxCommonLightMatrix={.m={{4096,4096,4096},{0,0,0},{0,0,0}}};
+/* InitScene writes the tail through slots 4/5; StepPathNodes reads the
+ * same slots through the full six-node path. */
+FxCommonTransformNode *g_FxCommonPathNodes[6];

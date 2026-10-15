@@ -179,9 +179,46 @@ static int native_process_slot_capacity(void)
     return 0;
 }
 
+static int cold_process_cleanup(void)
+{
+    FieldActor owner={0},other={0};PmCommand command={.stop=stop};
+    handlers[0]=&command;
+    for(unsigned banks=0;banks<4;++banks){
+        memset(primary,0,sizeof(primary));memset(secondary,0,sizeof(secondary));
+        g_PmTables=(PmTables){handlers,banks&1?primary:NULL,banks&2?secondary:NULL};
+        primary[0].header=(PmSlotHeader){.state=2,.command=0,.owner=&owner};
+        secondary[0].header=(PmSlotHeader){.state=2,.command=0,.owner=&owner};
+        primary[1].header=(PmSlotHeader){.state=2,.command=0,.owner=&other};
+        secondary[1].header=(PmSlotHeader){.state=2,.command=0,.owner=&other};
+        PmPrimarySlot saved_primary[11];PmSecondarySlot saved_secondary[11];
+        memcpy(saved_primary,primary,sizeof(primary));memcpy(saved_secondary,secondary,sizeof(secondary));
+        stopped=0;
+        CHECK(Scene_FreeEntityTable(NULL)==-25 && Scene_FreeEntityTable(&owner)==0);
+        CHECK(stopped==((banks&1)!=0)+((banks&2)!=0));
+        if(banks&1)CHECK(!primary[0].header.state && !primary[0].header.owner);
+        else CHECK(!memcmp(primary,saved_primary,sizeof(primary)));
+        if(banks&2)CHECK(!secondary[0].header.state && !secondary[0].header.owner);
+        else CHECK(!memcmp(secondary,saved_secondary,sizeof(secondary)));
+        CHECK(!memcmp(primary+1,saved_primary+1,sizeof(primary)-sizeof(*primary)));
+        CHECK(!memcmp(secondary+1,saved_secondary+1,sizeof(secondary)-sizeof(*secondary)));
+    }
+    g_PmTables=(PmTables){handlers,NULL,NULL};
+    Entity_ResetAllPools();Entity_InitFreePool();
+    FieldActor *actor=g_EntityPool;memset(actor,0,sizeof(*actor));actor->flags=0x10;
+    g_FieldActorListHead=actor;g_EntityFreeListHead=actor+1;g_EntityFreePoolCount=1;g_PlayerEntity=actor;
+    g_FieldMoveLock=0x1f;Entity_CollectGarbage();
+    CHECK(!g_FieldActorListHead && !g_PlayerEntity && g_EntityFreeListHead==actor &&
+          !g_EntityFreePoolCount && g_FieldMoveLock==0x12);
+    memset(primary,0,sizeof(primary));memset(secondary,0,sizeof(secondary));
+    handlers[0]=NULL;stopped=0;g_PmTables=(PmTables){handlers,primary,secondary};
+    puts("Original actor cleanup before first effect: absent/independent task banks, retained unrelated tasks and native actor collection passed");
+    return 0;
+}
+
 int main(void)
 {
     g_PmTables=(PmTables){handlers,primary,secondary};
+    CHECK(cold_process_cleanup()==0);
     CHECK(native_process_slot_capacity()==0);
     CHECK(scene_initialization()==0);
     CHECK(command_addresses()==0);

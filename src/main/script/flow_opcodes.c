@@ -692,7 +692,7 @@ void Script_RunQueue(void)
  * they must be ported before scenes using them can execute. */
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [0]=Script_JumpToEntityOffset, [1]=Entity_MarkCurrentDead,
-    [2]=Entity_SetCurrentNodeActive, [4]=Entity_MarkNodeFree, [5]=Script_JumpIfZero,
+    [3]=Script_SetFogParams, [70]=Script_SetFogParamsAlt, [2]=Entity_SetCurrentNodeActive, [4]=Entity_MarkNodeFree, [5]=Script_JumpIfZero,
     [8]=Script_SpawnEntityAt, [9]=Script_EvalExpr, [10]=Script_AssignValue,
     [13]=Script_StopEntityAnim, [11]=Script_SetEntityVec3, [12]=Script_GetEntityVec3, [14]=Entity_QueryField,
     [17]=Script_DispatchCmd, [18]=Script_SpawnChildNode, [19]=Entity_SetCurrentFlags, [20]=Entity_SelectFieldSetter,
@@ -715,8 +715,8 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [50]=Entity_ClearCurrentFlag80, [55]=Entity_SetCurrentFlag4000, [57]=Entity_ClearCurrentFlag4000,
     [46]=Entity_SetCurrentActionMode, [47]=Script_SetEntityAnimFrame, [48]=Script_WaitAnimFrameMatch, [68]=Script_MoveTowardPoint,
     [69]=Script_GetAngleToEntity, [75]=Render_CameraSnapToEntity, [78]=Script_SetEntityAnimSpeed,
-    [101]=Entity_ClearMotionVectors, [102]=Entity_ComputeVelocity, [84]=Entity_GetDistanceComponents, [91]=Script_ClearBattleFlags, [92]=Script_SetBattleFlags, [94]=Entity_GetPositionByType, [97]=Render_CameraTrackRelativeOffset, [123]=Script_SetObjEntryField8, [116]=Script_SetObjEntryLimit, [119]=Script_PointInPoly, [117]=Script_SetFlagSlot, [118]=Render_CameraStepAngleFade,
-    [131]=Script_WaitAnimRange, [146]=Script_PlayEntityAnim, [147]=Script_SetAnimInterpRate, [148]=Menu_GetModeState,
+    [101]=Entity_ClearMotionVectors, [102]=Entity_ComputeVelocity, [84]=Entity_GetDistanceComponents, [91]=Script_ClearBattleFlags, [92]=Script_SetBattleFlags, [94]=Entity_GetPositionByType, [97]=Render_CameraTrackRelativeOffset, [123]=Script_SetObjEntryField8, [116]=Script_SetObjEntryLimit, [119]=Script_PointInPoly, [120]=Entity_ClearCurrentFlag20, [121]=Entity_SetCurrentFlag20, [117]=Script_SetFlagSlot, [118]=Render_CameraStepAngleFade,
+    [130]=Script_LoadGeomState, [131]=Script_WaitAnimRange, [146]=Script_PlayEntityAnim, [147]=Script_SetAnimInterpRate, [148]=Menu_GetModeState,
     [173]=Script_ClearInputFlagBit2, [174]=Script_SetInputFlagBit2,
     [172]=Script_SetAnimSlotPointer, [170]=Script_SetSceneFlag2000, [171]=Script_ClearSceneFlag2000,
     [205]=Script_SnapPosToSpawnPos, [203]=Script_GetAngleToPoint, [200]=Script_ClearEntityRoamFlag, [201]=Script_SetEntityRoamFlag,

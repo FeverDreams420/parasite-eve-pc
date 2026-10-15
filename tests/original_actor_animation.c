@@ -2106,6 +2106,43 @@ static int original_polygon_opcode(void)
     return 1;
 }
 
+static int original_scroll_opcodes(void)
+{
+    const u32 values[]={0,1,32767,32768,65535,65536,0x80000000,0xffffffff,0x12345678};
+    const u32 flags[]={0,1,0x3f,0x40,0x48,0x7f,0x80000040,0xffffffff};
+    const u32 durations[]={0,1,30,65535,65536};const unsigned ops[]={3,70};
+    GeomScrollRecord saved=g_GeomScroll;ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    FieldActor actor={0},*saved_actor=g_CurrentEntity;g_CurrentEntity=&actor;
+    uint64_t hash=UINT64_C(14695981039346656037);
+    for(unsigned op=0;op<2;++op)for(unsigned f=0;f<8;++f)for(unsigned i=0;i<9;++i)for(unsigned d=0;d<5;++d){
+        if(g_ScriptQueueOpcodeHandlers[ops[op]]!=(op?Script_SetFogParamsAlt:Script_SetFogParams))return 0;
+        memset(&g_GeomScroll,0xa5,sizeof(g_GeomScroll));g_GeomScroll.state.flags=(s32)flags[f];
+        GeomScrollRecord before=g_GeomScroll;
+        int data[]={(s32)values[i],(s32)values[(i+3)%9],(s32)durations[d]};int *args[]={data,data+1,data+2};
+        u32 result=g_ScriptQueueOpcodeHandlers[ops[op]](args);u16 halves[12];
+        memcpy(halves,&g_GeomScroll.state.position,sizeof(halves));
+        const u32 words[]={result,(u32)g_GeomScroll.state.flags};
+        for(unsigned j=0;j<14;++j){u32 value=j<2?words[j]:halves[j-2];
+            for(unsigned b=0;b<4;++b)hash=(hash^((value>>(b*8))&255))*UINT64_C(1099511628211);}
+        GeomScrollRecord expected=before;
+        if(flags[f]&0x40){
+            expected.state.flags=(flags[f]&~15u)|(op?9:1);
+            expected.words.start=before.words.position;
+            expected.state.position.targetX=(u16)data[0];expected.state.position.targetY=(u16)data[1];
+            expected.state.position.elapsed=1;expected.state.position.duration=(u16)data[2];
+        }
+        if(result!=1 || memcmp(&g_GeomScroll,&expected,sizeof(expected)))return 0;
+        g_GeomScroll=before;u32 program[]={ops[op]|(3u<<13),0,values[i],values[(i+3)%9],durations[d],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(memcmp(&g_GeomScroll,&expected,sizeof(expected)) || node.current.script!=program+7 ||
+           !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
+    g_GeomScroll=saved;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_CurrentEntity=saved_actor;
+    if(hash!=UINT64_C(0x93501ab9832625cd)){fprintf(stderr,"Scroll opcode hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original scroll opcodes: 720 USA MIPS states, signed coordinates, unsigned duration, disabled camera and full dispatcher passed");
+    return 1;
+}
+
 static int original_motion_opcodes(void)
 {
     const u32 factors[]={0,1,65536,327680,0x80000000,0x7fffffff};
@@ -2149,10 +2186,26 @@ static int original_motion_opcodes(void)
         if(result!=1 || memcmp(&expected,&actor,sizeof(actor)) || node.current.script!=program+4 ||
            !(node.flags&0x10) || g_ScriptNodePool)return 0;
     }
+    uint64_t flags_hash=UINT64_C(14695981039346656037);
+    for(unsigned op=120;op<=121;++op)for(unsigned bit=0;bit<32;++bit)for(unsigned inverse=0;inverse<2;++inverse){
+        FieldActor actor={.flags=(1u<<bit)^(inverse?UINT32_MAX:0)},before=actor,expected=actor;
+        if(op==120)expected.flags&=~0x20u;else expected.flags|=0x20;
+        g_CurrentEntity=&actor;
+        if(g_ScriptQueueOpcodeHandlers[op]!=(op==120?Entity_ClearCurrentFlag20:Entity_SetCurrentFlag20))return 0;
+        u32 result=g_ScriptQueueOpcodeHandlers[op](NULL);const u32 data[]={result,actor.flags};
+        for(unsigned i=0;i<2;++i)for(unsigned b=0;b<4;++b)
+            flags_hash=(flags_hash^((data[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        if(result!=1 || memcmp(&actor,&expected,sizeof(actor)))return 0;
+        actor=before;u32 program[]={op,0,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(memcmp(&actor,&expected,sizeof(actor)) || node.current.script!=program+4 ||
+           !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
     g_CurrentEntity=saved_actor;g_PlayerEntity=saved_player;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(flags_hash!=UINT64_C(0xf3302e2482610125))return 0;
     if(velocity!=UINT64_C(0xd151bdfd099e675a) || reset!=UINT64_C(0x137482f2419b4165)){
         fprintf(stderr,"Motion opcode hashes %016llx %016llx\n",(unsigned long long)velocity,(unsigned long long)reset);return 0;}
-    puts("Original motion opcodes: 432 velocity and 96 reset USA MIPS states, native player scaling, wrap and full dispatcher passed");
+    puts("Original motion opcodes: 432 velocity, 96 reset and 128 actor flag20 USA MIPS states, native player scaling, wrap and full dispatcher passed");
     return 1;
 }
 
@@ -2574,7 +2627,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
@@ -8019,8 +8072,8 @@ static int original_native_bootstrap(const char *executable,int field_control)
     if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     if(!SDL_Init(SDL_INIT_EVENTS))return 1;
     char capture[96];snprintf(capture,sizeof(capture),"pe-native-%llx.vram",(unsigned long long)SDL_GetPerformanceCounter());
-    for(unsigned input=field_control?6:0;input<(field_control?9u:6u);++input){
-        const char *limit=input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+    for(unsigned input=field_control?6:0;input<(field_control?10u:6u);++input){
+        const char *limit=input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
         const char *args[140]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
@@ -8042,9 +8095,17 @@ static int original_native_bootstrap(const char *executable,int field_control)
                 BOOTSTRAP_PRESS(23000,8);BOOTSTRAP_PRESS(23600,8);
                 for(unsigned tick=24200;tick<32200;tick+=600)BOOTSTRAP_PRESS(tick,0x4000);
                 if(input>=7){
-                    snprintf(scheduled[event],sizeof(scheduled[event]),"33000:%u",input==8?16u:32u);
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"33000:%u",input>=8?16u:32u);
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
-                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:0",input==8?34700u:33040u);
+                    if(input==9){
+                        for(unsigned tick=35000;tick<=36200;tick+=600){
+                            snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",tick,16u|0x4000u);
+                            args[at++]="--pad-at";args[at++]=scheduled[event++];
+                            snprintf(scheduled[event],sizeof(scheduled[event]),"%u:16",tick+10);
+                            args[at++]="--pad-at";args[at++]=scheduled[event++];
+                        }
+                    }
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:0",input==9?39000u:input==8?34700u:33040u);
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
@@ -8059,7 +8120,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -8084,7 +8145,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==5 && (!output || !strstr(output,"\"scene\":2818576456") ||
            !strstr(output,"\"video_state\":0") || !strstr(output,"\"flags\":4") ||
            !strstr(output,"\"menu\":{\"mode\":2,\"selection\":17")))valid=0;
-        if(input>=6){
+        if(input>=6 && input<9){
             int x=0,y=0,z=0,yaw=0;
             const char *player=output?strstr(output,"\"type\":0,\"sub\":0,\"player\":true"):NULL;
             const char *position=player?strstr(player,"\"position\":"):NULL;
@@ -8095,6 +8156,9 @@ static int original_native_bootstrap(const char *executable,int field_control)
                y!=(input==8?-262144:0) || z!=(input==8?178192384:-352387072) ||
                yaw!=(input==8?2048:input==7?3072:2144))valid=0;
         }
+        if(input==9 && (!output || !strstr(output,"\"scene\":2818994504") ||
+           !strstr(output,"\"movie\":3") || !strstr(output,"\"video_state\":2") ||
+           !strstr(output,"\"movie_frame\":257") || !strstr(output,"\"rgb24\":1")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -8109,6 +8173,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==6 && hash!=UINT64_C(0x71756cc6f486b60f))valid=0;
         if(input==7 && hash!=UINT64_C(0x0ba1b9388d40f17f))valid=0;
         if(input==8 && hash!=UINT64_C(0x71d4a7c739498ad8))valid=0;
+        if(input==9 && hash!=UINT64_C(0x4f2f3366d72018ad))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);

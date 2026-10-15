@@ -337,8 +337,9 @@ int Scene_FreeEntityTable(void *owner)
     int i;
     if (!owner)
         return -25;
+    /* Before the first effect, an absent native bank has no owned tasks. */
     result = 0;
-    for (i = 0; i < 11; ++i) {
+    for (i = 0; g_PmSlotTable && i < 11; ++i) {
         PmSlotHeader *entry = &g_PmSlotTable[i].header;
         if (entry->owner == owner) {
             result = Pm_Stop(i, owner, 1);
@@ -347,7 +348,7 @@ int Scene_FreeEntityTable(void *owner)
             ClearSlot(i);
         }
     }
-    for (i = 0; i < 11; ++i) {
+    for (i = 0; g_PmSlotTable2 && i < 11; ++i) {
         PmSlotHeader *entry = &g_PmSlotTable2[i].header;
         if (entry->owner == owner) {
             result = Pm_Stop(i + 11, owner, 1);

@@ -58,13 +58,13 @@ int Script_EncodeBarcode(int **arg0) {
 }
 
 
-int Script_SetFogParams(short **arg0) {
-    Render_SetScrollMode(*arg0[0], *arg0[1], *(unsigned short *)arg0[2], 0);
+int Script_SetFogParams(int **arg0) {
+    Render_SetScrollMode((s16)*arg0[0], (s16)*arg0[1], (u16)*arg0[2], 0);
     return 1;
 }
 
-int Script_SetFogParamsAlt(short **arg0) {
-    Render_SetScrollMode(*arg0[0], *arg0[1], *(unsigned short *)arg0[2], 8);
+int Script_SetFogParamsAlt(int **arg0) {
+    Render_SetScrollMode((s16)*arg0[0], (s16)*arg0[1], (u16)*arg0[2], 8);
     return 1;
 }
 
@@ -636,12 +636,14 @@ int Script_SetFlagSlot(int **arg0) {
     return 1;
 }
 
-int Entity_ClearCurrentFlag20(void) {
+int Entity_ClearCurrentFlag20(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags &= -0x21;
     return 1;
 }
 
-int Entity_SetCurrentFlag20(void) {
+int Entity_SetCurrentFlag20(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags |= 0x20;
     return 1;
 }

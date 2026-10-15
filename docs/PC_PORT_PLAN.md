@@ -1,5 +1,37 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
+## Bieżące naprawy: przejście z holu do M372
+
+Opkody 120/121 używają natywnego ABI dispatchera i oryginalnego kasowania /
+ustawiania bitu aktora 0x20; 128 stanów odpowiada CPU USA
+(`f3302e2482610125`). Opkody 3/70 zachowują podpisane współrzędne s16 i czas
+u16 oryginalnego scrolla; 720 stanów oraz wykonanie przez dispatcher odpowiada
+CPU USA (`93501ab9832625cd`). Podpięto istniejący 130 do oryginalnego loadera
+geometrii kamery. Oryginalny zapis inputu wychodzi z M003, uruchamia M372
+(`0xA8067148`) i film nr 3. Ograniczony przebieg 42 000 VBlank osiąga klatkę
+257 tego filmu; zrzut RGB24 został także obejrzany. Dłuższa próba kończy film
+i dochodzi do M004 (`0xA8000248`), gdzie pozostaje niepodpięty opkod 128,
+aktor 1:0, bajt skryptu 132. Nie zaliczamy tego jako ukończonej eksploracji.
+
+Debugger wskazał potem awarię w Scene_FreeEntityTable przy usuwaniu aktora
+przed pierwszą inicjalizacją banku procesów efektów. Oryginalny moduł pomija
+nieobecne natywne banki, zachowując zatrzymywanie zadań w obecnych bankach.
+Regresja obejmuje brak obu banków, każdą kombinację niezależnej obecności,
+zachowanie zadań innego właściciela i rzeczywiste usunięcie aktora/playera.
+Pięć testów jednostkowych modułów przeszło. Świeże ASan/UBSan/function
+(z instrumentowanym PsyZ/SDL) przechodzą --assets, --texture-pages, statystyki,
+regresję lifecycle i właściwy executable do 42 000 VBlank. Pełny stan JSON oraz
+1 MiB VRAM są identyczne ze zwykłym przebiegiem; SHA-256 VRAM:
+`210df09ec7c48ebfae3fa39a13785f7a58efcde356062765b8708525f633f03f`.
+Rozszerzony istniejący test sterowania obejmuje również wejście do M372 i
+257. klatkę filmu 3. Pełna ponowna weryfikacja tego kodu gry przeszła:
+39/39 CTest z wymaganym Disc 1, headless, bez skipów; test sterowania obejmuje
+cztery rzeczywiste uruchomienia od New Game (bezruch, ruch, M003, M372/film 3).
+Osobny build bez testów przechodzi. Bez nowych plików repozytorium,
+wydzielania funkcji ani równoległego silnika. `bu00/` pozostaje nietknięte.
+
+Poniżej zachowano wyniki poprzedniego kandydata i historię prac.
+
 ## Bieżący kandydat: oryginalne dialogi, imię, ruch i wejście do M003
 
 Oryginalny New Game przechodzi M431/film 2 → M010/dialog → ekran imienia →

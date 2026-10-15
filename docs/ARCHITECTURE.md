@@ -17,7 +17,9 @@ This bounded stop proves neither natural scene completion nor campaign play.
 The original New Game path reaches M431/movie 2, M010 dialogue and name entry,
 then M002 and M003 (the opera lobby). Headless replays check the original
 player position and facing before and after twenty simulation frames of right
-input, and the entrance transition into the next room. Frame-limit JSON
+input, the entrance transition into the next room, and M372/movie 3 after
+interaction at the opera doors. A longer probe reaches M004 and stops on
+unbound opcode 128; this is not complete exploration. Frame-limit JSON
 exposes original actor positions, dialogue pages, menu state and movement lock. Continue opens its card
 screen after fixing a NULL dereference; saved-game loading is unverified. Real
 Disc 2, full gameplay and the remaining acceptance gates are still pending.

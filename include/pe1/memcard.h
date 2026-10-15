@@ -188,7 +188,7 @@ extern int g_MemCardInfoPollCountdown;
 extern int g_MemCardConnectDebounce;
 /* Per port: a card was seen connecting and still has to be serviced. */
 extern int g_MemCardConnectPending[2];
-/* MemCard_InitManager has opened the card events and started LIBCARD. */
+/* MemCard_InitManager registered events and prepared the host card directories. */
 extern int g_MemCardManagerReady;
 extern int g_McOpPending;
 extern int g_MemCardSavePollTimeout;
@@ -211,7 +211,7 @@ enum MemCardEventIndex {
     MEMCARD_EVENT_SW_NEW_CARD,
     MEMCARD_EVENT_COUNT
 };
-extern int g_MemCardEventHandles[MEMCARD_EVENT_COUNT];
+extern long g_MemCardEventHandles[MEMCARD_EVENT_COUNT];
 /* Set by the event handlers, cleared after the manager services them. */
 extern int g_MemCardEventF400Spec0004Flag;
 extern int g_MemCardRemovedEventPending;

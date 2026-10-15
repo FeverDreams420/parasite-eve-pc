@@ -87,6 +87,6 @@ void Spu_StepReverbLoad(void);
 void Akao_SetVoicePitch(void);
 void Akao_CopyWords(unsigned int *src, unsigned int *dst, unsigned int size);
 void Akao_Tick(void);
-int Akao_TimerCallback(void);
+long Akao_TimerCallback(void);
 
 #endif

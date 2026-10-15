@@ -16,6 +16,12 @@
 void (*g_MemCardDelayedCallback)(void);
 int g_MemCardDelayedCallbackTimer;
 
+MemCardPortState g_MemCardPortStates[2];
+long g_MemCardEventHandles[MEMCARD_EVENT_COUNT];
+int g_MemCardManagerReady;
+int g_MemCardEventF400Spec0004Flag, g_MemCardRemovedEventPending, g_MemCardEventF400Spec2000Flag;
+int g_MemCardEventF000Spec0004Flag, g_MemCardEventF000Spec8000Flag, g_MemCardEventF000Spec2000Flag;
+
 /* The save tail is a packed byte stream: each record is copied as an
  * unaligned byte block at the IO cursor, which then advances past it. */
 #define SAVE_PUT(type, src)                                \
@@ -442,25 +448,22 @@ void MemCard_StepPortState(int port) {
     state->cardState = 1;
 }
 
-void InitCARD(int arg0);
-long StartCARD(void);
 void _bu_init(void);
-void _card_auto(int arg0);
 
-int MemCard_OnEventF400Spec0004(void);
-int MemCard_OnEventF400Spec8000(void);
-int MemCard_OnEventF400Spec0100(void);
-int MemCard_OnEventF400Spec2000(void);
-int MemCard_OnEventF000Spec0004(void);
-int MemCard_OnEventF000Spec8000(void);
-int MemCard_OnEventF000Spec0100(void);
-int MemCard_OnEventF000Spec2000(void);
+long MemCard_OnEventF400Spec0004(void);
+long MemCard_OnEventF400Spec8000(void);
+long MemCard_OnEventF400Spec0100(void);
+long MemCard_OnEventF400Spec2000(void);
+long MemCard_OnEventF000Spec0004(void);
+long MemCard_OnEventF000Spec8000(void);
+long MemCard_OnEventF000Spec0100(void);
+long MemCard_OnEventF000Spec2000(void);
 
 void MemCard_InitManager(void) {
     int i;
-    int *events;
+    long *events;
     int value;
-    int event;
+    long event;
     if (g_MemCardManagerReady == 0) {
         g_MemCardManagerReady = 1;
         i = 0;
@@ -477,10 +480,7 @@ void MemCard_InitManager(void) {
         g_MemCardEventHandles[MEMCARD_EVENT_SW_TIMEOUT] = OpenEvent(0xF0000011, 0x0100, 0x1000, MemCard_OnEventF000Spec0100);
         g_MemCardEventHandles[MEMCARD_EVENT_SW_NEW_CARD] = OpenEvent(0xF0000011, 0x2000, 0x1000, MemCard_OnEventF000Spec2000);
 
-        InitCARD(0);
-        StartCARD();
         _bu_init();
-        _card_auto(0);
 
         do {
             EnableEvent(events[i]);
@@ -1419,49 +1419,49 @@ int MemCard_HasDelayedCallback(void) {
     return g_MemCardDelayedCallback != 0;
 }
 
-int MemCard_OnEventF400Spec0004(void)
+long MemCard_OnEventF400Spec0004(void)
 {
     g_MemCardEventF400Spec0004Flag = 1;
     return 0;
 }
 
-int MemCard_OnEventF400Spec8000(void)
+long MemCard_OnEventF400Spec8000(void)
 {
     g_MemCardRemovedEventPending = 1;
     return 0;
 }
 
-int MemCard_OnEventF400Spec0100(void)
+long MemCard_OnEventF400Spec0100(void)
 {
     g_MemCardRemovedEventPending = 1;
     return 0;
 }
 
-int MemCard_OnEventF400Spec2000(void)
+long MemCard_OnEventF400Spec2000(void)
 {
     g_MemCardEventF400Spec2000Flag = 1;
     return 0;
 }
 
-int MemCard_OnEventF000Spec0004(void)
+long MemCard_OnEventF000Spec0004(void)
 {
     g_MemCardEventF000Spec0004Flag = 1;
     return 0;
 }
 
-int MemCard_OnEventF000Spec8000(void)
+long MemCard_OnEventF000Spec8000(void)
 {
     g_MemCardEventF000Spec8000Flag = 1;
     return 0;
 }
 
-int MemCard_OnEventF000Spec0100(void)
+long MemCard_OnEventF000Spec0100(void)
 {
     g_MemCardEventF000Spec8000Flag = 1;
     return 0;
 }
 
-int MemCard_OnEventF000Spec2000(void)
+long MemCard_OnEventF000Spec2000(void)
 {
     g_MemCardEventF000Spec2000Flag = 1;
     return 0;

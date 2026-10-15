@@ -18,8 +18,10 @@ void exit(int code);
 void FlushCache(void);
 
 /* Entry-hook and automatic IRQ acknowledgement services used by LIBETC. */
-int EnterCriticalSection(void);
-void ExitCriticalSection(void);
+void PS1_EnterCriticalSection(void);
+void PS1_ExitCriticalSection(void);
+#define EnterCriticalSection PS1_EnterCriticalSection
+#define ExitCriticalSection PS1_ExitCriticalSection
 int ResetEntryInt(void);
 void ReturnFromException(void);
 void HookEntryInt(void *entry);
@@ -57,14 +59,14 @@ void bzero(void *destination, size_t length);
 void *memcpy(void *destination, const void *source, size_t length);
 char *strcpy(char *destination, const char *source);
 
-int DeliverEvent(unsigned int event, int spec);
+void DeliverEvent(unsigned int event, unsigned int spec);
 
-int OpenEvent(unsigned int desc, int spec, int mode, int (*func)(void));
-int CloseEvent(int event);
-int EnableEvent(int event);
-int TestEvent(int event);
-int DisableEvent(int event);
-int UnDeliverEvent(unsigned int event, int spec);
+long OpenEvent(unsigned long desc, long spec, long mode, long (*func)(void));
+long CloseEvent(long event);
+long EnableEvent(long event);
+long TestEvent(long event);
+long DisableEvent(long event);
+void UnDeliverEvent(unsigned int event, unsigned int spec);
 
 /* LIBAPI root counters (counter.c). */
 int SetRCnt(unsigned int counter, int target, int mode);

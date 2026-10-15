@@ -33,7 +33,6 @@ void SetGeomOffset(int x, int y);
 void SetGeomScreen(int h);
 void MemCard_InitManager(void);
 void Boot_InitMemCard(void);
-void DsInit(void);
 
 void Boot_InitSystem(void) {
     ResetCallback();
@@ -44,8 +43,6 @@ void Boot_InitSystem(void) {
     SetGeomScreen(0xF0);
     MemCard_InitManager();
     Boot_InitMemCard();
-    DsInit();
-    DsSetDebug(0);
 }
 
 u32 Draw_FlushPrimQueue(void);
@@ -138,8 +135,6 @@ void Render_ResetScene(int width, int height)
 
 void Scene_TickTimers(void);
 
-void PadInitDirect(char *arg0, char *arg1);
-void PadStartCom(void);
 
 void Boot_VsyncCallback(void) {
     Draw_FlushPrimQueue();
@@ -147,8 +142,7 @@ void Boot_VsyncCallback(void) {
 }
 
 void Boot_InitMemCard(void) {
-    PadInitDirect((char *)&g_PadPackets[0], (char *)&g_PadPackets[1]);
-    PadStartCom();
+    Boot_ResetPadInput();
 }
 
 

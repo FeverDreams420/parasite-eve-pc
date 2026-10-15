@@ -314,9 +314,9 @@ void Akao_Tick(void)
 /* Timer callback immediately follows the sequencer tick and measures its
  * duration to maintain the rolling AKAO timer history. */
 
-/* Timer event handler (OpenEvent takes an int-returning handler): runs one
+/* Timer event handler (native OpenEvent takes a long-returning handler): runs one
  * sequencer tick, records how long it took and returns that duration. */
-int Akao_TimerCallback(void) {
+long Akao_TimerCallback(void) {
     s32 delta;
     s32 old_f0;
     s32 old_f4;

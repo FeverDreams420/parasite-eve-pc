@@ -1,3 +1,5 @@
+#include "pe1/memcard.h"
+void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/battle_runtime.h"
 #include "pe1/field_sfx.h"
 #include "pe1/psyq_callbacks.h"
@@ -2204,6 +2206,36 @@ static int original_save_metadata_storage(void)
     return valid;
 }
 
+void MemCard_InitManager(void);
+static int original_system_start(void)
+{
+    g_MemCardPortStates[0].present=0xA5; g_MemCardPortStates[1].present=0xA5;
+    Boot_InitSystem();
+    if(!g_MemCardManagerReady || g_MemCardPortStates[0].present || g_MemCardPortStates[1].present ||
+       g_PadPackets[0].header!=0x4100 || g_PadPackets[0].buttons!=0xFFFF ||
+       g_PadPackets[0].leftX!=128 || g_PadPackets[0].rightY!=128 ||
+       g_PadPackets[1].header!=0x00FF) return 0;
+    long handles[MEMCARD_EVENT_COUNT]; memcpy(handles,g_MemCardEventHandles,sizeof(handles));
+    int *flags[]={&g_MemCardEventF400Spec0004Flag,&g_MemCardRemovedEventPending,
+        &g_MemCardRemovedEventPending,&g_MemCardEventF400Spec2000Flag,
+        &g_MemCardEventF000Spec0004Flag,&g_MemCardEventF000Spec8000Flag,
+        &g_MemCardEventF000Spec8000Flag,&g_MemCardEventF000Spec2000Flag};
+    const unsigned specs[]={4,0x8000,0x100,0x2000};
+    for(unsigned i=0;i<MEMCARD_EVENT_COUNT;++i) {
+        if(handles[i]==-1) return 0;
+        for(unsigned j=0;j<i;++j) if(handles[i]==handles[j]) return 0;
+        for(unsigned j=0;j<MEMCARD_EVENT_COUNT;++j) *flags[j]=0;
+        DeliverEvent(i<4?0xF4000001u:0xF0000011u,specs[i%4]);
+        if(*flags[i]!=1) return 0;
+    }
+    g_MemCardPortStates[0].present=g_MemCardPortStates[1].present=1;
+    MemCard_InitManager();
+    if(memcmp(handles,g_MemCardEventHandles,sizeof(handles)) ||
+       g_MemCardPortStates[0].present || g_MemCardPortStates[1].present) return 0;
+    puts("Original system start: GPU/GTE/SPU, native pad reset and eight real card-event callbacks passed");
+    return 1;
+}
+
 static int original_subsystem_start(void)
 {
     g_GameStateFlags=0xA5A5A5A5; g_FrameRngCounter=123;
@@ -2330,6 +2362,7 @@ int main(int argc, char **argv)
     if (!boot_buffer_layout()) return 54;
     if (!game_state_reset()) return 53;
     if(!SDL_Init(SDL_INIT_EVENTS))return 43;
+    if(!original_system_start())return 130;
     if(!original_display_start())return 127;
     if(!original_subsystem_start())return 129;
     const u32 lzcs[]={0,1,0x7fffffff,0x80000000,0xffffffff};

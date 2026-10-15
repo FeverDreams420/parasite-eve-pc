@@ -8166,8 +8166,8 @@ static int original_native_bootstrap(const char *executable,int field_control)
     if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     if(!SDL_Init(SDL_INIT_EVENTS))return 1;
     char capture[96];snprintf(capture,sizeof(capture),"pe-native-%llx.vram",(unsigned long long)SDL_GetPerformanceCounter());
-    for(unsigned input=field_control?6:0;input<(field_control?12u:6u);++input){
-        const char *limit=input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+    for(unsigned input=field_control==2?12:field_control?6:0;input<(field_control==2?13u:field_control?12u:6u);++input){
+        const char *limit=input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
         const char *args[320]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
@@ -8209,7 +8209,14 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
-            if(input==11)for(unsigned tick=52000;tick<57000;tick+=600)BOOTSTRAP_PRESS(tick,0x4000);
+            if(input>=11)for(unsigned tick=52000;tick<57000;tick+=600)BOOTSTRAP_PRESS(tick,0x4000);
+            if(input==12){
+                static const unsigned route[][2]={{58000,16},{58200,16},{59769,32},{59869,32},{59994,16}};
+                for(unsigned i=0;i<5;++i){
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",route[i][0],route[i][1]);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                }
+            }
 #undef BOOTSTRAP_PRESS
         }
         SDL_PropertiesID props=SDL_CreateProperties();
@@ -8221,7 +8228,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -8267,6 +8274,9 @@ static int original_native_bootstrap(const char *executable,int field_control)
            !strstr(output,"\"video_state\":0") || !strstr(output,"\"game_frame\":6211") ||
            !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":35}") ||
            !strstr(output,"\"position\":[-134283264,-21360136,489422848],\"yaw\":0")))valid=0;
+        if(input==12 && (!output || !strstr(output,"\"scene\":2818573000") ||
+           !strstr(output,"\"video_state\":0") ||
+           !strstr(output,"\"position\":[-107559689,-72810496,35984650]")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -8303,6 +8313,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==9 && hash!=UINT64_C(0x4f2f3366d72018ad))valid=0;
         if(input==10 && hash!=UINT64_C(0x010725a10ea1b845))valid=0;
         if(input==11 && hash!=UINT64_C(0xd355ef4c28cf53bb))valid=0;
+        if(input==12 && hash!=UINT64_C(0x4b5ea0ce332f7bf5))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
@@ -8319,6 +8330,7 @@ int main(int argc, char **argv)
         int result=original_scene_texture_pages(&disc);pe_disc_close(&disc);return result?0:156;
     }
 
+    if(argc==3 && !strcmp(argv[1],"--native-stage"))return original_native_bootstrap(argv[2],2);
     if(argc==3 && !strcmp(argv[1],"--native-field-control"))return original_native_bootstrap(argv[2],1);
     if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2],0);
     if(argc==2 && !strcmp(argv[1],"--credits-playback")){

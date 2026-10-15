@@ -56,6 +56,16 @@ Kontrolowane wejście oryginalnym loaderem do M005 po M010 dochodzi do 30000
 VBlank i 2999 klatek sceny, z Ayą, Melissą i pozostałymi aktorami, bez abortu.
 To test inicjalizacji z wymuszonym tokenem w debuggerze, nie naturalne przejście
 M004 ani dowód ukończenia spotkania/walki. Świeże --assets przechodzi sanitizery.
+Następnie potwierdzono także naturalne wejście od New Game: po dialogu M004
+sam input prowadzi Ayę na pozycję przed schodami, skręca na rampę i dochodzi do
+M005. Nowy `original-game-stage-transition` w istniejącym fixture wykonuje
+właściwy executable z CUE i --pad-at do 60634 VBlank. Sprawdza M005,
+video_state 0, pozycję [-107559689,-72810496,35984650] i pełną VRAM:
+FNV `4b5ea0ce332f7bf5`, SHA-256
+`fb248ac6b643f620032ee08c3dcd64015ce56c40ac55f0fda2ac625c4e650a6e`.
+Odtworzenie z CLI odpowiada kontrolowanemu przejściu z samym inputem w debuggerze;
+test przeszedł w 92,46 s. To dodatkowy 40. test po pełnym zestawie 39/39,
+bez dalszych zmian kodu gry. Osobny aktualny build BUILD_TESTING=OFF przechodzi.
 
 Porównano pierwszą scenę M010 z rzeczywistym obrazem oryginalnego Disc 1
 w headless DuckStation (software, SLUS-00662, klatka 16604, dialog 9).
@@ -76,8 +86,9 @@ Pełny zestaw GPU: 41/42; istniejąca różnica obrazu abr_untextured (97,78%,
 pierwszy piksel RGB 0/3/0 wobec 0/4/0) jest identyczna na rendererze z e910fd1
 sprzed zmiany UV. Nie jest nową regresją i pozostaje otwartym defektem.
 MSL wykonano na Metal; DXIL/SPIR-V przebudowano, ale nie wykonano ich tu na
-Windows/Vulkan. Fork zawiera e910fd1 i 9fd00d8. Naturalne przejście schodów
-M004 do M005 pozostaje do potwierdzenia; test inicjalizacji M005 używa debuggera.
+Windows/Vulkan. Fork zawiera e910fd1 i 9fd00d8. Inicjalizacja M005 i naturalne
+wejście po schodach są potwierdzone; dalszy dialog, spotkanie i walka pozostają
+do przejścia oraz weryfikacji.
 
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,

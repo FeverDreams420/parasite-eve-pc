@@ -2707,6 +2707,110 @@ static unsigned fx_node_id(FxCommonNode *node)
     return 0xffff;
 }
 
+static int original_gte_register_transfers(void)
+{
+    const u32 values[]={0,1,0x7fff,0x8000,0xffff,0x10000,0x7fffffff,0x80000000,0xffffffff,0x12345678};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned f=0;f<15;++f)for(unsigned v=0;v<10;++v)for(unsigned seed=0;seed<3;++seed){
+        u32 value=values[v],buffer[12];
+        for(unsigned j=0;j<32;++j){Psyz_GteDataWrite(j,value^(j*0x01010101u)^(seed*0x03456789u));
+            Psyz_GteCtrlWrite(j,value+j*0x10203u+seed*0x07654321u);}
+        for(unsigned j=0;j<12;++j)buffer[j]=value^(j*0x01020304u)^(seed*0x00112233u);
+        s32 a=(s32)value,b=(s32)(value^0x80000000u),c=(s32)~value,d=(s32)(seed*0xfedcba98u);
+        switch(f){
+        case 0:SetVertex0(buffer);break;case 1:SetVertex1(buffer);break;case 2:SetVertex2(buffer);break;
+        case 3:SetVertexTri(buffer,buffer+4,buffer+8);break;case 4:SetRGBfifo(buffer,buffer+4,buffer+8);break;
+        case 5:SetIR123(a,b,c);break;case 6:SetIR0(a);break;case 7:SetSZfifo3(a,b,c);break;
+        case 8:SetSZfifo4(a,b,c,d);break;case 9:SetSXSYfifo(a,b,c);break;case 10:SetRii(a,b,c);break;
+        case 11:SetMAC123(a,b,c);break;case 12:SetData32(a);break;case 13:SetDQA(a);break;case 14:SetDQB(a);break;
+        }
+        for(unsigned bank=0;bank<2;++bank)for(unsigned j=0;j<32;++j){
+            u32 word=bank?Psyz_GteCtrlRead(j):Psyz_GteDataRead(j);
+            for(unsigned byte=0;byte<4;++byte)hash=(hash^(u8)(word>>(byte*8)))*UINT64_C(1099511628211);
+        }
+        ++cases;
+    }
+    /* Leave the GTE in a clean state before checking display initialization. */
+    for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+    if(cases!=450 || hash!=UINT64_C(0x3bcbb387746aa626)){
+        fprintf(stderr,"Original GTE REG03: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original GTE REG03: all 15 original entry points match USA CPU/COP2 transfers across 450 scenarios and all 64 readable data/control registers");return 1;
+}
+
+static int original_fx_fog(void)
+{
+    const s32 near_values[]={-32768,-1000,-1,0,1,100,1000,6500,32767,65535};
+    const s32 far_values[]={-1000,-1,0,100,199,200,1000,6500,11500,32767,65535};
+    const s32 distances[]={-32768,-1,1,160,320,768,32767};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned a=0;a<10;++a)for(unsigned b=0;b<11;++b)for(unsigned c=0;c<7;++c){
+        SetDQA(0x1234);SetDQB(0x12345678);
+        SetFogNearFar(near_values[a],far_values[b],distances[c]);
+        const u32 values[]={Psyz_GteCtrlRead(27),Psyz_GteCtrlRead(28)};
+        for(unsigned i=0;i<2;++i)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^(u8)(values[i]>>(byte*8)))*UINT64_C(1099511628211);
+        ++cases;
+    }
+    SetDQA(0x1234);SetDQB(0x12345678);SetFogNearFar(6500,11500,0);
+    if(cases!=770 || hash!=UINT64_C(0x2b60b43c2716c8c8) ||
+       Psyz_GteCtrlRead(27)!=0x1234 || Psyz_GteCtrlRead(28)!=0x12345678){
+        fprintf(stderr,"Original FX fog: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original FX fog: 770 USA CPU/GTE cases match DQA/DQB, range rejection, signed scales and clamps; zero projection guard preserves registers");return 1;
+}
+
+DISPENV *GetDispEnv(DISPENV *env);
+static int original_fx_display(void)
+{
+    Pe1GameState saved=g_GameState;FxCommonFrame frames[2];
+    FxCommonBuffer *active=g_FxCommonActiveBuffer;
+    memcpy(frames,g_FxCommonFrames,sizeof(frames));
+    static struct {u64 before;RenderNativeTag entries[4096];u64 after;} ordering[2];
+    static struct {u64 before;FxCommonBufferRegion regions[2];u64 after;} packets;
+    static u16 old_pixels[1024*512],pixels[1024*512];
+    DRAWENV old_draw;DISPENV old_display;RECT area={0,0,1024,512};
+    GetDrawEnv(&old_draw);GetDispEnv(&old_display);StoreImage(&area,old_pixels);DrawSync(0);
+    for(unsigned i=0;i<1024*512;++i)pixels[i]=0x1357;
+    LoadImage(&area,pixels);DrawSync(0);
+    memset(ordering,0xa5,sizeof(ordering));memset(&packets,0xa5,sizeof(packets));
+    memset(g_FxCommonFrames,0xa5,sizeof(g_FxCommonFrames));
+    g_OtBufferTable[0]=(u8 *)ordering[0].entries;g_RenderOtBufferBaseAlt[0]=(u8 *)ordering[1].entries;
+    g_RenderScratchBufferBase[0]=(u8 *)packets.regions;
+    RenderNativeTag terminal;ClearOTagR((u_int *)&terminal,1);
+    FxCommon_InitDisplay();int valid=g_FxCommonActiveBuffer==&g_FxCommonFrames[0].buffer;
+    for(unsigned i=0;i<2;++i){
+        FxCommonFrame *frame=&g_FxCommonFrames[i];
+        if(frame->buffer.data!=(u8 *)&packets.regions[i] ||
+           frame->buffer.allocation!=(void *)ordering[i].entries ||
+           frame->drawEnv.clip.x || frame->drawEnv.clip.y!=i*240 ||
+           frame->drawEnv.clip.w!=320 || frame->drawEnv.clip.h!=240 ||
+           frame->drawEnv.ofs[0] || frame->drawEnv.ofs[1]!=i*240 ||
+           frame->drawEnv.isbg || frame->drawEnv.r0 || frame->drawEnv.g0 || frame->drawEnv.b0 ||
+           frame->dispEnv.disp.x || frame->dispEnv.disp.y!=(1-i)*240 ||
+           frame->dispEnv.disp.w!=320 || frame->dispEnv.disp.h!=240 || frame->dispEnv.isrgb24)valid=0;
+        for(unsigned j=0;j<4096;++j)if(ordering[i].entries[j].length ||
+            ordering[i].entries[j].address!=(j?(uintptr_t)&ordering[i].entries[j-1]:terminal.address))valid=0;
+        if(ordering[i].before!=UINT64_C(0xa5a5a5a5a5a5a5a5) || ordering[i].after!=UINT64_C(0xa5a5a5a5a5a5a5a5))valid=0;
+    }
+    if(Psyz_GteCtrlRead(24)!=(160u<<16) || Psyz_GteCtrlRead(25)!=(120u<<16) || Psyz_GteCtrlRead(26)!=768)valid=0;
+    StoreImage(&area,pixels);DrawSync(0);
+    for(unsigned y=0;y<512;++y)for(unsigned x=0;x<1024;++x)
+        if(pixels[y*1024+x]!=(x<320 && y<480?0:0x1357))valid=0;
+    for(unsigned i=0;i<2;++i){
+        memset(ordering[i].entries,0xa5,sizeof(ordering[i].entries));
+        g_FxCommonActiveBuffer=&g_FxCommonFrames[i].buffer;
+        g_FxCommonActiveBuffer->data+=sizeof(FxCommonBufferRegion)-16;
+        FxCommon_ClearActiveOrdering();
+        if(g_FxCommonActiveBuffer->data!=(u8 *)&packets.regions[i])valid=0;
+        for(unsigned j=0;j<4096;++j)if(ordering[i].entries[j].length ||
+            ordering[i].entries[j].address!=(j?(uintptr_t)&ordering[i].entries[j-1]:terminal.address))valid=0;
+    }
+    for(unsigned i=0;i<sizeof(packets);++i)if(((u8 *)&packets)[i]!=0xa5)valid=0;
+    LoadImage(&area,old_pixels);PutDrawEnv(&old_draw);PutDispEnv(&old_display);DrawSync(0);
+    g_GameState=saved;memcpy(g_FxCommonFrames,frames,sizeof(frames));g_FxCommonActiveBuffer=active;
+    if(!valid){fprintf(stderr,"Original FX display: frame/env/OT/VRAM regression\n");return 0;}
+    puts("Original FX display: typed double buffers, native 4096-entry OTs, complete VRAM clear footprint, GTE setup, both arena resets and guards pass headlessly");return 1;
+}
+
 static int original_fx_node_pool(void)
 {
     const unsigned counts[]={0,1,2,7,63,199,200};
@@ -5928,6 +6032,7 @@ static int script_movie_error_exit(const char *executable)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--fx-display")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_gte_register_transfers() && original_fx_fog() && original_fx_display()?0:145;}
     if(argc==2 && !strcmp(argv[1],"--fx-camera"))return original_fx_node_pool() && original_fx_culling() && original_fx_camera_matrices()?0:143;
     if(argc==2 && !strcmp(argv[1],"--script-movie-error")){
         u32 script[]={53|(1u<<13),0,47,32,0};FieldActor actor={0};

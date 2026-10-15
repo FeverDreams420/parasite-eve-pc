@@ -59,8 +59,8 @@ extern s32 g_FxCommonExitVariant;
  * DRAWENV and DISPENV handed to PutDrawEnv / PutDispEnv. */
 typedef struct FxCommonFrame {
     FxCommonBuffer buffer;
-    u8 drawEnv[0x5C];   /* 0x08 */
-    u8 dispEnv[0x14];   /* 0x64 */
+    DRAWENV drawEnv;
+    DISPENV dispEnv;
 } FxCommonFrame;
 typedef PsxSignedRect FxCommonRect;
 extern FxCommonFrame g_FxCommonFrames[2];
@@ -130,7 +130,7 @@ s16 FxCommon_SwitchResource(s16 resourceId, u8 action);
 void FxCommon_SetMotionEndpoints(FxCommonShortVec3 *a, FxCommonShortVec3 *b, int bi, int ai);
 void FxCommon_StepCameraPath(void);
 
-PE1_STATIC_ASSERT(sizeof(FxCommonFrame) == sizeof(FxCommonBuffer) + 0x70, fx_common_frame_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(FxCommonFrame, drawEnv) == sizeof(FxCommonBuffer), fx_common_frame_draw_offset);
 PE1_STATIC_ASSERT(sizeof(FxCommonVec3) == 12, fx_motion_position_size);
 PE1_STATIC_ASSERT(sizeof(FxCommonShortVec3) == 6, fx_motion_endpoint_size);
 

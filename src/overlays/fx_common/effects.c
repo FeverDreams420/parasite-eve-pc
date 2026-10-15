@@ -213,8 +213,8 @@ int FxCommon_RunFrameLoop(void)
         VSync(2);
         FxCommon_StepMotionBlend();
         ResetGraph(1);
-        PutDrawEnv(((FxCommonFrame *)g_FxCommonActiveBuffer)->drawEnv);
-        PutDispEnv(((FxCommonFrame *)g_FxCommonActiveBuffer)->dispEnv);
+        PutDrawEnv(&((FxCommonFrame *)g_FxCommonActiveBuffer)->drawEnv);
+        PutDispEnv(&((FxCommonFrame *)g_FxCommonActiveBuffer)->dispEnv);
         DrawOTag(&g_FxCommonActiveBuffer->allocation[0xFFF]);
         next = &g_FxCommonFrames[0].buffer;
         if (g_FxCommonActiveBuffer == next)
@@ -222,7 +222,7 @@ int FxCommon_RunFrameLoop(void)
         g_FxCommonActiveBuffer = next;
         g_ActiveDrawSlot ^= 1;
         ClearOTagR(next->allocation, 0x1000);
-        FxCommon_SelectBufferAllocation((void **)g_FxCommonActiveBuffer);
+        FxCommon_SelectBufferAllocation(g_FxCommonActiveBuffer);
     }
     if (g_FxCommonResetRequested == 0)
         FxCommon_EndSequence();

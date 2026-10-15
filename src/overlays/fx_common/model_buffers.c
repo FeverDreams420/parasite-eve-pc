@@ -2011,17 +2011,17 @@ void FxCommon_DrawModelFlat(void *context, FxCommonPolyModel *model, int index)
 
 #undef FX_COMMON_LINK_PACKET
 
-void SetDispMask(int);
-void SetBackColor(int, int, int);
-void SetFarColor(int, int, int);
-void SetFogNearFar(int, int, int);
-void SetGeomOffset(int, int);
+void SetGeomOffset(int,int);
 void SetGeomScreen(int);
-void FxCommon_SelectBufferAllocation(void **);
 
-void FxCommon_InitDisplay(void) {
-    char *base = (char *)g_FxCommonFrames;
-    s16 rect[4];
+/* Native storage replaces the executable overlay's address-owned frame records.
+ * Packet arenas remain in the original shared scene work area. */
+FxCommonFrame g_FxCommonFrames[2];
+FxCommonBuffer *g_FxCommonActiveBuffer;
+
+void FxCommon_InitDisplay(void)
+{
+    RECT rect;
 
     SetDispMask(0);
     SetBackColor(0x80, 0x80, 0x80);
@@ -2030,57 +2030,43 @@ void FxCommon_InitDisplay(void) {
     SetGeomOffset(0xA0, 0x78);
     SetGeomScreen(0x300);
 
-    FxCommon_SelectBufferAllocation((void **)base);
-    FxCommon_SelectBufferAllocation((void **)(base + 0x78));
+    FxCommon_SelectBufferAllocation(&g_FxCommonFrames[0].buffer);
+    FxCommon_SelectBufferAllocation(&g_FxCommonFrames[1].buffer);
     g_FxCommonFrames[0].buffer.allocation = (FxCommonPacketTag *)g_OtBufferTable[0];
     g_FxCommonFrames[1].buffer.allocation = (FxCommonPacketTag *)g_RenderOtBufferBaseAlt[0];
-    ClearOTagR(g_FxCommonFrames[0].buffer.allocation, 0x1000);
-    ClearOTagR(g_FxCommonFrames[1].buffer.allocation, 0x1000);
+    ClearOTagR((u_int *)g_FxCommonFrames[0].buffer.allocation, 0x1000);
+    ClearOTagR((u_int *)g_FxCommonFrames[1].buffer.allocation, 0x1000);
 
-    SetDefDrawEnv(base + 8, 0, 0, 0x140, 0xF0);
-    SetDefDispEnv(base + 0x64, 0, 0xF0, 0x140, 0xF0);
-    SetDefDrawEnv(base + 0x80, 0, 0xF0, 0x140, 0xF0);
-    SetDefDispEnv(base + 0xDC, 0, 0, 0x140, 0xF0);
+    SetDefDrawEnv(&g_FxCommonFrames[0].drawEnv, 0, 0, 0x140, 0xF0);
+    SetDefDispEnv(&g_FxCommonFrames[0].dispEnv, 0, 0xF0, 0x140, 0xF0);
+    SetDefDrawEnv(&g_FxCommonFrames[1].drawEnv, 0, 0xF0, 0x140, 0xF0);
+    SetDefDispEnv(&g_FxCommonFrames[1].dispEnv, 0, 0, 0x140, 0xF0);
+    for(unsigned i=0;i<2;++i){
+        g_FxCommonFrames[i].drawEnv.isbg=0;
+        g_FxCommonFrames[i].drawEnv.r0=0;
+        g_FxCommonFrames[i].drawEnv.g0=0;
+        g_FxCommonFrames[i].drawEnv.b0=0;
+    }
 
-    g_FxCommonFrames[0].drawEnv[0x18] = 0;
-    g_FxCommonFrames[1].drawEnv[0x18] = 0;
-    g_FxCommonFrames[0].drawEnv[0x19] = 0;
-    g_FxCommonFrames[0].drawEnv[0x1A] = 0;
-    g_FxCommonFrames[0].drawEnv[0x1B] = 0;
-    g_FxCommonFrames[1].drawEnv[0x19] = 0;
-    g_FxCommonFrames[1].drawEnv[0x1A] = 0;
-    g_FxCommonFrames[1].drawEnv[0x1B] = 0;
-
-    rect[0] = 0;
-    rect[1] = 0;
-    rect[2] = 0x140;
-    rect[3] = 0xF0;
-    ClearImage(rect, 0, 0, 0);
-
-    rect[0] = 0;
-    rect[1] = 0xF0;
-    rect[2] = 0x140;
-    rect[3] = 0xF0;
-    ClearImage(rect, 0, 0, 0);
-
+    rect=(RECT){0,0,0x140,0xF0};
+    ClearImage(&rect, 0, 0, 0);
+    rect.y=0xF0;
+    ClearImage(&rect, 0, 0, 0);
     DrawSync(0);
     SetDispMask(1);
-    g_FxCommonActiveBuffer = (FxCommonBuffer *)base;
+    g_FxCommonActiveBuffer = &g_FxCommonFrames[0].buffer;
 }
 
 void FxCommon_ClearActiveOrdering(void)
 {
-    ClearOTagR(g_FxCommonActiveBuffer->allocation, 0x1000);
-    FxCommon_SelectBufferAllocation((void **)g_FxCommonActiveBuffer);
+    ClearOTagR((u_int *)g_FxCommonActiveBuffer->allocation, 0x1000);
+    FxCommon_SelectBufferAllocation(g_FxCommonActiveBuffer);
 }
 
-void FxCommon_SelectBufferAllocation(void **buffer)
+void FxCommon_SelectBufferAllocation(FxCommonBuffer *buffer)
 {
-    if (buffer == (void **)g_FxCommonFrames) {
-        *buffer = (FxCommonBufferRegion *)g_RenderScratchBufferBase[0];
-    } else {
-        *buffer = (FxCommonBufferRegion *)g_RenderScratchBufferBase[0] + 1;
-    }
+    if (buffer == &g_FxCommonFrames[0].buffer)
+        buffer->data = g_RenderScratchBufferBase[0];
+    else
+        buffer->data = g_RenderScratchBufferBase[0] + sizeof(FxCommonBufferRegion);
 }
-
-#undef FX_COMMON_LINK_PACKET

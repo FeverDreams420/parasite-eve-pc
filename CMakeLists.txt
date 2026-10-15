@@ -78,6 +78,8 @@ add_library(parasite-eve-original OBJECT
     src/main/math/fixed_round.c
     src/main/math/sqrt_approx.c
     src/main/fieldfx/angle.c
+    src/main/psyq/libgte/reg03.c
+    src/main/psyq/libgte/fog_02.c
     src/main/psyq/libgte/mtx_000.c
     src/main/psyq/libgte/mtx_001.c
     src/main/psyq/libgte/msc06.c
@@ -381,6 +383,7 @@ if(BUILD_TESTING)
     add_test(NAME original-game-actor-animation COMMAND test-original-actor-animation)
     add_test(NAME original-game-glint COMMAND test-original-actor-animation --glint)
     add_test(NAME original-game-fx-camera COMMAND test-original-actor-animation --fx-camera)
+    add_test(NAME original-game-fx-display COMMAND test-original-actor-animation --fx-display)
     add_test(NAME original-game-player-input-assets COMMAND test-original-actor-animation --assets)
     set_tests_properties(original-game-player-input-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()

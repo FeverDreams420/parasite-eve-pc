@@ -77,6 +77,20 @@ void VectorNormal(GteVector *vector, GteVector *unit);
 void VectorNormalS(GteVector *vector, GteShortVector *unit);
 void OuterProduct12(void *matrix_column, void *vector, void *output);
 void SetFogNearFar(int near, int far, int h);
+/* Original REG03 register-transfer entry points. */
+void SetVertex0(void *vertex);
+void SetVertex1(void *vertex);
+void SetVertex2(void *vertex);
+void SetVertexTri(void *v0, void *v1, void *v2);
+void SetRGBfifo(void *c0, void *c1, void *c2);
+void SetIR123(int ir1, int ir2, int ir3);
+void SetIR0(int ir0);
+void SetSZfifo3(int sz1, int sz2, int sz3);
+void SetSZfifo4(int sz0, int sz1, int sz2, int sz3);
+void SetSXSYfifo(int sxy0, int sxy1, int sxy2);
+void SetRii(int r11r12, int r22r23, int r33);
+void SetMAC123(int mac1, int mac2, int mac3);
+void SetData32(int data);
 void SetDQA(int dqa);
 void SetDQB(int dqb);
 

@@ -9,16 +9,16 @@ void SetFogNearFar(int near, int far, int h) {
     int dqb_base;
     int dqb;
     int h_reg;
-    range = far - near;
+    range = (s32)((u32)far - (u32)near);
     h_reg = h;
-    if (range < 100) {
+    if (range < 100 || h_reg == 0) {
         return;
     }
 
-    depth_scale = (-near * far) / range;
-    dqb_base = (far << 12) / range;
-    dqa = (depth_scale << 8) / h_reg;
-    dqb = dqb_base << 12;
+    depth_scale = (s32)(0u - (u32)near * (u32)far) / range;
+    dqb_base = (s32)((u32)far << 12) / range;
+    dqa = (s32)((s64)(s32)((u32)depth_scale << 8) / h_reg);
+    dqb = (s32)((u32)dqb_base << 12);
 
     if (dqa < -0x8000) {
         dqa = -0x8000;

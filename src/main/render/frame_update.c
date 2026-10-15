@@ -1,5 +1,6 @@
 #include "common.h"
 #include "pe1/battle_runtime.h"
+#include "pe1/boot_services.h"
 #include "pe1/field_movement.h"
 #include "pe1/game_state.h"
 #include "pe1/geom_state.h"
@@ -165,6 +166,17 @@ int Render_MoveGridCursor(PrimObj *obj, u32 *entries, u8 ascending, u8 restart) 
 
 /* Initialize camera projection and save the active actor screen position. */
 int Render_PrepareFrame(void) {
+    /* LP64 expands the original room sprites and draw-mode tags. Check the
+     * complete two-buffer packet set before touching the shared TIM workspace. */
+    if (!g_GeomState || !g_GameState.texture_load_scratch) return -2;
+    const GeomEntry *entries = (const GeomEntry *)((const u8 *)g_GeomState + g_GeomState->entry_offset);
+    size_t remaining = BOOT_TEXTURE_WORKSPACE_BYTES;
+    for (unsigned i = 0; i < g_GeomState->entry_count06; ++i) {
+        size_t bytes = (size_t)entries[i].prim_count * 2 *
+            (sizeof(RenderTilePacket) + sizeof(RenderTexturePagePacket));
+        if (bytes > remaining) return -2;
+        remaining -= bytes;
+    }
     struct {
         short vector[4];
         void *result;
@@ -184,14 +196,7 @@ int Render_PrepareFrame(void) {
         z = D_8009D254->posZ.parts.integer;
         local.vector[2] = z;
     } else local.vector[0] = local.vector[1] = local.vector[2] = 0;
-    {
-        /* Matching debt: a volatile input is the only form found
-         * that keeps the retail 48-byte frame (the 8 bytes above the
-         * projected point are never accessed). */
-        volatile unsigned short cx = 160;
-
-        gte_SetGeomOffset(cx, 112);
-    }
+    gte_SetGeomOffset(160, 112);
     {
         GteMatrix **slot = &g_GeomScroll.words.viewMatrix;
         GteMatrix *view;

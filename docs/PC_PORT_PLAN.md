@@ -1,5 +1,88 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
+## Bieżące naprawy: pamięć M004, skrypty M005 i prezentacja SDL
+
+Watchpoint wskazał zapis z Render_DrawSpriteEntry poza 128 KiB buforem
+D_8010BD00, do sąsiedniej natywnej listy OT. Dwa zestawy pakietów M004
+zajmują na ARM64 149856 bajtów. Istniejący wspólny bufor TIM/pakietów ma
+teraz 8 MiB, zgodnie z maksymalnym 12-bitowym zakresem sektorów tekstur.
+Render_PrepareFrame sprawdza cały zestaw przed pierwszym zapisem; loader
+przekazuje błąd inicjalizacji renderera. Usunięto też wymuszenie volatile
+potrzebne wyłącznie do historycznego byte match projekcji.
+
+Istniejący fixture kamery wykonuje oryginalny Render_LoadMeshEntry dla 4511
+wpisów geometrii Disc 1. Sprawdza oba zestawy pakietów, ich granice i guard
+bezpośrednio za przydziałem; największy zestaw ma 192864 bajty. Osobny przypadek
+przekraczający pojemność sprawdza odrzucenie bez zmiany workspace i scrolla.
+Regresja sterowania została rozszerzona o CROSS w dialogach M004 i przebieg
+do 58000 VBlank: dialog 35 zamknięty, game_frame 6211, player
+[-134283264,-21360136,489422848]. Oczekiwany FNV całej VRAM to
+`d355ef4c28cf53bb`, SHA-256
+`a9007a60763479f9332a5fff95dc3b7721bed37d7edb5bd3850d591696d29ac9`.
+To regresja konkretnego przebiegu, nie dowód zgodności całego obrazu z PS1.
+Dwa pełne przebiegi CTest przeszły 39/39 bez skipów z wymaganym Disc 1;
+drugi trwał 402,74 s i obejmował nową regresję 58000 VBlank oraz punkty koloru
+z odniesienia PS1. Po naprawach M005/UV pełny zestaw przechodzi ponownie:
+39/39, bez skipów, 405,93 s. Świeży instrumentowany executable tego kandydata
+zachowuje identyczne pełny stan JSON oraz VRAM M004 do 58000 VBlank.
+Świeży instrumentowany executable do 58000 VBlank ma identyczny stan i VRAM
+ze zwykłym programem; fixture geometrii i --assets także przechodzą
+ASan/UBSan/function z instrumentowanym PsyZ/SDL. Limit nadal używa _Exit,
+więc nie jest dowodem naturalnego shutdown ani braku wycieków.
+
+PsyZ ignorował DisplayMode.rgb24 w prezentacji SDL GPU/OpenGL. Oba istniejące
+backendy odtwarzają teraz trzy spakowane bajty VRAM na piksel filmu. Test
+wszystkich pięciu szerokości PS1 przeszedł w headless i na Metal, także ze
+ścieżką prezentacji. OpenGL nie jest wspieranym backendem na macOS i nie został
+tu uruchomiony. SDL event watch przekazuje prawdziwe zdarzenia klawiatury do
+oryginalnych pakietów pada; Return i keypad Enter mapują START. Istniejący
+fixture sprawdza wciśnięcie, puszczenie, focus i ponowny reset rejestracji.
+
+Zgłoszony dolny pas wynikał z prezentacji 240 linii mimo ustawionego przez grę
+zakresu 224. Istniejące backendy uwzględniają teraz rejestr zakresu pionowego
+i tryb podwójnej wysokości. Test przełącza RGB15/RGB24 i 224/240 linii,
+umieszczając inny kolor poza widocznym zakresem; przechodzi headless i na Metal.
+Odczyt RGB15 przez publiczne API przechwytywania działa również headless.
+
+Oryginalny opkod 206 (USA 800181CC) jest podpięty do istniejącego
+Entity_SetFieldByTypeId. Test wykonuje selekcję aktora, subtype, pomijanie
+usuniętych/nieobecnych aktorów, bajt komendy, timery i HP przez dispatcher.
+Komenda pola 255 ustawia podłogę przed utworzeniem nowej Ayi; oryginalny
+Battle_SetContextField wykonuje ten niezależny zapis przed odczytem playera.
+Test obejmuje brak playera i wartość -1111 używaną przez M005. Podpięto również
+istniejący opkod 29 (USA 80017E20), Script_CondBranch; zachowuje pełny wskaźnik
+hosta i 32-bitowy wrap przesunięcia. Obie gałęzie oraz dispatcher przechodzą.
+Kontrolowane wejście oryginalnym loaderem do M005 po M010 dochodzi do 30000
+VBlank i 2999 klatek sceny, z Ayą, Melissą i pozostałymi aktorami, bez abortu.
+To test inicjalizacji z wymuszonym tokenem w debuggerze, nie naturalne przejście
+M004 ani dowód ukończenia spotkania/walki. Świeże --assets przechodzi sanitizery.
+
+Porównano pierwszą scenę M010 z rzeczywistym obrazem oryginalnego Disc 1
+w headless DuckStation (software, SLUS-00662, klatka 16604, dialog 9).
+Headless port zachowywał kolory skóry, natomiast Metal pokazywał szare dłonie.
+Tekstury i palety obu portowych przebiegów były identyczne. Winne były
+niepodpisane korekty UV: shader używał abs pochodnych i dodatkowego przesunięcia
+przy odbiciach, co pobierało sąsiednie texele na obróconych modelach.
+Shader korzysta z obu podpisanych pochodnych, próbkowania w całkowitych
+współrzędnych PS1 i nie potrzebuje dawnego FixupFlipUV. Przebudowano istniejące
+nagłówki SPIR-V/MSL/DXIL. Na Metal rzeczywista scena ma znów cieliste dłonie;
+sześć kontrolnych punktów skóry różni się od PS1 o 0–1 poziom RGB555.
+Fixture uruchomienia ma osiem punktów skóry/mankietów z tego odniesienia,
+z tolerancją dwóch poziomów. Nie deklarujemy pełnego pixel perfect.
+
+Nowy test obróconego trójkąta wykazał błąd na Metal przed naprawą i przeszedł
+po niej. Dziesięć powiązanych testów GPU oraz trzy testy headless przechodzą.
+Pełny zestaw GPU: 41/42; istniejąca różnica obrazu abr_untextured (97,78%,
+pierwszy piksel RGB 0/3/0 wobec 0/4/0) jest identyczna na rendererze z e910fd1
+sprzed zmiany UV. Nie jest nową regresją i pozostaje otwartym defektem.
+MSL wykonano na Metal; DXIL/SPIR-V przebudowano, ale nie wykonano ich tu na
+Windows/Vulkan. Fork zawiera e910fd1 i 9fd00d8. Naturalne przejście schodów
+M004 do M005 pozostaje do potwierdzenia; test inicjalizacji M005 używa debuggera.
+
+Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
+producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
+zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.
+
 ## Bieżące naprawy: początek dialogu M004
 
 Podpięto oryginalne opkody 128/129. Zmieniają bit przechodniości 0x80

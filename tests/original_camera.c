@@ -4,6 +4,8 @@
 #include "pe1/game_state.h"
 #include "pe1/cdrom.h"
 #include "pe1/scene_room.h"
+#include "pe1/boot_services.h"
+#include "pe1/render_prim.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,6 +61,18 @@ static int animation_controls(void) {
 }
 int main(void) {
     CHECK(animation_controls()==0);
+    struct { GeomState header; GeomEntry entries[4]; } oversized={0};
+    oversized.header.entry_offset=(u8 *)oversized.entries-(u8 *)&oversized;
+    oversized.header.entry_count06=4;
+    for(unsigned i=0;i<4;++i)oversized.entries[i].prim_count=65535;
+    g_GeomState=&oversized.header;
+    g_GameState.texture_load_scratch=(union SceneAssetView *)D_8010BD00;
+    memset(D_8010BD00,0xa5,64);
+    GeomScrollState saved_scroll=g_GeomScroll.state;
+    CHECK(Render_PrepareFrame()==-2);
+    CHECK(!memcmp(&saved_scroll,&g_GeomScroll.state,sizeof(saved_scroll)));
+    for(unsigned i=0;i<64;++i)CHECK(D_8010BD00[i]==0xa5);
+    g_GameState.texture_load_scratch=NULL;g_GeomState=NULL;
     const char *path=getenv("PE_TEST_DISC");
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     PeDisc disc={0}; PeDiscFile archive,executable;
@@ -74,7 +88,8 @@ int main(void) {
         0x80093378u-base<=exe_size-sizeof(ranges) && (u64)exe_size+0x800<=executable.size);
     CHECK(pe_disc_read(&disc,&executable,(u64)0x80093378u-base+0x800,ranges,sizeof(ranges)));
     CdRom_BindImage(&disc,&archive);
-    unsigned views=0, frames=0; unsigned long long trace=14695981039346656037ULL;
+    unsigned views=0, frames=0, meshes=0; size_t largest_packets=0;
+    unsigned long long trace=14695981039346656037ULL;
     for (unsigned map=1;map<=SCENE_ROOM_COUNT;++map) {
         SceneRoomSectorRange *range=&ranges[map-1];
         if (!range->roomSectors) continue;
@@ -157,7 +172,45 @@ int main(void) {
             CHECK(g_GeomScroll.state.position.duration==30);
             ++views;
         }
-        free(copy);free(room);
+        /* Decode the authored entry records into fixture-owned native records.
+         * Execute the original packet builder, with a guard immediately after
+         * the calculated two-buffer extent rather than an oversized arena. */
+        size_t entry_offset=g_GeomState->entry_offset, packet_bytes=0;
+        CHECK(entry_offset<=size && g_GeomState->entry_count06<=(size-entry_offset)/0x38);
+        for(unsigned i=0;i<g_GeomState->entry_count06;++i){
+            u16 count;memcpy(&count,bytes+entry_offset+i*0x38+0x26,2);
+            packet_bytes+=(size_t)count*2*(sizeof(RenderTilePacket)+sizeof(RenderTexturePagePacket));
+        }
+        CHECK(packet_bytes<=BOOT_TEXTURE_WORKSPACE_BYTES);
+        if(map==4 && sizeof(void *)>4)CHECK(packet_bytes>0x20000);
+        if(packet_bytes>largest_packets)largest_packets=packet_bytes;
+        u8 *packets=malloc(packet_bytes+64);CHECK(packets);memset(packets,0xa5,packet_bytes+64);
+        void *end=packets;
+        for(unsigned i=0;i<g_GeomState->entry_count06;++i){
+            const u8 *source=bytes+entry_offset+i*0x38;
+            u16 count;memcpy(&count,source+0x26,2);
+            GeomEntry *entry=calloc(1,sizeof(*entry)+(size_t)count*12);CHECK(entry);
+            memcpy(entry,source,0x30);
+            s64 position=(s64)(source-bytes)+entry->u28.pos_ptr;
+            s64 texture=(s64)(source-bytes)+entry->u2C.uv_ptr;
+            CHECK(!count || (position>=0 && texture>=0 && (u64)position<=size && (u64)texture<=size &&
+                count<=(size-(size_t)position)/4 && count<=(size-(size_t)texture)/8));
+            entry->u28.pos_ptr=sizeof(*entry);entry->u2C.uv_ptr=sizeof(*entry)+count*4;
+            if(count){memcpy((u8 *)entry+entry->u28.pos_ptr,bytes+position,count*4);
+                memcpy((u8 *)entry+entry->u2C.uv_ptr,bytes+texture,count*8);}
+            u8 *start=end;
+            CHECK(Render_LoadMeshEntry(entry,end,&end)==0);
+            CHECK((u8 *)end-start==(size_t)count*2*(sizeof(RenderTilePacket)+sizeof(RenderTexturePagePacket)));
+            CHECK(entry->u30.prim==start);
+            CHECK((u8 *)entry->u34.pagePackets==start+(size_t)count*2*sizeof(RenderTilePacket));
+            RenderTilePacket *sprites=entry->u30.prim;
+            for(unsigned p=0;p<count*2;++p){CHECK(sprites[p].length==3);
+                CHECK(entry->u34.pagePackets[p].length==1);}
+            free(entry);++meshes;
+        }
+        CHECK((u8 *)end==packets+packet_bytes);
+        for(unsigned i=0;i<64;++i)CHECK(packets[packet_bytes+i]==0xa5);
+        free(packets);free(copy);free(room);
     }
     CdRom_BindImage(NULL,NULL);
     pe_disc_close(&disc); CHECK(views && frames);
@@ -165,5 +218,6 @@ int main(void) {
      * implementation. This proves preservation, not PS1 visual fidelity. */
     CHECK(views==509 && frames==30540 && trace==0x4389b6b0c8d9de19ULL);
     printf("Original camera: %u viewports, %u linear/smooth transition frames\n",views,frames);
+    printf("Original room mesh packets: %u entries, largest double buffer %zu bytes, immediate guards intact\n",meshes,largest_packets);
     return 0;
 }

@@ -27,7 +27,10 @@ void Boot_FinishFrame(void);
  * the scene arena. The loaded-scene/directory buffer keeps its 8-byte
  * header before g_StrFileDirBuffer. */
 extern u8 g_BootWorkArea[];
-extern u8 D_8010BD00[];
+/* Room TIM transfers have a 12-bit sector count; the same workspace later
+ * holds both native mesh-packet buffers. */
+enum { BOOT_TEXTURE_WORKSPACE_BYTES = 0x800000 };
+extern u8 D_8010BD00[BOOT_TEXTURE_WORKSPACE_BYTES];
 extern u8 D_80120D08[];
 extern u8 g_SceneLoadScratchArea[];
 

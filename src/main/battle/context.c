@@ -217,6 +217,11 @@ void Battle_SetContextField(int arg0, int arg1) {
     Combatant *ctx;
 
     arg0 = (u8)arg0;
+    /* Room scripts set the floor before the new player has been spawned. */
+    if (arg0 == 255) {
+        g_RoomFloorY->y = arg1;
+        return;
+    }
     ctx = ((BattleEntity *)g_PlayerEntity)->core;
 
     switch (arg0) {
@@ -270,9 +275,6 @@ void Battle_SetContextField(int arg0, int arg1) {
         break;
     case 34:
         ctx->panelB_timer = arg1;
-        break;
-    case 255:
-        g_RoomFloorY->y = arg1;
         break;
     }
 }

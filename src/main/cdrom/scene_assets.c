@@ -267,7 +267,7 @@ void Draw_ClearOnFlag(void) {
         rect.h = 0x1C0;
         ClearImage(&rect, 0, 0, 1);
         DrawSync(0);
-        Render_PrepareFrame();
+        if (Render_PrepareFrame() < 0) return;
         byte = g_DiscChangeFlags;
         value = *state;
         g_DiscChangeFlags = byte | 2;

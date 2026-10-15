@@ -106,7 +106,8 @@ int Draw_InitPipeline(void) {
     Boot_SetLightColor(&g_RenderLightingBlock, 2, 0x60, 0x60, 0x60);
 
     one = 1;
-    Render_PrepareFrame();
+    room_status = Render_PrepareFrame();
+    if (room_status < 0) return room_status;
     SetGeomScreen(W(g_RenderProjectionDistance));
     g_ScreenTint.fadeMode |= 0x40;
     CdRom_DetectDiscChange();

@@ -30,7 +30,8 @@
 
 /* Native backing for the original boot allocator. Overlay workspaces are
  * ordinary persistent memory; native OT/actor pointers need larger arenas. */
-_Alignas(16) u8 g_BootWorkArea[0x20000], D_8010BD00[0x20000];
+_Alignas(16) u8 g_BootWorkArea[0x20000];
+_Alignas(16) u8 D_8010BD00[BOOT_TEXTURE_WORKSPACE_BYTES];
 _Alignas(16) u8 D_80120D08[0x200000], g_SceneLoadScratchArea[0x20000];
 static _Alignas(16) u8 g_BootLoadedSceneArea[0x80008];
 u8 *g_StrFileDirBuffer = g_BootLoadedSceneArea + 8;
@@ -588,7 +589,7 @@ static void publish(void) {
         if(held[SDL_SCANCODE_X] || held[SDL_SCANCODE_SPACE])buttons|=0x4000;
         if(held[SDL_SCANCODE_C])buttons|=0x1000;
         if(held[SDL_SCANCODE_V])buttons|=0x8000;
-        if(held[SDL_SCANCODE_RETURN] || held[SDL_SCANCODE_ESCAPE])buttons|=8;
+        if(held[SDL_SCANCODE_RETURN] || held[SDL_SCANCODE_KP_ENTER] || held[SDL_SCANCODE_ESCAPE])buttons|=8;
         if(held[SDL_SCANCODE_TAB])buttons|=1;
         if(held[SDL_SCANCODE_Q])buttons|=0x400;
         if(held[SDL_SCANCODE_E])buttons|=0x800;
@@ -598,7 +599,12 @@ static void publish(void) {
     g_PadPackets[0].leftX=g_PadPackets[0].leftY=128;
     g_PadPackets[0].rightX=g_PadPackets[0].rightY=128;
 }
+static bool Boot_WatchPadEvent(void *userdata, SDL_Event *event) {
+    (void)userdata;Boot_HandlePadEvent(event);return true;
+}
 void Boot_ResetPadInput(void) {
+    SDL_RemoveEventWatch(Boot_WatchPadEvent,NULL);
+    SDL_AddEventWatch(Boot_WatchPadEvent,NULL);
     memset(held,0,sizeof(held));focused=true;
     memset(g_PadPackets,0,sizeof(g_PadPackets));
     g_PadPackets[1].header=0x00ff;

@@ -60,6 +60,7 @@ int Inv_ScrambleGrid(void);
 #include <stdio.h>
 #include <string.h>
 #include "pe1/boot_services.h"
+#include "pe1/room_floor.h"
 #include "pe1/font.h"
 #include "pe1/cdrom.h"
 #include "pe1/entity_allocation.h"
@@ -2106,6 +2107,65 @@ static int original_polygon_opcode(void)
     return 1;
 }
 
+static int original_conditional_branch_opcode(void)
+{
+    FieldActor actor={0},*saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;
+    u32 *saved_cursor=g_ScriptCursor;u32 program[10]={0};actor.script_base=(u8 *)program;g_CurrentEntity=&actor;
+    const u32 offsets[]={0,1,16,0x7fffffff,0x80000000,0xffffffff};
+    if(g_ScriptQueueOpcodeHandlers[29]!=Script_CondBranch)return 0;
+    for(unsigned equal=0;equal<2;++equal)for(unsigned i=0;i<6;++i){
+        int a=1,b=equal?1:2,offset=(s32)offsets[i];int *args[]={&a,&b,&offset};
+        g_ScriptCursor=program+3;
+        uintptr_t expected=equal?(uintptr_t)(program+3):(uintptr_t)program+(intptr_t)(s32)(offsets[i]<<1);
+        if(g_ScriptQueueOpcodeHandlers[29](args)!=1 || g_ScriptCursorAddress!=expected)return 0;
+    }
+    for(unsigned equal=0;equal<2;++equal){
+        u32 script[]={29|(3u<<13),0,1,equal?1u:2u,16,32,0,0,32,0};
+        actor.script_base=(u8 *)script;ScriptNode node={.current.script=script,.active=1,.flags=0x80};g_ScriptNodePool=&node;
+        Script_RunQueue();if(node.current.script!=script+(equal?7:10) || !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    puts("Original opcode 29: native conditional target, 32-bit offset wrapping, both paths and real dispatcher passed");return 1;
+}
+
+static int original_typed_field_opcode(void)
+{
+    FieldActor *saved_list=g_FieldActorListHead,*saved_player=g_PlayerEntity,*saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    FieldActor actors[3]={0},player={0};FieldActorState states[3]={0};Combatant core={0};
+    for(unsigned i=0;i<3;++i){actors[i].state=&states[i];actors[i].type_id=6;
+        actors[i].sub_id=i?2:1;actors[i].next=i<2?&actors[i+1]:NULL;}
+    actors[1].flags=0x10;player.state=(FieldActorState *)&core;g_PlayerEntity=&player;g_CurrentEntity=&player;
+    if(g_ScriptQueueOpcodeHandlers[206]!=Entity_SetFieldByTypeId)return 0;
+    for(unsigned mode=0;mode<5;++mode)for(int value=0;value<5;++value){
+        memset(states,0,sizeof(states));FieldActorState expected[3]={0};
+        int operands[]={mode==4?7:6,mode==3?9:2,0x150,value};
+        int *args[]={operands,operands+1,operands+2,operands+3};
+        g_FieldActorListHead=mode==1?actors+1:mode==2?NULL:actors;
+        if(mode<2){expected[2].behavior_mode=value;
+            expected[2].behavior_timer=value==1?400:value==2?70:value==3?20:0;}
+        if(g_ScriptQueueOpcodeHandlers[206](args)!=1 || memcmp(states,expected,sizeof(states)))return 0;
+        memset(states,0,sizeof(states));
+        u32 program[]={206|(4u<<13),0,(u32)operands[0],(u32)operands[1],(u32)operands[2],(u32)value,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(memcmp(states,expected,sizeof(states)) || node.current.script!=program+8 ||
+           !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
+    int operands[]={0,99,0x104,1234};int *args[]={operands,operands+1,operands+2,operands+3};
+    if(g_ScriptQueueOpcodeHandlers[206](args)!=1 || core.curHP!=1234)return 0;
+    core.curHP=0;Combatant expected_core={0};expected_core.curHP=1234;
+    u32 program[]={206|(4u<<13),0,0,99,0x104,1234,32,0};
+    ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+    if(memcmp(&core,&expected_core,sizeof(core)) || node.current.script!=program+8 || g_ScriptNodePool)return 0;
+    s16 saved_floor=g_RoomFloorY->y;g_PlayerEntity=NULL;
+    operands[2]=255;operands[3]=-1111;
+    if(g_ScriptQueueOpcodeHandlers[206](args)!=1 || g_RoomFloorY->y!=-1111)return 0;
+    g_RoomFloorY->y=saved_floor;
+    g_FieldActorListHead=saved_list;g_PlayerEntity=saved_player;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    puts("Original opcode 206: native actor selection, dead/missing/subtype filtering, command-byte truncation, behavior timers, player HP and real dispatcher passed");
+    return 1;
+}
+
 static int original_collision_gate_opcodes(void)
 {
     CollisionDatabase *saved_db=g_CollisionDb;struct CollisionPlane *saved_planes=g_CollisionPlaneTable;
@@ -2661,7 +2721,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_collision_gate_opcodes() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_conditional_branch_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
@@ -8106,8 +8166,8 @@ static int original_native_bootstrap(const char *executable,int field_control)
     if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     if(!SDL_Init(SDL_INIT_EVENTS))return 1;
     char capture[96];snprintf(capture,sizeof(capture),"pe-native-%llx.vram",(unsigned long long)SDL_GetPerformanceCounter());
-    for(unsigned input=field_control?6:0;input<(field_control?11u:6u);++input){
-        const char *limit=input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+    for(unsigned input=field_control?6:0;input<(field_control?12u:6u);++input){
+        const char *limit=input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
         const char *args[320]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
@@ -8149,6 +8209,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
+            if(input==11)for(unsigned tick=52000;tick<57000;tick+=600)BOOTSTRAP_PRESS(tick,0x4000);
 #undef BOOTSTRAP_PRESS
         }
         SDL_PropertiesID props=SDL_CreateProperties();
@@ -8160,7 +8221,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -8202,10 +8263,33 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==10 && (!output || !strstr(output,"\"scene\":2818572872") ||
            !strstr(output,"\"video_state\":0") || !strstr(output,"\"dialogue\":[{\"state\":2,\"page\":33}") ||
            !strstr(output,"\"position\":[65142784,-23855104,457768960],\"yaw\":0")))valid=0;
+        if(input==11 && (!output || !strstr(output,"\"scene\":2818572872") ||
+           !strstr(output,"\"video_state\":0") || !strstr(output,"\"game_frame\":6211") ||
+           !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":35}") ||
+           !strstr(output,"\"position\":[-134283264,-21360136,489422848],\"yaw\":0")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
             while((n=fread(block,1,sizeof(block),file))!=0){total+=n;
+                /* Original USA Disc 1, DuckStation software frame 16604,
+                 * M010 dialogue 9: skin and cuffs of Aya's date. Allow two
+                 * RGB555 levels for the current rasterizer's shading error;
+                 * replacing the skin with neutral grey must fail. */
+                static const u8 reference_hands[][5]={
+                    {72,139,28,28,28},{108,141,30,30,30},
+                    {72,141,27,21,17},{74,141,25,20,16},
+                    {104,143,28,22,18},{106,143,26,20,17},
+                    {108,143,25,19,16},{104,147,25,19,16}};
+                if(input==4)for(unsigned p=0;p<sizeof(reference_hands)/sizeof(reference_hands[0]);++p){
+                    size_t offset=((size_t)(224+reference_hands[p][1])*1024+reference_hands[p][0])*2;
+                    if(offset>=total-n && offset+2<=total){
+                        size_t at=offset-(total-n);u16 pixel=block[at]|((u16)block[at+1]<<8);
+                        for(unsigned channel=0;channel<3;++channel){
+                            int delta=((pixel>>(channel*5))&31)-reference_hands[p][channel+2];
+                            if(delta < -2 || delta > 2){valid=0;fprintf(stderr,"M010 PS1 hand colour mismatch at %u,%u channel %u\n",reference_hands[p][0],reference_hands[p][1],channel);}
+                        }
+                    }
+                }
                 for(size_t i=0;i<n;++i)hash=(hash^block[i])*UINT64_C(1099511628211);}
             if(total!=1024*512*2 || ferror(file))valid=0;
             fclose(file);remove(capture);
@@ -8218,6 +8302,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==8 && hash!=UINT64_C(0x71d4a7c739498ad8))valid=0;
         if(input==9 && hash!=UINT64_C(0x4f2f3366d72018ad))valid=0;
         if(input==10 && hash!=UINT64_C(0x010725a10ea1b845))valid=0;
+        if(input==11 && hash!=UINT64_C(0xd355ef4c28cf53bb))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);

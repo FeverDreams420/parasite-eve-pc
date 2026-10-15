@@ -141,7 +141,8 @@ int Script_CondBranch(int **arg0) {
     b = arg0[1];
     if (*a != *b) {
         c = arg0[2];
-        g_ScriptCursorAddress = (uintptr_t)(g_CurrentEntity->script_base + (*c * 2));
+        g_ScriptCursorAddress = (uintptr_t)g_CurrentEntity->script_base +
+            (intptr_t)(s32)((u32)*c << 1);
     }
     return 1;
 }

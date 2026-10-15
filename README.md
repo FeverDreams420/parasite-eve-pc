@@ -87,7 +87,10 @@ rectangle as RGB555 or packed RGB24 according to `display.rgb24`.
 Repeat `--pad-at VBLANK:BUTTON_MASK` for deterministic digital input, using
 pressed PS1 button bits (for example `10000:8` holds START; `10010:0` releases it).
 Input enters the original pad packet before the original mapping/repeat logic.
-Normal interactive play uses the PsyZ keyboard/gamepad bindings. Full New Game, saved-game loading and gameplay acceptance are still pending.
+Interactive keyboard events feed the original pad packets; Enter, keypad Enter
+and Escape map to START, including movie skipping. The SDL GPU and OpenGL
+backends present movie RGB24 as three packed VRAM bytes per pixel. Full New Game,
+saved-game loading and gameplay acceptance are still pending.
 
 Enable `BUILD_TESTING=ON` for tests of the original modules, CPU reference
 results, real assets and headless startup. Tests that depended on the abandoned

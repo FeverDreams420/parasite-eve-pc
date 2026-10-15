@@ -18,6 +18,7 @@
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
 s8 g_BattleHaltTimer;
+BattleEnemySlot g_BattleEnemySlots[7];
 u16 g_BattleHitActionPending;
 u8 g_BattleActionAnimModes[4];
 s8 g_BattleTargetCycleMode;

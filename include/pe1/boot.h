@@ -36,6 +36,12 @@ extern u16 g_SmallTexLbaTbl[];
 extern u16 g_FontUiLbaTbl[];
 extern u16 g_SceneInitLbaTbl0[];
 
+/* Original per-frame additive RNG: 14 retail instruction constants,
+ * two byte-offset cursors and 17 seeded words in one contiguous object. */
+extern u32 g_DrawPrimGeneratorWords[33];
+void Draw_InitGpuHwRegs(void);
+u32 Draw_FlushPrimQueue(void);
+
 /* System start-up (boot/init.c). */
 /* Frame counter stepped by Boot_RunFrame; battle colour cycles, the status
  * pointer rotation and the battle srand seed read it. */

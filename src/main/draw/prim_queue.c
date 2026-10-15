@@ -1,10 +1,5 @@
 #include "common.h"
-
-/* Table entry address: the queue offsets are byte offsets into the table. */
-typedef union DrawPrimGeneratorAddress {
-    u32 *pointer;
-    u32 address;
-} DrawPrimGeneratorAddress;
+#include "pe1/boot.h"
 
 u32 Draw_FlushPrimQueue(void) {
     u32 *base;
@@ -17,31 +12,13 @@ u32 Draw_FlushPrimQueue(void) {
     u32 head_value;
     u32 tail_value;
     u32 ret;
-    /* Match debt: read architectural zero without emitting an instruction;
-     * OR/ORI preserve the original encodings of the return and wrap value. */
-    u32 zero = 0;
-        base = (u32 *)0x80070E0C;
-    head_slot = (u32 *)0x80070E04;
-    tail_slot = (u32 *)0x80070E08;
-    head = *head_slot;
-    tail = *tail_slot;
-    /* Keep the base as a operand rather than a folded constant. */
-
-    /* Match note: preserve target operand order in the address adds. */
-    {
-        DrawPrimGeneratorAddress entry;
-
-        entry.pointer = base;
-        entry.address += head;
-        head_ptr = entry.pointer;
-    }
-    {
-        DrawPrimGeneratorAddress entry;
-
-        entry.pointer = base;
-        entry.address += tail;
-        tail_ptr = entry.pointer;
-    }
+    base = g_DrawPrimGeneratorWords + 16;
+    head_slot = g_DrawPrimGeneratorWords + 14;
+    tail_slot = g_DrawPrimGeneratorWords + 15;
+    head = (s32)*head_slot;
+    tail = (s32)*tail_slot;
+    head_ptr = base + head / 4;
+    tail_ptr = base + tail / 4;
 
     {
         u32 previousValue = *head_ptr;
@@ -50,15 +27,18 @@ u32 Draw_FlushPrimQueue(void) {
     }
     *head_ptr = head_value;
     /* Finish the entry write and result copy before updating queue offsets. */
-    ret = zero | head_value;
+    ret = head_value;
 
     head = head - 4;
     tail = tail - 4;
     if (head < 0) {
-        head = zero | 0x40;
+        head = 0x40;
     }
     *head_slot = head;
     if (tail < 0) {
+        /* Retail ORs the negative value; it does not reset it to +0x40.
+         * This cycles through -4..-64, including both cursors and the
+         * instruction constants retained in the same backing array. */
         tail |= 0x40;
     }
     *tail_slot = tail;

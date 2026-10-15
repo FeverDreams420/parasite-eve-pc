@@ -30,6 +30,7 @@ add_subdirectory(pc)
 # their platform dependencies are made portable; no duplicate game logic.
 add_library(parasite-eve-original OBJECT
     src/main/battle/encounter.c
+    src/main/battle/setup.c
     src/main/aya/stats.c
     src/main/item/active_list.c
     src/main/time/counters.c
@@ -60,6 +61,8 @@ add_library(parasite-eve-original OBJECT
     src/main/boot/init.c
     src/main/boot/frame_loop.c
     src/main/draw/pipeline.c
+    src/main/draw/gpu_regs.c
+    src/main/draw/prim_queue.c
     src/main/draw/frame.c
     src/main/draw/text.c
     src/main/draw/textbox.c
@@ -69,6 +72,7 @@ add_library(parasite-eve-original OBJECT
     src/main/entity/pool.c
     src/main/entity/allocation.c
     src/main/script/node_pool.c
+    src/main/script/sfx_queue.c
     src/main/psyq/libds/dssys_3.c
     src/main/script/node_actions.c
     src/main/script/actor_opcodes.c

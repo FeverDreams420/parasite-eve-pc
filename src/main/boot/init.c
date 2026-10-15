@@ -49,16 +49,15 @@ void Boot_InitSystem(void) {
 }
 
 u32 Draw_FlushPrimQueue(void);
-int Save_InitSystem();
+void Save_InitSystem(void);
 void Script_InitNodePool(void);
-int Entity_ResetStateGlobals();
+void Entity_ResetStateGlobals(void);
 void Entity_ResetAllPools(void);
-int SsInit();
+void SsInit(void);
 void Menu_SetEquipSlotIndex(int index);
 void Boot_BuildRenderFlagTable(void);
-int Save_PostInitStub();
+void Save_PostInitStub(void);
 int CdRom_InitScreenState();
-int Draw_InitGpuHwRegs();
 
 void Boot_InitSubsystems(void) {
     u32 var_s0;

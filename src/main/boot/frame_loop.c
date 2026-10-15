@@ -17,6 +17,8 @@
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_transition.h"
 
+u32 g_FrameRngCounter;
+
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
 extern int g_SceneDispatchToken;

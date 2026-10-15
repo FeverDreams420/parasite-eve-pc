@@ -1,3 +1,7 @@
+#include "pe1/battle_runtime.h"
+#include "pe1/field_sfx.h"
+#include "pe1/psyq_callbacks.h"
+#include "pe1/boot.h"
 #include "pe1/draw_buffers.h"
 #include "pe1/save.h"
 #include "pe1/game_timers.h"
@@ -2200,6 +2204,77 @@ static int original_save_metadata_storage(void)
     return valid;
 }
 
+static int original_subsystem_start(void)
+{
+    g_GameStateFlags=0xA5A5A5A5; g_FrameRngCounter=123;
+    for(unsigned i=0;i<7;++i) g_BattleEnemySlots[i].active=123;
+    g_BattleActionQueueCount=17; g_BattleActionIndex=11; g_BattleRemainingActions=3;
+    memset(g_ScriptVariableBank,0xA5,0x200*sizeof(u32));
+    memset(g_ScriptNodeActiveFlags,0xA5,sizeof(g_ScriptNodeActiveFlags));
+    Script_QueueFieldSfx(1,2,3,4,5);
+    Boot_InitSubsystems();
+    VSyncCallback(NULL);
+    if(g_GameStateFlags!=0x4000 || g_FrameRngCounter || g_ActiveDrawSlot ||
+       g_BattleActionQueueCount || g_BattleActionIndex || g_BattleRemainingActions ||
+       g_FieldSfxQueueCount || g_EntityFreePoolCount || g_FieldActorListHead ||
+       g_PlayerEntity || g_EntitySerialCounter) {fprintf(stderr,"subsystem check failed at %d\n",__LINE__);return 0;}
+    for(unsigned i=0;i<7;++i) if(g_BattleEnemySlots[i].active) {fprintf(stderr,"subsystem check failed at %d\n",__LINE__);return 0;}
+    for(unsigned i=0;i<0x200;++i) if(g_ScriptVariableBank[i]) {fprintf(stderr,"subsystem check failed at %d\n",__LINE__);return 0;}
+    /* USA 80034F40..80034F4C repeatedly clears only the first flag;
+     * the free-list initializer later clears all 64. Preserve that order. */
+    for(unsigned i=0;i<64;++i) if((u32)g_ScriptNodeActiveFlags[i]!=(i?0xA5A5A5A5u:0u))
+        {fprintf(stderr,"subsystem flag reset differs at %u\n",i);return 0;}
+    if(g_ScriptNodeFreeListHead || g_ScriptNodes[71].next) {fprintf(stderr,"subsystem check failed at %d\n",__LINE__);return 0;}
+    uint64_t hash=UINT64_C(14695981039346656037);
+    for(unsigned i=0;i<33;++i) for(unsigned byte=0;byte<4;++byte)
+        hash=(hash^((g_DrawPrimGeneratorWords[i]>>(byte*8))&255))*UINT64_C(1099511628211);
+    if(hash!=UINT64_C(0x2a702d05777cd111)) {fprintf(stderr,"subsystem check failed at %d\n",__LINE__);return 0;}
+    puts("Original subsystem start: RNG warm-up, battle reset, script/entity pools and SFX reset passed");
+    return 1;
+}
+
+/* Actual MIPS init/step execution, including the negative tail and the
+ * boot warm-up of 2000 draws. Hashes serialize each word little-endian. */
+static int original_frame_random(void)
+{
+    static const struct { unsigned draws; uint64_t state, stream; s32 head, tail; } cases[]={
+        {0,UINT64_C(0x2cb83249daca1179),UINT64_C(0xcbf29ce484222325),64,16},
+        {1,UINT64_C(0x982b0feedeac8cfd),UINT64_C(0x8346f5632112ce24),60,12},
+        {5,UINT64_C(0x36a1e402d88fc5),UINT64_C(0x6cf2a888882e39ef),44,-4},
+        {17,UINT64_C(0xb0944a452a2679dd),UINT64_C(0xeefebd61ca8aed13),64,-52},
+        {2000,UINT64_C(0x2a702d05777cd111),UINT64_C(0x9b10472970d605e0),20,-48},
+        {8192,UINT64_C(0xe822a05d2e530a78),UINT64_C(0x3d7e90f6c6b75720),4,-48},
+    };
+    u32 saved[33]; memcpy(saved,g_DrawPrimGeneratorWords,sizeof(saved));
+    int valid=1;
+    Draw_InitGpuHwRegs();
+    uint64_t stream=UINT64_C(14695981039346656037);
+    unsigned next=0;
+    for(unsigned draws=0;draws<=8192;++draws) {
+        if(draws==cases[next].draws) {
+            uint64_t state=UINT64_C(14695981039346656037);
+            for(unsigned i=0;i<33;++i) for(unsigned byte=0;byte<4;++byte)
+                state=(state^((g_DrawPrimGeneratorWords[i]>>(byte*8))&255))*UINT64_C(1099511628211);
+            if(state!=cases[next].state || stream!=cases[next].stream ||
+               (s32)g_DrawPrimGeneratorWords[14]!=cases[next].head ||
+               (s32)g_DrawPrimGeneratorWords[15]!=cases[next].tail) valid=0;
+            if(++next==sizeof(cases)/sizeof(cases[0])) break;
+        }
+        u32 value=Draw_FlushPrimQueue();
+        for(unsigned byte=0;byte<4;++byte)
+            stream=(stream^((value>>(byte*8))&255))*UINT64_C(1099511628211);
+    }
+    Draw_InitGpuHwRegs();
+    for(unsigned i=0;i<16;++i) {
+        static const u32 prefix[]={0x17a,0x264,0x3de,0x642,0xa20,0x9,0x3d,0x441042,
+            0x3e0003f,0x4b107e,0xb5c90,0x214eb,0x5989,0x1274,0x3fc00,0x450655};
+        if(Draw_FlushPrimQueue()!=prefix[i]) valid=0;
+    }
+    memcpy(g_DrawPrimGeneratorWords,saved,sizeof(saved));
+    if(!valid) fprintf(stderr,"Original frame RNG differs from USA MIPS execution\n");
+    return valid;
+}
+
 /* Goldens from executing USA EXE 800528F0/80052B2C in MIPS Unicorn.
  * 4096 draws cross seven complete table refresh boundaries. */
 static int original_item_random(void)
@@ -2247,6 +2322,7 @@ int main(int argc, char **argv)
     (void)argv;
     if (!original_startup_fade()) return 126;
     if (!original_save_metadata_storage()) return 125;
+    if (!original_frame_random()) return 128;
     if (!original_item_random()) return 124;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;
@@ -2255,6 +2331,7 @@ int main(int argc, char **argv)
     if (!game_state_reset()) return 53;
     if(!SDL_Init(SDL_INIT_EVENTS))return 43;
     if(!original_display_start())return 127;
+    if(!original_subsystem_start())return 129;
     const u32 lzcs[]={0,1,0x7fffffff,0x80000000,0xffffffff};
     const u32 lzcr[]={32,31,1,1,32};
     for(unsigned i=0;i<5;++i) {

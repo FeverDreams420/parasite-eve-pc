@@ -99,7 +99,12 @@ static void Boot_PollHost(void) {
         printf("{\"mode\":%d,\"selection\":%d,\"cursor\":[%d,%d]}",
             node->mode,node->selected_base,node->cursor_x,node->cursor_y);
     }else printf("null");
-    printf("}\n");
+    printf(",\"combat\":{\"mode\":%d,\"live_enemies\":%d",g_BattleModeState,(int)g_BattleLiveEnemyCount);
+    if(g_PlayerEntity && g_PlayerEntity->state){
+        Combatant *player=(Combatant *)g_PlayerEntity->state;
+        printf(",\"player_hp\":%u,\"player_max_hp\":%u",(unsigned)player->curHP,(unsigned)player->maxHP);
+    }
+    printf("}}\n");
     fflush(stdout);
     /* A diagnostic cap is a forced process boundary, even inside a menu's
      * VSync callback. Do not unwind through the locked SDK callback stack. */

@@ -33,7 +33,7 @@ int Script_SetEntityActionAndWait(int **arg0) {
         {
             FieldActor *state;
             state = g_CurrentEntity;
-            mode = *(u16 *)ptr;
+            mode = (u16)*ptr;
             Entity_SetActionMode((BattleEntity *)state, mode);
         }
         {

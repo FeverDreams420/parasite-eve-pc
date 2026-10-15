@@ -230,6 +230,30 @@ i normalną sekwencję operową, w tym film z pożarem teatru. Nie był to
 potwierdzony błąd emulatora; odniesienie pierwszej walki nadal wymaga dojścia.
 Oryginał doszedł już do sterowania Ayą w M004 po pożarze (klatka 55110).
 
+Podpięto istniejący opkod 198, oczekujący na akcję aktora: 2880 przypadków
+odpowiada wykonaniu CPU USA (`27a316c7f7829479`). Następnie podpięto istniejące
+operacje flag aktora 74/79/80/185/186/193/194/195, zachowując ich moduły
+i algorytmy; 2304 przypadki CPU i dispatchera dają `ab04cf6d428f3bf9`.
+Naturalny przebieg od New Game do 82000 VBlank kończy spotkanie z Melissą:
+M005, dialog 60 zamknięty, Melissa nieobecna, tryb walki 12, zero przeciwników,
+odblokowany ruch, HP Ayi 14/45. Zwykły i świeży instrumentowany executable
+ASan/UBSan/function mają identyczną pełną VRAM, SHA-256
+`93cfc546507339fa3b83301e213d1ad26ac9fbee4d77aec2251f006a3c4d12c4`;
+FNV `c7ae3598591ad7c3`. Limit nadal kończy proces przez _Exit.
+
+Niezależnie oryginał PS1 przeszedł spotkanie do tej samej pozycji Ayi,
+trybu walki i liczby przeciwników. Porównanie całych 320×224 RGB555 daje
+71660/71680 identycznych pikseli; pozostałe 20 leży na Ayi i różni się
+o najwyżej dwa poziomy kanału. Nie jest to pełny pixel perfect. HP oryginału
+wynosi 17/45, a global_flags 0x8000 wobec 0 portu. Przy różnych harmonogramach
+inputu/RNG różnice te pozostają niewyjaśnione i wymagają dalszej weryfikacji.
+
+Pełne dotychczasowe 41 testów przeszło bez skipów w 411,22 s. Następnie
+rozszerzono istniejącą diagnostykę o tryb/liczbę przeciwników/HP i dodano
+42. test `original-game-melissa-encounter` w istniejącym fixture: sprawdza
+powyższy stan i pełną VRAM. Nowy test oraz ponowiony bootstrap przeszły
+odpowiednio w 128,26 s i 145,11 s, z wymaganym Disc 1 i bez okna.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

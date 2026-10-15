@@ -183,12 +183,14 @@ int Script_SetEntityAnimSpeed(int **arg0) {
     return 1;
 }
 
-int Entity_SetCurrentFlag100(void) {
+int Entity_SetCurrentFlag100(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags |= 0x100;
     return 1;
 }
 
-int Entity_ClearCurrentFlag100(void) {
+int Entity_ClearCurrentFlag100(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags &= -0x101;
     return 1;
 }
@@ -1133,12 +1135,14 @@ int Script_SetBattleEntryCoords(int **arg0) {
     return 1;
 }
 
-int Script_ClearEntityFlag1(void) {
+int Script_ClearEntityFlag1(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags &= -2;
     return 1;
 }
 
-int Script_SetEntityFlag1(void) {
+int Script_SetEntityFlag1(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags |= 1;
     return 1;
 }
@@ -1178,17 +1182,20 @@ int Script_ClearRenderFlag8(void) {
     return 1;
 }
 
-int Script_SetEntityFlag400(void) {
+int Script_SetEntityFlag400(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags |= 0x400;
     return 1;
 }
 
-int Script_ClearEntityFlag400(void) {
+int Script_ClearEntityFlag400(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags &= -0x401;
     return 1;
 }
 
-int Script_WaitEntityFlags8(void) {
+int Script_WaitEntityFlags8(int **unused) {
+    (void)unused;
     ScriptNode *state;
     unsigned short flags;
 

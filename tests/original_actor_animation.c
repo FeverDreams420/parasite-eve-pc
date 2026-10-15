@@ -81,6 +81,8 @@ int Inv_ScrambleGrid(void);
 #include "pe1/menu_notification_dialog.h"
 #include "pe1/menu_state.h"
 #include "pe1/menu_inventory.h"
+#include "pe1/inventory_slots.h"
+#include "pe1/stat_modifiers.h"
 #include "../src/overlays/menu_memcard/menu_memcard_screen.h"
 #include "../src/overlays/menu_memcard/menu_memcard_image.h"
 #include <SDL3/SDL.h>
@@ -2576,6 +2578,36 @@ static int original_save_card_images(PeDisc *disc)
     if(!g_MemCardLoadSucceeded || memcmp(image,g_MemCardFileBuffer,sizeof(image)))valid=0;
     MenuWidget_InitPool();g_MenuDeferredCallback=NULL;g_AkaoMessageQueueCount=queued;
     if(!original_card_file_services(g_MemCardFileBuffer))valid=0;
+    /* A valid New Game image can also finish the original success callback.
+     * At the title screen no field actor exists yet; scene spawn follows later. */
+    FieldActor *saved_player=g_PlayerEntity;g_PlayerEntity=NULL;
+    int scale[7];memcpy(scale,g_StatScaleBase,sizeof(scale));
+    int saved_bonus=g_InvBonusSlotCount,saved_limit=g_InvSlotLimit;
+    s16 *saved_items=g_InvItemPtr,*saved_override=g_InvActiveListOverride;
+    int saved_override_limit=g_InvOverrideSlotLimit,saved_bit_words=g_InvSelectionBitWords;
+    u32 *saved_bits=g_InvSelectionBits;
+    Inv_BuildItemGridFromCategory();Save_InitMetadataState();Save_BuildHeader();
+    char path[]="bu00:BASLUS-006620000001O";
+    if(Save_BuildCardFile(path)!=0)valid=0;
+    SaveRuntimeState initialized=g_SaveRuntimeState;
+    memset(&g_SaveRuntimeState,0xA5,sizeof(g_SaveRuntimeState));
+    MenuWidget_InitPool();Menu_CreateMemCardProgressWidget(0);Menu_ClearCommandResult();
+    Save_LoadCardFileIntoRuntime();child=MenuWidget_GetCurrentNode();
+    if(!g_MemCardLoadSucceeded || memcmp(&initialized,&g_SaveRuntimeState,sizeof(initialized)) ||
+       !child || !child->parent || g_MenuDeferredCallback!=Save_CancelUiFlow)valid=0;
+    else {
+        MenuWidgetNode *parent=child->parent;
+        if(parent->update(parent,0)!=1 || !g_MenuDeferredCallback || Menu_GetCommandResult()!=0)valid=0;
+        if(parent->update(parent,0x10040)!=1 || g_MenuDeferredCallback || Menu_GetCommandResult()!=2 ||
+           MenuWidget_GetCurrentNode() || g_MenuWidgetActiveListHead || g_InvItemPtr!=g_AyaInventoryItems ||
+           g_AyaSaveState.max_hp!=Aya_LookupLevelStats(0)->hp ||
+           g_AyaEquippedWeaponSlot[0]!=0 || g_AyaEquippedArmorSlot[0]!=1)valid=0;
+    }
+    Menu_ClearCommandResult();g_AkaoMessageQueueCount=queued;
+    g_PlayerEntity=saved_player;memcpy(g_StatScaleBase,scale,sizeof(scale));
+    g_InvBonusSlotCount=saved_bonus;g_InvSlotLimit=saved_limit;g_InvItemPtr=saved_items;
+    g_InvActiveListOverride=saved_override;g_InvOverrideSlotLimit=saved_override_limit;
+    g_InvSelectionBitWords=saved_bit_words;g_InvSelectionBits=saved_bits;
     memcpy(g_GameTimers,saved_timers,sizeof(saved_timers));memcpy(g_KeyItemRecords,saved_keys,sizeof(saved_keys));
     memcpy(g_DrawBlendColorPair,saved_blend,sizeof(saved_blend));memcpy(g_RenderDispEnvArray,saved_display,sizeof(saved_display));
     g_TextboxNameGlyphs=saved_name;g_MenuItemContextFlag=saved_context;g_MenuActionSubmenuSel=saved_submenu;

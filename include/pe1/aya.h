@@ -118,8 +118,9 @@ extern u16 g_AyaHpCurrent[];
 extern u16 g_AyaHpMax[];
 extern s32 g_AyaSaveTotalExp[];
 extern u8 g_AyaInventorySlotCount[];
-extern s8 g_AyaEquippedWeaponSlot[];
-extern s8 g_AyaEquippedArmorSlot[];
+/* Array-style retail labels share the saved character fields. */
+#define g_AyaEquippedWeaponSlot (&g_AyaSaveState.equipped_weapon_slot)
+#define g_AyaEquippedArmorSlot (&g_AyaSaveState.equipped_armor_slot)
 /* Scalar views of the same two bytes for -G8 units with MASPSX_FORCE_G0:
  * cc1 then addresses each access directly (absolute after MASPSX) instead of
  * keeping the address in a as it does for the arrays. */

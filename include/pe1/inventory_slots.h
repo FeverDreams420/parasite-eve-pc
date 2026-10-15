@@ -46,13 +46,13 @@ extern s32 g_InvRebuildFilterMode, g_InvRebuildMinFirstStat;
 extern s32 g_InvActiveListCount;
 extern s16 g_InvActiveListItems[];
 #define g_InvTrackedSlots g_InventoryRuntime.tracked
-/* Two remembered selections. The retail indexed accesses use full addresses;
- * fixed-slot accesses use the individual small-data symbols below. Keeping
- * incomplete arrays avoids the old, overlapping three-element declarations. */
-extern s32 g_InvSavedSelectionIndex[];
-extern s32 g_InvSavedSelectionFromStorage[];
-extern s32 g_InvSavedSelectionIndex0, g_InvSavedSelectionIndex1; /* indices 0, 1 */
-extern s32 g_InvSavedSelectionFromStorage0, g_InvSavedSelectionFromStorage1; /* storage flags 0, 1 */
+/* Two remembered selections; fixed-slot names alias the same arrays. */
+extern s32 g_InvSavedSelectionIndex[2];
+extern s32 g_InvSavedSelectionFromStorage[2];
+#define g_InvSavedSelectionIndex0 (g_InvSavedSelectionIndex[0])
+#define g_InvSavedSelectionIndex1 (g_InvSavedSelectionIndex[1])
+#define g_InvSavedSelectionFromStorage0 (g_InvSavedSelectionFromStorage[0])
+#define g_InvSavedSelectionFromStorage1 (g_InvSavedSelectionFromStorage[1])
 extern s16 *g_InvActiveListOverride;
 extern s32 g_InvOverrideSlotLimit;
 extern u32 g_InvStorageSelectionBits[];
@@ -67,7 +67,7 @@ extern ItemDataRecord g_InvSavedSelectionRecord0, g_InvSavedSelectionRecord1;
 extern ItemDataRecord g_InvFallbackAmmoRecord;
 /* Both names addressed 0x800A1E64 in the USA executable. */
 #define g_InvSpecialItemRecords g_KeyItemRecords
-extern s16 g_WayneStorageItems[];
+#define g_WayneStorageItems (g_InventoryRuntime.storage)
 
 void Inv_InitWayneStorage(void);
 void Inv_RememberSelection(unsigned int index, int value);
@@ -117,8 +117,7 @@ static inline ItemDataRecord *Inv_LookupItemRecordScaled(int value) {
         if (value - 1U < 0xFFU) {
             result = Item_LookupBaseData(value - 1);
         } else if (saved - 0x200U < 9U) {
-            int shifted = saved << 5;
-            result = (ItemDataRecord *)(g_KeyItemDataTable + shifted);
+            result = &g_InvSpecialItemRecords[saved - 0x200];
         } else {
             result = 0;
         }

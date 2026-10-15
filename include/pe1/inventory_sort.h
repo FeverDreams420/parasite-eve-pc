@@ -1,7 +1,7 @@
 #ifndef PE1_INVENTORY_SORT_H
 #define PE1_INVENTORY_SORT_H
 
-#include "pe1/inventory.h"
+#include "pe1/inventory_slots.h"
 
 extern int g_InvSortStatIndex;
 extern ItemDataRecord *(*g_InvSortLookup)(int index);
@@ -15,7 +15,5 @@ void Inv_SortInventoryByMode(int mode, int key);
 void Inv_SortContainerItems(int key);
 void Inv_SortInventoryItems(int mode, int key);
 
-/* Wayne storage item IDs, sorted in place with qsort. */
-extern s16 g_WayneStorageItems[];
 
 #endif

@@ -177,6 +177,37 @@ static int new_game_inventory(void)
             CHECK(g_AyaSaveState.stats.levels[i]==*(u16 *)Aya_GetStatGrowthTable(i));
         CHECK(g_AyaSaveState.parasite_spell_flags==1 && g_AyaSaveState.level==0 && g_AyaSaveState.total_exp==0);
         CHECK(g_AyaSaveState.equipped_weapon_slot==0 && g_AyaSaveState.equipped_armor_slot==1);
+        CHECK(g_AyaEquippedWeaponSlot==&g_AyaSaveState.equipped_weapon_slot);
+        CHECK(g_AyaEquippedArmorSlot==&g_AyaSaveState.equipped_armor_slot);
+        CHECK(g_WayneStorageItems==g_InventoryRuntime.storage);
+        for(unsigned i=0;i<128;++i) {
+            CHECK(Inv_LookupItemRecord(0x100+i)==&g_InventoryRuntime.equipment[i]);
+            CHECK(Inv_LookupItemRecordScaled(0x100+i)==&g_InventoryRuntime.equipment[i]);
+        }
+        for(unsigned i=0;i<9;++i) {
+            CHECK(Inv_LookupItemRecord(0x200+i)==&g_KeyItemRecords[i]);
+            CHECK(Inv_LookupItemRecordScaled(0x200+i)==&g_KeyItemRecords[i]);
+        }
+        const int invalid_ids[]={-1,0,0x180,0x1ff,0x209,0x10000};
+        for(unsigned i=0;i<sizeof(invalid_ids)/sizeof(*invalid_ids);++i) {
+            CHECK(!Inv_LookupItemRecord(invalid_ids[i]));
+            CHECK(!Inv_LookupItemRecordScaled(invalid_ids[i]));
+        }
+        /* Both saved choices must retain their own list and selection. */
+        Inv_SelectActiveList(0);Inv_RememberSelection(0,1);
+        Inv_SetActiveListOverride(g_WayneStorageItems,100);Inv_SelectActiveList(1);
+        Inv_RememberSelection(1,73);
+        CHECK(g_InvSavedSelectionIndex0==1 && g_InvSavedSelectionIndex1==73);
+        CHECK(!g_InvSavedSelectionFromStorage0 && g_InvSavedSelectionFromStorage1);
+        Inv_RememberSelection(2,99);
+        CHECK(Inv_RestoreSelection(0)==1 && g_InvItemPtr==g_AyaInventoryItems);
+        CHECK(g_InvSelectionBitWords==2 && g_InvSlotLimit==Inv_GetAyaSlotLimit());
+        CHECK(Inv_RestoreSelection(1)==73 && g_InvItemPtr==g_WayneStorageItems);
+        CHECK(g_InvSelectionBitWords==4 && g_InvSlotLimit==100);
+        CHECK(Inv_RestoreSelection(2)==-1 && g_InvItemPtr==g_WayneStorageItems);
+        Inv_SetActiveListOverride(NULL,0);
+        CHECK(Inv_RestoreSelection(1)==73 && g_InvItemPtr==g_AyaInventoryItems);
+        CHECK(g_InvSelectionBitWords==2 && g_InvSlotLimit==Inv_GetAyaSlotLimit());
         const s16 expected[]={0x100,0x101,0x102,0x200,6};
         CHECK(!memcmp(g_AyaSaveState.inventory_items,expected,sizeof(expected)));
         CHECK(g_InvSpecialItemRecords[0].ammo==Item_LookupBaseData(0)->ammo);

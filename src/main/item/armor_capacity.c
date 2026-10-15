@@ -10,16 +10,13 @@
 #include "pe1/menu_inventory.h"
 #include "pe1/psyq_libc.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared inventory sort and selection state. */
 s32 g_InvPackedListCount;
 u8 *D_8009D084;
 s32 D_8009D088;
 s32 D_8009D08C;
-s32 g_InvSavedSelectionIndex0;
-s32 g_InvSavedSelectionIndex1;
-s32 g_InvSavedSelectionFromStorage0;
-s32 g_InvSavedSelectionFromStorage1;
+s32 g_InvSavedSelectionIndex[2];
+s32 g_InvSavedSelectionFromStorage[2];
 s32 g_InvWeaponSortStatIndex;
 s32 g_InvAmmoSortStatIndex;
 unsigned char *g_InvSortRankTable;
@@ -43,7 +40,7 @@ static inline ItemDataRecord *LookupOldArmor(int index) {
                 return Item_LookupBaseData(value - 1);
             }
             if (saved - 0x200U < 9U) {
-                result = &((ItemDataRecord *)g_KeyItemDataTable)[saved];
+                result = &g_KeyItemRecords[saved - 0x200];
             } else {
                 result = 0;
             }
@@ -68,7 +65,7 @@ static inline ItemDataRecord *LookupTrackedItem(int index) {
             if (value - 1U < 0xFFU) {
                 result = Item_LookupBaseData(value - 1);
             } else if (saved - 0x200U < 9U) {
-                result = &((ItemDataRecord *)g_KeyItemDataTable)[saved];
+                result = &g_KeyItemRecords[saved - 0x200];
             } else {
                 result = 0;
             }
@@ -93,7 +90,7 @@ static inline ItemDataRecord *LookupArmorTrackedItem(int index) {
             if (value - 1U < 0xFFU) {
                 result = Item_LookupBaseData(value - 1);
             } else if (saved - 0x200U < 9U) {
-                result = &((ItemDataRecord *)g_KeyItemDataTable)[saved];
+                result = &g_KeyItemRecords[saved - 0x200];
             } else {
                 result = 0;
             }
@@ -265,7 +262,7 @@ static inline ItemDataRecord *LookupActiveItem(int index) {
                 return Item_LookupBaseData(value - 1);
             }
             if (saved - 0x200U < 9U) {
-                result = &((ItemDataRecord *)g_KeyItemDataTable)[saved];
+                result = &g_KeyItemRecords[saved - 0x200];
             } else {
                 result = 0;
             }
@@ -275,9 +272,7 @@ static inline ItemDataRecord *LookupActiveItem(int index) {
     return 0;
 }
 
-/* Ammunition pool record. An inline call keeps the index scaled before the
- * table address is added, as retail does; a direct &g_InvSpecialItemRecords[kind - 5]
- * folds the -5 into the address (lev 16). */
+/* Ammunition pool record. */
 static inline ItemDataRecord *AmmoPoolRecord(int index) {
     return &g_InvSpecialItemRecords[index];
 }

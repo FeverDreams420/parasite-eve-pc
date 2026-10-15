@@ -12,8 +12,6 @@ extern struct BattleAttributes g_BattleEquipStateBlock;
 void Inv_BuildArmorList(struct BattleAttributes *out);
 
 extern int g_InvBonusSlotCount;
-/* Existing byte-array view of the equipped armor index in Aya's save state. */
-extern signed char g_AyaEquippedArmorSlot[];
 
 /* Historical name: retail selects the equipped armor slot at 0x800C0E22. */
 void BattleCmd_LoadWeaponModifiers(void);

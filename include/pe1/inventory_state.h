@@ -11,7 +11,6 @@ typedef struct InventorySlotRange {
     s16 stop;
 } InventorySlotRange;
 
-extern signed char g_AyaEquippedArmorSlot[];
 extern int g_InvBonusSlotCount;
 extern s32 g_InvWeaponSortStatIndex;
 extern u16 *g_InvSortListBase;

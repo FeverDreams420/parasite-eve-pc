@@ -308,7 +308,7 @@ void Menu_DrawEquipSlotListItem(int arg0) {
     Draw_OffsetCursor(-2, -2);
 
     if (g_MenuEquipMode != 0) {
-        Draw_AllocSprite(g_MenuEquipSlotGlyphs[g_MenuEquipMode][arg0]);
+        Draw_AllocSprite(g_MenuEquipSlotGlyphs[g_MenuEquipMode - 1][arg0]);
     }
 }
 
@@ -636,3 +636,10 @@ void Menu_DrawSaveSlot3Item(int index) {
 void Menu_DrawSoundEffectItem(int index) {
     Menu_CursorRenderData(g_MenuSelectedItemData);
 }
+
+/* Original USA rows at 0x800923C0: the retail label was biased by one
+ * unused row into the preceding panel outline. Native modes use index 0/1. */
+u8 g_MenuEquipSlotGlyphs[2][8] = {{97,92,98,0,0,0,0,0},{97,92,93,94,98,0,0,0}};
+
+/* Original USA data at 0x800922D0. */
+short g_MenuSortToggleGlyphs[2] = {14,30};

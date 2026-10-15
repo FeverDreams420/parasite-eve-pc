@@ -63,8 +63,8 @@ void Menu_DrawEquipInfoOptionRow(int index);
 
 /* Sort option rows: the first row index per view mode, then the first,
  * second and third glyph of each row. */
-/* Equipment slot glyphs per equip mode. */
-extern unsigned char g_MenuEquipSlotGlyphs[][8];
+/* Equipment slot glyphs for equip modes 1 and 2 (native rows 0 and 1). */
+extern unsigned char g_MenuEquipSlotGlyphs[2][8];
 /* Sort toggle row glyphs: the label, then the off and on markers. */
 extern short g_MenuSortToggleGlyphs[];
 /* Item icon glyph table for the current list (Text_LookupTable4 entry). */

@@ -401,3 +401,6 @@ int Menu_StepEquipScreen(MenuWidgetNode *node, unsigned int flags)
     }
     return handled;
 }
+
+/* Original USA data at 0x80092234. */
+int g_MenuItemActionStateTable[3][3] = {{0,1,2},{3,1,2},{1,2,0}};

@@ -1396,3 +1396,6 @@ int Inv_GetAyaSlotLimit(void) {
 
     return g_AyaSaveState.inventory_slot_count + Inv_GetBonusSlotCount();
 }
+
+/* Original USA data at 0x800923D8. */
+InventorySlotRange g_InvItemTableRanges[8] = {{28,33},{49,53},{58,63},{68,73},{90,96},{98,99},{263,300},{312,337}};

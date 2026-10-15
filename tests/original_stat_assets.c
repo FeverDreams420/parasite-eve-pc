@@ -23,6 +23,9 @@ int MemCard_HasDelayedCallback(void);
 #include "pe1/inventory.h"
 #include "pe1/inventory_slots.h"
 #include "pe1/inventory_state.h"
+#include "pe1/inventory_sort.h"
+#include "pe1/menu_bonus_stats.h"
+#include "pe1/menu_equipment.h"
 #include "pe1/weapon_list_output.h"
 #include "pe1/battle_modifiers.h"
 #include "pe1/battle_saved_state.h"
@@ -323,6 +326,73 @@ static int new_game_inventory(void)
     g_InvActiveListCount=0;
     Inv_SetActiveListOverride(NULL,0);Inv_SelectActiveList(0);
     puts("Original inventory: New Game/carryover, canonical records, descriptions, lookup and 100-slot category filters passed");
+    return 0;
+}
+static int inventory_sort_comparisons(void)
+{
+    ItemDataRecord equipment[40],keys[9];
+    memcpy(equipment,g_InventoryRuntime.equipment,sizeof(equipment));memcpy(keys,g_KeyItemRecords,sizeof(keys));
+    for(unsigned i=0;i<40;++i) {
+        ItemDataRecord *record=&g_InventoryRuntime.equipment[i];memset(record,0,sizeof(*record));
+        record->itemId=(i*7+3)%255;record->kind=i%22;record->bonusStats[0]=i%16;
+    }
+    for(unsigned i=0;i<9;++i) {
+        ItemDataRecord *record=&g_KeyItemRecords[i];memset(record,0,sizeof(*record));
+        record->itemId=150+i;record->kind=19+i%3;record->bonusStats[0]=i%16;
+    }
+    s16 ids[90];
+    for(unsigned i=0;i<90;++i)ids[i]=i<40?0x100+i:i<49?0x200+i-40:i<89?i-48:0;
+    u8 *ranks[]={g_InvSortRankTableA,g_InvSortRankTableB,g_InvSortRankTableC,g_InvSortRankTableD};
+    u8 *types[]={g_InvTypeRankTableA,g_InvTypeRankTableB};
+    uint64_t hash=UINT64_C(14695981039346656037);g_InvSortLookup=Inv_LookupData;
+    for(unsigned rank=0;rank<4;++rank)for(unsigned type=0;type<2;++type) {
+        g_InvSortRankTable=ranks[rank];g_InvSortTypeRankTable=types[type];
+        for(unsigned left=0;left<90;++left)for(unsigned right=0;right<90;++right) {
+            int result=Inv_CompareItemsForSort(&ids[left],&ids[right]);
+            CHECK(result>=-1 && result<=1);
+            for(unsigned byte=0;byte<4;++byte)hash=(hash^(((u32)result>>(byte*8))&255))*UINT64_C(1099511628211);
+        }
+    }
+    /* 64,800 comparisons by the actual USA comparator 8005AFFC and lookup
+     * 800532B4 in Unicorn MIPS, using the same records and real resident data. */
+    CHECK(hash==UINT64_C(0x47d2f17ffb5d3535));
+    s16 slots[2]={0,0x100},empty=0,valid=1;
+    s16 *old_items=g_InvItemPtr;int old_limit=g_InvSlotLimit;
+    g_InvItemPtr=slots;g_InvSlotLimit=2;g_InvSortLookup=Inv_LookupActiveListData;
+    CHECK(Inv_CompareItemsForSort(&empty,&valid)==1);
+    CHECK(Inv_CompareItemsForSort(&valid,&empty)==-1);
+    CHECK(!Inv_CompareItemsForSort(&empty,&empty));
+    g_InvItemPtr=old_items;g_InvSlotLimit=old_limit;g_InvSortLookup=Inv_LookupData;
+    memcpy(g_InventoryRuntime.equipment,equipment,sizeof(equipment));memcpy(g_KeyItemRecords,keys,sizeof(keys));
+    SaveRuntimeState before=g_SaveRuntimeState;
+    int old_bonus=g_InvBonusSlotCount;g_InvBonusSlotCount=0;
+    for(unsigned special=0;special<2;++special)for(unsigned mode=0;mode<(special?2u:1u);++mode)
+    for(unsigned key=0;key<(special?3u:2u);++key) {
+        g_SaveRuntimeState=before;
+        s16 *store=special?g_InventoryRuntime.specialStorage:g_InventoryRuntime.storage;
+        unsigned count=special?82:100;
+        for(unsigned i=0;i<count;++i)store[i]=count-i;
+        Inv_StepScrollDisplay2(special);
+        unsigned expected[0x209]={0};
+        for(unsigned i=0;i<count;++i)++expected[(unsigned)store[i]];
+        int weapon=g_AyaInventoryItems[g_AyaSaveState.equipped_weapon_slot];
+        int armor=g_AyaInventoryItems[g_AyaSaveState.equipped_armor_slot];
+        g_InvWeaponSortStatIndex=g_InvAmmoSortStatIndex=0;
+        if(special)Inv_SortInventoryItems(mode!=0,key);
+        else Inv_SortContainerItems(key!=0);
+        for(unsigned i=0;i<count;++i) {
+            unsigned id=(u16)store[i];CHECK(id<0x209 && expected[id]);--expected[id];
+        }
+        for(unsigned i=0;i<0x209;++i)CHECK(!expected[i]);
+        CHECK(g_AyaInventoryItems[g_AyaSaveState.equipped_weapon_slot]==weapon);
+        CHECK(g_AyaInventoryItems[g_AyaSaveState.equipped_armor_slot]==armor);
+        CHECK(g_InvTransferItemCount>=0 && g_InvTransferItemCount<=50);
+        for(int i=0;i<g_InvTransferItemCount;++i)
+            CHECK(g_InvTransferItemList[i]>=0 && g_InvTransferItemList[i]<g_AyaSaveState.inventory_slot_count);
+    }
+    g_SaveRuntimeState=before;g_InvBonusSlotCount=old_bonus;
+    Inv_SetActiveListOverride(NULL,0);Inv_SelectActiveList(0);
+    puts("Original inventory sorting: 64,800 USA MIPS comparisons, empty records and full inventory/storage sorting passed");
     return 0;
 }
 static int item_addition(void)
@@ -669,6 +739,35 @@ int main(void)
     CHECK(pe_disc_open(&disc,path));
     CHECK(pe_disc_find(&disc,"PE.IMG",&archive));
     CHECK(pe_disc_find(&disc,"SLUS_006.62",&exe));
+    const struct {const void *data;unsigned address,size;} menu_tables[]={
+        {g_InvSortRankTableA,0x923F8,24},
+        {g_InvSortRankTableB,0x92410,24},
+        {g_InvSortRankTableC,0x92428,24},
+        {g_InvSortRankTableD,0x92440,24},
+        {g_InvTypeRankTableA,0x92458,16},
+        {g_InvTypeRankTableB,0x92468,16},
+        {g_MenuStatusPanelPoints,0x92258,64},
+        {g_MenuStatsListPanelPoints,0x92298,32},
+        {g_MenuBlendColorPanelPoints,0x922D4,32},
+        {g_MenuExpReviewPanelPoints,0x922F4,32},
+        {g_MenuLevelUpPanelPoints,0x92314,56},
+        {g_MenuContextHelpTextIds,0x9234C,8},
+        {g_MenuModSlotIconIndexOffsetByView,0x922B8,4},
+        {g_MenuModSlotFirstGlyphs,0x922BC,8},
+        {g_MenuModSlotSecondGlyphs,0x922C4,8},
+        {g_MenuModSlotThirdGlyphs,0x922CC,4},
+        {g_MenuItemActionStateTable,0x92234,36},
+        {g_MenuEquipSlotGlyphs,0x923C0,16},
+        {g_MenuSortToggleGlyphs,0x922D0,4},
+        {g_InvItemTableRanges,0x923D8,32},
+    };
+    for(unsigned i=0;i<sizeof(menu_tables)/sizeof(*menu_tables);++i) {
+        u8 authored[64];unsigned size=menu_tables[i].size;
+        CHECK(size<=sizeof(authored));
+        CHECK(pe_disc_read(&disc,&exe,menu_tables[i].address-0x10000+0x800,authored,size));
+        CHECK(!memcmp(authored,menu_tables[i].data,size));
+    }
+
     /* Serialized USA sector-table entries 2..3 identify the resident bank.
      * Read the data coordinates directly; no parallel room runtime is needed. */
     CHECK(pe_disc_read(&disc,&exe,0x930d8-0x10000+0x800+2*2,
@@ -722,6 +821,7 @@ int main(void)
     CHECK(item_lookups()==0);
     CHECK(item_addition()==0);
     CHECK(new_game_inventory()==0);
+    CHECK(inventory_sort_comparisons()==0);
     CHECK(weapon_stats()==0);
     CHECK(armor_stats()==0);
     CHECK(equipment_init()==0);

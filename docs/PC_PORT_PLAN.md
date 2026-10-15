@@ -364,9 +364,44 @@ obiektem. Odejmowanie jest teraz wykonywane na liczbach przed dodaniem offsetu.
 Świeży --assets z ASan/UBSan/function i instrumentowanym PsyZ/SDL po tej
 poprawce i rozszerzeniu do czterech banków przeszedł bez raportów. Regresja
 M012 powtórzona w pełnym zestawie przeszła w 155,35 s; pozostała część
-zestawu jest jeszcze w toku. Dalszy input w porcie wybrał boczne wejście do M013
+zestawu jest jeszcze w toku. Dalszy input w porcie przeszedł do M013
 (`0xA80011C8`), gdzie ujawnił niepodpięty opkod 77 (Aya 0:0, script_byte 440).
-Nie jest to dowód filmu szczura ani walki M012.
+Odczyt tokenu i obrazu oryginału PS1 potwierdza, że M013 jest tutaj wariantem
+areny pierwszej walki ze szczurem. Wcześniejsze określenie tego przejścia jako
+bocznego pokoju było niepotwierdzoną interpretacją numeru mapy. Sam abort nie
+dowodzi poprawnego filmu ani przebiegu walki w porcie.
+
+Opkod 77 podpięto do istniejącego Script_SetEntityField1C bez zmiany funkcji.
+72 stany CPU USA 80017EA4 dają `3bf7cb6b9837996d`. Rozszerzony istniejący
+fixture ruchu sprawdza oba settery 77/93, pełny stan aktora i dispatcher.
+Świeży izolowany fixture --assets z ASan/UBSan/function i instrumentowanym
+PsyZ/SDL przeszedł. Izolowany executable z nowym podpięciem jest w trakcie
+przejścia do M013. Główny build pozostawiono bez tej zmiany do zakończenia
+trwającego zestawu 44 testów poprzedniego kandydata.
+
+Przebieg po podpięciu 77 dotarł do opkodu 202 (M013, aktor 2:0,
+script_byte 32). Podpięto istniejący Script_SetEntityField1E6: zapisuje
+16-bitowy indeks tabeli renderera przez natywny RenderObjectEntity.table_index.
+12 stanów CPU USA 80019298 daje `7b1afe75d03b90c1`; fixture kontroluje
+zawężenie, sąsiednie półsłowo, cały rekord aktora i dispatcher. Świeży
+izolowany --assets z ASan/UBSan/function i instrumentowanym PsyZ/SDL przeszedł
+z oboma podpięciami 77/202. Dalszy executable dotarł do opkodu 219
+(M013, aktor 2:0, script_byte 6020), Render_CameraTrackEntityAngle. To obecny
+brak dispatchera; nie uznajemy przez to pierwszej zwykłej walki za działającą.
+
+Pełny zestaw poprzedniego kandydata zakończył się wynikiem 41/44: trzy testy
+miały timeout (bootstrap, Melissa, --assets), bez innych błędów. Log pmset
+potwierdza uśpienie 16 października 01:03:26, Thermal Emergency Sleep
+01:04:01–01:12:29 i dalszy Maintenance Sleep do 01:22:15. Wyników timeout
+nie zaliczono jako PASS. Powtórka jest sekwencyjna, z caffeinate ograniczonym
+do procesu CTest (bez zmian globalnej konfiguracji lub zabezpieczeń termicznych).
+Bootstrap przeszedł ponownie w 142,71 s, Melissa w 125,05 s, a --assets
+w 11,75 s. Wszystkie 44 testy poprzedniego kandydata mają więc wyniki PASS
+po powtórce trzech timeoutów; nie był to jeden nieprzerwany zielony przebieg.
+Następnie główny executable przebudowano z podpięciami 77/202. Dwa powiązane
+testy actor-animation i --assets przeszły na aktualnym buildzie w 12,05 s
+(odpowiednio 0,47 s i 11,58 s). Pełnego zestawu nie powtarzano dla tych dwóch
+podpięć; ich dalsza naturalna ścieżka pozostaje zatrzymana na opkodzie 219.
 
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,

@@ -1935,6 +1935,25 @@ static int original_actor_render_opcodes(void)
     RenderObjectEntity previous_battle=g_PlayerBattleEntity;
     int previous_lock=g_FieldMoveLock;
     u32 script[16]={0};
+    const u32 table_values[]={0,1,0x7fff,0x8000,0xffff,0x10000,0x12345678,0x80000000,0xffffffff,0xffff0007,0xa5a55a5a,0x7fffffff};
+    uint64_t table_hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[202]!=Script_SetEntityField1E6)return 0;
+    for(unsigned i=0;i<sizeof(table_values)/sizeof(table_values[0]);++i){
+        FieldActor actor={0};actor.render_object.table_value30=0x1234;actor.render_object.table_index=0xa55a;
+        FieldActor before=actor,expected=actor;g_CurrentEntity=&actor;
+        int value=(s32)table_values[i];int *args[]={&value};u32 result=Script_SetEntityField1E6(args);
+        const u32 words[]={result,(u32)actor.render_object.table_value30|((u32)actor.render_object.table_index<<16)};
+        for(unsigned w=0;w<2;++w)for(unsigned b=0;b<4;++b)
+            table_hash=(table_hash^((words[w]>>(b*8))&255))*UINT64_C(1099511628211);
+        expected.render_object.table_index=actor.render_object.table_index;
+        if(memcmp(&actor,&expected,sizeof(actor)))return 0;
+        actor=before;u32 program[]={202|(1u<<13),0,table_values[i],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;
+        Script_RunQueue();
+        if(result!=1 || memcmp(&actor,&expected,sizeof(actor)) || node.current.script!=program+5 ||
+           node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+    }
+    if(table_hash!=UINT64_C(0x7b1afe75d03b90c1))return 0;
     s16 rates[]={0,1,32,-2,32767};
     for(unsigned player=0;player<2;++player) for(unsigned i=0;i<5;++i) {
         FieldActor actor={.flags=0x8040};ScriptNode node={.flags=0x8000};
@@ -1977,6 +1996,7 @@ static int original_actor_render_opcodes(void)
     memcpy(g_EntityRenderScratch,saved_view,sizeof(saved_view));
     g_CurrentEntity=previous;g_PlayerEntity=previous_player;g_FieldActorListHead=previous_head;
     g_ScriptNodePool=previous_node;g_ScriptCursor=previous_cursor;g_PlayerBattleEntity=previous_battle;g_FieldMoveLock=previous_lock;
+    puts("Original render table opcode 202: 12 USA CPU narrowing states, adjacent fields, whole actor and dispatcher passed");
     puts("Original actor render opcodes: animation start/wait/finish, player battle mirror and native inherited transforms with negative coordinates passed");
     return 1;
 }
@@ -2781,25 +2801,29 @@ static int original_motion_opcodes(void)
     FieldActor *saved_actor=g_CurrentEntity,*saved_player=g_PlayerEntity;
     ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
     uint64_t velocity=UINT64_C(14695981039346656037),reset=velocity;
-    uint64_t factor_hash=velocity;
-    if(g_ScriptQueueOpcodeHandlers[93]!=Script_SetCurrentEntityField20)return 0;
-    for(unsigned f=0;f<6;++f)for(unsigned p=0;p<12;++p){
-        FieldActor actor={.move_factor=(s32)0x98765432,.flags=patterns[p]};
-        FieldActor before=actor,expected=actor;
-        g_CurrentEntity=&actor;int factor=(s32)factors[f];int *args[]={&factor};
-        u32 result=Script_SetCurrentEntityField20(args);
-        const u32 data[]={result,(u32)actor.move_factor,actor.flags};
-        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<4;++b)
-            factor_hash=(factor_hash^((data[i]>>(b*8))&255))*UINT64_C(1099511628211);
-        expected.move_factor=actor.move_factor;
-        if(memcmp(&expected,&actor,sizeof(actor)))return 0;
-        actor=before;u32 program[]={93|(1u<<13),0,factors[f],32,0};
-        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
-        g_ScriptNodePool=&node;Script_RunQueue();
-        if(result!=1 || memcmp(&expected,&actor,sizeof(actor)) ||
-           node.current.script!=program+5 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+    const unsigned scalar_ops[]={77,93};
+    int (*scalar_handlers[])(int **)={Script_SetEntityField1C,Script_SetCurrentEntityField20};
+    for(unsigned op=0;op<2;++op){
+        uint64_t factor_hash=velocity;
+        if(g_ScriptQueueOpcodeHandlers[scalar_ops[op]]!=scalar_handlers[op])return 0;
+        for(unsigned f=0;f<6;++f)for(unsigned p=0;p<12;++p){
+            FieldActor actor={.anim_step=(s32)0x98765432,.move_factor=(s32)0x98765432,.flags=patterns[p]};
+            FieldActor before=actor,expected=actor;
+            g_CurrentEntity=&actor;int factor=(s32)factors[f];int *args[]={&factor};
+            u32 result=scalar_handlers[op](args);
+            const u32 data[]={result,(u32)(op?actor.move_factor:actor.anim_step),actor.flags};
+            for(unsigned i=0;i<3;++i)for(unsigned b=0;b<4;++b)
+                factor_hash=(factor_hash^((data[i]>>(b*8))&255))*UINT64_C(1099511628211);
+            if(op)expected.move_factor=actor.move_factor;else expected.anim_step=actor.anim_step;
+            if(memcmp(&expected,&actor,sizeof(actor)))return 0;
+            actor=before;u32 program[]={scalar_ops[op]|(1u<<13),0,factors[f],32,0};
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+            g_ScriptNodePool=&node;Script_RunQueue();
+            if(result!=1 || memcmp(&expected,&actor,sizeof(actor)) ||
+               node.current.script!=program+5 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+        }
+        if(factor_hash!=UINT64_C(0x3bf7cb6b9837996d))return 0;
     }
-    if(factor_hash!=UINT64_C(0x3bf7cb6b9837996d))return 0;
     if(g_ScriptQueueOpcodeHandlers[101]!=Entity_ClearMotionVectors ||
        g_ScriptQueueOpcodeHandlers[102]!=Entity_ComputeVelocity)return 0;
     for(unsigned player=0;player<2;++player)for(unsigned f=0;f<6;++f)
@@ -2854,7 +2878,7 @@ static int original_motion_opcodes(void)
     if(velocity!=UINT64_C(0xd151bdfd099e675a) || reset!=UINT64_C(0x137482f2419b4165)){
         fprintf(stderr,"Motion opcode hashes %016llx %016llx\n",(unsigned long long)velocity,(unsigned long long)reset);return 0;}
     puts("Original motion opcodes: 432 velocity, 96 reset and 128 actor flag20 USA MIPS states, native player scaling, wrap and full dispatcher passed");
-    puts("Original movement factor opcode 93: 72 USA CPU states, whole-actor guards and native dispatcher passed");
+    puts("Original animation step/movement factor opcodes 77/93: 144 USA CPU states, whole-actor guards and native dispatcher passed");
     return 1;
 }
 

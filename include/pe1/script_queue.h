@@ -52,6 +52,8 @@ int Script_ResetRenderState(int **unused);
 int Script_CondBranch(int **args);
 int Script_GetMenuChoice(int **args);
 int Script_SetCurrentEntityField20(int **args);
+int Script_SetEntityField1C(int **args);
+int Script_SetEntityField1E6(int **args);
 int Scene_TestGlobalFlags(int **args);
 int Scene_SetGlobalFlags(int **args);
 int Scene_ClearGlobalFlags(int **args);

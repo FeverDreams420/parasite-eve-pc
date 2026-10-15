@@ -5,6 +5,7 @@
 void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_status.h"
+#include "pe1/battle_main.h"
 #include "pe1/field_sfx.h"
 #include "pe1/psyq_callbacks.h"
 #include "pe1/boot.h"
@@ -2637,6 +2638,55 @@ static int original_hud_packet_initialization(void)
     return 1;
 }
 
+static int original_spell_effects(PeDisc *disc,PeDiscFile *executable)
+{
+    u8 sound_ids[40];
+    if(!pe_disc_read(disc,executable,0x10760-0x10000+0x800,sound_ids,sizeof(sound_ids)) ||
+       memcmp(sound_ids,&g_BattleActionSoundIds,sizeof(sound_ids)))return 0;
+    Combatant actor={0},target={0};BattleEntity entity={0};BattleAttributes attributes={0};
+    RenderAnimationDataHeader animation={0};animation.frame_count=9;
+    void *old_animation=g_GameState.bank_rows[0][4];g_GameState.bank_rows[0][4]=&animation;
+    Combatant *old_actor=g_ActiveActor;g_ActiveActor=&actor;
+    u32 old_flags=g_GameStateFlags,old_random=Psyz_RandState();int old_lock=D_8009D2E8;
+    u16 old_timer=g_ActorEffectFlag100Timer;SavePromptBlock old_scan=g_BattleScanPanel;
+    const u16 hp[][2]={{45,0},{45,44},{9999,9999},{45,65530}};
+    const s32 energy[]={0,100<<16,INT32_MIN};
+    const u32 pairs[]={0,0xAAAAA,0x55555,0xFFFFF},seeds[]={0x12345678,0x87654321};
+    uint64_t hash=UINT64_C(14695981039346656037);
+#define HASH_EFFECT(value,bytes) do { \
+    u32 word=(u32)(value); \
+    for(unsigned byte=0;byte<(bytes);++byte)hash=(hash^((word>>(byte*8))&255))*UINT64_C(1099511628211); \
+} while(0)
+    for(unsigned spell=0;spell<20;++spell)for(unsigned status=0;status<256;++status)
+    for(unsigned reduced=0;reduced<2;++reduced)for(unsigned pair=0;pair<4;++pair)for(unsigned seed=0;seed<2;++seed) {
+        memset(&actor,0,sizeof(actor));memset(&target,0,sizeof(target));memset(&entity,0,sizeof(entity));
+        attributes.effectFlags=reduced*0x200;actor.attributes=&attributes;
+        actor.maxHP=hp[status/64][0];actor.curHP=hp[status/64][1];actor.exp_or_acc=energy[status%3];
+        actor.maxAtk=100<<16;actor.stateFlags=0x12341000|status;
+        target.coreFlags=0xA5A55A5A;target.statusFlags2=pairs[pair];entity.core=&target;
+        entity.entityFlags=0x240;entity.actionMode=1;entity.animFrame=7<<16;entity.animPrev.fixed=3<<16;
+        g_GameStateFlags=2;g_BattleResultFlags=0xA5A55A5A;D_8009D2E8=0x1234;
+        g_ActorEffectFlag100Timer=77;g_BattleActiveEntity=NULL;Psyz_Srand(seeds[seed]);
+        Battle_ApplySpellEffect(spell,&entity);
+        HASH_EFFECT(actor.curHP,2);HASH_EFFECT(actor.exp_or_acc,4);HASH_EFFECT(actor.stateFlags,4);
+        HASH_EFFECT(target.coreFlags,4);HASH_EFFECT(g_BattleResultFlags,4);HASH_EFFECT(D_8009D2E8,4);
+        HASH_EFFECT(g_ActorEffectFlag100Timer,2);HASH_EFFECT(g_BattleActiveEntity==&entity,1);
+        HASH_EFFECT(entity.entityFlags,4);HASH_EFFECT(entity.actionMode,1);HASH_EFFECT(entity.animLastFrame,1);
+        HASH_EFFECT(entity.animFrame,4);HASH_EFFECT(entity.animPrev.fixed,4);HASH_EFFECT(entity.actionData==&animation,1);
+        HASH_EFFECT(Psyz_RandState(),4);
+    }
+#undef HASH_EFFECT
+    g_GameState.bank_rows[0][4]=old_animation;g_ActiveActor=old_actor;g_GameStateFlags=old_flags;
+    D_8009D2E8=old_lock;g_ActorEffectFlag100Timer=old_timer;g_BattleScanPanel=old_scan;Psyz_Srand(old_random);
+    /* Actual USA 80024250 and Entity_SetActionMode 8001A680, with only the
+     * PS1 BIOS rand service emulated. Animation input is a valid 9-frame header. */
+    if(hash!=UINT64_C(0x8ac4e547f4235e4d)) {
+        fprintf(stderr,"Original PE effects hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
+    }
+    puts("Original PE effects: 81,920 cases for all 20 commands match USA MIPS, including Scan, Confuse animation and PE cost");
+    return 1;
+}
+
 static int original_save_card_images(PeDisc *disc)
 {
     PeDiscFile archive,exe;
@@ -3063,7 +3113,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
-    if(!original_save_card_images(disc) || !original_hud_packet_initialization())valid=0;
+    if(!original_save_card_images(disc) || !original_hud_packet_initialization() || !original_spell_effects(disc,executable))valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

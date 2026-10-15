@@ -19,7 +19,6 @@ extern u8 g_BattleSaveOverlayActive, g_BattleSpritePrimCountdown;
 extern u32 g_BattleExpReward;
 extern u16 g_BattlePeBonusReward;
 
-extern unsigned int g_BattleResultFlags;
 extern int g_BattleAttackAnimFrame;
 extern u32 g_FrameRngCounter;
 extern s16 g_BattlePlayerAimHeight; /* battle camera height: player's model Y - 100 */

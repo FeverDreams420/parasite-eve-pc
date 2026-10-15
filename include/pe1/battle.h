@@ -5,6 +5,26 @@
 #include "pe1/battle_ailment.h"
 #include "pe1/field_actor.h"
 
+/* Scan result word and message overlay fields. */
+typedef union BattleResultFlags {
+    u32 flags;
+    struct {
+        unsigned int messageId : 8;
+        unsigned int infoPanel : 2;
+        unsigned int scanPairC0 : 2;
+        unsigned int scanPair3 : 1;
+        unsigned int scanPairC : 1;
+        unsigned int scanPair30 : 1;
+        unsigned int scanPairC000 : 1;
+        unsigned int scanPair30000 : 1;
+        unsigned int scanPair3000 : 1;
+        unsigned int scanPairC00 : 1;
+        unsigned int reserved19 : 13;
+    } bits;
+} BattleResultFlags;
+
+PE1_STATIC_ASSERT(sizeof(BattleResultFlags) == 4, battle_result_flags_size);
+
 typedef struct BattleRewardSlot {
     s16 id;
     s16 extra;

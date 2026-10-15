@@ -34,6 +34,7 @@ add_library(parasite-eve-original OBJECT
     src/main/battle/turn.c
     src/main/battle/enemy_actions.c
     src/main/battle/status_hud.c
+    src/main/battle/attack.c
     src/main/aya/stats.c
     src/main/item/active_list.c
     src/main/item/actions.c

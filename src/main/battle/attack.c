@@ -5,7 +5,6 @@
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_main.h"
 #include "pe1/battle_runtime.h"
-#include "pe1/battle_word_records.h"
 #include "pe1/entity_animation.h"
 #include "pe1/field_movement.h"
 #include "pe1/gte_types.h"
@@ -13,8 +12,7 @@
 #include "pe1/item_ids.h"
 #include "pe1/random.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* State shared by the original battle action functions. */
 u8 g_BattleActionAnimModes[4];
 u8 g_BattleActionQueueCount;
 u8 g_BattleActionIndex;
@@ -481,10 +479,10 @@ void Battle_ApplyDamage(int damageKind) {
         g_ActiveActor->curHP = g_ActiveActor->maxHP;
         break;
     case ITEM_SUPER_JUNK:
-        g_ActiveActor->exp_or_acc += g_ActiveActor->maxAtk / 4;
+        g_ActiveActor->exp_or_acc = (s32)((u32)g_ActiveActor->exp_or_acc + (u32)(g_ActiveActor->maxAtk / 4));
         break;
     case ITEM_DUPER_JUNK:
-        g_ActiveActor->exp_or_acc += g_ActiveActor->maxAtk / 2;
+        g_ActiveActor->exp_or_acc = (s32)((u32)g_ActiveActor->exp_or_acc + (u32)(g_ActiveActor->maxAtk / 2));
         break;
     case ITEM_CURE_P: {
         Combatant *target = g_ActiveActor;
@@ -572,10 +570,10 @@ void Battle_ApplyDamage(int damageKind) {
 
 s32 rand(void);
 u16 g_ActorEffectFlag100Timer;
-void *g_BattleActiveEntity;
+SavePromptBlock g_BattleScanPanel;
 
-/* The acting combatant, reloaded after every structure store as retail does. */
-#define ACTOR g_ActiveActorRecord.actor
+/* The currently acting combatant. */
+#define ACTOR g_ActiveActor
 
 /* Applies Parasite Energy technique idx (command - PE_SPELL_COMMAND_BASE) cast
  * by the player on target ent, then charges its PE cost. */
@@ -584,10 +582,10 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
     s32 dmg;
 
     dmg = 0;
-    if (!(g_GameStateFlagsRecord.flags & 2)) {
+    if (!(g_GameStateFlags & 2)) {
         soundTable = g_BattleActionSoundIds;
-        Akao_SendPositionalCmdStereo(soundTable.soundId[idx], 1, g_PlayerEntityRecord.entity->posX.parts.integer, g_PlayerEntityRecord.entity->posY.parts.integer, g_PlayerEntityRecord.entity->posZ.parts.integer);
-        ACTOR = g_PlayerEntityRecord.entity->core;
+        Akao_SendPositionalCmdStereo(soundTable.soundId[idx], 1, D_8009D254->posX.parts.integer, D_8009D254->posY.parts.integer, D_8009D254->posZ.parts.integer);
+        ACTOR = D_8009D254->core;
     }
     switch (idx) {
     case PE_SPELL_HEAL_1:
@@ -615,7 +613,7 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
         }
         if ((ACTOR->stateFlags & AYA_CONFUSION_MASK) != AYA_CONFUSION_MASK) {
             ACTOR->stateFlags &= ~AYA_CONFUSION_MASK;
-            g_FieldMoveLockRecord.flags &= ~FIELD_MOVE_CONFUSED;
+            D_8009D2E8 &= ~FIELD_MOVE_CONFUSED;
         }
         if ((ACTOR->stateFlags & AYA_DARKNESS_MASK) != AYA_DARKNESS_MASK) {
             ACTOR->stateFlags &= ~AYA_DARKNESS_MASK;
@@ -630,35 +628,37 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
         {
             Combatant *p = ACTOR;
             p->stateFlags |= AYA_BARRIER;
-            p->exp_or_acc -= p->maxAtk / 3;
+            p->exp_or_acc = (s32)((u32)p->exp_or_acc - (u32)(p->maxAtk / 3));
         }
         break;
     case PE_SPELL_SCAN:
         {
             /* Scan: note which of the target's status pairs read 2. */
             Combatant *e = ent->core;
-            g_BattleResultFlagsRecord.bits.scanPair3 = (e->statusFlags2 & 3) == 2;
-            g_BattleResultFlagsRecord.bits.scanPairC = (e->statusFlags2 & 0xC) == 8;
-            g_BattleResultFlagsRecord.bits.scanPair30 = (e->statusFlags2 & 0x30) == 0x20;
-            g_BattleResultFlagsRecord.bits.scanPairC000 = (e->statusFlags2 & 0xC000) == 0x8000;
-            g_BattleResultFlagsRecord.bits.scanPair30000 = (e->statusFlags2 & 0x30000) == 0x20000;
-            g_BattleResultFlagsRecord.bits.scanPair3000 = (e->statusFlags2 & 0x3000) == 0x2000;
-            g_BattleResultFlagsRecord.bits.scanPairC00 = (e->statusFlags2 & 0xC00) == 0x800;
-            if (((*(u32 *)&((Combatant *)ent->core)->statusFlags2 >> 6) & 3) == 2) {
-                g_BattleResultFlagsRecord.bits.scanPairC0 = 1;
+            BattleResultFlags result;result.flags=g_BattleResultFlags;
+            result.bits.scanPair3 = (e->statusFlags2 & 3) == 2;
+            result.bits.scanPairC = (e->statusFlags2 & 0xC) == 8;
+            result.bits.scanPair30 = (e->statusFlags2 & 0x30) == 0x20;
+            result.bits.scanPairC000 = (e->statusFlags2 & 0xC000) == 0x8000;
+            result.bits.scanPair30000 = (e->statusFlags2 & 0x30000) == 0x20000;
+            result.bits.scanPair3000 = (e->statusFlags2 & 0x3000) == 0x2000;
+            result.bits.scanPairC00 = (e->statusFlags2 & 0xC00) == 0x800;
+            if (((((Combatant *)ent->core)->statusFlags2 >> 6) & 3) == 2) {
+                result.bits.scanPairC0 = 1;
             } else {
-                g_BattleResultFlagsRecord.bits.scanPairC0 = 0;
+                result.bits.scanPairC0 = 0;
             }
-            g_BattleResultFlagsRecord.bits.messageId = 0x4B;
+            result.bits.messageId = 0x4B;
             g_BattleActiveEntity = ent;
-            g_BattleResultFlagsRecord.bits.infoPanel = 1;
+            result.bits.infoPanel = 1;
+            g_BattleResultFlags = result.flags;
             dmg = 0x320000;
         }
         break;
     case PE_SPELL_SLOW:
         /* Slow: certain when the target's pair reads 2, a coin flip at 0. */
         {
-            s32 pair = (*(u32 *)&((Combatant *)ent->core)->statusFlags2 >> 8) & 3;
+            s32 pair = (((Combatant *)ent->core)->statusFlags2 >> 8) & 3;
             if (pair != 0 ? pair == 2 : !(rand() & 1)) {
                 Combatant *e = ent->core;
                 e->coreFlags |= 1;
@@ -670,11 +670,11 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
         /* Haste: also cures a stiffness affliction. */
         {
             Combatant *p = ACTOR;
-            COMBATANT_STATE_BITS(p).haste = 1;
+            p->stateFlags |= AYA_HASTE;
             g_ActorEffectFlag100Timer = 0x1C2;
-            if (COMBATANT_STATE_BITS(p).stiffness == AYA_STIFFNESS_SLOW_VALUE ||
-                COMBATANT_STATE_BITS(p).stiffness == AYA_STIFFNESS_LOCK_VALUE) {
-                COMBATANT_STATE_BITS(p).stiffness = 0;
+            if (((p->stateFlags >> 6) & 3) == AYA_STIFFNESS_SLOW_VALUE ||
+                ((p->stateFlags >> 6) & 3) == AYA_STIFFNESS_LOCK_VALUE) {
+                p->stateFlags &= ~AYA_STIFFNESS_MASK;
             }
             dmg = 0xC80000;
         }
@@ -682,7 +682,7 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
     case PE_SPELL_CONFUSE:
         /* Confuse: certain when the target's pair reads 2, a coin flip at 0. */
         {
-            s32 pair = (*(u32 *)&((Combatant *)ent->core)->statusFlags2 >> 0xA) & 3;
+            s32 pair = (((Combatant *)ent->core)->statusFlags2 >> 0xA) & 3;
             if (pair != 0 ? pair == 2 : !(rand() & 1)) {
                 s32 r = rand();
                 Combatant *e = ent->core;
@@ -715,7 +715,7 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
         }
         if ((ACTOR->stateFlags & AYA_CONFUSION_MASK) != AYA_CONFUSION_MASK) {
             ACTOR->stateFlags &= ~AYA_CONFUSION_MASK;
-            g_FieldMoveLockRecord.flags &= ~FIELD_MOVE_CONFUSED;
+            D_8009D2E8 &= ~FIELD_MOVE_CONFUSED;
         }
         if ((ACTOR->stateFlags & AYA_DARKNESS_MASK) != AYA_DARKNESS_MASK) {
             ACTOR->stateFlags &= ~AYA_DARKNESS_MASK;
@@ -735,21 +735,14 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
     }
     /* Armor attribute 0x200 cuts the PE cost by a third. */
     if (!(ACTOR->attributes->effectFlags & 0x200)) {
-        ACTOR->exp_or_acc -= dmg;
+        ACTOR->exp_or_acc = (s32)((u32)ACTOR->exp_or_acc - (u32)dmg);
         return;
     }
-    ACTOR->exp_or_acc -= (dmg * 2) / 3;
+    ACTOR->exp_or_acc = (s32)((u32)ACTOR->exp_or_acc - (u32)((dmg * 2) / 3));
 }
 
-/* Advances Aya's 17-state action, saving her pose, visiting the selected
- * targets, and restoring normal animation/visibility at completion.
- * The saved pose is written through the position and rotation records:
- * their field stores may alias the player's fields, which keeps retail's
- * load/store interleaving without pins.
- * Case 9 writes the evasion outcome record and the target's core flag bits
- * as fields, so the reaction byte is read back after the flag stores.
- * Matching debt: pins and empty compiler barriers retain
- * retail allocation and scheduling in the remaining cases. */
+/* Advances Aya's 17-state action, visiting the selected targets and restoring
+ * her saved pose, animation and visibility when the action completes. */
 s32 Battle_StepAyaAction(void)
 {
   BattleEntity *targetEntity;
@@ -1152,3 +1145,6 @@ s32 Battle_StepAyaAction(void)
 
   return finished;
 }
+
+/* Original USA battle action sounds at 0x80010760. */
+const BattleActionSoundTable g_BattleActionSoundIds = {{1170,1172,1174,1176,1178,1180,1182,1184,1186,1188,1190,1192,1194,1170,1170,1170,1170,1170,1196,1201}};

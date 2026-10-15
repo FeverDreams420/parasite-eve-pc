@@ -2,6 +2,7 @@
 #define PE1_BATTLE_RUNTIME_H
 
 #include "pe1/game_state.h"
+#include "pe1/save_slot_metadata.h"
 
 #include "pe1/game_state_types.h"
 
@@ -41,7 +42,6 @@ extern s8 g_BattleTargetCycleMode; /* item target mode: 0, or 4..7 while picking
 /* Actions left in the battle turn (Save_ResetGlobalFlags clears it). */
 extern unsigned char g_BattleRemainingActions;
 extern u8 g_BattleActionAnimModes[4];
-extern unsigned int g_BattleResultFlags;
 /* Message overlay step of Menu_SaveOverlayDraw (0 idle, 1 show, 2 wait),
  * and the frames left on the actor effect that flag 0x100 marks. */
 extern u8 g_BattleSaveOverlayActive;

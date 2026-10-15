@@ -487,6 +487,10 @@ static int callback_list_storage(void)
     g_FieldFxActiveTaskSlot=NULL;
     if(FieldFx_AllocCallbackList(&out,0,16,3,record_list_callback)!=-1) return 0;
     if(&D_800F336C!=&g_FieldFxSpriteParams.palette || &D_800F3374!=&g_FieldFxSpriteParams.depth) return 0;
+    if(&g_FieldFxTpageSlot1!=g_FieldFxTpageSlots+1 || &g_FieldFxTpageSlot2!=g_FieldFxTpageSlots+2 ||
+        &g_FieldFxTpageSlot3!=g_FieldFxTpageSlots+3 || &g_FieldFxTpageSlot4!=g_FieldFxTpageSlots+4 ||
+        &g_FieldFxTpageSlot9!=g_FieldFxTpageSlots+9 || &g_FieldFxTpageSlot11!=g_FieldFxTpageSlots+11 ||
+        &g_FieldFxPaletteEntry3!=g_FieldFxPaletteTable+3 || &g_FieldFxTpageTableEntry1!=g_FieldFxTpageTable+1)return 0;
     /* Run the real M005 drift callback through the original list dispatcher:
      * age 6 moves once more before terminating; halfword motion wraps. */
     memset(arena,0xa5,sizeof(arena));
@@ -1040,7 +1044,8 @@ static int original_glow_resident_constants(void)
         {0x800e0d40,g_PointSpriteSlotSizes,7*sizeof(u16)},
         {0x800e0d6c,g_PointSpriteScript,22*sizeof(int)},
         {0x800c22a0,&g_FieldFxBlackColor,sizeof(RenderColor)},
-        {0x800e1204,g_FieldFxPaletteTable,6*sizeof(u16)}
+        {0x800e1204,g_FieldFxPaletteTable,6*sizeof(u16)},
+        {0x800e11e4,g_FieldFxTpageSlots,sizeof(g_FieldFxTpageSlots)}
     };
     PeDisc disc={0}; PeDiscFile file;
     u8 header[32], raw[128];

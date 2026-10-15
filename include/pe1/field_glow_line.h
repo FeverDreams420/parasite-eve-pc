@@ -45,6 +45,6 @@ PE1_STATIC_ASSERT(sizeof(FieldLineG2Packet) == ((sizeof(RenderGpuTag) + 16 + _Al
 PE1_STATIC_ASSERT(sizeof(FieldGlowQuadPacket) == ((sizeof(RenderGpuTag) + 48 + _Alignof(FieldGlowQuadPacket) - 1) / _Alignof(FieldGlowQuadPacket)) * _Alignof(FieldGlowQuadPacket), field_glow_quad_size);
 
 /* Texture page of the shared effect sheet. */
-extern u16 g_FieldFxTpageTableEntry1;
+#include "pe1/field_texture_tables.h"
 
 #endif /* PE1_FIELD_GLOW_LINE_H */

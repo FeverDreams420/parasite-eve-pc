@@ -3251,6 +3251,83 @@ static void fx_seed_camera_motion(unsigned pose,FxCommonShortVec3 **shorts)
     g_FxCommonMotionShift0=g_FxCommonMotionShift1=g_FxCommonMotionRemaining0=g_FxCommonMotionRemaining1=(s16)0xa5a5;
 }
 
+static int original_fx_scene_init(PeDisc *disc)
+{
+    PeDiscFile archive,exe;
+    if(!pe_disc_find(disc,"PE.IMG",&archive) || !pe_disc_find(disc,"SLUS_006.62",&exe) ||
+       !pe_disc_read(disc,&exe,0x930d8-0x10000+0x800+76*2,g_PeImageSectorTable+76,10))return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+    if(!SDL_Init(SDL_INIT_EVENTS))return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;ResetGraph(0);Boot_InitMemoryLayout();
+    CdRom_BindImage(disc,&archive);g_GameState.pe_image_base_lba=archive.sector;
+    fx_image_io=1;glyph_reads=glyph_polls=fx_read_failure=fx_poll_failure=0;
+    const unsigned rooms[]={0xb7,0xa1,0x5d,0x104,0x7d,0x122,0x179,0x2e,0x3a,0xbf};
+    const unsigned areas[]={0,0x80,0x208,0xb8,0xc0,0xd0,0xd8,0xe0,0xe4,0x148,0x160,0x178,0x180,0x1c0,0x1c8};
+    const unsigned flags[]={0,0xffffff,0x555555};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+#define SCENE_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+    for(unsigned variant=0;variant<10;++variant)for(unsigned night=0;night<2;++night)
+    for(unsigned flag=0;flag<3;++flag)for(unsigned area=0;area<15;++area){
+        g_ScriptVariableBank[SCRIPT_VAR_ROOM]=rooms[variant];g_ScriptVariableBank[SCRIPT_VAR_AREA]=areas[area];
+        g_ScriptVariableBank[SCRIPT_VAR_FLAGS]=(flags[flag]&~0x2000u)|(night?0x2000u:0);
+        /* Re-entry must not inherit animation or reserved fields from the
+         * previous visit; the original would have reloaded the overlay. */
+        memset(&g_FxCommonRuntime,0xa5,sizeof(g_FxCommonRuntime));
+        memset(g_FxCommonEffectSetup,0xa5,sizeof(g_FxCommonEffectSetup));
+        memset(g_FxCommonMotionPositions,0xa5,sizeof(g_FxCommonMotionPositions));
+        int result=FxCommon_InitScene();
+        if(result || g_FxCommonRouteNodeCount!=132){fprintf(stderr,"FX scene init case %u result=%d routes=%d\n",cases,result,g_FxCommonRouteNodeCount);return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;}
+        for(unsigned i=0;i<10;++i)if(g_FxCommonRuntime.pairedNodes[i]!=&g_FxCommonRecords[2*i] ||
+           g_FxCommonRuntime.pairedNodes[10+i]!=&g_FxCommonRecords[2*i+1])return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+        for(unsigned i=0;i<11;++i)if(g_FxCommonSceneNodes[i]!=&g_FxCommonRecords[22+i])return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+        for(unsigned i=0;i<132;++i)if(g_FxCommonRouteNodes[i]!=&g_FxCommonRecords[55+i])return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+        if(g_FxCommonRuntime.node0!=&g_FxCommonRecords[20] || g_FxCommonType51Node!=&g_FxCommonRecords[21] ||
+           g_FxCommonRuntime.node25!=&g_FxCommonRecords[33] || g_FxCommonType54Node!=&g_FxCommonRecords[34])return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+        const unsigned path_ids[]={37,39,38,40,35,36},echo_ids[]={41,43,42,44};
+        for(unsigned i=0;i<6;++i)if(g_FxCommonPathNodes[i]!=&g_FxCommonRecords[path_ids[i]])return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+        for(unsigned i=0;i<4;++i)if(g_FxCommonEchoNodes[i]!=&g_FxCommonRecords[echo_ids[i]] ||
+           g_FxCommonType26Nodes[i]!=&g_FxCommonRecords[47+i])return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+        for(unsigned i=0;i<2;++i)if(g_FxCommonType21Nodes[i]!=&g_FxCommonRecords[45+i] ||
+           g_FxCommonLodNodes[i]!=&g_FxCommonRecords[51+i] || g_FxCommonPairedNodes[i]!=&g_FxCommonRecords[53+i])return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+        for(unsigned i=0;i<sizeof(g_FxCommonEffectSetup);++i)SCENE_PUT(((u8 *)g_FxCommonEffectSetup)[i],1);
+        SCENE_PUT(g_FxCommonRouteNodeCount,4);
+        FxCommonNode *ordered[200],*node;unsigned count=0;FxCommon_BeginRecordIteration();
+        while((node=FxCommon_NextRecord())){if(count>=200)return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;ordered[count++]=node;}
+        SCENE_PUT(count,2);if(count!=187)return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+        for(unsigned i=0;i<count;++i){node=ordered[i];unsigned ident=node->id,kind=ident<20 || ident>=51?2:ident==20?0:1;
+            SCENE_PUT(ident,2);SCENE_PUT(kind,1);SCENE_PUT(node->type,2);
+            if(kind==2){SCENE_PUT(node->middleKind,2);SCENE_PUT(node->nearKind,2);SCENE_PUT(node->lod.margin,2);
+                SCENE_PUT(node->lod.farDepth,4);SCENE_PUT(node->lod.nearDepth,4);}
+            else if(kind==1)SCENE_PUT(node->margin,2);
+            SCENE_PUT((u8 *)node->resource-(u8 *)g_FxCommonModelTable,4);
+            for(unsigned j=0;j<3;++j)SCENE_PUT(kind==2?node->lod.matrix.t[j]:node->matrix.t[j],4);
+            for(unsigned j=0;j<3;++j)SCENE_PUT(kind==2?node->lod.seed.component[j]:node->seed.component[j],2);
+            SCENE_PUT(node->bucket,2);SCENE_PUT(fx_node_id(node->parent),2);
+            SCENE_PUT(fx_node_id(node->previous),2);SCENE_PUT(fx_node_id(node->next),2);
+        }
+        SCENE_PUT(g_FxCommonRoomVariant,2);SCENE_PUT(g_FxCommonViewMode,2);
+        SCENE_PUT(g_FxCommonPlaying,1);SCENE_PUT(g_FxCommonPlayAdvance,1);SCENE_PUT(g_FxCommonReplayCamera,1);
+        SCENE_PUT(g_FxCommonPlayTicks,4);SCENE_PUT(g_FxCommonPlayFrame,4);SCENE_PUT(D_8019C00D,1);SCENE_PUT(D_8019C02E,2);
+        s32 *positions[]={&g_FxCommonCameraPosition.x,&g_FxCommonCameraTarget.x};
+        for(unsigned i=0;i<2;++i)for(unsigned j=0;j<3;++j)SCENE_PUT(positions[i][j],4);
+        for(unsigned i=0;i<sizeof(g_FxCommonMotionPositions);++i)SCENE_PUT(((u8 *)g_FxCommonMotionPositions)[i],1);
+        ++cases;
+    }
+#undef SCENE_PUT
+    for(unsigned failure=0;failure<4;++failure){
+        CdRom_BindImage(disc,&archive);
+        glyph_reads=glyph_polls=0;fx_read_failure=failure<2?failure+1:0;fx_poll_failure=failure>=2?failure-1:0;
+        g_FxCommonRouteNodeCount=123;
+        if(FxCommon_InitScene()!=-1 || g_FxCommonRouteNodeCount!=123 ||
+           glyph_reads!=failure%2+1 || glyph_polls!=(failure<2?failure:failure-1))return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+    }
+    CdRom_BindImage(disc,&archive);
+    glyph_reads=glyph_polls=fx_read_failure=fx_poll_failure=0;
+    if(FxCommon_InitScene()!=0 || g_FxCommonRouteNodeCount!=132)return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;
+    fx_image_io=0;
+    if(cases!=900 || hash!=UINT64_C(0x8a8774df804ba8b5)){fprintf(stderr,"Original FX InitScene: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;}
+    puts("Original FX InitScene: 900 USA scene graphs, all ten room variants, both day/night model banks, three flag patterns and 15 entry areas, all node slots, four I/O failures and recovery pass with real image I/O");return 1;
+}
+
 static int original_fx_camera_motion(PeDisc *disc)
 {
     PeDiscFile archive;if(!pe_disc_find(disc,"PE.IMG",&archive) ||
@@ -6504,6 +6581,11 @@ static int script_movie_error_exit(const char *executable)
 int main(int argc, char **argv)
 {
     if(argc==2 && !strcmp(argv[1],"--fx-effects")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_fx_shader_packets() && original_fx_blend() && original_fx_uncompressed_order() && original_fx_shader_pixels() && original_fx_shader_guards()?0:147;}
+    if(argc==2 && !strcmp(argv[1],"--fx-scene")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
+        int result=original_fx_scene_init(&disc);pe_disc_close(&disc);return result?0:149;
+    }
     if(argc==2 && !strcmp(argv[1],"--fx-motion")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

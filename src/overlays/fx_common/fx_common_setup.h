@@ -36,7 +36,8 @@ extern s16 g_FxCommonRouteFarDepths[10];
 extern s16 g_FxCommonRouteNearDepths[10];
 extern GteMatrix g_FxCommonColorMatrix;
 extern GteMatrix g_FxCommonLightMatrix;
-extern FxCommonNode *g_FxCommonRouteNodes[];
+/* Nine authored route groups contain 66 points, with two nodes per point. */
+extern FxCommonNode *g_FxCommonRouteNodes[132];
 extern s32 g_FxCommonPlayFrame;
 extern s16 g_FxCommonRoomVariant;
 void Render_SetupFogLayer(void *);

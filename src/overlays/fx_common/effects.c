@@ -5,6 +5,15 @@
 #include "fx_common_motion.h"
 #include "fx_common_render.h"
 
+/* Original scene playback state, initialized by the overlay image and then
+ * updated by InitScene/StepEffects. */
+s8 D_8019C00D;
+s16 D_8019C02E=1;
+u8 g_FxCommonStartCameraPath=0x3e;
+u8 g_FxCommonPlaying,g_FxCommonPlayAdvance,g_FxCommonReplayCamera;
+s32 g_FxCommonPlayTicks,g_FxCommonPlayFrame;
+FxCommonResourceState g_FxCommonResourceState={.active=-1,.current={.word=-1}};
+
 void FxCommon_MuteMusic(void)
 {
     Akao_Cmd_A9(1, 0);

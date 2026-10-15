@@ -806,7 +806,9 @@ void FxCommon_UnlinkNode(FxCommonNode *node)
  * room and area before the shared effect assets are set up. */
 int FxCommon_SelectRoomVariant(void)
 {
-
+    /* These selectors were -1 in every freshly loaded overlay. */
+    g_FxCommonStartPreset=g_FxCommonAutoPlay=g_FxCommonAutoVariant=-1;
+    g_FxCommonConfirmExit=g_FxCommonConfirmExitVariant=-1;
     FxCommon_InitDisplay();
     if (Save_GetMetadataWindowIndex() == 0)
         g_FxCommonAltFogLayer = 0;
@@ -1021,7 +1023,8 @@ s32 g_FxCommonFrustumSide0,g_FxCommonFrustumSide1,g_FxCommonFrustumSide2,g_FxCom
 s32 g_FxCommonFrustumLength0,g_FxCommonFrustumLength1,g_FxCommonFrustumLength2,g_FxCommonFrustumLength3;
 u8 g_FxCommonPathWrapped,g_FxCommonNight;
 s16 g_FxCommonRoomVariant,g_FxCommonViewMode;
-s32 g_FxCommonStartPreset,g_FxCommonConfirmExit,g_FxCommonConfirmExitVariant,g_FxCommonAutoPlay,g_FxCommonAutoVariant,g_FxCommonAltFogLayer;
+s32 g_FxCommonStartPreset=-1,g_FxCommonConfirmExit=-1,g_FxCommonConfirmExitVariant=-1;
+s32 g_FxCommonAutoPlay=-1,g_FxCommonAutoVariant=-1,g_FxCommonAltFogLayer;
 static _Alignas(16) u8 fx_texture_resources[FX_COMMON_RESOURCE_BYTES],fx_model_resources[FX_COMMON_RESOURCE_BYTES];
 TimRelativeTable *const g_FxCommonTimTable=(TimRelativeTable *)fx_texture_resources;
 TimRelativeTable *const g_FxCommonModelTable=(TimRelativeTable *)fx_model_resources;

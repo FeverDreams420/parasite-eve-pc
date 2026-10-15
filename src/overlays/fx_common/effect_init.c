@@ -92,15 +92,8 @@ int FxCommon_InitScene(void)
     s32 groupVariant;
     s32 resourceOffset;
     FxCommonNode **secondInitialSlot;
-    s16 *rotationCursor;
-    s16 *zCursor;
-    s16 *yCursor;
     FxCommonEffectSetupRecord *setupCursor;
-    s16 *typeCursor;
-    s16 *variantCursor;
-    s16 *initialSubtype;
     FxCommonNode **initialSlots;
-    s16 *subtypeCursor;
     FxCommonNode **secondSlot;
     FxCommonNode **firstSlot;
     FxCommonNode *secondNode;
@@ -136,7 +129,21 @@ int FxCommon_InitScene(void)
     FxCommonPoint8 *point;
 
     if(FxCommon_SelectRoomVariant()<0)return -1;
+    /* Entering a statically linked scene must restore the state formerly
+     * supplied by loading a fresh overlay image, including nonzero defaults. */
+    D_8019C00D=0;D_8019C02E=1;g_FxCommonMarkerFade=1;
+    g_FxCommonViewMode=0;
+    g_FxCommonPlaying=g_FxCommonPlayAdvance=g_FxCommonReplayCamera=0;
+    g_FxCommonPlayTicks=g_FxCommonPlayFrame=0;
+    g_FxCommonCameraPosition=(FxCommonVec3){0};
+    g_FxCommonCameraTarget=(FxCommonVec3){0};
+    g_FxCommonCameraPathRemaining=g_FxCommonCameraPathStep=g_FxCommonCameraPathIndex=0;
+    memset(&g_FxCommonRuntime,0,sizeof(g_FxCommonRuntime));
+    memset(g_FxCommonEffectSetup,0,sizeof(g_FxCommonEffectSetup));
+    memset(g_FxCommonMotionPositions,0,sizeof(g_FxCommonMotionPositions));
     FxCommon_InitNodePools();
+    /* Static linking replaces reloading the overlay's zeroed route counter. */
+    g_FxCommonRouteNodeCount=0;
     FxCommon_InitFadeQuads();
     SetLightMatrix(&g_FxCommonLightMatrix);
     SetColorMatrix(&g_FxCommonColorMatrix);
@@ -161,17 +168,9 @@ int FxCommon_InitScene(void)
     pointIndex = 0;
     initialSlots = g_FxCommonRuntime.pairedNodes;
     secondInitialSlot = initialSlots + 10;
-    initialSubtype = &g_FxCommonEffectSetup[0].subtype;
-    /* Preserve the common base used by the seven setup-field cursors. */
-    subtypeCursor = initialSubtype;
-    rotationCursor = &((FxCommonEffectSetupRecord *)(initialSubtype - 10))->rotation;
-    zCursor = &((FxCommonEffectSetupRecord *)(initialSubtype - 10))->position[2];
-    yCursor = &((FxCommonEffectSetupRecord *)(initialSubtype - 10))->position[1];
-    setupCursor = (FxCommonEffectSetupRecord *)(initialSubtype - 10);
-    typeCursor = &((FxCommonEffectSetupRecord *)(initialSubtype - 10))->type;
-    variantCursor = &((FxCommonEffectSetupRecord *)(initialSubtype - 10))->variant;
+    setupCursor = g_FxCommonEffectSetup;
     firstPointOffset = resourceTable->offsets[0];
-    *subtypeCursor = 0x15;
+    g_FxCommonEffectSetup[0].subtype = 0x15;
     g_FxCommonEffectSetup[0].variant = 0x16;
     g_FxCommonEffectSetup[0].type = 0x17;
     g_FxCommonEffectSetup[0].motionIndices[0] = 0x1B;
@@ -365,34 +364,28 @@ int FxCommon_InitScene(void)
     g_FxCommonEffectSetup[9].enabled = (g_ScriptVariableBank[SCRIPT_VAR_FLAGS] >> 0x10) & 1;
     for (; pointIndex < 10; ++pointIndex) {
         setupCursor->position[0] = pointList->x;
-        *yCursor = (s16) (u16)pointList->y;
+        setupCursor->position[1] = (s16) (u16)pointList->y;
         pointZ = (u16)pointList->z;
-        *zCursor = (s16) pointZ;
-        firstInitialNode = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, *subtypeCursor, *variantCursor, *typeCursor, g_FxCommonEffectSetup[pointIndex].parameter38, g_FxCommonEffectSetup[pointIndex].parameter3c, Draw_GetTimTableEntry(g_FxCommonModelTable, 0));
+        setupCursor->position[2] = (s16) pointZ;
+        firstInitialNode = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, setupCursor->subtype, setupCursor->variant, setupCursor->type, g_FxCommonEffectSetup[pointIndex].parameter38, g_FxCommonEffectSetup[pointIndex].parameter3c, Draw_GetTimTableEntry(g_FxCommonModelTable, 0));
         initialSlots[pointIndex] = firstInitialNode;
         firstInitialNode->lod.matrix.t[0] = setupCursor->position[0];
-        (initialSlots[pointIndex])->lod.matrix.t[1] = (s32) *yCursor;
-        (initialSlots[pointIndex])->lod.matrix.t[2] = (s32) *zCursor;
+        (initialSlots[pointIndex])->lod.matrix.t[1] = (s32) setupCursor->position[1];
+        (initialSlots[pointIndex])->lod.matrix.t[2] = (s32) setupCursor->position[2];
         initialNode = initialSlots[pointIndex];
-        (initialNode)->lod.seed.component[1] = (u16) *rotationCursor;
+        (initialNode)->lod.seed.component[1] = (u16) setupCursor->rotation;
         initialResource = Draw_GetTimTableEntry(g_FxCommonModelTable, 0);
-        initialNodeType = *typeCursor;
-        initialNodeVariant = *variantCursor;
-        initialNodeSubtype = *subtypeCursor;
+        initialNodeType = setupCursor->type;
+        initialNodeVariant = setupCursor->variant;
+        initialNodeSubtype = setupCursor->subtype;
         secondInitialNode = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, initialNodeSubtype, initialNodeVariant, initialNodeType, 0x3E8, 0x1F4, initialResource);
         *secondInitialSlot = secondInitialNode;
         secondInitialNode->lod.matrix.t[0] = setupCursor->position[0];
-        (*secondInitialSlot)->lod.matrix.t[1] = (s32) *yCursor;
-        (*secondInitialSlot)->lod.matrix.t[2] = (s32) *zCursor;
-        (*secondInitialSlot)->lod.seed.component[1] = (u16) *rotationCursor;
+        (*secondInitialSlot)->lod.matrix.t[1] = (s32) setupCursor->position[1];
+        (*secondInitialSlot)->lod.matrix.t[2] = (s32) setupCursor->position[2];
+        (*secondInitialSlot)->lod.seed.component[1] = (u16) setupCursor->rotation;
         pairedInitialNode = *secondInitialSlot;
         (pairedInitialNode)->lod.seed.component[0] = 0x800;
-        typeCursor += 26;
-        variantCursor += 26;
-        subtypeCursor += 26;
-        yCursor += 26;
-        zCursor += 26;
-        rotationCursor += 26;
         secondInitialSlot++;
         pointList++;
         setupCursor++;
@@ -476,8 +469,8 @@ int FxCommon_InitScene(void)
         pointIndex = 0;
         pointList = (FxCommonPoint8 *)((u8 *)resourceData + pointOffset);
         pointCount = ((FxCommonPointList *)pointList)->count;
+        if(pointCount<0 || pointCount>(132-g_FxCommonRouteNodeCount)/2)return -3;
         ++pointList;
-        /* Separate capture preserves GCC 2.7.2's retail spill layout. */
         textureIndexOrHasPoints = pointIndex < pointCount;
         if (textureIndexOrHasPoints) {
             tableIndex = groupIndex * 2;
@@ -578,3 +571,9 @@ GteMatrix g_FxCommonLightMatrix={.m={{4096,4096,4096},{0,0,0},{0,0,0}}};
 /* InitScene writes the tail through slots 4/5; StepPathNodes reads the
  * same slots through the full six-node path. */
 FxCommonTransformNode *g_FxCommonPathNodes[6];
+FxCommonTransformNode *g_FxCommonEchoNodes[4];
+FxCommonNode *g_FxCommonType26Nodes[4],*g_FxCommonSceneNodes[11];
+FxCommonNode *g_FxCommonType21Nodes[2],*g_FxCommonLodNodes[2],*g_FxCommonPairedNodes[2];
+FxCommonNode *g_FxCommonType51Node,*g_FxCommonType54Node;
+FxCommonNode *g_FxCommonRouteNodes[132];
+s32 g_FxCommonRouteNodeCount;

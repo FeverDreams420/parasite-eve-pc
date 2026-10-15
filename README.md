@@ -17,8 +17,9 @@ logo, opening movie and title menu. Automated input can select New Game,
 load M431, play its movie, pass the M010 dialogue and name entry, and reach
 M002. Scheduled input checks twenty simulation frames of movement and entry
 into M003, the opera lobby, then M372 and movie 3. A longer probe reaches
-M004 and stops at an unbound script command. Full exploration remains unverified. Continue now opens the card screen without its earlier
-NULL-pointer crash; loading an actual saved game remains unverified.
+M004 dialogue after the movie. Further dialogue input exposes a GPU list
+corruption that is still unresolved. Full exploration remains unverified.
+Continue now opens the card screen without its earlier NULL-pointer crash; loading an actual saved game remains unverified.
 Artwork and video come from a user-supplied Disc 1 CUE/BIN. Full gameplay and
 end-to-end audio are unfinished; isolated AKAO/XA tests do not prove complete
 audio playback.

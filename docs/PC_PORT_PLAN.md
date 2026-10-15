@@ -1,5 +1,39 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
+## Bieżące naprawy: początek dialogu M004
+
+Podpięto oryginalne opkody 128/129. Zmieniają bit przechodniości 0x80
+trójkąta kolizji, a nie flagę sprite'a. Istniejące implementacje zachowują pełne
+wskaźniki hosta i oba stride trójkątów (22/28 bajtów). 3072 stanów obu funkcji,
+wszystkich wartości kind i trzech sąsiednich rekordów odpowiada rzeczywistym
+funkcjom CPU USA (`12d5c65f0d2fc325`); sprawdzany jest też dispatcher i guardy.
+
+Właściwy executable kończy film 3 (ostatnia klatka 1151), wchodzi do M004
+(`0xA8000248`) i otwiera dialog 33. Przebieg do 52 000 VBlank zakończył się
+poprawnie; obejrzano render sali z Ayą i jej towarzyszem. Regresja sterowania
+obejmuje teraz pięć uruchomień od New Game, w tym ten dialog wraz z pozycją
+playera i pełną VRAM. Budżet czasu testu zwiększono do 360 s.
+
+Istniejący diagnostyczny `--pad-at` alokuje bufor według argc, zamiast odrzucać
+65. zdarzenie. Input nadal przechodzi przez oryginalny pakiet pada. Scenariusz
+START w fixture uruchomienia obejmuje 129 zdarzeń. Nie dodano nowych plików,
+warstw ani implementacji gry. `bu00/` pozostaje nietknięte.
+
+Dalszy harmonogram CROSS po 52 000 VBlank ujawnia uszkodzenie listy GPU:
+GPU_Enqueue czyta nieprawidłową długość pakietu, a awaria jest w Draw_RenderFrame
+→ DrawOTagEnv. Sanitizer potwierdza
+przekroczenie queue_buf[16384] w PsyZ libgpu.c:200; producent wadliwego linku
+pozostaje do ustalenia. Analiza adresu sugeruje link w środku natywnego wpisu OT,
+ale ta hipoteza nie jest jeszcze potwierdzona. Ten dłuższy przebieg nie jest
+poprawnym przejściem M004 i nie zaliczamy go jako zakończonej rozgrywki.
+
+Pełna weryfikacja kandydata: 39/39 CTest z wymaganym Disc 1, headless, bez skipów
+(równoległość -j2); świeże ASan/UBSan/function z instrumentowanym PsyZ/SDL:
+--assets, --texture-pages, statystyki oraz właściwy executable do 52 000 VBlank.
+Pełny stan diagnostyczny i 1 MiB VRAM M004 są identyczne ze zwykłym programem;
+SHA-256 `c4af86e59e672fa12bc6ac4e7cf0b1870533e1c003460e32e8e1a497db3cd01a`.
+Osobny build bez testów przechodzi. Poniżej zachowano dowody poprzednich etapów.
+
 ## Bieżące naprawy: przejście z holu do M372
 
 Opkody 120/121 używają natywnego ABI dispatchera i oryginalnego kasowania /

@@ -44,6 +44,8 @@ int Script_DispatchScriptCmd(int **args);
 int Entity_SetCurrentActionMode(int **args);
 int Entity_ClearCurrentFlag20(int **unused);
 int Entity_SetCurrentFlag20(int **unused);
+int Script_SetObjEntryFlag80(int **args);
+int Script_ClearObjEntryFlag80(int **args);
 int Script_LoadGeomState(int **args);
 int Script_SetFogParams(int **args);
 int Script_SetFogParamsAlt(int **args);

@@ -42,13 +42,18 @@ int main(int argc,char **argv) {
             if(arg+1>=argc || g_BootHostVramPath){fprintf(stderr,"Missing or duplicate capture path\n");return EXIT_FAILURE;}
             g_BootHostVramPath=argv[++arg];
         }else if(!strcmp(argv[arg],"--pad-at")){
-            if(arg+1>=argc || g_BootHostPadEventCount==64){fprintf(stderr,"Invalid input schedule\n");return EXIT_FAILURE;}
+            if(arg+1>=argc){fprintf(stderr,"Invalid input schedule\n");return EXIT_FAILURE;}
             char *end,*mask_end;errno=0;unsigned long tick=strtoul(argv[++arg],&end,10);
             if(!tick || tick>INT_MAX || errno || *end!=':'){fprintf(stderr,"Invalid input frame\n");return EXIT_FAILURE;}
             unsigned long buttons=strtoul(end+1,&mask_end,0);
             if(mask_end==end+1 || *mask_end || errno || buttons>65535 ||
                (g_BootHostPadEventCount && tick<g_BootHostPadEvents[g_BootHostPadEventCount-1].vblank)){
                 fprintf(stderr,"Invalid input buttons/order\n");return EXIT_FAILURE;
+            }
+            if(!g_BootHostPadEvents){
+                /* There cannot be more events than command-line arguments. */
+                g_BootHostPadEvents=calloc((size_t)argc,sizeof(*g_BootHostPadEvents));
+                if(!g_BootHostPadEvents){fprintf(stderr,"Cannot allocate input schedule\n");return EXIT_FAILURE;}
             }
             g_BootHostPadEvents[g_BootHostPadEventCount++]=(BootHostPadEvent){(u32)tick,(u16)buttons};
         }else if(!strcmp(argv[arg],"--disc") || !strcmp(argv[arg],"--disc2")){
@@ -184,5 +189,6 @@ shutdown:
     CdRom_BindImage(NULL,NULL);
     g_CdImageVolumes[0]=g_CdImageVolumes[1]=NULL;
     pe_disc_close(&images[0]);pe_disc_close(&images[1]);
+    free(g_BootHostPadEvents);g_BootHostPadEvents=NULL;g_BootHostPadEventCount=0;
     return result;
 }

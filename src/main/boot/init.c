@@ -54,7 +54,7 @@ void Boot_InitMemCard(void);
 int g_BootHostActive;
 u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
 const char *g_BootHostVramPath;
-BootHostPadEvent g_BootHostPadEvents[64];
+BootHostPadEvent *g_BootHostPadEvents;
 unsigned g_BootHostPadEventCount;
 static unsigned hostPadEvent;
 static u16 hostButtons;

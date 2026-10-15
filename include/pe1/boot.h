@@ -11,7 +11,7 @@ typedef struct BootHostPadEvent { u32 vblank; u16 buttons; } BootHostPadEvent;
 extern int g_BootHostActive;
 extern u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
 extern const char *g_BootHostVramPath;
-extern BootHostPadEvent g_BootHostPadEvents[64];
+extern BootHostPadEvent *g_BootHostPadEvents;
 extern unsigned g_BootHostPadEventCount;
 
 /* Frame counter boot/frame_loop.c advances once per frame (an array view, so

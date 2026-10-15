@@ -1,11 +1,10 @@
 #include "common.h"
 #include "pe1/save.h"
+#include "pe1/battle.h"
+#include "pe1/draw_state.h"
 #include "pe1/save_slot_metadata.h"
 #include "pe1/textbox.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
-unsigned char g_MenuActiveMode;
 unsigned char g_SaveOverlayTimer;
 u8 g_BattleSaveOverlayActive;
 u8 *g_CurItemEffectData;
@@ -19,7 +18,8 @@ void Save_DrawSlotMetadata(void)
     int prompt;
     short colors[3];
 
-    if (g_BattleScanPanel.summary == 0 || *g_BattleScanPanel.summary == 0 || (*g_BattleScanPanel.summary)->primaryValue <= 0) {
+    EnemyCombatant *target = g_BattleScanPanel.target ? g_BattleScanPanel.target->core : NULL;
+    if (!target || target->hpAlive <= 0) {
         Draw_ResetTextboxes();
         g_BattleScanPanel.prompt.word &= ~0x300;
     }
@@ -28,9 +28,9 @@ void Save_DrawSlotMetadata(void)
     phase = (state >> 8) & 3;
     switch (phase) {
     case 1:
-        colors[0] = (*g_BattleScanPanel.summary)->primaryValue;
-        colors[1] = (*g_BattleScanPanel.summary)->secondaryValue;
-        colors[2] = 0;
+        colors[0] = target->hpAlive;
+        colors[1] = target->hpAliveCap;
+        colors[2] = -1;
         Draw_ResetTextboxes();
         Menu_SetTextCursorRect(Save_GetMetadataWindowIndex() != 0 ? 0x14 : 0x61, g_MenuActiveMode < 2 ? 0xF : 0xC3, 0, 0);
         Render_SetupColorTable(0, 2, colors);

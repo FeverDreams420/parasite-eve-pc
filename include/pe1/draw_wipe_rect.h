@@ -74,7 +74,7 @@ PE1_STATIC_ASSERT(sizeof(DrawWipeVertex) == 4, draw_wipe_vertex_size);
     {                                                \
         int x = (xValue);                            \
         int y = (yValue);                            \
-        DrawWipeVertex *out = g_DrawVertexWritePtr;             \
+        DrawWipeVertex *out = (DrawWipeVertex *)g_DrawVertexWritePtr;             \
                                                      \
         if (out < (DrawWipeVertex *)(limit)) {                         \
             out->x = x;                              \
@@ -89,10 +89,11 @@ PE1_STATIC_ASSERT(sizeof(DrawWipeVertex) == 4, draw_wipe_vertex_size);
 #define DRAW_ALLOC_PACKET(packet, size)                                  \
     {                                                                    \
         u8 *old = g_DrawPacketCursor;                                            \
-        u8 *next = old + (size);                                         \
+        u8 *next;                                         \
                                                                          \
         (packet).bytes = NULL;                                               \
-        if (next < g_DrawPacketArenaBase + 0x4000) {                                \
+        if ((size_t)(g_DrawPacketArenaBase + 0x4000 - old) > (size)) { \
+            next = old + (size);                                \
             g_DrawPacketCursor = next;                                           \
             (packet).bytes = (char *)old;                                         \
         } else {                                                         \

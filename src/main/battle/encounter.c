@@ -179,7 +179,7 @@ void Battle_StartEncounter(int mode) {
     neg_one = -1;
     *(u8 *)&g_BattleResultFlags = 0;
     initial_flags = g_BattleResultFlags;
-    g_BattleScanPanel.summary = 0;
+    g_BattleScanPanel.target = 0;
     g_BattleSaveOverlayActive = 0;
     g_BattleSpritePrimCountdown = 0;
     g_BattleExpReward = 0;
@@ -950,7 +950,7 @@ void Battle_StepEscapeOrDeath(void)
                 if (entity->parent == 0) continue;
             } else if (entity == D_8009D254) {
                 Anim_SetInterpRate(&g_PlayerBattleEntity, 30);
-                D_800B0D88_write.value = D_800B0D88_read.value | 2;
+                g_PlayerBattleEntity.flags_9C |= 2;
                 D_8009D254->renderObject.flags_9C |= 2;
             } else {
                 u32 flags;

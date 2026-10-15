@@ -3,22 +3,12 @@
 
 #include "common.h"
 
-/* Summary of the save slot shown by Save_DrawSlotMetadata. */
-typedef struct SaveSlotSummary {
-    u8 reserved00[0x10];
-    int primaryValue;   /* 0x10: nothing is drawn while it is not positive */
-    u8 reserved14[0x74];
-    int secondaryValue; /* 0x88 */
-} SaveSlotSummary;
-
 /*
  * Save prompt state word at 0x8009D1AC: the low byte counts frames down,
  * bits 8-9 hold the phase, bits 10-11 the prompt kind and bits 12-18 one
  * pending message each. Retail reaches the frame counter through the same
  * object as the word (it reloads the word after a counter store), so both
- * views share one union, and the union sits in one record with the summary
- * pointer in front of it. The record is larger than the -G4 small-data limit,
- * so both stay absolutely addressed.
+ * views share one union, following the native target pointer.
  */
 typedef union SavePromptState {
     u32 word;
@@ -27,10 +17,7 @@ typedef union SavePromptState {
 
 struct BattleEntity;
 typedef struct SavePromptBlock {
-    union {
-        SaveSlotSummary **summary; /* original report view of the target core pointer */
-        struct BattleEntity *target;
-    }; /* 0x8009D1A8 */
+    struct BattleEntity *target; /* Scan target, whose first field is the enemy core. */
     SavePromptState prompt;    /* 0x8009D1AC */
 } SavePromptBlock;
 /* g_BattleActiveEntity (the Scan target, PE_SPELL_SCAN in battle/attack.c)

@@ -6,8 +6,6 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_prim.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 unsigned char *g_DrawPacketCursor;
 unsigned char *g_DrawPacketArenaBase;
 int g_DrawTextDimmed;
@@ -17,8 +15,6 @@ unsigned int *g_DrawOrderingTableEntry;
 int g_TextCursorX;
 int g_TextCursorY;
 u16 *g_DrawVertexWritePtr;
-int g_TextCursorX;
-int g_TextCursorY;
 
 u32 g_DrawBlendColorPair[2];
 u8 g_WipeRectEdgeList[10] = {0,1,0,2,0xFF,1,3,2,3,0xFF};
@@ -68,17 +64,18 @@ void Draw_AllocColorRect(int firstVertex, int secondVertex, int width, int mode)
     ColorTriPair *p;
     u8 *end = g_DrawPacketArenaBase;
     u8 *old = g_DrawPacketCursor;
-    u8 *next = old + sizeof(ColorTriPair);
+    u8 *next;
     DrawVertexPair a, b, farA, farB;
     int magnitude;
     int color;
-    RenderPacketTag *ot;
+    RenderNativeTag *ot;
     ColorTriPrim *prim;
     int bx, fax, by, fay;
-    DrawPrimLink link;
 
-    magnitude = __builtin_abs(width);
-    if (next < end + 0x4000) {
+    if ((unsigned)(firstVertex & 0x7f) >= 12 || (unsigned)(secondVertex & 0x7f) >= 12 || (unsigned)mode >= 2) return;
+    magnitude = width < 0 ? (int)(0u - (u32)width) : width;
+    if ((size_t)(end + 0x4000 - old) > sizeof(ColorTriPair)) {
+        next = old + sizeof(ColorTriPair);
         g_DrawPacketCursor = next;
         pair = (ColorTriPair *)old;
     } else Inv_BoundsCheckAssertStub(1);
@@ -87,11 +84,12 @@ void Draw_AllocColorRect(int firstVertex, int secondVertex, int width, int mode)
         do {
             if (g_DrawTextDimmed) prim->color.word = g_DrawColorShaded;
             else prim->color.word = g_DrawPrimColor;
-            prim->tag.bytes.length = 4;
+            prim->tag.length = 4;
             prim->color.bytes.code = 0x20;
             prim++;
         } while (prim < (ColorTriPrim *)(pair + 1));
     }
+    if (!pair) return;
     farA = ((DrawVertexPair *)g_TextCursorStackTop)[firstVertex & 0x7f];
     a = farA;
     farB = ((DrawVertexPair *)g_TextCursorStackTop)[secondVertex & 0x7f];
@@ -131,57 +129,45 @@ void Draw_AllocColorRect(int firstVertex, int secondVertex, int width, int mode)
     p->first.y2 = fay;
     p->second.x0 = COORD(farB).x;
     p->second.y0 = COORD(farB).y;
-    ot = (RenderPacketTag *)g_DrawOrderingTableEntry;
-    p->first.tag.link.address = ot->link.address;
-    link.packet = &p->first;
-    ot->link.address = link.word;
-    p->second.tag.link.address = ot->link.address;
-    link.packet = &p->second;
-    ot->link.address = link.word;
+    ot = (RenderNativeTag *)g_DrawOrderingTableEntry;
+    p->first.tag.address = ot->address;
+    ot->address = (uintptr_t)&p->first;
+    p->second.tag.address = ot->address;
+    ot->address = (uintptr_t)&p->second;
 }
 
-static inline u32 *AllocateDrawMode(int mode) {
-    u32 *packet = 0;
+static inline RenderDrawModePacket *AllocateDrawMode(int mode) {
+    RenderDrawModePacket *packet = 0;
     u8 *old = g_DrawPacketCursor;
-    u8 *next = old + 8;
-    if (next < g_DrawPacketArenaBase + 0x4000) {
+    u8 *next;
+    if ((size_t)(g_DrawPacketArenaBase + 0x4000 - old) > sizeof(*packet)) {
+        next = old + sizeof(*packet);
         g_DrawPacketCursor = next;
-        packet = (u32 *)old;
+        packet = (RenderDrawModePacket *)old;
     } else Inv_BoundsCheckAssertStub(1);
     if (packet) SetDrawTPage(packet, 0, 0, (mode & 3) << 5);
     return packet;
 }
 
 void Draw_EmitWipeBar(u8 *edges, int mode) {
-    u32 *first = AllocateDrawMode(mode + 1);
-    u32 *second = AllocateDrawMode(2 - mode);
+    u8 *start = g_DrawPacketCursor;
+    RenderDrawModePacket *first = AllocateDrawMode(mode + 1);
+    RenderDrawModePacket *second = AllocateDrawMode(2 - mode);
+    if (!first || !second) { g_DrawPacketCursor = start; return; }
     while ((s8)edges[0] >= 0) {
         Draw_AllocColorRect((s8)edges[0], (s8)edges[1], 2, mode);
         edges += 2;
     }
     ++edges;
-    {
-        u32 mask24 = 0xffffff, maskTop = 0xff000000;
-        u32 *ot = g_DrawOrderingTableEntry;
-        DrawPrimLink link;
-
-        link.packet = first;
-        *first = (*first & maskTop) | (*ot & mask24);
-        *ot = (*ot & maskTop) | (link.word & mask24);
-    }
+    RenderNativeTag *ot = (RenderNativeTag *)g_DrawOrderingTableEntry;
+    first->tag.address = ot->address;
+    ot->address = (uintptr_t)first;
     while ((s8)edges[0] >= 0) {
         Draw_AllocColorRect((s8)edges[0], (s8)edges[1], -2, !mode);
         edges += 2;
     }
-    {
-        u32 mask24 = 0xffffff, maskTop = 0xff000000;
-        u32 *ot = g_DrawOrderingTableEntry;
-        DrawPrimLink link;
-
-        link.packet = second;
-        *second = (*second & maskTop) | (*ot & mask24);
-        *ot = (*ot & maskTop) | (link.word & mask24);
-    }
+    second->tag.address = ot->address;
+    ot->address = (uintptr_t)second;
 }
 
 #define PUSH_WIPE_BAR_VERTEX(xValue, yValue)                     \
@@ -190,8 +176,7 @@ void Draw_EmitWipeBar(u8 *edges, int mode) {
         int y = (yValue);                                       \
         u16 *out = g_DrawVertexWritePtr;                         \
                                                                 \
-        if ((unsigned int)out <                                  \
-            (unsigned int)((u16 *)g_TextCursorStackTop + 0x18)) { \
+        if (out < ((u16 *)g_TextCursorStackTop + 0x18)) { \
             out[1] = x;                                          \
             g_DrawVertexWritePtr = out + 2;                      \
             out[0] = y;                                          \
@@ -226,7 +211,7 @@ void Draw_EmitWipeBarPoly(int arg0, int arg1, u8 *arg2) {
             int x = value + g_TextCursorX;
             int y = g_TextCursorY + cursor[1];
 
-            if ((unsigned int)out < (unsigned int)end) {
+            if (out < end) {
                 out[1] = x;
                 g_DrawVertexWritePtr = out + 2;
                 out[0] = y;
@@ -307,15 +292,15 @@ void Draw_AllocColorGradient(int width, int height, u8 *points, int textured)
                 sprite.sprite->color.word = g_DrawPrimColor;
             sprite.sprite->tag.length = 4;
             sprite.sprite->color.bytes.code = 0x64;
+            sprite.sprite->x = g_TextCursorX;
+            sprite.sprite->y = g_TextCursorY;
+            sprite.sprite->u = 0;
+            sprite.sprite->v = 0;
+            sprite.sprite->clut = 0x391C;
+            sprite.sprite->width = width;
+            sprite.sprite->height = height;
+            DRAW_LINK_PACKET(sprite);
         }
-        sprite.sprite->x = g_TextCursorX;
-        sprite.sprite->y = g_TextCursorY;
-        sprite.sprite->u = 0;
-        sprite.sprite->v = 0;
-        sprite.sprite->clut = 0x391C;
-        sprite.sprite->width = width;
-        sprite.sprite->height = height;
-        DRAW_LINK_PACKET(sprite);
 
         window.x = 0;
         window.y = 0;
@@ -342,8 +327,8 @@ void Draw_AllocColorTri(int width, int height, int pulse) {
 
     tile = 0;
     old = g_DrawPacketCursor;
-    next = old + sizeof(TilePrim);
-    if (next < g_DrawPacketArenaBase + 0x4000) {
+    if ((size_t)(g_DrawPacketArenaBase + 0x4000 - old) > sizeof(TilePrim)) {
+        next = old + sizeof(TilePrim);
         g_DrawPacketCursor = next;
         tile = (TilePrim *)old;
     } else {
@@ -355,10 +340,11 @@ void Draw_AllocColorTri(int width, int height, int pulse) {
         } else {
             tile->color.word = g_DrawPrimColor;
         }
-        tile->tag.bytes.length = 3;
+        tile->tag.length = 3;
         tile->color.bytes.code = 0x60;
     }
 
+    if (!tile) return;
     if (pulse != 0) {
         sync = VSync(-1);
         if (sync & 0x20) {
@@ -376,42 +362,19 @@ void Draw_AllocColorTri(int width, int height, int pulse) {
         *color |= g_DrawColorShaded & 0xFFFFFF;
     }
 
-    {
-        u32 tag;
-        u32 mask24 = 0xFFFFFF;
-        u32 maskTop;
-        int w = width - 4;
-        int h = height - 4;
-        int y;
-        int x;
-        u8 code;
-        u32 linkedTag, lowTile, otValue;
-        u32 *ot;
-        DrawPrimLink link;
-        tag = tile->tag.word;
-        maskTop = 0xFF000000;
-        tile->w = w;
-        code = tile->color.bytes.code;
-        tile->h = h;
-        code |= 2;
-        tile->color.bytes.code = code;
-        y = g_TextCursorY;
-        x = g_TextCursorX;
-        tile->y0 = y + 2;
-        ot = g_DrawOrderingTableEntry;
-        tile->x0 = x + 2;
-        otValue = *ot;
-        linkedTag = (tag & maskTop) | (otValue & mask24);
-        link.packet = tile;
-        lowTile = link.word & mask24;
-        tile->tag.word = linkedTag;
-        old = g_DrawPacketCursor;
-        *ot = (*ot & maskTop) | lowTile;
-    }
+    tile->w = width - 4;
+    tile->h = height - 4;
+    tile->color.bytes.code |= 2;
+    tile->y0 = g_TextCursorY + 2;
+    tile->x0 = g_TextCursorX + 2;
+    RenderNativeTag *ordering = (RenderNativeTag *)g_DrawOrderingTableEntry;
+    tile->tag.address = ordering->address;
+    ordering->address = (uintptr_t)tile;
+    old = g_DrawPacketCursor;
 
     drawMode = 0;
-    next = old + sizeof(DrawModePrim);
-    if (next < g_DrawPacketArenaBase + 0x4000) {
+    if ((size_t)(g_DrawPacketArenaBase + 0x4000 - old) > sizeof(DrawModePrim)) {
+        next = old + sizeof(DrawModePrim);
         g_DrawPacketCursor = next;
         drawMode = (DrawModePrim *)old;
     } else {
@@ -420,18 +383,9 @@ void Draw_AllocColorTri(int width, int height, int pulse) {
     if (drawMode != 0) {
         SetDrawTPage(drawMode, 0, 0, 0x20);
     }
-    {
-        u32 mask24 = 0xFFFFFF;
-        u32 maskTop = 0xFF000000;
-        u32 *ot = g_DrawOrderingTableEntry;
-        DrawPrimLink link;
-
-        link.packet = drawMode;
-        if (drawMode) {
-            RenderNativeTag *ordering = (RenderNativeTag *)ot;
-            drawMode->tag.address = ordering->address;
-            ordering->address = (uintptr_t)drawMode;
-        }
+    if (drawMode) {
+        drawMode->tag.address = ordering->address;
+        ordering->address = (uintptr_t)drawMode;
     }
 }
 

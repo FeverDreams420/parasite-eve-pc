@@ -64,7 +64,7 @@ typedef struct AyaSaveState {
     /* 0x0D */ u8 pad_0D[3];
     /* 0x10 */ u32 bonus_points;         /* g_AyaBonusPoints [CONFIRMED 0 -> "BONUS POINT 0"]; clamp 0x1869F */
     /* 0x14 */ u8  pad_14[0x0A];
-    /* 0x1E */ u16 pe_bonus_pool;        /* g_AyaBonusPoolRecord.pool  TENTATIVE: pool cleared to 0 on level-up (Aya_SetTotalExp) */
+    /* 0x1E */ u16 pe_bonus_pool;        /* PE bonus carried until level-up (Aya_SetTotalExp) */
     /* 0x20 */ s8  equipped_weapon_slot; /* g_AyaEquippedWeaponSlot  [CONFIRMED 0 -> "M84F"] equipped weapon inventory slot */
     /* 0x21 */ u8  pad_21;
     /* 0x22 */ s8  equipped_armor_slot;  /* g_AyaEquippedArmorSlot  [CONFIRMED 1 -> "N Vest"] equipped armor inventory slot */
@@ -106,12 +106,6 @@ typedef union PlayerInventoryState {
 PE1_STATIC_ASSERT(offsetof(PlayerInventoryState, runtime.inventory.slots) == offsetof(AyaSaveState, inventory_items), player_inventory_slots_alias);
 PE1_STATIC_ASSERT(offsetof(PlayerInventoryState, runtime.inventory.tracked) == offsetof(AyaSaveState, equipped_weapon_slot), player_inventory_weapon_alias);
 PE1_STATIC_ASSERT(offsetof(PlayerInventoryState, runtime.inventory.tracked) + 2 == offsetof(AyaSaveState, equipped_armor_slot), player_inventory_armor_alias);
-/* AyaSaveState.pe_bonus_pool as a one-field record: a small word that
- * -G8 units with MASPSX_FORCE_G0 address directly (Aya_SetTotalExp). */
-typedef struct AyaBonusPoolRecord {
-    u16 pool;
-} AyaBonusPoolRecord;
-extern AyaBonusPoolRecord g_AyaBonusPoolRecord;
 /* Retail labels share the canonical fields in the saved character. */
 #define g_AyaHpCurrent (&g_AyaSaveState.current_hp)
 #define g_AyaHpMax (&g_AyaSaveState.max_hp)

@@ -31,12 +31,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(DrawGlyphDescriptor, mode) == 6, draw_glyph_mode_
 DrawGlyphDescriptor *Draw_LookupGlyphDescriptor(int index);
 void Menu_SetSaveSlotBlendBase(int color);
 
-/* A GPU packet's address as the low 24 bits of an ordering-table link. */
-typedef union DrawPrimLink {
-    void *packet;
-    u32 word;
-} DrawPrimLink;
-
 /* Semantic C names for the existing, independently addressed linker objects. */
 extern unsigned char *g_DrawPacketCursor;
 extern unsigned char *g_DrawPacketArenaBase;

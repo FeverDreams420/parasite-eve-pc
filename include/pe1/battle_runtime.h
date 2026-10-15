@@ -154,13 +154,6 @@ typedef struct BattleSavedRotation {
     u16 x, facing, z;
 } BattleSavedRotation;
 extern BattleSavedRotation g_AyaSavedRotation;
-/* D_800B0D88 is g_PlayerBattleEntity.flags_9C. Battle_StepEscapeOrDeath reloads the
- * player's flags only after this store, so the store must look like it may
- * alias them: a non-small view keeps the address in a register, and separate
- * read and write views keep GCC from sharing one LUI between the load and
- * the store. Matching debt (see docs/CODE_ORGANIZATION.md). */
-extern struct { u16 value; char pad[14]; } D_800B0D88_read __asm__("D_800B0D88");
-extern struct { u16 value; char pad[14]; } D_800B0D88_write __asm__("D_800B0D88");
 /* Set when Aya's action reaches its recovery pose (Battle_StepAyaAction case
  * 12); the cross-flash effect in the task program area clears it when it
  * starts and stops spawning its ember particles once it is set. */

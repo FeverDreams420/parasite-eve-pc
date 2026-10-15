@@ -61,6 +61,7 @@ add_library(parasite-eve-original OBJECT
     src/main/render/font_load.c
     src/main/menu/status_panels.c
     src/main/menu/save_screens.c
+    src/main/menu/save_slot.c
     src/main/menu/lists.c
     src/main/menu/item_detail.c
     src/main/battle/commands.c

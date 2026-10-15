@@ -2,6 +2,8 @@
 #include "pe1/resident_tables.h"
 #include "pe1/draw_area.h"
 #include "pe1/textbox.h"
+#include "pe1/textbox_open.h"
+#include "pe1/draw_wipe_rect.h"
 #include "pe1/memcard.h"
 void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/battle_runtime.h"
@@ -2506,6 +2508,151 @@ static int original_color_quad_packets(void)
     return valid;
 }
 
+
+/* USA 8003495C/80034DE0, including the real wipe callees: 18,560 cases.
+ * Compare the two numbers referenced by the HP glyph stream. Retail reads
+ * past its local terminator into unused number slots; those are excluded. */
+static int original_scan_overlay(PeDisc *disc, PeDiscFile *exe)
+{
+    u8 custom[]={1,255};
+    struct {u8 *data;u32 address;size_t size;} texts[]={
+        {g_AnalyzeHpUnknownText,0x91464,16},{g_AnalyzeHpFormatText,0x91474,12},
+        {(u8 *)g_TextSusceptibleToPoison,0x91480,44},
+        {(u8 *)g_TextSusceptibleToAcid,0x914AC,40},
+        {(u8 *)g_AnalyzeTranquilizerWeakTexts,0x914D4,40},
+        {(u8 *)g_AnalyzeHeatWeakTexts,0x914FC,36},
+        {(u8 *)g_AnalyzeColdWeakTexts,0x91520,36},
+        {(u8 *)g_AnalyzeStealWeakTexts,0x91544,44},
+        {(u8 *)g_AnalyzeConfusionWeakTexts,0x91570,42}};
+    u8 *messages[]={g_AnalyzeHpUnknownText,g_AnalyzeHpFormatText,
+        g_TextSusceptibleToPoison[0],g_TextSusceptibleToPoison[1],
+        g_TextSusceptibleToAcid[0],g_TextSusceptibleToAcid[1],
+        g_AnalyzeTranquilizerWeakTexts[0],g_AnalyzeTranquilizerWeakTexts[1],
+        g_AnalyzeHeatWeakTexts[0],g_AnalyzeHeatWeakTexts[1],
+        g_AnalyzeColdWeakTexts[0],g_AnalyzeColdWeakTexts[1],
+        g_AnalyzeStealWeakTexts[0],g_AnalyzeStealWeakTexts[1],
+        g_AnalyzeConfusionWeakTexts[0],g_AnalyzeConfusionWeakTexts[1],custom};
+    for(unsigned i=0;i<sizeof(texts)/sizeof(*texts);++i){
+        u8 raw[44];
+        if(!pe_disc_read(disc,exe,texts[i].address-0x10000+0x800,raw,texts[i].size) ||
+           memcmp(raw,texts[i].data,texts[i].size))return 0;
+    }
+    TextboxEntry saved_entries[4];memcpy(saved_entries,g_TextboxEntries,sizeof(saved_entries));
+    TextboxRect saved_rect=g_TextboxPendingRect;
+    SavePromptBlock saved_scan=g_BattleScanPanel;
+    u8 saved_active=g_BattleSaveOverlayActive,saved_timer=g_SaveOverlayTimer;
+    u8 saved_choice=g_DialogueChoiceCursor,saved_mode=g_MenuActiveMode;
+    s8 saved_equip=g_MenuEquipSlotIndex;
+    u8 *saved_message=g_CurItemEffectData,*saved_cursor=g_DrawPacketCursor,*saved_base=g_DrawPacketArenaBase;
+    unsigned *saved_order=g_DrawOrderingTableEntry;
+    int saved_window=g_SaveMetadataWindowIndex,saved_dim=g_DrawTextDimmed;
+    int saved_x=g_TextCursorX,saved_y=g_TextCursorY;
+    u32 saved_color=g_DrawPrimColor,saved_shade=g_DrawColorShaded;
+    u32 saved_blend[]={g_DrawBlendColorPair[0],g_DrawBlendColorPair[1]};
+    int saved_stack[28];memcpy(saved_stack,g_TextCursorStackBottom,sizeof(saved_stack));
+    u16 *saved_vertex=g_DrawVertexWritePtr;
+    union {uintptr_t align;u8 bytes[0x4000];} arena;
+    RenderNativeTag ordering;
+    EnemyCombatant core={0};BattleEntity target={0};
+    const u32 weaknesses[]={0,0x1000,0x2000,0x4000,0x8000,0x10000,0x20000,0x40000,0x7F000};
+    const unsigned timers[]={0,1,75,255};
+    uint64_t hash=UINT64_C(14695981039346656037);int valid=1;
+#define SCAN_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+    for(unsigned sample=0;sample<18560;++sample){
+        unsigned n=sample<18432?sample:sample-18432;
+        unsigned window=n%2;n/=2;unsigned mode=n%4;n/=4;
+        memset(arena.bytes,0xA5,sizeof(arena.bytes));ordering=(RenderNativeTag){0xFFFFFF,0xAB};
+        g_DrawPacketCursor=g_DrawPacketArenaBase=arena.bytes;g_DrawOrderingTableEntry=(unsigned *)&ordering;
+        g_DrawPrimColor=0x112233;g_DrawColorShaded=0x445566;g_DrawTextDimmed=0;
+        g_DrawBlendColorPair[0]=0x102030;g_DrawBlendColorPair[1]=0x405060;
+        g_SaveMetadataWindowIndex=window;g_MenuActiveMode=mode;
+        memset(&g_TextboxPendingRect,0xA5,sizeof(g_TextboxPendingRect));
+        g_DialogueChoiceCursor=3;g_MenuEquipSlotIndex=7;
+        memset(g_TextboxEntries,0xA5,sizeof(g_TextboxEntries));
+        for(unsigned i=0;i<4;++i){g_TextboxEntries[i].message=custom;g_TextboxEntries[i].control.flags=-1;}
+        if(sample<18432){
+            unsigned which=n%4;n/=4;unsigned timer=timers[n%4];n/=4;
+            u32 weak=weaknesses[n%9];n/=9;unsigned prompt=n%4;unsigned phase=n/4;
+            g_BattleSaveOverlayActive=0;g_SaveOverlayTimer=7;
+            g_BattleScanPanel.prompt.word=0x48000000|weak|(prompt<<10)|(phase<<8)|timer;
+            core.hpAlive=which==2?-1:123;core.hpAliveCap=456;
+            target.core=which==1?NULL:&core;g_BattleScanPanel.target=which?&target:NULL;
+            Save_DrawSlotMetadata();
+        }else{
+            g_SaveOverlayTimer=timers[n%4];g_BattleSaveOverlayActive=n/4;
+            g_BattleScanPanel.prompt.word=0x12345678;g_CurItemEffectData=custom;
+            Menu_SaveOverlayDraw();
+        }
+        SCAN_PUT(g_BattleScanPanel.prompt.word,4);SCAN_PUT(g_BattleSaveOverlayActive,1);
+        SCAN_PUT(g_SaveOverlayTimer,1);SCAN_PUT(g_DialogueChoiceCursor,1);SCAN_PUT(g_MenuEquipSlotIndex,1);
+        for(unsigned i=0;i<4;++i){
+            TextboxEntry *e=&g_TextboxEntries[i];unsigned id=0;
+            for(unsigned j=0;j<17;++j)if(e->message==messages[j])id=j+1;
+            SCAN_PUT(e->state,1);SCAN_PUT(id,1);SCAN_PUT(e->style,1);SCAN_PUT(e->background,1);
+            SCAN_PUT(e->control.flags,4);SCAN_PUT(e->page_id,2);SCAN_PUT(e->x,2);SCAN_PUT(e->y,2);
+            SCAN_PUT(e->width,2);SCAN_PUT(e->height,2);
+            const u8 *numbers=(const u8 *)e->numbers;for(unsigned j=0;j<12;++j)SCAN_PUT(numbers[j],1);
+        }
+        SCAN_PUT(g_TextboxPendingRect.x,2);SCAN_PUT(g_TextboxPendingRect.y,2);
+        SCAN_PUT(g_TextboxPendingRect.width,2);SCAN_PUT(g_TextboxPendingRect.height,2);
+        SCAN_PUT(g_TextCursorX,4);SCAN_PUT(g_TextCursorY,4);
+        RenderNativeTag *packets[16];unsigned count=0;u8 *cur=arena.bytes;
+        while(cur<g_DrawPacketCursor){
+            RenderNativeTag *tag=(RenderNativeTag *)cur;
+            if(count>=16 || (tag->length!=1 && tag->length!=4)){valid=0;break;}
+            packets[count++]=tag;SCAN_PUT(tag->length,1);
+            const u8 *payload=cur+sizeof(*tag);
+            for(unsigned j=0;j<tag->length*4;++j)SCAN_PUT(payload[j],1);
+            cur+=tag->length==1?sizeof(RenderDrawModePacket):sizeof(RenderColorTrianglePacket);
+        }
+        if(cur!=g_DrawPacketCursor || ordering.length!=0xAB)valid=0;
+        for(u8 *guard=g_DrawPacketCursor;guard<arena.bytes+sizeof(arena.bytes);++guard)if(*guard!=0xA5)valid=0;
+        SCAN_PUT(count,1);uintptr_t link=ordering.address;unsigned links=0;
+        while(link!=0xFFFFFF){
+            unsigned i=0;while(i<count && link!=(uintptr_t)packets[i])++i;
+            if(i==count || links>=count){valid=0;break;}
+            SCAN_PUT(i,1);link=packets[i]->address;++links;
+        }
+        SCAN_PUT(links,1);
+        if(!valid)break;
+    }
+#undef SCAN_PUT
+    /* Allocation pressure at every native alignment near the arena end. */
+    for(unsigned remaining=0;remaining<=512;remaining+=sizeof(uintptr_t))
+    for(unsigned kind=0;kind<4;++kind){
+        memset(arena.bytes,0xA5,sizeof(arena.bytes));ordering=(RenderNativeTag){0xFFFFFF,0xAB};
+        g_DrawPacketCursor=arena.bytes+sizeof(arena.bytes)-remaining;
+        g_DrawPacketArenaBase=arena.bytes;g_DrawOrderingTableEntry=(unsigned *)&ordering;
+        u8 *start=g_DrawPacketCursor;
+        if(kind<2)Draw_AllocColorGradient(320,20,NULL,kind);
+        else if(kind==2)Draw_AllocColorTri(320,20,0);
+        else Draw_EmitWipeBarRect(320,20,0);
+        if(g_DrawPacketCursor<start || g_DrawPacketCursor>arena.bytes+sizeof(arena.bytes) || ordering.length!=0xAB)valid=0;
+        for(u8 *guard=arena.bytes;guard<start;++guard)if(*guard!=0xA5)valid=0;
+        uintptr_t link=ordering.address;unsigned links=0;
+        while(link!=0xFFFFFF){
+            if(link<(uintptr_t)start || link+sizeof(RenderNativeTag)>(uintptr_t)g_DrawPacketCursor || ++links>20){valid=0;break;}
+            RenderNativeTag *tag=(RenderNativeTag *)link;
+            if(tag->length<1 || tag->length>4 || link+sizeof(*tag)+tag->length*4>(uintptr_t)g_DrawPacketCursor){valid=0;break;}
+            link=tag->address;
+        }
+    }
+    memcpy(g_TextboxEntries,saved_entries,sizeof(saved_entries));g_TextboxPendingRect=saved_rect;
+    g_BattleScanPanel=saved_scan;g_BattleSaveOverlayActive=saved_active;g_SaveOverlayTimer=saved_timer;
+    g_DialogueChoiceCursor=saved_choice;g_MenuEquipSlotIndex=saved_equip;g_MenuActiveMode=saved_mode;
+    g_CurItemEffectData=saved_message;g_DrawPacketCursor=saved_cursor;g_DrawPacketArenaBase=saved_base;
+    g_DrawOrderingTableEntry=saved_order;g_SaveMetadataWindowIndex=saved_window;g_DrawTextDimmed=saved_dim;
+    g_TextCursorX=saved_x;g_TextCursorY=saved_y;g_DrawPrimColor=saved_color;g_DrawColorShaded=saved_shade;
+    memcpy(g_DrawBlendColorPair,saved_blend,sizeof(saved_blend));
+    memcpy(g_TextCursorStackBottom,saved_stack,sizeof(saved_stack));g_DrawVertexWritePtr=saved_vertex;
+    if(!valid || hash!=UINT64_C(0x2c8a283ef8f19f95)){
+        fprintf(stderr,"original Scan/message overlay mismatch: %016llx valid=%d\n",(unsigned long long)hash,valid);return 0;
+    }
+    puts("original Scan/message overlays: 18560 USA MIPS cases, native wipe payloads and OT chains");
+    return 1;
+}
+
 static int original_hud_packet_updates(void)
 {
     extern void Battle_DrawSpellName(void);
@@ -4157,7 +4304,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
-    if(!original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
+    if(!original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

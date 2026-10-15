@@ -38,34 +38,29 @@ typedef struct RenderLinePacket {
  * renderer. */
 typedef struct RenderColorTilePacket {
     RenderNativeTag tag;
-    u8 r0, g0, b0, code;
+    union {
+        RenderPacketColor color;
+        struct { u8 r0, g0, b0, code; };
+    };
     u16 x0, y0;
     union { u16 w; u16 x1; };
     union { u16 h; u16 y1; };
 } RenderColorTilePacket;
 
-/* Original 32-bit TILE record still used by the wipe renderer and packed
- * textbox tables; these records have not yet moved to the native GPU ABI. */
-typedef struct RenderFlatTilePacket {
-    RenderPacketTag tag;
-    RenderPacketColor color;
-    u16 x0, y0, w, h;
-} RenderFlatTilePacket;
-
-PE1_STATIC_ASSERT(sizeof(RenderFlatTilePacket) == 16,
-                  render_flat_tile_packet_size);
+/* The wipe renderer uses the same native TILE with a packed colour view. */
+typedef RenderColorTilePacket RenderFlatTilePacket;
 
 /* Flat-colour triangle packet (POLY_F3). Coordinates retain the unsigned
  * halfword view used by the wipe renderer. */
 typedef struct RenderColorTrianglePacket {
-    RenderPacketTag tag;
+    RenderNativeTag tag;
     RenderPacketColor color;
     u16 x0, y0, x1, y1, x2, y2;
 } RenderColorTrianglePacket;
 
-PE1_STATIC_ASSERT(sizeof(RenderColorTrianglePacket) == 0x14,
+PE1_STATIC_ASSERT(sizeof(RenderColorTrianglePacket) == sizeof(RenderNativeTag) + 16,
                   render_color_triangle_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTrianglePacket, x0) == 8,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTrianglePacket, x0) == sizeof(RenderNativeTag) + 4,
                   render_color_triangle_first_vertex);
 
 /* Four-vertex Gouraud quad (POLY_G4), used for HUD gauge gradients. */

@@ -386,7 +386,7 @@ void Aya_SetTotalExp(s32 exp_delta, s32 pe_bonus_delta, void *wayne_items) {
     g_MenuExpReviewLevel = Aya_StatBinarySearch(g_MenuPendingTotalExp, Aya_GetLevelExpTable());
     g_MenuSelectionLocked = 1;
 
-    g_AyaBonusPoolRecord.pool = g_AyaBonusPoolRecord.pool + pe_bonus_delta;
+    g_AyaSaveState.pe_bonus_pool = g_AyaSaveState.pe_bonus_pool + pe_bonus_delta;
     g_MenuLevelDisplayValue = g_AyaSaveState.level;
     g_MenuHpMaxDisplayValue = g_AyaSaveState.max_hp;
     g_MenuBonusPointDisplayTarget = g_AyaSaveState.bonus_points;
@@ -395,7 +395,7 @@ void Aya_SetTotalExp(s32 exp_delta, s32 pe_bonus_delta, void *wayne_items) {
 
     if (g_MenuLevelDisplayValue < g_MenuLevelDisplayTarget) {
         s32 total;
-        s32 bonus = g_MenuBonusPointDisplayTarget + g_AyaBonusPoolRecord.pool;
+        s32 bonus = g_MenuBonusPointDisplayTarget + g_AyaSaveState.pe_bonus_pool;
         if (bonus <= 0x1869F) {
             total = bonus;
         } else {

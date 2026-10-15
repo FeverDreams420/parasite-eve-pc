@@ -12,7 +12,7 @@
 #include "menu_memcard_offset.h"
 
 typedef struct MemcardGlintBurst {
-    s16 x, y, z;
+    s16 x, y, z, reserved06;
 } MemcardGlintBurst;
 
 /* Spinning particle: a position (state 0) or the spin rates that drive
@@ -74,13 +74,13 @@ int MenuCard_DriftGlowParticle(int mode, void *state, intptr_t argument);
 int MenuCard_RisingEmberParticle(int mode, void *state, intptr_t argument);
 int MenuCard_RingBurstController(int mode, void *state, intptr_t argument);
 
-GteShortVector *MenuCard_GetGlintOriginA(void);
-GteShortVector *MenuCard_GetGlintOriginB(void);
-GteShortVector *MenuCard_GetGlintOriginC(void);
-GteShortVector *MenuCard_GetGlintOriginD(void);
-GteShortVector *MenuCard_GetGlintOriginE(void);
-GteShortVector *MenuCard_GetGlintOriginF(void);
-int MenuCard_ConsumeCrossFlashFlag(int mode);
+intptr_t MenuCard_GetGlintOriginA(int mode, intptr_t a, intptr_t b, intptr_t c);
+intptr_t MenuCard_GetGlintOriginB(int mode, intptr_t a, intptr_t b, intptr_t c);
+intptr_t MenuCard_GetGlintOriginC(int mode, intptr_t a, intptr_t b, intptr_t c);
+intptr_t MenuCard_GetGlintOriginD(int mode, intptr_t a, intptr_t b, intptr_t c);
+intptr_t MenuCard_GetGlintOriginE(int mode, intptr_t a, intptr_t b, intptr_t c);
+intptr_t MenuCard_GetGlintOriginF(int mode, intptr_t a, intptr_t b, intptr_t c);
+int MenuCard_ConsumeCrossFlashFlag(int mode, void *state, intptr_t argument);
 int MenuCard_CrossFlashController(int mode, void *state, intptr_t argument);
 
 #endif

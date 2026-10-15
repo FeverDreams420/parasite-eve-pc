@@ -14,8 +14,8 @@ extern u8 g_MenuCardPulseColorTrack[];
 extern RenderColor g_MemcardCosineColor;
 extern RenderColor g_MemcardSineColor;
 
-s32 MenuCard_PulseImage(s32 mode, MemcardPulseState *state);
-s32 MenuCard_CosineImage(s32 mode, MemcardPulseState *state);
-s32 MenuCard_SineRotatingImage(s32 mode, MemcardPulseState *state);
+s32 MenuCard_PulseImage(int mode, void *state, intptr_t argument);
+s32 MenuCard_CosineImage(int mode, void *state, intptr_t argument);
+s32 MenuCard_SineRotatingImage(int mode, void *state, intptr_t argument);
 
 #endif

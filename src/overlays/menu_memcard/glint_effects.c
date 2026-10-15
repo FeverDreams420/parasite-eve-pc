@@ -3,6 +3,8 @@
 #include "pe1/battle_runtime.h"
 #include "pe1/field_history_trail.h"
 #include "pe1/room_fx.h"
+#include "pe1/fieldfx_task.h"
+#include "pe1/pm.h"
 
 /* Spark that drifts with damped velocity for 44 frames; state 0 draws a
  * flickering coloured glow, state 1 a larger glow that fades with a sine. */
@@ -104,7 +106,7 @@ int MenuCard_RingBurstController(int mode, void *state, intptr_t argument) {
         Akao_SendPositionalCmdStereo(0x4B7, 0, burst->x, burst->y, burst->z);
         burst->state = 0;
         burst->timer = 0;
-        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->start, 20, 50,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 20, 50,
                              MenuCard_DriftGlowParticle);
     case 1:
         switch (burst->state) {
@@ -115,7 +117,7 @@ int MenuCard_RingBurstController(int mode, void *state, intptr_t argument) {
             burst->state = 1;
             burst->timer = 0;
             for (i = 0; i < 50; i++) {
-                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -407,7 +409,7 @@ int MenuCard_CrossFlashController(int mode, void *state, intptr_t argument) {
         FieldFx_DrawHistoryTrail(&from, &to, 0x3F0, (unsigned char *)&inner, (unsigned char *)&outer, 128, flash->trailB, 1);
         FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 21, &tipB, &from);
         FieldFx_DrawHistoryTrail(&from, &to, 0x3F2, (unsigned char *)&edge, (unsigned char *)&outer, 128, flash->trailD, 1);
-        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->start, 20, 36,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 20, 36,
                              MenuCard_RisingEmberParticle);
     case 1:
         flash->timer++;
@@ -416,7 +418,7 @@ int MenuCard_CrossFlashController(int mode, void *state, intptr_t argument) {
             int phase = (s16)flash->timer % 3;
             if (phase == 0) {
                 FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)(void *)g_FieldFxOwner->actor, flash->attachA, &center, &from);
-                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = from.x;
                     child->y = from.y;
@@ -426,7 +428,7 @@ int MenuCard_CrossFlashController(int mode, void *state, intptr_t argument) {
                 }
             } else if (phase == 2) {
                 FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)(void *)g_FieldFxOwner->actor, flash->attachB, &center, &from);
-                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = from.x;
                     child->y = from.y;
@@ -439,7 +441,7 @@ int MenuCard_CrossFlashController(int mode, void *state, intptr_t argument) {
             else index = 21;
             hand.z = -(rand() & 0x1FF);
             FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)(void *)g_FieldFxOwner->actor, index, &hand, &from);
-            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = from.x;
                 child->y = from.y;
@@ -452,7 +454,7 @@ int MenuCard_CrossFlashController(int mode, void *state, intptr_t argument) {
             }
             if ((flash->timer & 7) == 0) {
                 FieldFx_GetActorPosition((char *)D_8009D254, 0, (s16 *)&from);
-                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = from.x;
                     child->y = from.y;
@@ -642,12 +644,12 @@ int MenuCard_GlintBurstController(int mode, void *state, intptr_t argument) {
         burst->x = ((FieldActor *)g_FieldFxOwner->actor)->render_object.target_x;
         burst->y = ((FieldActor *)g_FieldFxOwner->actor)->render_object.target_y;
         burst->z = ((FieldActor *)g_FieldFxOwner->actor)->render_object.target_z;
-        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->start, 20, 22,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 20, 22,
                              MenuCard_FadingGlintParticle);
     case 1:
         if (g_FieldFxCurrentAge == 3) {
             for (i = 0; i < 6; i++) {
-                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -662,7 +664,7 @@ int MenuCard_GlintBurstController(int mode, void *state, intptr_t argument) {
         }
         if (g_FieldFxCurrentAge < 5) {
             for (i = 0; i < 4; i++) {
-                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -881,14 +883,14 @@ int MenuCard_SpinBurstController(int mode, void *state, intptr_t argument) {
         FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)D_8009D254, 0, (GteShortVector *)&burst->rotation);
         burst->rotation.x = 0;
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_FieldFxGlintModel, 0, 0);
-        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->start, 20, 40,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 20, 40,
                              MenuCard_SpinRingParticle);
     case 1:
         if (g_FieldFxCurrentAge == 3) {
             Akao_SendPositionalCmdStereo(1201, 0, burst->x, burst->y, burst->z);
         }
         if (g_FieldFxCurrentAge == 2) {
-            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = burst->x;
                 child->y = burst->y;
@@ -901,7 +903,7 @@ int MenuCard_SpinBurstController(int mode, void *state, intptr_t argument) {
                 child->timer = 0;
             }
             for (i = 0; i < 6; i++) {
-                child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+                child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = (rand() & 0x7F) - 64;
                     child->y = 0;
@@ -918,7 +920,7 @@ int MenuCard_SpinBurstController(int mode, void *state, intptr_t argument) {
             }
         }
         if (g_FieldFxCurrentAge == 8) {
-            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = burst->x;
                 child->y = burst->y;
@@ -932,7 +934,7 @@ int MenuCard_SpinBurstController(int mode, void *state, intptr_t argument) {
                 child->timer = 0;
             }
             for (i = 0; i < 6; i++) {
-                child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+                child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = 0;
                     child->y = (rand() & 0x7F) - 64;
@@ -948,7 +950,7 @@ int MenuCard_SpinBurstController(int mode, void *state, intptr_t argument) {
             }
         }
         if (g_FieldFxCurrentAge == 2) {
-            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
+            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = burst->x;
                 child->y = burst->y;
@@ -1026,4 +1028,31 @@ _Alignas(s32) u8 g_MenuCardSpinRingColorTrack[40] = {
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x28,0x50,0x08,0x00,0x00,0x00,0x00,
     0xc8,0x80,0x80,0x0c,0x00,0x00,0x00,0x00,0x00,0x14,0x60,0x0c,0x00,0x00,0x00,0x00,
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+
+/* Original program 108: descriptor 801F1BD8, script 801F1B98. */
+static u16 menu_card_script_108[] = {1,6,23,4,2,0,2,0,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd108 = {
+    .table={.callbacks={MenuCard_RingBurstController},
+            .sizes={20,0,0,0,0,0,0,0}},
+    .initialize=MenuCard_GetGlintOriginA,
+    .script=menu_card_script_108,
+};
+
+/* Original program 109: descriptor 801F1C58, script 801F1C10. */
+static u16 menu_card_script_109[] = {1,6,24,4,2,0,2,0,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd109 = {
+    .table={.callbacks={MenuCard_CrossFlashController},
+            .sizes={648,0,0,0,0,0,0,0}},
+    .initialize=MenuCard_GetGlintOriginB,
+    .script=menu_card_script_109,
+};
+
+/* Original program 110: descriptor 801F1D00, script 801F1C90. */
+static u16 menu_card_script_110[] = {1,6,25,4,2,0,2,0,0,2,1,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd110 = {
+    .table={.callbacks={MenuCard_GlintBurstController,MenuCard_SpinBurstController},
+            .sizes={8,16,0,0,0,0,0,0}},
+    .initialize=MenuCard_GetGlintOriginC,
+    .script=menu_card_script_110,
 };

@@ -26,12 +26,9 @@ extern PmTables g_PmTables;
 #define g_PmSlotTable2 (g_PmTables.secondary)
 void Pm_InitScene(void);
 
-/* Task programs of commands 108..114 (g_FieldFxTaskPrograms[23..29]) are
- * read on demand from PE.IMG sectors g_SceneAssetLbaTbl[0..1] to g_PmTaskProgramBuffer. */
-
-extern void *g_PmTaskProgramBuffer;
-extern FieldFxTaskProgram *g_FieldFxTaskProgramCmd108, *g_FieldFxTaskProgramCmd109, *g_FieldFxTaskProgramCmd110, *g_FieldFxTaskProgramCmd111;
-extern FieldFxTaskProgram *g_FieldFxTaskProgramCmd112, *g_FieldFxTaskProgramCmd113, *g_FieldFxTaskProgramCmd114;
+/* Original on-demand effect bank is linked statically as seven native programs. */
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd108, g_FieldFxTaskProgramCmd109, g_FieldFxTaskProgramCmd110;
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd111, g_FieldFxTaskProgramCmd112, g_FieldFxTaskProgramCmd113, g_FieldFxTaskProgramCmd114;
 
 int Pm_AllocSlot(unsigned int command);
 int Pm_FreeSlot(int slot);

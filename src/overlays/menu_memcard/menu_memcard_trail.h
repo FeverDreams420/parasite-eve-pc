@@ -6,11 +6,11 @@
 
 #include "menu_memcard_link.h"
 
-typedef struct MemcardTrailState { s16 phase, timer, attachment; } MemcardTrailState;
+typedef struct MemcardTrailState { s16 phase, timer, attachment, reserved06; } MemcardTrailState;
 extern u8 g_MenuCardTrailColorTrack[];
 extern u8 g_MenuCardSineTrailColorTrack[];
 
-s32 MenuCard_TrailEffect(s32 mode, MemcardTrailState *state);
-s32 MenuCard_SineTrailEffect(s32 mode, MemcardTrailState *state);
+s32 MenuCard_TrailEffect(int mode, void *state, intptr_t argument);
+s32 MenuCard_SineTrailEffect(int mode, void *state, intptr_t argument);
 
 #endif

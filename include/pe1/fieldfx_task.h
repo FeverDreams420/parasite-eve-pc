@@ -52,7 +52,8 @@ typedef struct FieldFxTaskContext {
     s16 variables[7];
     FieldFxTaskSlot slots[8];
     FieldFxTaskTable *table;
-    _Alignas(void *) char arena[0x97C];
+    /* Native list headers, entries and pointers may take twice the PS1 space. */
+    _Alignas(void *) char arena[0x97C * (sizeof(void *) / sizeof(u32))];
 } FieldFxTaskContext;
 
 PE1_STATIC_ASSERT(sizeof(FieldFxTaskSlot) == 3 * sizeof(void *), fieldfx_task_slot_size);
@@ -79,7 +80,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, table) == PE1_OFFSETOF(FieldF
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskContext, arena) == PE1_OFFSETOF(FieldFxTaskContext, table) + sizeof(void *),
                   fieldfx_task_context_arena);
 PE1_STATIC_ASSERT(sizeof(FieldFxTaskContext) ==
-                  ((PE1_OFFSETOF(FieldFxTaskContext, arena) + 0x97C + _Alignof(FieldFxTaskContext) - 1) /
+                  ((PE1_OFFSETOF(FieldFxTaskContext, arena) + sizeof(((FieldFxTaskContext *)0)->arena) + _Alignof(FieldFxTaskContext) - 1) /
                    _Alignof(FieldFxTaskContext)) * _Alignof(FieldFxTaskContext),
                   fieldfx_task_context_size);
 

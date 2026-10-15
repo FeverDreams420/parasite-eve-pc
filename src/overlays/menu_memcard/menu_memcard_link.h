@@ -9,15 +9,16 @@
 #include "pe1/gte.h"
 
 #include "menu_memcard_offset.h"
+#include "pe1/field_history_trail.h"
 #include "menu_memcard_pulse.h"
 
 typedef struct MemcardLinkColor { u8 bytes[4]; } MemcardLinkColor;
-typedef struct MemcardLinkState { s16 phase, timer, opacity, reserved06; GteRotation rotation; } MemcardLinkState;
-typedef struct MemcardLinkChannel { s32 reserved[2]; void *slots; } MemcardLinkChannel;
+typedef struct MemcardLinkState { s16 phase, timer, opacity, reserved06; FieldTrailPair history[17]; } MemcardLinkState;
+PE1_STATIC_ASSERT(sizeof(MemcardLinkState)==0x118,memcard_link_state_size);
 extern MemcardLinkColor g_MenuCardLinkColor1, g_MenuCardLinkColor2;
 #include "pe1/player_entity.h"
 extern s16 g_MenuCardLinkJointA, g_MenuCardLinkJointB;
 
-s32 MenuCard_LinkEffect(s32 mode, MemcardLinkState *state);
+s32 MenuCard_LinkEffect(int mode, void *state, intptr_t argument);
 
 #endif

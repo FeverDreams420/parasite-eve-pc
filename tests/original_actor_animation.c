@@ -1,3 +1,5 @@
+#include "../src/overlays/menu_memcard/menu_memcard_link.h"
+#include "../src/overlays/menu_memcard/menu_memcard_trail.h"
 #include "pe1/akao/pan3d.h"
 #include "../src/overlays/menu_memcard/menu_memcard_glint.h"
 #include "../src/overlays/menu_memcard/menu_memcard_video.h"
@@ -2038,43 +2040,39 @@ static int native_object_slot_bounds(void)
     return 1;
 }
 
-static int process_task_bank_failures(void)
+static int process_static_task_programs(void)
 {
-    Pe1GameState saved=g_GameState;
-    u16 saved_extent[2]={g_SceneAssetLbaTbl[0],g_SceneAssetLbaTbl[1]};void *saved_buffer=g_PmTaskProgramBuffer;
-    void *programs[104]; memcpy(programs,g_FieldFxTaskPrograms,sizeof(programs));
-    g_GameState.pe_image_base_lba=12345; g_GameState.flags&=~0x10000u;
-    g_SceneAssetLbaTbl[0]=7; g_SceneAssetLbaTbl[1]=49;
-    g_PmTaskProgramBuffer=glyph_scratch;
-    for(unsigned command=108;command<=114;++command) {
-        glyph_reads=glyph_polls=0; glyph_read_retry=1; glyph_poll_retry=glyph_pending=0;
-        if(Scene_LoadRoomAssets(command,NULL)!=-13 || glyph_reads!=1 || glyph_polls ||
-           (g_GameState.flags&0x10000) || memcmp(programs,g_FieldFxTaskPrograms,sizeof(programs))) return 0;
-        glyph_reads=glyph_polls=0; glyph_poll_retry=1; glyph_pending=1;
-        if(Scene_LoadRoomAssets(command,NULL)!=-13 || glyph_reads!=1 || glyph_polls!=2 ||
-           (g_GameState.flags&0x10000) || memcmp(programs,g_FieldFxTaskPrograms,sizeof(programs))) return 0;
+    Pe1GameState saved=g_GameState;PmTables tables=g_PmTables;u32 flags=g_GameStateFlags;
+    void *programs[104];memcpy(programs,g_FieldFxTaskPrograms,sizeof(programs));
+    FieldFxTaskProgram *native[]={&g_FieldFxTaskProgramCmd108,&g_FieldFxTaskProgramCmd109,
+        &g_FieldFxTaskProgramCmd110,&g_FieldFxTaskProgramCmd111,&g_FieldFxTaskProgramCmd112,
+        &g_FieldFxTaskProgramCmd113,&g_FieldFxTaskProgramCmd114};
+    PmCommand *handlers[86]={0};PmPrimarySlot bank[11]={0};
+    g_PmTables=(PmTables){handlers,bank,NULL};g_GameStateFlags=0x80;
+    g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
+    for(unsigned command=108;command<=114;++command){
+        g_GameState.flags&=~0x10000u;glyph_reads=glyph_polls=0;
+        glyph_read_retry=glyph_poll_retry=glyph_pending=1;
+        g_MenuCardCrossFlashRaised=g_BattleCrossFlashStop=77;
+        g_MemcardSineColor.r=77;g_MemcardCosineColor.g=88;g_MemcardGlintOrigin.x=99;
+        /* No handler is installed: binding succeeds without any image I/O,
+         * then the original PM dispatch reports the missing handler. */
+        if(Scene_LoadRoomAssets(command,NULL)!=-8 || glyph_reads || glyph_polls || !(g_GameState.flags&0x10000))return 0;
+        for(unsigned i=0;i<7;++i)if(g_FieldFxTaskPrograms[23+i]!=native[i])return 0;
+        if(g_MenuCardCrossFlashRaised || g_BattleCrossFlashStop || g_MemcardSineColor.r ||
+           g_MemcardCosineColor.g || g_MemcardGlintOrigin.x)return 0;
+        FieldFxTaskOwner owner={0};if(FieldFx_BindTaskProgram(&owner,command-85) ||
+            owner.tasks.table!=&native[command-108]->table || owner.tasks.pc.script!=native[command-108]->script)return 0;
     }
-    glyph_reads=glyph_polls=0;
-    g_SceneAssetLbaTbl[1]=7;
-    if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads || glyph_polls) return 0;
-    g_SceneAssetLbaTbl[1]=6;
-    if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads || glyph_polls) return 0;
-    g_SceneAssetLbaTbl[1]=49; g_GameState.pe_image_base_lba=UINT32_MAX-10;
-    if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads || glyph_polls) return 0;
-    g_GameState.pe_image_base_lba=12345; g_PmTaskProgramBuffer=NULL;
-    if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads || glyph_polls) return 0;
-    g_PmTaskProgramBuffer=glyph_scratch; g_SceneAssetLbaTbl[0]=8; g_SceneAssetLbaTbl[1]=50;
-    if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads!=1 || glyph_polls) return 0;
-    g_SceneAssetLbaTbl[0]=7;g_SceneAssetLbaTbl[1]=49;
-    for(unsigned command=108;command<=114;++command) {
-        glyph_reads=glyph_polls=0;glyph_read_retry=glyph_poll_retry=glyph_pending=0;
-        if(Scene_LoadRoomAssets(command,NULL)!=-13 || glyph_reads!=1 || glyph_polls!=1 ||
-            (g_GameState.flags&0x10000) || memcmp(programs,g_FieldFxTaskPrograms,sizeof(programs)))return 0;
-    }
-    g_SceneAssetLbaTbl[0]=saved_extent[0];g_SceneAssetLbaTbl[1]=saved_extent[1];g_PmTaskProgramBuffer=saved_buffer;
-    g_GameState=saved; glyph_reads=glyph_polls=0; glyph_read_retry=glyph_poll_retry=glyph_pending=0;
-    puts("Original process task-bank I/O: seven commands, read/poll failures and invalid extents return without retry or registry mutation");
-    return 1;
+    g_MemcardSineColor.r=77;
+    if(Scene_LoadRoomAssets(108,NULL)!=-8 || g_MemcardSineColor.r!=77)return 0;
+    bank[0].header.command=114;bank[0].header.state=1;
+    if(Pm_FreeSlot(0) || (g_GameState.flags&0x10000))return 0;
+    for(unsigned i=23;i<30;++i)if(g_FieldFxTaskPrograms[i])return 0;
+    if(Scene_LoadRoomAssets(108,NULL)!=-8 || g_MemcardSineColor.r)return 0;
+    memcpy(g_FieldFxTaskPrograms,programs,sizeof(programs));g_GameState=saved;g_PmTables=tables;g_GameStateFlags=flags;
+    glyph_reads=glyph_polls=0;glyph_read_retry=glyph_poll_retry=glyph_pending=0;
+    puts("Original static task programs: seven real bindings, cold/reset versus cached state, 114 release/rebind and no executable-bank I/O passed");return 1;
 }
 
 static int process_texture_bank_failures(void)
@@ -2744,9 +2742,9 @@ static int original_glint_lifecycle(void)
     u8 tracks[168];memcpy(tracks,g_MenuCardDriftGlowColorTrack,40);memcpy(tracks+40,g_MenuCardRisingEmberColorTrack,48);
     memcpy(tracks+88,g_MenuCardGlintBurstColorTrack,40);memcpy(tracks+128,g_MenuCardSpinRingColorTrack,40);
     _Alignas(16) static u8 packets[0x40000+128];RenderNativeTag ordering[4096];
-    _Alignas(void *) u8 pool[4096];FieldFxTaskSlot task={.start=(char *)pool,.end=(char *)pool+sizeof(pool)};
-    FieldFxObjectPrefix owner={0};BattleEntity actor={0};RenderMatrix matrices[22]={0};
-    for(unsigned i=0;i<22;++i){matrices[i].rotation[0][0]=matrices[i].rotation[1][1]=matrices[i].rotation[2][2]=4096;
+    _Alignas(void *) u8 pool[4096];FieldFxTaskSlot task={.end=(char *)pool};
+    FieldFxObjectPrefix owner={0};BattleEntity actor={0};RenderMatrix matrices[27]={0};
+    for(unsigned i=0;i<27;++i){matrices[i].rotation[0][0]=matrices[i].rotation[1][1]=matrices[i].rotation[2][2]=4096;
         matrices[i].translation[0]=(int)i*10-100;matrices[i].translation[2]=6000;}
     actor.renderObject.matrices=matrices;actor.renderObject.target_z=6000;owner.actor=(FieldActor *)&actor;
     g_FieldFxOwner=&owner;g_FieldFxActiveTaskSlot=&task;g_PlayerEntity=(FieldActor *)&actor;
@@ -2804,6 +2802,71 @@ static int original_glint_lifecycle(void)
         if(!valid)fprintf(stderr,"glint lifecycle controller=%u slot=%u alt=%u end=%d peak=%u offset=%d\n",controller,slot,alt,ended,peak,g_DrawPacketOffset);
         if(controller==1 && g_MenuCardCrossFlashRaised!=1)valid=0;
     }
+    {
+    PmTables saved_pm=g_PmTables;u32 saved_flags=g_GameStateFlags;
+    void *saved_programs[104];memcpy(saved_programs,g_FieldFxTaskPrograms,sizeof(saved_programs));
+    static PmPrimarySlot bank[11];
+    g_PmTables=(PmTables){g_PmCmdHandlerArray,bank,NULL};g_GameStateFlags=0x80;
+    g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
+    const unsigned masks[]={1,1,3,7,7,7,1};unsigned programs_run=0,combined_frames=0;
+    for(unsigned command=108;command<=114;++command){
+        memset(bank,0,sizeof(bank));
+        for(unsigned i=0;i<11;++i)memset(bank[i].task.tasks.arena,0xa5,sizeof(bank[i].task.tasks.arena));
+        g_GameState.flags&=~0x10000u;g_FieldFxAltPaletteFlag=0;g_FieldFxLoadedTexturePage=1;
+        g_FieldFxSpriteParams=(RenderEffectParameters){32,2,1,0,0,0,16,32,32};
+        if(Scene_LoadRoomAssets(command,&actor)!=0 || Pm_SendCmd(0,0,0,0,0,0)){valid=0;break;}
+        if(command==114)g_MenuCardCrossFlashRaised=1;
+        unsigned seen=0,max_used=0,finished=0;int companion=-1;
+        for(unsigned frame=0;frame<150;++frame){
+            g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;memset(packets,0xa5,sizeof(packets));
+            for(unsigned i=0;i<4096;++i)ordering[i]=(RenderNativeTag){.address=0xffffff};
+            D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets;
+            Psyz_GteCtrlWrite(26,320);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
+            if(command==109 && frame==4){
+                companion=Scene_LoadRoomAssets(114,&actor);
+                if(companion!=1 || Pm_SendCmd(companion,0,0,0,0,0))valid=0;
+            }
+            if(command==109 && frame==48)g_BattleCrossFlashStop=1;
+            if(Pm_Start(0) || (companion>=0 && Pm_Start(companion)) || Pm_Exec(0) ||
+               (companion>=0 && Pm_Exec(companion))){valid=0;break;}
+            FieldFxTaskContext *ctx=&bank[0].task.tasks;
+            if(ctx->used>sizeof(ctx->arena) || g_DrawPacketOffset<0 || g_DrawPacketOffset>0x40000){valid=0;break;}
+            if(ctx->used>max_used)max_used=ctx->used;
+            for(unsigned i=0;i<8;++i)if(ctx->slots[i].id!=0xffff){
+                FieldFxTaskSlot *slot=&ctx->slots[i];if(slot->id>2){valid=0;break;}
+                seen|=1u<<slot->id;
+                if(slot->start<ctx->arena || slot->start>=ctx->arena+sizeof(ctx->arena) ||
+                    (slot->end && (slot->end<slot->start || slot->end>=ctx->arena+sizeof(ctx->arena))))valid=0;
+            }
+            for(unsigned i=max_used;i<sizeof(ctx->arena);++i)if((u8)ctx->arena[i]!=0xa5){valid=0;break;}
+            for(unsigned i=g_DrawPacketOffset+sizeof(FieldModelGt4Packet);i<sizeof(packets);++i)
+                if(packets[i]!=0xa5){valid=0;break;}
+            for(unsigned i=0;i<4096;++i){uintptr_t link=ordering[i].address;unsigned count=0;
+                while(link!=0xffffff){
+                    if(link<(uintptr_t)packets || link>(uintptr_t)packets+g_DrawPacketOffset-sizeof(RenderNativeTag) || ++count>4096){valid=0;break;}
+                    RenderNativeTag *tag=(void *)link;
+                    if(tag->length>16 || link+sizeof(*tag)+tag->length*4>(uintptr_t)packets+g_DrawPacketOffset){valid=0;break;}
+                    link=tag->address;
+                }
+            }
+            if(command==109 && frame>=4 && frame<48){
+                if(bank[1].header.state!=2 || !bank[1].task.tasks.count)valid=0;
+                ++combined_frames;
+            }
+            if(!bank[0].header.state && (companion<0 || !bank[companion].header.state)){finished=frame;break;}
+        }
+        if(!finished || bank[0].task.tasks.count || seen!=masks[command-108] ||
+           (command>=111 && command<=113 && max_used<=0x97c))valid=0;
+        if(command==109 || command==114){
+            if(g_GameState.flags&0x10000)valid=0;
+            for(unsigned i=23;i<30;++i)if(g_FieldFxTaskPrograms[i])valid=0;
+        }
+        if(!valid)fprintf(stderr,"native task program %u: seen=%x arena=%u finish=%u count=%u state=%u\n",command,seen,max_used,finished,bank[0].task.tasks.count,bank[0].header.state);
+        ++programs_run;
+    }
+    if(programs_run!=7 || combined_frames!=44)valid=0;
+    memcpy(g_FieldFxTaskPrograms,saved_programs,sizeof(saved_programs));g_PmTables=saved_pm;g_GameStateFlags=saved_flags;
+    }
     memcpy(g_MenuCardDriftGlowColorTrack,tracks,40);memcpy(g_MenuCardRisingEmberColorTrack,tracks+40,48);
     memcpy(g_MenuCardGlintBurstColorTrack,tracks+88,40);memcpy(g_MenuCardSpinRingColorTrack,tracks+128,40);
     memcpy(g_FieldModelColorBackup,saved_colors,sizeof(saved_colors));g_FieldFxGlintModel=saved_model;g_AkaoBgmHandle[0]=saved_sound;
@@ -2813,8 +2876,66 @@ static int original_glint_lifecycle(void)
     g_ActiveDrawSlot=saved_slot;g_DrawPacketOffset=saved_offset;g_FieldFxCurrentAge=saved_age;
     g_FieldFxAltPaletteFlag=saved_alt;g_FieldFxLoadedTexturePage=saved_page;g_BattleCrossFlashStop=saved_stop;g_MenuCardCrossFlashRaised=saved_raised;
     if(!valid){fprintf(stderr,"original glint controller/list/render lifecycle failed (%u draws)\n",draws);return 0;}
-    puts("Original glint controllers: all four initializers, original callback lists, complete particle lifetimes, cross-flash stop and both native draw slots passed with arena guards");
+    puts("Original glint controllers/programs: all four controllers and seven real PM programs, overlapping tasks, cross-flash/114 handshake, complete lifetimes, both draw slots and native arena/OT guards passed");
     return 1;
+}
+
+static int original_task_bank_data(PeDisc *disc)
+{
+    PeDiscFile archive;static u8 bank[9*2048];
+    if(!pe_disc_find(disc,"PE.IMG",&archive) || !pe_disc_read(disc,&archive,969ull*2048,bank,sizeof(bank)))return 0;
+    FieldFxTaskProgram *programs[]={&g_FieldFxTaskProgramCmd108,&g_FieldFxTaskProgramCmd109,
+        &g_FieldFxTaskProgramCmd110,&g_FieldFxTaskProgramCmd111,&g_FieldFxTaskProgramCmd112,
+        &g_FieldFxTaskProgramCmd113,&g_FieldFxTaskProgramCmd114};
+    const u32 addresses[]={0x801f1bd8,0x801f1c58,0x801f1d00,0x801f1d8c,0x801f1e18,0x801f1ea4,0x801f1ef0};
+    static const struct {FieldFxCallbackListCallback callback;u32 address;} callbacks[]={
+        {MenuCard_RingBurstController,0x801edc44},{MenuCard_CrossFlashController,0x801eebc8},
+        {MenuCard_GlintBurstController,0x801ef978},{MenuCard_SpinBurstController,0x801f0690},
+        {MenuCard_LinkEffect,0x801f0d30},{MenuCard_TrailEffect,0x801f11fc},
+        {MenuCard_SineTrailEffect,0x801f1790},{MenuCard_ConsumeCrossFlashFlag,0x801f1b60}};
+    intptr_t (*initializers[])(int,intptr_t,intptr_t,intptr_t)={MenuCard_GetGlintOriginA,MenuCard_GetGlintOriginB,
+        MenuCard_GetGlintOriginC,MenuCard_GetGlintOriginD,MenuCard_GetGlintOriginE,MenuCard_GetGlintOriginF};
+    const unsigned words[]={12,12,15,18,18,18,9};int valid=1;
+    for(unsigned i=0;i<7;++i){
+        const u8 *record=bank+(addresses[i]-0x801ed7f8u);FieldFxTaskProgram *program=programs[i];
+        for(unsigned j=0;j<8;++j){u32 address=0,original;u16 size;
+            if(program->table.callbacks[j]){for(unsigned k=0;k<8;++k)
+                if(program->table.callbacks[j]==callbacks[k].callback)address=callbacks[k].address;
+                if(!address)valid=0;}
+            memcpy(&original,record+j*4,4);memcpy(&size,record+32+j*2,2);
+            if(original!=address || size!=program->table.sizes[j])valid=0;
+        }
+        u32 initializer,script;memcpy(&initializer,record+48,4);memcpy(&script,record+52,4);
+        if(initializer!=(i<6?0x801f1b00u+i*16:0) || program->initialize!=(i<6?initializers[i]:NULL))valid=0;
+        if(program->initialize && program->initialize(-1,INTPTR_MAX,INTPTR_MIN,0)!=(intptr_t)&g_MemcardGlintOrigin)valid=0;
+        if(script<0x801ed7f8u || script-0x801ed7f8u+words[i]*2>sizeof(bank) ||
+            memcmp(program->script,bank+(script-0x801ed7f8u),words[i]*2))valid=0;
+    }
+    static const struct {const void *data;u32 address;size_t bytes;} authored[]={
+        {&g_MenuCardLinkColor1,0x801ed850,4},{&g_MenuCardLinkColor2,0x801ed854,4},
+        {g_MenuCardPulseColorTrack,0x801f1d5c,40},{g_MenuCardTrailColorTrack,0x801f1de8,48},
+        {g_MenuCardSineTrailColorTrack,0x801f1e74,48},{&g_MenuCardLinkJointA,0x801f1d86,2},
+        {&g_MenuCardLinkJointB,0x801f1d88,2}};
+    for(unsigned i=0;i<sizeof(authored)/sizeof(*authored);++i)
+        if(memcmp(authored[i].data,bank+(authored[i].address-0x801ed7f8u),authored[i].bytes))valid=0;
+    FieldFxCallbackListCallback particles[]={MenuCard_PulseImage,MenuCard_CosineImage,MenuCard_SineRotatingImage};
+    static const int timers[]={0,1,10,11,12,14,15,16,17,22,23,24,31,39,43,32767,32768,65535};
+    static const s16 phases[]={-32768,-1,0,1,32767};static const int modes[]={-1,0,1,3,255};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned fn=0;fn<3;++fn)for(unsigned phase=0;phase<5;++phase)
+    for(unsigned timer=0;timer<18;++timer)for(unsigned mode=0;mode<5;++mode){
+        u16 words[10]={32767,32768,(u16)-10,0xa55a,(u16)-100,200,(u16)-300,0x5aa5,(u16)phases[phase],(u16)timers[timer]};
+        MemcardPulseState particle;memcpy(&particle,words,20);
+        int result=particles[fn](modes[mode],&particle,INTPTR_MAX);const u8 *bytes=(const u8 *)&particle;
+        for(unsigned i=0;i<20;++i)hash=(hash^bytes[i])*UINT64_C(1099511628211);
+        for(unsigned i=0;i<4;++i)hash=(hash^(u8)((u32)result>>(8*i)))*UINT64_C(1099511628211);
+        ++cases;
+    }
+    if(cases!=1350 || hash!=UINT64_C(0x920c3087dc472d02)){
+        fprintf(stderr,"Original image particles: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);valid=0;}
+    if(!valid)fprintf(stderr,"original native task descriptors/scripts/data differ from supplied USA bank\n");
+    else puts("Original task bank: all seven descriptors, 56 callbacks/sizes, six initializer returns, 102 script halfwords and image data match USA; 1350 image-particle CPU cases match");
+    return valid;
 }
 
 static int original_glint_particles(PeDisc *disc)
@@ -2826,7 +2947,7 @@ static int original_glint_particles(PeDisc *disc)
     FieldFxCallbackListCallback functions[]={MenuCard_DriftGlowParticle,MenuCard_RisingEmberParticle,
         MenuCard_FadingGlintParticle,MenuCard_SpinRingParticle};
     static const u32 seeds[]={1,0x87654321};static const int modes[]={0,1,3};
-    RoomFloorY floor=*g_RoomFloorY;unsigned saved_random=rand();
+    RoomFloorY floor=*g_RoomFloorY;unsigned saved_random=Psyz_RandState();
     uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int valid=1;
 #define GLINT_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
     for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
@@ -5489,7 +5610,7 @@ static int original_item_random(void)
 int main(int argc, char **argv)
 {
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;
@@ -5523,7 +5644,7 @@ int main(int argc, char **argv)
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_icon_packets(&disc,&exe)) return 133;
-        if (!original_glint_particles(&disc) || !original_positional_audio_projection() || !original_glint_lifecycle()) return 141;
+        if (!original_task_bank_data(&disc) || !original_glint_particles(&disc) || !original_positional_audio_projection() || !original_glint_lifecycle()) return 141;
         if (!original_video_buffers(&disc)) return 135;
         if (!original_video_decoder(&disc)) return 136;
         if (!original_video_stream_errors()) return 137;

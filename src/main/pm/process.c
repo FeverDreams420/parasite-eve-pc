@@ -11,11 +11,9 @@
 #include "pe1/scene_assets.h"
 #include "pe1/scene_room_load.h"
 
-/* Native bindings for the on-demand task bank.
- * NULL bindings remain unavailable until their original modules are ported. */
-void *g_PmTaskProgramBuffer;
-FieldFxTaskProgram *g_FieldFxTaskProgramCmd108, *g_FieldFxTaskProgramCmd109, *g_FieldFxTaskProgramCmd110;
-FieldFxTaskProgram *g_FieldFxTaskProgramCmd111, *g_FieldFxTaskProgramCmd112, *g_FieldFxTaskProgramCmd113, *g_FieldFxTaskProgramCmd114;
+#include "../../overlays/menu_memcard/menu_memcard_glint.h"
+#include "../../overlays/menu_memcard/menu_memcard_pulse.h"
+#include "../../overlays/menu_memcard/menu_memcard_trail.h"
 
 static inline int FindSlot(u32 command)
 {
@@ -86,26 +84,27 @@ int Scene_LoadRoomAssets(u32 command, void *owner)
     if (command >= 192)
         return -7;
     if (command - 108 < 7 && !(g_GameState.flags & 0x10000)) {
-        u32 first = g_SceneAssetLbaTbl[0], end = g_SceneAssetLbaTbl[1];
-        u64 lba = (u64)g_GameState.pe_image_base_lba + first;
-        if (!g_PmTaskProgramBuffer || end <= first ||
-            lba + (end - first) > UINT64_C(0x100000000)) return -13;
-        if (CdRom_ReadSectorsFromLba((u32)lba, g_PmTaskProgramBuffer, end - first) < 0)
-            return -13;
-        while ((ready = CdRom_PollReady()) != 0) {
-            if (ready < 0) return -13;
+        /* Native code and authored program data replace the executable bank.
+         * Reset its mutable cache/state as the original cold bank load did. */
+        struct {u8 *data;size_t bytes;} tracks[] = {
+            {g_MenuCardDriftGlowColorTrack,40},{g_MenuCardRisingEmberColorTrack,48},
+            {g_MenuCardGlintBurstColorTrack,40},{g_MenuCardSpinRingColorTrack,40},
+            {g_MenuCardPulseColorTrack,40},{g_MenuCardTrailColorTrack,48},{g_MenuCardSineTrailColorTrack,48}
+        };
+        for(unsigned i=0;i<sizeof(tracks)/sizeof(*tracks);++i){
+            memset(tracks[i].data,0,8);
+            for(size_t j=12;j<tracks[i].bytes;j+=8)memset(tracks[i].data+j,0,4);
         }
-        if (!g_FieldFxTaskProgramCmd108 || !g_FieldFxTaskProgramCmd109 || !g_FieldFxTaskProgramCmd110 ||
-            !g_FieldFxTaskProgramCmd111 || !g_FieldFxTaskProgramCmd112 || !g_FieldFxTaskProgramCmd113 ||
-            !g_FieldFxTaskProgramCmd114) return -13;
-        /* Room code is statically linked; no PS1 instruction-cache flush. */
-        g_FieldFxTaskPrograms[108 - 85] = g_FieldFxTaskProgramCmd108;
-        g_FieldFxTaskPrograms[109 - 85] = g_FieldFxTaskProgramCmd109;
-        g_FieldFxTaskPrograms[110 - 85] = g_FieldFxTaskProgramCmd110;
-        g_FieldFxTaskPrograms[111 - 85] = g_FieldFxTaskProgramCmd111;
-        g_FieldFxTaskPrograms[112 - 85] = g_FieldFxTaskProgramCmd112;
-        g_FieldFxTaskPrograms[113 - 85] = g_FieldFxTaskProgramCmd113;
-        g_FieldFxTaskPrograms[114 - 85] = g_FieldFxTaskProgramCmd114;
+        g_MemcardGlintOrigin=(GteShortVector){0};
+        g_MemcardCosineColor=g_MemcardSineColor=(RenderColor){0};
+        g_BattleCrossFlashStop=g_MenuCardCrossFlashRaised=0;
+        g_FieldFxTaskPrograms[108 - 85] = &g_FieldFxTaskProgramCmd108;
+        g_FieldFxTaskPrograms[109 - 85] = &g_FieldFxTaskProgramCmd109;
+        g_FieldFxTaskPrograms[110 - 85] = &g_FieldFxTaskProgramCmd110;
+        g_FieldFxTaskPrograms[111 - 85] = &g_FieldFxTaskProgramCmd111;
+        g_FieldFxTaskPrograms[112 - 85] = &g_FieldFxTaskProgramCmd112;
+        g_FieldFxTaskPrograms[113 - 85] = &g_FieldFxTaskProgramCmd113;
+        g_FieldFxTaskPrograms[114 - 85] = &g_FieldFxTaskProgramCmd114;
         g_GameState.flags |= 0x10000;
     }
     while ((ready = Asset_LoadTimTextures(0)) > 0) {}

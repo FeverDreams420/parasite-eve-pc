@@ -1,4 +1,6 @@
+#include "pe1/resident_tables.h"
 #include "pe1/draw_area.h"
+#include "pe1/textbox.h"
 #include "pe1/memcard.h"
 void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/battle_runtime.h"
@@ -2278,6 +2280,139 @@ static int original_menu_draw_areas(void)
     return valid;
 }
 
+void Draw_EmitDigitSprite(int digit);
+static int original_digit_packets(void)
+{
+    /* Payload hashes from USA Draw_SetFontVariant/Draw_EmitDigitSprite
+     * 8005F844/8005F874, executed in MIPS, excluding the platform DMA tag. */
+    static const uint64_t hashes[2][2]={{UINT64_C(0x4453c0728d2e749d),UINT64_C(0x22072416028e569d)},
+        {UINT64_C(0xdc84dc2c95ba4c69),UINT64_C(0x338cd32cbc4986f1)}};
+    const int positions[3][2]={{23,45},{-17,-9},{65533,65534}};
+    const int digits[]={-1,-10,0,1,9,10,79,INT_MAX};
+    static _Alignas(16) u8 arena[0x4000+16];
+    u8 *cursor=g_DrawPacketCursor,*base=g_DrawPacketArenaBase;
+    u32 *entry=g_DrawOrderingTableEntry;
+    int x=g_TextCursorX,y=g_TextCursorY,dim=g_DrawTextDimmed;
+    u32 color=g_DrawPrimColor,shaded=g_DrawColorShaded;
+    int clut=g_DrawDigitFontTpageClut,u=g_DrawDigitFontBaseTexU,v=g_DrawDigitFontBaseTexV;
+    int valid=1;
+    for(unsigned font=0;font<2;++font) for(unsigned dark=0;dark<2;++dark) {
+        RenderNativeTag ordering={0xFFFFFF,0x9876};
+        uintptr_t previous=ordering.address;
+        memset(arena,0xA5,sizeof(arena));
+        g_DrawPacketCursor=g_DrawPacketArenaBase=arena;g_DrawOrderingTableEntry=(u32 *)&ordering;
+        Draw_SetFontVariant(font);Draw_SetColor(0xE1A25C);Draw_SetTextDimmed(dark);
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned pos=0;pos<3;++pos) for(unsigned d=0;d<sizeof(digits)/sizeof(digits[0]);++d) {
+            Draw_SetCursor(positions[pos][0],positions[pos][1]);
+            RenderTexturedQuad *quad=(RenderTexturedQuad *)g_DrawPacketCursor;
+            Draw_EmitDigitSprite(digits[d]);
+            if(quad->tag.length!=9 || quad->tag.address!=previous ||
+               ordering.address!=(uintptr_t)quad || ordering.length!=0x9876 ||
+               g_DrawPacketCursor!=(u8 *)quad+sizeof(*quad) ||
+               g_TextCursorX!=positions[pos][0] || g_TextCursorY!=positions[pos][1]) valid=0;
+            previous=(uintptr_t)quad;
+            const u8 *payload=(const u8 *)quad+sizeof(RenderNativeTag);
+            for(unsigned i=0;i<36;++i) hash=(hash^payload[i])*UINT64_C(1099511628211);
+        }
+        if(hash!=hashes[font][dark]) valid=0;
+        for(size_t i=24*sizeof(RenderTexturedQuad);i<sizeof(arena);++i) if(arena[i]!=0xA5) valid=0;
+        g_DrawPacketCursor=arena+0x4000-sizeof(RenderTexturedQuad);
+        Draw_EmitDigitSprite(7);
+        if(ordering.address!=previous || ordering.length!=0x9876 ||
+           g_DrawPacketCursor!=arena+0x4000-sizeof(RenderTexturedQuad)) valid=0;
+    }
+    g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
+    g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;
+    g_DrawDigitFontTpageClut=clut;g_DrawDigitFontBaseTexU=u;g_DrawDigitFontBaseTexV=v;
+    if(!valid) fprintf(stderr,"Original digit payload/native links differ from USA MIPS reference\n");
+    return valid;
+}
+
+static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
+{
+    PeDiscFile archive; u8 range[4];
+    if(!pe_disc_find(disc,"PE.IMG",&archive) ||
+       !pe_disc_read(disc,executable,0x930D8-0x10000+0x800+4,range,sizeof(range))) return 0;
+    unsigned first=range[0]|(unsigned)range[1]<<8,last=range[2]|(unsigned)range[3]<<8;
+    if(last<=first || (last-first)*2048>sizeof(g_ResidentDataPack)) return 0;
+    ResidentDataPack resident=g_ResidentDataPack;
+    if(!pe_disc_read(disc,&archive,(uint64_t)first*2048,&g_ResidentDataPack,(last-first)*2048)) return 0;
+    unsigned count=(g_ResidentDataPack.directory.itemBaseData-g_ResidentDataPack.directory.glyphDescriptors)/8;
+    const uint64_t hashes[]={UINT64_C(0xd4de41434c6d79f9),UINT64_C(0xbdb11c6f91760571)};
+    const int positions[3][2]={{23,45},{-17,-9},{65533,65534}};
+    static _Alignas(16) u8 arena[0x4000+16];
+    u8 *cursor=g_DrawPacketCursor,*base=g_DrawPacketArenaBase;u32 *entry=g_DrawOrderingTableEntry;
+    int x=g_TextCursorX,y=g_TextCursorY,dim=g_DrawTextDimmed;
+    u32 color=g_DrawPrimColor,shaded=g_DrawColorShaded;
+    if(count!=156) {g_ResidentDataPack=resident;return 0;}
+    int valid=1;
+    int text_mode=g_TextRenderMode,advance=g_DrawGlyphAdvance;
+    for(unsigned dark=0;dark<2;++dark) {
+        RenderNativeTag ordering={0xFFFFFF,0x9876};
+        g_DrawPacketArenaBase=arena;g_DrawOrderingTableEntry=(u32 *)&ordering;
+        Draw_SetColor(0xE1A25C);Draw_SetTextDimmed(dark);
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned pos=0;pos<3;++pos) for(unsigned mode=0;mode<3;++mode)
+        for(unsigned glyph=0;glyph<count;++glyph) {
+            memset(arena,0xA5,sizeof(RenderTexturedQuad)+16);g_DrawPacketCursor=arena;
+            ordering.address=0xFFFFFF;Draw_SetCursor(positions[pos][0],positions[pos][1]);
+            Draw_EmitGlyph(glyph,mode);
+            RenderTexturedQuad *quad=(RenderTexturedQuad *)arena;
+            if(quad->tag.length!=9 || quad->tag.address!=0xFFFFFF ||
+               ordering.address!=(uintptr_t)quad || ordering.length!=0x9876 ||
+               g_DrawPacketCursor!=arena+sizeof(*quad)) valid=0;
+            const u8 *payload=arena+sizeof(RenderNativeTag);
+            for(unsigned i=0;i<36;++i) hash=(hash^payload[i])*UINT64_C(1099511628211);
+            for(size_t i=sizeof(RenderNativeTag)+36;i<sizeof(*quad)+16;++i) if(arena[i]!=0xA5) valid=0;
+        }
+        if(hash!=hashes[dark]) valid=0;
+        g_DrawPacketCursor=arena+0x4000-sizeof(RenderTexturedQuad);
+        uintptr_t head=ordering.address;Draw_EmitGlyph(123,2);
+        if(ordering.address!=head || g_DrawPacketCursor!=arena+0x4000-sizeof(RenderTexturedQuad)) valid=0;
+    }
+    /* USA 8005EED4: text quad bytes plus cursor/page/advance state,
+     * including all six page-prefix values and control bytes FA..FF.
+     * Page 1/code 0 delegates to the separate sprite emitter. */
+    const uint64_t text_hashes[]={UINT64_C(0xd7c5db13a021071c),UINT64_C(0x9871a07530db72aa)};
+    for(unsigned dark=0;dark<2;++dark) {
+        RenderNativeTag ordering={0xFFFFFF,0x9876};
+        g_DrawPacketArenaBase=arena;g_DrawOrderingTableEntry=(u32 *)&ordering;
+        Draw_SetColor(0xE1A25C);Draw_SetTextDimmed(dark);
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned pos=0;pos<3;++pos) for(unsigned page=0;page<6;++page)
+        for(unsigned code=0;code<256;++code) {
+            if(page==1 && code==0) continue;
+            memset(arena,0xA5,sizeof(RenderTexturedQuad)+16);g_DrawPacketCursor=arena;
+            ordering.address=0xFFFFFF;Draw_SetCursor(positions[pos][0],positions[pos][1]);
+            g_TextRenderMode=page;g_DrawGlyphAdvance=99;
+            Draw_AllocTexturedQuad(code);
+            RenderTexturedQuad *quad=(RenderTexturedQuad *)arena;
+            if(code<250) {
+                if(quad->tag.length!=9 || quad->tag.address!=0xFFFFFF ||
+                   ordering.address!=(uintptr_t)quad || g_DrawPacketCursor!=arena+sizeof(*quad)) valid=0;
+            } else if(ordering.address!=0xFFFFFF || g_DrawPacketCursor!=arena) valid=0;
+            if(ordering.length!=0x9876) valid=0;
+            const u8 *payload=arena+sizeof(RenderNativeTag);
+            for(unsigned i=0;i<36;++i) hash=(hash^payload[i])*UINT64_C(1099511628211);
+            const u32 state[]={(u32)g_TextCursorX,(u32)g_TextCursorY,(u32)g_TextRenderMode,(u32)g_DrawGlyphAdvance};
+            for(unsigned i=0;i<4;++i) for(unsigned byte=0;byte<4;++byte)
+                hash=(hash^((state[i]>>(byte*8))&255))*UINT64_C(1099511628211);
+            for(size_t i=sizeof(RenderNativeTag)+36;i<sizeof(*quad)+16;++i) if(arena[i]!=0xA5) valid=0;
+        }
+        if(hash!=text_hashes[dark]) valid=0;
+        g_TextRenderMode=0;g_DrawPacketCursor=arena+0x4000-sizeof(RenderTexturedQuad);
+        uintptr_t head=ordering.address;Draw_AllocTexturedQuad(7);
+        if(ordering.address!=head || g_DrawPacketCursor!=arena+0x4000-sizeof(RenderTexturedQuad)) valid=0;
+    }
+    g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
+    g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
+    g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;
+    if(valid) puts("Original icon/text quads: 156 real descriptors, six font pages/control bytes, positions, dim states and cursor updates match USA MIPS");
+    else fprintf(stderr,"Original icon payload/native links differ from USA MIPS 8005ED18\n");
+    return valid;
+}
+
 static int original_subsystem_start(void)
 {
     g_GameStateFlags=0xA5A5A5A5; g_FrameRngCounter=123;
@@ -2407,6 +2542,7 @@ int main(int argc, char **argv)
     if(!original_system_start())return 130;
     if(!original_display_start())return 127;
     if(!original_menu_draw_areas())return 131;
+    if(!original_digit_packets())return 132;
     if(!original_subsystem_start())return 129;
     const u32 lzcs[]={0,1,0x7fffffff,0x80000000,0xffffffff};
     const u32 lzcr[]={32,31,1,1,32};
@@ -2423,6 +2559,7 @@ int main(int argc, char **argv)
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
         if (!glyph_asset_records(&disc, &exe)) return 57;
+        if (!original_icon_packets(&disc,&exe)) return 133;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];
             if(!pointers[mode]) {if(native)return 21;continue;}

@@ -322,13 +322,14 @@ void Draw_EmitGlyph(s32 arg0, s32 arg1) {
         Inv_BoundsCheckAssertStub(1);
     }
 
+    if (!packet) return;
     if (packet != 0) {
         if (g_DrawTextDimmed != 0) {
             packet->color.word = g_DrawColorShaded;
         } else {
             packet->color.word = g_DrawPrimColor;
         }
-        packet->tag.bytes.length = 9;
+        packet->tag.length = 9;
         packet->color.bytes.code = 0x2C;
     }
 
@@ -382,15 +383,13 @@ void Draw_EmitGlyph(s32 arg0, s32 arg1) {
     }
 
     {
-        RenderPacketTag *ot;
-        DrawPrimLink link;
+        RenderNativeTag *ot;
 
         packet->clut = glyph->clut;
         packet->tpage = 7;
-        ot = (RenderPacketTag *)g_DrawOrderingTableEntry;
-        packet->tag.link.address = ot->link.address;
-        link.packet = packet;
-        ot->link.address = link.word;
+        ot = (RenderNativeTag *)g_DrawOrderingTableEntry;
+        packet->tag.address = ot->address;
+        ot->address = (uintptr_t)packet;
     }
 }
 
@@ -419,7 +418,7 @@ static inline RenderTexturedQuad *AllocBarQuad(void)
             prim->color.word = g_DrawColorShaded;
         else
             prim->color.word = g_DrawPrimColor;
-        prim->tag.bytes.length = 9;
+        prim->tag.length = 9;
         prim->color.bytes.code = 0x2C;
     }
     return prim;
@@ -457,7 +456,6 @@ void Draw_AllocTexturedQuad(int code) {
     int arg0;
     RenderTexturedQuad *prim;
     u8 *old, *next;
-    DrawPrimLink link;
 
     current = raw & 0xFF;
     if (g_TextRenderMode != 0) {
@@ -500,13 +498,14 @@ void Draw_AllocTexturedQuad(int code) {
     } else {
         Inv_BoundsCheckAssertStub(1);
     }
+    if (!prim) return;
     if (prim != 0) {
         if (g_DrawTextDimmed != 0) {
             prim->color.word = g_DrawColorShaded;
         } else {
             prim->color.word = g_DrawPrimColor;
         }
-        prim->tag.bytes.length = 9;
+        prim->tag.length = 9;
         prim->color.bytes.code = 0x2C;
     }
 
@@ -559,11 +558,10 @@ void Draw_AllocTexturedQuad(int code) {
     }
     prim->tpage = GetTPage(arg0, 0, 0x140, 0);
     {
-        RenderPacketTag *ot = (RenderPacketTag *)g_DrawOrderingTableEntry;
+        RenderNativeTag *ot = (RenderNativeTag *)g_DrawOrderingTableEntry;
 
-        prim->tag.link.address = ot->link.address;
-        link.packet = prim;
-        ot->link.address = link.word;
+        prim->tag.address = ot->address;
+        ot->address = (uintptr_t)prim;
     }
     AdvanceCursor(width + g_DrawGlyphAdvance);
 }
@@ -693,8 +691,7 @@ void Draw_SetFontVariant(int variant) {
 void Draw_EmitDigitSprite(int digit) {
     RenderTexturedQuad *quad = 0;
     u8 *old = g_DrawPacketCursor;
-    u8 *next = old + 40;
-    DrawPrimLink link;
+    u8 *next = old + sizeof(RenderTexturedQuad);
 
     if (next < g_DrawPacketArenaBase + 0x4000) {
         g_DrawPacketCursor = next;
@@ -702,10 +699,11 @@ void Draw_EmitDigitSprite(int digit) {
     } else {
         Inv_BoundsCheckAssertStub(1);
     }
+    if (!quad) return;
     if (quad) {
         if (g_DrawColorSelect) quad->color.word = g_DrawAlternateColor;
         else quad->color.word = g_DrawPrimaryColor;
-        quad->tag.bytes.length = 9;
+        quad->tag.length = 9;
         quad->color.bytes.code = 0x2C;
     }
     {
@@ -735,10 +733,9 @@ void Draw_EmitDigitSprite(int digit) {
         p->clut = g_DrawDigitFontTpageClut;
         p->tpage = 7;
         {
-            RenderPacketTag *ot = (RenderPacketTag *)g_DrawOrderingTableEntry;
-            p->tag.link.address = ot->link.address;
-            link.packet = p;
-            ot->link.address = link.word;
+            RenderNativeTag *ot = (RenderNativeTag *)g_DrawOrderingTableEntry;
+            p->tag.address = ot->address;
+            ot->address = (uintptr_t)p;
         }
     }
 }
@@ -1018,10 +1015,8 @@ static inline void PushCursorAt(int x, int y)
         quad->v2 = quad->v3 = quad->v0 + glyph->height; \
         quad->clut = glyph->clut; \
         quad->tpage = 7; \
-        quad->tag.link.address = *g_DrawOrderingTableEntry; \
-        ot = g_DrawOrderingTableEntry; \
-        link.quad = quad; \
-        *ot = (*ot & 0xFF000000) | (link.word & 0xFFFFFF); \
+        quad->tag.address = ((RenderNativeTag *)g_DrawOrderingTableEntry)->address; \
+        ((RenderNativeTag *)g_DrawOrderingTableEntry)->address = (uintptr_t)quad; \
     }
 
 /* Draws a stat value followed by a 48-pixel level bar filled up to

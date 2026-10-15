@@ -96,7 +96,7 @@ typedef struct RenderDrawModePacket {
 
 /* Four-vertex textured GPU packet. The final halfwords are packet padding. */
 typedef struct RenderTexturedQuad {
-    RenderPacketTag tag;
+    RenderNativeTag tag;
     union { u32 word; struct { u8 r, g, b, code; } bytes; } color;
     u16 x0, y0; u8 u0, v0; u16 clut;
     u16 x1, y1; u8 u1, v1; u16 tpage;
@@ -104,10 +104,10 @@ typedef struct RenderTexturedQuad {
     u16 x3, y3; u8 u3, v3; u16 pad3;
 } RenderTexturedQuad;
 
-PE1_STATIC_ASSERT(sizeof(RenderTexturedQuad) == 40, render_textured_quad_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTexturedQuad, clut) == 14, render_quad_clut_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTexturedQuad, tpage) == 22, render_quad_tpage_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTexturedQuad, x3) == 32, render_quad_x3_offset);
+PE1_STATIC_ASSERT(sizeof(RenderTexturedQuad) == ((sizeof(RenderNativeTag) + 36 + _Alignof(RenderTexturedQuad) - 1) / _Alignof(RenderTexturedQuad)) * _Alignof(RenderTexturedQuad), render_textured_quad_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTexturedQuad, clut) == sizeof(RenderNativeTag) + 10, render_quad_clut_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTexturedQuad, tpage) == sizeof(RenderNativeTag) + 18, render_quad_tpage_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTexturedQuad, x3) == sizeof(RenderNativeTag) + 28, render_quad_x3_offset);
 
 /* Native PsyZ sprite and texture-page packets built for room tiles.
  * Address and command length occupy full native tag words. */

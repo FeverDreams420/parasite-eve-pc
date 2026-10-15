@@ -306,6 +306,21 @@ Odniesienie PS1 przeszło już M011 do korytarza M012 (`0xA8001148`), a następn
 samym ruchem uruchomiło film przemiany szczura. Nie jest to jeszcze dowód
 tych zdarzeń w porcie.
 
+Po zgłoszeniu logu procesu uruchomionego 15 października o 22:32 ponowiono
+test spotkania z Melissą na bieżącym executable: `original-game-melissa-encounter`
+przeszedł w 125,93 s, sprawdzając stan po spotkaniu i pełną VRAM. Opkody
+82 i 206 są podpięte. BIN z używanego przez użytkownika katalogu
+`parasite-pc-backup-20260927/disc` jest bajtowo zgodny z obrazem testowym:
+SHA-256 `7f20fce99a7ff18accebf3156419b24d4c0145c5c0f8168d5e86005ccf28f9c4`.
+Zmieniony executable wymaga ponownego uruchomienia procesu.
+
+Dalszy przebieg po podpięciu 93 opuszcza M011, lecz loader M012 zwraca -2:
+brakuje natywnego deskryptora slotu 115, USA 8018FCB4. Odczyt oryginalnego
+banku wskazuje kontroler 8018F20C, initializer 8018FC54 i skrypt 8018FC78;
+odpowiadający wspólny moduł orbit_flare.c i script_args.c istnieje, ale nie
+jest jeszcze wpięty do natywnego celu. Nie pominięto deskryptora i nie uznano
+M012 za działające. To bieżący punkt dalszego portowania.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

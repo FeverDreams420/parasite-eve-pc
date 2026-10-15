@@ -58,6 +58,7 @@ add_library(parasite-eve-original OBJECT
     src/main/boot/frame_loop.c
     src/main/draw/pipeline.c
     src/main/draw/frame.c
+    src/main/draw/text.c
     src/main/pm/disc_tables.c
     src/main/pm/process.c
     src/main/entity/pool.c

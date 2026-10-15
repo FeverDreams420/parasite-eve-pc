@@ -16,6 +16,9 @@ extern int g_FieldMoveLock;
 #define g_LoadedTexturePageId (g_GameState.field_bg_cache_bank)
 #define g_SavedSceneAreaType (g_GameState.loaded_entity_bank)
 #define g_GameStateFlagsWord (g_GameState.flags)
+/* Screen offsets at original game-state bytes 0xD8/0xD9. */
+#define g_DrawBaseX ((signed char *)&g_GameState.scene_audio.tracks.reserved)
+#define g_DrawBaseY (g_DrawBaseX[1])
 
 /* g_GameState.scene_object.animation_source as its own scalar symbol:
  * Scene_UpdateBgDraw tests and sets it with absolute loads and stores. */

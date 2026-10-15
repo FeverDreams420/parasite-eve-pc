@@ -318,6 +318,7 @@ extern int g_TextCursorY;
 int g_DrawGradientBlendColor;
 extern int *g_TextCursorStackPtr;
 DrawFrameBuffer *g_DrawCurrentFrameBuffer;
+DrawFrameBuffer g_DrawFrameBuffers[2];
 extern u8 *g_DrawPacketCursor;
 extern u8 *g_DrawPacketArenaBase;
 u32 *g_DrawOrderingTableBase;
@@ -338,19 +339,10 @@ void Draw_InitBuffers(void) {
     g_DrawFrameBuffers[1].draw.b0 = 0;
     SetDefDispEnv(&g_DrawFrameBuffers[0].display, 0, 0xE0, 0x140, 0xE0);
     SetDefDispEnv(&g_DrawFrameBuffers[1].display, 0, 0, 0x140, 0xE0);
-    {
-        /* Match debt: retail stores the screen rectangles relative to the
-         * holding the first frame's packet arena field (s0), not
-         * as absolute addresses. */
-        u8 **front = &g_DrawFrameBuffers[0].frontBufferBase;
-        DrawFrameBuffer *second;
-
-        second = (DrawFrameBuffer *)(front + 1);
-        second[0].display.screen.y = 8;
-        second[-1].display.screen.y = 8;
-        second[0].display.screen.h = 0xE0;
-        second[-1].display.screen.h = 0xE0;
-    }
+    g_DrawFrameBuffers[0].display.screen.y = 8;
+    g_DrawFrameBuffers[1].display.screen.y = 8;
+    g_DrawFrameBuffers[0].display.screen.h = 0xE0;
+    g_DrawFrameBuffers[1].display.screen.h = 0xE0;
     g_TextCursorY = 0;
     g_TextCursorX = 0;
     g_TextCursorStackPtr = g_TextCursorStackBottom;

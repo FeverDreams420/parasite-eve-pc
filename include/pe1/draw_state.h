@@ -2,6 +2,7 @@
 #define PE1_DRAW_STATE_H
 
 #include "common.h"
+#include "pe1/game_state.h"
 #include "pe1/render_prim.h"
 
 /* Lookup entries have an eight-byte stride; the final byte is not read here. */
@@ -109,7 +110,6 @@ void Draw_EmitGlyph(int glyph, int mode);
 
 void Draw_EmitWipeBarRect(int width, int height, int mode);
 
-extern signed char g_DrawBaseX[];
 extern s32 g_DrawBufferIndex;
 /* g_DrawBlendColor and the halved blend Draw_BlendColor stores after it
  * (g_DrawScratchBuffer) as one pair; the wipe bars pick one by mode. */

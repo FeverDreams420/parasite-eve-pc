@@ -2,6 +2,7 @@
 #define PE1_DRAW_BUFFERS_H
 
 #include "common.h"
+#include "pe1/game_state.h"
 #include "pe1/psyq_gpu.h"
 
 /* Game double-buffer records: SDK environments followed by the ordering-table
@@ -35,6 +36,5 @@ extern u32 *g_DrawOrderingTableBase;
 extern DISPENV g_RenderDispEnvArray[2];
 extern DRAWENV g_RenderDrawEnvArray[2];
 /* Screen vertical offset (0..15) mirrored into both display environments. */
-extern signed char g_DrawBaseY;
 
 #endif

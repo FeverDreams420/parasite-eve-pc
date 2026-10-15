@@ -1,3 +1,4 @@
+#include "pe1/draw_buffers.h"
 #include "pe1/save.h"
 #include "pe1/game_timers.h"
 #include "pe1/random.h"
@@ -111,6 +112,43 @@ static int boot_buffer_layout(void)
         g_GameState.bank_work_far_end != g_GameState.voice_bank_base + 0x2800 ||
         !g_GameState.scene_process_slots || !g_GameState.script_sprite_buffer ||
         !g_GameState.unk_170) return 0;
+    DrawFrameBuffer saved_frames[2];
+    memcpy(saved_frames,g_DrawFrameBuffers,sizeof(saved_frames));
+    memset(g_DrawFrameBuffers,0xA5,sizeof(g_DrawFrameBuffers));
+    Draw_InitBuffers();
+    for(unsigned i=0;i<2;++i) {
+        const DrawFrameBuffer *frame=&g_DrawFrameBuffers[i];
+        if(frame->frontBufferBase!=(i?g_RenderBackBufferBase[0]:g_RenderFrontBufferBase[0]) ||
+           (void *)frame->orderingTableBase!=(i?(void *)g_RenderOtBufferBaseAlt[0]:(void *)g_OtBufferTable[0]) ||
+           frame->draw.clip.x || frame->draw.clip.y!=(i?224:0) ||
+           frame->draw.clip.w!=320 || frame->draw.clip.h!=224 ||
+           frame->draw.ofs[0] || frame->draw.ofs[1]!=(i?224:0) ||
+           frame->draw.isbg!=1 || frame->draw.r0 || frame->draw.g0 || frame->draw.b0 ||
+           frame->display.disp.x || frame->display.disp.y!=(i?0:224) ||
+           frame->display.disp.w!=320 || frame->display.disp.h!=224 ||
+           frame->display.screen.y!=8 || frame->display.screen.h!=224) return 0;
+    }
+    if(g_TextCursorX || g_TextCursorY || g_TextCursorStackPtr!=g_TextCursorStackBottom ||
+       g_DrawPrimColor!=0x808080 || g_DrawColorShaded!=0x404040 ||
+       g_DrawDigitFontTpageClut!=0x395D || g_DrawDigitFontBaseTexU!=0x84 ||
+       g_DrawDigitFontBaseTexV!=0xA4 || g_DrawPresentImage) return 0;
+    DISPENV saved_display[2];
+    memcpy(saved_display,g_RenderDispEnvArray,sizeof(saved_display));
+    if(g_DrawBaseX[0]!=g_GameState.scene_audio.tracks.reserved[0] ||
+       g_DrawBaseY!=g_GameState.scene_audio.tracks.reserved[1]) return 0;
+    Draw_SetBaseOffsetPosition(0,15-g_DrawBaseY);
+    if(g_DrawBaseY!=15 || g_GameState.scene_audio.tracks.reserved[1]!=15 ||
+       g_RenderDispEnvArray[0].screen.y!=15 || g_RenderDispEnvArray[1].screen.y!=15 ||
+       Draw_GetBaseY()!=15) return 0;
+    Draw_SetBaseOffsetPosition(0,1);
+    if(g_DrawBaseY!=15) return 0;
+    Draw_SetBaseOffsetPosition(0,-15);
+    if(g_DrawBaseY || Draw_GetBaseY() || g_RenderDispEnvArray[0].screen.y ||
+       g_RenderDispEnvArray[1].screen.y) return 0;
+    Draw_SetBaseOffsetPosition(0,-1);
+    if(g_DrawBaseY) return 0;
+    memcpy(g_RenderDispEnvArray,saved_display,sizeof(saved_display));
+    memcpy(g_DrawFrameBuffers,saved_frames,sizeof(saved_frames));
     RenderNativeTag *first = (RenderNativeTag *)g_OtBufferTable[0];
     RenderNativeTag *second = (RenderNativeTag *)g_RenderOtBufferBaseAlt[0];
     if (D_800B0E38.ordering[0]!=first || D_800B0E38.ordering[1]!=second ||

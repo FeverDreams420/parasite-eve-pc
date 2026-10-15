@@ -13,6 +13,8 @@
 #include "pe1/psyq_libc.h"
 #include "pe1/render_object.h"
 #include "pe1/render_prim.h"
+#include "pe1/render_animation_frame.h"
+#include "pe1/render_matrix_slot.h"
 
 /* Field engine sprite rendering (0x800C2EAC..0x800C5EB0): the draw state
  * (texture page, CLUT origin, blend mode, cell quad, colour ramps) and the
@@ -858,5 +860,129 @@ void FieldFx_DrawTexturedStrip(FieldTexturedStrip *strip)
         node++;
         packet++;
         g_DrawPacketOffset += sizeof(FieldStripPacket);
+    }
+}
+
+/* Original script sprite code embedded at USA E0060..E0808. Ordinary memory
+ * replaces the descending list below the animation buffer and COP2 scratch. */
+static FieldScriptSprite s_ScriptSprites[22];
+FieldScriptSprite *g_FieldFxScriptSpriteList;
+s16 g_FieldFxScriptSpriteCount;
+static struct {
+    u8 r, g, b, u, v;
+    u16 clut, tpage;
+    GteShortVector position;
+    int size;
+} s_ScriptSpriteDraw;
+
+void FieldFx_ClearScriptSprites(void)
+{
+    g_FieldFxScriptSpriteList = &s_ScriptSprites[21];
+    int cleared = 0;
+    for (unsigned i = 0; i < 22 && cleared < g_FieldFxScriptSpriteCount; ++i) {
+        FieldScriptSprite *sprite = g_FieldFxScriptSpriteList - i;
+        if (sprite->active) { sprite->active = 0; ++cleared; }
+    }
+    g_FieldFxScriptSpriteCount = 0;
+}
+
+void FieldFx_SpawnScriptSprite(const void *position, int mode, int size, int delay, int r, int g, int b)
+{
+    if (!position || !g_FieldFxScriptSpriteList) return;
+    int index = 0;
+    while (index <= g_FieldFxScriptSpriteCount && index < 21 &&
+           g_FieldFxScriptSpriteList[-index].active) ++index;
+    if (index > g_FieldFxScriptSpriteCount) index = 0;
+    FieldScriptSprite *sprite = g_FieldFxScriptSpriteList - index;
+    const s16 *point = position;
+    sprite->mode = mode;
+    sprite->x = point[0];sprite->y = point[1];sprite->z = point[2];
+    sprite->delay = sprite->remaining = delay;
+    sprite->cell = 0;sprite->active = 1;
+    sprite->r = r;sprite->g = g;sprite->b = b;
+    sprite->size = size;sprite->fade = 0;
+    if (g_FieldFxScriptSpriteCount < 20) ++g_FieldFxScriptSpriteCount;
+}
+
+/* USA E051C: emit the original FT4 from the shared sprite parameters. */
+static void func_800E051C(void)
+{
+    if ((unsigned)g_ActiveDrawSlot >= 2 || !g_ViewMatrixSlot.value ||
+        !g_GeomScroll.state.position.projectionDistance ||
+        !D_800B0E38.ordering[g_ActiveDrawSlot] || !g_RenderAnimBufferBase[g_ActiveDrawSlot] ||
+        g_DrawPacketOffset < 0 || g_DrawPacketOffset > RENDER_ANIM_BUFFER_BYTES - (int)sizeof(RenderTexturedQuad)) return;
+    RenderTexturedQuad *packet = (RenderTexturedQuad *)(g_RenderAnimBufferBase[g_ActiveDrawSlot] + g_DrawPacketOffset);
+    g_DrawPacketOffset += sizeof(*packet);
+    gte_ldrotmatrix(g_ViewMatrixSlot.value);gte_ldtransmatrix(g_ViewMatrixSlot.value);
+    gte_ldv0(&s_ScriptSpriteDraw.position);gte_rtps();
+    u32 screen;gte_stsxy2(&screen);
+    u32 depth = Psyz_GteDataRead(19);
+    s32 projection = *g_GeomScroll.state.position.projectionDistance;
+    s32 numerator = (s32)(((u32)s_ScriptSpriteDraw.size << 5) * (u32)projection);
+    s32 denominator = (s32)((depth << 4) + (u32)projection);
+    if (!denominator || (numerator == INT32_MIN && denominator == -1)) return;
+    s32 half = (numerator / denominator) >> 1;
+    u16 x = screen, y = screen >> 16;
+    packet->tag.length = 9;
+    packet->color.bytes.r=s_ScriptSpriteDraw.r;packet->color.bytes.g=s_ScriptSpriteDraw.g;packet->color.bytes.b=s_ScriptSpriteDraw.b;
+    packet->color.bytes.code=0x2E;
+    packet->clut=s_ScriptSpriteDraw.clut;packet->tpage=s_ScriptSpriteDraw.tpage;
+    packet->u0=packet->u2=s_ScriptSpriteDraw.u;packet->u1=packet->u3=s_ScriptSpriteDraw.u+16;
+    packet->v0=packet->v1=s_ScriptSpriteDraw.v;packet->v2=packet->v3=s_ScriptSpriteDraw.v+16;
+    packet->x0=packet->x2=(u32)x-(u32)half;packet->x1=packet->x3=(u32)x+(u32)half;
+    packet->y0=packet->y1=(u32)y-(u32)half;packet->y2=packet->y3=(u32)y+(u32)half;
+    int layer = (int)(depth >> 2) - 8;
+    if ((unsigned)layer < 4096) AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot]+layer,packet);
+}
+
+/* USA E026C: the four-cell strip; prepare UV before advancing its timer. */
+static void func_800E026C(FieldScriptSprite *sprite)
+{
+    if (!sprite->active) return;
+    s_ScriptSpriteDraw.clut=0x77D3;s_ScriptSpriteDraw.tpage=0x34;
+    s_ScriptSpriteDraw.r=s_ScriptSpriteDraw.g=s_ScriptSpriteDraw.b=128;
+    s_ScriptSpriteDraw.u=sprite->cell;s_ScriptSpriteDraw.v=0xD0;
+    s_ScriptSpriteDraw.position=(GteShortVector){sprite->x,sprite->y,sprite->z,0};
+    s_ScriptSpriteDraw.size=sprite->size;
+    if (sprite->active!=1) return;
+    if (!sprite->remaining) {
+        sprite->cell+=16;sprite->remaining=sprite->delay;
+        if (sprite->cell>=49) {
+            sprite->active=0;sprite->cell=0;--g_FieldFxScriptSpriteCount;return;
+        }
+    } else --sprite->remaining;
+    if (sprite->active==1) func_800E051C();
+}
+
+/* USA E03A0: RGB fade rises to 255 then returns below zero. */
+static void func_800E03A0(FieldScriptSprite *sprite)
+{
+    if (!sprite->active) return;
+    s_ScriptSpriteDraw.clut=0x7713;s_ScriptSpriteDraw.tpage=0x34;
+    s_ScriptSpriteDraw.u=0xC0;s_ScriptSpriteDraw.v=0xCA;
+    s_ScriptSpriteDraw.position=(GteShortVector){sprite->x,sprite->y,sprite->z,0};
+    s_ScriptSpriteDraw.size=sprite->size;
+    int r=sprite->r-sprite->fade,g=sprite->g-sprite->fade,b=sprite->b-sprite->fade;
+    s_ScriptSpriteDraw.r=r<0?0:r;s_ScriptSpriteDraw.g=g<0?0:g;s_ScriptSpriteDraw.b=b<0?0:b;
+    if (sprite->active!=1) {
+        sprite->fade=(s16)((u16)sprite->fade-sprite->delay);
+        if (sprite->fade<0) {sprite->active=0;sprite->fade=0;--g_FieldFxScriptSpriteCount;return;}
+    } else {
+        sprite->fade=(s16)((u16)sprite->fade+sprite->delay);
+        if (sprite->fade>=256) {sprite->fade=255;sprite->active=2;}
+    }
+    func_800E051C();
+}
+
+void FieldFx_UpdateScriptSprites(void)
+{
+    if (!g_FieldFxScriptSpriteList) return;
+    int processed=0;
+    for (unsigned i=0;i<22 && processed<g_FieldFxScriptSpriteCount;++i) {
+        FieldScriptSprite *sprite=g_FieldFxScriptSpriteList-i;
+        if (!sprite->active) continue;
+        if (sprite->mode==0) func_800E026C(sprite);
+        else if (sprite->mode==1) func_800E03A0(sprite);
+        ++processed;
     }
 }

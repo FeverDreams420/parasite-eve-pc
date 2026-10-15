@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe1/field_sprite_state.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "pe1/script_expression.h"
@@ -47,8 +48,6 @@ typedef struct ScriptCmdArgs {
 #define ARG_WORD(ptr) (*(int *)(ptr))
 #define ARG_BYTE(ptr) (*(u8 *)(ptr))
 
-void FieldFx_SpawnScriptSprite(Pe1Vec3s *position, int mode, int arg2, int arg3,
-                   int arg4, int arg5, int arg6);
 
 int Script_DispatchScriptCmd(ScriptCmdArgs *args)
 {

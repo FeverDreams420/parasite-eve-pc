@@ -144,7 +144,7 @@ typedef struct Pe1GameState {
             unsigned short *save_background_source;      /* 0x178 */
             unsigned short *save_background_destination; /* 0x17C */
             struct TimFile *hud_tim;                   /* 0x180 */
-            u8 *script_sprite_buffer;        /* 0x184: FieldFx_ClearScriptSprites starts the sprite list below it */
+            u8 *script_sprite_buffer;        /* 0x184: second animation buffer; script sprites now own ordinary storage */
         };
     };
     struct PmSlotBanks *scene_process_slots; /* 0x188 */

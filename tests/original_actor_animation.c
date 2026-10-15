@@ -2530,6 +2530,120 @@ static int original_color_quad_packets(void)
 
 /* CPU algorithm from USA 8007041C with COP2 forwarded to the same PsyZ GTE;
  * this isolates CPU/layout fidelity, not independent hardware GTE accuracy. */
+
+static int original_script_sprites(void)
+{
+    Pe1GameState saved_state=g_GameState;GeomScrollRecord saved_scroll=g_GeomScroll;
+    int saved_offset=g_DrawPacketOffset,saved_slot=g_ActiveDrawSlot;
+    FieldScriptSprite *saved_list=g_FieldFxScriptSpriteList;
+    s16 saved_count=g_FieldFxScriptSpriteCount;FieldScriptSprite saved_records[22]={0};
+    if(saved_list)memcpy(saved_records,saved_list-21,sizeof(saved_records));
+    FieldFx_ClearScriptSprites();FieldScriptSprite *list=g_FieldFxScriptSpriteList;
+    GteMatrix view={0};view.m[0][0]=view.m[1][1]=view.m[2][2]=4096;
+    int projection=320;g_ViewMatrixSlot.value=&view;g_GeomScroll.state.position.projectionDistance=&projection;
+    union {uintptr_t alignment;u8 bytes[0x10000];} arena;
+    RenderNativeTag ordering[4096];
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int valid=1;
+#define SPRITE_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+#define SPRITE_STATE() do {SPRITE_PUT(g_FieldFxScriptSpriteCount,2); \
+    for(unsigned i_=0;i_<22;++i_){const u8 *p_=(const u8 *)&list[-(int)i_]; \
+        for(unsigned j_=0;j_<20;++j_)SPRITE_PUT(p_[j_],1);}}while(0)
+#define SPRITE_SETUP() do { \
+    for(unsigned i_=0;i_<22;++i_){memset(&list[-(int)i_],0xA5,20);list[-(int)i_].active=0;} \
+    g_FieldFxScriptSpriteCount=0;FieldFx_ClearScriptSprites(); \
+    for(unsigned i_=0;i_<32;++i_){Psyz_GteDataWrite(i_,0);Psyz_GteCtrlWrite(i_,0);} \
+    Psyz_GteCtrlWrite(24,160<<16);Psyz_GteCtrlWrite(25,112<<16);Psyz_GteCtrlWrite(26,320); \
+}while(0)
+#define SPRITE_STEP(slot) do { \
+    memset(arena.bytes,0xA5,sizeof(arena.bytes)); \
+    for(unsigned i_=0;i_<4096;++i_)ordering[i_]=(RenderNativeTag){0xFFFFFF,0xAB}; \
+    g_DrawPacketOffset=0;g_ActiveDrawSlot=(slot); \
+    g_RenderAnimBufferBase[0]=g_RenderAnimBufferBase[1]=arena.bytes; \
+    D_800B0E38.ordering[0]=D_800B0E38.ordering[1]=ordering; \
+    FieldFx_UpdateScriptSprites();SPRITE_STATE(); \
+    if(g_DrawPacketOffset<0 || (size_t)g_DrawPacketOffset>sizeof(arena.bytes) || g_DrawPacketOffset%sizeof(RenderTexturedQuad)){valid=0;goto sprites_restore;} \
+    unsigned count_=(unsigned)g_DrawPacketOffset/sizeof(RenderTexturedQuad);SPRITE_PUT(count_,2); \
+    for(unsigned i_=0;i_<count_;++i_){RenderTexturedQuad *p_=(RenderTexturedQuad *)arena.bytes+i_; \
+        if(p_->tag.length!=9)valid=0;const u8 *data_=(const u8 *)p_+sizeof(RenderNativeTag); \
+        for(unsigned j_=0;j_<36;++j_)SPRITE_PUT(data_[j_],1);} \
+    for(unsigned layer_=0;layer_<4096;++layer_){uintptr_t link_=ordering[layer_].address;unsigned links_=0; \
+        if(ordering[layer_].length!=0xAB)valid=0;if(link_==0xFFFFFF)continue;SPRITE_PUT(layer_,2); \
+        while(link_!=0xFFFFFF){ \
+            if(link_<(uintptr_t)arena.bytes || link_>=(uintptr_t)(arena.bytes+g_DrawPacketOffset) || \
+               (link_-(uintptr_t)arena.bytes)%sizeof(RenderTexturedQuad) || ++links_>22){valid=0;goto sprites_restore;} \
+            SPRITE_PUT((link_-(uintptr_t)arena.bytes)/sizeof(RenderTexturedQuad),1);link_=((RenderNativeTag *)link_)->address;} \
+        SPRITE_PUT(links_,1);}SPRITE_PUT(65535,2); \
+    for(unsigned i_=g_DrawPacketOffset;i_<sizeof(arena.bytes);++i_)if(arena.bytes[i_]!=0xA5)valid=0; \
+}while(0)
+    const u32 masks[]={0,1,0x555555,0xAAAAAA,0xFFFFF,0x3FFFFF,1<<21};
+    for(unsigned m=0;m<7;++m){
+        SPRITE_SETUP();int count=0;
+        for(unsigned i=0;i<22;++i){list[-(int)i].active=(masks[m]>>i)&1;count+=list[-(int)i].active;}
+        g_FieldFxScriptSpriteCount=count>20?20:count;FieldFx_ClearScriptSprites();SPRITE_STATE();++cases;
+    }
+    const int delays[]={0,1,3,17,255},sizes[]={-32768,-1,0,1,32,32767},spawn_counts[]={1,4,20,21,22};
+    for(unsigned mode=0;mode<3;++mode)for(unsigned delay=0;delay<5;++delay)for(unsigned size=0;size<6;++size)
+    for(unsigned slot=0;slot<2;++slot)for(unsigned spawn=0;spawn<5;++spawn){
+        SPRITE_SETUP();
+        for(int i=0;i<spawn_counts[spawn];++i){s16 point[]={i*25-100,-i*7,1000+i*8};
+            FieldFx_SpawnScriptSprite(point,mode,sizes[size],delays[delay],i*17+31,i*11+64,511-i*9);SPRITE_STATE();}
+        for(unsigned tick=0;tick<8;++tick)SPRITE_STEP(slot);
+        FieldFx_ClearScriptSprites();SPRITE_STATE();++cases;
+    }
+    const unsigned long_runs[][3]={{0,255,1030},{1,1,520},{1,3,200}};
+    for(unsigned i=0;i<3;++i){
+        SPRITE_SETUP();s16 point[]={-25,-100,1000};
+        FieldFx_SpawnScriptSprite(point,long_runs[i][0],32,long_runs[i][1],200,128,64);SPRITE_STATE();
+        for(unsigned tick=0;tick<long_runs[i][2];++tick)SPRITE_STEP(tick&1);
+        ++cases;
+    }
+
+    /* Native arena exhaustion and projection guards do not alter pool timing. */
+    for(unsigned remaining=0;remaining<=168;remaining+=8){
+        SPRITE_SETUP();s16 point[]={0,0,1000};
+        for(unsigned i=0;i<20;++i)FieldFx_SpawnScriptSprite(point,0,32,255,0,0,0);
+        memset(arena.bytes,0xA5,sizeof(arena.bytes));
+        for(unsigned i=0;i<4096;++i)ordering[i]=(RenderNativeTag){0xFFFFFF,0xAB};
+        g_ActiveDrawSlot=0;g_RenderAnimBufferBase[0]=arena.bytes;D_800B0E38.ordering[0]=ordering;
+        unsigned start=RENDER_ANIM_BUFFER_BYTES-remaining;g_DrawPacketOffset=start;
+        FieldFx_UpdateScriptSprites();
+        unsigned emitted=remaining/sizeof(RenderTexturedQuad);
+        if(g_DrawPacketOffset!=(int)(start+emitted*sizeof(RenderTexturedQuad)) || g_FieldFxScriptSpriteCount!=20)valid=0;
+        for(unsigned i=0;i<start;++i)if(arena.bytes[i]!=0xA5)valid=0;
+        for(unsigned i=RENDER_ANIM_BUFFER_BYTES;i<sizeof(arena.bytes);++i)if(arena.bytes[i]!=0xA5)valid=0;
+        unsigned linked=0;
+        for(unsigned layer=0;layer<4096;++layer){uintptr_t link=ordering[layer].address;
+            while(link!=0xFFFFFF){
+                if(link<(uintptr_t)(arena.bytes+start) || link>=(uintptr_t)(arena.bytes+g_DrawPacketOffset) || ++linked>emitted){valid=0;break;}
+                link=((RenderNativeTag *)link)->address;
+            }
+        }
+        if(linked!=emitted)valid=0;
+    }
+    for(unsigned invalid=0;invalid<3;++invalid){
+        SPRITE_SETUP();s16 point[]={0,0,invalid==2?20000:0};
+        projection=invalid==0?0:320;
+        FieldFx_SpawnScriptSprite(point,0,32,1,0,0,0);
+        memset(arena.bytes,0xA5,sizeof(arena.bytes));
+        for(unsigned i=0;i<4096;++i)ordering[i]=(RenderNativeTag){0xFFFFFF,0xAB};
+        g_DrawPacketOffset=0;g_ActiveDrawSlot=0;
+        FieldFx_UpdateScriptSprites();
+        for(unsigned i=0;i<4096;++i)if(ordering[i].address!=0xFFFFFF || ordering[i].length!=0xAB)valid=0;
+        for(unsigned i=sizeof(RenderTexturedQuad);i<sizeof(arena.bytes);++i)if(arena.bytes[i]!=0xA5)valid=0;
+    }
+sprites_restore:
+#undef SPRITE_STEP
+#undef SPRITE_SETUP
+#undef SPRITE_STATE
+#undef SPRITE_PUT
+    memcpy(list-21,saved_records,sizeof(saved_records));g_FieldFxScriptSpriteList=saved_list;g_FieldFxScriptSpriteCount=saved_count;
+    g_GameState=saved_state;g_GeomScroll=saved_scroll;g_DrawPacketOffset=saved_offset;g_ActiveDrawSlot=saved_slot;
+    if(!valid || hash!=UINT64_C(0x1c171246cd9ca458)){
+        fprintf(stderr,"Original script sprites: cases=%u hash=%016llx valid=%d\n",cases,(unsigned long long)hash,valid);return 0;}
+    puts("Original script sprites: 910 USA CPU/GTE-bridge scenarios, pool/clear/reuse, two modes, timers, RGB fades, long lifecycles and FT4/OT payloads match");return 1;
+}
+
 static int original_wireframe_renderer(void)
 {
     GteMatrix view;
@@ -4683,7 +4797,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
-    if(!original_wireframe_renderer() || !original_wireframe_animation() || !original_textbox_renderer(disc,executable) || !original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
+    if(!original_script_sprites() || !original_wireframe_renderer() || !original_wireframe_animation() || !original_textbox_renderer(disc,executable) || !original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

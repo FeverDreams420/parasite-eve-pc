@@ -32,4 +32,19 @@ extern char g_FieldSpriteWrongColorModeMsg[];
 void FieldFx_InterpolateColorRamp(u8 *table, u32 step, u8 *out);
 void FieldFx_SetSpriteBlendMode(u8 mode);
 
+/* Original script sprite records (USA E0060..E0808), with no host pointers. */
+typedef struct FieldScriptSprite {
+    u8 active, delay, remaining, cell;
+    s16 x, y, z;
+    u8 mode, reserved;
+    s16 fade, size;
+    u8 r, g, b, padding;
+} FieldScriptSprite;
+PE1_STATIC_ASSERT(sizeof(FieldScriptSprite) == 20, field_script_sprite_size);
+extern FieldScriptSprite *g_FieldFxScriptSpriteList;
+extern s16 g_FieldFxScriptSpriteCount;
+void FieldFx_ClearScriptSprites(void);
+void FieldFx_SpawnScriptSprite(const void *position, int mode, int size, int delay, int r, int g, int b);
+void FieldFx_UpdateScriptSprites(void);
+
 #endif

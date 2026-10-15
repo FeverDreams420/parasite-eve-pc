@@ -23,9 +23,7 @@ int g_CdStreamBankIndex;
 s16 g_CdTrackBank;
 struct SceneTrackRecord *g_CdTrackRecord;
 
-/* Matching debt: pins and empty barriers retain the index,
-* zero extension and callback state. The duplicated ready branch preserves
-* GCC's block ordering. No ASM construct emits an instruction. */
+/* Original chunk/transfer state machine, with terminal file-image errors. */
 int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void *buffer, u32 maximum, int blocking)
 {
     /* Transfer addresses and phase changes use this scratch in separate cases. */
@@ -38,11 +36,14 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
     unsigned int isSequence;
     int finished = 0;
     u32 scaledIndex = index * 2;
-    u32 byteOffset;
     SceneSectorDirectory *root = (SceneSectorDirectory *)g_SceneSectorDirectory;
     u8 *entries;
     volatile u16 *entry;
-    byteOffset = scaledIndex;
+    /* The USA resident directory contains 250 banks and 251 boundaries. */
+    if (kind > 3 || index >= 250 || !buffer || !maximum) {
+        state->cd_read_phase = 0;
+        return -1;
+    }
     entries = (u8 *)root->offsets;
     entry = (u16 *)(scaledIndex + entries);
     do
@@ -52,11 +53,11 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
         {
         case 0:
             {
-                u8 *table = (u8 *)root;
                 u32 first;
-                entries = table + byteOffset;
                 first = *(u16 *)entry;
-                scaledIndex = ((volatile SceneSectorDirectory *)entries)->offsets[1];
+                if (entry[1] < first || *archiveLba > UINT32_MAX - first ||
+                    state->pe_image_base_lba > UINT32_MAX - (*archiveLba + first)) return -1;
+                scaledIndex = entry[1];
                 scaledIndex -= entry[0];
                 transferValue = *archiveLba + first;
                 workValue = state->pe_image_base_lba + transferValue;
@@ -98,10 +99,11 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
                 }
                 g_CdReadChunkSectors = count;
                 result = CdRom_ReadSectorsFromLba(g_CdReadStartLba + (g_CdReadTotalSectors - g_CdReadRemainingSectors), buffer, count);
-                if (result != (-1))
-                {
-                    state->cd_read_phase = 8;
+                if (result < 0) {
+                    state->cd_read_phase = 0;
+                    return -1;
                 }
+                state->cd_read_phase = 8;
                 busy = 1;
                 finished = (blocking ^ 1) & 1;
             }
@@ -115,10 +117,9 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
 
         case 8:
             result = CdRom_PollReady();
-            if (result == (-1))
-            {
-                transferValue = 7;
-                state->cd_read_phase = transferValue;
+            if (result < 0) {
+                state->cd_read_phase = 0;
+                return -1;
             }
             else
             if (result == 0)
@@ -159,11 +160,9 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
 
             }
 
-            if (result == (-1))
-            {
+            if (result < 0) {
                 state->cd_read_phase = 0;
-                busy = 1;
-                finished = (blocking ^ 1) & 1;
+                return -1;
             }
             else
             {
@@ -173,10 +172,9 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
 
         case 10:
             result = Spu_GetTransferStatus();
-            if (result == -1) {
+            if (result < 0) {
                 state->cd_read_phase = 0;
-                busy = 1;
-                finished = (blocking ^ 1) & 1;
+                return -1;
             } else if (result != 0) {
                 busy = 1;
                 finished = (blocking ^ 1) & 1;
@@ -193,6 +191,9 @@ int CdRom_ReadAssetSectors(unsigned kind, unsigned int index, int channel, void 
                 g_CdReadRemainingSectors = remaining - transferred;
             }
             break;
+        default:
+            state->cd_read_phase = 0;
+            return -1;
         }
     } while (!finished);
     return busy;

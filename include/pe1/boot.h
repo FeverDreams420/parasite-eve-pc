@@ -2,6 +2,7 @@
 #define PE1_BOOT_H
 
 #include "common.h"
+#include "pe1/pe_image.h"
 
 void Boot_InitSystem(void);
 void Boot_VsyncCallback(void);
@@ -15,6 +16,8 @@ void Boot_InitSubsystems(void);
 /* 0 on success; -1..-8 identify read/poll failure in four startup stages,
  * -9 sample upload failure, -10 invalid workspace or sector extents. */
 int Scene_LoadSceneData(void);
+/* 0 success; -1 audio; -2/-3 main read/poll; -4/-5 texture read/poll;
+ * -6/-7 directory read/poll; -8 invalid workspace or sector range. */
 int Boot_LoadOverlayTables(void);
 int CdRom_LoadBootAudio(void);
 int CdRom_LoadInitialImage(void);
@@ -30,11 +33,6 @@ int func_801909B4(void);
 
 /* Disc table load (pm/disc_tables.c): PE.IMG sector ranges of the
  * startup assets (entries of the g_PeImageSectorTable sector table). */
-extern u16 g_MainAssetLbaTbl[];
-extern u16 g_LargeTexLbaTbl[];
-extern u16 g_SmallTexLbaTbl[];
-extern u16 g_FontUiLbaTbl[];
-extern u16 g_SceneInitLbaTbl0[];
 
 /* Original per-frame additive RNG: 14 retail instruction constants,
  * two byte-offset cursors and 17 seeded words in one contiguous object. */

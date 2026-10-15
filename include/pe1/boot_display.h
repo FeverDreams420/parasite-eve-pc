@@ -2,6 +2,7 @@
 #define PE1_BOOT_DISPLAY_H
 
 #include "common.h"
+#include "pe1/pe_image.h"
 #include "pe1/asset_tim.h"
 #include "pe1/cdrom_buffers.h"
 #include "pe1/display_env.h"
@@ -85,8 +86,6 @@ extern s16 *g_BootDisplayFontImageRect;
 extern s16 *g_BootDisplayFontClutRect;
 extern s32 g_BootDisplayFontImagePixels;
 extern s32 g_BootDisplayFontClutPixels;
-extern u16 g_BootDisplayDataLbaTbl;
-extern u16 g_MainAssetLbaTbl[];
 extern char g_BootDisplayFontTim[];
 extern volatile s32 g_BootDisplayPlaybackCurrentPos;
 extern volatile s32 g_BootDisplayPlaybackEndPos;

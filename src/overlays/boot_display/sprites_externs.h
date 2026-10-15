@@ -4,7 +4,6 @@
 #include "common.h"
 
 extern s32 g_ActiveDrawSlot;
-extern u16 g_MainAssetLbaTbl[];
 extern void *g_BootDisplayCreditImages[];
 extern s32 g_BootDisplayImageBrightness;
 extern u32 g_BootDisplayFrameCounter;

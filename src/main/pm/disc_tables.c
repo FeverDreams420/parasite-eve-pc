@@ -162,81 +162,53 @@ void SetDispMask(int arg0);
 
 int Boot_LoadOverlayTables(void) {
     int status;
-    int imageBase;
-    Pe1GameState *state;
+    u32 imageBase = g_PeImageBaseLba;
+    Pe1GameState *state = &g_GameState;
     u16 *range;
     TimRelativeTable *main_table;
     TimRelativeTable *large_table;
     int i;
+    u16 *ranges[] = {g_MainAssetLbaTbl,
+        (g_ScriptVariableBank[SCRIPT_VAR_FLAGS] & 0x2000) ? g_LargeTexLbaTbl : g_SmallTexLbaTbl,
+        g_FontUiLbaTbl};
 
-    imageBase = g_PeImageBaseLba;
-
+    if (!state->scene_object_work || !state->object_texture_blob ||
+        !state->scene_load_scratch || !g_StrFileDirBuffer) return -8;
+    for (i = 0; i < 3; ++i) {
+        range = ranges[i];
+        if (range[1] <= range[0] || range[0] > UINT32_MAX - imageBase ||
+            (u32)(range[1] - range[0]) * 2048 > 0x80000) return -8;
+    }
     VSync(0);
     SetDispMask(0);
-    state = &g_GameState;
-    CdRom_ReadAssetSectors(1, 0xCC, 0, g_SceneLoadScratchBuffer[0], 0x21, 1);
+    if (CdRom_ReadAssetSectors(1, 0xCC, 0, state->scene_load_scratch, 0x21, 1) < 0) return -1;
 
-retry_first_load:
-    range = g_MainAssetLbaTbl;
-    do {
-        status = CdRom_ReadSectors(imageBase + range[0], 0, state->scene_object_work, range[1] - range[0]);
-    } while (status == -1);
-    while ((status = CdRom_PollReady()) != 0) {
-        if (status == -1) {
-            goto retry_first_load;
-        }
-    }
-
+    range = ranges[0];
+    if (CdRom_ReadSectors(imageBase + range[0], 0, state->scene_object_work,
+                         range[1] - range[0]) < 0) return -2;
+    while ((status = CdRom_PollReady()) > 0) {}
+    if (status < 0) return -3;
     main_table = (TimRelativeTable *)state->scene_object_work;
-    for (i = 0; i < 3; i++) {
-        Asset_LoadTimImage(SceneAsset_ResolveOffset(main_table, main_table->offsets[(s16)i]));
-    }
+    for (i = 0; i < 3; ++i)
+        Asset_LoadTimImage(SceneAsset_ResolveOffset(main_table, ((u32 *)main_table)[i]));
 
-    if (g_ScriptVariableBank[SCRIPT_VAR_FLAGS] & 0x2000) {
-retry_large_load_a:
-        range = g_LargeTexLbaTbl;
-        do {
-            status = CdRom_ReadSectors(imageBase + range[0], 0, state->object_texture_blob, range[1] - range[0]);
-        } while (status == -1);
-        while ((status = CdRom_PollReady()) != 0) {
-            if (status == -1) {
-                goto retry_large_load_a;
-            }
-        }
-    } else {
-retry_large_load_b:
-        range = g_SmallTexLbaTbl;
-        do {
-            status = CdRom_ReadSectors(imageBase + range[0], 0, state->object_texture_blob, range[1] - range[0]);
-        } while (status == -1);
-        while ((status = CdRom_PollReady()) != 0) {
-            if (status == -1) {
-                goto retry_large_load_b;
-            }
-        }
-    }
-
+    range = ranges[1];
+    if (CdRom_ReadSectors(imageBase + range[0], 0, state->object_texture_blob,
+                         range[1] - range[0]) < 0) return -4;
+    while ((status = CdRom_PollReady()) > 0) {}
+    if (status < 0) return -5;
     large_table = (TimRelativeTable *)state->object_texture_blob;
-    for (i = 0; i < 0x106; i++) {
-        Asset_LoadTimImage(SceneAsset_ResolveOffset(large_table, large_table->offsets[(s16)i]));
-    }
-
+    for (i = 0; i < 0x106; ++i)
+        Asset_LoadTimImage(SceneAsset_ResolveOffset(large_table, ((u32 *)large_table)[i]));
     DrawSync(0);
 
-retry_final_load:
-    range = g_FontUiLbaTbl;
-    do {
-        status = CdRom_ReadSectors(g_PeImageBaseLba + range[0], 0, g_StrFileDirBuffer, range[1] - range[0]);
-    } while (status == -1);
-    while ((status = CdRom_PollReady()) != 0) {
-        if (status == -1) {
-            goto retry_final_load;
-        }
-    }
-
-    EnterCriticalSection();
-    FlushCache();
-    ExitCriticalSection();
+    range = ranges[2];
+    if (CdRom_ReadSectors(imageBase + range[0], 0, g_StrFileDirBuffer,
+                         range[1] - range[0]) < 0) return -6;
+    while ((status = CdRom_PollReady()) > 0) {}
+    if (status < 0) return -7;
+    /* The final bank remains data. Native overlay functions are linked C;
+     * host code is never installed from the disc or instruction-cache flushed. */
     return 0;
 }
 

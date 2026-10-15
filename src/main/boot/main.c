@@ -50,11 +50,16 @@ int main(void) {
             g_SceneDispatchCur = token;
 
             switch (token) {
-            case 0xA8000048:
-                Boot_LoadOverlayTables();
+            case 0xA8000048: {
+                int overlay_status = Boot_LoadOverlayTables();
+                if (overlay_status < 0) {
+                    fprintf(stderr, "Boot assets failed: %d\n", overlay_status);
+                    return EXIT_FAILURE;
+                }
                 func_8019234C();
                 g_GameState.flags |= 1;
                 break;
+            }
             case 0xAA108448:
                 if ((g_GameState.display_list_modes & 2) == 0) {
                     mode = 2;

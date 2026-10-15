@@ -96,6 +96,12 @@
 extern u16 g_PeImageSectorTable[81];
 #define g_PeImageSectorBoundsNext (g_PeImageSectorTable + 1)
 #define g_SceneAssetLbaTbl (g_PeImageSectorTable + 69)
+#define g_SceneInitLbaTbl0 (g_PeImageSectorTable + 67)
+#define g_BootDisplayDataLbaTbl (g_PeImageSectorTable[71])
+#define g_MainAssetLbaTbl (g_PeImageSectorTable + 72)
+#define g_LargeTexLbaTbl (g_PeImageSectorTable + 73)
+#define g_SmallTexLbaTbl (g_PeImageSectorTable + 74)
+#define g_FontUiLbaTbl (g_PeImageSectorTable + 75)
 
 /* Original scalar symbols alias their canonical game-state fields. */
 #define g_PeImageBaseLba (g_GameState.pe_image_base_lba)

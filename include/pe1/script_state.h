@@ -23,7 +23,6 @@ extern ScriptNode *g_ScriptNodeFreeListHead;
  * array: small data in the -G8 pool unit). */
 extern unsigned short g_ScriptNodeSeqCounter[1];
 extern u32 g_ScriptOperandTable[16];
-extern u16 g_SceneInitLbaTbl0[];
 extern u16 g_SceneInitLbaTbl1[];
 
 extern unsigned char g_BattleEnemyEscapeFlag;

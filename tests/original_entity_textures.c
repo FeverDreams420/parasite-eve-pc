@@ -62,6 +62,7 @@ int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int
 #include "pe1/akao/stream.h"
 #include "pe1/boot.h"
 #include "pe1/boot_services.h"
+#include "pe1/script_queue.h"
 #include "pe1/resident_tables.h"
 #include "pe1/save.h"
 #include "pe1/akao/globals.h"
@@ -154,6 +155,79 @@ static int original_scene_bootstrap(PeRoomCatalog *catalog)
         hash=(hash^((u8 *)&g_SaveRuntimeState)[i])*UINT64_C(1099511628211);
     CHECK(hash==UINT64_C(0x0b3a33783621c7a8));
     puts("Original complete scene bootstrap: real resident/resources, menu state, SPU samples/instruments and bank bytes passed");
+    return 0;
+}
+
+/* Independent raw-sector/TIM interpretation, including retail's third
+ * main-table entry whose image has zero height and therefore uploads nothing. */
+static int boot_ui_reference(PeRoomCatalog *catalog,unsigned slot,unsigned count,PeVram *vram)
+{
+    size_t size=(size_t)(catalog->sector_bounds[slot+1]-catalog->sector_bounds[slot])*2048;
+    u8 *bytes=malloc(size); CHECK(bytes);
+    CHECK(pe_disc_read(catalog->disc,&catalog->archive,(uint64_t)catalog->sector_bounds[slot]*2048,bytes,size));
+    CHECK(count*4<=size);
+    for(unsigned i=0;i<count;++i) {
+        size_t tim=image_word(bytes+i*4); CHECK(tim<=size && size-tim>=20);
+        size_t clut=tim+8, image=clut;
+        int palette=(image_word(bytes+tim+4)&8)!=0;
+        if(palette) { CHECK(image_word(bytes+clut)<=size-clut); image+=image_word(bytes+clut); }
+        size_t blocks[]={image,clut};
+        for(unsigned b=0;b<(palette?2u:1u);++b) {
+            size_t at=blocks[b]; CHECK(at<=size && size-at>=12);
+            u32 xy=image_word(bytes+at+4), wh=image_word(bytes+at+8);
+            unsigned x=xy&65535,y=xy>>16,w=wh&65535,h=wh>>16;
+            if(!w || !h) continue;
+            CHECK(x<1024 && y<512 && w<=1024-x && h<=512-y &&
+                  (uint64_t)w*h*2<=size-at-12);
+            for(unsigned row=0;row<h;++row) for(unsigned col=0;col<w;++col) {
+                const u8 *pixel=bytes+at+12+((size_t)row*w+col)*2;
+                vram->words[(y+row)*1024+x+col]=(u16)pixel[0]|(u16)pixel[1]<<8;
+            }
+        }
+    }
+    free(bytes); return 0;
+}
+static int original_boot_ui(PeRoomCatalog *catalog)
+{
+    CHECK(g_SceneInitLbaTbl0==g_PeImageSectorTable+67 &&
+          &g_BootDisplayDataLbaTbl==g_PeImageSectorTable+71 &&
+          g_MainAssetLbaTbl==g_PeImageSectorTable+72 &&
+          g_LargeTexLbaTbl==g_PeImageSectorTable+73 &&
+          g_SmallTexLbaTbl==g_PeImageSectorTable+74 && g_FontUiLbaTbl==g_PeImageSectorTable+75);
+    u16 end=g_MainAssetLbaTbl[1]; g_MainAssetLbaTbl[1]=g_MainAssetLbaTbl[0];
+    CHECK(Boot_LoadOverlayTables()==-8); g_MainAssetLbaTbl[1]=end;
+    CdRom_BindImage(NULL,NULL); CHECK(Boot_LoadOverlayTables()==-1);
+    CdRom_BindImage(catalog->disc,&catalog->archive);
+    CHECK(CdRom_ReadAssetSectors(4,0,0,g_GameState.scene_load_scratch,33,1)==-1);
+    CHECK(CdRom_ReadAssetSectors(1,250,0,g_GameState.scene_load_scratch,33,1)==-1);
+    CHECK(CdRom_ReadAssetSectors(1,0,0,g_GameState.scene_load_scratch,0,1)==-1);
+    CHECK(CdRom_ReadAssetSectors(1,0,0,NULL,33,1)==-1);
+    g_GameState.cd_read_phase=255;
+    CHECK(CdRom_ReadAssetSectors(1,204,0,g_GameState.scene_load_scratch,33,1)==-1 && !g_GameState.cd_read_phase);
+    CHECK(CdRom_ReadAssetSectors(1,204,0,g_GameState.scene_load_scratch,33,0)==1 && g_GameState.cd_read_phase==8);
+    ((u32 *)g_GameState.scene_load_scratch)[0]=0;
+    CHECK(CdRom_ReadAssetSectors(1,204,0,g_GameState.scene_load_scratch,33,1)==-1 && !g_GameState.cd_read_phase);
+    PeVram *expected=malloc(sizeof(*expected)), *actual=malloc(sizeof(*actual));
+    CHECK(expected && actual);
+    u32 flags=g_ScriptVariableBank[SCRIPT_VAR_FLAGS];
+    RECT all={0,0,1024,512};
+    for(unsigned variant=0;variant<2;++variant) {
+        StoreImage(&all,(u_long *)expected->words); DrawSync(0);
+        CHECK(boot_ui_reference(catalog,72,3,expected)==0);
+        CHECK(boot_ui_reference(catalog,variant?73:74,262,expected)==0);
+        g_ScriptVariableBank[SCRIPT_VAR_FLAGS]=(flags&~0x2000u)|(variant?0x2000u:0);
+        CHECK(Boot_LoadOverlayTables()==0);
+        StoreImage(&all,(u_long *)actual->words); DrawSync(0);
+        CHECK(!memcmp(actual,expected,sizeof(*actual)));
+        size_t bytes=(size_t)(catalog->sector_bounds[76]-catalog->sector_bounds[75])*2048;
+        u8 *data=malloc(bytes); CHECK(data);
+        CHECK(pe_disc_read(catalog->disc,&catalog->archive,(uint64_t)catalog->sector_bounds[75]*2048,data,bytes));
+        CHECK(!memcmp(data,g_GameState.str_file_directory,bytes)); free(data);
+    }
+    g_ScriptVariableBank[SCRIPT_VAR_FLAGS]=flags;
+    ClearImage(&all,0,0,0); DrawSync(0);
+    free(expected); free(actual);
+    puts("Original boot UI: both texture variants, 265 TIM calls per variant, full VRAM and directory bank passed");
     return 0;
 }
 
@@ -390,6 +464,7 @@ int main(void)
     CHECK(expected && actual);
     ResetGraph(0);
     CHECK(original_scene_bootstrap(&catalog)==0);
+    CHECK(original_boot_ui(&catalog)==0);
     RECT all={0,0,1024,512};
     {
         PeRoomBlob resources={0};CHECK(pe_sector_bank_load(&catalog,3,&resources));

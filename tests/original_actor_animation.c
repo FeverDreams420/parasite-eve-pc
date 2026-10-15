@@ -1,3 +1,4 @@
+#include <signal.h>
 #include "../src/overlays/menu_memcard/menu_memcard_link.h"
 #include "../src/overlays/menu_memcard/menu_memcard_trail.h"
 #include "pe1/akao/pan3d.h"
@@ -1303,7 +1304,6 @@ static int original_glow_resident_constants(void)
         {0x800e11e4,g_FieldFxTpageSlots,sizeof(g_FieldFxTpageSlots)},
         {0x800c2258,&D_800C2258,sizeof(GteShortVector)},
         {0x800c2260,&g_FieldFxZeroVector,sizeof(GteShortVector)},
-        {0x80093162,g_SceneAssetLbaTbl,(2*sizeof(u16))},
         {0x800c2268,&g_FieldFxZeroRotation,sizeof(GteRotation)},
         {0x800c2290,&g_FieldFxUnitScale,sizeof(GteVector)},
         {0x800e1210,g_FieldFxStripPacketCounts,6*sizeof(u16)},
@@ -4714,6 +4714,87 @@ static int original_boot_audio_lifecycle(void)
     return 1;
 }
 
+static int original_script_movie(PeDisc *disc)
+{
+    _Alignas(16) static u8 work[BOOT_DISPLAY_WORK_SIZE+32],whole_frame[320*240*3],actual[320*240*3];
+    Pe1GameState state=g_GameState;PeDisc *image=g_CdImage;u8 *workspace=g_CdLoadAreaBase;
+    FieldActor *entity=g_CurrentEntity;ScriptNode *node_before=g_ScriptNodePool;u32 *cursor=g_ScriptCursor;
+    CdlATV mix=g_AkaoCdVolume;int old_slot=g_ActiveDrawSlot,background=g_MenuSaveBgFadeState;
+    DISPENV displays[2];DRAWENV draws[2];memcpy(displays,g_RenderDispEnvArray,sizeof(displays));memcpy(draws,g_RenderDrawEnvArray,sizeof(draws));
+    PeDiscFile exe;u32 pointer=0;int valid=1;
+    if(!pe_disc_find(disc,"SLUS_006.62",&exe) ||
+       !pe_disc_read(disc,&exe,0x910a0+53*4-0x10000+0x800,&pointer,4) ||
+       pointer!=0x80014e30 || g_ScriptQueueOpcodeHandlers[53]!=Script_LoadSceneData)return 0;
+    g_CdImage=disc;g_CdLoadAreaBase=work;g_DrawEnabled.value=0;
+    int number=0,*args[]={&number},*empty[]={NULL};u32 flags=g_GameState.flags;
+    if(Script_LoadSceneData(NULL)!=-1 || Script_LoadSceneData(empty)!=-1)valid=0;
+    number=-1;if(Script_LoadSceneData(args)!=-1)valid=0;
+    number=47;if(Script_LoadSceneData(args)!=-1)valid=0;number=0;
+    g_CdImage=NULL;if(Script_LoadSceneData(args)!=-1)valid=0;g_CdImage=disc;
+    g_CdLoadAreaBase=NULL;if(Script_LoadSceneData(args)!=-1)valid=0;
+    g_CdLoadAreaBase=work+1;if(Script_LoadSceneData(args)!=-1)valid=0;g_CdLoadAreaBase=work;
+    if(g_GameState.flags!=flags || g_DrawEnabled.value)valid=0;
+    unsigned rendered=0,rows=0;
+    for(unsigned repeat=0;repeat<2;++repeat){
+        memset(work,0xa5,sizeof(work));g_GameState.flags=0;g_GameStateFlags=0;
+        g_DrawEnabled.value=0;g_ActiveDrawSlot=0;g_MenuSaveBgFadeState=0;
+        g_MenuCardVideoDepthFlip=2;g_MenuCardVideoSize[0]=320;g_MenuCardVideoSize[1]=240;
+        u32 script[]={53|(1u<<13),0,repeat?0x10000u:0u,32,0};FieldActor actor={0};
+        ScriptNode node={.current.script=script,.active=1};g_CurrentEntity=&actor;g_ScriptNodePool=&node;
+        glyph_reads=glyph_polls=0;glyph_read_retry=glyph_poll_retry=glyph_pending=1;
+        int tick=VSync(-1);Script_RunQueue();
+        if(glyph_reads || glyph_polls || VSync(-1)!=tick+1 || g_ScriptNodePool ||
+           !(node.flags&0x10) || node.current.script!=script+5 || g_DrawEnabled.bits!=2 ||
+           g_MenuCardVideoDepthFlip!=1 || g_MenuCardVideoDecodeMode!=2 || g_MovieIndex ||
+           g_SeqElapsed!=1 || (g_GameState.flags&0x8200)!=0x8200 || g_MenuCardVideoDecodeBuffer0!=work)valid=0;
+        glyph_read_retry=glyph_poll_retry=glyph_pending=0;
+        Pe1SceneAudioState playing=g_GameState.scene_audio;flags=g_GameState.flags;
+        if(Script_LoadSceneData(args)!=-2 || g_GameState.flags!=flags || memcmp(&playing,&g_GameState.scene_audio,sizeof(playing)))valid=0;
+        unsigned frames=0;tick=VSync(-1);
+        for(;;){
+            unsigned decoded=g_MenuCardVideoDisplay.decodeIndex,region=g_MenuCardVideoDisplay.region;
+            int mode=g_MenuCardVideoDecodeMode;unsigned bpp=mode==3?3:2;
+            RECT area={0,region?0:240,mode==3?480:320,240};
+            int running=MenuCardFirst_StepVideo();StoreImage(&area,actual);DrawSync(0);
+            DecDCToutCallback(NULL);DecDCTin(g_MenuCardVideoDisplay.decode[decoded],mode);
+            DecDCTout(whole_frame,320*240*bpp/4);if(DecDCToutSync(0))valid=0;
+            DecDCToutCallback(MenuCardFirst_UploadVideoSlice);
+            for(unsigned x=0;x<20;++x)for(unsigned y=0;y<15;++y)for(unsigned row=0;row<16;++row){
+                if(memcmp(actual+((y*16+row)*320+x*16)*bpp,
+                    whole_frame+((x*15+y)*256+row*16)*bpp,16*bpp))valid=0;++rows;}
+            if(!frames){
+                if(mode!=2 || g_MenuCardVideoDepthFlip!=2)valid=0;
+                for(unsigned i=0;i<320*240;++i){u16 pixel;memcpy(&pixel,actual+i*2,2);if(pixel!=0x8000)valid=0;}
+            }else if(mode!=3 || g_MenuCardVideoDepthFlip)valid=0;
+            if(!g_MovieWide)valid=0;
+            ++frames;++rendered;Draw_RenderFrame();
+            if(!running || frames>150)break;
+        }
+        if(frames!=149 || VSync(-1)-tick!=596 || g_SeqElapsed!=150 || g_DrawEnabled.bits!=1 || !g_MenuCardVideoFinished)valid=0;
+        DecDCToutCallback(NULL);MenuCardFirst_ResetDisplayState();
+        if(g_DrawEnabled.value || g_MenuCardVideoDecodeBuffer0 || g_MenuCardVideoStreamRing)valid=0;
+        for(unsigned i=0x55e00;i<sizeof(work);++i)if(work[i]!=0xa5){valid=0;break;}
+        /* A failed file lookup closes the player and preserves scene/audio/env.
+         * The next successful repeat must still take the same cold path. */
+        char *name=g_MenuCardVideoTable[0].name;g_MenuCardVideoTable[0].name="\\ABSENT.STR;1";
+        Pe1SceneAudioState audio=g_GameState.scene_audio;flags=g_GameState.flags;CdlATV before_mix=g_AkaoCdVolume;
+        DISPENV before_display[2];DRAWENV before_draw[2];
+        memcpy(before_display,g_RenderDispEnvArray,sizeof(before_display));memcpy(before_draw,g_RenderDrawEnvArray,sizeof(before_draw));
+        if(Script_LoadSceneData(args)!=-3 || g_GameState.flags!=flags ||
+           memcmp(&audio,&g_GameState.scene_audio,sizeof(audio)) || memcmp(&before_mix,&g_AkaoCdVolume,sizeof(before_mix)) ||
+           memcmp(before_display,g_RenderDispEnvArray,sizeof(before_display)) || memcmp(before_draw,g_RenderDrawEnvArray,sizeof(before_draw)) ||
+           g_MenuCardVideoDecodeBuffer0 || g_MenuCardVideoDecodeBuffer1 || g_MenuCardVideoSliceBuffer0 ||
+           g_MenuCardVideoSliceBuffer1 || g_MenuCardVideoVlcTable || g_MenuCardVideoStreamRing)valid=0;
+        g_MenuCardVideoTable[0].name=name;
+    }
+    g_GameState=state;g_CdImage=image;g_CdLoadAreaBase=workspace;g_CurrentEntity=entity;g_ScriptNodePool=node_before;g_ScriptCursor=cursor;
+    g_AkaoCdVolume=mix;CdMix(&mix);g_ActiveDrawSlot=old_slot;g_MenuSaveBgFadeState=background;
+    memcpy(g_RenderDispEnvArray,displays,sizeof(displays));memcpy(g_RenderDrawEnvArray,draws,sizeof(draws));
+    if(!valid)fprintf(stderr,"original opcode 53/movie transition failed: frames=%u rows=%u\n",rendered,rows);
+    else puts("Original movie opcode 53: real VM dispatch, two cold/recovery plays, RGB15-to-RGB24 first-frame flip, 298 frames/full VRAM, input/busy/missing-file errors and no executable overlay I/O passed");
+    return valid;
+}
+
 static int original_movie_uploads(PeDisc *disc)
 {
     _Alignas(16) static u8 arena[0x55e00], whole_frame[320*240*3], actual[320*240*3];
@@ -5607,8 +5688,33 @@ static int original_item_random(void)
     return valid;
 }
 
+static int script_movie_error_exit(const char *executable)
+{
+    const char *args[]={executable,"--script-movie-error",NULL};
+    SDL_PropertiesID properties=SDL_CreateProperties();
+    SDL_SetPointerProperty(properties,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
+    SDL_SetNumberProperty(properties,SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER,SDL_PROCESS_STDIO_NULL);
+    SDL_SetNumberProperty(properties,SDL_PROP_PROCESS_CREATE_STDERR_NUMBER,SDL_PROCESS_STDIO_NULL);
+    SDL_Process *process=SDL_CreateProcessWithProperties(properties);SDL_DestroyProperties(properties);
+    if(!process){fprintf(stderr,"movie error child failed to start: %s\n",SDL_GetError());return 0;}
+    int status=99;int waited=SDL_WaitProcess(process,true,&status);SDL_DestroyProcess(process);
+#ifdef _WIN32
+    int expected=3;
+#else
+    int expected=-SIGABRT;
+#endif
+    if(!waited || status!=expected){fprintf(stderr,"movie opcode failure did not terminate VM: %d\n",status);return 0;}
+    puts("Original script error: movie failure terminates dispatcher instead of retrying or continuing the scene");return 1;
+}
+
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--script-movie-error")){
+        u32 script[]={53|(1u<<13),0,47,32,0};FieldActor actor={0};
+        ScriptNode node={.current.script=script,.active=1};
+        g_CurrentEntity=&actor;g_ScriptNodePool=&node;g_GameStateFlags=0;g_CdImage=NULL;
+        Script_RunQueue();return 99;
+    }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
     if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
@@ -5623,6 +5729,7 @@ int main(int argc, char **argv)
     if (!boot_buffer_layout()) return 54;
     if (!game_state_reset()) return 53;
     if(!SDL_Init(SDL_INIT_EVENTS))return 43;
+    if(!script_movie_error_exit(argv[0]))return 142;
     if(!original_system_start())return 130;
     if(!original_display_start())return 127;
     if(!original_menu_draw_areas())return 131;
@@ -5648,7 +5755,7 @@ int main(int argc, char **argv)
         if (!original_video_buffers(&disc)) return 135;
         if (!original_video_decoder(&disc)) return 136;
         if (!original_video_stream_errors()) return 137;
-        if (!original_movie_uploads(&disc)) return 138;
+        if (!original_movie_uploads(&disc) || !original_script_movie(&disc)) return 138;
         if (!original_image_display_switch(&disc,&exe) || !original_boot_display_data(&disc) || !original_enemy_slots(&disc,&exe)) return 140;
         if (!original_title_screen(&disc)) return 134;
         for(unsigned mode=0;mode<50;++mode) {

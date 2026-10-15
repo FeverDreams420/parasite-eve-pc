@@ -1,5 +1,9 @@
 #include "common.h"
 #include "pe1/akao.h"
+#include "pe1/akao/globals.h"
+#include "pe1/draw_state.h"
+#include "pe1/menu_memcard_display.h"
+#include "pe1/psyq_press.h"
 #include "pe1/akao_send.h"
 #include "pe1/akao/commands.h"
 #include "pe1/asset_find.h"
@@ -510,9 +514,6 @@ s32 Render_CameraStepAngleFade(s32 **arg0) {
 
 void ResetGraph(s32);
 void SetDispMask(s32);
-void func_801216C4(s32, s32 *);
-void func_80121C04(s32);
-void func_801223A8(s32);
 
 
 int Script_PointInPoly(int **arg0) {
@@ -528,70 +529,35 @@ int Script_PointInPoly(int **arg0) {
     return 1;
 }
 
-s32 Script_LoadSceneData(s16 **arg0) {
-    s16 **arg0_reg = arg0;
-    s32 *base = (s32 *)&g_GameState;
-    union {
-        s32 words[2];
-        u8 *buffers[2];
-    } sp;
-    s32 ret;
-
-    base[0] |= 0x8200;
+/* Original movie opcode: decoder/player code is statically linked.
+ * The existing native work area replaces the two executable overlay loads. */
+int Script_LoadSceneData(int **args) {
+    if (!args || !args[0] || !g_CdImage || !g_CdLoadAreaBase ||
+        (uintptr_t)g_CdLoadAreaBase % 16) return -1;
+    int number=(s16)*args[0];
+    if (number<0 || number>=47) return -1;
+    if (g_DrawEnabled.bits) return -2;
+    u32 flags=g_GameState.flags;
+    Pe1SceneAudioState audio=g_GameState.scene_audio;
+    CdlATV mix=g_AkaoCdVolume;
+    u8 *buffers[]={g_CdLoadAreaBase};
+    g_GameState.flags |= 0x8200;
     DrawSync(0);
     VSync(0);
     SetDispMask(0);
     ResetGraph(1);
-
-retry_first:
-    {
-        u16 *range = g_SceneInitLbaTbl0;
-        s32 minus_one = -1;
-        do {
-            ret = CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba + range[0], g_MdecOverlayLoadBase, range[1] - range[0]);
-        } while (ret == minus_one);
+    /* Reloading the PS1 player used to reset these movie-local values. */
+    g_MenuCardVideoDepthFlip=0;
+    g_MenuCardVideoSize[0]=g_MenuCardVideoSize[1]=0;
+    if (!MenuCardFirst_InitVideoBuffers(1,buffers) || !MenuCardFirst_OpenVideo(number)) {
+        DecDCToutCallback(NULL);
+        MenuCardFirst_ResetDisplayState();
+        g_GameState.flags=flags;
+        g_GameState.scene_audio=audio;
+        g_AkaoCdVolume=mix;CdMix(&mix);
+        return -3;
     }
-    {
-        s32 wait = -1;
-        while (1) {
-            ret = CdRom_PollReady();
-            if (ret == 0) {
-                break;
-            }
-            if (ret == wait) {
-                goto retry_first;
-            }
-        }
-    }
-
-
-retry_second:
-    {
-        u16 *range = g_SceneInitLbaTbl1;
-        s32 minus_one = -1;
-        do {
-            ret = CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba + range[0], g_CdLoadAreaBase, range[1] - range[0]);
-        } while (ret == minus_one);
-    }
-    {
-        s32 wait = -1;
-        while (1) {
-            ret = CdRom_PollReady();
-            if (ret == 0) {
-                break;
-            }
-            if (ret == wait) {
-                goto retry_second;
-            }
-        }
-    }
-
-
-    sp.words[1] = 0;
-    sp.buffers[0] = g_CdLoadAreaBase + ((g_SceneAssetLbaTbl[0] - g_SceneInitLbaTbl1[0]) << 0xB);
-    func_801216C4(1, sp.words);
-    func_80121C04(**arg0_reg);
-    func_801223A8(1);
+    MenuCardFirst_RequestVideoDepthFlip(1);
     return 1;
 }
 

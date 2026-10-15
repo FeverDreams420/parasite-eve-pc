@@ -231,8 +231,7 @@ static int original_boot_ui(PeRoomCatalog *catalog)
           title_display.disp.w==320 && title_display.disp.h==240 && title_display.isrgb24==1);
     PutDispEnv(&saved_title_display);g_GameState.flags=title_flags;
     puts("Original title image loader: full real bank, audio/reset/display state, extent and I/O failures passed");
-    CHECK(g_SceneInitLbaTbl0==g_PeImageSectorTable+67 &&
-          &g_BootDisplayDataLbaTbl==g_PeImageSectorTable+71 &&
+    CHECK(&g_BootDisplayDataLbaTbl==g_PeImageSectorTable+71 &&
           g_MainAssetLbaTbl==g_PeImageSectorTable+72 &&
           g_LargeTexLbaTbl==g_PeImageSectorTable+73 &&
           g_SmallTexLbaTbl==g_PeImageSectorTable+74 && g_FontUiLbaTbl==g_PeImageSectorTable+75);
@@ -483,7 +482,7 @@ int main(void)
     CHECK(!memcmp(g_PeImageSectorTable,catalog.sector_bounds,sizeof(catalog.sector_bounds)));
     CHECK(!memcmp(g_SceneSectorDirectory,&catalog.audio_base,4) &&
         !memcmp(g_SceneSectorDirectory+4,catalog.audio_bounds,sizeof(catalog.audio_bounds)));
-    CHECK(g_PeImageSectorBoundsNext==g_PeImageSectorTable+1 && g_SceneAssetLbaTbl==g_PeImageSectorTable+69);
+    CHECK(g_PeImageSectorBoundsNext==g_PeImageSectorTable+1);
     puts("Original image bootstrap: BOOT executable, 450 room ranges, 81 sector boundaries and audio directory loaded without fixture injection");
     Psyz_SpuInit();
     SpuInit();

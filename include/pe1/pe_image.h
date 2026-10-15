@@ -43,9 +43,8 @@
  *                              (Scene_LoadEntityTexture(s), Render_InitDisplayLists)
  *     g_RoomSectorTable        8-byte rows: start sector, then scratch,
  *                              texture and room sector counts (Scene_LoadRoom)
- *     g_SceneInitLbaTbl0 / g_SceneInitLbaTbl1
- *                              scene init-data ranges (Script_LoadSceneData)
- *     g_SceneAssetLbaTbl       scene asset ranges (Scene_LoadRoomAssets)
+ *     Movie/extra-effect code is linked statically; its old bank ranges
+ *     are retained only inside the authored sector table, without runtime aliases.
  *     g_MainAssetLbaTbl / g_LargeTexLbaTbl / g_FontUiLbaTbl
  *                              overlay/main asset + font/UI table ranges
  *                              (Boot_LoadOverlayTables)
@@ -95,8 +94,6 @@
 /* Native storage for the resident USA sector boundaries and linker aliases. */
 extern u16 g_PeImageSectorTable[81];
 #define g_PeImageSectorBoundsNext (g_PeImageSectorTable + 1)
-#define g_SceneAssetLbaTbl (g_PeImageSectorTable + 69)
-#define g_SceneInitLbaTbl0 (g_PeImageSectorTable + 67)
 #define g_StrFileDirLba (g_PeImageSectorTable + 70)
 #define g_BootDisplayDataLbaTbl (g_PeImageSectorTable[71])
 #define g_MainAssetLbaTbl (g_PeImageSectorTable + 72)

@@ -65,7 +65,6 @@ extern u8 *g_MenuCardScreenVideoDecodeBuffer0,*g_MenuCardScreenVideoDecodeBuffer
 
 void MenuCard_ResetDisplayState(void);
 s32 MenuCard_InitVideoBuffers(s8 count, u8 **buffers);
-s32 MenuCardFirst_InitVideoBuffers(s8 count, u8 **buffers);
 /* Buffers and saved environments of the first video player copy. */
 extern u8 *g_MenuCardVideoDecodeBuffer0, *g_MenuCardVideoDecodeBuffer1, *g_MenuCardVideoSliceBuffer0, *g_MenuCardVideoSliceBuffer1, *g_MenuCardVideoVlcTable, *g_MenuCardVideoStreamRing;
 extern DISPENV g_MenuCardVideoSavedDispEnv[2];
@@ -91,12 +90,10 @@ extern char g_MenuCardVideoDirectory[], g_MenuCardVideoDirectoryLate[], g_MenuCa
 void DecDCTReset(int mode);
 void MdecDiag_ExpandDecoderTable(void *table);
 extern void MenuCardFirst_UploadVideoSlice(void);
-s32 MenuCardFirst_OpenVideo(s32 number);
 s32 MenuCard_OpenVideo(s32 number);
 
 /* Per-frame video step: decode, upload and page flip. */
 extern u8 g_MenuCardVideoDecodeMode, g_MenuCardVideoDepthFlip, g_MenuCardScreenVideoDecodeMode;
 extern void DecDCTin(void *, s32);
-s32 MenuCardFirst_StepVideo(void);
 
 #endif

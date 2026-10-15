@@ -23,6 +23,8 @@ extern u32 g_ScriptVariableBank[];
 extern int (*g_ScriptQueueOpcodeHandlers[])(int **);
 
 /* Resident callbacks use the interpreter's decoded operand-pointer array. */
+/* Movie opcode: 1 starts; -1 invalid input/workspace, -2 busy, -3 stream error. */
+int Script_LoadSceneData(int **args);
 int Script_MoveTowardPoint(int **args);
 int Render_CameraTrackRelativeOffset(int **args);
 int Render_CameraStepAngleFade(int **args);

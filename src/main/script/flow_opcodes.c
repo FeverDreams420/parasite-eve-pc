@@ -658,6 +658,7 @@ void Script_RunQueue(void)
     u32 *values;
     FieldActor *argument_entity;
     u16 i;
+    int result;
 
     do {
         node = g_ScriptNodePool;
@@ -700,7 +701,12 @@ void Script_RunQueue(void)
                 fprintf(stderr, "Unbound original script opcode %u\n", opcode);
                 abort();
             }
-        } while (g_ScriptQueueOpcodeHandlers[opcode](args));
+            result=g_ScriptQueueOpcodeHandlers[opcode](args);
+            if(result<0){
+                fprintf(stderr,"Original script opcode %u failed: %d\n",opcode,result);
+                abort();
+            }
+        } while (result);
         /* Handlers may replace both the current node and the script cursor. */
         g_ScriptNodePool->current.script = g_ScriptCursor;
     } while ((g_ScriptNodePool = g_ScriptNodePool->next) != 0);
@@ -722,6 +728,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [40]=Script_ClearBit,
     [41]=Script_TestBit, [42]=Script_SetBit,
     [43]=Entity_ClearGlobalFlags, [44]=Entity_GetGlobalFlags, [45]=Entity_SetGlobalFlags,
+    [53]=Script_LoadSceneData,
     [50]=Entity_ClearCurrentFlag80, [55]=Entity_SetCurrentFlag4000, [57]=Entity_ClearCurrentFlag4000,
     [47]=Script_SetEntityAnimFrame, [48]=Script_WaitAnimFrameMatch, [68]=Script_MoveTowardPoint,
     [69]=Script_GetAngleToEntity,

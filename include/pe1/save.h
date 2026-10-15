@@ -16,7 +16,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(SaveRuntimeState, drawBlendColor) == 0x64,
                   save_draw_blend_color_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(SaveRuntimeState, categoryCounts) == 0x10CC,
                   save_category_counts_offset);
-extern SaveRuntimeState g_SaveRuntimeState;
+PE1_STATIC_ASSERT(PE1_OFFSETOF(SaveRuntimeState, cursorMetadata) == 0x12C4,
+                  save_cursor_metadata_offset);
 void Save_InitMetadataState(void);
 /* Slot cell picked on the save screen and the deferred read/write of it. */
 extern int g_SaveSlotCellIndex;
@@ -29,7 +30,6 @@ extern u8 *g_SaveMetadataCursor;
 extern int g_SaveMetadataWindowLength;
 extern ItemDataRecord *g_SaveMetadataSourceRecord;
 extern ItemDataRecord *g_MenuRenameTargetRecord;
-extern SaveMetadataWindow g_CursorRenderMetadataWindows[2];
 
 int Save_GetMetadataWindowIndex(void);
 void Save_AppendMetadataChar(unsigned char ch);
@@ -47,8 +47,6 @@ extern unsigned char g_MenuActiveMode;
 extern unsigned char g_SaveOverlayTimer;
 extern u8 *g_CurItemEffectData;
 void Menu_SaveOverlayDraw(void);
-
-extern unsigned char g_CursorRenderDataBlock[];
 
 /* The save-title formatter consumes four numeric fields and two variant
  * arguments from this contiguous six-word slot array. Each variant slot is

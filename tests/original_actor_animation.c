@@ -1,3 +1,4 @@
+#include "pe1/save.h"
 #include "pe1/game_timers.h"
 #include "pe1/random.h"
 #include <stdint.h>
@@ -2036,6 +2037,44 @@ static int room_callback_context(void)
     return 1;
 }
 
+/* USA Save_SelectMetadataWindow selects C0DE0 or C20A4 (+10 for armor). */
+static int original_save_metadata_storage(void)
+{
+    SaveRuntimeState saved=g_SaveRuntimeState;
+    int index=g_SaveMetadataWindowIndex, length=g_SaveMetadataWindowLength;
+    u8 *cursor=g_SaveMetadataCursor;
+    ItemDataRecord *source=g_SaveMetadataSourceRecord;
+    ItemDataRecord item={0};
+    int valid=1;
+    memset(&g_SaveRuntimeState,0xFF,sizeof(g_SaveRuntimeState));
+    for(int window=0;window<2;++window) {
+        g_SaveMetadataWindowIndex=window;
+        Save_SelectMetadataWindow(NULL);
+        if(g_SaveMetadataCursor!=g_SaveRuntimeState.windows.metadata[window].text ||
+           g_SaveMetadataWindowLength!=8 || g_SaveMetadataSourceRecord) valid=0;
+        Save_AppendMetadataChar(0x30+window);
+        if(g_SaveRuntimeState.windows.metadata[window].text[0]!=0x30+window ||
+           g_SaveRuntimeState.windows.metadata[window].text[1]!=0xFF) valid=0;
+        item.kind=window?ITEM_KIND_ARMOR:0;
+        Save_SelectMetadataWindow(&item);
+        if(g_SaveMetadataCursor!=g_CursorRenderMetadataWindows[window].text ||
+           g_SaveMetadataSourceRecord!=&item) valid=0;
+        Save_AppendMetadataChar(0x40+window);
+        if(((u8 *)&g_SaveRuntimeState)[0x12C4+window*16]!=0x40+window ||
+           g_CursorRenderDataBlock[window*16]!=0x40+window) valid=0;
+        /* Retail replaces the eighth glyph when a ninth is entered. */
+        for(unsigned i=1;i<8;++i) Save_AppendMetadataChar(0x50+i);
+        Save_AppendMetadataChar(0x60);
+        if(g_CursorRenderMetadataWindows[window].text[7]!=0x60 ||
+           g_CursorRenderMetadataWindows[window].text[8]!=0xFF) valid=0;
+    }
+    g_SaveRuntimeState=saved;
+    g_SaveMetadataWindowIndex=index; g_SaveMetadataWindowLength=length;
+    g_SaveMetadataCursor=cursor; g_SaveMetadataSourceRecord=source;
+    if(!valid) fprintf(stderr,"Original save metadata storage/selection failed\n");
+    return valid;
+}
+
 /* Goldens from executing USA EXE 800528F0/80052B2C in MIPS Unicorn.
  * 4096 draws cross seven complete table refresh boundaries. */
 static int original_item_random(void)
@@ -2081,6 +2120,7 @@ int main(int argc, char **argv)
 {
     if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
+    if (!original_save_metadata_storage()) return 125;
     if (!original_item_random()) return 124;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

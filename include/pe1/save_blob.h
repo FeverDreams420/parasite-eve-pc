@@ -62,7 +62,18 @@ typedef struct SaveRuntimeState {
 /* 0x64 */ u32 drawBlendColor;
 /* 0x68 */ SaveU8 inventory[0x1064];
 /* 0x10CC */ u16 categoryCounts[6];
-/* 0x10D8 */ SaveU8 remainder[0x20C];
+/* 0x10D8 */ union {
+        SaveU8 remainder[0x20C];
+        struct {
+            SaveU8 reserved10D8[0x1EC];
+/* 0x12C4 */ SaveMetadataWindow cursorMetadata[2];
+        };
+    };
 } SaveRuntimeState;
+
+extern SaveRuntimeState g_SaveRuntimeState;
+/* Both retail labels name 0x800C20A4, inside the saved runtime image. */
+#define g_CursorRenderMetadataWindows (g_SaveRuntimeState.cursorMetadata)
+#define g_CursorRenderDataBlock ((SaveU8 *)&g_SaveRuntimeState.cursorMetadata)
 
 #endif /* PE1_SAVE_BLOB_H */

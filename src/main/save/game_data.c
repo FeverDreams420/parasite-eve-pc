@@ -20,6 +20,8 @@
 #include "pe1/scene_dispatch.h"
 #include "pe1/text.h"
 
+SaveRuntimeState g_SaveRuntimeState;
+
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
 s32 g_InvPackedListCount;

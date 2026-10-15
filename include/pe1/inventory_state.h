@@ -26,11 +26,8 @@ extern unsigned char g_InvSortRankTableB[];
 extern u16 g_InvItemArray[];
 extern u8 g_ItemCodeRemapTable[];
 extern unsigned char g_ItemDropRngTable[];
-extern u8 g_CursorRenderDataBlock[];
 extern s16 g_InvActiveListItems[];
 extern int g_InvActiveListCount;
-/* Two 16-byte text windows the comparison panel and the save screen draw. */
-extern SaveMetadataWindow g_CursorRenderMetadataWindows[2];
 extern s16 g_BattleCountTable[];
 extern int g_MenuBattleCount;
 extern s32 g_InvCategoryBaseItemId;

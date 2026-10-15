@@ -17,20 +17,8 @@ extern const BattleActionSoundTable g_BattleActionSoundIds;
 extern u8 g_BattleHitTimer;
 extern s16 g_BattlePlayerAimHeight;
 extern const Tbl20 g_BattleActionEffectIds;
-extern u8 g_BattleStatusRowPosX[];
-/* A status anchor halfword addressed by the slot's byte offset. */
-typedef union BattleHalfwordAddress {
-    u16 *half;
-    u32 word;
-} BattleHalfwordAddress;
-extern u8 g_BattleStatusRowPosY[];
-/* The clut halfword of g_BattleRemainingActionSprites[0][0], addressed with
- * its own symbol and a byte offset per slot. */
-extern u8 g_BattleRemainingActionClut[];
 extern const StatusSymbolTemplate g_BattleStatusSymbolUv;
 extern const StatusSymbolTemplate g_BattleStatusSymbolSize;
 extern const StatusSymbolTemplate g_BattleStatusSymbolOffset;
-extern u8 g_BattleStatusSymbolSpriteU[];
-extern u8 g_BattleStatusSymbolSpriteV[];
 
 #endif /* PE1_BATTLE_MAIN_H */

@@ -6,13 +6,6 @@
 
 typedef RenderColorTilePacket BattleStatusLinePrim;
 
-typedef struct BattleStatusMarkerBody {
-    u8 pad00[8];
-    u16 x;
-    u16 y;
-    u8 pad0C[0x10];
-} BattleStatusMarkerBody;
-
 /* Texture-page command followed by a variable-size UI sprite. */
 typedef RenderPagedSpritePacket BattleGaugePrim;
 /* A gauge packet addressed from an untyped buffer by byte offset. */
@@ -22,13 +15,6 @@ typedef union BattleGaugePrimAddress {
     RenderSpritePacket *sprite;
     uintptr_t word;
 } BattleGaugePrimAddress;
-/* A word that holds a status packet offset, then the packet's address. */
-typedef union BattleSpriteWord {
-    intptr_t value;
-    u8 *bytes;
-    RenderSpritePacket *sprite;
-} BattleSpriteWord;
-
 /* A HUD packet address as a pointer or a word: retail adds the scaled slot
  * and index offsets to the buffer address as integers, offsets first. */
 typedef union BattleStatusPrimAddress {
@@ -46,7 +32,6 @@ extern BattleStatusLinePrim g_BattleStatusBarTiles[6];
 /* The same packets seen as the three shaded status-bar tiles of each draw
  * buffer (Battle_DrawHPBar). */
 #define BATTLE_STATUS_TILES ((RenderColorTilePacket (*)[3])g_BattleStatusBarTiles)
-extern BattleStatusMarkerBody g_BattleStatusValueMarkerSlots[2];
 extern RenderPagedSpritePacket g_BattleStatusValueDigits[2][2];  /* ammo digits */
 extern BattleGaugePrim g_BattleTargetHighlightSprites[2][3];
 extern BattleGaugePrim g_BattleStatusPointerSprites[2];
@@ -132,8 +117,6 @@ int Battle_DrawDecimalNumber(void *buffer, s16 x, s16 y, s16 value, s16 mode);
 
 PE1_STATIC_ASSERT(sizeof(BattleStatusLinePrim) == sizeof(RenderColorTilePacket),
                   battle_status_line_prim_size);
-PE1_STATIC_ASSERT(sizeof(BattleStatusMarkerBody) == 0x1C,
-                  battle_status_marker_body_stride);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(BattleGaugePrim, sprite) == sizeof(RenderTexturePagePacket),
                   battle_gauge_sprite_offset);
 PE1_STATIC_ASSERT(sizeof(BattleGaugePrim) == sizeof(RenderPagedSpritePacket),
@@ -141,13 +124,6 @@ PE1_STATIC_ASSERT(sizeof(BattleGaugePrim) == sizeof(RenderPagedSpritePacket),
 
 extern s32 g_BattleStatusPanelSlot;
 extern s32 g_BattleFrameCounter;
-/* The MISS sprite: the sprite of g_BattlePanelDigits[slot][panel][0], which
- * Battle_DrawStatusPanel draws for a negative value. Views of the record,
- * its colour and its texture coordinates: retail addresses each byte with
- * its own relocation, and the indexed field form changes the function. */
-extern RenderSpritePacket g_BattleMissSprite[];
-extern u8 g_BattleMissSpriteR[], g_BattleMissSpriteG[], g_BattleMissSpriteB[];
-extern u8 g_BattleMissSpriteU[], g_BattleMissSpriteV[];
 void Battle_DrawStatusPanel(int mode, BattleStatusPanel *panel);
 
 

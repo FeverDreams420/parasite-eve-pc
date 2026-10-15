@@ -16,8 +16,7 @@
 #include "pe1/render_prim.h"
 #include "pe1/script_state.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared state of the original HUD module. */
 s32 g_BattleStatusPanelSlot;
 u8 g_BattleSpritePrimCountdown;
 u8 g_MenuActiveMode;
@@ -350,21 +349,12 @@ void Battle_DrawStatusOverlay(RenderObjectEntity *object, int mode, int outOfRan
             Battle_DrawATBGauge();
             break;
         case 3: {
-            u32 slot;
-            u32 packetOffset;
-            u8 *packetBase;
-            RenderSpritePacket *packet;
-            u8 *packetTagBase;
+            int slot = g_ActiveDrawSlot;
+            RenderPagedSpritePacket *packet = &g_BattleStatusValueLabelSprites[slot];
             Battle_LayoutStatusPrimRow(0x1C);
-            packetBase = (u8 *)&g_BattleStatusValueLabelSprites[0].sprite;
-            slot = g_ActiveDrawSlot;
-            packetOffset = slot * 28;
-            packet = (RenderSpritePacket *)(packetBase + packetOffset);
-            packet->x = g_BattleStatusBarTiles[slot * 3].x0 + 0x1C;
-            packet->y = g_BattleStatusBarTiles[slot * 3].y0 + 8;
-            /* Keep this assignment at the call to preserve the original schedule. */
-            AddPrim(D_800B0E38.ordering[slot] + 4,
-                    (unsigned int *)((packetTagBase = packetBase - 8) + packetOffset));
+            packet->sprite.x = g_BattleStatusBarTiles[slot * 3].x0 + 0x1C;
+            packet->sprite.y = g_BattleStatusBarTiles[slot * 3].y0 + 8;
+            AddPrim(D_800B0E38.ordering[slot] + 4, packet);
             Battle_DrawStatusValue((s16)entityId, 0x12);
             break;
         }
@@ -499,30 +489,15 @@ void Battle_BuildStatusPrimHeader(RenderObjectEntity *object, s8 outOfRange)
 
 void Battle_LayoutStatusPrimRow(int bottomY)
 {
-    BattleStatusLinePrim *line;
-    BattleStatusPrimAddress bufferBase;
-    unsigned int **orderingBase;
-    int savedBottomY;
-    int slot;
-    u8 row;
-
-    savedBottomY = bottomY;
-    row = 0;
-    bufferBase.line = g_BattleStatusBarTiles;
-    orderingBase = D_800B0E38.ordering;
-    do {
-        slot = g_ActiveDrawSlot;
-        line = (BattleStatusLinePrim *)
-            (((slot * 3) << 4) + (row << 4) + bufferBase.address);
+    int slot = g_ActiveDrawSlot;
+    for (int row = 0; row < 3; ++row) {
+        BattleStatusLinePrim *line = &g_BattleStatusBarTiles[slot * 3 + row];
         line->x0 = g_BattleStatusBarTiles[slot * 3].x0 + row;
         line->y0 = g_BattleStatusBarTiles[slot * 3].y0 + row;
-        line->x1 = 0x50 - (row * 2);
-        line->y1 = (s8)savedBottomY - (row * 2);
-        AddPrim(orderingBase[slot] + (7 - row),
-                (unsigned int *)(((slot * 3) << 4) +
-                    ((row << 4) + bufferBase.address)));
-        row++;
-    } while (row < 3);
+        line->x1 = 0x50 - row * 2;
+        line->y1 = (s8)bottomY - row * 2;
+        AddPrim(D_800B0E38.ordering[slot] + 7 - row, line);
+    }
 }
 
 static inline RenderSpritePacket *HighlightSpriteAt(RenderSpritePacket *base, int slot, unsigned byte_offset)
@@ -587,238 +562,56 @@ void Battle_DrawTargetHighlight(void)
 #define NULL ((void *)0)
 
 void Battle_DrawSpellName(void) {
-    s32 c;
-    s32 packetOffset;
-    s32 workValue;
-    s32 c1;
-    s16 ys;
-    s16 xs;
-    s16 i;
-    u8 *e508;
-    s32 cidx;
-    s16 clut;
-    u8 *p;
-    BattleAction *d68;
-
-    c = g_ActiveDrawSlot;
-    {
-        s32 tv;
-        tv = *(u16 *)(g_BattleStatusRowPosY + c * 0x30);
-        ys = tv + 4;
-    }
-    if ((g_ActiveActor->action->attackWord & 0x300000) == 0x200000) {
-        u8 *q508;
-        workValue = 0x130;
-
-        q508 = (u8 *)&g_BattleRemainingActionSprites[0][0].sprite;
-        {
-            RenderSpritePacket *pa;
-            u8 e0a;
-            pa = (RenderSpritePacket *)(q508 + c * 0x118);
-            e0a = 0xE0;
-                        pa->u = e0a;
-            {
-                s32 cB;
-                cB = g_ActiveDrawSlot;
-                pa->width = 8;
-                pa->height = 0x10;
-                (q508 + cB * 0x118)[0xD] = e0a;
-            }
-        }
-        {
-            s32 cC;
-            BattleStatusPrimAddress t3;
-            BattleStatusPrimAddress base;
-            s32 rFD;
-            s32 tE;
-            cC = g_ActiveDrawSlot;
-            rFD = 0x1FD;
-            t3.address = cC * 0x118;
-            tE = *(u16 *)(g_BattleStatusRowPosX + cC * 0x30);
-            base.bytes = q508;
-            t3.address = t3.address + base.address;
-            t3.sprite->y = ys;
-            t3.sprite->x = tE + 0x3C;
-            clut = GetClut(workValue, rFD);
-        }
-        {
-            s32 cD;
-            s32 eo;
-            cD = g_ActiveDrawSlot;
-            q508 -= 8;
-            eo = cD * 0x118;
-            cD = cD * 4;
-            *(s16 *)(g_BattleRemainingActionClut + eo) = clut;
-
-            {
-                BattleStatusPrimAddress entry;
-
-                entry.byteOrdering = g_OtBufferTable;
-                entry.address = cD + entry.address;
-                AddPrim(*entry.byteOrdering + 0x10, eo + q508);
-            }
-        }
+    int slot = g_ActiveDrawSlot;
+    int y = g_BattleStatusBarTiles[slot * 3].y0 + 4;
+    BattleAction *action = g_ActiveActor->action;
+    if ((action->attackWord & 0x300000) == 0x200000) {
+        RenderPagedSpritePacket *packet = &g_BattleRemainingActionSprites[slot][0];
+        packet->sprite.u = 0xE0;
+        packet->sprite.v = 0xE0;
+        packet->sprite.width = 8;
+        packet->sprite.height = 16;
+        packet->sprite.x = g_BattleStatusBarTiles[slot * 3].x0 + 0x3C;
+        packet->sprite.y = y;
+        packet->sprite.clut = GetClut(0x130, 0x1FD);
+        AddPrim((RenderNativeTag *)g_OtBufferTable[slot] + 4, packet);
         return;
     }
-    i = 0;
-    {
-        s32 tx;
-        tx = *(u16 *)(g_BattleStatusRowPosX + c * 0x30);
-        xs = tx + 0x40;
-    }
-    if (g_BattleRemainingActions != 0) {
-        u8 e0 = 0xE0;
-        u8 *e5m8;
-        e508 = (u8 *)&g_BattleRemainingActionSprites[0][0].sprite;
-        e5m8 = e508 - 8;
-        do {
-            s32 s0;
-            RenderSpritePacket *pl;
-            {
-                {
-                    s32 cE;
-                    cE = g_ActiveDrawSlot;
-                    packetOffset = cE * 0x118;
-                    s0 = i * 0x1C;
-                }
-                packetOffset += s0;
-                {
-                    BattleStatusPrimAddress at;
-
-                    at.bytes = e508;
-                    at.address = packetOffset + at.address;
-                    pl = at.sprite;
-                }
-            }
-            {
-                Combatant *dval;
-                dval = g_ActiveActor;
-                pl->width = 4;
-                pl->height = 0x10;
-                d68 = dval->action;
-            }
-            if ((d68->attackWord & 0x300000) == 0x300000) {
-                workValue = 0x130;
-                                pl->u = 0xD8;
-                c1 = g_ActiveDrawSlot;
-                {
-                    BattleStatusPrimAddress at;
-
-                    at.bytes = e508;
-                    at.address = c1 * 0x118 + s0 + at.address;
-                    at.sprite->v = e0;
-                }
-                clut = GetClut(workValue, 0x1FB);
-            } else if ((d68->turnWord & 0xC0) == 0x80) {
-                workValue = 0x130;
-                                pl->u = 0xDC;
-                c1 = g_ActiveDrawSlot;
-                {
-                    BattleStatusPrimAddress at;
-
-                    at.bytes = e508;
-                    at.address = c1 * 0x118 + s0 + at.address;
-                    at.sprite->v = e0;
-                }
-                clut = GetClut(workValue, 0x1FC);
-            } else {
-                u8 dv = 0xD4;
-                workValue = 0x130;
-                                pl->u = dv;
-                c1 = g_ActiveDrawSlot;
-                {
-                    BattleStatusPrimAddress at;
-
-                    at.bytes = e508;
-                    at.address = c1 * 0x118 + s0 + at.address;
-                    at.sprite->v = e0;
-                }
-                clut = GetClut(workValue, 0x1FA);
-            }
-            {
-                workValue = g_ActiveDrawSlot;
-                packetOffset = workValue * 0x118;
-                packetOffset = s0 + packetOffset;
-                                *(s16 *)(g_BattleRemainingActionClut + packetOffset) = clut;
-
-            }
-            {
-                s32 j7;
-                s32 t2;
-                s32 cJ;
-                s32 a2v;
-                {
-                    workValue = i;
-                    j7 = workValue * 7;
-                }
-                j7 <<= 2;
-                cJ = g_ActiveDrawSlot;
-                {
-                    BattleStatusPrimAddress base;
-
-                    base.bytes = e5m8;
-                    a2v = j7 + base.address;
-                }
-                t2 = cJ * 0x118;
-                a2v = t2 + a2v;
-                t2 = t2 + j7;
-                {
-                    BattleStatusPrimAddress at;
-
-                    at.bytes = e508;
-                    at.address = t2 + at.address;
-                    at.sprite->x = xs;
-                    at.sprite->y = ys;
-                }
-                xs -= 6;
-                AddPrim(g_OtBufferTable[cJ] + 0x10, (void *)a2v);
-            }
-            {
-                s16 inext = i + 1;
-                i = inext;
-                if (!(inext < g_BattleRemainingActions)) break;
-            }
-        } while (1);
+    int x = g_BattleStatusBarTiles[slot * 3].x0 + 0x40;
+    for (int i = 0; i < g_BattleRemainingActions && i < 10; ++i) {
+        RenderPagedSpritePacket *packet = &g_BattleRemainingActionSprites[slot][i];
+        packet->sprite.width = 4;
+        packet->sprite.height = 16;
+        packet->sprite.v = 0xE0;
+        if ((action->attackWord & 0x300000) == 0x300000) {
+            packet->sprite.u = 0xD8;
+            packet->sprite.clut = GetClut(0x130, 0x1FB);
+        } else if ((action->turnWord & 0xC0) == 0x80) {
+            packet->sprite.u = 0xDC;
+            packet->sprite.clut = GetClut(0x130, 0x1FC);
+        } else {
+            packet->sprite.u = 0xD4;
+            packet->sprite.clut = GetClut(0x130, 0x1FA);
+        }
+        packet->sprite.x = x;
+        packet->sprite.y = y;
+        x -= 6;
+        AddPrim((RenderNativeTag *)g_OtBufferTable[slot] + 4, packet);
     }
 }
 
-typedef struct StatusSymbolSlot {
-    StatusSymbolTemplate data;
-    u8 padding[6];
-} StatusSymbolSlot;
-
 void Battle_DrawStatusSymbol(s8 which) {
-    StatusSymbolSlot first;
-    StatusSymbolSlot second;
-    StatusSymbolSlot third;
-    u8 spare[8]; /* Preserve the original stack frame around the copied templates. */
-    u32 slot;
-    u8 *packet;
-    u32 packetOffset;
-    u32 index;
-    u8 *a, *b, *c;
-    u8 *packetBase;
-    u8 *thirdBase;
-    first.data = g_BattleStatusSymbolUv;
-    second.data = g_BattleStatusSymbolSize;
-    third.data = g_BattleStatusSymbolOffset;
-    index = which * 2;
-    a = first.data.bytes + index;
-    b = second.data.bytes + index;
-    packetBase = (u8 *)&g_BattleStatusSymbolSprites[0].sprite;
-    thirdBase = third.data.bytes;
-    g_BattleStatusSymbolSpriteU[g_ActiveDrawSlot * 28] = a[0];
-    c = thirdBase + index;
-    g_BattleStatusSymbolSpriteV[g_ActiveDrawSlot * 28] = a[1];
-    slot = g_ActiveDrawSlot;
-    packetOffset = slot * 28;
-    packet = packetBase + packetOffset;
-    ((RenderSpritePacket *)packet)->width = b[0];
-    ((RenderSpritePacket *)packet)->height = b[1];
-    ((RenderSpritePacket *)packet)->x = *(u16 *)(g_BattleStatusRowPosX + slot * 48) + c[0];
-    ((RenderSpritePacket *)packet)->y = *(u16 *)(g_BattleStatusRowPosX + slot * 48 + 2) + c[1];
-    packetBase -= 8;
-    AddPrim(D_800B0E38.ordering[slot] + 4, (unsigned int *)(packetBase + packetOffset));
+    if ((unsigned)which >= 9) return;
+    unsigned index = which * 2;
+    int slot = g_ActiveDrawSlot;
+    RenderPagedSpritePacket *packet = &g_BattleStatusSymbolSprites[slot];
+    packet->sprite.u = g_BattleStatusSymbolUv.bytes[index];
+    packet->sprite.v = g_BattleStatusSymbolUv.bytes[index + 1];
+    packet->sprite.width = g_BattleStatusSymbolSize.bytes[index];
+    packet->sprite.height = g_BattleStatusSymbolSize.bytes[index + 1];
+    packet->sprite.x = g_BattleStatusBarTiles[slot * 3].x0 + g_BattleStatusSymbolOffset.bytes[index];
+    packet->sprite.y = g_BattleStatusBarTiles[slot * 3].y0 + g_BattleStatusSymbolOffset.bytes[index + 1];
+    AddPrim(D_800B0E38.ordering[slot] + 4, packet);
 }
 
 void Battle_DrawATBGauge(void)
@@ -868,54 +661,14 @@ void Battle_DrawATBGauge(void)
 
 void Battle_DrawStatusValue(int value, int yOffset)
 {
-    int drawSlot;
-    int anchorOffset;
-    int markerOffset;
-    u8 *markerBase;
-    int activeSlot;
-    BattleStatusMarkerBody *marker;
-    int savedValue;
-    u64 x;
-    u16 y;
-    u32 drawSlotOffset;
-
-    activeSlot = g_ActiveDrawSlot;
-    savedValue = value;
-    drawSlot = activeSlot;
-    markerBase = (u8 *)g_BattleStatusValueMarkerSlots;
-    anchorOffset = (drawSlot * 3) << 4;
-    markerOffset = drawSlot * sizeof(BattleStatusMarkerBody);
-    do {
-        do {
-            marker = (BattleStatusMarkerBody *)(markerBase + markerOffset);
-        } while (0);
-        drawSlotOffset = drawSlot << 2;
-        markerBase -= 8;
-        {
-            BattleStatusPrimAddress anchor;
-
-            anchor.line = g_BattleStatusBarTiles;
-            anchor.address = anchorOffset + anchor.address;
-            y = anchor.line->y0;
-        }
-        x = (marker->x =
-            *(u16 *)(g_BattleStatusRowPosX + anchorOffset) + 8);
-        y += yOffset;
-    } while (0);
-    marker->y = y;
-
-    {
-        BattleStatusPrimAddress entry;
-
-        entry.ordering = D_800B0E38.ordering;
-        entry.address = drawSlotOffset + entry.address;
-        AddPrim(*entry.ordering + 4, (unsigned int *)(markerBase + markerOffset));
-    }
-    drawSlot = g_ActiveDrawSlot;
-    Battle_DrawDecimalNumber(
-        g_BattleStatusValueDigits[drawSlot],
-        g_BattleStatusBarTiles[drawSlot * 3].x0 + 0x40,
-        (s16)--y, (s16)savedValue, 1);
+    int slot = g_ActiveDrawSlot;
+    RenderPagedSpritePacket *marker = &g_BattleStatusValueMarkers[slot];
+    int y = g_BattleStatusBarTiles[slot * 3].y0 + yOffset;
+    marker->sprite.x = g_BattleStatusBarTiles[slot * 3].x0 + 8;
+    marker->sprite.y = y;
+    AddPrim(D_800B0E38.ordering[slot] + 4, marker);
+    Battle_DrawDecimalNumber(g_BattleStatusValueDigits[slot],
+        g_BattleStatusBarTiles[slot * 3].x0 + 0x40, (s16)(y - 1), (s16)value, 1);
 }
 
 int Battle_DrawDecimalNumber(void *buffer, short x, short y, short value, short mode)
@@ -970,22 +723,16 @@ int Battle_DrawDecimalNumber(void *buffer, short x, short y, short value, short 
 #define PANEL_DIGIT(i) (&g_BattlePanelDigits[g_ActiveDrawSlot][g_BattleStatusPanelSlot][i].sprite)
 
 /* Draw a floating damage/recovery number, or the enemy MISS label.
- * Each frame has ten panel slots (0x578 / 0x8C), each with five 28-byte
- * texture-page/sprite packets. Retail sizes the digit buffer at 56 bytes
- * although a 16-bit value needs at most five digits.
- * Matching debt: the MISS branch keeps seven pins and two barriers; the
- * crutch-free form wastes stack slots (see CODE_ORGANIZATION.md).
+ * Each draw buffer has ten panels of five native page/sprite packets.
  */
 void Battle_DrawStatusPanel(s32 mode, BattleStatusPanel *input) {
+    if (!input || (unsigned)g_ActiveDrawSlot >= 2 || (unsigned)g_BattleStatusPanelSlot >= 10) return;
     BattleStatusPanel *panel = input;
-    u8 digits[56];
+    u8 digits[5];
     s32 screenY;
     s16 panelValue;
     s32 number;
     s32 screenX;
-    s32 missFrameOffset;
-    s32 panelOffset;
-    s32 timer;
     RenderSpritePacket *missSprite;
     s16 value;
     s16 quotient;
@@ -995,32 +742,18 @@ void Battle_DrawStatusPanel(s32 mode, BattleStatusPanel *input) {
     panelValue = panel->value;
     number = panelValue;
     if ((panelValue < 0) && (number = 0, ((mode & 0xFF) == 1))) {
-        s32 frame = g_ActiveDrawSlot;
-        s32 slotIndex = g_BattleStatusPanelSlot;
-        s32 x = panel->x;
-        s32 y;
-        timer = panel->timer;
-        y = panel->y;
-        *(g_BattleMissSpriteR + ((slotIndex * 0x8C) + (frame * 0x578))) = timer * 4;
-        screenX = x - 16;
-        timer -= 30;
-        screenY = y + timer;
-        *(g_BattleMissSpriteG + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0;
-        *(g_BattleMissSpriteB + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0;
-        *(g_BattleMissSpriteU + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0x50;
-        *(g_BattleMissSpriteV + ((g_BattleStatusPanelSlot * 0x8C) + (g_ActiveDrawSlot * 0x578))) = 0xE0;
-        {
-            /* screenY is complete; reuse the Y scratch for the draw slot. */
-            y = g_ActiveDrawSlot;
-            missFrameOffset = y * 0x578;
-            panelOffset = g_BattleStatusPanelSlot * 0x8C;
-            missSprite = (RenderSpritePacket *)(missFrameOffset + panelOffset + ((u8 *)g_BattleMissSprite));
-            missSprite->width = 0x18;
-            missSprite->x = screenX;
-            missSprite->y = screenY;
-            missSprite->height = 8;
-            AddPrim(((u32 *)D_800B0E38.ordering[y]) + 7, panelOffset + ((((u8 *)g_BattleMissSprite) - 8) + missFrameOffset));
-        }
+        RenderPagedSpritePacket *packet = &g_BattlePanelDigits[g_ActiveDrawSlot][g_BattleStatusPanelSlot][0];
+        missSprite = &packet->sprite;
+        missSprite->color.bytes.r = panel->timer * 4;
+        missSprite->color.bytes.g = 0;
+        missSprite->color.bytes.b = 0;
+        missSprite->u = 0x50;
+        missSprite->v = 0xE0;
+        missSprite->width = 24;
+        missSprite->height = 8;
+        missSprite->x = panel->x - 16;
+        missSprite->y = panel->y + panel->timer - 30;
+        AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot] + 7, packet);
     } else {
         value = number;
         n = 0;
@@ -1096,7 +829,7 @@ void Draw_QueuePrimitive(void) {
 
     slot = g_ActiveDrawSlot;
     g_StatusMarkerPackets[slot].sprite.y -= 2;
-    AddPrim((u32 *)g_OtBufferTable[slot] + 7, &g_StatusMarkerPackets[slot]);
+    AddPrim((RenderNativeTag *)g_OtBufferTable[slot] + 7, &g_StatusMarkerPackets[slot]);
     g_BattleSpritePrimCountdown--;
 }
 

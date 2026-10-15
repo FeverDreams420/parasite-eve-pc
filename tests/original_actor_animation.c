@@ -7,6 +7,7 @@ void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_level_up.h"
+#include "pe1/battle_update.h"
 #include "pe1/battle_status.h"
 #include "pe1/battle_main.h"
 #include "pe1/field_sfx.h"
@@ -2505,6 +2506,108 @@ static int original_color_quad_packets(void)
     return valid;
 }
 
+static int original_hud_packet_updates(void)
+{
+    extern void Battle_DrawSpellName(void);
+    extern void Battle_DrawStatusSymbol(s8);
+    struct {void *data;size_t bytes,stride;unsigned id,kind;} pools[]={
+        {g_BattleStatusValueDigits,sizeof(g_BattleStatusValueDigits),sizeof(RenderPagedSpritePacket),1,0},
+        {g_BattleRemainingActionSprites,sizeof(g_BattleRemainingActionSprites),sizeof(RenderPagedSpritePacket),17,0},
+        {g_BattleStatusValueMarkers,sizeof(g_BattleStatusValueMarkers),sizeof(RenderPagedSpritePacket),18,0},
+        {g_BattleStatusSymbolSprites,sizeof(g_BattleStatusSymbolSprites),sizeof(RenderPagedSpritePacket),19,0},
+        {g_BattlePanelDigits,sizeof(g_BattlePanelDigits),sizeof(RenderPagedSpritePacket),20,0},
+        {g_BattleStatusBarTiles,sizeof(g_BattleStatusBarTiles),sizeof(RenderColorTilePacket),0,1},
+        {g_StatusMarkerPackets,sizeof(g_StatusMarkerPackets),sizeof(RenderPagedSpritePacket),25,0},
+    };
+    Combatant actor={0};BattleAction action={0};actor.action=&action;
+    Combatant *old_actor=g_ActiveActor;int old_slot=g_ActiveDrawSlot,old_panel=g_BattleStatusPanelSlot;
+    u8 old_remaining=g_BattleRemainingActions,old_countdown=g_BattleSpritePrimCountdown;
+    RenderNativeTag *old_ordering[]={D_800B0E38.ordering[0],D_800B0E38.ordering[1]};
+    RenderNativeTag ordering[2][8];
+    for(unsigned i=0;i<7;++i)memset(pools[i].data,0xA5,pools[i].bytes);
+    memset(g_BattleStatusPointerSprites,0xA5,sizeof(g_BattleStatusPointerSprites));Battle_DrawHPBar();
+    for(unsigned slot=0;slot<2;++slot)D_800B0E38.ordering[slot]=ordering[slot];
+    g_ActiveActor=&actor;uint64_t hash=UINT64_C(14695981039346656037);int valid=1;
+    const s16 anchors[][2]={{0,0},{221,177},{-32768,32767}};
+    const u8 reds[]={0,128,255};
+#define HUD_SETUP(slot,anchor) do { \
+    for(unsigned layer=0;layer<8;++layer)ordering[slot][layer]=(RenderNativeTag){0xFFFFFF,0xAB}; \
+    g_ActiveDrawSlot=slot;g_BattleStatusPanelSlot=0; \
+    g_BattleStatusBarTiles[slot*3].x0=anchors[anchor][0];g_BattleStatusBarTiles[slot*3].y0=anchors[anchor][1]; \
+    g_BattleStatusPointerSprites[slot].sprite.color.bytes.r=reds[anchor]; \
+    g_BattleStatusPointerSprites[slot].sprite.color.bytes.g=17;g_BattleStatusPointerSprites[slot].sprite.color.bytes.b=231; \
+} while(0)
+#define HUD_BYTE(value) (hash=(hash^(u8)(value))*UINT64_C(1099511628211))
+#define HUD_COLLECT(slot) do { \
+    for(unsigned layer=0;layer<8;++layer) { \
+        struct {unsigned pool,index;} nodes[16];unsigned count=0;uintptr_t address=ordering[slot][layer].address; \
+        while(address!=0xFFFFFF) { \
+            unsigned pool=0;for(;pool<7;++pool) { \
+                uintptr_t base=(uintptr_t)pools[pool].data; \
+                if(address>=base && address<base+pools[pool].bytes && !((address-base)%pools[pool].stride))break; \
+            } \
+            if(pool==7 || count>=16) {valid=0;break;} \
+            nodes[count].pool=pool;nodes[count].index=(address-(uintptr_t)pools[pool].data)/pools[pool].stride;++count; \
+            memcpy(&address,(const void *)address,sizeof(address)); \
+        } \
+        if(ordering[slot][layer].length!=0xAB)valid=0;HUD_BYTE(count); \
+        for(unsigned i=0;i<count;++i) { \
+            unsigned pool=nodes[i].pool;u8 *packet=(u8 *)pools[pool].data+nodes[i].index*pools[pool].stride; \
+            HUD_BYTE(pools[pool].id);HUD_BYTE(nodes[i].index); \
+            if(pools[pool].kind) { \
+                for(unsigned byte=0;byte<12;++byte)HUD_BYTE(packet[sizeof(RenderNativeTag)+byte]); \
+            } else { \
+                for(unsigned byte=0;byte<4;++byte)HUD_BYTE(packet[sizeof(RenderNativeTag)+byte]); \
+                for(unsigned byte=0;byte<16;++byte)HUD_BYTE(packet[sizeof(RenderTexturePagePacket)+sizeof(RenderNativeTag)+byte]); \
+            } \
+        } \
+    } \
+    for(unsigned byte=0;byte<4;++byte)HUD_BYTE((u32)g_BattleStatusPanelSlot>>(byte*8)); \
+} while(0)
+    for(unsigned slot=0;slot<2;++slot)for(unsigned anchor=0;anchor<3;++anchor)
+    for(unsigned category=0;category<4;++category)for(unsigned mode=0;mode<4;++mode)for(unsigned left=0;left<11;++left) {
+        HUD_SETUP(slot,anchor);action.attackWord=category<<20;action.turnWord=mode<<6;g_BattleRemainingActions=left;
+        Battle_DrawSpellName();HUD_COLLECT(slot);
+    }
+    for(unsigned slot=0;slot<2;++slot)for(unsigned anchor=0;anchor<3;++anchor)for(unsigned which=0;which<9;++which) {
+        HUD_SETUP(slot,anchor);Battle_DrawStatusSymbol(which);HUD_COLLECT(slot);
+    }
+    const s16 offsets[]={0,30,-32768,32767};
+    for(unsigned slot=0;slot<2;++slot)for(unsigned anchor=0;anchor<3;++anchor)
+    for(unsigned value=0;value<100;++value)for(unsigned offset=0;offset<4;++offset) {
+        HUD_SETUP(slot,anchor);Battle_DrawStatusValue(value,offsets[offset]);HUD_COLLECT(slot);
+    }
+    const s16 values[]={-32768,-1,0,1,9,10,99,100,999,1000,9999,32767};
+    const u8 timers[]={0,1,15,29,30,255};const u16 positions[][2]={{0,0},{123,234},{65535,32768}};
+    for(unsigned slot=0;slot<2;++slot)for(unsigned panel=0;panel<10;++panel)for(unsigned mode=0;mode<2;++mode)
+    for(unsigned style=0;style<4;++style)for(unsigned value=0;value<12;++value)
+    for(unsigned timer=0;timer<6;++timer)for(unsigned position=0;position<3;++position) {
+        HUD_SETUP(slot,position);g_BattleStatusPanelSlot=panel;
+        BattleStatusPanel input={values[value],positions[position][0],positions[position][1],timers[timer],style};
+        Battle_DrawStatusPanel(mode,&input);HUD_COLLECT(slot);
+    }
+    const int bottoms[]={0,24,28,32,40,127,128,255};
+    for(unsigned slot=0;slot<2;++slot)for(unsigned anchor=0;anchor<3;++anchor)for(unsigned bottom=0;bottom<8;++bottom) {
+        HUD_SETUP(slot,anchor);Battle_LayoutStatusPrimRow(bottoms[bottom]);HUD_COLLECT(slot);
+    }
+    const u8 countdowns[]={0,1,30,255};
+    for(unsigned slot=0;slot<2;++slot)for(unsigned position=0;position<3;++position)for(unsigned timer=0;timer<4;++timer) {
+        HUD_SETUP(slot,position);g_StatusMarkerPackets[slot].sprite.x=positions[position][0];
+        g_StatusMarkerPackets[slot].sprite.y=positions[position][1];g_BattleSpritePrimCountdown=countdowns[timer];
+        Draw_QueuePrimitive();HUD_COLLECT(slot);HUD_BYTE(g_BattleSpritePrimCountdown);
+    }
+#undef HUD_COLLECT
+#undef HUD_BYTE
+#undef HUD_SETUP
+    g_ActiveActor=old_actor;g_ActiveDrawSlot=old_slot;g_BattleStatusPanelSlot=old_panel;g_BattleRemainingActions=old_remaining;g_BattleSpritePrimCountdown=old_countdown;
+    D_800B0E38.ordering[0]=old_ordering[0];D_800B0E38.ordering[1]=old_ordering[1];
+    if(!valid || hash!=UINT64_C(0xfa7672b3016c55b0)) {
+        fprintf(stderr,"Original HUD update hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
+    }
+    puts("Original HUD updates: 1,056 action lists, 54 symbols, 2,400 values and 34,560 floating/MISS panels, 48 layouts and 24 markers match unhooked USA MIPS");
+    return 1;
+}
+
 static int original_hud_packet_initialization(void)
 {
     struct {void *data;size_t bytes,stride;unsigned kind,count;} pools[]={
@@ -4054,7 +4157,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
-    if(!original_save_card_images(disc) || !original_hud_packet_initialization() || !original_spell_effects(disc,executable))valid=0;
+    if(!original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

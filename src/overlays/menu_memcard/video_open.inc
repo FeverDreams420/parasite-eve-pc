@@ -49,9 +49,6 @@ static inline void MenuCard_OpenKickVideoStream(CdlLOC *loc, u8 *result) {
 
 /* Start reading at the file position, retrying from the drive wait. */
 static inline void MenuCard_OpenStartVideoStream(CdlLOC *loc, u8 *result) {
-    /* Recorded crutch debt: goto restart of the stream start, not
-     * reproducible with a structured loop in stock GCC 2.7.2 (loop.c would
-     * hoist the per-try constant 1 out of the restart loop). */
 start:
     do {
         while (DsSystemStatus() != 1) {
@@ -109,9 +106,6 @@ s32 MENUCARD_OPEN_VIDEO_NAME(s32 number) {
         strcat(name, MENUCARD_VIDEO_DIRECTORY_LATE);
     }
     strcat(name, MENUCARD_VIDEO_ENTRY->name);
-    /* Recorded crutch debt: retail's CD retry loop is a goto restart, not
-     * reproducible with a structured loop in stock GCC 2.7.2 (loop.c
-     * hoists the per-try constants out of any loop with loop notes). */
 search:
     found = 0;
     if (DsSystemStatus() == 1 && DsQueueLen() == 0) {

@@ -83,6 +83,7 @@ add_library(parasite-eve-original OBJECT
     src/main/draw/textbox.c
     src/overlays/menu_memcard/list_screen.c
     src/overlays/menu_memcard/video_playback.c
+    src/overlays/mdec_diag/vlc_build.c
     src/overlays/menu_memcard/page_flip.c
     src/overlays/menu_memcard/image_nodes.c
     src/overlays/menu_memcard/fade.c

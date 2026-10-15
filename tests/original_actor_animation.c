@@ -2944,6 +2944,15 @@ static int original_video_buffers(PeDisc *disc)
            entry->speed!=speed || entry->end!=end || entry->x!=x || entry->y!=y ||
            memcmp(entry->reserved0e,row+14,6))valid=0;
     }
+    /* Golden is the complete output of USA 0x8010BD4C in Unicorn MIPS. */
+    static struct { u16 before[8], table[0x8800], after[8]; } vlc;
+    memset(&vlc,0xa5,sizeof(vlc));
+    MdecDiag_ExpandDecoderTable(vlc.table);
+    uint64_t expanded_hash=UINT64_C(14695981039346656037);
+    for(unsigned i=0;i<sizeof(vlc.table);++i)
+        expanded_hash=(expanded_hash^((u8 *)vlc.table)[i])*UINT64_C(1099511628211);
+    if(expanded_hash!=UINT64_C(0x62fd6458f3443095))valid=0;
+    for(unsigned i=0;i<8;++i)if(vlc.before[i]!=0xa5a5 || vlc.after[i]!=0xa5a5)valid=0;
     for(int split=1;split<=2;++split)for(int skip=0;skip<2;++skip) {
         u8 *buffers[2]={arena,second};
         memset(arena,0xa5,sizeof(arena));memset(second,0xa5,sizeof(second));

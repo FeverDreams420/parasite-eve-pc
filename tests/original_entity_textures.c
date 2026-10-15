@@ -62,6 +62,8 @@ int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int
 #include "pe1/akao/stream.h"
 #include "pe1/boot.h"
 #include "pe1/boot_services.h"
+#include "pe1/cdrom_buffers.h"
+#include "pe1/akao/queue.h"
 #include "pe1/script_queue.h"
 #include "pe1/resident_tables.h"
 #include "pe1/save.h"
@@ -189,6 +191,51 @@ static int boot_ui_reference(PeRoomCatalog *catalog,unsigned slot,unsigned count
 }
 static int original_boot_ui(PeRoomCatalog *catalog)
 {
+    /* Original title/card image loader: resident USA slot 70, not a
+     * separate copy of the sector range or a synthetic title implementation. */
+    CHECK(g_StrFileDirLba==g_PeImageSectorTable+70);
+    u16 title_start=g_StrFileDirLba[0],title_end=g_StrFileDirLba[1];
+    u8 *title=g_StrFileDirBuffer;
+    CHECK(title && title_end>title_start);
+    size_t title_bytes=(size_t)(title_end-title_start)*2048;
+    CHECK(title_bytes+16<0x80000);
+    memset(title-8,0xA5,title_bytes+24);
+    g_StrFileDirBuffer=NULL; CHECK(CdRom_LoadInitialImage()==-3); g_StrFileDirBuffer=title;
+    g_StrFileDirLba[1]=title_start; CHECK(CdRom_LoadInitialImage()==-3);
+    g_StrFileDirLba[1]=title_start+257; CHECK(CdRom_LoadInitialImage()==-3);
+    g_StrFileDirLba[1]=title_end;
+    u32 base=g_PeImageBaseLba;g_PeImageBaseLba=UINT32_MAX;
+    CHECK(CdRom_LoadInitialImage()==-3);g_PeImageBaseLba=base;
+    CdRom_BindImage(NULL,NULL); CHECK(CdRom_LoadInitialImage()==-1);
+    PeDiscFile short_title=catalog->archive;
+    short_title.size=(uint64_t)title_end*2048-1;
+    CdRom_BindImage(catalog->disc,&short_title); CHECK(CdRom_LoadInitialImage()==-1);
+    for(size_t i=0;i<title_bytes+24;++i) CHECK(title[(ptrdiff_t)i-8]==0xA5);
+    CdRom_BindImage(catalog->disc,&catalog->archive);
+    DISPENV saved_title_display,title_display;
+    GetDispEnv(&saved_title_display);
+    u32 title_flags=g_GameState.flags;
+    g_GameState.flags=(title_flags&~0x1004000u)|0xF0u;
+    memset(g_GameState.scene_audio.tracks.banks,7,2);
+    memset(g_GameState.scene_audio.tracks.keys,9,4);
+    int queued=g_AkaoMessageQueueCount;
+    CHECK(CdRom_LoadInitialImage()==0);
+    CHECK(g_AkaoMessageQueueCount==queued+1 && g_AkaoMessageQueue[queued].opcode.id==0xF0);
+    CHECK(!(g_GameState.flags&0x10040F0u));
+    for(unsigned i=0;i<2;++i) {
+        CHECK(g_GameState.scene_audio.tracks.banks[i]==-1);
+        for(unsigned j=0;j<2;++j) CHECK(g_GameState.scene_audio.tracks.keys[i][j]==-1);
+    }
+    u8 *title_expected=malloc(title_bytes);CHECK(title_expected);
+    CHECK(pe_disc_read(catalog->disc,&catalog->archive,(uint64_t)title_start*2048,title_expected,title_bytes));
+    CHECK(!memcmp(title,title_expected,title_bytes));free(title_expected);
+    for(unsigned i=0;i<8;++i) CHECK(title[-8+(int)i]==0xA5);
+    for(unsigned i=0;i<16;++i) CHECK(title[title_bytes+i]==0xA5);
+    GetDispEnv(&title_display);
+    CHECK(title_display.disp.x==0 && title_display.disp.y==0 &&
+          title_display.disp.w==320 && title_display.disp.h==240 && title_display.isrgb24==1);
+    PutDispEnv(&saved_title_display);g_GameState.flags=title_flags;
+    puts("Original title image loader: full real bank, audio/reset/display state, extent and I/O failures passed");
     CHECK(g_SceneInitLbaTbl0==g_PeImageSectorTable+67 &&
           &g_BootDisplayDataLbaTbl==g_PeImageSectorTable+71 &&
           g_MainAssetLbaTbl==g_PeImageSectorTable+72 &&

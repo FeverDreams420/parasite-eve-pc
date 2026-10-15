@@ -25,8 +25,10 @@ int main(void) {
         state = &g_GameState;
         Boot_SyncShutdown();
 
-        while (Asset_OpenPeImage() != 0) {
-            VSync(0);
+        int image_status = Asset_OpenPeImage();
+        if (image_status != 0) {
+            fprintf(stderr, "Game image mount failed: %d\n", image_status);
+            return EXIT_FAILURE;
         }
 
         Boot_InitGameState();
@@ -71,11 +73,16 @@ int main(void) {
                 g_SceneDispatchToken = 0xA80830C8;
                 g_GameState.flags |= 1;
                 break;
-            case 0xA9400048:
-                CdRom_LoadInitialImage();
+            case 0xA9400048: {
+                int title_status = CdRom_LoadInitialImage();
+                if (title_status < 0) {
+                    fprintf(stderr, "Title assets failed: %d\n", title_status);
+                    return EXIT_FAILURE;
+                }
                 Draw_InitDisplay(MenuCard_RunListScreen());
                 g_GameState.flags |= 3;
                 break;
+            }
             default:
                 Boot_RunFrame();
                 break;

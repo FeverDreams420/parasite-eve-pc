@@ -20,6 +20,7 @@ int Scene_LoadSceneData(void);
  * -6/-7 directory read/poll; -8 invalid workspace or sector range. */
 int Boot_LoadOverlayTables(void);
 int CdRom_LoadBootAudio(void);
+/* -1: read failure; -2: poll failure; -3: invalid range/workspace. */
 int CdRom_LoadInitialImage(void);
 int Draw_InitDisplay(int mode);
 void Boot_RunFrame(void);

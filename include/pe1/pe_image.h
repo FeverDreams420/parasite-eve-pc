@@ -97,6 +97,7 @@ extern u16 g_PeImageSectorTable[81];
 #define g_PeImageSectorBoundsNext (g_PeImageSectorTable + 1)
 #define g_SceneAssetLbaTbl (g_PeImageSectorTable + 69)
 #define g_SceneInitLbaTbl0 (g_PeImageSectorTable + 67)
+#define g_StrFileDirLba (g_PeImageSectorTable + 70)
 #define g_BootDisplayDataLbaTbl (g_PeImageSectorTable[71])
 #define g_MainAssetLbaTbl (g_PeImageSectorTable + 72)
 #define g_LargeTexLbaTbl (g_PeImageSectorTable + 73)

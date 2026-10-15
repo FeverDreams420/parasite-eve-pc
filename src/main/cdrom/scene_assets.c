@@ -566,9 +566,12 @@ int CdRom_ReadSectors(u32 lba, u32 offset, void *destination, u32 size)
 
 s32 CdRom_LoadInitialImage(void) {
     s32 status;
-    u16 *range;
-    s32 result;
+    const u16 *range = g_StrFileDirLba;
     DISPENV sp18;
+
+    if (!g_StrFileDirBuffer || range[1] <= range[0] ||
+        (u32)(range[1] - range[0]) * 2048 > 0x80000 ||
+        g_PeImageBaseLba > UINT32_MAX - range[0]) return -3;
 
     g_GameState.scene_audio.tracks.keys[0][1] = -1;
     g_GameState.scene_audio.tracks.keys[0][0] = -1;
@@ -579,16 +582,11 @@ s32 CdRom_LoadInitialImage(void) {
     g_GameState.flags &= 0xFFFFFF0F;
     Akao_Cmd_F0();
 
-restart:
-    range = g_StrFileDirLba;
-    do {
-        status = CdRom_ReadSectors(g_PeImageBaseLba + range[0], 0, g_StrFileDirBuffer, range[1] - range[0]);
-    } while (status == -1);
+    status = CdRom_ReadSectors(g_PeImageBaseLba + range[0], 0, g_StrFileDirBuffer, range[1] - range[0]);
+    if (status < 0) return -1;
 
     while ((status = CdRom_PollReady()) != 0) {
-        if (status == -1) {
-            goto restart;
-        }
+        if (status < 0) return -2;
     }
 
     VSync(0);

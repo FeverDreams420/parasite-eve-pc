@@ -4,9 +4,9 @@
 #include "fx_common.h"
 
 typedef GteShortVector FxCommonVector;
-s32 RotAverageNclip3(const FxCommonVector *, const FxCommonVector *, const FxCommonVector *, u32 *,
+long RotAverageNclip3(const FxCommonVector *, const FxCommonVector *, const FxCommonVector *, u32 *,
                   u32 *, u32 *, s32 *, s32 *, u32 *);
-s32 RotAverageNclip4(const FxCommonVector *, const FxCommonVector *, const FxCommonVector *,
+long RotAverageNclip4(const FxCommonVector *, const FxCommonVector *, const FxCommonVector *,
                   const FxCommonVector *, u32 *, u32 *, u32 *, u32 *, s32 *, s32 *, u32 *);
 
 struct FxCommonPolyResource {

@@ -9,6 +9,7 @@
 #include "pe1/projection_slot.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_matrix_slot.h"
+#include "pe1/render_packets.h"
 #include "pe1/room_fx.h"
 
 #include "fx_common_vectors.h"
@@ -64,10 +65,13 @@ typedef union FxCommonPacketTag { u32 packed; struct { unsigned int address:24; 
 typedef struct FxCommonBuffer {
     u8 *data;
     FxCommonPacketTag *allocation;
+    u8 *end;
+    int error;
 } FxCommonBuffer;
 
 typedef struct FxCommonBufferRegion {
-    u8 data[0x15F90];
+    /* F3 has the largest native/PS1 size ratio among model packets. */
+    u8 data[(0x15F90u / 20u) * (sizeof(RenderNativeTag) + 16u)];
 } FxCommonBufferRegion;
 
 typedef struct FxCommonGradientQuad {

@@ -181,6 +181,7 @@ int FxCommon_RunFrameLoop(void)
         FxCommon_DrawNightShadeAndMarkers();
         FxCommon_DrawSceneNodes();
         FxCommon_StepPathNodes();
+        if(g_FxCommonActiveBuffer->error)return -2;
         if (!started) {
             handle = FxCommon_SendTableCommand3d(0xABE, g_FxCommonPathNodes[0]->matrix.t);
             started = 1;

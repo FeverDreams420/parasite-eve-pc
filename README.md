@@ -42,8 +42,10 @@ modules directly and links them into the executable. Full integration is pending
 
 The original `fx_common/camera.c` now compiles whole and has native node pools,
 camera/frustum math, path sampling and image-backed resource loading. Tests
-compare these paths with USA code and real day/night banks. Its full renderer
-and frame loop remain unfinished; this does not make gameplay playable.
+compare these paths with USA code and real day/night banks. The three original
+model drawers also match USA command payloads and ordering chains for all 170
+day/night models in 2040 cases. Polygon-resource subdivision and the full frame
+loop remain unfinished; this does not make gameplay playable.
 
 ## Build and run
 

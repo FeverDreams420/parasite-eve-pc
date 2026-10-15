@@ -1,4 +1,5 @@
 #include "../src/overlays/fx_common/camera_externs.h"
+#include "../src/overlays/fx_common/fx_common_model.h"
 #include "../src/overlays/fx_common/fx_common_motion.h"
 #include <signal.h>
 #include "../src/overlays/menu_memcard/menu_memcard_link.h"
@@ -2764,6 +2765,8 @@ static int original_fx_display(void)
     Pe1GameState saved=g_GameState;FxCommonFrame frames[2];
     FxCommonBuffer *active=g_FxCommonActiveBuffer;
     memcpy(frames,g_FxCommonFrames,sizeof(frames));
+    Boot_InitMemoryLayout();
+    int arena_fits=g_RenderScratchBufferBase[0]+2*sizeof(FxCommonBufferRegion)<=g_RenderFrontBufferBase[0];
     static struct {u64 before;RenderNativeTag entries[4096];u64 after;} ordering[2];
     static struct {u64 before;FxCommonBufferRegion regions[2];u64 after;} packets;
     static u16 old_pixels[1024*512],pixels[1024*512];
@@ -2776,7 +2779,7 @@ static int original_fx_display(void)
     g_OtBufferTable[0]=(u8 *)ordering[0].entries;g_RenderOtBufferBaseAlt[0]=(u8 *)ordering[1].entries;
     g_RenderScratchBufferBase[0]=(u8 *)packets.regions;
     RenderNativeTag terminal;ClearOTagR((u_int *)&terminal,1);
-    FxCommon_InitDisplay();int valid=g_FxCommonActiveBuffer==&g_FxCommonFrames[0].buffer;
+    FxCommon_InitDisplay();int valid=arena_fits && g_FxCommonActiveBuffer==&g_FxCommonFrames[0].buffer;
     for(unsigned i=0;i<2;++i){
         FxCommonFrame *frame=&g_FxCommonFrames[i];
         if(frame->buffer.data!=(u8 *)&packets.regions[i] ||
@@ -2943,6 +2946,101 @@ static int original_fx_camera_matrices(void)
     if(hash!=UINT64_C(0xab55eca183324865)){
         fprintf(stderr,"Original FX camera matrices: hash=%016llx\n",(unsigned long long)hash);return 0;}
     puts("Original FX camera: six USA CPU/GTE scenarios match both matrices, angles and all four frustum planes, including vertical and coincident positions");return 1;
+}
+
+static int original_fx_model_render_assets(PeDisc *disc)
+{
+    PeDiscFile archive;if(!pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    static _Alignas(16) u8 bank[100*2048];
+    static struct {u64 before;_Alignas(16) u8 bytes[0x40000];u64 after;} arena;
+    static struct {u64 before;RenderNativeTag entries[4096];u64 after;} ot;
+    const unsigned sectors[]={2016,2105},sizes[]={89,100};
+    const s32 poses[][3]={{1000,0,0},{8000,800,0},{-1000,1000,0},{16000,4095,1}};
+    void (*draws[])(void *,FxCommonPolyModel *,int)={FxCommon_DrawModel,FxCommon_DrawModelTinted,FxCommon_DrawModelFlat};
+    FxCommonBuffer *old_buffer=g_FxCommonActiveBuffer; s32 old_bias=g_FxCommonDepthBias;
+    u8 old_color[4];memcpy(old_color,g_FxCommonFlatColor,4);
+    FxCommonRenderScratchpad old_work=g_FxCommonRenderWorkspace;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0,packets=0,coverage[8]={0};int valid=1;
+#define MODEL_PUT(value,count) do {uint64_t word_=(uint64_t)(value); \
+    for(unsigned byte_=0;byte_<(count);++byte_){hash=(hash^(u8)word_)*UINT64_C(1099511628211);word_>>=8;}}while(0)
+    for(unsigned variant=0;variant<2 && valid;++variant){
+        if(!pe_disc_read(disc,&archive,(uint64_t)sectors[variant]*2048,bank,sizes[variant]*2048)){valid=0;break;}
+        FxCommonPolyModel *models=(FxCommonPolyModel *)(bank+8);
+        if(models->bankOffsets[0]!=85*4){valid=0;break;}
+        for(unsigned index=0;index<85 && valid;++index)for(unsigned renderer=0;renderer<3 && valid;++renderer)
+        for(unsigned pose=0;pose<4 && valid;++pose){
+            for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+            const s32 controls[]={4096,0,poses[pose][2]?-4096:4096,0,4096,0,0,poses[pose][0]};
+            for(unsigned i=0;i<8;++i)Psyz_GteCtrlWrite(i,(u32)controls[i]);
+            Psyz_GteCtrlWrite(24,160u<<16);Psyz_GteCtrlWrite(25,120u<<16);Psyz_GteCtrlWrite(26,768);
+            Psyz_GteCtrlWrite(29,341);Psyz_GteCtrlWrite(30,256);
+            memset(&g_FxCommonRenderWorkspace,0xa5,sizeof(g_FxCommonRenderWorkspace));
+            memset(&arena,0xa5,sizeof(arena));memset(&ot,0xa5,sizeof(ot));
+            for(unsigned i=0;i<4096;++i)ot.entries[i]=(RenderNativeTag){0xffffff,0xab};
+            FxCommonBuffer buffer={.data=arena.bytes,.allocation=(FxCommonPacketTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
+            g_FxCommonActiveBuffer=&buffer;g_FxCommonDepthBias=poses[pose][1];
+            memcpy(g_FxCommonFlatColor,(u8[]){40,80,120,0},4);
+            draws[renderer](NULL,models,index);
+            if(buffer.error || buffer.data<arena.bytes || buffer.data>buffer.end){valid=0;break;}
+            u8 *cursor=arena.bytes,*addresses[8192];unsigned count=0;
+            while(cursor<buffer.data){RenderNativeTag *tag=(RenderNativeTag *)cursor;
+                if(count>=8192 || (tag->length!=4 && tag->length!=5 && tag->length!=6 && tag->length!=7 && tag->length!=8 && tag->length!=9 && tag->length!=12)){valid=0;break;}
+                addresses[count++]=cursor;
+                size_t size=(sizeof(*tag)+tag->length*4+_Alignof(RenderNativeTag)-1)&~(size_t)(_Alignof(RenderNativeTag)-1);
+                if(size>(size_t)(buffer.data-cursor)){valid=0;break;}cursor+=size;
+            }
+            if(!valid || cursor!=buffer.data){valid=0;break;}
+            MODEL_PUT(count,4);
+            for(unsigned i=0;i<count;++i){RenderNativeTag *tag=(RenderNativeTag *)addresses[i];MODEL_PUT(tag->length,1);
+                const u8 codes[]={0x20,0x28,0x30,0x38,0x24,0x2c,0x34,0x3c};
+                unsigned code=addresses[i][sizeof(*tag)+3]&0xfc;
+                for(unsigned kind=0;kind<8;++kind)if(code==codes[kind])++coverage[kind];
+                for(unsigned byte=0;byte<tag->length*4;++byte)MODEL_PUT(addresses[i][sizeof(*tag)+byte],1);}
+            for(unsigned depth=0;depth<4096 && valid;++depth){
+                if(ot.entries[depth].length!=0xab){valid=0;break;}
+                uintptr_t link=ot.entries[depth].address;if(link==0xffffff)continue;MODEL_PUT(depth,2);unsigned steps=0;
+                while(link!=0xffffff){unsigned id=0;while(id<count && (uintptr_t)addresses[id]!=link)++id;
+                    if(id==count || ++steps>count){valid=0;break;}MODEL_PUT(id,2);link=((RenderNativeTag *)link)->address;}
+                MODEL_PUT(65535,2);
+            }
+            MODEL_PUT(65535,2);packets+=count;++cases;
+            if(arena.before!=UINT64_C(0xa5a5a5a5a5a5a5a5) || arena.after!=UINT64_C(0xa5a5a5a5a5a5a5a5) ||
+               ot.before!=UINT64_C(0xa5a5a5a5a5a5a5a5) || ot.after!=UINT64_C(0xa5a5a5a5a5a5a5a5))valid=0;
+            for(u8 *p=buffer.data;p<buffer.end;++p)if(*p!=0xa5){valid=0;break;}
+        }
+    }
+#undef MODEL_PUT
+    for(unsigned i=0;i<8;++i)if(!coverage[i])valid=0;
+    /* A real native packet must fit completely; a bad depth cannot address an OT sentinel. */
+    _Alignas(16) u8 small_bank[128]={0};s32 offset=4;memcpy(small_bank,&offset,4);
+    FxCommonPolyResource *header=(FxCommonPolyResource *)(small_bank+4);header->counts[0]=1;
+    for(unsigned i=0;i<8;++i)header->offsets[i]=52;
+    FxCommonModelF3 *triangle=(FxCommonModelF3 *)(small_bank+56);
+    triangle->color.word=0x20ffffff;
+    triangle->vertices[0]=(GteShortVector){-10,-10,0,0};triangle->vertices[1]=(GteShortVector){10,-10,0,0};triangle->vertices[2]=(GteShortVector){-10,10,0,0};
+    for(unsigned renderer=0;renderer<3;++renderer){
+        memset(&arena,0xa5,sizeof(arena));memset(&ot,0xa5,sizeof(ot));
+        FxCommonBuffer buffer={.data=arena.bytes,.allocation=(FxCommonPacketTag *)ot.entries,
+            .end=arena.bytes+sizeof(FxCommonModelF3Packet)-1};g_FxCommonActiveBuffer=&buffer;
+        draws[renderer](NULL,(FxCommonPolyModel *)small_bank,0);
+        if(buffer.error!=-1 || buffer.data!=arena.bytes)valid=0;
+        for(unsigned i=0;i<sizeof(arena);++i)if(((u8 *)&arena)[i]!=0xa5)valid=0;
+        for(unsigned i=0;i<sizeof(ot);++i)if(((u8 *)&ot)[i]!=0xa5)valid=0;
+    }
+    for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+    const u32 controls[]={4096,0,4096,0,4096,0,0,1000};
+    for(unsigned i=0;i<8;++i)Psyz_GteCtrlWrite(i,controls[i]);Psyz_GteCtrlWrite(26,768);
+    Psyz_GteCtrlWrite(29,341);Psyz_GteCtrlWrite(30,256);
+    for(unsigned i=0;i<2;++i){memset(&ot,0xa5,sizeof(ot));
+        FxCommonBuffer buffer={.data=arena.bytes,.allocation=(FxCommonPacketTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
+        g_FxCommonActiveBuffer=&buffer;g_FxCommonDepthBias=i?-1:4096;
+        FxCommon_DrawModelFlat(NULL,(FxCommonPolyModel *)small_bank,0);
+        if(buffer.error!=-2 || buffer.data!=arena.bytes)valid=0;
+        for(unsigned j=0;j<sizeof(ot);++j)if(((u8 *)&ot)[j]!=0xa5)valid=0;
+    }
+    g_FxCommonActiveBuffer=old_buffer;g_FxCommonDepthBias=old_bias;memcpy(g_FxCommonFlatColor,old_color,4);g_FxCommonRenderWorkspace=old_work;
+    if(!valid || cases!=2040 || hash!=UINT64_C(0x22489a443c2917c3)){fprintf(stderr,"Original FX models: cases=%u packets=%u hash=%016llx valid=%d\n",cases,packets,(unsigned long long)hash,valid);return 0;}
+    puts("Original FX models: all 170 day/night models, three original drawers, all eight polygon streams, four views, native packet payloads and complete ordering chains match USA CPU/GTE; arena/depth guards pass");return 1;
 }
 
 static int original_fx_resources(PeDisc *disc,PeDiscFile *exe)
@@ -6032,6 +6130,11 @@ static int script_movie_error_exit(const char *executable)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--fx-models")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
+        int result=original_fx_model_render_assets(&disc);pe_disc_close(&disc);return result?0:146;
+    }
     if(argc==2 && !strcmp(argv[1],"--fx-display")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_gte_register_transfers() && original_fx_fog() && original_fx_display()?0:145;}
     if(argc==2 && !strcmp(argv[1],"--fx-camera"))return original_fx_node_pool() && original_fx_culling() && original_fx_camera_matrices()?0:143;
     if(argc==2 && !strcmp(argv[1],"--script-movie-error")){

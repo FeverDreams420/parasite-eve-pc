@@ -93,19 +93,19 @@ typedef struct FxCommonPacketUv {
 } FxCommonPacketUv;
 
 typedef struct FxCommonModelF3Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     FxCommonPacketRgb rgb;
     u32 xy0, xy1, xy2;
 } FxCommonModelF3Packet;
 
 typedef struct FxCommonModelF4Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     FxCommonPacketRgb rgb;
     u32 xy0, xy1, xy2, xy3;
 } FxCommonModelF4Packet;
 
 typedef struct FxCommonModelG3Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     FxCommonPacketRgb rgb0;
     u32 xy0;
     FxCommonPacketRgb rgb1;
@@ -115,7 +115,7 @@ typedef struct FxCommonModelG3Packet {
 } FxCommonModelG3Packet;
 
 typedef struct FxCommonModelG4Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     FxCommonPacketRgb rgb0;
     u32 xy0;
     FxCommonPacketRgb rgb1;
@@ -127,7 +127,7 @@ typedef struct FxCommonModelG4Packet {
 } FxCommonModelG4Packet;
 
 typedef struct FxCommonModelFt3Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     FxCommonPacketRgb rgb;
     u32 xy0;
     FxCommonPacketUv uv0;
@@ -138,7 +138,7 @@ typedef struct FxCommonModelFt3Packet {
 } FxCommonModelFt3Packet;
 
 typedef struct FxCommonModelFt4Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     FxCommonPacketRgb rgb;
     u32 xy0;
     FxCommonPacketUv uv0;
@@ -152,7 +152,7 @@ typedef struct FxCommonModelFt4Packet {
 } FxCommonModelFt4Packet;
 
 typedef struct FxCommonModelGt3Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     FxCommonPacketRgb rgb0;
     u32 xy0;
     FxCommonPacketUv uv0;
@@ -165,7 +165,7 @@ typedef struct FxCommonModelGt3Packet {
 } FxCommonModelGt3Packet;
 
 typedef struct FxCommonModelGt4Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     FxCommonPacketRgb rgb0;
     u32 xy0;
     FxCommonPacketUv uv0;
@@ -181,7 +181,8 @@ typedef struct FxCommonModelGt4Packet {
     u16 pad;
 } FxCommonModelGt4Packet;
 
-#define FX_COMMON_SCRATCHPAD ((FxCommonRenderScratchpad *)0x1F800000)
+extern FxCommonRenderScratchpad g_FxCommonRenderWorkspace;
+#define FX_COMMON_SCRATCHPAD (&g_FxCommonRenderWorkspace)
 
 
 #endif

@@ -108,7 +108,7 @@ void FxCommon_DrawSceneNodes(void);
 extern s32 g_FxCommonDepthBias;
 extern FxCommonTransformNode *g_FxCommonPathTailNodes[2];
 extern s16 D_8019C0D0[2];
-extern u8 g_FxCommonFlatColor[3];
+extern u8 g_FxCommonFlatColor[4];
 extern FxCommonTransformNode *g_FxCommonEchoNodes[4];
 void FxCommon_DrawTransformNodeCulled(FxCommonTransformNode *node, FxCommonBuffer *context, u8 pass,
                    u8 force, u8 mirrored);

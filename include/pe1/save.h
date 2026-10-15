@@ -53,8 +53,7 @@ extern u8 *g_CurItemEffectData;
 void Menu_SaveOverlayDraw(void);
 
 /* The save-title formatter consumes four numeric fields and two variant
- * arguments from this contiguous six-word slot array. Each variant slot is
- * either a numeric value or a pointer to SJIS text. */
+ * arguments. Numeric fields remain 32-bit; variants hold native text pointers. */
 typedef union SaveSjisFormatArgument {
     int number;
     unsigned char *text;
@@ -94,7 +93,8 @@ int Save_GetCurrentMapNumber(void);
 u8 *Save_FormatTitle(int chapter, int playtime_seconds);
 void Save_BuildHeader(void);
 void Save_RestoreHeader(void);
-void Save_SerializeTail(void);
-void Save_DeserializeTail(void);
+/* 0: copied; -1: unsupported record links, no tail/runtime mutation. */
+int Save_SerializeTail(void);
+int Save_DeserializeTail(void);
 
 #endif /* PE1_SAVE_H */

@@ -32,7 +32,8 @@ extern GameTimerEntry g_GameTimers[4];
 #define GAME_TIME_COUNTER(index) (g_GameTimers[index].current)
 
 /* Frames played; Save_ClassifyPlaytime buckets it for the save header. */
-extern unsigned int g_PlayTimeFrameCounter;
+extern u32 g_ScriptVariableBank[];
+#define g_PlayTimeFrameCounter (g_ScriptVariableBank[74])
 
 /* Frames left on the timed state that Entity_UpdateTimers clears with flag 0x100. */
 extern u16 g_ActorEffectFlag100Timer;

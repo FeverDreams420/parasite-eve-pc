@@ -75,6 +75,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/gpu_image.h"
 #include "pe1/akao.h"
 #include "pe1/memcard_save_state.h"
+#include "pe1/save_tail_state.h"
 #include "../src/overlays/menu_memcard/menu_memcard_screen.h"
 #include "../src/overlays/menu_memcard/menu_memcard_image.h"
 #include <SDL3/SDL.h>
@@ -2216,14 +2217,15 @@ static int card_test_path(char *destination,const char *source,int maximum)
     const char *name=source+5;
     return snprintf(destination,(size_t)maximum,"%s/bu%c0/%s",card_test_root,source[2],*name=='*'?"":name);
 }
-static int original_card_file_services(void)
+static int original_card_file_services(const u8 *image)
 {
     snprintf(card_test_root,sizeof(card_test_root),"pe-card-io-%llx",(unsigned long long)SDL_GetPerformanceCounter());
     SDL_PathInfo info;
     if(SDL_GetPathInfo(card_test_root,&info) || !SDL_CreateDirectory(card_test_root)) return 0;
     int valid=1;
     u8 expected[0x2000],actual[0x2000];
-    for(unsigned i=0;i<sizeof(expected);++i)expected[i]=(u8)(i*37+(i>>8));
+    if(image)memcpy(expected,image,sizeof(expected));
+    else for(unsigned i=0;i<sizeof(expected);++i)expected[i]=(u8)(i*37+(i>>8));
     Psyz_AdjustPathCB(card_test_path);
     for(unsigned port=0;port<2;++port) {
         char directory[160],host[256];
@@ -2307,7 +2309,7 @@ static int original_system_start(void)
        g_SaveTitleStyleFlag || g_MemCardLoadSucceeded || g_MemCardReadContext || g_MemCardActiveState ||
        (u8 *)&g_MemCardSaveStateBuffer!=g_MemCardFileBuffer+0x100 || g_MemCardIconPalette!=(u8 *)g_MemCardIconHeader.palette)
         return 0;
-    if(!original_card_file_services()) return 0;
+    if(!original_card_file_services(NULL)) return 0;
     puts("Original system start: GPU/GTE/SPU, native pad reset and eight real card-event callbacks passed");
     return 1;
 }
@@ -2405,6 +2407,103 @@ static int original_digit_packets(void)
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;
     g_DrawDigitFontTpageClut=clut;g_DrawDigitFontBaseTexU=u;g_DrawDigitFontBaseTexV=v;
     if(!valid) fprintf(stderr,"Original digit payload/native links differ from USA MIPS reference\n");
+    return valid;
+}
+
+static int original_save_card_images(void)
+{
+    /* Complete USA 80040B80 execution with retail bzero/memcpy/strcpy
+     * replaced by their ordinary memory operations in the MIPS reference. */
+    const uint64_t hashes[]={UINT64_C(0x936685394f80bede),UINT64_C(0xe5f81aab0f7bf953),UINT64_C(0xb61aaf5cd3ece884),UINT64_C(0x7c2fb8b4765a32aa),UINT64_C(0xcec572cd58919327),UINT64_C(0x35824b0bdf247d70),UINT64_C(0x7dce7284bb2cb877),UINT64_C(0xe89666a7d248ca42),UINT64_C(0x65bcde6175fd7dd),UINT64_C(0x38786e1cec33fc5b),UINT64_C(0x6b73adf727616b9e),UINT64_C(0x306ce1fd0927f959),UINT64_C(0x982926f768839710),UINT64_C(0x73a40725c205f9fa),UINT64_C(0xf21eb1b1eef2a01c),UINT64_C(0x5cd836de2ed5054c),UINT64_C(0x85fc33ce4d3ac0d6),UINT64_C(0x2e35122d654262a8),UINT64_C(0xd0abcde83a45c645),UINT64_C(0x2456ac875900e287),UINT64_C(0xa1789c690daf8765),UINT64_C(0x4125cc56ff810af9),UINT64_C(0xe416e4a8fa0d45b3),UINT64_C(0xba006f1659b2ff21)};
+    SaveRuntimeState saved_runtime=g_SaveRuntimeState;
+    Pe1GameState saved_state=g_GameState;
+    AyaBattleState saved_aya=g_AyaBattleState;
+    BattleStateTail saved_tail=g_SavedBattleStateTail;
+    BattleAttributes saved_attributes=g_BattleEquipStateBlock;
+    u32 saved_variables[512];memcpy(saved_variables,g_ScriptVariableBank,sizeof(saved_variables));
+    int saved_move=D_8009D2E8,saved_token=g_SceneDispatchToken,saved_style=g_SaveTitleStyleFlag;
+    u32 saved_flags=g_GameStateFlags;
+    u8 saved_fade=g_ScreenTint.fadeMode,*saved_cursor=g_SaveIoCursor;
+    SaveSjisFormatArguments saved_arguments=g_SaveSjisFormatArguments;
+    u8 title[0x44];memcpy(title,g_SaveTitleBuffer,sizeof(title));
+    int valid=&g_PlayTimeFrameCounter==g_ScriptVariableBank+74;
+    const unsigned seconds[]={0,3661,359999},play[]={0,400,800};
+    unsigned index=0;
+    for(unsigned style=0;style<2;++style) for(unsigned links=0;links<4;++links)
+    for(unsigned t=0;t<3;++t,++index) {
+        for(size_t i=0;i<sizeof(g_SaveRuntimeState);++i)((u8 *)&g_SaveRuntimeState)[i]=(u8)(i*17+3);
+        g_SaveRuntimeState.windows.header.playTimeMinutes=seconds[t];
+        for(unsigned i=0;i<0x800;++i)((u8 *)g_ScriptVariableBank)[i]=(u8)(i*13+9);
+        g_PlayTimeFrameCounter=play[t];
+        for(unsigned i=0;i<16;++i)((u8 *)&g_GameState)[i]=(u8)(i*11+0x55);
+        g_GameStateFlags=0xA5A55A5A;D_8009D2E8=0x01020309;g_SceneDispatchToken=0xCD4002A8;
+        g_ScreenTint.fadeMode=0xD3;
+        u8 aya[0x70];for(unsigned i=0;i<sizeof(aya);++i)aya[i]=(u8)(i*7+19);
+        memset(&g_AyaBattleState,0,sizeof(g_AyaBattleState));
+        memcpy(g_AyaBattleState.words,aya,0x1C);
+        memcpy((u8 *)g_AyaBattleState.words+PE1_OFFSETOF(Combatant,maxHP),aya+0x1C,0x4C);
+        g_AyaBattleState.action=links&1?&g_SavedBattleStateTail:NULL;
+        g_AyaBattleState.attributes=links&2?&g_BattleEquipStateBlock:NULL;
+        for(unsigned i=0;i<sizeof(g_SavedBattleStateTail);++i)((u8 *)&g_SavedBattleStateTail)[i]=(u8)(i*5+23);
+        for(unsigned i=0;i<sizeof(g_BattleEquipStateBlock);++i)((u8 *)&g_BattleEquipStateBlock)[i]=(u8)(i*3+31);
+        AyaBattleState expected_aya=g_AyaBattleState;
+        g_SaveTitleStyleFlag=style;
+        char path[]="bu00:BASLUS-006620000001O";
+        if(Save_BuildCardFile(path)!=0 || g_SaveIoCursor!=g_MemCardFileBuffer+0x1C90)valid=0;
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned i=0;i<sizeof(g_MemCardFileBuffer);++i)hash=(hash^g_MemCardFileBuffer[i])*UINT64_C(1099511628211);
+        if(hash!=hashes[index]) {
+            fprintf(stderr,"Original save image %u hash %016llx differs from USA MIPS\n",index,(unsigned long long)hash);valid=0;
+        }
+        /* Independent bitwise CRC, with its four on-disc bytes excluded. */
+        u16 crc=0xFFFF;
+        for(unsigned i=0;i<sizeof(g_MemCardFileBuffer);++i) {
+            unsigned value=i>=0x1C8C && i<0x1C90?0:g_MemCardFileBuffer[i];
+            crc^=value<<8;
+            for(unsigned b=0;b<8;++b)crc=(u16)((crc&0x8000)?(crc<<1)^0x1021:crc<<1);
+        }
+        u32 recorded;memcpy(&recorded,g_MemCardFileBuffer+0x1C8C,4);
+        if(recorded!=(u32)(crc^0xFFFF))valid=0;
+        static u8 tail[0x8A8+16];memset(tail,0xA5,sizeof(tail));
+        g_SaveIoCursor=tail+1;
+        if(Save_SerializeTail()!=0 || g_SaveIoCursor!=tail+1+0x8A8 ||
+           memcmp(tail+1,g_MemCardFileBuffer+0x13E4,0x8A8))valid=0;
+        for(unsigned i=1+0x8A8;i<sizeof(tail);++i)if(tail[i]!=0xA5)valid=0;
+        if(tail[0]!=0xA5)valid=0;
+        u8 expected_fields[15];memcpy(expected_fields,&g_GameState,sizeof(expected_fields));
+        BattleStateTail expected_tail=g_SavedBattleStateTail;BattleAttributes expected_attributes=g_BattleEquipStateBlock;
+        memset(g_ScriptVariableBank,0xA5,0x800);memset(&g_AyaBattleState,0xA5,sizeof(g_AyaBattleState));
+        memset((u8 *)&g_GameState+4,0xA5,11);g_GameStateFlags=0xFFFFFFFF;
+        D_8009D2E8=-1;g_SceneDispatchToken=0;g_ScreenTint.fadeMode=0;
+        memset(&g_SavedBattleStateTail,0xA5,sizeof(g_SavedBattleStateTail));
+        memset(&g_BattleEquipStateBlock,0xA5,sizeof(g_BattleEquipStateBlock));
+        g_SaveIoCursor=tail+1;
+        if(Save_DeserializeTail()!=0 || g_SaveIoCursor!=tail+1+0x8A8 ||
+           memcmp(&g_AyaBattleState,&expected_aya,sizeof(expected_aya)) ||
+           memcmp(g_ScriptVariableBank,g_MemCardFileBuffer+0x13E4,0x800) ||
+           memcmp(expected_fields,&g_GameState,sizeof(expected_fields)) ||
+           memcmp(&g_SavedBattleStateTail,&expected_tail,sizeof(expected_tail)) ||
+           memcmp(&g_BattleEquipStateBlock,&expected_attributes,sizeof(expected_attributes)) ||
+           (u32)g_SceneDispatchToken!=0xCD4002A8u || g_ScreenTint.fadeMode!=0xD3 ||
+           g_GameStateFlags!=(0xA5A55A5Au&0xFFFF2679u) || D_8009D2E8!=0x01020300)valid=0;
+        Pe1GameState before_state=g_GameState;AyaBattleState before_aya=g_AyaBattleState;
+        u32 before_variables[512];memcpy(before_variables,g_ScriptVariableBank,sizeof(before_variables));
+        u32 bad=0x12345678;memcpy(tail+1+0x818+0x68,&bad,4);g_SaveIoCursor=tail+1;
+        if(Save_DeserializeTail()!=-1 || g_SaveIoCursor!=tail+1 ||
+           memcmp(&g_GameState,&before_state,sizeof(before_state)) || memcmp(&g_AyaBattleState,&before_aya,sizeof(before_aya)) ||
+           memcmp(g_ScriptVariableBank,before_variables,sizeof(before_variables)))valid=0;
+        g_AyaBattleState.action=(BattleStateTail *)(uintptr_t)1;g_SaveIoCursor=tail+1;
+        memset(tail,0xA5,sizeof(tail));
+        if(Save_SerializeTail()!=-1 || g_SaveIoCursor!=tail+1)valid=0;
+        for(unsigned i=0;i<sizeof(tail);++i)if(tail[i]!=0xA5)valid=0;
+    }
+    if(!original_card_file_services(g_MemCardFileBuffer))valid=0;
+    g_SaveRuntimeState=saved_runtime;g_GameState=saved_state;g_GameStateFlags=saved_flags;g_AyaBattleState=saved_aya;
+    g_SavedBattleStateTail=saved_tail;g_BattleEquipStateBlock=saved_attributes;
+    memcpy(g_ScriptVariableBank,saved_variables,sizeof(saved_variables));D_8009D2E8=saved_move;
+    g_SceneDispatchToken=saved_token;g_SaveTitleStyleFlag=saved_style;g_ScreenTint.fadeMode=saved_fade;
+    g_SaveIoCursor=saved_cursor;g_SaveSjisFormatArguments=saved_arguments;memcpy(g_SaveTitleBuffer,title,sizeof(title));
+    if(valid)puts("Original save image: 24 full 8 KiB USA MIPS images, SJIS titles/icons, CRC, unaligned tail round trips and invalid link rejection passed");
     return valid;
 }
 
@@ -2606,6 +2705,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
+    if(!original_save_card_images())valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

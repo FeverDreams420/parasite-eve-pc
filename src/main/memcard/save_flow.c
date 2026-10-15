@@ -33,6 +33,13 @@ char *g_MemCardSearchPatternPtr = g_MemCardSearchPattern;
 MemCardFileHeader g_MemCardIconHeader;
 _Alignas(16) u8 g_MemCardFileBuffer[0x2000];
 
+SaveSjisFormatArguments g_SaveSjisFormatArguments;
+u8 g_SaveTitleBuffer[0x44];
+static u8 g_SaveTitleFormatLong[] = {0x82,0x6F,0x82,0x64,0x81,0x7C,'%','d',0x81,0x5E,'%','d',0x81,0x46,'%','d',0x81,0x46,'%','d',0x81,0x5E,0x82,0x63,0x82,0x60,0x82,0x78,'%','D',0x81,0x40,'%','s',0};
+static u8 g_SaveTitleFormatShort[] = {0x82,0x6F,0x82,0x64,0x81,0x7C,'%','d',0x81,0x5E,'%','d',0x81,0x46,'%','d',0x81,0x46,'%','d',0x81,0x5E,'%','s',0};
+u8 *g_SaveTitleFormatLongPtr = g_SaveTitleFormatLong;
+u8 *g_SaveTitleFormatShortPtr = g_SaveTitleFormatShort;
+
 long g_MemCardEventHandles[MEMCARD_EVENT_COUNT];
 int g_MemCardManagerReady;
 int g_MemCardEventF400Spec0004Flag, g_MemCardRemovedEventPending, g_MemCardEventF400Spec2000Flag;
@@ -41,10 +48,20 @@ int g_MemCardEventF000Spec0004Flag, g_MemCardEventF000Spec8000Flag, g_MemCardEve
 /* The save tail is a packed byte stream: each record is copied as an
  * unaligned byte block at the IO cursor, which then advances past it. */
 #define SAVE_PUT(type, src)                                \
-    *(type *)g_SaveIoCursor = *(type *)(src);              \
+    memcpy(g_SaveIoCursor, (src), sizeof(type));              \
     g_SaveIoCursor += sizeof(type)
 
-void Save_SerializeTail(void) {
+int Save_SerializeTail(void) {
+    if ((g_AyaBattleState.action && g_AyaBattleState.action != &g_SavedBattleStateTail) ||
+        (g_AyaBattleState.attributes && g_AyaBattleState.attributes != &g_BattleEquipStateBlock)) return -1;
+    /* The file contains the original 0x70-byte record, not host padding or
+     * native addresses. Its two links name the two fixed saved records. */
+    u8 aya[0x70];
+    memcpy(aya, g_AyaBattleState.words, 0x1C);
+    memcpy(aya + 0x1C, (u8 *)g_AyaBattleState.words + PE1_OFFSETOF(Combatant, maxHP), 0x4C);
+    u32 links[2] = {g_AyaBattleState.action ? 0x800B0CB0u : 0,
+                    g_AyaBattleState.attributes ? 0x8009D1B0u : 0};
+    memcpy(aya + 0x68, links, sizeof(links));
     SAVE_PUT(SaveBytes800, g_ScriptVariableBank);
     SAVE_PUT(SaveBytes4, &D_8009D2E8);
     SAVE_PUT(SaveBytes4, &g_SceneDispatchToken);
@@ -55,16 +72,21 @@ void Save_SerializeTail(void) {
     SAVE_PUT(SaveBytes2, &g_GameState.current_story_day);
     SAVE_PUT(SaveU8, &g_GameState.story_day_flags);
     SAVE_PUT(SaveU8, &g_ScreenTint.fadeMode);
-    SAVE_PUT(SaveBytes70, &g_AyaBattleState);
+    SAVE_PUT(SaveBytes70, aya);
     SAVE_PUT(SaveBytes18, &g_SavedBattleStateTail);
     SAVE_PUT(SaveBytes8, &g_BattleEquipStateBlock);
+    return 0;
 }
 
 #define SAVE_GET(type, dst)                                \
-    *(type *)(dst) = *(type *)g_SaveIoCursor;              \
+    memcpy((dst), g_SaveIoCursor, sizeof(type));              \
     g_SaveIoCursor += sizeof(type)
 
-void Save_DeserializeTail(void) {
+int Save_DeserializeTail(void) {
+    u32 links[2];
+    memcpy(links, g_SaveIoCursor + 0x818 + 0x68, sizeof(links));
+    if ((links[0] && links[0] != 0x800B0CB0u) ||
+        (links[1] && links[1] != 0x8009D1B0u)) return -1;
     SAVE_GET(SaveBytes800, g_ScriptVariableBank);
     SAVE_GET(SaveBytes4, &D_8009D2E8);
     SAVE_GET(SaveBytes4, &g_SceneDispatchToken);
@@ -75,11 +97,17 @@ void Save_DeserializeTail(void) {
     SAVE_GET(SaveBytes2, &g_GameState.current_story_day);
     SAVE_GET(SaveU8, &g_GameState.story_day_flags);
     SAVE_GET(SaveU8, &g_ScreenTint.fadeMode);
-    SAVE_GET(SaveBytes70, &g_AyaBattleState);
+    memset(&g_AyaBattleState, 0, sizeof(g_AyaBattleState));
+    memcpy(g_AyaBattleState.words, g_SaveIoCursor, 0x1C);
+    memcpy((u8 *)g_AyaBattleState.words + PE1_OFFSETOF(Combatant, maxHP), g_SaveIoCursor + 0x1C, 0x4C);
+    g_AyaBattleState.action = links[0] ? &g_SavedBattleStateTail : NULL;
+    g_AyaBattleState.attributes = links[1] ? &g_BattleEquipStateBlock : NULL;
+    g_SaveIoCursor += 0x70;
     SAVE_GET(SaveBytes18, &g_SavedBattleStateTail);
     SAVE_GET(SaveBytes8, &g_BattleEquipStateBlock);
     g_GameStateFlags &= 0xFFFF2679;
     D_8009D2E8 &= ~9;
+    return 0;
 }
 
 void Save_SetTitleStyleFlag(int value) {
@@ -113,7 +141,12 @@ void Save_SprintfSjis(unsigned char *dst, unsigned char *fmt)
 
     out = dst;
     ch = *fmt;
-    args = (SaveSjisFormatArgument *)&g_SaveSjisFormatArguments;
+    SaveSjisFormatArgument arguments[6] = {
+        {.number = g_SaveSjisFormatArguments.chapter}, {.number = g_SaveSjisFormatArguments.hours},
+        {.number = g_SaveSjisFormatArguments.minutes}, {.number = g_SaveSjisFormatArguments.seconds},
+        g_SaveSjisFormatArguments.primary, g_SaveSjisFormatArguments.secondary
+    };
+    args = arguments;
     while (ch != 0) {
         ch &= 0xFF;
         fmt++;
@@ -491,7 +524,7 @@ int Save_BuildCardFile(char *path) {
     MemCardFileHeader *file;
     u32 crc;
 
-resolved = Text_GetSaveIconData();
+    resolved = Text_GetSaveIconData();
     file = &g_MemCardIconHeader;
 
     D_800A5D50 = 0x2000;
@@ -512,7 +545,7 @@ resolved = Text_GetSaveIconData();
     __builtin_memcpy(g_SaveIoCursor, (u8 *)&g_SaveRuntimeState, 0x12E4);
     g_SaveIoCursor += 0x12E4;
 
-    Save_SerializeTail();
+    if (Save_SerializeTail() < 0) return -1;
 
     {
         u8 *data = g_MemCardFileBuffer;
@@ -1058,7 +1091,10 @@ void Save_StartWriteSlot(int port, int arg_slot) {
                     formattedSlot + firstSlotLetter);
     /* Recompute the path address after formatting it. */
     path = g_MemCardFilePath;
-    Save_BuildCardFile(path);
+    if (Save_BuildCardFile(path) < 0) {
+        state->sequence = sequence;
+        return;
+    }
 
     state->listCursor = slot;
     state->scanCursor = 0;
@@ -1114,50 +1150,33 @@ void Menu_CreateNotificationDialog(int arg0, int arg1);
 void Menu_SetDeferredCallback(void (*callback)(void));
 
 void Save_LoadCardFileIntoRuntime(void) {
-    SaveBytes4 expected_crc;
-    u8 *data;
-    u32 crc;
-    u32 i;
-    u32 bit;
-    u8 *cursor;
-
-    g_SaveIoCursor = (u8 *)&g_MemCardSaveStateBuffer;
-    *(SaveBytes12E4 *)&g_SaveRuntimeState = g_MemCardSaveStateBuffer;
-    g_SaveIoCursor += 0x12E4;
-    Save_DeserializeTail();
-
-    data = g_MemCardFileBuffer;
-    crc = 0xFFFF;
-    i = 0;
-    cursor = g_SaveIoCursor;
-    expected_crc = *(SaveBytes4 *)cursor;
-    g_SaveIoCursor += 4;
-    *(u32 *)cursor = 0;
-
-    do {
-        crc ^= data[i & 0xFFFF] << 8;
-        bit = 0;
-        do {
-            if (crc & 0x8000) {
-                crc = (crc << 1) ^ 0x1021;
-            } else {
-                crc <<= 1;
-            }
-            bit++;
-        } while ((bit & 0xFFFF) < 8);
-        i++;
-    } while ((i & 0xFFFF) < 0x2000);
-
-    if ((~crc & 0xFFFF) == *(u32 *)expected_crc.b) {
-        Save_RestoreHeader();
-        g_MemCardLoadSucceeded = 1;
-        Menu_DestroyMemCardProgressWidget();
-        Menu_CreateNotificationDialog(0x54, 0);
-        Menu_SetDeferredCallback(Save_CancelUiFlow);
-    } else {
-        Menu_DestroyMemCardProgressWidget();
-        Menu_CreateTwoLineDialog(0x55, 0x56);
+    /* Validate the unchanged file before committing any runtime fields. */
+    const size_t crc_offset = 0x100 + 0x12E4 + 0x8A8;
+    u32 expected_crc;
+    memcpy(&expected_crc, g_MemCardFileBuffer + crc_offset, sizeof(expected_crc));
+    u32 crc = 0xFFFF;
+    g_MemCardLoadSucceeded = 0;
+    for (size_t i = 0; i < sizeof(g_MemCardFileBuffer); ++i) {
+        u8 value = i >= crc_offset && i < crc_offset + 4 ? 0 : g_MemCardFileBuffer[i];
+        crc ^= (u32)value << 8;
+        for (unsigned bit = 0; bit < 8; ++bit)
+            crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
     }
+    if ((~crc & 0xFFFF) == expected_crc) {
+        g_SaveIoCursor = g_MemCardFileBuffer + 0x100 + 0x12E4;
+        if (Save_DeserializeTail() == 0) {
+            memcpy(&g_SaveRuntimeState, &g_MemCardSaveStateBuffer, sizeof(g_SaveRuntimeState));
+            g_SaveIoCursor += 4;
+            Save_RestoreHeader();
+            g_MemCardLoadSucceeded = 1;
+            Menu_DestroyMemCardProgressWidget();
+            Menu_CreateNotificationDialog(0x54, 0);
+            Menu_SetDeferredCallback(Save_CancelUiFlow);
+            return;
+        }
+    }
+    Menu_DestroyMemCardProgressWidget();
+    Menu_CreateTwoLineDialog(0x55, 0x56);
 }
 
 int MemCard_GetActiveProgressBlocks(void) {

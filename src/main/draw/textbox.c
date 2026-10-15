@@ -172,10 +172,10 @@ void Render_SetupFogLayer(void *source) {
             payload[4] = two;
             payload[5] = two;
             payload[6] = two;
-            ((RenderColorTilePacket *)payload)->w = 0x140;
-            ((RenderColorTilePacket *)payload)->h = 0x36;
-            ((RenderColorTilePacket *)payload)->x0 = 0;
-            ((RenderColorTilePacket *)payload)->y0 = 0xAA;
+            ((RenderFlatTilePacket *)payload)->w = 0x140;
+            ((RenderFlatTilePacket *)payload)->h = 0x36;
+            ((RenderFlatTilePacket *)payload)->x0 = 0;
+            ((RenderFlatTilePacket *)payload)->y0 = 0xAA;
             SetSemiTrans(payload, dither_enabled);
         }
     }

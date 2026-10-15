@@ -1,11 +1,12 @@
 #include "common.h"
+#include <string.h>
 #include "pe1/bounds_check.h"
 #include "pe1/draw_state.h"
 #include "pe1/menu_sound.h"
 #include "pe1/render_prim.h"
+#include "pe1/psyq_gpu.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Renderer state shared with the original draw modules. */
 unsigned char *g_DrawPacketCursor;
 unsigned char *g_DrawPacketArenaBase;
 int g_DrawTextDimmed;
@@ -26,10 +27,7 @@ void Draw_AllocColorQuad(int width, int height) {
     int ratio;
     int minimum;
     int widthSmaller;
-    u32 mask24;
-    u32 maskTop;
-    u32 *ot;
-    u32 firstTag;
+    RenderNativeTag *ot;
     int firstY;
     int firstRight;
     int firstBottom;
@@ -39,23 +37,23 @@ void Draw_AllocColorQuad(int width, int height) {
     int secondBottom;
     int secondBound;
     int tileY;
-    u32 tileMask24;
-    u32 tileMaskTop;
     int tileWidth;
     int tileHeight;
     int tileCode;
-    u32 modeMask24;
-    u32 modeMaskTop;
     u32 modeColor1;
     u32 modeColor2;
-    u32 *modeOt;
-    u32 modeTag;
-    u32 secondTag;
-    u32 linkHigh;
+    RenderNativeTag *modeOt;
     int darkColor;
     int darkerColor;
-    DrawPrimLink link;
 
+    /* Four original commands must fit before any state or list is changed. */
+    size_t required = 2 * sizeof(RenderGouraudQuad) + sizeof(RenderColorTilePacket) + sizeof(RenderDrawModePacket);
+    uintptr_t begin = (uintptr_t)g_DrawPacketArenaBase, cursor = (uintptr_t)g_DrawPacketCursor;
+    if (!begin || !g_DrawOrderingTableEntry || cursor < begin || cursor % _Alignof(RenderGouraudQuad) || cursor - begin >= 0x4000 ||
+        required >= 0x4000 - (cursor - begin)) {
+        Inv_BoundsCheckAssertStub(1);
+        return;
+    }
     first = 0;
     shadeOffset = Battle_GetStateFlag1() == 0 ? 7 : 0;
     old = g_DrawPacketCursor;
@@ -67,8 +65,8 @@ void Draw_AllocColorQuad(int width, int height) {
         Inv_BoundsCheckAssertStub(1);
     }
     if (first != 0) {
-        *(u32 *)&first->r0 = 0x808080;
-        ((RenderPacketTag *)&first->tag)->bytes.length = 8;
+        u32 color = 0x808080;memcpy(&first->r0, &color, sizeof(color));
+        first->tag.length = 8;
         first->code = 0x38;
     }
 
@@ -94,8 +92,6 @@ void Draw_AllocColorQuad(int width, int height) {
     firstY = shadeOffset + 0xAA;
     firstRight = ratio + 0xE5;
     firstBottom = shadeOffset + 0xAD;
-    mask24 = 0xFFFFFF;
-    firstTag = packet->tag;
 
     packet->g2 = 0x82;
     packet->g0 = 0x82;
@@ -119,13 +115,10 @@ void Draw_AllocColorQuad(int width, int height) {
     packet->y3 = firstBottom;
     packet->y2 = packet->y3;
 
-    maskTop = 0xFF000000;
-    ot = g_DrawOrderingTableEntry;
-    packet->tag = (firstTag & maskTop) | (*ot & mask24);
-    linkHigh = *ot & maskTop;
+    ot = (RenderNativeTag *)g_DrawOrderingTableEntry;
+    packet->tag.address = ot->address;
     old = g_DrawPacketCursor;
-    link.packet = packet;
-    *ot = linkHigh | (link.word & mask24);
+    ot->address = (uintptr_t)packet;
 
     second = 0;
     next = old + sizeof(RenderGouraudQuad);
@@ -136,8 +129,8 @@ void Draw_AllocColorQuad(int width, int height) {
         Inv_BoundsCheckAssertStub(1);
     }
     if (second != 0) {
-        *(u32 *)&second->r0 = 0x808080;
-        ((RenderPacketTag *)&second->tag)->bytes.length = 8;
+        u32 color = 0x808080;memcpy(&second->r0, &color, sizeof(color));
+        second->tag.length = 8;
         second->code = 0x38;
     }
 
@@ -145,10 +138,8 @@ void Draw_AllocColorQuad(int width, int height) {
     secondRight = ratio + 0xE5;
     secondTop = shadeOffset + 0xAA;
     secondBottom = shadeOffset + 0xAD;
-    mask24 = 0xFFFFFF;
     darkColor = 0x303030;
     darkerColor = 0x181818;
-    secondTag = packet->tag;
     packet->r2 = 0xFF;
     packet->r0 = 0xFF;
     packet->g2 = 0x3D;
@@ -174,13 +165,10 @@ void Draw_AllocColorQuad(int width, int height) {
     g_DrawPrimColor = darkColor;
     g_DrawColorShaded = darkerColor;
     g_DrawTextDimmed = 0;
-    tileMask24 = 0xFF000000;
-    ot = g_DrawOrderingTableEntry;
-    packet->tag = (secondTag & tileMask24) | (*ot & mask24);
-    linkHigh = *ot & tileMask24;
+    ot = (RenderNativeTag *)g_DrawOrderingTableEntry;
+    packet->tag.address = ot->address;
     old = g_DrawPacketCursor;
-    link.packet = packet;
-    *ot = linkHigh | (link.word & mask24);
+    ot->address = (uintptr_t)packet;
 
     tile = 0;
     next = old + sizeof(RenderColorTilePacket);
@@ -192,30 +180,26 @@ void Draw_AllocColorQuad(int width, int height) {
     }
     if (tile != 0) {
         if (g_DrawTextDimmed != 0) {
-            *(u32 *)&tile->r0 = g_DrawColorShaded;
+            memcpy(&tile->r0, &g_DrawColorShaded, sizeof(u32));
         } else {
-            *(u32 *)&tile->r0 = g_DrawPrimColor;
+            memcpy(&tile->r0, &g_DrawPrimColor, sizeof(u32));
         }
-        ((RenderPacketTag *)&tile->tag)->bytes.length = 3;
+        tile->tag.length = 3;
         tile->code = 0x60;
     }
-    tileMask24 = 0xFFFFFF;
     tile->x0 = 0xDD;
     tileY = shadeOffset + 0xA6;
     tile->y0 = tileY;
     tileWidth = 0x54;
     tileHeight = 0x0B;
-    tileMaskTop = 0xFF000000;
     tile->w = tileWidth;
     tileCode = tile->code;
     tile->h = tileHeight;
     tile->code = tileCode | 2;
-    ot = g_DrawOrderingTableEntry;
-    tile->tag = (tile->tag & tileMaskTop) | (*ot & tileMask24);
-    linkHigh = *ot & tileMaskTop;
+    ot = (RenderNativeTag *)g_DrawOrderingTableEntry;
+    tile->tag.address = ot->address;
     old = g_DrawPacketCursor;
-    link.packet = tile;
-    *ot = linkHigh | (link.word & tileMask24);
+    ot->address = (uintptr_t)tile;
 
     drawMode = 0;
     next = old + sizeof(RenderDrawModePacket);
@@ -228,16 +212,12 @@ void Draw_AllocColorQuad(int width, int height) {
     if (drawMode != 0) {
         SetDrawTPage(drawMode, 0, 0, 0);
     }
-    modeMask24 = 0xFFFFFF;
     modeColor1 = 0x808080;
     modeColor2 = 0x400000;
-    modeMaskTop = 0xFF000000;
-    modeTag = drawMode->tag;
-    modeOt = g_DrawOrderingTableEntry;
+    modeOt = (RenderNativeTag *)g_DrawOrderingTableEntry;
     modeColor2 |= 0x4040;
     g_DrawPrimColor = modeColor1;
     g_DrawColorShaded = modeColor2;
-    drawMode->tag = (modeTag & modeMaskTop) | (*modeOt & modeMask24);
-    link.packet = drawMode;
-    *modeOt = (*modeOt & modeMaskTop) | (link.word & modeMask24);
+    drawMode->tag.address = modeOt->address;
+    modeOt->address = (uintptr_t)drawMode;
 }

@@ -41,6 +41,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/entity_allocation.h"
 #include "pe1/render_buffers.h"
 #include "pe1/render_packets.h"
+#include "pe1/render_prim.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/field_tile.h"
 #include "pe1/field_textured_model.h"
@@ -2417,6 +2418,83 @@ static int original_digit_packets(void)
     return valid;
 }
 
+static int original_color_quad_packets(void)
+{
+    static _Alignas(16) u8 arena[0x4000+32];
+    u8 *cursor=g_DrawPacketCursor,*base=g_DrawPacketArenaBase;u32 *entry=g_DrawOrderingTableEntry;
+    u32 flags=g_GameStateFlags,color=g_DrawPrimColor,shaded=g_DrawColorShaded;int dim=g_DrawTextDimmed;
+    const int widths[]={-32768,-1,0,1,7,28,55,56,57,1000,32767};
+    const int heights[]={-1,0,1,7,28,56,1000,32767};
+    size_t bytes=2*sizeof(RenderGouraudQuad)+sizeof(RenderColorTilePacket)+sizeof(RenderDrawModePacket);
+    uint64_t hash=UINT64_C(14695981039346656037);int valid=1;
+    for(unsigned flag=0;flag<2;++flag)for(unsigned w=0;w<11;++w)for(unsigned h=0;h<8;++h) {
+        memset(arena,0xA5,sizeof(arena));RenderNativeTag ordering={0xFFFFFF,0xAB};
+        g_DrawPacketArenaBase=g_DrawPacketCursor=arena;g_DrawOrderingTableEntry=(u32 *)&ordering;
+        g_GameStateFlags=flag*2;Draw_AllocColorQuad(widths[w],heights[h]);
+        RenderGouraudQuad *first=(void *)arena,*second=(void *)(arena+sizeof(*first));
+        RenderColorTilePacket *tile=(void *)(arena+2*sizeof(*first));
+        RenderDrawModePacket *mode=(void *)((u8 *)tile+sizeof(*tile));
+        if(g_DrawPacketCursor!=arena+bytes || ordering.address!=(uintptr_t)mode || ordering.length!=0xAB ||
+           first->tag.address!=0xFFFFFF || first->tag.length!=8 || second->tag.address!=(uintptr_t)first || second->tag.length!=8 ||
+           tile->tag.address!=(uintptr_t)second || tile->tag.length!=3 || mode->tag.address!=(uintptr_t)tile || mode->tag.length!=1 ||
+           g_DrawPrimColor!=0x808080 || g_DrawColorShaded!=0x404040 || g_DrawTextDimmed)valid=0;
+        const u8 *payloads[]={(u8 *)first+sizeof(RenderNativeTag),(u8 *)second+sizeof(RenderNativeTag),
+                             (u8 *)tile+sizeof(RenderNativeTag),(u8 *)&mode->command};
+        const unsigned sizes[]={32,32,12,4};
+        for(unsigned p=0;p<4;++p)for(unsigned i=0;i<sizes[p];++i)hash=(hash^payloads[p][i])*UINT64_C(1099511628211);
+        for(unsigned i=bytes;i<sizeof(arena);++i)if(arena[i]!=0xA5)valid=0;
+    }
+    /* All four GPU payloads from 176 executions of USA 80061044 in MIPS. */
+    if(hash!=UINT64_C(0xa60c172cc58948fd)) {
+        fprintf(stderr,"Original color quad hash %016llx differs from USA MIPS\n",(unsigned long long)hash);valid=0;
+    }
+    for(unsigned remaining=0;remaining<=bytes+8;remaining+=8) {
+        memset(arena,0xA5,sizeof(arena));RenderNativeTag ordering={0xFFFFFF,0xAB};
+        u8 *start=arena+0x4000-remaining;
+        g_DrawPacketArenaBase=arena;g_DrawPacketCursor=start;g_DrawOrderingTableEntry=(u32 *)&ordering;
+        g_DrawPrimColor=0x123456;g_DrawColorShaded=0x654321;g_DrawTextDimmed=1;
+        Draw_AllocColorQuad(28,56);
+        if(remaining<=bytes) {
+            if(g_DrawPacketCursor!=start || ordering.address!=0xFFFFFF || ordering.length!=0xAB ||
+               g_DrawPrimColor!=0x123456 || g_DrawColorShaded!=0x654321 || g_DrawTextDimmed!=1)valid=0;
+            for(unsigned i=0;i<sizeof(arena);++i)if(arena[i]!=0xA5)valid=0;
+        } else {
+            if(g_DrawPacketCursor!=start+bytes)valid=0;
+            for(u8 *p=arena;p<start;++p)if(*p!=0xA5)valid=0;
+            for(u8 *p=start+bytes;p<arena+sizeof(arena);++p)if(*p!=0xA5)valid=0;
+        }
+    }
+    /* Feed the same native chain to PsyZ and observe VRAM headlessly.
+     * Check the complete footprint, background blend and all gauge pixels. */
+    static u16 saved_pixels[320*240],pixels[320*240];
+    DRAWENV old_draw,draw;RECT area={0,0,320,240};
+    GetDrawEnv(&old_draw);StoreImage(&area,saved_pixels);DrawSync(0);
+    SetDefDrawEnv(&draw,0,0,320,240);draw.isbg=0;draw.dtd=0;PutDrawEnv(&draw);
+    for(unsigned flag=0;flag<2;++flag)for(unsigned fill=0;fill<3;++fill) {
+        RenderNativeTag ordering={0xFFFFFF,0};memset(arena,0xA5,sizeof(arena));
+        g_DrawPacketArenaBase=g_DrawPacketCursor=arena;g_DrawOrderingTableEntry=(u32 *)&ordering;
+        g_GameStateFlags=flag*2;Draw_AllocColorQuad(fill*28,56);
+        ClearImage(&area,0,0,0);DrawOTag((u_int *)&ordering);DrawSync(0);
+        StoreImage(&area,pixels);DrawSync(0);
+        int offset=flag?0:7;
+        for(int y=0;y<240;++y)for(int x=0;x<320;++x) {
+            int background=x>=221 && x<305 && y>=166+offset && y<177+offset;
+            int gauge=x>=229 && x<285 && y>=170+offset && y<173+offset;
+            u16 value=pixels[y*320+x];
+            if((!background && value) || (background && !gauge && value!=0x0C63) ||
+               (gauge && (!value || value==0x0C63))) {
+                if(valid)fprintf(stderr,"Original color gauge VRAM (%d,%d)=%04x, background=%d gauge=%d\n",x,y,value,background,gauge);
+                valid=0;
+            }
+        }
+    }
+    LoadImage(&area,saved_pixels);PutDrawEnv(&old_draw);DrawSync(0);
+    g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
+    g_GameStateFlags=flags;g_DrawPrimColor=color;g_DrawColorShaded=shaded;g_DrawTextDimmed=dim;
+    if(valid)puts("Original color gauge: 176 four-command payloads match USA MIPS, native links, arena limits and six complete headless VRAM footprints passed");
+    return valid;
+}
+
 static int original_save_card_images(PeDisc *disc)
 {
     PeDiscFile archive,exe;
@@ -3185,7 +3263,7 @@ int main(int argc, char **argv)
     if(!original_system_start())return 130;
     if(!original_display_start())return 127;
     if(!original_menu_draw_areas())return 131;
-    if(!original_digit_packets())return 132;
+    if(!original_digit_packets() || !original_color_quad_packets())return 132;
     if(!original_subsystem_start())return 129;
     const u32 lzcs[]={0,1,0x7fffffff,0x80000000,0xffffffff};
     const u32 lzcr[]={32,31,1,1,32};

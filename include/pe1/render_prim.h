@@ -37,20 +37,20 @@ typedef struct RenderLinePacket {
 /* Fixed-size flat-color tile and draw-mode packets emitted by the main
  * renderer. */
 typedef struct RenderColorTilePacket {
-    u32 tag;
+    RenderNativeTag tag;
     u8 r0, g0, b0, code;
     u16 x0, y0, w, h;
 } RenderColorTilePacket;
 
-/* The same TILE packet seen through its link tag and colour word, as the
- * wipe renderer builds it. */
+/* Original 32-bit TILE record still used by the wipe renderer and packed
+ * textbox tables; these records have not yet moved to the native GPU ABI. */
 typedef struct RenderFlatTilePacket {
     RenderPacketTag tag;
     RenderPacketColor color;
     u16 x0, y0, w, h;
 } RenderFlatTilePacket;
 
-PE1_STATIC_ASSERT(sizeof(RenderFlatTilePacket) == sizeof(RenderColorTilePacket),
+PE1_STATIC_ASSERT(sizeof(RenderFlatTilePacket) == 16,
                   render_flat_tile_packet_size);
 
 /* Flat-colour triangle packet (POLY_F3). Coordinates retain the unsigned
@@ -68,7 +68,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTrianglePacket, x0) == 8,
 
 /* Four-vertex Gouraud quad (POLY_G4), used for HUD gauge gradients. */
 typedef struct RenderGouraudQuad {
-    u32 tag;
+    RenderNativeTag tag;
     u8 r0, g0, b0, code;
     s16 x0, y0;
     u8 r1, g1, b1, pad1;
@@ -79,14 +79,14 @@ typedef struct RenderGouraudQuad {
     s16 x3, y3;
 } RenderGouraudQuad;
 
-PE1_STATIC_ASSERT(sizeof(RenderGouraudQuad) == 0x24, render_gouraud_quad_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderGouraudQuad, x0) == 0x08,
+PE1_STATIC_ASSERT(sizeof(RenderGouraudQuad) == sizeof(RenderNativeTag) + 32, render_gouraud_quad_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderGouraudQuad, x0) == sizeof(RenderNativeTag) + 4,
                   render_gouraud_quad_first_vertex);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderGouraudQuad, x1) == 0x10,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderGouraudQuad, x1) == sizeof(RenderNativeTag) + 12,
                   render_gouraud_quad_second_vertex);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderGouraudQuad, x2) == 0x18,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderGouraudQuad, x2) == sizeof(RenderNativeTag) + 20,
                   render_gouraud_quad_third_vertex);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderGouraudQuad, x3) == 0x20,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderGouraudQuad, x3) == sizeof(RenderNativeTag) + 28,
                   render_gouraud_quad_fourth_vertex);
 
 typedef struct RenderDrawModePacket {
@@ -146,11 +146,11 @@ PE1_STATIC_ASSERT(sizeof(RenderTexturePagePacket) == sizeof(RenderNativeTag) + s
 PE1_STATIC_ASSERT(sizeof(RenderTileTexture) == 8, render_tile_texture_size);
 
 PE1_STATIC_ASSERT(sizeof(RenderLinePacket) == 16, render_line_packet_size);
-PE1_STATIC_ASSERT(sizeof(RenderColorTilePacket) == 16,
+PE1_STATIC_ASSERT(sizeof(RenderColorTilePacket) == ((sizeof(RenderNativeTag) + 12 + _Alignof(RenderColorTilePacket) - 1) / _Alignof(RenderColorTilePacket)) * _Alignof(RenderColorTilePacket),
                   render_color_tile_packet_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTilePacket, x0) == 8,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTilePacket, x0) == sizeof(RenderNativeTag) + 4,
                   render_color_tile_coordinates);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTilePacket, w) == 12,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTilePacket, w) == sizeof(RenderNativeTag) + 8,
                   render_color_tile_dimensions);
 PE1_STATIC_ASSERT(sizeof(RenderDrawModePacket) == 3 * sizeof(uintptr_t),
                   render_draw_mode_packet_size);

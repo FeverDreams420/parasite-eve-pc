@@ -67,6 +67,7 @@ extern int *g_TextCursorStackPtr;
 /* Byte (x, y) pairs terminated by 0xFF, followed by polygon edges. */
 void Draw_AllocColorGradient(int width, int height, u8 *points, int textured);
 void Draw_AllocColorTri(int width, int height, int mode);
+void Draw_AllocColorQuad(int width, int height);
 void Draw_AllocColorRect(int firstVertex, int secondVertex, int width, int mode);
 void Draw_EmitWipeBar(u8 *edges, int mode);
 void Draw_AllocSprite(int sprite);

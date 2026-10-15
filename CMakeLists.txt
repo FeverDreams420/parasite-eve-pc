@@ -84,6 +84,7 @@ add_library(parasite-eve-original OBJECT
     src/overlays/menu_memcard/image_nodes.c
     src/overlays/menu_memcard/fade.c
     src/main/draw/wipe.c
+    src/main/draw/color_quad.c
     src/main/pm/disc_tables.c
     src/main/pm/process.c
     src/main/entity/pool.c

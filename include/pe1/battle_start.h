@@ -9,7 +9,7 @@
 #include "pe1/save_slot_metadata.h"
 
 extern Combatant *g_ActiveActor;
-extern BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern BattleRewardSlot g_BattleRewardSlots[10];
 extern BattleEntity *g_BattleActionActors[7];
 extern int g_BattleFrameCounter;

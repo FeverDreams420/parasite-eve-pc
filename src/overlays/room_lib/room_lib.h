@@ -487,7 +487,7 @@ typedef struct RoomLibHandlerCState {
 } RoomLibHandlerCState;
 
 extern short g_RcossinTblCos[];
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 struct FieldActorNode;
 extern struct FieldActor *g_FieldActorListHead;
 extern int RoomLib_ResetAndSignal_801914B0(RoomEnt *obj);

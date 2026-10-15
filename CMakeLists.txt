@@ -35,6 +35,8 @@ add_library(parasite-eve-original OBJECT
     src/main/battle/enemy_actions.c
     src/main/battle/status_hud.c
     src/main/battle/attack.c
+    src/main/battle/context.c
+    src/main/entity/combat.c
     src/main/aya/stats.c
     src/main/item/active_list.c
     src/main/item/actions.c
@@ -153,6 +155,7 @@ endif()
 foreach(akao_target IN LISTS akao_runtime_targets)
     target_sources(${akao_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
         $<TARGET_OBJECTS:parasite-eve-original-akao>
+        $<TARGET_OBJECTS:parasite-eve-original-shadow>
         $<TARGET_OBJECTS:parasite-eve-original-disc>)
     target_include_directories(${akao_target} PRIVATE include)
     if(MSVC)
@@ -485,6 +488,11 @@ add_library(parasite-eve-original-shadow OBJECT src/overlays/room_lib/mirror_mod
 target_include_directories(parasite-eve-original-shadow PRIVATE include)
 target_compile_definitions(parasite-eve-original-shadow PRIVATE __psyz)
 target_link_libraries(parasite-eve-original-shadow PRIVATE psyz)
+if(MSVC)
+    target_compile_options(parasite-eve-original-shadow PRIVATE /Gy /Gw)
+else()
+    target_compile_options(parasite-eve-original-shadow PRIVATE -ffunction-sections -fdata-sections)
+endif()
 if(BUILD_TESTING)
     add_executable(test-original-shadow tests/original_shadow.c
         $<TARGET_OBJECTS:parasite-eve-original-shadow>

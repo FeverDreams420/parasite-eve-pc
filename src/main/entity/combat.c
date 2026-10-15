@@ -2,6 +2,7 @@
 #include "pe1/asset_find.h"
 #include "pe1/battle.h"
 #include "pe1/battle_runtime.h"
+#include "pe1/battle_reset_stats.h"
 #include "pe1/entity_animation.h"
 #include "pe1/game_timers.h"
 #include "pe1/inventory.h"
@@ -10,10 +11,9 @@
 #include "pe1/player_entity.h"
 #include "pe1/render_prim.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
-u16 g_BattleHitActionPending;
-unsigned char g_AyaStatusEffectTimer;
+/* Saved action interrupted by a hit, shared with the original battle loop. */
+u8 g_BattleHitActionMode[1], g_BattleHitActionSubmode[1];
+s32 g_BattleHitActionParam[1];
 
 int rand(void);
 s16 Entity_ApplyHitAndSetAnim(void *arg0);
@@ -93,7 +93,7 @@ void Entity_ResolveDropTable(void *arg0) {
             }
             if ((s16)g_ActiveActor->curHP != 0) {
                 Entity_ApplyHitAndSetAnim(arg0);
-                if (!(g_PlayerEntity->flags & 0x100)) {
+                if (!(D_8009D254->entityFlags & 0x100)) {
                     g_BattlePendingEnemySpawn = arg0;
                 }
             }
@@ -115,24 +115,20 @@ void Entity_ResolveDropTable(void *arg0) {
 
 int Battle_CalcRelativeAngle(BattleEntity *arg0, BattleEntity *actor);
 
-static inline FieldActor *CurrentPlayer(void) {
-    return g_PlayerEntity;
-}
-
 s16 Entity_ApplyHitAndSetAnim(void *arg0) {
     void *saved_arg;
     s32 value;
-    FieldActor *switch_actor;
-    FieldActor *actor;
+    BattleEntity *switch_actor;
+    BattleEntity *actor;
     Combatant *state;
     short bucket;
     u32 flags;
 
     saved_arg = arg0;
     value = 0;
-    switch_actor = CurrentPlayer();
+    switch_actor = D_8009D254;
 
-    switch (switch_actor->mode) {
+    switch (switch_actor->actionMode) {
     case 6:
     case 8:
     case 10:
@@ -140,40 +136,40 @@ s16 Entity_ApplyHitAndSetAnim(void *arg0) {
     case 13:
     case 14:
     case 15: {
-        FieldActor *case_actor;
+        BattleEntity *case_actor;
         u8 mode;
         u8 submode;
 
-        case_actor = CurrentPlayer();
-        mode = case_actor->mode;
+        case_actor = D_8009D254;
+        mode = case_actor->actionMode;
         g_BattleHitActionMode[0] = mode;
-        submode = case_actor->action;
+        submode = case_actor->animLastFrame;
         g_BattleHitActionPending = 1;
         g_BattleHitActionSubmode[0] = submode;
-        g_BattleHitActionParam[0] = *(u32 *)&case_actor->anim;
+        g_BattleHitActionParam[0] = case_actor->animFrame;
         break;
     }
     case 7:
     case 9:
     case 11: {
-        FieldActor *case_actor;
+        BattleEntity *case_actor;
         u8 mode;
         u8 submode;
 
-        case_actor = CurrentPlayer();
-        mode = case_actor->mode;
+        case_actor = D_8009D254;
+        mode = case_actor->actionMode;
         g_BattleHitActionMode[0] = mode;
-        submode = case_actor->action;
+        submode = case_actor->animLastFrame;
         g_BattleHitActionPending = 1;
         g_BattleHitActionSubmode[0] = submode;
-        g_BattleHitActionParam[0] = case_actor->action << 16;
+        g_BattleHitActionParam[0] = case_actor->animLastFrame << 16;
         break;
     }
     }
 
     state = g_ActiveActor;
     if ((state->stateFlags & 0x12000) == 0) {
-        value = Battle_CalcRelativeAngle(saved_arg, CurrentPlayer());
+        value = Battle_CalcRelativeAngle(saved_arg, D_8009D254);
         if ((s16)value < 0x200) {
             bucket = 0;
         } else if ((s16)value < 0x600) {
@@ -186,24 +182,24 @@ s16 Entity_ApplyHitAndSetAnim(void *arg0) {
             bucket = 0;
         }
 
-        Entity_SetActionMode((BattleEntity *)CurrentPlayer(), bucket);
+        Entity_SetActionMode(D_8009D254, bucket);
 
         {
-            FieldActor *effect_actor;
+            BattleEntity *effect_actor;
 
-            effect_actor = CurrentPlayer();
-            Asset_Find08Alt(0x46A, 0, Pe1Fixed_Integer(&effect_actor->pos_x), Pe1Fixed_Integer(&effect_actor->pos_y), Pe1Fixed_Integer(&effect_actor->pos_z));
+            effect_actor = D_8009D254;
+            Asset_Find08Alt(0x46A, 0, effect_actor->posX.parts.integer, effect_actor->posY.parts.integer, effect_actor->posZ.parts.integer);
         }
 
         {
-            FieldActor *flag_actor;
+            BattleEntity *flag_actor;
 
-            flag_actor = CurrentPlayer();
-            flags = flag_actor->flags;
+            flag_actor = D_8009D254;
+            flags = flag_actor->entityFlags;
             actor = flag_actor;
         }
         if (flags & 0x100) {
-            actor->flags = flags & ~0x100;
+            actor->entityFlags = flags & ~0x100;
             g_BattleHitActionPending = 2;
         }
     }
@@ -243,14 +239,14 @@ void Entity_UpdateTimers(void) {
         Battle_SubActionStep();
         timer40 = g_ActiveActor->statusTimer40 - g_ActiveActor->statusStep3E;
         g_ActiveActor->statusTimer40 = timer40;
-        if ((timer40 << 0x10) <= 0) {
+        if ((s16)timer40 <= 0) {
             (*state_flags) = ((*state_flags) & ~AYA_POISON_MASK);
         }
     }
     if (((*state_flags) & AYA_CONFUSION_MASK) == AYA_CONFUSION) {
         timer42 = g_ActiveActor->statusTimer42 - g_ActiveActor->statusStep3C;
         g_ActiveActor->statusTimer42 = timer42;
-        if ((timer42 << 0x10) <= 0) {
+        if ((s16)timer42 <= 0) {
             (*state_flags) = ((*state_flags) & ~AYA_CONFUSION_MASK);
             D_8009D2E8 &= ~FIELD_MOVE_CONFUSED;
         }
@@ -258,7 +254,7 @@ void Entity_UpdateTimers(void) {
     if (((*state_flags) & AYA_DARKNESS_MASK) == AYA_DARKNESS) {
         timer44 = g_ActiveActor->statusTimer44 - g_ActiveActor->statusStep3C;
         g_ActiveActor->statusTimer44 = timer44;
-        if ((timer44 << 0x10) <= 0) {
+        if ((s16)timer44 <= 0) {
             (*state_flags) = ((*state_flags) & ~AYA_DARKNESS_MASK);
         }
     }
@@ -266,7 +262,7 @@ void Entity_UpdateTimers(void) {
     if ((status_group == AYA_STIFFNESS_SLOW) || (status_group == AYA_STIFFNESS_LOCK)) {
         timer46 = g_ActiveActor->statusTimer46 - g_ActiveActor->statusStep3C;
         g_ActiveActor->statusTimer46 = timer46;
-        if ((timer46 << 0x10) <= 0) {
+        if ((s16)timer46 <= 0) {
             if (((*state_flags) & AYA_STIFFNESS_MASK) == AYA_STIFFNESS_LOCK && D_8009D254->actionMode == 0x11) {
                 Entity_SetActionMode(D_8009D254, g_ActiveActor->actionMode12);
             }
@@ -280,7 +276,7 @@ void Entity_UpdateTimers(void) {
     if ((*state_flags) & AYA_HASTE) {
         global_timer = g_ActorEffectFlag100Timer - 1;
         g_ActorEffectFlag100Timer = global_timer;
-        if ((global_timer << 0x10) <= 0) {
+        if ((s16)global_timer <= 0) {
             (*state_flags) = ((*state_flags) & ~AYA_HASTE);
         }
     }
@@ -296,9 +292,9 @@ void Entity_UpdateTimers(void) {
                 g_ActiveActor->hpMirror = (u16) (g_ActiveActor->hpMirror + 1);
             }
         }
-        accumulator = g_ActiveActor->exp_or_acc -
-                    (g_ActiveActor->maxAtk /
-                     (g_ActiveActor->field04.fieldId04 * 0x1E));
+        accumulator = (s32)((u32)g_ActiveActor->exp_or_acc -
+                    (u32)(g_ActiveActor->maxAtk /
+                     (g_ActiveActor->field04.fieldId04 * 0x1E)));
         g_ActiveActor->exp_or_acc = accumulator;
         if (accumulator <= 0x10000) {
             g_ActiveActor->exp_or_acc = 0x10000;
@@ -308,7 +304,7 @@ void Entity_UpdateTimers(void) {
     if ((*state_flags) & 0x01000000) {
         effect_timer = g_AyaStatusEffectTimer - 1;
         g_AyaStatusEffectTimer = effect_timer;
-        if ((effect_timer << 0x18) <= 0) {
+        if ((s8)effect_timer <= 0) {
             (*state_flags) = ((*state_flags) & 0xFEFFFFFF);
         }
     }

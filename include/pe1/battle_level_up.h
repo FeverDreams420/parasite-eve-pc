@@ -5,7 +5,7 @@
 
 #include "pe1/entity_animation.h"
 
-extern BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern BattleRewardSlot g_BattleRewardSlots[10];
 extern u8 g_BattleStepIndex;
 extern s16 g_MenuFrameCommand;

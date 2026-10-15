@@ -28,6 +28,8 @@ _Alignas(16) u8 g_BootWorkArea[0x20000], D_8010BD00[0x20000];
 _Alignas(16) u8 D_80120D08[0x200000], g_SceneLoadScratchArea[0x20000];
 static _Alignas(16) u8 g_BootLoadedSceneArea[0x80008];
 u8 *g_StrFileDirBuffer = g_BootLoadedSceneArea + 8;
+static _Alignas(16) u8 g_BootDisplayWorkArea[BOOT_DISPLAY_WORK_SIZE];
+u8 *g_CdLoadAreaBase = g_BootDisplayWorkArea;
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */

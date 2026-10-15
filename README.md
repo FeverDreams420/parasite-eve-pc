@@ -89,7 +89,8 @@ PE_TEST_DISC="/path/to/Parasite Eve (Disc 1).bin" ctest --test-dir build --outpu
 ```
 
 The optional PsyZ window test is `./build/pc/parasite-eve-pc --smoke-test`.
-A direct `cmake -S pc -B pc/build` build remains supported.
+These commands still launch the abandoned `pc/` frontend. They are diagnostic
+only; they do not demonstrate that the original game's entrypoint runs.
 
 ## Layout
 

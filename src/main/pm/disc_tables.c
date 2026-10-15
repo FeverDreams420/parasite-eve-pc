@@ -212,8 +212,11 @@ int Boot_LoadOverlayTables(void) {
 
 int CdRom_LoadBootAudio(void) {
     int status;
-    u16 *range;
-    int retry;
+    const u16 *range = &g_BootDisplayDataLbaTbl;
+
+    if (!g_CdLoadAreaBase || range[1] <= range[0] ||
+        (u32)(range[1] - range[0]) * 2048 > BOOT_DISPLAY_WORK_SIZE ||
+        g_GameState.pe_image_base_lba > UINT32_MAX - range[0]) return -3;
 
     g_GameState.scene_audio.tracks.keys[0][1] = -1;
     g_GameState.scene_audio.tracks.keys[0][0] = -1;
@@ -224,38 +227,12 @@ int CdRom_LoadBootAudio(void) {
     g_GameState.flags &= -0xF1;
     Akao_Cmd_F0();
 
-retry_first:
-    range = g_SceneInitLbaTbl0;
-    retry = -1;
-    do {
-        status = CdRom_ReadSectors(g_GameState.pe_image_base_lba + range[0], 0, g_MdecOverlayLoadBase, range[1] - range[0]);
-    } while (status == retry);
-
-    while ((status = CdRom_PollReady()) != 0) {
-        if (status == -1) {
-            goto retry_first;
-        }
-    }
-
-    EnterCriticalSection();
-    FlushCache();
-    ExitCriticalSection();
-
-retry_second:
-    range = &g_BootDisplayDataLbaTbl;
-    retry = -1;
-    do {
-        status = CdRom_ReadSectors(g_GameState.pe_image_base_lba + range[0], 0, g_CdLoadAreaBase, range[1] - range[0]);
-    } while (status == retry);
-
-    while ((status = CdRom_PollReady()) != 0) {
-        if (status == -1) {
-            goto retry_second;
-        }
-    }
-
-    EnterCriticalSection();
-    FlushCache();
-    ExitCriticalSection();
+    /* The former first range installed MIPS decoder code. Its complete C
+     * module is linked now; only the following display-data range is read. */
+    status = CdRom_ReadSectors(g_GameState.pe_image_base_lba + range[0], 0,
+                              g_CdLoadAreaBase, range[1] - range[0]);
+    if (status < 0) return -1;
+    while ((status = CdRom_PollReady()) > 0) {}
+    if (status < 0) return -2;
     return 0;
 }

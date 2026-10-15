@@ -17,6 +17,7 @@ int MemCard_HasDelayedCallback(void);
 #include "pe1/resident_tables.h"
 #include "pe1/cdrom.h"
 #include "pe1/battle.h"
+#include "pe1/battle_update.h"
 #include "pe1/battle_cmd.h"
 #include "pe1/player_entity.h"
 #include "pe1/stat_modifiers.h"
@@ -267,6 +268,23 @@ static int new_game_inventory(void)
         } else CHECK(!Inv_LookupActiveListDisplayData(i));
     }
     CHECK(!Inv_GetActiveListItemType(-1) && !Inv_GetActiveListItemType(100));
+    /* Old BEEB0 is an interior address of the equipment pool, not a
+     * separate remap table. Count authored IDs through canonical records. */
+    for(unsigned i=0;i<40;++i)g_InventoryRuntime.equipment[i].itemId=(i%7)+1;
+    u8 last_item=g_InventoryRuntime.equipment[127].itemId;
+    g_InventoryRuntime.equipment[127].itemId=9;items[98]=0x17f;items[99]=-1;
+    for(int id=-1;id<0x20a;++id) {
+        int expected=0;
+        if(id>=g_InvCategoryBaseItemId && id<g_InvCategoryBaseItemId+3)
+            expected=g_KeyItemRecords[id-g_InvCategoryBaseItemId].ammo;
+        else for(unsigned i=0;i<100;++i) {
+            int value=items[i];
+            if(value>=0x100 && value<0x180)value=g_InventoryRuntime.equipment[value-0x100].itemId;
+            expected+=value==id;
+        }
+        CHECK(Inv_CountByValue(id)==expected);
+    }
+    g_InventoryRuntime.equipment[127].itemId=last_item;items[98]=items[99]=0;
     uint64_t filter_hash=UINT64_C(14695981039346656037);
     for(unsigned kind=0;kind<32;++kind) {
         int mask=(int)(1u<<kind);

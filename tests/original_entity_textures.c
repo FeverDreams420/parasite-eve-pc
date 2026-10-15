@@ -630,7 +630,7 @@ int main(void)
                 CHECK(g_RoomM005BeaconModel0 && g_RoomM005BeaconModel1);
                 BattleEntity distant_player={0},*old_player=D_8009D254;FieldActorState hit_state={0};
                 distant_player.core=(Combatant *)&hit_state;effect_state.core_flags=0x01000005;
-                distant_player.posX.parts.integer=30000;distant_player.posZ.parts.integer=30000;D_8009D254=&distant_player;
+                distant_player.posX.parts.integer=30000;distant_player.posZ.parts.integer=30000;g_PlayerEntity=(FieldActor *)(&distant_player);
                 RenderBufferPrefix previous_buffers=D_800B0E38;
                 GteMatrix camera={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
                 GteMatrix *previous_view=g_GeomScroll.words.viewMatrix;g_GeomScroll.words.viewMatrix=&camera;
@@ -720,7 +720,7 @@ int main(void)
                 CHECK(hit_state.flags&0x4000);
                 g_PmTables=saved_pm;g_GameState.flags=saved_game_flags;g_GameStateFlags=saved_global_flags;srand(previous_random);
                 puts("Original M005 complete PM program: all three effects, player contact, natural script completion and slot release passed");
-                D_8009D254=old_player;D_800B0E38=previous_buffers;g_GeomScroll.words.viewMatrix=previous_view;
+                g_PlayerEntity=(FieldActor *)(old_player);D_800B0E38=previous_buffers;g_GeomScroll.words.viewMatrix=previous_view;
                 g_ActiveDrawSlot=previous_draw_slot;g_DrawPacketOffset=previous_offset;g_FieldFxCurrentAge=previous_age;
                 g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_slot;
                 puts("Original M005 beacon init: two real models, native joint 20, actor action and eight-child list passed");

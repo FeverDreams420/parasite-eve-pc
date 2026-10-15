@@ -641,9 +641,9 @@ int Inv_CountByValue(int arg0) {
             do {
                 value = *ptr;
                 if (value - 0x100U < 0x80U) {
-                    temp = g_ItemCodeRemapTable[(value << 16) >> 11];
+                    temp = g_InventoryRuntime.equipment[value - 0x100].itemId;
                 } else {
-                    temp = (value << 16) >> 16;
+                    temp = (s16)value;
                 }
                 count += ((temp ^ arg0) < 1U);
                 ptr++;

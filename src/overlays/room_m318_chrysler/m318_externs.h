@@ -6,7 +6,7 @@
 #include "pe1/field_actor.h"
 #include "pe1/field_color.h"
 
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern char g_RoomM318GetMayaPosErrorFormat[];
 extern char g_RoomM318FanSweepTrailColorTrack[];
 extern s32 rand(void);

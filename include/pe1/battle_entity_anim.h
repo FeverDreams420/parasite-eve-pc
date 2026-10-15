@@ -7,7 +7,7 @@
 #include "pe1/entity_animation.h"
 
 extern struct FieldActor *g_FieldActorListHead;
-extern BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern s8 g_BattleLiveEnemyCount;
 extern u16 g_BattlePeBonusReward;
 extern u32 g_BattleExpReward;

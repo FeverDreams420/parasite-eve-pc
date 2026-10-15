@@ -23,7 +23,6 @@ extern unsigned char g_InvTypeRankTableA[];
 extern unsigned char g_InvTypeRankTableB[];
 extern unsigned char g_InvSortRankTableB[];
 #define g_InvItemArray (g_InventoryRuntime.specialStorage)
-extern u8 g_ItemCodeRemapTable[];
 extern unsigned char g_ItemDropRngTable[];
 extern s16 g_InvActiveListItems[10];
 extern int g_InvActiveListCount;

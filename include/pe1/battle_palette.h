@@ -6,7 +6,7 @@
 #include "common.h"
 #include "pe1/game_state.h"
 
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern u8 g_EntityInstanceCounter;
 extern s8 g_BattleLiveEnemyCount;
 

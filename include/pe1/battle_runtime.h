@@ -12,7 +12,7 @@
 #include "pe1/scene_transition.h"
 
 extern Combatant *g_ActiveActor;
-extern BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern s16 g_MenuFrameCommand;
 extern int g_BattleAttackPmSlot;
 extern u8 g_BattleHitPending;

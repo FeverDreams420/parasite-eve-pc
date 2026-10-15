@@ -33,7 +33,7 @@ extern u8 g_SceneE08CentreGlowSprite[];
 extern u8 g_SceneE08CentreGlowSpriteG, g_SceneE08CentreGlowSpriteB, g_SceneE08CentreGlowSpriteCell, g_SceneE08CentreGlowSpriteClut, g_SceneE08CentreGlowSpriteFlip;
 extern s16 g_SceneE08CentreGlowSpriteOffset, g_SceneE08CentreGlowSpriteDepth;
 extern FieldGlowSprite g_SceneE08GlowModelHaloSprite;
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern u8 g_SceneE08RadialRibbonsRamp[];
 extern u16 g_SceneE08RingEffectRing0Mode;
 extern u8 g_SceneE08RingEffectSource[];

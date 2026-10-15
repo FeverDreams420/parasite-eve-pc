@@ -26,7 +26,6 @@ s16 Entity_ApplyHitAndSetAnim(void *);                 /* static */
 void Entity_UpdateTimers(void);
 /* Separate declarations preserve the original GCC quantities for each tail. */
 /* COMMON supplies small-data metadata to MASPSX. */
-s8 g_BattleHaltTimer;
 unsigned char g_AyaStatusEffectTimer;
 
 

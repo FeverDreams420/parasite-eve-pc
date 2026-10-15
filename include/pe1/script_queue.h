@@ -9,7 +9,7 @@
 #include "pe1/script_state.h"
 
 extern u8 *D_8009D2F0[];
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 /* The 0x200 script variables (0x800 bytes), cleared with the entity pools
  * and saved in the save tail; operand mode 2 indexes them. */
 extern u32 g_ScriptVariableBank[];

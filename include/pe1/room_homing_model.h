@@ -108,7 +108,7 @@ typedef struct RoomHomingModelEntity {
     s32 position[3];              /* 0x28 */
 } RoomHomingModelEntity;
 
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 
 extern void Akao_Cmd_21(int handle, int arg);
 

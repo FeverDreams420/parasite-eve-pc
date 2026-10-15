@@ -77,7 +77,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSoundBurstState, soundHandle) == 0xC,
 
 extern void Akao_Cmd_21(int, int);
 extern int rand(void);
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern void FieldFx_OffsetPointByAngles(void *, void *, int, void *, int, int);
 extern void LoadAverageShort12(void *, void *, int, int, void *);
 extern void FieldFx_DrawGlowLine(void *, void *, void *, void *, int, int, int);

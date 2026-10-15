@@ -8,8 +8,7 @@ typedef struct ScriptAnimObj {
     EntityAnimEventCore *core;
 } ScriptAnimObj;
 
-/* The twelve-argument entry uses C89 default promotions at the call boundary;
- * the definition retains byte/halfword parameter values within the function. */
+/* Script arguments are narrowed when stored in the six native event records. */
 void Script_SetObjAnimEntry12(ScriptAnimObj *obj, int index, int effectType,
                           int enterMode, int exitMode, int power,
                           int parameter0, int parameter1, int parameter2,

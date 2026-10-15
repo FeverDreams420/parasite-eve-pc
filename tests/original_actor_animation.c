@@ -1199,7 +1199,7 @@ static int native_effect_collision_coordinates(void)
 {
     BattleEntity player={0}, *saved=D_8009D254;
     GteShortVector quad[4]={{0,0,0},{16,0,0},{0,0,16},{16,0,16}};
-    D_8009D254=&player;
+    g_PlayerEntity=(FieldActor *)(&player);
     for(int x=-2;x<=18;++x) for(int z=-2;z<=18;++z) {
         GteShortVector point={x,99,z};
         player.posX.parts.integer=x; player.posY.parts.integer=99; player.posZ.parts.integer=z;
@@ -1227,7 +1227,7 @@ static int native_effect_collision_coordinates(void)
     if(actor_state.flags!=0x5234)return 0;
     u8 action=1;actor_state.action_state=&action;
     if(((RoomM005BeaconPool *)&actor)->node->state!=&action)return 0;
-    D_8009D254=saved;
+    g_PlayerEntity=(FieldActor *)(saved);
     puts("Original effect collision: player/native coordinate paths agree across 441 triangle/quad positions");
     return 1;
 }
@@ -1541,7 +1541,7 @@ static int authored_glow_script_cycle(void)
     owner.state=&owner_state; owner_state.control10.command_value=1;
     owner_state.action_state=&owner_action;
     player.core=&core; core.action=&action; action.actionCode.actionId=player_action;
-    D_8009D254=&player;
+    g_PlayerEntity=(FieldActor *)(&player);
     FieldFxObject *object=&buffer.primary[0].effect;
     object->prefix.asset_type=7; object->prefix.actor=&owner;
     memset(buffer.guard,0xa5,sizeof(buffer.guard));
@@ -1603,7 +1603,7 @@ static int authored_glow_script_cycle(void)
     if(Pm_Stop(0,&owner,0) || buffer.primary[0].header.state || buffer.primary[0].header.owner) do { fprintf(stderr,"authored effect failure line %d variant %u action %u\n",__LINE__,variant,player_action); return 0; } while(0);
     classes[variant]->unload(); g_PmTables=previous;
     g_GameState=previous_game; g_GameStateFlags=previous_flags;
-    D_8009D254=saved_player; D_800B0E38=saved;
+    g_PlayerEntity=(FieldActor *)(saved_player); D_800B0E38=saved;
     g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset; g_GeomScroll.words.viewMatrix=saved_view;
     g_GeomScroll.words.projectionDistance=saved_projection;
     }
@@ -2589,7 +2589,7 @@ static int original_hud_packet_initialization(void)
         }
     }
     uint64_t icon_hash=hash;hash=UINT64_C(14695981039346656037);
-    BattleEntity entity={0};entity.core=&actor;BattleEntity *old_entity=D_8009D254;D_8009D254=&entity;
+    BattleEntity entity={0};entity.core=&actor;BattleEntity *old_entity=D_8009D254;g_PlayerEntity=(FieldActor *)(&entity);
     u32 old_flags=g_GameStateFlags;int old_context=g_MenuItemContextFlag,old_frame=g_BattleFrameCounter;
     const u16 hp_cases[][2]={{0,0},{1,0},{9,9},{10,9},{99,10},{100,99},{999,100},{1000,999},{9999,0},{9999,9999}};
     const u32 states[]={0,0x400,0x800,0xC00,0x1FFF};const int frames[]={0,16,17,31};
@@ -2631,7 +2631,7 @@ static int original_hud_packet_initialization(void)
         }
         for(unsigned byte=0;byte<10;++byte)hash=(hash^((u8 *)&actor.exp_or_acc)[byte])*UINT64_C(1099511628211);
     }
-    D_8009D254=old_entity;g_GameStateFlags=old_flags;g_MenuItemContextFlag=old_context;g_BattleFrameCounter=old_frame;
+    g_PlayerEntity=(FieldActor *)(old_entity);g_GameStateFlags=old_flags;g_MenuItemContextFlag=old_context;g_BattleFrameCounter=old_frame;
     g_ActiveActor=old_actor;g_ActiveDrawSlot=old_slot;
     D_800B0E38.ordering[0]=old_ordering[0];D_800B0E38.ordering[1]=old_ordering[1];
     Battle_SetWindowBoundsByMode(old_mode);g_HudOrigin=old_origin;
@@ -2641,6 +2641,91 @@ static int original_hud_packet_initialization(void)
         fprintf(stderr,"Original HUD icon/active hashes %016llx/%016llx differ from USA MIPS\n",(unsigned long long)icon_hash,(unsigned long long)hash);return 0;
     }
     puts("Original HUD: 226 initialized packets, 65,536 icon lists and 19,200 active HUD frames match USA MIPS");
+    return 1;
+}
+
+static int original_combat_angles(void)
+{
+    extern int Battle_CalcRelativeAngle(BattleEntity *,BattleEntity *);
+    const s32 coords[]={0,1,-1,65536,-65536,0x3fffffff,-0x3fffffff,0x12345678,-0x12345678};
+    const s16 yaws[]={-32768,-8193,-4096,-1,0,1,1023,2048,4095,4096,8193,32767};
+    BattleEntity target={0},viewer={0};uint64_t hash=UINT64_C(14695981039346656037);
+    for(unsigned x=0;x<9;++x)for(unsigned z=0;z<9;++z)for(unsigned offset=0;offset<9;++offset)
+    for(unsigned yaw=0;yaw<12;++yaw) {
+        target.posX.fixed=coords[x];target.posZ.fixed=coords[z];
+        viewer.posX.fixed=coords[offset];viewer.posZ.fixed=-coords[offset];viewer.facingAngle=yaws[yaw];
+        u16 result=Battle_CalcRelativeAngle(&target,&viewer);
+        for(unsigned byte=0;byte<2;++byte)hash=(hash^((result>>(byte*8))&255))*UINT64_C(1099511628211);
+    }
+    /* Unhooked USA 800305C8 and its real SDK ratan2 callee. */
+    if(hash!=UINT64_C(0x37f5f1d4d13308e7)) {
+        fprintf(stderr,"Original battle angle hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
+    }
+    puts("Original relative battle angle: 8,748 fixed-position/facing cases match USA MIPS");
+    return 1;
+}
+
+/* Actual USA Entity_UpdateTimers 8001F9C4, including its real poison and
+ * animation callees, supplies this oracle. Auto medicine/cure are excluded here. */
+static int original_combat_timers(void)
+{
+    extern void Entity_UpdateTimers(void);
+    extern unsigned char g_AyaStatusEffectTimer;
+    const u16 times[]={0,1,32767,32768,65535,3,50,9000};
+    const u16 steps[]={0,1,2,32767,32768,65535,50,9001};
+    const u16 hp[]={0,1,50,200,65535,32767,32768,199};
+    const u32 energy[]={0,65536,65537,200000,5000000,0x7fffffff,0x80000000,0xffffffff};
+    const u8 transient[]={0,1,127,128,255,3,50,90};
+    Combatant actor;BattleEntity player;BattleAttributes attributes={0};
+    RenderAnimationDataHeader animation={0};animation.frame_count=9;
+    void *old_animation=g_GameState.bank_rows[0][4];
+    Combatant *old_actor=g_ActiveActor;FieldActor *old_player=g_PlayerEntity;
+    u32 old_flags=g_GameStateFlags;int old_slot=g_ActiveDrawSlot,old_lock=D_8009D2E8;
+    u16 old_haste=g_ActorEffectFlag100Timer;u8 old_transient=g_AyaStatusEffectTimer;
+    uint64_t hash=UINT64_C(14695981039346656037);
+    g_GameState.bank_rows[0][4]=&animation;g_ActiveActor=&actor;
+    g_PlayerEntity=(FieldActor *)&player;
+#define HASH_TIMER(value,bytes) do { \
+    u32 word=(u32)(value); \
+    for(unsigned byte=0;byte<(bytes);++byte)hash=(hash^((word>>(byte*8))&255))*UINT64_C(1099511628211); \
+} while(0)
+    for(unsigned low=0;low<256;++low)for(unsigned buffs=0;buffs<16;++buffs)
+    for(unsigned slot=0;slot<2;++slot)for(unsigned phase=0;phase<8;++phase) {
+        memset(&actor,0,sizeof(actor));memset(&player,0,sizeof(player));
+        actor.attributes=&attributes;actor.field04.fieldId04=2;
+        actor.exp_or_acc=(s32)energy[phase];actor.curHP=hp[phase];actor.hpMirror=198;
+        actor.maxHP=200;actor.maxAtk=100<<16;
+        actor.stateFlags=low|((buffs&7)<<8)|((buffs>>3)<<24);
+        actor.actionMode12=4;actor.subActionStep=3;actor.subActionCounter=(phase&1)?3:2;
+        actor.subActionPeriod=3;actor.statusStep3C=actor.statusStep3E=steps[phase];
+        actor.statusTimer40=actor.statusTimer42=actor.statusTimer44=actor.statusTimer46=times[phase];
+        player.core=&actor;player.actionMode=(phase&1)?8:17;player.animLastFrame=5;
+        player.animFrame=7<<16;player.animPrev.fixed=3<<16;player.entityFlags=0x240;
+        player.motionX=100;player.motionY=-200;player.motionZ=300;
+        player.renderObject.projected_x=123;player.renderObject.projected_y=234;
+        g_GameStateFlags=2;D_8009D2E8=0x1234;g_ActorEffectFlag100Timer=times[phase];
+        g_AyaStatusEffectTimer=transient[phase];g_ActiveDrawSlot=slot;
+        Entity_UpdateTimers();
+        HASH_TIMER(actor.stateFlags,4);HASH_TIMER(actor.curHP,2);HASH_TIMER(actor.hpMirror,2);
+        HASH_TIMER(actor.exp_or_acc,4);HASH_TIMER(actor.subActionCounter,1);
+        HASH_TIMER(actor.statusTimer40,2);HASH_TIMER(actor.statusTimer42,2);
+        HASH_TIMER(actor.statusTimer44,2);HASH_TIMER(actor.statusTimer46,2);
+        HASH_TIMER(g_ActorEffectFlag100Timer,2);HASH_TIMER(g_AyaStatusEffectTimer,1);HASH_TIMER(D_8009D2E8,4);
+        HASH_TIMER(player.motionX,4);HASH_TIMER(player.motionY,4);HASH_TIMER(player.motionZ,4);
+        HASH_TIMER(player.actionMode,1);HASH_TIMER(player.animLastFrame,1);
+        HASH_TIMER(player.animFrame,4);HASH_TIMER(player.animPrev.fixed,4);
+        HASH_TIMER(player.actionData==&animation,1);
+        HASH_TIMER(actor.panelAux_val,2);HASH_TIMER(actor.panelAux_x,2);HASH_TIMER(actor.panelAux_y,2);
+        HASH_TIMER(actor.panelAux_timer,1);HASH_TIMER(actor.panelAux_mode,1);
+    }
+#undef HASH_TIMER
+    g_GameState.bank_rows[0][4]=old_animation;g_ActiveActor=old_actor;g_PlayerEntity=old_player;
+    g_GameStateFlags=old_flags;g_ActiveDrawSlot=old_slot;D_8009D2E8=old_lock;
+    g_ActorEffectFlag100Timer=old_haste;g_AyaStatusEffectTimer=old_transient;
+    if(hash!=UINT64_C(0xa1f411039c73e485)) {
+        fprintf(stderr,"Original combat timer hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
+    }
+    puts("Original combat timers: 65,536 status/buff/phase cases match USA MIPS");
     return 1;
 }
 
@@ -2970,6 +3055,43 @@ static int original_scene_teardown(void)
     memcpy(g_FieldFxTaskPrograms,programs,sizeof(programs));
     if(!valid)fprintf(stderr,"original scene teardown regression\n");
     else puts("Original scene teardown: native callback order, duplicate/boundary IDs, retained resident handlers, task ranges and missing-state guards passed");
+    return valid;
+}
+
+static int original_boot_display_data(PeDisc *disc)
+{
+    Pe1GameState saved=g_GameState;PeDisc *old_image=g_CdImage;
+    u8 *workspace=g_CdLoadAreaBase;u16 first=g_PeImageSectorTable[71],last=g_PeImageSectorTable[72];
+    int queued=g_AkaoMessageQueueCount,valid=1;PeDiscFile archive;u8 expected[2048];
+    g_CdImage=disc;
+    if(Asset_OpenPeImage() || !pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    g_GameState.flags&=~0x1000000u;
+    memset(workspace,0xA5,BOOT_DISPLAY_WORK_SIZE);
+    glyph_pending=glyph_poll_retry=0;
+    if(CdRom_LoadBootAudio())valid=0;
+    for(unsigned sector=first;sector<last;++sector) {
+        if(!pe_disc_read(disc,&archive,(uint64_t)sector*2048,expected,sizeof(expected)) ||
+           memcmp(workspace+(sector-first)*2048,expected,sizeof(expected)))valid=0;
+    }
+    for(unsigned byte=(last-first)*2048;byte<BOOT_DISPLAY_WORK_SIZE;++byte)
+        if(workspace[byte]!=0xA5)valid=0;
+    if(g_GameState.scene_audio.tracks.keys[0][0]!=-1 || g_GameState.scene_audio.tracks.keys[0][1]!=-1 ||
+       g_GameState.scene_audio.tracks.keys[1][0]!=-1 || g_GameState.scene_audio.tracks.keys[1][1]!=-1 ||
+       g_GameState.scene_audio.tracks.banks[0]!=-1 || g_GameState.scene_audio.tracks.banks[1]!=-1)valid=0;
+    g_GameState.flags&=~0x1000000u;glyph_poll_retry=1;
+    if(CdRom_LoadBootAudio()!=-2)valid=0;
+    glyph_poll_retry=0;g_CdImage=NULL;g_GameState.flags&=~0x1000000u;
+    if(CdRom_LoadBootAudio()!=-1)valid=0;
+    g_CdImage=disc;
+    g_CdLoadAreaBase=NULL;if(CdRom_LoadBootAudio()!=-3)valid=0;g_CdLoadAreaBase=workspace;
+    g_PeImageSectorTable[72]=first;if(CdRom_LoadBootAudio()!=-3)valid=0;
+    g_PeImageSectorTable[72]=first-1;if(CdRom_LoadBootAudio()!=-3)valid=0;
+    g_PeImageSectorTable[72]=first+BOOT_DISPLAY_WORK_SIZE/2048+1;if(CdRom_LoadBootAudio()!=-3)valid=0;
+    g_PeImageSectorTable[72]=last;g_GameState.pe_image_base_lba=UINT32_MAX;
+    if(CdRom_LoadBootAudio()!=-3)valid=0;
+    g_GameState=saved;g_CdImage=old_image;g_AkaoMessageQueueCount=queued;
+    glyph_polls=0;glyph_pending=glyph_poll_retry=0;
+    if(valid)puts("Original boot display data: full archive range and scratch guards match Disc 1; I/O errors and invalid extents terminate without loading code");
     return valid;
 }
 
@@ -3978,6 +4100,7 @@ int main(int argc, char **argv)
 {
     if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
+    if (!original_combat_timers() || !original_combat_angles()) return 141;
     if (!original_startup_fade()) return 126;
     if (!original_save_metadata_storage()) return 125;
     if (!original_frame_random()) return 128;
@@ -4013,7 +4136,7 @@ int main(int argc, char **argv)
         if (!original_video_decoder(&disc)) return 136;
         if (!original_video_stream_errors()) return 137;
         if (!original_movie_uploads(&disc)) return 138;
-        if (!original_image_display_switch(&disc,&exe)) return 140;
+        if (!original_image_display_switch(&disc,&exe) || !original_boot_display_data(&disc)) return 140;
         if (!original_title_screen(&disc)) return 134;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];

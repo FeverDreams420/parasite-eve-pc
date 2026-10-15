@@ -52,7 +52,7 @@ typedef struct RoomM089PulseEvent {
     u8 active;
 } RoomM089PulseEvent;
 
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern u8 *g_RoomM089PulseModel;
 extern u8 g_RoomM089PulseColorTrack[];
 

@@ -15,7 +15,7 @@ extern GteShortVector g_RoomM123JointAnchor;
 int RoomM123_JointSwirlParticleCallback(int mode, RoomM123Particle *particle);
 extern int rand(void);
 extern GteShortVector g_RoomM123PulseRingTilt;
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 int RoomM123_PulseRingCallback(int mode, RoomPulseParticle *particle, int *reference);
 extern GteShortVector g_RoomM123JointOffset;
 extern GteShortVector g_RoomM123WaveSpinBase;

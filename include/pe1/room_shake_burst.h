@@ -88,7 +88,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomShakeSweepParticle, stretch) == 0x0E,
 PE1_STATIC_ASSERT(sizeof(RoomShakeSweepParticle) == 0x10,
                   room_shake_sweep_particle_size);
 
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 
 extern int rand(void);
 extern void Battle_HaltOnPositiveX(void);

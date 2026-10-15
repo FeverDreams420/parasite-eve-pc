@@ -271,13 +271,6 @@ typedef struct FieldMoveTarget {
 
 void Entity_WriteFieldByCmd(FieldActor *actor, int command, int value);
 
-/*
- * Do not add canonical externs for g_PlayerEntity/g_ActiveActor here yet. Matching
- * functions currently use several declaration shapes to select absolute vs
- * gp-relative addressing. Prefer local externs until a whole actor cluster is
- * migrated and build-checked.
- */
-
 /* The actor whose script-node lists are being run. */
 extern FieldActor *g_CurrentEntity;
 /* Head of the active actor list (entity/pool.c). */

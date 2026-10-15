@@ -65,7 +65,7 @@ typedef struct RoomM086EventState {
     u8 active;
 } RoomM086EventState;
 
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern u8 *g_RoomM086SeekerModelB;
 
 /* room_m086 seeker controller (RoomM086_SeekerController): follows joint 7 of the

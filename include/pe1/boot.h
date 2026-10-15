@@ -19,6 +19,8 @@ int Scene_LoadSceneData(void);
 /* 0 success; -1 audio; -2/-3 main read/poll; -4/-5 texture read/poll;
  * -6/-7 directory read/poll; -8 invalid workspace or sector range. */
 int Boot_LoadOverlayTables(void);
+/* Boot-display data only: -1 read, -2 poll, -3 invalid range/workspace.
+ * Decoder code is statically linked; no executable overlay is loaded. */
 int CdRom_LoadBootAudio(void);
 /* -1: read failure; -2: poll failure; -3: invalid range/workspace. */
 int CdRom_LoadInitialImage(void);

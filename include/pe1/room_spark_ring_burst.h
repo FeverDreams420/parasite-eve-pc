@@ -88,7 +88,7 @@ typedef struct RoomSparkBattleEntity {
     RoomSparkActor *actor;
 } RoomSparkBattleEntity;
 
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 
 int rand(void);
 

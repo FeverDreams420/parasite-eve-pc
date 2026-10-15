@@ -1,4 +1,5 @@
 #include "pe1/entity_frame_update.h"
+#include "pe1/player_entity.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/pm.h"
 #include "pe1/geom_state.h"
@@ -205,6 +206,7 @@ int main(void)
         secondary[i].header=(PmSlotHeader){.state=2,.command=0,.owner=&actors[i]};
     }
     g_PlayerEntity=&actors[1]; g_FieldMoveLock=0x1f;
+    CHECK((void *)D_8009D254==(void *)&actors[1]);
     for(unsigned n=0;n<4;++n) {
         unsigned index=order[n];
         actors[index].flags=0x800010;
@@ -222,7 +224,7 @@ int main(void)
         }
         CHECK(live==3-n);
     }
-    CHECK(!g_FieldActorListHead && !g_PlayerEntity && g_FieldMoveLock==0x12);
+    CHECK(!g_FieldActorListHead && !g_PlayerEntity && !D_8009D254 && g_FieldMoveLock==0x12);
     unsigned available=0;
     for(FieldActor *p=g_EntityFreeListHead;p;p=p->next) CHECK(++available<=14);
     CHECK(available==14);

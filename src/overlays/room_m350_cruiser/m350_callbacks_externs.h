@@ -49,7 +49,7 @@ extern RenderColor g_RoomM350BodyRingColor0, g_RoomM350BodyRingColor1;
 extern int rand(void);
 extern void g_RoomM350HandSparkColor;
 extern unsigned char g_RoomM350AreaTrackPlayer;
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern void RoomM350_AreaPlayerPulseCallback(void);
 int RoomM350_DropFlareCallback(int event, int **position);
 extern char g_RoomM350DropSplashTrigger;

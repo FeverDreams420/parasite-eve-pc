@@ -15,7 +15,7 @@ typedef struct FieldTriScratch {
 
 extern FieldTriScratch *g_FieldFxTriScratch;
 
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 
 int FieldFx_IsPointInQuadXZ(void *point, GteShortVector *quad);
 int FieldFx_IsPointInTriangleXZ(GteShortVector *point, GteShortVector *tri);

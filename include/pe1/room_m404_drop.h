@@ -69,7 +69,7 @@ typedef struct RoomM404DropEvent {
     u8 active;
 } RoomM404DropEvent;
 
-extern struct BattleEntity *D_8009D254;
+#include "pe1/player_entity.h"
 extern RoomM404DropRotation g_RoomM404DropFanTilt;
 extern RoomM404DropColor g_RoomM404DropFanColor;
 extern RoomM404DropColor g_RoomM404DropGlowColor;

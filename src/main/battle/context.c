@@ -12,15 +12,13 @@
 
 /* Script setup and execution share six inline animation-event records. */
 
-void Script_SetObjAnimEntry12(obj, index, effectType, enterMode, exitMode, power,
-                           parameter0, parameter1, parameter2, parameter3, category, frame)
-    ScriptAnimObj *obj;
-    u8 index;
-    int effectType, enterMode;
-    u8 exitMode;
-    u16 power;
-    u8 parameter0, parameter1, parameter2, parameter3, category, frame;
+void Script_SetObjAnimEntry12(ScriptAnimObj *obj, int index, int effectType,
+                           int enterMode, int exitMode, int power,
+                           int parameter0, int parameter1, int parameter2,
+                           int parameter3, int category, int frame)
 {
+    index = (u8)index;
+    if (!obj || !obj->core || index >= 6) return;
     EnemyActionEffect *dst = &obj->core->records[index];
 
     dst->state = 0;
@@ -38,7 +36,9 @@ void Script_SetObjAnimEntry12(obj, index, effectType, enterMode, exitMode, power
 }
 
 void Script_SetObjAnimEntry5(ScriptAnimObj *obj, int index, int effectType, int enterMode, u8 exitMode, u16 power) {
-    EnemyActionEffect *dst = &obj->core->records[(u8)index];
+    index = (u8)index;
+    if (!obj || !obj->core || index >= 6) return;
+    EnemyActionEffect *dst = &obj->core->records[index];
 
     dst->state = 0;
     dst->effectType = effectType;
@@ -48,18 +48,17 @@ void Script_SetObjAnimEntry5(ScriptAnimObj *obj, int index, int effectType, int 
 }
 
 void Battle_SetEntryCoords(ScriptAnimObj *arg0, unsigned char arg1, int arg2, int arg3) {
+    if (!arg0 || !arg0->core || arg1 >= 6) return;
     EnemyActionEffect *entry = &arg0->core->records[arg1];
 
     entry->enterStep = arg2;
     entry->exitStep = arg3;
 }
 
-/* Three pins preserve the initial core, retained core and parent
- * lifetimes with stock GCC and maspsx. */
-
 int Entity_TriggerAnimEvent(BattleEntity *entity, u8 slot)
 {
     int result = 0;
+    if (!entity) return 0;
     EntityAnimEventCore *initial = entity->core;
     EntityAnimEventCore *core;
     BattleEntity *actor;
@@ -518,7 +517,7 @@ int Battle_CalcDistToPlayer(BattleEntity *actor, BattleEntity *player)
 
     x = actor->renderObject.target_x - player->posX.parts.integer;
     y = actor->renderObject.target_z - player->posZ.parts.integer;
-    return Math_IntSqrt((x * x) + (y * y));
+    return Math_IntSqrt((u32)x * (u32)x + (u32)y * (u32)y);
 }
 
 s16 Battle_CalcAngleToTarget(RenderObjectEntity *object, void *target)
@@ -528,33 +527,19 @@ s16 Battle_CalcAngleToTarget(RenderObjectEntity *object, void *target)
     int y;
     int angle;
 
-    x = object->target_x << 16;
-    y = object->target_z << 16;
-    angle = ratan2(x - position[0], y - position[2]);
+    x = (s32)((u32)object->target_x << 16);
+    y = (s32)((u32)object->target_z << 16);
+    angle = ratan2((s32)((u32)x - (u32)position[0]), (s32)((u32)y - (u32)position[2]));
     return angle + 0x800;
 }
 
 int Battle_CalcRelativeAngle(BattleEntity *target, BattleEntity *viewer)
 {
-    int angle;
-    int wrapped;
-
-    angle = 0x800 - ratan2(target->posX.fixed - viewer->posX.fixed,
-                           target->posZ.fixed - viewer->posZ.fixed);
-    angle = angle << 16;
-    angle = angle >> 16;
+    s32 x = (s32)((u32)target->posX.fixed - (u32)viewer->posX.fixed);
+    s32 z = (s32)((u32)target->posZ.fixed - (u32)viewer->posZ.fixed);
+    int angle = (s16)(0x800 - ratan2(x, z));
     angle += viewer->facingAngle;
-    if (angle >= 0)
-    {
-        wrapped = angle;
-    }
-    else
-    {
-        wrapped = angle + 0xFFF;
-    }
-    wrapped >>= 12;
-    wrapped <<= 12;
-    return (s16) (angle - wrapped);
+    return (s16)(angle % 0x1000);
 }
 
 void Battle_CheckDropChance(void)

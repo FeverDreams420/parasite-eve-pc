@@ -7,6 +7,7 @@
 #include "pe1/inventory_sort.h"
 #include "pe1/inventory_state.h"
 #include "pe1/menu_state.h"
+#include "pe1/menu_inventory.h"
 #include "pe1/psyq_libc.h"
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached

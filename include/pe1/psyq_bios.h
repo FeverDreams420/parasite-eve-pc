@@ -1,6 +1,9 @@
 #ifndef PE1_PSYQ_BIOS_H
 #define PE1_PSYQ_BIOS_H
 
+
+#include <stddef.h>
+
 /* Character-output services reached through the LIBC BIOS veneers. */
 int printf(const char *format, ...);
 int puts(const char *text);
@@ -50,9 +53,9 @@ int ChangeClearRCnt(int counter, int enabled);
     __asm__ volatile("syscall" : "=r"(result), "=r"(selector) \
                      : "1"(selector) : "memory")
 
-void bzero(void *destination, int length);
-void *memcpy(void *destination, const void *source, unsigned int length);
-char *strcpy(char *destination, char *source);
+void bzero(void *destination, size_t length);
+void *memcpy(void *destination, const void *source, size_t length);
+char *strcpy(char *destination, const char *source);
 
 int DeliverEvent(unsigned int event, int spec);
 

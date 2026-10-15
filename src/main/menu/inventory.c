@@ -303,7 +303,7 @@ int Menu_InventoryPageNavHandler(MenuWidgetNode *root, unsigned int flags) {
                 oldx = other->x;
                 x = g_MenuItemUseMode;
                 if (x == 0) {
-                    x = (int)child->popup_node;
+                    x = child->popup_node != NULL;
                     if (x == 0) x = 0x9C;
                     else x = 0xA2;
                 } else x = 0xB0;
@@ -364,7 +364,7 @@ int Menu_InventoryPageNavHandler(MenuWidgetNode *root, unsigned int flags) {
 }
 
 #define NULL ((void *)0)
-void Menu_DrawSkillSelectionList(int arg0);
+void Menu_DrawSkillSelectionList(MenuWidgetNode *arg0);
 
 void Menu_OpenSkillSelectionView(void) {
     MenuWidgetNode *temp_a0;
@@ -382,8 +382,8 @@ void Menu_OpenSkillSelectionView(void) {
 
 void Menu_DrawSkillItem(int arg0);
 
-void Menu_DrawSkillSelectionList(int arg0) {
-    MenuWidget_DrawList((MenuWidgetNode *)arg0, Menu_DrawSkillItem);
+void Menu_DrawSkillSelectionList(MenuWidgetNode *arg0) {
+    MenuWidget_DrawList(arg0, Menu_DrawSkillItem);
 }
 #undef NULL
 
@@ -395,7 +395,7 @@ void Menu_DrawSkillSelectionList(int arg0) {
 int g_MenuEquipSwapSource;
 int g_MenuEquipSwapSkipRestore;
 
-s32 Menu_HandleAyaInventorySelectionInput(s32 arg0, s32 arg1)
+s32 Menu_HandleAyaInventorySelectionInput(MenuWidgetNode *arg0, unsigned int arg1)
 {
     s32 temp_v0_2;
     void *temp_v0;
@@ -444,11 +444,11 @@ void Menu_ProcessSwapReturnIfPending(void) {
 #define NULL ((void *)0)
 ItemDataRecord *g_MenuSelectedItemData;
 void Menu_DrawEquipStatsPanel(void);
-int Menu_HandleItemInput(int arg0, int arg1);
+int Menu_HandleItemInput(MenuWidgetNode *arg0, unsigned int arg1);
 void Menu_DrawEquipItemName(void);
 void Menu_DrawEquipItemIcon(void);
-int Menu_DrawSoundEffectList();
-int Menu_DrawEquipItemDetailPanel();
+void Menu_DrawSoundEffectList(MenuWidgetNode *node);
+void Menu_DrawEquipItemDetailPanel(MenuWidgetNode *node);
 int g_MenuItemDiscardMode;
 void Draw_PrintRawText(u8 *arg0);
 
@@ -518,7 +518,7 @@ void Menu_DrawEquipStatsPanel(void) {
     }
 }
 
-int Menu_HandleItemInput(int arg0, int arg1) {
+int Menu_HandleItemInput(MenuWidgetNode *arg0, unsigned int arg1) {
     int value;
     ItemDataRecord *ptr;
 

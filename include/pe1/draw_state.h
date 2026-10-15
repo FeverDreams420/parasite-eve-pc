@@ -114,6 +114,8 @@ extern s32 g_DrawBufferIndex;
 /* g_DrawBlendColor and the halved blend Draw_BlendColor stores after it
  * (g_DrawScratchBuffer) as one pair; the wipe bars pick one by mode. */
 extern u32 g_DrawBlendColorPair[];
+#define g_DrawBlendColor (g_DrawBlendColorPair[0])
+#define g_DrawScratchBuffer ((int *)&g_DrawBlendColorPair[1])
 extern GpuDrawEnabledFlag g_DrawEnabled;
 extern short g_SeqElapsed;
 extern volatile unsigned char g_SceneInitSubphase;

@@ -526,7 +526,7 @@ void Menu_DrawEquipOptionsList(int arg0) {
     MenuWidget_DrawList((MenuWidgetNode *)arg0, Menu_DrawWeaponModSlots);
 }
 
-s32 Menu_EquipOptionsInputHandler(void *arg0, s32 arg1) {
+s32 Menu_EquipOptionsInputHandler(MenuWidgetNode *arg0, unsigned int arg1) {
     s32 temp_a1;
     MenuWidgetNode *temp_v0;
     MenuWidgetNode *temp_v0_2;

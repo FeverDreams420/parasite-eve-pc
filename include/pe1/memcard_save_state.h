@@ -27,7 +27,7 @@ int format(char *device);
 int lseek(int descriptor, int offset, int origin);
 int read(int descriptor, void *buffer, int count);
 int write(int descriptor, void *buffer, int count);
-int strncmp(const char *left, const char *right, unsigned int count);
+
 
 unsigned int MemCard_GetDialogMode(void);
 int Menu_CreateSaveSlotListView(int port, int count);

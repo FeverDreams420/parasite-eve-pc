@@ -1,3 +1,15 @@
+#include "pe1/game_timers.h"
+#include "pe1/game_state.h"
+#include "pe1/draw_wipe_rect.h"
+#include "pe1/save.h"
+#include "pe1/menu_queue.h"
+#include "pe1/textbox.h"
+#include "pe1/menu_flags.h"
+#include "pe1/memcard.h"
+#include "pe1/menu_inventory.h"
+void Menu_FullInit(void);
+void MemCard_ClearDelayedCallback(void);
+int MemCard_HasDelayedCallback(void);
 #include "pe1/aya.h"
 #include "pe1/resident_tables.h"
 #include "pe1/cdrom.h"
@@ -468,6 +480,46 @@ static int recalc_stats(void)
     g_InvItemPtr=NULL;
     return 0;
 }
+static unsigned delayed_calls;
+static void delayed_probe(void) { ++delayed_calls; }
+static int original_menu_bootstrap(void)
+{
+    memset(&g_SaveRuntimeState,0xA5,sizeof(g_SaveRuntimeState));
+    MemCard_SetDelayedCallback(delayed_probe);
+    CHECK(MemCard_HasDelayedCallback() && g_MemCardDelayedCallbackTimer==1);
+    Menu_FullInit();
+    /* Complete serialized image from USA Menu_FullInit 800527C8 in MIPS.
+     * Only the three BIOS bzero calls use host memory-service semantics. */
+    uint64_t hash=UINT64_C(14695981039346656037);
+    for(size_t i=0;i<sizeof(g_SaveRuntimeState);++i)
+        hash=(hash^((u8 *)&g_SaveRuntimeState)[i])*UINT64_C(1099511628211);
+    CHECK(hash==UINT64_C(0x0b3a33783621c7a8));
+    CHECK(&g_AyaSaveState.blend_color==&g_SaveRuntimeState.drawBlendColor);
+    CHECK((u8 *)&g_PlayerInventoryState==(u8 *)&g_SaveRuntimeState+0x20);
+    CHECK(!MemCard_HasDelayedCallback() && !g_MemCardDelayedCallbackTimer && !delayed_calls);
+    CHECK(g_GameState.flags&0x40000000);
+    CHECK(g_MenuWidgetFreeListHead==g_MenuWidgetNodePool && !g_MenuWidgetCurrentNode &&
+          !g_MenuWidgetActiveListHead && !g_MenuWidgetNodePool[23].next);
+    for(unsigned i=0;i<23;++i) CHECK(g_MenuWidgetNodePool[i].next==g_MenuWidgetNodePool+i+1);
+    CHECK(g_SaveMetadataWindowIndex==1 && g_SaveMetadataWindowLength==8 &&
+          g_SaveMetadataCursor==g_SaveRuntimeState.windows.metadata[1].text);
+    CHECK(g_SaveRuntimeState.cursorMetadata[0].text[0]==255 &&
+          g_SaveRuntimeState.cursorMetadata[1].text[0]==255);
+    CHECK(g_DrawBlendColorPair[0]==0x404040 && g_DrawBlendColorPair[1]==0x404040);
+    CHECK(g_DrawBaseY==8 && g_TextboxKernGlyph0F==1);
+    CHECK(g_GameTimers[0].current==0 && g_GameTimers[1].current==0 &&
+          g_GameTimers[2].current==0 && g_GameTimers[3].current==0);
+    CHECK(g_TextboxNameGlyphs.count==3 && g_TextboxNameGlyphs.glyphs[0]==0x10 &&
+          g_TextboxNameGlyphs.glyphs[1]==0x48 && g_TextboxNameGlyphs.glyphs[2]==0x30);
+    MemCard_SetDelayedCallback(delayed_probe);
+    MemCard_DelayedCallback(); CHECK(!delayed_calls && g_MemCardDelayedCallbackTimer==2);
+    MemCard_DelayedCallback(); CHECK(!delayed_calls && g_MemCardDelayedCallbackTimer==3);
+    MemCard_DelayedCallback(); CHECK(delayed_calls==1 && !MemCard_HasDelayedCallback());
+    MemCard_DelayedCallback(); CHECK(delayed_calls==1);
+    puts("Original full menu initialization with real resident data and delayed callback passed");
+    return 0;
+}
+
 int main(void)
 {
     CHECK(pending_command_stack() == 0);
@@ -538,6 +590,7 @@ int main(void)
     CHECK(equipment_init()==0);
     CHECK(inventory_selection()==0);
     CHECK(recalc_stats()==0);
+    CHECK(original_menu_bootstrap()==0);
     puts("Original player stat recalculation: 297 level/modifier combinations and inventory capacity passed");
     pe_disc_close(&disc);
     printf("Original stat queries: %u values across seven real growth tables, level/sublevel/distance/overflow passed\n",queries);

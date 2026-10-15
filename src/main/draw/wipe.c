@@ -20,7 +20,7 @@ u16 *g_DrawVertexWritePtr;
 int g_TextCursorX;
 int g_TextCursorY;
 
-int g_DrawBlendColor;
+u32 g_DrawBlendColorPair[2];
 
 int Draw_GetBlendColor(void) {
     return g_DrawBlendColor;

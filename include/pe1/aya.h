@@ -100,7 +100,7 @@ typedef union PlayerInventoryState {
     AyaSaveState aya;
     struct { u8 prefix[0x20]; InventoryRuntime inventory; } runtime;
 } PlayerInventoryState;
-extern PlayerInventoryState g_PlayerInventoryState;
+#define g_PlayerInventoryState (g_SaveRuntimeState.player)
 #define g_AyaSaveState (g_PlayerInventoryState.aya)
 #define g_InventoryRuntime (g_PlayerInventoryState.runtime.inventory)
 PE1_STATIC_ASSERT(offsetof(PlayerInventoryState, runtime.inventory.slots) == offsetof(AyaSaveState, inventory_items), player_inventory_slots_alias);
@@ -185,5 +185,7 @@ int Aya_StatOverflowQuery(int kind, int value);
 int Battle_GetScaledMaxHP(int level);
 void Aya_DeriveStats(int *out_max, int *out_current);
 int Aya_UnlockParasiteSpellById(int key);
+
+#include "pe1/save_blob.h"
 
 #endif /* PE1_AYA_H */

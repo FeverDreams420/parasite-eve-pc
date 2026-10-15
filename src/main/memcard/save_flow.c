@@ -13,6 +13,9 @@
 #include "pe1/save_tail_state.h"
 #include "pe1/script_queue.h"
 
+void (*g_MemCardDelayedCallback)(void);
+int g_MemCardDelayedCallbackTimer;
+
 /* The save tail is a packed byte stream: each record is copied as an
  * unaligned byte block at the IO cursor, which then advances past it. */
 #define SAVE_PUT(type, src)                                \

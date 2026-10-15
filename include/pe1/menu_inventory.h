@@ -14,7 +14,7 @@ int Menu_InventoryNavigate(MenuWidgetNode *current, MenuWidgetNode *node,
 void Menu_CreateBonusPointAllocationView(void);
 void Menu_SetSwapReturnFlag(void);
 void Menu_ProcessSwapReturnIfPending(void);
-int Menu_HandleAyaInventorySelectionInput(int node, int flags);
+int Menu_HandleAyaInventorySelectionInput(MenuWidgetNode *node, unsigned int flags);
 
 extern int g_InvItemUsableFlag, g_MenuInputPausePending;
 void Menu_OpenItemUsePanelAtIndex(int index);

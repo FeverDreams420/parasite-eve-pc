@@ -2,6 +2,7 @@
 #define PE1_DRAW_WIPE_RECT_H
 
 #include "common.h"
+#include "pe1/save_blob.h"
 #include "pe1/bounds_check.h"
 #include "pe1/draw_state.h"
 #include "pe1/psyq_gpu.h"
@@ -12,9 +13,7 @@
  * is the inline form of Draw_BlendColor. */
 
 extern int g_DrawGradientBlendColor;
-extern int g_DrawBlendColor;
-extern int g_SavedDrawBlendColor[];
-extern int g_DrawScratchBuffer[];
+#define g_SavedDrawBlendColor (&g_SaveRuntimeState.drawBlendColor)
 extern u16 *g_DrawVertexWritePtr;
 extern u8 g_WipeRectEdgeList[];
 
@@ -89,13 +88,13 @@ PE1_STATIC_ASSERT(sizeof(DrawWipeVertex) == 4, draw_wipe_vertex_size);
 /* Reserve `size` bytes of the packet arena into `packet` (0 on overflow). */
 #define DRAW_ALLOC_PACKET(packet, size)                                  \
     {                                                                    \
-        u32 old = (u32)g_DrawPacketCursor;                                            \
-        u32 next = old + (size);                                         \
+        u8 *old = g_DrawPacketCursor;                                            \
+        u8 *next = old + (size);                                         \
                                                                          \
-        (packet).word = 0;                                               \
-        if (next < (u32)g_DrawPacketArenaBase + 0x4000) {                                \
+        (packet).bytes = NULL;                                               \
+        if (next < g_DrawPacketArenaBase + 0x4000) {                                \
             g_DrawPacketCursor = next;                                           \
-            (packet).word = old;                                         \
+            (packet).bytes = (char *)old;                                         \
         } else {                                                         \
             Inv_BoundsCheckAssertStub(1);                                   \
         }                                                                \

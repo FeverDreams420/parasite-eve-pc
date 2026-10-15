@@ -110,7 +110,6 @@ void Menu_CopyPromptCodes(unsigned char *src) {
 }
 
 
-PlayerInventoryState g_PlayerInventoryState;
 int g_StatScaleBase[7];
 
 void Inv_RecalcSlotStats(void) {

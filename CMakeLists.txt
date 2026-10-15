@@ -34,6 +34,9 @@ add_library(parasite-eve-original OBJECT
     src/main/item/active_list.c
     src/main/time/counters.c
     src/main/save/game_data.c
+    src/main/memcard/save_flow.c
+    src/main/menu/inventory.c
+    src/main/item/armor_capacity.c
     src/main/render/font.c
     src/main/render/font_load.c
     src/main/menu/status_panels.c
@@ -59,6 +62,8 @@ add_library(parasite-eve-original OBJECT
     src/main/draw/pipeline.c
     src/main/draw/frame.c
     src/main/draw/text.c
+    src/main/draw/textbox.c
+    src/main/draw/wipe.c
     src/main/pm/disc_tables.c
     src/main/pm/process.c
     src/main/entity/pool.c
@@ -470,7 +475,8 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-stat-assets tests/original_stat_assets.c $<TARGET_OBJECTS:parasite-eve-original-disc>
-        $<TARGET_OBJECTS:parasite-eve-original>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-pad>
+        $<TARGET_OBJECTS:parasite-eve-original-actor-animation> $<TARGET_OBJECTS:parasite-eve-original-akao>)
     target_include_directories(test-original-stat-assets PRIVATE include)
     target_link_libraries(test-original-stat-assets PRIVATE psyz)
     add_test(NAME original-game-stat-assets COMMAND test-original-stat-assets)

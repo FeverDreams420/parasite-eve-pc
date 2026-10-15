@@ -2,6 +2,7 @@
 #define PE1_SAVE_BLOB_H
 
 #include "common.h"
+#include "pe1/aya.h"
 
 typedef unsigned char SaveU8;
 
@@ -43,6 +44,8 @@ typedef struct SaveBytes12E4 {
  * name that the rename screen edits (see SaveMetadataWindow). */
 typedef struct SaveRuntimeState {
     union {
+        struct {
+    union {
         SaveMetadataWindow metadata[2];
         struct {
 /* 0x00 */ SaveU8 saveName[8];
@@ -67,6 +70,12 @@ typedef struct SaveRuntimeState {
         struct {
             SaveU8 reserved10D8[0x1EC];
 /* 0x12C4 */ SaveMetadataWindow cursorMetadata[2];
+        };
+    };
+        };
+        struct {
+            SaveU8 playerPrefix[0x20];
+            PlayerInventoryState player;
         };
     };
 } SaveRuntimeState;

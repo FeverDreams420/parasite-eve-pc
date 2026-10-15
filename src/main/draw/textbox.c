@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe1/draw_state.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/field_pad.h"
 #include "pe1/menu_flags.h"
@@ -16,6 +17,7 @@ unsigned char g_TextboxKernGlyph0F;
 TextboxRect g_TextboxPendingRect;
 u8 g_DialogueChoiceCursor;
 u8 g_PlayerMovementEnabled;
+TextboxNameGlyphs g_TextboxNameGlyphs = {{0x10, 0x48, 0x30, 0, 0, 0, 0, 0, 0}, 3};
 
 /* A draw-mode word pair followed by the sprite primitive it prefixes. */
 typedef struct GpuModeSprtPacket {
@@ -135,7 +137,7 @@ void Render_SetupFogLayer(void *source) {
         SetSprt(sprite);
         if (MargePrim(draw_mode, sprite)) exit(-1);
 
-        sprite_fields = (RenderSpritePacket *)(((u8)i * 28) + (int)sprite_base);
+        sprite_fields = (RenderSpritePacket *)(sprite_base + (u8)i * 28);
         SetShadeTex(sprite_fields, 1);
         x_arg = 0;
 
@@ -162,7 +164,7 @@ void Render_SetupFogLayer(void *source) {
         SetDrawTPage(tile_mode, 0, 1, tpage & 0xFFFF);
         SetTile(tile);
         if (MargePrim(tile_mode, tile)) exit(-1);
-        payload = (u8 *)(((u8)i * 24) + (int)tile_payload_base);
+        payload = (u8 *)(tile_payload_base + (u8)i * 24);
         dither_enabled = 1;
         {
             int two = 2;

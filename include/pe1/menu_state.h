@@ -102,9 +102,8 @@ extern unsigned char g_MenuBlendColorPanelPoints[];
  *   g_MenuWidgetFreeListHead  active widget/draw pointer    : 0x800a22e0  -> 0x800a2640
  *   g_MenuDrawPhase  menu draw phase / step        : field 0x01  -> menu 0x08
  *   g_DrawPacketCursor  active draw buffer pointer     : switches with the layer
- *   (The g_DrawScratchBuffer..g_MenuWidgetSavedNode cluster is the MenuWidget pool head/free/tail,
- *    managed by MenuWidget_InitPool / MenuWidget_CreateNode; non-null only
- *    while a menu owns it -> a clean "is a menu open?" test.)
+ *   g_DrawScratchBuffer is the halved blend colour, adjacent to the widget
+ *   pointers in retail RAM; it is not a widget pointer or a menu-open flag.
  *
  * OPEN  : MenuWidget_InitPool() allocates the node pool (g_MenuWidgetActiveListHead/15C != NULL),
  *         g_GameStateFlags |= 0x04, g_MenuDrawPhase set; the inventory root step begins

@@ -17,8 +17,22 @@
 #include "pe1/script_node.h"
 #include "pe1/script_queue.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Original USA per-type integration callbacks (800915DC). */
+FieldActorCallbacks g_FieldActorTypeCallbacks[13] = {
+    {Entity_IntegratePositionFull, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL},
+    {Entity_IntegratePositionConditional, NULL}
+};
 
 
 FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
@@ -43,6 +57,7 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
     SceneBankAssetRecord *walk;
     struct { u8 *primData; u32 unknown; u32 mode; } renderSetup;
 
+    if (!scene || scene[0] >= sizeof(g_FieldActorTypeCallbacks) / sizeof(*g_FieldActorTypeCallbacks)) return NULL;
     available = g_EntityFreeListHead;
     if (!available) return 0;
     actor = available;
@@ -87,7 +102,7 @@ FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull)
     actor->type_id = scene[0];
     actor->sub_id = scene[1];
     if (scene[0] < 10) {
-        actor->model_state.allocation_active = g_SceneMapPrimBaseTable[scene[0]];
+        actor->model_state.model_header = g_GameState.bank_slots[scene[0]];
     } else {
         actor->model_state.allocation_active = 0;
     }

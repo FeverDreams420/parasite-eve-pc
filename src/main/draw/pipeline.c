@@ -3,6 +3,7 @@
 #include "pe1/boot.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/game_state.h"
+#include "pe1/geom_state.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_camera.h"
 #include "pe1/render_lighting.h"
@@ -107,7 +108,7 @@ int Draw_InitPipeline(void) {
     one = 1;
     Render_PrepareFrame();
     SetGeomScreen(W(g_RenderProjectionDistance));
-    UB(g_ScreenTransitionState) |= 0x40;
+    g_ScreenTint.fadeMode |= 0x40;
     CdRom_DetectDiscChange();
     while ((room_status = Scene_LoadEntityTexture()) == one) {
     }

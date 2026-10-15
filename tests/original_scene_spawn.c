@@ -24,8 +24,6 @@ int g_RenderCounter[1];
 #include "pe1/render_buffers.h"
 #include "pe1/script_state.h"
 #include "pe1/scene_archive.h"
-uintptr_t g_SceneMapPrimBaseTable[10];
-FieldActorCallbacks g_FieldActorTypeCallbacks[256];
 
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 static u32 room_word(const u8 *bytes)
@@ -41,6 +39,21 @@ int main(void)
     if(!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     PeDisc disc={0}; PeRoomCatalog catalog; PeRoom room={0};
     CHECK(pe_disc_open(&disc,path) && pe_room_catalog_open(&catalog,&disc));
+    PeDiscFile executable;u8 callbacks[13*8];
+    CHECK(pe_disc_find(&disc,"SLUS_006.62",&executable) &&
+          pe_disc_read(&disc,&executable,0x915DC-0x10000+0x800,callbacks,sizeof(callbacks)));
+    for(unsigned i=0;i<13;++i){
+        CHECK(room_word(callbacks+i*8)==(i?0x80035E04u:0x80035C84u));
+        CHECK(room_word(callbacks+i*8+4)==0);
+        CHECK(g_FieldActorTypeCallbacks[i].frame==(i?Entity_IntegratePositionConditional:Entity_IntegratePositionFull));
+        CHECK(!g_FieldActorTypeCallbacks[i].contact);
+    }
+    Entity_ResetAllPools();Entity_InitFreePool();
+    FieldActor *free_head=g_EntityFreeListHead,*active_head=g_FieldActorListHead;
+    CHECK(!Scene_LoadMap(NULL,NULL,1));
+    for(unsigned i=13;i<256;++i){u8 invalid[]={i,0};CHECK(!Scene_LoadMap(invalid,NULL,1));}
+    CHECK(g_EntityFreeListHead==free_head && g_FieldActorListHead==active_head);
+
     u8 *memory=malloc(16u*ENTITY_ALLOCATION_BLOCK_SIZE); CHECK(memory);
     g_RenderScratchBufferBase[0]=memory;
     struct { SceneAssetBlob header; SceneAssetDirectory directory; SceneBankAssetRecord row; } archive={0};
@@ -151,7 +164,7 @@ int main(void)
             PeRoomSlice *root=&banks.roots[group]; if(!root->present) continue;
             PeModel parsed; CHECK(pe_model_open(root->bytes,root->size,&parsed,error,sizeof(error)));
             u8 *copy=malloc(root->size); CHECK(copy); memcpy(copy,root->bytes,root->size);
-            g_SceneMapPrimBaseTable[1]=(uintptr_t)copy;
+            g_GameState.bank_slots[1]=copy;
             for(unsigned full=0;full<2;++full) {
                 Entity_ResetAllPools(); Entity_InitFreePool();
                 Script_InitNodePool(); Script_InitNodeFreeList();
@@ -163,6 +176,7 @@ int main(void)
                 CHECK(actor->render_object.primitive_buffer==memory+2*sizeof(RenderShadowQuad));
                 CHECK(actor->script_node_lists[2] && actor->script_base==(u8 *)script);
                 CHECK(actor->type_id==1 && actor->sub_id==7 && actor->move_speed==4096);
+                CHECK(actor->frame_callback==Entity_IntegratePositionConditional && !actor->contact_callback);
                 CHECK(actor->render_object.draw_count==(int)full);
                 if(!full) CHECK((actor->flags&0x600000a0)==0x600000a0);
                 CHECK((u8 *)(actor->render_object.matrices+parsed.part_count)<=memory+
@@ -184,7 +198,7 @@ int main(void)
         CHECK(pe_sector_bank_load(&catalog,bank,&blob));
         CHECK(pe_entity_banks(&blob,1,&banks,error,sizeof(error)));
         CHECK(banks.roots[0].present && banks.rows[0][0x15].present);
-        g_SceneMapPrimBaseTable[0]=(uintptr_t)banks.roots[0].bytes;
+        g_GameState.bank_slots[0]=banks.roots[0].bytes;
         for(unsigned action=0;action<48;++action)
             g_GameState.bank_rows[0][action]=(void *)banks.rows[0][action].bytes;
         scripts[2]=(u8 *)script;
@@ -208,6 +222,7 @@ int main(void)
                 actor=g_FieldActorListHead;
             } else actor=Scene_LoadMap(scene,NULL,full);
             CHECK(actor && actor==g_PlayerEntity && actor==g_FieldActorListHead);
+            CHECK(actor->frame_callback==Entity_IntegratePositionFull && !actor->contact_callback);
             CHECK((void *)actor->state==&g_AyaBattleState);
             CHECK(g_AyaBattleState.action==&g_SavedBattleStateTail);
             CHECK(actor->action_data==banks.rows[0][0x15].bytes && actor->mode==0x15);
@@ -234,7 +249,7 @@ int main(void)
             if(room_banks.rows[group][action].present)scene_banks.rows[group][action]=room_banks.rows[group][action];
             g_GameState.bank_rows[group][action]=(void *)scene_banks.rows[group][action].bytes;
         }
-        g_SceneMapPrimBaseTable[group]=(uintptr_t)scene_banks.roots[group].bytes;
+        g_GameState.bank_slots[group]=scene_banks.roots[group].bytes;
     }
     CHECK(pe_script_program_open(&room,&scene_program,scene_error,sizeof(scene_error)));
     Entity_ResetAllPools(); Entity_InitFreePool();

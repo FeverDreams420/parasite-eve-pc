@@ -25,12 +25,12 @@ int main(void)
     g_PlayerEntity=&actor;g_EntityInputRulesByMode[0]=rules;
     g_ScriptQueueOpcodeHandlers[10]=Script_AssignValue;
     g_ScriptQueueOpcodeHandlers[2]=Entity_SetCurrentNodeActive;
-    Entity_IntegratePositionFull(&actor);
+    g_FieldActorTypeCallbacks[0].frame(&actor);
     if (actor.base_x!=100 || actor.saved_rot_y!=7 || actor.motion_x!=9 ||
         actor.pos_x!=114 || actor.pad_0AC[5]!=3 || rule_calls!=1) return 1;
     actor.base_x=999;g_GameStateFlags=0x100;
     node->current.script=script;node->active=1;actor.pad_0AC[5]=0;
-    Entity_IntegratePositionConditional(&actor);
+    g_FieldActorTypeCallbacks[12].frame(&actor);
     if (actor.pos_x!=114 || actor.base_x!=999 || actor.pad_0AC[5]!=3) return 2;
     g_GameStateFlags=0;actor.script_node_lists[0]=0;
     actor.flags=0;actor.accel_x=0;actor.motion_x=1;actor.delta_x=0;actor.pos_x=INT32_MAX;

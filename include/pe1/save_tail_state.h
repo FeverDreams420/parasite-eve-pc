@@ -13,10 +13,4 @@
  * record below through it and advance it by the record size. */
 extern u8 *g_SaveIoCursor;
 
-/* Records the save tail copies as raw bytes besides the game state. */
-/* g_ScreenTint.fadeMode as its own byte symbol. Draw_InitPipeline (a -G8
- * unit) sets its bit 6 through it: the scroll-state view would be placed
- * in small data there. */
-extern u8 g_ScreenTransitionState[];
-
 #endif

@@ -115,7 +115,7 @@ typedef struct FieldActorCallbacks {
                     struct FieldActor *other, int other_part);
 } FieldActorCallbacks;
 
-extern FieldActorCallbacks g_FieldActorTypeCallbacks[];
+extern FieldActorCallbacks g_FieldActorTypeCallbacks[13];
 
 /* Packed status values addressed by script selectors 0x64..0x6E. */
 typedef union FieldActorPackedStatus {

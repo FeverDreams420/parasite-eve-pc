@@ -24,9 +24,6 @@ int Scene_InitEntityPlayer(int resume);
 /* Steps the room TIM texture loader. */
 int Asset_LoadTimTextures(int force);
 
-/* Model allocation per actor type, given to actors of types below 10. */
-extern uintptr_t g_SceneMapPrimBaseTable[];
-
 /* Startup resource blob Scene_LoadSceneData copies out of the scratch buffer. */
 extern unsigned char g_StartupResourceBlob[0x10A50];
 

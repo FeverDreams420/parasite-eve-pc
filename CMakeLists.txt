@@ -515,7 +515,8 @@ if(BUILD_TESTING)
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         pc/room.c pc/room_banks.c pc/model.c pc/script.c
         $<TARGET_OBJECTS:parasite-eve-original-disc>
-        $<TARGET_OBJECTS:parasite-eve-original>)
+        $<TARGET_OBJECTS:parasite-eve-original>
+        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
     target_include_directories(test-original-scene-spawn PRIVATE include pc)
     target_compile_definitions(test-original-scene-spawn PRIVATE __psyz)
     target_link_libraries(test-original-scene-spawn PRIVATE psyz)

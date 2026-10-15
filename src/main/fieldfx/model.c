@@ -108,38 +108,38 @@ void FieldFx_ModelScaleColors(char *data, u16 factor)
     u32 green;
     u32 green_product;
     FieldModelHeader *table = (FieldModelHeader *)data;
-    u32 *scratch = (u32 *)0x1F800000;
+    u32 scratch; /* Original scratchpad word is local to this calculation. */
     FieldModelColor *entry = (FieldModelColor *)(data + table->colorOffset);
 
     for (i = 0; i < table->colorCount; i++, entry++) {
         red = entry->rgb.r;
         red *= factor;
-        scratch[12] = red;
+        scratch = red;
         if (red > 0x7FFF) {
-            scratch[12] = 0x7FFF;
+            scratch = 0x7FFF;
         }
-        red = scratch[12] >> 7;
-        scratch[12] = red;
+        red = scratch >> 7;
+        scratch = red;
         entry->rgb.r = red;
 
         green_product = entry->rgb.g;
         green_product *= factor;
-        scratch[12] = green_product;
+        scratch = green_product;
         if (green_product > 0x7FFF) {
-            scratch[12] = 0x7FFF;
+            scratch = 0x7FFF;
         }
-        green = scratch[12] >> 7;
-        scratch[12] = green;
+        green = scratch >> 7;
+        scratch = green;
         entry->rgb.g = green;
 
         blue_product = entry->rgb.b;
         blue_product *= factor;
-        scratch[12] = blue_product;
+        scratch = blue_product;
         if (blue_product > 0x7FFF) {
-            scratch[12] = 0x7FFF;
+            scratch = 0x7FFF;
         }
-        blue = scratch[12] >> 7;
-        scratch[12] = blue;
+        blue = scratch >> 7;
+        scratch = blue;
         entry->rgb.b = blue;
     }
 }

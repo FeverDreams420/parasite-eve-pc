@@ -824,7 +824,19 @@ static int native_effect_model_packets(void)
     Psyz_GteCtrlWrite(26,256); Psyz_GteCtrlWrite(29,1365); Psyz_GteCtrlWrite(30,1024);
     gte_SetGeomOffset(160,120);
     FieldFx_ModelSetTexture(0x123,0x456);
-    for(unsigned slot=0;slot<2;++slot) for(unsigned semi=0;semi<2;++semi) {
+    const u16 factors[]={0,64,128,512,65535};
+    const u32 expected_colors[5][4]={
+        {0,0,0,0},
+        {0x181008,0x181008,0x181009,0x181009},
+        {0x302010,0x302011,0x302012,0x302013},
+        {0xc08040,0xc08044,0xc08048,0xc0804c},
+        {0xffffff,0xffffff,0xffffff,0xffffff},
+    };
+    u8 original_model[sizeof(blob)];memcpy(original_model,blob,sizeof(blob));
+    for(unsigned slot=0;slot<2;++slot) for(unsigned semi=0;semi<2;++semi) for(unsigned factor=0;factor<5;++factor) {
+        FieldFx_ModelSaveColors((char *)blob);
+        FieldFx_ModelScaleColors((char *)blob,factors[factor]);
+        if(memcmp(blob+104,expected_colors[factor],16))return 0;
         memset(packets,0xa5,sizeof(packets));
         memset(ordering,0,sizeof(ordering));
         for(unsigned i=0;i<4096;++i) ordering[i].address=0xffffff;
@@ -840,6 +852,8 @@ static int native_effect_model_packets(void)
         for(unsigned i=0;i<4;++i) {
             RenderGpuTag *tag=(RenderGpuTag *)(packets+offset);
             if(tag->address!=previous || tag->length!=lengths[i] || packets[offset+sizeof(*tag)+3]!=(codes[i]|(semi?2:0))) return 0;
+            u32 rendered_color;memcpy(&rendered_color,packets+offset+sizeof(*tag),4);
+            if((rendered_color&0xffffff)!=expected_colors[factor][0])return 0;
             previous=(uintptr_t)tag; offset+=sizes[i];
         }
         unsigned used=0;
@@ -849,10 +863,12 @@ static int native_effect_model_packets(void)
         }
         if(used!=1) return 0;
         for(size_t i=expected;i<sizeof(packets);++i) if(packets[i]!=0xa5) return 0;
+        FieldFx_ModelRestoreColors((char *)blob);
+        if(memcmp(blob,original_model,sizeof(blob)))return 0;
     }
     D_800B0E38=saved; g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset;
     g_GeomScroll.words.viewMatrix=saved_view;
-    puts("Original effect model: all four packet types, both slots and transparency passed");
+    puts("Original effect model: all packet types, both slots, transparency and save/scale/draw/restore saturation passed");
     return 1;
 }
 

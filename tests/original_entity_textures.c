@@ -23,6 +23,7 @@ extern u8 *g_RoomM005ScriptAnchorView, *g_RoomM005BeaconModel0, *g_RoomM005Beaco
 int RoomM005_Orbiter(int mode,void *state,intptr_t argument);
 int RoomM005_CrossFlare(int mode,void *state,intptr_t argument);
 int RoomM005_JointBeacon(int mode,void *state,intptr_t argument);
+int RoomM005_BeaconDriftCallback(int mode,void *state,intptr_t argument);
 #include "pe1/room_script_record.h"
 #include "../src/overlays/room_m272_liberty/room_m272.h"
 #include "pe1/render_matrix_slot.h"
@@ -393,6 +394,32 @@ int main(void)
                     g_RoomM005Effects.table.callbacks[2]==RoomM005_JointBeacon);
                 CHECK(!memcmp(g_RoomM005Effects.table.sizes,(u16[]){12,4,36,0,0,0,0,0},16));
                 CHECK(!memcmp(g_RoomM005EffectScript,room.data.bytes+0x1ab0,60));
+                FieldActor effect_actor={0};FieldActorState effect_state={0};u8 effect_action=1;
+                RenderMatrix effect_matrices[21]={0};
+                for(unsigned joint=0;joint<21;++joint) {
+                    for(unsigned axis=0;axis<3;++axis)effect_matrices[joint].rotation[axis][axis]=4096;
+                    effect_matrices[joint].translation[2]=1024;
+                }
+                effect_actor.state=&effect_state;effect_actor.render_object.matrices=effect_matrices;
+                effect_state.action_state=&effect_action;
+                FieldFxTaskOwner effect_owner={0};effect_owner.prefix.actor=&effect_actor;effect_owner.tasks.flags=1;
+                _Alignas(void *) u8 beacon_state[36]={0},beacon_pool[512];memset(beacon_pool,0xa5,sizeof(beacon_pool));
+                FieldFxTaskSlot active={.start=(char *)beacon_state,.end=(char *)beacon_pool};
+                FieldFxTaskContext *old_context=g_FieldFxTaskContext;FieldFxObjectPrefix *old_owner=g_FieldFxOwner;
+                FieldFxTaskSlot *old_slot=g_FieldFxActiveTaskSlot;
+                g_FieldFxTaskContext=&effect_owner.tasks;g_FieldFxOwner=&effect_owner.prefix;g_FieldFxActiveTaskSlot=&active;
+                int allocated=RoomM005_JointBeacon(0,beacon_state,0);
+                CHECK(allocated>0 && allocated<=sizeof(beacon_pool) && effect_action==2);
+                GteShortVector *position=(void *)beacon_state,*rotation=(void *)(beacon_state+16);
+                CHECK(position->x==0 && position->y==-40 && position->z==932 && rotation->pad==1);
+                FieldFxCallbackList *list=(void *)beacon_pool;
+                CHECK(list->count==8 && list->callback==RoomM005_BeaconDriftCallback);
+                for(unsigned byte=allocated;byte<sizeof(beacon_pool);++byte)CHECK(beacon_pool[byte]==0xa5);
+                CHECK(g_RoomM005BeaconModel0==Asset_FindTable08ByU32Key(g_GameState.loaded_scene_assets,(int)0xc5462704u));
+                CHECK(g_RoomM005BeaconModel1==Asset_FindTable08ByU32Key(g_GameState.loaded_scene_assets,(int)0xc5862704u));
+                CHECK(g_RoomM005BeaconModel0 && g_RoomM005BeaconModel1);
+                g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_slot;
+                puts("Original M005 beacon init: two real models, native joint 20, actor action and eight-child list passed");
                 memset(g_RoomM005ScriptAnchorView-4,0x5a,20);
                 g_RoomM005BeaconModel0=(u8 *)1;g_RoomM005BeaconModel1=(u8 *)2;
                 CHECK(Scene_LoadRoom(room_id)==0 && !g_RoomM005BeaconModel0 && !g_RoomM005BeaconModel1);

@@ -2,6 +2,7 @@
 #define PE1_BOOT_DISPLAY_H
 
 #include "common.h"
+#include "pe1/cdrom.h"
 #include "pe1/pe_image.h"
 #include "pe1/asset_tim.h"
 #include "pe1/cdrom_buffers.h"
@@ -65,38 +66,41 @@ typedef struct {
 } BootDisplayCallbacks;
 extern BootDisplayCallbacks *g_BootDisplayCallbacks;
 extern u16 g_BootDisplayFontStyle;
-extern const u8 g_BootDisplayUppercaseWidths[][4];
-extern const u8 g_BootDisplayUppercaseWidthsStyle2[][4];
-extern const u8 g_BootDisplayLowercaseWidths[][4];
-extern const u8 *g_BootDisplayCreditLines[];
+/* All three historical biased width symbols address this same alphabet. */
+extern const u8 g_BootDisplayUppercaseWidths[26][4];
+#define g_BootDisplayLowercaseWidths g_BootDisplayUppercaseWidths
+#define g_BootDisplayUppercaseWidthsStyle2 g_BootDisplayUppercaseWidths
+extern const u8 *g_BootDisplayCreditLines[745];
+extern void *g_BootDisplayCreditImages[31];
 extern const u8 **g_BootDisplayTextCursor;
 
-extern char *volatile g_BootDisplayOrderingTable;
+extern char *g_BootDisplayOrderingTable;
 extern u16 g_BootDisplayTPage;
 extern u16 g_BootDisplayClut;
-extern char *volatile g_BootDisplayPrimitiveCursor;
+extern char *g_BootDisplayPrimitiveCursor;
 extern s32 g_BootDisplayTextScrollX;
 extern s32 g_BootDisplayTextScrollStepX;
 extern s32 g_BootDisplayTransition;
 extern s32 g_BootDisplayBufferIndex;
-extern volatile s16 g_BootDisplayStateTimer;
+extern s16 g_BootDisplayStateTimer;
 extern s16 g_BootDisplayTransferProgress;
 extern s32 g_BootDisplayState;
 extern s16 *g_BootDisplayFontImageRect;
 extern s16 *g_BootDisplayFontClutRect;
 extern s32 g_BootDisplayFontImagePixels;
 extern s32 g_BootDisplayFontClutPixels;
-extern char g_BootDisplayFontTim[];
-extern volatile s32 g_BootDisplayPlaybackCurrentPos;
-extern volatile s32 g_BootDisplayPlaybackEndPos;
+#define g_BootDisplayFontTim (g_CdLoadAreaBase + 0x5b2c)
+extern s32 g_BootDisplayPlaybackCurrentPos;
+extern s32 g_BootDisplayPlaybackEndPos;
 extern s32 g_BootDisplayPlaybackStartPos;
 extern s32 g_BootDisplayPlaybackEnded;
+extern PeDiscFile g_BootDisplayPlaybackFile;
 void BootDisplay_RecordReadPosition(u8 mode, int value);
 extern u16 g_CdDiskType;
-extern volatile u16 g_BootDisplayPlaybackRingIndex;
-extern volatile u16 g_BootDisplayPlaybackAltCount;
+extern u16 g_BootDisplayPlaybackRingIndex;
+extern u16 g_BootDisplayPlaybackAltCount;
 extern char *g_BootDisplayPlaybackSectorBuffer;
-extern volatile s32 g_BootDisplayPlaybackReadCount;
+extern s32 g_BootDisplayPlaybackReadCount;
 extern char *g_BootDisplayPlaybackFilePath;
 extern s32 g_ActiveDrawSlot;
 
@@ -117,7 +121,10 @@ void exit(s32) __attribute__((noreturn));
 s32 BootDisplay_StepPlaybackTransfer(u8 mode);
 void DsInit(void);
 s32 DsQueueLen(void);
+/* -1 missing image/file, -2 invalid extent/workspace; no state commit on error. */
 s32 BootDisplay_InitPlaybackFile(void);
+void BootDisplay_RunDisplay(void);
+s32 BootDisplay_DrawTextBlock(void);
 void SetGraphDebug(s32 value);
 void SetDispMask(s32 value);
 void DecDCTReset(s32 value);

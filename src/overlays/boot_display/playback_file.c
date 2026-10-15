@@ -1,34 +1,30 @@
 #include "pe1/boot_display.h"
-#include "pe1/psyq_ds.h"
-#include "pe1/psyq_ds_queue.h"
+#include "pe1/cdrom.h"
 
+/* Resolve the original XA path in the mounted image. There is no drive
+ * negotiation, shell state or unbounded search retry on the host. */
 s32 BootDisplay_InitPlaybackFile(void) {
-    DslFILE file;
-    s32 found;
-    /* Preserve separate zero/-1 retries and the ready-constant reload.
-     * Pins and empty barriers are tracked in crutch debt. */
-    s32 ready;
-    s32 failure;
-    volatile s32 *start;
-    DsInit();
-    DsSetDebug(0);
-    for (;;) {
-        ready = 1;
-        if (DsSystemStatus() != ready || DsQueueLen() != 0)
-            return VSync(0);
-        failure = 0;
-        found = (s32)DsSearchFile(&file, g_BootDisplayPlaybackFilePath);
-        if (found == failure) continue;
-        failure = -1;
-        if (found != failure) break;
-    }
-    start = &g_BootDisplayPlaybackStartPos;
-    *start = DsPosToInt(&file.pos);
-    g_BootDisplayPlaybackEndPos = DsPosToInt(&file.pos) + (file.size >> 11);
-    g_BootDisplayPlaybackCurrentPos = *start;
-    g_BootDisplayPlaybackReadCount = 0;
-    g_BootDisplayPlaybackRingIndex = 0;
-    g_BootDisplayPlaybackAltCount = 0;
-    g_BootDisplayPlaybackSectorBuffer = g_CdLoadAreaBase + (((g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) << 11) + 0x34800);
+    PeDiscFile file;
+    u64 end;
+    s64 bufferOffset=((s64)g_MainAssetLbaTbl[0]-g_BootDisplayDataLbaTbl)*2048+0x34800;
+    if(!g_CdImage || !g_BootDisplayPlaybackFilePath ||
+       !pe_disc_find(g_CdImage,g_BootDisplayPlaybackFilePath,&file))return -1;
+    end=(u64)file.sector+(file.size>>11);
+    if(file.directory || file.size<2048 || end>INT32_MAX ||
+       !g_CdLoadAreaBase || bufferOffset<0 || bufferOffset+8*2048>BOOT_DISPLAY_WORK_SIZE)return -2;
+    g_BootDisplayPlaybackFile=file;
+    g_BootDisplayPlaybackStartPos=(s32)file.sector;
+    g_BootDisplayPlaybackEndPos=(s32)end;
+    g_BootDisplayPlaybackCurrentPos=g_BootDisplayPlaybackStartPos;
+    g_BootDisplayPlaybackReadCount=0;
+    g_BootDisplayPlaybackRingIndex=0;
+    g_BootDisplayPlaybackAltCount=0;
+    g_BootDisplayPlaybackSectorBuffer=(char *)g_CdLoadAreaBase+bufferOffset;
     return 0;
 }
+
+PeDiscFile g_BootDisplayPlaybackFile;
+char *g_BootDisplayPlaybackFilePath,*g_BootDisplayPlaybackSectorBuffer;
+s32 g_BootDisplayPlaybackStartPos,g_BootDisplayPlaybackEndPos,g_BootDisplayPlaybackCurrentPos;
+s32 g_BootDisplayPlaybackReadCount;
+u16 g_BootDisplayPlaybackRingIndex,g_BootDisplayPlaybackAltCount;

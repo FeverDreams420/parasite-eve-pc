@@ -13,7 +13,7 @@ void BootDisplay_RunDisplay(void) {
     }
     g_BootDisplayCallbacks->init();
     if (!(g_GameStateFlags & 0x10000)) {
-        func_8012562C();
+        if(BootDisplay_InitPlaybackFile()<0)return;
         BootDisplay_StartPlayback();
         if (g_GameStateFlags & 0x20000) {
             Spu_SetVoiceVolume(144);
@@ -114,7 +114,7 @@ s32 BootDisplay_DrawTextBlock(void) {
         line = *g_BootDisplayTextCursor;
         y += 18;
     }
-    g_BootDisplayTextScrollX += g_BootDisplayTextScrollStepX;
+    g_BootDisplayTextScrollX = (s32)((u32)g_BootDisplayTextScrollX + (u32)g_BootDisplayTextScrollStepX);
     return rows < 1;
 }
 
@@ -166,12 +166,13 @@ u16 BootDisplay_GetGlyphWidth(u8 character) {
     u16 style = g_BootDisplayFontStyle;
     u8 saved;
     s32 width;
+    if(style>3)return 0;
     if (style == 2) {
         saved = character;
         if ((u8)(character - 'a') < 26)
             saved = character - 32;
         if ((u8)(saved - 'A') < 26)
-            width = g_BootDisplayUppercaseWidthsStyle2[saved][0];
+            width = g_BootDisplayUppercaseWidthsStyle2[saved-'A'][2];
         else switch (saved) {
         case '!': case '\'': case '.': case ':': width = 3; break;
         case '#': width = 7; break;
@@ -184,9 +185,9 @@ u16 BootDisplay_GetGlyphWidth(u8 character) {
         }
     } else {
         if ((u8)(character - 'A') < 26)
-            width = g_BootDisplayUppercaseWidths[character][style];
+            width = g_BootDisplayUppercaseWidths[character-'A'][style];
         else if ((u8)(character - 'a') < 26)
-            width = g_BootDisplayLowercaseWidths[character][style | 1];
+            width = g_BootDisplayLowercaseWidths[character-'a'][style | 1];
         else switch (character) {
         case '!': case '.': case ':': width = 2; break;
         case '\'': case ',': width = 3; break;
@@ -198,3 +199,44 @@ u16 BootDisplay_GetGlyphWidth(u8 character) {
     }
     return width;
 }
+
+/* Native pointers into the loaded credits data; no retail addresses are
+ * callable or dereferenced by the host. The loader validates every entry. */
+const u8 *g_BootDisplayCreditLines[745];
+void *g_BootDisplayCreditImages[31];
+const u8 **g_BootDisplayTextCursor;
+BootDisplayCallbacks *g_BootDisplayCallbacks;
+u16 g_BootDisplayFontStyle;
+s32 g_BootDisplayTextScrollX,g_BootDisplayTextScrollStepX,g_BootDisplayDone;
+u32 g_BootDisplayFrameCounter;
+
+/* USA alphabet widths: columns 0/1 for regular upper/lowercase and
+ * column 2 for style 2; odd style 3 uses the authored zero column. */
+const u8 g_BootDisplayUppercaseWidths[26][4]={
+    {9,6,10,0},
+    {7,6,8,0},
+    {8,6,10,0},
+    {9,7,10,0},
+    {7,6,8,0},
+    {7,5,8,0},
+    {9,6,10,0},
+    {10,7,11,0},
+    {5,4,7,0},
+    {7,5,7,0},
+    {9,6,10,0},
+    {8,4,9,0},
+    {10,10,12,0},
+    {9,7,11,0},
+    {9,6,11,0},
+    {7,7,8,0},
+    {10,6,12,0},
+    {8,5,10,0},
+    {6,5,8,0},
+    {9,4,10,0},
+    {9,7,10,0},
+    {9,6,10,0},
+    {11,9,13,0},
+    {9,7,10,0},
+    {8,6,10,0},
+    {7,5,8,0},
+};

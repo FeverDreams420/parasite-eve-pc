@@ -128,6 +128,8 @@ add_library(parasite-eve-original OBJECT
     src/overlays/fx_common/camera_path.c
     src/overlays/fx_common/camera.c
     src/overlays/fx_common/model_buffers.c
+    src/overlays/boot_display/text_screen.c
+    src/overlays/boot_display/playback_file.c
     src/main/fieldfx/geometry.c
     src/main/fieldfx/model.c
     src/main/fieldfx/sprite_render.c
@@ -393,6 +395,8 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-fx-scene PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
     add_test(NAME original-game-fx-step COMMAND test-original-actor-animation --fx-step)
     set_tests_properties(original-game-fx-step PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+    add_test(NAME original-game-credits-text COMMAND test-original-actor-animation --credits-text)
+    set_tests_properties(original-game-credits-text PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
     add_test(NAME original-game-fx-frames COMMAND test-original-actor-animation --fx-frames)
     set_tests_properties(original-game-fx-frames PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "game-assets;gpu")
     add_test(NAME original-game-fx-motion COMMAND test-original-actor-animation --fx-motion)

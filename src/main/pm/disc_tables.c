@@ -214,6 +214,12 @@ int Boot_LoadOverlayTables(void) {
 int CdRom_LoadBootAudio(void) {
     int status;
     const u16 *range = &g_BootDisplayDataLbaTbl;
+    const u8 *lines[745];void *images[31];
+    size_t bytes=(size_t)(range[1]-range[0])*2048;
+
+    memset(g_BootDisplayCreditLines,0,sizeof(g_BootDisplayCreditLines));
+    memset(g_BootDisplayCreditImages,0,sizeof(g_BootDisplayCreditImages));
+    g_BootDisplayPlaybackFilePath=NULL;
 
     if (!g_CdLoadAreaBase || range[1] <= range[0] ||
         (u32)(range[1] - range[0]) * 2048 > BOOT_DISPLAY_WORK_SIZE ||
@@ -235,5 +241,27 @@ int CdRom_LoadBootAudio(void) {
     if (status < 0) return -1;
     while ((status = CdRom_PollReady()) > 0) {}
     if (status < 0) return -2;
+    /* USA credits contain absolute data addresses, not host pointers. Bind
+     * the complete authored tables after checking every string/image entry. */
+    if(bytes<0x5b34 || !memchr(g_CdLoadAreaBase+4,0,24))return -4;
+    u32 magic;memcpy(&magic,g_BootDisplayFontTim,4);if(magic!=16)return -4;
+    for(unsigned i=0;i<745;++i){
+        u32 address;memcpy(&address,g_CdLoadAreaBase+0x4f88+i*4,4);
+        if(address<0x80120d1c || address>=0x80122fa4)return -4;
+        size_t offset=address-0x80120d00;
+        const u8 *line=g_CdLoadAreaBase+offset;
+        if(i==744){if(*line!=255)return -4;}
+        else if(*line==255 || !memchr(line,0,0x22a4-offset))return -4;
+        lines[i]=line;
+    }
+    u32 previous=0;
+    for(unsigned i=0;i<31;++i){
+        u32 address;memcpy(&address,g_CdLoadAreaBase+0x4ea4+i*4,4);
+        if(address<0x8012e86c || address<previous || (u64)address-0x80120d00+8>bytes)return -4;
+        images[i]=g_CdLoadAreaBase+(address-0x80120d00);previous=address;
+    }
+    memcpy(g_BootDisplayCreditLines,lines,sizeof(lines));
+    memcpy(g_BootDisplayCreditImages,images,sizeof(images));
+    g_BootDisplayPlaybackFilePath=(char *)g_CdLoadAreaBase+4;
     return 0;
 }

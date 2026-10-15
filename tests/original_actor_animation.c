@@ -71,6 +71,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/menu_widget.h"
 #include "pe1/menu_queue.h"
 #include "pe1/draw_state.h"
+#include "pe1/draw_level_bar.h"
 #include <SDL3/SDL.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -2450,10 +2451,87 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
         uintptr_t head=ordering.address;Draw_AllocTexturedQuad(7);
         if(ordering.address!=head || g_DrawPacketCursor!=arena+0x4000-sizeof(RenderTexturedQuad)) valid=0;
     }
+    /* Whole USA 8006062C execution, including nested cursor stack, number,
+     * optional minus sprite, bar slices, colour reset and final draw page. */
+    const uint64_t bar_hashes[]={UINT64_C(0xd0110c3a0c5a55a9),UINT64_C(0x6fe60f48763f6639)};
+    const int values[]={INT_MIN,-99,-10,-1,0,1,9,10,99,100,999,INT_MAX};
+    int *stack=g_TextCursorStackPtr,stack_data[28];
+    memcpy(stack_data,g_TextCursorStackBottom,sizeof(stack_data));
+    int font_clut=g_DrawDigitFontTpageClut,font_u=g_DrawDigitFontBaseTexU,font_v=g_DrawDigitFontBaseTexV;
+    for(unsigned dark=0;dark<2;++dark) {
+        RenderNativeTag ordering={0xFFFFFF,0x9876};
+        g_DrawPacketArenaBase=arena;g_DrawOrderingTableEntry=(u32 *)&ordering;
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned font=0;font<2;++font) for(unsigned pos=0;pos<3;++pos)
+        for(unsigned value=0;value<sizeof(values)/sizeof(values[0]);++value)
+        for(int width=-1;width<50;++width) {
+            memset(arena,0xA5,1024);g_DrawPacketCursor=arena;ordering.address=0xFFFFFF;
+            Draw_SetColor(0xE1A25C);Draw_SetTextDimmed(dark);Draw_SetFontVariant(font);
+            Draw_SetCursor(positions[pos][0],positions[pos][1]);
+            g_TextCursorStackPtr=g_TextCursorStackBottom;
+            Draw_AllocTexturedRectAlt(values[value],width);
+            u8 *packet=arena;uintptr_t previous=0xFFFFFF;unsigned packets=0;
+            while(packet<g_DrawPacketCursor && packets<16) {
+                RenderNativeTag *tag=(RenderNativeTag *)packet;
+                size_t bytes=tag->length==9?sizeof(RenderTexturedQuad):
+                    tag->length==4?sizeof(RenderSpritePacket):
+                    tag->length==1?sizeof(RenderDrawModePacket):0;
+                if(!bytes || bytes>(size_t)(g_DrawPacketCursor-packet)) {valid=0;break;}
+                if(tag->address!=previous) valid=0;
+                hash=(hash^tag->length)*UINT64_C(1099511628211);
+                if(tag->length==1) {
+                    uintptr_t command=((RenderDrawModePacket *)packet)->command;
+                    if(command>UINT32_MAX) valid=0;
+                    for(unsigned b=0;b<4;++b) hash=(hash^((command>>(b*8))&255))*UINT64_C(1099511628211);
+                } else for(unsigned b=0;b<tag->length*4;++b)
+                    hash=(hash^packet[sizeof(RenderNativeTag)+b])*UINT64_C(1099511628211);
+                previous=(uintptr_t)packet;packet+=bytes;++packets;
+            }
+            if(packet!=g_DrawPacketCursor || packets<8 || packets>12 ||
+               ordering.address!=previous || ordering.length!=0x9876 ||
+               g_TextCursorStackPtr!=g_TextCursorStackBottom) valid=0;
+            for(size_t i=(size_t)(packet-arena);i<1024;++i) if(arena[i]!=0xA5) valid=0;
+            const u32 state[]={(u32)g_TextCursorX,(u32)g_TextCursorY,
+                (u32)((u8 *)g_TextCursorStackPtr-(u8 *)g_TextCursorStackBottom),g_DrawPrimColor,g_DrawColorShaded};
+            for(unsigned i=0;i<5;++i) for(unsigned b=0;b<4;++b)
+                hash=(hash^((state[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        }
+        if(hash!=bar_hashes[dark]) {
+            fprintf(stderr,"Original bar dim %u hash %016llx differs from USA MIPS\n",dark,(unsigned long long)hash);
+            valid=0;
+        }
+    }
+    /* Every aligned amount of free space across the complete bar size:
+     * dropped packets must leave a valid chain and restore the cursor stack. */
+    for(unsigned remaining=0;remaining<=768;remaining+=8) {
+        RenderNativeTag ordering={0xFFFFFF,0x9876};
+        memset(arena,0xA5,sizeof(arena));
+        g_DrawPacketArenaBase=arena;g_DrawPacketCursor=arena+0x4000-remaining;
+        u8 *start=g_DrawPacketCursor;
+        g_DrawOrderingTableEntry=(u32 *)&ordering;g_TextCursorStackPtr=g_TextCursorStackBottom;
+        Draw_SetCursor(23,45);Draw_SetFontVariant(0);Draw_SetTextDimmed(0);Draw_SetColor(0xE1A25C);
+        Draw_AllocTexturedRectAlt(-99,24);
+        if(g_TextCursorX!=23 || g_TextCursorY!=45 || g_TextCursorStackPtr!=g_TextCursorStackBottom ||
+           g_DrawPacketCursor<start || g_DrawPacketCursor>arena+0x4000 || ordering.length!=0x9876) valid=0;
+        uintptr_t previous=0xFFFFFF;u8 *packet=start;
+        for(unsigned count=0;packet<g_DrawPacketCursor && count<16;++count) {
+            RenderNativeTag *tag=(RenderNativeTag *)packet;
+            size_t bytes=tag->length==9?sizeof(RenderTexturedQuad):
+                tag->length==4?sizeof(RenderSpritePacket):tag->length==1?sizeof(RenderDrawModePacket):0;
+            if(!bytes || bytes>(size_t)(g_DrawPacketCursor-packet)) {valid=0;break;}
+            if(tag->address!=previous) valid=0;
+            previous=(uintptr_t)packet;packet+=bytes;
+        }
+        if(packet!=g_DrawPacketCursor || ordering.address!=previous) valid=0;
+        for(u8 *p=arena;p<start;++p) if(*p!=0xA5) valid=0;
+        for(u8 *p=g_DrawPacketCursor;p<arena+sizeof(arena);++p) if(*p!=0xA5) valid=0;
+    }
+    g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
+    memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;
-    if(valid) puts("Original sprites/icon/text: 156 real descriptors, complete six-page/control/sprite paths, positions, dim states and cursor updates match USA MIPS");
+    if(valid) puts("Original sprites/icon/text: 156 real descriptors, complete text and 7344 whole-bar cases match USA MIPS; 97 arena limits preserve chains/cursors");
     else fprintf(stderr,"Original icon payload/native links differ from USA MIPS 8005ED18\n");
     return valid;
 }

@@ -371,10 +371,10 @@ static inline RenderTexturedQuad *AllocBarQuad(void)
 {
     RenderTexturedQuad *prim = 0;
     u8 *old = g_DrawPacketCursor;
-    u8 *next = old + sizeof(RenderTexturedQuad);
+    size_t used = (size_t)(old - g_DrawPacketArenaBase);
 
-    if (next < g_DrawPacketArenaBase + 0x4000) {
-        g_DrawPacketCursor = next;
+    if (used < 0x4000 && sizeof(RenderTexturedQuad) < 0x4000 - used) {
+        g_DrawPacketCursor = old + sizeof(RenderTexturedQuad);
         prim = (RenderTexturedQuad *)old;
     } else {
         Inv_BoundsCheckAssertStub(1);
@@ -712,7 +712,7 @@ void Draw_PrintNumberWidth2Unk(int value) {
     int i;
 
     if (value < 0) {
-        value = -value;
+        value = (int)(0u - (u32)value);
         Draw_AllocSprite(0x52);
         width = 1;
         AdvanceCursor(5);
@@ -969,8 +969,8 @@ static inline void PushCursorAt(int x, int y)
  * glyph, from `left` to the right edge computed from the stored left edge. */
 #define DRAW_BAR_SEGMENT(left, right_from_x0, u_offset) \
     { \
-        u32 *ot; \
         quad = AllocBarQuad(); \
+        if (quad) { \
         quad->x0 = quad->x2 = left; \
         quad->y0 = quad->y1 = g_TextCursorY + 1; \
         quad->x1 = quad->x3 = right_from_x0; \
@@ -983,6 +983,7 @@ static inline void PushCursorAt(int x, int y)
         quad->tpage = 7; \
         quad->tag.address = ((RenderNativeTag *)g_DrawOrderingTableEntry)->address; \
         ((RenderNativeTag *)g_DrawOrderingTableEntry)->address = (uintptr_t)quad; \
+        } \
     }
 
 /* Draws a stat value followed by a 48-pixel level bar filled up to
@@ -993,8 +994,7 @@ void Draw_AllocTexturedRectAlt(int value, int width)
     RenderDrawModePacket *mode;
     RenderTexturedQuad *quad;
     int drawMode;
-    DrawLevelBarLink link;
-    u8 *old, *next;
+    u8 *old;
     u32 *ot;
 
     PushCursor();
@@ -1023,9 +1023,9 @@ void Draw_AllocTexturedRectAlt(int value, int width)
     drawMode = glyph->mode;
     mode = 0;
     old = g_DrawPacketCursor;
-    next = old + sizeof(RenderDrawModePacket);
-    if (next < g_DrawPacketArenaBase + 0x4000) {
-        g_DrawPacketCursor = next;
+    size_t used = (size_t)(old - g_DrawPacketArenaBase);
+    if (used < 0x4000 && sizeof(RenderDrawModePacket) < 0x4000 - used) {
+        g_DrawPacketCursor = old + sizeof(RenderDrawModePacket);
         mode = (RenderDrawModePacket *)old;
     } else {
         Inv_BoundsCheckAssertStub(1);

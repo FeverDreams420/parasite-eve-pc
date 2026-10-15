@@ -108,6 +108,37 @@ opkodu 89 (M005, aktor 0:0, script_byte 4344). Pełny fixture
 `original-game-player-input-assets` przechodzi w 11,94 s; świeży build tego
 fixture z ASan/UBSan/function i instrumentowanym PsyZ/SDL również przechodzi.
 
+Podpięto następnie istniejące Entity_GetField/Entity_FindByTypeId (89/139),
+normalizując ABI pierwszej funkcji w system_opcodes.c. 12288 stanów oryginalnego
+CPU USA obejmuje wszystkie bajty komendy, ich powtórzenie z wyższymi bitami,
+signed HP, wybór rekordów i skasowanie statusFlags2 przez odczyt komendy 130
+(`bc5b5bf975c75f8d`). Oba warianty przechodzą przez dispatcher; test sprawdza
+także pustą listę, brak subtype/type i pomijanie usuniętych aktorów.
+Ślad naturalnego wykonania potwierdza Battle_StartEncounter przy VBlank 64481,
+fazę 58, global_flags 2178, a następnie zakończenie ładowania przy 64487.
+Nie dowodzi to jeszcze poprawnego przebiegu ani ukończenia starcia.
+
+Dalszy skrypt Melissy wymaga opkodu 26. Script_Random korzysta teraz z funkcji
+Draw_PackPrimColor zapisanej w C w istniejącym draw/prim_color.c zamiast MIPS.
+Zachowuje ten sam generator, niskie 16 bitów słowa i podpisany iloczyn zakresu;
+równe granice zwracają pełne surowe słowo. 4096 wywołań oryginalnego CPU USA
+sprawdza zakresy ujemne/odwrócone/równe i wszystkie 33 słowa stanu po każdej
+operacji (`f2f87de64cb28a19`), również przez dispatcher. Pierwotne słowa
+instrukcji czytane przez ujemny ogon generatora pozostają danymi w gpu_regs.c.
+Następny opkod 111 podpina istniejący Entity_AllocSlot przez jego oryginalny
+Script_InitEntityMoveState z poprawnym ABI. Test 5632 alokacji z oryginalnym
+hashem CPU USA wykonuje teraz połowę pierwszych przydziałów przez dispatcher,
+sprawdzając także wyczerpanie siedmiu slotów, reuse i wrap identyfikatorów.
+Świeży fixture --assets z tymi zmianami przechodzi ASan/UBSan/function
+z instrumentowanym PsyZ/SDL. Naturalny przebieg doszedł teraz do niepodpiętego
+opkodu 90 (M005, Melissa 2:0, script_byte 2076). Dla następnej naprawy wykonano
+12288 oryginalnych stanów CPU USA zapisu pól 90 (`2249f25ad3a196bd`), ale to
+na razie przygotowane odniesienie, nie dowód poprawności natywnego zapisu.
+Oryginał w osobnym headless DuckStation zatrzymał się podczas sekwencji operowej;
+nie posłużył jeszcze jako obrazowe odniesienie dla pierwszego starcia.
+Pełny zestaw obecnego kandydata przechodzi 40/40 bez skipów w 403,20 s,
+z wymaganym Disc 1; obejmuje też ponowne naturalne wejście do M005 (95,63 s).
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

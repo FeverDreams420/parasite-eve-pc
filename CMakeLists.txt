@@ -104,6 +104,7 @@ add_library(parasite-eve-original OBJECT
     src/main/draw/pipeline.c
     src/main/draw/gpu_regs.c
     src/main/draw/prim_queue.c
+    src/main/draw/prim_color.c
     src/main/draw/frame.c
     src/main/draw/text.c
     src/main/draw/textbox.c

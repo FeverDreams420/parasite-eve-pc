@@ -2199,6 +2199,52 @@ static int original_conditional_branch_opcode(void)
     puts("Original opcode 29: native conditional target, 32-bit offset wrapping, both paths and real dispatcher passed");return 1;
 }
 
+static int original_context_getter_opcodes(void)
+{
+    FieldActor *saved_list=g_FieldActorListHead,*saved_player=g_PlayerEntity,*saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    const u32 patterns[]={0,1,0x7fff,0x8000,0xffff,0x80000000,0xffffffff,0x010c0000,0xa5a55a5a,0x12345678,0x7fffffff,0x600000};
+    FieldActor actor={0};Combatant player;EnemyCombatant enemy;
+    uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[89]!=Entity_GetField || g_ScriptQueueOpcodeHandlers[139]!=Entity_FindByTypeId)return 0;
+    for(unsigned kind=0;kind<2;++kind)for(unsigned p=0;p<12;++p)for(unsigned cmd=0;cmd<512;++cmd){
+        u32 raw[0xd8/4];for(unsigned i=0;i<0xd8/4;++i)raw[i]=patterns[p];
+        raw[0]=(raw[0]&~0xe00000u)|((p%6)<<21);
+        memset(&player,0,sizeof(player));memcpy(&player,raw,0x1c);
+        memcpy(&player.maxHP,(u8 *)raw+0x1c,0xd8-0x1c);
+        memset(&enemy,0,sizeof(enemy));memcpy(&enemy,raw,0x18);
+        memcpy(enemy.records,(u8 *)raw+0x1c,0xd8-0x1c);
+        actor.state=(FieldActorState *)(kind?(void *)&enemy:(void *)&player);
+        actor.type_id=kind?6:0;actor.sub_id=3;actor.flags=0;actor.next=NULL;
+        g_PlayerEntity=&actor;g_CurrentEntity=&actor;g_FieldActorListHead=&actor;
+        int command=cmd,out=(s32)0x98765432;int *args[]={&command,&out};
+        u32 result=Entity_GetField(args),post_flags=kind?enemy.statusFlags2:player.statusFlags2;
+        const u32 words[]={result,(u32)out,post_flags};
+        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((words[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned typed=0;typed<2;++typed){
+            player.statusFlags2=patterns[p];enemy.statusFlags2=patterns[p];
+            u32 program[8];unsigned length;
+            if(typed){u32 code[]={139|(4u<<13),0,actor.type_id,3,cmd,0x98765432,32,0};memcpy(program,code,sizeof(code));length=8;}
+            else{u32 code[]={89|(2u<<13),0,cmd,0x98765432,32,0};memcpy(program,code,sizeof(code));length=6;}
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+            if(result!=1 || program[typed?5:3]!=(u32)out || (kind?enemy.statusFlags2:player.statusFlags2)!=post_flags ||
+               node.current.script!=program+length || node.flags!=0x90 || node.active || g_ScriptNodePool){
+                fprintf(stderr,"Context getter kind=%u pattern=%u cmd=%u typed=%u\n",kind,p,cmd,typed);return 0;}
+        }
+    }
+    FieldActor missing[3]={{0}};
+    for(unsigned i=0;i<3;++i){missing[i].type_id=6;missing[i].sub_id=i?3:2;missing[i].next=i<2?&missing[i+1]:NULL;missing[i].flags=i?0x10:0;}
+    for(unsigned mode=0;mode<3;++mode){
+        g_FieldActorListHead=mode==0?NULL:missing;u32 code[]={139|(4u<<13),0,mode==2?7:6,3,43,0x98765432,32,0};
+        ScriptNode node={.current.script=code,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(code[5]!=0x98765432 || node.current.script!=code+8 || node.flags!=0x90 || g_ScriptNodePool)return 0;
+    }
+    g_FieldActorListHead=saved_list;g_PlayerEntity=saved_player;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0xbc5b5bf975c75f8d)){fprintf(stderr,"Context getter hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original context getters 89/139: 12288 unhooked USA CPU states, all command bytes, signed HP, event records, status consumption and dispatcher selection passed");return 1;
+}
+
 static int original_typed_field_opcode(void)
 {
     FieldActor *saved_list=g_FieldActorListHead,*saved_player=g_PlayerEntity,*saved_actor=g_CurrentEntity;
@@ -2792,7 +2838,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
@@ -5950,6 +5996,8 @@ static int original_enemy_slots(PeDisc *disc,PeDiscFile *exe)
     RenderAnimationDataHeader animation={0};animation.frame_count=9;
     g_GameState.bank_rows[0][2]=&animation;
     BattleEntity actors[8];const u8 starts[]={0,127,254,255};
+    FieldActor *saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    if(g_ScriptQueueOpcodeHandlers[111]!=Script_InitEntityMoveState)return 0;
     uint64_t hash=UINT64_C(14695981039346656037);
 #define HASH_SLOT(value,bytes) do { \
     u32 word=(u32)(value); \
@@ -5972,7 +6020,12 @@ static int original_enemy_slots(PeDisc *disc,PeDiscFile *exe)
         for(unsigned i=0;i<8;++i) {
             actors[i].entityFlags=0x240|(((mask>>i)&1)*0x2000);actors[i].actionMode=9;actors[i].animLastFrame=5;
             actors[i].animFrame=7<<16;actors[i].animPrev.fixed=3<<16;
-            Entity_AllocSlot(&actors[i]);HASH_SLOT_ACTOR(i);
+            if(i&1){
+                u32 program[]={111,0,32,0};ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+                g_CurrentEntity=(FieldActor *)&actors[i];g_ScriptNodePool=&node;Script_RunQueue();
+                if(node.current.script!=program+4 || node.flags!=0x90 || node.active || g_ScriptNodePool)return 0;
+            }else Entity_AllocSlot(&actors[i]);
+            HASH_SLOT_ACTOR(i);
         }
         for(unsigned i=1;i<7;i+=2)Battle_SlotFree(&actors[i]);
         for(unsigned i=0;i<7;++i) {HASH_SLOT(g_BattleEnemySlots[i].active,4);HASH_SLOT(actors[i].core!=NULL,1);}
@@ -5985,11 +6038,12 @@ static int original_enemy_slots(PeDisc *disc,PeDiscFile *exe)
 #undef HASH_SLOT_ACTOR
 #undef HASH_SLOT
     memcpy(g_BattleEnemySlots,old_slots,sizeof(old_slots));g_EntityInstanceCounter=old_counter;g_BattleLiveEnemyCount=old_live;
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     g_GameState.bank_rows[0][2]=old_animation;
     if(hash!=UINT64_C(0x81c2f5af25011535)) {
         fprintf(stderr,"Original enemy-slot hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
     }
-    puts("Original enemy slots: complete template and 5,632 allocations, exhaustion, reuse, ID wrapping and clears match unhooked USA MIPS");
+    puts("Original enemy slots: complete template and 5,632 allocations, opcode 111 dispatcher, exhaustion, reuse, ID wrapping and clears match unhooked USA MIPS");
     return 1;
 }
 
@@ -8166,6 +8220,30 @@ static int original_frame_random(void)
             0x3e0003f,0x4b107e,0xb5c90,0x214eb,0x5989,0x1274,0x3fc00,0x450655};
         if(Draw_FlushPrimQueue()!=prefix[i]) valid=0;
     }
+    const int bounds[]={-32768,-1000,-1,0,1,100,1000,32767};
+    uint64_t opcode_hash=UINT64_C(14695981039346656037);
+    FieldActor actor={0},*saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    g_CurrentEntity=&actor;if(g_ScriptQueueOpcodeHandlers[26]!=Script_Random)valid=0;
+    for(unsigned lo=0;lo<8;++lo)for(unsigned hi=0;hi<8;++hi){
+        Draw_InitGpuHwRegs();
+        for(unsigned draw=0;draw<64;++draw){
+            u32 before[33];memcpy(before,g_DrawPrimGeneratorWords,sizeof(before));
+            int low=bounds[lo],high=bounds[hi],out=(s32)0x98765432;int *args[]={&out,&low,&high};
+            u32 result=Script_Random(args),after[33];memcpy(after,g_DrawPrimGeneratorWords,sizeof(after));
+            u32 words[35]={result,(u32)out};memcpy(words+2,after,sizeof(after));
+            for(unsigned i=0;i<35;++i)for(unsigned b=0;b<4;++b)
+                opcode_hash=(opcode_hash^((words[i]>>(b*8))&255))*UINT64_C(1099511628211);
+            memcpy(g_DrawPrimGeneratorWords,before,sizeof(before));
+            u32 program[]={26|(3u<<13),0,0x98765432,(u32)low,(u32)high,32,0};
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+            if(result!=1 || low!=bounds[lo] || high!=bounds[hi] || program[2]!=(u32)out ||
+               memcmp(after,g_DrawPrimGeneratorWords,sizeof(after)) || node.current.script!=program+7 ||
+               node.flags!=0x90 || node.active || g_ScriptNodePool)valid=0;
+        }
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(opcode_hash!=UINT64_C(0xf2f87de64cb28a19)){fprintf(stderr,"Range RNG hash %016llx\n",(unsigned long long)opcode_hash);valid=0;}
+    if(valid)puts("Original random opcode 26: 4096 unhooked USA CPU draws, equal/reversed/signed ranges, complete generator state and real dispatcher passed");
     memcpy(g_DrawPrimGeneratorWords,saved,sizeof(saved));
     if(!valid) fprintf(stderr,"Original frame RNG differs from USA MIPS execution\n");
     return valid;

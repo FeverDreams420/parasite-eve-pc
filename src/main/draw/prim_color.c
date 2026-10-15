@@ -1,25 +1,11 @@
-#include "pe1/game_asm.h"
+#include "common.h"
+#include "pe1/boot.h"
 
-/*
- * int Draw_PackPrimColor(int low, int high): low plus the 16-bit
- * Draw_FlushPrimQueue result scaled to (high - low), i.e.
- * low + ((u16)r * (high - low) >> 16).
- *
- * Original assembler: ra is kept in
- * $v1 with `or` instead of a stack frame across the call, and the range and
- * result use the trapping `sub` and `add`, which GCC never emits.
- */
-GAME_ASM_FUNCTION(Draw_PackPrimColor,
-    "    or      $v1, $zero, $ra\n"
-    "    jal     Draw_FlushPrimQueue\n"
-    "    sub     $a1, $a1, $a0\n"
-    "    andi    $v0, $v0, 0xFFFF\n"
-    "    mult    $v0, $a1\n"
-    "    or      $ra, $zero, $v1\n"
-    "    mflo    $v0\n"
-    "    mfhi    $t3\n"
-    "    srl     $v0, $v0, 16\n"
-    "    sll     $t3, $t3, 16\n"
-    "    or      $v0, $v0, $t3\n"
-    "    jr      $ra\n"
-    "    add     $v0, $v0, $a0\n");
+/* The original range scaler uses the low 16 bits of the frame generator.
+ * Keep the signed product's high bits; an unsigned scale changes negative
+ * ranges and the enemy scripts' choices. */
+int Draw_PackPrimColor(int low, int high) {
+    s32 range = (s32)((u32)high - (u32)low);
+    s64 product = (s64)(u16)Draw_FlushPrimQueue() * range;
+    return (s32)((u32)low + (u32)(product >> 16));
+}

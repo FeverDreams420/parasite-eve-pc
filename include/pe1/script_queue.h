@@ -22,6 +22,10 @@ extern u32 g_ScriptVariableBank[];
 #define SCRIPT_VAR_AREA 0x4A
 extern int (*g_ScriptQueueOpcodeHandlers[])(int **);
 int Entity_SetFieldByTypeId(int **args);
+int Entity_GetField(int **args);
+int Entity_FindByTypeId(int **args);
+int Script_Random(int **args);
+int Script_InitEntityMoveState(int **unused);
 int Script_CondBranch(int **args);
 int Scene_TestGlobalFlags(int **args);
 int Scene_SetGlobalFlags(int **args);

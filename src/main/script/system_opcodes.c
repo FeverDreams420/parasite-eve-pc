@@ -233,13 +233,13 @@ int Menu_SetModeState6(int **unused) {
     return 1;
 }
 
-int Entity_GetField(char ***arg0) {
+int Entity_GetField(int **arg0) {
     FieldActor *ctx = g_CurrentEntity;
 
     if (ctx->type_id == 0) {
-        *(int *)arg0[1] = Battle_GetContextField(*(unsigned char *)arg0[0]);
+        *arg0[1] = Battle_GetContextField((u8)*arg0[0]);
     } else {
-        *(int *)arg0[1] = Battle_GetEnemyContextField(ctx, *(unsigned char *)arg0[0]);
+        *arg0[1] = Battle_GetEnemyContextField(ctx, (u8)*arg0[0]);
     }
     return 1;
 }
@@ -573,7 +573,8 @@ int Script_PlayerPointInPoly(int **arg0) {
     return 1;
 }
 
-int Script_InitEntityMoveState(void) {
+int Script_InitEntityMoveState(int **unused) {
+    (void)unused;
     Entity_AllocSlot((BattleEntity *)g_CurrentEntity);
     return 1;
 }

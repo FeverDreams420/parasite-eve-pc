@@ -61,6 +61,7 @@ int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int
 #include "pe1/akao.h"
 #include "pe1/akao/stream.h"
 #include "pe1/boot.h"
+#include "pe1/boot_services.h"
 #include "pe1/resident_tables.h"
 #include "pe1/save.h"
 #include "pe1/akao/globals.h"
@@ -69,16 +70,26 @@ int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int
 #endif
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 #ifdef PE_TEST_REAL_DISC
-AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
 static u32 image_word(const u8 *p)
 {
     return (u32)p[0] | (u32)p[1] << 8 | (u32)p[2] << 16 | (u32)p[3] << 24;
 }
 static int original_scene_bootstrap(PeRoomCatalog *catalog)
 {
-    static _Alignas(16) u8 scratch[0x20000], bank[0x1400];
-    g_GameState.scene_load_scratch=scratch;
-    g_GameState.bank_work_far_end=bank;
+    PeDiscFile executable;
+    AkaoVoiceBankEntry authored_voice[20];
+    CHECK(pe_disc_find(catalog->disc,"SLUS_006.62",&executable));
+    CHECK(pe_disc_read(catalog->disc,&executable,0x94488-0x10000+0x800,
+                       authored_voice,sizeof(authored_voice)));
+    CHECK(!memcmp(g_AkaoVoiceBankEntries,authored_voice,sizeof(authored_voice)));
+    Boot_InitSystem();
+    Boot_InitGameState();
+    for(unsigned i=0;i<4;++i) authored_voice[i].ids[0]=authored_voice[i].ids[1]=0;
+    CHECK(!memcmp(g_AkaoVoiceBankEntries,authored_voice,sizeof(authored_voice)));
+    Boot_InitSubsystems();
+    u8 *bank=g_GameState.bank_work_far_end;
+    CHECK(g_GameState.scene_load_scratch==g_SceneLoadScratchArea);
+    CHECK(bank==g_BootWorkArea+0x4000);
     g_GameState.startup_resource_blob=(u8 *)(uintptr_t)1;
     g_GameState.startup_resource_tables[0]=(void *)(uintptr_t)1;
     g_GameState.startup_resource_tables[1]=(void *)(uintptr_t)1;
@@ -109,7 +120,7 @@ static int original_scene_bootstrap(PeRoomCatalog *catalog)
     g_PeImageSectorTable[6]=sample_start;
     memset(&g_ResidentDataPack,0xA5,sizeof(g_ResidentDataPack));
     memset(g_StartupResourceBlob,0xA5,sizeof(g_StartupResourceBlob));
-    memset(bank,0xA5,sizeof(bank));
+    memset(bank,0xA5,0x1400);
     CHECK(Scene_LoadSceneData()==0);
     CHECK(g_GameState.startup_resource_blob==g_StartupResourceBlob);
     for(unsigned slot=2;slot<=7;++slot) {
@@ -121,7 +132,7 @@ static int original_scene_bootstrap(PeRoomCatalog *catalog)
                            expected.bytes,expected.size));
         if(slot==2) CHECK(!memcmp(&g_ResidentDataPack,expected.bytes,expected.size));
         if(slot==3) CHECK(!memcmp(g_StartupResourceBlob,expected.bytes,sizeof(g_StartupResourceBlob)));
-        if(slot==7) CHECK(!memcmp(bank,expected.bytes,sizeof(bank)));
+        if(slot==7) CHECK(!memcmp(bank,expected.bytes,0x1400));
         if(slot==6) {
             u32 address=image_word(expected.bytes+0x10), bytes=image_word(expected.bytes+0x14);
             u32 first=image_word(expected.bytes+0x18), last=image_word(expected.bytes+0x1C);

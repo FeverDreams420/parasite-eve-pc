@@ -21,11 +21,10 @@ void Asset_ResetGameState(void);
 /* End-of-frame pass: draws the fade primitives and sends queued AKAO commands. */
 void Boot_FinishFrame(void);
 
-/* Work areas carved up by Boot_InitMemoryLayout. g_BootWorkArea follows the
- * field engine and moves with it; the other three are buffers inside the
- * overlay window block, at fixed addresses (configs/USA/main.yaml): the
- * texture load scratch after the mdec_diag window header and the scene
- * object work and ordering tables after the menu_memcard window header. */
+/* Native storage carved by the original Boot_InitMemoryLayout. Overlay
+ * workspaces live independently; native tags and actor pointers enlarge
+ * the scene arena. The loaded-scene/directory buffer keeps its 8-byte
+ * header before g_StrFileDirBuffer. */
 extern u8 g_BootWorkArea[];
 extern u8 D_8010BD00[];
 extern u8 D_80120D08[];

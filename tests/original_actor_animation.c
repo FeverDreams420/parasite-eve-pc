@@ -4,6 +4,7 @@ void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/field_sfx.h"
 #include "pe1/psyq_callbacks.h"
 #include "pe1/boot.h"
+#include "pe1/cdrom_buffers.h"
 #include "pe1/draw_buffers.h"
 #include "pe1/save.h"
 #include "pe1/game_timers.h"
@@ -95,12 +96,6 @@ static int record_menu_event(MenuWidgetNode *node,unsigned flags)
     return node->mode==2;
 }
 
-/* Backing storage for exercising the original boot buffer layout. */
-_Alignas(16) u8 g_BootWorkArea[0x20000], D_8010BD00[0x20000];
-_Alignas(16) u8 D_80120D08[0x200000], g_SceneLoadScratchArea[0x20000];
-static u8 directory[0x1000];
-u8 *g_StrFileDirBuffer = directory + 8;
-
 static int boot_buffer_layout(void)
 {
     Pe1GameState saved = g_GameState;
@@ -110,8 +105,8 @@ static int boot_buffer_layout(void)
         g_GameState.voice_bank_base_1400 != g_BootWorkArea + 0x6000 ||
         (void *)g_GameState.entity_texture_blob != g_BootWorkArea + 0x14000 ||
         g_GameState.scene_object_work != D_80120D08 ||
-        g_GameState.str_file_directory != directory + 8 ||
-        (void *)g_GameState.loaded_scene_assets != directory ||
+        g_GameState.str_file_directory != g_StrFileDirBuffer ||
+        (void *)g_GameState.loaded_scene_assets != g_StrFileDirBuffer - 8 ||
         g_GameState.scene_load_scratch != g_SceneLoadScratchArea ||
         g_GameState.bank_work_base != g_GameState.voice_bank_base ||
         g_GameState.bank_work_end != g_GameState.voice_bank_base + 0x1400 ||
@@ -362,7 +357,6 @@ static int glyph_asset_records(PeDisc *disc, const PeDiscFile *exe)
 }
 
 /* Record positional sound requests; no replacement audio ships with the game. */
-AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
 static unsigned sounds;
 int Asset_Find08w(int id,int mode,int x,int y,int z)
 {

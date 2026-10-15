@@ -27,6 +27,13 @@ char g_PeDisc1MarkerPath[] = "\\FMV1\\PEDISC01.IDF;1";
 char g_PeImagePath[] = "\\PE.IMG;1";
 char g_PeDisc2MarkerPath[] = "\\FMV2\\PEDISC02.IDF;1";
 
+/* USA resident records at 0x80094488; boot clears IDs, retaining the
+ * authored action/frame pair for the four player footstep triggers. */
+AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20] = {
+    {0,0,0x16,0,{1000,1000}}, {0,0,0x16,0x13,{1001,1001}},
+    {0,0,0x17,0,{1000,1000}}, {0,0,0x17,9,{1001,1001}}
+};
+
 int Asset_OpenPeImage(void)
 {
     PeDiscFile archive, marker;

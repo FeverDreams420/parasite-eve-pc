@@ -228,7 +228,8 @@ typedef struct AkaoVoiceBankEntry {
     u8 frame;
     u16 ids[2];
 } AkaoVoiceBankEntry;
-extern AkaoVoiceBankEntry g_AkaoVoiceBankEntries[];
+PE1_STATIC_ASSERT(sizeof(AkaoVoiceBankEntry) == 8, scene_voice_trigger_size);
+extern AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
 void *Asset_FindTable2CByU16Key(char *base, int key);
 void *Asset_FindTable30ByU16Key(char *base, int key);
 void Akao_LoadVoiceBankAlt(void);

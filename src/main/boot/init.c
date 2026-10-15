@@ -4,6 +4,8 @@
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_status.h"
 #include "pe1/boot.h"
+#include "pe1/boot_services.h"
+#include "pe1/cdrom_buffers.h"
 #include "pe1/display_env.h"
 #include "pe1/draw_buffers.h"
 #include "pe1/field_sfx.h"
@@ -19,6 +21,13 @@
 #include "pe1/psyq_spu_api.h"
 #include "pe1/scene_dispatch.h"
 #include "pe1/scene_flags.h"
+
+/* Native backing for the original boot allocator. Overlay workspaces are
+ * ordinary persistent memory; native OT/actor pointers need larger arenas. */
+_Alignas(16) u8 g_BootWorkArea[0x20000], D_8010BD00[0x20000];
+_Alignas(16) u8 D_80120D08[0x200000], g_SceneLoadScratchArea[0x20000];
+static _Alignas(16) u8 g_BootLoadedSceneArea[0x80008];
+u8 *g_StrFileDirBuffer = g_BootLoadedSceneArea + 8;
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */

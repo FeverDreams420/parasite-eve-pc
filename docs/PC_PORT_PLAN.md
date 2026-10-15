@@ -139,6 +139,27 @@ nie posłużył jeszcze jako obrazowe odniesienie dla pierwszego starcia.
 Pełny zestaw obecnego kandydata przechodzi 40/40 bez skipów w 403,20 s,
 z wymaganym Disc 1; obejmuje też ponowne naturalne wejście do M005 (95,63 s).
 
+Kolejna naprawa podpina Entity_SetField (90) i normalizuje jego ABI w miejscu.
+12288 stanów zapisu odpowiada teraz odniesieniu CPU USA `2249f25ad3a196bd`,
+łącznie z całymi 0xD8 bajtami stanu i podłogą, przez oba opkody 90/206.
+Skrypt przeszedł do 183, konfiguracji rekordu ataku. Istniejące polecenia
+112/183/176 mają zgodne ABI i są podpięte razem: pełne sześć rekordów,
+zawężenia 8/16 bitów, parametry i kroki wejścia/wyjścia przechodzą 216 stanów
+CPU USA (`f942d785949a4441`) oraz dispatcher, bez zmiany ich algorytmów.
+Przebieg doszedł dalej do 207 (aktor 6:0, script_byte 6264), a po podpięciu
+do 149 (script_byte 6272). Istniejący sygnał 207 ustawia g_BattleEnemyEscapeFlag
+na 1, jak jednobajtowy zapis USA pod 8009D244. Podpięto też pozostałe ustawienia
+trybu walki 149/150 (0/8, USA 8009D28C); test wykonuje teraz wszystkie cztery
+ustawienia 137/138/149/150 przez dispatcher. Fixture --assets przechodzi
+w 12,69 s i z ASan/UBSan/function oraz instrumentowanym PsyZ/SDL.
+Nie jest to jeszcze dowód ukończenia pierwszej walki ani pełnej kampanii.
+Aktualny naturalny przebieg z kompletem tych podpięć dochodzi do kolejnego
+niepodpiętego opkodu 106 (Melissa 2:0, script_byte 3272). Osobny pełny
+executable z ASan/UBSan/function, zbudowany przed podpięciem 207/149/150,
+przeszedł tę samą drogę do oczekiwanego abortu 207 bez raportu sanitizerów.
+To dowód dla tego wcześniejszego kandydata do wskazanego punktu, nie test
+wykonania ostatnich sygnałów ani naturalnego zakończenia procesu.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

@@ -277,13 +277,13 @@ int Entity_FindByTypeId(int **arg0) {
     return 1;
 }
 
-int Entity_SetField(char ***arg0) {
+int Entity_SetField(int **arg0) {
     FieldActor *ctx = g_CurrentEntity;
 
     if (ctx->type_id == 0) {
-        Battle_SetContextField(*(unsigned char *)arg0[0], *(int *)arg0[1]);
+        Battle_SetContextField((u8)*arg0[0], *arg0[1]);
     } else {
-        Entity_WriteFieldByCmd(ctx, *(unsigned char *)arg0[0], *(int *)arg0[1]);
+        Entity_WriteFieldByCmd(ctx, (u8)*arg0[0], *arg0[1]);
     }
 
     return 1;
@@ -579,31 +579,31 @@ int Script_InitEntityMoveState(int **unused) {
     return 1;
 }
 
-int Script_SetEntityAnim12Args(char **arg0) {
+int Script_SetEntityAnim12Args(int **arg0) {
     Script_SetObjAnimEntry12(
         (ScriptAnimObj *)g_CurrentEntity,
-        *(unsigned char *)arg0[0],
-        *(unsigned char *)arg0[1],
-        *(unsigned char *)arg0[2],
-        *(unsigned char *)arg0[3],
-        *(unsigned short *)arg0[4],
-        *(signed char *)arg0[5],
-        *(signed char *)arg0[6],
-        *(signed char *)arg0[7],
-        *(signed char *)arg0[8],
-        *(unsigned char *)arg0[9],
-        *(unsigned char *)arg0[10]);
+        (u8)*arg0[0],
+        (u8)*arg0[1],
+        (u8)*arg0[2],
+        (u8)*arg0[3],
+        (u16)*arg0[4],
+        (s8)*arg0[5],
+        (s8)*arg0[6],
+        (s8)*arg0[7],
+        (s8)*arg0[8],
+        (u8)*arg0[9],
+        (u8)*arg0[10]);
     return 1;
 }
 
-int Script_SetEntityAnim5Args(char **arg0) {
+int Script_SetEntityAnim5Args(int **arg0) {
     Script_SetObjAnimEntry5(
         (ScriptAnimObj *)g_CurrentEntity,
-        *(unsigned char *)arg0[0],
-        *(unsigned char *)arg0[1],
-        *(unsigned char *)arg0[2],
-        *(unsigned char *)arg0[3],
-        *(unsigned short *)arg0[4]);
+        (u8)*arg0[0],
+        (u8)*arg0[1],
+        (u8)*arg0[2],
+        (u8)*arg0[3],
+        (u16)*arg0[4]);
     return 1;
 }
 
@@ -900,12 +900,14 @@ int Script_SetEntityField1E6(int **arg0) {
     return 1;
 }
 
-int Menu_ClearModeState(void) {
+int Menu_ClearModeState(int **unused) {
+    (void)unused;
     g_BattleModeState = 0;
     return 1;
 }
 
-int Menu_SetModeState8(void) {
+int Menu_SetModeState8(int **unused) {
+    (void)unused;
     g_BattleModeState = 8;
     return 1;
 }
@@ -1285,7 +1287,8 @@ int Script_SnapPosToSpawnPos(int **unused) {
     return 1;
 }
 
-int Script_SignalSceneExit(void) {
+int Script_SignalSceneExit(int **unused) {
+    (void)unused;
     Script_SignalExit();
     return 1;
 }

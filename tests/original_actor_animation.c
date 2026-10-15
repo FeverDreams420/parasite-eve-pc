@@ -2089,6 +2089,15 @@ static int original_flag_opcode_bindings(void)
     }
     g_GameStateFlags=saved_flags;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     if(global_hash!=UINT64_C(0x7d8e36c81c7f7588))return 0;
+    u8 saved_escape=g_BattleEnemyEscapeFlag;
+    if(g_ScriptQueueOpcodeHandlers[207]!=Script_SignalSceneExit)return 0;
+    g_CurrentEntity=&actor;g_BattleEnemyEscapeFlag=0;
+    u32 exit_program[]={207,0,32,0};ScriptNode exit_node={.current.script=exit_program,.active=1,.flags=0x80};
+    g_ScriptNodePool=&exit_node;Script_RunQueue();
+    if(g_BattleEnemyEscapeFlag!=1 || exit_node.current.script!=exit_program+4 || exit_node.flags!=0x90 ||
+       exit_node.active || g_ScriptNodePool)return 0;
+    g_BattleEnemyEscapeFlag=saved_escape;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    puts("Original battle sequence signal opcode 207: native escape latch and real dispatcher completion passed");
     puts("Original global flag opcodes 81/82/83: 300 USA CPU states, high-bit masks and real dispatcher passed");
     puts("Original flag opcodes: 576 USA MIPS cases, native handler ABI and full dispatcher/node completion passed");
     puts("Original fade release opcode: all 256 USA MIPS values, dispatcher completion and untouched native tint state passed");
@@ -2162,19 +2171,21 @@ static int original_battle_entry_opcode(void)
     g_GameState=saved_state;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     if(hash!=UINT64_C(0xdcc852ebc349be75))return 0;
     int saved_mode=g_BattleModeState;
-    for(unsigned op=137;op<=138;++op){
-        int (*handler)(int **)=op==137?Menu_SetModeState6:Menu_SetModeState5;
+    const unsigned mode_ops[]={137,138,149,150};const int modes[]={6,5,0,8};
+    int (*mode_handlers[])(int **)={Menu_SetModeState6,Menu_SetModeState5,Menu_ClearModeState,Menu_SetModeState8};
+    for(unsigned m=0;m<4;++m){
+        unsigned op=mode_ops[m];int (*handler)(int **)=mode_handlers[m];
         if(g_ScriptQueueOpcodeHandlers[op]!=handler)return 0;
         for(unsigned i=0;i<6;++i){
             g_BattleModeState=(s32)flags[i];
             u32 program[]={op,0,32,0};ScriptNode dispatched={.current.script=program,.active=1,.flags=0x80};
             g_CurrentEntity=&actor;g_ScriptNodePool=&dispatched;Script_RunQueue();
-            if(g_BattleModeState!=(op==137?6:5) || g_ScriptNodePool || dispatched.active ||
+            if(g_BattleModeState!=modes[m] || g_ScriptNodePool || dispatched.active ||
                dispatched.flags!=0x90 || dispatched.current.script!=program+4)return 0;
         }
     }
     g_BattleModeState=saved_mode;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
-    puts("Original battle mode opcodes 137/138: both native handlers and dispatcher completion passed");
+    puts("Original battle mode opcodes 137/138/149/150: four native handlers and dispatcher completion passed");
     puts("Original battle entry opcode 85: 192 USA CPU phase/flag/yield states, real dispatcher and texture-load error propagation passed");return 1;
 }
 
@@ -2243,6 +2254,73 @@ static int original_context_getter_opcodes(void)
     g_FieldActorListHead=saved_list;g_PlayerEntity=saved_player;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     if(hash!=UINT64_C(0xbc5b5bf975c75f8d)){fprintf(stderr,"Context getter hash %016llx\n",(unsigned long long)hash);return 0;}
     puts("Original context getters 89/139: 12288 unhooked USA CPU states, all command bytes, signed HP, event records, status consumption and dispatcher selection passed");return 1;
+}
+
+static int original_context_setter_opcodes(void)
+{
+    FieldActor *saved_list=g_FieldActorListHead,*saved_player=g_PlayerEntity,*saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;s16 saved_floor=g_RoomFloorY->y;
+    const u32 patterns[]={0,1,0x7fff,0x8000,0xffff,0x80000000,0xffffffff,0x010c0000,0xa5a55a5a,0x12345678,0x7fffffff,0x600000};
+    FieldActor actor={0};Combatant player;FieldActorState enemy;
+    uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[90]!=Entity_SetField)return 0;
+    for(unsigned kind=0;kind<2;++kind)for(unsigned p=0;p<12;++p)for(unsigned cmd=0;cmd<512;++cmd){
+        u32 raw[0xd8/4];for(unsigned i=0;i<0xd8/4;++i)raw[i]=patterns[p];
+        memset(&player,0,sizeof(player));memcpy(&player,raw,0x1c);memcpy(&player.maxHP,(u8 *)raw+0x1c,0xd8-0x1c);
+        memset(&enemy,0,sizeof(enemy));memcpy(&enemy,raw,0x18);memcpy(&enemy.count_limit,(u8 *)raw+0x1c,0xd8-0x1c);
+        actor.state=kind?&enemy:(FieldActorState *)&player;actor.type_id=kind?6:0;actor.sub_id=3;actor.flags=0;actor.next=NULL;
+        g_PlayerEntity=&actor;g_CurrentEntity=&actor;g_FieldActorListHead=&actor;g_RoomFloorY->y=0x1234;
+        Combatant before_player=player;FieldActorState before_enemy=enemy;
+        int command=cmd,value=(s32)patterns[(p+cmd)%12];int *args[]={&command,&value};u32 result=Entity_SetField(args);
+        u8 after[0xd8];
+        if(kind){memcpy(after,&enemy,0x18);memcpy(after+0x18,(u8 *)raw+0x18,4);memcpy(after+0x1c,&enemy.count_limit,0xd8-0x1c);}
+        else{memcpy(after,&player,0x1c);memcpy(after+0x1c,&player.maxHP,0xd8-0x1c);}
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned b=0;b<sizeof(after);++b)hash=(hash^after[b])*UINT64_C(1099511628211);
+        u16 floor=g_RoomFloorY->y;for(unsigned b=0;b<2;++b)hash=(hash^((floor>>(b*8))&255))*UINT64_C(1099511628211);
+        Combatant after_player=player;FieldActorState after_enemy=enemy;
+        for(unsigned typed=0;typed<2;++typed){
+            player=before_player;enemy=before_enemy;g_RoomFloorY->y=0x1234;
+            u32 program[8];unsigned length;
+            if(typed){u32 code[]={206|(4u<<13),0,actor.type_id,3,cmd,(u32)value,32,0};memcpy(program,code,sizeof(code));length=8;}
+            else{u32 code[]={90|(2u<<13),0,cmd,(u32)value,32,0};memcpy(program,code,sizeof(code));length=6;}
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+            if(result!=1 || memcmp(&player,&after_player,sizeof(player)) || memcmp(&enemy,&after_enemy,sizeof(enemy)) ||
+               (u16)g_RoomFloorY->y!=floor || node.current.script!=program+length || node.flags!=0x90 || node.active || g_ScriptNodePool)return 0;
+        }
+    }
+    g_RoomFloorY->y=saved_floor;g_FieldActorListHead=saved_list;g_PlayerEntity=saved_player;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0x2249f25ad3a196bd)){fprintf(stderr,"Context setter hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original context setters 90/206: 12288 unhooked USA CPU states, all command bytes, complete actor/floor writes and both dispatcher forms passed");return 1;
+}
+
+static int original_script_event_entries(void)
+{
+    FieldActor actor={0},*saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    EntityAnimEventCore core;actor.state=(FieldActorState *)&core;g_CurrentEntity=&actor;
+    const u32 patterns[]={0,1,0x7fff,0x8000,0xffff,0x80000000,0xffffffff,0x010c0000,0xa5a55a5a,0x12345678,0x7fffffff,0x600000};
+    const unsigned ops[]={112,183,176},counts[]={11,5,3};
+    int (*handlers[])(int **)={Script_SetEntityAnim12Args,Script_SetEntityAnim5Args,Script_SetBattleEntryCoords};
+    uint64_t hash=UINT64_C(14695981039346656037);
+    for(unsigned op=0;op<3;++op)for(unsigned slot=0;slot<6;++slot)for(unsigned p=0;p<12;++p){
+        memset(&core,0,sizeof(core));memset(&core,0xa5,0x18);memset(core.records,0xa5,0xb4-0x1c);
+        EntityAnimEventCore before=core;int values[11];int *args[11];
+        for(unsigned i=0;i<11;++i){values[i]=i?(s32)patterns[(p+i)%12]:(int)(slot|((p%2)<<8));args[i]=values+i;}
+        if(g_ScriptQueueOpcodeHandlers[ops[op]]!=handlers[op])return 0;
+        u32 result=handlers[op](args);EntityAnimEventCore after=core;
+        u8 raw[0xb4];memcpy(raw,&core,0x18);memset(raw+0x18,0xa5,4);memcpy(raw+0x1c,core.records,0xb4-0x1c);
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned b=0;b<sizeof(raw);++b)hash=(hash^raw[b])*UINT64_C(1099511628211);
+        core=before;u32 program[15]={ops[op]|(counts[op]<<13),0};
+        for(unsigned i=0;i<counts[op];++i)program[2+i]=(u32)values[i];
+        program[2+counts[op]]=32;
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(&core,&after,sizeof(core)) || node.current.script!=program+4+counts[op] ||
+           node.flags!=0x90 || node.active || g_ScriptNodePool)return 0;
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0xf942d785949a4441)){fprintf(stderr,"Script event setup hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original event setup opcodes 112/183/176: 216 unhooked USA CPU states, six records, narrowed operands, all parameters and full dispatcher passed");return 1;
 }
 
 static int original_typed_field_opcode(void)
@@ -2838,7 +2916,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

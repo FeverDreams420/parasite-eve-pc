@@ -32,6 +32,7 @@ add_library(parasite-eve-original OBJECT
     src/main/battle/encounter.c
     src/main/aya/stats.c
     src/main/item/active_list.c
+    src/main/time/counters.c
     src/main/save/game_data.c
     src/main/render/font.c
     src/main/render/font_load.c

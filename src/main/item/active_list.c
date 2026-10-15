@@ -119,16 +119,16 @@ void GameTime_SetCounterSeconds(int timer, int seconds) {
 /* Item-drop random table: seeding from the play clock and the per-draw
  * lagged-xor refresh of the 0x209-byte table. */
 
-int g_ItemDropRngIndex;
+u8 g_ItemDropRngTable[521];
 
 #define SCRAMBLE_RANDOM_BYTES()                    \
     {                                           \
         int scramble_i_;                           \
         for (scramble_i_ = 0; scramble_i_ < 0x20; scramble_i_++) { \
-            g_ItemDropRngTable[scramble_i_] ^= g_ItemDropRngXorKeyLow[scramble_i_]; \
+            g_ItemDropRngTable[scramble_i_] ^= g_ItemDropRngTable[scramble_i_ + 489]; \
         }                                          \
         for (scramble_i_ = 0x20; scramble_i_ < 0x209; scramble_i_++) { \
-            g_ItemDropRngTable[scramble_i_] ^= g_ItemDropRngXorKeyHigh[scramble_i_]; \
+            g_ItemDropRngTable[scramble_i_] ^= g_ItemDropRngTable[scramble_i_ - 32]; \
         }                                          \
     }
 
@@ -174,10 +174,10 @@ int Inv_ScrambleGrid(void)
     g_ItemDropRngIndex++;
     if (g_ItemDropRngIndex >= 0x209) {
         for (i = 0; i < 0x20; i++) {
-            g_ItemDropRngTable[i] = g_ItemDropRngTable[i] ^ g_ItemDropRngXorKeyLow[i];
+            g_ItemDropRngTable[i] = g_ItemDropRngTable[i] ^ g_ItemDropRngTable[i + 489];
         }
         for (i = 0x20; i < 0x209; i++) {
-            g_ItemDropRngTable[i] = g_ItemDropRngTable[i] ^ g_ItemDropRngXorKeyHigh[i];
+            g_ItemDropRngTable[i] = g_ItemDropRngTable[i] ^ g_ItemDropRngTable[i - 32];
         }
         g_ItemDropRngIndex = 0;
     }

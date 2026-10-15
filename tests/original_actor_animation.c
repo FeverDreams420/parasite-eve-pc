@@ -1,3 +1,11 @@
+#include "pe1/game_timers.h"
+#include "pe1/random.h"
+#include <stdint.h>
+void GameTime_InitCounter0(void);
+void GameTime_InitCounter1(void);
+void GameTime_InitCounter2(void);
+void Inv_SetDefaultItemId(void);
+int Inv_ScrambleGrid(void);
 #include "pe1/entity_animation.h"
 #include "pe1/room_m005_drifting_sprite.h"
 #include "pe1/room_m005.h"
@@ -2028,10 +2036,52 @@ static int room_callback_context(void)
     return 1;
 }
 
+/* Goldens from executing USA EXE 800528F0/80052B2C in MIPS Unicorn.
+ * 4096 draws cross seven complete table refresh boundaries. */
+static int original_item_random(void)
+{
+    static const struct { u32 frames; uint64_t table_hash, stream_hash; } cases[] = {
+        {UINT32_C(0), UINT64_C(0x72d912fe482091f1), UINT64_C(0x6a8e50bbaca9ed24)},
+        {UINT32_C(60), UINT64_C(0x3d536800677af255), UINT64_C(0xa1d70666c8a26a26)},
+        {UINT32_C(3600), UINT64_C(0x681d934fc438838), UINT64_C(0xce743e2b365ad07f)},
+        {UINT32_C(4294967295), UINT64_C(0x30ad6f89bad09868), UINT64_C(0x32d6b1fd5d134ec)},
+    };
+    GameTimerEntry saved_timers[4];
+    u8 saved_table[521];
+    s32 saved_index=g_ItemDropRngIndex;
+    int valid=1;
+    memcpy(saved_timers,g_GameTimers,sizeof(saved_timers));
+    memcpy(saved_table,g_ItemDropRngTable,sizeof(saved_table));
+    GameTime_InitCounter0(); GameTime_InitCounter1(); GameTime_InitCounter2();
+    if(g_GameClockFlags!=1 || g_GameTimeTable!=0 || g_GameClockLimit!=21600000 ||
+       g_GameTimers[1].flags!=1 || g_GameTimers[1].current || g_GameTimers[1].limit ||
+       g_GameTimers[2].flags!=1 || g_GameTimers[2].current || g_GameTimers[2].limit) valid=0;
+    for(unsigned c=0;c<sizeof(cases)/sizeof(cases[0]);++c) {
+        memcpy(&g_GameTimers[0].current,&cases[c].frames,sizeof(u32));
+        Inv_SetDefaultItemId();
+        uint64_t table=UINT64_C(14695981039346656037);
+        uint64_t stream=table;
+        for(unsigned i=0;i<521;++i) table=(table^g_ItemDropRngTable[i])*UINT64_C(1099511628211);
+        if(g_ItemDropRngIndex!=520 || table!=cases[c].table_hash) valid=0;
+        for(unsigned i=0;i<4096;++i) {
+            int byte=Inv_ScrambleGrid();
+            if(byte<0 || byte>255 || g_ItemDropRngIndex!=(s32)(i%521)) valid=0;
+            stream=(stream^(unsigned)byte)*UINT64_C(1099511628211);
+        }
+        if(stream!=cases[c].stream_hash) valid=0;
+    }
+    memcpy(g_GameTimers,saved_timers,sizeof(saved_timers));
+    memcpy(g_ItemDropRngTable,saved_table,sizeof(saved_table));
+    g_ItemDropRngIndex=saved_index;
+    if(!valid) fprintf(stderr,"Original item RNG/timer reset differs from USA EXE\n");
+    return valid;
+}
+
 int main(int argc, char **argv)
 {
     if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
+    if (!original_item_random()) return 124;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;
     if (!glyph_selection()) return 56;

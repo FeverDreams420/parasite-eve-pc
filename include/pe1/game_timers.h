@@ -22,13 +22,13 @@ extern GameTimerEntry g_GameTimers[4];
 
 /* Interior symbol naming timer zero's flags word; its reset stores both the
  * cleared and the running value. */
-extern volatile u32 g_GameClockFlags;
+#define g_GameClockFlags (*(volatile u32 *)&g_GameTimers[0].flags)
 
 /* Interior symbols for the game clock words GameTime_InitCounter0 writes.
  * Retail stores the game clock limit twice on reset; the qualifier keeps
  * both. */
-extern int g_GameTimeTable;
-extern volatile int g_GameClockLimit;
+#define g_GameTimeTable (g_GameTimers[0].current)
+#define g_GameClockLimit (*(volatile int *)&g_GameTimers[0].limit)
 #define GAME_TIME_COUNTER(index) (g_GameTimers[index].current)
 
 /* Frames played; Save_ClassifyPlaytime buckets it for the save header. */

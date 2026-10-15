@@ -83,6 +83,9 @@ PE1_STATIC_ASSERT(sizeof(FieldFxTaskContext) ==
                    _Alignof(FieldFxTaskContext)) * _Alignof(FieldFxTaskContext),
                   fieldfx_task_context_size);
 
+extern struct PmCommand g_FieldFxTaskClass;
+void FieldFx_InitEffectResources(void);
+int FieldFx_CloseTaskOwner(struct PmSlotHeader *slot);
 int FieldFx_SpawnTask(int id);
 
 int FieldFx_UpdateCallbackList(void *arg0);
@@ -117,11 +120,11 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks.flags) == sizeof(FieldFxO
                   fieldfx_owner_flags);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskOwner, tasks.table) == sizeof(FieldFxObjectPrefix) + PE1_OFFSETOF(FieldFxTaskContext, table),
                   fieldfx_owner_table);
-int FieldFx_InitTaskContext(FieldFxTaskOwner *owner);
-int FieldFx_InitTaskProgram(FieldFxTaskOwner *owner, int skip,
+void FieldFx_InitTaskContext(struct PmSlotHeader *slot);
+int FieldFx_InitTaskProgram(struct PmSlotHeader *slot, int skip,
                   int arg2, intptr_t arg3, intptr_t arg4, intptr_t arg5);
-int FieldFx_DrawTasks(FieldFxTaskOwner *owner);
-int FieldFx_UpdateTasks(FieldFxTaskOwner *owner);
+int FieldFx_DrawTasks(struct PmSlotHeader *slot);
+int FieldFx_UpdateTasks(struct PmSlotHeader *slot);
 extern s16 g_SpinningModelAnchorB[3];
 int FieldFx_SpinningModelEmitterB(int mode, FieldFxEmitter *state);
 

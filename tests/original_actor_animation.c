@@ -556,7 +556,8 @@ static int native_task_cycle(void)
     table.callbacks[0]=observe_native_task; table.sizes[0]=sizeof(NativeTaskState);
     owner->tasks.table=&table; owner->tasks.pc.script=script; owner->tasks.argument=42;
     owner->prefix.actor=NULL; owner->prefix.reserved00=0;
-    if(FieldFx_InitTaskContext(owner)!=0 || owner->tasks.cursor!=owner->tasks.arena || owner->tasks.used || owner->tasks.count)
+    FieldFx_InitTaskContext((PmSlotHeader *)owner);
+    if(owner->tasks.cursor!=owner->tasks.arena || owner->tasks.used || owner->tasks.count)
         return 0;
     for(unsigned slot=0;slot<8;++slot)
         if(owner->tasks.slots[slot].id!=0xffff || owner->tasks.slots[slot].start || owner->tasks.slots[slot].end)
@@ -564,47 +565,68 @@ static int native_task_cycle(void)
     if(owner->tasks.table!=&table || owner->tasks.pc.script!=script) return 0;
     GteMatrix identity={0}; identity.m[0][0]=identity.m[1][1]=identity.m[2][2]=4096;
     GteMatrix *saved_view=g_ViewMatrixSlot.value; g_ViewMatrixSlot.value=&identity;
-    if(FieldFx_UpdateTasks(owner)!=0 || owner->tasks.variables[0]!=9 || owner->tasks.count!=1 ||
+    if(FieldFx_UpdateTasks((PmSlotHeader *)owner)!=0 || owner->tasks.variables[0]!=9 || owner->tasks.count!=1 ||
        owner->tasks.delay!=2 || owner->tasks.slots[0].age!=1) return 0;
-    if(FieldFx_DrawTasks(owner)!=0 || task_draws!=1) return 0;
-    if(FieldFx_UpdateTasks(owner)!=0 || owner->tasks.count || owner->tasks.delay!=1 || owner->tasks.slots[0].id!=0xffff)
+    if(FieldFx_DrawTasks((PmSlotHeader *)owner)!=0 || task_draws!=1) return 0;
+    if(FieldFx_UpdateTasks((PmSlotHeader *)owner)!=0 || owner->tasks.count || owner->tasks.delay!=1 || owner->tasks.slots[0].id!=0xffff)
         return 0;
-    if(FieldFx_UpdateTasks(owner)!=0 || owner->prefix.reserved00!=4 || owner->tasks.delay) return 0;
+    if(FieldFx_UpdateTasks((PmSlotHeader *)owner)!=0 || owner->prefix.reserved00!=4 || owner->tasks.delay) return 0;
     g_ViewMatrixSlot.value=saved_view;
     FieldFxTaskProgram program={0};
     program.table.callbacks[0]=observe_native_task;program.table.sizes[0]=sizeof(NativeTaskState);
     program.initialize=record_native_task_argument;program.script=script;
     void *old_program=g_FieldFxTaskPrograms[32];g_FieldFxTaskPrograms[32]=&program;
     if(FieldFx_BindTaskProgram(owner,32)!=0 || owner->tasks.table!=&program.table || owner->tasks.pc.script!=script)return 0;
-    FieldFx_InitTaskContext(owner);owner->tasks.argument=42;
-    if(FieldFx_InitTaskProgram(owner,1,0,0,0,0)!=0 || owner->tasks.argument!=42)return 0;
-    if(FieldFx_InitTaskProgram(owner,0,7,(intptr_t)&task_pointer_value,(intptr_t)&task_pointer_value+sizeof(int),-9)!=0 ||
+    FieldFx_InitTaskContext((PmSlotHeader *)owner);owner->tasks.argument=42;
+    if(FieldFx_InitTaskProgram((PmSlotHeader *)owner,1,0,0,0,0)!=0 || owner->tasks.argument!=42)return 0;
+    if(FieldFx_InitTaskProgram((PmSlotHeader *)owner,0,7,(intptr_t)&task_pointer_value,(intptr_t)&task_pointer_value+sizeof(int),-9)!=0 ||
         owner->tasks.argument!=(intptr_t)&task_pointer_value)return 0;
     task_pointer_value=0;
     if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState))return 0;
     owner->tasks.pc.script=script+9;
-    if(FieldFx_UpdateTasks(owner)!=0 || task_pointer_value!=1)return 0;
+    if(FieldFx_UpdateTasks((PmSlotHeader *)owner)!=0 || task_pointer_value!=1)return 0;
     g_ViewMatrixSlot.value=&identity;
-    if(FieldFx_DrawTasks(owner)!=0 || task_pointer_value!=11)return 0;
+    if(FieldFx_DrawTasks((PmSlotHeader *)owner)!=0 || task_pointer_value!=11)return 0;
     g_ViewMatrixSlot.value=saved_view;
+    {
+        PmPrimarySlot bank[11]={0};PmTables old_tables=g_PmTables;
+        Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
+        g_PmTables=(PmTables){g_PmCmdHandlerArray,bank,NULL};
+        g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
+        if(g_PmCmdHandlerArray[85]!=&g_FieldFxTaskClass)return 0;
+        program.script=script+9;task_pointer_value=0;
+        if(Scene_LoadRoomAssets(117,NULL)!=0 || bank[0].header.command!=117 || bank[0].header.state!=1 ||
+            bank[0].task.tasks.table!=&program.table)return 0;
+        if(Pm_SendCmd(0,0,7,(intptr_t)&task_pointer_value,(intptr_t)&task_pointer_value+sizeof(int),-9)!=0)return 0;
+        g_FieldFxTaskContext=&bank[0].task.tasks;
+        if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState))return 0;
+        g_ViewMatrixSlot.value=&identity;
+        if(Pm_Start(0)!=0 || Pm_Exec(0)!=0 || task_pointer_value!=11)return 0;
+        if(Pm_Stop(0,NULL,0)!=0 || bank[0].header.state)return 0;
+        memset(bank,0,sizeof(bank));g_FieldFxTaskPrograms[32]=NULL;
+        if(Scene_LoadRoomAssets(117,NULL)!=-8 || bank[0].header.state ||
+            Scene_LoadRoomAssets(191,NULL)!=-8 || bank[0].header.state ||
+            FieldFx_BindTaskProgram(owner,-1)!=-1 || FieldFx_BindTaskProgram(owner,104)!=-1)return 0;
+        g_ViewMatrixSlot.value=saved_view;g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;
+    }
     g_FieldFxTaskPrograms[32]=old_program;
-    FieldFx_InitTaskContext(owner);owner->tasks.table=&table;owner->tasks.argument=42;
+    FieldFx_InitTaskContext((PmSlotHeader *)owner);owner->tasks.table=&table;owner->tasks.argument=42;
     u16 bad_scripts[][6]={{1,7,99,0,0,0},{1,(u16)-1,99,0,0,0},{4,7,1,0,0,0},{3,0,7,0,0,0}};
     for(unsigned invalid=0;invalid<sizeof(bad_scripts)/sizeof(bad_scripts[0]);++invalid) {
-        FieldFx_InitTaskContext(owner); owner->tasks.pc.script=bad_scripts[invalid];
-        if(FieldFx_UpdateTasks(owner)!=-1 || owner->tasks.count || owner->tasks.used) return 0;
+        FieldFx_InitTaskContext((PmSlotHeader *)owner); owner->tasks.pc.script=bad_scripts[invalid];
+        if(FieldFx_UpdateTasks((PmSlotHeader *)owner)!=-1 || owner->tasks.count || owner->tasks.used) return 0;
     }
     u16 decrement[]={3,0,0,0,0,0};
-    FieldFx_InitTaskContext(owner); owner->tasks.pc.script=decrement; owner->tasks.variables[0]=2;
-    if(FieldFx_UpdateTasks(owner)!=-1 || owner->tasks.variables[0]!=1 || owner->tasks.pc.script!=decrement+3) return 0;
+    FieldFx_InitTaskContext((PmSlotHeader *)owner); owner->tasks.pc.script=decrement; owner->tasks.variables[0]=2;
+    if(FieldFx_UpdateTasks((PmSlotHeader *)owner)!=-1 || owner->tasks.variables[0]!=1 || owner->tasks.pc.script!=decrement+3) return 0;
     owner->tasks.pc.script=decrement; owner->tasks.variables[0]=1;
-    if(FieldFx_UpdateTasks(owner)!=0 || owner->tasks.variables[0] || owner->tasks.pc.script!=decrement+3) return 0;
-    FieldFx_InitTaskContext(owner); g_FieldFxTaskContext=&owner->tasks;
+    if(FieldFx_UpdateTasks((PmSlotHeader *)owner)!=0 || owner->tasks.variables[0] || owner->tasks.pc.script!=decrement+3) return 0;
+    FieldFx_InitTaskContext((PmSlotHeader *)owner); g_FieldFxTaskContext=&owner->tasks;
     for(unsigned slot=0;slot<8;++slot)
         if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState)) return 0;
     if(owner->tasks.count!=8 || FieldFx_SpawnTask(0)!=-1 || FieldFx_SpawnTask(8)!=-1 || FieldFx_SpawnTask(-1)!=-1)
         return 0;
-    FieldFx_InitTaskContext(owner);
+    FieldFx_InitTaskContext((PmSlotHeader *)owner);
     table.sizes[0]=sizeof(owner->tasks.arena)+1;
     if(FieldFx_SpawnTask(0)!=-1 || owner->tasks.count || owner->tasks.used) return 0;
     table.sizes[0]=sizeof(NativeTaskState);
@@ -612,12 +634,12 @@ static int native_task_cycle(void)
     owner->tasks.cursor=owner->tasks.arena+owner->tasks.used;
     if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState) || owner->tasks.used!=sizeof(NativeTaskState) ||
        owner->tasks.slots[0].start!=owner->tasks.arena) return 0;
-    FieldFx_InitTaskContext(owner);
+    FieldFx_InitTaskContext((PmSlotHeader *)owner);
     owner->tasks.used=1; owner->tasks.cursor=owner->tasks.arena+1;
     int padding=(int)_Alignof(void *)-1;
     if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState)+padding ||
        owner->tasks.slots[0].start!=owner->tasks.arena+_Alignof(void *)) return 0;
-    FieldFx_InitTaskContext(owner);
+    FieldFx_InitTaskContext((PmSlotHeader *)owner);
     table.callbacks[0]=reject_task_allocation;
     if(FieldFx_SpawnTask(0)!=-1 || owner->tasks.count || owner->tasks.used || owner->tasks.cursor!=owner->tasks.arena ||
        owner->tasks.slots[0].id!=0xffff) return 0;
@@ -1033,6 +1055,11 @@ static int original_glow_resident_constants(void)
     const u32 resident_ids[8]={0x800e086c,0x800e09d4,0x800e0abc,0x800e0bcc,0x800e0f50,0x800e0e9c,0x800e0fe0,0x800e0d50};
     if(!pe_disc_read(&disc,&file,0x800ull+0x80094188u-base,raw,sizeof(resident_ids)) ||
        memcmp(raw,resident_ids,sizeof(resident_ids))) { pe_disc_close(&disc); return 0; }
+    u32 task_descriptor;
+    const u32 task_methods[]={0x800d4860,0x800d4620,0x800d4698,0x800d4704,0x800d413c,0x800d4850,0};
+    if(!pe_disc_read(&disc,&file,0x800ull+0x80094188u-base+85*4,&task_descriptor,4) || task_descriptor!=0x800e13d4 ||
+        !pe_disc_read(&disc,&file,0x800ull+task_descriptor-base,raw,sizeof(task_methods)) ||
+        memcmp(raw,task_methods,sizeof(task_methods))) {pe_disc_close(&disc);return 0;}
     pe_disc_close(&disc);
     puts("Original glow constants: resident PM IDs, spins, scales, offsets, slot sizes and authored script match the supplied USA disc");
     return 1;
@@ -1657,7 +1684,6 @@ static int native_object_slot_bounds(void)
  * Error cases return before these records can be installed or executed. */
 u16 g_SceneAssetLbaTbl[2];
 void *g_PmTaskProgramBuffer;
-void *g_FieldFxTaskPrograms[104];
 u8 g_FieldFxTaskProgramCmd108[1], g_FieldFxTaskProgramCmd109[1], g_FieldFxTaskProgramCmd110[1];
 u8 g_FieldFxTaskProgramCmd111[1], g_FieldFxTaskProgramCmd112[1], g_FieldFxTaskProgramCmd113[1], g_FieldFxTaskProgramCmd114[1];
 static int process_task_bank_failures(void)

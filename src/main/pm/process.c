@@ -106,6 +106,8 @@ int Scene_LoadRoomAssets(u32 command, void *owner)
         subcommand = command - 85;
         command = 85;
     }
+    if (command == 85 && ((unsigned)subcommand >= sizeof(g_FieldFxTaskPrograms)/sizeof(g_FieldFxTaskPrograms[0]) ||
+        !g_FieldFxTaskPrograms[subcommand])) return -8;
     if (!g_PmCmdHandlerTable[command])
         return -8;
     if (!g_PmCmdHandlerTable[command]->initialize)

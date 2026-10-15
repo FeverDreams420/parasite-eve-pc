@@ -13,7 +13,6 @@
 PmPrimarySlot primary[11];
 PmSecondarySlot secondary[11];
 static PmCommand *handlers[86];
-void *g_FieldFxTaskPrograms[104];
 static unsigned stopped;
 static int stop(PmSlotHeader *slot) { ++stopped; return 0; }
 int Pm_ScriptSendCommand1(int **args);
@@ -165,7 +164,7 @@ static int native_process_slot_capacity(void)
         memset(slot->effect.data,0x33,sizeof(slot->effect.data));
         CHECK(slot->header.state==1 && slot->header.command==7 && slot->header.owner==NULL &&
               slot->header.ticks==0x12345678);
-        CHECK(FieldFx_InitTaskContext(&slot->task)==0);
+        FieldFx_InitTaskContext(&slot->header);
         CHECK(slot->task.tasks.cursor==slot->task.tasks.arena && slot->header.field02==1 &&
               slot->header.ticks==0x12345678 && slot->header.owner==NULL);
         memset(slot->task.tasks.arena,0x44,sizeof(slot->task.tasks.arena));

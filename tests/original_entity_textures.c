@@ -13,6 +13,10 @@
 #include "pe1/pe_image.h"
 #include "pe1/scene_room.h"
 #include "pe1/room_fx_model.h"
+#include "pe1/field_effect_pool.h"
+extern u8 *g_FieldFxModel83ACD504;
+#include "pe1/field_effect_modules.h"
+#include "pe1/field_texture_tables.h"
 #include "../src/overlays/room_m272_liberty/room_m272.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/render_camera.h"
@@ -283,6 +287,39 @@ int main(void)
     CHECK(expected && actual);
     ResetGraph(0);
     RECT all={0,0,1024,512};
+    {
+        PeRoomBlob resources={0};CHECK(pe_sector_bank_load(&catalog,3,&resources));
+        u8 *old_resources=g_GameState.startup_resource_blob;
+        void *old_page0=g_GameState.startup_resource_tables[0];
+        u8 **model_slots[]={&g_FieldFxModel6DEAE684,&D_800F32D8,&D_800F3418,&g_FieldFxTwinModelB,&g_FieldFxModel83ACD504,&g_FieldFxGlintModel};
+        u8 *old_models[6];for(unsigned i=0;i<6;++i)old_models[i]=*model_slots[i];
+        g_GameState.startup_resource_blob=resources.bytes;
+        const u8 *records;unsigned count;
+        CHECK(pe_room_blob_table(&resources,2,12,&records,&count));
+        const u32 keys[]={0x6deae684,0x8ab5b684,0x5ab32504,0x5ab32104,0x83acd504,0x57e8eb04,0x57d40d84};
+        u8 *payloads[7]={0};
+        for(unsigned k=0;k<7;++k)for(unsigned i=0;i<count;++i)
+            if(image_word(records+i*12+8)==keys[k])payloads[k]=resources.bytes+(image_word(records+i*12+4)&0xffffff);
+        for(unsigned k=0;k<7;++k)CHECK(payloads[k]);
+        g_GameState.startup_resource_tables[0]=payloads[6];
+        CHECK(g_PmCmdHandlerArray[85]==&g_FieldFxTaskClass);
+        g_PmCmdHandlerArray[85]->init();DrawSync(0);
+        CHECK(g_FieldFxModel6DEAE684==payloads[0] && D_800F32D8==payloads[1] && D_800F3418==payloads[2] &&
+            g_FieldFxTwinModelB==payloads[3] && g_FieldFxModel83ACD504==payloads[4] && g_FieldFxGlintModel==payloads[5]);
+        CHECK((void *)&g_FieldEffectAssetTable==(void *)&g_GameState.startup_resource_blob);
+        for(unsigned depth=0;depth<2;++depth) {
+            CHECK(g_FieldFxTpageTable[depth*2]==GetTPage(depth,0,0x380,0x100));
+            CHECK(g_FieldFxTpageTable[depth*2+1]==GetTPage(depth,0,0x340,0x100));
+        }
+        RECT page={0x380,0x100,64,256};
+        StoreImage(&page,(u_long *)actual->words);DrawSync(0);
+        CHECK(!memcmp(actual->words,payloads[6],64*256*2));
+        CHECK(g_FieldFxLoadedTexturePage==0);
+        g_GameState.startup_resource_blob=old_resources;g_GameState.startup_resource_tables[0]=old_page0;
+        for(unsigned i=0;i<6;++i)*model_slots[i]=old_models[i];
+        pe_room_blob_close(&resources);
+        puts("Original handler 85: six real startup models, canonical archive alias, texture pages and full VRAM upload passed");
+    }
     unsigned native_rooms=0, native_geometry_entries=0;
     int new_game_room_loaded=0;
     size_t native_packet_bytes=0;

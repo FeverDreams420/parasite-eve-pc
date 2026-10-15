@@ -9,11 +9,13 @@
 FieldFxTaskContext *g_FieldFxTaskContext;
 FieldFxTaskSlot *g_FieldFxActiveTaskSlot;
 int g_FieldFxCurrentAge;
+void *g_FieldFxTaskPrograms[104];
 char g_FieldFxTaskProgramMissingMsg[] = "TS No Thread No.%d\n";
 
 /* Binds task program `index` to the owner's task context. */
 int FieldFx_BindTaskProgram(FieldFxTaskOwner *owner, int index)
 {
+    if ((unsigned)index >= sizeof(g_FieldFxTaskPrograms)/sizeof(g_FieldFxTaskPrograms[0])) return -1;
     FieldFxTaskProgram *program = g_FieldFxTaskPrograms[index];
 
     if (program == 0) {

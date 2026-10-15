@@ -2172,8 +2172,9 @@ int FieldFx_SpawnTask(int id)
  * Opcodes: 0 stop (end of script), 1 set variable, 2 spawn task,
  * 3 count down a variable and jump while positive, 4 wait on a timer or
  * a variable, 5 toggle the owner's held state. */
-int FieldFx_UpdateTasks(FieldFxTaskOwner *owner)
+int FieldFx_UpdateTasks(PmSlotHeader *raw)
 {
+    FieldFxTaskOwner *owner = (FieldFxTaskOwner *)raw;
     FieldFxTaskContext *context = &owner->tasks;
     FieldFxTaskSlot *slot;
     FieldActorState *state;
@@ -2301,8 +2302,9 @@ int FieldFx_UpdateTasks(FieldFxTaskOwner *owner)
     return 0;
 }
 
-int FieldFx_InitTaskContext(FieldFxTaskOwner *owner)
+void FieldFx_InitTaskContext(PmSlotHeader *raw)
 {
+    FieldFxTaskOwner *owner = (FieldFxTaskOwner *)raw;
     FieldFxTaskContext *context = &owner->tasks;
     FieldFxTaskSlot *slot;
     int i;
@@ -2326,10 +2328,10 @@ int FieldFx_InitTaskContext(FieldFxTaskOwner *owner)
         slot->end = 0;
     }
 
-    return 0;
 }
 
-int FieldFx_InitTaskProgram(FieldFxTaskOwner *owner, int skip, int arg2, intptr_t arg3, intptr_t arg4, intptr_t arg5) {
+int FieldFx_InitTaskProgram(PmSlotHeader *raw, int skip, int arg2, intptr_t arg3, intptr_t arg4, intptr_t arg5) {
+    FieldFxTaskOwner *owner = (FieldFxTaskOwner *)raw;
     FieldFxTaskContext *ctx;
     intptr_t (*callback)(int, intptr_t, intptr_t, intptr_t);
 
@@ -2347,8 +2349,9 @@ int FieldFx_InitTaskProgram(FieldFxTaskOwner *owner, int skip, int arg2, intptr_
 
 /* Draws every live task of the owner: loads the current view matrix into
  * the GTE, then runs each task callback and its particle list in mode 2. */
-int FieldFx_DrawTasks(FieldFxTaskOwner *owner)
+int FieldFx_DrawTasks(PmSlotHeader *raw)
 {
+    FieldFxTaskOwner *owner = (FieldFxTaskOwner *)raw;
     FieldFxTaskContext *context = &owner->tasks;
     FieldFxTaskSlot *slot = context->slots;
     int i;
@@ -2371,13 +2374,13 @@ int FieldFx_DrawTasks(FieldFxTaskOwner *owner)
     return 0;
 }
 
-int FieldFx_CloseTaskOwner(u8 *state) {
-    state[0] = 4;
+int FieldFx_CloseTaskOwner(PmSlotHeader *state) {
+    state->state = 4;
     return 0;
 }
 
-int FieldFx_InitEffectResources(void) {
-    void **table;
+void FieldFx_InitEffectResources(void) {
+    u8 **table;
 
     FieldFx_InitTexturePageTable();
 
@@ -2390,10 +2393,18 @@ int FieldFx_InitEffectResources(void) {
     g_FieldFxGlintModel = Asset_FindTable08ByU32Key(*table, 0x57E8EB04);
     FieldFx_LoadEffectTexturePage(0);
 
-    return 0;
 }
 
 /* Original resident draw parameters and palette rows shared by field effects. */
 RenderEffectParameters g_FieldFxSpriteParams;
 RenderColor g_FieldFxBlackColor = {0,0,0,0};
 u16 g_FieldFxPaletteTable[6] = {0x1c8,0x1cf,0x1d6,0x1d7,0x1d7,0};
+
+/* Original resident descriptor 800E13D4: field animation task handler 85. */
+PmCommand g_FieldFxTaskClass = {
+    FieldFx_InitEffectResources, FieldFx_InitTaskContext, FieldFx_InitTaskProgram,
+    FieldFx_DrawTasks, FieldFx_UpdateTasks, FieldFx_CloseTaskOwner, NULL,
+};
+u16 g_FieldFxTpageTable[4];
+u8 *g_FieldFxModel6DEAE684, *D_800F32D8, *D_800F3418;
+u8 *g_FieldFxTwinModelB, *g_FieldFxModel83ACD504, *g_FieldFxGlintModel;

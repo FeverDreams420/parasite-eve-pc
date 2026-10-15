@@ -29,7 +29,7 @@ extern struct BattleEntity *D_8009D254;
 /* Original address 0x800B0E14 is game state +0x13C. */
 #define g_FieldEffectSoundHeader (g_GameState.scene_object_tables[2])
 extern void *g_FieldEffectResource2;
-extern void *g_FieldEffectAssetTable;
+#define g_FieldEffectAssetTable (g_GameState.startup_resource_blob)
 void *FieldFx_GetEffectResource(int index);
 
 /* Glow effect (fieldfx/glow.c). */

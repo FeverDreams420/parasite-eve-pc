@@ -1124,7 +1124,7 @@ static int original_glow_resident_constants(void)
         {0x80190b80,g_RoomScriptRecordWords,20},
     };
     for(unsigned i=0;i<sizeof(room_rows)/sizeof(room_rows[0]);++i)
-        if(memcmp(room_bytes+room_rows[i].address-0x8018efe8u,room_rows[i].value,room_rows[i].size)) {pe_disc_close(&disc);return 0;}
+        if(memcmp(room_bytes+(room_rows[i].address-0x8018efe8u),room_rows[i].value,room_rows[i].size)) {pe_disc_close(&disc);return 0;}
     pe_disc_close(&disc);
     puts("Original glow constants: resident PM IDs, spins, scales, offsets, slot sizes and authored script match the supplied USA disc");
     return 1;

@@ -4350,7 +4350,11 @@ static int original_textbox_renderer(PeDisc *disc,PeDiscFile *exe)
         if(t_->length!=expected_)valid=0; \
         for(unsigned j_=0;j_<4;++j_)TEXT_PUT(p_[j_],1); \
         const u8 *end_=(const u8 *)(packet)+sizeof(RenderTexturePagePacket)+sizeof(RenderNativeTag); \
-        for(const u8 *zero_=p_+4;zero_<end_;++zero_)if(*zero_)valid=0; \
+        for(const u8 *zero_=p_+4;zero_<end_;++zero_){ \
+            u8 expected_byte_=0; \
+            if(sizeof(uintptr_t)==8 && zero_>=end_-4) \
+                expected_byte_=(u8)(UINT32_C(0x005a4d50)>>(8*(zero_-(end_-4)))); \
+            if(*zero_!=expected_byte_)valid=0;} \
         p_=end_; \
         for(unsigned j_=0;j_<(kind==1?16:12);++j_)TEXT_PUT(p_[j_],1); \
     }else for(unsigned j_=0;j_<t_->length*4;++j_)TEXT_PUT(p_[j_],1); \
@@ -5643,6 +5647,123 @@ static int original_credit_text(PeDisc *disc)
     puts("Original credits text: 745 native line bindings, 31 image bindings, image-file extent setup, 2560 USA glyph cases and 5280 layouts/656800 positioned glyphs match");return 1;
 }
 
+static int original_credit_sprite_packets(void)
+{
+    static struct {u64 before;BootDisplaySpritePacket packet;u64 after;} arena;
+    static RenderNativeTag ot[16];
+    const s16 poses[][2]={{-32768,32767},{-1,-1},{0,0},{320,224},{32767,-32768},{123,-456}};
+    const u16 uv[]={0,1,255,256,65535,0x1234};
+    const s32 brightness[]={INT32_MIN,-129,-4,-1,0,1,4,124,127,128,129,255,INT32_MAX};
+    const u16 timers[]={0,1,2,3,28,29,30,65535};const u32 frames[]={0,1,356,357,358,449,450,UINT32_MAX};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int valid=1;
+#define SPRITE_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value);for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+#define SPRITE_RESET() do {memset(&arena,0xa5,sizeof(arena));for(unsigned o_=0;o_<16;++o_)ot[o_]=(RenderNativeTag){0xffffff,0}; \
+    g_BootDisplayOrderingTable=ot;g_BootDisplayPrimitiveCursor=(char *)&arena.packet;g_BootDisplayPrimitiveEnd=(char *)(&arena.packet+1); \
+    g_BootDisplayTPage=0x4567;g_BootDisplayClut=0x1234;g_BootDisplayState=5;g_BootDisplayDone=0;}while(0)
+#define SPRITE_PACKET() do {SPRITE_PUT((u32)arena.packet.draw_mode.code,4); \
+    const u8 *p_=&arena.packet.sprite.r0;for(unsigned b_=0;b_<16;++b_)SPRITE_PUT(p_[b_],1); \
+    if(arena.packet.draw_mode.tag.length!=(sizeof(BootDisplaySpritePacket)-sizeof(RenderNativeTag))/4 || \
+       (arena.packet.sprite.tag.address & UINT64_C(0xff000000ff000000)) || (arena.packet.sprite.tag.length & UINT64_C(0xff000000ff000000)) || arena.before!=UINT64_C(0xa5a5a5a5a5a5a5a5) || arena.after!=UINT64_C(0xa5a5a5a5a5a5a5a5))valid=0;++cases;}while(0)
+#define SPRITE_LINK(depth) do {if(ot[depth].address!=(uintptr_t)&arena.packet || arena.packet.draw_mode.tag.address!=0xffffff || \
+    g_BootDisplayPrimitiveCursor!=(char *)(&arena.packet+1))valid=0;for(unsigned o_=0;o_<16;++o_)if(ot[o_].length || (o_!=(depth) && ot[o_].address!=0xffffff))valid=0;}while(0)
+    for(unsigned pose=0;pose<6;++pose)for(unsigned i=0;i<6;++i){SPRITE_RESET();BootDisplay_InitSprite16(&arena.packet,poses[pose][0],poses[pose][1],uv[i],uv[(i*5+1)%6]);SPRITE_PACKET();}
+    for(unsigned style=0;style<4;++style)for(unsigned pose=0;pose<6;++pose)for(unsigned character=0;character<256;++character){
+        SPRITE_RESET();g_BootDisplayFontStyle=style;BootDisplay_QueueTintedSprite(poses[pose][0],poses[pose][1],character);SPRITE_PACKET();SPRITE_LINK(11);}
+    for(unsigned color=0;color<256;++color){SPRITE_RESET();BootDisplay_QueueFadeSprite(color);SPRITE_PACKET();SPRITE_LINK(11);}
+    if(!valid || cases!=6436 || hash!=UINT64_C(0x0de15ffbec1c8bad)){fprintf(stderr,"Credits sprites: cases=%u hash=%016llx valid=%d\n",cases,(unsigned long long)hash,valid);return 0;}
+    for(unsigned state=5;state<9;++state)for(unsigned transition=0;transition<4;++transition)
+    for(unsigned timer=0;timer<8;++timer)for(unsigned frame=0;frame<8;++frame)for(unsigned slot=0;slot<2;++slot)for(unsigned value=0;value<13;++value){
+        SPRITE_RESET();g_BootDisplayState=state;g_BootDisplayTransition=transition;g_BootDisplayStateTimer=timers[timer];
+        g_BootDisplayFrameCounter=frames[frame];g_BootDisplayBufferIndex=slot;g_BootDisplayImageBrightness=brightness[value];
+        BootDisplay_StepImageSprite();SPRITE_PACKET();SPRITE_LINK(14);
+        SPRITE_PUT(g_BootDisplayState,4);SPRITE_PUT(g_BootDisplayTransition,4);SPRITE_PUT(g_BootDisplayImageBrightness,4);
+        SPRITE_PUT(g_BootDisplayStateTimer,2);SPRITE_PUT(g_BootDisplayBufferIndex,4);
+    }
+#undef SPRITE_PUT
+#undef SPRITE_PACKET
+#undef SPRITE_LINK
+    if(!valid || cases!=33060 || hash!=UINT64_C(0xf412ed31c8597b85)){fprintf(stderr,"Credits sprite state: cases=%u hash=%016llx valid=%d\n",cases,(unsigned long long)hash,valid);return 0;}
+    for(unsigned kind=0;kind<3;++kind)for(size_t remaining=0;remaining<sizeof(BootDisplaySpritePacket);++remaining){
+        SPRITE_RESET();g_BootDisplayPrimitiveEnd=g_BootDisplayPrimitiveCursor+remaining;BootDisplaySpritePacket previous=arena.packet;
+        if(kind==0)BootDisplay_QueueTintedSprite(1,2,'A');else if(kind==1)BootDisplay_QueueFadeSprite(128);else BootDisplay_StepImageSprite();
+        if(g_BootDisplayState!=-1 || g_BootDisplayDone!=-1 || memcmp(&previous,&arena.packet,sizeof(previous)) ||
+           g_BootDisplayPrimitiveCursor!=(char *)&arena.packet)return 0;
+        for(unsigned i=0;i<16;++i)if(ot[i].address!=0xffffff || ot[i].length)return 0;
+    }
+#undef SPRITE_RESET
+    puts("Original credits sprite packets: 33060 USA constructor/glyph/fade/image states match semantic payloads, native combined packet headers, full OT links and 168 atomic arena failures");return 1;
+}
+
+static int original_credit_sprites(PeDisc *disc)
+{
+    g_CdImage=disc;glyph_pending=glyph_poll_retry=0;fx_image_io=1;
+    if(Asset_OpenPeImage() || CdRom_LoadBootAudio())return 0;
+    if(!SDL_Init(SDL_INIT_EVENTS))return 0;ResetGraph(0);Boot_InitMemoryLayout();
+    BootDisplay_InitDisplayResources();if(!original_credit_sprite_packets())return 0;
+    const u32 sprite_addresses[]={0x80123e08,0x80123f8c,0x8012403c,0x80124598,0x80124704,0x801247f4,0x80124034};
+    const u32 image_addresses[]={0x8012489c,0,0x80125094,0x80124c04,0x80125464,0x80124aa4,0x80125444};
+    if(memcmp(g_CdLoadAreaBase+0x4e4c,sprite_addresses,sizeof(sprite_addresses)) ||
+       memcmp(g_CdLoadAreaBase+0x4e68,image_addresses,sizeof(image_addresses)))return 0;
+    BootDisplayCallbacks *callbacks=&g_BootDisplaySpriteCallbacks;
+    if(callbacks->init!=BootDisplay_InitDisplayResources || callbacks->step!=BootDisplay_SelectFrameBuffers ||
+       callbacks->text!=BootDisplay_StepImageSprite || callbacks->glyph!=BootDisplay_QueueTintedSprite ||
+       callbacks->transition!=BootDisplay_QueueFadeSprite || callbacks->present!=BootDisplay_PresentSpriteFrame || callbacks->shutdown!=BootDisplay_DisplayNoOp)return 0;
+    callbacks->shutdown();callbacks=&g_BootDisplayImageCallbacks;
+    if(callbacks->init!=BootDisplay_InitDisplayBuffers || callbacks->step || callbacks->text!=BootDisplay_StepImageDisplay ||
+       callbacks->glyph!=BootDisplay_BrightenGlyph || callbacks->transition!=BootDisplay_BrightenImageRegion ||
+       callbacks->present!=BootDisplay_PresentFrame || callbacks->shutdown!=BootDisplay_CallInitSystem)return 0;
+    BootDisplay_InitDisplayResources();char *begins[2],*ends[2];RenderNativeTag *tables[2];
+    for(unsigned slot=0;slot<2;++slot){g_ActiveDrawSlot=slot;BootDisplay_SelectFrameBuffers();
+        begins[slot]=g_BootDisplayPrimitiveCursor;ends[slot]=g_BootDisplayPrimitiveEnd;tables[slot]=g_BootDisplayOrderingTable;
+        for(unsigned i=0;i<BOOT_DISPLAY_SPRITE_CAPACITY;++i)BootDisplay_QueueTintedSprite(24,20,'A');
+        if(g_BootDisplayState<0 || g_BootDisplayPrimitiveCursor!=ends[slot])return 0;
+    }
+    if(ends[0]!=begins[1] || ends[1]!=(char *)tables[0] || tables[0]+16!=tables[1])return 0;
+    BootDisplay_QueueFadeSprite(128);if(g_BootDisplayState!=-1)return 0;
+
+    static _Alignas(16) u8 table[69632],decoded[0xa800],rgb[0xa000];
+    static u16 stage[1024*512],actual[1024*512],expected[1024*512];
+    RECT whole={0,0,1024,512};unsigned states=0,draws=0,visible=0;
+    MdecDiag_ExpandDecoderTable(table);
+    for(unsigned index=0;index<31;++index){
+        DecDCTvlcSize2(0);if(DecDCTvlc2(g_BootDisplayCreditImages[index],decoded,table)!=0)return 0;
+        DecDCTReset(0);DecDCToutCallback(NULL);DecDCTin(decoded,0);DecDCTout(rgb,0x2800);if(DecDCToutSync(0))return 0;
+        BootDisplay_InitDisplayResources();g_BootDisplayBufferIndex=index%2;g_BootDisplayStateTimer=index;
+        for(unsigned i=0;i<1024*512;++i)stage[i]=0x1357;LoadImage(&whole,stage);DrawSync(0);
+        unsigned steps=0;
+        while(g_BootDisplayState!=5 && steps<512){g_ActiveDrawSlot=steps%2;BootDisplay_SelectFrameBuffers();BootDisplay_StepImageSprite();++steps;}
+        if(g_BootDisplayState!=5){fprintf(stderr,"Credit sprite image %u stalled state=%d\n",index,g_BootDisplayState);return 0;}
+        BootDisplayImageBuffer *screen=&g_BootDisplayImageBuffers[index%2];
+        for(unsigned column=0;column<10;++column)for(unsigned y=0;y<128;++y)
+            memcpy(&stage[(screen->transferY+y)*1024+screen->transferX+column*16],rgb+column*0x1000+y*32,32);
+        StoreImage(&whole,actual);DrawSync(0);if(memcmp(actual,stage,sizeof(stage)))return 0;
+        states+=steps;
+        for(unsigned position=0;position<4;++position)for(unsigned slot=0;slot<2;++slot){
+            LoadImage(&whole,stage);DrawSync(0);g_ActiveDrawSlot=slot;g_BootDisplayBufferIndex=1-index%2;
+            g_BootDisplayStateTimer=position;g_BootDisplayState=7;g_BootDisplayTransition=1;
+            g_BootDisplayFrameCounter=1;g_BootDisplayImageBrightness=128;
+            SetDefDrawEnv(&g_RenderDrawEnvArray[slot],0,slot*224,320,224);g_RenderDrawEnvArray[slot].isbg=1;
+            SetDefDispEnv(&g_RenderDispEnvArray[slot],0,(1-slot)*224,320,224);
+            BootDisplay_SelectFrameBuffers();BootDisplay_StepImageSprite();BootDisplay_PresentSpriteFrame();DrawSync(0);
+            if(g_ActiveDrawSlot!=(s32)(1-slot))return 0;
+            StoreImage(&whole,actual);DrawSync(0);
+            LoadImage(&whole,stage);DrawSync(0);PutDrawEnv(&g_RenderDrawEnvArray[slot]);
+            BootDisplayDrawModePrim mode;BootDisplaySpritePrim sprite;memset(&mode,0,sizeof(mode));memset(&sprite,0,sizeof(sprite));
+            BootDisplayImageBuffer *front=&g_BootDisplayImageBuffers[1-index%2];
+            SetDrawTPage(&mode,0,0,GetTPage(2,0,front->x,front->y));SetSprt(&sprite);
+            sprite.r0=sprite.g0=sprite.b0=128;sprite.w=160;sprite.h=120;
+            sprite.x0=position%2?0:160;sprite.y0=position>=2?105:0;
+            DrawPrim(&mode);DrawPrim(&sprite);DrawSync(0);StoreImage(&whole,expected);DrawSync(0);
+            if(memcmp(actual,expected,sizeof(actual))){fprintf(stderr,"Credit sprite presentation index=%u pos=%u slot=%u differs\n",index,position,slot);return 0;}
+            for(unsigned y=0;y<224;++y)for(unsigned x=0;x<320;++x)if(actual[(slot*224+y)*1024+x]&0x7fff)++visible;
+            ++draws;
+        }
+    }
+    fx_image_io=0;
+    if(!visible || draws!=248)return 0;
+    printf("Original credits sprite images: 31 images, %u decoder steps, 310 RGB15 uploads and %u full-VRAM presentations across all positions/both buffers match unmerged direct draw\n",states,draws);return 1;
+}
+
 static int original_credit_brightness(void)
 {
     static struct {u8 before[64];char pixels[320*224*3];u8 after[64];} screens[2];
@@ -6915,6 +7036,11 @@ static int script_movie_error_exit(const char *executable)
 int main(int argc, char **argv)
 {
     if(argc==2 && !strcmp(argv[1],"--fx-effects")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_fx_shader_packets() && original_fx_blend() && original_fx_uncompressed_order() && original_fx_shader_pixels() && original_fx_shader_guards()?0:147;}
+    if(argc==2 && !strcmp(argv[1],"--credits-sprites")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
+        int result=original_credit_sprites(&disc);pe_disc_close(&disc);return result?0:154;
+    }
     if(argc==2 && !strcmp(argv[1],"--credits-images")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

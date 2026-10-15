@@ -1,8 +1,14 @@
 # Code organization
 
-`pc/` owns the host entry point and runtime integration. `src/main/` groups
-game logic by subsystem; `include/pe1/` contains shared subsystem headers.
-Add sources to CMake explicitly as they become portable and runnable.
+Repair complete original modules in their existing files under `src/main/`
+and `src/overlays/`; `include/pe1/` contains shared subsystem headers. Do not
+create new files or extract selected functions while restoring the original
+game. Add the existing whole modules to CMake as they become portable.
+
+The entire `pc/` directory and its build/test dependencies must be removed.
+Its current frontend and parallel implementations are abandoned work, not
+the intended runtime architecture. Do not rename or relocate them. Necessary
+host changes belong in the existing original modules or the PsyZ fork.
 
 `src/overlays/` holds room, scene and effect code. Native modules should use
 static linking, explicit registration, namespaced symbols and clear
@@ -17,8 +23,8 @@ AKAO still needs equivalent audio behavior. Use the maintained
 `khasinski/parasite-eve-psyz` source fork for needed generic runtime features.
 Do not link legacy SDK implementations wholesale alongside PsyZ.
 
-Move or merge translation units according to responsibilities and ownership.
-There is no manifest, symbol-order or original compiler boundary to preserve.
+Keep original translation units intact; do not move functions into new files.
+There is no binary-layout or original compiler requirement to preserve.
 Use subsystem headers for cross-module declarations and ordinary definitions
 for runtime state. Remove address aliases as the affected state is ported.
 

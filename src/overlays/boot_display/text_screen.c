@@ -9,7 +9,7 @@ void BootDisplay_RunDisplay(void) {
         g_BootDisplayCallbacks = &g_BootDisplayImageCallbacks;
     } else {
         g_BootDisplayCallbacks = &g_BootDisplaySpriteCallbacks;
-        if (!(g_GameStateFlags & 0x20000)) g_BootDisplaySpriteCallbacks.text = 0;
+        g_BootDisplaySpriteCallbacks.text = (g_GameStateFlags & 0x20000)?BootDisplay_StepImageSprite:NULL;
     }
     g_BootDisplayCallbacks->init();
     if (!(g_GameStateFlags & 0x10000)) {

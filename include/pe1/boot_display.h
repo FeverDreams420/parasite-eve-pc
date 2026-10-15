@@ -13,6 +13,7 @@
 #include "pe1/psyq_ds.h"
 #include "pe1/psyq_ds_queue.h"
 #include "pe1/psyq_gpu.h"
+#include "pe1/render_packets.h"
 
 /* Three byte channels in the boot screen image buffer. */
 typedef struct BootRgb24Pixel {
@@ -22,12 +23,12 @@ typedef struct BootRgb24Pixel {
 PE1_STATIC_ASSERT(sizeof(BootRgb24Pixel) == 3, boot_rgb24_pixel_size);
 
 typedef struct {
-    s32 tag;
-    s32 code;
+    RenderNativeTag tag;
+    uintptr_t code;
 } BootDisplayDrawModePrim;
 
 typedef struct {
-    s32 tag;
+    RenderNativeTag tag;
     u8 r0;
     u8 g0;
     u8 b0;
@@ -45,6 +46,8 @@ typedef struct {
     BootDisplayDrawModePrim draw_mode;
     BootDisplaySpritePrim sprite;
 } BootDisplaySpritePacket;
+enum { BOOT_DISPLAY_SPRITE_CAPACITY=300 };
+PE1_STATIC_ASSERT(sizeof(BootDisplaySpritePacket)==3*sizeof(uintptr_t)+sizeof(RenderNativeTag)+16, boot_sprite_native_size);
 
 /* Native record per display buffer: GPU position, pixels and decode target. */
 typedef struct {
@@ -74,10 +77,12 @@ extern const u8 *g_BootDisplayCreditLines[745];
 extern void *g_BootDisplayCreditImages[31];
 extern const u8 **g_BootDisplayTextCursor;
 
-extern char *g_BootDisplayOrderingTable;
+extern RenderNativeTag *g_BootDisplayOrderingTable;
 extern u16 g_BootDisplayTPage;
 extern u16 g_BootDisplayClut;
 extern char *g_BootDisplayPrimitiveCursor;
+extern char *g_BootDisplayPrimitiveEnd;
+extern s32 g_BootDisplayImageBrightness;
 extern s32 g_BootDisplayTextScrollX;
 extern s32 g_BootDisplayTextScrollStepX;
 extern s32 g_BootDisplayTransition;
@@ -86,6 +91,7 @@ extern s16 g_BootDisplayStateTimer;
 extern s16 g_BootDisplayTransferProgress;
 extern s32 g_BootDisplayState;
 extern s32 g_BootDisplayDone;
+extern u32 g_BootDisplayFrameCounter;
 extern RECT *g_BootDisplayFontImageRect;
 extern RECT *g_BootDisplayFontClutRect;
 extern u8 *g_BootDisplayFontImagePixels;
@@ -136,10 +142,19 @@ void BootDisplay_InitDisplayBuffers(void);
 void BootDisplay_StepImageDisplay(void);
 void BootDisplay_BrightenGlyph(s16 x,s16 y,u8 character);
 void BootDisplay_BrightenImageRegion(u8 intensity);
+void BootDisplay_CallInitSystem(void);
+extern BootDisplayCallbacks g_BootDisplayImageCallbacks,g_BootDisplaySpriteCallbacks;
+void BootDisplay_InitDisplayResources(void);
+void BootDisplay_SelectFrameBuffers(void);
+void BootDisplay_DisplayNoOp(void);
+void BootDisplay_StepImageSprite(void);
+void BootDisplay_QueueTintedSprite(s16 x,s16 y,u8 character);
+void BootDisplay_InitSprite16(BootDisplaySpritePacket *packet,s16 x,s16 y,u16 u,u16 v);
+void BootDisplay_QueueFadeSprite(u8 color);
+void BootDisplay_PresentSpriteFrame(void);
 
 /* Callable entry points inside neighboring boot-display code. */
 s32 BootDisplay_GetGlyphIndex(u8 character);
 u16 BootDisplay_GetGlyphWidth(u8 character);
-void func_8012462C(void *primitive, u16 x, u16 y, s32 u, s32 v);
 
 #endif

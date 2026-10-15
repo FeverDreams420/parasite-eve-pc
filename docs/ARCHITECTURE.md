@@ -1,15 +1,21 @@
 # Architecture
 
-The native target is a C11 executable built with CMake and linked to PsyZ.
-`pc/main.c` starts the native boot frontend: read-only ISO9660 access to a
+The intended native target runs the original C modules, repaired in place,
+with CMake and PsyZ. No new files, extracted functions or parallel game engine
+are permitted while restoring the original game. The entire `pc/` directory
+must be deleted, including its build and test dependencies; relocating it
+does not satisfy this requirement.
+
+The current, abandoned `pc/main.c` frontend provides read-only ISO9660 access to a
 MODE2/2352 BIN, FFmpeg MDEC/XA decoding on a producer thread, SDL presentation
 and audio, then the original `PE.IMG` title artwork and menu input.
 The bounded video queue and audio prebuffer keep decoding ahead of playback.
 Frames retain the original 15 Hz timing and 4:3 aspect; the audio device stays
 alive through the final samples before entering the menu.
 
-The PsyZ smoke test remains available separately. Game code is added
-incrementally as its platform dependencies are replaced.
+This frontend is a diagnostic artifact and does not establish that the
+original game runs. Repair whole original modules and integrate their
+original control flow as platform dependencies are corrected.
 
 The memory map and overlay addresses below describe the original game for
 asset decoding and porting research. They are not host addresses, build
@@ -118,12 +124,12 @@ templates other shared code still instantiates per overlay.
 ## Native build and module integration
 
 ```
-pc/ boot + disc + movie + title -> host C11 compiler -> SDL/FFmpeg frontend + PsyZ
+existing src/main/ + src/overlays/ -> host C11 compiler -> original game + PsyZ
 ```
 
-The root `CMakeLists.txt` includes `pc/`. The current executable contains
-the native boot modules under `pc/`; a passing build does not validate unported
-game sources.
+The root `CMakeLists.txt` still includes `pc/`. This is an unresolved dependency
+to eliminate, not the architecture shown above. A passing frontend build does
+not validate the original game flow.
 There is no historical compiler, splat step, PS1 linker, assembly extraction,
 retail checksum verification or decompilation report in the build.
 
@@ -144,7 +150,7 @@ native registration and state ownership are implemented.
 
 | Path | Contents |
 | --- | --- |
-| `pc/` | native entry point and runtime integration |
+| `pc/` | abandoned parallel implementation; entire directory must be removed |
 | `src/main/<subsystem>/` | game code to port |
 | `src/main/psyq/lib*/` | legacy runtime behavior to compare with PsyZ |
 | `src/overlays/` | room, scene and effect modules, plus shared room code |

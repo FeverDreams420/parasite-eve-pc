@@ -1,14 +1,20 @@
 #include "common.h"
+#include <string.h>
 #include "pe1/boot_display.h"
 #include "pe1/cdrom_buffers.h"
 
 #include "sprites_externs.h"
 
 void BootDisplay_InitDisplayResources(void) {
-    s16 rect[4];
-    char *resource;
+    RECT rect;
+    TimFile *resource;
     s32 offset;
 
+    s64 workspace=((s64)g_MainAssetLbaTbl[0]-g_BootDisplayDataLbaTbl)*2048;
+    if(!g_CdLoadAreaBase || workspace<0 ||
+       workspace+0x54000+2*BOOT_DISPLAY_SPRITE_CAPACITY*sizeof(BootDisplaySpritePacket)+32*sizeof(RenderNativeTag)>BOOT_DISPLAY_WORK_SIZE){
+        g_BootDisplayState=g_BootDisplayDone=-1;return;
+    }
     ResetGraph(1);
     SetGraphDebug(0);
     SetDispMask(0);
@@ -16,17 +22,18 @@ void BootDisplay_InitDisplayResources(void) {
     g_BootDisplayTextScrollX = 0xE000;
     g_BootDisplayTextScrollStepX = -0x100;
     g_BootDisplayTransition = 1;
-    rect[2] = 0x3FF;
+    g_BootDisplayState=g_BootDisplayDone=g_BootDisplayTransferProgress=0;
+    g_BootDisplayImageBrightness=g_BootDisplayFontStyle=0;
+    rect.w = 0x3FF;
     g_BootDisplayStateTimer = 0;
-    rect[0] = 0;
-    rect[1] = 0;
-    rect[3] = 0x1FF;
-    g_BootDisplayBufferIndex ^= 1;
-    ClearImage(rect, 0, 0, 0);
+    rect.x = 0;
+    rect.y = 0;
+    rect.h = 0x1FF;
+    g_BootDisplayBufferIndex = 1;
+    ClearImage(&rect, 0, 0, 0);
     DrawSync(0);
 
-    resource = g_BootDisplayFontTim;
-    Asset_LoadTimImage(resource);
+    resource = (TimFile *)g_BootDisplayFontTim;
     g_BootDisplayFontImagePixels = (u8 *)Asset_LoadTimImage(resource);
     g_BootDisplayFontClutPixels = (u16 *)Asset_GetTimClutPixels(resource);
     g_BootDisplayFontImageRect = Asset_GetTimImageRect(resource);
@@ -35,48 +42,42 @@ void BootDisplay_InitDisplayResources(void) {
     g_BootDisplayClut = GetClut(g_BootDisplayFontClutRect->x, g_BootDisplayFontClutRect->y);
     DecDCTReset(0);
     offset = 0x43000;
-    MdecDiag_ExpandDecoderTable(g_CdLoadAreaBase + (((g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) << 11) + offset));
+    MdecDiag_ExpandDecoderTable(g_CdLoadAreaBase + (((g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) * 2048) + offset));
     SetDispMask(1);
 }
 
 void BootDisplay_SelectFrameBuffers(void) {
-    s32 orderingOffset;
-    s32 primitiveOffset;
-    s32 sectorOffset;
-    if (g_ActiveDrawSlot != 0) {
-        orderingOffset = 0x581E0;
-        primitiveOffset = 0x560D0;
-        sectorOffset = (g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) << 11;
-    } else {
-        orderingOffset = 0x581A0;
-        primitiveOffset = 0x54000;
-        sectorOffset = (g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) << 11;
+    s64 offset=((s64)g_MainAssetLbaTbl[0]-g_BootDisplayDataLbaTbl)*2048;
+    size_t bytes=BOOT_DISPLAY_SPRITE_CAPACITY*sizeof(BootDisplaySpritePacket);
+    if(!g_CdLoadAreaBase || (unsigned)g_ActiveDrawSlot>=2 || offset<0 ||
+       offset+0x54000+2*bytes+32*sizeof(RenderNativeTag)>BOOT_DISPLAY_WORK_SIZE){
+        g_BootDisplayState=g_BootDisplayDone=-1;return;
     }
-    orderingOffset = sectorOffset + orderingOffset;
-
-    {
-        u8 *base = g_CdLoadAreaBase;
-        u8 *orderingBuffer;
-        sectorOffset += primitiveOffset;
-        orderingBuffer = base + orderingOffset;
-        base = base + sectorOffset;
-        g_BootDisplayOrderingTable = orderingBuffer;
-        g_BootDisplayPrimitiveCursor = base;
-    }
-    ClearOTagR(g_BootDisplayOrderingTable, 16);
+    char *base=(char *)g_CdLoadAreaBase+offset+0x54000;
+    g_BootDisplayPrimitiveCursor=base+g_ActiveDrawSlot*bytes;
+    g_BootDisplayPrimitiveEnd=g_BootDisplayPrimitiveCursor+bytes;
+    g_BootDisplayOrderingTable=(RenderNativeTag *)(base+2*bytes)+g_ActiveDrawSlot*16;
+    ClearOTagR((u_int *)g_BootDisplayOrderingTable,16);
 }
 
 void BootDisplay_DisplayNoOp(void) {
 }
 
 void BootDisplay_StepImageSprite(void) {
+    if(g_BootDisplayState<0 || !g_BootDisplayOrderingTable || !g_BootDisplayPrimitiveCursor || !g_BootDisplayPrimitiveEnd ||
+       (uintptr_t)g_BootDisplayPrimitiveCursor%_Alignof(BootDisplaySpritePacket) ||
+       (uintptr_t)g_BootDisplayPrimitiveCursor>(uintptr_t)g_BootDisplayPrimitiveEnd ||
+       (uintptr_t)g_BootDisplayPrimitiveEnd-(uintptr_t)g_BootDisplayPrimitiveCursor<sizeof(BootDisplaySpritePacket)){
+        g_BootDisplayState=g_BootDisplayDone=-1;return;
+    }
+
+    if((unsigned)g_BootDisplayBufferIndex>=2){g_BootDisplayState=g_BootDisplayDone=-1;return;}
     BootDisplaySpritePacket *packet = (BootDisplaySpritePacket *)g_BootDisplayPrimitiveCursor;
     u16 tpage;
-    s16 rect[4];
+    RECT rect;
     tpage = GetTPage(2, 0, g_BootDisplayImageBuffers[g_BootDisplayBufferIndex].x, g_BootDisplayImageBuffers[g_BootDisplayBufferIndex].y);
     SetDrawTPage(packet, 0, 0, tpage);
-    /* PsyQ packet length occupies the high byte of its ordering-table tag. */
-    ((u8 *)&packet->sprite.tag)[3] = 4;
+    SetSprt(&packet->sprite);
     packet->sprite.code = 0x64;
     MargePrim(packet, &packet->sprite);
     switch ((u16)g_BootDisplayStateTimer & 3) {
@@ -93,21 +94,21 @@ void BootDisplay_StepImageSprite(void) {
     packet->sprite.w = 160;
     packet->sprite.h = 120;
     if (g_BootDisplayTransition == 0) {
-        s32 brightness = g_BootDisplayImageBrightness + 4;
+        s32 brightness = (s32)((u32)g_BootDisplayImageBrightness + 4u);
         g_BootDisplayImageBrightness = brightness;
         if (brightness >= 128) {
             g_BootDisplayImageBrightness = 128;
             g_BootDisplayTransition = 1;
         }
     } else if (g_BootDisplayTransition == 2) {
-        s32 brightness = g_BootDisplayImageBrightness - 4;
+        s32 brightness = (s32)((u32)g_BootDisplayImageBrightness - 4u);
         g_BootDisplayImageBrightness = brightness;
         if (brightness <= 0) {
             g_BootDisplayImageBrightness = 0;
             g_BootDisplayTransition = 1;
         }
     }
-    AddPrim(g_BootDisplayOrderingTable + 56, packet);
+    AddPrim(g_BootDisplayOrderingTable + 14, packet);
     g_BootDisplayPrimitiveCursor += sizeof(*packet);
     switch (g_BootDisplayState) {
     case 0: {
@@ -116,20 +117,27 @@ void BootDisplay_StepImageSprite(void) {
         s32 endOffset;
         char *base;
 
-        DecDCTvlcSize2(MdecDiag_ReadHalfword(g_BootDisplayCreditImages[(u16)g_BootDisplayStateTimer]) >> 2);
+        unsigned imageIndex=(u16)g_BootDisplayStateTimer;u16 words;
+        if(imageIndex>=31 || !g_BootDisplayCreditImages[imageIndex]){g_BootDisplayState=g_BootDisplayDone=-1;break;}
+        memcpy(&words,g_BootDisplayCreditImages[imageIndex],2);
+        if(!words || 4u+words*4u>0xa800){g_BootDisplayState=g_BootDisplayDone=-1;break;}
+        DecDCTvlcSize2(words >> 2);
         startOffset = 0x38800;
         endOffset = 0x43000;
         offset = (g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) * 2048;
-        base = g_CdLoadAreaBase;
+        base = (char *)g_CdLoadAreaBase;
         startOffset += offset;
-        DecDCTvlc2(g_BootDisplayCreditImages[(u16)g_BootDisplayStateTimer], base + startOffset, base + (offset + endOffset));
-        g_BootDisplayState = 1;
+        int result=DecDCTvlc2(g_BootDisplayCreditImages[imageIndex], base+startOffset, base+offset+endOffset);
+        if(result<0)g_BootDisplayState=g_BootDisplayDone=-1;
+        else {g_BootDisplayState=result?1:2;g_BootDisplayTransferProgress=0;}
         break;
     }
     case 1: {
         s32 offset;
         offset = (g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) * 2048;
-        if (DecDCTvlc2(0, 0, g_CdLoadAreaBase + (offset + 0x43000)) == 0) {
+        int result=DecDCTvlc2(0,0,g_CdLoadAreaBase+offset+0x43000);
+        if(result<0){g_BootDisplayState=g_BootDisplayDone=-1;break;}
+        if (result == 0) {
             g_BootDisplayState = 2;
             g_BootDisplayTransferProgress = 0;
         }
@@ -138,7 +146,7 @@ void BootDisplay_StepImageSprite(void) {
     case 2: {
         s32 offset;
         offset = (g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) * 2048;
-        g_BootDisplayTransferCursor = g_CdLoadAreaBase + offset;
+        g_BootDisplayTransferCursor = (char *)g_CdLoadAreaBase + offset;
         DecDCTin(g_CdLoadAreaBase + (offset + 0x38800), 0);
         DecDCTout(g_BootDisplayTransferCursor, 0x2800);
         g_BootDisplayState = 3;
@@ -152,11 +160,11 @@ void BootDisplay_StepImageSprite(void) {
         break;
     case 4:
         if ((u16)g_BootDisplayTransferProgress < g_BootDisplayImageBuffers[g_BootDisplayBufferIndex].transferX + 160) {
-            rect[0] = g_BootDisplayTransferProgress;
-            rect[1] = g_BootDisplayImageBuffers[g_BootDisplayBufferIndex].transferY;
-            rect[2] = 16;
-            rect[3] = 128;
-            LoadImage(rect, g_BootDisplayTransferCursor);
+            rect.x = g_BootDisplayTransferProgress;
+            rect.y = g_BootDisplayImageBuffers[g_BootDisplayBufferIndex].transferY;
+            rect.w = 16;
+            rect.h = 128;
+            LoadImage(&rect, g_BootDisplayTransferCursor);
             g_BootDisplayTransferCursor += 0x1000;
             g_BootDisplayTransferProgress += 16;
         } else g_BootDisplayState = 5;
@@ -165,7 +173,6 @@ void BootDisplay_StepImageSprite(void) {
         u32 frame = g_BootDisplayFrameCounter;
         u32 divisor = 450;
         u32 phase;
-        /* Preserve retail hardware division rather than reciprocal multiplication. */
         phase = frame % divisor;
         frame = divisor - 93;
         if (phase == frame) g_BootDisplayTransition = 2;
@@ -191,7 +198,6 @@ void BootDisplay_StepImageSprite(void) {
         u32 frame = g_BootDisplayFrameCounter;
         u32 divisor = 450;
         u32 phase;
-        /* Preserve retail hardware division rather than reciprocal multiplication. */
         phase = frame % divisor;
         frame = divisor - 93;
         if (phase == frame) g_BootDisplayTransition = 2;
@@ -200,21 +206,29 @@ void BootDisplay_StepImageSprite(void) {
     }
 }
 
-void BootDisplay_QueueTintedSprite(u16 x, u16 y, u8 color) {
-    char *primitive = g_BootDisplayPrimitiveCursor;
+void BootDisplay_QueueTintedSprite(s16 x, s16 y, u8 color) {
+    if(g_BootDisplayState<0 || !g_BootDisplayOrderingTable || !g_BootDisplayPrimitiveCursor || !g_BootDisplayPrimitiveEnd ||
+       (uintptr_t)g_BootDisplayPrimitiveCursor%_Alignof(BootDisplaySpritePacket) ||
+       (uintptr_t)g_BootDisplayPrimitiveCursor>(uintptr_t)g_BootDisplayPrimitiveEnd ||
+       (uintptr_t)g_BootDisplayPrimitiveEnd-(uintptr_t)g_BootDisplayPrimitiveCursor<sizeof(BootDisplaySpritePacket)){
+        g_BootDisplayState=g_BootDisplayDone=-1;return;
+    }
+
+    BootDisplaySpritePacket *primitive = (BootDisplaySpritePacket *)g_BootDisplayPrimitiveCursor;
     s32 packed = BootDisplay_GetGlyphIndex(color);
 
-    func_8012462C(primitive, x, y, (packed & 15) << 4, packed & 0xF0);
-    AddPrim(g_BootDisplayOrderingTable + 0x2C, primitive);
-    g_BootDisplayPrimitiveCursor += 0x1C;
+    BootDisplay_InitSprite16(primitive, x, y, (packed & 15) << 4, packed & 0xF0);
+    AddPrim(g_BootDisplayOrderingTable + 11, primitive);
+    g_BootDisplayPrimitiveCursor += sizeof(BootDisplaySpritePacket);
 }
 
 void BootDisplay_InitSprite16(BootDisplaySpritePacket *primitive, s16 x, s16 y,
                        u16 u, u16 v) {
-    volatile BootDisplaySpritePacket *packet = primitive;
+    if(!primitive){g_BootDisplayState=g_BootDisplayDone=-1;return;}
+    BootDisplaySpritePacket *packet = primitive;
 
     SetDrawTPage(&primitive->draw_mode, 0, 0, g_BootDisplayTPage);
-    ((u8 *)&primitive->sprite.tag)[3] = 4;
+    SetSprt(&primitive->sprite);
     primitive->sprite.code = 100;
     SetSemiTrans(&primitive->sprite, 1);
     MargePrim(&primitive->draw_mode, &primitive->sprite);
@@ -231,10 +245,17 @@ void BootDisplay_InitSprite16(BootDisplaySpritePacket *primitive, s16 x, s16 y,
 }
 
 void BootDisplay_QueueFadeSprite(u8 color) {
+    if(g_BootDisplayState<0 || !g_BootDisplayOrderingTable || !g_BootDisplayPrimitiveCursor || !g_BootDisplayPrimitiveEnd ||
+       (uintptr_t)g_BootDisplayPrimitiveCursor%_Alignof(BootDisplaySpritePacket) ||
+       (uintptr_t)g_BootDisplayPrimitiveCursor>(uintptr_t)g_BootDisplayPrimitiveEnd ||
+       (uintptr_t)g_BootDisplayPrimitiveEnd-(uintptr_t)g_BootDisplayPrimitiveCursor<sizeof(BootDisplaySpritePacket)){
+        g_BootDisplayState=g_BootDisplayDone=-1;return;
+    }
+
     BootDisplaySpritePacket *primitive = (BootDisplaySpritePacket *)g_BootDisplayPrimitiveCursor;
 
     SetDrawTPage(&primitive->draw_mode, 0, 0, g_BootDisplayTPage);
-    ((u8 *)&primitive->sprite.tag)[3] = 4;
+    SetSprt(&primitive->sprite);
     primitive->sprite.code = 100;
     SetSemiTrans(&primitive->sprite, 1);
     MargePrim(&primitive->draw_mode, &primitive->sprite);
@@ -249,16 +270,26 @@ void BootDisplay_QueueFadeSprite(u8 color) {
     primitive->sprite.w = 0x60;
     primitive->sprite.h = 0x18;
     primitive->sprite.clut = g_BootDisplayClut;
-    AddPrim(g_BootDisplayOrderingTable + 0x2C, primitive);
-    g_BootDisplayPrimitiveCursor += 0x1C;
+    AddPrim(g_BootDisplayOrderingTable + 11, primitive);
+    g_BootDisplayPrimitiveCursor += sizeof(BootDisplaySpritePacket);
 }
 
 void BootDisplay_PresentSpriteFrame(void) {
+    if(g_BootDisplayState<0 || (unsigned)g_ActiveDrawSlot>=2 || !g_BootDisplayOrderingTable){g_BootDisplayState=g_BootDisplayDone=-1;return;}
     DrawSync(0);
     VSync(2);
     ResetGraph(1);
     PutDispEnv(&g_RenderDispEnvArray[g_ActiveDrawSlot]);
-    DrawOTagEnv(g_BootDisplayOrderingTable + 0x3C,
+    DrawOTagEnv(g_BootDisplayOrderingTable + 15,
                   &g_RenderDrawEnvArray[g_ActiveDrawSlot]);
     g_ActiveDrawSlot ^= 1;
 }
+
+/* Both arenas and ordering tables live in the original shared workspace. */
+RenderNativeTag *g_BootDisplayOrderingTable;
+char *g_BootDisplayPrimitiveCursor,*g_BootDisplayPrimitiveEnd;
+s32 g_BootDisplayTransition,g_BootDisplayImageBrightness;
+BootDisplayCallbacks g_BootDisplaySpriteCallbacks={
+    BootDisplay_InitDisplayResources,BootDisplay_SelectFrameBuffers,BootDisplay_StepImageSprite,
+    BootDisplay_QueueTintedSprite,BootDisplay_QueueFadeSprite,BootDisplay_PresentSpriteFrame,BootDisplay_DisplayNoOp
+};

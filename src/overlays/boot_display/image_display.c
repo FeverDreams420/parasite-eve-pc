@@ -368,3 +368,7 @@ RECT *g_BootDisplayFontImageRect,*g_BootDisplayFontClutRect;
 u8 *g_BootDisplayFontImagePixels;
 u16 *g_BootDisplayFontClutPixels;
 u16 g_BootDisplayTPage,g_BootDisplayClut;
+BootDisplayCallbacks g_BootDisplayImageCallbacks={
+    BootDisplay_InitDisplayBuffers,NULL,BootDisplay_StepImageDisplay,BootDisplay_BrightenGlyph,
+    BootDisplay_BrightenImageRegion,BootDisplay_PresentFrame,BootDisplay_CallInitSystem
+};

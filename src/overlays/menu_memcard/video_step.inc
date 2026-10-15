@@ -21,7 +21,7 @@ static inline s16 MenuCard_NextVideoFrame(VideoDisplay *dec) {
             return -1;
         }
     }
-    g_SeqElapsedRecord.value++;
+    g_SeqElapsed++;
     dec->decodeIndex ^= 1;
     DecDCTvlc2(frame, dec->decode[dec->decodeIndex], MENUCARD_VIDEO_PTR4);
     StFreeRing(frame);

@@ -1,3 +1,4 @@
+#include "../src/overlays/menu_memcard/menu_memcard_video.h"
 #include "pe1/resident_tables.h"
 #include "pe1/draw_area.h"
 #include "pe1/textbox.h"
@@ -2915,6 +2916,90 @@ static int original_save_card_images(PeDisc *disc)
     return valid;
 }
 
+static int original_video_buffers(PeDisc *disc)
+{
+    static u8 arena[0x55e00], second[0x16a00];
+    static u16 saved[1024*512], pixels[1024*512], expected[1024*512];
+    RECT whole={0,0,1024,512};
+    DISPENV displays[2]; DRAWENV draws[2];
+    Pe1SceneAudioState audio=g_GameState.scene_audio;
+    u32 flags=g_GameStateFlagsWord;
+    memcpy(displays,g_RenderDispEnvArray,sizeof(displays));
+    memcpy(draws,g_RenderDrawEnvArray,sizeof(draws));
+    StoreImage(&whole,saved);DrawSync(0);
+    int valid=1;
+    PeDiscFile archive;
+    static u8 bank[133*2048];
+    if(!pe_disc_find(disc,"PE.IMG",&archive) ||
+       !pe_disc_read(disc,&archive,978ull*2048,bank,sizeof(bank)))return 0;
+    for(unsigned i=0;i<47;++i) {
+        const u8 *row=bank+0x41e10+i*20;
+        u32 name; s16 speed,end; u16 x,y;
+        memcpy(&name,row,4);memcpy(&speed,row+6,2);memcpy(&end,row+8,2);
+        memcpy(&x,row+10,2);memcpy(&y,row+12,2);
+        VideoEntry *entry=&g_MenuCardScreenVideoTable[i];
+        if(name<0x8018eff0u || name-0x8018eff0u>=sizeof(bank) ||
+           !memchr(bank+(name-0x8018eff0u),0,sizeof(bank)-(name-0x8018eff0u)))return 0;
+        if(strcmp(entry->name,(char *)bank+(name-0x8018eff0u)) || entry->wide!=row[4] ||
+           entry->speed!=speed || entry->end!=end || entry->x!=x || entry->y!=y ||
+           memcmp(entry->reserved0e,row+14,6))valid=0;
+    }
+    for(int split=1;split<=2;++split)for(int skip=0;skip<2;++skip) {
+        u8 *buffers[2]={arena,second};
+        memset(arena,0xa5,sizeof(arena));memset(second,0xa5,sizeof(second));
+        for(unsigned i=0;i<1024*512;++i)pixels[i]=(u16)(i*37+(i>>10)*19);
+        memcpy(expected,pixels,sizeof(expected));
+        LoadImage(&whole,pixels);DrawSync(0);
+        g_DrawEnabled.bits=0;g_SeqElapsed=123;
+        g_GameStateFlagsWord=skip?0x08000000:0;
+        if(MenuCard_InitVideoBuffers(0,buffers) || MenuCard_InitVideoBuffers(3,buffers) ||
+           MenuCard_InitVideoBuffers(1,NULL))valid=0;
+        if(!MenuCard_InitVideoBuffers(split,buffers))valid=0;
+        if(g_MenuCardScreenVideoDecodeBuffer0!=arena ||
+           g_MenuCardScreenVideoDecodeBuffer1!=arena+0xfa00 ||
+           g_MenuCardScreenVideoStreamRing!=arena+0x1f400 ||
+           g_MenuCardScreenVideoVlcTable!=(split==1?arena+0x3f400:second) ||
+           g_MenuCardScreenVideoSliceBuffer0!=(split==1?arena+0x50400:second+0x11000) ||
+           g_MenuCardScreenVideoSliceBuffer1!=(split==1?arena+0x53100:second+0x13d00) ||
+           g_GameState.scene_audio.tracks.movie_active!=1 || g_SeqElapsed!=0 ||
+           g_MenuCardScreenVideoLastTime!=-1 ||
+           g_GameState.scene_audio.tracks.movie_volume!=152 ||
+           MenuCard_InitVideoBuffers(split,buffers))valid=0;
+        for(unsigned y=0;y<256;++y)memcpy(expected+y*1024+512,pixels+y*1024+320,192*2);
+        if(!skip)for(unsigned y=0;y<64;++y)
+            memcpy(expected+(y+256)*1024+512,pixels+(y+448)*1024,320*2);
+        StoreImage(&whole,pixels);DrawSync(0);
+        if(memcmp(pixels,expected,sizeof(pixels)))valid=0;
+        for(int index=0;index<2;++index)for(int wide=0;wide<2;++wide) {
+            MenuCard_SetVideoDisplay(index,wide);
+            if(g_RenderDispEnvArray[index].disp.w!=320 ||
+               g_RenderDispEnvArray[index].disp.y!=(index?0:240) ||
+               g_RenderDispEnvArray[index].isrgb24!=wide ||
+               g_RenderDrawEnvArray[index].clip.w!=320 ||
+               g_RenderDrawEnvArray[index].clip.y!=(index?240:0))valid=0;
+        }
+        /* The movie overwrites the graphics whose backups must survive. */
+        for(unsigned y=0;y<256;++y)memset(pixels+y*1024+320,0,192*2);
+        if(!skip)for(unsigned y=0;y<64;++y)memset(pixels+(y+448)*1024,0,320*2);
+        LoadImage(&whole,pixels);DrawSync(0);
+        MenuCard_ResetDisplayState();
+        if(g_DrawEnabled.bits || g_MenuCardScreenVideoDecodeBuffer0 ||
+           g_MenuCardScreenVideoDecodeBuffer1 || g_MenuCardScreenVideoStreamRing ||
+           g_MenuCardScreenVideoVlcTable || g_MenuCardScreenVideoSliceBuffer0 ||
+           g_MenuCardScreenVideoSliceBuffer1 ||
+           memcmp(displays,g_RenderDispEnvArray,sizeof(displays)) ||
+           memcmp(draws,g_RenderDrawEnvArray,sizeof(draws)))valid=0;
+        StoreImage(&whole,pixels);DrawSync(0);
+        if(memcmp(pixels,expected,sizeof(pixels)))valid=0;
+        for(unsigned i=0;i<sizeof(arena);++i)if(arena[i]!=0xa5)valid=0;
+        for(unsigned i=0;i<sizeof(second);++i)if(second[i]!=0xa5)valid=0;
+    }
+    LoadImage(&whole,saved);DrawSync(0);
+    g_GameState.scene_audio=audio;g_GameStateFlagsWord=flags;
+    if(!valid)fprintf(stderr,"original movie buffer/display regression\n");
+    return valid;
+}
+
 static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
 {
     PeDiscFile archive; u8 range[4];
@@ -3473,6 +3558,7 @@ int main(int argc, char **argv)
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_icon_packets(&disc,&exe)) return 133;
+        if (!original_video_buffers(&disc)) return 135;
         if (!original_title_screen(&disc)) return 134;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];

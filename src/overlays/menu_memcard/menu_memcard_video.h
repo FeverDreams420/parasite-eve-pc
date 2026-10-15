@@ -16,7 +16,7 @@
 #include "pe1/psyq_press.h"
 #include "pe1/script_state.h"
 
-typedef struct VideoFrame { u32 reserved[2], time, reserved0c; u16 width, height; } VideoFrame;
+typedef StHEADER VideoFrame;
 /* One entry of a video table: file name, colour depth and playback layout. */
 typedef struct VideoEntry {
     char *name;            /* 0x00 file name appended to the directory */
@@ -26,7 +26,7 @@ typedef struct VideoEntry {
     u16 x, y;              /* 0x0A display origin */
     u8 reserved0e[6];
 } VideoEntry;
-typedef struct VideoRect { s16 x,y,w,h; } VideoRect;
+typedef RECT VideoRect;
 /* Playback state of one video player copy. */
 typedef struct VideoDisplay {
     u8 *decode[2];        /* 0x00 MDEC decode buffers */
@@ -43,11 +43,7 @@ extern void exit(s32),Spu_SetVoiceVolume(s32);
 extern VideoEntry *g_MenuCardScreenVideoEntry;
 extern u8 g_MenuCardScreenVideoFinished;
 /* Wide-screen flag of the playing movie (Pe1SceneAudioState movie_wide). */
-extern s8 g_MovieWide;
-/* g_SeqElapsed as a one-field record: MENUCARD_OPEN_VIDEO_NAME sets it with
- * its own address load, next to g_MovieWide and g_MovieIndex. */
-typedef struct VideoFrameCount { s16 value; } VideoFrameCount;
-extern VideoFrameCount g_SeqElapsedRecord;
+#define g_MovieWide (g_GameState.scene_audio.tracks.movie_wide)
 extern s16 g_MenuCardScreenVideoLastTime,g_MenuCardScreenVideoSize[2];
 
 void *MenuCard_UpdateVideoFrame(VideoDisplay *display);
@@ -68,6 +64,7 @@ extern DISPENV g_MenuCardScreenSavedDispEnv[2];
 extern DRAWENV g_MenuCardScreenSavedDrawEnv[2];
 extern u8 *g_MenuCardScreenVideoDecodeBuffer0,*g_MenuCardScreenVideoDecodeBuffer1,*g_MenuCardScreenVideoSliceBuffer0,*g_MenuCardScreenVideoSliceBuffer1,*g_MenuCardScreenVideoVlcTable,*g_MenuCardScreenVideoStreamRing;
 
+void MenuCard_ResetDisplayState(void);
 s32 MenuCard_InitVideoBuffers(s8 count, u8 **buffers);
 s32 MenuCardFirst_InitVideoBuffers(s8 count, u8 **buffers);
 /* Buffers and saved environments of the first video player copy. */
@@ -76,7 +73,7 @@ extern DISPENV g_MenuCardVideoSavedDispEnv[2];
 extern DRAWENV g_MenuCardVideoSavedDrawEnv[2];
 
 typedef struct VideoDiscRange { u16 start,end; } VideoDiscRange;
-extern VideoEntry g_MenuCardScreenVideoTable[];
+extern VideoEntry g_MenuCardScreenVideoTable[47];
 extern u32 g_FieldPadBits;
 s32 MenuCard_StepVideo(void);
 extern void SetDispMask(s32), ResetGraph(s32), Field_HandleStateTransition(void), StUnSetRing(void), Draw_RenderFrame(void);
@@ -87,13 +84,15 @@ void MenuCard_SetVideoDisplay(s8 index, s8 wide);
 void MenuCardFirst_SetVideoDisplay(s8 index, s8 wide);
 
 /* Video open: file lookup, stream start and first decoded frame. */
-extern u8 g_MovieIndex;
+#define g_MovieIndex (g_GameState.scene_audio.tracks.movie_index)
 extern VideoEntry g_MenuCardVideoTable[];
 extern DslFILE g_MenuCardVideoFile, g_MenuCardScreenVideoFile;
 extern CdlLOC g_MenuCardVideoRestartLoc, g_MenuCardScreenVideoRestartLoc;
 extern VideoDisplay g_MenuCardVideoDisplay, g_MenuCardScreenVideoDisplay;
 extern char g_MenuCardVideoDirectory[], g_MenuCardVideoDirectoryLate[], g_MenuCardScreenVideoDirectory[], g_MenuCardScreenVideoDirectoryLate[];
-extern void strcat(char *, char *), StSetRing(void *, s32);
+extern void StSetRing(void *, s32);
+void DecDCTReset(int mode);
+void MdecDiag_ExpandDecoderTable(void *table);
 extern void DecDCTvlc2(void *, void *, void *), MenuCardFirst_UploadVideoSlice(void);
 extern s32 DsRead2(CdlLOC *, s32);
 s32 MenuCardFirst_OpenVideo(s32 number);

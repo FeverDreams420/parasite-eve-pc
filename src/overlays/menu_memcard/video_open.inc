@@ -29,7 +29,7 @@ static inline s16 MenuCard_OpenNextVideoFrame(VideoDisplay *dec) {
             return -1;
         }
     }
-    g_SeqElapsedRecord.value++;
+    g_SeqElapsed++;
     dec->decodeIndex ^= 1;
     DecDCTvlc2(frame, dec->decode[dec->decodeIndex], MENUCARD_VIDEO_PTR4);
     StFreeRing(frame);
@@ -136,7 +136,7 @@ search:
         MenuCard_OpenKickVideoStream(&MENUCARD_VIDEO_RESTART, result);
     }
     MENUCARD_VIDEO_FINISHED = 0;
-    g_SeqElapsedRecord.value = 1;
+    g_SeqElapsed = 1;
     {
         u8 *active = &g_DrawEnabled.bits;
 

@@ -16,12 +16,7 @@
 #define MENUCARD_SLOT92_SOURCE g_MenuCardScreenSavedDrawEnv
 #endif
 
-typedef struct MemcardRect {
-    s16 x;
-    s16 y;
-    s16 w;
-    s16 h;
-} MemcardRect;
+typedef RECT MemcardRect;
 
 
 #include "display_reset_externs.h"

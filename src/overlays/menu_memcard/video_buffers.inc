@@ -17,7 +17,7 @@ s32 MENUCARD_INIT_VIDEO_BUFFERS_NAME(s8 count, u8 **buffers) {
     u8 *base;
     s32 offset;
 
-    if ((u8)(count - 1) >= 2) {
+    if (!buffers || (u8)(count - 1) >= 2) {
         return 0;
     }
     for (i = 0; i < count; i++) {
@@ -61,7 +61,7 @@ s32 MENUCARD_INIT_VIDEO_BUFFERS_NAME(s8 count, u8 **buffers) {
     }
     g_DrawEnabled.bits = 1;
     g_GameState.scene_audio.tracks.movie_volume = 152;
-    g_SeqElapsedRecord.value = 0;
+    g_SeqElapsed = 0;
     MENUCARD_VIDEO_LAST_TIME = -1;
     for (i = 0; i < 2; i++) {
         MENUCARD_VIDEO_SAVED_DISPLAY[i] = g_RenderDispEnvArray[i];

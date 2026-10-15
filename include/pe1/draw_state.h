@@ -17,13 +17,6 @@ typedef struct DrawTextCursorPair {
     u32 y;
 } DrawTextCursorPair;
 
-/* The draw-enabled byte is read signed by the display queries and unsigned
- * by the sequence-elapsed query. */
-typedef union GpuDrawEnabledFlag {
-    signed char value;
-    unsigned char bits;
-} GpuDrawEnabledFlag;
-
 /* Wipe bar vertex coordinates, stored y first. */
 typedef struct {
     s16 y, x;
@@ -117,8 +110,8 @@ extern s32 g_DrawBufferIndex;
 extern u32 g_DrawBlendColorPair[];
 #define g_DrawBlendColor (g_DrawBlendColorPair[0])
 #define g_DrawScratchBuffer ((int *)&g_DrawBlendColorPair[1])
-extern GpuDrawEnabledFlag g_DrawEnabled;
-extern short g_SeqElapsed;
+#define g_DrawEnabled (g_GameState.scene_audio.tracks.draw_enabled)
+#define g_SeqElapsed (g_GameState.scene_audio.tracks.movie_frame)
 #define g_SceneInitSubphase (*(volatile unsigned char *)&g_GameState.scene_init_subphase)
 
 /* Battle status icons: per draw buffer, thirteen paged sprites (poison,

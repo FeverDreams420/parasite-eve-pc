@@ -27,8 +27,6 @@
 #include "pe1/scene_dispatch.h"
 #include "pe1/script_queue.h"
 
-GpuDrawEnabledFlag g_DrawEnabled;
-short g_SeqElapsed;
 
 int Draw_InitDisplay(int mode) {
     int mode_reg;

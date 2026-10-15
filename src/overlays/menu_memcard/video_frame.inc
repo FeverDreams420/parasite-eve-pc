@@ -8,7 +8,8 @@
 
 void *MENUCARD_UPDATE_VIDEO_FRAME_NAME(VideoDisplay *display) {
     struct {
-        void *data;
+        u32 *data;
+        u32 *header;
         VideoFrame *frame;
         VideoRect clear;
     } local;
@@ -17,10 +18,7 @@ void *MENUCARD_UPDATE_VIDEO_FRAME_NAME(VideoDisplay *display) {
     s32 remaining;
     s32 status;
     void *data;
-    /* Retail never reloads $a0 after the event-sync call below: the frame
-       pointer argument lives in $a0 across it, which only a $4 variable
-       reproduces. */
-    void **dataPtr;
+    u32 **dataPtr;
 
     retries = 2000;
     status = DsSystemStatus();
@@ -32,15 +30,16 @@ void *MENUCARD_UPDATE_VIDEO_FRAME_NAME(VideoDisplay *display) {
             exit(1);
         }
     }
-    while (StGetNext(dataPtr, &local.frame) != 0) {
+    while (StGetNext(dataPtr, &local.header) != 0) {
         dataPtr = &local.data;
         if (--retries == 0) {
             return 0;
         }
     }
+    local.frame = (VideoFrame *)local.header;
     end = MENUCARD_VIDEO_ENTRY->end;
-    if (local.frame->time >= (end - 16)) {
-        s32 position = local.frame->time + 16;
+    if (local.frame->frameCount >= (end - 16)) {
+        s32 position = local.frame->frameCount + 16;
 
         remaining = position - end;
         remaining = 14 - remaining;
@@ -49,10 +48,10 @@ void *MENUCARD_UPDATE_VIDEO_FRAME_NAME(VideoDisplay *display) {
         }
         Spu_SetVoiceVolume(g_GameState.scene_audio.tracks.movie_volume * remaining / 14);
     }
-    if (local.frame->time < MENUCARD_VIDEO_LAST_TIME || local.frame->time >= MENUCARD_VIDEO_ENTRY->end) {
+    if (local.frame->frameCount < MENUCARD_VIDEO_LAST_TIME || local.frame->frameCount >= MENUCARD_VIDEO_ENTRY->end) {
         MENUCARD_VIDEO_FINISHED = 1;
     }
-    MENUCARD_VIDEO_LAST_TIME = local.frame->time;
+    MENUCARD_VIDEO_LAST_TIME = local.frame->frameCount;
     if (MENUCARD_VIDEO_SIZE[0] != local.frame->width || MENUCARD_VIDEO_SIZE[1] != local.frame->height) {
         if (g_MovieWide) {
             local.clear.x = 0;

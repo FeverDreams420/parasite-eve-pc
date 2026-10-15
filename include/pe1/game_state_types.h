@@ -3,6 +3,9 @@
 
 #include "pe1/render_object.h"
 
+/* Signed/unsigned views of the original movie-active byte. */
+typedef union GpuDrawEnabledFlag { signed char value; unsigned char bits; } GpuDrawEnabledFlag;
+
 /* Original global mode flags and their shared record view. */
 typedef struct GameStateBlock {
     u32 flags;
@@ -37,7 +40,7 @@ typedef union Pe1SceneAudioState {
         Pe1S8 keys[2][2];
         Pe1S8 pending_key, pending_bank; /* 0xE0, 0xE1 in game state */
         /* Movie playback state (menu_memcard video player). */
-        Pe1U8 movie_active;      /* 0xE2: frame countdown while playing */
+        union { Pe1U8 movie_active; GpuDrawEnabledFlag draw_enabled; }; /* 0xE2 */
         Pe1S8 movie_wide;        /* 0xE3: wide-screen movie flag */
         short movie_frame;       /* 0xE4 */
         Pe1U8 movie_volume;      /* 0xE6: fade scale, reset to 0x98 */

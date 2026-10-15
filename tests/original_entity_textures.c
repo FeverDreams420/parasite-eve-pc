@@ -35,13 +35,8 @@ int RoomM005_BeaconDriftCallback(int mode,void *state,intptr_t argument);
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-RenderLightColor g_RoomLightTint = {255,255,255};
-s32 g_IdentityMatrixSource[8] = {4096,0,4096,0,4096,0,0,0};
-s16 g_RenderTexturePageDeltas[4][4];
 int g_RenderCounter[1];
-RenderVec3s g_RenderNormalTable[240];
 
-u8 g_SceneAreaType;
 /* Controlled battle-step input for the original loading gate. */
 u8 g_AyaActionStep;
 #ifndef PE_TEST_REAL_DISC

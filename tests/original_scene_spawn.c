@@ -1,3 +1,4 @@
+#include "pe1/render_camera.h"
 #include "pe1/render_setup.h"
 #include "pe1/entity_frame_update.h"
 #include "pe1/gte.h"
@@ -17,11 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-RenderLightColor g_RoomLightTint = {255,255,255};
-s32 g_IdentityMatrixSource[8] = {4096,0,4096,0,4096,0,0,0};
-s16 g_RenderTexturePageDeltas[4][4];
 int g_RenderCounter[1];
-RenderVec3s g_RenderNormalTable[240];
 
 #include "pe1/entity_allocation.h"
 #include "pe1/render_buffers.h"
@@ -29,7 +26,6 @@ RenderVec3s g_RenderNormalTable[240];
 #include "pe1/scene_archive.h"
 uintptr_t g_SceneMapPrimBaseTable[10];
 FieldActorCallbacks g_FieldActorTypeCallbacks[256];
-u8 g_SceneAreaType;
 
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 static u32 room_word(const u8 *bytes)
@@ -39,6 +35,8 @@ static u32 room_word(const u8 *bytes)
 
 int main(void)
 {
+    GteMatrix view={0};int projection=240;
+    Render_InitViewState(&view,&projection);
     const char *path=getenv("PE_TEST_DISC");
     if(!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     PeDisc disc={0}; PeRoomCatalog catalog; PeRoom room={0};

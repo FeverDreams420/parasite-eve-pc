@@ -2,7 +2,7 @@
 #define PE1_RENDER_LIGHTING_H
 
 #include "pe1/gte_types.h"
-#include "pe1/scene_room_load.h"
+#include "pe1/geom_state.h"
 
 /* MATRIX arithmetic and the packed word transfers used by the GTE. */
 typedef union RenderLightingMatrix {
@@ -24,11 +24,7 @@ extern RenderLightingState g_RenderLightingBlock;
 #define g_RenderLight1DirX (g_RenderLightingBlock.light.matrix.m[1][0])
 void Boot_SetBackColor(u16 *destination, int r, int g, int b);
 void Boot_SetLightColor(RenderLightingState *lighting, int index, int r, int g, u16 b);
-typedef struct RenderLightColor {
-    u8 r, g, b;
-} RenderLightColor;
-
-PE1_STATIC_ASSERT(sizeof(RenderLightColor) == 3, render_light_color_size);
-extern RenderLightColor g_RoomLightTint;
+/* One tint shared by view reset, scripts and model lighting. */
+#define g_RoomLightTint (g_GeomScroll.state.position.lightTint)
 
 #endif

@@ -14,6 +14,7 @@ extern int g_FieldMoveLock;
 #define g_PendingStoryDay (g_GameState.pending_story_day)
 #define g_CurrentStoryDay (&g_GameState.current_story_day)
 #define g_LoadedTexturePageId (g_GameState.field_bg_cache_bank)
+#define g_SceneAreaType (g_GameState.requested_entity_bank)
 #define g_SavedSceneAreaType (g_GameState.loaded_entity_bank)
 #define g_GameStateFlagsWord (g_GameState.flags)
 /* Screen offsets at original game-state bytes 0xD8/0xD9. */

@@ -297,6 +297,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-model-setup tests/original_model_setup.c
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
         pc/room.c pc/room_banks.c pc/model.c pc/vram.c
         $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original>)
@@ -509,6 +510,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-scene-spawn tests/original_scene_spawn.c
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
         pc/room.c pc/room_banks.c pc/model.c pc/script.c
         $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original>)

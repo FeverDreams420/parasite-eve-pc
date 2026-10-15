@@ -20,6 +20,11 @@
 #include "pe1/gte_types.h"
 #include "pe1/render_tint.h"
 
+typedef struct RenderLightColor {
+    u8 r, g, b;
+} RenderLightColor;
+PE1_STATIC_ASSERT(sizeof(RenderLightColor) == 3, render_light_color_size);
+
 /* The low byte selects the group; the remaining signed 24 bits hold an
  * animation position with eight fractional bits. Halfword and packed-word
  * accesses are also used by the slot setup commands. */
@@ -162,7 +167,7 @@ typedef struct GeomScrollCoordinates {
     u16 baseAngleDigital;       /* 0x94: g_CameraBaseAngleDigital */
     u16 baseAngleAnalog;        /* 0x96: g_CameraBaseAngleAnalog */
     u8 otZ;                     /* 0x98: g_GeomOtZ */
-    u8 lightTint[3];            /* 0x99: g_RoomLightTint */
+    RenderLightColor lightTint;            /* 0x99: g_RoomLightTint */
     s16 originX, originY;
 } GeomScrollCoordinates;
 

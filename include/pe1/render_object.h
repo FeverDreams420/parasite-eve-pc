@@ -655,7 +655,7 @@ void Render_TransformMorphVertices(RenderObjectEntity *object, u32 *view_matrix)
 /* Word lookup/work buffers also used for GTE screen/depth output. */
 extern u32 g_RenderVertexWorkWords[], g_RenderClutLookupTable[];
 /* Unit vertex normals indexed by RenderVec3s.pad of a model vertex. */
-extern RenderVec3s g_RenderNormalTable[];
+extern RenderVec3s g_RenderNormalTable[240];
 /* Projected screen XY and view depth of the transformed model vertices. */
 /* Original symbols are views into the same work buffers, not allocations. */
 #define D_800B1640 (g_RenderClutLookupTable + 2)

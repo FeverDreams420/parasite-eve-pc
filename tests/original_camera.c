@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-RenderLightColor g_RoomLightTint;
 #define CHECK(x) do { if (!(x)) {fprintf(stderr,"line %d: %s\n",__LINE__,#x);return 1;} } while(0)
 int Render_SetEntryLimit(int index,int frame);
 int Render_SetFlagSlot(int index,int enabled);
@@ -111,6 +110,9 @@ int main(void) {
             s32 distance=camera.prefix.gpu.geom_screen;
             memset(&g_GeomScroll,0xA5,sizeof(g_GeomScroll));
             CHECK(Render_InitViewState(&matrix,&distance)==0);
+            CHECK(g_GeomScroll.state.position.lightTint.r==255 &&
+                  g_GeomScroll.state.position.lightTint.g==255 &&
+                  g_GeomScroll.state.position.lightTint.b==255);
             CHECK(g_GeomScroll.state.position.matrixWords==(u32 *)&matrix);
             CHECK(g_GeomScroll.state.position.projectionDistance==&distance);
             CHECK(g_GeomScroll.state.position.x==0 && g_GeomScroll.state.position.originX==0);

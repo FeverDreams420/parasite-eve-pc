@@ -37,7 +37,7 @@ extern unsigned char g_StartupResourceBlob[0x10A50];
  * scene render object from the loaded bank.
  */
 
-extern u8 g_SceneAreaType;
+
 /* g_CurrentStoryDay aliases the canonical current-day byte. */
 #include "pe1/pe_image.h"
 

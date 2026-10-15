@@ -1,3 +1,6 @@
+#include "pe1/render_camera.h"
+#include "pe1/render_matrix_copy.h"
+#include "pe1/scene_room_load.h"
 #include "pe1/render_setup.h"
 #include "pe1/entity_frame_update.h"
 #include "pe1/gte.h"
@@ -15,11 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-RenderLightColor g_RoomLightTint = {255,255,255};
-s32 g_IdentityMatrixSource[8] = {4096,0,4096,0,4096,0,0,0};
-s16 g_RenderTexturePageDeltas[4][4];
 int g_RenderCounter[1];
-RenderVec3s g_RenderNormalTable[240];
 extern DRAWENV g_RenderDrawEnvArray[2];
 extern DISPENV g_RenderDispEnvArray[2];
 extern int g_MenuSaveBgFadeState;
@@ -34,6 +33,8 @@ static unsigned vsync_callbacks;
 static void count_vsync(void) { ++vsync_callbacks; }
 int main(int argc, char **argv)
 {
+    GteMatrix view={0};int projection=240;
+    Render_InitViewState(&view,&projection);
     const char *path = getenv("PE_TEST_DISC");
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS") ? 1 : 77;
     PeDisc disc = {0}; PeRoomCatalog catalog; PeRoom room = {0};
@@ -149,10 +150,43 @@ int main(int argc, char **argv)
     CHECK(pe_disc_open(&disc,path)); CHECK(pe_room_catalog_open(&catalog,&disc));
     PeDiscFile executable;
     CHECK(pe_disc_find(&disc,"SLUS_006.62",&executable));
-    CHECK(pe_disc_read(&disc,&executable,0x921d8-0x10000+0x800,
-                       g_RenderTexturePageDeltas,sizeof(g_RenderTexturePageDeltas)));
-    CHECK(pe_disc_read(&disc,&executable,0x91a58-0x10000+0x800,
-                       g_RenderNormalTable,sizeof(g_RenderNormalTable)));
+    u8 original_render[sizeof(g_RenderNormalTable)];
+    CHECK(pe_disc_read(&disc,&executable,0x91a38-0x10000+0x800,original_render,sizeof(g_IdentityMatrixSource)));
+    CHECK(!memcmp(original_render,g_IdentityMatrixSource,sizeof(g_IdentityMatrixSource)));
+    CHECK(pe_disc_read(&disc,&executable,0x921d8-0x10000+0x800,original_render,sizeof(g_RenderTexturePageDeltas)));
+    CHECK(!memcmp(original_render,g_RenderTexturePageDeltas,sizeof(g_RenderTexturePageDeltas)));
+    CHECK(pe_disc_read(&disc,&executable,0x91a58-0x10000+0x800,original_render,sizeof(g_RenderNormalTable)));
+    CHECK(!memcmp(original_render,g_RenderNormalTable,sizeof(g_RenderNormalTable)));
+    /* An incomplete final NCCT triple must preserve the real vertex colours.
+     * Even a colour marker in an unused lane retains the original selection. */
+    {
+        RenderLightingState old_lights=g_RenderLightingBlock;
+        u32 old_main[3],old_alt[3],fade=g_RenderFadeColour;
+        memcpy(old_main,g_RenderClutLookupTable,sizeof(old_main));memcpy(old_alt,g_RenderVertexWorkWords,sizeof(old_alt));
+        RenderObjectHeader header={.part_count=1,.vertex_count=3};
+        RenderObjectPart part={.vertex_count=3,.visible=1};
+        RenderMatrix matrix={.rotation={{4096,0,0},{0,4096,0},{0,0,4096}}};
+        RenderVec3s vertices[3]={{0,0,0,1},{0,0,0,57},{0,0,0,239}};
+        u32 colours[3];RenderObjectEntity object={0};
+        object.header=&header;object.parts=&part;object.vertices=vertices;object.vertex_colours=colours;
+        object.matrices=&matrix;object.draw_count=1;object.shade=48;object.lightPositiveY=24;object.lightNegativeY=12;
+        g_RenderFadeColour=0x00305070;
+        Render_InitRoomPrimState(&object);
+        for(unsigned marker=0;marker<3;++marker)for(unsigned count=1;count<=2;++count) {
+            u32 expected_main[3],expected_alt[3];
+            for(unsigned i=0;i<3;++i)colours[i]=0x00406080|(i==marker?0x30000000:0);
+            header.vertex_count=part.vertex_count=3;vertices[1].pad=57;vertices[2].pad=239;
+            Render_DrawObject(&object,&g_RenderLightingState);
+            memcpy(expected_main,g_RenderClutLookupTable,sizeof(expected_main));memcpy(expected_alt,g_RenderVertexWorkWords,sizeof(expected_alt));
+            header.vertex_count=part.vertex_count=count;
+            vertices[2].pad=32767;if(count==1)vertices[1].pad=-1;
+            Render_DrawObject(&object,&g_RenderLightingState);
+            CHECK(!memcmp(expected_main,g_RenderClutLookupTable,count*sizeof(u32)));
+            CHECK(!memcmp(expected_alt,g_RenderVertexWorkWords,count*sizeof(u32)));
+        }
+        g_RenderLightingBlock=old_lights;g_RenderFadeColour=fade;
+        memcpy(g_RenderClutLookupTable,old_main,sizeof(old_main));memcpy(g_RenderVertexWorkWords,old_alt,sizeof(old_alt));
+    }
     for (unsigned map = 1; map <= PE_USA_ROOM_SLOTS; ++map) {
         if (!catalog.ranges[map-1].room_sectors) continue;
         PeRoomBanks banks;

@@ -2607,3 +2607,7 @@ AkaoCommandHandler g_AkaoExtOpcodeHandlers[32] = {
     [0x1E] = SeqOp_Noop,
     [0x1F] = SeqOp_Noop,
 };
+
+/* Rolling native timer measurements, initially zero in the USA data. */
+s32 g_AkaoTimerDeltaHist0, g_AkaoTimerDeltaHist1;
+s32 g_AkaoTimerDeltaHist2, g_AkaoTimerDeltaHist3, g_AkaoTimerDeltaSum;

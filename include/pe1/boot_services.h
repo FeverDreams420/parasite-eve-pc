@@ -13,6 +13,7 @@ void Draw_ReportError(char *message, char *detail, int value, unsigned char seve
 /* Soft-reset and start-up services (asset/game_state.c). */
 extern int g_SceneDispatchToken;
 void Boot_SyncShutdown(void);
+void Boot_Shutdown(void);
 int Draw_SetBaseY(int unused, u32 y);
 void Boot_InitMemoryLayout(void);
 void Boot_InitGameState(void);

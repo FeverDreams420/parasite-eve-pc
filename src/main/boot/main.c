@@ -43,7 +43,11 @@ int main(void) {
 
         do {
             if (g_GameState.flags & STATE_FLAG_IMAGE_BUSY) {
-                Render_InitDisplayLists(mode);
+                int display_status = Render_InitDisplayLists(mode);
+                if (display_status < 0) {
+                    fprintf(stderr, "Game image selection failed: %d\n", display_status);
+                    return EXIT_FAILURE;
+                }
                 g_GameState.flags &= ~STATE_FLAG_IMAGE_BUSY;
             }
 

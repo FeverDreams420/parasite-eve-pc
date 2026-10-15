@@ -18,7 +18,7 @@ extern unsigned char g_AkaoSilentEndSample[0x40];
 /* SpuInitMalloc table for four blocks. */
 extern char g_AkaoSpuMallocTable[];
 /* Root counter 2 event that drives Akao_TimerCallback. */
-extern int g_AkaoTimerEventDesc;
+extern long g_AkaoTimerEventDesc;
 
 void Spu_InitVoiceState(void);
 

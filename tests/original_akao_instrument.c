@@ -32,8 +32,9 @@ extern AkaoQueueEntry g_AkaoMessageQueue[16];
 extern int g_AkaoMessageQueueCount;
 static AkaoQueueEntry received[16];
 static unsigned received_count;
-static void record_message(AkaoQueueEntry *entry)
+static void record_message(void *message)
 {
+    AkaoQueueEntry *entry = message;
     if (received_count >= 16) abort();
     received[received_count++] = *entry;
 }
@@ -47,16 +48,16 @@ extern void *g_AkaoSoundEntryTable[256];
 extern void *g_AkaoBgmHandle[2];
 void Seq_GetGlobalPitch(unsigned int *out);
 void Seq_ApplyGlobalPitch(void);
-void Seq_SetCurrentTrackField56(AkaoValueCommand *command);
+void Seq_SetCurrentTrackField56(void *message);
 void SeqOp_StreamPair(AkaoTrack *track, u32 voice_mask);
 void SeqOp_ReadTrack64U16(AkaoTrack *track, u32 voice_mask);
 void SeqOp_SetTrack34Mask(AkaoTrack *track, u32 mask);
 void SeqOp_ClearTrack34Mask(AkaoTrack *track, u32 mask);
-void Spu_StopActiveVoices(void);
+void Spu_StopActiveVoices(void *message);
 void Akao_UpdateVoiceMask(AkaoU8 *new_base);
 void Akao_InitVoiceState(AkaoTrack *track, void *script);
-void Akao_InitPrimarySecondaryVoices(void);
-void Akao_InitPrimarySecondaryVoicesWithMode(AkaoValueCommand *command);
+void Akao_InitPrimarySecondaryVoices(void *message);
+void Akao_InitPrimarySecondaryVoicesWithMode(void *message);
 void Akao_StepSequencerVoice(void *sequence);
 void Akao_SetVoiceKeyOff(AkaoTrack *track, u32 voice_mask, int index);
 void Akao_SetVoiceKeyOn(AkaoTrack *track, u32 voice_mask);
@@ -431,7 +432,7 @@ int main(int argc, char **argv)
         g_AkaoVoiceChannelTable[i].flags = 0xffff;
     }
     g_SpuActiveVoiceMask = 0xfff000;
-    Spu_StopActiveVoices();
+    Spu_StopActiveVoices(NULL);
     CHECK(g_SpuActiveVoiceMask == 0x249000);
     CHECK(g_SpuPendingKeyOffMask == 0xdb6000);
     for (unsigned i = 0; i < 12; ++i)
@@ -565,7 +566,7 @@ int main(int argc, char **argv)
             g_AkaoVoiceStateTable[i].pan_duration = 13;
             g_AkaoVoiceStateTable[i].adsr_release_rate = 17;
         }
-        if (mode == 0) Akao_InitPrimarySecondaryVoices();
+        if (mode == 0) Akao_InitPrimarySecondaryVoices(NULL);
         else {
             AkaoValueCommand command = {0};
             command.value = mode == 1 ? 73 : 75;

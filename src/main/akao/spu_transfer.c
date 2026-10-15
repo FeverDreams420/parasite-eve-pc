@@ -182,27 +182,24 @@ void Spu_InitVoiceState(void) {
         voice->track.pitch_offset = 0;
     }
 
-    /* Retail keeps the bank stores ordered against the scalar globals
-     * around them. GCC 2.7 lets a scalar access pass a structure-field
-     * store, so the bank fields are written through word views. */
     bank = g_AkaoCurTrack;
-    *(int *)&bank[0].key_off_request_mask = 0;
-    *(int *)&bank[0].allocated_voice_mask = 0;
-    *(int *)&bank[0].key_on_request_mask = 0;
-    *(int *)&bank[1].key_off_request_mask = 0;
-    *(int *)&bank[1].allocated_voice_mask = 0;
-    *(int *)&bank[1].key_on_request_mask = 0;
+    bank[0].key_off_request_mask = 0;
+    bank[0].allocated_voice_mask = 0;
+    bank[0].key_on_request_mask = 0;
+    bank[1].key_off_request_mask = 0;
+    bank[1].allocated_voice_mask = 0;
+    bank[1].key_on_request_mask = 0;
     g_AkaoSfxTickAccumulator = 1;
     g_AkaoSfxTempo.value = 0x66A80000;
     g_SpuPendingKeyOffMask = 0;
     g_AkaoSfxAllocatedVoiceMask = 0;
     g_AkaoVoiceMaskScratch = 0;
-    *(int *)&bank[1].volume = 0x3FFF0000;
-    *(int *)&bank[0].volume = 0x3FFF0000;
-    *(int *)&bank[1].volume_delta = 0;
-    *(int *)&bank[0].volume_delta = 0;
-    *(short *)&bank[1].volume_slide_duration = 0;
-    *(short *)&bank[0].volume_slide_duration = 0;
+    bank[1].volume = 0x3FFF0000;
+    bank[0].volume = 0x3FFF0000;
+    bank[1].volume_delta = 0;
+    bank[0].volume_delta = 0;
+    bank[1].volume_slide_duration = 0;
+    bank[0].volume_slide_duration = 0;
 
     g_AkaoVoiceUpdateFlags |= AKAO_GLOBAL_UPDATE_TEMPO;
     Seq_SetParamWithReset(4);
@@ -210,7 +207,7 @@ void Spu_InitVoiceState(void) {
 }
 
 void Spu_InitHardware(void) {
-    int event;
+    long event;
 
     SpuStart();
     SpuInitMalloc(4, g_AkaoSpuMallocTable);
@@ -261,3 +258,17 @@ void Spu_Shutdown(void) {
     Spu_WriteKeyOff(0xFFFFFF);
     SpuQuit();
 }
+
+/* Original silence blocks and native SPU allocator/event storage. */
+unsigned char g_AkaoSilentLoopSample[0x20] = {
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x0c,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+unsigned char g_AkaoSilentEndSample[0x40] = {
+    0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+_Alignas(8) char g_AkaoSpuMallocTable[40];
+long g_AkaoTimerEventDesc;

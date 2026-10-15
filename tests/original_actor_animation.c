@@ -10,6 +10,7 @@ void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/field_sfx.h"
 #include "pe1/psyq_callbacks.h"
 #include "pe1/boot.h"
+#include "pe1/boot_disc_check.h"
 #include "pe1/cdrom_buffers.h"
 #include "pe1/draw_buffers.h"
 #include "pe1/save.h"
@@ -59,6 +60,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/pm.h"
 #include "pe1/akao/commands.h"
 #include "pe1/akao/globals.h"
+#include "pe1/akao/init_state.h"
 #include "pe1/akao_send.h"
 #include "pe1/script_state.h"
 #include "pe1/script_queue.h"
@@ -95,6 +97,7 @@ int Inv_ScrambleGrid(void);
 #include <stdlib.h>
 #include <limits.h>
 #include <psyz/system.h>
+#include <psyz/spu.h>
 
 /* Observe the original traversal while deliberately changing cursor state. */
 static int widget_draw_order[4], widget_draw_x[4], widget_draw_y[4];
@@ -2918,6 +2921,189 @@ static int original_save_card_images(PeDisc *disc)
     return valid;
 }
 
+static unsigned unload_log[32], unload_count;
+#define UNLOAD_PROBE(id) static void unload_probe_##id(void) { unload_log[unload_count++]=id; }
+UNLOAD_PROBE(0) UNLOAD_PROBE(1) UNLOAD_PROBE(2) UNLOAD_PROBE(3)
+UNLOAD_PROBE(4) UNLOAD_PROBE(5) UNLOAD_PROBE(6) UNLOAD_PROBE(7)
+UNLOAD_PROBE(8) UNLOAD_PROBE(84) UNLOAD_PROBE(85)
+#undef UNLOAD_PROBE
+
+static int original_scene_teardown(void)
+{
+    struct Archive { SceneAssetBlob header;SceneAssetDirectory directory;SceneAssetRecord entries[8]; } archive={0};
+    archive.header.directoryOffset=offsetof(struct Archive,directory);
+    archive.directory.entries=offsetof(struct Archive,entries) | 8u<<22;
+    const u8 ids[]={0,7,8,84,85,191,255,8};
+    for(unsigned i=0;i<8;++i)archive.entries[i].handlerId=ids[i];
+    PmCommand handlers[86]={{0}};PmCommand *table[86];
+    void (*probes[])(void)={unload_probe_0,unload_probe_1,unload_probe_2,unload_probe_3,
+        unload_probe_4,unload_probe_5,unload_probe_6,unload_probe_7};
+    for(unsigned i=0;i<8;++i)handlers[i].unload=probes[i];
+    handlers[8].unload=unload_probe_8;handlers[84].unload=unload_probe_84;
+    handlers[85].unload=unload_probe_85;
+    PmTables saved=g_PmTables;u32 flags=g_GameStateFlags;
+    SceneAssetView *loaded=g_GameState.loaded_scene_assets;
+    void *programs[104];memcpy(programs,g_FieldFxTaskPrograms,sizeof(programs));
+    int valid=1;
+    for(unsigned mode=0;mode<4;++mode) {
+        for(unsigned i=0;i<86;++i)table[i]=&handlers[i];
+        for(unsigned i=0;i<104;++i)g_FieldFxTaskPrograms[i]=&table[i%86];
+        g_PmTables.handlers=mode==3?NULL:table;
+        g_GameStateFlags=0x31415900u | (mode?0x80:0);
+        g_GameState.loaded_scene_assets=mode==2?NULL:(SceneAssetView *)&archive;
+        unload_count=0;
+        int result=Asset_UnloadTableEntries();
+        if(mode>=2) {
+            if(result!=-1 || unload_count || g_GameStateFlags!=0x31415980u)valid=0;
+        } else {
+            const unsigned expected[]={0,1,2,3,4,5,6,7,85,8,84,8};
+            if(result || g_GameStateFlags!=0x31415900u ||
+               unload_count!=(mode?12u:0u) ||
+               (mode && memcmp(unload_log,expected,sizeof(expected))))valid=0;
+        }
+        for(unsigned i=0;i<86;++i)
+            if(table[i]!=(mode<2 && i>=8 && i<85?NULL:&handlers[i]))valid=0;
+        for(unsigned i=0;i<104;++i)
+            if(g_FieldFxTaskPrograms[i]!=(mode<2 && i>=30?NULL:&table[i%86]))valid=0;
+    }
+    g_PmTables=saved;g_GameStateFlags=flags;g_GameState.loaded_scene_assets=loaded;
+    memcpy(g_FieldFxTaskPrograms,programs,sizeof(programs));
+    if(!valid)fprintf(stderr,"original scene teardown regression\n");
+    else puts("Original scene teardown: native callback order, duplicate/boundary IDs, retained resident handlers, task ranges and missing-state guards passed");
+    return valid;
+}
+
+static int original_image_display_switch(PeDisc *disc,PeDiscFile *exe)
+{
+    PeDisc *previous=g_CdImage;Pe1GameState saved=g_GameState;
+    static u16 pixels[1024*512],after[1024*512];RECT area={0,0,1024,512};
+    for(unsigned i=0;i<1024*512;++i)pixels[i]=(u16)(i*13+0x1234);
+    LoadImage(&area,pixels);DrawSync(0);g_CdImage=disc;
+    if(Render_InitDisplayLists(0)!=-4 || Render_InitDisplayLists(3)!=-4 ||
+       Render_InitDisplayLists(2)!=-4)return 0;
+    StoreImage(&area,after);DrawSync(0);
+    if(memcmp(after,pixels,sizeof(pixels)))return 0;
+    g_CdImage=NULL;
+    if(Render_InitDisplayLists(1)!=-1)return 0;
+    g_CdImage=disc;
+    if(Render_InitDisplayLists(1) || g_PeImageMountFlags!=1)return 0;
+    StoreImage(&area,after);DrawSync(0);
+    for(unsigned y=0;y<512;++y)for(unsigned x=0;x<1024;++x)
+        if(after[y*1024+x]!=(x<320 && y<448?0:pixels[y*1024+x]))return 0;
+    static const struct { AkaoMessageHandler function;u32 address; } bindings[]={
+        {Akao_MessageNoop,0x8008ca7cu},
+        {Seq_SelectPlaybackBank,0x8008ae94u},
+        {Akao_InitPrimarySecondaryVoicesWithMode,0x8008c3e4u},
+        {Seq_SelectPlaybackBankWithCountdown,0x8008b040u},
+        {Seq_RestoreSecondaryStateAndSelect,0x8008afb8u},
+        {Seq_StartIndexedNestedStream,0x8008b124u},
+        {Spu_ManageVoicesCmd,0x8008b1d0u},
+        {Seq_StartRelativeNestedStream,0x8008b168u},
+        {Seq_StartIndexedNestedStreamWithDefaults,0x8008b0c8u},
+        {Seq_StartDefaultNestedStream,0x8008b084u},
+        {Seq_RestorePrimaryState,0x8008af08u},
+        {Seq_SetPlaybackMode1AndRefreshVoices,0x8008c55cu},
+        {Seq_SetPlaybackMode2AndRefreshVoices,0x8008c654u},
+        {Seq_SetPlaybackMode4AndRefreshVoices,0x8008c5d8u},
+        {Seq_SetGlobalD2B8AndDirtyAllTracks,0x8008c6d0u},
+        {Seq_SetCurrentTrackField56,0x8008c70cu},
+        {Seq_RestorePendingTracks,0x8008c814u},
+        {Seq_DeactivatePendingTracks,0x8008c720u},
+        {Spu_RestoreStoppedVoices,0x8008c9dcu},
+        {Spu_VoiceStopAll,0x8008c8b8u},
+        {Spu_SetVoiceVolumeImmediateMasked,0x8008b698u},
+        {Spu_ParameterSlide,0x8008b780u},
+        {Spu_SetVoicePanImmediateMasked,0x8008ba3cu},
+        {Spu_SlideVoicePanMasked,0x8008bb1cu},
+        {Spu_SetVoicePitchImmediateMasked,0x8008bdc8u},
+        {Spu_SlideVoicePitchMasked,0x8008bea8u},
+        {Spu_SetAllVoiceVolumeImmediate,0x8008b900u},
+        {Spu_SlideAllVoiceVolume,0x8008b978u},
+        {Spu_SetAllVoicePanImmediate,0x8008bc94u},
+        {Spu_SlideAllVoicePan,0x8008bd08u},
+        {Spu_SetAllVoicePitchImmediate,0x8008c030u},
+        {Spu_SlideAllVoicePitch,0x8008c0a4u},
+        {Seq_SetTrackPitchImmediate,0x8008b1fcu},
+        {Seq_SlideTrackPitch,0x8008b2ccu},
+        {Seq_TrackPitchSetup,0x8008b410u},
+        {Seq_SetGlobalPitchImmediate,0x8008b580u},
+        {Seq_SlideGlobalPitchToTarget,0x8008b5b8u},
+        {Seq_SlideGlobalPitchFromStartToTarget,0x8008b624u},
+        {Akao_SetGlobalD2D0Immediate,0x8008c16cu},
+        {Akao_SlideGlobalD2D0ToTarget,0x8008c18cu},
+        {Akao_SlideGlobalD2D0FromStartToTarget,0x8008c1f8u},
+        {Akao_SetGlobalD2CCImmediate,0x8008c270u},
+        {Akao_SlideGlobalD2CCToTarget,0x8008c290u},
+        {Akao_SlideGlobalD2CCFromStartToTarget,0x8008c2fcu},
+        {Akao_InitPrimarySecondaryVoices,0x8008c374u},
+        {Spu_StopActiveVoices,0x8008c46cu},
+    };
+    u32 original[256];
+    if(!pe_disc_read(disc,exe,0x8009c0c0u-0x80010000u+0x800,original,sizeof(original)))return 0;
+    for(unsigned i=0;i<256;++i) {
+        unsigned found=0;
+        for(unsigned j=0;j<sizeof(bindings)/sizeof(bindings[0]);++j)
+            if(Akao_MessageHandlers[i]==bindings[j].function && original[i]==bindings[j].address)++found;
+        if(found!=1)return 0;
+    }
+    u8 silence[96];
+    if(!pe_disc_read(disc,exe,0x8009b7fcu-0x80010000u+0x800,silence,sizeof(silence)) ||
+       memcmp(silence,g_AkaoSilentLoopSample,32) || memcmp(silence+32,g_AkaoSilentEndSample,64))return 0;
+    g_CdImage=previous;g_GameState=saved;
+    puts("Original image display selection: valid Disc 1, missing Disc 2/image, invalid mode, full VRAM clear footprint and authored silence records passed");
+    return 1;
+}
+
+static int original_boot_audio_lifecycle(void)
+{
+    g_CdImage=NULL; /* Restart must not depend on physical drive readiness. */
+    for(unsigned cycle=0;cycle<2;++cycle) {
+    Boot_SyncShutdown();
+    if(!StopRCnt(0xf2000002u)){fprintf(stderr,"audio root counter stop failed\n");return 0;}
+    g_AkaoTimerDeltaHist0=g_AkaoTimerDeltaHist1=g_AkaoTimerDeltaHist2=g_AkaoTimerDeltaHist3=0;
+    g_AkaoTimerDeltaSum=0;
+    for(unsigned i=0;i<4;++i) {
+        DeliverEvent(0xf2000002u,2);
+        if(g_AkaoTimerDeltaHist0<=0 || g_AkaoTimerDeltaSum!=g_AkaoTimerDeltaHist0+
+           g_AkaoTimerDeltaHist1+g_AkaoTimerDeltaHist2+g_AkaoTimerDeltaHist3){fprintf(stderr,"audio timer history failed %u: %d %d %d %d sum %d\n",i,g_AkaoTimerDeltaHist0,g_AkaoTimerDeltaHist1,g_AkaoTimerDeltaHist2,g_AkaoTimerDeltaHist3,g_AkaoTimerDeltaSum);return 0;}
+    }
+    u8 uploaded[32];Psyz_SpuMemRead(0x1010,uploaded,sizeof(uploaded));
+    if(memcmp(uploaded,g_AkaoSilentLoopSample,32)){fprintf(stderr,"audio silence upload mismatch\n");return 0;}
+    /* Queue commands 20/30/34 must retain native script pointers and defaults. */
+    u16 offsets[2048];u8 scripts[16];
+    memset(offsets,0xff,sizeof(offsets));memset(scripts,0xa0,sizeof(scripts));
+    offsets[6]=0;offsets[7]=8;
+    unsigned short *saved_offsets=g_AkaoSampleOffsetTable;
+    char *saved_samples=g_AkaoSampleDataBase;
+    g_AkaoSampleOffsetTable=offsets;g_AkaoSampleDataBase=(char *)scripts;
+    const u8 commands[]={0x20,0x30,0x34};
+    for(unsigned i=0;i<3;++i) {
+        AkaoQueueEntry command={0};command.opcode.id=commands[i];
+        command.arg0.value=3;command.arg1=0x12;command.arg2=0x32;command.arg3=0x23;
+        if(i==2) {command.arg0.sequence=scripts;command.second_sequence=scripts+8;}
+        g_SpuActiveVoiceMask=0;g_AkaoSeqPendingFlags=0;
+        g_AkaoMessageQueue[0]=command;g_AkaoMessageQueueCount=1;Akao_ProcessMessageQueue();
+        if(g_AkaoMessageQueueCount || g_AkaoVoiceChannelTable[10].pc!=scripts ||
+           g_AkaoVoiceChannelTable[11].pc!=scripts+8 ||
+           g_AkaoVoiceChannelTable[10].key_off_mask!=(i==2?0x400u:3u) ||
+           g_AkaoVoiceChannelTable[10].key_on_mask!=(i==0?0x12u:i==1?0x2000000u:0x1000000u))return 0;
+    }
+    g_AkaoSampleOffsetTable=saved_offsets;g_AkaoSampleDataBase=saved_samples;
+    long event=g_AkaoTimerEventDesc;
+    Menu_ResetEquipSlotState();g_SceneDispatchToken=0xa80651c8;
+    Boot_Shutdown();
+    if(g_SceneDispatchToken!=(int)0xa9400048u ||
+       g_ScriptVariableBank[SCRIPT_VAR_ROOM]!=(s32)0xa80651c8u ||
+       !(g_GameState.flags&0x100))return 0;
+    /* EnableEvent accepts a valid slot even when unused; it must stay closed. */
+    g_AkaoTimerDeltaHist0=-1234;
+    EnableEvent(event);DeliverEvent(0xf2000002u,2);
+    if(g_AkaoTimerDeltaHist0!=-1234)return 0;
+    }
+    puts("Original audio restart/reset: two SPU start/stop cycles, native event handles, indexed/direct stream commands and four dispatched AKAO timer ticks and closed-event soft reset passed without a drive");
+    return 1;
+}
+
 static int original_movie_uploads(PeDisc *disc)
 {
     _Alignas(16) static u8 arena[0x55e00], whole_frame[320*240*3], actual[320*240*3];
@@ -3827,6 +4013,7 @@ int main(int argc, char **argv)
         if (!original_video_decoder(&disc)) return 136;
         if (!original_video_stream_errors()) return 137;
         if (!original_movie_uploads(&disc)) return 138;
+        if (!original_image_display_switch(&disc,&exe)) return 140;
         if (!original_title_screen(&disc)) return 134;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];
@@ -4114,6 +4301,8 @@ int main(int argc, char **argv)
         g_MenuWidgetCurrentNode=NULL;
         g_PlayerEntity=0;
     }
+    if(!original_scene_teardown())return 139;
+    if(argc>1 && !original_boot_audio_lifecycle())return 141;
     puts("Original action/clock/audio trigger and digital/analog player motion passed");
     SDL_Quit();
     return 0;

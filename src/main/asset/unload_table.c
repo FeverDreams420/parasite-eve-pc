@@ -10,8 +10,10 @@ static inline void Unload(int index) {
 int Asset_UnloadTableEntries(void) {
     Pe1GameState *state = &g_GameState;
     int i;
+    if (!g_PmCmdHandlerTable) return -1;
 
     if (g_GameStateFlags & 0x80) {
+        if (!state->loaded_scene_assets) return -1;
         for (i = 0; i < 8; i++) {
             Unload(i);
         }
@@ -33,10 +35,7 @@ int Asset_UnloadTableEntries(void) {
         g_GameStateFlags &= ~0x80;
     }
     for (i = 8; i < 85; i++) {
-        PmCommand **slot = &g_PmCmdHandlerTable[i];
-        if (*slot) {
-            *slot = 0;
-        }
+        g_PmCmdHandlerTable[i] = 0;
     }
     for (i = 30; (unsigned int)i < 104; i++) {
         if (g_FieldFxTaskPrograms[i]) {

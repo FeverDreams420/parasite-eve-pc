@@ -5,7 +5,7 @@
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_status.h"
 #include "pe1/battle_update.h"
-#include "pe1/draw_slot_record.h"
+#include "pe1/draw_buffers.h"
 #include "pe1/draw_state.h"
 #include "pe1/game_state.h"
 #include "pe1/menu_state.h"
@@ -600,7 +600,7 @@ void Battle_DrawSpellName(void) {
     u8 *p;
     BattleAction *d68;
 
-    c = g_ActiveDrawSlotRecord.slot;
+    c = g_ActiveDrawSlot;
     {
         s32 tv;
         tv = *(u16 *)(g_BattleStatusRowPosY + c * 0x30);
@@ -619,7 +619,7 @@ void Battle_DrawSpellName(void) {
                         pa->u = e0a;
             {
                 s32 cB;
-                cB = g_ActiveDrawSlotRecord.slot;
+                cB = g_ActiveDrawSlot;
                 pa->width = 8;
                 pa->height = 0x10;
                 (q508 + cB * 0x118)[0xD] = e0a;
@@ -631,7 +631,7 @@ void Battle_DrawSpellName(void) {
             BattleStatusPrimAddress base;
             s32 rFD;
             s32 tE;
-            cC = g_ActiveDrawSlotRecord.slot;
+            cC = g_ActiveDrawSlot;
             rFD = 0x1FD;
             t3.address = cC * 0x118;
             tE = *(u16 *)(g_BattleStatusRowPosX + cC * 0x30);
@@ -644,7 +644,7 @@ void Battle_DrawSpellName(void) {
         {
             s32 cD;
             s32 eo;
-            cD = g_ActiveDrawSlotRecord.slot;
+            cD = g_ActiveDrawSlot;
             q508 -= 8;
             eo = cD * 0x118;
             cD = cD * 4;
@@ -677,7 +677,7 @@ void Battle_DrawSpellName(void) {
             {
                 {
                     s32 cE;
-                    cE = g_ActiveDrawSlotRecord.slot;
+                    cE = g_ActiveDrawSlot;
                     packetOffset = cE * 0x118;
                     s0 = i * 0x1C;
                 }
@@ -700,7 +700,7 @@ void Battle_DrawSpellName(void) {
             if ((d68->attackWord & 0x300000) == 0x300000) {
                 workValue = 0x130;
                                 pl->u = 0xD8;
-                c1 = g_ActiveDrawSlotRecord.slot;
+                c1 = g_ActiveDrawSlot;
                 {
                     BattleStatusPrimAddress at;
 
@@ -712,7 +712,7 @@ void Battle_DrawSpellName(void) {
             } else if ((d68->turnWord & 0xC0) == 0x80) {
                 workValue = 0x130;
                                 pl->u = 0xDC;
-                c1 = g_ActiveDrawSlotRecord.slot;
+                c1 = g_ActiveDrawSlot;
                 {
                     BattleStatusPrimAddress at;
 
@@ -725,7 +725,7 @@ void Battle_DrawSpellName(void) {
                 u8 dv = 0xD4;
                 workValue = 0x130;
                                 pl->u = dv;
-                c1 = g_ActiveDrawSlotRecord.slot;
+                c1 = g_ActiveDrawSlot;
                 {
                     BattleStatusPrimAddress at;
 
@@ -736,7 +736,7 @@ void Battle_DrawSpellName(void) {
                 clut = GetClut(workValue, 0x1FA);
             }
             {
-                workValue = g_ActiveDrawSlotRecord.slot;
+                workValue = g_ActiveDrawSlot;
                 packetOffset = workValue * 0x118;
                 packetOffset = s0 + packetOffset;
                                 *(s16 *)(g_BattleRemainingActionClut + packetOffset) = clut;
@@ -752,7 +752,7 @@ void Battle_DrawSpellName(void) {
                     j7 = workValue * 7;
                 }
                 j7 <<= 2;
-                cJ = g_ActiveDrawSlotRecord.slot;
+                cJ = g_ActiveDrawSlot;
                 {
                     BattleStatusPrimAddress base;
 

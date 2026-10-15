@@ -7,7 +7,7 @@
 #include "pe1/battle_setup.h"
 #include "pe1/battle_status.h"
 #include "pe1/battle_update.h"
-#include "pe1/draw_slot_record.h"
+#include "pe1/draw_buffers.h"
 #include "pe1/entity_animation.h"
 #include "pe1/geom_state.h"
 #include "pe1/gte_types.h"
@@ -17,12 +17,11 @@
 #include "pe1/scene_transition.h"
 #include "pe1/textbox.h"
 
-#define NULL ((void *)0)
 
 s8 Pad_GetMenuPressedBitOrDisabled(void);
 struct BattleStatusPanel;
 void Battle_DrawStatusPanel(s32, struct BattleStatusPanel *);
-int Entity_ResolveDropTable(void *);                      /* static */
+void Entity_ResolveDropTable(void *);
 s16 Entity_ApplyHitAndSetAnim(void *);                 /* static */
 void Entity_UpdateTimers(void);
 /* Separate declarations preserve the original GCC quantities for each tail. */
@@ -166,7 +165,7 @@ void Menu_MainUpdate(s32 arg0) {
             g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = var_a3;
             g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = var_a2;
             g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = var_a1;
-            var_v0_3 = g_ActiveDrawSlotRecord.slot;
+            var_v0_3 = g_ActiveDrawSlot;
             g_BattlePeGauges[var_v0_3][1].b3 = var_a0;
         }
         else if (var_v1 == 1) {
@@ -188,7 +187,7 @@ void Menu_MainUpdate(s32 arg0) {
             g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = var_a0;
             g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = var_a2;
             g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = var_a1;
-            var_v0_3 = g_ActiveDrawSlotRecord.slot;
+            var_v0_3 = g_ActiveDrawSlot;
             g_BattlePeGauges[var_v0_3][1].b3 = var_a0;
         }
         else if (var_v1 == 2) {
@@ -213,7 +212,7 @@ void Menu_MainUpdate(s32 arg0) {
             g_BattlePeGauges[g_ActiveDrawSlot][1].b2 = var_a3;
             g_BattlePeGauges[g_ActiveDrawSlot][1].r3 = var_a2;
             g_BattlePeGauges[g_ActiveDrawSlot][1].g3 = var_a1;
-            var_v0_3 = g_ActiveDrawSlotRecord.slot;
+            var_v0_3 = g_ActiveDrawSlot;
             g_BattlePeGauges[var_v0_3][1].b3 = var_a0;
         }
         else {
@@ -242,20 +241,17 @@ void Menu_MainUpdate(s32 arg0) {
         }
         }
         if (D_8009D254->actionMode != 0x12) {
-            ((void (*)(BattleEntity *, int, int))Entity_SetActionMode)(D_8009D254, 0x12U, var_a2);
+            Entity_SetActionMode(D_8009D254, 0x12);
         }
         if (g_BattleHaltTimer == 0x5A) {
             s32 reset_flags;
-            u32 reset_operand;
 
             Entity_SetActionMode(D_8009D254, g_ActiveActor->actionMode12);
             reset_flags = *temp_s2;
-            reset_operand = ~0x2000U;
-            reset_flags &= reset_operand;
-            reset_operand = (u32) g_ActiveActor;
+            reset_flags &= ~0x2000u;
             g_BattleHaltTimer = 0;
             *temp_s2 = reset_flags;
-            ((Combatant *)reset_operand)->exp_or_acc = 0x10000;
+            g_ActiveActor->exp_or_acc = 0x10000;
             g_BattlePeGauges[0][1].r0 = 0xFF;
             g_BattlePeGauges[0][1].g0 = 0x3D;
             g_BattlePeGauges[0][1].b0 = 0x81;
@@ -318,7 +314,7 @@ void Menu_MainUpdate(s32 arg0) {
                     g_BattlePeGauges[g_ActiveDrawSlot][0].b2 = var_a3;
                     g_BattlePeGauges[g_ActiveDrawSlot][0].r3 = var_a2;
                     g_BattlePeGauges[g_ActiveDrawSlot][0].g3 = var_a1;
-                    var_v0_4 = g_ActiveDrawSlotRecord.slot;
+                    var_v0_4 = g_ActiveDrawSlot;
                     g_BattlePeGauges[var_v0_4][0].b3 = var_a0_2;
                 }
                 else if (var_v1 == 1) {
@@ -340,7 +336,7 @@ void Menu_MainUpdate(s32 arg0) {
                     g_BattlePeGauges[g_ActiveDrawSlot][0].b2 = var_a0_2;
                     g_BattlePeGauges[g_ActiveDrawSlot][0].r3 = var_a2;
                     g_BattlePeGauges[g_ActiveDrawSlot][0].g3 = var_a1;
-                    var_v0_4 = g_ActiveDrawSlotRecord.slot;
+                    var_v0_4 = g_ActiveDrawSlot;
                     g_BattlePeGauges[var_v0_4][0].b3 = var_a0_2;
                 }
                 else if (var_v1 == 2) {
@@ -364,7 +360,7 @@ void Menu_MainUpdate(s32 arg0) {
                     g_BattlePeGauges[g_ActiveDrawSlot][0].b2 = var_a2;
                     g_BattlePeGauges[g_ActiveDrawSlot][0].r3 = 0;
                     g_BattlePeGauges[g_ActiveDrawSlot][0].g3 = var_a1;
-                    var_v0_4 = g_ActiveDrawSlotRecord.slot;
+                    var_v0_4 = g_ActiveDrawSlot;
                     g_BattlePeGauges[var_v0_4][0].b3 = var_a0_2;
                 }
                 else if (var_v1 == 3) {

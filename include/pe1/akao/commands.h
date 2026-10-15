@@ -5,10 +5,10 @@
 #include "pe1/akao/queue.h"
 #include "pe1/akao/track.h"
 
-void Seq_StartDefaultNestedStream(AkaoNestedSource *source);
-void Seq_StartIndexedNestedStreamWithDefaults(AkaoNestedSource *source);
-void Seq_StartIndexedNestedStream(AkaoNestedSource *source);
-void Seq_StartRelativeNestedStream(AkaoQueueEntry *command);
+void Seq_StartDefaultNestedStream(void *message);
+void Seq_StartIndexedNestedStreamWithDefaults(void *message);
+void Seq_StartIndexedNestedStream(void *message);
+void Seq_StartRelativeNestedStream(void *message);
 
 typedef signed char AkaoCommandS8;
 
@@ -69,9 +69,9 @@ typedef struct AkaoBankPitchRangeCommand {
     int bank_selector;
 } AkaoBankPitchRangeCommand;
 
-void Seq_SetTrackPitchImmediate(AkaoBankPitchCommand *command);
-void Seq_SlideTrackPitch(AkaoBankPitchSlideCommand *command);
-void Seq_TrackPitchSetup(AkaoBankPitchRangeCommand *command);
+void Seq_SetTrackPitchImmediate(void *message);
+void Seq_SlideTrackPitch(void *message);
+void Seq_TrackPitchSetup(void *message);
 
 typedef struct AkaoValueCommand {
     int pad_0;
@@ -202,4 +202,44 @@ void Akao_Cmd_D6(int command, int arg1, int arg2);
 void Akao_Cmd_D9(int command, int arg1);
 void Akao_Cmd_DA(int command, int arg1, int arg2);
 
+/* Original message-table targets share a native callback ABI. */
+void Akao_MessageNoop(void *message);
+void Seq_SelectPlaybackBank(void *message);
+void Akao_InitPrimarySecondaryVoicesWithMode(void *message);
+void Seq_SelectPlaybackBankWithCountdown(void *message);
+void Seq_RestoreSecondaryStateAndSelect(void *message);
+void Spu_ManageVoicesCmd(void *message);
+void Seq_RestorePrimaryState(void *message);
+void Seq_SetPlaybackMode1AndRefreshVoices(void *message);
+void Seq_SetPlaybackMode2AndRefreshVoices(void *message);
+void Seq_SetPlaybackMode4AndRefreshVoices(void *message);
+void Seq_SetGlobalD2B8AndDirtyAllTracks(void *message);
+void Seq_SetCurrentTrackField56(void *message);
+void Seq_RestorePendingTracks(void *message);
+void Seq_DeactivatePendingTracks(void *message);
+void Spu_RestoreStoppedVoices(void *message);
+void Spu_VoiceStopAll(void *message);
+void Spu_SetVoiceVolumeImmediateMasked(void *message);
+void Spu_ParameterSlide(void *message);
+void Spu_SetVoicePanImmediateMasked(void *message);
+void Spu_SlideVoicePanMasked(void *message);
+void Spu_SetVoicePitchImmediateMasked(void *message);
+void Spu_SlideVoicePitchMasked(void *message);
+void Spu_SetAllVoiceVolumeImmediate(void *message);
+void Spu_SlideAllVoiceVolume(void *message);
+void Spu_SetAllVoicePanImmediate(void *message);
+void Spu_SlideAllVoicePan(void *message);
+void Spu_SetAllVoicePitchImmediate(void *message);
+void Spu_SlideAllVoicePitch(void *message);
+void Seq_SetGlobalPitchImmediate(void *message);
+void Seq_SlideGlobalPitchToTarget(void *message);
+void Seq_SlideGlobalPitchFromStartToTarget(void *message);
+void Akao_SetGlobalD2D0Immediate(void *message);
+void Akao_SlideGlobalD2D0ToTarget(void *message);
+void Akao_SlideGlobalD2D0FromStartToTarget(void *message);
+void Akao_SetGlobalD2CCImmediate(void *message);
+void Akao_SlideGlobalD2CCToTarget(void *message);
+void Akao_SlideGlobalD2CCFromStartToTarget(void *message);
+void Akao_InitPrimarySecondaryVoices(void *message);
+void Spu_StopActiveVoices(void *message);
 #endif

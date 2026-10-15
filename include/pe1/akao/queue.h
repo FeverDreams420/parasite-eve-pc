@@ -1,11 +1,8 @@
 #ifndef PE1_AKAO_QUEUE_H
 #define PE1_AKAO_QUEUE_H
 
-/*
- * AKAO message queue entry (0x24 bytes, the Square message shape that FF7's
- * AKAO queue also uses). Akao_ProcessMessageQueue dispatches on the low byte
- * of the opcode word; Akao_EnqueueStagedCommand writes the whole word.
- */
+/* Runtime AKAO messages: native pointers enlarge the historical 0x24-byte
+ * record. Dispatch uses the opcode's low byte; this is not a disc layout. */
 typedef struct AkaoQueueEntry {
     /* 0x00 */ union {
         unsigned char id;
@@ -18,8 +15,11 @@ typedef struct AkaoQueueEntry {
         /* sequence messages: the sequence data to play */
         unsigned char *sequence;
     } arg0;
-    /* 0x08 */ int arg1;
-    /* 0x0C */ int arg2;
+    union {
+        struct { int arg1; int arg2; };
+        /* Message 0x34 carries two native sequence pointers and replaces pan. */
+        void *second_sequence;
+    };
     /* 0x10 */ int arg3;
     /* 0x14 */ int sequence;
     /* 0x18 */ int unk_18;
@@ -27,13 +27,13 @@ typedef struct AkaoQueueEntry {
     /* 0x20 */ int unk_20;
 } AkaoQueueEntry;
 
-typedef void (*AkaoMessageHandler)(AkaoQueueEntry *entry);
+typedef void (*AkaoMessageHandler)(void *entry);
 
 extern AkaoQueueEntry g_AkaoMessageQueue[];
 extern int g_AkaoMessageQueueCount;
 extern AkaoMessageHandler Akao_MessageHandlers[];
 
-void Akao_MessageNoop(AkaoQueueEntry *entry);
+void Akao_MessageNoop(void *message);
 void Akao_AllocMessageSlot(AkaoQueueEntry **out_msg);
 void Akao_ProcessMessageQueue(void);
 

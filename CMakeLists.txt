@@ -45,6 +45,7 @@ add_library(parasite-eve-original OBJECT
     src/main/menu/item_actions.c
     src/main/menu/item_use_panel.c
     src/main/menu/main_menu.c
+    src/main/menu/main_update.c
     src/main/time/counters.c
     src/main/save/game_data.c
     src/main/memcard/save_flow.c
@@ -59,6 +60,7 @@ add_library(parasite-eve-original OBJECT
     src/main/battle/commands.c
     src/main/text/tables.c
     src/main/asset/tim_textures.c
+    src/main/asset/unload_table.c
     src/main/math/fixed_mul.c
     src/main/math/fixed_div.c
     src/main/math/fixed_round.c
@@ -372,6 +374,12 @@ endif()
 
 add_library(parasite-eve-original-camera OBJECT src/main/render/camera.c)
 target_include_directories(parasite-eve-original-camera PRIVATE include)
+target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original-camera>)
+if(MSVC)
+    target_compile_options(parasite-eve-original-camera PRIVATE /Gy /Gw)
+else()
+    target_compile_options(parasite-eve-original-camera PRIVATE -ffunction-sections -fdata-sections)
+endif()
 if(BUILD_TESTING)
     add_executable(test-original-camera tests/original_camera.c $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original>

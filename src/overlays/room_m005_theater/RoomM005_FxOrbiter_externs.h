@@ -1,4 +1,4 @@
 #ifndef PE1_EXT_9268335C49A2
 #define PE1_EXT_9268335C49A2
-extern char RoomM005_Rec2[];
+extern char RoomM005_Rec2[32];
 #endif /* PE1_EXT_9268335C49A2 */

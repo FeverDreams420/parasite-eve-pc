@@ -39,8 +39,9 @@ typedef struct RoomM005EventState {
     s16 triggered;                /* 0x12 */
 } RoomM005EventState;
 
-typedef struct RoomM005Seed8 {
+typedef union RoomM005Seed8 {
     u8 bytes[8];
+    GteShortVector vector;
 } RoomM005Seed8;
 
 extern RoomM005Seed8 g_RoomM005OrbiterJointAnchor;
@@ -50,7 +51,8 @@ extern RoomM005Seed8 g_RoomM005OrbiterJointAnchor;
 extern u8 g_RoomM005ScriptAnchorView[];
 extern u8 g_RoomM005ScriptFadeView[];
 extern int rand(void);
-int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state);
+int RoomM005_Orbiter(int mode, void *state, intptr_t argument);
+int RoomM005_CrossFlare(int mode, void *state, intptr_t argument);
 
 extern RenderColor g_RoomM005BeaconTint;
 extern GteShortVector g_RoomM005BeaconOffset; /* drift offset, written by the joint beacon */
@@ -59,6 +61,6 @@ extern GteShortVector g_RoomM005BeaconCenter;
 /* Cross flare (RoomM005_CrossFlare): two joint templates and the flash track. */
 extern RoomM005Seed8 g_RoomM005CrossFlareFlashAnchor;
 extern RoomM005Seed8 g_RoomM005CrossFlareTwinAnchor;
-extern u8 g_RoomM005CrossFlareColorTrack[];
+extern u8 g_RoomM005CrossFlareColorTrack[80];
 
 #endif

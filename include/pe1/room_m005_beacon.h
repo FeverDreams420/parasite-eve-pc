@@ -84,9 +84,12 @@ typedef struct RoomM005BeaconEvent {
     /* 0x12 */ s16 variant;
 } RoomM005BeaconEvent;
 
-typedef struct RoomM005BeaconOffset {
+typedef union RoomM005BeaconOffset {
     s32 word[2];
-} __attribute__((packed)) RoomM005BeaconOffset;
+    GteShortVector vector;
+} RoomM005BeaconOffset;
+
+int RoomM005_JointBeacon(int mode, void *state, intptr_t argument);
 
 typedef struct RoomM005BeaconColor {
     u8 r, g, b, code;

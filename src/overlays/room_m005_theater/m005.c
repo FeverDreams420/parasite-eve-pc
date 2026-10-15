@@ -110,7 +110,8 @@ ret0:
 
 #undef RoomM005_ScriptDialog
 
-int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state) {
+int RoomM005_Orbiter(int mode, void *data, intptr_t argument) {
+    RoomM005OrbiterState *state = data;
     RoomM005Seed8 seed = g_RoomM005OrbiterJointAnchor;
     s16 target[4];
     char *pool;
@@ -165,7 +166,7 @@ int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state) {
         pool = ANIM_OWNER_AS(RoomM005Channel)->pool;
         FieldFx_GetActorPosition(pool, 0, (s16 *)g_RoomM005ScriptAnchorView);
         pool = ANIM_OWNER_AS(RoomM005Channel)->pool;
-        FieldFx_TransformMatrixPoint(pool, 20, &seed, g_RoomM005ScriptFadeView);
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)pool, 20, &seed.vector, (GteShortVector *)g_RoomM005ScriptFadeView);
         {
             int idx = g_FieldFxTpageSlot2;
             int palette;
@@ -192,7 +193,7 @@ int RoomM005_Orbiter(int mode, RoomM005OrbiterState *state) {
  * the final size share one, and parameter02 is written second: each of
  * these decides retail's choice. */
 
-int RoomM005_CrossFlare(int mode) {
+int RoomM005_CrossFlare(int mode, void *data, intptr_t argument) {
     GteShortVector position;
     GteRotation rotation;
     RoomM005Seed8 outer = g_RoomM005CrossFlareFlashAnchor;
@@ -223,7 +224,7 @@ int RoomM005_CrossFlare(int mode) {
         break;
     case 2:
         g_FieldFxSpriteParams.depth = 0x40;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM005Channel)->pool, 9, &inner, &position);
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)ANIM_OWNER_AS(RoomM005Channel)->pool, 9, &inner.vector, &position);
         if (g_FieldFxCurrentAge < 35) {
             g_FieldFxSpriteParams.parameter00 = 0x20;
             g_FieldFxSpriteParams.parameter02 = 2;
@@ -256,7 +257,7 @@ int RoomM005_CrossFlare(int mode) {
             }
         }
         g_FieldFxSpriteParams.depth = 0x18;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM005Channel)->pool, 0x14, &outer, &position);
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)ANIM_OWNER_AS(RoomM005Channel)->pool, 0x14, &outer.vector, &position);
         if (g_FieldFxCurrentAge < 35) {
             step = g_FieldFxCurrentAge - 18;
             if ((unsigned int)step < 17) {
@@ -344,7 +345,8 @@ int RoomM005_BeaconDriftCallback(int mode, void *data, intptr_t argument) {
 /* Joint beacon: rides joint 0x14, sheds drifting sprites for the first
  * frames, swells and shrinks, tags the player on contact; draws four passes
  * of a model, three glow sprites and a turning second model. */
-int RoomM005_JointBeacon(int mode, RoomM005Beacon *state) {
+int RoomM005_JointBeacon(int mode, void *data, intptr_t argument) {
+    RoomM005Beacon *state = data;
     GteVector scale;
     GteShortVector position;
     GteShortVector rotation;
@@ -360,7 +362,7 @@ int RoomM005_JointBeacon(int mode, RoomM005Beacon *state) {
 
     switch (mode) {
     case 0:
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM005BeaconChannel)->pool, 0x14, &offset, state);
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)ANIM_OWNER_AS(RoomM005BeaconChannel)->pool, 0x14, &offset.vector, &state->position);
         FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomM005BeaconChannel)->pool, 0,
                       &state->rotation);
         state->rotation.pad = 1;
@@ -585,3 +587,20 @@ int RoomM005_JointBeacon(int mode, RoomM005Beacon *state) {
 RenderColor g_RoomM005BeaconTint = {128,128,128,0};
 GteShortVector g_RoomM005BeaconOffset;
 GteShortVector g_RoomM005BeaconCenter;
+
+/* Original room-local seeds and tracks; byte views preserve the archive data. */
+RoomM005Seed8 g_RoomM005OrbiterJointAnchor = {.vector={0,0,-60,0}};
+RoomM005Seed8 g_RoomM005CrossFlareFlashAnchor = {.vector={0,0,-70,0}};
+RoomM005Seed8 g_RoomM005CrossFlareTwinAnchor = {.vector={0,16,60,0}};
+RoomM005BeaconOffset g_RoomM005JointBeaconAnchor = {.vector={0,-40,-92,0}};
+char RoomM005_Rec2[32] = {
+    0,0,0,0,0,0,0,0,32,(char)200,32,32,0,0,0,0,
+    32,(char)128,(char)200,32,0,0,0,0,32,(char)200,32,0,0,0,0,0,
+};
+u8 g_RoomM005CrossFlareColorTrack[80] = {
+    0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,255,64,16,0,0,0,0,
+    128,128,255,8,0,0,0,0,255,255,255,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,255,64,16,0,0,0,0,
+    128,128,255,8,0,0,0,0,255,255,255,0,0,0,0,0,
+};
+u8 *g_RoomM005BeaconModel0, *g_RoomM005BeaconModel1;

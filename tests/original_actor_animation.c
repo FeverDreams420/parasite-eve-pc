@@ -2,6 +2,7 @@
 #include "pe1/room_m005_drifting_sprite.h"
 #include "pe1/room_m005.h"
 #include "pe1/room_m005_beacon.h"
+#include "../src/overlays/room_m005_theater/RoomM005_FxOrbiter_externs.h"
 #include "pe1/field_sprite_params.h"
 #include "pe1/field_rotated_quad.h"
 #include "pe1/field_texture_tables.h"
@@ -1089,6 +1090,22 @@ static int original_glow_resident_constants(void)
     if(!pe_disc_read(&disc,&file,0x800ull+0x80094188u-base+85*4,&task_descriptor,4) || task_descriptor!=0x800e13d4 ||
         !pe_disc_read(&disc,&file,0x800ull+task_descriptor-base,raw,sizeof(task_methods)) ||
         memcmp(raw,task_methods,sizeof(task_methods))) {pe_disc_close(&disc);return 0;}
+    PeDiscFile archive;u32 room_range[2];u8 room_bytes[0x2000];
+    if(!pe_disc_find(&disc,"PE.IMG",&archive) ||
+        !pe_disc_read(&disc,&file,0x800ull+0x80093378u-base+4*8,room_range,sizeof(room_range))) {pe_disc_close(&disc);return 0;}
+    u64 room_sector=(u64)room_range[0]+(room_range[1]&255)+((room_range[1]>>8)&4095);
+    if(!pe_disc_read(&disc,&archive,room_sector*2048,room_bytes,sizeof(room_bytes))) {pe_disc_close(&disc);return 0;}
+    struct {u32 address;const void *value;size_t size;} room_rows[]={
+        {0x8018eff4,&g_RoomM005OrbiterJointAnchor,8},
+        {0x8018effc,&g_RoomM005CrossFlareFlashAnchor,8},
+        {0x8018f004,&g_RoomM005CrossFlareTwinAnchor,8},
+        {0x8018f00c,&g_RoomM005BeaconTint,4},
+        {0x8018f010,&g_RoomM005JointBeaconAnchor,8},
+        {0x80190ad4,RoomM005_Rec2,sizeof(RoomM005_Rec2)},
+        {0x80190af4,g_RoomM005CrossFlareColorTrack,sizeof(g_RoomM005CrossFlareColorTrack)},
+    };
+    for(unsigned i=0;i<sizeof(room_rows)/sizeof(room_rows[0]);++i)
+        if(memcmp(room_bytes+room_rows[i].address-0x8018efe8u,room_rows[i].value,room_rows[i].size)) {pe_disc_close(&disc);return 0;}
     pe_disc_close(&disc);
     puts("Original glow constants: resident PM IDs, spins, scales, offsets, slot sizes and authored script match the supplied USA disc");
     return 1;

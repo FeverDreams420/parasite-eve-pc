@@ -16,14 +16,14 @@ void FxCommon_StepCameraPath(void)
         g_FxCommonCameraPathRemaining--;
         g_FxCommonCameraPathStep++;
 
-        lookup = Draw_GetTimTableEntry(&g_FxCommonTimTable, 2);
+        lookup = Draw_GetTimTableEntry(g_FxCommonTimTable, 2);
         FxCommon_SamplePath(g_FxCommonCameraPathStep << 8, g_FxCommonCameraPathIndex + 1,
                        lookup, &point, &scratch);
         g_FxCommonCameraTarget.x = point.x;
         g_FxCommonCameraTarget.y = point.y;
         g_FxCommonCameraTarget.z = point.z;
 
-        lookup = Draw_GetTimTableEntry(&g_FxCommonTimTable, 2);
+        lookup = Draw_GetTimTableEntry(g_FxCommonTimTable, 2);
         FxCommon_SamplePath(g_FxCommonCameraPathStep << 8, g_FxCommonCameraPathIndex,
                        lookup, &point, &scratch);
         g_FxCommonCameraPosition.x = point.x;
@@ -41,7 +41,7 @@ void FxCommon_InitCameraPath(int index, int unused1, int unused2, int source)
     int result;
     int shortIndex;
 
-    lookup = Draw_GetTimTableEntry(&g_FxCommonTimTable, 2);
+    lookup = Draw_GetTimTableEntry(g_FxCommonTimTable, 2);
     shortIndex = savedIndex;
     FxCommon_SamplePath(source, shortIndex + 1, lookup, &point, &scratch);
     g_FxCommonMotionRemaining0 = 0;
@@ -49,7 +49,7 @@ void FxCommon_InitCameraPath(int index, int unused1, int unused2, int source)
     g_FxCommonCameraTarget.y = point.y;
     g_FxCommonCameraTarget.z = point.z;
 
-    lookup = Draw_GetTimTableEntry(&g_FxCommonTimTable, 2);
+    lookup = Draw_GetTimTableEntry(g_FxCommonTimTable, 2);
     result = FxCommon_SamplePath(source, shortIndex, lookup, &point, &scratch);
     g_FxCommonCameraPathRemaining = result - 2;
     g_FxCommonMotionRemaining1 = 0;

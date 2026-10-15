@@ -30,7 +30,7 @@ void Boot_RunFrame(void);
 int Draw_InitPipeline(void);
 /* Original statically linked overlay entry points. The display entry's
  * address-only name remains until its implementation is identified. */
-void FxCommon_RunFrameLoop(void);
+int FxCommon_RunFrameLoop(void);
 void func_801235DC(void);
 int MenuCard_RunListScreen(void);
 

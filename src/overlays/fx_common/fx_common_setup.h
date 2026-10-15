@@ -15,7 +15,7 @@ extern s32 g_FxCommonConfirmExitVariant;
 int Save_GetMetadataWindowIndex(void);
 void Menu_SetEquipSlotIndex(int enabled);
 void FxCommon_InitDisplay(void);
-void FxCommon_LoadEffectSectors(void);
+int FxCommon_LoadEffectSectors(void);
 extern s32 g_FxCommonStartPreset;
 extern s32 g_FxCommonAutoPlay;
 extern s32 g_FxCommonAutoVariant;
@@ -40,7 +40,6 @@ extern FxCommonNode *g_FxCommonRouteNodes[];
 extern int g_FxCommonMotionPositionY[];
 extern s32 g_FxCommonPlayFrame;
 extern s16 g_FxCommonRoomVariant;
-extern unsigned char g_FxCommonModelTable;
 void Render_SetupFogLayer(void *);
 void SetFogNearFar(int,int,int);
 void SetBackColor(int,int,int);
@@ -48,8 +47,8 @@ void SetFarColor(int,int,int);
 void FxCommon_InitNodePools(void);
 FxCommonNode *FxCommon_CreateBareNode(FxCommonNode *,void *);
 FxCommonNode *FxCommon_CreateTypedNode(FxCommonNode *,s16,void *);
-FxCommonNode *FxCommon_CreateConfiguredNode(FxCommonNode *,s16,s16,s16,void *,void *,void *);
-void FxCommon_SelectRoomVariant(void);
+FxCommonNode *FxCommon_CreateConfiguredNode(FxCommonNode *,s16,s16,s16,s32,s32,void *);
+int FxCommon_SelectRoomVariant(void);
 /* The two camera lanes advance for 1 << durationShift frames. */
 void FxCommon_StartCameraMove(int setupIndex, int targetDurationShift,
                    int eyeDurationShift, u32 pathPosition);
@@ -129,12 +128,10 @@ typedef struct FxCommonRuntime {
     FxCommonNode pool[200];
     FxCommonNode *node0;
 } FxCommonRuntime;
-typedef char FxRuntimeSizeCheck[(sizeof(FxCommonRuntime) == 0x57E4) ? 1 : -1];
-typedef char FxRuntime_linksCheck[(((u32)&((FxCommonRuntime *)0)->links) == 0x8) ? 1 : -1];
-typedef char FxRuntime_pairedNodesCheck[(((u32)&((FxCommonRuntime *)0)->pairedNodes) == 0x330) ? 1 : -1];
-typedef char FxRuntime_poolCheck[(((u32)&((FxCommonRuntime *)0)->pool) == 0x380) ? 1 : -1];
-typedef char FxRuntime_node0Check[(((u32)&((FxCommonRuntime *)0)->node0) == 0x57e0) ? 1 : -1];
+/* Runtime data uses native pointers; no serialized PS1 offsets apply. */
 extern FxCommonRuntime g_FxCommonRuntime;
+#define g_FxCommonRecords (g_FxCommonRuntime.pool)
+#define g_FxCommonIndexLinks (g_FxCommonRuntime.links)
 
 typedef struct FxCommonEffectSetupRecord {
     s16 position[3];

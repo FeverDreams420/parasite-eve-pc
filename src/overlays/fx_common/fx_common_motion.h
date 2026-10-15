@@ -33,7 +33,7 @@ extern s16 g_FxCommonMotionRemaining1;
 extern u32 g_FieldPadPressed;
 extern u32 g_FieldPadBits;
 extern s8 g_SceneAudioSlot0Handle;
-extern void *g_AkaoBgmHandle[1];
+extern void *g_AkaoBgmHandle[];
 extern s32 g_FxCommonPageChanged;
 extern s32 g_FxCommonPageOpen;
 extern s16 g_FxCommonExitRequested;
@@ -80,7 +80,7 @@ extern RoomSpriteMatrix g_FxCommonCameraMatrix;
 extern s8 g_SceneAudioSlot0Key;
 
 void Akao_Cmd_C1_WithSlot(int channel, int value, int mode);
-void FxCommon_InitScene(void);
+int FxCommon_InitScene(void);
 void FxCommon_SetAkao3dVolumeRange(int enabled);
 s32 VSync(s32 value);
 void Field_HandleStateTransition(void);
@@ -130,7 +130,7 @@ s16 FxCommon_SwitchResource(s16 resourceId, u8 action);
 void FxCommon_SetMotionEndpoints(FxCommonShortVec3 *a, FxCommonShortVec3 *b, int bi, int ai);
 void FxCommon_StepCameraPath(void);
 
-PE1_STATIC_ASSERT(sizeof(FxCommonFrame) == 0x78, fx_common_frame_size);
+PE1_STATIC_ASSERT(sizeof(FxCommonFrame) == sizeof(FxCommonBuffer) + 0x70, fx_common_frame_size);
 PE1_STATIC_ASSERT(sizeof(FxCommonVec3) == 12, fx_motion_position_size);
 PE1_STATIC_ASSERT(sizeof(FxCommonShortVec3) == 6, fx_motion_endpoint_size);
 

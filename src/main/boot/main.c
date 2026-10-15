@@ -62,7 +62,9 @@ int main(void) {
                     fprintf(stderr, "Boot assets failed: %d\n", overlay_status);
                     return EXIT_FAILURE;
                 }
-                FxCommon_RunFrameLoop();
+                if(FxCommon_RunFrameLoop()<0){
+                    fprintf(stderr,"Effect scene startup failed\n");return EXIT_FAILURE;
+                }
                 g_GameState.flags |= 1;
                 break;
             }

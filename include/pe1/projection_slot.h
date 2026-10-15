@@ -13,6 +13,7 @@ typedef struct FieldProjectionSlot {
     s32 *distance;
 } FieldProjectionSlot;
 
-extern FieldProjectionSlot g_ProjectionSlot;
+/* Include geom_state.h at access sites, after renderer types are complete. */
+#define g_ProjectionSlot (*(FieldProjectionSlot *)(void *)&g_GeomScroll.state.position.projectionDistance)
 
 #endif /* PE1_PROJECTION_SLOT_H */

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "pe1/cdrom.h"
 #include "pe1/game_state.h"
+#include "pe1/geom_state.h"
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"
 #include "pe1/script_queue.h"
@@ -9,11 +10,6 @@
 #include "fx_common.h"
 #include "fx_common_motion.h"
 #include "fx_common_setup.h"
-
-typedef struct FxAssetSource {
-    u8 reserved[0x100];
-    u8 *data;
-} FxAssetSource;
 
 /* Aim the effect camera from its position at its target: build the view
  * matrix, the look-at matrix and the billboard rotation used by sprites. */
@@ -39,7 +35,7 @@ void FxCommon_UpdateCameraMatrices(void)
     g_FxCommonCameraAngles->x = ratan2(unit.y, SquareRoot0(unit.x * unit.x + unit.z * unit.z));
     g_FxCommonCameraAngles->y = ratan2(unit.z, unit.x) - 0x400;
     g_FxCommonCameraAngles->z = 0;
-    RotMatrix((RoomFxSeed8 *)g_FxCommonCameraAngles, &rotation);
+    RotMatrix(g_FxCommonCameraAngles, &rotation);
     CompMatrix(&rotation, &view, &g_FxCommonViewMatrix);
 
     up.x = 0;
@@ -53,7 +49,7 @@ void FxCommon_UpdateCameraMatrices(void)
     eye.z = g_FxCommonCameraPosition.z;
     FxCommon_BuildLookAtMatrix((GteMatrix *)&g_FxCommonViewMatrix, &eye, &target, &up);
 
-    g_FxCommonCameraAngles->x = -ratan2(SquareRoot0(offset.x * offset.x + offset.z * offset.z),
+    g_FxCommonCameraAngles->x = -ratan2(SquareRoot0((s32)((u32)offset.x*(u32)offset.x+(u32)offset.z*(u32)offset.z)),
                               -offset.y) + 0x400;
     g_FxCommonCameraAngles->y = -ratan2(offset.z, offset.x) + 0x400;
     g_FxCommonCameraAngles->z = 0;
@@ -142,12 +138,14 @@ int FxCommon_SamplePath(u32 position, int index, void *table,
     s16 yaw;
     s16 nextYaw;
 
+    if(!table || !out || !extra || index<0)return -1;
     base = table;
     cursor = base + index * sizeof(s32);
     points = (FxCommonPathPoint *)(base + *(s32 *)cursor);
     angles = extra;
     segment = position >> 8;
     count = points->count;
+    if(count<=2)return -1;
     fraction = position & 0xFF;
     points++;
     span = count - 2;
@@ -199,12 +197,12 @@ int FxCommon_SamplePath(u32 position, int index, void *table,
     if (angles->z >= -3 && angles->z <= 3)
         angles->z = 0;
 
-    start.x <<= 8;
-    start.y <<= 8;
-    start.z <<= 8;
-    middle.x <<= 8;
-    middle.y <<= 8;
-    middle.z <<= 8;
+    start.x *= 256;
+    start.y *= 256;
+    start.z *= 256;
+    middle.x *= 256;
+    middle.y *= 256;
+    middle.z *= 256;
     start.x += toMiddle.x * fraction;
     start.y += toMiddle.y * fraction;
     start.z += toMiddle.z * fraction;
@@ -271,48 +269,31 @@ void FxCommon_UpdateFrustumPlanes(FxCommonVec3 *eye)
     b.z = corner0.z - eye->z;
     OuterProduct0(&a, &b, &g_FxCommonFrustumNormal3);
 
-    g_FxCommonFrustumDistance0 = -(g_FxCommonFrustumNormal0.x * corner2.x) - g_FxCommonFrustumNormal0.y * corner2.y
-               - g_FxCommonFrustumNormal0.z * corner2.z;
-    g_FxCommonFrustumDistance1 = -(g_FxCommonFrustumNormal1.x * corner3.x) - g_FxCommonFrustumNormal1.y * corner3.y
-               - g_FxCommonFrustumNormal1.z * corner3.z;
-    g_FxCommonFrustumDistance2 = -(g_FxCommonFrustumNormal2.x * corner2.x) - g_FxCommonFrustumNormal2.y * corner2.y
-               - g_FxCommonFrustumNormal2.z * corner2.z;
-    g_FxCommonFrustumDistance3 = -(g_FxCommonFrustumNormal3.x * corner1.x) - g_FxCommonFrustumNormal3.y * corner1.y
-               - g_FxCommonFrustumNormal3.z * corner1.z;
-    g_FxCommonFrustumSide0 = g_FxCommonFrustumNormal0.x * corner1.x + g_FxCommonFrustumNormal0.y * corner1.y
-               + g_FxCommonFrustumNormal0.z * corner1.z + g_FxCommonFrustumDistance0;
-    g_FxCommonFrustumSide1 = g_FxCommonFrustumNormal1.x * corner0.x + g_FxCommonFrustumNormal1.y * corner0.y
-               + g_FxCommonFrustumNormal1.z * corner0.z + g_FxCommonFrustumDistance1;
-    g_FxCommonFrustumSide2 = g_FxCommonFrustumNormal2.x * corner1.x + g_FxCommonFrustumNormal2.y * corner1.y
-               + g_FxCommonFrustumNormal2.z * corner1.z + g_FxCommonFrustumDistance2;
-    g_FxCommonFrustumSide3 = g_FxCommonFrustumNormal3.x * corner2.x + g_FxCommonFrustumNormal3.y * corner2.y
-               + g_FxCommonFrustumNormal3.z * corner2.z + g_FxCommonFrustumDistance3;
+    g_FxCommonFrustumDistance0 = (s32)(0u-(u32)g_FxCommonFrustumNormal0.x*(u32)corner2.x-(u32)g_FxCommonFrustumNormal0.y*(u32)corner2.y-(u32)g_FxCommonFrustumNormal0.z*(u32)corner2.z);
+    g_FxCommonFrustumDistance1 = (s32)(0u-(u32)g_FxCommonFrustumNormal1.x*(u32)corner3.x-(u32)g_FxCommonFrustumNormal1.y*(u32)corner3.y-(u32)g_FxCommonFrustumNormal1.z*(u32)corner3.z);
+    g_FxCommonFrustumDistance2 = (s32)(0u-(u32)g_FxCommonFrustumNormal2.x*(u32)corner2.x-(u32)g_FxCommonFrustumNormal2.y*(u32)corner2.y-(u32)g_FxCommonFrustumNormal2.z*(u32)corner2.z);
+    g_FxCommonFrustumDistance3 = (s32)(0u-(u32)g_FxCommonFrustumNormal3.x*(u32)corner1.x-(u32)g_FxCommonFrustumNormal3.y*(u32)corner1.y-(u32)g_FxCommonFrustumNormal3.z*(u32)corner1.z);
+    g_FxCommonFrustumSide0 = (s32)((u32)g_FxCommonFrustumNormal0.x*(u32)corner1.x+(u32)g_FxCommonFrustumNormal0.y*(u32)corner1.y+(u32)g_FxCommonFrustumNormal0.z*(u32)corner1.z+(u32)g_FxCommonFrustumDistance0);
+    g_FxCommonFrustumSide1 = (s32)((u32)g_FxCommonFrustumNormal1.x*(u32)corner0.x+(u32)g_FxCommonFrustumNormal1.y*(u32)corner0.y+(u32)g_FxCommonFrustumNormal1.z*(u32)corner0.z+(u32)g_FxCommonFrustumDistance1);
+    g_FxCommonFrustumSide2 = (s32)((u32)g_FxCommonFrustumNormal2.x*(u32)corner1.x+(u32)g_FxCommonFrustumNormal2.y*(u32)corner1.y+(u32)g_FxCommonFrustumNormal2.z*(u32)corner1.z+(u32)g_FxCommonFrustumDistance2);
+    g_FxCommonFrustumSide3 = (s32)((u32)g_FxCommonFrustumNormal3.x*(u32)corner2.x+(u32)g_FxCommonFrustumNormal3.y*(u32)corner2.y+(u32)g_FxCommonFrustumNormal3.z*(u32)corner2.z+(u32)g_FxCommonFrustumDistance3);
 
-    g_FxCommonFrustumLength0 = SquareRoot0(g_FxCommonFrustumNormal0.x * g_FxCommonFrustumNormal0.x
-                               + g_FxCommonFrustumNormal0.y * g_FxCommonFrustumNormal0.y
-                               + g_FxCommonFrustumNormal0.z * g_FxCommonFrustumNormal0.z);
-    g_FxCommonFrustumLength1 = SquareRoot0(g_FxCommonFrustumNormal1.x * g_FxCommonFrustumNormal1.x
-                               + g_FxCommonFrustumNormal1.y * g_FxCommonFrustumNormal1.y
-                               + g_FxCommonFrustumNormal1.z * g_FxCommonFrustumNormal1.z);
-    g_FxCommonFrustumLength2 = SquareRoot0(g_FxCommonFrustumNormal2.x * g_FxCommonFrustumNormal2.x
-                               + g_FxCommonFrustumNormal2.y * g_FxCommonFrustumNormal2.y
-                               + g_FxCommonFrustumNormal2.z * g_FxCommonFrustumNormal2.z);
-    g_FxCommonFrustumLength3 = SquareRoot0(g_FxCommonFrustumNormal3.x * g_FxCommonFrustumNormal3.x
-                               + g_FxCommonFrustumNormal3.y * g_FxCommonFrustumNormal3.y
-                               + g_FxCommonFrustumNormal3.z * g_FxCommonFrustumNormal3.z);
+    g_FxCommonFrustumLength0 = SquareRoot0((s32)((u32)g_FxCommonFrustumNormal0.x*(u32)g_FxCommonFrustumNormal0.x+(u32)g_FxCommonFrustumNormal0.y*(u32)g_FxCommonFrustumNormal0.y+(u32)g_FxCommonFrustumNormal0.z*(u32)g_FxCommonFrustumNormal0.z));
+    g_FxCommonFrustumLength1 = SquareRoot0((s32)((u32)g_FxCommonFrustumNormal1.x*(u32)g_FxCommonFrustumNormal1.x+(u32)g_FxCommonFrustumNormal1.y*(u32)g_FxCommonFrustumNormal1.y+(u32)g_FxCommonFrustumNormal1.z*(u32)g_FxCommonFrustumNormal1.z));
+    g_FxCommonFrustumLength2 = SquareRoot0((s32)((u32)g_FxCommonFrustumNormal2.x*(u32)g_FxCommonFrustumNormal2.x+(u32)g_FxCommonFrustumNormal2.y*(u32)g_FxCommonFrustumNormal2.y+(u32)g_FxCommonFrustumNormal2.z*(u32)g_FxCommonFrustumNormal2.z));
+    g_FxCommonFrustumLength3 = SquareRoot0((s32)((u32)g_FxCommonFrustumNormal3.x*(u32)g_FxCommonFrustumNormal3.x+(u32)g_FxCommonFrustumNormal3.y*(u32)g_FxCommonFrustumNormal3.y+(u32)g_FxCommonFrustumNormal3.z*(u32)g_FxCommonFrustumNormal3.z));
     PopMatrix();
 }
 
 int FxCommon_IsPointInView(int *point)
 {
+    if(!point)return 0;
     int first, second;
     int secondVisible;
     int firstVisible = 0;
 
-    first = g_FxCommonFrustumNormal0.x * point[0] + g_FxCommonFrustumNormal0.y * point[1]
-          + g_FxCommonFrustumNormal0.z * point[2] + g_FxCommonFrustumDistance0;
-    second = g_FxCommonFrustumNormal1.x * point[0] + g_FxCommonFrustumNormal1.y * point[1]
-           + g_FxCommonFrustumNormal1.z * point[2] + g_FxCommonFrustumDistance1;
+    first = (s32)((u32)g_FxCommonFrustumNormal0.x*(u32)point[0]+(u32)g_FxCommonFrustumNormal0.y*(u32)point[1]+(u32)g_FxCommonFrustumNormal0.z*(u32)point[2]+(u32)g_FxCommonFrustumDistance0);
+    second = (s32)((u32)g_FxCommonFrustumNormal1.x*(u32)point[0]+(u32)g_FxCommonFrustumNormal1.y*(u32)point[1]+(u32)g_FxCommonFrustumNormal1.z*(u32)point[2]+(u32)g_FxCommonFrustumDistance1);
 
     secondVisible = 0;
     if (first > 0 && g_FxCommonFrustumSide0 > 0)
@@ -329,14 +310,13 @@ int FxCommon_IsPointInView(int *point)
 
 int FxCommon_IsShortPointInView(short *point)
 {
+    if(!point)return 0;
     int first, second;
     int secondVisible;
     int firstVisible = 0;
 
-    first = g_FxCommonFrustumNormal0.x * point[0] + g_FxCommonFrustumNormal0.y * point[1]
-          + g_FxCommonFrustumNormal0.z * point[2] + g_FxCommonFrustumDistance0;
-    second = g_FxCommonFrustumNormal1.x * point[0] + g_FxCommonFrustumNormal1.y * point[1]
-           + g_FxCommonFrustumNormal1.z * point[2] + g_FxCommonFrustumDistance1;
+    first = (s32)((u32)g_FxCommonFrustumNormal0.x*(u32)point[0]+(u32)g_FxCommonFrustumNormal0.y*(u32)point[1]+(u32)g_FxCommonFrustumNormal0.z*(u32)point[2]+(u32)g_FxCommonFrustumDistance0);
+    second = (s32)((u32)g_FxCommonFrustumNormal1.x*(u32)point[0]+(u32)g_FxCommonFrustumNormal1.y*(u32)point[1]+(u32)g_FxCommonFrustumNormal1.z*(u32)point[2]+(u32)g_FxCommonFrustumDistance1);
 
     secondVisible = 0;
     if (first > 0 && g_FxCommonFrustumSide0 > 0)
@@ -353,6 +333,8 @@ int FxCommon_IsShortPointInView(short *point)
 
 int FxCommon_CheckBoundsWithMargin(int *point, int margin)
 {
+    if(!point)return 0;
+    if(g_FxCommonFrustumLength0<=0 || g_FxCommonFrustumLength1<=0)return 0;
     int first;
     int second;
     int distance;
@@ -360,10 +342,8 @@ int FxCommon_CheckBoundsWithMargin(int *point, int margin)
     int secondVisible = 0;
     int firstVisible = 0;
     int threshold = margin;
-    first = g_FxCommonFrustumNormal0.x * point[0] + g_FxCommonFrustumNormal0.y * point[1]
-          + g_FxCommonFrustumNormal0.z * point[2] + g_FxCommonFrustumDistance0;
-    second = g_FxCommonFrustumNormal1.x * point[0] + g_FxCommonFrustumNormal1.y * point[1]
-           + g_FxCommonFrustumNormal1.z * point[2] + g_FxCommonFrustumDistance1;
+    first = (s32)((u32)g_FxCommonFrustumNormal0.x*(u32)point[0]+(u32)g_FxCommonFrustumNormal0.y*(u32)point[1]+(u32)g_FxCommonFrustumNormal0.z*(u32)point[2]+(u32)g_FxCommonFrustumDistance0);
+    second = (s32)((u32)g_FxCommonFrustumNormal1.x*(u32)point[0]+(u32)g_FxCommonFrustumNormal1.y*(u32)point[1]+(u32)g_FxCommonFrustumNormal1.z*(u32)point[2]+(u32)g_FxCommonFrustumDistance1);
     if (g_FxCommonFrustumSide0 > 0 && first >= 0)
     {
       firstVisible = 1;
@@ -380,8 +360,8 @@ int FxCommon_CheckBoundsWithMargin(int *point, int margin)
     {
       secondVisible = 1;
     }
-    limit = threshold * 8;
-    threshold = limit + 30;
+    limit = (s32)((u32)threshold * 8);
+    threshold = (s32)((u32)limit + 30);
     if (!firstVisible)
     {
       if (first >= 0)
@@ -390,7 +370,7 @@ int FxCommon_CheckBoundsWithMargin(int *point, int margin)
       }
       else
       {
-        distance = (-first) / g_FxCommonFrustumLength0;
+        distance = (s32)(0u-(u32)first) / g_FxCommonFrustumLength0;
       }
       limit = (short)threshold;
       if (distance < limit)
@@ -406,7 +386,7 @@ int FxCommon_CheckBoundsWithMargin(int *point, int margin)
       }
       else
       {
-        distance = (-second) / g_FxCommonFrustumLength1;
+        distance = (s32)(0u-(u32)second) / g_FxCommonFrustumLength1;
       }
       limit = (short)threshold;
       if (distance < limit)
@@ -418,18 +398,16 @@ int FxCommon_CheckBoundsWithMargin(int *point, int margin)
 }
 
 int FxCommon_CheckFourBoundsWithMargin(int *point, int margin) {
+    if(!point)return 0;
+    if(g_FxCommonFrustumLength0<=0 || g_FxCommonFrustumLength1<=0 || g_FxCommonFrustumLength2<=0 || g_FxCommonFrustumLength3<=0)return 0;
     int first, second, third, fourth, distance;
     int limit;
     int fourthVisible = 0, thirdVisible = 0, secondVisible = 0, firstVisible = 0;
     int threshold = margin;
-    first = g_FxCommonFrustumNormal0.x * point[0] + g_FxCommonFrustumNormal0.y * point[1]
-          + g_FxCommonFrustumNormal0.z * point[2] + g_FxCommonFrustumDistance0;
-    second = g_FxCommonFrustumNormal1.x * point[0] + g_FxCommonFrustumNormal1.y * point[1]
-          + g_FxCommonFrustumNormal1.z * point[2] + g_FxCommonFrustumDistance1;
-    third = g_FxCommonFrustumNormal2.x * point[0] + g_FxCommonFrustumNormal2.y * point[1]
-          + g_FxCommonFrustumNormal2.z * point[2] + g_FxCommonFrustumDistance2;
-    fourth = g_FxCommonFrustumNormal3.x * point[0] + g_FxCommonFrustumNormal3.y * point[1]
-          + g_FxCommonFrustumNormal3.z * point[2] + g_FxCommonFrustumDistance3;
+    first = (s32)((u32)g_FxCommonFrustumNormal0.x*(u32)point[0]+(u32)g_FxCommonFrustumNormal0.y*(u32)point[1]+(u32)g_FxCommonFrustumNormal0.z*(u32)point[2]+(u32)g_FxCommonFrustumDistance0);
+    second = (s32)((u32)g_FxCommonFrustumNormal1.x*(u32)point[0]+(u32)g_FxCommonFrustumNormal1.y*(u32)point[1]+(u32)g_FxCommonFrustumNormal1.z*(u32)point[2]+(u32)g_FxCommonFrustumDistance1);
+    third = (s32)((u32)g_FxCommonFrustumNormal2.x*(u32)point[0]+(u32)g_FxCommonFrustumNormal2.y*(u32)point[1]+(u32)g_FxCommonFrustumNormal2.z*(u32)point[2]+(u32)g_FxCommonFrustumDistance2);
+    fourth = (s32)((u32)g_FxCommonFrustumNormal3.x*(u32)point[0]+(u32)g_FxCommonFrustumNormal3.y*(u32)point[1]+(u32)g_FxCommonFrustumNormal3.z*(u32)point[2]+(u32)g_FxCommonFrustumDistance3);
     if (g_FxCommonFrustumSide0 > 0 && first >= 0)
         firstVisible = 1;
     if (g_FxCommonFrustumSide0 < 0 && first <= 0)
@@ -446,13 +424,13 @@ int FxCommon_CheckFourBoundsWithMargin(int *point, int margin) {
         fourthVisible = 1;
     if (g_FxCommonFrustumSide3 < 0 && fourth <= 0)
         fourthVisible = 1;
-    limit = threshold * 8;
-    threshold = limit + 30;
+    limit = (s32)((u32)threshold * 8);
+    threshold = (s32)((u32)limit + 30);
     if (!firstVisible) {
         if (first >= 0)
             distance = first / g_FxCommonFrustumLength0;
         else
-            distance = -first / g_FxCommonFrustumLength0;
+            distance = (s32)(0u-(u32)first) / g_FxCommonFrustumLength0;
         limit = (short)threshold;
         if (distance < limit)
             firstVisible = 1;
@@ -461,7 +439,7 @@ int FxCommon_CheckFourBoundsWithMargin(int *point, int margin) {
         if (second >= 0)
             distance = second / g_FxCommonFrustumLength1;
         else
-            distance = -second / g_FxCommonFrustumLength1;
+            distance = (s32)(0u-(u32)second) / g_FxCommonFrustumLength1;
         limit = (short)threshold;
         if (distance < limit)
             secondVisible = 1;
@@ -470,7 +448,7 @@ int FxCommon_CheckFourBoundsWithMargin(int *point, int margin) {
         if (third >= 0)
             distance = third / g_FxCommonFrustumLength2;
         else
-            distance = -third / g_FxCommonFrustumLength2;
+            distance = (s32)(0u-(u32)third) / g_FxCommonFrustumLength2;
         limit = (short)threshold;
         if (distance < limit)
             thirdVisible = 1;
@@ -479,7 +457,7 @@ int FxCommon_CheckFourBoundsWithMargin(int *point, int margin) {
         if (fourth >= 0)
             distance = fourth / g_FxCommonFrustumLength3;
         else
-            distance = -fourth / g_FxCommonFrustumLength3;
+            distance = (s32)(0u-(u32)fourth) / g_FxCommonFrustumLength3;
         limit = (short)threshold;
         if (distance < limit)
             fourthVisible = 1;
@@ -493,11 +471,11 @@ int FxCommon_CheckFourBoundsWithMargin(int *point, int margin) {
 void FxCommon_InitNodePools(void)
 {
     int i, offset;
-    char *slot;
+    FxCommonNode *slot;
 
     i = 1;
-    slot = (char *)&g_FxCommonRecords[1];
-    for (; i < 200; i++, slot += 108)
+    slot = &g_FxCommonRecords[1];
+    for (; i < 200; i++, ++slot)
         FxCommon_ResetTransformNode(slot);
 
     FxCommon_ResetTransformNode(&g_FxCommonDefaultNode);
@@ -544,74 +522,82 @@ void FxCommon_LinkNodeToParent(FxCommonNode *node, FxCommonNode *parent);
 
 FxCommonNode *FxCommon_CreateBareNode(FxCommonNode *parent, void *payload)
 {
+    if(!parent || parent->bucket<0 || parent->bucket>=2)return NULL;
     int index = FxCommon_AllocIndexLink();
+    if(index<0)return NULL;
     FxCommonNode *node = (FxCommonNode *)&g_FxCommonRecords[(s16)index];
 
     node->type = 0;
-    node->args.payload = payload;
+    node->resource = payload;
     node->id = index;
     FxCommon_LinkNodeToParent(node, parent);
-    node->state[0] = 0;
-    node->state[1] = 0;
-    node->state[2] = 0;
+    node->matrix.t[0] = 0;
+    node->matrix.t[1] = 0;
+    node->matrix.t[2] = 0;
     return node;
 }
 
-int FxCommon_GetOffsetTableValue(void *payload, int type);
 
 FxCommonNode *FxCommon_CreateTypedNode(FxCommonNode *parent, s16 type, void *payload)
 {
+    if(!payload)return NULL;
+    if(!parent || parent->bucket<0 || parent->bucket>=2)return NULL;
     int index = FxCommon_AllocIndexLink();
+    if(index<0)return NULL;
     FxCommonNode *node = (FxCommonNode *)&g_FxCommonRecords[(s16)index];
 
     node->type = type;
-    node->args.payload = payload;
+    node->resource = payload;
     node->id = index;
-    node->value32 = FxCommon_GetOffsetTableValue(payload, type);
+    node->margin = FxCommon_GetOffsetTableValue(payload, type);
     FxCommon_LinkNodeToParent(node, parent);
-    node->state[0] = 0;
-    node->state[1] = 0;
-    node->state[2] = 0;
+    node->matrix.t[0] = 0;
+    node->matrix.t[1] = 0;
+    node->matrix.t[2] = 0;
     return node;
 }
 
-int FxCommon_GetOffsetTableValue(void *payload, int subtype);
 
 FxCommonNode *FxCommon_CreateConfiguredNode(FxCommonNode *parent, s16 subtype, s16 variant,
-                            s16 type, void *data38, void *data3C,
+                            s16 type, s32 farDepth, s32 nearDepth,
                             void *payload)
 {
+    if(!payload)return NULL;
+    if(!parent || parent->bucket<0 || parent->bucket>=2)return NULL;
     int index = FxCommon_AllocIndexLink();
+    if(index<0)return NULL;
     FxCommonNode *node = (FxCommonNode *)&g_FxCommonRecords[(s16)index];
 
-    node->args.configured.subtype = subtype;
-    node->args.configured.variant = variant;
+    node->nearKind = subtype;
+    node->middleKind = variant;
     node->type = type;
     node->id = index;
-    node->args.configured.payload = payload;
-    node->value36 = FxCommon_GetOffsetTableValue(payload, subtype);
-    node->data38 = data38;
-    node->data3C = data3C;
+    node->resource = payload;
+    node->lod.margin = FxCommon_GetOffsetTableValue(payload, subtype);
+    node->lod.farDepth = farDepth;
+    node->lod.nearDepth = nearDepth;
     FxCommon_LinkNodeToParent(node, parent);
-    node->state[1] = 0;
-    node->state[2] = 0;
-    node->state[3] = 0;
+    node->lod.matrix.t[0] = 0;
+    node->lod.matrix.t[1] = 0;
+    node->lod.matrix.t[2] = 0;
     return node;
 }
 
 void FxCommon_ReleaseNode(FxCommonNode *node)
 {
+    if(!node || (unsigned)node->id>=200 || g_FxCommonIndexLinks[node->id].previous<0)return;
     FxCommon_UnlinkNode(node);
     FxCommon_FreeIndexLink(node->id);
 }
 
 void FxCommon_DrawTransformNode(FxCommonTransformNode *node, void *context)
 {
-    RotMatrix(&node->seed.room, &node->matrix);
-    *g_FxCommonWorkMatrix = node->matrix;
-    CompMatrix(&g_FxCommonViewMatrix, g_FxCommonWorkMatrix, g_FxCommonWorkMatrix);
-    SetTransMatrix(g_FxCommonWorkMatrix);
-    SetRotMatrix(g_FxCommonWorkMatrix);
+    GteMatrix work;
+    RotMatrix(&node->seed.angles, &node->matrix);
+    work = node->matrix;
+    CompMatrix(&g_FxCommonViewMatrix, &work, &work);
+    SetTransMatrix(&work);
+    SetRotMatrix(&work);
     FxCommon_DrawPolyResource(context, node->resource);
 }
 
@@ -622,6 +608,7 @@ void FxCommon_DrawTransformNode(FxCommonTransformNode *node, void *context)
 void FxCommon_DrawTransformNodeCulled(FxCommonTransformNode *node, FxCommonBuffer *context, u8 pass, u8 force,
                    u8 mirrored)
 {
+    GteMatrix work;
     GteVector position;
     GteMatrix mirror;
     int state;
@@ -632,14 +619,14 @@ void FxCommon_DrawTransformNodeCulled(FxCommonTransformNode *node, FxCommonBuffe
     position.z = node->matrix.t[2];
     state = FxCommon_CheckFourBoundsWithMargin(&position.x, node->margin) | force;
     if (state) {
-        RotMatrix(&node->seed.room, &node->matrix);
+        RotMatrix(&node->seed.angles, &node->matrix);
         if (mirrored == 1) {
             gte_CompMatrix(&mirror, &node->matrix, &node->matrix);
         }
-        *g_FxCommonWorkMatrix = node->matrix;
-        CompMatrix(&g_FxCommonViewMatrix, g_FxCommonWorkMatrix, g_FxCommonWorkMatrix);
-        SetTransMatrix(g_FxCommonWorkMatrix);
-        SetRotMatrix(g_FxCommonWorkMatrix);
+        work = node->matrix;
+        CompMatrix(&g_FxCommonViewMatrix, &work, &work);
+        SetTransMatrix(&work);
+        SetRotMatrix(&work);
         state = pass;
         if (state == 0) {
             if (mirrored == 0)
@@ -660,33 +647,34 @@ void FxCommon_DrawLodNode(FxCommonLodNode *node, FxCommonBuffer *context, u8 for
     GteVector position;
     GteMatrix mirror;
     RoomSpriteMatrix copy;
-    RoomFxSeed8 seed;
+    GteShortVector seed;
+    GteMatrix work;
     s16 margin;
     int depth;
 
     mirror = g_FxCommonMirrorYMatrix;
-    position.x = node->matrix.t[0];
-    position.y = node->matrix.t[1];
-    position.z = node->matrix.t[2];
-    margin = node->margin;
+    position.x = node->lod.matrix.t[0];
+    position.y = node->lod.matrix.t[1];
+    position.z = node->lod.matrix.t[2];
+    margin = node->lod.margin;
     if (mode == 2) {
-        seed = node->seed;
-        RotMatrix(&seed, &node->matrix);
-        copy = node->matrix;
-        gte_CompMatrix(&copy, &mirror, &node->matrix);
-        node->matrix.t[0] = copy.t[0];
-        node->matrix.t[1] = copy.t[1];
-        node->matrix.t[2] = copy.t[2];
+        seed = node->lod.seed.angles;
+        RotMatrix(&seed, &node->lod.matrix);
+        copy = node->lod.matrix;
+        gte_CompMatrix(&copy, &mirror, &node->lod.matrix);
+        node->lod.matrix.t[0] = copy.t[0];
+        node->lod.matrix.t[1] = copy.t[1];
+        node->lod.matrix.t[2] = copy.t[2];
     } else {
-        RotMatrix(&node->seed, &node->matrix);
+        RotMatrix(&node->lod.seed.angles, &node->lod.matrix);
     }
-    *g_FxCommonWorkMatrix = node->matrix;
-    CompMatrix(&g_FxCommonViewMatrix, g_FxCommonWorkMatrix, g_FxCommonWorkMatrix);
-    SetTransMatrix(g_FxCommonWorkMatrix);
-    SetRotMatrix(g_FxCommonWorkMatrix);
+    work = node->lod.matrix;
+    CompMatrix(&g_FxCommonViewMatrix, &work, &work);
+    SetTransMatrix(&work);
+    SetRotMatrix(&work);
     if (FxCommon_CheckBoundsWithMargin(&position.x, margin) | force) {
-        depth = g_FxCommonWorkMatrix->t[2];
-        if (depth < node->nearDepth) {
+        depth = work.t[2];
+        if (depth < node->lod.nearDepth) {
             if (depth > 0x180) {
                 if (mode == 0)
                     FxCommon_DrawModel(context, node->resource, node->nearKind);
@@ -695,7 +683,7 @@ void FxCommon_DrawLodNode(FxCommonLodNode *node, FxCommonBuffer *context, u8 for
                 if (mode == 2)
                     FxCommon_DrawModelTinted(context, node->resource, node->nearKind);
             }
-        } else if (depth < node->farDepth) {
+        } else if (depth < node->lod.farDepth) {
             if (mode == 0)
                 FxCommon_DrawModel(context, node->resource, node->middleKind);
             if (mode == 1)
@@ -728,7 +716,7 @@ void FxCommon_ResetTransformNode(FxCommonTransformNode *node)
     node->seed.component[0] = 0;
     node->seed.component[1] = 0;
     node->seed.component[2] = 0;
-    node->record = &g_FxCommonDefaultNode;
+    node->parent = &g_FxCommonDefaultNode;
     node->previous = 0;
     node->next = 0;
 }
@@ -737,6 +725,7 @@ int FxCommon_AllocIndexLink(void)
 {
     s16 index = g_FxCommonIndexFreeHead;
     s16 current = g_FxCommonIndexLast;
+    if((unsigned)index>=200)return -1;
     u16 freeNext;
     u16 next;
     int nextIndex;
@@ -756,6 +745,7 @@ int FxCommon_AllocIndexLink(void)
 void FxCommon_FreeIndexLink(s16 index)
 {
     int freeHead;
+    if((unsigned)index>=200 || g_FxCommonIndexLinks[index].previous<0)return;
 
     g_FxCommonIndexLinks[g_FxCommonIndexLinks[index].previous].next =
         g_FxCommonIndexLinks[index].next;
@@ -778,6 +768,7 @@ void FxCommon_BeginRecordIteration(void)
 
 FxCommonRecord *FxCommon_NextRecord(void)
 {
+    if((unsigned)g_FxCommonRecordCursor>201)return NULL;
     int record = g_FxCommonIndexLinks[g_FxCommonRecordCursor].next;
 
     g_FxCommonRecordCursor = record;
@@ -794,24 +785,26 @@ void FxCommon_LinkNodeToParent(FxCommonNode *node, FxCommonNode *parent)
 {
     int bucket;
 
+    if(!node || !parent || parent->bucket<0 || parent->bucket>=2)return;
     node->parent = parent;
     node->bucket = parent->bucket + 1;
     bucket = node->bucket;
-    node->previous = g_FxCommonNodeBuckets[bucket].head;
+    node->previous = g_FxCommonListTailNodes[bucket].previous;
     node->next = node->previous->next;
-    g_FxCommonNodeBuckets[bucket].head->next = node;
-    g_FxCommonNodeBuckets[bucket].head = node;
+    g_FxCommonListTailNodes[bucket].previous->next = node;
+    g_FxCommonListTailNodes[bucket].previous = node;
 }
 
 void FxCommon_UnlinkNode(FxCommonNode *node)
 {
+    if(!node || !node->previous || !node->next)return;
     node->previous->next = node->next;
     node->next->previous = node->previous;
 }
 
 /* Pick the effect variant, mirror pairs and texture flag for the current
  * room and area before the shared effect assets are set up. */
-void FxCommon_SelectRoomVariant(void)
+int FxCommon_SelectRoomVariant(void)
 {
 
     FxCommon_InitDisplay();
@@ -919,52 +912,23 @@ void FxCommon_SelectRoomVariant(void)
         g_FxCommonNight = 1;
     else
         g_FxCommonNight = 0;
-    FxCommon_LoadEffectSectors();
+    return FxCommon_LoadEffectSectors();
 }
 
-void FxCommon_LoadEffectSectors(void) {
-    FxAssetSource *resource = (FxAssetSource *)&g_GameStateFlagsWord;
-    u16 *range;
-    int result;
-
-first:
-    range = &g_PeImageSectorTable[76];
-    do {
-        result = CdRom_ReadSectorsFromLba(resource->data + range[0],
-                               &g_FxCommonTimTable, range[1] - range[0]);
-    } while (result == -1);
-    for (;;) {
-        result = CdRom_PollReady();
-        if (result == 0) break;
-        if (result == -1) goto first;
-    }
-
-    if (!(g_FxCommonNight)) {
-
-second:
-    range = &g_PeImageSectorTable[78];
-    do {
-        result = CdRom_ReadSectorsFromLba(resource->data + range[0],
-                               &g_FxCommonModelTable, range[1] - range[0]);
-    } while (result == -1);
-    for (;;) {
-        result = CdRom_PollReady();
-        if (result == 0) return;
-        if (result == -1) goto second;
-    }
-
-    }
-third:
-    range = &g_PeImageSectorTable[77];
-    do {
-        result = CdRom_ReadSectorsFromLba(resource->data + range[0],
-                               &g_FxCommonModelTable, range[1] - range[0]);
-    } while (result == -1);
-    for (;;) {
-        result = CdRom_PollReady();
-        if (result == 0) break;
-        if (result == -1) goto third;
-    }
+int FxCommon_LoadEffectSectors(void) {
+    unsigned model=g_FxCommonNight?77:78;
+    u32 first=g_PeImageSectorTable[76],end=g_PeImageSectorTable[77];
+    u32 modelFirst=g_PeImageSectorTable[model],modelEnd=g_PeImageSectorTable[model+1];
+    u64 lba=(u64)g_GameState.pe_image_base_lba+first;
+    u64 modelLba=(u64)g_GameState.pe_image_base_lba+modelFirst;
+    if(end<=first || modelEnd<=modelFirst ||
+       end-first>FX_COMMON_RESOURCE_BYTES/2048 || modelEnd-modelFirst>FX_COMMON_RESOURCE_BYTES/2048 ||
+       lba+end-first>UINT64_C(0x100000000) || modelLba+modelEnd-modelFirst>UINT64_C(0x100000000))return -5;
+    if(CdRom_ReadSectorsFromLba((u32)lba,g_FxCommonTimTable,end-first)<0)return -1;
+    int ready;while((ready=CdRom_PollReady())!=0)if(ready<0)return -2;
+    if(CdRom_ReadSectorsFromLba((u32)modelLba,g_FxCommonModelTable,modelEnd-modelFirst)<0)return -3;
+    while((ready=CdRom_PollReady())!=0)if(ready<0)return -4;
+    return 0;
 }
 
 void FxCommon_SetAkao3dVolumeRange(int extended)
@@ -989,7 +953,7 @@ int FxCommon_SendTableCommand3d(int id, s32 *state)
     s32 *savedOutput;
     int result;
 
-    resource = Draw_GetTimTableEntry(&g_FxCommonTimTable, 3);
+    resource = Draw_GetTimTableEntry(g_FxCommonTimTable, 3);
     PushMatrix();
     SetTransMatrix(&g_FxCommonViewMatrix);
     SetRotMatrix(&g_FxCommonViewMatrix);
@@ -1038,3 +1002,26 @@ void FxCommon_Apply3dPan(int handle, volatile s32 *state)
     g_ProjectionSlot.distance = savedOutput;
     PopMatrix();
 }
+
+/* Native ownership of the original camera, node lists and resource storage. */
+FxCommonRuntime g_FxCommonRuntime;
+FxCommonNode g_FxCommonDefaultNode,g_FxCommonListHeadNodes[3],g_FxCommonListTailNodes[3];
+s16 g_FxCommonIndexFreeNext[200],g_FxCommonIndexLast,g_FxCommonRecordCursor;
+u16 g_FxCommonIndexFreeHead;
+RoomSpriteMatrix g_FxCommonIdentityMatrix={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+GteMatrix g_FxCommonMirrorYMatrix={.m={{4096,0,0},{0,-4096,0},{0,0,4096}}};
+RoomSpriteMatrix g_FxCommonViewMatrix,g_FxCommonCameraMatrix;
+GteShortVector g_FxCommonCameraAngles[1];
+FxCommonVec3 g_FxCommonCameraPosition,g_FxCommonCameraTarget;
+GteShortVector g_FxCommonFrustumCorner0={-160,120,768,0},g_FxCommonFrustumCorner1={160,120,768,0};
+GteShortVector g_FxCommonFrustumCorner2={-160,-120,768,0},g_FxCommonFrustumCorner3={160,-120,768,0};
+GteVector g_FxCommonFrustumNormal0,g_FxCommonFrustumNormal1,g_FxCommonFrustumNormal2,g_FxCommonFrustumNormal3;
+s32 g_FxCommonFrustumDistance0,g_FxCommonFrustumDistance1,g_FxCommonFrustumDistance2,g_FxCommonFrustumDistance3;
+s32 g_FxCommonFrustumSide0,g_FxCommonFrustumSide1,g_FxCommonFrustumSide2,g_FxCommonFrustumSide3;
+s32 g_FxCommonFrustumLength0,g_FxCommonFrustumLength1,g_FxCommonFrustumLength2,g_FxCommonFrustumLength3;
+u8 g_FxCommonPathWrapped,g_FxCommonNight;
+s16 g_FxCommonRoomVariant,g_FxCommonViewMode;
+s32 g_FxCommonStartPreset,g_FxCommonConfirmExit,g_FxCommonConfirmExitVariant,g_FxCommonAutoPlay,g_FxCommonAutoVariant,g_FxCommonAltFogLayer;
+static _Alignas(16) u8 fx_texture_resources[FX_COMMON_RESOURCE_BYTES],fx_model_resources[FX_COMMON_RESOURCE_BYTES];
+TimRelativeTable *const g_FxCommonTimTable=(TimRelativeTable *)fx_texture_resources;
+TimRelativeTable *const g_FxCommonModelTable=(TimRelativeTable *)fx_model_resources;

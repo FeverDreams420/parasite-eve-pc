@@ -40,6 +40,11 @@ work from an abandoned approach; their tests do not establish that the
 original game runs. `parasite-eve-original` now compiles the first original
 modules directly and links them into the executable. Full integration is pending.
 
+The original `fx_common/camera.c` now compiles whole and has native node pools,
+camera/frustum math, path sampling and image-backed resource loading. Tests
+compare these paths with USA code and real day/night banks. Its full renderer
+and frame loop remain unfinished; this does not make gameplay playable.
+
 ## Build and run
 
 Use a C11 compiler, CMake 3.21 or newer, Git, pkg-config and FFmpeg development

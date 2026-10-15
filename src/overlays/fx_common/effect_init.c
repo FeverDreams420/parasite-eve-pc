@@ -77,7 +77,7 @@ void FxCommon_InitFadeQuads(void)
     }
 }
 
-void FxCommon_InitScene(void)
+int FxCommon_InitScene(void)
 {
     s32 firstPointOffset;
     s32 pointIndex;
@@ -136,7 +136,7 @@ void FxCommon_InitScene(void)
     void *resourceData;
     FxCommonPoint8 *point;
 
-    FxCommon_SelectRoomVariant();
+    if(FxCommon_SelectRoomVariant()<0)return -1;
     FxCommon_InitNodePools();
     FxCommon_InitFadeQuads();
     SetLightMatrix(&g_FxCommonLightMatrix);
@@ -154,10 +154,10 @@ void FxCommon_InitScene(void)
                          g_FieldBgTextureSlots[textureIndexOrHasPoints].clut_y);
         textureIndexOrHasPoints++;
     } while (textureIndexOrHasPoints < 2);
-    if ((g_FxCommonAltFogLayer != 0) || (Render_SetupFogLayer(Draw_GetTimTableEntry(&g_FxCommonTimTable, 0)), (g_FxCommonAltFogLayer != 0))) {
-        Render_SetupFogLayer(Draw_GetTimTableEntry(&g_FxCommonTimTable, 1));
+    if ((g_FxCommonAltFogLayer != 0) || (Render_SetupFogLayer(Draw_GetTimTableEntry(g_FxCommonTimTable, 0)), (g_FxCommonAltFogLayer != 0))) {
+        Render_SetupFogLayer(Draw_GetTimTableEntry(g_FxCommonTimTable, 1));
     }
-    resourceTableData = &g_FxCommonTimTable;
+    resourceTableData = g_FxCommonTimTable;
     resourceTable = Draw_GetTimTableEntry(resourceTableData, 2);
     pointIndex = 0;
     initialSlots = g_FxCommonRuntime.pairedNodes;
@@ -369,25 +369,25 @@ void FxCommon_InitScene(void)
         *yCursor = (s16) (u16)pointList->y;
         pointZ = (u16)pointList->z;
         *zCursor = (s16) pointZ;
-        firstInitialNode = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, *subtypeCursor, *variantCursor, *typeCursor, (void *) g_FxCommonEffectSetup[pointIndex].parameter38, (void *) g_FxCommonEffectSetup[pointIndex].parameter3c, Draw_GetTimTableEntry(&g_FxCommonModelTable, 0));
+        firstInitialNode = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, *subtypeCursor, *variantCursor, *typeCursor, g_FxCommonEffectSetup[pointIndex].parameter38, g_FxCommonEffectSetup[pointIndex].parameter3c, Draw_GetTimTableEntry(g_FxCommonModelTable, 0));
         initialSlots[pointIndex] = firstInitialNode;
-        firstInitialNode->state[1] = setupCursor->position[0];
-        (initialSlots[pointIndex])->state[2] = (s32) *yCursor;
-        (initialSlots[pointIndex])->state[3] = (s32) *zCursor;
+        firstInitialNode->lod.matrix.t[0] = setupCursor->position[0];
+        (initialSlots[pointIndex])->lod.matrix.t[1] = (s32) *yCursor;
+        (initialSlots[pointIndex])->lod.matrix.t[2] = (s32) *zCursor;
         initialNode = initialSlots[pointIndex];
-        (initialNode)->value2E = (u16) *rotationCursor;
-        initialResource = Draw_GetTimTableEntry(&g_FxCommonModelTable, 0);
+        (initialNode)->lod.seed.component[1] = (u16) *rotationCursor;
+        initialResource = Draw_GetTimTableEntry(g_FxCommonModelTable, 0);
         initialNodeType = *typeCursor;
         initialNodeVariant = *variantCursor;
         initialNodeSubtype = *subtypeCursor;
-        secondInitialNode = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, initialNodeSubtype, initialNodeVariant, initialNodeType, (void *)0x3E8, (void *)0x1F4, initialResource);
+        secondInitialNode = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, initialNodeSubtype, initialNodeVariant, initialNodeType, 0x3E8, 0x1F4, initialResource);
         *secondInitialSlot = secondInitialNode;
-        secondInitialNode->state[1] = setupCursor->position[0];
-        (*secondInitialSlot)->state[2] = (s32) *yCursor;
-        (*secondInitialSlot)->state[3] = (s32) *zCursor;
-        (*secondInitialSlot)->value2E = (u16) *rotationCursor;
+        secondInitialNode->lod.matrix.t[0] = setupCursor->position[0];
+        (*secondInitialSlot)->lod.matrix.t[1] = (s32) *yCursor;
+        (*secondInitialSlot)->lod.matrix.t[2] = (s32) *zCursor;
+        (*secondInitialSlot)->lod.seed.component[1] = (u16) *rotationCursor;
         pairedInitialNode = *secondInitialSlot;
-        (pairedInitialNode)->value2C = 0x800;
+        (pairedInitialNode)->lod.seed.component[0] = 0x800;
         typeCursor += 26;
         variantCursor += 26;
         subtypeCursor += 26;
@@ -398,8 +398,8 @@ void FxCommon_InitScene(void)
         pointList++;
         setupCursor++;
     }
-    nodeResource = Draw_GetTimTableEntry(&g_FxCommonModelTable, 0);
-    g_FxCommonRuntime.node0 = FxCommon_CreateBareNode(&g_FxCommonDefaultNode, Draw_GetTimTableEntry(&g_FxCommonModelTable, 1));
+    nodeResource = Draw_GetTimTableEntry(g_FxCommonModelTable, 0);
+    g_FxCommonRuntime.node0 = FxCommon_CreateBareNode(&g_FxCommonDefaultNode, Draw_GetTimTableEntry(g_FxCommonModelTable, 1));
     g_FxCommonType51Node = FxCommon_CreateTypedNode(&g_FxCommonDefaultNode, 0x51, nodeResource);
     g_FxCommonSceneNodes[0] = FxCommon_CreateTypedNode(&g_FxCommonDefaultNode, 0x28, nodeResource);
     g_FxCommonSceneNodes[1] = FxCommon_CreateTypedNode(&g_FxCommonDefaultNode, 0x29, nodeResource);
@@ -430,30 +430,30 @@ void FxCommon_InitScene(void)
     g_FxCommonType26Nodes[1] = FxCommon_CreateTypedNode(&g_FxCommonDefaultNode, 0x26, nodeResource);
     g_FxCommonType26Nodes[2] = FxCommon_CreateTypedNode(&g_FxCommonDefaultNode, 0x26, nodeResource);
     g_FxCommonType26Nodes[3] = FxCommon_CreateTypedNode(&g_FxCommonDefaultNode, 0x26, nodeResource);
-    g_FxCommonLodNodes[0] = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, 0x22, 0x20, 0x20, (void *)0x2710, (void *)0x1F40, nodeResource);
-    g_FxCommonLodNodes[1] = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, 0x22, 0x20, 0x20, (void *)0x14, (void *)0xA, nodeResource);
-    g_FxCommonPairedNodes[0] = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, 0x22, 0x20, 0x20, (void *)0x2710, (void *)0x1F40, nodeResource);
-    g_FxCommonPairedNodes[1] = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, 0x22, 0x20, 0x20, (void *)0x14, (void *)0xA, nodeResource);
-    (g_FxCommonPairedNodes[0])->value2E = 0xC8;
-    (g_FxCommonPairedNodes[1])->value2E = 0xC8;
-    g_FxCommonPairedNodes[0]->state[1] = 0x334;
-    g_FxCommonPairedNodes[0]->state[2] = 0x14;
-    g_FxCommonPairedNodes[0]->state[3] -= 0xFA0;
+    g_FxCommonLodNodes[0] = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, 0x22, 0x20, 0x20, 0x2710, 0x1F40, nodeResource);
+    g_FxCommonLodNodes[1] = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, 0x22, 0x20, 0x20, 0x14, 0xA, nodeResource);
+    g_FxCommonPairedNodes[0] = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, 0x22, 0x20, 0x20, 0x2710, 0x1F40, nodeResource);
+    g_FxCommonPairedNodes[1] = FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode, 0x22, 0x20, 0x20, 0x14, 0xA, nodeResource);
+    (g_FxCommonPairedNodes[0])->lod.seed.component[1] = 0xC8;
+    (g_FxCommonPairedNodes[1])->lod.seed.component[1] = 0xC8;
+    g_FxCommonPairedNodes[0]->lod.matrix.t[0] = 0x334;
+    g_FxCommonPairedNodes[0]->lod.matrix.t[1] = 0x14;
+    g_FxCommonPairedNodes[0]->lod.matrix.t[2] -= 0xFA0;
     {
         FxCommonNode *node = g_FxCommonPairedNodes[1];
-        node->state[1] = 0x334;
+        node->lod.matrix.t[0] = 0x334;
     }
-    g_FxCommonPairedNodes[1]->state[2] = -0x14;
-    g_FxCommonPairedNodes[1]->state[3] -= 0xFA0;
-    g_FxCommonType26Nodes[0]->state[0] = -0x32C8;
-    g_FxCommonType26Nodes[0]->state[1] = 0x1B58;
-    g_FxCommonType26Nodes[0]->state[2] = -0x1770;
-    g_FxCommonType26Nodes[1]->state[0] = -0x7D0;
-    g_FxCommonType26Nodes[1]->state[1] = 0x2328;
-    g_FxCommonType26Nodes[1]->state[2] = 0x7D0;
-    g_FxCommonType26Nodes[2]->state[0] = 0x1388;
-    g_FxCommonType26Nodes[2]->state[1] = 0x1770;
-    g_FxCommonType26Nodes[2]->state[2] = 0xFA0;
+    g_FxCommonPairedNodes[1]->lod.matrix.t[1] = -0x14;
+    g_FxCommonPairedNodes[1]->lod.matrix.t[2] -= 0xFA0;
+    g_FxCommonType26Nodes[0]->matrix.t[0] = -0x32C8;
+    g_FxCommonType26Nodes[0]->matrix.t[1] = 0x1B58;
+    g_FxCommonType26Nodes[0]->matrix.t[2] = -0x1770;
+    g_FxCommonType26Nodes[1]->matrix.t[0] = -0x7D0;
+    g_FxCommonType26Nodes[1]->matrix.t[1] = 0x2328;
+    g_FxCommonType26Nodes[1]->matrix.t[2] = 0x7D0;
+    g_FxCommonType26Nodes[2]->matrix.t[0] = 0x1388;
+    g_FxCommonType26Nodes[2]->matrix.t[1] = 0x1770;
+    g_FxCommonType26Nodes[2]->matrix.t[2] = 0xFA0;
     typeFixed = 0x350000;
     subtypeFixed = 0x330000;
     {
@@ -461,15 +461,15 @@ void FxCommon_InitScene(void)
         /* The counter is initialized after this scheduling-only clobber. */
         groupIndex = 0;
         groupVariant = 0;
-        node->state[0] = 0x2710;
+        node->matrix.t[0] = 0x2710;
     }
     {
         FxCommonNode *node = g_FxCommonType26Nodes[3];
         /* Keep the resource-offset constant after the final node loads. */
         resourceOffset = 4;
-        node->state[1] = 0x1B58;
+        node->matrix.t[1] = 0x1B58;
     }
-    g_FxCommonType26Nodes[3]->state[2] = 0xBB8;
+    g_FxCommonType26Nodes[3]->matrix.t[2] = 0xBB8;
     for (; groupIndex < 9; ++groupIndex) {
         resourceData = Draw_GetTimTableEntry(resourceTableData, 2);
         resourceTable = (FxCommonOffsetTable *)((u8 *)resourceData + resourceOffset);
@@ -489,26 +489,26 @@ void FxCommon_InitScene(void)
             do {
                 effectRoot = &g_FxCommonDefaultNode;
                 variantOrMotionOffset = variantBase + 0x34;
-                firstNode = FxCommon_CreateConfiguredNode(effectRoot, (s16) nodeSubtype, variantOrMotionOffset, (s16) nodeType, (void *) (u16) *(short *)((u8 *)g_FxCommonRouteFarDepths + tableIndex), (void *) (u16) *(short *)((u8 *)g_FxCommonRouteNearDepths + tableIndex), nodeResource);
+                firstNode = FxCommon_CreateConfiguredNode(effectRoot, (s16) nodeSubtype, variantOrMotionOffset, (s16) nodeType, (u16) *(short *)((u8 *)g_FxCommonRouteFarDepths + tableIndex), (u16) *(short *)((u8 *)g_FxCommonRouteNearDepths + tableIndex), nodeResource);
                 firstSlot = &g_FxCommonRouteNodes[g_FxCommonRouteNodeCount];
                 g_FxCommonRouteNodes[g_FxCommonRouteNodeCount] = firstNode;
-                firstNode->state[1] = point->x;
+                firstNode->lod.matrix.t[0] = point->x;
                 yNode = *firstSlot;
-                yNode->state[2] = point->y;
+                yNode->lod.matrix.t[1] = point->y;
                 g_FxCommonRouteNodeCount += 1;
-                (*firstSlot)->state[3] = point->z;
-                secondNode = FxCommon_CreateConfiguredNode(effectRoot, (s16) nodeSubtype, variantOrMotionOffset, (s16) nodeType, (void *)0x7D0, (void *)0x1F4, nodeResource);
+                (*firstSlot)->lod.matrix.t[2] = point->z;
+                secondNode = FxCommon_CreateConfiguredNode(effectRoot, (s16) nodeSubtype, variantOrMotionOffset, (s16) nodeType, 0x7D0, 0x1F4, nodeResource);
                 nodeIndex = g_FxCommonRouteNodeCount;
                 secondSlot = &g_FxCommonRouteNodes[nodeIndex];
                 g_FxCommonRouteNodes[nodeIndex] = secondNode;
-                secondNode->state[1] = point->x;
-                (*secondSlot)->state[2] = point->y;
+                secondNode->lod.matrix.t[0] = point->x;
+                (*secondSlot)->lod.matrix.t[1] = point->y;
                 nextPointIndex = ++pointIndex;
-                (*secondSlot)->state[3] = point->z;
+                (*secondSlot)->lod.matrix.t[2] = point->z;
                 pairedNode = *secondSlot;
                 g_FxCommonRouteNodeCount = nodeIndex + 1;
                 /* Byte view retains the retail ordering after the pool-index store. */
-                *(u16 *)((u8 *)pairedNode + PE1_OFFSETOF(FxCommonNode, value2C)) = (u16) (*(u16 *)((u8 *)pairedNode + PE1_OFFSETOF(FxCommonNode, value2C)) + 0x800);
+                pairedNode->lod.seed.component[0] = (s16)((u16)pairedNode->lod.seed.component[0] + 0x800);
                 point++;
             } while (nextPointIndex < pointCount);
         }
@@ -517,9 +517,9 @@ void FxCommon_InitScene(void)
         groupVariant += 3;
         resourceOffset += 4;
     }
-    g_FxCommonRuntime.node25->state[0] = 0;
-    g_FxCommonRuntime.node25->state[1] = 0x758;
-    g_FxCommonRuntime.node25->state[2] = 0;
+    g_FxCommonRuntime.node25->matrix.t[0] = 0;
+    g_FxCommonRuntime.node25->matrix.t[1] = 0x758;
+    g_FxCommonRuntime.node25->matrix.t[2] = 0;
     FxCommon_StartCameraMove(g_FxCommonRoomVariant, 1, 1, 0);
     motionIndex = 0;
     g_FxCommonMotionBlendFrames = 0;
@@ -578,4 +578,5 @@ void FxCommon_InitScene(void)
         g_FxCommonCameraPosition.y = motion.vector.y;
         g_FxCommonCameraPosition.z = motion.vector.z;
     }
+    return 0;
 }

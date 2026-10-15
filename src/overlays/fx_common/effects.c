@@ -139,7 +139,7 @@ void FxCommon_EndSequence(void)
 /* The effect overlay's own frame loop: run every effect system, compact the
  * ordering table, present the frame and flip the double buffer until the
  * scene asks to leave. */
-void FxCommon_RunFrameLoop(void)
+int FxCommon_RunFrameLoop(void)
 {
     FxCommonBuffer *next;
     int last;
@@ -152,7 +152,7 @@ void FxCommon_RunFrameLoop(void)
     g_ActiveDrawSlot = 0;
     g_FxCommonResetRequested = 0;
     last = 0;
-    FxCommon_InitScene();
+    if(FxCommon_InitScene()<0)return -1;
     FxCommon_SetAkao3dVolumeRange(g_FxCommonViewMode != 10);
     srand(VSync(-1));
     started = 0;
@@ -226,6 +226,7 @@ void FxCommon_RunFrameLoop(void)
     }
     if (g_FxCommonResetRequested == 0)
         FxCommon_EndSequence();
+    return 0;
 }
 
 void FxCommon_DrawNightShadeAndMarkers(void)
@@ -289,18 +290,18 @@ void FxCommon_DrawSceneNodes(void)
     DRAW(g_FxCommonType26Nodes[1], 1, 1, 0);
     DRAW(g_FxCommonType26Nodes[2], 1, 1, 0);
     DRAW(g_FxCommonType26Nodes[3], 1, 1, 0);
-    g_FxCommonType26Nodes[0]->state[0] += 10;
-    g_FxCommonType26Nodes[1]->state[0] += 2;
-    g_FxCommonType26Nodes[2]->state[0] += 40;
-    g_FxCommonType26Nodes[3]->state[0] += 30;
-    if (g_FxCommonType26Nodes[0]->state[0] > 0x6EE0)
-        g_FxCommonType26Nodes[0]->state[0] = -0x6328;
-    if (g_FxCommonType26Nodes[1]->state[0] > 0x6EE0)
-        g_FxCommonType26Nodes[1]->state[0] = -0x6328;
-    if (g_FxCommonType26Nodes[2]->state[0] > 0x6EE0)
-        g_FxCommonType26Nodes[2]->state[0] = -0x6328;
-    if (g_FxCommonType26Nodes[3]->state[0] > 0x6EE0)
-        g_FxCommonType26Nodes[3]->state[0] = -0x6328;
+    g_FxCommonType26Nodes[0]->matrix.t[0] += 10;
+    g_FxCommonType26Nodes[1]->matrix.t[0] += 2;
+    g_FxCommonType26Nodes[2]->matrix.t[0] += 40;
+    g_FxCommonType26Nodes[3]->matrix.t[0] += 30;
+    if (g_FxCommonType26Nodes[0]->matrix.t[0] > 0x6EE0)
+        g_FxCommonType26Nodes[0]->matrix.t[0] = -0x6328;
+    if (g_FxCommonType26Nodes[1]->matrix.t[0] > 0x6EE0)
+        g_FxCommonType26Nodes[1]->matrix.t[0] = -0x6328;
+    if (g_FxCommonType26Nodes[2]->matrix.t[0] > 0x6EE0)
+        g_FxCommonType26Nodes[2]->matrix.t[0] = -0x6328;
+    if (g_FxCommonType26Nodes[3]->matrix.t[0] > 0x6EE0)
+        g_FxCommonType26Nodes[3]->matrix.t[0] = -0x6328;
 
     g_FxCommonDepthBias = 1000;
     DRAW(g_FxCommonSceneNodes[1], 0, 1, 0);
@@ -432,15 +433,15 @@ void FxCommon_StepPathNodes(void)
     GteShortVector bank0;
     GteShortVector bank1;
 
-    FxCommon_SamplePath(g_FxCommonTailPathPosition, 0x4A, Draw_GetTimTableEntry(&g_FxCommonTimTable, 2),
+    FxCommon_SamplePath(g_FxCommonTailPathPosition, 0x4A, Draw_GetTimTableEntry(g_FxCommonTimTable, 2),
                   (FxCommonVec3 *)g_FxCommonPathNodes[4]->matrix.t,
                   &g_FxCommonPathNodes[4]->seed.angles);
-    FxCommon_SamplePath(g_FxCommonTailPathPosition, 0x4B, Draw_GetTimTableEntry(&g_FxCommonTimTable, 2),
+    FxCommon_SamplePath(g_FxCommonTailPathPosition, 0x4B, Draw_GetTimTableEntry(g_FxCommonTimTable, 2),
                   (FxCommonVec3 *)g_FxCommonPathNodes[5]->matrix.t,
                   &g_FxCommonPathNodes[5]->seed.angles);
-    FxCommon_SamplePath(g_FxCommonFlyerPathPosition, 0x4C, Draw_GetTimTableEntry(&g_FxCommonTimTable, 2),
+    FxCommon_SamplePath(g_FxCommonFlyerPathPosition, 0x4C, Draw_GetTimTableEntry(g_FxCommonTimTable, 2),
                   (FxCommonVec3 *)g_FxCommonPathNodes[0]->matrix.t, &bank0);
-    FxCommon_SamplePath(g_FxCommonFlyerPathPosition, 0x4D, Draw_GetTimTableEntry(&g_FxCommonTimTable, 2),
+    FxCommon_SamplePath(g_FxCommonFlyerPathPosition, 0x4D, Draw_GetTimTableEntry(g_FxCommonTimTable, 2),
                   (FxCommonVec3 *)g_FxCommonPathNodes[2]->matrix.t, &bank1);
 
     g_FxCommonPathNodes[0]->seed.component[0] = bank0.x;
@@ -489,7 +490,7 @@ void FxCommon_SnapMotionWhole(s16 base)
     g_FxCommonMotionBlendFrames = 0;
     for (i = 0; i < 10; i++) {
         FxCommon_SamplePath(i << 8, base + 0x40,
-                      Draw_GetTimTableEntry(&g_FxCommonTimTable, 2), &sample.vector, &extra);
+                      Draw_GetTimTableEntry(g_FxCommonTimTable, 2), &sample.vector, &extra);
         g_FxCommonMotionPositions[i].vector.x = sample.vector.x << 16;
         g_FxCommonMotionPositions[i].vector.y = sample.vector.y << 16;
         g_FxCommonMotionPositions[i].vector.z = sample.vector.z << 16;
@@ -505,7 +506,7 @@ void FxCommon_BeginMotionBlend(s16 base)
     g_FxCommonMotionBlendFrames = 0x20;
     for (i = 0; i < 10; i++) {
         FxCommon_SamplePath(i << 8, base + 0x40,
-                      Draw_GetTimTableEntry(&g_FxCommonTimTable, 2), &sample.vector, &extra);
+                      Draw_GetTimTableEntry(g_FxCommonTimTable, 2), &sample.vector, &extra);
         g_FxCommonMotionDeltas[i].vector.x =
             ((sample.vector.x << 16) - g_FxCommonMotionPositions[i].vector.x) >> 5;
         g_FxCommonMotionDeltas[i].vector.y =
@@ -923,8 +924,8 @@ void FxCommon_StepEffects(void)
                         g_FxCommonPlaying = 0;
                         g_FxCommonPlayAdvance = 0;
                         g_FxCommonInputLock = 0;
-                        FxCommon_SamplePath(g_FxCommonTailPathPosition + 0x20, 0x4A, Draw_GetTimTableEntry((&g_FxCommonTimTable), 2), &mode1Sample.vector, &sampleExtra);
-                        FxCommon_SamplePath(g_FxCommonTailPathPosition + 0x20, 0x4B, Draw_GetTimTableEntry((&g_FxCommonTimTable), 2), &mode1NextSample.vector, &sampleExtra);
+                        FxCommon_SamplePath(g_FxCommonTailPathPosition + 0x20, 0x4A, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode1Sample.vector, &sampleExtra);
+                        FxCommon_SamplePath(g_FxCommonTailPathPosition + 0x20, 0x4B, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode1NextSample.vector, &sampleExtra);
                         copyX = mode1Sample.vector.x;
                         copyY = mode1Sample.vector.y;
                         copyZ = mode1Sample.vector.z;
@@ -959,8 +960,8 @@ void FxCommon_StepEffects(void)
                     g_FxCommonPlaying = 0;
                     g_FxCommonPlayAdvance = 0;
                     g_FxCommonInputLock = 0;
-                    FxCommon_SamplePath(g_FxCommonFlyerPathPosition + 0x100, 0x4C, Draw_GetTimTableEntry((&g_FxCommonTimTable), 2), &mode2Sample.vector, &sampleExtra);
-                    FxCommon_SamplePath(g_FxCommonFlyerPathPosition + 0x100, 0x4D, Draw_GetTimTableEntry((&g_FxCommonTimTable), 2), &mode2NextSample.vector, &sampleExtra);
+                    FxCommon_SamplePath(g_FxCommonFlyerPathPosition + 0x100, 0x4C, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode2Sample.vector, &sampleExtra);
+                    FxCommon_SamplePath(g_FxCommonFlyerPathPosition + 0x100, 0x4D, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode2NextSample.vector, &sampleExtra);
                     shortA.x = (s16) mode2NextSample.vector.x;
                     shortA.y = (s16) mode2NextSample.vector.y;
                     shortA.z = (s16) mode2NextSample.vector.z;
@@ -1048,7 +1049,7 @@ void FxCommon_StepEffects(void)
                         g_FxCommonMotionBlendFrames = 0x20;
                         motionBase0 = (s16)phase0;
                         do {
-                            FxCommon_SamplePath(motionIndex0 << 8, motionBase0 + 0x40, Draw_GetTimTableEntry((&g_FxCommonTimTable), 2), &motionSample.vector, &motionExtra);
+                            FxCommon_SamplePath(motionIndex0 << 8, motionBase0 + 0x40, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &motionSample.vector, &motionExtra);
                             motionIndex0 += 1;
                             g_FxCommonMotionDeltas[motionSlot0].vector.x = ((motionSample.vector.x << 0x10) - g_FxCommonMotionPositions[motionSlot0].vector.x) >> 5;
                             g_FxCommonMotionDeltas[motionSlot0].vector.y = ((motionSample.vector.y << 0x10) - g_FxCommonMotionPositions[motionSlot0].vector.y) >> 5;
@@ -1079,7 +1080,7 @@ void FxCommon_StepEffects(void)
                         g_FxCommonMotionBlendFrames = 0x20;
                         motionBase1 = (s16)phase1;
                         do {
-                            FxCommon_SamplePath(motionIndex1 << 8, motionBase1 + 0x40, Draw_GetTimTableEntry((&g_FxCommonTimTable), 2), &motionSample.vector, &motionExtra);
+                            FxCommon_SamplePath(motionIndex1 << 8, motionBase1 + 0x40, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &motionSample.vector, &motionExtra);
                             motionIndex1 += 1;
                             g_FxCommonMotionDeltas[motionSlot1].vector.x = ((motionSample.vector.x << 0x10) - g_FxCommonMotionPositions[motionSlot1].vector.x) >> 5;
                             g_FxCommonMotionDeltas[motionSlot1].vector.y = ((motionSample.vector.y << 0x10) - g_FxCommonMotionPositions[motionSlot1].vector.y) >> 5;
@@ -1108,14 +1109,14 @@ void FxCommon_StepEffects(void)
         g_FxCommonCameraTarget.z = g_FxCommonPathNodes[0]->matrix.t[2];
     }
     if (g_FxCommonReplayCamera == 1) {
-        FxCommon_SamplePath(g_FxCommonCameraPathPosition, g_FxCommonEffectSetup[g_FxCommonRoomVariant].motionIndices[3], Draw_GetTimTableEntry((&g_FxCommonTimTable), 2), &g_FxCommonCameraPosition, &sampleExtra);
-        FxCommon_SamplePath(g_FxCommonCameraPathPosition, g_FxCommonEffectSetup[g_FxCommonRoomVariant].motionIndices[2], Draw_GetTimTableEntry((&g_FxCommonTimTable), 2), &g_FxCommonCameraTarget, &sampleExtra);
+        FxCommon_SamplePath(g_FxCommonCameraPathPosition, g_FxCommonEffectSetup[g_FxCommonRoomVariant].motionIndices[3], Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &g_FxCommonCameraPosition, &sampleExtra);
+        FxCommon_SamplePath(g_FxCommonCameraPathPosition, g_FxCommonEffectSetup[g_FxCommonRoomVariant].motionIndices[2], Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &g_FxCommonCameraTarget, &sampleExtra);
         g_FxCommonCameraPathPosition += 0x80;
     }
     if (g_FxCommonViewMode == 0xA) {
         g_FxCommonDemoFrame += 1;
-        FxCommon_SamplePath(g_FxCommonCameraPathPosition, 0x4E, Draw_GetTimTableEntry((&g_FxCommonTimTable), 2), &g_FxCommonCameraPosition, &sampleExtra);
-        FxCommon_SamplePath(g_FxCommonCameraPathPosition, 0x4F, Draw_GetTimTableEntry((&g_FxCommonTimTable), 2), &g_FxCommonCameraTarget, &sampleExtra);
+        FxCommon_SamplePath(g_FxCommonCameraPathPosition, 0x4E, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &g_FxCommonCameraPosition, &sampleExtra);
+        FxCommon_SamplePath(g_FxCommonCameraPathPosition, 0x4F, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &g_FxCommonCameraTarget, &sampleExtra);
         g_FxCommonCameraPathPosition += 0x10;
         if ((s16) g_FxCommonDemoFrame == 0x4B) {
             g_FxCommonDemoResource = FxCommon_SwitchResource(0xB, 0U);
@@ -1267,7 +1268,7 @@ void FxCommon_StartCameraMove(s32 index, s32 first, s32 second, u32 source) {
     s32 firstMask;
     s32 firstValue;
     s32 secondValue;
-    TimRelativeTable *table = &g_FxCommonTimTable;
+    TimRelativeTable *table = g_FxCommonTimTable;
     GteShortVector *extraPtr;
     volatile FxCommonShortVec3 *origin0 = &g_FxCommonMotionOrigin0;
     volatile FxCommonShortVec3 *target0 = &g_FxCommonMotionTarget0;

@@ -1,3 +1,5 @@
+#include "../src/overlays/fx_common/camera_externs.h"
+#include "../src/overlays/fx_common/fx_common_motion.h"
 #include <signal.h>
 #include "../src/overlays/menu_memcard/menu_memcard_link.h"
 #include "../src/overlays/menu_memcard/menu_memcard_trail.h"
@@ -226,9 +228,14 @@ static PeDisc *glyph_disc;
 static PeDiscFile glyph_archive;
 static int glyph_io_failed;
 static int glyph_read_retry, glyph_poll_retry, glyph_pending;
+static int fx_image_io;
+static unsigned fx_read_failure,fx_poll_failure;
+int CdRom_ImageReadSectorsFromLba(u32 lba,void *buffer,u32 count);
+int CdRom_ImagePollReady(void);
 int CdRom_ReadSectorsFromLba(u32 lba, void *buffer, u32 count)
 {
     ++glyph_reads;
+    if(fx_image_io)return glyph_reads==fx_read_failure?-1:CdRom_ImageReadSectorsFromLba(lba,buffer,count);
     if (glyph_disc) {
         if (lba < glyph_archive.sector || buffer != glyph_scratch ||
             count > sizeof(glyph_scratch) / 2048 ||
@@ -248,6 +255,7 @@ int CdRom_ReadSectorsFromLba(u32 lba, void *buffer, u32 count)
 int CdRom_PollReady(void)
 {
     ++glyph_polls;
+    if(fx_image_io)return glyph_polls==fx_poll_failure?-1:CdRom_ImagePollReady();
     if (glyph_pending) { glyph_pending = 0; return 1; }
     if (glyph_poll_retry) { glyph_poll_retry = 0; return -1; }
     return 0;
@@ -2688,6 +2696,217 @@ targets_restore:
     if(!valid || hash!=UINT64_C(0xcd7e48e9d9318f85)){
         fprintf(stderr,"Original battle targets: cases=%u hash=%016llx valid=%d\n",cases,(unsigned long long)hash,valid);return 0;}
     puts("Original battle targets: 82944 unhooked USA cases, filtering, null/dead cores, distances, angles, ordering/ties, full seven-target sentinel and saved-X alias match");return 1;
+}
+
+static unsigned fx_node_id(FxCommonNode *node)
+{
+    if(!node)return 0;if(node==&g_FxCommonDefaultNode)return 1;
+    for(unsigned i=0;i<3;++i){if(node==&g_FxCommonListHeadNodes[i])return 202+i;
+        if(node==&g_FxCommonListTailNodes[i])return 205+i;}
+    for(unsigned i=0;i<200;++i)if(node==&g_FxCommonRecords[i])return i+2;
+    return 0xffff;
+}
+
+static int original_fx_node_pool(void)
+{
+    const unsigned counts[]={0,1,2,7,63,199,200};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int valid=1;
+    _Alignas(16) u8 table[1024]={0};
+    for(unsigned i=0;i<8;++i){u32 offset=32+i*64,value=100+i*7;memcpy(table+i*4,&offset,4);memcpy(table+offset+48,&value,4);}
+#define FX_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+    for(unsigned count=0;count<7;++count)for(unsigned pattern=0;pattern<5;++pattern)for(unsigned offset=0;offset<3;++offset){
+        memset(&g_FxCommonRuntime,0,sizeof(g_FxCommonRuntime));memset(&g_FxCommonDefaultNode,0,sizeof(g_FxCommonDefaultNode));
+        memset(g_FxCommonListHeadNodes,0,3*sizeof(FxCommonNode));memset(g_FxCommonListTailNodes,0,3*sizeof(FxCommonNode));
+        memset(g_FxCommonIndexFreeNext,0,200*sizeof(s16));g_FxCommonIndexFreeHead=g_FxCommonIndexLast=g_FxCommonRecordCursor=0;
+        FxCommon_InitNodePools();FxCommonNode *live[200];unsigned kinds[200]={0},n=0,removed=0;
+        for(unsigned stage=0;stage<2;++stage){
+            unsigned number=stage?removed/2:counts[count];
+            for(unsigned i=0;i<number;++i){unsigned serial=stage?counts[count]+i:i,kind=(serial+offset)%3;
+                FxCommonNode *parent=&g_FxCommonDefaultNode;if(serial%4==3 && n && live[0]->bucket==1)parent=live[0];
+                FxCommonNode *node=kind==0?FxCommon_CreateBareNode(parent,table):
+                    kind==1?FxCommon_CreateTypedNode(parent,serial%8,table):
+                    FxCommon_CreateConfiguredNode(parent,serial%8,(serial+1)%8,(serial+2)%8,1000+serial,500+serial,table);
+                if(!node || n>=200 || (unsigned)node->id>=200){valid=0;break;}
+                kinds[node->id]=kind;live[n++]=node;
+            }
+            if(!stage){unsigned initial=n;FxCommonNode *original[200];memcpy(original,live,n*sizeof(*live));
+                for(unsigned i=0;i<initial;++i){FxCommonNode *node=original[i];unsigned id=node->id;
+                    int release=pattern==4 || (pattern==1 && !(id%2)) || (pattern==2 && id%2) || (pattern==3 && !(id%3));
+                    for(unsigned j=0;j<n;++j)if(live[j]!=node && live[j]->parent==node)release=0;
+                    if(release){FxCommon_ReleaseNode(node);unsigned j=0;while(j<n && live[j]!=node)++j;
+                        memmove(live+j,live+j+1,(n-j-1)*sizeof(*live));--n;++removed;}
+                }
+            }
+        }
+        FX_PUT(g_FxCommonIndexFreeHead,2);FX_PUT(g_FxCommonIndexLast,2);
+        for(unsigned i=0;i<200;++i)FX_PUT(g_FxCommonIndexFreeNext[i],2);
+        for(unsigned i=0;i<202;++i){FX_PUT(g_FxCommonIndexLinks[i].previous,2);FX_PUT(g_FxCommonIndexLinks[i].next,2);}
+        FxCommonNode *ordered[200],*node;unsigned length=0;FxCommon_BeginRecordIteration();
+        while((node=FxCommon_NextRecord())){if(length>=200){valid=0;break;}ordered[length++]=node;}
+        FX_PUT(length,2);if(length!=n)valid=0;
+        for(unsigned i=0;i<length;++i){node=ordered[i];unsigned kind=kinds[node->id];
+            FX_PUT(node->id,2);FX_PUT(kind,1);FX_PUT(node->type,2);FX_PUT(node->resource==table,1);
+            if(kind==2){FX_PUT(node->middleKind,2);FX_PUT(node->nearKind,2);FX_PUT(node->lod.margin,2);FX_PUT(node->lod.farDepth,4);FX_PUT(node->lod.nearDepth,4);}
+            else if(kind==1)FX_PUT(node->margin,2);
+            for(unsigned j=0;j<3;++j)FX_PUT(kind==2?node->lod.matrix.t[j]:node->matrix.t[j],4);
+            FX_PUT(node->bucket,2);FX_PUT(fx_node_id(node->parent),2);FX_PUT(fx_node_id(node->previous),2);FX_PUT(fx_node_id(node->next),2);
+        }
+        for(unsigned i=0;i<3;++i){FX_PUT(fx_node_id(g_FxCommonListHeadNodes[i].next),2);FX_PUT(fx_node_id(g_FxCommonListTailNodes[i].previous),2);}
+        ++cases;
+    }
+#undef FX_PUT
+    if(cases!=105 || hash!=UINT64_C(0x405afb1f82d27f95))valid=0;
+    /* Exhaustion and malformed ownership cannot consume a slot or a sentinel. */
+    FxCommon_InitNodePools();for(unsigned i=0;i<200;++i)if(!FxCommon_CreateBareNode(&g_FxCommonDefaultNode,NULL))valid=0;
+    FxCommonRuntime full=g_FxCommonRuntime;
+    if(FxCommon_AllocIndexLink()!=-1 || FxCommon_CreateBareNode(&g_FxCommonDefaultNode,NULL) || memcmp(&full,&g_FxCommonRuntime,sizeof(full)))valid=0;
+    FxCommon_ReleaseNode(&g_FxCommonRecords[199]);FxCommonRuntime freed=g_FxCommonRuntime;
+    FxCommon_ReleaseNode(&g_FxCommonRecords[199]);FxCommon_FreeIndexLink(-1);FxCommon_FreeIndexLink(200);
+    if(memcmp(&freed,&g_FxCommonRuntime,sizeof(freed)))valid=0;
+    FxCommonNode bad={.bucket=2};u16 head=g_FxCommonIndexFreeHead;
+    if(FxCommon_CreateBareNode(NULL,NULL) || FxCommon_CreateBareNode(&bad,NULL) ||
+       FxCommon_CreateTypedNode(&g_FxCommonDefaultNode,0,NULL) ||
+       FxCommon_CreateConfiguredNode(&g_FxCommonDefaultNode,0,0,0,1,2,NULL) || g_FxCommonIndexFreeHead!=head)valid=0;
+    FxCommon_InitNodePools();FxCommon_BeginRecordIteration();for(unsigned i=0;i<4;++i)if(FxCommon_NextRecord())valid=0;
+    if(!valid){fprintf(stderr,"Original FX node pool: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original FX node pool: 105 unhooked USA scenarios, all 200 slots, three constructors, parent/bucket links, frees/reuse and record iteration match; native exhaustion/double-free guards pass");return 1;
+}
+
+static int original_fx_culling(void)
+{
+    const s32 scales[]={1,8,4096,32767},depths[]={0,1,-1,INT32_MAX,INT32_MIN};
+    const s32 points[][3]={{0,0,0},{1,-1,1},{-1,1,-1},{512,-512,500},
+        {32767,-32768,32760},{-32768,32767,-32760},{INT32_MAX,INT32_MIN,1},
+        {INT32_MIN,INT32_MAX,-1},{1234,-5678,9012}};
+    const s32 sides[][4]={{1,1,1,1},{-1,-1,-1,-1},{1,-1,1,-1},{0,0,0,0},{0,1,-1,0}};
+    const s32 margins[]={-32768,-1,0,1,12,4095,0x10000000,INT32_MAX},lengths[]={1,64,65535};
+    GteVector *normals[]={&g_FxCommonFrustumNormal0,&g_FxCommonFrustumNormal1,&g_FxCommonFrustumNormal2,&g_FxCommonFrustumNormal3};
+    s32 *distance[]={&g_FxCommonFrustumDistance0,&g_FxCommonFrustumDistance1,&g_FxCommonFrustumDistance2,&g_FxCommonFrustumDistance3};
+    s32 *side[]={&g_FxCommonFrustumSide0,&g_FxCommonFrustumSide1,&g_FxCommonFrustumSide2,&g_FxCommonFrustumSide3};
+    s32 *length[]={&g_FxCommonFrustumLength0,&g_FxCommonFrustumLength1,&g_FxCommonFrustumLength2,&g_FxCommonFrustumLength3};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned a=0;a<4;++a)for(unsigned b=0;b<9;++b)for(unsigned c=0;c<5;++c)
+    for(unsigned d=0;d<5;++d)for(unsigned e=0;e<8;++e)for(unsigned f=0;f<3;++f){
+        s32 scale=scales[a],n[][3]={{scale,1,-scale},{-scale,scale,1},{1,-scale,scale},{scale,-scale,scale}};
+        s32 point[3];s16 shortpoint[3];
+        for(unsigned i=0;i<4;++i){normals[i]->x=n[i][0];normals[i]->y=n[i][1];normals[i]->z=n[i][2];
+            *distance[i]=(s32)((u32)depths[c]+i*17u);*side[i]=sides[d][i];*length[i]=lengths[f]+i;}
+        for(unsigned i=0;i<3;++i){point[i]=points[b][i];shortpoint[i]=(s16)point[i];}
+        s32 result[]={FxCommon_IsPointInView(point),FxCommon_IsShortPointInView(shortpoint),
+            FxCommon_CheckBoundsWithMargin(point,margins[e]),FxCommon_CheckFourBoundsWithMargin(point,margins[e])};
+        for(unsigned i=0;i<4;++i)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^(u8)((u32)result[i]>>(byte*8)))*UINT64_C(1099511628211);
+        ++cases;
+    }
+    int valid=cases==21600 && hash==UINT64_C(0xa642cfccbdbba705);
+    s32 point[3]={0};
+    for(unsigned i=0;i<4;++i){*length[i]=0;
+        if(FxCommon_CheckFourBoundsWithMargin(point,1))valid=0;*length[i]=1;}
+    g_FxCommonFrustumLength0=0;
+    if(FxCommon_CheckBoundsWithMargin(point,1) || FxCommon_IsPointInView(NULL) ||
+       FxCommon_IsShortPointInView(NULL) || FxCommon_CheckBoundsWithMargin(NULL,1) ||
+       FxCommon_CheckFourBoundsWithMargin(NULL,1))valid=0;
+    if(!valid){fprintf(stderr,"Original FX culling: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original FX culling: 21600 unhooked USA scenarios match all four checks, including signed boundaries and 32-bit overflow; null/zero-length guards pass");return 1;
+}
+
+static int original_fx_camera_matrices(void)
+{
+    const s32 poses[][2][3]={{{0,0,0},{0,0,1000}},{{100,-200,300},{-300,500,2000}},
+        {{-1000,2000,-3000},{4000,-5000,6000}},{{0,0,0},{0,1000,0}},
+        {{0,0,0},{0,-1000,0}},{{1,1,1},{1,1,1}}};
+    GteVector *normals[]={&g_FxCommonFrustumNormal0,&g_FxCommonFrustumNormal1,&g_FxCommonFrustumNormal2,&g_FxCommonFrustumNormal3};
+    s32 *distance[]={&g_FxCommonFrustumDistance0,&g_FxCommonFrustumDistance1,&g_FxCommonFrustumDistance2,&g_FxCommonFrustumDistance3};
+    s32 *side[]={&g_FxCommonFrustumSide0,&g_FxCommonFrustumSide1,&g_FxCommonFrustumSide2,&g_FxCommonFrustumSide3};
+    s32 *length[]={&g_FxCommonFrustumLength0,&g_FxCommonFrustumLength1,&g_FxCommonFrustumLength2,&g_FxCommonFrustumLength3};
+    uint64_t hash=UINT64_C(14695981039346656037);
+#define FX_HASH_BYTES(ptr,count) do {const u8 *bytes_=(const u8 *)(ptr); \
+    for(unsigned byte_=0;byte_<(count);++byte_)hash=(hash^bytes_[byte_])*UINT64_C(1099511628211);}while(0)
+    for(unsigned i=0;i<6;++i){
+        for(unsigned j=0;j<32;++j){Psyz_GteDataWrite(j,0);Psyz_GteCtrlWrite(j,0);}
+        memcpy(&g_FxCommonCameraPosition,poses[i][0],12);memcpy(&g_FxCommonCameraTarget,poses[i][1],12);
+        memset(g_FxCommonCameraAngles,0,sizeof(GteShortVector));
+        FxCommon_UpdateCameraMatrices();FxCommon_UpdateFrustumPlanes(&g_FxCommonCameraPosition);
+        /* MATRIX has two implicit alignment bytes, which carry no game state. */
+        FX_HASH_BYTES(g_FxCommonViewMatrix.m,18);FX_HASH_BYTES(g_FxCommonViewMatrix.t,12);
+        FX_HASH_BYTES(g_FxCommonCameraMatrix.m,18);FX_HASH_BYTES(g_FxCommonCameraMatrix.t,12);
+        FX_HASH_BYTES(g_FxCommonCameraAngles,8);
+        for(unsigned j=0;j<4;++j){FX_HASH_BYTES(normals[j],12);FX_HASH_BYTES(distance[j],4);
+            FX_HASH_BYTES(side[j],4);FX_HASH_BYTES(length[j],4);}
+    }
+#undef FX_HASH_BYTES
+    if(hash!=UINT64_C(0xab55eca183324865)){
+        fprintf(stderr,"Original FX camera matrices: hash=%016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original FX camera: six USA CPU/GTE scenarios match both matrices, angles and all four frustum planes, including vertical and coincident positions");return 1;
+}
+
+static int original_fx_resources(PeDisc *disc,PeDiscFile *exe)
+{
+    Pe1GameState saved=g_GameState;PeDisc *old_image=g_CdImage;PeDiscFile archive,old_archive;
+    u16 saved_sectors[5],sectors[5];u8 old_night=g_FxCommonNight;
+    memcpy(saved_sectors,g_PeImageSectorTable+76,sizeof(saved_sectors));
+    if(!pe_disc_find(disc,"PE.IMG",&archive) ||
+       !pe_disc_read(disc,exe,0x930d8-0x10000+0x800+76*2,sectors,sizeof(sectors)))return 0;
+    if(old_image && !pe_disc_find(old_image,"PE.IMG",&old_archive))return 0;
+    u8 *expected=malloc(FX_COMMON_RESOURCE_BYTES);if(!expected)return 0;
+    int valid=1;unsigned cases=0;uint64_t hash=UINT64_C(14695981039346656037);
+    memcpy(g_PeImageSectorTable+76,sectors,sizeof(sectors));fx_image_io=1;
+    for(unsigned night=0;night<2 && valid;++night){
+        CdRom_BindImage(disc,&archive);g_GameState.pe_image_base_lba=archive.sector;g_FxCommonNight=night;
+        glyph_reads=glyph_polls=fx_read_failure=fx_poll_failure=0;
+        memset(g_FxCommonTimTable,0xa5,FX_COMMON_RESOURCE_BYTES);memset(g_FxCommonModelTable,0xa5,FX_COMMON_RESOURCE_BYTES);
+        if(FxCommon_LoadEffectSectors()!=0 || glyph_reads!=2 || glyph_polls!=2){valid=0;break;}
+        for(unsigned bank=0;bank<2;++bank){unsigned index=bank?(night?1:2):0;
+            size_t size=(sectors[index+1]-sectors[index])*2048u;
+            const u8 *actual=(const u8 *)(bank?g_FxCommonModelTable:g_FxCommonTimTable);
+            if(!pe_disc_read(disc,&archive,(uint64_t)sectors[index]*2048,expected,size) || memcmp(actual,expected,size)){valid=0;break;}
+            for(size_t i=size;i<FX_COMMON_RESOURCE_BYTES;++i)if(actual[i]!=0xa5){valid=0;break;}
+        }
+    }
+    if(valid){
+        /* All 80 authored curves from the actual texture resource bank. */
+        const u8 *bank=(const u8 *)g_FxCommonTimTable;u32 start,end;memcpy(&start,bank+8,4);memcpy(&end,bank+12,4);
+        if(start>=end || end>41*2048u){valid=0;goto done;}
+        const u8 *paths=bank+start;u32 first;memcpy(&first,paths,4);
+        if(first!=80*4u){valid=0;goto done;}
+        for(unsigned index=0;index<80 && valid;++index){u32 offset;s16 count;
+            memcpy(&offset,paths+index*4,4);
+            if(offset>end-start-8){valid=0;break;}memcpy(&count,paths+offset+6,2);
+            if(count<=2 || offset+8+(u32)count*8>end-start){valid=0;break;}
+            unsigned span=count-2;const unsigned fractions[]={0,1,127,255};
+            for(unsigned seg=0;seg<span+3;++seg)for(unsigned f=0;f<4;++f)for(unsigned initial=0;initial<2;++initial){
+                unsigned segment=seg==span+2?0xffffff:seg;FxCommonVec3 out;GteShortVector angles;
+                memset(&out,0xa5,sizeof(out));memset(&angles,0xa5,sizeof(angles));g_FxCommonPathWrapped=initial;
+                s32 result=FxCommon_SamplePath((segment<<8)|fractions[f],index,(void *)paths,&out,&angles);
+                const void *parts[]={&out,&angles,&g_FxCommonPathWrapped,&result};unsigned sizes[]={12,8,1,4};
+                for(unsigned part=0;part<4;++part)for(unsigned byte=0;byte<sizes[part];++byte)
+                    hash=(hash^((const u8 *)parts[part])[byte])*UINT64_C(1099511628211);
+                ++cases;
+            }
+        }
+        if(cases!=80784 || hash!=UINT64_C(0x8fe143d65b03392d))valid=0;
+    }
+    for(unsigned fault=1;fault<=4;++fault){
+        CdRom_BindImage(disc,&archive);glyph_reads=glyph_polls=0;
+        fx_read_failure=fault==1?1:fault==3?2:0;fx_poll_failure=fault==2?1:fault==4?2:0;
+        if(FxCommon_LoadEffectSectors()!=-(int)fault)valid=0;
+    }
+    fx_read_failure=fx_poll_failure=0;
+    for(unsigned fault=0;fault<3;++fault){
+        memcpy(g_PeImageSectorTable+76,sectors,sizeof(sectors));g_GameState.pe_image_base_lba=archive.sector;
+        if(fault==0)g_PeImageSectorTable[77]=sectors[0];
+        if(fault==1)g_PeImageSectorTable[77]=sectors[0]+129;
+        if(fault==2)g_GameState.pe_image_base_lba=UINT32_MAX;
+        glyph_reads=glyph_polls=0;
+        if(FxCommon_LoadEffectSectors()!=-5 || glyph_reads || glyph_polls)valid=0;
+    }
+done:
+    fx_image_io=0;fx_read_failure=fx_poll_failure=0;
+    CdRom_BindImage(old_image,old_image?&old_archive:NULL);g_GameState=saved;g_FxCommonNight=old_night;
+    memcpy(g_PeImageSectorTable+76,saved_sectors,sizeof(saved_sectors));free(expected);
+    if(!valid){fprintf(stderr,"Original FX resources: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original FX resources: CUE/BIN day/night banks match every byte with intact buffer tails; four I/O failures and invalid extents propagate; all 80 paths match 80784 unhooked USA samples");return 1;
 }
 
 static int original_positional_audio_projection(void)
@@ -5709,6 +5928,7 @@ static int script_movie_error_exit(const char *executable)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--fx-camera"))return original_fx_node_pool() && original_fx_culling() && original_fx_camera_matrices()?0:143;
     if(argc==2 && !strcmp(argv[1],"--script-movie-error")){
         u32 script[]={53|(1u<<13),0,47,32,0};FieldActor actor={0};
         ScriptNode node={.current.script=script,.active=1};
@@ -5750,6 +5970,7 @@ int main(int argc, char **argv)
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
         if (!glyph_asset_records(&disc, &exe)) return 57;
+        if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;
         if (!original_task_bank_data(&disc) || !original_glint_particles(&disc) || !original_positional_audio_projection() || !original_glint_lifecycle()) return 141;
         if (!original_video_buffers(&disc)) return 135;

@@ -120,6 +120,8 @@ add_library(parasite-eve-original OBJECT
     src/main/script/value_ops.c
     src/main/script/flow_opcodes.c
     src/main/script/system_opcodes.c
+    src/overlays/fx_common/camera.c
+    src/overlays/fx_common/model_buffers.c
     src/main/fieldfx/geometry.c
     src/main/fieldfx/model.c
     src/main/fieldfx/sprite_render.c
@@ -378,6 +380,7 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-actor-animation PRIVATE psyz)
     add_test(NAME original-game-actor-animation COMMAND test-original-actor-animation)
     add_test(NAME original-game-glint COMMAND test-original-actor-animation --glint)
+    add_test(NAME original-game-fx-camera COMMAND test-original-actor-animation --fx-camera)
     add_test(NAME original-game-player-input-assets COMMAND test-original-actor-animation --assets)
     set_tests_properties(original-game-player-input-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()

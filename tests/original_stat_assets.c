@@ -7,6 +7,8 @@
 #include "pe1/menu_flags.h"
 #include "pe1/memcard.h"
 #include "pe1/menu_inventory.h"
+#include "pe1/menu_inventory_root.h"
+#include "pe1/menu_dialog.h"
 void Menu_FullInit(void);
 void MemCard_ClearDelayedCallback(void);
 int MemCard_HasDelayedCallback(void);
@@ -227,7 +229,80 @@ static int new_game_inventory(void)
             CHECK(!g_InventoryRuntime.specialStorage[0] && !g_InventoryRuntime.specialStorage[1]);
         }
     }
-    puts("Original New Game inventory: stats, initial items, tagged carryover and menu fade passed");
+    ItemDataRecord saved_equipment[40],saved_keys[9];
+    memcpy(saved_equipment,g_InventoryRuntime.equipment,sizeof(saved_equipment));
+    memcpy(saved_keys,g_KeyItemRecords,sizeof(saved_keys));
+    for(unsigned i=0;i<40;++i) {
+        memset(&g_InventoryRuntime.equipment[i],0,sizeof(ItemDataRecord));
+        g_InventoryRuntime.equipment[i].kind=i%22;
+        g_InventoryRuntime.equipment[i].tailCount=i%3;
+    }
+    for(unsigned i=0;i<9;++i) {
+        memset(&g_KeyItemRecords[i],0,sizeof(ItemDataRecord));
+        g_KeyItemRecords[i].kind=19+i%3;g_KeyItemRecords[i].tailCount=i%3;
+    }
+    s16 items[100];
+    for(unsigned i=0;i<100;++i) {
+        items[i]=i<40?0x100+i:i<49?0x200+i-40:i<89?i-48:0;
+    }
+    Inv_SetActiveListOverride(items,100);Inv_SelectActiveList(1);
+    for(unsigned i=0;i<100;++i) {
+        ItemDataRecord *record=i<40?&g_InventoryRuntime.equipment[i]:
+            i<49?&g_KeyItemRecords[i-40]:i<89?Item_LookupBaseData(i-49):NULL;
+        CHECK(Inv_FindIndexByData(record)==(record?(int)i:89));
+        CHECK(Inv_GetActiveListItemType(i)==(record?record->kind:0));
+        if(i<40) {
+            u8 flags=record->flags;
+            record->flags|=ITEM_DATA_FLAG_GENERIC_DESCRIPTION;
+            CHECK(Inv_LookupActiveListDisplayData(i)==g_CursorRenderMetadataWindows[record->kind==ITEM_KIND_ARMOR].text);
+            record->flags=flags;
+        } else if(i<49) {
+            CHECK(Inv_LookupActiveListDisplayData(i)==Text_LookupTable8(g_InvCategoryBaseItemId+i-41));
+        } else if(i<89) {
+            CHECK(Inv_LookupActiveListDisplayData(i)==Text_LookupTable8(i-49));
+        } else CHECK(!Inv_LookupActiveListDisplayData(i));
+    }
+    CHECK(!Inv_GetActiveListItemType(-1) && !Inv_GetActiveListItemType(100));
+    uint64_t filter_hash=UINT64_C(14695981039346656037);
+    for(unsigned kind=0;kind<32;++kind) {
+        int mask=(int)(1u<<kind);
+        for(int excluded=-1;excluded<100;excluded+=25) {
+            if(excluded<0)Inv_BuildFilteredPackedList(mask);
+            else Inv_BuildFilteredPackedListExcluding(mask,excluded);
+            CHECK(g_InvPackedListCount>=0 && g_InvPackedListCount<=100 && !Inv_GetPackedListCursor());
+            unsigned used=g_InvPackedListCount;
+            for(unsigned byte=0;byte<4;++byte)
+                filter_hash=(filter_hash^((used>>(8*byte))&255))*UINT64_C(1099511628211);
+            for(unsigned i=0;i<used;++i) {
+                unsigned slot=Inv_GetPackedListItem(i);CHECK(slot<100);
+                for(unsigned byte=0;byte<2;++byte)
+                    filter_hash=(filter_hash^((slot>>(8*byte))&255))*UINT64_C(1099511628211);
+            }
+            CHECK(!Inv_GetPackedListItem(-1) && !Inv_GetPackedListItem(used));
+        }
+    }
+    /* All 160 outputs from the original USA 800542A0/800543CC in Unicorn
+     * MIPS, with real resident base items and these same native record fields. */
+    CHECK(filter_hash==UINT64_C(0x7d954f5aec037d21));
+    Inv_BuildFilteredPackedList(-1);CHECK(g_InvPackedListCount==100);
+    for(unsigned i=0;i<100;++i)CHECK(Inv_GetPackedListItem(i)==(int)i);
+    /* The original removal routine must preserve a native list pointer and
+     * free only the equipment record belonging to a removed equipment ID. */
+    for(unsigned i=0;i<40;++i) {
+        g_InventoryRuntime.equipment[i].iconId=0xA5;
+        CHECK(Inv_RemoveActiveListItem(i)==(int)(0x100+i));
+        CHECK(!items[i] && !g_InventoryRuntime.equipment[i].iconId);
+    }
+    for(unsigned i=40;i<100;++i) {
+        int value=items[i];
+        CHECK(Inv_RemoveActiveListItem(i)==value && !items[i]);
+    }
+    for(unsigned i=0;i<9;++i)CHECK(g_KeyItemRecords[i].kind==19+i%3 && g_KeyItemRecords[i].tailCount==i%3);
+    CHECK(&g_InvBaseCapacity==&g_AyaSaveState.inventory_slot_count);
+    memcpy(g_InventoryRuntime.equipment,saved_equipment,sizeof(saved_equipment));
+    memcpy(g_KeyItemRecords,saved_keys,sizeof(saved_keys));
+    Inv_SetActiveListOverride(NULL,0);Inv_SelectActiveList(0);
+    puts("Original inventory: New Game/carryover, canonical records, descriptions, lookup and 100-slot category filters passed");
     return 0;
 }
 static int item_addition(void)

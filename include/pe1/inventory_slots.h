@@ -14,7 +14,7 @@ extern s32 g_InvTransferItemCount;
 extern s16 g_InvTransferItemList[];
 extern s16 *g_InvActiveItemList;
 extern s32 g_InvActiveListSlotCount;
-extern s16 g_InvPackedList[];
+extern s16 g_InvPackedList[100];
 /* Saved by inventory commands as a word; the frame loop reads its low byte. */
 typedef union SavedMenuMode {
     u32 value;
@@ -31,7 +31,7 @@ void Inv_InitMaxLevelInventory(int variant);
 int Inv_CountTotal(void);
 void Item_PackParasiteSpells(void);
 int Inv_LoadWayneItemsAsOverride(short *items);
-extern u8 g_InvBaseCapacity;
+#define g_InvBaseCapacity (g_AyaSaveState.inventory_slot_count)
 
 extern u32 g_InvSelectionBitStorage[];
 extern s16 *g_InvItemPtr;
@@ -83,6 +83,7 @@ int Inv_CheckFreeSlotCapacity(int requestedSlots);
 extern int g_InvCategoryBaseItemId; /* First base-item ID represented by the three ammo pools. */
 
 int Inv_GetPackedListItem(int index);
+int Inv_GetPackedListCursor(void);
 
 int Menu_GetCommandResult(void);
 void Menu_ClearCommandResult(void);

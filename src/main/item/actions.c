@@ -83,11 +83,11 @@ int Inv_CheckItemEquippable(unsigned int list_index, int modifier_index) {
         item_id = g_InvItemPtr[selected_a];
         saved_id = (s16)item_id;
         if (item_id - 0x100U < 0x80U) {
-            resolved = (ItemDataRecord *)(g_EquipItemDataTable + (item_id << 5));
+            resolved = &g_InventoryRuntime.equipment[item_id - 0x100];
         } else if (item_id - 1U < 0xFFU) {
             resolved = Item_LookupBaseData(item_id - 1);
         } else if (saved_id - 0x200U < 9U) {
-            resolved = &((ItemDataRecord *)g_KeyItemDataTable)[saved_id];
+            resolved = &g_KeyItemRecords[saved_id - 0x200];
         } else {
             resolved = 0;
         }
@@ -105,11 +105,11 @@ int Inv_CheckItemEquippable(unsigned int list_index, int modifier_index) {
         saved_id = (s16)item_id;
         if (item_id - 0x100U < 0x80U) {
             scaled_id = item_id << 5;
-            resolved = (ItemDataRecord *)(g_EquipItemDataTable + scaled_id);
+            resolved = &g_InventoryRuntime.equipment[item_id - 0x100];
         } else if (item_id - 1U < 0xFFU) {
             resolved = Item_LookupBaseData(item_id - 1);
         } else if (saved_id - 0x200U < 9U) {
-            resolved = &((ItemDataRecord *)g_KeyItemDataTable)[saved_id];
+            resolved = &g_KeyItemRecords[saved_id - 0x200];
         } else {
             resolved = 0;
         }
@@ -337,7 +337,7 @@ int Aya_UnlockParasiteSpellById(int key)
 }
 
 int g_InvPackedListCount;
-short g_InvPackedList[];
+short g_InvPackedList[100];
 
 unsigned int *g_InvSelectionBits;
 
@@ -699,8 +699,7 @@ static inline ItemDataRecord *LookupComparisonItem(int value) {
         if (value - 1U < 0xFFU) {
             result = Item_LookupBaseData(value - 1);
         } else if (saved - 0x200U < 9U) {
-            int shifted = saved << 5;
-            result = (ItemDataRecord *)(g_KeyItemDataTable + shifted);
+            result = &g_KeyItemRecords[saved - 0x200];
         } else {
             result = 0;
         }
@@ -845,8 +844,7 @@ static inline ItemDataRecord *LookupTrackedItem(int index) {
                 return Item_LookupBaseData(value - 1);
             }
             if (saved - 0x200U < 9U) {
-                int shifted = saved << 5;
-                result = (ItemDataRecord *)(g_KeyItemDataTable + shifted);
+                result = &g_KeyItemRecords[saved - 0x200];
             } else {
                 result = 0;
             }
@@ -1027,27 +1025,24 @@ s32 Inv_RemoveActiveListItem(s32 arg0) {
     s16 *slot;
     s32 selected;
     s32 removed;
-    s32 offset;
     s32 activeList;
 
     selected = arg0;
-    if ((g_InvItemPtr == g_AyaInventoryItems) && (g_EquippedArmorSlot == selected)) {
+    if ((g_InvItemPtr == g_AyaInventoryItems) && (g_AyaSaveState.equipped_armor_slot == selected)) {
         Inv_GetActiveSlotCount(&sp10);
     }
 
-    activeList = g_InvItemPtr;
-    offset = selected << 1;
-    slot = (s16 *)(offset + activeList);
+    slot = &g_InvItemPtr[selected];
     activeList = *slot;
     *slot = 0;
     removed = activeList;
 
-    if (activeList >= 0x100) {
-        g_InvItemSlotArray[removed - 0x100].iconId = 0;
+    if ((unsigned)(activeList - 0x100) < 128) {
+        g_InventoryRuntime.equipment[removed - 0x100].iconId = 0;
     }
 
-    if ((g_InvItemPtr == g_AyaInventoryItems) && (g_EquippedArmorSlot == selected)) {
-        g_EquippedArmorSlot = -1;
+    if ((g_InvItemPtr == g_AyaInventoryItems) && (g_AyaSaveState.equipped_armor_slot == selected)) {
+        g_AyaSaveState.equipped_armor_slot = -1;
         Inv_CheckFreeSlotCapacity(sp10);
         Inv_CompactActiveListSlots();
         Inv_SetActiveList(3, 0);

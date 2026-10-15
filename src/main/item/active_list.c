@@ -291,11 +291,11 @@ void *Inv_LookupActiveListDisplayData(s32 index) {
     itemId = g_InvItemPtr[index];
     displayData = NULL;
     if ((itemId - 0x100) < 0x80U) {
-        entry = &((ItemDataRecord *)g_EquipItemDataTable)[itemId];
+        entry = &g_InventoryRuntime.equipment[itemId - 0x100];
         if (entry->flags & 0x10) {
-            displayData = g_EquipItemDataTable + 0x31F8;
+            displayData = g_CursorRenderMetadataWindows[0].text;
             if (entry->kind == 9) {
-                displayData = g_EquipItemDataTable + 0x3208;
+                displayData = g_CursorRenderMetadataWindows[1].text;
             }
         } else {
             lookupIndex = entry->itemId - 1;
@@ -414,10 +414,7 @@ int Inv_FindIndexByData(void *needle) {
                     if ((unsigned int)offset < 0xFF) {
                         data = Item_LookupBaseData(offset);
                     } else if (saved_item_id - 0x200U < 9U) {
-                        int shifted;
-
-                        shifted = saved_item_id << 5;
-                        data = g_KeyItemDataTable + shifted;
+                        data = &g_KeyItemRecords[saved_item_id - 0x200];
                     } else {
                         data = 0;
                     }
@@ -540,11 +537,11 @@ void Menu_DrawActiveListSlot(s32 arg0) {
     temp_v1 = g_InvItemPtr[arg0];
     var_a1 = NULL;
     if ((temp_v1 - 0x100) < 0x80U) {
-        temp_v1_2 = &((ItemDataRecord *)g_EquipItemDataTable)[temp_v1];
+        temp_v1_2 = &g_InventoryRuntime.equipment[temp_v1 - 0x100];
         if (temp_v1_2->flags & 0x10) {
-            var_a1 = g_EquipItemDataTable + 0x31F8;
+            var_a1 = g_CursorRenderMetadataWindows[0].text;
             if (temp_v1_2->kind == 9) {
-                var_a1 = g_EquipItemDataTable + 0x3208;
+                var_a1 = g_CursorRenderMetadataWindows[1].text;
             }
         } else {
             var_a0 = temp_v1_2->itemId - 1;
@@ -567,14 +564,13 @@ void Menu_DrawActiveListSlot(s32 arg0) {
         /* Inventory IDs retain their signed 16-bit representation. */
         temp_a1 = (s16)temp_v1_3;
         if ((temp_v1_3 - 0x100) < 0x80U) {
-            var_v0 = &((ItemDataRecord *)g_EquipItemDataTable)[temp_v1_3];
+            var_v0 = &g_InventoryRuntime.equipment[temp_v1_3 - 0x100];
         } else {
             temp_a0 = temp_v1_3 - 1;
             if (temp_a0 < 0xFFU) {
                 var_v0 = Item_LookupBaseData(temp_a0);
             } else if ((temp_a1 - 0x200) < 9U) {
-                temp_v1_3 = temp_a1 << 5;
-                var_v0 = (ItemDataRecord *)(temp_v1_3 + g_KeyItemDataTable);
+                var_v0 = &g_KeyItemRecords[temp_a1 - 0x200];
             } else {
                 var_v0 = NULL;
             }
@@ -775,11 +771,11 @@ int Inv_GetActiveListItemType(int index)
         value = g_InvItemPtr[index];
         saved_value = value;
         if (value - 0x100U < 0x80U) {
-            entry = (ItemDataRecord *)(g_EquipItemDataTable + (value << 5));
+            entry = &g_InventoryRuntime.equipment[value - 0x100];
         } else if (value - 1U < 0xFFU) {
             entry = Item_LookupBaseData(value - 1);
         } else if (saved_value - 0x200U < 9U) {
-            entry = (ItemDataRecord *)(g_KeyItemDataTable + (saved_value << 5));
+            entry = &g_KeyItemRecords[saved_value - 0x200];
         } else {
             entry = 0;
         }
@@ -839,17 +835,13 @@ void Inv_BuildFilteredPackedList(int mask) {
                 item_id = g_InvItemPtr[index];
                 saved_item_id = (s16)item_id;
                 if (item_id - 0x100U < 0x80U) {
-                    data = (ItemDataRecord *)(g_EquipItemDataTable +
-                                              (item_id << 5));
+                    data = &g_InventoryRuntime.equipment[item_id - 0x100];
                 } else {
                     offset = item_id - 1;
                     if ((unsigned int)offset < 0xFF) {
                         data = Item_LookupBaseData(offset);
                     } else if (saved_item_id - 0x200U < 9U) {
-                        int shifted;
-
-                        shifted = saved_item_id << 5;
-                        data = (ItemDataRecord *)(g_KeyItemDataTable + shifted);
+                        data = &g_KeyItemRecords[saved_item_id - 0x200];
                     } else {
                         data = 0;
                     }
@@ -896,16 +888,13 @@ void Inv_BuildFilteredPackedListExcluding(int mask, int excluded) {
                 item_id = g_InvItemPtr[index];
                 saved_item_id = item_id;
                 if (item_id - 0x100U < 0x80U) {
-                    lookup = (ItemDataRecord *)(g_EquipItemDataTable +
-                                               (item_id << 5));
+                    lookup = &g_InventoryRuntime.equipment[item_id - 0x100];
                 } else {
                     offset = item_id - 1;
                     if ((unsigned int)offset < 0xFF) {
                         lookup = Item_LookupBaseData(offset);
                     } else if (saved_item_id - 0x200U < 9U) {
-                        int shifted;
-                        shifted = saved_item_id << 5;
-                        lookup = (ItemDataRecord *)(g_KeyItemDataTable + shifted);
+                        lookup = &g_KeyItemRecords[saved_item_id - 0x200];
                     } else {
                         lookup = 0;
                     }

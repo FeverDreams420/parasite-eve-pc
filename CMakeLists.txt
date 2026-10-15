@@ -35,6 +35,7 @@ add_library(parasite-eve-original OBJECT
     src/main/battle/enemy_actions.c
     src/main/aya/stats.c
     src/main/item/active_list.c
+    src/main/item/actions.c
     src/main/time/counters.c
     src/main/save/game_data.c
     src/main/memcard/save_flow.c
@@ -495,6 +496,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-stat-assets tests/original_stat_assets.c $<TARGET_OBJECTS:parasite-eve-original-disc>
+        $<TARGET_OBJECTS:parasite-eve-original-camera> $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
         $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-pad>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation> $<TARGET_OBJECTS:parasite-eve-original-akao>)
     target_include_directories(test-original-stat-assets PRIVATE include)

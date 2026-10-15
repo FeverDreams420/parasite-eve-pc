@@ -10,11 +10,9 @@
 #include "menu_memcard_image.h"
 #include "menu_memcard_screen.h"
 
-/* Matching views of the existing two pointer slots, not extra storage.
- * Separate names retain retail's reloads instead of caching their addresses. */
-extern struct { MemcardScreenBuffer *value; } g_MemcardSecondScreen;
-extern MemcardScreenBuffer *g_MemcardSecondScreenView;
-extern MemcardScreenBuffer *g_MemcardFirstDrawScreen;
+/* Original names refer to the same native pointer slots. */
+#define g_MemcardFirstDrawScreen (g_MemcardScreenBuffers[0])
+#define g_MemcardSecondScreenView (g_MemcardScreenBuffers[1])
 
 extern DISPENV g_MemcardListSavedDispEnv[2];
 extern DRAWENV g_MemcardListSavedDrawEnv[2];

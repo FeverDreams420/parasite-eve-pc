@@ -72,6 +72,9 @@ int Inv_ScrambleGrid(void);
 #include "pe1/menu_queue.h"
 #include "pe1/draw_state.h"
 #include "pe1/draw_level_bar.h"
+#include "pe1/gpu_image.h"
+#include "../src/overlays/menu_memcard/menu_memcard_screen.h"
+#include "../src/overlays/menu_memcard/menu_memcard_image.h"
 #include <SDL3/SDL.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -2536,6 +2539,89 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     return valid;
 }
 
+/* Compare actual headless GPU output at every original logo VSync. */
+static u16 title_expected_pixels[320*480],title_actual_pixels[320*480];
+static const u8 *title_logo_pixels,*title_logo_palette;
+static unsigned title_logo_frame,title_logo_failures;
+static void title_logo_observe(void)
+{
+    unsigned frame=title_logo_frame++;
+    if(frame>=480) {++title_logo_failures;return;}
+    unsigned shade=frame<32?frame*4:frame<392?128:frame<424?(424-frame)*4:0;
+    unsigned page=frame&1;
+    for(unsigned y=0;y<64;++y) for(unsigned x=0;x<256;++x) {
+        unsigned packed=title_logo_pixels[y*128+x/2];
+        unsigned index=(packed>>((x&1)*4))&15;
+        u16 texel=(u16)title_logo_palette[index*2]|(u16)title_logo_palette[index*2+1]<<8;
+        if(!texel) continue;
+        u16 color=texel&0x8000;
+        for(unsigned c=0;c<3;++c) color|=(((texel>>(c*5))&31)*shade/128)<<(c*5);
+        title_expected_pixels[(page*240+y+88)*320+x+32]=color;
+    }
+    MemcardScreenBuffer *screen=g_MemcardScreenBuffers[!page];
+    for(unsigned y=0;y<2;++y) for(unsigned x=0;x<6;++x) {
+        const u8 *p=screen->overlayImage+(y*6+x)*2;
+        title_expected_pixels[(page*240+y+7)*320+x+6]=(u16)p[0]|(u16)p[1]<<8;
+    }
+    RECT area={0,0,320,480};
+    StoreImage(&area,title_actual_pixels);DrawSync(0);
+    if(memcmp(title_actual_pixels,title_expected_pixels,sizeof(title_actual_pixels))) {
+        if(!title_logo_failures) for(unsigned i=0;i<320*480;++i)
+            if(title_actual_pixels[i]!=title_expected_pixels[i]) {
+                fprintf(stderr,"Logo frame %u pixel %u: %04x != %04x\n",frame,i,
+                        title_actual_pixels[i],title_expected_pixels[i]);break;
+            }
+        ++title_logo_failures;
+    }
+}
+static int original_title_screen(PeDisc *disc)
+{
+    PeDiscFile archive;
+    if(!pe_disc_find(disc,"PE.IMG",&archive)) return 0;
+    u32 flags=g_GameState.flags,base=g_PeImageBaseLba;
+    unsigned modes=g_PeImageMountFlags;
+    Pe1SceneAudioState audio=g_GameState.scene_audio;
+    int queued=g_AkaoMessageQueueCount;
+    CdRom_BindImage(disc,&archive);
+    if(Asset_OpenPeImage()!=0 || CdRom_LoadInitialImage()!=0) return 0;
+    const u8 *logo=g_MemcardImageBundle+g_MemcardImageOffsets[8];
+    unsigned palette_bytes=(unsigned)logo[8]|(unsigned)logo[9]<<8;
+    if(logo[0]!=16 || logo[4]!=8 || palette_bytes!=44) return 0;
+    title_logo_palette=logo+20;title_logo_pixels=logo+8+palette_bytes+12;
+    DRAWENV old_draw;GetDrawEnv(&old_draw);
+    RECT clear={0,0,320,480};ClearImage(&clear,0,0,0);DrawSync(0);
+    memset(title_expected_pixels,0,sizeof(title_expected_pixels));
+    for(unsigned p=0;p<2;++p) {
+        MemcardScreenBuffer *screen=g_MemcardScreenBuffers[p];
+        SetDefDrawEnv(&screen->draw,0,p*240,320,240);screen->draw.isbg=0;
+        SetDefDispEnv(&screen->disp,0,!p*240,320,240);screen->disp.isrgb24=1;
+        screen->overlay=(RECT){4,7,4,2};screen->dirty=(RECT){0};
+        for(unsigned i=0;i<24;++i) screen->overlayImage[i]=(u8)(p*71+i+1);
+    }
+    g_MemcardScreenPage=0;PutDrawEnv(&g_MemcardScreenBuffers[0]->draw);
+    title_logo_frame=title_logo_failures=0;
+    VSyncCallback(title_logo_observe);MenuCard_ShowLogoFade();VSyncCallback(Boot_VsyncCallback);
+    int valid=title_logo_frame==480 && !title_logo_failures && g_MemcardScreenPage==0 &&
+        g_MemcardCurrentScreen==g_MemcardScreenBuffers[0] &&
+        g_MemcardScreenBuffers[0]->disp.isrgb24==1 && g_MemcardScreenBuffers[1]->disp.isrgb24==1;
+    /* Original two-page background restore plus per-page dirty overlays. */
+    for(unsigned p=0;p<2;++p) g_MemcardScreenBuffers[p]->overlay.w=0;
+    MenuCard_FlipScreenPages();
+    const u8 *background=g_MemcardImageBundle+g_MemcardImageOffsets[0]+sizeof(MemcardImage);
+    static u16 restored[480*204];RECT background_area={0,20,480,204};
+    for(unsigned p=0;p<2;++p) {
+        background_area.y=p*240+20;StoreImage(&background_area,restored);DrawSync(0);
+        if(memcmp(restored,background,sizeof(restored))) valid=0;
+    }
+    if(g_MemcardScreenPage!=0 || g_MemcardCurrentScreen!=g_MemcardScreenBuffers[0]) valid=0;
+    PutDrawEnv(&old_draw);g_AkaoMessageQueueCount=queued;
+    CdRom_BindImage(NULL,NULL);g_GameState.flags=flags;g_PeImageBaseLba=base;
+    g_PeImageMountFlags=modes;g_GameState.scene_audio=audio;
+    if(valid) puts("Original title screen: all 480 logo frames match full framebuffer pixels, both RGB24 backgrounds restored headlessly");
+    else fprintf(stderr,"Original title screen failed: %u frames, %u pixel mismatches\n",title_logo_frame,title_logo_failures);
+    return valid;
+}
+
 static int original_subsystem_start(void)
 {
     g_GameStateFlags=0xA5A5A5A5; g_FrameRngCounter=123;
@@ -2683,6 +2769,7 @@ int main(int argc, char **argv)
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_icon_packets(&disc,&exe)) return 133;
+        if (!original_title_screen(&disc)) return 134;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];
             if(!pointers[mode]) {if(native)return 21;continue;}

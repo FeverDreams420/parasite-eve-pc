@@ -2,6 +2,17 @@
 #include "menu_memcard_menu.h"
 #include "menu_memcard_screen.h"
 
+/* Screen state belongs to the original title module. Native GPU tags and
+ * DRAWENV no longer share hardcoded PS1 byte offsets with image workspaces. */
+static MemcardScreenBuffer g_MemcardScreenStorage[2];
+MemcardScreenBuffer *g_MemcardScreenBuffers[2] = {
+    &g_MemcardScreenStorage[0], &g_MemcardScreenStorage[1]
+};
+MemcardScreenBuffer *g_MemcardCurrentScreen;
+s32 g_MemcardScreenPage, g_LogoFadePlayed;
+DISPENV g_MemcardListSavedDispEnv[2];
+DRAWENV g_MemcardListSavedDrawEnv[2];
+
 static inline MemcardImageNode *MenuCard_FindImageNode(s32 kind) {
     MemcardImageNode *node;
 
@@ -121,7 +132,7 @@ void MenuCard_ShowLogoFade(void) {
         sprite = sprites[i & 1];
         tpage = tpages[i & 1];
         SetDrawTPage(tpage, 0, 0, 0x18);
-        sprite->len = 4;
+        sprite->tag.length = 4;
         sprite->code = 0x64;
         sprite->x0 = 0x20;
         sprite->y0 = 0x58;
@@ -131,7 +142,7 @@ void MenuCard_ShowLogoFade(void) {
         sprite->h = 0x40;
         sprite++;
         SetDrawTPage(tpage + 1, 0, 0, 0x19);
-        sprite->len = 4;
+        sprite->tag.length = 4;
         sprite->code = 0x64;
         sprite->x0 = 0x11C;
         sprite->y0 = 0x50;
@@ -198,10 +209,8 @@ void MenuCard_ShowLogoFade(void) {
     }
 }
 
-/* Run the title/card-selection screen, then restore the game display.
- * Five pins and the header's two symbol views retain retail allocation. */
+/* Run the title/card-selection screen, then restore the game display. */
 s32 MenuCard_RunListScreen(void) {
-    u8 *firstMemory;
     s32 searchKind;
     s32 wantedKind;
     u32 prefix;
@@ -228,7 +237,6 @@ s32 MenuCard_RunListScreen(void) {
     u32 rgb1;
     u32 rgb2;
     MemcardImage *image;
-    u8 *secondMemory;
     u32 *source;
     u32 *destination;
 
@@ -238,14 +246,12 @@ s32 MenuCard_RunListScreen(void) {
     titleMode = g_PeImageMountFlags & 1;
     g_MemcardListSavedDrawEnv[0] = g_RenderDrawEnvArray[0];
     g_MemcardListSavedDrawEnv[1] = g_RenderDrawEnvArray[1];
-    firstMemory = g_CdLoadAreaBase;
-    secondMemory = firstMemory + 0x1C080;
-    g_RenderFrontBufferBase[0] = firstMemory + 0x4080;
-    g_MemcardScreenBuffers[0] = (MemcardScreenBuffer *) firstMemory;
-    g_MemcardSecondScreen.value = (MemcardScreenBuffer *) secondMemory;
-    g_RenderBackBufferBase[0] = secondMemory + 0x4080;
-    D_800B0E38.ordering[0] = (u32 *)(firstMemory + 0x80);
-    g_RenderOtBufferBaseAlt[0] = secondMemory + 0x80;
+    g_MemcardScreenBuffers[0] = &g_MemcardScreenStorage[0];
+    g_MemcardScreenBuffers[1] = &g_MemcardScreenStorage[1];
+    g_RenderFrontBufferBase[0] = g_MemcardScreenStorage[0].packets;
+    g_RenderBackBufferBase[0] = g_MemcardScreenStorage[1].packets;
+    D_800B0E38.ordering[0] = g_MemcardScreenStorage[0].ordering;
+    g_RenderOtBufferBaseAlt[0] = (u8 *)g_MemcardScreenStorage[1].ordering;
     Draw_SetPresentEnabled(1);
     result = -1;
     do {
@@ -263,12 +269,12 @@ s32 MenuCard_RunListScreen(void) {
         SetDefDrawEnv(&g_MemcardFirstDrawScreen->draw, 0, 0, 0x140, 0xF0);
         SetDefDrawEnv(&g_MemcardSecondScreenView->draw, 0, 0xF0, 0x140, 0xF0);
         SetDefDispEnv(&g_MemcardScreenBuffers[0]->disp, 0, 0xF0, 0x140, 0xF0);
-        SetDefDispEnv(&g_MemcardSecondScreen.value->disp, 0, 0, 0x140, 0xF0);
-        g_MemcardScreenBuffers[0]->disp.screen.y = g_MemcardSecondScreen.value->disp.screen.y = 0;
-        g_MemcardScreenBuffers[0]->disp.screen.h = g_MemcardSecondScreen.value->disp.screen.h = 0xF0;
-        g_MemcardScreenBuffers[0]->disp.isrgb24 = g_MemcardSecondScreen.value->disp.isrgb24 = 1;
-        g_MemcardScreenBuffers[0]->dirty.w = g_MemcardSecondScreen.value->dirty.w = 0;
-        g_MemcardScreenBuffers[0]->overlay.w = g_MemcardSecondScreen.value->overlay.w = 0;
+        SetDefDispEnv(&g_MemcardScreenBuffers[1]->disp, 0, 0, 0x140, 0xF0);
+        g_MemcardScreenBuffers[0]->disp.screen.y = g_MemcardScreenBuffers[1]->disp.screen.y = 0;
+        g_MemcardScreenBuffers[0]->disp.screen.h = g_MemcardScreenBuffers[1]->disp.screen.h = 0xF0;
+        g_MemcardScreenBuffers[0]->disp.isrgb24 = g_MemcardScreenBuffers[1]->disp.isrgb24 = 1;
+        g_MemcardScreenBuffers[0]->dirty.w = g_MemcardScreenBuffers[1]->dirty.w = 0;
+        g_MemcardScreenBuffers[0]->overlay.w = g_MemcardScreenBuffers[1]->overlay.w = 0;
         rect.x = 0;
         rect.y = 0;
         rect.w = 0x1E0;
@@ -291,14 +297,14 @@ s32 MenuCard_RunListScreen(void) {
                 } while (waitFrames < 0x3C);
             }
             g_MemcardScreenBuffers[0]->draw = g_RenderDrawEnvArray[0];
-            g_MemcardSecondScreen.value->draw = g_RenderDrawEnvArray[1];
+            g_MemcardScreenBuffers[1]->draw = g_RenderDrawEnvArray[1];
             g_MemcardScreenBuffers[0]->disp = g_RenderDispEnvArray[0];
-            g_MemcardSecondScreen.value->disp = g_RenderDispEnvArray[1];
+            g_MemcardScreenBuffers[1]->disp = g_RenderDispEnvArray[1];
             g_MemcardScreenBuffers[0]->draw.isbg = 0;
-            g_MemcardSecondScreen.value->draw.isbg = 0;
-            g_MemcardScreenBuffers[0]->dirty.w = g_MemcardSecondScreen.value->dirty.w = 0;
+            g_MemcardScreenBuffers[1]->draw.isbg = 0;
+            g_MemcardScreenBuffers[0]->dirty.w = g_MemcardScreenBuffers[1]->dirty.w = 0;
             g_MemcardScreenPage = g_ActiveDrawSlot;
-            g_MemcardScreenBuffers[0]->overlay.w = g_MemcardSecondScreen.value->overlay.w = 0;
+            g_MemcardScreenBuffers[0]->overlay.w = g_MemcardScreenBuffers[1]->overlay.w = 0;
             rect.x = 0;
             rect.y = 0;
             rect.w = 0x1E0;
@@ -343,12 +349,12 @@ s32 MenuCard_RunListScreen(void) {
         /* Rebuild the eight-node free list for this menu pass. */
         freeNode = g_MemcardImageNodePool;
         freeEnd = &g_MemcardImageNodePool[7];
-        if ((u32) g_MemcardImageNodePool < (u32) freeEnd) {
+        if (g_MemcardImageNodePool < freeEnd) {
             do {
                 nextFree = &freeNode[1];
                 freeNode->next = nextFree;
                 freeNode = nextFree;
-            } while ((u32) freeNode < (u32) freeEnd);
+            } while (freeNode < freeEnd);
         }
         freeNode->next = 0;
         g_MemcardFreeImageNodes = g_MemcardImageNodePool;
@@ -466,11 +472,11 @@ s32 MenuCard_RunListScreen(void) {
             } else if ((selectionY >= 0xB5) || ((selectionY == 0xB4) && (MemCard_IsPortPresent(0) == 0) && (MemCard_IsPortPresent(1) == 0))) {
                 result = 3;
             } else {
-                Draw_SetPresentImage((u8 *)g_MemcardSecondScreenView + 0x1C080);
+                Draw_SetPresentImage(g_MemcardScreenStorage[1].presentImage);
                 image = (MemcardImage *)&g_MemcardImageBundle[*g_MemcardImageOffsets];
                 source = (u32 *)(image + 1);
                 groupsRemaining = (image->width * image->height) / 6;
-                destination = (u32 *)((u8 *)g_MemcardSecondScreenView + 0x1C080);
+                destination = (u32 *)(g_MemcardScreenStorage[1].presentImage);
                 /* Pack four RGB24 pixels into two dimmed RGB555 words.
                  * The inclusive last group is intentional: retail uses >= 0. */
                 if (groupsRemaining >= 0) {

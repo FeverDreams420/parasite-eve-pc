@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "pe1/menu_sound.h"
+#include "pe1/cdrom_buffers.h"
 
 typedef struct MemcardImage { u8 header[16]; s16 width, height; } MemcardImage;
 typedef struct MemcardImageNode {
@@ -18,10 +19,12 @@ typedef struct MemcardImagePreset { s32 x, y, parameter; } MemcardImagePreset;
 extern MemcardImageNode *g_MemcardFreeImageNodes, *g_MemcardPendingNodeTail, *g_MemcardPendingNodeHead, *g_MemcardActiveNodeHead;
 extern MemcardImageNode *g_MemcardActiveNodeTail; /* Active-list tail. */
 extern MemcardImageNode g_MemcardImageNodePool[8];
-extern MemcardImagePreset g_MemcardImagePresets[];
+#define g_MemcardImagePresets ((MemcardImagePreset *)(g_MemcardImageBundle + 0x3DB08))
 extern u8 g_MenuCardAdvanceFadeEntry[];
-extern s32 g_MemcardImageOffsets[];
-extern u8 g_MemcardImageBundle[], g_MenuCardUpdateFadeCounterEntry[];
+/* USA title bank retains its authored offsets and preset data as data. */
+#define g_MemcardImageBundle (g_StrFileDirBuffer + 0x4264)
+#define g_MemcardImageOffsets ((s32 *)(g_MemcardImageBundle + 4))
+extern u8 g_MenuCardUpdateFadeCounterEntry[];
 
 MemcardImageNode *MenuCard_CreateImageNode(s32 kind);
 void MenuCard_CreateFixedImageNode(void);

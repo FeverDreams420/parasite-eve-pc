@@ -66,6 +66,8 @@ add_library(parasite-eve-original OBJECT
     src/main/draw/frame.c
     src/main/draw/text.c
     src/main/draw/textbox.c
+    src/overlays/menu_memcard/list_screen.c
+    src/overlays/menu_memcard/page_flip.c
     src/main/draw/wipe.c
     src/main/pm/disc_tables.c
     src/main/pm/process.c
@@ -486,4 +488,15 @@ if(BUILD_TESTING)
     target_link_libraries(test-original-stat-assets PRIVATE psyz)
     add_test(NAME original-game-stat-assets COMMAND test-original-stat-assets)
     set_tests_properties(original-game-stat-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+endif()
+
+# Original-module integration runs without creating a window or GPU device.
+if(BUILD_TESTING)
+    get_property(original_tests DIRECTORY PROPERTY TESTS)
+    foreach(original_test IN LISTS original_tests)
+        if(original_test MATCHES "^original-game-")
+            set_property(TEST ${original_test} APPEND PROPERTY ENVIRONMENT
+                "PSYZ_HEADLESS=1" "SDL_AUDIODRIVER=dummy")
+        endif()
+    endforeach()
 endif()

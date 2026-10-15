@@ -816,7 +816,7 @@ void MenuWidget_DrawListRow(MenuWidgetNode *node,
 {
     u32 index = node->x_limit * (row + node->scroll_y);
     /* Stock MIPS GCC emits SLLV, which masks the shift count to five bits. */
-    u32 bit = 1u << index;
+    u32 bit = 1u << (index & 31);
     int x, enabled, dimmed;
     CursorPair *stack = (CursorPair *)g_TextCursorStack;
     int (*select_callback)(int);

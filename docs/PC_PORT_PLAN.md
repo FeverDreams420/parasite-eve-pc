@@ -1,5 +1,52 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
+## Bieżący kandydat: oryginalne dialogi, imię, ruch i wejście do M003
+
+Oryginalny New Game przechodzi M431/film 2 → M010/dialog → ekran imienia →
+M002 → M003 (hol opery). Poprzednie wpisy mylnie nazywały token `0xA8001048` mapą M001;
+oryginalny parser odczytuje go jako M010. Token M002 to `0xA8000148`.
+Naprawiono istniejące opkody 13/34/35, 101/102, 119 i podpięto oryginalny 239.
+Nie dodano plików ani nie wydzielono funkcji produkcyjnych.
+
+Porównania z CPU USA obejmują 432 stany otwarcia dialogu, 576 wait/close,
+432 prędkości, 96 resetów ruchu i 486 przypadków wielokąta. Przywrócono
+rzeczywiste stałe AKAO i aliasy 16 fal LFO; 73 728 stanów głosu odpowiada CPU.
+Dwie oryginalne funkcje zwalniania głosu używają teraz natywnych rekordów
+zamiast stride PS1, który nadpisywał wskaźniki programu; 1296 przypadków
+porównuje wynik i zachowanie pozostałych pól. Siatka imienia maskuje przesunięcie
+bitowe jak oryginalna instrukcja MIPS.
+
+Krótki przebieg M002, zwykły i ASan/UBSan/function, przeszedł po poprawce
+aliasu banku menu: 40 VBlank prawego inputu daje 20 klatek symulacji,
+zmianę X o 5 241 600 jednostek 16.16 i yaw 3072. Pełny zestaw przeszedł
+39/39 bez skipów z wymaganym Disc 1. Następnie rozszerzony istniejący test
+`original-game-field-control` przeszedł ponownie: bezruch, krótki ruch i wejście
+z M002 do M003, z pozycją, yaw i pełną VRAM. Timeout zwiększono proporcjonalnie
+do trzech uruchomień. Zmiany po pełnym zestawie dotyczą tego fixture,
+dokumentacji oraz timeoutu, bez zmian kodu gry.
+
+Świeże ASan/UBSan/function (również PsyZ/SDL) przechodzą --assets, --texture-pages,
+statystyki, dwa przebiegi właściwego executable M002 oraz wejście do M003
+(35 500 VBlank). Stan i cały 1 MiB VRAM w M003 są identyczne w programie zwykłym
+i instrumentowanym: SHA-256
+`ea86b0accc634c6dae419c16a9dd2b615252fb9caa7acf35692d6b6c3d62f6c3`.
+Osobny build bez testów i końcowy build z testami również przechodzą.
+
+Dźwięki menu korzystają ze wspólnego pola oryginalnego stanu gry, zamiast
+niezależnej pustej tablicy `g_AkaoBgmHandle`. Test z prawdziwym bankiem Disc 1
+potwierdza, że cztery callbacki menu kolejkują właściwe komendy AKAO i wskaźniki
+sekwencji. To nie jest jeszcze dowód poprawnego końcowego PCM ani całego audio.
+JSON diagnostyczny obejmuje aktorów, dialogi, menu i blokadę ruchu.
+Dalsza próba chodzenia i interakcji w M003 zatrzymuje się na niepodpiętym
+opkodzie 121 (`Entity_SetCurrentFlag20`), aktor 0:0, bajt skryptu 964.
+Funkcja istnieje w oryginalnym `system_opcodes.c`; wymaga poprawienia ABI
+i podpięcia wraz z weryfikacją. Tego przebiegu nie zaliczamy jako ukończonego.
+
+Cała eksploracja, walki, kampania, zapisy/Continue, Disc 2 i pozostałe bramki
+akceptacji nadal są nieukończone. Ograniczenie VBlank kończy przez `_Exit`,
+więc nie dowodzi naturalnego shutdown ani braku wycieków. `bu00/` pozostaje
+nietknięte. Poniższe wpisy to historia wcześniejszych kandydatów.
+
 ## Aktualny stan: oryginalny New Game dochodzi do M001
 
 Właściwy executable wykonuje oryginalny wybór New Game, ładuje M431, odtwarza

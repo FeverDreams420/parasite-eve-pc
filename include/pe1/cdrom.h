@@ -89,7 +89,7 @@ extern int g_CdStreamBankIndex;
 extern int g_CdFadeStartTime;
 extern int g_CdFadeFramesLeft;
 
-extern void *g_AkaoBgmHandle[];
+#include "pe1/akao/bgm.h"
 
 void Akao_ResetPositionalState(void);
 int CdRom_SeekToTrack(int key, int mode, int group, int *slot, int immediate);

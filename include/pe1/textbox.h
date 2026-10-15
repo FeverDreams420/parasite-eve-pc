@@ -85,6 +85,7 @@ void Render_SetupColorTable(int index, int mode, short *colors);
 void Draw_SetCursor(int x, int y);
 
 void Draw_CloseTextboxPage(int arg0);
+s8 Draw_GetTextboxPageState(int page);
 void Script_SetCollisionFlag(int value);
 void Script_EnableMovement(void);
 void Script_DisableMovement(void);

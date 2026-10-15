@@ -109,8 +109,14 @@ typedef struct Pe1GameState {
     void *bank_asset_table;           /* 0x124: resolved bank asset table */
     u8 *bank_work_base;              /* 0x128 */
     u8 *bank_work_end;               /* 0x12C */
-    u8 *bank_work_far_end;           /* 0x130: voice bank base + 0x2800 */
-    void *scene_object_tables[3];    /* 0x134 */
+    union {
+        struct {
+            u8 *bank_work_far_end;       /* 0x130: resident sound table */
+            void *scene_object_tables[3]; /* 0x134 */
+        };
+        /* Original g_AkaoBgmHandle aliases these adjacent pointer slots. */
+        void *sound_table_handles[4];
+    };
     /* Startup resource tables selected by keys 0x57D40D84 and 0x57D41D84. */
     void *startup_resource_tables[2]; /* 0x140 */
     u8 *startup_resource_blob;       /* 0x148 */
@@ -169,6 +175,10 @@ typedef struct Pe1GameState {
 } Pe1GameState;
 
 /* Audio records keep their fixed scalar format; GPU packets use native tags. */
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, sound_table_handles) ==
+                  PE1_OFFSETOF(Pe1GameState, bank_work_far_end), game_sound_handle_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1GameState, scene_object_tables) ==
+                  PE1_OFFSETOF(Pe1GameState, sound_table_handles) + sizeof(void *), game_sound_scene_alias);
 PE1_STATIC_ASSERT(sizeof(Pe1SceneAudioState) == 16, scene_audio_state_size);
 PE1_STATIC_ASSERT(sizeof(Pe1PrimTag) == 2 * sizeof(uintptr_t), game_primitive_tag_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Pe1FadeTile, r) == sizeof(Pe1PrimTag), game_fade_tile_size);

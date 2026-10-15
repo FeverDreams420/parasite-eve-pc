@@ -24,6 +24,9 @@
 #include "pe1/psyq_spu_api.h"
 #include "pe1/scene_dispatch.h"
 #include "pe1/scene_flags.h"
+#include "pe1/player_entity.h"
+#include "pe1/textbox.h"
+#include "pe1/menu_widget.h"
 
 /* Native backing for the original boot allocator. Overlay workspaces are
  * ordinary persistent memory; native OT/actor pointers need larger arenas. */
@@ -74,12 +77,28 @@ static void Boot_PollHost(void) {
         if(fclose(out)!=0 || !written){fprintf(stderr,"Cannot finish VRAM capture\n");fflush(stderr);_Exit(2);}
     }
     DISPENV display;GetDispEnv(&display);
-    printf("{\"event\":\"frame_limit\",\"vblanks\":%u,\"scene\":%u,\"flags\":%u,\"draw_slot\":%d,\"movie\":%d,\"pad\":%u,\"game_flags\":%u,\"video_state\":%u,\"game_frame\":%u,\"movie_frame\":%d,\"display\":{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d,\"rgb24\":%d}}\n",
+    printf("{\"event\":\"frame_limit\",\"vblanks\":%u,\"scene\":%u,\"flags\":%u,\"draw_slot\":%d,\"movie\":%d,\"pad\":%u,\"game_flags\":%u,\"video_state\":%u,\"game_frame\":%u,\"movie_frame\":%d,\"move_lock\":%d,\"display\":{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d,\"rgb24\":%d},\"dialogue\":[",
         g_BootHostVBlankCount,(u32)g_SceneDispatchToken,g_GameStateFlags,g_ActiveDrawSlot,
         g_GameState.scene_audio.tracks.movie_index,g_FieldPadBits,g_GameState.flags,
         g_GameState.scene_audio.tracks.draw_enabled.bits,g_GlobalFrameCounter[0],
-        (s16)g_GameState.scene_audio.tracks.movie_frame,
+        (s16)g_GameState.scene_audio.tracks.movie_frame,g_FieldMoveLock,
         display.disp.x,display.disp.y,display.disp.w,display.disp.h,display.isrgb24);
+    for(unsigned i=0;i<4;++i)
+        printf("%s{\"state\":%u,\"page\":%d}",i?",":"",g_TextboxEntries[i].state,g_TextboxEntries[i].page_id);
+    printf("],\"actors\":[");
+    unsigned actor_index=0;
+    for(FieldActor *actor=g_FieldActorListHead;actor;actor=actor->next){
+        printf("%s{\"type\":%u,\"sub\":%u,\"player\":%s,\"flags\":%u,\"position\":[%d,%d,%d],\"yaw\":%d}",
+            actor_index++?",":"",actor->type_id,actor->sub_id,actor==g_PlayerEntity?"true":"false",actor->flags,
+            actor->pos_x,actor->pos_y,actor->pos_z,actor->rot_y);
+    }
+    printf("],\"menu\":");
+    if(g_MenuWidgetCurrentNode){
+        MenuWidgetNode *node=g_MenuWidgetCurrentNode;
+        printf("{\"mode\":%d,\"selection\":%d,\"cursor\":[%d,%d]}",
+            node->mode,node->selected_base,node->cursor_x,node->cursor_y);
+    }else printf("null");
+    printf("}\n");
     fflush(stdout);
     /* A diagnostic cap is a forced process boundary, even inside a menu's
      * VSync callback. Do not unwind through the locked SDK callback stack. */

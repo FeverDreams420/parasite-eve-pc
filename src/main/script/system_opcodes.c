@@ -468,7 +468,8 @@ int Script_RunEntityCommand(int **arg0) {
  * move speed. All are default-profile handlers that reach the current actor
  * through absolute addresses. */
 
-int Entity_ClearMotionVectors(void) {
+int Entity_ClearMotionVectors(int **unused) {
+    (void)unused;
     g_CurrentEntity->motion_x = 0;
     g_CurrentEntity->motion_y = 0;
     g_CurrentEntity->motion_z = 0;
@@ -478,7 +479,8 @@ int Entity_ClearMotionVectors(void) {
     return 1;
 }
 
-int Entity_ComputeVelocity(void) {
+int Entity_ComputeVelocity(int **unused) {
+    (void)unused;
     FieldActor *state = g_CurrentEntity;
     int temp;
 
@@ -489,8 +491,8 @@ int Entity_ComputeVelocity(void) {
     }
 
     temp = Math_FixedMul(temp, g_CurrentEntity->move_speed << 4);
-    g_CurrentEntity->motion_x = Math_FixedMul(-temp, rsin(g_CurrentEntity->rot_y) << 4);
-    g_CurrentEntity->motion_z = Math_FixedMul(-temp, rcos(g_CurrentEntity->rot_y) << 4);
+    g_CurrentEntity->motion_x = Math_FixedMul((s32)(0u-(u32)temp), (s32)((u32)rsin(g_CurrentEntity->rot_y) << 4));
+    g_CurrentEntity->motion_z = Math_FixedMul((s32)(0u-(u32)temp), (s32)((u32)rcos(g_CurrentEntity->rot_y) << 4));
 
     return 1;
 }

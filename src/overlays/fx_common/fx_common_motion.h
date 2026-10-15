@@ -38,7 +38,7 @@ extern s16 g_FxCommonMotionRemaining0,g_FxCommonMotionRemaining1;
 #define g_FxCommonMotionTarget1X (g_FxCommonMotionTarget1.x)
 extern u32 g_FieldPadPressed;
 extern u32 g_FieldPadBits;
-extern void *g_AkaoBgmHandle[];
+#include "pe1/akao/bgm.h"
 extern s32 g_FxCommonPageChanged;
 extern s32 g_FxCommonPageOpen;
 extern s16 g_FxCommonExitRequested;

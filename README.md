@@ -14,8 +14,9 @@ readability and native builds.
 
 The executable starts the original game entrypoint and follows the original
 logo, opening movie and title menu. Automated input can select New Game,
-load M431, play its movie and reach M001, where remaining script bindings
-still stop progress. Continue now opens the card screen without its earlier
+load M431, play its movie, pass the M010 dialogue and name entry, and reach
+M002. Scheduled input checks twenty simulation frames of movement and entry
+into M003, the opera lobby. Full exploration remains unverified. Continue now opens the card screen without its earlier
 NULL-pointer crash; loading an actual saved game remains unverified.
 Artwork and video come from a user-supplied Disc 1 CUE/BIN. Full gameplay and
 end-to-end audio are unfinished; isolated AKAO/XA tests do not prove complete

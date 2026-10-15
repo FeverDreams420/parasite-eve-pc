@@ -33,6 +33,7 @@ void Akao_SetVoiceKeyOn(AkaoTrack *voice, unsigned int voice_mask);
 void Spu_ManageVoices(int id, int control);
 void Seq_StartNestedTrack(AkaoTrack *track, AkaoNestedSource *source, unsigned mask, void *script);
 void Seq_ClearTrackVoiceId(AkaoTrack *track, unsigned voice_id);
+void Akao_RemoveVoice(AkaoTrack *tracks, int voice_id);
 
 void Spu_VoiceMaskCompose(AkaoTrack *track, int *mask_out, int mask, int mask_keep);
 void Seq_MarkTrack34MaskDirty(void);

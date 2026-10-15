@@ -523,26 +523,13 @@ void Seq_StartNestedTrack(AkaoTrack *track, AkaoNestedSource *source, unsigned i
 }
 
 void Seq_ClearTrackVoiceId(AkaoTrack *track, unsigned int voice_id) {
-    unsigned int i;
-    int bit;
-    int reset;
-    AkaoTickBank *state;
-    int *assigned;
-
-    if (voice_id < 24) {
-        i = 0;
-        reset = 24;
-        state = D_8009D2C8;
-        bit = 1;
-        assigned = (int *)track + 0x3C;
-        do {
-            if (*assigned == voice_id) {
-                *assigned = reset;
-                state->timing.allocated_voice_mask &= ~(bit << i);
+    if(voice_id<AKAO_VOICE_COUNT){
+        for(unsigned i=0;i<AKAO_VOICE_COUNT;++i){
+            if(track[i].assigned_voice_index==(int)voice_id){
+                track[i].assigned_voice_index=AKAO_VOICE_COUNT;
+                D_8009D2C8->timing.allocated_voice_mask &= ~(1u<<i);
             }
-            i++;
-            assigned += 0x47;
-        } while (i < 24);
+        }
     }
 }
 

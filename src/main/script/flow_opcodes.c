@@ -294,11 +294,11 @@ int Script_SpawnEntityAt(int **arg0) {
 }
 
 
-int Script_StopEntityAnim(s16 **arg0) {
+int Script_StopEntityAnim(int **arg0) {
     s16 value[5];
 
     value[0] = -1;
-    Render_SetupColorTable(*arg0[0], 0, value);
+    Render_SetupColorTable((s16)*arg0[0], 0, value);
     return 1;
 }
 
@@ -417,15 +417,14 @@ int Script_PlayFieldSfx(FieldSfxScriptArgs args) {
     return 1;
 }
 
-int Draw_GetTextboxPageState(short arg0);
 
 int Script_GetNodeTarget14(int **arg0) {
     *arg0[0] = g_ScriptNodePool->target14;
     return 1;
 }
 
-int Script_YieldWhileTableEntrySet(short **arg0) {
-    if ((Draw_GetTextboxPageState(*arg0[0]) << 24) != 0) {
+int Script_YieldWhileTableEntrySet(int **arg0) {
+    if ((u8)Draw_GetTextboxPageState((s16)*arg0[0]) != 0) {
         g_ScriptCursorAddress -= 0xC;
         g_ScriptNodePool->active = 1;
         return 0;
@@ -433,8 +432,8 @@ int Script_YieldWhileTableEntrySet(short **arg0) {
     return 1;
 }
 
-int Script_ClearTableEntry(short **arg0) {
-    Draw_CloseTextboxPage(*arg0[0]);
+int Script_ClearTableEntry(int **arg0) {
+    Draw_CloseTextboxPage((s16)*arg0[0]);
     return 1;
 }
 
@@ -695,11 +694,12 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [0]=Script_JumpToEntityOffset, [1]=Entity_MarkCurrentDead,
     [2]=Entity_SetCurrentNodeActive, [4]=Entity_MarkNodeFree, [5]=Script_JumpIfZero,
     [8]=Script_SpawnEntityAt, [9]=Script_EvalExpr, [10]=Script_AssignValue,
-    [11]=Script_SetEntityVec3, [12]=Script_GetEntityVec3, [14]=Entity_QueryField,
+    [13]=Script_StopEntityAnim, [11]=Script_SetEntityVec3, [12]=Script_GetEntityVec3, [14]=Entity_QueryField,
     [17]=Script_DispatchCmd, [18]=Script_SpawnChildNode, [19]=Entity_SetCurrentFlags, [20]=Entity_SelectFieldSetter,
     [22]=Entity_YieldWhileMoving, [23]=Entity_ComputeVelocityToTarget,
     [24]=Entity_FindNodeById, [25]=Entity_GetCurrentNodeId, [27]=Script_SetEntityMoveSpeed,
     [28]=Script_PlayFieldSfx,
+    [34]=Script_YieldWhileTableEntrySet, [35]=Script_ClearTableEntry,
     [30]=Entity_SetCurrentFlag80, [31]=Script_GetNodeTarget14, [32]=Entity_MarkCurrentNodeFree,
     [36]=Script_GetNodeTargets18_1C, [37]=Script_GetCurrentEntityField24,
     [38]=Script_GetCurrentEntityFieldD, [39]=Script_SetCurrentEntityFieldD,
@@ -715,7 +715,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [50]=Entity_ClearCurrentFlag80, [55]=Entity_SetCurrentFlag4000, [57]=Entity_ClearCurrentFlag4000,
     [46]=Entity_SetCurrentActionMode, [47]=Script_SetEntityAnimFrame, [48]=Script_WaitAnimFrameMatch, [68]=Script_MoveTowardPoint,
     [69]=Script_GetAngleToEntity, [75]=Render_CameraSnapToEntity, [78]=Script_SetEntityAnimSpeed,
-    [84]=Entity_GetDistanceComponents, [91]=Script_ClearBattleFlags, [92]=Script_SetBattleFlags, [94]=Entity_GetPositionByType, [97]=Render_CameraTrackRelativeOffset, [123]=Script_SetObjEntryField8, [116]=Script_SetObjEntryLimit, [117]=Script_SetFlagSlot, [118]=Render_CameraStepAngleFade,
+    [101]=Entity_ClearMotionVectors, [102]=Entity_ComputeVelocity, [84]=Entity_GetDistanceComponents, [91]=Script_ClearBattleFlags, [92]=Script_SetBattleFlags, [94]=Entity_GetPositionByType, [97]=Render_CameraTrackRelativeOffset, [123]=Script_SetObjEntryField8, [116]=Script_SetObjEntryLimit, [119]=Script_PointInPoly, [117]=Script_SetFlagSlot, [118]=Render_CameraStepAngleFade,
     [131]=Script_WaitAnimRange, [146]=Script_PlayEntityAnim, [147]=Script_SetAnimInterpRate, [148]=Menu_GetModeState,
     [173]=Script_ClearInputFlagBit2, [174]=Script_SetInputFlagBit2,
     [172]=Script_SetAnimSlotPointer, [170]=Script_SetSceneFlag2000, [171]=Script_ClearSceneFlag2000,
@@ -723,5 +723,5 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [213]=Script_ClearEntityParentLink, [214]=Entity_ClearParentLink, [199]=Script_SetNodeFlag80, [196]=Script_RotateEntityAngle, [215]=Script_GetSin, [216]=Script_GetCos, [217]=Script_GetAtan2,
     [227]=Script_SetInventorySlotPointer, [228]=Script_GetInventoryTotal, [229]=Script_GetInventorySlotLimit,
     [220]=Script_SetEntityFlag1000000, [225]=Script_SetMeshFadeLevel, [222]=Entity_PopCount, [223]=Script_EnableEntityGravity, [224]=Script_DisableEntityGravity,
-    [184]=Script_TurnTowardPointStep, [234]=Akao_ProcessCommand, [237]=Script_DispatchScriptCmd, [240]=Script_GetPlayerInputFlag
+    [184]=Script_TurnTowardPointStep, [234]=Akao_ProcessCommand, [237]=Script_DispatchScriptCmd, [239]=Script_OpenSaveLoadMenu, [240]=Script_GetPlayerInputFlag
 };

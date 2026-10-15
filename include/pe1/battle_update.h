@@ -32,7 +32,7 @@ extern u8 g_BattleSpritePrimCountdown;
 extern u8 g_BattleActionActorCount;
 extern int g_BattleAttackAnimFrame;
 extern s32 g_BattleImpactPmSlot;
-extern void *g_AkaoBgmHandle[16];
+#include "pe1/akao/bgm.h"
 extern BattleEntity *g_BattleActionActors[7];
 
 #endif

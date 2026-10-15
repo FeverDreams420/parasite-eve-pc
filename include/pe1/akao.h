@@ -32,7 +32,7 @@ typedef union AkaoInstrumentAddress {
 extern AkaoInstrument g_AkaoInstrumentTable[];
 extern unsigned g_AkaoStreamUploadMode, g_AkaoStreamAAddress, g_AkaoStreamARemaining, g_AkaoInstrumentUploadAddress, g_AkaoInstrumentUploadRemaining;
 
-extern void *g_AkaoBgmHandle[];
+#include "pe1/akao/bgm.h"
 
 int Akao_SendPositionalCmdStereo(int arg0, int arg1, short x, short y, short z);
 

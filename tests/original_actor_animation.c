@@ -5,6 +5,9 @@
 #include "../src/overlays/menu_memcard/menu_memcard_link.h"
 #include "../src/overlays/menu_memcard/menu_memcard_trail.h"
 #include "pe1/akao/pan3d.h"
+#include "pe1/akao/voice_masks.h"
+#include "pe1/akao/note_step.h"
+#include "pe1/akao/voice_state.h"
 #include "../src/overlays/menu_memcard/menu_memcard_glint.h"
 #include "../src/overlays/menu_memcard/menu_memcard_video.h"
 #include "pe1/resident_tables.h"
@@ -12,6 +15,7 @@
 #include "pe1/textbox.h"
 #include "pe1/textbox_open.h"
 #include "pe1/menu_flags.h"
+#include "pe1/menu_sound.h"
 #include "pe1/draw_wipe_rect.h"
 #include "pe1/memcard.h"
 void DeliverEvent(unsigned event,unsigned spec);
@@ -159,6 +163,14 @@ static int boot_buffer_layout(void)
         g_GameState.bank_work_far_end != g_GameState.voice_bank_base + 0x2800 ||
         !g_GameState.scene_process_slots || !g_GameState.script_sprite_buffer ||
         !g_GameState.unk_170) return 0;
+    if(g_AkaoBgmHandle[0]!=g_GameState.bank_work_far_end)return 0;
+    void *resident=g_AkaoBgmHandle[0];u8 sound_alias[4];
+    g_AkaoBgmHandle[0]=sound_alias;
+    g_AkaoBgmHandle[1]=sound_alias+1;
+    g_GameState.scene_object_tables[1]=sound_alias+2;
+    if(g_GameState.bank_work_far_end!=sound_alias || g_GameState.scene_object_tables[0]!=sound_alias+1 ||
+       g_AkaoBgmHandle[2]!=sound_alias+2)return 0;
+    g_AkaoBgmHandle[0]=resident;g_GameState.scene_object_tables[0]=g_GameState.scene_object_tables[1]=NULL;
     DrawFrameBuffer saved_frames[2];
     memcpy(saved_frames,g_DrawFrameBuffers,sizeof(saved_frames));
     memset(g_DrawFrameBuffers,0xA5,sizeof(g_DrawFrameBuffers));
@@ -2061,6 +2073,152 @@ static int original_flag_opcode_bindings(void)
     return 1;
 }
 
+static int original_polygon_opcode(void)
+{
+    const s32 polygons[][8]={{-10,-10,10,-10,10,10,-10,10},{-10,10,10,10,10,-10,-10,-10},
+        {-10,-10,10,-10,0,0,-10,10},{0,0,0,0,0,0,0,0},
+        {INT32_MIN,INT32_MIN,INT32_MAX,INT32_MIN,INT32_MAX,INT32_MAX,INT32_MIN,INT32_MAX},
+        {INT32_MAX,-1,INT32_MIN,1,0,INT32_MAX,1,INT32_MIN}};
+    const u32 points[]={0x80000000,0xffffffff,0,1,65535,65536,0x7fffffff,0x100000,0xfff00000};
+    FieldActor *saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;
+    u32 *saved_cursor=g_ScriptCursor;u32 saved_var=g_ScriptVariableBank[9];
+    FieldActor actor={0};g_CurrentEntity=&actor;uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[119]!=Script_PointInPoly)return 0;
+    for(unsigned p=0;p<6;++p)for(unsigned x=0;x<9;++x)for(unsigned z=0;z<9;++z){
+        int data[11];memcpy(data,polygons[p],sizeof(polygons[p]));
+        data[8]=(s32)points[x];data[9]=(s32)points[z];data[10]=(s32)0xa5a5a5a5;
+        int before[11];memcpy(before,data,sizeof(data));int *args[11];
+        for(unsigned i=0;i<11;++i)args[i]=data+i;
+        u32 result=Script_PointInPoly(args);u32 output[]={result,(u32)data[10]};
+        for(unsigned i=0;i<2;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((output[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        if(memcmp(data,before,10*sizeof(int))){fprintf(stderr,"Polygon input changed %u %u %u\n",p,x,z);return 0;}
+        u32 program[15]={119|(11u<<13),2u<<15};
+        for(unsigned i=0;i<10;++i)program[i+2]=(u32)before[i];
+        program[12]=9;program[13]=32;g_ScriptVariableBank[9]=0xa5a5a5a5;
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || g_ScriptVariableBank[9]!=output[1] || node.current.script!=program+15 ||
+           !(node.flags&0x10) || g_ScriptNodePool){fprintf(stderr,"Polygon dispatch %u %u %u result=%u var=%u want=%u cursor=%llu flags=%x\n",p,x,z,result,g_ScriptVariableBank[9],output[1],(unsigned long long)(node.current.script-program),node.flags);return 0;}
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_ScriptVariableBank[9]=saved_var;
+    if(hash!=UINT64_C(0xd928a71a360ec985)){fprintf(stderr,"Polygon hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original polygon opcode: 486 USA MIPS boundary, winding, degenerate and overflow states, eleven operands and native dispatcher passed");
+    return 1;
+}
+
+static int original_motion_opcodes(void)
+{
+    const u32 factors[]={0,1,65536,327680,0x80000000,0x7fffffff};
+    const u16 speeds[]={0,1,4096,65535};
+    const s16 angles[]={-32768,-1,0,1,1024,2048,3072,4095,32767};
+    const u32 patterns[]={0,1,2,3,0x40,0x41,0x80,0x7fffffff,0x80000000,0xffffffff,0x12345678,0xfedcba98};
+    FieldActor *saved_actor=g_CurrentEntity,*saved_player=g_PlayerEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    uint64_t velocity=UINT64_C(14695981039346656037),reset=velocity;
+    if(g_ScriptQueueOpcodeHandlers[101]!=Entity_ClearMotionVectors ||
+       g_ScriptQueueOpcodeHandlers[102]!=Entity_ComputeVelocity)return 0;
+    for(unsigned player=0;player<2;++player)for(unsigned f=0;f<6;++f)
+    for(unsigned speed=0;speed<4;++speed)for(unsigned angle=0;angle<9;++angle){
+        FieldActor actor={.move_factor=(s32)factors[f],.move_speed=speeds[speed],.rot_y=angles[angle],
+            .motion_x=0x1234,.motion_z=0x5678};
+        FieldActor before=actor;g_CurrentEntity=&actor;g_PlayerEntity=player?&actor:NULL;
+        u32 result=Entity_ComputeVelocity(NULL);const u32 data[]={result,(u32)actor.motion_x,(u32)actor.motion_z};
+        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<4;++b)
+            velocity=(velocity^((data[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        FieldActor expected=before;expected.motion_x=actor.motion_x;expected.motion_z=actor.motion_z;
+        if(memcmp(&expected,&actor,sizeof(actor)))return 0;
+        actor=before;u32 program[]={102,0,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(&expected,&actor,sizeof(actor)) || node.current.script!=program+4 ||
+           !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
+    for(unsigned p=0;p<12;++p)for(unsigned shift=0;shift<8;++shift){
+        FieldActor actor={.flags=patterns[p]},expected;g_CurrentEntity=&actor;g_PlayerEntity=NULL;
+        int *vectors[]={&actor.motion_x,&actor.motion_y,&actor.motion_z,&actor.accel_x,&actor.accel_y,&actor.accel_z};
+        for(unsigned i=0;i<6;++i)*vectors[i]=(s32)patterns[(p+shift+i)%12];
+        FieldActor before=actor;u32 result=Entity_ClearMotionVectors(NULL);
+        const u32 data[]={result,(u32)actor.motion_x,(u32)actor.motion_y,(u32)actor.motion_z,
+            (u32)actor.accel_x,(u32)actor.accel_y,(u32)actor.accel_z,actor.flags};
+        for(unsigned i=0;i<8;++i)for(unsigned b=0;b<4;++b)
+            reset=(reset^((data[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        expected=before;expected.motion_x=expected.motion_y=expected.motion_z=0;
+        expected.accel_x=expected.accel_y=expected.accel_z=0;
+        if(memcmp(&expected,&actor,sizeof(actor)))return 0;
+        actor=before;u32 program[]={101,0,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(&expected,&actor,sizeof(actor)) || node.current.script!=program+4 ||
+           !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
+    g_CurrentEntity=saved_actor;g_PlayerEntity=saved_player;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(velocity!=UINT64_C(0xd151bdfd099e675a) || reset!=UINT64_C(0x137482f2419b4165)){
+        fprintf(stderr,"Motion opcode hashes %016llx %016llx\n",(unsigned long long)velocity,(unsigned long long)reset);return 0;}
+    puts("Original motion opcodes: 432 velocity and 96 reset USA MIPS states, native player scaling, wrap and full dispatcher passed");
+    return 1;
+}
+
+static int original_dialogue_opcodes(void)
+{
+    const unsigned ops[]={13,34,35};
+    int (*handlers[])(int **)={Script_StopEntityAnim,Script_YieldWhileTableEntrySet,Script_ClearTableEntry};
+    const u32 open_pages[]={0,1,32767,32768,65535,65536,0x80000000,0xffffffff,0x12345678};
+    const u32 wait_pages[]={5,6,7,8,0xffffffff,0,65541,0x80000000,0x7fffffff};
+    const u8 movements[]={0,1,255};
+    const s16 pages[4][4]={{5,6,7,8},{5,5,5,5},{-1,5,-1,5},{-1,-1,-1,-1}};
+    const u8 states[8][4]={{0,0,0,0},{1,2,3,4},{0,3,2,1},{128,255,127,1},
+        {255,0,3,0},{0,0,255,0},{0,0,0,255},{2,2,2,2}};
+    TextboxEntry saved[4];memcpy(saved,g_TextboxEntries,sizeof(saved));
+    u8 saved_movement=g_PlayerMovementEnabled,saved_choice=g_DialogueChoiceCursor;
+    s8 saved_menu=g_MenuEquipSlotIndex;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    u8 markers[4];FieldActor actor={0};g_CurrentEntity=&actor;
+    uint64_t hashes[2]={UINT64_C(14695981039346656037),UINT64_C(14695981039346656037)};
+    for(unsigned op=0;op<3;++op)for(unsigned layout=0;layout<(op?4u:16u);++layout)
+    for(unsigned middle=0;middle<(op?8u:9u);++middle)for(unsigned last=0;last<(op?9u:3u);++last){
+        if(g_ScriptQueueOpcodeHandlers[ops[op]]!=handlers[op])return 0;
+        memset(g_TextboxEntries,0xa5,sizeof(saved));
+        for(unsigned i=0;i<4;++i){
+            g_TextboxEntries[i].message=markers+i;
+            g_TextboxEntries[i].state=op?states[middle][i]:(layout&(1u<<i))?3:0;
+            if(op)g_TextboxEntries[i].page_id=pages[layout][i];
+        }
+        g_DialogueChoiceCursor=0x12;g_MenuEquipSlotIndex=-7;
+        if(!op)g_PlayerMovementEnabled=movements[last];
+        TextboxEntry before[4];memcpy(before,g_TextboxEntries,sizeof(before));
+        int value=(s32)(op?wait_pages[last]:open_pages[middle]);int *args[]={&value};
+        u32 storage[4]={0};ScriptNode node={.active=7};g_ScriptNodePool=&node;g_ScriptCursor=storage+3;
+        u32 result=handlers[op](args);uint64_t hash=hashes[op?1:0];
+#define DIALOGUE_PUT(value,bytes) do {u32 put_=(u32)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)put_)*UINT64_C(1099511628211);put_>>=8;}}while(0)
+        DIALOGUE_PUT(result,4);
+        if(op){DIALOGUE_PUT((uintptr_t)g_ScriptCursor-(uintptr_t)storage,4);DIALOGUE_PUT(node.active,4);}
+        for(unsigned i=0;i<4;++i){
+            TextboxEntry *entry=&g_TextboxEntries[i];
+            if(entry->message!=markers+i)return 0;
+            for(unsigned b=0;b<4;++b)DIALOGUE_PUT(((u8 *)entry)[b],1);
+            DIALOGUE_PUT(0x80180000u+i*256,4);
+            for(unsigned b=0;b<48;++b)DIALOGUE_PUT(((u8 *)&entry->style)[b],1);
+        }
+        if(!op){DIALOGUE_PUT(g_DialogueChoiceCursor,1);DIALOGUE_PUT(g_MenuEquipSlotIndex,1);}
+#undef DIALOGUE_PUT
+        hashes[op?1:0]=hash;
+        TextboxEntry expected[4];memcpy(expected,g_TextboxEntries,sizeof(expected));
+        u8 choice=g_DialogueChoiceCursor;s8 menu=g_MenuEquipSlotIndex;
+        memcpy(g_TextboxEntries,before,sizeof(before));g_DialogueChoiceCursor=0x12;g_MenuEquipSlotIndex=-7;
+        u32 program[]={ops[op]|(1u<<13),0,(u32)value,32,0};
+        node=(ScriptNode){.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(g_ScriptNodePool || node.current.script!=(result?program+5:program) || node.active!=!result ||
+           !!(node.flags&0x10)!=!!result || memcmp(expected,g_TextboxEntries,sizeof(expected)) ||
+           choice!=g_DialogueChoiceCursor || menu!=g_MenuEquipSlotIndex)return 0;
+    }
+    memcpy(g_TextboxEntries,saved,sizeof(saved));g_PlayerMovementEnabled=saved_movement;
+    g_DialogueChoiceCursor=saved_choice;g_MenuEquipSlotIndex=saved_menu;g_CurrentEntity=saved_actor;
+    g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hashes[0]!=UINT64_C(0x76d0cc627a0cae51) || hashes[1]!=UINT64_C(0x1506f2e400f8d88f)){
+        fprintf(stderr,"Dialogue opcode hashes %016llx %016llx\n",(unsigned long long)hashes[0],(unsigned long long)hashes[1]);return 0;}
+    puts("Original dialogue opcodes: 432 open and 576 wait/close USA MIPS states, native pointers, duplicate pages and full dispatcher passed");
+    return 1;
+}
+
 static int original_turn_to_actor_opcode(void)
 {
     const s32 positions[][2]={{0,0},{65536,0},{0,-65536},{INT32_MIN,INT32_MAX}};
@@ -2382,9 +2540,41 @@ static int original_scene_transition_opcode(void)
     return 1;
 }
 
+static int original_native_voice_release(void)
+{
+    AkaoSequencerBank *saved_bank=g_AkaoCurTrack;uint64_t hash=UINT64_C(14695981039346656037);
+    const u32 masks[]={0,0xffffff,0x555555,0xffffffff};u8 programs[24][8];
+    for(unsigned function=0;function<2;++function)for(unsigned request=0;request<27;++request)
+    for(unsigned layout=0;layout<6;++layout)for(unsigned m=0;m<4;++m){
+        int requested=request<25?(int)request:request==25?-1:INT32_MAX;
+        AkaoTrack tracks[24],before[24];memset(tracks,0xa5,sizeof(tracks));
+        for(unsigned i=0;i<24;++i){
+            int id=layout==0?(int)i:layout==1?7:layout==2?(i&1)?24:(int)i:
+                layout==3?(i&1)?-1:0:layout==4?(int)(i%3):(int)((i*17+layout)%28)-2;
+            tracks[i].assigned_voice_index=id;tracks[i].pc=programs[i];
+            for(unsigned j=0;j<4;++j)tracks[i].call_stack[j]=programs[i]+j;
+        }
+        memcpy(before,tracks,sizeof(before));
+        AkaoSequencerBank bank={.allocated_voice_mask=masks[m]},expected_bank=bank;g_AkaoCurTrack=&bank;
+        if(function)Seq_ClearTrackVoiceId(tracks,(u32)requested);else Akao_RemoveVoice(tracks,requested);
+        for(unsigned i=0;i<24;++i){
+            u32 id=(u32)tracks[i].assigned_voice_index;
+            for(unsigned b=0;b<4;++b)hash=(hash^((id>>(b*8))&255))*UINT64_C(1099511628211);
+            before[i].assigned_voice_index=tracks[i].assigned_voice_index;
+        }
+        for(unsigned b=0;b<4;++b)hash=(hash^((bank.allocated_voice_mask>>(b*8))&255))*UINT64_C(1099511628211);
+        expected_bank.allocated_voice_mask=bank.allocated_voice_mask;
+        if(memcmp(tracks,before,sizeof(tracks)) || memcmp(&bank,&expected_bank,sizeof(bank)))return 0;
+    }
+    g_AkaoCurTrack=saved_bank;
+    if(hash!=UINT64_C(0xe2e44b8a1b490a5a)){fprintf(stderr,"Native voice release hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original voice release: 1296 USA MIPS cases, all 24 native records and full-width program/return pointers retained");
+    return 1;
+}
+
 static int original_actor_audio_state(void)
 {
-    if(!original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
@@ -6565,6 +6755,103 @@ static int original_credit_images(PeDisc *disc)
     printf("Original credits images: 31 real images, %u decoder steps, %u RGB24 slice uploads, full staged VRAM and both presented buffers match whole-frame MDEC output; ten invalid states/workspaces fail and recover\n",states,uploads);return 1;
 }
 
+static int original_menu_sound_commands(PeDisc *disc)
+{
+    _Alignas(16) static u8 bank[0x1400];PeDiscFile archive;
+    if(!pe_disc_find(disc,"PE.IMG",&archive) ||
+       !pe_disc_read(disc,&archive,(u64)g_PeImageSectorTable[7]*2048,bank,sizeof(bank)))return 0;
+    u32 directory,packed;memcpy(&directory,bank+4,4);
+    if(directory>sizeof(bank)-sizeof(SceneAssetDirectory))return 0;
+    memcpy(&packed,bank+directory+0x2c,4);unsigned count=packed>>22,offset=packed&0x3fffff;
+    if(offset>sizeof(bank) || count>(sizeof(bank)-offset)/12)return 0;
+    void (*play[])(void)={Menu_PlayConfirmSound,Menu_PlayCancelSound,Menu_PlayMoveSound,Menu_PlayErrorSound};
+    Pe1GameState saved_state=g_GameState;AkaoStagedCommand saved_command=g_AkaoCmd;
+    AkaoQueueEntry saved_queue[16];memcpy(saved_queue,g_AkaoMessageQueue,sizeof(saved_queue));
+    int saved_count=g_AkaoMessageQueueCount;AkaoSequenceCounter saved_sequence=g_AkaoCmd24Sequence;
+    g_GameState.bank_work_far_end=NULL;g_AkaoMessageQueueCount=0;
+    for(unsigned i=0;i<4;++i)play[i]();
+    if(g_AkaoMessageQueueCount)return 0;
+    g_GameState.bank_work_far_end=bank;
+    if(g_AkaoBgmHandle[0]!=bank)return 0;
+    for(unsigned i=0;i<4;++i){
+        u32 payload=0;
+        for(unsigned row=0;row<count;++row){
+            u16 key;memcpy(&key,bank+offset+row*12+10,2);
+            if(key==0x44c+i){memcpy(&payload,bank+offset+row*12+4,4);payload&=0xffffff;break;}
+        }
+        if(!payload || payload>sizeof(bank)-4)return 0;
+        u32 magic;memcpy(&magic,bank+payload,4);if(magic!=0x4f414b41)return 0;
+        play[i]();AkaoQueueEntry *command=&g_AkaoMessageQueue[i];
+        if(g_AkaoMessageQueueCount!=(int)i+1 || command->opcode.word!=0x24 ||
+           command->arg0.sequence!=bank+payload+4 || command->arg1!=0x100 ||
+           command->arg2!=0x80 || command->arg3!=0x7f)return 0;
+    }
+    g_GameState=saved_state;g_AkaoCmd=saved_command;g_AkaoMessageQueueCount=saved_count;
+    g_AkaoCmd24Sequence=saved_sequence;memcpy(g_AkaoMessageQueue,saved_queue,sizeof(saved_queue));
+    puts("Original menu audio: canonical loaded-bank alias and all four real USA sound keys queue native AKAO commands; absent bank stays quiet");
+    return 1;
+}
+
+static int original_akao_resident_tables(PeDisc *disc,PeDiscFile *exe)
+{
+    const struct {u32 address;size_t size;const void *data;} tables[]={
+        {0x8009b85c,96,g_AkaoOpcodeArgLengths},{0x8009b8bc,32,g_AkaoExtOpcodeArgLengths},
+        {0x8009b8dc,22,g_AkaoNoteLengthTable},{0x8009b8f4,4,g_AkaoDefaultVoiceProgram},
+        {0x8009b8f8,512,g_AkaoPanVolumeTable}};
+    u8 bytes[1024];u32 pointers[16];size_t sizes[16];
+    for(unsigned i=0;i<5;++i)
+        if(!pe_disc_read(disc,exe,tables[i].address-0x80010000u+0x800,bytes,tables[i].size) ||
+           memcmp(bytes,tables[i].data,tables[i].size))return 0;
+    if(!pe_disc_read(disc,exe,0x8009c080u-0x80010000u+0x800,pointers,sizeof(pointers)))return 0;
+    for(unsigned i=0;i<16;++i){
+        u32 end=0x8009c080;
+        for(unsigned j=0;j<16;++j){
+            if(pointers[j]>pointers[i] && pointers[j]<end)end=pointers[j];
+            if((pointers[i]==pointers[j])!=(g_AkaoSoundEntryTable[i]==g_AkaoSoundEntryTable[j]))return 0;
+        }
+        if(pointers[i]<0x8009baf8 || pointers[i]>=end || end-pointers[i]>sizeof(bytes))return 0;
+        sizes[i]=end-pointers[i];
+        if(!g_AkaoSoundEntryTable[i] || !pe_disc_read(disc,exe,pointers[i]-0x80010000u+0x800,bytes,sizes[i]) ||
+           memcmp(bytes,g_AkaoSoundEntryTable[i],sizes[i]))return 0;
+    }
+    const unsigned periods[]={1,2,255},modes[]={0,1,4};
+    int saved_mode=g_AkaoPlaybackMode;uint64_t hash=UINT64_C(14695981039346656037);unsigned frames=0;
+    for(unsigned selector=0;selector<16;++selector)for(unsigned period=0;period<3;++period)
+    for(unsigned mode=0;mode<3;++mode){
+        void *wave=g_AkaoSoundEntryTable[selector];
+        AkaoTrack voice={.pitch_lfo_table=wave,.volume_lfo_table=wave,.aux_lfo_table=wave,
+            .flags=7,.expression_value=100<<16,.volume_base=100<<8,.pitch_base=0x1000,
+            .pan_target=0x7f00,.panpot=0x7f00,.pitch_lfo_phase=1,.volume_lfo_phase=1,.aux_lfo_phase=1,
+            .pitch_lfo_duration=periods[period],.volume_lfo_duration=periods[period]+1,
+            .aux_lfo_duration=periods[period]+2,.pitch_lfo_depth=1024,.volume_lfo_target=100<<8,
+            .aux_lfo_target=64<<8,.update_flags=0x13};
+        g_AkaoPlaybackMode=modes[mode];
+        for(unsigned tick=0;tick<512;++tick){
+            Akao_SetVoiceKeyOn(&voice,0x1000);
+#define RESIDENT_AUDIO_PUT(value,count) do {u32 v_=(u32)(value); \
+    for(unsigned b_=0;b_<(count);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+            RESIDENT_AUDIO_PUT(voice.update_flags,4);
+            const u16 values[]={voice.pitch,(u16)voice.volume_left,(u16)voice.volume_right,
+                (u16)voice.pitch_lfo_value,(u16)voice.volume_lfo_value,(u16)voice.aux_lfo_value,
+                voice.pitch_lfo_phase,voice.volume_lfo_phase,voice.aux_lfo_phase};
+            for(unsigned i=0;i<9;++i)RESIDENT_AUDIO_PUT(values[i],2);
+            const void *cursor[]={voice.pitch_lfo_table,voice.volume_lfo_table,voice.aux_lfo_table};
+            for(unsigned i=0;i<3;++i){
+                uintptr_t offset=(uintptr_t)cursor[i]-(uintptr_t)wave;
+                if(offset>=sizes[selector])return 0;
+                RESIDENT_AUDIO_PUT(offset,4);
+            }
+#undef RESIDENT_AUDIO_PUT
+            ++frames;
+        }
+    }
+    g_AkaoPlaybackMode=saved_mode;
+    if(frames!=73728 || hash!=UINT64_C(0xb2a673818a54a74e)){
+        fprintf(stderr,"Original resident audio LFO hash %016llx frames %u\n",(unsigned long long)hash,frames);return 0;}
+    puts("Original resident audio: all five constant tables and sixteen aliased wave selectors match Disc 1; 73728 full USA MIPS voice/LFO states passed");
+    return 1;
+}
+
 static int original_boot_display_data(PeDisc *disc)
 {
     Pe1GameState saved=g_GameState;PeDisc *old_image=g_CdImage;
@@ -7726,20 +8013,42 @@ static int script_movie_error_exit(const char *executable)
     puts("Original script error: movie failure terminates dispatcher instead of retrying or continuing the scene");return 1;
 }
 
-static int original_native_bootstrap(const char *executable)
+static int original_native_bootstrap(const char *executable,int field_control)
 {
     const char *disc=getenv("PE_TEST_DISC");
     if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     if(!SDL_Init(SDL_INIT_EVENTS))return 1;
     char capture[96];snprintf(capture,sizeof(capture),"pe-native-%llx.vram",(unsigned long long)SDL_GetPerformanceCounter());
-    for(unsigned input=0;input<4;++input){
-        const char *limit=input>=2?"14000":input?"13000":"8000";
-        const char *args[24]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
+    for(unsigned input=field_control?6:0;input<(field_control?9u:6u);++input){
+        const char *limit=input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+        const char *args[140]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
-        for(unsigned event=0;event<(input==3?4u:input==2?6u:input?1u:0u);++event){
+        for(unsigned event=0;event<(input==3?4u:input==2 || input>=4?6u:input?1u:0u);++event){
             unsigned index=input==3 && event>=2?event+2:event;
             args[at++]="--pad-at";args[at++]=events[index];
+        }
+        char scheduled[64][32];
+        if(input>=5){
+            unsigned event=0;
+#define BOOTSTRAP_PRESS(tick,mask) do { \
+    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",(unsigned)(tick),(unsigned)(mask)); \
+    args[at++]="--pad-at";args[at++]=scheduled[event++]; \
+    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:0",(unsigned)(tick)+10); \
+    args[at++]="--pad-at";args[at++]=scheduled[event++]; \
+}while(0)
+            for(unsigned tick=17000;tick<(input==5?28000u:22000u);tick+=600)BOOTSTRAP_PRESS(tick,0x4000);
+            if(input>=6){
+                BOOTSTRAP_PRESS(23000,8);BOOTSTRAP_PRESS(23600,8);
+                for(unsigned tick=24200;tick<32200;tick+=600)BOOTSTRAP_PRESS(tick,0x4000);
+                if(input>=7){
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"33000:%u",input==8?16u:32u);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:0",input==8?34700u:33040u);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                }
+            }
+#undef BOOTSTRAP_PRESS
         }
         SDL_PropertiesID props=SDL_CreateProperties();
         SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
@@ -7750,7 +8059,7 @@ static int original_native_bootstrap(const char *executable)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -7765,6 +8074,27 @@ static int original_native_bootstrap(const char *executable)
         if(input==3 && (!output || !strstr(output,"\"scene\":2839543880") ||
            !strstr(output,"\"video_state\":0") || !strstr(output,"\"rgb24\":0") ||
            !strstr(output,"\"game_frame\":0")))valid=0;
+        if(input==4){
+            unsigned frames=0;const char *game=output?strstr(output,"\"game_frame\":"):NULL;
+            if(!output || !strstr(output,"\"scene\":2818576456") || !strstr(output,"\"video_state\":0") ||
+               !strstr(output,"\"dialogue\":[{\"state\":2,\"page\":9}") ||
+               !strstr(output,"\"type\":0,\"sub\":0,\"player\":true") || !game ||
+               sscanf(game,"\"game_frame\":%u",&frames)!=1 || frames<4000)valid=0;
+        }
+        if(input==5 && (!output || !strstr(output,"\"scene\":2818576456") ||
+           !strstr(output,"\"video_state\":0") || !strstr(output,"\"flags\":4") ||
+           !strstr(output,"\"menu\":{\"mode\":2,\"selection\":17")))valid=0;
+        if(input>=6){
+            int x=0,y=0,z=0,yaw=0;
+            const char *player=output?strstr(output,"\"type\":0,\"sub\":0,\"player\":true"):NULL;
+            const char *position=player?strstr(player,"\"position\":"):NULL;
+            if(!output || !strstr(output,input==8?"\"scene\":2818572744":"\"scene\":2818572616") || !strstr(output,"\"video_state\":0") ||
+               !strstr(output,"\"menu\":null") || !position ||
+               sscanf(position,"\"position\":[%d,%d,%d],\"yaw\":%d",&x,&y,&z,&yaw)!=4 ||
+               x!=(input==8?-17825792:-8323072+(input==7?20*FIELD_WALK_SPEED:0)) ||
+               y!=(input==8?-262144:0) || z!=(input==8?178192384:-352387072) ||
+               yaw!=(input==8?2048:input==7?3072:2144))valid=0;
+        }
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -7774,6 +8104,11 @@ static int original_native_bootstrap(const char *executable)
             fclose(file);remove(capture);
         }else valid=0;
         if(!input && hash!=UINT64_C(0x6c2aef67a1f42efb))valid=0;
+        if(input==4 && hash!=UINT64_C(0x42b28cf73effdc8b))valid=0;
+        if(input==5 && hash!=UINT64_C(0x1d6ff100102480bb))valid=0;
+        if(input==6 && hash!=UINT64_C(0x71756cc6f486b60f))valid=0;
+        if(input==7 && hash!=UINT64_C(0x0ba1b9388d40f17f))valid=0;
+        if(input==8 && hash!=UINT64_C(0x71d4a7c739498ad8))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
@@ -7790,7 +8125,8 @@ int main(int argc, char **argv)
         int result=original_scene_texture_pages(&disc);pe_disc_close(&disc);return result?0:156;
     }
 
-    if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2]);
+    if(argc==3 && !strcmp(argv[1],"--native-field-control"))return original_native_bootstrap(argv[2],1);
+    if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2],0);
     if(argc==2 && !strcmp(argv[1],"--credits-playback")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
@@ -7887,7 +8223,7 @@ int main(int argc, char **argv)
         if (!original_video_decoder(&disc)) return 136;
         if (!original_video_stream_errors()) return 137;
         if (!original_movie_uploads(&disc) || !original_script_movie(&disc)) return 138;
-        if (!original_image_display_switch(&disc,&exe) || !original_boot_display_data(&disc) || !original_enemy_slots(&disc,&exe)) return 140;
+        if (!original_akao_resident_tables(&disc,&exe) || !original_image_display_switch(&disc,&exe) || !original_boot_display_data(&disc) || !original_menu_sound_commands(&disc) || !original_enemy_slots(&disc,&exe)) return 140;
         if (!original_title_screen(&disc)) return 134;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];

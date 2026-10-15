@@ -359,6 +359,8 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-bootstrap-arguments PROPERTIES WILL_FAIL TRUE)
     add_test(NAME original-game-bootstrap COMMAND test-original-actor-animation --native-bootstrap $<TARGET_FILE:parasite-eve-pc>)
     set_tests_properties(original-game-bootstrap PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 180 LABELS "game-assets;gpu")
+    add_test(NAME original-game-field-control COMMAND test-original-actor-animation --native-field-control $<TARGET_FILE:parasite-eve-pc>)
+    set_tests_properties(original-game-field-control PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 270 LABELS "game-assets;gpu;audio")
     add_dependencies(test-original-actor-animation parasite-eve-pc)
     add_test(NAME original-game-fx-frames COMMAND test-original-actor-animation --fx-frames)
     set_tests_properties(original-game-fx-frames PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "game-assets;gpu")
@@ -466,6 +468,18 @@ if(MSVC)
 else()
     target_compile_options(parasite-eve-original-shadow PRIVATE -ffunction-sections -fdata-sections)
 endif()
+if(BUILD_TESTING)
+    # Resident script commands can open the original menu and render transition.
+    # Link whole existing modules for every fixture that uses the real table.
+    foreach(script_target test-original-queue test-original-movement test-original-actor-animation)
+        target_sources(${script_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-shadow>)
+    endforeach()
+    foreach(script_target test-original-queue test-original-movement)
+        target_sources(${script_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-pad>
+            $<TARGET_OBJECTS:parasite-eve-original-entity-textures>)
+    endforeach()
+endif()
+
 if(BUILD_TESTING)
     add_executable(test-original-shadow tests/original_shadow.c
         $<TARGET_OBJECTS:parasite-eve-original-shadow>

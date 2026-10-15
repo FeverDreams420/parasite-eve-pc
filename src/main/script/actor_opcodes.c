@@ -517,15 +517,17 @@ void SetDispMask(s32);
 
 
 int Script_PointInPoly(int **arg0) {
-    int local[8];
+    PolygonVertex local[4];
     unsigned int i;
 
     for (i = 0; i < 4; i++) {
-        local[i * 2] = *arg0[i * 2];
-        local[i * 2 + 1] = *arg0[i * 2 + 1];
+        local[i].xFraction = (u16)*arg0[i * 2];
+        local[i].x = (s16)((u32)*arg0[i * 2] >> 16);
+        local[i].zFraction = (u16)*arg0[i * 2 + 1];
+        local[i].z = (s16)((u32)*arg0[i * 2 + 1] >> 16);
     }
 
-    *arg0[10] = Geo_PointInPoly(*arg0[8], *arg0[9], (const PolygonVertex *)local, 4);
+    *arg0[10] = Geo_PointInPoly(*arg0[8], *arg0[9], local, 4);
     return 1;
 }
 

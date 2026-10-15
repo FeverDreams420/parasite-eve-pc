@@ -31,7 +31,7 @@ PE1_STATIC_ASSERT(sizeof(RenderPacketColor) == 4, render_packet_color_size);
 
 /* Variable-size textured sprite packet used by the glyph renderer. */
 typedef struct RenderSpritePacket {
-    RenderPacketTag tag;
+    RenderNativeTag tag;
     union {
         u32 word;
         struct {
@@ -43,10 +43,10 @@ typedef struct RenderSpritePacket {
     u16 clut, width, height;
 } RenderSpritePacket;
 
-PE1_STATIC_ASSERT(sizeof(RenderSpritePacket) == 20, render_sprite_packet_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderSpritePacket, x) == 8, render_sprite_x_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderSpritePacket, clut) == 14, render_sprite_clut_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderSpritePacket, width) == 16, render_sprite_width_offset);
+PE1_STATIC_ASSERT(sizeof(RenderSpritePacket) == sizeof(RenderNativeTag) + 16, render_sprite_packet_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderSpritePacket, x) == sizeof(RenderNativeTag) + 4, render_sprite_x_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderSpritePacket, clut) == sizeof(RenderNativeTag) + 10, render_sprite_clut_offset);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderSpritePacket, width) == sizeof(RenderNativeTag) + 12, render_sprite_width_offset);
 
 /* Prefix of the buffer pointers initialized by Boot_InitMemoryLayout.
  * The active draw slot selects one of the two ordering/packet buffers.

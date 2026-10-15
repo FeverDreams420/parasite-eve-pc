@@ -2371,10 +2371,44 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
         uintptr_t head=ordering.address;Draw_EmitGlyph(123,2);
         if(ordering.address!=head || g_DrawPacketCursor!=arena+0x4000-sizeof(RenderTexturedQuad)) valid=0;
     }
+    /* USA 8005EB64: all descriptor sprite payloads and draw-page commands. */
+    const uint64_t sprite_hashes[]={UINT64_C(0x0215f3979ba18173),UINT64_C(0x54f0e01143881453)};
+    for(unsigned dark=0;dark<2;++dark) {
+        RenderNativeTag ordering={0xFFFFFF,0x9876};
+        g_DrawPacketArenaBase=arena;g_DrawOrderingTableEntry=(u32 *)&ordering;
+        Draw_SetColor(0xE1A25C);Draw_SetTextDimmed(dark);
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned pos=0;pos<3;++pos) for(unsigned glyph=0;glyph<count;++glyph) {
+            memset(arena,0xA5,sizeof(RenderTexturedQuad)+16);g_DrawPacketCursor=arena;
+            ordering.address=0xFFFFFF;Draw_SetCursor(positions[pos][0],positions[pos][1]);
+            Draw_AllocSprite(glyph);
+            RenderSpritePacket *sprite=(RenderSpritePacket *)arena;
+            RenderDrawModePacket *page=(RenderDrawModePacket *)(arena+sizeof(*sprite));
+            if(sprite->tag.length!=4 || sprite->tag.address!=0xFFFFFF || page->tag.length!=1 ||
+               page->tag.address!=(uintptr_t)sprite || ordering.address!=(uintptr_t)page ||
+               ordering.length!=0x9876 || page->command>UINT32_MAX ||
+               g_DrawPacketCursor!=(u8 *)page+sizeof(*page)) valid=0;
+            for(unsigned i=0;i<16;++i) hash=(hash^arena[sizeof(RenderNativeTag)+i])*UINT64_C(1099511628211);
+            for(unsigned byte=0;byte<4;++byte) hash=(hash^((page->command>>(byte*8))&255))*UINT64_C(1099511628211);
+            for(size_t i=sizeof(*sprite)+sizeof(*page);i<sizeof(RenderTexturedQuad)+16;++i)
+                if(arena[i]!=0xA5) valid=0;
+        }
+        if(hash!=sprite_hashes[dark]) valid=0;
+        size_t pair=sizeof(RenderSpritePacket)+sizeof(RenderDrawModePacket);
+        for(unsigned missing=0;missing<=8;missing+=8) {
+            ordering.address=0xFFFFFF;
+            g_DrawPacketCursor=arena+0x4000-pair+missing;
+            u8 *failed_cursor=g_DrawPacketCursor;
+            memset(failed_cursor,0xA5,pair-missing+16);
+            Draw_AllocSprite(0x77);
+            if(g_DrawPacketCursor!=failed_cursor || ordering.address!=0xFFFFFF || ordering.length!=0x9876) valid=0;
+            for(size_t i=0;i<pair-missing+16;++i) if(failed_cursor[i]!=0xA5) valid=0;
+        }
+    }
     /* USA 8005EED4: text quad bytes plus cursor/page/advance state,
      * including all six page-prefix values and control bytes FA..FF.
-     * Page 1/code 0 delegates to the separate sprite emitter. */
-    const uint64_t text_hashes[]={UINT64_C(0xd7c5db13a021071c),UINT64_C(0x9871a07530db72aa)};
+     * Page 1/code 0 now includes its sprite/page packet pair. */
+    const uint64_t text_hashes[]={UINT64_C(0x3ee449b4194055b7),UINT64_C(0xa2b4884fca9feb47)};
     for(unsigned dark=0;dark<2;++dark) {
         RenderNativeTag ordering={0xFFFFFF,0x9876};
         g_DrawPacketArenaBase=arena;g_DrawOrderingTableEntry=(u32 *)&ordering;
@@ -2382,23 +2416,34 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
         uint64_t hash=UINT64_C(14695981039346656037);
         for(unsigned pos=0;pos<3;++pos) for(unsigned page=0;page<6;++page)
         for(unsigned code=0;code<256;++code) {
-            if(page==1 && code==0) continue;
             memset(arena,0xA5,sizeof(RenderTexturedQuad)+16);g_DrawPacketCursor=arena;
             ordering.address=0xFFFFFF;Draw_SetCursor(positions[pos][0],positions[pos][1]);
             g_TextRenderMode=page;g_DrawGlyphAdvance=99;
             Draw_AllocTexturedQuad(code);
             RenderTexturedQuad *quad=(RenderTexturedQuad *)arena;
-            if(code<250) {
+            int special=page==1 && code==0;
+            if(special) {
+                RenderSpritePacket *sprite=(RenderSpritePacket *)arena;
+                RenderDrawModePacket *mode=(RenderDrawModePacket *)(arena+sizeof(*sprite));
+                if(sprite->tag.length!=4 || sprite->tag.address!=0xFFFFFF || mode->tag.length!=1 ||
+                   mode->tag.address!=(uintptr_t)sprite || ordering.address!=(uintptr_t)mode ||
+                   g_DrawPacketCursor!=(u8 *)mode+sizeof(*mode)) valid=0;
+            } else if(code<250) {
                 if(quad->tag.length!=9 || quad->tag.address!=0xFFFFFF ||
                    ordering.address!=(uintptr_t)quad || g_DrawPacketCursor!=arena+sizeof(*quad)) valid=0;
             } else if(ordering.address!=0xFFFFFF || g_DrawPacketCursor!=arena) valid=0;
             if(ordering.length!=0x9876) valid=0;
             const u8 *payload=arena+sizeof(RenderNativeTag);
-            for(unsigned i=0;i<36;++i) hash=(hash^payload[i])*UINT64_C(1099511628211);
+            for(unsigned i=0;i<(special?16u:36u);++i) hash=(hash^payload[i])*UINT64_C(1099511628211);
+            if(special) {
+                RenderDrawModePacket *mode=(RenderDrawModePacket *)(arena+sizeof(RenderSpritePacket));
+                for(unsigned byte=0;byte<4;++byte) hash=(hash^((mode->command>>(byte*8))&255))*UINT64_C(1099511628211);
+            }
             const u32 state[]={(u32)g_TextCursorX,(u32)g_TextCursorY,(u32)g_TextRenderMode,(u32)g_DrawGlyphAdvance};
             for(unsigned i=0;i<4;++i) for(unsigned byte=0;byte<4;++byte)
                 hash=(hash^((state[i]>>(byte*8))&255))*UINT64_C(1099511628211);
-            for(size_t i=sizeof(RenderNativeTag)+36;i<sizeof(*quad)+16;++i) if(arena[i]!=0xA5) valid=0;
+            size_t used=special?sizeof(RenderSpritePacket)+sizeof(RenderDrawModePacket):sizeof(RenderNativeTag)+36;
+            for(size_t i=used;i<sizeof(*quad)+16;++i) if(arena[i]!=0xA5) valid=0;
         }
         if(hash!=text_hashes[dark]) valid=0;
         g_TextRenderMode=0;g_DrawPacketCursor=arena+0x4000-sizeof(RenderTexturedQuad);
@@ -2408,7 +2453,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;
-    if(valid) puts("Original icon/text quads: 156 real descriptors, six font pages/control bytes, positions, dim states and cursor updates match USA MIPS");
+    if(valid) puts("Original sprites/icon/text: 156 real descriptors, complete six-page/control/sprite paths, positions, dim states and cursor updates match USA MIPS");
     else fprintf(stderr,"Original icon payload/native links differ from USA MIPS 8005ED18\n");
     return valid;
 }

@@ -50,7 +50,8 @@ typedef struct TextboxPoint {
     u16 x, y;
 } TextboxPoint;
 typedef struct TextboxGlyphPacket {
-    u32 tag, drawMode;
+    RenderNativeTag tag;
+    uintptr_t drawMode;
     RenderSpritePacket sprite;
 } TextboxGlyphPacket;
 
@@ -101,7 +102,7 @@ PE1_STATIC_ASSERT(sizeof(TextboxEntry) == 0x38, textbox_entry_size);
 PE1_STATIC_ASSERT(sizeof(TextboxEntry) == 0x40, textbox_entry_size);
 #endif
 PE1_STATIC_ASSERT(sizeof(TextboxNumber) == 6, textbox_number_size);
-PE1_STATIC_ASSERT(sizeof(TextboxGlyphPacket) == 28, textbox_glyph_packet_size);
+PE1_STATIC_ASSERT(sizeof(TextboxGlyphPacket) == 3 * sizeof(uintptr_t) + sizeof(RenderSpritePacket), textbox_glyph_packet_size);
 
 void Menu_DrawTextboxEntries(void);
 void Draw_ResetTextboxes(void);

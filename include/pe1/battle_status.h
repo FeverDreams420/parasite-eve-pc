@@ -88,7 +88,7 @@ typedef struct BattleModeTilePacket {
     RenderColorTilePacket tile;
 } BattleModeTilePacket;
 
-PE1_STATIC_ASSERT(sizeof(BattleModeTilePacket) == 0x18,
+PE1_STATIC_ASSERT(sizeof(BattleModeTilePacket) == sizeof(RenderDrawModePacket) + sizeof(RenderColorTilePacket),
                   battle_mode_tile_packet_size);
 
 extern BattleModeTilePacket g_BattleStatusBackgrounds[2];      /* status background */

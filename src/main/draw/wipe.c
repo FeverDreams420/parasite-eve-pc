@@ -304,7 +304,7 @@ void Draw_AllocColorGradient(int width, int height, u8 *points, int textured)
                 sprite.sprite->color.word = g_DrawColorShaded;
             else
                 sprite.sprite->color.word = g_DrawPrimColor;
-            sprite.sprite->tag.bytes.length = 4;
+            sprite.sprite->tag.length = 4;
             sprite.sprite->color.bytes.code = 0x64;
         }
         sprite.sprite->x = g_TextCursorX;
@@ -426,8 +426,11 @@ void Draw_AllocColorTri(int width, int height, int pulse) {
         DrawPrimLink link;
 
         link.packet = drawMode;
-        drawMode->tag = (drawMode->tag & maskTop) | (*ot & mask24);
-        *ot = (*ot & maskTop) | (link.word & mask24);
+        if (drawMode) {
+            RenderNativeTag *ordering = (RenderNativeTag *)ot;
+            drawMode->tag.address = ordering->address;
+            ordering->address = (uintptr_t)drawMode;
+        }
     }
 }
 

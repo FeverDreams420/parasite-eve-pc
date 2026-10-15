@@ -238,29 +238,18 @@ void Draw_SetTextDimmed(int value) {
 }
 
 void Draw_AllocSprite(int index) {
-    DrawGlyphDescriptor *glyph;
-    RenderSpritePacket *sprite;
-    u32 *page;
-    int mode;
-    DrawPrimLink link;
-
-    glyph = Draw_LookupGlyphDescriptor(index);
-    sprite = 0;
-    {
-        u8 *old = g_DrawPacketCursor;
-        u8 *next = old + sizeof(RenderSpritePacket);
-
-        if (next < g_DrawPacketArenaBase + 0x4000) {
-            g_DrawPacketCursor = next;
-            sprite = (RenderSpritePacket *)old;
-        } else Inv_BoundsCheckAssertStub(1);
+    DrawGlyphDescriptor *glyph = Draw_LookupGlyphDescriptor(index);
+    size_t used = (size_t)(g_DrawPacketCursor - g_DrawPacketArenaBase);
+    size_t bytes = sizeof(RenderSpritePacket) + sizeof(RenderDrawModePacket);
+    if (used >= 0x4000 || bytes >= 0x4000 - used) {
+        Inv_BoundsCheckAssertStub(1);
+        return;
     }
-    if (sprite) {
-        if (g_DrawColorSelect) sprite->color.word = g_DrawAlternateColor;
-        else sprite->color.word = g_DrawPrimaryColor;
-        sprite->tag.bytes.length = 4;
-        sprite->color.bytes.code = 0x64;
-    }
+    RenderSpritePacket *sprite = (RenderSpritePacket *)g_DrawPacketCursor;
+    g_DrawPacketCursor += sizeof(*sprite);
+    sprite->color.word = g_DrawColorSelect ? g_DrawAlternateColor : g_DrawPrimaryColor;
+    sprite->tag.length = 4;
+    sprite->color.bytes.code = 0x64;
     sprite->x = g_DrawSpriteX;
     sprite->y = g_DrawSpriteY;
     sprite->u = glyph->u;
@@ -268,37 +257,14 @@ void Draw_AllocSprite(int index) {
     sprite->clut = glyph->clut;
     sprite->width = glyph->width;
     sprite->height = glyph->height;
-    {
-        RenderPacketTag *ot = (RenderPacketTag *)g_DrawOrderingTableEntry;
-
-        sprite->tag.link.address = ot->link.address;
-        link.packet = sprite;
-        ot->link.address = link.word;
-    }
-    mode = glyph->mode;
-    page = 0;
-    {
-        u8 *old = g_DrawPacketCursor;
-        u8 *next = old + 8;
-
-        if (next < g_DrawPacketArenaBase + 0x4000) {
-            g_DrawPacketCursor = next;
-            page = (u32 *)old;
-        } else Inv_BoundsCheckAssertStub(1);
-    }
-    if (page) {
-        SetDrawTPage(page, 0, 0, ((mode & 3) << 7) | 7);
-    }
-    {
-        u32 mask24, maskTop;
-        u32 *ot;
-        mask24 = 0xffffff;
-        maskTop = 0xff000000;
-        ot = g_DrawOrderingTableEntry;
-        *page = (*page & maskTop) | (*ot & mask24);
-        link.packet = page;
-        *ot = (*ot & maskTop) | (link.word & mask24);
-    }
+    RenderNativeTag *ordering = (RenderNativeTag *)g_DrawOrderingTableEntry;
+    sprite->tag.address = ordering->address;
+    ordering->address = (uintptr_t)sprite;
+    RenderDrawModePacket *page = (RenderDrawModePacket *)g_DrawPacketCursor;
+    g_DrawPacketCursor += sizeof(*page);
+    SetDrawTPage(page, 0, 0, ((glyph->mode & 3) << 7) | 7);
+    page->tag.address = ordering->address;
+    ordering->address = (uintptr_t)page;
 }
 
 void Draw_EmitGlyph(s32 arg0, s32 arg1) {
@@ -1067,7 +1033,9 @@ void Draw_AllocTexturedRectAlt(int value, int width)
     if (mode != 0)
         SetDrawTPage(mode, 0, 0, ((drawMode & 3) << 7) | 7);
     ot = g_DrawOrderingTableEntry;
-    mode->tag = (mode->tag & 0xFF000000) | (*ot & 0xFFFFFF);
-    link.mode = mode;
-    *ot = (*ot & 0xFF000000) | (link.word & 0xFFFFFF);
+    if (mode) {
+        RenderNativeTag *ordering = (RenderNativeTag *)ot;
+        mode->tag.address = ordering->address;
+        ordering->address = (uintptr_t)mode;
+    }
 }

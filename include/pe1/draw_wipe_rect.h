@@ -20,10 +20,10 @@ extern u8 g_WipeRectEdgeList[];
 /* A packet in the 16 KiB packet arena, or an ordering-table link word. */
 typedef union DrawPacketAddress {
     char *bytes;
-    u32 *tag;
+    RenderNativeTag *tag;
     GpuCmdPacket *window;
     RenderSpritePacket *sprite;
-    u32 word;
+    uintptr_t word;
 } DrawPacketAddress;
 
 extern u8 *g_DrawPacketCursor;                  /* packet cursor address */
@@ -101,15 +101,13 @@ PE1_STATIC_ASSERT(sizeof(DrawWipeVertex) == 4, draw_wipe_vertex_size);
     }
 
 /* PSY-Q addPrim on the current ordering-table entry. */
-#define DRAW_LINK_PACKET(packet)                                         \
-    {                                                                    \
-        u32 mask24 = 0xFFFFFF, maskTop = 0xFF000000;                     \
-        DrawPacketAddress *ot = g_DrawOrderingTableEntry;                              \
-        u32 tag = *(packet).tag;                                         \
-        tag &= maskTop;                                                  \
-        tag |= ot->word & mask24;                                        \
-        *(packet).tag = tag;                                             \
-        ot->word = (ot->word & maskTop) | ((packet).word & mask24);      \
+#define DRAW_LINK_PACKET(packet) \
+    { \
+        if ((packet).bytes) { \
+            RenderNativeTag *ordering = (RenderNativeTag *)g_DrawOrderingTableEntry; \
+            (packet).tag->address = ordering->address; \
+            ordering->address = (uintptr_t)(packet).bytes; \
+        } \
     }
 
 #endif /* PE1_DRAW_WIPE_RECT_H */

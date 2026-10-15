@@ -90,8 +90,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderGouraudQuad, x3) == 0x20,
                   render_gouraud_quad_fourth_vertex);
 
 typedef struct RenderDrawModePacket {
-    u32 tag;
-    u32 command;
+    RenderNativeTag tag;
+    uintptr_t command;
 } RenderDrawModePacket;
 
 /* Four-vertex textured GPU packet. The final halfwords are packet padding. */
@@ -130,7 +130,7 @@ typedef struct RenderPagedSpritePacket {
     RenderSpritePacket sprite;
 } RenderPagedSpritePacket;
 
-PE1_STATIC_ASSERT(sizeof(RenderPagedSpritePacket) == sizeof(RenderTexturePagePacket) + sizeof(RenderSpritePacket) + (sizeof(void *) == 8 ? 4 : 0),
+PE1_STATIC_ASSERT(sizeof(RenderPagedSpritePacket) == sizeof(RenderTexturePagePacket) + sizeof(RenderSpritePacket),
                   render_paged_sprite_packet_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderPagedSpritePacket, sprite) == sizeof(RenderTexturePagePacket),
                   render_paged_sprite_packet_sprite_offset);
@@ -152,7 +152,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTilePacket, x0) == 8,
                   render_color_tile_coordinates);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTilePacket, w) == 12,
                   render_color_tile_dimensions);
-PE1_STATIC_ASSERT(sizeof(RenderDrawModePacket) == 8,
+PE1_STATIC_ASSERT(sizeof(RenderDrawModePacket) == 3 * sizeof(uintptr_t),
                   render_draw_mode_packet_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderLinePacket, x0) == 8,
                   render_line_packet_points);

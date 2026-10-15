@@ -73,6 +73,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/draw_state.h"
 #include "pe1/draw_level_bar.h"
 #include "pe1/gpu_image.h"
+#include "pe1/akao.h"
 #include "../src/overlays/menu_memcard/menu_memcard_screen.h"
 #include "../src/overlays/menu_memcard/menu_memcard_image.h"
 #include <SDL3/SDL.h>
@@ -2574,6 +2575,21 @@ static void title_logo_observe(void)
         ++title_logo_failures;
     }
 }
+static unsigned title_node_index(MemcardImageNode *node)
+{
+    if(!node) return 0;
+    if(node<g_MemcardImageNodePool || node>=g_MemcardImageNodePool+8) return UINT_MAX;
+    return (unsigned)(node-g_MemcardImageNodePool)+1;
+}
+static unsigned title_callback_index(uintptr_t callback)
+{
+    const uintptr_t functions[]={0,(uintptr_t)MenuCard_UpdateFadeCounter,(uintptr_t)MenuCard_AdvanceFade,
+        (uintptr_t)MenuCard_UpdateFadeDisplay,(uintptr_t)MenuCard_DecreaseFade,(uintptr_t)MenuCard_StepFadeToImages,
+        (uintptr_t)MenuCard_CreateFadeImageNode,(uintptr_t)MenuCard_AttachFadePayload,(uintptr_t)MenuCard_InitFadeForNode,
+        (uintptr_t)MenuCard_BlendImage,(uintptr_t)MenuCard_BlendRotatedImage};
+    for(unsigned i=0;i<sizeof(functions)/sizeof(functions[0]);++i) if(functions[i]==callback) return i;
+    return UINT_MAX;
+}
 static int original_title_screen(PeDisc *disc)
 {
     PeDiscFile archive;
@@ -2614,10 +2630,116 @@ static int original_title_screen(PeDisc *disc)
         if(memcmp(restored,background,sizeof(restored))) valid=0;
     }
     if(g_MemcardScreenPage!=0 || g_MemcardCurrentScreen!=g_MemcardScreenBuffers[0]) valid=0;
+    /* Full original node/input/fade/render sequence versus USA MIPS, with
+     * pointer/function identities normalized to pool slots and callback IDs. */
+    const uint64_t node_hashes[]={UINT64_C(0x82bcdaa44ad52f19),UINT64_C(0x44a261b8d9567021),
+        UINT64_C(0x6f787be356e1bf1a),UINT64_C(0x6f787be356e1bf1a),
+        UINT64_C(0x8473fe8902c4b46e),UINT64_C(0x12d571482a868159)};
+    MemCardPortState saved_ports[2];memcpy(saved_ports,g_MemCardPortStates,sizeof(saved_ports));
+    void *saved_bgm[2]={g_AkaoBgmHandle[0],g_AkaoBgmHandle[1]};g_AkaoBgmHandle[0]=g_AkaoBgmHandle[1]=NULL;
+    u32 saved_pad=g_FieldPadBits;
+    for(unsigned scenario=0;scenario<6;++scenario) {
+        memset(g_MemCardPortStates,0,sizeof(saved_ports));
+        if(scenario && scenario!=5) {
+            MemCardPortState *port=&g_MemCardPortStates[scenario==3];
+            port->present=1;port->managerState=15;
+            if(scenario>=2) {port->slots[14].state=MEMCARD_SLOT_OCCUPIED;port->slots[14].titleStyleFlag=1;}
+        }
+        if(MemCard_HasAnyPresentFile()!=(scenario>=2 && scenario!=5)) valid=0;
+        memset(g_MemcardImageNodePool,0,sizeof(g_MemcardImageNodePool));
+        for(unsigned i=0;i<7;++i)g_MemcardImageNodePool[i].next=&g_MemcardImageNodePool[i+1];
+        g_MemcardFreeImageNodes=g_MemcardImageNodePool;
+        g_MemcardActiveNodeHead=g_MemcardActiveNodeTail=g_MemcardPendingNodeHead=g_MemcardPendingNodeTail=NULL;
+        for(unsigned p=0;p<2;++p) {
+            g_MemcardScreenBuffers[p]->overlay=(RECT){0};g_MemcardScreenBuffers[p]->dirty=(RECT){0};
+            memset(g_MemcardScreenBuffers[p]->overlayImage,0,sizeof(g_MemcardScreenBuffers[p]->overlayImage));
+        }
+        MenuCard_CreateImageNode(1)->field14=MenuCard_CreateFadeImageNode;
+        g_MemcardPrevPad=0;g_MemcardScreenTimer=1;
+        uint64_t hash=UINT64_C(14695981039346656037);
+        unsigned frames=scenario>=4?240:142;
+        for(unsigned frame=0;frame<frames;++frame) {
+            if(scenario==4 && frame==190) memset(g_MemCardPortStates,0,sizeof(saved_ports));
+            if(scenario==5 && frame==100) {
+                MemCardPortState *port=&g_MemCardPortStates[1];
+                port->present=1;port->managerState=15;
+                port->slots[14].state=MEMCARD_SLOT_OCCUPIED;port->slots[14].titleStyleFlag=1;
+            }
+            g_FieldPadBits=frame==40?4:frame==110 || frame==130?8:frame==120?0x20:frame==frames-2?0x20000000:0;
+            g_MemcardScreenPage=!(frame&1);g_MemcardCurrentScreen=g_MemcardScreenBuffers[g_MemcardScreenPage];
+            MenuCard_HandleListInput();MenuCard_RedrawImageNodes();
+            MemcardImageNode *node=g_MemcardActiveNodeHead,*previous=NULL;
+            while(node) {
+                MemcardImageNode *next=node->next;
+                if(node->freePending) {
+                    if(previous)previous->next=next;else g_MemcardActiveNodeHead=next;
+                    if(g_MemcardActiveNodeTail==node)g_MemcardActiveNodeTail=previous;
+                    node->next=g_MemcardFreeImageNodes;g_MemcardFreeImageNodes=node;
+                } else previous=node;
+                node=next;
+            }
+            if(g_MemcardPendingNodeHead) {
+                if(g_MemcardActiveNodeTail)g_MemcardActiveNodeTail->next=g_MemcardPendingNodeHead;
+                else g_MemcardActiveNodeHead=g_MemcardPendingNodeHead;
+                g_MemcardActiveNodeTail=g_MemcardPendingNodeTail;
+                g_MemcardPendingNodeHead=g_MemcardPendingNodeTail=NULL;
+            }
+            ++g_MemcardScreenTimer;
+            for(unsigned i=0;i<8;++i) {
+                MemcardImageNode *n=&g_MemcardImageNodePool[i];
+                const u32 fields[]={title_node_index(n->next),(u16)n->x|((u32)(u16)n->y<<16),
+                    (u16)n->width|((u32)(u16)n->height<<16),title_callback_index((uintptr_t)n->draw),
+                    title_callback_index((uintptr_t)n->update),title_callback_index((uintptr_t)n->field14),
+                    n->image?(u32)((u8 *)n->image-g_MemcardImageBundle):0,
+                    (u32)n->intensity,(u32)n->targetY,(u32)n->stepY,(u32)n->parameter,(u32)n->kind,(u32)n->freePending};
+                for(unsigned f=0;f<13;++f) for(unsigned b=0;b<4;++b)
+                    hash=(hash^((fields[f]>>(b*8))&255))*UINT64_C(1099511628211);
+            }
+            const u32 state[]={title_node_index(g_MemcardFreeImageNodes),title_node_index(g_MemcardActiveNodeHead),
+                title_node_index(g_MemcardActiveNodeTail),title_node_index(g_MemcardPendingNodeHead),
+                title_node_index(g_MemcardPendingNodeTail),(u32)g_MemcardScreenTimer,(u32)g_MemcardPrevPad};
+            for(unsigned f=0;f<7;++f) for(unsigned b=0;b<4;++b)
+                hash=(hash^((state[f]>>(b*8))&255))*UINT64_C(1099511628211);
+            for(unsigned p=0;p<2;++p) {
+                const RECT rects[]={g_MemcardScreenBuffers[p]->overlay,g_MemcardScreenBuffers[p]->dirty};
+                for(unsigned r=0;r<2;++r) {
+                    const u16 values[]={(u16)rects[r].x,(u16)rects[r].y,(u16)rects[r].w,(u16)rects[r].h};
+                    for(unsigned f=0;f<4;++f) for(unsigned b=0;b<2;++b)
+                        hash=(hash^((values[f]>>(b*8))&255))*UINT64_C(1099511628211);
+                }
+            }
+            RECT *area=&g_MemcardCurrentScreen->overlay;
+            if(area->w>0 && area->h>0) {
+                size_t bytes=(size_t)area->w*area->h*3;
+                if(bytes>sizeof(g_MemcardCurrentScreen->overlayImage)) {valid=0;break;}
+                for(size_t b=0;b<bytes;++b)hash=(hash^g_MemcardCurrentScreen->overlayImage[b])*UINT64_C(1099511628211);
+            }
+        }
+        if(hash!=node_hashes[scenario] || g_MemcardScreenTimer!=1003 ||
+           !g_MemcardActiveNodeHead || g_MemcardActiveNodeHead->kind!=7 || g_MemcardActiveNodeHead->y!=160) {
+            fprintf(stderr,"Original title nodes scenario %u hash %016llx differs from USA MIPS\n",scenario,(unsigned long long)hash);
+            valid=0;
+        }
+    }
+    for(unsigned available=0;available<5;++available) {
+        memset(g_MemcardImageNodePool,0,sizeof(g_MemcardImageNodePool));
+        for(unsigned i=1;i<available;++i)g_MemcardImageNodePool[i-1].next=&g_MemcardImageNodePool[i];
+        g_MemcardFreeImageNodes=available?g_MemcardImageNodePool:NULL;
+        g_MemcardActiveNodeHead=g_MemcardActiveNodeTail=g_MemcardPendingNodeHead=g_MemcardPendingNodeTail=NULL;
+        MemcardImageNode saved_nodes[8];memcpy(saved_nodes,g_MemcardImageNodePool,sizeof(saved_nodes));
+        MemcardImageNode *free=g_MemcardFreeImageNodes;
+        MenuCard_CreateImageGroup();
+        if(MenuCard_CreateImageNode(-1) || MenuCard_CreateImageNode(8)) valid=0;
+        if(!available) {MenuCard_CreateFixedImageNode();if(MenuCard_CreateImageNode(1))valid=0;}
+        if(g_MemcardFreeImageNodes!=free || g_MemcardPendingNodeHead || g_MemcardPendingNodeTail ||
+           memcmp(saved_nodes,g_MemcardImageNodePool,sizeof(saved_nodes))) valid=0;
+    }
+    memcpy(g_MemCardPortStates,saved_ports,sizeof(saved_ports));g_FieldPadBits=saved_pad;
+    g_AkaoBgmHandle[0]=saved_bgm[0];g_AkaoBgmHandle[1]=saved_bgm[1];
     PutDrawEnv(&old_draw);g_AkaoMessageQueueCount=queued;
     CdRom_BindImage(NULL,NULL);g_GameState.flags=flags;g_PeImageBaseLba=base;
     g_PeImageMountFlags=modes;g_GameState.scene_audio=audio;
-    if(valid) puts("Original title screen: all 480 logo frames match full framebuffer pixels, both RGB24 backgrounds restored headlessly");
+    if(valid) puts("Original title screen: all 480 logo frames match full framebuffer pixels, both RGB24 backgrounds and 1048 input/node/fade/render frames match USA MIPS headlessly");
     else fprintf(stderr,"Original title screen failed: %u frames, %u pixel mismatches\n",title_logo_frame,title_logo_failures);
     return valid;
 }

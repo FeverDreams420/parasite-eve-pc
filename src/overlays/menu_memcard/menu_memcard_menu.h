@@ -19,7 +19,6 @@ extern DRAWENV g_MemcardListSavedDrawEnv[2];
 #include "pe1/pe_image.h"
 extern s32 g_LogoFadePlayed, g_ActiveDrawSlot;
 extern u8 *g_CdLoadAreaBase;
-extern u8 g_MenuCardCreateFadeImageNodeEntry[];
 
 void MenuCard_ShowLogoFade(void);
 void Draw_InitBuffers(void);

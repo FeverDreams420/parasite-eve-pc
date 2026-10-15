@@ -9,9 +9,9 @@ typedef struct MemcardImage { u8 header[16]; s16 width, height; } MemcardImage;
 typedef struct MemcardImageNode {
     struct MemcardImageNode *next;
     s16 x, y, width, height;
-    void *draw;
-    void *update;
-    void *field14;
+    void (*draw)(struct MemcardImageNode *);
+    void (*update)(struct MemcardImageNode *, u8 *, s32, s32);
+    void (*field14)(struct MemcardImageNode *);
     MemcardImage *volatile image;
     s32 intensity, targetY, stepY, parameter, kind, freePending;
 } MemcardImageNode;
@@ -20,25 +20,32 @@ extern MemcardImageNode *g_MemcardFreeImageNodes, *g_MemcardPendingNodeTail, *g_
 extern MemcardImageNode *g_MemcardActiveNodeTail; /* Active-list tail. */
 extern MemcardImageNode g_MemcardImageNodePool[8];
 #define g_MemcardImagePresets ((MemcardImagePreset *)(g_MemcardImageBundle + 0x3DB08))
-extern u8 g_MenuCardAdvanceFadeEntry[];
 /* USA title bank retains its authored offsets and preset data as data. */
 #define g_MemcardImageBundle (g_StrFileDirBuffer + 0x4264)
 #define g_MemcardImageOffsets ((s32 *)(g_MemcardImageBundle + 4))
-extern u8 g_MenuCardUpdateFadeCounterEntry[];
 
 MemcardImageNode *MenuCard_CreateImageNode(s32 kind);
 void MenuCard_CreateFixedImageNode(void);
 void MenuCard_CreateImageGroup(void);
-extern u8 g_MenuCardUpdateFadeDisplayEntry[], g_MenuCardInitFadeForNodeEntry[];
 
-void MenuCard_BlendImage(MemcardImageNode *node, u8 *destination, s32 padding);
+void MenuCard_BlendImage(MemcardImageNode *node, u8 *destination, s32 padding, s32 stride);
 
 void MenuCard_BlendRotatedImage(MemcardImageNode *node, u8 *destination, s32 padding, s32 stride);
+
+void MenuCard_InitFadeForNode(MemcardImageNode *node);
+void MenuCard_UpdateFadeCounter(MemcardImageNode *node);
+void MenuCard_AdvanceFade(MemcardImageNode *node);
+void MenuCard_UpdateFadeDisplay(MemcardImageNode *node);
+void MenuCard_DecreaseFade(MemcardImageNode *node);
+void MenuCard_CreateFadeImageNode(MemcardImageNode *node);
+void MenuCard_AttachFadePayload(MemcardImageNode *node);
+void MenuCard_StepFadeToImages(MemcardImageNode *node);
+void MenuCard_RedrawImageNodes(void);
+void MenuCard_HandleListInput(void);
 
 /* Memory card list screen input. */
 extern s32 g_MemcardPrevPad; /* Pad state of the previous frame. */
 extern s32 g_MemcardScreenTimer;
-extern u8 g_MenuCardAttachFadePayloadEntry[], g_MenuCardDecreaseFadeEntry[];
 s32 Draw_RemapStatusFlags(void); /* Draw_RemapStatusFlags: pad state */
 s32 MemCard_IsPortPresent(s32 port); /* MemCard_IsPortPresent */
 s32 MemCard_HasAnyPresentFile(void);

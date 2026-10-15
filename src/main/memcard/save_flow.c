@@ -75,52 +75,15 @@ int Save_GetTitleStyleFlag(void) {
 }
 
 int MemCard_HasAnyPresentFile(void) {
-    unsigned char *base;
-    unsigned char *port;
-    unsigned char *end;
-    unsigned char *outer_end;
-    unsigned char *entry;
-    unsigned char *entry_end;
-    int found;
-    int state_full;
-    int entry_active;
-    int present;
-
-    base = (unsigned char *)g_MemCardPortStates;
-    end = base + 0x830;
-    found = 0;
-
-    if (base < end) {
-        state_full = 15;
-        entry_active = 1;
-        outer_end = end;
-        port = base + 0x418;
-        do {
-            if (port[-0x417] == state_full) {
-                entry = base + PE1_OFFSETOF(MemCardPortState, slots);
-                if (entry < port) {
-                    entry_end = port;
-                    do {
-                        found = 0;
-                        if (((MemCardSaveSlot *)entry)->state == entry_active) {
-                            present = ((MemCardSaveSlot *)entry)->titleStyleFlag;
-                            found = present != 0;
-                        }
-                        if (found != 0) {
-                            break;
-                        }
-                        entry += sizeof(MemCardSaveSlot);
-                    } while (entry < entry_end);
-                }
-            }
-            base += sizeof(MemCardPortState);
-            port += sizeof(MemCardPortState);
-            if (base >= outer_end) {
-                break;
-            }
-        } while (found == 0);
+    for (unsigned port = 0; port < 2; ++port) {
+        const MemCardPortState *state = &g_MemCardPortStates[port];
+        if (state->managerState != 15) continue;
+        for (unsigned slot = 0; slot < 15; ++slot) {
+            if (state->slots[slot].state == MEMCARD_SLOT_OCCUPIED &&
+                state->slots[slot].titleStyleFlag != 0) return 1;
+        }
     }
-    return found;
+    return 0;
 }
 
 void Save_SprintfSjis(unsigned char *dst, unsigned char *fmt)

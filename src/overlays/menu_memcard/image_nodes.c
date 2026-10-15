@@ -1,9 +1,13 @@
 #include "menu_memcard_image.h"
 #include "menu_memcard_screen.h"
 
+MemcardImageNode *g_MemcardFreeImageNodes, *g_MemcardPendingNodeTail, *g_MemcardPendingNodeHead;
+MemcardImageNode *g_MemcardActiveNodeHead, *g_MemcardActiveNodeTail;
+MemcardImageNode g_MemcardImageNodePool[8];
+
 typedef void (*MemcardNodeStep)(MemcardImageNode *node);
 
-typedef void (*MemcardNodeDraw)(MemcardImageNode *node, u32 *destination, s32 padding, s32 stride);
+typedef void (*MemcardNodeDraw)(MemcardImageNode *node, u8 *destination, s32 padding, s32 stride);
 
 /* Background pixels follow the 20-byte image header (24-bit, 320 words per row). */
 typedef struct MemcardBackground {
@@ -108,7 +112,7 @@ void MenuCard_RedrawImageNodes(void) {
             if (draw != 0) {
                 offset = area.w * (node->y - area.y) + (node->x - area.x);
                 skip = area.w - node->width;
-                draw(node, (u32 *)g_MemcardCurrentScreen->overlayImage + offset * 3 / 4, skip * 3 / 4,
+                draw(node, g_MemcardCurrentScreen->overlayImage + (offset * 3 / 4) * 4, skip * 3 / 4,
                      area.w * 3 / 4);
             }
         }
@@ -125,7 +129,8 @@ void MenuCard_RedrawImageNodes(void) {
     }
 }
 
-void MenuCard_BlendImage(MemcardImageNode *node, u8 *destination, s32 padding) {
+void MenuCard_BlendImage(MemcardImageNode *node, u8 *destination, s32 padding, s32 stride) {
+    (void)stride;
     s32 width = node->width;
     s32 intensity = node->intensity;
     s32 words;
@@ -231,7 +236,6 @@ void MenuCard_BlendRotatedImage(MemcardImageNode *node, u8 *destination, s32 pad
     s32 column;
     s32 product;
     s32 eightyFour;
-    s32 workspace[1];
     source = (u8 *)image + 20;
     if (60 - progress >= 0) {
         s32 offset;
@@ -350,13 +354,13 @@ void MenuCard_BlendRotatedImage(MemcardImageNode *node, u8 *destination, s32 pad
     }
 }
 
-/* Matching debt: the workspace operand preserves the retail stack frame. */
 MemcardImageNode *MenuCard_CreateImageNode(s32 kind) {
-    s32 workspace[1];
     MemcardImageNode *node = g_MemcardFreeImageNodes;
     MemcardImageNode *tail = g_MemcardPendingNodeTail;
     MemcardImage *imageData;
-    MemcardImagePreset *preset = &g_MemcardImagePresets[kind];
+    MemcardImagePreset *preset;
+    if (!node || kind < 0 || kind >= 8) return NULL;
+    preset = &g_MemcardImagePresets[kind];
     g_MemcardFreeImageNodes = node->next;
     node->next = 0;
     if (tail) { tail->next = node; g_MemcardPendingNodeTail = node; }
@@ -378,7 +382,7 @@ MemcardImageNode *MenuCard_CreateImageNode(s32 kind) {
         s32 y = node->y;
         s32 parameter;
         parameter = preset->parameter;
-        node->draw = g_MenuCardUpdateFadeCounterEntry; node->update = MenuCard_BlendImage;
+        node->draw = MenuCard_UpdateFadeCounter; node->update = MenuCard_BlendImage;
         node->targetY = y; node->parameter = parameter;
     }
     node->stepY = -16;
@@ -388,6 +392,7 @@ MemcardImageNode *MenuCard_CreateImageNode(s32 kind) {
 void MenuCard_CreateFixedImageNode(void) {
     s32 kind;
     MemcardImageNode *node = g_MemcardFreeImageNodes;
+    if (!node) return;
     MemcardImageNode *tail;
     MemcardImage *imageData;
     MemcardImagePreset *preset;
@@ -417,13 +422,17 @@ void MenuCard_CreateFixedImageNode(void) {
     }
     {
         s32 parameter = preset->parameter;
-        node->draw = g_MenuCardAdvanceFadeEntry;
+        node->draw = MenuCard_AdvanceFade;
         node->update = MenuCard_BlendImage;
         node->parameter = parameter;
     }
 }
 
 void MenuCard_CreateImageGroup(void) {
+    unsigned available = 0;
+    for (MemcardImageNode *free = g_MemcardFreeImageNodes; free && available < 5; free = free->next)
+        ++available;
+    if (available < 5) return;
     {
         s32 kind;
         MemcardImageNode *node = g_MemcardFreeImageNodes;
@@ -462,7 +471,7 @@ void MenuCard_CreateImageGroup(void) {
     }
     MenuCard_CreateImageNode(3);
     MenuCard_CreateFixedImageNode();
-    MenuCard_CreateImageNode(5)->field14 = g_MenuCardInitFadeForNodeEntry;
+    MenuCard_CreateImageNode(5)->field14 = MenuCard_InitFadeForNode;
     {
         s32 kind;
         MemcardImageNode *node = g_MemcardFreeImageNodes;
@@ -495,7 +504,7 @@ void MenuCard_CreateImageGroup(void) {
         }
         {
             s32 parameter = preset->parameter;
-            node->draw = g_MenuCardUpdateFadeDisplayEntry;
+            node->draw = MenuCard_UpdateFadeDisplay;
             node->update = MenuCard_BlendRotatedImage;
             node->parameter = parameter;
         }

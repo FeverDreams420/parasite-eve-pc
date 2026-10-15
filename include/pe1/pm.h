@@ -28,8 +28,8 @@ void Pm_InitScene(void);
  * read on demand from PE.IMG sectors g_SceneAssetLbaTbl[0..1] to g_PmTaskProgramBuffer. */
 extern u16 g_SceneAssetLbaTbl[2];
 extern void *g_PmTaskProgramBuffer;
-extern u8 g_FieldFxTaskProgramCmd108[], g_FieldFxTaskProgramCmd109[], g_FieldFxTaskProgramCmd110[], g_FieldFxTaskProgramCmd111[];
-extern u8 g_FieldFxTaskProgramCmd112[], g_FieldFxTaskProgramCmd113[], g_FieldFxTaskProgramCmd114[];
+extern FieldFxTaskProgram *g_FieldFxTaskProgramCmd108, *g_FieldFxTaskProgramCmd109, *g_FieldFxTaskProgramCmd110, *g_FieldFxTaskProgramCmd111;
+extern FieldFxTaskProgram *g_FieldFxTaskProgramCmd112, *g_FieldFxTaskProgramCmd113, *g_FieldFxTaskProgramCmd114;
 
 int Pm_AllocSlot(unsigned int command);
 int Pm_FreeSlot(int slot);

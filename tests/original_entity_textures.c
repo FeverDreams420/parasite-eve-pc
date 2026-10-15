@@ -471,6 +471,48 @@ int main(void)
                 }
                 CHECK(emitted && linked_packets);srand(previous_random);
                 g_FieldFxCurrentAge=12;CHECK(RoomM005_JointBeacon(1,beacon_state,0)==1);
+                PmPrimarySlot complete_slots[11]={0};PmTables saved_pm=g_PmTables;
+                u32 saved_game_flags=g_GameState.flags,saved_global_flags=g_GameStateFlags;
+                g_PmTables=(PmTables){g_PmCmdHandlerArray,complete_slots,NULL};
+                g_GameStateFlags|=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
+                effect_state.core_flags=0;effect_action=1;hit_state.flags=0;
+                memset(g_RoomM005ScriptAnchorView-4,0,20);srand(1);
+                CHECK(Scene_LoadRoomAssets(117,&effect_actor)==0 && Pm_SendCmd(0,0,0,0,0,0)==0);
+                unsigned seen_effects=0,complete_links=0;
+                for(unsigned frame=0;frame<110;++frame) {
+                    memset(&effect_packets,0xa5,sizeof(effect_packets));
+                    for(unsigned depth=0;depth<4096;++depth)effect_ot[depth]=(RenderGpuTag){.address=0xffffff};
+                    g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;
+                    D_800B0E38.ordering[g_ActiveDrawSlot]=effect_ot;
+                    D_800B0E38.packets[g_ActiveDrawSlot]=(char *)effect_packets.bytes;
+                    distant_player.posX.parts.integer=frame==80?0:30000;
+                    distant_player.posZ.parts.integer=frame==80?0:30000;
+                    if(frame==30)CHECK(Pm_SendCmd(0,0,1,0,0,0)==0);
+                    CHECK(Pm_Start(0)==0 && Pm_Exec(0)==0);
+                    for(unsigned slot=0;slot<8;++slot) {
+                        unsigned id=complete_slots[0].task.tasks.slots[slot].id;
+                        if(id<3)seen_effects|=1u<<id;
+                    }
+                    CHECK(g_DrawPacketOffset>=0 && g_DrawPacketOffset<=sizeof(effect_packets.bytes));
+                    for(unsigned depth=0;depth<4096;++depth) {
+                        uintptr_t address=effect_ot[depth].address;unsigned links=0;
+                        while(address!=0xffffff) {
+                            CHECK(address>=(uintptr_t)effect_packets.bytes &&
+                                address+sizeof(RenderGpuTag)<=(uintptr_t)effect_packets.bytes+g_DrawPacketOffset && ++links<1024);
+                            RenderGpuTag *tag=(void *)address;
+                            CHECK(tag->length==1 || tag->length==8 || tag->length==9 || tag->length==12);
+                            CHECK(address+sizeof(*tag)+tag->length*4<=(uintptr_t)effect_packets.bytes+g_DrawPacketOffset);
+                            ++complete_links;address=tag->address;
+                        }
+                    }
+                    CHECK(!memcmp(colors0,g_RoomM005BeaconModel0+header0[4],header0[5]*4));
+                    CHECK(!memcmp(colors1,g_RoomM005BeaconModel1+header1[4],header1[5]*4));
+                    for(unsigned byte=0;byte<16;++byte)CHECK(effect_packets.guard[byte]==0xa5);
+                }
+                CHECK(seen_effects==7 && complete_links && complete_slots[0].header.state==0 && effect_action==4);
+                CHECK(hit_state.flags&0x4000);
+                g_PmTables=saved_pm;g_GameState.flags=saved_game_flags;g_GameStateFlags=saved_global_flags;srand(previous_random);
+                puts("Original M005 complete PM program: all three effects, player contact, natural script completion and slot release passed");
                 D_8009D254=old_player;D_800B0E38=previous_buffers;g_GeomScroll.words.viewMatrix=previous_view;
                 g_ActiveDrawSlot=previous_draw_slot;g_DrawPacketOffset=previous_offset;g_FieldFxCurrentAge=previous_age;
                 g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_slot;

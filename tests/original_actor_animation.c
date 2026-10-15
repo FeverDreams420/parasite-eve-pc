@@ -1123,6 +1123,7 @@ static int original_glow_resident_constants(void)
         {0x800e11e4,g_FieldFxTpageSlots,sizeof(g_FieldFxTpageSlots)},
         {0x800c2258,&D_800C2258,sizeof(GteShortVector)},
         {0x800c2260,&g_FieldFxZeroVector,sizeof(GteShortVector)},
+        {0x80093162,g_SceneAssetLbaTbl,sizeof(g_SceneAssetLbaTbl)},
         {0x800c2268,&g_FieldFxZeroRotation,sizeof(GteRotation)},
         {0x800c2290,&g_FieldFxUnitScale,sizeof(GteVector)},
         {0x800e1210,g_FieldFxStripPacketCounts,6*sizeof(u16)},
@@ -1859,15 +1860,10 @@ static int native_object_slot_bounds(void)
     return 1;
 }
 
-/* Controlled addresses for the still-unbound on-demand task-program bank.
- * Error cases return before these records can be installed or executed. */
-u16 g_SceneAssetLbaTbl[2];
-void *g_PmTaskProgramBuffer;
-u8 g_FieldFxTaskProgramCmd108[1], g_FieldFxTaskProgramCmd109[1], g_FieldFxTaskProgramCmd110[1];
-u8 g_FieldFxTaskProgramCmd111[1], g_FieldFxTaskProgramCmd112[1], g_FieldFxTaskProgramCmd113[1], g_FieldFxTaskProgramCmd114[1];
 static int process_task_bank_failures(void)
 {
     Pe1GameState saved=g_GameState;
+    u16 saved_extent[2]={g_SceneAssetLbaTbl[0],g_SceneAssetLbaTbl[1]};void *saved_buffer=g_PmTaskProgramBuffer;
     void *programs[104]; memcpy(programs,g_FieldFxTaskPrograms,sizeof(programs));
     g_GameState.pe_image_base_lba=12345; g_GameState.flags&=~0x10000u;
     g_SceneAssetLbaTbl[0]=7; g_SceneAssetLbaTbl[1]=49;
@@ -1891,6 +1887,13 @@ static int process_task_bank_failures(void)
     if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads || glyph_polls) return 0;
     g_PmTaskProgramBuffer=glyph_scratch; g_SceneAssetLbaTbl[0]=8; g_SceneAssetLbaTbl[1]=50;
     if(Scene_LoadRoomAssets(108,NULL)!=-13 || glyph_reads!=1 || glyph_polls) return 0;
+    g_SceneAssetLbaTbl[0]=7;g_SceneAssetLbaTbl[1]=49;
+    for(unsigned command=108;command<=114;++command) {
+        glyph_reads=glyph_polls=0;glyph_read_retry=glyph_poll_retry=glyph_pending=0;
+        if(Scene_LoadRoomAssets(command,NULL)!=-13 || glyph_reads!=1 || glyph_polls!=1 ||
+            (g_GameState.flags&0x10000) || memcmp(programs,g_FieldFxTaskPrograms,sizeof(programs)))return 0;
+    }
+    g_SceneAssetLbaTbl[0]=saved_extent[0];g_SceneAssetLbaTbl[1]=saved_extent[1];g_PmTaskProgramBuffer=saved_buffer;
     g_GameState=saved; glyph_reads=glyph_polls=0; glyph_read_retry=glyph_poll_retry=glyph_pending=0;
     puts("Original process task-bank I/O: seven commands, read/poll failures and invalid extents return without retry or registry mutation");
     return 1;

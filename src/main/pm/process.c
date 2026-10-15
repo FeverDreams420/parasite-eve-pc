@@ -11,6 +11,13 @@
 #include "pe1/scene_assets.h"
 #include "pe1/scene_room_load.h"
 
+/* Resident USA extent and native bindings for the on-demand task bank.
+ * NULL bindings remain unavailable until their original modules are ported. */
+u16 g_SceneAssetLbaTbl[2] = {969,978};
+void *g_PmTaskProgramBuffer;
+FieldFxTaskProgram *g_FieldFxTaskProgramCmd108, *g_FieldFxTaskProgramCmd109, *g_FieldFxTaskProgramCmd110;
+FieldFxTaskProgram *g_FieldFxTaskProgramCmd111, *g_FieldFxTaskProgramCmd112, *g_FieldFxTaskProgramCmd113, *g_FieldFxTaskProgramCmd114;
+
 static inline int FindSlot(u32 command)
 {
     int slot = -1;
@@ -89,6 +96,9 @@ int Scene_LoadRoomAssets(u32 command, void *owner)
         while ((ready = CdRom_PollReady()) != 0) {
             if (ready < 0) return -13;
         }
+        if (!g_FieldFxTaskProgramCmd108 || !g_FieldFxTaskProgramCmd109 || !g_FieldFxTaskProgramCmd110 ||
+            !g_FieldFxTaskProgramCmd111 || !g_FieldFxTaskProgramCmd112 || !g_FieldFxTaskProgramCmd113 ||
+            !g_FieldFxTaskProgramCmd114) return -13;
         /* Room code is statically linked; no PS1 instruction-cache flush. */
         g_FieldFxTaskPrograms[108 - 85] = g_FieldFxTaskProgramCmd108;
         g_FieldFxTaskPrograms[109 - 85] = g_FieldFxTaskProgramCmd109;

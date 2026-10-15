@@ -125,7 +125,7 @@ void BattleCmd_UndoAllPending(void) {
 
 void Battle_DispatchSpecialAction(int);
 
-void Inv_SetActiveList(int mode, int *slot) {
+void Inv_SetActiveList(int mode, void *slot) {
     Combatant *active;
     int *selection;
     BattleEntity *entity;

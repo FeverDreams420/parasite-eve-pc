@@ -22,10 +22,10 @@ extern unsigned char g_InvSortRankTableD[];
 extern unsigned char g_InvTypeRankTableA[];
 extern unsigned char g_InvTypeRankTableB[];
 extern unsigned char g_InvSortRankTableB[];
-extern u16 g_InvItemArray[];
+#define g_InvItemArray (g_InventoryRuntime.specialStorage)
 extern u8 g_ItemCodeRemapTable[];
 extern unsigned char g_ItemDropRngTable[];
-extern s16 g_InvActiveListItems[];
+extern s16 g_InvActiveListItems[10];
 extern int g_InvActiveListCount;
 extern s16 g_BattleCountTable[];
 extern int g_MenuBattleCount;

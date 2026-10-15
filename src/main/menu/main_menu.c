@@ -22,6 +22,7 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/text.h"
 
+MenuBonusStatWorkspace g_MenuBonusStatWorkspace;
 int g_MenuPendingTotalExp;
 int g_MenuSelectionLocked;
 int g_AyaFullInvHold;
@@ -142,11 +143,11 @@ int Menu_CursorModeInputHandler(MenuWidgetNode *arg0, u32 arg1) {
 }
 
 void Menu_DrawBlendColorArrows(MenuWidgetNode *panel);
-s32 Menu_StepColorSelect(MenuWidgetNode *panel, s32 flags);
-void Menu_DrawBlendColorChannelList(int node);
-void Menu_DrawBlendColorOptionList(int node);
-void Menu_DrawScreenAdjustPanel(void);
-int Menu_ScreenAdjustInputHandler(void *node, int input);
+s32 Menu_StepColorSelect(MenuWidgetNode *panel, unsigned int flags);
+void Menu_DrawBlendColorChannelList(MenuWidgetNode *node);
+void Menu_DrawBlendColorOptionList(MenuWidgetNode *node);
+void Menu_DrawScreenAdjustPanel(MenuWidgetNode *unused);
+int Menu_ScreenAdjustInputHandler(MenuWidgetNode *node, unsigned int input);
 
 void Menu_OpenBlendColorScreen(MenuWidgetNode *arg0) {
     MenuWidgetNode *parent;
@@ -228,7 +229,7 @@ void Menu_DrawBlendColorArrows(MenuWidgetNode *panel) {
     Draw_AllocSprite(0x4B);
 }
 
-s32 Menu_StepColorSelect(MenuWidgetNode *panel, s32 flags) {
+s32 Menu_StepColorSelect(MenuWidgetNode *panel, unsigned int flags) {
     s32 shift;
     s32 choice;
     s32 color;
@@ -284,13 +285,13 @@ s32 Menu_StepColorSelect(MenuWidgetNode *panel, s32 flags) {
     return 1;
 }
 
-void Menu_DrawBlendColorChannelList(int node) {
+void Menu_DrawBlendColorChannelList(MenuWidgetNode *node) {
     MenuWidget_DrawList((MenuWidgetNode *)node, Menu_DrawBlendColorChannelRow);
 }
 
 int g_MenuScreenBaseYBackup;
 
-void Menu_DrawBlendColorOptionList(int node) {
+void Menu_DrawBlendColorOptionList(MenuWidgetNode *node) {
     MenuWidget_DrawList((MenuWidgetNode *)node, Menu_DrawBlendColorOptionRow);
 }
 
@@ -304,7 +305,7 @@ void Menu_OpenScreenAdjustView(MenuWidgetNode *parent) {
     g_MenuScreenBaseYBackup = Draw_GetBaseY();
 }
 
-void Menu_DrawScreenAdjustPanel(void) {
+void Menu_DrawScreenAdjustPanel(MenuWidgetNode *unused) {
     Draw_OffsetCursor(0x10, 0xA);
     Draw_PrintSignedNumberWidth3(8 - Draw_GetBaseY());
     Draw_SetTextDimmed(VSync(-1) & 0x10);
@@ -314,20 +315,18 @@ void Menu_DrawScreenAdjustPanel(void) {
     Draw_EmitGlyph(0x7B, 2);
 }
 
-int Menu_ScreenAdjustInputHandler(void *node, int input) {
-    int zero_arg;
+int Menu_ScreenAdjustInputHandler(MenuWidgetNode *node, unsigned int input) {
+    int delta;
 
     {
         if ((input & 0x1000) != 0) {
-            zero_arg = 0;
-            input = -1;
+            delta = -1;
         } else if ((input & 0x4000) != 0) {
-            zero_arg = 0;
-            input = 1;
+            delta = 1;
         } else {
             goto screen_adjust_other;
         }
-        Draw_SetBaseOffsetPosition(zero_arg, input);
+        Draw_SetBaseOffsetPosition(0, delta);
         Menu_PlayMoveSound();
         return 1;
     }
@@ -349,13 +348,13 @@ screen_adjust_other:
 }
 
 void Menu_CreateExpReviewView(void);
-void Menu_DrawExpReviewPanel(void);
-s32 Menu_ConfirmExpAllocation(MenuWidgetNode *node, s32 flags);
+void Menu_DrawExpReviewPanel(MenuWidgetNode *unused);
+s32 Menu_ConfirmExpAllocation(MenuWidgetNode *node, unsigned int flags);
 void Menu_CreateLevelUpBanner(void);
-void Menu_DrawLevelUpBanner(void);
+void Menu_DrawLevelUpBanner(MenuWidgetNode *unused);
 void Menu_CreateLevelUpResultPanel(void);
-void Menu_DrawBonusPointAnimFrame(void);
-s32 Menu_StepParasiteScreen(MenuWidgetNode *node, s32 flags);
+void Menu_DrawBonusPointAnimFrame(MenuWidgetNode *unused);
+s32 Menu_StepParasiteScreen(MenuWidgetNode *node, unsigned int flags);
 
 int g_BonusPointBarAnimProgress, g_BonusPointBarAnimStep;
 int g_BonusPointDisplayValue, g_MenuBonusPointDisplayTarget;
@@ -434,7 +433,7 @@ void Menu_CreateExpReviewView(void) {
     node->appearance.gradientPoints = g_MenuExpReviewPanelPoints;
 }
 
-void Menu_DrawExpReviewPanel(void) {
+void Menu_DrawExpReviewPanel(MenuWidgetNode *unused) {
     s32 can_step;
     s32 level;
     s32 exp_to_next;
@@ -494,7 +493,7 @@ void Menu_DrawExpReviewPanel(void) {
     Draw_StatePop();
 }
 
-s32 Menu_ConfirmExpAllocation(MenuWidgetNode *node, s32 flags) {
+s32 Menu_ConfirmExpAllocation(MenuWidgetNode *node, unsigned int flags) {
     s32 confirm;
     s32 new_level;
 
@@ -526,7 +525,7 @@ void Menu_CreateLevelUpBanner(void) {
     MenuWidget_CreateSimpleNode(0x16, 0, 0, 0)->draw = Menu_DrawLevelUpBanner;
 }
 
-void Menu_DrawLevelUpBanner(void) {
+void Menu_DrawLevelUpBanner(MenuWidgetNode *unused) {
     Draw_OffsetCursor(0, 4);
     Draw_PrintCenteredText(Text_LookupTable4(0x19));
 }
@@ -611,7 +610,7 @@ void Menu_InitStateTables(void) {
     }
 }
 
-void Menu_DrawBonusPointAnimFrame(void) {
+void Menu_DrawBonusPointAnimFrame(MenuWidgetNode *unused) {
     int var_a0;
     int var_a0_2;
     int var_a0_3;
@@ -699,7 +698,7 @@ void Menu_DrawBonusPointAnimFrame(void) {
     }
 }
 
-s32 Menu_StepParasiteScreen(MenuWidgetNode *arg0, s32 arg1) {
+s32 Menu_StepParasiteScreen(MenuWidgetNode *arg0, unsigned int arg1) {
     u16 *statDestination;
     s32 *statDeltas;
     s32 *statMultipliers;

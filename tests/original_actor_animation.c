@@ -2604,6 +2604,29 @@ static int original_save_card_images(PeDisc *disc)
            g_AyaEquippedWeaponSlot[0]!=0 || g_AyaEquippedArmorSlot[0]!=1)valid=0;
     }
     Menu_ClearCommandResult();g_AkaoMessageQueueCount=queued;
+    /* Exercise the newly linked original screen-adjust callbacks through the
+     * actual widget input ABI, including both limits and cancel/confirm. */
+    for(int base_y=0;base_y<16;++base_y)for(int direction=-1;direction<=1;direction+=2)
+    for(unsigned confirm=0;confirm<2;++confirm) {
+        Draw_SetBaseOffsetPosition(0,base_y-Draw_GetBaseY());
+        MenuWidget_InitPool();Menu_OpenScreenAdjustView(NULL);
+        MenuWidgetNode *node=MenuWidget_GetCurrentNode();
+        int expected=base_y+direction;if(expected<0)expected=0;if(expected>15)expected=15;
+        if(!node || !node->update)valid=0;
+        else {
+            if(node->update(node,0)!=1 || Draw_GetBaseY()!=base_y)valid=0;
+            if(node->update(node,direction<0?0x1000:0x4000)!=1 || Draw_GetBaseY()!=expected)valid=0;
+            if(node->update(node,confirm?0x10000:0x40)!=1 ||
+               Draw_GetBaseY()!=(confirm?expected:base_y) || MenuWidget_GetCurrentNode() || g_MenuWidgetActiveListHead)valid=0;
+        }
+    }
+    int paused=g_MenuInputPollingPaused,pending=g_MenuInputPausePending;
+    for(unsigned flags=0;flags<8;++flags) {
+        g_DiscChangeFlags=flags;MenuInput_SetPollingPaused(1);g_MenuInputPausePending=1;
+        Menu_DeferredExec();
+        if(g_MenuInputPollingPaused!=((flags&3)!=0) || g_MenuInputPausePending!=((flags&3)!=0))valid=0;
+    }
+    MenuInput_SetPollingPaused(paused);g_MenuInputPausePending=pending;g_AkaoMessageQueueCount=queued;
     g_PlayerEntity=saved_player;memcpy(g_StatScaleBase,scale,sizeof(scale));
     g_InvBonusSlotCount=saved_bonus;g_InvSlotLimit=saved_limit;g_InvItemPtr=saved_items;
     g_InvActiveListOverride=saved_override;g_InvOverrideSlotLimit=saved_override_limit;

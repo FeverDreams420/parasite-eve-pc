@@ -717,7 +717,6 @@ void Inv_StepScrollDisplay(void) {
     BattleCmdEntry *entry;
     ItemDataRecord *pool, *tracked;
     /* Mode 7 ignores the buffer; mode 5 consumes the selected record pointer. */
-    int selection[2];
     int mode;
     if (g_InvCompareSlotLeft.ammo == g_InvCompareLeftItem->ammo &&
         g_InvCompareSlotRight.ammo == g_InvCompareRightItem->ammo) return;
@@ -770,12 +769,10 @@ void Inv_StepScrollDisplay(void) {
     tracked = LookupComparisonActiveItem(g_InventoryRuntime.tracked[0]);
     if (tracked == g_InvCompareLeftItem) {
         mode = 5;
-        selection[0] = (int)tracked;
     } else if (tracked == g_InvCompareRightItem) {
-        selection[0] = (int)tracked;
         mode = 5;
     } else mode = 7;
-    Inv_SetActiveList(mode, selection);
+    Inv_SetActiveList(mode, mode == 5 ? &tracked : NULL);
 }
 
 static inline ItemDataRecord *LookupSlotItem(int value) {

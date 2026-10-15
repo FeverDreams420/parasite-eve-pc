@@ -9,6 +9,7 @@
 #include "pe1/menu_inventory.h"
 #include "pe1/menu_inventory_root.h"
 #include "pe1/menu_dialog.h"
+#include "pe1/menu_context_help.h"
 void Menu_FullInit(void);
 void MemCard_ClearDelayedCallback(void);
 int MemCard_HasDelayedCallback(void);
@@ -301,6 +302,25 @@ static int new_game_inventory(void)
     CHECK(&g_InvBaseCapacity==&g_AyaSaveState.inventory_slot_count);
     memcpy(g_InventoryRuntime.equipment,saved_equipment,sizeof(saved_equipment));
     memcpy(g_KeyItemRecords,saved_keys,sizeof(saved_keys));
+    CHECK(g_InvTransferItemList==g_InvPackedList+50);
+    CHECK(g_InvItemArray==g_InventoryRuntime.specialStorage);
+    for(unsigned special=0;special<2;++special) {
+        memset(g_InventoryRuntime.specialStorage,0,sizeof(g_InventoryRuntime.specialStorage));
+        CHECK(Inv_StepScrollDisplay2(special)==(special?80:100));
+        CHECK(g_InvActiveItemList==(special?g_InventoryRuntime.specialStorage:g_InventoryRuntime.storage));
+        CHECK(g_InvActiveListOverride==g_InvActiveItemList && g_InvOverrideSlotLimit==(special?80:100));
+        const int ids[]={0x100,0x17f,0x200,0x208,1,0xff,0,0x180,0x209};
+        for(unsigned i=0;i<sizeof(ids)/sizeof(*ids);++i) {
+            g_InvActiveItemList[i]=ids[i];
+            CHECK(Inv_LookupItemData(i)==Inv_LookupItemRecord(ids[i]));
+        }
+    }
+    g_InvActiveListCount=10;
+    for(unsigned i=0;i<10;++i) {
+        g_InvActiveListItems[i]=0x40+i;CHECK(Menu_GetBattleCountEntry(i)==(int)(0x40+i));
+    }
+    CHECK(!Menu_GetBattleCountEntry(-1) && !Menu_GetBattleCountEntry(10));
+    g_InvActiveListCount=0;
     Inv_SetActiveListOverride(NULL,0);Inv_SelectActiveList(0);
     puts("Original inventory: New Game/carryover, canonical records, descriptions, lookup and 100-slot category filters passed");
     return 0;
@@ -581,6 +601,17 @@ static int recalc_stats(void)
     CHECK(core.curHP==1 && core.hpMirror==1 && g_AyaSaveState.current_hp==1);
     s16 override[2]={0}; g_InvItemPtr=override; g_InvSlotLimit=2;
     Inv_SetAyaSlotCount(100); CHECK(g_AyaSaveState.inventory_slot_count==50 && g_InvSlotLimit==2);
+    BattleAction action={0};core.action=&action;
+    ItemDataRecord record={0},*record_pointer=&record;
+    const unsigned ammo_values[]={0,1,1023,1024,65535};
+    for(unsigned kind=0;kind<22;++kind)for(unsigned i=0;i<5;++i) {
+        record.kind=kind;record.ammo=ammo_values[i];action.attackWord=0xA5A55A5A;
+        Menu_ClearCommandResult();Inv_SetActiveList(5,&record_pointer);
+        unsigned category=kind>0 && kind<8?(kind>4?kind-4:1):kind>=19?kind-18:0;
+        CHECK(action.attackWord==((0xA5A55A5Au&0xFFCFFC00u)|(record.ammo&1023u)|((category&3u)<<20)));
+        CHECK(!Menu_GetCommandResult());
+    }
+    core.action=NULL;
     g_PlayerEntity=NULL; g_AyaSaveState.current_hp=123;
     Inv_RecalcSlotStats(); CHECK(g_AyaSaveState.current_hp==123);
     g_InvItemPtr=NULL;

@@ -36,6 +36,10 @@ add_library(parasite-eve-original OBJECT
     src/main/aya/stats.c
     src/main/item/active_list.c
     src/main/item/actions.c
+    src/main/item/swap.c
+    src/main/menu/skills.c
+    src/main/menu/equip_screen.c
+    src/main/menu/main_menu.c
     src/main/time/counters.c
     src/main/save/game_data.c
     src/main/memcard/save_flow.c

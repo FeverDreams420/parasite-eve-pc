@@ -34,6 +34,7 @@ int g_MenuLayoutLocked;
 int g_MenuSelectedSpell;
 
 int g_MenuInputPausePending;
+u8 g_MenuItemLabelBuffer[128];
 
 void Menu_DeferredExec(void) {
     if (g_MenuInputPausePending != 0) {
@@ -46,7 +47,7 @@ void Menu_DeferredExec(void) {
 
 #define NULL ((void *)0)
 void Inv_BuildFilteredPackedListExcluding(int mask, int excluded);
-int Menu_StepEquipConfirm(MenuWidgetNode *node, int input);
+int Menu_StepEquipConfirm(MenuWidgetNode *node, unsigned int input);
 void Menu_DrawEquipSelectionList(MenuWidgetNode *node);
 
 void Menu_StepSkillList(MenuWidgetNode *arg0, s32 arg1) {
@@ -155,7 +156,7 @@ void Menu_OnEquipConfirm(MenuWidgetNode *unused, int confirmed)
 
 /* Confirmation input handling shares the callback's equip-selection flow. */
 
-int Menu_StepEquipConfirm(MenuWidgetNode *node, int input) {
+int Menu_StepEquipConfirm(MenuWidgetNode *node, unsigned int input) {
     MenuWidgetNode *child;
     MenuWidgetNode *parent;
     MenuWidgetNode *dialog;
@@ -311,7 +312,7 @@ void Menu_StepItemDetailPanel2(void);
 
 int g_MenuSelectedSpell;
 
-s32 Menu_SkillActionHandler(MenuWidgetNode *node, s32 flags) {
+s32 Menu_SkillActionHandler(MenuWidgetNode *node, unsigned int flags) {
     MenuWidgetNode *child;
     s32 handled;
 
@@ -425,11 +426,11 @@ void Menu_CreateInvSwapView(MenuWidgetNode *parent, int mode) {
 
 #define NULL ((void *)0)
 
-void Menu_DrawEquipSortToggleList(int node);
-int Menu_EquipGridHandler(void *node, int flags);
-void Menu_CreateEquipInfoPanel(int parent, unsigned int option);
-int Menu_EquipSelectInput(void *node, unsigned int flags);
-void Menu_DrawEquipInfoOptionList(int node);
+void Menu_DrawEquipSortToggleList(MenuWidgetNode *node);
+int Menu_EquipGridHandler(MenuWidgetNode *node, unsigned int flags);
+void Menu_CreateEquipInfoPanel(MenuWidgetNode *parent, unsigned int option);
+int Menu_EquipSelectInput(MenuWidgetNode *node, unsigned int flags);
+void Menu_DrawEquipInfoOptionList(MenuWidgetNode *node);
 void Menu_DrawWeaponModSlots(s32 index);
 
 int g_MenuInventoryViewMode;
@@ -522,7 +523,7 @@ void Menu_DrawWeaponModSlots(s32 arg0) {
     }
 }
 
-void Menu_DrawEquipOptionsList(int arg0) {
+void Menu_DrawEquipOptionsList(MenuWidgetNode *arg0) {
     MenuWidget_DrawList((MenuWidgetNode *)arg0, Menu_DrawWeaponModSlots);
 }
 
@@ -564,11 +565,11 @@ s32 Menu_EquipOptionsInputHandler(MenuWidgetNode *arg0, unsigned int arg1) {
     return 1;
 }
 
-void Menu_DrawEquipSortToggleList(int arg0) {
+void Menu_DrawEquipSortToggleList(MenuWidgetNode *arg0) {
     MenuWidget_DrawList((MenuWidgetNode *)arg0, Menu_DrawEquipSortToggleRow);
 }
 
-int Menu_EquipGridHandler(void *arg0, int arg1) {
+int Menu_EquipGridHandler(MenuWidgetNode *arg0, unsigned int arg1) {
     int temp;
 
     if (arg1 & 0x10000) {
@@ -588,7 +589,7 @@ int Menu_EquipGridHandler(void *arg0, int arg1) {
     return 1;
 }
 
-void Menu_CreateEquipInfoPanel(int arg0, unsigned int arg1) {
+void Menu_CreateEquipInfoPanel(MenuWidgetNode *arg0, unsigned int arg1) {
     MenuWidgetNode *node;
     MenuWidgetNode *child;
 
@@ -612,11 +613,11 @@ void Menu_CreateEquipInfoPanel(int arg0, unsigned int arg1) {
     }
 }
 
-void Menu_DrawEquipInfoOptionList(int arg0) {
+void Menu_DrawEquipInfoOptionList(MenuWidgetNode *arg0) {
     MenuWidget_DrawList((MenuWidgetNode *)arg0, Menu_DrawEquipInfoOptionRow);
 }
 
-int Menu_EquipSelectInput(void *arg0, unsigned int arg1) {
+int Menu_EquipSelectInput(MenuWidgetNode *arg0, unsigned int arg1) {
     int temp;
     void (*handler)(int, int);
 

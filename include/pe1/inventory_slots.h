@@ -11,7 +11,8 @@
  * pending item-ID list at g_InvActiveListItems (count g_InvActiveListCount). */
 extern s32 g_InvPackedListCount;
 extern s32 g_InvTransferItemCount;
-extern s16 g_InvTransferItemList[];
+/* USA A1E00 is the upper half of the 100-slot packed-list workspace. */
+#define g_InvTransferItemList (g_InvPackedList + 50)
 extern s16 *g_InvActiveItemList;
 extern s32 g_InvActiveListSlotCount;
 extern s16 g_InvPackedList[100];
@@ -22,7 +23,7 @@ typedef union SavedMenuMode {
 } SavedMenuMode;
 extern SavedMenuMode g_SavedMenuMode;
 
-void Inv_SetActiveList(int mode, int *slot);
+void Inv_SetActiveList(int mode, void *slot);
 void Inv_ResetActiveList(void);
 void Battle_UseItem(int item);
 /* Moves ammo between the compared weapons; nonzero when it cannot. */
@@ -44,7 +45,7 @@ extern s32 g_InvPackedListCursor;
 extern s32 g_InvRebuildFilterMode, g_InvRebuildMinFirstStat;
 /* Pending item IDs and the current number to transfer. */
 extern s32 g_InvActiveListCount;
-extern s16 g_InvActiveListItems[];
+extern s16 g_InvActiveListItems[10];
 #define g_InvTrackedSlots g_InventoryRuntime.tracked
 /* Two remembered selections; fixed-slot names alias the same arrays. */
 extern s32 g_InvSavedSelectionIndex[2];

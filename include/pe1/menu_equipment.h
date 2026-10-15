@@ -28,7 +28,7 @@ int Menu_StepInventoryCategory(MenuWidgetNode *node, unsigned int flags);
 void Menu_DrawEquipListContainer(void *node);
 
 int Menu_EquipOptionsInputHandler(MenuWidgetNode *node, unsigned int flags);
-void Menu_DrawEquipOptionsList(int node);
+void Menu_DrawEquipOptionsList(MenuWidgetNode *node);
 void Menu_OpenInventoryScreen(void);
 /* Equipment selection state and stat preview. */
 extern int g_MenuItemUseMode, g_MenuItemRenameMode, g_MenuItemDiscardMode;

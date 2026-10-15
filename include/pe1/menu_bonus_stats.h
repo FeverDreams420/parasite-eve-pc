@@ -19,10 +19,10 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(MenuBonusStatWorkspace, multipliers) == 0x48,
 PE1_STATIC_ASSERT(sizeof(MenuBonusStatWorkspace) == 0x6C,
                   menu_bonus_stat_workspace_size);
 
-/* Independent interior labels retain the retail address calculations. */
-extern s32 g_BonusPointStatQueryResults[9];
-extern s32 g_BonusPointStatDeltas[9];
-extern s32 g_BonusPointStatMultipliers[9];
+extern MenuBonusStatWorkspace g_MenuBonusStatWorkspace;
+#define g_BonusPointStatQueryResults (g_MenuBonusStatWorkspace.queryResults)
+#define g_BonusPointStatDeltas (g_MenuBonusStatWorkspace.deltas)
+#define g_BonusPointStatMultipliers (g_MenuBonusStatWorkspace.multipliers)
 
 /* Level-up and bonus point panels: shown values step toward their targets. */
 extern int g_MenuLevelDisplayValue, g_MenuLevelDisplayTarget;

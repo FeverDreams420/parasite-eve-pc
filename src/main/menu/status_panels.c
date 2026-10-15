@@ -842,3 +842,6 @@ int Menu_ClampRange(int arg0) {
     }
     return 0;
 }
+
+/* Shared four-category inventory costs, formerly USA 0x800A1888. */
+int g_StatBaseTable[4];

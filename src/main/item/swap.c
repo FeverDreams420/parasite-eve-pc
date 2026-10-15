@@ -6,6 +6,7 @@
 #include "pe1/inventory_slots.h"
 #include "pe1/inventory_state.h"
 #include "pe1/menu_inventory.h"
+#include "pe1/menu_context_help.h"
 #include "pe1/menu_item_rows.h"
 #include "pe1/save.h"
 #include "pe1/text.h"
@@ -19,7 +20,7 @@ s32 g_InvTransferItemCount;
 int g_InvActiveListCount;
 
 int g_InvActiveListCount;
-short g_InvActiveListItems[];
+short g_InvActiveListItems[10];
 
 int Menu_GetBattleCount(void) {
     return g_InvActiveListCount;
@@ -40,11 +41,11 @@ void Inv_ShowItemDescriptionPanel(s32 index) {
     value = g_InvActiveListItems[index];
     if (value < 0x200) {
         if ((unsigned int)(value - 0x100) < 0x80U) {
-            entry = (ItemDataRecord *)(g_EquipItemDataTable + (value << 5));
+            entry = &g_InventoryRuntime.equipment[value - 0x100];
         } else if ((unsigned int)(value - 1) < 0xFFU) {
             entry = Item_LookupBaseData(value - 1);
         } else if ((unsigned int)(value - 0x200) < 9U) {
-            entry = (ItemDataRecord *)(g_KeyItemDataTable + (value << 5));
+            entry = &g_KeyItemRecords[value - 0x200];
         } else {
             entry = 0;
         }
@@ -52,7 +53,7 @@ void Inv_ShowItemDescriptionPanel(s32 index) {
             Menu_DrawSlotRow(entry, Text_LookupTable8(entry->itemId - 1));
         }
     } else {
-        entry = (ItemDataRecord *)(g_KeyItemDataTable + (value << 5));
+        entry = &g_KeyItemRecords[value - 0x200];
         if (entry->flags & ITEM_DATA_FLAG_GENERIC_DESCRIPTION) {
             text = g_CursorRenderDataBlock;
             if (entry->kind == 9) {
@@ -151,19 +152,11 @@ int Inv_CanAddActiveListItemToAya(int index) {
         item_id = g_InvActiveListItems[slot_index];
         saved_item_id = item_id;
         if (item_id - 0x100U < 0x80U) {
-            int shifted;
-            u8 *base;
-            shifted = item_id << 5;
-            base = g_EquipItemDataTable;
-            data = (ItemDataRecord *)(shifted + base);
+            data = &g_InventoryRuntime.equipment[item_id - 0x100];
         } else if (item_id - 1U < 0xFFU) {
             data = Item_LookupBaseData(item_id - 1);
         } else if (saved_item_id - 0x200U < 9U) {
-            int shifted;
-            u8 *base;
-            shifted = saved_item_id << 5;
-            base = g_KeyItemDataTable;
-            data = (ItemDataRecord *)(shifted + base);
+            data = &g_KeyItemRecords[saved_item_id - 0x200];
         } else {
             data = 0;
         }
@@ -328,12 +321,11 @@ void Menu_DrawArmorItemDetail(int slot) {
         Draw_SetTextDimmed(bit == 0);
 
         if ((unsigned int)(value - 0x100) < 0x80U) {
-            candidate = (ItemDataRecord *)(g_EquipItemDataTable +
-                                           (value << 5));
+            candidate = &g_InventoryRuntime.equipment[value - 0x100];
         } else if ((unsigned int)(value - 1) < 0xFFU) {
             candidate = Item_LookupBaseData(value - 1);
         } else if ((unsigned int)(value - 0x200) < 9U) {
-            candidate = (ItemDataRecord *)(g_KeyItemDataTable + (value << 5));
+            candidate = &g_KeyItemRecords[value - 0x200];
         } else {
             candidate = 0;
         }
@@ -356,17 +348,17 @@ void Menu_DrawArmorItemDetail(int slot) {
 /* Wayne-list item lookup, kind filtering, filtered-slot lookup, equip
  * eligibility and inventory swaps. */
 
-u8 *Inv_LookupItemData(int index) {
+ItemDataRecord *Inv_LookupItemData(int index) {
     int value = g_InvActiveItemList[index];
     int saved_value = value;
-    u8 *entry;
+    ItemDataRecord *entry;
 
     if (value - 0x100U < 0x80U) {
-        entry = g_EquipItemDataTable + (value << 5);
+        entry = &g_InventoryRuntime.equipment[value - 0x100];
     } else if (value - 1U < 0xFFU) {
         entry = Item_LookupBaseData(value - 1);
     } else if (saved_value - 0x200U < 9U) {
-        entry = g_KeyItemDataTable + (saved_value << 5);
+        entry = &g_KeyItemRecords[saved_value - 0x200];
     } else {
         entry = 0;
     }
@@ -408,8 +400,7 @@ static inline ItemDataRecord *LookupTrackedItem(int index) {
                 return Item_LookupBaseData(value - 1);
             }
             if (saved - 0x200U < 9U) {
-                int shifted = saved << 5;
-                result = (ItemDataRecord *)(g_KeyItemDataTable + shifted);
+                result = &g_KeyItemRecords[saved - 0x200];
             } else {
                 result = 0;
             }

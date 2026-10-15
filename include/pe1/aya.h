@@ -121,11 +121,9 @@ extern u8 g_AyaInventorySlotCount[];
 /* Array-style retail labels share the saved character fields. */
 #define g_AyaEquippedWeaponSlot (&g_AyaSaveState.equipped_weapon_slot)
 #define g_AyaEquippedArmorSlot (&g_AyaSaveState.equipped_armor_slot)
-/* Scalar views of the same two bytes for -G8 units with MASPSX_FORCE_G0:
- * cc1 then addresses each access directly (absolute after MASPSX) instead of
- * keeping the address in a as it does for the arrays. */
-extern s8 g_EquippedWeaponSlot;
-extern s8 g_EquippedArmorSlot;
+/* Scalar spellings refer to the same saved slot bytes. */
+#define g_EquippedWeaponSlot (g_AyaSaveState.equipped_weapon_slot)
+#define g_EquippedArmorSlot (g_AyaSaveState.equipped_armor_slot)
 extern s32 g_AyaBonusPoints[];
 extern u32 g_AyaParasiteSpellFlags[];
 extern u16 g_AyaStatAgility[];

@@ -11,6 +11,8 @@ typedef struct TextboxRect {
 } TextboxRect;
 
 extern TextboxRect g_TextboxPendingRect;
+extern u8 *g_TextboxMessageSource;
+extern int g_ScriptCollisionFlag;
 extern u8 g_DialogueChoiceCursor;
 extern s8 g_MenuEquipSlotIndex;
 extern u8 g_PlayerMovementEnabled;

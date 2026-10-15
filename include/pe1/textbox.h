@@ -3,9 +3,11 @@
 
 #include "common.h"
 #include "pe1/render_packets.h"
+#include "pe1/render_prim.h"
+#include "pe1/field_bg_load.h"
 
 /* Textbox / on-screen dialogue entry, walked by Menu_DrawTextboxEntries.
- * g_TextboxEntries is an array of these, stride 0x38. Each
+ * g_TextboxEntries is an array of native runtime entries. Each
  * frame the engine walks the active entries and types out / draws their text.
  * See include/pe1/text.h for the surrounding text subsystem notes. */
 
@@ -32,12 +34,6 @@ typedef struct TextboxEntry {
     TextboxNumber numbers[5];
 } TextboxEntry;
 
-typedef struct TextboxFontPage {
-    u32 reserved;
-    u16 textureX, textureY, paletteX, paletteY;
-    u16 tpage, clut;
-} TextboxFontPage;
-
 typedef struct TextboxNameGlyphs {
     u8 glyphs[9];
     s8 count;
@@ -49,43 +45,21 @@ typedef struct TextboxGlyphSpacing {
 typedef struct TextboxPoint {
     u16 x, y;
 } TextboxPoint;
-typedef struct TextboxGlyphPacket {
-    RenderNativeTag tag;
-    uintptr_t drawMode;
-    RenderSpritePacket sprite;
-} TextboxGlyphPacket;
+typedef RenderPagedSpritePacket TextboxGlyphPacket;
 
 extern TextboxEntry g_TextboxEntries[4];
 
-/* Font pages, the per-glyph spacing table and the textbox sprite/tile
- * packets for both frame buffers (choice cursor packets at 0x8009EC70,
- * 28 bytes; fog tiles at 0x8009ECA8, 24 bytes). */
-extern TextboxFontPage g_TextboxFontPages[4];
-extern TextboxGlyphSpacing g_TextboxGlyphSpacing[256];
+/* USA has 78 variable-width base glyphs; extended glyphs use fixed cells. */
+extern TextboxGlyphSpacing g_TextboxGlyphSpacing[78];
+enum { TEXTBOX_GLYPH_PACKET_CAPACITY = 0x2400 / 28 };
 
-/* A draw-table address as a pointer or a word: Menu_DrawTextboxEntries
- * adds byte offsets it computed once (draw slot * 4, glyph * 2) to the
- * table address as integers. */
-typedef union TextboxTableAddress {
-    void *pointer;
-    u8 *bytes;
-    RenderSpritePacket *sprite;
-    TextboxGlyphPacket **packets;
-    u32 **ordering;
-    TextboxGlyphSpacing *spacing;
-    u32 address;
-} TextboxTableAddress;
-/* A glyph's spacing entry addressed by the doubled glyph index. */
-typedef union TextboxGlyphSpacingAddress {
-    TextboxGlyphSpacing *spacing;
-    u32 word;
-} TextboxGlyphSpacingAddress;
 /* The dialogue choice cursor, one texture-page + sprite packet per frame
  * buffer: a 24x12 cell at u 0x70 of font page 3, placed at the selection
  * cursor plus 12 lines per choice. */
 extern TextboxGlyphPacket g_TextboxChoiceCursor[2];
-extern u8 g_TextboxFogTilePackets[];
+extern RenderModeTilePacket g_TextboxFogTilePackets[2];
 /* Text colour bytes of the textbox glyphs. */
+extern u8 g_TextboxGlyphColorR, g_TextboxGlyphColorG, g_TextboxGlyphColorB;
 extern u8 g_TextboxHighlightColorR;
 extern u8 g_TextboxHighlightColorG;
 extern u8 g_TextboxHighlightColorB;

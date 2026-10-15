@@ -6,6 +6,7 @@
 #include "pe1/resident_tables.h"
 #include "pe1/text.h"
 #include "pe1/save_slot_metadata.h"
+#include "pe1/textbox.h"
 
 MenuWidgetSimpleDescriptor g_MenuWidgetSimpleDescriptors[0x41];
 MenuWidgetGridDescriptor g_MenuWidgetGridDescriptors[0x41];
@@ -232,4 +233,20 @@ u8 g_AnalyzeStealWeakTexts[2][22] = {
 u8 g_AnalyzeConfusionWeakTexts[2][21] = {
     {0xfb,0x0e,0xfb,0x0c,0x6b,0x97,0x6c,0x57,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
     {0x16,0x34,0x43,0x42,0x0f,0x32,0x3e,0x3d,0x35,0x44,0x42,0x34,0x33,0x0f,0x34,0x30,0x42,0x38,0x3b,0x48,0xff},
+};
+
+/* Original shared font/background VRAM slots and USA base-glyph spacing. */
+FieldFontTextureState g_FieldFontTextureState = {.font = {{
+    {0x0,0x140,0x0,0x140,0xfc,0x0,0x0},
+    {0x0,0x180,0x0,0x150,0xfc,0x0,0x0},
+    {0x0,0x110,0x1d4,0x130,0x1de,0x0,0x0},
+    {0x0,0x11c,0x1d4,0x130,0x1dd,0x0,0x0}
+}, 0}};
+TextboxGlyphSpacing g_TextboxGlyphSpacing[78] = {
+    {0,7},{0,7},{0,7},{0,7},{0,7},{0,7},{0,7},{0,7},{0,7},{0,7},{0,7},{0,6},{0,6},
+    {0,8},{0,11},{0,14},{0,9},{0,8},{0,7},{0,8},{0,7},{0,7},{0,8},{0,9},{0,6},{0,7},
+    {0,9},{0,8},{0,11},{0,9},{0,7},{0,8},{0,7},{0,9},{0,7},{0,7},{0,9},{0,9},{0,11},
+    {0,7},{0,9},{0,7},{0,9},{0,4},{0,7},{0,6},{0,4},{0,4},{0,8},{0,8},{0,7},{0,7},
+    {0,7},{0,7},{0,8},{0,9},{0,5},{0,4},{0,8},{0,5},{0,11},{0,9},{0,7},{0,8},{0,8},
+    {0,7},{0,6},{0,5},{0,9},{0,9},{0,11},{0,7},{0,9},{0,6},{0,4},{0,4},{0,7},{0,0},
 };

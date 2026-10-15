@@ -3,6 +3,7 @@
 #include "pe1/draw_area.h"
 #include "pe1/textbox.h"
 #include "pe1/textbox_open.h"
+#include "pe1/menu_flags.h"
 #include "pe1/draw_wipe_rect.h"
 #include "pe1/memcard.h"
 void DeliverEvent(unsigned event,unsigned spec);
@@ -840,6 +841,12 @@ static int original_display_start(void)
            g_DrawFrameBuffers[0].frontBufferBase!=g_RenderFrontBufferBase[0] ||
            g_DrawFrameBuffers[1].frontBufferBase!=g_RenderBackBufferBase[0] ||
            g_SceneDispatchToken!=(modes[i]==1?0xA80830C8u:modes[i]==3?0xA80651C8u:0x12345678u)) return 0;
+        size_t glyph_bytes=TEXTBOX_GLYPH_PACKET_CAPACITY*sizeof(TextboxGlyphPacket);
+        if((u8 *)D_800B0E38.other_buffers[2]!=(u8 *)D_800B0E38.other_buffers[1]+glyph_bytes ||
+           g_RenderScratchBufferBase[0]!=(u8 *)D_800B0E38.other_buffers[2]+glyph_bytes)return 0;
+        RenderBufferPrefix display_layout=D_800B0E38;
+        Boot_InitMemoryLayout();
+        if(memcmp(&display_layout,&D_800B0E38,sizeof(display_layout)))return 0;
     }
     g_GameState=saved; g_GeomScroll=scroll;
     puts("Original display start: four modes, memory layout, two fade frames and scene-token selection passed");
@@ -2512,6 +2519,176 @@ static int original_color_quad_packets(void)
 /* USA 8003495C/80034DE0, including the real wipe callees: 18,560 cases.
  * Compare the two numbers referenced by the HP glyph stream. Retail reads
  * past its local terminator into unused number slots; those are excluded. */
+
+/* Execute the original parser and real SDK packet helpers, comparing state
+ * and every linked command against unhooked USA 371B0/37870. */
+static int original_textbox_renderer(PeDisc *disc,PeDiscFile *exe)
+{
+    u8 authored[sizeof(g_FieldFontTextureState)]={0};u8 spacing[sizeof(g_TextboxGlyphSpacing)]={0};
+    if(!pe_disc_read(disc,exe,0x91644-0x10000+0x800,authored,sizeof(authored)) ||
+       memcmp(authored,&g_FieldFontTextureState,sizeof(authored)) ||
+       !pe_disc_read(disc,exe,0x916A0-0x10000+0x800,spacing,sizeof(spacing)) ||
+       memcmp(spacing,g_TextboxGlyphSpacing,sizeof(spacing))){fprintf(stderr,"original textbox authored tables differ (font=%d spacing=%d)\n",memcmp(authored,&g_FieldFontTextureState,sizeof(authored)),memcmp(spacing,g_TextboxGlyphSpacing,sizeof(spacing)));return 0;}
+    TextboxEntry saved_entries[4];memcpy(saved_entries,g_TextboxEntries,sizeof(saved_entries));
+    TextboxGlyphPacket saved_choice[2];memcpy(saved_choice,g_TextboxChoiceCursor,sizeof(saved_choice));
+    RenderModeTilePacket saved_fog[2];memcpy(saved_fog,g_TextboxFogTilePackets,sizeof(saved_fog));
+    RenderBufferPrefix saved_buffers=D_800B0E38;
+    u8 *saved_source=g_TextboxMessageSource,*saved_cursor=g_DrawPacketCursor,*saved_base=g_DrawPacketArenaBase;
+    u32 *saved_order=g_DrawOrderingTableEntry;
+    int saved_slot=g_ActiveDrawSlot,saved_collision=g_ScriptCollisionFlag,saved_dim=g_DrawTextDimmed;
+    u32 saved_pad=g_FieldPadPressed,saved_color=g_DrawPrimColor,saved_shade=g_DrawColorShaded;
+    u32 saved_blend[]={g_DrawBlendColorPair[0],g_DrawBlendColorPair[1]};
+    u8 saved_globals[]={g_DialogueChoiceCursor,(u8)g_MenuEquipSlotIndex,g_TextboxKernGlyph0F,g_PlayerMovementEnabled,
+        g_TextboxGlyphColorR,g_TextboxGlyphColorG,g_TextboxGlyphColorB,
+        g_TextboxHighlightColorR,g_TextboxHighlightColorG,g_TextboxHighlightColorB};
+    int saved_x=g_TextCursorX,saved_y=g_TextCursorY,saved_stack[28];
+    memcpy(saved_stack,g_TextCursorStackBottom,sizeof(saved_stack));u16 *saved_vertex=g_DrawVertexWritePtr;
+    struct {u8 before[16];TextboxGlyphPacket packets[TEXTBOX_GLYPH_PACKET_CAPACITY];u8 after[16];} glyph_storage;
+    TextboxGlyphPacket *glyphs=glyph_storage.packets;
+    union {uintptr_t align;u8 bytes[0x4000];} arena;
+    RenderNativeTag ordering[8];u8 source[1024];
+    const u8 special[][32]={
+        {250,247,250,255},{251,4,1,251,0,251,1,251,2,251,3,251,5,2,255},
+        {251,8,76,251,8,255},{251,9,3,1,247,2,247,3,255},{1,248,2,255},{1,249},
+        {1,251,6,2,255},{1,251,7,3,2,255}};
+    const u8 extended[]={0,1,20,21,127,255},fb[]={10,19,20,127,255};
+    uint64_t hash=UINT64_C(14695981039346656037);int valid=1;unsigned frames=0;
+#define TEXT_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+#define TEXT_PAYLOAD(packet,kind) do { \
+    RenderNativeTag *t_=(RenderNativeTag *)(packet);TEXT_PUT(kind==1?6:kind==2?5:t_->length,1); \
+    const u8 *p_=(const u8 *)(packet)+sizeof(RenderNativeTag); \
+    if(kind){ \
+        unsigned expected_=(sizeof(RenderTexturePagePacket)+(kind==1?16:12))/4; \
+        if(t_->length!=expected_)valid=0; \
+        for(unsigned j_=0;j_<4;++j_)TEXT_PUT(p_[j_],1); \
+        const u8 *end_=(const u8 *)(packet)+sizeof(RenderTexturePagePacket)+sizeof(RenderNativeTag); \
+        for(const u8 *zero_=p_+4;zero_<end_;++zero_)if(*zero_)valid=0; \
+        p_=end_; \
+        for(unsigned j_=0;j_<(kind==1?16:12);++j_)TEXT_PUT(p_[j_],1); \
+    }else for(unsigned j_=0;j_<t_->length*4;++j_)TEXT_PUT(p_[j_],1); \
+}while(0)
+    for(unsigned msg=0;msg<104;++msg)for(unsigned slot=0;slot<2;++slot)
+    for(unsigned style=0;style<4;++style)for(unsigned state=1;state<=2;++state)
+    for(unsigned variant=0;variant<4;++variant){
+        memcpy(&g_FieldFontTextureState,authored,sizeof(authored));
+        if(variant&1)for(unsigned i=0;i<4;++i){
+            FieldBgTextureSlot *t=&g_FieldBgTextureSlots[i];
+            t->tpage=BG_SLOT_TPAGE(t->x,t->y);t->clut=BG_SLOT_CLUT(t->clut_x,t->clut_y);
+            if(g_TextboxFontPages[i].tpage!=t->tpage || g_TextboxFontPages[i].clut!=t->clut)valid=0;
+        }
+        memset(g_TextboxEntries,0xA5,sizeof(g_TextboxEntries));
+        memset(g_TextboxChoiceCursor,0xA5,sizeof(g_TextboxChoiceCursor));
+        memset(g_TextboxFogTilePackets,0xA5,sizeof(g_TextboxFogTilePackets));
+        Render_SetupFogLayer(source);
+        for(unsigned i=0;i<4;++i){TextboxEntry *e=&g_TextboxEntries[i];
+            TEXT_PUT(e->state,1);TEXT_PUT(e->style,1);TEXT_PUT(e->background,1);
+            TEXT_PUT(e->control.flags,4);TEXT_PUT(e->page_id,2);}
+        for(unsigned i=0;i<2;++i){TEXT_PAYLOAD(&g_TextboxChoiceCursor[i],1);TEXT_PAYLOAD(&g_TextboxFogTilePackets[i],2);}
+        memset(source,0,sizeof(source));source[0]=255;source[1]=254;source[2]=7;
+        if(msg<78){source[3]=msg;source[4]=255;}
+        else if(msg<86)memcpy(source+3,special[msg-78],sizeof(*special));
+        else if(msg<98){source[3]=msg<92?252:253;source[4]=extended[(msg-86)%6];source[5]=255;}
+        else if(msg<103){source[3]=251;source[4]=fb[msg-98];source[5]=255;}
+        else memcpy(source+3,(u8[]){1,247,2,255},4);
+        memset(arena.bytes,0xA5,sizeof(arena.bytes));memset(&glyph_storage,0xA5,sizeof(glyph_storage));
+        for(unsigned i=0;i<8;++i)ordering[i]=(RenderNativeTag){0xFFFFFF,0xAB};
+        for(unsigned i=0;i<2;++i){D_800B0E38.ordering[i]=ordering;D_800B0E38.other_buffers[1+i]=(char *)glyphs;}
+        g_DrawPacketCursor=g_DrawPacketArenaBase=arena.bytes;g_DrawOrderingTableEntry=(u32 *)ordering;
+        g_DrawPrimColor=0x112233;g_DrawColorShaded=0x445566;g_DrawTextDimmed=0;
+        g_DrawBlendColorPair[0]=0x102030;g_DrawBlendColorPair[1]=0x405060;
+        g_ActiveDrawSlot=slot;g_ScriptCollisionFlag=variant==3;
+        g_FieldPadPressed=(u32[]){0,0x100,0x20,8}[variant];
+        g_DialogueChoiceCursor=variant%3;g_MenuEquipSlotIndex=7;g_TextboxKernGlyph0F=variant%2;
+        g_TextboxHighlightColorR=17;g_TextboxHighlightColorG=34;g_TextboxHighlightColorB=51;
+        TextboxEntry *e;
+        for(unsigned entry=0;entry<4;++entry){
+            if(msg!=103 && entry!=variant%4)continue;
+        e=&g_TextboxEntries[entry];
+        e->state=state;e->message=source+3;e->style=style;e->background=1;
+        e->control.flags=((variant&1)<<25)|((variant>>1)<<16)|((variant%4)<<8);e->page_id=7;
+        e->x=43;e->y=57;e->width=260;e->height=32;
+        memcpy(e->numbers,(u8[]){1,2,3,4,5,3,9,8,7,6,5,2},12);
+        }
+        Menu_DrawTextboxEntries();
+        for(unsigned i=0;i<4;++i){e=&g_TextboxEntries[i];TEXT_PUT(e->state,1);
+            TEXT_PUT(e->message?(u32)(e->message-source):UINT32_MAX,4);TEXT_PUT(e->control.flags,4);}
+        TEXT_PUT(g_DialogueChoiceCursor,1);TEXT_PUT(g_MenuEquipSlotIndex,1);
+        TEXT_PUT(g_TextboxGlyphColorR,1);TEXT_PUT(g_TextboxGlyphColorG,1);TEXT_PUT(g_TextboxGlyphColorB,1);
+        for(unsigned layer=0;layer<8;++layer){
+            uintptr_t link=ordering[layer].address;unsigned links=0;
+            while(link!=0xFFFFFF){
+                unsigned kind=0,id=0;void *packet=(void *)link;
+                if(link>=(uintptr_t)glyphs && link<(uintptr_t)(glyphs+TEXTBOX_GLYPH_PACKET_CAPACITY)){
+                    kind=1;id=(link-(uintptr_t)glyphs)/sizeof(*glyphs);
+                }else if(link>=(uintptr_t)g_TextboxChoiceCursor && link<(uintptr_t)(g_TextboxChoiceCursor+2)){
+                    kind=1;id=1000+(link-(uintptr_t)g_TextboxChoiceCursor)/sizeof(*g_TextboxChoiceCursor);
+                }else if(link>=(uintptr_t)g_TextboxFogTilePackets && link<(uintptr_t)(g_TextboxFogTilePackets+2)){
+                    kind=2;id=1010+(link-(uintptr_t)g_TextboxFogTilePackets)/sizeof(*g_TextboxFogTilePackets);
+                }else{
+                    u8 *cur=arena.bytes;unsigned old_offset=0;
+                    while(cur<g_DrawPacketCursor && (uintptr_t)cur!=link){
+                        RenderNativeTag *t=(RenderNativeTag *)cur;
+                        if(t->length!=1 && t->length!=4){valid=0;break;}
+                        old_offset+=t->length==1?8:20;
+                        cur+=t->length==1?sizeof(RenderDrawModePacket):sizeof(RenderColorTrianglePacket);
+                    }
+                    if((uintptr_t)cur!=link || cur>=g_DrawPacketCursor){valid=0;break;}
+                    id=2000+old_offset/4;
+                }
+                if(++links>=400){valid=0;break;}
+                TEXT_PUT(id,2);TEXT_PAYLOAD(packet,kind);link=((RenderNativeTag *)packet)->address;
+            }
+            TEXT_PUT(links,2);if(ordering[layer].length!=0xAB)valid=0;
+        }
+        for(unsigned i=0;i<16;++i)if(glyph_storage.before[i]!=0xA5 || glyph_storage.after[i]!=0xA5)valid=0;
+        ++frames;if(!valid)goto text_restore;
+    }
+    /* Preserve the original number of glyph slots after pointer widening;
+     * overlong strings must stop without touching the adjacent work arena. */
+    for(unsigned kind=0;kind<6;++kind){
+        memset(&glyph_storage,0xA5,sizeof(glyph_storage));memset(g_TextboxEntries,0,sizeof(g_TextboxEntries));
+        for(unsigned i=0;i<8;++i)ordering[i]=(RenderNativeTag){0xFFFFFF,0xAB};
+        g_ActiveDrawSlot=0;g_ScriptCollisionFlag=0;g_FieldPadPressed=0;
+        TextboxEntry *e=&g_TextboxEntries[0];e->state=2;e->style=2;e->message=source;
+        unsigned bytes=0;
+        if(kind==0)for(unsigned i=0;i<340;++i)source[bytes++]=1;
+        else if(kind==1)for(unsigned i=0;i<120;++i)source[bytes++]=250;
+        else if(kind==2)for(unsigned i=0;i<340;++i){source[bytes++]=252;source[bytes++]=1;}
+        else if(kind==3)source[bytes++]=78;
+        else{
+            for(unsigned i=0;i<6;++i){source[bytes++]=251;source[bytes++]=8;}
+            for(unsigned i=0;i<5;++i){e->numbers[i].digits[0]=1;e->numbers[i].count=kind==4?6:1;}
+        }
+        source[bytes]=255;Menu_DrawTextboxEntries();
+        uintptr_t link=ordering[1].address;unsigned count=0,expected=kind<3?TEXTBOX_GLYPH_PACKET_CAPACITY:kind==5?5:0;
+        while(link!=0xFFFFFF){
+            if(count>=expected || link!=(uintptr_t)&glyphs[expected-count-1]){valid=0;break;}
+            link=((RenderNativeTag *)link)->address;++count;
+        }
+        if(count!=expected)valid=0;
+        for(unsigned i=0;i<16;++i)if(glyph_storage.before[i]!=0xA5 || glyph_storage.after[i]!=0xA5)valid=0;
+    }
+text_restore:
+    memcpy(&g_FieldFontTextureState,authored,sizeof(authored));
+#undef TEXT_PAYLOAD
+#undef TEXT_PUT
+    memcpy(g_TextboxEntries,saved_entries,sizeof(saved_entries));memcpy(g_TextboxChoiceCursor,saved_choice,sizeof(saved_choice));
+    memcpy(g_TextboxFogTilePackets,saved_fog,sizeof(saved_fog));D_800B0E38=saved_buffers;
+    g_TextboxMessageSource=saved_source;g_DrawPacketCursor=saved_cursor;g_DrawPacketArenaBase=saved_base;g_DrawOrderingTableEntry=saved_order;
+    g_ActiveDrawSlot=saved_slot;g_ScriptCollisionFlag=saved_collision;g_DrawTextDimmed=saved_dim;
+    g_FieldPadPressed=saved_pad;g_DrawPrimColor=saved_color;g_DrawColorShaded=saved_shade;
+    memcpy(g_DrawBlendColorPair,saved_blend,sizeof(saved_blend));g_DialogueChoiceCursor=saved_globals[0];g_MenuEquipSlotIndex=saved_globals[1];
+    g_TextboxKernGlyph0F=saved_globals[2];g_PlayerMovementEnabled=saved_globals[3];
+    g_TextboxGlyphColorR=saved_globals[4];g_TextboxGlyphColorG=saved_globals[5];g_TextboxGlyphColorB=saved_globals[6];
+    g_TextboxHighlightColorR=saved_globals[7];g_TextboxHighlightColorG=saved_globals[8];g_TextboxHighlightColorB=saved_globals[9];
+    g_TextCursorX=saved_x;g_TextCursorY=saved_y;memcpy(g_TextCursorStackBottom,saved_stack,sizeof(saved_stack));g_DrawVertexWritePtr=saved_vertex;
+    if(!valid || hash!=UINT64_C(0xa279a1e503166b41)){
+        fprintf(stderr,"original textbox renderer mismatch: frames=%u hash=%016llx valid=%d\n",frames,(unsigned long long)hash,valid);return 0;}
+    puts("Original textbox renderer: 6656 USA MIPS frames, all 78 base glyphs, extended pages, names, numbers, colors, choices, sections, delays, fog and both buffers match");
+    return 1;
+}
+
 static int original_scan_overlay(PeDisc *disc, PeDiscFile *exe)
 {
     u8 custom[]={1,255};
@@ -4304,7 +4481,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
-    if(!original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
+    if(!original_textbox_renderer(disc,executable) || !original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

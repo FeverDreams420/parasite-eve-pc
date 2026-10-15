@@ -329,9 +329,9 @@ void Boot_InitMemoryLayout(void) {
     g_OtBufferTable[0] = ptr;
     ptr += 2 * 0x1000 * sizeof(RenderNativeTag);
     g_RenderOtBufferBaseAlt[0] = ptr2;
-    ptr2 = ptr + 0x2400;
+    ptr2 = ptr + TEXTBOX_GLYPH_PACKET_CAPACITY * sizeof(TextboxGlyphPacket);
     g_GameState.object_texture_blob = (struct SceneAssetBlob *)ptr;
-    ptr += 0x4800;
+    ptr += 2 * TEXTBOX_GLYPH_PACKET_CAPACITY * sizeof(TextboxGlyphPacket);
     g_RenderScratchBufferBase[0] = ptr;
     ptr += const_48000;
     g_GameState.unk_170 = ptr2;

@@ -57,6 +57,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/field_effect_modules.h"
 #include "pe1/pm.h"
 #include "pe1/akao/commands.h"
+#include "pe1/akao/globals.h"
 #include "pe1/akao_send.h"
 #include "pe1/script_state.h"
 #include "pe1/script_queue.h"
@@ -2916,6 +2917,66 @@ static int original_save_card_images(PeDisc *disc)
     return valid;
 }
 
+static int original_video_stream_errors(void)
+{
+    static u8 image[2352*2];
+    _Alignas(16) static u8 arena[0x20000];
+    PeDisc *mounted=g_CdImage;
+    PeDisc disc={0};disc.stream=tmpfile();disc.sector_size=2352;
+    disc.image_size=sizeof(image);
+    if(!disc.stream)return 0;
+    g_CdImage=&disc;g_MenuCardScreenVideoStreamRing=arena;
+    VideoEntry entry={"test",0,1,300,0,0,{0}};
+    g_MenuCardScreenVideoEntry=&entry;
+    g_MenuCardScreenVideoSize[0]=320;g_MenuCardScreenVideoSize[1]=240;
+    VideoDisplay display={0};int valid=1;
+    for(unsigned test=0;test<15;++test) {
+        memset(image,0,sizeof(image));
+        VideoFrame first={.id=0x160,.type=0x8001,.nSectors=2,.frameCount=1,
+                          .frameSize=4032,.width=320,.height=240};
+        VideoFrame second=first;second.secCount=1;
+        switch(test) {
+        case 0:first.nSectors=0;break;
+        case 1:first.nSectors=66;break;
+        case 2:first.frameSize=8;break;
+        case 3:first.frameSize=4033;break;
+        case 4:first.width=0;break;
+        case 5:first.width=321;break;
+        case 6:first.height=241;break;
+        case 7:first.secCount=1;break;
+        case 8:second.secCount=0;break;
+        case 9:second.frameCount=2;break;
+        case 10:second.width=304;break;
+        case 11:second.frameSize=4000;break;
+        case 12:second.nSectors=3;break;
+        case 13:break; /* Advertised MDEC output exceeds its 0xFA00 arena. */
+        case 14:first.frameCount=0x7fffffff;break;
+        }
+        memcpy(image+24,&first,sizeof(first));memcpy(image+2352+24,&second,sizeof(second));
+        u32 command=test==13?0x3800ffff:0x38000020;
+        memcpy(image+56,&command,4);
+        rewind(disc.stream);
+        if(fwrite(image,1,sizeof(image),disc.stream)!=sizeof(image) || fflush(disc.stream))valid=0;
+        g_MenuCardScreenVideoFile=(PeDiscFile){.sector=0,.size=4096};
+        g_MenuCardScreenVideoSector=0;
+        if(MenuCard_UpdateVideoFrame(&display))valid=0;
+    }
+    /* Image extent rejection, incomplete frame and a cursor already at EOF. */
+    for(unsigned test=0;test<3;++test) {
+        g_MenuCardScreenVideoFile=(PeDiscFile){.sector=0,.size=test==1?2048:4096};
+        g_MenuCardScreenVideoSector=test==2?2:0;
+        disc.image_size=test==0?100:sizeof(image);
+        if(MenuCard_UpdateVideoFrame(&display))valid=0;
+    }
+    g_CdImage=NULL;g_DrawEnabled.bits=0;
+    if(MenuCard_PlayVideo(-1) || MenuCard_PlayVideo(47) || MenuCard_OpenVideo(0) ||
+       MenuCard_PlayVideo(0) || g_DrawEnabled.bits || (g_GameStateFlagsWord&0x200))valid=0;
+    g_MenuCardScreenVideoStreamRing=NULL;g_MenuCardScreenVideoEntry=NULL;
+    g_CdImage=mounted;fclose(disc.stream);
+    if(!valid)fprintf(stderr,"original movie stream rejection regression\n");
+    return valid;
+}
+
 /* Output goldens and yield counts come from the retail VLC_C procedure. */
 static int original_video_decoder(PeDisc *disc)
 {
@@ -2944,6 +3005,13 @@ static int original_video_decoder(PeDisc *disc)
     };
     static u8 frame[0x20000], output[0x40010], partial[0x40010];
     static u16 table[0x8800];
+    _Alignas(16) static u8 stream[0x20000];
+    PeDisc *old_image=g_CdImage;
+    Pe1SceneAudioState old_audio=g_GameState.scene_audio;
+    CdlATV old_mix=g_AkaoCdVolume;
+    g_CdImage=disc;
+    g_MenuCardScreenVideoStreamRing=stream;
+    VideoDisplay display={0};
     MdecDiag_ExpandDecoderTable(table);
     DecDCTvlcSize2(0);
     if(DecDCTvlcSize2(2)!=0xffffff || DecDCTvlcSize2(17)!=4 ||
@@ -2954,6 +3022,10 @@ static int original_video_decoder(PeDisc *disc)
         u32 frame_number=0,frame_size=0; size_t stored=0;
         uint64_t hash=UINT64_C(14695981039346656037);
         if(!pe_disc_find(disc,movies[movie].name,&file))return 0;
+        g_MenuCardScreenVideoFile=file;g_MenuCardScreenVideoSector=0;
+        g_MenuCardScreenVideoEntry=&g_MenuCardScreenVideoTable[movie];
+        g_MenuCardScreenVideoLastTime=0;g_MenuCardScreenVideoFinished=0;
+        g_MenuCardScreenVideoSize[0]=320;g_MenuCardScreenVideoSize[1]=240;
         for(u32 sector=0;sector<(file.size+2047u)/2048u && frames<movies[movie].frames;++sector) {
             if(!pe_disc_read_raw(disc,&file,sector,raw))return 0;
             u32 magic;memcpy(&magic,raw+24,4);
@@ -2967,6 +3039,14 @@ static int original_video_decoder(PeDisc *disc)
             memcpy(frame+stored,raw+56,2016);stored+=2016;++part;
             if(part!=parts)continue;
             if(frame_size>stored || frame_size<12)return 0;
+            g_MovieWide=frames&1;
+            void *native_frame=MenuCard_UpdateVideoFrame(&display);
+            if(native_frame!=stream+sizeof(VideoFrame) || memcmp(native_frame,frame,frame_size) ||
+               g_MenuCardScreenVideoLastTime!=(s16)frame_number ||
+               g_MenuCardScreenVideoFinished!=(frame_number>=(u32)g_MenuCardScreenVideoEntry->end) ||
+               display.regions[0].w!=(g_MovieWide?480:320) ||
+               display.regions[1].w!=display.regions[0].w || display.rect.h!=240 ||
+               display.regions[0].h!=240 || display.regions[1].h!=240)return 0;
             u16 words;memcpy(&words,frame,2);size_t bytes=4+(size_t)words*4;
             if(bytes+16>sizeof(output))return 0;
             memset(output,0xa5,sizeof(output));DecDCTvlcSize2(0);
@@ -2988,6 +3068,13 @@ static int original_video_decoder(PeDisc *disc)
                     frames,chunks,(unsigned long long)hash);return 0;
         }
     }
+    g_MenuCardScreenVideoSector=(g_MenuCardScreenVideoFile.size+2047u)/2048;
+    if(MenuCard_UpdateVideoFrame(&display))return 0;
+    g_CdImage=NULL;if(MenuCard_UpdateVideoFrame(&display))return 0;
+    g_CdImage=disc;g_MenuCardScreenVideoStreamRing=NULL;
+    if(MenuCard_UpdateVideoFrame(&display))return 0;
+    g_CdImage=old_image;g_GameState.scene_audio=old_audio;
+    g_AkaoCdVolume=old_mix;CdMix(&old_mix);
     /* V3 fixture: all DC magnitude sizes/signs and three predictors, with AC escapes. */
     static const u8 version3[]={
         0x00,0x01,0x00,0x38,0x1f,0x00,0x03,0x00,0x00,0x01,0x80,0x00,0x20,0x40,0x08,0xe8,
@@ -3693,6 +3780,7 @@ int main(int argc, char **argv)
         if (!original_icon_packets(&disc,&exe)) return 133;
         if (!original_video_buffers(&disc)) return 135;
         if (!original_video_decoder(&disc)) return 136;
+        if (!original_video_stream_errors()) return 137;
         if (!original_title_screen(&disc)) return 134;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];

@@ -5,7 +5,7 @@
 #define MENUCARD_VIDEO_MODE g_MenuCardScreenVideoDecodeMode
 #define MENUCARD_VIDEO_FLIP g_MenuCardScreenVideoDepthFlip
 #define MENUCARD_VIDEO_FILE g_MenuCardScreenVideoFile
-#define MENUCARD_VIDEO_RESTART g_MenuCardScreenVideoRestartLoc
+#define MENUCARD_VIDEO_SECTOR g_MenuCardScreenVideoSector
 #define MENUCARD_VIDEO_DISPLAY g_MenuCardScreenVideoDisplay
 #define MENUCARD_VIDEO_PTR4 g_MenuCardScreenVideoVlcTable
 #define MENUCARD_VIDEO_FINISHED g_MenuCardScreenVideoFinished
@@ -13,33 +13,12 @@
 
 /* Wait for the next decoded frame and start its decode; -1 on a stall. */
 static inline s16 MenuCard_NextVideoFrame(VideoDisplay *dec) {
-    s16 retries = 2000;
-    void *frame;
-
-    while ((frame = MENUCARD_VIDEO_UPDATE_FRAME(dec)) == 0) {
-        if (--retries == 0) {
-            return -1;
-        }
-    }
-    g_SeqElapsed++;
+    void *frame = MENUCARD_VIDEO_UPDATE_FRAME(dec);
+    if (!frame) return -1;
     dec->decodeIndex ^= 1;
-    DecDCTvlc2(frame, dec->decode[dec->decodeIndex], MENUCARD_VIDEO_PTR4);
-    StFreeRing(frame);
+    if (DecDCTvlc2(frame, dec->decode[dec->decodeIndex], MENUCARD_VIDEO_PTR4) != 0) return -1;
+    g_SeqElapsed++;
     return 0;
-}
-
-/* Restart the stream at the saved position. */
-static inline void MenuCard_KickVideoStream(CdlLOC *loc) {
-    u8 result[8];
-
-    StGetBackloc(loc);
-    do {
-        do {
-            while (DsSystemStatus() != 1) {
-            }
-        } while (DsQueueLen() != 0);
-        DsControl(2, loc, result);
-    } while (!DsRead2(loc, 0x1E0));
 }
 
 /* Wait for the slice upload; on a timeout skip to the other frame buffer. */
@@ -57,9 +36,8 @@ static inline void MenuCard_SyncVideoUpload(VideoDisplay *dec) {
     dec->done = 0;
 }
 
-/* Per-frame step: start the decode and the slice upload, wait for the next
- * frame (restarting the stream on a stall), wait for the upload, then stop
- * the player once the last frame has been shown. */
+/* Start decode/upload, read the next image frame, then finish the upload.
+ * A missing or invalid next frame terminates playback without a drive retry. */
 s32 MENUCARD_STEP_VIDEO_NAME(void) {
     s8 finished;
     u8 *flip;
@@ -71,13 +49,10 @@ s32 MENUCARD_STEP_VIDEO_NAME(void) {
             MENUCARD_VIDEO_SET_DISPLAY(g_ActiveDrawSlot ^ 1, g_MovieWide);
             *flip = 0;
         }
-        MENUCARD_VIDEO_RESTART = MENUCARD_VIDEO_FILE.pos;
         DecDCTin(MENUCARD_VIDEO_DISPLAY.decode[MENUCARD_VIDEO_DISPLAY.decodeIndex], MENUCARD_VIDEO_MODE);
         DecDCTout(MENUCARD_VIDEO_DISPLAY.buffers[MENUCARD_VIDEO_DISPLAY.selector],
                       MENUCARD_VIDEO_DISPLAY.rect.w * MENUCARD_VIDEO_DISPLAY.rect.h / 2);
-        while (MenuCard_NextVideoFrame(&MENUCARD_VIDEO_DISPLAY) == -1) {
-            MenuCard_KickVideoStream(&MENUCARD_VIDEO_RESTART);
-        }
+        if (MenuCard_NextVideoFrame(&MENUCARD_VIDEO_DISPLAY) == -1) finished = 1;
         MenuCard_SyncVideoUpload(&MENUCARD_VIDEO_DISPLAY);
         if (MENUCARD_VIDEO_FINISHED == 1) {
             finished = 1;
@@ -91,8 +66,6 @@ s32 MENUCARD_STEP_VIDEO_NAME(void) {
             (*active)--;
         }
         DecDCToutCallback(0);
-        StUnSetRing();
-        DsControlB(9, 0, 0);
     }
     return 0;
 }

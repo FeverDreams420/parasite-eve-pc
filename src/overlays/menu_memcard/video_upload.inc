@@ -13,10 +13,6 @@ void MENUCARD_UPLOAD_VIDEO_SLICE_NAME(void) {
     VideoRect rectangle;
     s8 old;
 
-    if (g_MovieWide && g_CdStreamReadyHalfword) {
-        StCdInterrupt();
-        g_CdStreamReadyHalfword = 0;
-    }
     old = MENUCARD_VIDEO_DISPLAY.selector;
     rectangle = MENUCARD_VIDEO_DISPLAY.rect;
     MENUCARD_VIDEO_DISPLAY.selector ^= 1;

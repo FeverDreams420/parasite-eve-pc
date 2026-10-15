@@ -17,6 +17,9 @@
 #define MENUCARD_VIDEO_LAST_TIME g_MenuCardScreenVideoLastTime
 #define MENUCARD_VIDEO_FINISHED g_MenuCardScreenVideoFinished
 #define MENUCARD_VIDEO_SIZE g_MenuCardScreenVideoSize
+#define MENUCARD_VIDEO_FILE g_MenuCardScreenVideoFile
+#define MENUCARD_VIDEO_SECTOR g_MenuCardScreenVideoSector
+#define MENUCARD_VIDEO_STREAM_BUFFER g_MenuCardScreenVideoStreamRing
 #include "video_frame.inc"
 
 #undef MENUCARD_UPDATE_VIDEO_FRAME_NAME
@@ -77,7 +80,7 @@
 #undef MENUCARD_VIDEO_DIRECTORY
 #undef MENUCARD_VIDEO_DIRECTORY_LATE
 #undef MENUCARD_VIDEO_FILE
-#undef MENUCARD_VIDEO_RESTART
+#undef MENUCARD_VIDEO_SECTOR
 #undef MENUCARD_VIDEO_DISPLAY
 #undef MENUCARD_VIDEO_PTR0
 #undef MENUCARD_VIDEO_PTR1
@@ -97,7 +100,7 @@
 #undef MENUCARD_VIDEO_MODE
 #undef MENUCARD_VIDEO_FLIP
 #undef MENUCARD_VIDEO_FILE
-#undef MENUCARD_VIDEO_RESTART
+#undef MENUCARD_VIDEO_SECTOR
 #undef MENUCARD_VIDEO_DISPLAY
 #undef MENUCARD_VIDEO_PTR4
 #undef MENUCARD_VIDEO_FINISHED
@@ -109,12 +112,10 @@ void MenuCard_StopVideo(void) {
     int value;
 
     counter = &g_DrawEnabled.bits;
-    value = *counter - 1;
+    value = *counter ? *counter - 1 : 0;
     *counter = value;
     Spu_SetVoiceVolume(0);
     DecDCToutCallback(0);
-    StUnSetRing();
-    DsControlB(9, 0, 0);
 }
 
 #define MENUCARD_EVENT_FLAG_NAME MenuCard_RequestVideoDepthFlip
@@ -137,8 +138,12 @@ s32 MenuCard_PlayVideo(s32 index) {
     g_MenuCardScreenVideoTable[entry].wide=1;
     SetDispMask(0); DrawSync(0); ResetGraph(1);
     buffer=movie_buffers;
-    MenuCard_InitVideoBuffers(1,&buffer);
-    MenuCard_OpenVideo((s16)entry);
+    if (!MenuCard_InitVideoBuffers(1,&buffer) || !MenuCard_OpenVideo((s16)entry)) {
+        DecDCToutCallback(0);
+        MenuCard_ResetDisplayState();
+        *flags &= ~0x200;
+        return 0;
+    }
     {
         u8 *active=&g_DrawEnabled.bits;
         if (*active) {
@@ -148,16 +153,13 @@ s32 MenuCard_PlayVideo(s32 index) {
                 if (left<=0) break;
                 Field_HandleStateTransition();
                 if (!(s8)MenuCard_StepVideo()) {
-                    g_MenuCardScreenVideoDecodeBuffer0=0;g_MenuCardScreenVideoDecodeBuffer1=0;g_MenuCardScreenVideoStreamRing=0;g_MenuCardScreenVideoVlcTable=0;g_MenuCardScreenVideoSliceBuffer0=0;g_MenuCardScreenVideoSliceBuffer1=0;
-                    g_DrawEnabled.bits=0;
+                    MenuCard_ResetDisplayState();
                 }
                 else if (g_FieldPadBits & 0x20000004) {
                     s32 remaining;
-                    g_DrawEnabled.bits--;
-                    Spu_SetVoiceVolume(0);DecDCToutCallback(0);StUnSetRing();DsControlB(9,0,0);
+                    MenuCard_StopVideo();
                     remaining=*remainingPtr;
-                    g_MenuCardScreenVideoDecodeBuffer0=0;g_MenuCardScreenVideoDecodeBuffer1=0;g_MenuCardScreenVideoStreamRing=0;g_MenuCardScreenVideoVlcTable=0;g_MenuCardScreenVideoSliceBuffer0=0;g_MenuCardScreenVideoSliceBuffer1=0;
-                    g_DrawEnabled.bits=0;
+                    MenuCard_ResetDisplayState();
                     if(remaining<1400) {VSync(0);SetDispMask(0);result=1;}
                 }
                 Draw_RenderFrame();
@@ -180,8 +182,8 @@ u8 *g_MenuCardScreenVideoVlcTable, *g_MenuCardScreenVideoStreamRing;
 DISPENV g_MenuCardScreenSavedDispEnv[2];
 DRAWENV g_MenuCardScreenSavedDrawEnv[2];
 VideoDisplay g_MenuCardScreenVideoDisplay;
-DslFILE g_MenuCardScreenVideoFile;
-CdlLOC g_MenuCardScreenVideoRestartLoc;
+PeDiscFile g_MenuCardScreenVideoFile;
+u32 g_MenuCardScreenVideoSector;
 char g_MenuCardScreenVideoDirectory[]="\\FMV1";
 char g_MenuCardScreenVideoDirectoryLate[]="\\FMV2";
 

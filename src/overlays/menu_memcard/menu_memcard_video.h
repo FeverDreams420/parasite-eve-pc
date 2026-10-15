@@ -11,7 +11,6 @@
 #include "pe1/gpu_image.h"
 #include "pe1/psyq_bios.h"
 #include "pe1/psyq_cd.h"
-#include "pe1/psyq_ds.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/psyq_press.h"
 #include "pe1/script_state.h"
@@ -38,8 +37,7 @@ typedef struct VideoDisplay {
     VideoRect rect;       /* 0x28 next slice */
     u8 done;              /* 0x30 frame fully uploaded */
 } VideoDisplay;
-extern s32 DsSystemStatus(void),DsShellOpen(void);
-extern void exit(s32),Spu_SetVoiceVolume(s32);
+extern void Spu_SetVoiceVolume(s32);
 extern VideoEntry *g_MenuCardScreenVideoEntry;
 extern u8 g_MenuCardScreenVideoFinished;
 /* Wide-screen flag of the playing movie (Pe1SceneAudioState movie_wide). */
@@ -56,7 +54,7 @@ extern u8 g_MenuCardVideoFinished;
 
 extern u8 g_MenuCardScreenVideoDepthFlip;
 extern s32 g_ActiveDrawSlot;
-extern void StCdInterrupt(void),DecDCTout(void *,s32),MenuCard_SetVideoDisplay(s8,s8);
+extern void DecDCTout(void *,s32),MenuCard_SetVideoDisplay(s8,s8);
 
 void MenuCard_UploadVideoSlice(void);
 
@@ -75,7 +73,7 @@ extern DRAWENV g_MenuCardVideoSavedDrawEnv[2];
 extern VideoEntry g_MenuCardScreenVideoTable[47];
 extern u32 g_FieldPadBits;
 s32 MenuCard_StepVideo(void);
-extern void SetDispMask(s32), ResetGraph(s32), Field_HandleStateTransition(void), StUnSetRing(void), Draw_RenderFrame(void);
+extern void SetDispMask(s32), ResetGraph(s32), Field_HandleStateTransition(void), Draw_RenderFrame(void);
 
 s32 MenuCard_PlayVideo(s32 index);
 
@@ -85,19 +83,17 @@ void MenuCardFirst_SetVideoDisplay(s8 index, s8 wide);
 /* Video open: file lookup, stream start and first decoded frame. */
 #define g_MovieIndex (g_GameState.scene_audio.tracks.movie_index)
 extern VideoEntry g_MenuCardVideoTable[];
-extern DslFILE g_MenuCardVideoFile, g_MenuCardScreenVideoFile;
-extern CdlLOC g_MenuCardVideoRestartLoc, g_MenuCardScreenVideoRestartLoc;
+extern PeDiscFile g_MenuCardVideoFile, g_MenuCardScreenVideoFile;
+extern u32 g_MenuCardVideoSector, g_MenuCardScreenVideoSector;
 extern VideoDisplay g_MenuCardVideoDisplay, g_MenuCardScreenVideoDisplay;
 extern char g_MenuCardVideoDirectory[], g_MenuCardVideoDirectoryLate[], g_MenuCardScreenVideoDirectory[], g_MenuCardScreenVideoDirectoryLate[];
-extern void StSetRing(void *, s32);
 void DecDCTReset(int mode);
 void MdecDiag_ExpandDecoderTable(void *table);
 extern void MenuCardFirst_UploadVideoSlice(void);
-extern s32 DsRead2(CdlLOC *, s32);
 s32 MenuCardFirst_OpenVideo(s32 number);
 s32 MenuCard_OpenVideo(s32 number);
 
-/* Per-frame video step: decode, restart the stream on a stall, page flip. */
+/* Per-frame video step: decode, upload and page flip. */
 extern u8 g_MenuCardVideoDecodeMode, g_MenuCardVideoDepthFlip, g_MenuCardScreenVideoDecodeMode;
 extern void DecDCTin(void *, s32);
 s32 MenuCardFirst_StepVideo(void);

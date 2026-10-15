@@ -6,7 +6,7 @@
 #define MENUCARD_VIDEO_DIRECTORY g_MenuCardScreenVideoDirectory
 #define MENUCARD_VIDEO_DIRECTORY_LATE g_MenuCardScreenVideoDirectoryLate
 #define MENUCARD_VIDEO_FILE g_MenuCardScreenVideoFile
-#define MENUCARD_VIDEO_RESTART g_MenuCardScreenVideoRestartLoc
+#define MENUCARD_VIDEO_SECTOR g_MenuCardScreenVideoSector
 #define MENUCARD_VIDEO_DISPLAY g_MenuCardScreenVideoDisplay
 #define MENUCARD_VIDEO_PTR0 g_MenuCardScreenVideoDecodeBuffer0
 #define MENUCARD_VIDEO_PTR1 g_MenuCardScreenVideoDecodeBuffer1
@@ -21,41 +21,12 @@
 
 /* Wait for the next decoded frame and start its decode; -1 on a stall. */
 static inline s16 MenuCard_OpenNextVideoFrame(VideoDisplay *dec) {
-    s16 retries = 2000;
-    void *frame;
-
-    while ((frame = MENUCARD_VIDEO_UPDATE_FRAME(dec)) == 0) {
-        if (--retries == 0) {
-            return -1;
-        }
-    }
-    g_SeqElapsed++;
+    void *frame = MENUCARD_VIDEO_UPDATE_FRAME(dec);
+    if (!frame) return -1;
     dec->decodeIndex ^= 1;
-    DecDCTvlc2(frame, dec->decode[dec->decodeIndex], MENUCARD_VIDEO_PTR4);
-    StFreeRing(frame);
+    if (DecDCTvlc2(frame, dec->decode[dec->decodeIndex], MENUCARD_VIDEO_PTR4) != 0) return -1;
+    g_SeqElapsed++;
     return 0;
-}
-
-/* Restart reading at a stream position until the drive accepts it. */
-static inline void MenuCard_OpenKickVideoStream(CdlLOC *loc, u8 *result) {
-    do {
-        do {
-            while (DsSystemStatus() != 1) {
-            }
-        } while (DsQueueLen() != 0);
-        DsControl(2, loc, result);
-    } while (!DsRead2(loc, 0x1E0));
-}
-
-/* Start reading at the file position, retrying from the drive wait. */
-static inline void MenuCard_OpenStartVideoStream(CdlLOC *loc, u8 *result) {
-start:
-    do {
-        while (DsSystemStatus() != 1) {
-        }
-    } while (DsQueueLen() != 0);
-    DsControl(2, loc, result);
-    if (!DsRead2(loc, 0x1E0)) goto start;
 }
 
 /* Reset the decode environment: buffers, both display areas, first slice. */
@@ -87,11 +58,9 @@ s32 MENUCARD_OPEN_VIDEO_NAME(s32 number) {
     s16 index = number;
     VideoRect size;
     char name[32];
-    u8 result[8];
     VideoEntry *entry;
-    DslFILE *found;
 
-    if ((u16)number >= 47) {
+    if (number < 0 || number >= 47 || !g_CdImage || !MENUCARD_VIDEO_PTR0 || !MENUCARD_VIDEO_PTR5) {
         return 0;
     }
     g_MovieIndex = index;
@@ -106,30 +75,21 @@ s32 MENUCARD_OPEN_VIDEO_NAME(s32 number) {
         strcat(name, MENUCARD_VIDEO_DIRECTORY_LATE);
     }
     strcat(name, MENUCARD_VIDEO_ENTRY->name);
-search:
-    found = 0;
-    if (DsSystemStatus() == 1 && DsQueueLen() == 0) {
-        found = DsSearchFile(&MENUCARD_VIDEO_FILE, name);
-    }
-    /* DsSearchFile: the file record, 0 when absent, all ones on a read error. */
-    if (found == 0 || found == (DslFILE *)-1) goto search;
-    MENUCARD_VIDEO_RESTART = MENUCARD_VIDEO_FILE.pos;
+    if (!pe_disc_find(g_CdImage, name, &MENUCARD_VIDEO_FILE)) return 0;
+    MENUCARD_VIDEO_SECTOR = 0;
     entry = MENUCARD_VIDEO_ENTRY;
     size.x = entry->x;
     size.y = entry->y;
     MenuCard_OpenSetDecodeEnv(&MENUCARD_VIDEO_DISPLAY, size.x, size.y + 240, size.x, size.y);
     DecDCTReset(0);
     DecDCToutCallback(MENUCARD_VIDEO_UPLOAD);
-    StSetRing(MENUCARD_VIDEO_PTR5, 0x40);
-    StSetStream(1, MENUCARD_VIDEO_ENTRY->speed, -1, 0, 0);
-    MenuCard_OpenStartVideoStream(&MENUCARD_VIDEO_FILE.pos, result);
     Spu_SetVoiceVolume(g_GameState.scene_audio.tracks.movie_volume);
     /* Reloading the PS1 code used to reset the VLC work limit. */
     DecDCTvlcSize2(0);
     MdecDiag_ExpandDecoderTable(MENUCARD_VIDEO_PTR4);
-    while (MenuCard_OpenNextVideoFrame(&MENUCARD_VIDEO_DISPLAY) == -1) {
-        MENUCARD_VIDEO_RESTART = MENUCARD_VIDEO_FILE.pos;
-        MenuCard_OpenKickVideoStream(&MENUCARD_VIDEO_RESTART, result);
+    if (MenuCard_OpenNextVideoFrame(&MENUCARD_VIDEO_DISPLAY) == -1) {
+        DecDCToutCallback(0);
+        return 0;
     }
     MENUCARD_VIDEO_FINISHED = 0;
     g_SeqElapsed = 1;

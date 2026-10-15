@@ -1796,3 +1796,6 @@ AkaoU8 g_AkaoOpcodeArgLengths[96], g_AkaoExtOpcodeArgLengths[32];
 u16 g_AkaoNoteLengthTable[11];
 void *g_AkaoSoundEntryTable[256];
 void *g_AkaoBgmHandle[2];
+
+/* Canonical CD/XA input mix owned by the original voice driver. */
+struct CdlATV g_AkaoCdVolume;

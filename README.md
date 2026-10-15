@@ -50,8 +50,11 @@ markers and night shade now use native packets and shared motion state, with
 headless tests of both buffers. Original camera motion/endpoints and all 79
 adjacent path pairs also have native state and USA reference tests. The complete
 original scene initializer now creates all 187 nodes from real image resources;
-900 USA reference cases cover its ten variants and scene entry choices.
-Frame-loop integration remains unfinished; this does not make gameplay playable.
+900 USA reference cases cover its ten variants and scene entry choices. Its
+original controller matches 21,624 USA states, and the complete original frame
+loop executes 2,664 headless frames with real textures, SDL input, playback and
+demo exits. Campaign integration and the original program's startup remain
+unfinished; this does not make gameplay playable.
 
 ## Build and run
 

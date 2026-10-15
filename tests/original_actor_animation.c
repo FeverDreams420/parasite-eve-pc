@@ -3236,7 +3236,7 @@ static uint64_t fx_camera_motion_hash(uint64_t hash,int path)
         &g_FxCommonMarkerFade,&g_FxCommonCameraPathRemaining,&g_FxCommonCameraPathStep,&g_FxCommonCameraPathIndex,&g_FxCommonPathWrapped};
     const unsigned path_sizes[]={12,12,2,2,2,1,1,1,1};
     for(unsigned i=0;i<(path?9:15);++i){const u8 *bytes=path?(const u8 *)path_fields[i]:(const u8 *)fields[i];
-        for(unsigned j=0;j<(path?path_sizes[i]:sizes[i]);++j)hash=(hash^bytes[j])*UINT64_C(1099511628211);}
+        for(unsigned j=0;j<(path?path_sizes[i]:sizes[i]);++j){hash=(hash^bytes[j])*UINT64_C(1099511628211);}}
     return hash;
 }
 
@@ -3326,6 +3326,124 @@ static int original_fx_scene_init(PeDisc *disc)
     fx_image_io=0;
     if(cases!=900 || hash!=UINT64_C(0x8a8774df804ba8b5)){fprintf(stderr,"Original FX InitScene: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return fprintf(stderr,"FX scene failure at line %d\n",__LINE__),0;}
     puts("Original FX InitScene: 900 USA scene graphs, all ten room variants, both day/night model banks, three flag patterns and 15 entry areas, all node slots, four I/O failures and recovery pass with real image I/O");return 1;
+}
+
+static int original_fx_controller(void)
+{
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    const unsigned rooms[]={0xb7,0xa1,0x5d,0x104,0x7d,0x122,0x179,0x2e,0x3a,0xbf};
+    for(unsigned scenario=0;scenario<44;++scenario){
+        unsigned variant=scenario<40?scenario/4:0,night=scenario<40?(scenario/2)%2:(scenario-40)/2;
+        unsigned script=scenario<40?scenario%2:2+(scenario%2);
+        g_ScriptVariableBank[SCRIPT_VAR_ROOM]=rooms[variant];
+        g_ScriptVariableBank[SCRIPT_VAR_AREA]=script==2?0x80:script==3?0x208:0;
+        g_ScriptVariableBank[SCRIPT_VAR_FLAGS]=0xffdfff|(night?0x2000:0);g_GameState.flags=0;
+        fx_image_io=1;glyph_reads=glyph_polls=fx_read_failure=fx_poll_failure=0;
+        if(FxCommon_InitScene()!=0)return 0;
+        for(unsigned frame=0;frame<(script==2?1230:512);++frame){
+            u32 pressed=0;
+            if(script==0){switch(frame%80){case 0:pressed=0x40;break;case 20:pressed=0x22;break;case 40:pressed=0x10;break;case 60:pressed=0x50;break;}}
+            else if(script==1 || script==3){if(frame==0 || frame==300 || frame==400)pressed=0x20000000;else if(frame==240)pressed=0x40000000;}
+            g_FieldPadPressed=g_FieldPadBits=pressed;
+            FxCommon_StepEffects();FxCommon_StepPathNodes();FxCommon_StepMotionBlend();
+            if(g_FxCommonActiveBuffer->error)return 0;
+            const void *fields[]={&g_FxCommonPageChanged,&g_FxCommonPageOpen,&g_FxCommonExitRequested,&g_FxCommonExitCountdown,
+                &g_FxCommonPageId,&g_FxCommonScreenFade,&g_FxCommonDemoFrame,&g_FxCommonDrawTintedCopies,
+                &g_FxCommonTailPathPosition,&g_FxCommonFlyerPathPosition,&g_FxCommonCameraPathPosition,&g_FxCommonDemoTicks,
+                &g_FxCommonDemoExiting,&g_FxCommonDemoResource,&g_FxCommonDemoResourceTicks,&g_FxCommonDemoShade,&g_FxCommonDemoFadePhase,
+                &g_FxCommonInputLock,&g_FxCommonTailViewEntered,&g_FxCommonExitVariant,&g_FxCommonResetRequested,D_8019C0D0,&g_FxCommonResourceState,
+                &g_FxCommonRoomVariant,&g_FxCommonViewMode,&g_FxCommonPlaying,&g_FxCommonPlayAdvance,&g_FxCommonReplayCamera,
+                &g_FxCommonPlayTicks,&g_FxCommonPlayFrame,&D_8019C00D,&D_8019C02E};
+            const unsigned sizes[]={4,4,2,2,2,2,2,2,4,4,4,4,4,2,4,1,1,2,2,4,1,4,8,2,2,1,1,1,4,4,1,2};
+            for(unsigned i=0;i<sizeof(sizes)/sizeof(*sizes);++i)for(unsigned j=0;j<sizes[i];++j){hash=(hash^((const u8 *)fields[i])[j])*UINT64_C(1099511628211);}
+            hash=fx_camera_motion_hash(hash,0);
+            const void *path_fields[]={&g_FxCommonMarkerFade,&g_FxCommonCameraPathRemaining,&g_FxCommonCameraPathStep,&g_FxCommonCameraPathIndex,&g_FxCommonMotionBlendFrames,g_FxCommonMotionPositions,g_FxCommonMotionDeltas};
+            const unsigned path_sizes[]={2,1,1,1,2,160,160};
+            for(unsigned i=0;i<7;++i)for(unsigned j=0;j<path_sizes[i];++j){hash=(hash^((const u8 *)path_fields[i])[j])*UINT64_C(1099511628211);}
+            for(unsigned i=0;i<6;++i){const void *parts[]={g_FxCommonPathNodes[i]->matrix.t,g_FxCommonPathNodes[i]->seed.component};
+                for(unsigned part=0;part<2;++part)for(unsigned byte=0;byte<(part?6:12);++byte){hash=(hash^((const u8 *)parts[part])[byte])*UINT64_C(1099511628211);}}
+            ++cases;if(g_FxCommonExitRequested)break;
+        }
+    }
+    fx_image_io=0;
+    if(cases!=21624 || hash!=UINT64_C(0xe9ce596e8e1fa6c1)){fprintf(stderr,"FX controller: %u states hash=%016llx\n",cases,(unsigned long long)hash);return 0;}
+    fx_image_io=1;
+    for(unsigned fault=0;fault<4;++fault){
+        g_ScriptVariableBank[SCRIPT_VAR_AREA]=0;
+        if(FxCommon_InitScene()!=0)return 0;
+        g_FieldPadPressed=g_FieldPadBits=fault%2?0x10:0x40;
+        if(fault<2){for(unsigned i=0;i<10;++i)g_FxCommonEffectSetup[i].enabled=0;}
+        else if(fault%2)g_FxCommonEffectSetup[g_FxCommonRoomVariant].value23=254;
+        else g_FxCommonEffectSetup[g_FxCommonRoomVariant].value22=254;
+        FxCommon_StepEffects();if(g_FxCommonActiveBuffer->error!=-3)return 0;
+    }
+    fx_image_io=0;
+    puts("Original FX controller: 21624 USA states across 44 browsing/play/cancel/demo/path sequences, all playback/motion/resource fields and six animated nodes match; four invalid selection graphs terminate");return 1;
+}
+
+static unsigned fx_loop_vblanks,fx_loop_frames,fx_loop_packets,fx_loop_pixels,fx_loop_failures,fx_loop_demo;
+static u16 fx_loop_image[320*480];
+static void fx_loop_observe(void)
+{
+    Boot_VsyncCallback();++fx_loop_vblanks;
+    if(fx_loop_vblanks>3000){++fx_loop_failures;g_FxCommonExitRequested=1;return;}
+    if(!(fx_loop_vblanks&1))return;
+    FxCommonBuffer *buffer=g_FxCommonActiveBuffer;
+    u8 *base=g_RenderScratchBufferBase[0]+g_ActiveDrawSlot*sizeof(FxCommonBufferRegion);
+    if(buffer->data==base)return; /* EndSequence's final 30 blanks. */
+    ++fx_loop_frames;
+    if(buffer->data<base || buffer->data>buffer->end || buffer->error){++fx_loop_failures;g_FxCommonExitRequested=1;return;}
+    uintptr_t link=(uintptr_t)&buffer->allocation[4095];unsigned steps=0,packets=0;
+    while(link!=0xffffff){
+        RenderNativeTag *tag=(RenderNativeTag *)link;
+        if(link<0x10000 || link%_Alignof(RenderNativeTag) || ++steps>65536 || tag->length>16){++fx_loop_failures;break;}
+        if(link>=(uintptr_t)base && link<(uintptr_t)buffer->end &&
+           link+sizeof(*tag)+tag->length*4>(uintptr_t)buffer->data){++fx_loop_failures;break;}
+        if(tag->length)++packets;link=tag->address;
+    }
+    if(packets<10)++fx_loop_failures;fx_loop_packets+=packets;
+    if(fx_loop_frames%20==0){
+        RECT area={0,0,320,480};StoreImage(&area,fx_loop_image);DrawSync(0);
+        unsigned visible=0;for(unsigned i=0;i<320*480;++i)if(fx_loop_image[i]&0x7fff)++visible;
+        if(visible>10000)++fx_loop_pixels;
+    }
+    if(!fx_loop_demo){
+        /* Exercise the original SDL->pad packet->field input path. Two
+         * confirmations start the playback and then request a normal exit. */
+        if(fx_loop_frames==20 || fx_loop_frames==100)host_event(SDL_EVENT_KEY_DOWN,SDL_SCANCODE_X);
+        if(fx_loop_frames==21 || fx_loop_frames==101)host_event(SDL_EVENT_KEY_UP,SDL_SCANCODE_X);
+        if(fx_loop_frames>200){++fx_loop_failures;g_FxCommonExitRequested=1;}
+    }
+}
+
+static int original_fx_frame_loop(PeDisc *disc)
+{
+    PeDiscFile archive,exe;u16 sectors[5];
+    if(!pe_disc_find(disc,"PE.IMG",&archive) || !pe_disc_find(disc,"SLUS_006.62",&exe) ||
+       !pe_disc_read(disc,&exe,0x930d8-0x10000+0x800+72*2,sectors,sizeof(sectors)))return 0;
+    u8 *textures=malloc(0x80000);if(!textures)return 0;
+    unsigned total_frames=0,total_packets=0;
+    for(unsigned night=0;night<2;++night)for(unsigned demo=0;demo<2;++demo){
+        for(unsigned bank=0;bank<2;++bank){unsigned index=bank?(night?1:2):0;
+            if(!pe_disc_read(disc,&archive,(uint64_t)sectors[index]*2048,textures,(sectors[index+1]-sectors[index])*2048u)){free(textures);return 0;}
+            Draw_LoadTimTable((TimRelativeTable *)textures,bank?262:3);DrawSync(0);
+        }
+        Boot_BuildRenderFlagTable();Boot_ResetPadInput();g_FieldPadBits=g_FieldPadPressed=0;
+        g_GameState.flags=0;
+        g_ScriptVariableBank[SCRIPT_VAR_AREA]=demo?0x80:0;
+        g_ScriptVariableBank[SCRIPT_VAR_ROOM]=0xb7;
+        g_ScriptVariableBank[SCRIPT_VAR_FLAGS]=0xffdfff|(night?0x2000:0);
+        CdRom_BindImage(disc,&archive);
+        fx_image_io=1;glyph_reads=glyph_polls=fx_read_failure=fx_poll_failure=0;
+        fx_loop_vblanks=fx_loop_frames=fx_loop_packets=fx_loop_pixels=fx_loop_failures=0;fx_loop_demo=demo;
+        VSyncCallback(fx_loop_observe);int result=FxCommon_RunFrameLoop();VSyncCallback(NULL);fx_image_io=0;
+        fprintf(stderr,"FX full loop night=%u demo=%u result=%d frames=%u packets=%u visible=%u errors=%u\n",night,demo,result,fx_loop_frames,fx_loop_packets,fx_loop_pixels,fx_loop_failures);
+        if(result || fx_loop_failures || fx_loop_frames!=(demo?1216u:116u) || !fx_loop_pixels ||
+           g_FxCommonResetRequested || !g_FxCommonExitRequested){free(textures);return 0;}
+        total_frames+=fx_loop_frames;total_packets+=fx_loop_packets;
+    }
+    free(textures);
+    printf("Original FX frame loop: %u frames, %u linked packets, day/night original texture banks, original SDL input/playback and complete demo exits, both buffers and headless pixels pass\n",total_frames,total_packets);return 1;
 }
 
 static int original_fx_camera_motion(PeDisc *disc)
@@ -6581,6 +6699,16 @@ static int script_movie_error_exit(const char *executable)
 int main(int argc, char **argv)
 {
     if(argc==2 && !strcmp(argv[1],"--fx-effects")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_fx_shader_packets() && original_fx_blend() && original_fx_uncompressed_order() && original_fx_shader_pixels() && original_fx_shader_guards()?0:147;}
+    if(argc==2 && !strcmp(argv[1],"--fx-step")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
+        int result=original_fx_scene_init(&disc) && original_fx_controller();pe_disc_close(&disc);return result?0:151;
+    }
+    if(argc==2 && !strcmp(argv[1],"--fx-frames")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
+        int result=original_fx_scene_init(&disc) && original_fx_frame_loop(&disc);pe_disc_close(&disc);return result?0:150;
+    }
     if(argc==2 && !strcmp(argv[1],"--fx-scene")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

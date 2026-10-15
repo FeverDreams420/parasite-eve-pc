@@ -13,6 +13,16 @@ u8 g_FxCommonStartCameraPath=0x3e;
 u8 g_FxCommonPlaying,g_FxCommonPlayAdvance,g_FxCommonReplayCamera;
 s32 g_FxCommonPlayTicks,g_FxCommonPlayFrame;
 FxCommonResourceState g_FxCommonResourceState={.active=-1,.current={.word=-1}};
+s32 g_FxCommonPageChanged=1,g_FxCommonPageOpen;
+s16 g_FxCommonExitRequested,g_FxCommonExitCountdown,g_FxCommonPageId;
+s16 g_FxCommonScreenFade=-1,g_FxCommonDrawTintedCopies=1;
+u16 g_FxCommonDemoFrame;
+s32 g_FxCommonTailPathPosition,g_FxCommonFlyerPathPosition,g_FxCommonCameraPathPosition;
+s32 g_FxCommonDemoTicks,g_FxCommonDemoExiting,g_FxCommonDemoResourceTicks;
+s16 g_FxCommonDemoResource=-1,g_FxCommonInputLock,g_FxCommonTailViewEntered;
+u8 g_FxCommonDemoShade,g_FxCommonDemoFadePhase,g_FxCommonResetRequested;
+s32 g_FxCommonExitVariant,g_FxCommonHsyncCount;
+s16 D_8019C0D0[2];
 
 void FxCommon_MuteMusic(void)
 {
@@ -145,7 +155,7 @@ void FxCommon_EndSequence(void)
     Render_ConsumeFontShuffleSeed();
 }
 
-/* The effect overlay's own frame loop: run every effect system, compact the
+/* The effect overlay's own frame loop: run every effect system, submit the
  * ordering table, present the frame and flip the double buffer until the
  * scene asks to leave. */
 int FxCommon_RunFrameLoop(void)
@@ -441,8 +451,8 @@ void FxCommon_StepPathNodes(void)
     g_FxCommonPathNodes[1]->seed = g_FxCommonPathNodes[0]->seed;
     g_FxCommonPathNodes[3]->matrix = g_FxCommonPathNodes[2]->matrix;
     g_FxCommonPathNodes[3]->seed = g_FxCommonPathNodes[2]->seed;
-    g_FxCommonTailPathPosition += 4;
-    g_FxCommonFlyerPathPosition += 0x10;
+    g_FxCommonTailPathPosition = (s32)((u32)g_FxCommonTailPathPosition + 4u);
+    g_FxCommonFlyerPathPosition = (s32)((u32)g_FxCommonFlyerPathPosition + 0x10u);
 }
 
 void FxCommon_SnapMotionWhole(s16 base)
@@ -455,9 +465,9 @@ void FxCommon_SnapMotionWhole(s16 base)
     for (i = 0; i < 10; i++) {
         FxCommon_SamplePath(i << 8, base + 0x40,
                       Draw_GetTimTableEntry(g_FxCommonTimTable, 2), &sample.vector, &extra);
-        g_FxCommonMotionPositions[i].vector.x = sample.vector.x << 16;
-        g_FxCommonMotionPositions[i].vector.y = sample.vector.y << 16;
-        g_FxCommonMotionPositions[i].vector.z = sample.vector.z << 16;
+        g_FxCommonMotionPositions[i].vector.x = (s32)((u32)sample.vector.x << 16);
+        g_FxCommonMotionPositions[i].vector.y = (s32)((u32)sample.vector.y << 16);
+        g_FxCommonMotionPositions[i].vector.z = (s32)((u32)sample.vector.z << 16);
     }
 }
 
@@ -472,11 +482,11 @@ void FxCommon_BeginMotionBlend(s16 base)
         FxCommon_SamplePath(i << 8, base + 0x40,
                       Draw_GetTimTableEntry(g_FxCommonTimTable, 2), &sample.vector, &extra);
         g_FxCommonMotionDeltas[i].vector.x =
-            ((sample.vector.x << 16) - g_FxCommonMotionPositions[i].vector.x) >> 5;
+            (s32)(((u32)sample.vector.x << 16) - (u32)g_FxCommonMotionPositions[i].vector.x) >> 5;
         g_FxCommonMotionDeltas[i].vector.y =
-            ((sample.vector.y << 16) - g_FxCommonMotionPositions[i].vector.y) >> 5;
+            (s32)(((u32)sample.vector.y << 16) - (u32)g_FxCommonMotionPositions[i].vector.y) >> 5;
         g_FxCommonMotionDeltas[i].vector.z =
-            ((sample.vector.z << 16) - g_FxCommonMotionPositions[i].vector.z) >> 5;
+            (s32)(((u32)sample.vector.z << 16) - (u32)g_FxCommonMotionPositions[i].vector.z) >> 5;
     }
 }
 
@@ -762,7 +772,7 @@ void FxCommon_StepEffects(void)
     s32 currentX;
     s32 currentY;
     s32 currentZ;
-    s16 resourceResult;
+    s16 resourceValues[5];
     s32 rowIndex;
     /* Raw halfword is loaded before the blend duration, then sign-extended. */
     u16 phase0;
@@ -791,7 +801,8 @@ void FxCommon_StepEffects(void)
     s16 nextIndex0;
     s16 nextIndex1;
 
-    resourceResult = 0;
+    memset(resourceValues,0,sizeof(resourceValues));
+    if((unsigned)g_FxCommonRoomVariant>=10){g_FxCommonActiveBuffer->error=-3;return;}
     if (g_FxCommonExitCountdown != 0) {
         countdown = g_FxCommonExitCountdown - 1;
         g_FxCommonExitCountdown = countdown;
@@ -800,23 +811,23 @@ void FxCommon_StepEffects(void)
         }
     }
     if (g_FxCommonPlayAdvance == 1) {
-        FxCommon_StartCameraMove(g_FxCommonRoomVariant, 0, 0, g_FxCommonPlayFrame << 8);
+        FxCommon_StartCameraMove(g_FxCommonRoomVariant, 0, 0, (u32)g_FxCommonPlayFrame << 8);
         rowIndex = g_FxCommonRoomVariant;
         if (g_FxCommonPlayFrame >= g_FxCommonEffectSetup[rowIndex].value30) {
             g_FxCommonDrawTintedCopies = 0;
         }
         if (g_FxCommonPlayFrame < (g_FxCommonEffectSetup[rowIndex].value0c - 1)) {
-            g_FxCommonPlayFrame += 1;
+            g_FxCommonPlayFrame = (s32)((u32)g_FxCommonPlayFrame + 1u);
         } else {
             g_FxCommonPlayAdvance = 0;
         }
     }
     if ((g_FxCommonExitCountdown != 0) && (g_FxCommonPlayAdvance == 0) && (g_FxCommonViewMode != 0xA) && (g_FxCommonReplayCamera == 0) && (g_FxCommonAutoPlay == -1)) {
-        nextFrame = g_FxCommonPlayFrame + 1;
+        nextFrame = (s32)((u32)g_FxCommonPlayFrame + 1u);
         g_FxCommonPlayFrame = nextFrame;
-        FxCommon_StartCameraMove(g_FxCommonRoomVariant, 0, 0, nextFrame << 8);
+        FxCommon_StartCameraMove(g_FxCommonRoomVariant, 0, 0, (u32)nextFrame << 8);
     }
-    if ((g_FxCommonPlaying == 1) && (elapsed = g_FxCommonPlayTicks + 1, g_FxCommonPlayTicks = elapsed, ((elapsed < 0xC9) == 0)) && (g_FxCommonCameraPathRemaining == 0)) {
+    if ((g_FxCommonPlaying == 1) && (elapsed = (s32)((u32)g_FxCommonPlayTicks + 1u), g_FxCommonPlayTicks = elapsed, ((elapsed < 0xC9) == 0)) && (g_FxCommonCameraPathRemaining == 0)) {
         if (g_FxCommonReplayCamera == 0) {
             g_FxCommonCameraPathPosition = 0;
         }
@@ -830,7 +841,7 @@ void FxCommon_StepEffects(void)
             if ((g_FieldPadPressed & 2) && (g_FxCommonAutoPlay == -1)) {
                 nextMode = (s16)(mode + 1) % 3;
                 g_FxCommonViewMode = nextMode;
-                if ((nextMode << 0x10) == 0) {
+                if (nextMode == 0) {
                     g_FxCommonMarkerFade = 1;
                     g_FxCommonPlayAdvance = 0;
                     FxCommon_StartCameraMove(g_FxCommonRoomVariant, 4, 5, 0);
@@ -850,8 +861,8 @@ void FxCommon_StepEffects(void)
                         g_FxCommonPlaying = 0;
                         g_FxCommonPlayAdvance = 0;
                         g_FxCommonInputLock = 0;
-                        FxCommon_SamplePath(g_FxCommonTailPathPosition + 0x20, 0x4A, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode1Sample.vector, &sampleExtra);
-                        FxCommon_SamplePath(g_FxCommonTailPathPosition + 0x20, 0x4B, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode1NextSample.vector, &sampleExtra);
+                        FxCommon_SamplePath((s32)((u32)g_FxCommonTailPathPosition + 0x20u), 0x4A, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode1Sample.vector, &sampleExtra);
+                        FxCommon_SamplePath((s32)((u32)g_FxCommonTailPathPosition + 0x20u), 0x4B, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode1NextSample.vector, &sampleExtra);
                         copyX = mode1Sample.vector.x;
                         copyY = mode1Sample.vector.y;
                         copyZ = mode1Sample.vector.z;
@@ -886,8 +897,8 @@ void FxCommon_StepEffects(void)
                     g_FxCommonPlaying = 0;
                     g_FxCommonPlayAdvance = 0;
                     g_FxCommonInputLock = 0;
-                    FxCommon_SamplePath(g_FxCommonFlyerPathPosition + 0x100, 0x4C, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode2Sample.vector, &sampleExtra);
-                    FxCommon_SamplePath(g_FxCommonFlyerPathPosition + 0x100, 0x4D, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode2NextSample.vector, &sampleExtra);
+                    FxCommon_SamplePath((s32)((u32)g_FxCommonFlyerPathPosition + 0x100u), 0x4C, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode2Sample.vector, &sampleExtra);
+                    FxCommon_SamplePath((s32)((u32)g_FxCommonFlyerPathPosition + 0x100u), 0x4D, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &mode2NextSample.vector, &sampleExtra);
                     shortA.x = (s16) mode2NextSample.vector.x;
                     shortA.y = (s16) mode2NextSample.vector.y;
                     shortA.z = (s16) mode2NextSample.vector.z;
@@ -962,8 +973,10 @@ void FxCommon_StepEffects(void)
                     g_FxCommonPlayFrame = 0;
                     g_FxCommonDrawTintedCopies = 1;
                     if (g_FxCommonEffectSetup[g_FxCommonRoomVariant].value22 != 0xFF) {
+                        unsigned choices=0;
                         do {
                             nextIndex0 = g_FxCommonEffectSetup[g_FxCommonRoomVariant].value22;
+                            if((unsigned)nextIndex0>=10 || ++choices>10){g_FxCommonActiveBuffer->error=-3;return;}
                             g_FxCommonRoomVariant = nextIndex0;
                         } while (g_FxCommonEffectSetup[nextIndex0].enabled == 0);
                         g_FxCommonPageChanged = 1;
@@ -977,9 +990,9 @@ void FxCommon_StepEffects(void)
                         do {
                             FxCommon_SamplePath(motionIndex0 << 8, motionBase0 + 0x40, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &motionSample.vector, &motionExtra);
                             motionIndex0 += 1;
-                            g_FxCommonMotionDeltas[motionSlot0].vector.x = ((motionSample.vector.x << 0x10) - g_FxCommonMotionPositions[motionSlot0].vector.x) >> 5;
-                            g_FxCommonMotionDeltas[motionSlot0].vector.y = ((motionSample.vector.y << 0x10) - g_FxCommonMotionPositions[motionSlot0].vector.y) >> 5;
-                            g_FxCommonMotionDeltas[motionSlot0].vector.z = ((motionSample.vector.z << 0x10) - g_FxCommonMotionPositions[motionSlot0].vector.z) >> 5;
+                            g_FxCommonMotionDeltas[motionSlot0].vector.x = (s32)(((u32)motionSample.vector.x << 16) - (u32)g_FxCommonMotionPositions[motionSlot0].vector.x) >> 5;
+                            g_FxCommonMotionDeltas[motionSlot0].vector.y = (s32)(((u32)motionSample.vector.y << 16) - (u32)g_FxCommonMotionPositions[motionSlot0].vector.y) >> 5;
+                            g_FxCommonMotionDeltas[motionSlot0].vector.z = (s32)(((u32)motionSample.vector.z << 16) - (u32)g_FxCommonMotionPositions[motionSlot0].vector.z) >> 5;
                             motionSlot0 += 1;
                         } while (motionIndex0 < 0xAU);
                     }
@@ -993,8 +1006,10 @@ void FxCommon_StepEffects(void)
                     g_FxCommonPlayFrame = 0;
                     g_FxCommonDrawTintedCopies = 1;
                     if (g_FxCommonEffectSetup[g_FxCommonRoomVariant].value23 != 0xFF) {
+                        unsigned choices=0;
                         do {
                             nextIndex1 = g_FxCommonEffectSetup[g_FxCommonRoomVariant].value23;
+                            if((unsigned)nextIndex1>=10 || ++choices>10){g_FxCommonActiveBuffer->error=-3;return;}
                             g_FxCommonRoomVariant = nextIndex1;
                         } while (g_FxCommonEffectSetup[nextIndex1].enabled == 0);
                         g_FxCommonPageChanged = 1;
@@ -1008,9 +1023,9 @@ void FxCommon_StepEffects(void)
                         do {
                             FxCommon_SamplePath(motionIndex1 << 8, motionBase1 + 0x40, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &motionSample.vector, &motionExtra);
                             motionIndex1 += 1;
-                            g_FxCommonMotionDeltas[motionSlot1].vector.x = ((motionSample.vector.x << 0x10) - g_FxCommonMotionPositions[motionSlot1].vector.x) >> 5;
-                            g_FxCommonMotionDeltas[motionSlot1].vector.y = ((motionSample.vector.y << 0x10) - g_FxCommonMotionPositions[motionSlot1].vector.y) >> 5;
-                            g_FxCommonMotionDeltas[motionSlot1].vector.z = ((motionSample.vector.z << 0x10) - g_FxCommonMotionPositions[motionSlot1].vector.z) >> 5;
+                            g_FxCommonMotionDeltas[motionSlot1].vector.x = (s32)(((u32)motionSample.vector.x << 16) - (u32)g_FxCommonMotionPositions[motionSlot1].vector.x) >> 5;
+                            g_FxCommonMotionDeltas[motionSlot1].vector.y = (s32)(((u32)motionSample.vector.y << 16) - (u32)g_FxCommonMotionPositions[motionSlot1].vector.y) >> 5;
+                            g_FxCommonMotionDeltas[motionSlot1].vector.z = (s32)(((u32)motionSample.vector.z << 16) - (u32)g_FxCommonMotionPositions[motionSlot1].vector.z) >> 5;
                             motionSlot1 += 1;
                         } while (motionIndex1 < 0xAU);
                     }
@@ -1037,13 +1052,13 @@ void FxCommon_StepEffects(void)
     if (g_FxCommonReplayCamera == 1) {
         FxCommon_SamplePath(g_FxCommonCameraPathPosition, g_FxCommonEffectSetup[g_FxCommonRoomVariant].motionIndices[3], Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &g_FxCommonCameraPosition, &sampleExtra);
         FxCommon_SamplePath(g_FxCommonCameraPathPosition, g_FxCommonEffectSetup[g_FxCommonRoomVariant].motionIndices[2], Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &g_FxCommonCameraTarget, &sampleExtra);
-        g_FxCommonCameraPathPosition += 0x80;
+        g_FxCommonCameraPathPosition = (s32)((u32)g_FxCommonCameraPathPosition + 0x80u);
     }
     if (g_FxCommonViewMode == 0xA) {
         g_FxCommonDemoFrame += 1;
         FxCommon_SamplePath(g_FxCommonCameraPathPosition, 0x4E, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &g_FxCommonCameraPosition, &sampleExtra);
         FxCommon_SamplePath(g_FxCommonCameraPathPosition, 0x4F, Draw_GetTimTableEntry((g_FxCommonTimTable), 2), &g_FxCommonCameraTarget, &sampleExtra);
-        g_FxCommonCameraPathPosition += 0x10;
+        g_FxCommonCameraPathPosition = (s32)((u32)g_FxCommonCameraPathPosition + 0x10u);
         if ((s16) g_FxCommonDemoFrame == 0x4B) {
             g_FxCommonDemoResource = FxCommon_SwitchResource(0xB, 0U);
             g_FxCommonDemoResourceTicks = 0;
@@ -1085,7 +1100,7 @@ void FxCommon_StepEffects(void)
         if (g_FxCommonDemoResourceTicks == 0xBA) {
             g_FxCommonDemoFadePhase = 2;
         }
-        g_FxCommonDemoResourceTicks += 1;
+        g_FxCommonDemoResourceTicks = (s32)((u32)g_FxCommonDemoResourceTicks + 1u);
         if ((g_FxCommonDemoFadePhase == 0) && (g_FxCommonDemoShade < 0x78U)) {
             g_FxCommonDemoShade += 5;
         }
@@ -1093,7 +1108,7 @@ void FxCommon_StepEffects(void)
             g_FxCommonDemoShade -= 5;
         }
         Menu_SetHighlightColor(g_FxCommonDemoResource, g_FxCommonDemoShade, g_FxCommonDemoShade, g_FxCommonDemoShade);
-        resourceTicks = g_FxCommonDemoTicks + 1;
+        resourceTicks = (s32)((u32)g_FxCommonDemoTicks + 1u);
         g_FxCommonDemoTicks = resourceTicks;
         if (resourceTicks == 0x4B1) {
             g_FxCommonScreenFade = 1;
@@ -1114,7 +1129,7 @@ void FxCommon_StepEffects(void)
         }
         Menu_SetHighlightColor(g_FxCommonEffectSetup[g_FxCommonRoomVariant].value25, 0x80, 0x80, 0x80);
         if (g_FxCommonViewMode != 0xA) {
-            Render_SetupColorTable(g_FxCommonEffectSetup[g_FxCommonRoomVariant].value25, 3, &resourceResult);
+            Render_SetupColorTable(g_FxCommonEffectSetup[g_FxCommonRoomVariant].value25, 3, resourceValues);
         }
         g_FxCommonPageId = (s16) g_FxCommonEffectSetup[g_FxCommonRoomVariant].value25;
         g_FxCommonPageOpen = 1;
@@ -1163,16 +1178,15 @@ void FxCommon_StepEffects(void)
 
 s16 FxCommon_SwitchResource(s16 resourceId, u8 action)
 {
-    s16 result;
+    s16 values[5]={0};
     s16 id;
 
-    result = 0;
     id = resourceId;
     if (action == 0) {
         if (id != g_FxCommonResourceState.active) {
             Draw_CloseTextboxPage(g_FxCommonResourceState.current.half);
             Menu_SetHighlightColor(id, 0x80, 0x80, 0x80);
-            Render_SetupColorTable(id, 3, &result);
+            Render_SetupColorTable(id, 3, values);
             g_FxCommonResourceState.current.word = id;
         }
     }

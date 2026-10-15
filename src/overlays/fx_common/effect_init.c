@@ -132,6 +132,17 @@ int FxCommon_InitScene(void)
     /* Entering a statically linked scene must restore the state formerly
      * supplied by loading a fresh overlay image, including nonzero defaults. */
     D_8019C00D=0;D_8019C02E=1;g_FxCommonMarkerFade=1;
+    g_FxCommonPageChanged=1;g_FxCommonPageOpen=0;g_FxCommonPageId=0;
+    g_FxCommonExitRequested=g_FxCommonExitCountdown=0;
+    g_FxCommonScreenFade=-1;g_FxCommonDrawTintedCopies=1;
+    g_FxCommonDemoFrame=0;g_FxCommonDemoTicks=g_FxCommonDemoExiting=0;
+    g_FxCommonDemoResource=-1;g_FxCommonDemoResourceTicks=0;
+    g_FxCommonDemoShade=g_FxCommonDemoFadePhase=0;
+    g_FxCommonTailPathPosition=g_FxCommonFlyerPathPosition=g_FxCommonCameraPathPosition=0;
+    g_FxCommonInputLock=g_FxCommonTailViewEntered=0;
+    g_FxCommonExitVariant=g_FxCommonHsyncCount=0;g_FxCommonResetRequested=0;
+    g_FxCommonResourceState=(FxCommonResourceState){.active=-1,.current={.word=-1}};
+    D_8019C0D0[0]=D_8019C0D0[1]=0;
     g_FxCommonViewMode=0;
     g_FxCommonPlaying=g_FxCommonPlayAdvance=g_FxCommonReplayCamera=0;
     g_FxCommonPlayTicks=g_FxCommonPlayFrame=0;
@@ -141,6 +152,7 @@ int FxCommon_InitScene(void)
     memset(&g_FxCommonRuntime,0,sizeof(g_FxCommonRuntime));
     memset(g_FxCommonEffectSetup,0,sizeof(g_FxCommonEffectSetup));
     memset(g_FxCommonMotionPositions,0,sizeof(g_FxCommonMotionPositions));
+    memset(g_FxCommonMotionDeltas,0,sizeof(g_FxCommonMotionDeltas));
     FxCommon_InitNodePools();
     /* Static linking replaces reloading the overlay's zeroed route counter. */
     g_FxCommonRouteNodeCount=0;

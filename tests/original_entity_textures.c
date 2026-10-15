@@ -60,6 +60,9 @@ int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int
 #include "pe1/cdrom.h"
 #include "pe1/akao.h"
 #include "pe1/akao/stream.h"
+#include "pe1/boot.h"
+#include "pe1/resident_tables.h"
+#include "pe1/save.h"
 #include "pe1/akao/globals.h"
 #include <psyz/spu.h>
 #include "pe1/psyq_spu_api.h"
@@ -71,6 +74,78 @@ static u32 image_word(const u8 *p)
 {
     return (u32)p[0] | (u32)p[1] << 8 | (u32)p[2] << 16 | (u32)p[3] << 24;
 }
+static int original_scene_bootstrap(PeRoomCatalog *catalog)
+{
+    static _Alignas(16) u8 scratch[0x20000], bank[0x1400];
+    g_GameState.scene_load_scratch=scratch;
+    g_GameState.bank_work_far_end=bank;
+    g_GameState.startup_resource_blob=(u8 *)(uintptr_t)1;
+    g_GameState.startup_resource_tables[0]=(void *)(uintptr_t)1;
+    g_GameState.startup_resource_tables[1]=(void *)(uintptr_t)1;
+    u16 end=g_PeImageSectorTable[4];
+    g_PeImageSectorTable[4]=g_PeImageSectorTable[3];
+    CHECK(Scene_LoadSceneData()==-10);
+    g_PeImageSectorTable[4]=end;
+    CdRom_BindImage(NULL,NULL);
+    CHECK(Scene_LoadSceneData()==-1);
+    CHECK(!g_GameState.startup_resource_blob && !g_GameState.startup_resource_tables[0] &&
+          !g_GameState.startup_resource_tables[1]);
+    const unsigned stages[]={2,3,6,7};
+    for(unsigned i=0;i<4;++i) {
+        PeDiscFile truncated=catalog->archive;
+        truncated.size=(uint64_t)catalog->sector_bounds[stages[i]+1]*2048-1;
+        CdRom_BindImage(catalog->disc,&truncated);
+        CHECK(Scene_LoadSceneData()==-(int)(i*2+1));
+    }
+    CdRom_BindImage(catalog->disc,NULL);
+    CHECK(Asset_OpenPeImage()==0);
+    u16 sample_start=g_PeImageSectorTable[6];
+    u8 invalid_magic[4];
+    CHECK(pe_disc_read(catalog->disc,&catalog->archive,(uint64_t)(sample_start+1)*2048,
+                       invalid_magic,sizeof(invalid_magic)));
+    CHECK(image_word(invalid_magic)!=0x4F414B41);
+    g_PeImageSectorTable[6]=sample_start+1;
+    CHECK(Scene_LoadSceneData()==-9);
+    g_PeImageSectorTable[6]=sample_start;
+    memset(&g_ResidentDataPack,0xA5,sizeof(g_ResidentDataPack));
+    memset(g_StartupResourceBlob,0xA5,sizeof(g_StartupResourceBlob));
+    memset(bank,0xA5,sizeof(bank));
+    CHECK(Scene_LoadSceneData()==0);
+    CHECK(g_GameState.startup_resource_blob==g_StartupResourceBlob);
+    for(unsigned slot=2;slot<=7;++slot) {
+        if(slot==4 || slot==5) continue;
+        PeRoomBlob expected={0};
+        expected.size=(size_t)(catalog->sector_bounds[slot+1]-catalog->sector_bounds[slot])*2048;
+        expected.bytes=malloc(expected.size); CHECK(expected.bytes);
+        CHECK(pe_disc_read(catalog->disc,&catalog->archive,(uint64_t)catalog->sector_bounds[slot]*2048,
+                           expected.bytes,expected.size));
+        if(slot==2) CHECK(!memcmp(&g_ResidentDataPack,expected.bytes,expected.size));
+        if(slot==3) CHECK(!memcmp(g_StartupResourceBlob,expected.bytes,sizeof(g_StartupResourceBlob)));
+        if(slot==7) CHECK(!memcmp(bank,expected.bytes,sizeof(bank)));
+        if(slot==6) {
+            u32 address=image_word(expected.bytes+0x10), bytes=image_word(expected.bytes+0x14);
+            u32 first=image_word(expected.bytes+0x18), last=image_word(expected.bytes+0x1C);
+            if(!last) last=256;
+            CHECK(first<last && last<=256);
+            size_t offset=0x40+(last-first)*0x40;
+            CHECK(offset<=expected.size && bytes<=expected.size-offset &&
+                  address<=0x80000 && bytes<=0x80000-address);
+            CHECK(!memcmp(&g_AkaoInstrumentTable[first],expected.bytes+0x40,(last-first)*0x40));
+            CHECK(!memcmp(Psyz_SpuGetRam()+address,expected.bytes+offset,bytes));
+        }
+        pe_room_blob_close(&expected);
+    }
+    CHECK(g_GameState.startup_resource_tables[0]==Asset_FindTable08ByU32Key(g_StartupResourceBlob,0x57D40D84));
+    CHECK(g_GameState.startup_resource_tables[1]==Asset_FindTable08ByU32Key(g_StartupResourceBlob,0x57D41D84));
+    CHECK(g_GameState.startup_resource_tables[0] && g_GameState.startup_resource_tables[1]);
+    uint64_t hash=UINT64_C(14695981039346656037);
+    for(size_t i=0;i<sizeof(g_SaveRuntimeState);++i)
+        hash=(hash^((u8 *)&g_SaveRuntimeState)[i])*UINT64_C(1099511628211);
+    CHECK(hash==UINT64_C(0x0b3a33783621c7a8));
+    puts("Original complete scene bootstrap: real resident/resources, menu state, SPU samples/instruments and bank bytes passed");
+    return 0;
+}
+
 static int room_key_images(const PeRoomBlob *room, PeVram *expected, unsigned *uploads)
 {
     const u8 *records; unsigned count;
@@ -303,22 +378,20 @@ int main(void)
     PeVram *expected=calloc(1,sizeof(*expected)), *actual=malloc(sizeof(*actual));
     CHECK(expected && actual);
     ResetGraph(0);
+    CHECK(original_scene_bootstrap(&catalog)==0);
     RECT all={0,0,1024,512};
     {
         PeRoomBlob resources={0};CHECK(pe_sector_bank_load(&catalog,3,&resources));
-        u8 *old_resources=g_GameState.startup_resource_blob;
-        void *old_page0=g_GameState.startup_resource_tables[0];
         u8 **model_slots[]={&g_FieldFxModel6DEAE684,&D_800F32D8,&D_800F3418,&g_FieldFxTwinModelB,&g_FieldFxModel83ACD504,&g_FieldFxGlintModel};
         u8 *old_models[6];for(unsigned i=0;i<6;++i)old_models[i]=*model_slots[i];
-        g_GameState.startup_resource_blob=resources.bytes;
         const u8 *records;unsigned count;
         CHECK(pe_room_blob_table(&resources,2,12,&records,&count));
         const u32 keys[]={0x6deae684,0x8ab5b684,0x5ab32504,0x5ab32104,0x83acd504,0x57e8eb04,0x57d40d84};
         u8 *payloads[7]={0};
         for(unsigned k=0;k<7;++k)for(unsigned i=0;i<count;++i)
-            if(image_word(records+i*12+8)==keys[k])payloads[k]=resources.bytes+(image_word(records+i*12+4)&0xffffff);
+            if(image_word(records+i*12+8)==keys[k])payloads[k]=g_StartupResourceBlob+(image_word(records+i*12+4)&0xffffff);
         for(unsigned k=0;k<7;++k)CHECK(payloads[k]);
-        g_GameState.startup_resource_tables[0]=payloads[6];
+        CHECK(g_GameState.startup_resource_tables[0]==payloads[6]);
         CHECK(g_PmCmdHandlerArray[85]==&g_FieldFxTaskClass);
         g_PmCmdHandlerArray[85]->init();DrawSync(0);
         CHECK(g_FieldFxModel6DEAE684==payloads[0] && D_800F32D8==payloads[1] && D_800F3418==payloads[2] &&
@@ -332,7 +405,6 @@ int main(void)
         StoreImage(&page,(u_long *)actual->words);DrawSync(0);
         CHECK(!memcmp(actual->words,payloads[6],64*256*2));
         CHECK(g_FieldFxLoadedTexturePage==0);
-        g_GameState.startup_resource_blob=old_resources;g_GameState.startup_resource_tables[0]=old_page0;
         for(unsigned i=0;i<6;++i)*model_slots[i]=old_models[i];
         pe_room_blob_close(&resources);
         puts("Original handler 85: six real startup models, canonical archive alias, texture pages and full VRAM upload passed");

@@ -37,129 +37,61 @@
  * through $gp, every other extern stays absolute. */
 u8 D_8009CDC8;
 
-typedef struct { char b[16]; } __attribute__((aligned(1), packed)) Copy16u;
-typedef struct { u32 w[4]; } Copy16a;
+_Alignas(4) u8 g_StartupResourceBlob[0x10A50];
 
-/* Block copy cursor: retail tests the two addresses' alignment as words. */
-typedef union SceneCopyCursor {
-    u8 *bytes;
-    Copy16u *unaligned;
-    Copy16a *aligned;
-    u32 word;
-} SceneCopyCursor;
+/* File images cannot recover through PS1 drive retries. Report the failed
+ * stage to the original boot caller instead of spinning or using stale data. */
+int Scene_LoadSceneData(void) {
+    RECT rect = {0, 0, 0x3FF, 0x1FF};
+    Pe1GameState *state = &g_GameState;
+    u32 lba = g_PeImageBaseLba;
+    int status;
+    const unsigned stages[] = {2, 3, 6, 7};
 
-void Scene_LoadSceneData(void) {
-    RECT rect;
-    Pe1GameState *state;
-    s32 lba;
-    u16 *p0;
-    s32 t;
-    s32 flag;
-    SceneCopyCursor src;
-    SceneCopyCursor dst;
-    u8 *end;
-    u8 *copyEnd;
-
-    rect.w = 0x3FF;
-    rect.x = 0;
-    rect.y = 0;
-    rect.h = 0x1FF;
-    state = &g_GameState;
-    lba = g_PeImageBaseLba;
-    ClearImage(&rect, 0, 0, 1);
-
-restart1:
-    p0 = &g_PeImageSectorTable[2];
-    while (CdRom_ReadSectorsFromLba(lba + p0[0], &g_ResidentDataPack, p0[1] - p0[0]) == -1) {}
-    t = 1;
-    do {
-        if (t == -1) {
-            goto restart1;
-        }
-        t = CdRom_PollReady();
-    } while (t != 0);
-
-    flag = 0;
-restart2:
-    p0 = &g_PeImageSectorTable[3];
-    while (CdRom_ReadSectorsFromLba(lba + p0[0], state->scene_load_scratch, p0[1] - p0[0]) == -1) {}
-    t = 1;
-    do {
-        if (flag == 0) {
-            Menu_FullInit();
-            flag = 1;
-        }
-        if (t == -1) {
-            goto restart2;
-        }
-        t = CdRom_PollReady();
-    } while (t != 0);
-
-    src.bytes = state->scene_load_scratch;
-    dst.bytes = g_StartupResourceBlob;
-    if ((src.word | dst.word) & 3) {
-        copyEnd = src.bytes + 0x10A50;
-        do {
-            *dst.unaligned = *src.unaligned;
-            src.bytes += 0x10;
-            dst.bytes += 0x10;
-        } while (src.bytes != copyEnd);
-    } else {
-        copyEnd = src.bytes + 0x10A50;
-        do {
-            *dst.aligned = *src.aligned;
-            src.bytes += 0x10;
-            dst.bytes += 0x10;
-        } while (src.bytes != copyEnd);
+    if (!state->scene_load_scratch || !state->bank_work_far_end) return -10;
+    for (unsigned i = 0; i < 4; ++i) {
+        unsigned slot = stages[i];
+        unsigned first = g_PeImageSectorTable[slot];
+        unsigned last = g_PeImageSectorTable[slot + 1];
+        if (last <= first || first > UINT32_MAX - lba) return -10;
+        size_t bytes = (size_t)(last - first) * 2048;
+        if ((i == 0 && bytes > sizeof(g_ResidentDataPack)) ||
+            (i != 0 && bytes > 0x20000) ||
+            (i == 1 && bytes < sizeof(g_StartupResourceBlob)) ||
+            (i == 3 && bytes < 0x1400)) return -10;
     }
+    ClearImage(&rect, 0, 0, 1);
+    state->startup_resource_blob = NULL;
+    state->startup_resource_tables[0] = NULL;
+    state->startup_resource_tables[1] = NULL;
 
+    if (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[2], &g_ResidentDataPack,
+            g_PeImageSectorTable[3] - g_PeImageSectorTable[2]) < 0) return -1;
+    while ((status = CdRom_PollReady()) > 0) {}
+    if (status < 0) return -2;
+
+    if (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[3], state->scene_load_scratch,
+            g_PeImageSectorTable[4] - g_PeImageSectorTable[3]) < 0) return -3;
+    Menu_FullInit();
+    while ((status = CdRom_PollReady()) > 0) {}
+    if (status < 0) return -4;
+    memcpy(g_StartupResourceBlob, state->scene_load_scratch, sizeof(g_StartupResourceBlob));
     state->startup_resource_blob = g_StartupResourceBlob;
     state->startup_resource_tables[0] = Asset_FindTable08ByU32Key(g_StartupResourceBlob, 0x57D40D84);
-    state->startup_resource_tables[1] = Asset_FindTable08ByU32Key(state->startup_resource_blob, 0x57D41D84);
+    state->startup_resource_tables[1] = Asset_FindTable08ByU32Key(g_StartupResourceBlob, 0x57D41D84);
 
-restart3:
-    p0 = &g_PeImageSectorTable[6];
-    while (CdRom_ReadSectorsFromLba(lba + p0[0], state->scene_load_scratch, p0[1] - p0[0]) == -1) {}
-    t = 1;
-    do {
-        if (t == -1) {
-            goto restart3;
-        }
-        t = CdRom_PollReady() != 0;
-    } while (t != 0);
+    if (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[6], state->scene_load_scratch,
+            g_PeImageSectorTable[7] - g_PeImageSectorTable[6]) < 0) return -5;
+    while ((status = CdRom_PollReady()) > 0) {}
+    if (status < 0) return -6;
+    if (Spu_UploadSampleBlockBlocking(state->scene_load_scratch, 1) < 0) return -9;
 
-    Spu_UploadSampleBlockBlocking(g_GameState.scene_load_scratch, 1);
-
-restart4:
-    p0 = &g_PeImageSectorTable[7];
-    while (CdRom_ReadSectorsFromLba(lba + p0[0], state->scene_load_scratch, p0[1] - p0[0]) == -1) {}
-    t = 1;
-    do {
-        if (t == -1) {
-            goto restart4;
-        }
-    } while ((t = (CdRom_PollReady() != 0)) != 0);
-
-    {
-        SceneCopyCursor to, from;
-        to.bytes = state->bank_work_far_end;
-
-        from.bytes = state->scene_load_scratch;
-        end = from.bytes + 0x1400;
-        if ((from.word | to.word) & 3) {
-            do {
-                *to.unaligned = *from.unaligned;
-                from.bytes += 0x10;
-                to.bytes += 0x10;
-            } while (from.bytes != end);
-        } else {
-            do {
-                *to.aligned = *from.aligned;
-                from.bytes += 0x10;
-                to.bytes += 0x10;
-            } while (from.bytes != end);
-        }
-    }
+    if (CdRom_ReadSectorsFromLba(lba + g_PeImageSectorTable[7], state->scene_load_scratch,
+            g_PeImageSectorTable[8] - g_PeImageSectorTable[7]) < 0) return -7;
+    while ((status = CdRom_PollReady()) > 0) {}
+    if (status < 0) return -8;
+    memcpy(state->bank_work_far_end, state->scene_load_scratch, 0x1400);
+    return 0;
 }
 
 /* The adjacent field background loader shares the scene resource state. */

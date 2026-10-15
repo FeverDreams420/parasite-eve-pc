@@ -429,6 +429,7 @@ if(BUILD_TESTING)
         $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_sources(test-original-entity-texture-assets PRIVATE
+        $<TARGET_OBJECTS:parasite-eve-original-pad>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
         $<TARGET_OBJECTS:parasite-eve-original-shadow>
         $<TARGET_OBJECTS:parasite-eve-original-akao>)

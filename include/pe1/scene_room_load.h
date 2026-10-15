@@ -28,7 +28,7 @@ int Asset_LoadTimTextures(int force);
 extern uintptr_t g_SceneMapPrimBaseTable[];
 
 /* Startup resource blob Scene_LoadSceneData copies out of the scratch buffer. */
-extern unsigned char g_StartupResourceBlob[];
+extern unsigned char g_StartupResourceBlob[0x10A50];
 
 /*
  * Scene_LoadEntityTextures: 14-state loader for the area entity bank.

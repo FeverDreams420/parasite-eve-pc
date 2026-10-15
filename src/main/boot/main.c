@@ -1,8 +1,9 @@
 #include "common.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include "pe1/boot.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/boot_services.h"
-#include "pe1/boot_stack.h"
 #include "pe1/field_bg_load.h"
 #include "pe1/game_state.h"
 #include "pe1/game_timers.h"
@@ -12,7 +13,7 @@
 #define STATE_FLAG_IMAGE_BUSY 0x00100000U
 #define STATE_FLAG_READY 0x00000100U
 
-void main(void) {
+int main(void) {
     int mode;
     u32 token;
     Pe1GameState *state;
@@ -30,7 +31,11 @@ void main(void) {
 
         Boot_InitGameState();
         Boot_InitSubsystems();
-        Scene_LoadSceneData();
+        int startup_status = Scene_LoadSceneData();
+        if (startup_status < 0) {
+            fprintf(stderr, "Scene startup failed: %d\n", startup_status);
+            return EXIT_FAILURE;
+        }
 
         g_SceneDispatchToken = 0xA9400048;
 
@@ -47,7 +52,7 @@ void main(void) {
             switch (token) {
             case 0xA8000048:
                 Boot_LoadOverlayTables();
-                BOOT_CALL_ON_SCRATCHPAD_STACK(BOOT_SCRATCHPAD_STACK_TOP, func_8019234C());
+                func_8019234C();
                 g_GameState.flags |= 1;
                 break;
             case 0xAA108448:

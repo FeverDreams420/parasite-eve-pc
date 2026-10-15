@@ -12,7 +12,9 @@ extern unsigned int g_GlobalFrameCounter[];
 
 /* Boot sequence (boot/main.c) and the services it starts. */
 void Boot_InitSubsystems(void);
-void Scene_LoadSceneData(void);
+/* 0 on success; -1..-8 identify read/poll failure in four startup stages,
+ * -9 sample upload failure, -10 invalid workspace or sector extents. */
+int Scene_LoadSceneData(void);
 int Boot_LoadOverlayTables(void);
 int CdRom_LoadBootAudio(void);
 int CdRom_LoadInitialImage(void);

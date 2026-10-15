@@ -53,6 +53,9 @@ int Inv_ScrambleGrid(void);
 #include "pe1/render_buffers.h"
 #include "pe1/render_packets.h"
 #include "pe1/render_prim.h"
+#include "pe1/render_anim_position.h"
+#include "pe1/render_animation_frame.h"
+#include "pe1/field_glow_line.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/field_tile.h"
 #include "pe1/field_textured_model.h"
@@ -843,7 +846,9 @@ static int original_display_start(void)
            g_SceneDispatchToken!=(modes[i]==1?0xA80830C8u:modes[i]==3?0xA80651C8u:0x12345678u)) return 0;
         size_t glyph_bytes=TEXTBOX_GLYPH_PACKET_CAPACITY*sizeof(TextboxGlyphPacket);
         if((u8 *)D_800B0E38.other_buffers[2]!=(u8 *)D_800B0E38.other_buffers[1]+glyph_bytes ||
-           g_RenderScratchBufferBase[0]!=(u8 *)D_800B0E38.other_buffers[2]+glyph_bytes)return 0;
+           g_RenderScratchBufferBase[0]!=(u8 *)D_800B0E38.other_buffers[2]+glyph_bytes ||
+           g_RenderAnimBufferBase[1]!=g_RenderAnimBufferBase[0]+RENDER_ANIM_BUFFER_BYTES ||
+           (u8 *)g_GameState.scene_process_slots!=g_RenderAnimBufferBase[1]+RENDER_ANIM_BUFFER_BYTES)return 0;
         RenderBufferPrefix display_layout=D_800B0E38;
         Boot_InitMemoryLayout();
         if(memcmp(&display_layout,&D_800B0E38,sizeof(display_layout)))return 0;
@@ -2522,6 +2527,203 @@ static int original_color_quad_packets(void)
 
 /* Execute the original parser and real SDK packet helpers, comparing state
  * and every linked command against unhooked USA 371B0/37870. */
+
+/* CPU algorithm from USA 8007041C with COP2 forwarded to the same PsyZ GTE;
+ * this isolates CPU/layout fidelity, not independent hardware GTE accuracy. */
+static int original_wireframe_renderer(void)
+{
+    GteMatrix view;
+    GteMatrix *saved_view=g_ViewMatrixSlot.value;
+    RenderNativeTag ordering[4096];
+    union {uintptr_t alignment;u8 bytes[0x4000];} arena;
+    const u32 scales[]={0,0x400000,0xC80000,0xFFFF0000};
+    const int yaws[]={0,256,1024,2048,3072,4095};
+    const unsigned materials[]={0,32,33,34,35};
+    const s16 rotations[][9]={{4096,0,0,0,4096,0,0,0,4096},
+        {0,0,4096,0,4096,0,-4096,0,0},{4096,0,0,0,4096,0,0,0,4096}};
+    u32 saved_xy[256];s16 saved_depth[256];
+    memcpy(saved_xy,g_WireScratch.screenXY,sizeof(saved_xy));memcpy(saved_depth,g_WireScratch.depth,sizeof(saved_depth));
+    uint64_t hash=UINT64_C(14695981039346656037);int valid=1;unsigned samples=0;
+#define WIRE_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+    for(unsigned orientation=0;orientation<2;++orientation)for(unsigned floor=0;floor<8;++floor)
+    for(unsigned material=0;material<5;++material)for(unsigned scale=0;scale<4;++scale)
+    for(unsigned yaw=0;yaw<6;++yaw)for(unsigned position=0;position<3;++position)for(unsigned camera=0;camera<3;++camera){
+        for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+        Psyz_GteCtrlWrite(24,160<<16);Psyz_GteCtrlWrite(25,112<<16);Psyz_GteCtrlWrite(26,320);
+        memset(&view,0,sizeof(view));memcpy(view.m,rotations[camera],sizeof(view.m));
+        if(camera==2){view.t[0]=23;view.t[1]=-17;view.t[2]=250;}g_ViewMatrixSlot.value=&view;
+        union {u32 alignment;u8 bytes[128];} frame={0};
+        frame.bytes[1]=3;frame.bytes[6]=16;frame.bytes[10]=1;frame.bytes[19]=2;
+        const s16 xs[]={-100,100,0},zs[]={0,0,100};
+        for(unsigned i=0;i<3;++i){s16 xyz[]={xs[i],floor>>i&1?0:-100,zs[i]};
+            memcpy(frame.bytes+28+i*8,xyz,sizeof(xyz));frame.bytes[28+i*8+6]=i%2;}
+        memcpy(frame.bytes+52,orientation?(u8[]){1,0,2,0}:(u8[]){0,1,2,0},4);
+        memcpy(frame.bytes+56,(u8[]){255,17,129,18},4);frame.bytes[67]=frame.bytes[71]=materials[material];
+        RenderAnimPositionInput point={0};point.x=(s16[]){-50,0,50}[position];point.z=(s16[]){1000,8000,15000}[position];
+        memset(arena.bytes,0xA5,sizeof(arena.bytes));
+        memset(g_WireScratch.screenXY,0xA5,sizeof(saved_xy));memset(g_WireScratch.depth,0xA5,sizeof(saved_depth));
+        for(unsigned i=0;i<4096;++i)ordering[i]=(RenderNativeTag){0xFFFFFF,0xAB};
+        int used=Render_DrawWireframeModel((struct RenderAnimFrame *)frame.bytes,&point,(s32)scales[scale],yaws[yaw],ordering,arena.bytes,sizeof(arena.bytes));
+        u8 *cur=arena.bytes;unsigned count=0,old_used=0;RenderNativeTag *packets[16];
+        if(used<0 || used>(int)sizeof(arena.bytes)){valid=0;goto wire_restore;}
+        while(cur<arena.bytes+used){
+            RenderNativeTag *tag=(RenderNativeTag *)cur;
+            if(count>=16 || (tag->length!=0 && tag->length!=1 && tag->length!=4)){valid=0;goto wire_restore;}
+            packets[count++]=tag;old_used+=(tag->length+1)*4;
+            cur+=tag->length==0?sizeof(RenderNativeTag):tag->length==1?sizeof(RenderDrawModePacket):sizeof(FieldLineG2Packet);
+        }
+        if(cur!=arena.bytes+used){valid=0;goto wire_restore;}
+        WIRE_PUT(old_used,4);
+        for(unsigned i=0;i<3;++i){WIRE_PUT(g_WireScratch.screenXY[i],4);WIRE_PUT(g_WireScratch.depth[i],2);}
+        for(unsigned i=56;i<60;++i)WIRE_PUT(frame.bytes[i],1);
+        for(unsigned i=0;i<count;++i){RenderNativeTag *tag=packets[i];WIRE_PUT(tag->length,1);
+            const u8 *payload=(const u8 *)tag+sizeof(*tag);for(unsigned j=0;j<tag->length*4;++j)WIRE_PUT(payload[j],1);}
+        for(unsigned layer=0;layer<4096;++layer){
+            uintptr_t link=ordering[layer].address;unsigned links=0;
+            if(ordering[layer].length!=0xAB)valid=0;
+            if(link==0xFFFFFF)continue;WIRE_PUT(layer,2);
+            while(link!=0xFFFFFF){
+                unsigned id=0;while(id<count && (uintptr_t)packets[id]!=link)++id;
+                if(id==count || ++links>=20){valid=0;goto wire_restore;}
+                WIRE_PUT(id,1);link=packets[id]->address;
+            }
+            WIRE_PUT(links,1);
+        }
+        WIRE_PUT(65535,2);++samples;
+    }
+
+    /* Allocation pressure with the three-edge, three-draw-mode reference
+     * case, plus invalid face indices and clipped depths. */
+    {
+        union {u32 alignment;u8 bytes[4096];} mesh={0};
+        mesh.bytes[1]=3;mesh.bytes[6]=16;mesh.bytes[10]=1;
+        const s16 positions[][3]={{-100,0,0},{100,-100,0},{0,-100,100}};
+        for(unsigned i=0;i<3;++i)memcpy(mesh.bytes+28+i*8,positions[i],6);
+        memcpy(mesh.bytes+52,(u8[]){0,1,2,0},4);mesh.bytes[67]=32;
+        memset(&view,0,sizeof(view));view.m[0][0]=view.m[1][1]=view.m[2][2]=4096;
+        RenderAnimPositionInput point={0};point.z=8000;
+        for(unsigned capacity=0;capacity<=176;capacity+=8){
+            for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+            Psyz_GteCtrlWrite(24,160<<16);Psyz_GteCtrlWrite(25,112<<16);Psyz_GteCtrlWrite(26,320);
+            memset(arena.bytes,0xA5,sizeof(arena.bytes));
+            for(unsigned i=0;i<4096;++i)ordering[i]=(RenderNativeTag){0xFFFFFF,0xAB};
+            int used=Render_DrawWireframeModel((struct RenderAnimFrame *)mesh.bytes,&point,0x400000,2048,ordering,arena.bytes,capacity);
+            if(used<0 || (unsigned)used>capacity || (capacity>=168 && used!=168))valid=0;
+            for(unsigned i=capacity;i<sizeof(arena.bytes);++i)if(arena.bytes[i]!=0xA5)valid=0;
+            for(unsigned i=0;i<4096;++i){uintptr_t link=ordering[i].address;unsigned links=0;
+                if(ordering[i].length!=0xAB)valid=0;
+                while(link!=0xFFFFFF){
+                    if(link<(uintptr_t)arena.bytes || link+sizeof(RenderNativeTag)>(uintptr_t)(arena.bytes+used) || ++links>6){valid=0;break;}
+                    RenderNativeTag *tag=(RenderNativeTag *)link;
+                    if((tag->length!=1 && tag->length!=4) || link+sizeof(*tag)+tag->length*4>(uintptr_t)(arena.bytes+used)){valid=0;break;}
+                    link=tag->address;
+                }
+            }
+        }
+        mesh.bytes[52]=3;
+        if(Render_DrawWireframeModel((struct RenderAnimFrame *)mesh.bytes,&point,0x400000,2048,ordering,arena.bytes,sizeof(arena.bytes)))valid=0;
+        mesh.bytes[52]=0;
+        for(unsigned i=0;i<3;++i){s16 zero=0;memcpy(mesh.bytes+28+i*8+2,&zero,2);}
+        point.z=0;
+        for(unsigned z=20000;z<=40000;z+=20000){
+            view.t[2]=z;
+            for(unsigned i=0;i<4096;++i)ordering[i]=(RenderNativeTag){0xFFFFFF,0xAB};
+            if(Render_DrawWireframeModel((struct RenderAnimFrame *)mesh.bytes,&point,0x400000,0,ordering,arena.bytes,sizeof(arena.bytes)))valid=0;
+            for(unsigned i=0;i<4096;++i)if(ordering[i].address!=0xFFFFFF || ordering[i].length!=0xAB)valid=0;
+        }
+        memset(mesh.bytes,0,sizeof(mesh.bytes));mesh.bytes[1]=255;
+        memset(g_WireScratch.screenXY,0xA5,sizeof(saved_xy));memset(g_WireScratch.depth,0xA5,sizeof(saved_depth));
+        if(Render_DrawWireframeModel((struct RenderAnimFrame *)mesh.bytes,&point,0x400000,0,ordering,arena.bytes,0) ||
+           g_WireScratch.screenXY[255]!=0xA5A5A5A5 || (u16)g_WireScratch.depth[255]!=0xA5A5)valid=0;
+    }
+wire_restore:
+#undef WIRE_PUT
+    g_ViewMatrixSlot.value=saved_view;
+    memcpy(g_WireScratch.screenXY,saved_xy,sizeof(saved_xy));memcpy(g_WireScratch.depth,saved_depth,sizeof(saved_depth));
+    if(!valid || hash!=UINT64_C(0xdd1b134b66169daf)){
+        fprintf(stderr,"Original wireframe renderer: samples=%u hash=%016llx valid=%d\n",samples,(unsigned long long)hash,valid);return 0;}
+    puts("Original wireframe renderer: 17280 USA CPU/GTE-bridge cases, native LINE_G2/draw-mode payloads and full OT chains match");return 1;
+}
+
+static int original_wireframe_animation(void)
+{
+    Pe1GameState saved_state=g_GameState;GeomScrollRecord saved_scroll=g_GeomScroll;
+    Combatant *saved_actor=g_ActiveActor;FieldActor *saved_player=g_PlayerEntity;
+    int saved_offset=g_DrawPacketOffset,saved_slot=g_ActiveDrawSlot,saved_frame=g_BattleAttackAnimFrame;
+    Combatant actor={0};BattleAction action={0};FieldActor player={0};actor.action=&action;
+    GteMatrix view={0};view.m[0][0]=view.m[1][1]=view.m[2][2]=4096;
+    g_ViewMatrixSlot.value=&view;g_ActiveActor=&actor;g_PlayerEntity=&player;
+    RenderNativeTag ordering[4096];
+    union {uintptr_t alignment;u8 bytes[0x4000];} arena;
+    const int distances[]={-32768,-1,0,1,200,32767};
+    const int frames[]={1,2,9,10,11,127,INT_MAX};
+    const int modes[]={0,16,32,48};
+    u32 saved_xy[256];s16 saved_depth[256];
+    memcpy(saved_xy,g_WireScratch.screenXY,sizeof(saved_xy));memcpy(saved_depth,g_WireScratch.depth,sizeof(saved_depth));
+    uint64_t hash=UINT64_C(14695981039346656037);int valid=1;unsigned samples=0;
+#define WIRE_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+    for(unsigned slot=0;slot<2;++slot)for(unsigned mode=0;mode<4;++mode)
+    for(unsigned distance=0;distance<6;++distance)for(unsigned step=0;step<7;++step)for(unsigned camera=0;camera<2;++camera){
+        for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+        Psyz_GteCtrlWrite(26,320);
+        union {u32 alignment;u8 bytes[128];} frame={0};
+        frame.bytes[1]=3;frame.bytes[6]=16;frame.bytes[10]=1;frame.bytes[19]=2;
+        const s16 xyz[][3]={{-100,-100,0},{100,0,0},{0,0,100}};
+        for(unsigned i=0;i<3;++i){memcpy(frame.bytes+28+i*8,xyz[i],sizeof(xyz[i]));frame.bytes[28+i*8+6]=i%2;}
+        memcpy(frame.bytes+52,(u8[]){0,1,2,0},4);memcpy(frame.bytes+56,(u8[]){255,17,129,18},4);
+        frame.bytes[67]=frame.bytes[71]=33;
+        player.pos_x=(s32)(((u32)(camera?50:0)<<16)|0x1234);
+        player.pos_y=(s32)(((u32)(camera?-300:-25)<<16)|0x1234);
+        player.pos_z=(s32)(((u32)(camera?8000:1000)<<16)|0x1234);
+        actor.stateFlags=modes[mode];action.range=distances[distance];
+        g_GameState.room_geometry_table=frame.bytes;g_DrawPacketOffset=0;g_ActiveDrawSlot=slot;g_BattleAttackAnimFrame=frames[step];
+        for(unsigned i=0;i<2;++i){g_OtBufferTable[i]=(u8 *)ordering;g_RenderAnimBufferBase[i]=arena.bytes;}
+        g_GeomScroll.state.position.screenOffsetX=camera?140:160;g_GeomScroll.state.position.screenOffsetY=camera?100:112;
+        memset(arena.bytes,0xA5,sizeof(arena.bytes));
+        memset(g_WireScratch.screenXY,0xA5,sizeof(saved_xy));memset(g_WireScratch.depth,0xA5,sizeof(saved_depth));
+        for(unsigned i=0;i<4096;++i)ordering[i]=(RenderNativeTag){0xFFFFFF,0xAB};
+        Render_AnimationFrame();int used=g_DrawPacketOffset;
+        u8 *cur=arena.bytes;unsigned count=0,old_used=0;RenderNativeTag *packets[16];
+        if(used<0 || used>(int)sizeof(arena.bytes)){valid=0;goto wire_restore;}
+        while(cur<arena.bytes+used){
+            RenderNativeTag *tag=(RenderNativeTag *)cur;
+            if(count>=16 || (tag->length!=0 && tag->length!=1 && tag->length!=4)){valid=0;goto wire_restore;}
+            packets[count++]=tag;old_used+=(tag->length+1)*4;
+            cur+=tag->length==0?sizeof(RenderNativeTag):tag->length==1?sizeof(RenderDrawModePacket):sizeof(FieldLineG2Packet);
+        }
+        if(cur!=arena.bytes+used){valid=0;goto wire_restore;}
+        WIRE_PUT(old_used,4);WIRE_PUT(g_BattleAttackAnimFrame,4);
+        WIRE_PUT(Psyz_GteCtrlRead(24),4);WIRE_PUT(Psyz_GteCtrlRead(25),4);
+        for(unsigned i=0;i<3;++i){WIRE_PUT(g_WireScratch.screenXY[i],4);WIRE_PUT(g_WireScratch.depth[i],2);}
+        for(unsigned i=56;i<60;++i)WIRE_PUT(frame.bytes[i],1);
+        for(unsigned i=0;i<count;++i){RenderNativeTag *tag=packets[i];WIRE_PUT(tag->length,1);
+            const u8 *payload=(const u8 *)tag+sizeof(*tag);for(unsigned j=0;j<tag->length*4;++j)WIRE_PUT(payload[j],1);}
+        for(unsigned layer=0;layer<4096;++layer){
+            uintptr_t link=ordering[layer].address;unsigned links=0;
+            if(ordering[layer].length!=0xAB)valid=0;
+            if(link==0xFFFFFF)continue;WIRE_PUT(layer,2);
+            while(link!=0xFFFFFF){
+                unsigned id=0;while(id<count && (uintptr_t)packets[id]!=link)++id;
+                if(id==count || ++links>=20){valid=0;goto wire_restore;}
+                WIRE_PUT(id,1);link=packets[id]->address;
+            }
+            WIRE_PUT(links,1);
+        }
+        WIRE_PUT(65535,2);++samples;
+    }
+wire_restore:
+#undef WIRE_PUT
+    g_GameState=saved_state;g_GeomScroll=saved_scroll;g_ActiveActor=saved_actor;g_PlayerEntity=saved_player;
+    g_DrawPacketOffset=saved_offset;g_ActiveDrawSlot=saved_slot;g_BattleAttackAnimFrame=saved_frame;
+    memcpy(g_WireScratch.screenXY,saved_xy,sizeof(saved_xy));memcpy(g_WireScratch.depth,saved_depth,sizeof(saved_depth));
+    if(!valid || hash!=UINT64_C(0xabf9dfc230518165)){
+        fprintf(stderr,"Original wireframe animation: samples=%u hash=%016llx valid=%d\n",samples,(unsigned long long)hash,valid);return 0;}
+    puts("Original wireframe animation: 672 USA CPU/GTE-bridge frames, canonical actor range/position, both buffers, OT depth and counter wrapping match");return 1;
+}
+
+
 static int original_textbox_renderer(PeDisc *disc,PeDiscFile *exe)
 {
     u8 authored[sizeof(g_FieldFontTextureState)]={0};u8 spacing[sizeof(g_TextboxGlyphSpacing)]={0};
@@ -4481,7 +4683,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
-    if(!original_textbox_renderer(disc,executable) || !original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
+    if(!original_wireframe_renderer() || !original_wireframe_animation() || !original_textbox_renderer(disc,executable) || !original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

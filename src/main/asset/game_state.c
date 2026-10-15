@@ -18,6 +18,7 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_animation_frame.h"
 #include "pe1/render_buffers.h"
+#include "pe1/render_animation_frame.h"
 #include "pe1/scene_assets.h"
 #include "pe1/scene_room.h"
 #include "pe1/script_queue.h"
@@ -339,11 +340,11 @@ void Boot_InitMemoryLayout(void) {
     g_RenderFrontBufferBase[0] = ptr;
     ptr += const_8000;
     g_RenderBackBufferBase[0] = ptr2;
-    ptr2 = ptr + 0x3800;
+    ptr2 = ptr + RENDER_ANIM_BUFFER_BYTES;
     g_GameState.script_sprite_buffer = ptr2;
     tmp = g_StrFileDirBuffer;
     g_RenderAnimBufferBase[0] = ptr;
-    ptr += 0x7000;
+    ptr += 2 * RENDER_ANIM_BUFFER_BYTES;
     g_GameState.scene_process_slots = (struct PmSlotBanks *)ptr;
     g_SceneLoadScratchBuffer[0] = g_SceneLoadScratchArea;
     g_LoadedSceneAssetBlock[0] = (struct SceneAssetBlob *)(tmp - 8);

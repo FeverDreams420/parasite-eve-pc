@@ -15,9 +15,9 @@
 typedef struct FieldLineG2Packet {
     /* 0x00 */ RenderGpuTag tag;
     /* 0x04 */ u8 r0, g0, b0, code;
-    /* 0x08 */ s16 x0, y0;
+    /* 0x08 */ union { u32 xy0; struct { s16 x0, y0; }; };
     /* 0x0C */ u8 r1, g1, b1, p1;
-    /* 0x10 */ s16 x1, y1;
+    /* 0x10 */ union { u32 xy1; struct { s16 x1, y1; }; };
 } FieldLineG2Packet;
 
 /* PSY-Q POLY_GT4. */

@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-/* Position input passed from RenderAnimPlayer.decoderData to the decoder. */
+/* Three signed integer positions at the original decoder record stride. */
 typedef struct RenderAnimPositionInput {
     u8 prefix[2];
     s16 x;

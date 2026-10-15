@@ -1,5 +1,6 @@
 #include "common.h"
 #include "pe1/battle.h"
+#include "pe1/field_actor.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_main.h"
 #include "pe1/battle_runtime.h"
@@ -1182,66 +1183,42 @@ void Battle_DrawEnemyHP(s16 maximum, s16 current)
 }
 
 void Render_AnimationFrame(void) {
-    int size;
-    int width;
-    int frame;
-    RenderAnimActor *early_actor;
-    RenderAnimActor *late_actor;
-    RenderAnimPlayer *player;
-    int draw_index;
-    int delta;
-    int scaled_frame;
-    /* Preserves the original GCC 2.7.2 stack frame. */
-    char frame_work[12];
-    int animation_id;
-    int zero_arg;
-    int x;
-    int y;
-    int z;
-
-    frame = g_BattleAttackAnimFrame;
-    if (frame < 10U) {
-        early_actor = (RenderAnimActor *)g_ActiveActor;
-        if ((early_actor->modeFlags & 0x30) == 0x10) {
-            scaled_frame = (frame << 2) + frame;
-            size = scaled_frame << 18;
+    u32 frame = (u32)g_BattleAttackAnimFrame;
+    u32 size, width;
+    int draw_index = g_ActiveDrawSlot;
+    RenderAnimPositionInput position = {0};
+    if (!g_ActiveActor || !g_PlayerEntity || (unsigned)draw_index >= 2 ||
+        g_DrawPacketOffset < 0 || g_DrawPacketOffset > RENDER_ANIM_BUFFER_BYTES) return;
+    if (frame < 10) {
+        if ((g_ActiveActor->stateFlags & 0x30) == 0x10) {
+            size = (frame * 5) << 18;
         } else {
-            size = ((early_actor->frameData->frameCount << 16) * frame) / 10U;
+            if (!g_ActiveActor->action) return;
+            size = (((u32)(u16)g_ActiveActor->action->range << 16) * frame) / 10;
         }
-        width = g_BattleAttackAnimFrame << 6;
+        width = frame << 6;
     } else {
-        late_actor = (RenderAnimActor *)g_ActiveActor;
         size = 0xC80000;
-        if ((late_actor->modeFlags & 0x30) != 0x10) {
-            size = late_actor->frameData->frameCount << 16;
+        if ((g_ActiveActor->stateFlags & 0x30) != 0x10) {
+            if (!g_ActiveActor->action) return;
+            size = (u32)(u16)g_ActiveActor->action->range << 16;
         }
-        frame = 10;
-        width = (g_BattleAttackAnimFrame << 4) + frame;
+        width = (frame << 4) + 10;
     }
-
-    animation_id = 0x457;
-    if (g_BattleAttackAnimFrame == 0) {
-        player = (RenderAnimPlayer *)g_PlayerEntity;
-        x = player->x;
-        y = player->y;
-        z = player->z;
-        zero_arg = 0;
-        Asset_Find08Alt(animation_id, zero_arg, x, y, z);
-    }
-
+    position.x = Pe1Fixed_Integer(&g_PlayerEntity->pos_x);
+    position.y = Pe1Fixed_Integer(&g_PlayerEntity->pos_y);
+    position.z = Pe1Fixed_Integer(&g_PlayerEntity->pos_z);
+    if (frame == 0) Asset_Find08Alt(0x457, 0, position.x, position.y, position.z);
     Render_SetGteScreenOffset();
-
-    draw_index = g_ActiveDrawSlot;
-    delta = Render_DrawWireframeModel(g_GameState.room_geometry_table,
-                                      ((RenderAnimPlayer *)g_PlayerEntity)->decoderData,
-                                      size, width & 0xFFFE,
-                                      g_OtBufferTable[draw_index] + 8,
-                                      g_RenderAnimBufferBase[draw_index] +
-                                           g_DrawPacketOffset);
-    g_DrawPacketOffset += delta;
-
+    if (g_OtBufferTable[draw_index] && g_RenderAnimBufferBase[draw_index]) {
+        g_DrawPacketOffset += Render_DrawWireframeModel(g_GameState.room_geometry_table,
+            &position, (s32)size, width & 0xFFFE,
+            (RenderNativeTag *)g_OtBufferTable[draw_index] + 2,
+            g_RenderAnimBufferBase[draw_index] + g_DrawPacketOffset,
+            RENDER_ANIM_BUFFER_BYTES - g_DrawPacketOffset);
+    }
     Render_ResetGteScreenOffset();
-    g_BattleAttackAnimFrame++;
+    g_BattleAttackAnimFrame = (s32)(frame + 1);
 }
 
 /* Status symbol templates (three 18-byte glyph strips the status primitive

@@ -29,6 +29,8 @@
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_room.h"
 #include "../../overlays/room_m272_liberty/room_m272.h"
+#include "pe1/room_m005.h"
+#include "pe1/room_m005_beacon.h"
 #include "pe1/scene_transition.h"
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
@@ -493,7 +495,7 @@ int Scene_LoadRoom(unsigned int roomId)
     /* Validate all native bindings before mutating the scene banks. */
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
-        PmCommand *native = NULL;
+        const void *native = NULL;
         slot = record[i].source.bytes.slot;
         /* These seven USA rooms contain the same original mirror module.
          * All other serialized descriptors still need native bindings. */
@@ -506,6 +508,8 @@ int Scene_LoadRoom(unsigned int roomId)
         }
         if (map + 1 == 272 && slot == 15 && record[i].u.handlerAddress == 0x8018f1a8u)
             native = &g_RoomM272Handlers;
+        if (map + 1 == 5 && slot == 117 && record[i].u.handlerAddress == 0x80190b44u)
+            native = &g_RoomM005Effects;
         if (!native) {
             fprintf(stderr, "Scene_LoadRoom: native descriptor missing for M%03d slot %u (PS1 %08x)\n",
                     map + 1, slot, record[i].u.handlerAddress);
@@ -624,7 +628,17 @@ int Scene_LoadRoom(unsigned int roomId)
         slot = record[i].source.bytes.slot;
         /* Validation above resolves the room-specific descriptor. Assign even
          * when a prior statically linked room used this same slot. */
-        g_PmCmdHandlerTable[slot] = map + 1 == 272 ? &g_RoomM272Handlers : &g_RoomFxMirrorHandlers;
+        if (map + 1 == 5) {
+            /* Task descriptors belong to the animation program bank, not the
+             * 86-entry PM handler array. */
+            g_FieldFxTaskPrograms[slot - 85] = &g_RoomM005Effects;
+            memset(g_RoomM005ScriptAnchorView - 4, 0, 20);
+            g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
+            g_RoomM005BeaconOffset = (GteShortVector){0};
+            g_RoomM005BeaconCenter = (GteShortVector){0};
+        } else {
+            g_PmCmdHandlerTable[slot] = map + 1 == 272 ? &g_RoomM272Handlers : &g_RoomFxMirrorHandlers;
+        }
     }
 
     if (directory->samples & 0xFFC00000) {

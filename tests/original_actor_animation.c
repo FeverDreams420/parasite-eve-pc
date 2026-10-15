@@ -6,6 +6,8 @@
 #include "../src/overlays/room_m005_theater/RoomM005_FxOrbiter_externs.h"
 #include "pe1/field_sprite_params.h"
 #include "pe1/field_rotated_quad.h"
+#include "pe1/field_shape_quads.h"
+#include "pe1/field_star_fan.h"
 #include "pe1/field_texture_tables.h"
 #include "../src/overlays/room_lib/room_lib.h"
 #include "pe1/game_state.h"
@@ -540,6 +542,16 @@ static int callback_list_storage(void)
     if(drift_entry->age || drift_entry->active!=1) return 0;
     for(size_t i=bytes;i<sizeof(arena);++i)if(arena[i]!=0xa5)return 0;
     puts("Original M005 drift: native callback ABI, halfword motion, terminal frame and slot reuse passed");
+    _Alignas(void *) u8 original_pool[1024];memset(original_pool,0xa5,sizeof(original_pool));
+    RoomM005OrbiterState controller={.armed=1,.frame=12};
+    FieldFxTaskSlot original_slot={.start=(char *)&controller,.end=(char *)original_pool};
+    g_FieldFxActiveTaskSlot=&original_slot;
+    int original_bytes=RoomM005_Orbiter(0,&controller,0);
+    FieldFxCallbackList *original_list=(void *)original_pool;
+    if(original_bytes<=0 || original_bytes>sizeof(original_pool) || controller.armed || controller.frame ||
+        original_list->count!=24 || original_list->callback!=RoomM005_FxOrbiter)return 0;
+    for(unsigned i=original_bytes;i<sizeof(original_pool);++i)if(original_pool[i]!=0xa5)return 0;
+    g_FieldFxActiveTaskSlot=NULL;
     g_FieldFxTaskContext=NULL;
     puts("Original callback lists: aligned pointer payloads, update/draw ages, completion/reuse and guards passed");
     return 1;
@@ -1094,7 +1106,16 @@ static int original_glow_resident_constants(void)
         {0x800e1204,g_FieldFxPaletteTable,6*sizeof(u16)},
         {0x800e11e4,g_FieldFxTpageSlots,sizeof(g_FieldFxTpageSlots)},
         {0x800c2258,&D_800C2258,sizeof(GteShortVector)},
-        {0x800c2260,&g_FieldFxZeroVector,sizeof(GteShortVector)}
+        {0x800c2260,&g_FieldFxZeroVector,sizeof(GteShortVector)},
+        {0x800c2268,&g_FieldFxZeroRotation,sizeof(GteRotation)},
+        {0x800c2290,&g_FieldFxUnitScale,sizeof(GteVector)},
+        {0x800e1210,g_FieldFxStripPacketCounts,6*sizeof(u16)},
+        {0x800e121c,g_FieldFxShapeVertexTable[0],4*sizeof(GteShortVector)},
+        {0x800e123c,g_FieldFxShapeVertexTable[1],8*sizeof(GteShortVector)},
+        {0x800e127c,g_FieldFxShapeVertexTable[2],8*sizeof(GteShortVector)},
+        {0x800e12bc,g_FieldFxShapeVertexTable[3],8*sizeof(GteShortVector)},
+        {0x800e12fc,g_FieldFxShapeVertexTable[4],8*sizeof(GteShortVector)},
+        {0x800e133c,g_FieldFxShapeVertexTable[5],16*sizeof(GteShortVector)}
     };
     PeDisc disc={0}; PeDiscFile file;
     u8 header[32], raw[128];

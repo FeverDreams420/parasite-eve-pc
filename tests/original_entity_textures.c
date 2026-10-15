@@ -17,6 +17,13 @@
 extern u8 *g_FieldFxModel83ACD504;
 #include "pe1/field_effect_modules.h"
 #include "pe1/field_texture_tables.h"
+extern FieldFxTaskProgram g_RoomM005Effects;
+extern u16 g_RoomM005EffectScript[30];
+extern u8 *g_RoomM005ScriptAnchorView, *g_RoomM005BeaconModel0, *g_RoomM005BeaconModel1;
+int RoomM005_Orbiter(int mode,void *state,intptr_t argument);
+int RoomM005_CrossFlare(int mode,void *state,intptr_t argument);
+int RoomM005_JointBeacon(int mode,void *state,intptr_t argument);
+#include "pe1/room_script_record.h"
 #include "../src/overlays/room_m272_liberty/room_m272.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/render_camera.h"
@@ -329,7 +336,7 @@ int main(void)
         CHECK(pe_room_load(&catalog,map,&room));
         unsigned descriptor_count=room.data.directory[1]>>22;
         int mirror=map==17 || map==18 || map==21 || map==45 || map==102 || map==151 || map==319;
-        if(descriptor_count && !mirror && map!=5 && map!=272) { pe_room_close(&room); continue; }
+        if(descriptor_count && !mirror && map!=5 && map!=272 && map!=23) { pe_room_close(&room); continue; }
         PeRoomRange *range = &catalog.ranges[map - 1];
         g_RoomSectorTable[map - 1].start = range->start;
         g_RoomSectorTable[map - 1].scratchSectors = range->scratch_sectors;
@@ -371,12 +378,26 @@ int main(void)
         Text_EncodeBase32(encoded, room_id);
         CHECK(encoded[0] == 'M' && Text_ParseMapNumber((signed char *)encoded) == (int)map);
         g_GameState.bank_slots[0] = scratch;
-        if (map == 5) {
-            CHECK(Scene_LoadRoom(room_id) == -2);
-            CHECK(!handlers[69] && g_GameState.bank_slots[0] == scratch);
+        if(map==23) {
+            CHECK(Scene_LoadRoom(room_id)==-2 && g_GameState.bank_slots[0]==scratch);
+            for(unsigned handler=0;handler<85;++handler)CHECK(!handlers[handler]);
         } else {
             CHECK(Scene_LoadRoom(room_id) == 0);
             CHECK(handlers[69] == (mirror ? &g_RoomFxMirrorHandlers : NULL));
+            if(map==5) {
+                CHECK(g_FieldFxTaskPrograms[32]==&g_RoomM005Effects);
+                for(unsigned handler=0;handler<85;++handler)CHECK(!handlers[handler]);
+                CHECK(g_RoomM005Effects.initialize==RoomLib_SetTaskVar0);
+                CHECK(g_RoomM005Effects.table.callbacks[0]==RoomM005_Orbiter &&
+                    g_RoomM005Effects.table.callbacks[1]==RoomM005_CrossFlare &&
+                    g_RoomM005Effects.table.callbacks[2]==RoomM005_JointBeacon);
+                CHECK(!memcmp(g_RoomM005Effects.table.sizes,(u16[]){12,4,36,0,0,0,0,0},16));
+                CHECK(!memcmp(g_RoomM005EffectScript,room.data.bytes+0x1ab0,60));
+                memset(g_RoomM005ScriptAnchorView-4,0x5a,20);
+                g_RoomM005BeaconModel0=(u8 *)1;g_RoomM005BeaconModel1=(u8 *)2;
+                CHECK(Scene_LoadRoom(room_id)==0 && !g_RoomM005BeaconModel0 && !g_RoomM005BeaconModel1);
+                for(unsigned byte=0;byte<20;++byte)CHECK((g_RoomM005ScriptAnchorView-4)[byte]==0);
+            }
             if(map==272) {
                 CHECK(handlers[15]==&g_RoomM272Handlers);
                 const u8 *descriptor_records; unsigned descriptors;
@@ -617,11 +638,11 @@ int main(void)
         free(scratch); free(textures); free(data); free(spu_expected);
         pe_room_close(&room);
         printf("Original Scene_LoadRoom M%03u: %s (cold + cached audio)\n", map,
-               map == 5 ? "unsupported descriptor rejected" : "native room and script/bank relocation passed");
+               map==23?"unsupported descriptor rejected":"native room and script/bank relocation passed");
     }
 
-    CHECK(new_game_room_loaded && native_rooms==237 && native_geometry_entries==2785);
-    CHECK(native_packet_bytes==23501072);
+    CHECK(new_game_room_loaded && native_rooms==238 && native_geometry_entries==2795);
+    CHECK(native_packet_bytes==23651152);
     printf("Original full room loading corpus: %u rooms, %u native geometry entries, %zu packet bytes\n",native_rooms,native_geometry_entries,native_packet_bytes);
 
     {

@@ -17,7 +17,6 @@ int Render_ClipPoint(int x,int y,int z);
 #include <libgpu.h>
 #include <stdio.h>
 #include <string.h>
-RoomFloorY g_RoomFloorY[1];
 _Static_assert(sizeof(Pe1FadeTile)==sizeof(TILE),"native game fade tile size");
 _Static_assert(offsetof(Pe1FadeTile,r)==offsetof(TILE,r0),"native game fade colour");
 _Static_assert(offsetof(Pe1FadeTile,x)==offsetof(TILE,x0),"native game fade geometry");

@@ -46,6 +46,7 @@ add_library(parasite-eve-original OBJECT
     src/main/fieldfx/angle.c
     src/main/psyq/libgte/mtx_000.c
     src/main/psyq/libgte/mtx_001.c
+    src/main/psyq/libgte/msc06.c
     src/main/psyq/libgte/mtx_06.c
     src/main/psyq/libgte/cmb_06.c
     src/main/anim/bone_rotations.c

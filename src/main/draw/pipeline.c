@@ -1,4 +1,5 @@
 #include "common.h"
+
 #include "pe1/boot.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/game_state.h"
@@ -11,6 +12,8 @@
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_transition.h"
 #include "pe1/script_state.h"
+
+RoomFloorY g_RoomFloorY[1];
 
 /* GPU pipeline start-up: voice bank, first room, light matrix and colours,
  * entity textures and fog. Retail compiles it without small-data address

@@ -125,7 +125,7 @@ int RoomM005_Orbiter(int mode, void *data, intptr_t argument) {
     case 0:
         state->armed = 0;
         state->frame = 0;
-        pool = ANIM_POOL_AS(RoomM005Channel)->pool;
+        pool = g_FieldFxActiveTaskSlot->end;
         return FieldFx_InitCallbackList(pool, 16, 24,
                              RoomM005_FxOrbiter);
     case 1:
@@ -143,7 +143,7 @@ int RoomM005_Orbiter(int mode, void *data, intptr_t argument) {
         if (g_FieldFxCurrentAge < 25) {
             pool = ANIM_OWNER_AS(RoomM005Channel)->pool;
             FieldFx_GetActorPosition(pool, 0, target);
-            pool = ANIM_POOL_AS(RoomM005Channel)->pool;
+            pool = g_FieldFxActiveTaskSlot->end;
             child = FieldFx_AcquireCallbackSlot(pool);
             if (child) {
                 child->seed = rand();
@@ -380,11 +380,11 @@ int RoomM005_JointBeacon(int mode, void *data, intptr_t argument) {
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM005BeaconModel0, 0, 0);
         g_RoomM005BeaconModel1 = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5862704);
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM005BeaconModel1, 0, 0);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM005BeaconSpawnChannel)->pool, 0x10, 8,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x10, 8,
                              RoomM005_BeaconDriftCallback);
     case 1:
         if (g_FieldFxCurrentAge < 10) {
-            sprite = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM005BeaconSpawnChannel)->pool);
+            sprite = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (sprite) {
                 sprite->x = (rand() & 0x3FF) - 0x200;
                 sprite->y = (rand() & 0x3FF) - 0x200;
@@ -610,3 +610,15 @@ u8 *g_RoomM005BeaconModel0, *g_RoomM005BeaconModel1;
 _Alignas(GteShortVector) s16 g_RoomScriptRecordWords[10];
 u8 *g_RoomM005ScriptAnchorView = (u8 *)g_RoomScriptRecordWords + 4;
 u8 *g_RoomM005ScriptFadeView = (u8 *)g_RoomScriptRecordWords + 12;
+
+/* Original descriptor at 80190B44 and task script at 80190A98. */
+u16 g_RoomM005EffectScript[30] = {
+    5,0,0, 1,6,32, 1,0,0, 2,0,0, 4,0,1,
+    4,11,0, 2,1,0, 4,35,0, 2,2,0, 0,0,0,
+};
+FieldFxTaskProgram g_RoomM005Effects = {
+    .table={.callbacks={RoomM005_Orbiter,RoomM005_CrossFlare,RoomM005_JointBeacon},
+            .sizes={sizeof(RoomM005OrbiterState),4,sizeof(RoomM005Beacon)}},
+    .initialize=RoomLib_SetTaskVar0,
+    .script=g_RoomM005EffectScript,
+};

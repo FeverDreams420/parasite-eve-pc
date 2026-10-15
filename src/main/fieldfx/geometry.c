@@ -2415,3 +2415,66 @@ u16 g_FieldFxTpageSlots[16] = {0,0,1,1,1,0,0,0,2,2,3,3,3,0,0,0};
 /* Original direction seed at 800C2258 and zero vector at 800C2260. */
 GteShortVector D_800C2258 = {0,0,-16384,0};
 GteShortVector g_FieldFxZeroVector = {0,0,0,0};
+
+/* Original resident shape vertices and six shape selections. */
+static GteShortVector s_FieldFxShapeVertices[52] = {
+    {-60,-60,0,0},
+    {60,-60,0,0},
+    {-60,60,0,0},
+    {60,60,0,0},
+    {-120,-60,0,0},
+    {0,-60,0,0},
+    {-120,60,0,0},
+    {0,60,0,0},
+    {120,-60,0,0},
+    {0,-60,0,0},
+    {120,60,0,0},
+    {0,60,0,0},
+    {-120,-60,0,0},
+    {0,-60,0,0},
+    {-120,60,0,0},
+    {0,60,0,0},
+    {120,60,0,0},
+    {0,60,0,0},
+    {120,-60,0,0},
+    {0,-60,0,0},
+    {-60,-120,0,0},
+    {60,-120,0,0},
+    {-60,0,0,0},
+    {60,0,0,0},
+    {-60,120,0,0},
+    {60,120,0,0},
+    {-60,0,0,0},
+    {60,0,0,0},
+    {-60,-120,0,0},
+    {60,-120,0,0},
+    {-60,0,0,0},
+    {60,0,0,0},
+    {60,120,0,0},
+    {-60,120,0,0},
+    {60,0,0,0},
+    {-60,0,0,0},
+    {-120,-120,0,0},
+    {0,-120,0,0},
+    {-120,0,0,0},
+    {0,0,0,0},
+    {120,-120,0,0},
+    {0,-120,0,0},
+    {120,0,0,0},
+    {0,0,0,0},
+    {-120,120,0,0},
+    {0,120,0,0},
+    {-120,0,0,0},
+    {0,0,0,0},
+    {120,120,0,0},
+    {0,120,0,0},
+    {120,0,0,0},
+    {0,0,0,0},
+};
+GteShortVector *g_FieldFxShapeVertexTable[6] = {
+    s_FieldFxShapeVertices, s_FieldFxShapeVertices+4, s_FieldFxShapeVertices+12,
+    s_FieldFxShapeVertices+20, s_FieldFxShapeVertices+28, s_FieldFxShapeVertices+36,
+};
+u16 g_FieldFxStripPacketCounts[6] = {1,2,2,2,2,4};
+GteRotation g_FieldFxZeroRotation = {0,0,0,0};
+GteVector g_FieldFxUnitScale = {4096,4096,4096,0};

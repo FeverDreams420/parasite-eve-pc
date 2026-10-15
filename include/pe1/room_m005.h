@@ -47,6 +47,8 @@ typedef union RoomM005Seed8 {
     GteShortVector vector;
 } RoomM005Seed8;
 
+extern FieldFxTaskProgram g_RoomM005Effects;
+extern u16 g_RoomM005EffectScript[30];
 extern RoomM005Seed8 g_RoomM005OrbiterJointAnchor;
 /* One-field views of RoomM005_Dialog (g_RoomScriptRecord): the orbiter takes
  * the anchor pointer (+0x04) and the fade block (+0x0C) with their own
@@ -54,6 +56,7 @@ extern RoomM005Seed8 g_RoomM005OrbiterJointAnchor;
 extern u8 *g_RoomM005ScriptAnchorView;
 extern u8 *g_RoomM005ScriptFadeView;
 extern int rand(void);
+int RoomM005_FxOrbiter(int mode, void *state, intptr_t argument);
 int RoomM005_Orbiter(int mode, void *state, intptr_t argument);
 int RoomM005_CrossFlare(int mode, void *state, intptr_t argument);
 

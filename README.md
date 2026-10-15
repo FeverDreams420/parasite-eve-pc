@@ -47,7 +47,9 @@ model drawers also match USA command payloads and ordering chains for all 170
 day/night models in 2040 cases. The fourth drawer, including FT3/FT4 subdivision
 and texture-distance selection, matches another 252 USA cases. Original fades,
 markers and night shade now use native packets and shared motion state, with
-headless tests of both buffers. Full scene initialization and frame-loop
+headless tests of both buffers. Original camera motion/endpoints and all 79
+adjacent path pairs also have native state and USA reference tests. Full scene
+initialization and frame-loop
 integration remain unfinished; this does not make gameplay playable.
 
 ## Build and run

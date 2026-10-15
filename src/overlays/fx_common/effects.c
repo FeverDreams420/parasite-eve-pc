@@ -166,6 +166,7 @@ int FxCommon_RunFrameLoop(void)
             Boot_Shutdown();
         }
         FxCommon_StepEffects();
+        if(g_FxCommonActiveBuffer->error)return -2;
         if (g_FxCommonResetRequested != 0)
             continue;
 
@@ -1096,7 +1097,7 @@ void FxCommon_StepEffects(void)
             Akao_Cmd_C1_WithSlot(g_SceneAudioSlot0Handle, 0xDC, 0);
         }
     }
-    FxCommon_StepCameraPath();
+    if(FxCommon_StepCameraPath()<0){g_FxCommonActiveBuffer->error=-3;return;}
     if (g_FxCommonPageChanged != 0) {
         g_FxCommonPageChanged = 0;
         if (g_FxCommonPageOpen == 1) {
@@ -1112,16 +1113,16 @@ void FxCommon_StepEffects(void)
     if (g_FxCommonMotionRemaining0 != 0) {
         remaining0 = g_FxCommonMotionRemaining0 - 1;
         g_FxCommonMotionRemaining0 = remaining0;
-        accumX0 = g_FxCommonMotionAccum0.x + g_FxCommonMotionStep0X;
+        accumX0 = (s32)((u32)g_FxCommonMotionAccum0.x + (u32)g_FxCommonMotionStep0X);
         g_FxCommonMotionAccum0.x = accumX0;
-        accumY0 = g_FxCommonMotionAccum0.y + g_FxCommonMotionStep0Y;
-        accumZ0 = g_FxCommonMotionAccum0.z + g_FxCommonMotionStep0Z;
+        accumY0 = (s32)((u32)g_FxCommonMotionAccum0.y + (u32)g_FxCommonMotionStep0Y);
+        accumZ0 = (s32)((u32)g_FxCommonMotionAccum0.z + (u32)g_FxCommonMotionStep0Z);
         g_FxCommonMotionAccum0.y = accumY0;
         g_FxCommonMotionAccum0.z = accumZ0;
-        g_FxCommonCameraTarget.x = g_FxCommonMotionOrigin0.x + (accumX0 >> g_FxCommonMotionShift0);
-        g_FxCommonCameraTarget.y = g_FxCommonMotionOrigin0.y + (accumY0 >> g_FxCommonMotionShift0);
-        g_FxCommonCameraTarget.z = g_FxCommonMotionOrigin0.z + (accumZ0 >> g_FxCommonMotionShift0);
-        if ((remaining0 << 0x10) == 0) {
+        g_FxCommonCameraTarget.x = (s32)((u32)g_FxCommonMotionOrigin0.x + (u32)(accumX0 >> (g_FxCommonMotionShift0 & 31)));
+        g_FxCommonCameraTarget.y = (s32)((u32)g_FxCommonMotionOrigin0.y + (u32)(accumY0 >> (g_FxCommonMotionShift0 & 31)));
+        g_FxCommonCameraTarget.z = (s32)((u32)g_FxCommonMotionOrigin0.z + (u32)(accumZ0 >> (g_FxCommonMotionShift0 & 31)));
+        if ((u16)remaining0 == 0) {
             g_FxCommonCameraTarget.x = g_FxCommonMotionTarget0.x;
             g_FxCommonCameraTarget.y = g_FxCommonMotionTarget0.y;
             g_FxCommonCameraTarget.z = g_FxCommonMotionTarget0.z;
@@ -1130,16 +1131,16 @@ void FxCommon_StepEffects(void)
     if (g_FxCommonMotionRemaining1 != 0) {
         remaining1 = g_FxCommonMotionRemaining1 - 1;
         g_FxCommonMotionRemaining1 = remaining1;
-        accumX1 = g_FxCommonMotionAccum1.x + g_FxCommonMotionStep1X;
+        accumX1 = (s32)((u32)g_FxCommonMotionAccum1.x + (u32)g_FxCommonMotionStep1X);
         g_FxCommonMotionAccum1.x = accumX1;
-        accumY1 = g_FxCommonMotionAccum1.y + g_FxCommonMotionStep1Y;
-        accumZ1 = g_FxCommonMotionAccum1.z + g_FxCommonMotionStep1Z;
+        accumY1 = (s32)((u32)g_FxCommonMotionAccum1.y + (u32)g_FxCommonMotionStep1Y);
+        accumZ1 = (s32)((u32)g_FxCommonMotionAccum1.z + (u32)g_FxCommonMotionStep1Z);
         g_FxCommonMotionAccum1.y = accumY1;
         g_FxCommonMotionAccum1.z = accumZ1;
-        g_FxCommonCameraPosition.x = g_FxCommonMotionOrigin1.x + (accumX1 >> g_FxCommonMotionShift1);
-        g_FxCommonCameraPosition.y = g_FxCommonMotionOrigin1.y + (accumY1 >> g_FxCommonMotionShift1);
-        g_FxCommonCameraPosition.z = g_FxCommonMotionOrigin1.z + (accumZ1 >> g_FxCommonMotionShift1);
-        if ((remaining1 << 0x10) == 0) {
+        g_FxCommonCameraPosition.x = (s32)((u32)g_FxCommonMotionOrigin1.x + (u32)(accumX1 >> (g_FxCommonMotionShift1 & 31)));
+        g_FxCommonCameraPosition.y = (s32)((u32)g_FxCommonMotionOrigin1.y + (u32)(accumY1 >> (g_FxCommonMotionShift1 & 31)));
+        g_FxCommonCameraPosition.z = (s32)((u32)g_FxCommonMotionOrigin1.z + (u32)(accumZ1 >> (g_FxCommonMotionShift1 & 31)));
+        if ((u16)remaining1 == 0) {
             g_FxCommonCameraPosition.x = g_FxCommonMotionTarget1.x;
             g_FxCommonCameraPosition.y = g_FxCommonMotionTarget1.y;
             g_FxCommonCameraPosition.z = g_FxCommonMotionTarget1.z;
@@ -1174,8 +1175,7 @@ s16 FxCommon_SwitchResource(s16 resourceId, u8 action)
     return resourceId;
 }
 
-/* Pins and empty scheduling barriers preserve the retail argument setup,
- * interleaved vector reads, and snapshot stores; tracked in crutch debt. */
+/* Sample target and eye endpoints, then initialize both original motion lanes. */
 void FxCommon_StartCameraMove(s32 index, s32 first, s32 second, u32 source) {
     FxCommonMotionRecord point;
     GteShortVector extra;
@@ -1186,10 +1186,10 @@ void FxCommon_StartCameraMove(s32 index, s32 first, s32 second, u32 source) {
     s32 secondValue;
     TimRelativeTable *table = g_FxCommonTimTable;
     GteShortVector *extraPtr;
-    volatile FxCommonShortVec3 *origin0 = &g_FxCommonMotionOrigin0;
-    volatile FxCommonShortVec3 *target0 = &g_FxCommonMotionTarget0;
-    volatile FxCommonShortVec3 *origin1 = &g_FxCommonMotionOrigin1;
-    volatile FxCommonShortVec3 *target1 = &g_FxCommonMotionTarget1;
+    FxCommonShortVec3 *origin0 = &g_FxCommonMotionOrigin0;
+    FxCommonShortVec3 *target0 = &g_FxCommonMotionTarget0;
+    FxCommonShortVec3 *origin1 = &g_FxCommonMotionOrigin1;
+    FxCommonShortVec3 *target1 = &g_FxCommonMotionTarget1;
     u32 sourceValue;
     TimRelativeTable *lookupTable;
     s32 lookupCount;
@@ -1227,14 +1227,14 @@ void FxCommon_StartCameraMove(s32 index, s32 first, s32 second, u32 source) {
     pz = point.vector.z;
     bz = g_FxCommonCameraTarget.z;
     g_FxCommonMotionShift0 = firstValue;
-    firstMask = 1 << firstValue;
+    firstMask = (s32)(1u << (firstValue & 31));
     g_FxCommonMotionAccum0X = 0;
     g_FxCommonMotionAccum0Y = 0;
     g_FxCommonMotionAccum0Z = 0;
     g_FxCommonMotionRemaining0 = firstMask;
-    g_FxCommonMotionStep0X = px - bx;
-    g_FxCommonMotionStep0Y = py - by;
-    g_FxCommonMotionStep0Z = pz - bz;
+    g_FxCommonMotionStep0X = (s32)((u32)px - (u32)bx);
+    g_FxCommonMotionStep0Y = (s32)((u32)py - (u32)by);
+    g_FxCommonMotionStep0Z = (s32)((u32)pz - (u32)bz);
     g_FxCommonMotionOrigin0X = bx;
     origin0->y = by;
     origin0->z = bz;
@@ -1252,15 +1252,15 @@ void FxCommon_StartCameraMove(s32 index, s32 first, s32 second, u32 source) {
     ay = g_FxCommonCameraPosition.y;
     qz = point.vector.z;
     az = g_FxCommonCameraPosition.z;
-    secondMask = 1 << secondValue;
+    secondMask = (s32)(1u << (secondValue & 31));
     g_FxCommonMotionAccum1X = 0;
     g_FxCommonMotionAccum1Y = 0;
     g_FxCommonMotionAccum1Z = 0;
     g_FxCommonMotionShift1 = secondValue;
     g_FxCommonMotionRemaining1 = secondMask;
-    g_FxCommonMotionStep1X = qx - ax;
-    g_FxCommonMotionStep1Y = qy - ay;
-    g_FxCommonMotionStep1Z = qz - az;
+    g_FxCommonMotionStep1X = (s32)((u32)qx - (u32)ax);
+    g_FxCommonMotionStep1Y = (s32)((u32)qy - (u32)ay);
+    g_FxCommonMotionStep1Z = (s32)((u32)qz - (u32)az);
     g_FxCommonMotionOrigin1X = ax;
     origin1->y = ay;
     origin1->z = az;

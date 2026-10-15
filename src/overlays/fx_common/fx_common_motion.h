@@ -16,20 +16,26 @@ extern FxCommonShortVec3 g_FxCommonMotionOrigin1;
 extern FxCommonShortVec3 g_FxCommonMotionTarget1;
 extern FxCommonShortVec3 g_FxCommonMotionOrigin0;
 extern FxCommonShortVec3 g_FxCommonMotionTarget0;
-/* Per-frame step of each lane and the right shift that scales its accumulator. */
-extern volatile s32 g_FxCommonMotionStep0X, g_FxCommonMotionStep0Y, g_FxCommonMotionStep0Z;
-extern volatile s32 g_FxCommonMotionStep1X, g_FxCommonMotionStep1Y, g_FxCommonMotionStep1Z;
-extern s16 g_FxCommonMotionShift0;
-extern s16 g_FxCommonMotionShift1;
-/* Volatile scalar views of the lane vectors' first components and of both
- * accumulators; the lane initialisers store through these. */
-extern volatile s16 g_FxCommonMotionOrigin0X, g_FxCommonMotionTarget0X;
-extern volatile s16 g_FxCommonMotionOrigin1X, g_FxCommonMotionTarget1X;
-extern volatile s32 g_FxCommonMotionAccum0X, g_FxCommonMotionAccum0Y, g_FxCommonMotionAccum0Z;
-extern volatile s32 g_FxCommonMotionAccum1X, g_FxCommonMotionAccum1Y, g_FxCommonMotionAccum1Z;
-/* Ordinary counter views; legacy callers use volatile scheduling declarations. */
-extern s16 g_FxCommonMotionRemaining0;
-extern s16 g_FxCommonMotionRemaining1;
+/* Both scalar access and vector access name the same native lane state. */
+extern FxCommonVec3 g_FxCommonMotionStep0,g_FxCommonMotionStep1;
+extern s16 g_FxCommonMotionShift0,g_FxCommonMotionShift1;
+extern s16 g_FxCommonMotionRemaining0,g_FxCommonMotionRemaining1;
+#define g_FxCommonMotionStep0X (g_FxCommonMotionStep0.x)
+#define g_FxCommonMotionStep0Y (g_FxCommonMotionStep0.y)
+#define g_FxCommonMotionStep0Z (g_FxCommonMotionStep0.z)
+#define g_FxCommonMotionAccum0X (g_FxCommonMotionAccum0.x)
+#define g_FxCommonMotionAccum0Y (g_FxCommonMotionAccum0.y)
+#define g_FxCommonMotionAccum0Z (g_FxCommonMotionAccum0.z)
+#define g_FxCommonMotionOrigin0X (g_FxCommonMotionOrigin0.x)
+#define g_FxCommonMotionTarget0X (g_FxCommonMotionTarget0.x)
+#define g_FxCommonMotionStep1X (g_FxCommonMotionStep1.x)
+#define g_FxCommonMotionStep1Y (g_FxCommonMotionStep1.y)
+#define g_FxCommonMotionStep1Z (g_FxCommonMotionStep1.z)
+#define g_FxCommonMotionAccum1X (g_FxCommonMotionAccum1.x)
+#define g_FxCommonMotionAccum1Y (g_FxCommonMotionAccum1.y)
+#define g_FxCommonMotionAccum1Z (g_FxCommonMotionAccum1.z)
+#define g_FxCommonMotionOrigin1X (g_FxCommonMotionOrigin1.x)
+#define g_FxCommonMotionTarget1X (g_FxCommonMotionTarget1.x)
 extern u32 g_FieldPadPressed;
 extern u32 g_FieldPadBits;
 extern void *g_AkaoBgmHandle[];
@@ -125,7 +131,8 @@ void Akao_Cmd_F1(void);
 int Render_ConsumeFontShuffleSeed(void);
 s16 FxCommon_SwitchResource(s16 resourceId, u8 action);
 void FxCommon_SetMotionEndpoints(FxCommonShortVec3 *a, FxCommonShortVec3 *b, int bi, int ai);
-void FxCommon_StepCameraPath(void);
+int FxCommon_StepCameraPath(void);
+int FxCommon_InitCameraPath(int index,int unused1,int unused2,int source);
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FxCommonFrame, drawEnv) == sizeof(FxCommonBuffer), fx_common_frame_draw_offset);
 PE1_STATIC_ASSERT(sizeof(FxCommonVec3) == 12, fx_motion_position_size);

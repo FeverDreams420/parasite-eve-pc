@@ -125,7 +125,6 @@ int FxCommon_InitScene(void)
     FxCommonNode *yNode;
     s32 groupIndex;
     s32 tableIndex;
-    s8 motionCount;
     u16 textureY;
     u16 pointZ;
     FxCommonNode *effectRoot;
@@ -559,21 +558,7 @@ int FxCommon_InitScene(void)
         g_FxCommonPlaying = 1;
         g_FxCommonPlayTicks = 1;
         g_FxCommonAutoPlay = 1;
-        FxCommon_SamplePath(0, selectedMotion + 1, Draw_GetTimTableEntry(resourceTableData, 2), &motion.vector, &shortMotion);
-        /* Shared volatile is scheduling debt in other callers; this store is ordinary. */
-        *(s16 *)&g_FxCommonMotionRemaining0 = 0;
-        g_FxCommonCameraTarget.x = motion.vector.x;
-        g_FxCommonCameraTarget.y = motion.vector.y;
-        g_FxCommonCameraTarget.z = motion.vector.z;
-        motionCount = FxCommon_SamplePath(0, selectedMotion, Draw_GetTimTableEntry(resourceTableData, 2), &motion.vector, &shortMotion) - 2;
-        g_FxCommonMotionRemaining1 = 0;
-        g_FxCommonCameraPathRemaining = motionCount;
-        g_FxCommonCameraPathStep = 0;
-        g_FxCommonCameraPathIndex = selectedMotion;
-        g_FxCommonMarkerFade = 0;
-        g_FxCommonCameraPosition.x = motion.vector.x;
-        g_FxCommonCameraPosition.y = motion.vector.y;
-        g_FxCommonCameraPosition.z = motion.vector.z;
+        if(FxCommon_InitCameraPath(selectedMotion,0,0,0)<0)return -2;
     }
     return 0;
 }

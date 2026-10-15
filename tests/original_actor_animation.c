@@ -3226,6 +3226,88 @@ static int original_fx_blend(void)
     puts("Original FX blend: 4352 USA updates match all ten shared motion records, signed/wrapped additions, counter expiry and untouched padding/deltas");return 1;
 }
 
+static uint64_t fx_camera_motion_hash(uint64_t hash,int path)
+{
+    const void *fields[]={&g_FxCommonCameraPosition,&g_FxCommonCameraTarget,
+        &g_FxCommonMotionStep0,&g_FxCommonMotionAccum0,&g_FxCommonMotionOrigin0,&g_FxCommonMotionTarget0,&g_FxCommonMotionShift0,&g_FxCommonMotionRemaining0,
+        &g_FxCommonMotionStep1,&g_FxCommonMotionAccum1,&g_FxCommonMotionOrigin1,&g_FxCommonMotionTarget1,&g_FxCommonMotionShift1,&g_FxCommonMotionRemaining1,&g_FxCommonPathWrapped};
+    const unsigned sizes[]={12,12,12,12,6,6,2,2,12,12,6,6,2,2,1};
+    const void *path_fields[]={&g_FxCommonCameraPosition,&g_FxCommonCameraTarget,&g_FxCommonMotionRemaining0,&g_FxCommonMotionRemaining1,
+        &g_FxCommonMarkerFade,&g_FxCommonCameraPathRemaining,&g_FxCommonCameraPathStep,&g_FxCommonCameraPathIndex,&g_FxCommonPathWrapped};
+    const unsigned path_sizes[]={12,12,2,2,2,1,1,1,1};
+    for(unsigned i=0;i<(path?9:15);++i){const u8 *bytes=path?(const u8 *)path_fields[i]:(const u8 *)fields[i];
+        for(unsigned j=0;j<(path?path_sizes[i]:sizes[i]);++j)hash=(hash^bytes[j])*UINT64_C(1099511628211);}
+    return hash;
+}
+
+static void fx_seed_camera_motion(unsigned pose,FxCommonShortVec3 **shorts)
+{
+    const FxCommonVec3 positions[]={{0,0,0},{100,-200,300},{INT32_MAX,INT32_MIN,-1},{-32768,32767,0x12345678}};
+    const FxCommonVec3 targets[]={{1000,-1000,500},{32767,-32768,100},{-1000000,2000000,-3000000},{INT32_MIN,INT32_MAX,-0x1234567}};
+    g_FxCommonCameraPosition=positions[pose];g_FxCommonCameraTarget=targets[pose];g_FxCommonPathWrapped=pose%2;
+    for(unsigned j=0;j<6;++j)*shorts[j]=(FxCommonShortVec3){(s16)(-30000+(int)j*701),(s16)(29000-(int)j*503),(s16)(-12345+(int)j*997)};
+    memset(&g_FxCommonMotionStep0,0xa5,sizeof(g_FxCommonMotionStep0));memset(&g_FxCommonMotionStep1,0xa5,sizeof(g_FxCommonMotionStep1));
+    memset(&g_FxCommonMotionAccum0,0xa5,sizeof(g_FxCommonMotionAccum0));memset(&g_FxCommonMotionAccum1,0xa5,sizeof(g_FxCommonMotionAccum1));
+    g_FxCommonMotionShift0=g_FxCommonMotionShift1=g_FxCommonMotionRemaining0=g_FxCommonMotionRemaining1=(s16)0xa5a5;
+}
+
+static int original_fx_camera_motion(PeDisc *disc)
+{
+    PeDiscFile archive;if(!pe_disc_find(disc,"PE.IMG",&archive) ||
+       !pe_disc_read(disc,&archive,1975u*2048,g_FxCommonTimTable,41*2048))return 0;
+    FxCommonShortVec3 external[2];FxCommonShortVec3 *shorts[]={external,external+1,&g_FxCommonMotionOrigin0,&g_FxCommonMotionTarget0,&g_FxCommonMotionOrigin1,&g_FxCommonMotionTarget1};
+    const s32 shifts[]={0,1,2,14,15,16,31,32,63,255,256,-1};
+    const u32 sources[]={0,1,255,256,0xffffff80};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int valid=1;
+    for(unsigned pose=0;pose<4;++pose)for(unsigned a=0;a<6;++a)for(unsigned b=0;b<6;++b)for(unsigned d=0;d<12;++d){
+        fx_seed_camera_motion(pose,shorts);FxCommon_SetMotionEndpoints(shorts[a],shorts[b],shifts[d],shifts[(d*5+3)%12]);
+        hash=fx_camera_motion_hash(hash,0);++cases;
+    }
+    if(cases!=1728 || hash!=UINT64_C(0x8ad0fc610fb630f5)){fprintf(stderr,"Original camera endpoints: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return 0;}
+    for(unsigned i=0;i<10;++i){g_FxCommonEffectSetup[i].motionIndices[0]=(i*7)%80;g_FxCommonEffectSetup[i].motionIndices[1]=(i*7+1)%80;}
+    hash=UINT64_C(14695981039346656037);cases=0;
+    for(unsigned pose=0;pose<4;++pose)for(unsigned index=0;index<10;++index)for(unsigned source=0;source<5;++source)for(unsigned d=0;d<12;++d){
+        fx_seed_camera_motion(pose,shorts);FxCommon_StartCameraMove(index,shifts[d],shifts[(d*5+3)%12],sources[source]);
+        hash=fx_camera_motion_hash(hash,0);++cases;
+    }
+    if(cases!=2400 || hash!=UINT64_C(0xf71e670bec43b4dd)){fprintf(stderr,"Original sampled camera endpoints: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return 0;}
+    hash=UINT64_C(14695981039346656037);cases=0;
+    for(unsigned index=0;index<79;++index)for(unsigned source=0;source<5;++source){
+        g_FxCommonMotionRemaining0=123;g_FxCommonMotionRemaining1=-234;g_FxCommonMarkerFade=321;g_FxCommonPathWrapped=index%2;
+        g_FxCommonCameraPathRemaining=g_FxCommonCameraPathStep=g_FxCommonCameraPathIndex=0xa5;
+        if(FxCommon_InitCameraPath(index+(index%2?0x10000:0),111,-222,(s32)sources[source]))valid=0;
+        hash=fx_camera_motion_hash(hash,1);++cases;
+        unsigned count=g_FxCommonCameraPathRemaining;
+        for(unsigned step=0;step<count+2;++step){int expected=g_FxCommonCameraPathRemaining>1;
+            if(FxCommon_StepCameraPath()!=expected)valid=0;hash=fx_camera_motion_hash(hash,1);++cases;}
+    }
+    for(unsigned index=0;index<79;++index){
+        g_FxCommonMotionRemaining0=g_FxCommonMotionRemaining1=g_FxCommonMarkerFade=0;g_FxCommonPathWrapped=0;
+        g_FxCommonCameraPathRemaining=3;g_FxCommonCameraPathStep=254;g_FxCommonCameraPathIndex=index;
+        for(unsigned step=0;step<4;++step){int expected=g_FxCommonCameraPathRemaining>1;
+            if(FxCommon_StepCameraPath()!=expected)valid=0;hash=fx_camera_motion_hash(hash,1);++cases;}
+    }
+    if(!valid || cases!=47836 || hash!=UINT64_C(0xc29a21ef98b25f06)){fprintf(stderr,"Original camera paths: cases=%u hash=%016llx valid=%d\n",cases,(unsigned long long)hash,valid);return 0;}
+    /* Bad path selectors and rejected point counts leave all observable state intact. */
+    const int bad[]={-1,79,255,65535,0x1004f};unsigned errors=0;
+    for(unsigned i=0;i<5;++i){uint64_t before=fx_camera_motion_hash(UINT64_C(14695981039346656037),1);
+        if(FxCommon_InitCameraPath(bad[i],0,0,0)!=-1 || fx_camera_motion_hash(UINT64_C(14695981039346656037),1)!=before)valid=0;++errors;}
+    for(unsigned index=79;index<=255;index+=176){g_FxCommonCameraPathIndex=index;g_FxCommonCameraPathRemaining=2;
+        uint64_t before=fx_camera_motion_hash(UINT64_C(14695981039346656037),1);
+        if(FxCommon_StepCameraPath()!=-1 || fx_camera_motion_hash(UINT64_C(14695981039346656037),1)!=before)valid=0;++errors;}
+    u8 *table=Draw_GetTimTableEntry(g_FxCommonTimTable,2);
+    for(unsigned index=0;index<2;++index){u32 offset;memcpy(&offset,table+index*4,4);s16 count;memcpy(&count,table+offset+6,2);
+        s16 bad_count=2;memcpy(table+offset+6,&bad_count,2);
+        g_FxCommonCameraPathIndex=0;g_FxCommonCameraPathStep=255;g_FxCommonCameraPathRemaining=2;g_FxCommonPathWrapped=0;
+        uint64_t before=fx_camera_motion_hash(UINT64_C(14695981039346656037),1);
+        if(FxCommon_InitCameraPath(0,0,0,-128)!=-1 || fx_camera_motion_hash(UINT64_C(14695981039346656037),1)!=before)valid=0;++errors;
+        if(FxCommon_StepCameraPath()!=-1 || fx_camera_motion_hash(UINT64_C(14695981039346656037),1)!=before)valid=0;++errors;
+        memcpy(table+offset+6,&count,2);
+    }
+    if(!valid || errors!=11){fprintf(stderr,"Original camera path guards: errors=%u valid=%d\n",errors,valid);return 0;}
+    puts("Original camera motion: 1728 USA aliased-endpoint scenarios, 2400 sampled constructors, all 79 real path pairs through 47836 init/update/hold states, shift/counter wrapping and 11 atomic error cases pass");return 1;
+}
+
 static int original_fx_model_render_assets(PeDisc *disc)
 {
     PeDiscFile archive;if(!pe_disc_find(disc,"PE.IMG",&archive))return 0;
@@ -6409,6 +6491,11 @@ static int script_movie_error_exit(const char *executable)
 int main(int argc, char **argv)
 {
     if(argc==2 && !strcmp(argv[1],"--fx-effects")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_fx_shader_packets() && original_fx_blend() && original_fx_uncompressed_order() && original_fx_shader_pixels() && original_fx_shader_guards()?0:147;}
+    if(argc==2 && !strcmp(argv[1],"--fx-motion")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
+        int result=original_fx_camera_motion(&disc);pe_disc_close(&disc);return result?0:148;
+    }
     if(argc==2 && !strcmp(argv[1],"--fx-models")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

@@ -20,6 +20,18 @@
 #include "pe1/render_camera.h"
 #include "pe1/render_object.h"
 #include "pe1/scene_assets.h"
+#include "pe1/scene_room.h"
+
+SceneRoomSectorRange g_RoomSectorTable[SCENE_ROOM_COUNT];
+u16 g_PeImageSectorTable[81] = {
+    0,71,72,87,121,126,131,153,156,157,180,197,
+    200,203,220,237,254,271,288,316,340,368,396,428,
+    434,442,448,456,464,472,478,483,489,497,503,510,
+    519,526,532,537,539,541,544,547,550,553,570,587,
+    604,621,638,655,672,689,706,723,740,757,774,791,
+    808,825,842,859,876,893,910,927,965,969,978,1111,
+    1276,1302,1547,1792,1975,2016,2105,2205,2224,
+};
 
 /* Resident USA key alphabet; room identifiers encode six five-bit digits. */
 u8 g_Base32CharTable[32] = "0123456789abcdefghiklmnoprstuvwy";

@@ -44,7 +44,6 @@ RenderVec3s g_RenderNormalTable[240];
 u8 g_SceneAreaType;
 /* Controlled battle-step input for the original loading gate. */
 u8 g_AyaActionStep;
-u16 g_PeImageSectorTable[64], g_PeImageSectorBoundsNext[64];
 #ifndef PE_TEST_REAL_DISC
 static int read_result, poll_result;
 static unsigned reads, polls;
@@ -67,7 +66,6 @@ int CdRom_ReadAssetSectors(unsigned int k,unsigned int i,int c,void *b,u32 m,int
 #endif
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
 #ifdef PE_TEST_REAL_DISC
-SceneRoomSectorRange g_RoomSectorTable[PE_USA_ROOM_SLOTS];
 AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20];
 static u32 image_word(const u8 *p)
 {
@@ -119,13 +117,13 @@ int main(void)
     for(unsigned i=0;i<3;++i) bank.streams[i].offset=offsetof(struct Bank,payload)+(i+2)*4;
     bank.streams[0].cdIndex=9;
     g_SceneAreaType=10; g_CurrentStoryDay[0]=2; g_PeImageBaseLba=1000;
-    for(unsigned i=0;i<64;++i) { g_PeImageSectorTable[i]=i*10; g_PeImageSectorBoundsNext[i]=i*10+5; }
+    for(unsigned i=0;i<=64;++i)g_PeImageSectorTable[i]=i*10;
     g_GameState.requested_entity_bank=10;
     g_GameState.scene_load_scratch=(u8 *)&scratch;
     g_GameState.entity_texture_blob=(SceneAssetView *)&bank;
     g_GameState.story_day_flags=1;
     CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==2);
-    CHECK(reads==1 && last_lba==1400 && last_size==5 && last_destination==&scratch);
+    CHECK(reads==1 && last_lba==1400 && last_size==10 && last_destination==&scratch);
     poll_result=1;
     CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==2);
     poll_result=-1;
@@ -135,7 +133,7 @@ int main(void)
     read_result=0; poll_result=0;
     CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==2);
     CHECK(Scene_LoadEntityTextures()==1 && g_GameState.scene_init_subphase==5);
-    CHECK(last_lba==1240 && last_size==5 && last_destination==&bank);
+    CHECK(last_lba==1240 && last_size==10 && last_destination==&bank);
     CHECK(Scene_LoadEntityTextures()==0 && g_GameState.scene_init_subphase==0);
     CHECK(!(g_GameState.story_day_flags&3) && g_GameState.cd_range_read_mode==9);
     for(unsigned i=0;i<2;++i) CHECK(g_GameState.bank_rows[0][i+3]==&bank.payload[i]);
@@ -267,19 +265,27 @@ int main(void)
     CdRom_BindImage(&invalid,NULL);
     CHECK(Asset_OpenPeImage() == -2 && g_PeImageMountFlags == 0);
     CdRom_BindImage(&disc,NULL);
+    memset(g_RoomSectorTable,0xa5,sizeof(g_RoomSectorTable));
+    memset(g_PeImageSectorTable,0xa5,sizeof(g_PeImageSectorTable));
+    memset(g_SceneSectorDirectory,0xa5,506);
     CHECK(Asset_OpenPeImage() == 0);
     CHECK(g_PeImageMountFlags == 1 && g_PeImageBaseLba == catalog.archive.sector);
     CHECK(&g_PeImageBaseLba == &g_GameState.pe_image_base_lba);
     CHECK(&g_PeImageMountFlags == &g_GameState.display_list_modes);
-    memcpy(g_SceneSectorDirectory,&catalog.audio_base,4);
-    memcpy(g_SceneSectorDirectory+4,catalog.audio_bounds,sizeof(catalog.audio_bounds));
+    for(unsigned i=0;i<PE_USA_ROOM_SLOTS;++i) {
+        CHECK(g_RoomSectorTable[i].start==catalog.ranges[i].start &&
+            g_RoomSectorTable[i].scratchSectors==catalog.ranges[i].scratch_sectors &&
+            g_RoomSectorTable[i].textureSectors==catalog.ranges[i].texture_sectors &&
+            g_RoomSectorTable[i].roomSectors==catalog.ranges[i].room_sectors);
+    }
+    CHECK(!memcmp(g_PeImageSectorTable,catalog.sector_bounds,sizeof(catalog.sector_bounds)));
+    CHECK(!memcmp(g_SceneSectorDirectory,&catalog.audio_base,4) &&
+        !memcmp(g_SceneSectorDirectory+4,catalog.audio_bounds,sizeof(catalog.audio_bounds)));
+    CHECK(g_PeImageSectorBoundsNext==g_PeImageSectorTable+1 && g_SceneAssetLbaTbl==g_PeImageSectorTable+69);
+    puts("Original image bootstrap: BOOT executable, 450 room ranges, 81 sector boundaries and audio directory loaded without fixture injection");
     Psyz_SpuInit();
     SpuInit();
     g_PeImageBaseLba=catalog.archive.sector;
-    for(unsigned i=0;i<64;++i) {
-        g_PeImageSectorTable[i]=catalog.sector_bounds[i];
-        g_PeImageSectorBoundsNext[i]=catalog.sector_bounds[i+1];
-    }
     PeRoomBlob resident={0};
     CHECK(pe_sector_bank_load(&catalog,12,&resident));
     RenderObjectHeader *scene_model=Asset_FindTable08ByU32Key(resident.bytes,(int)0xC4B5BA04u);
@@ -342,10 +348,6 @@ int main(void)
         int mirror=map==17 || map==18 || map==21 || map==45 || map==102 || map==151 || map==319;
         if(descriptor_count && !mirror && map!=5 && map!=272 && map!=23) { pe_room_close(&room); continue; }
         PeRoomRange *range = &catalog.ranges[map - 1];
-        g_RoomSectorTable[map - 1].start = range->start;
-        g_RoomSectorTable[map - 1].scratchSectors = range->scratch_sectors;
-        g_RoomSectorTable[map - 1].textureSectors = range->texture_sectors;
-        g_RoomSectorTable[map - 1].roomSectors = range->room_sectors;
         u8 *scratch = calloc(range->scratch_sectors, 2048);
         u8 *textures = calloc(range->texture_sectors, 2048);
         u8 *data = calloc(range->room_sectors, 2048);

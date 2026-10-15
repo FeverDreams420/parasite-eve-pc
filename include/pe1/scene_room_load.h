@@ -40,7 +40,7 @@ extern unsigned char g_StartupResourceBlob[];
 extern u8 g_SceneAreaType;
 /* g_CurrentStoryDay aliases the canonical current-day byte. */
 #include "pe1/pe_image.h"
-extern u16 g_PeImageSectorTable[], g_PeImageSectorBoundsNext[];
+
 extern u32 g_EntityRenderScratch[];
 /* Aya action sequencer step (battle_runtime.h); a battle-start texture
  * load waits until it reaches 2. */

@@ -1,6 +1,8 @@
 #ifndef PE1_SCRIPT_STATE_H
 #define PE1_SCRIPT_STATE_H
 
+#include "pe1/pe_image.h"
+
 #include "common.h"
 #include "pe1/script_node.h"
 
@@ -23,7 +25,7 @@ extern unsigned short g_ScriptNodeSeqCounter[1];
 extern u32 g_ScriptOperandTable[16];
 extern u16 g_SceneInitLbaTbl0[];
 extern u16 g_SceneInitLbaTbl1[];
-extern u16 g_SceneAssetLbaTbl[];
+
 extern unsigned char g_BattleEnemyEscapeFlag;
 
 /* Sound commands an actor script queued while deferral was on

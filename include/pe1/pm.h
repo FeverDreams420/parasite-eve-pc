@@ -1,6 +1,8 @@
 #ifndef PE1_PM_H
 #define PE1_PM_H
 
+#include "pe1/pe_image.h"
+
 #include "pe1/pm_types.h"
 
 /* Process manager: 11 primary slots (0..10) and 11 secondary slots (11..21).
@@ -26,7 +28,7 @@ void Pm_InitScene(void);
 
 /* Task programs of commands 108..114 (g_FieldFxTaskPrograms[23..29]) are
  * read on demand from PE.IMG sectors g_SceneAssetLbaTbl[0..1] to g_PmTaskProgramBuffer. */
-extern u16 g_SceneAssetLbaTbl[2];
+
 extern void *g_PmTaskProgramBuffer;
 extern FieldFxTaskProgram *g_FieldFxTaskProgramCmd108, *g_FieldFxTaskProgramCmd109, *g_FieldFxTaskProgramCmd110, *g_FieldFxTaskProgramCmd111;
 extern FieldFxTaskProgram *g_FieldFxTaskProgramCmd112, *g_FieldFxTaskProgramCmd113, *g_FieldFxTaskProgramCmd114;

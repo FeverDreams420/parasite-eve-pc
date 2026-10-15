@@ -132,7 +132,6 @@ static int boot_buffer_layout(void)
 }
 
 /* Scripted I/O exercises the original glyph-record loader, including retries. */
-u16 g_PeImageSectorTable[81];
 static u8 glyph_source[42 * 2048], glyph_scratch[42 * 2048];
 static unsigned glyph_reads, glyph_polls;
 static PeDisc *glyph_disc;
@@ -1123,7 +1122,7 @@ static int original_glow_resident_constants(void)
         {0x800e11e4,g_FieldFxTpageSlots,sizeof(g_FieldFxTpageSlots)},
         {0x800c2258,&D_800C2258,sizeof(GteShortVector)},
         {0x800c2260,&g_FieldFxZeroVector,sizeof(GteShortVector)},
-        {0x80093162,g_SceneAssetLbaTbl,sizeof(g_SceneAssetLbaTbl)},
+        {0x80093162,g_SceneAssetLbaTbl,(2*sizeof(u16))},
         {0x800c2268,&g_FieldFxZeroRotation,sizeof(GteRotation)},
         {0x800c2290,&g_FieldFxUnitScale,sizeof(GteVector)},
         {0x800e1210,g_FieldFxStripPacketCounts,6*sizeof(u16)},

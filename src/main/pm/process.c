@@ -11,9 +11,8 @@
 #include "pe1/scene_assets.h"
 #include "pe1/scene_room_load.h"
 
-/* Resident USA extent and native bindings for the on-demand task bank.
+/* Native bindings for the on-demand task bank.
  * NULL bindings remain unavailable until their original modules are ported. */
-u16 g_SceneAssetLbaTbl[2] = {969,978};
 void *g_PmTaskProgramBuffer;
 FieldFxTaskProgram *g_FieldFxTaskProgramCmd108, *g_FieldFxTaskProgramCmd109, *g_FieldFxTaskProgramCmd110;
 FieldFxTaskProgram *g_FieldFxTaskProgramCmd111, *g_FieldFxTaskProgramCmd112, *g_FieldFxTaskProgramCmd113, *g_FieldFxTaskProgramCmd114;

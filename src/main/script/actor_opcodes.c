@@ -514,7 +514,6 @@ void func_801216C4(s32, s32 *);
 void func_80121C04(s32);
 void func_801223A8(s32);
 
-#define g_SceneAssetLbaTbl (g_SceneAssetLbaTbl[0])
 
 int Script_PointInPoly(int **arg0) {
     int local[8];
@@ -589,7 +588,7 @@ retry_second:
 
 
     sp.words[1] = 0;
-    sp.buffers[0] = g_CdLoadAreaBase + ((g_SceneAssetLbaTbl - g_SceneInitLbaTbl1[0]) << 0xB);
+    sp.buffers[0] = g_CdLoadAreaBase + ((g_SceneAssetLbaTbl[0] - g_SceneInitLbaTbl1[0]) << 0xB);
     func_801216C4(1, sp.words);
     func_80121C04(**arg0_reg);
     func_801223A8(1);

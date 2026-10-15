@@ -92,6 +92,11 @@
 #define PE_DIR_RECORD_STRIDE   0xC        /* bytes per directory record */
 #define PE_DIR_PAYLOAD_MASK    0xFFFFFF   /* record +0x04 payload offset mask */
 
+/* Native storage for the resident USA sector boundaries and linker aliases. */
+extern u16 g_PeImageSectorTable[81];
+#define g_PeImageSectorBoundsNext (g_PeImageSectorTable + 1)
+#define g_SceneAssetLbaTbl (g_PeImageSectorTable + 69)
+
 /* Original scalar symbols alias their canonical game-state fields. */
 #define g_PeImageBaseLba (g_GameState.pe_image_base_lba)
 #define g_PeImageMountFlags (g_GameState.display_list_modes)
@@ -102,6 +107,7 @@ extern char g_PeImagePath[];       /* "\PE.IMG;1" */
 extern char g_PeDisc2MarkerPath[]; /* "\FMV2\PEDISC02.IDF;1" */
 
 int Asset_SearchByKeyType(int type);
+/* -1: no image; -2: archive/marker missing; -3: invalid resident data. */
 int Asset_OpenPeImage(void);
 
 /* Sector table address as a pointer or a word: some loaders add the scaled

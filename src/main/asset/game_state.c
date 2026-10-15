@@ -19,6 +19,7 @@
 #include "pe1/render_animation_frame.h"
 #include "pe1/render_buffers.h"
 #include "pe1/scene_assets.h"
+#include "pe1/scene_room.h"
 #include "pe1/script_queue.h"
 
 /* Original USA archive/marker paths, now resolved directly in file images. */
@@ -38,6 +39,56 @@ int Asset_OpenPeImage(void)
         flags |= 2;
     if (!flags || !pe_disc_find(g_CdImage, g_PeImagePath, &archive) || archive.directory)
         return -2;
+    /* The executable contributes resident data, never executable host code. */
+    PeDiscFile config_file, executable;
+    char config[1025], executable_path[128];
+    if (!pe_disc_find(g_CdImage, "SYSTEM.CNF", &config_file) || config_file.directory ||
+        !config_file.size || config_file.size >= sizeof(config) ||
+        !pe_disc_read(g_CdImage, &config_file, 0, config, config_file.size)) return -3;
+    config[config_file.size] = 0;
+    char *boot = strstr(config, "cdrom:");
+    if (!boot) boot = strstr(config, "CDROM:");
+    if (!boot) return -3;
+    boot += 6;
+    size_t path_length = 0;
+    while (boot[path_length] && boot[path_length] != ';' && boot[path_length] != '\r' &&
+           boot[path_length] != '\n' && boot[path_length] != ' ' && boot[path_length] != '\t') {
+        if (path_length + 1 >= sizeof(executable_path)) return -3;
+        executable_path[path_length] = boot[path_length];
+        ++path_length;
+    }
+    executable_path[path_length] = 0;
+    u8 header[32], room_data[SCENE_ROOM_COUNT * 8], sector_data[162], audio_data[506];
+    SceneRoomSectorRange ranges[SCENE_ROOM_COUNT];u16 sectors[81];
+    if (!path_length || !pe_disc_find(g_CdImage, executable_path, &executable) || executable.directory ||
+        !pe_disc_read(g_CdImage, &executable, 0, header, sizeof(header)) || memcmp(header,"PS-X EXE",8)) return -3;
+    u32 base=(u32)header[24]|(u32)header[25]<<8|(u32)header[26]<<16|(u32)header[27]<<24;
+    u32 bytes=(u32)header[28]|(u32)header[29]<<8|(u32)header[30]<<16|(u32)header[31]<<24;
+    if (base>0x800930d8u || bytes<sizeof(room_data) || 0x80093378u-base>bytes-sizeof(room_data) ||
+        (u64)bytes+0x800>executable.size ||
+        !pe_disc_read(g_CdImage,&executable,0x800ull+0x80093378u-base,room_data,sizeof(room_data)) ||
+        !pe_disc_read(g_CdImage,&executable,0x800ull+0x800930d8u-base,sector_data,sizeof(sector_data)) ||
+        !pe_disc_read(g_CdImage,&executable,0x800ull+0x8009317cu-base,audio_data,sizeof(audio_data))) return -3;
+    for(unsigned i=0;i<SCENE_ROOM_COUNT;++i) {
+        const u8 *p=room_data+i*8;
+        ranges[i].start=(u32)p[0]|(u32)p[1]<<8|(u32)p[2]<<16|(u32)p[3]<<24;
+        u32 counts=(u32)p[4]|(u32)p[5]<<8|(u32)p[6]<<16|(u32)p[7]<<24;
+        ranges[i].scratchSectors=counts&255;ranges[i].textureSectors=(counts>>8)&4095;ranges[i].roomSectors=counts>>20;
+        if (((u64)ranges[i].start+ranges[i].scratchSectors+ranges[i].textureSectors+ranges[i].roomSectors)*2048>archive.size) return -3;
+    }
+    for(unsigned i=0;i<81;++i) {
+        sectors[i]=(u16)sector_data[i*2]|(u16)sector_data[i*2+1]<<8;
+        if ((u64)sectors[i]*2048>archive.size) return -3;
+    }
+    u32 audio_base=(u32)audio_data[0]|(u32)audio_data[1]<<8|(u32)audio_data[2]<<16|(u32)audio_data[3]<<24;
+    u16 previous=0;
+    for(unsigned i=0;i<=250;++i) {
+        u16 boundary=(u16)audio_data[4+i*2]|(u16)audio_data[5+i*2]<<8;
+        if (boundary<previous || ((u64)audio_base+boundary)*2048>archive.size) return -3;
+        previous=boundary;
+    }
+    memcpy(g_RoomSectorTable,ranges,sizeof(ranges));memcpy(g_PeImageSectorTable,sectors,sizeof(sectors));
+    memcpy(g_SceneSectorDirectory,audio_data,sizeof(audio_data));
     CdRom_BindImage(g_CdImage, &archive);
     g_PeImageBaseLba = archive.sector;
     g_PeImageMountFlags = (u8)flags;

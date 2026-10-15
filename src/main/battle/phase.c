@@ -1,6 +1,7 @@
 #include "common.h"
 #include "pe1/akao.h"
 #include "pe1/battle.h"
+#include "pe1/battle_cmd.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_main.h"
 #include "pe1/battle_runtime.h"
@@ -10,29 +11,13 @@
 #include "pe1/pm.h"
 
 #define NULL ((void *)0)
-typedef struct { s32 words[4]; } Copy16;
-typedef struct { u8 bytes[0x10]; } __attribute__((packed)) PackedCopy16;
-typedef struct { u8 bytes[8]; } __attribute__((packed)) PackedCopy8;
-typedef struct { u8 bytes[0x10]; } LargeSymbol;
-typedef union { s32 value; } FlagValue;
-/* A block-move pointer seen as a word for GCC's alignment test. */
-typedef union { const u8 *bytes; u32 word; } CopyAddress;
-
-int BattleCmd_CommitAmmoAndUpdate(); /* no prototype: retail calls it with and without the action */
 s16 Battle_CalcAngleToTarget(RenderObjectEntity *object, void *target);
 void Battle_HaltOnPositiveX(void);
 int Battle_StepCharacterAction(BattleInitSlot *slot);
 
-/* COMMON supplies the small-data sizes of the turn queue words to MASPSX;
- * every other word stays absolute. */
-u8 g_BattleActionAnimModes[4];
-u8 g_BattleActionQueueCount;
-u8 g_BattleActionIndex;
-s32 g_BattleAilmentPmSlot;
-s32 g_BattleEffectPmSlot;
-s16 g_BattlePlayerAimHeight;
-
-
+/* Original USA 8001074C: existing PM program selected by each PE command. */
+const Tbl20 g_BattleActionEffectIds = {{92,93,94,100,104,103,106,101,99,98,
+                                      102,96,97,92,92,92,92,92,95,99}};
 
 void Battle_AdvancePhase(void) {
     Tbl20 sp18;
@@ -54,8 +39,8 @@ void Battle_AdvancePhase(void) {
     s32 actor_flags;
     BattleEntity *character_state;
     s32 system_flags;
-    FlagValue cleanup_flags;
-    FlagValue loop_limit;
+    s32 cleanup_flags;
+    s32 loop_limit;
     s32 temp_v0_2;
     BattleEntity *soundActor;
     s32 temp_v1_3;
@@ -91,10 +76,7 @@ void Battle_AdvancePhase(void) {
     Combatant *cleanupActor;
     Combatant *aya_actor;
     BattleEntity *aya_player;
-    u8 *copy_dst;
-    const u8 *copy_src;
-    const u8 *copy_end;
-    u32 misaligned;
+
 
     var_a0 = g_BattleLiveEnemyCount;
     temp_a2 = g_BattleActionIndex;
@@ -117,44 +99,8 @@ void Battle_AdvancePhase(void) {
     }
     if (g_ActiveActor->stateFlags & 0x200000) {
         sp18 = g_BattleActionEffectIds;
-        copy_dst = (u8 *)sp30.soundId;
-        copy_src = (const u8 *)g_BattleActionSoundIds.soundId;
-        copy_end = copy_src + 0x20;
-        {
-            CopyAddress dst;
-            CopyAddress src;
-
-            dst.bytes = copy_dst;
-            src.bytes = copy_src;
-            misaligned = (dst.word | src.word) & 3;
-        }
-        if (misaligned) {
-            do {
-                *(PackedCopy16 *)copy_dst = *(const PackedCopy16 *)copy_src;
-                copy_src += 0x10;
-                copy_dst += 0x10;
-            } while (copy_src != copy_end);
-            *(PackedCopy8 *)copy_dst = *(const PackedCopy8 *)copy_src;
-            command_value = temp_s2->command;
-        }
-        else
-        {
-        goto aligned_copy;
-block_found:
-        var_a2 = temp_v1_2;
-        targetFound = 1;
-        goto block_search_done;
-aligned_copy:
-        do {
-            *(Copy16 *)copy_dst = *(const Copy16 *)copy_src;
-            copy_src += 0x10;
-            copy_dst += 0x10;
-        } while (copy_src != copy_end);
-copy_tail:
-        *(PackedCopy8 *)copy_dst = *(const PackedCopy8 *)copy_src;
+        sp30 = g_BattleActionSoundIds;
         command_value = temp_s2->command;
-        }
-after_command:
         action = command_value - 0x183;
         if (temp_s2->actor != D_8009D254) {
             temp_v0 = Battle_CalcAngleToTarget(&temp_s2->actor->renderObject, &D_8009D254->posX);
@@ -168,28 +114,22 @@ after_command:
                 var_s0 = var_a0_2;
                 lastSlot = firstSlot + 7;
                 if (firstSlot < lastSlot) {
-                    loop_limit.value = lastSlot;
+                    loop_limit = lastSlot;
                     do {
                         temp_v1_2 = g_BattleActionQueue[var_s0 & 0xFF].actor;
                         if ((temp_v1_2 == NULL) || (((EnemyCombatant *)temp_v1_2->core)->hpAlive <= 0) || (*(s32 *)&temp_v1_2->entityFlags & 0x4000)) {
                             var_s0 += 1;
                         } else {
-                            goto block_found;
+                            var_a2 = temp_v1_2;
+                            targetFound = 1;
+                            break;
                         }
-                    } while ((var_s0 & 0xFF) < loop_limit.value);
+                    } while ((var_s0 & 0xFF) < loop_limit);
                 }
-block_search_done:
                 if (!(targetFound & 0xFF)) {
                     var_v0_3 = g_BattleActionIndex + 7;
                 temp_v1_3 = var_v0_3 & 0xFF;
-                temp_v1_3 <<= 3;
-                {
-                    BattleInitSlotAddress at;
-
-                    at.slot = g_BattleActionQueue;
-                    at.address = temp_v1_3 + at.address;
-                    temp_v1_3 = (u16)at.slot->command;
-                }
+                temp_v1_3 = (u16)g_BattleActionQueue[temp_v1_3].command;
                 g_BattleActionIndex = var_v0_3;
                 temp_v1_3 -= 3;
                 temp_v1_3 = temp_v1_3 < 0x194U;
@@ -208,7 +148,8 @@ block_search_done:
                         var_a1 = var_a0_2;
                         do {
                             queuedActor = g_BattleActionQueue[temp_v1_3].actor;
-                            if ((((EnemyCombatant *)queuedActor->core)->hpAlive <= 0) || (queuedActor == NULL)) {
+                            if (queuedActor == NULL || queuedActor->core == NULL ||
+                                ((EnemyCombatant *)queuedActor->core)->hpAlive <= 0) {
                                 g_BattleActionQueue[temp_v1_3].actor = var_a2;
                             }
                             var_s0 += 1;
@@ -222,16 +163,8 @@ block_search_done:
             temp_v1_6 = g_BattleActionQueue[firstSlot].actor;
             if ((temp_v1_6 == NULL) || (((EnemyCombatant *)temp_v1_6->core)->hpAlive <= 0) || (*(s32 *)&temp_v1_6->entityFlags & 0x4000)) {
                 var_v0_3 = g_BattleActionIndex + 1;
-block_35:
                 temp_v1_3 = var_v0_3 & 0xFF;
-                temp_v1_3 <<= 3;
-                {
-                    BattleInitSlotAddress at;
-
-                    at.slot = g_BattleActionQueue;
-                    at.address = temp_v1_3 + at.address;
-                    temp_v1_3 = (u16)at.slot->command;
-                }
+                temp_v1_3 = (u16)g_BattleActionQueue[temp_v1_3].command;
                 g_BattleActionIndex = var_v0_3;
                 temp_v1_3 -= 3;
                 temp_v1_3 = temp_v1_3 < 0x194U;
@@ -244,7 +177,6 @@ block_35:
             }
         }
             }
-block_39:
         Pm_StopAll();
         if (action == 6) {
             BattleEntity *attackTarget;
@@ -299,11 +231,10 @@ block_39:
         actor_flags &= var_a1;
         ((Combatant *)var_a0_4)->stateFlags = actor_flags;
     }
-block_55:
     actor = g_ActiveActor;
     actor_flags = actor->stateFlags;
     if (actor_flags & 0x80000) {
-        if ((Battle_StepAyaAction() << 0x18) != 0) {
+        if ((u8)Battle_StepAyaAction() != 0) {
             end_slot = g_BattleActionIndex;
             aya_actor = g_ActiveActor;
             aya_player = D_8009D254;
@@ -342,7 +273,7 @@ block_55:
             Battle_HaltOnPositiveX();
         }
     } else if (actor_flags & 0x100000) {
-        temp_v0 = Battle_CalcAngleToTarget(&temp_s2->actor->renderObject, ((void *)D_8009D254) + 0x28);
+        temp_v0 = Battle_CalcAngleToTarget(&temp_s2->actor->renderObject, &D_8009D254->posX);
         D_8009D254->facingAngle = temp_v0;
         Battle_StepCharacterAction(temp_s2);
         if (g_PmSlotTable[g_BattleEffectPmSlot].header.state - 1U >= 2U) {
@@ -353,12 +284,12 @@ block_55:
             cleanupActor->exp_or_acc = 0;
             *(s32 *)&character_state->entityFlags &= temp_a0_3;
             system_flags = g_GameStateFlags;
-            cleanup_flags.value = cleanupActor->stateFlags;
+            cleanup_flags = cleanupActor->stateFlags;
             system_flags &= temp_a0_3;
-            cleanup_flags.value &= var_a2_2;
+            cleanup_flags &= var_a2_2;
             g_GameStateFlags = system_flags;
-            cleanup_flags.value |= 0x200000;
-            cleanupActor->stateFlags = cleanup_flags.value;
+            cleanup_flags |= 0x200000;
+            cleanupActor->stateFlags = cleanup_flags;
             Battle_HaltOnPositiveX();
         }
     } else {

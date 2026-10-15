@@ -99,9 +99,8 @@ void BattleCmd_UndoPending(void);
 void BattleCmd_UndoAllPending(void);
 int BattleCmd_GetRemainingAmmo(int *out);
 void BattleCmd_CommitAndSyncAmmo(int item);
-/* Declared without a prototype: retail calls it with the queued action (which
- * it forwards to Inv_BuildWeaponList) and without any argument. */
-int BattleCmd_CommitAmmoAndUpdate();
+/* Synchronizes ammo, then rebuilds the supplied native action record. */
+int BattleCmd_CommitAmmoAndUpdate(void *out);
 void BattleCmd_ChangeWeaponAndSync(int item);
 
 

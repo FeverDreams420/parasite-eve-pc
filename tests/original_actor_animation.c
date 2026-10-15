@@ -2644,6 +2644,73 @@ static int original_hud_packet_initialization(void)
     return 1;
 }
 
+static int original_player_turn(void)
+{
+    extern void Battle_UpdatePlayerTurn(void);
+    const u8 modes[]={0,4,6,7,8,9,10,11,12,13,15,17};
+    const s16 heights[]={-900,-1,0,1,900};
+    Combatant actor={0};EnemyCombatant enemy={0},dead_enemy={0};BattleEntity player,target,dead_target={0};
+    dead_target.core=&dead_enemy;
+    const u8 frames[]={0,7,8},indices[]={0,3,11,42};
+    BattleAction action={0};RenderAnimationDataHeader animation={0};animation.frame_count=9;
+    void *old_animations[48];memcpy(old_animations,g_GameState.bank_rows[0],sizeof(old_animations));
+    BattleInitSlot old_queue[45];memcpy(old_queue,g_BattleActionQueue,sizeof(old_queue));
+    Combatant *old_actor=g_ActiveActor;FieldActor *old_player=g_PlayerEntity;
+    u32 old_flags=g_GameStateFlags;u8 old_count=g_BattleActionQueueCount,old_index=g_BattleActionIndex;
+    u8 old_remaining=g_BattleRemainingActions,old_hit_timer=g_BattleHitTimer;
+    u8 old_modes[4];memcpy(old_modes,g_BattleActionAnimModes,sizeof(old_modes));
+    int old_attack=g_BattleAttackPmSlot,old_impact=g_BattleImpactPmSlot;
+    s16 old_height=g_BattlePlayerAimHeight;
+    for(unsigned i=0;i<48;++i)g_GameState.bank_rows[0][i]=&animation;
+    g_ActiveActor=&actor;g_PlayerEntity=(FieldActor *)&player;
+    action.actionCode.actionId=8;action.turnWord=1;actor.action=&action;
+    actor.actionMode12=4;actor.actionMode13=5;
+    actor.targetAngleActionModes[0]=6;actor.targetAngleActionModes[1]=8;actor.targetAngleActionModes[2]=10;
+    enemy.hpAlive=100;
+    uint64_t hash=UINT64_C(14695981039346656037);
+#define HASH_TURN(value,bytes) do { \
+    u32 word=(u32)(value); \
+    for(unsigned byte=0;byte<(bytes);++byte)hash=(hash^((word>>(byte*8))&255))*UINT64_C(1099511628211); \
+} while(0)
+    for(unsigned mode=0;mode<12;++mode)for(unsigned phase=0;phase<3;++phase)
+    for(unsigned height=0;height<5;++height)for(unsigned committed=0;committed<2;++committed)
+    for(unsigned position=0;position<4;++position)for(unsigned next_kind=0;next_kind<2;++next_kind) {
+        unsigned index=indices[position];
+        memset(&player,0,sizeof(player));memset(&target,0,sizeof(target));
+        actor.stateFlags=committed*0x200000;player.core=&actor;target.core=&enemy;
+        player.actionMode=modes[mode];player.animLastFrame=8;player.animFrame=frames[phase]<<16;
+        player.animPrev.fixed=(modes[mode]==12?8:frames[phase])<<16;player.entityFlags=0x240;
+        player.posX.fixed=100<<16;player.posZ.fixed=-(20<<16);
+        target.renderObject.target_x=200;target.renderObject.target_y=heights[height];target.renderObject.target_z=-200;
+        memset(g_BattleActionQueue,0,sizeof(g_BattleActionQueue));
+        g_BattleActionQueue[index]=(BattleInitSlot){&target,1,0};
+        g_BattleActionQueue[index+1]=(BattleInitSlot){next_kind?&dead_target:NULL,next_kind?1:3,0};
+        g_BattleActionIndex=index;g_BattleActionQueueCount=index+1+next_kind;
+        for(unsigned i=0;i<4;++i)g_BattleActionAnimModes[i]=4+i;
+        g_GameStateFlags=2;g_BattleAttackPmSlot=g_BattleImpactPmSlot=-1;g_BattlePlayerAimHeight=17;
+        Battle_UpdatePlayerTurn();
+        HASH_TURN(player.actionMode,1);HASH_TURN(player.animLastFrame,1);
+        HASH_TURN(player.animFrame,4);HASH_TURN(player.animPrev.fixed,4);
+        HASH_TURN((u16)player.facingAngle,2);HASH_TURN(player.entityFlags,4);
+        HASH_TURN(actor.stateFlags,4);HASH_TURN(g_BattleActionIndex,1);
+        for(unsigned i=0;i<4;++i)HASH_TURN(g_BattleActionAnimModes[i],1);
+        HASH_TURN(player.actionData==&animation,1);
+    }
+#undef HASH_TURN
+    memcpy(g_GameState.bank_rows[0],old_animations,sizeof(old_animations));
+    memcpy(g_BattleActionQueue,old_queue,sizeof(old_queue));
+    g_ActiveActor=old_actor;g_PlayerEntity=old_player;g_GameStateFlags=old_flags;
+    g_BattleActionQueueCount=old_count;g_BattleActionIndex=old_index;
+    g_BattleRemainingActions=old_remaining;g_BattleHitTimer=old_hit_timer;
+    memcpy(g_BattleActionAnimModes,old_modes,sizeof(old_modes));
+    g_BattleAttackPmSlot=old_attack;g_BattleImpactPmSlot=old_impact;g_BattlePlayerAimHeight=old_height;
+    if(hash!=UINT64_C(0x782dd423afe0eac1)) {
+        fprintf(stderr,"Original player turn hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
+    }
+    puts("Original player turn: 2,880 animation/aim/committed-state/queue cases match unhooked USA MIPS");
+    return 1;
+}
+
 static int original_combat_angles(void)
 {
     extern int Battle_CalcRelativeAngle(BattleEntity *,BattleEntity *);
@@ -2731,6 +2798,9 @@ static int original_combat_timers(void)
 
 static int original_spell_effects(PeDisc *disc,PeDiscFile *executable)
 {
+    u8 effect_ids[20];
+    if(!pe_disc_read(disc,executable,0x1074c-0x10000+0x800,effect_ids,sizeof(effect_ids)) ||
+       memcmp(effect_ids,g_BattleActionEffectIds.bytes,sizeof(effect_ids)))return 0;
     u8 sound_ids[40];
     if(!pe_disc_read(disc,executable,0x10760-0x10000+0x800,sound_ids,sizeof(sound_ids)) ||
        memcmp(sound_ids,&g_BattleActionSoundIds,sizeof(sound_ids)))return 0;
@@ -4100,7 +4170,7 @@ int main(int argc, char **argv)
 {
     if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
-    if (!original_combat_timers() || !original_combat_angles()) return 141;
+    if (!original_combat_timers() || !original_combat_angles() || !original_player_turn()) return 141;
     if (!original_startup_fade()) return 126;
     if (!original_save_metadata_storage()) return 125;
     if (!original_frame_random()) return 128;

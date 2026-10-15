@@ -4,17 +4,6 @@
 #include "pe1/battle_runtime.h"
 #include "pe1/gte_types.h"
 
-/* COMMON supplies the small-data sizes of the turn queue words to MASPSX;
- * every other word stays absolute. g_BattleActionAnimMode1/3 are one-byte
- * views of g_BattleActionAnimModes[1] and [3]: Battle_UpdatePlayerTurn
- * compiles to retail only with the scalar symbols. */
-u8 g_BattleActionAnimMode1;
-u8 g_BattleActionAnimMode3;
-u8 g_BattleActionQueueCount;
-u8 g_BattleActionIndex;
-int g_BattleAttackPmSlot;
-s16 g_BattlePlayerAimHeight;
-
 int Battle_StepCharacterAction(BattleInitSlot *slot);
 
 #define CORE_HEALTH(entity) (((EnemyCombatant *)(entity)->core)->hpAlive)
@@ -58,10 +47,10 @@ void Battle_UpdatePlayerTurn(void)
         {
             if (slot->actor != g_BattleActionQueue[g_BattleActionIndex + 1].actor ||
                 CORE_HEALTH(slot->actor) <= 0) {
-                u8 count = g_BattleActionAnimMode1;
-                u8 delta = g_BattleActionAnimMode3;
+                u8 count = g_BattleActionAnimModes[1];
+                u8 delta = g_BattleActionAnimModes[3];
                 BattleAction *effectAction = g_ActiveActor->action;
-                g_BattleActionAnimMode1 = count + delta;
+                g_BattleActionAnimModes[1] = count + delta;
                 if (effectAction->attackWord & 0x3FF)
                     Battle_StartEnemyAttackEffect(slot->actor);
             }
@@ -90,10 +79,6 @@ void Battle_UpdatePlayerTurn(void)
     Entity_SetActionMode(D_8009D254, *(category + g_ActiveActor->targetAngleActionModes));
 }
 
-#define U8_AT(ptr, offset) (*(u8 *)((u8 *)(ptr) + (offset)))
-#define S16_AT(ptr, offset) (*(s16 *)((u8 *)(ptr) + (offset)))
-#define U16_AT(ptr, offset) (*(u16 *)((u8 *)(ptr) + (offset)))
-#define U32_AT(ptr, offset) (*(u32 *)((u8 *)(ptr) + (offset)))
 #define ACTION_AT(index) ((u16)g_BattleActionQueue[(u8)(index)].command)
 
 void Battle_ApplyPlayerHit(void) {

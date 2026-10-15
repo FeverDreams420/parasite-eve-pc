@@ -20,6 +20,8 @@
  * through $gp, every other extern stays absolute. */
 s8 g_BattleHaltTimer;
 BattleEnemySlot g_BattleEnemySlots[7];
+/* Original 45-entry action queue, widened only for native actor pointers. */
+BattleInitSlot g_BattleActionQueue[45];
 u16 g_BattleHitActionPending;
 u8 g_BattleActionAnimModes[4];
 s8 g_BattleTargetCycleMode;

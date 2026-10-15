@@ -7,7 +7,7 @@
 /* Battle turn, status and map-selection flow (src/main/battle, script). */
 
 /* 20-byte record copied as one unit by the enemy effect flow. */
-typedef struct { u8 bytes[0x14]; } __attribute__((packed)) Tbl20;
+typedef struct { u8 bytes[0x14]; } Tbl20;
 /* 18-byte status symbol sprite template. */
 typedef struct StatusSymbolTemplate {
     u8 bytes[18];

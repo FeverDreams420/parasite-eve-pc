@@ -2,6 +2,7 @@
 #include "pe1/akao.h"
 #include "pe1/battle.h"
 #include "pe1/battle_ailment.h"
+#include "pe1/battle_cmd.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_main.h"
 #include "pe1/battle_runtime.h"
@@ -83,8 +84,6 @@ void Battle_FinalizeAttackResult(void)
     }
 }
 
-int BattleCmd_CommitAmmoAndUpdate(); /* no prototype: retail calls it with and without the action */
-
 int Battle_StepCharacterAction(BattleInitSlot *slot)
 {
     BattleInitSlot * turnSlot = slot;
@@ -111,7 +110,7 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
     case 8:
     case 10: {
         BattleEntity *current = D_8009D254;
-        if (current->animLastFrame != ((u16 *)&current->animFrame)[1])
+        if (current->animLastFrame != (u16)(current->animFrame >> 16))
             break;
         if (g_BattleActionAnimModes[0] != 0) {
             g_BattleActionAnimModes[0]--;
@@ -160,7 +159,7 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
             if (narrow != predicate) goto alternate;
         }
         nextIndexB = indexB + 1;
-        { int offset = nextIndexB << 3;
+        {
         { int nextCode = g_BattleActionQueue[nextIndexB].command;
         g_BattleRemainingActions = 0;
         if (nextCode >= 3 || nextIndexB == g_BattleActionQueueCount) {
@@ -171,8 +170,8 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
         }
         }
         { EnemyCombatant *enemy;
-        { BattleInitSlotAddress at; at.slot = g_BattleActionQueue; at.address = at.address + offset; enemy = at.slot->actor->core; }
-        if (!(enemy->hpAlive > 0 && enemy)) {
+        enemy = g_BattleActionQueue[nextIndexB].actor ? g_BattleActionQueue[nextIndexB].actor->core : NULL;
+        if (!enemy || enemy->hpAlive <= 0) {
             Entity_SetActionMode(D_8009D254, active->actionMode12);
             g_BattleActionIndex++;
             g_ActiveActor->stateFlags |= 0x200000;
@@ -199,7 +198,7 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
             break;
         }
         }
-        if (BattleCmd_CommitAmmoAndUpdate()) {
+        if (BattleCmd_CommitAmmoAndUpdate(g_ActiveActor->action)) {
             Entity_SetActionMode(D_8009D254, 0xC);
             Akao_SetPos3D(1, 0, D_8009D254->posX.parts.integer,
                           D_8009D254->posY.parts.integer, D_8009D254->posZ.parts.integer);
@@ -212,11 +211,12 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
         if (activeAction->attackWord & 0x3FF) {
             indexAlt = g_BattleActionIndex;
             {
-                EnemyCombatant *enemy = g_BattleActionQueue[indexAlt].actor->core;
+                EnemyCombatant *enemy = g_BattleActionQueue[indexAlt].actor ?
+                    g_BattleActionQueue[indexAlt].actor->core : NULL;
                 int nextRetry;
-                if (enemy->hpAlive > 0) {
+                if (enemy && enemy->hpAlive > 0) {
                 nextRetry = retryCount - 1;
-                if (enemy) goto target_alive;
+                goto target_alive;
                 }
             target_dead:
             Entity_SetActionMode(caseEntity, active->actionMode12);
@@ -229,7 +229,7 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
             break;
             }
         }
-        if (BattleCmd_CommitAmmoAndUpdate()) {
+        if (BattleCmd_CommitAmmoAndUpdate(g_ActiveActor->action)) {
             Entity_SetActionMode(D_8009D254, 0xC);
             Akao_SetPos3D(1, 0, D_8009D254->posX.parts.integer,
                           D_8009D254->posY.parts.integer, D_8009D254->posZ.parts.integer);

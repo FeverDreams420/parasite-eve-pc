@@ -25,11 +25,11 @@ int Draw_InitDisplay(int mode);
 void Boot_RunFrame(void);
 /* Returns the room loader error before entering an incomplete scene. */
 int Draw_InitPipeline(void);
-/* Entry points of the boot overlays: the title display, the movie player
- * and the display-mode selection that returns the mode for Draw_InitDisplay. */
-void func_8019234C(void);
+/* Original statically linked overlay entry points. The display entry's
+ * address-only name remains until its implementation is identified. */
+void FxCommon_RunFrameLoop(void);
 void func_801235DC(void);
-int func_801909B4(void);
+int MenuCard_RunListScreen(void);
 
 /* Disc table load (pm/disc_tables.c): PE.IMG sector ranges of the
  * startup assets (entries of the g_PeImageSectorTable sector table). */

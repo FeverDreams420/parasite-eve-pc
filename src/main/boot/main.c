@@ -56,7 +56,7 @@ int main(void) {
                     fprintf(stderr, "Boot assets failed: %d\n", overlay_status);
                     return EXIT_FAILURE;
                 }
-                func_8019234C();
+                FxCommon_RunFrameLoop();
                 g_GameState.flags |= 1;
                 break;
             }
@@ -73,7 +73,7 @@ int main(void) {
                 break;
             case 0xA9400048:
                 CdRom_LoadInitialImage();
-                Draw_InitDisplay(func_801909B4());
+                Draw_InitDisplay(MenuCard_RunListScreen());
                 g_GameState.flags |= 3;
                 break;
             default:

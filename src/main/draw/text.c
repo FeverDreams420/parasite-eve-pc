@@ -177,7 +177,6 @@ void Draw_AllocPrimRectFull(s32 arg0, s32 arg1, s32 arg2, s32 arg3) {
     u8 *nextPacket;
     GpuCmdPacket *packet;
     DrawAreaRect *rectPtr;
-    DrawPrimLink link;
 
     if (g_DrawBufferIndex != 0) {
         arg1 += 0xE0;
@@ -199,9 +198,7 @@ void Draw_AllocPrimRectFull(s32 arg0, s32 arg1, s32 arg2, s32 arg3) {
     if (packet != NULL) {
         SetDrawArea(packet, rectPtr);
     }
-    link.packet = packet;
-    packet->u0.tag = (packet->u0.tag & 0xFF000000) | (*g_DrawOrderingTableEntry & 0xFFFFFF);
-    *g_DrawOrderingTableEntry = (*g_DrawOrderingTableEntry & 0xFF000000) | (link.word & 0xFFFFFF);
+    Draw_LinkDrawArea(g_DrawOrderingTableEntry, packet);
 }
 
 void Draw_AllocPrimRect(void) {
@@ -210,7 +207,6 @@ void Draw_AllocPrimRect(void) {
     u8 *nextPacket;
     GpuCmdPacket *packet;
     DrawAreaRect *rectPtr;
-    DrawPrimLink link;
 
     rect.w = 0x140;
     rect.x = 0;
@@ -232,9 +228,7 @@ void Draw_AllocPrimRect(void) {
     if (packet != NULL) {
         SetDrawArea(packet, rectPtr);
     }
-    link.packet = packet;
-    packet->u0.tag = (packet->u0.tag & 0xFF000000) | (*g_DrawOrderingTableEntry & 0xFFFFFF);
-    *g_DrawOrderingTableEntry = (*g_DrawOrderingTableEntry & 0xFF000000) | (link.word & 0xFFFFFF);
+    Draw_LinkDrawArea(g_DrawOrderingTableEntry, packet);
 }
 
 int g_DrawTextDimmed;

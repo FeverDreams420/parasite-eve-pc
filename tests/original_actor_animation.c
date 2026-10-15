@@ -1,3 +1,4 @@
+#include "pe1/draw_area.h"
 #include "pe1/memcard.h"
 void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/battle_runtime.h"
@@ -2230,6 +2231,53 @@ static int original_system_start(void)
     return 1;
 }
 
+void Draw_AllocPrimRectFull(s32 x,s32 y,s32 width,s32 height);
+void Draw_AllocPrimRect(void);
+static int original_menu_draw_areas(void)
+{
+    static _Alignas(16) u8 arena[0x4000+32];
+    u8 *saved_cursor=g_DrawPacketCursor,*saved_arena=g_DrawPacketArenaBase;
+    u32 *saved_ordering=g_DrawOrderingTableEntry;
+    int saved_slot=g_DrawBufferIndex,valid=1;
+    MenuWidgetNode *saved_head=g_MenuWidgetActiveListHead;
+    MenuWidgetNode parent={0},node={0};
+    parent.x=17;parent.y=19;parent.children[0]=&node;
+    node.x=11;node.y=13;node.draw_state=7;node.grid_width=5;
+    node.disabled=9;node.visible_rows=3;
+    g_MenuWidgetActiveListHead=&parent;
+    for(unsigned slot=0;slot<2;++slot) {
+        RenderNativeTag ordering={0xFFFFFF,0x1234};
+        memset(arena,0xA5,sizeof(arena));
+        g_DrawPacketArenaBase=arena;g_DrawPacketCursor=arena;
+        g_DrawOrderingTableEntry=(u32 *)&ordering;g_DrawBufferIndex=slot;
+        Draw_AllocPrimRectFull(21,33,89,41);
+        Draw_AllocPrimRect();
+        Draw_AllocPrimWithMask(&node);
+        const unsigned rects[3][4]={{21,33,89,41},{0,0,320,224},{28,32,35,27}};
+        for(unsigned i=0;i<3;++i) {
+            GpuCmdPacket *packet=(GpuCmdPacket *)(arena+i*sizeof(*packet));
+            unsigned x=rects[i][0],y=rects[i][1]+slot*224;
+            unsigned lastx=x+rects[i][2]-1,lasty=y+rects[i][3]-1;
+            if(packet->length!=2 || packet->field4!=(0xE3000000u|(y<<10)|x) ||
+               packet->field8!=(0xE4000000u|(lasty<<10)|lastx) ||
+               packet->u0.tag!=(i?(uintptr_t)(arena+(i-1)*sizeof(*packet)):0xFFFFFF)) valid=0;
+        }
+        uintptr_t head=(uintptr_t)(arena+2*sizeof(GpuCmdPacket));
+        if(ordering.address!=head || ordering.length!=0x1234 ||
+           g_DrawPacketCursor!=arena+3*sizeof(GpuCmdPacket)) valid=0;
+        g_DrawPacketCursor=arena+0x4000-sizeof(GpuCmdPacket);
+        Draw_AllocPrimRectFull(1,2,3,4);Draw_AllocPrimRect();Draw_AllocPrimWithMask(&node);
+        if(ordering.address!=head || ordering.length!=0x1234 ||
+           g_DrawPacketCursor!=arena+0x4000-sizeof(GpuCmdPacket)) valid=0;
+        for(size_t i=3*sizeof(GpuCmdPacket);i<sizeof(arena);++i) if(arena[i]!=0xA5) valid=0;
+    }
+    g_DrawPacketCursor=saved_cursor;g_DrawPacketArenaBase=saved_arena;
+    g_DrawOrderingTableEntry=saved_ordering;g_DrawBufferIndex=saved_slot;
+    g_MenuWidgetActiveListHead=saved_head;
+    if(!valid) fprintf(stderr,"Original menu draw-area payload/native links/arena guard failed\n");
+    return valid;
+}
+
 static int original_subsystem_start(void)
 {
     g_GameStateFlags=0xA5A5A5A5; g_FrameRngCounter=123;
@@ -2358,6 +2406,7 @@ int main(int argc, char **argv)
     if(!SDL_Init(SDL_INIT_EVENTS))return 43;
     if(!original_system_start())return 130;
     if(!original_display_start())return 127;
+    if(!original_menu_draw_areas())return 131;
     if(!original_subsystem_start())return 129;
     const u32 lzcs[]={0,1,0x7fffffff,0x80000000,0xffffffff};
     const u32 lzcr[]={32,31,1,1,32};

@@ -31,17 +31,21 @@ typedef struct RECT32 {
     int h;
 } RECT32;
 
+/* PsyZ DR_AREA/DR_TWIN: address, command count and two native command words. */
 typedef struct GpuCmdPacket {
     union {
-        int tag;
+        uintptr_t tag;
         struct {
-            unsigned char pad0[3];
+            unsigned char pad0[sizeof(uintptr_t)-1];
             unsigned char code;
         } head;
     } u0;
-    int field4;
-    int field8;
+    uintptr_t length;
+    uintptr_t field4;
+    uintptr_t field8;
 } GpuCmdPacket;
+PE1_GPU_STATIC_ASSERT(sizeof(GpuCmdPacket) == 4 * sizeof(uintptr_t), native_gpu_command_size);
+PE1_GPU_STATIC_ASSERT(PE1_GPU_OFFSETOF(GpuCmdPacket, field4) == 2 * sizeof(uintptr_t), native_gpu_command_payload);
 
 typedef struct DR_ENV {
     uintptr_t tag, len;

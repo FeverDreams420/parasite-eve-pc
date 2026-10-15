@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "pe1/psyq_gpu.h"
+#include "pe1/render_packets.h"
 
 typedef struct DrawAreaRect {
     s16 x, y;
@@ -11,12 +12,13 @@ typedef struct DrawAreaRect {
 
 void SetDrawArea(GpuCmdPacket *packet, DrawAreaRect *rect);
 
-/* PSX DMA tags keep the word count in the high byte and a physical address
- * in the low 24 bits. The pointer conversion is part of that hardware ABI. */
+/* PsyZ keeps the address and command count in separate native words. */
 static inline void Draw_LinkDrawArea(u32 *entry, GpuCmdPacket *packet)
 {
-    packet->u0.tag = (packet->u0.tag & 0xFF000000) | (*entry & 0xFFFFFF);
-    *entry = (*entry & 0xFF000000) | ((u32)packet & 0xFFFFFF);
+    if (!packet) return;
+    RenderNativeTag *ordering = (RenderNativeTag *)entry;
+    packet->u0.tag = ordering->address;
+    ordering->address = (uintptr_t)packet;
 }
 
 #endif

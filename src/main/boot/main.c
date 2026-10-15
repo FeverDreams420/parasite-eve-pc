@@ -153,7 +153,8 @@ int main(int argc,char **argv) {
                 break;
             }
             default:
-                Boot_RunFrame();
+                {int frame_status=Boot_RunFrame();
+                if(frame_status<0){fprintf(stderr,"Scene frame startup failed: %d\n",frame_status);goto shutdown;}}
                 break;
             }
 

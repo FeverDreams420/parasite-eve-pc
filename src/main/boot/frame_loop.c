@@ -73,7 +73,7 @@ void Boot_FlushSceneFast(void) {
 #define GAME_STATE_OF_SCENE_FLAGS(flagsByte) \
     ((Pe1GameState *)((flagsByte) - PE1_OFFSETOF(Pe1GameState, bank_state_12)))
 
-void Boot_RunFrame(void)
+int Boot_RunFrame(void)
 {
     RECT clear_rect;
     u32 flags;
@@ -82,7 +82,8 @@ void Boot_RunFrame(void)
     u8 *scene_flags;
     RenderTintTargetView *fade;
 
-    if (Draw_InitPipeline() < 0) return;
+    int startup=Draw_InitPipeline();
+    if (startup < 0) return startup;
     if (g_SceneDispatchCur == g_SceneDispatchToken) {
         scene_flags = &g_GameState.bank_state_12;
         state = &g_GameState;
@@ -174,6 +175,7 @@ loop_end_check:
         if (status & 0x200)
             g_GameStateFlagsWord = (first_status | 2u) & ~0x8200u;
     }
+    return 0;
 }
 
 /* Load the GTE back colour (scaled by 16) and clear the nine-halfword

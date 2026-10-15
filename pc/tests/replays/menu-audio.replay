@@ -1,5 +1,0 @@
-menu.prompt 0 return
-audio.menu.pcm 1 down
-audio.menu.pcm 1 escape
-audio.menu.pcm 1 close
-boot.stopped 0 assert

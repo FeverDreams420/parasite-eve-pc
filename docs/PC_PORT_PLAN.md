@@ -1,5 +1,83 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
+## Aktualny stan: oryginalny New Game dochodzi do M001
+
+Właściwy executable wykonuje oryginalny wybór New Game, ładuje M431, odtwarza
+film nr 2 i przechodzi do M001 (`0xA8001048`). Kolejne skrypty tworzą aktorów,
+konfigurują modele, animację, kamerę, geometrię i fade. Najdalszy bieżący przebieg
+zatrzymuje się na niepodpiętym opkodzie 13, aktor 0:0, pozycja skryptu 940 bajtów.
+To nadal nie jest działająca eksploracja, walka ani pełna kampania.
+
+Naprawy są w istniejących oryginalnych modułach, bez nowych plików i bez
+wydzielania funkcji. Scene_StreamTexturePage nie ucina już wskaźnika tabeli do
+32 bitów. Zachowuje oryginalny cache, czyta obraz i waliduje zakres oraz bloki
+TIM przed uploadem. Błędy odczytu/poll/range/TIM nie zmieniają cache ani VRAM;
+Draw_InitPipeline, Boot_RunFrame i main propagują błąd zamiast startować wadliwą
+scenę. Test wykonuje wszystkie 22 rzeczywiste wspólne banki TIM (strony 2..23),
+porównuje pełną VRAM, trafienia cache oraz 18 błędów i poprawny retry. Pozostałe
+wpisy tabeli nie są automatycznie uznawane za poprawne TIM-y.
+
+Dispatcher używa istniejących funkcji oryginalnych: AKAO 234, zdarzeń 28,
+przejścia sceny 49, tworzenia aktorów 8, akcji/animacji 46/78, obrotu ku aktorowi
+75, flag 63..66 i 91/92, geometrii 116/117/123, kamery 132, fade 133..136 i
+156, renderowania 155, promienia cienia 157, zakresu menu 166, poleceń 237 oraz
+czekania 140/143. 141/142/144/145 to autentyczne oryginalne funkcje return 1,
+zweryfikowane w EXE; pozostałe niepodpięte pozycje nadal kończą się jawnym błędem.
+Poprawiono natywne ABI tablic argumentów i deklaracje funkcji geometrii, bez
+adapterów kopiujących wybrane funkcje. Mnożenie promienia cienia i różnica
+współrzędnych obrotu zachowują 32-bitowy wrap bez signed overflow w C.
+
+Świeże porównania z rzeczywistymi funkcjami CPU USA: przejście sceny 174 stanów
+(8ae1600ce89fd57c), zakres menu 2048 (9ba3598d49695b25), wybrane gałęzie poleceń 237: 96
+(0dd78fa3cadbad1b), klatka animacji 2304 (fb78ff1167f295fc), flaga/kamera 432
+(c4b5a5fd1165f305), promień cienia 88 (0cb313b7d38c9570), geometria 288
+(18383904d1c6e665), fade 192 (0ddf13ae684d5bb5), wait fade 256
+(3ae97f7ab9537f25), obrót ku aktorowi 900 (34c38eb49612044f).
+Istniejący fixture sprawdza też pełne wskaźniki hosta, dispatcher, cofnięcie
+kursora/yield, wykonanie kolejnych ticków i zachowanie sąsiednich rekordów.
+
+Continue nie wywraca się już w MenuWidget_EaseNodePosition: NULL jest sprawdzany
+przed odczytem listy. Ograniczony przebieg otwiera ekran kart; faktyczny odczyt
+zapisu i powrót do gry pozostają niezweryfikowane. Pełne zrzuty 1 MiB VRAM dla
+zwykłego i instrumentowanego przebiegu Continue mają SHA-256
+d253cef8c7e5647e2bef6441b2436429e91e8e104b0d88d18c175fc76eac9be2.
+Test executable obejmuje teraz cztery scenariusze: start bez inputu, START,
+New Game do filmu sceny oraz Continue. JSON zawiera licznik klatek gry i filmu;
+błędy niepodpiętych opkodów wskazują scenę, aktora i pozycję skryptu.
+Limit VBlank nadal wymusza _Exit, więc nie dowodzi naturalnego shutdown/leak-free.
+
+Weryfikacja tego samego stanu źródeł: build z testami i osobny build bez testów;
+38/38 CTest z wymaganym Disc 1, headless, bez skipów. Świeże instrumentowane
+ASan/UBSan/function (również PsyZ/SDL) przechodzą --assets, --texture-pages,
+statystyki oraz właściwy executable Continue do 14 000 VBlank. Dłuższy New Game
+w zwykłym i instrumentowanym executable kończy się znanym abortem na opkodzie
+13 w M001, bez wcześniejszego raportu sanitizerów; tego przebiegu nie zaliczamy
+jako ukończonej rozgrywki. Żadnych nowych plików repozytorium; bu00/ nietknięte.
+
+Poniższe wpisy opisują wcześniejsze etapy. Wzmianki o istniejącym `pc/`,
+nieosiągalnym New Game i starych liczbach testów są historyczne.
+
+
+## Aktualny stan: usunięcie porzuconego `pc/`
+
+Usunięto cały katalog `pc/`, jego targety CMake i siedem fixture (14 testów CTest) zależnych od
+równoległej implementacji. Nie przeniesiono ich kodu do innych plików. Pozostałe
+testy wykonują oryginalne moduły; nie deklarujemy zachowania pokrycia usuniętych
+testów. Kopię usuniętych plików, wraz z czterema niezacommitowanymi zmianami,
+zachowano poza repozytorium w `/tmp/pe-pc-backup-20261015-192011`.
+Katalog zapisów `bu00/` pozostał nietknięty. Nie dodano plików do repozytorium.
+
+Weryfikacja po usunięciu: build z BUILD_TESTING=ON i osobny build z OFF
+przechodzą; 38/38 pozostałych testów CTest przechodzi headless z wymaganym
+Disc 1 (bez skipów), w tym trzy przebiegi właściwego executable i New Game.
+Usunięto zależność CI od FFmpeg; git diff --check przechodzi.
+
+Oryginalny New Game w ograniczonym przebiegu headless dochodzi do sceny M431 i
+uruchamia film nr 2. Nie jest to jeszcze dowód ukończenia filmu, eksploracji,
+sprawnego Continue, pełnego audio ani kampanii. Poniższe wpisy są historycznym
+zapisem postępów; wzmianki o istniejącym `pc/` dotyczą stanu sprzed usunięcia.
+
+
 Plan obejmuje całą grę, nie tylko boot i filmy. Celem jest ukończony natywny projekt C11: pełna kampania, oba dyski, wszystkie lokacje i sceny, eksploracja, walka ATB, PE, przeciwnicy, przedmioty, ekwipunek, menu, audio, zapis/odczyt, Tutorial oraz tryby i zawartość dodatkowa. Każda funkcja i każdy element zawartości mają otrzymać automatyczny test oraz mierzalny warunek odbioru.
 
 „Perfekcyjny” oznacza pełny uzgodniony zakres, poprawne zachowanie, brak znanych defektów i komplet wymaganych dowodów automatycznych. Sam build, procent pokrycia kodu, ekran menu albo liczba przetestowanych plików nie dowodzą ukończenia gry. Nie można udowodnić braku błędów dla wszystkich możliwych kombinacji stanu i sprzętu; dlatego jawnie definiujemy katalog funkcji, niezmienniki, warianty, obsługiwane platformy i testy błędów. Żadna pozycja zakresu nie może zniknąć z raportu przez pominięcie testu.

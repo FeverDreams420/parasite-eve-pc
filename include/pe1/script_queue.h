@@ -21,6 +21,37 @@ extern u32 g_ScriptVariableBank[];
 #define SCRIPT_VAR_FLAGS 3
 #define SCRIPT_VAR_AREA 0x4A
 extern int (*g_ScriptQueueOpcodeHandlers[])(int **);
+int Entity_ClearGlobalFlag1(int **unused);
+int Entity_SetGlobalFlag1(int **unused);
+int Entity_SetCurrentFlag40(int **unused);
+int Entity_ClearCurrentFlag40(int **unused);
+int Script_ClearEntityFlag40(int **unused);
+int Script_Noop1(int **unused);
+int Script_Noop2(int **unused);
+int Script_Noop3(int **unused);
+int Script_Noop4(int **unused);
+int Script_WaitFrameOrDraw(int **args);
+int Script_EncodeBarcode(int **args);
+int Script_ClampMenuRange(int **args);
+int Script_SetGteMatrix(int **args);
+int Script_SpawnEntityAt(int **args);
+int Script_DispatchScriptCmd(int **args);
+int Entity_SetCurrentActionMode(int **args);
+int Render_CameraSnapToEntity(int **args);
+int Script_SetEntityAnimSpeed(int **args);
+int Script_SetScreenScrollPos(int **args);
+int Script_SetCdRomSeekPos(int **args);
+int Script_SetFogColor(int **args);
+int Script_SetCdRomScreenPos(int **args);
+int Script_ScaleAnimValue(int **args);
+int Entity_YieldOnLoading(int **unused);
+int Script_SetFlagSlot(int **args);
+int Script_SetObjEntryLimit(int **args);
+int Script_SetObjEntryField8(int **args);
+int Script_ClearBattleFlags(int **unused);
+int Script_SetBattleFlags(int **unused);
+extern u8 g_ScriptCameraBytes[3];
+int Entity_YieldOnDrawBusy(int **unused);
 
 /* Resident callbacks use the interpreter's decoded operand-pointer array. */
 /* Movie opcode: 1 starts; -1 invalid input/workspace, -2 busy, -3 stream error. */

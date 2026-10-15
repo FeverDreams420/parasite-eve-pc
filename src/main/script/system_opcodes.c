@@ -95,22 +95,26 @@ int Script_SetEntityField224(short **arg0) {
     return 1;
 }
 
-int Entity_ClearGlobalFlag1(void) {
+int Entity_ClearGlobalFlag1(int **unused) {
+    (void)unused;
     g_FieldMoveLock &= -2;
     return 1;
 }
 
-int Entity_SetGlobalFlag1(void) {
+int Entity_SetGlobalFlag1(int **unused) {
+    (void)unused;
     g_FieldMoveLock |= 1;
     return 1;
 }
 
-int Entity_SetCurrentFlag40(void) {
+int Entity_SetCurrentFlag40(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags |= 0x40;
     return 1;
 }
 
-int Entity_ClearCurrentFlag40(void) {
+int Entity_ClearCurrentFlag40(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags &= -0x41;
     return 1;
 }
@@ -165,12 +169,12 @@ int Script_SetEntityField1C(int **arg0) {
     return 1;
 }
 
-int Script_SetEntityAnimSpeed(u16 **arg0) {
+int Script_SetEntityAnimSpeed(int **arg0) {
     FieldActor *entity;
     unsigned int value;
 
     entity = g_CurrentEntity;
-    value = **arg0;
+    value = (u16)**arg0;
     if (entity->action < value) {
         value = entity->action;
     }
@@ -314,14 +318,16 @@ int Entity_SetFieldByTypeId(int **arg0) {
     return 1;
 }
 
-int Script_ClearBattleFlags(void) {
+int Script_ClearBattleFlags(int **unused) {
+    (void)unused;
     int *ptr = &g_GeomScroll.state.flags;
 
     *ptr &= -0xC1;
     return 1;
 }
 
-int Script_SetBattleFlags(void) {
+int Script_SetBattleFlags(int **unused) {
+    (void)unused;
     int *ptr = &g_GeomScroll.state.flags;
 
     *ptr |= 0xC0;
@@ -498,17 +504,6 @@ typedef struct CameraBaseAngles {
     short y;
 } CameraBaseAngles;
 
-void Render_SetEntryVisible(int arg0, int arg1);
-void Render_SetEntryLimit(int arg0, int arg1);
-void Render_SetFlagSlot(int arg0, int arg1);
-int Render_GetEntryField6(int arg0);
-void Render_SetEntryField8(int arg0, int arg1);
-void Render_FillEntrySlotValues(int arg0, int arg1);
-void Render_SetEntrySlotValue(int arg0, int arg1, int arg2);
-void Render_SetEntryFlags(int arg0, int arg1);
-
-/* Arms the combat countdown: args are two minute-or-hour terms summed and
- * scaled to 60 Hz frames (216000 per unit), plus seconds (60 frames each). */
 int Script_ComputeAudioTimer(int **arg0) {
     int *dst;
     int value;
@@ -724,21 +719,22 @@ int Script_SetScreenScrollPos(int **arg0) {
     return 1;
 }
 
-int Script_SetCdRomSeekPos(unsigned short **arg0) {
-    CdRom_SetSeekPos(**arg0);
+int Script_SetCdRomSeekPos(int **arg0) {
+    CdRom_SetSeekPos((u16)**arg0);
     return 1;
 }
 
-int Script_SetFogColor(unsigned short **arg0) {
-    Render_SetFadeColour(**arg0);
+int Script_SetFogColor(int **arg0) {
+    Render_SetFadeColour((u16)**arg0);
     return 1;
 }
 
-int Script_SetCdRomScreenPos(unsigned short **arg0) {
-    return CdRom_SetScreenPos(*arg0[0], *arg0[1], *arg0[2], *arg0[3], *arg0[4]), 1;
+int Script_SetCdRomScreenPos(int **arg0) {
+    return CdRom_SetScreenPos((u16)*arg0[0], (u16)*arg0[1], (u16)*arg0[2], (u16)*arg0[3], (u16)*arg0[4]), 1;
 }
 
-int Script_ClearEntityFlag40(void) {
+int Script_ClearEntityFlag40(int **unused) {
+    (void)unused;
     unsigned char *ptr = &g_ScreenTint.fadeMode;
 
     *ptr &= 0xBF;
@@ -771,7 +767,7 @@ int Script_WaitFrameOrDraw(int **arg0) {
     if (Seq_GetElapsed() == *arg0[0]) {
         return 1;
     }
-    if ((Draw_CheckDrawStatus() << 24) != 0) {
+    if ((u8)Draw_CheckDrawStatus() != 0) {
         g_ScriptCursorAddress -= 0xC;
         g_ScriptNodePool->active = 1;
     } else {
@@ -781,16 +777,19 @@ int Script_WaitFrameOrDraw(int **arg0) {
     return 0;
 }
 
-int Script_Noop1(void) {
+int Script_Noop1(int **unused) {
+    (void)unused;
     return 1;
 }
 
-int Script_Noop2(void) {
+int Script_Noop2(int **unused) {
+    (void)unused;
     return 1;
 }
 
-int Entity_YieldOnDrawBusy(void) {
-    if ((Draw_CheckDrawStatus() << 24) != 0) {
+int Entity_YieldOnDrawBusy(int **unused) {
+    (void)unused;
+    if ((u8)Draw_CheckDrawStatus() != 0) {
         g_ScriptCursorAddress -= 8;
         g_ScriptNodePool->active = 1;
     } else {
@@ -800,11 +799,13 @@ int Entity_YieldOnDrawBusy(void) {
     return 0;
 }
 
-int Script_Noop3(void) {
+int Script_Noop3(int **unused) {
+    (void)unused;
     return 1;
 }
 
-int Script_Noop4(void) {
+int Script_Noop4(int **unused) {
+    (void)unused;
     return 1;
 }
 
@@ -942,7 +943,8 @@ int Script_SetMenuSlotEntry(int **arg0) {
     return 1;
 }
 
-int Entity_YieldOnLoading(void) {
+int Entity_YieldOnLoading(int **unused) {
+    (void)unused;
     if ((g_ScreenTint.fadeMode & 3) >= 2) {
         g_ScriptCursorAddress -= 8;
         g_ScriptNodePool->active = 1;
@@ -957,7 +959,7 @@ int Script_ScaleAnimValue(int **arg0) {
     int scale = g_CurrentEntity->render_object.hit_cylinder.radius * 2;
     RenderObjectHeader *dst = g_CurrentEntity->render_object.header;
 
-    dst->shadow_radius = (scale * value) >> 16;
+    dst->shadow_radius = (s32)((u32)scale * (u32)value) >> 16;
     return 1;
 }
 

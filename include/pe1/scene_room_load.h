@@ -13,6 +13,9 @@
 /* -1: invalid room or I/O failure; -2: missing native descriptor;
  * -3: invalid or unallocatable room geometry. */
 int Scene_LoadRoom(unsigned int roomId);
+/* Cached shared TIM page: -1 read, -2 poll, -3 invalid range/workspace,
+ * -4 invalid or truncated TIM. Failure retains the previous cache ID. */
+int Scene_StreamTexturePage(void);
 int Render_InitRoomPrimState(void *object);
 /* Entity loaders return -1 on texture/model I/O failure,
  * 1 while pending, 0 when complete. */

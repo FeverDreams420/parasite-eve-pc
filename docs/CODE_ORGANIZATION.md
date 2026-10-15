@@ -5,10 +5,9 @@ and `src/overlays/`; `include/pe1/` contains shared subsystem headers. Do not
 create new files or extract selected functions while restoring the original
 game. Add the existing whole modules to CMake as they become portable.
 
-The entire `pc/` directory and its build/test dependencies must be removed.
-Its current frontend and parallel implementations are abandoned work, not
-the intended runtime architecture. Do not rename or relocate them. Necessary
-host changes belong in the existing original modules or the PsyZ fork.
+The abandoned `pc/` directory and its dependent test fixtures have been removed.
+Do not recreate or relocate its parallel implementations. Necessary host changes
+belong in the existing original modules or the PsyZ fork.
 
 `src/overlays/` holds room, scene and effect code. Native modules should use
 static linking, explicit registration, namespaced symbols and clear

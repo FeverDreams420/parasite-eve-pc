@@ -74,10 +74,11 @@ static void Boot_PollHost(void) {
         if(fclose(out)!=0 || !written){fprintf(stderr,"Cannot finish VRAM capture\n");fflush(stderr);_Exit(2);}
     }
     DISPENV display;GetDispEnv(&display);
-    printf("{\"event\":\"frame_limit\",\"vblanks\":%u,\"scene\":%u,\"flags\":%u,\"draw_slot\":%d,\"movie\":%d,\"pad\":%u,\"game_flags\":%u,\"video_state\":%u,\"display\":{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d,\"rgb24\":%d}}\n",
+    printf("{\"event\":\"frame_limit\",\"vblanks\":%u,\"scene\":%u,\"flags\":%u,\"draw_slot\":%d,\"movie\":%d,\"pad\":%u,\"game_flags\":%u,\"video_state\":%u,\"game_frame\":%u,\"movie_frame\":%d,\"display\":{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d,\"rgb24\":%d}}\n",
         g_BootHostVBlankCount,(u32)g_SceneDispatchToken,g_GameStateFlags,g_ActiveDrawSlot,
         g_GameState.scene_audio.tracks.movie_index,g_FieldPadBits,g_GameState.flags,
-        g_GameState.scene_audio.tracks.draw_enabled.bits,
+        g_GameState.scene_audio.tracks.draw_enabled.bits,g_GlobalFrameCounter[0],
+        (s16)g_GameState.scene_audio.tracks.movie_frame,
         display.disp.x,display.disp.y,display.disp.w,display.disp.h,display.isrgb24);
     fflush(stdout);
     /* A diagnostic cap is a forced process boundary, even inside a menu's

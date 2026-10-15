@@ -499,8 +499,8 @@ int Render_CameraSnapToEntity(int **args) {
         speed = g_ScriptNodePool->target14;
     }
 
-    delta_x = g_CurrentEntity->pos_x - target->pos_x;
-    delta_z = g_CurrentEntity->pos_z - target->pos_z;
+    delta_x = (s32)((u32)g_CurrentEntity->pos_x - (u32)target->pos_x);
+    delta_z = (s32)((u32)g_CurrentEntity->pos_z - (u32)target->pos_z);
     target_angle = 0x1400 - ratan2(delta_z >> 16, delta_x >> 16);
     next_angle = (target_angle &= 0xFFF);
     angle = g_CurrentEntity->rot_y;

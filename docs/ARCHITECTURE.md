@@ -2,20 +2,22 @@
 
 The intended native target runs the original C modules, repaired in place,
 with CMake and PsyZ. No new files, extracted functions or parallel game engine
-are permitted while restoring the original game. The entire `pc/` directory
-must be deleted, including its build and test dependencies; relocating it
-does not satisfy this requirement.
+are permitted while restoring the original game. The abandoned `pc/` directory and its build/test dependencies have been
+removed. Do not relocate or recreate that parallel implementation.
 
 The executable now starts `src/main/boot/main.c`, mounts and validates USA
 CUE/BIN images through the original archive loader, and follows the original
 startup, logo, movie and title-screen code. It contains no `pc/` sources and
-needs no FFmpeg dependency. `BUILD_TESTING=OFF` omits the entire `pc/` build
-subdirectory; remaining tests still depend on abandoned code awaiting deletion.
+needs no FFmpeg dependency. Tests compile the original modules directly;
+fixtures depending on the abandoned implementation have been removed.
 
 Optional native diagnostics stop at an explicit VBlank limit, capture VRAM and
 state, and inject scheduled digital buttons into the original pad packet.
 This bounded stop proves neither natural scene completion nor campaign play.
-Real Disc 2, full gameplay and the remaining acceptance gates are still pending.
+The original New Game path reaches M431/movie 2 and subsequently M001,
+where remaining script bindings still stop progression. Continue opens its card
+screen after fixing a NULL dereference; saved-game loading is unverified. Real
+Disc 2, full gameplay and the remaining acceptance gates are still pending.
 
 The memory map and overlay addresses below describe the original game for
 asset decoding and porting research. They are not host addresses, build
@@ -29,7 +31,8 @@ and scene code is linked statically with explicit state/reset, and scratchpad
 work uses ordinary host buffers and the host stack. We do not emulate a CD drive.
 The planned asset layer validates both CUE/BIN images once and exposes one
 logical asset set, resolving source-specific IDs/offsets without disc-swap UI.
-This combined layer is planned; the current boot CLI still reads Disc 1 only.
+The CLI mounts images by their USA roles. Actual Disc 2 reads and transitions
+remain unverified because that image is not available in the current workspace.
 
 The maintained PsyZ source fork is
 [khasinski/parasite-eve-psyz](https://github.com/khasinski/parasite-eve-psyz),
@@ -127,8 +130,8 @@ templates other shared code still instantiates per overlay.
 existing src/main/ + src/overlays/ -> host C11 compiler -> original game + PsyZ
 ```
 
-The root `CMakeLists.txt` includes `pc/` only when tests are enabled. This
-remaining test dependency must be eliminated; it is not part of the executable.
+The root `CMakeLists.txt` builds the original sources for both the executable
+and tests, without the abandoned parallel implementation.
 There is no historical compiler, splat step, PS1 linker, assembly extraction,
 retail checksum verification or decompilation report in the build.
 
@@ -149,7 +152,6 @@ native registration and state ownership are implemented.
 
 | Path | Contents |
 | --- | --- |
-| `pc/` | abandoned parallel implementation; entire directory must be removed |
 | `src/main/<subsystem>/` | game code to port |
 | `src/main/psyq/lib*/` | legacy runtime behavior to compare with PsyZ |
 | `src/overlays/` | room, scene and effect modules, plus shared room code |

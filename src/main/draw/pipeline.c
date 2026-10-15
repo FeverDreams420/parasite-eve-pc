@@ -29,7 +29,6 @@ extern u32 g_GlobalFrameCounter[1];
 #define B(sym) (*(s8 *)(sym))
 #define UB(sym) (*(u8 *)(sym))
 
-s32 Scene_StreamTexturePage(void);
 void Entity_InitFreePool(void);
 void Script_InitNodeFreeList(void);
 int CdRom_DetectDiscChange(void);
@@ -53,7 +52,8 @@ int Draw_InitPipeline(void) {
     Akao_LoadVoiceBankAlt();
     room_status = Scene_LoadRoom(g_SceneDispatchToken);
     if (room_status < 0) return room_status;
-    Scene_StreamTexturePage();
+    room_status=Scene_StreamTexturePage();
+    if(room_status<0)return room_status;
     g_EntitySerialCounter = 1;
     H(g_ScriptNodeSeqCounter) = 1;
     Entity_InitFreePool();

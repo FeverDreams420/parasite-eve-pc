@@ -114,11 +114,4 @@ int Asset_SearchByKeyType(int type);
 /* -1: no image; -2: archive/marker missing; -3: invalid resident data. */
 int Asset_OpenPeImage(void);
 
-/* Sector table address as a pointer or a word: some loaders add the scaled
- * entry index to the table address as integers, index first. */
-typedef union PeSectorTableAddress {
-    unsigned short *entry;
-    unsigned int word;
-} PeSectorTableAddress;
-
 #endif /* PE1_PE_IMAGE_H */

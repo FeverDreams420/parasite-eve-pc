@@ -5,15 +5,8 @@
 int Akao_SendTableCommand(void *table, int command, int arg1, int arg2, int arg3);
 
 /* Decoded operands of the original actor-script sound dispatcher. */
-typedef struct AkaoCommandArgs {
-    int *opcode;
-    int *arg1;
-    int *arg2;
-    int *arg3;
-    int *arg4;
-    int *result;
-} AkaoCommandArgs;
+typedef int *AkaoCommandArgs[6]; /* opcode, arg1..arg4, result */
 
-int Akao_ProcessCommand(AkaoCommandArgs *args);
+int Akao_ProcessCommand(AkaoCommandArgs args);
 
 #endif

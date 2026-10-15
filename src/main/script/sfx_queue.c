@@ -3,7 +3,7 @@
 #include <string.h>
 
 FieldSfxU8 g_FieldSfxQueueCount;
-static FieldSfxQueueEntry g_FieldSfxQueue[28];
+FieldSfxQueueEntry g_FieldSfxQueue[28];
 
 void Script_ClearSfxTable(void) {
     memset(g_FieldSfxQueue, 0, sizeof(g_FieldSfxQueue));

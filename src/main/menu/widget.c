@@ -1690,8 +1690,8 @@ void MenuWidget_EaseNodePosition(MenuWidgetNode *arg0) {
     MenuWidgetNode *temp_a1;
     MenuWidgetListNavigation *navigation = (MenuWidgetListNavigation *)arg0;
 
-    temp_a1 = navigation->list;
     if (arg0 != NULL) {
+        temp_a1 = navigation->list;
         temp_v1 = temp_a1->visible_rows;
         temp_a2 = temp_a1->y_limit;
         if (temp_v1 < temp_a2) {

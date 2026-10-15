@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-option(BUILD_TESTING "Build tests, including remaining legacy dependencies" OFF)
+option(BUILD_TESTING "Build original game tests" OFF)
 include(CTest)
 
 # PsyZ belongs to the original game build, independently of the abandoned frontend.
@@ -30,7 +30,7 @@ else()
     target_compile_options(parasite-eve-original-disc PRIVATE -ffunction-sections -fdata-sections)
 endif()
 
-# The executable starts the original game; pc/ remains only as test debt.
+# The executable starts the original game and compiles its modules in place.
 add_executable(parasite-eve-pc src/main/boot/main.c)
 target_include_directories(parasite-eve-pc PRIVATE include)
 target_link_libraries(parasite-eve-pc PRIVATE psyz)
@@ -39,9 +39,6 @@ psyz_title(parasite-eve-pc "Parasite Eve")
 psyz_web_configure_target(parasite-eve-pc)
 psyz_ios_configure_target(parasite-eve-pc
     BUNDLE_IDENTIFIER "dev.parasiteeve.pc" DISPLAY_NAME "Parasite Eve")
-if(BUILD_TESTING)
-    add_subdirectory(pc)
-endif()
 
 # Compile the original game sources in place. Modules join this target as
 # their platform dependencies are made portable; no duplicate game logic.
@@ -189,9 +186,6 @@ else()
 endif()
 
 set(akao_runtime_targets parasite-eve-pc)
-if(BUILD_TESTING)
-    list(APPEND akao_runtime_targets test-boot-assets test-boot-replay)
-endif()
 foreach(akao_target IN LISTS akao_runtime_targets)
     target_sources(${akao_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
         $<TARGET_OBJECTS:parasite-eve-original-akao>
@@ -211,30 +205,6 @@ if(BUILD_TESTING)
     add_executable(test-original-akao-layout tests/original_akao_layout.c)
     target_include_directories(test-original-akao-layout PRIVATE include)
     add_test(NAME original-game-akao-layout COMMAND test-original-akao-layout)
-    add_executable(test-original-akao-instrument tests/original_akao_instrument.c
-        src/main/aya/stats.c
-        pc/room.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/akao_sequence.c pc/spu_bank.c
-        $<TARGET_OBJECTS:parasite-eve-original-akao>)
-    target_include_directories(test-original-akao-instrument PRIVATE include pc)
-    target_link_libraries(test-original-akao-instrument PRIVATE psyz)
-    # Isolate original procedures under test. The fixture rejects any request
-    # to the missing reverb-mode endpoint. Full audio must resolve it properly.
-    if(MSVC)
-        target_link_options(test-original-akao-instrument PRIVATE /OPT:REF)
-    elseif(APPLE)
-        target_link_options(test-original-akao-instrument PRIVATE -Wl,-dead_strip)
-    else()
-        target_link_options(test-original-akao-instrument PRIVATE -Wl,--gc-sections)
-    endif()
-    add_test(NAME original-game-akao-instrument COMMAND test-original-akao-instrument)
-    add_test(NAME original-game-akao-assets COMMAND test-original-akao-instrument --assets)
-    set_tests_properties(original-game-akao-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
-    add_test(NAME original-game-akao-menu-assets COMMAND test-original-akao-instrument --menu-assets)
-    set_tests_properties(original-game-akao-menu-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
-    add_test(NAME original-game-akao-tick-assets COMMAND test-original-akao-instrument --tick-assets)
-    set_tests_properties(original-game-akao-tick-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
-    add_test(NAME original-game-akao-prefix-assets COMMAND test-original-akao-instrument --execute-assets)
-    set_tests_properties(original-game-akao-prefix-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 
 if(BUILD_TESTING)
@@ -262,18 +232,6 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING)
-    # Disc I/O and the earlier decoder are test fixtures only. The function
-    # under test is the original game procedure linked into the executable.
-    add_executable(test-original-animation-assets tests/original_animation_assets.c
-        $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c pc/room_banks.c pc/animation.c pc/matrix.c pc/model.c
-        $<TARGET_OBJECTS:parasite-eve-original>)
-    target_include_directories(test-original-animation-assets PRIVATE include pc)
-    target_link_libraries(test-original-animation-assets PRIVATE psyz)
-    add_test(NAME original-game-animation-assets COMMAND test-original-animation-assets)
-    set_tests_properties(original-game-animation-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
-endif()
-
-if(BUILD_TESTING)
     add_executable(test-original-transforms tests/original_transforms.c
         $<TARGET_OBJECTS:parasite-eve-original>)
     target_include_directories(test-original-transforms PRIVATE include)
@@ -287,16 +245,6 @@ if(BUILD_TESTING)
     target_include_directories(test-original-projection PRIVATE include)
     target_link_libraries(test-original-projection PRIVATE psyz)
     add_test(NAME original-game-projection COMMAND test-original-projection)
-endif()
-
-if(BUILD_TESTING)
-    add_executable(test-original-projection-assets tests/original_projection_assets.c
-        $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c pc/room_banks.c pc/projection.c pc/camera.c
-        pc/model.c pc/matrix.c $<TARGET_OBJECTS:parasite-eve-original>)
-    target_include_directories(test-original-projection-assets PRIVATE include pc)
-    target_link_libraries(test-original-projection-assets PRIVATE psyz)
-    add_test(NAME original-game-projection-assets COMMAND test-original-projection-assets)
-    set_tests_properties(original-game-projection-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 
 if(BUILD_TESTING)
@@ -332,24 +280,8 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING)
-    add_executable(test-original-model-setup tests/original_model_setup.c
-        $<TARGET_OBJECTS:parasite-eve-original-camera>
-        pc/room.c pc/room_banks.c pc/model.c pc/vram.c
-        $<TARGET_OBJECTS:parasite-eve-original-disc>
-        $<TARGET_OBJECTS:parasite-eve-original>)
-    target_include_directories(test-original-model-setup PRIVATE include pc)
-    target_compile_definitions(test-original-model-setup PRIVATE __psyz)
-    target_link_libraries(test-original-model-setup PRIVATE psyz)
-    add_test(NAME original-game-model-setup COMMAND test-original-model-setup)
-    add_test(NAME original-game-model-gpu COMMAND test-original-model-setup --gpu)
-    add_test(NAME original-game-model-room-gpu COMMAND test-original-model-setup --room-gpu)
-    set_tests_properties(original-game-model-room-gpu PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "gpu;game-assets")
-    set_tests_properties(original-game-model-gpu PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "gpu;game-assets")
-    set_tests_properties(original-game-model-setup PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
-endif()
-
-if(BUILD_TESTING)
     add_executable(test-original-queue tests/original_queue.c
+        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
         $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original-akao>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
@@ -377,6 +309,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-movement tests/original_movement.c
+        src/main/asset/game_state.c
         $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original-akao>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
@@ -419,6 +352,8 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-credits-sprites PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets;gpu")
     add_test(NAME original-game-credits-playback COMMAND test-original-actor-animation --credits-playback)
     set_tests_properties(original-game-credits-playback PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90 LABELS "game-assets;gpu;audio")
+    add_test(NAME original-game-texture-pages COMMAND test-original-actor-animation --texture-pages)
+    set_tests_properties(original-game-texture-pages PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets;gpu")
     add_test(NAME original-game-bootstrap-cli COMMAND parasite-eve-pc --help)
     add_test(NAME original-game-bootstrap-arguments COMMAND parasite-eve-pc --frame-limit invalid)
     set_tests_properties(original-game-bootstrap-arguments PROPERTIES WILL_FAIL TRUE)
@@ -440,12 +375,6 @@ if(BUILD_TESTING)
     target_include_directories(test-original-floor PRIVATE include)
     target_link_libraries(test-original-floor PRIVATE psyz)
     add_test(NAME original-game-floor COMMAND test-original-floor)
-    add_executable(test-original-collision-assets tests/original_collision_assets.c
-        pc/collision.c pc/collision_math.c $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c $<TARGET_OBJECTS:parasite-eve-original>)
-    target_include_directories(test-original-collision-assets PRIVATE include pc)
-    target_link_libraries(test-original-collision-assets PRIVATE psyz)
-    add_test(NAME original-game-collision-assets COMMAND test-original-collision-assets)
-    set_tests_properties(original-game-collision-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 
 add_library(parasite-eve-original-camera OBJECT src/main/render/camera.c)
@@ -465,7 +394,6 @@ if(BUILD_TESTING)
     add_test(NAME original-game-camera COMMAND test-original-camera)
     set_tests_properties(original-game-camera PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
-
 
 add_library(parasite-eve-original-pad OBJECT src/main/menu/widget.c src/main/menu/input_queue.c)
 target_include_directories(parasite-eve-original-pad PRIVATE include)
@@ -526,35 +454,7 @@ if(BUILD_TESTING)
     else()
         target_compile_options(parasite-eve-test-disc PRIVATE -ffunction-sections -fdata-sections)
     endif()
-    add_executable(test-original-entity-textures tests/original_entity_textures.c
-        # This fixture already controls CdRom_ReadAssetSectors outcomes.
-        $<FILTER:$<TARGET_OBJECTS:parasite-eve-original-akao>,EXCLUDE,track_read[.]c[.]>
-        $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
-        $<TARGET_OBJECTS:parasite-eve-original-camera>
-        $<TARGET_OBJECTS:parasite-eve-test-disc>
-        $<TARGET_OBJECTS:parasite-eve-original>)
-    target_include_directories(test-original-entity-textures PRIVATE include pc)
-    target_compile_definitions(test-original-entity-textures PRIVATE __psyz)
-    target_link_libraries(test-original-entity-textures PRIVATE psyz)
-    add_test(NAME original-game-entity-textures COMMAND test-original-entity-textures)
-endif()
 
-if(BUILD_TESTING)
-    add_executable(test-original-entity-texture-assets tests/original_entity_textures.c
-        $<TARGET_OBJECTS:parasite-eve-original-disc> pc/room.c pc/vram.c pc/model.c pc/room_banks.c pc/animation.c pc/matrix.c
-        $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
-        $<TARGET_OBJECTS:parasite-eve-original-camera>
-        $<TARGET_OBJECTS:parasite-eve-original>)
-    target_sources(test-original-entity-texture-assets PRIVATE
-        $<TARGET_OBJECTS:parasite-eve-original-pad>
-        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
-        $<TARGET_OBJECTS:parasite-eve-original-shadow>
-        $<TARGET_OBJECTS:parasite-eve-original-akao>)
-    target_include_directories(test-original-entity-texture-assets PRIVATE include pc)
-    target_compile_definitions(test-original-entity-texture-assets PRIVATE __psyz PE_TEST_REAL_DISC)
-    target_link_libraries(test-original-entity-texture-assets PRIVATE psyz)
-    add_test(NAME original-game-entity-texture-assets COMMAND test-original-entity-texture-assets)
-    set_tests_properties(original-game-entity-texture-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "gpu;game-assets")
 endif()
 
 add_library(parasite-eve-original-shadow OBJECT src/overlays/room_lib/mirror_model.c src/main/render/mesh_list.c src/main/render/mesh_entry.c)
@@ -574,29 +474,6 @@ if(BUILD_TESTING)
     target_compile_definitions(test-original-shadow PRIVATE __psyz)
     target_link_libraries(test-original-shadow PRIVATE psyz)
     add_test(NAME original-game-shadow COMMAND test-original-shadow)
-endif()
-
-if(BUILD_TESTING)
-    add_executable(test-original-scene-spawn tests/original_scene_spawn.c
-        $<TARGET_OBJECTS:parasite-eve-original-akao>
-        $<TARGET_OBJECTS:parasite-eve-original-camera>
-        pc/room.c pc/room_banks.c pc/model.c pc/script.c
-        $<TARGET_OBJECTS:parasite-eve-original-disc>
-        $<TARGET_OBJECTS:parasite-eve-original>
-        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
-    target_include_directories(test-original-scene-spawn PRIVATE include pc)
-    target_compile_definitions(test-original-scene-spawn PRIVATE __psyz)
-    target_link_libraries(test-original-scene-spawn PRIVATE psyz)
-    if(APPLE)
-        target_link_options(test-original-scene-spawn PRIVATE -Wl,-dead_strip)
-    elseif(MSVC)
-        target_link_options(test-original-scene-spawn PRIVATE /OPT:REF)
-    else()
-        target_compile_options(test-original-scene-spawn PRIVATE -ffunction-sections -fdata-sections)
-        target_link_options(test-original-scene-spawn PRIVATE -Wl,--gc-sections)
-    endif()
-    add_test(NAME original-game-scene-spawn COMMAND test-original-scene-spawn)
-    set_tests_properties(original-game-scene-spawn PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()
 
 if(BUILD_TESTING)

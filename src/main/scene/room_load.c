@@ -666,44 +666,34 @@ invalid_geometry:
 
 s32 Scene_StreamTexturePage(void)
 {
-    Pe1GameState *state;
-    PeSectorTableAddress ranges;
-    PeSectorTableAddress nextRanges;
-    PeSectorTableAddress first;
-    PeSectorTableAddress last;
-    s32 retry;
-    s32 offset;
-    u16 start;
-    s32 poll;
-
-    state = &g_GameState;
-    if ((s8)g_GameState.room_type != g_LoadedTexturePageId) {
-        DrawSync(0);
-        /* Matching debt: the CD retry restarts from the table address;
-         * a loop lets loop.c hoist it (docs/CODE_ORGANIZATION.md). */
-restart:
-        ranges.entry = g_PeImageSectorTable;
-        nextRanges.entry = ranges.entry + 1;
-        retry = -1;
-        do {
-            offset = ((s8)state->room_type + 0x2B) * 2;
-            first.word = offset + ranges.word;
-            last.word = offset + nextRanges.word;
-            start = *first.entry;
-        } while (CdRom_ReadSectorsFromLba(state->pe_image_base_lba + start, state->scene_load_scratch,
-                                          *last.entry - start) == retry);
-        do {
-            poll = CdRom_PollReady();
-            if (poll == 0) {
-                break;
-            }
-            if (poll == -1) {
-                goto restart;
-            }
-        } while (1);
-        Asset_LoadTimImage((TimFile *)state->scene_load_scratch);
-        state->field_bg_cache_bank = (s8)state->room_type;
+    Pe1GameState *state=&g_GameState;
+    int page=(s8)state->room_type;
+    if(page==g_LoadedTexturePageId)return 0;
+    int index=page+0x2b;
+    if((unsigned)index>=80 || !state->scene_load_scratch ||
+       (uintptr_t)state->scene_load_scratch%_Alignof(TimFile))return -3;
+    u32 first=g_PeImageSectorTable[index],last=g_PeImageSectorTable[index+1];
+    if(last<=first || last-first>0x20000/2048 || first>UINT32_MAX-state->pe_image_base_lba)return -3;
+    DrawSync(0);
+    if(CdRom_ReadSectorsFromLba(state->pe_image_base_lba+first,state->scene_load_scratch,last-first)<0)return -1;
+    int ready;
+    while((ready=CdRom_PollReady())>0){}
+    if(ready<0)return -2;
+    /* Bound the authored TIM blocks before the existing uploader follows
+     * their relative lengths. Invalid input must not commit the cache. */
+    size_t bytes=(size_t)(last-first)*2048,at=8;
+    TimFile *tim=(TimFile *)state->scene_load_scratch;
+    if(tim->magic!=16 || (tim->flags&~11) || (tim->flags&7)>3)return -4;
+    for(unsigned block=0;block<((tim->flags&8)?2u:1u);++block){
+        u32 length;RECT rect;
+        if(bytes-at<12)return -4;
+        memcpy(&length,(u8 *)tim+at,4);memcpy(&rect,(u8 *)tim+at+4,sizeof(rect));
+        if(length<12 || (length&3) || length>bytes-at || rect.x<0 || rect.y<0 || rect.w<=0 || rect.h<=0 ||
+           rect.x+rect.w>1024 || rect.y+rect.h>512 || (u64)rect.w*rect.h*2>length-12)return -4;
+        at+=length;
     }
+    Asset_LoadTimImage(tim);
+    state->field_bg_cache_bank=(s8)page;
     return 0;
 }
 

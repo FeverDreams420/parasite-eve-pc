@@ -1098,7 +1098,7 @@ typedef struct AkaoStackLocals {
 
 
 
-int Akao_ProcessCommand(AkaoCommandArgs *args) {
+int Akao_ProcessCommand(AkaoCommandArgs args) {
     AkaoStackLocals locals;
     int status;
     int handle;
@@ -1119,17 +1119,17 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
     DeferredAkaoCommand *deferred;
     u8 *deferred_count;
 
-    switch (*args->opcode) {
+    switch (*args[0]) {
     case 0x64:
-        Akao_Cmd_99_9B_9D(*args->arg1);
+        Akao_Cmd_99_9B_9D(*args[1]);
         break;
     case 0x65:
-        Akao_Cmd_98_9A_9C(*args->arg1);
+        Akao_Cmd_98_9A_9C(*args[1]);
         break;
     case 0xC8:
     case 0x198:
-        status = CdRom_SeekToTrack(*args->arg1, 1, 0, &locals.slot,
-                                *args->arg2 == 0);
+        status = CdRom_SeekToTrack(*args[1], 1, 0, &locals.slot,
+                                *args[2] == 0);
         if (status == 1) {
             g_ScriptCursor -= 8;
             g_ScriptNodePool->active = status;
@@ -1138,13 +1138,13 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         if (locals.slot + 2U < 2U) {
             break;
         }
-        *args->result = Akao_Cmd_10((locals.slot == 0 ? g_GameState.bank_work_base : g_GameState.bank_work_end));
+        *args[5] = Akao_Cmd_10((locals.slot == 0 ? g_GameState.bank_work_base : g_GameState.bank_work_end));
         Akao_Cmd_C0_WithSlot(0, 0x7F);
-        CdRom_RegisterAudioSlot(locals.slot, *args->arg1, *args->result, 0x7F);
+        CdRom_RegisterAudioSlot(locals.slot, *args[1], *args[5], 0x7F);
         break;
     case 0xCB:
-        status = CdRom_SeekToTrack(*args->arg1, 1, 1, &locals.slot,
-                                *args->arg3 == 0);
+        status = CdRom_SeekToTrack(*args[1], 1, 1, &locals.slot,
+                                *args[3] == 0);
         if (status == 1) {
             g_ScriptCursor -= 8;
             g_ScriptNodePool->active = status;
@@ -1153,19 +1153,19 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         if (locals.slot + 2U < 2U) {
             break;
         }
-        *args->result = Akao_Cmd_19_Then_C0(
-            (locals.slot == 0 ? g_GameState.bank_work_base : g_GameState.bank_work_end), *args->arg2);
-        CdRom_RegisterAudioSlot(locals.slot, *args->arg1, *args->result,
-                                  *args->arg2);
+        *args[5] = Akao_Cmd_19_Then_C0(
+            (locals.slot == 0 ? g_GameState.bank_work_base : g_GameState.bank_work_end), *args[2]);
+        CdRom_RegisterAudioSlot(locals.slot, *args[1], *args[5],
+                                  *args[2]);
         break;
     case 0xC9:
-        locals.slot = CdRom_GetAudioSlotByKey(*args->arg1);
+        locals.slot = CdRom_GetAudioSlotByKey(*args[1]);
         if (locals.slot == -1) {
             break;
         }
         Akao_Cmd_11(locals.slot);
         wait_one = 1;
-        status = CdRom_SeekToTrack(*args->arg1, 0, 0, &locals.slot, wait_one);
+        status = CdRom_SeekToTrack(*args[1], 0, 0, &locals.slot, wait_one);
         if (status != wait_one) {
             break;
         }
@@ -1173,136 +1173,136 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         g_ScriptNodePool->active = status;
         return 0;
     case 0xCC:
-        Akao_Cmd_90(*args->arg1);
+        Akao_Cmd_90(*args[1]);
         break;
     case 0xCD:
-        locals.slot = CdRom_GetAudioSlotByKey(*args->arg1);
+        locals.slot = CdRom_GetAudioSlotByKey(*args[1]);
         if (locals.slot == -1) {
             break;
         }
-        Akao_Cmd_C0_WithSlot(locals.slot, *args->arg2);
-        slot_index0 = CdRom_FindAudioSlotIndex(*args->arg1);
-        handle = CdRom_GetAudioSlotByKey(*args->arg1);
-        CdRom_RegisterAudioSlot(slot_index0, *args->arg1, handle,
-                                  *args->arg2);
+        Akao_Cmd_C0_WithSlot(locals.slot, *args[2]);
+        slot_index0 = CdRom_FindAudioSlotIndex(*args[1]);
+        handle = CdRom_GetAudioSlotByKey(*args[1]);
+        CdRom_RegisterAudioSlot(slot_index0, *args[1], handle,
+                                  *args[2]);
         break;
     case 0xCE:
-        locals.slot = CdRom_GetAudioSlotByKey(*args->arg1);
+        locals.slot = CdRom_GetAudioSlotByKey(*args[1]);
         if (locals.slot == -1) {
             break;
         }
-        Akao_Cmd_C1_WithSlot(locals.slot, *args->arg2 * 2, *args->arg3);
-        slot_index1 = CdRom_FindAudioSlotIndex(*args->arg1);
-        handle = CdRom_GetAudioSlotByKey(*args->arg1);
-        CdRom_RegisterAudioSlot(slot_index1, *args->arg1, handle,
-                                  *args->arg3);
+        Akao_Cmd_C1_WithSlot(locals.slot, *args[2] * 2, *args[3]);
+        slot_index1 = CdRom_FindAudioSlotIndex(*args[1]);
+        handle = CdRom_GetAudioSlotByKey(*args[1]);
+        CdRom_RegisterAudioSlot(slot_index1, *args[1], handle,
+                                  *args[3]);
         break;
     case 0xCF:
-        locals.slot = CdRom_GetAudioSlotByKey(*args->arg1);
+        locals.slot = CdRom_GetAudioSlotByKey(*args[1]);
         if (locals.slot == -1) {
             break;
         }
-        Akao_Cmd_C2_WithSlot(locals.slot, *args->arg2 * 2, *args->arg3,
-                             *args->arg4);
-        slot_index2 = CdRom_FindAudioSlotIndex(*args->arg1);
-        handle = CdRom_GetAudioSlotByKey(*args->arg1);
-        CdRom_RegisterAudioSlot(slot_index2, *args->arg1, handle,
-                                  *args->arg4);
+        Akao_Cmd_C2_WithSlot(locals.slot, *args[2] * 2, *args[3],
+                             *args[4]);
+        slot_index2 = CdRom_FindAudioSlotIndex(*args[1]);
+        handle = CdRom_GetAudioSlotByKey(*args[1]);
+        CdRom_RegisterAudioSlot(slot_index2, *args[1], handle,
+                                  *args[4]);
         break;
     case 0xD0:
-        Akao_Cmd_D0(*args->arg1);
+        Akao_Cmd_D0(*args[1]);
         break;
     case 0xD1:
-        Akao_Cmd_D1(*args->arg1 * 2, *args->arg2);
+        Akao_Cmd_D1(*args[1] * 2, *args[2]);
         break;
     case 0xD2:
-        Akao_Cmd_D2(*args->arg1 * 2, *args->arg2, *args->arg3);
+        Akao_Cmd_D2(*args[1] * 2, *args[2], *args[3]);
         break;
     case 0xD3:
-        Akao_Cmd_D4(*args->arg1);
+        Akao_Cmd_D4(*args[1]);
         break;
     case 0xD4:
-        Akao_Cmd_D5(*args->arg1 * 2, *args->arg2);
+        Akao_Cmd_D5(*args[1] * 2, *args[2]);
         break;
     case 0xD5:
-        Akao_Cmd_D6(*args->arg1 * 2, *args->arg2, *args->arg3);
+        Akao_Cmd_D6(*args[1] * 2, *args[2], *args[3]);
         break;
     case 0xD6:
-        Akao_Cmd_D8(*args->arg1);
+        Akao_Cmd_D8(*args[1]);
         break;
     case 0xD7:
-        Akao_Cmd_D9(*args->arg1 * 2, *args->arg2);
+        Akao_Cmd_D9(*args[1] * 2, *args[2]);
         break;
     case 0xD8:
-        Akao_Cmd_DA(*args->arg1 * 2, *args->arg2, *args->arg3);
+        Akao_Cmd_DA(*args[1] * 2, *args[2], *args[3]);
         break;
     case 0xD9:
         Akao_ResetPositionalState();
         break;
     case 0x12C:
-        *args->result = Akao_SendTableCommand(
-            ((u8 *)g_GameState.loaded_scene_assets), *args->arg1, *args->arg2, *args->arg3,
-            *args->arg4);
+        *args[5] = Akao_SendTableCommand(
+            ((u8 *)g_GameState.loaded_scene_assets), *args[1], *args[2], *args[3],
+            *args[4]);
         break;
     case 0x12D:
-        Akao_Cmd_21(*args->arg1, *args->arg2);
+        Akao_Cmd_21(*args[1], *args[2]);
         break;
     case 0x12E:
-        Akao_Cmd_A0(*args->arg1, *args->arg2, *args->arg3);
+        Akao_Cmd_A0(*args[1], *args[2], *args[3]);
         break;
     case 0x12F:
-        Akao_Cmd_A1(*args->arg1, *args->arg2, *args->arg3 * 2,
-                    *args->arg4);
+        Akao_Cmd_A1(*args[1], *args[2], *args[3] * 2,
+                    *args[4]);
         break;
     case 0x130:
-        Akao_Cmd_A8(*args->arg1);
+        Akao_Cmd_A8(*args[1]);
         break;
     case 0x131:
-        Akao_Cmd_A9(*args->arg1 * 2, *args->arg2);
+        Akao_Cmd_A9(*args[1] * 2, *args[2]);
         break;
     case 0x132:
-        Akao_Cmd_A2(*args->arg1, *args->arg2, *args->arg3);
+        Akao_Cmd_A2(*args[1], *args[2], *args[3]);
         break;
     case 0x133:
-        Akao_Cmd_A3(*args->arg1, *args->arg2, *args->arg3 * 8,
-                    *args->arg4);
+        Akao_Cmd_A3(*args[1], *args[2], *args[3] * 8,
+                    *args[4]);
         break;
     case 0x134:
-        Akao_Cmd_AA(*args->arg1);
+        Akao_Cmd_AA(*args[1]);
         break;
     case 0x135:
-        Akao_Cmd_AB(*args->arg1 * 2, *args->arg2);
+        Akao_Cmd_AB(*args[1] * 2, *args[2]);
         break;
     case 0x136:
-        Akao_Cmd_A4(*args->arg1, *args->arg2, *args->arg3);
+        Akao_Cmd_A4(*args[1], *args[2], *args[3]);
         break;
     case 0x137:
-        Akao_Cmd_A5(*args->arg1, *args->arg2, *args->arg3 * 2,
-                    *args->arg4);
+        Akao_Cmd_A5(*args[1], *args[2], *args[3] * 2,
+                    *args[4]);
         break;
     case 0x138:
-        Akao_Cmd_AC(*args->arg1);
+        Akao_Cmd_AC(*args[1]);
         break;
     case 0x139:
-        Akao_Cmd_AD(*args->arg1 * 2, *args->arg2);
+        Akao_Cmd_AD(*args[1] * 2, *args[2]);
         break;
     case 0x13A:
         Akao_Cmd_F1();
         break;
     case 0x15E:
-        g_GameState.bank_value_f8 = *args->arg1;
-        g_GameState.bank_value_f6 = *args->arg2;
-        g_GameState.bank_value_fa = *args->arg3;
-        g_GameState.bank_value_f7 = *args->arg4;
+        g_GameState.bank_value_f8 = *args[1];
+        g_GameState.bank_value_f6 = *args[2];
+        g_GameState.bank_value_fa = *args[3];
+        g_GameState.bank_value_f7 = *args[4];
         break;
     case 0x15F:
-        *args->result = Asset_Find08w(
-            *args->arg1, 0, Pe1Fixed_Integer(&g_CurrentEntity->pos_x),
+        *args[5] = Asset_Find08w(
+            *args[1], 0, Pe1Fixed_Integer(&g_CurrentEntity->pos_x),
             Pe1Fixed_Integer(&g_CurrentEntity->pos_y),
             Pe1Fixed_Integer(&g_CurrentEntity->pos_z));
         break;
     case 0x160:
-        if (*args->arg2 == 0) {
+        if (*args[2] == 0) {
             player = g_PlayerEntity;
             if (player == 0) {
                 break;
@@ -1311,8 +1311,8 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         } else {
             actor = g_FieldActorListHead;
             while (actor != 0) {
-                if (actor->type_id == *args->arg2 &&
-                    actor->sub_id == *args->arg3 &&
+                if (actor->type_id == *args[2] &&
+                    actor->sub_id == *args[3] &&
                     !(actor->flags & 0x10)) {
                     break;
                 }
@@ -1322,16 +1322,16 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
                 break;
             }
         }
-        *args->result = Asset_Find08w(
-            *args->arg1, 0, ((Pe1Fixed16_16 *)&actor->pos_x)->parts.integer,
+        *args[5] = Asset_Find08w(
+            *args[1], 0, ((Pe1Fixed16_16 *)&actor->pos_x)->parts.integer,
             ((Pe1Fixed16_16 *)&actor->pos_y)->parts.integer,
             ((Pe1Fixed16_16 *)&actor->pos_z)->parts.integer);
         break;
     case 0x161:
-        *args->result = Asset_Find08w(*args->arg1, 0,
-                                     ((Pe1Fixed16_16 *)args->arg2)->parts.integer,
-                                     ((Pe1Fixed16_16 *)args->arg3)->parts.integer,
-                                     ((Pe1Fixed16_16 *)args->arg4)->parts.integer);
+        *args[5] = Asset_Find08w(*args[1], 0,
+                                     ((Pe1Fixed16_16 *)args[2])->parts.integer,
+                                     ((Pe1Fixed16_16 *)args[3])->parts.integer,
+                                     ((Pe1Fixed16_16 *)args[4])->parts.integer);
         break;
     case 0x190:
         base = ((u8 *)g_GameState.loaded_scene_assets);
@@ -1349,21 +1349,21 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
             current = &entries[count];
             if (current->flags & 0x10) {
                 int entry_id = current->id;
-                if (entry_id == *args->arg1) {
+                if (entry_id == *args[1]) {
                     goto archive_match;
                 }
             }
         } while (++count < entry_limit);
         break;
     case 0x191:
-        status = CdRom_SeekToTrack(*args->arg1, 1, 0, &locals.slot,
-                               *args->arg2 == 0);
+        status = CdRom_SeekToTrack(*args[1], 1, 0, &locals.slot,
+                               *args[2] == 0);
         if (status != 1) {
-            *args->result = locals.slot;
+            *args[5] = locals.slot;
             break;
     case 0x192:
-        status = CdRom_SeekToTrack(*args->arg1, 1, 1, &locals.slot,
-                               *args->arg2 == 0);
+        status = CdRom_SeekToTrack(*args[1], 1, 1, &locals.slot,
+                               *args[2] == 0);
         if (status == 1) {
             g_ScriptCursor -= 8;
             g_ScriptNodePool->active = status;
@@ -1376,7 +1376,7 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
         g_ScriptNodePool->active = status;
         return 0;
         }
-        *args->result = locals.slot;
+        *args[5] = locals.slot;
         break;
     case 0x195:
         g_GameState.bank_state_12 = 1;
@@ -1387,20 +1387,20 @@ int Akao_ProcessCommand(AkaoCommandArgs *args) {
             deferred = &g_DeferredAkaoCommands[g_GameState.bank_state_11];
             deferred->actor_type = g_CurrentEntity->type_id;
             deferred->actor_id = g_CurrentEntity->sub_id;
-            deferred->command = *args->arg1;
-            deferred->arg1 = *args->arg2;
-            deferred->arg2 = *args->arg3;
-            if (*args->opcode == 0x196) {
-                deferred->arg3 = *args->arg3;
+            deferred->command = *args[1];
+            deferred->arg1 = *args[2];
+            deferred->arg2 = *args[3];
+            if (*args[0] == 0x196) {
+                deferred->arg3 = *args[3];
             } else {
-                deferred->arg3 = *args->arg4;
+                deferred->arg3 = *args[4];
             }
             deferred_count = &g_GameState.bank_state_11;
             (*deferred_count)++;
         }
         break;
     case 0x199:
-        volume = *args->arg1;
+        volume = *args[1];
         locals.volumes[3] = 0;
         locals.volumes[1] = 0;
         g_GameState.scene_audio.tracks.movie_volume = volume;
@@ -1415,7 +1415,7 @@ archive_match:
                                     (current->data_offset & 0xFFFFFF);
         break;
     case 0x19A:
-        Akao_Cmd_92(*args->arg1);
+        Akao_Cmd_92(*args[1]);
         break;
     }
     return 1;

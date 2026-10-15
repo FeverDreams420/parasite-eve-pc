@@ -1,6 +1,8 @@
 #include "menu_memcard_image.h"
 #include "menu_memcard_menu.h"
 #include "menu_memcard_screen.h"
+#include "pe1/boot.h"
+#include <stdio.h>
 
 /* Screen state belongs to the original title module. Native GPU tags and
  * DRAWENV no longer share hardcoded PS1 byte offsets with image workspaces. */
@@ -32,6 +34,16 @@ void MenuCard_HandleListInput(void) {
     MemcardImageNode *node;
 
     pad = Draw_RemapStatusFlags();
+    if(g_BootHostActive && g_BootHostPadEventCount && pad!=g_MemcardPrevPad){
+        printf("{\"event\":\"title_input\",\"vblank\":%u,\"pad\":%u,\"timer\":%d,\"nodes\":[",
+            g_BootHostVBlankCount,(u32)pad,g_MemcardScreenTimer);
+        const char *separator="";
+        for(MemcardImageNode *n=g_MemcardActiveNodeHead;n;n=n->next){
+            printf("%s{\"kind\":%d,\"y\":%d,\"intensity\":%d,\"target\":%d,\"step\":%d}",
+                separator,n->kind,n->y,n->intensity,n->targetY,n->stepY);separator=",";
+        }
+        puts("]}");fflush(stdout);
+    }
     if ((pad & 0x800) && !(g_MemcardPrevPad & 0x800)) {
         node = MenuCard_FindImageNode(2);
         if (node != 0 && node->intensity > 0x80) {

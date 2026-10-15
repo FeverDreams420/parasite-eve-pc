@@ -257,13 +257,30 @@ static int glyph_io_failed;
 static int glyph_read_retry, glyph_poll_retry, glyph_pending;
 static int fx_image_io;
 static unsigned boot_credit_corruption;
+static unsigned texture_page_corruption;
 static unsigned fx_read_failure,fx_poll_failure;
 int CdRom_ImageReadSectorsFromLba(u32 lba,void *buffer,u32 count);
 int CdRom_ImagePollReady(void);
 int CdRom_ReadSectorsFromLba(u32 lba, void *buffer, u32 count)
 {
     ++glyph_reads;
-    if(fx_image_io)return glyph_reads==fx_read_failure?-1:CdRom_ImageReadSectorsFromLba(lba,buffer,count);
+    if(fx_image_io){
+        int status=glyph_reads==fx_read_failure?-1:CdRom_ImageReadSectorsFromLba(lba,buffer,count);
+        if(status>=0 && texture_page_corruption){
+            TimFile *tim=buffer;TimBlock *image=(TimBlock *)((u8 *)&tim->first_block+44);
+            switch(texture_page_corruption){
+            case 1:tim->magic=0;break;
+            case 2:tim->flags|=0x1000;break;
+            case 3:tim->first_block.header.length=-4;break;
+            case 4:image->header.length=13;break;
+            case 5:image->header.rect.h=-1;break;
+            case 6:image->header.rect.w=1025;break;
+            case 7:tim->first_block.header.length=count*2048-8;break;
+            case 8:tim->first_block.header.rect.w=32;break;
+            }
+        }
+        return status;
+    }
     if (glyph_disc) {
         if (lba < glyph_archive.sector || buffer != glyph_scratch ||
             count > sizeof(glyph_scratch) / 2048 ||
@@ -1909,23 +1926,480 @@ static int original_resident_script_program(void)
     return 1;
 }
 
+static int original_wait_opcode_bindings(void)
+{
+    const u8 enabled[]={0,1,2,127,128,255},wide[]={0,1,255};
+    const s16 elapsed[]={-32768,-1,0,1,2,32767};
+    const s32 targets[]={-32768,-1,0,1,2,32767,32768,INT32_MIN,INT32_MAX};
+    u8 saved_enabled=g_DrawEnabled.bits,saved_wide=g_MovieWide;short saved_elapsed=g_SeqElapsed;
+    uintptr_t saved_cursor=g_ScriptCursorAddress;ScriptNode *saved_node=g_ScriptNodePool;
+    FieldActor *saved_actor=g_CurrentEntity;
+    int (*handlers[])(int **)={Script_WaitFrameOrDraw,Entity_YieldOnDrawBusy};
+    const unsigned opcodes[]={140,143};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned op=0;op<2;++op)for(unsigned e=0;e<6;++e)for(unsigned time=0;time<6;++time)
+    for(unsigned target=0;target<9;++target)for(unsigned w=0;w<3;++w){
+        u32 program[6]={0};ScriptNode node={.active=7};int value=targets[target],*args[]={&value};
+        g_DrawEnabled.bits=enabled[e];g_MovieWide=wide[w];g_SeqElapsed=elapsed[time];
+        g_ScriptNodePool=&node;g_ScriptCursor=program+3;
+        if(g_ScriptQueueOpcodeHandlers[opcodes[op]]!=handlers[op])return 0;
+        u32 result=g_ScriptQueueOpcodeHandlers[opcodes[op]](args);
+        const u32 values[]={result,(u32)(g_ScriptCursorAddress-(uintptr_t)program),(u32)node.active};
+        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((values[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        if(value!=targets[target])return 0;++cases;
+    }
+    if(cases!=1944 || hash!=UINT64_C(0x5ccf0cb9f8ead07a))return 0;
+    FieldActor actor={0};g_CurrentEntity=&actor;
+    u32 program[]={140|(1u<<13),0,2,143,0,32,0};
+    ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+    g_DrawEnabled.bits=2;g_MovieWide=1;g_SeqElapsed=1;
+    g_ScriptNodePool=&node;Script_RunQueue();
+    if(node.current.script!=program || node.active!=1 || (node.flags&0x10))return 0;
+    g_SeqElapsed=2;g_ScriptNodePool=&node;Script_RunQueue();
+    if(node.current.script!=program+3 || node.active!=1 || (node.flags&0x10))return 0;
+    g_DrawEnabled.bits=0;g_ScriptNodePool=&node;Script_RunQueue();
+    if(node.current.script!=program+7 || !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    g_DrawEnabled.bits=saved_enabled;g_MovieWide=saved_wide;g_SeqElapsed=saved_elapsed;
+    g_ScriptCursorAddress=saved_cursor;g_ScriptNodePool=saved_node;g_CurrentEntity=saved_actor;
+    puts("Original frame/draw waits: 1944 unhooked USA MIPS states and three-tick dispatcher yield/resume/finish passed");
+    return 1;
+}
+
+static int original_field_sfx_opcode_binding(void)
+{
+    const u32 patterns[]={0,1,127,128,255,256,0xffffffff,0x80000000};
+    const u16 senders[]={0,1,65535,0x1234};
+    FieldActor *saved_actor=g_CurrentEntity,*saved_head=g_FieldActorListHead;
+    ScriptNode *saved_pool=g_ScriptNodePool,*saved_free=g_ScriptNodeFreeListHead;
+    u32 *saved_cursor=g_ScriptCursor;u16 saved_seq=g_ScriptNodeSeqCounter[0];
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    Script_ClearSfxTable();
+    if(g_ScriptQueueOpcodeHandlers[28]!=Script_PlayFieldSfx)return 0;
+#define SFX_PUT(value,bytes) do {u32 v_=(u32)(value);for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+    for(unsigned kind=0;kind<8;++kind)for(unsigned sub=0;sub<8;++sub)
+    for(unsigned task=0;task<8;++task)for(unsigned sender=0;sender<4;++sender){
+        u32 callback[]={32,0};
+        FieldActor actor={.field_sfx_id=senders[sender]};
+        FieldActor recipient={.type_id=(u8)patterns[kind],.sub_id=(u8)patterns[sub],.script_cursor_19c=callback};
+        ScriptNode available[2]={{0}};available[0].next=available+1;
+        g_CurrentEntity=&actor;g_FieldActorListHead=&recipient;g_ScriptNodeFreeListHead=available;
+        u32 program[]={28|(3u<<13),0,patterns[kind],patterns[sub],patterns[task],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;
+        Script_RunQueue();
+        if(!(node.flags&0x10) || node.current.script!=program+7 || g_ScriptNodePool || g_FieldSfxQueueCount!=1)return 0;
+        SFX_PUT(1,4);SFX_PUT(g_FieldSfxQueueCount,1);
+        const u8 *payload=(const u8 *)&g_FieldSfxQueue[0];
+        for(unsigned byte=0;byte<sizeof(FieldSfxQueueEntry);++byte)SFX_PUT(payload[byte],1);
+        Scene_UpdateEntityList();ScriptNode *event=recipient.script_node_lists[2];
+        if(g_FieldSfxQueueCount)return 0;
+        if((u16)patterns[kind]>255){
+            if(event || g_ScriptNodeFreeListHead!=available)return 0;
+        }else if(event!=available || event->current.script!=callback || event->flags!=4 || event->active!=1 ||
+           event->target14!=(u8)patterns[task] || event->trigger_value!=senders[sender] ||
+           g_ScriptNodeFreeListHead!=available+1)return 0;
+        ++cases;
+    }
+#undef SFX_PUT
+    g_CurrentEntity=saved_actor;g_FieldActorListHead=saved_head;g_ScriptNodePool=saved_pool;
+    g_ScriptNodeFreeListHead=saved_free;g_ScriptCursor=saved_cursor;g_ScriptNodeSeqCounter[0]=saved_seq;
+    if(cases!=2048 || hash!=UINT64_C(0xafaf0f79b0115df5))return 0;
+    puts("Original field-event opcode: 2048 USA MIPS payloads match full dispatcher, queue and native recipient-node delivery");
+    return 1;
+}
+
+static int original_flag_opcode_bindings(void)
+{
+    const u32 patterns[]={0,1,2,3,0x40,0x41,0x80,0x7fffffff,0x80000000,0xffffffff,0x12345678,0xfedcba98};
+    int (*handlers[])(int **)={Entity_ClearGlobalFlag1,Entity_SetGlobalFlag1,Entity_SetCurrentFlag40,Entity_ClearCurrentFlag40};
+    FieldActor *saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;
+    u32 *saved_cursor=g_ScriptCursor;int saved_lock=g_FieldMoveLock;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned op=0;op<4;++op)for(unsigned m=0;m<12;++m)for(unsigned f=0;f<12;++f){
+        FieldActor actor={.flags=patterns[f]};g_CurrentEntity=&actor;g_FieldMoveLock=(s32)patterns[m];
+        if(g_ScriptQueueOpcodeHandlers[63+op]!=handlers[op])return 0;
+        u32 result=g_ScriptQueueOpcodeHandlers[63+op](NULL);
+        const u32 values[]={result,(u32)g_FieldMoveLock,actor.flags};
+        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((values[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        u32 program[]={63+op,0,32,0};ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || !(node.flags&0x10) || node.current.script!=program+4 || g_ScriptNodePool ||
+           (u32)g_FieldMoveLock!=values[1] || actor.flags!=values[2])return 0;
+        ++cases;
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_FieldMoveLock=saved_lock;
+    if(cases!=576 || hash!=UINT64_C(0x4c0f80b0374806b5))return 0;
+    RenderTintState saved_tint;memcpy(&saved_tint,&g_ScreenTint,sizeof(saved_tint));
+    hash=UINT64_C(14695981039346656037);
+    FieldActor actor={0};g_CurrentEntity=&actor;
+    if(g_ScriptQueueOpcodeHandlers[136]!=Script_ClearEntityFlag40)return 0;
+    for(unsigned fade=0;fade<256;++fade){
+        memcpy(&g_ScreenTint,&saved_tint,sizeof(saved_tint));g_ScreenTint.fadeMode=fade;
+        u32 result=g_ScriptQueueOpcodeHandlers[136](NULL);
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        hash=(hash^g_ScreenTint.fadeMode)*UINT64_C(1099511628211);
+        RenderTintState expected;memcpy(&expected,&saved_tint,sizeof(expected));expected.fadeMode=g_ScreenTint.fadeMode;
+        u32 program[]={136,0,32,0};ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || !(node.flags&0x10) || node.current.script!=program+4 || g_ScriptNodePool ||
+           memcmp(&g_ScreenTint,&expected,sizeof(expected)))return 0;
+    }
+    int (*noops[])(int **)={Script_Noop1,Script_Noop2,Script_Noop4,Script_Noop3};
+    const unsigned opcodes[]={141,142,144,145};
+    for(unsigned i=0;i<4;++i){
+        if(g_ScriptQueueOpcodeHandlers[opcodes[i]]!=noops[i] || noops[i](NULL)!=1)return 0;
+        u32 program[]={opcodes[i],0,32,0};ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_ScriptNodePool=&node;Script_RunQueue();
+        if(!(node.flags&0x10) || node.current.script!=program+4 || g_ScriptNodePool)return 0;
+    }
+    memcpy(&g_ScreenTint,&saved_tint,sizeof(saved_tint));
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0x14fd97a6d6c2c325))return 0;
+    puts("Original flag opcodes: 576 USA MIPS cases, native handler ABI and full dispatcher/node completion passed");
+    puts("Original fade release opcode: all 256 USA MIPS values, dispatcher completion and untouched native tint state passed");
+    return 1;
+}
+
+static int original_turn_to_actor_opcode(void)
+{
+    const s32 positions[][2]={{0,0},{65536,0},{0,-65536},{INT32_MIN,INT32_MAX}};
+    const s16 angles[]={0,1,1023,1024,2047,2048,3072,4095,-1};
+    const int speeds[]={0,1,64,4096,INT32_MAX};
+    FieldActor *saved_actor=g_CurrentEntity,*saved_player=g_PlayerEntity,*saved_head=g_FieldActorListHead;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[75]!=Render_CameraSnapToEntity)return 0;
+    for(unsigned kind=0;kind<5;++kind)for(unsigned p=0;p<4;++p)
+    for(unsigned a=0;a<9;++a)for(unsigned speed=0;speed<5;++speed){
+        FieldActor actor={0},target={.type_id=7,.sub_id=11},dead={.type_id=7,.sub_id=11,.flags=0x10};
+        if(kind==4)dead.next=&target;
+        g_CurrentEntity=&actor;g_PlayerEntity=kind==0?&target:NULL;
+        g_FieldActorListHead=kind==2?&target:kind>=3?&dead:NULL;
+        actor.pos_x=p==3?INT32_MAX:0;actor.pos_z=p==3?INT32_MIN:0;actor.rot_y=angles[a];
+        target.pos_x=positions[p][0];target.pos_z=positions[p][1];
+        u32 storage[8]={0};ScriptNode node={.flags=0x80,.active=7};
+        g_ScriptNodePool=&node;g_ScriptCursor=storage+5;
+        int data[]={kind<2?0:7,11,speeds[speed]};int *args[]={data,data+1,data+2};
+        u32 result=Render_CameraSnapToEntity(args);
+        const u32 output[]={result,(u16)actor.rot_y,node.flags,(u32)node.active,
+            (u32)((uintptr_t)g_ScriptCursor-(uintptr_t)storage),(u32)node.target14,node.target18.actor!=NULL};
+        for(unsigned i=0;i<7;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((output[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        if(node.target18.actor && node.target18.actor!=&target)return 0;
+        u32 program[]={75|(3u<<13),0,(u32)data[0],11,(u32)data[2],32,0};
+        node=(ScriptNode){.current.script=program,.active=1,.flags=0x80};actor.rot_y=angles[a];
+        g_ScriptNodePool=&node;Script_RunQueue();
+        if(g_ScriptNodePool || (u16)actor.rot_y!=output[1] || node.target14!=(s32)output[5] ||
+           (node.target18.actor!=NULL)!=output[6] || (node.target18.actor && node.target18.actor!=&target) ||
+           node.current.script!=(result?program+7:program) || node.active!=!result ||
+           !!(node.flags&0x10)!=!!result)return 0;
+    }
+    g_CurrentEntity=saved_actor;g_PlayerEntity=saved_player;g_FieldActorListHead=saved_head;
+    g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0x34c38eb49612044f)){fprintf(stderr,"Turn opcode hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original turn-to-actor opcode: 900 USA MIPS states, live/missing/dead lookup, native target pointers and dispatcher passed");
+    return 1;
+}
+
+static int original_screen_fade_wait_opcode(void)
+{
+    RenderTintState saved=g_ScreenTint;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    FieldActor actor={0};g_CurrentEntity=&actor;uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[156]!=Entity_YieldOnLoading)return 0;
+    for(unsigned fade=0;fade<256;++fade){
+        u32 storage[4]={0};ScriptNode node={.active=7};
+        g_ScriptNodePool=&node;g_ScriptCursor=storage+3;g_ScreenTint.fadeMode=fade;
+        u32 result=Entity_YieldOnLoading(NULL);
+        const u32 data[]={result,(u32)((uintptr_t)g_ScriptCursor-(uintptr_t)storage),(u32)node.active};
+        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((data[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        u32 program[]={156,0,32,0};node=(ScriptNode){.current.script=program,.active=1,.flags=0x80};
+        g_ScriptNodePool=&node;Script_RunQueue();
+        int busy=(fade&3)>=2;
+        if(g_ScriptNodePool || node.current.script!=(busy?program:program+4) ||
+           node.active!=busy || !!(node.flags&0x10)==busy)return 0;
+        RenderTintState expected=saved;expected.fadeMode=fade;
+        if(memcmp(&g_ScreenTint,&expected,sizeof(expected)))return 0;
+    }
+    g_ScreenTint=saved;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0x3ae97f7ab9537f25))return 0;
+    puts("Original fade wait opcode: all 256 USA MIPS modes, cursor rewinds and full dispatcher yield/completion passed");
+    return 1;
+}
+
+static int original_screen_fade_opcodes(void)
+{
+    const unsigned ops[]={133,134,135};
+    int (*handlers[])(int **)={Script_SetCdRomSeekPos,Script_SetFogColor,Script_SetCdRomScreenPos};
+    const u32 values[]={0,1,3,4,65535,0x80000000,0xffffffff,0x12345678};
+    RenderTintState saved=g_ScreenTint;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    FieldActor actor={0};g_CurrentEntity=&actor;uint64_t hash=UINT64_C(14695981039346656037);
+    for(unsigned op=0;op<3;++op)for(unsigned seed=0;seed<8;++seed)for(unsigned v=0;v<8;++v){
+        if(g_ScriptQueueOpcodeHandlers[ops[op]]!=handlers[op])return 0;
+        g_ScreenTint=saved;
+        for(unsigned i=0;i<20;++i)((u8 *)&g_ScreenTint.targetR)[i]=(u8)(i*17+seed*31);
+        int data[5];int *args[5];for(unsigned i=0;i<5;++i){data[i]=(s32)values[(v+i)%8];args[i]=data+i;}
+        u32 result=handlers[op](args);
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned i=0;i<20;++i)hash=(hash^((u8 *)&g_ScreenTint.targetR)[i])*UINT64_C(1099511628211);
+        RenderTintState expected=g_ScreenTint;
+        if(memcmp(&g_ScreenTint,&saved,PE1_OFFSETOF(RenderTintState,targetR)))return 0;
+        g_ScreenTint=saved;
+        for(unsigned i=0;i<20;++i)((u8 *)&g_ScreenTint.targetR)[i]=(u8)(i*17+seed*31);
+        u32 program[]={ops[op]|(5u<<13),0,(u32)data[0],(u32)data[1],(u32)data[2],(u32)data[3],(u32)data[4],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || node.current.script!=program+9 || !(node.flags&0x10) || g_ScriptNodePool ||
+           memcmp(&expected,&g_ScreenTint,sizeof(expected)))return 0;
+    }
+    g_ScreenTint=saved;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0x0ddf13ae684d5bb5))return 0;
+    puts("Original screen fade opcodes: 192 USA MIPS states, full tint state, native packets retained and dispatcher passed");
+    return 1;
+}
+
+static int original_geometry_control_opcodes(void)
+{
+    const unsigned ops[]={116,117,123};
+    int (*handlers[])(int **)={Script_SetObjEntryLimit,Script_SetFlagSlot,Script_SetObjEntryField8};
+    const u32 values[]={0,1,255,256,65535,0x80000000,0xffffffff,0x12345678};
+    const u8 flags[]={0,1,2,4,0x20,255};
+    GeomState *saved_geom=g_GeomState;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    FieldActor actor={0};g_CurrentEntity=&actor;uint64_t hash=UINT64_C(14695981039346656037);
+    struct {GeomState header;GeomCtrlEntry controls[2];} geometry={0};
+    geometry.header.ctrl_offset=(u8 *)geometry.controls-(u8 *)&geometry.header;g_GeomState=&geometry.header;
+    for(unsigned op=0;op<3;++op)for(unsigned index=0;index<2;++index)
+    for(unsigned v=0;v<8;++v)for(unsigned f=0;f<6;++f){
+        if(g_ScriptQueueOpcodeHandlers[ops[op]]!=handlers[op])return 0;
+        memset(geometry.controls,0xa5,sizeof(geometry.controls));geometry.controls[index].head.b.flags=flags[f];
+        int data[]={index,(s32)values[v]};int *args[]={data,data+1};u32 result=handlers[op](args);
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned i=0;i<sizeof(geometry.controls);++i)
+            hash=(hash^((u8 *)geometry.controls)[i])*UINT64_C(1099511628211);
+        GeomCtrlEntry expected[2];memcpy(expected,geometry.controls,sizeof(expected));
+        memset(geometry.controls,0xa5,sizeof(geometry.controls));geometry.controls[index].head.b.flags=flags[f];
+        u32 program[]={ops[op]|(2u<<13),0,index,values[v],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || node.current.script!=program+6 || !(node.flags&0x10) || g_ScriptNodePool ||
+           memcmp(expected,geometry.controls,sizeof(expected)))return 0;
+    }
+    g_GeomState=saved_geom;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0x18383904d1c6e665))return 0;
+    puts("Original geometry control opcodes: 288 USA MIPS states, untouched adjacent controls and full dispatcher passed");
+    return 1;
+}
+
+static int original_shadow_radius_opcode(void)
+{
+    const s16 radii[]={-32768,-32767,-1,0,1,123,32766,32767};
+    const u32 values[]={0,1,0xffffffff,32767,0xffff8000,65535,65536,0x7fffffff,0x80000000,0x12345678,0xfedcba98};
+    FieldActor *saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;
+    u32 *saved_cursor=g_ScriptCursor;uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[157]!=Script_ScaleAnimValue)return 0;
+    for(unsigned r=0;r<8;++r)for(unsigned v=0;v<11;++v){
+        RenderObjectHeader header={0},expected={0};header.shadow_radius=0x7654;
+        FieldActor actor={0};actor.render_object.header=&header;
+        actor.render_object.hit_cylinder.radius=radii[r];g_CurrentEntity=&actor;
+        int value=(s32)values[v];int *args[]={&value};u32 result=g_ScriptQueueOpcodeHandlers[157](args);
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        u16 radius=header.shadow_radius;
+        for(unsigned b=0;b<2;++b)hash=(hash^((radius>>(b*8))&255))*UINT64_C(1099511628211);
+        expected.shadow_radius=radius;
+        if(memcmp(&header,&expected,sizeof(header)))return 0;
+        u32 program[]={157|(1u<<13),0,values[v],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        header.shadow_radius=0x7654;g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(&header,&expected,sizeof(header)) || node.current.script!=program+5 ||
+           !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0x0cb313b7d38c9570))return 0;
+    puts("Original shadow-radius opcode: 88 USA MIPS signed/overflow states and native dispatcher completion passed");
+    return 1;
+}
+
+static int original_camera_flags_opcodes(void)
+{
+    const u32 patterns[]={0,1,2,3,0x40,0x41,0x80,0x7fffffff,0x80000000,0xffffffff,0x12345678,0xfedcba98};
+    const unsigned ops[]={91,92,132};
+    int (*handlers[])(int **)={Script_ClearBattleFlags,Script_SetBattleFlags,Script_SetScreenScrollPos};
+    GeomScrollRecord saved=g_GeomScroll;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    uint64_t hash=UINT64_C(14695981039346656037);FieldActor actor={0};g_CurrentEntity=&actor;
+    for(unsigned op=0;op<3;++op)for(unsigned x=0;x<12;++x)for(unsigned y=0;y<12;++y){
+        if(g_ScriptQueueOpcodeHandlers[ops[op]]!=handlers[op])return 0;
+        g_GeomScroll.state.flags=(s32)patterns[x];
+        g_GeomScroll.state.position.baseAngleDigital=0x1234;
+        g_GeomScroll.state.position.baseAngleAnalog=(s16)0xfedc;
+        int data[]={(s32)patterns[x],(s32)patterns[y]};int *args[]={data,data+1};
+        u32 result=handlers[op](args);
+        u32 words[]={result,(u32)g_GeomScroll.state.flags};
+        for(unsigned i=0;i<2;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((words[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        const u16 angles[]={(u16)g_GeomScroll.state.position.baseAngleDigital,(u16)g_GeomScroll.state.position.baseAngleAnalog};
+        for(unsigned i=0;i<2;++i)for(unsigned b=0;b<2;++b)
+            hash=(hash^((angles[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        u32 program[]={ops[op]|(2u<<13),0,patterns[x],patterns[y],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || node.current.script!=program+6 || !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
+    g_GeomScroll=saved;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0xc4b5a5fd1165f305)){fprintf(stderr,"Camera flags opcode hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original camera/scroll flag opcodes: 432 USA MIPS states and native dispatcher completion passed");
+    return 1;
+}
+
+static int original_animation_frame_opcode(void)
+{
+    const u32 values[]={0,1,255,256,65535,65536,0x80000000,0xffffffff,0x12345678};
+    FieldActor *saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;
+    u32 *saved_cursor=g_ScriptCursor;uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[78]!=Script_SetEntityAnimSpeed)return 0;
+    for(unsigned action=0;action<256;++action)for(unsigned v=0;v<9;++v){
+        FieldActor actor={.action=action};actor.anim.fixed=0x12345678;g_CurrentEntity=&actor;
+        int value=(s32)values[v];int *args[]={&value};u32 result=g_ScriptQueueOpcodeHandlers[78](args);
+        u32 data[]={result,(u32)actor.anim.fixed};
+        for(unsigned i=0;i<2;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((data[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        u32 program[]={78|(1u<<13),0,values[v],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        actor.anim.fixed=0x12345678;g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || (u32)actor.anim.fixed!=data[1] || node.current.script!=program+5 ||
+           !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0xfb78ff1167f295fc))return 0;
+    puts("Original animation-frame opcode: 2304 USA MIPS states and native dispatcher completion passed");
+    return 1;
+}
+
+static int original_script_command_binding(void)
+{
+    const int ops[]={0,2100,2101,2201,2300,2401,2600,2601,2700,2900,3000,3200};
+    const u32 values[]={0,1,255,256,65535,0x80000000,0xffffffff,0x12345678};
+    u32 saved_flags=g_GameState.flags;int saved_collision=g_ScriptCollisionFlag;
+    GeomScrollRecord saved_scroll=g_GeomScroll;u8 saved_camera[3];memcpy(saved_camera,g_ScriptCameraBytes,3);
+    FieldActor *saved_actor=g_CurrentEntity,*saved_head=g_FieldActorListHead;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[237]!=Script_DispatchScriptCmd)return 0;
+    for(unsigned op=0;op<12;++op)for(unsigned v=0;v<8;++v){
+        FieldActor actor={0};g_CurrentEntity=&actor;g_FieldActorListHead=NULL;
+        int data[]={ops[op],(s32)values[v],(s32)(values[v]+1u),(s32)(values[v]-1u),0,0};
+        int *args[]={data,data+1,data+2,data+3,data+4,data+5};
+        g_GameState.flags=0x12345678;g_GeomScroll.state.position.originX=0x1234;
+        g_GeomScroll.state.position.originY=(s16)0xfedc;
+        memcpy(g_ScriptCameraBytes,(u8[]){1,2,3},3);
+        actor.shadow_matrix_index=4;actor.shadow_intensity=5;
+        g_RoomLightTint.r=7;g_RoomLightTint.g=8;g_RoomLightTint.b=9;
+        g_ScriptCollisionFlag=0x76543210;
+        u32 result=g_ScriptQueueOpcodeHandlers[237](args);
+#define COMMAND_PUT(value,bytes) do {u32 put_=(u32)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)put_)*UINT64_C(1099511628211);put_>>=8;}}while(0)
+        COMMAND_PUT(result,4);COMMAND_PUT(g_GameState.flags,4);
+        COMMAND_PUT(g_GeomScroll.state.position.originX,2);COMMAND_PUT(g_GeomScroll.state.position.originY,2);
+        for(unsigned i=0;i<3;++i)COMMAND_PUT(g_ScriptCameraBytes[i],1);
+        COMMAND_PUT(actor.shadow_matrix_index,1);COMMAND_PUT(actor.shadow_intensity,1);
+        COMMAND_PUT(g_RoomLightTint.r,1);COMMAND_PUT(g_RoomLightTint.g,1);COMMAND_PUT(g_RoomLightTint.b,1);
+        COMMAND_PUT(g_ScriptCollisionFlag,4);
+#undef COMMAND_PUT
+        u32 program[]={237|(6u<<13),0,(u32)data[0],(u32)data[1],(u32)data[2],(u32)data[3],0,0,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || node.current.script!=program+10 || !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
+    g_GameState.flags=saved_flags;g_ScriptCollisionFlag=saved_collision;g_GeomScroll=saved_scroll;
+    memcpy(g_ScriptCameraBytes,saved_camera,3);g_CurrentEntity=saved_actor;g_FieldActorListHead=saved_head;
+    g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0x0dd78fa3cadbad1b)){fprintf(stderr,"Original command dispatcher hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original script command dispatcher: 96 USA MIPS states and native opcode completion passed");
+    return 1;
+}
+
+static int original_clamp_opcode_binding(void)
+{
+    const u32 high[]={0,0xfffffe00,0x80000000,0x7ffffe00};
+    int saved=g_MenuItemContextFlag;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    FieldActor actor={0};g_CurrentEntity=&actor;
+    uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[166]!=Script_ClampMenuRange)return 0;
+    for(unsigned h=0;h<4;++h)for(unsigned low=0;low<512;++low){
+        int value=(s32)(high[h]|low);int *args[]={&value};g_MenuItemContextFlag=0x1234;
+        u32 result=g_ScriptQueueOpcodeHandlers[166](args);
+        u32 values[]={result,(u32)g_MenuItemContextFlag};
+        for(unsigned i=0;i<2;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((values[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        u32 program[]={166|(1u<<13),0,(u32)value,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_MenuItemContextFlag=0x1234;g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || node.current.script!=program+5 || !(node.flags&0x10) ||
+           g_ScriptNodePool || (u32)g_MenuItemContextFlag!=values[1])return 0;
+    }
+    g_MenuItemContextFlag=saved;g_CurrentEntity=saved_actor;
+    g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0x9ba3598d49695b25))return 0;
+    puts("Original menu range opcode: 2048 USA MIPS states and native dispatcher completion passed");
+    return 1;
+}
+
+static int original_scene_transition_opcode(void)
+{
+    const u32 tokens[]={0,1,0xA80830C8,0xA80810C8,0xA9400048,0xffffffff,0x80000000,0x7fffffff};
+    const u32 flags[]={0,1,0x2000,0x4000,0xffffffff,0x12345678};
+    const u32 counters[]={0,2000,2001,0xffffffff};
+    u32 saved_flags=g_GameStateFlags,saved_counter=g_PlayTimeFrameCounter;
+    int saved_token=g_SceneDispatchToken;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    FieldActor actor={0};g_CurrentEntity=&actor;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[49]!=Script_EncodeBarcode)return 0;
+    for(unsigned t=0;t<8;++t)for(unsigned f=0;f<6;++f)for(unsigned c=0;c<4;++c){
+        if(tokens[t]==0xA9400048 && c!=1)continue;
+        int value=(s32)tokens[t];int *args[]={&value};
+        g_GameStateFlags=flags[f];g_SceneDispatchToken=0x1234;g_PlayTimeFrameCounter=counters[c];
+        u32 result=g_ScriptQueueOpcodeHandlers[49](args);
+        u32 values[]={result,g_GameStateFlags,(u32)g_SceneDispatchToken,g_PlayTimeFrameCounter};
+        for(unsigned i=0;i<4;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((values[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        u32 program[]={49|(1u<<13),0,tokens[t],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_GameStateFlags=flags[f];g_SceneDispatchToken=0x1234;g_PlayTimeFrameCounter=counters[c];
+        g_ScriptNodePool=&node;Script_RunQueue();
+        if(result || node.current.script!=program+3 || node.flags!=0x80 || node.active!=0 ||
+           g_ScriptNodePool || g_GameStateFlags!=values[1] || (u32)g_SceneDispatchToken!=values[2] ||
+           g_PlayTimeFrameCounter!=values[3])return 0;
+        ++cases;
+    }
+    g_GameStateFlags=saved_flags;g_PlayTimeFrameCounter=saved_counter;g_SceneDispatchToken=saved_token;
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=174 || hash!=UINT64_C(0x8ae1600ce89fd57c))return 0;
+    puts("Original scene transition opcode: 174 USA MIPS states and native dispatcher yield/cursor passed");
+    return 1;
+}
+
 static int original_actor_audio_state(void)
 {
+    if(!original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
     int op=0x15e,a=0x12345,b=0x187,c=-2,d=-129,result=123;
     AkaoCommandArgs args={&op,&a,&b,&c,&d,&result};
     g_CurrentEntity=&actor;
-    if(Akao_ProcessCommand(&args)!=1 || g_GameState.bank_value_f8!=(u16)a ||
+    if(Akao_ProcessCommand(args)!=1 || g_GameState.bank_value_f8!=(u16)a ||
        g_GameState.bank_value_f6!=(u8)b || g_GameState.bank_value_fa!=(u16)c ||
        g_GameState.bank_value_f7!=(u8)d || result!=123) return 0;
     op=0x195; g_GameState.bank_state_12=0;
-    if(Akao_ProcessCommand(&args)!=1 || g_GameState.bank_state_12!=1) return 0;
+    if(Akao_ProcessCommand(args)!=1 || g_GameState.bank_state_12!=1) return 0;
     g_GameState.bank_state_11=0;
     for(unsigned i=0;i<18;++i) {
         op=i&1?0x197:0x196; a=0x180+i;b=-129;c=0x12345;d=-2;
-        if(Akao_ProcessCommand(&args)!=1 || g_GameState.bank_state_11!=(i<16?i+1:16)) return 0;
+        if(Akao_ProcessCommand(args)!=1 || g_GameState.bank_state_11!=(i<16?i+1:16)) return 0;
         if(i<16) {
             DeferredAkaoCommand *command=&g_DeferredAkaoCommands[i];
             if(command->actor_type!=7 || command->actor_id!=11 ||
@@ -1946,7 +2420,7 @@ static int original_actor_audio_state(void)
         g_GameState.flags&=~0xc0u;g_GameState.cd_track_phase=0;
         g_AkaoMessageQueueCount=0;
         op=0xcb;a=23;b=0x55;c=1;
-        if(Akao_ProcessCommand(&args)!=1 || result!=42 || g_AkaoMessageQueueCount!=2 ||
+        if(Akao_ProcessCommand(args)!=1 || result!=42 || g_AkaoMessageQueueCount!=2 ||
            g_AkaoMessageQueue[0].opcode.word!=0x19 ||
            g_AkaoMessageQueue[0].arg0.sample_data!=(u8 *)(sample_bank+8) ||
            g_AkaoMessageQueue[1].opcode.word!=0xc0 ||
@@ -1963,11 +2437,22 @@ static int original_actor_audio_state(void)
     record[8]=0xff;record[10]=0x34;record[11]=0x12;
     g_GameState.loaded_scene_assets=(SceneAssetView *)sound_archive;
     op=0x190;a=0x1234;
-    if(Akao_ProcessCommand(&args)!=1 || (u8)g_GameState.scene_audio.tracks.pending_key!=0x34 ||
+    if(Akao_ProcessCommand(args)!=1 || (u8)g_GameState.scene_audio.tracks.pending_key!=0x34 ||
        (u8)g_GameState.scene_audio.tracks.pending_bank!=0xff ||
        g_GameState.bank_asset_table!=(u8 *)sound_archive+96) return 0;
     op=0x199;a=0x198;
-    if(Akao_ProcessCommand(&args)!=1 || g_GameState.scene_audio.tracks.movie_volume!=0x98) return 0;
+    if(Akao_ProcessCommand(args)!=1 || g_GameState.scene_audio.tracks.movie_volume!=0x98) return 0;
+    if(g_ScriptQueueOpcodeHandlers[234]!=Akao_ProcessCommand)return 0;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor,saved_variable=g_ScriptVariableBank[9];
+    u32 program[]={234|(6u<<13),2,0x15e,0x23456,0x189,(u32)-3,(u32)-130,9,
+                   234|(2u<<13),0,0x199,0x145,32,0};
+    ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+    g_ScriptVariableBank[9]=0xa5a5a5a5;g_ScriptNodePool=&node;Script_RunQueue();
+    if(!(node.flags&0x10) || node.current.script!=program+14 || g_ScriptNodePool ||
+       g_GameState.bank_value_f8!=0x3456 || g_GameState.bank_value_f6!=0x89 ||
+       g_GameState.bank_value_fa!=65533 || g_GameState.bank_value_f7!=126 ||
+       g_GameState.scene_audio.tracks.movie_volume!=0x45 || g_ScriptVariableBank[9]!=0xa5a5a5a5)return 0;
+    g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_ScriptVariableBank[9]=saved_variable;
     g_AkaoMessageQueueCount=0;g_GameState=previous;g_CurrentEntity=previous_actor;
     puts("Original actor audio: canonical positional/deferral/archive/volume state, sixteen-command limit and both cached native bank pointers passed");
     return 1;
@@ -5748,6 +6233,72 @@ static void credits_drive_audio(void)
     if(credits_vblanks>40000)g_BootDisplayState=g_BootDisplayDone=-1;
 }
 
+static int original_scene_texture_pages(PeDisc *disc)
+{
+    PeDiscFile archive;g_CdImage=disc;fx_image_io=1;
+    fx_read_failure=fx_poll_failure=0;glyph_pending=glyph_poll_retry=0;
+    if(Asset_OpenPeImage() || !pe_disc_find(disc,"PE.IMG",&archive) || !SDL_Init(SDL_INIT_EVENTS))return 0;
+    ResetGraph(0);Boot_InitMemoryLayout();
+    static _Alignas(8) u16 expected[1024*512],actual[1024*512];
+    static _Alignas(16) u8 source[0x20000];
+    RECT all={0,0,1024,512};
+#define PAGE_CHECK(test) do {if(!(test)){fprintf(stderr,"Texture page failure at line %d\n",__LINE__);return 0;}}while(0)
+    for(unsigned page=2;page<24;++page){
+        unsigned index=43+page,bytes=(g_PeImageSectorTable[index+1]-g_PeImageSectorTable[index])*2048;
+        PAGE_CHECK(bytes<=sizeof(source) && pe_disc_read(disc,&archive,(u64)g_PeImageSectorTable[index]*2048,source,bytes));
+        for(unsigned i=0;i<1024*512;++i)expected[i]=0x1357;
+        LoadImage(&all,expected);DrawSync(0);
+        unsigned flags=source[4],offset=8;
+        for(unsigned block=0;block<((flags&8)?2u:1u);++block){
+            u32 length;RECT rect;memcpy(&length,source+offset,4);memcpy(&rect,source+offset+4,sizeof(rect));
+            PAGE_CHECK(rect.x>=0 && rect.y>=0 && rect.w>0 && rect.h>0 && rect.x+rect.w<=1024 && rect.y+rect.h<=512 &&
+                offset+length<=bytes && (unsigned)rect.w*rect.h*2<=length-12);
+            for(unsigned y=0;y<(unsigned)rect.h;++y)for(unsigned x=0;x<(unsigned)rect.w;++x){
+                unsigned pixel=offset+12+(y*rect.w+x)*2;
+                expected[(rect.y+y)*1024+rect.x+x]=source[pixel]|(u16)source[pixel+1]<<8;
+            }
+            offset+=length;
+        }
+        g_GameState.room_type=page;g_LoadedTexturePageId=-1;glyph_reads=glyph_polls=0;
+        PAGE_CHECK(Scene_StreamTexturePage()==0 && g_LoadedTexturePageId==(int)page && glyph_reads==1 && glyph_polls==1);
+        PAGE_CHECK(memcmp(g_GameState.scene_load_scratch,source,bytes)==0);
+        DrawSync(0);StoreImage(&all,actual);DrawSync(0);PAGE_CHECK(memcmp(expected,actual,sizeof(actual))==0);
+        u32 marker=0x2222;RECT corner={1023,511,1,1};LoadImage(&corner,&marker);DrawSync(0);
+        expected[511*1024+1023]=0x2222;
+        PAGE_CHECK(Scene_StreamTexturePage()==0 && glyph_reads==1 && glyph_polls==1);
+        StoreImage(&all,actual);DrawSync(0);PAGE_CHECK(memcmp(expected,actual,sizeof(actual))==0);
+    }
+    u32 base=g_GameState.pe_image_base_lba;u8 *scratch=g_GameState.scene_load_scratch;
+    u16 first=g_PeImageSectorTable[45],last=g_PeImageSectorTable[46];
+    for(unsigned fault=0;fault<18;++fault){
+        CdRom_BindImage(disc,&archive);g_GameState.room_type=2;g_LoadedTexturePageId=23;
+        g_GameState.scene_load_scratch=scratch;g_GameState.pe_image_base_lba=base;
+        g_PeImageSectorTable[46]=last;fx_read_failure=fx_poll_failure=texture_page_corruption=0;
+        glyph_reads=glyph_polls=0;int wanted=-3;
+        if(fault==0)g_GameState.room_type=127;
+        if(fault==1)g_GameState.room_type=200;
+        if(fault==2)g_GameState.scene_load_scratch=NULL;
+        if(fault==3)g_GameState.scene_load_scratch=scratch+1;
+        if(fault==4)g_PeImageSectorTable[46]=first;
+        if(fault==5)g_PeImageSectorTable[46]=first+65;
+        if(fault==6)g_GameState.pe_image_base_lba=UINT32_MAX;
+        if(fault==7){fx_read_failure=1;wanted=-1;}
+        if(fault==8){fx_poll_failure=1;wanted=-2;}
+        if(fault>=9 && fault<17){texture_page_corruption=fault-8;wanted=-4;}
+        if(fault==17){g_PeImageSectorTable[46]=first+1;wanted=-4;}
+        for(unsigned i=0;i<1024*512;++i)expected[i]=0x1357;
+        LoadImage(&all,expected);DrawSync(0);
+        PAGE_CHECK(Scene_StreamTexturePage()==wanted && g_LoadedTexturePageId==23);
+        StoreImage(&all,actual);DrawSync(0);PAGE_CHECK(memcmp(expected,actual,sizeof(actual))==0);
+    }
+    CdRom_BindImage(disc,&archive);g_GameState.scene_load_scratch=scratch;g_GameState.pe_image_base_lba=base;
+    g_PeImageSectorTable[46]=last;fx_read_failure=fx_poll_failure=texture_page_corruption=0;
+    PAGE_CHECK(Scene_StreamTexturePage()==0 && g_LoadedTexturePageId==2);
+#undef PAGE_CHECK
+    puts("Original shared texture pages: all 22 USA TIM banks, full VRAM, cache hits, 18 atomic failures and recovery passed");
+    return 1;
+}
+
 static int original_credit_playback(PeDisc *disc)
 {
     g_CdImage=disc;glyph_pending=glyph_poll_retry=0;fx_image_io=1;
@@ -7181,9 +7732,15 @@ static int original_native_bootstrap(const char *executable)
     if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     if(!SDL_Init(SDL_INIT_EVENTS))return 1;
     char capture[96];snprintf(capture,sizeof(capture),"pe-native-%llx.vram",(unsigned long long)SDL_GetPerformanceCounter());
-    for(unsigned input=0;input<2;++input){
-        const char *args[]={executable,"--disc",disc,"--headless","--frame-limit",input?"13000":"8000",
-            "--dump-vram",capture,input?"--pad-at":NULL,input?"10000:8":NULL,NULL};
+    for(unsigned input=0;input<4;++input){
+        const char *limit=input>=2?"14000":input?"13000":"8000";
+        const char *args[24]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
+        const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
+        unsigned at=8;
+        for(unsigned event=0;event<(input==3?4u:input==2?6u:input?1u:0u);++event){
+            unsigned index=input==3 && event>=2?event+2:event;
+            args[at++]="--pad-at";args[at++]=events[index];
+        }
         SDL_PropertiesID props=SDL_CreateProperties();
         SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
         SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER,SDL_PROCESS_STDIO_APP);
@@ -7193,9 +7750,21 @@ static int original_native_bootstrap(const char *executable)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input?"\"vblanks\":13000":"\"vblanks\":8000");
-        if(input && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
+            strstr(output,input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+        if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
+        if(input==2){
+            unsigned frames=0;int movie_frame=0;
+            const char *game=output?strstr(output,"\"game_frame\":"):NULL;
+            const char *movie=output?strstr(output,"\"movie_frame\":"):NULL;
+            if(!output || !strstr(output,"\"scene\":2819109064") || !strstr(output,"\"movie\":2") ||
+               !strstr(output,"\"video_state\":2") || !game || !movie ||
+               sscanf(game,"\"game_frame\":%u",&frames)!=1 || frames<2 ||
+               sscanf(movie,"\"movie_frame\":%d",&movie_frame)!=1 || movie_frame<2)valid=0;
+        }
+        if(input==3 && (!output || !strstr(output,"\"scene\":2839543880") ||
+           !strstr(output,"\"video_state\":0") || !strstr(output,"\"rgb24\":0") ||
+           !strstr(output,"\"game_frame\":0")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -7215,6 +7784,12 @@ static int original_native_bootstrap(const char *executable)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--texture-pages")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
+        int result=original_scene_texture_pages(&disc);pe_disc_close(&disc);return result?0:156;
+    }
+
     if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2]);
     if(argc==2 && !strcmp(argv[1],"--credits-playback")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
@@ -7542,6 +8117,7 @@ int main(int argc, char **argv)
         MenuWidgetListNavigation navigation={0};
         navigation.list=&menu;
         menu.visible_rows=4; menu.y_limit=16; menu.disabled=8; menu.scroll_y=4;
+        MenuWidget_EaseNodePosition(NULL);
         MenuWidget_EaseNodePosition(&navigation);
         if (navigation.draw_state!=8 || navigation.visible_rows!=8 ||
             navigation.list!=&menu || navigation.mode!=0) return 85;

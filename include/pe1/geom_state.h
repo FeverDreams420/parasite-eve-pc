@@ -351,6 +351,14 @@ typedef union GeomStateAddress {
 int Render_UpdateScrollPosition(void *position, int duration, int mode);
 /* One native record shared by camera, scripts, and overlay effects. */
 extern GeomScrollRecord g_GeomScroll;
+int Render_SetFlagSlot(int index, int enabled);
+int Render_SetEntryVisible(int index, int enabled);
+int Render_SetEntryLimit(int index, int frame);
+s16 Render_GetEntryField6(int index);
+int Render_SetEntryField8(int index, unsigned int value);
+int Render_FillEntrySlotValues(int index, u8 value);
+int Render_SetEntrySlotValue(int index, int slot, u8 value);
+int Render_SetEntryFlags(int index, int bits);
 /* The screen tint and fade parameters inside the scroll state. */
 #define g_ScreenTint (g_GeomScroll.state.position.tint)
 /* Screen fade length and elapsed frames (Render_StartFadeIn/StepFade). */

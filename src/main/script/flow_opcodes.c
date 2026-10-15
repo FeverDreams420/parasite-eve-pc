@@ -1,5 +1,6 @@
 #include "common.h"
 #include "pe1/field_sprite_state.h"
+#include "pe1/akao_send.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "pe1/script_expression.h"
@@ -21,6 +22,7 @@
 #include "pe1/render_shadow.h"
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_transition.h"
+#include "pe1/scene_dispatch.h"
 #include "pe1/script_node.h"
 #include "pe1/script_queue.h"
 #include "pe1/script_state.h"
@@ -31,25 +33,7 @@
  * through $gp, every other extern stays absolute. */
 u8 g_ScriptCameraBytes[3];
 
-typedef struct ScriptArgParts {
-    s16 low;
-    signed int high : 16;
-} ScriptArgParts;
-
-typedef struct ScriptCmdArgs {
-    int *opcode;
-    ScriptArgParts *arg1;
-    ScriptArgParts *arg2;
-    ScriptArgParts *arg3;
-    ScriptArgParts *arg4;
-    ScriptArgParts *arg5;
-} ScriptCmdArgs;
-
-#define ARG_WORD(ptr) (*(int *)(ptr))
-#define ARG_BYTE(ptr) (*(u8 *)(ptr))
-
-
-int Script_DispatchScriptCmd(ScriptCmdArgs *args)
+int Script_DispatchScriptCmd(int **args)
 {
     Pe1Vec3s position;
     Pe1Vec3s position2;
@@ -62,7 +46,7 @@ int Script_DispatchScriptCmd(ScriptCmdArgs *args)
 
     /* Opcode 2100 is accepted and does nothing; its case node is what
      * makes the compiler split the dispatch tree at 2500 as retail does. */
-    switch (*args->opcode) {
+    switch (*args[0]) {
     case 2100:
         break;
     case 2101:
@@ -70,65 +54,66 @@ int Script_DispatchScriptCmd(ScriptCmdArgs *args)
         break;
     case 2200:
         Render_UpdateScrollPosition(&(g_PlayerEntity)->pos_x,
-                                    ARG_WORD(args->arg1), ARG_WORD(args->arg2));
+                                    *args[1], *args[2]);
         return 1;
     case 2201:
-        g_GeomScroll.state.position.originX = ARG_WORD(args->arg1);
-        g_GeomScroll.state.position.originY = ARG_WORD(args->arg2);
+        g_GeomScroll.state.position.originX = *args[1];
+        g_GeomScroll.state.position.originY = *args[2];
         break;
     case 2300:
-        Script_SetCollisionFlag(ARG_WORD(args->arg1) != 0);
+        Script_SetCollisionFlag(*args[1] != 0);
         return 1;
     case 2400:
-        position.x = args->arg1->high;
-        position.y = args->arg2->high;
-        position.z = args->arg3->high;
-        FieldFx_SpawnScriptSprite(&position, 0, args->arg4->low,
-                      ARG_BYTE(args->arg5), 0, 0, 0);
+        position.x = (s16)((u32)*args[1] >> 16);
+        position.y = (s16)((u32)*args[2] >> 16);
+        position.z = (s16)((u32)*args[3] >> 16);
+        FieldFx_SpawnScriptSprite(&position, 0, (s16)*args[4],
+                      (u8)*args[5], 0, 0, 0);
         return 1;
     case 2401:
-        g_ScriptCameraBytes[0] = ARG_WORD(args->arg1);
-        g_ScriptCameraBytes[1] = ARG_WORD(args->arg2);
-        g_ScriptCameraBytes[2] = ARG_WORD(args->arg3);
+        g_ScriptCameraBytes[0] = *args[1];
+        g_ScriptCameraBytes[1] = *args[2];
+        g_ScriptCameraBytes[2] = *args[3];
         break;
     case 2402:
-        position2.x = args->arg1->high;
-        position2.y = args->arg2->high;
-        position2.z = args->arg3->high;
-        FieldFx_SpawnScriptSprite(&position2, 1, args->arg4->low,
-                      ARG_BYTE(args->arg5), g_ScriptCameraBytes[0],
+        position2.x = (s16)((u32)*args[1] >> 16);
+        position2.y = (s16)((u32)*args[2] >> 16);
+        position2.z = (s16)((u32)*args[3] >> 16);
+        FieldFx_SpawnScriptSprite(&position2, 1, (s16)*args[4],
+                      (u8)*args[5], g_ScriptCameraBytes[0],
                       g_ScriptCameraBytes[1], g_ScriptCameraBytes[2]);
         return 1;
     case 2500:
-        map_id[0] = ARG_WORD(args->arg1);
-        map_id[1] = ARG_WORD(args->arg2);
+        map_id[0] = *args[1];
+        map_id[1] = *args[2];
         loaded = Scene_LoadMap((u8 *)map_id, g_CurrentEntity, 0);
-        loaded->pos_x = ARG_WORD(args->arg3);
-        loaded->pos_y = ARG_WORD(args->arg4);
-        loaded->pos_z = ARG_WORD(args->arg5);
+        if (!loaded) return -1;
+        loaded->pos_x = *args[3];
+        loaded->pos_y = *args[4];
+        loaded->pos_z = *args[5];
         break;
     case 2600:
-        ((RenderShadowActor *)g_CurrentEntity)->shadow_matrix_index = ARG_WORD(args->arg1);
+        ((RenderShadowActor *)g_CurrentEntity)->shadow_matrix_index = *args[1];
         break;
     case 2601:
-        ((RenderShadowActor *)g_CurrentEntity)->shadow_intensity = ARG_WORD(args->arg1);
+        ((RenderShadowActor *)g_CurrentEntity)->shadow_intensity = *args[1];
         break;
     case 2700:
-        g_RoomLightTint.r = ARG_WORD(args->arg1);
-        g_RoomLightTint.g = ARG_WORD(args->arg2);
-        g_RoomLightTint.b = ARG_WORD(args->arg3);
+        g_RoomLightTint.r = *args[1];
+        g_RoomLightTint.g = *args[2];
+        g_RoomLightTint.b = *args[3];
         break;
     case 2800:
         Battle_DrawActiveStatus();
         return 1;
     case 2801:
-        Battle_SetWindowBoundsByMode(ARG_BYTE(args->arg1));
+        Battle_SetWindowBoundsByMode((u8)*args[1]);
         return 1;
     case 2900:
         g_GameState.flags |= 0x400000;
         break;
     case 3000:
-        initial_entity_id = ARG_WORD(args->arg1);
+        initial_entity_id = *args[1];
         if (initial_entity_id == 0) {
             return 1;
         }
@@ -139,7 +124,7 @@ int Script_DispatchScriptCmd(ScriptCmdArgs *args)
         }
         while (1) {
             if (entity->type_id == entity_id) {
-                if (entity->sub_id == ARG_WORD(args->arg2)) {
+                if (entity->sub_id == *args[2]) {
                     if ((entity->flags & 0x10) == 0) {
                         return 1;
                     }
@@ -300,6 +285,7 @@ int Script_SpawnEntityAt(int **arg0) {
     local[0] = arg0[0][0];
     local[1] = arg0[1][0];
     entity = Scene_LoadMap((u8 *)local, g_CurrentEntity, 1);
+    if (!entity) return -1;
     entity->pos_x = arg0[2][0];
     entity->pos_y = arg0[3][0];
     entity->pos_z = arg0[4][0];
@@ -422,22 +408,11 @@ int Script_Random(int **arg0) {
     return 1;
 }
 
-int Script_PlayFieldSfx(FieldSfxScriptArgs *arg0) {
-    int a;
-    int b;
-    int c;
-    int d;
-    void *ptr0;
-    void *ptr1;
-    void *ptr2;
-
-    ptr2 = (void *)arg0->taskArgument;
-    ptr1 = (void *)arg0->subId;
-    a = *(unsigned char *)ptr2;
-    b = *(unsigned char *)ptr1;
-    ptr0 = (void *)arg0->typeId;
-    c = *(unsigned short *)ptr0;
-    d = g_CurrentEntity->field_sfx_id;
+int Script_PlayFieldSfx(FieldSfxScriptArgs args) {
+    int a=(u8)*args[2];
+    int b=(u8)*args[1];
+    int c=(u16)*args[0];
+    int d=g_CurrentEntity->field_sfx_id;
     Script_QueueFieldSfx(a, b, c, d, 0);
     return 1;
 }
@@ -570,10 +545,10 @@ int Entity_SetGlobalFlags(int **arg0) {
     return 1;
 }
 
-int Entity_SetCurrentActionMode(u16 **arg0) {
+int Entity_SetCurrentActionMode(int **arg0) {
     FieldActor *entity;
 
-    Entity_SetActionMode((BattleEntity *)g_CurrentEntity, *arg0[0]);
+    Entity_SetActionMode((BattleEntity *)g_CurrentEntity, (u16)*arg0[0]);
     entity = g_CurrentEntity;
     entity->flags &= ~0x100;
     return 1;
@@ -698,7 +673,9 @@ void Script_RunQueue(void)
                 if (i == 4) modes = tail;
             }
             if (!g_ScriptQueueOpcodeHandlers[opcode]) {
-                fprintf(stderr, "Unbound original script opcode %u\n", opcode);
+                fprintf(stderr, "Unbound original script opcode %u (scene=%08x actor=%u:%u script_byte=%llu)\n",
+                    opcode, (u32)g_SceneDispatchToken, g_CurrentEntity->type_id, g_CurrentEntity->sub_id,
+                    (unsigned long long)((uintptr_t)g_ScriptCursor-(uintptr_t)g_CurrentEntity->script_base));
                 abort();
             }
             result=g_ScriptQueueOpcodeHandlers[opcode](args);
@@ -717,22 +694,28 @@ void Script_RunQueue(void)
 int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [0]=Script_JumpToEntityOffset, [1]=Entity_MarkCurrentDead,
     [2]=Entity_SetCurrentNodeActive, [4]=Entity_MarkNodeFree, [5]=Script_JumpIfZero,
-    [9]=Script_EvalExpr, [10]=Script_AssignValue,
+    [8]=Script_SpawnEntityAt, [9]=Script_EvalExpr, [10]=Script_AssignValue,
     [11]=Script_SetEntityVec3, [12]=Script_GetEntityVec3, [14]=Entity_QueryField,
     [17]=Script_DispatchCmd, [18]=Script_SpawnChildNode, [19]=Entity_SetCurrentFlags, [20]=Entity_SelectFieldSetter,
     [22]=Entity_YieldWhileMoving, [23]=Entity_ComputeVelocityToTarget,
     [24]=Entity_FindNodeById, [25]=Entity_GetCurrentNodeId, [27]=Script_SetEntityMoveSpeed,
+    [28]=Script_PlayFieldSfx,
     [30]=Entity_SetCurrentFlag80, [31]=Script_GetNodeTarget14, [32]=Entity_MarkCurrentNodeFree,
     [36]=Script_GetNodeTargets18_1C, [37]=Script_GetCurrentEntityField24,
     [38]=Script_GetCurrentEntityFieldD, [39]=Script_SetCurrentEntityFieldD,
     [40]=Script_ClearBit,
     [41]=Script_TestBit, [42]=Script_SetBit,
     [43]=Entity_ClearGlobalFlags, [44]=Entity_GetGlobalFlags, [45]=Entity_SetGlobalFlags,
-    [53]=Script_LoadSceneData,
+    [49]=Script_EncodeBarcode, [53]=Script_LoadSceneData,
+    [63]=Entity_ClearGlobalFlag1, [64]=Entity_SetGlobalFlag1,
+    [65]=Entity_SetCurrentFlag40, [66]=Entity_ClearCurrentFlag40,
+    [132]=Script_SetScreenScrollPos, [133]=Script_SetCdRomSeekPos, [134]=Script_SetFogColor, [135]=Script_SetCdRomScreenPos, [136]=Script_ClearEntityFlag40, [155]=Script_SetGteMatrix, [156]=Entity_YieldOnLoading, [157]=Script_ScaleAnimValue, [166]=Script_ClampMenuRange,
+    [141]=Script_Noop1, [142]=Script_Noop2, [144]=Script_Noop4, [145]=Script_Noop3,
+    [140]=Script_WaitFrameOrDraw, [143]=Entity_YieldOnDrawBusy,
     [50]=Entity_ClearCurrentFlag80, [55]=Entity_SetCurrentFlag4000, [57]=Entity_ClearCurrentFlag4000,
-    [47]=Script_SetEntityAnimFrame, [48]=Script_WaitAnimFrameMatch, [68]=Script_MoveTowardPoint,
-    [69]=Script_GetAngleToEntity,
-    [84]=Entity_GetDistanceComponents, [94]=Entity_GetPositionByType, [97]=Render_CameraTrackRelativeOffset, [118]=Render_CameraStepAngleFade,
+    [46]=Entity_SetCurrentActionMode, [47]=Script_SetEntityAnimFrame, [48]=Script_WaitAnimFrameMatch, [68]=Script_MoveTowardPoint,
+    [69]=Script_GetAngleToEntity, [75]=Render_CameraSnapToEntity, [78]=Script_SetEntityAnimSpeed,
+    [84]=Entity_GetDistanceComponents, [91]=Script_ClearBattleFlags, [92]=Script_SetBattleFlags, [94]=Entity_GetPositionByType, [97]=Render_CameraTrackRelativeOffset, [123]=Script_SetObjEntryField8, [116]=Script_SetObjEntryLimit, [117]=Script_SetFlagSlot, [118]=Render_CameraStepAngleFade,
     [131]=Script_WaitAnimRange, [146]=Script_PlayEntityAnim, [147]=Script_SetAnimInterpRate, [148]=Menu_GetModeState,
     [173]=Script_ClearInputFlagBit2, [174]=Script_SetInputFlagBit2,
     [172]=Script_SetAnimSlotPointer, [170]=Script_SetSceneFlag2000, [171]=Script_ClearSceneFlag2000,
@@ -740,5 +723,5 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [213]=Script_ClearEntityParentLink, [214]=Entity_ClearParentLink, [199]=Script_SetNodeFlag80, [196]=Script_RotateEntityAngle, [215]=Script_GetSin, [216]=Script_GetCos, [217]=Script_GetAtan2,
     [227]=Script_SetInventorySlotPointer, [228]=Script_GetInventoryTotal, [229]=Script_GetInventorySlotLimit,
     [220]=Script_SetEntityFlag1000000, [225]=Script_SetMeshFadeLevel, [222]=Entity_PopCount, [223]=Script_EnableEntityGravity, [224]=Script_DisableEntityGravity,
-    [184]=Script_TurnTowardPointStep, [240]=Script_GetPlayerInputFlag
+    [184]=Script_TurnTowardPointStep, [234]=Akao_ProcessCommand, [237]=Script_DispatchScriptCmd, [240]=Script_GetPlayerInputFlag
 };

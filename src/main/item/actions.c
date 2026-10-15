@@ -646,7 +646,7 @@ int Inv_GetWeaponCategoryAmmoBase(unsigned int arg0) {
     if (arg0 >= 3) {
         return 0;
     }
-    return g_InvCategoryItemTable[arg0].count;
+    return g_KeyItemRecords[arg0].ammo;
 }
 
 /* Keep resolved pointers for the comparison UI, then snapshot both records.
@@ -1071,7 +1071,7 @@ int Inv_LoadWayneItemsAsOverride(short *items) {
                 id = temp - base;
                 temp = id + 0x200;
                 *out = temp;
-                g_InvCategoryItemTable[id].count = (u16)items[1];
+                g_KeyItemRecords[id].ammo = (u16)items[1];
                 out++;
             } else {
                 *out = id;

@@ -21,6 +21,7 @@ int g_TextCursorX;
 int g_TextCursorY;
 
 u32 g_DrawBlendColorPair[2];
+u8 g_WipeRectEdgeList[10] = {0,1,0,2,0xFF,1,3,2,3,0xFF};
 
 int Draw_GetBlendColor(void) {
     return g_DrawBlendColor;

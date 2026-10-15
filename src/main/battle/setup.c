@@ -1,4 +1,5 @@
 #include "common.h"
+#include <string.h>
 #include "pe1/battle.h"
 #include "pe1/battle_cmd.h"
 #include "pe1/battle_entity_anim.h"
@@ -473,56 +474,70 @@ void Battle_SwapRecords(BattleTargetWords *records, int from_arg, int to_arg) {
 /* Copy the action the battle menu chose into the player's action record. */
 void Battle_CopyPadStateToRecord(void) {
     BattleAction *record = g_ActiveActor->action;
-    BattleAttackBits *attack = (BattleAttackBits *)&record->attackWord;
-    BattleTurnBits *turn = (BattleTurnBits *)&record->turnWord;
+    BattleAttackBits attack_value, source_attack;
+    BattleTurnBits turn_value, source_turn;
+    memcpy(&attack_value, &record->attackWord, sizeof(attack_value));
+    memcpy(&turn_value, &record->turnWord, sizeof(turn_value));
+    memcpy(&source_attack, &g_BattleMenuActionRecord.attackWord, sizeof(source_attack));
+    memcpy(&source_turn, &g_BattleMenuActionRecord.turnWord, sizeof(source_turn));
+    BattleAttackBits *attack = &attack_value;
+    BattleTurnBits *turn = &turn_value;
 
     record->powerBonus = g_BattleMenuActionRecord.powerBonus;
     record->range = g_BattleMenuActionRecord.range;
     record->field04 = g_BattleMenuActionRecord.field04;
     record->actionCode.actionId = g_BattleMenuActionRecord.actionCode.actionId;
     record->hitTrigger = g_BattleMenuActionRecord.hitTrigger;
-    attack->count = g_BattleMenuAttackBits.count;
-    attack->power = g_BattleMenuAttackBits.power;
-    attack->category = g_BattleMenuAttackBits.category;
-    turn->actions = g_BattleMenuTurnBits.actions;
-    turn->slot = g_BattleMenuTurnBits.slot;
-    turn->mode = g_BattleMenuTurnBits.mode;
-    turn->element8 = g_BattleMenuTurnBits.element8;
-    turn->element9 = g_BattleMenuTurnBits.element9;
-    turn->element10 = g_BattleMenuTurnBits.element10;
-    turn->element11 = g_BattleMenuTurnBits.element11;
-    turn->element12 = g_BattleMenuTurnBits.element12;
-    turn->hitState = g_BattleMenuTurnBits.hitState;
-    turn->flag15 = g_BattleMenuTurnBits.flag15;
-    turn->flag16 = g_BattleMenuTurnBits.flag16;
-    turn->flag17 = g_BattleMenuTurnBits.flag17;
+    attack->count = source_attack.count;
+    attack->power = source_attack.power;
+    attack->category = source_attack.category;
+    turn->actions = source_turn.actions;
+    turn->slot = source_turn.slot;
+    turn->mode = source_turn.mode;
+    turn->element8 = source_turn.element8;
+    turn->element9 = source_turn.element9;
+    turn->element10 = source_turn.element10;
+    turn->element11 = source_turn.element11;
+    turn->element12 = source_turn.element12;
+    turn->hitState = source_turn.hitState;
+    turn->flag15 = source_turn.flag15;
+    turn->flag16 = source_turn.flag16;
+    turn->flag17 = source_turn.flag17;
+    memcpy(&record->attackWord, &attack_value, sizeof(attack_value));
+    memcpy(&record->turnWord, &turn_value, sizeof(turn_value));
 }
 
 /* Copy the enemy attributes the menu record carries into the active actor. */
 void Battle_SyncEnemyAttributes(void) {
-    BattleAttributes *source = (BattleAttributes *)&g_BattleMenuActionRecord;
+    BattleAttributes source_value;
+    memcpy(&source_value, &g_BattleMenuActionRecord, sizeof(source_value));
+    BattleAttributes *source = &source_value;
     BattleAttributes *attributes = g_ActiveActor->attributes;
-    BattleEffectBits *effects = (BattleEffectBits *)&attributes->effectFlags;
+    BattleEffectBits effect_value, source_effect;
+    memcpy(&effect_value, &attributes->effectFlags, sizeof(effect_value));
+    memcpy(&source_effect, (u8 *)&g_BattleMenuActionRecord + 4, sizeof(source_effect));
+    BattleEffectBits *effects = &effect_value;
 
     attributes->parameterWord.fields.first = source->parameterWord.fields.first;
     attributes->parameterWord.fields.second = source->parameterWord.fields.second;
     attributes->parameterWord.fields.third = source->parameterWord.fields.third;
     attributes->parameterWord.fields.reserved = source->parameterWord.fields.reserved;
-    effects->resistPoison = g_BattleMenuEffectBits.resistPoison;
-    effects->resistConfusion = g_BattleMenuEffectBits.resistConfusion;
-    effects->resistDarkness = g_BattleMenuEffectBits.resistDarkness;
-    effects->resistStiffness = g_BattleMenuEffectBits.resistStiffness;
-    effects->resistSteal = g_BattleMenuEffectBits.resistSteal;
-    effects->armorMode = g_BattleMenuEffectBits.armorMode;
-    effects->mod14 = g_BattleMenuEffectBits.mod14;
-    effects->mod16 = g_BattleMenuEffectBits.mod16;
-    effects->mod11 = g_BattleMenuEffectBits.mod11;
-    effects->mod17 = g_BattleMenuEffectBits.mod17;
-    effects->mod12 = g_BattleMenuEffectBits.mod12;
-    effects->autoMedicine = g_BattleMenuEffectBits.autoMedicine;
-    effects->autoCure = g_BattleMenuEffectBits.autoCure;
-    effects->mod13 = g_BattleMenuEffectBits.mod13;
-    effects->mod15 = g_BattleMenuEffectBits.mod15;
+    effects->resistPoison = source_effect.resistPoison;
+    effects->resistConfusion = source_effect.resistConfusion;
+    effects->resistDarkness = source_effect.resistDarkness;
+    effects->resistStiffness = source_effect.resistStiffness;
+    effects->resistSteal = source_effect.resistSteal;
+    effects->armorMode = source_effect.armorMode;
+    effects->mod14 = source_effect.mod14;
+    effects->mod16 = source_effect.mod16;
+    effects->mod11 = source_effect.mod11;
+    effects->mod17 = source_effect.mod17;
+    effects->mod12 = source_effect.mod12;
+    effects->autoMedicine = source_effect.autoMedicine;
+    effects->autoCure = source_effect.autoCure;
+    effects->mod13 = source_effect.mod13;
+    effects->mod15 = source_effect.mod15;
+    memcpy(&attributes->effectFlags, &effect_value, sizeof(effect_value));
 }
 
 /* MASPSX_FORCE_G0 keeps the game-state flags absolute, as retail; the COMMON

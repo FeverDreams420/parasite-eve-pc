@@ -9,7 +9,6 @@
 #include "pe1/game_state.h"
 #include "pe1/game_timers.h"
 #include "pe1/inventory.h"
-#include "pe1/inventory_category.h"
 #include "pe1/inventory_queries.h"
 #include "pe1/inventory_slots.h"
 #include "pe1/inventory_sort.h"
@@ -637,7 +636,7 @@ int Inv_CountByValue(int arg0) {
 
     count = 0;
     if ((arg0 >= g_InvCategoryBaseItemId) && (arg0 < g_InvCategoryBaseItemId + 3)) {
-        count = g_InvCategoryItemTable[arg0 - g_InvCategoryBaseItemId].count;
+        count = g_KeyItemRecords[arg0 - g_InvCategoryBaseItemId].ammo;
     } else {
         ptr = (u16 *)g_InvItemPtr;
         end = ptr + g_InvSlotLimit;

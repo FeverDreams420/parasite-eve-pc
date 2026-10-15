@@ -6,7 +6,6 @@
 #include "pe1/draw_state.h"
 #include "pe1/game_state.h"
 #include "pe1/game_timers.h"
-#include "pe1/inventory_category.h"
 #include "pe1/inventory_slots.h"
 #include "pe1/inventory_state.h"
 #include "pe1/menu_background.h"
@@ -334,7 +333,7 @@ void Save_BuildHeader(void) {
     dst = g_SaveRuntimeState.categoryCounts;
     category = 0;
     while (i < 6) {
-        *dst = g_InvCategoryItemTable[category].count;
+        *dst = g_KeyItemRecords[category].ammo;
         category++;
         i++;
         dst++;
@@ -367,7 +366,7 @@ void Save_RestoreHeader(void) {
     src = g_SaveRuntimeState.categoryCounts;
     category = 0;
     while (i < 6) {
-        g_InvCategoryItemTable[category].count = *src++;
+        g_KeyItemRecords[category].ammo = *src++;
         i++;
         category++;
     }
@@ -375,8 +374,8 @@ void Save_RestoreHeader(void) {
     Draw_BlendColor(g_SaveRuntimeState.drawBlendColor);
     Menu_ClampRange(g_SaveRuntimeState.menuClampValue);
 
-    GAME_TIME_COUNTER(2) = (g_SaveRuntimeState.windows.header.playTimeMinutes * 15) * 4;
-    GAME_TIME_COUNTER(0) = (g_SaveRuntimeState.windows.header.gameTimeMinutes * 15) * 4;
+    GAME_TIME_COUNTER(2) = (s32)((u32)g_SaveRuntimeState.windows.header.playTimeMinutes * 60u);
+    GAME_TIME_COUNTER(0) = (s32)((u32)g_SaveRuntimeState.windows.header.gameTimeMinutes * 60u);
     Draw_SetBaseOffsetPosition(0, g_SaveRuntimeState.windows.header.drawBaseY - Draw_GetBaseY());
     Menu_SetActionSubmenuSelection(g_SaveRuntimeState.windows.header.menuLayout & 3);
     MenuWidget_SetColumnLayoutMode((g_SaveRuntimeState.windows.header.menuLayout >> 2) & 1);

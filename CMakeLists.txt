@@ -31,6 +31,8 @@ add_subdirectory(pc)
 add_library(parasite-eve-original OBJECT
     src/main/battle/encounter.c
     src/main/battle/setup.c
+    src/main/battle/turn.c
+    src/main/battle/enemy_actions.c
     src/main/aya/stats.c
     src/main/item/active_list.c
     src/main/time/counters.c
@@ -41,6 +43,9 @@ add_library(parasite-eve-original OBJECT
     src/main/render/font.c
     src/main/render/font_load.c
     src/main/menu/status_panels.c
+    src/main/menu/save_screens.c
+    src/main/menu/lists.c
+    src/main/menu/item_detail.c
     src/main/battle/commands.c
     src/main/text/tables.c
     src/main/asset/tim_textures.c
@@ -399,6 +404,10 @@ endif()
 # Original area-bank state machine; native I/O binding is still pending.
 add_library(parasite-eve-original-entity-textures OBJECT src/main/scene/room_load.c)
 target_include_directories(parasite-eve-original-entity-textures PRIVATE include)
+target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original-entity-textures>)
+if(BUILD_TESTING)
+    target_sources(test-original-actor-animation PRIVATE $<TARGET_OBJECTS:parasite-eve-original-entity-textures>)
+endif()
 if(MSVC)
     target_compile_options(parasite-eve-original-entity-textures PRIVATE /Gy /Gw)
 else()

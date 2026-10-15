@@ -6,6 +6,9 @@
 #include "pe1/resident_tables.h"
 #include "pe1/text.h"
 
+MenuWidgetSimpleDescriptor g_MenuWidgetSimpleDescriptors[0x41];
+MenuWidgetGridDescriptor g_MenuWidgetGridDescriptors[0x41];
+
 MenuWidgetSimpleDescriptor *MenuWidget_LookupSimpleDescriptor(unsigned int index) {
     if (index >= 0x41) {
         return 0;

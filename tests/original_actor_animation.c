@@ -76,6 +76,11 @@ int Inv_ScrambleGrid(void);
 #include "pe1/akao.h"
 #include "pe1/memcard_save_state.h"
 #include "pe1/save_tail_state.h"
+#include "pe1/menu_dialog.h"
+#include "pe1/text.h"
+#include "pe1/menu_notification_dialog.h"
+#include "pe1/menu_state.h"
+#include "pe1/menu_inventory.h"
 #include "../src/overlays/menu_memcard/menu_memcard_screen.h"
 #include "../src/overlays/menu_memcard/menu_memcard_image.h"
 #include <SDL3/SDL.h>
@@ -2410,11 +2415,29 @@ static int original_digit_packets(void)
     return valid;
 }
 
-static int original_save_card_images(void)
+static int original_save_card_images(PeDisc *disc)
 {
+    PeDiscFile archive,exe;
+    if(!pe_disc_find(disc,"PE.IMG",&archive) || !pe_disc_find(disc,"SLUS_006.62",&exe)) return 0;
+    CdRom_BindImage(disc,&archive);
+    if(Asset_OpenPeImage()!=0) return 0;
+    MenuWidgetSimpleDescriptor simple[0x41];MenuWidgetGridDescriptor grid[0x41];
+    if(!pe_disc_read(disc,&exe,0x92478-0x10000+0x800,simple,sizeof(simple)) ||
+       !pe_disc_read(disc,&exe,0x92888-0x10000+0x800,grid,sizeof(grid)) ||
+       memcmp(simple,g_MenuWidgetSimpleDescriptors,sizeof(simple)) ||
+       memcmp(grid,g_MenuWidgetGridDescriptors,sizeof(grid))) return 0;
     /* Complete USA 80040B80 execution with retail bzero/memcpy/strcpy
      * replaced by their ordinary memory operations in the MIPS reference. */
     const uint64_t hashes[]={UINT64_C(0x936685394f80bede),UINT64_C(0xe5f81aab0f7bf953),UINT64_C(0xb61aaf5cd3ece884),UINT64_C(0x7c2fb8b4765a32aa),UINT64_C(0xcec572cd58919327),UINT64_C(0x35824b0bdf247d70),UINT64_C(0x7dce7284bb2cb877),UINT64_C(0xe89666a7d248ca42),UINT64_C(0x65bcde6175fd7dd),UINT64_C(0x38786e1cec33fc5b),UINT64_C(0x6b73adf727616b9e),UINT64_C(0x306ce1fd0927f959),UINT64_C(0x982926f768839710),UINT64_C(0x73a40725c205f9fa),UINT64_C(0xf21eb1b1eef2a01c),UINT64_C(0x5cd836de2ed5054c),UINT64_C(0x85fc33ce4d3ac0d6),UINT64_C(0x2e35122d654262a8),UINT64_C(0xd0abcde83a45c645),UINT64_C(0x2456ac875900e287),UINT64_C(0xa1789c690daf8765),UINT64_C(0x4125cc56ff810af9),UINT64_C(0xe416e4a8fa0d45b3),UINT64_C(0xba006f1659b2ff21)};
+    GameTimerEntry saved_timers[4];memcpy(saved_timers,g_GameTimers,sizeof(saved_timers));
+    ItemDataRecord saved_keys[9];memcpy(saved_keys,g_KeyItemRecords,sizeof(saved_keys));
+    u32 saved_blend[2];memcpy(saved_blend,g_DrawBlendColorPair,sizeof(saved_blend));
+    DISPENV saved_display[2];memcpy(saved_display,g_RenderDispEnvArray,sizeof(saved_display));
+    TextboxNameGlyphs saved_name=g_TextboxNameGlyphs;
+    MenuWidgetSavedLayout saved_layouts[72];memcpy(saved_layouts,g_MenuWidgetColumnLayoutTable,sizeof(saved_layouts));
+    int saved_layout_mode=MenuWidget_GetColumnLayoutMode(),saved_context=g_MenuItemContextFlag;
+    int saved_window=g_SaveMetadataWindowIndex,saved_success=g_MemCardLoadSucceeded;
+    unsigned saved_submenu=g_MenuActionSubmenuSel;
     SaveRuntimeState saved_runtime=g_SaveRuntimeState;
     Pe1GameState saved_state=g_GameState;
     AyaBattleState saved_aya=g_AyaBattleState;
@@ -2497,13 +2520,73 @@ static int original_save_card_images(void)
         if(Save_SerializeTail()!=-1 || g_SaveIoCursor!=tail+1)valid=0;
         for(unsigned i=0;i<sizeof(tail);++i)if(tail[i]!=0xA5)valid=0;
     }
+    /* Execute the complete original loader, including real modal widgets.
+     * Synthetic image payloads deliberately exercise 32-bit timer wrapping. */
+    static u8 image[0x2000];memcpy(image,g_MemCardFileBuffer,sizeof(image));
+    int queued=g_AkaoMessageQueueCount;
+    g_SaveMetadataWindowIndex=0;
+    MenuWidget_InitPool();Menu_CreateMemCardProgressWidget(0);
+    Save_LoadCardFileIntoRuntime();
+    MenuWidgetNode *child=MenuWidget_GetCurrentNode();
+    if(!g_MemCardLoadSucceeded || memcmp(&g_SaveRuntimeState,image+0x100,sizeof(g_SaveRuntimeState)) ||
+       g_SaveIoCursor!=g_MemCardFileBuffer+0x1C90 || g_MenuDeferredCallback!=Save_CancelUiFlow ||
+       MenuWidget_FindByModeAndSelectedBase(1,0x27) || !child || !child->parent ||
+       child->parent->selected_base!=0x28 || child->parent->update!=Menu_HandleDeferredCallbackInput ||
+       GAME_TIME_COUNTER(2)!=(s32)((u32)g_SaveRuntimeState.windows.header.playTimeMinutes*60u) ||
+       GAME_TIME_COUNTER(0)!=(s32)((u32)g_SaveRuntimeState.windows.header.gameTimeMinutes*60u))valid=0;
+    for(unsigned i=0;i<6;++i)if(g_KeyItemRecords[i].ammo!=g_SaveRuntimeState.categoryCounts[i])valid=0;
+    const unsigned damaged[]={0,4,0x100,0x13E4,0x1C8C,0x1C90,0x1FFF};
+    for(unsigned fault=0;fault<8;++fault) {
+        memcpy(g_MemCardFileBuffer,image,sizeof(image));
+        if(fault<7) g_MemCardFileBuffer[damaged[fault]]^=0x40;
+        else {
+            u32 bad=0x12345678;memcpy(g_MemCardFileBuffer+0x13E4+0x818+0x68,&bad,4);
+            memset(g_MemCardFileBuffer+0x1C8C,0,4);
+            u16 crc=0xFFFF;
+            for(unsigned i=0;i<sizeof(image);++i) {
+                crc^=(u16)g_MemCardFileBuffer[i]<<8;
+                for(unsigned b=0;b<8;++b)crc=(u16)((crc&0x8000)?(crc<<1)^0x1021:crc<<1);
+            }
+            u32 stored=crc^0xFFFFu;memcpy(g_MemCardFileBuffer+0x1C8C,&stored,4);
+        }
+        SaveRuntimeState before_runtime=g_SaveRuntimeState;Pe1GameState before_game=g_GameState;
+        AyaBattleState before_aya=g_AyaBattleState;u32 before_variables[512];
+        memcpy(before_variables,g_ScriptVariableBank,sizeof(before_variables));
+        u32 before_flags=g_GameStateFlags;int before_lock=D_8009D2E8,before_scene=g_SceneDispatchToken;
+        GameTimerEntry timers[4];memcpy(timers,g_GameTimers,sizeof(timers));
+        MenuWidget_InitPool();Menu_CreateMemCardProgressWidget(0);g_MemCardLoadSucceeded=1;
+        Save_LoadCardFileIntoRuntime();
+        child=MenuWidget_GetCurrentNode();
+        if(g_MemCardLoadSucceeded || memcmp(&before_runtime,&g_SaveRuntimeState,sizeof(before_runtime)) ||
+           memcmp(&before_game,&g_GameState,sizeof(before_game)) || memcmp(&before_aya,&g_AyaBattleState,sizeof(before_aya)) ||
+           memcmp(before_variables,g_ScriptVariableBank,sizeof(before_variables)) ||
+           memcmp(timers,g_GameTimers,sizeof(timers)) || g_GameStateFlags!=before_flags || D_8009D2E8!=before_lock ||
+           g_SceneDispatchToken!=before_scene || g_MenuDeferredCallback || MenuWidget_FindByModeAndSelectedBase(1,0x27) ||
+           !child || !child->parent || child->parent->draw!=Menu_DrawTwoLineDialogText)valid=0;
+        const u8 *line0=Text_LookupTable4(0x55),*line1=Text_LookupTable4(0x56);
+        unsigned len0=0,len1=0;while(line0[len0]!=0xFF && len0<63)++len0;while(line1[len1]!=0xFF && len1<63)++len1;
+        if(memcmp(line0,g_MenuTwoLineDialogText[0],len0+1) || memcmp(line1,g_MenuTwoLineDialogText[1],len1+1))valid=0;
+        if(child && child->parent) {
+            MenuWidgetNode *parent=child->parent;
+            if(parent->update(parent,0x10040)!=1 || g_MenuWidgetActiveListHead || MenuWidget_GetCurrentNode())valid=0;
+        }
+    }
+    memcpy(g_MemCardFileBuffer,image,sizeof(image));MenuWidget_InitPool();Menu_CreateMemCardProgressWidget(0);
+    Save_LoadCardFileIntoRuntime();
+    if(!g_MemCardLoadSucceeded || memcmp(image,g_MemCardFileBuffer,sizeof(image)))valid=0;
+    MenuWidget_InitPool();g_MenuDeferredCallback=NULL;g_AkaoMessageQueueCount=queued;
     if(!original_card_file_services(g_MemCardFileBuffer))valid=0;
+    memcpy(g_GameTimers,saved_timers,sizeof(saved_timers));memcpy(g_KeyItemRecords,saved_keys,sizeof(saved_keys));
+    memcpy(g_DrawBlendColorPair,saved_blend,sizeof(saved_blend));memcpy(g_RenderDispEnvArray,saved_display,sizeof(saved_display));
+    g_TextboxNameGlyphs=saved_name;g_MenuItemContextFlag=saved_context;g_MenuActionSubmenuSel=saved_submenu;
+    MenuWidget_SetColumnLayoutMode(saved_layout_mode);memcpy(g_MenuWidgetColumnLayoutTable,saved_layouts,sizeof(saved_layouts));
+    g_SaveMetadataWindowIndex=saved_window;g_MemCardLoadSucceeded=saved_success;
     g_SaveRuntimeState=saved_runtime;g_GameState=saved_state;g_GameStateFlags=saved_flags;g_AyaBattleState=saved_aya;
     g_SavedBattleStateTail=saved_tail;g_BattleEquipStateBlock=saved_attributes;
     memcpy(g_ScriptVariableBank,saved_variables,sizeof(saved_variables));D_8009D2E8=saved_move;
     g_SceneDispatchToken=saved_token;g_SaveTitleStyleFlag=saved_style;g_ScreenTint.fadeMode=saved_fade;
     g_SaveIoCursor=saved_cursor;g_SaveSjisFormatArguments=saved_arguments;memcpy(g_SaveTitleBuffer,title,sizeof(title));
-    if(valid)puts("Original save image: 24 full 8 KiB USA MIPS images, SJIS titles/icons, CRC, unaligned tail round trips and invalid link rejection passed");
+    if(valid)puts("Original save image: 24 full 8 KiB USA MIPS images, SJIS titles/icons, CRC, unaligned tails and full loader with modal dialogs, CRC/link rejection and retry passed");
     return valid;
 }
 
@@ -2705,7 +2788,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
-    if(!original_save_card_images())valid=0;
+    if(!original_save_card_images(disc))valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

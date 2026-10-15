@@ -6,6 +6,10 @@
 #include "pe1/inventory.h"
 #include "pe1/player_entity.h"
 
+/* Authored USA action animation and offense parameters. */
+const EnemyAnimTable g_BattleActionAnimRows = {{{0,0,0,0,0},{0,0,5,10,2},{5,0,0,10,4},{0,0,0,10,2},{10,7,0,10,4},{0,0,5,15,3},{0,0,20,30,3},{0,0,5,10,2},{0,0,0,0,5}}};
+const EnemyOffenseScaleTable g_BattleActionOffenseScale = {{0,10,8,10,8,8,4,10,20}};
+
 void Battle_SubActionStep(void) {
     Combatant *state;
     BattleEntity *actor;

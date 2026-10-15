@@ -54,9 +54,6 @@ extern int g_BattleModeState;
  * words are also declared on their own: retail reads each of them through
  * its own absolute address. */
 extern BattleAction g_BattleMenuActionRecord;
-extern BattleEffectBits g_BattleMenuEffectBits;
-extern BattleAttackBits g_BattleMenuAttackBits;
-extern BattleTurnBits g_BattleMenuTurnBits;
 extern s8 g_BattleTargetCount;
 extern struct FieldActor *g_FieldActorListHead; /* actor list head */
 extern u8 g_EscapeFailedTexts[];

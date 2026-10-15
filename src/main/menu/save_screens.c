@@ -21,8 +21,7 @@
 #include "pe1/save.h"
 #include "pe1/text.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared state of the original menu panels and save dialogs. */
 int g_SaveSelectedSlotState;
 int D_8009CFA4;
 int g_InvItemUsableFlag;
@@ -32,6 +31,7 @@ int g_MenuActionTextBase;
 int g_MenuActiveItemList;
 MenuConfirmCallback g_MenuConfirmCallback;
 void (*g_MenuDeferredCallback)(void);
+u8 g_MenuTwoLineDialogText[2][64];
 int g_MenuEquipMode;
 unsigned char *g_MenuItemIconGlyphTable;
 int g_MenuItemPrimListHandles[2];
@@ -48,14 +48,14 @@ int g_SaveSlotCellIndex;
 #define NULL ((void *)0)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
-s32 Menu_MemCardPortSelectHandler(void *node, s32 flags);
+s32 Menu_MemCardPortSelectHandler(MenuWidgetNode *node, unsigned int flags);
 
 int g_McDialogMode;
 int g_MenuMemCardConfirmPending;
 /* Parasite spell named by the info panel. */
 int g_MenuSpellInfoId;
 
-void Menu_DrawParasiteSpellInfoPanel(void);
+void Menu_DrawParasiteSpellInfoPanel(MenuWidgetNode *unused);
 
 void Menu_CreateParasiteSpellInfoPanel(int arg0) {
     MenuWidgetNode *widget;
@@ -69,7 +69,7 @@ void Menu_CreateParasiteSpellInfoPanel(int arg0) {
     g_MenuSpellInfoId = arg0;
 }
 
-void Menu_DrawParasiteSpellInfoPanel(void) {
+void Menu_DrawParasiteSpellInfoPanel(MenuWidgetNode *unused) {
     Draw_OffsetCursor(2, 4);
     Draw_PrintCenteredText(Text_LookupTable4(0x26));
     Draw_OffsetCursor(0, 0x10);
@@ -426,7 +426,7 @@ void Menu_CreateTwoLineDialog(int line0_id, int line1_id) {
     MenuInput_InitQueue();
 }
 
-void Menu_DrawTwoLineDialogText(void) {
+void Menu_DrawTwoLineDialogText(MenuWidgetNode *unused) {
     Draw_OffsetCursor(0, 0xA);
     Draw_PrintCenteredText(g_MenuTwoLineDialogText[0]);
     Draw_OffsetCursor(0, 0xE);
@@ -437,7 +437,7 @@ void Menu_SetDeferredCallback(void (*callback)(void)) {
     g_MenuDeferredCallback = callback;
 }
 
-int Menu_HandleDeferredCallbackInput(MenuWidgetNode *node, int arg1) {
+int Menu_HandleDeferredCallbackInput(MenuWidgetNode *node, unsigned int arg1) {
     if ((arg1 & 0x10040) != 0) {
         MenuWidget_DestroyNode(node);
         if (g_MenuDeferredCallback != 0) {
@@ -476,9 +476,9 @@ void Menu_OpenMemCardSelectDialog(s32 arg0) {
 
 void Menu_OpenStartupMemCardDialog(void) {
     s32 one;
-    void *callback_2c;
-    void *callback_30;
-    void *callback_8c;
+    MenuWidgetInputHandler callback_2c;
+    void (*callback_30)(MenuWidgetNode *);
+    int (*callback_8c)(int);
     MenuWidgetNode *child;
     MenuWidgetNode *parent;
 
@@ -519,7 +519,7 @@ void Menu_ShowMemCardErrorDialog(int arg0) {
     }
 }
 
-s32 Menu_MemCardPortSelectHandler(void *node, s32 flags) {
+s32 Menu_MemCardPortSelectHandler(MenuWidgetNode *node, unsigned int flags) {
     s32 cellIndex;
 
     cellIndex = MenuWidget_GetCellIndex(MenuWidget_GetChild(node, 0));
@@ -630,7 +630,7 @@ void Menu_DrawSaveSlotPortLabel(MenuWidgetNode *node) {
 
 #define NULL ((void *)0)
 
-s32 Menu_StepSaveSelect(MenuWidgetNode *arg0, s32 arg1) {
+s32 Menu_StepSaveSelect(MenuWidgetNode *arg0, unsigned int arg1) {
     void (*var_a0)(void);
     s32 temp_s0;
     MenuWidgetNode *temp_s2;
@@ -728,8 +728,8 @@ s32 Menu_StepSaveSelect(MenuWidgetNode *arg0, s32 arg1) {
 
 int g_MemCardProgressPrimList;
 
-void MemCard_DrawProgress(void);
-int Menu_MemCardProgressInputHandler(void);
+void MemCard_DrawProgress(MenuWidgetNode *unused);
+int Menu_MemCardProgressInputHandler(MenuWidgetNode *node, unsigned int flags);
 void Draw_FlushPrimList(int arg0);
 int MemCard_GetActiveProgressBlocks(void);
 void MenuWidget_SaveAndSetCurrentNode(MenuWidgetNode *arg0);
@@ -755,7 +755,7 @@ void Menu_DestroyMemCardProgressWidget(void) {
     MenuWidget_DestroyNode(MenuWidget_FindByModeAndSelectedBase(1, 0x27));
 }
 
-void MemCard_DrawProgress(void) {
+void MemCard_DrawProgress(MenuWidgetNode *unused) {
     int i;
     int count;
 
@@ -777,7 +777,7 @@ void MemCard_DrawProgress(void) {
     }
 }
 
-int Menu_MemCardProgressInputHandler(void) {
+int Menu_MemCardProgressInputHandler(MenuWidgetNode *node, unsigned int flags) {
     return 1;
 }
 
@@ -890,7 +890,7 @@ void Menu_OpenSaveLoadEntryPoint(s32 arg0) {
 
 #define NULL ((void *)0)
 
-void Menu_DrawSaveMetadataPreview(void);
+void Menu_DrawSaveMetadataPreview(MenuWidgetNode *unused);
 
 void Menu_OpenRenameScreen(s32 arg0) {
     u8 *var_v1;
@@ -941,7 +941,7 @@ void Menu_OpenRenameScreen(s32 arg0) {
     g_GameState.flags |= 0x8000;
 }
 
-void Menu_DrawSaveMetadataPreview(void) {
+void Menu_DrawSaveMetadataPreview(MenuWidgetNode *unused) {
     u8 *text;
     s32 remaining;
     s32 lastSlot;

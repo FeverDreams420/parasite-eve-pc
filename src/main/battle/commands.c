@@ -15,6 +15,7 @@
 #include "pe1/player_entity.h"
 #include "pe1/weapon_list_output.h"
 
+BattleAction g_BattleMenuActionRecord;
 BattleCmdEntry g_BattleCmdStack[4];
 BattleCmdEntry *g_BattleCmdStackTop;
 u8 *g_MenuActiveListTarget;

@@ -6,9 +6,9 @@
 #include "pe1/menu_inventory.h"
 
 void Menu_DrawNotificationText(MenuWidgetNode *node);
-void Menu_DrawTwoLineDialogText(void);
+void Menu_DrawTwoLineDialogText(MenuWidgetNode *node);
 void Menu_DrawNotificationDialogContent(MenuWidgetNode *node);
-int Menu_HandleDeferredCallbackInput(MenuWidgetNode *node, int flags);
+int Menu_HandleDeferredCallbackInput(MenuWidgetNode *node, unsigned int flags);
 void Menu_SetDeferredCallback(void (*callback)(void));
 /* Opens the info panel announcing a newly learned parasite spell. */
 void Menu_CreateParasiteSpellInfoPanel(int spell);
@@ -26,7 +26,7 @@ extern int g_MenuActiveItemList, g_MenuActiveItemSlot;
 extern int g_MenuItemActionStateTable[][3];
 void *Inv_LookupActiveListDisplayData(int index);
 void Menu_DrawItemLabel(MenuWidgetNode *node);
-int Menu_ConfirmDialogHandler(void *node, int flags);
+int Menu_ConfirmDialogHandler(MenuWidgetNode *node, unsigned int flags);
 void Menu_DrawActionOptionList(MenuWidgetNode *node);
 void Menu_OnItemDiscardConfirm(MenuWidgetNode *node, int confirmed);
 void Menu_StepItemDetailPanel(void);
@@ -38,8 +38,8 @@ void Menu_DrawMemCardPortList(MenuWidgetNode *node);
 extern int g_SaveSelectedSlot;
 /* State of the save slot picked on the memory card screen. */
 extern int g_SaveSelectedSlotState;
-int Menu_StepSaveSelect(MenuWidgetNode *node, int flags);
-void Menu_DrawSaveSlotList(int node);
+int Menu_StepSaveSelect(MenuWidgetNode *node, unsigned int flags);
+void Menu_DrawSaveSlotList(MenuWidgetNode *node);
 void Menu_DrawSaveSlotPortLabel(MenuWidgetNode *node);
 int Menu_IsMemCardSlotCompatible(int slot);
 extern void (*g_MenuDeferredCallback)(void);

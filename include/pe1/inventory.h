@@ -2,7 +2,6 @@
 #define PE1_INVENTORY_H
 
 #include "common.h"
-#include "pe1/inventory_category.h"
 
 enum ItemDataFlags {
     ITEM_DATA_FLAG_GENERIC_DESCRIPTION = 0x10,

@@ -44,7 +44,7 @@ void Menu_DrawItemLabel(MenuWidgetNode *arg0) {
 
 /* Closes the dialog on a choice or cancel and reports it to
  * g_MenuConfirmCallback. */
-int Menu_ConfirmDialogHandler(void *node, int flags) {
+int Menu_ConfirmDialogHandler(MenuWidgetNode *node, unsigned int flags) {
     int index;
 
     if (flags & 0x10000) {

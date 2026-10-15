@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe1/menu_widget.h"
 #include <string.h>
 #include "pe1/akao.h"
 #include "pe1/asset_find.h"
@@ -67,6 +68,8 @@ int Asset_OpenPeImage(void)
     executable_path[path_length] = 0;
     u8 header[32], room_data[SCENE_ROOM_COUNT * 8], sector_data[162], audio_data[506];
     SceneRoomSectorRange ranges[SCENE_ROOM_COUNT];u16 sectors[81];
+    MenuWidgetSimpleDescriptor simple[0x41];
+    MenuWidgetGridDescriptor grid[0x41];
     if (!path_length || !pe_disc_find(g_CdImage, executable_path, &executable) || executable.directory ||
         !pe_disc_read(g_CdImage, &executable, 0, header, sizeof(header)) || memcmp(header,"PS-X EXE",8)) return -3;
     u32 base=(u32)header[24]|(u32)header[25]<<8|(u32)header[26]<<16|(u32)header[27]<<24;
@@ -75,7 +78,9 @@ int Asset_OpenPeImage(void)
         (u64)bytes+0x800>executable.size ||
         !pe_disc_read(g_CdImage,&executable,0x800ull+0x80093378u-base,room_data,sizeof(room_data)) ||
         !pe_disc_read(g_CdImage,&executable,0x800ull+0x800930d8u-base,sector_data,sizeof(sector_data)) ||
-        !pe_disc_read(g_CdImage,&executable,0x800ull+0x8009317cu-base,audio_data,sizeof(audio_data))) return -3;
+        !pe_disc_read(g_CdImage,&executable,0x800ull+0x8009317cu-base,audio_data,sizeof(audio_data)) ||
+        !pe_disc_read(g_CdImage,&executable,0x800ull+0x80092478u-base,simple,sizeof(simple)) ||
+        !pe_disc_read(g_CdImage,&executable,0x800ull+0x80092888u-base,grid,sizeof(grid))) return -3;
     for(unsigned i=0;i<SCENE_ROOM_COUNT;++i) {
         const u8 *p=room_data+i*8;
         ranges[i].start=(u32)p[0]|(u32)p[1]<<8|(u32)p[2]<<16|(u32)p[3]<<24;
@@ -96,6 +101,8 @@ int Asset_OpenPeImage(void)
     }
     memcpy(g_RoomSectorTable,ranges,sizeof(ranges));memcpy(g_PeImageSectorTable,sectors,sizeof(sectors));
     memcpy(g_SceneSectorDirectory,audio_data,sizeof(audio_data));
+    memcpy(g_MenuWidgetSimpleDescriptors,simple,sizeof(simple));
+    memcpy(g_MenuWidgetGridDescriptors,grid,sizeof(grid));
     CdRom_BindImage(g_CdImage, &archive);
     g_PeImageBaseLba = archive.sector;
     g_PeImageMountFlags = (u8)flags;

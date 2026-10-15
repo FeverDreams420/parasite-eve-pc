@@ -28,7 +28,7 @@ int g_MenuSelectionLocked;
 
 MenuWidgetNode *g_MenuActiveWidget;
 
-void Menu_DrawSaveSlotList(int arg0) {
+void Menu_DrawSaveSlotList(MenuWidgetNode *arg0) {
     g_MenuActiveWidget = (MenuWidgetNode *)arg0;
     MenuWidget_DrawList((MenuWidgetNode *)arg0, Menu_DrawSaveSlotEntry);
     Draw_BlendColor(g_SavedDrawBlendColor[0]);
@@ -257,7 +257,7 @@ void Save_StartWriteSlot(int arg0, int arg1);
 int Save_StartReadSlot(int port, int slot);
 void MemCard_SetDelayedCallback(void (*callback)(void));
 void MemCard_DrawProgress(void);
-int Menu_MemCardProgressInputHandler(void);
+int Menu_MemCardProgressInputHandler(MenuWidgetNode *node, unsigned int flags);
 void MemCard_MarkActivePortState13(void);
 void MemCard_ClearActivePrompt(void);
 int MemCard_GetActivePort(void);

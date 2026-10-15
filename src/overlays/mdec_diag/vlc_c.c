@@ -1,271 +1,173 @@
-#include "pe1/psyq_asm.h"
+#include "common.h"
+#include "pe1/psyq_press.h"
 
-/*
- * PSY-Q LIBPRESS VLC_C, linked into the mdec_diag overlay:
- * DecDCTvlcSize2, DecDCTvlc2 (the decoder
- * that uses the table built by MdecDiag_ExpandDecoderTable, i.e.
- * DecDCTvlcBuild). The boot display and memory-card video code call both.
- *
- * Original SDK assembler: the same
- * frameless static-state protocol as VLC, COP0 Status masking, and 57
- * trapping add/addi/sub instructions. DecDCTvlcSize2 is DecDCTvlcSize with
- * its own limit word, so its .Ldefault label follows the 3.5 VLC object.
- * The other labels are named after their retail addresses.
- */
-PSYQ_ASM_OBJECT(LIBPRESS, VLC_C)
+/* Original LIBPRESS VLC_C decoder. Pointers in its suspended state are native;
+ * the bitstream and lookup tables keep their little-endian PS1 format. */
+static u32 g_MdecVlc2SizeLimit = 0x00ffffff;
+static struct {
+    const u8 *input;
+    u8 *output, *end;
+    u32 bits, used, quant, block, predictor[3];
+    int suspended;
+} g_MdecVlc2SavedState;
 
-PSYQ_ASM_FUNCTION(DecDCTvlcSize2,
-    "    lui     $t0, %hi(g_MdecVlc2SizeLimit)\n"
-    "    addiu   $t0, $t0, %lo(g_MdecVlc2SizeLimit)\n"
-    "    addi    $at, $a0, -0x1\n"
-    "    blez    $at, .Ldefault\n"
-    "    lw      $v0, 0x0($t0)\n"
-    "    sll     $at, $a0, 1\n"
-    "    jr      $ra\n"
-    "    sw      $at, 0x0($t0)\n"
-    ".Ldefault:\n"
-    "    lui     $at, 0xFF\n"
-    "    ori     $at, $at, 0xFFFF\n"
-    "    jr      $ra\n"
-    "    sw      $at, 0x0($t0)\n");
+static u32 MdecVlc_Read16(const u8 *p) {
+    return p[0] | (u32)p[1] << 8;
+}
 
-PSYQ_ASM_FUNCTION(DecDCTvlc2,
-    "    lui     $t0, %hi(g_MdecVlc2SizeLimit)\n"
-    "    addiu   $t0, $t0, %lo(g_MdecVlc2SizeLimit)\n"
-    "    addi    $a2, $a2, 0x800\n"
-    "    lui     $at, 0x1\n"
-    "    add     $a3, $a2, $at\n"
-    "    bnez    $a0, .L8010C8F0\n"
-    "    lw      $t1, 0x0($t0)\n"
-    "    lui     $t0, %hi(g_MdecVlc2SavedState)\n"
-    "    addiu   $t0, $t0, %lo(g_MdecVlc2SavedState)\n"
-    "    lw      $a0, 0x0($t0)\n"
-    "    lw      $a1, 0x4($t0)\n"
-    "    lw      $v0, 0x8($t0)\n"
-    "    lw      $v1, 0xC($t0)\n"
-    "    lw      $t4, 0x10($t0)\n"
-    "    lw      $t5, 0x14($t0)\n"
-    "    lw      $t7, 0x18($t0)\n"
-    "    lw      $t8, 0x1C($t0)\n"
-    "    lw      $t9, 0x20($t0)\n"
-    "    add     $t1, $t1, $t1\n"
-    "    b       .L8010CA7C\n"
-    "    add     $t6, $a1, $t1\n"
-    ".L8010C8F0:\n"
-    "    add     $t5, $zero, $zero\n"
-    "    add     $t7, $zero, $zero\n"
-    "    add     $t8, $zero, $zero\n"
-    "    add     $t9, $zero, $zero\n"
-    "    add     $t1, $t1, $t1\n"
-    "    add     $t6, $a1, $t1\n"
-    "    lw      $t1, 0x0($a0)\n"
-    "    lhu     $t4, 0x4($a0)\n"
-    "    lhu     $t2, 0x6($a0)\n"
-    "    lhu     $v0, 0x8($a0)\n"
-    "    lhu     $v1, 0xA($a0)\n"
-    "    addi    $t2, $t2, -0x3\n"
-    "    bltz    $t2, .L8010C92C\n"
-    "    sll     $t4, $t4, 10\n"
-    "    addi    $t5, $zero, 0x1\n"
-    ".L8010C92C:\n"
-    "    addi    $a0, $a0, 0xC\n"
-    "    sll     $v0, $v0, 16\n"
-    "    or      $v0, $v0, $v1\n"
-    "    or      $v1, $zero, $zero\n"
-    "    sw      $t1, 0x0($a1)\n"
-    "    andi    $t1, $t1, 0xFFFF\n"
-    "    sll     $t1, $t1, 2\n"
-    "    addiu   $t1, $t1, 0x4\n"
-    "    add     $t1, $t1, $a1\n"
-    "    lui     $t0, %hi(g_MdecVlc2FrameEnd)\n"
-    "    addiu   $t0, $t0, %lo(g_MdecVlc2FrameEnd)\n"
-    "    sw      $t1, 0x0($t0)\n"
-    "    addi    $a1, $a1, 0x2\n"
-    ".L8010C960:\n"
-    "    beqz    $t5, .L8010CA38\n"
-    "    srl     $t0, $v0, 22\n"
-    "    xori    $at, $t0, 0x3FF\n"
-    "    beqz    $at, .L8010CB84\n"
-    "    addi    $a1, $a1, 0x2\n"
-    "    addi    $at, $t5, -0x3\n"
-    "    bltz    $at, .L8010C984\n"
-    "    addi    $at, $a2, -0x400\n"
-    "    addi    $at, $at, -0x400\n"
-    ".L8010C984:\n"
-    "    srl     $t0, $v0, 24\n"
-    "    sll     $t0, $t0, 2\n"
-    "    add     $t0, $t0, $at\n"
-    "    lhu     $t1, 0x0($t0)\n"
-    "    lhu     $t2, 0x2($t0)\n"
-    "    and     $t0, $zero, $zero\n"
-    "    beqz    $t2, .L8010C9C8\n"
-    "    sllv    $v0, $v0, $t1\n"
-    "    addi    $at, $zero, 0x20\n"
-    "    sub     $at, $at, $t2\n"
-    "    srlv    $t0, $v0, $at\n"
-    "    bltz    $v0, .L8010C9C4\n"
-    "    sllv    $v0, $v0, $t2\n"
-    "    addi    $t3, $zero, -0x1\n"
-    "    srlv    $t3, $t3, $at\n"
-    "    sub     $t0, $t0, $t3\n"
-    ".L8010C9C4:\n"
-    "    add     $v1, $v1, $t2\n"
-    ".L8010C9C8:\n"
-    "    add     $v1, $v1, $t1\n"
-    "    andi    $at, $v1, 0x10\n"
-    "    beqz    $at, .L8010C9E8\n"
-    "    andi    $v1, $v1, 0xF\n"
-    "    lhu     $t1, 0x0($a0)\n"
-    "    addi    $a0, $a0, 0x2\n"
-    "    sllv    $t1, $t1, $v1\n"
-    "    or      $v0, $v0, $t1\n"
-    ".L8010C9E8:\n"
-    "    addi    $at, $t5, -0x2\n"
-    "    bgtz    $at, .L8010CA10\n"
-    "    add     $t1, $t9, $t0\n"
-    "    beqz    $at, .L8010CA08\n"
-    "    add     $t1, $t8, $t0\n"
-    "    add     $t1, $t7, $t0\n"
-    "    b       .L8010CA14\n"
-    "    add     $t7, $t7, $t0\n"
-    ".L8010CA08:\n"
-    "    b       .L8010CA14\n"
-    "    add     $t8, $t8, $t0\n"
-    ".L8010CA10:\n"
-    "    add     $t9, $t9, $t0\n"
-    ".L8010CA14:\n"
-    "    sll     $t1, $t1, 2\n"
-    "    andi    $t1, $t1, 0x3FF\n"
-    "    or      $t1, $t4, $t1\n"
-    "    addi    $t5, $t5, 0x1\n"
-    "    addi    $at, $t5, -0x7\n"
-    "    bnez    $at, .L8010CA70\n"
-    "    sh      $t1, 0x0($a1)\n"
-    "    b       .L8010CA70\n"
-    "    addi    $t5, $t5, -0x6\n"
-    ".L8010CA38:\n"
-    "    xori    $at, $t0, 0x1FF\n"
-    "    beqz    $at, .L8010CB84\n"
-    "    addi    $a1, $a1, 0x2\n"
-    "    sll     $v0, $v0, 10\n"
-    "    addi    $v1, $v1, 0xA\n"
-    "    andi    $at, $v1, 0x10\n"
-    "    beqz    $at, .L8010CA68\n"
-    "    andi    $v1, $v1, 0xF\n"
-    "    lhu     $t1, 0x0($a0)\n"
-    "    addi    $a0, $a0, 0x2\n"
-    "    sllv    $t1, $t1, $v1\n"
-    "    or      $v0, $v0, $t1\n"
-    ".L8010CA68:\n"
-    "    or      $t0, $t4, $t0\n"
-    "    sh      $t0, 0x0($a1)\n"
-    ".L8010CA70:\n"
-    "    subu    $at, $a1, $t6\n"
-    "    bgez    $at, .L8010CBC8\n"
-    "    addi    $a1, $a1, 0x2\n"
-    ".L8010CA7C:\n"
-    "    srl     $t0, $v0, 19\n"
-    "    sll     $t0, $t0, 3\n"
-    "    add     $t0, $t0, $a2\n"
-    "    lw      $t1, 0x0($t0)\n"
-    "    nop\n"
-    "    bnez    $t1, .L8010CAD8\n"
-    "    andi    $at, $t1, 0xFF\n"
-    "    sll     $v0, $v0, 8\n"
-    "    addi    $v1, $v1, 0x8\n"
-    "    andi    $at, $v1, 0x10\n"
-    "    beqz    $at, .L8010CABC\n"
-    "    andi    $v1, $v1, 0xF\n"
-    "    lhu     $t0, 0x0($a0)\n"
-    "    addi    $a0, $a0, 0x2\n"
-    "    sllv    $t0, $t0, $v1\n"
-    "    or      $v0, $v0, $t0\n"
-    ".L8010CABC:\n"
-    "    srl     $t0, $v0, 23\n"
-    "    sll     $t0, $t0, 2\n"
-    "    add     $t0, $t0, $a3\n"
-    "    lw      $t1, 0x0($t0)\n"
-    "    add     $t3, $zero, $zero\n"
-    "    b       .L8010CADC\n"
-    "    andi    $at, $t1, 0xFF\n"
-    ".L8010CAD8:\n"
-    "    lw      $t3, 0x4($t0)\n"
-    ".L8010CADC:\n"
-    "    sllv    $v0, $v0, $at\n"
-    "    add     $v1, $v1, $at\n"
-    "    andi    $at, $v1, 0x10\n"
-    "    beqz    $at, .L8010CB00\n"
-    "    andi    $v1, $v1, 0xF\n"
-    "    lhu     $t0, 0x0($a0)\n"
-    "    addi    $a0, $a0, 0x2\n"
-    "    sllv    $t0, $t0, $v1\n"
-    "    or      $v0, $v0, $t0\n"
-    ".L8010CB00:\n"
-    "    srl     $t1, $t1, 16\n"
-    "    xori    $at, $t1, 0x7C1F\n"
-    "    beqz    $at, .L8010CB60\n"
-    "    xori    $at, $t1, 0xFE00\n"
-    "    beqz    $at, .L8010C960\n"
-    "    sh      $t1, 0x0($a1)\n"
-    "    beqz    $t3, .L8010CA7C\n"
-    "    addi    $a1, $a1, 0x2\n"
-    "    andi    $t2, $t3, 0xFFFF\n"
-    "    xori    $at, $t2, 0x7C1F\n"
-    "    beqz    $at, .L8010CB60\n"
-    "    xori    $at, $t2, 0xFE00\n"
-    "    beqz    $at, .L8010C960\n"
-    "    sh      $t2, 0x0($a1)\n"
-    "    srl     $t2, $t3, 16\n"
-    "    beqz    $t2, .L8010CA7C\n"
-    "    addi    $a1, $a1, 0x2\n"
-    "    xori    $at, $t2, 0x7C1F\n"
-    "    beqz    $at, .L8010CB60\n"
-    "    xori    $at, $t2, 0xFE00\n"
-    "    beqz    $at, .L8010C960\n"
-    "    sh      $t2, 0x0($a1)\n"
-    "    b       .L8010CA7C\n"
-    "    addi    $a1, $a1, 0x2\n"
-    ".L8010CB60:\n"
-    "    srl     $t0, $v0, 16\n"
-    "    sh      $t0, 0x0($a1)\n"
-    "    addi    $a1, $a1, 0x2\n"
-    "    lhu     $t0, 0x0($a0)\n"
-    "    addi    $a0, $a0, 0x2\n"
-    "    sll     $v0, $v0, 16\n"
-    "    sllv    $t0, $t0, $v1\n"
-    "    b       .L8010CA7C\n"
-    "    or      $v0, $v0, $t0\n"
-    ".L8010CB84:\n"
-    "    lui     $t0, %hi(g_MdecVlc2FrameEnd)\n"
-    "    addiu   $t0, $t0, %lo(g_MdecVlc2FrameEnd)\n"
-    "    lw      $t1, 0x0($t0)\n"
-    "    ori     $t0, $zero, 0xFE00\n"
-    ".L8010CB94:\n"
-    "    subu    $at, $a1, $t1\n"
-    "    bgez    $at, .L8010CBAC\n"
-    "    nop\n"
-    "    sh      $t0, 0x0($a1)\n"
-    "    b       .L8010CB94\n"
-    "    addi    $a1, $a1, 0x2\n"
-    ".L8010CBAC:\n"
-    "    mfc0    $t1, $12\n"
-    "    nop\n"
-    "    lui     $at, 0x2\n"
-    "    or      $t1, $t1, $at\n"
-    "    mtc0    $t1, $12\n"
-    "    jr      $ra\n"
-    "    add     $v0, $zero, $zero\n"
-    ".L8010CBC8:\n"
-    "    lui     $t0, %hi(g_MdecVlc2SavedState)\n"
-    "    addiu   $t0, $t0, %lo(g_MdecVlc2SavedState)\n"
-    "    sw      $a0, 0x0($t0)\n"
-    "    sw      $a1, 0x4($t0)\n"
-    "    sw      $v0, 0x8($t0)\n"
-    "    sw      $v1, 0xC($t0)\n"
-    "    sw      $t4, 0x10($t0)\n"
-    "    sw      $t5, 0x14($t0)\n"
-    "    sw      $t7, 0x18($t0)\n"
-    "    sw      $t8, 0x1C($t0)\n"
-    "    sw      $t9, 0x20($t0)\n"
-    "    jr      $ra\n"
-    "    addi    $v0, $zero, 0x1\n");
+static u32 MdecVlc_Read32(const u8 *p) {
+    return MdecVlc_Read16(p) | MdecVlc_Read16(p + 2) << 16;
+}
+
+static void MdecVlc_Write16(u8 *p, u32 value) {
+    p[0] = (u8)value;
+    p[1] = (u8)(value >> 8);
+}
+
+int DecDCTvlcSize2(int size) {
+    u32 previous = g_MdecVlc2SizeLimit;
+    g_MdecVlc2SizeLimit = size > 1 ? (u32)size * 2 : 0x00ffffff;
+    return (int)previous;
+}
+
+int DecDCTvlc2(void *input, void *decoded, void *vlc) {
+    const u8 *table = vlc;
+    const u8 *source;
+    u8 *output, *chunk_start;
+    u32 bits, used, quant, block, predictor[3];
+    u32 code, packed, extra, count, dc, length;
+    if (!table) return -1;
+    if (input) {
+        const u8 *frame = input;
+        if (!decoded) return -1;
+        source = frame + 12;
+        output = decoded;
+        chunk_start = output;
+        u32 header = MdecVlc_Read32(frame);
+        /* The advertised MDEC payload counts 32-bit words. */
+        g_MdecVlc2SavedState.end = output + 4 + (header & 0xffff) * 4;
+        MdecVlc_Write16(output, header);
+        MdecVlc_Write16(output + 2, header >> 16);
+        output += 2;
+        bits = MdecVlc_Read16(frame + 8) << 16 | MdecVlc_Read16(frame + 10);
+        used = 0;
+        quant = MdecVlc_Read16(frame + 4) << 10;
+        block = MdecVlc_Read16(frame + 6) >= 3 ? 1 : 0;
+        predictor[0] = predictor[1] = predictor[2] = 0;
+        g_MdecVlc2SavedState.suspended = 0;
+        goto dc_coefficient;
+    }
+    if (!g_MdecVlc2SavedState.suspended) return -1;
+    source = g_MdecVlc2SavedState.input;
+    output = g_MdecVlc2SavedState.output;
+    chunk_start = output;
+    bits = g_MdecVlc2SavedState.bits;
+    used = g_MdecVlc2SavedState.used;
+    quant = g_MdecVlc2SavedState.quant;
+    block = g_MdecVlc2SavedState.block;
+    for (unsigned i = 0; i < 3; ++i) predictor[i] = g_MdecVlc2SavedState.predictor[i];
+    goto ac_coefficient;
+
+dc_coefficient:
+    dc = bits >> 22;
+    output += 2;
+    if (dc == (block ? 0x3ffu : 0x1ffu)) goto frame_complete;
+    if (output + 2 > g_MdecVlc2SavedState.end) goto invalid;
+    if (block) {
+        const u8 *entry = table + (block < 3 ? 0x400 : 0) + (bits >> 24) * 4;
+        length = MdecVlc_Read16(entry);
+        count = MdecVlc_Read16(entry + 2);
+        bits <<= length & 31;
+        dc = 0;
+        if (count) {
+            dc = bits >> ((32 - count) & 31);
+            if (!(bits & 0x80000000u)) dc -= 0xffffffffu >> ((32 - count) & 31);
+            bits <<= count & 31;
+            used += count;
+        }
+        used += length;
+        unsigned component = block < 3 ? block - 1 : 2;
+        predictor[component] += dc;
+        code = quant | ((predictor[component] << 2) & 0x3ff);
+        if (++block == 7) block = 1;
+    } else {
+        code = quant | dc;
+        bits <<= 10;
+        used += 10;
+    }
+    if (used & 16) {
+        used &= 15;
+        bits |= MdecVlc_Read16(source) << used;
+        source += 2;
+    } else used &= 15;
+    MdecVlc_Write16(output, code);
+    /* LIBPRESS checks its work limit at DC boundaries, after writing DC. */
+    if ((size_t)(output - chunk_start) >= (size_t)g_MdecVlc2SizeLimit * 2) {
+        output += 2;
+        g_MdecVlc2SavedState.input = source;
+        g_MdecVlc2SavedState.output = output;
+        g_MdecVlc2SavedState.bits = bits;
+        g_MdecVlc2SavedState.used = used;
+        g_MdecVlc2SavedState.quant = quant;
+        g_MdecVlc2SavedState.block = block;
+        for (unsigned i = 0; i < 3; ++i) g_MdecVlc2SavedState.predictor[i] = predictor[i];
+        g_MdecVlc2SavedState.suspended = 1;
+        return 1;
+    }
+    output += 2;
+
+ac_coefficient:
+    {
+        const u8 *entry = table + 0x800 + (bits >> 19) * 8;
+        packed = MdecVlc_Read32(entry);
+        extra = 0;
+        if (packed) extra = MdecVlc_Read32(entry + 4);
+        else {
+            bits <<= 8;
+            used += 8;
+            if (used & 16) {
+                used &= 15;
+                bits |= MdecVlc_Read16(source) << used;
+                source += 2;
+            } else used &= 15;
+            packed = MdecVlc_Read32(table + 0x10800 + (bits >> 23) * 4);
+        }
+    }
+    count = packed & 255;
+    bits <<= count & 31;
+    used += count;
+    if (used & 16) {
+        used &= 15;
+        bits |= MdecVlc_Read16(source) << used;
+        source += 2;
+    } else used &= 15;
+    code = packed >> 16;
+    for (unsigned i = 0; ; ++i) {
+        if (code == 0x7c1f) {
+            if (output + 2 > g_MdecVlc2SavedState.end) goto invalid;
+            MdecVlc_Write16(output, bits >> 16);
+            output += 2;
+            bits = bits << 16 | MdecVlc_Read16(source) << used;
+            source += 2;
+            goto ac_coefficient;
+        }
+        if (output + 2 > g_MdecVlc2SavedState.end) goto invalid;
+        MdecVlc_Write16(output, code);
+        if (code == 0xfe00) goto dc_coefficient;
+        output += 2;
+        if (i == 2 || !extra) goto ac_coefficient;
+        code = i == 0 ? extra & 0xffff : extra >> 16;
+        if (i == 1 && !code) goto ac_coefficient;
+    }
+
+frame_complete:
+    while (output < g_MdecVlc2SavedState.end) {
+        MdecVlc_Write16(output, 0xfe00);
+        output += 2;
+    }
+    g_MdecVlc2SavedState.suspended = 0;
+    return 0;
+invalid:
+    g_MdecVlc2SavedState.suspended = 0;
+    return -1;
+}

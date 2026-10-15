@@ -129,26 +129,14 @@ s32 MenuCard_PlayVideo(s32 index) {
     s32 entry = index;
     s32 result = 0;
     u32 *flags;
-    s32 ready;
+    /* VLC/MDEC code is linked statically; only its original work arena remains. */
+    _Alignas(16) static u8 movie_buffers[0x55e00];
+    if (index < 0 || index >= 47 || g_DrawEnabled.bits) return 0;
     flags=&g_GameStateFlagsWord;
     *flags |= 0x200;
     g_MenuCardScreenVideoTable[entry].wide=1;
     SetDispMask(0); DrawSync(0); ResetGraph(1);
-retry:
-    {
-        VideoDiscRange *range = (VideoDiscRange *)g_SceneInitLbaTbl0;
-        s32 readError = -1;
-        s32 pollError;
-        do {} while(CdRom_ReadSectorsFromLba(g_GameState.pe_image_base_lba+range->start,g_MdecOverlayLoadBase,range->end-range->start)==readError);
-        pollError=-1;
-        for (;;) {
-            ready=CdRom_PollReady();
-            if (ready==0) break;
-            if (ready==pollError) goto retry;
-        }
-    }
-    EnterCriticalSection(); FlushCache(); ExitCriticalSection();
-    buffer=g_CdLoadAreaBase+((g_SceneAssetLbaTbl[0]-g_SceneInitLbaTbl1[0])<<11);
+    buffer=movie_buffers;
     MenuCard_InitVideoBuffers(1,&buffer);
     MenuCard_OpenVideo((s16)entry);
     {

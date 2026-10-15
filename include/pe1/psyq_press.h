@@ -7,4 +7,7 @@
 typedef void (*Pe1MdecCallback)(void);
 Pe1MdecCallback DecDCToutCallback(Pe1MdecCallback callback);
 
+int DecDCTvlcSize2(int size);
+int DecDCTvlc2(void *input, void *decoded, void *table);
+
 #endif

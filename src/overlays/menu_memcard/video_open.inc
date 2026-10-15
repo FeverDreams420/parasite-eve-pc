@@ -124,6 +124,8 @@ search:
     StSetStream(1, MENUCARD_VIDEO_ENTRY->speed, -1, 0, 0);
     MenuCard_OpenStartVideoStream(&MENUCARD_VIDEO_FILE.pos, result);
     Spu_SetVoiceVolume(g_GameState.scene_audio.tracks.movie_volume);
+    /* Reloading the PS1 code used to reset the VLC work limit. */
+    DecDCTvlcSize2(0);
     MdecDiag_ExpandDecoderTable(MENUCARD_VIDEO_PTR4);
     while (MenuCard_OpenNextVideoFrame(&MENUCARD_VIDEO_DISPLAY) == -1) {
         MENUCARD_VIDEO_RESTART = MENUCARD_VIDEO_FILE.pos;

@@ -72,7 +72,6 @@ extern u8 *g_MenuCardVideoDecodeBuffer0, *g_MenuCardVideoDecodeBuffer1, *g_MenuC
 extern DISPENV g_MenuCardVideoSavedDispEnv[2];
 extern DRAWENV g_MenuCardVideoSavedDrawEnv[2];
 
-typedef struct VideoDiscRange { u16 start,end; } VideoDiscRange;
 extern VideoEntry g_MenuCardScreenVideoTable[47];
 extern u32 g_FieldPadBits;
 s32 MenuCard_StepVideo(void);
@@ -93,7 +92,7 @@ extern char g_MenuCardVideoDirectory[], g_MenuCardVideoDirectoryLate[], g_MenuCa
 extern void StSetRing(void *, s32);
 void DecDCTReset(int mode);
 void MdecDiag_ExpandDecoderTable(void *table);
-extern void DecDCTvlc2(void *, void *, void *), MenuCardFirst_UploadVideoSlice(void);
+extern void MenuCardFirst_UploadVideoSlice(void);
 extern s32 DsRead2(CdlLOC *, s32);
 s32 MenuCardFirst_OpenVideo(s32 number);
 s32 MenuCard_OpenVideo(s32 number);

@@ -16,20 +16,11 @@ void *MENUCARD_UPDATE_VIDEO_FRAME_NAME(VideoDisplay *display) {
     s32 retries;
     s32 end;
     s32 remaining;
-    s32 status;
     void *data;
     u32 **dataPtr;
 
     retries = 2000;
-    status = DsSystemStatus();
     dataPtr = &local.data;
-    if (status == 1) {
-        status = DsShellOpen();
-        dataPtr = &local.data;
-        if (status != g_CdDiskType) {
-            exit(1);
-        }
-    }
     while (StGetNext(dataPtr, &local.header) != 0) {
         dataPtr = &local.data;
         if (--retries == 0) {

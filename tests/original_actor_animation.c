@@ -2638,6 +2638,25 @@ static int original_motion_opcodes(void)
     FieldActor *saved_actor=g_CurrentEntity,*saved_player=g_PlayerEntity;
     ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
     uint64_t velocity=UINT64_C(14695981039346656037),reset=velocity;
+    uint64_t factor_hash=velocity;
+    if(g_ScriptQueueOpcodeHandlers[93]!=Script_SetCurrentEntityField20)return 0;
+    for(unsigned f=0;f<6;++f)for(unsigned p=0;p<12;++p){
+        FieldActor actor={.move_factor=(s32)0x98765432,.flags=patterns[p]};
+        FieldActor before=actor,expected=actor;
+        g_CurrentEntity=&actor;int factor=(s32)factors[f];int *args[]={&factor};
+        u32 result=Script_SetCurrentEntityField20(args);
+        const u32 data[]={result,(u32)actor.move_factor,actor.flags};
+        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<4;++b)
+            factor_hash=(factor_hash^((data[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        expected.move_factor=actor.move_factor;
+        if(memcmp(&expected,&actor,sizeof(actor)))return 0;
+        actor=before;u32 program[]={93|(1u<<13),0,factors[f],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(&expected,&actor,sizeof(actor)) ||
+           node.current.script!=program+5 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+    }
+    if(factor_hash!=UINT64_C(0x3bf7cb6b9837996d))return 0;
     if(g_ScriptQueueOpcodeHandlers[101]!=Entity_ClearMotionVectors ||
        g_ScriptQueueOpcodeHandlers[102]!=Entity_ComputeVelocity)return 0;
     for(unsigned player=0;player<2;++player)for(unsigned f=0;f<6;++f)
@@ -2692,6 +2711,7 @@ static int original_motion_opcodes(void)
     if(velocity!=UINT64_C(0xd151bdfd099e675a) || reset!=UINT64_C(0x137482f2419b4165)){
         fprintf(stderr,"Motion opcode hashes %016llx %016llx\n",(unsigned long long)velocity,(unsigned long long)reset);return 0;}
     puts("Original motion opcodes: 432 velocity, 96 reset and 128 actor flag20 USA MIPS states, native player scaling, wrap and full dispatcher passed");
+    puts("Original movement factor opcode 93: 72 USA CPU states, whole-actor guards and native dispatcher passed");
     return 1;
 }
 

@@ -295,6 +295,17 @@ w 12,39 s; świeży fixture ASan/UBSan/function z instrumentowanym PsyZ/SDL
 także przeszedł. Ponowne naturalne przejście do dialogu M009 jest w toku;
 samo podpięcie nie dowodzi jeszcze wykonania M011.
 
+Ponowne przejście wykonało wybór i weszło do M011 (`0xA80010C8`), gdzie
+zatrzymał je opkod 93 (aktor 2:0, script_byte 260). Podpięto istniejący
+Script_SetCurrentEntityField20: jest to zapis pełnej 32-bitowej skali ruchu,
+bez zmiany funkcji. 72 przypadki CPU USA 800182E0 dają `3bf7cb6b9837996d`;
+fixture sprawdza cały stan aktora oraz bezpośredni i skryptowy zapis.
+Test --assets przeszedł w 12,14 s; świeży ASan/UBSan/function z instrumentowanym
+PsyZ/SDL także przeszedł. Dalszy przebieg wykonawczy jest w toku.
+Odniesienie PS1 przeszło już M011 do korytarza M012 (`0xA8001148`), a następnie
+samym ruchem uruchomiło film przemiany szczura. Nie jest to jeszcze dowód
+tych zdarzeń w porcie.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

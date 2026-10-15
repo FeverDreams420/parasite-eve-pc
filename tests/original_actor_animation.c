@@ -2948,6 +2948,101 @@ static int original_fx_camera_matrices(void)
     puts("Original FX camera: six USA CPU/GTE scenarios match both matrices, angles and all four frustum planes, including vertical and coincident positions");return 1;
 }
 
+static int original_fx_poly_render_assets(PeDisc *disc)
+{
+    PeDiscFile archive;if(!pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    static _Alignas(16) u8 bank[100*2048],synthetic[2048];
+    static struct {u64 before;_Alignas(16) u8 bytes[0x40000];u64 after;} arena;
+    static struct {u64 before;RenderNativeTag entries[4096];u64 after;} ot;
+    const s32 z_values[]={-1000,1,768,7980,7990,8000,8016,8144,8160,8176,11200,11216,11232,20000},biases[]={0,500,1000};
+    const u8 codes[]={0x20,0x28,0x30,0x38,0x24,0x2c,0x34,0x3c};
+    const unsigned strides[]={sizeof(FxCommonFlatTriangle),sizeof(FxCommonFlatQuad),sizeof(FxCommonColoredTriangle),sizeof(FxCommonColoredQuad),
+        sizeof(FxCommonTexturedTriangle),sizeof(FxCommonTexturedQuad),sizeof(FxCommonColoredTexturedTriangle),sizeof(FxCommonColoredTexturedQuad)};
+    FxCommonPolyResource *header=(FxCommonPolyResource *)synthetic;memset(synthetic,0,sizeof(synthetic));unsigned cursor=48;
+    for(unsigned kind=0;kind<8;++kind){header->counts[kind]=2;header->offsets[kind]=cursor;
+        for(unsigned reverse=0;reverse<2;++reverse){u8 *primitive=synthetic+cursor;unsigned quad=kind%2,colors=kind<2 || (kind>=4 && kind<6)?1:quad?4:3,at=colors*4;
+            for(unsigned i=0;i<colors;++i){primitive[i*4]=31+i*47;primitive[i*4+1]=67+i*23;primitive[i*4+2]=101+i*31;primitive[i*4+3]=i?0xcd:codes[kind];}
+            if(kind>=4){for(unsigned texture=0;texture<(kind<6?3u:1u);++texture){
+                    const u16 uv[]={(11+texture*3)|((23+texture*5)<<8),0x7100+texture,(101+texture*2)|((203+texture*7)<<8),0x101+texture,(77+texture)|((99+texture*9)<<8),231|((17+texture*11)<<8)};
+                    memcpy(primitive+at,uv,sizeof(uv));at+=sizeof(uv);}
+                if(kind>=6){unsigned unknown=quad?16:12;memset(primitive+at,0x5a,unknown);at+=unknown;}}
+            GteShortVector vertices[]={{-100,-80,0,0},{100,-80,0,0},{-100,80,0,0},{100,80,0,0}};
+            if(reverse){GteShortVector swap=vertices[1];vertices[1]=vertices[2];vertices[2]=swap;}
+            memcpy(primitive+at,vertices,(quad?4:3)*sizeof(*vertices));cursor+=strides[kind];
+        }
+    }
+    FxCommonBuffer *old_buffer=g_FxCommonActiveBuffer; s32 old_base=g_FxCommonDepthBase;
+    FxCommonRenderScratchpad old_work=g_FxCommonRenderWorkspace;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0,packets=0;int valid=1;
+#define POLY_PUT(value,count) do {uint64_t word_=(uint64_t)(value); \
+    for(unsigned byte_=0;byte_<(count);++byte_){hash=(hash^(u8)word_)*UINT64_C(1099511628211);word_>>=8;}}while(0)
+    for(unsigned variant=0;variant<3 && valid;++variant){
+        FxCommonPolyResource *resource=(FxCommonPolyResource *)synthetic;
+        if(variant<2){unsigned sector=variant?2105:2016,size=variant?100:89;u32 offset;
+            if(!pe_disc_read(disc,&archive,(uint64_t)sector*2048,bank,size*2048)){valid=0;break;}
+            memcpy(&offset,bank+4,4);if(offset>size*2048-48){valid=0;break;}resource=(FxCommonPolyResource *)(bank+offset);}
+        for(unsigned z=0;z<14 && valid;++z)for(unsigned bias=0;bias<3 && valid;++bias)for(unsigned mirror=0;mirror<2 && valid;++mirror){
+            for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+            const u32 controls[]={4096,0,mirror?0xf000:4096,0,4096,0,0,(u32)z_values[z]};
+            for(unsigned i=0;i<8;++i)Psyz_GteCtrlWrite(i,controls[i]);
+            Psyz_GteCtrlWrite(24,160u<<16);Psyz_GteCtrlWrite(25,120u<<16);Psyz_GteCtrlWrite(26,768);Psyz_GteCtrlWrite(29,341);Psyz_GteCtrlWrite(30,256);
+            memset(&g_FxCommonRenderWorkspace,0xa5,sizeof(g_FxCommonRenderWorkspace));memset(&arena,0xa5,sizeof(arena));memset(&ot,0xa5,sizeof(ot));
+            for(unsigned i=0;i<4096;++i)ot.entries[i]=(RenderNativeTag){0xffffff,0xab};
+            FxCommonBuffer buffer={.data=arena.bytes,.allocation=(FxCommonPacketTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
+            g_FxCommonActiveBuffer=&buffer;g_FxCommonDepthBase=biases[bias];FxCommon_DrawPolyResource(NULL,resource);
+            if(buffer.error || buffer.data<arena.bytes || buffer.data>arena.bytes+sizeof(FxCommonBufferRegion)){fprintf(stderr,"FX poly resource=%u z=%d bias=%d mirror=%u error=%d used=%td\n",variant,z_values[z],biases[bias],mirror,buffer.error,buffer.data-arena.bytes);valid=0;break;}
+            u8 *at=arena.bytes,*addresses[8192];unsigned count=0;
+            while(at<buffer.data){RenderNativeTag *tag=(RenderNativeTag *)at;
+                if(count>=8192 || (tag->length!=4 && tag->length!=5 && tag->length!=6 && tag->length!=7 && tag->length!=8 && tag->length!=9 && tag->length!=12)){valid=0;break;}
+                addresses[count++]=at;size_t size=(sizeof(*tag)+tag->length*4+_Alignof(RenderNativeTag)-1)&~(size_t)(_Alignof(RenderNativeTag)-1);
+                if(size>(size_t)(buffer.data-at)){valid=0;break;}at+=size;
+            }
+            if(!valid || at!=buffer.data){valid=0;break;}POLY_PUT(count,4);
+            for(unsigned i=0;i<count;++i){RenderNativeTag *tag=(RenderNativeTag *)addresses[i];POLY_PUT(tag->length,1);
+                for(unsigned byte=0;byte<tag->length*4;++byte)POLY_PUT(addresses[i][sizeof(*tag)+byte],1);}
+            for(unsigned depth=0;depth<4096 && valid;++depth){if(ot.entries[depth].length!=0xab){valid=0;break;}
+                uintptr_t link=ot.entries[depth].address;if(link==0xffffff)continue;POLY_PUT(depth,2);unsigned steps=0;
+                while(link!=0xffffff){unsigned id=0;while(id<count && (uintptr_t)addresses[id]!=link)++id;
+                    if(id==count || ++steps>count){valid=0;break;}POLY_PUT(id,2);link=((RenderNativeTag *)link)->address;}
+                POLY_PUT(65535,2);
+            }
+            POLY_PUT(65535,2);packets+=count;++cases;
+            if(arena.before!=UINT64_C(0xa5a5a5a5a5a5a5a5) || arena.after!=UINT64_C(0xa5a5a5a5a5a5a5a5) ||
+               ot.before!=UINT64_C(0xa5a5a5a5a5a5a5a5) || ot.after!=UINT64_C(0xa5a5a5a5a5a5a5a5))valid=0;
+            for(u8 *p=buffer.data;p<buffer.end;++p)if(*p!=0xa5){valid=0;break;}
+        }
+    }
+#undef POLY_PUT
+    const unsigned packet_sizes[]={sizeof(FxCommonF3Packet),sizeof(FxCommonF4Packet),sizeof(FxCommonG3Packet),sizeof(FxCommonG4Packet),
+        sizeof(FxCommonFt3Packet),sizeof(FxCommonFt4Packet),sizeof(FxCommonGt3Packet),sizeof(FxCommonGt4Packet)};
+    unsigned guards=0;
+    for(unsigned kind=0;kind<8;++kind)for(unsigned fault=0;fault<4;++fault){
+        /* Both single packets and all four subdivision packets must fit. */
+        if(fault==1 && kind!=4 && kind!=5)continue;
+        _Alignas(16) u8 minimal[128]={0};FxCommonPolyResource *one=(FxCommonPolyResource *)minimal;
+        one->counts[kind]=1;for(unsigned i=0;i<8;++i)one->offsets[i]=48;
+        memcpy(minimal+48,synthetic+header->offsets[kind],strides[kind]);
+        for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+        const u32 controls[]={4096,0,4096,0,4096,0,0,fault==1?20000:1000};
+        for(unsigned i=0;i<8;++i)Psyz_GteCtrlWrite(i,controls[i]);
+        Psyz_GteCtrlWrite(26,768);Psyz_GteCtrlWrite(29,341);Psyz_GteCtrlWrite(30,256);
+        memset(&g_FxCommonRenderWorkspace,0xa5,sizeof(g_FxCommonRenderWorkspace));memset(&arena,0xa5,sizeof(arena));memset(&ot,0xa5,sizeof(ot));
+        FxCommonBuffer buffer={.data=arena.bytes,.allocation=(FxCommonPacketTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
+        if(fault<2)buffer.end=arena.bytes+packet_sizes[kind]*((kind==4 || kind==5) && !fault?4:1)-1;
+        g_FxCommonActiveBuffer=&buffer;g_FxCommonDepthBase=fault==2?-1000:fault==3?100000:0;
+        FxCommon_DrawPolyResource(NULL,one);
+        int expected=fault<2?-1:kind<6?-2:0;
+        if(buffer.error!=expected || buffer.data!=arena.bytes)valid=0;
+        for(unsigned i=0;i<sizeof(arena);++i)if(((u8 *)&arena)[i]!=0xa5)valid=0;
+        for(unsigned i=0;i<sizeof(ot);++i)if(((u8 *)&ot)[i]!=0xa5)valid=0;
+        ++guards;
+    }
+    if(guards!=26)valid=0;
+    g_FxCommonActiveBuffer=old_buffer;g_FxCommonDepthBase=old_base;g_FxCommonRenderWorkspace=old_work;
+    if(!valid || cases!=252 || packets!=6322 || hash!=UINT64_C(0x8389f407efdeab28)){fprintf(stderr,"Original FX polygon resources: cases=%u packets=%u hash=%016llx valid=%d\n",cases,packets,(unsigned long long)hash,valid);return 0;}
+    puts("Original FX polygon resources: both real banks and all eight synthetic streams match USA CPU/GTE across subdivision and texture-distance boundaries; native payloads and complete OT chains pass");return 1;
+}
+
 static int original_fx_model_render_assets(PeDisc *disc)
 {
     PeDiscFile archive;if(!pe_disc_find(disc,"PE.IMG",&archive))return 0;
@@ -6133,7 +6228,7 @@ int main(int argc, char **argv)
     if(argc==2 && !strcmp(argv[1],"--fx-models")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
-        int result=original_fx_model_render_assets(&disc);pe_disc_close(&disc);return result?0:146;
+        int result=original_fx_model_render_assets(&disc) && original_fx_poly_render_assets(&disc);pe_disc_close(&disc);return result?0:146;
     }
     if(argc==2 && !strcmp(argv[1],"--fx-display")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_gte_register_transfers() && original_fx_fog() && original_fx_display()?0:145;}
     if(argc==2 && !strcmp(argv[1],"--fx-camera"))return original_fx_node_pool() && original_fx_culling() && original_fx_camera_matrices()?0:143;

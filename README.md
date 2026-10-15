@@ -44,8 +44,9 @@ The original `fx_common/camera.c` now compiles whole and has native node pools,
 camera/frustum math, path sampling and image-backed resource loading. Tests
 compare these paths with USA code and real day/night banks. The three original
 model drawers also match USA command payloads and ordering chains for all 170
-day/night models in 2040 cases. Polygon-resource subdivision and the full frame
-loop remain unfinished; this does not make gameplay playable.
+day/night models in 2040 cases. The fourth drawer, including FT3/FT4 subdivision
+and texture-distance selection, matches another 252 USA cases. Scene shaders
+and the full frame loop remain unfinished; this does not make gameplay playable.
 
 ## Build and run
 

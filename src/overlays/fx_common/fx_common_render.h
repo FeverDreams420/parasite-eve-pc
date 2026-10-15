@@ -35,7 +35,7 @@ typedef struct FxCommonRenderScratchpad {
     FxCommonUv midpointUv[6];
 } FxCommonRenderScratchpad;
 typedef struct FxCommonFt4Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     u32 color;
     u32 xy0;
     u16 uv0;
@@ -57,7 +57,7 @@ typedef struct FxCommonTextureHeader {
     u16 tpage;
 } FxCommonTextureHeader;
 typedef struct FxCommonFt3Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     u32 color;
     u32 xy0;
     u16 uv0;
@@ -69,7 +69,7 @@ typedef struct FxCommonFt3Packet {
     u16 uv2;
     u16 pad;
 } FxCommonFt3Packet;
-typedef char FxCommonFt3PacketSizeCheck[(sizeof(FxCommonFt3Packet) == 32) ? 1 : -1];
+PE1_STATIC_ASSERT(offsetof(FxCommonFt3Packet,uv2)==sizeof(RenderNativeTag)+24, fx_common_ft3_uv2);
 typedef struct FxCommonTextureSet {
     FxCommonUv uv0;
     u16 clut;
@@ -90,28 +90,28 @@ typedef struct FxCommonTexturedTriangle {
 } FxCommonTexturedTriangle;
 
 typedef struct FxCommonGt3Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     u32 color0, xy0, texture0, color1, xy1, texture1, color2, xy2, texture2;
 } FxCommonGt3Packet;
 typedef struct FxCommonGt4Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     u32 color0, xy0, texture0, color1, xy1, texture1, color2, xy2, texture2, color3, xy3;
     u16 uv3, pad;
 } FxCommonGt4Packet;
 typedef struct FxCommonF3Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     u32 color, xy0, xy1, xy2;
 } FxCommonF3Packet;
 typedef struct FxCommonF4Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     u32 color, xy0, xy1, xy2, xy3;
 } FxCommonF4Packet;
 typedef struct FxCommonG3Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     u32 color0, xy0, color1, xy1, color2, xy2;
 } FxCommonG3Packet;
 typedef struct FxCommonG4Packet {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     u32 color0, xy0, color1, xy1, color2, xy2, color3, xy3;
 } FxCommonG4Packet;
 typedef struct FxCommonFlatTriangle {
@@ -142,13 +142,6 @@ typedef struct FxCommonColoredTexturedQuad {
     u8 unknown1c[16];
     FxCommonVector vertices[4];
 } FxCommonColoredTexturedQuad;
-typedef struct FxGt3CursorSlot {
-    FxCommonColoredTexturedTriangle *cursor;
-} __attribute__((aligned(8))) FxGt3CursorSlot;
-typedef struct FxGt4CursorSlot {
-    FxCommonColoredTexturedQuad *cursor;
-} __attribute__((aligned(8))) FxGt4CursorSlot;
-
 extern s32 g_FxCommonDepthBase;
 
 #endif

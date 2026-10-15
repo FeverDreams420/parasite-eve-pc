@@ -35,6 +35,9 @@ int pe_disc_read_raw(PeDisc *disc, const PeDiscFile *file, uint32_t sector,
 /* Borrow an image; a NULL archive permits Asset_OpenPeImage discovery.
  * A NULL image unmounts it. The caller owns the stream lifetime. */
 extern PeDisc *g_CdImage;
+/* Borrowed mounted volumes, indexed by the authored disc identity (1/2).
+ * NULL entries are unavailable; no ownership transfer or physical swap. */
+extern PeDisc *g_CdImageVolumes[2];
 void CdRom_BindImage(struct PeDisc *disc, const struct PeDiscFile *archive);
 
 struct CdlLOC;

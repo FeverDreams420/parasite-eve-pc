@@ -5,6 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+option(BUILD_TESTING "Build tests, including remaining legacy dependencies" OFF)
 include(CTest)
 
 # PsyZ belongs to the original game build, independently of the abandoned frontend.
@@ -29,7 +30,18 @@ else()
     target_compile_options(parasite-eve-original-disc PRIVATE -ffunction-sections -fdata-sections)
 endif()
 
-add_subdirectory(pc)
+# The executable starts the original game; pc/ remains only as test debt.
+add_executable(parasite-eve-pc src/main/boot/main.c)
+target_include_directories(parasite-eve-pc PRIVATE include)
+target_link_libraries(parasite-eve-pc PRIVATE psyz)
+target_compile_definitions(parasite-eve-pc PRIVATE __psyz)
+psyz_title(parasite-eve-pc "Parasite Eve")
+psyz_web_configure_target(parasite-eve-pc)
+psyz_ios_configure_target(parasite-eve-pc
+    BUNDLE_IDENTIFIER "dev.parasiteeve.pc" DISPLAY_NAME "Parasite Eve")
+if(BUILD_TESTING)
+    add_subdirectory(pc)
+endif()
 
 # Compile the original game sources in place. Modules join this target as
 # their platform dependencies are made portable; no duplicate game logic.
@@ -407,6 +419,12 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-credits-sprites PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets;gpu")
     add_test(NAME original-game-credits-playback COMMAND test-original-actor-animation --credits-playback)
     set_tests_properties(original-game-credits-playback PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 90 LABELS "game-assets;gpu;audio")
+    add_test(NAME original-game-bootstrap-cli COMMAND parasite-eve-pc --help)
+    add_test(NAME original-game-bootstrap-arguments COMMAND parasite-eve-pc --frame-limit invalid)
+    set_tests_properties(original-game-bootstrap-arguments PROPERTIES WILL_FAIL TRUE)
+    add_test(NAME original-game-bootstrap COMMAND test-original-actor-animation --native-bootstrap $<TARGET_FILE:parasite-eve-pc>)
+    set_tests_properties(original-game-bootstrap PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 180 LABELS "game-assets;gpu")
+    add_dependencies(test-original-actor-animation parasite-eve-pc)
     add_test(NAME original-game-fx-frames COMMAND test-original-actor-animation --fx-frames)
     set_tests_properties(original-game-fx-frames PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "game-assets;gpu")
     add_test(NAME original-game-fx-motion COMMAND test-original-actor-animation --fx-motion)

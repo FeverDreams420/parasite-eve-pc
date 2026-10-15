@@ -1,5 +1,8 @@
 #include <SDL3/SDL.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <psyz/system.h>
 #include "common.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_status.h"
@@ -45,8 +48,46 @@ void SetGeomScreen(int h);
 void MemCard_InitManager(void);
 void Boot_InitMemCard(void);
 
+int g_BootHostActive;
+u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
+const char *g_BootHostVramPath;
+BootHostPadEvent g_BootHostPadEvents[64];
+unsigned g_BootHostPadEventCount;
+static unsigned hostPadEvent;
+static u16 hostButtons;
+
+static void Boot_PollHost(void) {
+    ++g_BootHostVBlankCount;
+    if(g_BootHostPadEventCount){
+        while(hostPadEvent<g_BootHostPadEventCount &&
+              g_BootHostPadEvents[hostPadEvent].vblank<=g_BootHostVBlankCount)
+            hostButtons=g_BootHostPadEvents[hostPadEvent++].buttons;
+    }
+    if(Psyz_QuitRequested())exit(EXIT_SUCCESS);
+    if(!g_BootHostVBlankLimit || g_BootHostVBlankCount<g_BootHostVBlankLimit)return;
+    if(g_BootHostVramPath){
+        static _Alignas(8) u16 vram[1024*512];RECT all={0,0,1024,512};
+        StoreImage(&all,vram);DrawSync(0);
+        FILE *out=fopen(g_BootHostVramPath,"wb");
+        if(!out){fprintf(stderr,"Cannot write VRAM capture\n");fflush(stderr);_Exit(2);}
+        int written=fwrite(vram,1,sizeof(vram),out)==sizeof(vram);
+        if(fclose(out)!=0 || !written){fprintf(stderr,"Cannot finish VRAM capture\n");fflush(stderr);_Exit(2);}
+    }
+    DISPENV display;GetDispEnv(&display);
+    printf("{\"event\":\"frame_limit\",\"vblanks\":%u,\"scene\":%u,\"flags\":%u,\"draw_slot\":%d,\"movie\":%d,\"pad\":%u,\"game_flags\":%u,\"video_state\":%u,\"display\":{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d,\"rgb24\":%d}}\n",
+        g_BootHostVBlankCount,(u32)g_SceneDispatchToken,g_GameStateFlags,g_ActiveDrawSlot,
+        g_GameState.scene_audio.tracks.movie_index,g_FieldPadBits,g_GameState.flags,
+        g_GameState.scene_audio.tracks.draw_enabled.bits,
+        display.disp.x,display.disp.y,display.disp.w,display.disp.h,display.isrgb24);
+    fflush(stdout);
+    /* A diagnostic cap is a forced process boundary, even inside a menu's
+     * VSync callback. Do not unwind through the locked SDK callback stack. */
+    _Exit(EXIT_SUCCESS);
+}
+
 void Boot_InitSystem(void) {
     ResetCallback();
+    if(g_BootHostActive)VSyncCallbacks(0,Boot_PollHost);
     Render_ResetScene(0x140, 0xE0);
     SpuInit();
     InitGeom();
@@ -331,6 +372,12 @@ void Boot_StoreTableEntry(u32 mask, int value) {
 u32 g_PadComboProgress;
 
 void Field_HandleStateTransition(void) {
+    /* Apply scheduled host input after SDK polling, before the unchanged
+     * original button mapping and repeat/combo handling below. */
+    if(g_BootHostActive && g_BootHostPadEventCount){
+        g_PadPackets[0].header=0x4000;
+        g_PadPackets[0].buttons=(u16)~hostButtons;
+    }
     u32 flags;
     u32 pad_bits;
     u32 base_bits;

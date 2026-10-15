@@ -179,6 +179,29 @@ static int boot_buffer_layout(void)
        g_DrawPrimColor!=0x808080 || g_DrawColorShaded!=0x404040 ||
        g_DrawDigitFontTpageClut!=0x395D || g_DrawDigitFontBaseTexU!=0x84 ||
        g_DrawDigitFontBaseTexV!=0xA4 || g_DrawPresentImage) return 0;
+    if(!SDL_Init(SDL_INIT_EVENTS))return 0;
+    ResetGraph(0);
+    int saved_present=g_DrawPresentEnabled,saved_index=g_DrawBufferIndex;
+    RenderNativeTag *saved_base=g_DrawOrderingTableBase;
+    u32 *saved_entry=g_DrawOrderingTableEntry;
+    u8 *saved_cursor=g_DrawPacketCursor,*saved_arena=g_DrawPacketArenaBase;
+    DrawFrameBuffer *saved_current=g_DrawCurrentFrameBuffer;
+    extern u_long D_800B89E4[]; /* SDK's terminating NOP packet. */
+    for(unsigned slot=0;slot<2;++slot){
+        g_DrawPresentEnabled=1;g_DrawBufferIndex=1-slot;Draw_SelectBuffer();
+        RenderNativeTag *ot=g_DrawFrameBuffers[slot].orderingTableBase;
+        if(g_DrawBufferIndex!=(int)slot || g_DrawOrderingTableBase!=ot ||
+           g_DrawOrderingTableEntry!=(u32 *)(ot+1) || g_DrawCurrentFrameBuffer!=g_DrawFrameBuffers+slot ||
+           g_DrawPacketCursor!=g_DrawFrameBuffers[slot].frontBufferBase){fprintf(stderr,"Native menu selection mismatch slot=%u index=%d base=%p expected=%p entry=%p expected=%p\n",slot,g_DrawBufferIndex,(void *)g_DrawOrderingTableBase,(void *)ot,(void *)g_DrawOrderingTableEntry,(void *)(ot+1));return 0;}
+        for(unsigned entry=0;entry<4096;++entry)
+            if(ot[entry].length || ot[entry].address!=(entry?(uintptr_t)(ot+entry-1):(uintptr_t)D_800B89E4)){fprintf(stderr,"Native menu OT mismatch slot=%u entry=%u address=%llx length=%llu\n",slot,entry,(unsigned long long)ot[entry].address,(unsigned long long)ot[entry].length);return 0;}
+    }
+    Draw_SetPresentImage(&saved_present);
+    if(g_DrawPresentImage!=&saved_present)return 0;
+    Draw_SetPresentImage(NULL);
+    g_DrawPresentEnabled=saved_present;g_DrawBufferIndex=saved_index;
+    g_DrawOrderingTableBase=saved_base;g_DrawOrderingTableEntry=saved_entry;
+    g_DrawPacketCursor=saved_cursor;g_DrawPacketArenaBase=saved_arena;g_DrawCurrentFrameBuffer=saved_current;
     DISPENV saved_display[2];
     memcpy(saved_display,g_RenderDispEnvArray,sizeof(saved_display));
     if(g_DrawBaseX[0]!=g_GameState.scene_audio.tracks.reserved[0] ||
@@ -7152,8 +7175,47 @@ static int script_movie_error_exit(const char *executable)
     puts("Original script error: movie failure terminates dispatcher instead of retrying or continuing the scene");return 1;
 }
 
+static int original_native_bootstrap(const char *executable)
+{
+    const char *disc=getenv("PE_TEST_DISC");
+    if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+    if(!SDL_Init(SDL_INIT_EVENTS))return 1;
+    char capture[96];snprintf(capture,sizeof(capture),"pe-native-%llx.vram",(unsigned long long)SDL_GetPerformanceCounter());
+    for(unsigned input=0;input<2;++input){
+        const char *args[]={executable,"--disc",disc,"--headless","--frame-limit",input?"13000":"8000",
+            "--dump-vram",capture,input?"--pad-at":NULL,input?"10000:8":NULL,NULL};
+        SDL_PropertiesID props=SDL_CreateProperties();
+        SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
+        SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER,SDL_PROCESS_STDIO_APP);
+        SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDERR_NUMBER,SDL_PROCESS_STDIO_NULL);
+        SDL_Process *child=SDL_CreateProcessWithProperties(props);SDL_DestroyProperties(props);
+        if(!child)return 1;
+        int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
+        SDL_DestroyProcess(child);
+        int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
+            strstr(output,input?"\"vblanks\":13000":"\"vblanks\":8000");
+        if(input && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
+           !strstr(output,"\"rgb24\":1")))valid=0;
+        FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
+        if(file){
+            u8 block[4096];size_t total=0,n;
+            while((n=fread(block,1,sizeof(block),file))!=0){total+=n;
+                for(size_t i=0;i<n;++i)hash=(hash^block[i])*UINT64_C(1099511628211);}
+            if(total!=1024*512*2 || ferror(file))valid=0;
+            fclose(file);remove(capture);
+        }else valid=0;
+        if(!input && hash!=UINT64_C(0x6c2aef67a1f42efb))valid=0;
+        if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
+            input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
+        printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
+        SDL_free(output);
+    }
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
+    if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2]);
     if(argc==2 && !strcmp(argv[1],"--credits-playback")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

@@ -6,16 +6,16 @@ are permitted while restoring the original game. The entire `pc/` directory
 must be deleted, including its build and test dependencies; relocating it
 does not satisfy this requirement.
 
-The current, abandoned `pc/main.c` frontend provides read-only ISO9660 access to a
-MODE2/2352 BIN, FFmpeg MDEC/XA decoding on a producer thread, SDL presentation
-and audio, then the original `PE.IMG` title artwork and menu input.
-The bounded video queue and audio prebuffer keep decoding ahead of playback.
-Frames retain the original 15 Hz timing and 4:3 aspect; the audio device stays
-alive through the final samples before entering the menu.
+The executable now starts `src/main/boot/main.c`, mounts and validates USA
+CUE/BIN images through the original archive loader, and follows the original
+startup, logo, movie and title-screen code. It contains no `pc/` sources and
+needs no FFmpeg dependency. `BUILD_TESTING=OFF` omits the entire `pc/` build
+subdirectory; remaining tests still depend on abandoned code awaiting deletion.
 
-This frontend is a diagnostic artifact and does not establish that the
-original game runs. Repair whole original modules and integrate their
-original control flow as platform dependencies are corrected.
+Optional native diagnostics stop at an explicit VBlank limit, capture VRAM and
+state, and inject scheduled digital buttons into the original pad packet.
+This bounded stop proves neither natural scene completion nor campaign play.
+Real Disc 2, full gameplay and the remaining acceptance gates are still pending.
 
 The memory map and overlay addresses below describe the original game for
 asset decoding and porting research. They are not host addresses, build
@@ -127,9 +127,8 @@ templates other shared code still instantiates per overlay.
 existing src/main/ + src/overlays/ -> host C11 compiler -> original game + PsyZ
 ```
 
-The root `CMakeLists.txt` still includes `pc/`. This is an unresolved dependency
-to eliminate, not the architecture shown above. A passing frontend build does
-not validate the original game flow.
+The root `CMakeLists.txt` includes `pc/` only when tests are enabled. This
+remaining test dependency must be eliminated; it is not part of the executable.
 There is no historical compiler, splat step, PS1 linker, assembly extraction,
 retail checksum verification or decompilation report in the build.
 

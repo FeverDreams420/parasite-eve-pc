@@ -12,14 +12,16 @@ compiler output, fixed code addresses and PS1 binary builds are no longer
 acceptance requirements. Changes are evaluated by behavior, portability,
 readability and native builds.
 
-The native executable boots through the opening movie to the original title
-screen and main menu. MDEC video and stereo XA audio are decoded directly from
-a user-supplied Disc 1 CUE/BIN; menu artwork comes from `PE.IMG`.
+The executable now starts the original game entrypoint, displays the logo and
+opening movie, and reaches the original Press Start screen when the movie is
+skipped. Artwork and video come from a user-supplied Disc 1 CUE/BIN.
+Title-option selection, New Game and end-to-end audio in this executable still
+need verification; isolated AKAO/XA tests do not prove complete audio playback.
 
 Gameplay is not playable yet. Native targets compile original modules in place;
 tests execute connected paths for room assets, audio banks, cameras, actor models,
-input and frame submission. The executable still uses temporary boot/frontend
-code in `pc/`. Original room loading and native geometry preparation are verified for 236 rooms,
+input and frame submission. The executable now starts the original `src/main/boot/main.c`, without `pc/` sources or FFmpeg.
+The abandoned implementation still supplies some test dependencies awaiting removal. Original room loading and native geometry preparation are verified for 236 rooms,
 including the New Game startup room M431; image I/O
 now belongs to the original archive module. Full original scene/frame integration,
 unsupported room descriptors and remaining hardware/address assumptions still
@@ -53,45 +55,45 @@ original scene initializer now creates all 187 nodes from real image resources;
 900 USA reference cases cover its ten variants and scene entry choices. Its
 original controller matches 21,624 USA states, and the complete original frame
 loop executes 2,664 headless frames with real textures, SDL input, playback and
-demo exits. Campaign integration and the original program's startup remain
-unfinished; this does not make gameplay playable.
+demo exits. Original-program startup now reaches the title screen headlessly;
+campaign integration remains unfinished.
 
 ## Build and run
 
-Use a C11 compiler, CMake 3.21 or newer, Git, pkg-config and FFmpeg development
-libraries (`libavformat`, `libavcodec`, `libavutil`, `libswscale`, `libswresample`).
-On macOS install them with `brew install ffmpeg pkg-config`. PsyZ and SDL are source
-submodules; no historical PS1 compiler, Sony SDK, Python packages or extracted
-game executable is needed for this build.
+Use a C11 compiler, CMake 3.21 or newer and Git. PsyZ and SDL are source
+submodules. The game-only build does not require FFmpeg or `pc/`; enabling the
+remaining legacy tests still requires pkg-config and FFmpeg development libraries.
+No historical PS1 compiler, Sony SDK or extracted game executable is needed.
 
 ```sh
 git clone https://github.com/khasinski/parasite-eve-pc
 cd parasite-eve-pc
 git submodule update --init third_party/psyz third_party/psyz/external/SDL
-cmake -S . -B build
+cmake -S . -B build -DBUILD_TESTING=OFF
 cmake --build build --parallel
-./build/pc/parasite-eve-pc --disc "/path/to/Parasite Eve (Disc 1).bin"
+./build/parasite-eve-pc --disc "/path/to/Parasite Eve (Disc 1).bin"
 ```
 
-`--discs "/path/to/Disc 1.cue" "/path/to/Disc 2.cue"` mounts both sources
-throughout boot. Each image has its own file extents and reader; identical file
-names do not merge their contents. The frontend currently boots from Disc 1;
-automatic source selection by original game loaders remains pending. CUE
-support currently covers a single BINARY MODE2/2352 track, relative quoted
-FILE paths and INDEX 01 offsets. Other layouts fail explicitly. Disc role/version
-validation and the game-wide asset catalog are still pending; this is not yet
-proof of gameplay or correct Disc 2 content. `--disc` remains a boot diagnostic.
+Pass `--disc2 "/path/to/Disc 2.cue"` to keep both sources open. Images
+are assigned by their authored USA disc markers; original disc-mode selection
+chooses the matching mounted volume without a tray or swap prompt. Only Disc 1
+has been tested with real data; Disc 2 and the complete campaign remain unverified.
+CUE support covers one BINARY MODE2/2352 track, relative quoted FILE paths and
+INDEX 01 offsets. Duplicate identities and missing startup Disc 1 fail explicitly.
 
-Interactive mode requires a graphical session and an audio device; automated
-boot tests can use `--headless`. You can set
-`PE_DISC_IMAGE` instead of passing `--disc`; `make run` uses that environment
-variable. Enter/Space skips the intro and opens the title options. Arrows or
-W/S change the selection, Enter confirms, and Escape returns to the title
-prompt. Continue remains disabled until native save support exists. Selecting
-New Game or Tutorial loads the original starting room data (M431 or M353)
-and applies its scratch/texture-bank uploads to CPU-visible VRAM, then exits;
-script entry/actor catalogs and the startup SPU sample bank are prepared in
-`PeScene`, but scene execution and gameplay are not integrated.
+Automated runs use `--headless --frame-limit N`; this is a forced diagnostic
+boundary, not a completed-game result. `--dump-vram PATH` writes all 1024×512
+16-bit VRAM words at that boundary and stdout records the game flags, scene,
+movie state and active display rectangle/format as JSON. Decode the selected
+rectangle as RGB555 or packed RGB24 according to `display.rgb24`.
+Repeat `--pad-at VBLANK:BUTTON_MASK` for deterministic digital input, using
+pressed PS1 button bits (for example `10000:8` holds START; `10010:0` releases it).
+Input enters the original pad packet before the original mapping/repeat logic.
+Normal interactive play uses the PsyZ keyboard/gamepad bindings. Full New Game,
+Continue and gameplay acceptance are still pending.
+
+Enable `BUILD_TESTING=ON` for the test suite. The following legacy test commands
+still include abandoned `pc/` experiments and do not establish game completion.
 
 `make ci` builds and runs the asset-free disc-reader, VRAM, script-format,
 script-runtime, script-scheduler, SPU-bank, AKAO-sequence, AKAO-channel,
@@ -104,9 +106,10 @@ menu input with your own image:
 PE_TEST_DISC="/path/to/Parasite Eve (Disc 1).bin" ctest --test-dir build --output-on-failure
 ```
 
-The optional PsyZ window test is `./build/pc/parasite-eve-pc --smoke-test`.
-These commands still launch the abandoned `pc/` frontend. They are diagnostic
-only; they do not demonstrate that the original game's entrypoint runs.
+The original executable is `./build/parasite-eve-pc`; the abandoned frontend
+and its `--smoke-test` option are no longer built. The `original-game-bootstrap`
+test launches the actual original entrypoint with a real CUE/BIN and checks
+bounded headless execution, scheduled START and a deterministic VRAM capture.
 
 ## Layout
 
@@ -450,7 +453,9 @@ checkpoints, and state/image/audio diagnostics so tests run without user help
 or a visible window. The separate save-editor project may supply fixtures;
 the port's test runner must work independently of it.
 
-The boot frontend can run without a visible window or audio device, using a
+The following replay interface belongs to the abandoned `pc/` experiment and
+is no longer available in the game executable. It could run without a visible
+window or audio device, using a
 software renderer and dummy audio. Replays react to actual presented states,
 not timed key presses, and write machine-readable JSONL events:
 

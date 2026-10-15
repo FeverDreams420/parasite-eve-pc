@@ -89,6 +89,7 @@ DRAWENV *PutDrawEnv(DRAWENV *env);
 int DrawPrim(void *primitive);
 void DrawOTagEnv(void *next, DRAWENV *env);
 DISPENV *PutDispEnv(DISPENV *env);
+DISPENV *GetDispEnv(DISPENV *env);
 DRAWENV *SetDefDrawEnv(DRAWENV *env, int x, int y, int w, int h);
 DISPENV *SetDefDispEnv(DISPENV *env, int x, int y, int w, int h);
 void SetDispMask(int mask);

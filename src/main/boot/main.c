@@ -1,6 +1,11 @@
 #include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <limits.h>
+#include <SDL3/SDL.h>
+#include <psyz/audio.h>
 #include "pe1/boot.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/boot_display.h"
@@ -14,11 +19,63 @@
 #define STATE_FLAG_IMAGE_BUSY 0x00100000U
 #define STATE_FLAG_READY 0x00000100U
 
-int main(void) {
+int main(int argc,char **argv) {
     int mode;
     u32 token;
     Pe1GameState *state;
+    PeDisc images[2]={{0}};
+    const char *paths[2]={NULL,NULL};
+    int result=EXIT_FAILURE;
+    for(int arg=1;arg<argc;++arg){
+        if(!strcmp(argv[arg],"--help")){
+            printf("Usage: %s --disc <USA Disc 1 CUE/BIN> [--disc2 <USA Disc 2 CUE/BIN>] [--headless] [--frame-limit N] [--dump-vram PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",argv[0]);
+            return EXIT_SUCCESS;
+        }
+        if(!strcmp(argv[arg],"--headless")){
+            if(!SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS","1",true))return EXIT_FAILURE;
+        }else if(!strcmp(argv[arg],"--frame-limit")){
+            char *end;errno=0;
+            unsigned long limit=arg+1<argc?strtoul(argv[++arg],&end,10):0;
+            if(!limit || limit>INT_MAX || errno || *end){fprintf(stderr,"Invalid frame limit\n");return EXIT_FAILURE;}
+            g_BootHostVBlankLimit=(u32)limit;
+        }else if(!strcmp(argv[arg],"--dump-vram")){
+            if(arg+1>=argc || g_BootHostVramPath){fprintf(stderr,"Missing or duplicate capture path\n");return EXIT_FAILURE;}
+            g_BootHostVramPath=argv[++arg];
+        }else if(!strcmp(argv[arg],"--pad-at")){
+            if(arg+1>=argc || g_BootHostPadEventCount==64){fprintf(stderr,"Invalid input schedule\n");return EXIT_FAILURE;}
+            char *end,*mask_end;errno=0;unsigned long tick=strtoul(argv[++arg],&end,10);
+            if(!tick || tick>INT_MAX || errno || *end!=':'){fprintf(stderr,"Invalid input frame\n");return EXIT_FAILURE;}
+            unsigned long buttons=strtoul(end+1,&mask_end,0);
+            if(mask_end==end+1 || *mask_end || errno || buttons>65535 ||
+               (g_BootHostPadEventCount && tick<g_BootHostPadEvents[g_BootHostPadEventCount-1].vblank)){
+                fprintf(stderr,"Invalid input buttons/order\n");return EXIT_FAILURE;
+            }
+            g_BootHostPadEvents[g_BootHostPadEventCount++]=(BootHostPadEvent){(u32)tick,(u16)buttons};
+        }else if(!strcmp(argv[arg],"--disc") || !strcmp(argv[arg],"--disc2")){
+            int slot=!strcmp(argv[arg],"--disc2");
+            if(paths[slot] || arg+1>=argc){fprintf(stderr,"Missing or duplicate image argument\n");return EXIT_FAILURE;}
+            paths[slot]=argv[++arg];
+        }else{fprintf(stderr,"Unknown argument: %s\n",argv[arg]);return EXIT_FAILURE;}
+    }
+    if(!paths[0]){fprintf(stderr,"Supply --disc with a USA CUE/BIN image\n");return EXIT_FAILURE;}
+    if(g_BootHostVramPath && !g_BootHostVBlankLimit){fprintf(stderr,"VRAM capture requires --frame-limit\n");return EXIT_FAILURE;}
+    for(unsigned slot=0;slot<2;++slot){
+        if(!paths[slot])continue;
+        if(!pe_disc_open(&images[slot],paths[slot])){
+            fprintf(stderr,"Cannot open image: %s\n",images[slot].error);goto shutdown;
+        }
+        CdRom_BindImage(&images[slot],NULL);
+        int mounted=Asset_OpenPeImage();
+        unsigned identity=g_PeImageMountFlags;
+        if(mounted || (identity!=1 && identity!=2) || g_CdImageVolumes[identity-1]){
+            fprintf(stderr,"Invalid or duplicate USA disc image (status %d)\n",mounted);goto shutdown;
+        }
+        g_CdImageVolumes[identity-1]=&images[slot];
+    }
+    if(!g_CdImageVolumes[0]){fprintf(stderr,"USA Disc 1 is required for startup\n");goto shutdown;}
+    CdRom_BindImage(g_CdImageVolumes[0],NULL);
 
+    g_BootHostActive=1;
     Boot_InitSystem();
     mode = 0;
 
@@ -29,7 +86,7 @@ int main(void) {
         int image_status = Asset_OpenPeImage();
         if (image_status != 0) {
             fprintf(stderr, "Game image mount failed: %d\n", image_status);
-            return EXIT_FAILURE;
+            goto shutdown;
         }
 
         Boot_InitGameState();
@@ -37,7 +94,7 @@ int main(void) {
         int startup_status = Scene_LoadSceneData();
         if (startup_status < 0) {
             fprintf(stderr, "Scene startup failed: %d\n", startup_status);
-            return EXIT_FAILURE;
+            goto shutdown;
         }
 
         g_SceneDispatchToken = 0xA9400048;
@@ -47,7 +104,7 @@ int main(void) {
                 int display_status = Render_InitDisplayLists(mode);
                 if (display_status < 0) {
                     fprintf(stderr, "Game image selection failed: %d\n", display_status);
-                    return EXIT_FAILURE;
+                    goto shutdown;
                 }
                 g_GameState.flags &= ~STATE_FLAG_IMAGE_BUSY;
             }
@@ -61,10 +118,10 @@ int main(void) {
                 int overlay_status = Boot_LoadOverlayTables();
                 if (overlay_status < 0) {
                     fprintf(stderr, "Boot assets failed: %d\n", overlay_status);
-                    return EXIT_FAILURE;
+                    goto shutdown;
                 }
                 if(FxCommon_RunFrameLoop()<0){
-                    fprintf(stderr,"Effect scene startup failed\n");return EXIT_FAILURE;
+                    fprintf(stderr,"Effect scene startup failed\n");goto shutdown;
                 }
                 g_GameState.flags |= 1;
                 break;
@@ -77,10 +134,10 @@ int main(void) {
                 }
                 if (CdRom_LoadBootAudio() < 0) {
                     fprintf(stderr, "Boot display assets failed\n");
-                    return EXIT_FAILURE;
+                    goto shutdown;
                 }
                 if(BootDisplay_RunDisplay()<0){
-                    fprintf(stderr,"Boot display failed\n");return EXIT_FAILURE;
+                    fprintf(stderr,"Boot display failed\n");goto shutdown;
                 }
                 g_SceneDispatchToken = 0xA80830C8;
                 g_GameState.flags |= 1;
@@ -89,7 +146,7 @@ int main(void) {
                 int title_status = CdRom_LoadInitialImage();
                 if (title_status < 0) {
                     fprintf(stderr, "Title assets failed: %d\n", title_status);
-                    return EXIT_FAILURE;
+                    goto shutdown;
                 }
                 Draw_InitDisplay(MenuCard_RunListScreen());
                 g_GameState.flags |= 3;
@@ -120,4 +177,11 @@ int main(void) {
         SetDispMask(0);
         state->flags &= ~STATE_FLAG_READY;
     }
+shutdown:
+    if(g_BootDisplayPlaybackActive)BootDisplay_WaitForCdAndRestoreCallbacks();
+    Psyz_AudioDestroy();
+    CdRom_BindImage(NULL,NULL);
+    g_CdImageVolumes[0]=g_CdImageVolumes[1]=NULL;
+    pe_disc_close(&images[0]);pe_disc_close(&images[1]);
+    return result;
 }

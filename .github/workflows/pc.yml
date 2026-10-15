@@ -14,10 +14,10 @@ jobs:
           submodules: false
       - name: Fetch PsyZ and SDL
         run: git submodule update --init third_party/psyz third_party/psyz/external/SDL
-      - name: Install movie decoder dependencies
+      - name: Install remaining legacy test dependencies
         run: brew install ffmpeg pkg-config
       - name: Build the native target
         run: |
-          cmake -S . -B build
+          cmake -S . -B build -DBUILD_TESTING=ON
           cmake --build build --parallel
-          ctest --test-dir build --output-on-failure
+          ctest --test-dir build --output-on-failure --no-tests=error

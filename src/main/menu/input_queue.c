@@ -321,13 +321,13 @@ DrawFrameBuffer *g_DrawCurrentFrameBuffer;
 DrawFrameBuffer g_DrawFrameBuffers[2];
 extern u8 *g_DrawPacketCursor;
 extern u8 *g_DrawPacketArenaBase;
-u32 *g_DrawOrderingTableBase;
+RenderNativeTag *g_DrawOrderingTableBase;
 extern u32 *g_DrawOrderingTableEntry;
 void Draw_InitBuffers(void) {
     g_DrawFrameBuffers[0].frontBufferBase = g_RenderFrontBufferBase[0];
     g_DrawFrameBuffers[1].frontBufferBase = g_RenderBackBufferBase[0];
-    g_DrawFrameBuffers[0].orderingTableBase = (u32 *)g_OtBufferTable[0];
-    g_DrawFrameBuffers[1].orderingTableBase = (u32 *)g_RenderOtBufferBaseAlt[0];
+    g_DrawFrameBuffers[0].orderingTableBase = (RenderNativeTag *)g_OtBufferTable[0];
+    g_DrawFrameBuffers[1].orderingTableBase = (RenderNativeTag *)g_RenderOtBufferBaseAlt[0];
     SetDefDrawEnv(&g_DrawFrameBuffers[0].draw, 0, 0, 0x140, 0xE0);
     SetDefDrawEnv(&g_DrawFrameBuffers[1].draw, 0, 0xE0, 0x140, 0xE0);
     g_DrawFrameBuffers[0].draw.isbg = g_DrawFrameBuffers[1].draw.isbg = 1;
@@ -352,11 +352,11 @@ void Draw_InitBuffers(void) {
     g_DrawPresentImage = 0;
 }
 
-int g_DrawPresentImage;
+void *g_DrawPresentImage;
 
 extern int g_DrawBufferIndex;
 
-void Draw_SetPresentImage(int arg0) {
+void Draw_SetPresentImage(void *arg0) {
     g_DrawPresentImage = arg0;
 }
 
@@ -364,7 +364,7 @@ void Draw_SelectBuffer(void) {
     int index;
     DrawFrameBuffer *frame;
     u8 *packets;
-    u32 *ordering;
+    RenderNativeTag *ordering;
 
     if (g_DrawPresentEnabled != 0) {
         index = g_DrawBufferIndex == 0;
@@ -380,10 +380,10 @@ void Draw_SelectBuffer(void) {
     g_DrawPacketArenaBase = packets;
     g_DrawPacketCursor = packets;
     g_DrawOrderingTableBase = ordering;
-    g_DrawOrderingTableEntry = ordering + 1;
+    g_DrawOrderingTableEntry = (u32 *)(ordering + 1);
 
     if (g_DrawPresentEnabled != 0) {
-        ClearOTagR(ordering, 0x1000);
+        ClearOTagR((u32 *)ordering, 0x1000);
     }
 }
 
@@ -398,7 +398,7 @@ void Draw_PresentFrame(int arg0) {
     int index;
     RECT rect;
     int mode;
-    int image;
+    void *image;
     int y;
 
     index = arg0;

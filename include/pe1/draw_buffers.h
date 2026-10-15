@@ -4,13 +4,14 @@
 #include "common.h"
 #include "pe1/game_state.h"
 #include "pe1/psyq_gpu.h"
+#include "pe1/render_packets.h"
 
 /* Game double-buffer records: SDK environments followed by the ordering-table
  * and packet-arena pointers. Selection advances by one native record. */
 typedef struct DrawFrameBuffer {
     DRAWENV draw;
     DISPENV display;
-    u32 *orderingTableBase;
+    RenderNativeTag *orderingTableBase;
     u8 *frontBufferBase;
 } DrawFrameBuffer;
 
@@ -29,8 +30,9 @@ extern int g_ActiveDrawSlot;
 extern int g_DrawBufferIndex;
 extern int g_DrawPresentEnabled;
 /* Image uploaded over the presented frame when nonzero. */
-extern int g_DrawPresentImage;
-extern u32 *g_DrawOrderingTableBase;
+extern void *g_DrawPresentImage;
+void Draw_SetPresentImage(void *image);
+extern RenderNativeTag *g_DrawOrderingTableBase;
 
 /* Main renderer keeps two SDK environments alongside its buffer pointers. */
 extern DISPENV g_RenderDispEnvArray[2];

@@ -27,6 +27,7 @@
 char g_PeDisc1MarkerPath[] = "\\FMV1\\PEDISC01.IDF;1";
 char g_PeImagePath[] = "\\PE.IMG;1";
 char g_PeDisc2MarkerPath[] = "\\FMV2\\PEDISC02.IDF;1";
+PeDisc *g_CdImageVolumes[2];
 
 /* USA resident records at 0x80094488; boot clears IDs, retaining the
  * authored action/frame pair for the four player footstep triggers. */
@@ -114,6 +115,10 @@ int Asset_OpenPeImage(void)
 int Render_InitDisplayLists(int mode)
 {
     if (mode != 1 && mode != 2) return -4;
+    if(g_CdImageVolumes[0] || g_CdImageVolumes[1]){
+        if(!g_CdImageVolumes[mode-1])return -4;
+        if(g_CdImage!=g_CdImageVolumes[mode-1])CdRom_BindImage(g_CdImageVolumes[mode-1],NULL);
+    }
     int status = Asset_OpenPeImage();
     if (status < 0) return status;
     if (!(g_PeImageMountFlags & mode)) return -4;

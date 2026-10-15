@@ -6,6 +6,13 @@
 
 void Boot_InitSystem(void);
 void Boot_VsyncCallback(void);
+/* Optional native diagnostics; the original game still reads its pad packet. */
+typedef struct BootHostPadEvent { u32 vblank; u16 buttons; } BootHostPadEvent;
+extern int g_BootHostActive;
+extern u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
+extern const char *g_BootHostVramPath;
+extern BootHostPadEvent g_BootHostPadEvents[64];
+extern unsigned g_BootHostPadEventCount;
 
 /* Frame counter boot/frame_loop.c advances once per frame (an array view, so
  * -G8 units still address it absolutely). */

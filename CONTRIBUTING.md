@@ -11,7 +11,7 @@ manifest requirement or decompilation progress/debt ratchet.
 2. Remove or simplify unnecessary PS1 APIs; use native C or our PsyZ fork where needed, preserving gameplay behavior.
 3. Add ported modules explicitly to the native CMake target when their dependencies work.
 4. Build with `cmake -S . -B build` and `cmake --build build --parallel`.
-5. Run `./build/pc/parasite-eve-pc --disc <Disc 1.bin>` in a graphical session for boot changes; `--smoke-test` checks PsyZ independently.
+5. Run `./build/parasite-eve-pc --disc <Disc 1.cue> --headless --frame-limit 8000 --dump-vram /tmp/pe.vram` for reproducible boot checks. This starts the original main; the abandoned frontend is no longer built.
 6. Validate changed game behavior with focused native tests or reproducible gameplay scenarios as modules become runnable.
 
 The native target reads the disc, plays the intro and renders the title/menu.

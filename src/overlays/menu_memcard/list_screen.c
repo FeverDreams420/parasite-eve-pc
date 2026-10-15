@@ -297,10 +297,14 @@ s32 MenuCard_RunListScreen(void) {
                     VSync(0);
                 } while (waitFrames < 0x3C);
             }
-            g_MemcardScreenBuffers[0]->draw = g_RenderDrawEnvArray[0];
-            g_MemcardScreenBuffers[1]->draw = g_RenderDrawEnvArray[1];
-            g_MemcardScreenBuffers[0]->disp = g_RenderDispEnvArray[0];
-            g_MemcardScreenBuffers[1]->disp = g_RenderDispEnvArray[1];
+            /* The native movie restores the game's 15-bit/224-line pages.
+             * This screen still composites authored RGB24 images in its own
+             * two 240-line pages, as configured before the movie above. */
+            SetDefDrawEnv(&g_MemcardScreenBuffers[0]->draw,0,0,320,240);
+            SetDefDrawEnv(&g_MemcardScreenBuffers[1]->draw,0,240,320,240);
+            SetDefDispEnv(&g_MemcardScreenBuffers[0]->disp,0,240,320,240);
+            SetDefDispEnv(&g_MemcardScreenBuffers[1]->disp,0,0,320,240);
+            g_MemcardScreenBuffers[0]->disp.isrgb24=g_MemcardScreenBuffers[1]->disp.isrgb24=1;
             g_MemcardScreenBuffers[0]->draw.isbg = 0;
             g_MemcardScreenBuffers[1]->draw.isbg = 0;
             g_MemcardScreenBuffers[0]->dirty.w = g_MemcardScreenBuffers[1]->dirty.w = 0;

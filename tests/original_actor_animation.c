@@ -788,6 +788,93 @@ static int native_effect_packet_links(void)
     return 1;
 }
 
+int CdRom_InitScreenState(void);
+void Render_ResetScene(int width,int height);
+int Draw_InitDisplay(int mode);
+static int original_display_start(void)
+{
+    Pe1GameState saved=g_GameState;
+    GeomScrollRecord scroll=g_GeomScroll;
+    const int modes[]={0,1,2,3};
+    g_GameState.flags=0;
+    Render_ResetScene(320,224);
+    for(unsigned i=0;i<4;++i) {
+        CdRom_InitScreenState();
+        g_SceneDispatchToken=0x12345678;
+        g_GameState.scene_init_subphase=0xA5;
+        if(Draw_InitDisplay(modes[i]) || g_ActiveDrawSlot || g_ScreenTint.fadeMode!=1 ||
+           g_ScreenTint.frame!=2 || g_ScreenTint.duration!=2 ||
+           g_SceneInitSubphase || g_GameState.bank_asset_source!=g_BootWorkArea ||
+           g_GameState.scene_load_scratch!=g_SceneLoadScratchArea ||
+           g_DrawFrameBuffers[0].frontBufferBase!=g_RenderFrontBufferBase[0] ||
+           g_DrawFrameBuffers[1].frontBufferBase!=g_RenderBackBufferBase[0] ||
+           g_SceneDispatchToken!=(modes[i]==1?0xA80830C8u:modes[i]==3?0xA80651C8u:0x12345678u)) return 0;
+    }
+    g_GameState=saved; g_GeomScroll=scroll;
+    puts("Original display start: four modes, memory layout, two fade frames and scene-token selection passed");
+    return 1;
+}
+
+/* RGB sequences from executing USA Render_SetCDDCSlot 80068E24 in MIPS. */
+static int original_startup_fade(void)
+{
+    static const struct { unsigned duration, count; u8 rgb[8][3]; } cases[]={
+        {0,2,{{0,200,255},{255,128,0}}},
+        {1,2,{{0,200,255},{255,128,0}}},
+        {2,3,{{0,200,255},{255,128,0},{255,128,0}}},
+        {4,5,{{0,200,255},{85,176,170},{170,152,85},{255,128,0},{255,128,0}}},
+        {7,8,{{0,200,255},{42,188,213},{85,176,170},{127,164,128},{170,152,85},{212,140,43},{255,128,0},{255,128,0}}},
+    };
+    GeomScrollRecord saved_scroll=g_GeomScroll;
+    RenderBufferPrefix saved_buffers=D_800B0E38;
+    int saved_slot=g_ActiveDrawSlot;
+    RenderGpuTag ordering[2][4];
+    int valid=1;
+    for(unsigned slot=0;slot<2;++slot) for(unsigned stop=0;stop<2;++stop)
+    for(unsigned blend=0;blend<4;++blend)
+    for(unsigned c=0;c<sizeof(cases)/sizeof(cases[0]);++c) {
+        CdRom_InitScreenState();
+        for(unsigned i=0;i<2;++i) {
+            const RenderTintTile *tile=&g_ScreenTint.tiles[i];
+            if(tile->tag.length!=3 || tile->command!=0x62 || tile->r!=255 ||
+               tile->g!=255 || tile->b!=255 || tile->x || tile->y ||
+               tile->width!=320 || tile->height!=224) valid=0;
+            D_800B0E38.ordering[i]=(char *)ordering[i];
+        }
+        g_ActiveDrawSlot=slot;
+        g_ScreenTint.fadeMode=stop?6:2; g_ScreenTint.blendMode=blend;
+        g_ScreenTint.duration=cases[c].duration;
+        g_ScreenTint.targetR=255; g_ScreenTint.targetG=128; g_ScreenTint.targetB=0;
+        g_ScreenTint.startR=0; g_ScreenTint.startG=200; g_ScreenTint.startB=255;
+        for(unsigned frame=0;frame<cases[c].count;++frame) {
+            for(unsigned i=0;i<2;++i) for(unsigned j=0;j<4;++j)
+                ordering[i][j]=(RenderGpuTag){0xFFFFFF,0x9876};
+            unsigned inactive=(g_ScreenTint.fadeMode&3)==0;
+            Render_SetCDDCSlot();
+            if(inactive) {
+                if(ordering[slot][3].address!=0xFFFFFF) valid=0;
+            } else {
+                const RenderTintTile *tile=&g_ScreenTint.tiles[slot];
+                const RenderTintMode *mode=&g_ScreenTint.modes[slot];
+                if(ordering[slot][3].address!=(uintptr_t)mode ||
+                   mode->tag.address!=(uintptr_t)tile || tile->tag.address!=0xFFFFFF ||
+                   mode->tag.length!=1 || tile->tag.length!=3 ||
+                   mode->command!=(0xE1000400u|(blend<<5)) ||
+                   memcmp(&tile->r,cases[c].rgb[frame],3)) valid=0;
+            }
+            for(unsigned i=0;i<2;++i) for(unsigned j=0;j<4;++j) {
+                if(ordering[i][j].length!=0x9876 ||
+                   ((i!=slot || j!=3) && ordering[i][j].address!=0xFFFFFF)) valid=0;
+            }
+        }
+        if(g_ScreenTint.fadeMode!=(stop?0:1) ||
+           g_ScreenTint.frame!=(cases[c].duration?cases[c].duration:1)) valid=0;
+    }
+    g_GeomScroll=saved_scroll; D_800B0E38=saved_buffers; g_ActiveDrawSlot=saved_slot;
+    if(!valid) fprintf(stderr,"Original startup fade RGB/native links differ from MIPS reference\n");
+    return valid;
+}
+
 static int native_screen_tint_packets(void)
 {
     static RenderGpuTag ordering[4096];
@@ -2158,6 +2245,7 @@ int main(int argc, char **argv)
 {
     if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
+    if (!original_startup_fade()) return 126;
     if (!original_save_metadata_storage()) return 125;
     if (!original_item_random()) return 124;
     if (!bios_random()) return 58;
@@ -2166,6 +2254,7 @@ int main(int argc, char **argv)
     if (!boot_buffer_layout()) return 54;
     if (!game_state_reset()) return 53;
     if(!SDL_Init(SDL_INIT_EVENTS))return 43;
+    if(!original_display_start())return 127;
     const u32 lzcs[]={0,1,0x7fffffff,0x80000000,0xffffffff};
     const u32 lzcr[]={32,31,1,1,32};
     for(unsigned i=0;i<5;++i) {

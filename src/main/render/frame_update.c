@@ -265,7 +265,7 @@ s32 CdRom_InitScreenState(void) {
  * links through. */
 typedef union RenderTagAddress {
     RenderGpuTag *tag;
-    u32 word;
+    uintptr_t word;
 } RenderTagAddress;
 
 /* PSY-Q addPrim; the ordering pointer is re-evaluated after the tag write. */

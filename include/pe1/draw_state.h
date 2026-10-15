@@ -118,7 +118,7 @@ extern u32 g_DrawBlendColorPair[];
 #define g_DrawScratchBuffer ((int *)&g_DrawBlendColorPair[1])
 extern GpuDrawEnabledFlag g_DrawEnabled;
 extern short g_SeqElapsed;
-extern volatile unsigned char g_SceneInitSubphase;
+#define g_SceneInitSubphase (*(volatile unsigned char *)&g_GameState.scene_init_subphase)
 
 /* Battle status icons: per draw buffer, thirteen paged sprites (poison,
  * confusion and the other ailment symbols Draw_StatusIcons lists). */

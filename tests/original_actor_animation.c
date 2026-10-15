@@ -1270,6 +1270,72 @@ static int native_object_script_cycle(void)
     return 1;
 }
 
+static int authored_m005_orbiter_cycle(void)
+{
+    PmPrimarySlot bank[11]={0};FieldActor actor={0};FieldActorState state={0};u8 action=1;
+    RenderMatrix matrices[21]={0};
+    for(unsigned i=0;i<21;++i) {
+        for(unsigned axis=0;axis<3;++axis)matrices[i].rotation[axis][axis]=4096;
+        matrices[i].translation[1]=-100;matrices[i].translation[2]=1024;
+    }
+    actor.state=&state;actor.mode=2;actor.render_object.matrices=matrices;
+    state.action_state=&action;state.control10.command_value=1;
+    PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
+    RenderBufferPrefix old_buffers=D_800B0E38;GteMatrix *old_view=g_GeomScroll.words.viewMatrix;
+    int old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
+    void *old_program=g_FieldFxTaskPrograms[32];u32 old_random=Psyz_RandState();
+    FieldFxTaskContext *old_context=g_FieldFxTaskContext;FieldFxObjectPrefix *old_owner=g_FieldFxOwner;
+    FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    static RenderGpuTag ordering[4096];
+    struct { _Alignas(void *) u8 bytes[65536];u8 guard[16]; } packets;
+    g_PmTables=(PmTables){g_PmCmdHandlerArray,bank,NULL};g_FieldFxTaskPrograms[32]=&g_RoomM005Effects;
+    g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
+    struct {SceneAssetBlob header;SceneAssetDirectory directory;} archive={0};
+    archive.header.directoryOffset=sizeof(SceneAssetBlob);
+    g_GameState.loaded_scene_archive=&archive.header;
+    g_GeomScroll.words.viewMatrix=&view;
+    Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(27,1);Psyz_GteCtrlWrite(28,0);
+    Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
+    FieldFx_InitTexturePageTable();srand(1);
+    memset(g_RoomM005ScriptAnchorView-4,0,20);
+    if(Scene_LoadRoomAssets(117,&actor)!=0 || Pm_SendCmd(0,0,0,0,0,0)!=0)return 0;
+    unsigned drawn=0,linked=0;
+    for(unsigned frame=0;frame<40;++frame) {
+        memset(&packets,0xa5,sizeof(packets));
+        for(unsigned depth=0;depth<4096;++depth)ordering[depth]=(RenderGpuTag){.address=0xffffff};
+        g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;
+        D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.bytes;
+        if(frame==30 && Pm_SendCmd(0,0,1,0,0,0)!=0)return 0;
+        if(Pm_Start(0)!=0 || Pm_Exec(0)!=0 || bank[0].task.tasks.count!=1)return 0;
+        if(g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes))return 0;
+        drawn+=g_DrawPacketOffset!=0;
+        for(unsigned depth=0;depth<4096;++depth) {
+            uintptr_t address=ordering[depth].address;unsigned chain=0;
+            while(address!=0xffffff) {
+                if(address<(uintptr_t)packets.bytes || address+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset ||
+                    address%_Alignof(RenderGpuTag) || ++chain>512)return 0;
+                RenderGpuTag *tag=(void *)address;
+                if(tag->length!=9)return 0;
+                ++linked;address=tag->address;
+            }
+        }
+        for(unsigned i=0;i<16;++i)if(packets.guard[i]!=0xa5)return 0;
+    }
+    RoomM005OrbiterState *orbiter=(void *)bank[0].task.tasks.slots[0].start;
+    if(!drawn || !linked || orbiter->armed!=1 || orbiter->frame!=9 || bank[0].task.tasks.variables[0]!=1)return 0;
+    s16 *anchor_words=(void *)g_RoomM005ScriptAnchorView,*fade_words=(void *)g_RoomM005ScriptFadeView;
+    if(anchor_words[0] || anchor_words[1]!=-100 || anchor_words[2]!=1024 ||
+        fade_words[0] || fade_words[1]!=-100 || fade_words[2]!=964)return 0;
+    if(Pm_Stop(0,&actor,0)!=0 || bank[0].header.state)return 0;
+    g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_task;
+    g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;g_FieldFxTaskPrograms[32]=old_program;
+    D_800B0E38=old_buffers;g_GeomScroll.words.viewMatrix=old_view;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;
+    srand(old_random);memset(g_RoomM005ScriptAnchorView-4,0,20);
+    puts("Original M005 orbiter: 40 PM frames, real script wait/signal, update/render, fade arming and arena guards passed");
+    return 1;
+}
+
 static int authored_glow_script_cycle(void)
 {
     PmCommand *classes[]={&g_GlowEffectClass,&g_GlowEffectBClass,&g_GlowEffectCClass,&g_FourLayerGlowClass,&g_PointSpriteClass,&g_BurstEffectClass,&g_BurstEffectBClass,&g_BurstEffectCClass};
@@ -1941,7 +2007,7 @@ static int room_callback_context(void)
 
 int main(int argc, char **argv)
 {
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_orbiter_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!bios_random()) return 58;
     if (!glyph_records()) return 55;

@@ -35,9 +35,9 @@ int Asset_SearchByKeyType(int type)
 
     blob = g_LoadedSceneAssetBlock[0];
     key = 0x73DECD80;
-    xMask = 0x7FF << 10;
+    xMask = 0x7FFu << 10;
     x832 = 832 << 10;
-    yMask = 0x7FF << 21;
+    yMask = 0x7FFu << 21;
     y256 = 256 << 21;
     for (;;) {
         image = Asset_FindTable08ByU32Key(blob, key);

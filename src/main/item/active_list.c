@@ -23,6 +23,9 @@
 #include "pe1/script_queue.h"
 #include "pe1/text.h"
 
+/* Shared original item-name/status message (USA A1B50..A1B6F). */
+u8 g_InvItemMessageBuffer[32];
+
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
 s32 g_ItemDropRngIndex;
@@ -997,24 +1000,38 @@ int Inv_PickRandomItem(int unused) {
 }
 
 /* Historical name: formats the item message into the shared FF-terminated buffer. */
-static inline void CopyText(u8 *dest, const u8 *src) {
-    while ((*dest++ = *src++) != 255) {}
+static inline int CopyText(u8 *dest, const u8 *src) {
+    uintptr_t begin = (uintptr_t)g_ResidentDataPack.bytes;
+    uintptr_t end = begin + sizeof(g_ResidentDataPack.bytes);
+    if ((uintptr_t)src < begin || (uintptr_t)src >= end) return 0;
+    for (unsigned i = 0; i < sizeof(g_InvItemMessageBuffer) && (uintptr_t)src < end; ++i) {
+        if ((dest[i] = *src++) == 255) return 1;
+    }
+    return 0;
 }
-static inline void AppendText(u8 *dest, const u8 *src) {
-    while (*dest++ != 255) {}
-    --dest;
-    while ((*dest++ = *src++) != 255) {}
+static inline int AppendText(u8 *dest, const u8 *src) {
+    uintptr_t begin = (uintptr_t)g_ResidentDataPack.bytes;
+    uintptr_t end = begin + sizeof(g_ResidentDataPack.bytes);
+    if ((uintptr_t)src < begin || (uintptr_t)src >= end) return 0;
+    unsigned i = 0;
+    while (i < sizeof(g_InvItemMessageBuffer) && dest[i] != 255) ++i;
+    for (; i < sizeof(g_InvItemMessageBuffer) && (uintptr_t)src < end; ++i) {
+        if ((dest[i] = *src++) == 255) return 1;
+    }
+    return 0;
 }
 u8 *Inv_GetItemEffectData(int item, int mode) {
-    if (!item) CopyText(g_InvItemMessageBuffer, Text_LookupTable4(19));
-    else if (mode >= 2) CopyText(g_InvItemMessageBuffer, Text_LookupTable4(18));
+    int valid;
+    if (!item) valid = CopyText(g_InvItemMessageBuffer, Text_LookupTable4(19));
+    else if (mode >= 2) valid = CopyText(g_InvItemMessageBuffer, Text_LookupTable4(18));
     else if (!g_SaveMetadataWindowIndex) {
-        CopyText(g_InvItemMessageBuffer, Text_LookupTable8(item - 1));
-        AppendText(g_InvItemMessageBuffer, Text_LookupTable4(mode + 16));
+        valid = CopyText(g_InvItemMessageBuffer, Text_LookupTable8((u32)item - 1)) &&
+            AppendText(g_InvItemMessageBuffer, Text_LookupTable4((u32)mode + 16));
     } else {
-        CopyText(g_InvItemMessageBuffer, Text_LookupTable4(mode + 16));
-        AppendText(g_InvItemMessageBuffer, Text_LookupTable8(item - 1));
+        valid = CopyText(g_InvItemMessageBuffer, Text_LookupTable4((u32)mode + 16)) &&
+            AppendText(g_InvItemMessageBuffer, Text_LookupTable8((u32)item - 1));
     }
+    if (!valid) g_InvItemMessageBuffer[0] = 255;
     return g_InvItemMessageBuffer;
 }
 

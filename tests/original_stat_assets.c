@@ -4,6 +4,7 @@
 #include "pe1/save.h"
 #include "pe1/menu_queue.h"
 #include "pe1/textbox.h"
+#include "pe1/text.h"
 #include "pe1/menu_flags.h"
 #include "pe1/memcard.h"
 #include "pe1/menu_inventory.h"
@@ -37,6 +38,69 @@ int MemCard_HasDelayedCallback(void);
 int Aya_StatBinarySearch(int value,int *table);
 int Aya_StatOverflowQuery(int kind,int value);
 #define CHECK(x) do { if(!(x)) { fprintf(stderr,"line %d: %s\n",__LINE__,#x); return 1; } } while(0)
+
+static int original_item_messages(void)
+{
+    int saved_window=g_SaveMetadataWindowIndex;u8 saved_buffer[32];memcpy(saved_buffer,g_InvItemMessageBuffer,32);
+    ResidentDataPack saved_pack=g_ResidentDataPack;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0,maximum=0;
+    const int modes[]={0,1,2,3,INT32_MAX};
+    for(int item=0;item<256;++item)for(unsigned mode=0;mode<5;++mode)for(unsigned window=0;window<2;++window){
+        g_SaveMetadataWindowIndex=window;memset(g_InvItemMessageBuffer,0xA5,32);
+        CHECK(Inv_GetItemEffectData(item,modes[mode])==g_InvItemMessageBuffer);
+        unsigned length=0;while(length<32 && g_InvItemMessageBuffer[length]!=255)++length;
+        CHECK(length<32);if(length+1>maximum)maximum=length+1;
+        for(unsigned i=0;i<32;++i)hash=(hash^g_InvItemMessageBuffer[i])*UINT64_C(1099511628211);
+        ++cases;
+    }
+    CHECK(hash==UINT64_C(0x443a865aea5e972f) && maximum==26);
+    const int invalid_items[]={-1,INT32_MIN,INT32_MAX,256};
+    for(unsigned i=0;i<4;++i)for(unsigned window=0;window<2;++window){
+        g_SaveMetadataWindowIndex=window;memset(g_InvItemMessageBuffer,0xA5,32);
+        CHECK(Inv_GetItemEffectData(invalid_items[i],0)==g_InvItemMessageBuffer && g_InvItemMessageBuffer[0]==255);
+        CHECK(Inv_GetItemEffectData(1,INT32_MIN)==g_InvItemMessageBuffer && g_InvItemMessageBuffer[0]==255);
+    }
+    /* Controlled tables exercise output boundaries without replacing lookups. */
+    memset(&g_ResidentDataPack,0,sizeof(g_ResidentDataPack));g_ResidentDataPack.directory.text=0x30;
+    TextTableDirectory *directory=(TextTableDirectory *)(g_ResidentDataPack.bytes+0x30);
+    directory->header.tableOffsets[0]=0x20;directory->header.tableOffsets[1]=0xD0;
+    TextOffsetTable *general=(TextOffsetTable *)(g_ResidentDataPack.bytes+0x50);
+    TextOffsetTable *names=(TextOffsetTable *)(g_ResidentDataPack.bytes+0x100);
+    general->header.count=20;names->header.count=1;names->header.offsets[0]=0x300;
+    for(unsigned i=16;i<20;++i)general->header.offsets[i]=0x4B0;
+    const unsigned name_lengths[]={0,1,28,29,30,31,32,33,64},suffix_lengths[]={0,1,2,30,31,32,64};
+    for(unsigned n=0;n<9;++n)for(unsigned suffix=0;suffix<7;++suffix)for(unsigned window=0;window<2;++window){
+        unsigned a=name_lengths[n],b=suffix_lengths[suffix];
+        memset(g_ResidentDataPack.bytes+0x400,0x11,a);g_ResidentDataPack.bytes[0x400+a]=255;
+        memset(g_ResidentDataPack.bytes+0x500,0x22,b);g_ResidentDataPack.bytes[0x500+b]=255;
+        g_SaveMetadataWindowIndex=window;memset(g_InvItemMessageBuffer,0xA5,32);
+        CHECK(Inv_GetItemEffectData(1,0)==g_InvItemMessageBuffer);
+        if(a+b+1<=32){
+            for(unsigned i=0;i<a+b;++i)CHECK(g_InvItemMessageBuffer[i]==(window?(i<b?0x22:0x11):(i<a?0x11:0x22)));
+            CHECK(g_InvItemMessageBuffer[a+b]==255);
+            for(unsigned i=a+b+1;i<32;++i)CHECK(g_InvItemMessageBuffer[i]==0xA5);
+        }else CHECK(g_InvItemMessageBuffer[0]==255);
+    }
+    g_ResidentDataPack.bytes[0x500]=0x22;g_ResidentDataPack.bytes[0x501]=255;
+    unsigned end=sizeof(g_ResidentDataPack.bytes);names->header.offsets[0]=end-8-0x100;
+    memset(g_ResidentDataPack.bytes+end-8,0x11,8);
+    for(unsigned window=0;window<2;++window){g_SaveMetadataWindowIndex=window;
+        CHECK(Inv_GetItemEffectData(1,0)==g_InvItemMessageBuffer && g_InvItemMessageBuffer[0]==255);}
+    g_ResidentDataPack.bytes[end-1]=255;
+    for(unsigned window=0;window<2;++window){g_SaveMetadataWindowIndex=window;
+        CHECK(Inv_GetItemEffectData(1,0)==g_InvItemMessageBuffer && g_InvItemMessageBuffer[8]==255);}
+    g_ResidentDataPack.bytes[end-1]=0x11;
+    names->header.offsets[0]=end-0x100;
+    CHECK(Inv_GetItemEffectData(1,0)==g_InvItemMessageBuffer && g_InvItemMessageBuffer[0]==255);
+    general->header.offsets[19]=end-8-0x50;
+    CHECK(Inv_GetItemEffectData(0,0)==g_InvItemMessageBuffer && g_InvItemMessageBuffer[0]==255);
+    general->header.count=18;
+    CHECK(Inv_GetItemEffectData(1,2)==g_InvItemMessageBuffer && g_InvItemMessageBuffer[0]==255);
+    g_ResidentDataPack=saved_pack;g_SaveMetadataWindowIndex=saved_window;memcpy(g_InvItemMessageBuffer,saved_buffer,32);
+    printf("Original item messages: %u USA MIPS buffers, all 255 authored names, prefix/suffix order, longest %u bytes, full 32-byte output and malformed/boundary guards passed\n",cases,maximum);
+    return 0;
+}
+
 static int pending_command_stack(void)
 {
     ItemDataRecord records[3] = {0};
@@ -880,6 +944,7 @@ int main(void)
     CHECK((unsigned)g_ResidentDataPack.directory.statGrowth+7*512<=resident_bytes);
     CHECK(g_ResidentDataPack.directory.levelStats>=0);
     CHECK((unsigned)g_ResidentDataPack.directory.levelStats+99*sizeof(AyaLevelStats)<=resident_bytes);
+    CHECK(original_item_messages()==0);
     unsigned queries=0;
     for(int kind=0;kind<7;++kind) {
         int *table=Aya_GetStatGrowthTable(kind);

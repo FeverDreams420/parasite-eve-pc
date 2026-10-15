@@ -83,7 +83,7 @@ int Inv_StepScrollDisplay2(int special);
 int Inv_SetupSlotDisplay(int mask);
 int Inv_PickRandomItem(int unused);
 u8 *Inv_GetItemEffectData(int item, int mode);
-extern u8 g_InvItemMessageBuffer[];
+extern u8 g_InvItemMessageBuffer[32];
 void Inv_RollRandomItemType(s16 *type, s16 *amount);
 int Inv_IsSlotSelectable(int index);
 int Inv_IsSlotEquipped(int index);

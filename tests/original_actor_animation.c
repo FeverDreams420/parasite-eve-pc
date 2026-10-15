@@ -1,6 +1,7 @@
 #include "pe1/entity_animation.h"
 #include "pe1/room_m005_drifting_sprite.h"
 #include "pe1/room_m005.h"
+#include "pe1/room_m005_beacon.h"
 #include "pe1/field_sprite_params.h"
 #include "pe1/field_rotated_quad.h"
 #include "pe1/field_texture_tables.h"
@@ -993,6 +994,27 @@ static int native_effect_collision_coordinates(void)
         if(FieldFx_IsPlayerInTriangleXZ(quad)!=FieldFx_IsPointInTriangleXZ(&point,quad) ||
            FieldFx_IsPlayerInQuadXZ(quad)!=FieldFx_IsPointInQuadXZ(&point,quad)) return 0;
     }
+    FieldActor actor={0};FieldActorState actor_state={0};RenderMatrix matrices[21]={0};
+    actor.state=&actor_state;actor.render_object.matrices=matrices;
+    GteShortVector input={-7,9,11,0},output={0},angles={0};
+    for(unsigned index=0;index<=20;index+=20)for(unsigned turn=0;turn<2;++turn) {
+        RenderMatrix *matrix=&matrices[index];
+        memset(matrix,0,sizeof(*matrix));
+        matrix->rotation[0][turn?2:0]=4096;matrix->rotation[1][1]=4096;
+        matrix->rotation[2][turn?0:2]=turn?-4096:4096;
+        matrix->translation[0]=40000+index;matrix->translation[1]=-50000;matrix->translation[2]=65530;
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)&actor,index,&input,&output);
+        if(output.x!=(s16)(40000+index+(turn?11:-7)) || output.y!=(s16)-49991 ||
+            output.z!=(s16)(turn?65537:65541))return 0;
+        FieldFx_GetTransformLookAngles((RoomFxTransformOwner *)&actor,index,&angles);
+        if(angles.x || angles.y!=(turn?3072:2048) || angles.z)return 0;
+        if(((RoomM005BeaconPool *)&actor)->matrix!=(GteMatrix *)matrices)return 0;
+    }
+    actor_state.flags=0x1234;
+    ((RoomM005BeaconActor *)&actor_state)->flags|=0x4000;
+    if(actor_state.flags!=0x5234)return 0;
+    u8 action=1;actor_state.action_state=&action;
+    if(((RoomM005BeaconPool *)&actor)->node->state!=&action)return 0;
     D_8009D254=saved;
     puts("Original effect collision: player/native coordinate paths agree across 441 triangle/quad positions");
     return 1;
@@ -1045,7 +1067,9 @@ static int original_glow_resident_constants(void)
         {0x800e0d6c,g_PointSpriteScript,22*sizeof(int)},
         {0x800c22a0,&g_FieldFxBlackColor,sizeof(RenderColor)},
         {0x800e1204,g_FieldFxPaletteTable,6*sizeof(u16)},
-        {0x800e11e4,g_FieldFxTpageSlots,sizeof(g_FieldFxTpageSlots)}
+        {0x800e11e4,g_FieldFxTpageSlots,sizeof(g_FieldFxTpageSlots)},
+        {0x800c2258,&D_800C2258,sizeof(GteShortVector)},
+        {0x800c2260,&g_FieldFxZeroVector,sizeof(GteShortVector)}
     };
     PeDisc disc={0}; PeDiscFile file;
     u8 header[32], raw[128];

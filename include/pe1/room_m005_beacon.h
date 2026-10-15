@@ -2,6 +2,7 @@
 #define PE1_ROOM_M005_BEACON_H
 
 #include "common.h"
+#include "pe1/field_actor.h"
 #include "pe1/asset_find.h"
 #include "pe1/field_model_draw.h"
 #include "pe1/field_sprite_draw.h"
@@ -53,7 +54,7 @@ typedef struct RoomM005BeaconNode {
 
 typedef struct RoomM005BeaconPool {
     /* 0x000 */ RoomM005BeaconNode *node;
-    /* 0x004 */ u8 reserved004[0x234];
+    /* 0x004 */ u8 reserved004[PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, matrices) - sizeof(void *)];
     /* 0x238 */ GteMatrix *matrix;
 } RoomM005BeaconPool;
 
@@ -63,9 +64,14 @@ typedef struct RoomM005BeaconChannel {
 } RoomM005BeaconChannel;
 
 typedef struct RoomM005BeaconActor {
-    u8 reserved[0x4C];
+    u8 reserved[PE1_OFFSETOF(FieldActorState, flags)];
     u32 flags;
 } RoomM005BeaconActor;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM005BeaconPool, matrix) ==
+    PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, matrices), m005_pool_native_matrices);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM005BeaconActor, flags) == PE1_OFFSETOF(FieldActorState, flags), m005_native_state_flags);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM005BeaconNode, state) == PE1_OFFSETOF(FieldActorState, action_state), m005_native_action_state);
 
 typedef struct RoomM005BeaconEntity {
     RoomM005BeaconActor *actor;

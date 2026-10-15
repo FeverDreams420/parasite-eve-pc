@@ -2411,3 +2411,7 @@ u8 *g_FieldFxTwinModelB, *g_FieldFxModel83ACD504, *g_FieldFxGlintModel;
 
 /* Original resident slot choices at 800E11E4, shared by room effects. */
 u16 g_FieldFxTpageSlots[16] = {0,0,1,1,1,0,0,0,2,2,3,3,3,0,0,0};
+
+/* Original direction seed at 800C2258 and zero vector at 800C2260. */
+GteShortVector D_800C2258 = {0,0,-16384,0};
+GteShortVector g_FieldFxZeroVector = {0,0,0,0};

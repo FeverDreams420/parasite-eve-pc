@@ -2,6 +2,7 @@
 #define PE1_ROOM_FX_H
 
 #include "common.h"
+#include "pe1/field_actor.h"
 #include "pe1/field_ring_geometry.h"
 #include "pe1/gte_types.h"
 
@@ -291,7 +292,7 @@ typedef struct RoomFxTransform {
 } RoomFxTransform;
 
 typedef struct RoomFxTransformOwner {
-    unsigned char pad00[0x238];
+    unsigned char pad00[PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, matrices)];
     RoomFxTransform *transforms;
 } RoomFxTransformOwner;
 
@@ -335,7 +336,8 @@ typedef struct RoomFxPairedSpriteState {
 
 PE1_STATIC_ASSERT(sizeof(RoomFxTransform) == 0x20,
                   room_fx_transform_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFxTransformOwner, transforms) == 0x238,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFxTransformOwner, transforms) ==
+    PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, matrices),
                   room_fx_transform_owner_transforms_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFxPairedSpriteState, sparkleX) == 0x18,
                   room_fx_paired_sprite_sparkle_x_offset);

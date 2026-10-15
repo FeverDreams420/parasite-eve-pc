@@ -337,7 +337,6 @@ int Aya_UnlockParasiteSpellById(int key)
 }
 
 int g_InvPackedListCount;
-short g_InvPackedList[100];
 
 unsigned int *g_InvSelectionBits;
 
@@ -1082,3 +1081,5 @@ int Inv_LoadWayneItemsAsOverride(short *items) {
     g_InvActiveListCount = count;
     return count;
 }
+
+ItemDataRecord g_InvCompareSlotLeft, g_InvCompareSlotRight;

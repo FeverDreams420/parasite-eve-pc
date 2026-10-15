@@ -39,6 +39,9 @@ add_library(parasite-eve-original OBJECT
     src/main/item/swap.c
     src/main/menu/skills.c
     src/main/menu/equip_screen.c
+    src/main/menu/equip_select.c
+    src/main/menu/item_actions.c
+    src/main/menu/item_use_panel.c
     src/main/menu/main_menu.c
     src/main/time/counters.c
     src/main/save/game_data.c

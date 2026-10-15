@@ -10,7 +10,7 @@
 
 int Menu_ItemListInputHandler(MenuWidgetNode *node, unsigned int flags);
 int Menu_InventoryPageInputHandler(MenuWidgetNode *root, unsigned int flags);
-int Menu_StepSkillScreen(MenuWidgetNode *node, int flags);
+int Menu_StepSkillScreen(MenuWidgetNode *node, unsigned int flags);
 void Menu_DrawUsableItemActionList(MenuWidgetNode *node);
 void Menu_DrawSoundTestList(MenuWidgetNode *node);
 void Menu_DrawItemListInvPanel(MenuWidgetNode *node);

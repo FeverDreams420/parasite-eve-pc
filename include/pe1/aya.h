@@ -112,24 +112,22 @@ typedef struct AyaBonusPoolRecord {
     u16 pool;
 } AyaBonusPoolRecord;
 extern AyaBonusPoolRecord g_AyaBonusPoolRecord;
-/* Interior names for single AyaSaveState fields. Incomplete arrays keep
- * their accesses absolute in -G8 units; scalar readers index element 0. */
-extern u16 g_AyaHpCurrent[];
-extern u16 g_AyaHpMax[];
-extern s32 g_AyaSaveTotalExp[];
-extern u8 g_AyaInventorySlotCount[];
+/* Retail labels share the canonical fields in the saved character. */
+#define g_AyaHpCurrent (&g_AyaSaveState.current_hp)
+#define g_AyaHpMax (&g_AyaSaveState.max_hp)
+#define g_AyaSaveTotalExp ((s32 *)&g_AyaSaveState.total_exp)
+#define g_AyaInventorySlotCount (&g_AyaSaveState.inventory_slot_count)
 /* Array-style retail labels share the saved character fields. */
 #define g_AyaEquippedWeaponSlot (&g_AyaSaveState.equipped_weapon_slot)
 #define g_AyaEquippedArmorSlot (&g_AyaSaveState.equipped_armor_slot)
 /* Scalar spellings refer to the same saved slot bytes. */
 #define g_EquippedWeaponSlot (g_AyaSaveState.equipped_weapon_slot)
 #define g_EquippedArmorSlot (g_AyaSaveState.equipped_armor_slot)
-extern s32 g_AyaBonusPoints[];
-extern u32 g_AyaParasiteSpellFlags[];
-extern u16 g_AyaStatAgility[];
+#define g_AyaBonusPoints ((s32 *)&g_AyaSaveState.bonus_points)
+#define g_AyaParasiteSpellFlags (&g_AyaSaveState.parasite_spell_flags)
 extern u16 g_AyaStatActiveTimeRate[];
-extern u16 g_AyaStatAgility[7];
-extern u8 g_AyaSaveLevel[];
+#define g_AyaStatAgility (g_AyaSaveState.stats.levels)
+#define g_AyaSaveLevel (&g_AyaSaveState.level)
 /* Growth tables have multiple consumers: 32-bit thresholds and initial u16. */
 void *Aya_GetStatGrowthTable(int category);
 void Aya_StatQueryLevelAndSubLevel(int category, int value, int *level, int *sublevel);

@@ -14,13 +14,13 @@ int Menu_InventoryPageNavHandler(MenuWidgetNode *root, unsigned int flags);
 void Menu_DrawBattleCommandList();
 void Menu_DrawEquipSelectionList(MenuWidgetNode *node);
 void Inv_BuildFilteredPackedListExcluding(int mask, int excluded);
-void Menu_DrawBonusPointSlotValue(void);
+void Menu_DrawBonusPointSlotValue(MenuWidgetNode *unused);
 void Menu_DrawParasiteAbilityList();
 void Menu_InitStateTables(void);
 void Menu_DrawItemDetailPanel(MenuWidgetNode *panel);
-int Menu_BonusPointCancelHandler(void *node, int flags);
+int Menu_BonusPointCancelHandler(MenuWidgetNode *node, unsigned int flags);
 void Menu_DrawEmptyList();
-void Menu_StepEquipSlotSelect2(void);
+void Menu_StepEquipSlotSelect2(MenuWidgetNode *unused);
 void Menu_SetEquipPanelsCursorY(void);
 void Menu_AlignEquipPanels(void);
 
@@ -28,6 +28,5 @@ void Menu_AlignEquipPanels(void);
 extern int g_MenuSourceItemList;
 /* Per-stat preview tables: value, level, sublevel and pending bonus. */
 extern int D_800A1898[7];
-extern int g_AyaBonusPoints[];
 
 #endif

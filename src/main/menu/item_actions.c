@@ -45,7 +45,7 @@ int g_MenuLayoutLocked;
 int g_MenuSpendArrowDirection;
 
 void Menu_CreateItemDetailView(MenuWidgetNode *arg0);
-void Menu_CreateEquipStatsPanel(int arg0);
+void Menu_CreateEquipStatsPanel(MenuWidgetNode *arg0);
 
 void Menu_ConfigureScreen(void) {
     MenuWidgetNode *node;
@@ -94,7 +94,7 @@ void Menu_ConfigureScreen(void) {
  * list views of the inventory menu. Contiguous at 0x80047678 and joined by
  * private data and helper calls. */
 
-int Menu_EquipStatsInputHandler(MenuWidgetNode *node, int flags);
+int Menu_EquipStatsInputHandler(MenuWidgetNode *node, unsigned int flags);
 int Menu_DetailViewInput(MenuWidgetNode *arg0, unsigned int arg1);
 int g_MenuSelectedItemIndex;
 int D_8009CFBC;
@@ -106,7 +106,7 @@ int g_MenuSelectedItemList;
 int g_MenuSelectedItemSlot;
 void Menu_DrawActiveListSlot(int arg0);
 #define NULL ((void *)0)
-void Menu_DrawEquipStats(void);
+void Menu_DrawEquipStats(MenuWidgetNode *unused);
 /* Inlined into Menu_OpenItemList, like Menu_CreateItemActionSubmenu; no
  * out-of-line copy exists in retail. */
 static inline void Menu_CreateScreenModeSubmenu(void) {
@@ -129,7 +129,7 @@ static inline void Menu_CreateScreenModeSubmenu(void) {
 }
 
 void Menu_StepInventoryRoot(s32 arg0, s32 arg1, s32 arg2);
-void Menu_DrawItemListHeader(void);
+void Menu_DrawItemListHeader(MenuWidgetNode *unused);
 int g_MenuItemListHeaderGlyph;
 
 int g_MenuEquipMode;
@@ -158,7 +158,7 @@ void Menu_InitCategoryTabs(void) {
     Menu_PlayCancelSound();
 }
 
-void Menu_DrawEquipScreenHeader(void) {
+void Menu_DrawEquipScreenHeader(MenuWidgetNode *unused) {
     Draw_OffsetCursor(0, 0xA);
     Draw_FlushPrimList(0x69);
 
@@ -172,7 +172,7 @@ void Menu_DrawEquipScreenHeader(void) {
     }
 }
 
-int Menu_InventoryItemHandler(MenuWidgetNode *arg0, int arg1) {
+int Menu_InventoryItemHandler(MenuWidgetNode *arg0, unsigned int arg1) {
     int temp;
 
     if (arg1 & 0x10000) {
@@ -217,7 +217,7 @@ inline void Menu_CreateItemActionSubmenu(void) {
     }
 }
 
-void Menu_DrawItemActionSubmenu(void) {
+void Menu_DrawItemActionSubmenu(MenuWidgetNode *unused) {
     int selected;
     int icon;
     u8 *entry;
@@ -255,7 +255,7 @@ void Menu_DrawItemActionSubmenu(void) {
     Draw_PrintTextById(0x68);
 }
 
-int Menu_StepSkillSelect(MenuWidgetNode *arg0, int arg1) {
+int Menu_StepSkillSelect(MenuWidgetNode *arg0, unsigned int arg1) {
     int var_a0;
     s32 *temp_a1;
     s32 pad_[1];
@@ -263,7 +263,7 @@ int Menu_StepSkillSelect(MenuWidgetNode *arg0, int arg1) {
     s32 temp_v0;
     s32 temp_v0_2;
     s32 var_s1;
-    s32 var_v0;
+    MenuWidgetNode *var_v0;
 
     if (arg1 & 0x10000) {
         temp_v0 = MenuWidget_GridCellIndex(MenuWidget_GetChild(arg0, 0));
@@ -314,7 +314,7 @@ shared_1:
     }
 }
 
-void Menu_CreateEquipStatsPanel(int arg0) {
+void Menu_CreateEquipStatsPanel(MenuWidgetNode *arg0) {
     MenuWidgetNode *node;
     MenuWidgetNode *child;
 
@@ -327,7 +327,7 @@ void Menu_CreateEquipStatsPanel(int arg0) {
     child->cursor_x = -1;
 }
 
-void Menu_DrawEquipStats(void) {
+void Menu_DrawEquipStats(MenuWidgetNode *unused) {
     int value;
     ItemDataRecord *data;
 
@@ -362,7 +362,7 @@ void Menu_DrawEquipStats(void) {
     }
 }
 
-int Menu_EquipStatsInputHandler(MenuWidgetNode *node, int flags) {
+int Menu_EquipStatsInputHandler(MenuWidgetNode *node, unsigned int flags) {
     MenuWidgetNode *selected;
     MenuWidgetNode *child;
     void *target;
@@ -513,7 +513,7 @@ void Menu_CreateItemList(void) {
     }
 }
 
-void Menu_DrawItemListHeader(void) {
+void Menu_DrawItemListHeader(MenuWidgetNode *unused) {
     Draw_OffsetCursor(4, 4);
     Draw_AllocSprite(g_MenuItemListHeaderGlyph);
     Draw_OffsetCursor(0x20, 0);
@@ -853,7 +853,7 @@ void Menu_SetEquipPanelsCursorY(void) {
 int g_MenuItemUseMode;
 int g_BonusPointDisplayValue;
 
-void Menu_DrawBonusPointSlotValue(void) {
+void Menu_DrawBonusPointSlotValue(MenuWidgetNode *unused) {
     int value;
 
     Draw_OffsetCursor(6, 4);
@@ -943,8 +943,8 @@ int Menu_StatSlotInputHandler(MenuWidgetNode *node, unsigned int flags) {
 
 #define NULL ((void *)0)
 
-s32 Menu_BonusPointCancelHandler(void *arg0, s32 arg1) {
-    s32 temp_s0;
+s32 Menu_BonusPointCancelHandler(MenuWidgetNode *arg0, unsigned int arg1) {
+    MenuWidgetNode *temp_s0;
     s32 var_a0;
     u16 *var_a1;
     s32 *var_v1;
@@ -1032,29 +1032,6 @@ static inline void Menu_CreateUsableItemActionView(MenuWidgetNode *parent)
         MenuWidget_SetColumnLayout(node, 0x14);
     if (node->cursor_x >= 0)
         MenuWidget_SetCurrentNode(node);
-}
-
-/* Same panel as Menu_CreateEquipItemSelectionView. */
-static inline void Menu_CreateEquipItemSelectionView(MenuWidgetNode *parent)
-{
-    MenuWidgetNode *root;
-    MenuWidgetNode *node;
-
-    root = MenuWidget_CreateSimpleNode(5, parent, 0, 0);
-    node = MenuWidget_CreateNode(5, root, root);
-    root->draw = Menu_StepEquipSlotSelect;
-    root->update = Menu_StepSkillScreen;
-    node->draw = Menu_DrawSoundTestList;
-    if (g_MenuLayoutLocked != 0)
-        MenuWidget_ClearColumnLayout(node);
-    else if (g_InvItemUsableFlag == 0)
-        MenuWidget_SetColumnLayout(node, 0x12);
-    if (node->cursor_x >= 0)
-        MenuWidget_SetCurrentNode(node);
-    root->disabled = 1;
-    node = MenuWidget_CreateNode(0x1B, root, root);
-    node->draw = Menu_DrawItemListInvPanel;
-    MenuWidget_ClearColumnLayout(node);
 }
 
 /* Whether the selected item can go into an equipment slot that has room. */
@@ -1255,7 +1232,6 @@ int Menu_ItemListInputHandler(MenuWidgetNode *node, unsigned int flags)
     }
     return 1;
 }
-#undef g_BonusPointStatDeltas
 #define CLAMP_EQUIP_PREVIEW(out, item, stat_index, active_stat) { \
     int desired_ = (active_stat); \
     int current_ = g_MenuStatItemStatIndex; \
@@ -1271,7 +1247,7 @@ int Menu_ItemListInputHandler(MenuWidgetNode *node, unsigned int flags)
     } \
 }
 
-void Menu_StepEquipSlotSelect2(void) {
+void Menu_StepEquipSlotSelect2(MenuWidgetNode *unused) {
     MenuWidgetNode *node;
     MenuWidgetNode *cursor_node;
     ItemDataRecord *item;
@@ -1372,8 +1348,8 @@ void Menu_StepEquipSlotSelect2(void) {
     }
 }
 
-void Menu_DrawBonusPointSpendPanel(void);
-s32 Menu_SpendBonusPoints(void *node, u32 buttons);
+void Menu_DrawBonusPointSpendPanel(MenuWidgetNode *unused);
+s32 Menu_SpendBonusPoints(MenuWidgetNode *node, unsigned int buttons);
 
 void Menu_OpenBonusPointSpendDialog(MenuWidgetNode *arg0, s32 arg1) {
     MenuWidgetNode *node;
@@ -1398,7 +1374,7 @@ void Menu_OpenBonusPointSpendDialog(MenuWidgetNode *arg0, s32 arg1) {
     g_MenuSpendArrowDirection = 0;
 }
 
-void Menu_DrawBonusPointSpendPanel(void) {
+void Menu_DrawBonusPointSpendPanel(MenuWidgetNode *unused) {
     int value;
     int mode;
     int level;
@@ -1469,7 +1445,7 @@ void Menu_DrawBonusPointSpendPanel(void) {
     }
 }
 
-int Menu_SpendBonusPoints(void *node, unsigned int buttons)
+int Menu_SpendBonusPoints(MenuWidgetNode *node, unsigned int buttons)
 {
     ItemDataRecord *item;
     int amount;
@@ -1592,3 +1568,7 @@ int Menu_SpendBonusPoints(void *node, unsigned int buttons)
     }
     return 1;
 }
+
+int D_800A1898[7];
+ItemDataRecord g_MenuItemUseSelectedItemSnapshot;
+ItemDataRecord g_BonusPointSpendItemCopy;

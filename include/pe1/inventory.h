@@ -39,7 +39,21 @@ typedef ItemDataRecord InvItemSlot;
 
 extern u8 g_EquipItemDataTable[];
 extern u8 g_KeyItemDataTable[]; /* legacy consumers not yet ported */
-extern ItemDataRecord g_KeyItemRecords[9];
+/* USA A1D9C..A1F84: packed-list scratch overlaps the fallback ammo
+ * record at +0xA8; the nine special records follow it at +0xC8. */
+typedef union InventoryItemWorkspace {
+    s16 packed[100];
+    struct {
+        u8 reserved[0xA8];
+        ItemDataRecord ammo[10];
+    };
+} InventoryItemWorkspace;
+PE1_STATIC_ASSERT(PE1_OFFSETOF(InventoryItemWorkspace, ammo) == 0xA8, inventory_ammo_workspace_offset);
+PE1_STATIC_ASSERT(sizeof(InventoryItemWorkspace) == 0x1E8, inventory_item_workspace_size);
+extern InventoryItemWorkspace g_InventoryItemWorkspace;
+#define g_InvPackedList (g_InventoryItemWorkspace.packed)
+#define g_InvFallbackAmmoRecord (g_InventoryItemWorkspace.ammo[0])
+#define g_KeyItemRecords (g_InventoryItemWorkspace.ammo + 1)
 extern ItemDataRecord g_InvCompareSlotLeft;
 extern ItemDataRecord g_InvCompareSlotRight;
 extern ItemDataRecord *g_InvCompareLeftItem, *g_InvCompareRightItem;

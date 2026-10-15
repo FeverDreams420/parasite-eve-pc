@@ -26,8 +26,8 @@ int g_MenuLayoutLocked;
 
 #define NULL ((void *)0)
 
-int Menu_AmmoSpendInputHandler(s32 arg0, s32 arg1);
-void Menu_DrawAmmoSpendPanel(void);
+int Menu_AmmoSpendInputHandler(MenuWidgetNode *arg0, unsigned int arg1);
+void Menu_DrawAmmoSpendPanel(MenuWidgetNode *unused);
 
 void Menu_CreateAmmoSpendPanel(MenuWidgetNode *parent) {
     MenuWidgetNode *node;
@@ -66,7 +66,7 @@ void Menu_CreateAmmoSpendPanel(MenuWidgetNode *parent) {
     g_MenuSpendArrowDirection = 0;
 }
 
-s32 Menu_AmmoSpendInputHandler(s32 arg0, s32 arg1) {
+s32 Menu_AmmoSpendInputHandler(MenuWidgetNode *arg0, unsigned int arg1) {
     if (arg1 & 0x1000) {
         if (Inv_SpendAmmo(-MenuInput_GetRepeatStep()) != 0) {
             Menu_PlayErrorSound();
@@ -103,7 +103,7 @@ s32 Menu_AmmoSpendInputHandler(s32 arg0, s32 arg1) {
 
 int g_MenuSpendArrowDirection;
 
-void Menu_DrawAmmoSpendPanel(void) {
+void Menu_DrawAmmoSpendPanel(MenuWidgetNode *unused) {
     Draw_OffsetCursor(0x3C, 0x12);
     Draw_AllocSprite(g_MenuSpendArrowDirection + 0x4D);
     Draw_OffsetCursor(-0x38, -0xE);
@@ -270,7 +270,7 @@ void Menu_StepItemGridScroll(ItemDataRecord *item, ItemDataRecord *other)
     Draw_SetColor(0x808080);
 }
 
-void Menu_StepEquipSlotSelect(void)
+void Menu_StepEquipSlotSelect(MenuWidgetNode *unused)
 {
     MenuWidgetNode *node, *current;
     ItemDataRecord *item, *other;
@@ -319,7 +319,7 @@ void Menu_StepEquipSlotSelect(void)
     }
 }
 
-s32 Menu_StepSkillScreen(MenuWidgetNode *panel, s32 flags) {
+s32 Menu_StepSkillScreen(MenuWidgetNode *panel, unsigned int flags) {
     MenuWidgetNode *node;
     MenuWidgetNode *root;
 

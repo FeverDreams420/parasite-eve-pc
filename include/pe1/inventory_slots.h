@@ -15,7 +15,6 @@ extern s32 g_InvTransferItemCount;
 #define g_InvTransferItemList (g_InvPackedList + 50)
 extern s16 *g_InvActiveItemList;
 extern s32 g_InvActiveListSlotCount;
-extern s16 g_InvPackedList[100];
 /* Saved by inventory commands as a word; the frame loop reads its low byte. */
 typedef union SavedMenuMode {
     u32 value;
@@ -65,7 +64,6 @@ extern ItemDataRecord g_InvSavedSelectionRecord0, g_InvSavedSelectionRecord1;
 /* Global fallback ammunition record, then the records of item values
  * 0x200..0x208 (the first three are the category ammunition pools);
  * storage tool IDs. */
-extern ItemDataRecord g_InvFallbackAmmoRecord;
 /* Both names addressed 0x800A1E64 in the USA executable. */
 #define g_InvSpecialItemRecords g_KeyItemRecords
 #define g_WayneStorageItems (g_InventoryRuntime.storage)

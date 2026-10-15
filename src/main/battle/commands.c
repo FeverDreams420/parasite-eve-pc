@@ -99,8 +99,10 @@ void BattleCmd_UndoPending(void) {
                 entry->payload.ammo_restore.ammo0;
             ((ItemDataRecord *)entry->payload.ammo_restore.item_data1)->ammo =
                 entry->payload.ammo_restore.ammo1;
-            ((ItemDataRecord *)entry->payload.ammo_restore.item_data2)->ammo =
-                entry->payload.ammo_restore.ammo2;
+            /* No reserve-pool change leaves this optional link NULL. */
+            if (entry->payload.ammo_restore.item_data2 != NULL)
+                ((ItemDataRecord *)entry->payload.ammo_restore.item_data2)->ammo =
+                    entry->payload.ammo_restore.ammo2;
             break;
         }
     }

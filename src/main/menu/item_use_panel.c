@@ -16,8 +16,7 @@ static inline ItemDataRecord *LookupTrackedItem(int index) {
     if ((unsigned)(value - 1) < 0xFF)
         return Item_LookupBaseData(value - 1);
     if ((unsigned)(saved - 0x200) < 9) {
-        int shifted = saved << 5;
-        return (ItemDataRecord *)(g_KeyItemDataTable + shifted);
+        return &g_KeyItemRecords[saved - 0x200];
     }
     return 0;
 }

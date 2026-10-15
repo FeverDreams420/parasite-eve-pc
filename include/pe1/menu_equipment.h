@@ -40,14 +40,14 @@ extern int g_MenuSelectedItemList, g_MenuSelectedItemSlot, D_8009CFBC, g_MenuSel
 /* Item put back into Aya's inventory after a storage swap (0: none). */
 extern int g_AyaFullInvHold;
 
-void Menu_DrawEquipScreenHeader(void);
-int Menu_InventoryItemHandler(MenuWidgetNode *node, int flags);
+void Menu_DrawEquipScreenHeader(MenuWidgetNode *unused);
+int Menu_InventoryItemHandler(MenuWidgetNode *node, unsigned int flags);
 void Menu_DrawScreenModeList(MenuWidgetNode *node);
 int Menu_GetStatBaseValue(int index);
-void Menu_DrawItemActionSubmenu(void);
-int Menu_StepSkillSelect(MenuWidgetNode *node, int flags);
+void Menu_DrawItemActionSubmenu(MenuWidgetNode *unused);
+int Menu_StepSkillSelect(MenuWidgetNode *node, unsigned int flags);
 
-void Menu_StepEquipSlotSelect(void);
+void Menu_StepEquipSlotSelect(MenuWidgetNode *unused);
 void Menu_DrawEquipStatsDelta(ItemDataRecord *preview);
 void Menu_StepItemGridScroll(ItemDataRecord *item, ItemDataRecord *other);
 

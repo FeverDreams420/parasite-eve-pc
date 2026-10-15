@@ -31,6 +31,5 @@ extern s16 g_BattleCountTable[];
 extern int g_MenuBattleCount;
 extern s32 g_InvCategoryBaseItemId;
 extern InventorySlotRange g_InvItemTableRanges[];
-extern short g_InvPackedList[100];
 
 #endif /* PE1_INVENTORY_STATE_H */

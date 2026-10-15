@@ -249,7 +249,7 @@ void Inv_ClearEquipFlagForKind(InvItemSlot *obj) {
 
     if (obj != 0) {
         kind = obj->kind;
-        base = (u8 *)g_InvItemSlotArray;
+        base = (u8 *)g_InventoryRuntime.equipment;
         kind ^= 9;
         is_kind_9 = (unsigned int)kind < 1;
         end = base + 0x1000;
@@ -1281,8 +1281,8 @@ s32 Inv_AddItem(s32 arg0) {
 }
 
 
-/* Nine native key records replace the PS1 address biased by -0x4000. */
-ItemDataRecord g_KeyItemRecords[9];
+/* Original packed-list, fallback ammo and nine special records share RAM. */
+InventoryItemWorkspace g_InventoryItemWorkspace;
 
 /* Inventory item-ID and active-slot lookup helpers. */
 

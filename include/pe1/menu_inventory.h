@@ -92,9 +92,6 @@ int Menu_StepListNavigate(MenuWidgetListNavigation *node, unsigned int flags);
 
 int Menu_CheckItemAffordable(int actionId);
 extern int g_MenuItemSelectFlag; /* Restricts selected parasite actions when nonzero. */
-/* Incomplete arrays retain the retail full-address HP accesses with -G8. */
-extern u16 g_AyaHpCurrent[]; /* Current HP. */
-extern u16 g_AyaHpMax[]; /* Maximum HP. */
 
 int Menu_StepNameEntry(MenuWidgetNode *parent, unsigned int flags);
 int Menu_StepNameEntryAlt(MenuWidgetNode *parent, unsigned int input);

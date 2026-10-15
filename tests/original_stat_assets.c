@@ -328,6 +328,80 @@ static int new_game_inventory(void)
     puts("Original inventory: New Game/carryover, canonical records, descriptions, lookup and 100-slot category filters passed");
     return 0;
 }
+static int inventory_ammo_rollback(void)
+{
+    SaveRuntimeState runtime=g_SaveRuntimeState;InventoryItemWorkspace workspace=g_InventoryItemWorkspace;
+    int packed_count=g_InvPackedListCount,packed_cursor=g_InvPackedListCursor;
+    CHECK(g_AyaHpCurrent==&g_AyaSaveState.current_hp && g_AyaHpMax==&g_AyaSaveState.max_hp);
+    CHECK((void *)g_AyaSaveTotalExp==&g_AyaSaveState.total_exp && g_AyaInventorySlotCount==&g_AyaSaveState.inventory_slot_count);
+    CHECK(g_AyaParasiteSpellFlags==&g_AyaSaveState.parasite_spell_flags && g_AyaSaveLevel==&g_AyaSaveState.level);
+    CHECK((void *)g_AyaBonusPoints==&g_AyaSaveState.bonus_points && g_AyaStatAgility==g_AyaSaveState.stats.levels);
+    int bonus=g_InvBonusSlotCount;FieldActor *player=g_PlayerEntity;g_PlayerEntity=NULL;
+    memset(&g_SaveRuntimeState,0,sizeof(g_SaveRuntimeState));memset(&g_InventoryItemWorkspace,0,sizeof(g_InventoryItemWorkspace));
+    CHECK((u8 *)&g_InvFallbackAmmoRecord==(u8 *)g_InvPackedList+0xA8);
+    CHECK(&g_InvFallbackAmmoRecord+1==g_KeyItemRecords);
+    CHECK((u8 *)g_KeyItemRecords==(u8 *)g_InvPackedList+sizeof(g_InvPackedList));
+    const unsigned ammo_values[]={0,1,30,999},capacities[]={0,30,1001};
+    const int amounts[]={-1000,-31,-1,0,1,31,1000};
+    uint64_t transfer_hash=UINT64_C(14695981039346656037);
+    for(unsigned la=0;la<4;++la)for(unsigned ra=0;ra<4;++ra)
+    for(unsigned lc=0;lc<3;++lc)for(unsigned rc=0;rc<3;++rc)
+    for(unsigned lr=0;lr<2;++lr)for(unsigned rr=0;rr<2;++rr)for(unsigned amount=0;amount<7;++amount) {
+        ItemDataRecord *records[]={&g_InvCompareSlotLeft,&g_InvCompareSlotRight};
+        unsigned ammo[]={ammo_values[la],ammo_values[ra]},caps[]={capacities[lc],capacities[rc]},reserves[]={lr*17,rr*29};
+        for(unsigned side=0;side<2;++side) {
+            ItemDataRecord *record=records[side];memset(record,0,sizeof(*record));
+            record->ammo=ammo[side];record->reserveAmmo=reserves[side];
+            record->baseStats[2]=caps[side]<256?caps[side]:1;
+            record->bonusStats[2]=caps[side]<256?0:caps[side]-1;
+        }
+        u32 result=Inv_SpendAmmo(amounts[amount]);
+        for(unsigned byte=0;byte<4;++byte)transfer_hash=(transfer_hash^((result>>(byte*8))&255))*UINT64_C(1099511628211);
+        for(unsigned side=0;side<2;++side)for(unsigned byte=0;byte<sizeof(ItemDataRecord);++byte)
+            transfer_hash=(transfer_hash^((u8 *)records[side])[byte])*UINT64_C(1099511628211);
+    }
+    /* Full record images and status from 4,032 executions of USA 80056B24. */
+    CHECK(transfer_hash==UINT64_C(0xb52387d83f546f0d));
+    g_AyaSaveState.inventory_slot_count=2;g_InvBonusSlotCount=0;
+    g_AyaSaveState.equipped_weapon_slot=0;g_AyaSaveState.equipped_armor_slot=-1;
+    g_AyaInventoryItems[0]=0x100;g_AyaInventoryItems[1]=0x101;
+    for(unsigned reserve=0;reserve<=7;reserve+=7) {
+        ItemDataRecord *left=&g_InventoryRuntime.equipment[0],*right=&g_InventoryRuntime.equipment[1];
+        memset(left,0,sizeof(*left));left->kind=1;left->baseStats[2]=30;left->ammo=10;
+        *right=*left;right->ammo=5;
+        g_KeyItemRecords[0].ammo=100;g_KeyItemRecords[0].bonusStats[2]=999;
+        Inv_ResetActiveList();Inv_RememberSelection(0,0);Inv_RememberSelection(1,1);
+        Inv_InitWayneStorage();CHECK(D_8009D084==D_800A1FE8);
+        ItemDataRecord saved_left=*left,saved_right=*right;
+        left->ammo=65535;right->kind=22;Inv_BuildStorageDisplay();
+        CHECK(!memcmp(left,&saved_left,sizeof(*left)) && !memcmp(right,&saved_right,sizeof(*right)));
+        Inv_BuildDisplayFromList(0,0,0,1);
+        CHECK(g_InvCompareLeftItem==left && g_InvCompareRightItem==right);
+        CHECK(Inv_SpendAmmo(4)==0 && g_InvCompareSlotLeft.ammo==6 && g_InvCompareSlotRight.ammo==9);
+        CHECK(left->ammo==10 && right->ammo==5);
+        g_InvCompareSlotLeft.reserveAmmo=reserve;g_InvCompareSlotLeft.tailData[10]=1;
+        BattleCmd_InitTableCursor();Menu_ClearCommandResult();Inv_StepScrollDisplay();
+        CHECK(left->ammo==6 && right->ammo==9 && g_KeyItemRecords[0].ammo==100+reserve);
+        CHECK(g_BattleCmdStackTop==g_BattleCmdStack+1 && g_BattleCmdStack[0].header.word==4);
+        CHECK(g_BattleCmdStack[0].payload.ammo_restore.item_data0==left &&
+              g_BattleCmdStack[0].payload.ammo_restore.item_data1==right);
+        CHECK(g_BattleCmdStack[0].payload.ammo_restore.item_data2==(reserve?&g_KeyItemRecords[0]:NULL));
+        BattleCmd_UndoPending();
+        CHECK(g_BattleCmdStackTop==g_BattleCmdStack && left->ammo==10 && right->ammo==5 && g_KeyItemRecords[0].ammo==100);
+    }
+    Inv_ResetActiveList();g_InvPackedListCount=1;g_InvPackedList[0]=1;
+    g_InventoryRuntime.tracked[0]=0;BattleCmd_InitTableCursor();Menu_ClearCommandResult();
+    Menu_OpenItemUsePanelAtIndex(0);
+    CHECK(g_InventoryRuntime.tracked[0]==1 && g_BattleCmdStackTop==g_BattleCmdStack+1);
+    CHECK(g_BattleCmdStack[0].header.word==2 &&
+          g_BattleCmdStack[0].payload.equip_restore.item_data==&g_InventoryRuntime.equipment[0]);
+    BattleCmd_UndoPending();CHECK(g_InventoryRuntime.tracked[0]==0 && g_BattleCmdStackTop==g_BattleCmdStack);
+    g_SaveRuntimeState=runtime;g_InventoryItemWorkspace=workspace;g_InvBonusSlotCount=bonus;g_PlayerEntity=player;
+    g_InvPackedListCount=packed_count;g_InvPackedListCursor=packed_cursor;
+    Inv_ResetActiveList();
+    puts("Original inventory snapshots and ammo comparison/commit/rollback passed with optional reserve pool");
+    return 0;
+}
 static int inventory_sort_comparisons(void)
 {
     ItemDataRecord equipment[40],keys[9];
@@ -752,6 +826,9 @@ int main(void)
         {g_MenuExpReviewPanelPoints,0x922F4,32},
         {g_MenuLevelUpPanelPoints,0x92314,56},
         {g_MenuContextHelpTextIds,0x9234C,8},
+        {g_MenuRenamePanelPointsWindow0,0x92354,44},
+        {g_MenuRenamePanelPointsWindow1,0x92380,32},
+        {g_MenuRenamePreviewPanelPoints,0x923A0,32},
         {g_MenuModSlotIconIndexOffsetByView,0x922B8,4},
         {g_MenuModSlotFirstGlyphs,0x922BC,8},
         {g_MenuModSlotSecondGlyphs,0x922C4,8},
@@ -822,6 +899,7 @@ int main(void)
     CHECK(item_addition()==0);
     CHECK(new_game_inventory()==0);
     CHECK(inventory_sort_comparisons()==0);
+    CHECK(inventory_ammo_rollback()==0);
     CHECK(weapon_stats()==0);
     CHECK(armor_stats()==0);
     CHECK(equipment_init()==0);

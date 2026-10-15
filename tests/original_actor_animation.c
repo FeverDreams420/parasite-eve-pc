@@ -14,6 +14,7 @@ void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/draw_buffers.h"
 #include "pe1/save.h"
 #include "pe1/game_timers.h"
+#include "pe1/menu_background.h"
 #include "pe1/random.h"
 #include <stdint.h>
 void GameTime_InitCounter0(void);
@@ -2917,6 +2918,50 @@ static int original_save_card_images(PeDisc *disc)
     return valid;
 }
 
+static int original_movie_uploads(PeDisc *disc)
+{
+    _Alignas(16) static u8 arena[0x55e00], whole_frame[320*240*3], actual[320*240*3];
+    PeDisc *old_image=g_CdImage;Pe1SceneAudioState audio=g_GameState.scene_audio;
+    CdlATV mix=g_AkaoCdVolume;u32 flags=g_GameStateFlagsWord;
+    int old_slot=g_ActiveDrawSlot,background=g_MenuSaveBgFadeState;
+    u8 wide=g_MenuCardScreenVideoTable[0].wide;
+    u8 *buffers[]={arena};int valid=1;
+    g_CdImage=disc;g_DrawEnabled.bits=0;g_ActiveDrawSlot=0;
+    g_GameStateFlagsWord|=0x200;g_MenuSaveBgFadeState=0;
+    g_MenuCardScreenVideoTable[0].wide=1;g_MenuCardScreenVideoDepthFlip=0;
+    if(!MenuCard_InitVideoBuffers(1,buffers) || !MenuCard_OpenVideo(0))return 0;
+    unsigned frames=0;int tick=VSync(-1);
+    for(;;) {
+        unsigned decoded=g_MenuCardScreenVideoDisplay.decodeIndex;
+        unsigned region=g_MenuCardScreenVideoDisplay.region;
+        RECT area={0,region?0:240,480,240};
+        int running=MenuCard_StepVideo();
+        StoreImage(&area,actual);DrawSync(0);
+        /* A whole transfer must agree with all twenty original slice callbacks. */
+        DecDCToutCallback(NULL);
+        DecDCTin(g_MenuCardScreenVideoDisplay.decode[decoded],3);
+        DecDCTout(whole_frame,sizeof(whole_frame)/4);
+        if(DecDCToutSync(0))valid=0;
+        DecDCToutCallback(MenuCard_UploadVideoSlice);
+        for(unsigned x=0;x<20;++x)for(unsigned y=0;y<15;++y)for(unsigned row=0;row<16;++row)
+            if(memcmp(actual+((y*16+row)*320+x*16)*3,
+                      whole_frame+((x*15+y)*256+row*16)*3,48))valid=0;
+        if(!frames)for(unsigned i=0;i<sizeof(actual);++i)if(actual[i])valid=0;
+        ++frames;
+        Draw_RenderFrame();
+        if(!running || frames>150)break;
+    }
+    if((unsigned)(VSync(-1)-tick)!=149*4 || frames!=149 || g_SeqElapsed!=150 || g_MenuCardScreenVideoLastTime!=150 ||
+       g_MenuCardScreenVideoFinished!=1 || g_DrawEnabled.bits!=1)valid=0;
+    DecDCToutCallback(NULL);MenuCard_ResetDisplayState();
+    g_MenuCardScreenVideoTable[0].wide=wide;g_MenuSaveBgFadeState=background;
+    g_GameStateFlagsWord=flags;g_GameState.scene_audio=audio;g_ActiveDrawSlot=old_slot;
+    g_AkaoCdVolume=mix;CdMix(&mix);g_CdImage=old_image;
+    if(!valid)fprintf(stderr,"original movie MDEC/slice/VRAM regression\n");
+    else puts("Original movie: 149 RGB24 frames through real OpenVideo/StepVideo, 2980 slice uploads, full VRAM regions and 15fps render path passed headlessly");
+    return valid;
+}
+
 static int original_video_stream_errors(void)
 {
     static u8 image[2352*2];
@@ -3781,6 +3826,7 @@ int main(int argc, char **argv)
         if (!original_video_buffers(&disc)) return 135;
         if (!original_video_decoder(&disc)) return 136;
         if (!original_video_stream_errors()) return 137;
+        if (!original_movie_uploads(&disc)) return 138;
         if (!original_title_screen(&disc)) return 134;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];

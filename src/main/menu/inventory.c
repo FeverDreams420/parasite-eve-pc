@@ -802,9 +802,11 @@ int Menu_IsMemCardSlotCompatible(int arg0) {
 
     if (g_McDialogMode != 0) {
         ptr = MemCard_GetSlot(g_MenuActiveWidget->selected_base - 0x25, arg0);
+        if (ptr == 0) return 0;
         result = ptr->state != MEMCARD_SLOT_UNAVAILABLE;
     } else {
         ptr = MemCard_GetSlot(g_MenuActiveWidget->selected_base - 0x25, arg0);
+        if (ptr == 0) return 0;
         if (ptr->state != MEMCARD_SLOT_OCCUPIED) {
             result = 0;
         } else {

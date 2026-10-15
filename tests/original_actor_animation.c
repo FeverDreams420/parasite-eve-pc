@@ -2077,6 +2077,55 @@ static int original_actor_camera_opcodes(void)
     return 1;
 }
 
+static int original_tracking_angle_opcode(void)
+{
+    FieldActor *saved_actor=g_CurrentEntity,*saved_player=g_PlayerEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    const u32 factors[]={0,65536,327680,0x80000000,0x7fffffff};
+    const u16 speeds[]={0,1,4096,65535};
+    const u32 poses[][4]={{0,0,0,0},{100u<<16,200u<<16,98u<<16,203u<<16},
+        {(u32)-100<<16,50u<<16,300u<<16,(u32)-200<<16},
+        {0x7fff0000,0x80000000,0x80010000,0x7ffe0000},{0,0,1,0},
+        {(u32)-1000<<16,300u<<16,1000u<<16,(u32)-300<<16}};
+    const s16 yaws[]={-1,0,1,2048,4095,32767};
+    const u32 turns[]={0,1,64,(u32)-64,0x80000000};
+    uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[219]!=Render_CameraTrackEntityAngle)return 0;
+    for(unsigned player=0;player<2;++player)for(unsigned resumed=0;resumed<2;++resumed)
+    for(unsigned factor=0;factor<5;++factor)for(unsigned speed=0;speed<4;++speed)
+    for(unsigned pose=0;pose<6;++pose)for(unsigned yaw=0;yaw<6;++yaw)for(unsigned turn=0;turn<5;++turn){
+        FieldActor actor={.pos_x=(s32)poses[pose][0],.pos_z=(s32)poses[pose][1],.rot_y=yaws[yaw],
+            .move_factor=(s32)factors[factor],.move_speed=speeds[speed],.motion_x=0x1234,.motion_z=0x5678,.flags=0x240};
+        FieldActor before=actor;
+        ScriptNode node={.flags=resumed?0xa0:0x80,.active=7,.target14=resumed?(s32)poses[pose][2]:0x1234,
+            .target18.coordinate=resumed?(s32)poses[pose][3]:0x5678,.target1c=resumed?(s32)turns[turn]:0x9abc};
+        ScriptNode node_before=node;u32 storage[32]={0};
+        int values[]={resumed?0x11220000:(s32)poses[pose][2],resumed?0x33440000:(s32)poses[pose][3],resumed?7:(s32)turns[turn]};
+        int *args[]={values,values+1,values+2};
+        g_CurrentEntity=&actor;g_PlayerEntity=player?&actor:NULL;g_ScriptNodePool=&node;g_ScriptCursor=storage+16;
+        u32 result=Render_CameraTrackEntityAngle(args);
+        const u32 words[]={result,(u32)actor.pos_x,(u32)actor.pos_z,(u32)actor.motion_x,(u32)actor.motion_z,
+            (u16)actor.rot_y,actor.flags,node.flags,(u32)node.active,(u32)node.target14,
+            (u32)node.target18.coordinate,(u32)node.target1c,(u32)(g_ScriptCursorAddress-(uintptr_t)storage)};
+        for(unsigned w=0;w<13;++w)for(unsigned b=0;b<4;++b)
+            hash=(hash^((words[w]>>(b*8))&255))*UINT64_C(1099511628211);
+        FieldActor expected=before;expected.pos_x=actor.pos_x;expected.pos_z=actor.pos_z;
+        expected.motion_x=actor.motion_x;expected.motion_z=actor.motion_z;expected.rot_y=actor.rot_y;
+        if(memcmp(&actor,&expected,sizeof(actor)))return 0;
+        ScriptNode after=node;actor=before;node=node_before;
+        u32 program[]={219|(3u<<13),0,(u32)values[0],(u32)values[1],(u32)values[2],32,0};
+        node.current.script=program;node.active=1;g_ScriptNodePool=&node;Script_RunQueue();
+        if(memcmp(&actor,&expected,sizeof(actor)) || node.current.script!=program+(result?7:0) ||
+           node.active!=!result || node.flags!=(after.flags|(result?0x10:0)) ||
+           node.target14!=after.target14 || node.target18.coordinate!=after.target18.coordinate ||
+           node.target1c!=after.target1c || g_ScriptNodePool)return 0;
+    }
+    g_CurrentEntity=saved_actor;g_PlayerEntity=saved_player;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0xc90373fa22ae5275)){fprintf(stderr,"Tracking angle hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original tracking opcode 219: 14400 unhooked USA CPU states, player scaling, signed wrap, retained goals, turn/arrival and native dispatcher passed");
+    return 1;
+}
+
 static int original_absolute_movement_opcode(void)
 {
     FieldActor *previous=g_CurrentEntity,*previous_player=g_PlayerEntity;
@@ -3728,8 +3777,43 @@ static int card_test_path(char *destination,const char *source,int maximum)
     const char *name=source+5;
     return snprintf(destination,(size_t)maximum,"%s/bu%c0/%s",card_test_root,source[2],*name=='*'?"":name);
 }
+static int original_slot_compatibility(void)
+{
+    MemCardPortState saved[2];memcpy(saved,g_MemCardPortStates,sizeof(saved));
+    MenuWidgetNode widget={0},*saved_widget=g_MenuActiveWidget;
+    int saved_mode=g_McDialogMode,saved_style=g_SaveTitleStyleFlag;
+    const int modes[]={0,1,2,-1},styles[]={0,1,255},states[]={0,1,2,3,255};
+    const int counts[]={0,1,15},indices[]={-1,0,1,14,15};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    g_MenuActiveWidget=&widget;
+    for(int port=0;port<3;++port)for(int mode=0;mode<4;++mode)
+    for(int style=0;style<3;++style)for(int state=0;state<5;++state)
+    for(int ready=0;ready<2;++ready)for(int count=0;count<3;++count)
+    for(int slot=0;slot<5;++slot) {
+        memset(g_MemCardPortStates,0,sizeof(saved));
+        widget.selected_base=port+0x25;g_McDialogMode=modes[mode];g_SaveTitleStyleFlag=styles[style];
+        int index=indices[slot];
+        if(port<2) {
+            g_MemCardPortStates[port].fileCount=counts[count];
+            if(index>=0 && index<15) {
+                MemCardSaveSlot *entry=&g_MemCardPortStates[port].slots[index];
+                entry->state=states[state];entry->metadataReady=ready;entry->titleStyleFlag=1;
+            }
+        }
+        u32 result=Menu_IsMemCardSlotCompatible(index);
+        for(int byte=0;byte<4;++byte)hash=(hash^((result>>(byte*8))&255))*UINT64_C(1099511628211);
+        ++cases;
+    }
+    memcpy(g_MemCardPortStates,saved,sizeof(saved));g_MenuActiveWidget=saved_widget;
+    g_McDialogMode=saved_mode;g_SaveTitleStyleFlag=saved_style;
+    if(cases!=5400 || hash!=UINT64_C(0x6d2dc156bb7a40e5))return 0;
+    puts("Original save-slot compatibility: 5400 USA CPU cases including pending metadata passed");
+    return 1;
+}
+
 static int original_card_file_services(const u8 *image)
 {
+    if(!original_slot_compatibility())return 0;
     snprintf(card_test_root,sizeof(card_test_root),"pe-card-io-%llx",(unsigned long long)SDL_GetPerformanceCounter());
     SDL_PathInfo info;
     if(SDL_GetPathInfo(card_test_root,&info) || !SDL_CreateDirectory(card_test_root)) return 0;
@@ -9087,7 +9171,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;

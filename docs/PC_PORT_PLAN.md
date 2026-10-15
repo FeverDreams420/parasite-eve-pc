@@ -386,8 +386,8 @@ script_byte 32). Podpięto istniejący Script_SetEntityField1E6: zapisuje
 zawężenie, sąsiednie półsłowo, cały rekord aktora i dispatcher. Świeży
 izolowany --assets z ASan/UBSan/function i instrumentowanym PsyZ/SDL przeszedł
 z oboma podpięciami 77/202. Dalszy executable dotarł do opkodu 219
-(M013, aktor 2:0, script_byte 6020), Render_CameraTrackEntityAngle. To obecny
-brak dispatchera; nie uznajemy przez to pierwszej zwykłej walki za działającą.
+(M013, aktor 2:0, script_byte 6020), Render_CameraTrackEntityAngle. Był to kolejny
+brak dispatchera; pierwsza zwykła walka nie miała wtedy potwierdzenia.
 
 Pełny zestaw poprzedniego kandydata zakończył się wynikiem 41/44: trzy testy
 miały timeout (bootstrap, Melissa, --assets), bez innych błędów. Log pmset
@@ -401,7 +401,44 @@ po powtórce trzech timeoutów; nie był to jeden nieprzerwany zielony przebieg.
 Następnie główny executable przebudowano z podpięciami 77/202. Dwa powiązane
 testy actor-animation i --assets przeszły na aktualnym buildzie w 12,05 s
 (odpowiednio 0,47 s i 11,58 s). Pełnego zestawu nie powtarzano dla tych dwóch
-podpięć; ich dalsza naturalna ścieżka pozostaje zatrzymana na opkodzie 219.
+podpięć; tamten przebieg zatrzymał się na opkodzie 219.
+
+Podpięto następnie istniejący Render_CameraTrackEntityAngle (219), bez
+przenoszenia funkcji. W tej samej funkcji różnice współrzędnych, negacja
+prędkości, dodawanie kąta i sumy kwadratów jawnie zachowują 32-bitowy wrap
+oryginału zamiast polegać na signed overflow C. Usunięto nieużywany stack_pad.
+14400 niehookowanych wykonań CPU USA 80013988 daje `c90373fa22ae5275`:
+gracz/zwykły aktor, start/wznowienie, pięć skal ruchu, cztery prędkości,
+sześć par pozycji (także granica signed), sześć kątów i pięć kroków obrotu.
+Fixture porównuje stan aktora/węzła/kursora, zachowanie pierwotnego celu po
+zmianie argumentów oraz pełny dispatcher i retry/dojście. Dwa powiązane CTest
+przeszły w 11,89 s (0,51 s i 11,38 s); świeży --assets z ASan/UBSan/function
+i instrumentowanym PsyZ/SDL także przeszedł. Naturalny executable do 112000
+VBlank zakończył się SIGSEGV; pełny przebieg z ASan/UBSan wskazał
+Battle_StepPostBattle: dereferencję core=NULL podczas sprawdzania kind.
+Oba analogiczne warunki tego modułu zachowują teraz obsługę aktorów bez core
+bez odczytu niskiej pamięci PS1. W referencji PS1 odczyt RAM[5] wynosi
+0x0c (kind jest bajtem +5), czyli nie 1. Ponowny naturalny przebieg
+od New Game do 112000 VBlank zakończył się kodem 0, bez aborta/segfaulta.
+Końcowy token A9400048, aktorów 0, combat.mode=-1; przebieg bez aktywnej
+obrony Ayi dochodzi do śmierci/powrotu do ekranu początkowego, nie dowodzi
+wygrania walki ze szczurem. VRAM SHA256
+`69af40313c3c61e02abf60ae4949ed06be0567b315354616861e6767b92382ce`.
+
+W debuggerze rzeczywiste Save_BuildHeader/Save_BuildCardFile utworzyły zapis
+M012, 8192 bajty, SHA256
+`184b9bde8c3bcfbaa447612d8e204b227849b5220204ef557a1a1160aa880e91`,
+wyłącznie w katalogu tymczasowym. Continue ujawnił niezależną dereferencję
+NULL w Menu_IsMemCardSlotCompatible: znaleziony slot ma metadataReady=0,
+więc GetSlot celowo nie zwraca jeszcze rekordu. W istniejącej funkcji taki
+slot jest tymczasowo niedostępny. 5400 wykonań rzeczywistego CPU USA z
+oryginalnymi getterami (RAM[0]=3) daje `6d2dc156bb7a40e5`; native fixture
+porównuje wszystkie wyniki, oba tryby, porty, stany i granice indeksów.
+Po poprawce prawdziwy executable przechodzi Continue i osiąga M012 do
+30000 VBlank: HP14/45, move_lock=0, brak otwartych dialogów, brak crasha.
+To dowód jednego checkpointu, nie pełnego roundtrip wszystkich zapisów.
+Oba powiązane CTest po tych poprawkach przeszły w 12,39 s. Świeży
+--assets z ASan/UBSan/function i instrumentowanym PsyZ/SDL także przeszedł.
 
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,

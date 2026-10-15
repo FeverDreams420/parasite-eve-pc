@@ -364,7 +364,6 @@ int Render_CameraTrackEntityAngle(int **args) {
     int squared_x;
     int squared_z;
     int movement_distance;
-    int stack_pad[2];
 
     script_args = args;
     tracking_entity = g_CurrentEntity;
@@ -401,10 +400,10 @@ int Render_CameraTrackEntityAngle(int **args) {
         turn_speed = g_ScriptNodePool->target1c;
     }
 
-    target_angle = (u16)(0x1400 - ratan2(current_z - target_z, current_x - target_x));
+    target_angle = (u16)(0x1400 - ratan2((s32)((u32)current_z - (u32)target_z), (s32)((u32)current_x - (u32)target_x)));
     target_angle &= 0xFFF;
-    g_CurrentEntity->motion_x = Math_FixedMul(-base_speed, (s32)((u32)rsin(target_angle) << 4));
-    base_speed = Math_FixedMul(-base_speed, (s32)((u32)rcos(target_angle) << 4));
+    g_CurrentEntity->motion_x = Math_FixedMul((s32)(0u - (u32)base_speed), (s32)((u32)rsin(target_angle) << 4));
+    base_speed = Math_FixedMul((s32)(0u - (u32)base_speed), (s32)((u32)rcos(target_angle) << 4));
 
     current = g_CurrentEntity;
     angle_difference = current->rot_y;
@@ -414,31 +413,31 @@ int Render_CameraTrackEntityAngle(int **args) {
         angle_difference = target_angle - current_angle;
         if (angle_difference < 0x801) {
             if (turn_speed < angle_difference) {
-                current->rot_y = current_angle + turn_speed;
+                current->rot_y = (s32)((u32)current_angle + (u32)turn_speed);
             }
         } else if (turn_speed < angle_difference) {
-            current->rot_y = current_angle - turn_speed;
+            current->rot_y = (s32)((u32)current_angle - (u32)turn_speed);
         }
     } else {
         angle_difference = current_angle - target_angle;
         if (angle_difference < 0x801) {
             if (turn_speed < angle_difference) {
-                current->rot_y = current_angle - turn_speed;
+                current->rot_y = (s32)((u32)current_angle - (u32)turn_speed);
             }
         } else if (turn_speed < angle_difference) {
-            current->rot_y = current_angle + turn_speed;
+            current->rot_y = (s32)((u32)current_angle + (u32)turn_speed);
         }
     }
 
     current = g_CurrentEntity;
-    current_x = (target_x - current_x) >> 16;
-    current_z = (target_z - current_z) >> 16;
+    current_x = (s32)((u32)target_x - (u32)current_x) >> 16;
+    current_z = (s32)((u32)target_z - (u32)current_z) >> 16;
     squared_x = current_x * current_x;
     squared_z = current_z * current_z;
-    angle_difference = squared_x + squared_z;
+    angle_difference = (s32)((u32)squared_x + (u32)squared_z);
     current_x = Pe1Fixed_Integer(&current->motion_x);
     current_z = Pe1Fixed_Integer(&current->motion_z);
-    movement_distance = current_x * current_x + current_z * current_z;
+    movement_distance = (s32)((u32)(current_x * current_x) + (u32)(current_z * current_z));
     current->rot_y &= 0xFFF;
     if (movement_distance >= angle_difference) {
         camera_state = g_ScriptNodePool;

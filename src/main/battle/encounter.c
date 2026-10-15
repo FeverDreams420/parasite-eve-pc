@@ -760,7 +760,9 @@ void Battle_StepPostBattle(void)
                 do {
                         if (entity != D_8009D254) {
                             core = entity->core;
-                            if ((core->field04.bytes.kind != 1) && ((core != 0) || !(entity->entityFlags & 0x40))) {
+                            /* The PS1 low-memory byte read for a missing core
+                             * is not kind 1; field actors still follow this path. */
+                            if (((core == 0) || (core->field04.bytes.kind != 1)) && ((core != 0) || !(entity->entityFlags & 0x40))) {
                                 entity->renderObject.flags_9C |= 2;
                                 actionCore = entity->core;
                                 entity->entityFlags |= 0x1000;
@@ -800,7 +802,7 @@ void Battle_StepPostBattle(void)
                     do {
                     if (entity != D_8009D254) {
                         fadingCore = entity->core;
-                        if ((fadingCore->field04.bytes.kind != exemptKind) && ((fadingCore != 0) || !(entity->entityFlags & 0x40))) {
+                        if (((fadingCore == 0) || (fadingCore->field04.bytes.kind != exemptKind)) && ((fadingCore != 0) || !(entity->entityFlags & 0x40))) {
                             Anim_SetInterpRate(&entity->renderObject, 0x3C);
                         }
                     }

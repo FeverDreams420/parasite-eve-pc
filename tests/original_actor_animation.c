@@ -4,6 +4,7 @@
 #include "pe1/memcard.h"
 void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/battle_runtime.h"
+#include "pe1/battle_status.h"
 #include "pe1/field_sfx.h"
 #include "pe1/psyq_callbacks.h"
 #include "pe1/boot.h"
@@ -2495,6 +2496,147 @@ static int original_color_quad_packets(void)
     return valid;
 }
 
+static int original_hud_packet_initialization(void)
+{
+    struct {void *data;size_t bytes,stride;unsigned kind,count;} pools[]={
+        {g_BattleStatusBarTiles,sizeof(g_BattleStatusBarTiles),sizeof(RenderColorTilePacket),3,6},
+        {g_BattleStatusValueDigits,sizeof(g_BattleStatusValueDigits),sizeof(RenderPagedSpritePacket),0,4},
+        {g_BattleTargetHighlightSprites,sizeof(g_BattleTargetHighlightSprites),sizeof(RenderPagedSpritePacket),0,6},
+        {g_BattleStatusPointerSprites,sizeof(g_BattleStatusPointerSprites),sizeof(RenderPagedSpritePacket),0,2},
+        {g_BattleStatusValueLabelSprites,sizeof(g_BattleStatusValueLabelSprites),sizeof(RenderPagedSpritePacket),0,2},
+        {g_BattleAmmoLabelSprites,sizeof(g_BattleAmmoLabelSprites),sizeof(RenderPagedSpritePacket),0,2},
+        {g_BattleAmmoDigitSprites,sizeof(g_BattleAmmoDigitSprites),sizeof(RenderPagedSpritePacket),0,8},
+        {g_BattleStatusBackgrounds,sizeof(g_BattleStatusBackgrounds),sizeof(BattleModeTilePacket),1,2},
+        {g_BattleAtbTracks,sizeof(g_BattleAtbTracks),sizeof(RenderColorTilePacket),3,2},
+        {g_BattleAtbLabels,sizeof(g_BattleAtbLabels),sizeof(RenderPagedSpritePacket),0,2},
+        {g_BattlePeLabels,sizeof(g_BattlePeLabels),sizeof(RenderPagedSpritePacket),0,2},
+        {g_BattleAtbGauges,sizeof(g_BattleAtbGauges),sizeof(RenderGouraudQuad),2,2},
+        {g_BattlePeGauges,sizeof(g_BattlePeGauges),sizeof(RenderGouraudQuad),2,4},
+        {g_BattleAtbMarkers,sizeof(g_BattleAtbMarkers),sizeof(RenderPagedSpritePacket),0,2},
+        {g_BattleHpDigits,sizeof(g_BattleHpDigits),sizeof(RenderPagedSpritePacket),0,8},
+        {g_BattleMaxHpDigits,sizeof(g_BattleMaxHpDigits),sizeof(RenderPagedSpritePacket),0,10},
+        {g_BattleHpLabels,sizeof(g_BattleHpLabels),sizeof(RenderPagedSpritePacket),0,2},
+        {g_BattleRemainingActionSprites,sizeof(g_BattleRemainingActionSprites),sizeof(RenderPagedSpritePacket),0,20},
+        {g_BattleStatusValueMarkers,sizeof(g_BattleStatusValueMarkers),sizeof(RenderPagedSpritePacket),0,2},
+        {g_BattleStatusSymbolSprites,sizeof(g_BattleStatusSymbolSprites),sizeof(RenderPagedSpritePacket),0,2},
+        {g_BattlePanelDigits,sizeof(g_BattlePanelDigits),sizeof(RenderPagedSpritePacket),0,100},
+        {g_BattleEndPanels,sizeof(g_BattleEndPanels),sizeof(RenderTexturedQuad),4,2},
+        {g_BattleStatusPointerLines,sizeof(g_BattleStatusPointerLines),sizeof(RenderLinePacket),5,4},
+        {g_BattleStatusPointerTriangles,sizeof(g_BattleStatusPointerTriangles),sizeof(BattleStatusPointerPrim),6,2},
+        {g_StatusIconPackets,sizeof(g_StatusIconPackets),sizeof(RenderPagedSpritePacket),0,26},
+        {g_StatusMarkerPackets,sizeof(g_StatusMarkerPackets),sizeof(RenderPagedSpritePacket),0,2},
+    };
+    for(unsigned p=0;p<sizeof(pools)/sizeof(*pools);++p)memset(pools[p].data,0xA5,pools[p].bytes);
+    Battle_DrawHPBar();
+    uint64_t hash=UINT64_C(14695981039346656037);
+    for(unsigned p=0;p<sizeof(pools)/sizeof(*pools);++p)for(unsigned i=0;i<pools[p].count;++i) {
+        u8 *packet=(u8 *)pools[p].data+i*pools[p].stride;
+        if(pools[p].kind<2) {
+            RenderTexturePagePacket *page=(void *)packet;
+            u8 *primitive=packet+sizeof(RenderTexturePagePacket);
+            for(unsigned byte=0;byte<4;++byte)hash=(hash^((u8 *)&page->command)[byte])*UINT64_C(1099511628211);
+            unsigned size=pools[p].kind==0?16:12;
+            for(unsigned byte=0;byte<size;++byte)hash=(hash^primitive[sizeof(RenderNativeTag)+byte])*UINT64_C(1099511628211);
+        } else {
+            unsigned size=pools[p].kind==2?32:pools[p].kind==4?36:pools[p].kind==6?16:12;
+            for(unsigned byte=0;byte<size;++byte)hash=(hash^packet[sizeof(RenderNativeTag)+byte])*UINT64_C(1099511628211);
+        }
+    }
+    if(hash!=UINT64_C(0xfbe92ec193830469)) {
+        fprintf(stderr,"Original HUD init hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
+    }
+    if(g_BattleAtbGauges[0].tag.length!=8 || g_BattleAtbTracks[1].tag.length!=3 ||
+       g_BattleHpDigits[1][3].page.length!=(sizeof(RenderTexturePagePacket)+16)/4 || g_BattleStatusBackgrounds[1].mode.tag.length!=(sizeof(RenderDrawModePacket)+12)/4 ||
+       g_BattleStatusPointerLines[1][1].tag.length!=3 || g_BattleStatusPointerTriangles[1].tag.length!=4)return 0;
+    BattleHudOrigin old_origin=g_HudOrigin;unsigned old_mode=Menu_GetActiveMode();
+    for(int mode=-512;mode<512;++mode) {
+        BattleHudOrigin before=g_HudOrigin;unsigned before_mode=Menu_GetActiveMode();
+        Battle_SetWindowBoundsByMode(mode);unsigned index=(u8)mode;
+        if(index<4) {
+            if(g_HudOrigin.x!=g_MenuWindowModeBounds.values[index*2] || g_HudOrigin.y!=g_MenuWindowModeBounds.values[index*2+1] || Menu_GetActiveMode()!=index)return 0;
+        } else if(memcmp(&before,&g_HudOrigin,sizeof(before)) || Menu_GetActiveMode()!=before_mode)return 0;
+    }
+    Combatant actor={0};Combatant *old_actor=g_ActiveActor;int old_slot=g_ActiveDrawSlot;
+    RenderNativeTag *old_ordering[2]={D_800B0E38.ordering[0],D_800B0E38.ordering[1]};
+    RenderNativeTag ordering[2][8]={0};g_ActiveActor=&actor;
+    for(unsigned slot=0;slot<2;++slot)D_800B0E38.ordering[slot]=ordering[slot];
+    hash=UINT64_C(14695981039346656037);int valid=1;
+    for(unsigned slot=0;slot<2;++slot)for(unsigned mode=0;mode<4;++mode)for(unsigned flags=0;flags<0x2000;++flags) {
+        g_ActiveDrawSlot=slot;Battle_SetWindowBoundsByMode(mode);actor.stateFlags=flags;
+        ordering[slot][7].address=0xFFFFFF;ordering[slot][7].length=0xAB;
+        Draw_StatusIcons();
+        unsigned icons[13],count=0;uintptr_t address=ordering[slot][7].address;
+        uintptr_t start=(uintptr_t)&g_StatusIconPackets[slot][0];
+        while(address!=0xFFFFFF) {
+            if(count>=13 || address<start || address>=start+sizeof(g_StatusIconPackets[slot]) ||
+               (address-start)%sizeof(RenderPagedSpritePacket)) {valid=0;break;}
+            unsigned index=(address-start)/sizeof(RenderPagedSpritePacket);icons[count++]=index;
+            address=g_StatusIconPackets[slot][index].page.address;
+        }
+        if(ordering[slot][7].length!=0xAB)valid=0;
+        hash=(hash^count)*UINT64_C(1099511628211);
+        for(unsigned i=0;i<count;++i) {
+            hash=(hash^icons[i])*UINT64_C(1099511628211);
+            const u8 *payload=(const u8 *)&g_StatusIconPackets[slot][icons[i]].sprite+sizeof(RenderNativeTag);
+            for(unsigned byte=0;byte<16;++byte)hash=(hash^payload[byte])*UINT64_C(1099511628211);
+        }
+    }
+    uint64_t icon_hash=hash;hash=UINT64_C(14695981039346656037);
+    BattleEntity entity={0};entity.core=&actor;BattleEntity *old_entity=D_8009D254;D_8009D254=&entity;
+    u32 old_flags=g_GameStateFlags;int old_context=g_MenuItemContextFlag,old_frame=g_BattleFrameCounter;
+    const u16 hp_cases[][2]={{0,0},{1,0},{9,9},{10,9},{99,10},{100,99},{999,100},{1000,999},{9999,0},{9999,9999}};
+    const u32 states[]={0,0x400,0x800,0xC00,0x1FFF};const int frames[]={0,16,17,31};
+    const int energy[]={-1,50<<16,101<<16};const u16 charge[]={0,4500,10000};
+    for(unsigned slot=0;slot<2;++slot)for(unsigned battle=0;battle<2;++battle)for(unsigned context=0;context<2;++context)
+    for(unsigned mode=0;mode<4;++mode)for(unsigned gauge=0;gauge<3;++gauge)for(unsigned hp=0;hp<10;++hp)
+    for(unsigned state=0;state<5;++state)for(unsigned frame=0;frame<4;++frame) {
+        for(unsigned layer=0;layer<8;++layer)ordering[slot][layer]=(RenderNativeTag){0xFFFFFF,0xAB};
+        g_ActiveDrawSlot=slot;g_GameStateFlags=battle*2;g_MenuItemContextFlag=context*2;g_BattleFrameCounter=frames[frame];
+        actor.exp_or_acc=energy[gauge];actor.hpAlive=charge[gauge];actor.maxAtk=100<<16;
+        actor.maxHP=hp_cases[hp][0];actor.curHP=hp_cases[hp][1];actor.stateFlags=states[state];
+        Battle_SetWindowBoundsByMode(mode);Battle_DrawActiveStatus();
+        for(unsigned layer=0;layer<8;++layer) {
+            struct {unsigned pool,index;} nodes[40];unsigned count=0;uintptr_t address=ordering[slot][layer].address;
+            while(address!=0xFFFFFF) {
+                unsigned pool=0;
+                for(;pool<sizeof(pools)/sizeof(*pools);++pool) {
+                    uintptr_t base=(uintptr_t)pools[pool].data;
+                    if(address>=base && address<base+pools[pool].bytes && !( (address-base)%pools[pool].stride))break;
+                }
+                if(pool==sizeof(pools)/sizeof(*pools) || count>=40) {valid=0;break;}
+                nodes[count].pool=pool;nodes[count].index=(address-(uintptr_t)pools[pool].data)/pools[pool].stride;++count;
+                memcpy(&address,(const void *)address,sizeof(address));
+            }
+            if(ordering[slot][layer].length!=0xAB)valid=0;
+            hash=(hash^count)*UINT64_C(1099511628211);
+            for(unsigned i=0;i<count;++i) {
+                unsigned pool=nodes[i].pool;u8 *packet=(u8 *)pools[pool].data+nodes[i].index*pools[pool].stride;
+                hash=(hash^pool)*UINT64_C(1099511628211);hash=(hash^nodes[i].index)*UINT64_C(1099511628211);
+                if(pools[pool].kind<2) {
+                    for(unsigned byte=0;byte<4;++byte)hash=(hash^packet[sizeof(RenderNativeTag)+byte])*UINT64_C(1099511628211);
+                    unsigned size=pools[pool].kind==0?16:12;
+                    for(unsigned byte=0;byte<size;++byte)hash=(hash^packet[sizeof(RenderTexturePagePacket)+sizeof(RenderNativeTag)+byte])*UINT64_C(1099511628211);
+                } else {
+                    unsigned size=pools[pool].kind==2?32:pools[pool].kind==4?36:pools[pool].kind==6?16:12;
+                    for(unsigned byte=0;byte<size;++byte)hash=(hash^packet[sizeof(RenderNativeTag)+byte])*UINT64_C(1099511628211);
+                }
+            }
+        }
+        for(unsigned byte=0;byte<10;++byte)hash=(hash^((u8 *)&actor.exp_or_acc)[byte])*UINT64_C(1099511628211);
+    }
+    D_8009D254=old_entity;g_GameStateFlags=old_flags;g_MenuItemContextFlag=old_context;g_BattleFrameCounter=old_frame;
+    g_ActiveActor=old_actor;g_ActiveDrawSlot=old_slot;
+    D_800B0E38.ordering[0]=old_ordering[0];D_800B0E38.ordering[1]=old_ordering[1];
+    Battle_SetWindowBoundsByMode(old_mode);g_HudOrigin=old_origin;
+    /* Complete icon order and sprite payloads from 65,536 actual executions
+     * of USA Draw_StatusIcons 800334AC, with every 13-bit status combination. */
+    if(!valid || icon_hash!=UINT64_C(0x34a3ba0320ab74ad) || hash!=UINT64_C(0xc21dbda617e554d5)) {
+        fprintf(stderr,"Original HUD icon/active hashes %016llx/%016llx differ from USA MIPS\n",(unsigned long long)icon_hash,(unsigned long long)hash);return 0;
+    }
+    puts("Original HUD: 226 initialized packets, 65,536 icon lists and 19,200 active HUD frames match USA MIPS");
+    return 1;
+}
+
 static int original_save_card_images(PeDisc *disc)
 {
     PeDiscFile archive,exe;
@@ -2921,7 +3063,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
-    if(!original_save_card_images(disc))valid=0;
+    if(!original_save_card_images(disc) || !original_hud_packet_initialization())valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

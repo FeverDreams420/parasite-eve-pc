@@ -8,7 +8,6 @@
 #include "pe1/draw_slot_record.h"
 #include "pe1/draw_state.h"
 #include "pe1/game_state.h"
-#include "pe1/global_slot.h"
 #include "pe1/menu_state.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_animation_frame.h"
@@ -22,7 +21,7 @@
 s32 g_BattleStatusPanelSlot;
 u8 g_BattleSpritePrimCountdown;
 u8 g_MenuActiveMode;
-u16 g_MenuActiveWindowXOffset;
+BattleHudOrigin g_HudOrigin;
 int g_BattleAttackAnimFrame;
 
 void Draw_InitDrawModeSprtPacket(void *, int);
@@ -36,9 +35,7 @@ u16 GetClut(int, int);
 
 /* Initialize the HUD packet pools for both draw buffers. The legacy symbol
  * name is retained; this routine sets up more than the HP bar.
- * Loops that write a sprite after initializing its packet address the sprite
- * through BATTLE_SPRITE_SLOTS, which keeps the sprite base in its own
- * as the retail code does.
+ * Sprite fields and packet headers refer to the same native packet pools.
  */
 void Battle_DrawHPBar(void) {
     BattleHudShades shades;
@@ -159,14 +156,14 @@ void Battle_DrawHPBar(void) {
         for (i = 0; (u8)i < 4; i++) {
             Draw_InitDrawModeSprtPacket(&g_BattleHpDigits[bufferIndex][(u8)i], hudPage);
             g_BattleHpDigits[bufferIndex][(u8)i].sprite.clut = hudClut;
-            BATTLE_SPRITE_SLOTS(g_BattleHpDigits, 4)[bufferIndex][(u8)i].sprite.width = 6;
-            BATTLE_SPRITE_SLOTS(g_BattleHpDigits, 4)[bufferIndex][(u8)i].sprite.height = 0xA;
+            g_BattleHpDigits[bufferIndex][(u8)i].sprite.width = 6;
+            g_BattleHpDigits[bufferIndex][(u8)i].sprite.height = 0xA;
         }
         for (i = 0; (u8)i < 5; i++) {
             Draw_InitDrawModeSprtPacket(&g_BattleMaxHpDigits[bufferIndex][(u8)i], hudPage);
             g_BattleMaxHpDigits[bufferIndex][(u8)i].sprite.clut = hudClut;
-            BATTLE_SPRITE_SLOTS(g_BattleMaxHpDigits, 5)[bufferIndex][(u8)i].sprite.width = 6;
-            BATTLE_SPRITE_SLOTS(g_BattleMaxHpDigits, 5)[bufferIndex][(u8)i].sprite.height = 0xA;
+            g_BattleMaxHpDigits[bufferIndex][(u8)i].sprite.width = 6;
+            g_BattleMaxHpDigits[bufferIndex][(u8)i].sprite.height = 0xA;
         }
         greenGradient = &g_BattlePeGauges[bufferIndex][0];
         SetPolyG4(greenGradient);
@@ -248,14 +245,14 @@ void Battle_DrawHPBar(void) {
         for (i = 0; (u8)i < 3; i++) {
             Draw_InitDrawModeSprtPacket(&g_BattleTargetHighlightSprites[bufferIndex][(u8)i], hudPage);
             g_BattleTargetHighlightSprites[bufferIndex][(u8)i].sprite.clut = hudClut;
-            BATTLE_SPRITE_SLOTS(g_BattleTargetHighlightSprites, 3)[bufferIndex][(u8)i].sprite.width = 0x18;
-            BATTLE_SPRITE_SLOTS(g_BattleTargetHighlightSprites, 3)[bufferIndex][(u8)i].sprite.height = 8;
-            BATTLE_SET_SPRITE_COLOR(BATTLE_SPRITE_SLOTS(g_BattleTargetHighlightSprites, 3)[bufferIndex][(u8)i].sprite,
+            g_BattleTargetHighlightSprites[bufferIndex][(u8)i].sprite.width = 0x18;
+            g_BattleTargetHighlightSprites[bufferIndex][(u8)i].sprite.height = 8;
+            BATTLE_SET_SPRITE_COLOR(g_BattleTargetHighlightSprites[bufferIndex][(u8)i].sprite,
                                     0x80, 0x80, 0x80);
         }
         for (i = 0; (u8)i < 10; i++) {
             Draw_InitDrawModeSprtPacket(&g_BattleRemainingActionSprites[bufferIndex][(u8)i], hudPage);
-            BATTLE_SET_SPRITE_COLOR(BATTLE_SPRITE_SLOTS(g_BattleRemainingActionSprites, 10)[bufferIndex][(u8)i].sprite,
+            BATTLE_SET_SPRITE_COLOR(g_BattleRemainingActionSprites[bufferIndex][(u8)i].sprite,
                                     0x80, 0x80, 0x80);
         }
         Draw_InitDrawModeSprtPacket(&g_BattleAmmoLabelSprites[bufferIndex], hudPage);
@@ -269,9 +266,9 @@ void Battle_DrawHPBar(void) {
         for (i = 0; (u8)i < 4; i++) {
             Draw_InitDrawModeSprtPacket(&g_BattleAmmoDigitSprites[bufferIndex][(u8)i], hudPage);
             g_BattleAmmoDigitSprites[bufferIndex][(u8)i].sprite.clut = hudClut;
-            BATTLE_SPRITE_SLOTS(g_BattleAmmoDigitSprites, 4)[bufferIndex][(u8)i].sprite.width = 6;
-            BATTLE_SPRITE_SLOTS(g_BattleAmmoDigitSprites, 4)[bufferIndex][(u8)i].sprite.height = 6;
-            BATTLE_SET_SPRITE_COLOR(BATTLE_SPRITE_SLOTS(g_BattleAmmoDigitSprites, 4)[bufferIndex][(u8)i].sprite,
+            g_BattleAmmoDigitSprites[bufferIndex][(u8)i].sprite.width = 6;
+            g_BattleAmmoDigitSprites[bufferIndex][(u8)i].sprite.height = 6;
+            BATTLE_SET_SPRITE_COLOR(g_BattleAmmoDigitSprites[bufferIndex][(u8)i].sprite,
                                     0x80, 0x80, 0x80);
         }
         Draw_InitDrawModeSprtPacket(&g_BattleStatusValueLabelSprites[bufferIndex], hudPage);
@@ -293,8 +290,8 @@ void Battle_DrawHPBar(void) {
         for (i = 0; (u8)i < 2; i++) {
             Draw_InitDrawModeSprtPacket(&g_BattleStatusValueDigits[bufferIndex][(u8)i], hudPage);
             g_BattleStatusValueDigits[bufferIndex][(u8)i].sprite.clut = hudClut;
-            BATTLE_SPRITE_SLOTS(g_BattleStatusValueDigits, 2)[bufferIndex][(u8)i].sprite.width = 6;
-            BATTLE_SPRITE_SLOTS(g_BattleStatusValueDigits, 2)[bufferIndex][(u8)i].sprite.height = 6;
+            g_BattleStatusValueDigits[bufferIndex][(u8)i].sprite.width = 6;
+            g_BattleStatusValueDigits[bufferIndex][(u8)i].sprite.height = 6;
         }
         Draw_InitDrawModeSprtPacket(&g_BattleStatusSymbolSprites[bufferIndex], hudPage);
         g_BattleStatusSymbolSprites[bufferIndex].sprite.clut = hudClut;
@@ -305,7 +302,7 @@ void Battle_DrawHPBar(void) {
             glyph = Draw_LookupGlyphDescriptor(((u8)i) + 0x6A);
             pageCode = GetTPage(0, 0, 0x1C0, 0);
             Draw_InitDrawModeSprtPacket(&g_StatusIconPackets[bufferIndex][(u8)i], pageCode);
-#define GLYPH_SPRITE BATTLE_SPRITE_SLOTS(g_StatusIconPackets, 13)[bufferIndex][(u8)i].sprite
+#define GLYPH_SPRITE g_StatusIconPackets[bufferIndex][(u8)i].sprite
             GLYPH_SPRITE.u = glyph->u;
             GLYPH_SPRITE.v = glyph->v;
             g_StatusIconPackets[bufferIndex][(u8)i].sprite.clut = glyph->clut;
@@ -366,7 +363,7 @@ void Battle_DrawStatusOverlay(RenderObjectEntity *object, int mode, int outOfRan
             packet->x = g_BattleStatusBarTiles[slot * 3].x0 + 0x1C;
             packet->y = g_BattleStatusBarTiles[slot * 3].y0 + 8;
             /* Keep this assignment at the call to preserve the original schedule. */
-            AddPrim((unsigned int *)D_800B0E38.ordering[slot] + 4,
+            AddPrim(D_800B0E38.ordering[slot] + 4,
                     (unsigned int *)((packetTagBase = packetBase - 8) + packetOffset));
             Battle_DrawStatusValue((s16)entityId, 0x12);
             break;
@@ -447,7 +444,7 @@ void Battle_BuildStatusPrimHeader(RenderObjectEntity *object, s8 outOfRange)
     STATUS_POINTER_TRI->y1 = projected[1].y;
     STATUS_POINTER_TRI->x2 = projected[2].x;
     STATUS_POINTER_TRI->y2 = projected[2].y;
-    AddPrim((unsigned int *)D_800B0E38.ordering[g_ActiveDrawSlot] + 5,
+    AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot] + 5,
             (unsigned int *)STATUS_POINTER_TRI);
 
     /* Connector lines run to the panel on whichever side has room. */
@@ -492,11 +489,11 @@ void Battle_BuildStatusPrimHeader(RenderObjectEntity *object, s8 outOfRange)
             object->projected_target_y - 35;
         g_BattleStatusPointerLines[g_ActiveDrawSlot][1].y1 = object->projected_target_y - 34;
     }
-    AddPrim((unsigned int *)D_800B0E38.ordering[g_ActiveDrawSlot] + 7,
+    AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot] + 7,
             (unsigned int *)&g_BattleStatusPointerLines[g_ActiveDrawSlot][1]);
-    AddPrim((unsigned int *)D_800B0E38.ordering[g_ActiveDrawSlot] + 6,
+    AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot] + 6,
             (unsigned int *)&g_BattleStatusPointerLines[g_ActiveDrawSlot][0]);
-    AddPrim((unsigned int *)D_800B0E38.ordering[g_ActiveDrawSlot] + 5,
+    AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot] + 5,
             (unsigned int *)&g_BattleStatusPointerSprites[g_ActiveDrawSlot]);
 }
 
@@ -581,7 +578,7 @@ void Battle_DrawTargetHighlight(void)
 
             at.gauge = packets;
             at.address = slot_offset + (index_offset + at.address);
-            AddPrim((unsigned *)D_800B0E38.ordering[slot] + 7, at.words);
+            AddPrim(D_800B0E38.ordering[slot] + 7, at.words);
         }
         ++index;
     } while (index < (int)((g_ActiveActor->action->turnWord >> 4) & 3));
@@ -846,7 +843,7 @@ void Battle_DrawATBGauge(void)
     ammo += *(unsigned short *)&g_ActiveActor->action->attackWord & 0x3ff;
     sprite->x = g_BattleStatusBarTiles[g_ActiveDrawSlot * 3].x0 + 8;
     sprite->y = y;
-    AddPrim((unsigned *)D_800B0E38.ordering[g_ActiveDrawSlot] + 4, (unsigned *)packet);
+    AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot] + 4, (unsigned *)packet);
     while (i < Pad_GetMenuPressedBitOrDisabled()) {
         int kind = g_BattleActionQueue[i].command;
         if (kind == 1) {
@@ -963,7 +960,7 @@ int Battle_DrawDecimalNumber(void *buffer, short x, short y, short value, short 
             packet->sprite.color.bytes.b = g_BattleStatusPointerSprites[g_ActiveDrawSlot].sprite.color.bytes.b;
         }
         x += 6;
-        AddPrim((unsigned *)D_800B0E38.ordering[g_ActiveDrawSlot] + 4, (unsigned *)packet);
+        AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot] + 4, (unsigned *)packet);
     }
     return last;
 }
@@ -1103,69 +1100,13 @@ void Draw_QueuePrimitive(void) {
     g_BattleSpritePrimCountdown--;
 }
 
-/* Each emit queues one status icon at the cursor and advances the cursor.
- * Retail adds the draw-slot and icon offsets to the sprite base and steps
- * back 8 bytes for the packet; see CODE_ORGANIZATION.md. */
-#define INDEX_STRIDE(i) ((((((i) << 1) + (i)) << 3) - (i)) << 2) - (i)
-
-#define EMIT_CODED(code_expr) ({  ({  \
-    int packet_code; \
-    char *base; \
-    int code_off; \
-    int idx; \
-    int idx_off; \
-    void *prim; \
-    void *packet; \
-    void *ot; \
-    packet_code = (code_expr); \
-    base = (char *)&g_StatusIconPackets[0][0].sprite; \
-    code_off = ((packet_code << 3) - packet_code) << 2; \
-    prim = base - 8; \
-     \
-    idx = g_ActiveDrawSlot; \
-    prim = (char *)(code_off + (int)prim); \
-    idx_off = INDEX_STRIDE(idx) << 2; \
-    prim = (char *)(idx_off + (int)prim); \
-    packet = (char *)(idx_off + code_off + (int)base); \
-    ((RenderSpritePacket *)packet)->x = s0; \
-    ((RenderSpritePacket *)packet)->y = s2; \
-    ot = g_OtBufferTable[idx]; \
+/* Queue an icon from the native two-buffer packet pool. */
+#define EMIT_CODED(code_expr) do { \
+    RenderPagedSpritePacket *icon = &g_StatusIconPackets[g_ActiveDrawSlot][(code_expr)]; \
+    icon->sprite.x = s0; icon->sprite.y = s2; \
     s0 += s3; \
-    AddPrim((u32 *)ot + 7, prim); \
- }); })
-
-#define EMIT_BASE(base_sym) { \
-    char *base; \
-    int idx; \
-    void *prim; \
-    void *packet; \
-    base = (base_sym); \
-    idx = g_ActiveDrawSlot; \
-    prim = base - 8; \
-    packet = (char *)(INDEX_STRIDE(idx) << 2); \
-    prim = (char *)packet + (int)prim; \
-    packet = (char *)packet + (int)base; \
-    ((RenderSpritePacket *)packet)->x = s0; \
-    ((RenderSpritePacket *)packet)->y = s2; \
-    s0 += s3; \
-    AddPrim((u32 *)g_OtBufferTable[idx] + 7, prim); \
-}
-
-#define EMIT_BASE_LAST(base_sym) { \
-    int idx; \
-    char *base; \
-    int idx_off; \
-    void *packet; \
-    idx = g_ActiveDrawSlot; \
-    base = (base_sym); \
-    idx_off = INDEX_STRIDE(idx) << 2; \
-    packet = (char *)(idx_off + (int)base); \
-    idx <<= 2; \
-    base = base - 8; \
-    ((RenderSpritePacket *)packet)->x = s0; \
-    ((RenderSpritePacket *)packet)->y = s2; \
-    AddPrim(*(char **)((char *)g_OtBufferTable + idx) + 0x1C, (char *)idx_off + (int)base); \
-}
+    AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot] + 7, icon); \
+} while (0)
 
 void Draw_StatusIcons(void) {
     Combatant *s1;
@@ -1246,19 +1187,19 @@ void Draw_StatusIcons(void) {
     }
 
     if (*s4 & 0x1000) {
-        EMIT_BASE((char *)&g_StatusIconPackets[0][8].sprite);
+        EMIT_CODED(8);
     }
     if (*s4 & 0x100) {
-        EMIT_BASE((char *)&g_StatusIconPackets[0][9].sprite);
+        EMIT_CODED(9);
     }
     if (*s4 & 0x400) {
-        EMIT_BASE((char *)&g_StatusIconPackets[0][10].sprite);
+        EMIT_CODED(10);
     }
     if (*s4 & 0x800) {
-        EMIT_BASE((char *)&g_StatusIconPackets[0][11].sprite);
+        EMIT_CODED(11);
     }
     if (*s4 & 0x200) {
-        EMIT_BASE_LAST((char *)&g_StatusIconPackets[0][12].sprite);
+        EMIT_CODED(12);
     }
 }
 
@@ -1266,12 +1207,12 @@ void Draw_StatusIcons(void) {
  * g_MenuActiveMode is private state of this pair. */
 
 u8 g_MenuActiveMode;
-u16 g_MenuActiveWindowYOffset;
 
 void Battle_SetWindowBoundsByMode(int mode) {
     SaveWindowModeBounds bounds;
     u16 *entry;
 
+    if ((u8)mode >= 4) return;
     bounds = g_MenuWindowModeBounds;
     entry = &bounds.values[(u8)mode * 2];
     /* A record store: GCC 2.7 would let a scalar store pass the next load. */
@@ -1306,7 +1247,7 @@ void Battle_DrawActiveStatus(void)
     RenderGouraudQuad *peFill;
     RenderGouraudQuad *peRemainder;
     RenderSpritePacket *peLabel;
-    BattleTileSlot *tiles;
+    BattleModeTilePacket *tiles;
 
     if (!(g_GameStateFlags & 2)) {
         g_ActiveActor = D_8009D254->core;
@@ -1378,26 +1319,26 @@ void Battle_DrawActiveStatus(void)
         AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot] + 5, (u32 *)&g_BattlePeGauges[g_ActiveDrawSlot][1]);
         AddPrim(D_800B0E38.ordering[g_ActiveDrawSlot] + 4, (u32 *)&g_BattlePeLabels[g_ActiveDrawSlot]);
         if (g_GameStateFlags & 2) {
-            tiles = g_BattleStatusBackgroundTiles;
+            tiles = g_BattleStatusBackgrounds;
             tiles[g_ActiveDrawSlot].tile.x0 = g_HudOrigin.x;
             tiles[g_ActiveDrawSlot].tile.y0 = g_HudOrigin.y;
             tiles[g_ActiveDrawSlot].tile.w = 0x54;
             tiles[g_ActiveDrawSlot].tile.h = 0x20;
         } else {
-            tiles = g_BattleStatusBackgroundTiles;
+            tiles = g_BattleStatusBackgrounds;
             tiles[g_ActiveDrawSlot].tile.x0 = g_HudOrigin.x;
             tiles[g_ActiveDrawSlot].tile.y0 = g_HudOrigin.y + 7;
             tiles[g_ActiveDrawSlot].tile.w = 0x54;
             tiles[g_ActiveDrawSlot].tile.h = 0x19;
         }
     } else if (g_GameStateFlags & 2) {
-        tiles = g_BattleStatusBackgroundTiles;
+        tiles = g_BattleStatusBackgrounds;
         tiles[g_ActiveDrawSlot].tile.x0 = g_HudOrigin.x;
         tiles[g_ActiveDrawSlot].tile.y0 = g_HudOrigin.y;
         tiles[g_ActiveDrawSlot].tile.w = 0x54;
         tiles[g_ActiveDrawSlot].tile.h = 0x19;
     } else {
-        tiles = g_BattleStatusBackgroundTiles;
+        tiles = g_BattleStatusBackgrounds;
         tiles[g_ActiveDrawSlot].tile.x0 = g_HudOrigin.x;
         tiles[g_ActiveDrawSlot].tile.y0 = g_HudOrigin.y + 7;
         tiles[g_ActiveDrawSlot].tile.w = 0x54;
@@ -1410,8 +1351,8 @@ void Battle_DrawActiveStatus(void)
 
 /* Digit sprites of the current draw buffer. Every use indexes again: the
  * byte stores to the packets make GCC reload the draw slot. */
-#define MAX_HP_DIGIT(i) (&g_BattleMaxHpDigitSlots[g_ActiveDrawSlot][i].sprite)
-#define CURRENT_HP_DIGIT(i) (&g_BattleHpDigitSlots[g_ActiveDrawSlot][i].sprite)
+#define MAX_HP_DIGIT(i) (&g_BattleMaxHpDigits[g_ActiveDrawSlot][i].sprite)
+#define CURRENT_HP_DIGIT(i) (&g_BattleHpDigits[g_ActiveDrawSlot][i].sprite)
 
 /* Draw current/maximum HP from reversed decimal digits and the HP label.
  * The maximum is drawn right to left after a slash, the current value is
@@ -1500,10 +1441,7 @@ void Battle_DrawEnemyHP(s16 maximum, s16 current)
     /* Place the HP label after the number pair. */
     {
         s32 frame = g_ActiveDrawSlot;
-        RenderSpritePacket *sprites = &g_BattleHpLabels[0].sprite;
-
-        /* Step the sprite pointer by whole packets. */
-        label = (RenderSpritePacket *)((RenderPagedSpritePacket *)sprites + frame);
+        label = &g_BattleHpLabels[frame].sprite;
         label->x = g_HudOrigin.x + 0x44;
         label->y = g_HudOrigin.y + 0xE;
         AddPrim(D_800B0E38.ordering[frame] + 4, (u32 *)&g_BattleHpLabels[frame]);
@@ -1596,3 +1534,31 @@ const StatusSymbolTemplate g_BattleStatusSymbolOffset = {{
 const SaveWindowModeBounds g_MenuWindowModeBounds = {{
     221, 177, 15, 177, 15, 15, 221, 15,
 }};
+
+/* Canonical packet pools for the original two HUD draw buffers. */
+BattleStatusLinePrim g_BattleStatusBarTiles[6];
+RenderPagedSpritePacket g_BattleStatusValueDigits[2][2];
+BattleGaugePrim g_BattleTargetHighlightSprites[2][3];
+BattleGaugePrim g_BattleStatusPointerSprites[2];
+BattleGaugePrim g_BattleStatusValueLabelSprites[2];
+BattleGaugePrim g_BattleAmmoLabelSprites[2];
+RenderPagedSpritePacket g_BattleAmmoDigitSprites[2][4];
+BattleModeTilePacket g_BattleStatusBackgrounds[2];
+RenderColorTilePacket g_BattleAtbTracks[2];
+RenderPagedSpritePacket g_BattleAtbLabels[2];
+RenderPagedSpritePacket g_BattlePeLabels[2];
+RenderGouraudQuad g_BattleAtbGauges[2];
+RenderGouraudQuad g_BattlePeGauges[2][2];
+RenderPagedSpritePacket g_BattleAtbMarkers[2];
+RenderPagedSpritePacket g_BattleHpDigits[2][4], g_BattleMaxHpDigits[2][5];
+RenderPagedSpritePacket g_BattleHpLabels[2];
+RenderPagedSpritePacket g_BattleRemainingActionSprites[2][10];
+RenderPagedSpritePacket g_BattleStatusValueMarkers[2];
+RenderPagedSpritePacket g_BattleStatusSymbolSprites[2];
+BattleHudShades g_BattleStatusShades[1] = {{-32,96,16}};
+RenderPagedSpritePacket g_BattlePanelDigits[2][10][5];
+RenderTexturedQuad g_BattleEndPanels[2];
+RenderLinePacket g_BattleStatusPointerLines[2][2];
+BattleStatusPointerPrim g_BattleStatusPointerTriangles[2];
+RenderPagedSpritePacket g_StatusIconPackets[2][13];
+RenderPagedSpritePacket g_StatusMarkerPackets[2];

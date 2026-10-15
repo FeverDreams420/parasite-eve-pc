@@ -29,7 +29,7 @@ int Render_MoveGridCursor(PrimObj *obj, u32 *entries, u8 ascending, u8 restart);
 
 /* Flat-color GPU line packet: tag, RGB/code, and two screen points. */
 typedef struct RenderLinePacket {
-    u32 tag;
+    RenderNativeTag tag;
     u8 r, g, b, code;
     s16 x0, y0, x1, y1;
 } RenderLinePacket;
@@ -39,7 +39,9 @@ typedef struct RenderLinePacket {
 typedef struct RenderColorTilePacket {
     RenderNativeTag tag;
     u8 r0, g0, b0, code;
-    u16 x0, y0, w, h;
+    u16 x0, y0;
+    union { u16 w; u16 x1; };
+    union { u16 h; u16 y1; };
 } RenderColorTilePacket;
 
 /* Original 32-bit TILE record still used by the wipe renderer and packed
@@ -94,6 +96,11 @@ typedef struct RenderDrawModePacket {
     uintptr_t command;
 } RenderDrawModePacket;
 
+typedef struct RenderModeTilePacket {
+    RenderDrawModePacket mode;
+    RenderColorTilePacket tile;
+} RenderModeTilePacket;
+
 /* Four-vertex textured GPU packet. The final halfwords are packet padding. */
 typedef struct RenderTexturedQuad {
     RenderNativeTag tag;
@@ -145,7 +152,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTilePacket, clut) == sizeof(RenderNativeTag
 PE1_STATIC_ASSERT(sizeof(RenderTexturePagePacket) == sizeof(RenderNativeTag) + sizeof(uintptr_t), render_texture_page_packet_size);
 PE1_STATIC_ASSERT(sizeof(RenderTileTexture) == 8, render_tile_texture_size);
 
-PE1_STATIC_ASSERT(sizeof(RenderLinePacket) == 16, render_line_packet_size);
+PE1_STATIC_ASSERT(sizeof(RenderLinePacket) == sizeof(RenderColorTilePacket), render_line_packet_size);
 PE1_STATIC_ASSERT(sizeof(RenderColorTilePacket) == ((sizeof(RenderNativeTag) + 12 + _Alignof(RenderColorTilePacket) - 1) / _Alignof(RenderColorTilePacket)) * _Alignof(RenderColorTilePacket),
                   render_color_tile_packet_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTilePacket, x0) == sizeof(RenderNativeTag) + 4,
@@ -154,7 +161,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderColorTilePacket, w) == sizeof(RenderNativeT
                   render_color_tile_dimensions);
 PE1_STATIC_ASSERT(sizeof(RenderDrawModePacket) == 3 * sizeof(uintptr_t),
                   render_draw_mode_packet_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderLinePacket, x0) == 8,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderLinePacket, x0) == sizeof(RenderNativeTag) + 4,
                   render_line_packet_points);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderBufferPrefix, packets) == 8 * sizeof(void *),
                   render_buffer_prefix_packets);

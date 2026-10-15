@@ -19,38 +19,19 @@ u8 g_DialogueChoiceCursor;
 u8 g_PlayerMovementEnabled;
 TextboxNameGlyphs g_TextboxNameGlyphs = {{0x10, 0x48, 0x30, 0, 0, 0, 0, 0, 0}, 3};
 
-/* A draw-mode word pair followed by the sprite primitive it prefixes. */
-typedef struct GpuModeSprtPacket {
-    u32 tag;
-    u32 mode;
-    u8 sprt[1];
-} GpuModeSprtPacket;
-
-/* A draw-mode word pair followed by the tile primitive it prefixes. */
-typedef struct GpuModeTilePacket {
-    u32 tag;
-    u32 mode;
-    u8 tile[1];
-} GpuModeTilePacket;
-
-void Draw_InitDrawModeSprtPacket(GpuModeSprtPacket *packet, int tpage) {
-    u8 *prim = packet->sprt;
-
-    SetDrawTPage(packet, 0, 1, tpage);
-    SetSprt(prim);
-    if (MargePrim(packet, prim) != 0) {
-        exit(-1);
-    }
+/* Native paged packets retain the original mode+primitive command order. */
+void Draw_InitDrawModeSprtPacket(void *raw, int tpage) {
+    RenderPagedSpritePacket *packet = raw;
+    SetDrawTPage(&packet->page, 0, 1, tpage);
+    SetSprt(&packet->sprite);
+    if (MargePrim(&packet->page, &packet->sprite) != 0) exit(-1);
 }
 
-void Draw_InitDrawModeTilePacket(GpuModeTilePacket *packet, int tpage) {
-    u8 *prim = packet->tile;
-
-    SetDrawTPage(packet, 0, 1, tpage);
-    SetTile(prim);
-    if (MargePrim(packet, prim) != 0) {
-        exit(-1);
-    }
+void Draw_InitDrawModeTilePacket(void *raw, int tpage) {
+    RenderModeTilePacket *packet = raw;
+    SetDrawTPage(&packet->mode, 0, 1, tpage);
+    SetTile(&packet->tile);
+    if (MargePrim(&packet->mode, &packet->tile) != 0) exit(-1);
 }
 
 void Menu_SetEquipSlotIndex(int index) {

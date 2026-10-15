@@ -4,13 +4,7 @@
 #include "pe1/battle.h"
 #include "pe1/render_prim.h"
 
-typedef struct BattleStatusLinePrim {
-    u8 pad00[8];
-    u16 x0;
-    u16 y0;
-    u16 x1;
-    u16 y1;
-} BattleStatusLinePrim;
+typedef RenderColorTilePacket BattleStatusLinePrim;
 
 typedef struct BattleStatusMarkerBody {
     u8 pad00[8];
@@ -26,11 +20,11 @@ typedef union BattleGaugePrimAddress {
     void *raw;
     BattleGaugePrim *prim;
     RenderSpritePacket *sprite;
-    u32 word;
+    uintptr_t word;
 } BattleGaugePrimAddress;
 /* A word that holds a status packet offset, then the packet's address. */
 typedef union BattleSpriteWord {
-    s32 value;
+    intptr_t value;
     u8 *bytes;
     RenderSpritePacket *sprite;
 } BattleSpriteWord;
@@ -45,7 +39,7 @@ typedef union BattleStatusPrimAddress {
     u8 *bytes;
     u8 **byteOrdering;
     u32 **ordering;
-    u32 address;
+    uintptr_t address;
 } BattleStatusPrimAddress;
 
 extern BattleStatusLinePrim g_BattleStatusBarTiles[6];
@@ -63,10 +57,11 @@ extern BattleGaugePrim g_BattleStatusValueLabelSprites[2];
 extern BattleGaugePrim g_BattleAmmoLabelSprites[2];
 extern RenderPagedSpritePacket g_BattleAmmoDigitSprites[2][4];  /* ammo count digits */
 
-void AddPrim(unsigned int *orderingEntry, unsigned int *primitive);
+void AddPrim(void *orderingEntry, void *primitive);
 void Battle_LayoutStatusPrimRow(int bottomY);
 void Battle_DrawTargetHighlight(void);
 void Battle_DrawActiveStatus(void);
+void Battle_DrawHPBar(void);
 void Battle_DrawEnemyHP(s16 maximum, s16 current);
 void Draw_StatusIcons(void);
 int Menu_GetItemContextFlag(void);
@@ -79,27 +74,17 @@ typedef struct BattleHudOrigin {
     u16 y;
 } BattleHudOrigin;
 
-extern u16 g_MenuActiveWindowXOffset;
-#define g_HudOrigin (*(BattleHudOrigin *)&g_MenuActiveWindowXOffset)
+extern BattleHudOrigin g_HudOrigin;
+#define g_MenuActiveWindowXOffset (g_HudOrigin.x)
+#define g_MenuActiveWindowYOffset (g_HudOrigin.y)
 
 /* Per draw buffer HUD packets (Battle_DrawHPBar fills them once). */
-typedef struct BattleModeTilePacket {
-    RenderDrawModePacket mode;
-    RenderColorTilePacket tile;
-} BattleModeTilePacket;
+typedef RenderModeTilePacket BattleModeTilePacket;
 
 PE1_STATIC_ASSERT(sizeof(BattleModeTilePacket) == sizeof(RenderDrawModePacket) + sizeof(RenderColorTilePacket),
                   battle_mode_tile_packet_size);
 
 extern BattleModeTilePacket g_BattleStatusBackgrounds[2];      /* status background */
-/* The background tiles seen from the tile: each is followed by the mode
- * words of the next packet. Battle_DrawActiveStatus addresses them this way,
- * keeping the tile base in a register. */
-typedef struct BattleTileSlot {
-    RenderColorTilePacket tile;
-    RenderDrawModePacket nextMode;
-} BattleTileSlot;
-extern BattleTileSlot g_BattleStatusBackgroundTiles[2];
 extern RenderColorTilePacket g_BattleAtbTracks[2];     /* ATB gauge track */
 extern RenderPagedSpritePacket g_BattleAtbLabels[2];   /* ATB label */
 extern RenderPagedSpritePacket g_BattlePeLabels[2];   /* PE label */
@@ -120,28 +105,13 @@ extern RenderPagedSpritePacket g_BattleAtbMarkers[2];   /* ATB gauge marker */
     ((sprite).color.bytes.r = (r_), (sprite).color.bytes.g = (g_),    \
      (sprite).color.bytes.b = (b_))
 
-/* HP digit packets: current HP has four per draw buffer, maximum HP five
- * (digits and slash). Battle_DrawEnemyHP addresses the sprites from the
- * sprite, each followed by the texture-page command of the next packet (the
- * BattleTileSlot view), so the sprite arrays keep their own symbols. */
-typedef struct BattleDigitSlot {
-    RenderSpritePacket sprite;
-    RenderTexturePagePacket nextPage;
-} BattleDigitSlot;
 extern RenderPagedSpritePacket g_BattleHpDigits[2][4], g_BattleMaxHpDigits[2][5];
-extern BattleDigitSlot g_BattleHpDigitSlots[2][4], g_BattleMaxHpDigitSlots[2][5];
 /* HP label packets. */
 extern RenderPagedSpritePacket g_BattleHpLabels[2];
 /* Further HUD sprite packets Battle_DrawHPBar initializes. */
 extern RenderPagedSpritePacket g_BattleRemainingActionSprites[2][10];
 extern RenderPagedSpritePacket g_BattleStatusValueMarkers[2];
 extern RenderPagedSpritePacket g_BattleStatusSymbolSprites[2];
-/* The sprites of a paged-sprite array seen from the first sprite: each is
- * followed by the texture-page command of the next packet. The view keeps
- * the sprite base (array + 8) in its own register, as Battle_DrawHPBar's
- * loops do. */
-#define BATTLE_SPRITE_SLOTS(packets, count) \
-    ((BattleDigitSlot (*)[count])&(packets)[0][0].sprite)
 /* Gray levels of the three status-bar tiles (Battle_DrawHPBar). */
 typedef struct BattleHudShades {
     s8 values[3];
@@ -160,7 +130,7 @@ void Battle_DrawStatusValue(int value, int yOffset);
 /* Returns the highest digit index (number of rendered digits minus one). */
 int Battle_DrawDecimalNumber(void *buffer, s16 x, s16 y, s16 value, s16 mode);
 
-PE1_STATIC_ASSERT(sizeof(BattleStatusLinePrim) == 0x10,
+PE1_STATIC_ASSERT(sizeof(BattleStatusLinePrim) == sizeof(RenderColorTilePacket),
                   battle_status_line_prim_size);
 PE1_STATIC_ASSERT(sizeof(BattleStatusMarkerBody) == 0x1C,
                   battle_status_marker_body_stride);
@@ -170,6 +140,7 @@ PE1_STATIC_ASSERT(sizeof(BattleGaugePrim) == sizeof(RenderPagedSpritePacket),
                   battle_gauge_prim_stride);
 
 extern s32 g_BattleStatusPanelSlot;
+extern s32 g_BattleFrameCounter;
 /* The MISS sprite: the sprite of g_BattlePanelDigits[slot][panel][0], which
  * Battle_DrawStatusPanel draws for a negative value. Views of the record,
  * its colour and its texture coordinates: retail addresses each byte with
@@ -184,7 +155,7 @@ void Battle_DrawStatusPanel(int mode, BattleStatusPanel *panel);
  * triangle (POLY_F3 layout) plus two flat lines per draw slot that join the
  * pointer to the status panel. */
 typedef struct BattleStatusPointerPrim {
-    u32 tag;
+    RenderNativeTag tag;
     u8 r, g, b, code;
     s16 x0, y0, x1, y1, x2, y2;
 } BattleStatusPointerPrim;
@@ -196,7 +167,7 @@ extern u32 g_FrameRngCounter;
 
 void RotTrans(const GteShortVector *v, GteVector *out, s32 *flag);
 
-PE1_STATIC_ASSERT(sizeof(BattleStatusPointerPrim) == 0x14,
+PE1_STATIC_ASSERT(sizeof(BattleStatusPointerPrim) == sizeof(RenderNativeTag) + 16,
                   battle_status_pointer_prim_stride);
 
 #endif

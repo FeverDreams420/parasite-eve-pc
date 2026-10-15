@@ -118,7 +118,7 @@ void SetPolyGT4(void *packet);
 void SetSprt(void *sprite);
 int MargePrim(void *first, void *second);
 
-void AddPrim(unsigned int *ot, unsigned int *prim);
+void AddPrim(void *ot, void *prim);
 
 u_short GetTPage(int tp, int abr, int x, int y);
 

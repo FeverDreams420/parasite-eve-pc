@@ -21,8 +21,6 @@
  * through $gp, every other extern stays absolute. */
 RampEdge *g_SceneDataTable2;
 u16 g_FieldCollisionTriIndex;
-unsigned short g_WallPolygonVertexCount;
-PolygonVertex *g_WallPolygonVertices;
 
 
 
@@ -202,7 +200,7 @@ short g_EntityCollisionWallParam;
 CollisionRegionTable g_RegionHeightTable;
 struct CollisionPlane *g_CollisionPlaneTable;
 CollisionDatabase *g_CollisionDb;
-short *g_EntityCollisionWallSlot;
+PolygonVertex *g_EntityCollisionWallSlot;
 PolygonVertex *g_FloorPolygonVertices;
 u16 g_FloorPolygonVertexCount;
 
@@ -1373,15 +1371,15 @@ void Entity_ApplyCollisionResponse(struct FieldActor *player)
     oldX = (short)(actor->baseX >> 16);
     oldZ = (short)(actor->baseZ >> 16);
     edge = Geo_FindNearestEdge(actor->posX.parts.integer, actor->posZ.parts.integer,
-                              g_WallPolygonVertices, g_WallPolygonVertexCount);
+                              g_EntityCollisionWallSlot, g_EntityCollisionWallParam);
     if (edge >= 0) {
         BattleEntity *current;
 
-        Entity_SlideOnWall(((BattleEntity *)g_PlayerEntity), g_WallPolygonVertices, g_WallPolygonVertexCount, edge, oldX, oldZ);
+        Entity_SlideOnWall(((BattleEntity *)g_PlayerEntity), g_EntityCollisionWallSlot, g_EntityCollisionWallParam, edge, oldX, oldZ);
         current = ((BattleEntity *)g_PlayerEntity);
         if ((short)Geo_FindNearestEdge(current->posX.parts.integer,
                                       current->posZ.parts.integer,
-                                      g_WallPolygonVertices, g_WallPolygonVertexCount) >= 0) {
+                                      g_EntityCollisionWallSlot, g_EntityCollisionWallParam) >= 0) {
             BattleEntity *restore = ((BattleEntity *)g_PlayerEntity);
             restore->posX.fixed = restore->baseX;
             restore->posY.fixed = restore->baseY;

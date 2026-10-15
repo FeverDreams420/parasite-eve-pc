@@ -160,6 +160,42 @@ przeszedł tę samą drogę do oczekiwanego abortu 207 bez raportu sanitizerów.
 To dowód dla tego wcześniejszego kandydata do wskazanego punktu, nie test
 wykonania ostatnich sygnałów ani naturalnego zakończenia procesu.
 
+Podpięto następnie istniejące polecenia PM 106–110. Pm_ScriptSendCommand0
+ma ABI int **, bez dawnego WrapperArgs; wartości komendy pozostają 32-bitowe,
+a odczyt przez 108 przekazuje pełne adresy hosta. Istniejący test prawdziwego
+zadania 117 obejmuje teraz dispatcher: slot/właściciela, pięć parametrów
+skalarnych, trzy różne wyniki odczytu (w tym 89ABCDEF) i zapis/odczyt stanu.
+Fixture --assets przechodzi także ASan/UBSan/function z instrumentowanym SDK.
+Ślad gry potwierdził efekt 117 w slocie 0 przy VBlank 64553, mode 0,
+HP Ayi 45 i jednym żywym przeciwniku. Samo uruchomienie efektu było poprawne;
+następna odpowiedź kolizji powodowała odczyt przez NULL w Geo_FindNearestEdge.
+
+Przyczyną były dwa odrębne natywne stany wielokąta ścian. Opkod 172 zapisywał
+g_EntityCollisionWallSlot/Param, ale Entity_ApplyCollisionResponse czytał nigdy
+nieustawiane g_WallPolygonVertices/Count. Oryginalny CPU zapisuje i czyta tę samą
+parę 8009D2F8/8009D264; osobny wielokąt podłogi to 8009D248/8009D1CC.
+Usunięto duplikat, a istniejący wskaźnik ma właściwy typ PolygonVertex *.
+Regresja łączy prawdziwy dispatcher 172 z odpowiedzią kolizji, zachowując
+oddzielną podłogę i pełny wskaźnik hosta. 242 przypadki położeń przy narożnikach
+i krawędziach, przy dwóch tempach ruchu, odpowiadają CPU z mostkiem PsyZ dla COP2
+(`99967d7c2a10f007`). Nie jest to niezależny dowód sprzętowej zgodności GTE.
+Przed naprawą pełny program z sanitizerami zgłaszał offset od NULL w tej samej
+funkcji; po naprawie fixture przechodzi w 12,06 s i z ASan/UBSan/function.
+Naturalny przebieg dochodzi teraz do niepodpiętego opkodu 100 (Melissa 2:0,
+script_byte 3368). Dalszy przebieg walki nadal wymaga weryfikacji.
+Pełne 40 istniejących testów przechodzi ponownie bez skipów w 407,35 s.
+Pełny executable tej naprawy z ASan/UBSan/function i instrumentowanym SDK
+dociera do tego samego oczekiwanego abortu 100 bez wcześniejszego raportu
+sanitizerów; nie jest to test zakończonej walki ani naturalnego shutdown.
+Następnie dodano `original-game-battle-entry` do istniejącego fixture i CMake,
+bez dalszych zmian logiki gry. Przebieg od New Game z samym --pad-at kończy się
+przy 64554 VBlank, M005, global_flags 2178, move_lock 4, game_frame 2138,
+zamkniętym dialogu 44 i pozycji Ayi [1441792,-72810496,56885248]. Sprawdza pełną
+VRAM: FNV `a2276ccc2247ed21`, SHA-256
+`f2a8d2f23b068d0edf9f95ccd0c4f1ae7915d33f5f5001af3db5073eb369e683`.
+Nowy, dodatkowy 41. test przeszedł w 98,85 s; obraz tego punktu obejrzano.
+HUD i dalsza interakcja walki nie są jeszcze potwierdzone tym punktem.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

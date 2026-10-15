@@ -2,6 +2,7 @@
 #define PE1_COLLISION_DATABASE_H
 
 #include "common.h"
+#include "pe1/floor_polygon.h"
 #include "pe1/game_state.h"
 
 /* Packed vertex tables used by the flat and sloped triangle formats.
@@ -153,7 +154,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionDatabase, vertices) ==
 PE1_STATIC_ASSERT(PE1_OFFSETOF(CollisionDatabaseFile, regions) == 0x28,
                   collision_database_file_regions_offset);
 
-/* Script word that receives the wall slot hit by the current entity. */
-extern short *g_EntityCollisionWallSlot;
+/* Active wall polygon installed by opcode 172 (USA 8009D2F8). */
+extern PolygonVertex *g_EntityCollisionWallSlot;
 
 #endif

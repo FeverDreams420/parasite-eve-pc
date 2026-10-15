@@ -724,6 +724,8 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [112]=Script_SetEntityAnim12Args, [183]=Script_SetEntityAnim5Args,
     [176]=Script_SetBattleEntryCoords,
     [207]=Script_SignalSceneExit,
+    [106]=Script_GetEntityEffect, [107]=Pm_ScriptSendCommand0, [108]=Pm_ScriptSendCommand1,
+    [109]=Pm_ScriptSetState, [110]=Pm_ScriptGetState,
     [137]=Menu_SetModeState6, [138]=Menu_SetModeState5,
     [149]=Menu_ClearModeState, [150]=Menu_SetModeState8,
     [101]=Entity_ClearMotionVectors, [102]=Entity_ComputeVelocity, [84]=Entity_GetDistanceComponents, [91]=Script_ClearBattleFlags, [92]=Script_SetBattleFlags, [94]=Entity_GetPositionByType, [97]=Render_CameraTrackRelativeOffset, [123]=Script_SetObjEntryField8, [116]=Script_SetObjEntryLimit, [119]=Script_PointInPoly, [120]=Entity_ClearCurrentFlag20, [121]=Entity_SetCurrentFlag20, [117]=Script_SetFlagSlot, [118]=Render_CameraStepAngleFade,

@@ -1057,7 +1057,7 @@ int Entity_ClearCurrentFlag4000(int **unused) {
 int Script_SetAnimSlotPointer(int **arg0) {
     int index = *arg0[0];
 
-    g_EntityCollisionWallSlot = (short *)(g_CurrentEntity->script_base + (ptrdiff_t)index * 2);
+    g_EntityCollisionWallSlot = (PolygonVertex *)(g_CurrentEntity->script_base + (ptrdiff_t)index * 2);
     g_EntityCollisionWallParam = *arg0[1];
     return 1;
 }
@@ -1578,29 +1578,8 @@ int Script_GetInventorySlotLimit(int **arg0) {
     return 1;
 }
 
-typedef struct WrapperArgs {
-    int *arg0;
-    int *arg2;
-    int *arg3;
-    int *arg4;
-    int *arg5;
-} WrapperArgs;
-
-int Pm_ScriptSendCommand0(WrapperArgs *args) {
-    int *ptr0;
-    int *ptr2;
-    int *ptr4;
-    int value4;
-    int value0;
-    int value2;
-
-    ptr0 = args->arg0;
-    ptr4 = args->arg4;
-    ptr2 = args->arg2;
-    value4 = *ptr4;
-    value0 = *ptr0;
-    value2 = *ptr2;
-    Pm_SendCmd(value0, 0, value2, *args->arg3, value4, *args->arg5);
+int Pm_ScriptSendCommand0(int **args) {
+    Pm_SendCmd(*args[0], 0, *args[1], *args[2], *args[3], *args[4]);
     return 1;
 }
 

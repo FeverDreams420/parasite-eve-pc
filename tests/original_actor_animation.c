@@ -732,6 +732,7 @@ static unsigned task_draws;
 static int task_pointer_value;
 static intptr_t record_native_task_argument(int mode,intptr_t value,intptr_t b,intptr_t c)
 {
+    if(mode==-7 && value==INT32_MIN && b==0x12345678 && c==-9)return 42;
     if(mode!=7 || value!=(intptr_t)&task_pointer_value || b!=value+sizeof(int) || c!=-9)abort();
     return value;
 }
@@ -803,23 +804,40 @@ static int native_task_cycle(void)
     {
         PmPrimarySlot bank[11]={0};PmTables old_tables=g_PmTables;
         Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
+        FieldActor actor={0},*old_actor=g_CurrentEntity;ScriptNode *old_node=g_ScriptNodePool;u32 *old_cursor=g_ScriptCursor;
+        g_CurrentEntity=&actor;
         g_PmTables=(PmTables){g_PmCmdHandlerArray,bank,NULL};
         g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
         if(g_PmCmdHandlerArray[85]!=&g_FieldFxTaskClass)return 0;
         program.script=script+9;task_pointer_value=0;
-        if(Scene_LoadRoomAssets(117,NULL)!=0 || bank[0].header.command!=117 || bank[0].header.state!=1 ||
+        u32 allocate[]={106|(2u<<13),0,117,99,32,0};
+        ScriptNode dispatch={.current.script=allocate,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
+        if(allocate[3]!=0 || dispatch.current.script!=allocate+6 || dispatch.flags!=0x90 || g_ScriptNodePool ||
+            bank[0].header.owner!=&actor || bank[0].header.command!=117 || bank[0].header.state!=1 ||
             bank[0].task.tasks.table!=&program.table)return 0;
+        u32 send[]={107|(5u<<13),0,0,(u32)-7,0x80000000,0x12345678,(u32)-9,32,0};
+        dispatch=(ScriptNode){.current.script=send,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
+        if(bank[0].task.tasks.argument!=42 || dispatch.current.script!=send+9 || dispatch.flags!=0x90 || g_ScriptNodePool)return 0;
         if(Pm_SendCmd(0,0,7,(intptr_t)&task_pointer_value,(intptr_t)&task_pointer_value+sizeof(int),-9)!=0)return 0;
         g_FieldFxTaskContext=&bank[0].task.tasks;
         if(FieldFx_SpawnTask(0)!=(int)sizeof(NativeTaskState))return 0;
         g_ViewMatrixSlot.value=&identity;
         if(Pm_Start(0)!=0 || Pm_Exec(0)!=0 || task_pointer_value!=11)return 0;
-        if(Pm_Stop(0,NULL,0)!=0 || bank[0].header.state)return 0;
+        bank[0].header.field02=0xa5;bank[0].header.field03=0xd2;bank[0].header.ticks=0x89abcdef;
+        u32 query[]={108|(5u<<13),0,0,0,99,99,99,32,0};
+        dispatch=(ScriptNode){.current.script=query,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
+        if(query[4]!=bank[0].header.field02 || query[5]!=bank[0].header.field03 || query[6]!=bank[0].header.ticks ||
+           dispatch.current.script!=query+9 || dispatch.flags!=0x90 || g_ScriptNodePool)return 0;
+        u32 states[]={109|(2u<<13),0,0,4,110|(2u<<13),0,0,99,32,0};
+        dispatch=(ScriptNode){.current.script=states,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
+        if(states[7]!=4 || bank[0].header.state!=4 || dispatch.current.script!=states+10 || dispatch.flags!=0x90 || g_ScriptNodePool)return 0;
+        if(Pm_Stop(0,&actor,0)!=0 || bank[0].header.state)return 0;
         memset(bank,0,sizeof(bank));g_FieldFxTaskPrograms[32]=NULL;
         if(Scene_LoadRoomAssets(117,NULL)!=-8 || bank[0].header.state ||
             Scene_LoadRoomAssets(191,NULL)!=-8 || bank[0].header.state ||
             FieldFx_BindTaskProgram(owner,-1)!=-1 || FieldFx_BindTaskProgram(owner,104)!=-1)return 0;
         g_ViewMatrixSlot.value=saved_view;g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;
+        g_CurrentEntity=old_actor;g_ScriptNodePool=old_node;g_ScriptCursor=old_cursor;
     }
     g_FieldFxTaskPrograms[32]=old_program;
     FieldFx_InitTaskContext((PmSlotHeader *)owner);owner->tasks.table=&table;owner->tasks.argument=42;
@@ -2391,6 +2409,32 @@ static int original_collision_gate_opcodes(void)
     g_CollisionDb=saved_db;g_CollisionPlaneTable=saved_planes;g_CurrentEntity=saved_actor;
     g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     if(hash!=UINT64_C(0x12d5c65f0d2fc325))return 0;
+    PolygonVertex *saved_wall=g_EntityCollisionWallSlot,*saved_floor_polygon=g_FloorPolygonVertices;
+    s16 saved_count=g_EntityCollisionWallParam;u16 saved_floor_count=g_FloorPolygonVertexCount,saved_radius=g_CollisionRadius;
+    FieldActor player={0},controller={0},*saved_player=g_PlayerEntity;_Alignas(8) u8 polygon_script[128]={0};
+    const PolygonVertex square[]={{0,-100,0,-100},{0,100,0,-100},{0,100,0,100},{0,-100,0,100}};
+    memcpy(polygon_script+64,square,sizeof(square));controller.script_base=polygon_script;
+    g_CurrentEntity=&controller;g_PlayerEntity=&player;g_FloorPolygonVertices=(PolygonVertex *)polygon_script;g_FloorPolygonVertexCount=3;
+    u32 setup[]={172|(2u<<13),0,32,0x10004,32,0};ScriptNode node={.current.script=setup,.active=1,.flags=0x80};
+    g_ScriptNodePool=&node;Script_RunQueue();
+    if(g_EntityCollisionWallSlot!=(PolygonVertex *)(polygon_script+64) || (u16)g_EntityCollisionWallParam!=4 ||
+       g_FloorPolygonVertices!=(PolygonVertex *)polygon_script || g_FloorPolygonVertexCount!=3 ||
+       node.current.script!=setup+6 || node.flags!=0x90 || g_ScriptNodePool)return 0;
+    const int wall_points[]={-110,-105,-100,-95,-90,0,90,95,100,105,110},speeds[]={2048,4096};
+    uint64_t response_hash=UINT64_C(14695981039346656037);
+    for(unsigned speed=0;speed<2;++speed)for(unsigned x=0;x<11;++x)for(unsigned z=0;z<11;++z){
+        memset(&player,0,sizeof(player));player.move_speed=speeds[speed];player.render_object.hit_cylinder.radius=10;
+        player.pos_x=(s32)((u32)wall_points[x]<<16);player.pos_z=(s32)((u32)wall_points[z]<<16);
+        Entity_ApplyCollisionResponse(NULL);
+        const u32 words[]={(u32)player.pos_x,(u32)player.pos_y,(u32)player.pos_z,g_CollisionRadius};
+        for(unsigned i=0;i<4;++i)for(unsigned b=0;b<(i==3?2:4);++b)
+            response_hash=(response_hash^((words[i]>>(b*8))&255))*UINT64_C(1099511628211);
+    }
+    g_EntityCollisionWallSlot=saved_wall;g_EntityCollisionWallParam=saved_count;g_CollisionRadius=saved_radius;
+    g_FloorPolygonVertices=saved_floor_polygon;g_FloorPolygonVertexCount=saved_floor_count;
+    g_PlayerEntity=saved_player;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(response_hash!=UINT64_C(0x99967d7c2a10f007)){fprintf(stderr,"Wall response hash %016llx\n",(unsigned long long)response_hash);return 0;}
+    puts("Original wall binding: opcode 172 shared native state, separate floor polygon and 242 USA CPU/GTE-bridge collision responses passed");
     puts("Original collision gate opcodes: 3072 USA MIPS states, both triangle layouts, all kind bits, neighbouring records and real dispatcher passed");
     return 1;
 }
@@ -8393,8 +8437,10 @@ static int original_native_bootstrap(const char *executable,int field_control)
     if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     if(!SDL_Init(SDL_INIT_EVENTS))return 1;
     char capture[96];snprintf(capture,sizeof(capture),"pe-native-%llx.vram",(unsigned long long)SDL_GetPerformanceCounter());
-    for(unsigned input=field_control==2?12:field_control?6:0;input<(field_control==2?13u:field_control?12u:6u);++input){
-        const char *limit=input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+    unsigned first=field_control==3?13:field_control==2?12:field_control?6:0;
+    unsigned end=field_control>=2?first+1:field_control?12:6;
+    for(unsigned input=first;input<end;++input){
+        const char *limit=input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
         const char *args[320]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
@@ -8437,12 +8483,17 @@ static int original_native_bootstrap(const char *executable,int field_control)
                 }
             }
             if(input>=11)for(unsigned tick=52000;tick<57000;tick+=600)BOOTSTRAP_PRESS(tick,0x4000);
-            if(input==12){
+            if(input>=12){
                 static const unsigned route[][2]={{58000,16},{58200,16},{59769,32},{59869,32},{59994,16}};
                 for(unsigned i=0;i<5;++i){
                     snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",route[i][0],route[i][1]);
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
+            }
+            if(input==13){
+                args[at++]="--pad-at";args[at++]="60634:128";
+                args[at++]="--pad-at";args[at++]="60734:192";
+                for(unsigned tick=61334;tick<64554;tick+=510)BOOTSTRAP_PRESS(tick,0x4000);
             }
 #undef BOOTSTRAP_PRESS
         }
@@ -8455,7 +8506,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -8504,6 +8555,11 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==12 && (!output || !strstr(output,"\"scene\":2818573000") ||
            !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"position\":[-107559689,-72810496,35984650]")))valid=0;
+        if(input==13 && (!output || !strstr(output,"\"scene\":2818573000") ||
+           !strstr(output,"\"flags\":2178,") || !strstr(output,"\"move_lock\":4") ||
+           !strstr(output,"\"video_state\":0") || !strstr(output,"\"game_frame\":2138") ||
+           !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":44}") ||
+           !strstr(output,"\"player\":true,\"flags\":0,\"position\":[1441792,-72810496,56885248]")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -8541,6 +8597,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==10 && hash!=UINT64_C(0x010725a10ea1b845))valid=0;
         if(input==11 && hash!=UINT64_C(0xd355ef4c28cf53bb))valid=0;
         if(input==12 && hash!=UINT64_C(0x4b5ea0ce332f7bf5))valid=0;
+        if(input==13 && hash!=UINT64_C(0xa2276ccc2247ed21))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
@@ -8558,6 +8615,7 @@ int main(int argc, char **argv)
     }
 
     if(argc==3 && !strcmp(argv[1],"--native-stage"))return original_native_bootstrap(argv[2],2);
+    if(argc==3 && !strcmp(argv[1],"--native-battle-entry"))return original_native_bootstrap(argv[2],3);
     if(argc==3 && !strcmp(argv[1],"--native-field-control"))return original_native_bootstrap(argv[2],1);
     if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2],0);
     if(argc==2 && !strcmp(argv[1],"--credits-playback")){

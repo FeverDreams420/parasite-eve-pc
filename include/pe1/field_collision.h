@@ -49,8 +49,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RampEdge, directionZ) == 8, ramp_edge_z_offset);
 /* Shared collision query state. The response routine publishes the scaled
  * half-width before querying and sliding against this polygon. */
 extern unsigned short g_CollisionRadius;
-extern PolygonVertex *g_WallPolygonVertices;
-extern unsigned short g_WallPolygonVertexCount;
 
 int Geo_FindNearestEdge(int x, int z, PolygonVertex *vertices,
                         unsigned short count);

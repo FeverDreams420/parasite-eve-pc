@@ -1,5 +1,18 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
+## Sprawdzenie widoczności EX Game przy uruchomieniu
+
+EX Game jest odblokowywane przez skan karty w menu, bez wczytywania zapisu,
+zgodnie z oryginalnym MenuCard_HandleListInput/MemCard_HasAnyPresentFile.
+Lokalny `bu00/BASLUS-006620000001G` ma w nazwie znacznik titleStyleFlag=1.
+Dwa świeże headless uruchomienia tego samego executable do 10900 VBlank,
+w odrębnych katalogach tymczasowych, potwierdziły: przy pustym katalogu
+node 6 ma intensity 0 (EX Game ukryte), a przy kopii istniejących zapisów
+intensity 256 i y=140 (widoczne). Nie wczytywano gry i nie zmieniano zapisów
+użytkownika. Fixture --assets również przeszedł; obejmuje sześć scenariuszy
+menu porównywanych z CPU USA, w tym pojawienie się/usunięcie odpowiedniej karty.
+To oczekiwane zachowanie oryginału, więc nie zmieniono warunku odblokowania.
+
 ## Bieżące naprawy: pamięć M004, skrypty M005 i prezentacja SDL
 
 Watchpoint wskazał zapis z Render_DrawSpriteEntry poza 128 KiB buforem

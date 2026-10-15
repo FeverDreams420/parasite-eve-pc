@@ -50,6 +50,7 @@ int Pm_ScriptStopCurrentEntity(int **args);
 int Script_SetEntityTarget(int **args);
 int Script_ResetRenderState(int **unused);
 int Script_CondBranch(int **args);
+int Script_GetMenuChoice(int **args);
 int Scene_TestGlobalFlags(int **args);
 int Scene_SetGlobalFlags(int **args);
 int Scene_ClearGlobalFlags(int **args);

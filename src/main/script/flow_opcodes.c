@@ -710,6 +710,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [49]=Script_EncodeBarcode, [53]=Script_LoadSceneData,
     [63]=Entity_ClearGlobalFlag1, [64]=Entity_SetGlobalFlag1,
     [65]=Entity_SetCurrentFlag40, [66]=Entity_ClearCurrentFlag40,
+    [67]=Script_GetMenuChoice,
     [132]=Script_SetScreenScrollPos, [133]=Script_SetCdRomSeekPos, [134]=Script_SetFogColor, [135]=Script_SetCdRomScreenPos, [136]=Script_ClearEntityFlag40, [155]=Script_SetGteMatrix, [156]=Entity_YieldOnLoading, [157]=Script_ScaleAnimValue, [166]=Script_ClampMenuRange,
     [141]=Script_Noop1, [142]=Script_Noop2, [144]=Script_Noop4, [145]=Script_Noop3,
     [140]=Script_WaitFrameOrDraw, [143]=Entity_YieldOnDrawBusy,

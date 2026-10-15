@@ -2749,12 +2749,35 @@ static int original_dialogue_opcodes(void)
            !!(node.flags&0x10)!=!!result || memcmp(expected,g_TextboxEntries,sizeof(expected)) ||
            choice!=g_DialogueChoiceCursor || menu!=g_MenuEquipSlotIndex)return 0;
     }
+    /* USA 80017DE4 executes the real signed-byte menu getter, including
+     * cancellation (-1); the opcode writes a complete script word. */
+    if(g_ScriptQueueOpcodeHandlers[67]!=Script_GetMenuChoice)return 0;
+    uint64_t choice_hash=UINT64_C(14695981039346656037);
+    u32 saved_variable=g_ScriptVariableBank[9];
+    for(unsigned choice=0;choice<256;++choice){
+        g_MenuEquipSlotIndex=(s8)choice;
+        int output=(s32)0x98765432;int *args[]={&output};
+        u32 result=Script_GetMenuChoice(args);
+        const u32 words[]={result,(u32)output,(u8)g_MenuEquipSlotIndex};
+        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<4;++b)
+            choice_hash=(choice_hash^((words[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        u32 program[]={67|(1u<<13)|(2u<<17),0,9,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_ScriptVariableBank[9]=0x98765432;g_ScriptNodePool=&node;
+        Script_RunQueue();
+        if(g_ScriptVariableBank[9]!=(u32)output || node.current.script!=program+5 ||
+           node.active || node.flags!=0x90 || g_ScriptNodePool ||
+           (u8)g_MenuEquipSlotIndex!=choice)return 0;
+    }
+    g_ScriptVariableBank[9]=saved_variable;
+    if(choice_hash!=UINT64_C(0xffdfd872a5725525))return 0;
     memcpy(g_TextboxEntries,saved,sizeof(saved));g_PlayerMovementEnabled=saved_movement;
     g_DialogueChoiceCursor=saved_choice;g_MenuEquipSlotIndex=saved_menu;g_CurrentEntity=saved_actor;
     g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     if(hashes[0]!=UINT64_C(0x76d0cc627a0cae51) || hashes[1]!=UINT64_C(0x1506f2e400f8d88f)){
         fprintf(stderr,"Dialogue opcode hashes %016llx %016llx\n",(unsigned long long)hashes[0],(unsigned long long)hashes[1]);return 0;}
     puts("Original dialogue opcodes: 432 open and 576 wait/close USA MIPS states, native pointers, duplicate pages and full dispatcher passed");
+    puts("Original menu choice opcode 67: all 256 signed-byte USA CPU states and native dispatcher outputs passed");
     return 1;
 }
 

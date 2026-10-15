@@ -285,6 +285,16 @@ w 144,71 s. Dalsze podejście do otworu i próba zamknięcia dialogu ujawniają
 niepodpięty opkod 67 (M009, Aya 0:0, script_byte 1072). Oryginał po tym dialogu
 przechodzi do M011; port nie ma jeszcze dowodu tego przejścia.
 
+Opkod 67 podpięto do istniejącego Script_GetMenuChoice bez zmiany implementacji
+ani przenoszenia funkcji. Wszystkie 256 wartości bajtu g_MenuEquipSlotIndex,
+w tym signed -1 przy anulowaniu, odpowiadają rzeczywistemu CPU USA 80017DE4
+z wykonanym oryginalnym getterem (`ffdfd872a5725525`). Istniejący fixture
+dialogów sprawdza także pełny zapis do zmiennej skryptowej przez dispatcher,
+zakończenie instrukcji i niezmieniony wynik wyboru. Test --assets przeszedł
+w 12,39 s; świeży fixture ASan/UBSan/function z instrumentowanym PsyZ/SDL
+także przeszedł. Ponowne naturalne przejście do dialogu M009 jest w toku;
+samo podpięcie nie dowodzi jeszcze wykonania M011.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

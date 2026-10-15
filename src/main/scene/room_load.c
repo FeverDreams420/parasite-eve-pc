@@ -31,6 +31,8 @@
 #include "../../overlays/room_m272_liberty/room_m272.h"
 #include "pe1/room_m005.h"
 #include "pe1/room_m005_beacon.h"
+#include "pe1/room_flare.h"
+#include "pe1/room_module.h"
 #include "pe1/scene_transition.h"
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
@@ -442,6 +444,8 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomM272Handlers;
         if (map + 1 == 5 && slot == 117 && record[i].u.handlerAddress == 0x80190b44u)
             native = &g_RoomM005Effects;
+        if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 30) && slot == 115 && record[i].u.handlerAddress == 0x8018fcb4u)
+            native = &g_RoomOrbitFlareEffects;
         if (!native) {
             fprintf(stderr, "Scene_LoadRoom: native descriptor missing for M%03d slot %u (PS1 %08x)\n",
                     map + 1, slot, record[i].u.handlerAddress);
@@ -568,6 +572,9 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
             g_RoomM005BeaconOffset = (GteShortVector){0};
             g_RoomM005BeaconCenter = (GteShortVector){0};
+        } else if (map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 30) {
+            g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
+            memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
         } else {
             g_PmCmdHandlerTable[slot] = map + 1 == 272 ? &g_RoomM272Handlers : &g_RoomFxMirrorHandlers;
         }

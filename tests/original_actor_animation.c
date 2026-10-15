@@ -45,6 +45,8 @@ int Inv_ScrambleGrid(void);
 #include "pe1/entity_animation.h"
 #include "pe1/room_m005_drifting_sprite.h"
 #include "pe1/room_m005.h"
+#include "pe1/room_flare.h"
+#include "pe1/room_module.h"
 #include "pe1/room_script_record.h"
 #include "pe1/room_m005_beacon.h"
 #include "../src/overlays/room_m005_theater/RoomM005_FxOrbiter_externs.h"
@@ -1501,7 +1503,27 @@ static int original_glow_resident_constants(void)
     };
     for(unsigned i=0;i<sizeof(room_rows)/sizeof(room_rows[0]);++i)
         if(memcmp(room_bytes+(room_rows[i].address-0x8018efe8u),room_rows[i].value,room_rows[i].size)) {pe_disc_close(&disc);return 0;}
+    const unsigned orbit_maps[]={12,13,27,30};u8 orbit_reference[0xd10-12];
+    for(unsigned m=0;m<4;++m){
+        unsigned map=orbit_maps[m];
+        if(!pe_disc_read(&disc,&file,0x800ull+0x80093378u-base+(map-1)*8,room_range,sizeof(room_range)))return 0;
+        room_sector=(u64)room_range[0]+(room_range[1]&255)+((room_range[1]>>8)&4095);
+        if(!pe_disc_read(&disc,&archive,room_sector*2048,room_bytes,sizeof(room_bytes)))return 0;
+        if(!m)memcpy(orbit_reference,room_bytes+12,sizeof(orbit_reference));
+        else if(memcmp(orbit_reference,room_bytes+12,sizeof(orbit_reference)))return 0;
+        struct {u32 callbacks[8];u16 sizes[8];u32 initialize,script;} descriptor;
+        memcpy(&descriptor,room_bytes+(0x8018fcb4u-0x8018efe8u),sizeof(descriptor));
+        for(unsigned i=0;i<8;++i){
+            if(descriptor.callbacks[i]!=(i?0u:0x8018f20cu) || descriptor.sizes[i]!=(i?0u:20u) ||
+               g_RoomOrbitFlareEffects.table.callbacks[i]!=(i?NULL:RoomEffect_OrbitFlareController) ||
+               g_RoomOrbitFlareEffects.table.sizes[i]!=(i?0u:sizeof(RoomOrbitFlareState)))return 0;
+        }
+        if(descriptor.initialize!=0x8018fc54u || descriptor.script!=0x8018fc78u ||
+           g_RoomOrbitFlareEffects.initialize!=RoomLib_SetArgs3 ||
+           memcmp(room_bytes+(descriptor.script-0x8018efe8u),g_RoomOrbitFlareScript,sizeof(g_RoomOrbitFlareScript)))return 0;
+    }
     pe_disc_close(&disc);
+    puts("Original orbit flare descriptors: M012/M013/M027/M030 identical module bytes, callbacks, sizes, initializer and all 30 script halfwords match the supplied USA disc");
     puts("Original glow constants: resident PM IDs, spins, scales, offsets, slot sizes and authored script match the supplied USA disc");
     return 1;
 }
@@ -1687,6 +1709,127 @@ static int authored_m005_effect_cycle(void)
     D_800B0E38=old_buffers;g_GeomScroll.words.viewMatrix=old_view;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;
     srand(old_random);memset(g_RoomM005ScriptAnchorView-4,0,20);
     puts("Original M005: 76 PM frames, real orbiter/cross-flare script, overlapping tasks, OT rings/blends and arena guards passed");
+    return 1;
+}
+
+static int authored_orbit_flare_cycle(void)
+{
+    PmPrimarySlot bank[11]={0};FieldActor actor={0},player={0};FieldActorState state={0};u8 action=1;
+    RenderMatrix matrices[26]={0};
+    for(unsigned i=0;i<26;++i){
+        for(unsigned axis=0;axis<3;++axis)matrices[i].rotation[axis][axis]=4096;
+        matrices[i].translation[0]=20;matrices[i].translation[2]=1024;
+    }
+    actor.state=&state;actor.mode=2;actor.render_object.matrices=matrices;
+    actor.render_object.target_x=20;actor.render_object.target_z=1024;
+    state.action_state=&action;player.pos_x=10000<<16;player.pos_z=10000<<16;
+    PolygonVertex polygon[]={{0,-1100,0,-1100},{0,1100,0,-1100},{0,1100,0,1100},{0,-1100,0,1100}};
+    PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
+    FieldActor *old_player=g_PlayerEntity;PolygonVertex *old_floor=g_FloorPolygonVertices;
+    u16 old_count=g_FloorPolygonVertexCount;
+    RenderBufferPrefix old_buffers=D_800B0E38;GteMatrix *old_view=g_GeomScroll.words.viewMatrix;
+    int old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset,old_age=g_FieldFxCurrentAge;
+    void *old_program=g_FieldFxTaskPrograms[30];u32 old_random=Psyz_RandState();
+    int old_args[3];memcpy(old_args,g_RoomScriptArgs,sizeof(old_args));
+    FieldFxTaskContext *old_context=g_FieldFxTaskContext;FieldFxObjectPrefix *old_owner=g_FieldFxOwner;
+    FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;
+    const u32 patterns[]={0,1,0x7fff,0x8000,0xffff,0x80000000,0xffffffff,0x010c0000,0xa5a55a5a,0x12345678,0x7fffffff,0x600000};
+    uint64_t init_hash=UINT64_C(14695981039346656037);
+    const int modes[]={0,1,-1};
+    for(unsigned m=0;m<3;++m)for(unsigned p=0;p<12;++p){
+        intptr_t result=RoomLib_SetArgs3(modes[m],(s32)patterns[p],(s32)patterns[(p+1)%12],(s32)patterns[(p+2)%12]);
+        const u32 words[]={result==(intptr_t)g_RoomScriptArgs,(u32)g_RoomScriptArgs[0],(u32)g_RoomScriptArgs[1],(u32)g_RoomScriptArgs[2]};
+        for(unsigned j=0;j<4;++j)for(unsigned b=0;b<4;++b)
+            init_hash=(init_hash^((words[j]>>(b*8))&255))*UINT64_C(1099511628211);
+    }
+    if(init_hash!=UINT64_C(0x3c0af86f8810cdb5))return 0;
+    uint64_t drift_hash=UINT64_C(14695981039346656037);
+    const int drift_modes[]={0,1,3},ages[]={0,1,13,14,15,32767},positions[]={0,1,-1,32767,-32768,1234};
+    const u32 seeds[]={1,0xffffffff};
+    for(unsigned m=0;m<3;++m)for(unsigned a=0;a<6;++a)for(unsigned p=0;p<6;++p)for(unsigned seed=0;seed<2;++seed){
+        RoomFxDriftParticle drift={.x=positions[p],.y=(s16)-positions[p],.z=(s16)(positions[p]^0x5555),
+            .pad6=(s16)0xa55a,.radius=0x12345678};
+        srand(seeds[seed]);g_FieldFxCurrentAge=ages[a];
+        u32 result=RoomEffect_OrbitFlareDrift(drift_modes[m],&drift,0);
+        for(unsigned b=0;b<4;++b)drift_hash=(drift_hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned b=0;b<sizeof(drift);++b)drift_hash=(drift_hash^((u8 *)&drift)[b])*UINT64_C(1099511628211);
+        u32 random=Psyz_RandState();
+        for(unsigned b=0;b<4;++b)drift_hash=(drift_hash^((random>>(b*8))&255))*UINT64_C(1099511628211);
+    }
+    if(drift_hash!=UINT64_C(0xf3429d82d5c5a69d))return 0;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    static RenderGpuTag ordering[4096];
+    struct {_Alignas(void *) u8 bytes[65536];u8 guard[16];} packets;
+    g_PmTables=(PmTables){g_PmCmdHandlerArray,bank,NULL};g_FieldFxTaskPrograms[30]=&g_RoomOrbitFlareEffects;
+    g_PlayerEntity=&player;g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;
+    FieldActorState player_state={0};player.state=&player_state;
+    FieldFxObjectPrefix owner={.actor=&actor};FieldFxTaskContext context={0};
+    g_FieldFxOwner=&owner;g_FieldFxTaskContext=&context;g_FieldFxCurrentAge=0;
+    uint64_t controller_hash=UINT64_C(14695981039346656037);
+    const u16 frames[]={0,1,15,16,51,52,32767,65535};
+    const int flight_positions[]={0,1000,-1000,1100,-1100,3000},angles[]={0,1024,2048,3072,-1},radii[]={0,64,-64};
+    for(unsigned phase=1;phase<=3;++phase)for(unsigned f=0;f<8;++f)for(unsigned p=0;p<6;++p)
+    for(unsigned angle=0;angle<5;++angle)for(unsigned r=0;r<3;++r)for(unsigned near=0;near<2;++near)for(unsigned flags=0;flags<2;++flags){
+        RoomOrbitFlareState flight={.x=flight_positions[p],.y=20,.z=flight_positions[p],.reserved06=-5,
+            .state=phase,.frame=frames[f],.soundHandle=-1,.angle=angles[angle],.height=100,.spread=60};
+        RoomOrbitFlareSpawn spawn={radii[r],512,1};
+        context.flags=flags;state.core_flags=0x01000000;player_state.flags=0;
+        player.pos_x=(s32)((u32)(near?flight_positions[p]:10000)<<16);player.pos_z=player.pos_x;
+        u32 result=RoomEffect_OrbitFlareController(1,&flight,(intptr_t)&spawn);
+        for(unsigned b=0;b<4;++b)controller_hash=(controller_hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned b=0;b<sizeof(flight);++b)controller_hash=(controller_hash^((u8 *)&flight)[b])*UINT64_C(1099511628211);
+        const u32 words[]={state.core_flags,player_state.flags};
+        for(unsigned j=0;j<2;++j)for(unsigned b=0;b<4;++b)
+            controller_hash=(controller_hash^((words[j]>>(b*8))&255))*UINT64_C(1099511628211);
+    }
+    if(controller_hash!=UINT64_C(0xa1ad64689555871d)){fprintf(stderr,"Orbit controller hash %016llx\n",(unsigned long long)controller_hash);return 0;}
+    player.pos_x=player.pos_z=10000<<16;
+    g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
+    struct {SceneAssetBlob header;SceneAssetDirectory directory;} archive={0};
+    archive.header.directoryOffset=sizeof(SceneAssetBlob);g_GameState.loaded_scene_archive=&archive.header;
+    g_GeomScroll.words.viewMatrix=&view;
+    Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(27,1);Psyz_GteCtrlWrite(28,0);
+    Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
+    FieldFx_InitTexturePageTable();srand(1);
+    int init=Scene_LoadRoomAssets(115,&actor),send=init?init:Pm_SendCmd(0,0,0,64,512,1);
+    if(init || send){fprintf(stderr,"Orbit init=%d send=%d\n",init,send);return 0;}
+    if(g_RoomScriptArgs[0]!=64 || g_RoomScriptArgs[1]!=512 || g_RoomScriptArgs[2]!=1 ||
+       bank[0].task.tasks.argument!=(intptr_t)g_RoomScriptArgs){fprintf(stderr,"Orbit args %d %d %d\n",g_RoomScriptArgs[0],g_RoomScriptArgs[1],g_RoomScriptArgs[2]);return 0;}
+    unsigned drawn=0,linked=0,seen=0,maximum=0;
+    for(unsigned frame=0;frame<160;++frame){
+        memset(&packets,0xa5,sizeof(packets));
+        for(unsigned depth=0;depth<4096;++depth)ordering[depth]=(RenderGpuTag){.address=0xffffff};
+        g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;
+        D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.bytes;
+        int start=Pm_Start(0),exec=start?start:Pm_Exec(0);
+        if(start || exec){fprintf(stderr,"Orbit frame %u start=%d exec=%d\n",frame,start,exec);return 0;}
+        for(unsigned i=0;i<8;++i)if(bank[0].task.tasks.slots[i].id!=0xffff){
+            seen|=1u<<i;
+            if(bank[0].task.tasks.slots[i].age>maximum)maximum=bank[0].task.tasks.slots[i].age;
+        }
+        if(g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes))return 0;
+        drawn+=g_DrawPacketOffset!=0;
+        for(unsigned depth=0;depth<4096;++depth){
+            uintptr_t address=ordering[depth].address;unsigned chain=0;
+            while(address!=0xffffff){
+                if(address<(uintptr_t)packets.bytes || address+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset ||
+                   address%_Alignof(RenderGpuTag) || ++chain>1024)return 0;
+                RenderGpuTag *tag=(void *)address;++linked;address=tag->address;
+            }
+        }
+        for(unsigned i=0;i<16;++i)if(packets.guard[i]!=0xa5)return 0;
+    }
+    if(!drawn || !linked || seen!=7 || maximum<52 || bank[0].task.tasks.count || action!=4){
+        fprintf(stderr,"Orbit lifecycle drawn=%u linked=%u seen=%x age=%u count=%u action=%u\n",drawn,linked,seen,maximum,bank[0].task.tasks.count,action);return 0;
+    }
+    if(Pm_Stop(0,&actor,0)!=0 || bank[0].header.state)return 0;
+    g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_task;g_FieldFxCurrentAge=old_age;
+    g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;g_FieldFxTaskPrograms[30]=old_program;
+    g_PlayerEntity=old_player;g_FloorPolygonVertices=old_floor;g_FloorPolygonVertexCount=old_count;
+    D_800B0E38=old_buffers;g_GeomScroll.words.viewMatrix=old_view;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;
+    srand(old_random);memcpy(g_RoomScriptArgs,old_args,sizeof(old_args));
+    puts("Original orbit flare: 36 initializer, 216 drift and 8640 flight/end USA CPU states (BIOS rand boundary controlled) passed");
+    puts("Original orbit flare: 160 real PM frames, three authored controller slots, drift list draw/update, native OT guards and complete expiry passed");
     return 1;
 }
 
@@ -8636,15 +8779,15 @@ static int original_native_bootstrap(const char *executable,int field_control)
     unsigned first=field_control>=2?(unsigned)field_control+10:field_control?6:0;
     unsigned end=field_control>=2?first+1:field_control?12:6;
     for(unsigned input=first;input<end;++input){
-        const char *limit=input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
-        const char *args[448]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
+        const char *limit=input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+        const char *args[640]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
         for(unsigned event=0;event<(input==3?4u:input==2 || input>=4?6u:input?1u:0u);++event){
             unsigned index=input==3 && event>=2?event+2:event;
             args[at++]="--pad-at";args[at++]=events[index];
         }
-        char scheduled[192][32];
+        char scheduled[320][32];
         if(input==1){
             for(unsigned event=0;event<128;++event){
                 snprintf(scheduled[event],sizeof(scheduled[event]),"%u:8",10001+event);
@@ -8691,7 +8834,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
                 args[at++]="--pad-at";args[at++]="60734:192";
                 for(unsigned tick=61334;tick<(input>=14?81500u:64554u);tick+=510)BOOTSTRAP_PRESS(tick,0x4000);
             }
-            if(input==15){
+            if(input>=15){
                 static const unsigned route[][2]={
                     {400,16},{600,32},{650,16},{700,48},{600,128},
                     {250,64},{650,48},{550,128},{800,16},{210,32},
@@ -8704,6 +8847,20 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     tick+=route[i][0];
                 }
             }
+            if(input==16){
+                args[at++]="--pad-at";args[at++]="95751:32";
+                args[at++]="--pad-at";args[at++]="96851:0";
+                for(unsigned pass=0;pass<2;++pass){
+                    for(unsigned tick=pass?100000u:96851u;tick<(pass?102000u:98400u);tick+=128){
+                        snprintf(scheduled[event],sizeof(scheduled[event]),"%u:16384",tick);
+                        args[at++]="--pad-at";args[at++]=scheduled[event++];
+                        snprintf(scheduled[event],sizeof(scheduled[event]),"%u:0",tick+8);
+                        args[at++]="--pad-at";args[at++]=scheduled[event++];
+                    }
+                }
+                args[at++]="--pad-at";args[at++]="102000:16";
+                args[at++]="--pad-at";args[at++]="103000:0";
+            }
 #undef BOOTSTRAP_PRESS
         }
         SDL_PropertiesID props=SDL_CreateProperties();
@@ -8715,7 +8872,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -8781,6 +8938,12 @@ static int original_native_bootstrap(const char *executable,int field_control)
            !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":-1}") ||
            !strstr(output,"\"player\":true,\"flags\":8,\"position\":[61903440,-21495808,-178751558],\"yaw\":3536") ||
            !strstr(output,"\"combat\":{\"mode\":12,\"live_enemies\":0,\"player_hp\":14,\"player_max_hp\":45}")))valid=0;
+        if(input==16 && (!output || !strstr(output,"\"scene\":2818576712") ||
+           !strstr(output,"\"flags\":0,\"draw_slot\"") || !strstr(output,"\"move_lock\":0") ||
+           !strstr(output,"\"game_frame\":770") || !strstr(output,"\"video_state\":0") ||
+           !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":-1}") ||
+           !strstr(output,"\"player\":true,\"flags\":8,\"position\":[19202048,0,170917888],\"yaw\":0") ||
+           !strstr(output,"\"combat\":{\"mode\":12,\"live_enemies\":0,\"player_hp\":14,\"player_max_hp\":45}")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -8821,6 +8984,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==13 && hash!=UINT64_C(0xa2276ccc2247ed21))valid=0;
         if(input==14 && hash!=UINT64_C(0xc7ae3598591ad7c3))valid=0;
         if(input==15 && hash!=UINT64_C(0x1a99c887686e1a86))valid=0;
+        if(input==16 && hash!=UINT64_C(0x8e856f4fc0b74e6d))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
@@ -8839,6 +9003,7 @@ int main(int argc, char **argv)
 
     if(argc==3 && !strcmp(argv[1],"--native-stage"))return original_native_bootstrap(argv[2],2);
     if(argc==3 && !strcmp(argv[1],"--native-battle-entry"))return original_native_bootstrap(argv[2],3);
+    if(argc==3 && !strcmp(argv[1],"--native-hallway"))return original_native_bootstrap(argv[2],6);
     if(argc==3 && !strcmp(argv[1],"--native-backstage"))return original_native_bootstrap(argv[2],5);
     if(argc==3 && !strcmp(argv[1],"--native-melissa"))return original_native_bootstrap(argv[2],4);
     if(argc==3 && !strcmp(argv[1],"--native-field-control"))return original_native_bootstrap(argv[2],1);
@@ -8898,7 +9063,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;

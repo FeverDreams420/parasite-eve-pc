@@ -1,6 +1,7 @@
 #ifndef PE1_ROOM_MODULE_H
 #define PE1_ROOM_MODULE_H
 
+#include "common.h"
 #include "pe1/room_interface.h"
 
 /* A room module's class. Every effect module a room links starts with a
@@ -58,7 +59,7 @@ int RoomLib_RegisterPairedTablesGated(void *o);
  * RoomLib_SetArgs3 call); three words in each room's data. */
 extern int g_RoomScriptArgs[3];
 
-int *RoomLib_SetArgs3(int unused, int a, int b, int c);
+intptr_t RoomLib_SetArgs3(int unused, intptr_t a, intptr_t b, intptr_t c);
 
 /* The single argument other rooms take the same way (RoomLib_SetArg1). */
 extern int g_RoomScriptArg;

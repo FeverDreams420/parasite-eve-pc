@@ -157,7 +157,9 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/actor_classes.c
     src/overlays/room_m272_liberty/m272.c
     src/overlays/room_m005_theater/m005.c
-    src/overlays/room_lib/script_task_var.c)
+    src/overlays/room_lib/script_task_var.c
+    src/overlays/room_lib/orbit_flare.c
+    src/overlays/room_lib/script_args.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_link_libraries(parasite-eve-original PRIVATE psyz)
 set_property(SOURCE src/main/boot/init.c APPEND PROPERTY INCLUDE_DIRECTORIES
@@ -370,6 +372,8 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-melissa-encounter PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 240 LABELS "game-assets;gpu;audio")
     add_test(NAME original-game-backstage-transition COMMAND test-original-actor-animation --native-backstage $<TARGET_FILE:parasite-eve-pc>)
     set_tests_properties(original-game-backstage-transition PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets;gpu;audio")
+    add_test(NAME original-game-hallway-transition COMMAND test-original-actor-animation --native-hallway $<TARGET_FILE:parasite-eve-pc>)
+    set_tests_properties(original-game-hallway-transition PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets;gpu;audio")
     add_dependencies(test-original-actor-animation parasite-eve-pc)
     add_test(NAME original-game-fx-frames COMMAND test-original-actor-animation --fx-frames)
     set_tests_properties(original-game-fx-frames PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "game-assets;gpu")

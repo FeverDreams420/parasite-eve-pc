@@ -8,11 +8,14 @@
 
 #include "pe1/room_module.h"
 
-int *RoomLib_SetArgs3(int unused, int a, int b, int c) {
+int g_RoomScriptArgs[3];
+
+intptr_t RoomLib_SetArgs3(int unused, intptr_t a, intptr_t b, intptr_t c) {
+    (void)unused;
     int *args = g_RoomScriptArgs;
 
-    *args = a;
-    g_RoomScriptArgs[1] = b;
-    g_RoomScriptArgs[2] = c;
-    return args;
+    *args = (s32)(u32)a;
+    g_RoomScriptArgs[1] = (s32)(u32)b;
+    g_RoomScriptArgs[2] = (s32)(u32)c;
+    return (intptr_t)args;
 }

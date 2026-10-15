@@ -126,4 +126,9 @@ extern int RoomLib_PairB;
 int RoomEffect_DroppedFlareParticle(int mode, RoomDroppedFlare *flare,
                                     RoomDroppedFlareSpawn *spawn);
 
+int RoomEffect_OrbitFlareDrift(int mode, void *state, intptr_t argument);
+int RoomEffect_OrbitFlareController(int mode, void *state, intptr_t argument);
+extern struct FieldFxTaskProgram g_RoomOrbitFlareEffects;
+extern u16 g_RoomOrbitFlareScript[30];
+
 #endif

@@ -10,13 +10,17 @@
 
 #include "pe1/field_texture_tables.h"
 #include "pe1/room_flare.h"
+#include "pe1/fieldfx_task.h"
+#include "pe1/room_module.h"
 
 static const GteRotation s_OrbitFlareRotation = { 0, 0, -60, 0 };
 static const GteRotation s_OrbitFlareSpin = { 0, 0, 0, 0 };
 
 /* Drift particle shed by the controller: mode 1 moves it up with a random
  * sideways jitter for fourteen frames, mode 2 draws it fading out. */
-int RoomEffect_OrbitFlareDrift(int mode, RoomFxDriftParticle *rec) {
+int RoomEffect_OrbitFlareDrift(int mode, void *data, intptr_t argument) {
+    RoomFxDriftParticle *rec = data;
+    (void)argument;
     s32 value;
     s32 scale;
     s32 tex;
@@ -58,27 +62,13 @@ ret0:
     return 0;
 }
 
-/* Flashes the scene: marks the battle actor and rewrites the colour code of
- * the first packet in the primary effect channel. */
-#define ROOMEFFECT_ORBIT_FLARE_FLASH()                                       \
-    {                                                                        \
-        RoomFlareChannel *channel = ANIM_OWNER_AS(RoomFlareChannel);                              \
-        RoomFlarePacket *packet;                                             \
-        if (((*(RoomFlarePacket **)channel->pool)->code & 0x3F000000) ==     \
-            0x01000000) {                                                    \
-            ((RoomFlareBattleEntity *)D_8009D254)->actor->flags |= 0x4000;                              \
-            packet = *(RoomFlarePacket **)channel->pool;                     \
-            packet->code = (packet->code & 0xC0FFFFFF) | 0x11000000;         \
-            packet = *(RoomFlarePacket **)channel->pool;                     \
-            packet->code |= 0x80000000;                                      \
-        }                                                                    \
-    }
-
 /* Controller that rises from the scene anchor for fifty-two frames while
  * shedding drift particles, then orbits the anchor at the spawn radius until
  * it leaves the walkable area or touches the floor, flashing the scene. */
-int RoomEffect_OrbitFlareController(int mode, RoomOrbitFlareState *state,
-                                    RoomOrbitFlareSpawn *spawn) {
+int RoomEffect_OrbitFlareController(int mode, void *data, intptr_t argument) {
+    RoomOrbitFlareState *state = data;
+    RoomOrbitFlareSpawn *spawn = (RoomOrbitFlareSpawn *)argument;
+    FieldActor *owner;
     GteRotation rotation = s_OrbitFlareRotation;
     GteRotation spin = s_OrbitFlareSpin;
     GteShortVector floorPos;
@@ -93,13 +83,14 @@ int RoomEffect_OrbitFlareController(int mode, RoomOrbitFlareState *state,
 
     switch (mode) {
     case 0:
-        state->x = ((RoomFlareAnchor *)ANIM_OWNER_AS(RoomFlareChannel)->pool)->x;
-        state->y = ((RoomFlareAnchor *)ANIM_OWNER_AS(RoomFlareChannel)->pool)->y;
-        state->z = ((RoomFlareAnchor *)ANIM_OWNER_AS(RoomFlareChannel)->pool)->z;
+        owner = g_FieldFxOwner->actor;
+        state->x = owner->render_object.target_x;
+        state->y = owner->render_object.target_y;
+        state->z = owner->render_object.target_z;
         state->state = 0;
         state->frame = 0;
         state->soundHandle = -1;
-        switch (FX_TASK_AS(RoomFlareEventState)->phase) {
+        switch (g_FieldFxTaskContext->variables[0]) {
         case 0:
             state->angle = -spawn->angle;
             state->soundHandle = FieldFx_PlaySoundAtOwner(0x565, FieldFx_GetOwnerProgress());
@@ -111,23 +102,24 @@ int RoomEffect_OrbitFlareController(int mode, RoomOrbitFlareState *state,
             state->angle = spawn->angle;
             break;
         }
-        pool = ANIM_POOL_AS(RoomFlareChannel)->pool;
+        pool = g_FieldFxActiveTaskSlot->end;
         return FieldFx_InitCallbackList(pool, 12, 16,
-                             (FieldFxCallbackListCallback)RoomEffect_OrbitFlareDrift);
+                             RoomEffect_OrbitFlareDrift);
     case 1:
         state->frame++;
         switch (state->state) {
         case 0:
+            owner = g_FieldFxOwner->actor;
             if (spawn->attached) {
-                FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomFlareChannel)->pool, 0, &rotation, state);
+                FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)owner, 0, (GteShortVector *)&rotation, (GteShortVector *)state);
             } else {
-                FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomFlareChannel)->pool, 0x19, &rotation, state);
+                FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)owner, 0x19, (GteShortVector *)&rotation, (GteShortVector *)state);
             }
             height = rsin(((s16)state->frame << 10) / 52) * 3 / 2;
             state->height = height;
             state->spread = (s16)height / 48;
             if (g_FieldFxCurrentAge % 3 == 0) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomFlareChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = state->x;
                     child->y = state->y;
@@ -138,15 +130,13 @@ int RoomEffect_OrbitFlareController(int mode, RoomOrbitFlareState *state,
             if ((s16)state->frame < 52) break;
             state->state = 1;
             state->frame = 0;
-            FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomFlareChannel)->pool, 0,
+            FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)owner, 0,
                           (GteShortVector *)&spin);
             state->angle = (s16)(state->angle + 0x400) - spin.y;
-            if (FX_TASK_AS(RoomFlareEventState)->active) {
-                RoomFlareNode **slot = (RoomFlareNode **)ANIM_OWNER_AS(RoomFlareChannel)->pool;
-                if (slot && *slot) {
-                    u8 *flag = (*slot)->state;
-                    if (*flag == 1) *flag = 2;
-                }
+            if (g_FieldFxTaskContext->flags) {
+                FieldActorState *core = owner->state;
+                if (core && core->action_state && *core->action_state == 1)
+                    *core->action_state = 2;
             }
             break;
         case 1:
@@ -159,7 +149,7 @@ int RoomEffect_OrbitFlareController(int mode, RoomOrbitFlareState *state,
                 state->spread = 0x60;
             }
             if (g_FieldFxCurrentAge & 1) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomFlareChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = state->x;
                     child->y = state->y;
@@ -167,7 +157,7 @@ int RoomEffect_OrbitFlareController(int mode, RoomOrbitFlareState *state,
                     child->radius = state->height;
                 }
             }
-            if (Geo_PointInPoly(state->x << 16, state->z << 16, g_FloorPolygonVertices,
+            if (Geo_PointInPoly((s32)((u32)(s32)state->x << 16), (s32)((u32)(s32)state->z << 16), g_FloorPolygonVertices,
                               g_FloorPolygonVertexCount) == 0) {
                 state->state = 2;
                 state->frame = 0;
@@ -176,8 +166,14 @@ int RoomEffect_OrbitFlareController(int mode, RoomOrbitFlareState *state,
                 }
             }
             if (FieldFx_IsPlayerWithinRadius(state, 0x39) == 0) break;
-            if (FX_TASK_AS(RoomFlareEventState)->active) {
-                ROOMEFFECT_ORBIT_FLARE_FLASH();
+            if (g_FieldFxTaskContext->flags) {
+                owner = g_FieldFxOwner->actor;
+                FieldActorState *core = owner->state;
+                if ((core->core_flags & 0x3F000000) == 0x01000000) {
+                    g_PlayerEntity->state->flags |= 0x4000;
+                    core->core_flags = (core->core_flags & 0xC0FFFFFF) | 0x11000000;
+                    core->core_flags |= 0x80000000;
+                }
             }
             state->state = 2;
             state->frame = 0;
@@ -301,3 +297,15 @@ int RoomEffect_OrbitFlareController(int mode, RoomOrbitFlareState *state,
     }
     return 0;
 }
+
+/* USA room descriptor 8018FCB4 and its authored task script 8018FC78. */
+u16 g_RoomOrbitFlareScript[30] = {
+    5,0,0, 1,6,30, 1,0,0, 2,0,0, 1,0,1,
+    2,0,0, 1,0,2, 2,0,0, 4,2,0, 0,0,0,
+};
+FieldFxTaskProgram g_RoomOrbitFlareEffects = {
+    .table={.callbacks={RoomEffect_OrbitFlareController},
+            .sizes={sizeof(RoomOrbitFlareState)}},
+    .initialize=RoomLib_SetArgs3,
+    .script=g_RoomOrbitFlareScript,
+};

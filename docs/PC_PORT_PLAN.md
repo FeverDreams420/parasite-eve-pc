@@ -321,6 +321,53 @@ odpowiadający wspólny moduł orbit_flare.c i script_args.c istnieje, ale nie
 jest jeszcze wpięty do natywnego celu. Nie pominięto deskryptora i nie uznano
 M012 za działające. To bieżący punkt dalszego portowania.
 
+Następnie cały istniejący orbit_flare.c i script_args.c włączono do natywnego
+celu. Funkcje pozostały na miejscu: oba callbacki mają natywne ABI, odwołania
+do aktora/zdarzenia/kontekstu/listy używają kanonicznych pól, a współrzędne
+16.16 są składane z unsigned shift. Init zwraca pełny wskaźnik hosta do
+oryginalnego trzywyrazowego rekordu, zachowując 32-bitowe argumenty.
+Deskryptor 115 jest wiązany dla M012/M013/M027/M030 z kontrolą adresu USA 8018FCB4;
+rekord jest zerowany przy ponownym załadowaniu. Nie dodano plików ani
+zastępczego efektu. Pozostałe kopie tego modułu w innych lokacjach wymagają
+jeszcze walidacji i podpięcia swoich deskryptorów.
+
+Fixture porównuje cztery oryginalne deskryptory, osiem callbacków/rozmiarów,
+initializer i wszystkie 30 półsłów skryptu z rzeczywistym PE.IMG.
+Cały wspólny zakres 3332 bajtów kodu/danych w tych czterech bankach jest
+identyczny (SHA-256 `883c0511f4de689bb0b14b05548026d2da4ae292d52d12dd2d1054646712e13e`);
+fixture sprawdza go przy każdym odczycie, zamiast zgadywać zgodność po samym
+adresie callbacka. Inne kopie mogą mieć inne adresy i nadal wymagają audytu.
+36 stanów CPU inicjalizatora daje `3c0af86f8810cdb5`, 216 stanów ruchu cząstek
+`f3429d82d5c5a69d` (BIOS rand jest kontrolowaną granicą), a 8640 stanów
+lotu/wygaszania kontrolera `a1ad64689555871d`. Ostatni zbiór wykonuje rzeczywiste
+rsin/rcos, test wielokąta i odległości; obejmuje trafienie gracza, wyjście poza
+podłogę, wrap licznika, dodatnie/ujemne promienie i sygnały. Nie obejmuje
+porównania rysowania z rasteryzacją PS1. Osobny natywny test 160 klatek
+uruchamia prawdziwe Scene_LoadRoomAssets/Pm_SendCmd/Start/Exec/Stop, trzy
+kontrolery authored script, macierze, cząstki i oba bufory rysowania. Sprawdza
+pełne linki OT, granice areny, naturalne wygaszenie i sygnał zakończenia 4.
+
+Naturalny przebieg od New Game z samym inputem osiąga 104000 VBlank,
+M012, game_frame 770, move_lock 0, HP 14/45, pozycję Ayi
+`[19202048,0,170917888]`, yaw 0. Obraz korytarza obejrzano. FNV całej VRAM
+to `8e856f4fc0b74e6d`, SHA-256
+`41e4269d9449efe9d415e2db13a528affcda28e99517c80b9e9ad087d6ebe79c`.
+Nowy 44. test `original-game-hallway-transition` w istniejącym fixture
+przeszedł w 150,96 s. Actor-animation i --assets przeszły razem w 12,23 s
+przed rozszerzeniem oracla kontrolera; rozszerzony fixture bez assets także
+przeszedł. Po zachowaniu leniwego odczytu ownera w callbacku uruchomiono pełny
+zestaw 44 testów oraz świeże sanitizery; ich wyniki są jeszcze w toku.
+Film przemiany szczura i walka nadal wymagają przejścia w porcie.
+Sanitizer wskazał błąd wyłącznie w nowym odczycie fixture: dodanie pełnego
+adresu PS1 do bufora przed odjęciem bazy tworzyło pośredni wskaźnik poza
+obiektem. Odejmowanie jest teraz wykonywane na liczbach przed dodaniem offsetu.
+Świeży --assets z ASan/UBSan/function i instrumentowanym PsyZ/SDL po tej
+poprawce i rozszerzeniu do czterech banków przeszedł bez raportów. Regresja
+M012 powtórzona w pełnym zestawie przeszła w 155,35 s; pozostała część
+zestawu jest jeszcze w toku. Dalszy input w porcie wybrał boczne wejście do M013
+(`0xA80011C8`), gdzie ujawnił niepodpięty opkod 77 (Aya 0:0, script_byte 440).
+Nie jest to dowód filmu szczura ani walki M012.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

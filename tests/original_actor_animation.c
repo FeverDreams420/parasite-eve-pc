@@ -8593,8 +8593,8 @@ static int original_native_bootstrap(const char *executable,int field_control)
     unsigned first=field_control>=2?(unsigned)field_control+10:field_control?6:0;
     unsigned end=field_control>=2?first+1:field_control?12:6;
     for(unsigned input=first;input<end;++input){
-        const char *limit=input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
-        const char *args[384]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
+        const char *limit=input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+        const char *args[448]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
         for(unsigned event=0;event<(input==3?4u:input==2 || input>=4?6u:input?1u:0u);++event){
@@ -8646,7 +8646,20 @@ static int original_native_bootstrap(const char *executable,int field_control)
             if(input>=13){
                 args[at++]="--pad-at";args[at++]="60634:128";
                 args[at++]="--pad-at";args[at++]="60734:192";
-                for(unsigned tick=61334;tick<(input==14?81500u:64554u);tick+=510)BOOTSTRAP_PRESS(tick,0x4000);
+                for(unsigned tick=61334;tick<(input>=14?81500u:64554u);tick+=510)BOOTSTRAP_PRESS(tick,0x4000);
+            }
+            if(input==15){
+                static const unsigned route[][2]={
+                    {400,16},{600,32},{650,16},{700,48},{600,128},
+                    {250,64},{650,48},{550,128},{800,16},{210,32},
+                    {650,16},{1800,128},{650,64},{1500,128},{500,0},
+                    {10,0x4000},{600,0},{850,16},{780,144},{1001,0}};
+                unsigned tick=82000;
+                for(unsigned i=0;i<sizeof(route)/sizeof(route[0]);++i){
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",tick,route[i][1]);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                    tick+=route[i][0];
+                }
             }
 #undef BOOTSTRAP_PRESS
         }
@@ -8659,7 +8672,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -8719,6 +8732,12 @@ static int original_native_bootstrap(const char *executable,int field_control)
            !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":60}") || strstr(output,"\"type\":2,\"sub\":0") ||
            !strstr(output,"\"player\":true,\"flags\":8,\"position\":[22609920,-72810496,41484288],\"yaw\":3625") ||
            !strstr(output,"\"combat\":{\"mode\":12,\"live_enemies\":0,\"player_hp\":14,\"player_max_hp\":45}")))valid=0;
+        if(input==15 && (!output || !strstr(output,"\"scene\":2818573512") ||
+           !strstr(output,"\"flags\":0,\"draw_slot\"") || !strstr(output,"\"move_lock\":0") ||
+           !strstr(output,"\"game_frame\":504") || !strstr(output,"\"video_state\":0") ||
+           !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":-1}") ||
+           !strstr(output,"\"player\":true,\"flags\":8,\"position\":[61903440,-21495808,-178751558],\"yaw\":3536") ||
+           !strstr(output,"\"combat\":{\"mode\":12,\"live_enemies\":0,\"player_hp\":14,\"player_max_hp\":45}")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -8758,6 +8777,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==12 && hash!=UINT64_C(0x4b5ea0ce332f7bf5))valid=0;
         if(input==13 && hash!=UINT64_C(0xa2276ccc2247ed21))valid=0;
         if(input==14 && hash!=UINT64_C(0xc7ae3598591ad7c3))valid=0;
+        if(input==15 && hash!=UINT64_C(0x1a99c887686e1a86))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
@@ -8776,6 +8796,7 @@ int main(int argc, char **argv)
 
     if(argc==3 && !strcmp(argv[1],"--native-stage"))return original_native_bootstrap(argv[2],2);
     if(argc==3 && !strcmp(argv[1],"--native-battle-entry"))return original_native_bootstrap(argv[2],3);
+    if(argc==3 && !strcmp(argv[1],"--native-backstage"))return original_native_bootstrap(argv[2],5);
     if(argc==3 && !strcmp(argv[1],"--native-melissa"))return original_native_bootstrap(argv[2],4);
     if(argc==3 && !strcmp(argv[1],"--native-field-control"))return original_native_bootstrap(argv[2],1);
     if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2],0);

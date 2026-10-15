@@ -267,6 +267,24 @@ rozszerzono istniejącą diagnostykę o tryb/liczbę przeciwników/HP i dodano
 powyższy stan i pełną VRAM. Nowy test oraz ponowiony bootstrap przeszły
 odpowiednio w 128,26 s i 145,11 s, z wymaganym Disc 1 i bez okna.
 
+Naturalne wyjście po spotkaniu prowadzi do M009 (`0xA80004C8`), za scenę.
+Pierwszy długi harmonogram inputu wielokrotnie przechodził przez te same drzwi
+w obie strony. Ślad Script_EncodeBarcode/Boot_RunFrame potwierdził poprawny
+wybór obu tokenów; nie był to dowód błędu loadera ani celu przejścia.
+Po puszczeniu kierunku przy wejściu, przebieg do 95751 VBlank pozostaje w M009:
+game_frame 504, move_lock 0, HP 14/45, pozycja Ayi
+`[61903440,-21495808,-178751558]`, yaw 3536. Obejrzano obraz lokacji;
+pełna VRAM ma FNV `1a99c887686e1a86`, SHA-256
+`ae6271a22ca7d9ec26ed1b808e261553ce2c4be84f854b8e559dca392044ad45`.
+Oryginał PS1 także doszedł do M009, ale pozycja/fazy animacji nie są identyczne:
+70096/71680 pikseli RGB555 zgadza się w tych dwóch ujęciach. To porównanie
+różnych momentów sceny, nie dowód pixel perfect. Kod gry pozostał bez zmian;
+istniejący fixture rozszerzono o `--native-backstage` i regresję stanu/VRAM.
+Nowy 43. test `original-game-backstage-transition` przeszedł z wymaganym Disc 1
+w 144,71 s. Dalsze podejście do otworu i próba zamknięcia dialogu ujawniają
+niepodpięty opkod 67 (M009, Aya 0:0, script_byte 1072). Oryginał po tym dialogu
+przechodzi do M011; port nie ma jeszcze dowodu tego przejścia.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

@@ -494,6 +494,12 @@ static int callback_list_storage(void)
     intptr_t record=RoomLib_SetTaskVar0(0,0,0,0);
     if(record!=(intptr_t)(g_RoomM005ScriptAnchorView-4) || g_RoomM005ScriptFadeView!=(u8 *)record+12 ||
         room_context.variables[0]!=7 || RoomLib_SetTaskVar0(1,0,0,0)!=record || room_context.variables[0]!=1)return 0;
+    room_context.flags=0x5a;room_context.argument=record;
+    if(FX_TASK_AS(RoomM005EventState)->triggered!=1 || FX_TASK_AS(RoomDlgState)->h12!=1 ||
+        FX_TASK_AS(RoomM005BeaconEvent)->active!=0x5a || FX_TASK_AS(RoomM005BeaconEvent)->variant!=1)return 0;
+    FX_TASK_AS(RoomM005BeaconEvent)->variant=23;FX_TASK_AS(RoomDlgState)->bD=0x42;
+    if(room_context.variables[0]!=23 || room_context.flags!=0x42 || room_context.argument!=record ||
+        room_context.pc.script || room_context.cursor)return 0;
     GteShortVector *anchor=(void *)g_RoomM005ScriptAnchorView,*fade=(void *)g_RoomM005ScriptFadeView;
     *anchor=(GteShortVector){-123,456,-789,0};*fade=(GteShortVector){12,-34,56,0};
     s16 *record_words=(s16 *)record;

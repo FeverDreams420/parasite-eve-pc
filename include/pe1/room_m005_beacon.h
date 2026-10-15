@@ -78,11 +78,13 @@ typedef struct RoomM005BeaconEntity {
 } RoomM005BeaconEntity;
 
 typedef struct RoomM005BeaconEvent {
-    /* 0x00 */ u8 reserved[0xD];
+    /* 0x00 */ u8 reserved[PE1_OFFSETOF(FieldFxTaskContext, flags)];
     /* 0x0D */ u8 active;
     /* 0x0E */ u8 reserved0E[4];
     /* 0x12 */ s16 variant;
 } RoomM005BeaconEvent;
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM005BeaconEvent, active) == PE1_OFFSETOF(FieldFxTaskContext, flags), m005_native_event_active);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM005BeaconEvent, variant) == PE1_OFFSETOF(FieldFxTaskContext, variables), m005_native_event_variant);
 
 typedef union RoomM005BeaconOffset {
     s32 word[2];

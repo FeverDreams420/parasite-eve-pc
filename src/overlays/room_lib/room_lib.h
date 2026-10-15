@@ -920,11 +920,13 @@ typedef struct RoomChanCtx {
 } RoomChanCtx;
 
 typedef struct RoomDlgState {
-    char pad[0xD];
+    char pad[PE1_OFFSETOF(FieldFxTaskContext, flags)];
     unsigned char bD;             /* 0x0D */
     char padE[0x4];
     short h12;                    /* 0x12 */
 } RoomDlgState;
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDlgState, bD) == PE1_OFFSETOF(FieldFxTaskContext, flags), room_dialog_native_flags);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDlgState, h12) == PE1_OFFSETOF(FieldFxTaskContext, variables), room_dialog_native_signal);
 
 
 /* The colour ramp table of the timed spawns (timed_spawn.c), each

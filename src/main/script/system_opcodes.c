@@ -943,7 +943,8 @@ int Script_SetEntityTarget(int **arg0) {
     return 1;
 }
 
-int Script_ResetRenderState(void) {
+int Script_ResetRenderState(int **unused) {
+    (void)unused;
     Pm_StopAllBoth();
     return 1;
 }

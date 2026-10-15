@@ -2207,7 +2207,8 @@ int FieldFx_UpdateTasks(PmSlotHeader *raw)
                 if (g_FieldFxTaskContext->flags) {
                     if (g_FieldFxOwner->actor->state != 0) {
                         g_FieldFxOwner->actor->state->core_flags &= 0xC0FFFFFF;
-                        *g_FieldFxOwner->actor->state->action_state = 4;
+                        if (g_FieldFxOwner->actor->state->action_state)
+                            *g_FieldFxOwner->actor->state->action_state = 4;
                         g_FieldFxTaskContext->flags = 0;
                     }
                 }
@@ -2251,7 +2252,7 @@ int FieldFx_UpdateTasks(PmSlotHeader *raw)
                 g_FieldFxTaskContext->flags = 1;
             } else if (g_FieldFxTaskContext->flags && g_FieldFxOwner->actor && g_FieldFxOwner->actor->state) {
                 u8 *mode = g_FieldFxOwner->actor->state->action_state;
-                if (*mode == 1)
+                if (mode && *mode == 1)
                     *mode = 2;
             }
             break;
@@ -2259,17 +2260,19 @@ int FieldFx_UpdateTasks(PmSlotHeader *raw)
     }
     if (g_FieldFxTaskContext->flags && g_FieldFxOwner->actor && g_FieldFxOwner->actor->state) {
         state = g_FieldFxOwner->actor->state;
+        /* Finishing an animation clears its active event before this task
+         * update. No event-phase gate applies when that record is absent. */
         flags = state->core_flags;
         count = (flags >> 24) & 0x3F;
         if (count >= 2)
             state->core_flags = (flags & 0xC0FFFFFF) | (((count - 1) & 0x3F) << 24);
         if ((int)((state->core_flags >> 24) & 0x3F) > 0) {
-            if (*state->action_state == 0) {
+            if (state->action_state && *state->action_state == 0) {
                 if (state->control10.command_value <= 0)
                     owner->prefix.reserved00 = 4;
             }
         }
-        if (*state->action_state == 0) {
+        if (state->action_state && *state->action_state == 0) {
             if (state->core_flags & 0x180E)
                 owner->prefix.reserved00 = 4;
             if (g_FieldFxOwner->actor->mode < 2)

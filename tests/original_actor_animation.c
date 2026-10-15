@@ -802,11 +802,11 @@ static int native_task_cycle(void)
     if(FieldFx_DrawTasks((PmSlotHeader *)owner)!=0 || task_pointer_value!=11)return 0;
     g_ViewMatrixSlot.value=saved_view;
     {
-        PmPrimarySlot bank[11]={0};PmTables old_tables=g_PmTables;
+        PmPrimarySlot bank[11]={0};PmSecondarySlot secondary[11]={0};PmTables old_tables=g_PmTables;
         Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
-        FieldActor actor={0},*old_actor=g_CurrentEntity;ScriptNode *old_node=g_ScriptNodePool;u32 *old_cursor=g_ScriptCursor;
+        FieldActor actor={0},*old_actor=g_CurrentEntity,*old_player=g_PlayerEntity,*old_head=g_FieldActorListHead;ScriptNode *old_node=g_ScriptNodePool;u32 *old_cursor=g_ScriptCursor;
         g_CurrentEntity=&actor;
-        g_PmTables=(PmTables){g_PmCmdHandlerArray,bank,NULL};
+        g_PmTables=(PmTables){g_PmCmdHandlerArray,bank,secondary};
         g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
         if(g_PmCmdHandlerArray[85]!=&g_FieldFxTaskClass)return 0;
         program.script=script+9;task_pointer_value=0;
@@ -832,6 +832,31 @@ static int native_task_cycle(void)
         dispatch=(ScriptNode){.current.script=states,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
         if(states[7]!=4 || bank[0].header.state!=4 || dispatch.current.script!=states+10 || dispatch.flags!=0x90 || g_ScriptNodePool)return 0;
         if(Pm_Stop(0,&actor,0)!=0 || bank[0].header.state)return 0;
+        FieldActor peer={.type_id=6,.sub_id=7,.flags=0x10,.next=&actor};actor.type_id=6;actor.sub_id=7;
+        g_FieldActorListHead=&peer;g_PlayerEntity=&actor;
+        if(Scene_LoadRoomAssets(117,&actor)!=0 || Scene_LoadRoomAssets(117,&peer)!=1)return 0;
+        secondary[3].header=(PmSlotHeader){.state=1,.command=117,.owner=&actor};
+        u32 selected[]={152|(2u<<13),0,6,7,32,0};
+        dispatch=(ScriptNode){.current.script=selected,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
+        if(bank[0].header.state || bank[1].header.state!=1 || secondary[3].header.state || dispatch.current.script!=selected+6 || dispatch.flags!=0x90 || g_ScriptNodePool)return 0;
+        u32 stop[]={151|(1u<<13),0,1,32,0};
+        dispatch=(ScriptNode){.current.script=stop,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
+        if(bank[1].header.state!=1 || dispatch.current.script!=stop+5 || dispatch.flags!=0x90 || g_ScriptNodePool)return 0;
+        g_CurrentEntity=&peer;
+        dispatch=(ScriptNode){.current.script=stop,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
+        if(bank[1].header.state || dispatch.current.script!=stop+5 || dispatch.flags!=0x90 || g_ScriptNodePool)return 0;
+        if(Scene_LoadRoomAssets(117,&actor)!=0 || Scene_LoadRoomAssets(117,&peer)!=1)return 0;
+        secondary[4].header=(PmSlotHeader){.state=1,.command=117,.owner=&peer};
+        selected[3]=99;dispatch=(ScriptNode){.current.script=selected,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
+        if(bank[0].header.state!=1 || bank[1].header.state!=1)return 0;
+        selected[2]=0;dispatch=(ScriptNode){.current.script=selected,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
+        if(bank[0].header.state || bank[1].header.state!=1 || secondary[4].header.state!=1)return 0;
+        u32 reset[]={153,0,32,0};
+        dispatch=(ScriptNode){.current.script=reset,.active=1,.flags=0x80};g_ScriptNodePool=&dispatch;Script_RunQueue();
+        for(unsigned i=0;i<11;++i)if(bank[i].header.state || secondary[i].header.state)return 0;
+        if(dispatch.current.script!=reset+4 || dispatch.flags!=0x90 || g_ScriptNodePool)return 0;
+        g_CurrentEntity=&actor;g_PlayerEntity=old_player;g_FieldActorListHead=old_head;
+        puts("Original effect cleanup opcodes 151/152/153: current/selected/player ownership, dead/missing subtype filtering and both-bank reset passed through dispatcher");
         memset(bank,0,sizeof(bank));g_FieldFxTaskPrograms[32]=NULL;
         if(Scene_LoadRoomAssets(117,NULL)!=-8 || bank[0].header.state ||
             Scene_LoadRoomAssets(191,NULL)!=-8 || bank[0].header.state ||
@@ -873,6 +898,31 @@ static int native_task_cycle(void)
     table.callbacks[0]=reject_task_allocation;
     if(FieldFx_SpawnTask(0)!=-1 || owner->tasks.count || owner->tasks.used || owner->tasks.cursor!=owner->tasks.arena ||
        owner->tasks.slots[0].id!=0xffff) return 0;
+    /* Retail's NULL reads see the nonzero low-memory byte observed after
+     * boot. Compare owner/core state; native code never signals a missing event. */
+    FieldActor idle_actor={0};FieldActorState idle_state={0};idle_actor.state=&idle_state;
+    void *saved_archive=g_GameState.loaded_scene_archive;int saved_palette=g_FieldFxAltPaletteFlag;
+    struct {SceneAssetBlob header;SceneAssetDirectory directory;} idle_archive={0};
+    idle_archive.header.directoryOffset=sizeof(SceneAssetBlob);g_GameState.loaded_scene_archive=&idle_archive.header;
+    u16 idle_scripts[][6]={{4,0,1},{5,1,0,4,0,1},{0,0,0}};
+    const u32 held_flags[]={0,0x1000000,0x2000000,0x3000000,0x1000002,0x200180e};
+    const int health[]={-1,0,1},idle_modes[]={0,1,4};uint64_t idle_hash=UINT64_C(14695981039346656037);
+    for(unsigned script_id=0;script_id<3;++script_id)for(unsigned held=0;held<6;++held)
+    for(unsigned hp=0;hp<3;++hp)for(unsigned mode=0;mode<3;++mode)for(unsigned phase=0;phase<6;++phase){
+        FieldFx_InitTaskContext((PmSlotHeader *)owner);owner->prefix.actor=&idle_actor;owner->prefix.asset_type=0;
+        owner->prefix.reserved00=0;owner->tasks.flags=1;owner->tasks.pc.script=idle_scripts[script_id];
+        idle_state=(FieldActorState){0};idle_state.core_flags=held_flags[held];idle_state.control10.command_value=health[hp];
+        u8 event_phase=phase?phase-1:0;idle_state.action_state=phase?&event_phase:NULL;idle_actor.mode=idle_modes[mode];
+        u32 result=FieldFx_UpdateTasks((PmSlotHeader *)owner);
+        const u32 words[]={result,owner->prefix.reserved00,idle_state.core_flags,owner->tasks.flags,
+            (u32)((u8 *)owner->tasks.pc.script-(u8 *)idle_scripts[script_id]),idle_state.action_state!=NULL,
+            idle_state.action_state?*idle_state.action_state:0};
+        for(unsigned i=0;i<7;++i)for(unsigned b=0;b<4;++b)
+            idle_hash=(idle_hash^((words[i]>>(b*8))&255))*UINT64_C(1099511628211);
+    }
+    g_GameState.loaded_scene_archive=saved_archive;g_FieldFxAltPaletteFlag=saved_palette;
+    if(idle_hash!=UINT64_C(0x15a8baf2abf03bd9)){fprintf(stderr,"Idle event task hash %016llx\n",(unsigned long long)idle_hash);return 0;}
+    puts("Original task event lifetime: 972 USA CPU cases, absent/0..4 event phases, hold/stop/signal, HP and actor-mode gates passed without low-memory writes");
     for(unsigned byte=0;byte<sizeof(storage.guard);++byte) if(storage.guard[byte]!=0xa5) return 0;
     g_FieldFxTaskContext=NULL; g_FieldFxActiveTaskSlot=NULL; g_FieldFxOwner=NULL;
     puts("Original effect tasks: init, script spawn/wait/stop, update/draw/completion, eight-slot limit, native alignment/wrap and allocation failure passed");
@@ -2341,6 +2391,55 @@ static int original_script_event_entries(void)
     puts("Original event setup opcodes 112/183/176: 216 unhooked USA CPU states, six records, narrowed operands, all parameters and full dispatcher passed");return 1;
 }
 
+static int original_animation_event_opcode(void)
+{
+    FieldActor *old_actor=g_CurrentEntity,*old_player=g_PlayerEntity,*old_head=g_FieldActorListHead;
+    ScriptNode *old_node=g_ScriptNodePool;u32 *old_cursor=g_ScriptCursor;u32 old_flags=g_GameStateFlags;
+    unsigned old_sounds=sounds;void *old_rows[48];memcpy(old_rows,g_GameState.bank_rows[0],sizeof(old_rows));
+    RenderAnimationDataHeader animation={0};animation.frame_count=9;
+    for(unsigned i=0;i<48;++i)g_GameState.bank_rows[0][i]=&animation;
+    g_PlayerEntity=NULL;g_FieldActorListHead=NULL;g_GameStateFlags=2;
+    const unsigned modes[]={0,1,2,6,7,8,9,14,15},flags[]={0,0x6000,0x40000000,0x80000000};
+    const unsigned frames[][2]={{2,4},{8,9},{8,1}},kinds[]={0,2,2,4};
+    uint64_t hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[100]!=Script_RunEntityCommand)return 0;
+    for(unsigned slot=0;slot<6;++slot)for(unsigned variant=0;variant<4;++variant)for(unsigned m=0;m<9;++m)
+    for(unsigned state=0;state<5;++state)for(unsigned f=0;f<3;++f)for(unsigned mask=0;mask<4;++mask){
+        EntityAnimEventCore core={0};BattleEntity actors[2]={{0}};
+        core.flags.raw=(slot<<21)|flags[mask];core.kind=kinds[variant];core.baseMode=4;core.assetId=1000;
+        core.active=core.records+slot;
+        for(unsigned i=0;i<6;++i){core.records[i].state=i==slot?state:0;core.records[i].enterMode=6;core.records[i].exitMode=7;
+            core.records[i].enterStep=0x18000;core.records[i].exitStep=0x24000;core.records[i].category=slot%2?3:1;core.records[i].frame=3;}
+        for(unsigned i=0;i<2;++i){actors[i].core=&core;actors[i].entityFlags=0x240;actors[i].animLastFrame=8;actors[i].animStep=0x12000;}
+        if(variant>=2)actors[0].parent=actors+1;
+        BattleEntity *selected=actors+(variant>=2);selected->actionMode=modes[m];
+        selected->animPrev.fixed=frames[f][0]<<16;selected->animFrame=frames[f][1]<<16;
+        EntityAnimEventCore before_core=core;BattleEntity before_actors[2];memcpy(before_actors,actors,sizeof(actors));
+        g_CurrentEntity=(FieldActor *)actors;ScriptNode node={.active=7};u32 scratch[16]={0};
+        g_ScriptNodePool=&node;g_ScriptCursor=scratch+8;sounds=0;
+        int command=slot|((mask%2)<<8),out=(s32)0x98765432;int *args[]={&command,&out};
+        u32 result=Script_RunEntityCommand(args);u32 words[27]={result,(u32)out,(u32)(g_ScriptCursorAddress-(uintptr_t)scratch),
+            (u32)node.active,core.flags.raw,core.active?1+(u32)(core.active-core.records):0};
+        for(unsigned i=0;i<6;++i)words[6+i]=core.records[i].state;
+        for(unsigned i=0;i<2;++i){u32 values[]={actors[i].entityFlags,actors[i].actionMode,actors[i].animLastFrame,
+            actors[i].animFrame,(u32)actors[i].animPrev.fixed,(u32)actors[i].animStep,actors[i].actionData==&animation};
+            memcpy(words+12+i*7,values,sizeof(values));}
+        words[26]=sounds;
+        for(unsigned i=0;i<27;++i)for(unsigned b=0;b<4;++b)hash=(hash^((words[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        EntityAnimEventCore after_core=core;BattleEntity after_actors[2];memcpy(after_actors,actors,sizeof(actors));
+        core=before_core;memcpy(actors,before_actors,sizeof(actors));sounds=0;
+        u32 code[]={100|(2u<<13),0,(u32)command,0x98765432,32,0};
+        node=(ScriptNode){.current.script=code,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(code[3]!=(u32)out || memcmp(&core,&after_core,sizeof(core)) || memcmp(actors,after_actors,sizeof(actors)) ||
+           sounds!=words[26] || node.current.script!=code+(result?6:0) || node.active!=(result?0:1) ||
+           node.flags!=(result?0x90:0x80) || g_ScriptNodePool)return 0;
+    }
+    g_CurrentEntity=old_actor;g_PlayerEntity=old_player;g_FieldActorListHead=old_head;g_ScriptNodePool=old_node;g_ScriptCursor=old_cursor;
+    g_GameStateFlags=old_flags;sounds=old_sounds;memcpy(g_GameState.bank_rows[0],old_rows,sizeof(old_rows));
+    if(hash!=UINT64_C(0xaa6e5b4256b2bf25)){fprintf(stderr,"Animation event hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original animation event opcode 100: 12960 USA CPU cases with recorded audio boundary, parent selection, frames/wrap, six records, all state changes and dispatcher retry passed");return 1;
+}
+
 static int original_typed_field_opcode(void)
 {
     FieldActor *saved_list=g_FieldActorListHead,*saved_player=g_PlayerEntity,*saved_actor=g_CurrentEntity;
@@ -2960,7 +3059,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

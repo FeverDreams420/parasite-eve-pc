@@ -196,6 +196,40 @@ VRAM: FNV `a2276ccc2247ed21`, SHA-256
 Nowy, dodatkowy 41. test przeszedł w 98,85 s; obraz tego punktu obejrzano.
 HUD i dalsza interakcja walki nie są jeszcze potwierdzone tym punktem.
 
+Podpięto istniejący Script_RunEntityCommand (100). 12960 porównań z CPU USA
+obejmuje sześć rekordów, rodzica dla kind 2/4, przejścia animacji, wrap klatki,
+flagi, zwrot wyniku i ponowienie instrukcji przez dispatcher
+(`aa6e5b4256b2bf25`). Entity_SetActionMode wykonuje się jako oryginalny CPU;
+granica żądania audio jest rejestrowana, bez wykonywania audio w tym oracle.
+Osobne wcześniejsze testy audio pozostają wymagane; to nie dowód dźwięku walki.
+
+Naturalny przebieg ujawnił potem odczyt przez NULL w FieldFx_UpdateTasks:
+zakończenie animacji prawidłowo zeruje aktywny rekord, a efekt żyje dłużej.
+Istniejąca procedura nie zapisuje już sygnału do nieobecnego rekordu i nie
+stosuje wtedy bramek jego fazy. Nie dodano zastępczego rekordu ani niskiej
+pamięci PS1. Porównanie 972 stanów zadania/właściciela z CPU USA obejmuje
+brak rekordu oraz fazy 0–4, stop/sygnał/wait, HP i tryb aktora
+(`15a8baf2abf03bd9`). Oryginał po boot ma pod adresem 0 bajt 3; oracle daje
+ten sam hash dla 3 i 4. Odczyty NULL nie oznaczają więc fazy zero. Natywny
+kod nie powiela zapisu pod adres 0 przy zakończeniu efektu bez odbiorcy.
+Podpięto też istniejące sprzątanie 151/152/153 z poprawnym ABI: regresja
+wykonuje prawdziwe zadania PM przez dispatcher, sprawdza właściciela,
+wybór gracza/aktora, pomijanie usuniętego aktora i brak subtype oraz reset
+obu banków. Naturalny przebieg dochodzi do opkodu 198 (Aya 0:0,
+script_byte 4832); dalsza walka pozostaje niepotwierdzona.
+Skorygowany kandydat przechodzi pełne 41/41 bez skipów w 413,59 s.
+Świeży pełny executable z ASan/UBSan/function i instrumentowanym SDK
+dochodzi do tego samego oczekiwanego abortu 198 bez raportów sanitizerów;
+nie oznacza to ukończenia walki ani naturalnego shutdown. Następnie wzmocniono
+regresję 151/152/153 o aktywne wpisy drugiego banku. Bez dalszych zmian logiki
+gry fixture --assets przechodzi ponownie w 12,10 s oraz z ASan/UBSan/function.
+
+Wcześniejsze zatrzymanie oryginału w DuckStation wynikało z włączonej
+przyciskiem Start pauzy (global_flags 8001). Ponowny Start przywrócił 8000
+i normalną sekwencję operową, w tym film z pożarem teatru. Nie był to
+potwierdzony błąd emulatora; odniesienie pierwszej walki nadal wymaga dojścia.
+Oryginał doszedł już do sterowania Ayą w M004 po pożarze (klatka 55110).
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

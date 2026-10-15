@@ -315,7 +315,7 @@ void Battle_AdvancePhase(void) {
 
 void Battle_StartEnemyAttackEffect(BattleEntity *entity)
 {
-    Combatant *core = entity->core;
+    EnemyCombatant *core = entity->core;
     u32 *status = &core->statusFlags2;
     int effect;
 

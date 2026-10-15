@@ -38,6 +38,8 @@ add_library(parasite-eve-original OBJECT
     src/main/battle/context.c
     src/main/battle/player_turn.c
     src/main/battle/phase.c
+    src/main/battle/enemy_slots.c
+    src/main/battle/enemy_movement.c
     src/main/entity/combat.c
     src/main/aya/stats.c
     src/main/item/active_list.c

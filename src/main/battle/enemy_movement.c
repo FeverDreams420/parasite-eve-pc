@@ -3,13 +3,10 @@
 #include "pe1/battle_runtime.h"
 #include "pe1/entity_animation.h"
 #include "pe1/gte.h"
-#include "pe1/math64.h"
 #include "pe1/random.h"
 
 /* Legacy name: this computes enemy damage, applies attack/status resistances,
- * subtracts HP, and starts the hit reaction. The double arithmetic calls the
- * LIBMATH soft-float entry points directly. Matching debt: the s4 pin keeps
- * enemy and its flagCore copy in retail's saved registers. */
+ * subtracts HP, and starts the hit reaction. */
 void Battle_StepEnemyMovement(BattleEntity *entity)
 {
     BattleAction *weaponAction;
@@ -40,18 +37,14 @@ void Battle_StepEnemyMovement(BattleEntity *entity)
     {
         s32 stat = (u16)g_ActiveActor->stat1E;
         double base, scale;
-        /* Integer bit patterns avoid native GCC's broken double literal pool. */
-        union { double value; unsigned long long bits; } factor;
         stat -= 25;
         stat += g_ActiveActor->field04.fieldId04;
-        base = __floatsidf(stat * 6);
-        scale = __floatsidf(g_BattleTargetCount - 1);
-        factor.bits = 0x3FB999999999999AULL; /* 0.1 */
-        scale = __muldf3(scale, factor.value);
-        scale = __adddf3(scale, 1.0);
-        scale = __muldf3(base, scale);
-        factor.bits = 0x401C000000000000ULL; /* 7.0 */
-        attackPower = __fixdfsi(__divdf3(scale, factor.value));
+        base = (double)(stat * 6);
+        scale = (double)(g_BattleTargetCount - 1);
+        scale *= 0.1;
+        scale += 1.0;
+        scale = base * scale;
+        attackPower = (s32)(scale / 7.0);
     }
     else if (activeState & 0x100000)
     {
@@ -203,51 +196,27 @@ void Battle_StepEnemyMovement(BattleEntity *entity)
     flagCore->coreFlags = (flagCore->coreFlags & ~0x6000) | 0x4000;
 }
 
-typedef struct FacingMotion {
-    u8 state;
-    u8 phase;
-    u16 amplitude;
-    s16 angle;
-} FacingMotion;
-
-typedef struct FacingCore {
-    u32 flags;
-    u8 pad04;
-    s8 status05;
-    u8 pad06[0x16];
-    u8 actions[0x80];
-    u8 pad9C[8];
-    FacingMotion motion;
-    u8 padAA[0x12];
-    u8 mode;
-    u8 previous_mode;
-    u8 step_flag;
-    u8 padBF;
-    s32 previous_frame;
-    s32 previous_step;
-    s32 previous_delta;
-} FacingCore;
-
 int Battle_CalcRelativeAngle(BattleEntity *, BattleEntity *);
 
 void Battle_UpdateEntityFacing(BattleEntity *entity)
 {
-    FacingCore *core = entity->core;
+    EnemyCombatant *core = entity->core;
     s16 direction;
     int mode;
     int phase;
     int value;
-    FacingMotion *motion;
+    unsigned record;
 
-    if (core->status05 != 0 || (core->flags & 0xE)) return;
-    if (!((g_ActiveActor->stateFlags & 0x80000) && core->actions[(core->flags >> 17) & 0x70])) {
-        if (core->mode == 1) {
-            core->mode++;
-            core->previous_mode = entity->actionMode;
-            core->step_flag = (entity->entityFlags >> 9) & 1;
-            core->previous_frame = entity->animFrame;
-            core->previous_step = entity->animPrev.fixed;
-            core->previous_delta = entity->animStep;
+    if (core->field04.bytes.kind != 0 || (core->coreFlags & 0xE)) return;
+    record = (core->coreFlags >> 21) & 7;
+    if (!((g_ActiveActor->stateFlags & 0x80000) && record < 6 && core->records[record].state)) {
+        if (core->resumePhase == 1) {
+            core->resumePhase++;
+            core->savedActionMode = entity->actionMode;
+            core->savedInterpolation = (entity->entityFlags >> 9) & 1;
+            core->savedAnimFrame = entity->animFrame;
+            core->savedAnimPrev = entity->animPrev.fixed;
+            core->savedAnimStep = entity->animStep;
         }
     }
     direction = (s16)Battle_CalcRelativeAngle(D_8009D254, entity);
@@ -263,28 +232,27 @@ void Battle_UpdateEntityFacing(BattleEntity *entity)
     entity->animStep = 0x10000;
     entity->entityFlags |= 0x1000;
     if (g_ActiveActor->stateFlags & 0x80000) return;
-    if (!(core->flags & 0x100000)) return;
-    if (core->motion.state == 0) return;
-    motion = &core->motion;
-    switch (core->motion.state) {
+    if (!(core->coreFlags & 0x100000)) return;
+    if (core->motionPhase == 0) return;
+    switch (core->motionPhase) {
     case 2:
-        core->motion.phase = 2;
-        core->motion.amplitude = 0x46;
+        core->motionFrames = 2;
+        core->motionAmplitude = 0x46;
         break;
     case 3:
-        core->motion.phase = 5;
-        core->motion.amplitude = 0x14;
+        core->motionFrames = 5;
+        core->motionAmplitude = 0x14;
         break;
     case 1:
-        core->motion.amplitude = 0x190;
+        core->motionAmplitude = 0x190;
         break;
     }
     phase = (u16)D_8009D254->facingAngle + 0x800;
-    motion->angle = phase;
+    core->motionAngle = phase;
     value = rsin((s16)phase);
-    entity->posX.fixed += (motion->amplitude * value) << 4;
-    value = rcos(motion->angle);
-    entity->posZ.fixed += (motion->amplitude * value) << 4;
+    entity->posX.fixed = (s32)((u32)entity->posX.fixed + (u32)(core->motionAmplitude * value) * 16u);
+    value = rcos(core->motionAngle);
+    entity->posZ.fixed = (s32)((u32)entity->posZ.fixed + (u32)(core->motionAmplitude * value) * 16u);
 }
 
 void Battle_StepEntityAnimState(BattleEntity *entity) {
@@ -381,8 +349,8 @@ void Battle_StepEntityAnimState(BattleEntity *entity) {
             iter = iter->next;
         }
 
-        product = state->rewardFactorA * state->rewardFactorB;
-        diff = state->rewardBase - product;
+        product = (s32)((u32)state->rewardFactorA * state->rewardFactorB);
+        diff = (s32)((u32)state->rewardBase - (u32)product);
         g_BattleExpReward += state->hpMirror;
         if (diff > 0) {
             g_BattlePeBonusReward += diff;

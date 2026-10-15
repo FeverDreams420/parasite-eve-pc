@@ -55,7 +55,7 @@ typedef struct TextboxGlyphPacket {
     RenderSpritePacket sprite;
 } TextboxGlyphPacket;
 
-extern TextboxEntry g_TextboxEntries[];
+extern TextboxEntry g_TextboxEntries[4];
 
 /* Font pages, the per-glyph spacing table and the textbox sprite/tile
  * packets for both frame buffers (choice cursor packets at 0x8009EC70,

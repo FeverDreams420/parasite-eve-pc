@@ -36,6 +36,8 @@ u8 g_BattleStepIndex;
 u32 g_BattleExpReward;
 u16 g_BattlePeBonusReward;
 s32 g_BattleModeState;
+BattleRewardSlot g_BattleRewardSlots[10];
+u8 g_BattleEnemyHoldTimer[1];
 
 void Battle_SaveAyaState(void);
 

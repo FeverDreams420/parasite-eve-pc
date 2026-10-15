@@ -15,6 +15,7 @@ int g_ScriptCollisionFlag;
 u8 *g_TextboxMessageSource;
 unsigned char g_TextboxKernGlyph0F;
 TextboxRect g_TextboxPendingRect;
+TextboxEntry g_TextboxEntries[4];
 u8 g_DialogueChoiceCursor;
 u8 g_PlayerMovementEnabled;
 TextboxNameGlyphs g_TextboxNameGlyphs = {{0x10, 0x48, 0x30, 0, 0, 0, 0, 0, 0}, 3};

@@ -634,7 +634,7 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
     case PE_SPELL_SCAN:
         {
             /* Scan: note which of the target's status pairs read 2. */
-            Combatant *e = ent->core;
+            EnemyCombatant *e = ent->core;
             BattleResultFlags result;result.flags=g_BattleResultFlags;
             result.bits.scanPair3 = (e->statusFlags2 & 3) == 2;
             result.bits.scanPairC = (e->statusFlags2 & 0xC) == 8;
@@ -643,7 +643,7 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
             result.bits.scanPair30000 = (e->statusFlags2 & 0x30000) == 0x20000;
             result.bits.scanPair3000 = (e->statusFlags2 & 0x3000) == 0x2000;
             result.bits.scanPairC00 = (e->statusFlags2 & 0xC00) == 0x800;
-            if (((((Combatant *)ent->core)->statusFlags2 >> 6) & 3) == 2) {
+            if (((((EnemyCombatant *)ent->core)->statusFlags2 >> 6) & 3) == 2) {
                 result.bits.scanPairC0 = 1;
             } else {
                 result.bits.scanPairC0 = 0;
@@ -658,9 +658,9 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
     case PE_SPELL_SLOW:
         /* Slow: certain when the target's pair reads 2, a coin flip at 0. */
         {
-            s32 pair = (((Combatant *)ent->core)->statusFlags2 >> 8) & 3;
+            s32 pair = (((EnemyCombatant *)ent->core)->statusFlags2 >> 8) & 3;
             if (pair != 0 ? pair == 2 : !(rand() & 1)) {
-                Combatant *e = ent->core;
+                EnemyCombatant *e = ent->core;
                 e->coreFlags |= 1;
             }
             dmg = 0x5A0000;
@@ -682,10 +682,10 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
     case PE_SPELL_CONFUSE:
         /* Confuse: certain when the target's pair reads 2, a coin flip at 0. */
         {
-            s32 pair = (((Combatant *)ent->core)->statusFlags2 >> 0xA) & 3;
+            s32 pair = (((EnemyCombatant *)ent->core)->statusFlags2 >> 0xA) & 3;
             if (pair != 0 ? pair == 2 : !(rand() & 1)) {
                 s32 r = rand();
-                Combatant *e = ent->core;
+                EnemyCombatant *e = ent->core;
                 s32 flags = e->coreFlags & ~0xE;
                 flags |= (((r % 3) + 3) & 7) * 2;
                 e->coreFlags = flags;

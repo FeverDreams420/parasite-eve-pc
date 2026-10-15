@@ -5,6 +5,8 @@
 #include "pe1/memcard.h"
 void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/battle_runtime.h"
+#include "pe1/battle_entity_anim.h"
+#include "pe1/battle_level_up.h"
 #include "pe1/battle_status.h"
 #include "pe1/battle_main.h"
 #include "pe1/field_sfx.h"
@@ -2644,6 +2646,217 @@ static int original_hud_packet_initialization(void)
     return 1;
 }
 
+static int original_enemy_death(void)
+{
+    extern void Battle_StepEntityAnimState(BattleEntity *);
+    Combatant actor={0};BattleEntity entity,child;RenderObjectHeader header={0};
+    Combatant *old_actor=g_ActiveActor;FieldActor *old_player=g_PlayerEntity,*old_head=g_FieldActorListHead;
+    BattleEnemySlot old_slot=g_BattleEnemySlots[0];s8 old_live=g_BattleLiveEnemyCount;
+    u32 old_exp=g_BattleExpReward;u16 old_pe=g_BattlePeBonusReward;int old_draw=g_ActiveDrawSlot;
+    BattleRewardSlot old_rewards[10];memcpy(old_rewards,g_BattleRewardSlots,sizeof(old_rewards));
+    int queued=g_AkaoMessageQueueCount;AkaoQueueEntry old_message=g_AkaoMessageQueue[0];AkaoStagedCommand staged=g_AkaoCmd;
+    g_ActiveActor=&actor;g_PlayerEntity=NULL;g_FieldActorListHead=(FieldActor *)&entity;
+    const u8 kinds[]={0,2},frames[]={0,7,8},fades[]={0,1,7,8,9};
+    const u16 rewards[][3]={{9,2,3},{0,65535,65535},{65535,1,1}};
+    uint64_t hash=UINT64_C(14695981039346656037);
+#define HASH_DEATH(value,bytes) do { \
+    u32 word=(u32)(value); \
+    for(unsigned byte=0;byte<(bytes);++byte)hash=(hash^((word>>(byte*8))&255))*UINT64_C(1099511628211); \
+} while(0)
+    for(unsigned phase=0;phase<4;++phase)for(unsigned persist=0;persist<2;++persist)
+    for(unsigned visible=0;visible<2;++visible)for(unsigned kind=0;kind<2;++kind)
+    for(unsigned frame=0;frame<3;++frame)for(unsigned fade=0;fade<5;++fade)
+    for(unsigned reward=0;reward<3;++reward)for(unsigned full=0;full<2;++full)
+    for(unsigned aux=0;aux<2;++aux)for(unsigned slot=0;slot<2;++slot) {
+        EnemyCombatant *core=&g_BattleEnemySlots[0].combatant;
+        memset(core,0,sizeof(*core));memset(&entity,0,sizeof(entity));memset(&child,0,sizeof(child));
+        entity.core=core;entity.next=&child;entity.entityFlags=0x240;entity.animFrame=frames[frame]<<16;
+        entity.motionX=100;entity.motionY=101;entity.motionZ=102;child.parent=&entity;child.entityFlags=0x20;
+        entity.renderObject.header=child.renderObject.header=&header;
+        entity.renderObject.draw_count=child.renderObject.draw_count=1;entity.renderObject.variant_visible=visible;
+        core->field04.bytes.kind=kinds[kind];core->slotBit=4;core->hpMirror=65535;core->deathAnimFrame=8;
+        core->deathAnimPhase=phase;core->deathFadeStep=fades[fade];core->deathPersist=persist;
+        core->rewardBase=rewards[reward][0];core->rewardFactorA=rewards[reward][1];core->rewardFactorB=rewards[reward][2];
+        core->rewardSlotId=0x44;core->lootItemId=300;core->lootItemAux=aux?77:-1;
+        for(unsigned i=0;i<10;++i)g_BattleRewardSlots[i]=(BattleRewardSlot){full?55:0,-1};
+        g_BattleEnemySlots[0].active=1;g_BattleLiveEnemyCount=1;g_ActiveDrawSlot=slot;
+        g_BattleExpReward=0xfffffff0;g_BattlePeBonusReward=65530;g_AkaoMessageQueueCount=0;
+        memset(&g_AkaoMessageQueue[0],0,sizeof(g_AkaoMessageQueue[0]));
+        Battle_StepEntityAnimState(&entity);
+        HASH_DEATH(core->deathAnimPhase,1);HASH_DEATH(core->deathFadeStep,1);
+        HASH_DEATH(entity.core==NULL,1);HASH_DEATH(g_BattleEnemySlots[0].active,4);
+        HASH_DEATH((u8)g_BattleLiveEnemyCount,1);HASH_DEATH(g_BattleExpReward,4);HASH_DEATH(g_BattlePeBonusReward,2);
+        BattleEntity *entities[]={&entity,&child};
+        for(unsigned i=0;i<2;++i) {
+            BattleEntity *e=entities[i];RenderObjectEntity *o=&e->renderObject;
+            HASH_DEATH(e->entityFlags,4);HASH_DEATH(e->motionX,4);HASH_DEATH(e->motionY,4);HASH_DEATH(e->motionZ,4);
+            HASH_DEATH((u8)o->fade_duration,1);HASH_DEATH(o->fade_red_step,1);HASH_DEATH(o->fade_green_step,1);
+            HASH_DEATH(o->fade_blue_step,1);HASH_DEATH(o->primitive_red,1);HASH_DEATH(o->primitive_green,1);
+            HASH_DEATH(o->primitive_blue,1);HASH_DEATH(o->flags_9C,2);
+        }
+        for(unsigned i=0;i<10;++i) {HASH_DEATH((u16)g_BattleRewardSlots[i].id,2);HASH_DEATH((u16)g_BattleRewardSlots[i].extra,2);}
+        HASH_DEATH(g_AkaoMessageQueueCount,4);
+        if(g_AkaoMessageQueueCount) {HASH_DEATH(g_AkaoMessageQueue[0].opcode.word,4);HASH_DEATH(g_AkaoMessageQueue[0].arg0.value,4);HASH_DEATH(g_AkaoMessageQueue[0].arg1,4);}
+    }
+#undef HASH_DEATH
+    g_ActiveActor=old_actor;g_PlayerEntity=old_player;g_FieldActorListHead=old_head;g_BattleEnemySlots[0]=old_slot;
+    g_BattleLiveEnemyCount=old_live;g_BattleExpReward=old_exp;g_BattlePeBonusReward=old_pe;g_ActiveDrawSlot=old_draw;
+    memcpy(g_BattleRewardSlots,old_rewards,sizeof(old_rewards));g_AkaoMessageQueueCount=queued;g_AkaoMessageQueue[0]=old_message;g_AkaoCmd=staged;
+    if(hash!=UINT64_C(0x85c5db394010ef9d)) {
+        fprintf(stderr,"Original enemy death hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
+    }
+    puts("Original enemy death: 11,520 phase/fade/child/visibility/reward cases match unhooked USA MIPS");
+    return 1;
+}
+
+static int original_enemy_damage(void)
+{
+    Combatant actor={0};EnemyCombatant enemy;BattleEntity entity;BattleAction action={0};
+    Combatant *old_actor=g_ActiveActor;u32 old_random=Psyz_RandState();s8 old_count=g_BattleTargetCount;
+    void *old_animation=g_GameState.bank_rows[0][2];
+    RenderAnimationDataHeader animation={0};animation.frame_count=9;
+    g_GameState.bank_rows[0][2]=&animation;g_ActiveActor=&actor;g_BattleTargetCount=4;
+    const u32 abilities[]={0,0x80000,0x100000},statuses[]={0,0x155555,0xaaaaaa,0xffffff};
+    const u16 stats[]={25,100,9999,65535},shots[]={1,2,3,5,7,10};
+    const u16 elements[]={0,0x100,0x200,0x300,0x400,0x800,0x1000,0x1f00},defenses[]={0,10,200,65535};
+    const u32 flags[]={0,0x8000,0x18000,0x20000,0x80000,0xc0000,0x90000,0xd8000};
+    const u32 seeds[]={0x12345678,0x87654321};
+    actor.field04.fieldId04=99;actor.exp_or_acc=100<<16;actor.maxAtk=200<<16;actor.action=&action;
+    action.powerBonus=75;action.actionCode.actionId=6;
+    uint64_t hash=UINT64_C(14695981039346656037);
+#define HASH_DAMAGE(value,bytes) do { \
+    u32 word=(u32)(value); \
+    for(unsigned byte=0;byte<(bytes);++byte)hash=(hash^((word>>(byte*8))&255))*UINT64_C(1099511628211); \
+} while(0)
+    for(unsigned ability=0;ability<3;++ability)for(unsigned stat=0;stat<4;++stat)
+    for(unsigned shot=0;shot<6;++shot)for(unsigned element=0;element<8;++element)
+    for(unsigned status=0;status<4;++status)for(unsigned flag=0;flag<8;++flag)
+    for(unsigned seed=0;seed<2;++seed)for(unsigned defense=0;defense<4;++defense) {
+        memset(&enemy,0,sizeof(enemy));memset(&entity,0,sizeof(entity));
+        actor.stateFlags=abilities[ability];actor.stat1E=stats[stat];action.turnWord=shots[shot]|elements[element];
+        entity.core=&enemy;entity.entityFlags=0x240;entity.actionMode=9;entity.animLastFrame=5;
+        entity.animFrame=7<<16;entity.animPrev.fixed=3<<16;
+        enemy.coreFlags=flags[flag];enemy.field04.bytes.kind=1;enemy.lowAndEntityId.bytes.low=2;
+        enemy.hpAlive=200000;enemy.defense=defenses[defense];enemy.statusFlags2=statuses[status];
+        Psyz_Srand(seeds[seed]);Battle_StepEnemyMovement(&entity);
+        HASH_DAMAGE(enemy.coreFlags,4);HASH_DAMAGE(enemy.statusFlags2,4);HASH_DAMAGE(enemy.hpAlive,4);
+        HASH_DAMAGE(entity.entityFlags,4);HASH_DAMAGE(entity.actionMode,1);HASH_DAMAGE(entity.animLastFrame,1);
+        HASH_DAMAGE(entity.animFrame,4);HASH_DAMAGE(entity.animPrev.fixed,4);
+        HASH_DAMAGE(entity.actionData==&animation,1);HASH_DAMAGE(Psyz_RandState(),4);
+    }
+#undef HASH_DAMAGE
+    g_ActiveActor=old_actor;g_GameState.bank_rows[0][2]=old_animation;g_BattleTargetCount=old_count;Psyz_Srand(old_random);
+    if(hash!=UINT64_C(0x19758ebd45a2608d)) {
+        fprintf(stderr,"Original enemy damage hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
+    }
+    puts("Original enemy damage: 147,456 stat/PE/shot/resistance/RNG cases match USA MIPS including real soft-float callees");
+    return 1;
+}
+
+static int original_enemy_facing(void)
+{
+    Combatant actor={0};EnemyCombatant enemy;BattleEntity entity,player;
+    Combatant *old_actor=g_ActiveActor;FieldActor *old_player=g_PlayerEntity;
+    void *old_animations[]={g_GameState.bank_rows[0][0],g_GameState.bank_rows[0][1]};
+    RenderAnimationDataHeader animation={0};animation.frame_count=9;
+    g_GameState.bank_rows[0][0]=g_GameState.bank_rows[0][1]=&animation;
+    g_ActiveActor=&actor;g_PlayerEntity=(FieldActor *)&player;
+    const s16 positions[][2]={{100,100},{-100,100},{100,-100},{-100,-100},{0,0}};
+    const s16 yaws[]={-32768,-1,0,1024,2048,4095,32767};
+    uint64_t hash=UINT64_C(14695981039346656037);
+#define HASH_FACING(value,bytes) do { \
+    u32 word=(u32)(value); \
+    for(unsigned byte=0;byte<(bytes);++byte)hash=(hash^((word>>(byte*8))&255))*UINT64_C(1099511628211); \
+} while(0)
+    for(unsigned kind=0;kind<2;++kind)for(unsigned resume=0;resume<3;++resume)
+    for(unsigned motion=0;motion<4;++motion)for(unsigned ability=0;ability<2;++ability)
+    for(unsigned event=0;event<2;++event)for(unsigned selected=0;selected<6;++selected)
+    for(unsigned knockback=0;knockback<2;++knockback)for(unsigned position=0;position<5;++position)
+    for(unsigned yaw=0;yaw<7;++yaw) {
+        memset(&enemy,0,sizeof(enemy));memset(&entity,0,sizeof(entity));memset(&player,0,sizeof(player));
+        actor.stateFlags=ability*0x80000;entity.core=&enemy;entity.entityFlags=0x240;
+        entity.actionMode=9;entity.animLastFrame=5;entity.animFrame=7<<16;entity.animPrev.fixed=3<<16;entity.animStep=0x18000;
+        enemy.coreFlags=(selected<<21)|(knockback*0x100000);enemy.field04.bytes.kind=kind;
+        enemy.records[selected].state=event;enemy.resumePhase=resume;
+        enemy.motionPhase=motion;enemy.motionFrames=7;enemy.motionAmplitude=123;enemy.motionAngle=-100;
+        player.posX.fixed=(s32)positions[position][0]*65536;player.posZ.fixed=(s32)positions[position][1]*65536;
+        player.facingAngle=yaws[yaw];Battle_UpdateEntityFacing(&entity);
+        HASH_FACING(enemy.resumePhase,1);HASH_FACING(enemy.savedActionMode,1);HASH_FACING(enemy.savedInterpolation,1);
+        HASH_FACING(enemy.savedAnimFrame,4);HASH_FACING(enemy.savedAnimPrev,4);HASH_FACING(enemy.savedAnimStep,4);
+        HASH_FACING(enemy.motionPhase,1);HASH_FACING(enemy.motionFrames,1);
+        HASH_FACING(enemy.motionAmplitude,2);HASH_FACING((u16)enemy.motionAngle,2);HASH_FACING(entity.entityFlags,4);
+        HASH_FACING(entity.actionMode,1);HASH_FACING(entity.animLastFrame,1);HASH_FACING(entity.animFrame,4);
+        HASH_FACING(entity.animPrev.fixed,4);HASH_FACING(entity.animStep,4);
+        HASH_FACING(entity.posX.fixed,4);HASH_FACING(entity.posZ.fixed,4);HASH_FACING(entity.actionData==&animation,1);
+    }
+#undef HASH_FACING
+    g_ActiveActor=old_actor;g_PlayerEntity=old_player;
+    g_GameState.bank_rows[0][0]=old_animations[0];g_GameState.bank_rows[0][1]=old_animations[1];
+    if(hash!=UINT64_C(0x6496fbe76c786105)) {
+        fprintf(stderr,"Original enemy facing hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
+    }
+    puts("Original enemy hit reaction: 40,320 kind/record/phase/position/facing cases match unhooked USA MIPS");
+    return 1;
+}
+
+static int original_enemy_slots(PeDisc *disc,PeDiscFile *exe)
+{
+    extern void Battle_SlotFree(BattleEntity *);
+    u8 original[0xD8],native[0xD8];
+    if(!pe_disc_read(disc,exe,0x109b0-0x10000+0x800,original,sizeof(original)))return 0;
+    memcpy(native,&g_EnemyCombatantInitial,0x18);memset(native+0x18,0,4);
+    memcpy(native+0x1c,(const u8 *)&g_EnemyCombatantInitial+PE1_OFFSETOF(EnemyCombatant,records),0xD8-0x1c);
+    if(memcmp(native,original,sizeof(native)) || g_EnemyCombatantInitial.effect ||
+       g_EnemyCombatantInitial.action || g_EnemyCombatantInitial.attributes || g_EnemyCombatantInitial.field70)return 0;
+    BattleEnemySlot old_slots[7];memcpy(old_slots,g_BattleEnemySlots,sizeof(old_slots));
+    u8 old_counter=g_EntityInstanceCounter;s8 old_live=g_BattleLiveEnemyCount;
+    void *old_animation=g_GameState.bank_rows[0][2];
+    RenderAnimationDataHeader animation={0};animation.frame_count=9;
+    g_GameState.bank_rows[0][2]=&animation;
+    BattleEntity actors[8];const u8 starts[]={0,127,254,255};
+    uint64_t hash=UINT64_C(14695981039346656037);
+#define HASH_SLOT(value,bytes) do { \
+    u32 word=(u32)(value); \
+    for(unsigned byte=0;byte<(bytes);++byte)hash=(hash^((word>>(byte*8))&255))*UINT64_C(1099511628211); \
+} while(0)
+#define HASH_SLOT_ACTOR(index) do { \
+    BattleEntity *actor=&actors[index];EnemyCombatant *core=actor->core; \
+    if(core) { \
+        memcpy(native,core,0x18);u32 pointer=(core->effect==&core->records[0]);memcpy(native+0x18,&pointer,4); \
+        memcpy(native+0x1c,(const u8 *)core+PE1_OFFSETOF(EnemyCombatant,records),0xD8-0x1c); \
+        for(unsigned byte=0;byte<sizeof(native);++byte)HASH_SLOT(native[byte],1); \
+    } \
+    HASH_SLOT(core!=NULL,1);HASH_SLOT(actor->entityFlags,4);HASH_SLOT(actor->actionMode,1); \
+    HASH_SLOT(actor->animLastFrame,1);HASH_SLOT(actor->animFrame,4);HASH_SLOT(actor->animPrev.fixed,4); \
+    HASH_SLOT(actor->actionData==&animation,1);HASH_SLOT(g_EntityInstanceCounter,1);HASH_SLOT((u8)g_BattleLiveEnemyCount,1); \
+} while(0)
+    for(unsigned mask=0;mask<128;++mask)for(unsigned start=0;start<4;++start) {
+        Battle_ClearMotionTable();g_EntityInstanceCounter=starts[start];g_BattleLiveEnemyCount=0;
+        memset(actors,0,sizeof(actors));
+        for(unsigned i=0;i<8;++i) {
+            actors[i].entityFlags=0x240|(((mask>>i)&1)*0x2000);actors[i].actionMode=9;actors[i].animLastFrame=5;
+            actors[i].animFrame=7<<16;actors[i].animPrev.fixed=3<<16;
+            Entity_AllocSlot(&actors[i]);HASH_SLOT_ACTOR(i);
+        }
+        for(unsigned i=1;i<7;i+=2)Battle_SlotFree(&actors[i]);
+        for(unsigned i=0;i<7;++i) {HASH_SLOT(g_BattleEnemySlots[i].active,4);HASH_SLOT(actors[i].core!=NULL,1);}
+        for(unsigned i=1;i<7;i+=2) {
+            actors[i].entityFlags^=0x2000;Entity_AllocSlot(&actors[i]);HASH_SLOT_ACTOR(i);
+        }
+        Battle_ClearMotionTable();
+        for(unsigned i=0;i<7;++i) {HASH_SLOT(g_BattleEnemySlots[i].active,4);HASH_SLOT(actors[i].core!=NULL,1);}
+    }
+#undef HASH_SLOT_ACTOR
+#undef HASH_SLOT
+    memcpy(g_BattleEnemySlots,old_slots,sizeof(old_slots));g_EntityInstanceCounter=old_counter;g_BattleLiveEnemyCount=old_live;
+    g_GameState.bank_rows[0][2]=old_animation;
+    if(hash!=UINT64_C(0x81c2f5af25011535)) {
+        fprintf(stderr,"Original enemy-slot hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
+    }
+    puts("Original enemy slots: complete template and 5,632 allocations, exhaustion, reuse, ID wrapping and clears match unhooked USA MIPS");
+    return 1;
+}
+
 static int original_player_turn(void)
 {
     extern void Battle_UpdatePlayerTurn(void);
@@ -2804,7 +3017,7 @@ static int original_spell_effects(PeDisc *disc,PeDiscFile *executable)
     u8 sound_ids[40];
     if(!pe_disc_read(disc,executable,0x10760-0x10000+0x800,sound_ids,sizeof(sound_ids)) ||
        memcmp(sound_ids,&g_BattleActionSoundIds,sizeof(sound_ids)))return 0;
-    Combatant actor={0},target={0};BattleEntity entity={0};BattleAttributes attributes={0};
+    Combatant actor={0};EnemyCombatant target={0};BattleEntity entity={0};BattleAttributes attributes={0};
     RenderAnimationDataHeader animation={0};animation.frame_count=9;
     void *old_animation=g_GameState.bank_rows[0][4];g_GameState.bank_rows[0][4]=&animation;
     Combatant *old_actor=g_ActiveActor;g_ActiveActor=&actor;
@@ -4170,7 +4383,7 @@ int main(int argc, char **argv)
 {
     if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
-    if (!original_combat_timers() || !original_combat_angles() || !original_player_turn()) return 141;
+    if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;
     if (!original_save_metadata_storage()) return 125;
     if (!original_frame_random()) return 128;
@@ -4206,7 +4419,7 @@ int main(int argc, char **argv)
         if (!original_video_decoder(&disc)) return 136;
         if (!original_video_stream_errors()) return 137;
         if (!original_movie_uploads(&disc)) return 138;
-        if (!original_image_display_switch(&disc,&exe) || !original_boot_display_data(&disc)) return 140;
+        if (!original_image_display_switch(&disc,&exe) || !original_boot_display_data(&disc) || !original_enemy_slots(&disc,&exe)) return 140;
         if (!original_title_screen(&disc)) return 134;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];

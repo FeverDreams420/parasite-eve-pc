@@ -178,9 +178,11 @@ struct FieldActorState {
     /* 0x50 */ unsigned char number_desc_0[0x08];
     /* 0x58 */ unsigned char number_desc_1[0x08];
     /* 0x60 */ unsigned char coord_desc[0x08];
-    /* 0x68 */ void *action;
-    /* 0x6C */ void *substate;
-    /* 0x70 */ void *aux_state;
+    /* Scalar slots overlap enemy animation-event records. Native pointers
+     * are stored after the shared scalar state instead of widening these. */
+    /* 0x68 */ u32 reserved_action_slot;
+    /* 0x6C */ u32 reserved_substate_slot;
+    /* 0x70 */ u32 reserved_aux_slot;
     /* 0x74 */ unsigned char reserved74[0x14];
     /* 0x88 */ int script_value88;
     /* 0x8C */ short script_value8c;
@@ -214,6 +216,9 @@ struct FieldActorState {
     /* 0xD4 */ unsigned short panel_c_y;
     /* 0xD6 */ unsigned char panel_c_timer;
     /* 0xD7 */ unsigned char panel_c_mode;
+    void *action;
+    void *substate;
+    void *aux_state;
 };
 
 

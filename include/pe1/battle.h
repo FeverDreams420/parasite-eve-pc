@@ -261,9 +261,8 @@ typedef struct Combatant {
 /* 0x64 */ u16  panelAux_y;
 /* 0x66 */ u8   panelAux_timer; /* set to 0x1E when Battle_SubActionStep emits the descriptor */
 /* 0x67 */ u8   panelAux_mode;
-/* 0x68 */ struct BattleAction *action; /* the queued action/command descriptor; read by nearly every turn func via M2C_FIELD(combatant,void**,0x68) (battle/setup.c:195; Battle_DrawATBGauge.c:55; battle/turn.c:537) */
-/* 0x6C */ BattleAttributes *attributes;
-/* 0x70 */ void *field70;      /* TENTATIVE: no semantic use confirmed yet */
+/* Scalar event slots; native pointers follow the scalar state. */
+              u32 reserved_action_slot, reserved_attributes_slot, reserved_aux_slot;
 /* 0x74 */ u8   pad_74[0x14];
 /* 0x88 */ s32  field88;       /* GetEnemyCtx case19, clamped >=0 (battle/context.c:309) */
 /* 0x8C */ u16  field8C;       /* GetEnemyCtx case20 (battle/context.c:315) */
@@ -273,13 +272,15 @@ typedef struct Combatant {
 /* 0xD2 */ u16  panelC_x;
 /* 0xD4 */ u16  panelC_y;
 /* 0xD6 */ u8   panelC_timer;
-                               /* ... struct continues; remaining bytes unmapped */
+/* 0xD7 */ u8   panelC_mode;
+              struct BattleAction *action;
+              BattleAttributes *attributes;
+              void *field70;
 } Combatant;
 
-/* Enemy entity core. It shares several stat/status offsets with Combatant but
- * diverges by +0x10: notably +0x18 is an EnemyActionEffect pointer, while the
- * active player Combatant stores action-mode bytes there. Do not merge these
- * two views without stronger lifetime evidence.
+/* Enemy entity core. Scalar fields share the field-state storage, but the
+ * event records and player pointers have different lifetimes. In particular
+ * effect@0x18 selects one of the six records beginning at old offset 0x1C.
  */
 typedef struct EnemyCombatant {
 /* 0x00 */ u32 coreFlags;
@@ -294,13 +295,16 @@ typedef struct EnemyCombatant {
 /* 0x10 */ s32 hpAlive;
 /* 0x14 */ s32 previousHP; /* previous update snapshot for the floating damage panel */
 /* 0x18 */ EnemyActionEffect *effect;
-/* 0x1C */ u8  pad_1C[0x30];
-/* 0x4C */ u32 stateFlags;
-/* 0x50 */ u8  pad_50[0x18];
-              void *action;
-/* 0x6C */ BattleAttributes *attributes;
-/* 0x70 */ void *field70;
-              u8 pad_74[8];
+/* Six inline events share scalar enemy-state storage, not the player's
+ * native action/attributes pointers. Both views widen only effect@0x18. */
+    union {
+        EnemyActionEffect records[6];
+        struct {
+            u8 pad_1C[0x30];
+            u32 stateFlags;
+            u8 pad_50[0x2C];
+        };
+    };
 /* 0x7C */ s8  contactActionIds[0x0C]; /* four ids per facing group (coreFlags >> 21), -1 ends a group (Entity_CheckActionIdMatch) */
 /* 0x88 */ s32 hpAliveCap; /* caps hpAlive when smaller */
 /* 0x8C */ u16 defense; /* subtracted from attack power */
@@ -329,7 +333,7 @@ typedef struct EnemyCombatant {
 /* 0xAE */ u8  deathAssetEnabled;
 /* 0xAF */ u8  deathPersist;
 /* 0xB0 */ u16 attackAssetId;
-/* 0xB2 */ u8  pad_B2[2];
+/* 0xB2 */ u16 eventAssetId;
 /* 0xB4 */ u16 deathAssetId;
 /* 0xB6 */ u16 contactAssetIds[3]; /* effect asset per facing group (coreFlags >> 21) spawned on contact */
 /* 0xBC */ u8  resumePhase;
@@ -345,6 +349,11 @@ typedef struct EnemyCombatant {
 /* 0xD4 */ u16 panelC_y;
 /* 0xD6 */ u8  panelC_timer; /* 30 captures projected coordinates; then counts down */
 /* 0xD7 */ u8  panelC_mode; /* 0=damage, 1=recovery, 2=alternate damage display */
+    /* Same native pointer extension as FieldActorState. These pointers are
+     * inactive during the enemy/event-record lifetime. */
+    void *action;
+    BattleAttributes *attributes;
+    void *field70;
 } EnemyCombatant;
 
 /* Bit layout of EnemyCombatant.coreFlags as hit resolution writes it. */
@@ -585,8 +594,21 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyActionEffect, power) == 0x0C,
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, curHP) ==
                   PE1_OFFSETOF(Combatant, curHP), combatant_views_hp_match);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, attributes) ==
-                  PE1_OFFSETOF(Combatant, attributes), combatant_views_attributes_match);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, effect) ==
+                  PE1_OFFSETOF(EntityAnimEventCore, active), enemy_event_active_match);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, records) ==
+                  PE1_OFFSETOF(EntityAnimEventCore, records), enemy_event_records_match);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, contactActionIds) ==
+                  PE1_OFFSETOF(EntityAnimEventCore, parameters), enemy_event_parameters_match);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, eventAssetId) ==
+                  PE1_OFFSETOF(EntityAnimEventCore, assetId), enemy_event_asset_match);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, stateFlags) ==
+                  PE1_OFFSETOF(FieldActorState, flags), enemy_state_flags_match);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, statusFlags2) ==
+                  PE1_OFFSETOF(FieldActorState, status_flags2), enemy_state_status_match);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(EnemyCombatant, action) ==
+                  PE1_OFFSETOF(FieldActorState, action), enemy_state_action_match);
+PE1_STATIC_ASSERT(sizeof(EnemyCombatant) == sizeof(FieldActorState), enemy_state_size_match);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, curHP) ==
                   PE1_OFFSETOF(FieldActorState, amount), state_views_hp_match);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, atbStep) ==
@@ -595,6 +617,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, stateFlags) ==
                   PE1_OFFSETOF(FieldActorState, flags), state_views_flags_match);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, attributes) ==
                   PE1_OFFSETOF(FieldActorState, substate), state_views_substate_match);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(Combatant, action) ==
+                  PE1_OFFSETOF(FieldActorState, action), state_views_action_match);
 PE1_STATIC_ASSERT(sizeof(Combatant) == sizeof(FieldActorState),
                   state_views_size_match);
 

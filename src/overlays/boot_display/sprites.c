@@ -27,12 +27,12 @@ void BootDisplay_InitDisplayResources(void) {
 
     resource = g_BootDisplayFontTim;
     Asset_LoadTimImage(resource);
-    g_BootDisplayFontImagePixels = Asset_LoadTimImage(resource);
-    g_BootDisplayFontClutPixels = Asset_GetTimClutPixels(resource);
+    g_BootDisplayFontImagePixels = (u8 *)Asset_LoadTimImage(resource);
+    g_BootDisplayFontClutPixels = (u16 *)Asset_GetTimClutPixels(resource);
     g_BootDisplayFontImageRect = Asset_GetTimImageRect(resource);
     g_BootDisplayFontClutRect = Asset_GetTimClutRect(resource);
-    g_BootDisplayTPage = GetTPage(0, 0, g_BootDisplayFontImageRect[0], g_BootDisplayFontImageRect[1]);
-    g_BootDisplayClut = GetClut(g_BootDisplayFontClutRect[0], g_BootDisplayFontClutRect[1]);
+    g_BootDisplayTPage = GetTPage(0, 0, g_BootDisplayFontImageRect->x, g_BootDisplayFontImageRect->y);
+    g_BootDisplayClut = GetClut(g_BootDisplayFontClutRect->x, g_BootDisplayFontClutRect->y);
     DecDCTReset(0);
     offset = 0x43000;
     MdecDiag_ExpandDecoderTable(g_CdLoadAreaBase + (((g_MainAssetLbaTbl[0] - g_BootDisplayDataLbaTbl) << 11) + offset));
@@ -230,7 +230,7 @@ void BootDisplay_InitSprite16(BootDisplaySpritePacket *primitive, s16 x, s16 y,
     packet->sprite.clut = g_BootDisplayClut;
 }
 
-void BootDisplay_QueueFadeSprite(s32 color) {
+void BootDisplay_QueueFadeSprite(u8 color) {
     BootDisplaySpritePacket *primitive = (BootDisplaySpritePacket *)g_BootDisplayPrimitiveCursor;
 
     SetDrawTPage(&primitive->draw_mode, 0, 0, g_BootDisplayTPage);

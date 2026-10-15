@@ -46,7 +46,7 @@ typedef struct {
     BootDisplaySpritePrim sprite;
 } BootDisplaySpritePacket;
 
-/* One 16-byte record per display buffer: GPU position, pixels, and decode target. */
+/* Native record per display buffer: GPU position, pixels and decode target. */
 typedef struct {
     u16 x, y;
     char *pixels;
@@ -58,7 +58,7 @@ extern BootDisplayImageBuffer g_BootDisplayImageBuffers[2];
 typedef struct {
     void (*init)(void);
     void (*step)(void);
-    s32 (*text)(void);
+    void (*text)(void);
     void (*glyph)(s16, s16, u8);
     void (*transition)(u8);
     void (*present)(void);
@@ -85,10 +85,11 @@ extern s32 g_BootDisplayBufferIndex;
 extern s16 g_BootDisplayStateTimer;
 extern s16 g_BootDisplayTransferProgress;
 extern s32 g_BootDisplayState;
-extern s16 *g_BootDisplayFontImageRect;
-extern s16 *g_BootDisplayFontClutRect;
-extern s32 g_BootDisplayFontImagePixels;
-extern s32 g_BootDisplayFontClutPixels;
+extern s32 g_BootDisplayDone;
+extern RECT *g_BootDisplayFontImageRect;
+extern RECT *g_BootDisplayFontClutRect;
+extern u8 *g_BootDisplayFontImagePixels;
+extern u16 *g_BootDisplayFontClutPixels;
 #define g_BootDisplayFontTim (g_CdLoadAreaBase + 0x5b2c)
 extern s32 g_BootDisplayPlaybackCurrentPos;
 extern s32 g_BootDisplayPlaybackEndPos;
@@ -131,6 +132,10 @@ void DecDCTReset(s32 value);
 void MdecDiag_ExpandDecoderTable(void *address);
 void BootDisplay_PresentFrame(void);
 void BootDisplay_SetImageDisplay(u16 index);
+void BootDisplay_InitDisplayBuffers(void);
+void BootDisplay_StepImageDisplay(void);
+void BootDisplay_BrightenGlyph(s16 x,s16 y,u8 character);
+void BootDisplay_BrightenImageRegion(u8 intensity);
 
 /* Callable entry points inside neighboring boot-display code. */
 s32 BootDisplay_GetGlyphIndex(u8 character);

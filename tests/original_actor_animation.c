@@ -5643,6 +5643,114 @@ static int original_credit_text(PeDisc *disc)
     puts("Original credits text: 745 native line bindings, 31 image bindings, image-file extent setup, 2560 USA glyph cases and 5280 layouts/656800 positioned glyphs match");return 1;
 }
 
+static int original_credit_brightness(void)
+{
+    static struct {u8 before[64];char pixels[320*224*3];u8 after[64];} screens[2];
+    const unsigned seeds[]={0,64,128,240};
+    const int edges[][2]={{0,-16},{0,-7},{304,208},{319,100},{-1,100},{0,223},{0,224},{1,0}};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int valid=1;
+    for(unsigned slot=0;slot<2;++slot)g_BootDisplayImageBuffers[slot].pixels=screens[slot].pixels;
+#define BRIGHT_PUT(data,count) do {const u8 *p_=(const u8 *)(data); \
+    for(size_t i_=0;i_<(size_t)(count);++i_)hash=(hash^p_[i_])*UINT64_C(1099511628211);}while(0)
+#define BRIGHT_CLEAR(slot,shade) do {unsigned s_=(slot),v_=(shade); \
+    memset(&screens[s_],0xa5,sizeof(screens[s_]));u8 *p_=(u8 *)screens[s_].pixels; \
+    for(size_t i_=0;i_<sizeof(screens[s_].pixels);i_+=3){p_[i_]=v_;p_[i_+1]=v_/2;p_[i_+2]=(v_+17)&255;}}while(0)
+#define BRIGHT_GUARDS() do {for(unsigned i_=0;i_<64;++i_)if(screens[g_BootDisplayBufferIndex].before[i_]!=0xa5 || screens[g_BootDisplayBufferIndex].after[i_]!=0xa5)valid=0;}while(0)
+    for(unsigned style=0;style<4;++style){unsigned slot=style%2;g_BootDisplayBufferIndex=slot;g_BootDisplayFontStyle=style;
+        for(unsigned character=0;character<256;++character){
+            BRIGHT_CLEAR(slot,seeds[style]);
+            BootDisplay_BrightenGlyph(100,110,character);
+            for(unsigned y=0;y<16;++y)BRIGHT_PUT(screens[slot].pixels+(110+y)*960+300,48);
+            BRIGHT_GUARDS();++cases;
+        }
+    }
+    for(unsigned style=0;style<4;++style)for(unsigned edge=0;edge<8;++edge)for(unsigned character=0;character<2;++character){
+        unsigned slot=style%2;int x=edges[edge][0],y=edges[edge][1];g_BootDisplayBufferIndex=slot;g_BootDisplayFontStyle=style;
+        BRIGHT_CLEAR(slot,seeds[style]);
+        BootDisplay_BrightenGlyph(x,y,character?'~':'A');
+        int start=(y>0?y:0)*960+x*3;if(start<0)start=0;
+        int end=((y+16<224?y+16:224)-1)*960+x*3+48;
+        if(end>320*224*3)end=320*224*3;if(end<start)end=start;
+        BRIGHT_PUT(screens[slot].pixels+start,end-start);BRIGHT_GUARDS();++cases;
+    }
+    for(unsigned slot=0;slot<2;++slot)for(unsigned seed=0;seed<4;++seed){
+        g_BootDisplayBufferIndex=slot;BRIGHT_CLEAR(slot,seeds[seed]);
+        BootDisplay_BrightenImageRegion(0);for(unsigned row=0;row<24;++row)BRIGHT_PUT(screens[slot].pixels+0x19dac+row*960,288);
+        BRIGHT_GUARDS();++cases;
+    }
+#undef BRIGHT_CLEAR
+#undef BRIGHT_PUT
+    const int outside[][2]={{-1,0},{319,223},{-32768,0},{32767,223}};
+    for(unsigned edge=0;edge<4;++edge){g_BootDisplayBufferIndex=edge%2;memset(&screens[edge%2],0xa5,sizeof(screens[edge%2]));
+        BootDisplay_BrightenGlyph(outside[edge][0],outside[edge][1],'A');BRIGHT_GUARDS();}
+#undef BRIGHT_GUARDS
+    if(!valid || cases!=1096 || hash!=UINT64_C(0x62c94d8d86727434)){fprintf(stderr,"Credits brightness: cases=%u hash=%016llx guards=%d\n",cases,(unsigned long long)hash,valid);return 0;}
+    puts("Original credits RGB24 brightness: 1096 USA glyph/panel cases, saturation, four styles, both buffers, row clipping and four outer buffer guards pass");return 1;
+}
+
+static int original_credit_images(PeDisc *disc)
+{
+    g_CdImage=disc;glyph_pending=glyph_poll_retry=0;fx_image_io=1;
+    if(Asset_OpenPeImage() || CdRom_LoadBootAudio())return 0;
+    if(!SDL_Init(SDL_INIT_EVENTS))return 0;ResetGraph(0);Boot_InitMemoryLayout();
+    static _Alignas(16) u8 table[69632],decoded[0xa800],rgb[0xf000];
+    static u16 actual[1024*512],expected[1024*512],shown[480*224];
+    RECT whole={0,0,1024,512};unsigned states=0,uploads=0;
+    BootDisplay_InitDisplayBuffers();if(!original_credit_brightness())return 0;
+    MdecDiag_ExpandDecoderTable(table);
+    for(unsigned index=0;index<31;++index){
+        DecDCTvlcSize2(0);
+        if(DecDCTvlc2(g_BootDisplayCreditImages[index],decoded,table)!=0)return 0;
+        DecDCTReset(0);DecDCToutCallback(NULL);DecDCTin(decoded,1);DecDCTout(rgb,0x3c00);
+        if(DecDCToutSync(0))return 0;
+        g_ActiveDrawSlot=0;BootDisplay_InitDisplayBuffers();g_BootDisplayBufferIndex=index%2;
+        g_BootDisplayStateTimer=index;
+        for(unsigned i=0;i<1024*512;++i)expected[i]=0x1357;
+        LoadImage(&whole,expected);DrawSync(0);
+        unsigned steps=0;
+        while(g_BootDisplayState!=5 && steps<512){BootDisplay_StepImageDisplay();++steps;}
+        if(g_BootDisplayState!=5){fprintf(stderr,"Credits image %u stalled state=%d after=%u\n",index,g_BootDisplayState,steps);return 0;}
+        BootDisplayImageBuffer *screen=&g_BootDisplayImageBuffers[index%2];
+        for(unsigned column=0;column<10;++column)for(unsigned y=0;y<120;++y)
+            memcpy(&expected[(screen->transferY+52+y)*1024+screen->transferX+120+column*24],rgb+column*0x1800+y*48,48);
+        StoreImage(&whole,actual);DrawSync(0);
+        if(memcmp(actual,expected,sizeof(actual))){fprintf(stderr,"Credits staged image %u differs from whole-frame MDEC output\n",index);return 0;}
+        g_BootDisplayState=6;BootDisplay_PresentFrame();
+        if(g_BootDisplayStateTimer!=(s16)(index+1) || g_BootDisplayBufferIndex!=(s32)(1-index%2) ||
+           g_BootDisplayState!=(index==30?7:0))return 0;
+        g_BootDisplayState=7;BootDisplay_StepImageDisplay();BootDisplay_PresentFrame();
+        RECT visible={0,0,480,224};StoreImage(&visible,shown);DrawSync(0);
+        for(unsigned y=0;y<224;++y)if(memcmp(shown+y*480,&expected[(screen->transferY+y)*1024+screen->transferX],960)){
+            fprintf(stderr,"Credits presented image %u row %u differs\n",index,y);return 0;}
+        states+=steps;uploads+=10;
+    }
+    u8 *workspace=g_CdLoadAreaBase;u16 main_sector=g_MainAssetLbaTbl[0];
+    for(unsigned fault=0;fault<3;++fault){
+        if(fault==0)g_CdLoadAreaBase=NULL;
+        else g_MainAssetLbaTbl[0]=fault==1?0:65535;
+        BootDisplay_InitDisplayBuffers();
+        if(g_BootDisplayState!=-1 || g_BootDisplayDone!=-1)return 0;
+        g_CdLoadAreaBase=workspace;g_MainAssetLbaTbl[0]=main_sector;
+    }
+    for(unsigned fault=0;fault<7;++fault){
+        BootDisplay_InitDisplayBuffers();
+        u16 words;memcpy(&words,g_BootDisplayCreditImages[0],2);
+        if(fault==0)g_BootDisplayBufferIndex=2;
+        if(fault==1)g_BootDisplayStateTimer=31;
+        if(fault==2){u16 invalid=65535;memcpy(g_BootDisplayCreditImages[0],&invalid,2);}
+        if(fault==3){u16 invalid=0;memcpy(g_BootDisplayCreditImages[0],&invalid,2);}
+        if(fault==4)g_BootDisplayState=1;
+        if(fault==5)g_BootDisplayImageBuffers[0].pixels=NULL;
+        if(fault==6)BootDisplay_SetImageDisplay(2);
+        BootDisplay_StepImageDisplay();
+        memcpy(g_BootDisplayCreditImages[0],&words,2);
+        if(g_BootDisplayState!=-1 || g_BootDisplayDone!=-1)return 0;
+    }
+    BootDisplay_InitDisplayBuffers();if(g_BootDisplayState || g_BootDisplayDone)return 0;
+    fx_image_io=0;
+    printf("Original credits images: 31 real images, %u decoder steps, %u RGB24 slice uploads, full staged VRAM and both presented buffers match whole-frame MDEC output; ten invalid states/workspaces fail and recover\n",states,uploads);return 1;
+}
+
 static int original_boot_display_data(PeDisc *disc)
 {
     Pe1GameState saved=g_GameState;PeDisc *old_image=g_CdImage;
@@ -6807,6 +6915,11 @@ static int script_movie_error_exit(const char *executable)
 int main(int argc, char **argv)
 {
     if(argc==2 && !strcmp(argv[1],"--fx-effects")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_fx_shader_packets() && original_fx_blend() && original_fx_uncompressed_order() && original_fx_shader_pixels() && original_fx_shader_guards()?0:147;}
+    if(argc==2 && !strcmp(argv[1],"--credits-images")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
+        int result=original_credit_images(&disc);pe_disc_close(&disc);return result?0:153;
+    }
     if(argc==2 && !strcmp(argv[1],"--credits-text")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

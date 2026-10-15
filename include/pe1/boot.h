@@ -29,10 +29,8 @@ int Draw_InitDisplay(int mode);
 void Boot_RunFrame(void);
 /* Returns the room loader error before entering an incomplete scene. */
 int Draw_InitPipeline(void);
-/* Original statically linked overlay entry points. The display entry's
- * address-only name remains until its implementation is identified. */
+/* Original statically linked overlay entry points. */
 int FxCommon_RunFrameLoop(void);
-void func_801235DC(void);
 int MenuCard_RunListScreen(void);
 
 /* Disc table load (pm/disc_tables.c): PE.IMG sector ranges of the

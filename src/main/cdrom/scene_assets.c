@@ -1,3 +1,6 @@
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
 #include "common.h"
 #include "pe1/akao.h"
 #include "pe1/akao/commands.h"
@@ -304,8 +307,21 @@ static int read_image(PeDisc *disc, uint64_t offset, void *data, size_t size) {
         return fail(disc, "Disc image is not mounted");
     if (offset > disc->image_size || size > disc->image_size - offset)
         return fail(disc, "Read exceeds the disc image");
-    if (pe_seek(disc->stream, (int64_t)offset, SEEK_SET) != 0 ||
-        fread(data, 1, size, disc->stream) != size)
+    /* XA sample pulls and game asset reads share the mounted FILE. Keep
+     * each seek/read pair atomic without depending on the audio backend. */
+#ifdef _WIN32
+    _lock_file(disc->stream);
+#else
+    flockfile(disc->stream);
+#endif
+    int read_ok=pe_seek(disc->stream,(int64_t)offset,SEEK_SET)==0 &&
+                fread(data,1,size,disc->stream)==size;
+#ifdef _WIN32
+    _unlock_file(disc->stream);
+#else
+    funlockfile(disc->stream);
+#endif
+    if (!read_ok)
         return fail(disc, "Cannot read the disc image");
     return 1;
 }

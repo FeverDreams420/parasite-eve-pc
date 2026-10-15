@@ -2,9 +2,10 @@
 
 #include "text_screen_externs.h"
 
-void BootDisplay_RunDisplay(void) {
+s32 BootDisplay_RunDisplay(void) {
     u32 state;
     s32 fade;
+    s32 result=0;
     if (g_GameStateFlags & 0x10000) {
         g_BootDisplayCallbacks = &g_BootDisplayImageCallbacks;
     } else {
@@ -12,9 +13,10 @@ void BootDisplay_RunDisplay(void) {
         g_BootDisplaySpriteCallbacks.text = (g_GameStateFlags & 0x20000)?BootDisplay_StepImageSprite:NULL;
     }
     g_BootDisplayCallbacks->init();
+    if(g_BootDisplayState<0 || g_BootDisplayDone<0)return -1;
+    g_BootDisplayPlaybackEnded=0;
     if (!(g_GameStateFlags & 0x10000)) {
-        if(BootDisplay_InitPlaybackFile()<0)return;
-        BootDisplay_StartPlayback();
+        if(BootDisplay_InitPlaybackFile()<0 || BootDisplay_StartPlayback()<0){result=-2;goto cleanup;}
         if (g_GameStateFlags & 0x20000) {
             Spu_SetVoiceVolume(144);
             BootDisplay_SetCdFilter(1);
@@ -23,11 +25,11 @@ void BootDisplay_RunDisplay(void) {
     state = 0;
     fade = 0;
     g_BootDisplayFrameCounter = 420;
-    g_BootDisplayPlaybackEnded = 0;
     g_BootDisplayDone = 0;
     do {
         if (g_BootDisplayCallbacks->step) g_BootDisplayCallbacks->step();
         if (g_BootDisplayCallbacks->text) g_BootDisplayCallbacks->text();
+        if(g_BootDisplayState<0 || g_BootDisplayDone<0){result=-3;goto cleanup;}
         switch (state) {
         case 0:
             if (BootDisplay_DrawTextBlock()) {
@@ -58,17 +60,21 @@ void BootDisplay_RunDisplay(void) {
             break;
         }
         }
+        if(g_BootDisplayState<0 || g_BootDisplayDone<0){result=-3;goto cleanup;}
         Field_HandleStateTransition();
         if (g_GameStateFlags & 0x10000) {
             if (g_FieldPadPressed & 0x4000000) BootDisplay_SetCdFilter(0);
             if (g_FieldPadPressed & 0x8000000) BootDisplay_SetCdFilter(1);
         }
         g_BootDisplayCallbacks->present();
+        if(g_BootDisplayState<0 || g_BootDisplayDone<0){result=-3;goto cleanup;}
         ++g_BootDisplayFrameCounter;
     } while (g_BootDisplayDone == 0);
-    BootDisplay_WaitForCdAndRestoreCallbacks();
+cleanup:
+    if(BootDisplay_WaitForCdAndRestoreCallbacks()<0 && result==0)result=-4;
     g_BootDisplayCallbacks->shutdown();
     g_GameStateFlags &= ~0x10000;
+    return result;
 }
 
 s32 BootDisplay_DrawTextBlock(void) {

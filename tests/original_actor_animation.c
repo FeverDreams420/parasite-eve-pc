@@ -116,6 +116,8 @@ int Inv_ScrambleGrid(void);
 #include <limits.h>
 #include <psyz/system.h>
 #include <psyz/spu.h>
+#include <psyz/audio.h>
+#include <psyz/cd.h>
 
 /* Observe the original traversal while deliberately changing cursor state. */
 static int widget_draw_order[4], widget_draw_x[4], widget_draw_y[4];
@@ -5694,6 +5696,123 @@ static int original_credit_sprite_packets(void)
     puts("Original credits sprite packets: 33060 USA constructor/glyph/fade/image states match semantic payloads, native combined packet headers, full OT links and 168 atomic arena failures");return 1;
 }
 
+static unsigned credits_vblanks,credits_pcm_frames,credits_pcm_nonzero;
+static u32 credits_seen_images,credits_probe_frame;
+static unsigned credits_pixel_probes,credits_visible_pixels;
+static int credits_force_bad_buffer;
+static void credits_drive_audio(void)
+{
+    s16 samples[735*2];
+    ++credits_vblanks;
+    /* Disc 1 has no CREDITS.XA: this transport fixture uses FMV000's
+     * channel 1, including when exercising the text-only callback table. */
+    if(credits_vblanks==1 && !(g_GameStateFlags&0x20000))BootDisplay_SetCdFilter(1);
+    size_t count=Psyz_CdPullSamples(samples,735);
+    credits_pcm_frames+=(unsigned)count;
+    for(size_t i=0;i<count*2;++i)if(samples[i])++credits_pcm_nonzero;
+    g_PadPackets[0].header=0x4000;
+    g_PadPackets[0].buttons=g_BootDisplayPlaybackEnded?0xfff7:0xffff;
+    if((g_GameStateFlags&0x20000) && (g_BootDisplayState==5 || g_BootDisplayState==7) &&
+       (unsigned)g_BootDisplayStateTimer<30)credits_seen_images|=1u<<g_BootDisplayStateTimer;
+    if(g_BootDisplayFrameCounter%450==225 && credits_probe_frame!=g_BootDisplayFrameCounter){
+        static _Alignas(8) u16 pixels[1024*512];RECT all={0,0,1024,512};
+        StoreImage(&all,pixels);DrawSync(0);++credits_pixel_probes;
+        for(unsigned y=0;y<448;++y)for(unsigned x=0;x<320;++x)
+            if(pixels[y*1024+x]&0x7fff)++credits_visible_pixels;
+        credits_probe_frame=g_BootDisplayFrameCounter;
+    }
+    if(credits_force_bad_buffer && credits_vblanks==1)g_BootDisplayBufferIndex=2;
+    if(credits_vblanks>40000)g_BootDisplayState=g_BootDisplayDone=-1;
+}
+
+static int original_credit_playback(PeDisc *disc)
+{
+    g_CdImage=disc;glyph_pending=glyph_poll_retry=0;fx_image_io=1;
+    if(Asset_OpenPeImage() || CdRom_LoadBootAudio())return 0;
+    if(!SDL_Init(SDL_INIT_EVENTS))return 0;
+    Boot_InitSystem();Boot_InitMemoryLayout();
+    g_GameStateFlags=0x10000;
+    int status=BootDisplay_RunDisplay();
+    printf("Original credits full image flow: status=%d frame=%u timer=%d state=%d done=%d flags=%08x\n",
+        status,g_BootDisplayFrameCounter,g_BootDisplayStateTimer,g_BootDisplayState,g_BootDisplayDone,g_GameStateFlags);
+    if(status || g_BootDisplayDone!=1 || g_BootDisplayPlaybackActive ||
+       (g_GameStateFlags&0x10000) || g_BootDisplayFrameCounter!=14028 ||
+       g_BootDisplayStateTimer!=31 || g_BootDisplayState!=7)return 0;
+    const char *authored=g_BootDisplayPlaybackFilePath;
+    g_BootDisplayPlaybackFilePath="FMV1/FMV000.STR";
+    if(BootDisplay_InitPlaybackFile())return 0;
+    /* Compare real XA PCM from the CUE backend with the original module's
+     * mounted-image callback. Both deliberately use the same PsyZ decoder. */
+    enum {frames=88200};static s16 expected[frames*2],actual[frames*2];
+    if(Psyz_CdSetDiskPath(getenv("PE_TEST_DISC")))return 0;
+    u8 mode=200,filter[2]={1,1};CdlLOC position;
+    CdControlB(14,&mode,NULL);CdControlB(13,filter,NULL);Psyz_AudioPause();
+    CdlATV mix={128,0,128,0};CdMix(&mix);
+    CdIntToPos(g_BootDisplayPlaybackStartPos,&position);CdControlB(2,(u8 *)&position,NULL);CdControlB(27,NULL,NULL);
+    size_t reference=Psyz_CdPullSamples(expected,frames);
+    CdControlB(8,NULL,NULL);Psyz_CdSetDiskPath(NULL);
+    int start_status=BootDisplay_StartPlayback();
+    if(start_status){fprintf(stderr,"Credits playback start failed: %d\n",start_status);return 0;}
+    if(BootDisplay_SetCdFilter(1))return 0;
+    size_t observed=Psyz_CdPullSamples(actual,frames);unsigned nonzero=0;
+    for(size_t i=0;i<observed*2;++i)if(actual[i])++nonzero;
+    if(reference!=frames || observed!=reference || !nonzero || memcmp(expected,actual,observed*4) ||
+       BootDisplay_WaitForCdAndRestoreCallbacks() || g_BootDisplayPlaybackActive){
+        fprintf(stderr,"Credits PCM mismatch: reference=%zu observed=%zu nonzero=%u compare=%d active=%d\n",
+            reference,observed,nonzero,memcmp(expected,actual,observed*4),g_BootDisplayPlaybackActive);return 0;}
+    printf("Original credits XA transport: %zu real FMV stereo frames match CUE PCM (%u nonzero samples)\n",observed,nonzero);
+    s32 start=g_BootDisplayPlaybackStartPos,end=g_BootDisplayPlaybackEndPos;PeDiscFile file=g_BootDisplayPlaybackFile;
+    for(unsigned fault=0;fault<4;++fault){
+        u32 sector_size=disc->sector_size;char *buffer=g_BootDisplayPlaybackSectorBuffer;
+        if(fault==0)g_CdImage=NULL;
+        if(fault==1)disc->sector_size=2048;
+        if(fault==2)g_BootDisplayPlaybackSectorBuffer=NULL;
+        if(fault==3)g_BootDisplayPlaybackEndPos=start;
+        if(BootDisplay_StartPlayback()!=-1 || g_BootDisplayPlaybackActive)return 0;
+        g_CdImage=disc;disc->sector_size=sector_size;g_BootDisplayPlaybackSectorBuffer=buffer;g_BootDisplayPlaybackEndPos=end;
+    }
+    for(unsigned fault=0;fault<2;++fault){
+        g_BootDisplayState=g_BootDisplayDone=0;
+        g_BootDisplayPlaybackEndPos=start+3;g_BootDisplayPlaybackFile.size=3*2048;
+        if(BootDisplay_StartPlayback())return 0;
+        u64 bytes=disc->image_size;if(fault)disc->image_size=0;
+        Psyz_CdPullSamples(actual,frames);disc->image_size=bytes;
+        for(unsigned i=0;i<32;++i)VSync(0);
+        if(!g_BootDisplayPlaybackEnded || (fault && (g_BootDisplayState!=-1 || g_BootDisplayDone!=-1)) ||
+           (!fault && g_BootDisplayPlaybackCurrentPos!=start+3) || BootDisplay_WaitForCdAndRestoreCallbacks())return 0;
+        g_BootDisplayPlaybackFile=file;g_BootDisplayPlaybackEndPos=end;
+    }
+    if(BootDisplay_SetCdFilter(-1)!=-1 || BootDisplay_SetCdFilter(256)!=-1)return 0;
+    for(unsigned images=0;images<2;++images){
+        if(CdRom_LoadBootAudio())return 0;
+        g_BootDisplayPlaybackFilePath="FMV1/FMV000.STR";
+        Boot_BuildRenderFlagTable();g_GameStateFlags=images?0x20000:0;
+        credits_vblanks=credits_pcm_frames=credits_pcm_nonzero=0;
+        credits_seen_images=credits_pixel_probes=credits_visible_pixels=0;credits_probe_frame=UINT32_MAX;
+        VSyncCallbacks(0,credits_drive_audio);
+        status=BootDisplay_RunDisplay();VSyncCallbacks(0,NULL);
+        printf("Original credits full sprite flow: images=%u status=%d frame=%u timer=%d state=%d done=%d vblanks=%u pcm=%u nonzero=%u seen=%08x probes=%u pixels=%u\n",
+            images,status,g_BootDisplayFrameCounter,g_BootDisplayStateTimer,g_BootDisplayState,g_BootDisplayDone,
+            credits_vblanks,credits_pcm_frames,credits_pcm_nonzero,credits_seen_images,credits_pixel_probes,credits_visible_pixels);
+        if(status || g_BootDisplayDone!=1 || g_BootDisplayPlaybackActive || !g_BootDisplayPlaybackEnded ||
+           !credits_pcm_nonzero || g_BootDisplayFrameCounter!=(images?14157:14028) ||
+           credits_pixel_probes<10 || credits_visible_pixels<1000 ||
+           (images && (g_BootDisplayStateTimer!=30 || g_BootDisplayState!=7 || credits_seen_images!=0x3fffffffu)))return 0;
+    }
+    g_BootDisplayPlaybackFilePath="missing-credits.xa";g_GameStateFlags=0;
+    if(BootDisplay_RunDisplay()!=-2 || g_BootDisplayPlaybackActive)return 0;
+    u8 *workspace=g_CdLoadAreaBase;g_CdLoadAreaBase=NULL;
+    if(BootDisplay_RunDisplay()!=-1 || g_BootDisplayPlaybackActive)return 0;
+    g_CdLoadAreaBase=workspace;
+    g_BootDisplayPlaybackFilePath="FMV1/FMV000.STR";g_GameStateFlags=0x20000;
+    credits_force_bad_buffer=1;credits_vblanks=0;VSyncCallbacks(0,credits_drive_audio);
+    status=BootDisplay_RunDisplay();VSyncCallbacks(0,NULL);credits_force_bad_buffer=0;
+    if(status!=-3 || g_BootDisplayPlaybackActive)return 0;
+    g_BootDisplayPlaybackFilePath=(char *)authored;
+    puts("Original credits playback: four invalid starts, bounded EOF, read failure, cleanup and sprite-mode reentry passed");
+    return 1;
+}
+
 static int original_credit_sprites(PeDisc *disc)
 {
     g_CdImage=disc;glyph_pending=glyph_poll_retry=0;fx_image_io=1;
@@ -7035,6 +7154,11 @@ static int script_movie_error_exit(const char *executable)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--credits-playback")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
+        int result=original_credit_playback(&disc);pe_disc_close(&disc);return result?0:155;
+    }
     if(argc==2 && !strcmp(argv[1],"--fx-effects")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_fx_shader_packets() && original_fx_blend() && original_fx_uncompressed_order() && original_fx_shader_pixels() && original_fx_shader_guards()?0:147;}
     if(argc==2 && !strcmp(argv[1],"--credits-sprites")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

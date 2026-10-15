@@ -1,104 +1,98 @@
 #include "common.h"
 #include "pe1/boot_display.h"
 #include "pe1/cdrom.h"
+#include <psyz/cd.h>
+#include <psyz/audio.h>
+#include <string.h>
 
 #include "playback_externs.h"
 
-/* Retry labels preserve the original command-error control flow. */
+/* The original stream consumes the mounted image through PsyZ's XA decoder.
+ * No drive queue, shell checks, retry loops or sector-address callbacks remain.
+ * The audio lock protects playback state shared with the sample-pull thread. */
+static PeDisc *playbackImage;
+static int playbackEnded, playbackError;
+s32 g_BootDisplayPlaybackActive;
+s32 g_BootDisplayPlaybackEnded, g_BootDisplayReportedPos;
+
 s32 BootDisplay_StartPlayback(void) {
-    u8 mode[8];
-    u8 filter[8];
-    u8 result[8];
-    s32 request;
-    s32 status;
-    mode[0] = 200;
-retryMode:
-    do {
-        while (DsSystemStatus() != 1) {}
-    } while (DsQueueLen() != 0);
-    request = DsCommand(14, mode, 0, -1);
-    if (request == 0) goto retryMode;
-    while ((status = DsSync(request, result)) != 2) {
-        if (status != 0) goto retryMode;
+    if(!g_CdImage || !g_CdImage->stream || g_CdImage->sector_size!=2352 ||
+       !g_BootDisplayPlaybackSectorBuffer ||
+       g_BootDisplayPlaybackStartPos<0 ||
+       g_BootDisplayPlaybackStartPos>=g_BootDisplayPlaybackEndPos)return -1;
+    u8 mode=200, filter[2]={1,0};
+    CdControlB(8,NULL,NULL);
+    Psyz_AudioLock();
+    playbackImage=g_CdImage;
+    playbackEnded=playbackError=0;
+    g_BootDisplayPlaybackEnded=g_BootDisplayPlaybackActive=0;
+    Psyz_CdSetReadCB(BootDisplay_StepPlaybackTransfer);
+    if(CdControlB(14,&mode,NULL)<=0 || CdControlB(13,filter,NULL)<=0 ||
+       BootDisplay_IssuePlaybackRead(200,27)<0){
+        CdControlB(8,NULL,NULL);Psyz_CdSetReadCB(NULL);
+        playbackImage=NULL;Psyz_AudioUnlock();return -2;
     }
-    filter[0] = 1;
-    filter[1] = 0;
-retryFilter:
-    do {
-        while (DsSystemStatus() != 1) {}
-    } while (DsQueueLen() != 0);
-    request = DsCommand(13, filter, 0, -1);
-    if (request == 0) goto retryFilter;
-    while ((status = DsSync(request, result)) != 2) {
-        if (status != 0) goto retryFilter;
-    }
-    DsReadyCallback(BootDisplay_StepPlaybackTransfer);
+    g_BootDisplayPlaybackActive=1;
+    Psyz_AudioUnlock();
     VSyncCallback(BootDisplay_CheckPlaybackTime);
-    BootDisplay_IssuePlaybackRead(200, 27);
-    do {
-        while (DsSystemStatus() != 1) {}
-    } while (DsQueueLen() != 0);
     return 0;
 }
 
 int BootDisplay_SetCdFilter(int code) {
-    int result[2];
-    u8 command[2];
-    command[0] = 1;
-    command[1] = code;
-    while (DsSync(0, 0) != 2) {}
-    DsControlB(13, command, result);
-    return 0;
+    if((unsigned)code>255)return -1;
+    u8 filter[2]={1,(u8)code};
+    return CdControlB(13,filter,NULL)>0?0:-1;
 }
 
 int BootDisplay_IssuePlaybackRead(int command, int parameter) {
-    int result[2];
-    int status;
-    int *request = &g_BootDisplayPlaybackStartPos;
-    DsIntToPos(*request, result);
-    status = DsPacket((u8)command, result, (u8)parameter, 0, -1);
-    g_BootDisplayPlaybackCurrentPos = *request;
-    g_BootDisplayPlaybackReadCount++;
-    return (u8)status;
+    if(command!=200 || parameter!=27 || !playbackImage)return -1;
+    CdlLOC position;
+    CdIntToPos(g_BootDisplayPlaybackStartPos,&position);
+    if(CdControlB(2,(u8 *)&position,NULL)<=0 || CdControlB(27,NULL,NULL)<=0)return -1;
+    g_BootDisplayPlaybackCurrentPos=g_BootDisplayPlaybackStartPos;
+    g_BootDisplayPlaybackReadCount=(s32)((u32)g_BootDisplayPlaybackReadCount+1);
+    return 0;
 }
 
-s32 BootDisplay_StepPlaybackTransfer(u8 mode) {
-    volatile u16 *index;
-    u16 next;
-    if (DsSystemStatus() == 1 && DsShellOpen() != g_CdDiskType)
-        exit(1);
-    if (mode == 1) {
-        index = &g_BootDisplayPlaybackRingIndex;
-        DsGetSector(g_BootDisplayPlaybackSectorBuffer + (*index << 11), 512);
-        next = (*index + 1) & 7;
-        *index = next;
-    } else {
-        g_BootDisplayPlaybackAltCount = g_BootDisplayPlaybackAltCount + 1;
-        next = g_BootDisplayPlaybackAltCount;
+s32 BootDisplay_StepPlaybackTransfer(struct PsyzCdRead *read) {
+    if(!read || read->size!=2352 || !read->buffer || !playbackImage ||
+       playbackImage!=g_CdImage){playbackError=1;return -1;}
+    if(read->sector>=(u32)g_BootDisplayPlaybackEndPos){playbackEnded=1;return -1;}
+    if(read->sector<(u32)g_BootDisplayPlaybackStartPos ||
+       !pe_disc_read_raw(playbackImage,&g_BootDisplayPlaybackFile,
+          read->sector-(u32)g_BootDisplayPlaybackStartPos,read->buffer)){
+        playbackError=1;return -1;
     }
-    return next;
+    const u8 *sector=read->buffer;
+    if((sector[0x12]&0x44)==0x44)++g_BootDisplayPlaybackAltCount;
+    else{
+        memcpy(g_BootDisplayPlaybackSectorBuffer+(g_BootDisplayPlaybackRingIndex<<11),sector+24,2048);
+        g_BootDisplayPlaybackRingIndex=(g_BootDisplayPlaybackRingIndex+1)&7;
+    }
+    g_BootDisplayPlaybackCurrentPos=(s32)read->sector+1;
+    return 2352;
 }
 
 void BootDisplay_CheckPlaybackTime(void) {
-    volatile s32 *time;
-    if ((VSync(-1) & 31) == 0) {
-        time = &g_BootDisplayPlaybackCurrentPos;
-        if (*time > g_BootDisplayPlaybackEndPos) {
-            Spu_SetVoiceVolume(0);
-            g_BootDisplayPlaybackEnded = 1;
-        } else if (*time < g_BootDisplayPlaybackStartPos - 300) {
-            BootDisplay_IssuePlaybackRead(200, 27);
-        } else {
-            DsCommand(17, 0, (DslCB)BootDisplay_RecordReadPosition, 0);
+    if((VSync(-1)&31)!=0)return;
+    Psyz_AudioLock();
+    if(g_BootDisplayPlaybackActive){
+        if(playbackError){g_BootDisplayState=g_BootDisplayDone=-1;g_BootDisplayPlaybackEnded=1;}
+        else if(playbackEnded || g_BootDisplayPlaybackCurrentPos>=g_BootDisplayPlaybackEndPos){
+            Spu_SetVoiceVolume(0);g_BootDisplayPlaybackEnded=1;
+        }else{
+            u8 position[8]={0};
+            if(CdControlB(16,NULL,position)>0)BootDisplay_RecordReadPosition(2,position);
+            else{g_BootDisplayState=g_BootDisplayDone=-1;g_BootDisplayPlaybackEnded=1;}
         }
     }
+    Psyz_AudioUnlock();
 }
 
-void BootDisplay_RecordReadPosition(u8 mode, int value) {
-    if (mode == 2) {
-        g_BootDisplayReportedPos = DsPosToInt(value + 5);
-        if (g_BootDisplayReportedPos != 0) {
-            g_BootDisplayPlaybackCurrentPos = g_BootDisplayReportedPos;
-        }
+void BootDisplay_RecordReadPosition(u8 mode, const u8 *value) {
+    if(mode==2 && value){
+        CdlLOC position;memcpy(&position,value,sizeof(position));
+        g_BootDisplayReportedPos=CdPosToInt(&position);
+        if(g_BootDisplayReportedPos!=0)g_BootDisplayPlaybackCurrentPos=g_BootDisplayReportedPos;
     }
 }

@@ -3,15 +3,19 @@
 #include "pe1/cdrom.h"
 #include "pe1/psyq_callbacks.h"
 #include "pe1/psyq_cd.h"
-#include "pe1/psyq_ds.h"
+#include "pe1/boot_display.h"
+#include <psyz/cd.h>
+#include <psyz/audio.h>
 
 s32 BootDisplay_WaitForCdAndRestoreCallbacks(void) {
-    DsControl(8, 0, 0);
-    while (DsControlB(9, 0, 0) == 0) {}
-    do {
-        while (DsSystemStatus() != 1) {}
-    } while (DsQueueLen() != 0);
-    DsReadyCallback(0);
+    s32 result=0;
+    Psyz_AudioLock();
+    if(g_BootDisplayPlaybackActive){
+        if(CdControlB(8,NULL,NULL)<=0)result=-1;
+        Psyz_CdSetReadCB(NULL);
+        g_BootDisplayPlaybackActive=0;
+    }
+    Psyz_AudioUnlock();
     VSyncCallback(Boot_VsyncCallback);
-    return 0;
+    return result;
 }

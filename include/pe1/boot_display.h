@@ -10,8 +10,6 @@
 #include "pe1/gpu_image.h"
 #include "pe1/psyq_callbacks.h"
 #include "pe1/psyq_cd.h"
-#include "pe1/psyq_ds.h"
-#include "pe1/psyq_ds_queue.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_packets.h"
 
@@ -102,8 +100,7 @@ extern s32 g_BootDisplayPlaybackEndPos;
 extern s32 g_BootDisplayPlaybackStartPos;
 extern s32 g_BootDisplayPlaybackEnded;
 extern PeDiscFile g_BootDisplayPlaybackFile;
-void BootDisplay_RecordReadPosition(u8 mode, int value);
-extern u16 g_CdDiskType;
+void BootDisplay_RecordReadPosition(u8 mode, const u8 *value);
 extern u16 g_BootDisplayPlaybackRingIndex;
 extern u16 g_BootDisplayPlaybackAltCount;
 extern char *g_BootDisplayPlaybackSectorBuffer;
@@ -118,19 +115,14 @@ void Spu_SetVoiceVolume(s32 value);
 int BootDisplay_IssuePlaybackRead(int command, int parameter);
 int BootDisplay_SetCdFilter(int code);
 s32 BootDisplay_WaitForCdAndRestoreCallbacks(void);
-s32 DsSync(s32, void *);
 s32 BootDisplay_StartPlayback(void);
 void BootDisplay_CheckPlaybackTime(void);
-s32 DsSystemStatus(void);
-s32 DsShellOpen(void);
-/* PsyQ exit: the failure path never returns to the transfer callback. */
-void exit(s32) __attribute__((noreturn));
-s32 BootDisplay_StepPlaybackTransfer(u8 mode);
-void DsInit(void);
-s32 DsQueueLen(void);
+struct PsyzCdRead;
+s32 BootDisplay_StepPlaybackTransfer(struct PsyzCdRead *read);
+extern s32 g_BootDisplayPlaybackActive;
 /* -1 missing image/file, -2 invalid extent/workspace; no state commit on error. */
 s32 BootDisplay_InitPlaybackFile(void);
-void BootDisplay_RunDisplay(void);
+s32 BootDisplay_RunDisplay(void);
 s32 BootDisplay_DrawTextBlock(void);
 void SetGraphDebug(s32 value);
 void SetDispMask(s32 value);

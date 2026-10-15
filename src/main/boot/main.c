@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "pe1/boot.h"
 #include "pe1/boot_disc_check.h"
+#include "pe1/boot_display.h"
 #include "pe1/boot_services.h"
 #include "pe1/field_bg_load.h"
 #include "pe1/game_state.h"
@@ -78,7 +79,9 @@ int main(void) {
                     fprintf(stderr, "Boot display assets failed\n");
                     return EXIT_FAILURE;
                 }
-                func_801235DC();
+                if(BootDisplay_RunDisplay()<0){
+                    fprintf(stderr,"Boot display failed\n");return EXIT_FAILURE;
+                }
                 g_SceneDispatchToken = 0xA80830C8;
                 g_GameState.flags |= 1;
                 break;

@@ -99,6 +99,7 @@ add_library(parasite-eve-original OBJECT
     src/overlays/menu_memcard/list_screen.c
     src/overlays/menu_memcard/video_playback.c
     src/overlays/menu_memcard/video.c
+    src/overlays/menu_memcard/glint_effects.c
     src/overlays/mdec_diag/vlc_build.c
     src/overlays/mdec_diag/vlc_c.c
     src/overlays/menu_memcard/page_flip.c
@@ -371,6 +372,7 @@ if(BUILD_TESTING)
     target_include_directories(test-original-actor-animation PRIVATE include)
     target_link_libraries(test-original-actor-animation PRIVATE psyz)
     add_test(NAME original-game-actor-animation COMMAND test-original-actor-animation)
+    add_test(NAME original-game-glint COMMAND test-original-actor-animation --glint)
     add_test(NAME original-game-player-input-assets COMMAND test-original-actor-animation --assets)
     set_tests_properties(original-game-player-input-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()

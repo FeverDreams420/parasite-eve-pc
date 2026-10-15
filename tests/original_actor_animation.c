@@ -1,3 +1,5 @@
+#include "pe1/akao/pan3d.h"
+#include "../src/overlays/menu_memcard/menu_memcard_glint.h"
 #include "../src/overlays/menu_memcard/menu_memcard_video.h"
 #include "pe1/resident_tables.h"
 #include "pe1/draw_area.h"
@@ -2690,6 +2692,186 @@ targets_restore:
     puts("Original battle targets: 82944 unhooked USA cases, filtering, null/dead cores, distances, angles, ordering/ties, full seven-target sentinel and saved-X alias match");return 1;
 }
 
+static int original_positional_audio_projection(void)
+{
+    Pe1GameState state=g_GameState;GeomScrollRecord scroll=g_GeomScroll;
+    GteMatrix views[3]={{{{4096,0,0},{0,4096,0},{0,0,4096}}},
+        {{{0,0,4096},{0,4096,0},{-4096,0,0}}},{{{4096,0,0},{0,4096,0},{0,0,4096}}}};
+    views[2].t[0]=23;views[2].t[1]=-17;views[2].t[2]=250;
+    static const s16 positions[9][3]={{0,0,0},{0,0,1},{0,0,6000},{-1000,-500,2000},{1000,500,2000},
+        {-32768,32767,32767},{32767,-32768,-32768},{-1,-1,-1},{200,300,30000}};
+    static const s16 offsets[3][2]={{160,112},{-512,256},{0,0}};
+    static const u16 ranges[4][2]={{0,10000},{128,2048},{2048,4096},{0,65535}};
+    static const u8 limits[3][2]={{0,127},{48,127},{127,0}};
+    /* Exactly six addressable bytes: the GTE must receive a padded local copy. */
+    AkaoPackedRect3 *position=malloc(sizeof(*position));if(!position)return 0;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int valid=1;
+    for(unsigned view=0;view<3;++view)for(int projection=160;projection<=640;projection*=2)
+    for(unsigned point=0;point<9;++point)for(unsigned offset=0;offset<3;++offset)
+    for(unsigned extent=0;extent<4;++extent)for(unsigned limit=0;limit<3;++limit){
+        for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+        g_ViewMatrixSlot.value=&views[view];g_GeomScroll.state.position.projectionDistance=&projection;
+        g_GeomScroll.state.position.screenOffsetX=offsets[offset][0];g_GeomScroll.state.position.screenOffsetY=offsets[offset][1];
+        g_GameState.bank_value_f8=ranges[extent][0];g_GameState.bank_value_fa=ranges[extent][1];
+        g_GameState.bank_value_f6=limits[limit][0];g_GameState.bank_value_f7=limits[limit][1];
+        position->x=positions[point][0];position->y=positions[point][1];position->z=positions[point][2];
+        int pan=-1,volume=-1,result=Akao_Calc3DPan(position,&pan,&volume);
+        u32 values[]={(u32)result,(u32)pan,(u32)volume,Psyz_GteCtrlRead(24),Psyz_GteCtrlRead(25)};
+        for(unsigned i=0;i<5;++i)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^(u8)(values[i]>>(byte*8)))*UINT64_C(1099511628211);
+        if(pan<0 || pan>255 || volume<0 || volume>127)valid=0;++cases;
+    }
+    free(position);g_GameState=state;g_GeomScroll=scroll;
+    if(!valid || hash!=UINT64_C(0xdd3f0ddcc154e8eb)){
+        fprintf(stderr,"Original positional audio: cases=%u hash=%016llx valid=%d\n",cases,(unsigned long long)hash,valid);return 0;}
+    puts("Original positional audio: 2916 USA CPU/GTE-bridge cases, views/projection/clipping, negative pan, distance-volume wrapping and restored screen offsets match");return 1;
+}
+
+static int original_glint_lifecycle(void)
+{
+    Pe1GameState saved_state=g_GameState;GeomScrollRecord saved_scroll=g_GeomScroll;
+    RenderEffectParameters saved_params=g_FieldFxSpriteParams;
+    FieldFxObjectPrefix *saved_owner=g_FieldFxOwner;FieldFxTaskSlot *saved_task=g_FieldFxActiveTaskSlot;
+    FieldFxTaskContext context={0},*saved_context=g_FieldFxTaskContext;g_FieldFxTaskContext=&context;
+    BattleEntity *saved_entity=D_8009D254;GteShortVector saved_origin=g_MemcardGlintOrigin;
+    u8 *saved_model=g_FieldFxGlintModel;void *saved_sound=g_AkaoBgmHandle[0];
+    int saved_slot=g_ActiveDrawSlot,saved_offset=g_DrawPacketOffset,saved_age=g_FieldFxCurrentAge;
+    int saved_alt=g_FieldFxAltPaletteFlag; s16 saved_page=g_FieldFxLoadedTexturePage;
+    u16 saved_stop=g_BattleCrossFlashStop;s16 saved_raised=g_MenuCardCrossFlashRaised;
+    u32 saved_colors[256];memcpy(saved_colors,g_FieldModelColorBackup,sizeof(saved_colors));
+    u16 model_page=g_FieldFxModelTpage,model_clut=g_FieldFxModelClut,model_semi=g_FieldFxModelSemiTrans;
+    s16 model_depth=g_FieldFxModelDepthBias;
+    u8 tracks[168];memcpy(tracks,g_MenuCardDriftGlowColorTrack,40);memcpy(tracks+40,g_MenuCardRisingEmberColorTrack,48);
+    memcpy(tracks+88,g_MenuCardGlintBurstColorTrack,40);memcpy(tracks+128,g_MenuCardSpinRingColorTrack,40);
+    _Alignas(16) static u8 packets[0x40000+128];RenderNativeTag ordering[4096];
+    _Alignas(void *) u8 pool[4096];FieldFxTaskSlot task={.start=(char *)pool,.end=(char *)pool+sizeof(pool)};
+    FieldFxObjectPrefix owner={0};BattleEntity actor={0};RenderMatrix matrices[22]={0};
+    for(unsigned i=0;i<22;++i){matrices[i].rotation[0][0]=matrices[i].rotation[1][1]=matrices[i].rotation[2][2]=4096;
+        matrices[i].translation[0]=(int)i*10-100;matrices[i].translation[2]=6000;}
+    actor.renderObject.matrices=matrices;actor.renderObject.target_z=6000;owner.actor=(FieldActor *)&actor;
+    g_FieldFxOwner=&owner;g_FieldFxActiveTaskSlot=&task;g_PlayerEntity=(FieldActor *)&actor;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};int projection=320;
+    g_ViewMatrixSlot.value=&view;g_GeomScroll.state.position.projectionDistance=&projection;
+    g_GameState.bank_value_f8=0;g_GameState.bank_value_fa=10000;g_GameState.bank_value_f6=0;g_GameState.bank_value_f7=127;
+    u32 sound[32]={0};g_AkaoBgmHandle[0]=sound;
+    _Alignas(16) u8 model_bytes[64]={0};FieldTexturedModel *model=(void *)model_bytes;
+    model->header.flatTris=1;model->header.colorOffset=52;model->header.colorCount=3;
+    for(unsigned i=0;i<3;++i){model->header.tris[0].vertex[i]=28+i*8;model->header.tris[0].uv[i]=0x1000+i;
+        FieldModelVertex *v=(void *)(model_bytes+28+i*8);v->x=i==0?-20:i==1?20:0;v->y=i==2?20:-20;v->color=52+i*4;
+        u32 color=0x00302010+i;memcpy(model_bytes+52+i*4,&color,4);}
+    g_FieldFxGlintModel=model_bytes;
+    FieldFxCallbackListCallback controllers[]={MenuCard_RingBurstController,MenuCard_CrossFlashController,
+        MenuCard_GlintBurstController,MenuCard_SpinBurstController};
+    const int counts[]={50,36,22,40},ends[]={72,48,8,8};
+    unsigned draws=0;int valid=1;
+    for(unsigned controller=0;controller<4;++controller)for(unsigned slot=0;slot<2;++slot)for(unsigned alt=0;alt<2;++alt){
+        union {MemcardRingBurst ring;MemcardCrossFlash cross;MemcardGlintBurst glint;MemcardSpinBurst spin;} state={0};
+        memset(pool,0xa5,sizeof(pool));g_ActiveDrawSlot=slot;g_FieldFxAltPaletteFlag=alt;g_FieldFxLoadedTexturePage=1;
+        g_FieldFxSpriteParams=(RenderEffectParameters){32,2,1,0,0,0,16,32,32};g_FieldFxCurrentAge=0;
+        g_BattleCrossFlashStop=55;g_MenuCardCrossFlashRaised=0;
+        int used=controllers[controller](0,&state,0);FieldFxCallbackList *list=(void *)pool;
+        if(used<=0 || used>sizeof(pool) || list->count!=counts[controller]){valid=0;break;}
+        for(unsigned i=used;i<sizeof(pool);++i)if(pool[i]!=0xa5)valid=0;
+        if(controller==1 && (state.cross.attachA!=6 || state.cross.attachB!=19 || g_BattleCrossFlashStop))valid=0;
+        int ended=0;unsigned peak=0;
+        for(int frame=0;frame<=90;++frame){
+            g_FieldFxCurrentAge=frame;g_DrawPacketOffset=0;memset(packets,0xa5,sizeof(packets));
+            for(unsigned i=0;i<4096;++i)ordering[i]=(RenderNativeTag){.address=0xffffff};
+            D_800B0E38.ordering[slot]=ordering;D_800B0E38.packets[slot]=(char *)packets;
+            Psyz_GteCtrlWrite(26,320);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
+            if(frame && !ended){if(controller==1 && frame==48)g_BattleCrossFlashStop=1;
+                int result=controllers[controller](1,&state,0);
+                if(result){ended=frame;if(result!=(controller==0?1:2))valid=0;}}
+            if(!ended || frame==ended){controllers[controller](2,&state,0);++draws;}
+            int active=FieldFx_DrawCallbackList((char *)pool);if(active>peak)peak=active;
+            if(g_FieldFxCurrentAge!=frame || g_DrawPacketOffset<0 || g_DrawPacketOffset>0x40000){valid=0;break;}
+            /* The original model renderer writes tentative UVs before culling.
+             * Its final scratch packet need not advance the committed cursor. */
+            for(unsigned i=g_DrawPacketOffset+sizeof(FieldModelGt4Packet);i<sizeof(packets);++i)
+                if(packets[i]!=0xa5){valid=0;break;}
+            for(unsigned i=0;i<4096;++i){uintptr_t link=ordering[i].address;unsigned count=0;
+                while(link!=0xffffff){
+                    if(link<(uintptr_t)packets || link>(uintptr_t)packets+g_DrawPacketOffset-sizeof(RenderNativeTag) || ++count>4096){valid=0;break;}
+                    RenderNativeTag *tag=(void *)link;
+                    if(tag->length>16 || link+sizeof(*tag)+tag->length*4>(uintptr_t)packets+g_DrawPacketOffset){valid=0;break;}
+                    link=tag->address;
+                }
+            }
+            FieldFx_UpdateCallbackList(pool);
+            if(frame==90 && active)valid=0;
+        }
+        if(ended!=ends[controller] || !peak)valid=0;
+        if(!valid)fprintf(stderr,"glint lifecycle controller=%u slot=%u alt=%u end=%d peak=%u offset=%d\n",controller,slot,alt,ended,peak,g_DrawPacketOffset);
+        if(controller==1 && g_MenuCardCrossFlashRaised!=1)valid=0;
+    }
+    memcpy(g_MenuCardDriftGlowColorTrack,tracks,40);memcpy(g_MenuCardRisingEmberColorTrack,tracks+40,48);
+    memcpy(g_MenuCardGlintBurstColorTrack,tracks+88,40);memcpy(g_MenuCardSpinRingColorTrack,tracks+128,40);
+    memcpy(g_FieldModelColorBackup,saved_colors,sizeof(saved_colors));g_FieldFxGlintModel=saved_model;g_AkaoBgmHandle[0]=saved_sound;
+    g_FieldFxModelTpage=model_page;g_FieldFxModelClut=model_clut;g_FieldFxModelSemiTrans=model_semi;g_FieldFxModelDepthBias=model_depth;
+    g_GameState=saved_state;g_GeomScroll=saved_scroll;g_FieldFxSpriteParams=saved_params;
+    g_FieldFxOwner=saved_owner;g_FieldFxActiveTaskSlot=saved_task;g_FieldFxTaskContext=saved_context;g_PlayerEntity=(FieldActor *)saved_entity;g_MemcardGlintOrigin=saved_origin;
+    g_ActiveDrawSlot=saved_slot;g_DrawPacketOffset=saved_offset;g_FieldFxCurrentAge=saved_age;
+    g_FieldFxAltPaletteFlag=saved_alt;g_FieldFxLoadedTexturePage=saved_page;g_BattleCrossFlashStop=saved_stop;g_MenuCardCrossFlashRaised=saved_raised;
+    if(!valid){fprintf(stderr,"original glint controller/list/render lifecycle failed (%u draws)\n",draws);return 0;}
+    puts("Original glint controllers: all four initializers, original callback lists, complete particle lifetimes, cross-flash stop and both native draw slots passed with arena guards");
+    return 1;
+}
+
+static int original_glint_particles(PeDisc *disc)
+{
+    static const int timers[]={0,1,14,15,16,17,22,23,24,30,31,38,39,43,44,32767,32768,65535};
+    static const s16 poses[6][6]={{0,0,0,0,0,0},{-500,499,300,70,-80,33},
+        {32767,-32768,32760,-32768,32767,-1},{-32768,32767,-32760,32767,-32768,1},
+        {35,0,-35,-1,1,127},{-1,-1,-1,-127,-128,128}};
+    FieldFxCallbackListCallback functions[]={MenuCard_DriftGlowParticle,MenuCard_RisingEmberParticle,
+        MenuCard_FadingGlintParticle,MenuCard_SpinRingParticle};
+    static const u32 seeds[]={1,0x87654321};static const int modes[]={0,1,3};
+    RoomFloorY floor=*g_RoomFloorY;unsigned saved_random=rand();
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int valid=1;
+#define GLINT_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+    for(unsigned fn=0;fn<4;++fn)for(int state=-1;state<4;++state)
+    for(unsigned timer=0;timer<sizeof(timers)/sizeof(*timers);++timer)for(unsigned pose=0;pose<6;++pose)
+    for(int height=-500;height<=500;height+=500)for(unsigned seed=0;seed<2;++seed)for(unsigned mode=0;mode<3;++mode){
+        u16 words[10]={(u16)poses[pose][0],(u16)poses[pose][1],(u16)poses[pose][2],0xa55a,
+            (u16)poses[pose][3],(u16)poses[pose][4],(u16)poses[pose][5],0x5aa5,(u16)state,(u16)timers[timer]};
+        union {RoomDampedSpark spark;MemcardSpinParticle spin;} particle;
+        memcpy(&particle,words,20);g_RoomFloorY->y=height;srand(seeds[seed]);
+        int result=functions[fn](modes[mode],&particle,0);
+        const u8 *bytes=(const u8 *)&particle;for(unsigned i=0;i<20;++i)GLINT_PUT(bytes[i],1);
+        GLINT_PUT(result,4);
+        /* Match the complete RNG state, including the three jitter draws. */
+        u32 rng=seeds[seed];if(fn==1 && state==1 && modes[mode]==1)
+            for(unsigned i=0;i<3;++i)rng=rng*UINT32_C(1103515245)+12345;
+        GLINT_PUT(rng,4);
+        u32 next=rng*UINT32_C(1103515245)+12345;if(rand()!=((next>>16)&32767))valid=0;
+        ++cases;
+    }
+    *g_RoomFloorY=floor;srand(saved_random);
+#undef GLINT_PUT
+    if(cases!=38880 || hash!=UINT64_C(0x445fa6d24cc84f79))valid=0;
+    PeDiscFile archive;static u8 bank[22*2048];
+    if(!pe_disc_find(disc,"PE.IMG",&archive) || !pe_disc_read(disc,&archive,965ull*2048,bank,sizeof(bank)))return 0;
+    static const struct {const void *data;u32 address;size_t bytes;} authored[]={
+        {&g_MenuCardEffectSpinRotation,0x801ed7fc,8},{&g_MenuCardEffectTiltRotation,0x801ed804,8},
+        {&g_MenuCardRingBurstGlowColor,0x801ed80c,4},{&g_MenuCardRingBurstRingColor,0x801ed810,4},
+        {&g_MenuCardRingBurstBandColor,0x801ed814,4},{&g_MenuCardHandOffset,0x801ed818,8},
+        {&g_MenuCardCrossFlashTipAOffset,0x801ed820,8},{&g_MenuCardCrossFlashTipBOffset,0x801ed828,8},
+        {&g_MenuCardCrossFlashCenterOffset,0x801ed830,8},{&g_MenuCardCrossFlashInnerColor,0x801ed838,4},
+        {&g_MenuCardCrossFlashOuterColor,0x801ed83c,4},{&g_MenuCardCrossFlashEdgeColor,0x801ed840,4},
+        {&g_MenuCardGlintBurstFlashColor,0x801ed844,4},{&g_MenuCardSpinRingColorA,0x801ed848,4},
+        {&g_MenuCardSpinRingColorB,0x801ed84c,4},{g_MenuCardDriftGlowColorTrack,0x801f1bb0,40},
+        {g_MenuCardRisingEmberColorTrack,0x801f1c28,48},{g_MenuCardGlintBurstColorTrack,0x801f1cb0,40},
+        {g_MenuCardSpinRingColorTrack,0x801f1cd8,40}};
+    u16 state_bytes;memcpy(&state_bytes,bank+(0x801f1c78u-0x801eb7f8u),2);
+    if(state_bytes!=sizeof(MemcardCrossFlash))valid=0;
+    for(unsigned i=0;i<sizeof(authored)/sizeof(*authored);++i)
+        if(memcmp(authored[i].data,bank+(authored[i].address-0x801eb7f8),authored[i].bytes))valid=0;
+    if(!valid){fprintf(stderr,"Original glint particles: cases=%u hash=%016llx valid=%d\n",cases,(unsigned long long)hash,valid);return 0;}
+    puts("Original glint particles: 38880 real USA cases, four callbacks, all phases, signed/wrapping coordinates and timers, damping/bounce, jitter RNG and authored data match");
+    return 1;
+}
+
 static int original_script_sprites(void)
 {
     Pe1GameState saved_state=g_GameState;GeomScrollRecord saved_scroll=g_GeomScroll;
@@ -5306,6 +5488,7 @@ static int original_item_random(void)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
     if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_task_bank_failures() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
@@ -5340,6 +5523,7 @@ int main(int argc, char **argv)
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_icon_packets(&disc,&exe)) return 133;
+        if (!original_glint_particles(&disc) || !original_positional_audio_projection() || !original_glint_lifecycle()) return 141;
         if (!original_video_buffers(&disc)) return 135;
         if (!original_video_decoder(&disc)) return 136;
         if (!original_video_stream_errors()) return 137;

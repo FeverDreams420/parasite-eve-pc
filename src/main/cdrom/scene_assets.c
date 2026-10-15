@@ -123,9 +123,10 @@ s32 Akao_SendPositionalCmd(void *arg0, s32 arg1, s32 arg2, AkaoPosCoord arg3, Ak
 int Akao_Calc3DPan(AkaoPackedRect3 *pos, int *pan, int *volume)
 {
     Pe1GameState *state;
-    long sxy;
-    long x;
-    long y;
+    s32 sxy;
+    s32 x;
+    s32 y;
+    GteShortVector position = {pos->x, pos->y, pos->z, 0};
     int depth;
     int far;
     int span;
@@ -136,12 +137,12 @@ int Akao_Calc3DPan(AkaoPackedRect3 *pos, int *pan, int *volume)
     gte_ldrotmatrix(g_ViewMatrixSlot.value);
     gte_ldtransmatrix(g_ViewMatrixSlot.value);
     gte_ctc2_26(*g_GeomScroll.state.position.projectionDistance);
-    depth = RotTransPers((GteShortVector *)pos, (int *)&sxy, (int *)&x, (int *)&y);
+    depth = RotTransPers(&position, &sxy, &x, &y);
     x = (short)sxy;
     y = sxy >> 16;
     Render_ResetGteScreenOffset();
 
-    *pan = ((x + 40) << 7) / 400 + 64;
+    *pan = ((x + 40) * 128) / 400 + 64;
     if ((unsigned int)*pan >= 256) {
         *pan = 255;
     }
@@ -154,7 +155,7 @@ int Akao_Calc3DPan(AkaoPackedRect3 *pos, int *pan, int *volume)
 
     far = state->bank_value_fa;
     depth = far - depth;
-    depth = depth * depth / (far - state->bank_value_f8);
+    depth = (s32)((u32)depth * (u32)depth) / (far - state->bank_value_f8);
     span = state->bank_value_f7;
     low = state->bank_value_f6;
     span -= low;

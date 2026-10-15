@@ -1,8 +1,14 @@
 #include "menu_memcard_glint.h"
+#include "pe1/geom_state.h"
+#include "pe1/battle_runtime.h"
+#include "pe1/field_history_trail.h"
+#include "pe1/room_fx.h"
 
 /* Spark that drifts with damped velocity for 44 frames; state 0 draws a
  * flickering coloured glow, state 1 a larger glow that fades with a sine. */
-int MenuCard_DriftGlowParticle(int mode, RoomDampedSpark *spark) {
+int MenuCard_DriftGlowParticle(int mode, void *state, intptr_t argument) {
+    RoomDampedSpark *spark = state;
+    (void)argument;
     GteRotation rotation = g_MenuCardEffectSpinRotation;
     RenderColor color;
     int angle;
@@ -30,7 +36,7 @@ int MenuCard_DriftGlowParticle(int mode, RoomDampedSpark *spark) {
         case 0: {
             int kind;
             int palette;
-            angle = ((s16)spark->timer << 10) / 44;
+            angle = ((s16)spark->timer * 1024) / 44;
             fade = 128 - ((g_FieldFxCurrentAge & 1) << 5);
             FieldFx_SampleColorTrack(g_MenuCardDriftGlowColorTrack, &color, (s16)spark->timer);
             rotation.z = -g_FieldFxCurrentAge * 16;
@@ -50,7 +56,7 @@ int MenuCard_DriftGlowParticle(int mode, RoomDampedSpark *spark) {
         case 1: {
             int kind;
             int palette;
-            angle = ((s16)spark->timer << 10) / 44;
+            angle = ((s16)spark->timer * 1024) / 44;
             fade = rsin(angle * 2) / 32;
             rotation.z = -g_FieldFxCurrentAge * 16;
             size = rsin(angle) / 2 + 0x1000;
@@ -74,7 +80,9 @@ int MenuCard_DriftGlowParticle(int mode, RoomDampedSpark *spark) {
 
 /* Ring burst: sprays drift glows on its first frames, then grows a stack
  * of glow rings and bands around its position. */
-int MenuCard_RingBurstController(int mode, MemcardRingBurst *burst) {
+int MenuCard_RingBurstController(int mode, void *state, intptr_t argument) {
+    MemcardRingBurst *burst = state;
+    (void)argument;
     GteShortVector position;
     GteShortVector offset;
     GteRotation spin = g_MenuCardEffectSpinRotation;
@@ -96,8 +104,8 @@ int MenuCard_RingBurstController(int mode, MemcardRingBurst *burst) {
         Akao_SendPositionalCmdStereo(0x4B7, 0, burst->x, burst->y, burst->z);
         burst->state = 0;
         burst->timer = 0;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 20, 50,
-                             (FieldFxCallbackListCallback)MenuCard_DriftGlowParticle);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->start, 20, 50,
+                             MenuCard_DriftGlowParticle);
     case 1:
         switch (burst->state) {
         case 0:
@@ -107,7 +115,7 @@ int MenuCard_RingBurstController(int mode, MemcardRingBurst *burst) {
             burst->state = 1;
             burst->timer = 0;
             for (i = 0; i < 50; i++) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -148,7 +156,7 @@ int MenuCard_RingBurstController(int mode, MemcardRingBurst *burst) {
         g_FieldFxSpriteParams.depth = 41;
         switch (burst->state) {
         case 0:
-            angle = (burst->timer << 10) / 24;
+            angle = (burst->timer * 1024) / 24;
             gte_ldrotmatrix(g_ViewMatrixSlot.value);
             gte_ldtransmatrix(g_ViewMatrixSlot.value);
             fade = rsin(angle) / 32;
@@ -163,7 +171,7 @@ int MenuCard_RingBurstController(int mode, MemcardRingBurst *burst) {
                           &ring, 0, fade, 1);
             break;
         case 1:
-            angle = (burst->timer << 10) / 48;
+            angle = (burst->timer * 1024) / 48;
             if (burst->timer < 5) {
                 amount = 0x80 - burst->timer * 32;
                 FieldFx_DrawScreenTint((unsigned char *)&ring, amount, 1, 8);
@@ -223,7 +231,9 @@ int MenuCard_RingBurstController(int mode, MemcardRingBurst *burst) {
 /* Spark with three phases: state 0 falls and bounces with a spinning
  * coloured glint, state 1 rises with jitter as a pulsing flame frame,
  * state 2 lies on the floor as a flat glow that fades with a sine. */
-int MenuCard_RisingEmberParticle(int mode, RoomDampedSpark *spark) {
+int MenuCard_RisingEmberParticle(int mode, void *state, intptr_t argument) {
+    RoomDampedSpark *spark = state;
+    (void)argument;
     GteRotation rotation = g_MenuCardEffectSpinRotation;
     RenderColor color;
     GteShortVector position;
@@ -273,7 +283,7 @@ int MenuCard_RisingEmberParticle(int mode, RoomDampedSpark *spark) {
             angle = (s16)spark->timer;
             FieldFx_SampleColorTrack(g_MenuCardRisingEmberColorTrack, &color, angle * 2);
             rotation.z = spark->x + g_FieldFxCurrentAge * 32;
-            size = rsin(angle << 7);
+            size = rsin(angle * 128);
             g_FieldFxSpriteParams.parameter00 = 16;
             g_FieldFxSpriteParams.parameter02 = 1;
             g_FieldFxSpriteParams.extent_x = 16;
@@ -295,9 +305,9 @@ int MenuCard_RisingEmberParticle(int mode, RoomDampedSpark *spark) {
         case 1: {
             int kind;
             int palette;
-            angle = (s16)spark->timer << 6;
+            angle = (s16)spark->timer * 64;
             fade = rcos(angle) / 32;
-            rotation.z = g_FieldFxCurrentAge << 5;
+            rotation.z = g_FieldFxCurrentAge * 32;
             size = rcos(angle);
             g_FieldFxSpriteParams.parameter00 = 32;
             g_FieldFxSpriteParams.parameter02 = 2;
@@ -321,7 +331,7 @@ int MenuCard_RisingEmberParticle(int mode, RoomDampedSpark *spark) {
         case 2: {
             int kind;
             int palette;
-            angle = ((s16)spark->timer << 10) / 18;
+            angle = ((s16)spark->timer * 1024) / 18;
             fade = rsin(angle * 2) / 32;
             size = rsin(angle);
             g_FieldFxSpriteParams.parameter00 = 32;
@@ -358,7 +368,9 @@ int MenuCard_RisingEmberParticle(int mode, RoomDampedSpark *spark) {
 /* Controller that draws two crossed beams between the actor's hands while
  * the flash flag is raised, sheds sparks from both hands and mirrors every
  * beam to the other side. */
-int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
+int MenuCard_CrossFlashController(int mode, void *state, intptr_t argument) {
+    MemcardCrossFlash *flash = state;
+    (void)argument;
     GteShortVector from;
     GteShortVector to;
     MemcardJointOffset hand = g_MenuCardHandOffset;
@@ -383,28 +395,28 @@ int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
         g_BattleCrossFlashStop = 0;
         tipA.x *= -1;
         tipB.x *= -1;
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 8, &hand, &from);
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 8, &tipA, &to);
-        FieldFx_DrawHistoryTrail(&from, &to, 0x3F0, (unsigned char *)&inner, (unsigned char *)&outer, 128, (struct FieldTrailPair *)flash->trailA, 1);
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 8, &tipB, &from);
-        FieldFx_DrawHistoryTrail(&from, &to, 0x3F2, (unsigned char *)&edge, (unsigned char *)&outer, 128, (struct FieldTrailPair *)flash->trailC, 1);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 8, &hand, &from);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 8, &tipA, &to);
+        FieldFx_DrawHistoryTrail(&from, &to, 0x3F0, (unsigned char *)&inner, (unsigned char *)&outer, 128, flash->trailA, 1);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 8, &tipB, &from);
+        FieldFx_DrawHistoryTrail(&from, &to, 0x3F2, (unsigned char *)&edge, (unsigned char *)&outer, 128, flash->trailC, 1);
         tipA.x *= -1;
         tipB.x *= -1;
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 21, &hand, &from);
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 21, &tipA, &to);
-        FieldFx_DrawHistoryTrail(&from, &to, 0x3F0, (unsigned char *)&inner, (unsigned char *)&outer, 128, (struct FieldTrailPair *)flash->trailB, 1);
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 21, &tipB, &from);
-        FieldFx_DrawHistoryTrail(&from, &to, 0x3F2, (unsigned char *)&edge, (unsigned char *)&outer, 128, (struct FieldTrailPair *)flash->trailD, 1);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 20, 36,
-                             (FieldFxCallbackListCallback)MenuCard_RisingEmberParticle);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 21, &hand, &from);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 21, &tipA, &to);
+        FieldFx_DrawHistoryTrail(&from, &to, 0x3F0, (unsigned char *)&inner, (unsigned char *)&outer, 128, flash->trailB, 1);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 21, &tipB, &from);
+        FieldFx_DrawHistoryTrail(&from, &to, 0x3F2, (unsigned char *)&edge, (unsigned char *)&outer, 128, flash->trailD, 1);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->start, 20, 36,
+                             MenuCard_RisingEmberParticle);
     case 1:
         flash->timer++;
         g_MenuCardCrossFlashRaised = 1;
         if (g_BattleCrossFlashStop == 0) {
             int phase = (s16)flash->timer % 3;
             if (phase == 0) {
-                FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, flash->attachA, &center, &from);
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)(void *)g_FieldFxOwner->actor, flash->attachA, &center, &from);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
                 if (child) {
                     child->x = from.x;
                     child->y = from.y;
@@ -413,8 +425,8 @@ int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
                     child->timer = 0;
                 }
             } else if (phase == 2) {
-                FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, flash->attachB, &center, &from);
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)(void *)g_FieldFxOwner->actor, flash->attachB, &center, &from);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
                 if (child) {
                     child->x = from.x;
                     child->y = from.y;
@@ -426,8 +438,8 @@ int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
             if (flash->timer & 1) index = 8;
             else index = 21;
             hand.z = -(rand() & 0x1FF);
-            FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, index, &hand, &from);
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)(void *)g_FieldFxOwner->actor, index, &hand, &from);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
             if (child) {
                 child->x = from.x;
                 child->y = from.y;
@@ -440,7 +452,7 @@ int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
             }
             if ((flash->timer & 7) == 0) {
                 FieldFx_GetActorPosition((char *)D_8009D254, 0, (s16 *)&from);
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
                 if (child) {
                     child->x = from.x;
                     child->y = from.y;
@@ -478,7 +490,7 @@ int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
         {
             int kind;
             int palette;
-            FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, flash->attachA, &center, &from);
+            FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)(void *)g_FieldFxOwner->actor, flash->attachA, &center, &from);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             if (kind == 4 && g_FieldFxAltPaletteFlag != 0) palette += 4;
@@ -488,7 +500,7 @@ int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
         {
             int kind;
             int palette;
-            FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, flash->attachB, &center, &from);
+            FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)(void *)g_FieldFxOwner->actor, flash->attachB, &center, &from);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             if (kind == 4 && g_FieldFxAltPaletteFlag != 0) palette += 4;
@@ -497,18 +509,18 @@ int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
         }
         tipA.x *= -1;
         tipB.x *= -1;
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 8, &hand, &from);
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 8, &tipA, &to);
-        FieldFx_DrawHistoryTrail(&from, &to, 8, (unsigned char *)&inner, (unsigned char *)&outer, 128, (struct FieldTrailPair *)flash->trailA, 1);
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 8, &tipB, &from);
-        FieldFx_DrawHistoryTrail(&from, &to, 10, (unsigned char *)&edge, (unsigned char *)&outer, 128, (struct FieldTrailPair *)flash->trailC, 1);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 8, &hand, &from);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 8, &tipA, &to);
+        FieldFx_DrawHistoryTrail(&from, &to, 8, (unsigned char *)&inner, (unsigned char *)&outer, 128, flash->trailA, 1);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 8, &tipB, &from);
+        FieldFx_DrawHistoryTrail(&from, &to, 10, (unsigned char *)&edge, (unsigned char *)&outer, 128, flash->trailC, 1);
         tipA.x *= -1;
         tipB.x *= -1;
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 21, &hand, &from);
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 21, &tipA, &to);
-        FieldFx_DrawHistoryTrail(&from, &to, 8, (unsigned char *)&inner, (unsigned char *)&outer, 128, (struct FieldTrailPair *)flash->trailB, 1);
-        FieldFx_TransformMatrixPoint(((RoomSparkBattleEntity *)D_8009D254), 21, &tipB, &from);
-        FieldFx_DrawHistoryTrail(&from, &to, 10, (unsigned char *)&edge, (unsigned char *)&outer, 128, (struct FieldTrailPair *)flash->trailD, 1);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 21, &hand, &from);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 21, &tipA, &to);
+        FieldFx_DrawHistoryTrail(&from, &to, 8, (unsigned char *)&inner, (unsigned char *)&outer, 128, flash->trailB, 1);
+        FieldFx_TransformMatrixPoint(((RoomFxTransformOwner *)(void *)D_8009D254), 21, &tipB, &from);
+        FieldFx_DrawHistoryTrail(&from, &to, 10, (unsigned char *)&edge, (unsigned char *)&outer, 128, flash->trailD, 1);
         g_FieldFxSpriteParams.depth = 16;
         break;
     }
@@ -518,7 +530,9 @@ int MenuCard_CrossFlashController(int mode, MemcardCrossFlash *flash) {
 /* Spark that drifts with damped velocity for 24 frames; state 0 draws a
  * glint whose size follows a sine scaled by the spark's angle field, state 1
  * also falls and bounces and draws a larger spinning glint. */
-int MenuCard_FadingGlintParticle(int mode, RoomDampedSpark *spark) {
+int MenuCard_FadingGlintParticle(int mode, void *state, intptr_t argument) {
+    RoomDampedSpark *spark = state;
+    (void)argument;
     GteRotation rotation;
     int fall;
     int bounce;
@@ -562,7 +576,7 @@ int MenuCard_FadingGlintParticle(int mode, RoomDampedSpark *spark) {
             u16 clut;
             int kind;
             int palette;
-            angle = ((s16)spark->timer << 10) / 24;
+            angle = ((s16)spark->timer * 1024) / 24;
             size = rsin(angle) + 0x800;
             size = size * (s16)spark->angle / 4096;
             fade = rcos(angle) / 32 + 40;
@@ -585,7 +599,7 @@ int MenuCard_FadingGlintParticle(int mode, RoomDampedSpark *spark) {
             u16 clut;
             int kind;
             int palette;
-            angle = ((s16)spark->timer << 10) / 24;
+            angle = ((s16)spark->timer * 1024) / 24;
             size = rsin(angle) + 0x1000;
             fade = rsin(angle * 2) / 32;
             rotation.x = 0;
@@ -611,7 +625,9 @@ int MenuCard_FadingGlintParticle(int mode, RoomDampedSpark *spark) {
 
 /* Controller that sits on the scene anchor, bursts fading glints on its
  * early frames and flashes a glint, ring and halo while it fades. */
-int MenuCard_GlintBurstController(int mode, MemcardGlintBurst *burst) {
+int MenuCard_GlintBurstController(int mode, void *state, intptr_t argument) {
+    MemcardGlintBurst *burst = state;
+    (void)argument;
     RenderColor color;
     RenderColor flash = g_MenuCardGlintBurstFlashColor;
     RoomDampedSpark *child;
@@ -623,15 +639,15 @@ int MenuCard_GlintBurstController(int mode, MemcardGlintBurst *burst) {
 
     switch (mode) {
     case 0:
-        burst->x = ((MemcardGlintAnchor *)ANIM_OWNER_AS(RoomSparkChannel)->pool)->x;
-        burst->y = ((MemcardGlintAnchor *)ANIM_OWNER_AS(RoomSparkChannel)->pool)->y;
-        burst->z = ((MemcardGlintAnchor *)ANIM_OWNER_AS(RoomSparkChannel)->pool)->z;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 20, 22,
-                             (FieldFxCallbackListCallback)MenuCard_FadingGlintParticle);
+        burst->x = ((FieldActor *)g_FieldFxOwner->actor)->render_object.target_x;
+        burst->y = ((FieldActor *)g_FieldFxOwner->actor)->render_object.target_y;
+        burst->z = ((FieldActor *)g_FieldFxOwner->actor)->render_object.target_z;
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->start, 20, 22,
+                             MenuCard_FadingGlintParticle);
     case 1:
         if (g_FieldFxCurrentAge == 3) {
             for (i = 0; i < 6; i++) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -646,7 +662,7 @@ int MenuCard_GlintBurstController(int mode, MemcardGlintBurst *burst) {
         }
         if (g_FieldFxCurrentAge < 5) {
             for (i = 0; i < 4; i++) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -692,7 +708,7 @@ int MenuCard_GlintBurstController(int mode, MemcardGlintBurst *burst) {
         if (g_FieldFxCurrentAge < 33) {
             int kind;
             int palette;
-            angle = g_FieldFxCurrentAge << 5;
+            angle = g_FieldFxCurrentAge * 32;
             fade = rcos(angle) / 32;
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
@@ -728,13 +744,15 @@ int MenuCard_GlintBurstController(int mode, MemcardGlintBurst *burst) {
 
 /* Particle that spins: state 0 draws a halo, state 1 a tilted textured
  * ring around the shared origin, state 2 a scaled model that orbits it. */
-int MenuCard_SpinRingParticle(int mode, MemcardSpinParticle *p) {
+int MenuCard_SpinRingParticle(int mode, void *state, intptr_t argument) {
+    MemcardSpinParticle *p = state;
+    (void)argument;
     GteShortVector offset;
     RenderColor color;
     RenderColor colorA = g_MenuCardSpinRingColorA;
     RenderColor colorB = g_MenuCardSpinRingColorB;
-    MemcardModelMatrix matrix;
-    MemcardModelScale scale;
+    GteMatrix matrix;
+    GteVector scale;
     RenderMatrixSlot *matrixSlot;
     int angle;
     int size;
@@ -768,7 +786,7 @@ int MenuCard_SpinRingParticle(int mode, MemcardSpinParticle *p) {
     case 2:
         switch (p->state) {
         case 0:
-            size = rsin((s16)p->timer << 5);
+            size = rsin((s16)p->timer * 32);
             FieldFx_SampleColorTrack(g_MenuCardSpinRingColorTrack, &color, (s16)p->timer);
             FieldFx_DrawRingBand((GteShortVector *)p, 1400, 2200, 18, &p->rotation, size, size,
                           0, &color, 128, 1);
@@ -776,7 +794,7 @@ int MenuCard_SpinRingParticle(int mode, MemcardSpinParticle *p) {
         case 1: {
             int kind;
             int palette;
-            angle = ((s16)p->timer << 10) / 40;
+            angle = ((s16)p->timer * 1024) / 40;
             fade = rcos(angle) / 32;
             if (p->timer & 1) {
                 fade = fade * 2 / 3;
@@ -786,7 +804,7 @@ int MenuCard_SpinRingParticle(int mode, MemcardSpinParticle *p) {
             offset.z = g_MemcardGlintOrigin.z;
             width = 1900;
             if ((s16)p->timer < 33) {
-                width = rsin((s16)p->timer << 5) * 1900 / 4096;
+                width = rsin((s16)p->timer * 32) * 1900 / 4096;
             }
             height = rcos(angle) / 32 + 64;
             matrixSlot = &g_ViewMatrixSlot;
@@ -808,7 +826,7 @@ int MenuCard_SpinRingParticle(int mode, MemcardSpinParticle *p) {
             int page;
             u16 *index;
             int spin;
-            spin = (s16)p->timer << 5;
+            spin = (s16)p->timer * 32;
             width = rsin(spin) / 8 + 100;
             FieldFx_AnglesToVector((GteShortVector *)&p->rotation, (s16)width, &offset);
             offset.x += g_MemcardGlintOrigin.x;
@@ -827,7 +845,7 @@ int MenuCard_SpinRingParticle(int mode, MemcardSpinParticle *p) {
             if (kind == 4 && g_FieldFxAltPaletteFlag != 0) palette += 4;
             FieldFx_ModelSetTexture(page, GetClut(224, palette));
             FieldFx_ModelSetSemiTrans(1);
-            RotMatrixYXZ(&p->rotation, &matrix);
+            RotMatrixYXZ((GteShortVector *)&p->rotation, &matrix);
             matrix.t[0] = offset.x;
             matrix.t[1] = offset.y;
             matrix.t[2] = offset.z;
@@ -835,10 +853,10 @@ int MenuCard_SpinRingParticle(int mode, MemcardSpinParticle *p) {
             scale.y = size;
             scale.z = size;
             ScaleMatrix(&matrix, &scale);
-            FieldFx_ModelSaveColors(g_FieldFxGlintModel);
-            FieldFx_ModelScaleColors(g_FieldFxGlintModel, (u16)fade);
+            FieldFx_ModelSaveColors((char *)g_FieldFxGlintModel);
+            FieldFx_ModelScaleColors((char *)g_FieldFxGlintModel, (u16)fade);
             FieldFx_ModelDraw((union FieldTexturedModel *)g_FieldFxGlintModel, (GteMatrix *)&matrix);
-            FieldFx_ModelRestoreColors(g_FieldFxGlintModel);
+            FieldFx_ModelRestoreColors((char *)g_FieldFxGlintModel);
             break;
         }
         }
@@ -849,26 +867,28 @@ int MenuCard_SpinRingParticle(int mode, MemcardSpinParticle *p) {
 
 /* Controller that sits on the scene anchor, plays its sound on frame 3 and
  * spawns spinning halos, rings and model shards on frames 2 and 8. */
-int MenuCard_SpinBurstController(int mode, MemcardSpinBurst *burst) {
+int MenuCard_SpinBurstController(int mode, void *state, intptr_t argument) {
+    MemcardSpinBurst *burst = state;
+    (void)argument;
     MemcardSpinParticle *child;
     int i;
 
     switch (mode) {
     case 0:
-        burst->x = ((MemcardGlintAnchor *)ANIM_OWNER_AS(RoomSparkChannel)->pool)->x;
-        burst->y = ((MemcardGlintAnchor *)ANIM_OWNER_AS(RoomSparkChannel)->pool)->y;
-        burst->z = ((MemcardGlintAnchor *)ANIM_OWNER_AS(RoomSparkChannel)->pool)->z;
+        burst->x = ((FieldActor *)g_FieldFxOwner->actor)->render_object.target_x;
+        burst->y = ((FieldActor *)g_FieldFxOwner->actor)->render_object.target_y;
+        burst->z = ((FieldActor *)g_FieldFxOwner->actor)->render_object.target_z;
         FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)D_8009D254, 0, (GteShortVector *)&burst->rotation);
         burst->rotation.x = 0;
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_FieldFxGlintModel, 0, 0);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 20, 40,
-                             (FieldFxCallbackListCallback)MenuCard_SpinRingParticle);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->start, 20, 40,
+                             MenuCard_SpinRingParticle);
     case 1:
         if (g_FieldFxCurrentAge == 3) {
             Akao_SendPositionalCmdStereo(1201, 0, burst->x, burst->y, burst->z);
         }
         if (g_FieldFxCurrentAge == 2) {
-            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
             if (child) {
                 child->x = burst->x;
                 child->y = burst->y;
@@ -881,7 +901,7 @@ int MenuCard_SpinBurstController(int mode, MemcardSpinBurst *burst) {
                 child->timer = 0;
             }
             for (i = 0; i < 6; i++) {
-                child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
                 if (child) {
                     child->x = (rand() & 0x7F) - 64;
                     child->y = 0;
@@ -898,7 +918,7 @@ int MenuCard_SpinBurstController(int mode, MemcardSpinBurst *burst) {
             }
         }
         if (g_FieldFxCurrentAge == 8) {
-            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
             if (child) {
                 child->x = burst->x;
                 child->y = burst->y;
@@ -912,7 +932,7 @@ int MenuCard_SpinBurstController(int mode, MemcardSpinBurst *burst) {
                 child->timer = 0;
             }
             for (i = 0; i < 6; i++) {
-                child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
                 if (child) {
                     child->x = 0;
                     child->y = (rand() & 0x7F) - 64;
@@ -928,7 +948,7 @@ int MenuCard_SpinBurstController(int mode, MemcardSpinBurst *burst) {
             }
         }
         if (g_FieldFxCurrentAge == 2) {
-            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = (MemcardSpinParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->start);
             if (child) {
                 child->x = burst->x;
                 child->y = burst->y;
@@ -966,3 +986,44 @@ int MenuCard_SpinBurstController(int mode, MemcardSpinBurst *burst) {
     }
     return 0;
 }
+
+/* Original overlay state, owned by its complete native module. */
+u16 g_BattleCrossFlashStop;
+s16 g_MenuCardCrossFlashRaised;
+GteShortVector g_MemcardGlintOrigin;
+
+GteRotation g_MenuCardEffectSpinRotation = {0,0,0,0};
+GteRotation g_MenuCardEffectTiltRotation = {1024,0,0,1};
+RenderColor g_MenuCardRingBurstGlowColor = {150,160,140,0};
+RenderColor g_MenuCardRingBurstRingColor = {140,140,70,0};
+RenderColor g_MenuCardRingBurstBandColor = {60,100,20,0};
+RenderColor g_MenuCardCrossFlashInnerColor = {92,128,0,0};
+RenderColor g_MenuCardCrossFlashOuterColor = {50,128,60,0};
+RenderColor g_MenuCardCrossFlashEdgeColor = {0,0,50,0};
+RenderColor g_MenuCardGlintBurstFlashColor = {100,128,100,0};
+RenderColor g_MenuCardSpinRingColorA = {0,10,128,0};
+RenderColor g_MenuCardSpinRingColorB = {128,128,128,0};
+MemcardJointOffset g_MenuCardHandOffset = {0,0,0,0};
+MemcardJointOffset g_MenuCardCrossFlashTipAOffset = {-41,0,-235,0};
+MemcardJointOffset g_MenuCardCrossFlashTipBOffset = {0,0,-400,0};
+MemcardJointOffset g_MenuCardCrossFlashCenterOffset = {0,0,-32,0};
+_Alignas(s32) u8 g_MenuCardDriftGlowColorTrack[40] = {
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0c,0x00,0x00,0x00,0x00,
+    0x64,0xc8,0x96,0x10,0x00,0x00,0x00,0x00,0x0a,0x64,0x0a,0x10,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+_Alignas(s32) u8 g_MenuCardRisingEmberColorTrack[48] = {
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x1e,0xa0,0x1e,0x06,0x00,0x00,0x00,0x00,
+    0xa0,0xc8,0x1e,0x06,0x00,0x00,0x00,0x00,0x0a,0x50,0x8c,0x08,0x00,0x00,0x00,0x00,
+    0x00,0x0a,0x80,0x0c,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+_Alignas(s32) u8 g_MenuCardGlintBurstColorTrack[40] = {
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xc8,0xa0,0x78,0x0a,0x00,0x00,0x00,0x00,
+    0xc8,0x80,0x80,0x0a,0x00,0x00,0x00,0x00,0x80,0x28,0x00,0x0c,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+_Alignas(s32) u8 g_MenuCardSpinRingColorTrack[40] = {
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x28,0x50,0x08,0x00,0x00,0x00,0x00,
+    0xc8,0x80,0x80,0x0c,0x00,0x00,0x00,0x00,0x00,0x14,0x60,0x0c,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};

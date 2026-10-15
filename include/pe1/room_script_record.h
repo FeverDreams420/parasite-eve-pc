@@ -4,15 +4,11 @@
 #include "common.h"
 #include "pe1/room_interface.h"
 
-/*
- * The record a room's scene script reads back through the shared
- * RoomLib_SetTaskVar0. Each room that links that unit (m005, m023, m123)
- * places its own data here with its own layout; the one thing they share
- * is a leading halfword, which is what the symbol names. room_m123 reads
- * that halfword directly (a direct scalar keeps retail's absolute loads,
- * where any record or union view keeps the address in a register); the
- * other rooms take the address and read it through their own view macro.
- */
-extern s16 g_RoomScriptRecord;
+/* Each original overlay supplies its complete room-local record. Legacy
+ * scalar accesses name its first halfword; vector views share the same storage.
+ * PE_OVERLAY qualifies the backing symbol when several rooms are linked. */
+extern s16 g_RoomScriptRecordWords[];
+#define g_RoomScriptRecord (g_RoomScriptRecordWords[0])
+intptr_t RoomLib_SetTaskVar0(int mode, intptr_t a, intptr_t b, intptr_t c);
 
 #endif

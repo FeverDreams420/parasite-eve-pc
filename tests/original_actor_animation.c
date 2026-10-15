@@ -1,6 +1,7 @@
 #include "pe1/entity_animation.h"
 #include "pe1/room_m005_drifting_sprite.h"
 #include "pe1/room_m005.h"
+#include "pe1/room_script_record.h"
 #include "pe1/room_m005_beacon.h"
 #include "../src/overlays/room_m005_theater/RoomM005_FxOrbiter_externs.h"
 #include "pe1/field_sprite_params.h"
@@ -488,6 +489,23 @@ static int callback_list_storage(void)
        FieldFx_InitCallbackList((char *)arena+1,16,3,record_list_callback)!=-1) return 0;
     g_FieldFxActiveTaskSlot=NULL;
     if(FieldFx_AllocCallbackList(&out,0,16,3,record_list_callback)!=-1) return 0;
+    FieldFxTaskContext room_context={0},*old_room_context=g_FieldFxTaskContext;
+    g_FieldFxTaskContext=&room_context;room_context.variables[0]=7;
+    intptr_t record=RoomLib_SetTaskVar0(0,0,0,0);
+    if(record!=(intptr_t)(g_RoomM005ScriptAnchorView-4) || g_RoomM005ScriptFadeView!=(u8 *)record+12 ||
+        room_context.variables[0]!=7 || RoomLib_SetTaskVar0(1,0,0,0)!=record || room_context.variables[0]!=1)return 0;
+    GteShortVector *anchor=(void *)g_RoomM005ScriptAnchorView,*fade=(void *)g_RoomM005ScriptFadeView;
+    *anchor=(GteShortVector){-123,456,-789,0};*fade=(GteShortVector){12,-34,56,0};
+    s16 *record_words=(s16 *)record;
+    if(record_words[2]!=-123 || record_words[3]!=456 || record_words[4]!=-789 ||
+        record_words[6]!=12 || record_words[7]!=-34 || record_words[8]!=56)return 0;
+    FieldFxTaskProgram room_program={.initialize=RoomLib_SetTaskVar0};
+    FieldFxTaskOwner room_owner={0};FieldFxObjectPrefix *old_room_owner=g_FieldFxOwner;
+    room_owner.tasks.table=&room_program.table;
+    FieldFx_InitTaskContext((PmSlotHeader *)&room_owner);
+    if(FieldFx_InitTaskProgram((PmSlotHeader *)&room_owner,0,1,0,0,0)!=0 ||
+        room_owner.tasks.argument!=record || room_owner.tasks.variables[0]!=1)return 0;
+    memset((void *)record,0,20);g_FieldFxTaskContext=old_room_context;g_FieldFxOwner=old_room_owner;
     if(&D_800F336C!=&g_FieldFxSpriteParams.palette || &D_800F3374!=&g_FieldFxSpriteParams.depth) return 0;
     if(&g_FieldFxTpageSlot1!=g_FieldFxTpageSlots+1 || &g_FieldFxTpageSlot2!=g_FieldFxTpageSlots+2 ||
         &g_FieldFxTpageSlot3!=g_FieldFxTpageSlots+3 || &g_FieldFxTpageSlot4!=g_FieldFxTpageSlots+4 ||
@@ -1103,6 +1121,7 @@ static int original_glow_resident_constants(void)
         {0x8018f010,&g_RoomM005JointBeaconAnchor,8},
         {0x80190ad4,RoomM005_Rec2,sizeof(RoomM005_Rec2)},
         {0x80190af4,g_RoomM005CrossFlareColorTrack,sizeof(g_RoomM005CrossFlareColorTrack)},
+        {0x80190b80,g_RoomScriptRecordWords,20},
     };
     for(unsigned i=0;i<sizeof(room_rows)/sizeof(room_rows[0]);++i)
         if(memcmp(room_bytes+room_rows[i].address-0x8018efe8u,room_rows[i].value,room_rows[i].size)) {pe_disc_close(&disc);return 0;}

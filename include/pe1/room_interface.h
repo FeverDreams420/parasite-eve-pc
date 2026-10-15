@@ -32,7 +32,7 @@
 #define g_RoomScriptArgs PE_OVERLAY_SYM(g_RoomScriptArgs)
 #define g_RoomScriptArg PE_OVERLAY_SYM(g_RoomScriptArg)
 /* pe1/room_script_record.h */
-#define g_RoomScriptRecord PE_OVERLAY_SYM(g_RoomScriptRecord)
+#define g_RoomScriptRecordWords PE_OVERLAY_SYM(g_RoomScriptRecordWords)
 /* room_lib/room_lib.h */
 #define RoomLib_SlotTable PE_OVERLAY_SYM(RoomLib_SlotTable)
 /* pe1/room_flare.h, pe1/room_grab_attack.h */

@@ -9,9 +9,9 @@
 #include "pe1/fieldfx_task.h"
 #include "pe1/room_script_record.h"
 
-void *RoomLib_SetTaskVar0(int mode) {
+intptr_t RoomLib_SetTaskVar0(int mode, intptr_t a, intptr_t b, intptr_t c) {
     if (mode == 1) {
         g_FieldFxTaskContext->variables[0] = 1;
     }
-    return &g_RoomScriptRecord;
+    return (intptr_t)&g_RoomScriptRecord;
 }

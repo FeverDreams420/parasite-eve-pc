@@ -604,3 +604,9 @@ u8 g_RoomM005CrossFlareColorTrack[80] = {
     128,128,255,8,0,0,0,0,255,255,255,0,0,0,0,0,
 };
 u8 *g_RoomM005BeaconModel0, *g_RoomM005BeaconModel1;
+
+/* Original zero-initialized dialog record at 80190B80..80190B93.
+ * Both views and the script initializer address this same room-local data. */
+_Alignas(GteShortVector) s16 g_RoomScriptRecordWords[10];
+u8 *g_RoomM005ScriptAnchorView = (u8 *)g_RoomScriptRecordWords + 4;
+u8 *g_RoomM005ScriptFadeView = (u8 *)g_RoomScriptRecordWords + 12;

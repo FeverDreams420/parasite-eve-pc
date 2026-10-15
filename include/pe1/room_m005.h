@@ -48,8 +48,8 @@ extern RoomM005Seed8 g_RoomM005OrbiterJointAnchor;
 /* One-field views of RoomM005_Dialog (g_RoomScriptRecord): the orbiter takes
  * the anchor pointer (+0x04) and the fade block (+0x0C) with their own
  * addresses, where a member access shares the record base. */
-extern u8 g_RoomM005ScriptAnchorView[];
-extern u8 g_RoomM005ScriptFadeView[];
+extern u8 *g_RoomM005ScriptAnchorView;
+extern u8 *g_RoomM005ScriptFadeView;
 extern int rand(void);
 int RoomM005_Orbiter(int mode, void *state, intptr_t argument);
 int RoomM005_CrossFlare(int mode, void *state, intptr_t argument);

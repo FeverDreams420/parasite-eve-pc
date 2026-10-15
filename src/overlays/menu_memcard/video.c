@@ -166,3 +166,69 @@ void MenuCardFirst_StopVideo(void) {
 
 #undef MENUCARD_EVENT_FLAG_NAME
 #undef MENUCARD_EVENT_FLAG
+
+/* Original first-player state; kept separate from the memory-card copy. */
+VideoEntry *g_MenuCardVideoEntry;
+u8 g_MenuCardVideoFinished, g_MenuCardVideoDecodeMode, g_MenuCardVideoDepthFlip;
+s16 g_MenuCardVideoLastTime, g_MenuCardVideoSize[2];
+u8 *g_MenuCardVideoDecodeBuffer0, *g_MenuCardVideoDecodeBuffer1;
+u8 *g_MenuCardVideoSliceBuffer0, *g_MenuCardVideoSliceBuffer1;
+u8 *g_MenuCardVideoVlcTable, *g_MenuCardVideoStreamRing;
+DISPENV g_MenuCardVideoSavedDispEnv[2];
+DRAWENV g_MenuCardVideoSavedDrawEnv[2];
+VideoDisplay g_MenuCardVideoDisplay;
+PeDiscFile g_MenuCardVideoFile;
+u32 g_MenuCardVideoSector;
+char g_MenuCardVideoDirectory[]="\\FMV1";
+char g_MenuCardVideoDirectoryLate[]="\\FMV2";
+
+/* Authored USA first-player table at 80122438 (archive bank 68). */
+VideoEntry g_MenuCardVideoTable[47] = {
+    {"\\FMV000.STR;1",0,1,150,0,0,{64,1,240,0,0,0}},
+    {"\\FMV001.STR;1",0,1,2077,0,0,{64,1,240,0,0,0}},
+    {"\\FMV002.STR;1",0,1,1021,0,0,{64,1,240,0,0,0}},
+    {"\\FMV003.STR;1",0,1,1151,0,0,{64,1,240,0,0,0}},
+    {"\\FMV004.STR;1",0,1,561,0,0,{64,1,240,0,0,0}},
+    {"\\FMV005.STR;1",0,1,231,0,0,{64,1,240,0,0,0}},
+    {"\\FMV006.STR;1",0,1,744,0,0,{64,1,240,0,0,0}},
+    {"\\FMV006C.STR;1",0,1,205,0,0,{64,1,240,0,0,0}},
+    {"\\FMV007.STR;1",0,1,449,0,0,{64,1,240,0,0,0}},
+    {"\\FMV008.STR;1",0,1,220,0,0,{64,1,240,0,0,0}},
+    {"\\FMV009.STR;1",0,1,275,0,0,{64,1,240,0,0,0}},
+    {"\\FMV010.STR;1",0,1,507,0,0,{64,1,240,0,0,0}},
+    {"\\FMV011.STR;1",0,1,554,0,0,{64,1,240,0,0,0}},
+    {"\\FMV012.STR;1",0,1,359,0,0,{64,1,240,0,0,0}},
+    {"\\FMV013.STR;1",0,1,375,0,0,{64,1,240,0,0,0}},
+    {"\\FMV014.STR;1",0,1,424,0,0,{64,1,240,0,0,0}},
+    {"\\FMV015.STR;1",0,1,340,0,0,{64,1,240,0,0,0}},
+    {"\\FMV016A.STR;1",0,1,104,0,0,{64,1,240,0,0,0}},
+    {"\\FMV016B.STR;1",0,1,97,0,0,{64,1,240,0,0,0}},
+    {"\\FMV017A.STR;1",0,1,459,0,0,{64,1,240,0,0,0}},
+    {"\\FMV017B.STR;1",0,1,194,0,0,{64,1,240,0,0,0}},
+    {"\\FMV018.STR;1",0,1,729,0,0,{64,1,240,0,0,0}},
+    {"\\FMV019.STR;1",0,1,353,0,0,{64,1,240,0,0,0}},
+    {"\\FMV020A.STR;1",0,1,556,0,0,{64,1,240,0,0,0}},
+    {"\\FMV020B.STR;1",0,1,1113,0,0,{64,1,240,0,0,0}},
+    {"\\FMV021.STR;1",0,1,186,0,0,{64,1,240,0,0,0}},
+    {"\\FMV023A.STR;1",0,1,397,0,0,{64,1,240,0,0,0}},
+    {"\\FMV023B.STR;1",0,1,545,0,0,{64,1,240,0,0,0}},
+    {"\\FMV024A.STR;1",0,1,39,0,0,{64,1,240,0,0,0}},
+    {"\\FMV024B1.STR;1",0,1,579,0,0,{64,1,240,0,0,0}},
+    {"\\FMV024B3.STR;1",0,1,39,0,0,{64,1,240,0,0,0}},
+    {"\\FMV024C.STR;1",0,1,120,0,0,{64,1,240,0,0,0}},
+    {"\\FMV024C2.STR;1",0,1,56,0,0,{64,1,240,0,0,0}},
+    {"\\FMV024E.STR;1",0,1,163,0,0,{64,1,240,0,0,0}},
+    {"\\FMV024F.STR;1",0,1,665,0,0,{64,1,240,0,0,0}},
+    {"\\FMV025.STR;1",0,1,367,0,0,{64,1,240,0,0,0}},
+    {"\\FMV026.STR;1",0,1,310,0,0,{64,1,240,0,0,0}},
+    {"\\FMV027.STR;1",0,1,497,0,0,{64,1,240,0,0,0}},
+    {"\\FMV028.STR;1",0,1,120,0,0,{64,1,240,0,0,0}},
+    {"\\FMV029.STR;1",0,1,438,0,0,{64,1,240,0,0,0}},
+    {"\\FMV030.STR;1",0,1,296,0,0,{64,1,240,0,0,0}},
+    {"\\FMV031.STR;1",0,1,451,0,0,{64,1,240,0,0,0}},
+    {"\\FMV032.STR;1",0,1,226,0,0,{64,1,240,0,0,0}},
+    {"\\FMV033A.STR;1",0,1,262,0,0,{64,1,240,0,0,0}},
+    {"\\FMV033B.STR;1",0,1,482,0,0,{64,1,240,0,0,0}},
+    {"\\FMV034.STR;1",0,1,219,0,0,{64,1,240,0,0,0}},
+    {"\\FMV035.STR;1",0,1,720,0,0,{64,1,240,0,0,0}},
+};

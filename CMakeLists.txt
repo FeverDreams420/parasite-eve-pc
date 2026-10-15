@@ -7,6 +7,11 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 include(CTest)
 
+# PsyZ belongs to the original game build, independently of the abandoned frontend.
+set(PSYZ_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/psyz)
+add_subdirectory(${PSYZ_DIR}/psyz ${CMAKE_CURRENT_BINARY_DIR}/psyz)
+target_compile_definitions(psyz PRIVATE __psyz)
+
 # Whole original modules may contain entry points not yet called by each test.
 # Keep function-level linking instead of splitting source files for test targets.
 if(APPLE)
@@ -93,6 +98,7 @@ add_library(parasite-eve-original OBJECT
     src/main/draw/textbox.c
     src/overlays/menu_memcard/list_screen.c
     src/overlays/menu_memcard/video_playback.c
+    src/overlays/menu_memcard/video.c
     src/overlays/mdec_diag/vlc_build.c
     src/overlays/mdec_diag/vlc_c.c
     src/overlays/menu_memcard/page_flip.c

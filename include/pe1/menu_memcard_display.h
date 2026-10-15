@@ -8,6 +8,8 @@
 /* Video display mode of each copied player (2 = 320 wide, 3 = 480 wide). */
 extern u8 g_MenuCardScreenVideoDecodeMode;
 extern u8 g_MenuCardVideoDecodeMode;
+int MenuCardFirst_StepVideo(void);
+void MenuCardFirst_ResetDisplayState(void);
 
 /* Prim list the memory card progress widget flushes; 0x40 marks a write. */
 extern int g_MemCardProgressPrimList;

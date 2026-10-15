@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "pe1/cdrom.h"
+#include "pe1/menu_memcard_display.h"
 #include "pe1/cdrom_buffers.h"
 #include "pe1/game_state.h"
 #include "pe1/display_env.h"
@@ -82,7 +83,7 @@ void MenuCardFirst_SetVideoDisplay(s8 index, s8 wide);
 
 /* Video open: file lookup, stream start and first decoded frame. */
 #define g_MovieIndex (g_GameState.scene_audio.tracks.movie_index)
-extern VideoEntry g_MenuCardVideoTable[];
+extern VideoEntry g_MenuCardVideoTable[47];
 extern PeDiscFile g_MenuCardVideoFile, g_MenuCardScreenVideoFile;
 extern u32 g_MenuCardVideoSector, g_MenuCardScreenVideoSector;
 extern VideoDisplay g_MenuCardVideoDisplay, g_MenuCardScreenVideoDisplay;

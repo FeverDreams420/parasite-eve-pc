@@ -7,6 +7,7 @@
 #include "pe1/geom_state.h"
 #include "pe1/gte.h"
 #include "pe1/pad_state.h"
+#include "pe1/menu_memcard_display.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_animation_frame.h"
 #include "pe1/render_camera.h"
@@ -35,8 +36,6 @@ RenderLightingState g_RenderLightingBlock;
 void Field_HandleStateTransition(void);
 void Scene_UpdateEntityList(void);
 void Entity_FrameUpdate(void);
-int func_80122040(void);
-void func_80121A00(void);
 void Draw_ClearOnFlag(void);
 void Render_Update(void);
 void FieldFx_UpdateScriptSprites(void);
@@ -114,8 +113,8 @@ void Boot_RunFrame(void)
 
             if (!(state->flags & 0x100)) {
                 if ((s8)Draw_CheckDrawStatus() != 0) {
-                    if ((s8)func_80122040() == 0) {
-                        func_80121A00();
+                    if ((s8)MenuCardFirst_StepVideo() == 0) {
+                        MenuCardFirst_ResetDisplayState();
                         Draw_ClearOnFlag();
                         continue;
                     }

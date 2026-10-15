@@ -7,10 +7,6 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
 
-set(PSYZ_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/psyz)
-
-add_subdirectory(${PSYZ_DIR}/psyz ${CMAKE_CURRENT_BINARY_DIR}/psyz)
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 find_package(PkgConfig REQUIRED)
@@ -38,7 +34,6 @@ else()
 endif()
 target_include_directories(parasite-eve-pc SYSTEM PRIVATE ${PSYZ_DIR}/psyz/include)
 target_compile_definitions(parasite-eve-pc PRIVATE __psyz)
-target_compile_definitions(psyz PRIVATE __psyz)
 
 psyz_title(parasite-eve-pc "Parasite Eve")
 psyz_web_configure_target(parasite-eve-pc)

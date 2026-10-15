@@ -4416,42 +4416,54 @@ static int original_movie_uploads(PeDisc *disc)
     _Alignas(16) static u8 arena[0x55e00], whole_frame[320*240*3], actual[320*240*3];
     PeDisc *old_image=g_CdImage;Pe1SceneAudioState audio=g_GameState.scene_audio;
     CdlATV mix=g_AkaoCdVolume;u32 flags=g_GameStateFlagsWord;
-    int old_slot=g_ActiveDrawSlot,background=g_MenuSaveBgFadeState;
-    u8 wide=g_MenuCardScreenVideoTable[0].wide;
-    u8 *buffers[]={arena};int valid=1;
+    int old_slot=g_ActiveDrawSlot,background=g_MenuSaveBgFadeState,valid=1;
+    for(unsigned first=0;first<2;++first) for(unsigned wide_mode=0;wide_mode<2;++wide_mode) {
+    VideoEntry *table=first?g_MenuCardVideoTable:g_MenuCardScreenVideoTable;
+    VideoDisplay *display=first?&g_MenuCardVideoDisplay:&g_MenuCardScreenVideoDisplay;
+    u8 wide=table[0].wide;
+    u8 *buffers[]={arena};unsigned bytes_per_pixel=wide_mode?3:2;
     g_CdImage=disc;g_DrawEnabled.bits=0;g_ActiveDrawSlot=0;
     g_GameStateFlagsWord|=0x200;g_MenuSaveBgFadeState=0;
-    g_MenuCardScreenVideoTable[0].wide=1;g_MenuCardScreenVideoDepthFlip=0;
-    if(!MenuCard_InitVideoBuffers(1,buffers) || !MenuCard_OpenVideo(0))return 0;
-    unsigned frames=0;int tick=VSync(-1);
+    table[0].wide=wide_mode;
+    if(first)g_MenuCardVideoDepthFlip=0;else g_MenuCardScreenVideoDepthFlip=0;
+    if(!(first?MenuCardFirst_InitVideoBuffers(1,buffers):MenuCard_InitVideoBuffers(1,buffers)) ||
+       !(first?MenuCardFirst_OpenVideo(0):MenuCard_OpenVideo(0)))return 0;
+    unsigned frames=0,bad_rows=0,black=0,sync_errors=0;int tick=VSync(-1);
     for(;;) {
-        unsigned decoded=g_MenuCardScreenVideoDisplay.decodeIndex;
-        unsigned region=g_MenuCardScreenVideoDisplay.region;
-        RECT area={0,region?0:240,480,240};
-        int running=MenuCard_StepVideo();
+        unsigned decoded=display->decodeIndex;
+        unsigned region=display->region;
+        RECT area={0,region?0:240,wide_mode?480:320,240};
+        int running=first?MenuCardFirst_StepVideo():MenuCard_StepVideo();
         StoreImage(&area,actual);DrawSync(0);
         /* A whole transfer must agree with all twenty original slice callbacks. */
         DecDCToutCallback(NULL);
-        DecDCTin(g_MenuCardScreenVideoDisplay.decode[decoded],3);
-        DecDCTout(whole_frame,sizeof(whole_frame)/4);
-        if(DecDCToutSync(0))valid=0;
-        DecDCToutCallback(MenuCard_UploadVideoSlice);
+        DecDCTin(display->decode[decoded],wide_mode?3:2);
+        DecDCTout(whole_frame,320*240*bytes_per_pixel/4);
+        if(DecDCToutSync(0)){valid=0;++sync_errors;}
+        DecDCToutCallback(first?MenuCardFirst_UploadVideoSlice:MenuCard_UploadVideoSlice);
         for(unsigned x=0;x<20;++x)for(unsigned y=0;y<15;++y)for(unsigned row=0;row<16;++row)
-            if(memcmp(actual+((y*16+row)*320+x*16)*3,
-                      whole_frame+((x*15+y)*256+row*16)*3,48))valid=0;
-        if(!frames)for(unsigned i=0;i<sizeof(actual);++i)if(actual[i])valid=0;
+            if(memcmp(actual+((y*16+row)*320+x*16)*bytes_per_pixel,
+                      whole_frame+((x*15+y)*256+row*16)*bytes_per_pixel,16*bytes_per_pixel)){valid=0;++bad_rows;}
+        if(!frames) {
+            if(wide_mode){for(unsigned i=0;i<320*240*3;++i)if(actual[i]){valid=0;++black;}}
+            else for(unsigned i=0;i<320*240;++i){u16 pixel;memcpy(&pixel,actual+i*2,2);if(pixel!=0x8000){valid=0;++black;}}
+        }
         ++frames;
         Draw_RenderFrame();
         if(!running || frames>150)break;
     }
-    if((unsigned)(VSync(-1)-tick)!=149*4 || frames!=149 || g_SeqElapsed!=150 || g_MenuCardScreenVideoLastTime!=150 ||
-       g_MenuCardScreenVideoFinished!=1 || g_DrawEnabled.bits!=1)valid=0;
-    DecDCToutCallback(NULL);MenuCard_ResetDisplayState();
-    g_MenuCardScreenVideoTable[0].wide=wide;g_MenuSaveBgFadeState=background;
+    if((unsigned)(VSync(-1)-tick)!=149*4 || frames!=149 || g_SeqElapsed!=150 || (first?g_MenuCardVideoLastTime:g_MenuCardScreenVideoLastTime)!=150 ||
+       (first?g_MenuCardVideoFinished:g_MenuCardScreenVideoFinished)!=1 || g_DrawEnabled.bits!=1)valid=0;
+    if(!valid)fprintf(stderr,"movie case first=%u wide=%u frames=%u ticks=%u elapsed=%u last=%d done=%d active=%u rows=%u black=%u sync=%u\n",first,wide_mode,frames,(unsigned)(VSync(-1)-tick),g_SeqElapsed,first?g_MenuCardVideoLastTime:g_MenuCardScreenVideoLastTime,first?g_MenuCardVideoFinished:g_MenuCardScreenVideoFinished,g_DrawEnabled.bits,bad_rows,black,sync_errors);
+    DecDCToutCallback(NULL);
+    if(first)MenuCardFirst_ResetDisplayState();else MenuCard_ResetDisplayState();
+    table[0].wide=wide;
+    }
+    g_MenuSaveBgFadeState=background;
     g_GameStateFlagsWord=flags;g_GameState.scene_audio=audio;g_ActiveDrawSlot=old_slot;
     g_AkaoCdVolume=mix;CdMix(&mix);g_CdImage=old_image;
     if(!valid)fprintf(stderr,"original movie MDEC/slice/VRAM regression\n");
-    else puts("Original movie: 149 RGB24 frames through real OpenVideo/StepVideo, 2980 slice uploads, full VRAM regions and 15fps render path passed headlessly");
+    else puts("Original movies: both original players in RGB15/RGB24, 149 frames per case through real OpenVideo/StepVideo, 11920 total slice uploads, full VRAM regions and 15fps render path passed headlessly");
     return valid;
 }
 
@@ -4692,6 +4704,17 @@ static int original_video_buffers(PeDisc *disc)
         if(strcmp(entry->name,(char *)bank+(name-0x8018eff0u)) || entry->wide!=row[4] ||
            entry->speed!=speed || entry->end!=end || entry->x!=x || entry->y!=y ||
            memcmp(entry->reserved0e,row+14,6))valid=0;
+    }
+    static u8 first_bank[4*2048];
+    if(!pe_disc_read(disc,&archive,965ull*2048,first_bank,sizeof(first_bank)))return 0;
+    for(unsigned i=0;i<47;++i){
+        const u8 *row=first_bank+0x1738+i*20;u32 name;s16 speed,end;u16 x,y;
+        memcpy(&name,row,4);memcpy(&speed,row+6,2);memcpy(&end,row+8,2);memcpy(&x,row+10,2);memcpy(&y,row+12,2);
+        VideoEntry *entry=&g_MenuCardVideoTable[i];
+        if(name<0x80120D00u || name-0x80120D00u>=sizeof(first_bank) ||
+           !memchr(first_bank+(name-0x80120D00u),0,sizeof(first_bank)-(name-0x80120D00u)))return 0;
+        if(strcmp(entry->name,(char *)first_bank+(name-0x80120D00u)) || entry->wide!=row[4] || entry->speed!=speed ||
+           entry->end!=end || entry->x!=x || entry->y!=y || memcmp(entry->reserved0e,row+14,6))valid=0;
     }
     /* Golden is the complete output of USA 0x8010BD4C in Unicorn MIPS. */
     static struct { u16 before[8], table[0x8800], after[8]; } vlc;

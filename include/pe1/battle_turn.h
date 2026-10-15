@@ -10,6 +10,7 @@
 #include "pe1/render_setup.h"
 
 extern s32 g_BattleModeState;
+extern u8 g_BattleFadeLevel;
 
 
 int Battle_ProcessActionSlot(BattleEntity *);

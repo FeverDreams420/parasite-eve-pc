@@ -56,8 +56,8 @@ extern int g_BattleModeState;
 extern BattleAction g_BattleMenuActionRecord;
 extern s8 g_BattleTargetCount;
 extern struct FieldActor *g_FieldActorListHead; /* actor list head */
-extern u8 g_EscapeFailedTexts[];
-extern u8 g_EscapeBlockedTexts[];
+extern u8 g_EscapeFailedTexts[34];
+extern u8 g_EscapeBlockedTexts[28];
 extern const EnemyCombatant g_EnemyCombatantInitial;
 extern BattleEnemySlot g_BattleEnemySlots[7];
 extern u8 g_EntityInstanceCounter;

@@ -2532,6 +2532,103 @@ static int original_color_quad_packets(void)
  * this isolates CPU/layout fidelity, not independent hardware GTE accuracy. */
 
 
+
+static int original_escape_chance(PeDisc *disc,PeDiscFile *exe)
+{
+    u8 messages[62];
+    if(!pe_disc_read(disc,exe,0x9159C-0x10000+0x800,messages,34) || memcmp(messages,g_EscapeFailedTexts,34) ||
+       !pe_disc_read(disc,exe,0x915C0-0x10000+0x800,messages,28) || memcmp(messages,g_EscapeBlockedTexts,28))return 0;
+    Combatant active={0};BattleEntity entities[4]={{0}};EnemyCombatant enemies[3]={{0}};
+    Combatant *saved_actor=g_ActiveActor;FieldActor *saved_player=g_PlayerEntity,*saved_head=g_FieldActorListHead;
+    u8 saved_overlay=g_BattleSaveOverlayActive,*saved_message=g_CurItemEffectData;int saved_window=g_SaveMetadataWindowIndex;
+    u8 custom=255;u8 *texts[]={&custom,g_EscapeFailedTexts,g_EscapeFailedTexts+17,g_EscapeBlockedTexts,g_EscapeBlockedTexts+14};
+    const u8 player_ranks[]={0,1,2,127,128,254,255},enemy_ranks[]={0,1,2,126,127,128,255};
+    const u16 health[][2]={{0,100},{9,100},{10,100},{65535,65535},{32767,32768},{100,100}};
+    const u32 seeds[]={0x12345678,0x87654321};
+    g_ActiveActor=&active;g_PlayerEntity=g_FieldActorListHead=(FieldActor *)&entities[0];
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int valid=1;
+#define ESCAPE_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+    for(unsigned rank=0;rank<7;++rank)for(unsigned enemy=0;enemy<7;++enemy)
+    for(unsigned hp=0;hp<6;++hp)for(unsigned attempts=0;attempts<8;++attempts)
+    for(unsigned scenario=0;scenario<6;++scenario)for(unsigned window=0;window<2;++window)for(unsigned seed=0;seed<2;++seed){
+        memset(entities,0,sizeof(entities));memset(enemies,0,sizeof(enemies));
+        entities[0].core=(EnemyCombatant *)&active;entities[0].next=scenario==0?NULL:&entities[1];
+        entities[1].next=&entities[2];entities[2].next=&entities[3];
+        for(unsigned i=0;i<3;++i){entities[i+1].core=&enemies[i];enemies[i].hpAlive=1;}
+        enemies[0].field04.bytes.rank=enemy_ranks[enemy];enemies[1].field04.bytes.rank=127;enemies[2].field04.bytes.rank=128;
+        if(scenario==1){enemies[1].hpAlive=0;enemies[1].statusFlags2=0x40000;entities[3].core=NULL;}
+        if(scenario==3){enemies[0].hpAlive=0;enemies[0].statusFlags2=0x40000;enemies[1].field04.bytes.rank=2;entities[3].core=NULL;}
+        if(scenario==4)enemies[0].statusFlags2=0x40000;
+        if(scenario==5){entities[1].core=NULL;enemies[1].hpAlive=-1;enemies[1].statusFlags2=0x40000;
+            enemies[2].field04.bytes.rank=enemy_ranks[enemy];enemies[2].statusFlags2=0x40000;}
+        active.field04.bytes.rank=player_ranks[rank];active.curHP=health[hp][0];active.maxHP=health[hp][1];
+        active.stateFlags=(s32)((0xA13579BDu&0xF1FFFFFFu)|(attempts<<25));
+        g_SaveMetadataWindowIndex=window;g_BattleSaveOverlayActive=7;g_CurItemEffectData=&custom;
+        srand(seeds[seed]);int result=Battle_RollEscapeChance();int next_random=rand();
+        unsigned message=5;for(unsigned i=0;i<5;++i)if(g_CurItemEffectData==texts[i])message=i;
+        if(message==5)valid=0;
+        ESCAPE_PUT(result,4);ESCAPE_PUT(active.stateFlags,4);ESCAPE_PUT(g_BattleSaveOverlayActive,1);ESCAPE_PUT(message,1);ESCAPE_PUT(next_random,2);++cases;
+    }
+#undef ESCAPE_PUT
+    g_ActiveActor=saved_actor;g_PlayerEntity=saved_player;g_FieldActorListHead=saved_head;
+    g_BattleSaveOverlayActive=saved_overlay;g_CurItemEffectData=saved_message;g_SaveMetadataWindowIndex=saved_window;
+    if(!valid || hash!=UINT64_C(0x02675eb74a42ca49)){
+        fprintf(stderr,"Original escape chance: cases=%u hash=%016llx valid=%d\n",cases,(unsigned long long)hash,valid);return 0;}
+    puts("Original escape chance: 56448 USA cases, rank/HP boundaries, signed chance narrowing, attempts, blocked/dead/null cores, both text variants and RNG consumption match");return 1;
+}
+
+static int original_action_slot(void)
+{
+    Combatant active={0};BattleAction action={0};active.action=&action;
+    BattleEntity entities[4]={{0}};EnemyCombatant state={0},peer_core={0},player_core={0};RenderObjectHeader header={0};
+    Combatant *saved_active=g_ActiveActor;FieldActor *saved_player=g_PlayerEntity,*saved_head=g_FieldActorListHead;
+    BattleEntity *saved_actors[7];memcpy(saved_actors,g_BattleActionActors,sizeof(saved_actors));
+    BattleInitSlot saved_queue=g_BattleActionQueue[0];
+    u8 saved_count=g_BattleActionActorCount,saved_fade=g_BattleFadeLevel,saved_index=g_BattleActionIndex;
+    int saved_slot=g_ActiveDrawSlot;g_ActiveActor=&active;
+    g_FieldActorListHead=g_PlayerEntity=(FieldActor *)&entities[3];
+    const u32 phases[]={0,0x2000,0x4000,0x6000};const int kinds[]={0,1,2,4,-1},health[]={-1,0,1};
+    const unsigned fades[]={0,1,7,8,127,128,129,135,136,255},commands[]={0,0x189,0x196};
+    const unsigned arrays[][2]={{0,0},{0,3},{0,7},{1,1},{6,6},{6,7}};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int valid=1;
+#define SLOT_PUT(value,bytes) do {uint64_t v_=(uint64_t)(value); \
+    for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)v_)*UINT64_C(1099511628211);v_>>=8;}}while(0)
+    for(unsigned phase=0;phase<4;++phase)for(unsigned kind=0;kind<5;++kind)for(unsigned alive=0;alive<3;++alive)
+    for(unsigned fade=0;fade<10;++fade)for(unsigned command=0;command<3;++command)for(unsigned a=0;a<2;++a)
+    for(unsigned array=0;array<6;++array)for(unsigned peer=0;peer<3;++peer)for(unsigned slot=0;slot<2;++slot){
+        memset(entities,0,sizeof(entities));memset(&state,0,sizeof(state));memset(&peer_core,0,sizeof(peer_core));memset(&player_core,0,sizeof(player_core));
+        entities[3].next=&entities[0];entities[0].next=&entities[1];entities[1].next=&entities[2];
+        entities[0].core=&state;entities[0].parent=&entities[1];entities[2].core=peer?&peer_core:NULL;
+        peer_core.field04.bytes.kind=peer==1?4:2;entities[3].core=&player_core;player_core.field04.bytes.kind=4;
+        state.coreFlags=0xA5000003|phases[phase];state.hpAlive=health[alive];state.field04.bytes.kind=kinds[kind];
+        for(unsigned i=0;i<4;++i){RenderObjectEntity *o=&entities[i].renderObject;
+            o->header=&header;o->draw_count=1;o->flags_9C=0x8002;o->primitive_red=17;o->primitive_green=34;o->primitive_blue=51;}
+        for(unsigned i=0;i<7;++i)g_BattleActionActors[i]=i<arrays[array][1]?&entities[i&1?1:2]:NULL;
+        g_BattleActionActorCount=arrays[array][0];g_BattleFadeLevel=fades[fade];g_BattleActionIndex=0;
+        g_BattleActionQueue[0].actor=&entities[1];g_BattleActionQueue[0].command=commands[command];g_ActiveDrawSlot=slot;
+        action.actionCode.actionId=a?6:5;int result=Battle_ProcessActionSlot(&entities[0]);
+        SLOT_PUT(result,4);SLOT_PUT(state.coreFlags,4);SLOT_PUT(g_BattleActionActorCount,1);SLOT_PUT(g_BattleFadeLevel,1);
+        for(unsigned i=0;i<7;++i){unsigned id=0;for(unsigned j=0;j<4;++j)if(g_BattleActionActors[i]==&entities[j])id=j+1;
+            if(g_BattleActionActors[i] && !id)valid=0;SLOT_PUT(id,1);}
+        for(unsigned i=0;i<4;++i){RenderObjectEntity *o=&entities[i].renderObject;SLOT_PUT(o->flags_9C,2);
+            SLOT_PUT(o->primitive_red,1);SLOT_PUT(o->primitive_green,1);SLOT_PUT(o->primitive_blue,1);}
+        ++cases;
+    }
+    state.coreFlags=0x2000;g_BattleActionActorCount=7;g_BattleActionQueue[0].command=0;action.actionCode.actionId=5;
+    for(unsigned i=0;i<7;++i)g_BattleActionActors[i]=&entities[1];
+    Battle_ProcessActionSlot(&entities[0]);
+    if(g_BattleActionActorCount!=7)valid=0;
+    for(unsigned i=0;i<7;++i)if(g_BattleActionActors[i]!=&entities[1])valid=0;
+#undef SLOT_PUT
+    g_ActiveActor=saved_active;g_PlayerEntity=saved_player;g_FieldActorListHead=saved_head;
+    memcpy(g_BattleActionActors,saved_actors,sizeof(saved_actors));g_BattleActionQueue[0]=saved_queue;
+    g_BattleActionActorCount=saved_count;g_BattleFadeLevel=saved_fade;g_BattleActionIndex=saved_index;g_ActiveDrawSlot=saved_slot;
+    if(!valid || hash!=UINT64_C(0x049bef90c93d53e1)){
+        fprintf(stderr,"Original action slot: cases=%u hash=%016llx valid=%d\n",cases,(unsigned long long)hash,valid);return 0;}
+    puts("Original action slot: 129600 USA cases, seven-actor list clear/append, commands, all phases, kinds/HP/fades, parent/peer/player exclusion and both buffers match");return 1;
+}
+
 static int original_battle_target_list(void)
 {
     BattleTarget saved_targets[BATTLE_TARGET_CAPACITY+1];memcpy(saved_targets,g_BattleTargetList,sizeof(saved_targets));
@@ -4859,7 +4956,7 @@ static int original_icon_packets(PeDisc *disc,PeDiscFile *executable)
     }
     g_DrawDigitFontTpageClut=font_clut;g_DrawDigitFontBaseTexU=font_u;g_DrawDigitFontBaseTexV=font_v;
     memcpy(g_TextCursorStackBottom,stack_data,sizeof(stack_data));g_TextCursorStackPtr=stack;
-    if(!original_battle_target_list() || !original_script_sprites() || !original_wireframe_renderer() || !original_wireframe_animation() || !original_textbox_renderer(disc,executable) || !original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
+    if(!original_escape_chance(disc,executable) || !original_action_slot() || !original_battle_target_list() || !original_script_sprites() || !original_wireframe_renderer() || !original_wireframe_animation() || !original_textbox_renderer(disc,executable) || !original_scan_overlay(disc,executable) || !original_save_card_images(disc) || !original_hud_packet_initialization() || !original_hud_packet_updates() || !original_spell_effects(disc,executable))valid=0;
     g_TextRenderMode=text_mode;g_DrawGlyphAdvance=advance;
     g_ResidentDataPack=resident;g_DrawPacketCursor=cursor;g_DrawPacketArenaBase=base;g_DrawOrderingTableEntry=entry;
     g_TextCursorX=x;g_TextCursorY=y;g_DrawTextDimmed=dim;g_DrawPrimColor=color;g_DrawColorShaded=shaded;

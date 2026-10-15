@@ -12,6 +12,9 @@
 #include "pe1/save.h"
 #include "pe1/scene_transition.h"
 
+/* Actors affected by the current action, in original encounter order. */
+BattleEntity *g_BattleActionActors[7];
+
 void Battle_DispatchSpecialAction(int arg0) {
     BattleEntity *actor;
 
@@ -834,10 +837,6 @@ void Battle_MarkActiveEntities(BattleTarget *table, int selected_index)
 
 }
 
-/* MASPSX_FORCE_G0 keeps the battle words absolute, as retail; the COMMON
- * fade level supplies the small-data metadata of the one $gp-relative byte. */
-u8 g_BattleFadeLevel;
-
 int Battle_ProcessActionSlot(BattleEntity *actor)
 {
     EnemyCombatant *state = actor->core;
@@ -854,16 +853,16 @@ int Battle_ProcessActionSlot(BattleEntity *actor)
                     do {
                         g_BattleActionActors[(u8)i] = 0;
                         i++;
-                    } while (g_BattleActionActors[(u8)i] != 0);
+                    } while (i < 7 && g_BattleActionActors[(u8)i] != 0);
                 }
                 {
                     u8 count = g_BattleActionActorCount;
-                    g_BattleActionActorCount = count + 1;
-                    g_BattleActionActors[count] = actor;
+                    if (count < 7) {
+                        g_BattleActionActorCount = count + 1;
+                        g_BattleActionActors[count] = actor;
+                    }
                 }
             } else {
-                /* Matching debt: retail sets the room argument before the
-                 * test, in the branch delay slot. */
                 int room = 0x5B;
                 if (actor == g_BattleActionQueue[index].actor) {
                     g_BattleAilmentPmSlot = Scene_LoadRoomAssets(room, actor);

@@ -74,6 +74,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/draw_level_bar.h"
 #include "pe1/gpu_image.h"
 #include "pe1/akao.h"
+#include "pe1/memcard_save_state.h"
 #include "../src/overlays/menu_memcard/menu_memcard_screen.h"
 #include "../src/overlays/menu_memcard/menu_memcard_image.h"
 #include <SDL3/SDL.h>
@@ -2208,6 +2209,63 @@ static int original_save_metadata_storage(void)
     return valid;
 }
 
+static char card_test_root[128];
+static int card_test_path(char *destination,const char *source,int maximum)
+{
+    if(strncmp(source,"bu",2) || (source[2]!='0' && source[2]!='1') || source[3]!='0' || source[4]!=':') return -1;
+    const char *name=source+5;
+    return snprintf(destination,(size_t)maximum,"%s/bu%c0/%s",card_test_root,source[2],*name=='*'?"":name);
+}
+static int original_card_file_services(void)
+{
+    snprintf(card_test_root,sizeof(card_test_root),"pe-card-io-%llx",(unsigned long long)SDL_GetPerformanceCounter());
+    SDL_PathInfo info;
+    if(SDL_GetPathInfo(card_test_root,&info) || !SDL_CreateDirectory(card_test_root)) return 0;
+    int valid=1;
+    u8 expected[0x2000],actual[0x2000];
+    for(unsigned i=0;i<sizeof(expected);++i)expected[i]=(u8)(i*37+(i>>8));
+    Psyz_AdjustPathCB(card_test_path);
+    for(unsigned port=0;port<2;++port) {
+        char directory[160],host[256];
+        snprintf(directory,sizeof(directory),"%s/bu%u0",card_test_root,port);
+        if(!SDL_CreateDirectory(directory)) {valid=0;break;}
+        snprintf(g_MemCardFilePath,sizeof(g_MemCardFilePath),g_MemCardFilenameFormatPtr,port,'0'+port,'O');
+        if(strlen(g_MemCardFilePath)!=25 || strlen(g_MemCardFilePath+5)!=20) valid=0;
+        int fd=open(g_MemCardFilePath,0x10200);
+        if(fd<0) {valid=0;break;}
+        close(fd);
+        fd=open(g_MemCardFilePath,2);
+        if(fd<0) {valid=0;break;}
+        memcpy(g_MemCardFileBuffer,expected,sizeof(expected));
+        if(write(fd,(char *)g_MemCardFileBuffer,sizeof(expected))!=sizeof(expected)) valid=0;
+        if(close(fd)) valid=0;
+        fd=open(g_MemCardFilePath,1);
+        if(fd<0) {valid=0;break;}
+        if(read(fd,actual,sizeof(actual))!=sizeof(actual) || memcmp(actual,expected,sizeof(actual))) valid=0;
+        if(lseek(fd,0x1FF0,0)!=0x1FF0 || read(fd,actual,16)!=16 || memcmp(actual,expected+0x1FF0,16)) valid=0;
+        if(read(fd,actual,1)!=0) valid=0;
+        close(fd);
+        fd=open(g_MemCardFilePath,3);
+        if(fd<0) {valid=0;break;}
+        u8 marker=0xC7;
+        if(lseek(fd,0x123,0)!=0x123 || write(fd,(char *)&marker,1)!=1 ||
+           lseek(fd,0x123,0)!=0x123 || read(fd,actual,1)!=1 || actual[0]!=marker) valid=0;
+        close(fd);
+        char search[8];snprintf(search,sizeof(search),"bu%u0:*",port);
+        MemCardDirEntry entry;
+        memset(&entry,0xA5,sizeof(entry));
+        if(!firstfile(search,&entry) || entry.size!=0x2000 || memcmp(entry.name,g_MemCardFilePath+5,20) || nextfile(&entry)) valid=0;
+        Psyz_AdjustPath(host,g_MemCardFilePath,sizeof(host));
+        if(!SDL_RemovePath(host) || !SDL_RemovePath(directory))valid=0;
+    }
+    if(open("bu00:missing-file",1)>=0 || read(-1,actual,1)!=-1 || write(-1,(char *)actual,1)!=-1)valid=0;
+    Psyz_AdjustPathCB(NULL);
+    if(!SDL_RemovePath(card_test_root)) valid=0;
+    memset(g_MemCardFileBuffer,0,sizeof(g_MemCardFileBuffer));
+    if(valid)puts("Original card file ABI: both ports, exact 20-byte names, 8 KiB write/reopen/read, seek/update, directory entries and I/O errors passed");
+    return valid;
+}
+
 void MemCard_InitManager(void);
 static int original_system_start(void)
 {
@@ -2234,6 +2292,22 @@ static int original_system_start(void)
     MemCard_InitManager();
     if(memcmp(handles,g_MemCardEventHandles,sizeof(handles)) ||
        g_MemCardPortStates[0].present || g_MemCardPortStates[1].present) return 0;
+    memset(g_MemCardPortStates,0xA5,2*sizeof(MemCardPortState));
+    g_MemCardServicedPort=g_MemCardInfoPollCountdown=g_MemCardConnectDebounce=7;
+    g_MemCardConnectPending[0]=g_MemCardConnectPending[1]=7;
+    g_McOpPending=g_MemCardActivePortOneBased=g_MemCardSavePollTimeout=7;
+    g_MemCardActivePromptPending=g_SaveTitleStyleFlag=g_MemCardLoadSucceeded=g_MemCardReadContext=7;
+    g_MemCardActiveState=&g_MemCardPortStates[1];
+    MemCard_InitState();
+    MemCardPortState expected_ports[2];memset(expected_ports,0,sizeof(expected_ports));
+    expected_ports[0].fileDescriptor=expected_ports[1].fileDescriptor=-1;
+    if(memcmp(g_MemCardPortStates,expected_ports,sizeof(expected_ports)) || g_MemCardServicedPort ||
+       g_MemCardInfoPollCountdown || g_MemCardConnectDebounce || g_MemCardConnectPending[0] || g_MemCardConnectPending[1] ||
+       g_McOpPending || g_MemCardActivePortOneBased || g_MemCardSavePollTimeout || g_MemCardActivePromptPending ||
+       g_SaveTitleStyleFlag || g_MemCardLoadSucceeded || g_MemCardReadContext || g_MemCardActiveState ||
+       (u8 *)&g_MemCardSaveStateBuffer!=g_MemCardFileBuffer+0x100 || g_MemCardIconPalette!=(u8 *)g_MemCardIconHeader.palette)
+        return 0;
+    if(!original_card_file_services()) return 0;
     puts("Original system start: GPU/GTE/SPU, native pad reset and eight real card-event callbacks passed");
     return 1;
 }

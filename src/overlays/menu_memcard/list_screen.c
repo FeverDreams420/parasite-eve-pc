@@ -344,7 +344,7 @@ s32 MenuCard_RunListScreen(void) {
             PutDrawEnv(&g_MemcardCurrentScreen->draw);
             PutDispEnv(&g_MemcardCurrentScreen->disp);
         }
-        func_8018F2F4();
+        MenuCard_FlipScreenPages();
         VSync(0);
         SetDispMask(1);
         /* Rebuild the eight-node free list for this menu pass. */

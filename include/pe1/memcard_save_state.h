@@ -24,9 +24,6 @@ typedef struct MemCardDirEntry {
 void *firstfile(const char *name, void *entry);
 void *nextfile(void *entry);
 int format(char *device);
-int lseek(int descriptor, int offset, int origin);
-int read(int descriptor, void *buffer, int count);
-int write(int descriptor, void *buffer, int count);
 
 
 unsigned int MemCard_GetDialogMode(void);

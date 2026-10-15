@@ -151,8 +151,8 @@ extern int g_MemCardActiveBytesRemaining;
 extern int g_MemCardActivePromptPending;
 extern int g_MemCardLoadSucceeded;
 
-extern char g_MemCardFilePath[];
-extern s8 *g_MemCardFilenameFormatPtr;
+extern char g_MemCardFilePath[0x20];
+extern const char *g_MemCardFilenameFormatPtr;
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(MemCardSaveSlot, titleStyleFlag) == 0x29,
                   memcard_save_slot_title_style_offset);
@@ -233,9 +233,9 @@ typedef struct MemCardFileHeader {
 } MemCardFileHeader;
 PE1_STATIC_ASSERT(sizeof(MemCardFileHeader) == 0x100, memcard_file_header_size);
 extern MemCardFileHeader g_MemCardIconHeader;
-extern u8 g_MemCardIconPalette[];
-extern u8 g_MemCardFileBuffer[];
+#define g_MemCardIconPalette ((u8 *)g_MemCardIconHeader.palette)
+extern u8 g_MemCardFileBuffer[0x2000];
 /* Runtime save state as read back from the card file. */
-extern SaveBytes12E4 g_MemCardSaveStateBuffer;
+#define g_MemCardSaveStateBuffer (*(SaveBytes12E4 *)(g_MemCardFileBuffer + 0x100))
 
 #endif

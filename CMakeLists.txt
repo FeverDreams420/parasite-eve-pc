@@ -98,6 +98,7 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_m005_theater/m005.c
     src/overlays/room_lib/script_task_var.c)
 target_include_directories(parasite-eve-original PRIVATE include)
+target_link_libraries(parasite-eve-original PRIVATE psyz)
 set_property(SOURCE src/main/boot/init.c APPEND PROPERTY INCLUDE_DIRECTORIES
     "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
 if(MSVC)
@@ -117,6 +118,7 @@ add_library(parasite-eve-original-akao OBJECT
     src/main/akao/spu_transfer.c
     src/main/psyq/libspu/s_svva.c)
 target_include_directories(parasite-eve-original-akao PRIVATE include)
+target_link_libraries(parasite-eve-original-akao PRIVATE psyz)
 if(MSVC)
     target_compile_options(parasite-eve-original-akao PRIVATE /Gy /Gw)
 else()

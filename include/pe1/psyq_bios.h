@@ -3,18 +3,20 @@
 
 
 #include <stddef.h>
-
-/* Character-output services reached through the LIBC BIOS veneers. */
-int printf(const char *format, ...);
-int puts(const char *text);
+#include <psyz/system.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#ifndef _WIN32
+#include <strings.h>
+#else
+#define bzero(destination, length) memset((destination), 0, (length))
+#endif
 
 /* File services used by the memory-card manager. */
-int open(char *path, int mode);
-int close(int descriptor);
 int erase(char *path);
 
 /* Program control and cache services. */
-void exit(int code);
 void FlushCache(void);
 
 /* Entry-hook and automatic IRQ acknowledgement services used by LIBETC. */
@@ -54,10 +56,6 @@ int ChangeClearRCnt(int counter, int enabled);
 #define PSYQ_BIOS_SYSCALL(result, selector) \
     __asm__ volatile("syscall" : "=r"(result), "=r"(selector) \
                      : "1"(selector) : "memory")
-
-void bzero(void *destination, size_t length);
-void *memcpy(void *destination, const void *source, size_t length);
-char *strcpy(char *destination, const char *source);
 
 void DeliverEvent(unsigned int event, unsigned int spec);
 

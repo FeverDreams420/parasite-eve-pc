@@ -17,6 +17,22 @@ void (*g_MemCardDelayedCallback)(void);
 int g_MemCardDelayedCallbackTimer;
 
 MemCardPortState g_MemCardPortStates[2];
+MemCardPreviewBuffer g_MemCardPreviewBuffers[2];
+MemCardPortState *g_MemCardActiveState;
+int g_MemCardActivePortOneBased, g_MemCardActiveBytesRemaining;
+int g_MemCardActivePromptPending, g_MemCardLoadSucceeded;
+unsigned int g_MemCardServicedPort;
+int g_MemCardInfoPollCountdown, g_MemCardConnectDebounce, g_MemCardConnectPending[2];
+int g_McOpPending, g_MemCardSavePollTimeout, g_MemCardReadContext;
+int g_SaveTitleStyleFlag, D_800A5D50;
+u8 *g_SaveIoCursor;
+char g_MemCardFilePath[0x20];
+const char *g_MemCardFilenameFormatPtr = "bu%d0:BASLUS-00662000000%c%c";
+static char g_MemCardSearchPattern[] = "bu00:*";
+char *g_MemCardSearchPatternPtr = g_MemCardSearchPattern;
+MemCardFileHeader g_MemCardIconHeader;
+_Alignas(16) u8 g_MemCardFileBuffer[0x2000];
+
 long g_MemCardEventHandles[MEMCARD_EVENT_COUNT];
 int g_MemCardManagerReady;
 int g_MemCardEventF400Spec0004Flag, g_MemCardRemovedEventPending, g_MemCardEventF400Spec2000Flag;
@@ -555,7 +571,7 @@ void MemCard_AbortActiveOperation(MemCardPortState *state) {
 
         sprintf(name_buf, g_MemCardFilenameFormatPtr, is_second,
                         state->slots[slot].titleStyleFlag + 0x30, slot + 0x41);
-        sprintf(path, g_MemCardSaveSupportData.saveFileFormat, state_index, g_MemCardFilePath);
+        sprintf(path, g_MemCardSaveSupportData.saveFileFormat, (long)state_index, g_MemCardFilePath);
 
         do {
             fd = open(path, 1);
@@ -710,7 +726,7 @@ void MemCard_UpdateSaveState(int port) {
         break;
 
     case 14:
-        sprintf(device, g_MemCardSaveSupportData.deviceFormat, port);
+        sprintf(device, g_MemCardSaveSupportData.deviceFormat, (long)port);
         g_MemCardSavePollTimeout = format(device) ? 12 : -1;
         state->present &= ~4;
         g_McOpPending = 0;

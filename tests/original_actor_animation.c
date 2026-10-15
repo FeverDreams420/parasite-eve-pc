@@ -2988,7 +2988,7 @@ static int original_fx_poly_render_assets(PeDisc *disc)
             Psyz_GteCtrlWrite(24,160u<<16);Psyz_GteCtrlWrite(25,120u<<16);Psyz_GteCtrlWrite(26,768);Psyz_GteCtrlWrite(29,341);Psyz_GteCtrlWrite(30,256);
             memset(&g_FxCommonRenderWorkspace,0xa5,sizeof(g_FxCommonRenderWorkspace));memset(&arena,0xa5,sizeof(arena));memset(&ot,0xa5,sizeof(ot));
             for(unsigned i=0;i<4096;++i)ot.entries[i]=(RenderNativeTag){0xffffff,0xab};
-            FxCommonBuffer buffer={.data=arena.bytes,.allocation=(FxCommonPacketTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
+            FxCommonBuffer buffer={.data=arena.bytes,.allocation=(RenderNativeTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
             g_FxCommonActiveBuffer=&buffer;g_FxCommonDepthBase=biases[bias];FxCommon_DrawPolyResource(NULL,resource);
             if(buffer.error || buffer.data<arena.bytes || buffer.data>arena.bytes+sizeof(FxCommonBufferRegion)){fprintf(stderr,"FX poly resource=%u z=%d bias=%d mirror=%u error=%d used=%td\n",variant,z_values[z],biases[bias],mirror,buffer.error,buffer.data-arena.bytes);valid=0;break;}
             u8 *at=arena.bytes,*addresses[8192];unsigned count=0;
@@ -3027,7 +3027,7 @@ static int original_fx_poly_render_assets(PeDisc *disc)
         for(unsigned i=0;i<8;++i)Psyz_GteCtrlWrite(i,controls[i]);
         Psyz_GteCtrlWrite(26,768);Psyz_GteCtrlWrite(29,341);Psyz_GteCtrlWrite(30,256);
         memset(&g_FxCommonRenderWorkspace,0xa5,sizeof(g_FxCommonRenderWorkspace));memset(&arena,0xa5,sizeof(arena));memset(&ot,0xa5,sizeof(ot));
-        FxCommonBuffer buffer={.data=arena.bytes,.allocation=(FxCommonPacketTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
+        FxCommonBuffer buffer={.data=arena.bytes,.allocation=(RenderNativeTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
         if(fault<2)buffer.end=arena.bytes+packet_sizes[kind]*((kind==4 || kind==5) && !fault?4:1)-1;
         g_FxCommonActiveBuffer=&buffer;g_FxCommonDepthBase=fault==2?-1000:fault==3?100000:0;
         FxCommon_DrawPolyResource(NULL,one);
@@ -3041,6 +3041,189 @@ static int original_fx_poly_render_assets(PeDisc *disc)
     g_FxCommonActiveBuffer=old_buffer;g_FxCommonDepthBase=old_base;g_FxCommonRenderWorkspace=old_work;
     if(!valid || cases!=252 || packets!=6322 || hash!=UINT64_C(0x8389f407efdeab28)){fprintf(stderr,"Original FX polygon resources: cases=%u packets=%u hash=%016llx valid=%d\n",cases,packets,(unsigned long long)hash,valid);return 0;}
     puts("Original FX polygon resources: both real banks and all eight synthetic streams match USA CPU/GTE across subdivision and texture-distance boundaries; native payloads and complete OT chains pass");return 1;
+}
+
+static int original_fx_shader_packets(void)
+{
+    FxCommonGradientQuad *quads[]={g_FxCommonSkyQuads,g_FxCommonShadeQuads,g_FxCommonFloorFadeQuads,g_FxCommonTopFadeQuads};
+    FxCommonDrawModePacket *modes[]={g_FxCommonDrawModes0,g_FxCommonDrawModes1,g_FxCommonDrawModes2};
+    for(unsigned i=0;i<4;++i)memset(quads[i],0xa5,2*sizeof(*quads[i]));
+    for(unsigned i=0;i<3;++i)memset(modes[i],0xa5,2*sizeof(*modes[i]));
+    FxCommon_InitFadeQuads();uint64_t hash=UINT64_C(14695981039346656037);int valid=1;
+#define SHADER_PUT(value,count) do {uint64_t word_=(uint64_t)(value); \
+    for(unsigned byte_=0;byte_<(count);++byte_){hash=(hash^(u8)word_)*UINT64_C(1099511628211);word_>>=8;}}while(0)
+    for(unsigned group=0;group<7;++group)for(unsigned slot=0;slot<2;++slot){
+        RenderNativeTag *tag=group<4?&quads[group][slot].tag:&modes[group-4][slot].tag;
+        if(tag->length!=(group<4?8:1))valid=0;SHADER_PUT(tag->length,1);
+        for(unsigned byte=0;byte<tag->length*4;++byte)SHADER_PUT(((u8 *)(tag+1))[byte],1);
+        if(group>=4 && modes[group-4][slot].command>UINT32_MAX)valid=0;
+    }
+    if(hash!=UINT64_C(0x353e0cebf2681c3d))valid=0;
+    static struct {u64 before;_Alignas(16) u8 data[4096];u64 after;} arena;
+    static struct {u64 before;RenderNativeTag entries[4096];u64 after;} ot;
+    s32 fades[605],full[262];for(unsigned i=0;i<601;++i)fades[i]=(s32)i-300;
+    memcpy(fades+601,(s32[]){-32768,-32767,32766,32767},16);
+    for(unsigned i=0;i<256;++i)full[i]=i;memcpy(full+256,(s32[]){-1,256,32767,65535,INT32_MAX,INT32_MIN},24);
+    const s32 markers[]={-32768,-255,-254,-8,-1,0,1,8,247,254,255,32767},night[]={-16,0,16,255};
+    const s32 *values[]={fades,full,markers,night};const unsigned numbers[]={605,262,12,4};
+    unsigned cases=0,packets=0;
+    for(unsigned kind=0;kind<4 && valid;++kind)for(unsigned v=0;v<numbers[kind] && valid;++v)
+    for(unsigned slot=0;slot<2 && valid;++slot)for(unsigned pattern=0;pattern<(kind<2?1:4) && valid;++pattern)
+    for(unsigned view=0;view<(kind<2?1:3) && valid;++view){
+        for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+        const u32 controls[]={4096,0,4096,0,4096,0,0,(u32)(view==0?1000:view==1?8000:-1000)};
+        for(unsigned i=0;i<8;++i)Psyz_GteCtrlWrite(i,controls[i]);
+        Psyz_GteCtrlWrite(24,160u<<16);Psyz_GteCtrlWrite(25,120u<<16);Psyz_GteCtrlWrite(26,768);Psyz_GteCtrlWrite(29,341);Psyz_GteCtrlWrite(30,256);
+        memset(&arena,0xa5,sizeof(arena));memset(&ot,0xa5,sizeof(ot));
+        for(unsigned i=0;i<4096;++i)ot.entries[i]=(RenderNativeTag){0xffffff,0xab};
+        FxCommonBuffer *buffer=&g_FxCommonFrames[slot].buffer;
+        *buffer=(FxCommonBuffer){.data=arena.data,.allocation=ot.entries,.end=arena.data+sizeof(arena.data)};g_FxCommonActiveBuffer=buffer;
+        for(unsigned i=0;i<10;++i){g_FxCommonMotionPositions[i].vector.x=(s32)(((u32)(i*37-150)&65535)<<16|i);
+            g_FxCommonMotionPositions[i].vector.y=(s32)(((u32)(80-i*19)&65535)<<16|i*3);
+            g_FxCommonMotionPositions[i].vector.z=(s32)(((u32)(i*131-300)&65535)<<16|i*7);g_FxCommonMotionPositions[i].pad0C=(s32)0xa5a5a5a5;
+            memset(&g_FxCommonEffectSetup[i],0,sizeof(g_FxCommonEffectSetup[i]));
+            g_FxCommonEffectSetup[i].position[0]=i*51-200;g_FxCommonEffectSetup[i].position[1]=i*29-100;g_FxCommonEffectSetup[i].position[2]=i*113-400;
+            g_FxCommonEffectSetup[i].enabled=pattern==0?0:pattern==1?1:pattern==2?i%2:(i==0 || i==3 || i==9);}
+        g_FxCommonRoomVariant=pattern*3;g_FxCommonMarkerFade=(s16)values[kind][v];g_FxCommonNight=pattern%2;s16 result=0;
+        if(kind==0)result=FxCommon_StepFadeIntensity((s16)values[kind][v]);
+        if(kind==1)FxCommon_DrawFullScreenFade(values[kind][v]);
+        if(kind==2)result=FxCommon_DrawEffectMarkers((s16)values[kind][v]);
+        if(kind==3){FxCommon_DrawNightShadeAndMarkers();result=g_FxCommonMarkerFade;}
+        if(buffer->error || buffer->data<arena.data || buffer->data>buffer->end){valid=0;break;}
+        u8 *cursor=arena.data,*addresses[64];unsigned count=0;
+        while(cursor<buffer->data){RenderNativeTag *tag=(RenderNativeTag *)cursor;
+            if(count>=64 || (tag->length!=1 && tag->length!=3 && tag->length!=8 && tag->length!=12)){valid=0;break;}
+            addresses[count++]=cursor;size_t size=(sizeof(*tag)+tag->length*4+_Alignof(RenderNativeTag)-1)&~(size_t)(_Alignof(RenderNativeTag)-1);
+            if(size>(size_t)(buffer->data-cursor)){valid=0;break;}cursor+=size;
+        }
+        if(!valid || cursor!=buffer->data){valid=0;break;}
+        SHADER_PUT((u16)result,2);SHADER_PUT(count,2);
+        for(unsigned i=0;i<count;++i){RenderNativeTag *tag=(RenderNativeTag *)addresses[i];SHADER_PUT(tag->length,1);
+            for(unsigned byte=0;byte<tag->length*4;++byte)SHADER_PUT(addresses[i][sizeof(*tag)+byte],1);
+            if(tag->length==1 && ((FxCommonDrawModePacket *)tag)->command>UINT32_MAX)valid=0;}
+        const unsigned depths[]={0,9,10,4095};
+        for(unsigned d=0;d<4 && valid;++d){unsigned depth=depths[d];SHADER_PUT(depth,2);uintptr_t link=ot.entries[depth].address;unsigned steps=0;
+            while(link!=0xffffff){unsigned id=0;while(id<count && link!=(uintptr_t)addresses[id])++id;
+                if(id==count){if(link==(uintptr_t)&g_FxCommonShadeQuads[0])id=0x8000;else if(link==(uintptr_t)&g_FxCommonShadeQuads[1])id=0x8001;
+                    else if(link==(uintptr_t)&g_FxCommonDrawModes1[0])id=0x8002;else if(link==(uintptr_t)&g_FxCommonDrawModes1[1])id=0x8003;else{valid=0;break;}}
+                SHADER_PUT(id,2);RenderNativeTag *tag=(RenderNativeTag *)link;
+                if(id>=0x8000){SHADER_PUT(tag->length,1);for(unsigned byte=0;byte<tag->length*4;++byte)SHADER_PUT(((u8 *)(tag+1))[byte],1);}
+                link=tag->address;if(++steps>count+4){valid=0;break;}
+            }
+            SHADER_PUT(65535,2);
+        }
+        for(unsigned i=0;i<4096;++i)if(ot.entries[i].length!=0xab)valid=0;
+        for(u8 *at=buffer->data;at<buffer->end;++at)if(*at!=0xa5)valid=0;
+        if(arena.before!=UINT64_C(0xa5a5a5a5a5a5a5a5) || arena.after!=UINT64_C(0xa5a5a5a5a5a5a5a5) ||
+           ot.before!=UINT64_C(0xa5a5a5a5a5a5a5a5) || ot.after!=UINT64_C(0xa5a5a5a5a5a5a5a5))valid=0;
+        ++cases;packets+=count;
+    }
+#undef SHADER_PUT
+    if(!valid || cases!=2118 || packets!=7028 || hash!=UINT64_C(0xe11d5d9a899124c5)){
+        fprintf(stderr,"Original FX shaders: cases=%u packets=%u hash=%016llx valid=%d\n",cases,packets,(unsigned long long)hash,valid);return 0;}
+    puts("Original FX shaders: eight initialized gradients/six modes and 2118 USA scenarios match fades, marker labels, selection palettes, night shade, both buffers, native payloads and full OT chains");return 1;
+}
+
+static int original_fx_shader_pixels(void)
+{
+    static u16 saved_pixels[1024*512],pixels[1024*512];RECT whole={0,0,1024,512};
+    Pe1GameState saved=g_GameState;FxCommonFrame frames[2];memcpy(frames,g_FxCommonFrames,sizeof(frames));
+    FxCommonBuffer *active=g_FxCommonActiveBuffer;int slot_before=g_ActiveDrawSlot;
+    DRAWENV draw_before;DISPENV display_before;GetDrawEnv(&draw_before);GetDispEnv(&display_before);
+    StoreImage(&whole,saved_pixels);DrawSync(0);Boot_InitMemoryLayout();FxCommon_InitDisplay();
+    const unsigned intensities[]={0,32,127,255};int valid=1;
+    for(unsigned slot=0;slot<2 && valid;++slot)for(unsigned value=0;value<4 && valid;++value){
+        for(unsigned i=0;i<1024*512;++i)pixels[i]=0x1357;LoadImage(&whole,pixels);DrawSync(0);
+        RECT area={0,(s16)(slot*240),320,240};ClearImage(&area,160,160,160);DrawSync(0);
+        g_FxCommonActiveBuffer=&g_FxCommonFrames[slot].buffer;g_ActiveDrawSlot=slot;FxCommon_ClearActiveOrdering();
+        g_FxCommonFrames[slot].drawEnv.dtd=0;PutDrawEnv(&g_FxCommonFrames[slot].drawEnv);PutDispEnv(&g_FxCommonFrames[slot].dispEnv);
+        FxCommon_DrawFullScreenFade(intensities[value]);if(g_FxCommonActiveBuffer->error){valid=0;break;}
+        DrawOTag((u_int *)&g_FxCommonActiveBuffer->allocation[4095]);DrawSync(0);StoreImage(&whole,pixels);DrawSync(0);
+        int channel=20-(int)(intensities[value]>>3);if(channel<0)channel=0;u16 expected=(u16)(channel|(channel<<5)|(channel<<10));
+        for(unsigned y=0;y<512 && valid;++y)for(unsigned x=0;x<1024;++x){u16 wanted=x<320 && y>=slot*240 && y<(slot+1)*240?expected:0x1357;
+            if(pixels[y*1024+x]!=wanted){fprintf(stderr,"FX fade pixels slot=%u intensity=%u x=%u y=%u got=%04x expected=%04x\n",slot,intensities[value],x,y,pixels[y*1024+x],wanted);valid=0;break;}}
+    }
+    LoadImage(&whole,saved_pixels);PutDrawEnv(&draw_before);PutDispEnv(&display_before);DrawSync(0);
+    g_GameState=saved;memcpy(g_FxCommonFrames,frames,sizeof(frames));g_FxCommonActiveBuffer=active;g_ActiveDrawSlot=slot_before;
+    if(valid)puts("Original FX fade pixels: original boot memory/display/arena path, both frame buffers, four subtractive intensities and all 1024x512 VRAM pixels per frame pass headlessly");return valid;
+}
+
+static int original_fx_uncompressed_order(void)
+{
+    static RenderNativeTag ordering[2][4096];static FxCommonDrawModePacket packets[4096];
+    const unsigned counts[]={0,1,2,10,127,4096};uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned slot=0;slot<2;++slot)for(unsigned pattern=0;pattern<128;++pattern){
+        unsigned count=counts[pattern%6];ClearOTagR((u_int *)ordering[slot],4096);
+        uintptr_t terminal=ordering[slot][0].address;
+        for(unsigned j=0;j<count;++j){unsigned depth=pattern%4==0?0:pattern%4==1?4095:pattern%4==2?j%4096:(j*1103515245u+pattern*12345u)%4096;
+            packets[j].tag=(RenderNativeTag){ordering[slot][depth].address,1};packets[j].command=j;
+            ordering[slot][depth].address=(uintptr_t)&packets[j];}
+        for(unsigned byte=0;byte<4;++byte)hash=(hash^(u8)(count>>(byte*8)))*UINT64_C(1099511628211);
+        uintptr_t link=(uintptr_t)&ordering[slot][4095];unsigned steps=0,seen=0;
+        while(link!=0xffffff){RenderNativeTag *tag=(RenderNativeTag *)link;
+            if(link==terminal){if(tag->address!=0xffffff || tag->length!=4)return 0;break;}
+            if(tag->length){uintptr_t offset=link-(uintptr_t)packets;
+                if(offset>=count*sizeof(*packets) || offset%sizeof(*packets))return 0;
+                unsigned id=offset/sizeof(*packets);for(unsigned byte=0;byte<2;++byte)hash=(hash^(u8)(id>>(byte*8)))*UINT64_C(1099511628211);++seen;}
+            link=tag->address;if(++steps>4096+count+1)return 0;
+        }
+        if(seen!=count)return 0;++cases;
+    }
+    if(cases!=256 || hash!=UINT64_C(0x8eff7149a4f01905)){fprintf(stderr,"Original FX OT order: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original FX OT order: 256 empty/sparse/dense patterns preserve the same packet order as USA DMA compaction with native OT entries left intact");return 1;
+}
+
+static int original_fx_shader_guards(void)
+{
+    FxCommonBuffer *old_buffer=g_FxCommonActiveBuffer;
+    static _Alignas(16) u8 arena[4096];static RenderNativeTag ordering[4096];
+    const size_t fade_size=sizeof(FxCommonGradientQuad)+sizeof(FxCommonDrawModePacket);
+    unsigned cases=0;int valid=1;
+    for(size_t remaining=0;remaining<=fade_size;++remaining){
+        memset(arena,0xa5,sizeof(arena));memset(ordering,0xa5,sizeof(ordering));
+        FxCommonBuffer buffer={.data=arena,.allocation=ordering,.end=arena+remaining};g_FxCommonActiveBuffer=&buffer;
+        FxCommon_DrawFullScreenFade(127);
+        if(remaining<fade_size){if(buffer.error!=-1 || buffer.data!=arena)valid=0;
+            for(unsigned i=0;i<sizeof(arena);++i)if(arena[i]!=0xa5)valid=0;
+            for(unsigned i=0;i<sizeof(ordering);++i)if(((u8 *)ordering)[i]!=0xa5)valid=0;
+        }else if(buffer.error || buffer.data!=arena+fade_size)valid=0;
+        ++cases;
+    }
+    const unsigned counts[]={1,4,10};
+    for(unsigned slot=0;slot<2;++slot)for(unsigned c=0;c<3;++c)for(unsigned space=0;space<3;++space){
+        size_t required=counts[c]*(sizeof(FxCommonLinePacket)+2*sizeof(FxCommonMarkerQuad));
+        size_t remaining=space==0?0:space==1?required-1:required;
+        memset(arena,0xa5,sizeof(arena));memset(ordering,0xa5,sizeof(ordering));
+        for(unsigned i=0;i<10;++i)g_FxCommonEffectSetup[i].enabled=i<counts[c];
+        FxCommonBuffer *buffer=&g_FxCommonFrames[slot].buffer;*buffer=(FxCommonBuffer){.data=arena,.allocation=ordering,.end=arena+remaining};g_FxCommonActiveBuffer=buffer;
+        if(FxCommon_DrawEffectMarkers(127)!=135)valid=0;
+        if(space<2){if(buffer->error!=-1 || buffer->data!=arena)valid=0;
+            for(unsigned i=0;i<sizeof(arena);++i)if(arena[i]!=0xa5)valid=0;
+            for(unsigned i=0;i<sizeof(ordering);++i)if(((u8 *)ordering)[i]!=0xa5)valid=0;
+        }else if(buffer->error || buffer->data!=arena+required)valid=0;
+        ++cases;
+    }
+    FxCommonBuffer buffer={.data=arena,.allocation=ordering,.end=arena};g_FxCommonActiveBuffer=&buffer;
+    if(FxCommon_DrawEffectMarkers(0) || buffer.error || buffer.data!=arena)valid=0;++cases;
+    g_FxCommonActiveBuffer=old_buffer;
+    if(!valid){fprintf(stderr,"Original FX shader guards: cases=%u\n",cases);return 0;}
+    printf("Original FX shader guards: %u exact-capacity/short-arena cases, atomic errors, both marker buffers and zero-level mode-only drawing pass\n",cases);return 1;
+}
+
+static int original_fx_blend(void)
+{
+    const s16 counters[]={-32768,-1,0,1,2,31,32,32767};uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned c=0;c<8;++c)for(unsigned pattern=0;pattern<16;++pattern){
+        u32 positions[40],deltas[40];for(unsigned j=0;j<40;++j){positions[j]=j*0x01234567u+pattern*0x9e3779b9u;deltas[j]=~(j*0x07654321u)+pattern*0x13579bdfu;}
+        memcpy(g_FxCommonMotionPositions,positions,sizeof(positions));memcpy(g_FxCommonMotionDeltas,deltas,sizeof(deltas));g_FxCommonMotionBlendFrames=counters[c];
+        for(unsigned step=0;step<34;++step){FxCommon_StepMotionBlend();
+            const u8 *parts[]={(const u8 *)&g_FxCommonMotionBlendFrames,(const u8 *)g_FxCommonMotionPositions};const unsigned sizes[]={2,160};
+            for(unsigned p=0;p<2;++p)for(unsigned b=0;b<sizes[p];++b)hash=(hash^parts[p][b])*UINT64_C(1099511628211);
+            if(memcmp(g_FxCommonMotionDeltas,deltas,sizeof(deltas)))return 0;++cases;
+        }
+    }
+    if(cases!=4352 || hash!=UINT64_C(0xfd879abe57c21976)){fprintf(stderr,"Original FX blend: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original FX blend: 4352 USA updates match all ten shared motion records, signed/wrapped additions, counter expiry and untouched padding/deltas");return 1;
 }
 
 static int original_fx_model_render_assets(PeDisc *disc)
@@ -3072,7 +3255,7 @@ static int original_fx_model_render_assets(PeDisc *disc)
             memset(&g_FxCommonRenderWorkspace,0xa5,sizeof(g_FxCommonRenderWorkspace));
             memset(&arena,0xa5,sizeof(arena));memset(&ot,0xa5,sizeof(ot));
             for(unsigned i=0;i<4096;++i)ot.entries[i]=(RenderNativeTag){0xffffff,0xab};
-            FxCommonBuffer buffer={.data=arena.bytes,.allocation=(FxCommonPacketTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
+            FxCommonBuffer buffer={.data=arena.bytes,.allocation=(RenderNativeTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
             g_FxCommonActiveBuffer=&buffer;g_FxCommonDepthBias=poses[pose][1];
             memcpy(g_FxCommonFlatColor,(u8[]){40,80,120,0},4);
             draws[renderer](NULL,models,index);
@@ -3115,7 +3298,7 @@ static int original_fx_model_render_assets(PeDisc *disc)
     triangle->vertices[0]=(GteShortVector){-10,-10,0,0};triangle->vertices[1]=(GteShortVector){10,-10,0,0};triangle->vertices[2]=(GteShortVector){-10,10,0,0};
     for(unsigned renderer=0;renderer<3;++renderer){
         memset(&arena,0xa5,sizeof(arena));memset(&ot,0xa5,sizeof(ot));
-        FxCommonBuffer buffer={.data=arena.bytes,.allocation=(FxCommonPacketTag *)ot.entries,
+        FxCommonBuffer buffer={.data=arena.bytes,.allocation=(RenderNativeTag *)ot.entries,
             .end=arena.bytes+sizeof(FxCommonModelF3Packet)-1};g_FxCommonActiveBuffer=&buffer;
         draws[renderer](NULL,(FxCommonPolyModel *)small_bank,0);
         if(buffer.error!=-1 || buffer.data!=arena.bytes)valid=0;
@@ -3127,7 +3310,7 @@ static int original_fx_model_render_assets(PeDisc *disc)
     for(unsigned i=0;i<8;++i)Psyz_GteCtrlWrite(i,controls[i]);Psyz_GteCtrlWrite(26,768);
     Psyz_GteCtrlWrite(29,341);Psyz_GteCtrlWrite(30,256);
     for(unsigned i=0;i<2;++i){memset(&ot,0xa5,sizeof(ot));
-        FxCommonBuffer buffer={.data=arena.bytes,.allocation=(FxCommonPacketTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
+        FxCommonBuffer buffer={.data=arena.bytes,.allocation=(RenderNativeTag *)ot.entries,.end=arena.bytes+sizeof(arena.bytes)};
         g_FxCommonActiveBuffer=&buffer;g_FxCommonDepthBias=i?-1:4096;
         FxCommon_DrawModelFlat(NULL,(FxCommonPolyModel *)small_bank,0);
         if(buffer.error!=-2 || buffer.data!=arena.bytes)valid=0;
@@ -6225,6 +6408,7 @@ static int script_movie_error_exit(const char *executable)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--fx-effects")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_fx_shader_packets() && original_fx_blend() && original_fx_uncompressed_order() && original_fx_shader_pixels() && original_fx_shader_guards()?0:147;}
     if(argc==2 && !strcmp(argv[1],"--fx-models")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

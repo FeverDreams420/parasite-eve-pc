@@ -524,14 +524,11 @@ int FxCommon_InitScene(void)
     motionIndex = 0;
     g_FxCommonMotionBlendFrames = 0;
     motionBase = (s16) (u16) g_FxCommonRoomVariant;
-    /* The earlier variant is dead; the motion byte offset is assigned below. */
-    variantOrMotionOffset = 0;
     for (; motionIndex < 10; ++motionIndex) {
         FxCommon_SamplePath(motionIndex << 8, motionBase + 0x40, Draw_GetTimTableEntry(resourceTableData, 2), &motion.vector, &shortMotion);
-        *((s32 *)((u8 *)g_FxCommonMotionPositions + variantOrMotionOffset)) = motion.vector.x << 0x10;
-        *((s32 *)((u8 *)g_FxCommonMotionPositionY + variantOrMotionOffset)) = motion.vector.y << 0x10;
-        *((s32 *)((u8 *)g_FxCommonMotionPositionZ + variantOrMotionOffset)) = motion.vector.z << 0x10;
-        variantOrMotionOffset += 0x10;
+        g_FxCommonMotionPositions[motionIndex].vector.x = (s32)((u32)motion.vector.x << 16);
+        g_FxCommonMotionPositions[motionIndex].vector.y = (s32)((u32)motion.vector.y << 16);
+        g_FxCommonMotionPositions[motionIndex].vector.z = (s32)((u32)motion.vector.z << 16);
     }
     if (g_FxCommonAutoPlay == 1) {
         g_FxCommonMarkerFade = 0;
@@ -580,3 +577,9 @@ int FxCommon_InitScene(void)
     }
     return 0;
 }
+
+/* Original double-buffered screen overlays and the scene's setup records. */
+FxCommonGradientQuad g_FxCommonSkyQuads[2],g_FxCommonShadeQuads[2];
+FxCommonGradientQuad g_FxCommonFloorFadeQuads[2],g_FxCommonTopFadeQuads[2];
+FxCommonDrawModePacket g_FxCommonDrawModes0[2],g_FxCommonDrawModes1[2],g_FxCommonDrawModes2[2];
+FxCommonEffectSetupRecord g_FxCommonEffectSetup[10];

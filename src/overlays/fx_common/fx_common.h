@@ -60,11 +60,9 @@ struct FxCommonNode {
     FxCommonNode *parent, *previous, *next;
 };
 
-typedef union FxCommonPacketTag { u32 packed; struct { unsigned int address:24; unsigned int length:8; } bits; struct { u8 address[3]; u8 length; } bytes; } FxCommonPacketTag;
-
 typedef struct FxCommonBuffer {
     u8 *data;
-    FxCommonPacketTag *allocation;
+    RenderNativeTag *allocation;
     u8 *end;
     int error;
 } FxCommonBuffer;
@@ -75,7 +73,7 @@ typedef struct FxCommonBufferRegion {
 } FxCommonBufferRegion;
 
 typedef struct FxCommonGradientQuad {
-    u32 tag;
+    RenderNativeTag tag;
     u8 color0[4];
     s16 x0;
     s16 y0;
@@ -91,29 +89,12 @@ typedef struct FxCommonGradientQuad {
 } FxCommonGradientQuad;
 
 typedef struct FxCommonDrawModePacket {
-    FxCommonPacketTag tag;
-    u32 command;
+    RenderNativeTag tag;
+    uintptr_t command;
 } FxCommonDrawModePacket;
 
-typedef union FxCommonPacketCursor {
-    FxCommonGradientQuad quad;
-    struct {
-        FxCommonDrawModePacket packet;
-        u8 pad08[0x1C];
-    } mode;
-} FxCommonPacketCursor;
-
-typedef union FxCommonAddress {
-    void *pointer;
-    u32 word;
-} FxCommonAddress;
-
-PE1_STATIC_ASSERT(sizeof(FxCommonGradientQuad) == 0x24,
-                  fx_common_gradient_quad_size);
-PE1_STATIC_ASSERT(sizeof(FxCommonDrawModePacket) == 8,
-                  fx_common_draw_mode_packet_size);
-PE1_STATIC_ASSERT(sizeof(FxCommonPacketCursor) == 0x24,
-                  fx_common_packet_cursor_size);
+PE1_STATIC_ASSERT(sizeof(FxCommonGradientQuad) == sizeof(RenderNativeTag)+32, fx_common_gradient_quad_size);
+PE1_STATIC_ASSERT(sizeof(FxCommonDrawModePacket) == sizeof(RenderNativeTag)+sizeof(uintptr_t), fx_common_draw_mode_packet_size);
 
 typedef struct FxCommonShortVec3 {
     s16 x;
@@ -150,15 +131,6 @@ PE1_STATIC_ASSERT(sizeof(FxCommonMotionRecord) == 16, fx_motion_record_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FxCommonMotionRecord, vector) == 0,
                   fx_motion_record_vector_offset);
 
-typedef struct FxCommonMotionLane {
-    s32 value;
-    s32 pad04[3];
-} FxCommonMotionLane;
-
-typedef struct FxCommonMotionByte {
-    u8 value;
-} FxCommonMotionByte;
-
 typedef struct FxCommonResourceState {
     s32 active;
     union {
@@ -171,10 +143,6 @@ extern s16 g_FxCommonMotionBlendFrames;
 extern u8 g_FxCommonPathWrapped;
 extern GteMatrix g_FxCommonMirrorYMatrix;
 extern FxCommonMotionRecord g_FxCommonMotionPositions[10];
-extern FxCommonMotionLane g_FxCommonMotionPositionZ[10];
-extern FxCommonMotionByte g_FxCommonMotionDeltaX[1];
-extern FxCommonMotionByte g_FxCommonMotionDeltaY[1];
-extern FxCommonMotionByte g_FxCommonMotionDeltaZ[1];
 extern FxCommonMotionRecord g_FxCommonMotionDeltas[10];
 extern FxCommonResourceState g_FxCommonResourceState;
 

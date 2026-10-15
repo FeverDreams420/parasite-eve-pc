@@ -37,7 +37,6 @@ extern short g_FxCommonRouteNearDepths[];
 extern unsigned char g_FxCommonColorMatrix;
 extern unsigned char g_FxCommonLightMatrix;
 extern FxCommonNode *g_FxCommonRouteNodes[];
-extern int g_FxCommonMotionPositionY[];
 extern s32 g_FxCommonPlayFrame;
 extern s16 g_FxCommonRoomVariant;
 void Render_SetupFogLayer(void *);
@@ -67,14 +66,14 @@ extern FxCommonDrawModePacket g_FxCommonDrawModes2[2];
 /* Effect markers drawn by FxCommon_DrawEffectMarkers: a line from the effect position
  * to its label and two textured label halves. */
 typedef struct FxCommonLinePacket {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     u8 r, g, b, code;
     u32 xy0;
     u32 xy1;
 } FxCommonLinePacket;
 
 typedef struct FxCommonMarkerQuad {
-    FxCommonPacketTag tag;
+    RenderNativeTag tag;
     u8 r0, g0, b0, code;
     s16 x0, y0;
     u8 u0, v0;
@@ -93,22 +92,10 @@ typedef struct FxCommonMarkerQuad {
     u16 pad32;
 } FxCommonMarkerQuad;
 
-PE1_STATIC_ASSERT(sizeof(FxCommonLinePacket) == 0x10, fx_common_line_size);
-PE1_STATIC_ASSERT(sizeof(FxCommonMarkerQuad) == 0x34,
-                  fx_common_marker_quad_size);
+PE1_STATIC_ASSERT(offsetof(FxCommonLinePacket,xy0) == sizeof(RenderNativeTag)+4, fx_common_line_xy0);
+PE1_STATIC_ASSERT(sizeof(FxCommonMarkerQuad) == sizeof(RenderNativeTag)+48, fx_common_marker_quad_size);
 
-/* 16.16 motion vectors read back by their whole parts. */
-typedef struct FxCommonFixedPart {
-    int fraction : 16;
-    int whole : 16;
-} FxCommonFixedPart;
-
-typedef struct FxCommonFixedVec {
-    FxCommonFixedPart x, y, z, pad;
-} FxCommonFixedVec;
-
-extern FxCommonFixedVec g_FxCommonMotionWhole[10];
-int RotTransPers3(GteShortVector *v0, GteShortVector *v1, GteShortVector *v2,
+long RotTransPers3(GteShortVector *v0, GteShortVector *v1, GteShortVector *v2,
                   s32 *sxy0, s32 *sxy1, s32 *sxy2, s32 *p, s32 *flag);
 
 extern FxCommonNode *g_FxCommonType26Nodes[4];

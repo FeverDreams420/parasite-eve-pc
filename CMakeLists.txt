@@ -122,6 +122,8 @@ add_library(parasite-eve-original OBJECT
     src/main/script/value_ops.c
     src/main/script/flow_opcodes.c
     src/main/script/system_opcodes.c
+    src/overlays/fx_common/effects.c
+    src/overlays/fx_common/effect_init.c
     src/overlays/fx_common/camera.c
     src/overlays/fx_common/model_buffers.c
     src/main/fieldfx/geometry.c
@@ -384,6 +386,7 @@ if(BUILD_TESTING)
     add_test(NAME original-game-glint COMMAND test-original-actor-animation --glint)
     add_test(NAME original-game-fx-camera COMMAND test-original-actor-animation --fx-camera)
     add_test(NAME original-game-fx-display COMMAND test-original-actor-animation --fx-display)
+    add_test(NAME original-game-fx-effects COMMAND test-original-actor-animation --fx-effects)
     add_test(NAME original-game-fx-models COMMAND test-original-actor-animation --fx-models)
     set_tests_properties(original-game-fx-models PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
     add_test(NAME original-game-player-input-assets COMMAND test-original-actor-animation --assets)

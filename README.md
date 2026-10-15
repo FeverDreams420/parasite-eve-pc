@@ -45,8 +45,10 @@ camera/frustum math, path sampling and image-backed resource loading. Tests
 compare these paths with USA code and real day/night banks. The three original
 model drawers also match USA command payloads and ordering chains for all 170
 day/night models in 2040 cases. The fourth drawer, including FT3/FT4 subdivision
-and texture-distance selection, matches another 252 USA cases. Scene shaders
-and the full frame loop remain unfinished; this does not make gameplay playable.
+and texture-distance selection, matches another 252 USA cases. Original fades,
+markers and night shade now use native packets and shared motion state, with
+headless tests of both buffers. Full scene initialization and frame-loop
+integration remain unfinished; this does not make gameplay playable.
 
 ## Build and run
 

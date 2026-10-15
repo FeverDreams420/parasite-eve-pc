@@ -142,16 +142,11 @@ void FxCommon_EndSequence(void)
 int FxCommon_RunFrameLoop(void)
 {
     FxCommonBuffer *next;
-    int last;
     int handle;
     u8 started;
-    int scanning;
-    int i;
-    FxCommonAddress current;
 
     g_ActiveDrawSlot = 0;
     g_FxCommonResetRequested = 0;
-    last = 0;
     if(FxCommon_InitScene()<0)return -1;
     FxCommon_SetAkao3dVolumeRange(g_FxCommonViewMode != 10);
     srand(VSync(-1));
@@ -191,24 +186,7 @@ int FxCommon_RunFrameLoop(void)
         if (g_FxCommonViewMode == 10 || (g_FxCommonPlaying == 1 && g_FxCommonPlayAdvance == 0))
             Menu_DrawTextboxEntries();
 
-        scanning = 1;
-        for (i = 0xFFF; i >= 0; i--) {
-            if (scanning) {
-                if ((FxCommonPacketTag *)(g_FxCommonActiveBuffer->allocation[i].packed |
-                                          0x80000000) ==
-                    &g_FxCommonActiveBuffer->allocation[i - 1]) {
-                    last = i;
-                    scanning = 0;
-                }
-            } else if ((FxCommonPacketTag *)(g_FxCommonActiveBuffer->allocation[i].packed |
-                                             0x80000000) !=
-                       &g_FxCommonActiveBuffer->allocation[i - 1]) {
-                current.pointer = &g_FxCommonActiveBuffer->allocation[i];
-                g_FxCommonActiveBuffer->allocation[last].packed = current.word & 0xFFFFFF;
-                scanning = 1;
-            }
-        }
-
+        /* Native OT links retain empty entries; DMA run compression is unnecessary. */
         g_FxCommonHsyncCount = VSync(1);
         DrawSync(0);
         VSync(2);
@@ -216,13 +194,13 @@ int FxCommon_RunFrameLoop(void)
         ResetGraph(1);
         PutDrawEnv(&((FxCommonFrame *)g_FxCommonActiveBuffer)->drawEnv);
         PutDispEnv(&((FxCommonFrame *)g_FxCommonActiveBuffer)->dispEnv);
-        DrawOTag(&g_FxCommonActiveBuffer->allocation[0xFFF]);
+        DrawOTag((u_int *)&g_FxCommonActiveBuffer->allocation[0xFFF]);
         next = &g_FxCommonFrames[0].buffer;
         if (g_FxCommonActiveBuffer == next)
             next = &g_FxCommonFrames[1].buffer;
         g_FxCommonActiveBuffer = next;
         g_ActiveDrawSlot ^= 1;
-        ClearOTagR(next->allocation, 0x1000);
+        ClearOTagR((u_int *)next->allocation, 0x1000);
         FxCommon_SelectBufferAllocation(g_FxCommonActiveBuffer);
     }
     if (g_FxCommonResetRequested == 0)
@@ -233,36 +211,11 @@ int FxCommon_RunFrameLoop(void)
 void FxCommon_DrawNightShadeAndMarkers(void)
 {
     if (g_FxCommonNight == 1) {
-        u32 *dst = (u32 *)g_FxCommonShadeQuads;
-        FxCommonBuffer *owner = g_FxCommonActiveBuffer;
-        FxCommonBuffer *sentinel = &g_FxCommonFrames[0].buffer;
-        u32 lowMask;
-        u32 *base;
-        u32 highMask;
-        u32 *src1;
-        u32 *src2;
-        u32 destWord;
-        u32 lowWord;
-        FxCommonAddress address;
-
-        if (owner != sentinel)
-            dst += 9;
-        lowMask = 0xFFFFFF;
-        base = (u32 *)g_FxCommonShadeQuads;
-        highMask = 0xFF000000;
-        src1 = (u32 *)(owner)->allocation;
-        destWord = *dst;
-        lowWord = src1[0xFFF];
-        destWord &= highMask;
-        lowWord &= lowMask;
-        destWord |= lowWord;
-        *dst = destWord;
-        src2 = (u32 *)(owner)->allocation;
-        if (owner != sentinel)
-            base += 9;
-        address.pointer = base;
-        lowWord = address.word & lowMask;
-        src2[0xFFF] = (src2[0xFFF] & highMask) | lowWord;
+        unsigned slot=g_FxCommonActiveBuffer==&g_FxCommonFrames[0].buffer?0:1;
+        FxCommonGradientQuad *quad=&g_FxCommonShadeQuads[slot];
+        RenderNativeTag *entry=&g_FxCommonActiveBuffer->allocation[4095];
+        quad->tag.address=entry->address;
+        entry->address=(uintptr_t)quad;
     }
     if (g_FxCommonMarkerFade != 0)
         g_FxCommonMarkerFade = FxCommon_DrawEffectMarkers(g_FxCommonMarkerFade);
@@ -519,33 +472,13 @@ void FxCommon_BeginMotionBlend(s16 base)
 
 void FxCommon_StepMotionBlend(void)
 {
-    FxCommonMotionLane *x;
-    FxCommonMotionLane *y;
-    FxCommonMotionLane *z;
-    FxCommonMotionLane *end;
-    FxCommonMotionByte *base;
-    int sourceOffset;
-
-    if (g_FxCommonMotionBlendFrames <= 0) {
-        return;
+    if(g_FxCommonMotionBlendFrames<=0)return;
+    --g_FxCommonMotionBlendFrames;
+    for(unsigned i=0;i<10;++i){
+        g_FxCommonMotionPositions[i].vector.x=(s32)((u32)g_FxCommonMotionPositions[i].vector.x+(u32)g_FxCommonMotionDeltas[i].vector.x);
+        g_FxCommonMotionPositions[i].vector.y=(s32)((u32)g_FxCommonMotionPositions[i].vector.y+(u32)g_FxCommonMotionDeltas[i].vector.y);
+        g_FxCommonMotionPositions[i].vector.z=(s32)((u32)g_FxCommonMotionPositions[i].vector.z+(u32)g_FxCommonMotionDeltas[i].vector.z);
     }
-
-    g_FxCommonMotionBlendFrames--;
-    base = (FxCommonMotionByte *)g_FxCommonMotionPositionZ;
-    z = g_FxCommonMotionPositionZ;
-    y = (FxCommonMotionLane *)(base - 4);
-    x = (FxCommonMotionLane *)(base - 8);
-    sourceOffset = 0;
-    end = (FxCommonMotionLane *)(base + 0xA0);
-    do {
-        x->value += *(s32 *)(g_FxCommonMotionDeltaX + sourceOffset);
-        y->value += *(s32 *)(g_FxCommonMotionDeltaY + sourceOffset);
-        z->value += *(s32 *)(g_FxCommonMotionDeltaZ + sourceOffset);
-        x++;
-        y++;
-        z++;
-        sourceOffset += 0x10;
-    } while (z < end);
 }
 
 #define FX_MODE_PACKET                                          \
@@ -562,16 +495,12 @@ s16 FxCommon_DrawEffectMarkers(s16 value)
     FxCommonBuffer *buffer;
     FxCommonBuffer *leftBuffer;
     FxCommonBuffer *rightBuffer;
-    FxCommonPacketTag *ot;
-    FxCommonAddress address;
-    FxCommonAddress lineLink;
-    FxCommonAddress leftLink;
-    FxCommonAddress rightLink;
+    RenderNativeTag *ot;
     FxCommonLinePacket *line;
     FxCommonMarkerQuad *quad;
     GteShortVector rotation;
     GteShortVector position;
-    GteShortVector unused;
+    GteShortVector unused={0};
     s32 screen0;
     s32 screen1;
     s32 screen2;
@@ -600,16 +529,23 @@ s16 FxCommon_DrawEffectMarkers(s16 value)
         level = value + 0xFF;
     }
 
+    unsigned markerCount=0;
+    if(level)for(unsigned marker=0;marker<10;++marker)if(g_FxCommonEffectSetup[marker].enabled==1)++markerCount;
+    size_t required=markerCount*(sizeof(FxCommonLinePacket)+2*sizeof(FxCommonMarkerQuad));
+    if(required && (!g_FxCommonActiveBuffer->end || (uintptr_t)g_FxCommonActiveBuffer->data>(uintptr_t)g_FxCommonActiveBuffer->end ||
+       required>(uintptr_t)g_FxCommonActiveBuffer->end-(uintptr_t)g_FxCommonActiveBuffer->data)){
+        g_FxCommonActiveBuffer->error=-1;return value;
+    }
+
     mode = FX_MODE_PACKET;
-    mode->tag.bits.address = g_FxCommonActiveBuffer->allocation[10].bits.address;
     ot = &g_FxCommonActiveBuffer->allocation[10];
-    address.pointer = FX_MODE_PACKET;
-    ot->bits.address = address.word;
+    mode->tag.address = ot->address;
+    ot->address = (uintptr_t)mode;
 
     for (i = 0; i < 10; i++) {
-        position.x = g_FxCommonMotionWhole[i].x.whole;
-        position.y = g_FxCommonMotionWhole[i].y.whole;
-        position.z = g_FxCommonMotionWhole[i].z.whole;
+        position.x = (s16)((u32)g_FxCommonMotionPositions[i].vector.x >> 16);
+        position.y = (s16)((u32)g_FxCommonMotionPositions[i].vector.y >> 16);
+        position.z = (s16)((u32)g_FxCommonMotionPositions[i].vector.z >> 16);
         if (g_FxCommonEffectSetup[i].enabled != 1 || level == 0)
             continue;
 
@@ -620,7 +556,7 @@ s16 FxCommon_DrawEffectMarkers(s16 value)
                       &screen2, &depth, &flag);
 
         line = (FxCommonLinePacket *)g_FxCommonActiveBuffer->data;
-        line->tag.bytes.length = 3;
+        line->tag.length = 3;
         line->code = 0x40;
         SetSemiTrans(line, 1);
         vertex = &line->xy0;
@@ -636,9 +572,8 @@ s16 FxCommon_DrawEffectMarkers(s16 value)
             line->b = level >> 3;
         }
         buffer = g_FxCommonActiveBuffer;
-        lineLink.pointer = line;
-        line->tag.bits.address = buffer->allocation[10].bits.address;
-        buffer->allocation[10].bits.address = lineLink.word;
+        line->tag.address = buffer->allocation[10].address;
+        buffer->allocation[10].address = (uintptr_t)line;
         line++;
         buffer->data = (u8 *)line;
         quad = (FxCommonMarkerQuad *)buffer->data;
@@ -683,9 +618,8 @@ s16 FxCommon_DrawEffectMarkers(s16 value)
             quad->clut = GetClut(0x3C0, 0x8F);
         quad->tpage = GetTPage(0, 1, 0x3C0, 0);
         leftBuffer = g_FxCommonActiveBuffer;
-        leftLink.pointer = quad;
-        quad->tag.bits.address = leftBuffer->allocation[9].bits.address;
-        leftBuffer->allocation[9].bits.address = leftLink.word;
+        quad->tag.address = leftBuffer->allocation[9].address;
+        leftBuffer->allocation[9].address = (uintptr_t)quad;
         quad++;
 
         u = 0x80;
@@ -722,9 +656,8 @@ s16 FxCommon_DrawEffectMarkers(s16 value)
         quad->clut = GetClut(0x3C0, 0x91);
         quad->tpage = GetTPage(0, 2, 0x3C0, 0);
         rightBuffer = g_FxCommonActiveBuffer;
-        rightLink.pointer = quad;
-        quad->tag.bits.address = rightBuffer->allocation[9].bits.address;
-        rightBuffer->allocation[9].bits.address = rightLink.word;
+        quad->tag.address = rightBuffer->allocation[9].address;
+        rightBuffer->allocation[9].address = (uintptr_t)quad;
         quad++;
         rightBuffer->data = (u8 *)quad;
     }
@@ -762,61 +695,43 @@ s16 FxCommon_StepFadeIntensity(s16 value)
 
 void FxCommon_DrawFullScreenFade(int intensity)
 {
-    FxCommonPacketCursor *packet;
-    FxCommonBuffer *quadBuffer;
-    FxCommonBuffer *modeBuffer;
-    FxCommonAddress packetAddress;
-    u32 addressMask = 0xFFFFFF;
-    u32 commandMask;
-    u32 tag;
+    FxCommonBuffer *buffer=g_FxCommonActiveBuffer;
+    size_t required=sizeof(FxCommonGradientQuad)+sizeof(FxCommonDrawModePacket);
+    if(!buffer->end || (uintptr_t)buffer->data>(uintptr_t)buffer->end || required>(uintptr_t)buffer->end-(uintptr_t)buffer->data){
+        buffer->error=-1;return;
+    }
+    FxCommonGradientQuad *quad=(FxCommonGradientQuad *)buffer->data;
+    SetPolyG4(quad);
+    SetSemiTrans(quad, 1);
 
-    packet = g_FxCommonActiveBuffer->data;
-    SetPolyG4(&packet->quad);
-    SetSemiTrans(&packet->quad, 1);
+    quad->color0[0] = intensity;
+    quad->color0[1] = intensity;
+    quad->color0[2] = intensity;
+    quad->color1[0] = intensity;
+    quad->color1[1] = intensity;
+    quad->color1[2] = intensity;
+    quad->color2[0] = intensity;
+    quad->color2[1] = intensity;
+    quad->color2[2] = intensity;
+    quad->color3[0] = intensity;
+    quad->color3[1] = intensity;
+    quad->color3[2] = intensity;
+    quad->x0 = 0;
+    quad->y0 = 0;
+    quad->x1 = 0x140;
+    quad->y1 = 0;
+    quad->x2 = 0;
+    quad->y2 = 0xF0;
+    quad->x3 = 0x140;
+    quad->y3 = 0xF0;
 
-    packet->quad.color0[0] = intensity;
-    packet->quad.color0[1] = intensity;
-    packet->quad.color0[2] = intensity;
-    packet->quad.color1[0] = intensity;
-    packet->quad.color1[1] = intensity;
-    packet->quad.color1[2] = intensity;
-    packet->quad.color2[0] = intensity;
-    packet->quad.color2[1] = intensity;
-    packet->quad.color2[2] = intensity;
-    packet->quad.color3[0] = intensity;
-    packet->quad.color3[1] = intensity;
-    packet->quad.color3[2] = intensity;
-    packet->quad.x0 = 0;
-    packet->quad.y0 = 0;
-    packet->quad.x1 = 0x140;
-    packet->quad.y1 = 0;
-    packet->quad.x2 = 0;
-    packet->quad.y2 = 0xF0;
-    packet->quad.x3 = 0x140;
-    packet->quad.y3 = 0xF0;
-
-    commandMask = 0xFF000000;
-    packetAddress.pointer = packet;
-    quadBuffer = g_FxCommonActiveBuffer;
-    tag = packet->quad.tag;
-    tag &= commandMask;
-    tag |= *(u32 *)quadBuffer->allocation & addressMask;
-    packet->quad.tag = tag;
-    *(u32 *)quadBuffer->allocation =
-        (*(u32 *)quadBuffer->allocation & commandMask) |
-        (packetAddress.word & addressMask);
-    packet++;
-    quadBuffer->data = packet;
-
-    SetDrawTPage(&packet->mode.packet, 0, 0, 0x40);
-    modeBuffer = g_FxCommonActiveBuffer;
-    packet->mode.packet.tag.packed = (packet->mode.packet.tag.packed & commandMask) |
-                              (*(u32 *)modeBuffer->allocation & addressMask);
-    packetAddress.pointer = packet;
-    addressMask = packetAddress.word & addressMask;
-    *(u32 *)modeBuffer->allocation =
-        (*(u32 *)modeBuffer->allocation & commandMask) | addressMask;
-    modeBuffer->data = &packet->mode.packet + 1;
+    quad->tag.address=buffer->allocation[0].address;
+    buffer->allocation[0].address=(uintptr_t)quad;
+    FxCommonDrawModePacket *mode=(FxCommonDrawModePacket *)(quad+1);
+    SetDrawTPage(mode,0,0,0x40);
+    mode->tag.address=buffer->allocation[0].address;
+    buffer->allocation[0].address=(uintptr_t)mode;
+    buffer->data=(u8 *)(mode+1);
 }
 
 /* Advance effect selection, resource transitions and the two motion blends. */
@@ -1353,3 +1268,7 @@ void FxCommon_StartCameraMove(s32 index, s32 first, s32 second, u32 source) {
     target1->y = qy;
     target1->z = qz;
 }
+
+/* One native owner for the original shared motion records and marker state. */
+FxCommonMotionRecord g_FxCommonMotionPositions[10],g_FxCommonMotionDeltas[10];
+s16 g_FxCommonMotionBlendFrames,g_FxCommonMarkerFade;

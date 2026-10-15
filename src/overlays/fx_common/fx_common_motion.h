@@ -32,7 +32,6 @@ extern s16 g_FxCommonMotionRemaining0;
 extern s16 g_FxCommonMotionRemaining1;
 extern u32 g_FieldPadPressed;
 extern u32 g_FieldPadBits;
-extern s8 g_SceneAudioSlot0Handle;
 extern void *g_AkaoBgmHandle[];
 extern s32 g_FxCommonPageChanged;
 extern s32 g_FxCommonPageOpen;
@@ -62,7 +61,7 @@ typedef struct FxCommonFrame {
     DRAWENV drawEnv;
     DISPENV dispEnv;
 } FxCommonFrame;
-typedef PsxSignedRect FxCommonRect;
+typedef RECT FxCommonRect;
 extern FxCommonFrame g_FxCommonFrames[2];
 extern s32 g_ActiveDrawSlot;
 extern u8 g_FxCommonResetRequested;
@@ -73,11 +72,9 @@ extern FxCommonVec3 g_FxCommonCameraTarget;
 extern RoomSpriteMatrix g_FxCommonIdentityMatrix;
 /* Transform nodes animated along the camera paths (0x801EA578..0x801EA58C). */
 extern FxCommonTransformNode *g_FxCommonPathNodes[6];
-/* Camera rotation angles. An incomplete array, so the -G8 camera unit keeps
- * the absolute address in a as retail does. */
+/* Camera rotation angles. */
 extern GteShortVector g_FxCommonCameraAngles[];
 extern RoomSpriteMatrix g_FxCommonCameraMatrix;
-extern s8 g_SceneAudioSlot0Key;
 
 void Akao_Cmd_C1_WithSlot(int channel, int value, int mode);
 int FxCommon_InitScene(void);

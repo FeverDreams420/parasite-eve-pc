@@ -1964,8 +1964,8 @@ void FxCommon_InitDisplay(void)
 
     FxCommon_SelectBufferAllocation(&g_FxCommonFrames[0].buffer);
     FxCommon_SelectBufferAllocation(&g_FxCommonFrames[1].buffer);
-    g_FxCommonFrames[0].buffer.allocation = (FxCommonPacketTag *)g_OtBufferTable[0];
-    g_FxCommonFrames[1].buffer.allocation = (FxCommonPacketTag *)g_RenderOtBufferBaseAlt[0];
+    g_FxCommonFrames[0].buffer.allocation = (RenderNativeTag *)g_OtBufferTable[0];
+    g_FxCommonFrames[1].buffer.allocation = (RenderNativeTag *)g_RenderOtBufferBaseAlt[0];
     ClearOTagR((u_int *)g_FxCommonFrames[0].buffer.allocation, 0x1000);
     ClearOTagR((u_int *)g_FxCommonFrames[1].buffer.allocation, 0x1000);
 

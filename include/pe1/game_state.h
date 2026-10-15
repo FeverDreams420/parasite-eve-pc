@@ -17,6 +17,8 @@ extern int g_FieldMoveLock;
 #define g_SceneAreaType (g_GameState.requested_entity_bank)
 #define g_SavedSceneAreaType (g_GameState.loaded_entity_bank)
 #define g_GameStateFlagsWord (g_GameState.flags)
+#define g_SceneAudioSlot0Handle (g_GameState.scene_audio.tracks.keys[0][1])
+#define g_SceneAudioSlot0Key (g_GameState.scene_audio.tracks.keys[0][0])
 /* Screen offsets at original game-state bytes 0xD8/0xD9. */
 #define g_DrawBaseX ((signed char *)&g_GameState.scene_audio.tracks.reserved)
 #define g_DrawBaseY (g_DrawBaseX[1])

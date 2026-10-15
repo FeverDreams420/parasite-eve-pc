@@ -90,6 +90,24 @@ Windows/Vulkan. Fork zawiera e910fd1 i 9fd00d8. Inicjalizacja M005 i naturalne
 wejście po schodach są potwierdzone; dalszy dialog, spotkanie i walka pozostają
 do przejścia oraz weryfikacji.
 
+Dalszy przebieg z samym inputem przechodzi dialogi 38–44 w M005. Podpięto
+istniejące Scene_TestGlobalFlags/SetGlobalFlags/ClearGlobalFlags (81/82/83):
+300 stanów masek, w tym bit znaku, zgadza się z rzeczywistym CPU USA
+(`7d8e36c81c7f7588`), także przez dispatcher. Następny zatrzymujący opkod 85
+to istniejący Boot_MemCardStepInit, historycznie mylnie nazwany: przygotowuje
+audio/tekstury i wywołuje Battle_StartEncounter. Funkcja pozostała w swoim
+module, ma zgodne ABI oraz propaguje błąd ładowania zamiast zaczynać walkę
+z niepoprawnymi zasobami. 192 stany faz/flag/yield odpowiadają CPU USA
+(`dcc852ebc349be75`); test obejmuje dispatcher i błąd ładowania tekstur.
+Przebieg wykonawczy przeszedł następnie do opkodu 137. Istniejące ustawienia
+trybu walki 137/138 mają teraz ABI dispatchera i są podpięte; oryginalny CPU
+zapisuje odpowiednio 6/5 pod 8009D28C i zwraca 1. Fixture sprawdza oba przez
+dispatcher. To potwierdza dalszy postęp skryptu, nie ukończenie walki.
+Aktualny executable z tymi zmianami dochodzi do kolejnego niepodpiętego
+opkodu 89 (M005, aktor 0:0, script_byte 4344). Pełny fixture
+`original-game-player-input-assets` przechodzi w 11,94 s; świeży build tego
+fixture z ASan/UBSan/function i instrumentowanym PsyZ/SDL również przechodzi.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

@@ -197,8 +197,11 @@ s32 Entity_GetDistanceComponents(s32 *args[]) {
 
 
 
-s32 Boot_MemCardStepInit(u8 **arg0) {
+/* Original battle-entry opcode 85; the historical name also covers the
+ * menu-background transition shared with card screens. */
+s32 Boot_MemCardStepInit(int **arg0) {
     Pe1GameState *base;
+    int status;
 
     base = &g_GameState;
     loop_1:
@@ -216,7 +219,9 @@ s32 Boot_MemCardStepInit(u8 **arg0) {
         base->memcard_init_phase = 0x38U;
         goto loop_1;
     case 0x38:
-        if (CdRom_StepReadState(1) != 1) {
+        status = CdRom_StepReadState(1);
+        if (status < 0) return status;
+        if (status != 1) {
             if (!(g_GameState.flags & 0x400000)) {
                 Menu_SaveBgStartFadeOut();
             }
@@ -225,14 +230,16 @@ s32 Boot_MemCardStepInit(u8 **arg0) {
         }
         break;
     case 0x39:
-        if (Asset_LoadTimTextures(1) != 1) {
+        status = Asset_LoadTimTextures(1);
+        if (status < 0) return status;
+        if (status != 1) {
             base->memcard_init_phase = 0x3AU;
             goto loop_1;
         }
         break;
     case 0x3A:
         g_GameStateFlags |= 2;
-        Battle_StartEncounter(**arg0);
+        Battle_StartEncounter((u8)**arg0);
         base->memcard_init_phase = 0x3BU;
         break;
     case 0x3B:

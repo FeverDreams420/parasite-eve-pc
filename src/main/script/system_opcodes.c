@@ -221,12 +221,14 @@ int Scene_ClearGlobalFlags(int **arg0) {
     return 1;
 }
 
-int Menu_SetModeState5(void) {
+int Menu_SetModeState5(int **unused) {
+    (void)unused;
     g_BattleModeState = 5;
     return 1;
 }
 
-int Menu_SetModeState6(void) {
+int Menu_SetModeState6(int **unused) {
+    (void)unused;
     g_BattleModeState = 6;
     return 1;
 }

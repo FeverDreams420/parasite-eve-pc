@@ -2505,6 +2505,43 @@ static int original_polygon_opcode(void)
     return 1;
 }
 
+static int original_script_polygon_opcode(void)
+{
+    const s32 polygons[][8]={{-10,-10,10,-10,10,10,-10,10},{-10,10,10,10,10,-10,-10,-10},
+        {-10,-10,10,-10,0,0,-10,10},{0,0,0,0,0,0,0,0}};
+    const u32 points[]={0x80000000,0xffffffff,0,1,65535,65536,0x7fffffff,0x100000,0xfff00000};
+    const int counts[]={3,4,0x10004},offsets[]={-16,0,16};
+    FieldActor *saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;
+    u32 *saved_cursor=g_ScriptCursor;u32 saved_var=g_ScriptVariableBank[9];
+    FieldActor actor={0};g_CurrentEntity=&actor;uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[226]!=Entity_CallAction){fputs("Opcode226 handler missing\n",stderr);return 0;}
+    struct {u8 prefix[64];PolygonVertex vertices[4];u8 suffix[64];} blob={0};
+    for(unsigned p=0;p<4;++p)for(unsigned x=0;x<9;++x)for(unsigned z=0;z<9;++z)
+    for(unsigned c=0;c<3;++c)for(unsigned off=0;off<3;++off){
+        for(unsigned i=0;i<4;++i)blob.vertices[i]=(PolygonVertex){0,polygons[p][i*2],0,polygons[p][i*2+1]};
+        actor.script_base=(u8 *)&blob+64-offsets[off]*2;
+        int data[]={(s32)points[x],(s32)points[z],counts[c],offsets[off],(s32)0xa5a5a5a5};
+        int before[5];memcpy(before,data,sizeof(data));int *args[]={data,data+1,data+2,data+3,data+4};
+        u32 result=Entity_CallAction(args),words[6]={result};memcpy(words+1,data,sizeof(data));
+        for(unsigned i=0;i<6;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((words[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        if(memcmp(data,before,4*sizeof(int))){fputs("Opcode226 inputs changed\n",stderr);return 0;}
+        u32 program[]={226|(5u<<13)|(2u<<29),0,(u32)before[0],(u32)before[1],(u32)before[2],(u32)before[3],9,32,0};
+        g_ScriptVariableBank[9]=0xa5a5a5a5;
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || g_ScriptVariableBank[9]!=(u32)data[4] || node.current.script!=program+9 ||
+           !(node.flags&0x10) || g_ScriptNodePool){
+            fprintf(stderr,"Opcode226 dispatch p=%u x=%u z=%u c=%u off=%u result=%u var=%u want=%u cursor=%td flags=%x pool=%p\n",
+                p,x,z,c,off,result,g_ScriptVariableBank[9],(u32)data[4],node.current.script-program,node.flags,(void *)g_ScriptNodePool);return 0;}
+        ++cases;
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_ScriptVariableBank[9]=saved_var;
+    if(cases!=2916 || hash!=UINT64_C(0xd1f7c244a77c2fa5)){
+        fprintf(stderr,"Script polygon226 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original opcode226: 2916 unhooked USA CPU states, signed script offsets, u16 count narrowing, boundary/winding tests and full dispatcher passed");
+    return 1;
+}
+
 static int original_battle_entry_opcode(void)
 {
     Pe1GameState saved_state=g_GameState;FieldActor actor={0},*saved_actor=g_CurrentEntity;
@@ -3481,7 +3518,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_script_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

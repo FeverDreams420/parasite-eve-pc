@@ -100,6 +100,17 @@ w oryginale czyta poprzednie dane stosu; port wyznacza pozycję stawu
 przed rysowaniem, co usuwa niezainicjalizowany odczyt, ale wymaga jeszcze
 porównania obrazu. To nie jest dowód całej drugiej walki z Melissą.
 
+Po zamknięciu dialog125–126 dalszy skrypt M023 wymaga opcode226.
+Podpięto istniejące Entity_CallAction (USA8001a390), bez zastępowania
+funkcji: wielokąt jest odczytywany ze script_base bieżącego aktora,
+offset ma zawijanie słowa jak MIPS, count jest u16, wynik trafia do
+wskazanego argumentu. 2916 stanów z niezmodyfikowanym CPU USA i
+rzeczywistym dispatcherem ma hashd1f7c244a77c2fa5; świeży fixture
+ASan/UBSan/function z zasobami PASS. Replay omija ten abort, ale dalej
+zatrzymuje się na niepowiązanym opcode54 (aktor2, script_byte4648).
+Pełne 48 CTest uruchomiono dla wcześniejszego kandydata8810d644b;
+ten przebieg nie obejmuje późniejszego podpięcia226.
+
 Oryginalny PS1 zaakceptował też checkpoint M022 po papudze: brak papugi,
 HP29/64 i ta sama pozycja wejściowa co Continue portu. Ta próba ujawniła
 dwa osobne problemy do rozwiązania: po świeżym Continue statyczny model

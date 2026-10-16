@@ -1566,7 +1566,7 @@ int Entity_CallAction(int **arg0)
     current = g_CurrentEntity;
     xSlot = &args[0];
     base = current->script_base;
-    polygonOffset <<= 1;
+    polygonOffset = (s32)((u32)polygonOffset << 1);
     *args[4] = Geo_PointInPoly(**xSlot, *args[1], (const PolygonVertex *) (base + polygonOffset), *(u16 *)args[2]);
     return 1;
 }

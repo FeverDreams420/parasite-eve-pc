@@ -143,6 +143,7 @@ int Script_GetCos(int **args);
 int Script_GetAtan2(int **args);
 int Entity_PopCount(int **args);
 int Script_SetMeshFadeLevel(int **args);
+int Entity_CallAction(int **args);
 int Script_RotateEntityAngle(int **args);
 int Script_GetAngleToPoint(int **args);
 int Script_SnapPosToSpawnPos(int **unused);

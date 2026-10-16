@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Dalsza eksploracja dociera do M064 i telefonu. Zapis przez oryginalne
+menu odtworzył fortify/strcpy abort w Save_BuildCardFile: tytuł Central Park
+ma dokładnie64 bajty Shift-JIS, a strcpy dopisywało terminator poza
+64-bajtowym polem title. W istniejącym save_flow.c zastąpiono to kopiowaniem
+pełnego64-bajtowego pola z wyzerowanego68-bajtowego bufora; sąsiedni
+reserved pozostaje wyzerowany, więc wynikowy plik zachowuje oryginalny
+nagłówek. Nie skrócono nazwy i nie dodano plików ani nowej warstwy zapisu.
+
+Nowy korpus obejmuje2700 tytułów: wszystkie450 numerów lokacji,
+oba style i trzy czasy. Kod USA daje hash89861520334f7fe0,
+maksimum64 bajty i36 lokacji z pełnym polem. Testuje się również
+cały256-bajtowy nagłówek M064 (8864e135c46b03c4 przy czasie4930).
+CPU wykonuje oryginalny kod; jego wywołania libc bzero/memcpy/strcpy
+są zwykłymi operacjami pamięci w referencji. Pełny --assets PASS
+normalnie i pod ASan/UBSan/function z instrumentowanymi PsyZ/SDL,
+włącznie z wcześniejszymi24 pełnymi obrazami8192 bajtów.
+
+Świeży replay Continue E→walki zoo→M062→M063→M064→telefon→nowy slotF,
+cap85092, PASS normalnie i sanitizowany. Cały JSON, cztery timery i1MiB
+VRAM są identyczne (SHAc7789c829bdb99d9125c44b43f8329af6bc595ad655aaba9e6943db6a34f9951).
+Oba przebiegi utworzyły identyczny8192-bajtowy F (SHA
+b006ff41571866b85a58ab1f0329d6ef4bdb210cd26801772ecfc28ab5ca5ae0),
+z poprawnym CRC. Pełny nagłówek rzeczywistego F porównano osobno
+z kodem USA przy jego zapisanym czasie4920; jest identyczny.
+Zapis odbywa się przez UI telefonu, bez wywołania sztucznego checkpointu.
+PrywatneB/C/D/E nie zostały nadpisane; karty użytkownika nietknięte.
+
+Zimny Continue F/cap24000 również PASS normalnie i sanitizowany:
+cały JSON i1MiB VRAM identyczne (SHA
+142ac576eb17678b541f74eec957299937b7f480618a4d56f54fed8305fced41).
+M064, etap232, HP21/101, brak menu/locka/przeciwników; pozycja
+[49545216,−65536,−14745600], yaw3104 odpowiada oryginalnemu punktowi
+powrotu od telefonu. Wszystkie sloty i całe4096 bajtów wyposażenia
+zgadzają się ze stanem przed zapisem (M16 nadal4 naboje i2 sloty).
+Siedem prywatnych zestawówB/C/D/E/F zachowało swoje hashe.
+Legitymny checkpoint zachowano w /tmp/pe-zoo-phone-checkpoint/bu00,
+manifest /tmp/pe-zoo-phone-card-hashes.json. Replaye: /tmp/pe-save-title-
+route-args.json i continue-args.json, wyniki route-{normal,san}.log/.vram
+oraz continue-{normal,san}.log/.vram, podsumowanie phone-proof.json.
+Dalsze interakcje M064 i zdobycie Zoo Key pozostają do sprawdzenia.
+
+
 Dalsze przejście M063 uruchamia walkę z aktorem3:31 i dołączonym
 obiektem4:31. Pierwotny replay kończył się abortem przy VBlank71997:
 opcode197, script_byte48. USA tabela800910A0 wskazuje80019170,

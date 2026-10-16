@@ -8964,12 +8964,48 @@ static int original_spell_effects(PeDisc *disc,PeDiscFile *executable)
     return 1;
 }
 
+static int original_save_title_images(void)
+{
+    int scene=g_SceneDispatchToken,style=g_SaveTitleStyleFlag,stage=g_PlayTimeFrameCounter,size=D_800A5D50;
+    SaveRuntimeState runtime=g_SaveRuntimeState;AyaBattleState aya=g_AyaBattleState;
+    SaveSjisFormatArguments arguments=g_SaveSjisFormatArguments;u8 title[0x44];memcpy(title,g_SaveTitleBuffer,sizeof(title));
+    u8 *cursor=g_SaveIoCursor;uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0,full=0,maximum=0;
+    const unsigned seconds[]={0,4930,359999};g_PlayTimeFrameCounter=232;
+    for(unsigned room=1;room<=SCENE_ROOM_COUNT;++room){
+        char name[8];snprintf(name,sizeof(name),"m%04ui",room);g_SceneDispatchToken=Text_ParseBase32Id((signed char *)name);
+        unsigned full_room=0;
+        for(unsigned mode=0;mode<2;++mode)for(unsigned t=0;t<3;++t){
+            g_SaveTitleStyleFlag=mode;const u8 *data=Save_FormatTitle(6,seconds[t]);unsigned length=0;
+            while(length<sizeof(title) && data[length])++length;
+            if(length>maximum)maximum=length;if(length==64)full_room=1;
+            for(unsigned i=0;i<sizeof(title);++i)hash=(hash^data[i])*UINT64_C(1099511628211);
+            ++cases;
+        }
+        full+=full_room;
+    }
+    uint64_t title_hash=hash;
+    int valid=cases==2700 && hash==UINT64_C(0x89861520334f7fe0) && maximum==64 && full==36;
+    g_SceneDispatchToken=0xa8006248;g_SaveTitleStyleFlag=0;
+    g_SaveRuntimeState.windows.header.playTimeMinutes=4930;g_AyaBattleState.action=NULL;g_AyaBattleState.attributes=NULL;
+    char path[]="bu00:BASLUS-006620000000F";
+    if(Save_BuildCardFile(path)!=0)valid=0;
+    hash=UINT64_C(14695981039346656037);
+    for(unsigned i=0;i<sizeof(MemCardFileHeader);++i)hash=(hash^g_MemCardFileBuffer[i])*UINT64_C(1099511628211);
+    if(hash!=UINT64_C(0x8864e135c46b03c4) || memcmp(g_MemCardIconHeader.title,g_SaveTitleBuffer,64))valid=0;
+    for(unsigned i=0;i<sizeof(g_MemCardIconHeader.reserved);++i)if(g_MemCardIconHeader.reserved[i])valid=0;
+    g_SceneDispatchToken=scene;g_SaveTitleStyleFlag=style;g_PlayTimeFrameCounter=stage;D_800A5D50=size;
+    g_SaveRuntimeState=runtime;g_AyaBattleState=aya;g_SaveSjisFormatArguments=arguments;g_SaveIoCursor=cursor;
+    memcpy(g_SaveTitleBuffer,title,sizeof(title));
+    if(!valid){fprintf(stderr,"Original save titles/header differ from USA CPU: cases=%u title=%016llx max=%u full=%u header=%016llx\n",cases,(unsigned long long)title_hash,maximum,full,(unsigned long long)hash);return 0;}
+    puts("Original save titles: 2700 USA CPU states across all450 room names, 36 full64-byte titles and complete M064 card header passed");return 1;
+}
+
 static int original_save_card_images(PeDisc *disc)
 {
     PeDiscFile archive,exe;
     if(!pe_disc_find(disc,"PE.IMG",&archive) || !pe_disc_find(disc,"SLUS_006.62",&exe)) return 0;
     CdRom_BindImage(disc,&archive);
-    if(Asset_OpenPeImage()!=0) return 0;
+    if(Asset_OpenPeImage()!=0 || !original_save_title_images()) return 0;
     MenuWidgetSimpleDescriptor simple[0x41];MenuWidgetGridDescriptor grid[0x41];
     if(!pe_disc_read(disc,&exe,0x92478-0x10000+0x800,simple,sizeof(simple)) ||
        !pe_disc_read(disc,&exe,0x92888-0x10000+0x800,grid,sizeof(grid)) ||

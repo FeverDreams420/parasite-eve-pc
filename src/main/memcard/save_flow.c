@@ -533,7 +533,11 @@ int Save_BuildCardFile(char *path) {
     file->productCode = g_MemCardSaveSupportData.cardProductCode;
     file->iconDisplay = 0x11;
     file->blockCount = 1;
-    strcpy(file->title, (char *)Save_FormatTitle(path[0x18] - 0x40, g_SaveRuntimeState.windows.header.playTimeMinutes));
+    /* A full 32-character Shift-JIS title occupies all 64 bytes. The
+     * already cleared reserved area supplies the following zero, as in
+     * the original card image, without writing past the title subobject. */
+    memcpy(file->title, Save_FormatTitle(path[0x18] - 0x40,
+           g_SaveRuntimeState.windows.header.playTimeMinutes), sizeof(file->title));
 
     __builtin_memcpy(g_MemCardIconPalette, resolved + 0x14, 0x20);
     __builtin_memcpy(file->icon, resolved + 0x40, sizeof(file->icon));

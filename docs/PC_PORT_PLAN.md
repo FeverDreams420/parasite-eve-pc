@@ -10,7 +10,7 @@ Automatyczny input od New Game przechodzi Melissę, zaplecze, przemianę
 szczura i zwycięską walkę, następnie M020: dialog112, menu, użycie Medicine1
 (HP11->45) i otrzymanie następnego leku. Osobna próba potwierdza zamknięcie
 okna oraz powrót sterowania. Nowy test tej trasy przeszedł dwukrotnie.
-Poprzedni zamrożony kandydat ma 45/45 PASS; katalog zawiera teraz 48 testów.
+Poprzedni zamrożony kandydat ma 48/48 PASS; katalog zawiera teraz 49 testów.
 Aktualne testy powiązanych modułów oraz fixture’y ASan/UBSan/function przechodzą.
 Pełny runtime z sanitizerami dla M020 także przeszedł, z identycznym stanem i VRAM. To nadal
 początek kampanii, nie pełny port ani deklaracja pixel perfect.
@@ -137,12 +137,52 @@ neutralnych obrotów kości, takich jak inicjalizowane przez istniejący
 Render_SetupEntityPrims, oddzielonych od macierzy wynikowych. Nie pomija
 rysowania i nie mnoży kolejno wyniku poprzedniej klatki. Test500 transformacji
 obejmuje pięć obrotów modelu, rozgałęzienia kości, translacje i granice bufora.
-Cztery powiązane testy PASS12.70s; świeży fixture ASan/UBSan/function PASS.
+Render_SetupEntityPrims czyści też active_matrix przy zmianie modelu, aby
+nie zachować pozy w starej alokacji. Test inicjalizuje obiekt z niepoprawnym
+starym wskaźnikiem i sprawdza jego usunięcie. Cztery powiązane testy
+PASS13.11s; świeży fixture ASan/UBSan/function PASS.
 Rzeczywisty Continue M022→M012→M319 (cap27649, HP29/64, move_lock0)
 przechodzi zarówno w zwykłym, jak i pełnym buildzie z sanitizerami:
 identyczny JSON i cały VRAM, SHA256
-169be5517c9235c09f17f1c2606a2fe1a38cd2d65eab6f4171a17ba225f50d19.
+e05136a7d3d0c2559fa16d6483985baeb06720820183067653d9fc898bbe3078.
 Wygląd statycznych modeli nadal wymaga dokładnego porównania z PS1.
+
+Nowy original-game-m023-melissa przechodzi od New Game całą wcześniejszą
+trasę do M022, Heal1 (HP1→31), walkę z papugą i zdobycie leku, użycie leku
+w M319 (HP23→64), dialog120–126 i film5, całą drugą walkę z Melissą,
+dialog127–128, wspomnienie szpitala M367 oraz powrót do M319/dialog133.
+Kończy się przy cap222996 z HP21/64, kluczami200/201, bez menu i blokady
+ruchu. Nie zmienia HP ani skryptów przez debugger. Pierwszy wynik331.99s;
+po opisanej poniżej poprawce D PASS330.01s, pięć powiązanych testów
+PASS342.88s. FNV całego VRAMc7b404688a203971 potwierdza niezależny replay;
+zrzut końcowy obejrzano. To wynik pięciu testów aktualnego kandydata,
+nie świeży pełny wynik49/49. Pierwotna asercja obrazu pochodziła z wariantu
+z zachowywaniem starej pozy modelu; nowa inicjalizacja zmienia68 pikseli
+tego kadru, przy identycznym pełnym JSON gry. Nie jest to referencja PS1.
+
+Dłuższy runtime ASan/UBSan wykrył w ruchu papugi przesunięcie ujemnego
+wyniku GTE w RoomLib_HandlerD. Przesunięcia, dodawanie i mnożenie tej
+funkcji zachowują teraz zawijanie32-bitowego słowa MIPS, bez signed UB.
+1296 stanów już zainicjalizowanego D porównano z CPU USA i mostkiem GTE:
+ujemny ruch, skrajne wartości szybkości/progresu/współrzędnych, zwolnienie
+i granice natywnej areny; hashc3b4322592dc574c. Mostek współdzieli GTE PsyZ,
+więc nie dowodzi niezależnej zgodności sprzętowego GTE. Fixture z sanitizerami
+PASS. Rzeczywisty replay M020→papuga→M023→M367→M319 (cap109996) po tej
+poprawce przechodzi z ASan/UBSan/function: HP23/64, identyczny JSON i cały
+VRAM jak w zwykłym buildzie, SHA256
+d3d7038288b7c783d2e831cba311a7df8afeb3a68f475f2f488822ecb4ac34d9.
+
+Po zapisie/Continue z M319 za Melissą próba dochodzi do „Jump in”, M026
+i odzyskuje sterowanie. Podpięto istniejące render opcodes189–192 oraz
+geometry124–127. 576 i2016 stanów bez hooków CPU USA sprawdza odpowiednio
+zawężenia parametrów/flag oraz całe/pojedyncze sloty animacji, zerowe liczby
+slotów, sąsiednie dane i dispatcher. Zachowano oryginalne OR z maską0x30,
+także w wrapperze o dawnej nazwie ClearObjEntryFlags. Oba zestawy oraz
+rozszerzony fixture ASan/UBSan/function PASS. M026 przy cap27134 ma HP21
+i move_lock0; Heal1 podnosi HP do51. Kolejna próba wchodzi do M027,
+wygrywa starcie (cap32002, HP29, move_lock0) i zatrzymuje się dopiero przy
+wejściu M028: niepowiązany descriptor115/80193250. Nie uznawać M028 ani
+całych kanałów za ukończone.
 
 Pozostaje do zbadania osobna różnica: żywy rdzeń gracza przed zapisem
 zachowywał maxHP53, choć SaveAya i późniejsze Continue/PS1 wskazują64.

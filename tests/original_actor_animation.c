@@ -2507,14 +2507,20 @@ static int original_polygon_opcode(void)
 
 static int original_static_model_matrices(void)
 {
-    RenderObjectHeader header={.part_count=3,.matrix_command_bytes=5};
-    RenderObjectPart parts[3]={{0}};parts[1].translation_z=100;parts[2].translation_z=-200;
-    s8 commands[]={0,-1,1,-2,2};
+    struct {
+        RenderObjectHeader header;
+        RenderObjectPart parts[3];
+        RenderVec3s section[2],bounds[6],origin;
+        s8 commands[8];
+    } model={.header={.part_count=3,.matrix_command_bytes=5},.commands={0,-1,1,-2,2}};
+    model.parts[1].translation_z=100;model.parts[2].translation_z=-200;
     struct {u64 before;RenderMatrix matrices[3];u64 after;} output;
     const s16 angles[]={0,1024,2048,3072,731};
     for(unsigned angle=0;angle<5;++angle){
         memset(&output,0xa5,sizeof(output));
-        RenderObjectEntity object={.header=&header,.parts=parts,.matrix_commands=commands,.matrices=output.matrices};
+        RenderObjectEntity object={.active_matrix=(RenderMatrix *)(uintptr_t)1};s8 *texture=NULL;
+        if(Render_SetupEntityPrims(&object,&model.header,(u8 *)output.matrices,0,0,0,0,0,&texture,0)!=1 ||
+           object.active_matrix || object.matrices!=output.matrices)return 0;
         GteShortVector rotation={0,angles[angle],0,0};RotMatrix(&rotation,(GteMatrix *)&object.model_matrix);
         object.model_matrix.translation[0]=3;object.model_matrix.translation[1]=-7;object.model_matrix.translation[2]=1024;
         RenderMatrix first[3];
@@ -2525,7 +2531,7 @@ static int original_static_model_matrices(void)
             for(unsigned bone=0;bone<3;++bone){
                 RenderMatrix *matrix=output.matrices+bone;
                 if(memcmp(matrix->rotation,object.model_matrix.rotation,sizeof(matrix->rotation)))return 0;
-                int distance=bone?parts[bone].translation_z:0;
+                int distance=bone?model.parts[bone].translation_z:0;
                 s32 expected[]={3+(object.model_matrix.rotation[0][2]*distance>>12),-7,
                     1024+(object.model_matrix.rotation[2][2]*distance>>12)};
                 if(memcmp(matrix->translation,expected,sizeof(expected)))return 0;
@@ -2618,6 +2624,49 @@ static int original_follow_actor_opcode(void)
     if(cases!=3456 || hash!=UINT64_C(0x174b6ba481a52f15)){
         fprintf(stderr,"Follow actor54 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
     puts("Original opcode54: 3456 unhooked USA CPU states, actor/player selection, dead/reused targets, cached native pointers, motion/turn/arrival and dispatcher retry passed");
+    return 1;
+}
+
+static int original_render_flag_opcodes(void)
+{
+    const u32 patterns[]={0,1,2,3,0x40,0x41,0x80,0x7fffffff,0x80000000,0xffffffff,0x12345678,0xfedcba98};
+    const unsigned ops[]={189,190,191,192},counts[]={4,0,1,0};
+    int (*handlers[])(int **)={Script_SetRenderFlag8Params,Script_ClearRenderFlag8,Script_SetRenderFlag10Value,Script_ClearRenderFlag10};
+    FieldActor *saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;
+    u32 *saved_cursor=g_ScriptCursor;uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned op=0;op<4;++op){
+        if(g_ScriptQueueOpcodeHandlers[ops[op]]!=handlers[op])return 0;
+        for(unsigned flag=0;flag<12;++flag)for(unsigned value=0;value<12;++value){
+            FieldActor actor={.flags=0xdecafbad};g_CurrentEntity=&actor;
+            actor.render_object.script_param97=0x12;actor.render_object.script_param98=0x34;
+            actor.render_object.script_param99=0x56;actor.render_object.script_value9a=(s16)0x789a;
+            actor.render_object.flags_9C=patterns[flag];FieldActor before=actor,expected=actor;
+            int data[4];int *args[4];for(unsigned i=0;i<4;++i){data[i]=(s32)patterns[(value+i)%12];args[i]=data+i;}
+            u32 result=handlers[op](args);
+            for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+            const u8 bytes[]={actor.render_object.script_param97,actor.render_object.script_param98,actor.render_object.script_param99,
+                (u8)actor.render_object.script_value9a,(u8)((u16)actor.render_object.script_value9a>>8),
+                (u8)actor.render_object.flags_9C,(u8)(actor.render_object.flags_9C>>8)};
+            for(unsigned b=0;b<sizeof(bytes);++b)hash=(hash^bytes[b])*UINT64_C(1099511628211);
+            expected.render_object.script_param97=actor.render_object.script_param97;
+            expected.render_object.script_param98=actor.render_object.script_param98;
+            expected.render_object.script_param99=actor.render_object.script_param99;
+            expected.render_object.script_value9a=actor.render_object.script_value9a;
+            expected.render_object.flags_9C=actor.render_object.flags_9C;
+            if(memcmp(&actor,&expected,sizeof(actor)))return 0;
+            actor=before;u32 program[8]={ops[op]|(counts[op]<<13),0};
+            for(unsigned i=0;i<counts[op];++i)program[2+i]=(u32)data[i];
+            program[2+counts[op]]=32;
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+            if(result!=1 || memcmp(&actor,&expected,sizeof(actor)) || node.current.script!=program+4+counts[op] ||
+               node.flags!=0x90 || node.active || g_ScriptNodePool)return 0;
+            ++cases;
+        }
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=576 || hash!=UINT64_C(0x33cb511103ef7831)){
+        fprintf(stderr,"Render flag CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original render flags189-192: 576 unhooked USA CPU states, byte/halfword narrowing, preserved actor fields and complete dispatcher passed");
     return 1;
 }
 
@@ -3373,6 +3422,44 @@ static int original_geometry_control_opcodes(void)
     return 1;
 }
 
+static int original_geometry_slot_opcodes(void)
+{
+    const unsigned ops[]={124,125,126,127};
+    int (*handlers[])(int **)={Script_FillObjEntrySlotValues,Script_SetObjEntrySlotValue,Script_SetObjEntryFlags,Script_ClearObjEntryFlags};
+    const u32 values[]={0,1,255,256,65535,0x80000000,0xffffffff,0x12345678};
+    const u8 flags[]={0,1,2,4,0x20,255};const unsigned counts[]={0,1,4};
+    GeomState *saved_geom=g_GeomState;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    FieldActor actor={0};g_CurrentEntity=&actor;uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    struct {GeomState header;u8 padding[512-sizeof(GeomState)];GeomCtrlEntry controls[2];GeomAnimationSlot slots[2][4];u64 guard;} geometry={0};
+    geometry.header.ctrl_offset=512;g_GeomState=&geometry.header;
+    for(unsigned op=0;op<4;++op)for(unsigned index=0;index<2;++index)for(unsigned count=0;count<3;++count)
+    for(unsigned value=0;value<8;++value)for(unsigned flag=0;flag<6;++flag)
+    for(unsigned slot=0;slot<(op==1?4:1);++slot){
+        if(g_ScriptQueueOpcodeHandlers[ops[op]]!=handlers[op])return 0;
+        memset(geometry.controls,0xa5,48);geometry.controls[0].slot_offset=32;geometry.controls[1].slot_offset=24;
+        geometry.controls[index].head.packed=flags[flag]|(counts[count]<<8);geometry.guard=UINT64_C(0xa55aa55aa55aa55a);
+        u8 before[48],expected[48];memcpy(before,geometry.controls,48);
+        int data[]={index,op==1?(int)slot:(s32)values[value],(s32)values[value]};int *args[]={data,data+1,data+2};
+        u32 result=handlers[op](args);
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned b=0;b<48;++b)hash=(hash^((u8 *)geometry.controls)[b])*UINT64_C(1099511628211);
+        if(geometry.guard!=UINT64_C(0xa55aa55aa55aa55a) || geometry.header.ctrl_offset!=512)return 0;
+        memcpy(expected,geometry.controls,48);memcpy(geometry.controls,before,48);
+        unsigned n=op==1?3:2;u32 program[7]={ops[op]|(n<<13),0};
+        for(unsigned i=0;i<n;++i)program[2+i]=(u32)data[i];program[2+n]=32;
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || node.current.script!=program+4+n || node.flags!=0x90 || node.active || g_ScriptNodePool ||
+           memcmp(expected,geometry.controls,48) || geometry.guard!=UINT64_C(0xa55aa55aa55aa55a))return 0;
+        ++cases;
+    }
+    g_GeomState=saved_geom;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=2016 || hash!=UINT64_C(0x9415818042796d7d)){
+        fprintf(stderr,"Geometry slots CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original geometry124-127: 2016 unhooked USA CPU states, complete/per-slot duration updates, zero counts, low-byte narrowing, original OR/complement flags and dispatcher guards passed");
+    return 1;
+}
+
 static int original_shadow_radius_opcode(void)
 {
     const s16 radii[]={-32768,-32767,-1,0,1,123,32766,32767};
@@ -3597,7 +3684,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
@@ -4132,6 +4219,41 @@ static int original_contact_action_callback(void)
     if(hash!=UINT64_C(0xa5fd542478aeafa5)){
         fprintf(stderr,"Contact action CPU hash differs: %u %016llx\n",cases,(unsigned long long)hash);return 0;}
     puts("Original contact action callback: 6720 USA MIPS states, null core/effect, inactive/dead enemies, facing groups, terminators and signed part IDs passed");
+    return 1;
+}
+
+static int original_room_d_update(void)
+{
+    const u32 patterns[]={0,1,0xffffffff,65536,0xffff0000,0x100000,0xfff00000,0x7fffffff,0x80000000,0x12345678,0xfedcba98,0x08000000};
+    const u32 phases[]={0,0x4000000,0x8000000,0xc010000,0x7fffffff,0x80000000};
+    const u32 motions[]={0,65536,0xffff0000,0x7fffffff,0x80000000,0x12345678};
+    const s16 matrices[][9]={{4096,0,0,0,4096,0,0,0,4096},{0,0,4096,0,4096,0,-4096,0,0},
+        {-4096,0,0,0,4096,0,0,0,-4096}};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned phase=0;phase<6;++phase)for(unsigned motion=0;motion<6;++motion)
+    for(unsigned pattern=0;pattern<12;++pattern)for(unsigned matrix=0;matrix<3;++matrix){
+        struct {u64 before;PmSecondarySlot storage;u64 after;} guarded={.before=UINT64_C(0xa55aa55aa55aa55a),.after=UINT64_C(0x5aa55aa55aa55aa5)};
+        RoomEnt *object=(void *)&guarded.storage;RoomLibHandlerDState *state=(void *)&object->sub;RoomLink link={0};
+        object->link=&link;object->flag3=1;object->t1A=1;state->lockY=1;
+        memcpy(state->matrix,matrices[matrix],sizeof(state->matrix));
+        state->motion[0]=(s32)motions[motion];state->motion[2]=(s32)motions[(motion+1)%6];
+        for(unsigned i=0;i<3;++i){state->anchor[i]=(s32)patterns[(pattern+i)%12];link.pos[i]=0x12345678;}
+        state->value88=(s32)patterns[pattern];state->value8C=(s32)patterns[(pattern+3)%12];
+        state->value90=(s32)patterns[(pattern+6)%12];state->speed=(s32)patterns[(pattern+9)%12];
+        state->progress.word=(s32)phases[phase];
+        for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+        RoomLib_HandlerD(object);
+        const u32 words[]={(u32)state->motion[0],(u32)state->motion[2],(u32)state->value88,(u32)state->progress.word,
+            (u32)link.pos[0],(u32)link.pos[1],(u32)link.pos[2],(u32)link.modelTranslation[0],(u32)link.modelTranslation[1],
+            (u32)link.modelTranslation[2],object->state,object->flag3};
+        for(unsigned word=0;word<12;++word)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+        if(guarded.before!=UINT64_C(0xa55aa55aa55aa55a) || guarded.after!=UINT64_C(0x5aa55aa55aa55aa5))return 0;
+        ++cases;
+    }
+    if(cases!=1296 || hash!=UINT64_C(0xc3b4322592dc574c)){
+        fprintf(stderr,"Room D update CPU/GTE hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original room D update: 1296 USA CPU/GTE-bridge states, negative motion, wrapped speed/progress/coordinates, release and native arena guards passed");
     return 1;
 }
 
@@ -9534,7 +9656,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
     unsigned first=field_control>=2?(unsigned)field_control+10:field_control?6:0;
     unsigned end=field_control>=2?first+1:field_control?12:6;
     for(unsigned input=first;input<end;++input){
-        const char *limit=input==20?"200826":input==19?"154203":input==18?"131932":input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+        const char *limit=input==21?"222996":input==20?"200826":input==19?"154203":input==18?"131932":input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
         const char *args[4096]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
@@ -9733,7 +9855,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
-            if(input==20){
+            if(input>=20){
                 /* Continue normal exploration: M021, M020 corpse key, M018
                  * unlock, Melissa's diary and second key, then unlock M022. */
                 static const unsigned route[][2]={
@@ -9813,6 +9935,64 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
+            if(input==21){
+                /* Recorded New Game continuation: Heal1 in M022, parrot,
+                 * Medicine1 in M319, second Melissa fight, hospital memory
+                 * and return to normal field control after dialogue133. */
+                static const unsigned route[][2]={
+                    {200826,4096},{200830,0},{200930,64},{200934,0},{200942,16384},{200946,0},
+                    {201046,16384},{201050,0},{201150,16384},{201154,0},{201454,16384},{201458,0},
+                    {201558,16384},{201562,0},{201862,8192},{201866,0},{201966,8192},{201970,0},
+                    {202070,128},{202150,0},{202162,128},{202184,0},{202196,128},{202546,0},
+                    {202846,16},{203296,32},{203476,16},{203730,128},{203765,16384},{203769,0},
+                    {203969,64},{204087,32},{204137,128},{204141,16384},{204145,0},{204345,128},
+                    {204375,16384},{204379,0},{204579,64},{204592,128},{204596,16384},{204600,0},
+                    {204800,16384},{204804,0},{205984,16384},{205988,0},{206016,16384},{206020,0},
+                    {206048,16384},{206052,0},{206080,16384},{206084,0},{206112,16384},{206116,0},
+                    {206144,16384},{206148,0},{206176,16384},{206180,0},{206208,16384},{206212,0},
+                    {206240,16384},{206244,0},{206272,16384},{206276,0},{206304,16384},{206308,0},
+                    {206336,16384},{206340,0},{206368,16384},{206372,0},{206400,16384},{206404,0},
+                    {206732,64},{207332,0},{207632,128},{207832,64},{208332,0},{208432,128},
+                    {208452,16},{208552,64},{208732,0},{208832,16},{210612,0},{210812,16384},
+                    {210816,0},{210996,16},{211156,4096},{211160,0},{211260,16384},{211264,0},
+                    {211364,64},{211368,0},{211376,64},{211380,0},{211388,64},{211392,0},
+                    {211400,16384},{211404,0},{211504,16384},{211508,0},{211808,8192},{211812,0},
+                    {211912,8192},{211916,0},{212416,16},{212766,0},{213066,16},{213616,0},
+                    {213916,16384},{213920,0},{214100,16384},{214104,0},{214284,16384},{214288,0},
+                    {214468,16384},{214472,0},{214652,16384},{214656,0},{216036,16384},{216040,0},
+                    {216220,16384},{216224,0},{216704,16384},{216708,0},{216736,16384},{216740,0},
+                    {216768,16384},{216772,0},{216800,16384},{216804,0},{216832,16384},{216836,0},
+                    {216864,16384},{216868,0},{216896,16384},{216900,0},{216928,16384},{216932,0},
+                    {216960,16384},{216964,0},{216992,16384},{216996,0},{217024,16384},{217028,0},
+                    {217056,16384},{217060,0},{217088,16384},{217092,0},{217120,16384},{217124,0},
+                    {217152,16384},{217156,0},{217184,16384},{217188,0},{217216,16384},{217220,0},
+                    {217248,16384},{217252,0},{217280,16384},{217284,0},{217312,16384},{217316,0},
+                    {217344,16384},{217348,0},{217376,16384},{217380,0},{217408,16384},{217412,0},
+                    {217440,16384},{217444,0},{217472,16384},{217476,0},{217504,16384},{217508,0},
+                    {217536,16384},{217540,0},{217568,16384},{217572,0},{217600,16384},{217604,0},
+                    {217632,16384},{217636,0},{217664,16384},{217668,0},{217696,16384},{217700,0},
+                    {217728,16384},{217732,0},{217760,16384},{217764,0},{217792,16384},{217796,0},
+                    {217824,16384},{217828,0},{217856,16384},{217860,0},{217888,16384},{217892,0},
+                    {217920,16384},{217924,0},{217952,16384},{217956,0},{217984,16384},{217988,0},
+                    {218016,16384},{218020,0},{218048,16384},{218052,0},{218080,16384},{218084,0},
+                    {218112,16384},{218116,0},{218144,16384},{218148,0},{218176,16384},{218180,0},
+                    {218208,16384},{218212,0},{218240,16384},{218244,0},{218272,16384},{218276,0},
+                    {218304,16384},{218308,0},{218336,16384},{218340,0},{218368,16384},{218372,0},
+                    {218400,16384},{218404,0},{218432,16384},{218436,0},{218464,16384},{218468,0},
+                    {218496,16384},{218500,0},{218528,16384},{218532,0},{218560,16384},{218564,0},
+                    {218592,16384},{218596,0},{218624,16384},{218628,0},{218656,16384},{218660,0},
+                    {218688,16384},{218692,0},{218720,16384},{218724,0},{218752,16384},{218756,0},
+                    {218784,16384},{218788,0},{218816,16384},{218820,0},{218848,16384},{218852,0},
+                    {218880,16384},{218884,0},{218912,16384},{218916,0},{218944,16384},{218948,0},
+                    {218976,16384},{218980,0},{219308,16384},{219312,0},{220092,16384},{220096,0},
+                    {220276,16384},{220280,0},{221060,16384},{221064,0},{221244,16384},{221248,0},
+                    {222028,16384},{222032,0},{222812,16384},{222816,0},
+                };
+                for(unsigned i=0;i<sizeof(route)/sizeof(route[0]);++i){
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",route[i][0],route[i][1]);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                }
+            }
 #undef BOOTSTRAP_PRESS
         }
         SDL_PropertiesID props=SDL_CreateProperties();
@@ -9824,7 +10004,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==20?"\"vblanks\":200826":input==19?"\"vblanks\":154203":input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==21?"\"vblanks\":222996":input==20?"\"vblanks\":200826":input==19?"\"vblanks\":154203":input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -9930,6 +10110,12 @@ static int original_native_bootstrap(const char *executable,int field_control)
                sscanf(health,"\"player_hp\":%u,\"player_max_hp\":%u",&hp,&max_hp)!=2 ||
                hp!=1 || max_hp!=53)valid=0;
         }
+        if(input==21 && (!output || !strstr(output,"\"scene\":2818970824") ||
+           !strstr(output,"\"video_state\":0") || !strstr(output,"\"move_lock\":0") ||
+           !strstr(output,"\"menu\":null") || !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":133}") ||
+           !strstr(output,"\"player\":true,\"flags\":8,\"position\":[0,0,137953280],\"yaw\":-451") ||
+           !strstr(output,"\"player_hp\":21,\"player_max_hp\":64") ||
+           !strstr(output,"\"inventory\":{\"capacity\":13,\"slots\":[256,257,258,512,200,201,0")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -9973,6 +10159,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==16 && hash!=UINT64_C(0x8e856f4fc0b74e6d))valid=0;
         if(input==19 && hash!=UINT64_C(0x16dbf16f81d33fc0))valid=0;
         if(input==20 && hash!=UINT64_C(0xb4f02c215f7e80c6))valid=0;
+        if(input==21 && hash!=UINT64_C(0xc7b404688a203971))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
@@ -9991,6 +10178,7 @@ int main(int argc, char **argv)
 
     if(argc==3 && !strcmp(argv[1],"--native-stage"))return original_native_bootstrap(argv[2],2);
     if(argc==3 && !strcmp(argv[1],"--native-battle-entry"))return original_native_bootstrap(argv[2],3);
+    if(argc==3 && !strcmp(argv[1],"--native-m023"))return original_native_bootstrap(argv[2],11);
     if(argc==3 && !strcmp(argv[1],"--native-m022"))return original_native_bootstrap(argv[2],10);
     if(argc==3 && !strcmp(argv[1],"--native-m017"))return original_native_bootstrap(argv[2],9);
     if(argc==3 && !strcmp(argv[1],"--native-m020-items"))return original_native_bootstrap(argv[2],8);
@@ -10055,7 +10243,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;

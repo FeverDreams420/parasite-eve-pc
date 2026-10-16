@@ -1160,6 +1160,8 @@ int Render_SetupEntityPrims(RenderObjectEntity *obj, RenderObjectHeader *model,
     }
 
     obj->matrices = (RenderMatrix *)entry;
+    /* A new model must not retain a decoded pose in an old allocation. */
+    obj->active_matrix = NULL;
     matrix = (RenderMatrix *)entry;
     for (i = 0; i < obj->header->part_count;) {
         i++;

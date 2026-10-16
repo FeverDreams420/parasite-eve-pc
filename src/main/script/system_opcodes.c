@@ -1164,7 +1164,8 @@ int Script_SetRenderFlag10Value(int **arg0) {
     return 1;
 }
 
-int Script_ClearRenderFlag10(void) {
+int Script_ClearRenderFlag10(int **unused) {
+    (void)unused;
     g_CurrentEntity->render_object.flags_9C &= 0xFFEF;
     return 1;
 }
@@ -1178,7 +1179,8 @@ int Script_SetRenderFlag8Params(int **arg0) {
     return 1;
 }
 
-int Script_ClearRenderFlag8(void) {
+int Script_ClearRenderFlag8(int **unused) {
+    (void)unused;
     g_CurrentEntity->render_object.flags_9C &= 0xFFF7;
     return 1;
 }

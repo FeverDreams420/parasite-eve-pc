@@ -255,11 +255,11 @@ void RoomLib_HandlerD(RoomEnt *o) {
             left_arg = left;
             targetPosition = (Vec3Fixed *)state->target;
             initial_speed = FieldFx_GetFixedDistance3D((Vec3Fixed *)left_arg, targetPosition);
-            initial_speed += (state->value8C * 0x70) >> 21;
+            initial_speed = (s32)((u32)initial_speed + (u32)((s32)((u32)state->value8C * 0x70u) >> 21));
             if (initial_speed < 0x148) {
                 initial_speed = 0x148;
             }
-            initial_velocity = (0x5160000 / initial_speed) << 8;
+            initial_velocity = (s32)((u32)(0x5160000 / initial_speed) << 8);
             state->speed = initial_velocity;
             state->progress.word = initial_velocity >> 3;
             FieldFx_FixedVecToLookAngles((Vec3Fixed *)left, targetPosition, state->angles);
@@ -274,7 +274,7 @@ void RoomLib_HandlerD(RoomEnt *o) {
     scratch[0x34] = 0;
     {
         int angle;
-        angle = ((state->progress.word + bias) >> 16) - 0x400;
+        angle = ((s32)((u32)state->progress.word + (u32)bias) >> 16) - 0x400;
         scratch[0x35] = angle;
         sample.part.sin=rsin(angle & 0xFFF);sample.part.cos=rcos(angle & 0xFFF);
         rot = &sample.word;
@@ -302,8 +302,8 @@ void RoomLib_HandlerD(RoomEnt *o) {
     gte_ldv0((void *)scratch);
     gte_mvmva();
     gte_stmac(((RoomLibMotionWork *)scratch)->rotated);
-    state->motion[0] += ((RoomLibMotionWork *)scratch)->rotated[0] << 12;
-    state->motion[2] += ((RoomLibMotionWork *)scratch)->rotated[2] << 12;
+    state->motion[0] = (s32)((u32)state->motion[0] + ((u32)((RoomLibMotionWork *)scratch)->rotated[0] << 12));
+    state->motion[2] = (s32)((u32)state->motion[2] + ((u32)((RoomLibMotionWork *)scratch)->rotated[2] << 12));
 
     if (state->progress.word > 0x08000000) {
         ent->flag3 = 2;
@@ -315,23 +315,23 @@ void RoomLib_HandlerD(RoomEnt *o) {
         if (((RoomLibMotionWork *)scratch)->rotated[2] >= 0) {
             int position;
             position = state->value88;
-            position += state->value8C;
-            projected = (position + bias) >> 16;
+            position = (s32)((u32)position + (u32)state->value8C);
+            projected = (s32)((u32)position + (u32)bias) >> 16;
             work = projected;
-            product = work * (state->speed >> 12);
+            product = (s32)((u32)work * (u32)(state->speed >> 12));
             state->value88 = position;
             progress = state->progress.word;
         } else {
             int updated;
             projected = state->value88;
-            projected = (projected + bias) >> 16;
-            product = projected * (state->speed >> 12);
+            projected = (s32)((u32)projected + (u32)bias) >> 16;
+            product = (s32)((u32)projected * (u32)(state->speed >> 12));
             updated = state->value88;
-            updated -= state->value8C;
+            updated = (s32)((u32)updated - (u32)state->value8C);
             progress = work = state->progress.word;
             state->value88 = updated;
         }
-        result = progress + ((product >> 8) << 12);
+        result = (s32)((u32)progress + ((u32)(product >> 8) << 12));
         state->progress.word = result;
     }
     }
@@ -344,10 +344,10 @@ void RoomLib_HandlerD(RoomEnt *o) {
             ((RoomLibMotionWork *)scratch)->displacement[2] = 0;
             RoomLib_ReleaseHandlerD((PmSlotHeader *)ent);
         } else {
-            scratch[0] = ((((state->motion[0] + bias) >> 16) *
-                           state->value90) >> 12);
+            scratch[0] = (s32)((u32)((s32)((u32)state->motion[0] + (u32)bias) >> 16) *
+                                  (u32)state->value90) >> 12;
             scratch[1] = 0;
-            scratch[2] = (state->motion[2] + bias) >> 16;
+            scratch[2] = (s32)((u32)state->motion[2] + (u32)bias) >> 16;
             gte_ldrotmatrix(state->matrix);
             gte_ldv0((void *)scratch);
             gte_mvmva();
@@ -358,18 +358,18 @@ void RoomLib_HandlerD(RoomEnt *o) {
     if (state->rate != 0 && state->rate < state->progress.half.whole) {
         RoomLib_ReleaseHandlerD((PmSlotHeader *)ent);
     }
-    link->pos[0] = state->anchor[0] +
-                       (((RoomLibMotionWork *)scratch)->displacement[0] << 16);
-    link->pos[2] = state->anchor[2] +
-                       (((RoomLibMotionWork *)scratch)->displacement[2] << 16);
+    link->pos[0] = (s32)((u32)state->anchor[0] +
+                       ((u32)((RoomLibMotionWork *)scratch)->displacement[0] << 16));
+    link->pos[2] = (s32)((u32)state->anchor[2] +
+                       ((u32)((RoomLibMotionWork *)scratch)->displacement[2] << 16));
     {
-        link->modelTranslation[0] = (link->pos[0] + 0x8000) >> 16;
-        link->modelTranslation[2] = (link->pos[2] + 0x8000) >> 16;
+        link->modelTranslation[0] = (s32)((u32)link->pos[0] + 0x8000u) >> 16;
+        link->modelTranslation[2] = (s32)((u32)link->pos[2] + 0x8000u) >> 16;
         if (state->copyPosition == 0) {
-            value = state->anchor[1] +
-                    (((RoomLibMotionWork *)scratch)->displacement[1] << 16);
+            value = (s32)((u32)state->anchor[1] +
+                    ((u32)((RoomLibMotionWork *)scratch)->displacement[1] << 16));
             link->pos[1] = value;
-            link->modelTranslation[1] = (value + 0x8000) >> 16;
+            link->modelTranslation[1] = (s32)((u32)value + 0x8000u) >> 16;
         }
     }
     if (state->range[0] != 0 &&

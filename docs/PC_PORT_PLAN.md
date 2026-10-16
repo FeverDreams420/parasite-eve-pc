@@ -15,6 +15,15 @@ Aktualne testy powiązanych modułów oraz fixture’y ASan/UBSan/function przec
 Pełny runtime z sanitizerami dla M020 także przeszedł, z identycznym stanem i VRAM. To nadal
 początek kampanii, nie pełny port ani deklaracja pixel perfect.
 
+Po wyjściu z M020 odtworzono kolejne zwycięskie starcie w korytarzu M012.
+Oryginalny opcode72 (reset kamery przy graczu) jest podpięty do istniejącej
+funkcji; wcześniej zatrzymywał skrypt po awansie poziomu. Powtórzenie inputu
+do vblank40000 kończy się bez abortu: brak przeciwników, HP35/49, pojemność
+ekwipunku11, brak menu i blokady ruchu. Zrzut obrazu pokazuje Ayę w korytarzu.
+Test regresji obejmuje wyłączoną kamerę, wybrany viewport, ograniczenia kadru,
+domyślne 30 klatek przejścia i rzeczywisty dispatcher. Cztery powiązane testy
+(actor-animation, camera, stat-assets, player-input-assets) przeszły po zmianie.
+
 Jeden zapis M012 wygenerowany przez oryginalne funkcje portu zaakceptował
 rzeczywisty PS1: File loaded, identyczne HP14/45, pozycja i yaw432 po Continue.
 Nie jest to dowód wszystkich save’ów i trybów. Headless runner pozwala podawać

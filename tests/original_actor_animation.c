@@ -2867,6 +2867,48 @@ static int original_collision_gate_opcodes(void)
     return 1;
 }
 
+static int original_player_camera_reset_opcode(void)
+{
+    GeomScrollRecord saved=g_GeomScroll;
+    GeomState *saved_geometry=g_GeomState;
+    FieldActor player={0}, *saved_player=g_PlayerEntity, *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    struct { GeomState header; CameraViewport views[2]; } geometry={0};
+    GteMatrix matrix={.m={{4096,0,0},{0,4096,0},{0,0,4096}},.t={0,0,4096}};
+    geometry.header.entry_offset_1C=(u8 *)geometry.views-(u8 *)&geometry;
+    geometry.views[1].width=640;geometry.views[1].height=480;
+    geometry.views[1].minX=geometry.views[1].maxX=-123;
+    geometry.views[1].minY=geometry.views[1].maxY=234;
+    g_PlayerEntity=g_CurrentEntity=&player;g_GeomState=&geometry.header;
+    player.pos_x=-123*65536;player.pos_y=45*65536;player.pos_z=1024*65536;
+    if(g_ScriptQueueOpcodeHandlers[72]!=Script_ResetPlayerCameraPos)return 0;
+    const u32 flags[]={0,1,0x38,0x40,0x48,0xffffffff};
+    for(unsigned i=0;i<sizeof(flags)/sizeof(*flags);++i){
+        memset(&g_GeomScroll,0xa5,sizeof(g_GeomScroll));
+        g_GeomScroll.words.viewMatrix=&matrix;
+        g_GeomScroll.state.flags=flags[i];g_GeomScroll.state.position.groupSelect=1;
+        GeomScrollRecord before=g_GeomScroll,expected=before;
+        if(flags[i]&64){
+            expected.state.flags=(flags[i]&~7u)|3;
+            expected.state.position.startX=(u16)before.state.position.x;
+            expected.state.position.startY=(u16)before.state.position.y;
+            expected.state.position.targetX=(u16)-123;expected.state.position.targetY=234;
+            expected.state.position.duration=30;expected.state.position.elapsed=1;
+        }
+        if(Script_ResetPlayerCameraPos(NULL)!=1 || memcmp(&expected,&g_GeomScroll,sizeof(expected)))return 0;
+        g_GeomScroll=before;
+        u32 program[]={72,0,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_ScriptNodePool=&node;Script_RunQueue();
+        if(memcmp(&expected,&g_GeomScroll,sizeof(expected)) || node.current.script!=program+4 ||
+           !(node.flags&0x10) || g_ScriptNodePool)return 0;
+    }
+    g_GeomScroll=saved;g_GeomState=saved_geometry;g_PlayerEntity=saved_player;g_CurrentEntity=saved_actor;
+    g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    puts("Original player camera reset: opcode 72, disabled camera, selected viewport bounds, default transition and dispatcher passed");
+    return 1;
+}
+
 static int original_scroll_opcodes(void)
 {
     const u32 values[]={0,1,32767,32768,65535,65536,0x80000000,0xffffffff,0x12345678};
@@ -3435,7 +3477,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

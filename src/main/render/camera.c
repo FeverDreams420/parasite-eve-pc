@@ -815,12 +815,7 @@ int Render_UpdateScrollPosition(void *positionArg, int duration, int mode)
     vector.x = position[0] >> 16;
     vector.y = (position[1] >> 16) - (u16)g_GeomScroll.state.position.focusHeight;
     vector.z = position[2] >> 16;
-    {
-        /* Matching debt: see Render_PrepareFrame; this volatile * input is the only form found that keeps the 24-byte frame. */
-        volatile unsigned short cx = 160;
-
-        gte_SetGeomOffset(cx, 112);
-    }
+    gte_SetGeomOffset(160, 112);
     {
         GteMatrix **slot = &g_GeomScroll.words.viewMatrix;
         GteMatrix *matrix;

@@ -73,7 +73,8 @@ int Script_IsBattlePhase4(int **arg0) {
     return 1;
 }
 
-int Script_ResetPlayerCameraPos(void) {
+int Script_ResetPlayerCameraPos(int **unused) {
+    (void)unused;
     Render_UpdateScrollPosition(&g_PlayerEntity->pos_x, -1, -1);
     return 1;
 }

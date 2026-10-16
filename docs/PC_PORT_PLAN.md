@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Dalszy przebieg z M052 ujawnił niepodpięty opcode168 przy próbie otwarcia
+zamkniętych drzwi działu uzbrojenia M051 (actor5:0, byte1172,
+vblank64957, zapytanie o klucz214). Podpięto istniejący oryginalny
+Script_CountItemsByValue/USA800194f8 do istniejącej tabeli i nagłówka;
+Inv_CountByValue pozostaje bez zmian w active_list.c. 768 niehookowanych
+stanów CPU USA potwierdza wynik, aliasowanie wejścia/wyjścia, pojemności
+0/1/3/8/16/50, tożsamości broni zapisanej przez indeks, signed zwykłych ID
+oraz trzy pule amunicji (hash d87c5049da16e855). Natywny dispatcher zapisuje
+wynik do zmiennej aktora, kontrolując sąsiadów i nienaruszenie ekwipunku.
+Cztery powiązane CTesty PASS13.58s, cały fixture aktorów z --assets także
+ASan/UBSan/function PASS.
+
+Dwa świeże pełne replaye tego kandydata z prywatnego Continue B do cap70135
+przeszły normalnie i pod ASan/UBSan/function. Stan końcowy: M046, HP92/92,
+M16A1 w slocie9, brak menu i dialogu. Pełny JSON i1048576 bajtów VRAM
+są identyczne; SHA256 VRAM:
+a785df459e1646cdeb000dae991d819b8899e1dbb0215b75c82ee6c7f2f04d0e.
+ZapisB zachował hash70745ddae23fc9e5fa3a6232b724dc436c87271118e046ac35ea1fc152150b22.
+Nie jest to nowy pełny zestaw50/50 ani dowód ukończenia dnia2.
+
+Rzeczywisty input po poprawce pokazuje w M051 dialog197 „Authorized
+Personnel Only — Weapon Department”, pozwala go zamknąć i wrócić przez
+M043 do recepcji M046. Oryginalny PS1 niezależnie potwierdził ten sam
+pokój i dialog197. Potem żywa sesja portu wychodzi na oryginalną mapę
+Nowego Jorku, podróżuje do M024/Carnegie Hall i wraca na mapę; ta dalsza
+podróż nie jest jeszcze objęta pełnym porównaniem runtime z sanitizerami.
+
 Najnowsze poprawki zbrojowni pozostają w oryginalnych modułach: opcode154
 steruje animacją geometrii,114 widocznością wpisu, a238 otwiera oryginalny
 interfejs przechowywania ekwipunku (zaobserwowany argument1). Podpięto

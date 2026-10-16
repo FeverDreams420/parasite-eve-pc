@@ -736,6 +736,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [113]=Script_SetSceneEntryAnim,
     [114]=Script_SetRenderEntryEnabled,
     [154]=Script_SetMenuSlotEntry,
+    [168]=Script_CountItemsByValue,
     [176]=Script_SetBattleEntryCoords,
     [180]=Script_SetMoveFlag, [181]=Script_ClearMoveFlag,
     [207]=Script_SignalSceneExit, [208]=Script_DrawSaveOverlay,

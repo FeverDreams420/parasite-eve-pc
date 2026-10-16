@@ -448,6 +448,8 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomActorClassTable[0];
         if (map + 1 == 28 && slot == 73 && record[i].u.handlerAddress == 0x801931dcu)
             native = &g_RoomActorClassTable[4];
+        if (map + 1 == 32 && slot == 73 && record[i].u.handlerAddress == 0x80192558u)
+            native = &g_RoomActorClassTable[4];
         if (map + 1 == 23 && slot == 118 && record[i].u.handlerAddress == 0x80190720u)
             native = &g_RoomM023Effects;
         if (map + 1 == 5 && slot == 117 && record[i].u.handlerAddress == 0x80190b44u)
@@ -591,7 +593,7 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM023BeaconModel = NULL;
         } else if (map + 1 == 22) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];
-        } else if (map + 1 == 28 && slot == 73) {
+        } else if ((map + 1 == 28 || map + 1 == 32) && slot == 73) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];
         } else {
             g_PmCmdHandlerTable[slot] = map + 1 == 272 ? &g_RoomM272Handlers : &g_RoomFxMirrorHandlers;

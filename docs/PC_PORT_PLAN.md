@@ -225,8 +225,32 @@ widgetów przez CPU oracle. Świeży fixture ASan/UBSan/function PASS, cztery
 powiązane CTest PASS12.96s. Zwykły runtime od zapisu M319 przez kanały
 przechodzi dawny abort actor6/script_byte1052; przy cap50000 otwiera menu
 wyboru ekwipunku (obejrzano kadr), a Circle zamyka je i oddaje ruch przy
-cap50608. Pełne pobieranie/odrzucanie zawartości skrzyń i runtime169
-z sanitizerami nie są jeszcze zweryfikowane.
+cap50608. Osobny runtime ASan/UBSan/function przechodzi także otwarcie i anulowanie
+menu do cap50912: identyczny pełny JSON i VRAM jak w zwykłym buildzie,
+SHA2561004acff5dfe649b83b32825f9a777f747e3a3abd07c4c2b2dcca2dac71f9806.
+Pełne pobieranie/odrzucanie zawartości wszystkich skrzyń nadal wymaga
+weryfikacji.
+
+Lewe schody M031 prowadzą do M032. Podpięto brakujący descriptor
+slot73/80192558 do istniejącej klasy C, wiersz4. Fixture czyta rzeczywisty
+M032 z PE.IMG: siedem metod oraz cały blok764 instrukcji zgadza się z M028
+po dokładnie26 relokacjach adresów. Rozszerzony fixture --assets przechodzi
+z ASan/UBSan/function. Root build pozostaje zamrożony na b18423087 na czas
+uruchomionego pełnego zestawu50 testów; M032 sprawdzono osobnymi buildami
+z aktualnego źródła, nie nadpisując działających programów.
+
+Próba od prywatnego Continue w M031 wchodzi do M032; cap29100 obejmuje
+trwającą walkę, HP3/67, dwóch wrogów. Zwykły build i runtime z sanitizerami
+mają identyczny JSON i cały VRAM, SHA256
+8908398a57114c5f4119ef08c39d6620aa6d95cf199e5358dbcc768cc4f6bc04.
+Osobna trasa z wcześniejszym Heal1 wygrywa całą walkę M032 i oddaje ruch
+przy cap30038: HP27/72, zero żywych wrogów, menuNULL, move_lock0. Oba
+buildy przechodzą, pełny JSON i VRAM identyczne, SHA256
+30b228b73dae781ed326383edd055e2b0cacced63ba6a2e53207b8b1a8e8ebb6.
+Dalszy zwykły input leczy do57, dochodzi do zamkniętej bramy/dialog12,
+wraca do M031 i wchodzi prawymi schodami do M334 przy cap40906; kadr
+M334 obejrzano. Ta próba zaczyna się od Continue, nie od New Game;
+nie jest dowodem przejścia całych kanałów ani porównaniem obrazu z PS1.
 
 Osobny PS1 zaakceptował także zapis M319 po drugiej Melissie wygenerowany
 przez oryginalne funkcje portu: HP21/64, zgodna pozycja Continue, Melissa

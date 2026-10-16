@@ -4195,10 +4195,10 @@ static int authored_m023_effect_cycle(SceneAssetView *room)
 
 static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)
 {
-    u8 header[0x800];u32 base;PeDiscFile archive;SceneAssetView *rooms[2]={NULL,NULL};
+    u8 header[0x800];u32 base;PeDiscFile archive;SceneAssetView *rooms[3]={NULL,NULL,NULL};
     if(!pe_disc_read(disc,exe,0,header,sizeof(header)) || !pe_disc_find(disc,"PE.IMG",&archive))return 0;
-    memcpy(&base,header+0x18,4);const unsigned ids[]={12,28};int valid=1;
-    for(unsigned i=0;valid && i<2;++i){
+    memcpy(&base,header+0x18,4);const unsigned ids[]={12,28,32};int valid=1;
+    for(unsigned i=0;valid && i<3;++i){
         SceneRoomSectorRange range;
         valid=pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(ids[i]-1)*8,&range,sizeof(range));
         if(!valid)break;
@@ -4237,9 +4237,34 @@ static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)
             ++relocated;
         }
         valid=valid && relocated==19;
+        SceneRoomDirectory *sewer=SceneAsset_ResolveOffset(rooms[2],rooms[2]->header.directoryOffset);
+        SceneRoomRecord *entry=SceneAsset_ResolveOffset(rooms[2],sewer->scripts&0x3fffff);
+        const u8 *c=(u8 *)rooms[2]+8;
+        valid=valid && sewer->scripts>>22==1 && entry->source.bytes.slot==73 && entry->u.handlerAddress==0x80192558u;
+        for(unsigned method=0;valid && method<7;++method){
+            u32 address;memcpy(&address,c+0x80192558u-0x8018eff0u+method*4,4);
+            valid=address==methods[method]-0x10;
+        }
+        relocated=0;
+        for(unsigned offset=0;valid && offset<0xbf0;offset+=4){
+            u32 reference,current;memcpy(&reference,b+0x80191514u-0x8018eff0u+offset,4);
+            memcpy(&current,c+0x80191504u-0x8018eff0u+offset,4);
+            if(reference==current)continue;
+            u32 expected=reference,opcode=reference>>26;
+            if(opcode==2 || opcode==3){
+                u32 target=0x80000000u|((reference&0x3ffffffu)<<2);
+                if(target>=0x80191514u && target<0x80192104u)
+                    expected=(reference&0xfc000000u)|(((target-0x10u)>>2)&0x3ffffffu);
+            }else if(offset==0x3c || offset==0x200 || offset==0x244 || offset==0x370 || offset==0x710){
+                expected=(reference&0xffff0000u)|(u16)((u16)reference-0x10u);
+            }
+            if(current!=expected)valid=0;
+            ++relocated;
+        }
+        valid=valid && relocated==26;
     }
-    free(rooms[0]);free(rooms[1]);
-    if(valid)puts("Original M028: class C slot73, orbit-flare slot115, full USA descriptors/script/seeds and 658 controller instructions with exactly 19 address relocations match M012");
+    free(rooms[0]);free(rooms[1]);free(rooms[2]);
+    if(valid)puts("Original M028: class C slot73, orbit-flare slot115, full USA descriptors/script/seeds and 658 controller instructions with exactly 19 address relocations match M012; M032 class C slot73 descriptor and 764 instructions match M028 after exactly 26 address relocations");
     return valid;
 }
 

@@ -131,11 +131,23 @@ trasę New Game→M022, ale nie późniejsze podpięcia226/54 ani całą drugą 
 
 Oryginalny PS1 zaakceptował też checkpoint M022 po papudze: brak papugi,
 HP29/64 i ta sama pozycja wejściowa co Continue portu. Ta próba ujawniła
-dwa osobne problemy do rozwiązania: po świeżym Continue statyczny model
-w M319 ma pusty active_matrix i powoduje awarię renderera; żywy rdzeń
-gracza przed zapisem zachowywał maxHP53, choć SaveAya i późniejsze
-Continue/PS1 wskazują64. Nie uznawać jeszcze roundtripów zapisu ani
-synchronizacji statystyk po awansie za w pełni zgodne.
+osobną awarię po świeżym Continue: statyczny model w M319 miał pusty
+active_matrix. Render_TransformVertices używa teraz w tym przypadku
+neutralnych obrotów kości, takich jak inicjalizowane przez istniejący
+Render_SetupEntityPrims, oddzielonych od macierzy wynikowych. Nie pomija
+rysowania i nie mnoży kolejno wyniku poprzedniej klatki. Test500 transformacji
+obejmuje pięć obrotów modelu, rozgałęzienia kości, translacje i granice bufora.
+Cztery powiązane testy PASS12.70s; świeży fixture ASan/UBSan/function PASS.
+Rzeczywisty Continue M022→M012→M319 (cap27649, HP29/64, move_lock0)
+przechodzi zarówno w zwykłym, jak i pełnym buildzie z sanitizerami:
+identyczny JSON i cały VRAM, SHA256
+169be5517c9235c09f17f1c2606a2fe1a38cd2d65eab6f4171a17ba225f50d19.
+Wygląd statycznych modeli nadal wymaga dokładnego porównania z PS1.
+
+Pozostaje do zbadania osobna różnica: żywy rdzeń gracza przed zapisem
+zachowywał maxHP53, choć SaveAya i późniejsze Continue/PS1 wskazują64.
+Nie uznawać jeszcze roundtripów zapisu ani synchronizacji statystyk po
+awansie za w pełni zgodne.
 
 Jeden zapis M012 wygenerowany przez oryginalne funkcje portu zaakceptował
 rzeczywisty PS1: File loaded, identyczne HP14/45, pozycja i yaw432 po Continue.

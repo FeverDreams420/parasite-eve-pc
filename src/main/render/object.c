@@ -1703,6 +1703,11 @@ int Render_InitRoomPrimState(void *objectArg)
 static RenderMatrix g_RenderTransformStack[65536];
 
 void Render_TransformVertices(RenderObjectEntity *actor) {
+    /* An actor without an animation bank can reach opcode155 before any
+     * decoder supplies active_matrix (notably after Continue). Use the
+     * neutral bone rotations initialized by Render_SetupEntityPrims, kept
+     * separate from the output so repeated draws cannot compound them. */
+    static const RenderMatrix rest = {.rotation={{4096,0,0},{0,4096,0},{0,0,4096}}};
     s32 origin[3];
     s32 *originY = &origin[1];
     s32 *originZ = &origin[2];
@@ -1753,7 +1758,7 @@ void Render_TransformVertices(RenderObjectEntity *actor) {
     gte_ldtransmatrix(current);
     for (i = 0; i < actor->header->matrix_command_bytes; i++, commands++) {
         int command = *commands;
-        RenderMatrix *source;
+        const RenderMatrix *source;
 
         if (command == -1) {
             gte_ReadMatrix(stack);
@@ -1766,7 +1771,7 @@ void Render_TransformVertices(RenderObjectEntity *actor) {
             gte_ldtransmatrix(stack);
             continue;
         }
-        source = &actor->active_matrix[command];
+        source = actor->active_matrix ? &actor->active_matrix[command] : &rest;
         gte_ldclmv(source);
         gte_rtir();
         *originZ = actor->parts[command].translation_z;

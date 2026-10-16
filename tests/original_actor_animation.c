@@ -2505,6 +2505,39 @@ static int original_polygon_opcode(void)
     return 1;
 }
 
+static int original_static_model_matrices(void)
+{
+    RenderObjectHeader header={.part_count=3,.matrix_command_bytes=5};
+    RenderObjectPart parts[3]={{0}};parts[1].translation_z=100;parts[2].translation_z=-200;
+    s8 commands[]={0,-1,1,-2,2};
+    struct {u64 before;RenderMatrix matrices[3];u64 after;} output;
+    const s16 angles[]={0,1024,2048,3072,731};
+    for(unsigned angle=0;angle<5;++angle){
+        memset(&output,0xa5,sizeof(output));
+        RenderObjectEntity object={.header=&header,.parts=parts,.matrix_commands=commands,.matrices=output.matrices};
+        GteShortVector rotation={0,angles[angle],0,0};RotMatrix(&rotation,(GteMatrix *)&object.model_matrix);
+        object.model_matrix.translation[0]=3;object.model_matrix.translation[1]=-7;object.model_matrix.translation[2]=1024;
+        RenderMatrix first[3];
+        for(unsigned frame=0;frame<100;++frame){
+            Render_TransformVertices(&object);
+            if(object.active_matrix || output.before!=UINT64_C(0xa5a5a5a5a5a5a5a5) ||
+               output.after!=UINT64_C(0xa5a5a5a5a5a5a5a5))return 0;
+            for(unsigned bone=0;bone<3;++bone){
+                RenderMatrix *matrix=output.matrices+bone;
+                if(memcmp(matrix->rotation,object.model_matrix.rotation,sizeof(matrix->rotation)))return 0;
+                int distance=bone?parts[bone].translation_z:0;
+                s32 expected[]={3+(object.model_matrix.rotation[0][2]*distance>>12),-7,
+                    1024+(object.model_matrix.rotation[2][2]*distance>>12)};
+                if(memcmp(matrix->translation,expected,sizeof(expected)))return 0;
+            }
+            if(!frame)memcpy(first,output.matrices,sizeof(first));
+            else if(memcmp(first,output.matrices,sizeof(first)))return 0;
+        }
+    }
+    puts("Original static model path: 500 repeated transforms without an animation bank, neutral bones, branched hierarchy and matrix-buffer guards passed");
+    return 1;
+}
+
 static int original_script_polygon_opcode(void)
 {
     const s32 polygons[][8]={{-10,-10,10,-10,10,10,-10,10},{-10,10,10,10,10,-10,-10,-10},
@@ -3564,7 +3597,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

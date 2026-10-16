@@ -4280,6 +4280,32 @@ static int original_shadow_radius_opcode(void)
     return 1;
 }
 
+static int original_camera_release_opcode(void)
+{
+    const u32 upper[]={0,0x10000,0x12345600,0x7fffff00,0x80000000,0xffffff00};
+    GeomScrollRecord saved=g_GeomScroll;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[73]!=Script_SetBattleStateMode)return 0;
+    for(unsigned i=0;i<6;++i)for(unsigned low=0;low<256;++low){
+        memset(&g_GeomScroll,0xa5,sizeof(g_GeomScroll));g_GeomScroll.state.flags=(s32)(upper[i]|low);
+        GeomScrollRecord before=g_GeomScroll,expected=before;expected.state.flags=(s32)(((upper[i]|low)&~7u)|0x80);
+        u32 result=Script_SetBattleStateMode(NULL),words[]={result,(u32)g_GeomScroll.state.flags};
+        for(unsigned w=0;w<2;++w)for(unsigned b=0;b<4;++b)hash=(hash^((words[w]>>(b*8))&255))*UINT64_C(1099511628211);
+        if(result!=1 || memcmp(&g_GeomScroll,&expected,sizeof(expected)))return 0;
+        g_GeomScroll=before;FieldActor actor={.flags=0x12345678};u32 program[]={73,0,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_CurrentEntity=&actor;g_ScriptNodePool=&node;Script_RunQueue();
+        if(memcmp(&g_GeomScroll,&expected,sizeof(expected)) || actor.flags!=0x12345678 ||
+           node.current.script!=program+4 || node.flags!=0x90 || node.active || g_ScriptNodePool)return 0;
+        ++cases;
+    }
+    g_GeomScroll=saved;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=1536 || hash!=UINT64_C(0x9726c7e9d2657525)){
+        fprintf(stderr,"Camera73 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original opcode73: 1536 unhooked USA CPU states, all low flag bytes and signed/high patterns, retained camera state and real zero-operand dispatcher passed");
+    return 1;
+}
+
 static int original_camera_flags_opcodes(void)
 {
     const u32 patterns[]={0,1,2,3,0x40,0x41,0x80,0x7fffffff,0x80000000,0xffffffff,0x12345678,0xfedcba98};
@@ -4475,7 +4501,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

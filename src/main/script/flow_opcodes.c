@@ -713,6 +713,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [65]=Entity_SetCurrentFlag40, [66]=Entity_ClearCurrentFlag40,
     [67]=Script_GetMenuChoice,
     [72]=Script_ResetPlayerCameraPos,
+    [73]=Script_SetBattleStateMode,
     [93]=Script_SetCurrentEntityField20, [77]=Script_SetEntityField1C,
     [202]=Script_SetEntityField1E6, [210]=Script_GetFloorTableValue,
     [219]=Render_CameraTrackEntityAngle,

@@ -80,7 +80,8 @@ int Script_ResetPlayerCameraPos(int **unused) {
     return 1;
 }
 
-int Script_SetBattleStateMode(void) {
+int Script_SetBattleStateMode(int **unused) {
+    (void)unused;
     int *ptr = &g_GeomScroll.state.flags;
 
     *ptr = (*ptr & -8) | 0x80;

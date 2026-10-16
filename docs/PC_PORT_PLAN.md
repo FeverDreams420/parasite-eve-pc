@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Od telefonu Continue C zwykły input przechodzi M042/M043, wchodzi i wychodzi
+z szatni M045 (oryginalna animacja drzwi154), a w dalszym korytarzu kończy
+scenę z Benem i Danielem59–71. Wcześniej zatrzymywał ją niepodpięty73 przy
+vblank35921/actor2:0/byte2716. Podpięto istniejący oryginalny
+Script_SetBattleStateMode/USA80017d18: zeruje niskie3 bity flag kamery
+i ustawia0x80, zachowując resztę. Funkcja pozostaje w system_opcodes.c;
+dopasowano jej sygnaturę callbacku z void do int **unused.
+1536 niehookowanych stanów CPU USA obejmuje wszystkie256 niskich bajtów
+i sześć wzorców górnych bitów (hash9726c7e9d2657525). Test sprawdza także
+nienaruszenie całego pozostałego stanu kamery i dispatcher bez operandów.
+Cztery powiązane CTesty PASS12.86s, cały fixture --assets pod
+ASan/UBSan/function PASS.
+
+Dwa świeże pełne replaye C → M045 → Ben/Daniel → ruch po scenie/cap37060
+przeszły normalnie i pod ASan/UBSan/function bez błędów i niepodpiętych
+opcode’ów. Cały JSON i1048576 bajtów VRAM są identyczne; SHA256 VRAM:
+25da587ae33529604f817590b11e6a3410817a5b1c30f05311b1640ea9fcbb40.
+B iC pozostały niezmienione. Oryginalny PS1 niezależnie kończy ten sam
+ciąg dialogów: etap164, pozycja[-10878976,262144,88408064], obrót3441,
+flagi kamery112, move_lock2 — wszystkie te wartości zgadzają się z portem
+przed dalszym inputem. 40 klatek Down w porcie zmienia z o−6553600,
+HP92/92 i M16A1 pozostają, brak menu i otwartego dialogu. Żywa sesja obu
+wersji dociera dalej do M047 (pusta sala odpraw na etapie164); ta dalsza
+lokacja nie jest objęta powyższym replayem SAN. Dzień2 nadal nieukończony.
+
 Kolejny legalny checkpoint powstał przez telefon w M042: zwykły input
 od prywatnego Continue B, oryginalny dialog6 „Will you save your progress?”,
 animacja telefonu, oryginalne menu231, wolny slot3/C, komunikat „File saved”,

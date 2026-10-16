@@ -32,6 +32,7 @@ int Script_SetSceneEntryAnim(int **args);
 int Script_SetRenderEntryEnabled(int **args);
 int Script_SetMenuSlotEntry(int **args);
 int Script_CountItemsByValue(int **args);
+int Script_SetBattleStateMode(int **unused);
 int Script_SetEntityAnim5Args(int **args);
 int Script_SetBattleEntryCoords(int **args);
 int Script_SignalSceneExit(int **unused);

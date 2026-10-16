@@ -10,7 +10,7 @@ Automatyczny input od New Game przechodzi Melissę, zaplecze, przemianę
 szczura i zwycięską walkę, następnie M020: dialog112, menu, użycie Medicine1
 (HP11->45) i otrzymanie następnego leku. Osobna próba potwierdza zamknięcie
 okna oraz powrót sterowania. Nowy test tej trasy przeszedł dwukrotnie.
-Poprzedni zamrożony kandydat ma 45/45 PASS; katalog zawiera teraz 46 testów.
+Poprzedni zamrożony kandydat ma 45/45 PASS; katalog zawiera teraz 47 testów.
 Aktualne testy powiązanych modułów oraz fixture’y ASan/UBSan/function przechodzą.
 Pełny runtime z sanitizerami dla M020 także przeszedł, z identycznym stanem i VRAM. To nadal
 początek kampanii, nie pełny port ani deklaracja pixel perfect.
@@ -23,6 +23,24 @@ ekwipunku11, brak menu i blokady ruchu. Zrzut obrazu pokazuje Ayę w korytarzu.
 Test regresji obejmuje wyłączoną kamerę, wybrany viewport, ograniczenia kadru,
 domyślne 30 klatek przejścia i rzeczywisty dispatcher. Cztery powiązane testy
 (actor-animation, camera, stat-assets, player-input-assets) przeszły po zmianie.
+
+Nowy test original-game-m017-survivor od New Game obejmuje także zamknięcie
+odbioru leku, wyjście M020, dwie dalsze wygrane walki w M012 i awanse,
+przejście M011 i powrót oraz pełny dialog85–89 z ocalałym w M017.
+PASS223.91s, cap154203: HP14/53, pojemność12, zachowany ekwipunek,
+dialog zamknięty, menuNULL i move_lock0. FNV VRAM16dbf16f81d33fc0 zgadza się
+z niezależnym od CTest replayem tej samej trasy. To dowód powtarzalności
+portu, nie niezależna referencja PS1 dla tych pokoi. Pierwsza wersja asercji
+błędnie oczekiwała HP/pozycjiY z checkpointu M020; pełna trasa ujawniła tę
+różnicę, więc finalny test sprawdza faktyczny stan New Game. Powiązane trzy
+testy actor-animation/player-input-assets/camera także PASS12.25s.
+
+Osobna sesja headless sterowana wyłącznie host inputem z checkpointu M020
+potwierdza wejście i wyjście M021, ponowne przeszukanie ciała M020 (dialog115,
+otrzymany klucz200), odblokowanie drzwi M018 (dialog118), odczyt dziennika
+Melissy99–108 i otrzymanie klucza201. Oba klucze pozostają w ekwipunku po
+powrocie do M012. Ta dalsza trasa nie jest jeszcze testem od New Game ani
+dowodem zgodności z PS1; input i zrzuty zachowano w roboczym /tmp.
 
 Jeden zapis M012 wygenerowany przez oryginalne funkcje portu zaakceptował
 rzeczywisty PS1: File loaded, identyczne HP14/45, pozycja i yaw432 po Continue.

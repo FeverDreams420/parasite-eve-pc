@@ -9135,15 +9135,15 @@ static int original_native_bootstrap(const char *executable,int field_control)
     unsigned first=field_control>=2?(unsigned)field_control+10:field_control?6:0;
     unsigned end=field_control>=2?first+1:field_control?12:6;
     for(unsigned input=first;input<end;++input){
-        const char *limit=input==18?"131932":input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
-        const char *args[2048]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
+        const char *limit=input==19?"154203":input==18?"131932":input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+        const char *args[4096]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
         for(unsigned event=0;event<(input==3?4u:input==2 || input>=4?6u:input?1u:0u);++event){
             unsigned index=input==3 && event>=2?event+2:event;
             args[at++]="--pad-at";args[at++]=events[index];
         }
-        char scheduled[1024][32];
+        char scheduled[2048][32];
         if(input==1){
             for(unsigned event=0;event<128;++event){
                 snprintf(scheduled[event],sizeof(scheduled[event]),"%u:8",10001+event);
@@ -9231,7 +9231,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
-            if(input==18){
+            if(input>=18){
                 static const unsigned route[][2]={
                     {113000,16},{115000,16384},{115008,0},{115128,16384},{115136,0},{115256,16384},
                     {115264,0},{115384,16384},{115392,0},{115400,0},{115512,16384},{115520,0},
@@ -9279,6 +9279,61 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
+            if(input==19){
+                /* Recorded host input from the M020 receipt through two corridor
+                 * victories, level-up, M011 round trip and the M017 survivor. */
+                static const unsigned route[][2]={
+                    {132000,16384},{132008,0},{132200,64},{132360,32},{132780,16},{132870,32},
+                    {132970,16},{133030,32},{133130,64},{133170,32},{133330,16},{133410,128},
+                    {133430,32},{133870,16384},{133874,0},{134054,64},{134454,16384},{134458,0},
+                    {134638,32},{134642,0},{134650,16384},{134654,0},{134834,64},{135234,32},
+                    {135250,0},{135258,16384},{135262,0},{135442,32},{135642,16384},{135646,0},
+                    {135826,128},{136326,0},{136406,16384},{136410,0},{136426,64},{137226,128},
+                    {137306,16384},{137310,0},{137338,16384},{137342,0},{137370,16384},{137374,0},
+                    {137402,16384},{137406,0},{137434,16384},{137438,0},{137466,16384},{137470,0},
+                    {137498,16384},{137502,0},{137530,16384},{137534,0},{137562,16384},{137566,0},
+                    {137594,16384},{137598,0},{137626,16384},{137630,0},{137658,16384},{137662,0},
+                    {137690,16384},{137694,0},{137722,16384},{137726,0},{137754,16384},{137758,0},
+                    {137786,16384},{137790,0},{137818,16384},{137822,0},{137850,16384},{137854,0},
+                    {137882,16384},{137886,0},{137914,16384},{137918,0},{137946,16384},{137950,0},
+                    {137978,16384},{137982,0},{138010,16384},{138014,0},{138042,16384},{138046,0},
+                    {138074,16384},{138078,0},{138106,16384},{138110,0},{138138,16384},{138142,0},
+                    {138170,16384},{138174,0},{138202,16384},{138206,0},{138234,16384},{138238,0},
+                    {138266,16384},{138270,0},{138298,16384},{138302,0},{138330,16384},{138334,0},
+                    {138362,16384},{138366,0},{138394,16384},{138398,0},{138426,16384},{138430,0},
+                    {138458,16384},{138462,0},{138490,16384},{138494,0},{138522,16384},{138526,0},
+                    {138554,16384},{138558,0},{138586,16384},{138590,0},{138618,16384},{138622,0},
+                    {138650,16384},{138654,0},{138682,16384},{138686,0},{138714,16384},{138718,0},
+                    {138746,16384},{138750,0},{138778,16384},{138782,0},{138810,16384},{138814,0},
+                    {138842,16384},{138846,0},{138874,16384},{138878,0},{138906,16384},{138910,0},
+                    {138938,16384},{138942,0},{138970,16384},{138974,0},{139002,16384},{139006,0},
+                    {139034,16384},{139038,0},{139066,16384},{139070,0},{139098,16384},{139102,0},
+                    {139130,16384},{139134,0},{139162,16384},{139166,0},{139194,16384},{139198,0},
+                    {139226,16384},{139230,0},{139258,16384},{139262,0},{139290,16384},{139294,0},
+                    {139322,16384},{139326,0},{139960,64},{141960,32},{142210,0},{142710,64},
+                    {142748,32},{142788,16384},{142792,0},{143192,64},{143412,32},{143472,16384},
+                    {143476,0},{143516,128},{144036,0},{144336,128},{144436,0},{144736,16},
+                    {144758,128},{144908,16384},{144912,0},{145212,64},{145332,128},{145632,0},
+                    {146032,32},{146232,16},{146812,0},{147212,16},{149112,32},{149562,0},
+                    {149862,16384},{149866,0},{149894,16384},{149898,0},{149926,16384},{149930,0},
+                    {149958,16384},{149962,0},{149990,16384},{149994,0},{150022,16384},{150026,0},
+                    {150054,16384},{150058,0},{150086,16384},{150090,0},{150118,16384},{150122,0},
+                    {150150,16384},{150154,0},{150182,16384},{150186,0},{150214,16384},{150218,0},
+                    {150246,16384},{150250,0},{150278,16384},{150282,0},{150310,16384},{150314,0},
+                    {150342,16384},{150346,0},{150374,16384},{150378,0},{150406,16384},{150410,0},
+                    {150438,16384},{150442,0},{150470,16384},{150474,0},{150502,16384},{150506,0},
+                    {150534,16384},{150538,0},{150566,16384},{150570,0},{150598,16384},{150602,0},
+                    {150630,16384},{150634,0},{150662,16384},{150666,0},{150694,16384},{150698,0},
+                    {150726,16384},{150730,0},{150758,16384},{150762,0},{150870,64},{151005,32},
+                    {151165,0},{151565,16384},{151569,0},{151689,16384},{151693,0},{151813,16384},
+                    {151817,0},{151937,16384},{151941,0},{152061,16384},{152065,0},{152185,16384},
+                    {152189,0},{152369,16384},{152373,0},{153553,16},{153653,0},
+                };
+                for(unsigned i=0;i<sizeof(route)/sizeof(route[0]);++i){
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",route[i][0],route[i][1]);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                }
+            }
 #undef BOOTSTRAP_PRESS
         }
         SDL_PropertiesID props=SDL_CreateProperties();
@@ -9290,7 +9345,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==19?"\"vblanks\":154203":input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -9378,6 +9433,13 @@ static int original_native_bootstrap(const char *executable,int field_control)
            !strstr(output,"\"player\":true,\"flags\":8,\"position\":[-33929350,0,19598750],\"yaw\":2048") ||
            !strstr(output,"\"combat\":{\"mode\":9,\"live_enemies\":0,\"player_hp\":45,\"player_max_hp\":45}") ||
            !strstr(output,"\"inventory\":{\"capacity\":10,\"slots\":[256,257,258,512,6,0,0")))valid=0;
+        if(input==19 && (!output || !strstr(output,"\"scene\":2818577352") ||
+           !strstr(output,"\"video_state\":0") || !strstr(output,"\"move_lock\":0") ||
+           !strstr(output,"\"menu\":null") ||
+           !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":89}") ||
+           !strstr(output,"\"player\":true,\"flags\":8,\"position\":[18022400,-262144,-55115776],\"yaw\":3910") ||
+           !strstr(output,"\"combat\":{\"mode\":9,\"live_enemies\":0,\"player_hp\":14,\"player_max_hp\":53}") ||
+           !strstr(output,"\"inventory\":{\"capacity\":12,\"slots\":[256,257,258,512,6,0,0")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -9419,6 +9481,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==14 && hash!=UINT64_C(0xc7ae3598591ad7c3))valid=0;
         if(input==15 && hash!=UINT64_C(0x1a99c887686e1a86))valid=0;
         if(input==16 && hash!=UINT64_C(0x8e856f4fc0b74e6d))valid=0;
+        if(input==19 && hash!=UINT64_C(0x16dbf16f81d33fc0))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
@@ -9437,6 +9500,7 @@ int main(int argc, char **argv)
 
     if(argc==3 && !strcmp(argv[1],"--native-stage"))return original_native_bootstrap(argv[2],2);
     if(argc==3 && !strcmp(argv[1],"--native-battle-entry"))return original_native_bootstrap(argv[2],3);
+    if(argc==3 && !strcmp(argv[1],"--native-m017"))return original_native_bootstrap(argv[2],9);
     if(argc==3 && !strcmp(argv[1],"--native-m020-items"))return original_native_bootstrap(argv[2],8);
     if(argc==3 && !strcmp(argv[1],"--native-rat"))return original_native_bootstrap(argv[2],7);
     if(argc==3 && !strcmp(argv[1],"--native-hallway"))return original_native_bootstrap(argv[2],6);

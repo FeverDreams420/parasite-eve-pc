@@ -474,6 +474,36 @@ checkpointu wywołuje dialog117 przy końcowych drzwiach. Podejście do bocznych
 drzwi przechodzi do tokenu A8002048, gdzie zatrzymuje się na niepodpiętym
 opkodzie62 (aktor2:0, script_byte72). Następna lokacja nie jest jeszcze zaliczona.
 
+W scenie A8002048 opkod62 odpowiada CPU USA 80017D3C,
+Script_SetEntityField224 w istniejącym system_opcodes.c. Podpięto go do
+dispatchera; sygnatura jest teraz int** zamiast short**, a promień cylindra
+render_object.hit_cylinder.radius pochodzi jawnie z signed górnego półsłowa
+argumentu. Nie zmieniono funkcji ani semantyki: oryginał wykonuje lh +2,
+sh +224. 65536 rzeczywistych wykonań CPU (wszystkie górne półsłowa,
+low=5aa5, sąsiednie półsłowo=a55a) daje `18f5d8e8953d7b25`.
+Istniejący fixture porównuje return/radius/sąsiada, cały natywny rekord
+aktora i 12 programów dispatchera. Oba powiązane CTest przeszły w 12,39 s.
+Powtórka z rzeczywistego pre-rat checkpointu, wejście przez boczne drzwi,
+kończy 42000 VBlank w A8002048: HP11/45, mode9, enemy0, move_lock0, brak menu
+oraz otwartych dialogów, Aya[28639232,0,-1245184], yaw1024. Obejrzano render
+zagraconej garderoby z postaciami. Cała VRAM SHA256
+`032edcda79b08c60bc0f54ffbdc48e09ea7a72c55187f28216eb244303bbb163`.
+Nie jest to jeszcze dowód całej zawartości tej lokacji. Świeży --assets
+z ASan/UBSan/function i instrumentowanym PsyZ/SDL przeszedł. Pełny zestaw
+45 CTest pozostaje w toku; executable podczas jego wykonywania nie jest
+przebudowywany.
+
+Oryginalne Save_BuildHeader/Save_BuildCardFile utworzyły także rzeczywisty
+checkpoint po szczurze (8192 bajty, wyłącznie /tmp), SHA256
+`1a909415ef6d6e671b90053f0ec85ea647146a295ddcfd8398e1975299736f1b`.
+Continue z tego checkpointu dochodzi do M012, ale dalsza droga zatrzymuje
+się na niepodpiętym opkodzie210 (aktor6:0, script_byte1132). Nie uznano tego
+checkpointu za w pełni zweryfikowany roundtrip. Odczyt oryginalnej tabeli
+wskazuje dla 210 CPU80019DB8, istniejący Script_GetFloorTableValue; pomimo
+historycznej nazwy odczytuje GAME_TIME_COUNTER. Dalsze wiązanie wymaga
+sprawdzenia zakresów i referencji CPU. Nie dodano projektu edytora
+zapisów ani danych zapisu do repozytorium.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

@@ -1954,6 +1954,32 @@ static int original_actor_render_opcodes(void)
            node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
     }
     if(table_hash!=UINT64_C(0x7b1afe75d03b90c1))return 0;
+    if(g_ScriptQueueOpcodeHandlers[62]!=Script_SetEntityField224)return 0;
+    uint64_t radius_hash=UINT64_C(14695981039346656037);
+    for(unsigned high=0;high<65536;++high){
+        FieldActor actor={0},expected;g_CurrentEntity=&actor;
+        actor.render_object.hit_cylinder.radius=0x1234;
+        actor.render_object.hit_cylinder.bounds_value1=(s16)0xa55a;
+        expected=actor;expected.render_object.hit_cylinder.radius=(s16)high;
+        int value=(s32)((high<<16)|0x5aa5);int *args[]={&value};
+        u32 result=Script_SetEntityField224(args);
+        const u32 words[]={result,(u16)actor.render_object.hit_cylinder.radius|
+            ((u32)(u16)actor.render_object.hit_cylinder.bounds_value1<<16)};
+        for(unsigned w=0;w<2;++w)for(unsigned b=0;b<4;++b)
+            radius_hash=(radius_hash^((words[w]>>(b*8))&255))*UINT64_C(1099511628211);
+        if(memcmp(&actor,&expected,sizeof(actor)))return 0;
+    }
+    if(radius_hash!=UINT64_C(0x18f5d8e8953d7b25))return 0;
+    for(unsigned i=0;i<sizeof(table_values)/sizeof(table_values[0]);++i){
+        FieldActor actor={0},expected=actor;g_CurrentEntity=&actor;
+        expected.render_object.hit_cylinder.radius=(s16)(table_values[i]>>16);
+        u32 program[]={62|(1u<<13),0,table_values[i],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;
+        Script_RunQueue();
+        if(memcmp(&actor,&expected,sizeof(actor)) || node.current.script!=program+5 ||
+           node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+    }
+    puts("Original cylinder radius opcode 62: all 65536 signed high halfwords match USA CPU; full actor guards and dispatcher passed");
     s16 rates[]={0,1,32,-2,32767};
     for(unsigned player=0;player<2;++player) for(unsigned i=0;i<5;++i) {
         FieldActor actor={.flags=0x8040};ScriptNode node={.flags=0x8000};

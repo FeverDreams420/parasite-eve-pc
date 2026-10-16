@@ -85,12 +85,12 @@ int Script_SetBattleStateMode(void) {
     return 1;
 }
 
-int Script_SetEntityField224(short **arg0) {
+int Script_SetEntityField224(int **arg0) {
     FieldActor *entity;
     int value;
 
     entity = g_CurrentEntity;
-    value = (*arg0)[1];
+    value = (s16)((u32)*arg0[0] >> 16);
     entity->render_object.hit_cylinder.radius = value;
     return 1;
 }

@@ -235,9 +235,11 @@ Lewe schody M031 prowadzą do M032. Podpięto brakujący descriptor
 slot73/80192558 do istniejącej klasy C, wiersz4. Fixture czyta rzeczywisty
 M032 z PE.IMG: siedem metod oraz cały blok764 instrukcji zgadza się z M028
 po dokładnie26 relokacjach adresów. Rozszerzony fixture --assets przechodzi
-z ASan/UBSan/function. Root build pozostaje zamrożony na b18423087 na czas
-uruchomionego pełnego zestawu50 testów; M032 sprawdzono osobnymi buildami
-z aktualnego źródła, nie nadpisując działających programów.
+z ASan/UBSan/function. Pełny zestaw50 testów zamrożonego b18423087 przeszedł w1423.44s (-j2,
+wymagany Disc1, bez SKIP). M032 sprawdzono osobnymi buildami z aktualnego
+źródła, nie nadpisując działających programów. Po zakończeniu zestawu
+odświeżono root build o poprawkę M032; cztery powiązane CTest aktualnego
+źródła PASS12.97s. Nie jest to świeży pełny wynik50/50 dla poprawki M032.
 
 Próba od prywatnego Continue w M031 wchodzi do M032; cap29100 obejmuje
 trwającą walkę, HP3/67, dwóch wrogów. Zwykły build i runtime z sanitizerami

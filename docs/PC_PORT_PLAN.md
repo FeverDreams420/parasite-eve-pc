@@ -176,10 +176,9 @@ Nie jest to dowód wszystkich ataków, dropów ani klatek pośrednich.
 i wchodzi do M083/cap54603 (A80081C8): fontanna,49 trójkątów, HP123,
 etap248, lock0. Obraz /tmp/pe-m083-live.png obejrzany. Ruch alejką
 uruchamia walkę dwóch typ3/57HP; po czekaniu do55335 HP94, ATB9000,
-bez poison. To nie jest jeszcze ukończona walka ani pełny replay M083.
-Po48 klatkach uniku i otwarciu menu/cap55399 nadal HP94; bieżący
-debugger jest zatrzymany na głównym menu walki (selected_base0).
-Bieżący debugger używa zamrożonego /tmp/pe-park-slow99-game-debug,
+bez poison. Wtedy walka nie była jeszcze ukończona.
+Po48 klatkach uniku i otwarciu menu/cap55399 nadal HP94.
+Ten przebieg używał zamrożonego /tmp/pe-park-slow99-game-debug,
 prywatnego /tmp/pe-m082-prepared, args.json, log
 /tmp/pe-m082-prepared-lldb.log i ciągłego trace
 /tmp/pe-m082-prepared-input.jsonl (od47891). Wyłącznie input i limity
@@ -187,8 +186,52 @@ hosta; nie zmieniano HP, pozycji, AI, flag ani inventory przez debugger.
 Pomocnik /tmp/pe_park_combat_control.py ma dodatkowy pe-ready-range,
 który fizycznie zbliża Ayę na zasięg M16, zanim zatwierdzi cel.
 
-Następne zadanie: ukończyć M083 i kontynuować kampanię. Pełna kampania i pełny zakres celu
-pozostają nieukończone. Żaden plik produkcyjny nie został dodany ani
+M083: Cure-P użyte przez menu przy94HP nadaje immunity3 i zwalnia
+slot10. Dwa typ3/57HP pokonane M16, wynik HP59/123. W tej gałęzi nagrody
+to dwa Ammo+6, bez Medicine/Cure-P. Obtain All wyczyściło oba pending
+wpisy, End zamyka ekran. Dwa Heal1 leczą HP59→89→119. Trzecie użycie
+nie leczy (po dwóch pozostało27PE, koszt30); menu zamknięte. Próba
+pomocnika single z Circle cofa wybór w oryginalnym reticle i nie kończy
+pojedynczego strzału; dopiero dalsze zatwierdzone cele wykonują serię.
+Nie traktujemy samego pojedynczego Cross/Circle jako trafienia.
+
+Pełny replay od G do cap59047 PASS normalnie i z ASan/UBSan/function:
+cały JSON i1MiB VRAM identyczne, SHA256
+a2bfd4f1d83990d3399c963607c84f7a9dc55252e034302cd575e9ac79a461f0.
+M083, etap248, HP119/123, capacity20, lock0, brak menu/żywych wrogów,
+slot10 pusty po Cure-P, broń9/pancerz14, bonus M16 nadal2. Wszystkie
+prywatne pliki B–G niezmienione; użytkowe bu00/ i bu10/ nietknięte.
+Artefakty /tmp/pe-m083-victory-{normal,san}.log, katalogi z frame.vram,
+/tmp/pe-m083-victory-args.json, verify.py i proof.json. Obraz końcowy
+frame.png obejrzany. To nie dowodzi wszystkich ataków, dropów ani
+wszystkich wariantów walk M083.
+
+Dalszy ruch do schodów daje script lock przycap59582 i prowadzi do M085,
+nie M084. Pierwszy loader zatrzymuje się jawnie: slot10/80190024,
+Scene frame startup failed:-2, przed zamierzonym cap59702. Proces
+zakończył się; debugger zamknięto. Zachowany ciągły input:
+/tmp/pe-m085-entry-failure-args.json i /tmp/pe-m082-prepared-input.jsonl.
+Nie ma jeszcze dowodu działającego wejścia M085.
+
+Następny oryginalny moduł to istniejący room_lib/three_particles.c,
+pięć metod klasy i osiem callbacków/cząstek, obecnie jeszcze nie włączony
+do buildu natywnego. Cały blok M065 i M085 ma4276 bajtów i jest identyczny,
+SHA256 5f38b43c1a2a1c16f29c5e9f8b5e27641e93f0b77b12571d214dbf17b010c035.
+Odczytano descriptor, wszystkie listy, layout30h/B4h i14-word script;
+/tmp/pe-m085-module-audit.json oraz /tmp/pe-m{065,085}-room.bin.
+Do poprawienia w całym oryginalnym module: ABI metod/callbacków, natywny
+actor/matrices zamiast offset238h, wskaźnik w RoomDebrisClock, rozmiary
+alokacji i arytmetyka przesunięć/wrap. Header ma velocity[4], ale oryginalny
+layout B4h oraz kod używają trzech wektorów od9Ch. Uwaga na alias:
+floor packet=80190088, główny packet=80190098, Alpha=801900A2 jest jego
+polem depth, nie osobnym obiektem (SH potwierdzone w8018F984). Rampa ma16
+bajtów od80190078. Inicjalizację obu macierzy i COP2 trzeba zweryfikować
+z CPU/GTE, a nie zakładać zerowej translacji stosu. Żaden z tych punktów
+nie jest jeszcze portem ani PASS tego modułu.
+
+Następne zadanie: naprawić cały three_particles.c w miejscu, zweryfikować
+CPU/PM i wejście M085, następnie kontynuować kampanię. Pełna kampania i
+pełny zakres celu pozostają nieukończone. Żaden plik produkcyjny nie został dodany ani
 przeniesiony. Użytkowe bu00/ i bu10/ nietknięte.
 
 Pełny oryginalny input po etapie240 przechodzi M069→M072, ucieczkę Eve

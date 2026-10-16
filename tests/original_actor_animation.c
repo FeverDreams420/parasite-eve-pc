@@ -51,6 +51,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/room_m023_beacon.h"
 #include "pe1/room_flare.h"
 #include "pe1/room_glow_orb.h"
+#include "pe1/room_drop_field.h"
 #include "pe1/room_ember_burst.h"
 #include "pe1/room_module.h"
 #include "pe1/room_script_record.h"
@@ -1910,6 +1911,67 @@ static int authored_orbit_flare_cycle(void)
     return 1;
 }
 
+static int original_room_effect_core_flags(void)
+{
+    const u32 seeds[]={0,1,0xffffffff,0x80000000,0xc0ffffff,0x07060000,0x3f000000,0x40000000};
+    int (*handlers[])(PmSlotHeader *)={RoomLib_CloseTarget,RoomEffect_DropFieldClose,RoomEffect_DropFieldRegister};
+    FieldActor *old_player=g_PlayerEntity;FieldFxState *old_state=g_FieldFxScriptState;
+    FieldFxObject *old_object=g_FieldFxScriptObject;FieldFxSlot *old_slots=g_FieldFxSlotTable;
+    char *old_data=g_FieldFxScriptData;int *old_commands=g_FieldFxCommandTable;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned method=0;method<3;++method)for(unsigned status=0;status<8;++status)for(unsigned seed=0;seed<8;++seed){
+        FieldActorState core;memset(&core,0xa5,sizeof(core));FieldActor actor={0},other={0};u8 phase=1;
+        core.core_flags=seeds[seed];core.control10.command_value=status==2?0:status==3?-1:1;
+        core.flags=0x07060000;core.action_state=&phase;
+        actor.state=status==1?NULL:&core;g_PlayerEntity=status==7?&actor:&other;
+        FieldFxObject object={0};memset(&object,0xa5,8);object.prefix.actor=status==0?NULL:&actor;
+        object.prefix.asset_type=status==5?7:status==6?14:0;
+        FieldActorState expected=core;int running=status>=2;
+        if(method<2 && running)expected.core_flags &= 0xc0ffffff;
+        if(method==2 && status==4)expected.core_flags &= 0xbfffffff;
+        u32 result=handlers[method]((PmSlotHeader *)&object);u8 output[21];
+        memcpy(output,&result,4);memcpy(output+4,&object,8);memcpy(output+12,&core.core_flags,4);memcpy(output+16,&core.flags,4);output[20]=phase;
+        for(unsigned i=0;i<sizeof(output);++i)hash=(hash^output[i])*UINT64_C(1099511628211);
+        if(memcmp(&core,&expected,sizeof(core)) || phase!=(method<2 && running?4:1))return 0;
+        ++cases;
+    }
+    g_PlayerEntity=old_player;g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;
+    g_FieldFxSlotTable=old_slots;g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;
+    if(cases!=192 || hash!=UINT64_C(0x15ee6173ba0071b5)){fprintf(stderr,"Room effect core flags %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original room effect closure/registration: 192 unhooked USA CPU states, native owner/player/dead/null modes and every adjacent event byte preserved passed");
+    return 1;
+}
+
+static int original_drop_field_states(void)
+{
+    const u8 fills[]={0,1,0xa5,0xff};const unsigned initializers[]={2,3,6,12},updates[]={2,3,4,6,9,10};
+    const s16 ages[]={-32768,-1,0,1,7,8,20,21,60,61,120,121,32767},ys[]={0,1,-1,-32768,32767};
+    const u32 steps[]={0,1,0xffffffff,0x80000000,0x7fffffff};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    _Alignas(void *) u8 data[512];u8 control[4];
+#define DROP_HASH(ptr,length) do {const u8 *bytes=(const u8 *)(ptr);for(unsigned b=0;b<(length);++b)hash=(hash^bytes[b])*UINT64_C(1099511628211);}while(0)
+    for(unsigned id=0;id<4;++id)for(unsigned fill=0;fill<4;++fill){
+        memset(data,fills[fill],sizeof(data));g_RoomDropFieldSpawnData[initializers[id]](NULL,control,data);
+        DROP_HASH(data,sizeof(data));++cases;
+    }
+    for(unsigned id=0;id<6;++id)for(unsigned fill=0;fill<4;++fill)for(unsigned age=0;age<13;++age){
+        memset(data,fills[fill],sizeof(data));memset(control,0xa5,sizeof(control));memcpy(control+2,ages+age,2);
+        g_RoomDropFieldUpdateList[updates[id]](NULL,control,data);
+        DROP_HASH(data,sizeof(data));DROP_HASH(control,sizeof(control));++cases;
+    }
+    FieldFxState *old_state=g_FieldFxScriptState;FieldFxState script={0};RoomDropFieldState context={0};
+    g_FieldFxScriptState=&script;script.current_context=&context;
+    for(unsigned step=0;step<5;++step)for(unsigned y=0;y<5;++y)for(unsigned fill=0;fill<4;++fill){
+        context.initialFallStep=(s32)steps[step];memset(data,fills[fill],sizeof(data));memcpy(data+2,ys+y,2);
+        g_RoomDropFieldSpawnData[5](NULL,control,data);DROP_HASH(data,sizeof(data));++cases;
+    }
+    g_FieldFxScriptState=old_state;
+#undef DROP_HASH
+    if(cases!=428 || hash!=UINT64_C(0xb3bad0b238c533aa)){fprintf(stderr,"Drop field CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original DropField: 428 unhooked USA CPU initializer/update states, signed positions, word/halfword wrap, timers, phases and whole-buffer guards passed");
+    return 1;
+}
+
 static int original_room_glow_orb(void)
 {
     const u32 seeds[]={0,1,2,3,0x12345678,0xffffffff,0x80000000,0x7fffffff};
@@ -1993,6 +2055,13 @@ static int original_room_glow_orb(void)
     }
     if(!drawn || !linked || (seen&14)!=14 || action!=4 || bank.slots[0].header.state || bank.slots[0].effect.state.slot_count){
         fprintf(stderr,"Room glow lifecycle seen=%x drawn=%u linked=%u action=%u state=%u count=%d\n",seen,drawn,linked,action,bank.slots[0].header.state,bank.slots[0].effect.state.slot_count);return 0;}
+    RoomGlowOrb touching={.state=1,.size=4096,.depth=128,.z=1200,
+        .matrix={.m={{4096,0,0},{0,0,4096},{0,-4096,0}}}};
+    FieldFxObject hit_object={0};hit_object.prefix.actor=&actor;u8 hit_slot[2]={2,1};
+    other.pos_x=other.pos_y=0;other.pos_z=1200*65536;player_state.flags=0;
+    state.core_flags=0x12345678;state.flags=0x76543210;g_DrawPacketOffset=0;
+    if(RoomEffect_GlowOrbDraw(&hit_object,hit_slot,&touching) || hit_slot[1]!=2 ||
+       state.core_flags!=0x92345678 || state.flags!=0x76543210 || player_state.flags!=0x4000){fprintf(stderr,"Glow contact slot=%u core=%x flags=%x player=%x\n",hit_slot[1],state.core_flags,state.flags,player_state.flags);return 0;}
     }
     g_RoomGlowOrbHandlers.unload();
     g_PmTables=old_tables;g_PmCmdHandlerArray[8]=old_class;g_GameState=old_game;g_GameStateFlags=old_flags;
@@ -4004,7 +4073,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
@@ -4444,10 +4513,10 @@ static int authored_m023_effect_cycle(SceneAssetView *room)
 
 static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)
 {
-    u8 header[0x800];u32 base;PeDiscFile archive;SceneAssetView *rooms[4]={NULL,NULL,NULL,NULL};
+    u8 header[0x800];u32 base;PeDiscFile archive;SceneAssetView *rooms[5]={NULL,NULL,NULL,NULL,NULL};
     if(!pe_disc_read(disc,exe,0,header,sizeof(header)) || !pe_disc_find(disc,"PE.IMG",&archive))return 0;
-    memcpy(&base,header+0x18,4);const unsigned ids[]={12,28,32,34};int valid=1;
-    for(unsigned i=0;valid && i<4;++i){
+    memcpy(&base,header+0x18,4);const unsigned ids[]={12,28,32,34,348};int valid=1;
+    for(unsigned i=0;valid && i<5;++i){
         SceneRoomSectorRange range;
         valid=pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(ids[i]-1)*8,&range,sizeof(range));
         if(!valid)break;
@@ -4533,7 +4602,19 @@ static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)
             g_RoomUpdateList[2]==RoomEffect_GlowOrbUpdate && g_RoomUpdateList[3]==RoomEffect_GlowOrbFlashUpdate;
 
     }
-    free(rooms[0]);free(rooms[1]);free(rooms[2]);free(rooms[3]);
+    if(valid){
+        const u8 *d=(u8 *)rooms[4]+8;
+        const u32 methods[]={0x8018f064,0x8018f06c,0x8018f098,0x8018f0c4,0x8018f128,0x8018f1b4,0x8018f238};
+        SceneRoomDirectory *dir=SceneAsset_ResolveOffset(rooms[4],rooms[4]->header.directoryOffset);
+        SceneRoomRecord *record=SceneAsset_ResolveOffset(rooms[4],dir->scripts&0x3fffff);
+        valid=dir->scripts>>22==1 && record->source.bytes.slot==9 && record->u.handlerAddress==0x8019290c &&
+            !memcmp(d+0x8019290c-0x8018eff0,methods,sizeof(methods)) &&
+            !memcmp(d+0x80192928-0x8018eff0,g_RoomDropFieldScript,sizeof(g_RoomDropFieldScript)) &&
+            !memcmp(d+0x801928f2-0x8018eff0,g_RoomDropFieldSpawnScript+1,26) &&
+            !memcmp(d+0x801929e8-0x8018eff0,g_RoomDropFieldParticleFrames,20) &&
+            g_RoomDropFieldSpawnScript[0]==sizeof(RoomDropFieldState);
+    }
+    free(rooms[0]);free(rooms[1]);free(rooms[2]);free(rooms[3]);free(rooms[4]);
     if(valid)puts("Original M028: class C slot73, orbit-flare slot115, full USA descriptors/script/seeds and 658 controller instructions with exactly 19 address relocations match M012; M032 class C slot73 descriptor and 764 instructions match M028 after exactly 26 address relocations; M034 glow-orb class slot8, all callback lists, sizes, 35-word script and rotation/flash seeds match USA");
     return valid;
 }

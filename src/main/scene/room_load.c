@@ -6,6 +6,7 @@
 #include "pe1/render_shadow.h"
 #include "pe1/room_fx_model.h"
 #include "pe1/room_glow_orb.h"
+#include "pe1/room_drop_field.h"
 #include "pe1/render_camera.h"
 #include "pe1/akao.h"
 #include "pe1/asset_tim.h"
@@ -453,6 +454,8 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomActorClassTable[4];
         if (map + 1 == 34 && slot == 8 && record[i].u.handlerAddress == 0x8018ff7cu)
             native = &g_RoomGlowOrbHandlers;
+        if (map + 1 == 348 && slot == 9 && record[i].u.handlerAddress == 0x8019290cu)
+            native = &g_RoomDropFieldHandlers;
         if (map + 1 == 23 && slot == 118 && record[i].u.handlerAddress == 0x80190720u)
             native = &g_RoomM023Effects;
         if (map + 1 == 5 && slot == 117 && record[i].u.handlerAddress == 0x80190b44u)
@@ -603,6 +606,17 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_RoomGlowOrbOrigin, 0, sizeof(g_RoomGlowOrbOrigin));
             memset(&g_RoomGlowOrbSprite, 0, sizeof(g_RoomGlowOrbSprite));
             memset(&g_RoomGlowOrbFlashSprite, 0, sizeof(g_RoomGlowOrbFlashSprite));
+        } else if (map + 1 == 348 && slot == 9) {
+            g_PmCmdHandlerTable[slot] = &g_RoomDropFieldHandlers;
+            g_RoomDropFieldModel = NULL;
+            memset(g_RoomDropFieldRings, 0, sizeof(g_RoomDropFieldRings));
+            memset(&g_RoomDropFieldSpinSprite, 0, sizeof(g_RoomDropFieldSpinSprite));
+            memset(&g_RoomDropFieldModelSprite, 0, sizeof(g_RoomDropFieldModelSprite));
+            memset(&g_RoomDropFieldDoubleSprite, 0, sizeof(g_RoomDropFieldDoubleSprite));
+            memset(&g_RoomDropFieldParticleSprite, 0, sizeof(g_RoomDropFieldParticleSprite));
+            memset(&g_RoomDropFieldQuadSprite, 0, sizeof(g_RoomDropFieldQuadSprite));
+            memset(&g_RoomDropFieldDropSprite, 0, sizeof(g_RoomDropFieldDropSprite));
+            memset(&g_RoomDropFieldMotionSprite, 0, sizeof(g_RoomDropFieldMotionSprite));
         } else if ((map + 1 == 28 || map + 1 == 32) && slot == 73) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];
         } else {

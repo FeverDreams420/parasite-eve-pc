@@ -14,7 +14,7 @@ int RoomLib_CloseTarget(PmSlotHeader *slot)
     slot->state = 4;
     if ((unsigned int)FieldFx_GetStatus(slot) >= 2) {
         FieldActor *actor = ((FieldFxObjectPrefix *)slot)->actor;
-        actor->state->flags &= 0xC0FFFFFFu;
+        actor->state->core_flags &= 0xC0FFFFFFu;
         *actor->state->action_state = 4;
     }
     return 0;

@@ -165,7 +165,7 @@ int RoomEffect_GlowOrbDraw(void *data, void *control, void *state) {
         if (FieldFx_IsPointInSpriteQuad(&point, &matrix) != 0 && FieldFx_GetStatus(object) == 3) {
             g_PlayerEntity->state->flags |= 0x4000;
             if (object->prefix.actor != 0) {
-                object->prefix.actor->state->flags |= 0x80000000;
+                object->prefix.actor->state->core_flags |= 0x80000000;
             }
             slot[1] = 2;
         }

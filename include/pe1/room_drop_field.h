@@ -14,6 +14,8 @@
 #include "pe1/room_fx.h"
 #include "pe1/room_interface.h"
 #include "pe1/room_spark.h"
+#include "pe1/field_actor.h"
+#include "pe1/fieldfx_state.h"
 
 /* The drop field effect set linked by room_m174, room_m348 and room_m383
  * (src/overlays/room_lib/drop_field.c): a controller and
@@ -35,15 +37,8 @@ typedef struct RoomDropFieldMatrixWords {
 } RoomDropFieldMatrixWords;
 
 /* The room entity and its link as the controller init reads them. */
-typedef struct RoomDropFieldLink {
-    u8 pad0[0x238];
-    RoomDropFieldMatrixWords *view; /* 0x238: view matrices */
-} RoomDropFieldLink;
-
-typedef struct RoomDropFieldEntity {
-    u8 pad0[0x8];
-    RoomDropFieldLink *link;      /* 0x08 */
-} RoomDropFieldEntity;
+typedef FieldActor RoomDropFieldLink;
+typedef FieldFxObject RoomDropFieldEntity;
 
 typedef struct RoomDropFieldState {
     RoomDropFieldLink *link;
@@ -62,9 +57,9 @@ typedef struct RoomDropFieldState {
     s32 initialFallStep;          /* 0x58, converted to 8.8 at spawn */
 } RoomDropFieldState;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDropFieldState, holdFrames) == 0x48,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDropFieldState, holdFrames) == sizeof(void *) + 0x44,
                   room_drop_field_hold_offset);
-PE1_STATIC_ASSERT(sizeof(RoomDropFieldState) == 0x5C,
+PE1_STATIC_ASSERT(sizeof(RoomDropFieldState) == sizeof(void *) + 0x58,
                   room_drop_field_state_size);
 
 typedef struct RoomDropFieldVec {
@@ -135,7 +130,6 @@ extern unsigned char g_RoomDropFieldBeamImages[];
 extern u8 g_RoomDropFieldParticleFrames[];
 
 s32 *FieldFx_RegPtr(s32 index);
-void FieldFx_BuildRingGeometry(void *params);
 void FieldFx_ModelSetDepthBias(int arg0);
 
 #endif

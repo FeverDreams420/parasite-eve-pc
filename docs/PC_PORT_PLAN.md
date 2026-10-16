@@ -381,6 +381,49 @@ Ten replay używa prywatnego checkpointu w /tmp; nie jest nowym testem
 całej trasy od New Game ani ukończeniem starcia. Katalog nadal ma50 testów;
 pełny wynik50/50 sprzed tych zmian nie jest ich świeżym wynikiem.
 
+Aktualizacja M034 → M348: cały istniejący moduł drop_field.c jest teraz
+kompilowany, z 39 oryginalnymi callbackami i klasą M348/slot9. Powiązanie
+sprawdza oryginalny deskryptor, 7 metod, 48 słów skryptu, 14 rozmiarów
+rekordów i rampę kolorów. Poprawiono w miejscu natywne wskaźniki,
+macierze, krok tablicy pierścieni i przesunięcia słów ze znakiem.
+Nie przenoszono funkcji i nie dodano plików projektu.
+
+Watchpoint sprzętowy wykazał błąd wcześniejszej adaptacji: zamknięcie
+klasy zapisywało flags (oryginalne +0x4c), uszkadzając exitMode animacji3,
+zamiast core_flags (+0). Poprawiono wspólne CloseTarget, DropField
+Register/Close oraz flagę trafienia właściciela GlowOrb. Flaga trafienia
+gracza nadal prawidłowo używa flags. Bez omijania animacji ani zastępczego
+trybu przy brakującej animacji. Zmiana przywraca obrażenia i wymaga innego
+inputu niż wcześniejsze replaye; historyczne HP72/cap19782 powyżej nie
+opisuje aktualnego buildu. Stary przebieg może kończyć się Game Over
+nawet przy kodzie wyjścia0, więc sam exit0 nie jest zaliczeniem walki.
+
+Test istniejącego modułu obejmuje 428 stanów porównanych z niehookowanym
+kodem CPU USA (hash b3bad0b238c533aa), 192 przypadki oryginalnego zapisu
+flag (15ee6173ba0071b5) oraz dwa natywne kontakty GlowOrb z kontrolą
+nienaruszenia sąsiednich pól. Metadane porównano z rzeczywistym M348.
+Cztery testy CTest przeszły w13.12s; osobny test aktorów z zasobami przeszedł
+ASan/UBSan/function. Nie powtórzono pełnych50 testów po tej zmianie.
+Nie oznacza to niezależnej weryfikacji wszystkich rysujących callbacków.
+
+Prywatny Continue M034 i wyłącznie rzeczywisty input hosta pozwoliły
+pokonać ogon, przejść do M348, pokonać bossa, odebrać awans/nagrodę
+oraz zamknąć dialog25 i wejść M359/cap31726, HP59. Ekran awansu obejrzano.
+Nie wstrzykiwano HP, obrażeń ani stanu walki. Warianty DropField M174/M383
+oraz cała dalsza kampania nadal wymagają weryfikacji.
+
+Dwa świeże odtworzenia tego samego inputu bez debuggera, zwykłe oraz
+ASan/UBSan/function, kończą się poprawnie na cap29806: M348, ekran awansu,
+zero żywych przeciwników, HP59/72. Pełny JSON i cały VRAM są identyczne,
+SHA256 dc295b4452cc43574b005f522e7846c9245b536d428d28bc5506c41489be105a.
+Dalsze przejście do M359 potwierdzono osobno w żywej sesji; ten końcowy
+odcinek nie jest objęty powyższym porównaniem dwóch replayów.
+
+Eksperymentalny zapis wykonany w trakcie przejścia do M348 nie odtworzył
+spotkania po Continue; przyczyna nie została ustalona. Nie traktować go
+jako obsługi zapisu w dowolnym momencie. Wszystkie takie pliki i przebiegi
+pozostają w /tmp; karty użytkownika nie są zmieniane.
+
 Osobny PS1 zaakceptował także zapis M319 po drugiej Melissie wygenerowany
 przez oryginalne funkcje portu: HP21/64, zgodna pozycja Continue, Melissa
 nieobecna przy fortepianie; zwykły input dochodzi do wyboru Jump in.

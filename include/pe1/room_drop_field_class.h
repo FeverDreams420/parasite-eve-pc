@@ -10,18 +10,17 @@
  * engine, named in each room's symbol file. The start method spawns from
  * the spawn data with the spawn script as the layout; the set's effects
  * (pe1/room_drop_field.h) spawn from the same two tables. */
-extern int g_RoomDropFieldScript[];
-extern RoomModuleHandler g_RoomDropFieldDrawList[];
-extern RoomModuleHandler g_RoomDropFieldUpdateList[];
-extern u8 g_RoomDropFieldSpawnScript[];
-extern u8 g_RoomDropFieldSpawnData[];
+extern int g_RoomDropFieldScript[48];
+extern FieldFxHandler g_RoomDropFieldDrawList[14], g_RoomDropFieldUpdateList[14], g_RoomDropFieldSpawnData[14];
+extern u16 g_RoomDropFieldSpawnScript[14];
+extern PmCommand g_RoomDropFieldHandlers;
 
-int RoomEffect_DropFieldNop0(void);
-int RoomEffect_DropFieldPlantScript(void *object);
-int RoomEffect_DropFieldSpawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
-int RoomEffect_DropFieldRegister(struct RoomEnt *o);
-int RoomEffect_DropFieldStart(void *o);
-int RoomEffect_DropFieldClose(struct RoomEnt *o);
-int RoomEffect_DropFieldNop6(void);
+void RoomEffect_DropFieldNop0(void);
+void RoomEffect_DropFieldPlantScript(PmSlotHeader *object);
+int RoomEffect_DropFieldSpawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int RoomEffect_DropFieldRegister(PmSlotHeader *slot);
+int RoomEffect_DropFieldStart(PmSlotHeader *slot);
+int RoomEffect_DropFieldClose(PmSlotHeader *slot);
+void RoomEffect_DropFieldNop6(void);
 
 #endif

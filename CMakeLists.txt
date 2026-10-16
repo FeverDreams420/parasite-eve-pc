@@ -156,6 +156,7 @@ add_library(parasite-eve-original OBJECT
     src/main/fieldfx/vector.c
     src/main/field/actor_collision.c
     src/overlays/room_lib/glow_orb.c
+    src/overlays/room_lib/drop_field.c
     src/overlays/room_lib/glow_orb_setup.c
     src/overlays/room_lib/class_spawn.c
     src/overlays/room_lib/class_close_target.c

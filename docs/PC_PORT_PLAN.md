@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Skrzynia Medicine2 w M062 przeszła również oryginalną ścieżkę pełnego
+ekwipunku (17/17): komunikat „Your inventory is full”, wymianę
+przedmiotu256 na Medicine2/ID7, użycie Medicine2 przez menu (HP35→101),
+powrót do skrzyni i odzyskanie przedmiotu256. Po zamknięciu odbioru
+lock0, bez menu, ekwipunek jak po walce, klucz i wyposażenie zachowane;
+zmienna84 ma268568592 (flaga skrzyni268435456), zmienna128 wraca do0.
+Cały replay Continue F do cap59442 PASS normalnie i pod ASan/UBSan/function
+z instrumentowanymi PsyZ/SDL: pełny JSON,512 zmiennych, timery, tabela
+wyposażenia i VRAM identyczne (SHA
+d3ff64abd3ff245689d4db9efdb0e3a330ded48a8950ca1bbe2f4f8e7f821714).
+PrywatneB–F niezmienione. Artefakty /tmp/pe-zoo-medicine-{normal,san}.log
+oraz .vram, input /tmp/pe-zoo-medicine-args.json, kontrola
+/tmp/pe-zoo-medicine-verify.py i proof.json. Pozostałe dwie skrzynie
+M062 nie były jeszcze otwarte.
+
+Po powrocie M062→M063 dalsze północne wyjście zatrzymało starą wersję:
+„native descriptor missing for M358 slot74 (PS1 80193378)”.
+Oryginalne M358/M384/M387 mają identyczny kompletny moduł0x43a4 bajtów
+(SHA40b20ebed8367de7e228cf0722adb22362254961ad555f21fb6b664bb4e66ecc).
+Ich klasa okna ma te same wszystkie instrukcje co M063/M083 po
+relokacji0x34f4, lecz tablica skoków jest przeniesiona przed klasy aktorów;
+klasaE ma tę samą pełną procedurę po relokacji0x60. Test --assets
+porównuje wszystkie instrukcje obu klas,24 wpisy tablicy skoków,
+obie tablice po7 metod i oba deskryptory dla wszystkich trzech lokacji.
+Loader wiąże wyłącznie slot74/80193378 i slot75/80193308 z istniejącymi
+oryginalnymi funkcjami; inne warianty nie są podpinane przez podobieństwo.
+CPU MIPS M358 potwierdza2304 aktualizacjeE (ab6562b990f5c842),648 cykli
+okna (d06378940ffec935) i192 stanów lotu (b938fce337189cd5, mostek COP2
+PsyZ, nie niezależny audyt sprzętowego GTE). Nie dodano nowych plików
+ani nie przeniesiono funkcji. Pełny replay od Continue F, przez wszystkie wcześniejsze interakcje, walkę
+M062, Medicine2 i wyjście M063, do M358/cap65219 PASS normalnie oraz
+ASan/UBSan/function z instrumentowanymi PsyZ/SDL. Cały JSON,512 zmiennych,
+timery, ekwipunek i VRAM identyczne (SHA
+b6cb866a0952e3ec8b9f7ee4bbdf6d3fe124ae48671713d0e77955bac15f9493).
+M358, HP101/101, lock0, bez menu i żywych przeciwników. PrywatneB–F
+niezmienione. Artefakty /tmp/pe-m358-entry-{normal,san}.log/.vram,
+input /tmp/pe-m358-entry-args.json, kontrola /tmp/pe-m358-entry-verify.py
+i proof.json. Pełny fixture --assets PASS normalnie oraz sanitizowany
+(/tmp/pe-m358-assets.log, /tmp/pe-m358-fixture-san-assets.log).
+Obraz wejścia obejrzany headless. Dalszy marsz uruchamia walkę z dwoma
+typu6 (35HP) i jednym typu4 (57HP); ukończenie walki jeszcze niezweryfikowane.
+M384/M387 mają dowód modułu/danych, nie pełnej rozgrywki tych lokacji.
+
 Po założeniu SP Vest1 oryginalny input wraca z M064 przez M063 do M062.
 Podejście do bramy z Zoo Key/ID202 uruchamia oryginalny skrypt bez
 potrzeby dodatkowego przycisku; po animacji wraca sterowanie i Aya
@@ -32,8 +75,8 @@ ASan/UBSan/function z instrumentowanymi PsyZ/SDL. Cały JSON ze wszystkimi
 089b810e682973cc76d119d979c2482c31ea8179d9ca81193cacd78206f302bc).
 PrywatneB–F niezmienione. Artefakty /tmp/pe-zoo-gate-battle-
 {normal,san}.log/.vram, input /tmp/pe-zoo-gate-battle-args.json,
-kontrola /tmp/pe-zoo-gate-battle-verify.py i proof.json. Dalsze skrzynie
-M062 i wyjście w stronę kolejnej części fabuły pozostają do przejścia.
+kontrola /tmp/pe-zoo-gate-battle-verify.py i proof.json. Medicine2 sprawdzono w nowszym przebiegu powyżej; dwie pozostałe
+skrzynie M062 i dalsza fabuła pozostają do przejścia.
 
 Świeży Continue F przechodzi interakcje M064: otwarcie wejścia do
 budynku, rozmowę przy ciele (tekst94), szafkę z Zoo Key/ID202,

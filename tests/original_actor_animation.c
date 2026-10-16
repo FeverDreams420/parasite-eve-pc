@@ -5388,7 +5388,63 @@ static int original_window_assets(PeDisc *disc,PeDiscFile *exe)
         }
         free(room);if(!valid)return 0;
     }
-    puts("Original window assets: complete M063/M083 code and class table, seven methods and slot74 descriptors passed");return 1;
+    /* The combined library moves the window jump table before the actor
+     * code. Compare every instruction, allowing only the audited relocations,
+     * and compare the entire class-E body and both method tables. */
+    u32 class_e[0xaa4/4];
+    SceneRoomSectorRange reference_range;
+    if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+58*8,&reference_range,sizeof(reference_range)) ||
+       !pe_disc_read(disc,&archive,(u64)(reference_range.start+reference_range.scratchSectors+reference_range.textureSectors)*2048+8+0xf4c,class_e,sizeof(class_e)))return 0;
+    const unsigned combined_rooms[]={358,384,387};
+    const u32 e_methods[]={0x8018ff9c,0x8018ffa4,0x80190020,0x80190298,0x801902a0,0x801909e0,0x80190a38};
+    for(unsigned room_index=0;room_index<3;++room_index){
+        SceneRoomSectorRange range;
+        if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(combined_rooms[room_index]-1)*8,&range,sizeof(range)))return 0;
+        size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);if(!room)return 0;
+        int valid=pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+        if(valid){
+            SceneRoomDirectory *directory=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+            SceneRoomRecord *records=SceneAsset_ResolveOffset(room,directory->scripts&0x3fffff);
+            valid=directory->scripts>>22==2 && bytes>=8+0x43a4;
+            unsigned descriptors=0;
+            for(unsigned i=0;valid && i<2;++i){
+                valid=records[i].source.offsetAndSlot%0x1000000==8;
+                if(records[i].source.bytes.slot==74 && records[i].u.handlerAddress==0x80193378)descriptors|=1;
+                else if(records[i].source.bytes.slot==75 && records[i].u.handlerAddress==0x80193308)descriptors|=2;
+                else valid=0;
+            }
+            valid=valid && descriptors==3;
+            u8 *code=(u8 *)room+8;
+            for(unsigned offset=0x64;valid && offset<0xdec;offset+=4){
+                u32 expected,actual;memcpy(&expected,module+offset,4);memcpy(&actual,code+0x34f4+offset,4);
+                if((expected>>26==2 || expected>>26==3) &&
+                   ((expected&0x3ffffff)<<2)>=0x18eff0 && ((expected&0x3ffffff)<<2)<0x18fddc)
+                    expected+=0x34f4/4;
+                if(offset==0x98 || offset==0x210 || offset==0x320 || offset==0x904)
+                    expected=(expected&0xffff0000)|((expected+0x34f4)&0xffff);
+                if(offset==0x100)expected=(expected&0xffff0000)|0xf1cc;
+                valid=actual==expected;
+            }
+            for(unsigned i=0;valid && i<24;++i){
+                u32 expected,actual;memcpy(&expected,module+4+i*4,4);memcpy(&actual,code+0x1dc+i*4,4);
+                valid=actual==expected+0x34f4;
+            }
+            for(unsigned i=0;valid && i<7;++i){
+                u32 actual;memcpy(&actual,code+0x4388+i*4,4);valid=actual==methods[i]+0x34f4;
+            }
+            valid=valid && !memcmp(code+0x4318,e_methods,sizeof(e_methods));
+            for(unsigned i=0;valid && i<sizeof(class_e)/sizeof(*class_e);++i){
+                u32 expected=class_e[i],actual;memcpy(&actual,code+0xfac+i*4,4);
+                if((expected>>26==2 || expected>>26==3) &&
+                   ((expected&0x3ffffff)<<2)>=0x18ff3c && ((expected&0x3ffffff)<<2)<0x1909e0)
+                    expected+=0x60/4;
+                if(i*4==0x34 || i*4==0x260 || i*4==0x418)expected+=0x60;
+                valid=actual==expected;
+            }
+        }
+        free(room);if(!valid)return 0;
+    }
+    puts("Original window assets: M063/M083 and combined M358/M384/M387 window/class-E bodies, jump tables and descriptors passed");return 1;
 }
 
 static int original_window_motion(void)

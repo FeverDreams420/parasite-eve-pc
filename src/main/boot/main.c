@@ -29,6 +29,7 @@ int main(int argc,char **argv) {
     for(int arg=1;arg<argc;++arg){
         if(!strcmp(argv[arg],"--help")){
             printf("Usage: %s --disc <USA Disc 1 CUE/BIN> [--disc2 <USA Disc 2 CUE/BIN>] [--headless] [--frame-limit N] [--dump-vram PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",argv[0]);
+            printf("Headless fixtures only: --diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE (requires --frame-limit; output is marked coverage-only)\n");
             return EXIT_SUCCESS;
         }
         if(!strcmp(argv[arg],"--headless")){
@@ -56,6 +57,25 @@ int main(int argc,char **argv) {
                 if(!g_BootHostPadEvents){fprintf(stderr,"Cannot allocate input schedule\n");return EXIT_FAILURE;}
             }
             g_BootHostPadEvents[g_BootHostPadEventCount++]=(BootHostPadEvent){(u32)tick,(u16)buttons};
+        }else if(!strcmp(argv[arg],"--diagnostic-hp-at")){
+            if(arg+1>=argc){fprintf(stderr,"Invalid diagnostic HP schedule\n");return EXIT_FAILURE;}
+            const char *cursor=argv[++arg];unsigned long values[3];
+            for(unsigned field=0;field<3;++field){
+                char *end;errno=0;
+                if(*cursor<'0' || *cursor>'9'){fprintf(stderr,"Invalid diagnostic HP event\n");return EXIT_FAILURE;}
+                values[field]=strtoul(cursor,&end,10);
+                if(errno || (field?values[field]>USHRT_MAX:(!values[field] || values[field]>INT_MAX)) ||
+                   *end!=(field==2?'\0':':')){fprintf(stderr,"Invalid diagnostic HP event\n");return EXIT_FAILURE;}
+                cursor=end+1;
+            }
+            if(g_BootHostHealthEventCount && values[0]<=g_BootHostHealthEvents[g_BootHostHealthEventCount-1].vblank){
+                fprintf(stderr,"Diagnostic HP events must have strictly increasing frames\n");return EXIT_FAILURE;
+            }
+            if(!g_BootHostHealthEvents){
+                g_BootHostHealthEvents=calloc((size_t)argc,sizeof(*g_BootHostHealthEvents));
+                if(!g_BootHostHealthEvents){fprintf(stderr,"Cannot allocate diagnostic HP schedule\n");return EXIT_FAILURE;}
+            }
+            g_BootHostHealthEvents[g_BootHostHealthEventCount++]=(BootHostHealthEvent){(u32)values[0],(u16)values[1],(u16)values[2]};
         }else if(!strcmp(argv[arg],"--disc") || !strcmp(argv[arg],"--disc2")){
             int slot=!strcmp(argv[arg],"--disc2");
             if(paths[slot] || arg+1>=argc){fprintf(stderr,"Missing or duplicate image argument\n");return EXIT_FAILURE;}
@@ -64,6 +84,13 @@ int main(int argc,char **argv) {
     }
     if(!paths[0]){fprintf(stderr,"Supply --disc with a USA CUE/BIN image\n");return EXIT_FAILURE;}
     if(g_BootHostVramPath && !g_BootHostVBlankLimit){fprintf(stderr,"VRAM capture requires --frame-limit\n");return EXIT_FAILURE;}
+    if(g_BootHostHealthEventCount){
+        const char *headless=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
+        if(!headless || strcmp(headless,"1") || !g_BootHostVBlankLimit ||
+           g_BootHostHealthEvents[g_BootHostHealthEventCount-1].vblank>g_BootHostVBlankLimit){
+            fprintf(stderr,"Diagnostic HP schedule requires headless mode and a frame limit covering every event\n");return EXIT_FAILURE;
+        }
+    }
     for(unsigned slot=0;slot<2;++slot){
         if(!paths[slot])continue;
         if(!pe_disc_open(&images[slot],paths[slot])){
@@ -189,6 +216,7 @@ shutdown:
     CdRom_BindImage(NULL,NULL);
     g_CdImageVolumes[0]=g_CdImageVolumes[1]=NULL;
     pe_disc_close(&images[0]);pe_disc_close(&images[1]);
+    free(g_BootHostHealthEvents);g_BootHostHealthEvents=NULL;g_BootHostHealthEventCount=g_BootHostHealthApplied=0;
     free(g_BootHostPadEvents);g_BootHostPadEvents=NULL;g_BootHostPadEventCount=0;
     return result;
 }

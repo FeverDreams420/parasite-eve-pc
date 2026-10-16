@@ -12,17 +12,16 @@ compiler output, fixed code addresses and PS1 binary builds are no longer
 acceptance requirements. Changes are evaluated by behavior, portability,
 readability and native builds.
 
-The executable starts the original game entrypoint and follows the original
-logo, opening movie and title menu. Automated input can select New Game,
-load M431, play its movie, pass the M010 dialogue and name entry, and reach
-M002. Scheduled input checks twenty simulation frames of movement and entry
-into M003, the opera lobby, then M372 and movie 3. A longer probe reaches
-M004 dialogue after the movie. Further dialogue input exposes a GPU list
-corruption that is still unresolved. Full exploration remains unverified.
-Continue now opens the card screen without its earlier NULL-pointer crash; loading an actual saved game remains unverified.
-Artwork and video come from a user-supplied Disc 1 CUE/BIN. Full gameplay and
-end-to-end audio are unfinished; isolated AKAO/XA tests do not prove complete
-audio playback.
+The executable runs the original game entrypoint. Recorded ordinary input
+covers New Game, the first Melissa fight, exploration and further encounters,
+plus genuine memory-card Save/Continue through checkpoint H in M087. The
+mandatory M086 encounter still needs an ordinary successful replay. Separate,
+explicitly diagnostic runs with guarded HP changes reach M126 and the Day 3
+transition; these are coverage fixtures, not a completed-campaign result.
+See [the port plan](docs/PC_PORT_PLAN.md) for current evidence and limitations.
+Artwork, video and audio come from user-supplied CUE/BIN images. Full gameplay,
+visual fidelity and end-to-end audio remain unfinished; isolated audio tests
+do not prove complete playback.
 
 Native targets compile original modules in place, without an additional game
 engine or FFmpeg. Tests exercise original room/assets, audio, camera, actor,
@@ -89,8 +88,17 @@ pressed PS1 button bits (for example `10000:8` holds START; `10010:0` releases i
 Input enters the original pad packet before the original mapping/repeat logic.
 Interactive keyboard events feed the original pad packets; Enter, keypad Enter
 and Escape map to START, including movie skipping. The SDL GPU and OpenGL
-backends present movie RGB24 as three packed VRAM bytes per pixel. Full New Game,
-saved-game loading and gameplay acceptance are still pending.
+backends present movie RGB24 as three packed VRAM bytes per pixel. Full campaign
+acceptance and complete visual/audio verification remain pending.
+
+For coverage fixtures, `--diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE` schedules
+an explicit health change. It requires headless mode and a frame limit covering
+all events. Frames must increase strictly; a missing player, unexpected HP or
+value above maximum HP aborts the replay with status 2. Each applied event is
+logged as JSON, and the final record includes `coverage_only: true`,
+`ordinary_campaign_proof: false`, and scheduled/applied counts. Use private
+memory-card copies for these fixtures. Such runs cannot establish an ordinary
+campaign playthrough. The normal game path has no scheduled health changes.
 
 Enable `BUILD_TESTING=ON` for tests of the original modules, CPU reference
 results, real assets and headless startup. Tests that depended on the abandoned

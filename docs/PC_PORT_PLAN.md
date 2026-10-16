@@ -1,6 +1,6 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
-## Aktualny potwierdzony stan — 16 października 2026
+## Aktualny potwierdzony stan — 17 października 2026
 
 M075: zwykły input uruchamia walkę (typ5/75HP, defense18; pomocniczy
 aktor4 pojawia się po Script_SpawnEntityAt niedźwiedzia).
@@ -665,20 +665,67 @@ katalog/frame.vram i frame.png, /tmp/pe-m126-v1-coverage-normal-proof.json,
 /tmp/pe-m126-native-coverage-case.json. To nadal wyłącznie fixture pokrycia:
 coverage_only=true, ordinary_campaign_proof=false.
 
-Pełny odpowiednik tego replayu pod sanitizerami jest W TOKU, nie zaliczony:
-exec session83185, debugger PID98786/inferior98814, log
-/tmp/pe-m126-v1-coverage-san.log, prywatne karty
-/tmp/pe-m126-v1-coverage-san. Kontroler /tmp/pe_m126_safe_control.py używa
-normalnego powrotu C przed limitem, bez ReturnFromFrame. Należy odpytać
-ten sam proces i porównać pełny JSON/VRAM/karty po zakończeniu, bez
-restartowania go na podstawie samego timeoutu obserwacji.
-Do dalszej eksploracji uruchomiono osobny debugger exec session60187,
-/tmp/pe-m126-v1-live-lldb.log, prefix/input w odpowiadających plikach
-/tmp/pe-m126-v1-live-args.json i -input.jsonl. Odtwarza ten sam fixture
-normalnie i ma zatrzymać się w Boot_PollHost przy67826; jeszcze nie jest
-dowodem dalszego przebiegu M126. Zamrożone binaria
-/tmp/pe-m126-v1-game-debug i -game-sanitized nie mogą być nadpisywane.
-Wciąż wymagane zwykłe ukończenie M086 i pełna kampania bez wymuszeń.
+Pełny odpowiednik replayu M126 pod sanitizerami został zakończony:
+exec83185 terminal0, pełny JSON i1MiB VRAM identyczne ze zwykłym buildem,
+SHA256b5c9e84f770f13ef76932fcb89ed516ea5435471ee3f34cc9f3fe542974c0163.
+Wszystkie15 wcześniejszych wymuszeń HP zgadzają się z przypadkiem,
+B–H niezmienione i bu10 puste. Dowód /tmp/pe-m126-v1-coverage-proof.json,
+logi /tmp/pe-m126-v1-coverage-{normal,san}.log. To nadal fixture pokrycia,
+nie zwykłe ukończenie M086 ani pełnej kampanii.
+
+Istniejący runner boot/main.c i boot/init.c obsługuje teraz jawny harmonogram
+--diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE. Nie dodano plików ani nowej
+logiki gry. Zdarzenia wymagają headless i limitu obejmującego cały harmonogram,
+rosnących ściśle klatek oraz wartości16-bitowych. W oryginalnym punkcie
+VBlank przed sprawdzeniem limitu odczytywane są HP i maxHP prawdziwego gracza:
+brak gracza, niezgodne oczekiwane HP lub wartość ponad maxHP kończą replay
+statusem2 przed zapisem. Tylko jawne zdarzenie zmienia curHP; zwykły przebieg
+nie ma takich zdarzeń. Każde zastosowanie zapisuje JSON diagnostic_hp,
+a finalny raport obowiązkowo coverage_only=true, ordinary_campaign_proof=false
+oraz liczby scheduled/applied. Parser czyta środowisko SDL zgodnie z --headless;
+sama flaga działa bez zewnętrznego PSYZ_HEADLESS.
+
+Stały test original-game-diagnostic-hp-arguments w istniejącym fixture sprawdza
+14 błędnych harmonogramów i poprawny harmonogram z samą flagą --headless,
+przed otwarciem obrazu. Testy CLI/help/argumentów:3/3 PASS2.16s,
+/tmp/pe-native-hp-v2-cli-tests.log. Te same przypadki z sanitizowanym executable
+PASS /tmp/pe-native-hp-v2-cli-san.log. Dwa osobne rzeczywiste coldContinueH
+z oczekiwanym HP68 zamiast69 oraz z value65535 przy maxHP133 kończą się
+statusem2 przy26756, z czytelną diagnozą i niezmienionymi kartami:
+/tmp/pe-native-hp-v1-{wrong-hp,over-max}.log. Nie wolno zmieniać oczekiwanej
+wartości tylko po to, by ukryć inną sekwencję obrażeń.
+
+Cały przypadek H→M086→M089→M126/cap67826 odtworzono teraz NATYWNIE,
+bez LLDB, normalnie i pod ASan/UBSan/function, na końcowym wariancie v2.
+Oba procesy terminal0, bez PSYZ_HEADLESS w środowisku (tylko --headless),
+15/15 sprawdzonych zdarzeń HP. Cały JSON po usunięciu wyłącznie trzech nowych
+pól metadanych diagnostycznych jest identyczny z poprzednim debuggerowym
+wzorcem; wszystkie pozostałe pola porównane. Cały VRAM identyczny z tym samym
+SHA256b5c9e84f770f13ef76932fcb89ed516ea5435471ee3f34cc9f3fe542974c0163.
+B–H byte-identical do H, bu10 puste. Dowód
+/tmp/pe-native-hp-v2-proof.json, weryfikator /tmp/pe-native-hp-verify.py v2,
+logi /tmp/pe-native-hp-v2-{normal,san}.log, args.json i prywatne katalogi.
+Pełny fixture --assets także PASS na tym wariancie pod sanitizerami:
+/tmp/pe-native-hp-v2-assets-san.log. Te dowody nie usuwają etykiety coverage-only.
+README zaktualizowano: zwykły Save/ContinueH jest potwierdzony, osobny
+przebieg diagnostyczny i cały nieukończony zakres kampanii są jawnie opisane.
+
+Dalszy zwykły input tej diagnostycznej postaci przechodzi scenę M126,
+planszę M351 „Day3 — Selection”, menu zapisu i M092/dialog35 do
+M093/dialog97. Nie doszło żadne nowe wymuszenie HP; oryginalna zmiana dnia
+przywróciła HP181. Plansza dnia czekała na przycisk, nie była zawieszeniem.
+W menu36 (Select Slot) otwarto port2, cofnięto Circle i wybrano End/wiersz2;
+nie zapisano żadnego pliku. Całe B–H i bu10 nadal niezmienione.
+Przy100763: M093/A80091C8, HP181, flags0/lock2, bez menu, pozycja
+[86704128,*,19529728], yaw3796. Obejrzano planszę dnia, menu i pokój M092.
+Pełny rozszerzony przypadek /tmp/pe-day3-m093-coverage-case.json:
+1789 odcinków do100763, te same15 wymuszeń HP z początku. Tego dalszego
+fragmentu nie powtórzono jeszcze pod sanitizerami i nie jest zwykłym dowodem
+kampanii. Debugger exec60187/PID1674 pozostaje zatrzymany w Boot_PollHost,
+log /tmp/pe-m126-v1-live-lldb.log, trace /tmp/pe-m126-v1-live-input.jsonl.
+Zamrożone /tmp/pe-m126-v1-game-debug oraz /tmp/pe-native-hp-v2-game i
+-game-sanitized nie mogą być nadpisywane. Dalej: oryginalna kampania od M093,
+powtarzalne fixture’y kolejnych modułów oraz zwykłe przejście M086 odH.
 
 Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym
 leczeniem/przygotowaniem i skuteczniejszym unikaniem pocisków, bez zmiany

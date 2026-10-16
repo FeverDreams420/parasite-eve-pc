@@ -8,6 +8,11 @@ void Boot_InitSystem(void);
 void Boot_VsyncCallback(void);
 /* Optional native diagnostics; the original game still reads its pad packet. */
 typedef struct BootHostPadEvent { u32 vblank; u16 buttons; } BootHostPadEvent;
+/* Explicit fixture-only health changes. Expected HP is checked before each
+ * store so a divergent replay fails instead of silently hiding damage. */
+typedef struct BootHostHealthEvent { u32 vblank; u16 expected,value; } BootHostHealthEvent;
+extern BootHostHealthEvent *g_BootHostHealthEvents;
+extern unsigned g_BootHostHealthEventCount,g_BootHostHealthApplied;
 extern int g_BootHostActive;
 extern u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
 extern const char *g_BootHostVramPath;

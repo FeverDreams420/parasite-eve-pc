@@ -59,6 +59,8 @@ u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
 const char *g_BootHostVramPath;
 BootHostPadEvent *g_BootHostPadEvents;
 unsigned g_BootHostPadEventCount;
+BootHostHealthEvent *g_BootHostHealthEvents;
+unsigned g_BootHostHealthEventCount,g_BootHostHealthApplied;
 static unsigned hostPadEvent;
 static u16 hostButtons;
 
@@ -68,6 +70,19 @@ static void Boot_PollHost(void) {
         while(hostPadEvent<g_BootHostPadEventCount &&
               g_BootHostPadEvents[hostPadEvent].vblank<=g_BootHostVBlankCount)
             hostButtons=g_BootHostPadEvents[hostPadEvent++].buttons;
+    }
+    while(g_BootHostHealthApplied<g_BootHostHealthEventCount &&
+          g_BootHostHealthEvents[g_BootHostHealthApplied].vblank<=g_BootHostVBlankCount){
+        BootHostHealthEvent *event=&g_BootHostHealthEvents[g_BootHostHealthApplied];
+        Combatant *player=g_PlayerEntity?(Combatant *)g_PlayerEntity->state:NULL;
+        if(event->vblank!=g_BootHostVBlankCount || !player || player->curHP!=event->expected || event->value>player->maxHP){
+            fprintf(stderr,"Diagnostic HP precondition failed at frame %u (expected %u, actual %d, value %u)\n",
+                g_BootHostVBlankCount,event->expected,player?(int)player->curHP:-1,event->value);
+            fflush(stderr);_Exit(2);
+        }
+        player->curHP=event->value;++g_BootHostHealthApplied;
+        printf("{\"event\":\"diagnostic_hp\",\"vblank\":%u,\"expected\":%u,\"value\":%u}\n",
+            g_BootHostVBlankCount,event->expected,event->value);fflush(stdout);
     }
     if(Psyz_QuitRequested())exit(EXIT_SUCCESS);
     if(!g_BootHostVBlankLimit || g_BootHostVBlankCount<g_BootHostVBlankLimit)return;
@@ -121,7 +136,11 @@ static void Boot_PollHost(void) {
     printf("],\"script_variables\":[");
     for(unsigned variable=0;variable<0x200;++variable)
         printf("%s%u",variable?",":"",g_ScriptVariableBank[variable]);
-    printf("]}\n");
+    printf("]");
+    if(g_BootHostHealthEventCount)
+        printf(",\"coverage_only\":true,\"ordinary_campaign_proof\":false,\"diagnostic_hp\":{\"scheduled\":%u,\"applied\":%u}",
+            g_BootHostHealthEventCount,g_BootHostHealthApplied);
+    printf("}\n");
     fflush(stdout);
     /* A diagnostic cap is a forced process boundary, even inside a menu's
      * VSync callback. Do not unwind through the locked SDK callback stack. */

@@ -12264,6 +12264,51 @@ static int script_movie_error_exit(const char *executable)
     puts("Original script error: movie failure terminates dispatcher instead of retrying or continuing the scene");return 1;
 }
 
+static int native_diagnostic_hp_arguments(const char *executable)
+{
+    const char *bad[][9]={
+        {"--diagnostic-hp-at",NULL},
+        {"--diagnostic-hp-at","0:1:2",NULL},
+        {"--diagnostic-hp-at","x",NULL},
+        {"--diagnostic-hp-at","1:-1:2",NULL},
+        {"--diagnostic-hp-at","1:65536:2",NULL},
+        {"--diagnostic-hp-at","1:1:65536",NULL},
+        {"--diagnostic-hp-at","1:1:2x",NULL},
+        {"--diagnostic-hp-at","2147483648:1:2",NULL},
+        {"--diagnostic-hp-at","1:1",NULL},
+        {"--diagnostic-hp-at","2:1:2","--diagnostic-hp-at","2:1:2",NULL},
+        {"--diagnostic-hp-at","2:1:2","--diagnostic-hp-at","1:1:2",NULL},
+        {"--frame-limit","10","--diagnostic-hp-at","1:1:2",NULL},
+        {"--headless","--diagnostic-hp-at","1:1:2",NULL},
+        {"--headless","--frame-limit","10","--diagnostic-hp-at","11:1:2",NULL},
+        {"--headless","--frame-limit","10","--diagnostic-hp-at","1:1:2",NULL}
+    };
+    SDL_Environment *environment=SDL_CreateEnvironment(true);
+    if(!environment || !SDL_SetEnvironmentVariable(environment,"PSYZ_HEADLESS","0",true))return 0;
+    int valid=1;
+    for(unsigned row=0;row<sizeof(bad)/sizeof(bad[0]);++row){
+        const char *args[16]={executable,"--disc","/nonexistent-diagnostic-image"};unsigned at=3;
+        for(unsigned item=0;bad[row][item];++item)args[at++]=bad[row][item];
+        SDL_PropertiesID props=SDL_CreateProperties();
+        SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
+        SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ENVIRONMENT_POINTER,environment);
+        SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER,SDL_PROCESS_STDIO_APP);
+        SDL_SetBooleanProperty(props,SDL_PROP_PROCESS_CREATE_STDERR_TO_STDOUT_BOOLEAN,true);
+        SDL_Process *child=SDL_CreateProcessWithProperties(props);SDL_DestroyProperties(props);
+        if(!child){valid=0;break;}
+        int status=-1;size_t size=0;char *output=SDL_ReadProcess(child,&size,&status);SDL_DestroyProcess(child);
+        if(status!=EXIT_FAILURE || !output || strstr(output,"ERROR: AddressSanitizer") || strstr(output,"runtime error:") ||
+           (row==14?!strstr(output,"Cannot open image"):
+            ((!strstr(output,"diagnostic") && !strstr(output,"Diagnostic")) || strstr(output,"Cannot open image")))){
+            fprintf(stderr,"Diagnostic HP argument case %u status%d: %.200s\n",row,status,output?output:"");valid=0;
+        }
+        SDL_free(output);
+    }
+    SDL_DestroyEnvironment(environment);
+    if(valid)puts("Native diagnostic HP arguments: 14 malformed/unordered/non-headless/out-of-cap schedules rejected; explicit headless schedule accepted before image access");
+    return valid;
+}
+
 static int original_native_bootstrap(const char *executable,int field_control)
 {
     const char *disc=getenv("PE_TEST_DISC");
@@ -12865,6 +12910,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
 
 int main(int argc, char **argv)
 {
+    if(argc==3 && !strcmp(argv[1],"--native-diagnostic-hp-arguments"))return native_diagnostic_hp_arguments(argv[2])?0:1;
     if(argc==2 && !strcmp(argv[1],"--texture-pages")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

@@ -10,6 +10,7 @@
 #include "pe1/room_effect_sequence.h"
 #include "pe1/room_drop_field.h"
 #include "pe1/room_three_particle_class.h"
+#include "pe1/room_m086_seeker.h"
 #include "pe1/render_camera.h"
 #include "pe1/akao.h"
 #include "pe1/asset_tim.h"
@@ -511,6 +512,10 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomOrbitFlareEffects;
         if (map + 1 == 28 && slot == 115 && record[i].u.handlerAddress == 0x80193250u)
             native = &g_RoomOrbitFlareEffects;
+        if (map + 1 == 86) {
+            if(slot==120 && record[i].u.handlerAddress==0x80190aecu)native=&g_RoomM086SeekerProgram;
+            if(slot==121 && record[i].u.handlerAddress==0x80190b3cu)native=&g_RoomM086GlintProgram;
+        }
         if (!native) {
             fprintf(stderr, "Scene_LoadRoom: native descriptor missing for M%03d slot %u (PS1 %08x)\n",
                     map + 1, slot, record[i].u.handlerAddress);
@@ -652,6 +657,11 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 28 || map + 1 == 30) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
+        } else if (map + 1 == 86) {
+            g_FieldFxTaskPrograms[slot-85]=slot==120?&g_RoomM086SeekerProgram:&g_RoomM086GlintProgram;
+            memset(g_RoomM086ControllerParams,0,sizeof(int)*4);
+            memset(g_RoomM086BounceGlintParams,0,sizeof(int)*3);
+            g_RoomM086SeekerModelA=g_RoomM086SeekerModelB=NULL;
         } else if (map + 1 == 23) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomM023Effects;
             memset(g_RoomM005ScriptAnchorView - 4, 0, 20);

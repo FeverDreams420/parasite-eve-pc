@@ -11,14 +11,20 @@
 #include "pe1/room_m086_seeker.h"
 
 #include "m086_externs.h"
+#include "pe1/fieldfx_task.h"
+#include "pe1/battle.h"
+#include "pe1/geom_state.h"
+#include "pe1/psyq_libc.h"
 
-int RoomM086_SeekerCallback(int mode, RoomM086Seeker *seeker, RoomM086SeekerParams *params) {
+int RoomM086_SeekerCallback(int mode, void *data, intptr_t argument) {
+    RoomM086Seeker *seeker=data;
+    RoomM086SeekerParams *params=(void *)argument;
     GteShortVector rotation;
     GteShortVector position;
     GteMatrix matrix;
     GteVector scale;
     RoomFloorY *floor;
-    RoomM086Channel *channel;
+    FieldActor *actor;
     u16 *index;
     int size = params->size >> 3;
     int fall;
@@ -41,13 +47,13 @@ int RoomM086_SeekerCallback(int mode, RoomM086Seeker *seeker, RoomM086SeekerPara
             }
             if (FieldFx_IsPlayerWithinRadius(&seeker->position, size * 41 / 512) == 0) break;
             if (seeker->position.y < floor->y - 0x202) break;
-            if (FX_TASK_AS(RoomM086EventState)->active) {
-                channel = ANIM_OWNER_AS(RoomM086Channel);
-                if ((channel->pool->object->flags & 0x3F000000) == 0x01000000) {
-                    ((RoomM086BattleEntity *)D_8009D254)->actor->flags |= 0x4000;
-                    channel->pool->object->flags =
-                        (channel->pool->object->flags & 0xC0FFFFFF) | 0x11000000;
-                    channel->pool->object->flags |= 0x80000000;
+            if (g_FieldFxTaskContext->flags) {
+                actor = g_FieldFxOwner->actor;
+                if ((actor->state->core_flags & 0x3F000000) == 0x01000000) {
+                    ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                    actor->state->core_flags =
+                        (actor->state->core_flags & 0xC0FFFFFF) | 0x11000000;
+                    actor->state->core_flags |= 0x80000000;
                 }
             }
             seeker->state = 1;
@@ -103,10 +109,10 @@ int RoomM086_SeekerCallback(int mode, RoomM086Seeker *seeker, RoomM086SeekerPara
             scale.y = size;
             scale.z = size;
             ScaleMatrix(&matrix, &scale);
-            FieldFx_ModelSaveColors(g_RoomM086SeekerModelB);
-            FieldFx_ModelScaleColors(g_RoomM086SeekerModelB, 0x80);
+            FieldFx_ModelSaveColors((char *)g_RoomM086SeekerModelB);
+            FieldFx_ModelScaleColors((char *)g_RoomM086SeekerModelB, 0x80);
             FieldFx_ModelDraw((union FieldTexturedModel *)g_RoomM086SeekerModelB, &matrix);
-            FieldFx_ModelRestoreColors(g_RoomM086SeekerModelB);
+            FieldFx_ModelRestoreColors((char *)g_RoomM086SeekerModelB);
             g_FieldFxSpriteParams.parameter00 = 0x10;
             g_FieldFxSpriteParams.parameter02 = 1;
             g_FieldFxSpriteParams.extent_x = 0x10;
@@ -148,10 +154,10 @@ int RoomM086_SeekerCallback(int mode, RoomM086Seeker *seeker, RoomM086SeekerPara
             }
             break;
         case 2:
-            rcos(seeker->timer << 5);
+            rcos(seeker->timer * 32);
             rotation.x = 0;
             rotation.y = 0;
-            rotation.z = g_FieldFxCurrentAge << 7;
+            rotation.z = (s32)((u32)g_FieldFxCurrentAge * 128u);
             rotation.pad = 0;
             g_FieldFxSpriteParams.parameter00 = 0x10;
             g_FieldFxSpriteParams.parameter02 = 1;
@@ -177,7 +183,9 @@ int RoomM086_SeekerCallback(int mode, RoomM086Seeker *seeker, RoomM086SeekerPara
 /* Seeker controller: anchored on joint 7 of the actor, it drifts and falls
  * (shedding sparks on the first frame), then bursts into a spark ring and a
  * fan of seekers once it reaches the floor band. */
-int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM086ControllerParams *params) {
+int RoomM086_SeekerController(int mode, void *data, intptr_t argument) {
+    RoomM086SeekerController *state=data;
+    RoomM086ControllerParams *params=(void *)argument;
     GteShortVector rotation;
     GteShortVector position;
     RoomM086Offset anchor = g_RoomM086JointAnchor;
@@ -198,17 +206,17 @@ int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM08
         slot = &g_ViewMatrixSlot;
         gte_ldrotmatrix(slot->value);
         gte_ldtransmatrix(slot->value);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM086Channel)->pool, 7, &anchor, state);
-        FieldFx_RotateVector(ANIM_OWNER_AS(RoomM086Channel)->pool->bone, &drift, &state->velocity);
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)g_FieldFxOwner->actor, 7, (GteShortVector *)&anchor, &state->position);
+        FieldFx_RotateVector((GteMatrixWords *)g_FieldFxOwner->actor->render_object.matrices, (GteShortVector *)&drift, &state->velocity);
         state->state = 0;
         state->timer = 0;
         state->velocity.y -= 0x18;
-        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomM086Channel)->pool, 0,
+        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0,
                       &state->rotation);
-        if (FX_TASK_AS(RoomM086EventState)->active) {
-            RoomM086Pool *pool = ANIM_OWNER_AS(RoomM086Channel)->pool;
-            if (pool && pool->object) {
-                u8 *flag = pool->object->state;
+        if (g_FieldFxTaskContext->flags) {
+            FieldActor *actor = g_FieldFxOwner->actor;
+            if (actor && actor->state) {
+                u8 *flag = actor->state->action_state;
                 if (*flag == 1) *flag = 2;
             }
         }
@@ -217,7 +225,7 @@ int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM08
         g_RoomM086SeekerModelB = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5865704);
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM086SeekerModelB, 0, 0);
         FieldFx_PlaySoundAtOwner(0x577, FieldFx_GetOwnerProgress());
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM086SpawnChannel)->pool, 0x14, 0xE,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0xE,
                              (FieldFxCallbackListCallback)RoomM086_SeekerCallback);
     case 1:
         switch (state->state) {
@@ -231,7 +239,7 @@ int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM08
             state->velocity.y += 5;
             if (g_FieldFxCurrentAge == 1) {
                 for (i = 0; i < 6; i++) {
-                    child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM086SpawnChannel)->pool);
+                    child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                     if (child) {
                         child->position.x = state->position.x;
                         child->position.y = state->position.y;
@@ -247,7 +255,7 @@ int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM08
             if (state->position.y < g_RoomFloorY->y - 0x202) return 0;
             angle = rand();
             for (i = 0; i < 6; i++) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM086SpawnChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->position.x = state->position.x;
                     child->position.y = state->position.y;
@@ -263,7 +271,7 @@ int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM08
             }
             angle = state->rotation.y - (params->spacing * params->count) / 2;
             for (i = 0; i < params->count; i++) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM086SpawnChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->position.x = state->position.x;
                     child->position.y = state->position.y;
@@ -323,10 +331,10 @@ int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM08
             scale.y = size;
             scale.z = size;
             ScaleMatrix(&matrix, &scale);
-            FieldFx_ModelSaveColors(g_RoomM086SeekerModelA);
-            FieldFx_ModelScaleColors(g_RoomM086SeekerModelA, 0x80);
+            FieldFx_ModelSaveColors((char *)g_RoomM086SeekerModelA);
+            FieldFx_ModelScaleColors((char *)g_RoomM086SeekerModelA, 0x80);
             FieldFx_ModelDraw((union FieldTexturedModel *)g_RoomM086SeekerModelA, &matrix);
-            FieldFx_ModelRestoreColors(g_RoomM086SeekerModelA);
+            FieldFx_ModelRestoreColors((char *)g_RoomM086SeekerModelA);
             g_FieldFxSpriteParams.parameter00 = 0x10;
             g_FieldFxSpriteParams.parameter02 = 1;
             g_FieldFxSpriteParams.extent_x = 0x10;
@@ -384,7 +392,9 @@ int RoomM086_SeekerController(int mode, RoomM086SeekerController *state, RoomM08
  * the shared return label, which lets each phase 0 draw cross-jump only the
  * call. */
 
-int RoomM086_BounceGlintCallback(int mode, RoomBounceGlint *glint, int *size) {
+int RoomM086_BounceGlintCallback(int mode, void *data, intptr_t argument) {
+    RoomBounceGlint *glint=data;
+    int *size=(void *)argument;
     GteRotation rotation;
     int extent = *size;
     int intensity;
@@ -437,7 +447,7 @@ int RoomM086_BounceGlintCallback(int mode, RoomBounceGlint *glint, int *size) {
             g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[g_FieldFxTpageSlot3];
             g_FieldFxSpriteParams.palette = 3;
             g_FieldFxSpriteParams.parameter06 = 0;
-            intensity = rcos((glint->timer << 10) / 24) / 32;
+            intensity = rcos((glint->timer * 1024) / 24) / 32;
             if (glint->flag != 0) {
                 int kind;
                 int palette;
@@ -470,7 +480,7 @@ int RoomM086_BounceGlintCallback(int mode, RoomBounceGlint *glint, int *size) {
             rotation.flags = 0;
             g_FieldFxSpriteParams.parameter00 = 0x10;
             g_FieldFxSpriteParams.parameter02 = 1;
-            rotation.z = g_FieldFxCurrentAge << 7;
+            rotation.z = (s32)((u32)g_FieldFxCurrentAge * 128u);
             g_FieldFxSpriteParams.extent_x = 0x10;
             g_FieldFxSpriteParams.extent_y = 0x10;
             g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[g_FieldFxTpageSlot3];
@@ -491,14 +501,14 @@ int RoomM086_BounceGlintCallback(int mode, RoomBounceGlint *glint, int *size) {
     return 0;
 }
 
-s32 rand(void);
 
 #define COPY_POS(dst, src) \
     (dst)->x = (src)->x;   \
     (dst)->y = (src)->y;   \
     (dst)->z = (src)->z
 
-s32 RoomM086_BounceGlint(s32 mode, RoomBounceGlint *ent) {
+int RoomM086_BounceGlint(int mode, void *data, intptr_t argument) {
+    RoomBounceGlint *ent=data;
     RoomM086Offset blob;
     RoomBounceGlint *actor;
     s32 phase;
@@ -522,13 +532,12 @@ s32 RoomM086_BounceGlint(s32 mode, RoomBounceGlint *ent) {
         goto ret0;
 
     mode0:
-        FieldFx_TransformMatrixPoint(((void **)ANIM_OWNER_AS(void))[2], 7, &blob, ent);
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)g_FieldFxOwner->actor, 7, (GteShortVector *)&blob, (GteShortVector *)ent);
         ent->y = g_RoomFloorY->y;
         value = FieldFx_GetOwnerProgress();
         FieldFx_PlaySoundAtOwner(0x579, value);
-        FieldFx_InitCallbackList(((void **)ANIM_POOL_AS(void))[2], 0x14, 0x18,
-                      (FieldFxCallbackListCallback)RoomM086_BounceGlintCallback);
-        goto done;
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x18,
+                      RoomM086_BounceGlintCallback);
 
     }
 mode1:
@@ -537,7 +546,7 @@ mode1:
         angle = rand();
         i = 0;
         do {
-            actor = FieldFx_AcquireCallbackSlot(((void **)ANIM_POOL_AS(void))[2]);
+            actor = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (actor != 0) {
                 COPY_POS(actor, ent);
                 mag = (rand() & 0xF) + 7;
@@ -566,7 +575,7 @@ mode1:
         angle = rand();
         i = 0;
         do {
-            actor = FieldFx_AcquireCallbackSlot(((void **)ANIM_POOL_AS(void))[2]);
+            actor = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (actor != 0) {
                 COPY_POS(actor, ent);
                 mag = (rand() & 0x1F) + 0x18;
@@ -593,7 +602,7 @@ mode1:
     value = g_FieldFxCurrentAge - 2;
     if (value < 0x15U) {
         angle = rand();
-        actor = FieldFx_AcquireCallbackSlot(((void **)ANIM_POOL_AS(void))[2]);
+        actor = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
         if (actor != 0) {
             COPY_POS(actor, ent);
             value = rand();
@@ -649,12 +658,11 @@ mode1:
     }
 ret0:
     return 0;
-done:;
 }
 
 #undef COPY_POS
 
-int *RoomM086_SetControllerParams(int arg0, int arg1, int arg2, int arg3) {
+intptr_t RoomM086_SetControllerParams(int arg0, intptr_t arg1, intptr_t arg2, intptr_t arg3) {
     if (arg0 == 1) {
         g_RoomM086ControllerParams[0] = arg1;
         g_RoomM086ControllerParams[1] = arg2;
@@ -662,10 +670,10 @@ int *RoomM086_SetControllerParams(int arg0, int arg1, int arg2, int arg3) {
     } else if (arg0 == 2) {
         g_RoomM086ControllerParams[3] = arg1;
     }
-    return g_RoomM086ControllerParams;
+    return (intptr_t)g_RoomM086ControllerParams;
 }
 
-int *RoomM086_SetBounceGlintParams(int arg0, int arg1, int arg2, int arg3) {
+intptr_t RoomM086_SetBounceGlintParams(int arg0, intptr_t arg1, intptr_t arg2, intptr_t arg3) {
     if (arg0 == 1) {
         int *base = g_RoomM086BounceGlintParams;
 
@@ -674,5 +682,15 @@ int *RoomM086_SetBounceGlintParams(int arg0, int arg1, int arg2, int arg3) {
         base[2] = arg3;
         base[0] = 0x1000;
     }
-    return g_RoomM086BounceGlintParams;
+    return (intptr_t)g_RoomM086BounceGlintParams;
 }
+
+/* Complete original M086 task data; pointer-bearing state uses native ABI. */
+int g_RoomM086ControllerParams[4],g_RoomM086BounceGlintParams[3];
+u8 *g_RoomM086SeekerModelA,*g_RoomM086SeekerModelB;
+RoomM086Offset g_RoomM086JointAnchor={0,0,-30,0};
+RoomM086Offset g_RoomM086LaunchVelocity={0,0,-41,0};
+u16 g_RoomM086SeekerScript[]={5,0,0,1,6,35,4,41,0,2,0,0,0,0,0,0};
+u16 g_RoomM086GlintScript[]={1,6,36,4,5,0,2,0,0,0,0,0};
+FieldFxTaskProgram g_RoomM086SeekerProgram={{{RoomM086_SeekerController},{sizeof(RoomM086SeekerController)}},RoomM086_SetControllerParams,g_RoomM086SeekerScript};
+FieldFxTaskProgram g_RoomM086GlintProgram={{{RoomM086_BounceGlint},{8}},RoomM086_SetBounceGlintParams,g_RoomM086GlintScript};

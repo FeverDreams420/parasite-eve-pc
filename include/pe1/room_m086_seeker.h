@@ -34,37 +34,6 @@ typedef struct RoomM086SeekerParams {
     /* 0x04 */ s16 distance;
 } RoomM086SeekerParams;
 
-typedef struct RoomM086Object {
-    /* 0x00 */ u32 flags;
-    /* 0x04 */ u8 reserved04[0x14];
-    /* 0x18 */ u8 *state;
-} RoomM086Object;
-
-typedef struct RoomM086Pool {
-    /* 0x000 */ RoomM086Object *object;
-    /* 0x004 */ u8 reserved004[0x234];
-    /* 0x238 */ void *bone;
-} RoomM086Pool;
-
-typedef struct RoomM086Channel {
-    s32 reserved[2];
-    RoomM086Pool *pool;
-} RoomM086Channel;
-
-typedef struct RoomM086Actor {
-    u8 reserved[0x4C];
-    u32 flags;
-} RoomM086Actor;
-
-typedef struct RoomM086BattleEntity {
-    RoomM086Actor *actor;
-} RoomM086BattleEntity;
-
-typedef struct RoomM086EventState {
-    u8 reserved[0xD];
-    u8 active;
-} RoomM086EventState;
-
 #include "pe1/player_entity.h"
 extern u8 *g_RoomM086SeekerModelB;
 
@@ -89,19 +58,16 @@ typedef struct RoomM086Offset {
     s16 x, y, z, pad;
 } RoomM086Offset;
 
-typedef struct RoomM086SpawnChannel {
-    s32 reserved[2];
-    void *pool;
-} RoomM086SpawnChannel;
-
-extern RoomM086Offset g_RoomM086JointAnchor;
-extern RoomM086Offset g_RoomM086LaunchVelocity;
-extern RoomM086Offset g_RoomM086JointAnchor;
-extern RoomM086Offset g_RoomM086LaunchVelocity;
+extern RoomM086Offset g_RoomM086JointAnchor,g_RoomM086LaunchVelocity;
 extern u8 *g_RoomM086SeekerModelA;
-extern u16 g_FieldFxPaletteEntry2;
-
-int RoomM086_SeekerCallback(int mode, RoomM086Seeker *seeker, RoomM086SeekerParams *params);
-int rand(void);
-
+#include "pe1/fieldfx_task.h"
+extern int g_RoomM086ControllerParams[4],g_RoomM086BounceGlintParams[3];
+extern FieldFxTaskProgram g_RoomM086SeekerProgram,g_RoomM086GlintProgram;
+extern u16 g_RoomM086SeekerScript[16],g_RoomM086GlintScript[12];
+int RoomM086_SeekerCallback(int mode, void *data, intptr_t argument);
+int RoomM086_SeekerController(int mode, void *data, intptr_t argument);
+int RoomM086_BounceGlintCallback(int mode, void *data, intptr_t argument);
+int RoomM086_BounceGlint(int mode, void *data, intptr_t argument);
+intptr_t RoomM086_SetControllerParams(int mode, intptr_t a, intptr_t b, intptr_t c);
+intptr_t RoomM086_SetBounceGlintParams(int mode, intptr_t a, intptr_t b, intptr_t c);
 #endif

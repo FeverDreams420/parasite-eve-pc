@@ -388,13 +388,12 @@ FNV20b7a2d44a6de28b. Task120/80190AEC: callback8018F734,
 size28, init80190A44, script80190ACC (16 halfwordów). Task121/80190B3C:
 callback80190574, size8, init80190A90, script80190B24 (12 halfwordów).
 To SeekerController i BounceGlint oraz dwa callbacki dzieci i dwa
-inicjalizatory parametrów. Źródło jeszcze nie jest natywne: stare widoki
+inicjalizatory parametrów. W chwili pierwszego audytu źródło nie było natywne: stare widoki
 aktor/pool/bone, callbacki2/3arg, PS1 void** indeksy, int argumenty zamiast
 intptr_t, brak kompletnych danych/descriptorów i jawnej arytmetyki wrap.
 Audyt /tmp/pe-m086-module-audit.json, pełne dane /tmp/pe-m086-room.bin.
-Nie dodano jeszcze powiązań120/121. Następny krok: naprawić cały ten
-plik i istniejące nagłówki, odtworzyć dane, zweryfikować CPU/GTE/PM i
-ponowić tę samą pełną trasę, a potem kontynuować kampanię.
+Audyt wyznaczył naprawę całego pliku i istniejących nagłówków, danych
+i powiązań120/121 oraz testy CPU/GTE/PM i wejścia opisane niżej.
 Po błędnym podejściu do telefonu ponowiono od prawdziwego cap67493.
 Pomocnik projekcji musi używać camera.screenOffsetX/Y, nie wartości
 GTE odczytanych po Render_ResetGteScreenOffset (160/112). Współrzędne
@@ -428,6 +427,39 @@ a proces zakończono. Wszystkie cztery procesy replay zakończyły się0.
 Checkpoint H jest gotowy do następnych niezależnych testów modułu M086;
 nie oznacza ukończenia pełnej kampanii ani wszystkich wariantów zapisów.
 Root bu00/bu10 nietknięte.
+M086: wszystkie6 oryginalnych funkcji naprawiono w tym samym m086.c,
+a CMake dołącza cały plik. Callbacki mają natywne int/void*/intptr_t ABI,
+initializatory intptr_t, owner/actor/matrices/action_state i context.flags
+są rzeczywistymi natywnymi polami. Usunięto stare fałszywe widoki struktur
+PS1 z istniejącego nagłówka, bez nowych plików. BounceGlint/mode0 jawnie
+zwraca rozmiar natywnej listy (stary C kończył się bez return, podczas gdy
+kod MIPS zachowywał wynik InitCallbackList). Odtworzono oba pełne programy,
+wektory (0,0,−30)/(0,0,−41), globals i reset BSS przy ładowaniu. Loader
+wiąże wyłącznie M086120/80190AEC i121/80190B3C.
+
+192 porównania czterech callbacków z rzeczywistym CPU/ROM BIOS/GTE,
+pełne stany, RNG, wszystkie24 sloty puli, contact/owner flags i guards:
+FNV3c2b77bfca9f9902, /tmp/pe-m086-cpu.py. Native initializer sprawdza
+pełne wskaźniki i parametry. Assets test czyta cały oryginalny moduł,
+oba deskryptory, wszystkie słowa skryptów, work-zero i oba wektory.
+Oba rzeczywiste programy PM przechodzą pełny start/send/update/draw/expiry
+z modelami z tego samego wymaganego CUE, oboma buforami GPU, zagnieżdżonymi
+pulami, łańcuchami OT i guardami. Pełny --assets PASS normalnie i z
+ASan/UBSan/function: /tmp/pe-m086-pm-fixture.log i
+/tmp/pe-m086-final-fixture-san.log. Nie jest to pełna weryfikacja każdego
+piksela ani wszystkich granicznych parametrów modeli.
+
+Cold ContinueH→M086/cap24464 na final PASS normalnie i z sanitizerami:
+cały JSON i1MiB VRAM identyczne, SHA256
+c72b2102bfb00b57f2cc5f4c9b5d76ac15ceca77deb351c8808eb4157502bdd8.
+M086/A8008348, etap248, HP69/133, capacity20, broń9/pancerz14, flags0,
+lock0, brak menu/żywych wrogów. Wszystkie prywatne B–H identyczne,
+bu10 puste; użytkowe karty nietknięte. Obraz M086 obejrzany.
+Artefakty /tmp/pe-m086-final-entry-{normal,san}.log i katalogi,
+/tmp/pe-m086-entry-h-args.json, /tmp/pe-m086-final-entry-verify.py i proof.json.
+Dalszy input na debug v1 (przed samymi castami char* i rozszerzeniem
+fixture) uruchamia walkę przy24680: cztery typ3/120HP, defense13.
+To jeszcze nie jest zwycięstwo ani pełny dowód przebiegu tej walki.
 Następnie kontynuować kampanię. Pełna kampania i pełny zakres celu
 pozostają nieukończone. Użytkowe bu00/ i bu10/ nietknięte.
 

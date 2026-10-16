@@ -155,6 +155,7 @@ add_library(parasite-eve-original OBJECT
     src/main/fieldfx/vector.c
     src/main/field/actor_collision.c
     src/overlays/room_lib/actor_classes.c
+    src/overlays/room_lib/actor_class_table.c
     src/overlays/room_m272_liberty/m272.c
     src/overlays/room_m005_theater/m005.c
     src/overlays/room_lib/script_task_var.c
@@ -380,6 +381,8 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-m020-items PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 360 LABELS "game-assets;gpu;audio")
     add_test(NAME original-game-m017-survivor COMMAND test-original-actor-animation --native-m017 $<TARGET_FILE:parasite-eve-pc>)
     set_tests_properties(original-game-m017-survivor PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 420 LABELS "game-assets;gpu;audio")
+    add_test(NAME original-game-m022-keys COMMAND test-original-actor-animation --native-m022 $<TARGET_FILE:parasite-eve-pc>)
+    set_tests_properties(original-game-m022-keys PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 480 LABELS "game-assets;gpu;audio")
     add_dependencies(test-original-actor-animation parasite-eve-pc)
     add_test(NAME original-game-fx-frames COMMAND test-original-actor-animation --fx-frames)
     set_tests_properties(original-game-fx-frames PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "game-assets;gpu")

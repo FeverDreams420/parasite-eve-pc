@@ -28,7 +28,7 @@ void srand(unsigned int seed);
 void Battle_ResetEnemyStats(int mode);
 void Battle_SetupEnemyAnims(void);
 void Battle_CheckDropChance(void);
-int Entity_CheckActionIdMatch(void);
+void Entity_CheckActionIdMatch(FieldActor *self, int self_part, FieldActor *other, int other_part);
 void Battle_SetWindowBoundsByMode(int mode);
 void Battle_StartEncounter(int mode);
 

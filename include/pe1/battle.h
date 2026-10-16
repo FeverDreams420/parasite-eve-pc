@@ -482,7 +482,7 @@ typedef struct BattleEntity {
               u32 scriptLocals[0x38];
 /* 0x18C */ struct BattleEntity *parent; /* parent/owner; linked animations recurse through this entity */
 /* 0x190 */ void (*frameCallback)(FieldActor *);
-/* 0x194 */ void *actionCheckFn; /* Entity_CheckActionIdMatch fn ptr (Battle_StartEncounter.c:124) */
+/* 0x194 */ void (*actionCheckFn)(FieldActor *, int, FieldActor *, int);
 /* 0x198 */ u8   pad_198[4];
 /* 0x19C */ u32 *scriptCursor19C;
 /* 0x1A0 */ u32 *scriptCursor1A0;

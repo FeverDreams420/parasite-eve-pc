@@ -21,6 +21,7 @@
 #include "pe1/memcard.h"
 void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/battle_runtime.h"
+#include "pe1/battle_start.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_level_up.h"
 #include "pe1/battle_update.h"
@@ -60,6 +61,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/game_state.h"
 #include "pe1/player_entity.h"
 #include "pe1/scene_assets.h"
+#include "pe1/scene_room.h"
 #include <stdio.h>
 #include <string.h>
 #include "pe1/boot_services.h"
@@ -3809,17 +3811,170 @@ static int room_actor_view(void)
     if(actor.pos_z!=-5*65536 || actor.base_y!=17 || actor.render_object.flags_9C!=0x400 ||
        state.core_flags!=0x40000000 || state.reserveda8[4]!=9) return 0;
     FieldActor snapshot=actor;
-    int (*release[])(RoomEnt *)={RoomLib_ReleaseHandlerB,RoomLib_ReleaseHandlerC};
+    int (*release[])(PmSlotHeader *)={RoomLib_ReleaseHandlerB,RoomLib_ReleaseHandlerC};
     for(unsigned method=0;method<2;++method) {
         int signal=1;
         RoomEnt object={0};
         object.link=view; object.active=1; object.flag3=1; object.sub.signal=&signal;
         action_state=1;
-        if(release[method](&object)!=0 || action_state!=4 || signal || object.flag3 || object.state!=4)
+        if(release[method]((PmSlotHeader *)&object)!=0 || action_state!=4 || signal || object.flag3 || object.state!=4)
             return 0;
         if(memcmp(&actor,&snapshot,sizeof(actor))) return 0;
     }
     puts("Original room actor view: canonical position, animation, motion, parent/model pointers and B/C release state passed");
+    return 1;
+}
+
+static int original_room_actor_assets(PeDisc *disc,PeDiscFile *exe)
+{
+    u8 header[0x800];u32 base;SceneRoomSectorRange range;PeDiscFile archive;
+    if(!pe_disc_read(disc,exe,0,header,sizeof(header)))return 0;
+    memcpy(&base,header+0x18,4);
+    s16 trig[4096][2];
+    if(!pe_disc_read(disc,exe,0x800ull+0x800966ecu-base,trig,sizeof(trig)))return 0;
+    for(unsigned angle=0;angle<4096;++angle)
+        if(rsin(angle)!=trig[angle][0] || rcos(angle)!=trig[angle][1])return 0;
+    if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+21*8,&range,sizeof(range)) ||
+       !pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);
+    if(!room)return 0;
+    int valid=pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+    if(valid){
+        SceneRoomDirectory *directory=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+        SceneRoomRecord *record=SceneAsset_ResolveOffset(room,directory->scripts&0x3fffff);
+        valid=directory->scripts>>22==1 && record->source.bytes.slot==70 &&
+            record->u.handlerAddress==0x801924e8u;
+        static const u32 methods[6][7]={
+            {0x8018f1cc,0x8018f1d4,0x8018f274,0x8018f4f8,0x8018f500,0x8018fe98,0x8018ff34},
+            {0x8018f1cc,0x8018f1d4,0x8018f274,0x8018f4f8,0x8018f500,0x8018fe98,0x8018ff34},
+            {0x8018ff3c,0x8018ff44,0x8018ffc0,0x80190238,0x80190240,0x80190980,0x801909d8},
+            {0x801909e0,0x801909e8,0x80190a84,0x80190ccc,0x80190cd4,0x801914a0,0x801914fc},
+            {0x80191504,0x8019150c,0x8019159c,0x801917e4,0x801917ec,0x80192090,0x801920ec},
+            {0x801920f4,0x801920fc,0x80192138,0x801921d0,0x801921d8,0x801924c4,0x801924e0}};
+        size_t offset=(record->source.offsetAndSlot&0xffffff)+0x801924e8u-0x8018eff0u;
+        valid=valid && offset<=bytes && sizeof(methods)<=bytes-offset &&
+            !memcmp((u8 *)room+offset,methods,sizeof(methods));
+    }
+    free(room);
+    if(valid)puts("Original room actor assets: M022 slot 70, all 42 class methods and 4096 USA sine/cosine entries verified");
+    return valid;
+}
+
+static int original_contact_action_callback(void)
+{
+    static const s8 patterns[5][4]={{3,-1,7,1},{0,1,3,7},{7,3,-1,1},{-1,3,3,3},{1,1,1,3}};
+    const int health[]={-1,0,1,100},actions[]={0,1,3,7,255,65539,-65533};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned effect=0;effect<6;++effect)for(unsigned kind=0;kind<8;++kind)
+    for(unsigned hp=0;hp<4;++hp)for(unsigned pattern=0;pattern<5;++pattern)
+    for(unsigned action=0;action<7;++action){
+        EnemyCombatant enemy;Combatant player;EnemyActionEffect event={0};
+        memset(&enemy,0xa5,sizeof(enemy));memset(&player,0x5a,sizeof(player));
+        enemy.coreFlags=(0x105a55aau&~0xe00000u)|(kind<<21);enemy.hpAlive=health[hp];
+        enemy.effect=effect?&event:NULL;event.state=effect?effect-1:0;
+        for(unsigned group=0;group<3;++group)memcpy(enemy.contactActionIds+group*4,patterns[pattern],4);
+        player.stateFlags=0xa5a55a5a;
+        EnemyCombatant expected_enemy=enemy;Combatant expected_player=player;
+        FieldActor self={.state=(FieldActorState *)&player,.contact_callback=Entity_CheckActionIdMatch};
+        FieldActor other={.state=effect==5?NULL:(FieldActorState *)&enemy};
+        self.contact_callback(&self,27,&other,actions[action]);
+        const u32 words[]={player.stateFlags,enemy.coreFlags};
+        for(unsigned i=0;i<2;++i)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[i]>>(byte*8))&255))*UINT64_C(1099511628211);
+        expected_enemy.coreFlags=enemy.coreFlags;expected_player.stateFlags=player.stateFlags;
+        if(memcmp(&enemy,&expected_enemy,sizeof(enemy)) || memcmp(&player,&expected_player,sizeof(player)))return 0;
+        ++cases;
+    }
+    if(hash!=UINT64_C(0xa5fd542478aeafa5)){
+        fprintf(stderr,"Contact action CPU hash differs: %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original contact action callback: 6720 USA MIPS states, null core/effect, inactive/dead enemies, facing groups, terminators and signed part IDs passed");
+    return 1;
+}
+
+static int original_room_d_motion(void)
+{
+    const int targets[][3]={{0,0,10},{10,0,0},{0,0,-10},{-10,0,0},{7,-3,11}};
+    const int anchors[][3]={{0,0,0},{1,2,3}},modes[]={0,16,-16};
+    const s16 steps[][3]={{4096,0,0},{-4096,0,0},{0,0,4096},{0,0,-4096},{17,-29,31}};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned t=0;t<5;++t)for(unsigned a=0;a<2;++a)for(unsigned m=0;m<3;++m)
+    for(unsigned linked=0;linked<2;++linked)for(unsigned step=0;step<5;++step){
+        RoomLibHandlerDState state={0};RoomLibMotionWork work={0};RoomLink target={0};
+        for(unsigned i=0;i<3;++i){state.target[i]=targets[t][i]*65536;
+            state.anchor[i]=anchors[a][i]*65536;state.rotation[i]=steps[step][i];target.pos[i]=state.target[i];}
+        state.target[3]=modes[m]*65536;state.targetLink=linked?&target:NULL;
+        for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
+        RoomLib_HandlerDTransformTarget(&state,&work);
+        for(unsigned i=0;i<16;++i){u32 value=i<4?(u32)state.target[i]:i<7?(u32)work.rotated[i-4]:(u16)work.matrix[i-7];
+            for(unsigned byte=0;byte<4;++byte)hash=(hash^((value>>(byte*8))&255))*UINT64_C(1099511628211);}
+        ++cases;
+    }
+    if(hash!=UINT64_C(0x996cffcbf9215269)){
+        fprintf(stderr,"Room D motion CPU/GTE-bridge hash differs: %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original room D motion: 300 USA CPU/GTE-bridge states, all directions, signed height, target actors and native state storage passed");
+    return 1;
+}
+
+static int native_room_actor_class_table(void)
+{
+    PmSlotBanks banks={0};PmTables saved_tables=g_PmTables;
+    u32 saved_flags=g_GameStateFlags;g_GameStateFlags|=0x80;
+    PmCommand *saved_handler=g_PmCmdHandlerTable[70];
+    FieldActor actor={0};RoomLink *view=(RoomLink *)&actor;
+    view->variant=3;
+    unsigned saved_count=room_callback_count;
+    RoomEnt *saved_context=expected_room_context;
+    g_PmTables.primary=banks.primary;g_PmTables.secondary=banks.secondary;
+    void (*callbacks[])(RoomEnt *)={RoomLib_HandlerD,RoomLib_HandlerD,RoomLib_HandlerE,
+        RoomLib_HandlerB,RoomLib_HandlerC,RoomLib_HandlerA};
+    for(unsigned row=0;row<6;++row){
+        memset(&banks,0,sizeof(banks));g_PmCmdHandlerTable[70]=&g_RoomActorClassTable[row];
+        PmCommand *handler=g_PmCmdHandlerTable[70];
+        handler->init();
+        int slot=Scene_LoadRoomAssets(70,&actor);
+        if(slot!=11){fprintf(stderr,"Room actor class row %u line %d failed\n",row,__LINE__);return 0;}
+        RoomEnt *object=(RoomEnt *)&banks.secondary[0];
+        if(object->link!=view || object->t16!=-1 || object->t17!=-1 || object->t18!=(row==3 || row==4?0:-1) ||
+           object->t19!=(row==3 || row==4?7:3) || object->active || object->sub.signal ||
+           object->sub.cb!=callbacks[row] || object->t1A){fprintf(stderr,"Room actor class row %u line %d failed\n",row,__LINE__);return 0;}
+        if(row<2){
+            RoomLibHandlerDState *state=(RoomLibHandlerDState *)&object->sub;
+            if(state->value90!=0x400 || state->duration!=0x100 || state->progress.word ||
+               Pm_SendCmd(slot,0,23,1,0,1)!=0 || object->t19!=5)return 0;
+            object->t19=3;
+        }
+        if(row<2){
+            RoomLibHandlerDState *state=(RoomLibHandlerDState *)&object->sub;
+            RoomLibMotionWork work={0};
+            state->target[0]=0;state->target[1]=0;state->target[2]=10*65536;state->target[3]=0;
+            memset(state->anchor,0,sizeof(state->anchor));
+            state->rotation[0]=4096;state->rotation[1]=state->rotation[2]=0;
+            RoomLib_HandlerDTransformTarget(state,&work);
+            if(state->target[0]!=4096*65536 || state->target[1] || state->target[2]!=10*65536 ||
+               state->target[3] || state->anchor[0] || state->targetLink)return 0;
+            state->target[0]=0;state->target[2]=10*65536;state->rotation[0]=-4096;
+            RoomLib_HandlerDTransformTarget(state,&work);
+            if(state->target[0]!=-4096*65536 || state->target[1] || state->target[2]!=10*65536)return 0;
+        }
+        if(row==4){RoomLibHandlerCState *state=(RoomLibHandlerCState *)&object->sub;
+            if(state->mode!=0x10000 || state->rate!=0x10 || state->targetLink || state->secondaryLink ||
+               state->localOffset[0] || state->localOffset[1] || state->localOffset[2])return 0;}
+        if(row<5){
+            if(Pm_SendCmd(slot,0,19,7,0,0)!=0 || object->flag3!=7){fprintf(stderr,"Room actor class row %u line %d failed\n",row,__LINE__);return 0;}
+            int output=-1,progress=-1;
+            if(Pm_SendCmd(slot,1,19,(intptr_t)&output,(intptr_t)&progress,0)!=0 || output!=7){fprintf(stderr,"Room actor class row %u line %d failed\n",row,__LINE__);return 0;}
+        }
+        expected_room_context=object;room_callback_count=0;object->sub.cb=record_room_callback;
+        if(Pm_Start(slot)!=0 || Pm_Exec(slot)!=0 || room_callback_count!=1 || object->w04!=8){fprintf(stderr,"Room actor class row %u line %d failed\n",row,__LINE__);return 0;}
+        if(Pm_Stop(slot,&actor,0)!=0 || object->state){fprintf(stderr,"Room actor class row %u line %d failed\n",row,__LINE__);return 0;}
+        if(Pm_Exec(slot)!=0 || object->state){fprintf(stderr,"Room actor class row %u line %d failed\n",row,__LINE__);return 0;}
+        handler->unload();
+        for(unsigned i=1;i<11;++i){PmSecondarySlot zero={0};
+            if(memcmp(&banks.secondary[i],&zero,sizeof(zero))){fprintf(stderr,"Room actor class row %u line %d failed\n",row,__LINE__);return 0;}}
+    }
+    g_PmCmdHandlerTable[70]=saved_handler;g_PmTables=saved_tables;g_GameStateFlags=saved_flags;
+    room_callback_count=saved_count;expected_room_context=saved_context;
+    puts("Original room actor classes: six typed PM rows, allocation, native defaults, scalar query, callbacks, release and slot guards passed");
     return 1;
 }
 
@@ -3828,9 +3983,9 @@ static int room_callback_context(void)
     RoomEnt object={0};
     expected_room_context=&object;
     object.sub.cb=record_room_callback;
-    int (*updates[])(RoomEnt *)={RoomLib_UpdateHandlerA,RoomLib_UpdateHandlerB,RoomLib_UpdateHandlerC};
+    int (*updates[])(PmSlotHeader *)={RoomLib_UpdateHandlerA,RoomLib_UpdateHandlerB,RoomLib_UpdateHandlerC};
     for(unsigned method=0;method<3;++method) {
-        if(updates[method](&object)!=0 || room_callback_count!=method+1 || object.w04!=(int)(method+1)*7)
+        if(updates[method]((PmSlotHeader *)&object)!=0 || room_callback_count!=method+1 || object.w04!=(int)(method+1)*7)
             return 0;
     }
     puts("Original room actor classes: A/B/C update callbacks received their native object context");
@@ -9135,7 +9290,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
     unsigned first=field_control>=2?(unsigned)field_control+10:field_control?6:0;
     unsigned end=field_control>=2?first+1:field_control?12:6;
     for(unsigned input=first;input<end;++input){
-        const char *limit=input==19?"154203":input==18?"131932":input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+        const char *limit=input==20?"200826":input==19?"154203":input==18?"131932":input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
         const char *args[4096]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
@@ -9279,7 +9434,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
-            if(input==19){
+            if(input>=19){
                 /* Recorded host input from the M020 receipt through two corridor
                  * victories, level-up, M011 round trip and the M017 survivor. */
                 static const unsigned route[][2]={
@@ -9334,6 +9489,86 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
+            if(input==20){
+                /* Continue normal exploration: M021, M020 corpse key, M018
+                 * unlock, Melissa's diary and second key, then unlock M022. */
+                static const unsigned route[][2]={
+                    {154203,16},{154403,16384},{154407,0},{154587,16},{154837,16384},{154841,0},
+                    {155021,16},{155091,16384},{155095,0},{155275,128},{155405,16384},{155409,0},
+                    {155589,16},{155593,16384},{155597,0},{155777,128},{155917,16},{155921,16384},
+                    {155925,0},{156105,64},{156905,0},{157305,32},{157505,64},{158305,0},
+                    {158705,16384},{158709,0},{158737,16384},{158741,0},{158769,16384},{158773,0},
+                    {158801,16384},{158805,0},{158833,16384},{158837,0},{158865,16384},{158869,0},
+                    {158897,16384},{158901,0},{158929,16384},{158933,0},{158961,16384},{158965,0},
+                    {158993,16384},{158997,0},{159025,16384},{159029,0},{159057,16384},{159061,0},
+                    {159089,16384},{159093,0},{159121,16384},{159125,0},{159153,16384},{159157,0},
+                    {159185,16384},{159189,0},{159217,16384},{159221,0},{159249,16384},{159253,0},
+                    {159281,16384},{159285,0},{159313,16384},{159317,0},{159345,16384},{159349,0},
+                    {159377,16384},{159381,0},{159409,16384},{159413,0},{159441,16384},{159445,0},
+                    {159473,16384},{159477,0},{159505,16384},{159509,0},{159537,16384},{159541,0},
+                    {159569,16384},{159573,0},{159601,16384},{159605,0},{159633,16384},{159637,0},
+                    {159745,64},{159880,128},{160180,0},{160580,16},{160800,16384},{160804,0},
+                    {161204,16},{161384,16384},{161388,0},{161568,64},{161748,32},{161838,16384},
+                    {161842,0},{162022,32},{162072,16384},{162076,0},{162256,128},{162706,16384},
+                    {162710,0},{162890,32},{163040,64},{164040,0},{164340,4096},{164344,0},
+                    {164444,16384},{164448,0},{164528,64},{164532,0},{164540,64},{164544,0},
+                    {164552,16384},{164556,0},{164616,16384},{164620,0},{164720,8192},{164724,0},
+                    {164740,8192},{164744,0},{164760,16},{165520,32},{166020,0},{166320,64},
+                    {166400,128},{166900,0},{167200,64},{168200,0},{168500,16384},{168504,0},
+                    {168532,16384},{168536,0},{168564,16384},{168568,0},{168596,16384},{168600,0},
+                    {168628,16384},{168632,0},{168660,16384},{168664,0},{168692,16384},{168696,0},
+                    {168724,16384},{168728,0},{168756,16384},{168760,0},{168788,16384},{168792,0},
+                    {168820,16384},{168824,0},{168852,16384},{168856,0},{168884,16384},{168888,0},
+                    {168916,16384},{168920,0},{168948,16384},{168952,0},{168980,16384},{168984,0},
+                    {169012,16384},{169016,0},{169044,16384},{169048,0},{169076,16384},{169080,0},
+                    {169108,16384},{169112,0},{169140,16384},{169144,0},{169172,16384},{169176,0},
+                    {169204,16384},{169208,0},{169236,16384},{169240,0},{169268,16384},{169272,0},
+                    {169300,16384},{169304,0},{169332,16384},{169336,0},{169364,16384},{169368,0},
+                    {169396,16384},{169400,0},{169428,16384},{169432,0},{169460,16384},{169464,0},
+                    {169492,16384},{169496,0},{169524,16384},{169528,0},{169556,16384},{169560,0},
+                    {169588,16384},{169592,0},{169620,16384},{169624,0},{169652,16384},{169656,0},
+                    {169684,16384},{169688,0},{169716,16384},{169720,0},{169748,16384},{169752,0},
+                    {169860,16},{171140,32},{171640,0},{171940,128},{172440,0},{172840,128},
+                    {172990,0},{173390,16384},{173394,0},{173794,64},{173994,128},{174144,0},
+                    {174544,128},{174594,16},{174619,16384},{174623,0},{174803,128},{174807,16384},
+                    {174811,0},{174991,16384},{174995,0},{175175,16384},{175179,0},{175299,64},
+                    {175344,32},{175504,16},{175584,0},{175784,64},{176624,128},{176804,0},
+                    {177204,16384},{177208,0},{177388,128},{177538,0},{177938,128},{178188,16},
+                    {178388,16384},{178392,0},{178592,16},{178812,16384},{178816,0},{178996,16},
+                    {179096,16384},{179100,0},{179280,32},{179340,16},{179344,16384},{179348,0},
+                    {179528,128},{179646,16},{179650,16384},{179654,0},{179854,16384},{179858,0},
+                    {180038,16384},{180042,0},{180222,16384},{180226,0},{180406,16384},{180410,0},
+                    {180590,16384},{180594,0},{180774,16384},{180778,0},{180958,16384},{180962,0},
+                    {181142,16384},{181146,0},{181326,16384},{181330,0},{181510,16384},{181514,0},
+                    {181694,16384},{181698,0},{181878,16384},{181882,0},{182062,16384},{182066,0},
+                    {182246,16384},{182250,0},{182430,16384},{182434,0},{182614,16384},{182618,0},
+                    {182798,16384},{182802,0},{182982,16384},{182986,0},{183166,16384},{183170,0},
+                    {183350,16384},{183354,0},{183534,16384},{183538,0},{183718,16384},{183722,0},
+                    {183902,16384},{183906,0},{184086,16384},{184090,0},{184270,16384},{184274,0},
+                    {184454,16384},{184458,0},{184638,16384},{184642,0},{184822,16384},{184826,0},
+                    {184976,64},{185356,32},{185706,0},{186106,64},{186286,32},{186486,0},
+                    {186886,32},{187386,0},{187486,16384},{187490,0},
+                    {188460,16},{188515,32},{188615,0},{188915,64},{189671,128},{189821,0},
+                    {189921,32},{190001,64},{190516,128},{190666,0},{190766,16384},{190770,0},
+                    {190950,128},{191100,0},{191500,128},{191750,16},{192270,32},{192330,16},
+                    {192334,128},{192452,16},{192456,16384},{192460,0},{192660,16384},{192664,0},
+                    {192844,16384},{192848,0},{193028,16384},{193032,0},{193212,16384},{193216,0},
+                    {193396,16384},{193400,0},{193580,16384},{193584,0},{193764,16384},{193768,0},
+                    {193948,16384},{193952,0},{194132,16384},{194136,0},{194316,16384},{194320,0},
+                    {194500,16384},{194504,0},{194684,16384},{194688,0},{194868,16384},{194872,0},
+                    {195052,16384},{195056,0},{195236,16384},{195240,0},{195420,16384},{195424,0},
+                    {195604,16384},{195608,0},{195788,16384},{195792,0},{195972,16384},{195976,0},
+                    {196156,16384},{196160,0},{196340,16384},{196344,0},{196524,16384},{196528,0},
+                    {196708,16384},{196712,0},{196892,16384},{196896,0},{197076,16384},{197080,0},
+                    {197260,16384},{197264,0},{197444,16384},{197448,0},{197628,16384},{197632,0},
+                    {197782,64},{198162,32},{198512,64},{198692,32},{198892,0},{199292,32},
+                    {199792,0},{199892,16384},{199896,0},{200076,32},{200226,0},
+                };
+                for(unsigned i=0;i<sizeof(route)/sizeof(route[0]);++i){
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",route[i][0],route[i][1]);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                }
+            }
 #undef BOOTSTRAP_PRESS
         }
         SDL_PropertiesID props=SDL_CreateProperties();
@@ -9345,7 +9580,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==19?"\"vblanks\":154203":input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==20?"\"vblanks\":200826":input==19?"\"vblanks\":154203":input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -9440,6 +9675,17 @@ static int original_native_bootstrap(const char *executable,int field_control)
            !strstr(output,"\"player\":true,\"flags\":8,\"position\":[18022400,-262144,-55115776],\"yaw\":3910") ||
            !strstr(output,"\"combat\":{\"mode\":9,\"live_enemies\":0,\"player_hp\":14,\"player_max_hp\":53}") ||
            !strstr(output,"\"inventory\":{\"capacity\":12,\"slots\":[256,257,258,512,6,0,0")))valid=0;
+        if(input==20){
+            unsigned hp=0,max_hp=0;
+            const char *health=output?strstr(output,"\"player_hp\":"):NULL;
+            if(!output || !strstr(output,"\"scene\":2818580808") ||
+               !strstr(output,"\"video_state\":0") || !strstr(output,"\"move_lock\":0") ||
+               !strstr(output,"\"menu\":null") ||
+               !strstr(output,"\"combat\":{\"mode\":9,\"live_enemies\":0") ||
+               !strstr(output,"\"slots\":[256,257,258,512,200,201,0") || !health ||
+               sscanf(health,"\"player_hp\":%u,\"player_max_hp\":%u",&hp,&max_hp)!=2 ||
+               hp!=1 || max_hp!=53)valid=0;
+        }
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -9482,6 +9728,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==15 && hash!=UINT64_C(0x1a99c887686e1a86))valid=0;
         if(input==16 && hash!=UINT64_C(0x8e856f4fc0b74e6d))valid=0;
         if(input==19 && hash!=UINT64_C(0x16dbf16f81d33fc0))valid=0;
+        if(input==20 && hash!=UINT64_C(0xb4f02c215f7e80c6))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
@@ -9500,6 +9747,7 @@ int main(int argc, char **argv)
 
     if(argc==3 && !strcmp(argv[1],"--native-stage"))return original_native_bootstrap(argv[2],2);
     if(argc==3 && !strcmp(argv[1],"--native-battle-entry"))return original_native_bootstrap(argv[2],3);
+    if(argc==3 && !strcmp(argv[1],"--native-m022"))return original_native_bootstrap(argv[2],10);
     if(argc==3 && !strcmp(argv[1],"--native-m017"))return original_native_bootstrap(argv[2],9);
     if(argc==3 && !strcmp(argv[1],"--native-m020-items"))return original_native_bootstrap(argv[2],8);
     if(argc==3 && !strcmp(argv[1],"--native-rat"))return original_native_bootstrap(argv[2],7);
@@ -9563,7 +9811,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_motion() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;
@@ -9596,6 +9844,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};PeDiscFile exe;u32 pointers[50];
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
+        if (!original_room_actor_assets(&disc,&exe))return 157;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;

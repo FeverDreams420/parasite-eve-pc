@@ -442,6 +442,8 @@ int Scene_LoadRoom(unsigned int roomId)
         }
         if (map + 1 == 272 && slot == 15 && record[i].u.handlerAddress == 0x8018f1a8u)
             native = &g_RoomM272Handlers;
+        if (map + 1 == 22 && slot == 70 && record[i].u.handlerAddress == 0x801924e8u)
+            native = &g_RoomActorClassTable[0];
         if (map + 1 == 5 && slot == 117 && record[i].u.handlerAddress == 0x80190b44u)
             native = &g_RoomM005Effects;
         if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 30) && slot == 115 && record[i].u.handlerAddress == 0x8018fcb4u)
@@ -575,6 +577,8 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if (map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 30) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
+        } else if (map + 1 == 22) {
+            g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];
         } else {
             g_PmCmdHandlerTable[slot] = map + 1 == 272 ? &g_RoomM272Handlers : &g_RoomFxMirrorHandlers;
         }

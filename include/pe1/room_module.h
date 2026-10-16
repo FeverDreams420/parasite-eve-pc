@@ -2,6 +2,7 @@
 #define PE1_ROOM_MODULE_H
 
 #include "common.h"
+#include "pe1/pm_types.h"
 #include "pe1/room_interface.h"
 
 /* A room module's class. Every effect module a room links starts with a
@@ -31,6 +32,7 @@ typedef int (*RoomModuleHandler)();
  * room's (room_lib/actor_class_table.c and its window-class variants). */
 #define ROOM_CLASS_METHODS 7
 extern RoomModuleHandler g_RoomClassTable[][ROOM_CLASS_METHODS];
+extern PmCommand g_RoomActorClassTable[6];
 
 /* Command program planted into the engine slot (opcode in the high half of
  * each word, -1 terminated). */

@@ -17,10 +17,10 @@
 
 #include "room_lib.h"
 
-int RoomLib_HandlerDNop0(void) {
-    return 0;
+void RoomLib_HandlerDNop0(void) {
 }
-int RoomLib_InitHandlerD(RoomEnt *o) {
+void RoomLib_InitHandlerD(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     RoomLibHandlerDState *state = (RoomLibHandlerDState *)&o->sub;
 
     o->flag3 = 1;
@@ -54,9 +54,9 @@ int RoomLib_InitHandlerD(RoomEnt *o) {
     state->lockY = 0;
     state->copyPosition = 0;
     state->copyRotation = 0;
-    return 0;
 }
-int RoomLib_ConfigureHandlerD(RoomEnt *o, int query, unsigned int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
+int RoomLib_ConfigureHandlerD(PmSlotHeader *slot, int query, int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
+    RoomEnt *o = (RoomEnt *)slot;
     RoomLibHandlerDState *state = (RoomLibHandlerDState *)&o->sub;
     FieldActorNode *node;
     switch (op) {
@@ -172,10 +172,12 @@ int RoomLib_ConfigureHandlerD(RoomEnt *o, int query, unsigned int op, intptr_t a
     }
     return 0;
 }
-int RoomLib_HandlerDNop3(void) {
+int RoomLib_HandlerDNop3(PmSlotHeader *slot) {
+    (void)slot;
     return 0;
 }
-int RoomLib_UpdateHandlerD(RoomEnt *o) {
+int RoomLib_UpdateHandlerD(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     switch (FieldFx_IsOwnerBusy((struct FieldFxTaskOwner *)o)) {
     case 0:
         if (o->link->variant < 2) {
@@ -184,7 +186,7 @@ int RoomLib_UpdateHandlerD(RoomEnt *o) {
         o->sub.cb(o);
         return 0;
     case 1:
-        RoomLib_ReleaseHandlerD(o);
+        RoomLib_ReleaseHandlerD((PmSlotHeader *)o);
     case 2:
         return 0;
     }
@@ -194,7 +196,7 @@ void RoomLib_ArmHandlerD(RoomEnt *o) {
     signed char c;
     int t;
     unsigned short lo;
-    if (o->bB4 != 0) {
+    if (((RoomLibHandlerDState *)&o->sub)->mirrorPosition != 0) {
         RoomLib_FxNotify(o->link, &o->sub, 0);
     }
     c = o->t16;
@@ -241,7 +243,7 @@ void RoomLib_HandlerD(RoomEnt *o) {
         state->anchor[0] = link->pos[0];
         state->anchor[1] = link->pos[1];
         state->anchor[2] = link->pos[2];
-        RoomLib_HandlerDTransformTarget((struct RoomLibMotionState *)state,
+        RoomLib_HandlerDTransformTarget(state,
                                         (void *)scratch);
         {
             Vec3Fixed *targetPosition;
@@ -251,7 +253,7 @@ void RoomLib_HandlerD(RoomEnt *o) {
 
             left = (char *)state->anchor;
             left_arg = left;
-            targetPosition = (Vec3Fixed *)((RoomLibMotionState *)state)->position;
+            targetPosition = (Vec3Fixed *)state->target;
             initial_speed = FieldFx_GetFixedDistance3D((Vec3Fixed *)left_arg, targetPosition);
             initial_speed += (state->value8C * 0x70) >> 21;
             if (initial_speed < 0x148) {
@@ -267,14 +269,15 @@ void RoomLib_HandlerD(RoomEnt *o) {
 
     {
         int bias = 0x8000;
-        int *table = (int *)rcossin_tbl;
+        GteSineWord sample;
 
     scratch[0x34] = 0;
     {
         int angle;
         angle = ((state->progress.word + bias) >> 16) - 0x400;
         scratch[0x35] = angle;
-        rot = table + (angle & 0xFFF);
+        sample.part.sin=rsin(angle & 0xFFF);sample.part.cos=rcos(angle & 0xFFF);
+        rot = &sample.word;
     }
     result = ((short *)rot)[1];
     scratch[0x15] = 0;
@@ -339,7 +342,7 @@ void RoomLib_HandlerD(RoomEnt *o) {
             ((RoomLibMotionWork *)scratch)->displacement[0] = 0;
             ((RoomLibMotionWork *)scratch)->displacement[1] = 0;
             ((RoomLibMotionWork *)scratch)->displacement[2] = 0;
-            RoomLib_ReleaseHandlerD(ent);
+            RoomLib_ReleaseHandlerD((PmSlotHeader *)ent);
         } else {
             scratch[0] = ((((state->motion[0] + bias) >> 16) *
                            state->value90) >> 12);
@@ -353,7 +356,7 @@ void RoomLib_HandlerD(RoomEnt *o) {
     }
 
     if (state->rate != 0 && state->rate < state->progress.half.whole) {
-        RoomLib_ReleaseHandlerD(ent);
+        RoomLib_ReleaseHandlerD((PmSlotHeader *)ent);
     }
     link->pos[0] = state->anchor[0] +
                        (((RoomLibMotionWork *)scratch)->displacement[0] << 16);
@@ -374,10 +377,10 @@ void RoomLib_HandlerD(RoomEnt *o) {
         if (ent->w04 >= (unsigned int)state->range[1] &&
             (state->range[2] == 0 ||
              ent->w04 <= (unsigned int)state->range[2])) {
-            RoomLib_HandlerDTransformTarget((struct RoomLibMotionState *)state,
+            RoomLib_HandlerDTransformTarget(state,
                                         (void *)scratch);
             scratch[1] = state->angles[1];
-            FieldFx_FixedVecToLookAngles((Vec3Fixed *)state->anchor, (Vec3Fixed *)((RoomLibMotionState *)state)->position, state->angles);
+            FieldFx_FixedVecToLookAngles((Vec3Fixed *)state->anchor, (Vec3Fixed *)state->target, state->angles);
             state->angles[1] = FieldFx_TurnToward(
                 (short)*(volatile unsigned short *)&scratch[1],
                 state->angles[1], state->range[0]) & 0xFFF;
@@ -417,27 +420,23 @@ void RoomLib_FxNotify(RoomLink *arg0, struct RoomSub *arg1, intptr_t scratch) {
             rec->duration) & 0xFFF;
     }
 }
-void RoomLib_HandlerDTransformTarget(RoomLibMotionState *state, RoomLibMotionWork *work) {
+void RoomLib_HandlerDTransformTarget(RoomLibHandlerDState *state, RoomLibMotionWork *work) {
     int angle;
-    int *entry;
-    int *table;
     int height;
     int lo;
     int hi;
-    if (state->target != 0) {
-        state->position[0] = state->target->pos[0];
-        state->position[1] = state->target->pos[1];
-        state->position[2] = state->target->pos[2];
+    if (state->targetLink != 0) {
+        state->target[0] = state->targetLink->pos[0];
+        state->target[1] = state->targetLink->pos[1];
+        state->target[2] = state->targetLink->pos[2];
     }
-    if (state->mode.word != 0) {
-        angle = FieldFx_VecToAngle((Vec3Fixed *)state->anchor, (Vec3Fixed *)state->position);
+    if (state->target[3] != 0) {
+        angle = FieldFx_VecToAngle((Vec3Fixed *)state->anchor, (Vec3Fixed *)state->target);
         angle &= 0xFFF;
-        table = (int *)rcossin_tbl;
-        entry = table + angle;
-        hi = ((short *)entry)[1];
+        hi = rcos(angle);
         work->matrix[1] = 0;
         work->matrix[0] = hi;
-        lo = *entry;
+        lo = rsin(angle);
         work->matrix[3] = 0;
         work->matrix[5] = 0;
         work->matrix[7] = 0;
@@ -447,23 +446,21 @@ void RoomLib_HandlerDTransformTarget(RoomLibMotionState *state, RoomLibMotionWor
         work->matrix[4] = 0x1000;
         work->matrix[8] = work->matrix[0];
         work->matrix[6] = -(unsigned short)work->matrix[2];
-        height = state->mode.half.height;
+        height = (s16)((u32)state->target[3] >> 16);
         work->input[2] = height;
         gte_ldrotmatrix(work->matrix);
         gte_ldv0(work->input);
         gte_mvmva();
         gte_stmac(work->rotated);
-        state->position[0] = state->anchor[0] + (work->rotated[0] << 16);
-        state->position[2] = state->anchor[2] + (work->rotated[2] << 16);
+        state->target[0] = (s32)((u32)state->anchor[0] + ((u32)work->rotated[0] << 16));
+        state->target[2] = (s32)((u32)state->anchor[2] + ((u32)work->rotated[2] << 16));
     }
-    angle = FieldFx_VecToAngle((Vec3Fixed *)state->anchor, (Vec3Fixed *)state->position);
+    angle = FieldFx_VecToAngle((Vec3Fixed *)state->anchor, (Vec3Fixed *)state->target);
     angle &= 0xFFF;
-    table = (int *)rcossin_tbl;
-    entry = table + angle;
-    hi = ((short *)entry)[1];
+    hi = rcos(angle);
     work->matrix[1] = 0;
     work->matrix[0] = hi;
-    lo = *entry;
+    lo = rsin(angle);
     work->matrix[3] = 0;
     work->matrix[5] = 0;
     work->matrix[7] = 0;
@@ -472,18 +469,19 @@ void RoomLib_HandlerDTransformTarget(RoomLibMotionState *state, RoomLibMotionWor
     work->matrix[8] = work->matrix[0];
     work->matrix[6] = -(unsigned short)work->matrix[2];
     gte_ldrotmatrix(work->matrix);
-    gte_ldv0(state->localStep);
+    gte_ldv0(state->rotation);
     gte_mvmva();
     gte_stmac(work->rotated);
-    state->position[0] += work->rotated[0] << 16;
-    state->position[1] += work->rotated[1] << 16;
-    state->position[2] += work->rotated[2] << 16;
+    state->target[0] = (s32)((u32)state->target[0] + ((u32)work->rotated[0] << 16));
+    state->target[1] = (s32)((u32)state->target[1] + ((u32)work->rotated[1] << 16));
+    state->target[2] = (s32)((u32)state->target[2] + ((u32)work->rotated[2] << 16));
 }
-int RoomLib_ReleaseHandlerD(RoomEnt *o) {
+int RoomLib_ReleaseHandlerD(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     struct RoomSub *s = &o->sub;
     o->state = 4;
     o->flag3 = 0;
-    if (o->bB8 == 0) {
+    if (((RoomLibHandlerDState *)&o->sub)->copyRotation == 0) {
         if (o->active != 0) {
             if (o->link->target != 0) {
                 *o->link->target->state = 4;
@@ -502,14 +500,13 @@ int RoomLib_ReleaseHandlerD(RoomEnt *o) {
     }
     return 0;
 }
-int RoomLib_HandlerDNop6(void) {
-    return 0;
+void RoomLib_HandlerDNop6(void) {
 }
 
-int RoomLib_HandlerENop0(void) {
-    return 0;
+void RoomLib_HandlerENop0(void) {
 }
-int RoomLib_InitHandlerE(RoomEnt *o) {
+void RoomLib_InitHandlerE(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     RoomLibHandlerEState *state = (RoomLibHandlerEState *)&o->sub;
 
     o->flag3 = 1;
@@ -535,9 +532,9 @@ int RoomLib_InitHandlerE(RoomEnt *o) {
     state->phaseFrame[0] = 0;
     state->lockY = 0;
     state->copyPosition = 0;
-    return 0;
 }
-int RoomLib_ConfigureHandlerE(RoomEnt *o, int query, unsigned int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
+int RoomLib_ConfigureHandlerE(PmSlotHeader *slot, int query, int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
+    RoomEnt *o = (RoomEnt *)slot;
     RoomLibHandlerEState *state = (RoomLibHandlerEState *)&o->sub;
     FieldActorNode *node;
     switch (op) {
@@ -656,10 +653,12 @@ int RoomLib_ConfigureHandlerE(RoomEnt *o, int query, unsigned int op, intptr_t a
     }
     return 0;
 }
-int RoomLib_HandlerENop3(void) {
+int RoomLib_HandlerENop3(PmSlotHeader *slot) {
+    (void)slot;
     return 0;
 }
-int RoomLib_UpdateHandlerE(RoomEnt *o) {
+int RoomLib_UpdateHandlerE(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     switch (FieldFx_IsOwnerBusy((struct FieldFxTaskOwner *)o)) {
     case 0:
         if (o->link->variant < 2) {
@@ -668,7 +667,7 @@ int RoomLib_UpdateHandlerE(RoomEnt *o) {
         o->sub.cb(o);
         return 0;
     case 1:
-        RoomLib_ReleaseHandlerE(o);
+        RoomLib_ReleaseHandlerE((PmSlotHeader *)o);
     case 2:
         return 0;
     }
@@ -734,8 +733,8 @@ void RoomLib_HandlerE(RoomEnt *o) {
         }
         angle = FieldFx_VecToAngle((Vec3Fixed *)state->start, (Vec3Fixed *)state->target) & 0xFFF;
         {
-            rotBase = (short *)(rcossin_tbl);
-            rot = rotBase + (angle << 1);
+            GteSineWord sample={.part={rsin(angle),rcos(angle)}};
+            rot = sample.half;
             rotY = rot[1];
             scratch[21] = 0;
             scratch[20] = rotY;
@@ -781,7 +780,7 @@ void RoomLib_HandlerE(RoomEnt *o) {
         remain = state->duration;
     }
     if (state->eased != 0) {
-        scale = 0x1000 - g_RcossinTblCos[(((remain << 11) / state->duration) & 0xFFF) << 1];
+        scale = 0x1000 - rcos(((remain << 11) / state->duration) & 0xFFF);
         link->pos[0] = state->start[0] + (((state->delta[0] * scale + 0x1000) >> 13) << 12);
         if (state->lockY == 0) {
             link->pos[1] = state->start[1] + (((state->delta[1] * scale + 0x1000) >> 13) << 12);
@@ -801,7 +800,7 @@ void RoomLib_HandlerE(RoomEnt *o) {
         link->posMirror[3] = link->pos[3];
     }
     if (remain >= state->duration && state->frame >= state->frameLimit) {
-        RoomLib_ReleaseHandlerE(o);
+        RoomLib_ReleaseHandlerE((PmSlotHeader *)o);
     } else {
         state->frame++;
         if (state->frameLimit < state->frame) {
@@ -828,7 +827,8 @@ void RoomLib_HandlerESteerToward(RoomLink *entArg, RoomLibHandlerEState *recArg)
             rec->secondaryHeading);
     }
 }
-int RoomLib_ReleaseHandlerE(RoomEnt *o) {
+int RoomLib_ReleaseHandlerE(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     struct RoomSub *s = &o->sub;
     o->state = 4;
     o->flag3 = 0;
@@ -843,14 +843,13 @@ int RoomLib_ReleaseHandlerE(RoomEnt *o) {
     }
     return 0;
 }
-int RoomLib_HandlerENop6(void) {
-    return 0;
+void RoomLib_HandlerENop6(void) {
 }
 
-int RoomLib_HandlerBNop0(void) {
-    return 0;
+void RoomLib_HandlerBNop0(void) {
 }
-int RoomLib_InitHandlerB(RoomEnt *o) {
+void RoomLib_InitHandlerB(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     RoomLibHandlerBState *state = (RoomLibHandlerBState *)&o->sub;
     RoomLink *l;
     o->flag3 = 1;
@@ -884,9 +883,9 @@ int RoomLib_InitHandlerB(RoomEnt *o) {
     l->move[0] = 0;
     l->move[1] = 0;
     l->move[2] = 0;
-    return 0;
 }
-int RoomLib_ConfigureHandlerB(RoomEnt *o, int query, unsigned int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
+int RoomLib_ConfigureHandlerB(PmSlotHeader *slot, int query, int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
+    RoomEnt *o = (RoomEnt *)slot;
     RoomLibHandlerBState *state = (RoomLibHandlerBState *)&o->sub;
     FieldActorNode *node;
     switch (op) {
@@ -992,10 +991,12 @@ int RoomLib_ConfigureHandlerB(RoomEnt *o, int query, unsigned int op, intptr_t a
     }
     return 0;
 }
-int RoomLib_HandlerBNop3(void) {
+int RoomLib_HandlerBNop3(PmSlotHeader *slot) {
+    (void)slot;
     return 0;
 }
-int RoomLib_UpdateHandlerB(RoomEnt *obj) {
+int RoomLib_UpdateHandlerB(PmSlotHeader *slot) {
+    RoomEnt *obj = (RoomEnt *)slot;
     obj->sub.cb(obj);
     return 0;
 }
@@ -1045,7 +1046,7 @@ void RoomLib_HandlerB(RoomEnt *obj) {
         int v0;
         int v1;
         GteSineWord *entry;
-        GteSineWord *table;
+        GteSineWord sample;
         unsigned short matrixComponent;
         BattleEntity *player;
 
@@ -1060,8 +1061,8 @@ void RoomLib_HandlerB(RoomEnt *obj) {
         v1 += 0x800;
         v0 += v1;
         v0 &= 0xFFF;
-        table = rcossin_tbl;
-        entry = &table[v0];
+        sample.part.sin=rsin(v0);sample.part.cos=rcos(v0);
+        entry = &sample;
         v1 = entry->part.cos;
         state->matrix[1] = 0;
         ((volatile RoomLibHandlerBState *)state)->matrix[0] = v1;
@@ -1176,7 +1177,7 @@ void RoomLib_HandlerB(RoomEnt *obj) {
     }
     FieldFx_LoopLinkedAnimation(self);
     if (scratch->landed != 0) {
-        RoomLib_ReleaseHandlerB(self);
+        RoomLib_ReleaseHandlerB((PmSlotHeader *)self);
     }
 }
 
@@ -1214,8 +1215,8 @@ void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
 
         angle = FieldFx_VecToAngle((Vec3Fixed *)link->pos, (Vec3Fixed *)&scratch[20]) & 0xFFF;
         {
-            int *rotBase = (int *)rcossin_tbl;
-            int *entry = rotBase + angle;
+            GteSineWord sample={.part={rsin(angle),rcos(angle)}};
+            int *entry = &sample.word;
             int hi = ((short *)entry)[1];
             int lo;
             int savedHi;
@@ -1300,11 +1301,12 @@ void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
     }
     FieldFx_LoopLinkedAnimation(self);
     if (((RoomLibArcWork *)scratch)->landed != 0) {
-        RoomLib_ReleaseHandlerB(self);
+        RoomLib_ReleaseHandlerB((PmSlotHeader *)self);
     }
 }
 
-int RoomLib_ReleaseHandlerB(RoomEnt *o) {
+int RoomLib_ReleaseHandlerB(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     struct RoomSub *s = &o->sub;
     if (o->active != 0) {
         RoomLink *l = o->link;
@@ -1319,33 +1321,33 @@ int RoomLib_ReleaseHandlerB(RoomEnt *o) {
     }
     return 0;
 }
-int RoomLib_HandlerBNop6(void) {
-    return 0;
+void RoomLib_HandlerBNop6(void) {
 }
 
-int RoomLib_HandlerCNop0(void) {
-    return 0;
+void RoomLib_HandlerCNop0(void) {
 }
-int RoomLib_InitHandlerC(RoomEnt *o) {
+void RoomLib_InitHandlerC(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     RoomLink *l;
+    RoomLibHandlerCState *state=(RoomLibHandlerCState *)&o->sub;
     o->flag3 = 1;
     o->t17 = -1;
     o->t16 = -1;
     o->t19 = 7;
-    o->w94 = 0x10000;
-    o->h9C = 0x10;
+    state->mode = 0x10000;
+    state->rate = 0x10;
     l = o->link;
     o->sub.signal = 0;
     o->active = 0;
     o->t1A = 0;
-    o->w7C = 0;
-    o->w5C = 0;
-    o->w60 = 0;
-    o->w64 = 0;
-    o->h9E = 0;
+    state->targetLink = 0;
+    state->localOffset[0] = 0;
+    state->localOffset[1] = 0;
+    state->localOffset[2] = 0;
+    state->heading = 0;
     o->sub.cb = RoomLib_HandlerC;
-    o->w80 = 0;
-    o->hA0 = 0;
+    state->secondaryLink = 0;
+    state->secondaryHeading = 0;
     l->vel[0] = 0;
     l->vel[1] = 0;
     l->vel[2] = 0;
@@ -1355,9 +1357,9 @@ int RoomLib_InitHandlerC(RoomEnt *o) {
     l->move[0] = 0;
     l->move[1] = 0;
     l->move[2] = 0;
-    return 0;
 }
-int RoomLib_ConfigureHandlerC(RoomEnt *o, int query, unsigned int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
+int RoomLib_ConfigureHandlerC(PmSlotHeader *slot, int query, int op, intptr_t arg0, intptr_t arg1, intptr_t arg2) {
+    RoomEnt *o = (RoomEnt *)slot;
     RoomLibHandlerCState *state = (RoomLibHandlerCState *)&o->sub;
     FieldActorNode *node;
     switch (op) {
@@ -1457,10 +1459,12 @@ int RoomLib_ConfigureHandlerC(RoomEnt *o, int query, unsigned int op, intptr_t a
     }
     return 0;
 }
-int RoomLib_HandlerCNop3(void) {
+int RoomLib_HandlerCNop3(PmSlotHeader *slot) {
+    (void)slot;
     return 0;
 }
-int RoomLib_UpdateHandlerC(RoomEnt *obj) {
+int RoomLib_UpdateHandlerC(PmSlotHeader *slot) {
+    RoomEnt *obj = (RoomEnt *)slot;
     obj->sub.cb(obj);
     return 0;
 }
@@ -1518,8 +1522,8 @@ void RoomLib_HandlerC(RoomEnt *obj) {
         angle = FieldFx_VecToAngle((Vec3Fixed *)link->pos, (Vec3Fixed *)((u8 *)scratch + 0x28)) &
                 0xFFF;
         {
-            int *rotBase = (int *)rcossin_tbl;
-            int *entry = rotBase + angle;
+            GteSineWord sample={.part={rsin(angle),rcos(angle)}};
+            int *entry = &sample.word;
             int hi = ((short *)entry)[1];
             int lo;
             int savedHi;
@@ -1614,7 +1618,7 @@ void RoomLib_HandlerC(RoomEnt *obj) {
     }
     FieldFx_LoopLinkedAnimation(self);
     if (((RoomLibArcWork *)scratch)->landed != 0) {
-        RoomLib_ReleaseHandlerC(self);
+        RoomLib_ReleaseHandlerC((PmSlotHeader *)self);
     }
 }
 
@@ -1652,8 +1656,8 @@ void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
 
         angle = FieldFx_VecToAngle((Vec3Fixed *)link->pos, (Vec3Fixed *)&scratch[20]) & 0xFFF;
         {
-            int *rotBase = (int *)rcossin_tbl;
-            int *entry = rotBase + angle;
+            GteSineWord sample={.part={rsin(angle),rcos(angle)}};
+            int *entry = &sample.word;
             int hi = ((short *)entry)[1];
             int lo;
             int savedHi;
@@ -1736,11 +1740,12 @@ void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
     }
     FieldFx_LoopLinkedAnimation(self);
     if (((RoomLibArcWork *)scratch)->landed != 0) {
-        RoomLib_ReleaseHandlerC(self);
+        RoomLib_ReleaseHandlerC((PmSlotHeader *)self);
     }
 }
 
-int RoomLib_ReleaseHandlerC(RoomEnt *o) {
+int RoomLib_ReleaseHandlerC(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     struct RoomSub *s = &o->sub;
     if (o->active != 0) {
         RoomLink *l = o->link;
@@ -1755,14 +1760,13 @@ int RoomLib_ReleaseHandlerC(RoomEnt *o) {
     }
     return 0;
 }
-int RoomLib_HandlerCNop6(void) {
-    return 0;
+void RoomLib_HandlerCNop6(void) {
 }
 
-int RoomLib_HandlerANop0(void) {
-    return 0;
+void RoomLib_HandlerANop0(void) {
 }
-int RoomLib_InitHandlerA(RoomEnt *o) {
+void RoomLib_InitHandlerA(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     o->t16 = -1;
     o->t17 = -1;
     o->t18 = -1;
@@ -1772,9 +1776,9 @@ int RoomLib_InitHandlerA(RoomEnt *o) {
     o->active = 0;
     o->t1A = 0;
     o->h46 = 0;
-    return 0;
 }
-int RoomLib_ConfigureHandlerA(RoomEnt *o, int arg1, unsigned int op, intptr_t arg3, intptr_t sp10, intptr_t sp14) {
+int RoomLib_ConfigureHandlerA(PmSlotHeader *slot, int arg1, int op, intptr_t arg3, intptr_t sp10, intptr_t sp14) {
+    RoomEnt *o = (RoomEnt *)slot;
     if (op != 0xA) {
         if (op < 0xB) {
         if (op != 4) {
@@ -1813,10 +1817,12 @@ case10:
 done:
     return 0;
 }
-int RoomLib_HandlerANop3(void) {
+int RoomLib_HandlerANop3(PmSlotHeader *slot) {
+    (void)slot;
     return 0;
 }
-int RoomLib_UpdateHandlerA(RoomEnt *obj) {
+int RoomLib_UpdateHandlerA(PmSlotHeader *slot) {
+    RoomEnt *obj = (RoomEnt *)slot;
     obj->sub.cb(obj);
     return 0;
 }
@@ -1844,7 +1850,9 @@ void RoomLib_HandlerA(RoomEnt *o) {
             o->h48 = (unsigned short)o->h44 + 0x800;
         }
         {
-            int *e = &rcossin_tbl[(unsigned short)o->h44 & 0xFFF].word;
+            int angle=(unsigned short)o->h44 & 0xFFF;
+            GteSineWord sample={.part={rsin(angle),rcos(angle)}};
+            int *e = &sample.word;
             int hi = ((short *)e)[1];
             int lo;
             int savedHi;
@@ -1865,10 +1873,10 @@ void RoomLib_HandlerA(RoomEnt *o) {
 void RoomLib_HandlerF(RoomEnt *o) {
     int height;
     if (D_8009D254->actionMode >= 4) {
-        RoomLib_ReleaseHandlerA(o);
+        RoomLib_ReleaseHandlerA((PmSlotHeader *)o);
     } else if (D_8009D254->entityFlags & 0xC0000) {
         D_8009D254->entityFlags &= 0xFFF3FFFF;
-        RoomLib_ReleaseHandlerA(o);
+        RoomLib_ReleaseHandlerA((PmSlotHeader *)o);
     } else {
         _Alignas(4) short scratchMemory[128] = {0};
         volatile short *scratch = scratchMemory;
@@ -1884,7 +1892,7 @@ void RoomLib_HandlerF(RoomEnt *o) {
         height = o->pos[0] - o->pos[1];
         o->pos[0] = height;
         if (height < 0) {
-            RoomLib_ReleaseHandlerA(o);
+            RoomLib_ReleaseHandlerA((PmSlotHeader *)o);
         }
         if (o->h46 != 0) {
             D_8009D254->facingAngle = FieldFx_TurnToward(
@@ -1892,7 +1900,8 @@ void RoomLib_HandlerF(RoomEnt *o) {
         }
     }
 }
-int RoomLib_ReleaseHandlerA(RoomEnt *o) {
+int RoomLib_ReleaseHandlerA(PmSlotHeader *slot) {
+    RoomEnt *o = (RoomEnt *)slot;
     int *p = o->sub.signal;
     o->state = 4;
     if (p != 0) {
@@ -1900,6 +1909,5 @@ int RoomLib_ReleaseHandlerA(RoomEnt *o) {
     }
     return 0;
 }
-int RoomLib_HandlerANop6(void) {
-    return 0;
+void RoomLib_HandlerANop6(void) {
 }

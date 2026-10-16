@@ -10,7 +10,7 @@ Automatyczny input od New Game przechodzi Melissę, zaplecze, przemianę
 szczura i zwycięską walkę, następnie M020: dialog112, menu, użycie Medicine1
 (HP11->45) i otrzymanie następnego leku. Osobna próba potwierdza zamknięcie
 okna oraz powrót sterowania. Nowy test tej trasy przeszedł dwukrotnie.
-Poprzedni zamrożony kandydat ma 45/45 PASS; katalog zawiera teraz 47 testów.
+Poprzedni zamrożony kandydat ma 45/45 PASS; katalog zawiera teraz 48 testów.
 Aktualne testy powiązanych modułów oraz fixture’y ASan/UBSan/function przechodzą.
 Pełny runtime z sanitizerami dla M020 także przeszedł, z identycznym stanem i VRAM. To nadal
 początek kampanii, nie pełny port ani deklaracja pixel perfect.
@@ -39,8 +39,43 @@ Osobna sesja headless sterowana wyłącznie host inputem z checkpointu M020
 potwierdza wejście i wyjście M021, ponowne przeszukanie ciała M020 (dialog115,
 otrzymany klucz200), odblokowanie drzwi M018 (dialog118), odczyt dziennika
 Melissy99–108 i otrzymanie klucza201. Oba klucze pozostają w ekwipunku po
-powrocie do M012. Ta dalsza trasa nie jest jeszcze testem od New Game ani
-dowodem zgodności z PS1; input i zrzuty zachowano w roboczym /tmp.
+powrocie do M012. Ten osobny checkpoint-replay nie jest dowodem zgodności
+z PS1; jego input i zrzuty zachowano w roboczym /tmp. Pełną trasę od
+New Game do M022 sprawdza także opisany poniżej test.
+
+M022 ma natywnie podpięty oryginalny deskryptor slot70/801924e8 z istniejącej
+tabeli klas D/D/E/B/C/A. Oryginalne funkcje pozostają w actor_classes.c;
+mają typy callbacków PM, poprawiony wspólny prefiks stanu na 64 bitach,
+inicjalizację pól C i odczyty pól D przez ich właściwe struktury. Odczyty
+trygonometrii korzystają z rsin/rcos PsyZ: wszystkie 4096 par porównano
+z USA EXE. Test zasobów sprawdza również 42 adresy metod z archiwum M022,
+a test PM obejmuje wszystkie sześć wierszy, konfigurację/zapytanie, kontekst
+callbacku, zwalnianie i granice slotów. Funkcja przekształcania celu D używa
+bezpośrednio istniejącego stanu klasy zamiast drugiego widoku ze stałymi
+offsetami PS1. Jej 300 stanów (kierunki, signed height, wskazany aktor)
+zgadza się z oryginalnym CPU z mostkiem GTE; hash996cffcbf9215269.
+Mostek używa tego samego GTE PsyZ, więc nie stanowi niezależnego dowodu
+zgodności sprzętowego GTE. Fixture ASan/UBSan/function z zasobami także PASS.
+
+Replay z checkpointu M020 przez klucze i dziennik wchodzi do M022 (cap88500)
+zarówno w zwykłym, jak i w pełnym buildzie ASan/UBSan/function. Oba zwracają
+identyczny JSON (HP41/53, klucze200/201, brak menu/blokady) i identyczny VRAM:
+SHA256 6db7bc8899de145348a5833163e8894bd13d1742087fd8a20bb35775b0dd76fc.
+Nie dowodzi to jeszcze wszystkich stanów ruchu klas ani zgodności obrazu M022
+z PS1. Rozszerzona trasa od New Game do M022 ujawniła osobną awarię przy
+vblank170117 w M012: kontakt gracza z przeciwnikiem bez aktywnego effect.
+Entity_CheckActionIdMatch ma teraz właściwą sygnaturę contact_callback i
+pomija pusty efekt, jak oryginalna funkcja8001d268, której odczyt bajtu0
+nie daje aktywnego stanu1 (w działającej referencji PS1 bajt wynosi3).
+Porównanie6720 stanów z CPU USA obejmuje brak rdzenia/efektu, różne stany
+efektu, HP, grupy kontaktu, terminatory i signed16 part ID; hash a5fd542478aeafa5.
+Nowy original-game-m022-keys przechodzi od New Game całą zapisaną trasę
+przez M020, dalsze walki i awanse w korytarzu, M011/M017/M021, klucz200,
+dziennik Melissy i klucz201, aż do odblokowania i wejścia do M022.
+PASS292.93s przy cap200826, HP1/53, oba klucze, brak menu/blokady ruchu;
+FNV VRAMb4f02c215f7e80c6 zgadza się z sesją debuggera sterowaną tym samym
+inputem. Pięć powiązanych testów tego kandydata PASS305.56s, bez skipów.
+Nie jest to świeży wynik pełnych 48/48 ani dowód całej kampanii.
 
 Jeden zapis M012 wygenerowany przez oryginalne funkcje portu zaakceptował
 rzeczywisty PS1: File loaded, identyczne HP14/45, pozycja i yaw432 po Continue.

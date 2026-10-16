@@ -4,6 +4,7 @@
 #define ROOM_LIB_H
 
 #include "common.h"
+#include "pe1/pm_types.h"
 #include "pe1/field_actor.h"
 #include "pe1/script_queue.h"
 #include "pe1/battle_context.h"
@@ -271,23 +272,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, t19) == PE1_OFFSETOF(FieldFxTaskOwner, t
 
 
 /* Working records used while rotating scripted room motion vectors. */
-typedef struct RoomLibMotionState {
-    char pad00[0x40];
-    int position[3];              /* 0x40 */
-    union {
-        int word;
-        struct {
-            short pad4C;
-            short height;
-        } half;
-    } mode;                       /* 0x4C */
-    int anchor[3];                /* 0x50 */
-    char pad5C[0x14];
-    short localStep[3];           /* 0x70: packed GTE V0, shared with rotation */
-    char pad76[0xA];
-    RoomLink *target;             /* 0x80 */
-} RoomLibMotionState;
-
 typedef struct RoomLibMotionWork {
     short input[3];               /* 0x00 */
     short pad06;
@@ -338,6 +322,9 @@ typedef struct RoomLibHandlerEState {
     short active;                 /* 0x08 */
     signed char variant;          /* 0x0A */
     unsigned char optionB;        /* 0x0B */
+#if INTPTR_MAX > INT32_MAX
+    u8 argumentHigh[sizeof(intptr_t)-sizeof(s32)];
+#endif
     unsigned char optionC;        /* 0x0C */
     unsigned char flags;          /* 0x0D */
     char pad0E[0x2];
@@ -374,6 +361,9 @@ typedef struct RoomLibHandlerDState {
     short active;                 /* 0x08 */
     signed char variant;          /* 0x0A */
     unsigned char optionB;        /* 0x0B */
+#if INTPTR_MAX > INT32_MAX
+    u8 argumentHigh[sizeof(intptr_t)-sizeof(s32)];
+#endif
     unsigned char optionC;        /* 0x0C */
     unsigned char flags;          /* 0x0D */
     char pad0E[0x2];
@@ -423,6 +413,9 @@ typedef struct RoomLibHandlerBState {
     short active;                 /* 0x08 */
     signed char variant;          /* 0x0A */
     unsigned char optionB;        /* 0x0B */
+#if INTPTR_MAX > INT32_MAX
+    u8 argumentHigh[sizeof(intptr_t)-sizeof(s32)];
+#endif
     unsigned char optionC;        /* 0x0C */
     unsigned char flags;          /* 0x0D */
     unsigned char started;        /* 0x0E */
@@ -459,6 +452,9 @@ typedef struct RoomLibHandlerCState {
     short active;                 /* 0x08 */
     signed char variant;          /* 0x0A */
     unsigned char optionB;        /* 0x0B */
+#if INTPTR_MAX > INT32_MAX
+    u8 argumentHigh[sizeof(intptr_t)-sizeof(s32)];
+#endif
     unsigned char optionC;        /* 0x0C */
     unsigned char flags;          /* 0x0D */
     unsigned char started;        /* 0x0E */
@@ -485,6 +481,16 @@ typedef struct RoomLibHandlerCState {
     short secondaryHeading;       /* 0x94 */
     unsigned char finished;       /* 0x96 */
 } RoomLibHandlerCState;
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, sub) + PE1_OFFSETOF(RoomLibHandlerDState, flags) == PE1_OFFSETOF(RoomEnt, t19), room_class_d_flags_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, sub) + sizeof(RoomLibHandlerDState) <= sizeof(PmSecondarySlot), room_class_d_slot_capacity);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, sub) + PE1_OFFSETOF(RoomLibHandlerEState, flags) == PE1_OFFSETOF(RoomEnt, t19), room_class_e_flags_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, sub) + sizeof(RoomLibHandlerEState) <= sizeof(PmSecondarySlot), room_class_e_slot_capacity);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, sub) + PE1_OFFSETOF(RoomLibHandlerBState, flags) == PE1_OFFSETOF(RoomEnt, t19), room_class_b_flags_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, sub) + sizeof(RoomLibHandlerBState) <= sizeof(PmSecondarySlot), room_class_b_slot_capacity);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, sub) + PE1_OFFSETOF(RoomLibHandlerCState, flags) == PE1_OFFSETOF(RoomEnt, t19), room_class_c_flags_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEnt, sub) + sizeof(RoomLibHandlerCState) <= sizeof(PmSecondarySlot), room_class_c_slot_capacity);
+
 
 extern short g_RcossinTblCos[];
 #include "pe1/player_entity.h"
@@ -1097,60 +1103,59 @@ extern int rand(void);
  * A room's class table lists seven methods per class: three no-ops (slots
  * 0, 3 and 6), Init, Configure, Update and Release; the remaining functions
  * are the class's private states. */
-struct RoomLibMotionState;
 struct RoomLibMotionWork;
-int RoomLib_HandlerDNop0(void);
-int RoomLib_InitHandlerD(RoomEnt *o);
-int RoomLib_ConfigureHandlerD(RoomEnt *o, int query, unsigned int op,
+void RoomLib_HandlerDNop0(void);
+void RoomLib_InitHandlerD(PmSlotHeader *slot);
+int RoomLib_ConfigureHandlerD(PmSlotHeader *slot, int query, int op,
                               intptr_t arg0, intptr_t arg1, intptr_t arg2);
-int RoomLib_HandlerDNop3(void);
-int RoomLib_UpdateHandlerD(RoomEnt *o);
+int RoomLib_HandlerDNop3(PmSlotHeader *slot);
+int RoomLib_UpdateHandlerD(PmSlotHeader *slot);
 void RoomLib_ArmHandlerD(RoomEnt *o);
-void RoomLib_HandlerDTransformTarget(struct RoomLibMotionState *state,
+void RoomLib_HandlerDTransformTarget(RoomLibHandlerDState *state,
                                      struct RoomLibMotionWork *work);
-int RoomLib_ReleaseHandlerD(RoomEnt *o);
-int RoomLib_HandlerDNop6(void);
-int RoomLib_HandlerENop0(void);
-int RoomLib_InitHandlerE(RoomEnt *o);
-int RoomLib_ConfigureHandlerE(RoomEnt *o, int query, unsigned int op,
+int RoomLib_ReleaseHandlerD(PmSlotHeader *slot);
+void RoomLib_HandlerDNop6(void);
+void RoomLib_HandlerENop0(void);
+void RoomLib_InitHandlerE(PmSlotHeader *slot);
+int RoomLib_ConfigureHandlerE(PmSlotHeader *slot, int query, int op,
                               intptr_t arg0, intptr_t arg1, intptr_t arg2);
-int RoomLib_HandlerENop3(void);
-int RoomLib_UpdateHandlerE(RoomEnt *o);
+int RoomLib_HandlerENop3(PmSlotHeader *slot);
+int RoomLib_UpdateHandlerE(PmSlotHeader *slot);
 void RoomLib_ArmHandlerE(RoomEnt *o);
 void RoomLib_HandlerESteerToward(RoomLink *entity, RoomLibHandlerEState *state);
-int RoomLib_ReleaseHandlerE(RoomEnt *o);
-int RoomLib_HandlerENop6(void);
-int RoomLib_HandlerBNop0(void);
-int RoomLib_InitHandlerB(RoomEnt *o);
-int RoomLib_ConfigureHandlerB(RoomEnt *o, int query, unsigned int op,
+int RoomLib_ReleaseHandlerE(PmSlotHeader *slot);
+void RoomLib_HandlerENop6(void);
+void RoomLib_HandlerBNop0(void);
+void RoomLib_InitHandlerB(PmSlotHeader *slot);
+int RoomLib_ConfigureHandlerB(PmSlotHeader *slot, int query, int op,
                               intptr_t arg0, intptr_t arg1, intptr_t arg2);
-int RoomLib_HandlerBNop3(void);
-int RoomLib_UpdateHandlerB(RoomEnt *obj);
+int RoomLib_HandlerBNop3(PmSlotHeader *slot);
+int RoomLib_UpdateHandlerB(PmSlotHeader *slot);
 void RoomLib_ArmHandlerB(RoomEnt *o);
 void RoomLib_HandlerBPhase(RoomEnt *obj);
 void RoomLib_AdvanceArcToTarget(RoomEnt *obj);
-int RoomLib_ReleaseHandlerB(RoomEnt *o);
-int RoomLib_HandlerBNop6(void);
-int RoomLib_HandlerCNop0(void);
-int RoomLib_InitHandlerC(RoomEnt *o);
-int RoomLib_ConfigureHandlerC(RoomEnt *o, int query, unsigned int op,
+int RoomLib_ReleaseHandlerB(PmSlotHeader *slot);
+void RoomLib_HandlerBNop6(void);
+void RoomLib_HandlerCNop0(void);
+void RoomLib_InitHandlerC(PmSlotHeader *slot);
+int RoomLib_ConfigureHandlerC(PmSlotHeader *slot, int query, int op,
                               intptr_t arg0, intptr_t arg1, intptr_t arg2);
-int RoomLib_HandlerCNop3(void);
-int RoomLib_UpdateHandlerC(RoomEnt *obj);
+int RoomLib_HandlerCNop3(PmSlotHeader *slot);
+int RoomLib_UpdateHandlerC(PmSlotHeader *slot);
 void RoomLib_ArmHandlerC(RoomEnt *o);
 void RoomLib_HandlerCPhase(RoomEnt *unused);
 void RoomLib_AdvanceArcToTargetY(RoomEnt *obj);
-int RoomLib_ReleaseHandlerC(RoomEnt *o);
-int RoomLib_HandlerCNop6(void);
-int RoomLib_HandlerANop0(void);
-int RoomLib_InitHandlerA(RoomEnt *o);
-int RoomLib_ConfigureHandlerA(RoomEnt *o, int arg1, unsigned int op,
+int RoomLib_ReleaseHandlerC(PmSlotHeader *slot);
+void RoomLib_HandlerCNop6(void);
+void RoomLib_HandlerANop0(void);
+void RoomLib_InitHandlerA(PmSlotHeader *slot);
+int RoomLib_ConfigureHandlerA(PmSlotHeader *slot, int arg1, int op,
                               intptr_t arg3, intptr_t sp10, intptr_t sp14);
-int RoomLib_HandlerANop3(void);
-int RoomLib_UpdateHandlerA(RoomEnt *obj);
+int RoomLib_HandlerANop3(PmSlotHeader *slot);
+int RoomLib_UpdateHandlerA(PmSlotHeader *slot);
 void RoomLib_RearmHandlerA(RoomEnt *o);
-int RoomLib_ReleaseHandlerA(RoomEnt *o);
-int RoomLib_HandlerANop6(void);
+int RoomLib_ReleaseHandlerA(PmSlotHeader *slot);
+void RoomLib_HandlerANop6(void);
 struct RoomFloorWalkerObject;
 int RoomLib_HandlerGNop0(void);
 int RoomLib_InitHandlerG(RoomEnt *o);

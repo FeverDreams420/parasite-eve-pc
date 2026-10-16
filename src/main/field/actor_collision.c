@@ -1388,19 +1388,21 @@ void Entity_ApplyCollisionResponse(struct FieldActor *player)
     }
 }
 
-void Entity_CheckActionIdMatch(BattleEntity *arg0, void *arg1, EnemyCombatant **arg2, int arg3) {
+void Entity_CheckActionIdMatch(FieldActor *arg0, int arg1, FieldActor *arg2, int arg3) {
     EnemyCombatant *entry;
     int i;
     int kind;
     int offset;
     int value;
 
-    entry = *arg2;
+    (void)arg1;
+    entry = (EnemyCombatant *)arg2->state;
     if (entry == 0) {
         return;
     }
 
-    if (entry->effect->state != 1) {
+    /* An absent effect reads an inactive byte at PS1 address zero. */
+    if (!entry->effect || entry->effect->state != 1) {
         return;
     }
 
@@ -1419,7 +1421,7 @@ void Entity_CheckActionIdMatch(BattleEntity *arg0, void *arg1, EnemyCombatant **
         offset = (entry->coreFlags >> 19) & 0x1C;
         value = (entry->contactActionIds + offset)[i & 0xFFFF];
         if (arg3 == value) {
-            ((Combatant *)arg0->core)->stateFlags |= 0x4000;
+            ((Combatant *)arg0->state)->stateFlags |= 0x4000;
             entry->coreFlags |= 0x80000000;
             return;
         }

@@ -10,7 +10,7 @@
 
 #include "room_lib.h"
 
-RoomModuleHandler g_RoomClassTable[6][ROOM_CLASS_METHODS] = {
+PmCommand g_RoomActorClassTable[6] = {
     ROOMLIB_ACTOR_CLASS_D,
     ROOMLIB_ACTOR_CLASS_D,
     ROOMLIB_ACTOR_CLASS_E,

@@ -147,7 +147,7 @@ void Battle_SetupPlayerPalette(void) {
     Battle_FlushScriptSounds();
     g_EntityInstanceCounter = 0;
     g_BattleLiveEnemyCount = 0;
-    D_8009D254->actionCheckFn = (void *)g_FieldActorTypeCallbacks[0].contact;
+    D_8009D254->actionCheckFn = g_FieldActorTypeCallbacks[0].contact;
     g_GameStateFlags &= -3;
     D_8009D2E8 &= -0x11;
     flags = &g_GameState.story_day_flags;
@@ -218,7 +218,7 @@ void Battle_StartEncounter(int mode) {
     {
         BattleEntity *post_entity;
         RenderMatrix *post_actor;
-        void *callback;
+        void (*callback)(FieldActor *, int, FieldActor *, int);
         post_entity = D_8009D254;
         post_actor = post_entity->renderObject.matrices;
         callback = Entity_CheckActionIdMatch;

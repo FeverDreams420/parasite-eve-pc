@@ -190,7 +190,7 @@ M083: Cure-P użyte przez menu przy94HP nadaje immunity3 i zwalnia
 slot10. Dwa typ3/57HP pokonane M16, wynik HP59/123. W tej gałęzi nagrody
 to dwa Ammo+6, bez Medicine/Cure-P. Obtain All wyczyściło oba pending
 wpisy, End zamyka ekran. Dwa Heal1 leczą HP59→89→119. Trzecie użycie
-nie leczy (po dwóch pozostało27PE, koszt30); menu zamknięte. Próba
+nie leczy (po dwóch pozostało27PE, koszt60); menu zamknięte. Próba
 pomocnika single z Circle cofa wybór w oryginalnym reticle i nie kończy
 pojedynczego strzału; dopiero dalsze zatwierdzone cele wykonują serię.
 Nie traktujemy samego pojedynczego Cross/Circle jako trafienia.
@@ -320,7 +320,7 @@ pokonane M16; podczas walki HP48→78 po jawnym Heal1. Pomocnik focus
 wybiera rzeczywisty cel z najmniejszym HP w zasięgu, wyłącznie przez input.
 Końcowe HP46, nagrody trzy Ammo+6 (bez Medicine/Cure-P), Obtain All/End.
 Dwa Heal1 dają106HP, zostaje27PE; menu zamknięte, bez kolejnej próby
-zaklęcia za30PE. Poprzedni pe-heal po Detox pamiętał wybór zaklęcia3,
+zaklęcia za60PE. Poprzedni pe-heal po Detox pamiętał wybór zaklęcia3,
 więc nie wolno uznawać tamtych prób za Heal1; nowy pe-cast wybiera
 zaklęcie według packed list i aktualnej siatki kursora.
 

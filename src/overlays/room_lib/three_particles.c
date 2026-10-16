@@ -30,31 +30,36 @@
 
 #include "room_lib.h"
 
-ROOMLIB_PLANT_TABLE(RoomLib_ThreeParticlePlantScript, g_RoomThreeParticleScript)
-
-ROOMLIB_SPAWN6(RoomLib_ThreeParticleSpawn6)
-
-ROOMLIB_REGISTER_TABLE(RoomLib_ThreeParticleRegister, g_RoomThreeParticleDrawList)
-
-int RoomLib_ThreeParticleStart(void *o) {
-    int result;
-
-    if ((unsigned int)FieldFx_GetStatus(o) >= 2) {
-        result = FieldFx_UpdateSlots(o, g_RoomThreeParticleUpdateList);
-        result |= FieldFx_RunScript(o, g_RoomThreeParticleInitList,
-                                g_RoomThreeParticleSpawnLayout);
-    } else {
-        result = -1;
-    }
-
-    if (result == -1) {
-        RoomLib_ThreeParticleClose(o);
-    }
-
+void RoomLib_ThreeParticlePlantScript(PmSlotHeader *object) {
+    *FieldFx_GetSlot((FieldFxObject *)object) = g_RoomThreeParticleScript;
+}
+int RoomLib_ThreeParticleSpawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)slot,b,c,d,(int)e,(int)f);
     return 0;
 }
-
-ROOMLIB_CLOSE_TARGET(RoomLib_ThreeParticleClose)
+int RoomLib_ThreeParticleRegister(PmSlotHeader *object) {
+    if ((unsigned)FieldFx_GetStatus(object)>=2)
+        FieldFx_Register((FieldFxObject *)object,g_RoomThreeParticleDrawList);
+    return 0;
+}
+int RoomLib_ThreeParticleStart(PmSlotHeader *object) {
+    int result=-1;
+    if ((unsigned)FieldFx_GetStatus(object)>=2) {
+        result=FieldFx_UpdateSlots((FieldFxObject *)object,g_RoomThreeParticleUpdateList);
+        result|=FieldFx_RunScript((FieldFxObject *)object,g_RoomThreeParticleInitList,g_RoomThreeParticleSpawnLayout);
+    }
+    if(result==-1)RoomLib_ThreeParticleClose(object);
+    return 0;
+}
+int RoomLib_ThreeParticleClose(PmSlotHeader *object) {
+    object->state=4;
+    if ((unsigned)FieldFx_GetStatus(object)>=2) {
+        FieldActor *actor=((FieldFxObjectPrefix *)object)->actor;
+        actor->state->core_flags&=0xC0FFFFFFu;
+        *actor->state->action_state=4;
+    }
+    return 0;
+}
 
 /*
  * Three transform particles: a sprite class whose Init seeds the sprite and
@@ -71,54 +76,21 @@ static const RoomFxSeed8 s_ThreeParticleSeed = {
     {0x04, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 };
 
-/* The effect owner state: the owner's actor, a copy of its view matrix
- * (the translation is where the particles start), the reload timer, the
- * landed flag and the sprite asset whose low byte selects the page. */
-typedef struct RoomDebrisClock {
-    struct RoomDebrisActor *actor;    /* 0x00 */
-    union {
-        RoomEffectWords8 words;
-        GteMatrix matrix;
-    } view;                           /* 0x04 */
-    unsigned short reload;            /* 0x24 */
-    s16 cooldown;                     /* 0x26 */
-    s16 landedFlag;                   /* 0x28 */
-    s16 pad2A;
-    union {
-        int index;
-        u8 page;
-    } asset;                          /* 0x2C */
-} RoomDebrisClock;
-
-/* The owner's actor: its view matrices. */
-typedef struct RoomDebrisActor {
-    u8 pad000[0x238];
-    RoomEffectWords8 *views;          /* 0x238 */
-} RoomDebrisActor;
-
-typedef struct RoomDebrisEntity {
-    u8 pad00[0x8];
-    RoomDebrisActor *actor;           /* 0x08 */
-} RoomDebrisEntity;
-
-int RoomLib_ThreeParticleNop0(void) {
-    return 0;
+void RoomLib_ThreeParticleNop0(void) {
 }
 
-int RoomLib_ThreeParticleNop1(void) {
-    return 0;
+void RoomLib_ThreeParticleNop1(void) {
 }
 
-void RoomLib_InitThreeParticlePackets(RoomDebrisEntity *arg0, void *arg1, RoomDebrisClock *state) {
-    RoomEffectWords8 *src;
-    RoomDebrisActor *table;
+int RoomLib_InitThreeParticlePackets(void *arg0, void *arg1, void *data) {
+    RoomDebrisClock *state=data;
+    FieldActor *table;
 
     FieldFx_SetScriptContext(state);
     state->asset.index = Asset_SearchByKeyType(0xA);
-    table = arg0->actor;
+    table = ((FieldFxObjectPrefix *)arg0)->actor;
     state->actor = table;
-    src = table->views;
-    state->view.words = *src;
+    memcpy(&state->view,table->render_object.matrices,sizeof(state->view));
     state->cooldown = 0;
     state->landedFlag = 0;
     state->reload = *FieldFx_VarPtr(6);
@@ -139,12 +111,15 @@ void RoomLib_InitThreeParticlePackets(RoomDebrisEntity *arg0, void *arg1, RoomDe
     RoomLib_ThreeParticleFloorPacket.g = 0x80;
     RoomLib_ThreeParticleFloorPacket.b = 0x80;
     RoomLib_ThreeParticleFloorPacket.zero = 0;
+    return 0;
 }
 
-void RoomLib_ThreeParticleNop3(void) {
+int RoomLib_ThreeParticleNop3(void *owner, void *slot, void *data) {
+    return 0;
 }
 
-void RoomLib_UpdateThreeParticleTimer(int arg0, char *arg1, char *arg2) {
+int RoomLib_UpdateThreeParticleTimer(void *arg0, void *slot, void *arg2) {
+    char *arg1=slot;
     RoomDebrisClock *state = (RoomDebrisClock *)arg2;
 
     if (state->cooldown != 0) {
@@ -164,6 +139,7 @@ void RoomLib_UpdateThreeParticleTimer(int arg0, char *arg1, char *arg2) {
     if (FieldFx_IsLastSlotHalted() == 1) {
         arg1[1] = 2;
     }
+    return 0;
 }
 
 typedef GteShortVector RoomInitThreeVec;
@@ -179,9 +155,10 @@ int *FieldFx_RegPtr(int index);
 int FieldFx_PlaySoundAtMatrixPosition(void *object, int message, void *state);
 
 /* Retail marks this function handwritten; only its COP2 windows remain ASM. */
-void RoomLib_InitThreeTransformParticles(void *owner, void *unused,
-                                         RoomDebrisTriplet *state) {
-    RoomInitThreeStack stack;
+int RoomLib_InitThreeTransformParticles(void *owner, void *unused, void *data) {
+    RoomDebrisTriplet *state=data;
+    /* Only discarded translations depended on old stack contents. */
+    RoomInitThreeStack stack={0};
     RoomSpriteMatrix *firstMatrix;
     RoomSpriteMatrix *secondMatrix;
     RoomInitThreeVec *seed;
@@ -258,9 +235,9 @@ void RoomLib_InitThreeTransformParticles(void *owner, void *unused,
         particles->size[i] = 0;
         particles->countdown[i] = (randomValue % 10) + 1;
         particles->life[i] = *FieldFx_VarPtr(2);
-        particles->position[i].x = clock->view.matrix.t[0] << 16;
-        particles->position[i].y = clock->view.matrix.t[1] << 16;
-        particles->position[i].z = clock->view.matrix.t[2] << 16;
+        particles->position[i].x = (s32)((u32)clock->view.matrix.t[0] << 16);
+        particles->position[i].y = (s32)((u32)clock->view.matrix.t[1] << 16);
+        particles->position[i].z = (s32)((u32)clock->view.matrix.t[2] << 16);
         particles->rotation[i].x = 0;
         particles->rotation[i].y = 0;
         particles->rotation[i].z = 0;
@@ -288,6 +265,7 @@ void RoomLib_InitThreeTransformParticles(void *owner, void *unused,
     ApplyMatrixSV(&stack.matrices[1], &stack.projectionSeed,
                   (GteShortVector *)&particles->velocity[2]);
     FieldFx_PlaySoundAtMatrixPosition(callOwner, 0x573, projectionMatrix);
+    return 0;
 }
 
 typedef GteShortVector RoomDrawThreeVec;
@@ -306,8 +284,10 @@ typedef struct RoomDrawThreeStack {
 
 void FieldFx_SetSpriteColorMode(int depth);
 
-void RoomLib_DrawThreeTransformParticles(void *unused, RoomFxControl *args, RoomDebrisTriplet *state) {
-    RoomDrawThreeStack stack;
+int RoomLib_DrawThreeTransformParticles(void *unused, void *control, void *data) {
+    RoomFxControl *args=control;
+    RoomDebrisTriplet *state=data;
+    RoomDrawThreeStack stack={0};
     unsigned int i;
     RoomFxVec4 *sourceScale;
     RoomSpriteMatrix *secondaryMatrix;
@@ -362,7 +342,7 @@ void RoomLib_DrawThreeTransformParticles(void *unused, RoomFxControl *args, Room
 
             if (drawState->reserved08 == 1) {
                 callArgs = stack.args;
-                computedScale = rsin(callArgs->frame << 7) >> 3;
+                computedScale = rsin(callArgs->frame * 128) >> 3;
                 baseScale = drawState->phase[i];
                 computedScale += baseScale;
                 scaleValue = computedScale;
@@ -413,6 +393,7 @@ void RoomLib_DrawThreeTransformParticles(void *unused, RoomFxControl *args, Room
             }
         }
     }
+    return 0;
 }
 
 typedef struct RoomDebrisOwner {
@@ -426,8 +407,9 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDebrisTriplet, position) == 0x3C,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDebrisTriplet, velocity) == 0x9C,
                   room_debris_triplet_velocity_offset);
 
-void RoomLib_UpdateDebrisTriplet(void *unused, RoomDebrisOwner *owner,
-                                        RoomDebrisTriplet *state) {
+int RoomLib_UpdateDebrisTriplet(void *unused, void *control, void *data) {
+    RoomDebrisOwner *owner=control;
+    RoomDebrisTriplet *state=data;
     s16 point[4];
     RoomDebrisClock *clock;
     unsigned int i;
@@ -447,22 +429,22 @@ void RoomLib_UpdateDebrisTriplet(void *unused, RoomDebrisOwner *owner,
             }
         }
         if (state->mode[i] == 1) {
-            state->position[i].x += (state->velocity[i].x * state->speed) >> 4;
-            state->position[i].y += (state->velocity[i].y * state->speed) >> 4;
-            state->position[i].z += (state->velocity[i].z * state->speed) >> 4;
+            state->position[i].x = (s32)((u32)state->position[i].x + (u32)((state->velocity[i].x * state->speed) >> 4));
+            state->position[i].y = (s32)((u32)state->position[i].y + (u32)((state->velocity[i].y * state->speed) >> 4));
+            state->position[i].z = (s32)((u32)state->position[i].z + (u32)((state->velocity[i].z * state->speed) >> 4));
         }
         if (state->swing[i] < state->swingLimit) {
             state->swing[i] += rand() % 80 + 20;
             state->phase[i] += rand() % 40 + 40;
-            state->position[i].y += -0xA0000;
+            state->position[i].y = (s32)((u32)state->position[i].y - 0xA0000u);
         }
-        state->swing[i] += rsin(owner->angle << 5) >> 7;
+        state->swing[i] += rsin(owner->angle * 32) >> 7;
         if (state->life[i] < 0x14) {
             if (state->size[i] >= 7) state->size[i] -= 6;
         }
         if (state->landed[i] == 0) {
-            if (!Geo_PointInPoly((state->position[i].x >> 16) << 16,
-                               (state->position[i].z >> 16) << 16,
+            if (!Geo_PointInPoly((s32)((u32)state->position[i].x & 0xffff0000u),
+                               (s32)((u32)state->position[i].z & 0xffff0000u),
                                g_FloorPolygonVertices, g_FloorPolygonVertexCount)) {
                 state->landed[i] = 1;
                 state->mode[i] = 0;
@@ -492,4 +474,17 @@ void RoomLib_UpdateDebrisTriplet(void *unused, RoomDebrisOwner *owner,
     state->speed += state->acceleration;
     if (state->speed < 0) state->speed = 0;
     if (state->remaining == 0) owner->phase = 2;
+    return 0;
 }
+
+/* Complete original M065/M085 module data (USA 8018FFF8..801900A4). */
+FieldFxHandler g_RoomThreeParticleInitList[]={RoomLib_InitThreeParticlePackets,RoomLib_InitThreeTransformParticles,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_RoomThreeParticleDrawList[]={RoomLib_ThreeParticleNop3,RoomLib_DrawThreeTransformParticles,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_RoomThreeParticleUpdateList[]={RoomLib_UpdateThreeParticleTimer,RoomLib_UpdateDebrisTriplet,(FieldFxHandler)(intptr_t)-1};
+u16 g_RoomThreeParticleSpawnLayout[4]={sizeof(RoomDebrisClock),sizeof(RoomDebrisTriplet),65535,0};
+int g_RoomThreeParticleScript[]={0x10000,0x100000,0x10040029,0x1009002a,0x200001,0x20000,0x30fb0000,0x110001,0x10001,0x20008,0x110000,0x10001,0x30f70000,-1};
+PmCommand g_RoomThreeParticleHandlers={RoomLib_ThreeParticleNop1,RoomLib_ThreeParticlePlantScript,
+    RoomLib_ThreeParticleSpawn6,RoomLib_ThreeParticleRegister,RoomLib_ThreeParticleStart,
+    RoomLib_ThreeParticleClose,RoomLib_ThreeParticleNop0};
+u8 RoomLib_ThreeParticleTable[16]={0,64,0,60,0,64,32,20,0,64,0,60,0,64,0,255};
+RoomFxSpritePacket RoomLib_ThreeParticlePacket,RoomLib_ThreeParticleFloorPacket;

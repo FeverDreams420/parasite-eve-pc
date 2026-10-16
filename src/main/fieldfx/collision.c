@@ -375,18 +375,18 @@ int FieldFx_IsPlayerWithinRadius(s16 *pos, int extraRadius) {
     z = entity->posZ.parts.integer;
     local[2] = z;
     x -= pos[0];
-    x_sq = x * x;
+    x_sq = (s32)((u32)x * (u32)x);
     delta[0] = x;
     z -= pos[2];
-    z_sq = z * z;
-    radius += extraRadius;
-    radius_sq = radius * radius;
+    z_sq = (s32)((u32)z * (u32)z);
+    radius = (s32)((u32)radius + (u32)extraRadius);
+    radius_sq = (s32)((u32)radius * (u32)radius);
     delta[2] = z;
-    return x_sq + z_sq < radius_sq;
+    return (s32)((u32)x_sq + (u32)z_sq) < radius_sq;
 }
 
 
-int func_800C6C18(char *obj) {
+int func_800C6C18(void *obj) {
     int enabled;
 
     if (FieldFx_GetStatus(obj) == 3) {

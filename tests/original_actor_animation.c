@@ -1,3 +1,5 @@
+#include "pe1/room_debris_triplet.h"
+#include "pe1/room_three_particle_class.h"
 #include "pe1/menu_item_record.h"
 #include "../src/overlays/fx_common/camera_externs.h"
 #include "../src/overlays/fx_common/fx_common_model.h"
@@ -2045,6 +2047,69 @@ static int original_room_effect_core_flags(void)
     g_FieldFxSlotTable=old_slots;g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;
     if(cases!=192 || hash!=UINT64_C(0x15ee6173ba0071b5)){fprintf(stderr,"Room effect core flags %u %016llx\n",cases,(unsigned long long)hash);return 0;}
     puts("Original room effect closure/registration: 192 unhooked USA CPU states, native owner/player/dead/null modes and every adjacent event byte preserved passed");
+    return 1;
+}
+
+static int original_three_particle_program(void);
+
+static int original_three_particle_states(void)
+{
+    FieldFxState *old_script=g_FieldFxScriptState;FieldFxState script={0};
+    FieldActor *old_player=g_PlayerEntity;FieldActor player={0};FieldFxObjectPrefix owner={0};
+    PolygonVertex *old_polygon=g_FloorPolygonVertices;u16 old_count=g_FloorPolygonVertexCount;
+    PolygonVertex polygon[4]={{.x=-300,.z=-300},{.x=300,.z=-300},{.x=300,.z=300},{.x=-300,.z=300}};
+    RoomDebrisClock clock={0};script.current_context=&clock;g_FieldFxScriptState=&script;g_PlayerEntity=&player;
+    const u32 seeds[]={0,1,0x12345678,0xffffffff};u32 old_rng=Psyz_RandState();
+    const s16 matrices[3][9]={{4096,0,0,0,4096,0,0,0,4096},{0,0,4096,0,4096,0,-4096,0,0},{2048,1024,0,-1024,3072,0,0,0,4096}};
+    const s32 poses[4][3]={{0,0,0},{123,-99,1500},{-32768,32767,-1},{32767,-32768,32768}};
+    const s16 angles[]={0,1,1024,-1024,32767,-32768};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+#define THREE_HASH(ptr,length) do {const u8 *bytes=(const u8 *)(ptr);for(unsigned byte=0;byte<(length);++byte)hash=(hash^bytes[byte])*UINT64_C(1099511628211);}while(0)
+    for(unsigned matrix=0;matrix<3;++matrix)for(unsigned pose=0;pose<4;++pose)for(unsigned angle=0;angle<6;++angle)for(unsigned seed=0;seed<4;++seed){
+        struct {u32 before;RoomDebrisTriplet data;u32 after;} record;memset(&record,0xa5,sizeof(record));
+        memset(&clock.view,0,sizeof(clock.view));memcpy(clock.view.matrix.m,matrices[matrix],18);memcpy(clock.view.matrix.t,poses[pose],12);
+        intptr_t vars[]={200,-1,40,angles[angle],pose&1,1000,8,0,0};memcpy(script.vars,vars,sizeof(vars));script.regs[1]=matrix&1;
+        srand(seeds[seed]);RoomLib_InitThreeTransformParticles(&owner,NULL,&record.data);u32 random=Psyz_RandState();
+        THREE_HASH(&record.data,sizeof(record.data));THREE_HASH(&random,4);++cases;
+        if(record.before!=0xa5a5a5a5 || record.after!=0xa5a5a5a5)return 0;
+    }
+    if(hash!=UINT64_C(0x234309fa30aaa62d)){fprintf(stderr,"Three particle init %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    const s32 xs[]={0,1,-1,0x7fff0000,INT32_MIN,INT32_MAX};
+    const s16 speeds[]={0,1,300,-1,32767,-32768},limits[]={-32768,0,1000,32767},accelerations[]={-32768,-1,1,32767};
+    const s16 update_angles[]={-32768,-1,0,1,1023,32767},remaining[]={0,1,3,-1};
+    const u16 life[]={0,1,19,20,21,65535},swings[]={0,1,1000,32767,32768,65535},phases[]={0,32767,65535};
+    const s8 countdown[]={-128,-1,0,1,2,127};const u8 sizes[]={0,6,7,124,128,252,255};const s16 velocities[]={0,1,-1,32767,-32768};
+    g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;player.render_object.hit_cylinder.radius=63;
+    hash=UINT64_C(14695981039346656037);cases=0;
+    for(unsigned variant=0;variant<16;++variant)for(unsigned angle=0;angle<6;++angle)for(unsigned seed=0;seed<4;++seed){
+        struct {u32 before;RoomDebrisTriplet data;u32 after;} record;memset(&record,0xa5,sizeof(record));RoomDebrisTriplet *data=&record.data;
+        data->remaining=remaining[variant%4];data->speed=speeds[variant%6];data->acceleration=accelerations[variant%4];data->swingLimit=limits[variant%4];data->keepAlive=variant&1;
+        for(unsigned i=0;i<3;++i){
+            data->mode[i]=(variant+i)%3;data->landed[i]=(variant>>i)&1;data->active[i]=(variant+i)%3-1;data->countdown[i]=countdown[(variant+i)%6];data->size[i]=sizes[(variant+i)%7];
+            data->life[i]=life[(variant+i)%6];data->swing[i]=swings[(variant+i)%6];data->phase[i]=phases[(variant+i)%3];
+            for(unsigned axis=0;axis<3;++axis){((s32 *)&data->position[i])[axis]=xs[(variant+i+axis)%6];((s16 *)&data->velocity[i])[axis]=velocities[(variant+i+axis)%5];}
+        }
+        RoomFxControl control={37,67,update_angles[angle]};memset(&clock,0,sizeof(clock));clock.landedFlag=variant&1;
+        player.pos_x=(variant&1?32767:0)*65536;player.pos_z=(variant&1?-32768:0)*65536;
+        srand(seeds[seed]);RoomLib_UpdateDebrisTriplet(&owner,&control,data);u32 random=Psyz_RandState();
+        THREE_HASH(data,sizeof(*data));THREE_HASH(&control,4);THREE_HASH(&clock.landedFlag,2);THREE_HASH(&random,4);++cases;
+        if(record.before!=0xa5a5a5a5 || record.after!=0xa5a5a5a5)return 0;
+    }
+    if(hash!=UINT64_C(0xff1932b53e5636f9)){fprintf(stderr,"Three particle update %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    const s16 cooldowns[]={-32768,-1,0,1,2,32767},reloads[]={-32768,0,8,32767};
+    FieldActor contact_actor={0};FieldActorState contact_state={0};Combatant player_core={0};u8 action=0;
+    contact_actor.state=&contact_state;contact_state.action_state=&action;owner.actor=&contact_actor;player.state=(FieldActorState *)&player_core;
+    hash=UINT64_C(14695981039346656037);cases=0;
+    for(unsigned cool=0;cool<6;++cool)for(unsigned reload=0;reload<4;++reload)for(unsigned landed=0;landed<3;++landed)for(unsigned halt=0;halt<3;++halt)for(unsigned mode=0;mode<3;++mode){
+        memset(&clock,0xa5,sizeof(clock));clock.reload=reloads[reload];clock.cooldown=cooldowns[cool];clock.landedFlag=landed;
+        script.slot_count=halt;script.halted=halt?1:0;contact_state.core_flags=0x01234567;contact_state.control10.command_value=1;action=mode;player_core.stateFlags=0x10203040;
+        RoomFxControl control={37,0xa5,0x1234};RoomLib_UpdateThreeParticleTimer(&owner,&control,&clock);
+        THREE_HASH(&clock.reload,6);THREE_HASH(&control,4);THREE_HASH(&contact_state.core_flags,4);THREE_HASH(&player_core.stateFlags,4);++cases;
+    }
+#undef THREE_HASH
+    g_FieldFxScriptState=old_script;g_PlayerEntity=old_player;g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_count;srand(old_rng);
+    if(hash!=UINT64_C(0xdcf26f313369619d)){fprintf(stderr,"Three particle timer %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original three particles: 288 USA CPU/GTE initializers independent of stack fill and 384 updates plus 648 contact timer states from unhooked CPU/BIOS, full 180-byte states, RNG, collision and guards passed");
     return 1;
 }
 
@@ -4858,7 +4923,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_attachment_opcode() || !original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_frame_clock_layout() || !original_script_timer_commands() || !original_scene_frame_timers() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_attachment_opcode() || !original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_three_particle_states() || !original_three_particle_program() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_frame_clock_layout() || !original_script_timer_commands() || !original_scene_frame_timers() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
@@ -5442,6 +5507,8 @@ static int original_m023_assets(PeDisc *disc,PeDiscFile *exe)
  * are the only hooks in /tmp/pe-motion-cpu.py. All tested procedures run
  * from the USA image, including the original field engine helpers. */
 #include "pe1/room_motion_init.h"
+#include "pe1/room_debris_triplet.h"
+#include "pe1/room_three_particle_class.h"
 #include "pe1/asset_key_record.h"
 #include "../src/overlays/room_lib/motion_particles.h"
 extern FieldFxHandler g_RoomInitList__motion[],g_RoomUpdateList__motion[],g_RoomDrawList__motion[];
@@ -5616,6 +5683,134 @@ static int original_window_lifecycle(void)
     g_RoomWindowClassHandlers.send((PmSlotHeader *)&object,1,19,(intptr_t)&enabled,0,0);
     if(enabled!=7)return 0;
     puts("Original window lifecycle: 648 unhooked USA CPU arm/arrival/release states and native-width command output passed");return 1;
+}
+
+static int original_three_particle_program(void)
+{
+    RenderBufferPrefix old_buffers=D_800B0E38;int old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
+    GteMatrix *old_view=g_GeomScroll.words.viewMatrix;FieldFxState *old_state=g_FieldFxScriptState;
+    FieldFxObject *old_object=g_FieldFxScriptObject;FieldFxSlot *old_slots=g_FieldFxSlotTable;char *old_data=g_FieldFxScriptData;int *old_commands=g_FieldFxCommandTable;
+    void *old_archive=g_GameState.loaded_scene_archive;FieldActor *old_player=g_PlayerEntity;u32 old_random=Psyz_RandState();
+    PolygonVertex *old_polygon=g_FloorPolygonVertices;u16 old_count=g_FloorPolygonVertexCount;RoomFloorY old_floor=*g_RoomFloorY;
+    RoomFxSpritePacket old_packet=RoomLib_ThreeParticlePacket,old_shadow=RoomLib_ThreeParticleFloorPacket;
+    s32 *old_projection=g_GeomScroll.words.projectionDistance,projection=320;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    _Alignas(void *) static u8 arena[65536];static RenderGpuTag ordering[4096];
+    FieldFxState script={0};RoomDebrisClock clock={0};script.current_context=&clock;g_FieldFxScriptState=&script;
+    g_RoomFloorY->y=0;g_GeomScroll.words.viewMatrix=&view;g_GeomScroll.words.projectionDistance=&projection;
+    const s16 frames[]={0,1,12,40,80,-1,32767};const unsigned masks[]={0,1,3,7};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+#define THREE_FAIL() do {fprintf(stderr,"Three particle guard line %u case%u used%d\n",__LINE__,cases,g_DrawPacketOffset);return 0;}while(0)
+#define THREE_PUT(value,bytes) do {uint64_t word_=(uint64_t)(value);for(unsigned byte_=0;byte_<(bytes);++byte_){hash=(hash^(u8)word_)*UINT64_C(1099511628211);word_>>=8;}}while(0)
+    for(unsigned page=0;page<2;++page)for(unsigned draw=0;draw<2;++draw)for(unsigned camera=0;camera<2;++camera)
+    for(unsigned variant=0;variant<2;++variant)for(unsigned mask=0;mask<4;++mask)for(unsigned frame=0;frame<7;++frame){
+        for(unsigned i=0;i<32;++i){Psyz_GteCtrlWrite(i,0);Psyz_GteDataWrite(i,0);}
+        Psyz_GteCtrlWrite(24,160u<<16);Psyz_GteCtrlWrite(25,112u<<16);Psyz_GteCtrlWrite(26,320);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);
+        view.t[0]=camera?23:0;view.t[1]=camera?-17:0;view.t[2]=camera?250:0;
+        memset(arena,0xa5,sizeof(arena));for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff,.length=0xab};
+        g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)arena;
+        clock.asset.index=page;RoomLib_ThreeParticlePacket=(RoomFxSpritePacket){.r=128,.g=128,.b=128,.offset=-100,.depth=128};
+        RoomLib_ThreeParticleFloorPacket=(RoomFxSpritePacket){.r=128,.g=128,.b=128,.code=4,.mode=1,.offset=50,.depth=128};
+        RoomDebrisTriplet data={0};data.reserved08=variant;data.jitter[0]=-3;data.jitter[1]=2;data.jitter[2]=4;
+        for(unsigned i=0;i<3;++i){
+            data.active[i]=masks[mask]>>i&1?0:-1;data.size[i]=(u8[]){0,64,128}[i];data.swing[i]=(u16[]){128,2048,32768}[i];data.phase[i]=100*i+10;data.life[i]=20+i*7;
+            data.position[i].x=((int)i*160-160)*65536;data.position[i].y=(-(int)i*70-100)*65536;data.position[i].z=(900+(int)i*100)*65536;
+            data.rotation[i]=(GteShortVector){16*i,64*i,32*i,0};
+        }
+        RoomFxControl control={1,1,frames[frame]};RoomLib_DrawThreeTransformParticles(NULL,&control,&data);
+        if(g_DrawPacketOffset<0 || g_DrawPacketOffset%sizeof(FieldStripPacket))THREE_FAIL();
+        unsigned count=g_DrawPacketOffset/sizeof(FieldStripPacket);if(count>9)THREE_FAIL();
+        THREE_PUT(count,2);
+        for(unsigned i=0;i<12;++i)THREE_PUT(((u8 *)&RoomLib_ThreeParticlePacket)[i],1);
+        for(unsigned i=0;i<12;++i)THREE_PUT(((u8 *)&RoomLib_ThreeParticleFloorPacket)[i],1);
+        for(unsigned i=0;i<count;++i){FieldStripPacket *packet=(void *)(arena+i*sizeof(*packet));
+            if(packet->tag.length!=9)THREE_FAIL();
+            for(unsigned j=0;j<36;++j)THREE_PUT(((u8 *)&packet->r0)[j],1);
+        }
+        for(unsigned layer=0;layer<4096;++layer){uintptr_t link=ordering[layer].address;unsigned links=0;if(link==0xffffff)continue;
+            THREE_PUT(layer,2);
+            while(link!=0xffffff){if(link<(uintptr_t)arena || link>=(uintptr_t)arena+g_DrawPacketOffset || (link-(uintptr_t)arena)%sizeof(FieldStripPacket) || ++links>9)THREE_FAIL();
+                THREE_PUT((link-(uintptr_t)arena)/sizeof(FieldStripPacket),1);link=((RenderGpuTag *)link)->address;}
+            THREE_PUT(links,1);
+        }
+        THREE_PUT(65535,2);++cases;
+        for(unsigned i=g_DrawPacketOffset+sizeof(FieldStripPacket);i<sizeof(arena);++i)if(arena[i]!=0xa5)THREE_FAIL();
+    }
+#undef THREE_PUT
+    if(hash!=UINT64_C(0x51e1deb8f951b445)){fprintf(stderr,"Three particle draw %u %016llx\n",cases,(unsigned long long)hash);THREE_FAIL();}
+    _Alignas(8) u8 archive[128]={0};((SceneAssetBlob *)archive)->directoryOffset=8;
+    ((SceneAssetDirectory *)(archive+8))->keyEntries=(1u<<22)|64;
+    ((AssetU32KeyRecord *)(archive+64))->packedOffset=80;((AssetU32KeyRecord *)(archive+64))->key=0x73decd80;
+    ((TimPackedImage *)(archive+80))->key.bytes.type=10;((TimPackedImage *)(archive+80))->geometry=(832u<<10)|(256u<<21);
+    g_GameState.loaded_scene_archive=archive;
+    PolygonVertex polygon[4]={{.x=-2000,.z=-2000},{.x=2000,.z=-2000},{.x=2000,.z=2000},{.x=-2000,.z=2000}};
+    g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;
+    view.t[0]=view.t[1]=view.t[2]=0;
+    for(unsigned draw=0;draw<2;++draw){
+        FieldFxObject object={0};FieldActor actor={0};FieldActorState state={0};u8 action=2;
+        RenderMatrix matrix={.rotation={{4096,0,0},{0,4096,0},{0,0,4096}},.translation={0,-100,1200}};
+        actor.state=&state;state.control10.command_value=1;state.action_state=&action;actor.render_object.matrices=&matrix;
+        actor.pos_x=8000*65536;actor.pos_z=8000*65536;g_PlayerEntity=&actor;object.prefix.actor=&actor;
+        g_RoomThreeParticleHandlers.init();g_RoomThreeParticleHandlers.initialize((PmSlotHeader *)&object);
+        const intptr_t vars[]={300,-2,40,512,0,1000,8};
+        for(unsigned i=0;i<7;++i)g_RoomThreeParticleHandlers.send((PmSlotHeader *)&object,0,i,vars[i],0,0);
+        intptr_t wide=sizeof(intptr_t)>4?(intptr_t)UINT64_C(0x1234567887654321):0x7654321;
+        g_RoomThreeParticleHandlers.send((PmSlotHeader *)&object,0,8,wide,0,0);
+        if(object.state.commands!=g_RoomThreeParticleScript || object.state.vars[6]!=8 || object.state.vars[8]!=wide)THREE_FAIL();
+        unsigned seen=0,drawn=0,ticks=0;int double_seen=0,single_seen=0;
+        for(;ticks<200;++ticks){
+            memset(arena,0xa5,sizeof(arena));for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
+            g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)arena;
+            g_RoomThreeParticleHandlers.start((PmSlotHeader *)&object);g_RoomThreeParticleHandlers.execute((PmSlotHeader *)&object);
+            for(unsigned i=0;i<64;++i)if(object.slots[i].flag){FieldFxSlot *slot=&object.slots[i];seen|=1u<<slot->handler_id;
+                if(slot->handler_id>1 || slot->data_offset<0 || (uintptr_t)(object.data+slot->data_offset)%(slot->handler_id?_Alignof(RoomDebrisTriplet):_Alignof(RoomDebrisClock)))THREE_FAIL();
+                if(slot->handler_id==0){RoomDebrisClock *data=(void *)(object.data+slot->data_offset);
+                    if(data->actor!=&actor || memcmp(&data->view,&matrix,32) || data->reload!=8 || data->asset.index!=0)THREE_FAIL();}
+                if(slot->handler_id==1){RoomDebrisTriplet *data=(void *)(object.data+slot->data_offset);if(data->reserved08==1)double_seen=1;else single_seen=1;}
+            }
+            if(g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(arena))THREE_FAIL();drawn+=g_DrawPacketOffset!=0;
+            for(unsigned i=g_DrawPacketOffset+sizeof(FieldStripPacket);i<sizeof(arena);++i)if(arena[i]!=0xa5)THREE_FAIL();
+            if(object.prefix.reserved00==4)break;
+        }
+        if(ticks==200 || seen!=3 || !drawn || !double_seen || !single_seen){fprintf(stderr,"Three particle PM %u ticks%u seen%u draws%u variants%d/%d\n",draw,ticks,seen,drawn,double_seen,single_seen);THREE_FAIL();}
+        state.core_flags=0x3fabcdef;g_RoomThreeParticleHandlers.stop((PmSlotHeader *)&object);g_RoomThreeParticleHandlers.unload();
+        if(state.core_flags!=0x00abcdef || action!=4)THREE_FAIL();
+    }
+    D_800B0E38=old_buffers;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;g_GeomScroll.words.viewMatrix=old_view;
+    g_GeomScroll.words.projectionDistance=old_projection;g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;g_FieldFxSlotTable=old_slots;g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;
+    g_GameState.loaded_scene_archive=old_archive;g_PlayerEntity=old_player;g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_count;*g_RoomFloorY=old_floor;
+    RoomLib_ThreeParticlePacket=old_packet;RoomLib_ThreeParticleFloorPacket=old_shadow;srand(old_random);
+    puts("Original three particles: 448 USA CPU/BIOS/GTE draw packets and OT chains, both buffers, color/brightness alias and full authored PM script with both particle passes and expiry passed");
+    return 1;
+#undef THREE_FAIL
+}
+
+static int original_three_particle_assets(PeDisc *disc,PeDiscFile *exe)
+{
+    u8 header[32],module[0x10b4];u32 base;PeDiscFile archive;
+    if(!pe_disc_read(disc,exe,0,header,sizeof(header)) || !pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    memcpy(&base,header+24,4);
+    const unsigned rooms[]={65,85};
+    const u32 methods[]={0x8018f1b4,0x8018effc,0x8018f028,0x8018f054,0x8018f09c,0x8018f128,0x8018f1ac};
+    const u32 lists[]={0x8018f1bc,0x8018f388,0xffffffff,0x8018f300,0x8018f828,0xffffffff,0x8018f308,0x8018fbcc,0xffffffff,0xb40030,0xffff};
+    for(unsigned i=0;i<2;++i){
+        SceneRoomSectorRange range;if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(rooms[i]-1)*8,&range,sizeof(range)))return 0;
+        size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);if(!room)return 0;
+        int valid=pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+        if(valid){SceneRoomDirectory *directory=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+            SceneRoomRecord *record=SceneAsset_ResolveOffset(room,directory->scripts&0x3fffff);
+            valid=directory->scripts>>22==1 && record->reserved[0]==0xb4 && record->reserved[1]==0x10 && record->source.offsetAndSlot==0x0a000008 && record->u.handlerAddress==0x80190024;
+            if(valid){memcpy(module,room->bytes+8,sizeof(module));uint64_t hash=UINT64_C(14695981039346656037);
+                for(unsigned j=0;j<sizeof(module);++j)hash=(hash^module[j])*UINT64_C(1099511628211);
+                valid=hash==UINT64_C(0x469c7423e8424e94) && !memcmp(module+0x1034,methods,sizeof(methods)) && !memcmp(module+0x1008,lists,sizeof(lists)) &&
+                    !memcmp(module+0x1050,g_RoomThreeParticleScript,56) && !memcmp(module+0x1088,RoomLib_ThreeParticleTable,16);
+            }
+        }
+        free(room);if(!valid)return 0;
+    }
+    if(g_RoomThreeParticleSpawnLayout[0]!=sizeof(RoomDebrisClock) || g_RoomThreeParticleSpawnLayout[1]!=180 || g_RoomThreeParticleSpawnLayout[2]!=65535)return 0;
+    puts("Original M065/M085 assets: entire identical 4276-byte module, seven methods, six callbacks, both PS1 allocation sizes, complete script and color table passed");
+    return 1;
 }
 
 static int original_motion_assets(PeDisc *disc,PeDiscFile *exe)
@@ -12273,7 +12468,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};PeDiscFile exe;u32 pointers[50];
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
-        if (!original_motion_assets(&disc,&exe) || !original_window_assets(&disc,&exe) || !original_scene_object_workspace_assets(&disc,&exe) || !original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
+        if (!original_three_particle_assets(&disc,&exe) || !original_motion_assets(&disc,&exe) || !original_window_assets(&disc,&exe) || !original_scene_object_workspace_assets(&disc,&exe) || !original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;

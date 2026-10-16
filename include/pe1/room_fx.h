@@ -415,9 +415,7 @@ PE1_STATIC_ASSERT(sizeof(RoomFxPairedEmitterState) ==
 extern unsigned char RoomLib_ThreeParticleTable[];
 extern RoomFxSpritePacket RoomLib_ThreeParticlePacket;
 extern RoomFxSpritePacket RoomLib_ThreeParticleFloorPacket;
-/* The primary packet's depth as its own symbol: the draw pass stores it
- * through a separate address, and a store through the packet would let the
- * compiler share the packet's address with the call after it. */
-extern s16 RoomLib_ThreeParticleAlpha;
+/* Original 801900A2 aliases the primary template's brightness word. */
+#define RoomLib_ThreeParticleAlpha (RoomLib_ThreeParticlePacket.depth)
 
 #endif

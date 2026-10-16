@@ -3,6 +3,17 @@
 
 #include "common.h"
 #include "pe1/gte.h"
+#include "pe1/room_effect_state.h"
+
+/* Pointer-bearing owner state; the original PS1 record was 0x30 bytes. */
+struct FieldActor;
+typedef struct RoomDebrisClock {
+    struct FieldActor *actor;
+    union { RoomEffectWords8 words; GteMatrix matrix; } view;
+    u16 reload;
+    s16 cooldown, landedFlag, pad2A;
+    union { int index; u8 page; } asset;
+} RoomDebrisClock;
 
 /* 16.16 fixed-point position; the integer halves are read as `>> 16`,
  * which the compiler narrows to halfword loads as retail does. */
@@ -36,16 +47,18 @@ typedef struct RoomDebrisTriplet {
     RoomDebrisPosition position[3]; /* 0x3C */
     GteShortVector rotation[3];     /* 0x6C */
     u8 reserved84[0x18];
-    RoomDebrisVelocity velocity[4]; /* 0x9C */
+    RoomDebrisVelocity velocity[3]; /* 0x9C */
 } RoomDebrisTriplet;
 
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDebrisTriplet, rotation) == 0x6C, room_debris_rotation_offset);
 
-void RoomLib_InitThreeTransformParticles(void *owner, void *unused,
-                                         RoomDebrisTriplet *state);
-struct RoomFxControl;
-void RoomLib_DrawThreeTransformParticles(void *unused, struct RoomFxControl *args,
-                                         RoomDebrisTriplet *state);
+PE1_STATIC_ASSERT(sizeof(RoomDebrisTriplet) == 0xB4, room_debris_triplet_size);
+int RoomLib_InitThreeParticlePackets(void *owner, void *slot, void *data);
+int RoomLib_ThreeParticleNop3(void *owner, void *slot, void *data);
+int RoomLib_UpdateThreeParticleTimer(void *owner, void *slot, void *data);
+int RoomLib_InitThreeTransformParticles(void *owner, void *slot, void *data);
+int RoomLib_DrawThreeTransformParticles(void *owner, void *slot, void *data);
+int RoomLib_UpdateDebrisTriplet(void *owner, void *slot, void *data);
 
 #endif

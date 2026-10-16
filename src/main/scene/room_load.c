@@ -9,6 +9,7 @@
 #include "pe1/room_glow_orb.h"
 #include "pe1/room_effect_sequence.h"
 #include "pe1/room_drop_field.h"
+#include "pe1/room_three_particle_class.h"
 #include "pe1/render_camera.h"
 #include "pe1/akao.h"
 #include "pe1/asset_tim.h"
@@ -458,6 +459,8 @@ int Scene_LoadRoom(unsigned int roomId)
                 break;
             }
         }
+        if ((map + 1 == 65 || map + 1 == 85) && slot == 10 && record[i].u.handlerAddress == 0x80190024u)
+            native = &g_RoomThreeParticleHandlers;
         if (map + 1 == 272 && slot == 15 && record[i].u.handlerAddress == 0x8018f1a8u)
             native = &g_RoomM272Handlers;
         if ((map + 1 == 63 || map + 1 == 83) && slot == 74 &&
@@ -675,6 +678,10 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_EffectSequenceGlowSpriteSecondary, 0, sizeof(g_EffectSequenceGlowSpriteSecondary));
             memset(&g_EffectSequenceFinalGlowSprite, 0, sizeof(g_EffectSequenceFinalGlowSprite));
             memset(&g_EffectSequenceSparkleSprite, 0, sizeof(g_EffectSequenceSparkleSprite));
+        } else if ((map + 1 == 65 || map + 1 == 85) && slot == 10) {
+            g_PmCmdHandlerTable[slot] = &g_RoomThreeParticleHandlers;
+            memset(&RoomLib_ThreeParticlePacket,0,sizeof(RoomLib_ThreeParticlePacket));
+            memset(&RoomLib_ThreeParticleFloorPacket,0,sizeof(RoomLib_ThreeParticleFloorPacket));
         } else if (map + 1 == 348 && slot == 9) {
             g_PmCmdHandlerTable[slot] = &g_RoomDropFieldHandlers;
             g_RoomDropFieldModel = NULL;

@@ -211,28 +211,56 @@ nie M084. Pierwszy loader zatrzymuje się jawnie: slot10/80190024,
 Scene frame startup failed:-2, przed zamierzonym cap59702. Proces
 zakończył się; debugger zamknięto. Zachowany ciągły input:
 /tmp/pe-m085-entry-failure-args.json i /tmp/pe-m082-prepared-input.jsonl.
-Nie ma jeszcze dowodu działającego wejścia M085.
+Bieżący kandydat naprawia cały istniejący room_lib/three_particles.c
+w miejscu: zachowuje wszystkie13 funkcji (5 metod klasy i8 callbacków),
+a CMake dołącza ten oryginalny plik. Nie dodano plików produkcyjnych.
+Loader wiąże wyłącznie potwierdzone M065/M085 slot10/80190024; inne
+warianty pokojów pozostają niezweryfikowane. Oba pełne moduły mają4276
+bajtów i identyczny SHA256
+5f38b43c1a2a1c16f29c5e9f8b5e27641e93f0b77b12571d214dbf17b010c035.
 
-Następny oryginalny moduł to istniejący room_lib/three_particles.c,
-pięć metod klasy i osiem callbacków/cząstek, obecnie jeszcze nie włączony
-do buildu natywnego. Cały blok M065 i M085 ma4276 bajtów i jest identyczny,
-SHA256 5f38b43c1a2a1c16f29c5e9f8b5e27641e93f0b77b12571d214dbf17b010c035.
-Odczytano descriptor, wszystkie listy, layout30h/B4h i14-word script;
-/tmp/pe-m085-module-audit.json oraz /tmp/pe-m{065,085}-room.bin.
-Do poprawienia w całym oryginalnym module: ABI metod/callbacków, natywny
-actor/matrices zamiast offset238h, wskaźnik w RoomDebrisClock, rozmiary
-alokacji i arytmetyka przesunięć/wrap. Header ma velocity[4], ale oryginalny
-layout B4h oraz kod używają trzech wektorów od9Ch. Uwaga na alias:
-floor packet=80190088, główny packet=80190098, Alpha=801900A2 jest jego
-polem depth, nie osobnym obiektem (SH potwierdzone w8018F984). Rampa ma16
-bajtów od80190078. Inicjalizację obu macierzy i COP2 trzeba zweryfikować
-z CPU/GTE, a nie zakładać zerowej translacji stosu. Żaden z tych punktów
-nie jest jeszcze portem ani PASS tego modułu.
+Poprawiono ABI wszystkich metod/callbacków, rzeczywisty natywny
+FieldActor i jego macierze zamiast offset238h, wskaźnik w RoomDebrisClock
+(48→56 bajtów) i rozmiary alokacji. RoomDebrisTriplet ma3 wektory velocity,
+zgodnie z oryginalnym B4h, a nie dawnym przypuszczeniem velocity[4].
+Odtworzono wszystkie listy,14-word script, layout i16-bajtową rampę.
+Alpha jest aliasem pola depth głównego packetu, zgodnie z SH8018F984,
+nie osobną zmienną. Oba szablony packetów zerują się przy ładowaniu.
+Jawna arytmetyka unsigned zachowuje32-bitowy wrap pozycji i promienia.
+W DrawGlowSprite mnożenie przez16 zachowuje podpisaną arytmetykę UV
+bez niezdefiniowanego przesunięcia ujemnej wartości (wykryte przez UBSan
+w poprawnym wariancie page1). Nie zmieniono algorytmów rozgrywki.
 
-Następne zadanie: naprawić cały three_particles.c w miejscu, zweryfikować
-CPU/PM i wejście M085, następnie kontynuować kampanię. Pełna kampania i
-pełny zakres celu pozostają nieukończone. Żaden plik produkcyjny nie został dodany ani
-przeniesiony. Użytkowe bu00/ i bu10/ nietknięte.
+Świeży test wymagający rzeczywistego CUE PASS normalnie i z
+ASan/UBSan/function, z instrumentowanymi PsyZ/SDL. Zestaw porównuje
+pełne180-bajtowe stany i RNG z wykonaniem oryginalnego MIPS, rzeczywistego
+ROM BIOS i COP2/GTE:288 inicjalizacji (stos0/A5 daje identyczny wynik),
+384 aktualizacje,648 stanów timera/kontaktu i448 rysowań z łańcuchami OT.
+Zerowanie scratch macierzy zmienia tylko odrzucone translacje, nie wynik
+cząstek ani RNG. Sprawdzono oba bufory, presety stron, kamery, maski i
+ujemny wiek, alias jasności, pełny oryginalny skrypt PM, oba przebiegi
+cząstek/cieni, natywny actor/matrix/TIM, szerokie vars i zakończenie zadań.
+Hashe FNV: init234309fa30aaa62d, updateff1932b53e5636f9,
+timerdcf26f313369619d, draw51e1deb8f951b445.
+Artefakty /tmp/pe-three-particle-{cpu,timer-cpu,draw-cpu}.py i
+/tmp/pe-three-particle-final-fixture{,-san}.log. Wcześniejsze kandydaty
+v1/uv nie zaliczają sanitizera; powyższy PASS dotyczy final.
+
+Pełny replay od Continue G do M085/cap59702 na final PASS normalnie
+oraz ASan/UBSan/function: cały JSON i1MiB VRAM identyczne, SHA256
+f55ffdfb94feeed3ab6729af5893e9c1fdf242b2d822e838b094d9da86293b23.
+Etap248, HP119/123, capacity20, broń9/pancerz14, lock0, brak menu i
+żywych wrogów. Wszystkie prywatne pliki B–G identyczne ze źródłem.
+Obraz frame.png obejrzany. Artefakty /tmp/pe-three-final-m085-entry-
+{normal,san}.log, katalogi z frame.vram, /tmp/pe-three-final-m085-verify.py
+i proof.json. To dowód wejścia i ładowania modułu, nie wszystkich walk
+ani ataków w tej lokacji. Dalszy rzeczywisty input uruchamia przy59828
+skrypt walki, a przy60248 są trzy typ3/60HP; walka jeszcze niezaliczona.
+Świeży original-game-melissa-encounter PASS127.04s na tym samym buildzie,
+wymagane CUE, bez SKIP/abortów opcode206 i82; log
+/tmp/pe-three-final-melissa.log.
+Następnie kontynuować kampanię. Pełna kampania i pełny zakres celu
+pozostają nieukończone. Użytkowe bu00/ i bu10/ nietknięte.
 
 Pełny oryginalny input po etapie240 przechodzi M069→M072, ucieczkę Eve
 (etap244), M070 z dialogami96/45/97, odblokowane wyjście, powrót do M072

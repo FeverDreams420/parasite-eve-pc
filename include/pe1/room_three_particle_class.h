@@ -10,15 +10,18 @@
  * engine, named in each room's symbol file. The class's no-ops open the
  * particles' run in the same unit. */
 extern int g_RoomThreeParticleScript[];
-extern RoomModuleHandler g_RoomThreeParticleDrawList[];
-extern RoomModuleHandler g_RoomThreeParticleUpdateList[];
-extern RoomModuleHandler g_RoomThreeParticleInitList[];
-extern int g_RoomThreeParticleSpawnLayout[];
+extern FieldFxHandler g_RoomThreeParticleDrawList[];
+extern FieldFxHandler g_RoomThreeParticleUpdateList[];
+extern FieldFxHandler g_RoomThreeParticleInitList[];
+extern u16 g_RoomThreeParticleSpawnLayout[4];
+extern PmCommand g_RoomThreeParticleHandlers;
 
-int RoomLib_ThreeParticlePlantScript(void *object);
-int RoomLib_ThreeParticleSpawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
-int RoomLib_ThreeParticleRegister(void *o);
-int RoomLib_ThreeParticleStart(void *o);
-int RoomLib_ThreeParticleClose(struct RoomEnt *o);
+void RoomLib_ThreeParticleNop0(void);
+void RoomLib_ThreeParticleNop1(void);
+void RoomLib_ThreeParticlePlantScript(PmSlotHeader *object);
+int RoomLib_ThreeParticleSpawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int RoomLib_ThreeParticleRegister(PmSlotHeader *object);
+int RoomLib_ThreeParticleStart(PmSlotHeader *object);
+int RoomLib_ThreeParticleClose(PmSlotHeader *object);
 
 #endif

@@ -180,6 +180,7 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/class_nop0.c
     src/overlays/room_lib/class_plant_script.c
     src/overlays/room_lib/glow_orb.c
+    src/overlays/room_lib/three_particles.c
     src/overlays/room_lib/drop_field.c
     src/overlays/room_lib/glow_orb_setup.c
     src/overlays/room_lib/class_spawn.c

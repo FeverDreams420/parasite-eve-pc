@@ -462,7 +462,8 @@ void FieldFx_DrawGlowSprite(FieldGlowSprite *sprite, GteMatrix *placement, u8 mo
     gte_ldv3(g_FieldFxCellQuad, &g_FieldFxCellQuad[1], &g_FieldFxCellQuad[2]);
     gte_rtpt_padded();
     g_FieldFxScratch->v = g_FieldFxSpriteCellVBase + (sprite->cell & 0xF0);
-    g_FieldFxScratch->u = (sprite->cell - g_FieldFxScratch->v) << 4;
+    /* The row base can exceed cell; retain signed UV arithmetic without UB. */
+    g_FieldFxScratch->u = (sprite->cell - g_FieldFxScratch->v) * 16;
     g_FieldFxScratch->clutX = sprite->clut << 4;
     g_FieldFxScratch->clutY = sprite->clut >> 4;
     packet->tag.length = 9;

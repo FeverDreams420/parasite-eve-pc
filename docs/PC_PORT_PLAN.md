@@ -29,7 +29,8 @@ M059, etap232, dwóch żywych przeciwników, stan0, HP83/92; Cure-P
 pozostaje w slocie10, całe wyposażenie niezmienione. Nie porównuje się
 HP/pozycji z późniejszym stanem PS1 po innym przebiegu inputu i nie
 uznaje się jeszcze tej walki za ukończoną. Pełny replay sanitizowany
-tego nowego punktu nadal trwa.
+tego samego punktu również PASS: cały JSON i1MiB VRAM identyczne
+ze zwykłym buildem (SHA 6c2600ea9ce6353ddc90bd1f09249756af407acb40efaee1000f663f9c3cb3ba), prywatneB/C/D/E bez zmian.
 
 
 Dalsza eksploracja M374 potwierdziła wyjście na mapę świata i ponowne

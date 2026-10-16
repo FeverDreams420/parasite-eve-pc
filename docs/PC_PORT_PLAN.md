@@ -42,8 +42,23 @@ input /tmp/pe-m358-entry-args.json, kontrola /tmp/pe-m358-entry-verify.py
 i proof.json. Pełny fixture --assets PASS normalnie oraz sanitizowany
 (/tmp/pe-m358-assets.log, /tmp/pe-m358-fixture-san-assets.log).
 Obraz wejścia obejrzany headless. Dalszy marsz uruchamia walkę z dwoma
-typu6 (35HP) i jednym typu4 (57HP); ukończenie walki jeszcze niezweryfikowane.
-M384/M387 mają dowód modułu/danych, nie pełnej rozgrywki tych lokacji.
+typu6 (35HP) i jednym typu4 (57HP). Oryginalny input pokonuje wszystkich,
+korzystając z M16 i Medicine1 przez menu (HP18→63). Po ekranach EXP,
+awansu i odbioru dwóch Junk wraca sterowanie: M358/cap70450, HP14/107,
+pojemność18, lock0, bez menu i żywych przeciwników, battle9, broń9,
+pancerz14, ZooKey i wszystkie wcześniejsze przedmioty zachowane poza
+zużytym Medicine1; Junk w slotach16/17. Pełny replay tego samego kandydata
+PASS normalnie i ASan/UBSan/function z instrumentowanymi PsyZ/SDL:
+cały JSON,512 zmiennych, timery, wyposażenie i VRAM identyczne (SHA
+95bc7a91277eade6a25947e5f00795d639e95bf6e418b3e13489617d1866c57b).
+PrywatneB–F niezmienione. Artefakty /tmp/pe-m358-battle-{normal,san}.log
+oraz .vram, input /tmp/pe-m358-battle-args.json, kontrola
+/tmp/pe-m358-battle-verify.py i proof.json. Brak niezależnego przejścia
+całego spotkania na PS1; M384/M387 mają dowód modułu/danych, nie pełnej
+rozgrywki tych lokacji. Kolejny cel kampanii: północne wyjście M358→M067.
+Żywy debugger zatrzymano po dodatkowym Heal1 w polu (HP14→44),
+cap70830, bez menu/locka; ten późniejszy odcinek nie jest częścią
+porównanego replayu cap70450.
 
 Po założeniu SP Vest1 oryginalny input wraca z M064 przez M063 do M062.
 Podejście do bramy z Zoo Key/ID202 uruchamia oryginalny skrypt bez

@@ -18,45 +18,20 @@ typedef struct RoomM089ModelPulse {
     /* 0x0A */ s16 timer;
 } RoomM089ModelPulse;
 
-typedef struct RoomM089PulseNode {
-    /* 0x00 */ u32 flags;
-    /* 0x04 */ u8 reserved04[0x14];
-    /* 0x18 */ u8 *state;
-} RoomM089PulseNode;
-
-typedef struct RoomM089PulsePool {
-    RoomM089PulseNode *node;
-} RoomM089PulsePool;
-
-typedef struct RoomM089PulseChannel {
-    s32 reserved[2];
-    RoomM089PulsePool *pool;
-} RoomM089PulseChannel;
-
-typedef struct RoomM089SpawnChannel {
-    s32 reserved[2];
-    void *pool;
-} RoomM089SpawnChannel;
-
-typedef struct RoomM089PulseActor {
-    u8 reserved[0x4C];
-    u32 flags;
-} RoomM089PulseActor;
-
-typedef struct RoomM089PulseEntity {
-    RoomM089PulseActor *actor;
-} RoomM089PulseEntity;
-
-typedef struct RoomM089PulseEvent {
-    u8 reserved[0xD];
-    u8 active;
-} RoomM089PulseEvent;
-
 #include "pe1/player_entity.h"
 extern u8 *g_RoomM089PulseModel;
 extern u8 g_RoomM089PulseColorTrack[];
 
-int RoomM089_SwirlSpriteCallback(int mode, RoomSwirlRiseState *state);
+#include "pe1/fieldfx_task.h"
+extern short g_RoomM089Anchor[3];
+extern u16 g_RoomM089Script[22];
+extern FieldFxTaskProgram g_RoomM089Program;
+int RoomM089_SpiralTrailCallback(int mode,void *data,intptr_t argument);
+int RoomM089_SpiralTrail(int mode,void *data,intptr_t argument);
+int RoomM089_SpinModel(int mode,void *data,intptr_t argument);
+int RoomM089_SwirlRiseSprite(int mode,void *data,intptr_t argument);
+int RoomM089_ModelPulse(int mode,void *data,intptr_t argument);
+intptr_t RoomM089_SetAnchor(int mode,intptr_t x,intptr_t y,intptr_t z);
 int rand(void);
 
 #endif

@@ -11,6 +11,7 @@
 #include "pe1/room_drop_field.h"
 #include "pe1/room_three_particle_class.h"
 #include "pe1/room_m086_seeker.h"
+#include "pe1/room_m089_model_pulse.h"
 #include "pe1/render_camera.h"
 #include "pe1/akao.h"
 #include "pe1/asset_tim.h"
@@ -512,6 +513,10 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomOrbitFlareEffects;
         if (map + 1 == 28 && slot == 115 && record[i].u.handlerAddress == 0x80193250u)
             native = &g_RoomOrbitFlareEffects;
+        if (map + 1 == 89) {
+            if(slot==75 && record[i].u.handlerAddress==0x8019405cu)native=&g_RoomActorClassTable[2];
+            if(slot==119 && record[i].u.handlerAddress==0x80194128u)native=&g_RoomM089Program;
+        }
         if (map + 1 == 86) {
             if(slot==120 && record[i].u.handlerAddress==0x80190aecu)native=&g_RoomM086SeekerProgram;
             if(slot==121 && record[i].u.handlerAddress==0x80190b3cu)native=&g_RoomM086GlintProgram;
@@ -657,6 +662,13 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 28 || map + 1 == 30) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
+        } else if (map + 1 == 89 && slot == 119) {
+            g_FieldFxTaskPrograms[34]=&g_RoomM089Program;
+            memset(g_RoomM089Anchor,0,6);g_RoomM089CoreModel=g_RoomM089PulseModel=NULL;
+            memset(g_RoomM089PulseColorTrack,0,8);
+            for(unsigned key=0;key<5;++key)memset(g_RoomM089PulseColorTrack+12+key*8,0,4);
+        } else if (map + 1 == 89 && slot == 75) {
+            g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[2];
         } else if (map + 1 == 86) {
             g_FieldFxTaskPrograms[slot-85]=slot==120?&g_RoomM086SeekerProgram:&g_RoomM086GlintProgram;
             memset(g_RoomM086ControllerParams,0,sizeof(int)*4);

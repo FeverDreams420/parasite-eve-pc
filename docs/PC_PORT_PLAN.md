@@ -510,6 +510,69 @@ Debug /tmp/pe-m086-prepared-live-lldb.log zatrzymany przy26076 w M087,
 bez menu, flags0/lock0, HP69/133. Nadal potrzebny skuteczniejszy rzeczywisty
 przebieg walki lub przygotowanie przedmiotów przez oryginalne menu/skrzynie.
 
+Dalsza zwykła próba od H (sterownik uwzględnia już niedostępność celu i
+30 klatek logiki względem60 VBlanków) kończy się HP0 przy31792, nadal bez
+ukończenia M086. Pełny input /tmp/pe-m086-third-loss-args.json, trace
+/tmp/pe-m086-prepared-input.jsonl, log /tmp/pe-m086-prepared-live-lldb.log.
+Nie uznajemy tego za błąd oryginalnej walki. Poprawiono także pomocnik PE:
+odrzucenie zaklęcia z pozostającym menu8 jest jawnym błędem sterowania;
+stara wartość g_MenuSelectedSpell nie wystarcza do zaliczenia użycia.
+
+Osobny przebieg DIAGNOSTYCZNY odnawia HP przez debugger na prywatnych
+kartach. /tmp/pe-m089-coverage-case.json zawiera pełny prefix od ContinueH,
+1189 odcinków inputu26756→40458 i15 jawnych wymuszeń HP. To fixture
+pokrycia modułów, NIE dowód zwykłego zwycięstwa ani pełnej kampanii.
+Nie zmieniano poziomu, PE, ekwipunku, flag skryptów ani HP przeciwników.
+Oryginalne ataki kończą M086 i uruchamiają ekran nagród; Obtain All bierze
+Ammo+15 oraz dwa Defense+1 (sloty19/20), End zamyka nagrody. Dalszy input
+przechodzi M088, rozmowę przy powozie i wejście M089. Poprzedni build
+zatrzymywał startup na M089 slot75/8019405c. Wszystkie B–H w tej kopii
+pozostały identyczne z rzeczywistym checkpointem; nie zapisano tej postaci
+jako nowego kanonicznego checkpointu.
+
+M089: naprawiono cały istniejący src/overlays/room_m089_central_park/m089.c,
+zachowując wszystkie6 oryginalnych funkcji. Pięć callbacków używa wspólnego
+natywnego ABI, inicjalizator zwraca intptr_t. Usunięto stare widoki struktur
+z offsetami PS1 w istniejącym nagłówku; kod używa prawdziwych FieldActor,
+FieldFxTaskContext.flags, activeTaskSlot.end i flag stanu gracza/właściciela.
+Przesunięcia ze znakiem zapisano z jawnym zawijaniem MIPS, bez UB C;
+rysowanie modeli i działanie całego oryginalnego skryptu pozostają w module.
+Odtworzono task119/80194128, wszystkie22 półsłowa skryptu, trzy rozmiary
+stanów8/4/12, cztery kolory, cały48-bajtowy color track i zerowany anchor/
+modele. Loader wiąże wyłącznie dwa potwierdzone deskryptory M089 oraz
+resetuje ich dane robocze. Nie dodano plików repozytorium ani kodu gry
+zastępującego istniejące funkcje.
+
+Audyt całego modułu20864 bajty: SHA256
+2abdde7b00da24b3255f76f36599d6a4436f22899ad99d9afcedbffadebe2d3a,
+FNV3f2c0352d3a3caa9. Całe0xAA4 bajty klasyE zgadzają się z M059 po30
+jawnych relokacjach, wszystkie33 cele Configure także potwierdzone.
+/tmp/pe-m089-cpu.py wykonuje oryginalne instrukcje i ROM BIOS bez
+hookowania funkcji:240 stanów aktualizacji pięciu callbacków, pełne bufory
+stanu,24 sloty cząstek, RNG i obie flagi kontaktu dają FNV3345e804cde1fcfa.
+Istniejący fixture original_actor_animation sprawdza ten wynik, guardy,
+natywny inicjalizator, pełne dane modułu oraz rzeczywisty PM/task119 z
+oryginalnymi modelami M089. Wszystkie trzy callbacki główne i obie pule
+zagnieżdżone działają do naturalnego wygaśnięcia w obu buforach GPU;
+sprawdzane są natywne linki OT oraz granice aren i pakietów.
+Pełny fixture --assets PASS normalnie i pod ASan/UBSan/function:
+/tmp/pe-m089-final-assets.log, /tmp/pe-m089-v1-assets-san.log. To nie jest
+porównanie wszystkich pośrednich klatek z konsolą ani dowód całej kampanii.
+
+Nowy debug build odtwarza wszystkie1189 odcinków inputu i15 wymuszeń HP
+ze starego przypadku diagnostycznego, przechodzi dawny błąd i osiąga
+M089/A80084C8/cap40458, dialog60, HP181, bez menu. Obraz obejrzany,
+VRAM SHA2565218fac66ae858e79d887885405e2b8a4c8db1901a86171e3b4a2661b01410c2.
+Dowód /tmp/pe-m089-v1-coverage-proof.json jawnie oznacza coverage_only=true,
+ordinary_campaign_proof=false; karty niezmienione. Log
+/tmp/pe-m089-v1-coverage-live-lldb.log, obraz /tmp/pe-m089-v1-entry.png,
+pełne dane/audyt /tmp/pe-m089-room.bin i /tmp/pe-m089-module-audit.json.
+Dalsze dialogi60–63 prowadzą przy41374 do battle0, flags2178/lock4,
+M089, HP181. Debugger pozostaje zatrzymany w Boot_PollHost, bez okna;
+nie dołożono dalszych wymuszeń HP. Następne kroki: zbadać tę walkę i
+kolejne oryginalne moduły, a niezależnie uzyskać zwykłe przejście M086 odH
+oraz pełny replay kampanii bez wymuszeń. Nadal nie ma dowodu całej gry.
+
 Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym
 leczeniem/przygotowaniem i skuteczniejszym unikaniem pocisków, bez zmiany
 stanu gry przez debugger. Nadal nie ma dowodu pełnej kampanii.

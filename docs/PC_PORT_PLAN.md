@@ -727,6 +727,37 @@ Zamrożone /tmp/pe-m126-v1-game-debug oraz /tmp/pe-native-hp-v2-game i
 -game-sanitized nie mogą być nadpisywane. Dalej: oryginalna kampania od M093,
 powtarzalne fixture’y kolejnych modułów oraz zwykłe przejście M086 odH.
 
+Aktualizacja 2026-10-17: rozszerzony przypadek diagnostyczny od prawdziwego H
+przechodzi teraz M093→M096→M097 (apteka), powrót M096→M093, następnie
+M094 i wejście M095 (sklep z bronią). Obejrzano obrazy ulic, apteki i sklepu.
+Sam input, bez nowych zmian HP/pozycji/flag fabularnych. Nadal te same15
+wcześniejszych zdarzeń HP, ostatnie przy35932, przed wejściem M089.
+Przy120323: M095/A80092C8, stage328, game_frame367, flags0/lock2,
+bez menu, battle12/live0, HP181/181, pozycja[75169792,0,-7340032], yaw1024.
+Pełny natywny replay bez debuggera, na zamrożonych v2 normal i ASan/UBSan/function,
+oba terminal0: cały JSON identyczny, wszystkie15 zdarzeń HP zgodne z oczekiwaniami,
+cały1MiB VRAM identyczny także z odczytem zatrzymanego debuggera.
+SHA256 VRAM82d47c74319dd5718f9282cbff583462c7e0b40f012f9f34a8ec270627c242a7.
+Karty B–H byte-identical do kanonicznego H, bu10 puste w obu prywatnych katalogach.
+Dowód /tmp/pe-day3-m095-proof.json; weryfikator /tmp/pe-day3-m095-verify.py;
+przypadek /tmp/pe-day3-m095-coverage-case.json (2105 odcinków26756→120323);
+logi/args/prywatne katalogi /tmp/pe-day3-m095-{normal,san}.
+To potwierdza deterministyczną diagnostyczną trasę i brak zgłoszeń sanitizerów;
+nie dowodzi zwykłego przejścia M086 ani pełnej wierności obrazu/całej kampanii.
+Poprzednie ograniczenie „fragment po67826 niepowtórzony pod sanitizerami”
+nie dotyczy już tego rozszerzonego przypadku do120323.
+
+Dalsze rozpoznanie samym inputem: rozmowy Maedy106 i Daniela100/101/102,
+komunikat pełnego ekwipunku przy przedmiocie na ulicy i wybór Yes przy
+przednich drzwiach samochodu. Po dalszych dialogach gra znalazła się w M096;
+wyjazd z Soho ani wybór następnego celu nie są jeszcze potwierdzone.
+Aktualny debugger exec60187/PID1674: cap132987, M096/A8009348, HP181,
+flags0/lock2, bez menu, pozycja[61538304,*, -30212096], yaw1040.
+Dodatkowy przypadek /tmp/pe-day3-soho-live-coverage-case.json (2368 odcinków)
+nie jest jeszcze powtórzony natywnie pod sanitizerami. Dalej zbadać oryginalny
+skrypt wyjazdu i kontynuować kampanię; nie pomijać fabuły wymuszaniem flag.
+Żadnych nowych plików repozytorium ani zmian kodu gry w tej aktualizacji.
+
 Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym
 leczeniem/przygotowaniem i skuteczniejszym unikaniem pocisków, bez zmiany
 stanu gry przez debugger. Nadal nie ma dowodu pełnej kampanii.

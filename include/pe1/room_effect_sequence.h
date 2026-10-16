@@ -2,6 +2,7 @@
 #define PE1_ROOM_EFFECT_SEQUENCE_H
 
 #include "common.h"
+#include "pe1/pm_types.h"
 #include "pe1/asset_find.h"
 #include "pe1/field_script_context.h"
 #include "pe1/field_sprite_state.h"
@@ -31,12 +32,15 @@ extern intptr_t *FieldFx_VarPtr(int index);
 extern int *FieldFx_RegPtr(int index);
 /* The two colour ramps the variant glows fade through (FieldFx_InterpolateColorRamp
  * records r, g, b, duration): lime for resource selector -1, amber otherwise. */
-extern char g_EffectSequenceAmberGlowRamp;
-extern char g_EffectSequenceLimeGlowRamp;
+extern u8 g_EffectSequenceAmberGlowRamp[12];
+extern u8 g_EffectSequenceLimeGlowRamp[12];
 
 /* The module's class methods (slots 3 to 5). */
-int RoomEffect_EffectSequenceRegister(void *o);
-int RoomEffect_EffectSequenceStart(void *o);
-s32 RoomEffect_EffectSequenceNop5(void *o);
+int RoomEffect_EffectSequenceRegister(PmSlotHeader *o);
+int RoomEffect_EffectSequenceStart(PmSlotHeader *o);
+int RoomEffect_EffectSequenceNop5(PmSlotHeader *o);
+extern PmCommand g_RoomEffectSequenceHandlers;
+extern FieldFxHandler g_RoomEffectSequenceDrawList[8], g_RoomEffectSequenceUpdateList[8], g_RoomEffectSequenceInitList[8];
+extern u16 g_RoomEffectSequenceSizes[8];
 
 #endif

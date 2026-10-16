@@ -6,6 +6,7 @@
 #include "pe1/render_shadow.h"
 #include "pe1/room_fx_model.h"
 #include "pe1/room_glow_orb.h"
+#include "pe1/room_effect_sequence.h"
 #include "pe1/room_drop_field.h"
 #include "pe1/render_camera.h"
 #include "pe1/akao.h"
@@ -456,6 +457,13 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomActorClassTable[4];
         if (map + 1 == 34 && slot == 8 && record[i].u.handlerAddress == 0x8018ff7cu)
             native = &g_RoomGlowOrbHandlers;
+        if (slot == 14 && record[i].u.handlerAddress == 0x80192bccu) {
+            switch (map + 1) {
+            case 49: case 50: case 90: case 344: case 374:
+                native = &g_RoomEffectSequenceHandlers;
+                break;
+            }
+        }
         if (map + 1 == 348 && slot == 9 && record[i].u.handlerAddress == 0x8019290cu)
             native = &g_RoomDropFieldHandlers;
         if (map + 1 == 23 && slot == 118 && record[i].u.handlerAddress == 0x80190720u)
@@ -612,6 +620,13 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_RoomGlowOrbOrigin, 0, sizeof(g_RoomGlowOrbOrigin));
             memset(&g_RoomGlowOrbSprite, 0, sizeof(g_RoomGlowOrbSprite));
             memset(&g_RoomGlowOrbFlashSprite, 0, sizeof(g_RoomGlowOrbFlashSprite));
+        } else if (slot == 14 && (map + 1 == 49 || map + 1 == 50 || map + 1 == 90 || map + 1 == 344 || map + 1 == 374)) {
+            g_PmCmdHandlerTable[slot] = &g_RoomEffectSequenceHandlers;
+            g_EffectSequenceModel = NULL;
+            memset(&g_EffectSequenceGlowSprite, 0, sizeof(g_EffectSequenceGlowSprite));
+            memset(&g_EffectSequenceGlowSpriteSecondary, 0, sizeof(g_EffectSequenceGlowSpriteSecondary));
+            memset(&g_EffectSequenceFinalGlowSprite, 0, sizeof(g_EffectSequenceFinalGlowSprite));
+            memset(&g_EffectSequenceSparkleSprite, 0, sizeof(g_EffectSequenceSparkleSprite));
         } else if (map + 1 == 348 && slot == 9) {
             g_PmCmdHandlerTable[slot] = &g_RoomDropFieldHandlers;
             g_RoomDropFieldModel = NULL;

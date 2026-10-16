@@ -156,6 +156,9 @@ add_library(parasite-eve-original OBJECT
     src/main/fieldfx/task_list.c
     src/main/fieldfx/vector.c
     src/main/field/actor_collision.c
+    src/overlays/room_lib/effect_sequence.c
+    src/overlays/room_lib/class_nop0.c
+    src/overlays/room_lib/class_plant_script.c
     src/overlays/room_lib/glow_orb.c
     src/overlays/room_lib/drop_field.c
     src/overlays/room_lib/glow_orb_setup.c

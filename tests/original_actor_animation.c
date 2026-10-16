@@ -52,6 +52,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/room_flare.h"
 #include "pe1/room_glow_orb.h"
 #include "pe1/room_drop_field.h"
+#include "pe1/room_effect_sequence.h"
 #include "pe1/room_ember_burst.h"
 #include "pe1/room_module.h"
 #include "pe1/room_script_record.h"
@@ -5331,6 +5332,72 @@ static int original_room_actor_assets(PeDisc *disc,PeDiscFile *exe)
     free(room);
     if(valid)puts("Original room actor assets: M022 slot 70, all 42 class methods and 4096 USA sine/cosine entries verified");
     return valid;
+}
+
+static int original_effect_sequence_assets(PeDisc *disc, PeDiscFile *exe)
+{
+    const unsigned rooms[]={49,50,90,344,374};
+    const u32 methods[]={0x8018f034,0x8018f03c,0x8018f068,0x8018f094,0x8018f0bc,0x8018f12c,0x8018f134};
+    const u32 lists[3][8]={
+        {0x8018f13c,0x801903a8,0x80190bf8,0x801914f0,0x80191c94,0x80192494,0x80192688,0xffffffff},
+        {0x8018f36c,0x80190428,0x80190cb0,0x801915a8,0x80191d44,0x8019249c,0x80192794,0xffffffff},
+        {0x8018f374,0x80190868,0x80191140,0x80191958,0x80192178,0x80192680,0x801929b0,0xffffffff}};
+    const u16 sizes[]={0x28,0x38,0x38,0x38,0x38,0x38,0x38,0xffff};
+    const u32 script[]={0x10000,0xffffffff};
+    u8 header[0x800],baseline[0x3c54];u32 base;PeDiscFile archive;
+    if(!pe_disc_read(disc,exe,0,header,sizeof(header)) || !pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    memcpy(&base,header+0x18,4);
+    for(unsigned i=0;i<5;++i){
+        SceneRoomSectorRange range;
+        if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(rooms[i]-1)*8,&range,sizeof(range)))return 0;
+        size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);
+        if(!room)return 0;
+        int valid=bytes>=sizeof(baseline)+8 && pe_disc_read(disc,&archive,
+            (u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+        if(valid){
+            const u8 *body=(const u8 *)room+8;
+            if(!i)memcpy(baseline,body,sizeof(baseline));
+            SceneRoomDirectory *directory=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+            SceneRoomRecord *record=SceneAsset_ResolveOffset(room,directory->scripts&0x3fffff);
+            valid=!memcmp(body,baseline,sizeof(baseline)) && directory->scripts>>22==1 &&
+                record->source.bytes.slot==14 && record->u.handlerAddress==0x80192bcc &&
+                !memcmp(body+0x80192bcc-0x8018eff0,methods,sizeof(methods)) &&
+                !memcmp(body+0x80192b5c-0x8018eff0,lists,sizeof(lists)) &&
+                !memcmp(body+0x80192bbc-0x8018eff0,sizes,sizeof(sizes)) &&
+                !memcmp(body+0x80192be8-0x8018eff0,script,sizeof(script)) &&
+                !memcmp(body+0x80192bf0-0x8018eff0,g_EffectSequenceAmberGlowRamp,12) &&
+                !memcmp(body+0x80192bfc-0x8018eff0,g_EffectSequenceLimeGlowRamp,12);
+        }
+        free(room);if(!valid)return 0;
+    }
+    if(g_RoomEffectSequenceSizes[0]<sizeof(void *)+36 || g_RoomEffectSequenceSizes[0]%sizeof(void *))return 0;
+    for(unsigned i=1;i<8;++i)if(g_RoomEffectSequenceSizes[i]!=sizes[i])return 0;
+    puts("Original effect sequence: all five USA modules, seven PM methods, 21 callbacks, sizes, script and colour ramps verified");
+    return 1;
+}
+
+static int original_effect_sequence_initializers(void)
+{
+    const u32 seeds[]={0,1,0x12345678,0xffffffff};
+    const u8 fills[]={0,1,0xa5,0xff};
+    const int values[]={-32768,-1,0,1,13,32767,65539};
+    FieldFxState state={0};FieldFxState *saved=g_FieldFxScriptState;
+    u32 random=Psyz_RandState();uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    _Alignas(void *) u8 data[512];g_FieldFxScriptState=&state;
+    for(unsigned handler=1;handler<=4;++handler)for(unsigned seed=0;seed<4;++seed)
+    for(unsigned fill=0;fill<4;++fill)for(unsigned index=0;index<7;++index)
+    for(unsigned selector=0;selector<7;++selector){
+        srand(seeds[seed]);state.regs[1]=values[index];state.regs[2]=values[selector];
+        memset(data,fills[fill],sizeof(data));
+        g_RoomEffectSequenceInitList[handler](NULL,NULL,data);
+        for(unsigned i=0;i<sizeof(data);++i)hash=(hash^data[i])*UINT64_C(1099511628211);
+        ++cases;
+    }
+    srand(random);g_FieldFxScriptState=saved;
+    if(cases!=3136 || hash!=UINT64_C(0xa5f62be2508a87fd)){
+        fprintf(stderr,"Effect sequence initializer CPU hash: %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original effect sequence: 3136 unhooked USA MIPS initializer states, seeded randomness, signed register narrowing and whole-buffer guards passed");
+    return 1;
 }
 
 static int original_contact_action_callback(void)
@@ -11464,7 +11531,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;
@@ -11497,7 +11564,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};PeDiscFile exe;u32 pointers[50];
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
-        if (!original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
+        if (!original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;

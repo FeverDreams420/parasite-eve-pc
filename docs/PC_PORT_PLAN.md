@@ -2,6 +2,43 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Świeże testy z wymaganym Disc 1 potwierdzają wejście do walki z Melissą
+(100,95 s) i pełny scenariusz spotkania (129,22 s), oba PASS bez SKIP.
+Komendy82 i206 pozostają podpięte do oryginalnych Scene_SetGlobalFlags
+i Entity_SetFieldByTypeId; nie zastępuje się ich pustym pomijaniem.
+
+Dalszy rzeczywisty input po Continue E przechodzi posterunek, FMV7,
+scenę samochodu M039 i wejście do Central Parku M374. Znaleziony tam
+błąd brakującego deskryptora slot14/USA80192BCC wynikał z pominięcia
+istniejącego całego room_lib/effect_sequence.c w buildzie. Moduł zachowuje
+wszystkie25 funkcji; poprawiono natywne widoki wskaźników, typy GTE i ABI
+callbacków, dołączono oryginalne tabele oraz istniejące class_nop0.c
+i class_plant_script.c. Loader wiąże wyłącznie potwierdzone pięć pokoi
+M049/M050/M090/M344/M374 i zeruje ich pierwotne dane przy przeładowaniu.
+Stan kontrolera ma48 bajtów na64-bit, z wyrównaniem wskaźnika; pozostałe
+sześć stanów zachowuje56 bajtów. Nie wydzielono funkcji ani nowych plików.
+
+Fixture z Disc 1 porównuje identyczny kod/dane pięciu modułów, siedem
+metod PM,21 wpisów callbacków, rozmiary, skrypt i obie rampy kolorów.
+3136 stanów czterech inicjalizatorów zgadza się z niehookowanym kodem
+CPU USA, także przy zawężaniu signed rejestrów i losowości BIOS
+(hash a5f62be2508a87fd); sprawdzany jest cały512-bajtowy bufor.
+Zwykły replay Continue E/cap38000 kończy dialogi przy bramie Central
+Parku, oddaje sterowanie, ma etap232 i HP92/92. Nie oznacza to jeszcze
+przejścia całego parku ani weryfikacji obrazu wszystkich wariantów efektu.
+Niezależny PS1 przeszedł tę samą sekwencję dialogów12–16 i98–106,
+oddając sterowanie w M374 przy etapie232, HP92/92, broń9/pancerz1.
+Pozycja Ayi[39452672,5439488,38076416] i obrót1466 zgadzają się dokładnie
+z PC; nie porównywano jeszcze pełnego obrazu tej sceny z PS1.
+Pełny fixture --assets przechodzi ASan/UBSan/function z instrumentowanymi
+PsyZ/SDL, w tym nowe porównania modułu i3136 inicjalizacji.
+Pełny replay Continue E→M374/cap38000 przechodzi normalnie i pod
+ASan/UBSan/function (oba PASS): cały JSON i1MiB VRAM identyczne,
+SHA VRAM 841c0cabac22e23dae77d6270f82539e1fccbad1ce4ecfc5713c43f77a3660ab.
+Wszystkie prywatneB/C/D/E pozostają niezmienione. Obejrzano także oba
+obrazy M374 po zakończeniu rozmowy; nie jest to wyczerpujący audyt pikseli.
+
+
 Dalszy rzeczywisty input po Continue D przechodzi M042/M043/M051,
 ponownie wchodzi M052 i kończy scenę Wayne/Torres143–147. Właściwe
 wejście do zbrojowni ma w M051 regionx−510..−360,z−3792..−3645;

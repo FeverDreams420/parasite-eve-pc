@@ -44,8 +44,8 @@ extern FieldFxHandler g_RoomInitList[];
 /* Spawn layout read with g_RoomInitList (object type and placement). */
 extern int g_RoomSpawnLayout[];
 
-int RoomLib_ClassNop0(void);
-int RoomLib_PlantScript(void *object);
+void RoomLib_ClassNop0(void);
+void RoomLib_PlantScript(PmSlotHeader *object);
 int RoomLib_Spawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f);
 int RoomLib_RegisterDrawList(void *o);
 int RoomLib_RegisterPairedTables(void *o);

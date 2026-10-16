@@ -8,4 +8,6 @@
 
 #include "room_lib.h"
 
-ROOMLIB_PLANT_TABLE(RoomLib_PlantScript, g_RoomScript)
+void RoomLib_PlantScript(PmSlotHeader *object) {
+    *FieldFx_GetSlot((FieldFxObject *)object) = g_RoomScript;
+}

@@ -361,6 +361,73 @@ Obraz frame.png obejrzany (alejka i telefon). Artefakty
 Dalszy rzeczywisty input przy64477 uruchamia walkę; przy64657 jeden
 rat typ3/60 i dwa typ4/35. Oba nietoperze pokonane M16, przy65537 HP66,
 zostaje typ3/60. Sterownik używa wyłącznie inputu, bez zmian stanu gry.
+M087: oba typ4/35 oraz typ3/60 pokonane M16. Pod koniec HP9; nagrody
+Junk/Junk/Ammo+6 (Obtain All dodało Junk do10 i11), bez Medicine/Cure-P.
+Dwa jawne Heal1 podnoszą9→39→69HP; zostaje27PE, menu zamknięte przy67493.
+Pełny replay G→M087 zwycięstwo/cap67493 PASS normalnie oraz
+ASan/UBSan/function: cały JSON i1MiB VRAM identyczne, SHA256
+8b3bcd354f7c098a4c85efe6043541afd24cc76027ee776acccf9e488fdd5bbd.
+M087/A80083C8, etap248, HP69/133 (maxHP wzrosło po walce), mode9/live0,
+lock0, brak menu, capacity20, broń9/pancerz14, nowe Junk10/11. Wszystkie
+prywatne B–G niezmienione, bu10 puste. Obraz frame.png obejrzany.
+Artefakty /tmp/pe-m087-victory-{normal,san}.log i katalogi,
+/tmp/pe-m087-victory-args.json, verify.py i proof.json.
+Próba dojścia do telefonu kończy się przejściem: przy67642 skrypt blokuje
+ruch, x1790,z−77, a następnie M086 startup−2, brak native descriptor
+slot121/80190B3C. Proces zakończony1. Telefon nie został uruchomiony,
+nie utworzono H i nie zaliczono nowego zapisu. Reproducer
+/tmp/pe-m086-entry-failure-args.json zamierza67826, trace
+/tmp/pe-m087-bind-input.jsonl od64289, backtrace/log
+/tmp/pe-m087-bind-live-lldb.log. To jawny brak portu, nie zawieszenie walki.
+
+Następny cały oryginalny moduł: istniejący
+src/overlays/room_m086_central_park/m086.c, wszystkie6 funkcji w miejscu.
+Rzeczywisty blok ma7080 bajtów, SHA256
+802a5f596dc71c68dcdd355f01d5971713843388249cb085a420e5767459772a,
+FNV20b7a2d44a6de28b. Task120/80190AEC: callback8018F734,
+size28, init80190A44, script80190ACC (16 halfwordów). Task121/80190B3C:
+callback80190574, size8, init80190A90, script80190B24 (12 halfwordów).
+To SeekerController i BounceGlint oraz dwa callbacki dzieci i dwa
+inicjalizatory parametrów. Źródło jeszcze nie jest natywne: stare widoki
+aktor/pool/bone, callbacki2/3arg, PS1 void** indeksy, int argumenty zamiast
+intptr_t, brak kompletnych danych/descriptorów i jawnej arytmetyki wrap.
+Audyt /tmp/pe-m086-module-audit.json, pełne dane /tmp/pe-m086-room.bin.
+Nie dodano jeszcze powiązań120/121. Następny krok: naprawić cały ten
+plik i istniejące nagłówki, odtworzyć dane, zweryfikować CPU/GTE/PM i
+ponowić tę samą pełną trasę, a potem kontynuować kampanię.
+Po błędnym podejściu do telefonu ponowiono od prawdziwego cap67493.
+Pomocnik projekcji musi używać camera.screenOffsetX/Y, nie wartości
+GTE odczytanych po Render_ResetGteScreenOffset (160/112). Współrzędne
+telefonu wyznaczono z rzeczywistego obrazu, macierzy, projekcji i wysokości
+podłoża: okolice x200,z637, podejście z przechodniego x200,z500.
+Zwykły Cross uruchamia oryginalny dialog6 "Will you save your progress?".
+Yes→Slot1→lista plików (domyślnieG6)→Down do pustegoH7→Save. Przy70028
+nowy H ma8192 bajty, SHA256
+3536b725f8f40be24e18bb274a6137e748e9f0b00a246ab012b67940cfc9b176.
+B–G porównane bajtowo i niezmienione; prywatna kopia checkpointu
+/tmp/pe-m087-phone-checkpoint/bu00. Po potwierdzeniu File saved przy70232
+lista plików pokazujeH7. Ten H jest autentycznym zapisem przez UI,
+bez pe-save/Save_BuildCardFile wywoływanego przez debugger. Zimne ContinueH/cap24000 PASS normalnie i z ASan/UBSan/function:
+cały JSON i1MiB VRAM identyczne, SHA256
+85b4a434ee41116505895452fd76770a01b332180ba0bb5b95a44855c7297694.
+M087, etap248, HP69/133, level12 (stored11 odczytane w LLDB), pełny
+sprzęt i inventory zachowane, lock0, brak menu/żywych wrogów. Oryginalny
+spawn telefonu to [13762560,−262144,31260672], yaw2048; obraz obejrzany.
+H i B–G niezmienione po Continue. Artefakty
+/tmp/pe-m087-phone-continue-{normal,san}.log i katalogi,
+/tmp/pe-m087-phone-continue-proof.json. Pełny replay G→utworzenie H/cap70232 PASS również normalnie oraz z
+ASan/UBSan/function: całe JSON,1MiB VRAM i wszystkie8192 bajty H są
+identyczne (także z autentycznym zapisem z debug przebiegu). VRAM SHA256
+f88f59d4078c4a95abbe6182a7897d4f2f8730848d7ac81f192b828c603c1cde.
+Koniec na liście plików Save/H7 po File saved, bez nadpisania B–G.
+Artefakty /tmp/pe-m087-phone-save-{normal,san}.log i katalogi z frame.vram,
+/tmp/pe-m087-phone-save-args.json, /tmp/pe-m087-phone-verify.py i
+/tmp/pe-m087-phone-proof.json. Oba obrazy Save/Continue obejrzane.
+Menu w dalszym debug inputcie zamknięte przy70440 (lock0, brak menu),
+a proces zakończono. Wszystkie cztery procesy replay zakończyły się0.
+Checkpoint H jest gotowy do następnych niezależnych testów modułu M086;
+nie oznacza ukończenia pełnej kampanii ani wszystkich wariantów zapisów.
+Root bu00/bu10 nietknięte.
 Następnie kontynuować kampanię. Pełna kampania i pełny zakres celu
 pozostają nieukończone. Użytkowe bu00/ i bu10/ nietknięte.
 

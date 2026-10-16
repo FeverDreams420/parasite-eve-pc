@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Naprawiono inicjalizację zegarów przy rzeczywistym rozruchu. Istniejący
+src/main/psyq/libsnd/ssinit_c.c był pominięty w buildzie, a mylna nazwa
+SsInit wiązała wywołanie Boot_InitSubsystems z inicjalizacją dźwięku SDK.
+Zegary0/1/2 miały flags0 i limit0, więc czas nie rósł po Continue.
+Oryginalny USA80036DC8 wywołuje wyłącznie trzy inicjalizatory zegarów.
+Dołączono cały istniejący plik, nazwano jego funkcję GameTime_InitCounters
+i wywołano ją z pierwotnego miejsca w boot/init.c; nie dodano wrappera
+ani pliku.12 pełnych stanów banku niehookowanego CPU zgadza się z C
+(28838f78c52e3a0c), także z nienaruszonym skryptowym zegarem3.
+
+Rzeczywisty Continue D na nowym kandydacie uruchamia zegary0/1/2 z flags1,
+limit0=21600000.120 VBlanków zwykłego oczekiwania zwiększa każdy z trzech
+liczników dokładnie o120; niezależny oryginalny PS1 daje ten sam przyrost.
+Natywny punkt przed/po: cap24000→24120, zegar0/2=205997→206117,
+zegar1=15699→15819, M042 i etap224 zachowane. Nie nadpisywano czasu,
+pozycji ani stanu fabuły. Należy odróżnić historyczną nazwę
+g_PlayTimeFrameCounter (zmienna fabuły74) od rzeczywistego licznika2.
+
+Nowe Continue D/cap24000 normalnie i pod ASan/UBSan/function: PASS,
+pełny JSON i1MiB VRAM identyczne (2265a2819edfc2968c231059ef7a3d1c511b8ff2a01ed2a34e2f63bcfa123a23),
+wszystkie prywatneB/C/D bez zmian. Pełny fixture --assets z instrumentowanymi
+PsyZ/SDL przechodzi ASan/UBSan/function. Siedem wymagających dysku CTestów,
+w tym świeża pierwsza walka z Melissą:7/7 PASS141.35s (Melissa127.36s),
+bez SKIP. Nie jest to pełne50/50 ani pełny replay muzeum po naprawie zegarów;
+wcześniejsze replaye nie potwierdzały tykania czasu i pozostają dowodami
+wyłącznie opisanych tam stanów. Pełna kampania nadal wymaga weryfikacji.
+
+
 Domknięto podpięcie istniejących poleceń sterowania geometrią122/187/188.
 Nie przenoszono funkcji: Script_GetObjEntryField6, Script_SetEntryScrolled
 i Script_SetEntryMirrored pozostają w system_opcodes.c. Ich pomocnicze
@@ -53,10 +81,31 @@ Automaty dialogów muszą obserwować wszystkie cztery TextboxEntry.
 Rozmowa z Klampem używa też slotu1 (m.in. strona68); sprawdzanie samego
 slotu0 daje fałszywe rozpoznanie zawieszenia. Potwierdzenie zwykłym inputem
 kontynuuje oryginalny skrypt, bez naprawy gry ani zmiany flag.
-Dalszy diagnostyczny przebieg starszego kandydata kończy rozmowę z Klampem
-w M192, etap208, sterowanie przywrócone; świeże odtworzenie aktualnego
-kandydata i niezależne przejście PS1 pozostają w toku. Nie jest to jeszcze
-dowód pełnej wizyty w muzeum na aktualnym kandydacie ani pełnego dnia2.
+Pełne replaye Continue C → muzeum/Klamp → M192/cap124558 przeszły
+normalnie i pod ASan/UBSan/function na kandydacie zegarów2a61619ce (oba exit0).
+Cały JSON i1048576 bajtów VRAM są identyczne oraz zgodne z wcześniejszym
+przebiegiem diagnostycznym (021d84ecfc4d7ef1e9f62a7bbf9af9bb702842b0fd1d9c1d835ce89c2ccc4dfe).
+Oryginalny PS1 niezależnie kończy spotkanie: M192, etap208, pozycja
+[484245504,0,225443840], obrót1024, HP92/92, broń9/pancerz1 i lock2,
+zgodnie z natywnym punktem. B/C niezmienione. Nie jest to pełny dzień2
+ani pełny replay po późniejszym podpięciu122/187/188.
+
+Dalszy diagnostyczny przebieg wraca przez M037 do komisariatu, kończy
+drugą odprawę M047128–142 i odbiera Mod Permit (przedmiot55 w slocie10).
+Oryginalny telefon tworzy nowy prywatny zapisD8192 bajty,
+a56259c958f72204b29f970b4bf128977716bb530439233902ab84657663813e,
+etap224; B/C niezmienione. To inny punkt niż wcześniejszy testowy D
+zapisany przed muzeum — pliki znajdują się w osobnych katalogach.
+Na aktualnym kandydacie3475041b2 Continue tego D/cap24000 przeszedł
+normalnie i pod ASan/UBSan/function (oba PASS), w osobnych prywatnych
+katalogach. Pełny JSON i VRAM są identyczne
+(2265a2819edfc2968c231059ef7a3d1c511b8ff2a01ed2a34e2f63bcfa123a23),
+wszystkie trzy plikiB/C/D bez zmian, Mod Permit zachowany i sterowanie
+przywrócone w M042. Oryginalny PS1 przyjął ten nowy D przez własny ekran Continue i odtworzył
+etap224, pozycję[39714816,-131072,-51904512], obrót0, HP92/92, broń9/pancerz1,
+pojemność16, wszystkie50 slotów i wszystkie32 bajty rekorduM16 zgodnie
+z native. Testy nie dotykały zapisów użytkownika.
+
 
 Audyt oryginalnej tabeli interpretera wykazał25 niepodpiętych niezerowych
 handlerów. Następne cztery,103/104/105/211, są teraz podpięte do istniejących

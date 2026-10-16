@@ -4379,6 +4379,16 @@ static int original_frame_clock_layout(void)
     memcpy(g_GameTimers,saved,sizeof(saved));
     if(cases!=36 || hash!=UINT64_C(0xc9281cb7a579fbb4)){
         fprintf(stderr,"Clock init CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    hash=UINT64_C(14695981039346656037);
+    for(unsigned seed=0;seed<12;++seed){
+        u32 raw[12];for(unsigned i=0;i<12;++i)raw[i]=values[(seed+i)%12]^(i*0x01020304u);
+        memcpy(g_GameTimers,raw,sizeof(raw));GameTime_InitCounters();
+        for(unsigned i=0;i<sizeof(raw);++i)hash=(hash^((u8 *)g_GameTimers)[i])*UINT64_C(1099511628211);
+    }
+    memcpy(g_GameTimers,saved,sizeof(saved));
+    if(hash!=UINT64_C(0x28838f78c52e3a0c)){
+        fprintf(stderr,"Combined clock init CPU hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original USA 80036DC8 combined timer initialization: 12 full-bank CPU states preserve the script timer and initialize all three running clocks independently of SDK sound initialization");
     puts("Original clock module: 432 unhooked USA packed-word/source aliases and 36 initializers preserve fixed 20/6/6-bit format and neighbouring clocks without layout-dependent bitfields or forced redundant stores");
     return 1;
 }

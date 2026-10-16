@@ -16,6 +16,7 @@
 #include "pe1/font.h"
 #include "pe1/game_state.h"
 #include "pe1/game_state_types.h"
+#include "pe1/game_timers.h"
 #include "pe1/gte.h"
 #include "pe1/menu_inventory.h"
 #include "pe1/pad_state.h"
@@ -132,7 +133,6 @@ void Save_InitSystem(void);
 void Script_InitNodePool(void);
 void Entity_ResetStateGlobals(void);
 void Entity_ResetAllPools(void);
-void SsInit(void);
 void Menu_SetEquipSlotIndex(int index);
 void Boot_BuildRenderFlagTable(void);
 void Save_PostInitStub(void);
@@ -151,7 +151,7 @@ void Boot_InitSubsystems(void) {
         Draw_FlushPrimQueue();
     }
     Boot_BuildRenderFlagTable();
-    SsInit();
+    GameTime_InitCounters();
     VSyncCallback(NULL);
     VSyncCallback(&Boot_VsyncCallback);
     Menu_SetEquipSlotIndex(0);

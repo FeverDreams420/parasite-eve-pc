@@ -19,6 +19,7 @@ typedef struct GameTimerEntry {
 PE1_STATIC_ASSERT(sizeof(GameTimerEntry) == 0x0C, game_timer_entry_size);
 
 extern GameTimerEntry g_GameTimers[4];
+void GameTime_InitCounters(void);
 void GameTime_InitCounter0(void);
 void GameTime_InitCounter1(void);
 void GameTime_InitCounter2(void);
@@ -32,7 +33,8 @@ void Scene_TickTimers(void);
 #define g_GameClockLimit (g_GameTimers[0].limit)
 #define GAME_TIME_COUNTER(index) (g_GameTimers[index].current)
 
-/* Frames played; Save_ClassifyPlaytime buckets it for the save header. */
+/* Legacy name for authored story progress (script variable 74), used to
+ * classify the save header. Elapsed play frames are timer 2 above. */
 extern u32 g_ScriptVariableBank[];
 #define g_PlayTimeFrameCounter (g_ScriptVariableBank[74])
 

@@ -67,6 +67,7 @@ add_library(parasite-eve-original OBJECT
     src/main/menu/main_menu.c
     src/main/menu/main_update.c
     src/main/time/counters.c
+    src/main/psyq/libsnd/ssinit_c.c
     src/main/save/game_data.c
     src/main/memcard/save_flow.c
     src/main/menu/inventory.c

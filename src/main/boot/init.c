@@ -113,10 +113,14 @@ static void Boot_PollHost(void) {
     const u8 *equipment=(const u8 *)g_SaveRuntimeState.player.runtime.inventory.equipment;
     for(unsigned byte=0;byte<sizeof(g_SaveRuntimeState.player.runtime.inventory.equipment);++byte)
         printf("%02x",(unsigned)equipment[byte]);
-    printf("\"},\"story_stage\":%u,\"timers\":[",g_ScriptVariableBank[74]);
+    printf("\",\"weapon_slot\":%d,\"armor_slot\":%d},\"story_stage\":%u,\"timers\":[",
+        g_AyaSaveState.equipped_weapon_slot,g_AyaSaveState.equipped_armor_slot,g_ScriptVariableBank[74]);
     for(unsigned timer=0;timer<4;++timer)
         printf("%s{\"flags\":%u,\"current\":%d,\"limit\":%d}",timer?",":"",
             g_GameTimers[timer].flags,g_GameTimers[timer].current,g_GameTimers[timer].limit);
+    printf("],\"script_variables\":[");
+    for(unsigned variable=0;variable<0x200;++variable)
+        printf("%s%u",variable?",":"",g_ScriptVariableBank[variable]);
     printf("]}\n");
     fflush(stdout);
     /* A diagnostic cap is a forced process boundary, even inside a menu's

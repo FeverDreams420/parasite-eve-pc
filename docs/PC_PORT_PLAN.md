@@ -2,6 +2,60 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Świeży Continue F przechodzi interakcje M064: otwarcie wejścia do
+budynku, rozmowę przy ciele (tekst94), szafkę z Zoo Key/ID202,
+odbiór SP Vest1/ID160, otwarcie drzwi do kolejnej szafki i odbiór
+M203/ID131 po sprawdzeniu klucza. Po zamknięciu ekranów odbioru
+wraca sterowanie; HP21/101, etap232. Klucz zajmuje slot13, nowe
+przedmioty sloty14/15 (referencje261/262), rekordy wyposażenia5/6.
+Pierwsze pięć i wszystkie pozostałe rekordy zachowane; M16 nadal4
+naboje i2 sloty. Zmienna skryptowa54 wynosi126. Pełny replay
+Continue F→łupy/cap29102 PASS normalnie i sanitizowany: cały JSON,
+timery,4096 bajtów wyposażenia i1MiB VRAM identyczne
+(SHA8b89a7dc4cb244ecc4130ef9aceaba97b9d8aa3d34421e61165291ba1ce60ed5).
+Obrazy interakcji i odbioru przedmiotów obejrzano headless.
+Artefakty /tmp/pe-zoo-key-{normal,san}.log/.vram,
+input /tmp/pe-zoo-key-route-args.json.
+
+Powrót przez M063 uruchomił drugą walkę z dwoma aktorami3:31.
+Ten input zakończył się porażką (HP0); następnie oryginalny Game Over
+wrócił do ekranu tytułowego. Widoczne New Game/Continue/Tutorial,
+bez EX Game. Continue F w tym samym procesie ponownie wczytał M064,
+HP21/101, pierwotny ekwipunek F i oddał sterowanie. Pełny replay
+tej sekwencji do cap39129 PASS normalnie i sanitizowany: cały JSON
+i VRAM identyczne (SHA4dccd2451dac5b0fac4d3c0a9642dc4fd9ef3c371f100ecd3db014d2ade33b1a).
+Nie traktuje się porażki jako ukończenia walki ani przejścia do M062.
+Pomocniczy skrypt nawigacji w /tmp zatrzymuje teraz marsz po rozpoczęciu
+walki; ruch w walce wymaga jawnego argumentu combat.
+
+Po tym Continue ponowiono wszystkie interakcje M064 i założono
+SP Vest1 przez oryginalne menu. W istniejącym Boot_PollHost dodano
+aktywny weapon_slot/armor_slot oraz wszystkie512 script_variables
+w raporcie diagnostycznym. Pozwala to automatycznie sprawdzać
+aktywny pancerz i flagi skryptów po ponownym użyciu stanu gry;
+nie zmieniono logiki rozgrywki ani nie dodano plików.
+
+Końcowy kandydat z tym raportem powtarza całą sekwencję od Continue F,
+przez pierwsze łupy, porażkę i ekran tytułowy, do ponownego Continue,
+ponownego zdobycia przedmiotów i założenia pancerza/cap44566.
+Oba pełne replaye PASS (zwykły oraz ASan/UBSan/function z instrumentowanymi
+PsyZ/SDL): cały JSON, wszystkie512 zmiennych, timery i1MiB VRAM identyczne
+(SHAf9ce49ca1f9e83a07be2ad1977a81e3cd80f92ec20b0a05b9f693b4b87148a2f).
+M064, etap232, HP21/101, lock0, bez menu/przeciwników, aktywna broń9,
+pancerz14 i zmienna54=126. Cała tabela4096 bajtów zgadza się między
+buildami; względem F zmieniły się tylko dwa dodane rekordy5/6.
+Raport po usunięciu nowych pól oraz VRAM zgadzają się też z kandydatem
+sprzed zmiany diagnostycznej. CTest original-game-actor-animation PASS.
+
+PrywatneB/C/D/E/F we wszystkich powyższych przebiegach pozostały
+niezmienione. Artefakty /tmp/pe-zoo-state-final-{normal,san}.log/.vram,
+input /tmp/pe-zoo-recovery-equip-args.json, kontrola
+/tmp/pe-zoo-state-final-verify.py i proof.json. Jest to natywny dowód
+interakcji i ponownego użycia stanu po Game Over; nie wykonano jeszcze
+niezależnego przejścia tych interakcji na PS1. Otwarcie bramy M062
+po zdobyciu klucza i dalsza kampania pozostają do sprawdzenia.
+
+
 Dalsza eksploracja dociera do M064 i telefonu. Zapis przez oryginalne
 menu odtworzył fortify/strcpy abort w Save_BuildCardFile: tytuł Central Park
 ma dokładnie64 bajty Shift-JIS, a strcpy dopisywało terminator poza
@@ -41,7 +95,8 @@ Legitymny checkpoint zachowano w /tmp/pe-zoo-phone-checkpoint/bu00,
 manifest /tmp/pe-zoo-phone-card-hashes.json. Replaye: /tmp/pe-save-title-
 route-args.json i continue-args.json, wyniki route-{normal,san}.log/.vram
 oraz continue-{normal,san}.log/.vram, podsumowanie phone-proof.json.
-Dalsze interakcje M064 i zdobycie Zoo Key pozostają do sprawdzenia.
+Dalsze interakcje M064 i zdobycie Zoo Key zweryfikowano w nowszym
+przebiegu opisanym powyżej; otwarcie bramy M062 pozostaje do sprawdzenia.
 
 
 Dalsze przejście M063 uruchamia walkę z aktorem3:31 i dołączonym

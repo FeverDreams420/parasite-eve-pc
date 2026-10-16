@@ -92,6 +92,7 @@ int Script_ClearTableEntry(int **args);
 int Script_PointInPoly(int **args);
 int Script_OpenSaveLoadMenu(int **args);
 int Script_RunInvCommand(int **args);
+int Script_OpenMemCardDialog(int **unused);
 int Script_SetMoveFlag(int **unused);
 int Script_ClearMoveFlag(int **unused);
 int Script_ClampMenuRange(int **args);

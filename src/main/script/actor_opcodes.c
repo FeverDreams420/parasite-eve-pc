@@ -958,7 +958,7 @@ int Script_SetActorScreenPos(int **arg0) {
     return 1;
 }
 
-int Script_OpenMemCardDialog(void) {
+int Script_OpenMemCardDialog(int **unused) {
     Pe1GameState *state = &g_GameState;
     ScriptNode *node;
     unsigned short *node_flags;

@@ -9,8 +9,9 @@ weryfikacji zachowania gry. Nie ma zastępczego silnika ani katalogu pc.
 Najnowszy osobny przebieg z prywatnego Continue M034 wygrywa starcie
 M034/M348, odbiera nagrody, przechodzi reporterów i nocną rozmowę, a potem
 planszę Day2/Fusion i pytanie o zapis w M351. Nie jest to jeszcze pełna
-trasa od New Game ani ukończony dzień2. Wybór zapisu ujawnia brak
-powiązania opcode231; szczegółowe dowody i ograniczenia opisano niżej.
+trasa od New Game ani ukończony dzień2. Zapis przez oryginalne menu
+jest akceptowany przez Continue portu i PS1. Dalsza rozmowa dnia2
+ujawnia brak opcode113; szczegółowe dowody opisano niżej.
 
 Automatyczny input od New Game przechodzi Melissę, zaplecze, przemianę
 szczura i zwycięską walkę, następnie M020: dialog112, menu, użycie Medicine1
@@ -506,6 +507,62 @@ hi-res, późniejsze hi-FPS oraz kompletne testy/platformy/paczki pozostają
 w zakresie celu. Dalsze sekcje zawierają historię napraw: wcześniejsze
 sformułowania o zatrzymanym opkodzie lub teście w toku opisują tamten etap;
 aktualne wyniki znajdują się przy późniejszych wpisach.
+
+### Zapis po dniu1 przez oryginalny interfejs
+
+Opcode231 korzysta teraz z istniejącego Script_OpenMemCardDialog w
+actor_opcodes.c; zmieniono wyłącznie sygnaturę callbacku i powiązanie
+interpretera. Oryginalny dwustopniowy yield/rewind8, konstruktor menu,
+wygaszanie i flagi pozostają na miejscu. Bez nowych plików.
+576 niehookowanych stanów CPU USA80015af0 pokrywa pierwszy yield i
+przypadek już aktywnego ładowania (hash4016f1aa27ca1435); realny dispatcher
+sprawdza ponowienie i zakończenie. Ten korpus nie uruchamia konstruktora
+menu — robi to poniższy rzeczywisty przebieg. Cztery testy powiązane
+przeszły w14.75s; osobny fixture aktorów z wymaganymi zasobami przeszedł
+ASan/UBSan/function.
+
+Prywatny Continue M034 → walka/M348 → reporterzy/M359 → samochód/M036 →
+narracja/M000 → Fusion/M351 → Yes → Slot1 → pusty plikB → File saved →
+wyjście z menu wchodzi do M042/dialog9, cap52104, HP92/92 i pojemność16.
+Kadr File saved obejrzano. W katalogu /tmp/pe-day2-save231-entry powstał
+BASLUS-006620000000B, 8192 bajtów, SHA256
+70745ddae23fc9e5fa3a6232b724dc436c87271118e046ac35ea1fc152150b22.
+Początkowy plikA zachował SHA256
+6742b60331a4a685f8d5ae9d4775519783ac406806dcb463e1b20ec8b34d7638.
+Karty użytkownika nie są używane do tych zapisów.
+
+Dwa świeże odtworzenia całej tej trasy bez debuggera — zwykłe i
+ASan/UBSan/function — przeszły do M042/cap52104. Pełny JSON, cały VRAM
+(SHA256 0115be205a2d5140d1a5b7cd6236e9a8f298d8d50637bf82806c0eb0117db6a1) i wszystkie8192 bajty
+nowego plikuB są identyczne; początkowy plikA w obu katalogach pozostał
+niezmieniony. Każdy replay zaczyna od osobnej kopii karty M034.
+
+Osobny proces Continue z samym plikiemB ładuje Fusion, a po zwykłym
+potwierdzeniu wchodzi do M042/dialog9: HP92/92, pozycja
+[-3342336,-131072,1835008], pojemność16, wszystkie50 slotów ekwipunku
+zgodne z zapisem, w tym nagroda259. Pierwsza próba inputu z za długim
+Down wybrała pusty slot3 i nie była zaliczeniem; finalny input trzyma
+Down przez4 klatki i wybiera prawidłowy slot2.
+
+Osobny Continue z tym samym inputem przeszedł także pełny runtime
+ASan/UBSan/function do M042/cap26000. JSON i cały VRAM są identyczne
+ze zwykłym procesem Continue, SHA256
+67ce367b80fb7cdb453374f419cdf2e82d683c2f0dcbb63b1c2a6e44d8edd2a1. Porównanie nie obejmuje jeszcze
+dalszej rozmowy ani M041.
+
+Ten sam plikB umieszczono na prywatnej karcie własnego headless PS1
+(PID49001). Oryginał wyświetlił File loaded; po Fusion wchodzi do
+M042/a8004148. Bez modyfikacji stanu rozgrywki potwierdzono w RAM
+oryginału HP92/92, powyższą pozycję, pojemność16 i wszystkie50 slotów
+identyczne z Continue portu. Zachowano kadry File loaded, Fusion i M042
+w /tmp. To zgodność tego konkretnego checkpointu, nie wszystkich zapisów,
+ciągłego RNG ani wszystkich klatek/renderingu. Kadry M042 obejrzano;
+nie były synchronizowane do identycznej klatki animacji.
+
+Dalszy input zamyka rozmowę w M042 i ujawnia niepodpięty opcode113
+Script_SetSceneEntryAnim w M041/a80040c8, actor1:0, script_byte84,
+vblank54561. Nie traktować eksploracji dnia2 ani kampanii za ukończone.
+Pełnych50 testów po tej zmianie nadal nie powtórzono.
 
 ## Sprawdzenie widoczności EX Game przy uruchomieniu
 

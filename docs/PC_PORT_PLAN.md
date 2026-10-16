@@ -2,6 +2,55 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Pełny oryginalny input po etapie240 przechodzi M069→M072, ucieczkę Eve
+(etap244), M070 z dialogami96/45/97, odblokowane wyjście, powrót do M072
+(etap248) i M068. Replay od Continue F do M068/cap103462 PASS normalnie
+oraz ASan/UBSan/function z instrumentowanymi PsyZ/SDL: cały JSON,512
+zmiennych, timery, wyposażenie i1MiB VRAM identyczne (SHA
+ea070568e5c3f5e59b0c24039cf618ccb9f930090d19b36237e860ac2bc36b49).
+Ekwipunek, cała tabela4096 bajtów i aktywne sloty są identyczne jak po
+scenie etapu240: HP39/107, pojemność18, broń9/pancerz14, ZooKey zachowany,
+lock0, bez menu i żywych przeciwników. PrywatneB–F niezmienione.
+Artefakty /tmp/pe-post-eve-field-{normal,san}.log/.vram, input
+/tmp/pe-post-eve-field-args.json, kontrola
+/tmp/pe-post-eve-field-verify.py i proof.json. Nie jest to dowód wszystkich
+klatek pośrednich ani niezależne przejście całości na PS1.
+
+Dalszy żywy input dochodzi M068→M074 (dolna alejka przy altanie;
+obraz obejrzany, to nadal park). Schody i bieganie po mesh działają,
+HP39 i ekwipunek zachowane. Opcja run pomocniczego pe-path w /tmp
+używa zwykłego przycisku Circle; zachowuje stop przy skrypcie/menu/walce.
+Następne aktywne wyjście M074 zatrzymuje program: native descriptor
+missing for M075 slot75 (PS1 80194048). Nie jest to ukończone wejście.
+Reproducer /tmp/pe-m075-entry-args.json obejmuje3290 ciągłych odcinków
+inputu od24000 do cap105807; poprzedni poprawny stan M074/cap105687
+miał lock1 i HP39. Stary debugger zakończył grę statusem1; nie pozostawiać
+tego jako działającego procesu do wznowienia.
+
+M075 potrzebuje także slot12/80193F74. Oryginalna klasaE jest tym samym
+całym ciałem2724 bajtów po relokacji0x1A38 i przeniesieniu33-elementowej
+tablicy Configure z8018F074 do8018F08C; 2304 unhookowane aktualizacje
+CPU MIPS dają ab6562b990f5c842 (/tmp/pe-m075-e-update-mips.py).
+Nie podpięto jeszcze descriptorów. Cały moduł cząstek ma15 istniejących
+funkcji w motion_particles.c, motion_particles_2.c i motion_particles_3.c;
+sprawdzenie składni ujawnia stare offsety wskaźników i deklaracje kolidujące
+z natywnymi FieldFx. Wszystkie funkcje muszą zostać zachowane i poprawione
+w tych plikach. Oryginalne siedem wspólnych metod klasy korzysta z lokalnych
+tabel/programu; istniejące PE_OVERLAY w room_interface.h pozwala kompilować
+ich oryginalne pliki dla tego modułu bez nowych implementacji/wrapperów.
+Pełne C11, dane, CPU/GTE, PM/FieldFx lifecycle i runtime M075 pozostają
+następnym zadaniem; sam pasujący HandlerE nie odblokowuje całej lokacji.
+
+Harness LLDB dla długiego inputu używa teraz SBLaunchInfo.SetArguments
+z JSON zamiast tysięcy argumentów drivera: poprzedni start zablokował się
+w SBDebugger.SetInputString/write przed utworzeniem procesu gry.
+Ścieżka VRAM musi być ustawiona od początku w JSON; próba jej zmiany
+przez debugger na tymczasowy literał przerwała wcześniejszy test statusem2
+(Cannot write VRAM capture). Ten przebieg nie jest PASS; nowy, poprawny
+replay podany wyżej kończy się statusem0. Bazowy VRAM Continue F zachował
+hash142ac576eb17678b541f74eec957299937b7f480618a4d56f54fed8305fced41.
+Nie zmieniono produkcyjnego kodu gry ani nie dodano plików.
+
 Oryginalny input przechodzi M358→M067 i kolejną walkę: dwóch typu3
 po35HP i jeden typu4 z44HP. M16 pokonuje wszystkich; Heal1 w walce
 zwiększa HP7→37 (po kolejnym trafieniu33), końcowe HP9/107.

@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Kolejny legalny checkpoint powstał przez telefon w M042: zwykły input
+od prywatnego Continue B, oryginalny dialog6 „Will you save your progress?”,
+animacja telefonu, oryginalne menu231, wolny slot3/C, komunikat „File saved”,
+zamknięcie menu i powrót sterowania/cap135047. PlikC ma8192 bajty i SHA256
+48cdc8aada0c7b4ae99d93bbdafbcdd204d9e07ac6a593dd8f33e3f812569157.
+B pozostał niezmieniony. To zapis interfejsem gry, bez wywoływania serializera
+z debuggera, teleportowania lub ustawiania flag/stanu fabuły.
+
+Dwa świeże Continue C od tytułu do cap24000 przeszły normalnie i pod
+ASan/UBSan/function, z identycznym pełnym JSON/VRAM (SHA256 VRAM
+7fc35189722c289d882476c270c5dd97d4032352b4999c165cd1e114ab55c485).
+Oryginalny PS1, po zwykłym soft resecie i Continue z testowej karty,
+niezależnie przyjąłC. Z portem zgadzają się M042, dokładna pozycja
+[39714816,-131072,-51904512], HP92/92, pojemność16, wszystkie50 slotów,
+indeksy broni9/pancerza1, ID260 i całe32 bajty rekordu M16A1.
+Fabuła pozostaje na etapie152; nie jest to ukończony dzień2. Żywa trasa
+obejmuje także mapę → M024 → mapę → M046 i dialog Eddiego192 oraz
+rozmowy Nix17/Daniel19 w M042. Pełna generacjaC do cap135047 nie ma jeszcze
+osobnego runtime SAN; testy Continue nie zastępują takiego dowodu.
+
 Dalszy przebieg z M052 ujawnił niepodpięty opcode168 przy próbie otwarcia
 zamkniętych drzwi działu uzbrojenia M051 (actor5:0, byte1172,
 vblank64957, zapytanie o klucz214). Podpięto istniejący oryginalny

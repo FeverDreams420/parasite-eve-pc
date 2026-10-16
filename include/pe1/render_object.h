@@ -149,7 +149,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderHelicalEffect, x) == 6,
                   render_helical_effect_position);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderHelicalEffect, direction) == 0xE,
                   render_helical_effect_direction);
-int FieldFx_HelicalTrailPoint(int mode, GteShortVector *state);
+int FieldFx_HelicalTrailPoint(int mode, void *data, intptr_t argument);
 int FieldFx_HelicalSprite(int mode, RenderHelicalEffect *state);
 int FieldFx_HelicalSpriteEmitter(int mode, RenderOrbitingEmitter *state);
 extern u8 g_HelicalTrailColorTrack[];
@@ -330,7 +330,7 @@ int FieldFx_DriftingEmitter(int mode, GteShortVector *position);
 extern u8 g_StarFanRingGlowColorTrack[];
 extern u8 g_StarFanRingGlowSpinColorTrack[];
 int FieldFx_StarFanRingGlow(int mode, RenderSparkEmitter *state);
-int FieldFx_OrbitTrailPoint(int mode, GteShortVector *state);
+int FieldFx_OrbitTrailPoint(int mode, void *data, intptr_t argument);
 
 
 void FieldFx_TransformTranslation(const GteShortVector *input,

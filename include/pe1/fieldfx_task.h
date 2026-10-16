@@ -31,6 +31,7 @@ typedef struct FieldFxTaskProgram {
     intptr_t (*initialize)(int, intptr_t, intptr_t, intptr_t);
     u16 *script;
 } FieldFxTaskProgram;
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd92, g_FieldFxTaskProgramCmd93;
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, initialize) == sizeof(FieldFxTaskTable),
                   fieldfx_program_initializer);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, script) == sizeof(FieldFxTaskTable) + sizeof(void *),

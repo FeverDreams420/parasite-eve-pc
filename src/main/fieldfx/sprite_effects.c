@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include "pe1/geom_state.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/field_actor.h"
 #include "pe1/field_effect_pool.h"
@@ -571,7 +573,7 @@ int FieldFx_SpiralEmitter(int mode, RenderArcingEmitter *state)
         state->position.y = g_RoomFloorY->y;
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_FieldFxModel6DEAE684, 0, 0xC0);
         return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 16, 24,
-                             (FieldEffectCallback)FieldFx_SpiralSprite);
+                             (FieldFxTaskCallback)FieldFx_SpiralSprite);
     case 1:
         if (g_FieldFxCurrentAge == 0) {
             for (i = 0, angle = 0; i < 24; i++, angle += 0xAA) {
@@ -788,8 +790,9 @@ int FieldFx_BouncingSpinEmitter(int mode, RenderPhaseEmitter *state) {
 /* Rising ember sparks: the drifting ember callback and the fan-sweep
  * spark template instance. */
 
-int FieldFx_EmberSpark(int mode, s16 *state) {
-    s16 sp10[3];
+int FieldFx_EmberSpark(int mode, void *data, intptr_t argument) {
+    s16 *state = data;
+    s16 sp10[4] = {0};
     char sp18[8];
 
     switch (mode) {
@@ -829,21 +832,22 @@ int FieldFx_EmberSpark(int mode, s16 *state) {
  * spark on a turning angle every other frame for 32 frames, updates the
  * trail for 70 frames and publishes its pool for the sparks.
  * Matrix loads are C; each GTE transfer uses its individual macro. */
-int FieldFx_FanSweep(int mode, FieldFanSweep *sweep)
+int FieldFx_FanSweep(int mode, void *data, intptr_t argument)
 {
+    FieldFanSweep *sweep = data;
     RoomFanSweepSpark *spark;
     int handles;
 
     switch (mode) {
     case 0:
         sweep->angle = rand();
-        handles = FieldFx_InitCallbackList(ANIM_POOL_AS(RoomEmberBurstChannel)->pool, 0x10, 0x18,
-                                (FieldFxCallbackListCallback)FieldFx_FanSweepSpark);
+        handles = FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x10, 0x18,
+                                FieldFx_FanSweepSpark);
         handles += FieldFx_AllocCallbackList(&sweep->pool, handles, 8, 0x12, FieldFx_EmberSpark);
         return handles;
     case 1:
         if (g_FieldFxCurrentAge < 0x20 && (g_FieldFxCurrentAge & 1)) {
-            spark = (RoomFanSweepSpark *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomEmberBurstChannel)->pool);
+            spark = (RoomFanSweepSpark *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (spark) {
                 spark->angle = sweep->angle;
                 spark->radius = 0xC8;
@@ -883,8 +887,9 @@ int FieldFx_FanSweep(int mode, FieldFanSweep *sweep)
 
 /* Glow under the fan sweep: a pulsing sprite at the actor for 60 frames,
  * plus a flickering ring while the event is not in stage 11. */
-int FieldFx_FanSweepGlow(int mode, FieldFanSweepGlow *glow)
+int FieldFx_FanSweepGlow(int mode, void *data, intptr_t argument)
 {
+    FieldFanSweepGlow *glow = data;
     GteRotation rotation;
     GteShortVector position;
     RenderColor color = g_FieldFxFanSweepGlowTint;
@@ -939,6 +944,22 @@ int FieldFx_FanSweepGlow(int mode, FieldFanSweepGlow *glow)
     }
     return 0;
 }
+
+/* Resident USA fan-sweep programs: Heal1 and its glowing variant. */
+u16 g_FieldFxTaskScriptCmd92[] = {1,6,7,2,0,0,4,5,0,0,0,0};
+u16 g_FieldFxTaskScriptCmd93[] = {1,6,8,2,0,0,4,5,0,2,1,0,4,5,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd92 = {
+    {{FieldFx_FanSweep}, {sizeof(FieldFanSweep)}}, NULL, g_FieldFxTaskScriptCmd92};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd93 = {
+    {{FieldFx_FanSweep, FieldFx_FanSweepGlow}, {sizeof(FieldFanSweep), sizeof(FieldFanSweepGlow)}},
+    NULL, g_FieldFxTaskScriptCmd93};
+GteShortVector g_FanSweepSparkAnchor;
+void *g_FanSweepSparkTrailPool;
+RenderColor g_FieldFxFanSweepSparkTint = {0x8c,0x78,0x46,0};
+RenderColor g_FieldFxFanSweepGlowTint = {0x80,0x50,0x0a,0};
+char g_EmberColorTrack[] = {
+    0,0,0,0,0,0,0,0,0xc8,0xa0,0x10,6,0,0,0,0,0x64,0x40,0x46,6,
+    0,0,0,0,0xff,0x50,0,6,0,0,0,0,0,0,0,0,0,0,0,0};
 
 int FieldFx_ArcingSpark(int mode, RenderArcingEffect *state)
 {
@@ -1026,8 +1047,9 @@ int FieldFx_ArcingSparkEmitter(int mode, RenderArcingEmitter *state)
     return 0;
 }
 
-int FieldFx_OrbitTrailPoint(int mode, GteShortVector *state)
+int FieldFx_OrbitTrailPoint(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
     GteShortVector position;
     RenderColor color;
     int scale, clut_y;
@@ -1339,8 +1361,9 @@ int FieldFx_VerticalEffectEmitter(int mode, void *state)
     return 0;
 }
 
-int FieldFx_HelicalTrailPoint(int mode, GteShortVector *state)
+int FieldFx_HelicalTrailPoint(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
     GteShortVector position;
     GteRotation rotation;
     RenderColor color;
@@ -1769,7 +1792,7 @@ int FieldFx_DescendingSpriteEmitter(int mode, GteShortVector *state)
         state->z = g_FieldFxOwner->actor->render_object.target_z;
         state->y = g_RoomFloorY->y;
         return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 8, 12,
-                             (FieldEffectCallback)FieldFx_DescendingSprite);
+                             (FieldFxTaskCallback)FieldFx_DescendingSprite);
     case 1:
         if (g_FieldFxCurrentAge < 40 && (g_FieldFxCurrentAge & 1)) {
             particle = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);

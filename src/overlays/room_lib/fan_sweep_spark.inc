@@ -5,7 +5,8 @@
 /* Fan sweep spark: circles the published anchor while it rises, dropping a
  * trail point now and then; it swells for 12 frames, holds for 12, then
  * fades while its radius grows. */
-int ROOM_FAN_SWEEP_SPARK_NAME(int mode, RoomFanSweepSpark *spark) {
+int ROOM_FAN_SWEEP_SPARK_NAME(int mode, void *data, intptr_t argument) {
+    RoomFanSweepSpark *spark = data;
     GteShortVector position;
     GteRotation spin;
     RenderColor color = ROOM_FAN_SWEEP_SPARK_COLOR;

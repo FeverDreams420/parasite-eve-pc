@@ -330,6 +330,57 @@ okno i uruchomił akcje walki, lecz Aya zginęła; tej próby nie zaliczono jako
 przejścia starcia. Prywatny checkpoint M034 zachowano wyłącznie w /tmp;
 zapisy użytkownika nie były modyfikowane.
 
+Próby M034 ujawniły brak natywnych programów PE92/93: użycie Heal1
+zwracało -8 z Scene_LoadRoomAssets, po czym faza walki indeksowała PM
+ujemnym numerem. HP mogło się zmienić mimo braku efektu, a animacja
+rzucania zaklęcia nie oddawała poprawnie ruchu. Nie był to dowód działania
+leczenia w walce, mimo wcześniejszych testów samej funkcji zmiany HP.
+
+Cały istniejący fieldfx/sprite_effects.c kompiluje się teraz w natywnym
+celu. Rodzina FanSweep/Glow/Spark/Ember ma zgodne callbacki z trzema
+argumentami, natywny wskaźnik drugiej puli, dostęp do variables[6] przez
+właściwy układ kontekstu oraz oryginalne skrypty i deskryptory92/93.
+Wspólny widok kanału puli odpowiada FieldFxTaskSlot na PC. Bufor pozycji
+EmberSpark ma również brakujące półsłowo wymagane przez oryginalny odczyt
+GTE; sanitizer wcześniej wykrywał odczyt poza lokalną tablicą trzech s16.
+Nie przeniesiono funkcji ani nie dodano plików. Pozostałe rodziny w tym
+module i ich programy nadal wymagają osobnych powiązań i audytu ABI.
+
+Test rodziny obejmuje100 stanów EmberSpark zgodnych z CPU USA i rzeczywistym
+BIOS-em PS1 bez hooków (hash1026cb69f2dfeabd), w tym zawijanie signed
+koordynatów i granice wieku18 klatek. Oba oryginalne skrypty przechodzą
+po100 klatek pełnego PM: dwie zagnieżdżone pule, rysowanie, łańcuchy OT,
+granice aren i zwolnienie slotu. Metadane deskryptorów, oba skrypty,
+40 bajtów ścieżki koloru i oba kolory porównano z dostarczonym Disc1.
+To nie jest niezależny dowód zgodności pikseli efektu z PS1.
+
+Battle_AdvancePhase sprawdza teraz błąd przydziału efektu przed użyciem
+indeksu PM i zatrzymuje wykonanie z konkretnym numerem programu zamiast
+odczytywać pamięć sprzed tablicy. Specjalny Scan, który nie przydziela
+slotu efektu, rozstrzyga swój warunek przed odczytem tablicy. Pozostałe
+niepodpięte programy PE nie są przez tę diagnostykę uznane za działające.
+
+Osobny PS1 zaakceptował także checkpoint M034 z portu: Continue wraca do
+komunikatu „There are 2 targets!”, HP48/72 i pozycji
+[-57212928,78643200,720896]. Karta i proces emulatora są prywatnymi
+zasobami testowymi w /tmp; zapisów użytkownika nie zmieniano. Próby
+ręcznego inputu hosta potwierdziły strzał w ogon (-22HP) i użycie Heal1,
+ale nie zakończyły jeszcze całej walki z aligatorem.
+
+Końcowy kandydat przechodzi4/4 powiązane CTest (13.14s). Świeży fixture
+ASan/UBSan/function z wymaganym Disc1 i zasobami również PASS dla
+metadanych,100 stanów CPU/BIOS i obu pełnych cykli efektu. Późniejszą
+kontrolę błędu slotu w phase.c sprawdza runtime całej gry z sanitizerami.
+Replay prywatnego Continue M034 → menu PE → Heal1 → ruch/cap19782
+przechodzi zwykły build oraz ASan/UBSan/function. Pełny JSON i VRAM są
+identyczne, SHA256
+16116d6323d2f06afc8a60e3d878d8ed2951d79ad7e4694d5fe4edfec6ee370d.
+HP48→72/72, menu zamknięte, prawidłowy slot efektu1, powrót do animacji4
+i rzeczywista zmiana pozycji po100 klatkach inputu. Kadr obejrzano.
+Ten replay używa prywatnego checkpointu w /tmp; nie jest nowym testem
+całej trasy od New Game ani ukończeniem starcia. Katalog nadal ma50 testów;
+pełny wynik50/50 sprzed tych zmian nie jest ich świeżym wynikiem.
+
 Osobny PS1 zaakceptował także zapis M319 po drugiej Melissie wygenerowany
 przez oryginalne funkcje portu: HP21/64, zgodna pozycja Continue, Melissa
 nieobecna przy fortepianie; zwykły input dochodzi do wyboru Jump in.

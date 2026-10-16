@@ -2,11 +2,13 @@
 #define PE1_ROOM_EMBER_BURST_H
 
 #include "common.h"
+#include <stdio.h>
 #include "pe1/field_actor.h"
 #include "pe1/field_owner_actor.h"
 #include "pe1/field_texture_tables.h"
 #include "pe1/fieldfx_callback_list.h"
 #include "pe1/fieldfx_task_pool.h"
+#include "pe1/fieldfx_task.h"
 #include "pe1/gte_types.h"
 #include "pe1/player_entity.h"
 #include "pe1/psyq_gpu.h"
@@ -103,13 +105,13 @@ extern RenderColor g_RoomM318FanSweepSparkColor;
 extern void *g_RoomM318FanSweepSparkPool;
 extern RenderColor g_RoomM318FanSweepSparkColor;
 extern GteShortVector g_RoomM318FanSweepAnchor;
-extern int RoomM318_FanSweepSpark(int mode, RoomFanSweepSpark *spark);
+extern int RoomM318_FanSweepSpark(int mode, void *data, intptr_t argument);
 /* Main executable copy of the fan sweep spark (FieldFx_FanSweepSpark). */
 extern void *g_FanSweepSparkTrailPool;
 extern RenderColor g_FieldFxFanSweepSparkTint;
 extern GteShortVector g_FanSweepSparkAnchor;
-extern int FieldFx_FanSweepSpark(int mode, RoomFanSweepSpark *spark);
-extern int FieldFx_EmberSpark(int mode, s16 *position);
+extern int FieldFx_FanSweepSpark(int mode, void *data, intptr_t argument);
+extern int FieldFx_EmberSpark(int mode, void *data, intptr_t argument);
 
 /* Main executable fan sweep controller (FieldFx_FanSweep) and the glowing
  * anchor drawn under it (FieldFx_FanSweepGlow). */
@@ -125,7 +127,7 @@ typedef struct FieldFanSweepGlow {
 } FieldFanSweepGlow;
 
 typedef struct FieldFanSweepEvent {
-    u8 reserved[0x1E];
+    u8 reserved[PE1_OFFSETOF(struct FieldFxTaskContext, variables) + 6 * sizeof(s16)];
     s16 stage;                    /* 0x1E */
 } FieldFanSweepEvent;
 

@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "pe1/gte_types.h"
+#include "pe1/fieldfx_task_pool.h"
 
 /* Orbit trail particle: a position, the orbit radius and the heading
  * angles the radius is projected along (a velocity while it falls). */
@@ -19,13 +20,14 @@ PE1_STATIC_ASSERT(sizeof(RoomOrbitTrailParticle) == 0x14,
 
 /* Shared allocator context used by the contiguous orbit-trail burst family. */
 typedef struct RoomOrbitTrailPoolChannel {
-    s32 reserved[2];
+    u16 id, age;
+    char *start;
     void *pool;
 } RoomOrbitTrailPoolChannel;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOrbitTrailPoolChannel, pool) == 8,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOrbitTrailPoolChannel, pool) == PE1_OFFSETOF(FieldFxTaskSlot, end),
                   room_orbit_trail_pool_offset);
-PE1_STATIC_ASSERT(sizeof(RoomOrbitTrailPoolChannel) == 12,
+PE1_STATIC_ASSERT(sizeof(RoomOrbitTrailPoolChannel) == sizeof(FieldFxTaskSlot),
                   room_orbit_trail_pool_channel_size);
 
 /* Burst controller state: the actor anchor and two cleared counters. */

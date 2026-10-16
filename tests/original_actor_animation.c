@@ -51,6 +51,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/room_m023_beacon.h"
 #include "pe1/room_flare.h"
 #include "pe1/room_glow_orb.h"
+#include "pe1/room_ember_burst.h"
 #include "pe1/room_module.h"
 #include "pe1/room_script_record.h"
 #include "pe1/room_m005_beacon.h"
@@ -1418,7 +1419,15 @@ static int original_glow_resident_constants(void)
 {
     const char *path=getenv("PE_TEST_DISC");
     if(!path) return !getenv("PE_REQUIRE_GAME_ASSETS");
+    const u32 fan92[]={0x800d751c,0,0,0,0,0,0,0,8,0,0,0,0,0x800e17c8};
+    const u32 fan93[]={0x800d751c,0x800d7764,0,0,0,0,0,0,0xc0008,0,0,0,0,0x800e1840};
     struct { u32 address; const void *value; size_t size; } rows[]={
+        {0x800e1808,fan92,sizeof(fan92)}, {0x800e1864,fan93,sizeof(fan93)},
+        {0x800e17c8,g_FieldFxTaskProgramCmd92.script,24},
+        {0x800e1840,g_FieldFxTaskProgramCmd93.script,36},
+        {0x800c22d4,&g_FieldFxFanSweepSparkTint,4},
+        {0x800c22d8,&g_FieldFxFanSweepGlowTint,4},
+        {0x800e17e0,g_EmberColorTrack,40},
         {0x800c2154,&g_GlowEffectLayersSpinA,sizeof(GteShortVector)},
         {0x800c215c,&g_GlowLayers1SpinB,sizeof(GteShortVector)},
         {0x800c2164,&g_GlowLayers1Scale,sizeof(GteVector)},
@@ -1644,6 +1653,68 @@ static int native_object_script_cycle(void)
     if(FieldFx_FreeAllSlots()!=-1 || FieldFx_IsLastSlotHalted() || object->state.slot_count) return 0;
     for(unsigned i=0;i<sizeof(buffer.guard);++i) if(buffer.guard[i]!=0xa5) return 0;
     puts("Original object scripts: native reset, init/draw/update/free callbacks, wait/halt, context and guards passed");
+    return 1;
+}
+
+static int authored_fan_sweep_cycles(void)
+{
+    PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
+    FieldActor *old_player=g_PlayerEntity;FieldFxTaskContext *old_context=g_FieldFxTaskContext;
+    FieldFxObjectPrefix *old_owner=g_FieldFxOwner;FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;
+    int old_age=g_FieldFxCurrentAge,old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
+    RenderBufferPrefix old_buffers=D_800B0E38;GteMatrix *old_view=g_GeomScroll.words.viewMatrix;
+    GteShortVector old_anchor=g_FanSweepSparkAnchor;void *old_trail=g_FanSweepSparkTrailPool;
+    u32 old_random=Psyz_RandState();
+    uint64_t hash=UINT64_C(14695981039346656037);
+    const u32 seeds[]={0,1,0x12345678,0xffffffff};const int ages[]={0,1,17,18,19};
+    const s16 coordinates[]={0,1,-32768,32767,-1000};
+    for(unsigned seed=0;seed<4;++seed)for(unsigned age=0;age<5;++age)for(unsigned coordinate=0;coordinate<5;++coordinate){
+        s16 data[]={coordinates[coordinate],coordinates[coordinate],coordinates[coordinate],(s16)0xa5a5};
+        srand(seeds[seed]);g_FieldFxCurrentAge=ages[age];u32 result=FieldFx_EmberSpark(1,data,0);u8 output[12];
+        memcpy(output,&result,4);memcpy(output+4,data,8);
+        for(unsigned i=0;i<12;++i)hash=(hash^output[i])*UINT64_C(1099511628211);
+    }
+    if(hash!=UINT64_C(0x1026cb69f2dfeabd)){fprintf(stderr,"Ember CPU hash %016llx\n",(unsigned long long)hash);return 0;}
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    RenderMatrix matrix={.rotation={{4096,0,0},{0,4096,0},{0,0,4096}},.translation={0,0,1200}};
+    FieldActorState state={0};FieldActor player={.state=&state,.pos_z=1200*65536};player.render_object.matrices=&matrix;
+    static RenderGpuTag ordering[4096];
+    struct {_Alignas(void *) u8 bytes[65536];u8 guard[16];} packets;
+    g_PlayerEntity=&player;g_GeomScroll.words.viewMatrix=&view;
+    g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
+    Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
+    FieldFx_InitTexturePageTable();
+    for(unsigned variant=0;variant<2;++variant){
+        struct {PmPrimarySlot slots[11];u8 guard[16];} bank={0};memset(bank.guard,0xa5,16);
+        g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(1);
+        if(Scene_LoadRoomAssets(92+variant,&player)!=0 || Pm_SendCmd(0,0,0,0,0,0))return 0;
+        unsigned draws=0,particles=0;
+        for(unsigned frame=0;frame<100;++frame){
+            for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
+            memset(packets.guard,0xa5,16);g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;
+            D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.bytes;
+            if(Pm_Start(0) || Pm_Exec(0))return 0;
+            draws+=g_DrawPacketOffset!=0;
+            FieldFxTaskContext *ctx=&bank.slots[0].task.tasks;
+            if(ctx->slots[0].id!=0xffff && ctx->slots[0].end){
+                FieldFxCallbackList *list=(void *)ctx->slots[0].end;
+                for(unsigned i=0;i<(unsigned)list->count;++i)particles+=((FieldFxCallbackListEntry *)(list->entries+i*list->stride))->active!=0;
+            }
+            if(ctx->used>sizeof(ctx->arena) || g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes))return 0;
+            for(unsigned i=0;i<4096;++i){uintptr_t at=ordering[i].address;unsigned count=0;while(at && at!=0xffffff){
+                if(at<(uintptr_t)packets.bytes || at+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset || ++count>512)return 0;
+                at=((RenderGpuTag *)at)->address;
+            }}
+            for(unsigned i=0;i<16;++i)if(bank.guard[i]!=0xa5 || packets.guard[i]!=0xa5)return 0;
+        }
+        if(!draws || !particles || bank.slots[0].header.state || bank.slots[0].task.tasks.count ||
+           bank.slots[0].task.tasks.variables[6]!=7+variant)return 0;
+    }
+    g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;g_PlayerEntity=old_player;
+    g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_task;g_FieldFxCurrentAge=old_age;
+    D_800B0E38=old_buffers;g_GeomScroll.words.viewMatrix=old_view;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;
+    g_FanSweepSparkAnchor=old_anchor;g_FanSweepSparkTrailPool=old_trail;srand(old_random);
+    puts("Original resident fan sweep 92/93: 100 unhooked USA CPU/BIOS ember states, two authored scripts x 100 real PM frames, nested native pools, draw chains, expiry and guards passed");
     return 1;
 }
 
@@ -3933,7 +4004,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

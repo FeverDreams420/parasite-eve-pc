@@ -1,4 +1,6 @@
 #include "common.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include "pe1/akao.h"
 #include "pe1/battle.h"
 #include "pe1/battle_cmd.h"
@@ -210,6 +212,11 @@ void Battle_AdvancePhase(void) {
         }
         if (action != 0x13) {
             g_BattleEffectPmSlot = Scene_LoadRoomAssets(sp18.bytes[action], temp_s2->actor);
+            if ((unsigned)g_BattleEffectPmSlot >= 11) {
+                fprintf(stderr, "Cannot start original PE effect %u (command=%u, status=%d)\n",
+                        sp18.bytes[action], (u16)temp_s2->command, g_BattleEffectPmSlot);
+                abort();
+            }
         }
         if ((action - 7U < 2U) || (action == 0xA)) {
             soundActor = temp_s2->actor;
@@ -296,7 +303,7 @@ void Battle_AdvancePhase(void) {
         if (D_8009D254->animLastFrame == D_8009D254->animPrev.parts.integer) {
             Entity_SetActionMode(((void *)D_8009D254), actor->actionMode12);
         }
-        if (((g_PmSlotTable[g_BattleEffectPmSlot].header.state - 1U >= 2U) || (temp_s2->command == 0x196)) && (g_ActiveActor->stateFlags |= 0x200000, Battle_ApplySpellEffect(temp_s2->command - 0x183, temp_s2->actor), (temp_s2->command != 0x196))) {
+        if (((temp_s2->command == 0x196) || (g_PmSlotTable[g_BattleEffectPmSlot].header.state - 1U >= 2U)) && (g_ActiveActor->stateFlags |= 0x200000, Battle_ApplySpellEffect(temp_s2->command - 0x183, temp_s2->actor), (temp_s2->command != 0x196))) {
             temp_v0_6 = g_BattleActionIndex + 1;
             g_BattleActionIndex = temp_v0_6;
             if (((u16)g_BattleActionQueue[temp_v0_6 & 0xFF].command - 3U >= 0x194U) || (D_8009D254->actionMode < 4U)) {

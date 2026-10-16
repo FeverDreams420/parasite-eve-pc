@@ -469,7 +469,7 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 75 && record[i].u.handlerAddress == 0x80193308u)
                 native = &g_RoomActorClassTable[2];
         }
-        if (map + 1 == 75) {
+        if (map + 1 == 75 || map + 1 == 80 || map + 1 == 82) {
             if (slot == 75 && record[i].u.handlerAddress == 0x80194048u)
                 native = &g_RoomActorClassTable[2];
             if (slot == 12 && record[i].u.handlerAddress == 0x80193f74u)
@@ -620,7 +620,7 @@ int Scene_LoadRoom(unsigned int roomId)
     }
 
     /* Loading this original overlay also cleared its particle work data. */
-    if (map + 1 == 75) {
+    if (map + 1 == 75 || map + 1 == 80 || map + 1 == 82) {
         memset(&g_RoomMotionGlyph, 0, sizeof(g_RoomMotionGlyph));
         memset(g_RoomMotionGlyphs, 0, sizeof(g_RoomMotionGlyphs));
         memset(g_RoomMotionTrailA__motion, 0, sizeof(g_RoomMotionTrailA__motion));
@@ -650,9 +650,9 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 63 || map + 1 == 83 || map + 1 == 358 ||
                     map + 1 == 384 || map + 1 == 387) && slot == 74) {
             g_PmCmdHandlerTable[slot] = &g_RoomWindowClassHandlers;
-        } else if (map + 1 == 75 && slot == 12) {
+        } else if ((map + 1 == 75 || map + 1 == 80 || map + 1 == 82) && slot == 12) {
             g_PmCmdHandlerTable[slot] = &g_RoomMotionHandlers;
-        } else if (map + 1 == 75 && slot == 75) {
+        } else if ((map + 1 == 75 || map + 1 == 80 || map + 1 == 82) && slot == 75) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
         } else if (actor_library && slot == 70) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];

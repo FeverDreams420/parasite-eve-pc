@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+M075: zwykły input uruchamia walkę (typ5/75HP, defense18; pomocniczy
+aktor4 pojawia się po Script_SpawnEntityAt niedźwiedzia).
+M16 pokonuje przeciwników, wynik HP8/107. Ekran nagród: Ammo+15, Obtain All,
+End przy pełnych18 slotach; następnie Heal1 podnosi HP8→38. Telefon, Save,
+Slot1, pusty slot6, oryginalny zapis G:8192 bajty,
+SHA256 1cd948c5ced01f8cbd42d52ec587e611e3b768204e1355c3f098e550726e2463.
+B–F niezmienione. To rzeczywisty zapis przez UI, bez pe-save i modyfikacji
+stanu gry. Pełny replay od Continue F/cap111681 PASS normalnie oraz
+ASan/UBSan/function: stan, VRAM i cały G identyczne. Zakończenie testu jest
+na liście plików po komunikacie File saved; menu zamknięto w dalszym inputcie.
+Zimny Continue G/cap24000 także PASS w obu wersjach: M075, etap248,
+HP38/107,18 slotów, broń9/pancerz14, lock0, bez menu.
+Artefakty /tmp/pe-m075-phone-{normal,san}.log/.vram,
+/tmp/pe-m075-g-continue-{normal,san}.log/.vram,
+/tmp/pe-m075-phone-verify.py i proof.json; karty prywatne
+/tmp/pe-m075-phone-checkpoint/bu00. Użytkowe bu00/ i bu10/ nietknięte.
+Nie jest to dowód wszystkich ataków, klatek efektów ani wszystkich dropów.
+
+Dalszy żywy input przechodzi M075→M074→M076 (185 trójkątów)→M077
+(162 trójkąty), nadal HP38 i ten sam ekwipunek. Oba obrazy obejrzane.
+Próba M077→M080 na poprzednim buildzie zatrzymuje się na slot75/80194048.
+Cały moduł22116 bajtów w M080 i M082 jest identyczny z M075, łącznie
+z oboma descriptorami. Loader wiąże teraz także te dwie lokacje i zeruje
+ich BSS przy ładowaniu. Rozszerzony original_motion_assets sprawdza cały
+moduł, listy, program, relokowaną klasęE i33-elementową tablicę Configure
+każdego z trzech pokojów; fixture --assets PASS normalnie i pod sanitizerami
+(/tmp/pe-motion-variants-final-{san-,}assets.log). Zwykły pełny replay do cap119194 przechodzi wejście M080 (most),
+HP38/107, etap248, lock0, ekwipunek zachowany; obraz obejrzany.
+Pełny odpowiednik z ASan/UBSan/function PASS: cały JSON i1MiB VRAM
+identyczne, SHA256 eb0e0ed1416d6469c4ef6719869f50478120e630659cc4bed308dc3767da16d2.
+Zapis G identyczny, B–F niezmienione. Artefakty
+/tmp/pe-m080-entry-{normal,san}.log/.vram, args.json, verify.py i proof.json.
+Runtime M082 pozostaje do potwierdzenia.
+Dalsza żywa próba walki M080 (typ5/75HP i typ6/35HP) kończy się
+Game Over po trafieniach, bez abortu. Przez tytuł i oryginalny Continue
+wczytano G, następnie Heal1 poza walką podniósł HP38→68.
+Żywy debugger /tmp/pe-motion-variants-game-debug, katalog
+/tmp/pe-motion-variants-live, log /tmp/pe-motion-variants-live-lldb.log,
+zatrzymany w Boot_PollHost cap125835, M075, lock0, menu zamknięte.
+Długi pe-path ładowany przez HandleCommand z pliku /tmp omija limit
+pojedynczej linii terminala; nie oznacza błędu gry. Nie jest to
+ukończona walka M080. Pełna kampania pozostaje nieukończona.
+
 Pełny oryginalny input po etapie240 przechodzi M069→M072, ucieczkę Eve
 (etap244), M070 z dialogami96/45/97, odblokowane wyjście, powrót do M072
 (etap248) i M068. Replay od Continue F do M068/cap103462 PASS normalnie

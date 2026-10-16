@@ -5519,50 +5519,54 @@ static int original_motion_assets(PeDisc *disc,PeDiscFile *exe)
     u8 header[0x800];u32 base;PeDiscFile archive;SceneRoomSectorRange range;
     if(!pe_disc_read(disc,exe,0,header,sizeof(header)) || !pe_disc_find(disc,"PE.IMG",&archive))return 0;
     memcpy(&base,header+0x18,4);
-    if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+74*8,&range,sizeof(range)))return 0;
-    size_t bytes=(size_t)range.roomSectors*2048;u8 *blob=malloc(bytes);if(!blob)return 0;
-    int valid=bytes>=8+0x5664 && pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,blob,bytes);
-    if(valid){
-        SceneAssetView *room=(void *)blob;SceneRoomDirectory *directory=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
-        SceneRoomRecord *records=SceneAsset_ResolveOffset(room,directory->scripts&0x3fffff);unsigned descriptors=0;
-        valid=directory->scripts>>22==2;
-        for(unsigned i=0;valid && i<2;++i){
-            valid=(records[i].source.offsetAndSlot&0xffffff)==8;
-            if(records[i].source.bytes.slot==75 && records[i].u.handlerAddress==0x80194048)descriptors|=1;
-            else if(records[i].source.bytes.slot==12 && records[i].u.handlerAddress==0x80193f74)descriptors|=2;
-            else valid=0;
+    const unsigned rooms[]={75,80,82};
+    for(unsigned room_index=0;room_index<3;++room_index){
+        if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(rooms[room_index]-1)*8,&range,sizeof(range)))return 0;
+        size_t bytes=(size_t)range.roomSectors*2048;u8 *blob=malloc(bytes);if(!blob)return 0;
+        int valid=bytes>=8+0x5664 && pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,blob,bytes);
+        if(valid){
+            SceneAssetView *room=(void *)blob;SceneRoomDirectory *directory=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+            SceneRoomRecord *records=SceneAsset_ResolveOffset(room,directory->scripts&0x3fffff);unsigned descriptors=0;
+            valid=directory->scripts>>22==2;
+            for(unsigned i=0;valid && i<2;++i){
+                valid=(records[i].source.offsetAndSlot&0xffffff)==8;
+                if(records[i].source.bytes.slot==75 && records[i].u.handlerAddress==0x80194048)descriptors|=1;
+                else if(records[i].source.bytes.slot==12 && records[i].u.handlerAddress==0x80193f74)descriptors|=2;
+                else valid=0;
+            }
+            valid=valid && descriptors==3;
+            uint64_t hash=UINT64_C(14695981039346656037);for(unsigned i=0;i<0x5664;++i)hash=(hash^blob[8+i])*UINT64_C(1099511628211);
+            valid=valid && hash==UINT64_C(0x9b37f5c19cfede02);
+            const u32 init[]={0x8018f3dc,0x8018f79c,0x8018fbe8,0x8018ff74,0x80190884,0xffffffff};
+            const u32 draw[]={0x8018f714,0x8018f814,0x8018fc60,0x80190410,0x80190af4,0xffffffff};
+            const u32 update[]={0x8018f71c,0x8018fb44,0x8018ff10,0x801906d0,0x80190b54,0xffffffff};
+            const u32 methods[]={0x8018f3d4,0x8018f1e4,0x8018f210,0x8018f23c,0x8018f284,0x8018f348,0x8018f3cc};
+            const u32 class_e_methods[]={0x80191974,0x8019197c,0x801919f8,0x80191c70,0x80191c78,0x801923b8,0x80192410};
+            u8 *code=blob+8;
+            valid=valid && !memcmp(code+0x4f30,init,sizeof(init)) && !memcmp(code+0x4f48,draw,sizeof(draw)) &&
+                !memcmp(code+0x4f60,update,sizeof(update)) && !memcmp(code+0x4f84,methods,sizeof(methods)) &&
+                !memcmp(code+0x5058,class_e_methods,sizeof(class_e_methods)) &&
+                !memcmp(code+0x4fa0,g_RoomScript__motion,30*4) && !memcmp(code+0x5018,g_RoomMotionLookupCodes,8);
+            /* Compare the entire already-ported actor class, including its
+             * 33-way Configure table, allowing only these actual relocations. */
+            u32 reference[0xaa4/4],jump[33];SceneRoomSectorRange ref;
+            if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+58*8,&ref,sizeof(ref)) ||
+               !pe_disc_read(disc,&archive,(u64)(ref.start+ref.scratchSectors+ref.textureSectors)*2048+8+0xf4c,reference,sizeof(reference)) ||
+               !pe_disc_read(disc,&archive,(u64)(ref.start+ref.scratchSectors+ref.textureSectors)*2048+8+0x84,jump,sizeof(jump)))valid=0;
+            for(unsigned i=0;valid && i<sizeof(reference)/4;++i){
+                u32 expected=reference[i],actual;memcpy(&actual,code+0x2984+i*4,4);
+                if((expected>>26==2 || expected>>26==3) && ((expected&0x3ffffff)<<2)>=0x18ff3c && ((expected&0x3ffffff)<<2)<0x1909e0)expected+=0x1a38/4;
+                if(i*4==0x34 || i*4==0x260 || i*4==0x418)expected+=0x1a38;
+                if(i*4==0xa4)expected=(expected&0xffff0000)|0xf08c;
+                valid=expected==actual;
+            }
+            for(unsigned i=0;valid && i<33;++i){u32 actual;memcpy(&actual,code+0x9c+i*4,4);valid=actual==jump[i]+0x1a38;}
         }
-        valid=valid && descriptors==3;
-        uint64_t hash=UINT64_C(14695981039346656037);for(unsigned i=0;i<0x5664;++i)hash=(hash^blob[8+i])*UINT64_C(1099511628211);
-        valid=valid && hash==UINT64_C(0x9b37f5c19cfede02);
-        const u32 init[]={0x8018f3dc,0x8018f79c,0x8018fbe8,0x8018ff74,0x80190884,0xffffffff};
-        const u32 draw[]={0x8018f714,0x8018f814,0x8018fc60,0x80190410,0x80190af4,0xffffffff};
-        const u32 update[]={0x8018f71c,0x8018fb44,0x8018ff10,0x801906d0,0x80190b54,0xffffffff};
-        const u32 methods[]={0x8018f3d4,0x8018f1e4,0x8018f210,0x8018f23c,0x8018f284,0x8018f348,0x8018f3cc};
-        const u32 class_e_methods[]={0x80191974,0x8019197c,0x801919f8,0x80191c70,0x80191c78,0x801923b8,0x80192410};
-        u8 *code=blob+8;
-        valid=valid && !memcmp(code+0x4f30,init,sizeof(init)) && !memcmp(code+0x4f48,draw,sizeof(draw)) &&
-            !memcmp(code+0x4f60,update,sizeof(update)) && !memcmp(code+0x4f84,methods,sizeof(methods)) &&
-            !memcmp(code+0x5058,class_e_methods,sizeof(class_e_methods)) &&
-            !memcmp(code+0x4fa0,g_RoomScript__motion,30*4) && !memcmp(code+0x5018,g_RoomMotionLookupCodes,8);
-        /* Compare the entire already-ported actor class, including its
-         * 33-way Configure table, allowing only these actual relocations. */
-        u32 reference[0xaa4/4],jump[33];SceneRoomSectorRange ref;
-        if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+58*8,&ref,sizeof(ref)) ||
-           !pe_disc_read(disc,&archive,(u64)(ref.start+ref.scratchSectors+ref.textureSectors)*2048+8+0xf4c,reference,sizeof(reference)) ||
-           !pe_disc_read(disc,&archive,(u64)(ref.start+ref.scratchSectors+ref.textureSectors)*2048+8+0x84,jump,sizeof(jump)))valid=0;
-        for(unsigned i=0;valid && i<sizeof(reference)/4;++i){
-            u32 expected=reference[i],actual;memcpy(&actual,code+0x2984+i*4,4);
-            if((expected>>26==2 || expected>>26==3) && ((expected&0x3ffffff)<<2)>=0x18ff3c && ((expected&0x3ffffff)<<2)<0x1909e0)expected+=0x1a38/4;
-            if(i*4==0x34 || i*4==0x260 || i*4==0x418)expected+=0x1a38;
-            if(i*4==0xa4)expected=(expected&0xffff0000)|0xf08c;
-            valid=expected==actual;
-        }
-        for(unsigned i=0;valid && i<33;++i){u32 actual;memcpy(&actual,code+0x9c+i*4,4);valid=actual==jump[i]+0x1a38;}
+        free(blob);
+        if(!valid)return 0;
     }
-    free(blob);
-    if(valid)puts("Original M075 assets: complete 22116-byte library, fifteen motion functions, PM descriptor, five callbacks per list, 30-word program and relocated entire class E passed");
-    return valid;
+    puts("Original M075/M080/M082 assets: complete 22116-byte library, fifteen motion functions, PM descriptor, five callbacks per list, 30-word program and relocated entire class E passed");
+    return 1;
 }
 
 static int original_window_assets(PeDisc *disc,PeDiscFile *exe)

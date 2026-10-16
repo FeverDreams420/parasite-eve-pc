@@ -60,6 +60,8 @@ int Script_GetFloorTableValue(int **args);
 int Boot_CheckModeSwitch(int **args);
 int Script_GiveItem(int **args);
 int Entity_InitWithTimeout(int **args);
+int Entity_MarkAnimPending(int **unused);
+int Entity_AdvancePendingAnim(int **unused);
 int Script_ResetPlayerCameraPos(int **unused);
 int Script_ShowReceivedItem(int **args);
 int Scene_TestGlobalFlags(int **args);

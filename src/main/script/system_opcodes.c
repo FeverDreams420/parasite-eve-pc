@@ -345,7 +345,7 @@ int Script_SetCurrentEntityField20(int **arg0) {
     return 1;
 }
 
-int Entity_MarkAnimPending(void) {
+int Entity_MarkAnimPending(int **unused) {
     unsigned int i;
     FieldActor *entity;
     ScriptNode *node;
@@ -369,7 +369,7 @@ int Entity_MarkAnimPending(void) {
     return 1;
 }
 
-int Entity_AdvancePendingAnim(void) {
+int Entity_AdvancePendingAnim(int **unused) {
     unsigned int i;
     FieldActor *entity;
     ScriptNode *node;

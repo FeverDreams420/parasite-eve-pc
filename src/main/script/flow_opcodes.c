@@ -747,7 +747,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [151]=Pm_ScriptStopCurrentEntity, [152]=Script_SetEntityTarget, [153]=Script_ResetRenderState,
     [137]=Menu_SetModeState6, [138]=Menu_SetModeState5,
     [149]=Menu_ClearModeState, [150]=Menu_SetModeState8,
-    [101]=Entity_ClearMotionVectors, [102]=Entity_ComputeVelocity, [84]=Entity_GetDistanceComponents, [91]=Script_ClearBattleFlags, [92]=Script_SetBattleFlags, [94]=Entity_GetPositionByType, [97]=Render_CameraTrackRelativeOffset, [123]=Script_SetObjEntryField8, [116]=Script_SetObjEntryLimit, [119]=Script_PointInPoly, [120]=Entity_ClearCurrentFlag20, [121]=Entity_SetCurrentFlag20, [117]=Script_SetFlagSlot, [118]=Render_CameraStepAngleFade,
+    [101]=Entity_ClearMotionVectors, [102]=Entity_ComputeVelocity, [84]=Entity_GetDistanceComponents, [91]=Script_ClearBattleFlags, [92]=Script_SetBattleFlags, [94]=Entity_GetPositionByType, [95]=Entity_MarkAnimPending, [96]=Entity_AdvancePendingAnim, [97]=Render_CameraTrackRelativeOffset, [123]=Script_SetObjEntryField8, [116]=Script_SetObjEntryLimit, [119]=Script_PointInPoly, [120]=Entity_ClearCurrentFlag20, [121]=Entity_SetCurrentFlag20, [117]=Script_SetFlagSlot, [118]=Render_CameraStepAngleFade,
     [128]=Script_SetObjEntryFlag80, [129]=Script_ClearObjEntryFlag80, [130]=Script_LoadGeomState, [131]=Script_WaitAnimRange, [146]=Script_PlayEntityAnim, [147]=Script_SetAnimInterpRate, [148]=Menu_GetModeState,
     [173]=Script_ClearInputFlagBit2, [174]=Script_SetInputFlagBit2,
     [172]=Script_SetAnimSlotPointer, [170]=Script_SetSceneFlag2000, [171]=Script_ClearSceneFlag2000,

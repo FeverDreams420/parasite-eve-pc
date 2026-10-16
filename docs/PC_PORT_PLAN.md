@@ -254,6 +254,32 @@ wraca do M031 i wchodzi prawymi schodami do M334 przy cap40906; kadr
 M334 obejrzano. Ta próba zaczyna się od Continue, nie od New Game;
 nie jest dowodem przejścia całych kanałów ani porównaniem obrazu z PS1.
 
+Dalsza próba od prywatnego Continue M032 dochodzi do przełącznika przy
+lewej ścianie (osobny prostokąt interakcji od samych drzwi), dialog13,
+wybiera Press the switch, otwiera bramę i wchodzi do M033. Tam brakowało
+opcode95 przy actor0/script_byte840. Podpięto istniejące funkcje
+Entity_MarkAnimPending i Entity_AdvancePendingAnim (opcode95/96,
+USA80018300/80018364), dostosowując wyłącznie sygnatury do dispatchera.
+Wstrzymują/wznawiają zadania w trzech listach aktora; nie zastąpiono
+oryginalnego mechanizmu tasków.
+
+4480 stanów bez hooków CPU USA sprawdza puste/rozdzielone listy, wspólne
+ogony, wyjątek dla bieżącego zadania, wszystkie flagi i wznowienie kursora:
+hashea512f4d706a92b1. Fixture dodatkowo porównuje pozostałe pola węzłów
+oraz odtwarza95→96 przez rzeczywisty dispatcher z pełnymi natywnymi
+adresami skryptów. Świeży fixture ASan/UBSan/function PASS; cztery
+powiązane CTest PASS13.20s. Replay od Continue M032 przez powtórne
+starcie, Heal1, otwarcie bramy i wejście M033/cap33500 przechodzi zwykły
+build i runtime ASan/UBSan/function: HP48/72, bez menu i blokady ruchu,
+identyczny pełny JSON i VRAM, SHA256
+39103f7db6b2518f74b8c697791b9cfe27d48cc39c21f6179cd9221cd4654b6c.
+Kadr M033 obejrzano. To trasa od Continue, nie nowy przebieg od New Game.
+Dalszy zwykły input zamyka dialogi15–22 z Eve i dociera do ładowania M034,
+które zatrzymuje się na niepowiązanym descriptorze slot8/8018ff7c.
+Odpowiada istniejącemu modułowi room_lib/glow_orb.c i jego setupowi,
+które wymagają jeszcze natywnej integracji. Nie uznawać walki z aligatorem,
+M034 ani zakończenia dnia1 za ukończone. Bez nowych plików produkcyjnych.
+
 Osobny PS1 zaakceptował także zapis M319 po drugiej Melissie wygenerowany
 przez oryginalne funkcje portu: HP21/64, zgodna pozycja Continue, Melissa
 nieobecna przy fortepianie; zwykły input dochodzi do wyboru Jump in.

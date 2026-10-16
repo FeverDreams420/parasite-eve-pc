@@ -108,7 +108,6 @@ int Render_TransformPoint(GeomEntry *entry, int x, int y, int depth) {
     unsigned int depthWord;
     unsigned int packed;
     unsigned int mask;
-    int stackFrame[8]; /* Preserves the original 0x20-byte frame. */
 
     current = entry;
     sum = current->base_x;
@@ -116,9 +115,8 @@ int Render_TransformPoint(GeomEntry *entry, int x, int y, int depth) {
     depthWord = current->head.packed;
     sum += x;
     screenX = sum;
-    /* Keeps the unclamped x copy apart from the sum the clamp truncates;
-     * the pins reproduce retail moving the entry to $t0 and reusing $a0
-     * for y, which local allocation otherwise swaps. */
+    /* Compare the wrapped signed coordinate while retaining the original
+     * sum when it falls within the bounds. */
     depthWord >>= 20;
     depth += depthWord;
 

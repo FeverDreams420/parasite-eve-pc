@@ -611,15 +611,14 @@ int Script_SetEntityAnim5Args(int **arg0) {
 }
 
 int Script_SetSceneEntryAnim(int **arg0) {
-    char *header = (char *)g_GeomState;
-    char *base = (char *)g_GeomState;
     int index = *arg0[0];
+    GeomEntry *entries = (GeomEntry *)((u8 *)g_GeomState + g_GeomState->entry_offset);
 
     Render_TransformPoint(
-        (GeomEntry *)(base + ((GeomState *)header)->entry_offset + (index * 56)),
-        *(short *)arg0[1],
-        *(short *)arg0[2],
-        *(short *)arg0[3]);
+        entries + index,
+        (s16)*arg0[1],
+        (s16)*arg0[2],
+        (s16)*arg0[3]);
     return 1;
 }
 

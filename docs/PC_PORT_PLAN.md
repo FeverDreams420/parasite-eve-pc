@@ -10,8 +10,9 @@ Najnowszy osobny przebieg z prywatnego Continue M034 wygrywa starcie
 M034/M348, odbiera nagrody, przechodzi reporterów i nocną rozmowę, a potem
 planszę Day2/Fusion i pytanie o zapis w M351. Nie jest to jeszcze pełna
 trasa od New Game ani ukończony dzień2. Zapis przez oryginalne menu
-jest akceptowany przez Continue portu i PS1. Dalsza rozmowa dnia2
-ujawnia brak opcode113; szczegółowe dowody opisano niżej.
+jest akceptowany przez Continue portu i PS1. Kolejny przebieg od tego
+zapisu przechodzi rozmowę z Bakerem i odbiór Mod Permit;
+szczegółowe dowody i dalsze ograniczenia opisano niżej.
 
 Automatyczny input od New Game przechodzi Melissę, zaplecze, przemianę
 szczura i zwycięską walkę, następnie M020: dialog112, menu, użycie Medicine1
@@ -507,6 +508,67 @@ hi-res, późniejsze hi-FPS oraz kompletne testy/platformy/paczki pozostają
 w zakresie celu. Dalsze sekcje zawierają historię napraw: wcześniejsze
 sformułowania o zatrzymanym opkodzie lub teście w toku opisują tamten etap;
 aktualne wyniki znajdują się przy późniejszych wpisach.
+
+### Oryginalna pozycja wpisu geometrii i rozmowa z Bakerem
+
+Opcode113/USA80018a9c jest podpięty do istniejącego
+Script_SetSceneEntryAnim w system_opcodes.c. Funkcja ustawia współrzędne
+i głębokość wpisu geometrii; nie odtwarza animacji postaci. Zastąpiono
+stary krok56 bajtów indeksowaniem natywnego GeomEntry i odczyty low16
+argumentów jawną konwersją s16. Oryginalne Render_TransformPoint nadal
+wykonuje zawijanie współrzędnych, clamp i zapis12-bitowej głębokości.
+Usunięto jego nieużywane wypełnienie stosu służące dopasowaniu kodu PS1;
+nie przeniesiono funkcji ani nie dodano plików projektu.
+
+7920 stanów z niehookowanym CPU USA porównuje wszystkie48 bajtów
+nieposzerzonej części trzech wpisów, signed/high-word argumenty,
+normalne/odwrócone/punktowe ograniczenia i zawijanie głębokości;
+hash9d5d2d1d374efb69. Natywny test kontroluje także nienaruszenie pełnych
+wskaźników i sąsiednich rekordów oraz wykonuje każdy przypadek przez
+rzeczywisty dispatcher. Cztery testy powiązane po oczyszczeniu funkcji
+przeszły w13.16s; fixture z wymaganymi zasobami przeszedł osobno
+ASan/UBSan/function.
+
+Rzeczywisty Continue z plikuB po dniu1 przechodzi rozmowę9–18 w M042,
+wchodzi do M041, dialog20 i otrzymuje Mod Permit55. Zamknięcie okna
+oddaje ruch;80 klatek Down zmienia z o-15728000,80 Up wraca do tej samej
+pozycji (obrót różni się zgodnie z inputem). Samodzielny oryginalny PS1
+z tego samego checkpointu także kończy rozmowę, przyznaje55 i pozwala
+wyjść do M042; kadr Mod Permit obejrzano po obu stronach, w RAM PS1
+potwierdzono nagrodę. Nie synchronizowano każdego momentu obu przebiegów.
+
+Wcześniejszy replay do M041/cap30932 przeszedł zwykle i pod
+ASan/UBSan/function z identycznym JSON/VRAM; był sprzed usunięcia
+nieużywanego wypełnienia stosu, więc nie zastępuje weryfikacji finalnego
+kandydata opisanej dalej.
+
+Finalny kandydat po usunięciu wypełnienia stosu przechodzi dwa świeże
+replaye bez debuggera: Continue plikuB → M042/dialog9–18 → M041/dialog20
+→ Mod Permit → zamknięcie okna → ruch Down/Up → wyjście do M042 →
+korytarz M043 → recepcja M046, cap35776, HP92/92, pojemność16 i permit55.
+Zwykły build i ASan/UBSan/function mają identyczny pełny JSON i cały VRAM,
+SHA256 e4c2cccd75cba36dcf926860f956b079caa944609d8c17c2d02c25f5f4ffc22d.
+PlikB w prywatnej karcie pozostaje niezmieniony. Kadr recepcji obejrzano.
+
+Dalszy zwykły input wraca do M042, przechodzi
+korytarz M043 i recepcję M046 oraz wraca do M043 i wchodzi M051/M052.
+Ten dalszy odcinek rozpoznano w żywej sesji sprzed usunięcia wypełnienia;
+nie jest objęty powyższym porównaniem finalnego kandydata do cap35776.
+Rozszerzony finalny replay przechodzi także powrót M046 → M043 → M051
+→ M052 i odbiór Tool22, a następnie zamknięcie okna nagrody/cap40776.
+Zwykły build i ASan/UBSan/function przeszły z identycznym pełnym JSON
+oraz całym VRAM, SHA256
+1ec34ad852a5eb13cb5c8672a40906a718bc0e9f51a4db98bfd882ddeca374ad. HP92/92, permit55 i Tool22 w ekwipunku,
+menuNULL, dialog zamknięty; plikB niezmieniony. Kadr Tool obejrzano.
+Jeszcze dalsza żywa sesja odbiera Ammo+6 i zaczyna dialog25–29 z Torresem;
+ten ostatni odcinek nie jest objęty porównaniem cap40776 ani niezależnym
+przebiegiem PS1. Czekanie po dialog29 odsłania następny niepodpięty
+opcode154 w M052, actor2:0, script_byte1724, vblank44807; nie pomijać go
+ani nie uznawać rozmowy za zakończoną. Nie uznawać modyfikacji broni ani całej zbrojowni za
+zweryfikowane na podstawie samego otrzymania Toola.
+
+To osobne odtworzenie od checkpointu, nie pełna trasa New Game.
+Pełnych50 testów ani całego dnia2 nadal nie potwierdzono.
 
 ### Zapis po dniu1 przez oryginalny interfejs
 

@@ -28,6 +28,7 @@ int Entity_FindByTypeId(int **args);
 int Script_Random(int **args);
 int Script_InitEntityMoveState(int **unused);
 int Script_SetEntityAnim12Args(int **args);
+int Script_SetSceneEntryAnim(int **args);
 int Script_SetEntityAnim5Args(int **args);
 int Script_SetBattleEntryCoords(int **args);
 int Script_SignalSceneExit(int **unused);

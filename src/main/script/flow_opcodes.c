@@ -733,6 +733,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [90]=Entity_SetField,
     [111]=Script_InitEntityMoveState,
     [112]=Script_SetEntityAnim12Args, [183]=Script_SetEntityAnim5Args,
+    [113]=Script_SetSceneEntryAnim,
     [176]=Script_SetBattleEntryCoords,
     [180]=Script_SetMoveFlag, [181]=Script_ClearMoveFlag,
     [207]=Script_SignalSceneExit, [208]=Script_DrawSaveOverlay,

@@ -2982,6 +2982,48 @@ static int original_task_pause_opcodes(void)
     return 1;
 }
 
+static int original_scene_entry_position_opcode(void)
+{
+    const u32 heads[]={0,1,0x7fff,0x8000,0xffff,0x80000000,0xffffffff,0x010c0000,0xa5a55a5a,0x12345678,0x7fffffff,0x600000};
+    const u16 bases[][2]={{0,0},{65535,65535},{32768,32767},{123,456},{65530,7}};
+    const s16 bounds[][4]={{-100,100,-50,50},{-32768,32767,-32768,32767},{500,-500,300,-300},{10,10,-20,-20}};
+    const u32 values[]={0,1,0xffffffff,32767,0xffff8000,65535,0x8000ffff,0x7fffffff,0x80000000,0xffff0001,0x12345678};
+    struct {GeomState header;GeomEntry entries[3];} geometry={0};
+    GeomState *saved_geom=g_GeomState;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    geometry.header.entry_offset=(s32)((u8 *)geometry.entries-(u8 *)&geometry.header);g_GeomState=&geometry.header;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[113]!=Script_SetSceneEntryAnim)return 0;
+    for(unsigned index=0;index<3;++index)for(unsigned f=0;f<12;++f)for(unsigned base=0;base<5;++base)
+    for(unsigned bound=0;bound<4;++bound)for(unsigned a=0;a<11;++a){
+        for(unsigned i=0;i<3;++i){
+            GeomEntry *entry=geometry.entries+i;memset(entry,(i*73+f*11)&255,sizeof(*entry));
+            entry->head.packed=heads[(f+i)%12];entry->base_x=bases[base][0];entry->base_y=bases[base][1];
+            memcpy(&entry->bounds,bounds[bound],sizeof(entry->bounds));
+            entry->u30.prim=geometry.entries+i;entry->u34.pagePackets=(void *)(geometry.entries+(2-i));
+        }
+        GeomEntry before[3],after[3],expected[3];memcpy(before,geometry.entries,sizeof(before));memcpy(expected,before,sizeof(before));
+        int input[]={index,(s32)values[a],(s32)values[(a+3)%11],(s32)values[(a+7)%11]};
+        int *args[]={input,input+1,input+2,input+3};u32 result=Script_SetSceneEntryAnim(args);
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<48;++b)
+            hash=(hash^((u8 *)(geometry.entries+i))[b])*UINT64_C(1099511628211);
+        expected[index].head=geometry.entries[index].head;expected[index].scr_x=geometry.entries[index].scr_x;expected[index].scr_y=geometry.entries[index].scr_y;
+        if(memcmp(expected,geometry.entries,sizeof(expected)))return 0;
+        memcpy(after,geometry.entries,sizeof(after));memcpy(geometry.entries,before,sizeof(before));
+        FieldActor actor={0};u32 code[]={113|(4u<<13),0,index,input[1],input[2],input[3],32,0};
+        ScriptNode node={.current.script=code,.active=1,.flags=0x80};g_CurrentEntity=&actor;g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(after,geometry.entries,sizeof(after)) || node.current.script!=code+8 ||
+           node.flags!=0x90 || node.active || g_ScriptNodePool || g_GeomState!=&geometry.header)return 0;
+        ++cases;
+    }
+    g_GeomState=saved_geom;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=7920 || hash!=UINT64_C(0x9d5d2d1d374efb69)){
+        fprintf(stderr,"Scene113 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original opcode113: 7920 unhooked USA CPU states, three native mesh records, signed operands, inverted/tight bounds, depth wrap, untouched full-width pointers and real dispatcher passed");
+    return 1;
+}
+
 static int original_memcard_dialog_opcode(void)
 {
     const u16 flags[]={0,1,0x20,0x21,0x80,0xff,0x8000,0xffff};
@@ -4193,7 +4235,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_scene_entry_position_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

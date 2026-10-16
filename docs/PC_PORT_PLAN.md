@@ -532,7 +532,13 @@ Zatem sam ponowny przebieg zdarzenia nie stanowi jeszcze dowodu błędu
 produkcyjnego Save/Continue. Dalsza walidacja wymaga normalnego punktu zapisu
 lub potwierdzenia tej samej semantyki w PS1. Token A8002048 dekoduje się przez
 oryginalne Text_EncodeBase32 do M0020I: garderoba to M020, nie zgadywany
-numer na podstawie kolejności odwiedzania. Dalsza interakcja w M020 jest w toku.
+numer na podstawie kolejności odwiedzania. Osobny executable z 210/165
+przechodzi ten sam pre-rat checkpoint, walkę i drzwi do M020, a następnie
+ruch/confirm do 45000 VBlank bez crasha: HP11/45, mode9, enemy0, move_lock0,
+Aya[835232,0,-29049184], yaw512, brak menu/dialogów. Nie uruchomił jeszcze
+interakcji z postacią. Zmierzony input Down+Left w M020 zmienia oba X/Z na
+ujemne; kamera obraca kierunki o 90 stopni względem korytarza. Trwa kolejne
+podejście do aktora2 w [11730944,0,15794176], wyłącznie przez input.
 
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,

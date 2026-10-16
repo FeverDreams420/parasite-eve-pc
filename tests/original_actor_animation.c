@@ -4581,6 +4581,40 @@ static int original_animation_frame_opcode(void)
     return 1;
 }
 
+static int original_attachment_opcode(void)
+{
+    const int animations[]={0,1,-1,32768,65536,0x12345678};const u8 parts[]={0,1,2,3,255};
+    FieldActor *saved_current=g_CurrentEntity,*saved_player=g_PlayerEntity,*saved_head=g_FieldActorListHead;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[197]!=Entity_CopyAttachmentData)return 0;
+    for(unsigned selector=0;selector<8;++selector)for(unsigned pi=0;pi<5;++pi)for(unsigned ai=0;ai<6;++ai){
+        FieldActor actor={0},nodes[3]={{.type_id=7,.sub_id=11,.flags=0x10},{.type_id=7,.sub_id=12},{.type_id=7,.sub_id=11}};
+        RenderObjectHeader header={.part_count=parts[pi]};
+        nodes[0].next=nodes+1;nodes[1].next=nodes+2;
+        actor.parent=nodes;actor.render_object.header=&header;actor.render_object.animation_source=&nodes[0].render_object;
+        actor.render_object.animation_state=0x1234;actor.render_object.animation_id=0x5678;
+        FieldActor expected=actor;g_CurrentEntity=&actor;g_PlayerEntity=selector==1?NULL:nodes+2;g_FieldActorListHead=selector==2?NULL:nodes;
+        int type=selector<2?0:selector<5?7:selector==5?8:selector==6?263:-1,sub=selector==4?12:11,animation=animations[ai];int *args[]={&type,&sub,&animation};
+        u32 result=g_ScriptQueueOpcodeHandlers[197](args);unsigned parent=0,source=0;
+        for(unsigned i=0;i<3;++i){if(actor.parent==nodes+i)parent=i+1;if(actor.render_object.animation_source==&nodes[i].render_object)source=i+1;}
+        u32 words[]={result,parent,source,(u16)actor.render_object.animation_state,(u16)actor.render_object.animation_id};
+        for(unsigned i=0;i<sizeof(words)/sizeof(words[0]);++i)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[i]>>(byte*8))&255))*UINT64_C(1099511628211);
+        expected.parent=actor.parent;expected.render_object.animation_source=actor.render_object.animation_source;
+        expected.render_object.animation_state=actor.render_object.animation_state;expected.render_object.animation_id=actor.render_object.animation_id;
+        if(memcmp(&actor,&expected,sizeof(actor)))return 0;
+        u32 program[]={197|(3u<<13),0,(u32)type,(u32)sub,(u32)animation,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;
+        Script_RunQueue();
+        if(memcmp(&actor,&expected,sizeof(actor)) || node.current.script!=program+7 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+        ++cases;
+    }
+    g_CurrentEntity=saved_current;g_PlayerEntity=saved_player;g_FieldActorListHead=saved_head;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(hash!=UINT64_C(0x4b22e715ef4e6670)){fprintf(stderr,"Original attachment opcode differs: %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original attachment opcode197: 240 unhooked USA CPU selection/animation states, whole actor guards and real dispatcher programs passed");return 1;
+}
+
 static int original_script_command_binding(void)
 {
     const int ops[]={0,2100,2101,2201,2300,2401,2600,2601,2700,2900,3000,3200};
@@ -4720,7 +4754,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_frame_clock_layout() || !original_script_timer_commands() || !original_scene_frame_timers() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_attachment_opcode() || !original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_frame_clock_layout() || !original_script_timer_commands() || !original_scene_frame_timers() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

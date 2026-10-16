@@ -2,6 +2,43 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Dalsze przejście M063 uruchamia walkę z aktorem3:31 i dołączonym
+obiektem4:31. Pierwotny replay kończył się abortem przy VBlank71997:
+opcode197, script_byte48. USA tabela800910A0 wskazuje80019170,
+czyli istniejące Entity_CopyAttachmentData w system_opcodes.c.
+Podpięto tę oryginalną funkcję bez zmiany logiki i dodano deklarację
+w istniejącym nagłówku; nie dodano plików ani implementacji zastępczej.
+
+Nowy fixture porównuje240 stanów z niehookowanym CPU USA i jego
+oryginalnym Render_SetObjectAnim (hash4b22e715ef4e6670): gracz/brak gracza,
+pusta lista, dead/subtype/type filtering, pełne wartości identyfikatorów,
+pięć wariantów modelu i signed16 numer animacji. Sprawdza też pozostałe
+bajty całego aktora oraz240 programów rzeczywistego interpretera.
+Pełny --assets przechodzi normalnie i pod ASan/UBSan/function
+z instrumentowanymi PsyZ/SDL.
+
+Świeży pełny replay Continue E do wejścia w tę walkę/cap72553 przechodzi
+normalnie i sanitizowany: cały JSON i1MiB VRAM identyczne
+(SHA59cfca91f35e98e85dcfde136dd53b8fa20edc4c74edffb63a1640d856072408).
+Kolejny pełny replay obejmuje ukończenie spotkania i M062/cap77670:
+Heal1 przez oryginalne menu PE zwiększa HP37→67, kolejne ataki zadają
+obrażenia, M16 pokonuje przeciwnika HP57, ekran wyników zamyka się
+i sterowanie wraca do pola. Stan końcowy: M062, etap232, HP21/101,
+lock0, bez menu i żywych przeciwników, Cure-P i dwa wcześniejsze Junk
+zachowane. Załadowana amunicja M16 ma4: względem E tylko bajt138
+tabeli wyposażenia zmienił16→4, pozostałe4095 bajtów bez zmian.
+W pełnym replayu normalnym i sanitizowanym cały JSON, cztery timery,
+wyposażenie i1MiB VRAM są identyczne (SHA
+f9ffd39f4170b2663aa6c64a37763098cc3514ad7608daf99ba7a891eee700bb).
+Wszystkie prywatneB/C/D/E bez zmian. Obrazy walki i wejścia M062
+obejrzane headless. Artefakty /tmp/pe-attachment-complete-{normal,san}.log
+oraz .vram, input /tmp/pe-attachment-complete-args.json,
+pełna kontrola /tmp/pe-attachment-complete-verify.py i proof.json.
+Nie jest to jeszcze niezależne przejście tej walki na PS1 ani dowód
+ukończenia zoo. M062 ustawia barierę trójkąta16; skrypt pobliskiej bramy
+sprawdza Zoo Key/ID202, którego bieżący ekwipunek nie zawiera.
+
+
 Dalszy oryginalny input przechodzi M061: losowa walka z dwoma aktorami5,
 odebranie EXP i dwóch Junk (ID20, sloty11/12), powrót do pola oraz
 zachodnie wyjście do M063. Przy wejściu brakowało deskryptora

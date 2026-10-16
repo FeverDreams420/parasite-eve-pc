@@ -747,7 +747,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [209]=Script_ResetEntityAnimSlot,
     [106]=Script_GetEntityEffect, [107]=Pm_ScriptSendCommand0, [108]=Pm_ScriptSendCommand1,
     [100]=Script_RunEntityCommand,
-    [198]=Script_SetEntityActionAndWait,
+    [197]=Entity_CopyAttachmentData, [198]=Script_SetEntityActionAndWait,
     [74]=Entity_TestCurrentFlags, [79]=Entity_SetCurrentFlag100, [80]=Entity_ClearCurrentFlag100,
     [185]=Script_ClearEntityFlag1, [186]=Script_SetEntityFlag1,
     [189]=Script_SetRenderFlag8Params, [190]=Script_ClearRenderFlag8,

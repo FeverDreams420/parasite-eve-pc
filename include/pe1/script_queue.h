@@ -22,6 +22,7 @@ extern u32 g_ScriptVariableBank[];
 #define SCRIPT_VAR_AREA 0x4A
 extern int (*g_ScriptQueueOpcodeHandlers[])(int **);
 int Entity_SetFieldByTypeId(int **args);
+int Entity_CopyAttachmentData(int **args);
 int Entity_GetField(int **args);
 int Entity_SetField(int **args);
 int Entity_FindByTypeId(int **args);

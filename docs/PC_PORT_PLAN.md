@@ -483,6 +483,33 @@ wrogów i odmów ucieczki, nie zwycięstwo ani dowód wszystkich wariantów
 ich efektów. Artefakty /tmp/pe-m086-escape-four-{normal,san}.log i katalogi,
 /tmp/pe-m086-escape-four-args.json, verify.py i proof.json. Debug final
 /tmp/pe-m086-escape-four-live-lldb.log odtwarza26780 i potwierdza bit blokady.
+Kolejna gałąź od zimnego Continue H używa wyłącznie inputu: wcześniejsze
+Heal1 i serie M16. Przy cap30812 pozostają trzy żywe typ3, Aya HP69/133,
+flags130/lock4, battle0, bez menu; broń9/pancerz14 i ekwipunek bez zmian.
+Pełny replay tego inputu PASS normalnie i z ASan/UBSan/function: cały JSON
+i1MiB VRAM identyczne, SHA256
+2b8de8980e088ead4f8def85c4757c1b2a9f35b038cf99d0198bf95e07fecd29.
+Wszystkie prywatne B–H niezmienione, bu10 puste, obraz obejrzany.
+Artefakty /tmp/pe-m086-first-kill-{normal,san}.log i katalogi,
+/tmp/pe-m086-first-kill-args.json, verify.py i proof.json. To dowód
+wyeliminowania jednego przeciwnika, nie zwycięstwa ani wszystkich klatek.
+Dalszy input tej gałęzi kończy się HP0/battle3 przy32524; pełny zapis
+/tmp/pe-m086-second-loss-args.json, trace /tmp/pe-m086-heal2-input.jsonl,
+log /tmp/pe-m086-heal2-live-lldb.log. Nie zmieniano HP, PE ani pozycji.
+
+Pomocnik /tmp wcześniej pomijał żywych wrogów z flagą4000 przy planowaniu
+ruchu; poprawiono wyłącznie obserwację sterownika. Wybór zaklęcia nie
+potwierdza jego wykonania: g_MenuSelectedSpell może zawierać poprzednią
+wartość, gdy menu PE nadal odrzuca użycie. Pomocnik wymaga teraz także
+opuszczenia listy PE. Resident tabela oraz oryginalna Battle_ApplySpellEffect
+potwierdzają koszt Heal1=60PE/leczenie30HP, Heal2=120PE/leczenie60HP.
+W osobnym Continue H stanie bez ruchu przez1800 klatek w M087 zostawia
+PE27 i HP69; Heal1 zostaje odrzucone, menu zamknięto Circle. To nie jest
+przygotowanie zasobów przed walką. Prywatne karty tej próby także niezmienione.
+Debug /tmp/pe-m086-prepared-live-lldb.log zatrzymany przy26076 w M087,
+bez menu, flags0/lock0, HP69/133. Nadal potrzebny skuteczniejszy rzeczywisty
+przebieg walki lub przygotowanie przedmiotów przez oryginalne menu/skrzynie.
+
 Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym
 leczeniem/przygotowaniem i skuteczniejszym unikaniem pocisków, bez zmiany
 stanu gry przez debugger. Nadal nie ma dowodu pełnej kampanii.

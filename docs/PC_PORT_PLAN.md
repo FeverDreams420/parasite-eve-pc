@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Oryginalny input na kandydacie z powiększonym buforem tła kończy losową
+walkę M059: M16 pokonuje aktorów5:31 i6:3, Heal1 przez menu PE zwiększa
+HP6→36. Po odbiorze EXP i wszystkich przedmiotów sterowanie wraca do
+pola, brak żywych przeciwników, flags2 wyczyszczone, lock0, HP16/92.
+Cure-P zostaje w slocie10; nagroda Medicine1 (ID6) trafia do11.
+EXP wynosi93; nie wyprowadzano przyrostu z pierwszej klatki animowanego
+licznika. W całych4096 bajtach wyposażenia jedyna różnica względem E
+to załadowana amunicja M16: offset138 tabeli (rekord4+10) zmienia16→11,
+zgodnie z pięcioma rzeczywiście oddanymi strzałami. Dwa sloty broni
+po Mod Permit i wszystkie pozostałe bajty są zachowane.
+Pełny świeży replay Continue E→Cure-P→walka→Heal1→nagrody/cap53694
+przechodzi normalnie i pod ASan/UBSan/function (oba PASS): cały JSON,
+cztery timery,4096 bajtów wyposażenia i1MiB VRAM identyczne (SHA
+45453224baf684a4891bd5370d10aa13de57e97933cfc7dd92c763bffb401cfb). PrywatneB/C/D/E
+bez zmian. Jest to natywne ukończenie jednego spotkania; PS1 niezależnie
+potwierdził jego wejście i identyczne typy/sub-ID obu przeciwników,
+lecz nie ukończono jeszcze na nim tej samej walki z porównywalnym inputem.
+
+Dalsza automatyzacja inputu tego samego kandydata używa Medicine1
+z menu pola: HP16→61, slot11 wyzerowany, Cure-P zachowany. Menu zamyka
+się i przejście M059→M060 kończy przy cap57664, HP61/92, lock0 i braku
+menu. Ten dalszy fragment nie ma jeszcze świeżego pełnego replayu
+sanitizowanego. Główne wejście do zoo M060 ma14 trójkątów podłoża;
+kampania nie jest jeszcze ukończona ani zweryfikowana jako całość.
+
+
 Dalszy realny input w M059 otwiera skrzynię Cure-P i zamyka jej menu.
 Natywne50 slotów i zmienna84=133136 zgadzają się z PS1: przedmiot13
 trafia do wolnego slotu10, a bit2048 oznacza otwartą skrzynię. Całe4096

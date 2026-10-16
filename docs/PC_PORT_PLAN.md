@@ -2,6 +2,19 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Dalsza kontrola fabuły: oryginalny PS1 i natywny port kończą konferencję
+prasową i rozmowę u Bakera, wracając do M042 z etapem184, pozycją
+[-28049408,-131072,71827456], obrotem3104, HP92/92 oraz bronią9/pancerzem1.
+Warunkiem uruchomienia jest podejście do biurka Bakera; sama wcześniejsza
+wizyta w pustej M047 przy etapie164 nie uruchamia konferencji.
+Porównanie dotyczy stanu rozgrywki; nie dowodzi identycznego renderingu PS1.
+Świeże replaye Continue C → konferencja → M042/cap72988 na aktualnym
+kandydacie przeszły normalnie i pod ASan/UBSan/function (oba exit0).
+Pełny końcowy JSON i1048576 bajtów VRAM są identyczne; VRAM zgadza się
+również z przebiegiem sprzed zmian zegarów:
+50a629fabc56b70ceed81730637a240918a82b8a931eecd6a1f82e89b19f2d19.
+B iC pozostały niezmienione. Nie jest to dowód pełnego dnia2 ani całej gry.
+
 Audyt oryginalnej tabeli interpretera wykazał25 niepodpiętych niezerowych
 handlerów. Następne cztery,103/104/105/211, są teraz podpięte do istniejących
 funkcji zegarów w system_opcodes.c. Poprawiono sygnatury callbacków bez

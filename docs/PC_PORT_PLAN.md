@@ -621,6 +621,65 @@ w miejscu, rzeczywiste natywne struktury oraz pełne dane/skrypt, CPU/PM
 fixtures i odtworzenie wejścia M126. Nadal wymagane zwykłe ukończenie M086
 odH i pełne przejście kampanii bez wymuszeń.
 
+M126/task122: naprawiono cały istniejący room_lib/dropped_flare.c,
+zachowując wszystkie3 oryginalne funkcje w miejscu. Callbacki mają wspólne
+natywne ABI, inicjalizator zwraca intptr_t i zachowuje obie32-bitowe wartości
+w jednej ciągłej tablicy. Usunięto nieużyteczne widoki struktur z offsetami
+PS1 z istniejącego room_flare.h; używane są rzeczywiste owner.actor,
+actor.state, context.flags/variables i activeTaskSlot.end. Oryginalne flagi
+kontaktu i ataku trafiają do natywnych stanów gracza/właściciela. Zachowano
+spadanie, rozprysk, wszystkie5 stanów cząstki, dźwięk oraz rysowanie.
+Przesunięcia ujemnych timerów zapisano bez UB C. Cały script18 półsłów,
+deskryptor122 i dwa zerowane słowa danych są w tym samym module.
+Loader wiąże wyłącznie pięć potwierdzonych, byte-identical modułów
+M126/M129/M139/M149/M326, slot122/8018fd00. Nie dodano plików repozytorium.
+
+Audyt całych3408 bajtów każdego modułu i obu oryginalnych seedów,
+rect(0,0,−16), callback/size16, inicjalizatora i wszystkich słów skryptu:
+FNV64f7d5eb8f98dfc6, SHA256 jak wyżej. /tmp/pe-m126-cpu.py wykonuje
+oryginalne instrukcje i ROM BIOS, z mostem COP2, bez hookowania funkcji:
+228 stanów aktualizacji, cały stan i24 sloty cząstek, RNG i flagi kontaktu
+dają FNV162712f297cfbbdc. Ścieżka emitera age1 odtwarzająca dźwięk NIE
+jest częścią tego korpusu CPU, ponieważ izolowana pamięć oracle nie ma
+zainicjalizowanego sterownika audio. Jest wykonywana w pełnym natywnym PM.
+
+Istniejący fixture original_actor_animation sprawdza te wyniki, oba tryby
+inicjalizacji emitera przez rzeczywisty joint19/player aim, natywne
+callbacki/listy oraz guardy buforów. Pełny autorski script/task122 z
+oryginalnym archiwum M126 wykonuje dźwięk i wszystkie tworzone cząstki,
+rysowanie w obu buforach GPU, poprawne natywne łańcuchy OT, granice aren
+i naturalne wygaśnięcie. --assets PASS normalnie oraz pod
+ASan/UBSan/function: /tmp/pe-m126-init-assets.log,
+/tmp/pe-m126-v1-assets-san.log. To nie dowodzi wszystkich pośrednich klatek
+względem konsoli ani słyszalnego wyniku PCM konkretnego SFX.
+
+Pełny diagnostyczny replay od H na nowym debug buildzie osiąga67826,
+M126/A8022348, stage308, flags0/lock1, bez menu i bez aktora gracza
+(początek sceny), battle12/live0. Obraz obejrzany: jasna klatka początku
+sceny. VRAM SHA256
+b5c9e84f770f13ef76932fcb89ed516ea5435471ee3f34cc9f3fe542974c0163.
+Wszystkie1546 odcinków inputu i15 wcześniejszych wymuszeń HP odtworzone;
+prywatne B–H niezmienione, bu10 puste. Terminal0, bez poprzedniego błędu
+native descriptor missing. Artefakty /tmp/pe-m126-v1-coverage-normal.log,
+katalog/frame.vram i frame.png, /tmp/pe-m126-v1-coverage-normal-proof.json,
+/tmp/pe-m126-native-coverage-case.json. To nadal wyłącznie fixture pokrycia:
+coverage_only=true, ordinary_campaign_proof=false.
+
+Pełny odpowiednik tego replayu pod sanitizerami jest W TOKU, nie zaliczony:
+exec session83185, debugger PID98786/inferior98814, log
+/tmp/pe-m126-v1-coverage-san.log, prywatne karty
+/tmp/pe-m126-v1-coverage-san. Kontroler /tmp/pe_m126_safe_control.py używa
+normalnego powrotu C przed limitem, bez ReturnFromFrame. Należy odpytać
+ten sam proces i porównać pełny JSON/VRAM/karty po zakończeniu, bez
+restartowania go na podstawie samego timeoutu obserwacji.
+Do dalszej eksploracji uruchomiono osobny debugger exec session60187,
+/tmp/pe-m126-v1-live-lldb.log, prefix/input w odpowiadających plikach
+/tmp/pe-m126-v1-live-args.json i -input.jsonl. Odtwarza ten sam fixture
+normalnie i ma zatrzymać się w Boot_PollHost przy67826; jeszcze nie jest
+dowodem dalszego przebiegu M126. Zamrożone binaria
+/tmp/pe-m126-v1-game-debug i -game-sanitized nie mogą być nadpisywane.
+Wciąż wymagane zwykłe ukończenie M086 i pełna kampania bez wymuszeń.
+
 Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym
 leczeniem/przygotowaniem i skuteczniejszym unikaniem pocisków, bez zmiany
 stanu gry przez debugger. Nadal nie ma dowodu pełnej kampanii.

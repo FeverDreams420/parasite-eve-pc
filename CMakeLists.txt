@@ -197,6 +197,7 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_m023_theater/m023.c
     src/overlays/room_lib/script_task_var.c
     src/overlays/room_lib/orbit_flare.c
+    src/overlays/room_lib/dropped_flare.c
     src/overlays/room_lib/script_args.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_link_libraries(parasite-eve-original PRIVATE psyz)

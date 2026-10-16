@@ -23,37 +23,6 @@
  * object and sheds drift particles, and a dropped flare particle that falls,
  * flashes the scene on impact and scatters children. */
 
-typedef struct RoomFlareChannel {
-    s32 reserved[2];
-    char *pool;                   /* 0x08 */
-} RoomFlareChannel;
-
-typedef struct RoomFlareNode {
-    u8 reserved[0x18];
-    u8 *state;                    /* 0x18 */
-} RoomFlareNode;
-
-typedef struct RoomFlareEventState {
-    u8 reserved[0xD];
-    u8 active;                    /* 0x0D */
-    u8 reserved0E[4];
-    s16 phase;                    /* 0x12 */
-} RoomFlareEventState;
-
-typedef struct RoomFlareActor {
-    u8 reserved[0x4C];
-    u32 flags;                    /* 0x4C */
-} RoomFlareActor;
-
-typedef struct RoomFlareBattleEntity {
-    RoomFlareActor *actor;
-} RoomFlareBattleEntity;
-
-/* First word of the packet the effect channel's pool points at. */
-typedef struct RoomFlarePacket {
-    u32 code;
-} RoomFlarePacket;
-
 /* Scene object reached through the primary channel pool. */
 typedef struct RoomFlareAnchor {
     u8 reserved[0x268];
@@ -119,12 +88,13 @@ extern u16 g_FieldFxPaletteEntry2;
 extern int rand(void);
 extern void Akao_Cmd_21(int, int);
 
-/* Room data the dropped-flare unit writes; each room defines it. */
-extern int RoomLib_PairA;
-extern int RoomLib_PairB;
-
-int RoomEffect_DroppedFlareParticle(int mode, RoomDroppedFlare *flare,
-                                    RoomDroppedFlareSpawn *spawn);
+#include "pe1/fieldfx_task.h"
+extern int g_RoomDroppedFlareArgs[2];
+extern u16 g_RoomDroppedFlareScript[18];
+extern FieldFxTaskProgram g_RoomDroppedFlareProgram;
+int RoomEffect_DroppedFlareParticle(int mode,void *data,intptr_t argument);
+int RoomEffect_DroppedFlareEmitter(int mode,void *data,intptr_t argument);
+intptr_t RoomEffect_DroppedFlareSetArgs(int mode,intptr_t first,intptr_t second,intptr_t third);
 
 int RoomEffect_OrbitFlareDrift(int mode, void *state, intptr_t argument);
 int RoomEffect_OrbitFlareController(int mode, void *state, intptr_t argument);

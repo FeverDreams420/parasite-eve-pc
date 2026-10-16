@@ -707,7 +707,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [40]=Script_ClearBit,
     [41]=Script_TestBit, [42]=Script_SetBit,
     [43]=Entity_ClearGlobalFlags, [44]=Entity_GetGlobalFlags, [45]=Entity_SetGlobalFlags,
-    [49]=Script_EncodeBarcode, [53]=Script_LoadSceneData,
+    [49]=Script_EncodeBarcode, [53]=Script_LoadSceneData, [54]=Render_CameraTrackEntityZoom,
     [63]=Entity_ClearGlobalFlag1, [64]=Entity_SetGlobalFlag1,
     [62]=Script_SetEntityField224,
     [65]=Entity_SetCurrentFlag40, [66]=Entity_ClearCurrentFlag40,

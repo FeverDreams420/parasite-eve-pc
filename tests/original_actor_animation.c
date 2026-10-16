@@ -2542,6 +2542,52 @@ static int original_script_polygon_opcode(void)
     return 1;
 }
 
+static int original_follow_actor_opcode(void)
+{
+    const s32 poses[][2]={{0,0},{65536,0},{0,-65536},{1000*65536,-1000*65536},{65535,-65535},{-10*65536,10*65536}};
+    const s16 angles[]={0,1024,3072,4095};const int turns[]={0,64,4096},factors[]={0,327680};
+    FieldActor *saved_actor=g_CurrentEntity,*saved_player=g_PlayerEntity,*saved_head=g_FieldActorListHead;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[54]!=Render_CameraTrackEntityZoom)return 0;
+    for(unsigned kind=0;kind<6;++kind)for(unsigned p=0;p<6;++p)for(unsigned a=0;a<4;++a)
+    for(unsigned turn=0;turn<3;++turn)for(unsigned phase=0;phase<4;++phase)for(unsigned factor=0;factor<2;++factor){
+        FieldActor actor={.move_factor=factors[factor],.move_speed=4096,.rot_y=angles[a],.motion_x=0x12345678,.motion_z=0x76543210};
+        FieldActor target={.type_id=7,.sub_id=11,.pos_x=poses[p][0],.pos_z=poses[p][1],.field_sfx_id=42,.flags=phase==2?0x10:0};
+        FieldActor dead={.type_id=7,.sub_id=11,.flags=0x10,.next=kind==4?&target:NULL};
+        g_CurrentEntity=&actor;g_PlayerEntity=kind==0?&target:kind==5?&actor:NULL;
+        g_FieldActorListHead=(kind==2 || kind==5)?&target:kind>=3 && kind<=4?&dead:NULL;
+        ScriptNode node={.flags=phase?0xa0:0x80,.active=7,.target14=phase?turns[turn]:0,
+            .target18.actor=phase?&target:NULL,.target1c=phase==3?41:phase?42:0};
+        ScriptNode before_node=node;FieldActor before_actor=actor;
+        u32 storage[8]={0};g_ScriptCursor=storage+5;g_ScriptNodePool=&node;
+        int data[]={kind<2?0:7,11,turns[turn]};int *args[]={data,data+1,data+2};
+        u32 result=Render_CameraTrackEntityZoom(args);
+        const u32 words[]={result,(u32)actor.pos_x,(u32)actor.pos_z,(u32)actor.motion_x,(u32)actor.motion_z,
+            (u16)actor.rot_y,node.flags,node.active,(u32)node.target14,node.target18.actor!=NULL,(u32)node.target1c,
+            (u32)((uintptr_t)g_ScriptCursor-(uintptr_t)storage)};
+        for(unsigned i=0;i<12;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((words[i]>>(b*8))&255))*UINT64_C(1099511628211);
+        if(node.target18.actor && node.target18.actor!=&target)return 0;
+        if(!phase){
+            FieldActor expected=actor;ScriptNode expected_node=node;actor=before_actor;
+            u32 program[]={54|(3u<<13),0,(u32)data[0],11,(u32)data[2],32,0};
+            node=before_node;node.current.script=program;node.active=1;g_ScriptNodePool=&node;Script_RunQueue();
+            if(memcmp(&actor,&expected,sizeof(actor)) || g_ScriptNodePool || node.target14!=expected_node.target14 ||
+               node.target18.actor!=expected_node.target18.actor || node.target1c!=expected_node.target1c ||
+               node.current.script!=(result?program+7:program) || node.active!=!result ||
+               node.flags!=(expected_node.flags|(result?0x10:0)))return 0;
+        }
+        ++cases;
+    }
+    g_CurrentEntity=saved_actor;g_PlayerEntity=saved_player;g_FieldActorListHead=saved_head;
+    g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=3456 || hash!=UINT64_C(0x174b6ba481a52f15)){
+        fprintf(stderr,"Follow actor54 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original opcode54: 3456 unhooked USA CPU states, actor/player selection, dead/reused targets, cached native pointers, motion/turn/arrival and dispatcher retry passed");
+    return 1;
+}
+
 static int original_battle_entry_opcode(void)
 {
     Pe1GameState saved_state=g_GameState;FieldActor actor={0},*saved_actor=g_CurrentEntity;
@@ -3518,7 +3564,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_script_polygon_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

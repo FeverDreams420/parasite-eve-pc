@@ -100,6 +100,7 @@ int Script_SetFogParamsAlt(int **args);
 int Entity_ClearMotionVectors(int **unused);
 int Entity_ComputeVelocity(int **unused);
 int Render_CameraSnapToEntity(int **args);
+int Render_CameraTrackEntityZoom(int **args);
 int Script_SetEntityAnimSpeed(int **args);
 int Script_SetScreenScrollPos(int **args);
 int Script_SetCdRomSeekPos(int **args);

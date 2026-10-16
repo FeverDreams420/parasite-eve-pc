@@ -111,6 +111,24 @@ zatrzymuje się na niepowiązanym opcode54 (aktor2, script_byte4648).
 Pełne 48 CTest uruchomiono dla wcześniejszego kandydata8810d644b;
 ten przebieg nie obejmuje późniejszego podpięcia226.
 
+Opcode54 jest teraz powiązany z istniejącym Render_CameraTrackEntityZoom
+(USA80013e84; mimo dawnej nazwy funkcja prowadzi aktora do innego aktora).
+3456 stanów bez hooków CPU USA ma hash174b6ba481a52f15: wybór gracza/NPC,
+pomijanie martwego celu, zachowany natywny wskaźnik i serial celu, ruch,
+skręt, dojście oraz ponowienie opcode w dispatcherze. Świeży fixture
+ASan/UBSan/function z zasobami PASS. Replay z checkpointu M020 po obu
+podpięciach przechodzi całą walkę M023: zwykłe menu zużywa zdobyte
+Medicine1 (HP6→51), strzały kończą starcie z HP23/64, następuje dialog127–128,
+wspomnienie szpitala M367 (dialog130–131) i powrót do M319 z dialog133.
+Po zamknięciu dialog133 wraca sterowanie (cap109996, move_lock0, brak menu).
+Stan początkowy sceny/dialog125, pozycja Ayi i HP29/64 potwierdzono też
+w oryginalnym PS1; późniejszy przebieg walki nie ma jeszcze zsynchronizowanej
+referencji RNG/obrazu. Trasa ta nadal zaczyna się od checkpointu M020.
+
+Pełny zestaw dla zamrożonego kandydata8810d644b zakończył się48/48 PASS
+w1050.68s (-j2, wymagany Disc1, bez skipów). Obejmuje M023 i poprzednią
+trasę New Game→M022, ale nie późniejsze podpięcia226/54 ani całą drugą walkę.
+
 Oryginalny PS1 zaakceptował też checkpoint M022 po papudze: brak papugi,
 HP29/64 i ta sama pozycja wejściowa co Continue portu. Ta próba ujawniła
 dwa osobne problemy do rozwiązania: po świeżym Continue statyczny model

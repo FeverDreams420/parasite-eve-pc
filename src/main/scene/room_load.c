@@ -461,6 +461,12 @@ int Scene_LoadRoom(unsigned int roomId)
         }
         if ((map + 1 == 65 || map + 1 == 85) && slot == 10 && record[i].u.handlerAddress == 0x80190024u)
             native = &g_RoomThreeParticleHandlers;
+        if (map + 1 == 87) {
+            if (slot == 10 && record[i].u.handlerAddress == 0x80193518u)
+                native = &g_RoomThreeParticleHandlers;
+            if (slot == 75 && record[i].u.handlerAddress == 0x801935b4u)
+                native = &g_RoomActorClassTable[2];
+        }
         if (map + 1 == 272 && slot == 15 && record[i].u.handlerAddress == 0x8018f1a8u)
             native = &g_RoomM272Handlers;
         if ((map + 1 == 63 || map + 1 == 83) && slot == 74 &&
@@ -678,10 +684,12 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_EffectSequenceGlowSpriteSecondary, 0, sizeof(g_EffectSequenceGlowSpriteSecondary));
             memset(&g_EffectSequenceFinalGlowSprite, 0, sizeof(g_EffectSequenceFinalGlowSprite));
             memset(&g_EffectSequenceSparkleSprite, 0, sizeof(g_EffectSequenceSparkleSprite));
-        } else if ((map + 1 == 65 || map + 1 == 85) && slot == 10) {
+        } else if ((map + 1 == 65 || map + 1 == 85 || map + 1 == 87) && slot == 10) {
             g_PmCmdHandlerTable[slot] = &g_RoomThreeParticleHandlers;
             memset(&RoomLib_ThreeParticlePacket,0,sizeof(RoomLib_ThreeParticlePacket));
             memset(&RoomLib_ThreeParticleFloorPacket,0,sizeof(RoomLib_ThreeParticleFloorPacket));
+        } else if (map + 1 == 87 && slot == 75) {
+            g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
         } else if (map + 1 == 348 && slot == 9) {
             g_PmCmdHandlerTable[slot] = &g_RoomDropFieldHandlers;
             g_RoomDropFieldModel = NULL;

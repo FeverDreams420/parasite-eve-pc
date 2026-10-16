@@ -271,11 +271,11 @@ pełne args /tmp/pe-m085-detox100-failure-args.json, backtrace w
 Audyt oryginalnego resident bloku: task100 descriptor800E1C64, callbacki
 800DACA4/800DB0D0 odpowiadają istniejącym FieldFx_CosineEmitter i
 FieldFx_SineEmitter w kompletnym już przenośnym emitters.c; rozmiary12/12,
-script800E1BE0 ma18 halfwordów. Brakuje powiązania i oryginalnych danych:
+script800E1BE0 ma18 halfwordów. W chwili pierwszego audytu brakowało
+powiązania i oryginalnych danych:
 color tracks800E1C04/40 i800E1C2C/56, tints800C22E8/800C22EC,
-anchor800E221C. Nie dodano jeszcze żadnego z tych powiązań; następny krok
-to audyt CPU/GTE i cyklu task100, naprawa danych w tym samym module
-oraz ponowienie zachowanego pełnego inputu zwykle i z sanitizerami.
+anchor800E221C. Ten audyt wyznaczył naprawę danych w tym samym module,
+a następnie porównania CPU/GTE i ponowienie pełnego inputu opisane niżej.
 Detox100: bieżąca naprawa uzupełnia wyłącznie oryginalne dane w istniejącym
 emitters.c i wpis w task_list.c; wszystkie29 funkcji tego modułu pozostają
 w miejscu. Nie dodano plików ani nowej implementacji zaklęcia. Odtworzono
@@ -309,6 +309,58 @@ w tym debug przebiegu; nie jest pełnym testem śmierci z sanitizerami.
 Ciągły trace /tmp/pe-detox100-input.jsonl od62200 do63724. Następny
 przebieg powinien przygotować zapas leczenia/Cure-P lub poprawić ruch
 w walce; śmierć przy braku zasobów nie dowodzi błędu oryginalnej walki.
+Nowa gałąź od rzeczywistego Continue G oszczędza Cure-P w M083.
+Po cap54735 czeka180 zamiast600 klatek: walka zaczyna się z123HP.
+Dwa typ3/57 pokonane przy91HP, oba końcowe cele13HP wybrane przez
+oryginalny reticle; nagrody Ammo+6 dwa razy, bez Medicine/Cure-P.
+Jawny wybór Heal1 przez menu daje121HP. Cure-P nadal w slocie10.
+Wejście M085/cap57400: HP121, bez menu/locka. W walce Cure-P zużyte
+przez Items/slot10, stateFlags200003 potwierdza odporność3. Trzy typ3/60
+pokonane M16; podczas walki HP48→78 po jawnym Heal1. Pomocnik focus
+wybiera rzeczywisty cel z najmniejszym HP w zasięgu, wyłącznie przez input.
+Końcowe HP46, nagrody trzy Ammo+6 (bez Medicine/Cure-P), Obtain All/End.
+Dwa Heal1 dają106HP, zostaje27PE; menu zamknięte, bez kolejnej próby
+zaklęcia za30PE. Poprzedni pe-heal po Detox pamiętał wybór zaklęcia3,
+więc nie wolno uznawać tamtych prób za Heal1; nowy pe-cast wybiera
+zaklęcie według packed list i aktualnej siatki kursora.
+
+Pełny replay G→M085 zwycięstwo/cap62734 PASS normalnie oraz
+ASan/UBSan/function na zamrożonym kandydacie Detox100: cały JSON i1MiB
+VRAM identyczne, SHA256
+2326e05c1566a8170f20c2250cb7b90d2256ddd5b2b06b191473145c1138c0bb.
+M085, etap248, HP106/123, capacity20, broń9/pancerz14, live0, mode9,
+lock0, brak menu; slot10 pusty po Cure-P, inventory zachowane. B–G
+niezmienione, bu10 puste; użytkowe karty nietknięte. Obraz frame.png
+obejrzany. Artefakty /tmp/pe-m085-victory-{normal,san}.log i katalogi,
+/tmp/pe-m085-victory-args.json, verify.py i proof.json. Nie jest to dowód
+wszystkich wariantów obrazu/ataków/dropów tej walki.
+
+Dalszy input wychodzi z areny na z3000/cap63709, potem przy z6832
+uruchamia wyjście/cap64049. Wejście M087 zatrzymało się na brakującym
+slocie10/80193518, startup−2; proces zakończył się1. Pełny reproducer
+/tmp/pe-m087-entry-failure-args.json zamierza cap64289, ciągły trace
+/tmp/pe-m083-cure-reserve-input.jsonl, log lldb o tej samej nazwie.
+Audyt M087: cały moduł18004 bajty, FNV0d8472ecf5bd2d50. Oba wymagane
+recordy są slot10/80193518 oraz75/801935B4. Wszystkie1023 instrukcje
+całej klasy three_particles różnią się od M085 tylko30 relokacjami:
+kod+1D8, dane+34F4, work packets+35A0. Seed, cały skrypt, rampa i
+rozmiary PS1 są identyczne; Alpha nadal aliasuje depth. Pełna klasa E
+AA4 bajtów i33-way Configure są identyczne z już zweryfikowanym M075
+po relokacji−A34, wskaźnik tabeliF08C→F07C. Do loadera dodano tylko te
+dwa dokładne powiązania i reset obu szablonów przy slocie10. Test assets
+sprawdza cały moduł i każdy wymieniony blok; pełny fixture --assets PASS
+normalnie i z ASan/UBSan/function (/tmp/pe-m087-bind-fixture{,-san}.log).
+Pełny replay G→M087/cap64289 na kandydacie bind PASS normalnie i z
+sanitizerami: cały JSON i1MiB VRAM identyczne, SHA256
+72bdf63c0e1d2b5ef7726f9bf2ffba003179e91c416df9c3d735c4c5adb44360.
+M087/A80083C8, HP106/123, etap248, capacity20, broń9/pancerz14,
+lock0/mode9/live0, brak menu, prywatne B–G niezmienione, bu10 puste.
+Obraz frame.png obejrzany (alejka i telefon). Artefakty
+/tmp/pe-m087-bind-{normal,san}.log, katalogi z frame.vram, args.json,
+/tmp/pe-m087-bind-verify.py i proof.json. To dowód wejścia, nie całej walki.
+Dalszy rzeczywisty input przy64477 uruchamia walkę; przy64657 jeden
+rat typ3/60 i dwa typ4/35. Oba nietoperze pokonane M16, przy65537 HP66,
+zostaje typ3/60. Sterownik używa wyłącznie inputu, bez zmian stanu gry.
 Następnie kontynuować kampanię. Pełna kampania i pełny zakres celu
 pozostają nieukończone. Użytkowe bu00/ i bu10/ nietknięte.
 

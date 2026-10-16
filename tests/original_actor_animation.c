@@ -5839,6 +5839,61 @@ static int original_three_particle_assets(PeDisc *disc,PeDiscFile *exe)
         }
         free(room);if(!valid)return 0;
     }
+    /* M087 links this entire original class with relocated tables/work data,
+     * and the same complete class E already verified in M075. */
+    SceneRoomSectorRange range,reference_range;
+    u8 relocated[0x4654],reference_e[0xaa4];u32 reference_jump[33];
+    if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+86*8,&range,sizeof(range)) ||
+       !pe_disc_read(disc,exe,0x800ull+0x80093378u-base+74*8,&reference_range,sizeof(reference_range)))return 0;
+    u64 sector=(u64)(range.start+range.scratchSectors+range.textureSectors)*2048;
+    u64 reference_sector=(u64)(reference_range.start+reference_range.scratchSectors+reference_range.textureSectors)*2048;
+    if(!pe_disc_read(disc,&archive,sector+8,relocated,sizeof(relocated)) ||
+       !pe_disc_read(disc,&archive,reference_sector+8+0x2984,reference_e,sizeof(reference_e)) ||
+       !pe_disc_read(disc,&archive,reference_sector+8+0x9c,reference_jump,sizeof(reference_jump)))return 0;
+    uint64_t hash=UINT64_C(14695981039346656037);
+    for(unsigned j=0;j<sizeof(relocated);++j)hash=(hash^relocated[j])*UINT64_C(1099511628211);
+    if(hash!=UINT64_C(0x0d8472ecf5bd2d50) || memcmp(relocated,module,12))return 0;
+    size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);if(!room)return 0;
+    int valid=pe_disc_read(disc,&archive,sector,room,bytes);
+    if(valid){SceneRoomDirectory *directory=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+        SceneRoomRecord *record=SceneAsset_ResolveOffset(room,directory->scripts&0x3fffff);unsigned mask=0;
+        valid=directory->scripts>>22==2;
+        for(unsigned j=0;valid && j<2;++j){
+            valid=record[j].reserved[0]==0x54 && record[j].reserved[1]==0x46 && (record[j].source.offsetAndSlot&0xffffff)==8;
+            if(record[j].source.bytes.slot==10 && record[j].u.handlerAddress==0x80193518)mask|=1;
+            else if(record[j].source.bytes.slot==75 && record[j].u.handlerAddress==0x801935b4)mask|=2;
+            else valid=0;
+        }
+        valid=valid && mask==3;
+    }
+    free(room);if(!valid)return 0;
+    const u16 data_reloc[]={0x14,0x7c,0xc8,0xdc,0xe4,0x980};
+    const u16 work_reloc[]={0x264,0x270,0x27c,0x288,0x290,0x298,0x2a0,0x2a8,0x2b0,0x2b8,0x2c0,0x2c8,0x2d0,0x2d8,0x2e0,0x2e8,0x988,0x994,0x9b8,0xa94,0xb60};
+    for(unsigned j=0;j<0xffc;j+=4){u32 expected,actual;memcpy(&expected,module+12+j,4);memcpy(&actual,relocated+0x1e4+j,4);
+        unsigned opcode=expected>>26,target=(expected&0x3ffffff)<<2;
+        if((opcode==2 || opcode==3) && target>=0x18effc && target<0x18fff8)expected+=0x1d8/4;
+        for(unsigned k=0;k<sizeof(data_reloc)/sizeof(data_reloc[0]);++k)if(j==data_reloc[k])expected=(expected&0xffff0000)|(u16)(expected+0x34f4);
+        for(unsigned k=0;k<sizeof(work_reloc)/sizeof(work_reloc[0]);++k)if(j==work_reloc[k])expected=(expected&0xffff0000)|(u16)(expected+0x35a0);
+        if(expected!=actual)return 0;
+    }
+    for(unsigned j=0;j<7;++j){u32 actual;memcpy(&actual,relocated+0x4528+j*4,4);if(actual!=methods[j]+0x1d8)return 0;}
+    for(unsigned j=0;j<11;++j){u32 actual,expected=lists[j];memcpy(&actual,relocated+0x44fc+j*4,4);
+        if(j<9 && expected!=0xffffffff)expected+=0x1d8;
+        if(actual!=expected)return 0;
+    }
+    if(memcmp(relocated+0x4544,g_RoomThreeParticleScript,56) || memcmp(relocated+0x457c,RoomLib_ThreeParticleTable,16))return 0;
+    for(unsigned j=0x4638;j<0x4654;++j)if(relocated[j])return 0;
+    const u32 class_e[]={0x80190f40,0x80190f48,0x80190fc4,0x8019123c,0x80191244,0x80191984,0x801919dc};
+    if(memcmp(relocated+0x45c4,class_e,sizeof(class_e)))return 0;
+    for(unsigned j=0;j<sizeof(reference_e);j+=4){u32 expected,actual;memcpy(&expected,reference_e+j,4);memcpy(&actual,relocated+0x1f50+j,4);
+        unsigned opcode=expected>>26,target=(expected&0x3ffffff)<<2;
+        if((opcode==2 || opcode==3) && target>=0x191974 && target<0x192418)expected-=0xa34/4;
+        if(j==0x34 || j==0x260 || j==0x418)expected=(expected&0xffff0000)|(u16)(expected-0xa34);
+        if(j==0xa4)expected=(expected&0xffff0000)|0xf07c;
+        if(actual!=expected)return 0;
+    }
+    for(unsigned j=0;j<33;++j){u32 actual;memcpy(&actual,relocated+0x8c+j*4,4);if(actual!=reference_jump[j]-0xa34)return 0;}
+    puts("Original M087 assets: complete library, all 1023 three-particle instructions with only audited relocations, identical script/color/seed, zero work templates, entire class E and all 33 Configure targets passed");
     if(g_RoomThreeParticleSpawnLayout[0]!=sizeof(RoomDebrisClock) || g_RoomThreeParticleSpawnLayout[1]!=180 || g_RoomThreeParticleSpawnLayout[2]!=65535)return 0;
     puts("Original M065/M085 assets: entire identical 4276-byte module, seven methods, six callbacks, both PS1 allocation sizes, complete script and color table passed");
     return 1;

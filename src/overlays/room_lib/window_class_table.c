@@ -7,6 +7,5 @@
 #include "pe1/room_module.h"
 #include "pe1/room_window.h"
 
-RoomModuleHandler g_RoomClassTable[1][ROOM_CLASS_METHODS] = {
-    ROOMLIB_WINDOW_CLASS,
-};
+PmCommand g_RoomWindowClassHandlers =
+    ROOMLIB_WINDOW_CLASS;

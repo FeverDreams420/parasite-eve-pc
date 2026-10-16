@@ -33,6 +33,7 @@ typedef int (*RoomModuleHandler)();
 #define ROOM_CLASS_METHODS 7
 extern RoomModuleHandler g_RoomClassTable[][ROOM_CLASS_METHODS];
 extern PmCommand g_RoomActorClassTable[6];
+extern PmCommand g_RoomWindowClassHandlers;
 
 /* Command program planted into the engine slot (opcode in the high half of
  * each word, -1 terminated). */

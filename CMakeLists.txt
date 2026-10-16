@@ -167,6 +167,8 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/class_register_active.c
     src/overlays/room_lib/actor_classes.c
     src/overlays/room_lib/actor_class_table.c
+    src/overlays/room_lib/window_class.c
+    src/overlays/room_lib/window_class_table.c
     src/overlays/room_m272_liberty/m272.c
     src/overlays/room_m005_theater/m005.c
     src/overlays/room_m023_theater/m023.c

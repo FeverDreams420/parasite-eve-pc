@@ -6,6 +6,7 @@
 #include "pe1/field_vector_math.h"
 #include "pe1/gte_sine_table.h" /* packed PSY-Q sine table, one RoomWindowTrig per angle step */
 #include "pe1/gte_types.h"
+#include "pe1/pm_types.h"
 
 /* The window effect: a script object that flies a camera-facing frame from
  * its anchor actor towards a target actor, spinning it around the flight
@@ -34,14 +35,14 @@ typedef union RoomWindowTrig {
  * closes. */
 typedef struct RoomWindowFlags {
     s32 flags;                    /* 0x00 */
-    u8 pad04[0x14];
+    u8 pad04[PE1_OFFSETOF(FieldActorState, action_state) - sizeof(u32)];
     u8 *state;                    /* 0x18 */
 } RoomWindowFlags;
 
 /* The anchor record reached through RoomWindowActor.anchor. */
 typedef struct RoomWindowAnchor {
     RoomWindowFlags *marker;      /* 0x00 */
-    u8 pad04[0xB];
+    u8 pad04[PE1_OFFSETOF(FieldActor, action) - sizeof(void *)];
     u8 frameCount;                /* 0x0F */
     u8 pad10[0x4];
     s32 speed;                    /* 0x14 */
@@ -55,44 +56,37 @@ typedef struct RoomWindowAnchor {
 
 /* The field actor the script object is attached to. */
 typedef struct RoomWindowActor {
-    u8 pad00[0x28];
+    u8 pad00[PE1_OFFSETOF(FieldActor, pos_x)];
     s32 pos[3];                   /* 0x28 */
     u8 pad34[0x64];
     s32 flags;                    /* 0x98 */
-    u8 pad9C[0xF0];
+    u8 pad9C[PE1_OFFSETOF(FieldActor, parent) - PE1_OFFSETOF(FieldActor, flags) - sizeof(u32)];
     RoomWindowAnchor *anchor;     /* 0x18C */
-    u8 pad190[0x58];
+    u8 pad190[PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, model_matrix) - PE1_OFFSETOF(FieldActor, parent) - sizeof(void *)];
     s16 matrix[9];                /* 0x1E8 */
     u8 pad1FA[0x2];
     s32 center[3];                /* 0x1FC */
-    u8 pad208[0x48];
+    u8 pad208[PE1_OFFSETOF(RenderObjectEntity, flags_9C) - PE1_OFFSETOF(RenderObjectEntity, model_matrix) - sizeof(RenderMatrix)];
     u16 drawFlags;                /* 0x250 */
 } RoomWindowActor;
 
 typedef struct RoomWindowTarget {
-    u8 pad00[0x28];
+    u8 pad00[PE1_OFFSETOF(FieldActor, pos_x)];
     s32 pos[3];                   /* 0x28 */
 } RoomWindowTarget;
 
-typedef struct RoomWindowPlayerCore {
-    u8 pad00[0x4C];
-    s32 flags;                    /* 0x4C */
-} RoomWindowPlayerCore;
-
-typedef struct RoomWindowPlayer {
-    RoomWindowPlayerCore *core;   /* 0x00 */
-    u8 pad04[0x24];
-    s32 pos[3];                   /* 0x28 */
-} RoomWindowPlayer;
-
 /* Handler state at RoomWindowObject + 0xC (see
  * RoomLib_ConfigureWindowClass for the configuration ops). */
+struct RoomWindowObject;
 typedef struct RoomWindowState {
-    void (*callback)(void);       /* 0x00 */
+    void (*callback)(struct RoomWindowObject *);       /* 0x00 */
     int *signal;                  /* 0x04 */
     s16 active;                   /* 0x08 */
     s8 variant;                   /* 0x0A */
     s8 optionB;                   /* 0x0B */
+#if INTPTR_MAX > INT32_MAX
+    u8 argumentHigh[sizeof(intptr_t) - sizeof(s32)];
+#endif
     s8 optionC;                   /* 0x0C */
     u8 flags;                     /* 0x0D */
     u8 started;                   /* 0x0E (object + 0x1A) */
@@ -141,7 +135,20 @@ typedef struct RoomWindowScratch {
     s16 arrived;                  /* 0x90 */
 } RoomWindowScratch;
 
-#define ROOM_WINDOW_SCRATCH ((RoomWindowScratch *)0x1F800000)
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowFlags, state) == PE1_OFFSETOF(FieldActorState, action_state), window_marker_native_state);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowAnchor, frameCount) == PE1_OFFSETOF(FieldActor, action), window_anchor_native_count);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowAnchor, speed) == PE1_OFFSETOF(FieldActor, anim), window_anchor_native_speed);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowAnchor, frame) == PE1_OFFSETOF(FieldActor, anim_prev) + sizeof(u16), window_anchor_native_frame);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowAnchor, pos) == PE1_OFFSETOF(FieldActor, pos_x), window_anchor_native_pos);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowAnchor, yaw) == PE1_OFFSETOF(FieldActor, rot_y), window_anchor_native_yaw);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowActor, flags) == PE1_OFFSETOF(FieldActor, flags), window_actor_native_flags);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowActor, anchor) == PE1_OFFSETOF(FieldActor, parent), window_actor_native_anchor);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowActor, matrix) == PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, model_matrix), window_actor_native_matrix);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowActor, center) == PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, model_matrix) + PE1_OFFSETOF(RenderMatrix, translation), window_actor_native_center);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowActor, drawFlags) == PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, flags_9C), window_actor_native_draw_flags);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowObject, actor) == PE1_OFFSETOF(PmSlotHeader, owner), window_pm_native_owner);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomWindowObject, state) + PE1_OFFSETOF(RoomWindowState, flags) == PE1_OFFSETOF(FieldFxTaskOwner, tasks) + PE1_OFFSETOF(FieldFxTaskContext, flags), window_pm_native_busy_flags);
+PE1_STATIC_ASSERT(sizeof(RoomWindowObject) <= sizeof(PmSecondarySlot), window_pm_native_capacity);
 
 extern struct FieldActor *g_PlayerEntity;
 
@@ -150,17 +157,17 @@ extern int FieldFx_IntSqrt(int value);
 struct RoomEnt;
 
 /* The window actor class (src/overlays/room_lib/window_class.c). */
-int RoomLib_WindowClassNop0(void);
-int RoomLib_InitWindowClass(RoomWindowObject *ctx);
-int RoomLib_ConfigureWindowClass(RoomWindowObject *obj, int query, unsigned int op,
-                                 int a, int b, int c);
-int RoomLib_WindowClassNop3(void);
-int RoomLib_UpdateWindowClass(struct RoomEnt *o);
-int RoomLib_WindowClassNop6(void);
+void RoomLib_WindowClassNop0(void);
+void RoomLib_InitWindowClass(PmSlotHeader *slot);
+int RoomLib_ConfigureWindowClass(PmSlotHeader *slot, int query, int op,
+                                 intptr_t a, intptr_t b, intptr_t c);
+int RoomLib_WindowClassNop3(PmSlotHeader *slot);
+int RoomLib_UpdateWindowClass(PmSlotHeader *slot);
+void RoomLib_WindowClassNop6(void);
 void RoomLib_WindowHandler(RoomWindowObject *obj);
-void RoomLib_WindowArrived(void *ctx);
-void RoomLib_ArmWindowClass(struct RoomEnt *o);
-int RoomLib_ReleaseWindowClass(char *ctx);
+void RoomLib_WindowArrived(RoomWindowObject *ctx);
+void RoomLib_ArmWindowClass(RoomWindowObject *obj);
+int RoomLib_ReleaseWindowClass(PmSlotHeader *slot);
 
 /* Its row of a room's class table (g_RoomClassTable, pe1/room_module.h). */
 #define ROOMLIB_WINDOW_CLASS \

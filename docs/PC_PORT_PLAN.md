@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Dalszy oryginalny input przechodzi M061: losowa walka z dwoma aktorami5,
+odebranie EXP i dwóch Junk (ID20, sloty11/12), powrót do pola oraz
+zachodnie wyjście do M063. Przy wejściu brakowało deskryptora
+slot74/USA8018FDDC. Włączono istniejący cały room_lib/window_class.c
+oraz window_class_table.c, zachowując wszystkie10 funkcji w miejscu.
+Poprawiono natywne widoki aktora i stanu, pełne sygnatury PM/callbacków,
+argumenty wskaźnikowe, lokalną pamięć zamiast scratchpada i zawijanie
+32-bitowej arytmetyki. Loader wiąże M063/M083 po dokładnym slocie i adresie;
+nie dodano plików ani zastępczej logiki rozgrywki.
+
+Fixture z wymaganym Disc1 sprawdza cały identyczny moduł0xE08 bajtów
+obu pokoi, wszystkie7 metod i oba deskryptory.648 stanów arm/arrival/release
+zgadza się z niehookowanym CPU USA (d06378940ffec935).192 stany lotu,
+początku ruchu, signed przesunięć, obrotów, skali, targetowania i dojścia
+zgadzają się z oryginalnym kodem CPU przy obsłudze COP2 przez PsyZ
+(b938fce337189cd5); to nie jest niezależny audyt sprzętowego GTE.
+Test obejmuje też natywny wskaźnik wyniku komendy19. Pełny --assets
+przechodzi normalnie i pod ASan/UBSan/function z instrumentowanymi PsyZ/SDL.
+
+Pełny świeży replay Continue E→M059/Heal1/nagrody→Medicine1→M060→M061/
+walka/nagrody→M063, cap68462, przechodzi normalnie i sanitizowany:
+cały JSON, cztery timery,4096 bajtów wyposażenia i1MiB VRAM identyczne
+(SHA892e77947e7d67cd6ddffcb38102d9ffc68701ca0a3e5bc3585f927d715a4ce5).
+M063: etap232, HP37/101, poziom zapisu7 (wyświetlany8), pojemność17,
+lock0, bez menu i żywych przeciwników; obraz wejścia obejrzany headless.
+M16 ma7 naboi i nadal2 sloty: względem E tylko bajt138 zmienił16→7,
+pozostałe4095 bajtów zachowane. PrywatneB/C/D/E bez zmian.
+Artefakty: /tmp/pe-window-{final-route,route-san}.log i .vram;
+input /tmp/pe-window-route-args.json. Dalsza eksploracja M063, rozgrywka
+M083 oraz warianty window w M358/M384/M387 pozostają niezweryfikowane.
+
+
 Biblioteka actor_classes.c jest teraz powiązana we wszystkich29 pokojach
 Disc1, których kompletny moduł0x35A0 bajtów i tabela są identyczne
 z M022. Obsługiwane48 deskryptorów obejmuje17 klasyD (slot70),26 klasyE

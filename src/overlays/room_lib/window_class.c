@@ -2,7 +2,7 @@
  * The window actor class: a script object that flies a spinning frame from
  * its anchor actor towards a target actor (RoomLib_WindowHandler), in the
  * room library's seven-method layout (no-op, Init, Configure, no-op,
- * Update, Arm, Release, no-op) with the handler and its arrival callback.
+ * Update, Release, no-op) with its arm, flight and arrival callbacks.
  *
  * room_m063 and m083 link only this class; room_m358, m384 and m387 link
  * it directly after the room library (actor_classes.c). The ten
@@ -14,11 +14,11 @@
 
 #include "room_lib.h"
 
-int RoomLib_WindowClassNop0(void) {
-    return 0;
+void RoomLib_WindowClassNop0(void) {
 }
 
-int RoomLib_InitWindowClass(RoomWindowObject *ctx) {
+void RoomLib_InitWindowClass(PmSlotHeader *slot) {
+    RoomWindowObject *ctx = (RoomWindowObject *)slot;
     int value;
 
     ctx->enabled = 1;
@@ -43,15 +43,14 @@ int RoomLib_InitWindowClass(RoomWindowObject *ctx) {
     ctx->state.offset.y = 0;
     ctx->state.offset.z = 0;
     ctx->state.flags = 0;
-
-    return 0;
 }
 
-int RoomLib_ConfigureWindowClass(RoomWindowObject *obj, int query, unsigned int op,
-                                  int a, int b, int c) {
+int RoomLib_ConfigureWindowClass(PmSlotHeader *slot, int query, int op,
+                                  intptr_t a, intptr_t b, intptr_t c) {
+    RoomWindowObject *obj = (RoomWindowObject *)slot;
     RoomWindowState *state = &obj->state;
     FieldActorNode *node;
-    void (*callback)(void);
+    void (*callback)(RoomWindowObject *);
     int sentinel;
 
     switch (op) {
@@ -120,18 +119,20 @@ int RoomLib_ConfigureWindowClass(RoomWindowObject *obj, int query, unsigned int 
     return 0;
 }
 
-int RoomLib_WindowClassNop3(void) {
+int RoomLib_WindowClassNop3(PmSlotHeader *slot) {
+    (void)slot;
     return 0;
 }
 
 /* Runs the armed handler, or releases the class when the script ends. */
-int RoomLib_UpdateWindowClass(RoomEnt *o) {
-    switch (FieldFx_IsOwnerBusy()) {
+int RoomLib_UpdateWindowClass(PmSlotHeader *slot) {
+    RoomWindowObject *o = (RoomWindowObject *)slot;
+    switch (FieldFx_IsOwnerBusy((FieldFxTaskOwner *)o)) {
     case 0:
-        o->sub.cb(o);
+        o->state.callback(o);
         return 0;
     case 1:
-        RoomLib_ReleaseWindowClass((char *)o);
+        RoomLib_ReleaseWindowClass(slot);
     case 2:
         return 0;
     }
@@ -140,17 +141,17 @@ int RoomLib_UpdateWindowClass(RoomEnt *o) {
 
 /* Arms the window when the actor's variant and window match the
  * configured ones. */
-void RoomLib_ArmWindowClass(RoomEnt *o) {
-    RoomLink *l = o->link->link18C;
-    if (o->t16 >= 0) {
-        if (o->t16 != l->variant) return;
+void RoomLib_ArmWindowClass(RoomWindowObject *o) {
+    FieldActor *l = (FieldActor *)o->actor->anchor;
+    if (o->state.variant >= 0) {
+        if (o->state.variant != l->mode) return;
     }
-    if (o->t17 >= 0) {
-        int hi = l->winHi;
-        int lo = l->winLo;
-        if (o->t17 < hi || lo < o->t17) return;
+    if (o->state.optionB >= 0) {
+        int hi = (u32)l->anim_prev >> 16;
+        int lo = l->anim.parts.integer;
+        if (o->state.optionB < hi || lo < o->state.optionB) return;
     }
-    o->sub.cb = RoomLib_WindowHandler;
+    o->state.callback = RoomLib_WindowHandler;
 }
 
 /* Window effect tick. On the first call it places the window in front of
@@ -160,24 +161,22 @@ void RoomLib_ArmWindowClass(RoomEnt *o) {
  * player once it comes within 200 units, and hands over to the arrival
  * callback when it reaches the target.
  *
- * The scratchpad rotation matrices and the GTE input vector are volatile in
- * RoomWindowScratch: retail stores each cosine and sine and reads them back
- * from the scratchpad before filling the mirrored entries, and keeps those
- * stores in program order around the vector stores. The RotMatrixYXZ angle
- * view of the same words is plain (its last store fills the call's delay
- * slot, which a volatile store never does). */
+ * The original scratch workspace is local native memory; the GTE receives
+ * the same matrices and vectors in the original order. */
 
 void RoomLib_WindowHandler(RoomWindowObject *obj) {
+    RoomWindowScratch scratch = {0};
     RoomWindowScratch *sp;
     RoomWindowState *state = &obj->state;
     RoomWindowActor *actor = obj->actor;
     RoomWindowAnchor *anchor = actor->anchor;
-    RoomWindowTrig *trig;
+    RoomWindowTrig sample, *trig = &sample;
+    int angle;
     int cosv;
     int dist;
     int quot;
 
-    sp = ROOM_WINDOW_SCRATCH;
+    sp = &scratch;
     if (obj->state.started == 0) {
         obj->state.started = 1;
         obj->actor->flags |= 0x10000;
@@ -187,14 +186,15 @@ void RoomLib_WindowHandler(RoomWindowObject *obj) {
         sp->in.local.x = 0x80;
         sp->in.local.y = 0;
         sp->in.local.z = -350;
-        trig = (RoomWindowTrig *)&rcossin_tbl[anchor->yaw & 0xFFF].half;
+        angle = anchor->yaw & 0xFFF;
+        sample.part.sin = rsin(angle); sample.part.cos = rcos(angle);
         {
             int c = trig->part.cos;
             int s;
 
             sp->yaw.m[0][1] = 0;
             sp->yaw.m[0][0] = c;
-            s = trig->word;
+            s = trig->part.sin;
             sp->yaw.m[1][0] = 0;
             sp->yaw.m[1][1] = 0x1000;
             sp->yaw.m[1][2] = 0;
@@ -207,23 +207,24 @@ void RoomLib_WindowHandler(RoomWindowObject *obj) {
         gte_ldv0(&sp->in.local);
         gte_mvmva();
         gte_stmac(&sp->out);
-        obj->state.origin[0].value = anchor->pos[0] + (sp->out.x << 16);
-        obj->state.origin[1].value = anchor->pos[1] + (sp->out.y << 16);
-        obj->state.origin[2].value = anchor->pos[2] + (sp->out.z << 16);
+        obj->state.origin[0].value = (s32)((u32)anchor->pos[0] + ((u32)sp->out.x << 16));
+        obj->state.origin[1].value = (s32)((u32)anchor->pos[1] + ((u32)sp->out.y << 16));
+        obj->state.origin[2].value = (s32)((u32)anchor->pos[2] + ((u32)sp->out.z << 16));
         if (obj->state.targetNode != 0) {
             obj->state.target[0] = obj->state.targetNode->pos[0];
             obj->state.target[1] = obj->state.targetNode->pos[1];
             obj->state.target[2] = obj->state.targetNode->pos[2];
         }
-        trig = (RoomWindowTrig *)&rcossin_tbl[FieldFx_VecToAngle((Vec3Fixed *)&obj->state.origin[0].value,
-                                               (Vec3Fixed *)obj->state.target) & 0xFFF].half;
+        angle = FieldFx_VecToAngle((Vec3Fixed *)&obj->state.origin[0].value,
+                                  (Vec3Fixed *)obj->state.target) & 0xFFF;
+        sample.part.sin = rsin(angle); sample.part.cos = rcos(angle);
         {
             int c = trig->part.cos;
             int s;
 
             sp->yaw.m[0][1] = 0;
             sp->yaw.m[0][0] = c;
-            s = trig->word;
+            s = trig->part.sin;
             sp->yaw.m[1][0] = 0;
             sp->yaw.m[1][1] = 0x1000;
             sp->yaw.m[1][2] = 0;
@@ -236,11 +237,11 @@ void RoomLib_WindowHandler(RoomWindowObject *obj) {
         gte_ldv0(&obj->state.offset);
         gte_mvmva();
         gte_stmac(&sp->out);
-        obj->state.target[0] += sp->out.x << 16;
-        obj->state.target[1] += sp->out.y << 16;
-        obj->state.target[2] += sp->out.z << 16;
-        dist = FieldFx_GetFixedDistance3D((Vec3Fixed *)&obj->state.origin[0].value, (Vec3Fixed *)obj->state.target) +
-               ((obj->state.step * 0x70) >> 21);
+        obj->state.target[0] = (s32)((u32)obj->state.target[0] + ((u32)sp->out.x << 16));
+        obj->state.target[1] = (s32)((u32)obj->state.target[1] + ((u32)sp->out.y << 16));
+        obj->state.target[2] = (s32)((u32)obj->state.target[2] + ((u32)sp->out.z << 16));
+        dist = (s32)((u32)FieldFx_GetFixedDistance3D((Vec3Fixed *)&obj->state.origin[0].value, (Vec3Fixed *)obj->state.target) +
+               (u32)((s32)((u32)obj->state.step * 0x70u) >> 21));
         if (dist < 0x148) {
             dist = 0x148;
         }
@@ -253,7 +254,8 @@ void RoomLib_WindowHandler(RoomWindowObject *obj) {
     }
 
     sp->arrived = 0;
-    trig = (RoomWindowTrig *)&rcossin_tbl[(((state->spin + 0x8000) >> 16) - 0x400) & 0xFFF].half;
+    angle = (((s32)((u32)state->spin + 0x8000u) >> 16) - 0x400) & 0xFFF;
+    sample.part.sin = rsin(angle); sample.part.cos = rcos(angle);
     {
         u16 c;
         u16 s;
@@ -262,7 +264,7 @@ void RoomLib_WindowHandler(RoomWindowObject *obj) {
         cosv = trig->part.cos;
         sp->yaw.m[0][1] = 0;
         sp->yaw.m[0][0] = cosv;
-        sn = trig->word;
+        sn = trig->part.sin;
         c = sp->yaw.m[0][0];
         sp->yaw.m[1][0] = 0;
         sp->yaw.m[1][2] = 0;
@@ -280,21 +282,21 @@ void RoomLib_WindowHandler(RoomWindowObject *obj) {
     gte_ldv0(&sp->in.local);
     gte_mvmva();
     gte_stmac(&sp->advance);
-    state->pos[0].value += sp->advance.x << 12;
-    state->pos[2].value += sp->advance.z << 12;
+    state->pos[0].value = (s32)((u32)state->pos[0].value + ((u32)sp->advance.x << 12));
+    state->pos[2].value = (s32)((u32)state->pos[2].value + ((u32)sp->advance.z << 12));
     if (sp->advance.z >= 0) {
-        state->travel += state->step;
-        state->spin += ((((state->travel + 0x8000) >> 16) * (state->spinSpeed >> 12)) >> 8) << 12;
+        state->travel = (s32)((u32)state->travel + (u32)state->step);
+        state->spin = (s32)((u32)state->spin + ((u32)((s32)((u32)((s32)((u32)state->travel + 0x8000u) >> 16) * (u32)(state->spinSpeed >> 12)) >> 8) << 12));
     } else {
-        state->spin += ((((state->travel + 0x8000) >> 16) * (state->spinSpeed >> 12)) >> 8) << 12;
-        state->travel -= state->step;
+        state->spin = (s32)((u32)state->spin + ((u32)((s32)((u32)((s32)((u32)state->travel + 0x8000u) >> 16) * (u32)(state->spinSpeed >> 12)) >> 8) << 12));
+        state->travel = (s32)((u32)state->travel - (u32)state->step);
     }
-    sp->spot.x = (((state->pos[0].value + 0x8000) >> 16) * state->scale + 0x800) >> 12;
+    sp->spot.x = (s32)((u32)((s32)((u32)state->pos[0].value + 0x8000u) >> 16) * (u32)state->scale + 0x800u) >> 12;
     sp->spot.y = 0;
-    sp->spot.z = (state->pos[2].value + 0x8000) >> 16;
+    sp->spot.z = (s32)((u32)state->pos[2].value + 0x8000u) >> 16;
     if (sp->advance.z < 0) {
-        if (FieldFx_IntSqrt(state->pos[0].part.integer * state->pos[0].part.integer +
-                          state->pos[2].part.integer * state->pos[2].part.integer) < 0x100) {
+        if (FieldFx_IntSqrt((s32)((u32)state->pos[0].part.integer * (u32)state->pos[0].part.integer +
+                          (u32)state->pos[2].part.integer * (u32)state->pos[2].part.integer)) < 0x100) {
             sp->arrived = 1;
         }
     }
@@ -306,10 +308,11 @@ void RoomLib_WindowHandler(RoomWindowObject *obj) {
         return;
     }
     sp->in.angles.x = 0;
-    sp->in.angles.y = obj->index * 0x280 + 0x640;
+    sp->in.angles.y = (u32)obj->index * 0x280u + 0x640u;
     sp->in.angles.z = -0x400;
     RotMatrixYXZ(&sp->in.angles, (GteMatrix *)&sp->yaw);
-    trig = (RoomWindowTrig *)&rcossin_tbl[sp->in.angles.y & 0xFFF].half;
+    angle = sp->in.angles.y & 0xFFF;
+    sample.part.sin = rsin(angle); sample.part.cos = rcos(angle);
     {
         u16 c;
         u16 s;
@@ -318,7 +321,7 @@ void RoomLib_WindowHandler(RoomWindowObject *obj) {
         cosv = trig->part.cos;
         sp->roll.m[0][1] = 0;
         sp->roll.m[0][0] = cosv;
-        sn = trig->word;
+        sn = trig->part.sin;
         c = sp->roll.m[0][0];
         sp->roll.m[1][1] = 0x1000;
         sp->roll.m[0][2] = sn;
@@ -353,9 +356,9 @@ void RoomLib_WindowHandler(RoomWindowObject *obj) {
     gte_mvmva();
     gte_stmac(&sp->corner);
     gte_MulMatrix0(&state->rotation, &sp->yaw, &sp->roll);
-    actor->pos[0] = state->origin[0].value + (sp->out.x << 16);
-    actor->pos[1] = state->origin[1].value + (sp->out.y << 16);
-    actor->pos[2] = state->origin[2].value + (sp->out.z << 16);
+    actor->pos[0] = (s32)((u32)state->origin[0].value + ((u32)sp->out.x << 16));
+    actor->pos[1] = (s32)((u32)state->origin[1].value + ((u32)sp->out.y << 16));
+    actor->pos[2] = (s32)((u32)state->origin[2].value + ((u32)sp->out.z << 16));
     actor->center[0] = state->origin[0].part.integer + sp->corner.x;
     actor->center[1] = state->origin[1].part.integer + sp->corner.y;
     actor->center[2] = state->origin[2].part.integer + sp->corner.z;
@@ -382,19 +385,19 @@ void RoomLib_WindowHandler(RoomWindowObject *obj) {
     }
 }
 
-void RoomLib_WindowArrived(void *ctx) {
+void RoomLib_WindowArrived(RoomWindowObject *ctx) {
     RoomWindowActor *obj = ((RoomWindowObject *)ctx)->actor;
     RoomWindowAnchor *window = obj->anchor;
     unsigned int limit = window->frameCount;
 
     limit--;
     if (window->frame >= limit) {
-        RoomLib_ReleaseWindowClass(ctx);
+        RoomLib_ReleaseWindowClass((PmSlotHeader *)ctx);
     }
 }
 
-int RoomLib_ReleaseWindowClass(char *ctxArg) {
-    RoomWindowObject *ctx = (RoomWindowObject *)ctxArg;
+int RoomLib_ReleaseWindowClass(PmSlotHeader *slot) {
+    RoomWindowObject *ctx = (RoomWindowObject *)slot;
     RoomWindowAnchor *anchor;
     RoomWindowFlags *marker;
 
@@ -415,6 +418,5 @@ int RoomLib_ReleaseWindowClass(char *ctxArg) {
     return 0;
 }
 
-int RoomLib_WindowClassNop6(void) {
-    return 0;
+void RoomLib_WindowClassNop6(void) {
 }

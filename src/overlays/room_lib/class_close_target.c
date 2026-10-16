@@ -6,6 +6,16 @@
 
 #include "pe1/room_module.h"
 
-#include "room_lib.h"
+#include "pe1/field_actor.h"
+#include "pe1/fieldfx_state.h"
 
-ROOMLIB_CLOSE_TARGET(RoomLib_CloseTarget)
+int RoomLib_CloseTarget(PmSlotHeader *slot)
+{
+    slot->state = 4;
+    if ((unsigned int)FieldFx_GetStatus(slot) >= 2) {
+        FieldActor *actor = ((FieldFxObjectPrefix *)slot)->actor;
+        actor->state->flags &= 0xC0FFFFFFu;
+        *actor->state->action_state = 4;
+    }
+    return 0;
+}

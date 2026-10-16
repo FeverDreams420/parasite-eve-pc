@@ -50,6 +50,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/room_m023_effects.h"
 #include "pe1/room_m023_beacon.h"
 #include "pe1/room_flare.h"
+#include "pe1/room_glow_orb.h"
 #include "pe1/room_module.h"
 #include "pe1/room_script_record.h"
 #include "pe1/room_m005_beacon.h"
@@ -1838,6 +1839,100 @@ static int authored_orbit_flare_cycle(void)
     return 1;
 }
 
+static int original_room_glow_orb(void)
+{
+    const u32 seeds[]={0,1,2,3,0x12345678,0xffffffff,0x80000000,0x7fffffff};
+    const u8 fills[]={0,1,0xa5,0xff},flags[]={0,1,2,255};
+    const s8 timers[]={-128,-1,0,1,19,20,21,127};const s16 depths[]={-32768,-1,0,8,9,128,32767,0x1234};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+#define GLOW_HASH(ptr,len) do {const u8 *bytes=(const u8 *)(ptr);for(size_t j=0;j<(len);++j)hash=(hash^bytes[j])*UINT64_C(1099511628211);++cases;}while(0)
+    FieldActor *old_player=g_PlayerEntity,*old_owner=g_RoomGlowOrbOwner;
+    GteMatrix old_axes=g_RoomGlowOrbAxes,old_origin=g_RoomGlowOrbOrigin;
+    RoomFxSpritePacket old_sprite=g_RoomGlowOrbSprite,old_flash=g_RoomGlowOrbFlashSprite;
+    FieldFxState *old_state=g_FieldFxScriptState;FieldFxObject *old_object=g_FieldFxScriptObject;
+    FieldFxSlot *old_slots=g_FieldFxSlotTable;char *old_data=g_FieldFxScriptData;int *old_commands=g_FieldFxCommandTable;
+    FieldActor actor={0},other={0};FieldFxObject object={0};RenderMatrix matrices[50];object.prefix.actor=&actor;actor.render_object.matrices=matrices;
+    for(unsigned player=0;player<2;++player)for(unsigned seed=0;seed<8;++seed){
+        u32 words[400];for(unsigned i=0;i<400;++i)words[i]=seeds[seed]+i*0x1020304u;memcpy(matrices,words,sizeof(matrices));
+        g_PlayerEntity=player?&actor:&other;RoomEffect_GlowOrbCaptureOwner(&object,NULL,NULL);
+        u8 data[68];u32 owner=g_RoomGlowOrbOwner==&actor;memcpy(data,&owner,4);memcpy(data+4,&g_RoomGlowOrbAxes,32);memcpy(data+36,&g_RoomGlowOrbOrigin,32);GLOW_HASH(data,sizeof(data));
+    }
+    for(unsigned f=0;f<4;++f){
+        memset(&object,fills[f],sizeof(object));object.prefix.actor=NULL;
+        memset(&g_RoomGlowOrbSprite,fills[f],sizeof(g_RoomGlowOrbSprite));memset(&g_RoomGlowOrbFlashSprite,fills[f],sizeof(g_RoomGlowOrbFlashSprite));
+        RoomEffect_GlowOrbSetup((PmSlotHeader *)&object);u8 data[36];u32 script=object.state.commands==g_RoomGlowOrbScript;
+        memcpy(data,&script,4);memcpy(data+4,&g_RoomGlowOrbSprite,12);memcpy(data+16,&g_RoomGlowOrbFlashSprite,12);memcpy(data+28,&object,8);GLOW_HASH(data,sizeof(data));
+        FieldFxState state=object.state;state.commands=NULL;FieldFxState zero={0};
+        if(memcmp(&state,&zero,sizeof(state)))return 0;
+        for(unsigned i=0;i<sizeof(object.slots);++i)if(((u8 *)object.slots)[i])return 0;
+        for(unsigned i=0;i<sizeof(object.data);++i)if(((u8 *)object.data)[i])return 0;
+    }
+    g_FieldFxScriptState=&object.state;
+    for(unsigned i=0;i<8;++i){RoomGlowOrbSpawner data;memset(&data,0xa5,sizeof(data));object.state.regs[4]=seeds[i];RoomEffect_GlowOrbSpawnerInit(&object,NULL,&data);GLOW_HASH(&data,sizeof(data));}
+    for(unsigned i=0;i<4;++i){u8 control[]={0xa5,flags[i]};RoomEffect_GlowOrbControllerUpdate(&object,control,NULL);GLOW_HASH(control,sizeof(control));}
+    for(unsigned i=0;i<4;++i){RoomGlowOrbFlash data;memset(&data,fills[i],sizeof(data));RoomEffect_GlowOrbFlashInit(&object,NULL,&data);GLOW_HASH(&data,sizeof(data));}
+    for(unsigned t=0;t<8;++t)for(unsigned d=0;d<8;++d)for(unsigned f=0;f<4;++f){
+        RoomGlowOrbFlash flash;memset(&flash,0xa5,sizeof(flash));flash.timer=timers[t];flash.depth=depths[d];u8 control[]={0xa5,flags[f]};
+        RoomEffect_GlowOrbFlashUpdate(&object,control,&flash);u8 data[16];memcpy(data,&flash,14);memcpy(data+14,control,2);GLOW_HASH(data,sizeof(data));
+    }
+#undef GLOW_HASH
+    if(cases!=292 || hash!=UINT64_C(0x8fb5ea8e9d0d22fb)){
+        fprintf(stderr,"Room glow CPU states %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    /* Run the original four-type script through its real PM lifecycle. */
+    PmTables old_tables=g_PmTables;PmCommand *old_class=g_PmCmdHandlerArray[8];
+    Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
+    RenderBufferPrefix old_buffers=D_800B0E38;int old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
+    GteMatrix *old_view=g_GeomScroll.words.viewMatrix;GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    s32 *old_projection=g_GeomScroll.words.projectionDistance,projection=256;
+    PolygonVertex *old_polygon=g_FloorPolygonVertices;u16 old_count=g_FloorPolygonVertexCount;RoomFloorY old_floor=*g_RoomFloorY;
+    for(unsigned mode=0;mode<2;++mode){
+    PolygonVertex polygon[4]={{.x=-2000,.z=-2000},{.x=2000,.z=-2000},{.x=2000,.z=2000},{.x=-2000,.z=2000}};
+    struct {PmPrimarySlot slots[11];u8 guard[16];} bank={0};struct {_Alignas(16) u8 bytes[65536];u8 guard[16];} packets;
+    static RenderGpuTag ordering[4096];FieldActorState state={.control10.command_value=1},player_state={0};u8 action=1;
+    actor=(FieldActor){.state=&state};state.action_state=&action;actor.render_object.matrices=matrices;
+    other=(FieldActor){.state=&player_state,.pos_x=10000*65536,.pos_z=10000*65536};g_PlayerEntity=&other;
+    memset(matrices,0,sizeof(matrices));for(unsigned i=0;i<50;++i){for(unsigned j=0;j<3;++j)matrices[i].rotation[j][j]=4096;matrices[i].translation[2]=1200;}
+    g_PmCmdHandlerArray[8]=&g_RoomGlowOrbHandlers;g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};
+    g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;g_GameState.cd_range_read_mode=0;
+    g_GeomScroll.words.viewMatrix=&view;g_GeomScroll.words.projectionDistance=&projection;
+    g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;g_RoomFloorY->y=0;
+    Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);FieldFx_InitTexturePageTable();
+    memset(bank.guard,0xa5,sizeof(bank.guard));g_RoomGlowOrbHandlers.init();
+    if(Scene_LoadRoomAssets(8,&actor)!=0 || bank.slots[0].header.owner!=&actor)return 0;
+    if(Pm_SendCmd(0,0,0,64,0,0) || Pm_SendCmd(0,0,1,mode,0,0) || Pm_SendCmd(0,0,2,0,0,0))return 0;
+    if(Pm_SendCmd(0,0,8,(intptr_t)&actor,0,0) || bank.slots[0].effect.state.vars[8]!=(intptr_t)&actor)return 0;
+    unsigned seen=0,drawn=0,linked=0;
+    for(unsigned frame=0;frame<360;++frame){
+        for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
+        memset(packets.guard,0xa5,sizeof(packets.guard));g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;
+        D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.bytes;
+        if(frame==12){
+            if(!FieldFx_StartSlot(&bank.slots[0].effect,1,(u16 *)g_RoomSpawnLayout,g_RoomInitList))return 0;
+            seen|=2;
+        }
+        if(Pm_Start(0) || Pm_Exec(0))return 0;
+        for(unsigned i=0;i<64;++i)if(bank.slots[0].effect.slots[i].flag==1)seen|=1u<<bank.slots[0].effect.slots[i].handler_id;
+        if(g_DrawPacketOffset)++drawn;
+        if(g_DrawPacketOffset>sizeof(packets.bytes))return 0;
+        for(unsigned i=0;i<4096;++i){uintptr_t at=ordering[i].address;unsigned count=0;while(at && at!=0xffffff){
+            if(at<(uintptr_t)packets.bytes || at+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset || at%_Alignof(RenderGpuTag) || ++count>128)return 0;
+            ++linked;at=((RenderGpuTag *)at)->address;
+        }}
+        for(unsigned i=0;i<16;++i)if(bank.guard[i]!=0xa5 || packets.guard[i]!=0xa5)return 0;
+    }
+    if(!drawn || !linked || (seen&14)!=14 || action!=4 || bank.slots[0].header.state || bank.slots[0].effect.state.slot_count){
+        fprintf(stderr,"Room glow lifecycle seen=%x drawn=%u linked=%u action=%u state=%u count=%d\n",seen,drawn,linked,action,bank.slots[0].header.state,bank.slots[0].effect.state.slot_count);return 0;}
+    }
+    g_RoomGlowOrbHandlers.unload();
+    g_PmTables=old_tables;g_PmCmdHandlerArray[8]=old_class;g_GameState=old_game;g_GameStateFlags=old_flags;
+    D_800B0E38=old_buffers;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;g_GeomScroll.words.viewMatrix=old_view;g_GeomScroll.words.projectionDistance=old_projection;
+    g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_count;*g_RoomFloorY=old_floor;
+    g_PlayerEntity=old_player;g_RoomGlowOrbOwner=old_owner;g_RoomGlowOrbAxes=old_axes;g_RoomGlowOrbOrigin=old_origin;g_RoomGlowOrbSprite=old_sprite;g_RoomGlowOrbFlashSprite=old_flash;
+    g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;g_FieldFxSlotTable=old_slots;g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;
+    puts("Original room glow orb: 292 unhooked USA CPU capture/setup/spawner/controller/flash states, full native model pointers and two scripts x 360 real PM frames with orb/flash draw, slot expiry and packet guards passed");
+    return 1;
+}
+
 static int authored_glow_script_cycle(void)
 {
     PmCommand *classes[]={&g_GlowEffectClass,&g_GlowEffectBClass,&g_GlowEffectCClass,&g_FourLayerGlowClass,&g_PointSpriteClass,&g_BurstEffectClass,&g_BurstEffectBClass,&g_BurstEffectCClass};
@@ -1932,7 +2027,6 @@ static int authored_glow_script_cycle(void)
     return 1;
 }
 
-int Script_CopyEntityRenderObject(int **args);
 static int original_actor_render_opcodes(void)
 {
     FieldActor *previous=g_CurrentEntity,*previous_player=g_PlayerEntity,*previous_head=g_FieldActorListHead;
@@ -2007,9 +2101,10 @@ static int original_actor_render_opcodes(void)
     u32 saved_view[9];memcpy(saved_view,g_EntityRenderScratch,sizeof(saved_view));
     GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
     memset(g_EntityRenderScratch,0,sizeof(saved_view));memcpy(g_EntityRenderScratch,&view,sizeof(view));
-    for(unsigned player=0;player<2;++player) for(unsigned index=0;index<2;++index) {
-        RenderMatrix matrices[2]={0};RenderVec3s bounds[4]={0};
-        for(unsigned j=0;j<2;++j) {
+    for(unsigned player=0;player<2;++player) for(unsigned part_case=0;part_case<5;++part_case) {
+        int raw_part=(int[]){0,1,49,65585,-65487}[part_case];unsigned index=(u16)(s16)raw_part;
+        RenderMatrix matrices[50]={0};RenderVec3s bounds[100]={0};
+        for(unsigned j=0;j<50;++j) {
             for(unsigned k=0;k<3;++k) matrices[j].rotation[k][k]=4096;
             matrices[j].translation[0]=-100-j*10;matrices[j].translation[1]=200+j*10;matrices[j].translation[2]=-300-j*10;
             bounds[2*j]=(RenderVec3s){-7,9,-11,10};
@@ -2018,17 +2113,23 @@ static int original_actor_render_opcodes(void)
         FieldActor actor={.flags=0x8000};
         owner.render_object.bounds_vertices=bounds;owner.render_object.matrices=matrices;
         g_CurrentEntity=&actor;g_PlayerEntity=player?&owner:NULL;g_FieldActorListHead=&dead;
-        int type=player?0:7,id=11,part=index;int *args[]={&type,&id,&part};
+        int type=player?0:7,id=11,part=raw_part;int *args[]={&type,&id,&part};
         if(Script_CopyEntityRenderObject(args)!=1 || actor.parent!=&owner || actor.flags!=0xa000 ||
            actor.render_object.animation_source!=&owner.render_object || actor.render_object.table_index!=index ||
            actor.pos_x!=(-107-(int)index*10)*65536 || actor.pos_y!=(209+(int)index*10)*65536 ||
            actor.pos_z!=(-311-(int)index*10)*65536) do { fprintf(stderr,"render opcode failure line %d\n",__LINE__); return 0; } while(0);
+        FieldActor expected=actor;actor=(FieldActor){.flags=0x8000};
+        u32 program[]={164|(3u<<13),0,(u32)type,(u32)id,(u32)part,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;
+        if(g_ScriptQueueOpcodeHandlers[164]!=Script_CopyEntityRenderObject)return 0;
+        Script_RunQueue();
+        if(memcmp(&actor,&expected,sizeof(actor)) || node.current.script!=program+7 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
     }
     memcpy(g_EntityRenderScratch,saved_view,sizeof(saved_view));
     g_CurrentEntity=previous;g_PlayerEntity=previous_player;g_FieldActorListHead=previous_head;
     g_ScriptNodePool=previous_node;g_ScriptCursor=previous_cursor;g_PlayerBattleEntity=previous_battle;g_FieldMoveLock=previous_lock;
     puts("Original render table opcode 202: 12 USA CPU narrowing states, adjacent fields, whole actor and dispatcher passed");
-    puts("Original actor render opcodes: animation start/wait/finish, player battle mirror and native inherited transforms with negative coordinates passed");
+    puts("Original actor render opcodes: animation start/wait/finish, player battle mirror and native inherited transforms with negative coordinates and opcode164 dispatcher passed");
     return 1;
 }
 
@@ -2667,6 +2768,30 @@ static int original_render_flag_opcodes(void)
     if(cases!=576 || hash!=UINT64_C(0x33cb511103ef7831)){
         fprintf(stderr,"Render flag CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
     puts("Original render flags189-192: 576 unhooked USA CPU states, byte/halfword narrowing, preserved actor fields and complete dispatcher passed");
+    return 1;
+}
+
+static int original_textbox_rect_opcode(void)
+{
+    const u32 values[]={0,1,32767,32768,65535,65536,0x80000000,0x1234abcd};
+    TextboxRect saved=g_TextboxPendingRect;ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    FieldActor *saved_actor=g_CurrentEntity,actor={0};g_CurrentEntity=&actor;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[208]!=Script_DrawSaveOverlay)return 0;
+    for(unsigned x=0;x<8;++x)for(unsigned y=0;y<8;++y)for(unsigned w=0;w<8;++w)for(unsigned h=0;h<8;++h){
+        int data[]={(s32)values[x],(s32)values[y],(s32)values[w],(s32)values[h]};int *args[]={data,data+1,data+2,data+3};
+        u32 result=Script_DrawSaveOverlay(args);TextboxRect expected=g_TextboxPendingRect;u8 output[12];
+        memcpy(output,&result,4);memcpy(output+4,&expected,8);
+        for(unsigned i=0;i<sizeof(output);++i)hash=(hash^output[i])*UINT64_C(1099511628211);
+        memset(&g_TextboxPendingRect,0xa5,sizeof(g_TextboxPendingRect));
+        u32 program[]={208|(4u<<13),0,values[x],values[y],values[w],values[h],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(&g_TextboxPendingRect,&expected,sizeof(expected)) || node.current.script!=program+8 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+        ++cases;
+    }
+    g_TextboxPendingRect=saved;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_CurrentEntity=saved_actor;
+    if(cases!=4096 || hash!=UINT64_C(0xc532dce5369fff45))return 0;
+    puts("Original opcode208: 4096 unhooked USA CPU textbox rectangle states, low-halfword narrowing and complete dispatcher passed");
     return 1;
 }
 
@@ -3325,8 +3450,8 @@ static int original_motion_opcodes(void)
 
 static int original_dialogue_opcodes(void)
 {
-    const unsigned ops[]={13,34,35};
-    int (*handlers[])(int **)={Script_StopEntityAnim,Script_YieldWhileTableEntrySet,Script_ClearTableEntry};
+    const unsigned ops[]={13,34,35,209};
+    int (*handlers[])(int **)={Script_StopEntityAnim,Script_YieldWhileTableEntrySet,Script_ClearTableEntry,Script_ResetEntityAnimSlot};
     const u32 open_pages[]={0,1,32767,32768,65535,65536,0x80000000,0xffffffff,0x12345678};
     const u32 wait_pages[]={5,6,7,8,0xffffffff,0,65541,0x80000000,0x7fffffff};
     const u8 movements[]={0,1,255};
@@ -3338,26 +3463,29 @@ static int original_dialogue_opcodes(void)
     s8 saved_menu=g_MenuEquipSlotIndex;FieldActor *saved_actor=g_CurrentEntity;
     ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
     u8 markers[4];FieldActor actor={0};g_CurrentEntity=&actor;
-    uint64_t hashes[2]={UINT64_C(14695981039346656037),UINT64_C(14695981039346656037)};
-    for(unsigned op=0;op<3;++op)for(unsigned layout=0;layout<(op?4u:16u);++layout)
-    for(unsigned middle=0;middle<(op?8u:9u);++middle)for(unsigned last=0;last<(op?9u:3u);++last){
+    TextboxRect saved_rect=g_TextboxPendingRect;
+    uint64_t hashes[3]={UINT64_C(14695981039346656037),UINT64_C(14695981039346656037),UINT64_C(14695981039346656037)};
+    for(unsigned op=0;op<4;++op)for(unsigned layout=0;layout<((op==1 || op==2)?4u:16u);++layout)
+    for(unsigned middle=0;middle<((op==1 || op==2)?8u:9u);++middle)for(unsigned last=0;last<((op==1 || op==2)?9u:3u);++last){
+        int waits=op==1 || op==2;unsigned hash_index=op==3?2:waits;
         if(g_ScriptQueueOpcodeHandlers[ops[op]]!=handlers[op])return 0;
         memset(g_TextboxEntries,0xa5,sizeof(saved));
         for(unsigned i=0;i<4;++i){
             g_TextboxEntries[i].message=markers+i;
-            g_TextboxEntries[i].state=op?states[middle][i]:(layout&(1u<<i))?3:0;
-            if(op)g_TextboxEntries[i].page_id=pages[layout][i];
+            g_TextboxEntries[i].state=waits?states[middle][i]:(layout&(1u<<i))?3:0;
+            if(waits)g_TextboxEntries[i].page_id=pages[layout][i];
         }
         g_DialogueChoiceCursor=0x12;g_MenuEquipSlotIndex=-7;
-        if(!op)g_PlayerMovementEnabled=movements[last];
+        if(!waits)g_PlayerMovementEnabled=movements[last];
+        if(op==3)g_TextboxPendingRect=(TextboxRect){-8,movements[last],296,-24};
         TextboxEntry before[4];memcpy(before,g_TextboxEntries,sizeof(before));
-        int value=(s32)(op?wait_pages[last]:open_pages[middle]);int *args[]={&value};
+        int value=(s32)(waits?wait_pages[last]:open_pages[middle]);int *args[]={&value};
         u32 storage[4]={0};ScriptNode node={.active=7};g_ScriptNodePool=&node;g_ScriptCursor=storage+3;
-        u32 result=handlers[op](args);uint64_t hash=hashes[op?1:0];
+        u32 result=handlers[op](args);uint64_t hash=hashes[hash_index];
 #define DIALOGUE_PUT(value,bytes) do {u32 put_=(u32)(value); \
     for(unsigned b_=0;b_<(bytes);++b_){hash=(hash^(u8)put_)*UINT64_C(1099511628211);put_>>=8;}}while(0)
         DIALOGUE_PUT(result,4);
-        if(op){DIALOGUE_PUT((uintptr_t)g_ScriptCursor-(uintptr_t)storage,4);DIALOGUE_PUT(node.active,4);}
+        if(waits){DIALOGUE_PUT((uintptr_t)g_ScriptCursor-(uintptr_t)storage,4);DIALOGUE_PUT(node.active,4);}
         for(unsigned i=0;i<4;++i){
             TextboxEntry *entry=&g_TextboxEntries[i];
             if(entry->message!=markers+i)return 0;
@@ -3365,9 +3493,9 @@ static int original_dialogue_opcodes(void)
             DIALOGUE_PUT(0x80180000u+i*256,4);
             for(unsigned b=0;b<48;++b)DIALOGUE_PUT(((u8 *)&entry->style)[b],1);
         }
-        if(!op){DIALOGUE_PUT(g_DialogueChoiceCursor,1);DIALOGUE_PUT(g_MenuEquipSlotIndex,1);}
+        if(!waits){DIALOGUE_PUT(g_DialogueChoiceCursor,1);DIALOGUE_PUT(g_MenuEquipSlotIndex,1);}
 #undef DIALOGUE_PUT
-        hashes[op?1:0]=hash;
+        hashes[hash_index]=hash;
         TextboxEntry expected[4];memcpy(expected,g_TextboxEntries,sizeof(expected));
         u8 choice=g_DialogueChoiceCursor;s8 menu=g_MenuEquipSlotIndex;
         memcpy(g_TextboxEntries,before,sizeof(before));g_DialogueChoiceCursor=0x12;g_MenuEquipSlotIndex=-7;
@@ -3402,6 +3530,9 @@ static int original_dialogue_opcodes(void)
     memcpy(g_TextboxEntries,saved,sizeof(saved));g_PlayerMovementEnabled=saved_movement;
     g_DialogueChoiceCursor=saved_choice;g_MenuEquipSlotIndex=saved_menu;g_CurrentEntity=saved_actor;
     g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    g_TextboxPendingRect=saved_rect;
+    if(hashes[2]!=UINT64_C(0x114538d7aed539c5))return 0;
+    puts("Original styled textbox opcode 209: 432 USA CPU states, signed page IDs, pending rectangles and dispatcher passed");
     if(hashes[0]!=UINT64_C(0x76d0cc627a0cae51) || hashes[1]!=UINT64_C(0x1506f2e400f8d88f)){
         fprintf(stderr,"Dialogue opcode hashes %016llx %016llx\n",(unsigned long long)hashes[0],(unsigned long long)hashes[1]);return 0;}
     puts("Original dialogue opcodes: 432 open and 576 wait/close USA MIPS states, native pointers, duplicate pages and full dispatcher passed");
@@ -3802,7 +3933,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_task_pause_opcodes() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
@@ -4242,10 +4373,10 @@ static int authored_m023_effect_cycle(SceneAssetView *room)
 
 static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)
 {
-    u8 header[0x800];u32 base;PeDiscFile archive;SceneAssetView *rooms[3]={NULL,NULL,NULL};
+    u8 header[0x800];u32 base;PeDiscFile archive;SceneAssetView *rooms[4]={NULL,NULL,NULL,NULL};
     if(!pe_disc_read(disc,exe,0,header,sizeof(header)) || !pe_disc_find(disc,"PE.IMG",&archive))return 0;
-    memcpy(&base,header+0x18,4);const unsigned ids[]={12,28,32};int valid=1;
-    for(unsigned i=0;valid && i<3;++i){
+    memcpy(&base,header+0x18,4);const unsigned ids[]={12,28,32,34};int valid=1;
+    for(unsigned i=0;valid && i<4;++i){
         SceneRoomSectorRange range;
         valid=pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(ids[i]-1)*8,&range,sizeof(range));
         if(!valid)break;
@@ -4309,9 +4440,30 @@ static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)
             ++relocated;
         }
         valid=valid && relocated==26;
+        SceneRoomDirectory *boss=SceneAsset_ResolveOffset(rooms[3],rooms[3]->header.directoryOffset);
+        SceneRoomRecord *orb=SceneAsset_ResolveOffset(rooms[3],boss->scripts&0x3fffff);const u8 *d=(u8 *)rooms[3]+8;
+        const u32 orb_methods[]={0x8018f244,0x8018f00c,0x8018f0b8,0x8018f0e4,0x8018f12c,0x8018f1b8,0x8018f23c};
+        const u32 orb_lists[]={0x8018f24c,0x8018f380,0x8018f434,0x8018fdd4,0xffffffff,
+            0x8018f36c,0x8018f3bc,0x8018f830,0x8018fde4,0xffffffff,
+            0x8018f374,0x8018f3c4,0x8018fc54,0x8018fee0,0xffffffff};
+        const u32 seeds[]={0xc00,0,0x448,0x448,0x448,0};
+        valid=valid && boss->scripts>>22==1 && orb->source.bytes.slot==8 && orb->u.handlerAddress==0x8018ff7cu &&
+            !memcmp(d+0x8018ff7cu-0x8018eff0u,orb_methods,sizeof(orb_methods)) &&
+            !memcmp(d+0x8018ff34u-0x8018eff0u,orb_lists,sizeof(orb_lists)) &&
+            !memcmp(d+0x8018ff70u-0x8018eff0u,g_RoomSpawnLayout,12) &&
+            !memcmp(d+0x8018ff98u-0x8018eff0u,g_RoomGlowOrbScript,sizeof(g_RoomGlowOrbScript)) &&
+            !memcmp((u8 *)rooms[3]+12,seeds,sizeof(seeds)) &&
+            g_RoomGlowOrbHandlers.initialize==RoomEffect_GlowOrbSetup && g_RoomGlowOrbHandlers.send==RoomLib_Spawn6 &&
+            g_RoomInitList[0]==RoomEffect_GlowOrbCaptureOwner && g_RoomInitList[1]==RoomEffect_GlowOrbSpawnerInit &&
+            g_RoomInitList[2]==RoomEffect_GlowOrbInit && g_RoomInitList[3]==RoomEffect_GlowOrbFlashInit &&
+            g_RoomDrawList[0]==RoomEffect_GlowOrbControllerDraw && g_RoomDrawList[1]==RoomEffect_GlowOrbSpawnerDraw &&
+            g_RoomDrawList[2]==RoomEffect_GlowOrbDraw && g_RoomDrawList[3]==RoomEffect_GlowOrbFlashDraw &&
+            g_RoomUpdateList[0]==RoomEffect_GlowOrbControllerUpdate && g_RoomUpdateList[1]==RoomEffect_GlowOrbSpawnerUpdate &&
+            g_RoomUpdateList[2]==RoomEffect_GlowOrbUpdate && g_RoomUpdateList[3]==RoomEffect_GlowOrbFlashUpdate;
+
     }
-    free(rooms[0]);free(rooms[1]);free(rooms[2]);
-    if(valid)puts("Original M028: class C slot73, orbit-flare slot115, full USA descriptors/script/seeds and 658 controller instructions with exactly 19 address relocations match M012; M032 class C slot73 descriptor and 764 instructions match M028 after exactly 26 address relocations");
+    free(rooms[0]);free(rooms[1]);free(rooms[2]);free(rooms[3]);
+    if(valid)puts("Original M028: class C slot73, orbit-flare slot115, full USA descriptors/script/seeds and 658 controller instructions with exactly 19 address relocations match M012; M032 class C slot73 descriptor and 764 instructions match M028 after exactly 26 address relocations; M034 glow-orb class slot8, all callback lists, sizes, 35-word script and rotation/flash seeds match USA");
     return valid;
 }
 

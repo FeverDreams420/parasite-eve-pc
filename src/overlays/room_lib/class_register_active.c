@@ -9,9 +9,14 @@
 
 #include "pe1/room_module.h"
 
-#include "room_lib.h"
+#include "pe1/fieldfx_state.h"
 
-ROOMLIB_REGISTER_TABLE_AT3(RoomLib_RegisterDrawListActive, g_RoomDrawList)
+int RoomLib_RegisterDrawListActive(PmSlotHeader *slot)
+{
+    if (FieldFx_GetStatus(slot) == 3)
+        FieldFx_Register((FieldFxObject *)slot, g_RoomDrawList);
+    return 0;
+}
 
 /*
  * Room module class, slot 4, in the modules that start only while the field
@@ -22,5 +27,16 @@ ROOMLIB_REGISTER_TABLE_AT3(RoomLib_RegisterDrawListActive, g_RoomDrawList)
  * the lists are the room's (pe1/room_module.h).
  */
 
-ROOMLIB_START_AT3(RoomLib_RegisterPairedTablesActive, g_RoomUpdateList,
-                  g_RoomInitList, g_RoomSpawnLayout, RoomLib_CloseTarget)
+int RoomLib_RegisterPairedTablesActive(PmSlotHeader *slot)
+{
+    int result;
+    if (FieldFx_GetStatus(slot) == 3) {
+        result = FieldFx_UpdateSlots((FieldFxObject *)slot, g_RoomUpdateList);
+        result |= FieldFx_RunScript((FieldFxObject *)slot, g_RoomInitList, (u16 *)g_RoomSpawnLayout);
+    } else {
+        result = -1;
+    }
+    if (result == -1)
+        RoomLib_CloseTarget(slot);
+    return 0;
+}

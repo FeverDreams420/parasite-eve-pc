@@ -10,7 +10,9 @@ Automatyczny input od New Game przechodzi Melissę, zaplecze, przemianę
 szczura i zwycięską walkę, następnie M020: dialog112, menu, użycie Medicine1
 (HP11->45) i otrzymanie następnego leku. Osobna próba potwierdza zamknięcie
 okna oraz powrót sterowania. Nowy test tej trasy przeszedł dwukrotnie.
-Poprzedni zamrożony kandydat ma 48/48 PASS; katalog zawiera teraz 49 testów.
+Katalog zawiera50 testów; zamrożony kandydat b18423087 ma50/50 PASS.
+Późniejsze poprawki M032/M033/M034 mają osobne wyniki opisane poniżej;
+nie mają jeszcze świeżego pełnego50/50.
 Aktualne testy powiązanych modułów oraz fixture’y ASan/UBSan/function przechodzą.
 Pełny runtime z sanitizerami dla M020 także przeszedł, z identycznym stanem i VRAM. To nadal
 początek kampanii, nie pełny port ani deklaracja pixel perfect.
@@ -275,10 +277,58 @@ identyczny pełny JSON i VRAM, SHA256
 39103f7db6b2518f74b8c697791b9cfe27d48cc39c21f6179cd9221cd4654b6c.
 Kadr M033 obejrzano. To trasa od Continue, nie nowy przebieg od New Game.
 Dalszy zwykły input zamyka dialogi15–22 z Eve i dociera do ładowania M034,
-które zatrzymuje się na niepowiązanym descriptorze slot8/8018ff7c.
-Odpowiada istniejącemu modułowi room_lib/glow_orb.c i jego setupowi,
-które wymagają jeszcze natywnej integracji. Nie uznawać walki z aligatorem,
+które w tej próbie zatrzymywało się na niepowiązanym deskryptorze
+slot8/8018ff7c. Odpowiada istniejącemu modułowi room_lib/glow_orb.c
+i jego setupowi; integrację opisano poniżej. Nie uznawać walki z aligatorem,
 M034 ani zakończenia dnia1 za ukończone. Bez nowych plików produkcyjnych.
+
+Moduł GlowOrb kompiluje się teraz w całości z istniejących glow_orb.c,
+glow_orb_setup.c i trzech wspólnych modułów klas. Deskryptor M034/slot8
+wiąże siedem oryginalnych metod oraz wszystkie dwanaście callbacków;
+35 słów skryptu, trzy listy callbacków, rozmiary slotów i stałe porównano
+z rzeczywistym archiwum M034. Wskaźniki właściciela i jego macierzy
+korzystają z istniejących FieldActor/FieldFxObject zamiast offsetów PS1.
+Nie przenoszono funkcji ani nie dodawano plików. Dotyczy to na razie
+powiązania w M034; pozostałe pokoje używające GlowOrb wymagają weryfikacji.
+
+Fixture porównuje 292 stany z CPU USA bez hooków (hash8fb5ea8e9d0d22fb),
+w tym macierze właściciela, setup, spawner, kontroler i granice czasu flasha.
+Oba warianty oryginalnego skryptu przechodzą po360 klatek rzeczywistego PM,
+z renderowaniem pakietów, kontrolą granic, wygaszeniem i zwolnieniem właściciela.
+Nie jest to jeszcze niezależne porównanie pikseli efektu z PS1.
+
+Dalszy skrypt M034 ujawnił brak powiązań istniejących funkcji164,208,209.
+Kopiowanie części modelu164 zachowuje oryginalną implementację; fixture
+sprawdza także rzeczywisty indeks kości49 i jego zawijanie do s16.
+Instrukcje208/209 ustawiają prostokąt i otwierają stylizowane okno tekstowe:
+sygnatury korzystają z natywnych argumentów dispatchera i jawnego u16/s16.
+4096 stanów prostokąta zgadza się z CPU USA (c532dce5369fff45), a432 stany
+otwarcia z różnymi wolnymi slotami i signed page IDs dają114538d7aed539c5.
+Każdy przypadek przechodzi także rzeczywisty dispatcher. Cztery powiązane
+CTest PASS12.95s z wymaganym Disc1. Wynik pełnych50 testów ze starszego
+zamrożonego kandydata nie jest świeżym pełnym wynikiem tych zmian.
+
+Runtime ASan/UBSan/function wykrył przy wejściu M034 ujemne przesunięcie
+przy kopiowaniu pozycji części modelu w Entity_FrameUpdate. Trzy osie
+w istniejącym frame_update.c przesuwają teraz słowo unsigned, zachowując
+bity wyniku PS1. Nie dodano alternatywnego mechanizmu wiązania aktorów.
+
+Świeży fixture ASan/UBSan/function z wymaganym Disc1 i rzeczywistymi
+zasobami przechodzi po wszystkich powyższych zmianach. Obejmuje testy
+GlowOrb, instrukcji164/208/209 oraz porównanie metadanych M034.
+
+Końcowy build ma5/5 PASS129.34s: actor-animation, player-input-assets,
+camera, stat-assets oraz melissa-encounter (od New Game, zwycięstwo nad
+pierwszą Melissą i powrót sterowania). Replay Continue M032 → walka →
+przełącznik → M033/dialogi15–22 → M034/cap43000 przechodzi zwykły build
+i runtime ASan/UBSan/function. Oba mają identyczny pełny JSON i VRAM:
+SHA256 a7c3b0070625d8cd938d04f387344d96f5046c1edc0c763800f8c4f912ddc353.
+Kadr obejrzano: Aya, aligator i stylizowany komunikat „There are 2 targets!”.
+HP48/72, jeden przeciwnik, okno8 aktywne. To potwierdzenie wejścia do walki,
+nie zwycięstwa ani zakończenia dnia1. Dalszy input zwykłego builda zamknął
+okno i uruchomił akcje walki, lecz Aya zginęła; tej próby nie zaliczono jako
+przejścia starcia. Prywatny checkpoint M034 zachowano wyłącznie w /tmp;
+zapisy użytkownika nie były modyfikowane.
 
 Osobny PS1 zaakceptował także zapis M319 po drugiej Melissie wygenerowany
 przez oryginalne funkcje portu: HP21/64, zgodna pozycja Continue, Melissa

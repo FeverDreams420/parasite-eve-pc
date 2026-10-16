@@ -5,6 +5,7 @@
 #include "pe1/geom_state.h"
 #include "pe1/render_shadow.h"
 #include "pe1/room_fx_model.h"
+#include "pe1/room_glow_orb.h"
 #include "pe1/render_camera.h"
 #include "pe1/akao.h"
 #include "pe1/asset_tim.h"
@@ -450,6 +451,8 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomActorClassTable[4];
         if (map + 1 == 32 && slot == 73 && record[i].u.handlerAddress == 0x80192558u)
             native = &g_RoomActorClassTable[4];
+        if (map + 1 == 34 && slot == 8 && record[i].u.handlerAddress == 0x8018ff7cu)
+            native = &g_RoomGlowOrbHandlers;
         if (map + 1 == 23 && slot == 118 && record[i].u.handlerAddress == 0x80190720u)
             native = &g_RoomM023Effects;
         if (map + 1 == 5 && slot == 117 && record[i].u.handlerAddress == 0x80190b44u)
@@ -593,6 +596,13 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM023BeaconModel = NULL;
         } else if (map + 1 == 22) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];
+        } else if (map + 1 == 34 && slot == 8) {
+            g_PmCmdHandlerTable[slot] = &g_RoomGlowOrbHandlers;
+            g_RoomGlowOrbOwner = NULL;
+            memset(&g_RoomGlowOrbAxes, 0, sizeof(g_RoomGlowOrbAxes));
+            memset(&g_RoomGlowOrbOrigin, 0, sizeof(g_RoomGlowOrbOrigin));
+            memset(&g_RoomGlowOrbSprite, 0, sizeof(g_RoomGlowOrbSprite));
+            memset(&g_RoomGlowOrbFlashSprite, 0, sizeof(g_RoomGlowOrbFlashSprite));
         } else if ((map + 1 == 28 || map + 1 == 32) && slot == 73) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];
         } else {

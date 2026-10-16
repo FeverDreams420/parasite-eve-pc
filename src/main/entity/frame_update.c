@@ -315,9 +315,9 @@ void Entity_FrameUpdate(void) {
             if (entity->flags & 0x40) {
                 if (entity->flags & 0x2000) {
                     Render_TransformSkinnedVertices(&entity->render_object, g_EntityRenderScratch);
-                    entity->pos_x = (s16)entity->render_object.rotation_overrides[0].x << 16;
-                    entity->pos_y = (s16)entity->render_object.rotation_overrides[0].y << 16;
-                    entity->pos_z = (s16)entity->render_object.rotation_overrides[0].z << 16;
+                    entity->pos_x = (s32)((u32)(s16)entity->render_object.rotation_overrides[0].x << 16);
+                    entity->pos_y = (s32)((u32)(s16)entity->render_object.rotation_overrides[0].y << 16);
+                    entity->pos_z = (s32)((u32)(s16)entity->render_object.rotation_overrides[0].z << 16);
                 } else if (entity->model_state.allocation_active == 0) {
                     entity->render_object.hit_body.value0 = entity->pos_x >> 16;
                     entity->render_object.hit_body.value1 = entity->pos_y >> 16;

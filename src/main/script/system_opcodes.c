@@ -1304,16 +1304,16 @@ int Script_SignalSceneExit(int **unused) {
     return 1;
 }
 
-int Script_DrawSaveOverlay(unsigned short **arg0) {
-    Menu_SetTextCursorRect(*arg0[0], *arg0[1], *arg0[2], *arg0[3]);
+int Script_DrawSaveOverlay(int **arg0) {
+    Menu_SetTextCursorRect((u16)*arg0[0], (u16)*arg0[1], (u16)*arg0[2], (u16)*arg0[3]);
     return 1;
 }
 
-int Script_ResetEntityAnimSlot(short **arg0) {
+int Script_ResetEntityAnimSlot(int **arg0) {
     short local[8];
 
     local[0] = -1;
-    Render_SetupColorTable(*arg0[0], 1, local);
+    Render_SetupColorTable((s16)*arg0[0], 1, local);
     return 1;
 }
 

@@ -11,7 +11,8 @@
 #include "pe1/room_fx.h"
 #include "pe1/room_interface.h"
 #include "pe1/room_module.h"
-#include "pe1/room_spark.h"
+#include "pe1/field_actor.h"
+#include "pe1/fieldfx_state.h"
 
 /* The glow orb (src/overlays/room_lib/glow_orb.c, rooms m034,
  * m174 and m383): a camera-facing glow placed by the owner's matrix,
@@ -41,6 +42,9 @@ typedef struct RoomGlowOrb {
     /* 0x24 */ GteMatrix matrix;
 } RoomGlowOrb;
 
+PE1_STATIC_ASSERT(sizeof(RoomGlowOrb) == 0x44, room_glow_orb_size);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomGlowOrb, matrix) == 0x24, room_glow_orb_matrix);
+
 /* The spawner object: it records the script's yaw and drops the orb. */
 typedef struct RoomGlowOrbSpawner {
     /* 0x00 */ s16 pad00;
@@ -60,30 +64,38 @@ typedef struct RoomGlowOrbFlash {
 } RoomGlowOrbFlash;
 
 /* The owner's link record: its render node and its joint matrices. */
-typedef struct RoomGlowOrbLink {
-    /* 0x000 */ u32 *target;
-    /* 0x004 */ u8 pad004[0x234];
-    /* 0x238 */ GteMatrix *matrices;
-} RoomGlowOrbLink;
-
-typedef struct RoomGlowOrbObject {
-    /* 0x00 */ u8 pad00[8];
-    /* 0x08 */ RoomGlowOrbLink *link;
-} RoomGlowOrbObject;
+typedef FieldActor RoomGlowOrbLink;
+typedef FieldFxObject RoomGlowOrbObject;
 
 /* Per-room data, named in each room's symbol file: the module's script,
  * the owner's placement and origin matrices captured at start, the owner,
  * and the orb's and the flashes' sprite parameter blocks. The module's
  * handler lists and spawn layout are the room module lists
  * (pe1/room_module.h). */
-extern int g_RoomGlowOrbScript[];
+extern int g_RoomGlowOrbScript[35];
 extern GteMatrix g_RoomGlowOrbAxes;
 extern GteMatrix g_RoomGlowOrbOrigin;
 extern RoomGlowOrbLink *g_RoomGlowOrbOwner;
 extern RoomFxSpritePacket g_RoomGlowOrbSprite;
 extern RoomFxSpritePacket g_RoomGlowOrbFlashSprite;
 
-int RoomEffect_GlowOrbSetup(void *object);
+extern PmCommand g_RoomGlowOrbHandlers;
+void RoomEffect_GlowOrbSetup(PmSlotHeader *object);
+void RoomEffect_GlowOrbNop0(void);
+void RoomEffect_GlowOrbNop6(void);
+
+int RoomEffect_GlowOrbCaptureOwner(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbControllerDraw(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbControllerUpdate(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbSpawnerInit(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbSpawnerDraw(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbSpawnerUpdate(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbInit(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbDraw(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbUpdate(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbFlashInit(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbFlashDraw(void *object, void *slot, void *data);
+int RoomEffect_GlowOrbFlashUpdate(void *object, void *slot, void *data);
 
 int FieldFx_IsPointInSpriteQuad(GteShortVector *point, GteMatrix *matrix);
 int FieldFx_GetStatus(void *object);

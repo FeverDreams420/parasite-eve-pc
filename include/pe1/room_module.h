@@ -38,23 +38,23 @@ extern PmCommand g_RoomActorClassTable[6];
  * each word, -1 terminated). */
 extern int g_RoomScript[];
 /* Per-object handler lists, -1 terminated, one entry per object type. */
-extern RoomModuleHandler g_RoomDrawList[];
-extern RoomModuleHandler g_RoomUpdateList[];
-extern RoomModuleHandler g_RoomInitList[];
+extern FieldFxHandler g_RoomDrawList[];
+extern FieldFxHandler g_RoomUpdateList[];
+extern FieldFxHandler g_RoomInitList[];
 /* Spawn layout read with g_RoomInitList (object type and placement). */
 extern int g_RoomSpawnLayout[];
 
 int RoomLib_ClassNop0(void);
 int RoomLib_PlantScript(void *object);
-int RoomLib_Spawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
+int RoomLib_Spawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f);
 int RoomLib_RegisterDrawList(void *o);
 int RoomLib_RegisterPairedTables(void *o);
-int RoomLib_CloseTarget(struct RoomEnt *o);
+int RoomLib_CloseTarget(PmSlotHeader *slot);
 int RoomLib_ClassNop6(void);
 /* Variants some modules link in the registration and start slots: * the draw list and start only while the engine runs the object
  * (status 3). */
-int RoomLib_RegisterDrawListActive(void *o);
-int RoomLib_RegisterPairedTablesActive(void *o);
+int RoomLib_RegisterDrawListActive(PmSlotHeader *slot);
+int RoomLib_RegisterPairedTablesActive(PmSlotHeader *slot);
 int RoomLib_RegisterPairedTablesGated(void *o);
 
 /* Arguments the scene script hands the room's effects (the script's

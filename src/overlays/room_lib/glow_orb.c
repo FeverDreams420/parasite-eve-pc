@@ -14,74 +14,84 @@
 #include "pe1/field_collision.h"
 #include "pe1/gte.h"
 #include "pe1/room_glow_orb.h"
+#include <string.h>
+#include "pe1/player_entity.h"
 
 static const GteShortVector s_GlowOrbSpin = { 0xC00, 0, 0, 0 };
 static const GteVector s_GlowOrbFlashScale = { 0x448, 0x448, 0x448, 0 };
 
 /* Class slots 6 and 0. */
-int RoomEffect_GlowOrbNop6(void) {
-    return 0;
+void RoomEffect_GlowOrbNop6(void) {
 }
 
-int RoomEffect_GlowOrbNop0(void) {
-    return 0;
+void RoomEffect_GlowOrbNop0(void) {
 }
 
 /* Controller init: captures the owner's placement matrix, and the matrix
  * the orb starts from (the player's own when the owner is the player). */
-void RoomEffect_GlowOrbCaptureOwner(RoomGlowOrbObject *object) {
-    g_RoomGlowOrbOwner = object->link;
-    g_RoomGlowOrbAxes = g_RoomGlowOrbOwner->matrices[0];
-
-    g_RoomGlowOrbOrigin = g_RoomGlowOrbOwner->matrices[0x31];
-
-    if ((void *)object->link == (void *)D_8009D254) {
-        g_RoomGlowOrbOrigin = g_RoomGlowOrbOwner->matrices[0];
-    }
+int RoomEffect_GlowOrbCaptureOwner(void *data, void *slot, void *state) {
+    RoomGlowOrbObject *object = data;
+    g_RoomGlowOrbOwner = object->prefix.actor;
+    memcpy(&g_RoomGlowOrbAxes, &g_RoomGlowOrbOwner->render_object.matrices[0], sizeof(g_RoomGlowOrbAxes));
+    /* The player overrides matrix49 in retail; avoid its unobserved read
+     * beyond the player's native model matrix allocation. */
+    memcpy(&g_RoomGlowOrbOrigin,
+           &g_RoomGlowOrbOwner->render_object.matrices[g_RoomGlowOrbOwner == g_PlayerEntity ? 0 : 0x31],
+           sizeof(g_RoomGlowOrbOrigin));
+    return 0;
 }
 
-void RoomEffect_GlowOrbControllerDraw(void) {
+int RoomEffect_GlowOrbControllerDraw(void *object, void *slot, void *data) {
+    return 0;
 }
 
-void RoomEffect_GlowOrbControllerUpdate(void *object, RoomFallingParticleControl *control) {
+int RoomEffect_GlowOrbControllerUpdate(void *object, void *slot, void *data) {
+    RoomFallingParticleControl *control = slot;
     control->state = 2;
+    return 0;
 }
 
-void RoomEffect_GlowOrbSpawnerInit(void *object, void *control, RoomGlowOrbSpawner *spawner) {
+int RoomEffect_GlowOrbSpawnerInit(void *object, void *control, void *data) {
+    RoomGlowOrbSpawner *spawner = data;
     spawner->pad00 = 0;
     spawner->yaw = *FieldFx_RegPtr(4);
+    return 0;
 }
 
-void RoomEffect_GlowOrbSpawnerDraw(void) {
+int RoomEffect_GlowOrbSpawnerDraw(void *object, void *slot, void *data) {
+    return 0;
 }
 
 /* Restores the recorded yaw and drops the orb. */
-void RoomEffect_GlowOrbSpawnerUpdate(void *object, RoomFallingParticleControl *control,
-                                     RoomGlowOrbSpawner *spawner) {
+int RoomEffect_GlowOrbSpawnerUpdate(void *object, void *slot, void *data) {
+    RoomFallingParticleControl *control = slot;
+    RoomGlowOrbSpawner *spawner = data;
     int *yaw;
 
     yaw = FieldFx_RegPtr(4);
     *yaw = spawner->yaw;
     FieldFx_StartSlot(object, 2, (unsigned short *)g_RoomSpawnLayout, g_RoomInitList);
     control->state = 2;
+    return 0;
 }
 
-void RoomEffect_GlowOrbInit(void *object, void *slot, RoomGlowOrb *orb) {
-    GteShortVector tilt;
+int RoomEffect_GlowOrbInit(void *object, void *slot, void *data) {
+    RoomGlowOrb *orb = data;
+    GteShortVector tilt = {0};
     GteShortVector spin = s_GlowOrbSpin;
-    GteMatrix local;
-    GteShortVector turn;
-    GteMatrix base;
+    GteMatrix local = {0};
+    GteShortVector turn = {0};
+    GteMatrix base = {0};
     int *yaw;
 
     turn.x = 0;
     yaw = FieldFx_RegPtr(4);
-    turn.y = *yaw + *FieldFx_VarPtr(2);
+    turn.y = (s16)((u32)*yaw + (u32)*FieldFx_VarPtr(2));
     turn.z = 0;
     RotMatrixYXZ(&turn, &base);
     tilt.x = 0;
     tilt.y = 0;
-    tilt.z = -*FieldFx_VarPtr(0);
+    tilt.z = (s16)(0u - (u32)*FieldFx_VarPtr(0));
     ApplyMatrixSV(&g_RoomGlowOrbAxes, &tilt, &orb->offset);
     ApplyMatrixSV(&base, &orb->offset, &orb->offset);
     orb->matrix = g_RoomGlowOrbAxes;
@@ -99,6 +109,7 @@ void RoomEffect_GlowOrbInit(void *object, void *slot, RoomGlowOrb *orb) {
     RotMatrixYXZ(&spin, &local);
     gte_CompMatrix(&orb->matrix, &local, &orb->matrix);
     gte_CompMatrix(&base, &orb->matrix, &orb->matrix);
+    return 0;
 }
 
 /* Draw the glow orb: two scaled halo layers at the orb, a touch test
@@ -106,9 +117,12 @@ void RoomEffect_GlowOrbInit(void *object, void *slot, RoomGlowOrb *orb) {
  * stepping back along the orb's offset. The GNU constructor assignments
  * clear a temporary with memset and copy it, and the second scale lives in
  * a nested block so it takes the first temporary's freed stack slot. */
-void RoomEffect_GlowOrbDraw(RoomGlowOrbObject *object, u8 *slot, RoomGlowOrb *orb) {
+int RoomEffect_GlowOrbDraw(void *data, void *control, void *state) {
+    RoomGlowOrbObject *object = data;
+    u8 *slot = control;
+    RoomGlowOrb *orb = state;
     GteMatrix matrix;
-    GteShortVector point;
+    GteShortVector point = {0};
 
     FieldFx_SetSpriteTexturePreset(0);
     FieldFx_SetSpriteColorMode(0x10);
@@ -145,13 +159,13 @@ void RoomEffect_GlowOrbDraw(RoomGlowOrbObject *object, u8 *slot, RoomGlowOrb *or
             FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_RoomGlowOrbSprite, &matrix, 0);
         }
 
-        point.x = ((RoomSparkBattleEntity *)D_8009D254)->x.part.integer;
-        point.y = ((RoomSparkBattleEntity *)D_8009D254)->y.part.integer;
-        point.z = ((RoomSparkBattleEntity *)D_8009D254)->z.part.integer;
+        point.x = (s16)(g_PlayerEntity->pos_x >> 16);
+        point.y = (s16)(g_PlayerEntity->pos_y >> 16);
+        point.z = (s16)(g_PlayerEntity->pos_z >> 16);
         if (FieldFx_IsPointInSpriteQuad(&point, &matrix) != 0 && FieldFx_GetStatus(object) == 3) {
-            ((RoomSparkBattleEntity *)D_8009D254)->actor->flags |= 0x4000;
-            if (object->link != 0) {
-                *object->link->target |= 0x80000000;
+            g_PlayerEntity->state->flags |= 0x4000;
+            if (object->prefix.actor != 0) {
+                object->prefix.actor->state->flags |= 0x80000000;
             }
             slot[1] = 2;
         }
@@ -180,13 +194,15 @@ void RoomEffect_GlowOrbDraw(RoomGlowOrbObject *object, u8 *slot, RoomGlowOrb *or
         matrix.t[1] = orb->y - 0x100;
         FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_RoomGlowOrbSprite, &matrix, 0);
     }
+    return 0;
 }
 
 /* Drifts the orb by its offset and brightens it; every third frame over the
  * walkable area it leaves a flash on the floor, and it ends once it leaves
  * the area. */
-void RoomEffect_GlowOrbUpdate(void *owner, RoomFallingParticleControl *control,
-                              RoomFallingParticleState *state) {
+int RoomEffect_GlowOrbUpdate(void *owner, void *slot, void *data) {
+    RoomFallingParticleControl *control = slot;
+    RoomFallingParticleState *state = data;
     u16 *spawn;
 
     state->x += state->velocityX;
@@ -198,7 +214,7 @@ void RoomEffect_GlowOrbUpdate(void *owner, RoomFallingParticleControl *control,
     }
 
     state->frame++;
-    if (Geo_PointInPoly((s16)state->x << 16, (s16)state->z << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount)) {
+    if (Geo_PointInPoly((s32)((u32)(s16)state->x << 16), (s32)((u32)(s16)state->z << 16), g_FloorPolygonVertices, g_FloorPolygonVertexCount)) {
         if ((s8)state->frame % 3 == 0) {
             spawn = FieldFx_StartSlot(owner, 3, (unsigned short *)g_RoomSpawnLayout, g_RoomInitList);
             if (spawn != 0) {
@@ -209,19 +225,23 @@ void RoomEffect_GlowOrbUpdate(void *owner, RoomFallingParticleControl *control,
         }
     }
 
-    if (!Geo_PointInPoly((s16)state->x << 16, (s16)state->z << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount)) {
+    if (!Geo_PointInPoly((s32)((u32)(s16)state->x << 16), (s32)((u32)(s16)state->z << 16), g_FloorPolygonVertices, g_FloorPolygonVertexCount)) {
         control->state = 2;
         state->active = 0;
     }
+    return 0;
 }
 
-void RoomEffect_GlowOrbFlashInit(void *object, void *control, RoomGlowOrbFlash *flash) {
+int RoomEffect_GlowOrbFlashInit(void *object, void *control, void *data) {
+    RoomGlowOrbFlash *flash = data;
     flash->timer = 0;
     flash->depth = 0x80;
+    return 0;
 }
 
-void RoomEffect_GlowOrbFlashDraw(void *object, void *control, RoomGlowOrbFlash *flash) {
-    GteMatrix matrix;
+int RoomEffect_GlowOrbFlashDraw(void *object, void *control, void *data) {
+    RoomGlowOrbFlash *flash = data;
+    GteMatrix matrix = {0};
     GteVector scale;
     s16 *depth;
 
@@ -251,10 +271,12 @@ void RoomEffect_GlowOrbFlashDraw(void *object, void *control, RoomGlowOrbFlash *
     scale = s_GlowOrbFlashScale;
     ScaleMatrix(&matrix, &scale);
     FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_RoomGlowOrbFlashSprite, &matrix, 1);
+    return 0;
 }
 
-void RoomEffect_GlowOrbFlashUpdate(void *object, RoomFallingParticleControl *control,
-                                   RoomGlowOrbFlash *flash) {
+int RoomEffect_GlowOrbFlashUpdate(void *object, void *slot, void *data) {
+    RoomFallingParticleControl *control = slot;
+    RoomGlowOrbFlash *flash = data;
     flash->timer++;
 
     if (flash->timer >= 0x15) {
@@ -264,4 +286,5 @@ void RoomEffect_GlowOrbFlashUpdate(void *object, RoomFallingParticleControl *con
     if (flash->depth >= 9) {
         flash->depth -= 8;
     }
+    return 0;
 }

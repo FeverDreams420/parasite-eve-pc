@@ -460,6 +460,32 @@ Artefakty /tmp/pe-m086-final-entry-{normal,san}.log i katalogi,
 Dalszy input na debug v1 (przed samymi castami char* i rozszerzeniem
 fixture) uruchamia walkę przy24680: cztery typ3/120HP, defense13.
 To jeszcze nie jest zwycięstwo ani pełny dowód przebiegu tej walki.
+Dalszy rzeczywisty input w M086 otwiera battle root (Items/PE/Weapon/
+Armor/Escape). Pierwsze wejście do Armor było błędem sterowania, wrócono
+Circle; później dynamiczny pomocnik odczytuje bieżący kursor zamiast
+zakładać jego wiersz. Cztery próby Escape nie kończą walki; HP69→49→19,
+przy26780 wszystkie4 typ3 nadal żyją, escape counter4. Odczyt rzeczywistych
+core.statusFlags2 każdego wroga daje00552555, w tym bit00040000:
+Battle_RollEscapeChance zwraca−1 dla zakazu ucieczki przed losowaniem.
+To oryginalne ograniczenie tej walki, nie powód do zmiany prawdopodobieństwa
+ani flag wroga. Późna próba Heal1 nie zwiększyła HP przed śmiercią przy27356;
+przy27436 HP0/mode3. Nie zaliczamy zwycięstwa ani poprawnego ukończenia
+leczenia. Pełny input /tmp/pe-m086-first-loss-args.json i
+/tmp/pe-m086-v1-input.jsonl, log /tmp/pe-m086-v1-live-lldb.log; proces zabity
+po diagnostyce, bez zmiany zapisów.
+
+Cold H→cztery odmowy Escape/cap26780 na final PASS normalnie i z
+ASan/UBSan/function: cały JSON i1MiB VRAM identyczne, SHA256
+85f621a32c9ad6ea5d0e865747d989627af567e22ee3cde497909bd31fb4fb9d.
+M086, HP19/133, live4/mode0, flags130/lock4, menu zamknięte. Wszystkie
+prywatne B–H niezmienione. Obraz obejrzany. To zintegrowany przebieg ataków
+wrogów i odmów ucieczki, nie zwycięstwo ani dowód wszystkich wariantów
+ich efektów. Artefakty /tmp/pe-m086-escape-four-{normal,san}.log i katalogi,
+/tmp/pe-m086-escape-four-args.json, verify.py i proof.json. Debug final
+/tmp/pe-m086-escape-four-live-lldb.log odtwarza26780 i potwierdza bit blokady.
+Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym
+leczeniem/przygotowaniem i skuteczniejszym unikaniem pocisków, bez zmiany
+stanu gry przez debugger. Nadal nie ma dowodu pełnej kampanii.
 Następnie kontynuować kampanię. Pełna kampania i pełny zakres celu
 pozostają nieukończone. Użytkowe bu00/ i bu10/ nietknięte.
 

@@ -573,6 +573,54 @@ nie dołożono dalszych wymuszeń HP. Następne kroki: zbadać tę walkę i
 kolejne oryginalne moduły, a niezależnie uzyskać zwykłe przejście M086 odH
 oraz pełny replay kampanii bez wymuszeń. Nadal nie ma dowodu całej gry.
 
+Kontynuacja tej samej diagnostycznej postaci kończy walkę z Eve w M089
+przez zwykły input, bez dalszych zmian HP od40458. HP181→163 po pierwszej
+serii, potem realne ataki i Heal2; końcowe HP11/181. Pełny skrypt Eve
+potwierdza dodawanie1000000 do puli zdrowia i porównanie z tym progiem
+(opcode89/44 i EvalExpr przy12940–12980); nie jest to brakujący cap obrażeń.
+Przeciwniczka dochodzi do1000000, gra kończy walkę i otwiera dialog64.
+Początkowy pusty celownik był błędem testowego sterowania: Eve jeszcze nie
+była dostępna na liście celów. Circle i odczekanie przywróciły normalny atak.
+
+Pełny przypadek /tmp/pe-m089-battle-coverage-case.json obejmuje1380
+odcinków inputu26756→46498 i dokładnie te same15 wcześniejszych wymuszeń
+HP. Zimny ContinueH→M086→M088→M089→dialog64 powtórzony normalnie i pod
+ASan/UBSan/function: cały JSON i1MiB VRAM identyczne, SHA256
+616a223a736cc88f574013d395033fcc47bb0d99ac545e44b508d8dceeaf08ea.
+Przy46498: M089/A80084C8, stage272, flags128/lock1, battle12,
+zero żywych przeciwników, HP11/181, dialog64/state2, menu zamknięte.
+Wyposażenie9/14 i lista przedmiotów zgodne, Defense+1 w slotach19/20.
+Wszystkie prywatne B–H byte-identical do checkpointu, bu10 puste.
+Obraz obejrzany. To nadal fixture pokrycia, NIE zwykły pełny replay kampanii:
+coverage_only=true i ordinary_campaign_proof=false w dowodzie.
+Artefakty /tmp/pe-m089-battle-coverage-{normal,san}.log i katalogi,
+/tmp/pe-m089-battle-coverage-verify.py, proof.json oraz
+/tmp/pe-m089-battle-coverage-normal/frame.png. Oba procesy terminal0;
+logi bez błędów sanitizerów. /tmp/pe_safe_host_control.py używa breakpointu
+przed warunkiem limitu (init.c:73) i normalnego Continue przez powrót C;
+nie używa ReturnFromFrame ani ręcznego zdejmowania ramek ASan.
+
+Dalszy diagnostyczny input: dialogi po M089, M367, M058/dialog71, następne
+sceny i dialogi18–24. Startup M126 zatrzymuje się na brakującym native
+slot122/8018fd00, status−2. Żądany koniec67826 nie został osiągnięty;
+/tmp/pe-m126-entry-coverage-case.json zapisuje attempted_end oraz błąd,
+pełny prefix,1546 odcinków i15 jawnych wymuszeń HP z początku przebiegu.
+Log /tmp/pe-m089-v1-coverage-live-lldb.log. Proces zakończony, debugger
+zamknięty. Nie zapisano kanonicznego checkpointu z tej postaci.
+
+Kod M126 jest już w istniejącym room_lib/dropped_flare.c: cały obiekt
+trzech funkcji (cząstka, emiter, inicjalizator), nie należy tworzyć nowych
+plików ani przepisywać go. Audyt /tmp/pe-m126-module-audit.json potwierdza
+pełne3408 bajtów identyczne w M126/M129/M139/M149/M326:
+SHA256a0bbfc2d681b733082dafd768b10e3c187b25d3c9ac354727775acbc89e1401a.
+Slot122 ma callback8018f9f8, stan16, initializer8018fcc0 i script8018fcdc.
+Pozostałe8 pokoi z tym slotem mają trzy większe warianty modułu; nie są
+objęte tym dowodem identyczności całego modułu i nie należy wiązać ich
+na podstawie samego numeru slotu. Następna naprawa: cały dropped_flare.c
+w miejscu, rzeczywiste natywne struktury oraz pełne dane/skrypt, CPU/PM
+fixtures i odtworzenie wejścia M126. Nadal wymagane zwykłe ukończenie M086
+odH i pełne przejście kampanii bez wymuszeń.
+
 Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym
 leczeniem/przygotowaniem i skuteczniejszym unikaniem pocisków, bez zmiany
 stanu gry przez debugger. Nadal nie ma dowodu pełnej kampanii.

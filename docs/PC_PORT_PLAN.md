@@ -23,6 +23,13 @@ metod PM,21 wpisów callbacków, rozmiary, skrypt i obie rampy kolorów.
 3136 stanów czterech inicjalizatorów zgadza się z niehookowanym kodem
 CPU USA, także przy zawężaniu signed rejestrów i losowości BIOS
 (hash a5f62be2508a87fd); sprawdzany jest cały512-bajtowy bufor.
+Dodatkowe2592 stany trzech aktualizacji sprite'ów zgadzają się z
+niehookowanym CPU USA (f7d6259fe0896699): cztery ziarna RNG, cztery
+wypełnienia całego bufora, signed wiek slotu, indeksy macierzy0/13 oraz
+współrzędne−32768/32767/40000. Fixture sprawdza także cały kontroler;
+na PC używa rzeczywistego szerokiego wskaźnika właściciela. Nowy korpus
+przechodzi normalnie i pod ASan/UBSan/function. Nie obejmuje aktualizacji
+używającej GTE ani rysowania wszystkich wariantów.
 Zwykły replay Continue E/cap38000 kończy dialogi przy bramie Central
 Parku, oddaje sterowanie, ma etap232 i HP92/92. Nie oznacza to jeszcze
 przejścia całego parku ani weryfikacji obrazu wszystkich wariantów efektu.

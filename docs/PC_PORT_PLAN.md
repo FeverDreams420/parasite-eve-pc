@@ -33,8 +33,10 @@ wczytuje M059 i oddaje sterowanie, etap232, HP92/92, broń9/pancerz1,
 pozycja[−271974400,0,20381696], obrót3952 zgodne z oryginalnym PS1.
 Cały JSON i1MiB VRAM są identyczne z kandydatem sprzed poprawki
 arytmetyki (1f74fda52e8a450a2a268087ea6a5ae3f4c138908df26bd54d5aaa0ee1e44aa1).
-PrywatneB/C/D/E pozostają niezmienione. Pełny replay ASan/UBSan/function
-do tego punktu nadal trwa; nie uznaje się go jeszcze za zaliczony.
+PrywatneB/C/D/E pozostają niezmienione. Ten sam pełny replay
+ASan/UBSan/function zakończył się PASS: cały JSON i1MiB VRAM identyczne
+ze zwykłym buildem, wszystkie cztery prywatne zapisy bez zmian.
+To świeży dowód przejścia do M059, nie całego parku ani dnia2.
 
 
 Świeże testy z wymaganym Disc 1 potwierdzają wejście do walki z Melissą

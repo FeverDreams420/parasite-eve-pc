@@ -213,26 +213,26 @@ typedef RenderSparkEmitter RenderSineEmitter;
 PE1_STATIC_ASSERT(sizeof(RenderSineEmitter) == 0xC, render_sine_emitter_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderSineEmitter, phase) == 8,
                   render_sine_emitter_phase);
-int FieldFx_SineEmitter(int mode, RenderSineEmitter *state);
+int FieldFx_SineEmitter(int mode, void *data, intptr_t argument);
 
 extern u8 g_SineSweepColorTrack[];
 extern GteShortVector g_SineEffectAnchor;
-int FieldFx_SineSweepTriangle(int mode, RenderSineEffect *state);
+int FieldFx_SineSweepTriangle(int mode, void *data, intptr_t argument);
 
 extern u8 g_CosineEffectColorTrack[];
 extern int g_SparkEmitterPhaseSeed;
 extern u8 g_RingFlashColorTrack[], g_RingFlashInnerColorTrack[];
-int FieldFx_RingFlash(int mode, RenderSparkEmitter *state);
+int FieldFx_RingFlash(int mode, void *data, intptr_t argument);
 extern u8 g_JitterSpriteColorTrack[];
 extern u8 g_RisingJitterColorTrack[];
-int FieldFx_RisingJitterSprite(int mode, GteShortVector *state);
-int FieldFx_RisingJitterEmitter(int mode, GteShortVector *state);
-int FieldFx_JitterSprite(int mode, GteShortVector *state);
-int FieldFx_JitterSpriteEmitter(int mode, GteShortVector *state);
-int FieldFx_CosineEffect(int mode, RenderCosineEffect *effect);
+int FieldFx_RisingJitterSprite(int mode, void *data, intptr_t argument);
+int FieldFx_RisingJitterEmitter(int mode, void *data, intptr_t argument);
+int FieldFx_JitterSprite(int mode, void *data, intptr_t argument);
+int FieldFx_JitterSpriteEmitter(int mode, void *data, intptr_t argument);
+int FieldFx_CosineEffect(int mode, void *data, intptr_t argument);
 
 extern u8 g_RotatingEffectColorTrack[];
-int FieldFx_RotatingEffect(int mode);
+int FieldFx_RotatingEffect(int mode, void *data, intptr_t argument);
 
 extern RenderColor g_FieldFxGlowFountainTint;
 extern RenderColor g_FieldFxCosineEffectTint;
@@ -255,8 +255,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderDiamondEmitter, radius) == 24,
 PE1_STATIC_ASSERT(sizeof(RenderDiamondParticle) == 12, render_diamond_particle_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderDiamondParticle, color_time) == 10,
                   render_diamond_particle_color_time);
-int FieldFx_DiamondParticle(int mode, RenderDiamondParticle *state);
-int FieldFx_DiamondEmitter(int mode, RenderDiamondEmitter *state);
+int FieldFx_DiamondParticle(int mode, void *data, intptr_t argument);
+int FieldFx_DiamondEmitter(int mode, void *data, intptr_t argument);
 
 /* The emitter at 0x800DDD70 allocates this 16-byte callback state. */
 typedef struct RenderSettlingSprite {
@@ -271,8 +271,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderSettlingSprite, phase) == 12,
 extern GteShortVector g_SettlingSpriteAnchor;
 extern u8 g_SettlingEmitterColorTrack[];
 extern u8 g_SettlingSpriteColorTrack[];
-int FieldFx_SettlingSprite(int mode, RenderSettlingSprite *state);
-int FieldFx_SettlingEmitter(int mode, GteShortVector *state);
+int FieldFx_SettlingSprite(int mode, void *data, intptr_t argument);
+int FieldFx_SettlingEmitter(int mode, void *data, intptr_t argument);
 
 /* 0x800DD76C allocates 16-byte particles for 0x800DD380. */
 typedef struct RenderConvergingSprite {
@@ -290,8 +290,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderConvergingSprite, phase) == 14,
 PE1_STATIC_ASSERT(sizeof(RenderConvergingEmitter) == 16, render_converging_emitter_size);
 extern GteShortVector g_ConvergingSpriteAnchor;
 extern u8 g_ConvergingSpriteColorTrack[];
-int FieldFx_ConvergingSprite(int mode, RenderConvergingSprite *state);
-int FieldFx_ConvergingEmitter(int mode, RenderConvergingEmitter *state);
+int FieldFx_ConvergingSprite(int mode, void *data, intptr_t argument);
+int FieldFx_ConvergingEmitter(int mode, void *data, intptr_t argument);
 
 /* Callback 0x800DCCCC and its emitter 0x800DCE94 use a 16-byte payload.
  * The rotation prefix is passed directly to RotMatrixYXZ by 0x800D2370. */
@@ -308,15 +308,15 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderTiltingSprite, initial_tilt) == 12,
                   render_tilting_sprite_initial_tilt);
 extern u8 g_TiltingSpriteColorTrack[];
 extern GteShortVector g_TiltingSpriteAnchor;
-int FieldFx_TiltingSprite(int mode, RenderTiltingSprite *state);
-int FieldFx_TiltingSpriteEmitter(int mode, RenderSparkEmitter *state);
+int FieldFx_TiltingSprite(int mode, void *data, intptr_t argument);
+int FieldFx_TiltingSpriteEmitter(int mode, void *data, intptr_t argument);
 
 extern RenderColor g_FieldFxArcingSparkTint;
 extern RenderColor g_FieldFxOrbitHelicalTint;
 extern RenderColor g_FieldFxDampedSparkTint;
 extern RenderColor g_FieldFxSparkOuterTint;
 extern RenderColor g_FieldFxSparkInnerTint;
-int FieldFx_CosineEmitter(int mode, RenderSparkEmitter *state);
+int FieldFx_CosineEmitter(int mode, void *data, intptr_t argument);
 
 
 void LoadAverageCol(void *first, void *second, int first_scale,
@@ -325,11 +325,11 @@ void LoadAverageCol(void *first, void *second, int first_scale,
 
 extern u8 g_OrbitTrailColorTrack[];
 extern u8 g_DriftingEffectColorTrack[];
-int FieldFx_DriftingEffect(int mode, GteShortVector *position);
-int FieldFx_DriftingEmitter(int mode, GteShortVector *position);
+int FieldFx_DriftingEffect(int mode, void *data, intptr_t argument);
+int FieldFx_DriftingEmitter(int mode, void *data, intptr_t argument);
 extern u8 g_StarFanRingGlowColorTrack[];
 extern u8 g_StarFanRingGlowSpinColorTrack[];
-int FieldFx_StarFanRingGlow(int mode, RenderSparkEmitter *state);
+int FieldFx_StarFanRingGlow(int mode, void *data, intptr_t argument);
 int FieldFx_OrbitTrailPoint(int mode, void *data, intptr_t argument);
 
 
@@ -761,8 +761,8 @@ extern s16 g_FadeEmitterIntensity;
  * track of its falling sparks. */
 extern GteShortVector g_FieldFxZeroOffset;
 extern u8 g_FadeParticleColorTrack[];
-int FieldFx_FadeParticle(int mode, RenderFadeParticle *particle);
-int FieldFx_FadeEmitter(int mode, RenderFadeEmitter *state);
+int FieldFx_FadeParticle(int mode, void *data, intptr_t argument);
+int FieldFx_FadeEmitter(int mode, void *data, intptr_t argument);
 
 /* Original 0x800B0CEC is the embedded object at game state +0x14.
  * Callers use the canonical state declared by pe1/game_state.h. */

@@ -383,7 +383,6 @@ int StoreImage(RECT *rect, void *pixels);
 void FieldFx_SampleColorTrack(void *key, void *color, int time)
 {
     RenderColorTrack *track = (RenderColorTrack *)key;
-    /* Matching debt: retain the retail count across initialization. */
     int count = track->count;
     int i, total, length;
     key = (unsigned char *)key + 8;
@@ -417,7 +416,8 @@ void FieldFx_SampleColorTrack(void *key, void *color, int time)
     }
     total = ((RenderColorKey *)key)->timing.length;
     length = time - ((RenderColorKey *)key)->timing.start;
-    length = (length << 12) / total;
+    /* MIPS sll wraps to 32 bits, including negative inherited key times. */
+    length = (s32)((u32)length << 12) / total;
     LoadAverageCol(key, (RenderColorKey *)key + 1, 4096 - length, length, color);
 }
 

@@ -14,6 +14,6 @@ typedef struct FieldSpinGlow {
 
 PE1_STATIC_ASSERT(sizeof(FieldSpinGlow) == 0x10, field_spin_glow_size);
 
-int FieldFx_SpinGlow(int mode, FieldSpinGlow *state);
+int FieldFx_SpinGlow(int mode, void *data, intptr_t argument);
 
 #endif

@@ -12,8 +12,9 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_prim.h"
 
-int SPINNING_MODEL_FUNC(int mode, FieldFxSpinningModel *state)
+int SPINNING_MODEL_FUNC(int mode, void *data, intptr_t argument)
 {
+    FieldFxSpinningModel *state = data;
     GteShortVector angles;
     GteMatrix matrix;
     GteVector scale;

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe1/geom_state.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/field_actor.h"
 #include "pe1/field_fade_particle.h"
@@ -13,7 +14,9 @@
 #include "pe1/render_object.h"
 #include "pe1/render_prim.h"
 
-int FieldFx_CosineEffect(int mode, RenderCosineEffect *effect) {
+int FieldFx_CosineEffect(int mode, void *data, intptr_t argument)
+{
+    RenderCosineEffect *effect = data;
     u32 color;
 
     switch (mode) {
@@ -32,8 +35,9 @@ int FieldFx_CosineEffect(int mode, RenderCosineEffect *effect) {
     return 0;
 }
 
-int FieldFx_CosineEmitter(int mode, RenderSparkEmitter *state)
+int FieldFx_CosineEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderSparkEmitter *state = data;
     GteShortVector position;
     RenderColor first = g_FieldFxSparkOuterTint;
     RenderColor second = g_FieldFxSparkInnerTint;
@@ -75,8 +79,9 @@ int FieldFx_CosineEmitter(int mode, RenderSparkEmitter *state)
     return 0;
 }
 
-int FieldFx_SineSweepTriangle(int mode, RenderSineEffect *state)
+int FieldFx_SineSweepTriangle(int mode, void *data, intptr_t argument)
 {
+    RenderSineEffect *state = data;
     RenderColor color;
     switch (mode) {
     case 1:
@@ -97,8 +102,9 @@ int FieldFx_SineSweepTriangle(int mode, RenderSineEffect *state)
     return 0;
 }
 
-int FieldFx_SineEmitter(int mode, RenderSineEmitter *state)
+int FieldFx_SineEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderSineEmitter *state = data;
     RenderSineEffect *effect;
     switch (mode) {
     case 0:
@@ -137,7 +143,7 @@ void FieldFx_DrawDiamondOutline(GteShortVector *position, int x, int y, int angl
     RenderLinePacket *line;
     int r, g, b, dx, dy;
     line = (RenderLinePacket *)(D_800B0E38.packets[g_ActiveDrawSlot] + g_DrawPacketOffset);
-    g_DrawPacketOffset += 64;
+    g_DrawPacketOffset += 4 * sizeof(*line);
     gte_lwc2_0_0(position);
     gte_lwc2_1_4(position);
     gte_rtps();
@@ -176,8 +182,9 @@ void FieldFx_DrawDiamondOutline(GteShortVector *position, int x, int y, int angl
 #undef EDGE
 }
 
-int FieldFx_DiamondParticle(int mode, RenderDiamondParticle *state)
+int FieldFx_DiamondParticle(int mode, void *data, intptr_t argument)
 {
+    RenderDiamondParticle *state = data;
     RenderColor color;
     int fade;
     switch (mode) {
@@ -193,8 +200,9 @@ int FieldFx_DiamondParticle(int mode, RenderDiamondParticle *state)
     return 0;
 }
 
-int FieldFx_DiamondEmitter(int mode, RenderDiamondEmitter *state)
+int FieldFx_DiamondEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderDiamondEmitter *state = data;
     RenderColor color;
     RenderDiamondParticle *particle;
     int phase;
@@ -244,8 +252,9 @@ int FieldFx_DiamondEmitter(int mode, RenderDiamondEmitter *state)
     return 0;
 }
 
-int FieldFx_RingFlash(int mode, RenderSparkEmitter *state)
+int FieldFx_RingFlash(int mode, void *data, intptr_t argument)
 {
+    RenderSparkEmitter *state = data;
     GteShortVector position;
     RenderColor color;
     int scale;
@@ -277,8 +286,9 @@ int FieldFx_RingFlash(int mode, RenderSparkEmitter *state)
     return 0;
 }
 
-int FieldFx_JitterSprite(int mode, GteShortVector *state)
+int FieldFx_JitterSprite(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
     RenderColor color;
     GteRotation rotation;
     int scale, palette;
@@ -306,8 +316,9 @@ int FieldFx_JitterSprite(int mode, GteShortVector *state)
     return 0;
 }
 
-int FieldFx_JitterSpriteEmitter(int mode, GteShortVector *state)
+int FieldFx_JitterSpriteEmitter(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
     GteShortVector *particle;
     switch (mode) {
     case 0:
@@ -343,11 +354,9 @@ int FieldFx_JitterSpriteEmitter(int mode, GteShortVector *state)
     return 0;
 }
 
-/* Matching debt: 3 GTE transfer pins, 4 empty constraints, and the three
- * TU-local reservations above. The unpinned matrix pointer lets
- * GCC reuse t1 for constant-division multiply-high results. */
-int FieldFx_TwinModelEffect(int mode, FieldFxTwinModel *state)
+int FieldFx_TwinModelEffect(int mode, void *data, intptr_t argument)
 {
+    FieldFxTwinModel *state = data;
     GteShortVector angles;
     GteShortVector position;
     GteVector scale;
@@ -470,8 +479,9 @@ int FieldFx_TwinModelEffect(int mode, FieldFxTwinModel *state)
     return 0;
 }
 
-int FieldFx_RisingJitterSprite(int mode, GteShortVector *state)
+int FieldFx_RisingJitterSprite(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
     RenderColor color;
     GteRotation rotation;
     int scale, palette;
@@ -501,8 +511,9 @@ int FieldFx_RisingJitterSprite(int mode, GteShortVector *state)
     return 0;
 }
 
-int FieldFx_RisingJitterEmitter(int mode, GteShortVector *state)
+int FieldFx_RisingJitterEmitter(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
     GteShortVector *particle;
     switch (mode) {
     case 0:
@@ -536,7 +547,9 @@ int FieldFx_RisingJitterEmitter(int mode, GteShortVector *state)
     return 0;
 }
 
-int FieldFx_DriftingEffect(int mode, GteShortVector *position) {
+int FieldFx_DriftingEffect(int mode, void *data, intptr_t argument)
+{
+    GteShortVector *position = data;
     RenderColor color;
     GteRotation rotation;
     int scale;
@@ -566,8 +579,9 @@ int FieldFx_DriftingEffect(int mode, GteShortVector *position) {
     return 0;
 }
 
-int FieldFx_DriftingEmitter(int mode, GteShortVector *state)
+int FieldFx_DriftingEmitter(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
     GteShortVector *particle;
     switch (mode) {
     case 0:
@@ -601,8 +615,9 @@ int FieldFx_DriftingEmitter(int mode, GteShortVector *state)
     return 0;
 }
 
-int FieldFx_TiltingSprite(int mode, RenderTiltingSprite *state)
+int FieldFx_TiltingSprite(int mode, void *data, intptr_t argument)
 {
+    RenderTiltingSprite *state = data;
     RenderColor color;
     int u, v, palette;
     switch (mode) {
@@ -627,8 +642,9 @@ int FieldFx_TiltingSprite(int mode, RenderTiltingSprite *state)
     return 0;
 }
 
-int FieldFx_TiltingSpriteEmitter(int mode, RenderSparkEmitter *state)
+int FieldFx_TiltingSpriteEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderSparkEmitter *state = data;
     GteShortVector position;
     RenderColor color;
     RenderTiltingSprite *particle;
@@ -681,8 +697,9 @@ int FieldFx_TiltingSpriteEmitter(int mode, RenderSparkEmitter *state)
     return 0;
 }
 
-int FieldFx_StarFanRingGlow(int mode, RenderSparkEmitter *state)
+int FieldFx_StarFanRingGlow(int mode, void *data, intptr_t argument)
 {
+    RenderSparkEmitter *state = data;
     GteShortVector position;
     GteRotation rotation;
     RenderColor color;
@@ -716,8 +733,9 @@ int FieldFx_StarFanRingGlow(int mode, RenderSparkEmitter *state)
     return 0;
 }
 
-int FieldFx_ConvergingSprite(int mode, RenderConvergingSprite *state)
+int FieldFx_ConvergingSprite(int mode, void *data, intptr_t argument)
 {
+    RenderConvergingSprite *state = data;
     RenderColor color __attribute__((aligned(4)));
     GteRotation rotation;
     GteShortVector position;
@@ -777,8 +795,9 @@ int FieldFx_ConvergingSprite(int mode, RenderConvergingSprite *state)
     return 0;
 }
 
-int FieldFx_ConvergingEmitter(int mode, RenderConvergingEmitter *state)
+int FieldFx_ConvergingEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderConvergingEmitter *state = data;
     RenderConvergingSprite *particle;
     switch (mode) {
     case 0:
@@ -821,8 +840,9 @@ int FieldFx_ConvergingEmitter(int mode, RenderConvergingEmitter *state)
     return 0;
 }
 
-int FieldFx_SettlingSprite(int mode, RenderSettlingSprite *state)
+int FieldFx_SettlingSprite(int mode, void *data, intptr_t argument)
 {
+    RenderSettlingSprite *state = data;
     RenderColor color;
     GteShortVector position;
     int scale;
@@ -883,8 +903,9 @@ int FieldFx_SettlingSprite(int mode, RenderSettlingSprite *state)
     return 0;
 }
 
-int FieldFx_SettlingEmitter(int mode, GteShortVector *state)
+int FieldFx_SettlingEmitter(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
     GteShortVector position;
     RenderColor color;
     RenderSettlingSprite *particle;
@@ -943,8 +964,9 @@ int FieldFx_SettlingEmitter(int mode, GteShortVector *state)
 /* Mode 0 anchors at actor point 19; mode 1 runs 25 frames; mode 2 flashes
  * the screen, swells the model for 16 frames and draws the fan, band and
  * quad while the burst lasts. */
-int FieldFx_FlashBurst(int mode, FieldFlashBurst *state)
+int FieldFx_FlashBurst(int mode, void *data, intptr_t argument)
 {
+    FieldFlashBurst *state = data;
     GteVector scale;
     RenderColor color;
     GteMatrix matrix;
@@ -1056,8 +1078,9 @@ int FieldFx_FlashBurst(int mode, FieldFlashBurst *state)
 
 /* Mode 1 moves the glow with damped horizontal speed and gravity for 32
  * ticks; mode 2 draws a pulsing spinning sprite with a fainter halo. */
-int FieldFx_SpinGlow(int mode, FieldSpinGlow *state)
+int FieldFx_SpinGlow(int mode, void *data, intptr_t argument)
 {
+    FieldSpinGlow *state = data;
     GteShortVector position;
     GteRotation rotation;
     int scale;
@@ -1105,8 +1128,9 @@ int FieldFx_SpinGlow(int mode, FieldSpinGlow *state)
 /* Mode 0 anchors at the owner actor and opens a pool of 32 spin glows;
  * mode 1 throws two glows per frame for 16 frames and ends at frame 48;
  * mode 2 draws the rising shape quad, the opening ring and the band. */
-int FieldFx_GlowFountain(int mode, FieldGlowFountain *state)
+int FieldFx_GlowFountain(int mode, void *data, intptr_t argument)
 {
+    FieldGlowFountain *state = data;
     GteRotation rotation;
     GteShortVector vector;
     RenderColor tint = g_FieldFxGlowFountainTint;
@@ -1124,7 +1148,7 @@ int FieldFx_GlowFountain(int mode, FieldGlowFountain *state)
         state->y = g_FieldFxOwner->actor->render_object.target_y;
         state->z = g_FieldFxOwner->actor->render_object.target_z;
         return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 16, 32,
-                             (FieldEffectCallback)FieldFx_SpinGlow);
+                             FieldFx_SpinGlow);
     case 1:
         if (g_FieldFxCurrentAge < 16) {
             glow = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
@@ -1213,8 +1237,9 @@ int FieldFx_GlowFountain(int mode, FieldGlowFountain *state)
  * falling spark (phase 2, one in three) or a drifting one (phase 1);
  * phases 1 and 2 drift for 16 and 24 frames. Mode 2 draws each phase as a
  * shape quad capped at the emitter's intensity g_FadeEmitterIntensity. */
-int FieldFx_FadeParticle(int mode, RenderFadeParticle *particle)
+int FieldFx_FadeParticle(int mode, void *data, intptr_t argument)
 {
+    RenderFadeParticle *particle = data;
     GteShortVector offset = g_FieldFxZeroOffset;
     RenderColor color;
     RenderFadeParticle *child;
@@ -1337,8 +1362,9 @@ int FieldFx_FadeParticle(int mode, RenderFadeParticle *particle)
     return 0;
 }
 
-int FieldFx_FadeEmitter(int mode, RenderFadeEmitter *state)
+int FieldFx_FadeEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderFadeEmitter *state = data;
     RenderFadeParticle *particle;
     u16 intensity, page;
     switch (mode) {
@@ -1383,7 +1409,8 @@ int FieldFx_FadeEmitter(int mode, RenderFadeEmitter *state)
     return 0;
 }
 
-int FieldFx_RotatingEffect(int mode) {
+int FieldFx_RotatingEffect(int mode, void *data, intptr_t argument)
+{
     GteShortVector position;
     GteRotation rotation;
     u32 color;
@@ -1413,7 +1440,9 @@ int FieldFx_RotatingEffect(int mode) {
     return 0;
 }
 
-int FieldFx_PointEmitter(int mode, FieldFxEmitter *state) {
+int FieldFx_PointEmitter(int mode, void *data, intptr_t argument)
+{
+    FieldFxEmitter *state = data;
     FieldFxEmittedPoint *point;
     int angle;
 
@@ -1443,3 +1472,19 @@ int FieldFx_PointEmitter(int mode, FieldFxEmitter *state) {
     }
     return 0;
 }
+
+/* Resident task data for Scan and Slow. The complete callback module stays
+ * in this translation unit; native task records carry native callback pointers. */
+GteShortVector g_DiamondParticleAnchor;
+int g_SparkEmitterPhaseSeed;
+u8 g_DiamondParticleColorTrack[] = {0,0,0,0,0,0,0,0,200,140,0,24,0,0,0,0,200,140,0,2,0,0,0,0,255,255,255,14,0,0,0,0,200,140,0,32,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RingFlashColorTrack[] = {0,0,0,0,0,0,0,0,200,200,200,4,0,0,0,0,0,100,250,4,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RingFlashInnerColorTrack[] = {0,0,0,0,0,0,0,0,200,200,200,4,0,0,0,0,200,0,200,4,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_JitterSpriteColorTrack[] = {0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,100,100,100,10,0,0,0,0,60,0,100,16,0,0,0,0,0,0,0,0,0,0,0,0};
+u16 g_FieldFxTaskScriptCmd101[] = {1,6,16,2,0,0,4,7,0,2,0,0,4,7,0,2,0,0,0,0,0,0};
+u16 g_FieldFxTaskScriptCmd102[] = {1,6,17,2,0,0,4,5,0,2,0,0,4,5,0,2,0,0,2,1,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd101 = {
+    {{FieldFx_DiamondEmitter}, {sizeof(RenderDiamondEmitter)}}, NULL, g_FieldFxTaskScriptCmd101};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd102 = {
+    {{FieldFx_RingFlash, FieldFx_JitterSpriteEmitter}, {sizeof(RenderSparkEmitter), sizeof(GteShortVector)}},
+    NULL, g_FieldFxTaskScriptCmd102};

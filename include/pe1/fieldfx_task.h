@@ -32,6 +32,7 @@ typedef struct FieldFxTaskProgram {
     u16 *script;
 } FieldFxTaskProgram;
 extern FieldFxTaskProgram g_FieldFxTaskProgramCmd92, g_FieldFxTaskProgramCmd93;
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd101, g_FieldFxTaskProgramCmd102;
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, initialize) == sizeof(FieldFxTaskTable),
                   fieldfx_program_initializer);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, script) == sizeof(FieldFxTaskTable) + sizeof(void *),
@@ -142,8 +143,8 @@ typedef struct FieldFxSpinningModel {
     s16 ticks;        /* 0x0C */
     s16 height;       /* 0x0E */
 } FieldFxSpinningModel;
-int FieldFx_SpinningModelFlareA(int mode, FieldFxSpinningModel *state);
-int FieldFx_SpinningModelFlareB(int mode, FieldFxSpinningModel *state);
+int FieldFx_SpinningModelFlareA(int mode, void *data, intptr_t argument);
+int FieldFx_SpinningModelFlareB(int mode, void *data, intptr_t argument);
 
 /* Twin-model flare (FieldFx_TwinModelEffect): stage 0 grows, stage 1 spins a second
  * white copy, stage 2 holds. */
@@ -156,8 +157,8 @@ typedef struct FieldFxTwinModel {
 extern u8 *D_800F3418;
 extern u8 *g_FieldFxTwinModelB;
 extern u8 g_TwinModelColorTrack[];
-int FieldFx_TwinModelEffect(int mode, FieldFxTwinModel *state);
-int FieldFx_PointEmitter(int mode, FieldFxEmitter *state);
+int FieldFx_TwinModelEffect(int mode, void *data, intptr_t argument);
+int FieldFx_PointEmitter(int mode, void *data, intptr_t argument);
 
 typedef struct FieldFxPointTriple {
     u16 x;

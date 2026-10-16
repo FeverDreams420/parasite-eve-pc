@@ -1424,7 +1424,16 @@ static int original_glow_resident_constants(void)
     if(!path) return !getenv("PE_REQUIRE_GAME_ASSETS");
     const u32 fan92[]={0x800d751c,0,0,0,0,0,0,0,8,0,0,0,0,0x800e17c8};
     const u32 fan93[]={0x800d751c,0x800d7764,0,0,0,0,0,0,0xc0008,0,0,0,0,0x800e1840};
+    const u32 scan101[]={0x800db6bc,0,0,0,0,0,0,0,28,0,0,0,0,0x800e1c9c};
+    const u32 slow102[]={0x800dba9c,0x800dbe6c,0,0,0,0,0,0,0x8000c,0,0,0,0,0x800e1d30};
     struct { u32 address; const void *value; size_t size; } rows[]={
+        {0x800e1cf8,scan101,sizeof(scan101)}, {0x800e1dcc,slow102,sizeof(slow102)},
+        {0x800e1c9c,g_FieldFxTaskProgramCmd101.script,44},
+        {0x800e1d30,g_FieldFxTaskProgramCmd102.script,48},
+        {0x800e1cc8,g_DiamondParticleColorTrack,48},
+        {0x800e1d64,g_RingFlashColorTrack,32},
+        {0x800e1d84,g_RingFlashInnerColorTrack,32},
+        {0x800e1da4,g_JitterSpriteColorTrack,40},
         {0x800e1808,fan92,sizeof(fan92)}, {0x800e1864,fan93,sizeof(fan93)},
         {0x800e17c8,g_FieldFxTaskProgramCmd92.script,24},
         {0x800e1840,g_FieldFxTaskProgramCmd93.script,36},
@@ -1666,7 +1675,8 @@ static int authored_fan_sweep_cycles(void)
     FieldFxObjectPrefix *old_owner=g_FieldFxOwner;FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;
     int old_age=g_FieldFxCurrentAge,old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
     RenderBufferPrefix old_buffers=D_800B0E38;GteMatrix *old_view=g_GeomScroll.words.viewMatrix;
-    GteShortVector old_anchor=g_FanSweepSparkAnchor;void *old_trail=g_FanSweepSparkTrailPool;
+    GteShortVector old_anchor=g_FanSweepSparkAnchor,old_diamond=g_DiamondParticleAnchor;void *old_trail=g_FanSweepSparkTrailPool;
+    int old_phase=g_SparkEmitterPhaseSeed;
     u32 old_random=Psyz_RandState();
     uint64_t hash=UINT64_C(14695981039346656037);
     const u32 seeds[]={0,1,0x12345678,0xffffffff};const int ages[]={0,1,17,18,19};
@@ -1678,6 +1688,43 @@ static int authored_fan_sweep_cycles(void)
         for(unsigned i=0;i<12;++i)hash=(hash^output[i])*UINT64_C(1099511628211);
     }
     if(hash!=UINT64_C(0x1026cb69f2dfeabd)){fprintf(stderr,"Ember CPU hash %016llx\n",(unsigned long long)hash);return 0;}
+    hash=UINT64_C(14695981039346656037);
+    FieldFxTaskCallback callbacks[]={FieldFx_DiamondParticle,FieldFx_DiamondEmitter,FieldFx_RingFlash,FieldFx_JitterSprite};
+    const unsigned sizes[]={12,28,12,8};
+    const int emitter_ages[]={0,1,7,8,20,24,25,31,32,52,53,71,72};
+    for(unsigned callback=0;callback<4;++callback)for(unsigned seed=0;seed<4;++seed)for(unsigned age=0;age<13;++age){
+        union {_Alignas(void *) u8 bytes[28];RenderDiamondEmitter emitter;} data;
+        _Alignas(void *) char pool[1024]={0};FieldFxTaskSlot task={.end=pool};
+        for(unsigned i=0;i<sizes[callback];++i)data.bytes[i]=i*37+emitter_ages[age]*3;
+        g_FieldFxActiveTaskSlot=&task;g_FieldFxCurrentAge=emitter_ages[age];srand(seeds[seed]);
+        if(FieldFx_InitCallbackList(pool,12,10,FieldFx_DiamondParticle)<0)return 0;
+        u32 result=callbacks[callback](1,data.bytes,0),random=Psyz_RandState();
+        const void *parts[]={&result,data.bytes,&random};const unsigned lengths[]={4,sizes[callback],4};
+        for(unsigned part=0;part<3;++part)for(unsigned i=0;i<lengths[part];++i)
+            hash=(hash^((const u8 *)parts[part])[i])*UINT64_C(1099511628211);
+    }
+    if(hash!=UINT64_C(0xf5ac1564e3f2d91d)){fprintf(stderr,"Scan/Slow CPU hash %016llx\n",(unsigned long long)hash);return 0;}
+    /* USA CPU captures stop at LoadAverageCol, the GTE boundary. Negative
+     * inherited particle times select the header exactly as retail does. */
+    const struct {int time,offset,first,second;} color_cases[]={
+        {INT32_MIN,0,4096,0},{-32768,0,33558528,-33554432},
+        {-406,0,419840,-415744},{-1,0,5120,-1024},{0,8,4096,0},
+        {1,8,3926,170},{23,8,171,3925},{24,16,4096,0},
+        {25,16,2048,2048},{63,32,1152,2944},{64,32,1024,3072},
+        {72,32,0,4096},{100,32,0,4096},{INT32_MAX,32,0,4096}
+    };
+    hash=UINT64_C(14695981039346656037);
+    for(unsigned i=0;i<sizeof(color_cases)/sizeof(color_cases[0]);++i){
+        _Alignas(u32) u8 track[48];RenderColor actual={0},expected={0};
+        memcpy(track,g_DiamondParticleColorTrack,sizeof(track));memset(track,0,8);
+        FieldFx_SampleColorTrack(track,&actual,color_cases[i].time);
+        LoadAverageCol(track+color_cases[i].offset,
+                       track+color_cases[i].offset+8,
+                       color_cases[i].first,color_cases[i].second,&expected);
+        if(memcmp(&actual,&expected,3))return 0;
+        for(unsigned j=0;j<sizeof(track);++j)hash=(hash^track[j])*UINT64_C(1099511628211);
+    }
+    if(hash!=UINT64_C(0x3d88066c0df41791))return 0;
     GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
     RenderMatrix matrix={.rotation={{4096,0,0},{0,4096,0},{0,0,4096}},.translation={0,0,1200}};
     FieldActorState state={0};FieldActor player={.state=&state,.pos_z=1200*65536};player.render_object.matrices=&matrix;
@@ -1687,10 +1734,25 @@ static int authored_fan_sweep_cycles(void)
     g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
     Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
     FieldFx_InitTexturePageTable();
-    for(unsigned variant=0;variant<2;++variant){
+    /* Consecutive outlines must reserve four native packets each, not the
+     * PS1's fixed 64 bytes; otherwise the next outline overwrites its links. */
+    for(unsigned draw=0;draw<2;++draw){
+        memset(&packets,0xa5,sizeof(packets));
+        for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
+        g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;g_FieldFxCurrentAge=0;
+        D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)packets.bytes;
+        g_DiamondParticleAnchor=(GteShortVector){0,0,1200,0};
+        gte_ldrotmatrix(&view);gte_ldtransmatrix(&view);
+        RenderDiamondParticle particle={.angle=128,.size=64,.color_time=2};
+        for(unsigned i=0;i<3;++i)if(FieldFx_DiamondParticle(2,&particle,0))return 0;
+        if(g_DrawPacketOffset!=12*(sizeof(RenderLinePacket)+sizeof(RenderTintMode)))return 0;
+        for(unsigned i=g_DrawPacketOffset;i<sizeof(packets);++i)if(((u8 *)&packets)[i]!=0xa5)return 0;
+    }
+    const unsigned commands[]={92,93,101,102},variables[]={7,8,16,17};
+    for(unsigned variant=0;variant<4;++variant){
         struct {PmPrimarySlot slots[11];u8 guard[16];} bank={0};memset(bank.guard,0xa5,16);
         g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(1);
-        if(Scene_LoadRoomAssets(92+variant,&player)!=0 || Pm_SendCmd(0,0,0,0,0,0))return 0;
+        if(Scene_LoadRoomAssets(commands[variant],&player)!=0 || Pm_SendCmd(0,0,0,0,0,0))return 0;
         unsigned draws=0,particles=0;
         for(unsigned frame=0;frame<100;++frame){
             for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
@@ -1699,9 +1761,13 @@ static int authored_fan_sweep_cycles(void)
             if(Pm_Start(0) || Pm_Exec(0))return 0;
             draws+=g_DrawPacketOffset!=0;
             FieldFxTaskContext *ctx=&bank.slots[0].task.tasks;
-            if(ctx->slots[0].id!=0xffff && ctx->slots[0].end){
-                FieldFxCallbackList *list=(void *)ctx->slots[0].end;
-                for(unsigned i=0;i<(unsigned)list->count;++i)particles+=((FieldFxCallbackListEntry *)(list->entries+i*list->stride))->active!=0;
+            for(unsigned slot=0;slot<8;++slot)if(ctx->slots[slot].id!=0xffff && ctx->slots[slot].end){
+                FieldFxTaskCallback callback=ctx->table->callbacks[ctx->slots[slot].id];
+                if(callback==g_FieldFxTaskProgramCmd92.table.callbacks[0] || callback==g_FieldFxTaskProgramCmd93.table.callbacks[1] ||
+                   callback==FieldFx_DiamondEmitter || callback==FieldFx_JitterSpriteEmitter){
+                    FieldFxCallbackList *list=(void *)ctx->slots[slot].end;
+                    for(unsigned i=0;i<(unsigned)list->count;++i)particles+=((FieldFxCallbackListEntry *)(list->entries+i*list->stride))->active!=0;
+                }
             }
             if(ctx->used>sizeof(ctx->arena) || g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes))return 0;
             for(unsigned i=0;i<4096;++i){uintptr_t at=ordering[i].address;unsigned count=0;while(at && at!=0xffffff){
@@ -1711,13 +1777,13 @@ static int authored_fan_sweep_cycles(void)
             for(unsigned i=0;i<16;++i)if(bank.guard[i]!=0xa5 || packets.guard[i]!=0xa5)return 0;
         }
         if(!draws || !particles || bank.slots[0].header.state || bank.slots[0].task.tasks.count ||
-           bank.slots[0].task.tasks.variables[6]!=7+variant)return 0;
+           bank.slots[0].task.tasks.variables[6]!=variables[variant]){fprintf(stderr,"Resident task %u: draws=%u particles=%u state=%u count=%u variable=%d\n",commands[variant],draws,particles,bank.slots[0].header.state,bank.slots[0].task.tasks.count,bank.slots[0].task.tasks.variables[6]);return 0;}
     }
     g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;g_PlayerEntity=old_player;
     g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_task;g_FieldFxCurrentAge=old_age;
     D_800B0E38=old_buffers;g_GeomScroll.words.viewMatrix=old_view;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;
-    g_FanSweepSparkAnchor=old_anchor;g_FanSweepSparkTrailPool=old_trail;srand(old_random);
-    puts("Original resident fan sweep 92/93: 100 unhooked USA CPU/BIOS ember states, two authored scripts x 100 real PM frames, nested native pools, draw chains, expiry and guards passed");
+    g_FanSweepSparkAnchor=old_anchor;g_FanSweepSparkTrailPool=old_trail;g_DiamondParticleAnchor=old_diamond;g_SparkEmitterPhaseSeed=old_phase;srand(old_random);
+    puts("Original resident fan sweep 92/93: 100 ember + 208 Scan/Slow unhooked USA CPU/BIOS states, four authored scripts (92/93/Scan/Slow) x 100 real PM frames, nested native pools, draw chains, expiry and guards passed");
     return 1;
 }
 

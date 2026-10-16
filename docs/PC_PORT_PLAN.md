@@ -56,27 +56,65 @@ wybrano Medicine1, następnie użyto jej przez UI: HP40→85, slot11 pusty.
 Pozostałe Junk z nagród pozostają. Wejście M082/cap149915 działa,
 obraz mostu obejrzany, HP85/115, etap248, lock0, broń9/pancerz14,
 pojemność19, Sv Vest1 w slocie12. Pełne replaye od F normalnie i pod
-sanitizerami są uruchomione (/tmp/pe-m082-entry-{normal,san}.log/.vram,
-args.json, verify.py). Dopóki oba nie zakończą się i verifier nie przejdzie,
-nie traktować tego jako PASS automatycznej powtórki.
+ASan/UBSan/function PASS, cały JSON i1MiB VRAM identyczne:
+SHA256 8d5c1f78c9a41fb75b35c7a4e735ab1fd225ee753f344ae219598d0fa222ecca.
+Cały G identyczny, prywatneB–F niezmienione. Artefakty
+/tmp/pe-m082-entry-{normal,san}.log/.vram, args.json, verify.py i proof.json.
+To potwierdza wymienione walki, wymianę i leczenie do wejścia M082,
+a nie wszystkie ataki ani wszystkie klatki pośrednie.
 
-Próba walki M082: niedźwiedź typ5/75HP i dwa typ3/44HP. Niedźwiedź
-pokonany, ale sterowanie w prawo doprowadziło Ayę do granicy oryginalnego
-obszaru walki; dalsze trafienia kończą się Game Over. To nie jest
-ukończona walka ani dowód błędu kolizji. Stary debugger zakończony po
-powrocie do tytułu/cap154627. Nowy debugger używa tego samego zamrożonego
-/tmp/pe-motion-variants-game-debug, rzeczywistego G i krótkiego zimnego
-Continue do cap24000: katalog /tmp/pe-m075-g-live, argumenty
-/tmp/pe-m075-g-live-args.json, log /tmp/pe-m075-g-live-lldb.log.
-Osobny PE_DEBUG_INPUT_TRACE=/tmp/pe-g-park-input.jsonl zapobiega mieszaniu
-nowego licznika z pełnym starym /tmp/pe-zoo-checkpoint-input.jsonl.
-Pomocnik pe-state odczytuje teraz prawdziwy DISPENV przez GetDispEnv;
-stare odczyty symbolu display w LLDB trafiały na inny symbol. Produkcyjny
-Boot_PollHost już używał GetDispEnv, więc zrzuty normalne/SAN są poprawne.
-Długi pe-path przez HandleCommand z pliku /tmp omija limit linii terminala.
-Następne zadanie: przejść M082 ze zmianą kierunku przy granicy, dojść do
-M083 i kontynuować kampanię. Nie zmieniono kodu rozgrywki w tym etapie.
-Pełna kampania i pełny zakres celu pozostają nieukończone.
+Próby walki M082 (typ5/75HP, dwa typ3/44HP) kończyły się Game Over
+po wejściu przy granicy i zatruciu. To nie jest dowód błędu kolizji ani
+ukończona walka. Krótsza gałąź od rzeczywistego zimnego Continue G
+obejmuje zwycięstwa M080/M078/M081, wydanie100BP na M16 przez oryginalne
+menu (125→25BP, attack35→36), wymianę pełnego ekwipunku w skrzyni M080,
+leczenie i wejście M082 z HP81/115. Próba użycia PE wybierała Scan7,
+choć pomocnik sterowania zamierzał wybrać Slow8. Potwierdzono to w LLDB;
+pomocnik /tmp wybiera teraz według rzeczywistej listy i pozycji kursora,
+zamiast zakładać liczbę naciśnięć. Nie zaliczamy tego jako użycia Slow.
+
+Scan ujawnił brak resident task101 (command394/status-8). Włączono cały
+istniejący fieldfx/emitters.c, zachowując w nim wszystkie29 funkcji.
+Callbacki oraz dwie instancje spinning_model.inc mają natywne wspólne ABI.
+Oryginalne programy101/102, rozmiary stanów, skrypty i cztery ścieżki
+kolorów potwierdzono bajtowo w dostarczonym EXE USA. Podpięto tylko te
+zweryfikowane programy; kompilacja reszty modułu nie oznacza pełnego
+sprawdzenia pozostałych efektów. DiamondOutline rezerwuje teraz cztery
+sizeof(RenderLinePacket), zamiast64 bajtów PS1 nakładających pakiety PC.
+Pełny sanitizer replay ujawnił ujemny odziedziczony color_time=-406:
+SampleColorTrack używa teraz jawnego 32-bitowego przesunięcia MIPS,
+bez undefined behavior C i bez zerowania oryginalnego stanu cząstki.
+
+Fixture --assets PASS normalnie i z ASan/UBSan/function: dodatkowe208
+niehookowanych stanów CPU/BIOS Scan/Slow,14 przypadków interpolacji
+koloru z oryginalnymi argumentami na granicy GTE (ujemne i INT32 limits),
+cztery autorskie skrypty92/93/101/102 po100 pełnych klatek PM, obie
+buforowane listy pakietów, zagnieżdżone pule, wygasanie i guards.
+Osobny test trzech kolejnych konturów na obu buforach pilnuje rezerwacji
+pakietów linii i draw-mode. Artefakty /tmp/pe-resident-color-fixture{,-san}.log,
+/tmp/pe-resident-emitters-cpu.py i /tmp/pe-resident-color-cpu.py.
+
+Pełny replay tej krótszej gałęzi od rzeczywistego G do cap49900 PASS
+normalnie i pod ASan/UBSan/function: cały JSON i1MiB VRAM identyczne,
+SHA256 231d263b5fd299543c74be70fbd379a793d2f8036075030ac3f9f2b51d584822.
+Scan został rzeczywiście wywołany (LLDB: DiamondEmitter mode0/age0,
+g_MenuSelectedSpell=7), efekt kończy się i gra wraca do aktywnej walki
+M082, HP26/115, bez menu. Nie jest to zwycięstwo ani dowód wszystkich
+klatek efektu. Wszystkie prywatne pliki B–G niezmienione względem kopii
+G. Artefakty /tmp/pe-resident-color-{normal,san}-replay.log i katalogi
+z frame.vram, /tmp/pe-resident-color-verify.py i proof.json, wspólny input
+/tmp/pe-resident-scan-args.json; obserwacja callbacka
+/tmp/pe-resident-scan-callback-replay.log.
+
+Regresja zgłoszonego wejścia do pierwszej walki z Melissą:
+original-game-melissa-encounter PASS na aktualnym buildzie, wymagane
+CUE i PE_REQUIRE_GAME_ASSETS=1,126.50s, bez SKIP. Log
+/tmp/pe-resident-color-melissa.log.
+
+Następne zadanie: ukończyć M082, sprawdzić Slow przez rzeczywiste menu,
+dojść do M083 i kontynuować kampanię. Pełna kampania i pełny zakres celu
+pozostają nieukończone. Żaden plik produkcyjny nie został dodany ani
+przeniesiony. Użytkowe bu00/ i bu10/ nietknięte.
 
 Pełny oryginalny input po etapie240 przechodzi M069→M072, ucieczkę Eve
 (etap244), M070 z dialogami96/45/97, odblokowane wyjście, powrót do M072

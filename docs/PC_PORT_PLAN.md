@@ -504,6 +504,36 @@ historycznej nazwy odczytuje GAME_TIME_COUNTER. Dalsze wiązanie wymaga
 sprawdzenia zakresów i referencji CPU. Nie dodano projektu edytora
 zapisów ani danych zapisu do repozytorium.
 
+Następnie podpięto istniejące Script_GetFloorTableValue (210, CPU80019DB8)
+i Boot_CheckModeSwitch (165, CPU800155FC). Pierwszy bez zmiany implementacji
+odczytuje current jednego z czterech g_GameTimers. 672 rzeczywiste wykonania
+CPU obejmują wszystkie liczniki, 12 wzorców 32-bitowych oraz wynik zapisany
+do osobnej zmiennej, argumentu indeksu lub każdego z 12 słów tabeli:
+`74d6afc47a7ad4ed`. Fixture porównuje cały stan i 48 programów dispatchera.
+Drugi zachowuje oryginalne czekanie na tryb kamery 0/4, cofnięcie kursora o
+8 bajtów i active=1; zmieniono wyłącznie sygnaturę na wspólne int** z
+nieużywanym argumentem. 864 stany CPU (wszystkie tryby, górne flagi, aktywność
+i flagi węzła) dają `8ed4b8d9c2727b75`; fixture sprawdza również rzeczywisty
+retry i wznowienie dispatchera. Świeży --assets z ASan/UBSan/function oraz
+instrumentowanym PsyZ/SDL przeszedł dla obu podpięć.
+
+Nowe 210/165 są sprawdzane w osobnym executable; głównego buildu nie zmieniono
+w trakcie pełnego CTest kandydata 0cb304300. W nim rat-encounter przeszedł
+w 167,82 s, hallway-transition w 156,67 s, field-control w 410,08 s; pozostałe
+przypadki są jeszcze w toku. Nie jest to ukończony wynik 45/45.
+
+Po 210 Continue dochodzi do niepodpiętego 165. Po obu podpięciach przebieg
+z dalszym inputem nie abortuje, lecz kończy śmiercią Ayi/powrotem do title.
+Osobne Continue bez dalszego ruchu do 24000 VBlank poprawnie odtwarza M012,
+HP11/45, move_lock0, brak menu/dialogów, Aya[20316160,0,264437760], yaw480.
+Checkpoint po zwycięstwie utworzono debuggerem w mode9, poza normalnym punktem
+zapisu; nie zakładamy, że zapisuje niezakończone skrypty lub ich pozycję.
+Zatem sam ponowny przebieg zdarzenia nie stanowi jeszcze dowodu błędu
+produkcyjnego Save/Continue. Dalsza walidacja wymaga normalnego punktu zapisu
+lub potwierdzenia tej samej semantyki w PS1. Token A8002048 dekoduje się przez
+oryginalne Text_EncodeBase32 do M0020I: garderoba to M020, nie zgadywany
+numer na podstawie kolejności odwiedzania. Dalsza interakcja w M020 jest w toku.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

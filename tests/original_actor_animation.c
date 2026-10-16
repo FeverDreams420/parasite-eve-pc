@@ -2103,6 +2103,42 @@ static int original_actor_camera_opcodes(void)
     return 1;
 }
 
+static int original_mode_wait_opcode(void)
+{
+    const u32 patterns[]={0,1,0x7fff,0x8000,0xffff,0x80000000,0xffffffff,
+        0x010c0000,0xa5a55a5a,0x12345678,0x7fffffff,0x600000};
+    const int active_values[]={0,1,255},flag_values[]={0,128,255};
+    int saved_flags=g_GeomScroll.state.flags;ScriptNode *saved_node=g_ScriptNodePool;
+    u32 *saved_cursor=g_ScriptCursor;FieldActor *saved_actor=g_CurrentEntity,actor={0};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[165]!=Boot_CheckModeSwitch)return 0;
+    for(unsigned pattern=0;pattern<12;++pattern)for(unsigned mode=0;mode<8;++mode)
+    for(unsigned active=0;active<3;++active)for(unsigned flags=0;flags<3;++flags){
+        u32 program[8]={0};ScriptNode node={.active=active_values[active],.flags=flag_values[flags]};
+        ScriptNode expected=node;g_ScriptNodePool=&node;g_ScriptCursor=program+4;
+        g_GeomScroll.state.flags=(s32)((patterns[pattern]&~7u)|mode);
+        u32 result=Boot_CheckModeSwitch(NULL);
+        const u32 words[]={result,(u32)((u8 *)g_ScriptCursor-(u8 *)program),(u32)node.active,
+            node.flags,(u32)g_GeomScroll.state.flags};
+        for(unsigned word=0;word<5;++word)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+        expected.active=node.active;
+        if(memcmp(&node,&expected,sizeof(node)))return 0;
+        ++cases;
+    }
+    if(cases!=864 || hash!=UINT64_C(0x8ed4b8d9c2727b75))return 0;
+    u32 program[]={165,0,32,0};ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+    g_CurrentEntity=&actor;g_GeomScroll.state.flags=1;g_ScriptNodePool=&node;
+    Script_RunQueue();
+    if(node.current.script!=program || node.active!=1 || node.flags!=0x80 || g_ScriptNodePool)return 0;
+    g_GeomScroll.state.flags=4;g_ScriptNodePool=&node;Script_RunQueue();
+    if(node.current.script!=program+4 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+    g_GeomScroll.state.flags=saved_flags;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    g_CurrentEntity=saved_actor;
+    puts("Original mode wait opcode 165: 864 unhooked USA CPU states and native dispatcher yield/resume passed");
+    return 1;
+}
+
 static int original_tracking_angle_opcode(void)
 {
     FieldActor *saved_actor=g_CurrentEntity,*saved_player=g_PlayerEntity;
@@ -8860,6 +8896,40 @@ static int original_item_random(void)
     int valid=1;
     memcpy(saved_timers,g_GameTimers,sizeof(saved_timers));
     memcpy(saved_table,g_ItemDropRngTable,sizeof(saved_table));
+    const u32 timer_patterns[]={0,1,0x7fff,0x8000,0xffff,0x80000000,0xffffffff,
+        0x010c0000,0xa5a55a5a,0x12345678,0x7fffffff,0x600000};
+    uint64_t timer_hash=UINT64_C(14695981039346656037);
+    if(g_ScriptQueueOpcodeHandlers[210]!=Script_GetFloorTableValue)valid=0;
+    for(unsigned timer=0;timer<4;++timer)for(unsigned pattern=0;pattern<12;++pattern)
+    for(unsigned target=0;target<14;++target){
+        u32 raw[12];for(unsigned word=0;word<12;++word)raw[word]=timer_patterns[pattern]+word*0x01020304u;
+        memcpy(g_GameTimers,raw,sizeof(raw));
+        int index=timer,output=(s32)0x98765432;u32 guard=0xa55a5aa5;
+        int *destinations[14]={&output,&index};
+        for(unsigned i=0;i<4;++i){
+            destinations[2+i*3]=(int *)&g_GameTimers[i].flags;
+            destinations[3+i*3]=&g_GameTimers[i].current;
+            destinations[4+i*3]=&g_GameTimers[i].limit;
+        }
+        int *args[]={&index,destinations[target]};u32 result=Script_GetFloorTableValue(args);
+        u32 words[16]={result,(u32)output,(u32)index,guard};memcpy(words+4,g_GameTimers,sizeof(raw));
+        for(unsigned word=0;word<16;++word)for(unsigned byte=0;byte<4;++byte)
+            timer_hash=(timer_hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+    }
+    if(timer_hash!=UINT64_C(0x74d6afc47a7ad4ed))valid=0;
+    FieldActor timer_actor={0},*saved_actor=g_CurrentEntity;g_CurrentEntity=&timer_actor;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    for(unsigned timer=0;timer<4;++timer)for(unsigned pattern=0;pattern<12;++pattern){
+        u32 raw[12];for(unsigned word=0;word<12;++word)raw[word]=timer_patterns[pattern]+word*0x01020304u;
+        memcpy(g_GameTimers,raw,sizeof(raw));
+        u32 program[]={210|(2u<<13),0,timer,0x98765432,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;
+        Script_RunQueue();
+        if(program[3]!=raw[timer*3+1] || memcmp(g_GameTimers,raw,sizeof(raw)) ||
+           node.current.script!=program+6 || node.flags!=0x90 || node.active || g_ScriptNodePool)valid=0;
+    }
+    g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_CurrentEntity=saved_actor;
+    if(valid)puts("Original timer opcode 210: 672 unhooked USA CPU reads and output aliases plus 48 dispatcher programs passed");
     GameTime_InitCounter0(); GameTime_InitCounter1(); GameTime_InitCounter2();
     if(g_GameClockFlags!=1 || g_GameTimeTable!=0 || g_GameClockLimit!=21600000 ||
        g_GameTimers[1].flags!=1 || g_GameTimers[1].current || g_GameTimers[1].limit ||
@@ -9222,7 +9292,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;

@@ -32,6 +32,7 @@ typedef struct FieldFxTaskProgram {
     u16 *script;
 } FieldFxTaskProgram;
 extern FieldFxTaskProgram g_FieldFxTaskProgramCmd92, g_FieldFxTaskProgramCmd93;
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd99;
 extern FieldFxTaskProgram g_FieldFxTaskProgramCmd101, g_FieldFxTaskProgramCmd102;
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, initialize) == sizeof(FieldFxTaskTable),
                   fieldfx_program_initializer);
@@ -129,7 +130,7 @@ int FieldFx_InitTaskProgram(struct PmSlotHeader *slot, int skip,
 int FieldFx_DrawTasks(struct PmSlotHeader *slot);
 int FieldFx_UpdateTasks(struct PmSlotHeader *slot);
 extern s16 g_SpinningModelAnchorB[3];
-int FieldFx_SpinningModelEmitterB(int mode, FieldFxEmitter *state);
+int FieldFx_SpinningModelEmitterB(int mode, void *data, intptr_t argument);
 
 extern u8 *D_800F32D8;
 extern s16 g_SpinningModelAnchorA[3];

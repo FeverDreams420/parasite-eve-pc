@@ -12,6 +12,7 @@ int g_FieldFxCurrentAge;
 void *g_FieldFxTaskPrograms[104] = {
     [92 - 85] = &g_FieldFxTaskProgramCmd92,
     [93 - 85] = &g_FieldFxTaskProgramCmd93,
+    [99 - 85] = &g_FieldFxTaskProgramCmd99,
     [101 - 85] = &g_FieldFxTaskProgramCmd101,
     [102 - 85] = &g_FieldFxTaskProgramCmd102,
 };

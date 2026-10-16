@@ -86,7 +86,7 @@ SampleColorTrack używa teraz jawnego 32-bitowego przesunięcia MIPS,
 bez undefined behavior C i bez zerowania oryginalnego stanu cząstki.
 
 Fixture --assets PASS normalnie i z ASan/UBSan/function: dodatkowe208
-niehookowanych stanów CPU/BIOS Scan/Slow,14 przypadków interpolacji
+niehookowanych stanów CPU/BIOS Scan/Confuse,14 przypadków interpolacji
 koloru z oryginalnymi argumentami na granicy GTE (ujemne i INT32 limits),
 cztery autorskie skrypty92/93/101/102 po100 pełnych klatek PM, obie
 buforowane listy pakietów, zagnieżdżone pule, wygasanie i guards.
@@ -111,7 +111,40 @@ original-game-melissa-encounter PASS na aktualnym buildzie, wymagane
 CUE i PE_REQUIRE_GAME_ASSETS=1,126.50s, bez SKIP. Log
 /tmp/pe-resident-color-melissa.log.
 
-Następne zadanie: ukończyć M082, sprawdzić Slow przez rzeczywiste menu,
+Korekta nazewnictwa efektu: task102 jest Confuse10, nie Slow8.
+Oryginalna BattleActionEffectIds wybiera dla Slow task99. Testy208 stanów
+i programów101/102 powyżej dotyczą Scan/Confuse; nazwa w poprzednim
+opisie była błędna. Oryginalne dwukolumnowe menu PE wymaga po Down także
+Right, aby wybrać Slow8, a nie Scan7. Pomocnik /tmp odczytuje teraz
+rzeczywistą szerokość siatki i packed listę oraz sprawdza selected spell.
+
+Właściwy Slow odtworzył brak task99 (command395/status-8). Naprawiono
+ABI wszystkich35 istniejących callbacków sprite_effects.c w miejscu;
+żadnego nie przeniesiono ani nie zastąpiono. Dodano oryginalny deskryptor99,
+18-halfword script i anchor BSS w tym samym module, z dwoma slotami8/8
+potwierdzonymi w EXE. Porównanie280 niehookowanych stanów MIPS/BIOS
+obejmuje dwa emitery, opadającą cząstkę i obie fazy obracającego modelu,
+RNG, nieaktywne pola i pełną logiczną zawartość24 slotów puli. Fixture
+--assets PASS normalnie i z ASan/UBSan/function, pięć programów92/93/99/
+101/102 po100 pełnych klatek PM z modelem, zagnieżdżonymi pulami,
+rysowaniem, oboma buforami, wygasaniem i guards. Wszystkie35 funkcji
+modułu zachowano; pozostałych rodzin nie uznajemy za w pełni sprawdzone.
+Artefakty /tmp/pe-slow99-fixture{,-san}.log i /tmp/pe-slow99-cpu.py.
+
+Pełny rzeczywisty replay od Continue G do cap49520 PASS normalnie i pod
+ASan/UBSan/function: wybrany Slow8, efekt99 zakończony, ruch odblokowany
+(lock4), M082, HP81/115. LLDB potwierdza coreFlags1048577 spowolnionego
+przeciwnika i spadek PE6651842→1366457 (koszt i dalsza regeneracja).
+Cały JSON i1MiB VRAM identyczne, SHA256
+9d42871183e9b64025ca89397f647f0372ebca7ae606f1021a9c80b622b2af3e.
+Wszystkie prywatne pliki karty B–G niezmienione. Artefakty
+/tmp/pe-slow99-complete-{normal,san}.log i katalogi z frame.vram,
+/tmp/pe-slow99-complete-args.json, verify.py i proof.json.
+To potwierdza jedno rzeczywiste użycie Slow, nie zwycięstwo M082 ani
+wszystkie klatki efektu. Żywy input trwa w osobnym /tmp/pe-park-slow99,
+log /tmp/pe-park-slow99-lldb.log, trace /tmp/pe-park-slow99-input.jsonl.
+
+Następne zadanie: ukończyć M082, sprawdzić leczenie i Cure-P przez UI,
 dojść do M083 i kontynuować kampanię. Pełna kampania i pełny zakres celu
 pozostają nieukończone. Żaden plik produkcyjny nie został dodany ani
 przeniesiony. Użytkowe bu00/ i bu10/ nietknięte.
@@ -2670,7 +2703,7 @@ Pełny build i 35 original-game-* z wymaganym Disc 1 przeszły headless. Śwież
 
 Całe oryginalne battle/enemy_slots.c i battle/enemy_movement.c są dołączone do natywnego buildu. Usunięto niezgodny FacingCore oparty na starych offsetach; reakcja na trafienie używa kanonicznego EnemyCombatant. Oryginalna arytmetyka double zachowuje kolejność operacji, ale wykonuje się w C zamiast przez ABI soft-float PS1. Odrzut oraz mnożenie/odejmowanie nagród jawnie zawijają się do 32 bitów. Battle_SlotFree ma typ rzeczywistego argumentu BattleEntity, bez udawania void**.
 
-Naprawiono rzeczywistą kolizję pamięci: sześć 16-bajtowych event records obejmuje historyczne sloty 0x68/0x6C/0x70, które równoległy widok gracza uznawał za pointers. Widening tych slotów rozsuwał enemy tail względem EntityAnimEventCore. W istniejących FieldActorState/Combatant/EnemyCombatant pozostają wspólne scalar slots i sześć nieprzerwanych event records; native action/attributes/aux pointers są polami rozszerzenia za scalar state. Nie dodano rejestru, lookup layer ani plików. Static assertions kontrolują wspólny rozmiar, flags/status/action pointers, selected-event pointer, records, parameters i assetId. Scan/Slow/Confuse i StartEnemyAttackEffect używają właściwego EnemyCombatant zamiast player view. Save wire format pozostaje 8192-bajtowy, a jego dotychczasowe pełne porównania z EXE nadal przechodzą.
+Naprawiono rzeczywistą kolizję pamięci: sześć 16-bajtowych event records obejmuje historyczne sloty 0x68/0x6C/0x70, które równoległy widok gracza uznawał za pointers. Widening tych slotów rozsuwał enemy tail względem EntityAnimEventCore. W istniejących FieldActorState/Combatant/EnemyCombatant pozostają wspólne scalar slots i sześć nieprzerwanych event records; native action/attributes/aux pointers są polami rozszerzenia za scalar state. Nie dodano rejestru, lookup layer ani plików. Static assertions kontrolują wspólny rozmiar, flags/status/action pointers, selected-event pointer, records, parameters i assetId. Scan/Confuse/Confuse i StartEnemyAttackEffect używają właściwego EnemyCombatant zamiast player view. Save wire format pozostaje 8192-bajtowy, a jego dotychczasowe pełne porównania z EXE nadal przechodzą.
 
 Oryginalny szablon enemy USA 800109B0 ma pełny native initializer w enemy_slots.c. Istniejący fixture porównuje cały scalar obraz 0xD8 z EXE, normalizując tylko pointer, oraz sprawdza brak fikcyjnych pointers w rozszerzeniu. 5632 przydziały, wszystkie 128 kombinacji flag siedmiu slotów, wyczerpanie puli, zwalnianie/ponowne użycie i cztery początki licznika ID odpowiadają niehookowanym MIPS Alloc/Free/Clear, hash 81c2f5af25011535.
 

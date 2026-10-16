@@ -57,8 +57,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderBouncingSprite, duration) == 12,
                   render_bouncing_sprite_duration);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderBouncingSprite, angle) == 14,
                   render_bouncing_sprite_angle);
-int FieldFx_ScatterBurstSprite(int mode, RenderBouncingSprite *state);
-int FieldFx_BouncingSpinSprite(int mode, RenderBouncingSprite *state);
+int FieldFx_ScatterBurstSprite(int mode, void *data, intptr_t argument);
+int FieldFx_BouncingSpinSprite(int mode, void *data, intptr_t argument);
 int FieldFx_PulsingStarFan(int mode);
 extern u8 g_PulsingStarFanColorTrack1[], g_PulsingStarFanColorTrack0[];
 
@@ -72,7 +72,7 @@ typedef struct RenderCosineEffect {
 PE1_STATIC_ASSERT(sizeof(RenderCosineEffect) == 8, render_cosine_effect_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderCosineEffect, duration) == 6,
                   render_cosine_effect_duration);
-int FieldFx_CosineEffectB(int mode, RenderCosineEffect *state);
+int FieldFx_CosineEffectB(int mode, void *data, intptr_t argument);
 
 typedef struct RenderArcingEmitter {
     GteShortVector position;
@@ -84,7 +84,7 @@ PE1_STATIC_ASSERT(sizeof(RenderArcingEmitter) == 0x10,
                   render_arcing_emitter_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderArcingEmitter, radius) == 0xC,
                   render_arcing_emitter_radius);
-int FieldFx_ArcingSparkEmitter(int mode, RenderArcingEmitter *state);
+int FieldFx_ArcingSparkEmitter(int mode, void *data, intptr_t argument);
 extern u8 g_ArcingSparkColorTrack[];
 
 typedef struct RenderOrbitingEffect {
@@ -102,7 +102,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderOrbitingEffect, x) == 6,
                   render_orbiting_effect_position);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderOrbitingEffect, radius) == 0xC,
                   render_orbiting_effect_radius);
-int FieldFx_OrbitingSprite(int mode, RenderOrbitingEffect *state);
+int FieldFx_OrbitingSprite(int mode, void *data, intptr_t argument);
 typedef struct RenderOrbitingEmitter {
     int phase;
     char *particles;
@@ -110,7 +110,7 @@ typedef struct RenderOrbitingEmitter {
 
 
 
-int FieldFx_OrbitingSpriteBurst(int mode, RenderOrbitingEmitter *state);
+int FieldFx_OrbitingSpriteBurst(int mode, void *data, intptr_t argument);
 extern GteShortVector g_OrbitingEffectAnchor;
 extern char *g_OrbitingEffectParticlePool;
 
@@ -128,8 +128,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderVerticalEffect, timer) == 4,
                   render_vertical_effect_timer);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderVerticalEffect, x) == 6,
                   render_vertical_effect_position);
-int FieldFx_VerticalRingSprite(int mode, RenderVerticalEffect *state);
-int FieldFx_VerticalEffectEmitter(int mode, void *state);
+int FieldFx_VerticalRingSprite(int mode, void *data, intptr_t argument);
+int FieldFx_VerticalEffectEmitter(int mode, void *data, intptr_t argument);
 extern GteShortVector g_VerticalEffectAnchor;
 extern u8 g_VerticalEffectColorTrack[];
 
@@ -150,8 +150,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderHelicalEffect, x) == 6,
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderHelicalEffect, direction) == 0xE,
                   render_helical_effect_direction);
 int FieldFx_HelicalTrailPoint(int mode, void *data, intptr_t argument);
-int FieldFx_HelicalSprite(int mode, RenderHelicalEffect *state);
-int FieldFx_HelicalSpriteEmitter(int mode, RenderOrbitingEmitter *state);
+int FieldFx_HelicalSprite(int mode, void *data, intptr_t argument);
+int FieldFx_HelicalSpriteEmitter(int mode, void *data, intptr_t argument);
 extern u8 g_HelicalTrailColorTrack[];
 extern GteShortVector g_HelicalEffectAnchor;
 extern char *g_HelicalEffectParticlePool;
@@ -172,8 +172,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderDampedSpark, vx) == 6,
 PE1_STATIC_ASSERT(sizeof(RenderSparkEmitter) == 0xC, render_spark_emitter_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderSparkEmitter, phase) == 8,
                   render_spark_emitter_phase);
-int FieldFx_DampedSpark(int mode, RenderDampedSpark *state);
-int FieldFx_DampedSparkEmitter(int mode, RenderSparkEmitter *state);
+int FieldFx_DampedSpark(int mode, void *data, intptr_t argument);
+int FieldFx_DampedSparkEmitter(int mode, void *data, intptr_t argument);
 extern u8 g_DampedSparkColorTrack[];
 
 typedef struct RenderArcingEffect {
@@ -184,11 +184,11 @@ typedef struct RenderArcingEffect {
 PE1_STATIC_ASSERT(sizeof(RenderArcingEffect) == 8, render_arcing_effect_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderArcingEffect, velocity_y) == 6,
                   render_arcing_effect_velocity);
-int FieldFx_ArcingSpark(int mode, RenderArcingEffect *state);
-int FieldFx_RisingSpinSprite(int mode, RenderArcingEffect *state);
-int FieldFx_DescendingSprite(int mode, RenderArcingEffect *state);
-int FieldFx_DescendingSpriteEmitter(int mode, GteShortVector *state);
-int FieldFx_RisingSpinEmitter(int mode, GteShortVector *state);
+int FieldFx_ArcingSpark(int mode, void *data, intptr_t argument);
+int FieldFx_RisingSpinSprite(int mode, void *data, intptr_t argument);
+int FieldFx_DescendingSprite(int mode, void *data, intptr_t argument);
+int FieldFx_DescendingSpriteEmitter(int mode, void *data, intptr_t argument);
+int FieldFx_RisingSpinEmitter(int mode, void *data, intptr_t argument);
 extern u8 g_ArcingEffectColorTrack[];
 
 typedef struct RenderSineEffect {
@@ -701,8 +701,8 @@ PE1_STATIC_ASSERT(sizeof(RenderRisingEffect) == 14, render_rising_effect_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderRisingEffect, angle) == 12,
                   render_rising_effect_angle);
 extern u8 g_RisingSpriteColorTrack[];
-int FieldFx_RisingSprite(int mode, RenderRisingEffect *state);
-int FieldFx_RisingSpriteEmitter(int mode, RenderArcingEmitter *state);
+int FieldFx_RisingSprite(int mode, void *data, intptr_t argument);
+int FieldFx_RisingSpriteEmitter(int mode, void *data, intptr_t argument);
 
 /* Sprites circling the spiral anchor: 0x800D6514 spawns 24 of them for
  * 0x800D629C and publishes the anchor and the circle radius each frame. */
@@ -717,8 +717,8 @@ extern u16 g_SpiralEffectRadius;
 extern GteShortVector g_SpiralEffectAnchor;
 extern RenderColor g_FieldFxSpiralSpriteTint;
 extern RenderColor g_FieldFxRingPulseTint;
-int FieldFx_SpiralSprite(int mode, RenderSpiralSprite *state);
-int FieldFx_SpiralEmitter(int mode, RenderArcingEmitter *state);
+int FieldFx_SpiralSprite(int mode, void *data, intptr_t argument);
+int FieldFx_SpiralEmitter(int mode, void *data, intptr_t argument);
 
 typedef struct RenderRingPulse {
     GteShortVector position;
@@ -727,7 +727,7 @@ typedef struct RenderRingPulse {
 } RenderRingPulse;
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderRingPulse, phase) == 16,
                   render_ring_pulse_phase);
-int FieldFx_RingPulse(int mode, RenderRingPulse *state);
+int FieldFx_RingPulse(int mode, void *data, intptr_t argument);
 
 /* Falling sprite pair: 0x800D4C24 drops one sprite per frame for 0x800D4928
  * from above the player, tinted by the scene's colour track. */
@@ -737,8 +737,8 @@ typedef struct RenderPhaseEmitter {
 extern u8 g_FallingSpriteColorTrack0[];
 extern u8 g_FallingSpriteColorTrack1[];
 extern u8 g_BouncingSpriteColorTrack2[];
-int FieldFx_FallingSprite(int mode, RenderBouncingSprite *state);
-int FieldFx_FallingSpriteEmitter(int mode, RenderPhaseEmitter *state);
+int FieldFx_FallingSprite(int mode, void *data, intptr_t argument);
+int FieldFx_FallingSpriteEmitter(int mode, void *data, intptr_t argument);
 
 typedef struct RenderFadeEmitter {
     s16 count, intensity;

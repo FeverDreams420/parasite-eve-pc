@@ -1473,7 +1473,7 @@ int FieldFx_PointEmitter(int mode, void *data, intptr_t argument)
     return 0;
 }
 
-/* Resident task data for Scan and Slow. The complete callback module stays
+/* Resident task data for Scan and Confuse. The complete callback module stays
  * in this translation unit; native task records carry native callback pointers. */
 GteShortVector g_DiamondParticleAnchor;
 int g_SparkEmitterPhaseSeed;

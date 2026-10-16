@@ -13,8 +13,9 @@
 
 /* One falling sprite: drifts with damped sideways speed, bounces off the
  * floor and spins through a seven-frame strip tinted by the scene track. */
-int FieldFx_FallingSprite(int mode, RenderBouncingSprite *state)
+int FieldFx_FallingSprite(int mode, void *data, intptr_t argument)
 {
+    RenderBouncingSprite *state = data;
     GteShortVector position;
     GteRotation rotation;
     RenderColor color;
@@ -70,8 +71,9 @@ int FieldFx_FallingSprite(int mode, RenderBouncingSprite *state)
 
 /* Drops one falling sprite per frame for eight frames from above the
  * player (lower in scene variant 0) on an angle that turns by 0x200. */
-int FieldFx_FallingSpriteEmitter(int mode, RenderPhaseEmitter *state)
+int FieldFx_FallingSpriteEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderPhaseEmitter *state = data;
     GteShortVector position;
     RenderBouncingSprite *sprite;
     int speed;
@@ -151,8 +153,9 @@ int FieldFx_PulsingStarFan(int mode)
     return 0;
 }
 
-int FieldFx_ScatterBurstSprite(int mode, RenderBouncingSprite *state)
+int FieldFx_ScatterBurstSprite(int mode, void *data, intptr_t argument)
 {
+    RenderBouncingSprite *state = data;
     GteShortVector position;
     GteRotation rotation;
     int intensity, scale, palette;
@@ -196,8 +199,9 @@ int FieldFx_ScatterBurstSprite(int mode, RenderBouncingSprite *state)
 /* Scatter burst at the actor target: opens a pool of bouncing sprites
  * (FieldFx_ScatterBurstSprite), throws two per frame for six frames on a turning angle,
  * and draws a growing flash, a short ring and a ground ring. */
-int FieldFx_ScatterBurstEmitter(int mode, RenderArcingEmitter *state)
+int FieldFx_ScatterBurstEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderArcingEmitter *state = data;
     GteRotation rotation;
     GteShortVector position;
     RenderColor color = g_FieldFxGlowFountainTint;
@@ -302,8 +306,9 @@ int FieldFx_ScatterBurstEmitter(int mode, RenderArcingEmitter *state)
     return 0;
 }
 
-int FieldFx_CosineEffectB(int mode, RenderCosineEffect *state)
+int FieldFx_CosineEffectB(int mode, void *data, intptr_t argument)
 {
+    RenderCosineEffect *state = data;
     RenderColor color = g_FieldFxCosineEffectTint;
 
     switch (mode) {
@@ -325,8 +330,9 @@ int FieldFx_CosineEffectB(int mode, RenderCosineEffect *state)
 /* Arcing emitter: spawns three cosine sparks per frame between frames 4
  * and 10, draws the expanding ring for 13 frames and anchors the effect at
  * its position under the current view matrix. */
-int FieldFx_CosineSparkEmitter(int mode, RenderArcingEmitter *state)
+int FieldFx_CosineSparkEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderArcingEmitter *state = data;
     GteShortVector position;
     RenderColor color = g_FieldFxArcingEmitterTint;
     RenderCosineEffect *effect;
@@ -383,8 +389,9 @@ static inline int TextureIndex(unsigned int factor, unsigned int step)
     return factor * step + 128;
 }
 
-int FieldFx_RisingSprite(int mode, RenderRisingEffect *state)
+int FieldFx_RisingSprite(int mode, void *data, intptr_t argument)
 {
+    RenderRisingEffect *state = data;
     GteShortVector position;
     GteRotation rotation;
     RenderColor color;
@@ -432,8 +439,9 @@ int FieldFx_RisingSprite(int mode, RenderRisingEffect *state)
 /* Rising effect emitter at the actor target: plays sound 0x487, opens a pool
  * of rising sprites (FieldFx_RisingSprite), scatters one per frame for eight frames
  * and draws a slowly turning glow while the anchor climbs. */
-int FieldFx_RisingSpriteEmitter(int mode, RenderArcingEmitter *state)
+int FieldFx_RisingSpriteEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderArcingEmitter *state = data;
     GteRotation rotation;
     RenderRisingEffect *effect;
     int speed;
@@ -513,8 +521,9 @@ int FieldFx_RisingSpriteEmitter(int mode, RenderArcingEmitter *state)
 
 /* One sprite of the spiral: circles the shared anchor g_SpiralEffectAnchor at radius
  * g_SpiralEffectRadius while sinking, and flickers through an eight-frame strip. */
-int FieldFx_SpiralSprite(int mode, RenderSpiralSprite *state)
+int FieldFx_SpiralSprite(int mode, void *data, intptr_t argument)
 {
+    RenderSpiralSprite *state = data;
     RenderColor color = g_FieldFxSpiralSpriteTint;
     int scale;
     int intensity;
@@ -551,8 +560,9 @@ int FieldFx_SpiralSprite(int mode, RenderSpiralSprite *state)
 /* Spiral emitter on the ground under the actor: releases 24 circling
  * sprites (FieldFx_SpiralSprite) on the first frame, publishes the anchor and the
  * swelling radius they follow, and draws a spinning model in two sizes. */
-int FieldFx_SpiralEmitter(int mode, RenderArcingEmitter *state)
+int FieldFx_SpiralEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderArcingEmitter *state = data;
     GteMatrix matrix;
     GteVector scale;
     GteShortVector angles;
@@ -651,8 +661,9 @@ int FieldFx_SpiralEmitter(int mode, RenderArcingEmitter *state)
 
 /* Ring pulse at the actor target: a breathing disc for 32 frames and an
  * expanding ground ring over the first 17. */
-int FieldFx_RingPulse(int mode, RenderRingPulse *state)
+int FieldFx_RingPulse(int mode, void *data, intptr_t argument)
 {
+    RenderRingPulse *state = data;
     GteRotation rotation;
     RenderColor color = g_FieldFxRingPulseTint;
     int scale;
@@ -695,8 +706,9 @@ int FieldFx_RingPulse(int mode, RenderRingPulse *state)
     return 0;
 }
 
-int FieldFx_BouncingSpinSprite(int mode, RenderBouncingSprite *state)
+int FieldFx_BouncingSpinSprite(int mode, void *data, intptr_t argument)
 {
+    RenderBouncingSprite *state = data;
     GteShortVector position;
     GteRotation rotation;
     RenderColor color = g_FieldFxBouncingSpriteTint;
@@ -736,7 +748,9 @@ int FieldFx_BouncingSpinSprite(int mode, RenderBouncingSprite *state)
     return 0;
 }
 
-int FieldFx_BouncingSpinEmitter(int mode, RenderPhaseEmitter *state) {
+int FieldFx_BouncingSpinEmitter(int mode, void *data, intptr_t argument)
+{
+    RenderPhaseEmitter *state = data;
     RenderBouncingSprite *particle;
     GteShortVector position;
     int count;
@@ -961,8 +975,9 @@ char g_EmberColorTrack[] = {
     0,0,0,0,0,0,0,0,0xc8,0xa0,0x10,6,0,0,0,0,0x64,0x40,0x46,6,
     0,0,0,0,0xff,0x50,0,6,0,0,0,0,0,0,0,0,0,0,0,0};
 
-int FieldFx_ArcingSpark(int mode, RenderArcingEffect *state)
+int FieldFx_ArcingSpark(int mode, void *data, intptr_t argument)
 {
+    RenderArcingEffect *state = data;
     RenderColor color = g_FieldFxArcingSparkTint;
     GteShortVector position;
     int palette;
@@ -988,8 +1003,9 @@ int FieldFx_ArcingSpark(int mode, RenderArcingEffect *state)
     return 0;
 }
 
-int FieldFx_ArcingSparkEmitter(int mode, RenderArcingEmitter *state)
+int FieldFx_ArcingSparkEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderArcingEmitter *state = data;
     RenderColor color;
     GteShortVector position;
     GteRotation rotation;
@@ -1075,8 +1091,9 @@ int FieldFx_OrbitTrailPoint(int mode, void *data, intptr_t argument)
     return 0;
 }
 
-int FieldFx_OrbitingSprite(int mode, RenderOrbitingEffect *state)
+int FieldFx_OrbitingSprite(int mode, void *data, intptr_t argument)
 {
+    RenderOrbitingEffect *state = data;
     GteShortVector position;
     GteRotation rotation;
     RenderColor color = g_FieldFxOrbitHelicalTint;
@@ -1144,8 +1161,9 @@ int FieldFx_OrbitingSprite(int mode, RenderOrbitingEffect *state)
     return 0;
 }
 
-int FieldFx_OrbitingSpriteEmitter(int mode, RenderOrbitingEmitter *state)
+int FieldFx_OrbitingSpriteEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderOrbitingEmitter *state = data;
     GteShortVector position;
     RenderOrbitingEffect *effect;
     int count;
@@ -1208,8 +1226,9 @@ int FieldFx_OrbitingSpriteEmitter(int mode, RenderOrbitingEmitter *state)
 }
 
 /* Matrix loads are C; each GTE transfer uses its individual macro. */
-int FieldFx_OrbitingSpriteBurst(int mode, RenderOrbitingEmitter *state)
+int FieldFx_OrbitingSpriteBurst(int mode, void *data, intptr_t argument)
 {
+    RenderOrbitingEmitter *state = data;
     GteShortVector position;
     RenderOrbitingEffect *effect;
     int count;
@@ -1276,8 +1295,9 @@ int FieldFx_OrbitingSpriteBurst(int mode, RenderOrbitingEmitter *state)
     return 0;
 }
 
-int FieldFx_VerticalRingSprite(int mode, RenderVerticalEffect *state)
+int FieldFx_VerticalRingSprite(int mode, void *data, intptr_t argument)
 {
+    RenderVerticalEffect *state = data;
     GteShortVector position;
     GteRotation rotation;
     RenderColor color;
@@ -1322,7 +1342,7 @@ int FieldFx_VerticalRingSprite(int mode, RenderVerticalEffect *state)
     return 0;
 }
 
-int FieldFx_VerticalEffectEmitter(int mode, void *state)
+int FieldFx_VerticalEffectEmitter(int mode, void *state, intptr_t argument)
 {
     GteShortVector position;
     RenderVerticalEffect *effect;
@@ -1394,8 +1414,9 @@ int FieldFx_HelicalTrailPoint(int mode, void *data, intptr_t argument)
     return 0;
 }
 
-int FieldFx_HelicalSprite(int mode, RenderHelicalEffect *state)
+int FieldFx_HelicalSprite(int mode, void *data, intptr_t argument)
 {
+    RenderHelicalEffect *state = data;
     GteShortVector position;
     GteRotation rotation;
     RenderColor color = g_FieldFxOrbitHelicalTint;
@@ -1464,8 +1485,9 @@ int FieldFx_HelicalSprite(int mode, RenderHelicalEffect *state)
 }
 
 /* Matrix loads are C; each GTE transfer uses its individual macro. */
-int FieldFx_HelicalSpriteEmitter(int mode, RenderOrbitingEmitter *state)
+int FieldFx_HelicalSpriteEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderOrbitingEmitter *state = data;
     RenderHelicalEffect *effect;
     int count;
     int phase;
@@ -1530,8 +1552,9 @@ int FieldFx_HelicalSpriteEmitter(int mode, RenderOrbitingEmitter *state)
     return 0;
 }
 
-int FieldFx_DampedSpark(int mode, RenderDampedSpark *state)
+int FieldFx_DampedSpark(int mode, void *data, intptr_t argument)
 {
+    RenderDampedSpark *state = data;
     GteShortVector position;
     u32 color;
     switch (mode) {
@@ -1565,8 +1588,9 @@ int FieldFx_DampedSpark(int mode, RenderDampedSpark *state)
 }
 
 /* Matrix loads are C; each GTE transfer uses its individual macro. */
-int FieldFx_DampedSparkEmitter(int mode, RenderSparkEmitter *state)
+int FieldFx_DampedSparkEmitter(int mode, void *data, intptr_t argument)
 {
+    RenderSparkEmitter *state = data;
     GteRotation rotation;
     RenderColor color = g_FieldFxDampedSparkTint;
     RenderDampedSpark *effect;
@@ -1638,8 +1662,9 @@ int FieldFx_DampedSparkEmitter(int mode, RenderSparkEmitter *state)
 #define SPINNING_MODEL_COLOR(size) 0, (u8)((size) / 2), (u8)((size) / 8)
 #include "spinning_model.inc"
 
-int FieldFx_RisingSpinSprite(int mode, RenderArcingEffect *state)
+int FieldFx_RisingSpinSprite(int mode, void *data, intptr_t argument)
 {
+    RenderArcingEffect *state = data;
     GteShortVector position;
     GteRotation rotation;
     int intensity, palette;
@@ -1670,8 +1695,9 @@ int FieldFx_RisingSpinSprite(int mode, RenderArcingEffect *state)
     return 0;
 }
 
-int FieldFx_RisingSpinEmitter(int mode, GteShortVector *state)
+int FieldFx_RisingSpinEmitter(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
     RenderArcingEffect *particle;
     switch (mode) {
     case 0:
@@ -1715,7 +1741,9 @@ int FieldFx_RisingSpinEmitter(int mode, GteShortVector *state)
 #define SPINNING_MODEL_COLOR(size) (u8)((size) / 3), 0, (u8)((size) / 2)
 #include "spinning_model.inc"
 
-int FieldFx_SpinningModelEmitterB(int mode, FieldFxEmitter *state) {
+int FieldFx_SpinningModelEmitterB(int mode, void *data, intptr_t argument)
+{
+    FieldFxEmitter *state = data;
     FieldFxEmittedPoint *point;
     int angle;
 
@@ -1749,8 +1777,9 @@ int FieldFx_SpinningModelEmitterB(int mode, FieldFxEmitter *state) {
     return 0;
 }
 
-int FieldFx_DescendingSprite(int mode, RenderArcingEffect *state)
+int FieldFx_DescendingSprite(int mode, void *data, intptr_t argument)
 {
+    RenderArcingEffect *state = data;
     GteShortVector position;
     GteRotation rotation;
     int intensity, palette;
@@ -1782,8 +1811,9 @@ int FieldFx_DescendingSprite(int mode, RenderArcingEffect *state)
     return 0;
 }
 
-int FieldFx_DescendingSpriteEmitter(int mode, GteShortVector *state)
+int FieldFx_DescendingSpriteEmitter(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
     RenderArcingEffect *particle;
     switch (mode) {
     case 0:
@@ -1821,3 +1851,11 @@ int FieldFx_DescendingSpriteEmitter(int mode, GteShortVector *state)
     }
     return 0;
 }
+
+s16 g_SpinningModelAnchorB[3];
+
+/* Original USA resident task 99, selected by Slow (PE spell 8). */
+u16 g_FieldFxTaskScriptCmd99[] = {1,6,13,2,0,0,4,4,0,2,1,0,4,5,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd99 = {
+    {{FieldFx_SpinningModelEmitterB, FieldFx_DescendingSpriteEmitter}, {8, sizeof(GteShortVector)}},
+    NULL, g_FieldFxTaskScriptCmd99};

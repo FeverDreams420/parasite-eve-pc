@@ -144,8 +144,50 @@ To potwierdza jedno rzeczywiste użycie Slow, nie zwycięstwo M082 ani
 wszystkie klatki efektu. Żywy input trwa w osobnym /tmp/pe-park-slow99,
 log /tmp/pe-park-slow99-lldb.log, trace /tmp/pe-park-slow99-input.jsonl.
 
-Następne zadanie: ukończyć M082, sprawdzić leczenie i Cure-P przez UI,
-dojść do M083 i kontynuować kampanię. Pełna kampania i pełny zakres celu
+Dalsza próba po Slow kończy się Game Over/cap50888. Cure-P użyte przy
+17HP przez prawdziwe menu zużywa slot10 i usuwa poison (stateFlags
+270532608 po efekcie); potem Aya ginie przed następną turą Heal1. To nie
+jest regresja ani zwycięstwo. Zakończono ten debugger po Game Over.
+
+M082 jest teraz ukończone inną gałęzią inputu od prawdziwego Continue G.
+Heal1 przed wejściem HP81→111; druga próba Heal1 przy zbyt małym PE nic
+nie leczy. Na początku walki użyto Cure-P przez menu, stan otrzymuje
+poison immunity3. Input biegnie dolnym i górnym brzegiem mostu, zamiast
+pozostawać przy lewym przewężeniu. Dwa typ3/44HP pokonane, HP91. Seria
+M16 spoza zasięgu (2930 przy1587) nie rani niedźwiedzia; po podejściu
+do1353 dwie serie kończą typ5/75HP na-13, HP65. Pomocniczy typ4/10HP
+nie jest osobnym celem. Oryginalne ekrany wyniku i awansu: poziom11
+(zapisane level10), maxHP123, capacity20. Obtain All zabiera Ammo+6,
+Cure-P i Ammo+15; wszystkie3 wpisy pending list są wyczyszczone, nowy
+Cure-P wraca do zwolnionego slotu10, slot11 i nowy19 pozostają puste.
+Po End dwa Heal1 przez oryginalne UI podnoszą HP65→95→123; menu zamknięte.
+
+Pełny replay tej gałęzi od G do cap53727 PASS normalnie i pod
+ASan/UBSan/function: cały JSON i1MiB VRAM identyczne, SHA256
+a1954a568fc9e58a4f7471cb46aca32fdf0aadf4222db04e0e84bfb65b82b5aa.
+M082, etap248, lock0, brak menu/żywych wrogów, HP123/123, capacity20,
+broń9/pancerz14, bonus M16 nadal2, ekwipunek poza amunicją i odnowionym
+Cure-P zachowany. Wszystkie prywatne pliki B–G niezmienione; użytkowe
+bu00/ i bu10/ nietknięte. Artefakty /tmp/pe-m082-victory-{normal,san}.log,
+katalogi z frame.vram, /tmp/pe-m082-victory-args.json, verify.py i proof.json.
+Nie jest to dowód wszystkich ataków, dropów ani klatek pośrednich.
+
+Żywy input idzie na zachód mostu, uruchamia oryginalny skrypt wyjścia,
+i wchodzi do M083/cap54603 (A80081C8): fontanna,49 trójkątów, HP123,
+etap248, lock0. Obraz /tmp/pe-m083-live.png obejrzany. Ruch alejką
+uruchamia walkę dwóch typ3/57HP; po czekaniu do55335 HP94, ATB9000,
+bez poison. To nie jest jeszcze ukończona walka ani pełny replay M083.
+Po48 klatkach uniku i otwarciu menu/cap55399 nadal HP94; bieżący
+debugger jest zatrzymany na głównym menu walki (selected_base0).
+Bieżący debugger używa zamrożonego /tmp/pe-park-slow99-game-debug,
+prywatnego /tmp/pe-m082-prepared, args.json, log
+/tmp/pe-m082-prepared-lldb.log i ciągłego trace
+/tmp/pe-m082-prepared-input.jsonl (od47891). Wyłącznie input i limity
+hosta; nie zmieniano HP, pozycji, AI, flag ani inventory przez debugger.
+Pomocnik /tmp/pe_park_combat_control.py ma dodatkowy pe-ready-range,
+który fizycznie zbliża Ayę na zasięg M16, zanim zatwierdzi cel.
+
+Następne zadanie: ukończyć M083 i kontynuować kampanię. Pełna kampania i pełny zakres celu
 pozostają nieukończone. Żaden plik produkcyjny nie został dodany ani
 przeniesiony. Użytkowe bu00/ i bu10/ nietknięte.
 

@@ -276,6 +276,34 @@ color tracks800E1C04/40 i800E1C2C/56, tints800C22E8/800C22EC,
 anchor800E221C. Nie dodano jeszcze żadnego z tych powiązań; następny krok
 to audyt CPU/GTE i cyklu task100, naprawa danych w tym samym module
 oraz ponowienie zachowanego pełnego inputu zwykle i z sanitizerami.
+Detox100: bieżąca naprawa uzupełnia wyłącznie oryginalne dane w istniejącym
+emitters.c i wpis w task_list.c; wszystkie29 funkcji tego modułu pozostają
+w miejscu. Nie dodano plików ani nowej implementacji zaklęcia. Odtworzono
+pełny descriptor,18 halfwordów skryptu, oba color tracks, tints i anchor.
+Test odczytuje je bezpośrednio z wymaganego CUE i porównuje z natywnymi.
+224 porównania CPU/ROM BIOS stanów czterech oryginalnych callbacków,
+RNG i wszystkich slotów pul dają FNV e7f3d5cc149b7a78; oracle
+/tmp/pe-detox100-cpu.py. Pierwszy oracle błędnie założył nagłówek listy16
+zamiast oryginalnego12 i prefix slotu8 zamiast4; poprawiony oracle zgadza
+się z natywnym wynikiem. Nie zmieniano implementacji, żeby dopasować hash.
+Sześć oryginalnych programów PM (w tym Detox) x100 klatek: rysowanie,
+pule, łańcuchy OT, expiry i guards PASS. Pełny wymagany asset fixture
+PASS zwykle i z ASan/UBSan/function; logi
+/tmp/pe-detox100-verified-fixture{,-san}.log.
+Zwykły replay od Continue G do62200 przechodzi dawny abort: M085,
+HP51/123, dwa żywe typ3, menu zamknięte. LLDB przy62200 odczytuje
+stateFlags10200000, poison mask wyzerowany. Dalsze ataki mogą ponownie
+zatruć; Detox nie daje odporności. Pełny replay z ASan/UBSan/function do62200 PASS, bez diagnostyki błędów:
+cały JSON i1MiB VRAM identyczne ze zwykłym, SHA256
+71d9f71c8e17ea179f87b56b7ab6b2b6d11577d3ca193686f52635e8fde1eabf.
+Prywatne B–G niezmienione, obraz frame.png obejrzany. Logi
+/tmp/pe-detox100-{normal,san}.log i katalogi z frame.vram, args.json,
+/tmp/pe-detox100-verify.py oraz proof.json.
+Dalsza próba walki nie jest PASS: po ponownym poison HP51→26→18→0
+przy63124. Dwa polecenia pe-ready-range nie były zarejestrowane w nowej
+sesji debuggera, więc nie wykonały żadnego inputu; to błąd sterownika testu,
+nie gry. Po rejestracji i ruchu do zasięgu Aya ginie. Polecenie600 klatek
+sprawdza dalszą ścieżkę porażki; wynik jeszcze niezaliczony.
 Następnie kontynuować kampanię. Pełna kampania i pełny zakres celu
 pozostają nieukończone. Użytkowe bu00/ i bu10/ nietknięte.
 

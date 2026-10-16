@@ -1488,3 +1488,14 @@ FieldFxTaskProgram g_FieldFxTaskProgramCmd101 = {
 FieldFxTaskProgram g_FieldFxTaskProgramCmd102 = {
     {{FieldFx_RingFlash, FieldFx_JitterSpriteEmitter}, {sizeof(RenderSparkEmitter), sizeof(GteShortVector)}},
     NULL, g_FieldFxTaskScriptCmd102};
+
+/* Original USA Detox task 100 and its complete resident data. */
+u8 g_CosineEffectColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,100,0,8,0,0,0,0,0,160,100,8,0,0,0,0,160,200,160,0,0,0,0,0};
+u8 g_SineSweepColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,16,0,0,0,0,0,200,0,16,0,0,0,0,0,160,100,16,0,0,0,0,160,200,160,8,0,0,0,0,0,200,0,8,0,0,0,0,0,0,0,0,0,0,0,0};
+RenderColor g_FieldFxSparkOuterTint={30,200,50,0};
+RenderColor g_FieldFxSparkInnerTint={230,250,230,0};
+GteShortVector g_SineEffectAnchor;
+u16 g_FieldFxTaskScriptCmd100[]={1,6,15,2,0,0,4,8,0,2,1,0,4,5,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd100={
+    {{FieldFx_CosineEmitter,FieldFx_SineEmitter},{sizeof(RenderSparkEmitter),sizeof(RenderSineEmitter)}},
+    NULL,g_FieldFxTaskScriptCmd100};

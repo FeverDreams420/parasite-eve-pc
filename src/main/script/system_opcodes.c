@@ -1484,20 +1484,20 @@ int Entity_PolarToPosition(int **arg0)
     ptr = angleInput;
     angleValue = *ptr;
     value = angleValue;
-    angle = 0x1400 - value;
+    angle = (s16)(0x1400u - (u32)value);
     ptr = args[0];
     radiusInput = *ptr;
     radius = radiusInput;
     value = rcos(angle);
-    radius = -radius;
-    value = Math_FixedMul(radius, value << 4);
+    radius = (s32)(0u - (u32)radius);
+    value = Math_FixedMul(radius, (s32)((u32)value << 4));
     {
         int *dst;
         dst = args[2];
         *dst = value;
     }
     value = rsin(angle);
-    value = Math_FixedMul(radius, value << 4);
+    value = Math_FixedMul(radius, (s32)((u32)value << 4));
     {
         int *dst;
         dst = args[3];
@@ -1508,7 +1508,7 @@ int Entity_PolarToPosition(int **arg0)
         dst = args[2];
         current_v1 = g_CurrentEntity;
         value = *dst;
-        value += current_v1->pos_x;
+        value = (s32)((u32)value + (u32)current_v1->pos_x);
         *dst = value;
     }
     {
@@ -1518,7 +1518,7 @@ int Entity_PolarToPosition(int **arg0)
         current_v0 = g_CurrentEntity;
         loaded = *dst;
         base = current_v0->pos_z;
-        loaded += base;
+        loaded = (s32)((u32)loaded + (u32)base);
         *dst = loaded;
     }
     return 1;

@@ -153,6 +153,7 @@ int Script_FillObjEntrySlotValues(int **args);
 int Script_SetObjEntrySlotValue(int **args);
 int Script_SetObjEntryFlags(int **args);
 int Script_ClearObjEntryFlags(int **args);
+int Entity_PolarToPosition(int **args);
 int Script_RotateEntityAngle(int **args);
 int Script_GetAngleToPoint(int **args);
 int Script_SnapPosToSpawnPos(int **unused);

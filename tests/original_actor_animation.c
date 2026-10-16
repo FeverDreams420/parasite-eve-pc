@@ -2670,6 +2670,45 @@ static int original_render_flag_opcodes(void)
     return 1;
 }
 
+static int original_polar_position_opcode(void)
+{
+    const u32 patterns[]={0x80000000,0xffff0000,0xffffffff,0,1,1024,4096,65535,0x7fffffff,0x12345678,0xfedcba98,0x4000};
+    const u32 positions[][2]={{0,0},{65536,0xffff0000},{0x80000000,0x7fffffff},{0x7fffffff,0x80000000},{0x12345678,0xfedcba98}};
+    FieldActor *saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    u32 saved_vars[]={g_ScriptVariableBank[9],g_ScriptVariableBank[10]};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[221]!=Entity_PolarToPosition)return 0;
+    for(unsigned radius=0;radius<12;++radius)for(unsigned angle=0;angle<12;++angle)
+    for(unsigned pose=0;pose<5;++pose)for(unsigned alias=0;alias<6;++alias){
+        FieldActor actor={.pos_x=(s32)positions[pose][0],.pos_z=(s32)positions[pose][1],.flags=0xdecafbad};
+        FieldActor before=actor,expected=actor;g_CurrentEntity=&actor;
+        int data[]={(s32)patterns[radius],(s32)patterns[angle],(s32)0xa5a5a5a5,(s32)0x5a5a5a5a};
+        int *outputs[][2]={{data+2,data+3},{data+2,data+2},{&actor.pos_x,&actor.pos_z},{data,data+1},
+            {&actor.pos_z,&actor.pos_x},{data+1,data}};
+        int *args[]={data,data+1,outputs[alias][0],outputs[alias][1]};u32 result=Entity_PolarToPosition(args);
+        const u32 words[]={result,(u32)actor.pos_x,(u32)actor.pos_z,(u32)data[0],(u32)data[1],(u32)data[2],(u32)data[3]};
+        for(unsigned word=0;word<7;++word)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+        expected.pos_x=actor.pos_x;expected.pos_z=actor.pos_z;
+        if(memcmp(&actor,&expected,sizeof(actor)))return 0;
+        if(!alias){
+            actor=before;u32 program[]={221|(4u<<13)|(2u<<23)|(2u<<26),0,patterns[radius],patterns[angle],9,10,32,0};
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;
+            g_ScriptVariableBank[9]=0xa5a5a5a5;g_ScriptVariableBank[10]=0x5a5a5a5a;Script_RunQueue();
+            if(result!=1 || memcmp(&actor,&expected,sizeof(actor)) || g_ScriptVariableBank[9]!=(u32)data[2] ||
+               g_ScriptVariableBank[10]!=(u32)data[3] || node.current.script!=program+8 || node.flags!=0x90 ||
+               node.active || g_ScriptNodePool)return 0;
+        }
+        ++cases;
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    g_ScriptVariableBank[9]=saved_vars[0];g_ScriptVariableBank[10]=saved_vars[1];
+    if(cases!=4320 || hash!=UINT64_C(0xa8ae21be8bc9567d)){
+        fprintf(stderr,"Polar221 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original opcode221: 4320 unhooked USA CPU states, signed radius/angle wrapping, boundary positions, six input/output alias patterns and full dispatcher passed");
+    return 1;
+}
+
 static int original_battle_entry_opcode(void)
 {
     Pe1GameState saved_state=g_GameState;FieldActor actor={0},*saved_actor=g_CurrentEntity;
@@ -3684,7 +3723,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
@@ -4119,6 +4158,56 @@ static int authored_m023_effect_cycle(SceneAssetView *room)
     D_800B0E38=old_buffers;g_GeomScroll.words.viewMatrix=old_view;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;
     srand(old_random);memset(g_RoomM005ScriptAnchorView-4,0,20);
     if(valid)puts("Original M023: 180 PM frames, all three task types, real room model, complete task teardown and OT/packet guards passed");
+    return valid;
+}
+
+static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)
+{
+    u8 header[0x800];u32 base;PeDiscFile archive;SceneAssetView *rooms[2]={NULL,NULL};
+    if(!pe_disc_read(disc,exe,0,header,sizeof(header)) || !pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    memcpy(&base,header+0x18,4);const unsigned ids[]={12,28};int valid=1;
+    for(unsigned i=0;valid && i<2;++i){
+        SceneRoomSectorRange range;
+        valid=pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(ids[i]-1)*8,&range,sizeof(range));
+        if(!valid)break;
+        size_t bytes=(size_t)range.roomSectors*2048;
+        if(!(rooms[i]=malloc(bytes))){valid=0;break;}
+        valid=pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,rooms[i],bytes);
+    }
+    if(valid){
+        SceneRoomDirectory *directory=SceneAsset_ResolveOffset(rooms[1],rooms[1]->header.directoryOffset);
+        SceneRoomRecord *record=SceneAsset_ResolveOffset(rooms[1],directory->scripts&0x3fffff);
+        valid=directory->scripts>>22==2 && record[0].source.bytes.slot==115 && record[0].u.handlerAddress==0x80193250u &&
+            record[1].source.bytes.slot==73 && record[1].u.handlerAddress==0x801931dcu;
+        const u32 descriptor[]={0x80192700,0,0,0,0,0,0,0,20,0,0,0,0x80193148,0x80193214};
+        const u32 methods[]={0x80191514,0x8019151c,0x801915ac,0x801917f4,0x801917fc,0x801920a0,0x801920fc};
+        const u8 *a=(u8 *)rooms[0]+8,*b=(u8 *)rooms[1]+8;
+        valid=valid && !memcmp(b+0x80193250u-0x8018eff0u,descriptor,sizeof(descriptor)) &&
+            !memcmp(b+0x801931dcu-0x8018eff0u,methods,sizeof(methods)) &&
+            !memcmp(b+0x80193214u-0x8018eff0u,g_RoomOrbitFlareScript,sizeof(g_RoomOrbitFlareScript)) &&
+            !memcmp(a+4,b+0x1dc,16) && g_RoomOrbitFlareEffects.table.callbacks[0]==RoomEffect_OrbitFlareController &&
+            g_RoomOrbitFlareEffects.table.sizes[0]==20 && g_RoomOrbitFlareEffects.initialize==RoomLib_SetArgs3 &&
+            g_RoomActorClassTable[4].initialize==RoomLib_InitHandlerC && g_RoomActorClassTable[4].execute==RoomLib_UpdateHandlerC;
+        unsigned relocated=0;
+        for(unsigned offset=0;valid && offset<0xa48;offset+=4){
+            u32 reference,current;memcpy(&reference,a+0x8018f20cu-0x8018eff0u+offset,4);
+            memcpy(&current,b+0x80192700u-0x8018eff0u+offset,4);
+            if(reference==current)continue;
+            u32 expected=reference,opcode=reference>>26;
+            if(opcode==2 || opcode==3){
+                u32 target=0x80000000u|((reference&0x3ffffffu)<<2);
+                if(target>=0x8018f20cu && target<0x8018fc54u)
+                    expected=(reference&0xfc000000u)|(((target+0x34f4u)>>2)&0x3ffffffu);
+            }else if(offset==0x24 || offset==0x4c || offset==0x194){
+                expected=(reference&0xffff0000u)|(u16)((u16)reference+(offset==0x194?0x34f4u:0x1d8u));
+            }
+            if(current!=expected)valid=0;
+            ++relocated;
+        }
+        valid=valid && relocated==19;
+    }
+    free(rooms[0]);free(rooms[1]);
+    if(valid)puts("Original M028: class C slot73, orbit-flare slot115, full USA descriptors/script/seeds and 658 controller instructions with exactly 19 address relocations match M012");
     return valid;
 }
 
@@ -10276,7 +10365,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};PeDiscFile exe;u32 pointers[50];
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
-        if (!original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe))return 157;
+        if (!original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;

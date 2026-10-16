@@ -446,11 +446,15 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomM272Handlers;
         if (map + 1 == 22 && slot == 70 && record[i].u.handlerAddress == 0x801924e8u)
             native = &g_RoomActorClassTable[0];
+        if (map + 1 == 28 && slot == 73 && record[i].u.handlerAddress == 0x801931dcu)
+            native = &g_RoomActorClassTable[4];
         if (map + 1 == 23 && slot == 118 && record[i].u.handlerAddress == 0x80190720u)
             native = &g_RoomM023Effects;
         if (map + 1 == 5 && slot == 117 && record[i].u.handlerAddress == 0x80190b44u)
             native = &g_RoomM005Effects;
         if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 30) && slot == 115 && record[i].u.handlerAddress == 0x8018fcb4u)
+            native = &g_RoomOrbitFlareEffects;
+        if (map + 1 == 28 && slot == 115 && record[i].u.handlerAddress == 0x80193250u)
             native = &g_RoomOrbitFlareEffects;
         if (!native) {
             fprintf(stderr, "Scene_LoadRoom: native descriptor missing for M%03d slot %u (PS1 %08x)\n",
@@ -578,7 +582,7 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
             g_RoomM005BeaconOffset = (GteShortVector){0};
             g_RoomM005BeaconCenter = (GteShortVector){0};
-        } else if (map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 30) {
+        } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 28 || map + 1 == 30) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
         } else if (map + 1 == 23) {
@@ -587,6 +591,8 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM023BeaconModel = NULL;
         } else if (map + 1 == 22) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];
+        } else if (map + 1 == 28 && slot == 73) {
+            g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];
         } else {
             g_PmCmdHandlerTable[slot] = map + 1 == 272 ? &g_RoomM272Handlers : &g_RoomFxMirrorHandlers;
         }

@@ -180,9 +180,28 @@ slotów, sąsiednie dane i dispatcher. Zachowano oryginalne OR z maską0x30,
 także w wrapperze o dawnej nazwie ClearObjEntryFlags. Oba zestawy oraz
 rozszerzony fixture ASan/UBSan/function PASS. M026 przy cap27134 ma HP21
 i move_lock0; Heal1 podnosi HP do51. Kolejna próba wchodzi do M027,
-wygrywa starcie (cap32002, HP29, move_lock0) i zatrzymuje się dopiero przy
-wejściu M028: niepowiązany descriptor115/80193250. Nie uznawać M028 ani
-całych kanałów za ukończone.
+wygrywa starcie (cap32002, HP29, move_lock0) i dochodzi do M028.
+W M028 podpięto istniejący OrbitFlare (slot115/80193250) i klasę C
+(slot73/801931dc, wiersz4). Fixture czyta oba deskryptory z rzeczywistego
+archiwum; cały kontroler658 instrukcji jest zgodny z M012 po19 relokacjach.
+Skrypt wymaga też opcode221: podpięto istniejący Entity_PolarToPosition,
+zachowując kolejność zapisów i zawijanie słowa MIPS bez signed UB.
+4320 stanów bez hooków CPU USA (w tym aliasowanie parametrów i skrajne
+wartości) daje hasha8ae21be8bc9567d; fixture sprawdza też720 wywołań przez
+rzeczywisty dispatcher. Cztery powiązane CTest PASS13.04s, świeży fixture
+ASan/UBSan/function PASS. Replay do wejścia M028/cap33602 przechodzi
+zarówno zwykły build, jak i runtime ASan/UBSan/function: HP23/64, trzech
+wrogów, identyczny JSON oraz cały VRAM, SHA256
+b70a39c181b463165c9af9704627072a262be2d610be0bde9c2ca06d1e5ad352.
+Dalsza próba sterowania w walce kończy się śmiercią Ayi; pozostają dwaj
+wrogowie z HP2, a ruch nie zmienia pozycji. Przyczyna nieustalona, nie jest
+to dowód poprawnej walki ani ukończenia M028/czyszczenia kanałów.
+Nie wprowadzono obejścia HP, zachowania przeciwników ani nowych plików.
+
+Osobny PS1 zaakceptował także zapis M319 po drugiej Melissie wygenerowany
+przez oryginalne funkcje portu: HP21/64, zgodna pozycja Continue, Melissa
+nieobecna przy fortepianie; zwykły input dochodzi do wyboru Jump in.
+To sprawdzenie konkretnego checkpointu, nie wszystkich zapisów.
 
 Pozostaje do zbadania osobna różnica: żywy rdzeń gracza przed zapisem
 zachowywał maxHP53, choć SaveAya i późniejsze Continue/PS1 wskazują64.

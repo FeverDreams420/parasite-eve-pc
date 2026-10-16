@@ -36,6 +36,22 @@ użycia permitu i dodania slotu do M16A1, nie całego Tune-Up, Tool,
 pozostałych modyfikacji ani pełnego dnia2. Nie uruchomiono pełnego50/50.
 
 
+Telefon po ulepszeniu tworzy prywatny zapisE8192 bajty,
+83182cd2dc22bda1ca6c0d37302bc52dcb1742e95c861fa69977143a41b2222a.
+B/C/D pozostały niezmienione. Świeże Continue E/cap24000 na tym samym
+kandydacie przeszło normalnie i pod ASan/UBSan/function (oba PASS).
+Pełny JSON, wszystkie rekordy wyposażenia, timery i1MiB VRAM są identyczne
+(2265a2819edfc2968c231059ef7a3d1c511b8ff2a01ed2a34e2f63bcfa123a23).
+Rekordy zgadzają się ze stanem po ulepszeniu na PS1; M16 ma2 sloty,
+permit ze slotu10 zużyty. Zapisany czas rzeczywiście wzrósł: po Continue
+zegary0/2=237197, flags1, limit0=21600000. Każdy replay miał osobny prywatny
+katalog, wszystkie cztery plikiB/C/D/E bez zmian. Oryginalny PS1 przyjąłE
+przez własny Continue po zwykłym soft resecie i odtworzył M042, etap224,
+pozycję[39714816,-131072,-51904512], obrót0, HP92/92 i broń9/pancerz1.
+Wszystkie50 slotów i całe4096 bajtów wyposażenia zgadzają się z native;
+zegary0/2=231882, flags1 i limit0=21600000. To dowód trwałości ulepszenia
+i rosnącego czasu przez zapis/wczytanie, nie pełnej kampanii.
+
 Naprawiono inicjalizację zegarów przy rzeczywistym rozruchu. Istniejący
 src/main/psyq/libsnd/ssinit_c.c był pominięty w buildzie, a mylna nazwa
 SsInit wiązała wywołanie Boot_InitSubsystems z inicjalizacją dźwięku SDK.

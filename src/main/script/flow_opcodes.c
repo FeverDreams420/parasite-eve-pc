@@ -716,6 +716,8 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [202]=Script_SetEntityField1E6, [210]=Script_GetFloorTableValue,
     [219]=Render_CameraTrackEntityAngle,
     [165]=Boot_CheckModeSwitch,
+    [167]=Script_GiveItem,
+    [232]=Script_ShowReceivedItem,
     [132]=Script_SetScreenScrollPos, [133]=Script_SetCdRomSeekPos, [134]=Script_SetFogColor, [135]=Script_SetCdRomScreenPos, [136]=Script_ClearEntityFlag40, [155]=Script_SetGteMatrix, [156]=Entity_YieldOnLoading, [157]=Script_ScaleAnimValue, [166]=Script_ClampMenuRange,
     [141]=Script_Noop1, [142]=Script_Noop2, [144]=Script_Noop4, [145]=Script_Noop3,
     [140]=Script_WaitFrameOrDraw, [143]=Entity_YieldOnDrawBusy,

@@ -1,3 +1,4 @@
+#include "pe1/script_queue.h"
 #include "pe1/game_timers.h"
 #include "pe1/game_state.h"
 #include "pe1/draw_wipe_rect.h"
@@ -551,6 +552,64 @@ static int inventory_sort_comparisons(void)
     puts("Original inventory sorting: 64,800 USA MIPS comparisons, empty records and full inventory/storage sorting passed");
     return 0;
 }
+static int script_item_awards(void)
+{
+    static const u32 ids[]={0,1,2,3,6,9,27,63,64,68,149,150,255,256,383,384,
+        511,512,520,521,32767,32768,0xffffffff,0x80000000};
+    const int limits[]={0,1,10,50};
+    PlayerInventoryState saved_player=g_PlayerInventoryState;
+    InventoryItemWorkspace saved_workspace=g_InventoryItemWorkspace;
+    s16 *saved_items=g_InvItemPtr;int saved_limit=g_InvSlotLimit,saved_bonus=g_InvBonusSlotCount;
+    u32 *saved_selection=g_InvSelectionBits;int saved_words=g_InvSelectionBitWords;
+    u32 saved_bits[2];memcpy(saved_bits,g_InvSelectionBitStorage,sizeof(saved_bits));
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    CHECK(sizeof(PlayerInventoryState)==0x1224 && sizeof(InventoryItemWorkspace)==0x1e8);
+    g_InvBonusSlotCount=0;
+    for(unsigned item=0;item<sizeof(ids)/sizeof(ids[0]);++item)for(unsigned cap=0;cap<4;++cap)
+    for(unsigned scenario=0;scenario<6;++scenario)for(unsigned alias=0;alias<2;++alias){
+        int limit=limits[cap];s16 custom[50]={0};
+        memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
+        memset(&g_InventoryItemWorkspace,0,sizeof(g_InventoryItemWorkspace));
+        g_AyaSaveState.inventory_slot_count=limit;
+        if(scenario>=1 && scenario<=3){
+            for(unsigned slot=0;slot<50;++slot)g_AyaInventoryItems[slot]=6;
+            if(scenario>=2 && limit)g_AyaInventoryItems[limit/2]=0;
+        }
+        if(scenario==3)for(unsigned record=0;record<128;++record)g_InventoryRuntime.equipment[record].iconId=1;
+        if(scenario==4 && limit)g_AyaInventoryItems[0]=512;
+        if(scenario==5){for(unsigned slot=0;slot<50;++slot)custom[slot]=6;if(limit)custom[limit/2]=0;}
+        for(unsigned category=0;category<3;++category){
+            g_KeyItemRecords[category].bonusStats[2]=999;
+            g_KeyItemRecords[category].ammo=scenario==4?998:0;
+        }
+        g_InvItemPtr=scenario==5?custom:g_AyaInventoryItems;g_InvSlotLimit=limit;
+        g_InvSelectionBits=NULL;g_InvSelectionBitWords=0;
+        g_InvSelectionBitStorage[0]=0xdeadbeef;g_InvSelectionBitStorage[1]=0xa55a5aa5;
+        int id=(s32)ids[item],output=(s32)0x98765432;int *args[]={&id,alias?&id:&output};
+        u32 result=Script_GiveItem(args);
+        CHECK(g_InvItemPtr==custom || g_InvItemPtr==g_AyaInventoryItems);
+        CHECK(!g_InvSelectionBits || g_InvSelectionBits==g_InvSelectionBitStorage);
+        const u32 words[]={result,(u32)id,(u32)output,g_InvItemPtr==custom,(u32)g_InvSlotLimit,
+            g_InvSelectionBits!=NULL,(u32)g_InvSelectionBitWords};
+        for(unsigned word=0;word<7;++word)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+        const void *blocks[]={&g_PlayerInventoryState,&g_InventoryItemWorkspace,custom,g_InvSelectionBitStorage};
+        const size_t sizes[]={sizeof(g_PlayerInventoryState),sizeof(g_InventoryItemWorkspace),sizeof(custom),8};
+        for(unsigned block=0;block<4;++block)for(size_t byte=0;byte<sizes[block];++byte)
+            hash=(hash^((const u8 *)blocks[block])[byte])*UINT64_C(1099511628211);
+        ++cases;
+    }
+    g_PlayerInventoryState=saved_player;g_InventoryItemWorkspace=saved_workspace;
+    g_InvItemPtr=saved_items;g_InvSlotLimit=saved_limit;g_InvBonusSlotCount=saved_bonus;
+    g_InvSelectionBits=saved_selection;g_InvSelectionBitWords=saved_words;
+    memcpy(g_InvSelectionBitStorage,saved_bits,sizeof(saved_bits));
+    if(cases!=1152 || hash!=UINT64_C(0xc4267725611c01f9)){
+        fprintf(stderr,"Item award CPU mismatch: cases=%u hash=%016llx\n",cases,(unsigned long long)hash);return 1;
+    }
+    puts("Original item opcode 167: 1152 unhooked USA CPU insertions and aliases passed");
+    return 0;
+}
+
 static int item_addition(void)
 {
     memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
@@ -980,6 +1039,7 @@ int main(void)
     CHECK(battle_defaults(&disc,&exe)==0);
     CHECK(item_lookups()==0);
     CHECK(item_addition()==0);
+    CHECK(script_item_awards()==0);
     CHECK(new_game_inventory()==0);
     CHECK(inventory_sort_comparisons()==0);
     CHECK(inventory_ammo_rollback()==0);

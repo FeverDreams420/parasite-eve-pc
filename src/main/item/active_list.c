@@ -1254,7 +1254,7 @@ s32 Inv_AddItem(s32 arg0) {
     }
     slot = t;
     if (arg0 < 0x100) {
-        ent = Item_LookupBaseData(arg0 - 1);
+        ent = Item_LookupBaseData((u32)arg0 - 1u);
         if (ent == NULL) {
             return ret;
         }

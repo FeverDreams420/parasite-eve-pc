@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <psyz/system.h>
 #include "common.h"
+#include "pe1/aya.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_status.h"
 #include "pe1/boot.h"
@@ -104,7 +105,10 @@ static void Boot_PollHost(void) {
         Combatant *player=(Combatant *)g_PlayerEntity->state;
         printf(",\"player_hp\":%u,\"player_max_hp\":%u",(unsigned)player->curHP,(unsigned)player->maxHP);
     }
-    printf("}}\n");
+    printf("},\"inventory\":{\"capacity\":%u,\"slots\":[",(unsigned)g_AyaSaveState.inventory_slot_count);
+    for(unsigned slot=0;slot<50;++slot)
+        printf("%s%u",slot?",":"",(unsigned)(u16)g_AyaSaveState.inventory_items[slot]);
+    printf("]}}\n");
     fflush(stdout);
     /* A diagnostic cap is a forced process boundary, even inside a menu's
      * VSync callback. Do not unwind through the locked SDK callback stack. */

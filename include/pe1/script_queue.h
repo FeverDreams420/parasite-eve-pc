@@ -58,6 +58,8 @@ int Render_CameraTrackEntityAngle(int **args);
 int Script_SetEntityField224(int **args);
 int Script_GetFloorTableValue(int **args);
 int Boot_CheckModeSwitch(int **args);
+int Script_GiveItem(int **args);
+int Script_ShowReceivedItem(int **args);
 int Scene_TestGlobalFlags(int **args);
 int Scene_SetGlobalFlags(int **args);
 int Scene_ClearGlobalFlags(int **args);

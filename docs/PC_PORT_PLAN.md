@@ -1,5 +1,32 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
+## Aktualny potwierdzony stan — 16 października 2026
+
+Port naprawia oryginalne moduły C na miejscu. Nie wymaga byte match ani
+odbudowy plików wykonywalnych PS1. Porównania z CPU/obrazem oryginału służą
+weryfikacji zachowania gry. Nie ma zastępczego silnika ani katalogu pc.
+
+Automatyczny input od New Game przechodzi Melissę, zaplecze, przemianę
+szczura i zwycięską walkę, następnie M020: dialog112, menu, użycie Medicine1
+(HP11->45) i otrzymanie następnego leku. Osobna próba potwierdza zamknięcie
+okna oraz powrót sterowania. Nowy test tej trasy przeszedł dwukrotnie.
+Poprzedni zamrożony kandydat ma 45/45 PASS; katalog zawiera teraz 46 testów.
+Aktualne testy powiązanych modułów oraz fixture’y ASan/UBSan/function przechodzą.
+Pełny runtime z sanitizerami dla M020 także przeszedł, z identycznym stanem i VRAM. To nadal
+początek kampanii, nie pełny port ani deklaracja pixel perfect.
+
+Jeden zapis M012 wygenerowany przez oryginalne funkcje portu zaakceptował
+rzeczywisty PS1: File loaded, identyczne HP14/45, pozycja i yaw432 po Continue.
+Nie jest to dowód wszystkich save’ów i trybów. Headless runner pozwala podawać
+input, raportuje stan aktorów/menu/walki i slotów ekwipunku oraz zapisuje VRAM.
+Własny fork PsyZ pozostaje khasinski/parasite-eve-psyz.
+
+Pełna kampania, wszystkie pozostałe lokacje/tryby, Disc2, pełna zgodność obrazu,
+hi-res, późniejsze hi-FPS oraz kompletne testy/platformy/paczki pozostają
+w zakresie celu. Dalsze sekcje zawierają historię napraw: wcześniejsze
+sformułowania o zatrzymanym opkodzie lub teście w toku opisują tamten etap;
+aktualne wyniki znajdują się przy późniejszych wpisach.
+
 ## Sprawdzenie widoczności EX Game przy uruchomieniu
 
 EX Game jest odblokowywane przez skan karty w menu, bez wczytywania zapisu,
@@ -537,8 +564,106 @@ przechodzi ten sam pre-rat checkpoint, walkę i drzwi do M020, a następnie
 ruch/confirm do 45000 VBlank bez crasha: HP11/45, mode9, enemy0, move_lock0,
 Aya[835232,0,-29049184], yaw512, brak menu/dialogów. Nie uruchomił jeszcze
 interakcji z postacią. Zmierzony input Down+Left w M020 zmienia oba X/Z na
-ujemne; kamera obraca kierunki o 90 stopni względem korytarza. Trwa kolejne
+ujemne. Sam pomiar połączonych kierunków nie ustala obrotu kamery;
+wcześniejszy wniosek o 90 stopniach nie był wystarczająco potwierdzony. Trwa kolejne
 podejście do aktora2 w [11730944,0,15794176], wyłącznie przez input.
+
+Pełny zamrożony zestaw kandydata 0cb304300 zakończył się 45/45 PASS w
+729,44 s, bez SKIP/timeout/błędów (dwa procesy CTest, caffeinate ograniczone do
+zadania). Obejmuje pierwszy pełny test New Game -> zwycięstwo nad szczurem.
+Dopiero potem główny executable przebudowano z 210/165. Oba powiązane CTest
+actor-animation i player-input-assets przeszły na tym buildzie w 12,52 s
+(0,58 i 11,94 s). Nie przenosimy wyniku 45/45 na nowego kandydata jako
+świeżego pełnego przebiegu.
+
+Osobny headless proces PS1 uruchomiono od boot z tymczasową kartą 128 KiB.
+Karta zawiera jeden oryginalny blok zapisu M012 wygenerowany przez port;
+format katalogu sprawdzono według MemoryCardImage::Format/WriteFile w
+źródłach DuckStation. Dane karty są wyłącznie w /tmp i w niepersistowanej
+karcie własnego emulatora, bez używania katalogu bu00 użytkownika.
+Przy frame15517 rzeczywisty PS1 pokazuje Select File to Load: slot1,
+imię Ayi, Level1, HP14/45, DAY1, Theater, Time00:23:17. PS1 następnie
+potwierdza File loaded i przy frame19525 wraca do M012. Odczyt rzeczywistej
+pamięci PS1 przez RSP24700 potwierdza HP14/45, pozycję
+[19202048,0,258736128], yaw432: identyczne z natywnym Continue dla tego
+checkpointu. Obejrzano ekran korytarza. Plik save ma SHA256
+`184b9bde8c3bcfbaa447612d8e204b227849b5220204ef557a1a1160aa880e91`,
+a tymczasowa karta MCR `9c7baad575a6e0af008c4def4a47f5e690c2f0df5c0c5307b860b74b44eb3052`.
+To rzeczywisty odczyt PC -> PS1 jednego zapisu, nie dowód wszystkich stanów,
+wersji, odwrotnego kierunku ani pełnej zgodności obrazu/audio.
+
+Dalsza kalibracja M020 odbywa się w tym samym headless executable, zatrzymywanym
+w istniejącym diagnostycznym limicie VBlank. Komendy LLDB w /tmp zmieniają
+wyłącznie wirtualny pad i następny limit; nie przestawiają aktorów, HP, flag
+rozgrywki ani skryptów. Przy 48185 VBlank input Right20, Up90, Right75 po
+wcześniejszej trasie uruchamia prawdziwy dialog112, state2, move_lock1,
+Aya[5434217,0,11054464], yaw2652. Cross8 zamyka go; po idle160 stan jest
+odblokowany. To potwierdza jedno zdarzenie w M020, nie wszystkie interakcje.
+Utworzono też wyłącznie tymczasowy blok Save_BuildHeader/Save_BuildCardFile
+M020 do dalszych prób; nie jest jeszcze zweryfikowanym punktem zapisu gry.
+
+
+W M020 dalszy input uruchomił 167 (aktor 7:0, script_byte 1428), potem232
+(script_byte 1480). Podpięto istniejące Script_GiveItem (USA 800194B0) i
+Script_ShowReceivedItem (USA 80015BAC), bez przenoszenia ani przepisywania
+funkcji. 1152 wykonania rzeczywistego CPU z prawdziwym resident packiem i
+niehookowanym Inv_AddItem oraz jego pomocnikami dają `c4267725611c01f9`.
+Obejmują 24 ID (w tym skrajne), pojemności 0/1/10/50, pełną/pustą listę,
+dziurę, zajęte 128 rekordów ekwipunku, amunicję blisko999, listę zastępczą
+oraz alias wejścia/wyjścia. Porównywane są return/result, oba konteksty listy,
+całe PlayerInventoryState, InventoryItemWorkspace i bity zaznaczeń.
+Native VM osobno sprawdza 12 programów dla Medicine1: brak miejsca/puste sloty
+oraz alias tej samej zmiennej skryptu. Sanitizer ujawnił signed overflow w
+Inv_AddItem dla INT_MIN-1; w tej samej oryginalnej funkcji indeks przekazany
+do Item_LookupBaseData powstaje teraz przez unsigned odejmowanie, zgodne
+z wrap CPU. Golden nie zmienił się i świeży stat-assets ASan/UBSan/function
+przeszedł.
+
+Dla232 5760 rzeczywistych wykonań CPU z niehookowanymi Render_BeginSceneLoad,
+Menu_CreateItemUsePanel i konstruktorami widgetów daje `a8b80c9059a27965`:
+cztery prawdziwe rodzaje przedmiotów, flagi gry/globalne/kamery i fazy węzła.
+Fixture porównuje sterowanie (return/flags/active/cursor), sprawdza rzeczywiste
+widgety w natywnym ABI i pełny dispatcher yield/retry/open. Świeży --assets
+ASan/UBSan/function z instrumentowanym PsyZ/SDL również przeszedł. Trzy
+powiązane CTest (actor-animation, player-input-assets, stat-assets) przeszły
+na głównym buildzie w 12,86 s. Diagnostyczny raport istniejącego Boot_PollHost
+zawiera teraz bazową pojemność i wszystkie 50 slotów ekwipunku, wyłącznie
+odczytywane przy limicie; nie jest to nowa warstwa logiki gry.
+
+Z samego pre-rat checkpointu pełny replay do 49932 VBlank pokazuje Medicine1
+w oryginalnym oknie (opis Restores45HP), HP45/45 i sloty
+[256,257,258,512,6,0,...]. Lek użyty wcześniej podniósł HP11->45 i zmniejszył
+liczbę przedmiotów5->4; odbiór z obiektu przywraca5. VRAM SHA256
+`604b82ed2acb26fb1dbc91685f5d6ba105ca2e40610274a48a356f96e6dbfcb1`.
+Dalszy Cross50000/hold8 do 50200 zamyka okno: menuNULL, flags0, move_lock0,
+HP45 i przedmiot zachowany, bez crasha.
+
+Nowy 46. CTest original-game-m020-items w istniejącym fixture wykonuje wszystko
+od New Game: Melissa, szczur, M020/dialog112, menu/use Medicine1, odbiór
+następnego leku. Dwa uruchomienia przeszły w 192,91 s i 192,55 s do 131932 VBlank.
+Kończy na otwartym oknie odbioru, sprawdza scenę/pozycję/HP/modalność/sloty.
+VRAM FNV `276e21abd46696b5` zgadza się między niezależnym pełnym runnerem
+i CTest. Nie jest to pełny świeży wynik46/46 ani referencja pikseli PS1.
+Zamknięcie okna jest osobnym wyżej opisanym przebiegiem.
+
+Przyspieszony replay z tymczasowego bloku M020 po Continue wyrównuje wejście
+Left40 i odtwarza ten sam dialog, użycie leku, odbiór i zamknięcie do 32240:
+HP45/45, menuNULL, flags0, move_lock0, ta sama pozycja[-33929350,0,19598750]
+i sloty pięciu przedmiotów. Świeży pełny runtime ASan/UBSan/function z instrumentowanym PsyZ/SDL również
+przeszedł: końcowy JSON jest identyczny, cała VRAM SHA256 obu buildów
+`1f38362dcbdf80ba66c3ce4255208af0d5f7bdf9da664f0f3a320bc090e79a59`.
+Tymczasowy blok M020 ma SHA256
+`7cfd69d3d9764f776fa3c3fb4dcec17b601c6caf315926f8c7aa308889668704`.
+Fixture nie zastępuje dowodu normalnego punktu zapisu.
+
+W nowej próbie referencji PS1 przyciski Up/Right nie przesuwały postaci:
+pad jest w trybie analogowym, co oryginalny Field_HandleStateTransition
+obsługuje przez lewą gałkę. Odczyt własnego AIControl::GetAxisIndex potwierdza
+LLeft/LRight/LDown/LUp (oraz odpowiedniki prawej gałki). LUp=0.5 przez 20 klatek
+przesunął Ayę z [19202048,0,258736128] do[19121248,0,255460128]. Sama wcześniejsza
+próba z D-padem nie jest zaliczona jako referencja walki. Pomocnicze drivery
+w /tmp przerywają teraz przed advance przy odpowiedzi ERR; porównanie walki
+wymaga świeżego, wyrównanego początku i prawidłowego inputu analogowego.
 
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,

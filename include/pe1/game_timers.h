@@ -8,7 +8,7 @@
  * flags bit 0 runs the timer, bit 1 counts down instead of up, bit 2 marks
  * that the limit was reached. Timer 0 is the game clock, timer 2 the play
  * time saved in the memory card header (in frames), timer 3
- * the combat countdown that Script_ComputeAudioTimer arms with the frames
+ * the script countdown that Script_ComputeAudioTimer arms with the frames
  * left in current and a limit of 0. */
 typedef struct GameTimerEntry {
     /* 0x00 */ u32 flags;
@@ -19,16 +19,17 @@ typedef struct GameTimerEntry {
 PE1_STATIC_ASSERT(sizeof(GameTimerEntry) == 0x0C, game_timer_entry_size);
 
 extern GameTimerEntry g_GameTimers[4];
+void GameTime_InitCounter0(void);
+void GameTime_InitCounter1(void);
+void GameTime_InitCounter2(void);
+void GameTime_PackTime(const u32 *src, u32 *out);
+void Scene_TickTimers(void);
 
-/* Interior symbol naming timer zero's flags word; its reset stores both the
- * cleared and the running value. */
-#define g_GameClockFlags (*(volatile u32 *)&g_GameTimers[0].flags)
+/* Interior clock aliases used by existing callers; ordinary host memory. */
+#define g_GameClockFlags (g_GameTimers[0].flags)
 
-/* Interior symbols for the game clock words GameTime_InitCounter0 writes.
- * Retail stores the game clock limit twice on reset; the qualifier keeps
- * both. */
 #define g_GameTimeTable (g_GameTimers[0].current)
-#define g_GameClockLimit (*(volatile int *)&g_GameTimers[0].limit)
+#define g_GameClockLimit (g_GameTimers[0].limit)
 #define GAME_TIME_COUNTER(index) (g_GameTimers[index].current)
 
 /* Frames played; Save_ClassifyPlaytime buckets it for the save header. */

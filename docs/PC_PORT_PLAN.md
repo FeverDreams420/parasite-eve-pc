@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Audyt oryginalnej tabeli interpretera wykazał25 niepodpiętych niezerowych
+handlerów. Następne cztery,103/104/105/211, są teraz podpięte do istniejących
+funkcji zegarów w system_opcodes.c. Poprawiono sygnatury callbacków bez
+przenoszenia funkcji i bez nowych plików. Arytmetyka uruchamiania timera
+jawnie zawija32 bity, zgodnie z addu/sll MIPS; zachowano nawet oryginalny
+wzór (arg0+arg1)*216000+arg2*60. Konwersja HMS ponownie odczytuje wejście
+po każdym zapisie, zachowując znaczenie aliasujących operandów.
+
+Cały istniejący moduł time/counters.c używa teraz zwykłych pól hosta:
+usunięto wymuszanie powtórzonych zapisów volatile służące dopasowaniu kodu,
+bitfieldy zastąpiono jawnym formatem20/6/6, kroki liczników mają zdefiniowane
+zawijanie32-bitowe, a iteracja odwołuje się do pól kolejnych GameTimerEntry
+zamiast przesuwać wskaźnik do pojedynczego pola przez inne struktury.
+Nie zmieniono zasad pauzy, filmu ani odliczania; oryginalne nieograniczone
+tykanie przy odpowiednich flagach pozostaje. Nie dodano automatycznego
+zatrzymywania przy zerze wbrew temu, co wykonuje CPU gry.
+
+Niezależne wykonanie niezmodyfikowanego USA EXE porównano z natywnym C:
+432 pakowania słowa/aliasów (82cfc71941e10949),36 inicjalizacji wszystkich
+trzech zegarów (c9281cb7a579fbb4),98304 tyknięcia czterech liczników,
+flagi/pauza/prawdziwe warunki filmu (250be6425a7b2025),4032 uzbrojenia
+odliczania (97565315c9ec268a),19968 sekwencji zapytanie/flaga/zapytanie
+z aliasami (6823bca859fc7725) i768 podpisanych konwersji HMS z pełnym
+aliasowaniem wyjść (2e9b02aa3f9f9c80). Łącznie123540 przypadków; polecenia
+sprawdzane także przez rzeczywisty dispatcher i zmienne aktora.
+Cały fixture --assets przeszedł ASan/UBSan/function, cztery powiązane
+CTesty PASS12.57s.
+
+Świeże pełne replaye C → Ben/Daniel → M047 → Baker77 → recepcja/cap50806
+przeszły normalnie i pod ASan/UBSan/function. Pełny JSON i1048576 bajtów
+VRAM są identyczne, a cały VRAM zgadza się także z kandydatem sprzed
+zmiany modułu zegarów (d13414dda3890ba43f8f5c74a14b84f6749165d27ec16fae4133f0cc4cf9d39f).
+B iC niezmienione, HP92/92 i M16A1 zachowane, brak menu i otwartego dialogu.
+Także świeże Continue C → telefon → zapisD → zamknięcie/cap28000 przeszły
+normalnie i pod ASan/UBSan/function. Pełny JSON, VRAM
+(ec6dde02638fae86b73183fd4c8ad64300fc6281573be46e82d62e71e93f26b1)
+i wszystkie8192 bajtyD są identyczne. D ma nadal ten sam hash co przed
+zmianą modułu (6026a670ba1caa68175677c3af3cc2c3c427770e3e20de65d83d9f1be3c064d0).
+Każdy przebieg zapisu miał osobny prywatny katalog; B iC bez zmian.
+Pozostaje21 niezerowych handlerów do portowania/weryfikacji. Nie jest to
+dowód pełnego dnia2, autorskiej sceny z limitem czasu ani świeży pełny50/50.
+
 Od telefonu Continue C zwykły input przechodzi M042/M043, wchodzi i wychodzi
 z szatni M045 (oryginalna animacja drzwi154), a w dalszym korytarzu kończy
 scenę z Benem i Danielem59–71. Wcześniej zatrzymywał ją niepodpięty73 przy

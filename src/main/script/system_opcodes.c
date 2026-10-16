@@ -516,12 +516,12 @@ typedef struct CameraBaseAngles {
 
 int Script_ComputeAudioTimer(int **arg0) {
     int *dst;
-    int value;
+    u32 value;
 
     dst = &g_GameTimers[3].current;
-    value = (*arg0[0] + *arg0[1]) * 216000;
-    value += *arg0[2] * 60;
-    *dst = value;
+    value = ((u32)*arg0[0] + (u32)*arg0[1]) * 216000u;
+    value += (u32)*arg0[2] * 60u;
+    *dst = (s32)value;
     if (*arg0[3] == 1) {
         g_GameTimers[3].limit = 0;
         g_GameTimers[3].flags |= 2;
@@ -546,7 +546,8 @@ int Script_GetCombatModeFlag(int **arg0) {
     return 1;
 }
 
-int Script_SetCombatModeFlag(void) {
+int Script_SetCombatModeFlag(int **unused) {
+    (void)unused;
     int *ptr = (int *)&g_GameTimers[3].flags;
 
     *ptr |= 4;
@@ -1338,17 +1339,10 @@ int Script_GetFloorTableValue(int **arg0) {
     return 1;
 }
 
-typedef struct GameTimeArgs {
-    s32 *seconds;
-    s32 *hours;
-    s32 *minutes;
-    s32 *rest;
-} GameTimeArgs;
-
-s32 GameTime_ConvertSecondsToHMS(GameTimeArgs *arg0) {
-    *arg0->hours = *arg0->seconds / 216000;
-    *arg0->minutes = (*arg0->seconds % 216000) / 3600;
-    *arg0->rest = (*arg0->seconds % 3600) / 60;
+s32 GameTime_ConvertSecondsToHMS(int **arg0) {
+    *arg0[1] = *arg0[0] / 216000;
+    *arg0[2] = (*arg0[0] % 216000) / 3600;
+    *arg0[3] = (*arg0[0] % 3600) / 60;
     return 1;
 }
 

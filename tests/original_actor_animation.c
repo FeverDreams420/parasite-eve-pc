@@ -4280,6 +4280,140 @@ static int original_shadow_radius_opcode(void)
     return 1;
 }
 
+static int original_frame_clock_layout(void)
+{
+    const u32 values[]={0,1,0xffffffff,59,60,3599,3600,216000,0x80000000,0x7fffffff,0x8000ffff,0x12345678};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned seed=0;seed<12;++seed)for(unsigned pattern=0;pattern<12;++pattern)for(unsigned alias=0;alias<3;++alias){
+        u32 input[]={0xa55a5aa5,values[seed],0xdeadbeef},output=values[pattern];
+        GameTime_PackTime(input,alias?input+alias-1:&output);
+        for(unsigned i=0;i<sizeof(input);++i)hash=(hash^((u8 *)input)[i])*UINT64_C(1099511628211);
+        for(unsigned i=0;i<4;++i)hash=(hash^((output>>(i*8))&255))*UINT64_C(1099511628211);
+        if(input[2]!=0xdeadbeef)return 0;
+        ++cases;
+    }
+    if(cases!=432 || hash!=UINT64_C(0x82cfc71941e10949)){
+        fprintf(stderr,"Packed clock CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    GameTimerEntry saved[4];memcpy(saved,g_GameTimers,sizeof(saved));
+    void (*init[])(void)={GameTime_InitCounter0,GameTime_InitCounter1,GameTime_InitCounter2};
+    hash=UINT64_C(14695981039346656037);cases=0;
+    for(unsigned op=0;op<3;++op)for(unsigned seed=0;seed<12;++seed){
+        u32 raw[12];for(unsigned i=0;i<12;++i)raw[i]=values[(seed+i)%12]^(i*0x01020304u);
+        memcpy(g_GameTimers,raw,sizeof(raw));init[op]();
+        for(unsigned i=0;i<sizeof(raw);++i)hash=(hash^((u8 *)g_GameTimers)[i])*UINT64_C(1099511628211);
+        ++cases;
+    }
+    memcpy(g_GameTimers,saved,sizeof(saved));
+    if(cases!=36 || hash!=UINT64_C(0xc9281cb7a579fbb4)){
+        fprintf(stderr,"Clock init CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original clock module: 432 unhooked USA packed-word/source aliases and 36 initializers preserve fixed 20/6/6-bit format and neighbouring clocks without layout-dependent bitfields or forced redundant stores");
+    return 1;
+}
+
+static int original_script_timer_commands(void)
+{
+    const u32 values[]={0,1,0xffffffff,59,60,3599,3600,216000,0x80000000,0x7fffffff,0x8000ffff,0x12345678};
+    const u32 flags[]={0,1,2,3,4,5,0x80000000,0xffffffff};
+    const u32 modes[]={0,1,0xffffffff,2,0x10001,0x80000000};
+    const u32 upper[]={0,0x10000,0x12345600,0x7fffff00,0x80000000,0xffffff00};
+    GameTimerEntry saved[4];memcpy(saved,g_GameTimers,sizeof(saved));
+    FieldActor *saved_actor=g_CurrentEntity;ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[103]!=Script_ComputeAudioTimer || g_ScriptQueueOpcodeHandlers[104]!=Script_GetCombatModeFlag ||
+       g_ScriptQueueOpcodeHandlers[105]!=Script_SetCombatModeFlag || g_ScriptQueueOpcodeHandlers[211]!=GameTime_ConvertSecondsToHMS)return 0;
+    for(unsigned seed=0;seed<12;++seed)for(unsigned f=0;f<8;++f)for(unsigned m=0;m<6;++m)for(unsigned alias=0;alias<7;++alias){
+        u32 raw[12];for(unsigned i=0;i<12;++i)raw[i]=values[(seed+i)%12]^(i*0x01020304u);raw[9]=flags[f];
+        memcpy(g_GameTimers,raw,sizeof(raw));int input[]={(s32)values[seed],(s32)values[(seed+3)%12],(s32)values[(seed+7)%12],(s32)modes[m]};
+        int *args[]={input,input+1,input+2,input+3};
+        if(alias==1)args[3]=&g_GameTimers[3].current;
+        if(alias==2)args[0]=&g_GameTimers[3].current;
+        if(alias==3)args[1]=(int *)&g_GameTimers[3].flags;
+        if(alias==4)args[2]=&g_GameTimers[3].limit;
+        if(alias==5)args[3]=(int *)&g_GameTimers[3].flags;
+        if(alias==6)args[1]=args[0];
+        u32 result=Script_ComputeAudioTimer(args);
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned b=0;b<sizeof(raw);++b)hash=(hash^((u8 *)g_GameTimers)[b])*UINT64_C(1099511628211);
+        for(unsigned b=0;b<sizeof(input);++b)hash=(hash^((u8 *)input)[b])*UINT64_C(1099511628211);
+        if(result!=1 || memcmp(raw,g_GameTimers,9*sizeof(u32)))return 0;
+        if(!alias){
+            GameTimerEntry expected[4];memcpy(expected,g_GameTimers,sizeof(expected));memcpy(g_GameTimers,raw,sizeof(raw));
+            FieldActor actor={.flags=0x12345678};u32 program[]={103|(4u<<13),0,values[seed],values[(seed+3)%12],values[(seed+7)%12],modes[m],32,0};
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_CurrentEntity=&actor;g_ScriptNodePool=&node;Script_RunQueue();
+            if(memcmp(expected,g_GameTimers,sizeof(expected)) || actor.flags!=0x12345678 ||
+               node.current.script!=program+8 || node.flags!=0x90 || node.active || g_ScriptNodePool)return 0;
+        }
+        ++cases;
+    }
+    if(cases!=4032 || hash!=UINT64_C(0x97565315c9ec268a)){
+        fprintf(stderr,"Timer103 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    hash=UINT64_C(14695981039346656037);cases=0;
+    for(unsigned high=0;high<6;++high)for(unsigned low=0;low<256;++low)for(unsigned target=0;target<13;++target){
+        u32 raw[12];for(unsigned i=0;i<12;++i)raw[i]=values[i]^(i*0x01020304u);raw[9]=upper[high]|low;
+        memcpy(g_GameTimers,raw,sizeof(raw));int output=(s32)0x98765432;int *destinations[13]={&output};
+        for(unsigned i=0;i<4;++i){destinations[1+i*3]=(int *)&g_GameTimers[i].flags;destinations[2+i*3]=&g_GameTimers[i].current;destinations[3+i*3]=&g_GameTimers[i].limit;}
+        int *args[]={destinations[target]};u32 a=Script_GetCombatModeFlag(args),first=(u32)*args[0];
+        GameTimerEntry one[4],two[4];memcpy(one,g_GameTimers,sizeof(one));u32 b=Script_SetCombatModeFlag(NULL);memcpy(two,g_GameTimers,sizeof(two));
+        u32 c=Script_GetCombatModeFlag(args),words[]={a,first,b,c,(u32)*args[0]};
+        for(unsigned i=0;i<5;++i)for(unsigned byte=0;byte<4;++byte)hash=(hash^((words[i]>>(byte*8))&255))*UINT64_C(1099511628211);
+        for(unsigned i=0;i<sizeof(one);++i)hash=(hash^((u8 *)one)[i])*UINT64_C(1099511628211);
+        for(unsigned i=0;i<sizeof(two);++i)hash=(hash^((u8 *)two)[i])*UINT64_C(1099511628211);
+        for(unsigned i=0;i<sizeof(raw);++i)hash=(hash^((u8 *)g_GameTimers)[i])*UINT64_C(1099511628211);
+        for(unsigned i=0;i<4;++i)hash=(hash^(((u32)output>>(i*8))&255))*UINT64_C(1099511628211);
+        if(a!=1 || b!=1 || c!=1)return 0;
+        if(!target){
+            memcpy(g_GameTimers,raw,sizeof(raw));FieldActor actor={0};u32 program[]={104|(1u<<13),0,0xa55a5a5a,105,0,104|(1u<<13),0,0x5aa5a5a5,32,0};
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_CurrentEntity=&actor;g_ScriptNodePool=&node;Script_RunQueue();raw[9]|=4;
+            if(program[2]!=((upper[high]|low)&4?1u:0u) || program[7]!=1 || memcmp(raw,g_GameTimers,sizeof(raw)) ||
+               node.current.script!=program+10 || node.flags!=0x90 || node.active || g_ScriptNodePool)return 0;
+        }
+        ++cases;
+    }
+    if(cases!=19968 || hash!=UINT64_C(0x6823bca859fc7725)){
+        fprintf(stderr,"Timer104/105 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    hash=UINT64_C(14695981039346656037);cases=0;
+    for(unsigned seed=0;seed<12;++seed)for(unsigned a=0;a<4;++a)for(unsigned b=0;b<4;++b)for(unsigned c=0;c<4;++c){
+        int input[]={(s32)values[seed],0x12345678,(s32)0x87654321,(s32)0xa5a55a5a};int *args[]={input,input+a,input+b,input+c};
+        GameTimerEntry before[4];memcpy(before,g_GameTimers,sizeof(before));u32 result=GameTime_ConvertSecondsToHMS(args);
+        for(unsigned i=0;i<4;++i)hash=(hash^((result>>(i*8))&255))*UINT64_C(1099511628211);
+        for(unsigned i=0;i<sizeof(input);++i)hash=(hash^((u8 *)input)[i])*UINT64_C(1099511628211);
+        FieldActor actor={0};u32 initial[]={values[seed],0x12345678,0x87654321,0xa5a55a5a,0xdeadbeef};memcpy(actor.pad_0AC,initial,sizeof(initial));
+        u32 program[]={211|(4u<<13)|(1u<<17)|(1u<<20)|(1u<<23)|(1u<<26),0,0,a,b,c,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_CurrentEntity=&actor;g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(input,actor.pad_0AC,sizeof(input)) || actor.pad_0AC[4]!=0xdeadbeef || memcmp(before,g_GameTimers,sizeof(before)) ||
+           node.current.script!=program+8 || node.flags!=0x90 || node.active || g_ScriptNodePool)return 0;
+        ++cases;
+    }
+    memcpy(g_GameTimers,saved,sizeof(saved));g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=768 || hash!=UINT64_C(0x2e9b02aa3f9f9c80)){
+        fprintf(stderr,"Timer211 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original timer opcodes103/104/105/211: 4032 arming states, 19968 flag/query sequences, 768 signed HMS/output aliases, retained neighbours and native dispatcher programs match unhooked USA CPU");
+    return 1;
+}
+
+static int original_scene_frame_timers(void)
+{
+    const u32 values[]={0,1,0xffffffff,59,60,3599,3600,216000,0x80000000,0x7fffffff,0x8000ffff,0x12345678};
+    const u32 upper[]={0,0x10000,0x12345600,0x7fffff00,0x80000000,0xffffff00};
+    const u32 gates[]={0,1,0x40,0x80000000};
+    const u16 video[][3]={{0,1,0},{1,0,0},{1,1,0},{1,1,1},{1,32767,0},{1,32768,0},{128,65535,1},{0,32767,255}};
+    GameTimerEntry saved[4];memcpy(saved,g_GameTimers,sizeof(saved));u32 saved_flags=g_GameStateFlags;Pe1SceneAudioState saved_audio=g_GameState.scene_audio;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned seed=0;seed<12;++seed)for(unsigned flag=0;flag<256;++flag)for(unsigned gate=0;gate<4;++gate)for(unsigned v=0;v<8;++v){
+        u32 raw[12];for(unsigned i=0;i<4;++i){raw[i*3]=upper[seed%6]|((flag+i*0x33)&255);raw[i*3+1]=values[(seed+i)%12];raw[i*3+2]=values[(seed+i+4)%12];}
+        memcpy(g_GameTimers,raw,sizeof(raw));g_GameStateFlags=gates[gate];g_DrawEnabled.bits=(u8)video[v][0];g_SeqElapsed=video[v][1];g_GameState.scene_audio.tracks.movie_wide=(s8)video[v][2];
+        Pe1SceneAudioState before=g_GameState.scene_audio;Scene_TickTimers();
+        for(unsigned i=0;i<sizeof(raw);++i)hash=(hash^((u8 *)g_GameTimers)[i])*UINT64_C(1099511628211);
+        if(g_GameStateFlags!=gates[gate] || memcmp(&before,&g_GameState.scene_audio,sizeof(before)))return 0;
+        ++cases;
+    }
+    memcpy(g_GameTimers,saved,sizeof(saved));g_GameStateFlags=saved_flags;g_GameState.scene_audio=saved_audio;
+    if(cases!=98304 || hash!=UINT64_C(0x250be6425a7b2025)){
+        fprintf(stderr,"Frame timers CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original frame timers: 98304 unhooked USA CPU states, all flag bytes, four clocks, signed wrap, pause and real movie guards preserve original unbounded ticking");
+    return 1;
+}
+
 static int original_camera_release_opcode(void)
 {
     const u32 upper[]={0,0x10000,0x12345600,0x7fffff00,0x80000000,0xffffff00};
@@ -4501,7 +4635,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_frame_clock_layout() || !original_script_timer_commands() || !original_scene_frame_timers() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

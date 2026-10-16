@@ -714,6 +714,8 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [67]=Script_GetMenuChoice,
     [72]=Script_ResetPlayerCameraPos,
     [73]=Script_SetBattleStateMode,
+    [103]=Script_ComputeAudioTimer, [104]=Script_GetCombatModeFlag,
+    [105]=Script_SetCombatModeFlag, [211]=GameTime_ConvertSecondsToHMS,
     [93]=Script_SetCurrentEntityField20, [77]=Script_SetEntityField1C,
     [202]=Script_SetEntityField1E6, [210]=Script_GetFloorTableValue,
     [219]=Render_CameraTrackEntityAngle,

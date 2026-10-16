@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Po założeniu SP Vest1 oryginalny input wraca z M064 przez M063 do M062.
+Podejście do bramy z Zoo Key/ID202 uruchamia oryginalny skrypt bez
+potrzeby dodatkowego przycisku; po animacji wraca sterowanie i Aya
+przechodzi na drugą stronę. Pełny replay od Continue F do cap50587
+zwykłego i sanitizowanego kandydata ma identyczny cały JSON, wszystkie512
+zmiennych, timery, wyposażenie oraz1MiB VRAM (SHA
+73fe52820f617edc144a559a27cf3987ec5ab6d9c31960c1045e374d992fc673).
+ASan/UBSan/function z instrumentowanymi PsyZ/SDL bez błędów.
+W sanitizowanym replayu debugger odczytał flagę trójkąta16:128 przed
+otwarciem (cap48730),0 po przejściu (cap50587). Zwykły kandydat nie
+ma informacji linii init.c, dlatego jego dodatkowy odczyt po przejściu
+nie zadziałał; nie jest liczony jako osobny dowód flagi. Końcowy raport
+i VRAM zwykłego procesu są zgodne z sanitizowanym. PrywatneB–F zachowały
+hashe. Artefakty /tmp/pe-zoo-gate-{normal,san}.log/.vram,
+input /tmp/pe-zoo-gate-args.json i /tmp/pe-zoo-gate-proof.json.
+Nie jest to jeszcze niezależne porównanie całego przejścia z PS1 ani
+ukończenie zoo. Nie zmieniono kodu rozgrywki ani nie dodano plików.
+
+Dalsze podejście za bramą uruchamia walkę z dwoma przeciwnikami typu6,
+po32HP każdy. Oryginalny Heal1 zwiększa HP17→47; dwa ataki M16 po dwa
+strzały pokonują obydwu. Zamknięcie ekranów EXP/przedmiotów przywraca
+pole z HP35/101, lock0, bez menu i żywych przeciwników, battle9.
+Nagroda ID6 zajmuje slot16; klucz i oba przedmioty z M064 zachowane,
+aktywny SP Vest1. Pełny replay Continue F→obie serie łupów i Game Over→
+pancerz→brama→ta walka/cap54211 PASS normalnie oraz pod
+ASan/UBSan/function z instrumentowanymi PsyZ/SDL. Cały JSON ze wszystkimi
+512 zmiennymi i wyposażeniem, timery i VRAM są identyczne (SHA
+089b810e682973cc76d119d979c2482c31ea8179d9ca81193cacd78206f302bc).
+PrywatneB–F niezmienione. Artefakty /tmp/pe-zoo-gate-battle-
+{normal,san}.log/.vram, input /tmp/pe-zoo-gate-battle-args.json,
+kontrola /tmp/pe-zoo-gate-battle-verify.py i proof.json. Dalsze skrzynie
+M062 i wyjście w stronę kolejnej części fabuły pozostają do przejścia.
+
 Świeży Continue F przechodzi interakcje M064: otwarcie wejścia do
 budynku, rozmowę przy ciele (tekst94), szafkę z Zoo Key/ID202,
 odbiór SP Vest1/ID160, otwarcie drzwi do kolejnej szafki i odbiór
@@ -53,7 +86,7 @@ input /tmp/pe-zoo-recovery-equip-args.json, kontrola
 /tmp/pe-zoo-state-final-verify.py i proof.json. Jest to natywny dowód
 interakcji i ponownego użycia stanu po Game Over; nie wykonano jeszcze
 niezależnego przejścia tych interakcji na PS1. Otwarcie bramy M062
-po zdobyciu klucza i dalsza kampania pozostają do sprawdzenia.
+po zdobyciu klucza zweryfikowano poniżej; dalsza kampania pozostaje otwarta.
 
 
 Dalsza eksploracja dociera do M064 i telefonu. Zapis przez oryginalne
@@ -96,7 +129,7 @@ manifest /tmp/pe-zoo-phone-card-hashes.json. Replaye: /tmp/pe-save-title-
 route-args.json i continue-args.json, wyniki route-{normal,san}.log/.vram
 oraz continue-{normal,san}.log/.vram, podsumowanie phone-proof.json.
 Dalsze interakcje M064 i zdobycie Zoo Key zweryfikowano w nowszym
-przebiegu opisanym powyżej; otwarcie bramy M062 pozostaje do sprawdzenia.
+przebiegu opisanym powyżej; bramę M062 sprawdzono po zdobyciu klucza.
 
 
 Dalsze przejście M063 uruchamia walkę z aktorem3:31 i dołączonym

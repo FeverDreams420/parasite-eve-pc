@@ -6,6 +6,5 @@
 
 #include "pe1/room_module.h"
 
-int RoomLib_ClassNop6(void) {
-    return 0;
+void RoomLib_ClassNop6(void) {
 }

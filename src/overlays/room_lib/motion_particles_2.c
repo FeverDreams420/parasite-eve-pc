@@ -4,9 +4,8 @@
  * room_m075, room_m080, room_m082, scene_e09 and scene_e10 link the same
  * fifteen functions in the same order, after the room prelude and before
  * the room library, with the same 0x18 bytes of read-only data. The object
- * is split in three units only because its particle draw needs
- * -fno-strength-reduce, which the setup loop must not get; they are
- * merged once they compile together. Trails, glyphs and lookup codes live
+ * remains in its three original source units. Native builds use ordinary
+ * C11 and pointer-bearing runtime records. Trails, glyphs and lookup codes live
  * in each room's own data (pe1/room_motion_init.h).
  */
 
@@ -22,28 +21,23 @@ static const RoomFxVec4 s_MotionScale = { 0x590, 0x590, 0x590, 0 };
 
 typedef struct RoomLibMotionScaleScratch {
     RoomFxVec4 value;
-    /* Reserve the original stack space after the copied scale vector. */
-    char pad[8];
 } RoomLibMotionScaleScratch;
 
-void RoomEffect_DrawMotionParticles(void *unused, RoomStatePair *control,
-                   RoomMotionState *state)
-{
+int RoomEffect_DrawMotionParticles(void *owner_data, void *control_data, void *data) {
+    RoomStatePair *control = control_data; RoomMotionState *state = data;
     RoomSpriteMatrix matrix;
     RoomLibMotionScaleScratch scale;
     RoomMotionContext *context;
-    RoomMotionTransform *savedSecondary;
-    RoomMotionTransform *savedPrimary;
-    RoomMotionTransform *current;
+    RoomSpriteMatrix livePrimary, liveSecondary;
     RoomSpriteMatrix *primary;
     RoomSpriteMatrix *secondary;
     u16 *depth;
     char *packet;
-    RoomMotionCursor *cursor;
+    RoomMotionPoint *cursor;
     int i;
 
     context = FieldFx_GetScriptContext();
-    FieldFx_SetSpriteTexturePreset(context->owner);
+    FieldFx_SetSpriteTexturePreset(context->allocation & 255);
     FieldFx_SetSpriteCellSize(0x20, 0x20);
     FieldFx_SetSpriteColorMode(0x10);
     FieldFx_SetSpriteBlendMode(2);
@@ -64,10 +58,8 @@ void RoomEffect_DrawMotionParticles(void *unused, RoomStatePair *control,
     ScaleMatrix(&matrix, &scale.value);
 
     if (control->h2 == 30) {
-        savedSecondary = context->link->p238;
-        state->matrix[1] = savedSecondary->secondary;
-        savedPrimary = context->link->p238;
-        state->matrix[0] = savedPrimary->primary;
+        memcpy(&state->matrix[1], &context->link->render_object.matrices[13], sizeof(state->matrix[1]));
+        memcpy(&state->matrix[0], &context->link->render_object.matrices[9], sizeof(state->matrix[0]));
     }
 
     if (control->h2 >= 31) {
@@ -75,30 +67,32 @@ void RoomEffect_DrawMotionParticles(void *unused, RoomStatePair *control,
         primary = &state->matrix[0];
         secondary = &state->matrix[1];
     } else {
-        current = context->link->p238;
-        primary = &current->primary;
-        secondary = &current->secondary;
+        memcpy(&livePrimary, &context->link->render_object.matrices[9], sizeof(livePrimary));
+        memcpy(&liveSecondary, &context->link->render_object.matrices[13], sizeof(liveSecondary));
+        primary = &livePrimary;
+        secondary = &liveSecondary;
     }
 
     i = 0;
     if (state->count != 0) {
         depth = &g_RoomMotionGlyph.depth;
         packet = (char *)depth - 10;
-        cursor = (RoomMotionCursor *)state;
+        cursor = state->particle;
         do {
             *depth = state->depth;
             *(u8 *)((char *)depth - 6) =
                 g_RoomMotionLookupCodes[state->lookup[i].id];
-            matrix.t[0] = primary->t[0] + cursor->particle.primaryX;
-            matrix.t[1] = primary->t[1] + cursor->particle.primaryY;
-            matrix.t[2] = primary->t[2] + cursor->particle.primaryZ;
+            matrix.t[0] = primary->t[0] + cursor->primaryX;
+            matrix.t[1] = primary->t[1] + cursor->primaryY;
+            matrix.t[2] = primary->t[2] + cursor->primaryZ;
             FieldFx_DrawGlowSprite((FieldGlowSprite *)packet, &matrix, 1);
-            matrix.t[0] = secondary->t[0] + cursor->particle.secondaryX;
-            matrix.t[1] = secondary->t[1] + cursor->particle.secondaryY;
-            matrix.t[2] = secondary->t[2] + cursor->particle.secondaryZ;
+            matrix.t[0] = secondary->t[0] + cursor->secondaryX;
+            matrix.t[1] = secondary->t[1] + cursor->secondaryY;
+            matrix.t[2] = secondary->t[2] + cursor->secondaryZ;
             FieldFx_DrawGlowSprite((FieldGlowSprite *)packet, &matrix, 1);
             i++;
-            cursor = (RoomMotionCursor *)((RoomMotionPoint *)cursor + 1);
+            ++cursor;
         } while ((unsigned int)i < state->count);
     }
+    return 0;
 }

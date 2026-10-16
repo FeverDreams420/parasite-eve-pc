@@ -20,26 +20,38 @@ Dalszy żywy input dochodzi M068→M074 (dolna alejka przy altanie;
 obraz obejrzany, to nadal park). Schody i bieganie po mesh działają,
 HP39 i ekwipunek zachowane. Opcja run pomocniczego pe-path w /tmp
 używa zwykłego przycisku Circle; zachowuje stop przy skrypcie/menu/walce.
-Następne aktywne wyjście M074 zatrzymuje program: native descriptor
-missing for M075 slot75 (PS1 80194048). Nie jest to ukończone wejście.
-Reproducer /tmp/pe-m075-entry-args.json obejmuje3290 ciągłych odcinków
-inputu od24000 do cap105807; poprzedni poprawny stan M074/cap105687
-miał lock1 i HP39. Stary debugger zakończył grę statusem1; nie pozostawiać
-tego jako działającego procesu do wznowienia.
+Wyjście M074 wcześniej zatrzymywało program na brakującym descriptorze
+M075 slot75/80194048 (oraz slot12/80193F74). Reproducer
+/tmp/pe-m075-entry-args.json obejmuje3290 ciągłych odcinków inputu
+od24000 do cap105807; stan przed wyjściem M074/cap105687 ma lock1 i HP39.
 
-M075 potrzebuje także slot12/80193F74. Oryginalna klasaE jest tym samym
-całym ciałem2724 bajtów po relokacji0x1A38 i przeniesieniu33-elementowej
-tablicy Configure z8018F074 do8018F08C; 2304 unhookowane aktualizacje
-CPU MIPS dają ab6562b990f5c842 (/tmp/pe-m075-e-update-mips.py).
-Nie podpięto jeszcze descriptorów. Cały moduł cząstek ma15 istniejących
-funkcji w motion_particles.c, motion_particles_2.c i motion_particles_3.c;
-sprawdzenie składni ujawnia stare offsety wskaźników i deklaracje kolidujące
-z natywnymi FieldFx. Wszystkie funkcje muszą zostać zachowane i poprawione
-w tych plikach. Oryginalne siedem wspólnych metod klasy korzysta z lokalnych
-tabel/programu; istniejące PE_OVERLAY w room_interface.h pozwala kompilować
-ich oryginalne pliki dla tego modułu bez nowych implementacji/wrapperów.
-Pełne C11, dane, CPU/GTE, PM/FieldFx lifecycle i runtime M075 pozostają
-następnym zadaniem; sam pasujący HandlerE nie odblokowuje całej lokacji.
+Cały oryginalny moduł M075 jest teraz kompilowany i podpięty: wszystkie15
+funkcji pozostają w motion_particles.c, motion_particles_2.c i
+motion_particles_3.c. Poprawiono natywne wskaźniki, rzeczywiste macierze
+FieldActor, rekordy pierścieni, wyrównanie pamięci FieldFx i sygnatury
+callbacków. Siedem wspólnych metod korzysta z istniejącego PE_OVERLAY=motion,
+oryginalnych plików, lokalnych tabel i30-słowowego programu. Przy ponownym
+ładowaniu M075 zerowane są oryginalne dane BSS efektów. Nie dodano plików.
+
+Testy normalne oraz ASan/UBSan/function z instrumentowanymi PsyZ/SDL PASS:
+2192 stany względem CPU USA (aktualizacja, seed, fade, timer, inicjalizacja
+z macierzami aktora i pierścieniem) oraz prawdziwy cykl PM/FieldFx,
+wszystkie pięć typów obiektów, oba bufory rysowania, wyrównanie wskaźników
+i granice pakietów. Fixture --assets sprawdza cały moduł22116 bajtów,
+descriptory, listy callbacków, program i całą relokowaną klasęE wraz
+z33-elementową tablicą Configure. Logi /tmp/pe-motion-final-assets.log
+oraz /tmp/pe-motion-final-san-assets.log. Testy nie są dowodem zgodności
+każdego piksela ani ukończenia walki w M075. Zwykły replay do cap105807
+przechodzi wejście M075: HP39/107, ekwipunek zachowany, obraz obejrzany.
+Ten sam pełny replay PASS pod ASan/UBSan/function: cały JSON i1MiB VRAM
+identyczne z normalnym kandydatem, SHA256 VRAM
+769a9adb3a573f3af4867cd154720037d01cd3327738dc4c07efa58add93f787.
+PrywatneB–F niezmienione. Artefakty /tmp/pe-m075-motion-{final,san}.log/.vram,
+/tmp/pe-m075-motion-verify.py i proof.json. Nadal nie jest to ukończona
+walka w M075; nie rozszerzać bindingu na niezweryfikowane warianty.
+Ponowny test CTest
+original-game-melissa-encounter z PE_REQUIRE_GAME_ASSETS=1 i rzeczywistym
+CUE PASS (127,51s), bez abortów opcode206/82.
 
 Harness LLDB dla długiego inputu używa teraz SBLaunchInfo.SetArguments
 z JSON zamiast tysięcy argumentów drivera: poprzedni start zablokował się
@@ -49,7 +61,7 @@ przez debugger na tymczasowy literał przerwała wcześniejszy test statusem2
 (Cannot write VRAM capture). Ten przebieg nie jest PASS; nowy, poprawny
 replay podany wyżej kończy się statusem0. Bazowy VRAM Continue F zachował
 hash142ac576eb17678b541f74eec957299937b7f480618a4d56f54fed8305fced41.
-Nie zmieniono produkcyjnego kodu gry ani nie dodano plików.
+W tamtym przebiegu nie zmieniono produkcyjnego kodu gry ani nie dodano plików.
 
 Oryginalny input przechodzi M358→M067 i kolejną walkę: dwóch typu3
 po35HP i jeden typu4 z44HP. M16 pokonuje wszystkich; Heal1 w walce

@@ -8,4 +8,8 @@
 
 #include "room_lib.h"
 
-ROOMLIB_REGISTER_TABLE(RoomLib_RegisterDrawList, g_RoomDrawList)
+int RoomLib_RegisterDrawList(PmSlotHeader *o) {
+    if ((unsigned int)FieldFx_GetStatus(o) >= 2)
+        FieldFx_Register((FieldFxObject *)o, g_RoomDrawList);
+    return 0;
+}

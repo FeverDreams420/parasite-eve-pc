@@ -6,6 +6,9 @@
 #include "pe1/field_script_context.h"
 #include "pe1/pe_image.h"
 #include "pe1/room_fx.h"
+#include "pe1/field_actor.h"
+#include "pe1/field_particle_chain.h"
+#include "pe1/field_textured_strip.h"
 #include "pe1/room_interface.h"
 
 /* Motion particle setup shared by rooms m075, m080 and m082: copies three
@@ -20,10 +23,7 @@ typedef struct RoomMotionInitModel {
     RoomSpriteMatrix secondary;     /* 0x1A0 */
 } RoomMotionInitModel;
 
-typedef struct RoomMotionInitLink {
-    u8 pad000[0x238];
-    RoomMotionInitModel *model;     /* 0x238 */
-} RoomMotionInitLink;
+typedef FieldActor RoomMotionInitLink;
 
 typedef struct RoomMotionInitOwner {
     u8 pad00[8];
@@ -39,7 +39,7 @@ typedef struct RoomMotionInitState {
     s16 field66;
     s16 field68;
     u8 pad6A[2];
-    void *allocation;               /* 0x6C */
+    int allocation;               /* 0x6C */
 } RoomMotionInitState;
 
 /* 0x44-byte particle record. */
@@ -68,9 +68,13 @@ extern RoomMotionParticle g_RoomMotionTrailA[10];
 extern RoomMotionParticle g_RoomMotionTrailB[10];
 extern FieldGlowSprite g_RoomMotionGlyphs[4];
 /* Views of glyphs[1].depth and glyphs[2], used by the quad draw pass. */
-extern u16 g_RoomMotionQuadDepth;
-extern FieldGlowSprite g_RoomMotionQuadPacket;
+#define g_RoomMotionQuadDepth (g_RoomMotionGlyphs[1].depth)
+#define g_RoomMotionQuadPacket (g_RoomMotionGlyphs[2])
 extern u8 g_RoomMotionLookupCodes[];
 
+
+extern PmCommand g_RoomMotionHandlers;
+/* Native static instance of the original per-overlay trail storage. */
+extern RoomMotionParticle g_RoomMotionTrailA__motion[10];
 
 #endif /* PE1_ROOM_MOTION_INIT_H */

@@ -48,10 +48,10 @@ extern int g_RoomSpawnLayout[];
 void RoomLib_ClassNop0(void);
 void RoomLib_PlantScript(PmSlotHeader *object);
 int RoomLib_Spawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f);
-int RoomLib_RegisterDrawList(void *o);
-int RoomLib_RegisterPairedTables(void *o);
+int RoomLib_RegisterDrawList(PmSlotHeader *o);
+int RoomLib_RegisterPairedTables(PmSlotHeader *o);
 int RoomLib_CloseTarget(PmSlotHeader *slot);
-int RoomLib_ClassNop6(void);
+void RoomLib_ClassNop6(void);
 /* Variants some modules link in the registration and start slots: * the draw list and start only while the engine runs the object
  * (status 3). */
 int RoomLib_RegisterDrawListActive(PmSlotHeader *slot);

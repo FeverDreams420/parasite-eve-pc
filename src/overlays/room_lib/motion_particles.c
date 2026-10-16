@@ -6,9 +6,8 @@
  * room_m075, room_m080, room_m082, scene_e09 and scene_e10 link the same
  * fifteen functions in the same order, after the room prelude and before
  * the room library, with the same 0x18 bytes of read-only data. The object
- * is split in three units only because its particle draw needs
- * -fno-strength-reduce, which the setup loop must not get; they are
- * merged once they compile together. Trails, glyphs and lookup codes live
+ * remains in its three original source units. Native builds use ordinary
+ * C11 and pointer-bearing runtime records. Trails, glyphs and lookup codes live
  * in each room's own data (pe1/room_motion_init.h).
  */
 
@@ -19,7 +18,8 @@
 #include "pe1/room_floor.h"
 #include "pe1/room_fx.h"
 #include "pe1/room_motion_init.h"
-#include "pe1/room_rearm_timer.h"
+#include "pe1/asset_find.h"
+#include "pe1/room_module.h"
 
 #include "motion_particles.h"
 #include "render_layouts.h"
@@ -30,17 +30,12 @@ static const RoomFxSeed8 s_MotionQuadSeed = { { 0, 4, 0, 0, 0, 0, 0, 0 } };
 /* Work area of the anchored sprite quad and pair: the uniform scale, the
  * sprite depth (the pair's ring intensity), the ring image source and the
  * ring the pair draws. */
-typedef struct RoomAnchoredSpriteState {
-    u8 pad00[0x10];
-    s16 scale;                    /* 0x10 */
-    u16 depth;                    /* 0x12 */
-    u8 sourceData[0x100];         /* 0x14 */
-    FieldRingGeometry ring;       /* 0x114 */
-} RoomAnchoredSpriteState;
+
 
 /* Motion particle setup: the two trails of ten particles and the four
  * glyphs. */
-void RoomEffect_MotionParticlesInit(RoomMotionInitOwner *owner, void *unused, RoomMotionInitState *state) {
+int RoomEffect_MotionParticlesInit(void *owner_data, void *control_data, void *data) {
+    RoomMotionInitOwner *owner = owner_data; RoomMotionInitState *state = data;
     RoomMotionInitLink *link;
     RoomMotionParticle *particle;
     unsigned int i;
@@ -49,9 +44,9 @@ void RoomEffect_MotionParticlesInit(RoomMotionInitOwner *owner, void *unused, Ro
     state->allocation = Asset_SearchByKeyType(12);
     link = owner->link;
     state->link = link;
-    state->base = link->model->base;
-    state->primary = state->link->model->primary;
-    state->secondary = state->link->model->secondary;
+    memcpy(&state->base, &link->render_object.matrices[0], sizeof(state->base));
+    memcpy(&state->primary, &link->render_object.matrices[9], sizeof(state->primary));
+    memcpy(&state->secondary, &link->render_object.matrices[13], sizeof(state->secondary));
     state->timer = 30;
     state->field66 = 0;
     state->field68 = 0;
@@ -125,14 +120,31 @@ void RoomEffect_MotionParticlesInit(RoomMotionInitOwner *owner, void *unused, Ro
         particle->green = 255;
         particle->blue = 255;
     }
+    return 0;
 }
 
-void RoomEffect_MotionParticlesNop(void) {
+int RoomEffect_MotionParticlesNop(void *owner_data, void *control_data, void *data) {
+
+    return 0;
 }
 
-ROOM_REARM_TIMER_TICK(RoomEffect_MotionParticlesTick, 0x64)
+int RoomEffect_MotionParticlesTick(void *owner, void *control_data, void *state_data) {
+    RoomStatePair *control = control_data;
+    RoomMotionInitState *state = state_data;
+    if (state->field66 != 0) --state->field66;
+    if (state->field68 == 1) {
+        state->field68 = 0;
+        if (state->field66 == 0) {
+            state->field66 = state->timer;
+            func_800C6C18(owner);
+        }
+    }
+    if (FieldFx_IsLastSlotHalted() == 1) control->b1 = 2;
+    return 0;
+}
 
-void RoomEffect_MotionParticlesAnchor(int a0, int a1, short *out) {
+int RoomEffect_MotionParticlesAnchor(void *owner_data, void *control_data, void *data) {
+    short *out = data;
     RoomMotionInitState *ctx = FieldFx_GetScriptContext();
 
     out[0] = ctx->primary.t[0];
@@ -143,6 +155,7 @@ void RoomEffect_MotionParticlesAnchor(int a0, int a1, short *out) {
     out[6] = ctx->secondary.t[2];
     out[9] = 0;
     out[8] = 0x400;
+    return 0;
 }
 
 typedef struct RoomLibSpriteQuadStack {
@@ -156,16 +169,12 @@ typedef struct RoomLibSpriteQuadStack {
 /* Builds a uniformly scaled rotation from the shared seed and draws the
  * sprite twice at each of two map anchors: once unrotated at the anchor
  * height and once rotated on the shared floor height. Retail marks this
- * function handwritten; only its COP2 windows remain ASM. Like
- * RoomEffect_DrawAnchoredSpritePair, the matrix pointer is still pinned.
- * RotMatrix receives the stack addresses directly; the pointer used by
- * the following GTE operations starts its lifetime after that call. */
-void RoomEffect_DrawAnchoredSpriteQuad(void *unused0, void *unused1,
-                                            char *params) {
-    RoomLibSpriteQuadStack stack;
-    /* The params and packet pointers share one pinned variable. */
+ * function handwritten; the same matrix operations use the native GTE. */
+int RoomEffect_DrawAnchoredSpriteQuad(void *owner_data, void *control_data, void *data) {
+    char *params = data;
+    RoomLibSpriteQuadStack stack = {0};
     char *fx;
-    RoomMotionInitModel *map;
+    RoomMotionInitModel model, *map = &model;
     RoomSpriteMatrix *scaleMatrix;
     RoomSpriteMatrix *matrix;
     RoomMotionContext *root;
@@ -175,8 +184,8 @@ void RoomEffect_DrawAnchoredSpriteQuad(void *unused0, void *unused1,
     fx = params;
     root = FieldFx_GetScriptContext();
     stack.seed = s_MotionQuadSeed;
-    map = ((RoomMotionInitLink *)root->link)->model;
-    FieldFx_SetSpriteTexturePreset(root->owner);
+    memcpy(map, root->link->render_object.matrices, sizeof(*map));
+    FieldFx_SetSpriteTexturePreset(root->allocation & 255);
     FieldFx_SetSpriteCellSize(0x20, 0x20);
     FieldFx_SetSpriteColorMode(0x10);
     FieldFx_SetSpriteBlendMode(2);
@@ -247,9 +256,11 @@ void RoomEffect_DrawAnchoredSpriteQuad(void *unused0, void *unused1,
     stack.matrix.t[1] = *floorY;
     stack.matrix.t[2] = map->secondary.t[2];
     FieldFx_DrawGlowSprite((FieldGlowSprite *)fx, matrix, 1);
+    return 0;
 }
 
-void RoomEffect_UpdateTimedFade(void *arg0, RoomFxControl *state, RoomAnchoredSpriteState *obj) {
+int RoomEffect_UpdateTimedFade(void *owner_data, void *control_data, void *data) {
+    RoomFxControl *state = control_data; RoomAnchoredSpriteState *obj = data;
     RoomAnchoredSpriteState *p = obj;
     if ((unsigned short)((unsigned short)state->frame - 1) < 7U) {
         obj->depth += 0x10;
@@ -263,9 +274,11 @@ void RoomEffect_UpdateTimedFade(void *arg0, RoomFxControl *state, RoomAnchoredSp
     if (state->frame == 0x3A) {
         state->state = 2;
     }
+    return 0;
 }
 
-void RoomEffect_InitSpritePair(void *arg0, void *arg1, RoomAnchoredSpriteState *obj) {
+int RoomEffect_InitSpritePair(void *owner_data, void *control_data, void *data) {
+    RoomAnchoredSpriteState *obj = data;
     FieldRingGeometry *ring = &obj->ring;
     int c80 = 0x80;
     int v = 0x10;
@@ -290,19 +303,19 @@ void RoomEffect_InitSpritePair(void *arg0, void *arg1, RoomAnchoredSpriteState *
     ring->extent1 = 0;
     ring->source = obj->sourceData;
     FieldFx_BuildRingGeometry(ring);
+    return 0;
 }
 
 /* Builds a uniformly scaled rotation from the shared seed and draws the
  * sprite at two map anchors. Retail marks this function handwritten; only
- * its COP2 windows remain ASM. */
-void RoomEffect_DrawAnchoredSpritePair(void *unused0, void *unused1,
-                                            RoomAnchoredSpriteState *params) {
-    RoomLibSpriteTransformStack stack;
-    /* The GTE and draw matrix pointer still needs its pin. */
+ * its COP2 operations now use the native GTE. */
+int RoomEffect_DrawAnchoredSpritePair(void *owner_data, void *control_data, void *data) {
+    RoomAnchoredSpriteState *params = data;
+    RoomLibSpriteTransformStack stack = {0};
     RoomSpriteMatrix *scaleMatrix;
     RoomSpriteMatrix *matrix;
     RoomMotionContext *root;
-    RoomMotionInitModel *map;
+    RoomMotionInitModel model, *map = &model;
     short *floorY;
     FieldRingGeometry *renderState;
     int firstY;
@@ -356,7 +369,7 @@ void RoomEffect_DrawAnchoredSpritePair(void *unused0, void *unused1,
     }
 
     FieldFx_SetSpriteBlendMode(2);
-    map = ((RoomMotionInitLink *)root->link)->model;
+    memcpy(map, root->link->render_object.matrices, sizeof(*map));
     renderState = &params->ring;
     renderState->intensity = params->depth;
     /* Both anchors sit on the shared floor height; the first block stores
@@ -374,9 +387,11 @@ void RoomEffect_DrawAnchoredSpritePair(void *unused0, void *unused1,
     stack.matrix.t[1] = secondY;
     stack.matrix.t[2] = map->secondary.t[2];
     FieldFx_DrawShadedRing(renderState, matrix, 1);
+    return 0;
 }
 
-void RoomEffect_StepSpritePair(void *arg0, RoomFxControl *state, RoomAnchoredSpriteState *obj) {
+int RoomEffect_StepSpritePair(void *owner_data, void *control_data, void *data) {
+    RoomFxControl *state = control_data; RoomAnchoredSpriteState *obj = data;
     if (state->frame < 0x10) {
         obj->scale += 0xF0;
         if (state->frame < 0x10) {
@@ -386,6 +401,7 @@ void RoomEffect_StepSpritePair(void *arg0, RoomFxControl *state, RoomAnchoredSpr
     if (state->frame == 0x10) {
         state->state = 2;
     }
+    return 0;
 }
 
 s32 *FieldFx_RegPtr(s32 index);
@@ -393,12 +409,8 @@ s32 *FieldFx_RegPtr(s32 index);
 /* Seeds the motion particles: three or six of them depending on the first
  * scene flag, each with a random anchor offset, a random sprite lookup and
  * a random drift that is slower and sideways when the flag is set. */
-void RoomEffect_SeedMotionParticles(void *unused0, void *unused1,
-                                        RoomMotionState *state)
-{
-    /* Retail reserves one 8-byte local that nothing in the shipped code
-     * reads; keep it so the frame matches. */
-    s16 unusedVector[4];
+int RoomEffect_SeedMotionParticles(void *owner_data, void *control_data, void *data) {
+    RoomMotionState *state = data;
     unsigned int i;
 
     if (*FieldFx_RegPtr(1)) {
@@ -438,4 +450,39 @@ void RoomEffect_SeedMotionParticles(void *unused0, void *unused1,
             i++;
         } while (i < state->count);
     }
+    return 0;
 }
+
+/* Original M075 field-program and three complete handler lists. Native
+ * state sizes are rounded for the pointers used by subsequent slots. */
+FieldFxHandler g_RoomInitList[] = {
+    RoomEffect_MotionParticlesInit, RoomEffect_MotionParticlesAnchor,
+    RoomEffect_InitSpritePair, RoomEffect_SeedMotionParticles,
+    RoomEffect_InitParticleRenderPair, (FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_RoomDrawList[] = {
+    RoomEffect_MotionParticlesNop, RoomEffect_DrawAnchoredSpriteQuad,
+    RoomEffect_DrawAnchoredSpritePair, RoomEffect_DrawMotionParticles,
+    RoomEffect_DrawParticleRenderPair, (FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_RoomUpdateList[] = {
+    RoomEffect_MotionParticlesTick, RoomEffect_UpdateTimedFade,
+    RoomEffect_StepSpritePair, RoomEffect_UpdateParticleMotion,
+    RoomEffect_UpdateParticleRenderPair, (FieldFxHandler)(intptr_t)-1};
+#define MOTION_SLOT_BYTES(type) ((sizeof(type)+sizeof(void *)-1)&~(sizeof(void *)-1))
+int g_RoomSpawnLayout[] = {
+    MOTION_SLOT_BYTES(RoomMotionInitState) | (((20+sizeof(void *)-1)&~(sizeof(void *)-1))<<16),
+    MOTION_SLOT_BYTES(RoomAnchoredSpriteState) | (MOTION_SLOT_BYTES(RoomMotionState)<<16),
+    (int)(MOTION_SLOT_BYTES(RoomParticleRenderPairState) | 0xffff0000u)};
+int g_RoomScript[] = {
+    (int)0x00101000u,(int)0x00500000u,(int)0x00100190u,(int)0x00500001u,(int)0x00010000u,(int)0x00100000u,
+    (int)0x10090000u,(int)0x100c0010u,(int)0x1007000eu,(int)0x1008002au,(int)0x100f002eu,(int)0x100b0051u,
+    (int)0x1010005au,(int)0x00200001u,(int)0x00020000u,(int)0x30f60000u,(int)0x00010001u,(int)0x30fb0000u,
+    (int)0x00010002u,(int)0x30f90000u,(int)0x00110000u,(int)0x00010003u,(int)0x30f60000u,(int)0x00110001u,
+    (int)0x00010003u,(int)0x30f30000u,(int)0x00110000u,(int)0x00010004u,(int)0x30f00000u,(int)0xffffffffu,
+};
+
+PmCommand g_RoomMotionHandlers = {RoomLib_ClassNop0,RoomLib_PlantScript,
+    RoomLib_Spawn6,RoomLib_RegisterDrawList,RoomLib_RegisterPairedTables,
+    RoomLib_CloseTarget,RoomLib_ClassNop6};
+FieldGlowSprite g_RoomMotionGlyph, g_RoomMotionGlyphs[4];
+RoomMotionParticle g_RoomMotionTrailA[10], g_RoomMotionTrailB[10];
+u8 g_RoomMotionLookupCodes[] = {0,2,4,6,8,10,12,14};

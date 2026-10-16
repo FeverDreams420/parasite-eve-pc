@@ -10,12 +10,12 @@
 
 #include "room_lib.h"
 
-int RoomLib_RegisterPairedTables(void *o) {
+int RoomLib_RegisterPairedTables(PmSlotHeader *o) {
     int result;
 
     if ((unsigned int)FieldFx_GetStatus(o) >= 2) {
-        result = FieldFx_UpdateSlots(o, g_RoomUpdateList);
-        result |= FieldFx_RunScript(o, g_RoomInitList, g_RoomSpawnLayout);
+        result = FieldFx_UpdateSlots((FieldFxObject *)o, g_RoomUpdateList);
+        result |= FieldFx_RunScript((FieldFxObject *)o, g_RoomInitList, (u16 *)g_RoomSpawnLayout);
     } else {
         result = -1;
     }

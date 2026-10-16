@@ -5334,6 +5334,155 @@ static int original_m023_assets(PeDisc *disc,PeDiscFile *exe)
     return valid;
 }
 
+/* Original M075 CPU corpus; BIOS RNG and the opaque missing-image result
+ * are the only hooks in /tmp/pe-motion-cpu.py. All tested procedures run
+ * from the USA image, including the original field engine helpers. */
+#include "pe1/room_motion_init.h"
+#include "pe1/asset_key_record.h"
+#include "../src/overlays/room_lib/motion_particles.h"
+extern FieldFxHandler g_RoomInitList__motion[],g_RoomUpdateList__motion[],g_RoomDrawList__motion[];
+extern RoomMotionParticle g_RoomMotionTrailA__motion[10];
+extern int g_RoomScript__motion[],g_RoomSpawnLayout__motion[];
+static int original_motion_states(void)
+{
+    FieldFxState *old_state=g_FieldFxScriptState,fx={0};
+    unsigned old_rng=Psyz_RandState();uint64_t hash=UINT64_C(14695981039346656037);
+    const int frames[]={-32768,-1,0,1,7,15,16,21,30,31,50,58,65,32767};
+    const unsigned counts[]={0,1,3,6,8},depths[]={0,1,4,5,128,65532},seeds[]={1,0x12345678};
+    unsigned cases=0;int ok=0;g_FieldFxScriptState=&fx;
+#define MOTION_HASH(ptr,len) do {const u8 *p_=(const u8 *)(ptr);for(size_t b_=0;b_<(len);++b_)hash=(hash^p_[b_])*UINT64_C(1099511628211);}while(0)
+#define MOTION_CHECK(expected,label) do {if(hash!=UINT64_C(expected)){fprintf(stderr,"Original motion %s: %u %016llx\n",label,cases,(unsigned long long)hash);goto done;}hash=UINT64_C(14695981039346656037);cases=0;}while(0)
+    for(unsigned ci=0;ci<5;++ci)for(unsigned fi=0;fi<14;++fi)for(unsigned di=0;di<6;++di)for(unsigned si=0;si<2;++si){
+        RoomMotionState state;u8 *bytes=(u8 *)&state;int frame=frames[fi];
+        for(unsigned i=0;i<sizeof(state);++i)bytes[i]=(u8)(i*37+(u32)frame*3+seeds[si]);
+        state.count=counts[ci];state.depth=depths[di];RoomStatePair control={0x13,0x7e,frame};srand(seeds[si]);
+        g_RoomUpdateList__motion[3](NULL,&control,&state);unsigned random=Psyz_RandState();
+        MOTION_HASH(&state,sizeof(state));MOTION_HASH(&control,sizeof(control));MOTION_HASH(&random,4);++cases;
+    }
+    MOTION_CHECK(0xc32734cffa10e78d,"update");
+    const unsigned seed_values[]={0,1,0x12345678,0xffffffff};
+    for(unsigned flag=0;flag<3;++flag)for(unsigned si=0;si<4;++si){
+        RoomMotionState state;memset(&state,0xa5,sizeof(state));fx.regs[1]=flag;srand(seed_values[si]);
+        g_RoomInitList__motion[3](NULL,NULL,&state);unsigned random=Psyz_RandState();
+        MOTION_HASH(&state,sizeof(state));MOTION_HASH(&random,4);++cases;
+    }
+    MOTION_CHECK(0xee2f9a1f32bcf6dd,"seed");
+    const int scales[]={-32768,-1,0,1,1024,32760};const unsigned sprite_depths[]={0,1,16,17,128,65520};
+    const int sprite_frames[]={-32768,-1,0,1,7,15,16,21,30,31,50,51,58,65,32767};
+    for(unsigned variant=0;variant<2;++variant){
+        for(unsigned sc=0;sc<6;++sc)for(unsigned di=0;di<6;++di)for(unsigned fi=0;fi<15;++fi){
+            RoomAnchoredSpriteState state;memset(&state,0xa5,sizeof(state));state.scale=scales[sc];state.depth=sprite_depths[di];
+            RoomStatePair control={0x13,0x7e,sprite_frames[fi]};g_RoomUpdateList__motion[variant+1](NULL,&control,&state);
+            MOTION_HASH(&state,20);MOTION_HASH(&control,4);++cases;
+        }
+        if(variant)MOTION_CHECK(0x55c8d1b51d80980d,"sprite pair step");else MOTION_CHECK(0xa2aa4b324364c76d,"timed fade");
+    }
+    const int reloads[]={-32768,-1,0,1,30,32767},timers[]={-32768,-1,0,1,2,30,32767};
+    for(unsigned ri=0;ri<6;++ri)for(unsigned ti=0;ti<7;++ti)for(unsigned request=0;request<3;++request)for(unsigned halt=0;halt<2;++halt){
+        RoomMotionInitState state;memset(&state,0xa5,sizeof(state));state.timer=reloads[ri];state.field66=timers[ti];state.field68=request;
+        FieldFxObject owner={0};RoomStatePair control={0x13,0x7e,0};fx.slot_count=halt;fx.halted=halt;
+        g_RoomUpdateList__motion[0](&owner,&control,&state);MOTION_HASH(&state.timer,6);MOTION_HASH(&control,4);++cases;
+    }
+    MOTION_CHECK(0x6e492949ecc52cb5,"timer");
+    {
+        FieldGlowSprite old_glyph=g_RoomMotionGlyph,old_glyphs[4];RoomMotionParticle old_a[10],old_b[10];
+        memcpy(old_glyphs,g_RoomMotionGlyphs,sizeof(old_glyphs));memcpy(old_a,g_RoomMotionTrailA__motion,sizeof(old_a));memcpy(old_b,g_RoomMotionTrailB,sizeof(old_b));
+        u32 empty_archive[32]={0};empty_archive[1]=8;
+        void *archive=g_GameState.loaded_scene_archive;g_GameState.loaded_scene_archive=empty_archive;
+        for(unsigned pattern=0;pattern<4;++pattern){
+            RoomMotionInitState state;RoomMotionInitOwner owner={0};FieldActor actor={0};RenderMatrix matrices[14];
+            memset(&state,0xa5,sizeof(state));owner.link=&actor;actor.render_object.matrices=matrices;
+            for(unsigned i=0;i<sizeof(matrices);++i)((u8 *)matrices)[i]=(u8)(i*37+pattern*71);
+            memset(&g_RoomMotionGlyph,0xa5,sizeof(g_RoomMotionGlyph));memset(g_RoomMotionGlyphs,0xa5,sizeof(g_RoomMotionGlyphs));
+            memset(g_RoomMotionTrailA__motion,0xa5,sizeof(old_a));memset(g_RoomMotionTrailB,0xa5,sizeof(old_b));
+            g_RoomInitList__motion[0](&owner,NULL,&state);
+            if(state.link!=&actor || fx.current_context!=&state)goto init_done;
+            MOTION_HASH(&state.base,102);MOTION_HASH(&state.allocation,4);MOTION_HASH(&g_RoomMotionGlyph,16);
+            MOTION_HASH(g_RoomMotionTrailA__motion,sizeof(old_a));MOTION_HASH(g_RoomMotionTrailB,sizeof(old_b));MOTION_HASH(g_RoomMotionGlyphs,sizeof(old_glyphs));++cases;
+        }
+init_done:
+        g_GameState.loaded_scene_archive=archive;g_RoomMotionGlyph=old_glyph;memcpy(g_RoomMotionGlyphs,old_glyphs,sizeof(old_glyphs));
+        memcpy(g_RoomMotionTrailA__motion,old_a,sizeof(old_a));memcpy(g_RoomMotionTrailB,old_b,sizeof(old_b));
+    }
+    MOTION_CHECK(0xb34061a49b104785,"init and native actor matrices");
+    for(unsigned pattern=0;pattern<4;++pattern){
+        RoomAnchoredSpriteState state;memset(&state,0xa5,sizeof(state));
+        for(unsigned i=0;i<0x114;++i)((u8 *)&state)[i]=(u8)(i*37+pattern*71);
+        for(unsigned i=0;i<20;++i)((u8 *)&state.ring)[sizeof(void *)+i]=(u8)((0x118+i)*37+pattern*71);
+        g_RoomInitList__motion[2](NULL,NULL,&state);
+        if(state.ring.source!=state.sourceData)goto done;
+        MOTION_HASH(&state,0x114);MOTION_HASH((u8 *)&state.ring+sizeof(void *),20);++cases;
+    }
+    MOTION_CHECK(0x395f99da3ab86c99,"pair ring init");
+    ok=1;
+done:
+    g_FieldFxScriptState=old_state;srand(old_rng);
+#undef MOTION_CHECK
+#undef MOTION_HASH
+    if(ok)puts("Original M075 motion: 2192 USA CPU update/seed/fade/timer/init states, native actor matrices and pointer-bearing ring passed");
+    return ok;
+}
+
+static int original_motion_program(void)
+{
+    struct { _Alignas(16) u8 packets[32768]; u8 guard[32]; } arena;
+    static RenderGpuTag ordering[4096];
+    _Alignas(8) u8 archive[128]={0};
+    ((SceneAssetBlob *)archive)->directoryOffset=8;
+    ((SceneAssetDirectory *)(archive+8))->keyEntries=(1u<<22)|64;
+    ((AssetU32KeyRecord *)(archive+64))->packedOffset=80;
+    ((AssetU32KeyRecord *)(archive+64))->key=0x73decd80;
+    ((TimPackedImage *)(archive+80))->key.bytes.type=12;
+    ((TimPackedImage *)(archive+80))->geometry=(832u<<10)|(256u<<21);
+    RenderBufferPrefix old_buffers=D_800B0E38;int old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
+    GteMatrix *old_view=g_GeomScroll.words.viewMatrix;void *old_archive=g_GameState.loaded_scene_archive;
+    FieldActor *old_player=g_PlayerEntity;FieldFxState *old_state=g_FieldFxScriptState;
+    FieldFxObject *old_object=g_FieldFxScriptObject;FieldFxSlot *old_slots=g_FieldFxSlotTable;
+    char *old_data=g_FieldFxScriptData;int *old_commands=g_FieldFxCommandTable;
+    unsigned old_rng=Psyz_RandState();s16 old_floor=g_RoomFloorY->y;int ok=0;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    g_GeomScroll.words.viewMatrix=&view;g_GameState.loaded_scene_archive=archive;g_RoomFloorY->y=0;
+    Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
+    for(unsigned draw_slot=0;draw_slot<2;++draw_slot){
+        FieldFxObject object={0};FieldActor actor={0};FieldActorState actor_state={0};RenderMatrix matrices[14]={0};u8 action_state[4]={2};
+        actor.state=&actor_state;actor.render_object.matrices=matrices;actor_state.control10.command_value=1;actor_state.action_state=action_state;
+        actor.pos_x=8000*65536;actor.pos_z=8000*65536;object.prefix.actor=&actor;object.prefix.asset_type=12;g_PlayerEntity=&actor;
+        for(unsigned i=0;i<14;++i){for(unsigned j=0;j<3;++j)matrices[i].rotation[j][j]=4096;matrices[i].translation[2]=640;}
+        matrices[9].translation[0]=-96;matrices[13].translation[0]=96;
+        g_ActiveDrawSlot=draw_slot;D_800B0E38.ordering[draw_slot]=ordering;D_800B0E38.packets[draw_slot]=(char *)arena.packets;srand(1);
+        g_RoomMotionHandlers.init();g_RoomMotionHandlers.initialize((PmSlotHeader *)&object);
+        intptr_t wide=sizeof(intptr_t)>4?(intptr_t)UINT64_C(0x1234567887654321):0x7654321;
+        g_RoomMotionHandlers.send((PmSlotHeader *)&object,0,8,wide,0,0);
+        if(object.state.commands!=g_RoomScript__motion || object.state.vars[8]!=wide)goto done;
+        unsigned seen=0,drawn=0,frames=0;
+        for(;frames<320;++frames){
+            memset(&arena,0xa5,sizeof(arena));for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};g_DrawPacketOffset=0;
+            g_RoomMotionHandlers.start((PmSlotHeader *)&object);
+            g_RoomMotionHandlers.execute((PmSlotHeader *)&object);
+            for(unsigned i=0;i<64;++i)if(object.slots[i].flag){
+                FieldFxSlot *slot=&object.slots[i];seen|=1u<<slot->handler_id;
+                if(slot->handler_id>=5 || slot->data_offset<0 || (unsigned)slot->data_offset>=FIELDFX_DATA_SIZE ||
+                   (uintptr_t)(object.data+slot->data_offset)%_Alignof(void *))goto done;
+            }
+            if(g_DrawPacketOffset<0 || g_DrawPacketOffset>(int)sizeof(arena.packets))goto done;
+            drawn+=g_DrawPacketOffset!=0;
+            for(unsigned i=0;i<sizeof(arena.guard);++i)if(arena.guard[i]!=0xa5)goto done;
+            if(object.prefix.reserved00==4)break;
+        }
+        if(seen!=31 || !drawn || frames==320){fprintf(stderr,"Motion program slot%u seen%x frames%u drawn%u pc%d\n",draw_slot,seen,frames,drawn,object.state.pc);goto done;}
+        actor_state.core_flags=0x3fabcdef;action_state[0]=2;
+        g_RoomMotionHandlers.stop((PmSlotHeader *)&object);g_RoomMotionHandlers.unload();
+        if(object.prefix.reserved00!=4 || actor_state.core_flags!=0x00abcdef || action_state[0]!=4)goto done;
+    }
+    ok=1;
+done:
+    D_800B0E38=old_buffers;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;g_GeomScroll.words.viewMatrix=old_view;
+    g_GameState.loaded_scene_archive=old_archive;g_PlayerEntity=old_player;g_RoomFloorY->y=old_floor;
+    g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;g_FieldFxSlotTable=old_slots;g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;srand(old_rng);
+    if(ok)puts("Original M075 motion program: real PM/FieldFx lifecycle, all five object types, both draw slots, native pointer alignment and packet guards passed");
+    return ok;
+}
+
 /* USA M063 CPU execution, with COP2 forwarded to PsyZ for this corpus. */
 static int original_window_lifecycle(void)
 {
@@ -5363,6 +5512,57 @@ static int original_window_lifecycle(void)
     g_RoomWindowClassHandlers.send((PmSlotHeader *)&object,1,19,(intptr_t)&enabled,0,0);
     if(enabled!=7)return 0;
     puts("Original window lifecycle: 648 unhooked USA CPU arm/arrival/release states and native-width command output passed");return 1;
+}
+
+static int original_motion_assets(PeDisc *disc,PeDiscFile *exe)
+{
+    u8 header[0x800];u32 base;PeDiscFile archive;SceneRoomSectorRange range;
+    if(!pe_disc_read(disc,exe,0,header,sizeof(header)) || !pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    memcpy(&base,header+0x18,4);
+    if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+74*8,&range,sizeof(range)))return 0;
+    size_t bytes=(size_t)range.roomSectors*2048;u8 *blob=malloc(bytes);if(!blob)return 0;
+    int valid=bytes>=8+0x5664 && pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,blob,bytes);
+    if(valid){
+        SceneAssetView *room=(void *)blob;SceneRoomDirectory *directory=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+        SceneRoomRecord *records=SceneAsset_ResolveOffset(room,directory->scripts&0x3fffff);unsigned descriptors=0;
+        valid=directory->scripts>>22==2;
+        for(unsigned i=0;valid && i<2;++i){
+            valid=(records[i].source.offsetAndSlot&0xffffff)==8;
+            if(records[i].source.bytes.slot==75 && records[i].u.handlerAddress==0x80194048)descriptors|=1;
+            else if(records[i].source.bytes.slot==12 && records[i].u.handlerAddress==0x80193f74)descriptors|=2;
+            else valid=0;
+        }
+        valid=valid && descriptors==3;
+        uint64_t hash=UINT64_C(14695981039346656037);for(unsigned i=0;i<0x5664;++i)hash=(hash^blob[8+i])*UINT64_C(1099511628211);
+        valid=valid && hash==UINT64_C(0x9b37f5c19cfede02);
+        const u32 init[]={0x8018f3dc,0x8018f79c,0x8018fbe8,0x8018ff74,0x80190884,0xffffffff};
+        const u32 draw[]={0x8018f714,0x8018f814,0x8018fc60,0x80190410,0x80190af4,0xffffffff};
+        const u32 update[]={0x8018f71c,0x8018fb44,0x8018ff10,0x801906d0,0x80190b54,0xffffffff};
+        const u32 methods[]={0x8018f3d4,0x8018f1e4,0x8018f210,0x8018f23c,0x8018f284,0x8018f348,0x8018f3cc};
+        const u32 class_e_methods[]={0x80191974,0x8019197c,0x801919f8,0x80191c70,0x80191c78,0x801923b8,0x80192410};
+        u8 *code=blob+8;
+        valid=valid && !memcmp(code+0x4f30,init,sizeof(init)) && !memcmp(code+0x4f48,draw,sizeof(draw)) &&
+            !memcmp(code+0x4f60,update,sizeof(update)) && !memcmp(code+0x4f84,methods,sizeof(methods)) &&
+            !memcmp(code+0x5058,class_e_methods,sizeof(class_e_methods)) &&
+            !memcmp(code+0x4fa0,g_RoomScript__motion,30*4) && !memcmp(code+0x5018,g_RoomMotionLookupCodes,8);
+        /* Compare the entire already-ported actor class, including its
+         * 33-way Configure table, allowing only these actual relocations. */
+        u32 reference[0xaa4/4],jump[33];SceneRoomSectorRange ref;
+        if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+58*8,&ref,sizeof(ref)) ||
+           !pe_disc_read(disc,&archive,(u64)(ref.start+ref.scratchSectors+ref.textureSectors)*2048+8+0xf4c,reference,sizeof(reference)) ||
+           !pe_disc_read(disc,&archive,(u64)(ref.start+ref.scratchSectors+ref.textureSectors)*2048+8+0x84,jump,sizeof(jump)))valid=0;
+        for(unsigned i=0;valid && i<sizeof(reference)/4;++i){
+            u32 expected=reference[i],actual;memcpy(&actual,code+0x2984+i*4,4);
+            if((expected>>26==2 || expected>>26==3) && ((expected&0x3ffffff)<<2)>=0x18ff3c && ((expected&0x3ffffff)<<2)<0x1909e0)expected+=0x1a38/4;
+            if(i*4==0x34 || i*4==0x260 || i*4==0x418)expected+=0x1a38;
+            if(i*4==0xa4)expected=(expected&0xffff0000)|0xf08c;
+            valid=expected==actual;
+        }
+        for(unsigned i=0;valid && i<33;++i){u32 actual;memcpy(&actual,code+0x9c+i*4,4);valid=actual==jump[i]+0x1a38;}
+    }
+    free(blob);
+    if(valid)puts("Original M075 assets: complete 22116-byte library, fifteen motion functions, PM descriptor, five callbacks per list, 30-word program and relocated entire class E passed");
+    return valid;
 }
 
 static int original_window_assets(PeDisc *disc,PeDiscFile *exe)
@@ -11932,7 +12132,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!original_window_lifecycle() || !original_window_motion() || !original_room_e_init() || !original_room_e_update() || !original_effect_sequence_updates() || !original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!original_motion_states() || !original_motion_program() || !original_window_lifecycle() || !original_window_motion() || !original_room_e_init() || !original_room_e_update() || !original_effect_sequence_updates() || !original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;
@@ -11965,7 +12165,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};PeDiscFile exe;u32 pointers[50];
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
-        if (!original_window_assets(&disc,&exe) || !original_scene_object_workspace_assets(&disc,&exe) || !original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
+        if (!original_motion_assets(&disc,&exe) || !original_window_assets(&disc,&exe) || !original_scene_object_workspace_assets(&disc,&exe) || !original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;

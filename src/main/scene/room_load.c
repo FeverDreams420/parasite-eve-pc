@@ -1,3 +1,4 @@
+#include "pe1/room_motion_init.h"
 #include "common.h"
 #include <stdio.h>
 #include <string.h>
@@ -468,6 +469,12 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 75 && record[i].u.handlerAddress == 0x80193308u)
                 native = &g_RoomActorClassTable[2];
         }
+        if (map + 1 == 75) {
+            if (slot == 75 && record[i].u.handlerAddress == 0x80194048u)
+                native = &g_RoomActorClassTable[2];
+            if (slot == 12 && record[i].u.handlerAddress == 0x80193f74u)
+                native = &g_RoomMotionHandlers;
+        }
         if (actor_library && slot == 70 && record[i].u.handlerAddress == 0x801924e8u)
             native = &g_RoomActorClassTable[0];
         if (actor_library && slot == 75 && record[i].u.handlerAddress == 0x80192520u)
@@ -612,6 +619,14 @@ int Scene_LoadRoom(unsigned int roomId)
         memset(RoomM272_Rec, 0, sizeof(RoomM272_Rec));
     }
 
+    /* Loading this original overlay also cleared its particle work data. */
+    if (map + 1 == 75) {
+        memset(&g_RoomMotionGlyph, 0, sizeof(g_RoomMotionGlyph));
+        memset(g_RoomMotionGlyphs, 0, sizeof(g_RoomMotionGlyphs));
+        memset(g_RoomMotionTrailA__motion, 0, sizeof(g_RoomMotionTrailA__motion));
+        memset(g_RoomMotionTrailB, 0, sizeof(g_RoomMotionTrailB));
+    }
+
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
         slot = record[i].source.bytes.slot;
@@ -635,6 +650,10 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 63 || map + 1 == 83 || map + 1 == 358 ||
                     map + 1 == 384 || map + 1 == 387) && slot == 74) {
             g_PmCmdHandlerTable[slot] = &g_RoomWindowClassHandlers;
+        } else if (map + 1 == 75 && slot == 12) {
+            g_PmCmdHandlerTable[slot] = &g_RoomMotionHandlers;
+        } else if (map + 1 == 75 && slot == 75) {
+            g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
         } else if (actor_library && slot == 70) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];
         } else if ((actor_library || map + 1 == 358 || map + 1 == 384 ||

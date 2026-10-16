@@ -193,10 +193,40 @@ ASan/UBSan/function PASS. Replay do wejścia M028/cap33602 przechodzi
 zarówno zwykły build, jak i runtime ASan/UBSan/function: HP23/64, trzech
 wrogów, identyczny JSON oraz cały VRAM, SHA256
 b70a39c181b463165c9af9704627072a262be2d610be0bde9c2ca06d1e5ad352.
-Dalsza próba sterowania w walce kończy się śmiercią Ayi; pozostają dwaj
-wrogowie z HP2, a ruch nie zmienia pozycji. Przyczyna nieustalona, nie jest
-to dowód poprawnej walki ani ukończenia M028/czyszczenia kanałów.
-Nie wprowadzono obejścia HP, zachowania przeciwników ani nowych plików.
+Dalsza pierwsza próba zakończyła się śmiercią Ayi. Następny replay od
+New Game wygrywa M027 i M028, używając wyłącznie zwykłych inputów: ruch
+od ściany, Heal1 i ataki. Ruch w dół oraz na boki zmienia współrzędne;
+wcześniejszy brak ruchu nie stanowi dowodu błędu sterowania. Po M028
+pozostaje HP16, zdobyto Medicine1, blokada ruchu znika. Trasa wchodzi do
+M031, zamyka dialog10–11 i odzyskuje sterowanie; cap246050 ma HP16/67,
+capacity14, oba klucze i Medicine1, zero żywych wrogów, bez menu/blokady.
+FNV całego VRAMb4dcd37be6d0bb88; kadr M031 obejrzano. Rozszerzono istniejący
+runner testów o original-game-m028-sewer; większe lokalne tablice inputów
+mieszczą trasę od New Game, host już alokował harmonogram według argc.
+Nowy CTest PASS358.62s; pięć powiązanych testów PASS371.27s z wymaganym
+Disc1, bez SKIP. To katalog50 testów, nie świeży wynik całego zestawu.
+
+Osobna powtórka od zapisu M319 przez M027 i całą walkę M028 do cap37202
+przechodzi zarówno zwykły build, jak i ASan/UBSan/function. Identyczny pełny
+JSON i VRAM, SHA256
+0245b88628ae2416cfc51b5e09c5a4b8451cf3a2abfbb32486a6952b13582694.
+Kończy się bez żywych wrogów i blokady ruchu, HP43/67, capacity14.
+To osobny start Continue; nie jest identyczny z przebiegiem od New Game
+ani referencją PS1. Nie wprowadzono obejścia HP, zachowania przeciwników
+ani nowych plików. Pełne kanały i kampania pozostają nieukończone.
+
+Dalsze otwarcie skrzyni z amunicją w M031 wymaga opcode169. Podpięto
+istniejący Entity_InitWithTimeout (USA80019540); deklaracja istniejącego
+Menu_OpenEquipSlotSwap ma teraz zgodny zwracany s32. 416 stanów bez hooków
+CPU USA potwierdza pierwsze wywołanie/fade, czekanie przy istniejącym menu,
+rewind kursora, aktywność/flagi węzła, granice wyniku wyboru i anulowanie:
+hash5f9e764ae2a58395. To nie obejmuje pierwszego tworzenia wszystkich
+widgetów przez CPU oracle. Świeży fixture ASan/UBSan/function PASS, cztery
+powiązane CTest PASS12.96s. Zwykły runtime od zapisu M319 przez kanały
+przechodzi dawny abort actor6/script_byte1052; przy cap50000 otwiera menu
+wyboru ekwipunku (obejrzano kadr), a Circle zamyka je i oddaje ruch przy
+cap50608. Pełne pobieranie/odrzucanie zawartości skrzyń i runtime169
+z sanitizerami nie są jeszcze zweryfikowane.
 
 Osobny PS1 zaakceptował także zapis M319 po drugiej Melissie wygenerowany
 przez oryginalne funkcje portu: HP21/64, zgodna pozycja Continue, Melissa

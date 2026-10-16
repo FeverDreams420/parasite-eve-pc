@@ -992,7 +992,7 @@ int Script_CountItemsByValue(int **arg0) {
     return 1;
 }
 
-void Menu_OpenEquipSlotSwap(int arg0);
+s32 Menu_OpenEquipSlotSwap(s32 arg0);
 
 int Entity_InitWithTimeout(int **arg0) {
     ScriptNode *state = g_ScriptNodePool;

@@ -2670,6 +2670,38 @@ static int original_render_flag_opcodes(void)
     return 1;
 }
 
+static int original_equip_selection_opcode(void)
+{
+    const s16 commands[]={-32768,-2,-1,0,1,2,3,4,128,385,386,387,32767};
+    const u16 flags[]={0,1,0x20,0x21,0x80,0xff,0x8000,0xffff};
+    const u32 geom[]={0,0x2000,0xc000,0xdeadbeef};
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    s16 saved_command=g_MenuFrameCommand;int saved_geom=g_GeomScroll.state.flags;
+    MenuWidgetNode *saved_head=g_MenuWidgetActiveListHead;
+    MenuWidgetNode widget={.mode=1,.selected_base=1};g_MenuWidgetActiveListHead=&widget;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[169]!=Entity_InitWithTimeout)return 0;
+    for(unsigned c=0;c<13;++c)for(unsigned f=0;f<8;++f)for(unsigned g=0;g<4;++g){
+        ScriptNode node={.flags=flags[f],.active=7};u32 code[20]={0};
+        g_ScriptNodePool=&node;g_ScriptCursor=code+16;g_MenuFrameCommand=commands[c];g_GeomScroll.state.flags=geom[g];
+        int input=0x12345678,output=(s32)0xa5a5a5a5;int *args[]={&input,&output};
+        u32 result=Entity_InitWithTimeout(args);
+        const u32 words[]={result,node.flags,node.active,(u32)((uintptr_t)g_ScriptCursor-(uintptr_t)(code+16)),
+            (u32)output,(u32)g_GeomScroll.state.flags};
+        for(unsigned w=0;w<6;++w)for(unsigned b=0;b<4;++b)
+            hash=(hash^((words[w]>>(b*8))&255))*UINT64_C(1099511628211);
+        if(input!=0x12345678 || g_MenuFrameCommand!=commands[c] ||
+           g_MenuWidgetActiveListHead!=&widget || widget.next || widget.mode!=1 || widget.selected_base!=1)return 0;
+        ++cases;
+    }
+    g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_MenuFrameCommand=saved_command;
+    g_GeomScroll.state.flags=saved_geom;g_MenuWidgetActiveListHead=saved_head;
+    if(cases!=416 || hash!=UINT64_C(0x5f9e764ae2a58395)){
+        fprintf(stderr,"Equip169 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original opcode169: 416 unhooked USA CPU states, first fade, existing-menu wait, selected/cancel boundaries, cursor rewind and retained node flags passed");
+    return 1;
+}
+
 static int original_polar_position_opcode(void)
 {
     const u32 patterns[]={0x80000000,0xffff0000,0xffffffff,0,1,1024,4096,65535,0x7fffffff,0x12345678,0xfedcba98,0x4000};
@@ -3723,7 +3755,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;
@@ -9745,15 +9777,15 @@ static int original_native_bootstrap(const char *executable,int field_control)
     unsigned first=field_control>=2?(unsigned)field_control+10:field_control?6:0;
     unsigned end=field_control>=2?first+1:field_control?12:6;
     for(unsigned input=first;input<end;++input){
-        const char *limit=input==21?"222996":input==20?"200826":input==19?"154203":input==18?"131932":input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
-        const char *args[4096]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
+        const char *limit=input==22?"246050":input==21?"222996":input==20?"200826":input==19?"154203":input==18?"131932":input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+        const char *args[8192]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
         for(unsigned event=0;event<(input==3?4u:input==2 || input>=4?6u:input?1u:0u);++event){
             unsigned index=input==3 && event>=2?event+2:event;
             args[at++]="--pad-at";args[at++]=events[index];
         }
-        char scheduled[2048][32];
+        char scheduled[4096][32];
         if(input==1){
             for(unsigned event=0;event<128;++event){
                 snprintf(scheduled[event],sizeof(scheduled[event]),"%u:8",10001+event);
@@ -10024,7 +10056,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
-            if(input==21){
+            if(input>=21){
                 /* Recorded New Game continuation: Heal1 in M022, parrot,
                  * Medicine1 in M319, second Melissa fight, hospital memory
                  * and return to normal field control after dialogue133. */
@@ -10082,6 +10114,77 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
+            if(input==22){
+                /* Recorded ordinary inputs: Heal1, Jump in, M027 rats,
+                 * M028 frog/rats, movement away from the arena wall,
+                 * Heal1, victory/Medicine1 drop and M031 dialogues10–11.
+                 * No save injection or gameplay-state writes. */
+                static const unsigned route[][2]={
+                    {222996,4096},{223000,0},{223100,64},{223104,0},{223112,16384},{223116,0},
+                    {223216,16384},{223220,0},{223320,16384},{223324,0},{223624,8192},{223628,0},
+                    {223728,8192},{223732,0},{223832,16},{224432,128},{224782,16},{225262,0},
+                    {225462,16384},{225466,0},{226466,16},{228166,0},{228466,16384},{228470,0},
+                    {228498,16384},{228502,0},{228530,16384},{228534,0},{228562,16384},{228566,0},
+                    {228594,16384},{228598,0},{228626,16384},{228630,0},{228658,16384},{228662,0},
+                    {228690,16384},{228694,0},{228722,16384},{228726,0},{228754,16384},{228758,0},
+                    {228786,16384},{228790,0},{228818,16384},{228822,0},{228850,16384},{228854,0},
+                    {228882,16384},{228886,0},{228914,16384},{228918,0},{228946,16384},{228950,0},
+                    {228978,16384},{228982,0},{229010,16384},{229014,0},{229042,16384},{229046,0},
+                    {229074,16384},{229078,0},{229106,16384},{229110,0},{229138,16384},{229142,0},
+                    {229170,16384},{229174,0},{229202,16384},{229206,0},{229234,16384},{229238,0},
+                    {229266,16384},{229270,0},{229298,16384},{229302,0},{229330,16384},{229334,0},
+                    {229362,16384},{229366,0},{229394,16384},{229398,0},{229426,16384},{229430,0},
+                    {229458,16384},{229462,0},{229490,16384},{229494,0},{229522,16384},{229526,0},
+                    {229554,16384},{229558,0},{229586,16384},{229590,0},{229618,16384},{229622,0},
+                    {229650,16384},{229654,0},{229682,16384},{229686,0},{229714,16384},{229718,0},
+                    {229746,16384},{229750,0},{229778,16384},{229782,0},{229810,16384},{229814,0},
+                    {229842,16384},{229846,0},{229874,16384},{229878,0},{229906,16384},{229910,0},
+                    {229938,16384},{229942,0},{229970,16384},{229974,0},{230002,16384},{230006,0},
+                    {230034,16384},{230038,0},{230066,16384},{230070,0},{230098,16384},{230102,0},
+                    {230130,16384},{230134,0},{230162,16384},{230166,0},{230194,16384},{230198,0},
+                    {230226,16384},{230230,0},{230258,16384},{230262,0},{230290,16384},{230294,0},
+                    {230322,16384},{230326,0},{230354,16384},{230358,0},{230386,16384},{230390,0},
+                    {230418,16384},{230422,0},{230450,16384},{230454,0},{230482,16384},{230486,0},
+                    {230514,16384},{230518,0},{230546,16384},{230550,0},{230578,0},{230878,16},
+                    {232478,64},{232494,128},{232510,32},{232526,4096},{232530,0},{232630,64},
+                    {232634,0},{232642,16384},{232646,0},{232746,16384},{232750,0},{232850,16384},
+                    {232854,0},{233154,16384},{233158,0},{233186,16384},{233190,0},{233218,16384},
+                    {233222,0},{233250,16384},{233254,0},{233282,16384},{233286,0},{233314,16384},
+                    {233318,0},{233346,16384},{233350,0},{233378,16384},{233382,0},{233410,16384},
+                    {233414,0},{233442,16384},{233446,0},{233474,16384},{233478,0},{233506,16384},
+                    {233510,0},{233538,16384},{233542,0},{233570,16384},{233574,0},{233602,16384},
+                    {233606,0},{233634,16384},{233638,0},{233666,16384},{233670,0},{233698,16384},
+                    {233702,0},{233730,16384},{233734,0},{233762,16384},{233766,0},{233794,16384},
+                    {233798,0},{233826,16384},{233830,0},{233858,16384},{233862,0},{233890,16384},
+                    {233894,0},{233922,16384},{233926,0},{233954,16384},{233958,0},{233986,16384},
+                    {233990,0},{234018,16384},{234022,0},{234050,16384},{234054,0},{234082,16384},
+                    {234086,0},{234114,16384},{234118,0},{234146,16384},{234150,0},{234178,16384},
+                    {234182,0},{234210,16384},{234214,0},{234242,16384},{234246,0},{234274,16384},
+                    {234278,0},{234306,16384},{234310,0},{234338,16384},{234342,0},{234370,16384},
+                    {234374,0},{234402,16384},{234406,0},{234434,16384},{234438,0},{234466,16384},
+                    {234470,0},{234498,16384},{234502,0},{234530,16384},{234534,0},{234562,16384},
+                    {234566,0},{234594,16384},{234598,0},{234626,16384},{234630,0},{234658,16384},
+                    {234662,0},{234690,16384},{234694,0},{234722,16384},{234726,0},{234754,16384},
+                    {234758,0},{234786,16384},{234790,0},{234818,16384},{234822,0},{234850,16384},
+                    {234854,0},{234882,16384},{234886,0},{234914,16384},{234918,0},{234946,16384},
+                    {234950,0},{234978,16384},{234982,0},{235010,16384},{235014,0},{235042,16384},
+                    {235046,0},{235074,16384},{235078,0},{235106,16384},{235110,0},{235138,16384},
+                    {235142,0},{235170,16384},{235174,0},{235202,16384},{235206,0},{235234,16384},
+                    {235238,0},{235266,16384},{235270,0},{235298,16384},{235302,0},{235330,16384},
+                    {235334,0},{235362,16384},{235366,0},{235394,16384},{235398,0},{235426,16384},
+                    {235430,0},{235458,16384},{235462,0},{235490,16384},{235494,0},{235522,16384},
+                    {235526,0},{235554,16384},{235558,0},{235586,16384},{235590,0},{235618,16384},
+                    {235622,0},{235650,16384},{235654,0},{235682,16384},{235686,0},{235714,16384},
+                    {235718,0},{235746,16384},{235750,0},{235778,0},{236078,16},{236578,16},
+                    {237778,0},{238078,16384},{238082,0},{238262,0},{239262,16384},{239266,0},
+                    {239446,0},{240446,0},{241446,16},{242046,0},{242346,16},{243846,0},
+                    {244146,16},{245046,0},{245346,16384},{245350,0},
+                };
+                for(unsigned i=0;i<sizeof(route)/sizeof(route[0]);++i){
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",route[i][0],route[i][1]);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                }
+            }
 #undef BOOTSTRAP_PRESS
         }
         SDL_PropertiesID props=SDL_CreateProperties();
@@ -10093,7 +10196,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==21?"\"vblanks\":222996":input==20?"\"vblanks\":200826":input==19?"\"vblanks\":154203":input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==22?"\"vblanks\":246050":input==21?"\"vblanks\":222996":input==20?"\"vblanks\":200826":input==19?"\"vblanks\":154203":input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -10205,6 +10308,12 @@ static int original_native_bootstrap(const char *executable,int field_control)
            !strstr(output,"\"player\":true,\"flags\":8,\"position\":[0,0,137953280],\"yaw\":-451") ||
            !strstr(output,"\"player_hp\":21,\"player_max_hp\":64") ||
            !strstr(output,"\"inventory\":{\"capacity\":13,\"slots\":[256,257,258,512,200,201,0")))valid=0;
+        if(input==22 && (!output || !strstr(output,"\"scene\":2818584776") ||
+           !strstr(output,"\"video_state\":0") || !strstr(output,"\"move_lock\":0") ||
+           !strstr(output,"\"menu\":null") || !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":11}") ||
+           !strstr(output,"\"player\":true,\"flags\":1032,\"position\":[11141120,68681728,323017600],\"yaw\":2048") ||
+           !strstr(output,"\"combat\":{\"mode\":9,\"live_enemies\":0,\"player_hp\":16,\"player_max_hp\":67}") ||
+           !strstr(output,"\"inventory\":{\"capacity\":14,\"slots\":[256,257,258,512,200,201,6,0")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -10249,6 +10358,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==19 && hash!=UINT64_C(0x16dbf16f81d33fc0))valid=0;
         if(input==20 && hash!=UINT64_C(0xb4f02c215f7e80c6))valid=0;
         if(input==21 && hash!=UINT64_C(0xc7b404688a203971))valid=0;
+        if(input==22 && hash!=UINT64_C(0xb4dcd37be6d0bb88))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
@@ -10267,6 +10377,7 @@ int main(int argc, char **argv)
 
     if(argc==3 && !strcmp(argv[1],"--native-stage"))return original_native_bootstrap(argv[2],2);
     if(argc==3 && !strcmp(argv[1],"--native-battle-entry"))return original_native_bootstrap(argv[2],3);
+    if(argc==3 && !strcmp(argv[1],"--native-m028"))return original_native_bootstrap(argv[2],12);
     if(argc==3 && !strcmp(argv[1],"--native-m023"))return original_native_bootstrap(argv[2],11);
     if(argc==3 && !strcmp(argv[1],"--native-m022"))return original_native_bootstrap(argv[2],10);
     if(argc==3 && !strcmp(argv[1],"--native-m017"))return original_native_bootstrap(argv[2],9);

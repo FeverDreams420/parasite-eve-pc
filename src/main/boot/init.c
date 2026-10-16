@@ -109,7 +109,15 @@ static void Boot_PollHost(void) {
     printf("},\"inventory\":{\"capacity\":%u,\"slots\":[",(unsigned)g_AyaSaveState.inventory_slot_count);
     for(unsigned slot=0;slot<50;++slot)
         printf("%s%u",slot?",":"",(unsigned)(u16)g_AyaSaveState.inventory_items[slot]);
-    printf("]}}\n");
+    printf("],\"equipment_records\":\"");
+    const u8 *equipment=(const u8 *)g_SaveRuntimeState.player.runtime.inventory.equipment;
+    for(unsigned byte=0;byte<sizeof(g_SaveRuntimeState.player.runtime.inventory.equipment);++byte)
+        printf("%02x",(unsigned)equipment[byte]);
+    printf("\"},\"story_stage\":%u,\"timers\":[",g_ScriptVariableBank[74]);
+    for(unsigned timer=0;timer<4;++timer)
+        printf("%s{\"flags\":%u,\"current\":%d,\"limit\":%d}",timer?",":"",
+            g_GameTimers[timer].flags,g_GameTimers[timer].current,g_GameTimers[timer].limit);
+    printf("]}\n");
     fflush(stdout);
     /* A diagnostic cap is a forced process boundary, even inside a menu's
      * VSync callback. Do not unwind through the locked SDK callback stack. */

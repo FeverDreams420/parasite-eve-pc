@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Dalszy rzeczywisty input po Continue D przechodzi M042/M043/M051,
+ponownie wchodzi M052 i kończy scenę Wayne/Torres143–147. Właściwe
+wejście do zbrojowni ma w M051 regionx−510..−360,z−3792..−3645;
+drzwi przyx−250,z180 wymagają klucza i nie są tym wejściem.
+Oryginalny skrypt przy ladzie Torresa używa osobnego regionux226..479,
+z−121..29 i kierunku na ladę; zwykłe zbliżanie się do samego NPC za
+ladą nie jest właściwą metodą interakcji.
+
+Przez oryginalne menu wybrano nowy Mod Permit ze slotu10 i M16A1,
+zatwierdzono Add slot, zamknięto wynik i dialogi52–53. Permit znika,
+broń pozostaje w slocie9; liczba jej slotów rośnie1→2. Całe4096 bajtów
+128 rekordów wyposażenia przed i po operacji jest zgodne z niezależnym
+wykonaniem na PS1. Jedyna różnica: bajt148 całej tabeli (offset20 rekordu4)
+zmienia1→2. SHA przed542fa7d52be2bf2d019ac7389a69fcad248f3f2d9e7224652872ca0a8156cd62,
+po f0d59b453fe521729cbe6b91f6cca68f5e31695c443ac9828c9d58425a509e1d.
+Oba przebiegi zachowują etap224, HP92/92, broń9/pancerz1 i pozostałe
+50 slotów; sterowanie wraca. Pozycje różnią się przez ręcznie sterowany
+input przy ladzie, więc nie ogłasza się zgodności obrazu między PS1 a PC.
+
+Istniejący raport Boot_PollHost na limicie headless zawiera teraz także
+story_stage, cztery pełne timery i całe4096 bajtów equipment_records jako
+hex. Pozwala to sprawdzać wynik ulepszenia i tykanie czasu ze świeżego
+procesu bez pobierania stanu debuggerem. Nie dodano pliku, mechaniki gry
+ani nowej warstwy rozgrywki. Zwykły pełny replay D→Mod Permit/cap41602
+przeszedł na nowym raporcie; wszystkie4096 bajtów zgadzają się z wynikiem
+PS1, slot10 wyzerowany, timery0/1/2 aktywne. VRAM zgadza się z przebiegiem
+sprzed rozszerzenia raportu (ad1b4bf9579efcb7e7a29bbbdf2bf9f82c94dfef0daa36a1b737ad259e384628).
+Ten sam pełny replay przeszedł pod ASan/UBSan/function (oba PASS).
+Cały JSON, w tym wszystkie128 rekordów i cztery timery, oraz cały1MiB
+VRAM są identyczne. PrywatneB/C/D niezmienione. Jest to świeży dowód
+użycia permitu i dodania slotu do M16A1, nie całego Tune-Up, Tool,
+pozostałych modyfikacji ani pełnego dnia2. Nie uruchomiono pełnego50/50.
+
+
 Naprawiono inicjalizację zegarów przy rzeczywistym rozruchu. Istniejący
 src/main/psyq/libsnd/ssinit_c.c był pominięty w buildzie, a mylna nazwa
 SsInit wiązała wywołanie Boot_InitSubsystems z inicjalizacją dźwięku SDK.

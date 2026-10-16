@@ -256,6 +256,10 @@ Osobny PS1 zaakceptował także zapis M319 po drugiej Melissie wygenerowany
 przez oryginalne funkcje portu: HP21/64, zgodna pozycja Continue, Melissa
 nieobecna przy fortepianie; zwykły input dochodzi do wyboru Jump in.
 To sprawdzenie konkretnego checkpointu, nie wszystkich zapisów.
+Oryginalny PS1 zaakceptował także checkpoint wejścia M334 z portu:
+Continue w M334, HP57/72, pozycja startowa [0,31064064,-41943040].
+To osobne wczytanie, nie porównanie ciągłego przebiegu, RNG i wszystkich
+interakcji w tej lokacji.
 
 Pozostaje do zbadania osobna różnica: żywy rdzeń gracza przed zapisem
 zachowywał maxHP53, choć SaveAya i późniejsze Continue/PS1 wskazują64.

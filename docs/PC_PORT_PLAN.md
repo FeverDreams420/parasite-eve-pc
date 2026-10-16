@@ -22,6 +22,15 @@ obejmuje także mapę → M024 → mapę → M046 i dialog Eddiego192 oraz
 rozmowy Nix17/Daniel19 w M042. Pełna generacjaC do cap135047 nie ma jeszcze
 osobnego runtime SAN; testy Continue nie zastępują takiego dowodu.
 
+Osobny świeży replay Continue C → telefon → zapis w wolnym slocie4/D →
+zamknięcie menu/cap28000 sprawdza już samą ścieżkę telefonu także pod
+ASan/UBSan/function. Normal i SAN mają identyczny pełny JSON, cały VRAM
+(SHA256 ec6dde02638fae86b73183fd4c8ad64300fc6281573be46e82d62e71e93f26b1)
+i wszystkie8192 bajtyD (SHA256
+6026a670ba1caa68175677c3af3cc2c3c427770e3e20de65d83d9f1be3c064d0).
+B iC pozostały niezmienione; powrót do M042 bez menu i dialogu, HP92/92,
+M16A1 zachowane. Każdy replay miał osobny prywatny katalog karty.
+
 Dalszy przebieg z M052 ujawnił niepodpięty opcode168 przy próbie otwarcia
 zamkniętych drzwi działu uzbrojenia M051 (actor5:0, byte1172,
 vblank64957, zapytanie o klucz214). Podpięto istniejący oryginalny

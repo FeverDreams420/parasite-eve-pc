@@ -734,6 +734,8 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [111]=Script_InitEntityMoveState,
     [112]=Script_SetEntityAnim12Args, [183]=Script_SetEntityAnim5Args,
     [113]=Script_SetSceneEntryAnim,
+    [114]=Script_SetRenderEntryEnabled,
+    [154]=Script_SetMenuSlotEntry,
     [176]=Script_SetBattleEntryCoords,
     [180]=Script_SetMoveFlag, [181]=Script_ClearMoveFlag,
     [207]=Script_SignalSceneExit, [208]=Script_DrawSaveOverlay,
@@ -758,5 +760,5 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [213]=Script_ClearEntityParentLink, [214]=Entity_ClearParentLink, [199]=Script_SetNodeFlag80, [196]=Script_RotateEntityAngle, [215]=Script_GetSin, [216]=Script_GetCos, [217]=Script_GetAtan2,
     [226]=Entity_CallAction, [227]=Script_SetInventorySlotPointer, [228]=Script_GetInventoryTotal, [229]=Script_GetInventorySlotLimit,
     [220]=Script_SetEntityFlag1000000, [221]=Entity_PolarToPosition, [225]=Script_SetMeshFadeLevel, [222]=Entity_PopCount, [223]=Script_EnableEntityGravity, [224]=Script_DisableEntityGravity,
-    [184]=Script_TurnTowardPointStep, [234]=Akao_ProcessCommand, [237]=Script_DispatchScriptCmd, [239]=Script_OpenSaveLoadMenu, [240]=Script_GetPlayerInputFlag
+    [184]=Script_TurnTowardPointStep, [234]=Akao_ProcessCommand, [237]=Script_DispatchScriptCmd, [238]=Script_BeginSceneTransition, [239]=Script_OpenSaveLoadMenu, [240]=Script_GetPlayerInputFlag
 };

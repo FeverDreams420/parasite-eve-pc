@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Najnowsze poprawki zbrojowni pozostają w oryginalnych modułach: opcode154
+steruje animacją geometrii,114 widocznością wpisu, a238 otwiera oryginalny
+interfejs przechowywania ekwipunku (zaobserwowany argument1). Podpięto
+istniejące funkcje, zachowując ich historyczne nazwy. Nie dodano plików ani
+zastępczej logiki gry. W item/swap.c poprawiono oba kierunki wymiany z pustym
+miejscem magazynu: natywne NULL nie może być dereferencjonowane. Oryginał
+odczytuje wtedy bajt niskiego RAM; zaobserwowane0x5A przepuszcza tę operację.
+Ograniczenia aktualnie noszonego wyposażenia i rodzajów19–21 pozostają.
+
+Nowe fixture’y porównują niezmodyfikowany CPU USA z rzeczywistym dispatcherem:
+154:10752 stanów (7eccb673b20e4be5),114:6144 (ab69ffd93fa3e525),
+238:576 (7c7baf97c5d2fdd5; faza oczekiwania/pominięcia, konstruktor sprawdzany
+w grze), wymiana magazynu:5184 (758e388bfa3e3cb1). Ostatni zbiór obejmuje
+cztery kierunki, filtrowane indeksy, puste miejsca, maski i zachowanie danych
+przedmiotów. Cztery powiązane CTesty PASS13.69s; cały fixture aktorów z
+zasobami również przeszedł ASan/UBSan/function.
+
+Zwykły headless replay prywatnego Continue B dochodzi przez Bakera, Tool,
+amunicję, rozmowę z Torresem, otrzymanie M16A1 i samouczek M362 do magazynu
+M052. Odkłada i odbiera M16A1, wybiera Cancel w dialogu56, zakłada broń przez
+oryginalne główne menu i porusza Ayą. Cap57276: HP92/92, broń260 w slocie9,
+menu statusu pokazuje M16A1 i16 nabojów. Niezależny PS1 potwierdza odbiór,
+samouczek, cykl magazynu i założenie tej samej broni; wszystkie32 bajty jej
+rekordu są identyczne. PS1 używa slotu8, bo nie podniesiono tam Tool.
+To nie jest porównanie każdej klatki ani pełnego dnia2. Transfer parametrów
+przez Tool, cały Tune-Up, pozostałe magazyny i pełna kampania nadal wymagają
+weryfikacji. Nie wykonano nowego pełnego zestawu50/50.
+
+Pełny replay tej trasy z sanitizerami ujawnił dodatkowy odczyt poza buforem
+geometrii w Render_TransformPoint wywołanym przez opcode113. Sam PASS
+fixture’ów i zwykłego replayu nie stanowi więc jeszcze dowodu poprawności
+pamięci całej tej ścieżki; przyczyna jest badana.
+
 Port naprawia oryginalne moduły C na miejscu. Nie wymaga byte match ani
 odbudowy plików wykonywalnych PS1. Porównania z CPU/obrazem oryginału służą
 weryfikacji zachowania gry. Nie ma zastępczego silnika ani katalogu pc.

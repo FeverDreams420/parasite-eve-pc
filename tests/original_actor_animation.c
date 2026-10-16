@@ -2982,6 +2982,79 @@ static int original_task_pause_opcodes(void)
     return 1;
 }
 
+static int original_geometry_visibility_opcode(void)
+{
+    const u32 values[]={0,1,0xffffffff,2,100,0x80000000,0x7fffffff,0xffffffff};
+    struct {GeomState header;GeomEntry entries[3];} geometry={0};
+    GeomState *saved_geom=g_GeomState;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    geometry.header.entry_offset=(s32)((u8 *)geometry.entries-(u8 *)&geometry);g_GeomState=&geometry.header;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[114]!=Script_SetRenderEntryEnabled)return 0;
+    for(unsigned index=0;index<3;++index)for(unsigned v=0;v<8;++v)for(unsigned f=0;f<256;++f){
+        for(unsigned i=0;i<3;++i){
+            GeomEntry *entry=geometry.entries+i;memset(entry,(f+i*73)&255,sizeof(*entry));
+            entry->head.packed=0x12345600|((f+i)&255);entry->u30.prim=geometry.entries+i;
+            entry->u34.pagePackets=(void *)(geometry.entries+(2-i));
+        }
+        GeomEntry before[3],after[3],expected[3];memcpy(before,geometry.entries,sizeof(before));memcpy(expected,before,sizeof(before));
+        int data[]={index,(s32)values[v]};int *args[]={data,data+1};u32 result=Script_SetRenderEntryEnabled(args);
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<48;++b)
+            hash=(hash^((u8 *)(geometry.entries+i))[b])*UINT64_C(1099511628211);
+        expected[index].head=geometry.entries[index].head;
+        if(memcmp(expected,geometry.entries,sizeof(expected)))return 0;
+        memcpy(after,geometry.entries,sizeof(after));memcpy(geometry.entries,before,sizeof(before));
+        FieldActor actor={0};u32 program[]={114|(2u<<13),0,index,values[v],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_CurrentEntity=&actor;g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(after,geometry.entries,sizeof(after)) || node.current.script!=program+6 ||
+           node.flags!=0x90 || node.active || g_ScriptNodePool)return 0;
+        ++cases;
+    }
+    g_GeomState=saved_geom;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=6144 || hash!=UINT64_C(0xab69ffd93fa3e525))return 0;
+    puts("Original opcode114: 6144 unhooked USA CPU states, every flag byte, zero/nonzero enabled values, three native entries, full-width pointer guards and real dispatcher passed");
+    return 1;
+}
+
+static int original_animation_stop_slot_opcode(void)
+{
+    const u32 limits[]={0,1,2,3,65535,0xffffffff,0x80000000,0x12345678};
+    const s16 steps[]={-32768,-256,-1,0,1,256,32767};
+    const u8 flags[]={0,1,2,4,0x20,255};const u32 positions[]={0,1,255,0xabcdef12};
+    struct {GeomState header;u8 pad[512-sizeof(GeomState)];GeomCtrlEntry controls[2];GeomAnimationSlot slots[2][4];u64 guard;} geometry={0};
+    GeomState *saved_geom=g_GeomState;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    geometry.header.ctrl_offset=512;g_GeomState=&geometry.header;u8 *body=(u8 *)&geometry+512;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[154]!=Script_SetMenuSlotEntry)return 0;
+    for(unsigned index=0;index<2;++index)for(unsigned slot=0;slot<4;++slot)for(unsigned l=0;l<8;++l)
+    for(unsigned st=0;st<7;++st)for(unsigned f=0;f<6;++f)for(unsigned p=0;p<4;++p){
+        memset(body,0xa5,48);geometry.guard=UINT64_C(0xa55aa55aa55aa55a);
+        for(unsigned i=0;i<2;++i){
+            geometry.controls[i].head.packed=0x12340400|flags[(f+i)%6];
+            geometry.controls[i].position.packed=positions[(p+i)%4];geometry.controls[i].step=steps[st];
+            geometry.controls[i].slot_offset=32-i*8;
+        }
+        u8 before[48],after[48];memcpy(before,body,48);
+        int data[]={index,(s32)limits[l],slot};int *args[]={data,data+1,data+2};
+        u32 result=Script_SetMenuSlotEntry(args);
+        for(unsigned b=0;b<4;++b)hash=(hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned b=0;b<48;++b)hash=(hash^body[b])*UINT64_C(1099511628211);
+        memcpy(after,body,48);memcpy(body,before,48);
+        FieldActor actor={0};u32 program[]={154|(3u<<13),0,index,limits[l],slot,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_CurrentEntity=&actor;g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(after,body,48) || node.current.script!=program+7 || node.flags!=0x90 ||
+           node.active || g_ScriptNodePool || geometry.guard!=UINT64_C(0xa55aa55aa55aa55a) || geometry.header.ctrl_offset!=512)return 0;
+        ++cases;
+    }
+    g_GeomState=saved_geom;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=10752 || hash!=UINT64_C(0x7eccb673b20e4be5)){
+        fprintf(stderr,"Animation slot154 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original opcode154: 10752 unhooked USA CPU states, relative slot arrays, stop marker, unsigned frame bounds, signed direction reversal, retained group/flags and real dispatcher passed");
+    return 1;
+}
+
 static int original_scene_entry_position_opcode(void)
 {
     const u32 heads[]={0,1,0x7fff,0x8000,0xffff,0x80000000,0xffffffff,0x010c0000,0xa5a55a5a,0x12345678,0x7fffffff,0x600000};
@@ -3021,6 +3094,42 @@ static int original_scene_entry_position_opcode(void)
     if(cases!=7920 || hash!=UINT64_C(0x9d5d2d1d374efb69)){
         fprintf(stderr,"Scene113 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
     puts("Original opcode113: 7920 unhooked USA CPU states, three native mesh records, signed operands, inverted/tight bounds, depth wrap, untouched full-width pointers and real dispatcher passed");
+    return 1;
+}
+
+static int original_equipment_open_opcode(void)
+{
+    const u16 flags[]={0,1,0x20,0x21,0x80,0xff,0x8000,0xffff};
+    const u32 game[]={0,1,0x1000,0x1001,0x8000,0x9000,0x80000000,0xffffffff};
+    const u32 geom[]={0,0x2000,0xc000,0xdeadbeef},block[]={0,4,0x87654321};
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    u32 saved_game=g_GameState.flags,saved_block=g_GameStateFlags;int saved_geom=g_GeomScroll.state.flags;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[238]!=Script_BeginSceneTransition)return 0;
+    for(unsigned f=0;f<8;++f)for(unsigned g=0;g<8;++g)for(unsigned geo=0;geo<4;++geo)for(unsigned b=0;b<3;++b){
+        if((flags[f]&0x20) && !(game[g]&0x1000))continue;
+        ScriptNode node;memset(&node,0xa5,sizeof(node));node.flags=flags[f];node.active=7;
+        ScriptNode expected=node;u32 code[20]={0};g_ScriptNodePool=&node;g_ScriptCursor=code+16;
+        g_GameState.flags=game[g];g_GameStateFlags=block[b];g_GeomScroll.state.flags=geom[geo];
+        u32 result=Script_BeginSceneTransition(NULL);
+        const u32 words[]={result,node.flags,node.active,(u32)((uintptr_t)g_ScriptCursor-(uintptr_t)(code+16)),
+            g_GameState.flags,(u32)g_GeomScroll.state.flags,g_GameStateFlags};
+        for(unsigned w=0;w<7;++w)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[w]>>(byte*8))&255))*UINT64_C(1099511628211);
+        expected.flags=node.flags;expected.active=node.active;
+        if(memcmp(&node,&expected,sizeof(node)) || g_ScriptNodePool!=&node)return 0;
+        ++cases;
+    }
+    FieldActor *saved_actor=g_CurrentEntity;FieldActor actor={0};u32 program[]={238|(1u<<13),0,1,32,0};
+    ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+    g_CurrentEntity=&actor;g_ScriptNodePool=&node;g_GameState.flags=0;Script_RunQueue();
+    int valid=node.current.script==program && node.flags==0xa0 && node.active==1 && !g_ScriptNodePool;
+    g_GameState.flags=0x1000;g_ScriptNodePool=&node;Script_RunQueue();
+    valid=valid && node.current.script==program+5 && node.flags==0xb0 && !node.active && !g_ScriptNodePool;
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    g_GameState.flags=saved_game;g_GameStateFlags=saved_block;g_GeomScroll.state.flags=saved_geom;
+    if(!valid || cases!=576 || hash!=UINT64_C(0x7c7baf97c5d2fdd5))return 0;
+    puts("Original opcode238: 576 unhooked USA CPU first-yield/already-loading states, native cursor rewind and dispatcher continuation passed; menu construction is exercised by the runtime replay");
     return 1;
 }
 
@@ -3082,6 +3191,54 @@ static int original_movement_gate_opcodes(void)
     g_PlayerMovementEnabled=saved_gate;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     if(cases!=512 || hash!=UINT64_C(0xa6aa125c6851c325))return 0;
     puts("Original opcodes180/181: 512 unhooked USA CPU movement-gate states and real dispatcher completion passed");
+    return 1;
+}
+
+static int original_inventory_storage_swaps(void)
+{
+    const s16 ids[]={0,260,512,513,514,515},mapping[]={4,2,5,0,3,1};const u8 flags[]={1,0x20,0xff};
+    PlayerInventoryState saved_player=g_PlayerInventoryState;InventoryItemWorkspace saved_workspace=g_InventoryItemWorkspace;
+    s16 *saved_items=g_InvItemPtr,*saved_active=g_InvActiveItemList,*saved_override=g_InvActiveListOverride;
+    int saved_limit=g_InvSlotLimit,saved_active_count=g_InvActiveListSlotCount,saved_override_limit=g_InvOverrideSlotLimit;
+    int saved_transfer=g_InvTransferItemCount,saved_bonus=g_InvBonusSlotCount,saved_mode=g_MenuEquipMode;
+    int saved_battle=g_MenuBattleEquipMode,saved_source=g_MenuEquipSwapSource,saved_return=g_MenuEquipSwapSkipRestore;
+    u32 *saved_bits=g_InvSelectionBits;int saved_words=g_InvSelectionBitWords;
+    u32 saved_aya_bits[2],saved_storage_bits[4];memcpy(saved_aya_bits,g_InvSelectionBitStorage,sizeof(saved_aya_bits));memcpy(saved_storage_bits,g_InvStorageSelectionBits,sizeof(saved_storage_bits));
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned mode=0;mode<4;++mode)for(unsigned fi=0;fi<6;++fi)for(unsigned ti=0;ti<6;++ti)
+    for(unsigned other=0;other<6;++other)for(unsigned f=0;f<3;++f)for(unsigned pair=0;pair<2;++pair){
+        s16 storage[100]={ids[other],516,0,517,0,518};
+        memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));memset(&g_InventoryItemWorkspace,0,sizeof(g_InventoryItemWorkspace));
+        g_AyaSaveState.inventory_slot_count=6;g_AyaSaveState.max_hp=100;g_AyaSaveState.current_hp=50;g_InventoryRuntime.tracked[2]=1;
+        const s16 initial[]={256,257,258,0,260,261};memcpy(g_AyaInventoryItems,initial,sizeof(initial));
+        const u8 kinds[]={1,9,8,pair?8:1,4,1};
+        for(unsigned i=0;i<6;++i){ItemDataRecord *r=g_InventoryRuntime.equipment+i;r->iconId=1;r->itemId=100;r->flags=flags[f];r->kind=kinds[i];}
+        for(unsigned i=0;i<9;++i){ItemDataRecord *r=g_KeyItemRecords+i;r->iconId=1;r->itemId=100;r->flags=1;r->kind=19+i%4;}
+        memcpy(g_InvTransferItemList,mapping,sizeof(mapping));g_InvTransferItemCount=6;
+        g_InvActiveItemList=g_InvActiveListOverride=storage;g_InvActiveListSlotCount=g_InvOverrideSlotLimit=6;
+        g_InvBonusSlotCount=0;g_MenuEquipMode=2;g_MenuBattleEquipMode=0;g_MenuEquipSwapSource=1;g_MenuEquipSwapSkipRestore=0;
+        for(unsigned i=0;i<2;++i)g_InvSelectionBitStorage[i]=0xdeadbeef;
+        for(unsigned i=0;i<4;++i)g_InvStorageSelectionBits[i]=0xdeadbeef;
+        ItemDataRecord records[128];memcpy(records,g_InventoryRuntime.equipment,sizeof(records));
+        const int from_modes[]={51,52,52,51},to_modes[]={51,52,51,52};
+        u32 result=Inv_RebuildWithSlotLimit(from_modes[mode],fi,to_modes[mode],ti),tracked;
+        memcpy(&tracked,g_InventoryRuntime.tracked,4);
+        const u32 words[]={result,tracked,g_InvSlotLimit,g_InvSelectionBitWords,g_InvItemPtr==g_AyaInventoryItems?1u:2u,g_MenuEquipSwapSkipRestore};
+        for(unsigned w=0;w<6;++w)for(unsigned b=0;b<4;++b)hash=(hash^((words[w]>>(b*8))&255))*UINT64_C(1099511628211);
+        const u8 *regions[]={(u8 *)g_AyaInventoryItems,(u8 *)storage,(u8 *)g_InvSelectionBitStorage,(u8 *)g_InvStorageSelectionBits};
+        const unsigned sizes[]={12,12,8,16};
+        for(unsigned r=0;r<4;++r)for(unsigned b=0;b<sizes[r];++b)hash=(hash^regions[r][b])*UINT64_C(1099511628211);
+        if(memcmp(records,g_InventoryRuntime.equipment,sizeof(records)) || g_InvActiveItemList!=storage ||
+           g_InvActiveListOverride!=storage || g_InvTransferItemCount!=6 || memcmp(g_InvTransferItemList,mapping,sizeof(mapping)))return 0;
+        ++cases;
+    }
+    g_PlayerInventoryState=saved_player;g_InventoryItemWorkspace=saved_workspace;g_InvItemPtr=saved_items;g_InvActiveItemList=saved_active;g_InvActiveListOverride=saved_override;
+    g_InvSlotLimit=saved_limit;g_InvActiveListSlotCount=saved_active_count;g_InvOverrideSlotLimit=saved_override_limit;g_InvTransferItemCount=saved_transfer;
+    g_InvBonusSlotCount=saved_bonus;g_MenuEquipMode=saved_mode;g_MenuBattleEquipMode=saved_battle;g_MenuEquipSwapSource=saved_source;g_MenuEquipSwapSkipRestore=saved_return;
+    g_InvSelectionBits=saved_bits;g_InvSelectionBitWords=saved_words;memcpy(g_InvSelectionBitStorage,saved_aya_bits,sizeof(saved_aya_bits));memcpy(g_InvStorageSelectionBits,saved_storage_bits,sizeof(saved_storage_bits));
+    if(cases!=5184 || hash!=UINT64_C(0x758e388bfa3e3cb1)){
+        fprintf(stderr,"Storage swap CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original inventory/storage swap: 5184 unhooked USA CPU states, empty targets in both directions, occupied/special slots, equipped/locked restrictions, filtered indices, selection masks and unchanged equipment records passed");
     return 1;
 }
 
@@ -4235,7 +4392,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_scene_entry_position_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

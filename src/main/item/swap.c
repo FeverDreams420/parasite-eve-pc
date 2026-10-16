@@ -482,6 +482,7 @@ int Inv_IsSlotEquipped(int index) {
 int Inv_RebuildWithSlotLimit(int fromMode, int fromIndex, int toMode, int toIndex) {
     int success = 1;
     int from;
+    ItemDataRecord *item;
     g_InvItemPtr = g_AyaInventoryItems;
     g_InvSlotLimit = Inv_GetAyaSlotLimit();
     g_InvSelectionBits = g_InvSelectionBitStorage;
@@ -498,8 +499,8 @@ int Inv_RebuildWithSlotLimit(int fromMode, int fromIndex, int toMode, int toInde
     } else if (fromMode == 0x34) {
         from = WayneSlot(toIndex);
         if (Inv_IsSlotEquipped(from) &&
-            (Inv_LookupItemRecordScaled(g_InvActiveItemList[fromIndex])->kind < 19 ||
-             Inv_LookupItemRecordScaled(g_InvActiveItemList[fromIndex])->kind >= 22)) {
+            ((item = Inv_LookupItemRecordScaled(g_InvActiveItemList[fromIndex])) == NULL ||
+             item->kind < 19 || item->kind >= 22)) {
             SwapSlots(&g_InvActiveItemList[fromIndex], &g_InvItemPtr[from]);
             Menu_SetSwapReturnFlag();
             Inv_RebuildSelectableMask();
@@ -507,8 +508,8 @@ int Inv_RebuildWithSlotLimit(int fromMode, int fromIndex, int toMode, int toInde
     } else {
         from = WayneSlot(fromIndex);
         if (Inv_IsSlotEquipped(from) &&
-            (Inv_LookupItemRecordScaled(g_InvActiveItemList[toIndex])->kind < 19 ||
-             Inv_LookupItemRecordScaled(g_InvActiveItemList[toIndex])->kind >= 22)) {
+            ((item = Inv_LookupItemRecordScaled(g_InvActiveItemList[toIndex])) == NULL ||
+             item->kind < 19 || item->kind >= 22)) {
             SwapSlots(&g_InvItemPtr[from], &g_InvActiveItemList[toIndex]);
             Menu_SetSwapReturnFlag();
             Inv_RebuildSelectableMask();

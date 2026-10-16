@@ -208,8 +208,7 @@ int Render_SetEntryFlags(int index, int bits) {
     return 0;
 }
 
-/* The empty asm barrier fences the cc1 scheduler so the flag load/stores
- * keep the retail order. */
+/* Set the animation start frame, stop slot and direction. */
 int Menu_SetSlotEntry(int index, unsigned int limit, unsigned int slot)
 {
     GeomStateAddress table, base;

@@ -1,3 +1,4 @@
+#include <string.h>
 #include "common.h"
 #include "pe1/battle_context.h"
 #include "pe1/battle_entity_anim.h"
@@ -614,6 +615,21 @@ int Script_SetSceneEntryAnim(int **arg0) {
     int index = *arg0[0];
     GeomEntry *entries = (GeomEntry *)((u8 *)g_GeomState + g_GeomState->entry_offset);
 
+    if ((u32)index >= g_GeomState->entry_count06) {
+        /* M052 also addresses record 31 beyond its 20 meshes, within the
+         * original geometry bytes. Preserve that byte-level command rather
+         * than indexing past the expanded native mesh allocation. */
+        s64 offset = (s64)g_GameState.geometry_disk_entry_offset + (s64)index * 0x38;
+        GeomEntry record = {0};
+        u8 *bytes;
+        if (offset < 0 || (u64)offset + 0x30 > g_GameState.geometry_disk_bytes)
+            return -1;
+        bytes = (u8 *)g_GeomState + offset;
+        memcpy(&record, bytes, 0x30);
+        Render_TransformPoint(&record, (s16)*arg0[1], (s16)*arg0[2], (s16)*arg0[3]);
+        memcpy(bytes, &record, 0x30);
+        return 1;
+    }
     Render_TransformPoint(
         entries + index,
         (s16)*arg0[1],

@@ -3064,6 +3064,7 @@ static int original_scene_entry_position_opcode(void)
     struct {GeomState header;GeomEntry entries[3];} geometry={0};
     GeomState *saved_geom=g_GeomState;FieldActor *saved_actor=g_CurrentEntity;
     ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    geometry.header.entry_count06=3;
     geometry.header.entry_offset=(s32)((u8 *)geometry.entries-(u8 *)&geometry.header);g_GeomState=&geometry.header;
     uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
     if(g_ScriptQueueOpcodeHandlers[113]!=Script_SetSceneEntryAnim)return 0;
@@ -3094,6 +3095,48 @@ static int original_scene_entry_position_opcode(void)
     if(cases!=7920 || hash!=UINT64_C(0x9d5d2d1d374efb69)){
         fprintf(stderr,"Scene113 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
     puts("Original opcode113: 7920 unhooked USA CPU states, three native mesh records, signed operands, inverted/tight bounds, depth wrap, untouched full-width pointers and real dispatcher passed");
+    return 1;
+}
+
+static int original_scene_entry_raw_bytes(void)
+{
+    const u32 heads[]={0,1,0xffffffff,0x14000011,0x12345678,0x80000000};
+    const s16 bounds[][4]={{-100,100,-50,50},{-32768,32767,-32768,32767},{500,-500,300,-300},{10,10,-20,-20}};
+    const u32 values[]={0,1,0xffffffff,32767,0xffff8000,65535,0x8000ffff,0x80000000};
+    struct {GeomState header;u32 padding;u8 raw[224];GeomEntry entries[2];u64 guard;} geometry={0};
+    Pe1GameState saved_game=g_GameState;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    geometry.header.entry_count06=2;
+    geometry.header.entry_offset=(s32)((u8 *)geometry.entries-(u8 *)&geometry);
+    geometry.guard=UINT64_C(0xa55aa55aa55aa55a);memset(geometry.entries,0xa5,sizeof(geometry.entries));
+    g_GeomState=&geometry.header;g_GameState.geometry_disk_entry_offset=64;g_GameState.geometry_disk_bytes=288;
+    if((u8 *)geometry.raw-(u8 *)&geometry!=64)return 0;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned index=2;index<4;++index)for(unsigned f=0;f<6;++f)
+    for(unsigned b=0;b<4;++b)for(unsigned a=0;a<8;++a){
+        for(unsigned i=0;i<224;++i)geometry.raw[i]=(u8)(i*37+f*11);
+        GeomEntry record={0};u8 *target=geometry.raw+index*56;memcpy(&record,target,48);
+        record.head.packed=heads[f];record.base_x=123;record.base_y=456;memcpy(&record.bounds,bounds[b],8);
+        memcpy(target,&record,48);u8 before[224],after[224];memcpy(before,geometry.raw,224);
+        int input[]={index,(s32)values[a],(s32)values[(a+3)%8],(s32)values[(a+5)%8]};
+        int *args[]={input,input+1,input+2,input+3};u32 result=Script_SetSceneEntryAnim(args);
+        for(unsigned i=0;i<4;++i)hash=(hash^((result>>(i*8))&255))*UINT64_C(1099511628211);
+        for(unsigned i=0;i<224;++i)hash=(hash^geometry.raw[i])*UINT64_C(1099511628211);
+        memcpy(after,geometry.raw,224);memcpy(geometry.raw,before,224);
+        FieldActor actor={0};u32 program[]={113|(4u<<13),0,index,input[1],input[2],input[3],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_CurrentEntity=&actor;g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(after,geometry.raw,224) || node.current.script!=program+8 || node.active ||
+           node.flags!=0x90 || g_ScriptNodePool || geometry.guard!=UINT64_C(0xa55aa55aa55aa55a))return 0;
+        for(unsigned i=0;i<sizeof(geometry.entries);++i)if(((u8 *)geometry.entries)[i]!=0xa5)return 0;
+        input[0]=4;memcpy(before,geometry.raw,224);
+        if(Script_SetSceneEntryAnim(args)!=-1 || memcmp(before,geometry.raw,224))return 0;
+        input[0]=-2;if(Script_SetSceneEntryAnim(args)!=-1 || memcmp(before,geometry.raw,224))return 0;
+        ++cases;
+    }
+    g_GameState=saved_game;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=384 || hash!=UINT64_C(0xb3feaabbff457d95)){
+        fprintf(stderr,"Scene113 raw CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original opcode113: 384 unhooked USA CPU states addressing retained bytes beyond the mesh table, full payload equality, untouched native meshes, real dispatcher and invalid range rejection passed");
     return 1;
 }
 
@@ -4392,7 +4435,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

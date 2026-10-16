@@ -343,6 +343,8 @@ int Scene_LoadRoom(unsigned int roomId)
 {
     static GeomState *geometry_owner;
     GeomState *next_geometry = NULL;
+    u32 next_geometry_disk_bytes = 0;
+    s32 next_geometry_disk_entry_offset = 0;
     char name[8];
     unsigned int base;
     int map;
@@ -538,6 +540,8 @@ int Scene_LoadRoom(unsigned int roomId)
                 native->u2C.uv_ptr = (s32)(texture - ((u8 *)native - (u8 *)next_geometry));
             }
         }
+        next_geometry_disk_bytes = declared;
+        next_geometry_disk_entry_offset = header.entry_offset;
     }
 
     state->requested_entity_bank = directory->entityBank;
@@ -563,6 +567,8 @@ int Scene_LoadRoom(unsigned int roomId)
     geometry_owner = next_geometry;
     next_geometry = NULL;
     state->geometry_state = geometry_owner;
+    state->geometry_disk_bytes = next_geometry_disk_bytes;
+    state->geometry_disk_entry_offset = next_geometry_disk_entry_offset;
 
     shortRecord = SceneAsset_ResolveOffset(room, directory->taskSlots & 0x3FFFFF);
     for (i = 0; i < directory->taskSlots >> 22; i++) {

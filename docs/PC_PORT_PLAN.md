@@ -30,10 +30,34 @@ To nie jest porównanie każdej klatki ani pełnego dnia2. Transfer parametrów
 przez Tool, cały Tune-Up, pozostałe magazyny i pełna kampania nadal wymagają
 weryfikacji. Nie wykonano nowego pełnego zestawu50/50.
 
-Pełny replay tej trasy z sanitizerami ujawnił dodatkowy odczyt poza buforem
-geometrii w Render_TransformPoint wywołanym przez opcode113. Sam PASS
-fixture’ów i zwykłego replayu nie stanowi więc jeszcze dowodu poprawności
-pamięci całej tej ścieżki; przyczyna jest badana.
+Pełny replay z sanitizerami wykrył jeszcze odczyt poza buforem geometrii
+w opcode113. M052 ma20 meshów, ale skrypt aktora3:0 przy vblank47041
+(byte2088) i48683 (byte2516) adresuje rekord31 z głębokością−10/+10.
+Oryginalny PS1 potwierdza długość danych16148, offset tabeli108 i20 meshów:
+adres108+31*56=1844 mieści się w surowych danych. Poszerzony natywny
+rekord trafiał już za alokację17432 bajtów. Nie wolno po prostu pominąć
+tego polecenia ani tylko powiększyć pustej tablicy.
+
+Loader zachowuje teraz długość i pierwotny offset danych obok wskaźnika
+geometrii w istniejącym stanie gry. Zwykłe indeksy nadal używają natywnych
+meshów. Oryginalny handler113 wykonuje pozostałe adresowania na zachowanych
+bajtach pokoju, przez lokalny rekord i zapis tej samej części skalarnej;
+odrzuca dostęp wykraczający poza cały oryginalny bufor. Dzięki temu zmiana
+jest widoczna również przez pozostałych użytkowników surowych danych.
+384 niehookowane stany CPU USA sprawdzają cały224-bajtowy obszar, zachowanie
+sąsiednich natywnych meshów i dispatcher (hash b3feaabbff457d95), dodatkowo
+sprawdzane są ujemny/nadmierny adres. Cztery powiązane CTesty PASS12.97s.
+Cały fixture aktorów z --assets przeszedł ASan/UBSan/function. Pełne replaye
+normal i ASan/UBSan/function zakończyły się kodem0 przy cap57276, bez
+niepodpiętych opcode’ów i błędów sanitizerów. Cały końcowy JSON i1048576
+bajtów VRAM są identyczne; SHA256 VRAM:
+77a31aaf16fe210241681db801e33e8ca0aa354039e11c152b1910f97224bb11.
+Jest to również ten sam końcowy stan i obraz co wcześniej w zwykłym replayu.
+Prywatny8192-bajtowy zapisB zachował SHA256
+70745ddae23fc9e5fa3a6232b724dc436c87271118e046ac35ea1fc152150b22.
+Świeży oryginalny test original-game-melissa-encounter też PASS129.69s:
+potwierdza zgłoszone wcześniej wejście do starcia, niezależnie od późniejszej
+trasy zbrojowni. Wszystkie zmiany wykonano w istniejących plikach.
 
 Port naprawia oryginalne moduły C na miejscu. Nie wymaga byte match ani
 odbudowy plików wykonywalnych PS1. Porównania z CPU/obrazem oryginału służą

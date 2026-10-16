@@ -302,8 +302,13 @@ Prywatne B–G niezmienione, obraz frame.png obejrzany. Logi
 Dalsza próba walki nie jest PASS: po ponownym poison HP51→26→18→0
 przy63124. Dwa polecenia pe-ready-range nie były zarejestrowane w nowej
 sesji debuggera, więc nie wykonały żadnego inputu; to błąd sterownika testu,
-nie gry. Po rejestracji i ruchu do zasięgu Aya ginie. Polecenie600 klatek
-sprawdza dalszą ścieżkę porażki; wynik jeszcze niezaliczony.
+nie gry. Po rejestracji i ruchu do zasięgu Aya ginie. Po600 dalszych klatkach cap63724: scenaA9400048/M5000I, flags0, lock0,
+battle−1, rgb24, odtworzony film otwierający z logo SQUARE (zrzut
+/tmp/pe-detox100-loss.vram/png obejrzany). To potwierdza powrót po śmierci
+w tym debug przebiegu; nie jest pełnym testem śmierci z sanitizerami.
+Ciągły trace /tmp/pe-detox100-input.jsonl od62200 do63724. Następny
+przebieg powinien przygotować zapas leczenia/Cure-P lub poprawić ruch
+w walce; śmierć przy braku zasobów nie dowodzi błędu oryginalnej walki.
 Następnie kontynuować kampanię. Pełna kampania i pełny zakres celu
 pozostają nieukończone. Użytkowe bu00/ i bu10/ nietknięte.
 

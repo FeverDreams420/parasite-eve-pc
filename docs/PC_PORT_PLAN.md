@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Domknięto podpięcie istniejących poleceń sterowania geometrią122/187/188.
+Nie przenoszono funkcji: Script_GetObjEntryField6, Script_SetEntryScrolled
+i Script_SetEntryMirrored pozostają w system_opcodes.c. Ich pomocnicze
+funkcje używają wspólnych deklaracji w geom_state.h; usunięto sprzeczne
+lokalne deklaracje void dla funkcji zwracających int i przyjmujących
+bez znaku współrzędne przewijania. Pozostaje18 niezerowych poleceń
+oryginalnej tabeli bez natywnego podpięcia; oryginalne puste sloty pozostają puste.
+
+Niezależne wykonanie USA8001994C/8001998C z ich prawdziwymi helperami
+obejmuje36864 kombinacje dwóch wpisów, wszystkich256 bajtów flag,
+trzech wartości włączenia i12 par współrzędnych z granicami/ujemnymi
+bitami (hash334ad29225047b25). Odczyt USA80018C10 ma120 przypadków
+podpisanych półsłów i aliasów wyjścia, także do samego indeksu oraz pól
+obu kontrolek (eac2f716824c248d). Istniejący fixture sprawdza cały dispatcher,
+nienaruszenie sąsiednich wpisów, pozostałych pól i prawdziwych64-bitowych
+wskaźników pakietów. Sześć powiązanych CTestów z wymaganym dyskiem:
+PASS12.57s, bez SKIP. Cały fixture --assets przeszedł też ASan/UBSan/function
+z instrumentowanymi bibliotekami PsyZ/SDL (exit0). Pełny build przeszedł;
+nie uruchomiono pełnego50/50.
+
+
 Dalsza kontrola fabuły: oryginalny PS1 i natywny port kończą konferencję
 prasową i rozmowę u Bakera, wracając do M042 z etapem184, pozycją
 [-28049408,-131072,71827456], obrotem3104, HP92/92 oraz bronią9/pancerzem1.

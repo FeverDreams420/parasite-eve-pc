@@ -1145,8 +1145,6 @@ int Entity_PolarToPosition2(int **arg0)
 
 /* Contiguous animation-entry commands share the current actor. */
 
-void Render_SetEntryScrolled(int arg0, int arg1, int arg2, int arg3);
-void Render_SetEntryMirrored(int arg0, int arg1, int arg2, int arg3);
 
 int Script_SetBattleEntryCoords(int **arg0) {
     Battle_SetEntryCoords((ScriptAnimObj *)g_CurrentEntity, *(unsigned char *)arg0[0], *arg0[1], *arg0[2]);

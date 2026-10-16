@@ -353,6 +353,8 @@ int Render_UpdateScrollPosition(void *position, int duration, int mode);
 extern GeomScrollRecord g_GeomScroll;
 int Render_SetFlagSlot(int index, int enabled);
 int Render_SetEntryVisible(int index, int enabled);
+int Render_SetEntryScrolled(int index, int enabled, unsigned int x, unsigned int y);
+int Render_SetEntryMirrored(int index, int enabled, unsigned int x, unsigned int y);
 int Render_SetEntryLimit(int index, int frame);
 s16 Render_GetEntryField6(int index);
 int Render_SetEntryField8(int index, unsigned int value);

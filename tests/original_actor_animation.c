@@ -4207,6 +4207,79 @@ static int original_geometry_control_opcodes(void)
         if(result!=1 || node.current.script!=program+6 || !(node.flags&0x10) || g_ScriptNodePool ||
            memcmp(expected,geometry.controls,sizeof(expected)))return 0;
     }
+    /* Unhooked USA 8001994C/8001998C include their actual mesh helpers.
+     * Native mesh records have wide packet pointers; hash only their original
+     * representation and independently require the real pointers untouched. */
+    const u32 motion_values[]={0,1,255,256,65535,65536,0x80000000,0x7fffffff,
+        0xffffffff,0x12345678,0xffff00ff,0x80000100};
+    const u32 enabled_values[]={0,1,0xffffffff};
+    struct {GeomState header;GeomEntry entries[2];} meshes={0};
+    meshes.header.entry_offset=(u8 *)meshes.entries-(u8 *)&meshes.header;
+    u64 wide_markers[2]={0};uint64_t mesh_hash=UINT64_C(14695981039346656037);
+    unsigned mesh_cases=0;
+    for(unsigned op=0;op<2;++op)for(unsigned index=0;index<2;++index)
+    for(unsigned flag=0;flag<256;++flag)for(unsigned enabled=0;enabled<3;++enabled)
+    for(unsigned v=0;v<12;++v){
+        const unsigned opcode=187+op;
+        int (*handler)(int **)=op?Script_SetEntryMirrored:Script_SetEntryScrolled;
+        if(g_ScriptQueueOpcodeHandlers[opcode]!=handler)return 0;
+        memset(meshes.entries,0xa5,sizeof(meshes.entries));
+        for(unsigned i=0;i<2;++i){
+            meshes.entries[i].u30.prim=wide_markers;
+            meshes.entries[i].u34.pagePackets=(void *)(wide_markers+1);
+        }
+        meshes.entries[index].head.b.flags=flag;g_GeomState=&meshes.header;
+        GeomEntry before[2];memcpy(before,meshes.entries,sizeof(before));
+        int data[]={index,(s32)enabled_values[enabled],(s32)motion_values[v],(s32)motion_values[(v+5)%12]};
+        int *args[]={data,data+1,data+2,data+3};u32 result=handler(args);
+        for(unsigned b=0;b<4;++b)mesh_hash=(mesh_hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned i=0;i<2;++i){
+            for(unsigned b=0;b<48;++b)mesh_hash=(mesh_hash^((u8 *)&meshes.entries[i])[b])*UINT64_C(1099511628211);
+            for(unsigned b=0;b<8;++b)mesh_hash=(mesh_hash^0xa5)*UINT64_C(1099511628211);
+        }
+        GeomEntry expected[2];memcpy(expected,before,sizeof(expected));
+        expected[index].head.b.flags=meshes.entries[index].head.b.flags;
+        expected[index].speedX=meshes.entries[index].speedX;
+        expected[index].speedY=meshes.entries[index].speedY;
+        if(result!=1 || memcmp(expected,meshes.entries,sizeof(expected)))return 0;
+        memcpy(meshes.entries,before,sizeof(before));
+        u32 program[]={opcode|(4u<<13),0,index,enabled_values[enabled],motion_values[v],motion_values[(v+5)%12],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(node.current.script!=program+8 || node.active || node.flags!=0x90 ||
+           g_ScriptNodePool || memcmp(expected,meshes.entries,sizeof(expected)))return 0;
+        ++mesh_cases;
+    }
+    if(mesh_cases!=36864 || mesh_hash!=UINT64_C(0x334ad29225047b25)){
+        fprintf(stderr,"Geometry mesh commands hash %016llx\n",(unsigned long long)mesh_hash);return 0;}
+    uint64_t frame_hash=UINT64_C(14695981039346656037);unsigned frame_cases=0;
+    if(g_ScriptQueueOpcodeHandlers[122]!=Script_GetObjEntryField6)return 0;
+    for(unsigned index=0;index<2;++index)for(unsigned v=0;v<12;++v)for(unsigned target=0;target<5;++target){
+        g_GeomState=&geometry.header;memset(geometry.controls,0xa5,sizeof(geometry.controls));
+        geometry.controls[index].position.parts.frame=(s16)motion_values[v];
+        int data[]={index,(s32)0x98765432};
+        int *destinations[]={data+1,data,(int *)&geometry.controls[0].head.packed,
+            (int *)&geometry.controls[0].position.packed,(int *)&geometry.controls[1].position.packed};
+        int *args[]={data,destinations[target]};u32 result=Script_GetObjEntryField6(args);
+        for(unsigned b=0;b<4;++b)frame_hash=(frame_hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+        for(unsigned b=0;b<sizeof(geometry.controls);++b)
+            frame_hash=(frame_hash^((u8 *)geometry.controls)[b])*UINT64_C(1099511628211);
+        for(unsigned b=0;b<sizeof(data);++b)frame_hash=(frame_hash^((u8 *)data)[b])*UINT64_C(1099511628211);
+        ++frame_cases;
+    }
+    if(frame_cases!=120 || frame_hash!=UINT64_C(0xeac2f716824c248d)){
+        fprintf(stderr,"Geometry frame getter hash %016llx\n",(unsigned long long)frame_hash);return 0;}
+    u32 saved_operands[2]={g_ScriptOperandTable[0],g_ScriptOperandTable[1]};
+    for(unsigned index=0;index<2;++index)for(unsigned v=0;v<12;++v)for(unsigned alias=0;alias<2;++alias){
+        memset(geometry.controls,0xa5,sizeof(geometry.controls));
+        geometry.controls[index].position.parts.frame=(s16)motion_values[v];
+        g_ScriptOperandTable[0]=index;g_ScriptOperandTable[1]=0x98765432;
+        u32 program[]={122|(2u<<13)|(3u<<17)|(3u<<20),0,0,alias?0u:1u,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(g_ScriptOperandTable[alias?0:1]!=(u32)(s32)(s16)motion_values[v] ||
+           node.current.script!=program+6 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+    }
+    g_ScriptOperandTable[0]=saved_operands[0];g_ScriptOperandTable[1]=saved_operands[1];
+    puts("Original geometry commands 122/187/188: 36984 unhooked USA CPU cases, signed frame aliases, wide mesh-pointer guards and native dispatcher passed");
     g_GeomState=saved_geom;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     if(hash!=UINT64_C(0x18383904d1c6e665))return 0;
     puts("Original geometry control opcodes: 288 USA MIPS states, untouched adjacent controls and full dispatcher passed");

@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Dalszy realny input w M059 otwiera skrzynię Cure-P i zamyka jej menu.
+Natywne50 slotów i zmienna84=133136 zgadzają się z PS1: przedmiot13
+trafia do wolnego slotu10, a bit2048 oznacza otwartą skrzynię. Całe4096
+bajtów wyposażenia pozostaje zgodne ze stanem po Mod Permit. Pozycje
+po interakcji różnią się nieznacznie przez analogowe sterowanie PS1.
+Dane59 trójkątów podłoża i wszystkie ich połączenia również są zgodne.
+
+Na dalszej trasie zaczyna się losowa walka z aktorami5:31 i6:3,
+potwierdzona niezależnie na PS1. W natywnym wejściu wystąpiło uszkodzenie
+OT i awaria GPU_Enqueue przy VBlank50201. Przyczyną był pierwotny limit
+scene_object_work=7320 bajtów: model tła walki potrzebuje8972 bajtów
+po poszerzeniu nagłówków pakietów, więc nadpisywał początek OT.
+W istniejących Boot_InitMemoryLayout i Draw_InitDisplay powiększono
+rezerwację do14640 bajtów na64-bit. Nie zmieniano logiki walki ani SDK
+w celu pomijania uszkodzonego pakietu; nie dodano plików.
+
+Nowy test przed poprawką odtwarza brak pamięci dla banku24 (9068>7320).
+Po poprawce uruchamia oryginalny Render_SetupEntityPrims dla16 banków
+Disc1 o indeksach23–38, sprawdza ich rzeczywisty koniec i cały obszar OT
+wypełniony znacznikami. Maksimum9068/14640 bajtów; wszystkie znaczniki
+pozostają nienaruszone. Pełny fixture --assets przechodzi normalnie i pod
+ASan/UBSan/function z instrumentowanymi PsyZ/SDL.
+Zwykły replay Continue E→Cure-P→walka/cap50764 przechodzi bez awarii:
+M059, etap232, dwóch żywych przeciwników, stan0, HP83/92; Cure-P
+pozostaje w slocie10, całe wyposażenie niezmienione. Nie porównuje się
+HP/pozycji z późniejszym stanem PS1 po innym przebiegu inputu i nie
+uznaje się jeszcze tej walki za ukończoną. Pełny replay sanitizowany
+tego nowego punktu nadal trwa.
+
+
 Dalsza eksploracja M374 potwierdziła wyjście na mapę świata i ponowne
 wejście przy etapie232. Ponowne wejście stawia dwóch dodatkowych
 policjantów: przeszkody przyx283,z390 ix289,z1009 są kolizjami NPC,

@@ -327,7 +327,7 @@ void Boot_InitMemoryLayout(void) {
     ptr = D_8010BD00;
     ptr2 = D_80120D08;
     g_GameState.texture_load_scratch = (union SceneAssetView *)ptr;
-    ptr = ptr2 + 0x1C98;
+    ptr = ptr2 + BOOT_SCENE_OBJECT_WORK_BYTES;
     g_GameState.scene_object_work = ptr2;
     /* Each of the two ordering tables holds 4096 native PsyZ tags. */
     ptr2 = ptr + 0x1000 * sizeof(RenderNativeTag);

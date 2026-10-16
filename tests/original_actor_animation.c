@@ -5351,6 +5351,51 @@ static int original_room_actor_assets(PeDisc *disc,PeDiscFile *exe)
     return valid;
 }
 
+static int original_scene_object_workspace_assets(PeDisc *disc, PeDiscFile *exe)
+{
+    u8 header[0x800];u32 base;u16 sectors[81];PeDiscFile archive;
+    if(!pe_disc_read(disc,exe,0,header,sizeof(header)))return 0;
+    memcpy(&base,header+0x18,4);
+    if(!pe_disc_read(disc,exe,0x800ull+0x800930d8u-base,sectors,sizeof(sectors)) ||
+       !pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    Pe1GameState saved=g_GameState;Boot_InitMemoryLayout();
+    size_t capacity=(u8 *)g_GameState.render_buffers.ordering[0]-g_GameState.scene_object_work;
+    g_GameState=saved;
+    u8 *workspace=malloc(capacity+0x1000*sizeof(RenderNativeTag));
+    if(!workspace)return 0;
+    unsigned checked=0;size_t maximum=0;int valid=1;
+    for(unsigned bank=23;bank<=38 && valid;++bank){
+        size_t bytes=(size_t)(sectors[bank+1]-sectors[bank])*2048;
+        SceneAssetView *view=malloc(bytes);
+        if(!view){valid=0;break;}
+        valid=sectors[bank+1]>sectors[bank] && pe_disc_read(disc,&archive,(u64)sectors[bank]*2048,view,bytes);
+        if(valid){
+            SceneAssetDirectory *directory=SceneAsset_ResolveOffset(view,view->header.directoryOffset);
+            SceneRoomRecord *root=SceneAsset_ResolveOffset(view,directory->bankRootEntries&0x3fffff);
+            valid=directory->bankRootEntries>>22==1;
+            RenderObjectHeader *model=SceneAsset_ResolveOffset(view,root->source.offsetAndSlot&0xffffff);
+            size_t needed=2*(model->packet34_count*sizeof(RenderPacket34)+model->packet28_count*sizeof(RenderPacket28)+
+                model->packet24_count*sizeof(RenderPacket24)+model->packet1c_count*sizeof(RenderPacket1C))+
+                model->animation_entry_count*sizeof(RenderAnimationLookupEntry)+model->part_count*sizeof(RenderMatrix);
+            if(needed>capacity){fprintf(stderr,"Scene backdrop bank %u needs %zu bytes before OT, only %zu reserved\n",bank,needed,capacity);valid=0;}
+            if(valid){
+                RenderObjectEntity object={0};s8 *texture=NULL;
+                memset(workspace,0xa5,capacity+0x1000*sizeof(RenderNativeTag));
+                valid=Render_SetupEntityPrims(&object,model,workspace,0x2c0,0x80,0,0x1c2,0,&texture,1)==1 &&
+                    (u8 *)(object.matrices+model->part_count)<=workspace+capacity;
+                for(size_t i=capacity;i<capacity+0x1000*sizeof(RenderNativeTag);++i)
+                    if(workspace[i]!=0xa5){valid=0;break;}
+                if(needed>maximum)maximum=needed;
+                ++checked;
+            }
+        }
+        free(view);
+    }
+    free(workspace);
+    if(valid && checked==16)printf("Original scene backdrop workspace: all 16 USA banks fit before native OT, max %zu/%zu bytes, whole OT guards intact\n",maximum,capacity);
+    return valid && checked==16;
+}
+
 static int original_effect_sequence_assets(PeDisc *disc, PeDiscFile *exe)
 {
     const unsigned rooms[]={49,50,90,344,374};
@@ -11680,7 +11725,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};PeDiscFile exe;u32 pointers[50];
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
-        if (!original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
+        if (!original_scene_object_workspace_assets(&disc,&exe) || !original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;

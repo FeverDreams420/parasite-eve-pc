@@ -8887,15 +8887,15 @@ static int original_native_bootstrap(const char *executable,int field_control)
     unsigned first=field_control>=2?(unsigned)field_control+10:field_control?6:0;
     unsigned end=field_control>=2?first+1:field_control?12:6;
     for(unsigned input=first;input<end;++input){
-        const char *limit=input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
-        const char *args[640]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
+        const char *limit=input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+        const char *args[1280]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
         for(unsigned event=0;event<(input==3?4u:input==2 || input>=4?6u:input?1u:0u);++event){
             unsigned index=input==3 && event>=2?event+2:event;
             args[at++]="--pad-at";args[at++]=events[index];
         }
-        char scheduled[320][32];
+        char scheduled[640][32];
         if(input==1){
             for(unsigned event=0;event<128;++event){
                 snprintf(scheduled[event],sizeof(scheduled[event]),"%u:8",10001+event);
@@ -8955,7 +8955,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     tick+=route[i][0];
                 }
             }
-            if(input==16){
+            if(input>=16){
                 args[at++]="--pad-at";args[at++]="95751:32";
                 args[at++]="--pad-at";args[at++]="96851:0";
                 for(unsigned pass=0;pass<2;++pass){
@@ -8969,6 +8969,20 @@ static int original_native_bootstrap(const char *executable,int field_control)
                 args[at++]="--pad-at";args[at++]="102000:16";
                 args[at++]="--pad-at";args[at++]="103000:0";
             }
+            if(input==17){
+                static const unsigned route[][2]={{104000,16},{104900,32},{105100,16},
+                    {105700,0x4000},{105710,0},{106310,128},{106450,16},{107050,0}};
+                for(unsigned i=0;i<sizeof(route)/sizeof(route[0]);++i){
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",route[i][0],route[i][1]);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                }
+                for(unsigned tick=107100;tick<112000;tick+=32){
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:16384",tick);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:0",tick+4);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                }
+            }
 #undef BOOTSTRAP_PRESS
         }
         SDL_PropertiesID props=SDL_CreateProperties();
@@ -8980,7 +8994,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){
@@ -9052,6 +9066,16 @@ static int original_native_bootstrap(const char *executable,int field_control)
            !strstr(output,"\"dialogue\":[{\"state\":0,\"page\":-1}") ||
            !strstr(output,"\"player\":true,\"flags\":8,\"position\":[19202048,0,170917888],\"yaw\":0") ||
            !strstr(output,"\"combat\":{\"mode\":12,\"live_enemies\":0,\"player_hp\":14,\"player_max_hp\":45}")))valid=0;
+        if(input==17){
+            unsigned hp=0,max_hp=0;
+            const char *health=output?strstr(output,"\"player_hp\":"):NULL;
+            if(!output || !strstr(output,"\"scene\":2818576712") ||
+               !strstr(output,"\"video_state\":0") || !strstr(output,"\"move_lock\":0") ||
+               !strstr(output,"\"combat\":{\"mode\":9,\"live_enemies\":0") ||
+               !strstr(output,"\"menu\":null") || !health ||
+               sscanf(health,"\"player_hp\":%u,\"player_max_hp\":%u",&hp,&max_hp)!=2 ||
+               !hp || hp>max_hp)valid=0;
+        }
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -9111,6 +9135,7 @@ int main(int argc, char **argv)
 
     if(argc==3 && !strcmp(argv[1],"--native-stage"))return original_native_bootstrap(argv[2],2);
     if(argc==3 && !strcmp(argv[1],"--native-battle-entry"))return original_native_bootstrap(argv[2],3);
+    if(argc==3 && !strcmp(argv[1],"--native-rat"))return original_native_bootstrap(argv[2],7);
     if(argc==3 && !strcmp(argv[1],"--native-hallway"))return original_native_bootstrap(argv[2],6);
     if(argc==3 && !strcmp(argv[1],"--native-backstage"))return original_native_bootstrap(argv[2],5);
     if(argc==3 && !strcmp(argv[1],"--native-melissa"))return original_native_bootstrap(argv[2],4);
@@ -9342,6 +9367,20 @@ int main(int argc, char **argv)
         if(g_FieldPadPressed || g_FieldPadReleased)return 36;
         g_PadPackets[0].leftX=19;Field_HandleStateTransition();
         if(g_FieldPadBits!=(FIELD_PAD_LEFT|1))return 37;
+        MenuWidget_InitPool();
+        for(unsigned descriptor=0;descriptor<0x41;++descriptor) {
+            MenuWidgetNode *reused=g_MenuWidgetFreeListHead;
+            reused->appearance.gradientPoints=(u8 *)&g_MenuWidgetNodePool[23];
+            MenuWidgetNode *panel=MenuWidget_CreateSimpleNode(descriptor,NULL,NULL,1);
+            MenuWidgetSimpleDescriptor *desc=MenuWidget_LookupSimpleDescriptor(descriptor);
+            if(panel!=reused || panel->appearance.gradientPoints || panel->mode!=1 ||
+               panel->grid_width!=desc->width || panel->visible_rows!=desc->height) {
+                fprintf(stderr,"Reused simple panel %u retained gradient pointer %p\n",descriptor,(void *)panel->appearance.gradientPoints);
+                return 124;
+            }
+            MenuWidget_DestroyNodeRecursive(panel);
+        }
+        puts("Original simple panels: all 65 descriptors clear the full native gradient pointer on node reuse");
         MenuWidget_InitPool();
         for (unsigned slot=0; slot<24; ++slot) {
             MenuWidgetNode *allocated=MenuWidget_AllocNode(slot?&g_MenuWidgetNodePool[0]:NULL,

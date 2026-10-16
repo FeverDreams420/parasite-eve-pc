@@ -461,7 +461,7 @@ MenuWidgetNode *MenuWidget_CreateSimpleNode(s32 mode, MenuWidgetNode *parent_arg
     node->disabled = 0;
     node->cursor_x = arg_flag;
     node->cursor_y = 0;
-    node->appearance.cursorTargetX = 0;
+    node->appearance.gradientPoints = 0;
     return node;
 }
 

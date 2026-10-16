@@ -440,6 +440,40 @@ To dowód jednego checkpointu, nie pełnego roundtrip wszystkich zapisów.
 Oba powiązane CTest po tych poprawkach przeszły w 12,39 s. Świeży
 --assets z ASan/UBSan/function i instrumentowanym PsyZ/SDL także przeszedł.
 
+Próba walki ze szczurem z rzeczywistego checkpointu (Continue, wejście do
+korytarza, Cross co 32 VBlank) ujawniła kolejny błąd zależny od układu pamięci.
+Zwykły executable i pełny ASan runtime zatrzymały się w Draw_AllocColorGradient
+na odczycie `0x100000000`; osobny build z symbolami przeszedł ten sam input.
+To nie błąd rasteryzatora: MenuWidget_CreateSimpleNode zerował 32-bitowy
+appearance.cursorTargetX w unii z 64-bitowym gradientPoints. Ponowne użycie
+węzła pozostawiało górne 32 bity poprzedniego wskaźnika. Oryginalny konstruktor
+zeruje teraz właściwe gradientPoints, bez zmiany API/modułu. Regresja wszystkich
+65 deskryptorów wymusza ponowne użycie węzła z poprzednim natywnym adresem:
+przed poprawką FAIL (`Reused simple panel 0 ... 0x100000000`), po poprawce
+PASS. Dwa powiązane CTest przeszły w 12,93 s. Pełny sanitizer przebiegu bez
+atakowania (34000 VBlank z checkpointu, śmierć Ayi) przeszedł po poprzednich
+poprawkach core=NULL; nie dowodzi wygrania walki. Po poprawce konstruktora
+zwykły executable i świeży pełny ASan/UBSan/function runtime z instrumentowanym
+PsyZ/SDL przechodzą Continue i wygrywają walkę przy tym samym inputcie.
+Oba do 32000 VBlank: scena M012, mode9 (zakończony level-up/oddanie sterowania
+skryptowi), enemy0, HP11/45, move_lock0, Aya[-3407872,0,-95289344], yaw0.
+Cała VRAM jest identyczna w obu buildach, SHA256
+`81d469c604d966ad55aa47e0b5ac82660d860234624905c01e1152042bcec91e`.
+Obejrzano obraz i sprawdzono dalszy ruch: po 1200 VBlank Up Aya osiąga
+[-3407872,0,-291897344], nadal M012, HP11/45. Nie jest to jeszcze dowód
+następnej lokacji ani zgodności tej walki z referencją PS1.
+Naturalna trasa od New Game do 112000 VBlank również kończy zwycięską walkę:
+M012, mode9, enemy0, HP11/45, Aya[-3407872,0,-95289344], yaw0, game_frame1437,
+move_lock0, brak menu i otwartych dialogów. VRAM SHA256
+`c34f11bf7344480a068e9c180d01676922138c5778a88a211e5c900f6517bbca`.
+Nowy CTest original-game-rat-encounter powtarza tę trasę i sprawdza końcową
+scenę, tryb, przeciwników, żywego gracza i odblokowany stan. CTest przeszedł
+w 167,22 s. Pełnych 45 testów po tej zmianie nie powtarzano. Test korzysta z istniejącego fixture/executable i wyłącznie inputu;
+nie dodano plików ani fixture zapisów do repozytorium. Dalszy input z
+checkpointu wywołuje dialog117 przy końcowych drzwiach. Podejście do bocznych
+drzwi przechodzi do tokenu A8002048, gdzie zatrzymuje się na niepodpiętym
+opkodzie62 (aktor2:0, script_byte72). Następna lokacja nie jest jeszcze zaliczona.
+
 Nie dodano plików ani równoległej implementacji gry. Poniższy opis nieznanego
 producenta uszkodzonej listy GPU jest historyczny. Cała kampania, walka,
 zapisy/Continue, Disc 2 i pozostałe bramki nadal wymagają ukończenia i dowodów.

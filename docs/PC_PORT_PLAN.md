@@ -15,6 +15,28 @@ również z przebiegiem sprzed zmian zegarów:
 50a629fabc56b70ceed81730637a240918a82b8a931eecd6a1f82e89b19f2d19.
 B iC pozostały niezmienione. Nie jest to dowód pełnego dnia2 ani całej gry.
 
+Kontynuacja C → konferencja → mapa → Museum → M038/M191/cap83542
+przeszła świeżo normalnie i pod ASan/UBSan/function (exit0), bez zmiany B/C.
+Pełny JSON i1048576 bajtów VRAM są identyczne; VRAM zgadza się także
+z kandydatem sprzed zmian zegarów (109f3985097dfd2cafa93c76d3f091751bf2479643c33ad77cf14c81f1c05331).
+Oryginalny PS1 niezależnie kończy tę scenę z etapem200, pozycją
+[427294720,0,474415104], obrotem1024, HP92/92 i bronią9/pancerzem1.
+Po rozmowie przy wejściu oba przebiegi osiągają M195, etap192 i pozycję
+[43581440,0,-103743488]; obrót zależy tutaj od chwili zakończenia dialogu
+(2652 native,2367 PS1), więc nie jest ogłaszany jako zgodny punkt obrazu.
+Aktualny native bez sanitizerów odtworzył całą trasę do M195/cap93480,
+z VRAM identycznym jak przed zmianami zegarów
+(168734b703d5426c4c6b97ea68b869a9e7be3f3c7a000ec930e8c3d2be534426).
+
+Automaty dialogów muszą obserwować wszystkie cztery TextboxEntry.
+Rozmowa z Klampem używa też slotu1 (m.in. strona68); sprawdzanie samego
+slotu0 daje fałszywe rozpoznanie zawieszenia. Potwierdzenie zwykłym inputem
+kontynuuje oryginalny skrypt, bez naprawy gry ani zmiany flag.
+Dalszy diagnostyczny przebieg starszego kandydata kończy rozmowę z Klampem
+w M192, etap208, sterowanie przywrócone; świeże odtworzenie aktualnego
+kandydata i niezależne przejście PS1 pozostają w toku. Nie jest to jeszcze
+dowód pełnej wizyty w muzeum na aktualnym kandydacie ani pełnego dnia2.
+
 Audyt oryginalnej tabeli interpretera wykazał25 niepodpiętych niezerowych
 handlerów. Następne cztery,103/104/105/211, są teraz podpięte do istniejących
 funkcji zegarów w system_opcodes.c. Poprawiono sygnatury callbacków bez

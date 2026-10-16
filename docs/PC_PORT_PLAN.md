@@ -34,16 +34,49 @@ Pełny odpowiednik z ASan/UBSan/function PASS: cały JSON i1MiB VRAM
 identyczne, SHA256 eb0e0ed1416d6469c4ef6719869f50478120e630659cc4bed308dc3767da16d2.
 Zapis G identyczny, B–F niezmienione. Artefakty
 /tmp/pe-m080-entry-{normal,san}.log/.vram, args.json, verify.py i proof.json.
-Runtime M082 pozostaje do potwierdzenia.
-Dalsza żywa próba walki M080 (typ5/75HP i typ6/35HP) kończy się
-Game Over po trafieniach, bez abortu. Przez tytuł i oryginalny Continue
-wczytano G, następnie Heal1 poza walką podniósł HP38→68.
-Żywy debugger /tmp/pe-motion-variants-game-debug, katalog
-/tmp/pe-motion-variants-live, log /tmp/pe-motion-variants-live-lldb.log,
-zatrzymany w Boot_PollHost cap125835, M075, lock0, menu zamknięte.
-Długi pe-path ładowany przez HandleCommand z pliku /tmp omija limit
-pojedynczej linii terminala; nie oznacza błędu gry. Nie jest to
-ukończona walka M080. Pełna kampania pozostaje nieukończona.
+Walka M080 jest teraz ukończona: typ5/75HP i typ6/35HP, M16,
+końcowe HP16, poziom10, maxHP115, pojemność19. Obtain All zabiera Ammo+15
+i jeden Junk do nowego slotu18; drugi Junk pozostaje. Heal1 po walce
+podnosi HP16→46. Pełny input zawiera także poprzednią porażkę, Game Over,
+Continue G przez UI, Heal1 przed ponowną walką i zwycięstwo. Normalny
+oraz ASan/UBSan/function replay do cap136265 PASS: cały JSON i VRAM
+identyczne, SHA256 f46e3ec214b12ca3165fe53f01b269cd954a2fd9c6bfd345f991359457e94b5c.
+B–F niezmienione, cały G identyczny. Artefakty
+/tmp/pe-m080-battle-{normal,san}.log/.vram, args.json, verify.py i proof.json.
+To nie dowodzi wszystkich pośrednich klatek ani wszystkich ataków.
+
+Dalszy żywy input: skrzynia M080, pełne19 slotów, oryginalna wymiana
+Junk ze slotu12 na Sv Vest1 (nowy rekord263). Przejście do M078,
+walka typ5/32HP i typ4/44HP, zwycięstwo HP31. Nagrody: wymiana kolejnego
+Junk ze slotu11 na Medicine1 oraz Ammo+6. Medicine1 użyta przez menu:
+HP31→76, slot11 staje się pusty. M078 ma osobną skrzynię, której ten
+przebieg nie otwiera. W M079 przejście południową alejką, bez otwierania
+obiektu typu5 w środku. M081: cztery typ3 po35HP, zwycięstwo HP40;
+wybrano Medicine1, następnie użyto jej przez UI: HP40→85, slot11 pusty.
+Pozostałe Junk z nagród pozostają. Wejście M082/cap149915 działa,
+obraz mostu obejrzany, HP85/115, etap248, lock0, broń9/pancerz14,
+pojemność19, Sv Vest1 w slocie12. Pełne replaye od F normalnie i pod
+sanitizerami są uruchomione (/tmp/pe-m082-entry-{normal,san}.log/.vram,
+args.json, verify.py). Dopóki oba nie zakończą się i verifier nie przejdzie,
+nie traktować tego jako PASS automatycznej powtórki.
+
+Próba walki M082: niedźwiedź typ5/75HP i dwa typ3/44HP. Niedźwiedź
+pokonany, ale sterowanie w prawo doprowadziło Ayę do granicy oryginalnego
+obszaru walki; dalsze trafienia kończą się Game Over. To nie jest
+ukończona walka ani dowód błędu kolizji. Stary debugger zakończony po
+powrocie do tytułu/cap154627. Nowy debugger używa tego samego zamrożonego
+/tmp/pe-motion-variants-game-debug, rzeczywistego G i krótkiego zimnego
+Continue do cap24000: katalog /tmp/pe-m075-g-live, argumenty
+/tmp/pe-m075-g-live-args.json, log /tmp/pe-m075-g-live-lldb.log.
+Osobny PE_DEBUG_INPUT_TRACE=/tmp/pe-g-park-input.jsonl zapobiega mieszaniu
+nowego licznika z pełnym starym /tmp/pe-zoo-checkpoint-input.jsonl.
+Pomocnik pe-state odczytuje teraz prawdziwy DISPENV przez GetDispEnv;
+stare odczyty symbolu display w LLDB trafiały na inny symbol. Produkcyjny
+Boot_PollHost już używał GetDispEnv, więc zrzuty normalne/SAN są poprawne.
+Długi pe-path przez HandleCommand z pliku /tmp omija limit linii terminala.
+Następne zadanie: przejść M082 ze zmianą kierunku przy granicy, dojść do
+M083 i kontynuować kampanię. Nie zmieniono kodu rozgrywki w tym etapie.
+Pełna kampania i pełny zakres celu pozostają nieukończone.
 
 Pełny oryginalny input po etapie240 przechodzi M069→M072, ucieczkę Eve
 (etap244), M070 z dialogami96/45/97, odblokowane wyjście, powrót do M072

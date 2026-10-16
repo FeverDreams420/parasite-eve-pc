@@ -2,6 +2,7 @@
 #define PE1_ROOM_M023_EFFECTS_H
 
 #include "common.h"
+#include "pe1/fieldfx_task.h"
 #include "pe1/field_owner_actor.h"
 #include "pe1/field_texture_tables.h"
 #include "pe1/fieldfx_callback_list.h"
@@ -15,7 +16,7 @@
  * either at the joint itself or at a random point of a wide band. */
 
 typedef struct RoomM023EventState {
-    u8 reserved[0x12];
+    u8 reserved[PE1_OFFSETOF(FieldFxTaskContext, variables)];
     s16 variant;                  /* 0x12 */
     s16 interval;                 /* 0x14 */
 } RoomM023EventState;
@@ -61,17 +62,18 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM023ParticleRecord, driftPulse.vx) ==
                       PE1_OFFSETOF(RoomM023ParticleRecord, scatter.vx),
                   room_m023_particle_velocity_view);
 
-typedef struct RoomM023Template {
+typedef union RoomM023Template {
     s32 word[2];
-} __attribute__((packed)) RoomM023Template;
+    GteShortVector vector;
+} RoomM023Template;
 
 extern RoomM023Template g_RoomM023JointAnchor;
 /* Anchor vector room_m023 keeps in its scene script record. */
 #define RoomM023_ScriptAnchor (*(GteShortVector *)&g_RoomScriptRecord)
 
 extern int rand(void);
-extern int RoomM023_DriftPulseCallback(int mode,
-                         RoomM023DriftPulseCallbackView *particle);
+int RoomM023_DriftPulseCallback(int mode, void *data, intptr_t argument);
+int RoomM023_ScatterEmitter(int mode, void *data, intptr_t argument);
 
 /* Joint glow: a ring burst, then a growing and pulsing glow sprite pair
  * drawn at a model joint. */
@@ -85,6 +87,9 @@ extern RenderColor g_RoomM023RingBandColor;
 extern RenderColor g_RoomM023StarFanColor;
 extern RenderColor g_RoomM023RingBandColor;
 extern RenderColor g_RoomM023StarFanColor;
-int RoomM023_JointGlow(int mode, RoomM023JointGlow *glow);
+int RoomM023_JointGlow(int mode, void *data, intptr_t argument);
+int RoomM023_JointBeacon(int mode, void *data, intptr_t argument);
+extern FieldFxTaskProgram g_RoomM023Effects;
+extern u16 g_RoomM023EffectScript[63];
 
 #endif

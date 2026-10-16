@@ -2,6 +2,7 @@
 #define PE1_ROOM_M023_BEACON_H
 
 #include "common.h"
+#include "pe1/field_actor.h"
 #include "pe1/asset_find.h"
 #include "pe1/field_model_draw.h"
 #include "pe1/field_sprite_draw.h"
@@ -45,7 +46,7 @@ typedef struct RoomM023BeaconNode {
 
 typedef struct RoomM023BeaconPool {
     /* 0x000 */ RoomM023BeaconNode *node;
-    /* 0x004 */ u8 reserved004[0x234];
+    /* 0x004 */ u8 reserved004[PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, matrices) - sizeof(void *)];
     /* 0x238 */ GteMatrix *matrix;
 } RoomM023BeaconPool;
 
@@ -55,7 +56,7 @@ typedef struct RoomM023BeaconChannel {
 } RoomM023BeaconChannel;
 
 typedef struct RoomM023BeaconActor {
-    u8 reserved[0x4C];
+    u8 reserved[PE1_OFFSETOF(FieldActorState, flags)];
     u32 flags;
 } RoomM023BeaconActor;
 
@@ -64,7 +65,7 @@ typedef struct RoomM023BeaconEntity {
 } RoomM023BeaconEntity;
 
 typedef struct RoomM023BeaconEvent {
-    /* 0x00 */ u8 reserved[0xD];
+    /* 0x00 */ u8 reserved[PE1_OFFSETOF(FieldFxTaskContext, flags)];
     /* 0x0D */ u8 active;
     /* 0x0E */ u8 reserved0E[4];
     /* 0x12 */ s16 variant;
@@ -75,11 +76,17 @@ typedef struct RoomM023BeaconColor {
 } RoomM023BeaconColor;
 
 #include "pe1/player_entity.h"
-extern u8 *g_RoomM023BeaconModel;
+extern char *g_RoomM023BeaconModel;
 extern u8 g_RoomM023BeaconColorTrack[];
 
-void FieldFx_ModelShiftColors(u8 *data, int r, int g, int b);
 int FieldFx_IsPlayerInSegmentBand(void *position, GteShortVector *target, int radius);
 GteMatrix *MulMatrix0(GteMatrix *first, GteMatrix *second, GteMatrix *out);
+
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM023BeaconPool, matrix) ==
+    PE1_OFFSETOF(FieldActor, render_object) + PE1_OFFSETOF(RenderObjectEntity, matrices), m023_native_matrices);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM023BeaconActor, flags) == PE1_OFFSETOF(FieldActorState, flags), m023_native_state_flags);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM023BeaconNode, state) == PE1_OFFSETOF(FieldActorState, action_state), m023_native_action_state);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM023BeaconEvent, active) == PE1_OFFSETOF(FieldFxTaskContext, flags), m023_native_event_active);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM023BeaconEvent, variant) == PE1_OFFSETOF(FieldFxTaskContext, variables), m023_native_event_variant);
 
 #endif

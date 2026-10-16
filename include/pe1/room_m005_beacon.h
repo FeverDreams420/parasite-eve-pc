@@ -104,7 +104,6 @@ extern u8 *g_RoomM005BeaconModel1;
 extern GteShortVector g_RoomM005BeaconOffset;
 extern GteShortVector g_RoomM005BeaconCenter;
 
-void FieldFx_ModelShiftColors(u8 *data, int r, int g, int b);
 int FieldFx_IsPlayerInSegmentBand(void *position, GteShortVector *target, int radius);
 int rand(void);
 

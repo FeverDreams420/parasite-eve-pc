@@ -15,6 +15,7 @@ void FieldFx_ModelSetSemiTrans(short value);
 void FieldFx_ModelSaveColors(char *data);
 void FieldFx_ModelRestoreColors(char *data);
 void FieldFx_ModelScaleColors(char *data, u16 factor);
+void FieldFx_ModelShiftColors(char *data, int r, int g, int b);
 void FieldFx_ModelSetColors(char *data, u8 r, u8 g, u8 b);
 /* Draws the model through placement. */
 void FieldFx_ModelDraw(union FieldTexturedModel *model, GteMatrix *placement);

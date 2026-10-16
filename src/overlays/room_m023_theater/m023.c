@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe1/geom_state.h"
 #include "pe1/gte.h"
 #include "pe1/room_drift_pulse.h"
 #include "pe1/room_m023_beacon.h"
@@ -8,7 +9,9 @@
  * a local pointer first: its address load is what keeps the frame counter
  * load after the palette lookup like retail. */
 
-int RoomM023_DriftPulseCallback(int mode, RoomDriftPulseState *state) {
+int RoomM023_DriftPulseCallback(int mode, void *data, intptr_t argument) {
+    RoomDriftPulseState *state = data;
+    (void)argument;
     GteShortVector origin;
     GteRotation rotation;
     RenderColor color;
@@ -106,9 +109,11 @@ int RoomM023_DriftPulseCallback(int mode, RoomDriftPulseState *state) {
 
 /* Every `interval` frames emits a particle with a random velocity, either
  * from the tracked model joint or from a random point of a wide band. */
-int RoomM023_ScatterEmitter(int mode, RoomM023ScatterState *state) {
+int RoomM023_ScatterEmitter(int mode, void *data, intptr_t argument) {
+    RoomM023ScatterState *state = data;
+    (void)argument;
     RoomM023Template template = g_RoomM023JointAnchor;
-    s16 position[4];
+    GteShortVector position;
     RoomM023Particle *particle;
 
     switch (mode) {
@@ -124,16 +129,16 @@ int RoomM023_ScatterEmitter(int mode, RoomM023ScatterState *state) {
             state->joint = 16;
             break;
         }
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM023Channel)->pool, 16, 12,
-                             (FieldFxCallbackListCallback)RoomM023_DriftPulseCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 16, 12,
+                             RoomM023_DriftPulseCallback);
     case 1:
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM023Channel)->pool, state->joint, &template, position);
+        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM023Channel)->pool, state->joint, &template.vector, &position);
         state->timer++;
         if (FX_TASK_AS(RoomM023EventState)->interval == 0) return 1;
         if (FX_TASK_AS(RoomM023EventState)->interval < state->timer) {
             state->timer = 0;
-            FieldFx_GetActorPosition(ANIM_OWNER_AS(RoomM023Channel)->pool, 0, position);
-            particle = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM023Channel)->pool);
+            FieldFx_GetActorPosition(ANIM_OWNER_AS(RoomM023Channel)->pool, 0, (s16 *)&position);
+            particle = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (particle == 0) return 0;
             if (rand() & 1) {
                 particle->x = (rand() & 0x7FF) - 0x400;
@@ -141,9 +146,9 @@ int RoomM023_ScatterEmitter(int mode, RoomM023ScatterState *state) {
                 particle->z = 0;
                 particle->attached = 0;
             } else {
-                particle->x = position[0];
-                particle->y = position[1];
-                particle->z = position[2];
+                particle->x = position.x;
+                particle->y = position.y;
+                particle->z = position.z;
                 particle->attached = 1;
             }
             particle->vx = rand() % 70 - 35;
@@ -152,7 +157,7 @@ int RoomM023_ScatterEmitter(int mode, RoomM023ScatterState *state) {
         }
         break;
     case 2:
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM023Channel)->pool, state->joint, &template, &RoomM023_ScriptAnchor);
+        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM023Channel)->pool, state->joint, &template.vector, &RoomM023_ScriptAnchor);
         g_FieldFxSpriteParams.parameter00 = 32;
         g_FieldFxSpriteParams.parameter02 = 2;
         g_FieldFxSpriteParams.extent_x = 32;
@@ -167,7 +172,9 @@ int RoomM023_ScatterEmitter(int mode, RoomM023ScatterState *state) {
     return 0;
 }
 
-int RoomM023_JointGlow(int mode, RoomM023JointGlow *glow) {
+int RoomM023_JointGlow(int mode, void *data, intptr_t argument) {
+    RoomM023JointGlow *glow = data;
+    (void)argument;
     GteShortVector position;
     GteRotation rotation;
     RoomM023Template template = g_RoomM023JointAnchor;
@@ -199,14 +206,17 @@ int RoomM023_JointGlow(int mode, RoomM023JointGlow *glow) {
         if (glow->state >= 3) return 1;
         break;
     case 2:
+        /* The PS1 ring read the previous contents of its stack position.
+         * Resolve the joint before every draw on the host. */
+        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM023Channel)->pool, glow->joint, &template.vector, &position);
         size = 0;
         intensity = 0;
         switch (glow->state) {
         case 0:
             frame = glow->frame;
             FieldFx_DrawRingBand(&position, 0x258, 0x320, 0x20, 0, frame, frame, &ring, 0,
-                          rsin(frame << 7) / 32, 1);
-            size = glow->frame << 8;
+                          rsin((u16)frame * 128) / 32, 1);
+            size = (s32)((u32)(s32)glow->frame << 8);
             intensity = 0x50;
             if (glow->frame >= 8) {
                 glow->state = 1;
@@ -224,7 +234,7 @@ int RoomM023_JointGlow(int mode, RoomM023JointGlow *glow) {
             break;
         case 2:
             intensity = 0xA0;
-            size = rcos(glow->frame << 7) / 2 + 0x1000;
+            size = rcos((u16)glow->frame * 128) / 2 + 0x1000;
             if (glow->frame >= 8) {
                 glow->state = 3;
                 glow->frame = 0;
@@ -245,9 +255,8 @@ int RoomM023_JointGlow(int mode, RoomM023JointGlow *glow) {
         }
         rotation.x = 0;
         rotation.y = 0;
-        rotation.z = -g_FieldFxCurrentAge << 6;
+        rotation.z = (s16)(0u - ((u32)g_FieldFxCurrentAge << 6));
         rotation.flags = 0;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM023Channel)->pool, glow->joint, &template, &position);
         {
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
@@ -271,7 +280,9 @@ int RoomM023_JointGlow(int mode, RoomM023JointGlow *glow) {
 /* Joint beacon: rides a model joint, swells in, pulses, flickers and
  * collapses, tagging the player once on contact; draws a glow sprite pair
  * with two star fans and a loaded model scaled by the beacon size. */
-int RoomM023_JointBeacon(int mode, RoomM023Beacon *state) {
+int RoomM023_JointBeacon(int mode, void *data, intptr_t argument) {
+    RoomM023Beacon *state = data;
+    (void)argument;
     GteVector scale;
     GteShortVector position;
     GteShortVector rotation;
@@ -300,7 +311,7 @@ int RoomM023_JointBeacon(int mode, RoomM023Beacon *state) {
             RoomM023BeaconPool *pool = ANIM_OWNER_AS(RoomM023BeaconChannel)->pool;
             if (pool && pool->node) {
                 u8 *flag = pool->node->state;
-                if (*flag == 1) *flag = 2;
+                if (flag && *flag == 1) *flag = 2;
             }
         }
         state->armed = 1;
@@ -308,7 +319,7 @@ int RoomM023_JointBeacon(int mode, RoomM023Beacon *state) {
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM023BeaconModel, 0, 0);
         return 0;
     case 1:
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM023BeaconChannel)->pool, state->joint, &offset, state);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomM023BeaconChannel)->pool, state->joint, &offset.vector, &state->position);
         FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomM023BeaconChannel)->pool, 0,
                       &state->rotation);
         switch (state->phase) {
@@ -467,3 +478,25 @@ int RoomM023_JointBeacon(int mode, RoomM023Beacon *state) {
     }
     return 0;
 }
+
+RoomM023Template g_RoomM023JointAnchor = {.vector={0,0,-70,0}};
+RenderColor g_RoomM023RingBandColor = {100,200,10,0};
+RenderColor g_RoomM023StarFanColor = {100,200,100,0};
+char *g_RoomM023BeaconModel;
+u8 g_RoomM023BeaconColorTrack[48] = {
+    0,0,0,0,0,0,0,0, 96,255,96,8,0,0,0,0,
+    255,255,255,8,0,0,0,0, 128,255,128,8,0,0,0,0,
+    0,128,0,8,0,0,0,0, 0,0,0,0,0,0,0,0,
+};
+/* Original USA descriptor 80190720 and task script 80190670. */
+u16 g_RoomM023EffectScript[63] = {
+    5,0,0, 1,6,33, 1,1,4, 1,0,0, 2,0,0, 1,0,1, 2,0,0,
+    4,12,0, 1,1,2, 1,0,0, 2,1,0, 1,0,1, 2,1,0, 4,38,0,
+    1,1,1, 1,0,0, 2,2,0, 1,0,1, 2,2,0, 1,1,0, 0,0,0,
+};
+FieldFxTaskProgram g_RoomM023Effects = {
+    .table={.callbacks={RoomM023_ScatterEmitter,RoomM023_JointGlow,RoomM023_JointBeacon},
+            .sizes={sizeof(RoomM023ScatterState),8,sizeof(RoomM023Beacon)}},
+    .initialize=RoomLib_SetTaskVar0,
+    .script=g_RoomM023EffectScript,
+};

@@ -77,6 +77,37 @@ FNV VRAMb4f02c215f7e80c6 zgadza się z sesją debuggera sterowaną tym samym
 inputem. Pięć powiązanych testów tego kandydata PASS305.56s, bez skipów.
 Nie jest to świeży wynik pełnych 48/48 ani dowód całej kampanii.
 
+Dalszy replay z checkpointu M020 wygrywa walkę z papugą w M022,
+otrzymuje Medicine1 i przechodzi przez drzwi z kluczem201 do pokoju
+prób z fortepianem (archiwum M319), dialog120–124 i film5. M023 jest
+teraz statycznie podpięty przez oryginalny deskryptor118/80190720.
+Naprawy pozostają w istniejącym m023.c i jego nagłówkach: natywne typy
+callbacków, offsety pól aktora/kontekstu i koniec areny listy cząstek.
+Dane deskryptora, skrypt63 halfwords, kolory i punkt stawu porównano
+z archiwum USA. M005 i M023 używają tego samego istniejącego rekordu
+roboczego aktywnego pokoju, zerowanego przy zmianie pokoju; nie są
+jednocześnie aktywne. Nie dodano plików produkcyjnych.
+
+Aktualny build przechodzi do M023: cap101480, dialog125 „Once again…”,
+HP29/64, bez abortu; zrzut pokazuje Ayę i Eve na scenie. Test zasobów
+wykonuje180 klatek oryginalnego programu PM, wszystkie trzy rodzaje zadań,
+rysowanie rzeczywistego modelu z M023, kontrolę łańcuchów OT i granic
+packetów oraz zakończenie zadań. 720 stanów drift callbacku zgadza się
+z niezmodyfikowanym CPU USA (hash5f4bf4da84fc4de5). Cztery testy modułów
+PASS12.96s, rozszerzony test zasobów PASS12.17s; świeży fixture
+ASan/UBSan/function z zasobami również PASS. Pierwszy ring JointGlow
+w oryginale czyta poprzednie dane stosu; port wyznacza pozycję stawu
+przed rysowaniem, co usuwa niezainicjalizowany odczyt, ale wymaga jeszcze
+porównania obrazu. To nie jest dowód całej drugiej walki z Melissą.
+
+Oryginalny PS1 zaakceptował też checkpoint M022 po papudze: brak papugi,
+HP29/64 i ta sama pozycja wejściowa co Continue portu. Ta próba ujawniła
+dwa osobne problemy do rozwiązania: po świeżym Continue statyczny model
+w M319 ma pusty active_matrix i powoduje awarię renderera; żywy rdzeń
+gracza przed zapisem zachowywał maxHP53, choć SaveAya i późniejsze
+Continue/PS1 wskazują64. Nie uznawać jeszcze roundtripów zapisu ani
+synchronizacji statystyk po awansie za w pełni zgodne.
+
 Jeden zapis M012 wygenerowany przez oryginalne funkcje portu zaakceptował
 rzeczywisty PS1: File loaded, identyczne HP14/45, pozycja i yaw432 po Continue.
 Nie jest to dowód wszystkich save’ów i trybów. Headless runner pozwala podawać

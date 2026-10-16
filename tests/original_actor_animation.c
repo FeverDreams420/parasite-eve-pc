@@ -47,6 +47,8 @@ int Inv_ScrambleGrid(void);
 #include "pe1/entity_animation.h"
 #include "pe1/room_m005_drifting_sprite.h"
 #include "pe1/room_m005.h"
+#include "pe1/room_m023_effects.h"
+#include "pe1/room_m023_beacon.h"
 #include "pe1/room_flare.h"
 #include "pe1/room_module.h"
 #include "pe1/room_script_record.h"
@@ -3823,6 +3825,132 @@ static int room_actor_view(void)
     }
     puts("Original room actor view: canonical position, animation, motion, parent/model pointers and B/C release state passed");
     return 1;
+}
+
+static int original_m023_drift_states(void)
+{
+    const int phases[]={-1,0,1,2,32767},ages[]={-1,0,1,3,4,7,8,32767},modes[]={0,1,3};
+    const int poses[][6]={{0,0,0,0,0,0},{1,2,3,4,5,6},{32767,-32768,-1,35,-35,32767},
+        {65535,0,32768,65535,32768,1},{-1,-1,-1,-127,-128,128},{123,-456,789,-35,34,0}};
+    int saved_age=g_FieldFxCurrentAge;unsigned cases=0;
+    uint64_t hash=UINT64_C(14695981039346656037);
+    for(unsigned phase=0;phase<5;++phase)for(unsigned age=0;age<8;++age)
+    for(unsigned pose=0;pose<6;++pose)for(unsigned mode=0;mode<3;++mode){
+        struct {u16 before;RoomM023DriftPulseCallbackView state;u16 after;} record;
+        memset(&record,0xa5,sizeof(record));
+        record.state=(RoomM023DriftPulseCallbackView){poses[pose][0],poses[pose][1],poses[pose][2],
+            phases[phase],poses[pose][3],poses[pose][4],poses[pose][5]};
+        g_FieldFxCurrentAge=ages[age];
+        FieldFxCallbackListCallback callback=RoomM023_DriftPulseCallback;
+        u32 result=callback(modes[mode],&record.state,0);
+        for(unsigned i=0;i<sizeof(record.state);++i)hash=(hash^((u8 *)&record.state)[i])*UINT64_C(1099511628211);
+        for(unsigned i=0;i<4;++i)hash=(hash^((result>>(i*8))&255))*UINT64_C(1099511628211);
+        if(record.before!=0xa5a5 || record.after!=0xa5a5)return 0;
+        ++cases;
+    }
+    g_FieldFxCurrentAge=saved_age;
+    if(hash!=UINT64_C(0x5f4bf4da84fc4de5)){
+        fprintf(stderr,"M023 drift CPU hash: %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original M023 drift: 720 unhooked USA CPU states, phase fallthrough, age boundaries, halfword wrap and callback guards passed");
+    return 1;
+}
+
+static int authored_m023_effect_cycle(SceneAssetView *room)
+{
+    PmPrimarySlot bank[11]={0};FieldActor actor={0},player={0};
+    FieldActorState state={0},player_state={0};u8 action=1;
+    RenderMatrix matrices[21]={0};
+    for(unsigned i=0;i<21;++i){
+        for(unsigned axis=0;axis<3;++axis)matrices[i].rotation[axis][axis]=4096;
+        matrices[i].translation[1]=-100;matrices[i].translation[2]=1024;
+    }
+    actor.state=&state;actor.mode=2;actor.render_object.matrices=matrices;
+    state.action_state=&action;player.state=&player_state;
+    player.pos_x=player.pos_z=10000<<16;
+    PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
+    FieldActor *old_player=g_PlayerEntity;
+    RenderBufferPrefix old_buffers=D_800B0E38;GteMatrix *old_view=g_GeomScroll.words.viewMatrix;
+    int old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset,old_age=g_FieldFxCurrentAge;
+    void *old_program=g_FieldFxTaskPrograms[33];u32 old_random=Psyz_RandState();
+    FieldFxTaskContext *old_context=g_FieldFxTaskContext;FieldFxObjectPrefix *old_owner=g_FieldFxOwner;
+    FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;char *old_model=g_RoomM023BeaconModel;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    static RenderGpuTag ordering[4096];
+    struct {_Alignas(void *) u8 bytes[65536];u8 guard[16];} packets;
+    g_PmTables=(PmTables){g_PmCmdHandlerArray,bank,NULL};g_FieldFxTaskPrograms[33]=&g_RoomM023Effects;
+    g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
+    g_GameState.loaded_scene_archive=&room->header;g_PlayerEntity=&player;
+    g_GeomScroll.words.viewMatrix=&view;
+    Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(27,1);Psyz_GteCtrlWrite(28,0);
+    Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
+    FieldFx_InitTexturePageTable();srand(1);memset(g_RoomM005ScriptAnchorView-4,0,20);
+    int valid=Scene_LoadRoomAssets(118,&actor)==0 && Pm_SendCmd(0,0,0,0,0,0)==0;
+    unsigned drawn=0,linked=0,seen=0;
+    for(unsigned frame=0;valid && frame<180;++frame){
+        memset(&packets,0xa5,sizeof(packets));
+        for(unsigned depth=0;depth<4096;++depth)ordering[depth]=(RenderGpuTag){.address=0xffffff};
+        g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;
+        D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.bytes;
+        valid=Pm_Start(0)==0 && Pm_Exec(0)==0;
+        if(!valid){fprintf(stderr,"M023 task frame %u failed\n",frame);break;}
+        for(unsigned slot=0;slot<8;++slot)if(bank[0].task.tasks.slots[slot].id!=0xffff)
+            seen|=1u<<bank[0].task.tasks.slots[slot].id;
+        if(g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes)){valid=0;break;}
+        drawn+=g_DrawPacketOffset!=0;
+        for(unsigned depth=0;valid && depth<4096;++depth){
+            uintptr_t address=ordering[depth].address;unsigned chain=0;
+            while(address!=0xffffff){
+                if(address<(uintptr_t)packets.bytes || address+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset ||
+                   address%_Alignof(RenderGpuTag) || ++chain>512){valid=0;break;}
+                RenderGpuTag *tag=(void *)address;++linked;address=tag->address;
+            }
+        }
+        for(unsigned i=0;i<16;++i)if(packets.guard[i]!=0xa5)valid=0;
+    }
+    valid=valid && drawn && linked && seen==7 && g_RoomM023BeaconModel && bank[0].task.tasks.count==0;
+    if(!valid)fprintf(stderr,"M023 cycle drawn=%u linked=%u seen=%u remaining=%d\n",drawn,linked,seen,bank[0].task.tasks.count);
+    Pm_Stop(0,&actor,0);
+    g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_task;g_FieldFxCurrentAge=old_age;
+    g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;g_FieldFxTaskPrograms[33]=old_program;
+    g_PlayerEntity=old_player;g_RoomM023BeaconModel=old_model;
+    D_800B0E38=old_buffers;g_GeomScroll.words.viewMatrix=old_view;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;
+    srand(old_random);memset(g_RoomM005ScriptAnchorView-4,0,20);
+    if(valid)puts("Original M023: 180 PM frames, all three task types, real room model, complete task teardown and OT/packet guards passed");
+    return valid;
+}
+
+static int original_m023_assets(PeDisc *disc,PeDiscFile *exe)
+{
+    u8 header[0x800];u32 base;SceneRoomSectorRange range;PeDiscFile archive;
+    if(!pe_disc_read(disc,exe,0,header,sizeof(header)))return 0;
+    memcpy(&base,header+0x18,4);
+    if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+22*8,&range,sizeof(range)) ||
+       !pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);if(!room)return 0;
+    int valid=pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+    if(valid){
+        SceneRoomDirectory *directory=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+        SceneRoomRecord *record=SceneAsset_ResolveOffset(room,directory->scripts&0x3fffff);
+        valid=directory->scripts>>22==1 && record->source.bytes.slot==118 && record->u.handlerAddress==0x80190720u;
+        const u32 expected[]={0x8018f3c8,0x8018f710,0x8018fc14,0,0,0,0,0,0x00080010,0x30,0,0,0x80190644,0x80190670};
+        size_t payload=record->source.offsetAndSlot&0xffffff;
+        valid=valid && !memcmp((u8 *)room+payload+0x80190720u-0x8018eff0u,expected,sizeof(expected)) &&
+            !memcmp((u8 *)room+payload+0x80190670u-0x8018eff0u,g_RoomM023EffectScript,sizeof(g_RoomM023EffectScript)) &&
+            !memcmp((u8 *)room+payload+4,&g_RoomM023JointAnchor,8) &&
+            !memcmp((u8 *)room+payload+12,&g_RoomM023RingBandColor,4) &&
+            !memcmp((u8 *)room+payload+16,&g_RoomM023StarFanColor,4) &&
+            !memcmp((u8 *)room+payload+0x801906f0u-0x8018eff0u,g_RoomM023BeaconColorTrack,48) &&
+            g_RoomM023Effects.table.callbacks[0]==RoomM023_ScatterEmitter &&
+            g_RoomM023Effects.table.callbacks[1]==RoomM023_JointGlow &&
+            g_RoomM023Effects.table.callbacks[2]==RoomM023_JointBeacon &&
+            g_RoomM023Effects.table.sizes[0]==16 && g_RoomM023Effects.table.sizes[1]==8 &&
+            g_RoomM023Effects.table.sizes[2]==48 && g_RoomM023Effects.initialize==RoomLib_SetTaskVar0 &&
+            g_RoomM023Effects.script==g_RoomM023EffectScript;
+    }
+    if(valid)valid=authored_m023_effect_cycle(room);
+    free(room);
+    if(valid)puts("Original M023 module: USA slot 118 descriptor, three callbacks/sizes, complete task script, joint anchor and color tracks verified");
+    return valid;
 }
 
 static int original_room_actor_assets(PeDisc *disc,PeDiscFile *exe)
@@ -9811,7 +9939,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_motion() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;
@@ -9844,7 +9972,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};PeDiscFile exe;u32 pointers[50];
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
-        if (!original_room_actor_assets(&disc,&exe))return 157;
+        if (!original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe))return 157;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;

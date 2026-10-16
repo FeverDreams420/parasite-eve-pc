@@ -2,6 +2,50 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Oryginalny input przechodzi M358→M067 i kolejną walkę: dwóch typu3
+po35HP i jeden typu4 z44HP. M16 pokonuje wszystkich; Heal1 w walce
+zwiększa HP7→37 (po kolejnym trafieniu33), końcowe HP9/107.
+Przy pełnym ekwipunku18/18 wybrano Obtain All, następnie End; dwa nowe
+Junk pozostawiono, poprzednie przedmioty i wyposażenie zachowano.
+Po ekranie wyników wróciło sterowanie. Heal1 w polu podniósł HP9→39.
+Zoo Key/ID202 uruchamia otwarcie następnej bramy M067; po tekście107
+Aya przechodzi do M068. Dalej M068→M072→M069 (amfiteatr), podejście
+uruchamia tekst36 i scenę Eve w M071, po dialogach37/38 wraca M069,
+etap fabuły240, tekst108 i ponownie sterowanie.
+
+Pełny replay od prywatnego Continue F do M069/cap92236, obejmujący
+wszystkie wcześniejsze łupy, Game Over i ponowne Continue, walki M062,
+M358 i M067, obie bramy oraz scenę Eve, PASS na tym samym kandydacie
+normalnie i ASan/UBSan/function z instrumentowanymi PsyZ/SDL. Cały JSON,
+512 zmiennych, timery, ekwipunek i1MiB VRAM identyczne (SHA
+381525db6c5273e33dd096c359c071e1d5947bceea494ec9c7a7499075b467a4).
+M069, etap240, HP39/107, pojemność18, broń9/pancerz14, lock0, bez menu
+ani żywych przeciwników. PrywatneB–F niezmienione. Artefakty
+/tmp/pe-eve-stage240-{normal,san}.log/.vram, input
+/tmp/pe-eve-stage240-args.json, kontrola /tmp/pe-eve-stage240-verify.py
+i proof.json. Obrazy M067/M068/M072/M069/M071 obejrzane headless.
+Nie wykonano jeszcze niezależnego przejścia całego odcinka na PS1;
+identyczność końcowego VRAM nie dowodzi wszystkich klatek pośrednich FMV.
+Nie zmieniano kodu rozgrywki ani nie dodawano plików.
+
+Wcześniejszy osobny replay do M068/cap82412 ukończył zwykły build,
+lecz sanitizowany proces zakończył się statusem143 przed raportem —
+nie jest liczony jako PASS. Zakończył się też stary debugger. Zapisany
+input pozwolił odtworzyć cap92236 w nowym debuggerze; jego VRAM jest
+identyczny z ukończonym zwykłym replayem. Późniejszy pełny sanitizowany
+przebieg cap92236 wymieniony powyżej zakończył się statusem0.
+Dalszy oryginalny input wraca M069→M072, uruchamia ucieczkę Eve i etap244,
+przechodzi do M070 i kończy dialogi96/45/97, przywracając sterowanie.
+Po odejściu Eve odblokowane trójkąty pozwalają dojść do wyjścia M070;
+powrót do M072 ustawia etap248. Żywy debugger: cap102038, HP39/107,
+bez menu/locka/przeciwników, M072, pozycja[189857792,?,158793728], yaw76.
+Ten odcinek po cap92236 nie jest jeszcze objęty porównaniem obu buildów.
+Nowa sesja LLDB87162/PID14980 używa zamrożonego
+/tmp/pe-glint-native-m358-live-debug; launcher /tmp/pe-eve240-live-command.sh,
+log /tmp/pe-eve240-debug-console.log (stdout debuggera przekierowany,
+stan wymaga odczytu logu), wejście nadal /tmp/pe-zoo-checkpoint-input.jsonl.
+Nie nadpisywać tego pliku wykonywalnego, dopóki debugger żyje.
+
 Skrzynia Medicine2 w M062 przeszła również oryginalną ścieżkę pełnego
 ekwipunku (17/17): komunikat „Your inventory is full”, wymianę
 przedmiotu256 na Medicine2/ID7, użycie Medicine2 przez menu (HP35→101),
@@ -55,8 +99,8 @@ PrywatneB–F niezmienione. Artefakty /tmp/pe-m358-battle-{normal,san}.log
 oraz .vram, input /tmp/pe-m358-battle-args.json, kontrola
 /tmp/pe-m358-battle-verify.py i proof.json. Brak niezależnego przejścia
 całego spotkania na PS1; M384/M387 mają dowód modułu/danych, nie pełnej
-rozgrywki tych lokacji. Kolejny cel kampanii: północne wyjście M358→M067.
-Żywy debugger zatrzymano po dodatkowym Heal1 w polu (HP14→44),
+rozgrywki tych lokacji. Późniejsze M067 i amfiteatr opisano powyżej.
+Poprzedni debugger zatrzymano po dodatkowym Heal1 w polu (HP14→44),
 cap70830, bez menu/locka; ten późniejszy odcinek nie jest częścią
 porównanego replayu cap70450.
 

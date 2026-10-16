@@ -6,6 +6,12 @@ Port naprawia oryginalne moduły C na miejscu. Nie wymaga byte match ani
 odbudowy plików wykonywalnych PS1. Porównania z CPU/obrazem oryginału służą
 weryfikacji zachowania gry. Nie ma zastępczego silnika ani katalogu pc.
 
+Najnowszy osobny przebieg z prywatnego Continue M034 wygrywa starcie
+M034/M348, odbiera nagrody, przechodzi reporterów i nocną rozmowę, a potem
+planszę Day2/Fusion i pytanie o zapis w M351. Nie jest to jeszcze pełna
+trasa od New Game ani ukończony dzień2. Wybór zapisu ujawnia brak
+powiązania opcode231; szczegółowe dowody i ograniczenia opisano niżej.
+
 Automatyczny input od New Game przechodzi Melissę, zaplecze, przemianę
 szczura i zwycięską walkę, następnie M020: dialog112, menu, użycie Medicine1
 (HP11->45) i otrzymanie następnego leku. Osobna próba potwierdza zamknięcie
@@ -418,6 +424,57 @@ zero żywych przeciwników, HP59/72. Pełny JSON i cały VRAM są identyczne,
 SHA256 dc295b4452cc43574b005f522e7846c9245b536d428d28bc5506c41489be105a.
 Dalsze przejście do M359 potwierdzono osobno w żywej sesji; ten końcowy
 odcinek nie jest objęty powyższym porównaniem dwóch replayów.
+
+Dalsza weryfikacja M359/cap32326 obejmuje nagrodę259 i dialog135 przed
+operą: pełny JSON i VRAM zwykłego buildu oraz ASan/UBSan/function są zgodne,
+SHA256 eb4f4c084bede8e98d5a315ba2001d994129181e5ac2635bafe7e94a42e8268b.
+Rzeczywisty input zamyka dialogi135–144, przechodzi rozmowę w samochodzie
+M036 i nocną narrację M000. Następny skrypt sceny a80650c8 ujawnił opcode233
+(USA80015c7c): odczyt maksymalnego HP przez Inv_DispatchCommand1107.
+
+Podpięto istniejące Script_RunInvCommand w actor_opcodes.c, zmieniając
+wyłącznie widok argumentów na natywną tablicę wskaźników interpretera.
+Zachowano oryginalne wykonanie polecenia raz, pierwsze wygaszenie ekranu,
+oczekiwanie na menu, rewind0x1c i zapis niezerowego wyniku. Nie ma nowej
+implementacji ekwipunku. 1920 stanów z niehookowanym CPU USA obejmuje
+odczyty HP, nieznane polecenia, wspólny argument wejścia/wyniku, flagi
+węzła, menu obecne/nieobecne, wyniki0/387/-1 i flagi wygaszania;
+hash2fe6ce5c1827001d. Dodatkowo rzeczywisty dispatcher wykonuje1107
+i kończy węzeł. Cztery powiązane testy przeszły w13.05s; test aktorów
+z zasobami przeszedł osobno zwykle i pod ASan/UBSan/function.
+To nie jest dowód wszystkich poleceń ekwipunku ani ukończenia dnia2.
+Przebieg z tą poprawką dociera do planszy Day2/Fusion (M351, a80650c8),
+HP92/92, cap46534; zwykły build i ASan/UBSan/function mają identyczny JSON
+i cały VRAM, SHA256
+14bc817387cee592853d686a2f54aa3090df45f55a0f5b06c1f0345b019f64a0.
+
+Potwierdzenie planszy ujawniło brak opcode180. Podpięto istniejące
+Script_SetMoveFlag/Script_ClearMoveFlag180/181, zachowując oryginalne
+ustawienie bajtu g_PlayerMovementEnabled na1/0. 512 stanów porównano
+z niehookowanymi funkcjami USA800197d0/800197f0 i wywołano przez rzeczywisty
+dispatcher; hasha6aa125c6851c325. Cztery powiązane testy po tej zmianie
+przeszły w13.03s. Bez nowych plików, przenoszenia funkcji ani zastępczej
+logiki przejścia między dniami. Rozszerzony test233 przechodzi także przez
+rzeczywisty dispatcher: otwarcie menu, ponowne oczekiwanie bez powtórnego
+odczytu HP oraz zamknięcie z wynikiem387. Cztery testy po rozszerzeniu
+fixture’a przeszły w12.51s.
+
+Żywa sesja dochodzi do pytania o zapis (M351/cap49000, dialog182,
+HP92/92). Wybór Yes zatrzymuje się na niepodpiętym opcode231
+Script_OpenMemCardDialog (vblank49003, actor1:0, script_byte7168).
+Cały przebieg prywatnego Continue M034 → walka → M348/nagrody → M359 →
+M036 → M000 → plansza dnia2 → pytanie o zapis M351/cap49000 przechodzi
+zwykły build i ASan/UBSan/function: oba exit0, identyczny pełny JSON
+oraz cały VRAM (SHA256 89a0dc8e65fb644c98e894aaa56a2513834500faec7829d2327a7b9482e40adb). HP92/92,
+pojemność16, nagroda259 zachowana. Obejrzano kadry reporterów, samochodu,
+nocnej narracji, planszy Fusion i pytania o zapis. Końcowy fixture aktorów
+z cyklem menu także przeszedł ASan/UBSan/function z wymaganymi zasobami.
+Pełnych50 testów po tych poprawkach nadal nie powtórzono.
+
+To następny konkretny punkt pracy; nie uznawać zapisu po dniu1 ani
+właściwej eksploracji dnia2 za ukończone. W kadrze pytania o zapis
+widać także nakładające się elementy tekstu; nie deklarować zgodności
+obrazu na podstawie samej zgodności obu natywnych replayów.
 
 Eksperymentalny zapis wykonany w trakcie przejścia do M348 nie odtworzył
 spotkania po Continue; przyczyna nie została ustalona. Nie traktować go

@@ -1032,22 +1032,13 @@ int Script_ShowReceivedItem(int **arg0) {
     return 1;
 }
 
-/* Decoded script operands; the result is written back through its pointer. */
-typedef struct ScriptInvCommandArgs {
-    int *command;
-    int *value;
-    int *other;
-    int *result;
-    int *unused;
-} ScriptInvCommandArgs;
-
-int Script_RunInvCommand(ScriptInvCommandArgs *args) {
+int Script_RunInvCommand(int **args) {
     ScriptNode *node;
     int flags;
     int result;
 
     if ((g_ScriptNodePool->flags & 0x20) == 0) {
-        *args->result = Inv_DispatchCommand(*args->command, *args->value, *args->other, args->unused);
+        *args[3] = Inv_DispatchCommand(*args[0], *args[1], *args[2], args[4]);
     }
 
     if (MenuWidget_HasActiveNodes() != 0) {
@@ -1067,7 +1058,7 @@ int Script_RunInvCommand(ScriptInvCommandArgs *args) {
 
     result = g_MenuFrameCommand;
     if (result != 0) {
-        *args->result = result;
+        *args[3] = result;
         g_ScriptNodePool->flags &= 0xFFDF;
     }
     return 1;

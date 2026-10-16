@@ -1086,12 +1086,12 @@ int Script_GetFloorNumber(int **arg0) {
     return 1;
 }
 
-int Script_SetMoveFlag(void) {
+int Script_SetMoveFlag(int **unused) {
     Script_EnableMovement();
     return 1;
 }
 
-int Script_ClearMoveFlag(void) {
+int Script_ClearMoveFlag(int **unused) {
     Script_DisableMovement();
     return 1;
 }

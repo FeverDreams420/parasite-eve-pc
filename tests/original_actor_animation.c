@@ -2982,6 +2982,90 @@ static int original_task_pause_opcodes(void)
     return 1;
 }
 
+static int original_movement_gate_opcodes(void)
+{
+    int (*handlers[])(int **)={Script_SetMoveFlag,Script_ClearMoveFlag};
+    u8 saved_gate=g_PlayerMovementEnabled;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned op=0;op<2;++op)for(unsigned value=0;value<256;++value){
+        if(g_ScriptQueueOpcodeHandlers[180+op]!=handlers[op])return 0;
+        g_PlayerMovementEnabled=value;u32 result=handlers[op](NULL);
+        const u32 words[]={result,g_PlayerMovementEnabled};
+        for(unsigned w=0;w<2;++w)for(unsigned b=0;b<4;++b)
+            hash=(hash^((words[w]>>(b*8))&255))*UINT64_C(1099511628211);
+        FieldActor actor={0};u32 program[]={180+op,0,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_PlayerMovementEnabled=value;g_CurrentEntity=&actor;g_ScriptNodePool=&node;Script_RunQueue();
+        if(g_PlayerMovementEnabled!=words[1] || result!=1 || node.current.script!=program+4 ||
+           node.flags!=0x90 || node.active || g_ScriptNodePool)return 0;
+        ++cases;
+    }
+    g_PlayerMovementEnabled=saved_gate;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=512 || hash!=UINT64_C(0xa6aa125c6851c325))return 0;
+    puts("Original opcodes180/181: 512 unhooked USA CPU movement-gate states and real dispatcher completion passed");
+    return 1;
+}
+
+static int original_inventory_command_opcode(void)
+{
+    const int commands[]={1106,1107,-1,1099,1121};
+    const u16 flags[]={0,1,0x20,0x21,0x80,0xff,0x8000,0xffff};
+    const u32 geom[]={0,0x2000,0xc000,0xdeadbeef};
+    const s16 results[]={-1,0,387};
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    s16 saved_command=g_MenuFrameCommand;int saved_geom=g_GeomScroll.state.flags;
+    u32 saved_game=g_GameState.flags,saved_block=g_GameStateFlags;
+    u16 saved_max=g_AyaSaveState.max_hp,saved_hp=g_AyaSaveState.current_hp;
+    MenuWidgetNode *saved_head=g_MenuWidgetActiveListHead;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[233]!=Script_RunInvCommand)return 0;
+    for(unsigned c=0;c<5;++c)for(unsigned f=0;f<8;++f)for(unsigned menu=0;menu<2;++menu)
+    for(unsigned r=0;r<3;++r)for(unsigned g=0;g<4;++g)for(unsigned alias=0;alias<2;++alias){
+        ScriptNode node={.flags=flags[f],.active=7};u32 code[20]={0};MenuWidgetNode widget={0};
+        int input[]={commands[c],0x12345678,(s32)0x87654321,(s32)0xa5a5a5a5,0x1234};
+        int *args[]={input,input+1,input+2,input+(alias?0:3),input+4};
+        g_ScriptNodePool=&node;g_ScriptCursor=code+16;g_MenuFrameCommand=results[r];
+        g_GeomScroll.state.flags=geom[g];g_GameState.flags=0x12345678;g_GameStateFlags=0x87654321;
+        g_AyaSaveState.max_hp=92;g_AyaSaveState.current_hp=17;g_MenuWidgetActiveListHead=menu?&widget:NULL;
+        u32 result=Script_RunInvCommand(args);
+        const u32 words[]={result,node.flags,node.active,(u32)((uintptr_t)g_ScriptCursor-(uintptr_t)(code+16)),
+            (u32)*args[3],(u32)g_GeomScroll.state.flags,g_GameState.flags,g_GameStateFlags,
+            (u16)g_MenuFrameCommand,(u32)input[0],(u32)input[1],(u32)input[2],(u32)input[4]};
+        for(unsigned w=0;w<13;++w)for(unsigned b=0;b<4;++b)
+            hash=(hash^((words[w]>>(b*8))&255))*UINT64_C(1099511628211);
+        ScriptNode expected={.flags=node.flags,.active=node.active};
+        if(memcmp(&node,&expected,sizeof(node)) || g_ScriptNodePool!=&node ||
+           g_MenuWidgetActiveListHead!=(menu?&widget:NULL) || widget.next ||
+           g_AyaSaveState.max_hp!=92 || g_AyaSaveState.current_hp!=17)return 0;
+        ++cases;
+    }
+    g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_MenuFrameCommand=saved_command;
+    g_GeomScroll.state.flags=saved_geom;g_GameState.flags=saved_game;g_GameStateFlags=saved_block;
+    g_AyaSaveState.max_hp=saved_max;g_AyaSaveState.current_hp=saved_hp;g_MenuWidgetActiveListHead=saved_head;
+    if(cases!=1920 || hash!=UINT64_C(0x2fe6ce5c1827001d)){
+        fprintf(stderr,"Inventory233 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    FieldActor *saved_actor=g_CurrentEntity;FieldActor actor={0};ScriptNode node={0};
+    u32 code[]={233|(5u<<13),0,1107,0,0,0,0,32,0};
+    g_AyaSaveState.max_hp=92;g_CurrentEntity=&actor;node.current.script=code;node.active=1;node.flags=0x80;g_ScriptNodePool=&node;
+    g_MenuWidgetActiveListHead=NULL;g_MenuFrameCommand=0;Script_RunQueue();
+    int valid=code[5]==92 && node.current.script==code+9 && node.flags==0x90 && !node.active && !g_ScriptNodePool;
+    MenuWidgetNode widget={0};g_MenuWidgetActiveListHead=&widget;
+    node=(ScriptNode){.current.script=code,.active=1,.flags=0x80};g_ScriptNodePool=&node;code[5]=0;
+    Script_RunQueue();
+    valid=valid && code[5]==92 && node.current.script==code && node.flags==0xa0 && node.active==1 && !g_ScriptNodePool;
+    g_AyaSaveState.max_hp=61;g_ScriptNodePool=&node;Script_RunQueue();
+    valid=valid && code[5]==92 && node.current.script==code && node.flags==0xa0 && node.active==1 && !g_ScriptNodePool;
+    g_MenuWidgetActiveListHead=NULL;g_MenuFrameCommand=387;g_ScriptNodePool=&node;Script_RunQueue();
+    valid=valid && code[5]==387 && node.current.script==code+9 && node.flags==0x90 && !node.active && !g_ScriptNodePool;
+    g_GeomScroll.state.flags=saved_geom;g_GameState.flags=saved_game;g_GameStateFlags=saved_block;
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    g_AyaSaveState.max_hp=saved_max;g_MenuWidgetActiveListHead=saved_head;g_MenuFrameCommand=saved_command;
+    if(!valid)return 0;
+    puts("Original opcode233: 1920 unhooked USA CPU states, HP queries, unknown commands, aliased result operands, first menu fade, menu wait, nonzero/cancel results and dispatcher completion passed");
+    return 1;
+}
+
 static int original_equip_selection_opcode(void)
 {
     const s16 commands[]={-32768,-2,-1,0,1,2,3,4,128,385,386,387,32767};
@@ -4073,7 +4157,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_movement_gate_opcodes() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

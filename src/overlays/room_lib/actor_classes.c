@@ -760,15 +760,15 @@ void RoomLib_HandlerE(RoomEnt *o) {
         gte_ldv0((void *)scratch);
         gte_mvmva();
         gte_stmac((void *)&scratch[4]);
-        state->target[0] += *(int *)&scratch[4] << 12;
-        state->target[1] += *(int *)&scratch[6] << 12;
-        state->target[2] += *(int *)&scratch[8] << 12;
+        state->target[0] = (s32)((u32)state->target[0] + ((u32)*(int *)&scratch[4] << 12));
+        state->target[1] = (s32)((u32)state->target[1] + ((u32)*(int *)&scratch[6] << 12));
+        state->target[2] = (s32)((u32)state->target[2] + ((u32)*(int *)&scratch[8] << 12));
         if (state->duration == 0) {
-            state->duration = ((FieldFx_GetFixedDistance3D((Vec3Fixed *)state->start, (Vec3Fixed *)state->target) << 16) / state->speed) + 1;
+            state->duration = (s32)((u32)((s32)((u32)FieldFx_GetFixedDistance3D((Vec3Fixed *)state->start, (Vec3Fixed *)state->target) << 16) / state->speed) + 1u);
         }
-        state->delta[0] = (state->target[0] - state->start[0] + 0x800) >> 12;
-        state->delta[1] = (state->target[1] - state->start[1] + 0x800) >> 12;
-        state->delta[2] = (state->target[2] - state->start[2] + 0x800) >> 12;
+        state->delta[0] = (s32)((u32)state->target[0] - (u32)state->start[0] + 0x800u) >> 12;
+        state->delta[1] = (s32)((u32)state->target[1] - (u32)state->start[1] + 0x800u) >> 12;
+        state->delta[2] = (s32)((u32)state->target[2] - (u32)state->start[2] + 0x800u) >> 12;
         state->heading = ratan2(state->delta[0], state->delta[2]);
     }
     scratch[52] = 0;
@@ -780,18 +780,18 @@ void RoomLib_HandlerE(RoomEnt *o) {
         remain = state->duration;
     }
     if (state->eased != 0) {
-        scale = 0x1000 - rcos(((remain << 11) / state->duration) & 0xFFF);
-        link->pos[0] = state->start[0] + (((state->delta[0] * scale + 0x1000) >> 13) << 12);
+        scale = 0x1000 - rcos(((s32)((u32)remain << 11) / state->duration) & 0xFFF);
+        link->pos[0] = (s32)((u32)state->start[0] + ((u32)((s32)((u32)state->delta[0] * (u32)scale + 0x1000u) >> 13) << 12));
         if (state->lockY == 0) {
-            link->pos[1] = state->start[1] + (((state->delta[1] * scale + 0x1000) >> 13) << 12);
+            link->pos[1] = (s32)((u32)state->start[1] + ((u32)((s32)((u32)state->delta[1] * (u32)scale + 0x1000u) >> 13) << 12));
         }
-        link->pos[2] = state->start[2] + (((state->delta[2] * scale + 0x1000) >> 13) << 12);
+        link->pos[2] = (s32)((u32)state->start[2] + ((u32)((s32)((u32)state->delta[2] * (u32)scale + 0x1000u) >> 13) << 12));
     } else {
-        link->pos[0] = state->start[0] + ((state->delta[0] * remain / state->duration) << 12);
+        link->pos[0] = (s32)((u32)state->start[0] + ((u32)((s32)((u32)state->delta[0] * (u32)remain) / state->duration) << 12));
         if (state->lockY == 0) {
-            link->pos[1] = state->start[1] + ((state->delta[1] * remain / state->duration) << 12);
+            link->pos[1] = (s32)((u32)state->start[1] + ((u32)((s32)((u32)state->delta[1] * (u32)remain) / state->duration) << 12));
         }
-        link->pos[2] = state->start[2] + ((state->delta[2] * remain / state->duration) << 12);
+        link->pos[2] = (s32)((u32)state->start[2] + ((u32)((s32)((u32)state->delta[2] * (u32)remain) / state->duration) << 12));
     }
     if (state->copyPosition != 0) {
         link->posMirror[0] = link->pos[0];

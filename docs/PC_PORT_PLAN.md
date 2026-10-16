@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Dalsza eksploracja M374 potwierdziła wyjście na mapę świata i ponowne
+wejście przy etapie232. Ponowne wejście stawia dwóch dodatkowych
+policjantów: przeszkody przyx283,z390 ix289,z1009 są kolizjami NPC,
+nie potwierdzonym błędem ruchu. Przejście do parku biegnie zachodnim
+wyjściemx<−1280,z≈550; północna droga wraca na mapę świata.
+
+W M059 brakowało wiązania slot75/USA80192520. Całe0x35A0 bajtów kodu
+i tabel z tej lokacji jest identyczne z M022 (SHA
+ba882d6c2ff9f160796d490043d58f387b77a06e3ecde233f26de9516952f464).
+Podpięto istniejącą klasę E, trzeci wiersz g_RoomActorClassTable;
+nie dodano implementacji zastępczej ani pliku. Fixture z Disc 1 sprawdza
+oba deskryptory i identyczność całej biblioteki, nie tylko siedmiu metod.
+
+Nowy korpus klasy E wykazał UBSan „left shift of negative value” w ruchu
+w ujemnym kierunku. W istniejącym HandlerE poprawiono arytmetykę słów
+przy wyznaczaniu celu, delty, czasu i ruchu liniowego/z easingiem, zachowując
+32-bitowe zawijanie.2304 stany już rozpoczętego ruchu zgadzają się z
+niehookowanym CPU USA (ab6562b990f5c842), włącznie z fazami signed,
+lockY, kopiowaniem pozycji i końcem kontrolera.576 pierwszych klatek
+(100939fc059de009) porównuje ponadto czas automatyczny, signed lokalne
+przesunięcia i transformację; CPU i jego wywołania wykonuje kod USA,
+ale COP2 obsługuje PsyZ, więc ten drugi korpus nie jest niezależnym
+audytem sprzętowego GTE. Oba korpusy przechodzą normalnie; sprawdzają
+szerokie natywne wskaźniki oraz granice oryginalnego slotu PM.
+Pełny fixture --assets z instrumentowanymi PsyZ/SDL przechodzi
+ASan/UBSan/function również z oboma nowymi korpusami klasy E.
+Świeży zwykły replay Continue E/cap45174 na poprawionej arytmetyce
+wczytuje M059 i oddaje sterowanie, etap232, HP92/92, broń9/pancerz1,
+pozycja[−271974400,0,20381696], obrót3952 zgodne z oryginalnym PS1.
+Cały JSON i1MiB VRAM są identyczne z kandydatem sprzed poprawki
+arytmetyki (1f74fda52e8a450a2a268087ea6a5ae3f4c138908df26bd54d5aaa0ee1e44aa1).
+PrywatneB/C/D/E pozostają niezmienione. Pełny replay ASan/UBSan/function
+do tego punktu nadal trwa; nie uznaje się go jeszcze za zaliczony.
+
+
 Świeże testy z wymaganym Disc 1 potwierdzają wejście do walki z Melissą
 (100,95 s) i pełny scenariusz spotkania (129,22 s), oba PASS bez SKIP.
 Komendy82 i206 pozostają podpięte do oryginalnych Scene_SetGlobalFlags

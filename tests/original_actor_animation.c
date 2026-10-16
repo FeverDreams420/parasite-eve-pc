@@ -5328,26 +5328,42 @@ static int original_room_actor_assets(PeDisc *disc,PeDiscFile *exe)
         size_t offset=(record->source.offsetAndSlot&0xffffff)+0x801924e8u-0x8018eff0u;
         valid=valid && offset<=bytes && sizeof(methods)<=bytes-offset &&
             !memcmp((u8 *)room+offset,methods,sizeof(methods));
-        SceneRoomSectorRange park_range;
-        valid=valid && pe_disc_read(disc,exe,0x800ull+0x80093378u-base+58*8,&park_range,sizeof(park_range));
-        if(valid){
-            size_t park_bytes=(size_t)park_range.roomSectors*2048;
-            SceneAssetView *park=malloc(park_bytes);
-            if(!park){free(room);return 0;}
-            valid=bytes>=0x35a8 && park_bytes>=0x35a8 &&
-                pe_disc_read(disc,&archive,(u64)(park_range.start+park_range.scratchSectors+park_range.textureSectors)*2048,park,park_bytes);
+        const struct {u16 room;u8 classes;} libraries[]={
+            {22,1}, {32,16}, {59,4}, {61,4}, {62,4}, {66,4}, {67,4},
+            {78,4}, {81,4}, {197,5}, {198,5}, {199,5}, {201,4}, {206,5},
+            {207,5}, {210,5}, {214,5}, {217,5}, {218,4}, {219,5}, {220,5},
+            {226,5}, {227,5}, {232,4}, {386,4}, {405,21}, {407,17}, {408,21},
+            {409,21}
+        };
+        unsigned descriptors=0;
+        for(unsigned m=0;m<sizeof(libraries)/sizeof(libraries[0]) && valid;++m){
+            SceneRoomSectorRange linked_range;
+            valid=pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(libraries[m].room-1)*8,&linked_range,sizeof(linked_range));
+            if(!valid)break;
+            size_t linked_bytes=(size_t)linked_range.roomSectors*2048;
+            SceneAssetView *linked=malloc(linked_bytes);
+            if(!linked){free(room);return 0;}
+            valid=bytes>=0x35a8 && linked_bytes>=0x35a8 &&
+                pe_disc_read(disc,&archive,(u64)(linked_range.start+linked_range.scratchSectors+linked_range.textureSectors)*2048,linked,linked_bytes);
             if(valid){
-                SceneRoomDirectory *park_directory=SceneAsset_ResolveOffset(park,park->header.directoryOffset);
-                SceneRoomRecord *park_record=SceneAsset_ResolveOffset(park,park_directory->scripts&0x3fffff);
-                valid=park_directory->scripts>>22==1 && park_record->source.bytes.slot==75 &&
-                    park_record->u.handlerAddress==0x80192520u &&
-                    !memcmp((u8 *)room+8,(u8 *)park+8,0x35a0);
+                SceneRoomDirectory *linked_directory=SceneAsset_ResolveOffset(linked,linked->header.directoryOffset);
+                SceneRoomRecord *linked_record=SceneAsset_ResolveOffset(linked,linked_directory->scripts&0x3fffff);
+                unsigned found=0;
+                valid=!memcmp((u8 *)room+8,(u8 *)linked+8,0x35a0);
+                for(unsigned j=0;j<linked_directory->scripts>>22 && valid;++j){
+                    unsigned class_id;
+                    switch(linked_record[j].source.bytes.slot){case 70:class_id=0;break;case 75:class_id=2;break;case 73:class_id=4;break;default:valid=0;continue;}
+                    valid=!(found&(1u<<class_id)) && linked_record[j].u.handlerAddress==0x801924e8u+class_id*28;
+                    found|=1u<<class_id;++descriptors;
+                }
+                valid=valid && found==libraries[m].classes;
             }
-            free(park);
+            free(linked);
         }
+        valid=valid && descriptors==48;
     }
     free(room);
-    if(valid)puts("Original room actor assets: M022 slot 70/M059 slot 75, identical full actor module, all 42 class methods and 4096 USA sine/cosine entries verified");
+    if(valid)puts("Original room actor assets: 29 identical complete actor modules, all 48 class descriptors, all 42 class methods and 4096 USA sine/cosine entries verified");
     return valid;
 }
 

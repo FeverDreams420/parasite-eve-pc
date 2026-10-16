@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 16 października 2026
 
+Biblioteka actor_classes.c jest teraz powiązana we wszystkich29 pokojach
+Disc1, których kompletny moduł0x35A0 bajtów i tabela są identyczne
+z M022. Obsługiwane48 deskryptorów obejmuje17 klasyD (slot70),26 klasyE
+(slot75) i5 klasyC (slot73). Loader nadal sprawdza oryginalny adres
+każdego deskryptora i używa istniejących pełnych klas; wariant M028
+pozostaje osobno. Nie dodano nowych plików ani implementacji zastępczej.
+
+Rozszerzony fixture wczytuje wszystkie29 modułów z CUE/BIN, porównuje
+cały kod/dane i wszystkie42 metody oraz sprawdza komplet48 deskryptorów,
+klasy, sloty i brak duplikatów. Pełny --assets przechodzi normalnie
+oraz pod ASan/UBSan/function z instrumentowanymi PsyZ/SDL. Potwierdza to
+zgodność powiązań i danych; nie oznacza przejścia wszystkich29 lokacji.
+
+Nowy zwykły replay Continue E→walka M059/Heal1/nagrody→Medicine1→M060
+przechodzi także do M061/cap60580, gdzie starszy kandydat kończył się
+brakiem slot75/USA80192520. Etap232, HP61/92, Cure-P w slocie10,
+zużyte Medicine1 ze slotu11, lock0, bez menu i żywych przeciwników.
+M061 wczytuje obraz oraz oryginalne skrypty wejścia. Pełny replay
+sanitizowany tego samego kandydata również PASS: cały JSON, timery,
+4096 bajtów wyposażenia i1MiB VRAM identyczne (SHA b07f487c2249974f47f65e7b6bec8c7c2ae529275e6458e8b4bc892794ed55a4).
+M16 ma11 naboi po pięciu strzałach i nadal2 sloty; wszystkie inne bajty
+wyposażenia zachowane. PrywatneB/C/D/E pozostały niezmienione.
+Dalszej eksploracji M061 i pozostałych26 nowych lokacji nie uznaje się
+jeszcze za zweryfikowaną rozgrywkę.
+Niezależny PS1 w rzeczywistej walce M059 potwierdził też Heal1 przez
+oryginalne menu PE: HP17→47 (dokładnie30), broń9/pancerz1 zachowane.
+Nie wyrównywano HP ani upływu czasu między przebiegami.
+
+
 Oryginalny input na kandydacie z powiększonym buforem tła kończy losową
 walkę M059: M16 pokonuje aktorów5:31 i6:3, Heal1 przez menu PE zwiększa
 HP6→36. Po odbiorze EXP i wszystkich przedmiotów sterowanie wraca do

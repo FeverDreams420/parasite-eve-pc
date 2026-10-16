@@ -349,6 +349,7 @@ int Scene_LoadRoom(unsigned int roomId)
     char name[8];
     unsigned int base;
     int map;
+    int actor_library = 0;
     int ready;
     int loaded;
     unsigned int i;
@@ -433,13 +434,22 @@ int Scene_LoadRoom(unsigned int roomId)
 
     room = state->loaded_scene_assets;
     directory = SceneAsset_ResolveOffset(room, room->header.directoryOffset);
+    /* These USA rooms link the same complete actor library and class table. */
+    switch (map + 1) {
+    case 22: case 32: case 59: case 61: case 62: case 66: case 67:
+    case 78: case 81: case 197: case 198: case 199: case 201: case 206:
+    case 207: case 210: case 214: case 217: case 218: case 219: case 220:
+    case 226: case 227: case 232: case 386: case 405: case 407: case 408:
+    case 409:
+        actor_library = 1;
+        break;
+    }
     /* Validate all native bindings before mutating the scene banks. */
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
         const void *native = NULL;
         slot = record[i].source.bytes.slot;
-        /* These seven USA rooms contain the same original mirror module.
-         * All other serialized descriptors still need native bindings. */
+        /* Seven USA rooms share the original mirror module. */
         if (slot == 69 && record[i].u.handlerAddress == 0x8018fb44u) {
             switch (map + 1) {
             case 17: case 18: case 21: case 45: case 102: case 151: case 319:
@@ -449,13 +459,13 @@ int Scene_LoadRoom(unsigned int roomId)
         }
         if (map + 1 == 272 && slot == 15 && record[i].u.handlerAddress == 0x8018f1a8u)
             native = &g_RoomM272Handlers;
-        if (map + 1 == 22 && slot == 70 && record[i].u.handlerAddress == 0x801924e8u)
+        if (actor_library && slot == 70 && record[i].u.handlerAddress == 0x801924e8u)
             native = &g_RoomActorClassTable[0];
-        if (map + 1 == 59 && slot == 75 && record[i].u.handlerAddress == 0x80192520u)
+        if (actor_library && slot == 75 && record[i].u.handlerAddress == 0x80192520u)
             native = &g_RoomActorClassTable[2];
         if (map + 1 == 28 && slot == 73 && record[i].u.handlerAddress == 0x801931dcu)
             native = &g_RoomActorClassTable[4];
-        if (map + 1 == 32 && slot == 73 && record[i].u.handlerAddress == 0x80192558u)
+        if (actor_library && slot == 73 && record[i].u.handlerAddress == 0x80192558u)
             native = &g_RoomActorClassTable[4];
         if (map + 1 == 34 && slot == 8 && record[i].u.handlerAddress == 0x8018ff7cu)
             native = &g_RoomGlowOrbHandlers;
@@ -613,10 +623,12 @@ int Scene_LoadRoom(unsigned int roomId)
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomM023Effects;
             memset(g_RoomM005ScriptAnchorView - 4, 0, 20);
             g_RoomM023BeaconModel = NULL;
-        } else if (map + 1 == 22) {
+        } else if (actor_library && slot == 70) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];
-        } else if (map + 1 == 59 && slot == 75) {
+        } else if (actor_library && slot == 75) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
+        } else if (actor_library && slot == 73) {
+            g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];
         } else if (map + 1 == 34 && slot == 8) {
             g_PmCmdHandlerTable[slot] = &g_RoomGlowOrbHandlers;
             g_RoomGlowOrbOwner = NULL;
@@ -642,7 +654,7 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_RoomDropFieldQuadSprite, 0, sizeof(g_RoomDropFieldQuadSprite));
             memset(&g_RoomDropFieldDropSprite, 0, sizeof(g_RoomDropFieldDropSprite));
             memset(&g_RoomDropFieldMotionSprite, 0, sizeof(g_RoomDropFieldMotionSprite));
-        } else if ((map + 1 == 28 || map + 1 == 32) && slot == 73) {
+        } else if (map + 1 == 28 && slot == 73) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];
         } else {
             g_PmCmdHandlerTable[slot] = map + 1 == 272 ? &g_RoomM272Handlers : &g_RoomFxMirrorHandlers;

@@ -259,6 +259,23 @@ skrypt walki, a przy60248 są trzy typ3/60HP; walka jeszcze niezaliczona.
 Świeży original-game-melissa-encounter PASS127.04s na tym samym buildzie,
 wymagane CUE, bez SKIP/abortów opcode206 i82; log
 /tmp/pe-three-final-melissa.log.
+Dalsza walka M085: M16 obniża pierwszego typ3 z60 do16HP, druga seria
+go pokonuje. Pozostałe dwa nadal mają60HP. HP119→102→53; Heal1 przez
+oryginalne menu podnosi HP, dalsze ataki/trucizna dają67, potem51.
+Próba Detox (spell3) ujawnia następny jawny brak: Cannot start original
+PE effect100 (command390,status−8), abort w Battle_AdvancePhase.
+Nie jest to zwycięstwo ani PASS Detox. Proces zatrzymany na SIGABRT;
+trace /tmp/pe-three-final-m085-input.jsonl jest ciągły od59702 do62024,
+pełne args /tmp/pe-m085-detox100-failure-args.json, backtrace w
+/tmp/pe-three-final-m085-live-lldb.log.
+Audyt oryginalnego resident bloku: task100 descriptor800E1C64, callbacki
+800DACA4/800DB0D0 odpowiadają istniejącym FieldFx_CosineEmitter i
+FieldFx_SineEmitter w kompletnym już przenośnym emitters.c; rozmiary12/12,
+script800E1BE0 ma18 halfwordów. Brakuje powiązania i oryginalnych danych:
+color tracks800E1C04/40 i800E1C2C/56, tints800C22E8/800C22EC,
+anchor800E221C. Nie dodano jeszcze żadnego z tych powiązań; następny krok
+to audyt CPU/GTE i cyklu task100, naprawa danych w tym samym module
+oraz ponowienie zachowanego pełnego inputu zwykle i z sanitizerami.
 Następnie kontynuować kampanię. Pełna kampania i pełny zakres celu
 pozostają nieukończone. Użytkowe bu00/ i bu10/ nietknięte.
 

@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Bieżąca zwykła gałąź jest w M095/sklepie z bronią przy108333, HP181/181,
+lock2, menuNULL. Powrót M097→M096→M093→M094 (dialog114 i otwarcie sklepu)
+→M095 nie wymagał zmian kodu. Skrzynia typu7 dała Tool/item22 do pustego8;
+Medicine2 pozostało w10. Trzy Defense+1 są zużyte na SpVest/record7
+(bonus defense4), jeden na noszony SvVest/record5 (bonus defense3), sloty
+15/19/20 puste. Przy skrzyniach i ladach trzeba użyć Cross z rzeczywistej
+granicy kolizji; nie wymuszać dojścia do środka bryły. Blokady pomocnika
+walk były poprawnymi kolizjami lub zbyt ścisłym waypointem, nie crashami gry.
+
+Frozen /tmp/pe-o1-raster-game nadal używany przez exec76299/PID86034,
+cwd /tmp/pe-m089-prepared-v3-live; trace i log jak poniżej. Read-only zrzuty
+/tmp/pe-day3-gunshop-v1-debug.vram i -debug-equipment.bin (pełne4096 bajtów).
+Pełna powtórka coldI→cały ten odcinek normal/SAN uruchomiona exec56815;
+/tmp/pe-day3-gunshop-v1-run.py, -prepare.py/-verify.py i
+-{normal,san}-args.json/.log. Sprawdzić terminal oraz verifier przed
+przypisaniem PASS; nie restartować żywego procesu. Na tym etapie wynik
+porównania po97913 jeszcze nieznany. Nie zmieniono kodu gry ani plików kart
+użytkownika. Następnie można zwykłym Tune Up użyć zdobytego Tool albo
+kontynuować rozmowy/wyjazd z Soho; pełna kampania pozostaje otwarta.
+
+Zakończony zwykły coldI→M089 zwycięstwo→Day3/J→Soho→apteka→Medicine2
+w slocie10/cap97913: normal exit0 40,39s i SAN exit0 141,77s, bez zgłoszeń.
+Cały JSON i pełne1MiB VRAM identyczne także z debuggerem; SHA256 VRAM
+4024618c75774fb140da531ce346d3a213ab86e288c44dad78eb89b01dc148f1.
+B–I niezmienione, utworzony po drodze J identyczny z kanonicznym zwykłym J,
+bu10 puste. Manifest /tmp/pe-day3-pharmacy-v1-proof.json, -verify.py,
+-prepare.py/-run.py i komplet args/logs. Zero historycznych/nowych HP guards.
+Powtórka obejmuje oryginalną obsługę pełnego inventory i zastąpienie Ammo20
+przez Medicine2/item7; nie jest to tylko wpisanie przedmiotu w stan.
+
 Zakończona pełna zwykła powtórka coldI→polowe Heal2→M089 zwycięstwo→
 sceny/filmy→Day3→Save J/cap83389: normal exit0 36,14s, SAN exit0 130,27s.
 Cały JSON oraz pełne1MiB VRAM identyczne także z debuggerem; SHA256 VRAM

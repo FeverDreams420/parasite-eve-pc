@@ -11575,7 +11575,7 @@ static int original_credit_images(PeDisc *disc)
     printf("Original credits images: 31 real images, %u decoder steps, %u RGB24 slice uploads, full staged VRAM and both presented buffers match whole-frame MDEC output; ten invalid states/workspaces fail and recover\n",states,uploads);return 1;
 }
 
-static int original_menu_sound_commands(PeDisc *disc)
+static int original_menu_sound_commands(PeDisc *disc,PeDiscFile *exe)
 {
     _Alignas(16) static u8 bank[0x1400];PeDiscFile archive;
     if(!pe_disc_find(disc,"PE.IMG",&archive) ||
@@ -11593,22 +11593,50 @@ static int original_menu_sound_commands(PeDisc *disc)
     if(g_AkaoMessageQueueCount)return 0;
     g_GameState.bank_work_far_end=bank;
     if(g_AkaoBgmHandle[0]!=bank)return 0;
+    u8 expected_programs[4][sizeof(bank)];size_t program_sizes[4];
     for(unsigned i=0;i<4;++i){
-        u32 payload=0;
+        u32 payload=0,length=0;
         for(unsigned row=0;row<count;++row){
             u16 key;memcpy(&key,bank+offset+row*12+10,2);
-            if(key==0x44c+i){memcpy(&payload,bank+offset+row*12+4,4);payload&=0xffffff;break;}
+            if(key==0x44c+i){memcpy(&payload,bank+offset+row*12+4,4);payload&=0xffffff;memcpy(&length,bank+offset+row*12,4);length&=0xffffff;break;}
         }
-        if(!payload || payload>sizeof(bank)-4)return 0;
+        if(!payload || payload>sizeof(bank)-4 || length<8 || length>sizeof(bank)-payload)return 0;
+        program_sizes[i]=length-4;memcpy(expected_programs[i],bank+payload+4,length-4);
+        void *stable=Asset_FindTable2CByU16Key((char *)bank,0x44c+i);
+        if(!stable || stable==bank+payload || memcmp(stable,bank+payload,length) ||
+           stable!=Asset_FindTable2CByU16Key((char *)bank,0x44c+i))return 0;
         u32 magic;memcpy(&magic,bank+payload,4);if(magic!=0x4f414b41)return 0;
         play[i]();AkaoQueueEntry *command=&g_AkaoMessageQueue[i];
         if(g_AkaoMessageQueueCount!=(int)i+1 || command->opcode.word!=0x24 ||
-           command->arg0.sequence!=bank+payload+4 || command->arg1!=0x100 ||
+           command->arg0.sequence!=(u8 *)stable+4 || command->arg1!=0x100 ||
            command->arg2!=0x80 || command->arg3!=0x7f)return 0;
     }
+    memset(bank,0xa5,sizeof(bank));
+    for(unsigned i=0;i<4;++i)
+        if(memcmp(g_AkaoMessageQueue[i].arg0.sequence,expected_programs[i],program_sizes[i]))return 0;
     g_GameState=saved_state;g_AkaoCmd=saved_command;g_AkaoMessageQueueCount=saved_count;
     g_AkaoCmd24Sequence=saved_sequence;memcpy(g_AkaoMessageQueue,saved_queue,sizeof(saved_queue));
-    puts("Original menu audio: canonical loaded-bank alias and all four real USA sound keys queue native AKAO commands; absent bank stays quiet");
+    u8 exe_header[0x800];u32 exe_base;SceneRoomSectorRange ranges[2];
+    if(!pe_disc_read(disc,exe,0,exe_header,sizeof(exe_header)))return 0;
+    memcpy(&exe_base,exe_header+0x18,4);
+    for(unsigned i=0;i<2;++i)
+        if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-exe_base+(98+i)*8,&ranges[i],sizeof(ranges[i])))return 0;
+    size_t room_bytes=(size_t)ranges[1].roomSectors*2048;
+    if(room_bytes<(size_t)ranges[0].roomSectors*2048 || room_bytes<=0x26f18)return 0;
+    u8 *room=malloc(room_bytes);if(!room)return 0;
+    int valid=pe_disc_read(disc,&archive,(u64)(ranges[0].start+ranges[0].scratchSectors+ranges[0].textureSectors)*2048,
+                           room,(size_t)ranges[0].roomSectors*2048);
+    u8 *footstep=valid?Asset_FindTable2CByU16Key((char *)room,1004):NULL;
+    u8 footstep_bytes[36];
+    if(!footstep || footstep==room+0x26f0c || memcmp(footstep,room+0x26f0c,sizeof(footstep_bytes))){free(room);return 0;}
+    memcpy(footstep_bytes,footstep,sizeof(footstep_bytes));
+    valid=pe_disc_read(disc,&archive,(u64)(ranges[1].start+ranges[1].scratchSectors+ranges[1].textureSectors)*2048,
+                       room,room_bytes);
+    AkaoTrack lookahead={0};lookahead.pc=footstep+12;
+    if(!valid || room[0x26f18]!=0xc9 || memcmp(footstep,footstep_bytes,sizeof(footstep_bytes)) ||
+       Akao_LookupSampleBankByte(&lookahead)!=0x7f){free(room);return 0;}
+    free(room);
+    puts("Original menu audio: canonical loaded-bank alias and all four real USA sound keys queue native AKAO commands with stable shared programs after source overwrite; absent bank stays quiet");
     return 1;
 }
 
@@ -13767,7 +13795,7 @@ int main(int argc, char **argv)
         if (!original_video_decoder(&disc)) return 136;
         if (!original_video_stream_errors()) return 137;
         if (!original_movie_uploads(&disc) || !original_script_movie(&disc)) return 138;
-        if (!original_akao_resident_tables(&disc,&exe) || !original_image_display_switch(&disc,&exe) || !original_boot_display_data(&disc) || !original_menu_sound_commands(&disc) || !original_enemy_slots(&disc,&exe)) return 140;
+        if (!original_akao_resident_tables(&disc,&exe) || !original_image_display_switch(&disc,&exe) || !original_boot_display_data(&disc) || !original_menu_sound_commands(&disc,&exe) || !original_enemy_slots(&disc,&exe)) return 140;
         if (!original_title_screen(&disc)) return 134;
         for(unsigned mode=0;mode<50;++mode) {
             SceneFlagRecord *native=g_EntityInputRulesByMode[mode];

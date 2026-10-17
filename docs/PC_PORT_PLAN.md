@@ -2,6 +2,67 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Finalna weryfikacja naprawy SFX: coldK→rozmowa M099→wyjście/M100→
+zwykłe zwycięstwo z trzema przeciwnikami/cap29527 normal exit0 15,94s,
+SAN exit0 62,74s. Cały JSON i pełne1MiB VRAM identyczne także z debuggerem,
+SHA256 VRAM f48f389aa8e74572ff59fd7bf677840e54fa63af2d4f7d0887a0c2619e597b82.
+HP88/181, battle2/live0, menu20; B–K niezmienione, bu10 puste, brak błędów
+sanitizerów i HP diagnostics. Manifest /tmp/pe-room-sfx-v1-native-proof.json,
+-verify.py; exec65371 zakończony0. Zbiorczy /tmp/pe-room-sfx-v1-proof.json
+wiąże hashe obu zmienionych źródeł, frozen normal/SAN i głównego executable,
+pełne testy CPU/asset oraz ten replay. Nie dowodzi to pełnego PCM gry ani
+całej kampanii. Żaden nowy plik repozytorium nie powstał.
+
+Bieżący debugger po poprawce nadal exec34303/PID88078, cap29527, M100,
+HP88, oryginalny panel EXP przed odebraniem nagród. Dalej obsłużyć nagrody,
+M107→Cathy/M111 i dalszy NYPD. Stary crash exec8898/PID87568 pozostaje
+wyłącznie do odczytów przy awarii i nie może być użyty do pe-step.
+
+Naprawa czasu życia pokojowych SFX w istniejącym
+Asset_FindTable2CByU16Key/scene_assets.c: pełne serializowane wpisy mają
+trwałe kopie, identyczne bajty współdzielą kopię. Nie zatrzymuje to głosów,
+nie pomija NULL i nie zmienia programu sequencera; jego PC/call stack nadal
+wskazują poprawne dane po ponownym użyciu bufora pokoju. Wyszukiwanie kluczy,
+flagi i offsety pozostają oryginalne. Długość to low24 pierwszego słowa
+SceneCdStreamRecord. Brak nowych plików ani nowych funkcji produkcyjnych.
+Kopie pozostają osiągalne do końca procesu; cały istniejący katalog pokoju
+Disc1 ma3351 poprawnych wpisów i577 unikalnych programów/24184 bajty.
+Audyt /tmp/pe-room-sfx-lifetime-audit.py/.json;24 zerowe banki pokojów
+są jawnie oznaczone short-room i nie stanowią danych SFX. To nie audyt Disc2.
+
+Istniejący original_menu_sound_commands sprawdza wszystkie cztery realne
+menu keys, współdzielenie kopii i integralność zakolejkowanych programów po
+nadpisaniu całego źródła. Dodatkowo ładuje rzeczywisty M099, bierze1004,
+ładuje M100 do TEGO SAMEGO bufora i potwierdzaC9 w nadpisanym+26f18, całe
+36 bajtów zachowanego SFX oraz oryginalny LookupSampleBankByte==7F zamiast
+wejścia do pustego call_stack. To deterministyczny test przyczyny crasha.
+
+Unikalne frozen /tmp/pe-room-sfx-v1-{game,fixture} i -sanitized, build
+/tmp/pe-room-sfx-v1-build.py/.log: normal/SAN CPU exit0 oraz wymagane pełne
+--assets exit0 10,98/47,73s, bez sanitizer errors; PsyZ/SDL instrumentowane.
+/tmp/pe-room-sfx-v1-tests-results.json i -{normal,san}-{cpu,assets}.log.
+Główny cmake build także exit0 (/tmp/pe-room-sfx-v1-cmake-build.log), więc
+build/parasite-eve-pc zawiera poprawkę. Nie nadpisywano live executable.
+
+Ważne ograniczenie odtwarzania starej awarii: standalone baseline
+/tmp/pe-nypd-k-audio-crash-v1-{normal,san} zakończył się0 przy27875,
+15,25/60,10s. Nie wolno przedstawiać go jako reprodukcji SIGSEGV ani dowodu
+braku błędu. Oryginalny zatrzymany debugger87568 nadal zachowuje prawdziwy
+crash i odczytane nadpisanie; wrażliwość zależy od momentu aktywnego SFX.
+Deterministyczny test nadpisania danych powyżej obejmuje tę przyczynę.
+
+Nowy poprawiony debugger exec34303/PID88078, cwd
+/tmp/pe-nypd-k-sfx-fixed-live, coldK i wszystkie pierwotne odcinki inputu
+odtworzone pojedynczo, przechodzi do27875/M100 bez awarii. Dalej zwykła
+walka M100: dwa typ5/35HP i jeden typ6/70HP pokonane trzema seriami;
+przy29527 HP88/181, battle2/live0, menu20/EXP review. Native
+HealthApplied==0. Jeszcze nie odebrano nagród. Nowy trace
+/tmp/pe-nypd-k-sfx-fixed-input.jsonl; log/args -live-lldb.log/-live-args.json.
+Pełny coldK→ta walka normal/SAN uruchomiony exec65371; prefix
+/tmp/pe-room-sfx-v1-native-, runner/prepare/verifier gotowe, gold
+/tmp/pe-room-sfx-v1-native-debug.vram. Przed dalszą grą odczytać terminal
+oraz -verify.py. Cathy's room i cała kampania nadal pozostają do wykonania.
+
 Pełny coldI→utworzenie zwykłego K/cap161012 zakończony normal/SAN exit0,
 72,04/242,90s. Cały JSON, pełne1MiB VRAM i8192 bajty K identyczne także
 z debuggerem; SHA256 VRAM

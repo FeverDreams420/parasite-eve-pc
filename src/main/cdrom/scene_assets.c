@@ -280,6 +280,7 @@ void Draw_ClearOnFlag(void) {
 #include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
 #define pe_seek _fseeki64
@@ -655,7 +656,42 @@ void *name(base_type base, key_type key) { \
 }
 
 DEFINE_ASSET_SEARCHER(Asset_FindTable08ByU32Key, void *, int, keyEntries, AssetU32KeyRecord, packedOffset)
-DEFINE_ASSET_SEARCHER(Asset_FindTable2CByU16Key, char *, int, streamEntries, SceneCdStreamRecord, offset)
+void *Asset_FindTable2CByU16Key(char *base, int key) {
+    /* Room buffers are reused while queued and active SFX still refer to their
+     * programs. Keep the serialized programs alive, sharing identical bytes
+     * across rooms; sequencer PCs and loop targets then remain valid. */
+    struct StreamCopy {
+        struct StreamCopy *next;
+        size_t size;
+        u8 bytes[];
+    };
+    static struct StreamCopy *copies;
+    SceneAssetDirectory *directory = SceneAsset_ResolveOffset(
+        base, ((SceneAssetBlob *)base)->directoryOffset);
+    u32 packed = directory->streamEntries;
+    SceneCdStreamRecord *records = SceneAsset_ResolveOffset(base, packed & 0x3FFFFF);
+
+    for (u32 i = 0; i < packed >> 22; ++i) {
+        if (records[i].key == key) {
+            size_t size = records[i].reserved & 0xFFFFFF;
+            const u8 *program = SceneAsset_ResolveOffset(base, records[i].offset & 0xFFFFFF);
+            struct StreamCopy *copy;
+            if (size < 8) return NULL;
+            for (copy = copies; copy; copy = copy->next) {
+                if (copy->size == size && !memcmp(copy->bytes, program, size))
+                    return copy->bytes;
+            }
+            copy = malloc(sizeof(*copy) + size);
+            if (!copy) return NULL;
+            copy->size = size;
+            memcpy(copy->bytes, program, size);
+            copy->next = copies;
+            copies = copy;
+            return copy->bytes;
+        }
+    }
+    return NULL;
+}
 DEFINE_ASSET_SEARCHER(Asset_FindTable30ByU16Key, char *, int, trackEntries, SceneTrackRecord, offset)
 
 

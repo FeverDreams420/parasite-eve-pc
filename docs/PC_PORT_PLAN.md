@@ -2,6 +2,112 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Zwykły nowy zapis M i zimne Continue M potwierdzone niezależnie.
+Pełny coldL→50440/SaveM: normal exit0 21,54s, SAN exit0 78,97s;
+cały JSON, pełne1MiB VRAM i wszystkie kartyB–M identyczne także z
+prawdziwym zapisem debuggera. VRAM SHA256
+9d8506ad95485dd33362a2c7dc0f618a7b2fa51fba22b14c532a80e240699220.
+Zimne ContinueM→24000: normal exit0 14,09s, SAN exit0 56,67s;
+M112/A8021148, stage400, HP83/189, menuNULL/lock0, M16[34,9,0],
+sloty1/8 puste i drugiTool10 zachowany. Cały JSON i1MiB VRAM identyczne
+między wariantami; nie zapisano obrazu debuggera tego zimnego Continue.
+VRAM SHA256 3e9611ed673a46a19258215dc0f58a2fa3175b5d8ffe0333f977316e178b0053.
+CałeB–M zgodne z kanonicznym /tmp/pe-nypd-ordinary-m-checkpoint,
+bu10 puste, zero HP diagnostics i błędów ASan/UBSan/function.
+/tmp/pe-nypd-ordinary-m-v1-verify.py sprawdza oba przypadki, dowody
+/tmp/pe-nypd-ordinary-save-m-v1-proof.json oraz
+/tmp/pe-nypd-ordinary-continue-m-v3-proof.json.
+Zbiorczy /tmp/pe-nypd-ordinary-m-v1-proof.json wiąże cztery przypadki
+(TuneUp, zwycięstwoM115, SaveM, ContinueM), SHA256 executable/argv,
+odcisk śledzonego kodu i zamrożony input /tmp/pe-nypd-ordinary-m-v1-input.jsonl
+od42416 do50440; jego prefiks -escape-v2-args.json zawiera coldL→42416.
+Pola pool/PE/poziom poza JSON są tylko odczytami debuggera, nie pełną
+niezależną zgodnością tych pól. Zgodność VRAM PC/SAN nie jest oracle PS1.
+Przygotowanie Continue miało dwie odrzucone konfiguracje: v1 wskazywało
+slotL i starszy executable (exit0, ale nie testM), v2 miało nieposortowane
+zdarzenia pada (oba exit1/Invalid input buttons/order). Dopiero v3 wybiera
+M dwunastoma Down, ma posortowany input i właściwy frozen v2 w obu wariantach.
+Nie zaliczać v1/v2 jako dowodów ContinueM. Brak nowych plików repozytorium
+lub nowego silnika; w tym etapie zmieniono wyłącznie istniejącą dokumentację.
+Kolejny etap: kontynuować zwykłą kampanię z M112 i nowego M, badać następne
+moduły na miejscu. Cała kampania i port pozostają nieukończone.
+
+
+Zwykłe zwycięstwo M115 po TuneUp osiągnięte i niezależnie odtworzone.
+Nowy prefiks coldL→Tool/TuneUp→M121 prowadzi do42416/HP127/ATB9000.
+Pierwsza próba po TuneUp przegrana przy44932/HP0: trzystrzałowe serie
+oraz dwa Heal2 nie wystarczyły. Dowód tej przegranej jest tylko śladem
+inputu i stanami debuggera /tmp/pe-m113-tuneup-v1-{input.jsonl,lldb.log};
+nie ma jej niezależnej powtórki ani twierdzenia o zwycięstwie. PID93394
+został zakończony po przegranej. Nie zmieniano parametrów gry.
+
+Następna próba od42416: oryginalne menu/escape przy42692, po zakończeniu
+powrotu lock0 przy43112. Próba przejścia prawą krawędzią znów wywołuje
+spotkanie; ucieczka sama nie daje ukończenia tej strefy. Przy43584 HP124,
+PE136; Energy Shot6 z dodatkowym zatwierdzeniem celu usuwa sub1/78HP,
+przy44072 nadalHP124. Czekanie w lewej części areny odnawiaPE kosztem
+jednego trafienia: przy45092 HP90/PE114. Drugi Energy Shot zostawia
+sub31/4HP (74 obrażenia); po zwykłym pojedynczym strzale przy46248
+pozostaje tylko sub0/78HP, HP87/PE48, clip5. Pełna seria daje celowi21HP,
+AyaHP53, clip2; następne dwa strzały usuwają ostatniego wroga.
+Przy46904 foes=[]/battle2/HP53, a przy47024 oryginalne EXP/menu20,
+stage400, bank44=0x0406183C, M16clip0. Bez HP/PE/ammo/actor writes.
+Dystans jest utrzymywany w lewej części areny; zewnętrzny tester ma teraz
+patrol x[−2600,−2250]/z[−2700,−2300]. To sterowanie padem, nie nowa AI gry.
+
+Pełny coldL→47024: normal exit0 20,51s i SAN exit0 75,26s,
+cały JSON i pełne1MiB VRAM zgodne także z debuggerem, SHA256
+34de7ed7d7446bac1560b26746b33488cadde45a1d60c6a8509d5d4a417c6c3b.
+B–L bez zmian, bu10 puste, zero HP diagnostics i błędów sanitizerów.
+/tmp/pe-m115-ordinary-win-v2-proof.json i -prepare.py/-run.py/-verify.py.
+Trace /tmp/pe-m115-ordinary-escape-v2-input.jsonl od42416;
+-args.json zawiera pełny wcześniejszy prefiks, w tym prawdziwe TuneUp.
+
+Nagrody M115/ObtainAll/End przy47568: pool31→76 (+45 nabojów; skład listy nie został osobno zapisany), poziom14,
+HP53/189, PE83; zasoby te odczytano bezpośrednio debuggerem (JSON nie
+serializuje poola/PE/poziomu). Prawdziwe field Heal1 daje53→83 przy47792,
+zamknięcie menu. Przejście prawą bramą do M112/A8021148 przy48548.
+Telefon osiągnięty tylnym obejściem biurka; przednia trasa testera blokuje
+się przyworld[−447,936]. Legalna tylna trasa od tego miejsca:
+[−430,300],[−430,−150],[−1300,−150],[−1550,−100],[−1600,100],
+[−1700,300],[−1720,650],[−1550,850], następnie w stronę[−1455,850].
+Ruch zatrzymuje się na[−1482,850], ale jest już w obszarze telefonu;
+yaw3072 i Cross uruchamiają dialog6 przy49608. To poprawka trasy testera,
+nie zmiana kolizji ani teleporter. Oryginalne Save/Slot1 pokazujeL/row11;
+Down raz wybiera pustyM/row12. Zapis utworzony przy50440/File saved/menu40:
+8192 bajty, SHA256 9f5fd2b9c73f320d6b7ed92b71b1b269f921cdc71ec264c61f438a06b151f573,
+M112/stage400/HP83/189, M16[34,9,0], drugiTool10, clip0, pool76.
+Kanoniczny katalog /tmp/pe-nypd-ordinary-m-checkpoint/bu00 zawieraB–M;
+B–L identyczne z prawdziwymL, bu10 puste. Nie używano c.capture/pe-save.
+Aktualny debugger exec26129/PID93920 przy50440, prywatne karty w
+/tmp/pe-m115-ordinary-escape-v2-live. Starszy exec91119/PID91474 jest
+zatrzymany na poprzedniej przegranej, nie kontynuować go.
+
+
+Nowe zwykłe TuneUp po skrzyni M113: prawdziwe menu (root row6) wybiera
+M92F ze slotu1 jako dawcę, M16 ze slotu9 jako cel, modifier0/RoF3.
+Oryginalny transfer zastępuje tail33/RoF2 kodem34/RoF3, zachowuje Heat9;
+Tool ze slotu8 i M92F ze slotu1 zostają zużyte, Tool10 pozostaje.
+Przy38544 M113/menuNULL/lock0, HP127/189, stage400, broń9/zbroja14,
+M16clip8, tail[34,9,0], rekord dawcy6 ma iconId0. Bez zmian stanu debuggerem.
+Niezależny pełny coldL→38544: normal exit0 18,44s, SAN exit0 69,06s;
+cały JSON i1MiB VRAM zgodne także z debuggerem, SHA256
+8b3b492d218a99cfba5e7e9fe675f3103125c37d769010b2732ad790f408ef08.
+B–L bez zmian, bu10 puste, zero HP diagnostics i błędów sanitizerów.
+/tmp/pe-m113-tuneup-v1-proof.json, -prepare.py/-run.py/-verify.py;
+preceding_m113_victory oznacza wygraną M113 w prefiksie, nie nową walkę.
+Nowy debugger exec77034/PID93394 używa tego samego frozen v2, prywatne
+karty /tmp/pe-m113-tuneup-v1-live, input -input.jsonl od38096.
+Nie nadpisywać executable ani jego obiektów przy aktywnych inferiorach.
+
+Odczyt rzeczywistej granicy areny M115 wyjaśnia część złego sterowania:
+lewa granica x około−2996 (nie granica planszy−4360). Poprzedni patrol
+zewnętrznego testera celował w−4000, więc prowadził Ayę pod ścianę.
+Tester przeniesiony na prostokąt x[−2600,−900]/z[−2700,−2300], wyłącznie
+zmiana generowania pada w /tmp/pe_park_combat_control.py; bez zmian gry.
+Nie utożsamiać poprzednich porażek testera z błędem mechaniki gry.
+
+
 Świeża regresja dokładnego zgłoszenia Melissy na obecnym frozen v2:
 New Game→oryginalne spotkanie, --native-melissa/input14, wymagane prawdziwe
 CUE, headless, rzeczywisty input. Normal exit0 42,63s, SAN exit0 161,46s;

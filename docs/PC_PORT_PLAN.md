@@ -2,6 +2,47 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Naprawiono rzeczywisty crash Tune-Up przy zużyciu wyposażonego dawcy.
+Zwykły Continue C przechodzi M042→Baker/M041 (Mod Permit55), korytarzM043,
+boczne M047 i M056 z odmową wejścia do aresztu/dialog206 oraz powroty,
+M051→zbrojownięM052, odbiór Tool22, rozmowę Torresa25–56 i M16A1,
+plansze samouczkaM362 (Right zmienia stronę, Circle wraca), magazyn oraz
+właściwe Tune-Up z menu. Wybrano M84F jako dawcę i M16A1 jako odbiorcę.
+Pierwszą odwrotną propozycję anulowano w potwierdzeniu bez zużycia zasobów.
+Przy potwierdzeniu poprawnej operacji stary build dereferencjonował pusty
+slot po usunięciu M84F: FindWeapon w armor_capacity.c:299, wywołany przez
+Inv_TransferItemBetweenLists. To nie błąd nawigacji. Stary sanitizowany
+build odtwarza ten sam crash ze zwykłego inputu (exit-6/35,64s), UBSan
+potwierdza member access within null pointer. Żywy crash zachowano w
+/tmp/pe-day2-c-station-v1-crash-bt.txt; proces zakończono, nie kontynuować go.
+
+Poprawiono wyłącznie istniejące FindWeapon w src/main/item/armor_capacity.c:
+puste rekordy są pomijane, indeks wykluczenia nie tworzy wskaźnika przed
+początkiem tablicy przy-1. Pozostała oryginalna kolejność wyszukiwania i
+wynik-1 przy braku Cluba. W istniejącym fixture dodano osobną regresję
+--tool-equipped-donor i CTest original-tool-equipped-donor:14 konfiguracji
+(każda dostępna pozycja Cluba i jego brak), rzeczywisty transfer bonusów,
+zużycie dawcy, automatyczny wybór zastępczy. Jednostkowa regresja zwalnia
+z kosztu Toola; jego rzeczywiste zużycie sprawdza pełny runtime replay.
+
+Finalny /tmp/pe-day2-tool-transfer-v2:173 świeże obiekty/profil, manifest
+zależności/obiektów/archiwów/binarek zgodny. CPU, wymagane assets i nowa
+regresja:6/6 normal/SAN; root build0, nowy CTest PASS. Pełny replay z C
+normal/SAN0 w13,51/35,64s, pełny JSON i1MiBVRAM identyczne (również z
+poprawionym kandydatemv1). Przy52642: M052, etap152, HP72/72,
+pojemność15, M84F i Tool zużyte (sloty0/9 puste), M16A1 bonusy[5,4,1],
+automatycznie wybrany Club/slot2. Menu Tune-Up nadal otwarte:13/cursor[0,3].
+Źródłowy C niezmieniony, brak zmian RAM/HP/statystyk/skryptów w testach
+rozgrywki. VRAM SHA256
+2024352b5266077cd51e35f8a8727100df61e05bbed18693cfc9e5be2b39bf4b.
+Dowody /tmp/pe-day2-tool-transfer-v2-{proof,build-proof,test-results}.json,
+verify.py, pełne args/logi/VRAM. Input w /tmp/pe-day2-c-station-v1-input.jsonl.
+Operacji transferu nie porównano jeszcze niezależnie z USA PS1; zgodność
+natywnych obrazów nie dowodzi pixel-perfect. Nie uruchamiano całej macierzy
+native bootstrap po tej poprawce. Nie dodano plików repo ani nowych warstw.
+Następny krok: zamknąć Tune-Up, wyposażyć M16A1 przez oryginalne menu,
+dokończyć komisariat i przejść do następnej lokacji; cel pozostaje aktywny.
+
 Dalszy zwykły input z tej samej trasy B przechodzi rozmowy Daniela/M036,
 nocną narrację/M000, planszę Fusion/M351, oryginalne pytanie o zapis182,
 Yes i zapis C, zamknięcie menu oraz M042/dialog9. Przy61749: etap136,

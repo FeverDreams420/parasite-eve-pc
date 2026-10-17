@@ -47,7 +47,11 @@ and reaches Daniel's M036 scene. Normal/sanitized runs match the controlled
 session in full state and VRAM, with the source save unchanged. The same route
 continues through the Day 2 transition and creates genuine Save C. Its cold
 Continue works in both native builds and the original USA game, with matching
-HP, position, all inventory slots and equipment records.
+HP, position, all inventory slots and equipment records. Ordinary input from C
+also covers the station's opening conversations, side rooms, armory rewards,
+tuning tutorial and a real bonus transfer. Consuming the equipped donor exposed
+an empty-slot crash in the original inventory module; the in-place fix now passes
+the same replay in both builds and a permanent fallback-weapon regression.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

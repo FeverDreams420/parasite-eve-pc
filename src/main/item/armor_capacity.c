@@ -293,13 +293,12 @@ static inline int ItemKind(int slot) {
     return 0;
 }
 static inline int FindWeapon(int kind, int excluded) {
-    s16 *slot = g_InvItemPtr;
-    s16 *skip = slot + excluded;
-    while (slot < g_InvItemPtr + g_InvSlotLimit) {
-        if (slot != skip && Inv_LookupItemRecordScaled(*slot)->kind == kind) break;
-        ++slot;
+    for (int slot = 0; slot < g_InvSlotLimit; ++slot) {
+        if (slot == excluded) continue;
+        /* Consuming the equipped donor leaves an empty slot in this list. */
+        ItemDataRecord *item = Inv_LookupItemRecordScaled(g_InvItemPtr[slot]);
+        if (item && item->kind == kind) return slot;
     }
-    if (slot < g_InvItemPtr + g_InvSlotLimit) return slot - g_InvItemPtr;
     return -1;
 }
 static inline void SetTracked(unsigned index, int value) {

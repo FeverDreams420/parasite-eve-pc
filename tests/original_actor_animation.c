@@ -14759,8 +14759,51 @@ static int original_native_bootstrap(const char *executable,int field_control)
     return 0;
 }
 
+/* Run in its own process: removing an equipped donor must scan empty slots
+ * before finding the fallback club, or return -1 when no club remains. */
+static int original_tool_equipped_donor(void)
+{
+    for (int fallback = -1; fallback < 15; ++fallback) {
+        if (fallback == 0 || fallback == 1) continue;
+        memset(&g_PlayerInventoryState, 0, sizeof(g_PlayerInventoryState));
+        g_PlayerEntity = NULL;
+        g_AyaSaveState.inventory_slot_count = 15;
+        g_AyaInventoryItems[0] = 256;
+        g_AyaInventoryItems[1] = 257;
+        g_InventoryRuntime.tracked[0] = 0;
+        g_InventoryRuntime.tracked[2] = -1;
+        ItemDataRecord *source = &g_InventoryRuntime.equipment[0];
+        ItemDataRecord *dest = &g_InventoryRuntime.equipment[1];
+        source->iconId = dest->iconId = 1;
+        source->kind = 1;
+        dest->kind = 4;
+        source->bonusStats[0] = 4; source->bonusStats[1] = 2;
+        dest->bonusStats[0] = 1; dest->bonusStats[1] = 2; dest->bonusStats[2] = 1;
+        if (fallback >= 0) {
+            g_AyaInventoryItems[fallback] = 258;
+            g_InventoryRuntime.equipment[2].iconId = 1;
+            g_InventoryRuntime.equipment[2].kind = 8;
+        }
+        g_InvActiveListOverride = NULL;
+        g_InvSavedSelectionFromStorage[0] = g_InvSavedSelectionFromStorage[1] = 0;
+        g_InvSavedSelectionIndex[0] = 0;
+        g_InvSavedSelectionIndex[1] = 1;
+        /* Waive the tool cost only in this isolated lookup regression. The
+         * recorded runtime replay verifies actual Tool consumption. */
+        Inv_TransferItemBetweenLists(0, -1, 0, 999);
+        if (g_AyaInventoryItems[0] || source->iconId ||
+            g_InventoryRuntime.tracked[0] != fallback ||
+            dest->bonusStats[0] != 5 || dest->bonusStats[1] != 4 || dest->bonusStats[2] != 1 ||
+            source->bonusStats[0] || source->bonusStats[1] || source->bonusStats[2]) return 0;
+    }
+    puts("Original Tool transfer: equipped donor removal, every fallback club position and no-club result passed");
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--tool-equipped-donor"))return original_tool_equipped_donor()?0:157;
+
     if(argc==3 && !strcmp(argv[1],"--native-diagnostic-hp-arguments"))return native_diagnostic_hp_arguments(argv[2])?0:1;
     if(argc==2 && !strcmp(argv[1],"--texture-pages")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

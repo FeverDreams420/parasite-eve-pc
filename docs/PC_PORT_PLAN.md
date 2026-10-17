@@ -77,15 +77,33 @@ To dowód odtwarzalnej przegranej, nie zwycięstwa nad bossem. M16 ma Heat:
 cel3 jest odporny (3HP/pocisk), cel2 słaby (25HP/pocisk). Heal2 wymaga120PE.
 Nie zmieniano tych oryginalnych zasad w celu ułatwienia testu.
 
+M118 wygrane zwykłym inputem od Continue N przez M121 i M117. Dwie serie
+M16 oraz Energy Shot pokonały cel6 (150→99→48→0HP); odebrano oryginalną
+nagrodę, runtime item262 w slocie1. Przy38880: M118/A8021448, HP93,
+tryb walki9, lock0, menuNULL, oba Medicine1 w8/11. Niezależna powtórka
+normal/SAN na tym samym v4 exit0 (20,66/78,50s), identyczny cały JSON
+oraz1MiB VRAM debuggera (SHA065368506a2f41219e571308c6782c0a950f3bee5b9783379738d3154e6e59d3).
+B–N niezmienione, bu10 puste, zero HP diagnostics i błędów sanitizerów.
+/tmp/pe-m118-ordinary-win-v1-proof.json, -input.jsonl oraz
+-normal/-san-args.json i logi. Weryfikator sprawdza także SHA binarek względem manifestu v4.
+To dowód tej walki i nagrody, nie ukończenia kampanii.
+
+Pełna gałąź M118→ponowne M121→M117 również ma niezależną powtórkę:
+normal/SAN exit0 (22,11/84,41s), identyczne JSON/VRAM debuggera,
+niezmienione karty i zero HP diagnostics/błędów sanitizerów.
+/tmp/pe-m118-m121-return-v1-proof.json. Przy43350 w M117 Aya8HP,
+Medicine1 w11/12/19, SG550 w1, drugi M121 zakończony z nagrodami.
+Ponowna rozmowa lekarza/dialog105 nie leczy; nie zmieniano skryptu.
+
 Debugger current-v8 został zakończony. Następca current-v9 (session2763),
 /tmp/pe-nypd-current-v9-{lldb.log,args.json,input.jsonl}, używa tego samego
-immutable v4 i prywatnych kart. Z bazowego Continue N przeszedł M121,
-M117 i niewygraną dotąd M118: zwykłe dwa ataki M16 oraz Energy Shot
-pokonały cel6 (150→99→48→0HP). Przy38352 Aya ma93HP, oba Medicine1,
-tryb walki2 i otwarty ekran nagród. Ten nowy wynik pozostaje obserwacją
-debuggera do czasu niezależnej powtórki normal/SAN. Zamrożonych binarek
-ani obiektów nie przebudowywać w miejscu. Zwycięstwo M123, późniejsze
-sceny, PS1 pixel/audio reference i cała pozostała kampania wymagają pracy.
+immutable v4 i prywatnych kart. Po udokumentowanej gałęzi dwa Medicine1
+ze slotów12/19 podniosły HP8→98. SG550 z M118 wyposażono przez zwykłe
+menu (slot1, potwierdzone przy44766), M16 zachowane w9. Medicine1 w11
+pozostało. Te ostatnie przygotowania są na razie obserwacją debuggera.
+Zamrożonych binarek ani obiektów nie przebudowywać w miejscu. Zwycięstwo
+M123, późniejsze sceny, PS1 pixel/audio reference i pozostała kampania
+wymagają pracy.
 
 Po zwycięstwie M122 zweryfikowano również zwykłe wejście do M124:
 cap40196, M124/A8022248, stage400, HP101/189, pole9, lock0, menuNULL,

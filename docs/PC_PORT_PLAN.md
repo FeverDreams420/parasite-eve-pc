@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Lepszy punkt do dalszych testów: po nagrodach M121 nie zużywać Medicine1
+ani Heal1 przed M117. Oryginalny lekarz przywraca22→189 za darmo; zachowane
+PE65 i dwa Medicine1 w8/11. Przez Tune Up przeniesiono bonus SvVest12 na
+SpVest14, zużywając Tool1; Tool10 pozostał. Offense+1/19 podniósł bonus M16
+2/2/1→3/2/1. Sześć osobnych kliknięć Down w panelu reload dopełniło10→16,
+pool60→54. Przy34900 M117, HP189, PE65, clip16, leki8/11 zachowane,
+menuNULL i lock0. /tmp/pe-nypd-resource-ready-v1-proof.json: normal/SAN
+exit0 (18,75/73,24s), cały JSON/VRAM zgodny z debuggerem, B–N bez zmian,
+bu10 puste. PE65 i pool54 są odczytami debuggera, nie polami JSON runnera.
+
+Dalsze próby M122 nadal nie są zwycięstwem. Zwykły gun5 + Energy Shot
+zabił typ5/98HP (41→ujemneHP), a prawdziwe menu Medicine1 zużyło slot8.
+Gałąź resource-combat-v1 skończyła się przy38461 HP0, typ3 nadal78HP.
+Przyczyną do poprawienia w testerze jest wybór bezpiecznego miejsca przed
+akcją: aktualne pole line_burst oraz promień kolizji Ayi63 są widoczne
+przez rzeczywisty stan PM. Samo pełne ATB nie gwarantuje bezpiecznego
+rozpoczęcia długiej animacji. Nie modyfikowano obrażeń ani prawdopodobieństw.
+Zachowane inputy /tmp/pe-m122-resource-combat-v1-input.jsonl i log
+/tmp/pe-m122-ordinary-v1-lldb.log. Przejścia M118/M122 pozostają do wygrania.
+
+Zwykły cold N i dalszy realny input dochodzą do M122/A8022148 przy37487:
+HP189/189, stage400, brak menu i blokady ruchu, tryb pola9. Trasa obejmuje
+wygraną M121, odpoczynek M117, oryginalne Tune Up i Offense+1 na M16.
+Normal/SAN na armor-bonus-v3 exit0 (19,24/75,94s), cały JSON i1MiB VRAM
+identyczne także z debuggerem. SHA256 VRAM
+2e283cf112474aaa20085287cac83d6e90650aa75f1d55e6f3dc0cb95f2e5db2.
+B–N niezmienione, bu10 puste, zero HP diagnostics;
+/tmp/pe-m122-ordinary-entry-v1-proof.json i odpowiadający verify.py.
+Przejście koło ciała w M121 wymaga obejścia przez [1700,650],[600,650],
+potem [500,0],[500,-963],[700,-1600],[900,-2200],[700,-2700]. Proste
+odcinki centroidów przecinały przeszkodę; nie zmieniano kolizji gry.
+
+M122 uruchamia rzeczywistą walkę: typ5/98HP, typ3/78HP i początkowo
+niedostępny do celowania typ4/72HP. Pierwsza próba skończyła się przegraną
+przy40209 (HP0); oryginalne Heal2 zadziałało14→74, dwie próby ucieczki
+były nieskuteczne. Nie ma jeszcze dowodu zwycięstwa ani dalszego przejścia.
+Ponowna M118 po ulepszeniu pancerza też przegrana przy39052 (wróg32HP);
+nie traktować tych przegranych jako ukończenia scen. Stary debugger M118
+pozostaje przegraną gałęzią; dalszy M122 odtwarza stan sprzed niej.
+
 Świeżo przebudowany build/parasite-eve-pc przeszedł ponownie rzeczywisty
 --native-melissa od New Game: exit0, input14, FNVc7ae3598591ad7c3,
 headless i wymagane Disc1. Opcode206 i82 nie abortują. Log:

@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Dalsze testowanie M115: pierwsza próba z błędnym idle600 zakończyła się
+śmiercią przy40097. Powtórka do36861 z pełnym181HP i krótkimi12-frame
+krokami intro7→0 dochodzi37005 bez utratyHP. Native licznik6 obejmuje
+3 cele typ5 i3 ukryte kontrolery typ6 (flags0x600044A0, skip target0x4000).
+Pomocnik pe-foes wcześniej wypisywał każdy core bez rozróżnienia; teraz
+/tmp/pe_zoo_checkpoint_control.py podaje sub/flags/targetable, a fire-safe
+odrzuca nieistniejący wybieralny typ zamiast cicho wybierać index0.
+To naprawy zewnętrznego testera, bez zmian w oryginalnej grze.
+
+/tmp/pe_park_combat_control.py odczytuje aktywne oryginalne taski136,
+RoomLineBurstState px/pz/state z natywnych11 slotów PM i bierze pod uwagę
+strefy300 oraz trójkąty rzeczywistej podłogi. Przy37517 widoczne były
+(-632,-2549) i(-1069,-2710). Sama granica areny nie wystarczała: tester
+pchał postać w wewnętrzną ścianę. Po dodaniu podłogi przeszedł przy37693→37981
+z(-1344,-2833) do(-2676,-2738), nadal32HP, bez kolejnej straty podczas ATB.
+Nie jest to jeszcze zwycięstwo ani udane Escape. Bieżący żywy debugger
+PID73546/exec33439, frozen /tmp/pe-pending-reward-game-debug, cwd
+/tmp/pe-m115-retry-live, args/input/log pod tym samym prefiksem.
+Stare inferiory70123,71693,72950 po zachowaniu dowodów zakończono,
+aby nie utrzymywać niepotrzebnych procesów; nie próbować ich kontynuować.
+
+
 Rzeczywiste wejście M116 od I8/cap31894 PASS normal oraz ASan/UBSan/function,
 oba exit0: pełny JSON i1MiB VRAM identyczne, także z debuggerem.
 SHA256f23b749c7765f54ee8be6e0133987c7fe0bd913f678785868c0302e9e6095398.
@@ -21,7 +43,9 @@ flags44=0x0406183c (autorskie262144 dodane). Po300 klatkach fade-in
 pokazuje właściwy korytarz, HP181. Przy36861 M115 rozpoczął losową walkę.
 Błędne oczekiwanie600 klatek bez inputu kosztowało164HP; nie jest to crash
 silnika. Heal2 w walce działa17→77; pierwsza próba Escape z prawdziwego
-menu zwróciła niepowodzenie. Sześciu wrogów:3×typ5/78HP/def18 i3×typ6/72HP/def20.
+menu zwróciła niepowodzenie. Licznik silnika wynosi6, ale są3 cele typ5/78HP/def18 oraz3 ukryte
+kontrolery typ6/72HP/def20 z flagą0x4000; tych ostatnich nie wolno traktować
+jako wybieralnych celów. Pierwotny opis „sześciu wrogów” był zbyt uproszczony.
 Żywy debugger72950/exec79174 zachowuje tę próbę, input od28100 w
 /tmp/pe-pending-reward-live-input.jsonl; nie utrwalać jej jako zwycięstwa.
 Powtórka odI z inputem zakończonym36861 pozwala uniknąć błędnego idle600.
@@ -1210,8 +1234,13 @@ M099/A80094C8, HP181/181, brak menu/locka; SHA256 VRAM
 Ten Continue nie stosuje nowych zmian HP, lecz źródło nadal ma 15 wcześniejszych
 guarded HP diagnostics: coverage_only=true, ordinary_campaign_proof=false.
 Manifest i dowód: /tmp/pe-nypd-phone-checkpoint/manifest.json oraz
-/tmp/pe-nypd-I-continue-proof.json. Pełne odtworzenie H→zapis I normal/SAN
-jest osobnym, jeszcze niezakończonym testem; nie utożsamiać z cold Continue.
+/tmp/pe-nypd-I-continue-proof.json. Pełne odtworzenie H→zapis I normal/SAN także zakończone PASS, oba exit0:
+3695 segmentów, cap199707, dokładnie15 wcześniejszych HP diagnostics.
+Pełny JSON/VRAM identyczne; wszystkie8192 bajty nowego I zgodne z
+zapisem utworzonym przez UI, B–H bez zmian. SHA256 VRAM
+b0af07685c03ac20ef3a0e46e13a230d8da057dbe6c54bffe891c9f595d8525a.
+Verifier /tmp/pe-nypd-I-save-verify.py i /tmp/pe-nypd-I-save-proof.json.
+To osobny dowód od cold Continue; oba pozostają coverage-only.
 Nowy debugger /tmp/pe-line-family-v2-game-debug ma już bindingi M116;
 input dalszej trasy: /tmp/pe-nypd-I-live-input.jsonl.
 

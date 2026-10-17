@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Zwykły checkpoint L11: oryginalne Medicine2 w11 leczy115→181,
+krótka scena M115, powrót M107→M100→M099, telefon i nowy plik L.
+Pełny coldK→SaveL/cap48919 normal exit0 21,66s, SAN exit0 79,72s.
+Cały JSON, pełne1MiB VRAM i wszystkie B–L zgodne także z debuggerem;
+B–K niezmienione, bu10 puste. SHA256 L/8192 bajty
+2e67a93b79f45c12c873a8f7cffcde7a667fe740aa528634f00203aaf47cfb0d;
+VRAM f16b0e551a610ca6c3f4459c081fce3cb1d838e1a5232830c1b596cdf18660ab.
+Cold Continue L/cap24000 normal exit0 15,01s, SAN exit0 59,36s:
+M099/story400/HP181, M92F w1, zużyte Medicine2 w11, Offense+1 w19;
+cały JSON i VRAM zgodne między wariantami, B–L bez zmian.
+VRAM 6cef844df45d4e6bbb9a756e440d7c8c754b0517547f9126213f46e1b8834af8.
+Manifesty /tmp/pe-nypd-ordinary-{save,continue}-l-v1-proof.json,
+verifier /tmp/pe-nypd-ordinary-l-v1-verify.py; zero HP diagnostics i błędów
+sanitizerów. Prywatne karty /tmp/pe-nypd-ordinary-l-checkpoint;
+nie dotykano kart użytkownika. Pełna kampania i wierność pikseli/PCM
+nadal nie są potwierdzone.
+
+Zwykła kontynuacja K→Cathy/M111 cap33751: normal exit0 16,89s,
+SAN exit0 65,30s, cały JSON i pełne1MiB VRAM zgodne z debuggerem.
+SHA256 VRAM 5d71faf476c6a0252a02ae8878305b22111a22ff3637b62263705153e51a850a.
+Prawdziwe Medicine1 leczy88→133; rozmowy54–58 ustawiają bit2048.
+Manifest /tmp/pe-nypd-cathy-k-v1-proof.json; B–K niezmienione,
+brak HP diagnostics i błędów sanitizerów.
+
+Dalej M107: zwykłe zwycięstwo nad typ5/98HP i typ6/35HP, HP115.
+Offense+1 trafia do19; Medicine2 zastępuje Junk/item20 w11 przez oryginalny
+panel nagród. M108 pełny ekwipunek uruchamia oryginalne specjalne storage:
+N Vest/257 przeniesiony z1 do specialStorage[1], regular storage puste
+(bezpośredni odczyt debuggera; JSON nie zawiera tablic storage).
+Oryginalny GiveItem148 daje M92F/262 do1, rozmowy kończą story400.
+cap42875 normal exit0 19,42s, SAN exit0 73,53s; cały JSON i pełne1MiB VRAM
+zgodne z debuggerem, SHA256
+907434c703995f2e426061d31b29e729d4888d915635425a04a6f60931620bc4.
+Manifest /tmp/pe-nypd-m108-k-v1-proof.json; B–K niezmienione,
+zero HP diagnostics i sanitizer errors. To dalszy test oryginalnych modułów,
+bez nowych plików ani funkcji gry. Item20 to Junk; wcześniejsze nazwanie go
+Ammo20 było błędem opisu i zostało poprawione.
+
 Finalna weryfikacja naprawy SFX: coldK→rozmowa M099→wyjście/M100→
 zwykłe zwycięstwo z trzema przeciwnikami/cap29527 normal exit0 15,94s,
 SAN exit0 62,74s. Cały JSON i pełne1MiB VRAM identyczne także z debuggerem,
@@ -13,9 +51,9 @@ wiąże hashe obu zmienionych źródeł, frozen normal/SAN i głównego executab
 pełne testy CPU/asset oraz ten replay. Nie dowodzi to pełnego PCM gry ani
 całej kampanii. Żaden nowy plik repozytorium nie powstał.
 
-Bieżący debugger po poprawce nadal exec34303/PID88078, cap29527, M100,
-HP88, oryginalny panel EXP przed odebraniem nagród. Dalej obsłużyć nagrody,
-M107→Cathy/M111 i dalszy NYPD. Stary crash exec8898/PID87568 pozostaje
+Bieżący debugger exec34303/PID88078 doszedł zwykłymi inputami do
+cap48919/M099, story400, HP181/181 i utworzył L11 przez oryginalny telefon.
+Powtórka zapisu i cold Continue przeszły oba warianty opisane poniżej. Stary crash exec8898/PID87568 pozostaje
 wyłącznie do odczytów przy awarii i nie może być użyty do pe-step.
 
 Naprawa czasu życia pokojowych SFX w istniejącym
@@ -61,7 +99,8 @@ HealthApplied==0. Jeszcze nie odebrano nagród. Nowy trace
 Pełny coldK→ta walka normal/SAN uruchomiony exec65371; prefix
 /tmp/pe-room-sfx-v1-native-, runner/prepare/verifier gotowe, gold
 /tmp/pe-room-sfx-v1-native-debug.vram. Przed dalszą grą odczytać terminal
-oraz -verify.py. Cathy's room i cała kampania nadal pozostają do wykonania.
+oraz -verify.py. Dalszą drogę do Cathy i M108 potwierdzono poniżej;
+cała kampania nadal pozostaje do wykonania.
 
 Pełny coldI→utworzenie zwykłego K/cap161012 zakończony normal/SAN exit0,
 72,04/242,90s. Cały JSON, pełne1MiB VRAM i8192 bajty K identyczne także
@@ -135,7 +174,7 @@ przedmiot205/Locker Key2 trafia do wolnego15. Rozmowy do18 i przejście
 schodami przez rzeczywiste floor triangles dają M100 przy155328, story392.
 Losowa walka M100: typ5/35HP/def22 i typ6/70HP/def15. Pełne serie M16/Heat
 pokonują obu; przy157029 HP121/181, battle2, zero żywych. Oryginalne nagrody
-EXP/ObtainAll/End dają Medicine1/item6 do19 i Ammo20 do20. Bez leczenia,
+EXP/ObtainAll/End dają Medicine1/item6 do19 i Junk/item20 do20. Bez leczenia,
 HP/PE writes ani zmian flag przez debugger. Niepotrzebny idle700 na wejściu
 walki kosztował27HP, pierwsza seria kolejne33; później nie utracono HP.
 
@@ -208,7 +247,7 @@ Cały JSON i pełne1MiB VRAM identyczne także z debuggerem; SHA256 VRAM
 B–I niezmienione, utworzony po drodze J identyczny z kanonicznym zwykłym J,
 bu10 puste. Manifest /tmp/pe-day3-pharmacy-v1-proof.json, -verify.py,
 -prepare.py/-run.py i komplet args/logs. Zero historycznych/nowych HP guards.
-Powtórka obejmuje oryginalną obsługę pełnego inventory i zastąpienie Ammo20
+Powtórka obejmuje oryginalną obsługę pełnego inventory i zastąpienie Junk/item20
 przez Medicine2/item7; nie jest to tylko wpisanie przedmiotu w stan.
 
 Zakończona pełna zwykła powtórka coldI→polowe Heal2→M089 zwycięstwo→
@@ -235,7 +274,7 @@ zweryfikowany i zachowuje pochodzenie bez15 guards starszej gałęzi.
 Dalszy bieżący input: M092→M093/dialog97, rozmowy Maedy105/106 i Daniela99,
 M096/dialog122→M097 apteka. Obejście poruszającego się NPC korzysta z
 oryginalnych floor triangles. Medicine2/item7 ze skrzyni typu6 zastąpiło
-Ammo/item20 w slocie10 przez oryginalny ekran pełnego inventory; komunikat
+Junk/item20 w slocie10 przez oryginalny ekran pełnego inventory; komunikat
 „Restores90HP” obejrzany. Przy97913 M097/A80093C8, HP181, lock2, menuNULL.
 Powtórka /tmp/pe-day3-pharmacy-v1-run.py uruchomiona exec89032: normal
 terminal0 40,39s, SAN PID86675 nadal pracował przy ostatnim odczycie.

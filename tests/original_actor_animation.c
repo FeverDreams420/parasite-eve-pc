@@ -3278,6 +3278,44 @@ static int original_flag_opcode_bindings(void)
        exit_node.active || g_ScriptNodePool)return 0;
     g_BattleEnemyEscapeFlag=saved_escape;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     puts("Original battle sequence signal opcode 207: native escape latch and real dispatcher completion passed");
+    /* Remaining pure state/math handlers: unhooked USA instructions, including
+     * the complete integer-sqrt callee, supply the independent stream hash. */
+    {
+        const unsigned ops[]={71,76,218,235,236};
+        int (*handlers[])(int **)={Script_IsBattlePhase4,Script_Noop,Script_GetSqrt,
+            Script_SetEntityShadowFlag,Script_ClearEntityShadowFlag};
+        int saved_geom=g_GeomScroll.state.flags;
+        uint64_t state_hash=UINT64_C(14695981039346656037);unsigned cases=0;
+        g_CurrentEntity=&actor;
+        for(unsigned op=0;op<5;++op)for(unsigned i=0;i<131072;++i){
+            u32 value=i<65536?i:((i-65536)<<16)|0xa55au;
+            struct {u32 before;int input,output;u32 after;} words={0x11223344,(s32)value,(s32)0x98765432,0xa55a5aa5};
+            int *args[]={op==0?&words.output:&words.input,&words.output};
+            if(g_ScriptQueueOpcodeHandlers[ops[op]]!=handlers[op])return 0;
+            actor.flags=value;g_GeomScroll.state.flags=(s32)value;
+            u32 result=handlers[op](args);
+            const u32 expected[]={result,actor.flags,(u32)g_GeomScroll.state.flags,
+                (u32)words.output,(u32)words.input,words.before,words.after};
+            for(unsigned k=0;k<7;++k)for(unsigned byte=0;byte<4;++byte)
+                state_hash=(state_hash^((expected[k]>>(byte*8))&255))*UINT64_C(1099511628211);
+            actor.flags=value;g_GeomScroll.state.flags=(s32)value;
+            u32 program[6]={ops[op],0,32,0};unsigned length=4;
+            if(op==0){program[0]|=1u<<13;program[2]=0x98765432;program[3]=32;program[4]=0;length=5;}
+            if(op==2){program[0]|=2u<<13;program[2]=value;program[3]=0x98765432;program[4]=32;program[5]=0;length=6;}
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+            if(result!=1 || actor.flags!=expected[1] || (u32)g_GeomScroll.state.flags!=expected[2] ||
+               (op==0 && program[2]!=expected[3]) || (op==2 && (program[2]!=value || program[3]!=expected[3])) ||
+               words.input!=(s32)value || words.before!=0x11223344 || words.after!=0xa55a5aa5 ||
+               node.current.script!=program+length || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+            ++cases;
+        }
+        g_GeomScroll.state.flags=saved_geom;
+        g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+        if(cases!=655360 || state_hash!=UINT64_C(0x644731ef64fd8971)){
+            fprintf(stderr,"State/math opcode mismatch: cases=%u hash=%016llx\n",cases,(unsigned long long)state_hash);return 0;
+        }
+        puts("Original opcodes 71/76/218/235/236: 655360 USA CPU states, full sqrt callee, real dispatcher and operand guards passed");
+    }
     const u32 actor_values[]={0,1,8,0x100,0x400,0x508,0x7fffffff,0x80000000,0xffffffff,0x12345678,0x20,0xa5a55a5a};
     const unsigned actor_ops[]={74,79,80,185,186,193,194,195};
     int (*actor_handlers[])(int **)={Entity_TestCurrentFlags,Entity_SetCurrentFlag100,Entity_ClearCurrentFlag100,

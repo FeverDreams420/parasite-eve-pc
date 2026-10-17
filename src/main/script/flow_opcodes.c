@@ -151,12 +151,14 @@ int Script_DispatchScriptCmd(int **args)
     return 1;
 }
 
-int Script_SetEntityShadowFlag(void) {
+int Script_SetEntityShadowFlag(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags |= 0x20000000;
     return 1;
 }
 
-int Script_ClearEntityShadowFlag(void) {
+int Script_ClearEntityShadowFlag(int **unused) {
+    (void)unused;
     g_CurrentEntity->flags &= 0xDFFFFFFF;
     return 1;
 }
@@ -712,13 +714,13 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [62]=Script_SetEntityField224,
     [65]=Entity_SetCurrentFlag40, [66]=Entity_ClearCurrentFlag40,
     [67]=Script_GetMenuChoice,
-    [72]=Script_ResetPlayerCameraPos,
+    [71]=Script_IsBattlePhase4, [72]=Script_ResetPlayerCameraPos,
     [73]=Script_SetBattleStateMode,
     [103]=Script_ComputeAudioTimer, [104]=Script_GetCombatModeFlag,
     [105]=Script_SetCombatModeFlag, [211]=GameTime_ConvertSecondsToHMS,
     [93]=Script_SetCurrentEntityField20, [77]=Script_SetEntityField1C,
     [202]=Script_SetEntityField1E6, [210]=Script_GetFloorTableValue,
-    [219]=Render_CameraTrackEntityAngle,
+    [218]=Script_GetSqrt, [219]=Render_CameraTrackEntityAngle,
     [164]=Script_CopyEntityRenderObject, [165]=Boot_CheckModeSwitch,
     [167]=Script_GiveItem, [169]=Entity_InitWithTimeout,
     [231]=Script_OpenMemCardDialog, [232]=Script_ShowReceivedItem, [233]=Script_RunInvCommand,
@@ -729,7 +731,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [140]=Script_WaitFrameOrDraw, [143]=Entity_YieldOnDrawBusy,
     [50]=Entity_ClearCurrentFlag80, [55]=Entity_SetCurrentFlag4000, [57]=Entity_ClearCurrentFlag4000,
     [46]=Entity_SetCurrentActionMode, [47]=Script_SetEntityAnimFrame, [48]=Script_WaitAnimFrameMatch, [68]=Script_MoveTowardPoint,
-    [69]=Script_GetAngleToEntity, [75]=Render_CameraSnapToEntity, [78]=Script_SetEntityAnimSpeed,
+    [69]=Script_GetAngleToEntity, [75]=Render_CameraSnapToEntity, [76]=Script_Noop, [78]=Script_SetEntityAnimSpeed,
     [81]=Scene_TestGlobalFlags, [82]=Scene_SetGlobalFlags, [83]=Scene_ClearGlobalFlags,
     [85]=Boot_MemCardStepInit,
     [89]=Entity_GetField, [139]=Entity_FindByTypeId,
@@ -765,5 +767,6 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [213]=Script_ClearEntityParentLink, [214]=Entity_ClearParentLink, [199]=Script_SetNodeFlag80, [196]=Script_RotateEntityAngle, [215]=Script_GetSin, [216]=Script_GetCos, [217]=Script_GetAtan2,
     [226]=Entity_CallAction, [227]=Script_SetInventorySlotPointer, [228]=Script_GetInventoryTotal, [229]=Script_GetInventorySlotLimit,
     [220]=Script_SetEntityFlag1000000, [221]=Entity_PolarToPosition, [225]=Script_SetMeshFadeLevel, [222]=Entity_PopCount, [223]=Script_EnableEntityGravity, [224]=Script_DisableEntityGravity,
+    [235]=Script_SetEntityShadowFlag, [236]=Script_ClearEntityShadowFlag,
     [184]=Script_TurnTowardPointStep, [234]=Akao_ProcessCommand, [237]=Script_DispatchScriptCmd, [238]=Script_BeginSceneTransition, [239]=Script_OpenSaveLoadMenu, [240]=Script_GetPlayerInputFlag
 };

@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Audyt rejestru interpretera USA ujawnił16 niepodpiętych, niezerowych wpisów.
+Podpięto istniejące oryginalne funkcje71/76/218/235/236: test dolnych3 bitów
+stanu geometrii, rzeczywisty retailowy no-op, Math_IntSqrt przez oryginalny
+handler oraz ustawienie/skasowanie flagi cienia0x20000000. Trzy bezargumentowe
+sygnatury dostosowano w miejscu do int ** interpretora, bez rzutowania funkcji
+ani nowych adapterów. Ciała algorytmów pozostały oryginalne.
+
+Nowa część istniejącego original_flag_opcode_bindings wykonuje655360 stanów
+(5 opcode ×131072 wejścia: wszystkie dolne16 bitów oraz wszystkie górne16
+bitów przy dolnych0xa55a). Niezależny, niehookowany USA MIPS wykonuje całe
+funkcje i pełny Math_IntSqrt, FNV644731ef64fd8971. Natywne bezpośrednie
+wywołania i tyle samo prawdziwych programów dispatchera sprawdzają także
+stan geometrii, flagi aktora, wejścia, wyjścia, guardy, kursor i zwolnienie
+węzła. /tmp/pe-state-opcodes-mips.py i log. CPU normal/SAN exit0
+(0,73/1,82s); usunięcie pięciu wpisów przy nowych testach powoduje exit123
+w obu wariantach. Wymagane --assets też exit0 (11,03/47,73s).
+
+/tmp/pe-state-opcodes-registry-audit.json porównuje wszystkie241 pozycje
+0..240 z tablicą0x800910A0 w dostarczonym SLUS i ręcznie nazwanymi symbolami:
+209 aktywnych wpisów zgodnych adresowo,21 oryginalnych NULL zachowanych,
+11 wciąż niepodpiętych:21,98,99,115,175,177,179,182,204,212,230.
+Zgodność nazw/adresów nie dowodzi poprawności całych ciał ani przejścia
+wszystkich scen. Pozostałe funkcje wymagają audytu; nie zastępowano ich no-op.
+
+Regresja zwykłego cold N→wygranaM121→M117/rest/TuneUp/Offense/reload:
+state-opcodes-v1 normal/SAN exit0 (19,78/74,29s), cały JSON identyczny
+z poprzednim kandydatem i między wariantami;1MiB VRAM zgodne z debuggerem,
+B–N niezmienione, bu10 puste. Bez diagnostycznych zmian HP.
+/tmp/pe-state-opcodes-native-v1-proof.json. /tmp/pe-state-opcodes-v1-proof.json
+wiąże SHA źródeł, SLUS, oracle i czterech executable z wynikami CPU,
+--assets, kontrolą negatywną, audytem rejestru i regresją natywną.
+Pełny build root również przeszedł. Bieżący debugger pozostaje na starszym,
+niemodyfikowanym armor-bonus-v3 przy M117/34900; nie nadpisywano jego
+executable ani obiektów debuggera. To nie dowód ukończenia M118/M122.
+
 Lepszy punkt do dalszych testów: po nagrodach M121 nie zużywać Medicine1
 ani Heal1 przed M117. Oryginalny lekarz przywraca22→189 za darmo; zachowane
 PE65 i dwa Medicine1 w8/11. Przez Tune Up przeniesiono bonus SvVest12 na

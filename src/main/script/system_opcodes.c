@@ -164,7 +164,8 @@ int Entity_TestCurrentFlags(int **arg0) {
     return 1;
 }
 
-int Script_Noop(void) {
+int Script_Noop(int **unused) {
+    (void)unused;
     return 1;
 }
 

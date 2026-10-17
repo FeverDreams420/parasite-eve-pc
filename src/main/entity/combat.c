@@ -104,7 +104,12 @@ void Entity_ResolveDropTable(void *arg0) {
             if (action->effectType == 0xA) {
                 value /= 2;
             }
-            after_state->exp_or_acc -= value * ((after_state->maxAtk * 4) / (s16)after_state->maxHP);
+            /* The original shift, multiply and subtraction wrap as PS1
+             * words. Large attack powers must not overflow signed host C. */
+            s32 rate = (s32)((u32)after_state->maxAtk * 4U) /
+                       (s16)after_state->maxHP;
+            after_state->exp_or_acc = (s32)((u32)after_state->exp_or_acc -
+                                          (u32)value * (u32)rate);
         }
     }
 

@@ -2,6 +2,122 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Przygotowany zwykły checkpoint N, z pełnymHP i załadowanym M16.
+ColdM→skrzynia Medicine3→użycie (83→189)→Items/M16/reload16 (pool76→60)
+→telefonM112/Save/Slot1→Down zM/row12 na pustyN/row13. Przy27437
+File saved/menu40: M112/A8021148, stage400, HP189/189, M16clip16,
+tail[34,9,0], SpVest/record5/slot14, drugiTool10, bank86=0x1200.
+Nowy N8192 bajty SHA256
+77d34d2eb3cab20aa7fb479d02159c545f5e4e4123083566100e3be9364b34dd.
+/tmp/pe-nypd-ordinary-n-checkpoint/bu00 zawieraB–N, B–M niezmienione,
+bu10 puste. Nie używano pe-save/c.capture ani zapisów statystyk debuggerem.
+
+Pełny coldM→SaveN na poprawionym player-damage-v2: normal0 14,87s,
+SAN0 59,23s; cały JSON, pełne1MiB VRAM i wszystkieB–N zgodne także
+z debuggerem/genuineN. VRAM SHA256
+fbd7311daf3eee5b495d0ecab3b8ebaad946a6d43ceea71c6e55fd77c4de3eb0.
+Zimne ContinueN→24000: normal0 13,95s, SAN0 56,59s; M112, HP189/189,
+menuNULL/lock0, clip16, tail34/9, sloty1/8 puste i drugiTool10 zachowany.
+Cały JSON i1MiB VRAM identyczne między wariantami, wszystkieB–N niezmienione,
+bu10 puste. VRAM SHA256
+c820bd32a1fd408225f4d9a21673b560dcf9d5a35f6a4e858c328e5699bd2124;
+brak obrazu debuggera zimnego Continue w tym porównaniu. Zero HP diagnostics
+i błędów ASan/UBSan/function w obu testach.
+/tmp/pe-nypd-ordinary-n-v1-verify.py sprawdza SaveN i ContinueN,
+manifesty /tmp/pe-nypd-ordinary-{save,continue}-n-v1-proof.json.
+/tmp/pe-player-damage-v2-proof.json wiąże SHA źródeł/executable/oracle,
+311040 CPU, pełne wymagane --assets, negatywny stary baseline i pięć
+przypadków natywnych (M115, scenaM121, Medicine3, SaveN, ContinueN).
+Zamrożony trace /tmp/pe-player-damage-v2-input-m112-n.jsonl od24000 do27437.
+To dowód powtarzalności PC/SAN, nie pełny obrazowy oracle PS1.
+
+Nowy debugger exec34298 używa poprawionego /tmp/pe-player-damage-v2-game,
+zimnego N i prywatnych kart /tmp/pe-nypd-n-explore-v1-live; zatrzymany
+przy24000/M112/HP189. Następny etap: wrócić przez M115/M044 do M121,
+przejść nowe spotkanie przy pełnymHP i badać M117/M118/M122. Stare procesy
+94679 (6HP),95012 (śmierć) i debugger SaveN są tylko dowodami wcześniejszych
+prób; nie kontynuować ich jako bieżącej gałęzi. Nie odbudowywać aktywnego
+frozen executable ani jego obiektów. Pełna kampania/cały port nadal nieukończone.
+
+
+Nowy audyt obrażeń otrzymywanych przez Ayę (nie zadawanych przeciwnikom):
+watchpoint prawdziwej walki M121 wskazał Entity_ResolveDropTable w istniejącym
+entity/combat.c, wywołaną przez Menu_MainUpdate. Przy30391 HP37→−24→0;
+zaobserwowany atak typu9/sub1: power84, stat20=140, parameterWord=0x01703C17.
+Ta próba skończyła się śmiercią, bez wystrzelonego naboju (clip16).
+Poprzedni test147456 original_enemy_damage dotyczy Battle_StepEnemyMovement,
+więc nie wolno traktować go jako dowodu poprawności obrażeń Ayi.
+
+Nowy oracle /tmp/pe-player-damage-mips.py wykonuje niepodpięty kod USA
+0x8001F4D4 z rzeczywistymi callees i tylko usługą BIOS rand. 311040 przypadków:
+obrona0/4/123/32767/65535, oba modyfikatory obrony, Barrier, pierwszy/drugi
+parametr pancerza, szansa krytyczna i RNG, ATB−1/0/1, power0/30/100/65535,
+trzy limityPE (w tym zawijanie przesunięcia), kategorie0/1/2 i wybrane
+rekordy0/2/3/7. FNV10c0a3385de763dd; /tmp/pe-player-damage-caps-mips.log.
+W tej macierzy effectType=0, hit-animation guard0x2000 i mode4: animacja
+trafienia i skutki statusów nie są audytowane tym wzorcem. Istniejące testy
+65536 stanów timerów pozostają osobnym dowodem, nie pełnym audytem modułu.
+
+Baseline z pierwszą macierzą103680: normal exit0 i zgodny FNV7e2426d6848f3409,
+SAN abort−6: combat.c107:46, signed overflow65535*324559. Zachowane
+/tmp/pe-player-damage-v1-cpu-{normal,san}.log i -results.json. Poprawka
+WYŁĄCZNIE w oryginalnej Entity_ResolveDropTable: 32-bitowe zawijanie shift/
+multiply/subtract przezu32 i zachowana dzielona wartość signed. Brak zmian
+siły ataków, szans, obrażeń HP lub zachowania prawidłowych stanów. To naprawa
+UB ścieżki Barrier w krańcowych danych, nie wyjaśnienie przegranej M121.
+Istniejący tests/original_actor_animation.c/original_enemy_damage rozszerzony
+na osobną odwrotną macierz, bez nowych plików/funkcji produkcyjnych.
+
+Frozen /tmp/pe-player-damage-v2-{game,fixture} i -sanitized mają nowe
+unikalne obiekty combat.c/test, pozostali aktywni debuggerzy nadal używają
+nienaruszonego frozen battle-equip-v2. CPU311040 PASS normal0 0,79s,
+SAN0 1,74s; wymagane pełne --assets/CUE: normal0 11,07s, SAN0 48,08s,
+zero ASan/UBSan/function. Główny build i jego CPU fixture również exit0.
+Nie uruchamiano całego CTest z dawnymi timeoutami180/240.
+
+Pełny coldL→zwycięstwoM115/cap47024 na poprawionym kandydacie:
+normal0 21,24s, SAN0 76,70s. Cały JSON identyczny z wcześniejszą zwykłą
+powtórką, pełne1MiB VRAM zgodne także z wcześniejszym debuggerem,
+SHA25634de7ed7d7446bac1560b26746b33488cadde45a1d60c6a8509d5d4a417c6c3b.
+B–L bez zmian, bu10 puste, zero HP diagnostics i sanitizer errors.
+/tmp/pe-player-damage-v2-m115-proof.json i -verify.py; prefiks obejmuje
+rzeczywiste Barrier, leczenia i zwycięstwoM113 przed M115.
+
+Nowe zwykłe coldM→M112 exit→M115 west exit→scenaM044/dialog83→M121.
+Przy29419 M121/stage400/HP83; bank44 0x0406183C→0x0446183C (+0x400000).
+Przeładowanie M16 przez Items: pool76→60, clip0→16, również aktywne
+attackWord&1023=16. Przy29867 menuNULL/lock0, brak walki. Normal0 17,00s,
+SAN0 67,61s na starym frozenv2, cały JSON i1MiB VRAM zgodne także z
+jego debuggerem. Poprawiony player-damage-v2 powtarza: normal0 17,43s,
+SAN0 68,37s, ta sama pełna VRAM SHA256
+3246636b3fa4bc60cbf2c238646b98af347a580f794cbeec21c0c390fe434e94,
+cały JSON normal==SAN; B–M bez zmian, bu10 puste, zero HP diagnostics/błędów.
+/tmp/pe-player-damage-v2-m121-story-proof.json i -verify.py, starszy
+/tmp/pe-m121-west-story-v1-proof.json. To scena fabularna, nie zwycięstwoM121.
+
+M121 spotkanie: dwa typ9/70HP/def15 i typ8/35HP/def22. Arena ma7 wierzchołków,
+x około[−1465,80], z[90,925]; cała mapa jest znacznie większa. Pierwsza trasa
+wyczekiwania daje83→6HP przy30289; alternatywny lewy patrol83→37, potem
+śmierć30393. Debugger /tmp/pe-nypd-m-explore-v1-lldb.log PID94679 zatrzymany
+na6HP; /tmp/pe-m121-combat-v1-lldb.log PID95012 zatrzymany na śmierci.
+To tylko próby debuggera, nie niezależnie odtworzone zwycięstwa ani ukończenie
+walki. Sterowanie i przygotowanie zasobów nadal wymagają poprawy.
+Znaleziono Medicine3 w nieotwartej skrzyniM112/actor4: ItemId8, pos[−1146,604],
+Y−224, hitradius350. Podchodzić od prawej strony biurka (x około−939,z588),
+nie od telefonu. Przez Cross oryginalna skrzynia daje Medicine3 do slotu1
+przy24938/popup55; po zamknięciu i użyciu z Items HP83→189 przy25246,
+slot1 znów pusty, bank86|512 (wynik0x1200). Bez jakichkolwiek HP writes.
+Pełny coldM→25246 na poprawionym kandydacie: normal0 14,14s,
+SAN0 56,43s; cały JSON i pełne1MiB VRAM zgodne także z debuggerem,
+SHA25642a6cb7f1a576585f6e357bce89b9a3d587c0b002e4076d584aeb6abe49cad03.
+B–M bez zmian, bu10 puste, zero HP diagnostics/błędów sanitizerów.
+/tmp/pe-m112-medicine3-v1-proof.json i -prepare.py/-run.py/-verify.py.
+Aktualny debugger /tmp/pe-m112-medicine3-v1-lldb.log exec18580, od zimnegoM;
+ponownie załadowano16 nabojów przed powrotem do telefonu. Ten przebieg
+zakończył się potwierdzonym zapisem N opisanym wyżej. Nazwy pancerzy skorygowane
+według ItemId: record5/A0 to SpVest, record7/A8 to SvVest (nie odwrotnie).
+
+
 Zwykły nowy zapis M i zimne Continue M potwierdzone niezależnie.
 Pełny coldL→50440/SaveM: normal exit0 21,54s, SAN exit0 78,97s;
 cały JSON, pełne1MiB VRAM i wszystkie kartyB–M identyczne także z
@@ -495,7 +611,7 @@ Dalsze dojście do M099 i oryginalnego telefonu: przy161012 File saved,
 nowy pusty K10,8192 bajty, SHA256
 54496f90714c69769714474d771ddeecd73540dab71e3655117b27a39ab32785.
 HP121/181, Medicine2 w10, Medicine1 w19, LockerKey2 w15, Tool w8,
-bonus defense SpVest4/SvVest3. Prywatny checkpoint
+bonus defense SvVest4/SpVest3. Prywatny checkpoint
 /tmp/pe-nypd-ordinary-checkpoint/bu00 (B–K), odrębny od starego
 diagnostycznego /tmp/pe-nypd-phone-checkpoint/bu00. Obraz File saved
 /tmp/pe-nypd-ordinary-save-k-v1-debug.png obejrzany. Menu zamknięte przy161360.
@@ -519,7 +635,7 @@ i pełne1MiB VRAM identyczne także z debuggerem. VRAM SHA256
 bcd3d89798503886f6ce3e284145f6d143445784f8f7abcf7634f681f5ce78e5.
 B–I niezmienione, utworzony J identyczny z kanonicznym zwykłym J,
 bu10 puste. Manifest /tmp/pe-day3-gunshop-v1-proof.json i -verify.py.
-Tool w8, Medicine2 w10, bonus defense SpVest4/SvVest3 — wszystko przez
+Tool w8, Medicine2 w10, bonus defense SvVest4/SpVest3 — wszystko przez
 oryginalne UI, zero HP diagnostics. Ten dowód zamyka wcześniejsze oczekiwanie
 na exec56815; oba procesy zakończone0.
 
@@ -536,8 +652,8 @@ wynik procesu, nie zakładać zawieszenia ani zakończenia z upływu czasu.
 Bieżąca zwykła gałąź jest w M095/sklepie z bronią przy108333, HP181/181,
 lock2, menuNULL. Powrót M097→M096→M093→M094 (dialog114 i otwarcie sklepu)
 →M095 nie wymagał zmian kodu. Skrzynia typu7 dała Tool/item22 do pustego8;
-Medicine2 pozostało w10. Trzy Defense+1 są zużyte na SpVest/record7
-(bonus defense4), jeden na noszony SvVest/record5 (bonus defense3), sloty
+Medicine2 pozostało w10. Trzy Defense+1 są zużyte na SvVest/record7
+(bonus defense4), jeden na noszony SpVest/record5 (bonus defense3), sloty
 15/19/20 puste. Przy skrzyniach i ladach trzeba użyć Cross z rzeczywistej
 granicy kolizji; nie wymuszać dojścia do środka bryły. Blokady pomocnika
 walk były poprawnymi kolizjami lub zbyt ścisłym waypointem, nie crashami gry.
@@ -595,9 +711,9 @@ Wynik SAN i -verify.py trzeba odczytać po zakończeniu; sam normal PASS nie
 potwierdza jeszcze porównania. Gold /tmp/pe-day3-pharmacy-v1-debug.vram.
 
 Po97913 użyto czterech Defense+1 przez oryginalne menu. Pierwsze trzy
-trafiły do SpVest/record7 (bonus defense1→4); odczyt4096 bajtów equipment
-wykazał wybór tego wariantu zamiast noszonego SvVest/record5. Ostatni
-trafił do SvVest (bonus defense2→3). Nie cofano ani nie wymuszano zmian.
+trafiły do SvVest/record7 (bonus defense1→4); odczyt4096 bajtów equipment
+wykazał wybór tego wariantu zamiast noszonego SpVest/record5. Ostatni
+trafił do SpVest (bonus defense2→3). Nie cofano ani nie wymuszano zmian.
 Sloty8/15/19/20 są puste, Medicine2 nadal w10. Pomocnik cursor musiał
 przejść na lewą kolumnę PRZED wierszem10: prawa komórka21 jest poza
 capacity21 i poprawnie blokuje zejście. Nie jest to błąd gry.

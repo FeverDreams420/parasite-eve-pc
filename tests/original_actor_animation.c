@@ -10445,6 +10445,51 @@ static int original_enemy_damage(void)
         fprintf(stderr,"Original enemy damage hash %016llx differs from USA MIPS\n",(unsigned long long)hash);return 0;
     }
     puts("Original enemy damage: 147,456 stat/PE/shot/resistance/RNG cases match USA MIPS including real soft-float callees");
+    {
+        /* The reverse damage path is a separate original function. Keep its
+         * USA CPU oracle separate from damage dealt to an enemy above. The
+         * hit-animation guard leaves the real damage, RNG and barrier paths
+         * running without requiring a loaded room's animation/effect banks. */
+        extern void Entity_ResolveDropTable(void *);
+        FieldActor *saved_player=g_PlayerEntity;
+        BattleEntity player={0};BattleAttributes attributes={0};EnemyActionEffect effect={0};
+        const u16 player_stats[]={0,4,123,32767,65535},powers[]={0,30,100,65535};
+        const u32 player_flags[]={0x2000,0x2100,0x3000,0x3100,0x2200,0x2300,0x3200,0x3300};
+        const u32 parameters[]={0,17|(91<<10)|(30<<20),1023|(1023<<10)|(255<<20)};
+        const s32 pe_caps[]={234<<16,0x20000000,0x7fffffff};
+        const u8 selected_effects[]={0,2,3,7},chances[]={0,70,255};
+        const s32 gauges[]={-1,0,1};
+        uint64_t player_hash=UINT64_C(14695981039346656037);
+        unsigned player_cases=0;
+        g_ActiveActor=&actor;g_PlayerEntity=(FieldActor *)&player;
+        for(unsigned stat=0;stat<5;++stat)for(unsigned flag=0;flag<8;++flag)
+        for(unsigned selected=0;selected<4;++selected)for(unsigned category=0;category<3;++category)
+        for(unsigned power=0;power<4;++power)for(unsigned parameter=0;parameter<3;++parameter)
+        for(unsigned chance=0;chance<3;++chance)for(unsigned gauge=0;gauge<3;++gauge)
+        for(unsigned initial=0;initial<2;++initial)for(unsigned cap=0;cap<3;++cap) {
+            memset(&actor,0,sizeof(actor));memset(&enemy,0,sizeof(enemy));
+            memset(&entity,0,sizeof(entity));memset(&player,0,sizeof(player));
+            memset(&effect,0,sizeof(effect));attributes.parameterWord.raw=parameters[parameter];
+            actor.attributes=&attributes;actor.curHP=83;actor.hpMirror=83;actor.maxHP=189;
+            actor.stat20=(s16)player_stats[stat];actor.stateFlags=player_flags[flag];
+            actor.atbGauge=gauges[gauge];actor.exp_or_acc=100<<16;actor.maxAtk=pe_caps[cap];
+            entity.core=&enemy;enemy.coreFlags=(u32)selected_effects[selected]<<21;
+            enemy.effect=&effect;enemy.effectChance=chances[chance];
+            effect.state=1;effect.power=powers[power];effect.category=category;
+            player.core=&actor;player.entityFlags=0x100;player.actionMode=4;
+            Psyz_Srand(seeds[initial]);Entity_ResolveDropTable(&entity);
+            const u32 values[]={actor.curHP,(u32)actor.exp_or_acc,(u32)actor.stateFlags,effect.state,Psyz_RandState()};
+            const u8 widths[]={2,4,4,1,4};
+            for(unsigned word=0;word<5;++word)for(unsigned byte=0;byte<widths[word];++byte)
+                player_hash=(player_hash^((values[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+            ++player_cases;
+        }
+        g_PlayerEntity=saved_player;g_ActiveActor=old_actor;Psyz_Srand(old_random);
+        if(player_cases!=311040 || player_hash!=UINT64_C(0x10c0a3385de763dd)) {
+            fprintf(stderr,"Original player damage: %u cases, hash %016llx differs from USA MIPS\n",player_cases,(unsigned long long)player_hash);return 0;
+        }
+        puts("Original player damage: 311,040 unhooked USA CPU defense/critical/RNG/barrier/HP/PE-wrap cases passed (hit animation and status effects excluded)");
+    }
     return 1;
 }
 

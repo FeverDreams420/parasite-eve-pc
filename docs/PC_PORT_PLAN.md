@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Uzupełniono wszystkie14 resident PM programów wybieranych przez oryginalną
+tabelę komend PE. Nowe94/95/96/97/98/104/106: pełne skrypty,10 tabel kolorów,
+4 tints, oryginalne anchors/pools oraz native descriptors w istniejących
+sprite_effects.c/emitters.c; wszystkie oryginalne callbacks pozostają na miejscu.
+Cmd98/800DF9B0 zidentyfikowany jako istniejący FieldFx_PointEmitter przez
+oryginalny kod (rand, model scroll, nested800D9A8C, spawn co6 do40, stop70).
+RenderOrbitingEmitter ma native pointer: size16 zamiast PS1 size8 w95/96/97;
+allocator tasków już wyrównuje payloady i nagłówki. Żadnych nowych plików repo.
+
+Istniejący --assets porównuje całe7 deskryptorów USA (56bytes każdy), pełne
+skrypty wraz z paddingiem i wszystkie10 kolor-tracków oraz tints. Adresy,
+rozmiary i dane audytu: /tmp/pe-remaining-pe-data.json, generator pomocniczy
+/tmp/pe-remaining-pe-data.py. Skrypty mają instrukcje3-halfword; zakresy
+wyznaczone rzeczywistymi kolejnymi symbolami, bez kopiowania sąsiednich danych.
+Istniejący test PM wykonuje wszystkie14 programów po200 frame, oba drawsloty,
+modele, nested callback pools, kontrolę limitów i naturalne zakończenie;
+sprawdza także każde mapowanie PE0..18 (Liberate19 ma osobną oryginalną ścieżkę).
+Test zachowuje/restauruje nowe globals i używa20 macierzy aktora dla FlashBurst.
+
+ASan/UBSan wykrył faktyczny ujemny shift w EnergyShot/GlowFountain przyage1:
+(g_FieldFxCurrentAge-4)<<6. W istniejącej funkcji zastąpiony jawnym unsigned
+32-bit shift i konwersjąs32, zgodnie z MIPS; nie zmieniono ruchu/czasów efektu.
+Końcowy build, CPU normal/SAN i --assets normal/SAN PASS, bez runtime error,
+PsyZ/SDL instrumentowane w SAN. Logi /tmp/pe-resident-pe-final-build.log,
+/tmp/pe-resident-pe-final-assets.log, /tmp/pe-resident-pe-v2-cpu-san.log,
+/tmp/pe-resident-pe-v2-assets-san.log. Diff --check PASS. Frozen normal
+/tmp/pe-resident-pe-final-game/-fixture, SAN /tmp/pe-resident-pe-v2-game-sanitized/
+-fixture-sanitized. To pełne testy programów, a nie dowód użycia każdego
+czaru w kampanii, niezależny pixel oracle PS1 ani ukończenie całej gry.
+Pozostałe resident programy85..91/105/107 nie są tym uzupełnieniem podpięte;
+cały Tutorial/EX/Chrysler, pełna kampania i zwykłe zwycięstwo M086 nadal otwarte.
+
+Nowy frozen debugger z całą aktualną wersją14 programów:
+/tmp/pe-resident-pe-final-game-debug (-O1 z pełnych TU), exec66829/PID78296,
+cwd /tmp/pe-resident-pe-m116-live. Odtwarza coldI→M116/cap31894, HP181,
+bez nowych HP diagnostics. Kolejkowane odczytanie wszystkich19 mapowań PE;
+log/args/input /tmp/pe-resident-pe-m116-live*. Dalej z M116 trzeba sprawdzić
+oryginalną drogę przez event3 doM113, zamiast utożsamiać telefonM112 z
+obowiązkowym przejściem. Aktualny stary debugger75770 ma tylko poprzedni
+zestaw programów i53HP przy39412; nie używać go do sprawdzania nowych PE.
+
+
 Nowy rzeczywisty abort M115 przy użyciu Barrier: Cannot start original PE
 effect103 (command392,status-8), Battle_AdvancePhase/phase.c218.
 Próba obejścia po prawej zatrzymała cylinder gracza przyx456,z-2242;

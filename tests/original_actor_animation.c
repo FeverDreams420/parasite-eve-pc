@@ -98,6 +98,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/field_shaded_ring.h"
 #include "pe1/field_shaded_quad.h"
 #include "pe1/field_glow_layers.h"
+#include "pe1/field_flash_burst.h"
 #include "pe1/fieldfx_state.h"
 #include "pe1/field_effect_modules.h"
 #include "pe1/pm.h"
@@ -1437,11 +1438,48 @@ static int original_glow_resident_constants(void)
     const u32 scan101[]={0x800db6bc,0,0,0,0,0,0,0,28,0,0,0,0,0x800e1c9c};
     const u32 slow102[]={0x800dba9c,0x800dbe6c,0,0,0,0,0,0,0x8000c,0,0,0,0,0x800e1d30};
     const u32 barrier103[]={0x800dc058,0x800dc750,0,0,0,0,0,0,0x80014,0,0,0,0,0x800e1e04};
+    const u32 pe94[]={0x800d751c,0x800d7764,0x800d7b70,0x0,0x0,0x0,0x0,0x0,0xc0008,0x10,0x0,0x0,0x0,0x800e189c};
+    const u32 pe95[]={0x800d8388,0x800d7764,0x800d751c,0x0,0x0,0x0,0x0,0x0,0xc0008,0x8,0x0,0x0,0x0,0x800e1958};
+    const u32 pe96[]={0x800d868c,0x800d8b6c,0x800d7764,0x0,0x0,0x0,0x0,0x0,0x40008,0xc,0x0,0x0,0x0,0x800e19e8};
+    const u32 pe97[]={0x800d927c,0x800d96f4,0x0,0x0,0x0,0x0,0x0,0x0,0xc0008,0x0,0x0,0x0,0x0,0x800e1a7c};
+    const u32 pe98[]={0x800df9b0,0x800d9fd4,0x0,0x0,0x0,0x0,0x0,0x0,0x80008,0x0,0x0,0x0,0x0,0x800e1b28};
+    const u32 pe104[]={0x800dca80,0x800dce94,0x0,0x0,0x0,0x0,0x0,0x0,0xc0008,0x0,0x0,0x0,0x0,0x800e1ec4};
+    const u32 pe106[]={0x800ddd70,0x800de0a8,0x800dea30,0x0,0x0,0x0,0x0,0x0,0x100008,0xc,0x0,0x0,0x0,0x800e204c};
     struct { u32 address; const void *value; size_t size; } rows[]={
+        {0x800e18c0,g_ArcingEffectColorTrack,48},
+        {0x800e18f0,g_ArcingSparkColorTrack,48},
+        {0x800e1988,g_OrbitTrailColorTrack,40},
+        {0x800e1a14,g_VerticalEffectColorTrack,48},
+        {0x800e1aa0,g_HelicalTrailColorTrack,40},
+        {0x800e1ac8,g_DampedSparkColorTrack,40},
+        {0x800e1920,pe94,sizeof(pe94)},
+        {0x800e189c,g_FieldFxTaskProgramCmd94.script,36},
+        {0x800e19b0,pe95,sizeof(pe95)},
+        {0x800e1958,g_FieldFxTaskProgramCmd95.script,48},
+        {0x800e1a44,pe96,sizeof(pe96)},
+        {0x800e19e8,g_FieldFxTaskProgramCmd96.script,44},
+        {0x800e1af0,pe97,sizeof(pe97)},
+        {0x800e1a7c,g_FieldFxTaskProgramCmd97.script,36},
+        {0x800e1b4c,pe98,sizeof(pe98)},
+        {0x800e1b28,g_FieldFxTaskProgramCmd98.script,36},
+        {0x800e1ee8,g_DriftingEffectColorTrack,48},
+        {0x800e1f18,g_TiltingSpriteColorTrack,48},
+        {0x800e207c,g_SettlingSpriteColorTrack,48},
+        {0x800e20ac,g_SettlingEmitterColorTrack,32},
+        {0x800e20cc,g_FlashBurstColorTrack,32},
+        {0x800e1f48,pe104,sizeof(pe104)},
+        {0x800e1ec4,g_FieldFxTaskProgramCmd104.script,36},
+        {0x800e20ec,pe106,sizeof(pe106)},
+        {0x800e204c,g_FieldFxTaskProgramCmd106.script,48},
+
         {0x800e1c64,detox100,sizeof(detox100)},
         {0x800e1be0,g_FieldFxTaskProgramCmd100.script,36},
         {0x800e1c04,g_CosineEffectColorTrack,40},
         {0x800e1c2c,g_SineSweepColorTrack,56},
+        {0x800c22bc,&g_FieldFxGlowFountainTint,4},
+        {0x800c22dc,&g_FieldFxArcingSparkTint,4},
+        {0x800c22e0,&g_FieldFxOrbitHelicalTint,4},
+        {0x800c22e4,&g_FieldFxDampedSparkTint,4},
         {0x800c22e8,&g_FieldFxSparkOuterTint,4},
         {0x800c22ec,&g_FieldFxSparkInnerTint,4},
         {0x800e1ba8,slow99,sizeof(slow99)},
@@ -1700,7 +1738,11 @@ static int authored_fan_sweep_cycles(void)
     RenderBufferPrefix old_buffers=D_800B0E38;GteMatrix *old_view=g_GeomScroll.words.viewMatrix;
     GteShortVector old_sine=g_SineEffectAnchor,old_anchor=g_FanSweepSparkAnchor,old_diamond=g_DiamondParticleAnchor;void *old_trail=g_FanSweepSparkTrailPool;
     int old_phase=g_SparkEmitterPhaseSeed,old_floor=g_RoomFloorY->y;
-    u8 *old_model=D_800F32D8,*old_twin_a=D_800F3418,*old_twin_b=g_FieldFxTwinModelB;
+    GteShortVector old_orbit=g_OrbitingEffectAnchor,old_helical=g_HelicalEffectAnchor;
+    GteShortVector old_vertical=g_VerticalEffectAnchor,old_tilting=g_TiltingSpriteAnchor,old_settling=g_SettlingSpriteAnchor;
+    char *old_orbit_pool=g_OrbitingEffectParticlePool,*old_helical_pool=g_HelicalEffectParticlePool;
+    s16 old_model_anchor_a[3];memcpy(old_model_anchor_a,g_SpinningModelAnchorA,sizeof(old_model_anchor_a));
+    u8 *old_model=D_800F32D8,*old_twin_a=D_800F3418,*old_twin_b=g_FieldFxTwinModelB,*old_flash=g_FieldFxModel83ACD504;
     s16 old_model_anchor[3];memcpy(old_model_anchor,g_SpinningModelAnchorB,6);
     u32 old_random=Psyz_RandState();
     uint64_t hash=UINT64_C(14695981039346656037);
@@ -1801,7 +1843,8 @@ static int authored_fan_sweep_cycles(void)
     if(hash!=UINT64_C(0x3d88066c0df41791))return 0;
     GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
     RenderMatrix matrix={.rotation={{4096,0,0},{0,4096,0},{0,0,4096}},.translation={0,0,1200}};
-    FieldActorState state={0};FieldActor player={.state=&state,.pos_z=1200*65536};player.render_object.matrices=&matrix;
+    RenderMatrix matrices[20];for(unsigned i=0;i<20;++i)matrices[i]=matrix;
+    FieldActorState state={0};FieldActor player={.state=&state,.pos_z=1200*65536};player.render_object.matrices=matrices;
     static RenderGpuTag ordering[4096];
     struct {_Alignas(void *) u8 bytes[65536];u8 guard[16];} packets;
     g_PlayerEntity=&player;g_GeomScroll.words.viewMatrix=&view;
@@ -1828,18 +1871,22 @@ static int authored_fan_sweep_cycles(void)
         FieldModelVertex *v=(void *)(model_bytes+28+i*8);v->x=i==0?-20:i==1?20:0;v->y=i==2?20:-20;v->color=52+i*4;
         u32 color=0x00302010+i;memcpy(model_bytes+52+i*4,&color,4);}
     _Alignas(16) u8 twin_model_bytes[64];memcpy(twin_model_bytes,model_bytes,sizeof(twin_model_bytes));
-    D_800F32D8=D_800F3418=model_bytes;g_FieldFxTwinModelB=twin_model_bytes;
+    D_800F32D8=D_800F3418=g_FieldFxModel83ACD504=model_bytes;g_FieldFxTwinModelB=twin_model_bytes;
     g_RoomFloorY->y=0;player.render_object.target_z=1200;
-    const unsigned commands[]={92,93,101,102,99,100,103},variables[]={7,8,16,17,13,15,18};
+    const unsigned commands[]={92,93,101,102,99,100,103,94,95,96,97,98,104,106},variables[]={7,8,16,17,13,15,18,9,10,11,12,13,19,21};
+    for(unsigned spell=0;spell<19;++spell){
+        unsigned command=g_BattleActionEffectIds.bytes[spell];
+        if(command<85 || command>=189 || !g_FieldFxTaskPrograms[command-85])return 0;
+    }
     if(g_FieldFxTaskPrograms[18]!=&g_FieldFxTaskProgramCmd103 ||
        g_FieldFxTaskProgramCmd103.table.callbacks[0]!=FieldFx_TwinModelEffect ||
        g_FieldFxTaskProgramCmd103.table.sizes[0]!=sizeof(FieldFxTwinModel))return 0;
-    for(unsigned variant=0;variant<7;++variant){
+    for(unsigned variant=0;variant<14;++variant){
         struct {PmPrimarySlot slots[11];u8 guard[16];} bank={0};memset(bank.guard,0xa5,16);
         g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(1);
         if(Scene_LoadRoomAssets(commands[variant],&player)!=0 || Pm_SendCmd(0,0,0,0,0,0))return 0;
         unsigned draws=0,particles=0;
-        for(unsigned frame=0;frame<100;++frame){
+        for(unsigned frame=0;frame<200;++frame){
             for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
             memset(packets.guard,0xa5,16);g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;
             D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.bytes;
@@ -1848,11 +1895,7 @@ static int authored_fan_sweep_cycles(void)
             FieldFxTaskContext *ctx=&bank.slots[0].task.tasks;
             for(unsigned slot=0;slot<8;++slot)if(ctx->slots[slot].id!=0xffff && ctx->slots[slot].end){
                 FieldFxTaskCallback callback=ctx->table->callbacks[ctx->slots[slot].id];
-                if(callback==g_FieldFxTaskProgramCmd92.table.callbacks[0] || callback==g_FieldFxTaskProgramCmd93.table.callbacks[1] ||
-                   callback==FieldFx_DiamondEmitter || callback==FieldFx_JitterSpriteEmitter ||
-                   callback==FieldFx_SpinningModelEmitterB || callback==FieldFx_DescendingSpriteEmitter ||
-                   callback==FieldFx_CosineEmitter || callback==FieldFx_SineEmitter ||
-                   callback==g_FieldFxTaskProgramCmd103.table.callbacks[1]){
+                {
                     FieldFxCallbackList *list=(void *)ctx->slots[slot].end;
                     for(unsigned i=0;i<(unsigned)list->count;++i)particles+=((FieldFxCallbackListEntry *)(list->entries+i*list->stride))->active!=0;
                 }
@@ -1871,10 +1914,14 @@ static int authored_fan_sweep_cycles(void)
     g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_task;g_FieldFxCurrentAge=old_age;
     D_800B0E38=old_buffers;g_GeomScroll.words.viewMatrix=old_view;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;
     g_SineEffectAnchor=old_sine;g_FanSweepSparkAnchor=old_anchor;g_FanSweepSparkTrailPool=old_trail;g_DiamondParticleAnchor=old_diamond;g_SparkEmitterPhaseSeed=old_phase;srand(old_random);
-    D_800F32D8=old_model;D_800F3418=old_twin_a;g_FieldFxTwinModelB=old_twin_b;
+    D_800F32D8=old_model;D_800F3418=old_twin_a;g_FieldFxTwinModelB=old_twin_b;g_FieldFxModel83ACD504=old_flash;
+    g_OrbitingEffectAnchor=old_orbit;g_HelicalEffectAnchor=old_helical;
+    g_VerticalEffectAnchor=old_vertical;g_TiltingSpriteAnchor=old_tilting;g_SettlingSpriteAnchor=old_settling;
+    g_OrbitingEffectParticlePool=old_orbit_pool;g_HelicalEffectParticlePool=old_helical_pool;
+    memcpy(g_SpinningModelAnchorA,old_model_anchor_a,sizeof(old_model_anchor_a));
     g_RoomFloorY->y=old_floor;memcpy(g_SpinningModelAnchorB,old_model_anchor,6);
-    puts("Original resident fan sweep 92/93: 100 ember + 208 Scan/Confuse + 280 Slow + 224 Detox unhooked USA CPU/BIOS states, six authored scripts (92/93/Scan/Confuse/Slow/Detox) x 100 real PM frames, nested native pools, draw chains, expiry and guards passed");
-    puts("Original Barrier 103: authored script x 100 real PM frames, both native draw buffers, twin models, nested jitter particles, expiry and packet/pool guards passed");
+    puts("Original resident particles: 100 ember + 208 Scan/Confuse + 280 Slow + 224 Detox unhooked USA CPU/BIOS states passed");
+    puts("Original resident PE: 14 complete authored programs x 200 PM frames, native pointer payloads, models, nested pools, both draw buffers and expiry passed");
     return 1;
 }
 

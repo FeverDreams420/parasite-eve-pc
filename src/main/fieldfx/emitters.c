@@ -1214,7 +1214,7 @@ int FieldFx_GlowFountain(int mode, void *data, intptr_t argument)
             rotation.x = 0;
             rotation.y = 0;
             rotation.z = g_FieldFxCurrentAge << 7;
-            scale = rsin((g_FieldFxCurrentAge - 4) << 6) * 2;
+            scale = rsin((s32)((u32)(g_FieldFxCurrentAge - 4) << 6)) * 2;
             FieldFx_DrawRingBand(&vector, 600, 700, 0x18, &rotation, scale, scale, 0,
                           &tint, intensity, 1);
         }
@@ -1509,3 +1509,19 @@ u16 g_FieldFxTaskScriptCmd103[]={1,6,18,2,0,0,4,20,0,2,1,0,0,0,0,0};
 FieldFxTaskProgram g_FieldFxTaskProgramCmd103={
     {{FieldFx_TwinModelEffect,FieldFx_RisingJitterEmitter},{sizeof(FieldFxTwinModel),sizeof(GteShortVector)}},
     NULL,g_FieldFxTaskScriptCmd103};
+
+/* Original resident PE programs and their complete colour tracks. */
+u8 g_DriftingEffectColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,140,5,0,0,0,0,150,150,150,5,0,0,0,0,0,120,50,16,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_TiltingSpriteColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,16,0,0,0,0,0,100,200,16,0,0,0,0,0,200,50,16,0,0,0,0,0,100,0,16,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_SettlingSpriteColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,200,0,0,12,0,0,0,0,128,128,0,32,0,0,0,0,200,128,0,12,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_SettlingEmitterColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,64,0,0,0,0,200,80,80,26,0,0,0,0,255,224,200,0,0,0,0,0};
+u8 g_FlashBurstColorTrack[]={0,0,0,0,0,0,0,0,255,255,255,8,0,0,0,0,200,80,0,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u16 g_FieldFxTaskScriptCmd104[]={1,6,19,2,1,0,4,30,0,2,0,0,4,5,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd104={
+    {{FieldFx_DriftingEmitter,FieldFx_TiltingSpriteEmitter},{8,12}},NULL,g_FieldFxTaskScriptCmd104};
+u16 g_FieldFxTaskScriptCmd106[]={1,6,21,2,0,0,4,88,0,2,1,0,4,5,0,2,2,0,4,2,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd106={
+    {{FieldFx_SettlingEmitter,FieldFx_FlashBurst,FieldFx_GlowFountain},{8,16,12}},NULL,g_FieldFxTaskScriptCmd106};
+
+GteShortVector g_TiltingSpriteAnchor,g_SettlingSpriteAnchor;
+RenderColor g_FieldFxGlowFountainTint={128,80,80,0};

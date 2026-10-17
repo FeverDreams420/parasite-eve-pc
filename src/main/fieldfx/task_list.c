@@ -12,11 +12,18 @@ int g_FieldFxCurrentAge;
 void *g_FieldFxTaskPrograms[104] = {
     [92 - 85] = &g_FieldFxTaskProgramCmd92,
     [93 - 85] = &g_FieldFxTaskProgramCmd93,
+    [94 - 85] = &g_FieldFxTaskProgramCmd94,
+    [95 - 85] = &g_FieldFxTaskProgramCmd95,
+    [96 - 85] = &g_FieldFxTaskProgramCmd96,
+    [97 - 85] = &g_FieldFxTaskProgramCmd97,
+    [98 - 85] = &g_FieldFxTaskProgramCmd98,
     [99 - 85] = &g_FieldFxTaskProgramCmd99,
     [100 - 85] = &g_FieldFxTaskProgramCmd100,
     [101 - 85] = &g_FieldFxTaskProgramCmd101,
     [102 - 85] = &g_FieldFxTaskProgramCmd102,
     [103 - 85] = &g_FieldFxTaskProgramCmd103,
+    [104 - 85] = &g_FieldFxTaskProgramCmd104,
+    [106 - 85] = &g_FieldFxTaskProgramCmd106,
 };
 char g_FieldFxTaskProgramMissingMsg[] = "TS No Thread No.%d\n";
 

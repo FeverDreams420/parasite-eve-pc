@@ -35,6 +35,9 @@ extern FieldFxTaskProgram g_FieldFxTaskProgramCmd92, g_FieldFxTaskProgramCmd93;
 extern FieldFxTaskProgram g_FieldFxTaskProgramCmd99, g_FieldFxTaskProgramCmd100;
 extern FieldFxTaskProgram g_FieldFxTaskProgramCmd101, g_FieldFxTaskProgramCmd102;
 extern FieldFxTaskProgram g_FieldFxTaskProgramCmd103;
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd94, g_FieldFxTaskProgramCmd95;
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd96, g_FieldFxTaskProgramCmd97;
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd98, g_FieldFxTaskProgramCmd104, g_FieldFxTaskProgramCmd106;
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, initialize) == sizeof(FieldFxTaskTable),
                   fieldfx_program_initializer);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(FieldFxTaskProgram, script) == sizeof(FieldFxTaskTable) + sizeof(void *),

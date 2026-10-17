@@ -2,6 +2,64 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Najnowszy kandydat: /tmp/pe-room-arc-v1. Gałąź M123 z pierwszą pokonaną
+głową ujawniła w SAN rzeczywisty błąd actor_classes.c:1551: przesunięcie
+ujemnego wyniku GTE (-7958) o12. W istniejącym module poprawiono ten sam
+wzór we wszystkich trzech procedurach: RoomLib_HandlerC,
+RoomLib_AdvanceArcToTargetY i RoomLib_AdvanceArcToTarget. Dziewięć przesunięć
+oraz dodawanie celu i sześć różnic do wyliczania prędkości używa teraz
+jawnego zawijania32-bitowego przed signed dzieleniem. Zachowano kolejność
+oryginalnych sll/addu/subu/div, funkcje i ich ABI. Bez nowych plików ani
+funkcji produkcyjnych i bez zmiany zasad rozgrywki.
+
+W istniejącym tests/original_actor_animation.c dodano972 przypadki pełnych
+trzech natywnych initializerów: ujemne GTE offsety (także -7958/-32768),
+dodatnie offsety, granice dodawania i różnicy celu oraz guardy slotu.
+Oracle USA wykonuje dwa oryginalne bloki C po GTE, od80191AA8/80191EA4,
+z niezmienionymi instrukcjami arytmetycznymi; B sprawdzany na wynikach
+tego samego wzoru. Zakres obejmuje skalarną konwersję GTE offset→cel→delta;
+pełne wywołania natywne używają kierunku0 i rzeczywistego GTE PsyZ.
+FNV cf98d09938562bbb; /tmp/pe-room-arc-offsets-mips.py i .log.
+Kontrola negatywna: bieżący nowy fixture i tylko stary obiekt actor_classes
+abortują SAN (-6) na ujemnym -32768. /tmp/pe-room-arc-v1-negative-proof.json.
+
+Po173 świeżych obiektów C na profil normal/SAN, oddzielne niezmienne gry
+oraz fixtures, dotychczasowe nieinstrumentowane archiwa SDK. CPU exit0
+(0,95/2,42s), wymagane --assets exit0 (11,79/49,84s), root build przeszedł.
+Manifest oraz /tmp/pe-room-arc-v1-verify.py sprawdzają bieżące zależności,
+obiekty, binarki, archiwa, oracle, negatywny i pozytywne przebiegi.
+/tmp/pe-room-arc-v1-proof.json. Poprzednie v4 i ich obiekty pozostały
+niezmienione; ich dowody odnoszą się do historycznych źródeł.
+
+Pierwszy cel M123 (typ3/200HP) pokonany zwykłym inputem: dwie serie SG550
+200→144→88, Energy Shot88→5, jeden pocisk kończy cel. Przy53892 pozostają
+cele2/300HP i4/400HP, Aya17HP, SG550 clip10, tryb walki0. Stary SAN na tej
+samej gałęzi abortował na -7958. Poprawiony normal/SAN exit0 (25,98/96,48s),
+cały JSON i1MiB VRAM zgodne ze starym zwykłym debuggerem;
+/tmp/pe-room-arc-v1-head3-proof.json. Boss wciąż żyje.
+
+Dalszy zwykły unik i Heal1: HP17→7→37, PE12, ATB196 przy54352,
+M123/A80221C8, stage400, lock4, menuNULL, SG550 slot1/clip10/pool69,
+SpVest14, oba pozostałe cele bez obrażeń. Normal/SAN exit0 (26,17/96,32s),
+identyczne JSON/VRAM i wynik świeżego debuggera na poprawionym kandydacie.
+SHA256 VRAM86bdf546780368d0c5704632f540166bb6a03467ec1f93d1387a78cef6301c14.
+W obu nowych przebiegach B–N niezmienione, bu10 puste, zero HP diagnostics,
+Unbound i błędów sanitizerów. /tmp/pe-room-arc-heal-v1-proof.json.
+
+Sterownik zewnętrzny miał błędną trasę M123 poza granicą walki, przez co
+Aya biegła w ścianę. Arena ma ośmiokąt x[-637,1155], z[-1846,-438].
+Punkty patrolu w /tmp/pe_park_combat_control.py poprawiono do
+(800,-1600),(850,-600),(-400,-600),(-350,-1600). Nadal trzeba poprawić
+reakcje sterownika na szarżę; sama korekta trasy nie zapewniła wygranej.
+Odczytano pełne19076B oryginalnego skryptu rodzica do analizy ataków:
+/tmp/pe-m123-parent-original-script.bin i .txt.
+
+Żywy debugger current-v14 (session80047), /tmp/pe-nypd-current-v14-live,
+stoi przy54352 na /tmp/pe-room-arc-v1-game. Args/log/input:
+/tmp/pe-nypd-current-v14-{args.json,lldb.log,input.jsonl}. V12 i V13 jawnie
+zakończono po sprawdzeniu następców. Kandydat i jego obiekty są niezmienne.
+Wygrana całego M123 i dalsza kampania pozostają do wykonania.
+
 Świeża regresja zgłoszenia206/82 na aktualnych build/parasite-eve-pc oraz
 build/test-original-actor-animation: --native-melissa exit0, input14,
 FNV c7ae3598591ad7c3; wymagane realne CUE, headless, prywatny cwd w /tmp.
@@ -127,12 +185,10 @@ W końcowym przebiegu seria rozdzielona i ruch Right40/Up180 z runem
 pozwoliły doładować ATB bez dalszej utratyHP. Wszystkie te zmiany dotyczą
 wyłącznie sterownika inputu w /tmp, nie funkcji gry ani zasad obrażeń.
 
-Żywy debugger current-v12 (session76592) stoi przy51888 przed walką M123.
-/tmp/pe-nypd-current-v12-{lldb.log,args.json,input.jsonl}; prywatne karty
-/tmp/pe-nypd-current-v12-live. Poprzednie v8/v9/v10/v11 jawnie zakończono.
-Zamrożonych /tmp/pe-m123-v4-game ani obiektów nie przebudowywać w miejscu.
-Zwycięstwo M123, późniejsze sceny, PS1 pixel/audio reference i pozostała
-kampania nadal wymagają pracy.
+Historyczny debugger current-v12 zakończono po odtworzeniu gałęzi na
+następcy; aktualny proces opisano wyżej. Zamrożonych /tmp/pe-m123-v4-game
+ani obiektów nie przebudowywać w miejscu. PS1 pixel/audio reference i cała
+pozostała kampania nadal wymagają pracy.
 
 Po zwycięstwie M122 zweryfikowano również zwykłe wejście do M124:
 cap40196, M124/A8022248, stage400, HP101/189, pole9, lock0, menuNULL,

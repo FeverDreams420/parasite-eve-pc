@@ -1240,12 +1240,12 @@ void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
         gte_mvmva();
         gte_stmac((void *)((u8 *)scratch + 0x38));
 
-        ((RoomLibHandlerBState *)state)->target[0] = ((RoomLibArcWork *)scratch)->point[0] +
-                            (((RoomLibArcWork *)scratch)->offset[0] << 12);
-        ((RoomLibHandlerBState *)state)->target[1] = ((RoomLibArcWork *)scratch)->point[1] +
-                            (((RoomLibArcWork *)scratch)->offset[1] << 12);
-        ((RoomLibHandlerBState *)state)->target[2] = ((RoomLibArcWork *)scratch)->point[2] +
-                            (((RoomLibArcWork *)scratch)->offset[2] << 12);
+        ((RoomLibHandlerBState *)state)->target[0] = (s32)((u32)((RoomLibArcWork *)scratch)->point[0] +
+                            ((u32)((RoomLibArcWork *)scratch)->offset[0] << 12));
+        ((RoomLibHandlerBState *)state)->target[1] = (s32)((u32)((RoomLibArcWork *)scratch)->point[1] +
+                            ((u32)((RoomLibArcWork *)scratch)->offset[1] << 12));
+        ((RoomLibHandlerBState *)state)->target[2] = (s32)((u32)((RoomLibArcWork *)scratch)->point[2] +
+                            ((u32)((RoomLibArcWork *)scratch)->offset[2] << 12));
 
         count = 0;
         step = ((RoomLibHandlerBState *)state)->phaseValue;
@@ -1258,10 +1258,10 @@ void RoomLib_AdvanceArcToTarget(RoomEnt *obj) {
             count++;
         } while (y < targetY);
         {
-            int xVelocity = (((RoomLibHandlerBState *)state)->target[0] - link->pos[0]) / count;
+            int xVelocity = (s32)((u32)((RoomLibHandlerBState *)state)->target[0] - (u32)link->pos[0]) / count;
             int zVelocity;
             *(volatile int *)&((RoomLibHandlerBState *)state)->horizontalVelocity[0] = xVelocity;
-            zVelocity = (((RoomLibHandlerBState *)state)->target[2] - link->pos[2]) / count;
+            zVelocity = (s32)((u32)((RoomLibHandlerBState *)state)->target[2] - (u32)link->pos[2]) / count;
             *(volatile int *)&((RoomLibHandlerBState *)state)->horizontalVelocity[1] = zVelocity;
         }
     }
@@ -1547,16 +1547,18 @@ void RoomLib_HandlerC(RoomEnt *obj) {
         gte_mvmva();
         gte_stmac(((RoomLibArcWork *)scratch)->offset);
 
-        (state)->arcTarget[0] = ((RoomLibArcWork *)scratch)->point[0] +
-                            (((RoomLibArcWork *)scratch)->offset[0] << 12);
-        (state)->arcTarget[1] = ((RoomLibArcWork *)scratch)->point[1] +
-                            (((RoomLibArcWork *)scratch)->offset[1] << 12);
-        (state)->arcTarget[2] = ((RoomLibArcWork *)scratch)->point[2] +
-                            (((RoomLibArcWork *)scratch)->offset[2] << 12);
+        /* GTE offsets and destinations are PS1 words: shift and add
+         * with unsigned wrapping before interpreting the signed delta. */
+        (state)->arcTarget[0] = (s32)((u32)((RoomLibArcWork *)scratch)->point[0] +
+                            ((u32)((RoomLibArcWork *)scratch)->offset[0] << 12));
+        (state)->arcTarget[1] = (s32)((u32)((RoomLibArcWork *)scratch)->point[1] +
+                            ((u32)((RoomLibArcWork *)scratch)->offset[1] << 12));
+        (state)->arcTarget[2] = (s32)((u32)((RoomLibArcWork *)scratch)->point[2] +
+                            ((u32)((RoomLibArcWork *)scratch)->offset[2] << 12));
         (state)->horizontalVelocity[0] =
-            ((state)->arcTarget[0] - link->pos[0]) / state->rate;
+            (s32)((u32)state->arcTarget[0] - (u32)link->pos[0]) / state->rate;
         (state)->horizontalVelocity[1] =
-            ((state)->arcTarget[2] - link->pos[2]) / state->rate;
+            (s32)((u32)state->arcTarget[2] - (u32)link->pos[2]) / state->rate;
     }
 
     ((RoomLibArcWork *)scratch)->landed = 0;
@@ -1681,12 +1683,12 @@ void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
         gte_mvmva();
         gte_stmac((void *)((u8 *)scratch + 0x38));
 
-        ((RoomLibHandlerCState *)state)->arcTarget[0] = ((RoomLibArcWork *)scratch)->point[0] +
-                            (((RoomLibArcWork *)scratch)->offset[0] << 12);
-        ((RoomLibHandlerCState *)state)->arcTarget[1] = ((RoomLibArcWork *)scratch)->point[1] +
-                            (((RoomLibArcWork *)scratch)->offset[1] << 12);
-        ((RoomLibHandlerCState *)state)->arcTarget[2] = ((RoomLibArcWork *)scratch)->point[2] +
-                            (((RoomLibArcWork *)scratch)->offset[2] << 12);
+        ((RoomLibHandlerCState *)state)->arcTarget[0] = (s32)((u32)((RoomLibArcWork *)scratch)->point[0] +
+                            ((u32)((RoomLibArcWork *)scratch)->offset[0] << 12));
+        ((RoomLibHandlerCState *)state)->arcTarget[1] = (s32)((u32)((RoomLibArcWork *)scratch)->point[1] +
+                            ((u32)((RoomLibArcWork *)scratch)->offset[1] << 12));
+        ((RoomLibHandlerCState *)state)->arcTarget[2] = (s32)((u32)((RoomLibArcWork *)scratch)->point[2] +
+                            ((u32)((RoomLibArcWork *)scratch)->offset[2] << 12));
 
         count = 0;
         step = ((RoomLibHandlerCState *)state)->phaseValue;
@@ -1699,10 +1701,10 @@ void RoomLib_AdvanceArcToTargetY(RoomEnt *obj) {
             count++;
         } while (y < targetY);
         {
-            int xVelocity = (((RoomLibHandlerCState *)state)->arcTarget[0] - link->pos[0]) / count;
+            int xVelocity = (s32)((u32)((RoomLibHandlerCState *)state)->arcTarget[0] - (u32)link->pos[0]) / count;
             int zVelocity;
             *(volatile int *)&((RoomLibHandlerCState *)state)->horizontalVelocity[0] = xVelocity;
-            zVelocity = (((RoomLibHandlerCState *)state)->arcTarget[2] - link->pos[2]) / count;
+            zVelocity = (s32)((u32)((RoomLibHandlerCState *)state)->arcTarget[2] - (u32)link->pos[2]) / count;
             *(volatile int *)&((RoomLibHandlerCState *)state)->horizontalVelocity[1] = zVelocity;
         }
     }

@@ -8241,6 +8241,48 @@ static int original_room_e_update(void)
     return 1;
 }
 
+static int original_room_arc_offsets(void)
+{
+    const s32 offsets[]={-32768,-7958,-4096,-1,0,1,4096,7958,32767};
+    const s32 targets[]={65536,0x40000000,0x7fff0000,0x7fffffff};
+    u64 hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned kind=0;kind<3;++kind)for(unsigned x=0;x<9;++x)
+    for(unsigned z=0;z<9;++z)for(unsigned target=0;target<4;++target){
+        struct {u64 before;PmSecondarySlot slot;u64 after;} guarded={0};
+        guarded.before=UINT64_C(0xa55aa55aa55aa55a);
+        guarded.after=UINT64_C(0x5aa55aa55aa55aa5);
+        RoomEnt *object=(RoomEnt *)&guarded.slot;RoomLink link={0};
+        object->link=&link;link.variant=1;link.pos[2]=targets[target]-65536;
+        s32 *destination,*velocity;
+        if(kind<2){
+            RoomLibHandlerCState *state=(RoomLibHandlerCState *)&object->sub;
+            state->target[2]=targets[target];state->localOffset[0]=offsets[x]*4096;
+            state->localOffset[2]=offsets[z]*4096;state->rate=16;state->mode=65536;
+            if(kind==0)RoomLib_HandlerC(object);else RoomLib_AdvanceArcToTargetY(object);
+            destination=state->arcTarget;velocity=state->horizontalVelocity;
+        }else{
+            RoomLibHandlerBState *state=(RoomLibHandlerBState *)&object->sub;
+            state->target[2]=targets[target];state->localOffset[0]=offsets[x]*4096;
+            state->localOffset[2]=offsets[z]*4096;state->mode=65536;
+            RoomLib_AdvanceArcToTarget(object);
+            destination=state->target;velocity=state->horizontalVelocity;
+        }
+        const u32 words[]={kind,(u32)offsets[x],(u32)offsets[z],(u32)targets[target],
+            (u32)destination[0],(u32)destination[1],(u32)destination[2],
+            (u32)velocity[0],(u32)velocity[1]};
+        for(unsigned word=0;word<9;++word)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+        if(guarded.before!=UINT64_C(0xa55aa55aa55aa55a) ||
+           guarded.after!=UINT64_C(0x5aa55aa55aa55aa5) || link.pos[0] || link.pos[1] ||
+           link.pos[2]!=targets[target]-65536)return 0;
+        ++cases;
+    }
+    if(cases!=972 || hash!=UINT64_C(0xcf98d09938562bbb)){
+        fprintf(stderr,"Room arc offset CPU hash: %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original room arcs: 972 signed GTE offset and wrapped destination/delta cases, USA CPU arithmetic blocks, three full native initializers and slot guards passed");
+    return 1;
+}
+
 static int native_room_actor_class_table(void)
 {
     PmSlotBanks banks={0};PmTables saved_tables=g_PmTables;
@@ -14572,7 +14614,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!original_paired_glow_states() || !original_paired_glow_program_flow() || !original_line_burst_states() || !original_dropped_flare_states() || !original_m089_states() || !original_m086_states() || !original_motion_states() || !original_motion_program() || !original_window_lifecycle() || !original_window_motion() || !original_room_e_init() || !original_room_e_update() || !original_effect_sequence_updates() || !original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!original_paired_glow_states() || !original_paired_glow_program_flow() || !original_line_burst_states() || !original_dropped_flare_states() || !original_m089_states() || !original_m086_states() || !original_motion_states() || !original_motion_program() || !original_window_lifecycle() || !original_window_motion() || !original_room_e_init() || !original_room_e_update() || !original_effect_sequence_updates() || !original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_room_arc_offsets() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;

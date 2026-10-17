@@ -7,7 +7,9 @@
 
 #include "room_lib.h"
 
-RoomSlotRec *RoomLib_SlotSet(int mode, int idx, int a, int b) {
+RoomSlotRec RoomLib_SlotTable[8];
+
+intptr_t RoomLib_SlotSet(int mode, intptr_t idx, intptr_t a, intptr_t b) {
     RoomSlotRec *e = &RoomLib_SlotTable[idx];
 
     if (mode == 1) {
@@ -20,5 +22,5 @@ RoomSlotRec *RoomLib_SlotSet(int mode, int idx, int a, int b) {
         e->h2 = g_RoomFloorY->raw;
         e->h4 = b;
     }
-    return e;
+    return (intptr_t)e;
 }

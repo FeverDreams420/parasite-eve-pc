@@ -46,14 +46,13 @@ PE1_STATIC_ASSERT(sizeof(RoomLineBurstParticle) == 0x14, room_line_burst_particl
 /* LINE_F2 packet as the burst fills it: the tag's length byte, the colour
  * bytes with the primitive code, and the two screen points. */
 typedef struct RoomLineBurstLinePacket {
-    u8 tag[3];
-    u8 length;                    /* 0x03 */
+    RenderNativeTag tag;
     u8 r, g, b, code;             /* 0x04 */
     s16 x0, y0;                   /* 0x08 */
     s16 x1, y1;                   /* 0x0C */
 } RoomLineBurstLinePacket;
 
-PE1_STATIC_ASSERT(sizeof(RoomLineBurstLinePacket) == 0x10, room_line_burst_line_packet_size);
+PE1_STATIC_ASSERT(sizeof(RoomLineBurstLinePacket) == sizeof(RenderLinePacket), room_line_burst_line_packet_size);
 
 /* Eight-byte constants copied to the stack unaligned, as retail does. */
 typedef struct RoomLineBurstWords8 {
@@ -67,5 +66,11 @@ typedef struct RoomLineBurstColor {
 
 #include "pe1/render_buffers.h"
 extern void LoadAverageShort12(void *from, void *to, int weightFrom, int weightTo, void *out);
+
+#include "pe1/fieldfx_task.h"
+extern int RoomEffect_LineBurstParticle(int mode, void *data, intptr_t argument);
+extern int RoomEffect_LineBurstController(int mode, void *data, intptr_t argument);
+extern FieldFxTaskProgram g_RoomLineBurstProgram;
+extern u16 g_RoomLineBurstScript[16];
 
 #endif

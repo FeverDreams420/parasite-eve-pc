@@ -859,7 +859,7 @@ typedef struct RoomSlotRec {
 /* The room's slot table (script_slot.c), named in each room's symbol
  * file. */
 extern RoomSlotRec RoomLib_SlotTable[];
-RoomSlotRec *RoomLib_SlotSet(int mode, int idx, int a, int b);
+intptr_t RoomLib_SlotSet(int mode, intptr_t idx, intptr_t a, intptr_t b);
 
 typedef struct RoomBlob8 {
     char b[8];

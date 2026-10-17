@@ -921,7 +921,7 @@ zakończył się0 przy177831, M111/A80210C8, story392, HP181/181, dialog54
 Cathy i lock1 (prawidłowy cap w trakcie rozmowy), bez menu. Cały VRAM
 zgodny z debuggerem: SHA256
 e6d80b9e9ac64b01f10ab9052e09d6dd5c65a929c93abf12c6b10cb8f99bc146.
-SAN50352 nadal uruchomiony; po terminal0 sprawdzić
+SAN50352 następnie zakończył się0; PASS potwierdzono przez
 /tmp/pe-m111-v1-entry-verify.py (wymaga dokładnie dialog54/lock1, pełnej
 zgodności JSON/VRAM i niezmienionych kart).
 
@@ -970,6 +970,64 @@ stare widoki owner/pool, callbacki2arg,16-bajtowy tag i OT*4. Cały ten
 moduł wymaga naprawy na miejscu i testów przed przyszłym podpięciem.
 Nowego zapisu przez telefon jeszcze nie ma. M086 zwykła wygrana nadal
 nieukończona; powyższa dalsza rozgrywka to coverage-only.
+
+Potwierdzenie pełnego M111: exec16749 terminal0, normal50351 iSAN50352
+oba0. /tmp/pe-m111-v1-entry-verify.py PASS; cały JSON i1MiB VRAM identyczne,
+SHA256e6d80b9e9ac64b01f10ab9052e09d6dd5c65a929c93abf12c6b10cb8f99bc146,
+zgodne z debuggerem. Wszystkie karty B–H niezmienione, bu10 puste.
+Proof /tmp/pe-m111-v1-entry-proof.json; cap177831, M111/A80210C8,
+story392, HP181/181, prawidłowy dialog54/lock1. Nadal coverage-only,
+te same15 wcześniejszych diagnostycznych zdarzeń HP.
+
+Aktualizacja całego oryginalnego modułu M122: naprawiono line_burst.c
+na miejscu (oba callbacki: controller i cały bounce_render.inc) oraz
+istniejący pełny script_slot.c/RoomLib_SlotSet. Nie ma nowych plików,
+wyciągniętych funkcji, zastępczego gameplayu ani wrapperów callbacków.
+Właściciel, aktywny pool i kontekst używają istniejących natywnych pól;
+parametry i inicjalizator przenoszą intptr_t. Wspólna tablica parametrów
+zachowuje oryginalne8 rekordów po16 bajtów. LINE_F2 ma natywny pełny tag,
+alokacja sizeof(packet) i OT[depth], bez PS1 *4 i indeksu drawSlot−8.
+Ujemne przesunięcia zastąpiono równoważnym mnożeniem i jawnym zawężeniem
+bounce, bez zmiany oryginalnych faz, RNG, cooldownu, koloru ani dźwięku57B.
+Potwierdzono w disassembly także współczynnik1204 w kosinusie cząstki.
+
+Całe8392 bajty M122: SHA256
+3ab71e2ef840e6124bd070a999d58436a95c47c5cf2d0234a0bb285c71e1109b,
+FNV865d23b4d2d74ff5. Test paired_glow sprawdza ten cały moduł oraz każdą
+instrukcję wspólnych metod i17 funkcji paired po relokacjach względemM107:
+code−1c4, data−26ac, BSS−2678, pełne listy, metody, rozmiary, skrypt i rampę.
+Na realnych modelach M122 wykonuje również cały paired PM w obu buforach.
+Loader wiąże dokładnie35/80190F30 i136/80190FEC; resetuje sprite/packet
+paired i8 oryginalnych rekordów parametrów line burst przy ładowaniu.
+Pozostałe warianty line burst i scenyE11–E14 nadal wymagają audytu/podpięcia.
+
+Nowe224 stany particle/controller (wszystkie4 fazy, granice timerów,
+4 ziarna RNG, punkty wewnątrz/poza podłożem, kontakt i brak kontaktu,
+24 sloty potomne i pełne flagi) zgadzają się z niepodmienionym MIPS,
+oryginalnym silnikiem, ROM BIOS i mostem COP2:
+/tmp/pe-line-cpu.py, hash ed4f850d3f8ab98e. Natywny test obejmuje strażniki
+pamięci, pełne wskaźniki i inicjalizację wszystkich8 rekordów parametrów.
+Pełny authored task136 na prawdziwym archiwum M122 i ścieżce dźwięku57B
+przechodzi oba bufory,123 klatki do końca,91 klatek rysowania,610 obserwacji
+żywych cząstek, przejście akcji1→2→4, kontakt4000 i fazę właściciela19
+przed jej oryginalnym odliczaniem, końcowe flag80000000, brak tasków.
+Sprawdzone pełne linki OT, granice packet arena i strażniki obu pooli.
+Cały --assets PASS normal i ASan/UBSan/function, oba terminal0:
+/tmp/pe-line-v6-assets.log i /tmp/pe-line-v6-assets-san.log. PsyZ/SDL
+instrumentowane; pełny build i diff --check PASS. Nie jest to jeszcze
+sprawdzona scena M122 w kampanii ani dowód pełnej zgodności pikseli z PS1.
+Audyt /tmp/pe-m122-module-audit.json; zamrożone
+/tmp/pe-line-v6-game, -game-sanitized, -fixture, -fixture-sanitized.
+
+Nowa próba exec33329/PID67538 rzeczywiście zatrzymała się przy189491,
+M100, stage400, HP121. Zwykłe menu PE/Heal2 uleczyło121→181 przy189587,
+bez zmiany HP przez debugger; menu zamknięte do189619. Powtórka inputu do
+obszaru starcia zatrzymała się przy189811/lock1. Tym razem czekanie jest
+w20-klatkowych krokach i kończy się natychmiast po zmianie trybu walki,
+bez wcześniejszego600-klatkowego idle. Dalszy input i wynik walki są w
+/tmp/pe-m099-v1-live-input.jsonl i live-lldb.log; sprawdzić aktualny stan.
+Nowego save telefonu nadal brak; nie nadpisywać H ani root bu00/bu10.
+
 
 
 Nadal coverage-only oraz osobno nieukończona zwykła walka M086 odH.

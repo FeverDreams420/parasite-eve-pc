@@ -22,7 +22,8 @@
 #define ROOMLIB_BOUNCE_FRAME_BASE 0xC8
 #endif
 
-int ROOMLIB_UPDATE_BOUNCE_RENDER_NAME(int mode, RoomLineBurstParticle *fx) {
+int ROOMLIB_UPDATE_BOUNCE_RENDER_NAME(int mode, void *data, intptr_t argument) {
+    RoomLineBurstParticle *fx=data;
     RoomLineBurstColor blob;
     int saved0;
     int saved2;
@@ -64,7 +65,7 @@ int ROOMLIB_UPDATE_BOUNCE_RENDER_NAME(int mode, RoomLineBurstParticle *fx) {
         if (y >= g_RoomFloorY->y) {
             int bounce;
 
-            bounce = (nextVy << 16) >> 16;
+            bounce = (s16)(u16)nextVy;
             bounce = -bounce;
             fx->vy = bounce;
         }
@@ -95,12 +96,11 @@ int ROOMLIB_UPDATE_BOUNCE_RENDER_NAME(int mode, RoomLineBurstParticle *fx) {
     {
         int sinValue;
         int scale;
-        /* Matching debt: the angle still needs retail's argument register. */
         int angle;
         int cosine;
         int texture;
 
-        sinValue = rsin((fx->timer << 10) / 24);
+        sinValue = rsin((fx->timer * 1024) / 24);
         angle = (fx->timer * 1204) / 24;
         scale = ((unsigned int)sinValue >> 31) + sinValue;
         scale >>= 1;
@@ -124,7 +124,7 @@ int ROOMLIB_UPDATE_BOUNCE_RENDER_NAME(int mode, RoomLineBurstParticle *fx) {
         int angle;
         RenderMatrixSlot *matrixSlot;
 
-        angle = rcos(fx->timer << 5);
+        angle = rcos(fx->timer * 32);
         if (angle < 0) {
             angle += 0x1F;
         }

@@ -17,8 +17,6 @@
 #include "pe1/player_entity.h"
 #include "pe1/scene_assets.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
 RampEdge *g_SceneDataTable2;
 u16 g_FieldCollisionTriIndex;
 
@@ -421,7 +419,7 @@ void Entity_ResolvePosition(BattleEntity *actor, int index) {
         id = entry_s0->plane;
         second = Math_FixedMul(g_CollisionPlaneTable[id].c, actor_s2->posZ.fixed);
         id = entry_s0->plane;
-        value = Math_FixedMul(entry_s0->distance - first - second, g_CollisionPlaneTable[id].inverseB);
+        value = Math_FixedMul((s32)((u32)entry_s0->distance - (u32)first - (u32)second), g_CollisionPlaneTable[id].inverseB);
         actor_s2->posY.fixed = value;
         arg_y = actor_s2->posX.parts.integer;
         arg_z = actor_s2->posZ.parts.integer;
@@ -1088,14 +1086,14 @@ int Geo_PointInTri(void *triangle, s16 x, s16 z)
                 inside = !inside;
             } else if (x < (s16)nextX || x < (s16)previousX) {
                 int deltaZ = (s16)previousZ - (s16)nextZ;
-                int side = ((s16)previousX - (s16)nextX) * (z - (s16)nextZ);
+                int side = (s32)((u32)((s16)previousX - (s16)nextX) * (u32)(z - (s16)nextZ));
 
                 if (deltaZ < 0) {
-                    deltaZ *= x - (s16)nextX;
+                    deltaZ = (s32)((u32)deltaZ * (u32)(x - (s16)nextX));
                     if (side < deltaZ)
                         inside = !inside;
                 } else {
-                    deltaZ *= x - (s16)nextX;
+                    deltaZ = (s32)((u32)deltaZ * (u32)(x - (s16)nextX));
                     if (deltaZ < side)
                         inside = !inside;
                 }
@@ -1174,8 +1172,6 @@ void Entity_SlideOnRamp(BattleEntity *entity)
 int Geo_PointInPoly(int x, int z, const PolygonVertex *vertices, unsigned short count)
 {
     unsigned short i;
-    /* Matching debt: the parity accumulator remains pinned on stock GCC
-     * 2.7.2. The edge comparison result is an ordinary flag. */
     int inside;
     int previousX, previousZ, currentX, currentZ;
     int cross, dz;

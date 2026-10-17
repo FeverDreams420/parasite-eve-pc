@@ -1097,8 +1097,8 @@ int Script_ClearInputFlagBit2(int **unused) {
     return 1;
 }
 
-int Entity_ResolveCurrentPosition(unsigned short **arg0) {
-    Entity_ResolvePosition((BattleEntity *)g_CurrentEntity, *arg0[0]);
+int Entity_ResolveCurrentPosition(int **arg0) {
+    Entity_ResolvePosition((BattleEntity *)g_CurrentEntity, (u16)*arg0[0]);
     return 1;
 }
 

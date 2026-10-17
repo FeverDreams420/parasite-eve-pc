@@ -3765,6 +3765,79 @@ static int original_scene_entry_position_opcode(void)
     return 1;
 }
 
+/* Opcode175 force-resolves the named triangle even outside its outline. */
+static int original_floor_resolve_opcode(void)
+{
+    const u32 positions[]={0,1,65535,0xffffffff,0x80000000,0x7fffffff,0xffff0000,65536,0x12345678,0xfedcba98};
+    const u32 highs[]={0,0x10000,0x80000000,0xffff0000,0x12340000,0x7fff0000};
+    const s16 shapes[][6]={{-100,-100,100,-100,0,100},{0,100,100,-100,-100,-100},{0,0,0,0,0,0},
+        {-32768,-32768,32767,-32768,0,32767},{-32768,-32768,32767,32767,-32768,32767}};
+    const s16 heights[]={-32768,-1,0,1,32767,123,-123,1000,-1000,321,-321,42};
+    const u32 coeff[]={0,1,0xffffffff,65536,0xffff0000,0x7fffffff,0x80000000,0x40000000,0xc0000000,0x12345678,0xfedcba98,0x100000};
+    CollisionDatabase *saved_db=g_CollisionDb;CollisionPlane *saved_planes=g_CollisionPlaneTable;
+    CollisionRegionTable saved_regions=g_RegionHeightTable;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;
+    struct FloorGeometry {CollisionDatabase db;CollisionTriangleXZ flat[3];CollisionTriangleXYZ slope[3];
+        CollisionVertexXZ xz[3];CollisionVertexXYZ xyz[3];CollisionPlane planes[3];CollisionRegionEntry regions[3];} geometry,before_geometry;
+    CollisionFlatRegion h0={0},h1={0},h2={0};CollisionFlatRegion *flat_heights[]={&h0,&h1,&h2};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(g_ScriptQueueOpcodeHandlers[175]!=Entity_ResolveCurrentPosition)return 0;
+    for(unsigned sweep=0;sweep<2;++sweep)for(unsigned test=0;test<(sweep?65536u:216000u);++test){
+        unsigned mode=sweep?test%2:test/108000,index=sweep?test%3:(test/36000)%3;
+        unsigned shape=sweep?test%5:(test/1200)%5,variant=sweep?test%12:(test/100)%12;
+        u32 high=sweep?test<<16:highs[(test/6000)%6];
+        u32 x=sweep?positions[test%10]:positions[(test/10)%10],z=sweep?positions[(test+3)%10]:positions[test%10];
+        BattleEntity actor;memset(&actor,0xa5,sizeof(actor));actor.posX.fixed=(s32)x;actor.posY.fixed=(s32)0x98765432;
+        actor.posZ.fixed=(s32)z;actor.baseX=0x76543210;actor.baseY=(s32)0xdeadbeef;actor.baseZ=0x10203040;
+        BattleEntity before=actor,expected=actor;g_CurrentEntity=(FieldActor *)&actor;
+        memset(&geometry,0xa5,sizeof(geometry));geometry.db.regionCount=geometry.db.triangleCount=geometry.db.planeCount=3;
+        geometry.db.vertices.pointer=mode?(void *)geometry.xyz:(void *)geometry.xz;
+        geometry.db.triangles.pointer=mode?(void *)geometry.slope:(void *)geometry.flat;
+        geometry.db.planes.pointer=mode?geometry.planes:NULL;geometry.db.rampEdges.pointer=NULL;geometry.db.regions=geometry.regions;
+        for(unsigned i=0;i<3;++i){
+            geometry.flat[i].header.kind=geometry.slope[i].face.kind=0x40+i;
+            geometry.flat[i].header.region=geometry.slope[i].face.region=(i+1)%3;
+            geometry.slope[i].face.plane=(i+2)%3;geometry.slope[i].face.distance=(s32)coeff[(variant+i+9)%12];
+            for(unsigned j=0;j<3;++j)geometry.flat[i].layout.links.vertices[j]=geometry.slope[i].layout.links.vertices[j]=j;
+            geometry.xz[i]=(CollisionVertexXZ){(u16)shapes[shape][i*2],(u16)shapes[shape][i*2+1]};
+            geometry.xyz[i]=(CollisionVertexXYZ){(u16)shapes[shape][i*2],(u16)((int)i*17-13),(u16)shapes[shape][i*2+1]};
+            geometry.planes[i]=(CollisionPlane){(s32)coeff[(variant+i)%12],(s32)coeff[(variant+i+3)%12],(s32)coeff[(variant+i+6)%12]};
+            flat_heights[i]->height=heights[(variant+i)%12];flat_heights[i]->triangleCount=0;geometry.regions[i].flat=flat_heights[i];
+        }
+        memcpy(&before_geometry,&geometry,sizeof(geometry));g_CollisionDb=&geometry.db;
+        g_CollisionPlaneTable=mode?geometry.planes:NULL;g_RegionHeightTable.entries=geometry.regions;
+        struct {u32 before;int index;u32 after;} input={0x11223344,(s32)(high|index),0xa55a5aa5};int *args[]={&input.index};
+        u32 result=Entity_ResolveCurrentPosition(args);unsigned face=0,mirror=0;
+        for(unsigned i=0;i<3;++i){
+            void *pointer=mode?(void *)&geometry.slope[i].face:(void *)&geometry.flat[i].header;
+            if(actor.collisionFace==pointer)face=i+1;if(actor.collisionFaceMirror==pointer)mirror=i+1;
+        }
+        if(!face || !mirror)return 0;
+        u32 inside=Geo_PointInTri(actor.collisionFace,actor.posX.parts.integer,actor.posZ.parts.integer);
+        const u32 words[]={result,inside,(u32)actor.posX.fixed,(u32)actor.posY.fixed,(u32)actor.posZ.fixed,
+            (u32)actor.baseX,(u32)actor.baseY,(u32)actor.baseZ,face,mirror};
+        for(unsigned word=0;word<10;++word)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+        expected.posY=actor.posY;expected.baseX=actor.baseX;expected.baseY=actor.baseY;expected.baseZ=actor.baseZ;
+        expected.collisionFace=actor.collisionFace;expected.collisionFaceMirror=actor.collisionFaceMirror;
+        if(memcmp(&actor,&expected,sizeof(actor)) || memcmp(&geometry,&before_geometry,sizeof(geometry)) ||
+           input.index!=(s32)(high|index) || input.before!=0x11223344 || input.after!=0xa55a5aa5)return 0;
+        actor=before;u32 program[]={175|(1u<<13),0,high|index,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(&actor,&expected,sizeof(actor)) || memcmp(&geometry,&before_geometry,sizeof(geometry)) ||
+           program[2]!=(high|index) || node.current.script!=program+5 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+        for(unsigned i=0;i<3;++i)if(flat_heights[i]->height!=heights[(variant+i)%12] || flat_heights[i]->triangleCount)return 0;
+        ++cases;
+    }
+    g_CollisionDb=saved_db;g_CollisionPlaneTable=saved_planes;g_RegionHeightTable=saved_regions;
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+    if(cases!=281536 || hash!=UINT64_C(0x06cbb55c0c953cd0)){
+        fprintf(stderr,"Floor175 CPU mismatch: %u %016llx\n",cases,(unsigned long long)hash);return 0;
+    }
+    puts("Original opcode175: 281536 USA CPU states, flat/sloped/degenerate/extreme triangles, full high-word domain, forced outside placement, wrapped height/cross products, full pointer/actor/geometry guards and real dispatcher passed");
+    return 1;
+}
+
 /* Original render-position/reset handlers, including their complete callees. */
 static int original_render_position_reset_opcodes(void)
 {
@@ -5681,7 +5754,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_attachment_opcode() || !original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_three_particle_states() || !original_three_particle_program() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_render_position_reset_opcodes() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_frame_clock_layout() || !original_script_timer_commands() || !original_scene_frame_timers() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_attachment_opcode() || !original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_three_particle_states() || !original_three_particle_program() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_render_position_reset_opcodes() || !original_floor_resolve_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_frame_clock_layout() || !original_script_timer_commands() || !original_scene_frame_timers() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

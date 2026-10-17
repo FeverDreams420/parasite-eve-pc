@@ -50,6 +50,7 @@ int Entity_PolarToPosition2(int **args);
 int Script_SetRenderEntryPos(int **args);
 int Script_ResetEntityRenderObj(int **unused);
 int Script_SetActorScreenPos(int **args);
+int Entity_ResolveCurrentPosition(int **args);
 int Script_Noop(int **unused);
 int Script_GetSqrt(int **args);
 int Script_SetEntityShadowFlag(int **unused);

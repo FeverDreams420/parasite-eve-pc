@@ -743,7 +743,7 @@ int (*g_ScriptQueueOpcodeHandlers[8192])(int **) = {
     [154]=Script_SetMenuSlotEntry,
     [168]=Script_CountItemsByValue,
     [122]=Script_GetObjEntryField6, [187]=Script_SetEntryScrolled, [188]=Script_SetEntryMirrored,
-    [176]=Script_SetBattleEntryCoords, [178]=Script_GetFloorNumber,
+    [175]=Entity_ResolveCurrentPosition, [176]=Script_SetBattleEntryCoords, [178]=Script_GetFloorNumber,
     [180]=Script_SetMoveFlag, [181]=Script_ClearMoveFlag, [182]=Entity_PolarToPosition2,
     [207]=Script_SignalSceneExit, [208]=Script_DrawSaveOverlay,
     [209]=Script_ResetEntityAnimSlot,

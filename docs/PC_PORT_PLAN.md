@@ -2,6 +2,55 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Podpięto oryginalne175 Entity_ResolveCurrentPosition z int ** i jawnym
+odczytem dolnego u16. W istniejącym actor_collision.c poprawiono zawijanie
+odejmowań równania płaszczyzny Entity_ResolvePosition oraz mnożeń
+Geo_PointInTri. Oryginalne kolejności i signed porównania pozostają zachowane;
+nie zastąpiono ich idealną geometrią64-bitową. Usunięto komentarze wymagane
+wyłącznie przez dawne dopasowanie kompilatora PS1 i zaktualizowano opis API.
+
+Nowy test w istniejącym fixture obejmuje281536 stanów: oba tryby podłogi,
+trzy rekordy, pięć kształtów (także zdegenerowane/skrajne), dwanaście
+zestawów wysokości/płaszczyzn, pozycje z ułamkami oraz wszystkie65536
+wariantów górnego słowa argumentu przy legalnych dolnych indeksach0..2.
+Pełny USA CPU wykonuje175, Entity_ResolvePosition, Math_FixedMul i
+Geo_PointInTri bez hookowania callees. Osobno obserwowany wynik testu
+trójkąta i cały stan pozycji/bazy/cache dają FNV06cbb55c0c953cd0.
+Każdy stan przechodzi też rzeczywisty dispatcher. Sprawdzono pełne natywne
+wskaźniki cache, guardy aktora, argumentu i niezmienne dane geometrii.
+175 wymusza wysokość/bazę również poza obrysem wskazanego trójkąta;
+nie dodano odrzucania pozycji zmieniającego oryginalny gameplay.
+/tmp/pe-floor175-mips.py i log; USA175=80019768, resolver=8001ACE0,
+triangle=8001C614. Testy przywracają użyte trwałe globale.
+
+Oba profile zbudowano w całości od zera: po170 obiektów C dla gry/fixture,
+bez ponownego użycia wcześniejszych obiektów gry. PsyZ/SDL to dotychczasowe,
+nieinstrumentowane archiwa; nie jest to pełna nowa kompilacja SDK.
+/tmp/pe-floor175-v1-build-manifest.json zawiera polecenia, SHA wszystkich
+obiektów, zależności .c/.h/.inc, archiwów i executable oraz wersję kompilatora.
+Verifier porównuje aktualne pliki z tym manifestem. CPU normal/SAN exit0
+(0,83/2,42s), wymagane --assets exit0 (11,23/48,18s), build root też przeszedł.
+
+Osobne negatywne warianty przywracające tylko stare odejmowanie wysokości
+albo tylko stary Geo_PointInTri przechodzą normal, lecz SAN abortuje:
+2128394904 - -725352448 oraz -65535 * -65535. Usunięcie tylko wpisu175
+daje exit123 w normal/SAN. /tmp/pe-floor175-negative-results.json.
+To dwa niezależnie zaobserwowane UB, nie zmiana siły przeciwników/kolizji.
+
+Regresja pełnego świeżego kandydata coldN→wygranaM121→M117/rest/upgrade
+/reload: normal/SAN exit0 (18,99/74,09s), cały JSON zgodny z poprzednim
+kandydatem, pełne1MiB VRAM zgodne także ze świeżym debuggerem, B–N bez
+zmian i bu10 puste w trzech prywatnych katalogach. Debug
+/tmp/pe-nypd-current-v5-lldb.log stoi przy34900 M117, HP189, PE65,
+clip16, pool54 i Medicine1 w8/11. Zamrożony executable
+/tmp/pe-floor175-v1-game i wszystkie jego obiekty pozostają niezmienne.
+Args/trace: /tmp/pe-nypd-current-v5-{args.json,input.jsonl}.
+/tmp/pe-floor175-v1-verify.py i proof.json wiążą ten manifest z CPU,
+negatywnymi kontrolami, rejestrem oraz /tmp/pe-floor175-native-v1-proof.json.
+Audyt rejestru:218 mapowań zgodnych adresowo,21 oryginalnych NULL,
+pozostają177/179. Nie dowodzi to ukończenia wszystkich funkcji kolizji,
+całej kampanii ani nadal niewygranych M118/M122.
+
 Podpięto istniejące oryginalne opcode115/204/230. 115 ma teraz natywną
 sygnaturę int ** i jawnie zawęża wszystkie trzy argumenty do s16, zgodnie
 z retailowymi LH. 230 zachowuje pełny indeks i odczytuje współrzędne przez

@@ -149,7 +149,7 @@ PE1_STATIC_ASSERT(sizeof(CollisionTriangleXYZ) == 28, collision_triangle_xyz_siz
  *
  * Functions:
  *   void Entity_ResolvePosition(struct BattleEntity *a, int triIndex);  // snap Y + cache tri
- *   int  Entity_ResolveCurrentPosition(u16 **idx);             // resolve D_8009D2F0
+ *   int  Entity_ResolveCurrentPosition(int **idx);             // resolve D_8009D2F0
  *   int  Geo_PointInTri(void *entry, s16 x, s16 z);              // containment test
  *   void Entity_RollbackPositionHierarchy(FieldActor *a);      // revert pos<-base on block
  *   void Scene_UpdateEntityPositions(void);                    // per-frame actor contact pass

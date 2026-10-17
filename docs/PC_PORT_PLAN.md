@@ -758,6 +758,61 @@ nie jest jeszcze powtórzony natywnie pod sanitizerami. Dalej zbadać oryginalny
 skrypt wyjazdu i kontynuować kampanię; nie pomijać fabuły wymuszaniem flag.
 Żadnych nowych plików repozytorium ani zmian kodu gry w tej aktualizacji.
 
+Aktualizacja 2026-10-17, wyjazd z Soho i M100: automat dialogów zatwierdzał
+bieżący cel Soho na mapie, stąd powrót do M096. Po dialogu102 trzeba zatrzymać
+potwierdzanie na A8000048 i wybrać Museum: dwa Left z wariantu2 przez6 do9.
+Oryginalny kod mapy prowadzi wtedy przy stage328 do M038. Cała fabuła M239,
+filmy12 i13 bez przewijania i dalsze dialogi kończą się M192 nocą, stage376.
+Natywny replay normal cap168544 terminal0 ma VRAM identyczny z debuggerem:
+021d84ecfc4d7ef1e9f62a7bbf9af9bb702842b0fd1d9c1d835ce89c2ccc4dfe.
+Przypadek /tmp/pe-day3-m192-coverage-case.json ma2755 odcinków i te same15
+wcześniejszych zdarzeń HP. Jego ASan/UBSan/function nadal działa, exec35876,
+PID26963; zwykły proces26962 zakończony0. Weryfikator po zakończeniu:
+/tmp/pe-day3-m192-verify.py. Nie ogłaszać jeszcze zgodności obu końcowych stanów.
+
+Wyjście z M192 przez prawą stronę (x7692..8074,z1404..4304) otwiera mapę.
+Wybór NYPD, wariant7 (Left z9 przez8), prowadzi do M037 i lobby M103,
+stage384. Wejście do korytarza podnosi stage392, ale stary executable kończył
+się błędem „native descriptor missing for M100 slot75 (PS1 801931a4)”.
+Cały17060-bajtowy moduł M100 jest identyczny z obsługiwanym M028 i jeszcze
+M014/M016/M110/M121/M298/M308/M311: SHA256
+e009eff38c82698deb58f80de6f8a2b2367df477b09348fa1c4a186e711ae7a9,
+FNVfb41fb4ec4a00c33. W oryginalnym room_load.c podpięto całą tę bibliotekę:
+D slot70/8019316c (M014), C slot73/801931dc (M016/M028), E slot75/801931a4
+(pozostałe sześć) oraz OrbitFlare slot115/80193250 we wszystkich dziewięciu.
+Zachowano oryginalne funkcje i istniejący reset argumentów; bez nowych plików,
+wyciągania funkcji ani nowych implementacji klas/efektów.
+
+Istniejący original_m028_assets sprawdza teraz każdy bajt dziewięciu modułów,
+wszystkie rzeczywiste deskryptory, cały kod53 funkcji aktorów względem M059
+(z wyłącznie audytowanymi relokacjami+16), wszystkie cztery tablice Configure
+i sześć wierszy metod. Pełny fixture --assets PASS normal i ASan/UBSan/function,
+oba terminal0: /tmp/pe-m100-v1-assets.log i /tmp/pe-m100-v1-assets-san.log.
+Pełny build i git diff --check PASS. Audyt obrazów /tmp/pe-m100-module-audit.json.
+
+Nowy rzeczywisty coldContinueH→M100/cap175382,2830 odcinków inputu,
+15/15 guarded HP z wcześniejszej części, native normal terminal0:
+M100/A8020048, stage392, flags0/lock0, brak menu, battle12/live0, HP181/181,
+pozycja[20250624,262144,-157351936], yaw1024. Karty B–H niezmienione.
+VRAM SHA2562b3af2c4dd075a4ce0f5d12bc3ac958e566c5479fe722f957eee3c92edbb0dcb.
+ASan/UBSan/function tego wejścia nadal działa, exec90790/PID29191;
+normal PID29190 zakończony0. Przypadek /tmp/pe-m100-v1-entry-case.json,
+logi/args/prywatne katalogi /tmp/pe-m100-v1-entry-{normal,san},
+weryfikator /tmp/pe-m100-v1-entry-verify.py po zakończeniu obu.
+Nadal coverage-only, nie dowód zwykłego M086 ani ukończenia dnia3/kampanii.
+
+Stary debugger exec60187 nie ma już procesu gry (loader zwrócił błąd M100).
+Nowy exec27108/PID29356 używa /tmp/pe-m100-v1-game-debug, prywatny katalog
+/tmp/pe-m100-v1-live, argv /tmp/pe-m100-v1-live-args.json, natywny harmonogram HP.
+Breakpoint2 w Boot_PollHost/init.c:89 zatrzymał go przy cap175382/M100.
+Stan odpowiada natywnemu normal; cała VRAM identyczna. Odczyt potwierdził
+handlers[75]==&g_RoomActorClassTable[2] i programs[30]==&g_RoomOrbitFlareEffects.
+Zrzut /tmp/pe-m100-v1-entry-debug.vram. Proces pozostaje zatrzymany w tym limicie.
+Dalszy input zapisywać do /tmp/pe-m100-v1-live-input.jsonl i dopinać do2830
+odcinków przypadku wejścia (nie do starego trace). Nie nadpisywać zamrożonych
+/tmp/pe-m100-v1-game, -game-debug i -game-sanitized. Dalej: dokończyć bieżące
+replaye, porównać pełny stan/VRAM, następnie kontynuować M100 i walki NYPD.
+
 Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym
 leczeniem/przygotowaniem i skuteczniejszym unikaniem pocisków, bez zmiany
 stanu gry przez debugger. Nadal nie ma dowodu pełnej kampanii.

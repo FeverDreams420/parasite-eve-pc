@@ -355,6 +355,7 @@ int Scene_LoadRoom(unsigned int roomId)
     unsigned int base;
     int map;
     int actor_library = 0;
+    int orbit_library = 0;
     int ready;
     int loaded;
     unsigned int i;
@@ -449,6 +450,13 @@ int Scene_LoadRoom(unsigned int roomId)
         actor_library = 1;
         break;
     }
+    /* These rooms share the entire 17060-byte actor/OrbitFlare module. */
+    switch (map + 1) {
+    case 14: case 16: case 28: case 100: case 110: case 121:
+    case 298: case 308: case 311:
+        orbit_library = 1;
+        break;
+    }
     /* Validate all native bindings before mutating the scene banks. */
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
@@ -491,7 +499,11 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomActorClassTable[0];
         if (actor_library && slot == 75 && record[i].u.handlerAddress == 0x80192520u)
             native = &g_RoomActorClassTable[2];
-        if (map + 1 == 28 && slot == 73 && record[i].u.handlerAddress == 0x801931dcu)
+        if (orbit_library && slot == 70 && record[i].u.handlerAddress == 0x8019316cu)
+            native = &g_RoomActorClassTable[0];
+        if (orbit_library && slot == 75 && record[i].u.handlerAddress == 0x801931a4u)
+            native = &g_RoomActorClassTable[2];
+        if (orbit_library && slot == 73 && record[i].u.handlerAddress == 0x801931dcu)
             native = &g_RoomActorClassTable[4];
         if (actor_library && slot == 73 && record[i].u.handlerAddress == 0x80192558u)
             native = &g_RoomActorClassTable[4];
@@ -512,7 +524,7 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomM005Effects;
         if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 30) && slot == 115 && record[i].u.handlerAddress == 0x8018fcb4u)
             native = &g_RoomOrbitFlareEffects;
-        if (map + 1 == 28 && slot == 115 && record[i].u.handlerAddress == 0x80193250u)
+        if (orbit_library && slot == 115 && record[i].u.handlerAddress == 0x80193250u)
             native = &g_RoomOrbitFlareEffects;
         if ((map+1==126 || map+1==129 || map+1==139 || map+1==149 || map+1==326) &&
             slot==122 && record[i].u.handlerAddress==0x8018fd00u)native=&g_RoomDroppedFlareProgram;
@@ -662,7 +674,7 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
             g_RoomM005BeaconOffset = (GteShortVector){0};
             g_RoomM005BeaconCenter = (GteShortVector){0};
-        } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || map + 1 == 28 || map + 1 == 30) && slot == 115) {
+        } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
         } else if ((map+1==126 || map+1==129 || map+1==139 || map+1==149 || map+1==326) && slot==122) {
@@ -729,7 +741,11 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_RoomDropFieldQuadSprite, 0, sizeof(g_RoomDropFieldQuadSprite));
             memset(&g_RoomDropFieldDropSprite, 0, sizeof(g_RoomDropFieldDropSprite));
             memset(&g_RoomDropFieldMotionSprite, 0, sizeof(g_RoomDropFieldMotionSprite));
-        } else if (map + 1 == 28 && slot == 73) {
+        } else if (orbit_library && slot == 70) {
+            g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];
+        } else if (orbit_library && slot == 75) {
+            g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
+        } else if (orbit_library && slot == 73) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];
         } else {
             g_PmCmdHandlerTable[slot] = map + 1 == 272 ? &g_RoomM272Handlers : &g_RoomFxMirrorHandlers;

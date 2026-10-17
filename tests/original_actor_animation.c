@@ -5628,6 +5628,59 @@ static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)
             !memcmp(d+0x801929e8-0x8018eff0,g_RoomDropFieldParticleFrames,20) &&
             g_RoomDropFieldSpawnScript[0]==sizeof(RoomDropFieldState);
     }
+    /* The complete M028 actor/OrbitFlare library also owns M100's two
+     * descriptors. Compare whole modules, all 53 actor functions and tables. */
+    if(valid){
+        const unsigned ids[]={14,16,28,100,110,121,298,308,311};
+        const u8 *module=(u8 *)rooms[1]+8;
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned i=0;i<17060;++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+        valid=hash==UINT64_C(0xfb41fb4ec4a00c33);
+        for(unsigned r=0;valid && r<sizeof(ids)/sizeof(*ids);++r){
+            SceneRoomSectorRange range;
+            if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(ids[r]-1)*8,&range,sizeof(range))){valid=0;break;}
+            size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);
+            if(!room){valid=0;break;}
+            valid=bytes>=8+17060 && pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+            if(valid){
+                SceneRoomDirectory *dir=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+                SceneRoomRecord *records=SceneAsset_ResolveOffset(room,dir->scripts&0x3fffff);
+                unsigned mask=0,slot=ids[r]==14?70:ids[r]==16 || ids[r]==28?73:75;
+                u32 handler=slot==70?0x8019316c:slot==73?0x801931dc:0x801931a4;
+                valid=dir->scripts>>22==2 && !memcmp((u8 *)room+8,module,17060);
+                for(unsigned i=0;valid && i<2;++i){
+                    valid=records[i].reserved[0]==0xa4 && records[i].reserved[1]==0x42 && (records[i].source.offsetAndSlot&0xffffff)==8;
+                    if(records[i].source.bytes.slot==115 && records[i].u.handlerAddress==0x80193250)mask|=1;
+                    else if(records[i].source.bytes.slot==slot && records[i].u.handlerAddress==handler)mask|=2;
+                    else valid=0;
+                }
+                valid=valid && mask==3;
+            }
+            free(room);
+        }
+        SceneRoomSectorRange ref;u8 reference[0x35a0];
+        if(valid)valid=pe_disc_read(disc,exe,0x800ull+0x80093378u-base+58*8,&ref,sizeof(ref)) &&
+            pe_disc_read(disc,&archive,(u64)(ref.start+ref.scratchSectors+ref.textureSectors)*2048+8,reference,sizeof(reference));
+        const u16 low[]={0x218,0x408,0x624,0xf80,0x11ac,0x1364,0x1a24,0x1b5c,0x1b98,0x1d6c,
+            0x2030,0x2550,0x2714,0x2758,0x2884,0x2c24,0x3128,0x31cc,0x3230,0x3288};
+        for(unsigned o=0x1dc;valid && o<0x34f8;o+=4){
+            u32 expected,actual;memcpy(&expected,reference+o,4);memcpy(&actual,module+o+16,4);
+            u32 target=(expected&0x3ffffff)<<2;
+            if((expected>>26==2 || expected>>26==3) && target>=0x18f1cc && target<0x1924e8)expected+=4;
+            for(unsigned j=0;j<sizeof(low)/sizeof(*low);++j)if(o==low[j])expected=(expected&0xffff0000)|(u16)(expected+16);
+            valid=expected==actual;
+        }
+        for(unsigned o=4;valid && o<0x1dc;o+=4){
+            u32 expected,actual;memcpy(&expected,reference+o,4);memcpy(&actual,module+o,4);
+            if(expected>=0x8018f1cc && expected<0x801924e8)expected+=16;
+            valid=expected==actual;
+        }
+        for(unsigned i=0;valid && i<6*7;++i){
+            u32 expected,actual;memcpy(&expected,reference+0x34f8+i*4,4);memcpy(&actual,module+0x417c+i*4,4);
+            valid=actual==expected+16;
+        }
+        if(valid)puts("Original actor/OrbitFlare library: identical 17060 bytes in nine rooms, all descriptors, 53 actor functions, four Configure tables and six method rows passed");
+    }
     free(rooms[0]);free(rooms[1]);free(rooms[2]);free(rooms[3]);free(rooms[4]);
     if(valid)puts("Original M028: class C slot73, orbit-flare slot115, full USA descriptors/script/seeds and 658 controller instructions with exactly 19 address relocations match M012; M032 class C slot73 descriptor and 764 instructions match M028 after exactly 26 address relocations; M034 glow-orb class slot8, all callback lists, sizes, 35-word script and rotation/flash seeds match USA");
     return valid;

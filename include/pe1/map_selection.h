@@ -8,7 +8,7 @@ typedef struct {
 } MapSelectionIndexRow;
 
 typedef struct {
-    char name[8];
+    s8 name[8];
 } MapSelectionName;
 
 typedef char MapSelectionIndexRow_size_must_be_24_bytes[

@@ -41,6 +41,8 @@ int GameTime_ConvertSecondsToHMS(int **args);
 int Script_SetEntityAnim5Args(int **args);
 int Script_SetBattleEntryCoords(int **args);
 int Script_GetFloorNumber(int **args);
+int Scene_SelectMapById(int **args);
+int Script_SetFloorByEntityRoll(int **args);
 int Script_IsBattlePhase4(int **args);
 int Entity_MarkNodeAnimPendingById(int **args);
 int Entity_AdvanceNodeById(int **args);

@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Podpięto ostatnie dwa niepuste wpisy oryginalnej tablicy interpretera:
+177 Scene_SelectMapById i179 Script_SetFloorByEntityRoll. Funkcje pozostają
+w actor_opcodes.c;179 ma natywne int **, obie jawnie odczytują dolny u8
+argumentu. MapSelectionName ma s8 zgodne z parserem ID. W font.c usunięto
+identyczne ramiona srand i komentarze służące wyłącznie dopasowaniu dawnego
+kompilatora; font_load.c opisuje zachowanie I/O bez wymagań byte match.
+Nie dodano produkcyjnych plików, adapterów ani zastępczego generatora pięter.
+
+Test w istniejącym fixture:80060 stanów oryginalnych177/179 wraz z pełną
+inicjalizacją, shuffle, RNG, loaderem rekordów, nawigacją, parserem map ID
+i generatorem przedziałów. Cztery ziarna0/1/32767/ffffffff, wszystkie69 pięter,
+wszystkie używane sloty i legalne kroki0/20/21/22/23/255; dla179 wszystkie256
+bajtów wejścia, także szerokie argumenty. Każdy stan sprawdzony dodatkowo
+przez rzeczywisty dispatcher i ponownie dla mapy docelowej równej bieżącej.
+Hash obejmuje wynik, token/obie flagi, stan generatora i rekordu, kolejność
+pięter, oba RNG, liczbę odczytów/polli oraz argument z guardami. Natywny
+wskaźnik tabeli jest sprawdzony i normalizowany. USA instrukcje wykonano
+bez hookowania selectorów, loaderów, parsera ani generatorów; jedynie granica
+fizycznego CD dostarcza rzeczywisty blok PE.IMG, a BIOS rand/srand ma jawne
+semantyki. FNV84099b77cf346185, zgodny we wszystkich czterech prefiksach.
+/tmp/pe-map177-179-mips.py i log. Nie wykonywano nielegalnego wyjścia kursora
+poza listę, którego zwykły interfejs nie powinien generować.
+
+Kandydat /tmp/pe-map177-179-v2: po170 świeżo skompilowanych obiektów C
+gry/fixture dla normal/SAN, bez ponownego użycia obiektów gry. SDK pozostaje
+z dotychczasowych nieinstrumentowanych archiwów. CPU normal/SAN exit0
+(0,89/2,34s), wymagane --assets exit0 (11,30/49,25s), root build przeszedł.
+Usunięcie tylko177 albo tylko179 w osobnych wariantach daje oczekiwany
+exit57 w obu profilach. Manifest i verifier wiążą wszystkie zależności,
+obiekty, executable oraz oracle, testy i audyt; /tmp/pe-map177-179-v2-proof.json.
+Audyt rzeczywistych241 wpisów USA potwierdza220 zgodnych adresowo handlerów
+i21 oryginalnych NULL: w tej tablicy nie pozostały niepodpięte funkcje.
+Nie oznacza to pokrycia pozostałych tablic callbacków/modułów ani całej gry.
+
+ColdN→wygranaM121→M117/rest/upgrade/reload na tym samym świeżym kandydacie:
+normal/SAN exit0 (19,90/75,53s), cały JSON i pełne1MiB VRAM zgodne z
+poprzednią referencją floor175-v1, karty B–N niezmienione, bu10 puste,
+zero diagnostycznych modyfikacji HP. /tmp/pe-map177-179-native-v2-proof.json.
+Żywy debugger nadal używa niezmienionego floor175-v1; powyższe porównanie
+nie jest nowym debuggerem ani referencją pikselową PS1. Przejście całego
+Chrysler Building, M118/M122 i dalszej kampanii pozostaje do wykonania.
+
 Przywrócono brakujące dane resident potrzebne istniejącym oryginalnym
 Scene_SelectMapById (177) i Script_SetFloorByEntityRoll (179): siedem
 24-bajtowych wierszy indeksów, 66 ośmiobajtowych nazw map, pięć stałych

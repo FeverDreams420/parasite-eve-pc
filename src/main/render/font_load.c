@@ -1,12 +1,7 @@
 #include "pe1/cdrom.h"
 #include "pe1/font.h"
 
-/* A failed poll restarts the whole load. Retail rebuilds the directory
- * address and the -1 sentinel on every pass, which a loop around the read
- * would hoist; the restart is a tail call, which GCC 2.7 turns into a jump
- * back to the function body without loop notes. The tail call needs an
- * int parameter: a u8 one is promoted at the call and fails the type
- * check of the tail-recursion test. */
+/* A failed poll restarts the complete record load. */
 int Render_LoadFontGlyph(int code)
 {
     int status;

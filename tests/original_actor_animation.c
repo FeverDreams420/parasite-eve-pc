@@ -419,6 +419,114 @@ static int glyph_selection(void)
     return 1;
 }
 
+/* Normalize only the native table address; all selected bytes, generator
+ * words, RNG state, I/O counts and script arguments remain observable. */
+typedef struct {
+    FontGlyphSelectionState state;
+    FontGlyphTable table;
+    u8 sequence[71];
+    u32 random;
+} GlyphMapSnapshot;
+static GlyphMapSnapshot glyph_map_snapshot(void)
+{
+    GlyphMapSnapshot s={.state=g_FontSelectionState,.table=g_FontActiveGlyphTable,
+                        .random=Psyz_RandState()};
+    memcpy(s.sequence,g_FontGlyphCodeSequence,sizeof(s.sequence));return s;
+}
+static void glyph_map_restore(const GlyphMapSnapshot *s)
+{
+    g_FontSelectionState=s->state;g_FontActiveGlyphTable=s->table;
+    memcpy(g_FontGlyphCodeSequence,s->sequence,sizeof(s->sequence));srand(s->random);
+}
+static int glyph_map_run(unsigned op,u32 value,unsigned key,u32 current,
+                         int dispatch,u8 output[596])
+{
+    g_GameStateFlags=0x80000001;g_GameState.flags=0x10000002;
+    g_SceneDispatchCur=current;g_SceneDispatchToken=0x12345678;
+    g_DrawPrimGeneratorWords[14]=64;g_DrawPrimGeneratorWords[15]=16;
+    for(unsigned i=0;i<17;++i)g_DrawPrimGeneratorWords[16+i]=(key+1)*0x9e3779b9u+i*0x1234567u;
+    glyph_reads=glyph_polls=0;
+    struct {u32 before;int value;u32 after;} arg={0x11223344,(s32)value,0xa55a5aa5};
+    int *args[]={&arg.value};int result;
+    if(dispatch){
+        u32 program[]={op|(1u<<13),0,value,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};
+        g_ScriptNodePool=&node;Script_RunQueue();
+        if(node.current.script!=program+5 || node.flags!=0x90 || node.active ||
+           g_ScriptNodePool || program[2]!=value)return 0;
+        result=1;
+    }else result=g_ScriptQueueOpcodeHandlers[op](args);
+    u32 words[]={op,value,(u32)result,g_SceneDispatchToken,g_GameStateFlags,g_GameState.flags,
+        g_FontSelectionState.table!=NULL,Psyz_RandState(),glyph_reads,glyph_polls,
+        arg.before,(u32)arg.value,arg.after};
+    unsigned at=0;
+    for(unsigned i=0;i<13;++i)for(unsigned b=0;b<4;++b)output[at++]=words[i]>>(8*b);
+    memcpy(output+at,&g_FontSelectionState,12);at+=12;
+    memcpy(output+at,&g_FontActiveGlyphTable,329);at+=329;
+    memcpy(output+at,g_FontGlyphCodeSequence,71);at+=71;
+    for(unsigned i=0;i<33;++i)for(unsigned b=0;b<4;++b)output[at++]=g_DrawPrimGeneratorWords[i]>>(8*b);
+    return at==596 && !glyph_io_failed &&
+        (!g_FontSelectionState.table || g_FontSelectionState.table==&g_FontActiveGlyphTable);
+}
+static int glyph_map_check(unsigned op,u32 value,unsigned key,uint64_t *hash,unsigned *cases)
+{
+    GlyphMapSnapshot before=glyph_map_snapshot();u8 direct[596],queued[596];u32 current=0;
+    for(unsigned same=0;same<2;++same){
+        glyph_map_restore(&before);
+        if(!glyph_map_run(op,value,key,current,0,direct))return 0;
+        u32 next=g_SceneDispatchToken;
+        glyph_map_restore(&before);
+        if(!glyph_map_run(op,value,key,current,1,queued) || memcmp(direct,queued,sizeof(direct)))return 0;
+        for(unsigned i=0;i<sizeof(direct);++i)*hash=(*hash^direct[i])*UINT64_C(1099511628211);
+        ++*cases;current=next;
+    }
+    glyph_map_restore(&before);return 1;
+}
+static int glyph_map_opcodes(void)
+{
+    Pe1GameState game=g_GameState;GlyphMapSnapshot original=glyph_map_snapshot();
+    u32 flags=g_GameStateFlags,current=g_SceneDispatchCur,token=g_SceneDispatchToken;
+    u32 prim[33];memcpy(prim,g_DrawPrimGeneratorWords,sizeof(prim));
+    FieldActor actor={0},*saved_actor=g_CurrentEntity;ScriptNode *node=g_ScriptNodePool;
+    u32 *cursor=g_ScriptCursor;g_CurrentEntity=&actor;
+    const u32 seeds[]={0,1,32767,0xffffffffu};
+    const u32 initial_args[]={0,1,2,20,22,70,71,255,0xa55a0002};
+    const unsigned actions[]={0,20,21,22,23,255};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int ok=1;
+    if(g_ScriptQueueOpcodeHandlers[177]!=Scene_SelectMapById ||
+       g_ScriptQueueOpcodeHandlers[179]!=Script_SetFloorByEntityRoll)ok=0;
+    for(unsigned trial=0;trial<4 && ok;++trial){
+        g_FontSelectionState=(FontGlyphSelectionState){.selected=255,.loadFailed=trial&1,
+            .unknown05={0x33,0x44,0x55},.seed=seeds[trial]};
+        memset(g_FontGlyphCodeSequence,0xa5,71);memset(&g_FontActiveGlyphTable,0x5a,329);srand(0x12345678);
+        GlyphMapSnapshot inactive=glyph_map_snapshot();
+        for(unsigned op=177;op<=179;op+=2)for(unsigned a=0;a<9 && ok;++a){
+            glyph_map_restore(&inactive);ok=glyph_map_check(op,initial_args[a],trial,&hash,&cases);
+        }
+        glyph_map_restore(&inactive);Render_LoadFontGlyphAlt();GlyphMapSnapshot active=glyph_map_snapshot();
+        for(unsigned floor=2;floor<=70 && ok;++floor){
+            glyph_map_restore(&active);Render_SetFontGlyphByCode(floor);
+            GlyphMapSnapshot loaded=glyph_map_snapshot();unsigned count=g_FontActiveGlyphTable.slots.count;
+            for(unsigned slot=0;slot<count && ok;++slot)for(unsigned a=0;a<6 && ok;++a){
+                unsigned action=actions[a];
+                if((action==21 && slot==0) || (action==23 && slot==count-1))continue;
+                glyph_map_restore(&loaded);g_FontSelectionState.selected=slot;
+                ok=glyph_map_check(177,action|(slot&1?0xa55a0000u:0),floor+trial*71,&hash,&cases);
+            }
+        }
+        for(unsigned value=0;value<256 && ok;++value){
+            glyph_map_restore(&active);ok=glyph_map_check(179,value|(value&1?0xa55a0000u:0),value+trial*256,&hash,&cases);
+        }
+        printf("Original floor map trial %u: %u cases, hash %016llx\n",trial,cases,(unsigned long long)hash);
+    }
+    if(cases!=80060 || hash!=UINT64_C(0x84099b77cf346185))ok=0;
+    glyph_map_restore(&original);g_GameState=game;g_GameStateFlags=flags;
+    g_SceneDispatchCur=current;g_SceneDispatchToken=token;memcpy(g_DrawPrimGeneratorWords,prim,sizeof(prim));
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=node;g_ScriptCursor=cursor;
+    if(ok)puts("Original floor opcodes 177/179: 80060 unhooked USA selector/load/navigation states, four seeds, 69 floors, all byte arguments, map flags, RNG and real dispatcher passed");
+    return ok;
+}
+
 static int glyph_asset_records(PeDisc *disc, const PeDiscFile *exe)
 {
     /* Compare every resident map byte against the mounted USA executable,
@@ -516,6 +624,7 @@ static int glyph_asset_records(PeDisc *disc, const PeDiscFile *exe)
             memcmp(sequence, g_FontGlyphCodeSequence, sizeof(sequence)) ||
             Psyz_RandState() != rng_state) ok = 0;
     }
+    if (ok) ok = glyph_map_opcodes();
     glyph_disc = NULL;
     g_GameState = saved;
     Menu_ResetEquipSlotState();

@@ -940,7 +940,7 @@ int Scene_SelectMapById(int **args) {
     u32 state_flags;
 
     if ((u8)Menu_IsEquipSlotActive() != 0) {
-        raw_selection = Render_GetOrLoadFontGlyph(*(u8 *)args[0]);
+        raw_selection = Render_GetOrLoadFontGlyph((u8)*args[0]);
     } else {
         raw_selection = Render_LoadFontGlyphAlt();
     }
@@ -985,7 +985,7 @@ int Scene_SelectMapById(int **args) {
     return raw_selection;
 }
 
-int Script_SetFloorByEntityRoll(u8 **args) {
+int Script_SetFloorByEntityRoll(int **args) {
     int selection;
     u8 state;
     MapSelectionIndexRow *select_index;
@@ -996,7 +996,7 @@ int Script_SetFloorByEntityRoll(u8 **args) {
     if (!(Menu_IsEquipSlotActive() & 0xFF)) {
         Render_LoadFontGlyphAlt();
     }
-    selection = Render_SetFontGlyphByCode(**args) & 0xFF;
+    selection = Render_SetFontGlyphByCode((u8)*args[0]) & 0xFF;
 
     if (selection == 0xFF) {
         if ((u8)Menu_GetEquipSlotStateOrIndex() < 2) {

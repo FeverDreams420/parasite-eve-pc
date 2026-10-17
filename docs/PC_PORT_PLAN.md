@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dodano w istniejącym fixture i CMake przypadek23 / original-game-alligator-entry.
+Pełna zwykła trasa od New Game obejmuje oba szczury/żaby M032, awans,
+Heal1 31→61HP, przełącznik i otwarcie bramy, M033 z rozmową Eve15–24,
+przejście M034 i oryginalny samouczek dwóch celów. Przy261381: M034,
+HP61/67, pojemność14, mode7, licznik przeciwników1 (ogon jest osobnym
+celem tego samego bossa), tekst8/state2, brak menu, move_lock5,
+pozycja[-57212928,78643200,720896], yaw1024. Test sprawdza te konkretne
+pola oraz cały VRAM FNV73f4fae453f9c832 i wcześniejszą flagę papugi.
+281 zmian maski pochodzi z fizycznego nagrania. Nowe CTest ma limit900s;
+root build0 i rejestracja w ctest -N potwierdzone.
+
+/tmp/pe-theater-alligator-entry-gate-v1: po173 świeże obiekty/profil,
+wszystkie zależności, obiekty, archiwa i binarki zweryfikowane z manifestem.
+CPU, wymagane assets i strict native-alligator-entry:6/6 normal/SAN;
+trasa62,75/172,02s. Osobny pełny replay New Game→ten sam punkt:
+normal/SAN0 w63,55/172,24s, identyczny pełny JSON i1MiBVRAM;
+SHA256fabe74e623b08b080326843ecd9df9664691caeceba02295b425577d8b5020d2.
+Telefoniczny payloadA nadal niezmieniony. /tmp/pe-theater-clock-m034-entry-v1-proof.json
+oraz /tmp/pe-theater-alligator-entry-gate-v1-{proof,build-proof,test-results}.json.
+Nie uruchamiano ponownie pełnej macierzy32 poleceń nowego kandydata;
+poniższe30/30 dotyczy wcześniejszego kandydata i przypadków0..22.
+Nie dodano plików ani kodu produkcyjnego; to trwały test oryginalnej trasy.
+
+Dwie późniejsze próby walki M034 na tej świeżej trasie zakończyły się
+śmiercią Ayi i nie są zaliczone jako zwycięstwo. Ogon otrzymuje obrażenia,
+Heal1 przez oryginalne menu przywraca m.in.43→67 i3→33HP. Odmowa
+trzeciego użycia była prawidłowa: koszt60PE, dostępne59; po ruchu i regeneracji
+czar działa. Amunicja także pozostała. Nie zmieniano statystyk, obrażeń,
+zasobów ani AI; kolejne próby wymagają lepszego zwykłego sterowania
+oraz pełniejszej eksploracji. Nie uznawać exit0 z hostowego capu za wygraną:
+oba nieudane procesy mają HP0 i mode3. Logi oraz input:
+/tmp/pe-theater-clock-m033-v1 i /tmp/pe-theater-clock-alligator-v2.
+Obie nieudane sesje zakończono i zachowano ich stany końcowe.
+Dalsza żywa trasa od New Game otworzyła pominięte skrzynie M031
+(Ammo+6, Medicine1, Offense+1) i weszła do opcjonalnego M334; to jeszcze
+obserwacja debuggera, bez zamkniętego porównania normal/SAN tej odnogi.
+Pełna kampania i cel portu pozostają nieukończone.
+
+### Poprzedni etap: kanały i zwycięstwo M032
+
 Pełna macierz świeżego /tmp/pe-theater-sewer-gate-v1 przechodzi 30/30
 poleceń: CPU, wymagane assets i wszystkie natywne przypadki 0..22 w obu
 profilach. Trasa 22 kończy zwykły/sanitizowany build w 66,88/170,40 s.

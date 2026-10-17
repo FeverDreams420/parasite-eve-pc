@@ -14037,7 +14037,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
             (unsigned long long)SDL_GetPerformanceCounter(),input);
         if(n<0 || (size_t)n>=sizeof(directory) || !SDL_CreateDirectory(directory))return 1;
         snprintf(capture,sizeof(capture),"%s/frame.vram",directory);
-        const char *limit=input==22?"246050":input==21?"222996":input==20?"200826":input==19?"154203":input==18?"131932":input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
+        const char *limit=input==23?"261381":input==22?"246050":input==21?"222996":input==20?"200826":input==19?"154203":input==18?"131932":input==17?"112000":input==16?"104000":input==15?"95751":input==14?"82000":input==13?"64554":input==12?"60634":input==11?"58000":input==10?"52000":input==9?"42000":input==8?"35500":input>=6?"33500":input==5?"30000":input==4?"24000":input>=2?"14000":input?"13000":"8000";
         const char *args[8192]={executable,"--disc",disc,"--headless","--frame-limit",limit,"--dump-vram",capture};
         const char *events[]={"10000:8","10010:0","11000:0x10","11010:0","11500:0x4000","11510:0"};
         unsigned at=8;
@@ -14413,7 +14413,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
-            if(input==22){
+            if(input>=22){
                 /* Original clocks: field Heal1, Jump in, M027 three-rat victory,
                  * Medicine1, M028 frog/two-rat victory and level-up, rewards,
                  * M031 dialogues10/11 and the sloping floor. Physical input only.
@@ -14460,6 +14460,65 @@ static int original_native_bootstrap(const char *executable,int field_control)
                     args[at++]="--pad-at";args[at++]=scheduled[event++];
                 }
             }
+            if(input>=23){
+                /* Ordinary New Game continuation: field Heal1, left M031
+                 * stairs, both M032 frogs, level-up/rewards, gate switch,
+                 * M033 Eve dialogues15..24 and the M034 two-target tutorial.
+                 * Only physical input; no injected saves or combat writes. */
+                static const unsigned route[][2]={
+                    {246050,4096},{246054,0},{246066,64},{246070,0},{246078,16384},{246082,0},
+                    {246094,16384},{246098,0},{246110,16384},{246114,0},{246274,8192},{246278,0},
+                    {246290,8192},{246294,0},{246306,8320},{246498,0},{247002,8256},{247098,8288},
+                    {247114,8256},{247130,8288},{247146,8256},{247162,8288},{247178,8256},{247194,8288},
+                    {247210,8256},{247306,0},{247310,8320},{247470,0},{247974,8240},{247990,8288},
+                    {247998,8208},{248000,0},{248008,8256},{248054,8320},{248066,8384},{248145,8320},
+                    {248157,8384},{248181,0},{248185,8256},{248233,8384},{248249,8256},{248265,8384},
+                    {248280,8224},{248286,0},{248294,8320},{248326,0},{248730,8320},{248890,0},
+                    {249194,16384},{249198,0},{249206,16384},{249210,0},{249214,16384},{249218,0},
+                    {249222,8288},{249378,8224},{249394,8320},{249406,8224},{249418,8320},{249430,8224},
+                    {249442,8320},{249454,8224},{249466,8320},{249478,8224},{249490,8320},{249502,8224},
+                    {249514,8320},{249526,8224},{249538,8320},{249550,8224},{249562,8320},{249574,16384},
+                    {249578,0},{249586,16384},{249590,0},{249594,16384},{249598,0},{249602,8224},
+                    {249786,8320},{249798,8224},{249810,8320},{249822,8224},{249834,8320},{249846,8224},
+                    {249858,8320},{249870,8224},{249882,8320},{249894,8224},{249906,8320},{249918,8224},
+                    {249930,8320},{249942,8224},{249954,16384},{249958,0},{249966,16384},{249970,0},
+                    {249974,16384},{249978,0},{249982,8320},{250078,8224},{250090,8320},{250102,8224},
+                    {250114,8320},{250126,8224},{250138,8320},{250142,8240},{250154,8384},{250166,8240},
+                    {250178,8384},{250190,8240},{250202,8384},{250214,8240},{250226,8384},{250238,8240},
+                    {250250,8384},{250262,8240},{250274,8384},{250286,8240},{250298,8384},{250310,8240},
+                    {250322,8384},{250334,16384},{250338,0},{250346,16384},{250350,0},{250354,16384},
+                    {250358,0},{250362,8240},{250470,8208},{250482,8256},{250494,8208},{250506,8256},
+                    {250518,8240},{250522,8208},{250534,8256},{250546,8208},{250558,8256},{250570,8208},
+                    {250582,8256},{250594,8208},{250606,8256},{250618,8208},{250630,8256},{250642,8208},
+                    {250654,8256},{250666,8208},{250678,8256},{250690,8208},{250702,8256},{250714,16384},
+                    {250718,0},{250726,16384},{250730,0},{250734,16384},{250738,0},{250742,8208},
+                    {250902,0},{250942,8336},{251006,8320},{251022,8336},{251038,8320},{251054,8336},
+                    {251070,8320},{251074,0},{251102,16384},{251106,0},{251114,16384},{251118,0},
+                    {251122,16384},{251126,0},{251490,16384},{251494,0},{251502,16384},{251506,0},
+                    {251510,16384},{251514,0},{252078,16384},{252082,0},{252274,16384},{252278,0},
+                    {252470,16384},{252474,0},{252666,16384},{252670,0},{252862,4096},{252866,0},
+                    {252878,64},{252882,0},{252890,16384},{252894,0},{252906,16384},{252910,0},
+                    {252922,16384},{252926,0},{253086,8192},{253090,0},{253102,8192},{253106,0},
+                    {253118,8336},{253246,8320},{253262,8336},{253278,8320},{253294,8336},{253310,8320},
+                    {253326,0},{253334,144},{253414,16},{253430,144},{253446,16},{253458,0},
+                    {253466,16384},{253470,0},{253662,16384},{253666,0},{253846,16384},{253850,0},
+                    {254030,8240},{254110,0},{254714,8208},{254970,8336},{254986,8240},{254993,0},
+                    {255301,8208},{255349,8336},{255365,0},{255669,16384},{255673,0},{255853,16384},
+                    {255857,0},{256037,16384},{256041,0},{256221,16384},{256225,0},{256405,16384},
+                    {256409,0},{256769,16384},{256773,0},{256953,16384},{256957,0},{257137,16384},
+                    {257141,0},{257501,16384},{257505,0},{257685,16384},{257689,0},{257869,16384},
+                    {257873,0},{258053,16384},{258057,0},{258237,16384},{258241,0},{258421,16384},
+                    {258425,0},{258605,16384},{258609,0},{258789,16384},{258793,0},{258973,16384},
+                    {258977,0},{259157,16384},{259161,0},{259341,16384},{259345,0},{259525,16384},
+                    {259529,0},{259709,16384},{259713,0},{259893,16384},{259897,0},{260077,16384},
+                    {260081,0},{260261,16384},{260265,0},{260445,16384},{260449,0},{260629,16384},
+                    {260633,0},{260813,16384},{260817,0},{260997,16384},{261001,0},
+                };
+                for(unsigned i=0;i<sizeof(route)/sizeof(route[0]);++i){
+                    snprintf(scheduled[event],sizeof(scheduled[event]),"%u:%u",route[i][0],route[i][1]);
+                    args[at++]="--pad-at";args[at++]=scheduled[event++];
+                }
+            }
 #undef BOOTSTRAP_PRESS
         }
         SDL_PropertiesID props=SDL_CreateProperties();
@@ -14472,7 +14531,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
-            strstr(output,input==22?"\"vblanks\":246050":input==21?"\"vblanks\":222996":input==20?"\"vblanks\":200826":input==19?"\"vblanks\":154203":input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+            strstr(output,input==23?"\"vblanks\":261381":input==22?"\"vblanks\":246050":input==21?"\"vblanks\":222996":input==20?"\"vblanks\":200826":input==19?"\"vblanks\":154203":input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
         /* UBSan may report a recoverable failure while the child exits 0.
          * Keep stderr with the captured state and fail the replay on it. */
         if(output && (strstr(output,"runtime error:") || strstr(output,"AddressSanitizer:") ||
@@ -14633,6 +14692,12 @@ static int original_native_bootstrap(const char *executable,int field_control)
            !strstr(output,"\"player\":true,\"flags\":1032,\"position\":[11141120,68681728,322442560],\"yaw\":2048") ||
            !strstr(output,"\"combat\":{\"mode\":9,\"live_enemies\":0,\"player_hp\":27,\"player_max_hp\":64}") ||
            !strstr(output,"\"inventory\":{\"capacity\":13,\"slots\":[256,257,258,512,0,200,201,0")))valid=0;
+        if(input==23 && (!output || !strstr(output,"\"scene\":2818585160") ||
+           !strstr(output,"\"video_state\":0") || !strstr(output,"\"move_lock\":5") ||
+           !strstr(output,"\"menu\":null") || !strstr(output,"\"dialogue\":[{\"state\":2,\"page\":8}") ||
+           !strstr(output,"\"player\":true,\"flags\":1280,\"position\":[-57212928,78643200,720896],\"yaw\":1024") ||
+           !strstr(output,"\"combat\":{\"mode\":7,\"live_enemies\":1,\"player_hp\":61,\"player_max_hp\":67}") ||
+           !strstr(output,"\"inventory\":{\"capacity\":14,\"slots\":[256,257,258,512,0,200,201,0")))valid=0;
         FILE *file=fopen(capture,"rb");uint64_t hash=UINT64_C(14695981039346656037);
         if(file){
             u8 block[4096];size_t total=0,n;
@@ -14685,6 +14750,7 @@ static int original_native_bootstrap(const char *executable,int field_control)
         if(input==20 && hash!=UINT64_C(0x77627bc3feb8cb34))valid=0;
         if(input==21 && hash!=UINT64_C(0xec3df138587c4889))valid=0;
         if(input==22 && hash!=UINT64_C(0xd3d2869131c3ae7))valid=0;
+        if(input==23 && hash!=UINT64_C(0x73f4fae453f9c832))valid=0;
         if(!valid){fprintf(stderr,"Native bootstrap failed: input=%u status=%d hash=%016llx output=%s\n",
             input,status,(unsigned long long)hash,output?output:"(none)");SDL_free(output);return 1;}
         printf("Original executable bootstrap: input=%u hash=%016llx, bounded headless main and real CUE/VRAM passed\n",input,(unsigned long long)hash);
@@ -14704,6 +14770,7 @@ int main(int argc, char **argv)
 
     if(argc==3 && !strcmp(argv[1],"--native-stage"))return original_native_bootstrap(argv[2],2);
     if(argc==3 && !strcmp(argv[1],"--native-battle-entry"))return original_native_bootstrap(argv[2],3);
+    if(argc==3 && !strcmp(argv[1],"--native-alligator-entry"))return original_native_bootstrap(argv[2],13);
     if(argc==3 && !strcmp(argv[1],"--native-m028"))return original_native_bootstrap(argv[2],12);
     if(argc==3 && !strcmp(argv[1],"--native-m023"))return original_native_bootstrap(argv[2],11);
     if(argc==3 && !strcmp(argv[1],"--native-m022"))return original_native_bootstrap(argv[2],10);

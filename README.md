@@ -33,11 +33,13 @@ and sanitized runs agree with the live session in full state and VRAM. A further
 ordinary replay includes the optional parrot victory and reward, finishes the
 second Melissa encounter and returns to field control after dialogue 133, with
 the same full-state and VRAM agreement. Its regression test also requires the
-original parrot defeat flag. The
-original USA game also loads that Save with matching HP, position, all inventory
+original parrot defeat flag. The original USA game also loads that Save with matching HP, position, all inventory
 slots and equipment records. Recorded ordinary input also wins the M027/M028
-sewer battles and traverses M031. The full bootstrap replay suite passes in both builds with the original
-clocks running, and a further ordinary replay wins M032.
+sewer battles and traverses M031. The bootstrap replay suite passes in both
+builds with the original clocks running, and a further ordinary replay wins M032.
+A complete New Game replay now also opens its gate, passes the M033 Eve scene,
+and reaches the M034 two-target tutorial. The alligator has not yet been defeated
+on this fresh route.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

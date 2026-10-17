@@ -1,6 +1,44 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
-## Aktualny potwierdzony stan — 17 października 2026
+## Aktualny potwierdzony stan — 18 października 2026
+
+Ponownie nagrano pełny zakres przypadku21 z działającymi oryginalnymi
+zegarami: interakcja z papugą w M022, dialog110, zwycięstwo, odebranie
+Medicine1, użycie tej nagrody w M319 (43→53HP), drugie spotkanie z Melissą,
+film, walka i cała sekwencja dialogów do133. Przy222996 Aya18/53HP,
+M319, pozycja[0,0,137953280], yaw-451, brak menu/przeciwników,
+move_lock0, mode12. Pierwotne Medicine1 w slocie4 zachowane, klucze200/201
+w slotach5/6. W istniejącym original_actor_animation.c zapisano197 zmian
+maski z fizycznego inputu, zachowując czasy; odnowiono konkretne asercje
+stanu oraz VRAM FNV ec3df138587c4889. Nie usunięto opcjonalnej walki.
+
+Oryginalny skrypt śmierci papugi ustawia bit0x100000 globalnej zmiennej24;
+wartość przed/po nowej trasie:814c8234→815c8274. Przypadek21 wymaga teraz
+tego bitu, więc samo dotarcie do Melissy nie zalicza całego zakresu.
+Negatywna fizyczna trasa omija papugę i nadal kończy drugie spotkanie:
+pozostałe oczekiwania dopasowano do wcześniej zweryfikowanego wyniku
+skrótu, bez żadnych zapisów RAM rozgrywki. Kontrola bez testu flagi
+przechodzi0/54,54s; z testem flagi odpada1/55,45s, oba procesy gry exit0,
+identyczny poprawny VRAM i PRE_PARROT_GATE_VALID=1.
+/tmp/pe-theater-parrot-negative-v1-{build.py,results.json,proof.json}.
+To sprawdza, że nowa kontrola rzeczywiście odrzuca brak opcjonalnej walki.
+
+Pełny automatyczny New Game→222996: normal/SAN0 w60,02/159,36s,
+pełny JSON i1MiBVRAM obu profili identyczne z żywą sesją; prawdziwy
+telefoniczny payloadA nadal identyczny. /tmp/pe-theater-parrot-v1-proof.json.
+Żywą sesję zakończono exit0. Nowy /tmp/pe-theater-parrot-gate-v2 ma po173
+świeże obiekty/profil, wszystkie zależności, obiekty, archiwa i binarki
+zweryfikowane z manifestem. CPU, wymagane assets i strict native-m023
+z flagą papugi:6/6 normal/SAN, trasa52,66/147,06s. Root build0.
+/tmp/pe-theater-parrot-gate-v2-{proof,build-proof,test-results}.json.
+Produkcja bez zmian, nie dodano plików repozytorium. Przypadek22 nadal
+zachowuje stare asercje i odpada w obu profilach po powrocie do tytułu;
+ponowne nagranie zejścia pod teatr trwa. Żywy input dotarł do M027,
+pokonał trzy szczury, zamknął nagrody i użył Medicine1 (29→53HP).
+To wstępna obserwacja kolejnej trasy, jeszcze nie wynik normal/SAN.
+Pełna kampania i cel portu pozostają nieukończone.
+
+### Poprzedni stan — 17 października 2026
 
 Ponownie nagrano zwykłą trasę New Game z poprawnie uruchomionymi oryginalnymi
 zegarami, bez zmian HP, pamięci rozgrywki ani generowania zapisów. Pierwsza

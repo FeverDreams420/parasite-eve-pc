@@ -30,11 +30,13 @@ complete visual fidelity and hi-res coverage remain unverified. A fresh ordinary
 New Game route with the original boot clocks running reaches both theater keys,
 including another corridor victory, level-up and a genuine phone Save. Normal
 and sanitized runs agree with the live session in full state and VRAM. A further
-ordinary replay also finishes the second Melissa encounter and returns to field
-control after dialogue 133, with the same full-state and VRAM agreement. The
+ordinary replay includes the optional parrot victory and reward, finishes the
+second Melissa encounter and returns to field control after dialogue 133, with
+the same full-state and VRAM agreement. Its regression test also requires the
+original parrot defeat flag. The
 original USA game also loads that Save with matching HP, position, all inventory
-slots and equipment records. Later legacy routes still need to be recorded and
-verified again; their stopped-clock assumptions are not restored.
+slots and equipment records. The legacy sewer continuation still needs to be recorded and
+verified again; its stopped-clock assumptions are not restored.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

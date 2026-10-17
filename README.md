@@ -17,8 +17,9 @@ covers New Game, the first Melissa fight, exploration and further encounters,
 plus genuine memory-card Save/Continue through checkpoint H in M087. The
 mandatory M086 encounter is also won through ordinary input from H: all four
 worms defeated, Aya at 83/133 HP, with identical full state, equipment and VRAM
-in normal and sanitized replays. Reward collection and a subsequent ordinary
-checkpoint remain unverified. Separate,
+in normal and sanitized replays. Reward collection, the return to the M087
+phone, a genuine checkpoint I and cold Continue are also verified in both
+builds, with identical save bytes. Separate,
 explicitly diagnostic runs with guarded HP changes reach Day 3 NYPD room M100
 via Soho and the Museum story. Normal and sanitized replays agree on the full
 state and VRAM through M111. A separate diagnostic branch also has a genuine

@@ -77,6 +77,35 @@ level-up przy38608; odbiór nagród i kolejny zwykły checkpoint pozostają
 niezweryfikowane. Wcześniejszy diagnostyczny I zachowuje osobną proweniencję
 z15 HP guards i nie staje się przez ten wynik zwykłym checkpointem.
 
+Dalszy zwykły input odebrał nagrody przez EXP/level-up/Obtain All/End,
+wrócił z M086 do telefonu M087 i utworzył pusty slot I8 przez oryginalne UI.
+Aya ma po awansie stored level13 (display14), HP83/181. Wcześniejszy szybki
+odczyt obrazu jako83/141 był błędny; pole max_hp i oba pełne replays dają181.
+Nagrody wypełniły sloty8/15/19/20 przedmiotem41 (Defense+1), Tool/M203
+pozostają zużyte, M16 zachowuje33/9. Zapis I:8192 bajty, SHA256
+c8f45f4b9e8deaca22dc7e37b64d2b360ecd17195749aacb0a4189e8c7a57a86.
+Nie wywoływano Save_BuildCardFile przez debugger; wyłącznie przyciski.
+
+Cold H→zwycięstwo→nagrody→telefon→File saved→lista plików/cap42862:
+normal exit0 43,92s, SAN exit0 153,02s, bez diagnostics. Cały JSON oraz
+pełne1MiB VRAM identyczne między buildami i z debuggerem; wszystkie8192
+bajty nowego I zgodne także z debuggerem. B–H niezmienione, bu10 puste.
+Manifest /tmp/pe-m086-save-v1-proof.json; -prepare.py, -run.py, -verify.py,
+-{normal,san}-args.json i pełne logi. Sanitizer nadal obejmuje PsyZ/SDL.
+
+Zimne Continue nowego zwykłego I/cap24000: normal exit0 29,46s,
+SAN exit0 120,28s, cały JSON i VRAM identyczne, SHA256 VRAM
+85b4a434ee41116505895452fd76770a01b332180ba0bb5b95a44855c7297694.
+M087/A80083C8, stage248, HP83/181, brak menu, lock0/live0, Heat33/9 i
+nagrody zachowane; wszystkie karty niezmienione. Manifest
+/tmp/pe-m086-save-v1-continue-proof.json i odpowiadające args/logs/runner/
+verifier. Prywatna kopia nowego kanonicznego checkpointu:
+/tmp/pe-m086-ordinary-phone-checkpoint/bu00. To odrębny I od starszego
+/tmp/pe-nypd-phone-checkpoint/bu00 z15 historycznymi HP guards; nie mieszać
+ich ani proweniencji. Zwykły checkpoint nie zawiera żadnych HP diagnostics.
+Debugger pozostał w M087, cap44094 po zamknięciu Save, lock0/brak menu.
+Cała kampania i przejście dalej od tego checkpointu pozostają nieukończone.
+
 Uzupełniono wszystkie23 resident programy85..107. Nowe85..91 używają
 wyłącznie istniejących funkcji sprite_effects.c/emitters.c: pełne skrypty264
 bajty, osiem color tracks328 bajtów, pięć tints20 bajtów oraz oryginalny
@@ -216,7 +245,9 @@ PsyZ/SDL instrumentowane w SAN. Logi /tmp/pe-resident-pe-final-build.log,
 -fixture-sanitized. To pełne testy programów, a nie dowód użycia każdego
 czaru w kampanii, niezależny pixel oracle PS1 ani ukończenie całej gry.
 Pozostałe resident programy85..91/105/107 nie są tym uzupełnieniem podpięte;
-cały Tutorial/EX/Chrysler, pełna kampania i zwykłe zwycięstwo M086 nadal otwarte.
+To historyczny stan tego kandydata; zwykłe zwycięstwo M086 oraz wszystkie23
+resident programy potwierdzono później powyżej. Tutorial/EX/Chrysler i pełna
+kampania nadal otwarte.
 
 Nowy frozen debugger z całą aktualną wersją14 programów:
 /tmp/pe-resident-pe-final-game-debug (-O1 z pełnych TU), exec66829/PID78296,
@@ -364,7 +395,9 @@ jako wybieralnych celów. Pierwotny opis „sześciu wrogów” był zbyt uprosz
 Żywy debugger72950/exec79174 zachowuje tę próbę, input od28100 w
 /tmp/pe-pending-reward-live-input.jsonl; nie utrwalać jej jako zwycięstwa.
 Powtórka odI z inputem zakończonym36861 pozwala uniknąć błędnego idle600.
-Zwykła obowiązkowa walka M086 odH i pełna kampania nadal nieukończone.
+Historycznie zwykła walka M086 odH była w tym momencie nieukończona;
+aktualny dowód zwycięstwa jest na początku dokumentu. Pełna kampania nadal
+nieukończona.
 
 
 Nowy rzeczywisty crash po losowej walce M100 od genuine I: po odebraniu

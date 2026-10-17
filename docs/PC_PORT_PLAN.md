@@ -2,6 +2,64 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Świeża regresja dokładnego zgłoszenia Melissy na obecnym frozen v2:
+New Game→oryginalne spotkanie, --native-melissa/input14, wymagane prawdziwe
+CUE, headless, rzeczywisty input. Normal exit0 42,63s, SAN exit0 161,46s;
+oba FNV c7ae3598591ad7c3, zero Unbound original script opcode (w tym206/82)
+i błędów ASan/UBSan/function. Prywatne puste karty pozostały puste.
+/tmp/pe-melissa-current-v2-proof.json wiąże SHA256 obu gier i fixture,
+wyniki i logi; -run.py/-verify.py odtwarzają i weryfikują próbę.
+Opkody są powiązane w istniejącym script/flow_opcodes.c z oryginalnymi
+Entity_SetFieldByTypeId i Scene_SetGlobalFlags w script/system_opcodes.c.
+Nie dodano plików repozytorium ani nowej implementacji rozgrywki.
+To potwierdzenie regresji tego spotkania, nie ukończenia kampanii.
+
+
+Świeży podstawowy fixture CPU tego samego frozen v2: normal exit0 0,22s,
+SAN exit0 0,92s, PSYZ_HEADLESS=1/SDL_AUDIODRIVER=dummy,
+/tmp/pe-current-v2-cpu-headless-results.json i logi -{normal,san}.log.
+Dwa wcześniejsze wywołania bez wymaganych zmiennych headless zakończyły
+się GPU trap/exit132 po testach startu display; nie są zaliczane jako PASS.
+Powtórki miały osobne prywatne katalogi robocze i poprawne środowisko.
+
+
+Dalsza zwykła droga od L: po nagrodach M113 otwarto południowo-wschodnią
+celę i jej skrzynię oryginalnym inputem. Tool trafia do slotu10 (cap38080),
+popup zamknięty przy38096; wcześniejszy Tool w8 pozostaje. Wyjście doM116
+przy38688, następnie wejście doM121 i oryginalne dialogi74/76/75.
+Przy40589 powrót doM115/A80212C8: HP127/189, stage400, bank44
+0x0402183C→0x0406183C, menuNULL/lock0; oba Toole zachowane.
+Pełny coldL→40589 niezależnie odtworzony: normal exit0 19,03s,
+SAN exit0 69,57s; cały JSON i pełne1MiB VRAM identyczne między wariantami.
+Nie zapisano VRAM debuggera przy tym cap: brak twierdzenia o zgodności
+z debuggerem ani o porównaniu obrazu z PS1. VRAM SHA256
+ a5a5ad5a08270ddc0c751b44334971e0d2febde3e33728aaf2a1a73f304d4ddb.
+B–L niezmienione, bu10 puste, zero HP diagnostics i błędów sanitizerów.
+Dowód /tmp/pe-m121-ordinary-v1-proof.json, odtwarzacze -prepare.py,
+-run.py i -verify.py. Ta próba potwierdza scenę fabularną; zwycięstwo
+w jej prefiksie dotyczy M113, nie M121. Nie zmieniono kodu gry.
+
+Dalsza próba M115 wywołuje walkę przy40744. Trzy widoczne typ5/78HP
+z pomocniczymi typ6. Nowo odblokowany Energy Shot6 użyty przez prawdziwe
+menu i dodatkowe zatwierdzenie celu: PE94, obrażenia68, cel78→10.
+Pojedynczy zwykły strzał zabija ten cel, ale Aya127→42 i dostaje Slow.
+Patrol zewnętrznego testera nie zapewnia skutecznych uników: przy42628
+HP8/PE124. Prawdziwe Heal2 daje8→68 przy42964, dalsza walka kończy się
+śmiercią przy43812 (battle3/HP0), bez abortu interpretera. To przegrana,
+nie dowód ukończenia walki. Pełny coldL→43812 odtworzony niezależnie:
+normal exit0 19,78s i SAN exit0 72,52s; cały JSON i1MiB VRAM zgodne
+również z debuggerem. SHA256 VRAM
+ a16be321df1383c975032f40216641affc1398724f7c7c21bfad8b6020b2593b.
+B–L bez zmian, bu10 puste, zero HP diagnostics i błędów sanitizerów.
+Manifest /tmp/pe-m115-ordinary-loss-v1-proof.json, -prepare.py/-run.py/
+-verify.py; victory=false. Wszystkie działania pochodzą z pada; nie
+zapisywano HP, PE, broni ani aktorów debuggerem. Następna próba powinna
+poprawić input i rozważyć oryginalne TuneUp (dwa Toole, M92F/RoF3),
+bez zmieniania zasad gry. Nie ma jeszcze nowego zapisu M przy telefonie.
+Debugger exec91119/PID91474 zatrzymany na tej przegranej; zamrożony
+/tmp/pe-battle-equip-v2-game i jego obiekty pozostają nienaruszone.
+
+
 Zwykłe zwycięstwo M113 zostało osiągnięte i niezależnie odtworzone.
 Nowa próba z patrolowaniem korytarza:6/70HP pokonany do32146/HP139,
 Barrier do32654 (bez straty HP na tym odcinku),7/78HP sprowadzony do24,
@@ -39,7 +97,7 @@ zero HP diagnostics i sanitizer errors. Manifest
 /tmp/pe-m113-ordinary-rewards-v1-proof.json i -verify.py; zbiorczy
 /tmp/pe-nypd-m113-ordinary-v1-proof.json wiąże pięć przypadków,
 frozen executable, prawdziwy L i oba ślady inputu. Pola spoza JSON
-pozostają wyraźnie oznaczone debugger_only_resources. Aktualny debugger exec91119/PID91474 zatrzymany przy37382;
+pozostają wyraźnie oznaczone debugger_only_resources. Historyczny punkt tego samego debuggera: cap37382;
 nie odbudowywać jego executable ani nie zmieniać stanu przez c.capture.
 Kontynuować eksplorację M113/M116 i następne sceny NYPD. Pełna kampania,
 pełny audyt stanów/obrazu/audio i cały port pozostają nieukończone.

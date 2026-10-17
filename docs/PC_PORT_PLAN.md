@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+M115 Escape potwierdzony żywym inputem: coldI→pierwszy ATB127HP przy37329,
+Triangle/ESC przez menu daje mode4 przy37425; po180+300 frame wraca
+37905, M115, flags128 bez battlebit2, lock0, menuNULL, mode10,
+HP127/181, native licznik0. Zwykła pełna powtórka exit0; SAN nadal
+potwierdzony żywy PID74065/exec37738. Args/logi i verifier
+/tmp/pe-m115-escape-{normal,san}-args.json, /tmp/pe-m115-escape-{normal,san}.log,
+/tmp/pe-m115-escape-verify.py. Nie ogłaszać jeszcze pary PASS przed SAN.
+
+Field Heal2 podniósł127→181. Prosta do przodu odtworzyła starcie przy38053:
+oryginalny skrypt przywraca po Escape world49,-2347 tuż przed pasem
+wyzwalającym, więc ponowne wejście w pas nie jest cooldown bugiem.
+Druga walka: poprawiony unik utrzymał181HP do38933; kolejne próby Escape
+nieudane, licznik prób3 przy40069 (rankAya14, enemies15; pierwsza szansa25%).
+Po leczeniu próba zakończyła się śmiercią40901. Nie utrwalać jako postępu.
+Inferiory73546 i73934 zakończono po zachowaniu logów.
+
+Bieżący nowy debugger exec82921/PID74219 odtwarza identyczny udany Escape
+z cap37905 w prywatnym /tmp/pe-m115-bypass-live. Kolejkowana próba
+ominięcia pasa przez world49,-2250→480,-2250→480,-2750→49,-3400→60,-4140.
+Pas ze skryptu actor7/byte1984 kończy się po prawej około x465;
+podłoga przyz-2500 sięga x523. Czy faktycznie zmieści się cylinder gracza,
+wymaga prawdziwego inputu; nie zmieniać kolizji. Args/input/log pod tym
+samym prefiksem; najpierw sprawdzić aktualny stan. Celem nadal prawdziwy
+telefon M112 i późniejsze przejście fabularne, bez nowych HP diagnostics.
+
+
 Koniec drugiej próby M115: po heal32→92, dalszym uniku i ładowaniu ATB
 przy38717 HP55; Escape nieudany przy38813, następnie śmierć38841.
 Nie traktować exec33439/PID73546 jako żywego zwycięskiego przebiegu.

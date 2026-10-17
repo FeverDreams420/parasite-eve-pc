@@ -38,11 +38,13 @@ slots and equipment records. Recorded ordinary input also wins the M027/M028
 sewer battles and traverses M031. The bootstrap replay suite passes in both
 builds with the original clocks running, and a further ordinary replay wins M032.
 A complete New Game replay now also opens its gate, passes the M033 Eve scene,
-and reaches the M034 two-target tutorial. The alligator has not yet been defeated
-on this fresh route. A further ordinary replay collects the M031/M334 chests,
+and reaches the M034 two-target tutorial. A further ordinary replay collects the M031/M334 chests,
 uses the original equipment upgrade menu, wins M032 and creates phone Save B.
 Normal/sanitized runs agree on full state, VRAM and both save payloads; a cold
 Continue B also returns to field control with matching state and VRAM.
+Ordinary input from B now defeats both alligator phases, collects the reward
+and reaches Daniel's M036 scene. Normal/sanitized runs match the controlled
+session in full state and VRAM, with the source save unchanged.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

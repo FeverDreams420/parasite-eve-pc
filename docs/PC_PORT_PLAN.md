@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zimny Continue z prawdziwego B przechodzi teraz obie fazy aligatora:
+M034 (ogon), przejście M348 (głowa), zwycięstwo, awans, Obtain All i End,
+rozmowy po walce oraz scenę Daniela M036. Przy51717: etap120,
+HP41/72, pojemność15, brak przeciwników/menu, mode9, move_lock3,
+rozmowa8/state2; gracz[-8323072,-2097152,-19005440], yaw176.
+Oryginalny M84F z bonusami[4,2,0], normalne strzały, Heal1 oraz zużycie
+Medicine1 14→59HP. CureP zachowane. Nagroda zajmuje slot4 jako259.
+Bez zmian statystyk/AI, zapisu stanu rozgrywki ani tworzenia save'a z RAM.
+Pełny input pochodzi z fizycznego sterowania w prywatnej sesji.
+Normal/SAN0 w13,12/37,02s: cały JSON i1MiBVRAM identyczne z żywą sesją;
+SHA2569ea0f4f72b2217d78dca66d801ad7a466bfb9bee7dc61ba17d674dfea38e5a39.
+Źródłowy B niezmieniony we wszystkich trzech prywatnych kartach.
+Artefakty /tmp/pe-theater-alligator-b-v1-{proof.json,verify.py,results.json},
+pełne args/input/logi/VRAM z tym samym prefiksem. Procesy zakończone0.
+To replay od Continue B, nie nowy pojedynczy replay od New Game;
+pełny zwykły New Game→B potwierdzono osobno poniżej. Nie dodano kodu
+produkcji ani plików repo. Trasa B→zwycięstwo nie jest jeszcze trwałym
+przypadkiem CTest; przypadek23 nadal kończy się na samouczku M034.
+Następny krok: dalsza scena M036, oryginalny zapis i zimny Continue;
+pełny port pozostaje aktywny i nieukończony.
+
 Dodano w istniejącym fixture i CMake przypadek23 / original-game-alligator-entry.
 Pełna zwykła trasa od New Game obejmuje obie żaby M032, awans,
 Heal1 31→61HP, przełącznik i otwarcie bramy, M033 z rozmową Eve15–24,

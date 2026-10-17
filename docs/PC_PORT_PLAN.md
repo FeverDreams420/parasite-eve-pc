@@ -95,15 +95,44 @@ niezmienione karty i zero HP diagnostics/błędów sanitizerów.
 Medicine1 w11/12/19, SG550 w1, drugi M121 zakończony z nagrodami.
 Ponowna rozmowa lekarza/dialog105 nie leczy; nie zmieniano skryptu.
 
-Debugger current-v8 został zakończony. Następca current-v9 (session2763),
-/tmp/pe-nypd-current-v9-{lldb.log,args.json,input.jsonl}, używa tego samego
-immutable v4 i prywatnych kart. Po udokumentowanej gałęzi dwa Medicine1
-ze slotów12/19 podniosły HP8→98. SG550 z M118 wyposażono przez zwykłe
-menu (slot1, potwierdzone przy44766), M16 zachowane w9. Medicine1 w11
-pozostało. Te ostatnie przygotowania są na razie obserwacją debuggera.
-Zamrożonych binarek ani obiektów nie przebudowywać w miejscu. Zwycięstwo
-M123, późniejsze sceny, PS1 pixel/audio reference i pozostała kampania
-wymagają pracy.
+Nowa zwykła gałąź z SG550 przechodzi M122 i wraca do startu M123.
+Po przygotowaniu w M117 (SG550 slot1, dwa Medicine1 do98HP i trzeci do143HP)
+M122 zakończono z61HP: pierwsza seria w cel3 zabiera60HP, następna seria
+rozdziela jeden pocisk na pozostałe18HP celu3 i drugi na cel5 (98→69HP).
+Po uniku Energy Shot przy153PE pokonuje ostatni cel. Odebrano nagrody,
+Medicine2 z11 przywraca61→151HP, potem M124→M044→M123/dialog106.
+Przy51888: M123/A80221C8, stage400, tryb walki0, lock4, menuNULL,
+HP151/189, PE10, ATB4886, SG550 clip16/pool69, SpVest14, M16 zachowane9,
+leki zużyte. M123 nie jest wygrane.
+
+Niezależne odtworzenie całej gałęzi od Continue N na niezmienionym v4:
+normal/SAN exit0 (24,61/90,53s), cały JSON i1MiB VRAM identyczne,
+zgodne ze świeżym debuggerem. SHA256 VRAM:
+5564d28afc4f0e83f949a33bc95127931b75486a61ad7b54ad493f0ae31eec25.
+B–N niezmienione, bu10 puste, zero HP diagnostics/Unbound/błędów SAN.
+/tmp/pe-m123-sg-entry-v1-proof.json, -input.jsonl oraz -normal/-san-args.json
+z logami i osobnymi katalogami kart. Ponowiony zbiorczy weryfikator v4
+potwierdza zgodność wszystkich zależności, obiektów, binarek i wcześniejszych
+prób z bieżącymi źródłami. Nie zmieniono kodu produkcyjnego ani gameplayu.
+
+Wcześniejsze próby debuggera zginęły w M122: v9 przy46748, v10 przy47686,
+v11 przy47840. To przegrane, nie dowody działania całej gałęzi. Sterownik
+zewnętrzny błędnie celował poza granicę walki: faktyczny siedmiokąt ma
+x[-1000,1309], z[-236,472], choć podłoga lokacji jest większa. Wymaganie
+950 odstępu od obu przeciwników blokowało atak. Porównano12 zwykłych
+sekwencji uników na tym samym stanie47208→47448; wszystkie exit0,
+prywatne karty niezmienione, wynik4–61HP. Wybrany wariant7 (Down+Left+run)
+zachowuje61HP i duży odstęp od celu5. /tmp/pe-m122-evade-search-v1-proof.json.
+W końcowym przebiegu seria rozdzielona i ruch Right40/Up180 z runem
+pozwoliły doładować ATB bez dalszej utratyHP. Wszystkie te zmiany dotyczą
+wyłącznie sterownika inputu w /tmp, nie funkcji gry ani zasad obrażeń.
+
+Żywy debugger current-v12 (session76592) stoi przy51888 przed walką M123.
+/tmp/pe-nypd-current-v12-{lldb.log,args.json,input.jsonl}; prywatne karty
+/tmp/pe-nypd-current-v12-live. Poprzednie v8/v9/v10/v11 jawnie zakończono.
+Zamrożonych /tmp/pe-m123-v4-game ani obiektów nie przebudowywać w miejscu.
+Zwycięstwo M123, późniejsze sceny, PS1 pixel/audio reference i pozostała
+kampania nadal wymagają pracy.
 
 Po zwycięstwie M122 zweryfikowano również zwykłe wejście do M124:
 cap40196, M124/A8022248, stage400, HP101/189, pole9, lock0, menuNULL,

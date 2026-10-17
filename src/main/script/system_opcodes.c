@@ -564,18 +564,20 @@ int Script_GetEntityEffect(int **arg0) {
 }
 
 int Script_PlayerPointInPoly(int **arg0) {
-    int values[8];
+    PolygonVertex values[4];
     unsigned int i;
 
     for (i = 0; i < 4; i++) {
-        values[i * 2] = *arg0[i * 2];
-        values[i * 2 + 1] = *arg0[i * 2 + 1];
+        values[i].xFraction = (u16)*arg0[i * 2];
+        values[i].x = (s16)((u32)*arg0[i * 2] >> 16);
+        values[i].zFraction = (u16)*arg0[i * 2 + 1];
+        values[i].z = (s16)((u32)*arg0[i * 2 + 1] >> 16);
     }
 
     *arg0[8] = Geo_PointInPoly(
         g_CurrentEntity->pos_x,
         g_CurrentEntity->pos_z,
-        (const PolygonVertex *)values,
+        values,
         4);
     return 1;
 }
@@ -1130,17 +1132,17 @@ int Entity_PolarToPosition2(int **arg0)
   src = args[0];
   radius = *src;
   value = rsin(current->rot_y);
-  radius = -radius;
-  value = Math_FixedMul(radius, value << 4);
+  radius = (s32)(0u - (u32)radius);
+  value = Math_FixedMul(radius, (s32)((u32)value << 4));
   current_v1 = g_CurrentEntity;
   dst = args[1];
-  *dst = g_CurrentEntity->pos_x + value;
+  *dst = (s32)((u32)g_CurrentEntity->pos_x + (u32)value);
   current = g_CurrentEntity;
   value = rcos(current->rot_y);
-  value = Math_FixedMul(radius, value << 4);
+  value = Math_FixedMul(radius, (s32)((u32)value << 4));
   current_v1 = g_CurrentEntity;
   dst = args[2];
-  *args[2] = current_v1->pos_z + value;
+  *args[2] = (s32)((u32)current_v1->pos_z + (u32)value);
   return 1;
 }
 

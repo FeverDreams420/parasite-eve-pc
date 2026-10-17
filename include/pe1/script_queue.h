@@ -45,6 +45,8 @@ int Script_IsBattlePhase4(int **args);
 int Entity_MarkNodeAnimPendingById(int **args);
 int Entity_AdvanceNodeById(int **args);
 int Script_SetEntityParentLink(int **args);
+int Script_PlayerPointInPoly(int **args);
+int Entity_PolarToPosition2(int **args);
 int Script_Noop(int **unused);
 int Script_GetSqrt(int **args);
 int Script_SetEntityShadowFlag(int **unused);

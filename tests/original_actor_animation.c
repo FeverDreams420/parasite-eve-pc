@@ -3373,6 +3373,43 @@ static int original_polygon_opcode(void)
     g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_ScriptVariableBank[9]=saved_var;
     if(hash!=UINT64_C(0xd928a71a360ec985)){fprintf(stderr,"Polygon hash %016llx\n",(unsigned long long)hash);return 0;}
     puts("Original polygon opcode: 486 USA MIPS boundary, winding, degenerate and overflow states, eleven operands and native dispatcher passed");
+    {
+        s32 shapes[10][8];memcpy(shapes,polygons,sizeof(polygons));
+        const s32 extra[][8]={{-10*65536,-10*65536,10*65536,-10*65536,10*65536,10*65536,-10*65536,10*65536},
+            {-10*65536,10*65536,10*65536,10*65536,10*65536,-10*65536,-10*65536,-10*65536},
+            {0,0,65536,0,65536,65536,0,65536},{-65536,-65536,65536,-65536,0,0,-65536,65536}};
+        memcpy(shapes+6,extra,sizeof(extra));u32 samples[13];memcpy(samples,points,sizeof(points));
+        samples[9]=10*65536;samples[10]=(u32)(-10*65536);samples[11]=0x7fff8000;samples[12]=0x80008000;
+        uint64_t actor_hash=UINT64_C(14695981039346656037);unsigned cases=0;
+        if(g_ScriptQueueOpcodeHandlers[21]!=Script_PlayerPointInPoly)return 0;
+        for(unsigned shape=0;shape<10;++shape)for(unsigned x=0;x<13;++x)for(unsigned z=0;z<13;++z)for(unsigned alias=0;alias<5;++alias){
+            FieldActor current={.pos_x=(s32)samples[x],.pos_z=(s32)samples[z],.flags=0xdecafbad};
+            FieldActor before=current,expected=current;g_CurrentEntity=&current;
+            int data[9];memcpy(data,shapes[shape],sizeof(shapes[shape]));data[8]=(s32)0xa5a5a5a5;
+            int *outputs[]={data+8,data,&current.pos_x,&current.pos_z,data+7},*args[9];
+            for(unsigned i=0;i<8;++i)args[i]=data+i;args[8]=outputs[alias];
+            u32 result=Script_PlayerPointInPoly(args),words[12]={result,(u32)current.pos_x,(u32)current.pos_z};
+            memcpy(words+3,data,sizeof(data));
+            for(unsigned word=0;word<12;++word)for(unsigned byte=0;byte<4;++byte)
+                actor_hash=(actor_hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+            expected.pos_x=current.pos_x;expected.pos_z=current.pos_z;
+            if(memcmp(&current,&expected,sizeof(current)))return 0;
+            if(!alias){
+                current=before;u32 program[13]={21|(9u<<13),2u<<9};
+                for(unsigned i=0;i<8;++i)program[i+2]=(u32)shapes[shape][i];
+                program[10]=9;program[11]=32;g_ScriptVariableBank[9]=0xa5a5a5a5;
+                ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+                if(result!=1 || memcmp(&current,&expected,sizeof(current)) || g_ScriptVariableBank[9]!=(u32)data[8] ||
+                   node.current.script!=program+13 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+            }
+            ++cases;
+        }
+        g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_ScriptVariableBank[9]=saved_var;
+        if(cases!=8450 || actor_hash!=UINT64_C(0xac99a90a44bccafe)){
+            fprintf(stderr,"Actor polygon21 CPU hash %u %016llx\n",cases,(unsigned long long)actor_hash);return 0;
+        }
+        puts("Original opcode21: 8450 USA CPU states, winding/degenerate/boundary polygons, fractions, five aliases, actor guards and 1690 real dispatcher programs passed");
+    }
     return 1;
 }
 
@@ -4103,6 +4140,40 @@ static int original_polar_position_opcode(void)
     if(cases!=4320 || hash!=UINT64_C(0xa8ae21be8bc9567d)){
         fprintf(stderr,"Polar221 CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
     puts("Original opcode221: 4320 unhooked USA CPU states, signed radius/angle wrapping, boundary positions, six input/output alias patterns and full dispatcher passed");
+    {
+        const s16 yaws[]={0,1,-1,1024,2048,3072,4095,4096,32767,-32768,731,-731};
+        uint64_t yaw_hash=UINT64_C(14695981039346656037);unsigned count=0;
+        if(g_ScriptQueueOpcodeHandlers[182]!=Entity_PolarToPosition2)return 0;
+        for(unsigned sweep=0;sweep<2;++sweep)for(unsigned test=0;test<(sweep?65536u:5760u);++test){
+            unsigned alias=sweep?0:test%8,pose=sweep?3:(test/8)%5,angle=(test/40)%12,radius=sweep?0:test/480;
+            FieldActor actor={.pos_x=(s32)positions[pose][0],.pos_z=(s32)positions[pose][1],
+                .rot_y=sweep?(s16)test:yaws[angle],.rot_z=0x1234,.flags=0xdecafbad};
+            FieldActor before=actor,expected=actor;g_CurrentEntity=&actor;
+            int data[]={(s32)patterns[radius],(s32)0xa5a5a5a5,0x5a5a5a5a};
+            int *outputs[][2]={{data+1,data+2},{data+1,data+1},{&actor.pos_x,&actor.pos_z},{data,data+1},
+                {&actor.pos_z,&actor.pos_x},{data+1,data},{&actor.pos_z,&actor.pos_z},{&actor.pos_x,&actor.pos_x}};
+            int *args[]={data,outputs[alias][0],outputs[alias][1]};u32 result=Entity_PolarToPosition2(args);
+            const u32 words[]={result,(u32)actor.pos_x,(u32)actor.pos_z,(u32)data[0],(u32)data[1],(u32)data[2]};
+            for(unsigned word=0;word<6;++word)for(unsigned byte=0;byte<4;++byte)
+                yaw_hash=(yaw_hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+            expected.pos_x=actor.pos_x;expected.pos_z=actor.pos_z;
+            if(memcmp(&actor,&expected,sizeof(actor)))return 0;
+            if(!alias){
+                actor=before;u32 program[]={182|(3u<<13)|(2u<<20)|(2u<<23),0,patterns[radius],9,10,32,0};
+                g_ScriptVariableBank[9]=0xa5a5a5a5;g_ScriptVariableBank[10]=0x5a5a5a5a;
+                ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+                if(result!=1 || memcmp(&actor,&expected,sizeof(actor)) || g_ScriptVariableBank[9]!=(u32)data[1] ||
+                   g_ScriptVariableBank[10]!=(u32)data[2] || node.current.script!=program+7 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+            }
+            ++count;
+        }
+        g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+        g_ScriptVariableBank[9]=saved_vars[0];g_ScriptVariableBank[10]=saved_vars[1];
+        if(count!=71296 || yaw_hash!=UINT64_C(0xd982fab26e42f8fa)){
+            fprintf(stderr,"Polar182 CPU hash %u %016llx\n",count,(unsigned long long)yaw_hash);return 0;
+        }
+        puts("Original opcode182: 71296 USA CPU states, all 65536 yaws, signed radius/position word wrapping, eight aliases, actor guards and 66256 real dispatcher programs passed");
+    }
     return 1;
 }
 

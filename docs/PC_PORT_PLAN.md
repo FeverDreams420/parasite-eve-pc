@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Podpięto oryginalne geometryczne opcode21 i182 w istniejącym interpreterze.
+Script_PlayerPointInPoly buduje teraz właściwe PolygonVertex[4] z pełnych
+par16.16, zamiast czytać int[8] przez wskaźnik innego typu. Zachowuje
+kolejność kopiowania wszystkich argumentów przed zapisem wyniku.
+Entity_PolarToPosition2 zachowuje oryginalne kolejności obliczeń, lecz negację,
+przesunięcia wartości trygonometrycznych i dodanie pozycji wykonuje jawnie
+z zawijaniem słów32-bitowych. Bez nowych funkcji ani warstw produkcyjnych.
+
+Istniejące testy polygon/polar rozszerzono o8450 stanów opcode21 (10 czworokątów,
+13×13 punktów,5 aliasów wyjścia) i71296 stanów opcode182 (5760 kombinacji
+promienia/kąta/pozycji/8 aliasów oraz wszystkie65536 wartości yaw).
+Pełne niehookowane funkcje USA MIPS, włącznie z Geo_PointInPoly, rsin,
+rcos i Math_FixedMul, dają FNVac99a90a44bccafe i d982fab26e42f8fa.
+/tmp/pe-geometry21-182-mips.py i log. Natywny dispatcher wykonuje dodatkowo
+1690 programów21 i66256 programów182, sprawdzając kursory, węzły,
+wyjścia i guardy aktorów. Testy przywracają użyte globale.
+CPU normal/SAN exit0 (0,67/1,83s), wymagane --assets exit0 (11,02/47,24s).
+
+Stare ciała funkcji z podpiętymi handlerami przechodzą normal (1,10s),
+ale SAN abortuje przy pierwszej negacji INT_MIN w182 (stary system.c1133).
+Baseline nie wykazał błędu runtime dla aliasu bufora21; jego zmiana usuwa
+niezgodny typ dostępu i daje ten sam wynik oryginalnego CPU. Osobne
+usunięcie samego21 albo182 przy nowych testach powoduje exit123 w obu
+wariantach. Wyniki /tmp/pe-geometry21-182-{baseline-v1-cpu,negative}-results.json.
+Pełny build root przeszedł. Audyt rejestru potwierdza214 mapowań adresowych,
+21 oryginalnych NULL i sześć wciąż niepodpiętych115,175,177,179,204,230;
+/tmp/pe-geometry21-182-registry-audit.json. Nie jest to ukończona kampania.
+
+Regresja geometry21-182-v1 coldN→M121 victory→M117/rest/upgrade/reload:
+normal/SAN exit0 (19,16/74,23s), cały JSON zgodny z poprzednim kandydatem,
+pełne1MiB VRAM zgodne także ze świeżym debuggerem. KartyB–N identyczne,
+bu10 puste, brak diagnostycznych zmian HP. Świeży headless debug
+/tmp/pe-nypd-current-v3-lldb.log stoi przy34900 w M117: HP189, PE65,
+clip16, reserve54, Medicine1 w8/11, menuNULL i lock0. Zamrożony executable
+/tmp/pe-geometry21-182-v1-game i jego obiekty pozostają niezmienne.
+Args/trace /tmp/pe-nypd-current-v3-{args.json,input.jsonl}.
+/tmp/pe-geometry21-182-native-v1-proof.json i verify.py porównują pełny
+stan, VRAM oraz prywatne karty obu runnerów i aktualnego debuggera.
+/tmp/pe-geometry21-182-v1-verify.py i proof.json wiążą SHA kodu, testów,
+oryginalnego SLUS, CPU oracle i dziesięciu executable z tymi wynikami.
+Adresy USA21=800188C4 i182=80019810. Te przypadki nie zaliczają nadal
+niewygranych M118/M122 ani całej kampanii.
+
 Podpięto kolejne istniejące funkcje98/99/212 bez zmiany ich logiki.
 98 zaznacza pierwszy węzeł o pasującym16-bitowym seq w trzech listach;
 99 odwiesza wszystkie pasujące węzły, zachowując pełne next_value/cursor,

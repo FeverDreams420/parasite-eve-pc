@@ -21,7 +21,7 @@ via Soho and the Museum story. Normal and sanitized replays agree on the full
 state and VRAM through M111. A separate diagnostic branch also has a genuine
 phone-created checkpoint I in M099; cold Continue agrees on full state and
 VRAM in normal and sanitized builds. Its earlier guarded HP changes remain
-part of its provenance. Cold I-to-M116 traversal also agrees on full state
+part of its provenance. Cold I-to-M116 and M113 traversal also agrees on full state
 and VRAM across both builds. The M122 modules pass their full effect tests;
 campaign entry is still unverified. These are
 coverage fixtures, not a completed-campaign result.

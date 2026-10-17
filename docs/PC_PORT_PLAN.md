@@ -12,16 +12,22 @@ potwierdzone po rzeczywistym załadowaniu M113 (M113_NATIVE1/1/True).
 Wszystkie14 programów są również obecne po coldI→M116; żadnych nowych
 HP diagnostics. To nadal coverage-only z wcześniejszych15 w źródle I.
 
-Bieżący exec66829/PID78296 zatrzymany przy33329 w M113. Kontynuować z tego
-miejsca na /tmp/pe-resident-pe-final-game-debug, nie z dawnego75770/53HP.
-Floor dump /tmp/pe-floor-a80211c8.json (64 trójkąty). CUE skrypty actor0..9
-w /tmp/pe-m113-original-actor*.bin/.txt; żywi aktorzy0,1,2,3,4,5,9.
-Rzeczywista powtórka odI do tego cap uruchomiona normal/SAN:
-exec10686/PID78428 i78429, potwierdzone żywe; /tmp/pe-m113-v1-entry-run.py,
--verify.py, -case.json i-{normal,san}-args.json/.log. Nie ogłaszać pary PASS,
-dopóki oba procesy nie zakończą się0 i verifier nie sprawdzi całego JSON,
-VRAM także z debuggerem i niezmienionych B–I. Dalej należy zbadać skrypt
-cel i kontynuować fabułę; to nie jest jeszcze dowód przejścia M113.
+Powtórka cold I→M113 zakończona PASS: oba procesy normal/SAN exit0,
+/tmp/pe-m113-v1-entry-verify.py potwierdza pełny JSON i wszystkie1MiB VRAM
+normal==SAN==debugger przy33329. SHA256 VRAM:
+434f42778ca6e5acea5df51d83bba6cf7e2d4314734702c478b1131f70721504.
+Karty B–I niezmienione, bu10 puste; proof /tmp/pe-m113-v1-entry-proof.json.
+Pozostaje coverage-only (15 wcześniejszych diagnostyk HP, zero nowych).
+
+Bieżący exec66829/PID78296 na /tmp/pe-resident-pe-final-game-debug
+wszedł następnie do prawdziwego spotkania M113. Trzy wybieralne cele:
+typ6/sub31 HP70 i typ7/sub0/sub1 HP78; dwa typ8 to niewybieralne kontrolery.
+Pojedynczy strzał przez Cross i zatwierdzenie Square zadał29 obrażeń
+celowi6, zużywając jeden nabój. Przy34385 Aya ma65HP; zwycięstwo nie
+potwierdzone. To eksperyment fizycznego inputu pomocnika, bez zmian balansu
+ani HP. Floor /tmp/pe-floor-a80211c8.json (64 trójkąty), skrypty actor0..9
+w /tmp/pe-m113-original-actor*.bin/.txt. Dalej zbadać encounter i fabułę;
+nie przedstawiać samego wejścia jako ukończenia M113.
 
 
 Uzupełniono wszystkie14 resident PM programów wybieranych przez oryginalną

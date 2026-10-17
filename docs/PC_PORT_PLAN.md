@@ -1129,12 +1129,25 @@ actor4, worldx[486,687],z[−840,−729], yaw(1536,2560), Cross→event11;
 actor0 uruchamia prawdziwy opcode231 przybyte2356, z room variable998.
 To pozwoli zapisać przed wejściem doM116, którego stary frozen debugv115
 jeszcze nie obsługuje. Nie uruchamiać nim M116 przed utworzeniem save'a.
-Genuine I powinien powstać przez UI na wolnym slocie, bez nadpisania H;
-nadal musi być opisany jako coverage-only (15 wcześniejszych HP diagnostics).
-Korytarz obok NPC2 przyx−300,z−40 jest fizycznie blokowany promieniem300;
-nie zmieniać kolizji ani pozycji. Przygotowana legalna dłuższa trasa po
-prawej stronie biurek do telefonu. Bieżący exec22652/PID70123 nadal żywy,
-input /tmp/pe-m115-v1-live-input.jsonl, sprawdzić aktualny pe-state i log.
+Genuine I powstał przez rzeczywisty telefon i menu M099 na wolnym slocie I8,
+bez nadpisania B–H. Plik /tmp/pe-nypd-phone-checkpoint/bu00/BASLUS-006620000000I
+ma 8192 bajty, SHA256
+3f54340313a4319859904bba25af288e72ebf95ea92ab6d640114d5880d8f14b.
+Przy198859 UI pokazało File saved; menu zamknięto przy199707. HP181/181,
+story400, flags44=0x0402183c. Użytkowe karty pozostają nietknięte.
+
+Zimny Continue I8 przeszedł normal i ASan/UBSan/function, oba terminal0.
+Verifier /tmp/pe-nypd-I-continue-verify.py potwierdza przy24000 pełny JSON,
+cały 1MiB VRAM, cały ekwipunek i niezmienione B–I; bu10 puste.
+M099/A80094C8, HP181/181, brak menu/locka; SHA256 VRAM
+6cef844df45d4e6bbb9a756e440d7c8c754b0517547f9126213f46e1b8834af8.
+Ten Continue nie stosuje nowych zmian HP, lecz źródło nadal ma 15 wcześniejszych
+guarded HP diagnostics: coverage_only=true, ordinary_campaign_proof=false.
+Manifest i dowód: /tmp/pe-nypd-phone-checkpoint/manifest.json oraz
+/tmp/pe-nypd-I-continue-proof.json. Pełne odtworzenie H→zapis I normal/SAN
+jest osobnym, jeszcze niezakończonym testem; nie utożsamiać z cold Continue.
+Nowy debugger /tmp/pe-line-family-v2-game-debug ma już bindingi M116;
+input dalszej trasy: /tmp/pe-nypd-I-live-input.jsonl.
 
 
 

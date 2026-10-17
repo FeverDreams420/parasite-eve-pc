@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Zakończona powtórka coldI→M089 zwycięstwo→Day3/J→apteka→Medicine2→
+cztery Defense+1→M095/Tool przy108333: normal exit0 44,13s, SAN exit0
+152,28s, bez zgłoszeń sanitizerów. Cały JSON, pełne4096 bajtów equipment
+i pełne1MiB VRAM identyczne także z debuggerem. VRAM SHA256
+bcd3d89798503886f6ce3e284145f6d143445784f8f7abcf7634f681f5ce78e5.
+B–I niezmienione, utworzony J identyczny z kanonicznym zwykłym J,
+bu10 puste. Manifest /tmp/pe-day3-gunshop-v1-proof.json i -verify.py.
+Tool w8, Medicine2 w10, bonus defense SpVest4/SvVest3 — wszystko przez
+oryginalne UI, zero HP diagnostics. Ten dowód zamyka wcześniejsze oczekiwanie
+na exec56815; oba procesy zakończone0.
+
+Dalszy zwykły input wraca przez M094 do M093. Daniel/dialog100 po sklepie,
+próba złych drzwi/dialog101, obejście samochodu i wejście z przeciwnej strony
+prowadzą przez102 do mapy. Pomocnik sm.advance zatrzymuje się na M0000,
+zamiast ponownie zatwierdzać Soho. Left2→6→9/Museum i Cross prowadzą
+przy115544 do M038/dialog37. Dalej oryginalne sceny i dialogi do M239/filmu
+przy121796; to nie jest jeszcze normal/SAN dowód odcinka po108333.
+Bieżący debugger exec76299/PID86034, dotychczasowy trace/log; uruchomiono
+ograniczone sm.movie_wait20 i scene_dialogue70. Przed kontynuacją odczytać
+wynik procesu, nie zakładać zawieszenia ani zakończenia z upływu czasu.
+
 Bieżąca zwykła gałąź jest w M095/sklepie z bronią przy108333, HP181/181,
 lock2, menuNULL. Powrót M097→M096→M093→M094 (dialog114 i otwarcie sklepu)
 →M095 nie wymagał zmian kodu. Skrzynia typu7 dała Tool/item22 do pustego8;

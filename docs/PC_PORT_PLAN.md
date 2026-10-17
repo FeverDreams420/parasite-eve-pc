@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Zakończona pełna zwykła powtórka coldI→polowe Heal2→M089 zwycięstwo→
+sceny/filmy→Day3→Save J/cap83389: normal exit0 36,14s, SAN exit0 130,27s.
+Cały JSON oraz pełne1MiB VRAM identyczne także z debuggerem; SHA256 VRAM
+f382e7557769d03909b22317e56bc3ab2d8494b75dc484b5d213e04d5278f8f5.
+Wszystkie8192 bajty J identyczne także z oryginalnym zapisem przez UI;
+SHA256 J4ddf4ef55c0eed32a110ef40469374aeb4615efc3912d9ec487dd9fd31138e0d.
+B–I niezmienione, bu10 puste, zero HP diagnostics i zgłoszeń sanitizerów.
+Manifest /tmp/pe-day3-ordinary-save-j-v1-proof.json i -verify.py.
+
+Cold Continue J/cap24000 także normal/SAN exit0 13,58/55,56s: cały JSON i
+VRAM identyczne, SHA256 VRAM
+cea89cb5e8e5b3447fbf674d1e2360751d05680be542aa0c8856081d155d815b.
+M351/A80650C8, story312, HP181/181, battle0/live0, menuNULL, lock1 —
+autorska plansza Day3 wymaga Cross. B–J byte-identical, bu10 puste.
+Manifest /tmp/pe-day3-ordinary-continue-j-v1-proof.json, -verify.py i
+-{normal,san}-args.json/.log. Pierwsze wywołanie runnera zostało poprawnie
+odrzucone przez parser za nieposortowane --pad-at (exit1 przed grą);
+argumenty posortowano i dopiero ponowny terminal0 jest zaliczony.
+Prywatny zwykły checkpoint /tmp/pe-day3-ordinary-checkpoint/bu00 jest
+zweryfikowany i zachowuje pochodzenie bez15 guards starszej gałęzi.
+
+Dalszy bieżący input: M092→M093/dialog97, rozmowy Maedy105/106 i Daniela99,
+M096/dialog122→M097 apteka. Obejście poruszającego się NPC korzysta z
+oryginalnych floor triangles. Medicine2/item7 ze skrzyni typu6 zastąpiło
+Ammo/item20 w slocie10 przez oryginalny ekran pełnego inventory; komunikat
+„Restores90HP” obejrzany. Przy97913 M097/A80093C8, HP181, lock2, menuNULL.
+Powtórka /tmp/pe-day3-pharmacy-v1-run.py uruchomiona exec89032: normal
+terminal0 40,39s, SAN PID86675 nadal pracował przy ostatnim odczycie.
+Wynik SAN i -verify.py trzeba odczytać po zakończeniu; sam normal PASS nie
+potwierdza jeszcze porównania. Gold /tmp/pe-day3-pharmacy-v1-debug.vram.
+
+Po97913 użyto czterech Defense+1 przez oryginalne menu. Pierwsze trzy
+trafiły do SpVest/record7 (bonus defense1→4); odczyt4096 bajtów equipment
+wykazał wybór tego wariantu zamiast noszonego SvVest/record5. Ostatni
+trafił do SvVest (bonus defense2→3). Nie cofano ani nie wymuszano zmian.
+Sloty8/15/19/20 są puste, Medicine2 nadal w10. Pomocnik cursor musiał
+przejść na lewą kolumnę PRZED wierszem10: prawa komórka21 jest poza
+capacity21 i poprawnie blokuje zejście. Nie jest to błąd gry.
+Przy99465 brak menu; dalej uruchomiono powrót z apteki przez floor waypoints.
+Ta część po97913 nie jest jeszcze porównana normal/SAN. Cel pełnej kampanii
+pozostaje otwarty; nie tworzono plików repo ani kodu zastępującego grę.
+
 Zwykłe przejście H→zwycięstwo M086→nagrody→Save I→M088 rozmowa/film→
 M089 początek walki potwierdzone normal/SAN exit0, 22,57/82,99s.
 Cap51257, M089/A80084C8, story272, HP83/181, battle0/live1, dialog63

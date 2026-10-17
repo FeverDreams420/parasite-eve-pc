@@ -22,7 +22,9 @@ phone, a genuine checkpoint I and cold Continue are also verified in both
 builds, with identical save bytes. Ordinary input also reaches M089 through
 the M088 conversation and movie, then defeats Eve from checkpoint I after
 field-menu Heal2; normal and sanitized runs agree on full state and VRAM
-at the post-battle dialogue. Separate,
+at the post-battle dialogue. The ordinary route through the following scenes
+also reaches Day 3, creates checkpoint J and passes cold Continue in both
+builds. Separate,
 explicitly diagnostic runs with guarded HP changes reach Day 3 NYPD room M100
 via Soho and the Museum story. Normal and sanitized replays agree on the full
 state and VRAM through M111. A separate diagnostic branch also has a genuine

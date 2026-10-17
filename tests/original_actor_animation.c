@@ -13079,6 +13079,34 @@ static int original_item_random(void)
         if(program[3]!=raw[timer*3+1] || memcmp(g_GameTimers,raw,sizeof(raw)) ||
            node.current.script!=program+6 || node.flags!=0x90 || node.active || g_ScriptNodePool)valid=0;
     }
+    {
+        /* USA 80019798 calls the original floor-selection getter. Its byte
+         * domain includes inactive selection and every encoded floor index. */
+        FontGlyphSelectionState saved_selection=g_FontSelectionState;
+        uint64_t floor_hash=UINT64_C(14695981039346656037);
+        if(g_ScriptQueueOpcodeHandlers[178]!=Script_GetFloorNumber)valid=0;
+        for(unsigned active=0;active<256;++active)for(unsigned index=0;index<256;++index) {
+            memset(&g_FontSelectionState,0x33,sizeof(g_FontSelectionState));
+            g_FontSelectionState.active=active;g_FontSelectionState.codeIndex=index;
+            g_FontSelectionState.code=0x5a;g_FontSelectionState.selected=0xa5;
+            u8 before[sizeof(g_FontSelectionState)];memcpy(before,&g_FontSelectionState,sizeof(before));
+            struct {u32 prefix;int output;u32 suffix;} cell={0x11112222,(s32)0x98765432,0xaaaa5555};
+            int *args[]={&cell.output};u32 result=Script_GetFloorNumber(args);
+            u32 words[7]={result,(u32)cell.output,cell.prefix,cell.suffix};memcpy(words+4,before,12);
+            for(unsigned word=0;word<7;++word)for(unsigned byte=0;byte<4;++byte)
+                floor_hash=(floor_hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+            if(memcmp(before,&g_FontSelectionState,sizeof(before)))valid=0;
+            u32 program[]={178|(1u<<13),0,0x98765432,32,0};
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;
+            Script_RunQueue();
+            if(program[2]!=(u32)cell.output || node.current.script!=program+5 ||
+               node.flags!=0x90 || node.active || g_ScriptNodePool ||
+               memcmp(before,&g_FontSelectionState,sizeof(before)))valid=0;
+        }
+        g_FontSelectionState=saved_selection;
+        if(floor_hash!=UINT64_C(0x393cb60902443125))valid=0;
+        if(valid)puts("Original floor opcode178: 65,536 unhooked USA CPU byte states and 65,536 native dispatcher programs, output guards and untouched selection state passed");
+    }
     g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_CurrentEntity=saved_actor;
     if(valid)puts("Original timer opcode 210: 672 unhooked USA CPU reads and output aliases plus 48 dispatcher programs passed");
     GameTime_InitCounter0(); GameTime_InitCounter1(); GameTime_InitCounter2();

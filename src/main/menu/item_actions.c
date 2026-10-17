@@ -549,8 +549,9 @@ void Menu_OpenItemList(void)
     }
 
     item = Inv_LookupActiveListData(Inv_RestoreSelection(list));
-    /* slot == -1 reads tailCount, the byte just before tailData. */
-    if (item->tailData[slot]) {
+    /* Whole-stat selection uses the count byte preceding the modifier
+     * array in retail. Address its native field instead of indexing -1. */
+    if (slot < 0 ? item->tailCount : item->tailData[slot]) {
 
     g_MenuSelectedItemList = list;
     g_MenuSelectedItemSlot = slot;
@@ -569,7 +570,7 @@ void Menu_OpenItemList(void)
         for (i = 0; i < 4 && g_StatBaseTable[i] == 0; ++i) {}
         g_MenuSelectedItemIndex = i < 4 ? i : 0;
         item = Inv_LookupActiveListData(Inv_RestoreSelection(list));
-        kind = item->tailData[slot] & 0x1f;
+        kind = (slot < 0 ? item->tailCount : item->tailData[slot]) & 0x1f;
         if (status == 1 || (!(g_MenuSelectedItemIndex & 1) && status == 2) ||
             ((g_MenuSelectedItemIndex & 1) && status == 5 && (unsigned)(kind - 8) >= 3)) {
             Menu_CreateItemActionSubmenu();

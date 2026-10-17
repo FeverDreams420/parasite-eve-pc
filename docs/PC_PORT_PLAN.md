@@ -2,6 +2,54 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Świeżo przebudowany build/parasite-eve-pc przeszedł ponownie rzeczywisty
+--native-melissa od New Game: exit0, input14, FNVc7ae3598591ad7c3,
+headless i wymagane Disc1. Opcode206 i82 nie abortują. Log:
+/tmp/pe-melissa-current-v3/melissa.log. Ten przebieg normal nie zastępuje
+wcześniejszej osobnej regresji SAN ani pełnego audytu obrazu gry.
+Najnowsze wymagane --assets na armor-bonus-v3 przechodzi normal/SAN
+(12,06/49,46s); dodatkowy strict-flex dotyczy tylko naprawianego menu.
+
+Zwykły cold N doprowadzono dalej do zwycięstwa w M121/A80220C8:
+trzech przeciwników (typ8/35HP i dwa typ9/70HP), oryginalne strzelanie
+oraz Energy Shot, bez zmiany HP debuggerem. Przy31613 HP22/189,
+zero żywych wrogów i ekran EXP. Normal/SAN exit0 (17,66/69,70s),
+cały JSON i pełne1MiB VRAM zgodne z debuggerem, karty B–N niezmienione.
+Dowód /tmp/pe-m121-ordinary-win-v1-proof.json. Po nagrodach i leczeniu
+przejście do M117 uruchomiło oryginalne dialogi100–104 i odpoczynek:
+HP142→189, PE pozostało5. Przy34988 normal/SAN exit0 (18,77/72,83s),
+identyczny JSON/VRAM i niezmienione karty;
+/tmp/pe-m117-ordinary-rest-v1-proof.json. To postęp kampanii, nie jej koniec.
+
+M118/A8021448 uruchamia oryginalny moduł paired_glow i walkę z typ6/150HP.
+Pierwsza próba zakończyła się zwykłą przegraną (HP0, wróg99HP), a nie
+crashem: normal/SAN exit0 (20,24/77,52s), JSON/VRAM zgodne z debuggerem,
+bez zmian kart i bez diagnostycznego podnoszenia HP.
+/tmp/pe-m118-ordinary-loss-v1-proof.json nie stanowi dowodu wygranej.
+Przy audycie skryptu podpięto istniejący Script_GetFloorNumber jako178
+w oryginalnym dispatcherze. 65536 stanów oryginalnego USA CPU i tyle samo
+programów natywnego dispatchera daje FNV393cb60902443125. Nowe testy z
+poprzednią tablicą abortują na niepodpiętym178; aktualne CPU i wymagane
+--assets przechodzą normal/SAN. Oracle i wyniki:
+/tmp/pe-floor-number178-mips.py, /tmp/pe-floor178-v1-*-results.json.
+
+Oryginalne Tune Up: przejście przez rzeczywiste UI przenosi bonusy SvVest
+na wyposażony SpVest (3/1/1→7/3/1), niszczy dawcę i zużywa nowy Tool;
+stary Tool pozostaje. W Menu_OpenItemList usunięto dwa odczyty tailData[-1]:
+retailowy bajt przed tablicą jest teraz odczytywany przez nazwane pole tailCount.
+Nie zmieniono algorytmu transferu. Usunięto również nieużywany stack_pad,
+którego jedynym celem było odtworzenie rozmiaru stosu PS1.
+Zwykły ASan/UBSan/function starego kodu przechodził. Dopiero dodatkowe
+-fstrict-flex-arrays=3 dla tego modułu wykrywa indeks−1 przy prawdziwym
+kliknięciu: stary kod abort/UBSan553, poprawiony normal/SAN exit0
+(19,11/75,52s), identyczny cały JSON i1MiB VRAM z oryginalnym przebiegiem,
+B–N niezmienione, bu10 puste. /tmp/pe-armor-bonus-transfer-v2-proof.json
+oraz /tmp/pe-armor-bonus-negative-v2-native-result.json.
+Ścisła kontrola granic zastosowana do całego fixture ujawnia osobny,
+nienaprawiony dostęp do deklarowanego u8[1] przy testach efektów
+(tests/original_actor_animation.c:6967); ten wariant --assets nie przechodzi.
+Nie należy utożsamiać go z normalnym zestawem ASan/UBSan/function.
+
 Przygotowany zwykły checkpoint N, z pełnymHP i załadowanym M16.
 ColdM→skrzynia Medicine3→użycie (83→189)→Items/M16/reload16 (pool76→60)
 →telefonM112/Save/Slot1→Down zM/row12 na pustyN/row13. Przy27437

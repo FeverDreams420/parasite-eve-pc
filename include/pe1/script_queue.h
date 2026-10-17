@@ -40,6 +40,7 @@ int Script_SetCombatModeFlag(int **unused);
 int GameTime_ConvertSecondsToHMS(int **args);
 int Script_SetEntityAnim5Args(int **args);
 int Script_SetBattleEntryCoords(int **args);
+int Script_GetFloorNumber(int **args);
 int Script_SignalSceneExit(int **unused);
 int Script_GetEntityEffect(int **args);
 int Script_RunEntityCommand(int **args);

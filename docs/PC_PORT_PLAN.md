@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Aktualna wersja14 PE programów osiągnęła prawdziwe M113/A80211C8 przez
+M116 event3: próg przy33041 world271,831, po12-frame krokach wejście33209,
+po fade-in przy33329 HP181/181, stage400, lock0, menuNULL, battle9.
+Gracz[-75628544,0,-3473408], yaw3072. Zrzut
+/tmp/pe-m113-v1-entry-debug.vram/.png obejrzany: właściwy blok cel NYPD.
+Native program51==LineBurst,30==OrbitFlare i wszystkie19 mapowań PE0..18
+potwierdzone po rzeczywistym załadowaniu M113 (M113_NATIVE1/1/True).
+Wszystkie14 programów są również obecne po coldI→M116; żadnych nowych
+HP diagnostics. To nadal coverage-only z wcześniejszych15 w źródle I.
+
+Bieżący exec66829/PID78296 zatrzymany przy33329 w M113. Kontynuować z tego
+miejsca na /tmp/pe-resident-pe-final-game-debug, nie z dawnego75770/53HP.
+Floor dump /tmp/pe-floor-a80211c8.json (64 trójkąty). CUE skrypty actor0..9
+w /tmp/pe-m113-original-actor*.bin/.txt; żywi aktorzy0,1,2,3,4,5,9.
+Rzeczywista powtórka odI do tego cap uruchomiona normal/SAN:
+exec10686/PID78428 i78429, potwierdzone żywe; /tmp/pe-m113-v1-entry-run.py,
+-verify.py, -case.json i-{normal,san}-args.json/.log. Nie ogłaszać pary PASS,
+dopóki oba procesy nie zakończą się0 i verifier nie sprawdzi całego JSON,
+VRAM także z debuggerem i niezmienionych B–I. Dalej należy zbadać skrypt
+cel i kontynuować fabułę; to nie jest jeszcze dowód przejścia M113.
+
+
 Uzupełniono wszystkie14 resident PM programów wybieranych przez oryginalną
 tabelę komend PE. Nowe94/95/96/97/98/104/106: pełne skrypty,10 tabel kolorów,
 4 tints, oryginalne anchors/pools oraz native descriptors w istniejących

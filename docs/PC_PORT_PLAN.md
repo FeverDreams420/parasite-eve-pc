@@ -3,7 +3,7 @@
 ## Aktualny potwierdzony stan — 18 października 2026
 
 Dodano w istniejącym fixture i CMake przypadek23 / original-game-alligator-entry.
-Pełna zwykła trasa od New Game obejmuje oba szczury/żaby M032, awans,
+Pełna zwykła trasa od New Game obejmuje obie żaby M032, awans,
 Heal1 31→61HP, przełącznik i otwarcie bramy, M033 z rozmową Eve15–24,
 przejście M034 i oryginalny samouczek dwóch celów. Przy261381: M034,
 HP61/67, pojemność14, mode7, licznik przeciwników1 (ogon jest osobnym
@@ -35,9 +35,26 @@ oraz pełniejszej eksploracji. Nie uznawać exit0 z hostowego capu za wygraną:
 oba nieudane procesy mają HP0 i mode3. Logi oraz input:
 /tmp/pe-theater-clock-m033-v1 i /tmp/pe-theater-clock-alligator-v2.
 Obie nieudane sesje zakończono i zachowano ich stany końcowe.
-Dalsza żywa trasa od New Game otworzyła pominięte skrzynie M031
-(Ammo+6, Medicine1, Offense+1) i weszła do opcjonalnego M334; to jeszcze
-obserwacja debuggera, bez zamkniętego porównania normal/SAN tej odnogi.
+Dalsza zwykła trasa od New Game zebrała skrzynie M031 (Ammo+6,
+Medicine1, Offense+1) oraz M334 (CureP, Range+2, Offense+1). Oryginalne
+menu zużyło trzy ulepszenia na M84F: bonusy [2,0,0]→[4,2,0]. Po zwycięstwie
+nad obiema żabami M032 i Heal1 gracz wybrał Use the phone przy panelu,
+a następnie oryginalny zapis B. Przy263604: M032, HP45/67, pojemność14,
+Medicine1 i CureP zachowane, brak menu/lock. Pełny replay od New Game
+normal/SAN0 w63,70/176,41s: cały JSON i1MiBVRAM identyczne z żywą sesją,
+oba zapisy A/B także identyczne bajtowo. B ma8192B, SHA256
+0258fe93c6f9abaecc0bc1c854a532cd6c7dbba2d4502b11d003d97f7f2b611b.
+Dowód /tmp/pe-theater-gate-save-v1-proof.json; osobne prywatne karty,
+bez ingerencji w root bu00/bu10 ani zapisu RAM/stanu rozgrywki.
+
+Zimny Continue B również normal/SAN0 w3,86/12,32s: pełny JSON/VRAM
+zgodne, M032 HP45/67, te same przedmioty, brak menu/lock, wszystkie trzy
+zegary uruchomione, payload B niezmieniony. Wybrano drugi plik krótkim
+fizycznym Down i potwierdzono zakończenie odczytu Cross. Wcześniejsze
+próby v1..v5 zatrzymały się w menu i nie są dowodem powrotu do gry;
+v2 odrzucono za nieuporządkowane --pad-at. Poprawny dowód:
+/tmp/pe-theater-gate-continue-v6-proof.json. B nie został jeszcze sprawdzony
+w oryginalnym USA PS1. Nie dodano kodu produkcyjnego ani nowych plików repo.
 Pełna kampania i cel portu pozostają nieukończone.
 
 ### Poprzedni etap: kanały i zwycięstwo M032

@@ -29,7 +29,9 @@ and matching normal/sanitized runs. This establishes that scene and pose;
 complete visual fidelity and hi-res coverage remain unverified. A fresh ordinary
 New Game route with the original boot clocks running reaches both theater keys,
 including another corridor victory, level-up and a genuine phone Save. Normal
-and sanitized runs agree with the live session in full state and VRAM. The
+and sanitized runs agree with the live session in full state and VRAM. A further
+ordinary replay also finishes the second Melissa encounter and returns to field
+control after dialogue 133, with the same full-state and VRAM agreement. The
 original USA game also loads that Save with matching HP, position, all inventory
 slots and equipment records. Later legacy routes still need to be recorded and
 verified again; their stopped-clock assumptions are not restored.

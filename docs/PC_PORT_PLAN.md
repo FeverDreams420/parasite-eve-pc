@@ -50,7 +50,23 @@ normal/SAN:6/6; trasa52,70/137,93s (dokładne czasy w -test-results.json).
 Obaj kandydaci mają po173 świeże obiekty/profil, zweryfikowane archiwa,
 binarki i zależności; v1 źródło fixture zachowane oddzielnie i zgodne z hashem
 manifestu. Root build0. /tmp/pe-theater-replay-v2-{proof,build-proof}.json.
-To nie dowód ukończenia kampanii ani drugiej Melissy na tej nowej trasie.
+Same przypadki19/20 nie dowodzą ukończenia drugiej walki ani kampanii.
+
+Następnie na tym samym niezmiennym kandydacie v2 kontynuowano od obu kluczy:
+oryginalne drzwi RehearsalKey, dialog120–124, film, M023/dialog125–126,
+walka z drugą Melissą, Medicine1 przez menu12→53HP, dalsze strzały,
+skryptowe zakończenie walki i dialog127–133. Przy215770 Aya15/53HP,
+M319/a80614c8, pozycja[0,0,137953280], yaw-451, brak przeciwników/menu,
+move_lock0, mode12. Żywa sesja zakończona exit0. Pełny New Game→ten punkt
+normal/SAN0 w51,51/139,40s; pełny JSON oraz1MiBVRAM są identyczne
+z debuggerem i między profilami. VRAM SHA256
+b31c8080e29d5ca0c167dd46775ba082c208f97d73aa339b7361ba1b8c1401b0;
+payloadA nadal identyczny. /tmp/pe-theater-clock-boss-v1-proof.json,
+-verify.py, -results.json, -input.jsonl i argumenty obu profili.
+Wszystko przez fizyczne przyciski, bez zapisów RAM rozgrywki. Ta trasa
+omija opcjonalną walkę z papugą, więc nie podmieniono nią testu21
+ani nie usunięto starego pokrycia;21/22 nadal wymagają pełnego nowego
+nagrania z zachowaniem zakresu. Kampania nadal nieukończona.
 
 ### Poprzedni audyt inicjalizacji zegarów i bisekcja
 

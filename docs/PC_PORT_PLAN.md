@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Podpięto kolejne istniejące funkcje98/99/212 bez zmiany ich logiki.
+98 zaznacza pierwszy węzeł o pasującym16-bitowym seq w trzech listach;
+99 odwiesza wszystkie pasujące węzły, zachowując pełne next_value/cursor,
+a212 łączy aktora z graczem albo pierwszym aktywnym pasującym type/sub.
+Nowe części istniejących testów original_script_event_entries i
+original_attachment_opcode wykonują7680 stanów kolejki oraz46080 stanów
+rodziców. Niezależny USA CPU wykonuje pełne funkcje bez hookowania callees:
+FNV kolejki7861a5199614bd55, parent42ec853f3260c391;
+/tmp/pe-node-parent-mips.py i log. Testy obejmują duplikaty ID, wszystkie
+trzy listy, puste/pending kursory, wysokie ID, brak/martwego rodzica,
+self-parent, pełne szerokości wskaźników i guardy całych obiektów.
+Każdy stan przechodzi także rzeczywisty dispatcher. Dodatkowy program99
+wznawia i wykonuje rzeczywisty skrypt spod natywnego adresu next_value.
+
+Końcowy node-parent-v2 przywraca również bieżącego aktora, węzeł i kursor
+po nowych testach.
+CPU normal/SAN exit0 (0,83/1,97s), wymagane --assets exit0 (11,20/48,14s).
+Osobne negatywne executable z usuniętym98,99 albo212 dają oczekiwany
+exit123 każdy w normal i SAN; bez zmiany ciał funkcji i bez awarii sanitizera.
+/tmp/pe-node-parent-negative-v2-results.json. Pełny build root przeszedł.
+Audyt rejestru /tmp/pe-node-parent-registry-audit.json:212 poprawnych
+mapowań adresowych,21 oryginalnych NULL oraz osiem nadal niepodpiętych
+21,115,175,177,179,182,204,230. To nie dowód przejścia wszystkich scen.
+
+Regresja końcowego node-parent-v2: zwykły coldN→wygranaM121→M117/rest
+→TuneUp/Offense/reload przechodzi normal/SAN (19,52/74,70s), cały JSON
+zgodny z poprzednim kandydatem,1MiB VRAM zgodne także ze świeżym debuggerem.
+B–N niezmienione i bu10 puste we wszystkich trzech prywatnych katalogach.
+Świeży LLDB /tmp/pe-nypd-current-v2-lldb.log potwierdza przy34900 M117,
+HP189, PE65, clip16, pool54 i Medicine1 w8/11. VRAM SHA256
+4ff4fd3c528f610fd375ed6cbfa736453f296ff8bcaf258c4d2e60def88b1770.
+Debug stoi na /tmp/pe-node-parent-v2-game; args i trace są pod
+/tmp/pe-nypd-current-v2-args.json oraz /tmp/pe-nypd-current-v2-input.jsonl.
+Nie nadpisywać tego executable ani jego obiektów podczas pracy debuggera.
+Poprzedni armor-bonus-v3 pozostaje zatrzymaną gałęzią referencyjną.
+
+/tmp/pe-node-parent-v2-verify.py i proof.json wiążą CPU/oracle, sześć
+kontroli negatywnych, --assets, audyt rejestru, SHA źródeł i executable
+oraz /tmp/pe-node-parent-native-v2-proof.json. Adresy USA handlerów:
+98=800183E8,99=80018460,212=80019F04. Nie jest to jeszcze dowód ich
+naturalnego użycia we wszystkich scenach ani zwycięstwa w M118/M122.
+
 Audyt rejestru interpretera USA ujawnił16 niepodpiętych, niezerowych wpisów.
 Podpięto istniejące oryginalne funkcje71/76/218/235/236: test dolnych3 bitów
 stanu geometrii, rzeczywisty retailowy no-op, Math_IntSqrt przez oryginalny

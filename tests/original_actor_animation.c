@@ -4289,6 +4289,71 @@ static int original_script_event_entries(void)
     }
     g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     if(hash!=UINT64_C(0xf942d785949a4441)){fprintf(stderr,"Script event setup hash %016llx\n",(unsigned long long)hash);return 0;}
+    /* Pause the first matching node, or resume every match in all three
+     * buckets. Addresses are compared at native width, then normalized only
+     * for the independent USA CPU stream hash. */
+    {
+        const u32 ids[]={0,1,2,7,0x7fff,0x8000,0xffff,0x10000,0xffffffff,0x1234};
+        const u16 flags[]={0,0x20,0x40,0x60,0xffff,0x8000,0x1234,0xa5a5};
+        const unsigned masks[]={0,0x155,0x1ff,0xaa};
+        int (*handlers[])(int **)={Entity_MarkNodeAnimPendingById,Entity_AdvanceNodeById};
+        uint64_t queue_hash=UINT64_C(14695981039346656037);unsigned cases=0;
+        FieldActor queued={0};ScriptNode entries[9];u32 initial[9][4]={{0}},resumed[9][4]={{0}};
+        g_CurrentEntity=&queued;
+        for(unsigned op=0;op<2;++op)for(unsigned layout=0;layout<4;++layout)
+        for(unsigned family=0;family<3;++family)for(unsigned flag=0;flag<8;++flag)
+        for(unsigned pending=0;pending<4;++pending)for(unsigned q=0;q<10;++q){
+            if(g_ScriptQueueOpcodeHandlers[98+op]!=handlers[op])return 0;
+            for(unsigned bucket=0;bucket<3;++bucket)
+                queued.script_node_lists[bucket]=layout==0 || (layout==1 && bucket!=0) || (layout==3 && bucket==0)?NULL:entries+bucket*3;
+            for(unsigned i=0;i<9;++i){
+                memset(entries+i,0xa5,sizeof(*entries));entries[i].current.script=initial[i];
+                entries[i].next_value=masks[pending]&(1u<<i)?(intptr_t)resumed[i]:0;
+                entries[i].flags=flags[(flag+i)%8];entries[i].seq=family==0?i%4:family==1?(u16)ids[i%10]:7;
+                entries[i].trigger_value=0x12345678+i;entries[i].active=(flag+i)%3;
+                entries[i].target14=(s32)(0xa5a50000u+i);entries[i].target18.coordinate=0x5a5a0000+i;
+                entries[i].target1c=(s32)(0x98760000u+i);entries[i].target20=0x76540000+i;
+                entries[i].next=i%3!=2?entries+i+1:NULL;entries[i].prev=i%3?entries+i-1:NULL;
+            }
+            FieldActor actor_before=queued;ScriptNode before[9],after[9];memcpy(before,entries,sizeof(entries));
+            int query=(s32)ids[q],*args[]={&query};u32 result=handlers[op](args);
+            for(unsigned i=0;i<9;++i){
+                ScriptNode *entry=entries+i;unsigned current;
+                if(entry->current.script==initial[i])current=1;
+                else if(entry->current.script==resumed[i])current=2;
+                else return 0;
+                if(entry->next_value && entry->next_value!=(intptr_t)resumed[i])return 0;
+                ScriptNode expected=before[i];expected.current=entry->current;expected.flags=entry->flags;expected.active=entry->active;
+                if(memcmp(entry,&expected,sizeof(expected)))return 0;
+                const u32 words[]={current,entry->next_value?2u:0u,entry->flags|((u32)entry->seq<<16),
+                    (u32)entry->trigger_value,(u32)entry->active,(u32)entry->target14,(u32)entry->target18.coordinate,
+                    (u32)entry->target1c,(u32)entry->target20,entry->next?(unsigned)(entry->next-entries)+1:0,
+                    entry->prev?(unsigned)(entry->prev-entries)+1:0};
+                if(i==0)for(unsigned b=0;b<4;++b)queue_hash=(queue_hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+                for(unsigned k=0;k<11;++k)for(unsigned b=0;b<4;++b)
+                    queue_hash=(queue_hash^((words[k]>>(b*8))&255))*UINT64_C(1099511628211);
+            }
+            memcpy(after,entries,sizeof(entries));memcpy(entries,before,sizeof(entries));
+            u32 program[]={(98+op)|(1u<<13),0,ids[q],32,0};
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+            if(result!=1 || query!=(s32)ids[q] || program[2]!=ids[q] || memcmp(&queued,&actor_before,sizeof(queued)) ||
+               memcmp(entries,after,sizeof(entries)) || node.current.script!=program+5 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+            ++cases;
+        }
+        if(cases!=7680 || queue_hash!=UINT64_C(0x7861a5199614bd55)){
+            fprintf(stderr,"Node control CPU mismatch: %u %016llx\n",cases,(unsigned long long)queue_hash);return 0;
+        }
+        u32 suspended[]={32,0},resume[]={10|(2u<<13),0,0x98765432,0x12345678,32,0};
+        ScriptNode waiting={.current.script=suspended,.next_value=(intptr_t)resume,.flags=0xe0,.seq=7};
+        memset(queued.script_node_lists,0,sizeof(queued.script_node_lists));queued.script_node_lists[2]=&waiting;
+        u32 wake[]={99|(1u<<13),0,7,32,0};ScriptNode wake_node={.current.script=wake,.active=1,.flags=0x80};
+        g_ScriptNodePool=&wake_node;Script_RunQueue();
+        if(waiting.current.script!=resume || waiting.next_value!=(intptr_t)resume || waiting.flags!=0x80 || waiting.active!=1)return 0;
+        g_ScriptNodePool=&waiting;Script_RunQueue();
+        if(resume[2]!=0x12345678 || waiting.current.script!=resume+6 || waiting.active || waiting.flags!=0x90 || g_ScriptNodePool)return 0;
+        puts("Original opcodes 98/99: 7680 USA CPU states, three buckets, duplicate IDs, null/resume cursors, full native pointers and real dispatcher passed");
+    }
+    g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     puts("Original event setup opcodes 112/183/176: 216 unhooked USA CPU states, six records, narrowed operands, all parameters and full dispatcher passed");return 1;
 }
 
@@ -5261,6 +5326,49 @@ static int original_attachment_opcode(void)
     }
     g_CurrentEntity=saved_current;g_PlayerEntity=saved_player;g_FieldActorListHead=saved_head;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
     if(hash!=UINT64_C(0x4b22e715ef4e6670)){fprintf(stderr,"Original attachment opcode differs: %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    {
+        const u32 keys[]={0,1,2,9,255,256,0xffffffff,0x10001,0x7fffffff,0x80000000};
+        const u32 subs[]={0,1,7,9,255,256,0xffffffff,0x10007};
+        const u32 flags[]={0,0x10,0x100000,0x600000,0xffffffff,0x80000000,0x12345678,0xa5a55a5a};
+        const u8 types[]={9,1,1,255,2},parts[]={9,7,7,255,0};
+        uint64_t parent_hash=UINT64_C(14695981039346656037);unsigned count=0;
+        if(g_ScriptQueueOpcodeHandlers[212]!=Script_SetEntityParentLink)return 0;
+        for(unsigned k=0;k<10;++k)for(unsigned s=0;s<8;++s)for(unsigned f=0;f<8;++f)
+        for(unsigned layout=0;layout<4;++layout)for(unsigned player=0;player<3;++player)for(unsigned parent=0;parent<6;++parent){
+            FieldActor actors[5],before[5],after[5];memset(actors,0xa5,sizeof(actors));
+            for(unsigned i=0;i<5;++i){
+                actors[i].type_id=types[i];actors[i].sub_id=parts[i];actors[i].next=i<4?actors+i+1:NULL;
+                actors[i].flags=flags[(f+i)%8];actors[i].parent=parent?actors+(parent+i-1)%5:NULL;
+            }
+            memcpy(before,actors,sizeof(actors));g_CurrentEntity=actors;g_FieldActorListHead=layout?actors+layout-1:NULL;
+            g_PlayerEntity=player?actors+player-1:NULL;
+            int key=(s32)keys[k],sub=(s32)subs[s],*args[]={&key,&sub};u32 result=Script_SetEntityParentLink(args);
+            for(unsigned b=0;b<4;++b)parent_hash=(parent_hash^((result>>(b*8))&255))*UINT64_C(1099511628211);
+            for(unsigned i=0;i<5;++i){
+                unsigned target=0;
+                if(actors[i].parent){
+                    for(unsigned j=0;j<5;++j)if(actors[i].parent==actors+j)target=j+1;
+                    if(!target)return 0;
+                }
+                const u32 words[]={target,actors[i].flags};
+                for(unsigned word=0;word<2;++word)for(unsigned b=0;b<4;++b)
+                    parent_hash=(parent_hash^((words[word]>>(b*8))&255))*UINT64_C(1099511628211);
+                FieldActor expected=before[i];expected.parent=actors[i].parent;expected.flags=actors[i].flags;
+                if(memcmp(actors+i,&expected,sizeof(expected)))return 0;
+            }
+            memcpy(after,actors,sizeof(actors));memcpy(actors,before,sizeof(actors));
+            u32 program[]={212|(2u<<13),0,keys[k],subs[s],32,0};
+            ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+            if(result!=1 || key!=(s32)keys[k] || sub!=(s32)subs[s] || program[2]!=keys[k] || program[3]!=subs[s] ||
+               memcmp(actors,after,sizeof(actors)) || node.current.script!=program+6 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+            ++count;
+        }
+        g_CurrentEntity=saved_current;g_PlayerEntity=saved_player;g_FieldActorListHead=saved_head;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;
+        if(count!=46080 || parent_hash!=UINT64_C(0x42ec853f3260c391)){
+            fprintf(stderr,"Parent link CPU mismatch: %u %016llx\n",count,(unsigned long long)parent_hash);return 0;
+        }
+        puts("Original opcode212: 46080 USA CPU states, player/self/typed/dead/missing parents, full actor guards and real dispatcher passed");
+    }
     puts("Original attachment opcode197: 240 unhooked USA CPU selection/animation states, whole actor guards and real dispatcher programs passed");return 1;
 }
 

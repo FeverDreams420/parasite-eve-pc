@@ -854,13 +854,13 @@ między v11 i v12 (v12 dodaje asercje flag); pełny build i diff --check PASS.
 Audyt /tmp/pe-m107-module-audit.json. To testy stanu i wykonania efektu;
 nie jest to deklaracja pełnego pixel perfect ani ukończenia sceny w kampanii.
 
-Pełny coldContinueH→M107/cap176941 działa w tle normalnie i pod sanitizerami,
-exec53648, PID45631/45632.2859 odcinków (2830+29), te same15 wcześniejszych
+Pełny coldContinueH→M107/cap176941 zakończony PASS normalnie i pod sanitizerami,
+exec53648 terminal0, oba procesy terminal0.2859 odcinków (2830+29), te same15 wcześniejszych
 zdarzeń HP; nie dodano nowych zmian stanu. Przypadek
 /tmp/pe-m107-v11-entry-case.json; logi/args/prywatne katalogi
-/tmp/pe-m107-v11-entry-{normal,san}; sprawdzić po zakończeniu przez
-/tmp/pe-m107-v11-entry-verify.py i dopiero wtedy ogłaszać wynik wejścia.
-Nowy debugger exec53791/PID46073 odtwarza ten sam przypadek z natywnym
+/tmp/pe-m107-v11-entry-{normal,san}; potwierdzony przez
+/tmp/pe-m107-v11-entry-verify.py i entry-proof.json opisane poniżej.
+Wcześniejszy debugger exec53791/PID46073 odtwarzał ten sam przypadek z natywnym
 harmonogramem HP, /tmp/pe-m107-v11-game-debug, prywatny katalog
 /tmp/pe-m107-v11-live, log /tmp/pe-m107-v11-live-lldb.log. Breakpoint1
 w Boot_PollHost/init.c:89 zatrzyma go przy176941. Kolejny input zapisywać do
@@ -868,11 +868,20 @@ w Boot_PollHost/init.c:89 zatrzyma go przy176941. Kolejny input zapisywać do
 Zamrożone v11 -game/-game-debug/-game-sanitized pozostawić bez nadpisywania.
 Dalej: zakończyć bieżące replaye, sprawdzić realną M107 i kontynuować NYPD.
 
+Potwierdzenie pełnego M107: normal i SAN zakończyły się0; verifier
+/tmp/pe-m107-v11-entry-verify.py PASS, proof
+/tmp/pe-m107-v11-entry-proof.json. Cały JSON i1MiB VRAM są identyczne,
+VRAM SHA25663f1457195fc2e4c2bac0226d0c745cd0a690c6aa63205e7e6ff16680a32f811,
+również zgodny ze zrzutem debuggera. Wszystkie prywatne karty B–H pozostały
+bajtowo niezmienione; bu10 puste. M107/A80203C8, cap176941, story392,
+HP181/181, brak menu i lock0, te same15 wcześniejszych zdarzeń HP.
+Jest to nadal coverage-only; zwykła walka M086 pozostaje otwarta.
+
 Aktualizacja M111/M118: normalny replay M107 zakończył się0 przy176941,
 sceneA80203C8, story392, HP181/181, lock0 i bez menu. Debugger potwierdził
 35==g_RoomPairedGlowHandlers i75==g_RoomActorClassTable[2]; zrzut
 /tmp/pe-m107-v11-entry-debug.vram/.png pokazuje korytarz. Sanitizer tego
-pełnego replayu nadal trwa; nie ogłaszać jeszcze porównania całego stanu.
+pełnego replayu następnie zakończył się PASS; porównanie opisane powyżej.
 
 Przejście fizycznym inputem przez korytarz do zachodnich drzwi, x−550,z−900,
 ujawniło następny rzeczywisty błąd: M111/slot35/801900e8. Ostatni debugger

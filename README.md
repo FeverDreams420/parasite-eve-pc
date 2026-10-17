@@ -18,7 +18,7 @@ plus genuine memory-card Save/Continue through checkpoint H in M087. The
 mandatory M086 encounter still needs an ordinary successful replay. Separate,
 explicitly diagnostic runs with guarded HP changes reach Day 3 NYPD room M100
 via Soho and the Museum story. Normal and sanitized replays agree on the full
-state and VRAM through M100. The M107 integration is being verified. These are
+state and VRAM through M107. The M111 integration is being verified. These are
 coverage fixtures, not a completed-campaign result.
 See [the port plan](docs/PC_PORT_PLAN.md) for current evidence and limitations.
 Artwork, video and audio come from user-supplied CUE/BIN images. Full gameplay,

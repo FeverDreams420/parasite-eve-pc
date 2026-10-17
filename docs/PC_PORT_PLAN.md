@@ -2,6 +2,19 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Koniec drugiej próby M115: po heal32→92, dalszym uniku i ładowaniu ATB
+przy38717 HP55; Escape nieudany przy38813, następnie śmierć38841.
+Nie traktować exec33439/PID73546 jako żywego zwycięskiego przebiegu.
+Oryginalne Escape jest dozwolone: g_BattleEnemyEscapeFlag0, statusFlags2
+wszystkich sześciu core0x522a91 nie ma blokującego0x40000.
+Nowa powtórka coldI uruchomiona w exec45387/PID73934, prywatny cwd
+/tmp/pe-m115-escape-live. Cel cap37329 to pierwszy pełny ATB przy127HP,
+przed niepotrzebnym atakiem w poprzedniej próbie. Zapisany input jest
+identyczny do tego miejsca; kolejkuje się pojedyncza próba Escape przez
+prawdziwe menu po asercjach cap/HP/ATB. Args/input/log mają ten sam prefiks.
+Przy kontynuacji najpierw sprawdzić aktualny stan i wynik w tym logu.
+
+
 Dalsze testowanie M115: pierwsza próba z błędnym idle600 zakończyła się
 śmiercią przy40097. Powtórka do36861 z pełnym181HP i krótkimi12-frame
 krokami intro7→0 dochodzi37005 bez utratyHP. Native licznik6 obejmuje

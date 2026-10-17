@@ -916,6 +916,62 @@ Zamrożonych v11 ani m111-v1 executable nie nadpisywać. Kolejny cel:
 genuine save przez UI na prywatnej karcie diagnostycznego postaci, żeby
 skrócić długie powtórki; takiego nowego checkpointu jeszcze nie utworzono.
 
+Live M111 i dalsza diagnostyka: zwykły cold replay exec16749/normal50351
+zakończył się0 przy177831, M111/A80210C8, story392, HP181/181, dialog54
+Cathy i lock1 (prawidłowy cap w trakcie rozmowy), bez menu. Cały VRAM
+zgodny z debuggerem: SHA256
+e6d80b9e9ac64b01f10ab9052e09d6dd5c65a929c93abf12c6b10cb8f99bc146.
+SAN50352 nadal uruchomiony; po terminal0 sprawdzić
+/tmp/pe-m111-v1-entry-verify.py (wymaga dokładnie dialog54/lock1, pełnej
+zgodności JSON/VRAM i niezmienionych kart).
+
+Debugger exec99677/PID50237 przeszedł fizycznym inputem:
+- M111 dialog54 zamknięty przy178015; rozmowa Cathy55–58 do179359,
+  stage392, flags44=2108. M111 jest szatnią, nie schodami.
+- Powrót M107 i losowa walka: typ5 HP98/def20 oraz6 HP35/def22.
+  Zwykłymi strzałami pokonano obu do181943, bez nowego fixture HP.
+  Pozostało31HP; przez UI odebrano Medicine2 iOffense1 zamiast dwóch
+  Junk (sloty10/11). Medicine2 rzeczywiście zużyte:31→121HP, slot10=0
+  przy183627. Victory/reward UI zamknięty przy183271.
+- M108/A8020448 wejście184318, dialog24; dalsze rozmowy do187990,
+  otrzymany przedmiot264 do pustego slot10, story392→400, flags44=2108.
+- Powrót M107→M100 przy189491, HP121, bez menu/locka.
+- Próba wejścia doM099 uruchomiła drugie losowe starcie wM100.
+  Typ5 HP35/def22, typ6 HP70/def15. Po dwóch turach:5 pokonany,
+  6 miał12HP, Aya19HP. Leczenie próbowano zbyt późno: cb.cast zatrzymał
+  się na asercji „Open battle menu only when ATB is full”; kolejny
+  zakolejkowany idle180 zakończył się śmiercią przy191187 (battle3, HP0).
+  To przegrana próba sterowania, bez aborta/crasha; nie jest dowodem
+  ukończenia drogi do telefonu. Nie kontynuować tego inferiora.
+
+Nowa próba exec33329/PID67538, zamrożony
+/tmp/pe-m099-v1-game-debug, prywatne karty /tmp/pe-m099-v1-live,
+log /tmp/pe-m099-v1-live-lldb.log, args /tmp/pe-m099-v1-live-args.json.
+Odtwarza dokładnie udany prefix doM100/cap189491:3196 odcinków
+(2883+313) w /tmp/pe-m099-v1-prebattle-case.json. Żadnych nowych zmian HP;
+te same15 wcześniejszych. Breakpoint init.c:89; PE_DEBUG_INPUT_TRACE
+ustawiony PRZED run na /tmp/pe-m099-v1-live-input.jsonl. Po zatrzymaniu
+najpierw rzeczywiste leczenie z menu przed następnym starciem i szybsze
+wyeliminowanie typu6. Nie kolejkować idle po asercji pomocnika.
+
+Dalsza droga wynika z całych skryptów disc, jeszcze niewykonana:
+M099 actor2 ustawia bit4096 w bank44; jeśli story400 i Cathy/bit2048,
+ustawia również bit67108864. To trzecia wymagana rozmowa obokM108 iCathy;
+nie trzeba wracać doCathy, żeby ustawić ten ostatni bit. Drzwi wybranych
+pokojów wówczas prowadzą doM115/A80212C8. Telefon jest wM112, actor3:
+worldx[-1497,-1422],z[792,903], yaw(2560,3584), Cross →event100;
+actor0 wykonuje prawdziwy opcode231 przybyte1280. M115 drzwi doM112:
+x[28,151],z[-4194,-4083]. Preflight /tmp/pe-nypd-phone-preflight.json;
+przy planowaniu posługiwać się tymi skryptami i aktualnym stanem gry,
+nie wcześniejszym zgadywaniem funkcji pomieszczeń.
+M122 ma oprócz paired_glow także cały istniejący line_burst.c (controller
+80190444, sound57B, descriptor slot136/80190FEC), jeszcze nieprzenośny:
+stare widoki owner/pool, callbacki2arg,16-bajtowy tag i OT*4. Cały ten
+moduł wymaga naprawy na miejscu i testów przed przyszłym podpięciem.
+Nowego zapisu przez telefon jeszcze nie ma. M086 zwykła wygrana nadal
+nieukończona; powyższa dalsza rozgrywka to coverage-only.
+
+
 Nadal coverage-only oraz osobno nieukończona zwykła walka M086 odH.
 
 Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym

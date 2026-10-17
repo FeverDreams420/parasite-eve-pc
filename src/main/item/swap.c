@@ -200,7 +200,11 @@ void Inv_TransferItemAlt(void) {
     g_InvSelectionBitWords = 2;
     for (; i < g_InvActiveListCount; i++) {
         int id = g_InvActiveListItems[i];
-        if (Inv_LookupItemRecord(id)->kind >= 16 && Inv_LookupItemRecord(id)->kind < 19) {
+        ItemDataRecord *item = Inv_LookupItemRecord(id);
+        /* Taking a reward leaves an empty entry in the pending list. */
+        if (!item)
+            continue;
+        if (item->kind >= 16 && item->kind < 19) {
             if (!Inv_CanAddActiveListItemToAya(i))
                 g_InvActiveListItems[i] = 0;
         } else if (id < 512) {

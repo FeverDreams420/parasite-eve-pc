@@ -3690,6 +3690,8 @@ static int original_inventory_storage_swaps(void)
     s16 *saved_items=g_InvItemPtr,*saved_active=g_InvActiveItemList,*saved_override=g_InvActiveListOverride;
     int saved_limit=g_InvSlotLimit,saved_active_count=g_InvActiveListSlotCount,saved_override_limit=g_InvOverrideSlotLimit;
     int saved_transfer=g_InvTransferItemCount,saved_bonus=g_InvBonusSlotCount,saved_mode=g_MenuEquipMode;
+    int saved_pending_count=g_InvActiveListCount;short saved_pending[10];
+    memcpy(saved_pending,g_InvActiveListItems,sizeof(saved_pending));
     int saved_battle=g_MenuBattleEquipMode,saved_source=g_MenuEquipSwapSource,saved_return=g_MenuEquipSwapSkipRestore;
     u32 *saved_bits=g_InvSelectionBits;int saved_words=g_InvSelectionBitWords;
     u32 saved_aya_bits[2],saved_storage_bits[4];memcpy(saved_aya_bits,g_InvSelectionBitStorage,sizeof(saved_aya_bits));memcpy(saved_storage_bits,g_InvStorageSelectionBits,sizeof(saved_storage_bits));
@@ -3721,6 +3723,24 @@ static int original_inventory_storage_swaps(void)
            g_InvActiveListOverride!=storage || g_InvTransferItemCount!=6 || memcmp(g_InvTransferItemList,mapping,sizeof(mapping)))return 0;
         ++cases;
     }
+    /* Closing a partly collected reward list must tolerate its empty entries. */
+    for(unsigned full=0;full<2;++full){
+        memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
+        g_AyaSaveState.inventory_slot_count=6;g_InvBonusSlotCount=0;
+        g_InvActiveListOverride=NULL;g_InvOverrideSlotLimit=0;
+        const s16 initial[]={256,257,258,259,260,261};
+        memcpy(g_AyaInventoryItems,initial,sizeof(initial));
+        if(!full)memset(g_AyaInventoryItems+2,0,4*sizeof(s16));
+        for(unsigned j=0;j<6;++j){g_InventoryRuntime.equipment[j].kind=1;g_InventoryRuntime.equipment[j].iconId=1;}
+        const short pending[]={0,258,0,259};
+        memcpy(g_InvActiveListItems,pending,sizeof(pending));g_InvActiveListCount=4;
+        Inv_TransferItemAlt();
+        const s16 collected[]={256,257,258,259,0,0};
+        const short empty[4]={0};
+        if(memcmp(g_AyaInventoryItems,full?initial:collected,sizeof(initial)) ||
+           memcmp(g_InvActiveListItems,full?pending:empty,sizeof(pending)))return 0;
+    }
+    g_InvActiveListCount=saved_pending_count;memcpy(g_InvActiveListItems,saved_pending,sizeof(saved_pending));
     g_PlayerInventoryState=saved_player;g_InventoryItemWorkspace=saved_workspace;g_InvItemPtr=saved_items;g_InvActiveItemList=saved_active;g_InvActiveListOverride=saved_override;
     g_InvSlotLimit=saved_limit;g_InvActiveListSlotCount=saved_active_count;g_InvOverrideSlotLimit=saved_override_limit;g_InvTransferItemCount=saved_transfer;
     g_InvBonusSlotCount=saved_bonus;g_MenuEquipMode=saved_mode;g_MenuBattleEquipMode=saved_battle;g_MenuEquipSwapSource=saved_source;g_MenuEquipSwapSkipRestore=saved_return;
@@ -3728,6 +3748,7 @@ static int original_inventory_storage_swaps(void)
     if(cases!=5184 || hash!=UINT64_C(0x758e388bfa3e3cb1)){
         fprintf(stderr,"Storage swap CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
     puts("Original inventory/storage swap: 5184 unhooked USA CPU states, empty targets in both directions, occupied/special slots, equipped/locked restrictions, filtered indices, selection masks and unchanged equipment records passed");
+    puts("Original pending reward transfer: empty entries after collection, available slots and full inventory passed");
     return 1;
 }
 

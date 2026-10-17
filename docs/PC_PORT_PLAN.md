@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Nowy rzeczywisty crash po losowej walce M100 od genuine I: po odebraniu
+Medicine1 i wybraniu Obtain All lista ma pusty wpis0. Inv_TransferItemAlt
+w istniejącym src/main/item/swap.c czytał jego NULL->kind (address6).
+Debugger71693 zachowany zatrzymany w tym crashu; dowód
+/tmp/pe-pending-reward-crash.txt, pełny input /tmp/pe-nypd-I-live-input.jsonl.
+Naprawa w miejscu: jeden lookup i pomijanie pustego/nieznanego rekordu,
+bez przenoszenia funkcji ani nowej implementacji inventory.
+Istniejący test storage/swaps rozszerzony o puste miejsca po odebranych
+nagrodach i pełną/wolną torbę; CPU PASS normal oraz ASan/UBSan/function.
+Pełny build i diff --check PASS.
+
+Rzeczywisty replay cold Continue I→losowa walka→nagrody przy28100 PASS
+normal/SAN, oba exit0. Pełny JSON i1MiB VRAM identyczne,
+SHA2568746e5530db7eacddd7e61d9c3aeff2da86bb17869e8d268dba227ed3f69722c.
+M100/A8020048, HP87/181, zero żywych wrogów, menu2/selection12/row2.
+Walka wygrana zwykłym inputem:2volleys typ6 i po1volley na obu typ5;
+bez nowych HP diagnostics. B–I identyczne, bu10 puste. Nadal coverage-only
+z wcześniejszych15 HP diagnostics źródłowego I. Verifier i dowód:
+/tmp/pe-pending-reward-verify.py i /tmp/pe-pending-reward-proof.json;
+logi /tmp/pe-pending-reward-{normal,san}.log. Obraz normal/frame.png obejrzany.
+Nowy frozen debug /tmp/pe-pending-reward-game-debug odtwarza ten sam input
+w prywatnym /tmp/pe-pending-reward-live, exec79174; po cap można zamknąć
+End, użyć Medicine1 z16 oraz field Heal2 i kontynuować doM116.
+Nie kontynuować starego inferiora71693 zatrzymanego w crashu.
+
+
+Świeża regresja zgłoszenia Melissa (opcode206 i82): oba są związane z
+oryginalnymi funkcjami, test interpretera PASS (206: filtrowanie aktorów,
+timery i realny dispatcher; 81/82/83:300 stanów USA CPU i dispatcher).
+Zamrożony kandydat sprzed poprawki łupów /tmp/pe-melissa-regression-20261017
+przeszedł --native-battle-entry (input13, hash a2276ccc2247ed21) oraz
+--native-melissa (input14, hash c7ae3598591ad7c3), oba exit0, realne CUE,
+headless i rzeczywisty input. Oryginalne limity CTest180/240s były za krótkie
+na ten przebieg i zakończyły się timeout; powtórki bez tych limitów przeszły.
+Logi battle-entry.log i melissa.log w tym katalogu. Nie jest to nowa
+implementacja walki ani dowód kompletnej kampanii.
+
+
 M075: zwykły input uruchamia walkę (typ5/75HP, defense18; pomocniczy
 aktor4 pojawia się po Script_SpawnEntityAt niedźwiedzia).
 M16 pokonuje przeciwników, wynik HP8/107. Ekran nagród: Ammo+15, Obtain All,
@@ -1119,8 +1157,10 @@ oparty na tym rzeczywistym stanie, a nie wcześniejszym przypuszczeniu,
 że gracz jest już obecny. Pełny VRAM normal==debugger,
 SHA256e76ed4f9aa51ba166bcdac1b4efd05a214db10792dd785d0c10a03feacc9ae1e,
 zrzut /tmp/pe-m115-v1-entry-debug.vram/.png obejrzany; program51==native
-LineBurst potwierdzony w debuggerze. SAN70128 nadal trwa; nie ogłaszać
-jeszcze porównania całego JSON normal/SAN.
+LineBurst potwierdzony w debuggerze. SAN70128 zakończył się0. Verifier /tmp/pe-m115-v1-entry-verify.py PASS:
+pełny JSON i VRAM normal/SAN identyczne, wszystkie B–H niezmienione,
+3547 segmentów inputu i dokładnie15 wcześniejszych HP diagnostics.
+Dowód /tmp/pe-m115-v1-entry-proof.json; nadal coverage-only.
 
 Po dialog72 i dalszej scence zwykły input wrócił z autorskiego skryptu
 doM100 przy196277, HP181, bez menu/locka. Wrócono doM099 przy196417,

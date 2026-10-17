@@ -26,12 +26,13 @@ The current PsyZ polygon attribute fix has 144 independent software PS1 GPU
 reference cases. A recorded M115 scene now agrees with the reference across
 all 16-bit VRAM bytes, with identical gameplay state before and after the fix
 and matching normal/sanitized runs. This establishes that scene and pose;
-complete visual fidelity and hi-res coverage remain unverified. Longer legacy
-New Game replays after M020 still fail their state gates. Historical builds
-isolate the change to restoring the original boot clock initialization; the
-old recording was made with stopped clocks. The correct initializer is retained,
-and its real boot state now has a regression test. Those later routes still
-need to be recorded and verified again.
+complete visual fidelity and hi-res coverage remain unverified. A fresh ordinary
+New Game route with the original boot clocks running reaches both theater keys,
+including another corridor victory, level-up and a genuine phone Save. Normal
+and sanitized runs agree with the live session in full state and VRAM. The
+original USA game also loads that Save with matching HP, position, all inventory
+slots and equipment records. Later legacy routes still need to be recorded and
+verified again; their stopped-clock assumptions are not restored.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

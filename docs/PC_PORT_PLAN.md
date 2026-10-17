@@ -2,6 +2,58 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Ponownie nagrano zwykłą trasę New Game z poprawnie uruchomionymi oryginalnymi
+zegarami, bez zmian HP, pamięci rozgrywki ani generowania zapisów. Pierwsza
+Melissa, M020 i rozmowa89 w M017 przechodzą. Następnie oryginalne Heal1
+przywraca29→49HP, kolejna walka z dwoma szczurami w M012 kończy się
+zwycięstwem i awansem do poziomu3, Aya ma43/53HP i pojemność12.
+Dalsza trasa obejmuje M021, telefon w M020, TheaterKey200 z ciała,
+oba napotkane Ammo+6, wszystkie strony99–108 dziennika w M018 oraz
+RehearsalKey201. Kończy się w M022 przy200826, pozycja[25559040,0,-1376256],
+yaw1024, pole odblokowane, brak menu/przeciwników, Medicine1 zachowane.
+Pomyłki nawigacji wokół mebli rozwiązano zwykłym inputem; nie zmieniano kolizji.
+
+ZapisA powstał wyłącznie przez oryginalne menu telefonu na pustej prywatnej
+karcie. Payload8192B SHA256b42d2eb3113098849e53cdba19e87fe9e8c76cdc270f4fc574d99f2aff68c664
+jest identyczny w żywym debuggerze i obu automatycznych przebiegach.
+New Game→telefon normal/SAN0 w42,93/119,10s, pełny JSON i1MiBVRAM zgodne;
+/tmp/pe-theater-clock-phone-v1-proof.json. Cold Continue tego samego pliku
+w nowych prywatnych katalogach normal/SAN0 w3,89/12,03s, pełny JSON/VRAM
+zgodne, pliki niezmienione, wszystkie trzy zegary działają. Oryginalna USA
+w niezależnym headless PS1 również wczytuje ten niezmieniony payload:
+M020, HP43/53, pozycja[917504,0,9764864], wszystkie50 slotów,
+4096B wyposażenia i oba wyposażone sloty zgadzają się z PC.
+Referencja przy8488: /tmp/pe-reference-clock-phone-v1/loaded-a-complete-state.json;
+/tmp/pe-theater-clock-continue-v1-proof.json. Pozycja po Continue pochodzi
+z oryginalnego zapisu/odtworzenia, nie musi równać się pozie stojącej przy telefonie.
+
+Pełny New Game→oba klucze/M022: normal/SAN0 w46,16/132,35s;
+pełny JSON i VRAM obu profili są identyczne także z końcem żywej sesji.
+VRAM SHA256493ad6bd5166aad61070ac22ff1d7a3cc4d974d44eb52883b03a385bc1b4af9d;
+/tmp/pe-theater-clock-keys-v1-proof.json. Żywa sesja została zakończona exit0.
+Użyto niezmiennych /tmp/pe-boot-clock-gate-v1-game i -game-sanitized.
+
+W istniejącym teście original_actor_animation.c zastąpiono dawną trasę20
+nagraniem fizycznego inputu (720 rzeczywistych zmian maski, czasy zachowane).
+Przypadek19 otrzymuje potwierdzony stan z działającymi zegarami; drugie
+zwycięstwo i awans są nadal wymagane przez szerszą trasę20. Każdy proces
+bootstrapu dostaje świeży prywatny katalog roboczy; ścieżki gry/CUE/capture
+są bezwzględne. Telefon testowy nie korzysta z kart w katalogu wywołania.
+Nie dodano plików repozytorium ani kodu produkcyjnego. Walidacja nowego
+kandydata /tmp/pe-theater-replay-v1:26/30 poleceń przechodzi, w tym wszystkie
+przypadki0..20 w obu profilach, CPU i wymagane assets. Dwa stare przypadki21/22
+nadal odpadają w obu profilach; nie usunięto ich asercji. Przy21 stara sekwencja
+kończy w menu33 zamiast po drugiej Melissie, przy22 w scenie pamięci126.
+Nowy /tmp/pe-theater-replay-v2 dodaje w przypadku20 kontrolę faktycznego pliku
+z telefonu:8192B, FNVddbea58f2544300e. CPU, assets i pełna trasa20 przechodzą
+normal/SAN:6/6; trasa52,70/137,93s (dokładne czasy w -test-results.json).
+Obaj kandydaci mają po173 świeże obiekty/profil, zweryfikowane archiwa,
+binarki i zależności; v1 źródło fixture zachowane oddzielnie i zgodne z hashem
+manifestu. Root build0. /tmp/pe-theater-replay-v2-{proof,build-proof}.json.
+To nie dowód ukończenia kampanii ani drugiej Melissy na tej nowej trasie.
+
+### Poprzedni audyt inicjalizacji zegarów i bisekcja
+
 Wyjaśniono początek rozbieżności starej trasy New Game→M017. Zmiany
 przycisków są identyczne z dawnym zapisem:1072 po usunięciu powtórzeń;
 nie pominięto rzeczywistego inputu. Świeży historyczny60fea009a z obecnym

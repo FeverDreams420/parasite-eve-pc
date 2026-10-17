@@ -55,7 +55,10 @@ the same replay in both builds and a permanent fallback-weapon regression.
 The continued route equips M16A1 and Kv Vest, collects both locker rewards,
 finishes Ben and Daniel's scene and the press conference, then creates phone
 Save D. Full replay and cold Continue D pass both builds with matching state,
-VRAM, inventory and equipment.
+VRAM, inventory and equipment. From D, ordinary input travels to the museum
+and creates phone Save E. Cold Continue E and the full Klamp conversation
+through the return to M192 also pass both builds with matching state and VRAM;
+inventory, equipment and source saves remain unchanged.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

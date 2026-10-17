@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły zimny Continue D przechodzi teraz wyjście M042→M043→M046,
+mapę Nowego Jorku (dwa Left wybierają Museum), podróż M038, wejście
+M191→M195, rozmowy przy schodach40–44 i recepcji45–46 oraz prawdziwy
+telefoniczny zapis E/piąty plik. Po konferencji policjant przy[299,1156]
+blokuje wąskie przejście przez górną część M042; działa zwykłe obejście
+biura dolnym i lewym korytarzem. W M191 podejście do wejścia prowadzi
+przez[4400,4800]→[3700,4800]→[2800,4700]; bez zmiany kolizji/schodów.
+Przy47113: M195, etap192, HP72/72, pojemność15, weapon10/armor4,
+cały ekwipunek i wyposażenie bez zmian, brak menu/dialogu, move_lock2,
+pozycja[-119579536,0,-40980490], yaw1024.
+Normal/SAN0 w13,74/39,02s: pełny JSON i1MiBVRAM identyczne z żywą sesją,
+wszystkie8192B E także identyczne, D niezmieniony. VRAM SHA256
+72685f6a4475de75256c3f7242dbd072ce9664a8ad83179531523ff0f4006362.
+E SHA2560bf2e214c040940a1cf4dc88ca7219abe67dab920bd2338a895d725eea57a44c.
+Dowód /tmp/pe-day2-d-museum-v1-{proof.json,verify.py,results.json},
+pełne args/input/logi/VRAM pod tym prefiksem.
+
+Osobny zimny Continue E: normal/SAN0 w4,17/12,82s. M195/etap192,
+HP72/72, brak menu, lock2, cały ekwipunek/rekordy i wyposażone sloty
+zgodne z sesją zapisu; pełny JSON/VRAM zgodny, payload E niezmieniony.
+/tmp/pe-day2-museum-e-continue-v1-proof.json. D/E nie sprawdzono jeszcze
+w oryginalnym USA PS1; poprzednia niezależna zgodność dotyczy C.
+
+Dalszy zwykły input od E przechodzi schody M195→M230, rozmowę53–54,
+podejście[2200,400], spotkanie z Klampem (także tekst w slocie1, m.in.68),
+wszystkie dalsze rozmowy i powrót przed muzeum M192. Przy43164: etap208,
+HP72/72, weapon10/armor4, brak menu/dialogu/przeciwników, move_lock2,
+pozycja[484245504,0,225443840], yaw1024; wszystkie sloty i4096B wyposażenia
+bez zmian. Normal/SAN0 w10,71/31,18s: pełny JSON i1MiBVRAM identyczne
+z żywą sesją, SHA256
+9883afc9a42f6b560d34a4574321559f92cdc606b523afb2c8e8e65d798c1dec.
+E niezmieniony. /tmp/pe-day2-e-klamp-v1-{proof.json,verify.py,results.json},
+pełne args/input/logi/VRAM. To dwa replaye połączone prawdziwym zapisem E,
+nie pojedynczy ciągły replay od D/New Game. Zgodność natywnych obrazów
+nie dowodzi pixel-perfect względem PS1. Odcinki nie są jeszcze osobnymi
+trwałymi przypadkami CTest. Wszystkie procesy zakończone0; prywatne karty,
+bez ingerencji w root bu00/bu10 ani RAM/stany rozgrywki. Nie zmieniano
+kodu produkcyjnego ani nie dodawano plików repo. Następny krok: wyjście
+M192 na mapę, powrót do NYPD i dalszy etap dnia2; pełny cel pozostaje aktywny.
+
 Dalszy zwykły replay z prawdziwego C obejmuje poprawiony transfer Toola,
 wyposażenie M16A1 (slot10) i Kv Vest (slot4) przez normalne ekrany,
 M052→M051→M043, szatnię M045 i odbiór obu szafek: Cm Vest1

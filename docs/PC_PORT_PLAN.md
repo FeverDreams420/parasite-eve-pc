@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Pełny coldI→utworzenie zwykłego K/cap161012 zakończony normal/SAN exit0,
+72,04/242,90s. Cały JSON, pełne1MiB VRAM i8192 bajty K identyczne także
+z debuggerem; SHA256 VRAM
+3ded537fdd1af04b17044a806684cdd53c3bbe669346f4cf6827038173e61273.
+Manifest /tmp/pe-nypd-ordinary-save-k-v1-proof.json i -verify.py potwierdzają
+zwykłe zwycięstwo M100, nagrody oraz oryginalny telefon. B–J niezmienione,
+bu10 puste, zero diagnostics/sanitizer errors. To zamyka exec68753;
+nie wymaga dalszego oczekiwania. Starszy debugger exec76299/PID86034
+zakończono po zachowaniu wszystkich trace/logs i checkpointu K.
+
+NOWY RZECZYWISTY CRASH po zimnym K: exec8898/PID87568, frozen
+/tmp/pe-o1-raster-game, cwd /tmp/pe-nypd-k-live. ColdK24000, zwykła rozmowa
+w M099/dialog47 i powrót do wyjścia przy27175. Podczas0/700 następuje
+EXC_BAD_ACCESS naNULL przy27277, Akao_LookupSampleBankByte/sequencer.c:359,
+przez StepSampleLoader/Tick/TimerCallback/Psyz_KernelPoll. Nie jest to
+zatrzymanie przez limit pomocnika. Proces pozostawiony w crash frame do
+odczytów; nie próbować pe-step ani ReturnFromFrame na nim. Log
+/tmp/pe-nypd-k-live-lldb.log, input /tmp/pe-nypd-k-input.jsonl, args
+/tmp/pe-nypd-k-live-args.json. Karty są prywatne; żadnych HP/PE/flag writes.
+
+Przyczyna odczytana z pamięci: aktywny SFX voice_mask0x4000, generated
+key_off_mask1138, pc10117a428, wszystkie call_stackNULL. Lookup trafia naC9,
+po czym cursor staje sięNULL. Nie dodawać samego NULL guard ani wyłączać
+SFX. loaded_scene_assets101153510, pc ma offset26f18. W oryginalnym M099
+te bajty to poprawny program SFX: a503b4ff010cdd0501b87b010cde0601...
+Po załadowaniu M100 ten SAM adres zawiera tablicę wartości0fc9/0fce/0fcd,
+bajtowo zgodną z M100+26f18; wcześniejszy program dźwięku został nadpisany.
+Zatem problemem jest czas życia danych AKAO podczas ponownego użycia
+bufora pokoju, nie brakujący opcode ani gameplay tej rozmowy. Oryginalne
+wyciągi /tmp/pe-m099-room.bin i /tmp/pe-m100-room.bin; żadnych zmian źródeł
+naprawy jeszcze nie wprowadzono. Naprawić własność/czas życia danych
+w istniejących modułach, zachować dźwięk do naturalnego zakończenia.
+
+Pełny standalone reproducer od zwykłego K do27875 uruchomiony normal/SAN
+exec81561: /tmp/pe-nypd-k-audio-crash-v1-prepare.py/-run.py,
+-{normal,san}-args.json/.log. Odczytać terminal i diagnostics tego SAMEGO
+przypadku przed naprawą. Oba frozen executable pozostają bez nadpisywania.
+Żaden build teraz nie pracuje. Pomocnik /tmp c.path_walk toleruje60 jednostek
+wyłącznie na pośrednich waypointach; końcowy cel pozostaje22. Steruje tylko
+przyciskami; to poprawka testera, nie kolizji gry. Dalsza droga do Cathy
+jeszcze niewykonana w tej zwykłej gałęzi, cel pełnego portu nadal aktywny.
+
 Cold Continue nowego zwykłego K/cap24000 zakończony normal/SAN exit0,
 15,54/61,28s. Cały JSON i pełne1MiB VRAM identyczne, SHA256 VRAM
 6cef844df45d4e6bbb9a756e440d7c8c754b0517547f9126213f46e1b8834af8.

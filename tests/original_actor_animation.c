@@ -6398,6 +6398,35 @@ static int original_line_burst_assets(PeDisc *disc,PeDiscFile *exe)
         !memcmp((u8 *)room+8+0x1fdc,g_RoomLineBurstScript,sizeof(g_RoomLineBurstScript)) &&
         g_RoomLineBurstProgram.table.callbacks[0]==RoomEffect_LineBurstController &&
         g_RoomLineBurstProgram.table.sizes[0]==36 && g_RoomLineBurstProgram.initialize==RoomLib_SlotSet;
+    const unsigned line_rooms[]={104,115,159};
+    for(unsigned r=0;valid && r<3;++r){
+        SceneRoomSectorRange variant_range;
+        if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(line_rooms[r]-1)*8,&variant_range,sizeof(variant_range))){valid=0;break;}
+        size_t variant_bytes=(size_t)variant_range.roomSectors*2048;SceneAssetView *variant=malloc(variant_bytes);if(!variant){valid=0;break;}
+        valid=pe_disc_read(disc,&archive,(u64)(variant_range.start+variant_range.scratchSectors+variant_range.textureSectors)*2048,variant,variant_bytes);
+        if(valid){
+            const u8 *data=(u8 *)variant+8,*reference=(u8 *)room+8;
+            uint64_t hash=UINT64_C(14695981039346656037);for(unsigned i=0;i<3876;++i)hash=(hash^data[i])*UINT64_C(1099511628211);
+            SceneRoomDirectory *dir=SceneAsset_ResolveOffset(variant,variant->header.directoryOffset);
+            SceneRoomRecord *record=SceneAsset_ResolveOffset(variant,dir->scripts&0x3fffff);
+            valid=hash==UINT64_C(0xd5cf48761589413b) && dir->scripts>>22==1 && record->reserved[0]==0x24 && record->reserved[1]==0x0f &&
+                record->source.offsetAndSlot==0x88000008u && record->u.handlerAddress==0x8018fe5cu;
+            const u32 expected_descriptor[]={0x8018f3a4,0,0,0,0,0,0,0,36,0,0,0,0x8018fdf8,0x8018fe3c};
+            valid=valid && !memcmp(data+4,reference+12,20) && !memcmp(data+0xe4c,g_RoomLineBurstScript,32) &&
+                !memcmp(data+0xe6c,expected_descriptor,sizeof(expected_descriptor));
+            for(unsigned o=0;valid && o<0xe34;o+=4){
+                u32 expected,actual;memcpy(&expected,reference+0x10b8+o,4);memcpy(&actual,data+0x18+o,4);
+                u32 target=(expected&0x3ffffff)<<2;
+                if((expected>>26==2 || expected>>26==3) && target>=0x1900a8 && target<0x190edc)expected-=0x10a0/4;
+                if(o==0x20 || o==0x3c8 || o==0x3f0)expected=(expected&0xffff0000)|(u16)(expected-8);
+                if(o==0x524)expected=(expected&0xffff0000)|(u16)(expected-0x10a0);
+                if(o==0xdf8)expected=(expected&0xffff0000)|(u16)(expected-0x1194);
+                valid=expected==actual;
+            }
+            for(unsigned i=0xea4;valid && i<3876;++i)valid=data[i]==0;
+        }
+        free(variant);if(!valid)fprintf(stderr,"Line-only complete module failed for M%03u\n",line_rooms[r]);
+    }
     if(valid){
         PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
         void *old_program=g_FieldFxTaskPrograms[51];
@@ -6453,7 +6482,7 @@ static int original_line_burst_assets(PeDisc *disc,PeDiscFile *exe)
         g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_polygon_count;
         if(valid)puts("Original line burst: authored task136, original M122 archive and sound path, both GPU buffers, complete nested pools, model/sprite draw chains, expiry and guards passed");
     }
-    free(room);return valid;
+    free(room);if(valid)puts("Original M104/M115/M159: all 3876 module bytes, every instruction of both callbacks and slot initializer after relocation, all descriptors, seeds, script and parameter data passed");return valid;
 }
 
 static int original_dropped_flare_assets(PeDisc *disc,PeDiscFile *exe)

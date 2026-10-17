@@ -1028,6 +1028,50 @@ bez wcześniejszego600-klatkowego idle. Dalszy input i wynik walki są w
 /tmp/pe-m099-v1-live-input.jsonl i live-lldb.log; sprawdzić aktualny stan.
 Nowego save telefonu nadal brak; nie nadpisywać H ani root bu00/bu10.
 
+Dalszy rzeczywisty przebieg próby M099: Heal2 przed walką przywrócił181HP;
+po wejściu189831/battle7 zaczekano20-klatkowymi krokami do battle0.
+Typ6 HP70 pokonany dwiema salwami z unikaniem, potem typ5 HP35 jedną.
+Obaj pokonani przy191063, Aya104HP. Medicine1 z reward UI wymieniona
+za Junk16 i zużyta:104→149 przy192667, slot16=0. Zwykły Heal2 z menu
+przywrócił181, menu zamknięte, dojście doM099/A80094C8 przy193110.
+Podejście do NPC2 wymagało korekty route przez korytarz między biurkami;
+końcowa pozycja[−303.369,−35.636] zatrzymuje się na jego rzeczywistym
+promieniu kolizji300. Z tej pozycji Cross uruchomił dialogi44–47.
+Przy194936 flags44=67115068 (0x0400183c), story400, HP181, brak menu,
+lock0. Następnie wyjście zM099 zgodnie z autorskim skryptem kierujeM115.
+
+Próba exec33329/PID67538 zakończyła się rzeczywistym brakiem deskryptora
+M115/136/8018FE5C w interwale195289→195309; nie ma już żywego inferiora.
+To błąd portu i został naprawiony przez powiązanie tej samej oryginalnej
+implementacji line_burst/script_slot, bez dodatkowego kodu gameplayu.
+Całe3876 bajtów tego wariantu jest identyczne wM104/M115/M159:
+SHA256e79370f43331a4c17e244f962c84e77a1570cbe0241450590eda4f17a55a5916,
+FNVd5cf48761589413b. Test sprawdza wszystkie bajty, trzy dokładne deskryptory,
+każdą instrukcję obu callbacków i inicjalizatora względemM122 po relokacjach
+code−10a0, seed−8, tablica parametrów−1194; także wszystkie seedy,
+32 bajty skryptu, rozmiary, metody i całą zerową tablicę8 parametrów.
+Loader wiąże136/8018FE5C wyłącznie dla tych trzech pokojów i resetuje8 rekordów.
+Cały --assets PASS normal i ASan/UBSan/function, oba terminal0:
+/tmp/pe-m115-v1-assets.log i /tmp/pe-m115-v1-assets-san.log. PsyZ/SDL
+instrumentowane; pełny build i diff --check PASS. Pozostałe warianty
+line burst jeszcze niepodpięte. Audyt /tmp/pe-m115-module-audit.json.
+
+Uruchomione ponowne pełne wejście H→M115, cap195909: normal/SAN
+exec69700, PID70127/70128. /tmp/pe-m115-v1-entry-{normal,san}.log,
+args i prywatne karty w katalogach o tej samej nazwie; verifier przygotowany
+/tmp/pe-m115-v1-entry-verify.py.3547 odcinków (3196+351), ostatni odcinek
+zero przedłużony do195909, te same15 zdarzeń HP; bez późniejszych zmian HP.
+Przypadek /tmp/pe-m115-v1-entry-case.json. Wynik realnego wejścia pending.
+Nowy debugger exec22652/PID70123 /tmp/pe-m115-v1-game-debug, prywatny
+katalog /tmp/pe-m115-v1-live, log /tmp/pe-m115-v1-live-lldb.log,
+trace /tmp/pe-m115-v1-live-input.jsonl ustawiony przed run. Breakpoint init.c:89
+zatrzyma go przy195909; zacząć od pe-state/pe-actors i sprawdzenia program51.
+Zamrożone /tmp/pe-m115-v1-game, -game-debug, -game-sanitized i fixture'y
+pozostawić bez nadpisywania. Następnie telefon M112 po przejściu M115;
+poprzedniego M099 debuggera nie próbować kontynuować. Nowego save jeszcze
+nie ma, H pozostaje niezmieniony. M086 zwykła wygrana nadal otwarta.
+
+
 
 
 Nadal coverage-only oraz osobno nieukończona zwykła walka M086 odH.

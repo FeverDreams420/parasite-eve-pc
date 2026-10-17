@@ -540,6 +540,8 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomPairedGlowHandlers;
         if (map + 1 == 122 && slot == 136 && record[i].u.handlerAddress == 0x80190fecu)
             native = &g_RoomLineBurstProgram;
+        if ((map + 1 == 104 || map + 1 == 115 || map + 1 == 159) && slot == 136 && record[i].u.handlerAddress == 0x8018fe5cu)
+            native = &g_RoomLineBurstProgram;
         if (map + 1 == 107 && slot == 75 && record[i].u.handlerAddress == 0x801936b0u)
             native = &g_RoomActorClassTable[2];
         if (map + 1 == 114 && slot == 72 && record[i].u.handlerAddress == 0x801936ccu)
@@ -700,7 +702,7 @@ int Scene_LoadRoom(unsigned int roomId)
             g_PmCmdHandlerTable[slot]=&g_RoomPairedGlowHandlers;
             memset(&g_RoomPairedGlowSprite,0,sizeof(g_RoomPairedGlowSprite));
             g_RoomPairedGlowPacket__paired=NULL;
-        } else if (map + 1 == 122 && slot == 136) {
+        } else if ((map + 1 == 104 || map + 1 == 115 || map + 1 == 122 || map + 1 == 159) && slot == 136) {
             g_FieldFxTaskPrograms[51]=&g_RoomLineBurstProgram;
             memset(RoomLib_SlotTable,0,8*sizeof(RoomSlotRec));
         } else if (map + 1 == 107 && slot == 75) {

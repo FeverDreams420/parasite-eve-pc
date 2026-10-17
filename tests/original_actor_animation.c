@@ -1445,7 +1445,19 @@ static int original_glow_resident_constants(void)
     const u32 pe98[]={0x800df9b0,0x800d9fd4,0x0,0x0,0x0,0x0,0x0,0x0,0x80008,0x0,0x0,0x0,0x0,0x800e1b28};
     const u32 pe104[]={0x800dca80,0x800dce94,0x0,0x0,0x0,0x0,0x0,0x0,0xc0008,0x0,0x0,0x0,0x0,0x800e1ec4};
     const u32 pe106[]={0x800ddd70,0x800de0a8,0x800dea30,0x0,0x0,0x0,0x0,0x0,0x100008,0xc,0x0,0x0,0x0,0x800e204c};
+    const u32 pe105[]={0x800dd19c,0x800dd76c,0x0,0x0,0x0,0x0,0x0,0x0,0x10000c,0x0,0x0,0x0,0x0,0x800e1f80};
+    const u32 pe107[]={0x800df6ac,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x4,0x0,0x0,0x0,0x0,0x800e2124};
     struct { u32 address; const void *value; size_t size; } rows[]={
+        {0x800e2014,pe105,56},
+        {0x800e1f80,g_FieldFxTaskProgramCmd105.script,36},
+        {0x800e216c,pe107,56},
+        {0x800e2124,g_FieldFxTaskProgramCmd107.script,24},
+        {0x800e1fa4,g_StarFanRingGlowColorTrack,40},
+        {0x800e1fcc,g_StarFanRingGlowSpinColorTrack,32},
+        {0x800e1fec,g_ConvergingSpriteColorTrack,40},
+        {0x800e213c,g_FadeParticleColorTrack,40},
+        {0x800e2164,g_FadeEmitterParticleKinds,8},
+        {0x800c22f0,&g_FieldFxZeroOffset,8},
         {0x800e18c0,g_ArcingEffectColorTrack,48},
         {0x800e18f0,g_ArcingSparkColorTrack,48},
         {0x800e1988,g_OrbitTrailColorTrack,40},
@@ -1740,6 +1752,8 @@ static int authored_fan_sweep_cycles(void)
     int old_phase=g_SparkEmitterPhaseSeed,old_floor=g_RoomFloorY->y;
     GteShortVector old_orbit=g_OrbitingEffectAnchor,old_helical=g_HelicalEffectAnchor;
     GteShortVector old_vertical=g_VerticalEffectAnchor,old_tilting=g_TiltingSpriteAnchor,old_settling=g_SettlingSpriteAnchor;
+    GteShortVector old_converging=g_ConvergingSpriteAnchor;
+    s16 old_fade_intensity=g_FadeEmitterIntensity;
     char *old_orbit_pool=g_OrbitingEffectParticlePool,*old_helical_pool=g_HelicalEffectParticlePool;
     s16 old_model_anchor_a[3];memcpy(old_model_anchor_a,g_SpinningModelAnchorA,sizeof(old_model_anchor_a));
     u8 *old_model=D_800F32D8,*old_twin_a=D_800F3418,*old_twin_b=g_FieldFxTwinModelB,*old_flash=g_FieldFxModel83ACD504;
@@ -1843,7 +1857,7 @@ static int authored_fan_sweep_cycles(void)
     if(hash!=UINT64_C(0x3d88066c0df41791))return 0;
     GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
     RenderMatrix matrix={.rotation={{4096,0,0},{0,4096,0},{0,0,4096}},.translation={0,0,1200}};
-    RenderMatrix matrices[20];for(unsigned i=0;i<20;++i)matrices[i]=matrix;
+    RenderMatrix matrices[29];for(unsigned i=0;i<29;++i)matrices[i]=matrix;
     FieldActorState state={0};FieldActor player={.state=&state,.pos_z=1200*65536};player.render_object.matrices=matrices;
     static RenderGpuTag ordering[4096];
     struct {_Alignas(void *) u8 bytes[65536];u8 guard[16];} packets;
@@ -1873,7 +1887,7 @@ static int authored_fan_sweep_cycles(void)
     _Alignas(16) u8 twin_model_bytes[64];memcpy(twin_model_bytes,model_bytes,sizeof(twin_model_bytes));
     D_800F32D8=D_800F3418=g_FieldFxModel83ACD504=model_bytes;g_FieldFxTwinModelB=twin_model_bytes;
     g_RoomFloorY->y=0;player.render_object.target_z=1200;
-    const unsigned commands[]={92,93,101,102,99,100,103,94,95,96,97,98,104,106},variables[]={7,8,16,17,13,15,18,9,10,11,12,13,19,21};
+    const unsigned commands[]={92,93,101,102,99,100,103,94,95,96,97,98,104,106,105,107},variables[]={7,8,16,17,13,15,18,9,10,11,12,13,19,21,20,22};
     for(unsigned spell=0;spell<19;++spell){
         unsigned command=g_BattleActionEffectIds.bytes[spell];
         if(command<85 || command>=189 || !g_FieldFxTaskPrograms[command-85])return 0;
@@ -1881,7 +1895,7 @@ static int authored_fan_sweep_cycles(void)
     if(g_FieldFxTaskPrograms[18]!=&g_FieldFxTaskProgramCmd103 ||
        g_FieldFxTaskProgramCmd103.table.callbacks[0]!=FieldFx_TwinModelEffect ||
        g_FieldFxTaskProgramCmd103.table.sizes[0]!=sizeof(FieldFxTwinModel))return 0;
-    for(unsigned variant=0;variant<14;++variant){
+    for(unsigned variant=0;variant<sizeof(commands)/sizeof(commands[0]);++variant){
         struct {PmPrimarySlot slots[11];u8 guard[16];} bank={0};memset(bank.guard,0xa5,16);
         g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(1);
         if(Scene_LoadRoomAssets(commands[variant],&player)!=0 || Pm_SendCmd(0,0,0,0,0,0))return 0;
@@ -1917,11 +1931,12 @@ static int authored_fan_sweep_cycles(void)
     D_800F32D8=old_model;D_800F3418=old_twin_a;g_FieldFxTwinModelB=old_twin_b;g_FieldFxModel83ACD504=old_flash;
     g_OrbitingEffectAnchor=old_orbit;g_HelicalEffectAnchor=old_helical;
     g_VerticalEffectAnchor=old_vertical;g_TiltingSpriteAnchor=old_tilting;g_SettlingSpriteAnchor=old_settling;
+    g_ConvergingSpriteAnchor=old_converging;g_FadeEmitterIntensity=old_fade_intensity;
     g_OrbitingEffectParticlePool=old_orbit_pool;g_HelicalEffectParticlePool=old_helical_pool;
     memcpy(g_SpinningModelAnchorA,old_model_anchor_a,sizeof(old_model_anchor_a));
     g_RoomFloorY->y=old_floor;memcpy(g_SpinningModelAnchorB,old_model_anchor,6);
     puts("Original resident particles: 100 ember + 208 Scan/Confuse + 280 Slow + 224 Detox unhooked USA CPU/BIOS states passed");
-    puts("Original resident PE: 14 complete authored programs x 200 PM frames, native pointer payloads, models, nested pools, both draw buffers and expiry passed");
+    puts("Original resident effects: 16 complete authored programs x 200 PM frames, native pointer payloads, models, nested pools, both draw buffers and expiry passed");
     return 1;
 }
 
@@ -8121,6 +8136,28 @@ static int original_gte_register_transfers(void)
         }
         ++cases;
     }
+    /* Original short-vector averages accept packed vectors within particle
+     * records. Exercise every byte alignment, signed Z's full-word store,
+     * output guards and both supported in-place destinations. */
+    const s16 average_first[]={-1200,600,-300,0};
+    const s16 average_second[]={800,-200,-500,0};
+    for(unsigned shift=0;shift<2;++shift)for(unsigned a=0;a<4;++a)
+    for(unsigned b=0;b<4;++b)for(unsigned o=0;o<4;++o){
+        _Alignas(u32) u8 first[16],second[16],output[16];
+        const s16 expected[]={shift?300:-400,shift?0:400,shift?-450:-800,-1};
+        void (*average)(void *,void *,int,int,void * volatile)=shift?LoadAverageShort12:LoadAverageShort0;
+        memset(first,0xa5,sizeof(first));memset(second,0xa5,sizeof(second));memset(output,0xa5,sizeof(output));
+        memcpy(first+a,average_first,8);memcpy(second+b,average_second,8);
+        average(first+a,second+b,shift?1024:1,shift?3072:1,output+o);
+        if(memcmp(output+o,expected,8))return 0;
+        for(unsigned i=0;i<16;++i)if((i<o || i>=o+8) && output[i]!=0xa5)return 0;
+        average(first+a,second+b,shift?1024:1,shift?3072:1,first+a);
+        if(memcmp(first+a,expected,8))return 0;
+        memcpy(first+a,average_first,8);
+        average(first+a,second+b,shift?1024:1,shift?3072:1,second+b);
+        if(memcmp(second+b,expected,8))return 0;
+    }
+    puts("Original GTE short averages: 128 alignment combinations, signed XYZ/padding, guards and both in-place outputs passed");
     /* Leave the GTE in a clean state before checking display initialization. */
     for(unsigned i=0;i<32;++i){Psyz_GteDataWrite(i,0);Psyz_GteCtrlWrite(i,0);}
     if(cases!=450 || hash!=UINT64_C(0x3bcbb387746aa626)){

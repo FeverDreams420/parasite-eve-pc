@@ -58,6 +58,8 @@ GteVector *ApplyMatrixLV(const GteMatrix *matrix, const GteVector *v,
                          GteVector *out);
 void LoadAverageShort12(void *first, void *second, int first_scale,
                         int second_scale, void *output);
+void LoadAverageShort0(void *first, void *second, int first_scale,
+                        int second_scale, void *output);
 GteMatrix *ScaleMatrix(GteMatrix *matrix, const GteVector *scale);
 GteMatrix *TransMatrix(GteMatrix *matrix, const GteVector *translation);
 void SetRotMatrix(const GteMatrix *matrix);

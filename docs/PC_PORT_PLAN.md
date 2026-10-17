@@ -2,7 +2,40 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
-Aktualna wersja14 PE programów osiągnęła prawdziwe M113/A80211C8 przez
+Dopisano brakujące dane i rejestrację oryginalnych resident programów105/107
+w istniejących emitters.c/task_list.c: skrypty36/24 bajty, cztery pełne tabele
+kolorów40/32/40/40, osiem oryginalnych indeksów kości1,2,5,13,16,23,26,28,
+anchor, intensity i zerowy offset. Funkcje StarFanRingGlow, ConvergingEmitter,
+ConvergingSprite, FadeEmitter i FadeParticle pozostały na miejscu; brak nowych
+funkcji rozgrywki lub plików. Test danych sprawdza całe oryginalne deskryptory
+56-byte, skrypty, tabele i offset względem własnego USA CUE.
+
+Uruchomienie nowych efektów ujawniło UBSan misaligned int load w istniejącym
+LoadAverageShort12: GteShortVector wymaga tylko halfword alignment. Naprawiono
+odczyty obu wejść i pełny ośmiobajtowy zapis przez memcpy w obu oryginalnych
+LoadAverageShort12/0 (msc06.c), zachowując transfery/komendy GTE i signed Z
+w drugim słowie. Istniejący test GTE obejmuje128 kombinacji wyrównań wejść/
+wyjścia, ujemne XYZ/padding, oba zapisy in-place i strażników. Program107
+wymaga rzeczywistych macierzy aż do28; fixture otrzymała29 macierzy.
+
+Kandydat /tmp/pe-resident-extra-v2-{game,fixture} i odpowiedniki -sanitized:
+build, pełny domyślny test CPU, --fx-display oraz --assets przy wymaganym CUE
+przeszły normal/SAN exit0; w finalnych logach brak ASan/UBSan/function błędów.
+Wszystkie16 programów przechodzi200 PM klatek, oba draw buffers, realne pakiety
+OT, nested pools i naturalne wygaśnięcie. Logi /tmp/pe-resident-extra-v2-*.log,
+manifest /tmp/pe-resident-extra-v2-proof.json. Wersja v1 zakończyła testy, ale
+miała UBSan w msc06.c; nie traktować jej jako czystego wyniku. Początkowy
+normal CPU bez PSYZ_HEADLESS zakończył się132; poprawne powtórki headless PASS.
+To dowód mechanizmu efektów, nie rzeczywistego użycia105/107 w kampanii.
+
+Pozostają resident85..91: pełne deskryptory odczytano do
+/tmp/pe-resident-85-91-audit.json. Cmd88/89/91 mają niezerowe słowo initializer
+wskazujące zero-initialized storage E21A8/E21D0; oryginalny D4698 wykonuje
+jalr przy skip0. Przed podpięciem zbadać runtime setup/relokację oraz argument
+skip; nie zgadywać callbacków. Cmd86/87 PulsingStarFan ma też niezgodne ABI
+mode-only w obecnym C i wymaga audytu w miejscu.
+
+Poprzedni zamrożony kandydat14 PE programów osiągnęła prawdziwe M113/A80211C8 przez
 M116 event3: próg przy33041 world271,831, po12-frame krokach wejście33209,
 po fade-in przy33329 HP181/181, stage400, lock0, menuNULL, battle9.
 Gracz[-75628544,0,-3473408], yaw3072. Zrzut
@@ -23,8 +56,9 @@ Bieżący exec66829/PID78296 na /tmp/pe-resident-pe-final-game-debug
 wszedł następnie do prawdziwego spotkania M113. Trzy wybieralne cele:
 typ6/sub31 HP70 i typ7/sub0/sub1 HP78; dwa typ8 to niewybieralne kontrolery.
 Pojedynczy strzał przez Cross i zatwierdzenie Square zadał29 obrażeń
-celowi6, zużywając jeden nabój. Przy34385 Aya ma65HP; zwycięstwo nie
-potwierdzone. To eksperyment fizycznego inputu pomocnika, bez zmian balansu
+celowi6, zużywając jeden nabój. Heal2 przez oryginalne menu zakończył się
+przy34841 HP125 (wcześniej65); drugi przy35585 HP66 (wcześniej9, po trafieniu).
+Przy35609 Aya ma2HP; zatrzymana nieudana próba, zwycięstwo niepotwierdzone. To eksperyment fizycznego inputu pomocnika, bez zmian balansu
 ani HP. Floor /tmp/pe-floor-a80211c8.json (64 trójkąty), skrypty actor0..9
 w /tmp/pe-m113-original-actor*.bin/.txt. Dalej zbadać encounter i fabułę;
 nie przedstawiać samego wejścia jako ukończenia M113.

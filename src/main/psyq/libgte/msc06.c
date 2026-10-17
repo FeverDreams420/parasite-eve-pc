@@ -4,6 +4,7 @@
  */
 
 #include "pe1/gte.h"
+#include <string.h>
 
 void LoadAverage12(void *first, void *second, int first_scale, int second_scale,
                    void * volatile output) {
@@ -36,13 +37,15 @@ void LoadAverage0(void *first, void *second, int first_scale, int second_scale,
 void LoadAverageShort12(void *first, void *second, int first_scale,
                         int second_scale, void * volatile output) {
     int lzcr;
-    int *out;
+    int packed[2];
     int gte_x;
     int gte_y;
     int gte_z;
 
-    gte_x = ((int *)first)[0];
-    gte_z = ((volatile int *)first)[1];
+    /* Packed short vectors need only halfword alignment on the host. */
+    memcpy(packed, first, sizeof(packed));
+    gte_x = packed[0];
+    gte_z = packed[1];
     gte_y = gte_x >> 16;
     gte_x &= 0xFFFF;
     gte_z &= 0xFFFF;
@@ -51,8 +54,9 @@ void LoadAverageShort12(void *first, void *second, int first_scale,
     gte_mtc2_10(gte_y);
     gte_mtc2_11(gte_z);
     gte_gpf12();
-    gte_x = ((int *)second)[0];
-    gte_z = ((volatile int *)second)[1];
+    memcpy(packed, second, sizeof(packed));
+    gte_x = packed[0];
+    gte_z = packed[1];
     gte_y = gte_x >> 16;
     gte_x &= 0xFFFF;
     gte_z &= 0xFFFF;
@@ -67,22 +71,24 @@ void LoadAverageShort12(void *first, void *second, int first_scale,
     gte_x &= 0xFFFF;
     gte_y = (unsigned int)gte_y << 16;
     gte_x |= gte_y;
-    out = output;
     gte_mfc2_11(gte_z);
-    ((volatile int *)out)[0] = gte_x;
-    ((volatile int *)out)[1] = gte_z;
+    packed[0] = gte_x;
+    packed[1] = gte_z;
+    memcpy(output, packed, sizeof(packed));
 }
 
 void LoadAverageShort0(void *first, void *second, int first_scale,
                        int second_scale, void * volatile output) {
     int lzcr;
-    int *out;
+    int packed[2];
     int gte_x;
     int gte_y;
     int gte_z;
 
-    gte_x = ((int *)first)[0];
-    gte_z = ((volatile int *)first)[1];
+    /* Packed short vectors need only halfword alignment on the host. */
+    memcpy(packed, first, sizeof(packed));
+    gte_x = packed[0];
+    gte_z = packed[1];
     gte_y = gte_x >> 16;
     gte_x &= 0xFFFF;
     gte_z &= 0xFFFF;
@@ -91,8 +97,9 @@ void LoadAverageShort0(void *first, void *second, int first_scale,
     gte_mtc2_10(gte_y);
     gte_mtc2_11(gte_z);
     gte_gpf0();
-    gte_x = ((int *)second)[0];
-    gte_z = ((volatile int *)second)[1];
+    memcpy(packed, second, sizeof(packed));
+    gte_x = packed[0];
+    gte_z = packed[1];
     gte_y = gte_x >> 16;
     gte_x &= 0xFFFF;
     gte_z &= 0xFFFF;
@@ -107,10 +114,10 @@ void LoadAverageShort0(void *first, void *second, int first_scale,
     gte_x &= 0xFFFF;
     gte_y = (unsigned int)gte_y << 16;
     gte_x |= gte_y;
-    out = output;
     gte_mfc2_11(gte_z);
-    ((volatile int *)out)[0] = gte_x;
-    ((volatile int *)out)[1] = gte_z;
+    packed[0] = gte_x;
+    packed[1] = gte_z;
+    memcpy(output, packed, sizeof(packed));
 }
 
 void LoadAverageByte(void *first, void *second, int first_scale,

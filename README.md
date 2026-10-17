@@ -26,7 +26,9 @@ and VRAM across both builds. The M122 modules pass their full effect tests;
 campaign entry is still unverified. These are
 coverage fixtures, not a completed-campaign result.
 All 14 resident effect programs selected by PE commands are registered and
-pass full PM lifecycle tests; actual use of every spell remains unverified.
+pass full PM lifecycle tests. Two further original resident programs (105/107)
+also pass these tests, including sanitized runs. Actual use of every spell
+remains unverified.
 See [the port plan](docs/PC_PORT_PLAN.md) for current evidence and limitations.
 Artwork, video and audio come from user-supplied CUE/BIN images. Full gameplay,
 visual fidelity and end-to-end audio remain unfinished; isolated audio tests

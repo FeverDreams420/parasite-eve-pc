@@ -1525,3 +1525,20 @@ FieldFxTaskProgram g_FieldFxTaskProgramCmd106={
 
 GteShortVector g_TiltingSpriteAnchor,g_SettlingSpriteAnchor;
 RenderColor g_FieldFxGlowFountainTint={128,80,80,0};
+
+/* Complete original resident programs 105 and 107, including authored
+ * tracks and the actor-matrix indices used by the nested fade particles. */
+u8 g_StarFanRingGlowColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,16,0,0,0,0,200,200,170,32,0,0,0,0,128,128,80,16,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_StarFanRingGlowSpinColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,250,250,250,56,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_ConvergingSpriteColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,64,128,24,0,0,0,0,128,128,0,16,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_FadeParticleColorTrack[]={0,0,0,0,0,0,0,0,80,80,80,8,0,0,0,0,128,40,20,8,0,0,0,0,96,0,70,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_FadeEmitterParticleKinds[]={1,2,5,13,16,23,26,28};
+u16 g_FieldFxTaskScriptCmd105[]={1,6,20,2,1,0,4,46,0,2,0,0,4,5,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd105={
+    {{FieldFx_StarFanRingGlow,FieldFx_ConvergingEmitter},{sizeof(RenderSparkEmitter),sizeof(RenderConvergingEmitter)}},NULL,g_FieldFxTaskScriptCmd105};
+u16 g_FieldFxTaskScriptCmd107[]={1,6,22,4,2,0,2,0,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd107={
+    {{FieldFx_FadeEmitter},{sizeof(RenderFadeEmitter)}},NULL,g_FieldFxTaskScriptCmd107};
+GteShortVector g_ConvergingSpriteAnchor;
+GteShortVector g_FieldFxZeroOffset={0,0,0,0};
+s16 g_FadeEmitterIntensity;

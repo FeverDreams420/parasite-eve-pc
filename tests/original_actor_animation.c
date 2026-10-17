@@ -5645,7 +5645,7 @@ done:
     D_800B0E38=old_buffers;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;g_GeomScroll.words.viewMatrix=old_view;
     g_GameState=old_game;g_PlayerEntity=old_player;*g_RoomFloorY=old_floor;
     g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;g_FieldFxSlotTable=old_slots;g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;srand(old_random);
-    if(ok)puts("Original paired glow PM: complete authored program, four authored types plus unused type2 no-ops, real M107 model, both draw slots, natural expiry and packet/OT guards passed");
+    if(ok)puts("Original paired glow PM: complete authored program, four authored types plus unused type2 no-ops, real room model, both draw slots, natural expiry and packet/OT guards passed");
     return ok;
 #undef PAIRED_FAIL
 }
@@ -5706,7 +5706,48 @@ static int original_paired_glow_assets(PeDisc *disc,PeDiscFile *exe)
         if(valid && !r){valid=authored_paired_glow_cycle(room);if(!valid)fprintf(stderr,"Paired glow authored PM failed\n");}
         free(room);if(!valid)return 0;
     }
-    puts("Original M107/M114: complete identical 18240-byte library, both descriptors, all 53 actor functions/tables, paired-glow lists/script/sizes/ramp and authored PM passed");return 1;
+    /* M111/M118 contain the whole paired module without the 53-function actor
+     * library. Compare every instruction and every authored table after the
+     * code, data and BSS relocations, not just the exported descriptor. */
+    const unsigned paired_only[]={111,118};
+    const u16 data_low[]={0x20,0x88,0xd4,0xe8,0xf0,0x750,0xf24};
+    const u16 bss_low[]={0x26c,0x278,0x284,0x28c,0x294,0x29c,0x2a4,0x2ac,0x2bc,
+        0x9fc,0xa8c,0xaa4,0xab4,0xac8,0xad8};
+    for(unsigned r=0;r<2;++r){
+        SceneRoomSectorRange range;
+        if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(paired_only[r]-1)*8,&range,sizeof(range)))return 0;
+        size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);if(!room)return 0;
+        int valid=bytes>=8+4520 && pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+        if(valid){
+            const u8 *candidate=(const u8 *)room+8;
+            SceneRoomDirectory *dir=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+            SceneRoomRecord *record=SceneAsset_ResolveOffset(room,dir->scripts&0x3fffff);
+            valid=dir->scripts>>22==1 && record->source.offsetAndSlot==0x23000008 &&
+                record->reserved[0]==0xa8 && record->reserved[1]==0x11 && record->u.handlerAddress==0x801900e8u;
+            uint64_t hash=UINT64_C(14695981039346656037);
+            for(unsigned i=0;i<4520;++i)hash=(hash^candidate[i])*UINT64_C(1099511628211);
+            valid=valid && hash==UINT64_C(0xca3ab00863c76dc9);
+            const u32 seed[]={0x400,0};valid=valid && !memcmp(candidate+4,seed,sizeof(seed));
+            for(unsigned o=0xc;valid && o<0x10a4;o+=4){
+                u32 expected,actual;memcpy(&expected,module+o+0x1d8,4);memcpy(&actual,candidate+o,4);
+                u32 target=(expected&0x3ffffff)<<2;
+                if((expected>>26==2 || expected>>26==3) && target>=0x18eff0 && target<0x19026c)expected-=0x1d8/4;
+                for(unsigned j=0;j<7;++j)if(o==data_low[j])expected=(expected&0xffff0000)|(u16)(expected-0x34f4);
+                for(unsigned j=0;j<15;++j)if(o==bss_low[j])expected=(expected&0xffff0000)|(u16)(expected-0x3598);
+                valid=expected==actual;
+            }
+            for(unsigned o=0x4598;valid && o<0x4608;o+=4){
+                u32 expected,actual;memcpy(&expected,module+o,4);memcpy(&actual,candidate+o-0x34f4,4);
+                if(o<0x45e0 || o>=0x45ec)if(expected!=0xffffffff)expected-=0x1d8;
+                valid=expected==actual;
+            }
+            valid=valid && !memcmp(module+0x4608,candidate+0x4608-0x34f4,128);
+        }
+        if(!valid)fprintf(stderr,"Paired-only module comparison failed for M%03u\n",paired_only[r]);
+        if(valid)valid=authored_paired_glow_cycle(room);
+        free(room);if(!valid)return 0;
+    }
+    puts("Original M107/M114 and M111/M118: complete modules, descriptors, all actor and paired functions/tables, script/sizes/ramp and real-room authored PM passed");return 1;
 }
 
 static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)

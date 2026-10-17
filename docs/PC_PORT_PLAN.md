@@ -867,6 +867,46 @@ w Boot_PollHost/init.c:89 zatrzyma go przy176941. Kolejny input zapisywać do
 /tmp/pe-m107-v11-live-input.jsonl, dopinając do2859 odcinków przypadku wejścia.
 Zamrożone v11 -game/-game-debug/-game-sanitized pozostawić bez nadpisywania.
 Dalej: zakończyć bieżące replaye, sprawdzić realną M107 i kontynuować NYPD.
+
+Aktualizacja M111/M118: normalny replay M107 zakończył się0 przy176941,
+sceneA80203C8, story392, HP181/181, lock0 i bez menu. Debugger potwierdził
+35==g_RoomPairedGlowHandlers i75==g_RoomActorClassTable[2]; zrzut
+/tmp/pe-m107-v11-entry-debug.vram/.png pokazuje korytarz. Sanitizer tego
+pełnego replayu nadal trwa; nie ogłaszać jeszcze porównania całego stanu.
+
+Przejście fizycznym inputem przez korytarz do zachodnich drzwi, x−550,z−900,
+ujawniło następny rzeczywisty błąd: M111/slot35/801900e8. Ostatni debugger
+v11 zakończył się na loaderze podczas177231→177831; trace zawiera24 odcinki
+176941→177831. Nie jest to działający live target do dalszego pe-step.
+
+Podpięto oryginalny wspólny paired_glow również dla M111/M118, bez nowych
+plików, funkcji gameplay ani warstw. Cały4520-bajtowy moduł jest identyczny
+w tych dwóch pokojach: SHA256
+05ca489c864beb6c0e125b1fc264cb44dd3e9913eaa58c74ba06852477e715b5,
+FNVca3ab00863c76dc9. Test porównuje każdą instrukcję wspólnych metod i17
+funkcji efektu z M107 (code−1d8, data−34f4, BSS−3598), komplet list,
+rozmiarów, metod klasy, skryptu, rampy i seeda oraz dokładny deskryptor.
+Pełne authored PM jest wykonane na realnym modelu obu pokojów, w obu
+buforach, ze sprawdzeniem zakończenia, flag, pointer alignment i OT.
+Cały --assets normal i ASan/UBSan/function PASS, oba terminal0:
+/tmp/pe-m111-v1-assets.log i /tmp/pe-m111-v1-assets-san.log.
+Pełny build i diff --check PASS; PsyZ/SDL w SAN nadal instrumentowane.
+M122 i scenyE11–E14 nadal wymagają osobnego audytu i podpięcia.
+
+Nowe pełne wejście H→M111/cap177831 uruchomione normal/SAN, exec16749,
+PID50351/50352; /tmp/pe-m111-v1-entry-{normal,san}.log, args i prywatne
+karty w katalogach o tej samej nazwie. Przypadek
+/tmp/pe-m111-v1-entry-case.json ma2883 odcinki i te same15 wcześniejszych
+zdarzeń HP. Wynik wejścia i porównanie pełnego stanu/VRAM są pending.
+Nowy debugger exec99677/PID50237 /tmp/pe-m111-v1-game-debug odtwarza
+ten sam przypadek, cap177831, log /tmp/pe-m111-v1-live-lldb.log, prywatne
+karty /tmp/pe-m111-v1-live. Po zatrzymaniu sprawdzić pe-state i wiązanie35;
+PE_DEBUG_INPUT_TRACE jest ustawiany kolejką komendy na
+/tmp/pe-m111-v1-live-input.jsonl. Przed kolejnym pe-step potwierdzić env.
+Zamrożonych v11 ani m111-v1 executable nie nadpisywać. Kolejny cel:
+genuine save przez UI na prywatnej karcie diagnostycznego postaci, żeby
+skrócić długie powtórki; takiego nowego checkpointu jeszcze nie utworzono.
+
 Nadal coverage-only oraz osobno nieukończona zwykła walka M086 odH.
 
 Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym

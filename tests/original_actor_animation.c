@@ -1077,6 +1077,48 @@ static int native_task_cycle(void)
         for(unsigned i=0;i<7;++i)for(unsigned b=0;b<4;++b)
             idle_hash=(idle_hash^((words[i]>>(b*8))&255))*UINT64_C(1099511628211);
     }
+    /* An actor can outlive its detached combat core during death/escape.
+     * Retail writes the held word through zero in this case. Keep observable
+     * task state and visual lifetime, without emulating low-memory writes. */
+    u16 detached_scripts[][9]={{5,0,0,4,0,1},{5,1,0,4,0,1},{0,0,0},{5,0,0,4,1,0,0,0,0}};
+    u64 detached_hash=UINT64_C(14695981039346656037);unsigned detached_cases=0;
+    for(unsigned script_id=0;script_id<4;++script_id)for(unsigned held=0;held<2;++held)
+    for(unsigned mode=0;mode<3;++mode)for(unsigned missing=0;missing<3;++missing){
+        FieldFx_InitTaskContext((PmSlotHeader *)owner);owner->prefix.reserved00=0;
+        owner->prefix.actor=missing==1?NULL:&idle_actor;owner->prefix.asset_type=0;
+        owner->tasks.flags=held;owner->tasks.pc.script=detached_scripts[script_id];
+        idle_actor.mode=idle_modes[mode];idle_actor.state=NULL;
+        idle_state.core_flags=0xa5a55a5a;u8 orphan_event=1;idle_state.action_state=&orphan_event;
+        for(unsigned frame=0;frame<3;++frame){
+            u32 result=FieldFx_UpdateTasks((PmSlotHeader *)owner);
+            const u32 words[]={result,owner->prefix.reserved00,owner->tasks.flags,
+                (u32)((u8 *)owner->tasks.pc.script-(u8 *)detached_scripts[script_id]),owner->tasks.delay};
+            for(unsigned i=0;i<5;++i)for(unsigned byte=0;byte<4;++byte)
+                detached_hash=(detached_hash^((words[i]>>(byte*8))&255))*UINT64_C(1099511628211);
+            if(idle_state.core_flags!=0xa5a55a5a || orphan_event!=1)return 0;
+            ++detached_cases;
+        }
+    }
+    if(detached_cases!=216 || detached_hash!=UINT64_C(0x2acb79b6be8b0f35)){
+        fprintf(stderr,"Detached task owner CPU hash: %u %016llx\n",detached_cases,(unsigned long long)detached_hash);return 0;}
+    puts("Original detached task owners: 216 USA CPU observable held/wait/stop states, absent actor/core, preserved flags and untouched orphan state passed");
+    u16 detached_visual[]={5,0,0,2,0,0,4,1,0,0,0,0};
+    for(unsigned missing=0;missing<3;++missing){
+        FieldFx_InitTaskContext((PmSlotHeader *)owner);owner->prefix.reserved00=0;
+        owner->prefix.actor=missing==1?NULL:&idle_actor;idle_actor.state=missing==2?&idle_state:NULL;
+        idle_state=(FieldActorState){0};u8 event=1;idle_state.action_state=&event;
+        owner->tasks.pc.script=detached_visual;owner->tasks.argument=42;
+        table.callbacks[0]=observe_native_task;table.sizes[0]=sizeof(NativeTaskState);
+        unsigned draws=task_draws;g_ViewMatrixSlot.value=&identity;
+        if(FieldFx_UpdateTasks((PmSlotHeader *)owner)!=0 || owner->tasks.count!=1 || owner->tasks.flags!=1 ||
+           FieldFx_DrawTasks((PmSlotHeader *)owner)!=0 || task_draws!=draws+1)return 0;
+        idle_actor.state=NULL;u32 orphan_flags=idle_state.core_flags;u8 old_event=event;
+        if(FieldFx_UpdateTasks((PmSlotHeader *)owner)!=0 || owner->tasks.count || owner->tasks.flags!=1 ||
+           FieldFx_UpdateTasks((PmSlotHeader *)owner)!=0 || owner->prefix.reserved00!=4 || owner->tasks.flags!=1 ||
+           idle_state.core_flags!=orphan_flags || event!=old_event)return 0;
+    }
+    g_ViewMatrixSlot.value=saved_view;
+    puts("Detached visual tasks: init, draw, owner/core detachment, natural child expiry and original stop preserve the held palette state");
     g_GameState.loaded_scene_archive=saved_archive;g_FieldFxAltPaletteFlag=saved_palette;
     if(idle_hash!=UINT64_C(0x15a8baf2abf03bd9)){fprintf(stderr,"Idle event task hash %016llx\n",(unsigned long long)idle_hash);return 0;}
     puts("Original task event lifetime: 972 USA CPU cases, absent/0..4 event phases, hold/stop/signal, HP and actor-mode gates passed without low-memory writes");

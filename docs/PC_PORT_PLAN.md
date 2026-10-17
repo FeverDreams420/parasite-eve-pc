@@ -2,7 +2,44 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
-Najnowszy kandydat: /tmp/pe-room-arc-v1. Gałąź M123 z pierwszą pokonaną
+Bieżąca poprawka: odłączony stan aktora podczas sprzątania po śmierci.
+Zwykły input od oryginalnego Continue N doprowadził do walki M120,
+wygranej, dwóch Medicine3 i Full Cure oraz powrotu do M122. Wygrana
+przy52789: HP86/max195; po użyciu Medicine3 i powrocie przy53694: HP195.
+Normal/SAN mają identyczne pełne JSON/VRAM i niezmienione prywatne karty:
+/tmp/pe-m120-ordinary-win-v1-proof.json i /tmp/pe-m120-return-v1-proof.json.
+M123 nadal nie pokonano; gałąź z jedną martwą głową zakończyła się śmiercią.
+
+Powtórna walka M122 zakończyła się śmiercią Ayi po dwóch próbach Run.
+Przy55243 tryb walki3/krok1 odłączył combat core przeciwnika typu4,
+a pierwotny interpreter efektu próbował zapisać przez NULL (geometry.c).
+Naprawa w istniejącym geometry.c pomija tylko zapis do nieistniejącego
+core; zachowuje held/palette flag, PC, opóźnienia i naturalne wygasanie.
+Analogiczne zapisy kontaktowe zabezpieczono w istniejących line_burst.c
+oraz m123.c. Bez nowych plików lub przenoszenia funkcji produkcyjnych.
+
+Nowy fixture w istniejącym original_actor_animation.c: 216 stanów
+oryginalnego USA interpretera (800D413C), trzy kolejne aktualizacje,
+NULL actor/core oraz niezależne sprawdzenie spawn/draw/wygaśnięcia efektu.
+Oracle /tmp/pe-task-detached-state-mips.py: FNV2acb79b6be8b0f35.
+Negatywny fixture z wyłącznie starym geometry.o abortuje SAN na NULL.
+Świeże niezmienne buildy /tmp/pe-fx-detached-v3, po173 obiekty/profil.
+CPU normal/SAN exit0 (0,79/2,28s), wymagane --assets exit0
+(11,94/50,12s), root build przeszedł. Zależności, obiekty i binarki
+zweryfikowane: /tmp/pe-fx-detached-v3-proof.json.
+Pełny replay na identycznym kodzie produkcyjnym v1 przechodzi do56000
+(normal27,43s/SAN97,65s), wraca po śmierci do intro, pełne JSON/VRAM
+zgodne, karty B–N niezmienione. /tmp/pe-fx-detached-native-v1-proof.json.
+Udanej ucieczki nie potwierdzono. Stary debugger current-v16/session70757
+pozostaje zatrzymany na oryginalnej awarii; jego binarki są niezmienne.
+Dalsza kampania i pełny port pozostają nieukończone.
+Aktualny root build: wymagany realny Disc1, original-game-melissa-encounter
+PASS125,07s (bez skip), /tmp/pe-fx-detached-v3-melissa-required.log.
+
+Poniżej historyczny dowód poprzedniej poprawki; manifest arc-v1 odnosi
+się do jej źródeł, a nie bieżących zmian geometry/line_burst/m123.
+
+Poprzedni kandydat: /tmp/pe-room-arc-v1. Gałąź M123 z pierwszą pokonaną
 głową ujawniła w SAN rzeczywisty błąd actor_classes.c:1551: przesunięcie
 ujemnego wyniku GTE (-7958) o12. W istniejącym module poprawiono ten sam
 wzór we wszystkich trzech procedurach: RoomLib_HandlerC,
@@ -54,8 +91,8 @@ reakcje sterownika na szarżę; sama korekta trasy nie zapewniła wygranej.
 Odczytano pełne19076B oryginalnego skryptu rodzica do analizy ataków:
 /tmp/pe-m123-parent-original-script.bin i .txt.
 
-Żywy debugger current-v14 (session80047), /tmp/pe-nypd-current-v14-live,
-stoi przy54352 na /tmp/pe-room-arc-v1-game. Args/log/input:
+Historyczny debugger current-v14 (session80047), /tmp/pe-nypd-current-v14-live,
+stał przy54352 na /tmp/pe-room-arc-v1-game; został zakończony. Args/log/input:
 /tmp/pe-nypd-current-v14-{args.json,lldb.log,input.jsonl}. V12 i V13 jawnie
 zakończono po sprawdzeniu następców. Kandydat i jego obiekty są niezmienne.
 Wygrana całego M123 i dalsza kampania pozostają do wykonania.
@@ -160,7 +197,7 @@ rozdziela jeden pocisk na pozostałe18HP celu3 i drugi na cel5 (98→69HP).
 Po uniku Energy Shot przy153PE pokonuje ostatni cel. Odebrano nagrody,
 Medicine2 z11 przywraca61→151HP, potem M124→M044→M123/dialog106.
 Przy51888: M123/A80221C8, stage400, tryb walki0, lock4, menuNULL,
-HP151/189, PE10, ATB4886, SG550 clip16/pool69, SpVest14, M16 zachowane9,
+HP151/195, PE10, ATB4886, SG550 clip16/pool69, SpVest14, M16 zachowane9,
 leki zużyte. M123 nie jest wygrane.
 
 Niezależne odtworzenie całej gałęzi od Continue N na niezmienionym v4:

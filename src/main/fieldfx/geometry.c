@@ -2205,7 +2205,7 @@ int FieldFx_UpdateTasks(PmSlotHeader *raw)
             if (context->count == 0) {
                 owner->prefix.reserved00 = 4;
                 if (g_FieldFxTaskContext->flags) {
-                    if (g_FieldFxOwner->actor->state != 0) {
+                    if (g_FieldFxOwner->actor && g_FieldFxOwner->actor->state != 0) {
                         g_FieldFxOwner->actor->state->core_flags &= 0xC0FFFFFF;
                         if (g_FieldFxOwner->actor->state->action_state)
                             *g_FieldFxOwner->actor->state->action_state = 4;
@@ -2247,8 +2247,11 @@ int FieldFx_UpdateTasks(PmSlotHeader *raw)
             break;
         case 5:
             if (a == 0) {
-                g_FieldFxOwner->actor->state->core_flags =
-                    (g_FieldFxOwner->actor->state->core_flags & 0xC0FFFFFF) | 0x1000000;
+                /* Escape/death can detach the combat state before this
+                 * visual program finishes. Preserve its held/palette state. */
+                if (g_FieldFxOwner->actor && g_FieldFxOwner->actor->state)
+                    g_FieldFxOwner->actor->state->core_flags =
+                        (g_FieldFxOwner->actor->state->core_flags & 0xC0FFFFFF) | 0x1000000;
                 g_FieldFxTaskContext->flags = 1;
             } else if (g_FieldFxTaskContext->flags && g_FieldFxOwner->actor && g_FieldFxOwner->actor->state) {
                 u8 *mode = g_FieldFxOwner->actor->state->action_state;

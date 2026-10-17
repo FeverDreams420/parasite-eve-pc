@@ -427,7 +427,7 @@ int RoomM123_JointBeacon(int mode, void *data, intptr_t argument) {
         state->target.z += position.z;
         if (FieldFx_IsPlayerInSegmentBand(state, &state->target, 0x140) == 0) return 0;
         if (state->armed == 0) return 0;
-        if (g_FieldFxTaskContext->flags) {
+        if (g_FieldFxTaskContext->flags && g_FieldFxOwner->actor && g_FieldFxOwner->actor->state) {
             FieldActorState *core = g_FieldFxOwner->actor->state;
             if ((core->core_flags & 0x3F000000) == 0x01000000) {
                 ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
@@ -818,7 +818,8 @@ int RoomM123_PulseRing(int mode, void *data, intptr_t argument) {
                 next->frame = 0;
             }
         }
-        if (g_FieldFxCurrentAge == 32 && g_FieldFxTaskContext->flags) {
+        if (g_FieldFxCurrentAge == 32 && g_FieldFxTaskContext->flags &&
+            g_FieldFxOwner->actor && g_FieldFxOwner->actor->state) {
             object = g_FieldFxOwner->actor->state;
             if ((object->core_flags & 0x3F000000) == 0x01000000) {
                 ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;

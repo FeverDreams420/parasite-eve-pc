@@ -142,7 +142,7 @@ int RoomEffect_LineBurstController(int mode, void *data, intptr_t argument) {
             state->intensity = rsin((state->timer * 16384) / params->duration) / 128 + 0x80;
             if (state->countdown != 0) state->countdown--;
             if (FieldFx_IsPlayerWithinRadius(&state->px, 0x104) && state->countdown == 0) {
-                if (g_FieldFxTaskContext->flags) {
+                if (g_FieldFxTaskContext->flags && g_FieldFxOwner->actor && g_FieldFxOwner->actor->state) {
                     FieldActorState *owner=g_FieldFxOwner->actor->state;
                     if ((owner->core_flags & 0x3F000000) == 0x01000000) {
                         ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;

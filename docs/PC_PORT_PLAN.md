@@ -2,6 +2,12 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Świeża regresja zgłoszenia206/82 na aktualnych build/parasite-eve-pc oraz
+build/test-original-actor-animation: --native-melissa exit0, input14,
+FNV c7ae3598591ad7c3; wymagane realne CUE, headless, prywatny cwd w /tmp.
+Pełna pierwsza walka z Melissą od New Game przechodzi bez abortu. Log:
+/tmp/pe-melissa-current-recheck-20261017/melissa.log.
+
 M123 jest włączone do natywnego buildu w całości, w istniejącym m123.c
 oraz RoomM123_SelectSlotPointer.c. Naprawiono wszystkie11 callbacków,
 sprawdzono trzy initializery, a dwa selektory parametrów dostały natywne
@@ -62,13 +68,24 @@ bu10 puste, zero HP diagnostics. Args/logi/obraz:
 /tmp/pe-m123-boss-entry-v4-*. Stary błąd M123 z poprzedniego wpisu jest
 usunięty; nie dowodzi to zwycięstwa nad bossem ani ukończenia kampanii.
 
-Żywy debugger current-v8 (session29225) stoi przy42077 przed sterowaniem
-walką, HP101, PE9, ATB4859. /tmp/pe-nypd-current-v8-{lldb.log,args.json,
-input.jsonl}, prywatne karty /tmp/pe-nypd-current-v8-live. Zamrożonych
-/tmp/pe-m123-v4-game i obiektów nie przebudowywać w miejscu. Stare
-current-v6/v7 zostały jawnie zakończone po sprawdzeniu następcy. M118,
-zwycięstwo M123, późniejsze sceny, PS1 pixel/audio reference i cała
-pozostała kampania nadal wymagają pracy.
+Pierwsza próba zwykłego rozegrania M123 zakończyła się śmiercią Ayi przy
+cap44867 (tryb walki3, HP0), bez awarii silnika. Powtórka wszystkich343
+przedziałów inputu na tym samym v4: normal/SAN exit0 (23,30/86,12s),
+identyczny cały JSON i VRAM debuggera, B–N niezmienione, bu10 puste,
+zero HP diagnostics. /tmp/pe-m123-first-loss-v1-proof.json oraz args/logi.
+To dowód odtwarzalnej przegranej, nie zwycięstwa nad bossem. M16 ma Heat:
+cel3 jest odporny (3HP/pocisk), cel2 słaby (25HP/pocisk). Heal2 wymaga120PE.
+Nie zmieniano tych oryginalnych zasad w celu ułatwienia testu.
+
+Debugger current-v8 został zakończony. Następca current-v9 (session2763),
+/tmp/pe-nypd-current-v9-{lldb.log,args.json,input.jsonl}, używa tego samego
+immutable v4 i prywatnych kart. Z bazowego Continue N przeszedł M121,
+M117 i niewygraną dotąd M118: zwykłe dwa ataki M16 oraz Energy Shot
+pokonały cel6 (150→99→48→0HP). Przy38352 Aya ma93HP, oba Medicine1,
+tryb walki2 i otwarty ekran nagród. Ten nowy wynik pozostaje obserwacją
+debuggera do czasu niezależnej powtórki normal/SAN. Zamrożonych binarek
+ani obiektów nie przebudowywać w miejscu. Zwycięstwo M123, późniejsze
+sceny, PS1 pixel/audio reference i cała pozostała kampania wymagają pracy.
 
 Po zwycięstwie M122 zweryfikowano również zwykłe wejście do M124:
 cap40196, M124/A8022248, stage400, HP101/189, pole9, lock0, menuNULL,

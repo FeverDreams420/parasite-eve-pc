@@ -129,21 +129,27 @@ void Menu_OnEquipConfirm(MenuWidgetNode *unused, int confirmed)
             Menu_OpenItemUsePanelAtIndex(MenuWidget_GridCellIndex(node));
             node->cursor_x = -1;
             next = MenuWidget_FindByModeAndSelectedBase(2, 5);
-            MenuWidget_SetCurrentNode(next->cursor_x < 0 ?
-                MenuWidget_FindByModeAndSelectedBase(2, 6) : next);
+            /* A battle equip command has already reset the widget pool.
+             * Retail then reads cursor_x through address zero in PS1 RAM;
+             * the native menu has no selection view left to restore. Keep
+             * the packed-list and deferred-input updates below. */
+            if (next)
+                MenuWidget_SetCurrentNode(next->cursor_x < 0 ?
+                    MenuWidget_FindByModeAndSelectedBase(2, 6) : next);
             MenuWidget_NavScrollTo(0x35);
         } else if (!Inv_GetSlotItemData(MenuWidget_GridCellIndex(node))) {
             Menu_CreateNotificationDialog(0x1D, 0);
         } else {
             node->cursor_x = -1;
             next = MenuWidget_FindByModeAndSelectedBase(2, 5);
-            MenuWidget_SetCurrentNode(next->cursor_x < 0 ?
-                MenuWidget_FindByModeAndSelectedBase(2, 6) : next);
+            if (next)
+                MenuWidget_SetCurrentNode(next->cursor_x < 0 ?
+                    MenuWidget_FindByModeAndSelectedBase(2, 6) : next);
             MenuWidget_NavScrollTo(0x35);
         }
         Inv_BuildFilteredPackedList(g_InvItemUsableFlag ? 0x1FE : 0x200);
         node = MenuWidget_FindByModeAndSelectedBase(2, 6);
-        if (node == MenuWidget_GetCurrentNode()) {
+        if (node && node == MenuWidget_GetCurrentNode()) {
             node->cursor_y = 0;
             node->cursor_x = 0;
         }

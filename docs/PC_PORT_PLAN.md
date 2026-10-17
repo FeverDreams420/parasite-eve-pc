@@ -2,6 +2,58 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Nowy prawdziwy crash zwykłej rozgrywki: po SaveL droga przez M100
+(zwycięstwo nad trzema przeciwnikami, HP165), M103 i powrót do M107
+uruchomiła dodatkową walkę. M16 ma pusty magazynek i zapas ammo pool0=0;
+exp_or_acc/maxAtk dotyczą PE, nie są dowodem zapasu amunicji.
+Dwie próby pustego strzału nie zadały obrażeń. Heal2 oraz Medicine2 użyte
+przez oryginalne menu; następnie zmiana M16→M92F (bag1) przy cap58114→58126
+wywołuje NULL read w Menu_OnEquipConfirm/skills.c:132. Ten odcinek to
+próba regresji, nie zwycięstwo M107; po naprawie dalsze czekanie kończy
+się zwykłą przegraną przy58358/HP0. Nie kontynuować tej gałęzi jako kampanii.
+
+Przyczyna potwierdzona w USA MIPS 80046574..800466BC oraz 800512AC:
+komenda equip 197/198 resetuje całą pulę widgetów, a callback kontynuuje
+czytanie panelu5 spod adresu0+44, a później zapis do nieistniejącego6.
+Na PC to UB/SIGSEGV. Istniejący Menu_OnEquipConfirm naprawiony na miejscu:
+obie ścieżki wyposażenia pomijają przywracanie usuniętych paneli,
+pozostawiając oryginalne komendy, packed-list rebuild i deferred input.
+Nie ma nowych funkcji/pliku/abstrakcji gry.
+
+Istniejący original_received_item_opcode w tests/original_actor_animation.c
+obejmuje teraz rzeczywisty callback zmiany broni/zbroi i oba anulowania:
+komenda197/198, stary rekord w undo queue, nowy tracked slot, brak widgetów
+po zamknięciu i właściwy deferred-input. Fixture z poprzednim skills.o
+rzeczywiście kończy normal SIGSEGV i SAN UBSan skills.c:132:45;
+/tmp/pe-battle-equip-test-baseline-tests-results.json i logi.
+Aktualny frozen /tmp/pe-battle-equip-v2-{game,fixture} oraz -sanitized:
+pełne CPU normal/SAN exit0, pełne wymagane --assets exit0 10,97/48,00s,
+bez błędów sanitizerów; nowy test wykonany w obu wariantach.
+/tmp/pe-battle-equip-v2-tests-results.json, build log i cmake-build.log.
+
+Pierwsza pełna powtórka poprawki cap58126 (v1) normal0 25,52s, SAN0 90,16s;
+stary runtime normal SIGSEGV po24,19s i SAN abort UBSan po89,12s.
+Pełny JSON/1MiB VRAM zgodny również z debuggerem, SHA256
+3965af0a58a3d26aa84ae591caeb06e38ae4c90d12b0588580f6e2e02d1e1d1b;
+M107/story400, HP60/181, menuNULL, broń1/M92F, zbroja14, trzy żywe cele.
+Wszystkie B–L identyczne z prawdziwym checkpointem L, zero HP diagnostics.
+/tmp/pe-battle-equip-v1-native-proof.json i -verify.py.
+V1 debugger exec56657/PID90037 zakończono po próbie; ponowne linkowanie
+omyłkowo użyło jego nazwy. Nie należy dalej go używać. Wszystkie następne
+buildy mają unikalny prefix v2. Końcowy v2 replay cap58126: normal exit0
+24,01s, SAN exit0 87,08s, cały JSON i VRAM identyczne z v1/debuggerem.
+Manifest /tmp/pe-battle-equip-v2-native-proof.json i -verify.py; zbiorczy
+/tmp/pe-battle-equip-v2-proof.json wiąże oba źródła, frozen executable,
+główny build, testy CPU/assets i negatywną regresję. CMake build exit0.
+
+Właściwa dalsza droga: po scenie Torresa bit131072 w bank44 jest ustawiony
+(L ma67246140/0402183C), więc drzwi M099 wracają do M100. Następny poziom
+M116 prowadzi przez event6 w M100, worldx[820,900],z[605,1614]; nie przez
+M107 ani M104. Trasa podłogi do schodów kończy się punktami
+251,996→519,1275→551,942→726,1269→871,936.
+Należy zbierać rzeczywiste ammo z nagród, a nie uznawać ObtainAll przy
+pełnym ekwipunku za odebranie wszystkiego. Rzeczywista kampania od L trwa.
+
 Zwykły checkpoint L11: oryginalne Medicine2 w11 leczy115→181,
 krótka scena M115, powrót M107→M100→M099, telefon i nowy plik L.
 Pełny coldK→SaveL/cap48919 normal exit0 21,66s, SAN exit0 79,72s.
@@ -51,10 +103,13 @@ wiąże hashe obu zmienionych źródeł, frozen normal/SAN i głównego executab
 pełne testy CPU/asset oraz ten replay. Nie dowodzi to pełnego PCM gry ani
 całej kampanii. Żaden nowy plik repozytorium nie powstał.
 
-Bieżący debugger exec34303/PID88078 doszedł zwykłymi inputami do
-cap48919/M099, story400, HP181/181 i utworzył L11 przez oryginalny telefon.
-Powtórka zapisu i cold Continue przeszły oba warianty opisane poniżej. Stary crash exec8898/PID87568 pozostaje
-wyłącznie do odczytów przy awarii i nie może być użyty do pe-step.
+Checkpoint L został zweryfikowany powyżej. Starszy debugger
+exec34303/PID88078 zatrzymał się później na crashu zmiany broni opisanym
+poniżej; tylko do odczytu, bez pe-step. Nowy debugger exec8504/PID90773
+używa /tmp/pe-battle-equip-v2-game i prywatnych kart
+/tmp/pe-nypd-l-story400-live, cold Continue L/cap24000/HP181.
+Log/args/cmd/input mają prefix /tmp/pe-nypd-l-story400-live-.
+Dalszą drogę należy odczytać z najnowszego logu i inputu.
 
 Naprawa czasu życia pokojowych SFX w istniejącym
 Asset_FindTable2CByU16Key/scene_assets.c: pełne serializowane wpisy mają

@@ -29,6 +29,7 @@
 #include "pe1/memcard.h"
 void DeliverEvent(unsigned event,unsigned spec);
 #include "pe1/battle_runtime.h"
+#include "pe1/battle_cmd.h"
 #include "pe1/battle_start.h"
 #include "pe1/battle_entity_anim.h"
 #include "pe1/battle_level_up.h"
@@ -12379,6 +12380,57 @@ static int original_received_item_opcode(PeDisc *disc,PeDiscFile *exe)
     if(node.current.script!=program+5 || node.active || node.flags!=0x90 || g_ScriptNodePool ||
        g_GameState.flags!=0x9000 || g_GameStateFlags!=4 || g_GeomScroll.state.flags!=0x7000 ||
        !g_MenuWidgetCurrentNode || g_MenuWidgetCurrentNode->selected_base!=0x37)valid=0;
+    /* Equip confirmation can close the complete menu while its callback is
+     * still running. Exercise both original command paths and cancellation. */
+    {
+        extern int g_MenuCommandResult;
+        PlayerInventoryState inventory=g_PlayerInventoryState;
+        InventoryItemWorkspace workspace=g_InventoryItemWorkspace;
+        BattleCmdEntry commands[4];memcpy(commands,g_BattleCmdStack,sizeof(commands));
+        BattleCmdEntry *command_top=g_BattleCmdStackTop;
+        FieldActor *player=g_PlayerEntity,entity={0};Combatant core={0};entity.state=&core;
+        s16 *item_ptr=g_InvItemPtr,*override=g_InvActiveListOverride;
+        int limit=g_InvSlotLimit,packed=g_InvPackedListCount,bonus=g_InvBonusSlotCount;
+        int battle=g_MenuBattleEquipMode,result=g_MenuCommandResult,pending=g_MenuInputPausePending;
+        u8 *target=g_MenuActiveListTarget;u32 *bits=g_InvSelectionBits;
+        int words=g_InvSelectionBitWords;u32 selection[2];memcpy(selection,g_InvSelectionBitStorage,sizeof(selection));
+        for(unsigned armor=0;armor<2;++armor)for(unsigned confirm=0;confirm<2;++confirm){
+            memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
+            g_AyaSaveState.inventory_slot_count=4;g_InvBonusSlotCount=0;
+            for(unsigned j=0;j<4;++j){
+                g_AyaInventoryItems[j]=256+j;
+                g_InventoryRuntime.equipment[j].kind=j<2?1:9;
+                g_InventoryRuntime.equipment[j].iconId=1;
+            }
+            g_InventoryRuntime.tracked[0]=0;g_InventoryRuntime.tracked[2]=2;
+            g_InvItemPtr=g_AyaInventoryItems;g_InvSlotLimit=4;g_InvActiveListOverride=NULL;
+            g_InvPackedListCount=2;g_InvPackedList[0]=armor?2:0;g_InvPackedList[1]=armor?3:1;
+            g_PlayerEntity=&entity;g_MenuActiveListTarget=NULL;g_MenuBattleEquipMode=1;
+            g_MenuCommandResult=0;g_MenuInputPausePending=0;g_InvItemUsableFlag=!armor;
+            BattleCmd_ResetTableCursor();MenuWidget_InitPool();
+            MenuWidgetNode *panel=MenuWidget_CreateSimpleNode(7,NULL,NULL,0);
+            MenuWidgetNode *list=MenuWidget_CreateNode(7,panel,panel);
+            list->grid_width=1;list->cursor_x=0;list->cursor_y=1;MenuWidget_SetCurrentNode(list);
+            Menu_OnEquipConfirm(NULL,confirm);
+            if(confirm){
+                if(g_MenuCommandResult!=(armor?0x198:0x197) || g_MenuWidgetActiveListHead ||
+                   g_MenuWidgetCurrentNode || g_BattleCmdStackTop!=g_BattleCmdStack+1 ||
+                   g_BattleCmdStack[0].header.word!=(armor?3u:2u) ||
+                   g_BattleCmdStack[0].payload.equip_restore.item_data!=&g_InventoryRuntime.equipment[armor?2:0] ||
+                   g_InventoryRuntime.tracked[armor?2:0]!=(armor?3:1) ||
+                   g_MenuInputPausePending!=!armor)valid=0;
+            }else if(g_MenuCommandResult || g_MenuWidgetCurrentNode!=list ||
+                     g_BattleCmdStackTop!=g_BattleCmdStack || g_MenuInputPausePending)valid=0;
+        }
+        g_PlayerInventoryState=inventory;g_InventoryItemWorkspace=workspace;
+        memcpy(g_BattleCmdStack,commands,sizeof(commands));g_BattleCmdStackTop=command_top;
+        g_PlayerEntity=player;g_InvItemPtr=item_ptr;g_InvActiveListOverride=override;
+        g_InvSlotLimit=limit;g_InvPackedListCount=packed;g_InvBonusSlotCount=bonus;
+        g_MenuBattleEquipMode=battle;g_MenuCommandResult=result;g_MenuInputPausePending=pending;
+        g_MenuActiveListTarget=target;g_InvSelectionBits=bits;g_InvSelectionBitWords=words;
+        memcpy(g_InvSelectionBitStorage,selection,sizeof(selection));
+        if(valid)puts("Original equip confirmation: weapon/armor command, undo payload, cleared widget pool, deferred input and cancellation passed");
+    }
     memcpy(g_MenuWidgetNodePool,nodes,sizeof(nodes));
     g_MenuWidgetActiveListHead=heads[0];g_MenuWidgetFreeListHead=heads[1];g_MenuWidgetCurrentNode=heads[2];
     g_MenuWidgetSavedNode=heads[3];g_MenuActiveWidget=heads[4];

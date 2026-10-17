@@ -15,7 +15,10 @@ readability and native builds.
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration and further encounters,
 plus genuine memory-card Save/Continue through checkpoint H in M087. The
-mandatory M086 encounter still needs an ordinary successful replay. Separate,
+mandatory M086 encounter is also won through ordinary input from H: all four
+worms defeated, Aya at 83/133 HP, with identical full state, equipment and VRAM
+in normal and sanitized replays. Reward collection and a subsequent ordinary
+checkpoint remain unverified. Separate,
 explicitly diagnostic runs with guarded HP changes reach Day 3 NYPD room M100
 via Soho and the Museum story. Normal and sanitized replays agree on the full
 state and VRAM through M111. A separate diagnostic branch also has a genuine

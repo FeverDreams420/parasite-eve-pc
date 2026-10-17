@@ -55,16 +55,27 @@ input zarchiwizowano /tmp/pe-h-heat-worm-loss-args.json, cały trace
 /tmp/pe-resident-hit-h-live-input.jsonl. PID83202/exec19315 zatrzymany po
 przegranej; nie przedstawiać tego jako ukończenia zwykłej kampanii.
 
-Trwa kolejna prywatna próba pełnymi seriami zamiast pojedynczych strzałów:
-exec22585/PID84875, /tmp/pe-h-heat-burst-live, /tmp/pe-o1-raster-game z O1
-rendererem. Polecenia w /tmp/pe-h-heat-burst-live.cmd automatycznie ładują
-cold H + cały sprawdzony Tune Up, dochodzą M086 i wywołują ograniczony do24
-obiegów pomocnik /tmp/pe-h-worms-burst-control.py. Trace
-/tmp/pe-h-heat-burst-live-input.jsonl, postęp /tmp/pe-h-heat-burst-turns.jsonl,
-log -live-lldb.log. Pomocnik czyta rzeczywiste wrogie pociski PM120 i pola
-przeciwników, planuje ruch po floor/arenie i używa wyłącznie przycisków;
-nie zmienia HP/PE/ATB ani RNG. Najpierw odczytać aktualny wynik/proces,
-nie restartować działającego przebiegu z powodu czasu obserwacji.
+Druga próba pełnymi seriami zakończyła się zwycięstwem M086 przez zwykły
+input: cztery robaki pokonane, Aya83/133, battle mode2, live enemies0,
+VBlank38156, A8008348, stage248. Źródło genuine H7 ma SHA256
+3536b725f8f40be24e18bb274a6137e748e9f0b00a246ab012b67940cfc9b176;
+zero wcześniejszych i nowych HP diagnostics. Pomocnik czyta rzeczywiste
+pociski PM120 i floor, a steruje wyłącznie przyciskami. Nie zmienia HP,
+PE, ATB, statystyk ani RNG. Oryginalne Tune Up i leczenie przez menu.
+
+Pełne cold H→Tune Up→zwycięstwo powtórzono bez debuggera: normal exit0
+38,07s, SAN exit0 126,67s, bez zgłoszeń sanitizerów. Cały końcowy JSON obu
+buildów identyczny, wszystkie4096 bajtów equipment oraz pełne1MiB VRAM
+zgodne także z debuggerem. VRAM SHA256
+9f39ca55c82e6ccd7d74ca8637a114e04c68b00ccd32eb2d2f860703662e56a8.
+1352 zdarzenia pada, B–H niezmienione, bu10 puste. Manifest
+/tmp/pe-m086-ordinary-v1-proof.json, verifier -verify.py, wejścia
+-{normal,san}-args.json, logi i wyniki -results.json. Jest to dowód
+zwycięstwa przed odbiorem nagród, nie całej kampanii ani późniejszego save.
+Prywatny debugger /tmp/pe-h-heat-burst-live doszedł następnie do panelu
+level-up przy38608; odbiór nagród i kolejny zwykły checkpoint pozostają
+niezweryfikowane. Wcześniejszy diagnostyczny I zachowuje osobną proweniencję
+z15 HP guards i nie staje się przez ten wynik zwykłym checkpointem.
 
 Uzupełniono wszystkie23 resident programy85..107. Nowe85..91 używają
 wyłącznie istniejących funkcji sprite_effects.c/emitters.c: pełne skrypty264

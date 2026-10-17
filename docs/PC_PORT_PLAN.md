@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dalszy zwykły input z tej samej trasy B przechodzi rozmowy Daniela/M036,
+nocną narrację/M000, planszę Fusion/M351, oryginalne pytanie o zapis182,
+Yes i zapis C, zamknięcie menu oraz M042/dialog9. Przy61749: etap136,
+HP72/72 (oryginalne przywrócenie na granicy dni), pojemność15,
+slot4=259, CureP zachowane, brak menu/przeciwników, mode9, lock3,
+pozycja[-3342336,-131072,1835008], yaw3072. Normal/SAN0 w18,79/52,16s:
+pełny JSON i1MiBVRAM identyczne z żywą sesją, C identyczne bajtowo,
+źródłowy B niezmieniony. VRAM SHA256
+5486fade055a95ac058992b278cd283ea906eb19042ced1697835493d9fb6775.
+Prawdziwy C8192B SHA256
+d454344490b57a2a50af4fff3bb69cf052b5f1b18a9834355ec7202a0a9c4e7b.
+/tmp/pe-theater-daniel-c-v1-{proof.json,verify.py,results.json} i pełne input/logi.
+
+Zimny Continue C: normal/SAN0 w4,70/14,77s, M042/dialog9, HP72/72,
+pojemność15, wszystkie sloty i całe wyposażenie zgodne z sesją zapisu,
+pełny JSON/VRAM zgodny pomiędzy profilami, C niezmieniony. Dowód:
+/tmp/pe-theater-day2-continue-c-v1-proof.json. Wszystkie natywne procesy
+zakończone0; prywatne karty, bez ingerencji w root bu00/bu10.
+
+Niezależny headless oryginał USA PS1 także wczytał ten C, wyświetlił
+File loaded, Fusion i M042/dialog9. Zimny odczyt porównano z natywnym:
+HP72/72, powyższa pozycja, pojemność15, wszystkie50 slotów,4096B rekordów
+wyposażenia oraz sloty broni/pancerza identyczne. Payload C niezmieniony
+w standardowym opakowaniu karty PS1; bez patchowania RAM/EXE gry.
+/tmp/pe-reference-day2-c-v1/{proof.json,loaded-c-state.json,card-proof.json},
+kadry loaded/fusion/m042.png i input.jsonl. Odczyt referencji wykonano przy klatce7890.
+Po zebraniu dowodów exec89963 zwrócił -1; PID2386 jest terminalnym zombie,
+a porty AI24821/GDB24820 są zamknięte. Nie zakładać żywej sesji referencji.
+Przy uruchamianiu wskazano istniejące biblioteki hosta przez DYLD_LIBRARY_PATH;
+przycisk Analog przełączył kontroler w tryb cyfrowy do wyboru pliku3.
+To zgodność konkretnego checkpointu, nie całej kampanii ani wszystkich obrazów.
+Nie dodano plików repo ani kodu produkcyjnego. Następny krok to dalsza
+zwykła eksploracja dnia2 oraz utrwalenie nowej trasy w istniejącym fixture.
+
 Zimny Continue z prawdziwego B przechodzi teraz obie fazy aligatora:
 M034 (ogon), przejście M348 (głowa), zwycięstwo, awans, Obtain All i End,
 rozmowy po walce oraz scenę Daniela M036. Przy51717: etap120,
@@ -20,7 +54,7 @@ To replay od Continue B, nie nowy pojedynczy replay od New Game;
 pełny zwykły New Game→B potwierdzono osobno poniżej. Nie dodano kodu
 produkcji ani plików repo. Trasa B→zwycięstwo nie jest jeszcze trwałym
 przypadkiem CTest; przypadek23 nadal kończy się na samouczku M034.
-Następny krok: dalsza scena M036, oryginalny zapis i zimny Continue;
+Dalsza scena M036, oryginalny zapis i zimny Continue potwierdzone powyżej;
 pełny port pozostaje aktywny i nieukończony.
 
 Dodano w istniejącym fixture i CMake przypadek23 / original-game-alligator-entry.

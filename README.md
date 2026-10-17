@@ -44,7 +44,10 @@ Normal/sanitized runs agree on full state, VRAM and both save payloads; a cold
 Continue B also returns to field control with matching state and VRAM.
 Ordinary input from B now defeats both alligator phases, collects the reward
 and reaches Daniel's M036 scene. Normal/sanitized runs match the controlled
-session in full state and VRAM, with the source save unchanged.
+session in full state and VRAM, with the source save unchanged. The same route
+continues through the Day 2 transition and creates genuine Save C. Its cold
+Continue works in both native builds and the original USA game, with matching
+HP, position, all inventory slots and equipment records.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

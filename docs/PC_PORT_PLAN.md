@@ -2,6 +2,19 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Cold Continue nowego zwykłego K/cap24000 zakończony normal/SAN exit0,
+15,54/61,28s. Cały JSON i pełne1MiB VRAM identyczne, SHA256 VRAM
+6cef844df45d4e6bbb9a756e440d7c8c754b0517547f9126213f46e1b8834af8.
+M099/A80094C8, HP121/181, battle0/live0, lock0, menuNULL. Wszystkie B–K
+niezmienione i bu10 puste. Manifest
+/tmp/pe-nypd-ordinary-continue-k-v1-proof.json oraz -verify.py potwierdzają
+zachowane Medicine2/Medicine1/LockerKey2 i źródło K SHA256
+54496f90714c69769714474d771ddeecd73540dab71e3655117b27a39ab32785.
+To zamyka oczekiwanie na exec81849; oba procesy terminal0, bez sanitizer
+errors. Pełna dłuższa powtórka UTWORZENIA K pozostaje osobno pending:
+exec68753 normal terminal0 72,04s, SAN PID87401 potwierdzony żywy/R/99CPU
+przy ostatnim odczycie. Nie wywodzić jej PASS z krótszego Continue.
+
 Zakończona pełna zwykła powtórka coldI→M089→Day3/J→Soho→wyjazd→Museum
 M038/M239→całe filmy12/13 bez skip→nocne M192/cap147236: normal exit0
 64,81s, SAN exit0 222,97s, bez diagnostics. Cały JSON i pełne1MiB VRAM

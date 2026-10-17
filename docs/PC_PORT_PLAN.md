@@ -2,6 +2,43 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dalszy zwykły replay z prawdziwego C obejmuje poprawiony transfer Toola,
+wyposażenie M16A1 (slot10) i Kv Vest (slot4) przez normalne ekrany,
+M052→M051→M043, szatnię M045 i odbiór obu szafek: Cm Vest1
+(rekord0/slot0=256) oraz Medicine2 (slot9=7). Zużyty M84F pozostaje
+usunięty; jego wolny rekord został legalnie użyty przez nową kamizelkę.
+Dalej M046/dialog Eddiego192, powrót do Bakera, poprawnie odmówione
+przedwczesne uruchomienie konferencji/dialog205, scena Bena i Daniela
+M043/59–71, etap164, powrót do Bakera i podejście do biurka uruchamiają
+konferencję77–125. Po niej gracz wraca do M042/etap184. Nie zmieniano
+warunków sceny ani flag; wcześniejsza wizyta M043 przed Torresem nie
+mogła uruchomić sceny Bena. W menu broni Cross przełącza na listę7;
+Down w panelu parametrów6 nie wybiera broni. Finalny input to uwzględnia.
+
+Z telefonu M042 wykonano oryginalny zapis D (czwarty plik), zamknięto
+komunikat i menu. Przy81456: M042, etap184, HP72/72, pojemność15,
+weapon10/armor4, brak menu/dialogu/przeciwników, move_lock2,
+pozycja[38945818,-131072,-51276286], yaw2048. M16A1 zachował bonusy[5,4,1].
+Świeży pełny replay od zimnego Continue C normal/SAN0 w22,25/60,23s:
+cały JSON i1MiBVRAM identyczne z sesją sterowaną, wszystkie8192 bajty
+D identyczne, C niezmieniony. VRAM SHA256
+458e528f595d1657876eb05bedcbdd43d9aa267845027ea2c4aec5e229aa6e9c.
+D SHA256926e046fd4fc3921117f6e1642a9ee6b7e6d895814b7b259e196c9ff6d65e997.
+/tmp/pe-day2-c-depart-v1-{proof.json,verify.py,results.json}, args/input/logi/VRAM.
+
+Osobny zimny Continue D (karta zawiera tylko D): normal/SAN0
+w4,75/14,44s. M042/etap184, HP72/72, move_lock2, brak menu,
+cały ekwipunek/rekordy wyposażenia oraz wyposażone sloty zgodne z sesją
+zapisu. Pełny JSON/VRAM zgodny pomiędzy profilami, D niezmieniony.
+/tmp/pe-day2-phone-d-continue-v1-proof.json. D nie porównano jeszcze
+z niezależnym USA PS1; poprzednie porównanie dotyczy C. Wszystkie nowe
+procesy zakończone0, prywatne karty bez dostępu do root bu00/bu10.
+Kandydat /tmp/pe-day2-tool-transfer-v2 pozostaje niezmieniony:346 obiektów,
+ich zależności i cztery binarki ponownie zgodne z manifestem. Nie zmieniano
+kodu produkcyjnego ani nie dodawano plików repo w tym etapie. Nie powtarzano
+pełnej macierzy bootstrap. Następne: zwykłe wyjście D na mapę i muzeum;
+ta konkretna nowa trasa nie dotarła jeszcze poza komisariat.
+
 Naprawiono rzeczywisty crash Tune-Up przy zużyciu wyposażonego dawcy.
 Zwykły Continue C przechodzi M042→Baker/M041 (Mod Permit55), korytarzM043,
 boczne M047 i M056 z odmową wejścia do aresztu/dialog206 oraz powroty,

@@ -5,10 +5,14 @@
 M115 Escape potwierdzony żywym inputem: coldI→pierwszy ATB127HP przy37329,
 Triangle/ESC przez menu daje mode4 przy37425; po180+300 frame wraca
 37905, M115, flags128 bez battlebit2, lock0, menuNULL, mode10,
-HP127/181, native licznik0. Zwykła pełna powtórka exit0; SAN nadal
-potwierdzony żywy PID74065/exec37738. Args/logi i verifier
+HP127/181, native licznik0. Pełna powtórka normal/SAN PASS, oba exit0. Pełny JSON i1MiB VRAM
+identyczne, wszystkie B–I bez zmian, bu10 puste. SHA256 VRAM
+d36dd5d26e8f03dca24060e736cade780a39f22107e1d797bee24b7e7472d148.
+Verifier /tmp/pe-m115-escape-verify.py i /tmp/pe-m115-escape-proof.json;
+normal/frame.png obejrzany: prawidłowy korytarz, brak ekranu walki.
+Nadal coverage-only:15 wcześniejszych HP diagnostics źródłowego I, zero nowych. Args/logi i verifier
 /tmp/pe-m115-escape-{normal,san}-args.json, /tmp/pe-m115-escape-{normal,san}.log,
-/tmp/pe-m115-escape-verify.py. Nie ogłaszać jeszcze pary PASS przed SAN.
+/tmp/pe-m115-escape-verify.py. Nie jest to dowód wygrania tego starcia; to dowód oryginalnego Escape.
 
 Field Heal2 podniósł127→181. Prosta do przodu odtworzyła starcie przy38053:
 oryginalny skrypt przywraca po Escape world49,-2347 tuż przed pasem

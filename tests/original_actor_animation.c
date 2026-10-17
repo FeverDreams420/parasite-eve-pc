@@ -6544,6 +6544,41 @@ static int original_paired_glow_assets(PeDisc *disc,PeDiscFile *exe)
     puts("Original M107/M114, M111/M118 and M122: complete modules, descriptors, all actor and paired functions/tables, script/sizes/ramp and real-room authored PM passed");return 1;
 }
 
+static int original_m123_pulse_contact(void)
+{
+    FieldFxObjectPrefix *old_owner=g_FieldFxOwner;FieldFxTaskContext *old_context=g_FieldFxTaskContext;
+    FieldActor *old_player=g_PlayerEntity;int old_age=g_FieldFxCurrentAge,valid=1;unsigned cases=0;
+    FieldActor actor={0},player={0};FieldActorState core={0};Combatant player_core={0};
+    FieldFxObjectPrefix owner={0};FieldFxTaskContext context={0};
+    actor.state=&core;player.state=(void *)&player_core;owner.actor=&actor;
+    g_FieldFxOwner=&owner;g_FieldFxTaskContext=&context;g_PlayerEntity=&player;
+    const unsigned modes[]={1,3},ages[]={8,31,32,33,48};
+    const u32 flags[]={0,0x1000000,0x1000042,0x11000000,0x21000000,0x81000000,0xc1000000,0xffffffff};
+    const u32 player_flags[]={0,0x200,0xa5a55a5a};u64 hash=UINT64_C(14695981039346656037);
+    for(unsigned m=0;m<2;++m)for(unsigned a=0;a<5;++a)for(unsigned held=0;held<2;++held)
+    for(unsigned f=0;f<8;++f)for(unsigned p=0;p<3;++p){
+        struct {_Alignas(void *) u8 bytes[32];} data;memset(data.bytes,0xa5,sizeof(data.bytes));
+        g_FieldFxCurrentAge=ages[a];context.flags=held;core.core_flags=flags[f];player_core.stateFlags=player_flags[p];
+        u32 result=RoomM123_PulseRing(modes[m],data.bytes+8,0);
+        u32 words[]={result,core.core_flags,player_core.stateFlags};
+        for(unsigned i=0;i<3;++i)for(unsigned b=0;b<4;++b)
+            hash=(hash^((words[i]>>(8*b))&255))*UINT64_C(1099511628211);
+        for(unsigned b=0;b<sizeof(data.bytes);++b)hash=(hash^data.bytes[b])*UINT64_C(1099511628211);
+        ++cases;
+    }
+    if(cases!=480 || hash!=UINT64_C(0x92f9f09848a02f45)){
+        fprintf(stderr,"M123 pulse contact CPU hash %u %016llx\n",cases,(unsigned long long)hash);valid=0;}
+    for(unsigned missing=0;missing<2;++missing){
+        u16 particle[6]={0};owner.actor=missing?NULL:&actor;actor.state=NULL;
+        context.flags=1;g_FieldFxCurrentAge=32;core.core_flags=0xa5a55a5a;player_core.stateFlags=0x200;
+        if(RoomM123_PulseRing(1,&particle,0)!=2 || context.flags!=1 ||
+           core.core_flags!=0xa5a55a5a || player_core.stateFlags!=0x200)valid=0;
+    }
+    g_FieldFxOwner=old_owner;g_FieldFxTaskContext=old_context;g_PlayerEntity=old_player;g_FieldFxCurrentAge=old_age;
+    if(valid)puts("Original M123 pulse contact: 480 unhooked USA CPU age/held/core/player states, full payload guards, plus absent actor/core preserve visual completion without combat writes passed");
+    return valid;
+}
+
 static int original_m123_programs(SceneAssetView *room)
 {
     PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
@@ -14656,7 +14691,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!original_paired_glow_states() || !original_paired_glow_program_flow() || !original_line_burst_states() || !original_dropped_flare_states() || !original_m089_states() || !original_m086_states() || !original_motion_states() || !original_motion_program() || !original_window_lifecycle() || !original_window_motion() || !original_room_e_init() || !original_room_e_update() || !original_effect_sequence_updates() || !original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_room_arc_offsets() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!original_m123_pulse_contact() || !original_paired_glow_states() || !original_paired_glow_program_flow() || !original_line_burst_states() || !original_dropped_flare_states() || !original_m089_states() || !original_m086_states() || !original_motion_states() || !original_motion_program() || !original_window_lifecycle() || !original_window_motion() || !original_room_e_init() || !original_room_e_update() || !original_effect_sequence_updates() || !original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_room_arc_offsets() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;

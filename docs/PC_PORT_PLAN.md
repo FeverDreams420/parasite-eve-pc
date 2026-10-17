@@ -2,6 +2,53 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Oryginalne menu BP: zwykłymi przyciskami wydano500 z502 punktów na ATB.
+Zapis runtime: bonus_points2 i stats.levels[5]200 (wcześniej150); ekran
+ATB13→18. Bez edycji pamięci statystyk. /tmp/pe-bp-atb-v1-proof.json:
+normal/SAN0 (27,01/97,13s), cap56278, M120, HP195, identyczne JSON i1MiB
+VRAM względem żywego debuggera, karty B–N niezmienione. Oba debugery
+niezależnie asercją odczytują faktyczny BP i stat przed zakończeniem,
+bez ReturnFromFrame w SAN. Manifest kandydata contact-v2 pozostaje aktualny.
+
+Ponowne odwiedzenie M120 nie uruchomiło od razu tej samej grupy: pomysł
+na zdobycie tam kolejnych leków nie został potwierdzony. Natomiast zwykła
+trasa M122 przy północnej ścianie (-767,-300),(-400,-300),(175,-300),
+(175,-600) przeszła doM124 bez ponownej walki, z HP195/SG550 clip9 i oboma
+lekami. Żywy current-v19 (session32309, /tmp/pe-nypd-current-v19-live,
+/tmp/pe-m123-contact-v2-game) przeszedł M124/M044 do M123 przy59247.
+Po pierwszej serii w cel3 przy59557 Aya97HP, clip7, pozostałe leki
+zachowane; dalsza walka w toku, bez deklaracji wygranej. Args/log/input:
+/tmp/pe-nypd-current-v19-{args.json,lldb.log,input.jsonl}. Starsze v16/v17/v18
+jawnie zakończono po sprawdzeniu następcy; zamrożonych binarek nie zmieniono.
+
+Najnowszy kandydat testowy /tmp/pe-m123-contact-v2: dopisano w istniejącym
+fixture 480 stanów pełnego oryginalnego callbacku PulseRing (USA80194C04).
+Bez hooków lub zastępowania instrukcji: tryby1/3, wiek8/31/32/33/48,
+held0/1, osiem zestawów core_flags i trzy zestawy flag gracza; pełne32B
+payload/canary. FNV92f9f09848a02f45, /tmp/pe-m123-pulse-contact-mips.py/.log.
+Dwa dalsze przypadki NULL actor/core sprawdzają zwrot2, zachowanie held
+oraz brak zapisów bojowych. Wyłącznie stary m123.o z nowym fixture
+abortuje na NULL, a poprawiony normal/SAN przechodzi. CPU0 (0,91/2,48s),
+wymagane --assets0 (12,01/50,60s), po173 świeże obiekty/profil, root build0.
+Manifest i /tmp/pe-m123-contact-v2-proof.json sprawdzają zależności/obiekty.
+Kod produkcyjny bez dalszych zmian względem poprawki odłączonego core.
+
+Nowa gałąź zwykłego inputu potwierdza ponowną wygraną M122, odbiór i użycie
+Medicine2 (69→159), przejście M124/M044/M123 oraz oryginalne użycie
+Medicine3 w walce (85→195). Cap60730, M123, Full Cure zachowane w12,
+Medicine3/19 zużyte. Normal/SAN0 (27,42/101,79s), pełne JSON/VRAM zgodne,
+prywatne karty B–N niezmienione, bu10 puste; /tmp/pe-m123-med3-v1-proof.json.
+Dalsza próba current-v17 zginęła przy62724; nie uznano bossa za pokonanego.
+
+Diagnoza taktyki: oryginalny PulseRing przy wieku32 i held/core-count1
+sygnalizuje trafienie bez testu odległości; potwierdza to nowy oracle.
+Oryginalny skrypt rodzica14956..15440 przywraca po100HP celom2 i3.
+To nie podstawy do zmiany mechaniki portu. Przetestowano też oryginalne
+menu zmiany broni w walce (SG550→M16A1/slot9) i Heal2 (49→109) w żywym
+current-v18; ta dalsza gałąź nie ma jeszcze osobnego dowodu normal/SAN.
+Kolejna próba ma przygotować większy zapas leczenia zwykłymi walkami,
+bez modyfikowania HP, ekwipunku ani zasad rozgrywki.
+
 Bieżąca poprawka: odłączony stan aktora podczas sprzątania po śmierci.
 Zwykły input od oryginalnego Continue N doprowadził do walki M120,
 wygranej, dwóch Medicine3 i Full Cure oraz powrotu do M122. Wygrana
@@ -31,7 +78,7 @@ Pełny replay na identycznym kodzie produkcyjnym v1 przechodzi do56000
 (normal27,43s/SAN97,65s), wraca po śmierci do intro, pełne JSON/VRAM
 zgodne, karty B–N niezmienione. /tmp/pe-fx-detached-native-v1-proof.json.
 Udanej ucieczki nie potwierdzono. Stary debugger current-v16/session70757
-pozostaje zatrzymany na oryginalnej awarii; jego binarki są niezmienne.
+był zatrzymany na oryginalnej awarii i został zakończony; jego binarki są niezmienne.
 Dalsza kampania i pełny port pozostają nieukończone.
 Aktualny root build: wymagany realny Disc1, original-game-melissa-encounter
 PASS125,07s (bez skip), /tmp/pe-fx-detached-v3-melissa-required.log.

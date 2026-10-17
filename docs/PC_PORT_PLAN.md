@@ -2,6 +2,66 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Po zwycięstwie M122 zweryfikowano również zwykłe wejście do M124:
+cap40196, M124/A8022248, stage400, HP101/189, pole9, lock0, menuNULL,
+oba Medicine1 zachowane, Medicine2 zużyte, clip9/pool69. Ten sam kandydat
+map177-179-v2 normal/SAN exit0 (20,40/77,86s), cały JSON oraz1MiB VRAM
+identyczne. SHA256 VRAM68b0ca9660dd2a458663dd9692329e8a3146730998bd995c2bbb3b48ed757d41.
+Karty prywatne B–N niezmienione, bu10 puste. Dowód i argv:
+/tmp/pe-m124-ordinary-entry-v1-proof.json. Świeży debugger current-v6
+(session13093) na tym samym najnowszym immutable executable również
+osiągnął40196; jego odczyt VRAM jest identyczny. Log/args/trace:
+/tmp/pe-nypd-current-v6-{lldb.log,args.json,input.jsonl}; prywatne karty
+/tmp/pe-nypd-current-v6-live. Nie należy nadpisywać obiektów map177-179-v2.
+
+Dalsza zbadana gałąź M124 przeszła przy40777 do sceny M044/A8004248,
+dialog95. Przy dalszym zwykłym inputcie loader zakończył proces błędem:
+Scene_LoadRoom: native descriptor missing for M123 slot73 (PS1 80195454),
+Scene frame startup failed:-2. Stary proces12629/current-v5 jest zakończony
+exit1, a jego LLDB został zamknięty. Current-v6 pozostaje przed tą gałęzią.
+To rzeczywisty brak portu, nie oczekiwanie na dialog ani wygrana M123.
+Z PE.IMG odczytano cztery wymagane deskryptory M123:73/80195454,
+143/801955d4,128/8019553c,144/8019564c. Oryginalny moduł w istniejącym
+src/overlays/room_m123_nypd/m123.c (948 linii) i jego zależności wymagają
+pełnego audytu/uruchomienia; nie dopinać samego pierwszego wpisu jako
+rzekomego ukończenia lokacji. Powtórka od N na najnowszym map177-179-v2 potwierdziła ten sam brak:
+normal/SAN exit1 (20,39/78,95s), bez błędów sanitizerów, karty niezmienione.
+/tmp/pe-m123-missing-v1-proof.json zapisuje odtwarzalne argv i cztery adresy.
+Zbadany input to
+/tmp/pe-m124-explore-v1-input.jsonl; ostatni żądany przedział nie został
+wykonany do końca, ponieważ gra wcześniej zakończyła pracę.
+
+Pierwsze potwierdzone zwycięstwo M122 zwykłym inputem: z oryginalnego
+zapisu N, przez wygraną M121 i przygotowanie M117, bez modyfikacji HP,
+obrażeń, dropów ani stanu gry. Typ3/78HP otrzymał pełny ostrzał M16 oraz
+kolejne dwa strzały; jego typ4 przestał być aktywny. Typ5/98HP otrzymał
+jeden zwykły strzał i Energy Shot po naładowaniu PE. Przy38439 brak wrogów,
+przy39459 zamknięte wyniki i łupy, M122/A8022148, stage400, tryb pola9,
+lock0 i menuNULL, Aya11/189HP. Medicine2/7 odebrane do slotu1, Medicine1
+w8/11 zachowane, M16 clip9, ammo pool69 (wcześniej54), PE0. Odbiór ALL
+na oryginalnym ekranie łupów obsługuje pozostałe przedmioty i END.
+
+/tmp/pe-m122-ordinary-win-v2-input.jsonl zawiera295 kolejnych przedziałów
+fizycznych przycisków34900..39459. Args zawierają także całą wcześniejszą
+trasę od Continue N. Na niezmienionym najnowszym kandydacie map177-179-v2
+normal/SAN exit0 (20,07/76,88s), identyczny cały JSON i pełne1MiB VRAM,
+zgodne też z odczytem referencyjnego debuggera floor175-v1. VRAM SHA256
+ d8be65c43441006a79ffeb5f3d1cdaa7038b86eb0bd81ca49954c663f3b6275a.
+B–N bajtowo niezmienione, bu10 puste; żadnych diagnostic_hp ani błędów
+sanitizerów/unbound opcode. /tmp/pe-m122-ordinary-win-v2-proof.json i
+verify.py wiążą wyniki, obraz, input i manifest wcześniej świeżo zbudowanej
+gry. Nie przebudowywano SDK ani nie zmieniano produkcyjnego kodu w tej
+próbie. Referencyjny debugger pozostaje na starym niezmiennym executable;
+porównanie nie jest nową referencją pikselową oryginalnej konsoli.
+
+Wcześniejsze wpisy o przegranym M122 opisują zachowane historyczne gałęzie;
+nie dotyczą już tej wygranej sekwencji. Unikanie ataków nadal wymaga poprawy:
+Aya przeżywa z11HP, więc ten przebieg nie dowodzi bezpiecznego kontrolera
+dla kolejnych starć. M118 pozostaje niewygrane, dalsza kampania i pełny port
+nie są ukończone. Po punkcie dowodowym użyto zdobyte Medicine2 zwykłym
+menu:11→101HP, slot1 pusty, oba Medicine1 zachowane; oddzielny dalszy input
+/tmp/pe-m122-postwin-v1-input.jsonl, żywy log nadal current-v5.
+
 Podpięto ostatnie dwa niepuste wpisy oryginalnej tablicy interpretera:
 177 Scene_SelectMapById i179 Script_SetFloorByEntityRoll. Funkcje pozostają
 w actor_opcodes.c;179 ma natywne int **, obie jawnie odczytują dolny u8

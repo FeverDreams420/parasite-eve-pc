@@ -13,28 +13,23 @@ acceptance requirements. Changes are evaluated by behavior, portability,
 readability and native builds.
 
 The executable runs the original game entrypoint. Recorded ordinary input
-covers New Game, the first Melissa fight, exploration and further encounters,
-plus genuine memory-card Save/Continue through checkpoint H in M087. The
-mandatory M086 encounter is also won through ordinary input from H: all four
-worms defeated, Aya at 83/133 HP, with identical full state, equipment and VRAM
-in normal and sanitized replays. Reward collection, the return to the M087
-phone, a genuine checkpoint I and cold Continue are also verified in both
-builds, with identical save bytes. Ordinary input also reaches M089 through
-the M088 conversation and movie, then defeats Eve from checkpoint I after
-field-menu Heal2; normal and sanitized runs agree on full state and VRAM
-at the post-battle dialogue. The ordinary route through the following scenes
-also reaches Day 3, creates checkpoint J and passes cold Continue in both
-builds. The ordinary Soho-to-Museum story, including movies 12/13 through
-the nighttime M192 exit, also agrees on full state and VRAM in both builds. Separate,
-explicitly diagnostic runs with guarded HP changes reach Day 3 NYPD room M100
-via Soho and the Museum story. Normal and sanitized replays agree on the full
-state and VRAM through M111. A separate diagnostic branch also has a genuine
-phone-created checkpoint I in M099; cold Continue agrees on full state and
-VRAM in normal and sanitized builds. Its earlier guarded HP changes remain
-part of its provenance. Cold I-to-M116 and M113 traversal also agrees on full state
-and VRAM across both builds. The M122 modules pass their full effect tests;
-campaign entry is still unverified. These are
-coverage fixtures, not a completed-campaign result.
+covers New Game, the first Melissa fight, exploration, subsequent bosses and
+story progression through Day 3 to the NYPD. Genuine phone-created checkpoint
+N in M112 also loads in the original USA game: player position, HP, all inventory
+slots and equipment records agree. Ordinary input from N wins M120 and M122,
+collects and uses healing items, and reaches the M123 boss. M123 has not been
+won, and the remaining campaign and EX content are incomplete. Earlier runs
+with explicit diagnostic HP changes are separate evidence, not proof of an
+ordinary campaign completion.
+
+The current PsyZ polygon attribute fix has 144 independent software PS1 GPU
+reference cases. A recorded M115 scene now agrees with the reference across
+all 16-bit VRAM bytes, with identical gameplay state before and after the fix
+and matching normal/sanitized runs. This establishes that scene and pose;
+complete visual fidelity and hi-res coverage remain unverified. Longer legacy
+New Game replays after M020 currently fail their state gates in both the
+previous and current builds. Those failures remain visible and need resolution.
+These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with
 1,344 original USA CPU/ROM cases. Actual use of every spell and effect in

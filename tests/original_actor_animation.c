@@ -14588,20 +14588,25 @@ static int original_native_bootstrap(const char *executable,int field_control)
             if(total!=1024*512*2 || ferror(file))valid=0;
             fclose(file);remove(capture);
         }else valid=0;
+        /* Raster hashes through input18 were renewed after the PS1 attribute
+         * precision fix. All original state assertions passed in both builds;
+         * M115 additionally matches independent PS1 VRAM byte for byte.
+         * Inputs19..22 retain their prior gates: their state regression is
+         * reproduced by the old SDK and must be resolved independently. */
         if(!input && hash!=UINT64_C(0x6c2aef67a1f42efb))valid=0;
-        if(input==4 && hash!=UINT64_C(0x42b28cf73effdc8b))valid=0;
-        if(input==5 && hash!=UINT64_C(0x1d6ff100102480bb))valid=0;
-        if(input==6 && hash!=UINT64_C(0x71756cc6f486b60f))valid=0;
-        if(input==7 && hash!=UINT64_C(0x0ba1b9388d40f17f))valid=0;
-        if(input==8 && hash!=UINT64_C(0x71d4a7c739498ad8))valid=0;
+        if(input==4 && hash!=UINT64_C(0x1ada3f3398816f93))valid=0;
+        if(input==5 && hash!=UINT64_C(0x0ec1e290a3492b00))valid=0;
+        if(input==6 && hash!=UINT64_C(0x6d41a093b9d9479f))valid=0;
+        if(input==7 && hash!=UINT64_C(0xf5956c8862619663))valid=0;
+        if(input==8 && hash!=UINT64_C(0x254e0ccbfc436ec4))valid=0;
         if(input==9 && hash!=UINT64_C(0x4f2f3366d72018ad))valid=0;
-        if(input==10 && hash!=UINT64_C(0x010725a10ea1b845))valid=0;
-        if(input==11 && hash!=UINT64_C(0xd355ef4c28cf53bb))valid=0;
-        if(input==12 && hash!=UINT64_C(0x4b5ea0ce332f7bf5))valid=0;
-        if(input==13 && hash!=UINT64_C(0xa2276ccc2247ed21))valid=0;
-        if(input==14 && hash!=UINT64_C(0xc7ae3598591ad7c3))valid=0;
-        if(input==15 && hash!=UINT64_C(0x1a99c887686e1a86))valid=0;
-        if(input==16 && hash!=UINT64_C(0x8e856f4fc0b74e6d))valid=0;
+        if(input==10 && hash!=UINT64_C(0xf0e363af6b7d37a7))valid=0;
+        if(input==11 && hash!=UINT64_C(0x38674366879df19f))valid=0;
+        if(input==12 && hash!=UINT64_C(0x15ae9dc0520a12d8))valid=0;
+        if(input==13 && hash!=UINT64_C(0x458f8a58931d4e5a))valid=0;
+        if(input==14 && hash!=UINT64_C(0xfd7ae4cac94eda93))valid=0;
+        if(input==15 && hash!=UINT64_C(0x1a8d9ad75c8755ae))valid=0;
+        if(input==16 && hash!=UINT64_C(0x75f57637532bf9c1))valid=0;
         if(input==19 && hash!=UINT64_C(0x16dbf16f81d33fc0))valid=0;
         if(input==20 && hash!=UINT64_C(0xb4f02c215f7e80c6))valid=0;
         if(input==21 && hash!=UINT64_C(0xc7b404688a203971))valid=0;

@@ -2,6 +2,83 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Bieżący kandydat grafiki: poprawka w istniejącym RasterTriangle naszego
+PsyZ. Oryginalne pakiety modelu/cienia i dane tekstur/CLUT w M115 były
+zgodne z PS1, lecz wynik różnił się w192 pikselach. Przyczyną była dokładna
+interpolacja barycentryczna zamiast półjednostkowego biasu i gradientów
+atrybutów z12 bitami ułamkowymi, zakotwiczonych w lewym wierzchołku
+z oryginalną kolejnością remisów. Poprawiono UV i RGB; ścieżka linii
+zachowuje dotychczasowe próbkowanie. Bez zmian produkcyjnego kodu gry,
+nowych plików lub wydzielania funkcji.
+
+/tmp/pe-ps1-attrs-v1-proof.json: od prawdziwego Continue N zwykły input
+prowadzi do M115. Normal/SAN exit0 (4,33/13,00s), pełne JSON iVRAM
+identyczne między profilami, JSON rozgrywki identyczny ze starym SDK.
+Oba widoczne bufory320×224 zgadzają się z referencją PS1 w pełnych16bitach;
+w tym przypadku zgadza się również cały1MiBVRAM (SHA256
+b20adc570f84503e402a0301e8f9c7b10c5b84bbf542ff4719086a7748aab284).
+Obraz sprawdzono wizualnie. To dowód tej sceny/pozy, nie całej grafiki gry.
+
+Istniejący test_libgpu.c rozszerzono o144 niezależne przypadki GPU:
+trzy trójkąty, sześć permutacji, dithering off/on, FT3/raw/GT3/subtractive.
+Złoty VRAM odczytano po zakończeniu pracy renderera emulatora; wcześniejszy
+odczyt wewnątrz wywołania LLDB był nieaktualny i został odrzucony.
+Stabilny wzorzec144 przypadków ma SHA256
+a0ef6399fc2f9541d54735403397589a2bee115b7c89bc16e0412f20aefef0e7.
+Nowy test przechodzi, a stary rasteryzator z tym samym fixture kończy exit1.
+Stary test rotated_triangle otrzymał20 próbek z oddzielnego GPU oracle,
+zamiast oczekiwań obliczanych błędną metodą barycentryczną. Test bufora OT
+ma dodatkowe miejsce na pierwszy payload P_TAG, aby nie przekraczać granic
+obiektu podczas addPrim. Normal/SAN:56 testów GPU/dither/grid PASS,
+0FAIL/0SKIP; move_image_internal_res wyłączono jawnie, bo headless obsługuje
+rozdzielczość1, a ten test wymaga2. Brak dowodu hi-res z tego przebiegu.
+Pełny SDK uruchomiony początkowo w niewłaściwym cwd zakończył się na
+sprzątaniu katalogów kart; dwa syntetyczne pliki testu zostały usunięte,
+istniejące zapisy użytkownika nie były nadpisywane. Dalsze testy mają prywatne cwd.
+
+Świeży kandydat /tmp/pe-ps1-attrs-v1:173 obiekty gry/fixture na profil,
+CPU i wymagane --assets normal/SAN exit0; root build exit0.
+Dłuższe replays: wszystkie stany input0..18 przechodzą normal/SAN;
+ich nowe hashe VRAM są identyczne między profilami i odnowiono je w
+istniejącym fixture. Kolektor w /tmp pomijał wyłącznie stare hashe obrazu,
+zachowując każdą asercję stanu; nie był finalnym testem akceptacji.
+Input19..22 wykazały rozbieżność i nie są uznane za poprawne. Ich asercji
+ani hashy nie poluzowano. Osobny v2 zmienia wyłącznie obiekt rasteryzatora
+w poprzednim archiwum SDK. Przy input19 poprzedni contact-v2, nowy v1
+normal/SAN i v2 mają identyczny pełny stan JSON: M017, HP29/49 zamiast
+oczekiwanych14/53. /tmp/pe-m017-contact-v2-baseline-state.json oraz
+/tmp/pe-ps1-attrs-{v2-m017-normal,collect-normal-m017,collect-san-m017}-state.json.
+To wcześniejsza regresja dłuższej trasy, niezależna od tej poprawki GPU.
+Niezmiennych binarek v1/v2/contact-v2 nie przebudowywano.
+PsyZ64b0523 wypchnięto do khasinski/parasite-eve-psyz; następny kandydat
+v3 uruchamia rzeczywiste asercje obrazu po odnowieniu hashy.
+W v3 ponownie CPU normal/SAN0 (0,38/1,70s), wymagane --assets0
+(3,59/15,77s),346 świeżych obiektów łącznie; wszystkie zależności, archiwa,
+obiekty i binarki ponownie zgodne z manifestem. Root build po odnowieniu
+fixture exit0. Dodatkowy rzeczywisty replay do M123/Medicine3 przy60730:
+normal/SAN0 (20,75/52,45s), HP195/195, cały stan JSON identyczny ze starym
+SDK, VRAM między profilami identyczny, prywatne13 payloadów kart niezmienione.
+/tmp/pe-ps1-attrs-v3-m123-proof.json. Bez manipulacji stanem rozgrywki.
+M123 nadal nie pokonano.
+Finalne rzeczywiste fixture v3:18/18 poleceń native normal/SAN PASS,
+z pełnymi dotychczasowymi asercjami obrazu i stanu dla input0..18;
+/tmp/pe-ps1-attrs-v3-verify-results.json i /tmp/pe-ps1-attrs-v3-proof.json.
+Bootstrap25,25/76,80s, Melissa22,38/67,56s, field-control71,45/203,80s.
+Te18 poleceń nie obejmuje świadomie czterech niezaliczonych późniejszych
+tras input19..22; nie jest to zielony pełny katalog ani dowód zakończenia gry.
+Referencyjny emulator przywrócono do oryginalnego M115 po syntetycznych
+próbach GPU: HP189/189 i pozycja[3080192,65536,-256376832].
+
+Niezależny dowód interoperacyjności: prawdziwy natywny zapis N wczytany
+przez oryginalny USA EXE na PS1. Po Continue zgodne: M112, HP189/189,
+pozycja, wszystkie50 slotów ekwipunku,4096 bajtów rekordów i sloty9/14.
+/tmp/pe-n-ps1-interop-v1-proof.json. Następnie656 klatek fizycznego
+inputu cyfrowego prowadzi w obu wersjach do M115; cztery aktory mają
+identyczne kanoniczne stany. Pad referencyjny przełączono przyciskiem Analog
+na tryb cyfrowy: oryginalny kod ignoruje DPad przy analogowym nagłówku73.
+Nie łatano instrukcji EXE ani danych rozgrywki; emulator używa BIOSfastboot.
+Prywatne payloady13 kart B–N niezmienione. Cała kampania pozostaje nieukończona.
+
 Oryginalne menu BP: zwykłymi przyciskami wydano500 z502 punktów na ATB.
 Zapis runtime: bonus_points2 i stats.levels[5]200 (wcześniej150); ekran
 ATB13→18. Bez edycji pamięci statystyk. /tmp/pe-bp-atb-v1-proof.json:

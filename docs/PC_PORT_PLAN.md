@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Rzeczywiste wejście M116 od I8/cap31894 PASS normal oraz ASan/UBSan/function,
+oba exit0: pełny JSON i1MiB VRAM identyczne, także z debuggerem.
+SHA256f23b749c7765f54ee8be6e0133987c7fe0bd913f678785868c0302e9e6095398.
+M116/A8021348, story400, HP181/181, brak dialog/menu/locka, battle9,
+zero żywych wrogów. Native task51==LineBurst oraz PM75==ActorClass[2]
+potwierdzone; zrzut /tmp/pe-m116-v1-entry-debug.png obejrzany.
+B–I niezmienione, bu10 puste. Verifier /tmp/pe-m116-v1-entry-verify.py,
+dowód /tmp/pe-m116-v1-entry-proof.json, logi /tmp/pe-m116-v1-entry-{normal,san}.log.
+Źródło nadal coverage-only:15 wcześniejszych HP diagnostics, zero nowych.
+Po M100 walka wygrana, Medicine1 +45 i field Heal2 +60 z cap181 przez UI.
+Dojście schodami wymaga obejścia: przy worldx417,z521 prosta do600,500
+jest blokowana. Legalna trasa po trójkątach251,996→519,1275→551,942→726,1269→871,936.
+
+Dalszy zwykły input przechodzi M116→M121/A80220C8, dialog74 przy34865,
+potem76 i75; przy35957 wraca M115/A80212C8 z graczem, story400,
+flags44=0x0406183c (autorskie262144 dodane). Po300 klatkach fade-in
+pokazuje właściwy korytarz, HP181. Przy36861 M115 rozpoczął losową walkę.
+Błędne oczekiwanie600 klatek bez inputu kosztowało164HP; nie jest to crash
+silnika. Heal2 w walce działa17→77; pierwsza próba Escape z prawdziwego
+menu zwróciła niepowodzenie. Sześciu wrogów:3×typ5/78HP/def18 i3×typ6/72HP/def20.
+Żywy debugger72950/exec79174 zachowuje tę próbę, input od28100 w
+/tmp/pe-pending-reward-live-input.jsonl; nie utrwalać jej jako zwycięstwa.
+Powtórka odI z inputem zakończonym36861 pozwala uniknąć błędnego idle600.
+Zwykła obowiązkowa walka M086 odH i pełna kampania nadal nieukończone.
+
+
 Nowy rzeczywisty crash po losowej walce M100 od genuine I: po odebraniu
 Medicine1 i wybraniu Obtain All lista ma pusty wpis0. Inv_TransferItemAlt
 w istniejącym src/main/item/swap.c czytał jego NULL->kind (address6).

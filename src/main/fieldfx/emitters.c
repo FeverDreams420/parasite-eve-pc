@@ -1499,3 +1499,13 @@ u16 g_FieldFxTaskScriptCmd100[]={1,6,15,2,0,0,4,8,0,2,1,0,4,5,0,0,0,0};
 FieldFxTaskProgram g_FieldFxTaskProgramCmd100={
     {{FieldFx_CosineEmitter,FieldFx_SineEmitter},{sizeof(RenderSparkEmitter),sizeof(RenderSineEmitter)}},
     NULL,g_FieldFxTaskScriptCmd100};
+
+/* Original resident Barrier task 103 (USA 800E1E04..800E1EC3).
+ * Both models and the nested rising particles use the original callbacks
+ * above; the host descriptor contains native pointers. */
+u8 g_TwinModelColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,80,0,12,0,0,0,0,50,128,0,6,0,0,0,0,50,128,0,2,0,0,0,0,200,200,200,6,0,0,0,0,100,100,100,32,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RisingJitterColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,120,100,6,0,0,0,0,100,50,0,6,0,0,0,0,0,0,0,0,0,0,0,0};
+u16 g_FieldFxTaskScriptCmd103[]={1,6,18,2,0,0,4,20,0,2,1,0,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd103={
+    {{FieldFx_TwinModelEffect,FieldFx_RisingJitterEmitter},{sizeof(FieldFxTwinModel),sizeof(GteShortVector)}},
+    NULL,g_FieldFxTaskScriptCmd103};

@@ -16,6 +16,7 @@ void *g_FieldFxTaskPrograms[104] = {
     [100 - 85] = &g_FieldFxTaskProgramCmd100,
     [101 - 85] = &g_FieldFxTaskProgramCmd101,
     [102 - 85] = &g_FieldFxTaskProgramCmd102,
+    [103 - 85] = &g_FieldFxTaskProgramCmd103,
 };
 char g_FieldFxTaskProgramMissingMsg[] = "TS No Thread No.%d\n";
 

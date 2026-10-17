@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Nowy rzeczywisty abort M115 przy użyciu Barrier: Cannot start original PE
+effect103 (command392,status-8), Battle_AdvancePhase/phase.c218.
+Próba obejścia po prawej zatrzymała cylinder gracza przyx456,z-2242;
+po lewej actor7/byte380 uruchamia drugi pas spotkania. Nie ma dowodu
+ominięcia obu pasów; po wznowieniu tej walki użycie oryginalnego menu PE5
+ujawniło brak programu103. Repro /tmp/pe-m115-bypass-live-input.jsonl,
+args/log pod tym prefiksem; stary inferior74219 zachowany w SIGABRT.
+
+Naprawa w istniejących plikach emitters.c, task_list.c i fieldfx_task.h:
+oryginalne callbacks FieldFx_TwinModelEffect/FieldFx_RisingJitterEmitter/
+FieldFx_RisingJitterSprite pozostają w swoim całym module. Dodano oryginalny
+32-byte skrypt103,64-byte TwinModelColorTrack,40-byte RisingJitterColorTrack,
+natywny descriptor20/8 i rejestrację103. Dane potwierdzone z USA:
+script800E1E04, tracks800E1E24/800E1E64, descriptor800E1E8C,
+callbacks800DC058/800DC750 (nested800DC5BC), initializerNULL.
+Istniejący fixture --assets sprawdza cały descriptor/skrypt/obie tabele.
+Istniejący test PM rozszerzony o100 frame Barrier: oba drawsloty, dwie
+osobne instancje modeli, nested jitter particles, naturalny koniec, native
+łańcuchy OT oraz granice packet/pool. Build, CPU normal i SAN, pełne
+--assets normal/SAN (instrumentowane PsyZ/SDL) i diff --check PASS.
+Logi /tmp/pe-barrier-v1-build.log, -cpu-san.log, -assets.log, -assets-san.log.
+
+Pełny rzeczywisty coldI→Escape→powtórne wejście→Barrier przy39400 PASS
+normal oraz ASan/UBSan/function, oba exit0. Cały JSON i1MiB VRAM identyczne,
+także z debuggerem. SHA256
+1198a509110f07dbf68902446b3113a1d93065eedc73f7a7a4f61fc45bc99072.
+M115/A80212C8, story400, HP127/181, mode0, lock4, menuNULL,
+licznik6 (3 cele i3 pomocnicze core). B–I bez zmian, bu10 puste.
+Verifier /tmp/pe-barrier-v1-live-verify.py i -proof.json; logi
+/tmp/pe-barrier-v1-live-{normal,san}.log. Nie dowodzi to wygrania starcia
+ani wszystkich innych PE efektów; nadal coverage-only z15 wcześniejszych
+HP diagnostics źródła I, zero nowych. Przy39400 bitBarrier nie jest już
+aktywny; nie opisywać tego zrzutu jako dowodu trwałej ochrony przed obrażeniami.
+
+Szybszy frozen debugger -O1 -g -fno-omit-frame-pointer jest zbudowany
+z całych oryginalnych TU i ich własnych definicji CMake. Kandydat sprzed
+poprawki także dał pełny JSON/VRAM równy normal/SAN dla Escape37905,
+czas68.2s: /tmp/pe-native-o1-escape-proof.json. Bieżący po poprawce:
+/tmp/pe-barrier-v1-game-debug, exec60039/PID75770, cwd/args/input/log
+/tmp/pe-barrier-v1-live-debug*. Cap39400 osiągnięty; dalszy input zaczyna
+się39400 w -input.jsonl. Poprzedniego crasha74219 nie kontynuować.
+
+
 M115 Escape potwierdzony żywym inputem: coldI→pierwszy ATB127HP przy37329,
 Triangle/ESC przez menu daje mode4 przy37425; po180+300 frame wraca
 37905, M115, flags128 bez battlebit2, lock0, menuNULL, mode10,

@@ -59,7 +59,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RenderBouncingSprite, angle) == 14,
                   render_bouncing_sprite_angle);
 int FieldFx_ScatterBurstSprite(int mode, void *data, intptr_t argument);
 int FieldFx_BouncingSpinSprite(int mode, void *data, intptr_t argument);
-int FieldFx_PulsingStarFan(int mode);
+int FieldFx_PulsingStarFan(int mode, void *data, intptr_t argument);
 extern u8 g_PulsingStarFanColorTrack1[], g_PulsingStarFanColorTrack0[];
 
 typedef struct RenderCosineEffect {

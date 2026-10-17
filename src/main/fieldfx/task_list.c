@@ -10,6 +10,14 @@ FieldFxTaskContext *g_FieldFxTaskContext;
 FieldFxTaskSlot *g_FieldFxActiveTaskSlot;
 int g_FieldFxCurrentAge;
 void *g_FieldFxTaskPrograms[104] = {
+    [85 - 85] = &g_FieldFxTaskProgramCmd85,
+    [86 - 85] = &g_FieldFxTaskProgramCmd86,
+    [87 - 85] = &g_FieldFxTaskProgramCmd87,
+    [88 - 85] = &g_FieldFxTaskProgramCmd88,
+    [89 - 85] = &g_FieldFxTaskProgramCmd89,
+    [90 - 85] = &g_FieldFxTaskProgramCmd90,
+    [91 - 85] = &g_FieldFxTaskProgramCmd91,
+
     [92 - 85] = &g_FieldFxTaskProgramCmd92,
     [93 - 85] = &g_FieldFxTaskProgramCmd93,
     [94 - 85] = &g_FieldFxTaskProgramCmd94,

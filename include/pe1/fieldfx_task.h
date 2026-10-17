@@ -31,6 +31,9 @@ typedef struct FieldFxTaskProgram {
     intptr_t (*initialize)(int, intptr_t, intptr_t, intptr_t);
     u16 *script;
 } FieldFxTaskProgram;
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd85, g_FieldFxTaskProgramCmd86;
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd87, g_FieldFxTaskProgramCmd88;
+extern FieldFxTaskProgram g_FieldFxTaskProgramCmd89, g_FieldFxTaskProgramCmd90, g_FieldFxTaskProgramCmd91;
 extern FieldFxTaskProgram g_FieldFxTaskProgramCmd92, g_FieldFxTaskProgramCmd93;
 extern FieldFxTaskProgram g_FieldFxTaskProgramCmd99, g_FieldFxTaskProgramCmd100;
 extern FieldFxTaskProgram g_FieldFxTaskProgramCmd101, g_FieldFxTaskProgramCmd102;

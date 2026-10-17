@@ -1447,7 +1447,41 @@ static int original_glow_resident_constants(void)
     const u32 pe106[]={0x800ddd70,0x800de0a8,0x800dea30,0x0,0x0,0x0,0x0,0x0,0x100008,0xc,0x0,0x0,0x0,0x800e204c};
     const u32 pe105[]={0x800dd19c,0x800dd76c,0x0,0x0,0x0,0x0,0x0,0x0,0x10000c,0x0,0x0,0x0,0x0,0x800e1f80};
     const u32 pe107[]={0x800df6ac,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x4,0x0,0x0,0x0,0x0,0x800e2124};
+    const u32 hit85[]={0x800d4c24,0x800df87c,0x0,0x0,0x0,0x0,0x0,0x0,0x40004,0x0,0x0,0x0,0x0,0x800e13f0};
+    const u32 hit86[]={0x800d4c24,0x800d4ea4,0x0,0x0,0x0,0x0,0x0,0x0,0x40004,0x0,0x0,0x0,0x0,0x800e14f4};
+    const u32 hit87[]={0x800d4c24,0x800d4ea4,0x0,0x0,0x0,0x0,0x0,0x0,0x40004,0x0,0x0,0x0,0x0,0x800e15a0};
+    const u32 hit88[]={0x800d5290,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xc,0x0,0x0,0x0,0x800e21a8,0x800e15fc};
+    const u32 hit89[]={0x800d5a00,0x800d5eb4,0x0,0x0,0x0,0x0,0x0,0x0,0xc0010,0x0,0x0,0x0,0x800e21a8,0x800e164c};
+    const u32 hit90[]={0x800d5290,0x800d5eb4,0x800d5a00,0x0,0x0,0x0,0x0,0x0,0xc000c,0x10,0x0,0x0,0x0,0x800e16fc};
+    const u32 hit91[]={0x800d6514,0x800d6a1c,0x800d6e3c,0x0,0x0,0x0,0x0,0x0,0x14000c,0x4,0x0,0x0,0x800e21d0,0x800e1760};
     struct { u32 address; const void *value; size_t size; } rows[]={
+        {0x800e14bc,hit85,56},
+        {0x800e13f0,g_FieldFxTaskProgramCmd85.script,44},
+        {0x800e1568,hit86,56},
+        {0x800e14f4,g_FieldFxTaskProgramCmd86.script,36},
+        {0x800e15c4,hit87,56},
+        {0x800e15a0,g_FieldFxTaskProgramCmd87.script,36},
+        {0x800e1614,hit88,56},
+        {0x800e15fc,g_FieldFxTaskProgramCmd88.script,24},
+        {0x800e16c4,hit89,56},
+        {0x800e164c,g_FieldFxTaskProgramCmd89.script,32},
+        {0x800e1728,hit90,56},
+        {0x800e16fc,g_FieldFxTaskProgramCmd90.script,44},
+        {0x800e1790,hit91,56},
+        {0x800e1760,g_FieldFxTaskProgramCmd91.script,48},
+        {0x800e141c,g_FallingSpriteColorTrack0,40},
+        {0x800e1444,g_FallingSpriteColorTrack1,40},
+        {0x800e146c,g_BouncingSpriteColorTrack2,40},
+        {0x800e1494,g_RotatingEffectColorTrack,40},
+        {0x800e1518,g_PulsingStarFanColorTrack1,40},
+        {0x800e1540,g_PulsingStarFanColorTrack0,40},
+        {0x800e166c,g_CosineSparkColorTrack,40},
+        {0x800e1694,g_RisingSpriteColorTrack,48},
+        {0x800c22c0,&g_FieldFxCosineEffectTint,4},
+        {0x800c22c4,&g_FieldFxArcingEmitterTint,4},
+        {0x800c22c8,&g_FieldFxSpiralSpriteTint,4},
+        {0x800c22cc,&g_FieldFxRingPulseTint,4},
+        {0x800c22d0,&g_FieldFxBouncingSpriteTint,4},
         {0x800e2014,pe105,56},
         {0x800e1f80,g_FieldFxTaskProgramCmd105.script,36},
         {0x800e216c,pe107,56},
@@ -1749,6 +1783,8 @@ static int authored_fan_sweep_cycles(void)
     int old_age=g_FieldFxCurrentAge,old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
     RenderBufferPrefix old_buffers=D_800B0E38;GteMatrix *old_view=g_GeomScroll.words.viewMatrix;
     GteShortVector old_sine=g_SineEffectAnchor,old_anchor=g_FanSweepSparkAnchor,old_diamond=g_DiamondParticleAnchor;void *old_trail=g_FanSweepSparkTrailPool;
+    s32 *old_projection=g_GeomScroll.state.position.projectionDistance;
+    GteShortVector old_spiral=g_SpiralEffectAnchor;u16 old_spiral_radius=g_SpiralEffectRadius;
     int old_phase=g_SparkEmitterPhaseSeed,old_floor=g_RoomFloorY->y;
     GteShortVector old_orbit=g_OrbitingEffectAnchor,old_helical=g_HelicalEffectAnchor;
     GteShortVector old_vertical=g_VerticalEffectAnchor,old_tilting=g_TiltingSpriteAnchor,old_settling=g_SettlingSpriteAnchor;
@@ -1756,7 +1792,7 @@ static int authored_fan_sweep_cycles(void)
     s16 old_fade_intensity=g_FadeEmitterIntensity;
     char *old_orbit_pool=g_OrbitingEffectParticlePool,*old_helical_pool=g_HelicalEffectParticlePool;
     s16 old_model_anchor_a[3];memcpy(old_model_anchor_a,g_SpinningModelAnchorA,sizeof(old_model_anchor_a));
-    u8 *old_model=D_800F32D8,*old_twin_a=D_800F3418,*old_twin_b=g_FieldFxTwinModelB,*old_flash=g_FieldFxModel83ACD504;
+    u8 *old_model=D_800F32D8,*old_twin_a=D_800F3418,*old_twin_b=g_FieldFxTwinModelB,*old_flash=g_FieldFxModel83ACD504,*old_spiral_model=g_FieldFxModel6DEAE684;
     s16 old_model_anchor[3];memcpy(old_model_anchor,g_SpinningModelAnchorB,6);
     u32 old_random=Psyz_RandState();
     uint64_t hash=UINT64_C(14695981039346656037);
@@ -1769,6 +1805,30 @@ static int authored_fan_sweep_cycles(void)
         for(unsigned i=0;i<12;++i)hash=(hash^output[i])*UINT64_C(1099511628211);
     }
     if(hash!=UINT64_C(0x1026cb69f2dfeabd)){fprintf(stderr,"Ember CPU hash %016llx\n",(unsigned long long)hash);return 0;}
+    /* Unhooked USA executable/ROM captures include all original particle
+     * bytes and the BIOS RNG state, including halfword wrap boundaries. */
+    hash=UINT64_C(14695981039346656037);
+    const struct {FieldFxTaskCallback callback;unsigned size;} hit_particles[]={
+        {FieldFx_FallingSprite,16},{FieldFx_ScatterBurstSprite,16},
+        {FieldFx_CosineEffectB,8},{FieldFx_RisingSprite,16},
+        {FieldFx_SpiralSprite,16},{FieldFx_BouncingSpinSprite,16}
+    };
+    const int hit_ages[]={0,1,7,8,12,16,17,20,24,25,31,40,255,65535};
+    const u16 radii[]={0,1,255,65535};
+    for(unsigned callback=0;callback<6;++callback)for(unsigned seed=0;seed<4;++seed)
+    for(unsigned age=0;age<14;++age)for(unsigned variant=0;variant<4;++variant){
+        _Alignas(void *) u8 data[16];
+        for(unsigned i=0;i<hit_particles[callback].size;++i)data[i]=i*37+hit_ages[age]*3+variant*73;
+        if(callback==2){s16 duration=12+(seeds[seed]&3);memcpy(data+6,&duration,2);}
+        g_SpiralEffectRadius=radii[variant];g_SpiralEffectAnchor=(GteShortVector){-32768,32767,-123,0};
+        srand(seeds[seed]);g_FieldFxCurrentAge=hit_ages[age];
+        u32 result=hit_particles[callback].callback(1,data,0),random=Psyz_RandState();
+        const void *parts[]={&result,data,&random};const unsigned lengths[]={4,hit_particles[callback].size,4};
+        for(unsigned part=0;part<3;++part)for(unsigned i=0;i<lengths[part];++i)
+            hash=(hash^((const u8 *)parts[part])[i])*UINT64_C(1099511628211);
+    }
+    if(hash!=UINT64_C(0x46f703bc59498352)){fprintf(stderr,"Resident hit/death CPU hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original resident hit/death: 1344 unhooked USA CPU/ROM update states, all particle bytes, halfword wrap and RNG passed");
     hash=UINT64_C(14695981039346656037);
     FieldFxTaskCallback callbacks[]={FieldFx_DiamondParticle,FieldFx_DiamondEmitter,FieldFx_RingFlash,FieldFx_JitterSprite};
     const unsigned sizes[]={12,28,12,8};
@@ -1861,7 +1921,10 @@ static int authored_fan_sweep_cycles(void)
     FieldActorState state={0};FieldActor player={.state=&state,.pos_z=1200*65536};player.render_object.matrices=matrices;
     static RenderGpuTag ordering[4096];
     struct {_Alignas(void *) u8 bytes[65536];u8 guard[16];} packets;
+    s32 projection=256;u32 sound[32]={0};
     g_PlayerEntity=&player;g_GeomScroll.words.viewMatrix=&view;
+    g_GeomScroll.state.position.projectionDistance=&projection;g_AkaoBgmHandle[0]=sound;
+    g_GameState.bank_value_f8=100;g_GameState.bank_value_fa=1000;g_GameState.bank_value_f6=48;g_GameState.bank_value_f7=100;
     g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
     Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
     FieldFx_InitTexturePageTable();
@@ -1886,8 +1949,10 @@ static int authored_fan_sweep_cycles(void)
         u32 color=0x00302010+i;memcpy(model_bytes+52+i*4,&color,4);}
     _Alignas(16) u8 twin_model_bytes[64];memcpy(twin_model_bytes,model_bytes,sizeof(twin_model_bytes));
     D_800F32D8=D_800F3418=g_FieldFxModel83ACD504=model_bytes;g_FieldFxTwinModelB=twin_model_bytes;
+    _Alignas(16) u8 spiral_model_bytes[64];memcpy(spiral_model_bytes,model_bytes,sizeof(spiral_model_bytes));
+    g_FieldFxModel6DEAE684=spiral_model_bytes;
     g_RoomFloorY->y=0;player.render_object.target_z=1200;
-    const unsigned commands[]={92,93,101,102,99,100,103,94,95,96,97,98,104,106,105,107},variables[]={7,8,16,17,13,15,18,9,10,11,12,13,19,21,20,22};
+    const unsigned commands[]={92,93,101,102,99,100,103,94,95,96,97,98,104,106,105,107,85,86,87,88,89,90,91},variables[]={7,8,16,17,13,15,18,9,10,11,12,13,19,21,20,22,0,1,2,3,4,5,6};
     for(unsigned spell=0;spell<19;++spell){
         unsigned command=g_BattleActionEffectIds.bytes[spell];
         if(command<85 || command>=189 || !g_FieldFxTaskPrograms[command-85])return 0;
@@ -1898,7 +1963,9 @@ static int authored_fan_sweep_cycles(void)
     for(unsigned variant=0;variant<sizeof(commands)/sizeof(commands[0]);++variant){
         struct {PmPrimarySlot slots[11];u8 guard[16];} bank={0};memset(bank.guard,0xa5,16);
         g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(1);
-        if(Scene_LoadRoomAssets(commands[variant],&player)!=0 || Pm_SendCmd(0,0,0,0,0,0))return 0;
+        if(Scene_LoadRoomAssets(commands[variant],&player)!=0)return 0;
+        /* Retail hit/status/death call sites create these without send. */
+        if(commands[variant]!=88 && commands[variant]!=89 && commands[variant]!=91 && Pm_SendCmd(0,0,0,0,0,0))return 0;
         unsigned draws=0,particles=0;
         for(unsigned frame=0;frame<200;++frame){
             for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
@@ -1932,11 +1999,13 @@ static int authored_fan_sweep_cycles(void)
     g_OrbitingEffectAnchor=old_orbit;g_HelicalEffectAnchor=old_helical;
     g_VerticalEffectAnchor=old_vertical;g_TiltingSpriteAnchor=old_tilting;g_SettlingSpriteAnchor=old_settling;
     g_ConvergingSpriteAnchor=old_converging;g_FadeEmitterIntensity=old_fade_intensity;
+    g_SpiralEffectAnchor=old_spiral;g_SpiralEffectRadius=old_spiral_radius;g_FieldFxModel6DEAE684=old_spiral_model;
+    g_GeomScroll.state.position.projectionDistance=old_projection;
     g_OrbitingEffectParticlePool=old_orbit_pool;g_HelicalEffectParticlePool=old_helical_pool;
     memcpy(g_SpinningModelAnchorA,old_model_anchor_a,sizeof(old_model_anchor_a));
     g_RoomFloorY->y=old_floor;memcpy(g_SpinningModelAnchorB,old_model_anchor,6);
     puts("Original resident particles: 100 ember + 208 Scan/Confuse + 280 Slow + 224 Detox unhooked USA CPU/BIOS states passed");
-    puts("Original resident effects: 16 complete authored programs x 200 PM frames, native pointer payloads, models, nested pools, both draw buffers and expiry passed");
+    puts("Original resident effects: 23 complete authored programs x 200 PM frames, native pointer payloads, models, nested pools, both draw buffers and expiry passed");
     return 1;
 }
 

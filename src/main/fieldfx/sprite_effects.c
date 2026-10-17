@@ -126,7 +126,7 @@ int FieldFx_FallingSpriteEmitter(int mode, void *data, intptr_t argument)
     return 0;
 }
 
-int FieldFx_PulsingStarFan(int mode)
+int FieldFx_PulsingStarFan(int mode, void *data, intptr_t argument)
 {
     GteShortVector position;
     RenderColor color;
@@ -1890,3 +1890,44 @@ s16 g_SpinningModelAnchorA[3];
 RenderColor g_FieldFxArcingSparkTint={255,200,50,0};
 RenderColor g_FieldFxOrbitHelicalTint={140,140,70,0};
 RenderColor g_FieldFxDampedSparkTint={128,110,10,0};
+
+/* Complete original resident hit/status/death effects 85..91. The retail
+ * offset-0x30 words for 88/89/91 point into scratch storage, not code.
+ * Battle_StartEnemyAttackEffect and Battle_ProcessActionSlot create these
+ * programs without a PM send; no host initializer is installed for them. */
+u8 g_FallingSpriteColorTrack0[]={0,0,0,0,0,0,0,0,64,128,128,24,0,0,0,0,0,64,128,16,0,0,0,0,0,0,120,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_FallingSpriteColorTrack1[]={0,0,0,0,0,0,0,0,160,110,0,24,0,0,0,0,120,120,0,16,0,0,0,0,40,10,0,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_BouncingSpriteColorTrack2[]={0,0,0,0,0,0,0,0,0,128,0,24,0,0,0,0,0,64,10,16,0,0,0,0,0,0,80,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RotatingEffectColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,200,255,8,0,0,0,0,0,20,190,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_PulsingStarFanColorTrack1[]={0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,255,190,5,8,0,0,0,0,120,100,5,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_PulsingStarFanColorTrack0[]={0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,255,0,8,0,0,0,0,0,40,100,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_CosineSparkColorTrack[]={0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,100,200,255,4,0,0,0,0,0,10,120,6,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RisingSpriteColorTrack[]={0,0,0,0,0,0,0,0,0,0,200,4,0,0,0,0,200,200,200,4,0,0,0,0,0,100,255,8,0,0,0,0,0,0,128,8,0,0,0,0,0,0,0,0,0,0,0,0};
+RenderColor g_FieldFxCosineEffectTint={12,120,255,0};
+RenderColor g_FieldFxArcingEmitterTint={0,80,200,0};
+RenderColor g_FieldFxSpiralSpriteTint={120,100,100,0};
+RenderColor g_FieldFxRingPulseTint={255,200,200,0};
+RenderColor g_FieldFxBouncingSpriteTint={128,128,128,0};
+u16 g_FieldFxTaskScriptCmd85[]={1,6,0,2,0,0,4,8,0,2,1,0,4,11,0,2,1,0,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd85={
+    {{FieldFx_FallingSpriteEmitter,FieldFx_RotatingEffect},{4,4}},NULL,g_FieldFxTaskScriptCmd85};
+u16 g_FieldFxTaskScriptCmd86[]={1,6,1,2,0,0,4,5,0,2,1,0,4,10,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd86={
+    {{FieldFx_FallingSpriteEmitter,FieldFx_PulsingStarFan},{4,4}},NULL,g_FieldFxTaskScriptCmd86};
+u16 g_FieldFxTaskScriptCmd87[]={1,6,2,2,0,0,4,5,0,2,1,0,4,10,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd87={
+    {{FieldFx_FallingSpriteEmitter,FieldFx_PulsingStarFan},{4,4}},NULL,g_FieldFxTaskScriptCmd87};
+u16 g_FieldFxTaskScriptCmd88[]={1,6,3,2,0,0,4,5,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd88={
+    {{FieldFx_ScatterBurstEmitter},{12}},NULL,g_FieldFxTaskScriptCmd88};
+u16 g_FieldFxTaskScriptCmd89[]={1,6,4,2,0,0,4,8,0,2,1,0,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd89={
+    {{FieldFx_CosineSparkEmitter,FieldFx_RisingSpriteEmitter},{16,12}},NULL,g_FieldFxTaskScriptCmd89};
+u16 g_FieldFxTaskScriptCmd90[]={1,6,5,2,0,0,4,5,0,2,2,0,4,10,0,2,1,0,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd90={
+    {{FieldFx_ScatterBurstEmitter,FieldFx_RisingSpriteEmitter,FieldFx_CosineSparkEmitter},{12,12,16}},NULL,g_FieldFxTaskScriptCmd90};
+u16 g_FieldFxTaskScriptCmd91[]={1,6,6,2,1,0,4,5,0,2,2,0,4,2,0,2,0,0,4,5,0,0,0,0};
+FieldFxTaskProgram g_FieldFxTaskProgramCmd91={
+    {{FieldFx_SpiralEmitter,FieldFx_RingPulse,FieldFx_BouncingSpinEmitter},{12,20,4}},NULL,g_FieldFxTaskScriptCmd91};
+GteShortVector g_SpiralEffectAnchor;
+u16 g_SpiralEffectRadius;

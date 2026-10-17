@@ -2,6 +2,54 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Uzupełniono wszystkie23 resident programy85..107. Nowe85..91 używają
+wyłącznie istniejących funkcji sprite_effects.c/emitters.c: pełne skrypty264
+bajty, osiem color tracks328 bajtów, pięć tints20 bajtów oraz oryginalny
+Spiral anchor/radius. PulsingStarFan ma poprawną wspólną sygnaturę callbacku
+(mode, state, argument); zachowano jego oryginalny algorytm. Brak nowych
+plików repo i funkcji rozgrywki. Dalsze programy108+ są oddzielnymi bankami;
+samo domknięcie resident85..107 nie oznacza obsługi wszystkich overlayów.
+
+Rozstrzygnięto wstępny audyt słowa+0x30 w88/89/91: wskazuje resident scratch
+storage (E21A8/E21D0), nie kod. Oryginalne Battle_StartEnemyAttackEffect
+(88/89) i Battle_ProcessActionSlot (91) tylko tworzą te efekty; nie wysyłają
+PM send. Native deskryptory nie instalują tych adresów jako callbacków,
+a test odtwarza dokładnie create→PM start/exec bez send dla tych trzech.
+Pozostałe programy zachowują wcześniejszą ścieżkę create/send. Pełne56-byte
+deskryptory USA, włącznie z tymi słowami, skrypty, tabele i tints są nadal
+porównywane z własnym oryginalnym CUE. Dane /tmp/pe-resident-hit-data.json.
+
+Sześć oryginalnych particle callbacks (Falling, ScatterBurst, CosineEffectB,
+Rising, Spiral, BouncingSpin) sprawdzono w1344 stanach z rzeczywistym CPU USA,
+ROM BIOS RNG i oryginalnymi SDK callees, bez modeli tych funkcji. Wiek
+0..65535, cztery nasiona, wrap półsłów, cztery promienie0/1/255/65535;
+porównanie wszystkich bajtów payloadu, return i RNG daje FNV46f703bc59498352.
+Oracle /tmp/pe-resident-hit-cpu.py/.log, native assert w istniejącej fixture.
+
+Kandydat /tmp/pe-resident-hit-v2-{game,fixture} i odpowiedniki -sanitized:
+build, pełne CPU oraz --assets z wymaganym CUE normal/SAN exit0, bez błędów
+ASan/UBSan/function. Wszystkie23 programy ×200 PM klatek, dwa draw slots,
+pełne łańcuchy OT, nested pools, naturalne wygaśnięcie i guards PASS.
+Spiral używa niepustego modelu fixture, audio prawidłowego pustego katalogu;
+to nie jest dowód oryginalnych pikseli ani PCM. Manifest
+/tmp/pe-resident-hit-v2-proof.json; logi /tmp/pe-resident-hit-v2-*.log.
+
+Na tym samym kandydacie trwa świeży --native-melissa normal/SAN:
+exec77052/PID82904 i exec59016/PID82905, prywatne katalogi
+/tmp/pe-resident-hit-v2-melissa-{normal,san}, zapisane rzeczywiste argv
+w /tmp/pe-resident-hit-v2-melissa-{normal,san}-args.json. Nie ogłaszać PASS
+przed exit0 i kontrolą logów. Potwierdzone żywe procesy pracują w
+Software_PushPrim/RasterSprite/RasterTriangle (sample obu PID w /tmp),
+nie restartować ich z powodu czasu obserwacji. Wzorzec dotychczasowego input14 to
+c7ae3598591ad7c3. Odtwarzanie source New Game używa wyłącznie pad inputu.
+
+Zbudowano też bieżące O1/-g/-fno-omit-frame-pointer z własnymi flagami TU:
+/tmp/pe-resident-hit-v2-{game,fixture}-debug. Pełna fixture CPU także PASS,
+w tym1344 oracle cases i23×200 PM frames; log cpu-o1 i build debug-build.
+Nadaje się do dalszego prawdziwego inputu przez debugger; nie nadpisano
+żadnego live executable. Nie kontynuować starej nieudanej próby M113/2HP
+jako aktualnej wersji — PID78296 nadal ma zamrożone tylko14 programów.
+
 Dopisano brakujące dane i rejestrację oryginalnych resident programów105/107
 w istniejących emitters.c/task_list.c: skrypty36/24 bajty, cztery pełne tabele
 kolorów40/32/40/40, osiem oryginalnych indeksów kości1,2,5,13,16,23,26,28,
@@ -28,14 +76,14 @@ miała UBSan w msc06.c; nie traktować jej jako czystego wyniku. Początkowy
 normal CPU bez PSYZ_HEADLESS zakończył się132; poprawne powtórki headless PASS.
 To dowód mechanizmu efektów, nie rzeczywistego użycia105/107 w kampanii.
 
-Pozostają resident85..91: pełne deskryptory odczytano do
+Historyczny wstępny audyt (rozstrzygnięty powyżej): resident85..91 odczytano do
 /tmp/pe-resident-85-91-audit.json. Cmd88/89/91 mają niezerowe słowo initializer
 wskazujące zero-initialized storage E21A8/E21D0; oryginalny D4698 wykonuje
 jalr przy skip0. Przed podpięciem zbadać runtime setup/relokację oraz argument
 skip; nie zgadywać callbacków. Cmd86/87 PulsingStarFan ma też niezgodne ABI
 mode-only w obecnym C i wymaga audytu w miejscu.
 
-Poprzedni zamrożony kandydat14 PE programów osiągnęła prawdziwe M113/A80211C8 przez
+Poprzedni zamrożony kandydat14 PE programów osiągnął prawdziwe M113/A80211C8 przez
 M116 event3: próg przy33041 world271,831, po12-frame krokach wejście33209,
 po fade-in przy33329 HP181/181, stage400, lock0, menuNULL, battle9.
 Gracz[-75628544,0,-3473408], yaw3072. Zrzut

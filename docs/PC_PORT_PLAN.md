@@ -2,6 +2,70 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Naprawiono lukę w istniejącym original_native_bootstrap: wcześniej SDL
+kierowało stderr procesu gry do NULL. Stare bootstrap PASS potwierdzały
+exit/state/VRAM, ale nie wykluczały recoverable UBSan warning. Teraz stderr
+jest scalany z przechwyconym stdout, a runtime error / ASan / LeakSanitizer /
+UBSan odrzuca przebieg także przy child exit0. Inne bezpośrednie replays
+z pełnymi logami stdout+stderr nie miały tej luki.
+
+Mocniejsza regresja --native-melissa na niezmienionym kodzie gry23 efektów:
+normal i w pełni instrumentowany SAN exit0, oba FNV c7ae3598591ad7c3,
+cała pierwsza walka zakończona i wcześniejsze ścisłe asercje stanu zachowane.
+UBSAN_OPTIONS=halt_on_error=1 i nowe przechwytywanie stderr; brak zgłoszeń.
+Czasy66,85/249,32s. Negatywny replay prawdziwego input0 zachowuje child exit0
+oraz prawidłowy FNV6c2aef67a1f42efb, ale dodany na stderr komunikat
+"runtime error: injected recoverable child diagnostic" daje fixture exit1.
+Pełne CPU normal/SAN także PASS. Build /tmp/pe-native-stderr-v1-*.log,
+manifest /tmp/pe-native-stderr-v1-proof.json. Dotychczasowe limity CTest
+180/240s nadal mogą powodować timeout w nieoptymalizowanych przebiegach;
+te bezpośrednie powtórki nie dowodzą zielonego całego CTest.
+
+Ułatwienie długich headless testów bez zmian w źródłach: kopie statycznych
+bibliotek PsyZ z samym sdl3_software.c kompilowanym -O1/-g z jego własnymi
+flagami CMake, także wszystkimi sanitizerami. Pozostałe PsyZ/SDL zachowują
+instrumentację; nie wyłączono żadnego checkera ani funkcji renderera.
+/tmp/pe-o1-raster-build.py, biblioteki /tmp/pe-o1-raster/{normal,san}/libpsyz.a,
+unikalne /tmp/pe-o1-raster-{game,fixture} i -sanitized. CPU i wymagane --assets
+normal/SAN exit0; osobne pełne Melissa również exit0/ten sam FNV. Najmocniejszy
+wynik sanitizera pochodzi dopiero z poprawionego fixture powyżej. Nie
+nadpisywano żadnego live executable. To kompilacja testowa, nie nowe API gry.
+
+Genuine H7: oryginalne Tune Up przez81 odcinków fizycznego inputu przenosi
+Heat (tail9) z M203 do wolnego slotu M16A1. Tool i M203 zużyte, M16 ma33/9,
+pozostają bazowe statystyki36/112/16; slot broni9 i pancerza14 bez zmian.
+Żadnych HP/PE/stat/flag writes przez debugger. Przy24700 M087/A80083C8,
+stage248, HP69/133, brak menu/lock/battle. Powtórki cold H→Tool normal/SAN
+exit0: cały JSON identyczny, wszystkie4096 bajtów equipment identyczne także
+z debuggerem, pełne1MiB VRAM normal==SAN==debugger SHA256
+29eaec5c74c28c18bb7b684be58575faf422d7fc3006b5cf7021c4dfcd3e0518.
+B–H niezmienione, bu10 puste. /tmp/pe-h-heat-v1-{case,proof}.json,
+-run.py, -verify.py, -{normal,san}-args.json/.log. To zwykłe przygotowanie
+z kanonicznego H, zero wcześniejszych/nowych HP diagnostics, nie nowy save
+ani dowód zwycięstwa M086. Użytkowe karty pozostały nietknięte.
+
+Pierwsza próba po Tune Up (/tmp/pe-resident-hit-h-live) pokonała jednego z
+czterech robaków M086, lecz zakończyła się HP0/mode3 przy34160. Prawdziwe
+Heal2 dało69→129 przy26908; późniejsze Heal1 także wykonały się. Pozostali
+trzej: HP98/150/98. Zaobserwowano wzrost HP pozostałych po śmierci pierwszego;
+nie przypisywać tego leczeniu Ayi ani nie zmieniać balansu. Pełny oryginalny
+skrypt aktora3 ma23884 bajty, identyczne z własnym CUE przy offset95976 w
+/tmp/pe-m086-room.bin; /tmp/pe-m086-full-enemy-script.bin/.txt. Nieudany
+input zarchiwizowano /tmp/pe-h-heat-worm-loss-args.json, cały trace
+/tmp/pe-resident-hit-h-live-input.jsonl. PID83202/exec19315 zatrzymany po
+przegranej; nie przedstawiać tego jako ukończenia zwykłej kampanii.
+
+Trwa kolejna prywatna próba pełnymi seriami zamiast pojedynczych strzałów:
+exec22585/PID84875, /tmp/pe-h-heat-burst-live, /tmp/pe-o1-raster-game z O1
+rendererem. Polecenia w /tmp/pe-h-heat-burst-live.cmd automatycznie ładują
+cold H + cały sprawdzony Tune Up, dochodzą M086 i wywołują ograniczony do24
+obiegów pomocnik /tmp/pe-h-worms-burst-control.py. Trace
+/tmp/pe-h-heat-burst-live-input.jsonl, postęp /tmp/pe-h-heat-burst-turns.jsonl,
+log -live-lldb.log. Pomocnik czyta rzeczywiste wrogie pociski PM120 i pola
+przeciwników, planuje ruch po floor/arenie i używa wyłącznie przycisków;
+nie zmienia HP/PE/ATB ani RNG. Najpierw odczytać aktualny wynik/proces,
+nie restartować działającego przebiegu z powodu czasu obserwacji.
+
 Uzupełniono wszystkie23 resident programy85..107. Nowe85..91 używają
 wyłącznie istniejących funkcji sprite_effects.c/emitters.c: pełne skrypty264
 bajty, osiem color tracks328 bajtów, pięć tints20 bajtów oraz oryginalny
@@ -34,14 +98,13 @@ Spiral używa niepustego modelu fixture, audio prawidłowego pustego katalogu;
 to nie jest dowód oryginalnych pikseli ani PCM. Manifest
 /tmp/pe-resident-hit-v2-proof.json; logi /tmp/pe-resident-hit-v2-*.log.
 
-Na tym samym kandydacie trwa świeży --native-melissa normal/SAN:
-exec77052/PID82904 i exec59016/PID82905, prywatne katalogi
+Historyczny pierwszy --native-melissa normal/SAN zakończony exit0
+(obie stare fixture odrzucały stderr; mocniejszy dowód powyżej):
+Zakończone exec77052/PID82904 i exec59016/PID82905, prywatne katalogi
 /tmp/pe-resident-hit-v2-melissa-{normal,san}, zapisane rzeczywiste argv
-w /tmp/pe-resident-hit-v2-melissa-{normal,san}-args.json. Nie ogłaszać PASS
-przed exit0 i kontrolą logów. Potwierdzone żywe procesy pracują w
-Software_PushPrim/RasterSprite/RasterTriangle (sample obu PID w /tmp),
-nie restartować ich z powodu czasu obserwacji. Wzorzec dotychczasowego input14 to
-c7ae3598591ad7c3. Odtwarzanie source New Game używa wyłącznie pad inputu.
+w /tmp/pe-resident-hit-v2-melissa-{normal,san}-args.json. Oba zachowały
+FNV c7ae3598591ad7c3. Zakończone procesy nie wymagają dalszego czekania.
+Odtwarzanie source New Game używało wyłącznie pad inputu.
 
 Zbudowano też bieżące O1/-g/-fno-omit-frame-pointer z własnymi flagami TU:
 /tmp/pe-resident-hit-v2-{game,fixture}-debug. Pełna fixture CPU także PASS,

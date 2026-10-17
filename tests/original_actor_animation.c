@@ -13467,13 +13467,17 @@ static int original_native_bootstrap(const char *executable,int field_control)
         SDL_PropertiesID props=SDL_CreateProperties();
         SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
         SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER,SDL_PROCESS_STDIO_APP);
-        SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDERR_NUMBER,SDL_PROCESS_STDIO_NULL);
+        SDL_SetBooleanProperty(props,SDL_PROP_PROCESS_CREATE_STDERR_TO_STDOUT_BOOLEAN,true);
         SDL_Process *child=SDL_CreateProcessWithProperties(props);SDL_DestroyProperties(props);
         if(!child)return 1;
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
         SDL_DestroyProcess(child);
         int valid=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
             strstr(output,input==22?"\"vblanks\":246050":input==21?"\"vblanks\":222996":input==20?"\"vblanks\":200826":input==19?"\"vblanks\":154203":input==18?"\"vblanks\":131932":input==17?"\"vblanks\":112000":input==16?"\"vblanks\":104000":input==15?"\"vblanks\":95751":input==14?"\"vblanks\":82000":input==13?"\"vblanks\":64554":input==12?"\"vblanks\":60634":input==11?"\"vblanks\":58000":input==10?"\"vblanks\":52000":input==9?"\"vblanks\":42000":input==8?"\"vblanks\":35500":input>=6?"\"vblanks\":33500":input==5?"\"vblanks\":30000":input==4?"\"vblanks\":24000":input>=2?"\"vblanks\":14000":input?"\"vblanks\":13000":"\"vblanks\":8000");
+        /* UBSan may report a recoverable failure while the child exits 0.
+         * Keep stderr with the captured state and fail the replay on it. */
+        if(output && (strstr(output,"runtime error:") || strstr(output,"AddressSanitizer:") ||
+           strstr(output,"LeakSanitizer:") || strstr(output,"UndefinedBehaviorSanitizer:")))valid=0;
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){

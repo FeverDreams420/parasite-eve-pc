@@ -16,13 +16,12 @@ typedef char MapSelectionIndexRow_size_must_be_24_bytes[
 typedef char MapSelectionName_size_must_be_8_bytes[
     sizeof(MapSelectionName) == 8 ? 1 : -1];
 
-extern MapSelectionIndexRow g_MapSelectIndexTable[];
-extern MapSelectionName g_MapFilenameTable[];
+extern MapSelectionIndexRow g_MapSelectIndexTable[7];
+extern MapSelectionName g_MapFilenameTable[66];
 
-/* Map id strings parsed by MapSelectionFlow: the debug overrides, the
- * fixed start maps and the per-entry id table (8 bytes per map). */
-extern s8 g_MapNameOverrideA[];
-extern s8 g_MapNameOverrideB[];
-extern s8 g_MapIdTable[];
+/* Floor-transition overrides and fixed map IDs, eight bytes per entry. */
+extern s8 g_MapNameOverrideA[8];
+extern s8 g_MapNameOverrideB[8];
+extern s8 g_MapIdTable[40];
 
 #endif

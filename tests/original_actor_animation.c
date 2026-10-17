@@ -83,6 +83,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/boot_services.h"
 #include "pe1/room_floor.h"
 #include "pe1/font.h"
+#include "pe1/map_selection.h"
 #include "pe1/cdrom.h"
 #include "pe1/entity_allocation.h"
 #include "pe1/render_buffers.h"
@@ -420,6 +421,27 @@ static int glyph_selection(void)
 
 static int glyph_asset_records(PeDisc *disc, const PeDiscFile *exe)
 {
+    /* Compare every resident map byte against the mounted USA executable,
+     * including the final IDs and padding, before exercising floor records. */
+    const struct {u32 address; const void *data; size_t size;} map_data[] = {
+        {0x8009173c, g_MapSelectIndexTable, sizeof(g_MapSelectIndexTable)},
+        {0x800917e4, g_MapIdTable, sizeof(g_MapIdTable)},
+        {0x8009180c, g_MapFilenameTable, sizeof(g_MapFilenameTable)},
+        {0x8009cd78, g_MapNameOverrideA, sizeof(g_MapNameOverrideA)},
+        {0x8009cd80, g_MapNameOverrideB, sizeof(g_MapNameOverrideB)}
+    };
+    u8 original_maps[sizeof(g_MapFilenameTable)];
+    unsigned map_bytes = 0;
+    for (unsigned i = 0; i < sizeof(map_data) / sizeof(map_data[0]); ++i) {
+        if (!pe_disc_read(disc, exe, map_data[i].address - 0x80010000u + 0x800,
+                          original_maps, map_data[i].size) ||
+            memcmp(original_maps, map_data[i].data, map_data[i].size)) return 0;
+        map_bytes += map_data[i].size;
+    }
+    for (unsigned row = 0; row < 7; ++row)
+        for (unsigned slot = 0; slot < 24; ++slot)
+            if (g_MapSelectIndexTable[row].filename_index[slot] >= 66) return 0;
+    printf("Original floor map data: five resident tables, %u USA bytes, 168 valid indices\n", map_bytes);
     Pe1GameState saved = g_GameState;
     u16 range[2];
     unsigned slots = 0;

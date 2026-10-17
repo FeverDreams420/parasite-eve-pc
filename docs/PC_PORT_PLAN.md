@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Przywrócono brakujące dane resident potrzebne istniejącym oryginalnym
+Scene_SelectMapById (177) i Script_SetFloorByEntityRoll (179): siedem
+24-bajtowych wierszy indeksów, 66 ośmiobajtowych nazw map, pięć stałych
+ID oraz dwa ID przejść końcowych. Definicje pozostają w istniejącym
+actor_opcodes.c, deklaracje map_selection.h podają rzeczywiste rozmiary.
+Test w istniejącym glyph_asset_records porównuje wszystkie 752 bajty
+bezpośrednio ze SLUS na wymaganym CUE i sprawdza 168 indeksów. Nie
+wprowadzono nowych plików ani nowej implementacji generatora pięter.
+
+Kandydat /tmp/pe-floor-map-data-v1: pełna świeża kompilacja po170 obiektów C
+normal/SAN, game i fixture, z dotychczasowymi nieinstrumentowanymi archiwami
+SDK. Manifest zawiera komendy i SHA wszystkich zależności/obiektów/binarek;
+osobno sprawdzono zgodność bieżących źródeł z manifestem. CPU normal/SAN
+exit0 (0,69/2,10s); wymagane --assets exit0 (11,06/48,14s), 115 rekordów,
+2723 sloty i 5750 zapytań generatora. Logi i proof.json:
+/tmp/pe-floor-map-data-v1-tests. Karty tylko w prywatnych katalogach /tmp.
+Rejestr pozostaje bez zmian:177/179 wymagają jeszcze weryfikacji oryginalnego
+przepływu wyboru/ładowania map, normalizacji ABI179 i podpięcia. Same dane
+nie dowodzą działania Chrysler Building ani ukończenia kampanii.
+
+Ponowiony test zgłoszenia206/82 na buildzie root zakończył pełną pierwszą
+walkę z Melissą od New Game: --native-melissa exit0, input14,
+FNV c7ae3598591ad7c3, wymagany rzeczywisty CUE, headless, osobne karty.
+/tmp/pe-melissa-recheck-20261017-final/melissa.log. Oba opcode'y pozostają
+związane z oryginalnymi funkcjami. Zamrożony debug floor175-v1 niezmieniony.
+
 Podpięto oryginalne175 Entity_ResolveCurrentPosition z int ** i jawnym
 odczytem dolnego u16. W istniejącym actor_collision.c poprawiono zawijanie
 odejmowań równania płaszczyzny Entity_ResolvePosition oraz mnożeń

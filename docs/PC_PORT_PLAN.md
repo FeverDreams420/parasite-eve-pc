@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Pełna macierz świeżego /tmp/pe-theater-sewer-gate-v1 przechodzi 30/30
+poleceń: CPU, wymagane assets i wszystkie natywne przypadki 0..22 w obu
+profilach. Trasa 22 kończy zwykły/sanitizowany build w 66,88/170,40 s.
+To zamyka cztery stare rozbieżności 19..22 bez cofania oryginalnych zegarów.
+Nie jest to pełny zestaw wszystkich CTestów ani dowód całej kampanii.
+Po 173 świeże obiekty/profil, wszystkie źródła nagłówkowe, obiekty, archiwa
+i binarki zgodne z manifestem; root build 0. /tmp/pe-theater-sewer-gate-v1-
+{proof,build-proof,test-results}.json.
+
+Nowe 200 zmian fizycznego inputu w istniejącym przypadku 22 obejmuje Heal1
+18→48HP, wybór Jump in, zwycięstwo nad trzema szczurami w M027,
+Medicine1 29→53HP, zwycięstwo nad żabą i dwoma szczurami w M028,
+awans do poziomu 4, nagrody, dialogi 10–11 M031 oraz ruch po pochyłej
+podłodze. Przy 246050: M031, HP 27/64, pojemność 13, brak menu/przeciwników,
+move_lock 0, pozycja [11141120,68681728,322442560], yaw 2048.
+FNV VRAM 0d3d2869131c3ae7. Ten konkretny przebieg nie otrzymuje Medicine1
+z M028; odbiór i użycie tego dropu nadal sprawdza papuga w przypadku 21,
+wraz z oryginalną flagą jej śmierci. Nie wymuszano dropu ani nie dodawano
+przedmiotu. Przypadek 22 również wymaga tej flagi papugi.
+
+Pełny New Game→M031: normal/SAN 0 w 66,20/178,29 s; pełny JSON i 1 MiB VRAM
+obu profili identyczne z żywym debuggerem. Zapis A z telefonu niezmieniony.
+/tmp/pe-theater-sewer-v1-proof.json; VRAM SHA256
+744f7721e17637db860fcb455768d445d77a410a94af5d041082e0c5ec1ce98e.
+Nowy harmonogram źródłowy dokładnie odpowiada zmianom maski w nagraniu.
+Zachowano istniejące pliki; produkcyjne moduły i zachowanie wrogów bez zmian.
+
+Dalszy zwykły input od New Game leczy w M031 27→57 przez oryginalne
+Heal1, schodzi lewymi schodami, wchodzi do M032, pokonuje obie żaby,
+przechodzi awans do poziomu 5 i zamyka nagrody. Przy 252862: HP 31/67,
+pojemność 14, mode 9, brak żywych przeciwników/menu, move_lock 0.
+Pełny JSON i VRAM zwykłego oraz sanitizowanego przebiegu są identyczne
+z debuggerem; oba exit 0 w 71,02/175,83 s. /tmp/pe-theater-clock-m032-v1-proof.json zawiera czasy,
+hashe i dowód zgodności; argumenty i fizyczny input są obok. Wszystkie
+żywe sesje tej próby zakończono exit 0. Bez zapisu RAM rozgrywki, fałszywych
+save'ów ani interakcji z kartami użytkownika. Dalsze M033 i reszta kampanii
+nadal wymagają pracy; cel pełnego portu pozostaje aktywny.
+
+### Poprzedni etap: papuga i drugie spotkanie z Melissą
+
 Ponownie nagrano pełny zakres przypadku21 z działającymi oryginalnymi
 zegarami: interakcja z papugą w M022, dialog110, zwycięstwo, odebranie
 Medicine1, użycie tej nagrody w M319 (43→53HP), drugie spotkanie z Melissą,

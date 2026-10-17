@@ -1071,6 +1071,72 @@ pozostawić bez nadpisywania. Następnie telefon M112 po przejściu M115;
 poprzedniego M099 debuggera nie próbować kontynuować. Nowego save jeszcze
 nie ma, H pozostaje niezmieniony. M086 zwykła wygrana nadal otwarta.
 
+Audyt kolejnych całych bibliotek tej rodziny: M116/M120 mają identyczne
+17600 bajtów (SHA2560ff35dd608d950d94f5116cd1402047b89a9b5c55195c617199c24d415145cf3,
+FNV3a3ae4a6df997701). Sprawdzono każdą instrukcję wszystkich53 funkcji
+aktorów względemM059,4 tablice Configure i6 wierszy metod (code+20,
+tablice bez przesunięcia), cały line burst/SlotSet względemM122 oraz
+seedy, skrypt, rozmiary, oba deskryptory i całą zerową tablicę parametrów.
+Podpięto75/80193368 do istniejącej klasyE i136/801933F8 do line burst.
+
+M113 ma7208 bajtów: SHA256
+0ccf9e28aa111ecee068b7799743187b07a2dafa5fc7f6d146f654bec5284c79,
+FNV238b3ab2185b7ea9. To dokładnie6 funkcji: oba efekty OrbitFlare iLineBurst
+oraz pełne inicjalizatory SetArgs3 iSlotSet. Test porównuje całe bloki
+instrukcji obu efektów i obu inicjalizatorów, wszystkie seedy i pełne
+skrypty/descriptor data. Podpięto115/80190AFC i136/80190B54.
+M263/M265/M333 mają identyczne20932 bajty: SHA256
+b73cf8d3044bd138ce8124fd0d86af80ab9ad13d49c0821b9b7a3390768eb2d6,
+FNV0b0c7c878f4b80b4. To komplet59 funkcji:53 aktorów +6 powyższych.
+Test obejmuje wszystkie instrukcje, pełne tablice Configure i metody,
+całą autorską konfigurację efektów,6 seed words/pozostałe stałe oraz
+cały zerowy obszar trzech argumentów i8 rekordów parametrów.
+Podpięto70/80193FB4,75/80193FEC,115/80194098 i136/801940F0.
+W każdym wariancie loader wymaga dokładnych PS1 adresów deskryptorów;
+oryginalne parametry są resetowane przy zmianie pokoju. Nie dopisano
+żadnych funkcji gameplayu ani nowych plików — to wyłącznie powiązanie
+pełnych już naprawionych modułów i rozszerzenie istniejącego testu.
+
+Końcowy pełny build i --assets PASS normal oraz ASan/UBSan/function,
+oba terminal0, PsyZ/SDL instrumentowane: /tmp/pe-line-family-v2-assets.log
+oraz /tmp/pe-line-family-v2-assets-san.log. Diff --check PASS. Audyt
+/tmp/pe-line-family-module-audit.json; zamrożone
+/tmp/pe-line-family-v2-game/-game-sanitized i-fixture/-fixture-sanitized.
+Samo prawdziwe wejście do tych sześciu nowych pokojów nadal niezweryfikowane.
+M391/M394/M395 orazM392 zawierają dodatkowe moduły (klasa10 lub40),
+których ta zmiana nie podpina; pełna kampania/EX/Chrysler nadal nieukończone.
+
+Powtórki M115 były długo uśpione przez macOS: pmset log potwierdził
+Maintenance Sleep i Dark Wake Thermal Emergency między03:40 a04:06;
+przy28:52 wall time procesy miały tylko3:29 CPU. Nie restartowano ich.
+Tymczasowe caffeinate -i -w70128, exec67606, utrzymuje idle assertion tylko
+do końca tego SAN procesu (bez utrzymywania ekranu). Procesy żywe i pracują.
+Normal70127 zakończył się0 przy195909. Debugger70123 dotarł do tego
+samego cap: M115/A80212C8, story400, scenka Bena/Sheevy, dialog72/lock1,
+aktorzy1/2/3/7, brak gracza w tej autorskiej scence, menuNULL, battle9,
+zero żywych wrogów. Dlatego verifier /tmp/pe-m115-v1-entry-verify.py został
+oparty na tym rzeczywistym stanie, a nie wcześniejszym przypuszczeniu,
+że gracz jest już obecny. Pełny VRAM normal==debugger,
+SHA256e76ed4f9aa51ba166bcdac1b4efd05a214db10792dd785d0c10a03feacc9ae1e,
+zrzut /tmp/pe-m115-v1-entry-debug.vram/.png obejrzany; program51==native
+LineBurst potwierdzony w debuggerze. SAN70128 nadal trwa; nie ogłaszać
+jeszcze porównania całego JSON normal/SAN.
+
+Po dialog72 i dalszej scence zwykły input wrócił z autorskiego skryptu
+doM100 przy196277, HP181, bez menu/locka. Wrócono doM099 przy196417,
+po starcie można się poruszać. Znaleziono bliższy telefon również wM099:
+actor4, worldx[486,687],z[−840,−729], yaw(1536,2560), Cross→event11;
+actor0 uruchamia prawdziwy opcode231 przybyte2356, z room variable998.
+To pozwoli zapisać przed wejściem doM116, którego stary frozen debugv115
+jeszcze nie obsługuje. Nie uruchamiać nim M116 przed utworzeniem save'a.
+Genuine I powinien powstać przez UI na wolnym slocie, bez nadpisania H;
+nadal musi być opisany jako coverage-only (15 wcześniejszych HP diagnostics).
+Korytarz obok NPC2 przyx−300,z−40 jest fizycznie blokowany promieniem300;
+nie zmieniać kolizji ani pozycji. Przygotowana legalna dłuższa trasa po
+prawej stronie biurek do telefonu. Bieżący exec22652/PID70123 nadal żywy,
+input /tmp/pe-m115-v1-live-input.jsonl, sprawdzić aktualny pe-state i log.
+
+
 
 
 

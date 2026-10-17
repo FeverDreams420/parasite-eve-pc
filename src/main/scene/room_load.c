@@ -542,6 +542,20 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomLineBurstProgram;
         if ((map + 1 == 104 || map + 1 == 115 || map + 1 == 159) && slot == 136 && record[i].u.handlerAddress == 0x8018fe5cu)
             native = &g_RoomLineBurstProgram;
+        if ((map + 1 == 116 || map + 1 == 120) && slot == 75 && record[i].u.handlerAddress == 0x80193368u)
+            native = &g_RoomActorClassTable[2];
+        if ((map + 1 == 116 || map + 1 == 120) && slot == 136 && record[i].u.handlerAddress == 0x801933f8u)
+            native = &g_RoomLineBurstProgram;
+        if (map + 1 == 113 && slot == 115 && record[i].u.handlerAddress == 0x80190afcu)
+            native = &g_RoomOrbitFlareEffects;
+        if (map + 1 == 113 && slot == 136 && record[i].u.handlerAddress == 0x80190b54u)
+            native = &g_RoomLineBurstProgram;
+        if (map + 1 == 263 || map + 1 == 265 || map + 1 == 333) {
+            if (slot == 70 && record[i].u.handlerAddress == 0x80193fb4u) native = &g_RoomActorClassTable[0];
+            if (slot == 75 && record[i].u.handlerAddress == 0x80193fecu) native = &g_RoomActorClassTable[2];
+            if (slot == 115 && record[i].u.handlerAddress == 0x80194098u) native = &g_RoomOrbitFlareEffects;
+            if (slot == 136 && record[i].u.handlerAddress == 0x801940f0u) native = &g_RoomLineBurstProgram;
+        }
         if (map + 1 == 107 && slot == 75 && record[i].u.handlerAddress == 0x801936b0u)
             native = &g_RoomActorClassTable[2];
         if (map + 1 == 114 && slot == 72 && record[i].u.handlerAddress == 0x801936ccu)
@@ -692,7 +706,7 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
             g_RoomM005BeaconOffset = (GteShortVector){0};
             g_RoomM005BeaconCenter = (GteShortVector){0};
-        } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30) && slot == 115) {
+        } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30 || map + 1 == 113 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
         } else if ((map+1==126 || map+1==129 || map+1==139 || map+1==149 || map+1==326) && slot==122) {
@@ -702,9 +716,15 @@ int Scene_LoadRoom(unsigned int roomId)
             g_PmCmdHandlerTable[slot]=&g_RoomPairedGlowHandlers;
             memset(&g_RoomPairedGlowSprite,0,sizeof(g_RoomPairedGlowSprite));
             g_RoomPairedGlowPacket__paired=NULL;
-        } else if ((map + 1 == 104 || map + 1 == 115 || map + 1 == 122 || map + 1 == 159) && slot == 136) {
+        } else if ((map + 1 == 104 || map + 1 == 113 || map + 1 == 115 || map + 1 == 116 || map + 1 == 120 || map + 1 == 122 || map + 1 == 159 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 136) {
             g_FieldFxTaskPrograms[51]=&g_RoomLineBurstProgram;
             memset(RoomLib_SlotTable,0,8*sizeof(RoomSlotRec));
+        } else if ((map + 1 == 116 || map + 1 == 120) && slot == 75) {
+            g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[2];
+        } else if ((map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 70) {
+            g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[0];
+        } else if ((map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 75) {
+            g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[2];
         } else if (map + 1 == 107 && slot == 75) {
             g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[2];
         } else if (map + 1 == 114 && slot == 72) {

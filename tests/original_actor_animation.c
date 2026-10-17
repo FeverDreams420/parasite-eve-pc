@@ -6427,6 +6427,115 @@ static int original_line_burst_assets(PeDisc *disc,PeDiscFile *exe)
         }
         free(variant);if(!valid)fprintf(stderr,"Line-only complete module failed for M%03u\n",line_rooms[r]);
     }
+    /* The M116/M120 module includes the complete 53-function actor library
+     * followed by the three original line-burst/parameter functions. */
+    SceneRoomSectorRange actor_range;u8 actor_reference[0x35a0];
+    if(valid)valid=pe_disc_read(disc,exe,0x800ull+0x80093378u-base+58*8,&actor_range,sizeof(actor_range)) &&
+        pe_disc_read(disc,&archive,(u64)(actor_range.start+actor_range.scratchSectors+actor_range.textureSectors)*2048+8,actor_reference,sizeof(actor_reference));
+    const unsigned actor_line_rooms[]={116,120,263,265,333};
+    const u16 actor_low[]={0x218,0x408,0x624,0xf80,0x11ac,0x1364,0x1a24,0x1b5c,0x1b98,0x1d6c,
+        0x2030,0x2550,0x2714,0x2758,0x2884,0x2c24,0x3128,0x31cc,0x3230,0x3288};
+    for(unsigned r=0;valid && r<5;++r){
+        SceneRoomSectorRange variant_range;
+        if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(actor_line_rooms[r]-1)*8,&variant_range,sizeof(variant_range))){valid=0;break;}
+        size_t variant_bytes=(size_t)variant_range.roomSectors*2048;SceneAssetView *variant=malloc(variant_bytes);if(!variant){valid=0;break;}
+        valid=pe_disc_read(disc,&archive,(u64)(variant_range.start+variant_range.scratchSectors+variant_range.textureSectors)*2048,variant,variant_bytes);
+        if(valid){
+            const unsigned combined=r>=2,library_bytes=combined?20932:17600,code_delta=combined?36:20;
+            const unsigned rows=combined?0x4fc4:0x4340,line_start=combined?0x4190:0x350c,line_seed=combined?0x1ec:0x1dc;
+            const unsigned script_offset=combined?0x50e0:0x43e8,descriptor_offset=combined?0x5100:0x4408,params_offset=combined?0x5144:0x4440;
+            const u8 *data=(u8 *)variant+8,*line=(u8 *)room+8;
+            uint64_t hash=UINT64_C(14695981039346656037);for(unsigned i=0;i<library_bytes;++i)hash=(hash^data[i])*UINT64_C(1099511628211);
+            SceneRoomDirectory *dir=SceneAsset_ResolveOffset(variant,variant->header.directoryOffset);
+            SceneRoomRecord *record=SceneAsset_ResolveOffset(variant,dir->scripts&0x3fffff);unsigned mask=0;
+            valid=hash==(combined?UINT64_C(0x0b0c7c878f4b80b4):UINT64_C(0x3a3ae4a6df997701)) && dir->scripts>>22==(combined?4:2);
+            for(unsigned i=0;valid && i<(combined?4:2);++i){
+                valid=(record[i].source.offsetAndSlot&0xffffff)==8 && record[i].reserved[0]==(combined?0xc4:0xc0) && record[i].reserved[1]==(combined?0x51:0x44);
+                if(record[i].source.bytes.slot==75 && record[i].u.handlerAddress==(combined?0x80193fecu:0x80193368u))mask|=1;
+                else if(record[i].source.bytes.slot==136 && record[i].u.handlerAddress==(combined?0x801940f0u:0x801933f8u))mask|=2;
+                else if(combined && record[i].source.bytes.slot==70 && record[i].u.handlerAddress==0x80193fb4u)mask|=4;
+                else if(combined && record[i].source.bytes.slot==115 && record[i].u.handlerAddress==0x80194098u)mask|=8;
+                else valid=0;
+            }
+            valid=valid && mask==(combined?15:3);
+            for(unsigned o=4;valid && o<0x1dc;o+=4){u32 expected,actual;memcpy(&expected,actor_reference+o,4);memcpy(&actual,data+o,4);
+                if(expected>=0x8018f1ccu && expected<0x801924e8u)expected+=code_delta;valid=expected==actual;}
+            for(unsigned o=0x1dc;valid && o<0x34f8;o+=4){u32 expected,actual;memcpy(&expected,actor_reference+o,4);memcpy(&actual,data+o+code_delta,4);
+                u32 target=(expected&0x3ffffff)<<2;
+                if((expected>>26==2 || expected>>26==3) && target>=0x18f1cc && target<0x1924e8)expected+=code_delta/4;
+                for(unsigned j=0;j<20;++j)if(o==actor_low[j])expected=(expected&0xffff0000)|(u16)(expected+code_delta);
+                valid=expected==actual;
+            }
+            for(unsigned i=0;valid && i<42;++i){u32 expected,actual;memcpy(&expected,actor_reference+0x34f8+i*4,4);memcpy(&actual,data+rows+i*4,4);valid=actual==expected+code_delta;}
+            for(unsigned o=0;valid && o<0xe34;o+=4){u32 expected,actual;memcpy(&expected,line+0x10b8+o,4);memcpy(&actual,data+line_start+o,4);
+                u32 target=(expected&0x3ffffff)<<2;
+                if((expected>>26==2 || expected>>26==3) && target>=0x1900a8 && target<0x190edc)expected+=(line_start-0x10b8)/4;
+                if(o==0x20 || o==0x3c8 || o==0x3f0)expected=(expected&0xffff0000)|(u16)(expected+(line_seed-0xc));
+                if(o==0x524)expected=(expected&0xffff0000)|(u16)(expected+(line_start-0x10b8));
+                if(o==0xdf8)expected=(expected&0xffff0000)|(u16)(expected+(params_offset-0x2038));
+                valid=expected==actual;
+            }
+            const u32 expected_descriptor[]={0x8018eff0u+line_start+0x39c,0,0,0,0,0,0,0,36,0,0,0,
+                0x8018eff0u+line_start+0xdf0,0x8018eff0u+script_offset};
+            valid=valid && !memcmp(data+line_seed,line+12,20) && !memcmp(data+script_offset,g_RoomLineBurstScript,32) &&
+                !memcmp(data+descriptor_offset,expected_descriptor,sizeof(expected_descriptor));
+            for(unsigned i=combined?0x5138:0x4440;valid && i<library_bytes;++i)valid=data[i]==0;
+        }
+        free(variant);if(!valid)fprintf(stderr,"Actor/line complete module failed for M%03u\n",actor_line_rooms[r]);
+    }
+    SceneRoomSectorRange orbit_range;u8 orbit_reference[17060];
+    if(valid)valid=pe_disc_read(disc,exe,0x800ull+0x80093378u-base+27*8,&orbit_range,sizeof(orbit_range)) &&
+        pe_disc_read(disc,&archive,(u64)(orbit_range.start+orbit_range.scratchSectors+orbit_range.textureSectors)*2048+8,orbit_reference,sizeof(orbit_reference));
+    const unsigned orbit_line_rooms[]={113,263,265,333};
+    for(unsigned r=0;valid && r<4;++r){
+        SceneRoomSectorRange variant_range;
+        if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(orbit_line_rooms[r]-1)*8,&variant_range,sizeof(variant_range))){valid=0;break;}
+        size_t variant_bytes=(size_t)variant_range.roomSectors*2048;SceneAssetView *variant=malloc(variant_bytes);if(!variant){valid=0;break;}
+        valid=pe_disc_read(disc,&archive,(u64)(variant_range.start+variant_range.scratchSectors+variant_range.textureSectors)*2048,variant,variant_bytes);
+        if(valid){
+            const unsigned combined=r!=0,library_bytes=combined?20932:7208,seed=combined?0x1dc:4;
+            const unsigned orbit_start=combined?0x351c:0x28,line_start=combined?0x4190:0xc9c;
+            const unsigned orbit_script=combined?0x506c:0x1ad0,orbit_descriptor=combined?0x50a8:0x1b0c;
+            const unsigned line_script=combined?0x50e0:0x1b44,line_descriptor=combined?0x5100:0x1b64;
+            const unsigned args=combined?0x5138:0x1b9c,params=combined?0x5144:0x1ba8;
+            const u8 *data=(u8 *)variant+8,*line=(u8 *)room+8;
+            uint64_t hash=UINT64_C(14695981039346656037);for(unsigned i=0;i<library_bytes;++i)hash=(hash^data[i])*UINT64_C(1099511628211);
+            valid=hash==(combined?UINT64_C(0x0b0c7c878f4b80b4):UINT64_C(0x238b3ab2185b7ea9));
+            if(!combined){SceneRoomDirectory *dir=SceneAsset_ResolveOffset(variant,variant->header.directoryOffset);
+                SceneRoomRecord *records=SceneAsset_ResolveOffset(variant,dir->scripts&0x3fffff);unsigned mask=0;
+                valid=valid && dir->scripts>>22==2;
+                for(unsigned i=0;valid && i<2;++i){valid=records[i].reserved[0]==0x28 && records[i].reserved[1]==0x1c && (records[i].source.offsetAndSlot&0xffffff)==8;
+                    if(records[i].source.bytes.slot==115 && records[i].u.handlerAddress==0x80190afcu)mask|=1;
+                    else if(records[i].source.bytes.slot==136 && records[i].u.handlerAddress==0x80190b54u)mask|=2;else valid=0;}
+                valid=valid && mask==3;
+            }
+            for(unsigned o=0;valid && o<0xc74;o+=4){u32 expected,actual;memcpy(&expected,orbit_reference+0x3508+o,4);memcpy(&actual,data+orbit_start+o,4);
+                u32 target=(expected&0x3ffffff)<<2;int delta=(int)orbit_start-0x3508;
+                if((expected>>26==2 || expected>>26==3) && target>=0x1924f8 && target<0x19316c)expected+=delta/4;
+                if(o==0x22c || o==0x254)expected=(expected&0xffff0000)|(u16)(expected+seed-0x1dc);
+                if(o==0x39c)expected=(expected&0xffff0000)|(u16)(expected+delta);
+                if(o==0xc54 || o==0xc60 || o==0xc68)expected=(expected&0xffff0000)|(u16)(expected+args-0x4298);
+                valid=expected==actual;
+            }
+            for(unsigned o=0;valid && o<0xe34;o+=4){u32 expected,actual;memcpy(&expected,line+0x10b8+o,4);memcpy(&actual,data+line_start+o,4);
+                u32 target=(expected&0x3ffffff)<<2;int delta=(int)line_start-0x10b8;
+                if((expected>>26==2 || expected>>26==3) && target>=0x1900a8 && target<0x190edc)expected+=delta/4;
+                if(o==0x20 || o==0x3c8 || o==0x3f0)expected=(expected&0xffff0000)|(u16)(expected+seed+16-12);
+                if(o==0x524)expected=(expected&0xffff0000)|(u16)(expected+delta);
+                if(o==0xdf8)expected=(expected&0xffff0000)|(u16)(expected+params-0x2038);
+                valid=expected==actual;
+            }
+            const u32 orbit_desc[]={0x8018eff0u+orbit_start+0x208,0,0,0,0,0,0,0,20,0,0,0,
+                0x8018eff0u+orbit_start+0xc50,0x8018eff0u+orbit_script};
+            const u32 line_desc[]={0x8018eff0u+line_start+0x39c,0,0,0,0,0,0,0,36,0,0,0,
+                0x8018eff0u+line_start+0xdf0,0x8018eff0u+line_script};
+            valid=valid && !memcmp(data+seed,orbit_reference+0x1dc,16) && !memcmp(data+seed+16,line+12,20) &&
+                !memcmp(data+orbit_script,g_RoomOrbitFlareScript,60) && !memcmp(data+line_script,g_RoomLineBurstScript,32) &&
+                !memcmp(data+orbit_descriptor,orbit_desc,sizeof(orbit_desc)) && !memcmp(data+line_descriptor,line_desc,sizeof(line_desc));
+            for(unsigned i=args;valid && i<library_bytes;++i)valid=data[i]==0;
+        }
+        free(variant);if(!valid)fprintf(stderr,"Orbit/line complete module failed for M%03u\n",orbit_line_rooms[r]);
+    }
     if(valid){
         PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
         void *old_program=g_FieldFxTaskPrograms[51];
@@ -6482,7 +6591,7 @@ static int original_line_burst_assets(PeDisc *disc,PeDiscFile *exe)
         g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_polygon_count;
         if(valid)puts("Original line burst: authored task136, original M122 archive and sound path, both GPU buffers, complete nested pools, model/sprite draw chains, expiry and guards passed");
     }
-    free(room);if(valid)puts("Original M104/M115/M159: all 3876 module bytes, every instruction of both callbacks and slot initializer after relocation, all descriptors, seeds, script and parameter data passed");return valid;
+    free(room);if(valid)puts("Original line families M104/M113/M115/M116/M120/M159/M263/M265/M333: all complete modules, all 53 actor functions where present, orbit/line functions and initializers, every instruction of both callbacks and slot initializer after relocation, all descriptors, seeds, script and parameter data passed");return valid;
 }
 
 static int original_dropped_flare_assets(PeDisc *disc,PeDiscFile *exe)

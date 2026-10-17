@@ -14444,6 +14444,21 @@ static int original_native_bootstrap(const char *executable,int field_control)
          * Keep stderr with the captured state and fail the replay on it. */
         if(output && (strstr(output,"runtime error:") || strstr(output,"AddressSanitizer:") ||
            strstr(output,"LeakSanitizer:") || strstr(output,"UndefinedBehaviorSanitizer:")))valid=0;
+        if(!input) {
+            /* The retail boot calls the three game-clock initializers, not
+             * SDK SsInit. A stopped clock changes later scripted encounters. */
+            const char *timers=output?strstr(output,"\"timers\":["):NULL;
+            unsigned flags[3]={0};int current[3]={0},limit[3]={0};
+            if(!timers || sscanf(timers,
+                "\"timers\":[{\"flags\":%u,\"current\":%d,\"limit\":%d},"
+                "{\"flags\":%u,\"current\":%d,\"limit\":%d},"
+                "{\"flags\":%u,\"current\":%d,\"limit\":%d}",
+                &flags[0],&current[0],&limit[0],&flags[1],&current[1],&limit[1],
+                &flags[2],&current[2],&limit[2])!=9 || flags[0]!=1 || flags[1]!=1 || flags[2]!=1 ||
+                limit[0]!=21600000 || limit[1] || limit[2]) {
+                fprintf(stderr,"Original boot game clocks are not initialized\n");valid=0;
+            }
+        }
         if(input==1 && (!output || !strstr(output,"\"pad\":4") || !strstr(output,"\"video_state\":0") ||
            !strstr(output,"\"rgb24\":1")))valid=0;
         if(input==2){

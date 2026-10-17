@@ -2,6 +2,54 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Wyjaśniono początek rozbieżności starej trasy New Game→M017. Zmiany
+przycisków są identyczne z dawnym zapisem:1072 po usunięciu powtórzeń;
+nie pominięto rzeczywistego inputu. Świeży historyczny60fea009a z obecnym
+PsyZ nadal daje dawne HP14/53, pojemność12 i pozycję[18022400,-262144,-55115776].
+Pełny build historyczny0, replay0/35,77s, prywatny katalog. Następnie siedem
+pełnych niezmiennych kandydatów z tego samego SDK zawęziło zmianę do
+16a1864235: poprzednik3475041b2e daje dawny wynik, następnik HP29/49,
+pojemność11 i pozycję[29818880,-262144,-48365568]. /tmp/pe-m017-bisect-v1:
+manifesty, pełne źródła historyczne, świeże obiekty, logi i stany; końcowe
+progress.json. Nie przełączano ani nie zmieniano roboczego drzewa repozytorium.
+
+16a1864235 przywraca oryginalne GameTime_InitCounters w miejscu mylnie
+podpiętego SDK SsInit. Nie cofamy tej zgodnej z USA poprawki zegarów,
+aby odzyskać dawny wynik testu. Oryginalny inicjalizator nadal przechodzi12
+pełnych stanów USA CPU (FNV28838f78c52e3a0c), a timery/przyrost po Continue
+mają wcześniejszą niezależną referencję PS1. Dodatkowe obserwacyjne przebiegi
+LLDB przed/po inicjalizacji kończą exit0 z tymi samymi dwoma wynikami;
+nie zaobserwowano opcode210 po132000, więc nie przypisujemy różnicy
+bezpośredniemu odczytowi tego opcode. Dokładny pośredni mechanizm wpływu
+inicjalizacji oraz ponowne nagranie całej trasy input19..22 pozostają do pracy.
+Dotychczasowych asercji tych czterech przypadków nadal nie poluzowano.
+
+Dodano w istniejącym original_actor_animation.c rzeczywistą kontrolę
+startowych trzech zegarów przy native-bootstrap/input0: flags1/1/1,
+limit21600000/0/0. Negatywny wariant zmienia wyłącznie wywołanie w całym
+istniejącym boot/init.c na SDK SsInit i odpada już przy input0: komunikat
+braku inicjalizacji, mimo identycznego FNVobrazu6c2aef67a1f42efb i exit0 gry.
+To kontrola działania rozruchu niezależna od samych pikseli. Produkcyjny
+kod gry pozostaje bez zmiany; nie dodano repozytoryjnych plików ani warstw.
+Świeży kandydat /tmp/pe-boot-clock-gate-v1, po173 nowe obiekty/profil:
+CPU normal/SAN0 (0,68/3,20s), wymagane --assets0 (5,67/21,19s),
+pełny bootstrap0 (35,39/86,09s). Root build0; wszystkie zależności,
+archiwa,346 obiektów i binarki zgodne z manifestem.
+/tmp/pe-boot-clock-gate-v1-proof.json i -negative.log.
+
+Dalsza oryginalna walka M123: current-v19 używa Medicine3 przy60165
+(44→195), Barrier5 przez oryginalne PE menu i strzela dwukrotnie w typ4
+(400→344→288). Przy61667 Aya41/195, PE50 i clip3. Zwycięstwa nie ma.
+Zwykły i sanitizowany replay na obecnym kodzie produkcyjnym0
+(19,87/48,42s) mają pełny JSON identyczny z żywym debuggerem, identyczny
+między profilami VRAM i wszystkie prywatne payloady kart niezmienione.
+/tmp/pe-m123-barrier-v1-proof.json, -input.jsonl i -{normal,san}-args.json.
+Dawny current-v19 zakończono jawnie przez jego zwykły limit klatek,
+export JSON/VRAM i exit0; LLDB również zamknięto. Nie zapisywano HP,
+statystyk, ekwipunku ani stanu fabuły. Kolejna próba M123 powinna oszczędzić
+Medicine3 przed bossem przez oryginalne leczenie PE w bezpiecznej lokacji.
+Pełna kampania i cztery późne trasy regresji pozostają niezaliczone.
+
 Bieżący kandydat grafiki: poprawka w istniejącym RasterTriangle naszego
 PsyZ. Oryginalne pakiety modelu/cienia i dane tekstur/CLUT w M115 były
 zgodne z PS1, lecz wynik różnił się w192 pikselach. Przyczyną była dokładna

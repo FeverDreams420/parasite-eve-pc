@@ -13,6 +13,7 @@
 #include "pe1/room_m086_seeker.h"
 #include "pe1/room_m089_model_pulse.h"
 #include "pe1/room_flare.h"
+#include "pe1/room_paired_glow.h"
 #include "pe1/render_camera.h"
 #include "pe1/akao.h"
 #include "pe1/asset_tim.h"
@@ -42,6 +43,7 @@
 #include "pe1/room_m023_beacon.h"
 #include "pe1/room_m005_beacon.h"
 #include "pe1/room_flare.h"
+#include "pe1/room_paired_glow.h"
 #include "pe1/room_module.h"
 #include "pe1/scene_transition.h"
 
@@ -528,6 +530,12 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomOrbitFlareEffects;
         if ((map+1==126 || map+1==129 || map+1==139 || map+1==149 || map+1==326) &&
             slot==122 && record[i].u.handlerAddress==0x8018fd00u)native=&g_RoomDroppedFlareProgram;
+        if ((map + 1 == 107 || map + 1 == 114) && slot == 35 && record[i].u.handlerAddress == 0x801935dcu)
+            native = &g_RoomPairedGlowHandlers;
+        if (map + 1 == 107 && slot == 75 && record[i].u.handlerAddress == 0x801936b0u)
+            native = &g_RoomActorClassTable[2];
+        if (map + 1 == 114 && slot == 72 && record[i].u.handlerAddress == 0x801936ccu)
+            native = &g_RoomActorClassTable[3];
         if (map + 1 == 89) {
             if(slot==75 && record[i].u.handlerAddress==0x8019405cu)native=&g_RoomActorClassTable[2];
             if(slot==119 && record[i].u.handlerAddress==0x80194128u)native=&g_RoomM089Program;
@@ -680,6 +688,14 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map+1==126 || map+1==129 || map+1==139 || map+1==149 || map+1==326) && slot==122) {
             g_FieldFxTaskPrograms[37]=&g_RoomDroppedFlareProgram;
             memset(g_RoomDroppedFlareArgs,0,sizeof(g_RoomDroppedFlareArgs));
+        } else if ((map + 1 == 107 || map + 1 == 114) && slot == 35) {
+            g_PmCmdHandlerTable[slot]=&g_RoomPairedGlowHandlers;
+            memset(&g_RoomPairedGlowSprite,0,sizeof(g_RoomPairedGlowSprite));
+            g_RoomPairedGlowPacket__paired=NULL;
+        } else if (map + 1 == 107 && slot == 75) {
+            g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[2];
+        } else if (map + 1 == 114 && slot == 72) {
+            g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[3];
         } else if (map + 1 == 89 && slot == 119) {
             g_FieldFxTaskPrograms[34]=&g_RoomM089Program;
             memset(g_RoomM089Anchor,0,6);g_RoomM089CoreModel=g_RoomM089PulseModel=NULL;

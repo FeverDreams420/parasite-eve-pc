@@ -1029,26 +1029,18 @@ typedef struct RoomTimer2 {
 
 
 #define ROOMLIB_PARTICLE_TICK_A(name) \
-    void name(RoomEnt *o, RoomFxControl *state, RoomFxPairedEmitterState *sys) { \
-        struct { short a; short pad; short b; } saved; \
-        RoomLibFxMatrixState *clock = FieldFx_GetScriptContext(); \
-        int tmp = RW16(o->link, 0x2A); \
-        saved.a = tmp; \
-        tmp = RW16(o->link, 0x32); \
-        saved.b = tmp; \
+    int name(void *object, void *control, void *data) { \
+        RoomFxControl *state=control; \
+        RoomFxPairedEmitterState *sys=data; \
+        RoomLibFxMatrixState *clock=FieldFx_GetScriptContext(); \
         if (state->frame < 0x20) { \
-            sys->timer = (unsigned short)sys->timer + (unsigned short)sys->phase; \
-            sys->phase = (unsigned short)sys->phase + 7; \
-            if (state->frame < 0x20 && sys->intensity >= 5) { \
-                sys->intensity = sys->intensity - 4; \
-            } \
+            sys->timer=(u16)sys->timer+(u16)sys->phase; \
+            sys->phase=(u16)sys->phase+7; \
+            if (sys->intensity >= 5) sys->intensity-=4; \
         } \
-        if (state->frame == 0x10) { \
-            clock->hit = 1; \
-        } \
-        if (state->frame == 0x20) { \
-            state->state = 2; \
-        } \
+        if (state->frame == 0x10) clock->hit=1; \
+        if (state->frame == 0x20) state->state=2; \
+        return 0; \
     }
 
 typedef struct RoomFxParams {

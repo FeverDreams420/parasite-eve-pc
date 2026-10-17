@@ -9,6 +9,7 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/psyq_libc.h"
 #include "pe1/room_fx.h"
+#include "pe1/room_module.h"
 #include "pe1/room_interface.h"
 #include "pe1/scene_archive.h"
 
@@ -22,7 +23,12 @@ extern unsigned char g_RoomPairedGlowColorTable[];
 
 
 int *FieldFx_RegPtr(int index);
-void FieldFx_BuildRingGeometry(void *params);
+
 void FieldFx_ModelSetTexture(int arg0, int arg1);
 
+extern PmCommand g_RoomPairedGlowHandlers;
+extern FieldFxHandler g_RoomInitList__paired[6],g_RoomDrawList__paired[6],g_RoomUpdateList__paired[6];
+extern int g_RoomScript__paired[26],g_RoomSpawnLayout__paired[3];
+extern void *g_RoomPairedGlowPacket__paired;
+extern u8 g_RoomPairedGlowColorTable__paired[24];
 #endif

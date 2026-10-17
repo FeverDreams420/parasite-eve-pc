@@ -766,9 +766,10 @@ filmy12 i13 bez przewijania i dalsze dialogi kończą się M192 nocą, stage376.
 Natywny replay normal cap168544 terminal0 ma VRAM identyczny z debuggerem:
 021d84ecfc4d7ef1e9f62a7bbf9af9bb702842b0fd1d9c1d835ce89c2ccc4dfe.
 Przypadek /tmp/pe-day3-m192-coverage-case.json ma2755 odcinków i te same15
-wcześniejszych zdarzeń HP. Jego ASan/UBSan/function nadal działa, exec35876,
-PID26963; zwykły proces26962 zakończony0. Weryfikator po zakończeniu:
-/tmp/pe-day3-m192-verify.py. Nie ogłaszać jeszcze zgodności obu końcowych stanów.
+wcześniejszych zdarzeń HP. Normal i ASan/UBSan/function zakończone0:
+cały JSON i1MiB VRAM identyczne, VRAM także zgodny z debuggerem; karty B–H
+niezmienione, bu10 puste. Dowód /tmp/pe-day3-m192-proof.json,
+weryfikator /tmp/pe-day3-m192-verify.py. Exec35876 zakończony.
 
 Wyjście z M192 przez prawą stronę (x7692..8074,z1404..4304) otwiera mapę.
 Wybór NYPD, wariant7 (Left z9 przez8), prowadzi do M037 i lobby M103,
@@ -795,10 +796,11 @@ Nowy rzeczywisty coldContinueH→M100/cap175382,2830 odcinków inputu,
 M100/A8020048, stage392, flags0/lock0, brak menu, battle12/live0, HP181/181,
 pozycja[20250624,262144,-157351936], yaw1024. Karty B–H niezmienione.
 VRAM SHA2562b3af2c4dd075a4ce0f5d12bc3ac958e566c5479fe722f957eee3c92edbb0dcb.
-ASan/UBSan/function tego wejścia nadal działa, exec90790/PID29191;
-normal PID29190 zakończony0. Przypadek /tmp/pe-m100-v1-entry-case.json,
+Normal i ASan/UBSan/function tego wejścia zakończone0: cały JSON i1MiB VRAM
+identyczne, wszystkie15 guarded HP zgodne, karty B–H niezmienione, bu10 puste.
+Dowód /tmp/pe-m100-v1-entry-proof.json, przypadek /tmp/pe-m100-v1-entry-case.json,
 logi/args/prywatne katalogi /tmp/pe-m100-v1-entry-{normal,san},
-weryfikator /tmp/pe-m100-v1-entry-verify.py po zakończeniu obu.
+weryfikator /tmp/pe-m100-v1-entry-verify.py. Exec90790 zakończony.
 Nadal coverage-only, nie dowód zwykłego M086 ani ukończenia dnia3/kampanii.
 
 Stary debugger exec60187 nie ma już procesu gry (loader zwrócił błąd M100).
@@ -807,11 +809,65 @@ Nowy exec27108/PID29356 używa /tmp/pe-m100-v1-game-debug, prywatny katalog
 Breakpoint2 w Boot_PollHost/init.c:89 zatrzymał go przy cap175382/M100.
 Stan odpowiada natywnemu normal; cała VRAM identyczna. Odczyt potwierdził
 handlers[75]==&g_RoomActorClassTable[2] i programs[30]==&g_RoomOrbitFlareEffects.
-Zrzut /tmp/pe-m100-v1-entry-debug.vram. Proces pozostaje zatrzymany w tym limicie.
-Dalszy input zapisywać do /tmp/pe-m100-v1-live-input.jsonl i dopinać do2830
-odcinków przypadku wejścia (nie do starego trace). Nie nadpisywać zamrożonych
-/tmp/pe-m100-v1-game, -game-debug i -game-sanitized. Dalej: dokończyć bieżące
-replaye, porównać pełny stan/VRAM, następnie kontynuować M100 i walki NYPD.
+Zrzut /tmp/pe-m100-v1-entry-debug.vram. Dalszy input z tego procesu jest w
+/tmp/pe-m100-v1-live-input.jsonl (29 odcinków175382→176941). Rozmowa z rannym
+policjantem kończy dialog22; boczne przejście uruchomiło błąd loadera M107.
+Exec27108 nie ma już procesu gry. Nie nadpisywać zamrożonych executable v1.
+
+Aktualizacja M107/M114: po rozmowie w M100 wejście do bocznego przejścia
+kończyło się „native descriptor missing for M107 slot35 (PS1 801935dc)”.
+Naprawiono cały istniejący paired_glow.c na miejscu: wszystkie17 funkcji,
+bez nowych plików i bez wyciągania funkcji. Callbacki mają natywne ABI,
+kontekst i macierze aktora przenoszą pełne wskaźniki. Zapisano oryginalne
+listy, program26 słów,24-bajtową rampę i deskryptor35. Istniejący PE_OVERLAY
+kompiluje kopie wspólnych metod klasy z ich dotychczasowych plików; brak
+nowych wrapperów/warstw gameplayu. Zachowano źródło archiwum dla komendy
+AKAO57E: disassembly używa800B0E64 zarówno do lookup modelu, jak i dźwięku.
+
+Całe18240 bajtów M107 iM114 jest identyczne:
+SHA2566ac58ddf436a3961f77c68e8cf4f110c07f199deebbcfeecb596678d4bab0ebf,
+FNV69dfe82737160a0a. Fixture porównuje każdy bajt, oba deskryptory i całe53
+funkcje aktorów z M059 (relokacje kodu+10a0 i czterech tablic+8), wszystkie
+wiersze metod, listy5 typów, rozmiary, skrypt i rampę. Loader podpina tylko
+te dwa dokładne warianty:35/801935dc oraz E75/801936b0 w M107,
+B72/801936cc w M114. Resetuje oryginalne dane sprite/packet przy zmianie sceny.
+M111/M118/M122 i scenyE11–E14 nie są jeszcze podpięte przez tę zmianę.
+
+W pełnym PM wykryto i poprawiono natywne wyrównanie: pierwotne alokacje
+300/20 bajtów przesuwały późniejsze struktury wskaźnikowe poza granicę8.
+Na64bit rozmiary wynoszą56/336/304/24/336; algorytm globalnego alokatora
+pozostaje oryginalny. 240 przypadków TickA/TickB, wzrostu/fade i resetu
+zgadza się z wykonaniem oryginalnego MIPS: hash18c13e84019080a0,
+/tmp/pe-m107-state-cpu.py. Dodatkowo80 kroków oryginalnego interpretera
+z oryginalnym no-op initializerem dla izolacji sterowania: hash
+ebce7b7762f7a29a, /tmp/pe-m107-script-cpu.py. Potwierdzono maskę typów1b:
+autorski program odwiedza0/1/3/4;2 jest zdefiniowany, lecz nieużywany,
+a jego trzy zachowane no-op callbacki mają osobny test niezmienności pamięci.
+
+Pełny natywny program PM na prawdziwym modelu M107 przechodzi oba bufory,
+naturalne zakończenie, flagi trafienia/rearm i action4 właściciela, kontrolę
+wyrównania danych oraz pełnych linków OT i strażników bufora pakietów.
+Cały --assets PASS normal i ASan/UBSan/function na końcowym teście v12,
+oba terminal0: /tmp/pe-m107-v12-assets.log i /tmp/pe-m107-v12-assets-san.log.
+Źródła PsyZ/SDL instrumentowane. Produkcyjny executable nie zmienił się
+między v11 i v12 (v12 dodaje asercje flag); pełny build i diff --check PASS.
+Audyt /tmp/pe-m107-module-audit.json. To testy stanu i wykonania efektu;
+nie jest to deklaracja pełnego pixel perfect ani ukończenia sceny w kampanii.
+
+Pełny coldContinueH→M107/cap176941 działa w tle normalnie i pod sanitizerami,
+exec53648, PID45631/45632.2859 odcinków (2830+29), te same15 wcześniejszych
+zdarzeń HP; nie dodano nowych zmian stanu. Przypadek
+/tmp/pe-m107-v11-entry-case.json; logi/args/prywatne katalogi
+/tmp/pe-m107-v11-entry-{normal,san}; sprawdzić po zakończeniu przez
+/tmp/pe-m107-v11-entry-verify.py i dopiero wtedy ogłaszać wynik wejścia.
+Nowy debugger exec53791/PID46073 odtwarza ten sam przypadek z natywnym
+harmonogramem HP, /tmp/pe-m107-v11-game-debug, prywatny katalog
+/tmp/pe-m107-v11-live, log /tmp/pe-m107-v11-live-lldb.log. Breakpoint1
+w Boot_PollHost/init.c:89 zatrzyma go przy176941. Kolejny input zapisywać do
+/tmp/pe-m107-v11-live-input.jsonl, dopinając do2859 odcinków przypadku wejścia.
+Zamrożone v11 -game/-game-debug/-game-sanitized pozostawić bez nadpisywania.
+Dalej: zakończyć bieżące replaye, sprawdzić realną M107 i kontynuować NYPD.
+Nadal coverage-only oraz osobno nieukończona zwykła walka M086 odH.
 
 Następny krok: przejść tę obowiązkową walkę od prawdziwego H, z wcześniejszym
 leczeniem/przygotowaniem i skuteczniejszym unikaniem pocisków, bez zmiany

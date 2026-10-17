@@ -1,3 +1,4 @@
+#include "pe1/room_paired_glow.h"
 #include "pe1/room_debris_triplet.h"
 #include "pe1/room_m086_seeker.h"
 #include "pe1/room_flare.h"
@@ -2126,6 +2127,63 @@ static int original_m086_states(void)
     g_FieldFxTaskContext=old_context;g_FieldFxActiveTaskSlot=old_task;g_FieldFxOwner=old_owner;g_PlayerEntity=old_player;
     g_GeomScroll.words.viewMatrix=old_view;g_FieldFxCurrentAge=old_age;g_RoomFloorY->y=old_floor;srand(old_random);
     puts("Original M086: 192 unhooked USA CPU/ROM BIOS/GTE update states, all particle slots, RNG, contact flags, guards and native parameter initializers passed");return 1;
+}
+
+static int original_paired_glow_states(void)
+{
+    static const s16 ages[]={-1,0,1,7,15,16,17,23,31,32,33,32767};
+    static const s16 values[]={-32768,-1,0,1,32767},intensity[]={4,5,128,32767,-1};
+    FieldFxState script={0},*saved=g_FieldFxScriptState;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    FieldFxHandler handlers[]={g_RoomUpdateList__paired[1],g_RoomUpdateList__paired[4],
+        g_RoomUpdateList__paired[3],g_RoomInitList__paired[3]};
+    g_FieldFxScriptState=&script;
+    for(unsigned callback=0;callback<4;++callback)for(unsigned a=0;a<12;++a)for(unsigned j=0;j<5;++j){
+        struct {u64 before;RoomFxPairedEmitterState data;u64 after;} guard;
+        guard.before=guard.after=UINT64_C(0x1234567887654321);
+        u8 *bytes=(u8 *)&guard.data;for(unsigned i=0;i<sizeof(guard.data);++i)bytes[i]=(u8)(i*37+j*3);
+        RoomFxPairedEmitterState *emitter=&guard.data;RoomDoubleSpriteFxParams *sprite=(void *)bytes;
+        emitter->timer=values[j];emitter->intensity=intensity[j];emitter->phase=values[4-j];
+        sprite->scale=values[j];sprite->depth=(u16)intensity[j];sprite->seed.vector.y=values[4-j];
+        RoomFxControl control={7,1,ages[a]};RoomLibFxMatrixState clock={0};clock.hit=-7;
+        FieldActor actor={0};FieldFxObjectPrefix object={0};object.actor=&actor;
+        script.current_context=&clock;
+        int returned=handlers[callback](&object,&control,bytes);
+        if(returned || guard.before!=UINT64_C(0x1234567887654321) || guard.after!=UINT64_C(0x1234567887654321)){
+            g_FieldFxScriptState=saved;return 0;
+        }
+        u8 fields[6];memcpy(fields,&emitter->timer,6);
+        const u8 *parts[]={callback<2?fields:bytes,(u8 *)&control,(u8 *)&clock.hit};
+        const size_t sizes[]={callback<2?6:20,4,2};
+        for(unsigned part=0;part<3;++part)for(unsigned i=0;i<sizes[part];++i)hash=(hash^parts[part][i])*UINT64_C(1099511628211);
+        ++cases;
+    }
+    g_FieldFxScriptState=saved;
+    if(cases!=240 || hash!=UINT64_C(0x18c13e84019080a0)){fprintf(stderr,"Paired glow states: %u %llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original paired glow: 240 MIPS-reference cases for both emitter ticks, sprite growth/fade and reset, native context and guards passed");return 1;
+}
+
+/* Isolate the authored command flow using the original no-op initializer
+ * for each type, as in the USA interpreter corpus. No update/draw is run. */
+static int original_paired_glow_program_flow(void)
+{
+    FieldFxState *old_state=g_FieldFxScriptState;FieldFxObject *old_object=g_FieldFxScriptObject;
+    FieldFxSlot *old_slots=g_FieldFxSlotTable;char *old_data=g_FieldFxScriptData;int *old_commands=g_FieldFxCommandTable;
+    FieldActor actor={0};FieldActorState core={0};actor.state=&core;core.control10.command_value=1;
+    FieldFxObject object={0};object.prefix.actor=&actor;
+    FieldFxHandler init[6];for(unsigned i=0;i<5;++i)init[i]=g_RoomInitList__paired[2];init[5]=(FieldFxHandler)(intptr_t)-1;
+    g_RoomPairedGlowHandlers.initialize((PmSlotHeader *)&object);
+    uint64_t hash=UINT64_C(14695981039346656037);u32 seen=0;
+    for(unsigned frame=0;frame<80;++frame){
+        FieldFx_RunScript(&object,init,(u16 *)g_RoomSpawnLayout__paired);
+        for(unsigned i=0;i<64;++i)if(object.slots[i].flag)seen|=1u<<object.slots[i].handler_id;
+        const u32 words[]={(u16)object.state.pc,(u16)object.state.wait,(u32)object.state.regs[0],
+            (u8)object.state.slot_count,(u8)object.state.halted,seen};
+        for(unsigned i=0;i<6;++i)for(unsigned byte=0;byte<4;++byte)hash=(hash^((words[i]>>(byte*8))&255))*UINT64_C(1099511628211);
+    }
+    g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;g_FieldFxSlotTable=old_slots;g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;
+    if(seen!=0x1b || hash!=UINT64_C(0xebce7b7762f7a29a)){fprintf(stderr,"Paired glow flow %x %llx\n",seen,(unsigned long long)hash);return 0;}
+    puts("Original paired glow program: 80 USA interpreter frames, PC/wait/registers/count/halt and actual type mask 0x1b passed");return 1;
 }
 
 static int original_dropped_flare_states(void)
@@ -5523,6 +5581,132 @@ static int authored_m023_effect_cycle(SceneAssetView *room)
     srand(old_random);memset(g_RoomM005ScriptAnchorView-4,0,20);
     if(valid)puts("Original M023: 180 PM frames, all three task types, real room model, complete task teardown and OT/packet guards passed");
     return valid;
+}
+
+static int authored_paired_glow_cycle(SceneAssetView *room)
+{
+#define PAIRED_FAIL() do {fprintf(stderr,"Paired glow check line%u used%d\n",__LINE__,g_DrawPacketOffset);goto done;}while(0)
+    RenderBufferPrefix old_buffers=D_800B0E38;Pe1GameState old_game=g_GameState;
+    int old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
+    GteMatrix *old_view=g_GeomScroll.words.viewMatrix;FieldActor *old_player=g_PlayerEntity;
+    FieldFxState *old_state=g_FieldFxScriptState;FieldFxObject *old_object=g_FieldFxScriptObject;
+    FieldFxSlot *old_slots=g_FieldFxSlotTable;char *old_data=g_FieldFxScriptData;int *old_commands=g_FieldFxCommandTable;
+    RoomFloorY old_floor=*g_RoomFloorY;u32 old_random=Psyz_RandState();int ok=0;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    static RenderGpuTag ordering[4096];struct {_Alignas(16) u8 bytes[65536];u8 guard[32];} packets;
+    g_GeomScroll.words.viewMatrix=&view;g_GameState.loaded_scene_archive=&room->header;g_RoomFloorY->y=0;
+    Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,112);
+    FieldFx_InitTexturePageTable();
+    for(unsigned draw=0;draw<2;++draw){
+        FieldFxObject object={0};FieldActor actor={0},player={0};FieldActorState core={0},player_core={0};u8 action=2;
+        RenderMatrix matrix={.rotation={{4096,0,0},{0,4096,0},{0,0,4096}},.translation={0,-100,1200}};
+        actor.state=&core;core.action_state=&action;core.control10.command_value=1;actor.render_object.matrices=&matrix;player.state=&player_core;
+        actor.pos_y=-100*65536;actor.pos_z=1200*65536;object.prefix.actor=&actor;g_PlayerEntity=&player;
+        g_ActiveDrawSlot=draw;D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)packets.bytes;srand(1);
+        g_RoomPairedGlowHandlers.init();g_RoomPairedGlowHandlers.initialize((PmSlotHeader *)&object);
+        if(object.state.commands!=g_RoomScript__paired)PAIRED_FAIL();
+        /* The USA interpreter also visits only types0/1/3/4. Type2 remains
+         * defined: its no-op callbacks preserve data and dispatch control. */
+        u8 inert[300],expected[300];memset(inert,0xa5,sizeof(inert));memcpy(expected,inert,sizeof(inert));
+        RoomFxControl inert_control={2,1,17},expected_control=inert_control;
+        if(g_RoomInitList__paired[2](&object,&inert_control,inert) ||
+           g_RoomDrawList__paired[2](&object,&inert_control,inert) ||
+           g_RoomUpdateList__paired[2](&object,&inert_control,inert) ||
+           memcmp(inert,expected,sizeof(inert)) || memcmp(&inert_control,&expected_control,sizeof(inert_control)))PAIRED_FAIL();
+        unsigned seen=0,drawn=0,linked=0,frame=0;
+        for(;frame<640;++frame){
+            memset(&packets,0xa5,sizeof(packets));for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};g_DrawPacketOffset=0;
+            if(g_RoomPairedGlowHandlers.start((PmSlotHeader *)&object) || g_RoomPairedGlowHandlers.execute((PmSlotHeader *)&object))PAIRED_FAIL();
+            for(unsigned i=0;i<64;++i)if(object.slots[i].flag){
+                FieldFxSlot *slot=&object.slots[i];seen|=1u<<slot->handler_id;
+                if(slot->handler_id>=5 || slot->data_offset<0 || (unsigned)slot->data_offset>=FIELDFX_DATA_SIZE ||
+                   (uintptr_t)(object.data+slot->data_offset)%_Alignof(void *))PAIRED_FAIL();
+            }
+            if(g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes))PAIRED_FAIL();
+            drawn+=g_DrawPacketOffset!=0;
+            for(unsigned i=0;i<4096;++i){uintptr_t link=ordering[i].address;unsigned count=0;
+                while(link!=0xffffff){
+                    if(link<(uintptr_t)packets.bytes || link+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset ||
+                       link%_Alignof(RenderGpuTag) || ++count>512)PAIRED_FAIL();
+                    ++linked;link=((RenderGpuTag *)link)->address;
+                }
+            }
+            for(unsigned i=0;i<sizeof(packets.guard);++i)if(packets.guard[i]!=0xa5)PAIRED_FAIL();
+            if(object.prefix.reserved00==4)break;
+        }
+        if(frame==640 || seen!=0x1b || !drawn || !linked || !g_RoomPairedGlowPacket__paired){
+            fprintf(stderr,"Paired glow PM draw%u frame%u seen%x drawn%u linked%u pc%d\n",draw,frame,seen,drawn,linked,object.state.pc);PAIRED_FAIL();
+        }
+        g_RoomPairedGlowHandlers.stop((PmSlotHeader *)&object);g_RoomPairedGlowHandlers.unload();
+        if(action!=4 || !(player_core.flags&0x4000) || !(core.core_flags&0x80000000u))PAIRED_FAIL();
+    }
+    ok=1;
+done:
+    D_800B0E38=old_buffers;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;g_GeomScroll.words.viewMatrix=old_view;
+    g_GameState=old_game;g_PlayerEntity=old_player;*g_RoomFloorY=old_floor;
+    g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;g_FieldFxSlotTable=old_slots;g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;srand(old_random);
+    if(ok)puts("Original paired glow PM: complete authored program, four authored types plus unused type2 no-ops, real M107 model, both draw slots, natural expiry and packet/OT guards passed");
+    return ok;
+#undef PAIRED_FAIL
+}
+
+static int original_paired_glow_assets(PeDisc *disc,PeDiscFile *exe)
+{
+    u8 header[0x800];u32 base;PeDiscFile archive;SceneRoomSectorRange ref;
+    if(!pe_disc_read(disc,exe,0,header,sizeof(header)) || !pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    memcpy(&base,header+0x18,4);const unsigned ids[]={107,114};u8 module[18240],reference[0x35a0];
+    if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+58*8,&ref,sizeof(ref)) ||
+       !pe_disc_read(disc,&archive,(u64)(ref.start+ref.scratchSectors+ref.textureSectors)*2048+8,reference,sizeof(reference)))return 0;
+    for(unsigned r=0;r<2;++r){
+        SceneRoomSectorRange range;if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+(ids[r]-1)*8,&range,sizeof(range)))return 0;
+        size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);if(!room)return 0;
+        int valid=bytes>=8+sizeof(module) && pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+        if(valid){
+            SceneRoomDirectory *dir=SceneAsset_ResolveOffset(room,room->header.directoryOffset);
+            SceneRoomRecord *records=SceneAsset_ResolveOffset(room,dir->scripts&0x3fffff);unsigned mask=0;
+            valid=dir->scripts>>22==2;
+            for(unsigned i=0;valid && i<2;++i){
+                valid=(records[i].source.offsetAndSlot&0xffffff)==8 && records[i].reserved[0]==0x40 && records[i].reserved[1]==0x47;
+                if(records[i].source.bytes.slot==35 && records[i].u.handlerAddress==0x801935dc)mask|=1;
+                else if(records[i].source.bytes.slot==(r?72:75) && records[i].u.handlerAddress==(r?0x801936ccu:0x801936b0u))mask|=2;
+                else valid=0;
+            }
+            valid=valid && mask==3;
+            if(!r)memcpy(module,(u8 *)room+8,sizeof(module));else valid=valid && !memcmp(module,(u8 *)room+8,sizeof(module));
+            uint64_t hash=UINT64_C(14695981039346656037);
+            for(unsigned i=0;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+            valid=valid && hash==UINT64_C(0x69dfe82737160a0a);
+            const u32 init[]={0x8018f394,0x8018f528,0x8018facc,0x8018fae4,0x8018fd2c,0xffffffff};
+            const u32 draw[]={0x8018f4a0,0x8018f6d8,0x8018fad4,0x8018fb04,0x8018feac,0xffffffff};
+            const u32 update[]={0x8018f4a8,0x8018f9d8,0x8018fadc,0x8018fcc8,0x80190178,0xffffffff};
+            const u32 methods[]={0x8018f38c,0x8018f1d4,0x8018f200,0x8018f22c,0x8018f274,0x8018f300,0x8018f384};
+            const u16 sizes[]={48,320,300,20,320,65535};
+            valid=valid && !memcmp(module+0x4598,init,sizeof(init)) && !memcmp(module+0x45b0,draw,sizeof(draw)) &&
+                !memcmp(module+0x45c8,update,sizeof(update)) && !memcmp(module+0x45e0,sizes,sizeof(sizes)) &&
+                !memcmp(module+0x45ec,methods,sizeof(methods)) && !memcmp(module+0x4608,g_RoomScript__paired,104) &&
+                !memcmp(module+0x4670,g_RoomPairedGlowColorTable__paired,24);
+            const u16 low[]={0x218,0x408,0x624,0xf80,0x11ac,0x1364,0x1a24,0x1b5c,0x1b98,0x1d6c,
+                0x2030,0x2550,0x2714,0x2758,0x2884,0x2c24,0x3128,0x31cc,0x3230,0x3288};
+            const u16 tables[]={0x2a4,0xff0,0x1ab4,0x25cc};
+            for(unsigned o=0x1dc;valid && o<0x34f8;o+=4){
+                u32 expected,actual;memcpy(&expected,reference+o,4);memcpy(&actual,module+o+0x10a0,4);u32 target=(expected&0x3ffffff)<<2;
+                if((expected>>26==2 || expected>>26==3) && target>=0x18f1cc && target<0x1924e8)expected+=0x10a0/4;
+                for(unsigned j=0;j<20;++j)if(o==low[j])expected=(expected&0xffff0000)|(u16)(expected+0x10a0);
+                for(unsigned j=0;j<4;++j)if(o==tables[j])expected=(expected&0xffff0000)|(u16)(expected+8);
+                valid=expected==actual;
+            }
+            for(unsigned o=4;valid && o<0x1dc;o+=4){
+                u32 expected,actual;memcpy(&expected,reference+o,4);memcpy(&actual,module+o+8,4);
+                if(expected>=0x8018f1cc && expected<0x801924e8)expected+=0x10a0;
+                valid=expected==actual;
+            }
+            for(unsigned i=0;valid && i<42;++i){u32 expected,actual;memcpy(&expected,reference+0x34f8+i*4,4);memcpy(&actual,module+0x4688+i*4,4);valid=actual==expected+0x10a0;}
+        }
+        if(!valid)fprintf(stderr,"Paired glow asset comparison failed for M%03u\n",ids[r]);
+        if(valid && !r){valid=authored_paired_glow_cycle(room);if(!valid)fprintf(stderr,"Paired glow authored PM failed\n");}
+        free(room);if(!valid)return 0;
+    }
+    puts("Original M107/M114: complete identical 18240-byte library, both descriptors, all 53 actor functions/tables, paired-glow lists/script/sizes/ramp and authored PM passed");return 1;
 }
 
 static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)
@@ -13038,7 +13222,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!original_dropped_flare_states() || !original_m089_states() || !original_m086_states() || !original_motion_states() || !original_motion_program() || !original_window_lifecycle() || !original_window_motion() || !original_room_e_init() || !original_room_e_update() || !original_effect_sequence_updates() || !original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!original_paired_glow_states() || !original_paired_glow_program_flow() || !original_dropped_flare_states() || !original_m089_states() || !original_m086_states() || !original_motion_states() || !original_motion_program() || !original_window_lifecycle() || !original_window_motion() || !original_room_e_init() || !original_room_e_update() || !original_effect_sequence_updates() || !original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;
@@ -13071,7 +13255,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};PeDiscFile exe;u32 pointers[50];
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
-        if (!original_dropped_flare_assets(&disc,&exe) || !original_m089_assets(&disc,&exe) || !original_m086_assets(&disc,&exe) || !original_three_particle_assets(&disc,&exe) || !original_motion_assets(&disc,&exe) || !original_window_assets(&disc,&exe) || !original_scene_object_workspace_assets(&disc,&exe) || !original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
+        if (!original_paired_glow_assets(&disc,&exe) || !original_dropped_flare_assets(&disc,&exe) || !original_m089_assets(&disc,&exe) || !original_m086_assets(&disc,&exe) || !original_three_particle_assets(&disc,&exe) || !original_motion_assets(&disc,&exe) || !original_window_assets(&disc,&exe) || !original_scene_object_workspace_assets(&disc,&exe) || !original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;

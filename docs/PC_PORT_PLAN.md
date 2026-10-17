@@ -42,7 +42,10 @@ poprawki także dał pełny JSON/VRAM równy normal/SAN dla Escape37905,
 czas68.2s: /tmp/pe-native-o1-escape-proof.json. Bieżący po poprawce:
 /tmp/pe-barrier-v1-game-debug, exec60039/PID75770, cwd/args/input/log
 /tmp/pe-barrier-v1-live-debug*. Cap39400 osiągnięty; dalszy input zaczyna
-się39400 w -input.jsonl. Poprzedniego crasha74219 nie kontynuować.
+się39400 w -input.jsonl. ReturnFromFrame/sterowanie na -O1 potwierdzone:
+pe-evade12 dochodzi39412, rzeczywista pozycja zmieniona, natomiast dwa
+trafienia obniżyły HP127→53. Ten aktualny stan nie jest zwycięstwem.
+Poprzedniego crasha74219 nie kontynuować.
 
 
 M115 Escape potwierdzony żywym inputem: coldI→pierwszy ATB127HP przy37329,

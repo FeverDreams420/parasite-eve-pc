@@ -2,6 +2,60 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Zwykłe przejście H→zwycięstwo M086→nagrody→Save I→M088 rozmowa/film→
+M089 początek walki potwierdzone normal/SAN exit0, 22,57/82,99s.
+Cap51257, M089/A80084C8, story272, HP83/181, battle0/live1, dialog63
+zamknięty. Cały JSON i pełne1MiB VRAM identyczne; SHA256 VRAM
+47a8591c501870bd62a653e477116104ec27a9de7dbd5366beed08920f88c1b7.
+B–H niezmienione, wygenerowany I identyczny z wcześniej sprawdzonym,
+bu10 puste, zero diagnostics. Manifest
+/tmp/pe-m089-ordinary-entry-v1-proof.json oraz prepare/run/verify/args/logs.
+
+Dwie pierwsze zwykłe próby walki od83HP przegrane. Pierwsza doszła do
+progu HP Eve1000000, lecz Aya równocześnie umarła przy56193; nie uznano
+tego za zwycięstwo. Druga, z ruchem po okręgu, zostawiła Eve1000090 i
+Aya0. Logi /tmp/pe-h-heat-burst-live-lldb.log i
+/tmp/pe-m089-ordinary-v2-live-lldb.log; input pierwszej zarchiwizowany
+/tmp/pe-m089-ordinary-v1-loss-input.jsonl, drugiej -v2-input.jsonl.
+Oba debug procesy po przegranej zakończone, zapisy niezmienione.
+
+Trzecia próba od zwykłego I: oryginalne polowe PE→Heal2→potwierdzenie celu
+leczy83→143 przed opuszczeniem M087. Nie zastosowano Defense+1 ani zmian
+statystyk. Ruch przez M086/M088, rozmowa i film, walka z prawdziwymi seriami
+M16/Heat i leczeniem przez PE kończą M089 przy35325: HP23/181,
+battle12/live0, flags128/lock1, dialog64/state2, brak menu, story272.
+Native g_BootHostHealthApplied==0. Obejrzany obraz
+/tmp/pe-m089-ordinary-v3-debug.png pokazuje Eve i autorski dialog po walce.
+
+Cold I→polowe Heal2→M089 zwycięstwo powtórzono normal i SAN exit0,
+19,38/73,95s, bez zgłoszeń ASan/UBSan/function. Cały JSON identyczny;
+pełne1MiB VRAM obu buildów identyczne także z debuggerem, SHA256
+2c8280b6594ddf7abdc131eea8443defe872cf589346fafc341e3d8aab79a99a.
+Wszystkie B–I niezmienione, bu10 puste, zero wcześniejszych/nowych HP guards.
+Manifest /tmp/pe-m089-ordinary-v3-proof.json, -prepare.py/-run.py/-verify.py,
+-{normal,san}-args.json i pełne logi. Pochodzenie zwykłego I pozostaje
+c8f45f4b9e8deaca22dc7e37b64d2b360ecd17195749aacb0a4189e8c7a57a86.
+To zwykłe zwycięstwo M089, nie pełna kampania ani pełny audyt audio/pikseli.
+
+Aktualny prywatny debugger: exec76299, PID86034, frozen
+/tmp/pe-o1-raster-game, cwd /tmp/pe-m089-prepared-v3-live; args/log/input
+/tmp/pe-m089-prepared-v3-live-args.json, -live-lldb.log i -input.jsonl.
+Dalsze dialogi/filmy przechodzą M055, M091 (dom Daniela) i nocleg;
+przy77261 M351, HP181 po autorskim odpoczynku, lock1. Sterownik dialogów
+zatrzymał się przy81761, bo ekran „Day3 / SELECTION” wymaga zwykłego Cross,
+nie czekania na textbox. Cross→dialog182→Yes→Slot1→Down do pustegoJ9→Save.
+Przy83389 menu40/File saved, M351/A80650C8, HP181, bez gameplay writes.
+Nowy J ma8192 bajty i SHA256
+4ddf4ef55c0eed32a110ef40469374aeb4615efc3912d9ec487dd9fd31138e0d.
+Prywatna kopia /tmp/pe-day3-ordinary-checkpoint/bu00. Zimne Continue J
+jeszcze niezweryfikowane. Pełny coldI→Heal2→M089→sceny→Day3→Save J
+normal/SAN uruchomiony w exec89978; /tmp/pe-day3-ordinary-save-j-v1-run.py,
+-prepare.py, -{normal,san}-args.json/.log, wynik dopiero w -results.json.
+Przed dalszym działaniem odczytać rzeczywisty wynik/live procesy; nie
+restartować żywego replay. Po35325 dalsze sceny nadal wymagają zakończenia
+tej weryfikacji, nie przypisywać im jeszcze normal/SAN PASS.
+Żaden nowy plik repozytorium ani nowy kod rozgrywki nie powstał.
+
 Naprawiono lukę w istniejącym original_native_bootstrap: wcześniej SDL
 kierowało stderr procesu gry do NULL. Stare bootstrap PASS potwierdzały
 exit/state/VRAM, ale nie wykluczały recoverable UBSan warning. Teraz stderr

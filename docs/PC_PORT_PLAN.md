@@ -2,6 +2,103 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Zwykłe zwycięstwo M113 zostało osiągnięte i niezależnie odtworzone.
+Nowa próba z patrolowaniem korytarza:6/70HP pokonany do32146/HP139,
+Barrier do32654 (bez straty HP na tym odcinku),7/78HP sprowadzony do24,
+przy33190 HP85. Prawdziwe Medicine2 z10 leczy85→175 do33730.
+Następna seria pokonuje słabszego7; zostaje7/78 i jego ukryty kontroler8.
+Przy34630 HP46/PE189/ATB9000; Heal2 daje106HP do34906.
+Pełna seria zabija ostatniego7 (końcowe−3HP), a przy35898 wszystkie aktory
+wrogów znikają: battle2/live0, oryginalne EXP/menu20, HP52/181,
+story400, broń9/zbroja14, M16clip8. Nigdy nie zapisywano HP debuggerem.
+
+Pełny coldL→zwycięstwo/cap35898 na frozen v2 normal exit0 17,61s,
+SAN exit0 66,74s. Cały JSON i pełne1MiB VRAM identyczne także z debuggerem,
+SHA256528a1fc3bb9a9c683e09f995279e701cb8dadabff9d9b99ae6849ec0d0eccb0b.
+B–L niezmienione, bu10 puste, zero HP diagnostics i sanitizer errors.
+/tmp/pe-m113-ordinary-win-v1-proof.json i -prepare.py/-run.py/-verify.py.
+Prefix do31686 jest dokładnie tym samym zwykłym wejściem od L co wyżej;
+dalszy input /tmp/pe-m113-patrol-v1-input.jsonl. To pierwsze zwykłe
+zwycięstwo tej sceny; wcześniejsze przegrane nie są zastępowane ani ukrywane.
+Opcja split zewnętrznego testera tylko przesuwa kursor między celami przed
+zatwierdzeniem drugiego strzału; nie zapisuje aktorów ani kolejki walki.
+
+Nagrody M113: [Medicine1, Ammo15, Ammo15]. Oryginalne EXP/ObtainAll/End
+kończą przy36442, HP52, poziom14/maxHP189 i nowy Energy Shot (flags491).
+Pool rośnie1→31, Medicine1 trafia do10. Zużyta Medicine1 leczy52→97.
+PE118 nie wystarcza na Heal2/120: oryginalne menu odmawia, HP i sloty
+bez zmian; asercja pomocnika zatrzymuje dalszą kolejkę, nie jest crashem gry.
+Po zamknięciu menu i60 field frames PE nadal118. Prawdziwe Heal1 leczy
+97→127 i zostawia58PE; po wyjściu z menu cap37382: M113, HP127/189,
+menuNULL/lock0, stage400, broń9/zbroja14, sloty10/11 puste, pool31.
+Poziom14, flags491, pool31 i PE58 są bezpośrednimi odczytami debuggera;
+obecny JSON nie serializuje tych pól. Nie oznaczać ich jako pełnej
+niezależnej zgodności JSON. Końcowa powtórka cap37382: normal exit0 18,01s, SAN exit0 67,74s,
+cały JSON i1MiB VRAM zgodne także z debuggerem; B–L bez zmian,
+zero HP diagnostics i sanitizer errors. Manifest
+/tmp/pe-m113-ordinary-rewards-v1-proof.json i -verify.py; zbiorczy
+/tmp/pe-nypd-m113-ordinary-v1-proof.json wiąże pięć przypadków,
+frozen executable, prawdziwy L i oba ślady inputu. Pola spoza JSON
+pozostają wyraźnie oznaczone debugger_only_resources. Aktualny debugger exec91119/PID91474 zatrzymany przy37382;
+nie odbudowywać jego executable ani nie zmieniać stanu przez c.capture.
+Kontynuować eksplorację M113/M116 i następne sceny NYPD. Pełna kampania,
+pełny audyt stanów/obrazu/audio i cały port pozostają nieukończone.
+
+Zwykła droga od L do kolejnego poziomu NYPD potwierdzona bez jakichkolwiek
+HP diagnostics. M100: typ6/70HP i dwa typ5/35HP pokonane pełnymi seriami;
+cap26647 HP148/181, nagrody [Medicine1, Junk, Junk]. ObtainAll zabiera
+Medicine1 do11; zużycie przez oryginalny ekwipunek leczy148→181.
+Schody M100/event6 prowadzą do M116/cap28826. Normal exit0 15,60s,
+SAN exit0 60,80s, cały JSON i1MiB VRAM zgodne także z debuggerem,
+SHA2564082ac84694986bbe4c00ceb645967e6c44c483562a72ed0f38f31a12a84b4c5.
+B–L niezmienione, bu10 puste; /tmp/pe-m116-ordinary-l-v1-proof.json,
+-prepare.py/-run.py/-verify.py. To pierwszy zwykły dowód tej drogi;
+starsze I→M116 pozostaje coverage-only z15 historycznymi HP guards.
+
+M116: oryginalna zmiana M16→M92F poza walką zachowuje istniejące panele
+(menu5), bez regresji po poprawce battle equip. Rozmowa z actor2 z pozycji
+world[-1655,520], Cross, dialogi68/69 i popup daje Ammo6 do wspólnego
+poola, dialog70 zamyka rozmowę; bank45|2097152. Powrót na M16 przez UI.
+Menu Items/M92F/transfer:11 nabojów do poola, wynik17/0; następnie
+Items/M16/transfer:16 do magazynka, wynik pool1/M16clip16/M92Fclip0.
+Przycap30866 również aktywny BattleAction ma attackWord&1023==16.
+Wszystko wyłącznie pad input; bez zmian save, amunicji ani HP debuggerem.
+Pool1 jest odczytem debuggera; obecny JSON nie zawiera tablicy ammo pools.
+
+M116→M113/cap31474: HP181/181, story400, broń9/zbroja14, lock0/menuNULL.
+Normal exit0 16,29s, SAN exit0 62,64s; cały JSON i1MiB VRAM zgodne także
+z debuggerem, SHA256434f42778ca6e5acea5df51d83bba6cf7e2d4314734702c478b1131f70721504.
+JSON potwierdza pełne rekordy obu magazynków16/0; B–L niezmienione,
+bu10 puste, zero sanitizer errors i HP diagnostics.
+/tmp/pe-m113-ordinary-l-v1-proof.json i -verify.py. Obrazy M116/M113
+obejrzane; nie stanowi to pełnego porównania pikseli z PS1.
+
+Dalsza pierwsza próba M113 przegrała, nie jest zwycięstwem: przy31686
+trzy wybieralne cele6/70HP i7/78HP×2 oraz dwa ukryte kontrolery8/72HP.
+Pełna seria zabija6 do32198/HP136, kolejna daje7 HP24 do32854/HP100.
+Oczekiwanie ATB w lewym ślepym korytarzu kosztuje54HP. Barrier uruchamia
+się bez aborta, przy33494 HP46, flags11200240 zawiera200, PE137/206.
+Greedy unik oscyluje w korytarzu zamiast wracać na centralną trasę;
+kończy się zwykłą śmiercią34082/HP0, cztery żywe aktory (dwa niewybieralne).
+Powtórka również tej przegranej cap34082: normal exit0 17,28s,
+SAN exit0 65,70s, cały JSON i1MiB VRAM zgodne także z debuggerem;
+SHA25691af26c2ec3f59883bfdfeaa6127e61922f607ceca3778e77bf1bde7f73b71d2.
+B–L niezmienione, zero HP diagnostics i sanitizer errors. To dowód wykonania
+Barrier i obsługi śmierci na tym odcinku, jawnie victory=false;
+/tmp/pe-m113-barrier-loss-v1-proof.json i -verify.py.
+Ta gałąź została zatrzymana, PID90773/exec8504 zakończony po zrzutach.
+Nowy tester /tmp/pe_park_combat_control.py sprawdza prawdziwy magazynek
+oraz właściwy ammo pool przed strzałem; exp_or_acc jest PE.
+Dla M113 nowa próba patroluje centralny korytarz między[-1000,0] i[1000,0],
+zamiast maksymalizować odległość od wrogów w ślepych odnogach. To tylko
+zewnętrzny tester inputu, bez zmian gry, obrażeń, kolizji ani balansu.
+Nowy debugger exec91119/PID91474, frozen /tmp/pe-battle-equip-v2-game,
+prywatne karty /tmp/pe-m113-patrol-v1-entry-normal, odtwarza ten sam prefix
+coldL→31686. Log/cmd /tmp/pe-m113-patrol-v1-live-*, input
+/tmp/pe-m113-patrol-v1-input.jsonl; przed dalszym sterowaniem odczytać
+rzeczywisty stan. Późniejsze zwycięstwo i bieżący cap opisano na początku
+dokumentu; pełna kampania nadal jest nieukończona.
+
 Nowy prawdziwy crash zwykłej rozgrywki: po SaveL droga przez M100
 (zwycięstwo nad trzema przeciwnikami, HP165), M103 i powrót do M107
 uruchomiła dodatkową walkę. M16 ma pusty magazynek i zapas ammo pool0=0;
@@ -105,11 +202,8 @@ całej kampanii. Żaden nowy plik repozytorium nie powstał.
 
 Checkpoint L został zweryfikowany powyżej. Starszy debugger
 exec34303/PID88078 zatrzymał się później na crashu zmiany broni opisanym
-poniżej; tylko do odczytu, bez pe-step. Nowy debugger exec8504/PID90773
-używa /tmp/pe-battle-equip-v2-game i prywatnych kart
-/tmp/pe-nypd-l-story400-live, cold Continue L/cap24000/HP181.
-Log/args/cmd/input mają prefix /tmp/pe-nypd-l-story400-live-.
-Dalszą drogę należy odczytać z najnowszego logu i inputu.
+poniżej; tylko do odczytu, bez pe-step. Gałąź exec8504/PID90773 została zakończona po przegranej M113.
+Aktualna próba exec91119/PID91474 opisana na początku dokumentu.
 
 Naprawa czasu życia pokojowych SFX w istniejącym
 Asset_FindTable2CByU16Key/scene_assets.c: pełne serializowane wpisy mają

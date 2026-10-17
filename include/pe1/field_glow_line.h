@@ -44,6 +44,9 @@ typedef struct FieldGlowQuadPacket {
 PE1_STATIC_ASSERT(sizeof(FieldLineG2Packet) == ((sizeof(RenderGpuTag) + 16 + _Alignof(FieldLineG2Packet) - 1) / _Alignof(FieldLineG2Packet)) * _Alignof(FieldLineG2Packet), field_line_g2_size);
 PE1_STATIC_ASSERT(sizeof(FieldGlowQuadPacket) == ((sizeof(RenderGpuTag) + 48 + _Alignof(FieldGlowQuadPacket) - 1) / _Alignof(FieldGlowQuadPacket)) * _Alignof(FieldGlowQuadPacket), field_glow_quad_size);
 
+void FieldFx_DrawGlowLine(GteShortVector *from, GteShortVector *to, u8 *color0,
+                         u8 *color1, int scale0, int scale1, int mode);
+
 /* Texture page of the shared effect sheet. */
 #include "pe1/field_texture_tables.h"
 

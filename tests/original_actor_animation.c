@@ -1,3 +1,7 @@
+#include "pe1/field_orbit_point.h"
+#include "pe1/room_m123.h"
+#include "pe1/room_m123_beacon.h"
+#include "pe1/room_m123_glow_burst.h"
 #include "pe1/room_paired_glow.h"
 #include "pe1/room_line_burst.h"
 #include "pe1/room_debris_triplet.h"
@@ -6496,6 +6500,146 @@ static int original_paired_glow_assets(PeDisc *disc,PeDiscFile *exe)
         free(room);if(!valid)return 0;
     }
     puts("Original M107/M114, M111/M118 and M122: complete modules, descriptors, all actor and paired functions/tables, script/sizes/ramp and real-room authored PM passed");return 1;
+}
+
+static int original_m123_programs(SceneAssetView *room)
+{
+    PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
+    const unsigned indices[]={43,58,59};void *old_programs[3];for(unsigned i=0;i<3;++i)old_programs[i]=g_FieldFxTaskPrograms[indices[i]];
+    FieldFxTaskContext *old_context=g_FieldFxTaskContext;FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;
+    FieldFxObjectPrefix *old_owner=g_FieldFxOwner;FieldActor *old_player=g_PlayerEntity;
+    RenderBufferPrefix old_buffers=D_800B0E38;GteMatrix *old_view=g_GeomScroll.words.viewMatrix;
+    int old_age=g_FieldFxCurrentAge,old_draw=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset,old_floor=g_RoomFloorY->y;
+    u32 old_random=Psyz_RandState();s16 old_record=g_RoomScriptRecordWords[0];int old_arg=g_RoomScriptArg;
+    u8 *old_models[]={g_RoomM123BeaconModel0,g_RoomM123BeaconModel1};void *old_selected=g_RoomM123SelectedColorTrack;
+    RoomM123JointAngles old_angles=g_RoomM123GlowBurstAngles;GteShortVector old_center=g_RoomM123GlowBurstCenter;
+    s16 old_speed=g_RoomM123SwirlSpeed,old_brightness=g_RoomM123SwirlBrightness;
+    u8 old_swirl_angles[8];u16 old_origin[3];memcpy(old_swirl_angles,g_RoomM123SwirlAngles,8);memcpy(old_origin,g_RoomM123SwirlOrigin,6);
+    struct {void *data;unsigned size;u8 saved[48];} tracks[]={
+        {g_RoomM123GlowColorTrack,40},{g_RoomM123GlowBurstColorTrack,40},{g_RoomM123BeaconColorTrack,48},
+        {g_RoomM123PulseColorTrack0,32},{g_RoomM123PulseColorTrack1,32},{g_RoomM123WaveColorTrack,40}};
+    for(unsigned i=0;i<6;++i)memcpy(tracks[i].saved,tracks[i].data,tracks[i].size);
+    static RenderGpuTag ordering[4096];static struct {_Alignas(void *) u8 bytes[524288];u8 guard[32];} packets;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};int valid=1;unsigned cycles=0;
+    g_GeomScroll.words.viewMatrix=&view;g_RoomFloorY->y=0;g_GameState.loaded_scene_archive=(void *)room;
+    g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
+    FieldFxTaskProgram *programs[]={&g_RoomM123JointEffects,&g_RoomM123PulseRingEffects,&g_RoomM123WaveBurstEffects};
+    for(unsigned i=0;i<3;++i)g_FieldFxTaskPrograms[indices[i]]=programs[i];
+    FieldFx_InitTexturePageTable();Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,112);
+    for(unsigned program=0;valid && program<3;++program)for(unsigned variant=0;valid && variant<(program?2u:1u);++variant)
+    for(unsigned draw=0;valid && draw<2;++draw){
+        struct {PmPrimarySlot slots[11];u8 guard[32];} bank={0};memset(bank.guard,0xa5,32);
+        FieldActor actor={0},player={0};FieldActorState state={0};Combatant player_state={0};RenderMatrix matrices[48]={0};u8 action=1;
+        actor.state=&state;actor.render_object.matrices=matrices;state.action_state=&action;state.core_flags=0x01000000;
+        actor.pos_x=100*65536;actor.pos_y=-800*65536;actor.pos_z=1200*65536;
+        player.state=(void *)&player_state;player.pos_x=8000*65536;player.pos_z=8000*65536;g_PlayerEntity=&player;
+        for(unsigned j=0;j<48;++j){for(unsigned k=0;k<3;++k)matrices[j].rotation[k][k]=4096;matrices[j].translation[0]=100;matrices[j].translation[1]=-800;matrices[j].translation[2]=1200;}
+        g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(1);
+        if(Scene_LoadRoomAssets(85+indices[program],&actor)!=0 || Pm_SendCmd(0,0,1,variant,0,0)){valid=0;break;}
+        unsigned frames=0,draws=0,children=0,seen=0;
+        for(;frames<360;++frames){
+            for(unsigned j=0;j<4096;++j)ordering[j]=(RenderGpuTag){.address=0xffffff};
+            memset(packets.guard,0xa5,32);g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;
+            D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)packets.bytes;
+            if(Pm_Start(0) || Pm_Exec(0)){valid=0;break;}
+            draws+=g_DrawPacketOffset!=0;FieldFxTaskContext *ctx=&bank.slots[0].task.tasks;
+            for(unsigned slot=0;slot<8;++slot)if(ctx->slots[slot].id!=0xffff){
+                seen|=1u<<ctx->slots[slot].id;
+                if(!ctx->slots[slot].end || (program==0 && ctx->slots[slot].id==2))continue;
+                FieldFxCallbackList *list=(void *)ctx->slots[slot].end;
+                for(unsigned j=0;j<(unsigned)list->count;++j)children+=((FieldFxCallbackListEntry *)(list->entries+j*list->stride))->active!=0;
+            }
+            if(ctx->used>sizeof(ctx->arena) || g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes)){valid=0;break;}
+            for(unsigned j=0;j<4096;++j){uintptr_t link=ordering[j].address;unsigned links=0;
+                while(link && link!=0xffffff){if(link<(uintptr_t)packets.bytes || link+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset || ++links>8192){valid=0;break;}link=((RenderGpuTag *)link)->address;}
+                if(!valid)break;
+            }
+            for(unsigned j=0;j<32;++j)if(bank.guard[j]!=0xa5 || packets.guard[j]!=0xa5)valid=0;
+            if(!valid || !bank.slots[0].header.state)break;
+        }
+        if(frames==360 || !draws || !children || seen!=(program?1u:15u) || bank.slots[0].header.state || bank.slots[0].task.tasks.count){fprintf(stderr,"M123 PM %u/%u/%u frames%u draws%u children%u seen%x state%u count%u\n",program,variant,draw,frames,draws,children,seen,bank.slots[0].header.state,bank.slots[0].task.tasks.count);valid=0;}
+        if(valid)++cycles;
+    }
+    g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;for(unsigned i=0;i<3;++i)g_FieldFxTaskPrograms[indices[i]]=old_programs[i];
+    g_FieldFxTaskContext=old_context;g_FieldFxActiveTaskSlot=old_task;g_FieldFxOwner=old_owner;g_PlayerEntity=old_player;
+    D_800B0E38=old_buffers;g_GeomScroll.words.viewMatrix=old_view;g_FieldFxCurrentAge=old_age;g_ActiveDrawSlot=old_draw;g_DrawPacketOffset=old_offset;g_RoomFloorY->y=old_floor;srand(old_random);
+    g_RoomScriptRecordWords[0]=old_record;g_RoomScriptArg=old_arg;g_RoomM123SelectedColorTrack=old_selected;
+    g_RoomM123BeaconModel0=old_models[0];g_RoomM123BeaconModel1=old_models[1];g_RoomM123GlowBurstAngles=old_angles;g_RoomM123GlowBurstCenter=old_center;
+    g_RoomM123SwirlSpeed=old_speed;g_RoomM123SwirlBrightness=old_brightness;memcpy(g_RoomM123SwirlAngles,old_swirl_angles,8);memcpy(g_RoomM123SwirlOrigin,old_origin,6);
+    for(unsigned i=0;i<6;++i)memcpy(tracks[i].data,tracks[i].saved,tracks[i].size);
+    if(valid)printf("Original M123 PM: %u full authored cycles, three programs and both selector variants, all eleven callbacks, actual USA models, both draw slots, natural expiry and packet/OT/arena guards passed\n",cycles);
+    return valid;
+}
+
+static int original_m123_assets(PeDisc *disc,PeDiscFile *exe)
+{
+    PeDiscFile archive;SceneRoomSectorRange ranges[2];SceneAssetView *rooms[2]={NULL,NULL};
+    const unsigned ids[]={123,28};int ok=0;
+    if(!pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    for(unsigned i=0;i<2;++i){
+        if(!pe_disc_read(disc,exe,0x800+0x80093378u-0x80010000u+(ids[i]-1)*8,&ranges[i],8))goto done;
+        size_t bytes=(size_t)ranges[i].roomSectors*2048;rooms[i]=malloc(bytes);
+        if(!rooms[i] || !pe_disc_read(disc,&archive,(u64)(ranges[i].start+ranges[i].scratchSectors+ranges[i].textureSectors)*2048,rooms[i],bytes))goto done;
+    }
+    const u8 *module=(u8 *)rooms[0]+8,*reference=(u8 *)rooms[1]+8;
+    u8 identity[32];
+    if(!pe_disc_read(disc,exe,0x800+0x800c2270u-0x80010000u,identity,32) ||
+       memcmp(identity,&g_FieldFxIdentityMatrix,32))goto done;
+    SceneRoomDirectory *dir=SceneAsset_ResolveOffset(rooms[0],rooms[0]->header.directoryOffset);
+    SceneRoomRecord *records=SceneAsset_ResolveOffset(rooms[0],dir->scripts&0x3fffff);
+    const unsigned slots[]={73,143,128,144};const u32 descriptors[]={0x80195454,0x801955d4,0x8019553c,0x8019564c};
+    if(dir->scripts>>22!=4)goto done;
+    for(unsigned i=0;i<4;++i)if(records[i].source.bytes.slot!=slots[i] || records[i].u.handlerAddress!=descriptors[i] ||
+        (records[i].source.offsetAndSlot&0xffffff)!=8 || records[i].reserved[0]!=0xd0 || records[i].reserved[1]!=0x66)goto done;
+    const u32 methods[]={0x80191538,0x80191540,0x801915d0,0x80191818,0x80191820,0x801920c4,0x80192120};
+    if(memcmp(module+0x80195454u-0x8018eff0u,methods,sizeof(methods)))goto done;
+    unsigned relocated=0;
+    for(unsigned offset=0;offset<0xbf0;offset+=4){
+        u32 a,b;memcpy(&a,reference+0x80191514u-0x8018eff0u+offset,4);memcpy(&b,module+0x80191538u-0x8018eff0u+offset,4);
+        if(a==b)continue;u32 expected=a;
+        if(a>>26==2 || a>>26==3){u32 target=0x80000000u|((a&0x3ffffffu)<<2);
+            if(target>=0x80191514u && target<0x80192104u)expected=(a&0xfc000000u)|(((target+0x24u)>>2)&0x3ffffffu);
+        }else if(offset==0x3c || offset==0x200 || offset==0x244 || offset==0x370 || offset==0x710)
+            expected=(a&0xffff0000u)|(u16)((u16)a+0x24u);
+        if(b!=expected)goto done;++relocated;
+    }
+    if(relocated!=26)goto done;
+    const struct {u32 address;const void *data;size_t size;} data[]={
+        {0x8018f1cc,&g_RoomM123JointOffset,8},{0x8018f1d4,&g_RoomM123JointOrigin,8},
+        {0x8018f1dc,&g_RoomM123TriangleColor,4},{0x8018f1e0,&g_RoomM123JointAnchor,8},
+        {0x8018f1e8,&g_RoomM123BeaconAnchor,8},{0x8018f1f0,&g_RoomM123PulseRingTilt,8},
+        {0x8018f1f8,&g_RoomM123WaveSpinBase,8},{0x801954bc,g_RoomM123GlowColorTrack,40},
+        {0x801954e4,g_RoomM123GlowBurstColorTrack,40},{0x8019550c,g_RoomM123BeaconColorTrack,48},
+        {0x80195594,g_RoomM123PulseColorTrack0,32},{0x801955b4,g_RoomM123PulseColorTrack1,32},
+        {0x80195624,g_RoomM123WaveColorTrack,40},{0x8019548c,g_RoomM123JointScript,48},
+        {0x80195574,g_RoomM123PulseRingScript,32},{0x8019560c,g_RoomM123WaveScript,24}};
+    unsigned bytes=0;
+    for(unsigned i=0;i<sizeof(data)/sizeof(data[0]);++i){if(memcmp(module+data[i].address-0x8018eff0u,data[i].data,data[i].size))goto done;bytes+=data[i].size;}
+    FieldFxTaskProgram *programs[]={&g_RoomM123JointEffects,&g_RoomM123PulseRingEffects,&g_RoomM123WaveBurstEffects};
+    const u32 tables[]={0x8019553c,0x801955d4,0x8019564c};
+    const u32 addresses[3][8]={{0x801929fc,0x80192f0c,0x80193618,0x80194768},{0x80194c04},{0x80195114}};
+    int (*callbacks[3][8])(int,void *,intptr_t)={{RoomM123_JointTriangleEmitter,RoomM123_GlowBurst,RoomM123_JointBeacon,RoomM123_JointSwirl},{RoomM123_PulseRing},{RoomM123_WaveBurst}};
+    const u32 initializers[]={0x80195350,0x8019537c,0x801953d4},scripts[]={0x8019548c,0x80195574,0x8019560c};
+    for(unsigned i=0;i<3;++i){const u8 *raw=module+tables[i]-0x8018eff0u;
+        if(memcmp(raw,addresses[i],32) || memcmp(raw+32,programs[i]->table.sizes,16) ||
+           memcmp(raw+48,&initializers[i],4) || memcmp(raw+52,&scripts[i],4))goto done;
+        for(unsigned j=0;j<8;++j)if(programs[i]->table.callbacks[j]!=callbacks[i][j])goto done;
+    }
+    if(programs[0]->initialize!=RoomLib_SetTaskVar0 || programs[1]->initialize!=RoomM123_SelectSlotPointer ||
+       programs[2]->initialize!=RoomLib_SetArg1)goto done;
+    void *selected=g_RoomM123SelectedColorTrack;int old_arg=g_RoomScriptArg;
+    const intptr_t values[]={0,1,2,255,-1,(intptr_t)UINT64_C(0x1234567800000001)};
+    for(unsigned i=0;i<6;++i){
+        intptr_t address=programs[1]->initialize(1,values[i],0,0);
+        if((void **)address!=&g_RoomM123SelectedColorTrack || *(void **)address!=((u32)values[i]==1?(void *)g_RoomM123PulseColorTrack1:(void *)g_RoomM123PulseColorTrack0))goto done;
+        address=programs[2]->initialize(1,values[i],0,0);
+        if((int *)address!=&g_RoomScriptArg || *(int *)address!=(s32)values[i])goto done;
+    }
+    g_RoomM123SelectedColorTrack=selected;g_RoomScriptArg=old_arg;
+    if(!original_m123_programs(rooms[0]))goto done;
+    printf("Original M123 assets: four descriptors, complete class C with 26 relocations, %u original data bytes, three typed programs and native selector/argument round trips passed\n",bytes);ok=1;
+done:
+    for(unsigned i=0;i<2;++i)free(rooms[i]);return ok;
 }
 
 static int original_m028_assets(PeDisc *disc,PeDiscFile *exe)
@@ -13456,6 +13600,36 @@ static int original_title_screen(PeDisc *disc)
     return valid;
 }
 
+static int original_m123_counters(void)
+{
+    int (*callbacks[])(int,void *,intptr_t)={RoomM123_JointTriangleCallback,
+        RoomM123_GlowBurstParticleCallback,RoomM123_JointSwirlParticleCallback,
+        RoomM123_PulseRingCallback,RoomM123_WaveCallback};
+    const unsigned frames[]={0,1,7,15,16,23,24,31,47,48,32767,65535};
+    const int speeds[]={-32768,-1,0,4096,32767};
+    const unsigned positions[]={0,4095,8191,12287,32767,65535};
+    const unsigned modes[]={0,1,3};u64 hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    s16 old_speed=g_RoomM123SwirlSpeed;
+    for(unsigned kind=0;kind<5;++kind)for(unsigned m=0;m<3;++m)
+    for(unsigned state=0;state<4;++state)for(unsigned f=0;f<12;++f)
+    for(unsigned speed=0;speed<5;++speed)for(unsigned pos=0;pos<6;++pos){
+        _Alignas(void *) u8 bytes[64];memset(bytes,0xa5,sizeof(bytes));u16 *s=(u16 *)(bytes+8);
+        if(!kind){s[0]=state;s[1]=frames[f];s[2]=positions[pos];}
+        else if(kind<3){s[0]=frames[f];s[1]=positions[pos];s[2]=0x1234;}
+        else{s[0]=0x1234;s[1]=0x5678;s[2]=positions[pos];s[3]=0x9abc;s[4]=state;s[5]=frames[f];}
+        g_RoomM123SwirlSpeed=speeds[speed];u32 result=callbacks[kind](modes[m],bytes+8,0);
+        const u32 words[]={kind,modes[m],state,frames[f],(u32)speeds[speed],positions[pos],result};
+        for(unsigned i=0;i<7;++i)for(unsigned b=0;b<4;++b)hash=(hash^((words[i]>>(8*b))&255))*UINT64_C(1099511628211);
+        for(unsigned i=0;i<sizeof(bytes);++i)hash=(hash^bytes[i])*UINT64_C(1099511628211);
+        ++cases;
+    }
+    g_RoomM123SwirlSpeed=old_speed;
+    if(cases!=21600 || hash!=UINT64_C(0x753a90c8398f8069)){
+        fprintf(stderr,"M123 callback counters: cases %u hash %016llx\n",cases,(unsigned long long)hash);return 0;
+    }
+    puts("Original M123 counters: 21600 unhooked USA CPU states, five typed callbacks, signed halfword boundaries and whole-buffer guards passed");return 1;
+}
+
 static int original_subsystem_start(void)
 {
     g_GameStateFlags=0xA5A5A5A5; g_FrameRngCounter=123;
@@ -14416,6 +14590,7 @@ int main(int argc, char **argv)
     if(!original_display_start())return 127;
     if(!original_menu_draw_areas())return 131;
     if(!original_digit_packets() || !original_color_quad_packets())return 132;
+    if(!original_m123_counters())return 158;
     if(!original_subsystem_start())return 129;
     const u32 lzcs[]={0,1,0x7fffffff,0x80000000,0xffffffff};
     const u32 lzcr[]={32,31,1,1,32};
@@ -14432,6 +14607,7 @@ int main(int argc, char **argv)
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
         if (!original_paired_glow_assets(&disc,&exe) || !original_line_burst_assets(&disc,&exe) || !original_dropped_flare_assets(&disc,&exe) || !original_m089_assets(&disc,&exe) || !original_m086_assets(&disc,&exe) || !original_three_particle_assets(&disc,&exe) || !original_motion_assets(&disc,&exe) || !original_window_assets(&disc,&exe) || !original_scene_object_workspace_assets(&disc,&exe) || !original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
+        if (!original_m123_assets(&disc, &exe)) return 159;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;

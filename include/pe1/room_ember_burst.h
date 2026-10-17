@@ -71,7 +71,7 @@ extern u8 g_RoomM318EmberFountainParticleColorTrack[];
 /* Twisting ember particle (RoomM318_EmberSpiralParticleCallback): its glow track and the bent
  * trail renderer it draws the orbiting sparks with. */
 extern u8 g_RoomM318EmberSpiralColorTrack[];
-extern void FieldFx_OffsetPointByAngles(void *, void *, int, void *, int, int);
+#include "pe1/field_orbit_point.h"
 
 /* Fan sweep controller (RoomM318_FanSweep): attaches to the actor named by its
  * parameters, fans out sparks on a turning angle into its own pool and

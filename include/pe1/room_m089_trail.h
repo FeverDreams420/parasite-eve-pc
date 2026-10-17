@@ -23,6 +23,6 @@ extern RenderColor g_RoomM089TrailHeadColor;
 extern RenderColor g_RoomM089TrailTailColor;
 extern RenderColor g_RoomM089TrailHeadColor;
 extern RenderColor g_RoomM089TrailTailColor;
-void FieldFx_DrawGlowLine(void *, void *, void *, void *, int, int, int);
+#include "pe1/field_glow_line.h"
 
 #endif

@@ -210,6 +210,9 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_m086_central_park/m086.c
     src/overlays/room_m089_central_park/m089.c
     src/overlays/room_m023_theater/m023.c
+    src/overlays/room_m123_nypd/m123.c
+    src/overlays/room_m123_nypd/RoomM123_SelectSlotPointer.c
+    src/overlays/room_lib/script_arg.c
     src/overlays/room_lib/script_task_var.c
     src/overlays/room_lib/orbit_flare.c
     src/overlays/room_lib/line_burst.c

@@ -15,6 +15,9 @@
 #include "pe1/room_flare.h"
 #include "pe1/room_paired_glow.h"
 #include "pe1/room_line_burst.h"
+#include "pe1/room_m123.h"
+#include "pe1/room_m123_glow_burst.h"
+#include "pe1/room_m123_beacon.h"
 #include "pe1/render_camera.h"
 #include "pe1/akao.h"
 #include "pe1/asset_tim.h"
@@ -564,6 +567,12 @@ int Scene_LoadRoom(unsigned int roomId)
             if(slot==75 && record[i].u.handlerAddress==0x8019405cu)native=&g_RoomActorClassTable[2];
             if(slot==119 && record[i].u.handlerAddress==0x80194128u)native=&g_RoomM089Program;
         }
+        if (map + 1 == 123) {
+            if(slot==73 && record[i].u.handlerAddress==0x80195454u)native=&g_RoomActorClassTable[4];
+            if(slot==128 && record[i].u.handlerAddress==0x8019553cu)native=&g_RoomM123JointEffects;
+            if(slot==143 && record[i].u.handlerAddress==0x801955d4u)native=&g_RoomM123PulseRingEffects;
+            if(slot==144 && record[i].u.handlerAddress==0x8019564cu)native=&g_RoomM123WaveBurstEffects;
+        }
         if (map + 1 == 86) {
             if(slot==120 && record[i].u.handlerAddress==0x80190aecu)native=&g_RoomM086SeekerProgram;
             if(slot==121 && record[i].u.handlerAddress==0x80190b3cu)native=&g_RoomM086GlintProgram;
@@ -706,6 +715,28 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
             g_RoomM005BeaconOffset = (GteShortVector){0};
             g_RoomM005BeaconCenter = (GteShortVector){0};
+        } else if (map + 1 == 123) {
+            if(slot==73){
+                g_PmCmdHandlerTable[73]=&g_RoomActorClassTable[4];
+                g_RoomScriptRecordWords[0]=0;g_RoomScriptArg=0;
+                g_RoomM123SelectedColorTrack=NULL;
+                g_RoomM123BeaconModel0=g_RoomM123BeaconModel1=NULL;
+                g_RoomM123GlowBurstAngles=(RoomM123JointAngles){0};
+                g_RoomM123GlowBurstCenter=(GteShortVector){0};
+                g_RoomM123SwirlBrightness=g_RoomM123SwirlSpeed=0;
+                memset(g_RoomM123SwirlAngles,0,8);memset(g_RoomM123SwirlOrigin,0,6);
+                struct {void *track;size_t bytes;} tracks[]={
+                    {g_RoomM123GlowColorTrack,40},{g_RoomM123GlowBurstColorTrack,40},
+                    {g_RoomM123BeaconColorTrack,48},{g_RoomM123PulseColorTrack0,32},
+                    {g_RoomM123PulseColorTrack1,32},{g_RoomM123WaveColorTrack,40}};
+                for(unsigned track=0;track<6;++track){
+                    memset(tracks[track].track,0,8);
+                    for(size_t offset=12;offset+4<=tracks[track].bytes;offset+=8)
+                        memset((u8 *)tracks[track].track+offset,0,4);
+                }
+            }else if(slot==128)g_FieldFxTaskPrograms[43]=&g_RoomM123JointEffects;
+            else if(slot==143)g_FieldFxTaskPrograms[58]=&g_RoomM123PulseRingEffects;
+            else if(slot==144)g_FieldFxTaskPrograms[59]=&g_RoomM123WaveBurstEffects;
         } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30 || map + 1 == 113 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));

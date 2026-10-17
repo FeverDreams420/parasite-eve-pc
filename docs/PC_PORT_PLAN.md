@@ -2,6 +2,74 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+M123 jest włączone do natywnego buildu w całości, w istniejącym m123.c
+oraz RoomM123_SelectSlotPointer.c. Naprawiono wszystkie11 callbacków,
+sprawdzono trzy initializery, a dwa selektory parametrów dostały natywne
+sygnatury. Odczyty PS1
+pool/owner/task (+8/+13/+238) zastąpiono istniejącymi natywnymi polami
+FieldFxTaskSlot.end, FieldActor.state/render_object.matrices i task.flags;
+usunięto zastępcze widoki z paddingiem PS1. Jawne zawijanie32-bitowe
+zastępuje signed shifts. Wspólny istniejący script_arg.c ma pełną natywną
+sygnaturę i przechowuje oryginalną wartość s32 bez obcinania adresu wyniku.
+Deklaracje obu helperów geometrii są zgodne z ich rzeczywistymi definicjami;
+poprawiono również istniejące deklaracje M089/ember i wywołania kolorów M089.
+Nie dodano produkcyjnych plików, nowych warstw ani zastępczych efektów.
+
+Przywrócono wszystkie388 bajtów skryptów/stałych M123, trzy kompletne
+FieldFxTaskProgram i brakującą macierz jednostkową32B w geometry.c.
+Loader najpierw sprawdza wszystkie cztery oryginalne deskryptory i dopiero
+potem instaluje slot73→oryginalna klasaC/wiersz4,128→JointEffects,
+143→PulseRingEffects,144→WaveBurstEffects. Work data i cache ramp kolorów
+są resetowane przy ładowaniu. Cała klasaC (764 instrukcje) i siedem metod
+zgadzają się z M028 po dokładnie26 relokacjach +24; nie zastąpiono jej
+uproszczonym zachowaniem. Test czyta deskryptory i dane bezpośrednio z CUE.
+
+Niezależny USA CPU:21600 stanów pięciu callbacków liczników/faz, signed
+halfword boundaries, tryby0/1/3 i guardy całych64B buforów; bez hookowania
+instrukcji funkcji. FNV753a90c8398f8069, /tmp/pe-m123-pure-mips.py i log.
+Pełny test PM w istniejącym fixture wykonuje10 naturalnych cykli trzech
+oryginalnych programów, oba warianty selectorów, wszystkie11 callbacków
+(w tym draw), rzeczywiste modele USA, oba bufory GPU, dzieci i naturalne
+wygaszenie oraz guardy PM/areny/pakietów i łańcuchów OT.
+
+Ten mocniejszy test wykrył oryginalne wywołanie DrawGlowLine z zerowym
+wskaźnikiem końcowego koloru w GlowBurstParticle po klatce16. Native
+renderer dereferencjonował NULL. Caller przekazuje teraz jawny czarny kolor;
+dla oryginalnego końcowego scale1=0 i słowa00000003 pod adresem0 po
+opóźnieniach CD wynik RGB pozostaje czarny, także przy oryginalnym użyciu
+scale0 dla b1. Zachowano tę arytmetykę. Kontekst obszaru0 opisuje
+[PSX-SPX: BIOS RAM](https://psx-spx.consoledev.net/ps1/kernelbios/memory-map/)
+(Garbage Area).
+Nie jest to pełna referencja pikselowa konsoli. Osobny wariant bieżącego v4,
+który przywraca tylko NULL, abortuje w SAN (-6,2,97s), dokładnie w tej
+ścieżce; pozytywny pełny PM przechodzi. /tmp/pe-m123-v4-negative-proof.json.
+
+Kandydat /tmp/pe-m123-v4: po173 świeżych obiektów C gry/fixture w normal/SAN,
+niezmienione nieinstrumentowane archiwa SDK. CPU normal/SAN exit0
+(1,02/2,49s), wymagane --assets exit0 (11,62/50,81s), root build przeszedł.
+Manifest i /tmp/pe-m123-v4-verify.py sprawdzają wszystkie bieżące zależności,
+obiekty, binarki, archiwa, oracle, pozytywny i negatywny wynik.
+/tmp/pe-m123-v4-proof.json. Brak SKIP w tych przebiegach.
+
+Zwykły input od Continue N przez M121, M117, wygraną M122, M124 i M044
+przechodzi teraz również wejście M123/dialog97 i start walki po dialog106.
+Końcowy cap42077: M123/A80221C8, stage400, tryb walki0, lock4, HP101/189,
+menuNULL, clip9/pool69, oba Medicine1 w8/11. Wrogie cele mają200/300/400HP;
+rodzic i dodatkowy segment są osobnymi oryginalnymi aktorami. Normal/SAN
+exit0 (22,37/85,38s), cały JSON i1MiB VRAM identyczne, zgodne z poprzednim
+kandydatem i świeżym debuggerem na tym samym v4. B–N niezmienione,
+bu10 puste, zero HP diagnostics. Args/logi/obraz:
+/tmp/pe-m123-boss-entry-v4-*. Stary błąd M123 z poprzedniego wpisu jest
+usunięty; nie dowodzi to zwycięstwa nad bossem ani ukończenia kampanii.
+
+Żywy debugger current-v8 (session29225) stoi przy42077 przed sterowaniem
+walką, HP101, PE9, ATB4859. /tmp/pe-nypd-current-v8-{lldb.log,args.json,
+input.jsonl}, prywatne karty /tmp/pe-nypd-current-v8-live. Zamrożonych
+/tmp/pe-m123-v4-game i obiektów nie przebudowywać w miejscu. Stare
+current-v6/v7 zostały jawnie zakończone po sprawdzeniu następcy. M118,
+zwycięstwo M123, późniejsze sceny, PS1 pixel/audio reference i cała
+pozostała kampania nadal wymagają pracy.
+
 Po zwycięstwie M122 zweryfikowano również zwykłe wejście do M124:
 cap40196, M124/A8022248, stage400, HP101/189, pole9, lock0, menuNULL,
 oba Medicine1 zachowane, Medicine2 zużyte, clip9/pool69. Ten sam kandydat

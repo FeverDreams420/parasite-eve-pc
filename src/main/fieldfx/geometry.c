@@ -9,6 +9,7 @@
 #include "pe1/field_glow_line.h"
 #include "pe1/field_history_trail.h"
 #include "pe1/field_orbit_point.h"
+
 #include "pe1/field_owner_actor.h"
 #include "pe1/field_pulled_sprite.h"
 #include "pe1/field_ring_band.h"
@@ -32,15 +33,14 @@
 #include "pe1/room_fx.h"
 #include "pe1/scene_assets.h"
 
+/* Original constant used to rotate an offset around its local axis. */
+GteMatrix g_FieldFxIdentityMatrix={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+
 /* Active owner of the original task engine. */
 FieldFxObjectPrefix *g_FieldFxOwner;
 int g_FieldFxAltPaletteFlag;
 int g_DrawPacketOffset;
 s16 g_FieldFxLoadedTexturePage;
-
-/* Matching debt: three transfer-pins per function, plus five empty
- * pointer/memory barriers across this TU. Matrix loads are C; each GTE
- * instruction and hazard nop uses its individual macro. */
 
 void FieldFx_TransformMatrixPoint(RoomFxTransformOwner *owner, int index,
                                   const GteShortVector *input, GteShortVector *output) {

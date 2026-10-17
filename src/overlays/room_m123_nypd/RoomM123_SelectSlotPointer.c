@@ -1,6 +1,7 @@
 #include "RoomM123_SelectSlotPointer_externs.h"
 
-void **RoomM123_SelectSlotPointer(int unused, unsigned int index) {
+intptr_t RoomM123_SelectSlotPointer(int unused, intptr_t value, intptr_t b, intptr_t c) {
+    u32 index=(u32)value;
     if (index >= 2) {
         index = 0;
     }
@@ -14,5 +15,5 @@ void **RoomM123_SelectSlotPointer(int unused, unsigned int index) {
         break;
     }
 
-    return &g_RoomM123SelectedColorTrack;
+    return (intptr_t)&g_RoomM123SelectedColorTrack;
 }

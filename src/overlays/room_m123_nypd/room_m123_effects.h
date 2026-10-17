@@ -22,10 +22,6 @@ typedef struct RoomM123Wave {
     u16 frame;
 } RoomM123Wave;
 
-typedef struct RoomM123Pool {
-    u8 reserved_00[8];
-    void *pool;
-} RoomM123Pool;
 
 
 PE1_STATIC_ASSERT(sizeof(RoomM123Wave) == 0x0C,
@@ -34,9 +30,5 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM123Wave, state) == 8,
                   room_m123_wave_state_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM123Wave, frame) == 0x0A,
                   room_m123_wave_frame_offset);
-PE1_STATIC_ASSERT(sizeof(RoomM123Pool) == 0x0C,
-                  room_m123_pool_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM123Pool, pool) == 8,
-                  room_m123_pool_pointer_offset);
 
 #endif

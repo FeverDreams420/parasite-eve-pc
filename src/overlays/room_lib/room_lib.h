@@ -824,10 +824,10 @@ extern void FieldFx_LoopLinkedAnimation(void *state);
 
 /* stash one arg into a room slot; returns the slot */
 #define ROOMLIB_SET_ARG1(name, sA) \
-    int *name(int a0, int a1) { \
+    intptr_t name(int a0, intptr_t a1, intptr_t a2, intptr_t a3) { \
         int *p = &sA; \
-        *p = a1; \
-        return p; \
+        *p = (s32)a1; \
+        return (intptr_t)p; \
     }
 
 typedef struct FieldActorNode {

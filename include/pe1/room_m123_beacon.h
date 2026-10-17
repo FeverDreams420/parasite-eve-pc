@@ -38,39 +38,6 @@ typedef struct RoomM123Beacon {
     /* 0x30 */ s16 shade;
 } RoomM123Beacon;
 
-typedef struct RoomM123BeaconNode {
-    /* 0x00 */ u32 flags;
-    /* 0x04 */ u8 reserved04[0x14];
-    /* 0x18 */ u8 *state;
-} RoomM123BeaconNode;
-
-typedef struct RoomM123BeaconPool {
-    /* 0x000 */ RoomM123BeaconNode *node;
-    /* 0x004 */ u8 reserved004[0x234];
-    /* 0x238 */ GteMatrix *matrix;
-} RoomM123BeaconPool;
-
-typedef struct RoomM123BeaconChannel {
-    s32 reserved[2];
-    RoomM123BeaconPool *pool;
-} RoomM123BeaconChannel;
-
-typedef struct RoomM123BeaconActor {
-    u8 reserved[0x4C];
-    u32 flags;
-} RoomM123BeaconActor;
-
-typedef struct RoomM123BeaconEntity {
-    RoomM123BeaconActor *actor;
-} RoomM123BeaconEntity;
-
-typedef struct RoomM123BeaconEvent {
-    /* 0x00 */ u8 reserved[0xD];
-    /* 0x0D */ u8 active;
-    /* 0x0E */ u8 reserved0E[4];
-    /* 0x12 */ s16 variant;
-} RoomM123BeaconEvent;
-
 typedef struct RoomM123BeaconOffset {
     s32 word[2];
 } __attribute__((packed)) RoomM123BeaconOffset;

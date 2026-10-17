@@ -35,6 +35,6 @@ extern u8 g_RoomM123GlowBurstColorTrack[];
 int rand(void);
 void FieldFx_DrawPulledSprite(GteShortVector *position, int scale_x, int scale_y, int texture,
                    int clut, int page, int intensity, int unused, int angle);
-int RoomM123_GlowBurstParticleCallback(int mode, RoomM123BurstParticle *particle);
+int RoomM123_GlowBurstParticleCallback(int mode, void *data, intptr_t argument);
 
 #endif

@@ -1,4 +1,9 @@
 #include "common.h"
+#include "pe1/geom_state.h"
+#include "pe1/fieldfx_task.h"
+#include "pe1/room_fx.h"
+#include "pe1/battle.h"
+#include "pe1/room_module.h"
 #include "pe1/akao_send.h"
 #include "pe1/field_owner_actor.h"
 #include "pe1/field_sprite_draw.h"
@@ -22,23 +27,6 @@
 #include "m123_externs.h"
 #include "room_m123_effects.h"
 
-typedef struct RoomPulseObject RoomPulseObject;
-
-typedef struct RoomPulsePool {
-    RoomPulseObject *object;
-} RoomPulsePool;
-
-struct RoomPulseObject {
-    u32 flags;
-    u8 pad[0x14];
-    u8 *status;
-};
-
-typedef struct RoomPulseGlobal {
-    u8 pad[0x4C];
-    u32 flags;
-} RoomPulseGlobal;
-
 typedef struct RoomM123Burst {
     u16 frame;
     u16 phase;
@@ -46,7 +34,8 @@ typedef struct RoomM123Burst {
     u16 pad;
 } RoomM123Burst;
 
-int RoomM123_JointTriangleCallback(int mode, RoomM123JointTriangle *triangle) {
+int RoomM123_JointTriangleCallback(int mode, void *data, intptr_t argument) {
+    RoomM123JointTriangle *triangle=data;
     GteShortVector corners[4];
     GteShortVector offset = g_RoomM123JointOffset;
     GteShortVector tip = g_RoomM123JointOrigin;
@@ -75,22 +64,22 @@ int RoomM123_JointTriangleCallback(int mode, RoomM123JointTriangle *triangle) {
     case 2:
         gte_ldrotmatrix(g_ViewMatrixSlot.value);
         gte_ldtransmatrix(g_ViewMatrixSlot.value);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM123Pool)->pool, 0x28, &offset, &corners[0]);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM123Pool)->pool, 0x22, &offset, &corners[1]);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM123Pool)->pool, 0x1D, &tip, &corners[2]);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x28, &offset, &corners[0]);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x22, &offset, &corners[1]);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x1D, &tip, &corners[2]);
         switch (triangle->state) {
         case 0:
-            FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM123Pool)->pool, 0x17, &tip, &corners[3]);
-            weight = 0x5000 - rsin((triangle->frame << 10) / 24) * 4;
+            FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x17, &tip, &corners[3]);
+            weight = 0x5000 - rsin(((s32)((u32)triangle->frame * 1024u)) / 24) * 4;
             LoadAverageShort12(&corners[3], &corners[0], 0x1000 - weight, weight, &corners[0]);
             LoadAverageShort12(&corners[3], &corners[1], 0x1000 - weight, weight, &corners[1]);
             LoadAverageShort12(&corners[3], &corners[2], 0x1000 - weight, weight, &corners[2]);
-            width = (triangle->frame << 7) / 24;
+            width = ((s32)((u32)triangle->frame * 128u)) / 24;
             gte_ldrotmatrix(g_ViewMatrixSlot.value);
             gte_ldtransmatrix(g_ViewMatrixSlot.value);
-            FieldFx_DrawGlowLine(&corners[0], &corners[1], &color, &color, width, width, 1);
-            FieldFx_DrawGlowLine(&corners[1], &corners[2], &color, &color, width, width, 1);
-            FieldFx_DrawGlowLine(&corners[2], &corners[0], &color, &color, width, width, 1);
+            FieldFx_DrawGlowLine(&corners[0], &corners[1], (u8 *)&color, (u8 *)&color, width, width, 1);
+            FieldFx_DrawGlowLine(&corners[1], &corners[2], (u8 *)&color, (u8 *)&color, width, width, 1);
+            FieldFx_DrawGlowLine(&corners[2], &corners[0], (u8 *)&color, (u8 *)&color, width, width, 1);
             return 0;
         case 1:
             position = triangle->position;
@@ -107,7 +96,7 @@ int RoomM123_JointTriangleCallback(int mode, RoomM123JointTriangle *triangle) {
             matrixSlot = &g_ViewMatrixSlot;
             gte_ldrotmatrix(matrixSlot->value);
             gte_ldtransmatrix(matrixSlot->value);
-            width = rsin(triangle->frame << 8) / 32;
+            width = rsin((s32)((u32)triangle->frame * 256u)) / 32;
             FieldFx_DrawHaloedPoint(&corners[0], &color, width, 1);
             break;
         default:
@@ -118,20 +107,20 @@ int RoomM123_JointTriangleCallback(int mode, RoomM123JointTriangle *triangle) {
     return 0;
 }
 
-int RoomM123_JointTriangleEmitter(int mode) {
+int RoomM123_JointTriangleEmitter(int mode, void *data, intptr_t argument) {
     int frame, index;
     RoomM123JointTriangleEmitterView *position;
 
     switch (mode) {
     case 0:
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM123Pool)->pool, 8, 16,
-                             (FieldFxCallbackListCallback)RoomM123_JointTriangleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 8, 16,
+                             RoomM123_JointTriangleCallback);
     case 1:
         frame = g_FieldFxCurrentAge;
         if (frame == (frame / 6) * 6) {
             if (frame >= 40) return 2;
             for (index = 0; index < 3; index++) {
-                position = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM123Pool)->pool);
+                position = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (position != 0) {
                     position->x = 1;
                     position->y = 0;
@@ -139,7 +128,7 @@ int RoomM123_JointTriangleEmitter(int mode) {
                 }
             }
             if (g_FieldFxCurrentAge < 25) {
-                position = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM123Pool)->pool);
+                position = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (position != 0) {
                     position->x = 0;
                     position->y = 0;
@@ -168,7 +157,9 @@ int RoomM123_JointTriangleEmitter(int mode) {
     return 0;
 }
 
-int RoomM123_GlowBurstParticleCallback(int mode, RoomM123PulsingParticle *particle) {
+int RoomM123_GlowBurstParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomM123PulsingParticle *particle=data;
+    RenderColor black={0};
     GteShortVector position;
     GteShortVector output;
     GteShortVector color;
@@ -187,8 +178,8 @@ int RoomM123_GlowBurstParticleCallback(int mode, RoomM123PulsingParticle *partic
         break;
     case 2:
         scale = particle->scale *
-                rcos(((s16)particle->frame << 10) / 48) / 4096;
-        FieldFx_OffsetPointByAngles(&g_RoomM123GlowBurstCenter, &position, scale / 2, &g_RoomM123GlowBurstAngles,
+                rcos(((s32)((u32)(s16)particle->frame * 1024u)) / 48) / 4096;
+        FieldFx_OffsetPointByAngles(&g_RoomM123GlowBurstCenter, &position, scale / 2, &g_RoomM123GlowBurstAngles.vector,
                       scale, (s16)particle->offset);
         if ((s16)particle->frame < 16) {
             FieldFx_SampleColorTrack(g_RoomM123GlowColorTrack, &color, 0x30 - (scale * 48) / 1024);
@@ -203,28 +194,27 @@ int RoomM123_GlowBurstParticleCallback(int mode, RoomM123PulsingParticle *partic
             gte_ldrotmatrix(matrixSlot->value);
             gte_ldtransmatrix(matrixSlot->value);
             FieldFx_DrawHaloedPoint(&position, &color, g_RoomScriptRecord, 1);
-            /* Retail re-tests the frame here; the blended tail only runs
-             * from frame 16 on. */
+            /* The blended tail starts at frame 16. */
             if ((s16)particle->frame < 16) break;
         }
         matrixSlot = &g_ViewMatrixSlot;
         gte_ldrotmatrix(matrixSlot->value);
         gte_ldtransmatrix(matrixSlot->value);
         FieldFx_SampleColorTrack(g_RoomM123GlowColorTrack, &color, 0x30 - (scale * 48) / 1024);
-        blend = rcos(((s16)particle->frame - 16) << 5);
+        blend = rcos((s32)((u32)((s16)particle->frame - 16) * 32u));
         LoadAverageShort12(&position, &g_RoomM123GlowBurstCenter, blend, 0x1000 - blend, &output);
-        FieldFx_DrawGlowLine(&output, &position, &color, 0, g_RoomScriptRecord, 0, 1);
+        /* Retail reads address zero for the unlit end. With its zero end
+         * scale and the post-CD zero-page blue byte, that end is black. */
+        FieldFx_DrawGlowLine(&output, &position, (u8 *)&color, (u8 *)&black, g_RoomScriptRecord, 0, 1);
         break;
     }
     return 0;
 }
 
-/* Glow burst: spawns sixteen pulsing particles at frame 1, then draws four
- * glow layers, two flash rings and a swept flare on joint 23. The parameter
- * block fields written twice share a base register; the tile indices are
- * read as g_FieldFxTpageSlots elements so their loads stay below the base-* stores, and the palette read-back follows the block's stores. */
+/* Glow burst: pulsing particles, joint glow layers and swept flare. */
 
-int RoomM123_GlowBurst(int mode, RoomM123GlowBurst *burst) {
+int RoomM123_GlowBurst(int mode, void *data, intptr_t argument) {
+    RoomM123GlowBurst *burst=data;
     GteShortVector template = g_RoomM123JointAnchor;
     GteShortVector position;
     GteRotation rotation;
@@ -238,13 +228,13 @@ int RoomM123_GlowBurst(int mode, RoomM123GlowBurst *burst) {
     switch (mode) {
     case 0:
         burst->timer = 0;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM123Pool)->pool, 8, 0x10,
-                             (FieldFxCallbackListCallback)RoomM123_GlowBurstParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 8, 0x10,
+                             RoomM123_GlowBurstParticleCallback);
     case 1:
         if (burst->timer < 0x80) burst->timer += 4;
         if (g_FieldFxCurrentAge == 1) {
             for (i = 0; i < 16; i++) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM123Pool)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->frame = 0;
                     child->scale = (rand() & 0x1FF) + 0x200;
@@ -266,14 +256,14 @@ int RoomM123_GlowBurst(int mode, RoomM123GlowBurst *burst) {
         g_FieldFxSpriteParams.parameter06 = 1;
         g_FieldFxSpriteParams.parameter0A = 0;
         g_FieldFxSpriteParams.depth = 0x32;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM123Pool)->pool, 0x17, &template, &position);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x17, &template, &position);
         rotation.x = 0;
         rotation.y = 0;
-        rotation.z = -g_FieldFxCurrentAge << 6;
+        rotation.z = (s32)(0u - (u32)g_FieldFxCurrentAge * 64u);
         rotation.flags = 0;
         intensity = burst->timer;
         if (g_FieldFxCurrentAge != 0) intensity = intensity * 2 / 3;
-        rcos((g_FieldFxCurrentAge << 10) / 40);
+        rcos(((s32)((u32)g_FieldFxCurrentAge * 1024u)) / 40);
         {
             int kind;
             int palette;
@@ -331,10 +321,10 @@ int RoomM123_GlowBurst(int mode, RoomM123GlowBurst *burst) {
         g_RoomM123GlowBurstCenter.x = position.x;
         g_RoomM123GlowBurstCenter.y = position.y;
         g_RoomM123GlowBurstCenter.z = position.z;
-        FieldFx_GetTransformLookAngles(ANIM_OWNER_AS(RoomM123Pool)->pool, 0, &g_RoomM123GlowBurstAngles.vector);
+        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0, &g_RoomM123GlowBurstAngles.vector);
         step = g_FieldFxCurrentAge - 16;
         if ((unsigned int)step < 17) {
-            fade = rcos(step << 6);
+            fade = rcos((s32)((u32)step * 64u));
             FieldFx_SampleColorTrack(g_RoomM123GlowBurstColorTrack, &color, step * 3);
             g_RoomM123GlowBurstAngles.rotation.flags = 1;
             FieldFx_DrawRingBand(&position, 700, 1000, 0x18, &g_RoomM123GlowBurstAngles.rotation, fade, fade, 0, &color,
@@ -357,7 +347,8 @@ int RoomM123_GlowBurst(int mode, RoomM123GlowBurst *burst) {
  * the player once on contact; draws a glow sprite pair with two star fans,
  * a fading three-sprite ring on the ground, a turning model while the effect
  * starts and three scaled passes of a second model. */
-int RoomM123_JointBeacon(int mode, RoomM123Beacon *state) {
+int RoomM123_JointBeacon(int mode, void *data, intptr_t argument) {
+    RoomM123Beacon *state=data;
     GteVector scale;
     GteShortVector position;
     GteShortVector rotation;
@@ -376,10 +367,10 @@ int RoomM123_JointBeacon(int mode, RoomM123Beacon *state) {
         state->glow = 0;
         state->width = 0;
         state->depth = 0x1000;
-        if (FX_TASK_AS(RoomM123BeaconEvent)->active) {
-            RoomM123BeaconPool *pool = ANIM_OWNER_AS(RoomM123BeaconChannel)->pool;
-            if (pool && pool->node) {
-                u8 *flag = pool->node->state;
+        if (g_FieldFxTaskContext->flags) {
+            FieldActor *pool = g_FieldFxOwner->actor;
+            if (pool && pool->state) {
+                u8 *flag = pool->state->action_state;
                 if (*flag == 1) *flag = 2;
             }
         }
@@ -390,17 +381,17 @@ int RoomM123_JointBeacon(int mode, RoomM123Beacon *state) {
         FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM123BeaconModel1, 0, 0xF0);
         return 0;
     case 1:
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM123BeaconChannel)->pool, 0x17, &offset, state);
-        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomM123BeaconChannel)->pool, 0,
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x17, (GteShortVector *)&offset, &state->position);
+        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)(struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0,
                       &state->rotation);
         state->alpha = 0x80;
         switch (state->phase) {
         case 0:
             state->timer++;
-            state->height = rcos(state->timer << 7) / 2 + 0x1000;
+            state->height = rcos((s32)((u32)state->timer * 128u)) / 2 + 0x1000;
             if (state->width < 0x800) state->width += 0x100;
             state->depth -= 0x80;
-            state->glow = rcos(state->timer << 7) + 0x1000;
+            state->glow = rcos((s32)((u32)state->timer * 128u)) + 0x1000;
             state->shade = state->timer;
             if (state->timer >= 8) {
                 state->phase = 1;
@@ -436,13 +427,13 @@ int RoomM123_JointBeacon(int mode, RoomM123Beacon *state) {
         state->target.z += position.z;
         if (FieldFx_IsPlayerInSegmentBand(state, &state->target, 0x140) == 0) return 0;
         if (state->armed == 0) return 0;
-        if (FX_TASK_AS(RoomM123BeaconEvent)->active) {
-            RoomM123BeaconChannel *channel = ANIM_OWNER_AS(RoomM123BeaconChannel);
-            if ((channel->pool->node->flags & 0x3F000000) == 0x01000000) {
-                ((RoomM123BeaconEntity *)D_8009D254)->actor->flags |= 0x4000;
-                channel->pool->node->flags =
-                    (channel->pool->node->flags & 0xC0FFFFFF) | 0x11000000;
-                channel->pool->node->flags |= 0x80000000;
+        if (g_FieldFxTaskContext->flags) {
+            FieldActorState *core = g_FieldFxOwner->actor->state;
+            if ((core->core_flags & 0x3F000000) == 0x01000000) {
+                ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                core->core_flags =
+                    (core->core_flags & 0xC0FFFFFF) | 0x11000000;
+                core->core_flags |= 0x80000000;
             }
         }
         state->armed = 0;
@@ -461,7 +452,7 @@ int RoomM123_JointBeacon(int mode, RoomM123Beacon *state) {
             rotation.x = 0;
             rotation.y = 0;
             rotation.pad = 0;
-            rotation.z = g_FieldFxCurrentAge << 6;
+            rotation.z = (s32)((u32)g_FieldFxCurrentAge * 64u);
             size = state->glow;
             FieldFx_SampleColorTrack(g_RoomM123BeaconColorTrack, &color, state->shade);
             {
@@ -529,11 +520,11 @@ int RoomM123_JointBeacon(int mode, RoomM123Beacon *state) {
                 RenderMatrixSlot *slot;
                 rotation.x = 0x800;
                 rotation.y = 0;
-                rotation.z = g_FieldFxCurrentAge << 4;
+                rotation.z = (s32)((u32)g_FieldFxCurrentAge * 16u);
                 RotMatrixYXZ(&rotation, &spin);
-                matrix = *ANIM_OWNER_AS(RoomM123BeaconChannel)->pool->matrix;
+                memcpy(&matrix,g_FieldFxOwner->actor->render_object.matrices,sizeof(matrix));
                 MulMatrix0(&matrix, &spin, &matrix);
-                scale.x = scale.y = rsin(g_FieldFxCurrentAge << 6) / 4 + 0x400;
+                scale.x = scale.y = rsin((s32)((u32)g_FieldFxCurrentAge * 64u)) / 4 + 0x400;
                 scale.z = 0x1000;
                 ScaleMatrix(&matrix, &scale);
                 matrix.t[0] = state->position.x;
@@ -553,19 +544,19 @@ int RoomM123_JointBeacon(int mode, RoomM123Beacon *state) {
                     FieldFx_ModelSetTexture(page, GetClut(0x60, palette));
                 }
                 FieldFx_ModelSetSemiTrans(1);
-                FieldFx_ModelSaveColors(g_RoomM123BeaconModel1);
-                FieldFx_ModelSetColors(g_RoomM123BeaconModel1, color.r, color.g, color.b);
-                size = rcos(g_FieldFxCurrentAge << 6) / 64;
-                FieldFx_ModelScaleColors(g_RoomM123BeaconModel1, size);
+                FieldFx_ModelSaveColors((char *)g_RoomM123BeaconModel1);
+                FieldFx_ModelSetColors((char *)g_RoomM123BeaconModel1, color.r, color.g, color.b);
+                size = rcos((s32)((u32)g_FieldFxCurrentAge * 64u)) / 64;
+                FieldFx_ModelScaleColors((char *)g_RoomM123BeaconModel1, size);
                 FieldFx_ModelDraw((union FieldTexturedModel *)g_RoomM123BeaconModel1, &matrix);
-                FieldFx_ModelRestoreColors(g_RoomM123BeaconModel1);
+                FieldFx_ModelRestoreColors((char *)g_RoomM123BeaconModel1);
             }
         }
         rotation.x = 0x800;
         rotation.y = 0;
-        rotation.z = g_FieldFxCurrentAge << 7;
+        rotation.z = (s32)((u32)g_FieldFxCurrentAge * 128u);
         RotMatrixYXZ(&rotation, &spin);
-        matrix = *ANIM_OWNER_AS(RoomM123BeaconChannel)->pool->matrix;
+        memcpy(&matrix,g_FieldFxOwner->actor->render_object.matrices,sizeof(matrix));
         MulMatrix0(&matrix, &spin, &matrix);
         scale.x = scale.y = state->height * 2 / 5;
         scale.z = 0x1800;
@@ -592,11 +583,11 @@ int RoomM123_JointBeacon(int mode, RoomM123Beacon *state) {
             FieldFx_ModelSetTexture(page, GetClut(0x60, palette));
         }
         FieldFx_ModelSetSemiTrans(1);
-        FieldFx_ModelSaveColors(g_RoomM123BeaconModel0);
-        FieldFx_ModelSetColors(g_RoomM123BeaconModel0, color.r, color.g, color.b);
+        FieldFx_ModelSaveColors((char *)g_RoomM123BeaconModel0);
+        FieldFx_ModelSetColors((char *)g_RoomM123BeaconModel0, color.r, color.g, color.b);
         FieldFx_ModelDraw((union FieldTexturedModel *)g_RoomM123BeaconModel0, &matrix);
-        FieldFx_ModelRestoreColors(g_RoomM123BeaconModel0);
-        FieldFx_ModelSaveColors(g_RoomM123BeaconModel0);
+        FieldFx_ModelRestoreColors((char *)g_RoomM123BeaconModel0);
+        FieldFx_ModelSaveColors((char *)g_RoomM123BeaconModel0);
         scale.z = 0x1000;
         scale.x = scale.y = state->depth;
         ScaleMatrix(&matrix, &scale);
@@ -614,10 +605,10 @@ int RoomM123_JointBeacon(int mode, RoomM123Beacon *state) {
             FieldFx_ModelSetTexture(page, GetClut(0x60, palette));
         }
         FieldFx_ModelSetSemiTrans(1);
-        FieldFx_ModelSetColors(g_RoomM123BeaconModel0, color.r, color.g, color.b);
+        FieldFx_ModelSetColors((char *)g_RoomM123BeaconModel0, color.r, color.g, color.b);
         FieldFx_ModelDraw((union FieldTexturedModel *)g_RoomM123BeaconModel0, &matrix);
-        FieldFx_ModelRestoreColors(g_RoomM123BeaconModel0);
-        FieldFx_ModelSaveColors(g_RoomM123BeaconModel0);
+        FieldFx_ModelRestoreColors((char *)g_RoomM123BeaconModel0);
+        FieldFx_ModelSaveColors((char *)g_RoomM123BeaconModel0);
         scale.z = 0x1000;
         scale.x = scale.y = state->width;
         ScaleMatrix(&matrix, &scale);
@@ -635,15 +626,16 @@ int RoomM123_JointBeacon(int mode, RoomM123Beacon *state) {
             FieldFx_ModelSetTexture(page, GetClut(0x60, palette));
         }
         FieldFx_ModelSetSemiTrans(1);
-        FieldFx_ModelSetColors(g_RoomM123BeaconModel0, color.r, color.g, color.b);
+        FieldFx_ModelSetColors((char *)g_RoomM123BeaconModel0, color.r, color.g, color.b);
         FieldFx_ModelDraw((union FieldTexturedModel *)g_RoomM123BeaconModel0, &matrix);
-        FieldFx_ModelRestoreColors(g_RoomM123BeaconModel0);
+        FieldFx_ModelRestoreColors((char *)g_RoomM123BeaconModel0);
         break;
     }
     return 0;
 }
 
-int RoomM123_JointSwirlParticleCallback(int mode, RoomM123Particle *particle) {
+int RoomM123_JointSwirlParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomM123Particle *particle=data;
     GteShortVector position;
     int textureFrame, scale, kind, palette;
     u16 clut;
@@ -664,7 +656,7 @@ int RoomM123_JointSwirlParticleCallback(int mode, RoomM123Particle *particle) {
 
         scale = g_RoomM123SwirlSpeed * particle->scale;
         sampleFrame = (s16)particle->frame;
-        FieldFx_OffsetPointByAngles(g_RoomM123SwirlOrigin, &position, sampleFrame << 6, g_RoomM123SwirlAngles,
+        FieldFx_OffsetPointByAngles((GteShortVector *)g_RoomM123SwirlOrigin, &position, (s32)((u32)sampleFrame * 64u), (GteShortVector *)g_RoomM123SwirlAngles,
                       scale / 4096, (s16)particle->offset);
         kind = g_FieldFxSpriteParams.palette;
         palette = g_FieldFxPaletteTable[kind];
@@ -678,8 +670,7 @@ int RoomM123_JointSwirlParticleCallback(int mode, RoomM123Particle *particle) {
     return 0;
 }
 
-int RoomM123_JointSwirl(int mode)
-{
+int RoomM123_JointSwirl(int mode, void *data, intptr_t argument) {
     GteShortVector seed = g_RoomM123JointAnchor;
     GteShortVector output;
     RoomM123Particle *particle;
@@ -687,18 +678,18 @@ int RoomM123_JointSwirl(int mode)
     int time;
     int scale;
     u16 outX, outY, outZ;
-    RoomM123Pool *context;
+    struct RoomFxTransformOwner *context;
     void *texture;
     u16 palette;
 
     switch (mode) {
     case 0:
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM123Pool)->pool, 8, 24,
-                             (FieldFxCallbackListCallback)RoomM123_JointSwirlParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 8, 24,
+                             RoomM123_JointSwirlParticleCallback);
     case 1:
         if (g_FieldFxCurrentAge == 1) {
             for (i = 0; i < 24; i++) {
-                particle = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM123Pool)->pool);
+                particle = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (particle != 0) {
                     particle->frame = (i << 6) / 24;
                     particle->scale = (rand() & 63) + 64;
@@ -706,7 +697,7 @@ int RoomM123_JointSwirl(int mode)
                 }
             }
         } else {
-            particle = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM123Pool)->pool);
+            particle = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (particle != 0) {
                 particle->frame = 0;
                 particle->scale = (rand() & 63) + 64;
@@ -716,26 +707,24 @@ int RoomM123_JointSwirl(int mode)
         time = g_FieldFxCurrentAge;
         g_RoomM123SwirlSpeed = 0x1000;
         if (time >= 50)
-            g_RoomM123SwirlSpeed = 0x1000 - ((time - 50) << 12) / 30;
+            g_RoomM123SwirlSpeed = 0x1000 - ((s32)(((u32)time - 50u) * 4096u)) / 30;
         if (time < 80) break;
         return 1;
     case 2:
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM123Pool)->pool, 23, &seed, &output);
-        scale = rsin((g_FieldFxCurrentAge << 11) / 80);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 23, &seed, &output);
+        scale = rsin(((s32)((u32)g_FieldFxCurrentAge * 2048u)) / 80);
         if (scale < 0)
             scale += 31;
         outX = output.x;
         outY = output.y;
         outZ = output.z;
-        context = ANIM_OWNER_AS(RoomM123Pool);
-        /* Keep the context load ahead of the texture address. */
+        context = (struct RoomFxTransformOwner *)g_FieldFxOwner->actor;
         texture = g_RoomM123SwirlAngles;
         g_RoomM123SwirlOrigin[0] = outX;
         g_RoomM123SwirlOrigin[1] = outY;
         g_RoomM123SwirlOrigin[2] = outZ;
-        /* Finish the position writes before reducing the signed scale. */
         g_RoomM123SwirlBrightness = scale >> 5;
-        FieldFx_GetTransformLookAngles(context->pool, 0, texture);
+        FieldFx_GetTransformLookAngles(context, 0, texture);
         g_FieldFxSpriteParams.parameter00 = 16;
         g_FieldFxSpriteParams.parameter02 = 1;
         g_FieldFxSpriteParams.extent_x = 16;
@@ -748,12 +737,13 @@ int RoomM123_JointSwirl(int mode)
         g_FieldFxSpriteParams.tpage = palette;
         break;
     }
-ret0:
     return 0;
 }
 
-int RoomM123_PulseRingCallback(int mode, RoomPulseParticle *particle, int *reference)
+int RoomM123_PulseRingCallback(int mode, void *data, intptr_t argument)
 {
+    RoomPulseParticle *particle=data;
+    void **reference=(void *)argument;
     int color[2];
     GteShortVector position = g_RoomM123PulseRingTilt;
     GteShortVector *positionPtr;
@@ -775,20 +765,19 @@ int RoomM123_PulseRingCallback(int mode, RoomPulseParticle *particle, int *refer
         matrixSlot = &g_ViewMatrixSlot.value;
         gte_ldrotmatrix(*matrixSlot);
         gte_ldtransmatrix(*matrixSlot);
-        FieldFx_SampleColorTrack((void *)*reference, color, particle->frame);
-        wave = rsin((g_FieldFxCurrentAge << 10) / 24);
+        FieldFx_SampleColorTrack(*reference, color, particle->frame);
+        wave = rsin(((s32)((u32)g_FieldFxCurrentAge * 1024u)) / 24);
         FieldFx_DrawRingBand((GteShortVector *)particle, 1000, 1500, 24, (GteRotation *)positionPtr, wave, wave, 0, (struct RenderColor *)color, 128, 1);
         break;
     }
     return 0;
 }
 
-int RoomM123_PulseRing(int mode, RoomPulseParticle *particle)
-{
+int RoomM123_PulseRing(int mode, void *data, intptr_t argument) {
+    RoomPulseParticle *particle=data;
     RoomPulseParticle *next;
-    RoomPulsePool *pool;
-    RoomPulseObject *object;
-    RoomM123Pool *context;
+    FieldActor *pool;
+    FieldActorState *object;
     RoomSoundSlot *soundSlot;
     int time;
     int volume;
@@ -796,15 +785,15 @@ int RoomM123_PulseRing(int mode, RoomPulseParticle *particle)
 
     switch (mode) {
     case 0:
-        FieldFx_GetActorPosition(ANIM_OWNER_AS(RoomM123Pool)->pool, 1, &particle->z);
+        FieldFx_GetActorPosition((char *)g_FieldFxOwner->actor, 1, (s16 *)&particle->z);
         particle->x = 0;
         particle->y = 0;
-        if (FX_TASK_AS(u8)[13]) {
-            pool = ANIM_OWNER_AS(RoomM123Pool)->pool;
-            if (pool != 0 && pool->object != 0) {
-                object = pool->object;
-                if (*object->status == 1)
-                    *object->status = 2;
+        if (g_FieldFxTaskContext->flags) {
+            pool = g_FieldFxOwner->actor;
+            if (pool != 0 && pool->state != 0) {
+                object = pool->state;
+                if (*object->action_state == 1)
+                    *object->action_state = 2;
             }
         }
         soundSlot = (RoomSoundSlot *)g_LoadedSceneAssetBlock;
@@ -815,11 +804,11 @@ int RoomM123_PulseRing(int mode, RoomPulseParticle *particle)
             if (soundSlot->channel != 0)
                 Akao_SendTableCommand(soundSlot->channel, 0x5B1, 0x80, 0x80, volume);
         }
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM123Pool)->pool, 12, 8,
-                             (FieldFxCallbackListCallback)RoomM123_PulseRingCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 12, 8,
+                             RoomM123_PulseRingCallback);
     case 1:
         if (g_FieldFxCurrentAge < 32 && g_FieldFxCurrentAge % 6 == 0) {
-            next = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM123Pool)->pool);
+            next = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (next != 0) {
                 next->x = particle->z;
                 next->y = particle->pad;
@@ -829,13 +818,12 @@ int RoomM123_PulseRing(int mode, RoomPulseParticle *particle)
                 next->frame = 0;
             }
         }
-        if (g_FieldFxCurrentAge == 32 && FX_TASK_AS(u8)[13]) {
-            context = ANIM_OWNER_AS(RoomM123Pool);
-            if ((((RoomPulsePool *)context->pool)->object->flags & 0x3F000000) == 0x01000000) {
-                (*((RoomPulseGlobal **)D_8009D254))->flags |= 0x4000;
-                ((RoomPulsePool *)context->pool)->object->flags =
-                    (((RoomPulsePool *)context->pool)->object->flags & 0xC0FFFFFF) | 0x21000000;
-                ((RoomPulsePool *)context->pool)->object->flags |= 0x80000000;
+        if (g_FieldFxCurrentAge == 32 && g_FieldFxTaskContext->flags) {
+            object = g_FieldFxOwner->actor->state;
+            if ((object->core_flags & 0x3F000000) == 0x01000000) {
+                ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                object->core_flags = (object->core_flags & 0xC0FFFFFF) | 0x21000000;
+                object->core_flags |= 0x80000000;
             }
         }
         if (g_FieldFxCurrentAge < 8) break;
@@ -853,11 +841,11 @@ int RoomM123_PulseRing(int mode, RoomPulseParticle *particle)
         g_FieldFxSpriteParams.tpage = palette;
         break;
     }
-ret0:
     return 0;
 }
 
-int RoomM123_WaveCallback(int mode, RoomM123Wave *wave) {
+int RoomM123_WaveCallback(int mode, void *data, intptr_t argument) {
+    RoomM123Wave *wave=data;
     int color[2];
     GteShortVector position = g_RoomM123WaveSpinBase;
     int result, scale, kind, palette;
@@ -872,8 +860,8 @@ int RoomM123_WaveCallback(int mode, RoomM123Wave *wave) {
     case 2:
         if (wave->state != 0) break;
         FieldFx_SampleColorTrack(g_RoomM123WaveColorTrack, color, (s16)wave->frame);
-        result = rcos((g_FieldFxCurrentAge << 10) / 24);
-        position.z = g_FieldFxCurrentAge << 5;
+        result = rcos(((s32)((u32)g_FieldFxCurrentAge * 1024u)) / 24);
+        position.z = (s32)((u32)g_FieldFxCurrentAge * 32u);
         scale = result / 2 + 2048;
         kind = g_FieldFxSpriteParams.palette;
         palette = g_FieldFxPaletteTable[kind];
@@ -886,7 +874,9 @@ int RoomM123_WaveCallback(int mode, RoomM123Wave *wave) {
     return 0;
 }
 
-int RoomM123_WaveBurst(int mode, RoomM123Burst *burst, int *choice) {
+int RoomM123_WaveBurst(int mode, void *data, intptr_t argument) {
+    RoomM123Burst *burst=data;
+    int *choice=(void *)argument;
     GteShortVector position = g_RoomM123JointOffset;
     RoomM123Wave *child;
     int value;
@@ -894,15 +884,15 @@ int RoomM123_WaveBurst(int mode, RoomM123Burst *burst, int *choice) {
     switch (mode) {
     case 0:
         value = *choice ? 34 : 40;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomM123Pool)->pool, value, &position, &burst->x);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, value, &position, (GteShortVector *)&burst->x);
         burst->frame = 0;
         burst->phase = 0;
         FieldFx_PlaySoundAtOwner(0x581, FieldFx_GetOwnerProgress());
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM123Pool)->pool, 12, 24,
-                             (FieldFxCallbackListCallback)RoomM123_WaveCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 12, 24,
+                             RoomM123_WaveCallback);
     case 1:
         if (g_FieldFxCurrentAge < 32) {
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM123Pool)->pool);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child != 0) {
                 child->x = burst->x;
                 child->y = burst->y;
@@ -946,3 +936,36 @@ int RoomM123_WaveBurst(int mode, RoomM123Burst *burst, int *choice) {
     }
     return 0;
 }
+
+/* Original M123 task tables, scripts, constants and work data. */
+GteShortVector g_RoomM123JointOffset={0,0,-110,0};
+GteShortVector g_RoomM123JointOrigin={0,0,0,0};
+GteShortVector g_RoomM123JointAnchor={0,0,-60,0};
+GteShortVector g_RoomM123PulseRingTilt={1024,0,0,1};
+GteShortVector g_RoomM123WaveSpinBase={0,0,0,0};
+RenderColor g_RoomM123TriangleColor={160,70,0,0};
+RoomM123BeaconOffset g_RoomM123BeaconAnchor={{0,65466}};
+u8 g_RoomM123GlowColorTrack[40]={0,0,0,0,0,0,0,0,128,0,0,16,0,0,0,0,200,128,0,16,0,0,0,0,240,240,0,16,0,0,0,0,240,240,128,0,0,0,0,0};
+u8 g_RoomM123GlowBurstColorTrack[40]={0,0,0,0,0,0,0,0,0,0,0,16,0,0,0,0,200,128,0,16,0,0,0,0,240,240,0,16,0,0,0,0,240,240,128,0,0,0,0,0};
+u8 g_RoomM123BeaconColorTrack[48]={0,0,0,0,0,0,0,0,255,250,200,8,0,0,0,0,240,240,0,8,0,0,0,0,0,200,250,16,0,0,0,0,0,128,200,16,0,0,0,0,0,0,0,0,0,0,0,0};
+char g_RoomM123PulseColorTrack0[32]={0,0,0,0,0,0,0,0,-66,110,30,12,0,0,0,0,70,0,-128,12,0,0,0,0,0,0,0,0,0,0,0,0};
+char g_RoomM123PulseColorTrack1[32]={0,0,0,0,0,0,0,0,70,120,-116,12,0,0,0,0,20,0,110,12,0,0,0,0,0,0,0,0,0,0,0,0};
+char g_RoomM123WaveColorTrack[40]={0,0,0,0,0,0,0,0,0,0,-128,4,0,0,0,0,0,80,-66,8,0,0,0,0,-128,80,0,12,0,0,0,0,0,0,0,0,0,0,0,0};
+u16 g_RoomM123JointScript[24]={5,0,0,1,6,43,2,0,0,2,1,0,4,34,0,2,2,0,2,3,0,0,0,0};
+u16 g_RoomM123PulseRingScript[16]={5,0,0,1,6,58,4,16,0,2,0,0,0,0,0,0};
+u16 g_RoomM123WaveScript[12]={1,6,59,4,16,0,2,0,0,0,0,0};
+RoomM123JointAngles g_RoomM123GlowBurstAngles;
+GteShortVector g_RoomM123GlowBurstCenter;
+u8 *g_RoomM123BeaconModel0,*g_RoomM123BeaconModel1;
+s16 g_RoomM123SwirlBrightness,g_RoomM123SwirlSpeed;
+_Alignas(GteShortVector) u8 g_RoomM123SwirlAngles[8];
+u16 g_RoomM123SwirlOrigin[3];
+void *g_RoomM123SelectedColorTrack;
+intptr_t RoomM123_SelectSlotPointer(int, intptr_t, intptr_t, intptr_t);
+FieldFxTaskProgram g_RoomM123JointEffects={
+    {{RoomM123_JointTriangleEmitter,RoomM123_GlowBurst,RoomM123_JointBeacon,RoomM123_JointSwirl},{4,4,52,4}},
+    RoomLib_SetTaskVar0,g_RoomM123JointScript};
+FieldFxTaskProgram g_RoomM123PulseRingEffects={
+    {{RoomM123_PulseRing},{12}},RoomM123_SelectSlotPointer,g_RoomM123PulseRingScript};
+FieldFxTaskProgram g_RoomM123WaveBurstEffects={
+    {{RoomM123_WaveBurst},{12}},RoomLib_SetArg1,g_RoomM123WaveScript};

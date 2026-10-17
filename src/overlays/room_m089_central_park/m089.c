@@ -81,15 +81,15 @@ int RoomM089_SpiralTrailCallback(int mode, void *data, intptr_t argument) {
             gte_ldrotmatrix(matrixSlot->value);
             gte_ldtransmatrix(matrixSlot->value);
             if (trail->points[5].x | trail->points[5].y | trail->points[5].z)
-                FieldFx_DrawGlowLine(&trail->points[4], &trail->points[5], &head, &tail, 0x19, 0, 1);
+                FieldFx_DrawGlowLine(&trail->points[4], &trail->points[5], (u8 *)&head, (u8 *)&tail, 0x19, 0, 1);
             if (trail->points[4].x | trail->points[4].y | trail->points[4].z)
-                FieldFx_DrawGlowLine(&trail->points[3], &trail->points[4], &head, &tail, 0x32, 0x19, 1);
+                FieldFx_DrawGlowLine(&trail->points[3], &trail->points[4], (u8 *)&head, (u8 *)&tail, 0x32, 0x19, 1);
             if (trail->points[3].x | trail->points[3].y | trail->points[3].z)
-                FieldFx_DrawGlowLine(&trail->points[2], &trail->points[3], &head, &tail, 0x4B, 0x32, 1);
+                FieldFx_DrawGlowLine(&trail->points[2], &trail->points[3], (u8 *)&head, (u8 *)&tail, 0x4B, 0x32, 1);
             if (trail->points[2].x | trail->points[2].y | trail->points[2].z)
-                FieldFx_DrawGlowLine(&trail->points[1], &trail->points[2], &head, &tail, 0x64, 0x4B, 1);
+                FieldFx_DrawGlowLine(&trail->points[1], &trail->points[2], (u8 *)&head, (u8 *)&tail, 0x64, 0x4B, 1);
             if (trail->points[1].x | trail->points[1].y | trail->points[1].z)
-                FieldFx_DrawGlowLine(&trail->points[0], &trail->points[1], &head, &tail, 0x80, 0x64, 1);
+                FieldFx_DrawGlowLine(&trail->points[0], &trail->points[1], (u8 *)&head, (u8 *)&tail, 0x80, 0x64, 1);
             break;
         case 1:
             rotation.x = 0x400;

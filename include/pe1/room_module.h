@@ -67,14 +67,14 @@ intptr_t RoomLib_SetArgs3(int unused, intptr_t a, intptr_t b, intptr_t c);
 /* The single argument other rooms take the same way (RoomLib_SetArg1). */
 extern int g_RoomScriptArg;
 
-int *RoomLib_SetArg1(int unused, int value);
+intptr_t RoomLib_SetArg1(int unused, intptr_t value, intptr_t b, intptr_t c);
 
 /* The spark barrage rooms take two such words, one entry each
  * (room_lib/script_arg_pair.c). */
 extern int g_RoomScriptArgA;
 extern int g_RoomScriptArgB;
 
-int *RoomLib_SetArgA(int unused, int value);
-int *RoomLib_SetArgB(int unused, int value);
+intptr_t RoomLib_SetArgA(int unused, intptr_t value, intptr_t b, intptr_t c);
+intptr_t RoomLib_SetArgB(int unused, intptr_t value, intptr_t b, intptr_t c);
 
 #endif

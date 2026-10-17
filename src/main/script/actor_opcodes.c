@@ -954,7 +954,7 @@ int Script_SetFloorByEntityRoll(u8 **args) {
 int Render_SetEntryPosition(int index, int x, int y);
 
 int Script_SetActorScreenPos(int **arg0) {
-    Render_SetEntryPosition(*arg0[0], *(short *)arg0[1], *(short *)arg0[2]);
+    Render_SetEntryPosition(*arg0[0], (s16)*arg0[1], (s16)*arg0[2]);
     return 1;
 }
 

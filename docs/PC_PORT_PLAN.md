@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Podpięto istniejące oryginalne opcode115/204/230. 115 ma teraz natywną
+sygnaturę int ** i jawnie zawęża wszystkie trzy argumenty do s16, zgodnie
+z retailowymi LH. 230 zachowuje pełny indeks i odczytuje współrzędne przez
+(s16)*arg zamiast aliasu short*. 204 przyjmuje ignorowane int **, resetuje
+oryginalny obiekt animacji i parent. Render_ClipPoint, Render_SetEntryPosition
+oraz Render_ClearObjectAnim zachowują oryginalne algorytmy, bez adapterów.
+
+Nowy test w istniejącym fixture wykonuje pełne niehookowane USA funkcje
+wraz z callees:92156 stanów115 (granice/inverted bounds, zawijanieu16,
+wszystkie wartości dolnych16bitów wejść),4840 stanów230 (pięć poprawnie
+przygotowanych rekordów, indeksy−2..2,8 flag i szerokie argumenty) oraz
+49152 stany204 (wszystkie256 part_count, stany animacji, parent/source,
+guardy całego aktora i pełnych natywnych wskaźników). FNV odpowiednio
+6a81bee8f390fd1c,1a33d0057329050e,f55ffb13ce6e0a25.
+Każdy z146148 stanów przechodzi także rzeczywisty dispatcher.
+/tmp/pe-render115-204-230-mips.py i log; adresy USA handler/callee:
+115=80018B30/800679C4,230=80015AB8/800677A0,204=80019260/8003E0D0.
+
+Końcowy render115-204-230-v2: CPU normal/SAN exit0 (1,00/2,22s), wymagane
+--assets exit0 (11,04/47,59s), pełny build root przeszedł. Osobne usunięcie
+każdego z trzech wpisów daje exit123 w obu wariantach (sześć przypadków).
+Wcześniejszy fixturev1 miał błąd pośredniego wyjścia poza tablicę w teście
+ujemnego indeksu; v2 oblicza entries+(index+2) bez tego UB i zachowuje
+wszystkie przypadki. Nie był to błąd Render_SetEntryPosition.
+
+Regresja coldN→wygranaM121→M117/rest/upgrade/reload: normal/SAN exit0
+(19,50/74,36s), cały JSON zgodny z poprzednim kandydatem i między wariantami,
+pełne1MiB VRAM zgodne ze świeżym debuggerem. B–N niezmienione i bu10 puste
+w trzech prywatnych katalogach. Nowy headless debug
+/tmp/pe-nypd-current-v4-lldb.log stoi przy34900 M117, HP189, PE65, clip16,
+pool54, Medicine1 w8/11. Zamrożony executable
+/tmp/pe-render115-204-230-v2-game i jego obiekty pozostają niezmienne.
+Args/trace: /tmp/pe-nypd-current-v4-{args.json,input.jsonl}.
+/tmp/pe-render115-204-230-v2-verify.py i proof.json wiążą SHA źródeł, SLUS,
+oracle, dziesięciu executable i wyników, w tym pełny stan/VRAM/karty z
+/tmp/pe-render115-204-230-native-v2-proof.json. Audyt rejestru potwierdza217
+poprawnych mapowań,21 oryginalnych NULL oraz nadal niepodpięte175/177/179.
+Nie zalicza to całej kampanii ani nadal niewygranych M118/M122.
+
 Podpięto oryginalne geometryczne opcode21 i182 w istniejącym interpreterze.
 Script_PlayerPointInPoly buduje teraz właściwe PolygonVertex[4] z pełnych
 par16.16, zamiast czytać int[8] przez wskaźnik innego typu. Zachowuje

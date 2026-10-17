@@ -648,8 +648,8 @@ int Script_SetRenderEntryEnabled(int **arg0) {
     return 1;
 }
 
-int Script_SetRenderEntryPos(short **arg0) {
-    Render_ClipPoint(*arg0[0], *arg0[1], *arg0[2]);
+int Script_SetRenderEntryPos(int **arg0) {
+    Render_ClipPoint((s16)*arg0[0], (s16)*arg0[1], (s16)*arg0[2]);
     return 1;
 }
 
@@ -912,7 +912,8 @@ int Entity_CopyAttachmentData(int **arg0)
 
 /* Adjacent script handlers share actor selection and render-object state. */
 
-int Script_ResetEntityRenderObj(void) {
+int Script_ResetEntityRenderObj(int **unused) {
+    (void)unused;
     Render_ClearObjectAnim(&g_CurrentEntity->render_object);
     g_CurrentEntity->parent = 0;
     return 1;

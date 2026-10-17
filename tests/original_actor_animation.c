@@ -3765,6 +3765,105 @@ static int original_scene_entry_position_opcode(void)
     return 1;
 }
 
+/* Original render-position/reset handlers, including their complete callees. */
+static int original_render_position_reset_opcodes(void)
+{
+    const u32 values[]={0,1,0xffffffff,32767,0xffff8000,65535,65536,0x7fffffff,0x80000000,0x12345678,0xfedcba98};
+    const u16 bases[][2]={{0,0},{65535,65535},{32768,32767},{123,456},{65530,7}},depths[]={0,65535,32768,12345,7};
+    const s16 bounds[][4]={{-100,100,-50,50},{-32768,32767,-32768,32767},{500,-500,300,-300},{10,10,-20,-20}};
+    const u32 flags[]={0,1,0x80,0xffffff7f,0xffffffff,0x80000000,0x12345678,0xa5a55a5a};
+    GeomState *saved_geom=g_GeomState;FieldActor *saved_actor=g_CurrentEntity;
+    ScriptNode *saved_node=g_ScriptNodePool;u32 *saved_cursor=g_ScriptCursor;int saved_flags=g_GeomScroll.state.flags;
+    FieldActor actor={0};g_CurrentEntity=&actor;uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    if(sizeof(GeomState)!=60 || g_ScriptQueueOpcodeHandlers[115]!=Script_SetRenderEntryPos ||
+       g_ScriptQueueOpcodeHandlers[204]!=Script_ResetEntityRenderObj || g_ScriptQueueOpcodeHandlers[230]!=Script_SetActorScreenPos)return 0;
+    for(unsigned sweep=0;sweep<2;++sweep)for(unsigned test=0;test<(sweep?65536u:26620u);++test){
+        GeomState geometry,before,after,expected;memset(&geometry,0xa5,sizeof(geometry));
+        unsigned bound=sweep?test%4:(test/1331)%4,base=test/5324;
+        int data[3];
+        if(sweep){
+            geometry.clip_offset_x=(u16)(test*3);geometry.clip_offset_y=(u16)(test*5);geometry.depth_offset=(u16)(test*17);
+            data[0]=(s32)((test<<16)|((test*7)&65535));data[1]=(s32)(((65535-test)<<16)|test);data[2]=(s32)((test<<16)|(test^0x8000));
+        }else{
+            geometry.clip_offset_x=bases[base][0];geometry.clip_offset_y=bases[base][1];geometry.depth_offset=depths[base];
+            data[0]=(s32)values[(test/121)%11];data[1]=(s32)values[(test/11)%11];data[2]=(s32)values[test%11];
+        }
+        geometry.clip_min_x=bounds[bound][0];geometry.clip_max_x=bounds[bound][1];
+        geometry.clip_min_y=bounds[bound][2];geometry.clip_max_y=bounds[bound][3];
+        before=expected=geometry;g_GeomState=&geometry;g_GeomScroll.state.flags=(s32)flags[test%8];
+        int inputs[3];memcpy(inputs,data,sizeof(data));int *args[]={data,data+1,data+2};u32 result=Script_SetRenderEntryPos(args);
+        for(unsigned byte=0;byte<4;++byte)hash=(hash^((result>>(byte*8))&255))*UINT64_C(1099511628211);
+        for(unsigned byte=0;byte<sizeof(geometry);++byte)hash=(hash^((u8 *)&geometry)[byte])*UINT64_C(1099511628211);
+        u32 actual_flags=(u32)g_GeomScroll.state.flags;
+        for(unsigned byte=0;byte<4;++byte)hash=(hash^((actual_flags>>(byte*8))&255))*UINT64_C(1099511628211);
+        expected.field26=geometry.field26;expected.disp_src_x=geometry.disp_src_x;expected.disp_src_y=geometry.disp_src_y;
+        if(memcmp(data,inputs,sizeof(data)) || memcmp(&geometry,&expected,sizeof(geometry)) || actual_flags!=flags[test%8])return 0;
+        after=geometry;geometry=before;
+        u32 program[]={115|(3u<<13),0,(u32)data[0],(u32)data[1],(u32)data[2],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(&geometry,&after,sizeof(geometry)) || (u32)g_GeomScroll.state.flags!=actual_flags ||
+           node.current.script!=program+7 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+        ++cases;
+    }
+    if(cases!=92156 || hash!=UINT64_C(0x6a81bee8f390fd1c)){
+        fprintf(stderr,"Render115 CPU mismatch: %u %016llx\n",cases,(unsigned long long)hash);return 0;
+    }
+    hash=UINT64_C(14695981039346656037);cases=0;
+    struct PositionGeometry {GeomState header;GeomEntry entries[5];u64 guard;} mesh,before,expected,after;
+    for(int index=-2;index<3;++index)for(unsigned flag=0;flag<8;++flag)for(unsigned x=0;x<11;++x)for(unsigned y=0;y<11;++y){
+        memset(&mesh,0xa5,sizeof(mesh));mesh.header.entry_offset=(s32)((u8 *)(mesh.entries+2)-(u8 *)&mesh);
+        for(unsigned i=0;i<5;++i){mesh.entries[i].u30.prim=mesh.entries+i;mesh.entries[i].u34.pagePackets=(void *)(mesh.entries+4-i);}
+        memcpy(&before,&mesh,sizeof(mesh));memcpy(&expected,&mesh,sizeof(mesh));g_GeomState=&mesh.header;g_GeomScroll.state.flags=(s32)flags[flag];
+        int data[]={index,(s32)values[x],(s32)values[y]},inputs[3];memcpy(inputs,data,sizeof(data));int *args[]={data,data+1,data+2};
+        u32 result=Script_SetActorScreenPos(args),actual_flags=(u32)g_GeomScroll.state.flags;
+        const u32 words[]={result,actual_flags};
+        for(unsigned word=0;word<2;++word)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+        for(unsigned i=0;i<5;++i)for(unsigned byte=0;byte<48;++byte)
+            hash=(hash^((u8 *)(mesh.entries+i))[byte])*UINT64_C(1099511628211);
+        GeomEntry *entry=expected.entries+(index+2),*actual=mesh.entries+(index+2);
+        entry->base_x=actual->base_x;entry->base_y=actual->base_y;entry->scr_x=actual->scr_x;entry->scr_y=actual->scr_y;
+        if(memcmp(data,inputs,sizeof(data)) || memcmp(&mesh,&expected,sizeof(mesh)))return 0;
+        memcpy(&after,&mesh,sizeof(mesh));memcpy(&mesh,&before,sizeof(mesh));g_GeomScroll.state.flags=(s32)flags[flag];
+        u32 program[]={230|(3u<<13),0,(u32)index,values[x],values[y],32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(&mesh,&after,sizeof(mesh)) || (u32)g_GeomScroll.state.flags!=actual_flags ||
+           node.current.script!=program+7 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+        ++cases;
+    }
+    if(cases!=4840 || hash!=UINT64_C(0x1a33d0057329050e)){
+        fprintf(stderr,"Render230 CPU mismatch: %u %016llx\n",cases,(unsigned long long)hash);return 0;
+    }
+    const u32 patterns[]={0,1,0x7fff,0x8000,0xffff,0x80000000,0xffffffff,0x010c0000,0xa5a55a5a,0x12345678,0x7fffffff,0x600000};
+    hash=UINT64_C(14695981039346656037);cases=0;
+    for(unsigned parts=0;parts<256;++parts)for(unsigned anim=0;anim<12;++anim)for(unsigned parent=0;parent<4;++parent)for(unsigned source=0;source<4;++source){
+        FieldActor current,others[2]={{0}};memset(&current,0xa5,sizeof(current));RenderObjectHeader header;memset(&header,0xa5,sizeof(header));
+        header.part_count=parts;RenderObjectHeader header_before=header;
+        FieldActor *parents[]={NULL,&current,others,others+1};RenderObjectEntity *sources[]={NULL,&current.render_object,&others[0].render_object,&others[1].render_object};
+        current.parent=parents[parent];current.render_object.header=&header;current.render_object.animation_source=sources[source];
+        current.render_object.animation_state=(s16)patterns[anim];current.render_object.animation_id=(s16)patterns[(anim+3)%12];
+        FieldActor actor_before=current,actor_expected=current;g_CurrentEntity=&current;u32 result=Script_ResetEntityRenderObj(NULL);
+        const u32 words[]={result,current.parent!=NULL,current.render_object.animation_source!=NULL,
+            (u16)current.render_object.animation_state,(u16)current.render_object.animation_id,current.flags};
+        for(unsigned word=0;word<6;++word)for(unsigned byte=0;byte<4;++byte)
+            hash=(hash^((words[word]>>(byte*8))&255))*UINT64_C(1099511628211);
+        actor_expected.parent=current.parent;actor_expected.render_object.animation_source=current.render_object.animation_source;
+        actor_expected.render_object.animation_state=current.render_object.animation_state;
+        if(memcmp(&current,&actor_expected,sizeof(current)) || memcmp(&header,&header_before,sizeof(header)))return 0;
+        current=actor_before;u32 program[]={204,0,32,0};
+        ScriptNode node={.current.script=program,.active=1,.flags=0x80};g_ScriptNodePool=&node;Script_RunQueue();
+        if(result!=1 || memcmp(&current,&actor_expected,sizeof(current)) || memcmp(&header,&header_before,sizeof(header)) ||
+           node.current.script!=program+4 || node.active || node.flags!=0x90 || g_ScriptNodePool)return 0;
+        ++cases;
+    }
+    g_GeomState=saved_geom;g_CurrentEntity=saved_actor;g_ScriptNodePool=saved_node;g_ScriptCursor=saved_cursor;g_GeomScroll.state.flags=saved_flags;
+    if(cases!=49152 || hash!=UINT64_C(0xf55ffb13ce6e0a25)){
+        fprintf(stderr,"Render204 CPU mismatch: %u %016llx\n",cases,(unsigned long long)hash);return 0;
+    }
+    puts("Original render opcodes115/230/204: 92156/4840/49152 USA CPU states, full callees, s16 inputs, clipping bounds/wrap, signed entry indices, all part counts, full native pointer/record guards and real dispatcher passed");
+    return 1;
+}
+
 static int original_scene_entry_raw_bytes(void)
 {
     const u32 heads[]={0,1,0xffffffff,0x14000011,0x12345678,0x80000000};
@@ -5582,7 +5681,7 @@ static int original_native_voice_release(void)
 
 static int original_actor_audio_state(void)
 {
-    if(!original_attachment_opcode() || !original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_three_particle_states() || !original_three_particle_program() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_frame_clock_layout() || !original_script_timer_commands() || !original_scene_frame_timers() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
+    if(!original_attachment_opcode() || !original_battle_entry_opcode() || !original_conditional_branch_opcode() || !original_context_getter_opcodes() || !original_context_setter_opcodes() || !original_script_event_entries() || !original_animation_event_opcode() || !original_action_wait_opcode() || !original_typed_field_opcode() || !original_collision_gate_opcodes() || !original_player_camera_reset_opcode() || !original_scroll_opcodes() || !original_native_voice_release() || !original_polygon_opcode() || !original_static_model_matrices() || !original_script_polygon_opcode() || !original_follow_actor_opcode() || !original_render_flag_opcodes() || !original_room_glow_orb() || !original_three_particle_states() || !original_three_particle_program() || !original_drop_field_states() || !original_room_effect_core_flags() || !authored_fan_sweep_cycles() || !original_textbox_rect_opcode() || !original_task_pause_opcodes() || !original_geometry_visibility_opcode() || !original_animation_stop_slot_opcode() || !original_scene_entry_position_opcode() || !original_render_position_reset_opcodes() || !original_scene_entry_raw_bytes() || !original_equipment_open_opcode() || !original_memcard_dialog_opcode() || !original_movement_gate_opcodes() || !original_inventory_storage_swaps() || !original_inventory_count_opcode() || !original_inventory_command_opcode() || !original_equip_selection_opcode() || !original_polar_position_opcode() || !original_motion_opcodes() || !original_dialogue_opcodes() || !original_turn_to_actor_opcode() || !original_screen_fade_wait_opcode() || !original_screen_fade_opcodes() || !original_geometry_control_opcodes() || !original_geometry_slot_opcodes() || !original_shadow_radius_opcode() || !original_frame_clock_layout() || !original_script_timer_commands() || !original_scene_frame_timers() || !original_camera_release_opcode() || !original_camera_flags_opcodes() || !original_animation_frame_opcode() || !original_script_command_binding() || !original_clamp_opcode_binding() || !original_scene_transition_opcode() || !original_wait_opcode_bindings() || !original_field_sfx_opcode_binding() || !original_flag_opcode_bindings())return 0;
     Pe1GameState previous=g_GameState;
     FieldActor actor={.type_id=7,.sub_id=11};
     FieldActor *previous_actor=g_CurrentEntity;

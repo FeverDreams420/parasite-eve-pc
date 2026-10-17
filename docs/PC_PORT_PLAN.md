@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 17 października 2026
 
+Zakończona pełna zwykła powtórka coldI→M089→Day3/J→Soho→wyjazd→Museum
+M038/M239→całe filmy12/13 bez skip→nocne M192/cap147236: normal exit0
+64,81s, SAN exit0 222,97s, bez diagnostics. Cały JSON i pełne1MiB VRAM
+identyczne także z debuggerem, SHA256
+021d84ecfc4d7ef1e9f62a7bbf9af9bb702842b0fd1d9c1d835ce89c2ccc4dfe.
+B–I niezmienione, J utworzony po drodze identyczny z kanonicznym zwykłym J,
+bu10 puste. Stage376, HP181/181, lock2, brak menu; obraz nocnego wyjścia
+obejrzany. Manifest /tmp/pe-day3-m192-ordinary-v1-proof.json, -verify.py,
+-prepare.py/-run.py i komplet args/logs. Dawny diagnostyczny wynik M192 miał
+ten sam VRAM, ale nadal zachowuje własne15 guards; nowy zwykły dowód nie
+zmienia jego proweniencji.
+
+Dalszy zwykły input: wyjście M192→mapa, wariant7/NYPD→M037→lobbyM103,
+przedmiot205/Locker Key2 trafia do wolnego15. Rozmowy do18 i przejście
+schodami przez rzeczywiste floor triangles dają M100 przy155328, story392.
+Losowa walka M100: typ5/35HP/def22 i typ6/70HP/def15. Pełne serie M16/Heat
+pokonują obu; przy157029 HP121/181, battle2, zero żywych. Oryginalne nagrody
+EXP/ObtainAll/End dają Medicine1/item6 do19 i Ammo20 do20. Bez leczenia,
+HP/PE writes ani zmian flag przez debugger. Niepotrzebny idle700 na wejściu
+walki kosztował27HP, pierwsza seria kolejne33; później nie utracono HP.
+
+Dalsze dojście do M099 i oryginalnego telefonu: przy161012 File saved,
+nowy pusty K10,8192 bajty, SHA256
+54496f90714c69769714474d771ddeecd73540dab71e3655117b27a39ab32785.
+HP121/181, Medicine2 w10, Medicine1 w19, LockerKey2 w15, Tool w8,
+bonus defense SpVest4/SvVest3. Prywatny checkpoint
+/tmp/pe-nypd-ordinary-checkpoint/bu00 (B–K), odrębny od starego
+diagnostycznego /tmp/pe-nypd-phone-checkpoint/bu00. Obraz File saved
+/tmp/pe-nypd-ordinary-save-k-v1-debug.png obejrzany. Menu zamknięte przy161360.
+
+Pełny coldI→cały odcinek→SaveK/cap161012 trwa exec68753 (PID87400/87401
+przy ostatnim odczycie); /tmp/pe-nypd-ordinary-save-k-v1-run.py/-prepare.py/
+-verify.py, -{normal,san}-args.json/.log, -results.json po terminal.
+Osobny coldContinueK/cap24000 trwa exec81849, normal terminal0 15,54s,
+SAN PID87404 nadal żywy przy ostatnim odczycie; prefix
+/tmp/pe-nypd-ordinary-continue-k-v1-, verifier gotowy. Nie przypisywać jeszcze
+PASS całości tych dwóch zestawów. Najpierw odczytać terminal i uruchomić
+oba verify; nie restartować żywych procesów. Główny debugger nadal
+exec76299/PID86034, cwd /tmp/pe-m089-prepared-v3-live, cap161360 M099,
+lock0, brak menu. Następne rozmowy/ścieżki NYPD (Cathy/M108) nie są jeszcze
+zwykle zweryfikowane. Nie dodano plików repo ani kodu gameplay.
+
 Zakończona powtórka coldI→M089 zwycięstwo→Day3/J→apteka→Medicine2→
 cztery Defense+1→M095/Tool przy108333: normal exit0 44,13s, SAN exit0
 152,28s, bez zgłoszeń sanitizerów. Cały JSON, pełne4096 bajtów equipment

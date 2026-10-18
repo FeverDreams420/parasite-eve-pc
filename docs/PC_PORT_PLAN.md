@@ -10,6 +10,17 @@ autentyczny D i prywatne karty bez zmian. Zależności/obiekty/archiwa/binaria
 ponownie przeliczone po testach. build/parasite-eve-pc oraz fixture są kopiami
 zweryfikowanych binariów normal. /tmp/pe-m328-port-v5-final-proof.json,
 /tmp/pe-m328-port-v5-verification.json i /tmp/pe-m328-{cue,death}-pair-v5-proof.json.
+Przygotowanie do następnej próby przez oryginalne menu: Medicine2 ze21
+69→159HP, następnie dostępny Heal1 159→189HP przy41216. Ponowne wybranie
+niedostępnego już Heal1 nie zmienia HP; wyjście z menu przy41656, nadal M328,
+lock0/menuNULL. Nie potwierdzono ani nie użyto Heal2 (nazwa pliku live jest
+robocza). Dwa checkpointy41216/41656 ×normal/SAN:4/4 exit0, pełne JSON zgodne
+z live i profilami, pełne1MiB VRAM zgodne między profilami. Całe inventory i
+4096B equipment pozostają takie jak przy wejściu z jedyną zmianą21:7→0.
+Źródłowe/prywatne D identyczne, bu10 puste. Dowód
+/tmp/pe-m328-field-heal-v1-proof.json, CLI -<cap>-<profile>-args.json.
+Live /tmp/pe-m328-heal2-v1-live zakończony poleceniem quit, exit0; nie jest
+aktywną sesją. Następny runtime może odtworzyć ten cold stan zwykłymi inputami.
 Archiwa PsyZ/SDL pozostają nieinstrumentowane. Kampania i całe M328
 pozostają nieukończone; nie potwierdzono zwycięstwa w tej walce.
 

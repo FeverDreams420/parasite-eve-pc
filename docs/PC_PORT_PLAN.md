@@ -2,6 +2,61 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Aktualny kandydat: /tmp/pe-m328-port-v5 (poniższe v2/v3 to historia dowodów).
+380 świeżych obiektów, normal i ASan/UBSan/function. Wszystkie38 regresji
+oraz cztery cold replaye M328 (pierwsza awaria41913 i porażka42669 × oba
+profile) kończą exit0. Pełny stan i1MiB VRAM są zgodne między profilami,
+autentyczny D i prywatne karty bez zmian. Zależności/obiekty/archiwa/binaria
+ponownie przeliczone po testach. build/parasite-eve-pc oraz fixture są kopiami
+zweryfikowanych binariów normal. /tmp/pe-m328-port-v5-final-proof.json,
+/tmp/pe-m328-port-v5-verification.json i /tmp/pe-m328-{cue,death}-pair-v5-proof.json.
+Archiwa PsyZ/SDL pozostają nieinstrumentowane. Kampania i całe M328
+pozostają nieukończone; nie potwierdzono zwycięstwa w tej walce.
+
+
+M328 — następny test rzeczywistej walki ujawnił błąd po zakończeniu animacji.
+Oryginalny Entity_TriggerAnimEvent zeruje aktywne zdarzenie przy końcu akcji,
+choć erupcja może nadal mieć żywe sloty. Przy41911 FieldFx_UpdateSlots
+czytał null action_state; kandydat v2 kończył SIGSEGV, SAN zgłaszał
+object_script.c:113. Dowód read-only LLDB /tmp/pe-m328-null-cue-v1.log:
+GroundEruptionStart→UpdateSlots, żywa erupcja z8 slotami i hpAlive120.
+Poprawka w istniejących object_script.c, ground_eruption.c i homing_projectile.c
+traktuje brak aktywnego zdarzenia jako brak cue (0). Bez nowego stanu/warstwy.
+Oryginalne USA instrukcje800c251c wykonane na CPU dla null/0/1/2/4 potwierdzają:
+null czyta jeden bajt spod RAM0, równy0; tylko cue1 przechodzi na2.
+/tmp/pe-m328-null-cue-cpu-v1-proof.json. Nie jest to emulowanie adresu0 w C.
+Test natywny sprawdza erupcję po zaniku eventu i przerwany rzut bez eventu.
+
+Kandydat /tmp/pe-m328-port-v3: świeże380 obiektów, normal i SAN,
+38/38 regresji exit0. Rozszerzony --hospital-eruption:288 stanów sześciu
+oryginalnych initializerów/update z pełnym512B canary zgodne z CPU/BIOS/GTE,
+hashba517b063e65beed (/tmp/pe-m328-eruption-cpu-v1.py).
+Replay pierwszej awarii do41913 już przechodzi w obu profilach, pełne JSON/VRAM
+identyczne, karty D niezmienione (/tmp/pe-m328-cue-pair-v3-proof.json).
+Dalsza nieudana taktyka kończy się rzeczywistym HP0/mode3 przy42489, nie crashem;
+para profili do42669 także exit0 i pełna zgodność stanu/VRAM
+(/tmp/pe-m328-death-pair-v3-proof.json). To test efektów i porażki, nie zwycięstwo.
+Następna próba używa posiadanej Medicine2 poza walką:69→159HP, slot21 pusty,
+przy40748. Próba /tmp/pe-m328-prepared-v1-live jest już zakończona exit0:
+po pierwszej zwykłej salwie7:0 ma34HP; późniejsze EnergyShot na6:31 zdejmuje90
+(120→30), lecz Aya ginie przy43460. Nie jest to zwycięstwo ani aktywna sesja.
+Cure-M nie zużyto (poza walką nie było stanu do wyleczenia); D bez zmian.
+
+
+Dodatkowa weryfikacja oryginalnego pocisku (w tym samym istniejącym teście):
+256 stanów lotu z oryginalnego USA CPU/SDK/GTE, osiem kierunków, cztery
+pozycje względem krawędzi podłogi, grawitacja, odbicie z/bez iskry i oba stany
+escaped. Porównuje pełny model60B oraz znormalizowane nagłówki/stany czterech
+iskier. Hashf0e781cbc727084d. Kontroler rzutu:1024 stany CPU z bramkami klatek,
+ruchem animacji w obu kierunkach, przerwaniem, cue null/0/1/2/4 oraz utratą
+core; pełny512B canary i zmiany anim_step/cue/flags. Hash96842f7cd6e5bb01.
+Ten test wymaga również potraktowania znikniętego core jako braku cue w
+przerwanym rzucie. Oryginalne funkcje wykonano bez zastępowania callbacków;
+helper GTE jest wspólnym PsyZ, więc to nie niezależny audyt samego GTE.
+/tmp/pe-m328-homing-{flight,throw}-cpu-v1.{py,log}; pochodzenie wszystkich
+referencji: /tmp/pe-m328-cpu-reference-v1-proof.json. Nadal nie jest to pełna
+weryfikacja renderingu/cyklu każdego efektu ani zwycięstwo w M328.
+
 M328 — bieżąca integracja usuwa brak deskryptora166. Oryginalne pliki
 room_lib/ground_eruption.c, homing_projectile.c i homing_projectile_seeds.c
 wchodzą do statycznego linku w całości; poprawiono ABI callbacków,

@@ -110,7 +110,9 @@ int FieldFx_UpdateSlots(FieldFxObject *obj, FieldFxHandler *handlers) {
         if (obj->prefix.asset_type != 0x24) {
             u8 *state = obj->prefix.actor->state->action_state;
 
-            if (state[0] == 1) {
+            /* A completed animation clears its active event while the
+             * effect may still have live slots. No event means no cue. */
+            if (state && state[0] == 1) {
                 state[0] = 2;
             }
         }

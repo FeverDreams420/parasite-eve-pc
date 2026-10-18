@@ -349,7 +349,7 @@ int RoomEffect_HomingProjectileThrow(int mode,void *data,intptr_t argument) {
                 model->released = 1;
             }
         }
-        if (model->state == 0 && model->armed != 0 && *actor->state->action_state == 0) {
+        if (model->state == 0 && model->armed != 0 && (!actor->state || !actor->state->action_state || *actor->state->action_state == 0)) {
             model->released = 1;
         }
         if (model->released != 0) {
@@ -361,7 +361,7 @@ int RoomEffect_HomingProjectileThrow(int mode,void *data,intptr_t argument) {
         }
 
         cue = actor->state->action_state;
-        if (*cue == 1) {
+        if (cue && *cue == 1) {
             *cue = 2;
             model->armed = 1;
         }
@@ -385,7 +385,7 @@ int RoomEffect_HomingProjectileThrow(int mode,void *data,intptr_t argument) {
                 return 0;
             }
             cue = actor->state->action_state;
-            if (*cue == 2) {
+            if (cue && *cue == 2) {
                 *cue = 4;
             }
             return 1;

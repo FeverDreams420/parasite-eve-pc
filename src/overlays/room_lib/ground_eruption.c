@@ -168,7 +168,7 @@ int RoomEffect_GroundEruptionTick(void *object,void *slot,void *data) {
     RoomEruptionActor *state=data;RoomFxControl *signal=slot;
     FieldActor *actor=((FieldFxObjectPrefix *)object)->actor;
     if(!state->cooldown) {
-        if(state->collisionState==1 && FieldFx_GetStatus(object)==3 && *actor->state->action_state==2) {
+        if(state->collisionState==1 && FieldFx_GetStatus(object)==3 && actor->state->action_state && *actor->state->action_state==2) {
             state->collisionState=0;state->cooldown=state->reload;
             ((Combatant *)g_PlayerEntity->state)->stateFlags|=0x4000;
             actor->state->core_flags|=0x80000000u;

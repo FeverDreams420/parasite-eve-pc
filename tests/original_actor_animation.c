@@ -15976,9 +15976,118 @@ static int original_hospital_falling_states(void)
     puts("Original hospital falling burst: 288 unhooked USA CPU/BIOS/GTE initializer and update states, RNG, halfword wrap and full 512-byte guards passed");return 1;
 }
 
+static int original_hospital_homing_throw_states(void)
+{
+    FieldFxObjectPrefix *old_owner=g_FieldFxOwner;FieldActor actor={0};FieldActorState state={0};
+    FieldFxObjectPrefix owner={.actor=&actor};g_FieldFxOwner=&owner;uint64_t hash=UINT64_C(14695981039346656037);
+    const int states[]={0,1,-1},finished[]={0,1,23,24},cues[]={-1,0,1,2,4},steps[]={65536,-65536},modes[]={8,9,2},frames[]={0,22,23,27,28,30,31};
+    const u32 flags[]={0,0x1800,2,0x40000000};
+    for(unsigned variant=0;variant<1024;++variant){
+        struct {RoomHomingModel model;u8 guard[452];} data;memset(&data,0x5a,sizeof(data));memset(&data.model,0,sizeof(data.model));
+        RoomHomingModel *model=&data.model;model->state=states[variant%3];model->finished=finished[(variant/3)%4];
+        model->released=(variant>>4)&1;model->armed=(variant>>5)&1;
+        memset(&actor,0,sizeof(actor));memset(&state,0,sizeof(state));
+        int cue=cues[(variant/7)%5];u8 event=cue<0?0:cue;
+        actor.state=variant%97?&state:NULL;state.core_flags=flags[(variant/11)%4];
+        state.control10.command_value=variant%53?120:0;state.action_state=cue<0?NULL:&event;
+        actor.anim_step=steps[(variant>>1)&1];actor.mode=modes[(variant/13)%3];actor.action=32;actor.anim.parts.integer=frames[(variant/17)%7];
+        u32 result=RoomEffect_HomingProjectileThrow(1,model,0);
+        const void *parts[]={&result,&data,&actor.anim_step,&event,&state.core_flags};const unsigned bytes[]={4,512,4,1,4};
+        for(unsigned part=0;part<5;++part)for(unsigned j=0;j<bytes[part];++j)hash=(hash^((const u8 *)parts[part])[j])*UINT64_C(1099511628211);
+    }
+    g_FieldFxOwner=old_owner;
+    if(hash!=UINT64_C(0x96842f7cd6e5bb01)){fprintf(stderr,"Hospital homing throw CPU hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original hospital homing throw: 1024 USA CPU states, animation gates, interruption, absent event/core and full 512-byte guards passed");return 1;
+}
+
+static int original_hospital_homing_flight_states(void)
+{
+    FieldFxTaskContext *old_context=g_FieldFxTaskContext;FieldFxObjectPrefix *old_owner=g_FieldFxOwner;
+    FieldFxTaskSlot *old_slot=g_FieldFxActiveTaskSlot;FieldActor *old_player=g_PlayerEntity;
+    PolygonVertex *old_vertices=g_FloorPolygonVertices;u16 old_count=g_FloorPolygonVertexCount;int old_floor=g_RoomFloorY->y;
+    FieldFxTaskContext context={0};FieldActor actor={0},player={.pos_x=30000*65536,.pos_z=30000*65536};
+    FieldFxObjectPrefix owner={.actor=&actor};FieldFxTaskSlot slot={0};
+    PolygonVertex vertices[]={{0,-1000,0,-1000},{0,1000,0,-1000},{0,1000,0,1000},{0,-1000,0,1000}};
+    g_FieldFxTaskContext=&context;g_FieldFxOwner=&owner;g_FieldFxActiveTaskSlot=&slot;
+    g_PlayerEntity=&player;g_FloorPolygonVertices=vertices;g_FloorPolygonVertexCount=4;g_RoomFloorY->y=0;
+    const int coordinates[][2]={{0,0},{999,999},{-1200,0},{0,-1200}},lifts[]={0,100,-100,-16};
+    uint64_t hash=UINT64_C(14695981039346656037);
+    for(int angle=0;angle<4096;angle+=512)for(unsigned point=0;point<4;++point)for(unsigned mode=0;mode<4;++mode)for(unsigned escaped=0;escaped<2;++escaped){
+        RoomHomingModel model={0};_Alignas(void *) char pool[1024];memset(pool,0x5a,sizeof(pool));slot.end=pool;
+        model.position[0].word=coordinates[point][0]*65536;
+        model.position[1].word=(mode==1?-1000:0)*65536;
+        model.position[2].word=coordinates[point][1]*65536;
+        model.speed=0x100000;model.scriptArg0=71;model.scriptArg1=93;model.drag=100;
+        model.lift=lifts[mode]*65536;model.gravity=mode?0x60000:0;model.soundHandle=-1;
+        model.angle=angle;model.state=1;model.matrixIndex=9;model.escaped=escaped;model.bounce=10;model.damping=8;
+        RoomHomingModel *address=&model;memcpy(&context.variables[1],&address,sizeof(address));
+        if(FieldFx_InitCallbackList(pool,8,4,RoomEffect_HomingProjectileSpark)<0)return 0;
+        u32 result=RoomEffect_HomingProjectile(1,NULL,0);if(result)return 0;
+        const void *parts[]={&result,&model};const unsigned lengths[]={4,60};
+        for(unsigned part=0;part<2;++part)for(unsigned j=0;j<lengths[part];++j)hash=(hash^((const u8 *)parts[part])[j])*UINT64_C(1099511628211);
+        FieldFxCallbackList *list=(void *)pool;
+        for(unsigned i=0;i<4;++i){
+            FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);
+            const void *fields[]={entry,entry->state};const unsigned bytes[]={4,8};
+            for(unsigned part=0;part<2;++part)for(unsigned j=0;j<bytes[part];++j)hash=(hash^((const u8 *)fields[part])[j])*UINT64_C(1099511628211);
+        }
+    }
+    g_FieldFxTaskContext=old_context;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_slot;g_PlayerEntity=old_player;
+    g_FloorPolygonVertices=old_vertices;g_FloorPolygonVertexCount=old_count;g_RoomFloorY->y=old_floor;
+    if(hash!=UINT64_C(0xf0e781cbc727084d)){fprintf(stderr,"Hospital homing CPU hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original hospital homing flight: 256 USA CPU/SDK/GTE states, floor edges, reflection, drag, bounce and spark payloads passed");return 1;
+}
+
+static int original_hospital_eruption_states(void)
+{
+    FieldFxState *old_script=g_FieldFxScriptState;int old_floor=g_RoomFloorY->y;u32 old_rng=Psyz_RandState();
+    FieldFxState script={0};RoomEruptionActor actor={0};actor.matrix.t[0]=100;actor.matrix.t[1]=-100;actor.matrix.t[2]=200;
+    script.current_context=&actor;g_FieldFxScriptState=&script;g_RoomFloorY->y=0;
+    FieldFxHandler callbacks[]={g_RoomEruptionInitList[2],g_RoomEruptionInitList[3],g_RoomEruptionInitList[4],
+        g_RoomEruptionUpdateList[2],g_RoomEruptionUpdateList[3],g_RoomEruptionUpdateList[5]};
+    const u8 fills[]={0,1,0xa5,0xff};uint64_t hash=UINT64_C(14695981039346656037);
+    for(unsigned callback=0;callback<6;++callback)for(unsigned fill=0;fill<4;++fill)for(unsigned variant=0;variant<12;++variant){
+        _Alignas(void *) u8 data[512];u8 control[]={37,0xa5,variant*7,0};
+        memset(data,fills[fill],sizeof(data));srand(variant*0x1234567u);
+        if(callback==4){
+            RoomEruptionRing *ring=(void *)data;ring->radius=1024;ring->depth=128;ring->frame=variant*7;
+            ring->phase=variant*19;ring->speed=800;ring->acceleration=-60;
+        }
+        if(callback==5)for(unsigned i=0;i<6;++i){
+            RoomEruptionDebrisState *debris=(void *)data;
+            debris->position[i]=(GteShortVector){100+i,-100+(int)i,200+i,0x1234};
+            debris->velocity[i]=(GteShortVector){30,-80+(int)variant*20,40,0x2345};
+            debris->gravityStep[i]=(int)variant*50-300;debris->visible[i]=i%2?1:0;
+        }
+        callbacks[callback](NULL,control,data);u32 random=Psyz_RandState();
+        const void *parts[]={data,control,&random};const unsigned lengths[]={512,4,4};
+        for(unsigned part=0;part<3;++part)for(unsigned j=0;j<lengths[part];++j)hash=(hash^((const u8 *)parts[part])[j])*UINT64_C(1099511628211);
+    }
+    g_FieldFxScriptState=old_script;g_RoomFloorY->y=old_floor;srand(old_rng);
+    if(hash!=UINT64_C(0xba517b063e65beed)){fprintf(stderr,"Hospital eruption CPU hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original hospital eruption: 288 unhooked USA CPU/BIOS/GTE leaf states and full 512-byte guards passed");return 1;
+}
+
 int main(int argc, char **argv)
 {
     if(argc==2 && !strcmp(argv[1],"--hospital-eruption")){
+        if(!original_hospital_eruption_states() || !original_hospital_homing_flight_states() || !original_hospital_homing_throw_states())return 1;
+        /* An animation may finish before its effect's final slot. No active
+         * event must leave cues untouched and let those slots finish. */
+        FieldFxObject lingering={0};FieldActor lingering_actor={0};FieldActorState lingering_state={0};
+        lingering.prefix.actor=&lingering_actor;lingering_actor.state=&lingering_state;
+        lingering_state.control10.command_value=120;lingering.prefix.asset_type=37;
+        lingering.state.slot_count=1;FieldFxHandler empty_handlers[]={NULL};
+        if(FieldFx_UpdateSlots(&lingering,empty_handlers))return 1;
+        RoomEruptionActor eruption={.collisionState=1};u8 signal[4]={1,0,0,0};
+        if(g_RoomEruptionUpdateList[0](&lingering,signal,&eruption) || eruption.cooldown || lingering_state.core_flags || signal[1])return 1;
+        FieldFxObjectPrefix lingering_owner={.actor=&lingering_actor};FieldFxTaskContext lingering_context={0};
+        g_FieldFxOwner=&lingering_owner;g_FieldFxTaskContext=&lingering_context;
+        RoomHomingModel interrupted={.armed=1};
+        if(RoomEffect_HomingProjectileThrow(1,&interrupted,0)!=1 || interrupted.state!=-1 || !interrupted.released)return 1;
+        lingering_actor.state=NULL;interrupted=(RoomHomingModel){.armed=1};
+        if(RoomEffect_HomingProjectileThrow(1,&interrupted,0)!=1 || interrupted.state!=-1 || !interrupted.released)return 1;
+        g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxScriptState=NULL;
         /* Exercise the native callback ABI, full pointer storage and guards. */
         FieldFxTaskContext context={0};FieldFxObjectPrefix owner={0};
         FieldActor actor={0};FieldActorState state={0};RoomHomingModel model={0};

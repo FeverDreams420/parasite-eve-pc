@@ -33,6 +33,19 @@ Dodatkowa próba głowy4 jako pierwszej kończy się Aya0HP przy62231,
 head4:288, pozostałe głowy pełne. /tmp/pe-m123-head4-first-v1-observation.json
 jest tylko obserwacją normal, bez pary SAN; nie jest zwycięstwem.
 
+Próba podejścia za bossa po kontroli kierunków: do64329 Aya195HP,
+głowa4:288, głowy2/3:300/200; dwukrotne oryginalne Heal2 oraz Medicine3
+wybrane normalnym inputem. Nie pokonano żadnej głowy; ta strategia nie
+uniknęła kolejnych trafień44HP. Programu PM tych trafień nie obserwowano,
+więc nie przypisujemy ich konkretnemu atakowi na podstawie samych obrażeń.
+Cold replay normal15.75s i ASan/UBSan/function46.46s: terminalneexit0,
+pełne JSON/1MiB VRAM identyczne z live i między profilami, A2 niezmienione,
+prywatnebu10 puste. /tmp/pe-m123-input-basis-v1-campaign-proof.json,
+pełny ślad /tmp/pe-m123-input-basis-v1-full-args.json. SAN obejmuje
+oryginalne źródła gry; archiwa PsyZ/SDL pozostają nieinstrumentowane.
+Procesy LLDB i oba replaye zakończone; nie utworzono save'a/savestate
+ani nie zmieniono HP/PE/RNG w pamięci. Pełny cel nadal otwarty.
+
 Najnowsza integracja: cały istniejący moduł M350 — m350.c,
 m350_callbacks.c i RoomEffect_ConfiguredPulseCallback.c — jest kompilowany
 w miejscu i podpięty do Scene_LoadRoom. Wszystkie62 oryginalne funkcje

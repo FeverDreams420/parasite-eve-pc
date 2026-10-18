@@ -67,7 +67,13 @@ pairs agree in full state and VRAM; all inventory and equipment changes are
 accounted for. Two attempts at M122 from this depleted branch end in Game Over,
 including a retry with the test driver's previously unreachable dodge route
 enabled. Neither attempt counts as a victory; the full-HP M117 replay remains
-available for the next campaign attempt.
+available. A subsequent direct route from M117 now wins M122: Energy Shot
+first defeats the 78-HP target, then M16 volleys finish the other opponent.
+The full-inventory reward screen exchanges a Tool for Medicine 2; real items
+and Heal 1 restore full HP before M124/M044 and the M123 boss introduction.
+Full normal/sanitized replays and six checkpoint pairs agree on state and VRAM,
+with A2 unchanged. M123 remains unwon; its introduction is the current replay
+endpoint, with HP 189/189.
 
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and

@@ -2,6 +2,66 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Bieżący zwykły łańcuch A2 ma teraz potwierdzoną wygraną M122 i dojście
+do intro bossa M123 z pełnym HP. Od M117/41618 reload M16 do16,
+M117→M121→[800,500],[800,-400],[700,-2600] prowadzi bezpośrednio do M122.
+Przy43440 HP189/189, PE141,8799, bez zmiany RNG/flag/kolizji lub parametrów.
+
+Udana taktyka używa pierwszego Energy Shot6 na typ3/78HP/def18,
+wybranego przez Right w prawdziwym celowniku (lista0=typ5,1=typ3).
+Przy44352 typ3 pokonany (odczyt debuggera−18HP), Aya189, live1.
+Dwa pełne ostrzały M16 pokonują pozostały typ5/98HP/def20:98→40→−18.
+Przy45424 M122/0xa8022148, battle2/live0, EXP20, HP30/189.
+Nie użyto Revive, nie dodano Heat ani obrażeń spoza oryginalnych funkcji.
+
+Pełny ekwipunek ma21/21, więc Medicine2/7 odbiera się przez Obtain Item,
+wybór nagrody1, Right i oryginalną zamianę ze slotem17/Tool. Przy46408
+menu14 i17=7. ObtainAll odbiera pozostałą amunicję, End pomija zamieniony
+Tool; trzy Tools8/19/20 pozostają. Medicine2 leczy30→120 i zwalnia17,
+zachowane Medicine1 ze12 leczy120→165, następnie Heal1 leczy165→189.
+Przy47972 pełne HP, menuNULL/lock0. To rzeczywiste użycie przedmiotów i PE,
+bez zapisu HP, energii, slotów, bonusów, RNG lub fabuły debuggerem.
+
+Wyjście M122 około[375,-600] prowadzi do M124 przy48556; dalej[-900,0]
+wybiera scenkę M044/dialog95 przy49300, potem96 oraz M123/97–99.
+Końcowy cap50404: M123/0xa80221c8, etap400, HP189/189, menuNULL,
+lock1/battle7, dialog99 zamknięty. Nadal trwa oryginalne intro, nie ogłoszono
+walki ani zwycięstwa nad bossem. Odczyty zasobów: M16clip11/shared pool172,
+PE54,79097. Wszystkie50 slotów względem M117 zachowane poza12/Medicine1→0
+i17/Tool→0; wszystkie4096B wyposażenia poza loaded ammo8→11/offset138.
+Dwa wolne miejsca12/17, broń10/zbroja14/capacity21 zachowane. Nie ma nowego
+telefonu Save; oryginalny A2 i pełny trace odtwarzają ten punkt.
+
+/tmp/pe-nypd-m122-energy-v3-{args.json,input.jsonl,run.py,verify.py,proof.json}:
+normal10,79s/SAN29,74s exit0, pełny końcowy JSON i1MiB VRAM zgodny z live;
+VRAM SHA256e2dbc51de84179e42f4b9527c96f4c74bd5ed6ec33f1feaccc755e9d20e13524.
+SHA obu gier ponownie zgodny z frozen /tmp/pe-audio-queue-v3-build-manifest.json.
+Sześć par checkpointów PASS12/12: Energy Shot/typ3, zwycięstwo M122,
+zamiana Medicine2 przy pełnym inventory, użyty Medicine2, pełne HP i M124.
+Każda para ma zgodny cały JSON/VRAM, A2 zachowany8192B, bu10 puste;
+artefakty-checkpoints.py,-checkpoints-results.json,-checkpoints-proof.json.
+Nie ma sanitizer/Unbound diagnostics. Obraz intro M123 obejrzany.
+Nie dodano plików repo ani zmian produkcyjnych. Stały CTest tej trasy,
+niezależny PS1 oracle odcinka, M123 i dalsza kampania pozostają niewykonane.
+Proces68372 zakończony exit0; następna sesja może odtworzyć pełny
+normal-args do50404 na frozen v3, prywatnym A2 i kontynuować intro przyciskami.
+
+Dwie wcześniejsze próby tego samego odcinka są negatywnymi dowodami,
+nie zwycięstwami. /tmp/pe-nypd-m117-direct-v1-{run.py,verify.py,proof.json}:
+z pełnego HP, ostrzał/Barrier/Medicine1 prowadzą do śmierci przy46180,
+title47180; normal9,84s/SAN27,50s exit0, pełny JSON/VRAM zgodny z live.
+/tmp/pe-nypd-m122-energy-v2-{run.py,verify.py,proof.json}: pierwszy Energy Shot
+na typ5 zostawia4HP, potem seria z prawdziwą zmianą celu zabija5 i uszkadza3,
+ale Aya ginie przed następną turą; title46552. Normal9,87s/SAN27,15s exit0,
+pełny JSON/VRAM zgodny z live. Oba zachowują A2/bu10 i nie mają raportów
+sanitizerów/opcode. Nie kontynuować zakończonych procesów68210/68311.
+Nowy helper serii mieszanej istniał tylko w RAM testera i generował zwykłe
+przyciski celownika; nie zmieniał listy celów, HP ani kolejki ataków gry.
+Zużycie magazynka w opisach prób obejmuje całą sekwencję z PE; sam ten
+odczyt nie rozdziela osobno nabojów związanych z Energy Shot i zwykłym
+ostrzałem, więc nie wyprowadzamy z niego liczby zwykłych strzałów.
+
+
 Zwykła kontynuacja od M117 potwierdza teraz opcjonalną wygraną M118 oraz
 prawdziwą nagrodę SG550 w bieżącym łańcuchu A2. Reload M16 do16, wyjście
 M117→M121; drzwi M121 około[3100,450] prowadzą do M118, nie M122.

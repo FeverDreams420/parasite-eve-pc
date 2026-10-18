@@ -7025,6 +7025,48 @@ static int original_m123_programs(SceneAssetView *room)
     return valid;
 }
 
+static int original_m123_ai(SceneAssetView *room,size_t bytes)
+{
+    const unsigned offset=228736,length=19076;
+    if(bytes<offset+length || m349_hash_bytes(UINT64_C(14695981039346656037),(u8 *)room+offset,length)!=UINT64_C(0xe57fffe71a31afec))return 0;
+    u8 *script=malloc(length);if(!script)return 0;memcpy(script,(u8 *)room+offset,length);
+    /* Observe the chosen attack boundary, without executing the attack. Only
+     * these post-decision entry points become the existing FREE-node opcode;
+     * all decision bytes, dispatcher and opcode handlers remain unchanged. */
+    const unsigned targets[]={10808,11624,12000};const u32 stop[]={32,0};
+    for(unsigned i=0;i<3;++i)memcpy(script+targets[i],stop,sizeof(stop));
+    FieldActor *old_current=g_CurrentEntity,*old_player=g_PlayerEntity,*old_head=g_FieldActorListHead;
+    ScriptNode *old_node=g_ScriptNodePool;ScriptCursorValue old_cursor=g_ScriptCursorValue;
+    extern int *g_DrawGpuReg2;int *old_rng_tail=g_DrawGpuReg2;u32 old_frame_rng[33];memcpy(old_frame_rng,g_DrawPrimGeneratorWords,sizeof(old_frame_rng));
+    u32 old_flags=g_GameStateFlags,old_operands[16];int old_active[64];
+    memcpy(old_operands,g_ScriptOperandTable,sizeof(old_operands));memcpy(old_active,g_ScriptNodeActiveFlags,sizeof(old_active));
+    FieldActor actor={.type_id=1,.script_base=script},player={0};Combatant core={0};ScriptNode node={0};
+    player.state=(void *)&core;actor.next=&player;g_CurrentEntity=&actor;g_PlayerEntity=&player;g_FieldActorListHead=&actor;g_GameStateFlags=2;
+    const unsigned hps[]={1,25,26,76,94,95,97,98,100,189,195},maxima[]={189,195},atbs[]={0,4499,4500,4501,8999,9000};
+    u64 hash=UINT64_C(14695981039346656037);unsigned cases=0,seen=0;int ok=1;
+    for(unsigned test=0;ok && test<296;++test){
+        unsigned entry,draws,hp,maximum,barrier,atb;
+        if(test<32){entry=6984;draws=test;hp=1;maximum=195;barrier=1;atb=9000;}
+        else {unsigned n=test-32;entry=9392;draws=0;atb=atbs[n%6];n/=6;barrier=n%2;n/=2;maximum=maxima[n%2];n/=2;hp=hps[n];}
+        memset(actor.pad_0AC,0,sizeof(actor.pad_0AC));memset(g_ScriptOperandTable,0,sizeof(old_operands));memset(g_ScriptNodeActiveFlags,0,sizeof(old_active));
+        g_ScriptNodeActiveFlags[21]=g_ScriptNodeActiveFlags[22]=1;
+        core.curHP=hp;core.maxHP=maximum;core.hpAlive=atb;core.stateFlags=barrier?0x200:0;
+        node=(ScriptNode){.current.script=(u32 *)(script+entry),.active=1};g_ScriptNodePool=&node;Draw_InitGpuHwRegs();for(unsigned draw=0;draw<draws;++draw)Draw_FlushPrimQueue();
+        Script_RunQueue();
+        uintptr_t destination=(uintptr_t)node.current.script-(uintptr_t)script-8;
+        if(!(node.flags&0x10) || (entry==6984?(destination!=10808 && destination!=12000):destination!=(barrier || (2*hp>maximum && 2*atb>9000)?11624:12000)) ||
+           core.curHP!=hp || core.maxHP!=maximum || core.hpAlive!=atb || core.stateFlags!=(barrier?0x200u:0u)){
+            fprintf(stderr,"M123 AI case%u entry%u hp%u/%u barrier%u atb%u target%llu\n",test,entry,hp,maximum,barrier,atb,(unsigned long long)destination);ok=0;break;}
+        if(entry==6984)seen|=destination==10808?1:2;
+        u32 record[]={entry,draws,hp,maximum,barrier,atb,(u32)destination};hash=m349_hash_bytes(hash,record,sizeof(record));hash=m349_hash_bytes(hash,g_DrawPrimGeneratorWords,sizeof(old_frame_rng));++cases;
+    }
+    if(cases!=296 || seen!=3 || hash!=UINT64_C(0xbae565e87815a8ca)){fprintf(stderr,"M123 AI CPU mismatch %u/%016llx seen%u\n",cases,(unsigned long long)hash,seen);ok=0;}
+    g_CurrentEntity=old_current;g_PlayerEntity=old_player;g_FieldActorListHead=old_head;g_ScriptNodePool=old_node;g_ScriptCursorValue=old_cursor;g_GameStateFlags=old_flags;
+    memcpy(g_ScriptOperandTable,old_operands,sizeof(old_operands));memcpy(g_ScriptNodeActiveFlags,old_active,sizeof(old_active));memcpy(g_DrawPrimGeneratorWords,old_frame_rng,sizeof(old_frame_rng));g_DrawGpuReg2=old_rng_tail;free(script);
+    if(ok)puts("Original M123 AI: 296 retail CPU decisions match through native dispatcher and unchanged handlers; last head3 chooses charge/beam, reactive tail uses Barrier or HP above half plus AT above half, post-decision sentinels only");
+    return ok;
+}
+
 static int original_m123_assets(PeDisc *disc,PeDiscFile *exe)
 {
     PeDiscFile archive;SceneRoomSectorRange ranges[2];SceneAssetView *rooms[2]={NULL,NULL};
@@ -7090,7 +7132,7 @@ static int original_m123_assets(PeDisc *disc,PeDiscFile *exe)
         if((int *)address!=&g_RoomScriptArg || *(int *)address!=(s32)values[i])goto done;
     }
     g_RoomM123SelectedColorTrack=selected;g_RoomScriptArg=old_arg;
-    if(!original_m123_programs(rooms[0]))goto done;
+    if(!original_m123_ai(rooms[0],(size_t)ranges[0].roomSectors*2048) || !original_m123_programs(rooms[0]))goto done;
     printf("Original M123 assets: four descriptors, complete class C with 26 relocations, %u original data bytes, three typed programs and native selector/argument round trips passed\n",bytes);ok=1;
 done:
     for(unsigned i=0;i<2;++i)free(rooms[i]);return ok;
@@ -15201,6 +15243,15 @@ static int original_attack_effect_status_gate(void)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--m123-ai")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;
+        if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive) ||
+           !pe_disc_read(&disc,&exe,0x800ull+0x80093378u-0x80010000u+122*8,&range,8))return 1;
+        size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);
+        int ok=room && pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes) && original_m123_ai(room,bytes);
+        free(room);pe_disc_close(&disc);return ok?0:1;
+    }
     if(argc==2 && !strcmp(argv[1],"--m350")){
         if(!original_m350_states())return 1;
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

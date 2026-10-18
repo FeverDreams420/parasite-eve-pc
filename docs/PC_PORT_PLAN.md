@@ -71,6 +71,59 @@ PsyZ/SDL nadal pochodzą z istniejących nieinstrumentowanych archiwów.
 Testy izolowanego M350 nie dowodzą przejścia walki na krążowniku ani
 zgodności pikseli i PCM z PS1. Pełna kampania i cały port pozostają otwarte.
 
+Nowy test oryginalnych decyzji M123: --m123-ai oraz
+original-game-m123-ai w istniejącym tests/original_actor_animation.c/CMake.
+Skrypt rodzica19076B jest czytany z rzeczywistego CUE (M123 offset228736),
+FNV64 e57fffe71a31afec, SHA256
+8f8aec5310acb3ca59f54e4d1976fb7a83e38cd4f22c24ad19f9b9dbb8415645.
+/tmp/pe-m123-ai-disc-proof-v1.json wiąże go z całym299008B M123 i z
+oryginalnym SLUS2025472B używanym przez oracle, oba identyczne z CUE.
+
+/tmp/pe-m123-ai-cpu-v3-proof.json wykonuje niezmodyfikowany oryginalny
+Script_RunQueue i jego rzeczywiste handlery w MIPS. Obserwacyjny breakpoint
+zatrzymuje CPU dopiero przed wybranym skokiem; nie zastępuje helperów.
+32 przypadki gałęzi6984, przy flagach śmierci20=0/21=1/22=1 (pozostała
+głowa3), wybierają tylko wejścia10808/szarża i12000/JointBeacon.
+Gałąź ta nie odczytuje stanu Barrier ani HP/AT Ayi i nie wybiera11624/PulseRing.
+To uzasadnia sprawdzenie kolejności celów pozostawiającej3 na końcu,
+ale nie dowodzi jeszcze zwycięstwa ani wszystkich przejść AI.
+
+264 przypadki reaktywnego ogona9392..9704 obejmują dwa maksymalne HP,
+11 wartości HP i granice4500/4501 paska AT, z Barrier i bez niej.
+Ogon wybiera PulseRing, gdy Barrier jest aktywna albo
+**2*HP > maxHP oraz2*AT >9000**; w pozostałych przypadkach wybiera wiązkę.
+Wstępna interpretacja warunku HP podczas analizy była odwrócona;
+oryginalny MIPS i natywny interpreter potwierdzają zdrowie **powyżej** połowy.
+Dotyczy to tego ogona, a nie każdej gałęzi całego skryptu rodzica.
+Sam mode9/power110 z obserwacji obrażeń nie identyfikuje jeszcze programu
+PM; nie przypisujemy wcześniejszych śmierci PulseRing bez odczytu programu.
+
+Łączny hash296 decyzji i pełnych33 słów stanu generatora skryptów:
+bae565e87815a8ca. Generator skryptów jest osobny od BIOS rand. W pierwszym
+fixture brakowało jego izolacji; samotny test przechodził, a --assets wykrywał
+zależność od wcześniejszych testów. Poprawiony fixture używa oryginalnego
+Draw_InitGpuHwRegs i0..31 poprzedzających losowań, zachowuje/przywraca
+całe33 słowa i wskaźnik kursora. Nie są to32 różne ziarna BIOS rand.
+
+Natywny test wykonuje ten sam kod decyzji i wszystkie istniejące handlery,
+łącznie z rzeczywistym skokiem, bez podmiany tablicy opcode. Wyłącznie
+w prywatnej kopii skryptu dla fixture pierwsze8B trzech docelowych wejść
+ataku zastępuje istniejący opcode FREE-node. Pozwala to odczytać wybraną
+granicę i zatrzymać test przed uruchomieniem ataku; nie zmienia bajtów
+badanych decyzji ani danych używanych przez grę. Jest to test decyzji,
+nie test wykonania tych ataków ani przejścia kampanii. HP/AT/Barrier/RNG
+ustawia się tylko w lokalnie skonstruowanym fixture; sesje gameplayu nadal
+używają zwykłych wejść i autentycznych kart bez takich zapisów RAM.
+
+Zamrożony test /tmp/pe-m123-ai-v2:177+177 świeżych obiektów, gry i fixture
+normal/SAN. -proof.json potwierdza4 terminalne exit0 (--m123-ai i --assets
+w obu profilach, z wymaganym CUE). -final-proof.json rehashuje354 obiekty,
+wszystkie zależności, biblioteki i4 executable. Lokalny build gry ma nadal
+identyczny SHA256 bc418a318b1f8525d587643fa7c2c02e22bc91686cd3508cfc8de4e3c6bc62c6;
+wcześniejszy replay lokalnego pliku nadal dotyczy dokładnie tych samych bajtów.
+Zmiany obejmują tylko istniejący test, CMake i dokumentację. PsyZ/SDL pozostają
+nieinstrumentowanymi archiwami. M123 i cały cel portu nie są ukończone.
+
 Dalszy test kampanii, bez zmian kodu produkcyjnego: wcześniejszy ostrzał
 najsłabszej głowy M123, zwykłe Medicine3 i Energy Shot wybrane przyciskami
 menu dały nowy checkpoint63407: typ3 pokonany, Aya131/195HP, PEraw0,

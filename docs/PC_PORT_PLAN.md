@@ -46,6 +46,40 @@ oryginalne źródła gry; archiwa PsyZ/SDL pozostają nieinstrumentowane.
 Procesy LLDB i oba replaye zakończone; nie utworzono save'a/savestate
 ani nie zmieniono HP/PE/RNG w pamięci. Pełny cel nadal otwarty.
 
+Audyt przewidywania wiązki M123: czysto odczytowy callback przy68207
+porównał macierze0/23, przewidywany początek/koniec i rzeczywisty payload
+RoomM123Beacon po obliczeniu celu. Oba wektory są identyczne we wszystkich
+trzech osiach: początek[158,-387,-1091], koniec[1618,-387,-2457].
+/tmp/pe-m123-beam-projection-audit-v1-proof.json wiąże executable SHA
+5c164869c267f8240aa5d3515b2be0e6b836de5c45bb7ba237e74b972481cf2f,
+pełne JSON/VRAM zgodne z poprzednim zweryfikowanym replayem68459
+oraz niezmienioną źródłowąA2. To jeden konkretny stan, nie dowód trafności
+prognozy przyszłego obrotu. Nie zmieniano kodu gry ani gameplay RAM.
+
+Osiem cold replayów zwykłych kierunków biegu od67791 do68245 kończy się
+HP14,14,14,0,14,14,56,0 (maski8208,8224,8256,8320,8240,8288,8336,8384).
+Wszystkieexit0, prywatne karty niezmienione; normal-only zestaw
+/tmp/pe-m123-post-beam-search-v1-proof.json. Wariant8336 ma też świeży
+ASan/UBSan/function exit0/53.16s, całe JSON/1MiB VRAM identyczne z normal;
+/tmp/pe-m123-post-beam-search-v1-8336-san-proof.json. Nie jest to jeszcze
+udany unik: odczyt PM w68245 wykazał fazę0/timer1, armed1, dystans525.98.
+Następny strzał był przedwczesny i przy68297 Aya ma0HP, głowa4 nadal344,
+bez zużycia naboju. /tmp/pe-m123-post-beam-safe-v1-observation.json jest
+normal-only i jawnie opisuje porażkę. Osobna próba kontrolera do69047
+również kończy się śmiercią, bez kolejnego trafienia głowy4; jej obserwacja
+/tmp/pe-m123-post-beam-v1-observation.json nie jest parą SAN ani zwycięstwem.
+Drugi zestaw8 kierunków od68245 do68400 kończy się samymi porażkami
+(0HP): /tmp/pe-m123-post-beam-search-v2-proof.json. Trzeci zestaw zmienia
+kierunek wcześniej, przy68050: końcowe HP0,4,0,0,4,4,0,0 przy68400,
+/tmp/pe-m123-post-beam-search-v3-proof.json. Wszystkie24 przebiegi normal
+mają terminalneexit0 i niezmienione prywatne karty; samoexit0 oznacza
+osiągnięcie limitu diagnostycznego, nie zwycięstwo. Te dwa dodatkowe
+zestawy nie mają pary SAN. Zestawv1 i odczyt PM pokazały, że wynik HP56
+był jedynie stanem przed właściwym sweepem; nie uznajemy go za unik.
+Następna strategia wymaga sprawdzenia ruchu blisko źródła wiązki,
+zamiast kolejnych stałych kierunków do krawędzi areny. Nie zmieniano
+obrażeń, czasu ataku, geometrii ani oryginalnego skryptu bossa.
+
 Najnowsza integracja: cały istniejący moduł M350 — m350.c,
 m350_callbacks.c i RoomEffect_ConfiguredPulseCallback.c — jest kompilowany
 w miejscu i podpięty do Scene_LoadRoom. Wszystkie62 oryginalne funkcje

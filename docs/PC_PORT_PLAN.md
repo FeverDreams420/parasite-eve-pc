@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dzień4 — wyjście z NYPD i przyjazd pod Museum, bez zmian produkcyjnych.
+Poprzedni odcinek goal zakończył świeży test pierwszej Melissy na aktualnym
+build/parasite-eve-pc: exit0/input14/FNVfd7ae4cac94eda93, log
+/tmp/pe-melissa-current-report-final.log. To regresja, nie nowa naprawa.
+
+M103 jest holem z recepcją NYPD, nie salą konferencyjną; wcześniejsza
+interpretacja obrazu była błędna. Read-only obserwator
+/tmp/pe-day4-m103-observe-v2.{json,log} odczytał skrypty i67 trójkątów
+podłogi, zachowane osobno /tmp/pe-day4-m103-floor-a80201c8.json.
+Globalny aktor4 przy220 sprawdza prostokąt x[-267,285],z[-1140,-996].
+Z potwierdzonego38258/M103 zwykły Down4, Down92, DownRight60,
+Right45, Down30, neutral500 prowadzi przy38989 do a8000048:
+oryginalna mapa Nowego Jorku. HP210/story440, bez zmian ekwipunku.
+To ustala właściwe wyjście i koryguje wcześniejszą niepewność sceny a8000048.
+
+Pięć Right4/release120 obchodzi dostępne opcje i wraca do NYPD;
+dwa kolejne wybierają Museum. Cross20/release1500 pokazuje zbliżenie
+American Museum of Natural History, drugie Cross20/release1500 kończy
+przy42897 w M191/a80290c8, przed muzeum, HP210/story440/lock2.
+Pełne cold replaye obu checkpointów od autentycznego B: cztery exit0,
+normal8,26/11,38s, ASan/UBSan/function25,29/35,82s. Pełny JSON identyczny
+z żywą sesją i między profilami, cały1MiB VRAM zgodny w każdej parze;
+źródłowe/prywatne8192B B niezmienione, bu10 puste. Dowody i pełne argumenty:
+/tmp/pe-day4-{worldmap,museum}-v1-{proof.json,full-args.json}.
+Runner /tmp/pe-day4-map-museum-pair-v1.py, log -pair-v1.log.
+Obejrzano mapę, zbliżenie Museum i końcowy obraz przed schodami.
+Nie jest to porównanie pikseli/PCM z PS1; SDK pozostaje nieinstrumentowane.
+
+Dalsze normal-only próby dojścia zachowano w
+/tmp/pe-day4-museum-live-v1/{args.json,input.jsonl,game.log,state.json}.
+Pierwszy błędny kierunek względem kamery wraca na mapę; zwykłe dwa Cross
+ponownie wracają do M191. Dalszy ruch dochodzi pod zamknięte drzwi
+około(2750,-744,4861), bez przejścia do wnętrza przy50073. Nie ustalono
+jeszcze przyczyny/warunku wejścia; nie zmieniano kamery, kolizji ani flag.
+Nie należy zaliczać tej próby jako przejścia muzeum. Klienci lobby-v1,
+armory-v3 i museum-v1 zakończeni quit/exit0, źródłowe karty bez zmian.
+Wcześniejszy armory-v2 został jawnie przerwany SIGTERM po potwierdzeniu
+PID86383/86385: utracono uchwyt terminala, nie wystąpił błąd gry.
+Obiekt aktora4 w M048 przy(-530,999) otwiera Drop an item here?;
+hipoteza źródła Storage Key214 nie potwierdziła się. Przedmiotów nie usuwano.
+Pełna kampania i audyt całego zakresu pozostają niezakończone.
+
+
 Dzień4 — M107 i menu warsztatu, nadal oryginalny kod/bez zmian produkcji.
 Z potwierdzonego35036/M100 bieg do(-880,-2200) prowadzi do M107/a80203c8
 przy35802. HP210/story440/lock2, bez walki. Cold normal7,46s/SAN22,54s
@@ -63,7 +106,7 @@ Dzień4 — kolejne potwierdzone pomieszczenia, nie ukończenie komisariatu.
 Z M104 zwykły bieg do(-1090,0) i dokończenie przejścia wracają przy36992
 do M100, HP210/210/story440. Następnie hol do(485,-2300) prowadzi do
 M103/a80201c8 przy38258. Obejrzany
-/tmp/pe-day4-m103-entry-pair-v1-normal.png przedstawia salę konferencyjną.
+/tmp/pe-day4-m103-entry-pair-v1-normal.png przedstawia hol z recepcją NYPD.
 Cały cold replay od B, wraz z wcześniejszym wejściem i powrotem M104,
 normal7,89s/SAN23,85s exit0; całe JSON identyczne z interaktywną trasą
 i między profilami, pełny1MiB VRAM identyczny, B źródłowe/prywatne

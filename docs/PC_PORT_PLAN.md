@@ -2,6 +2,63 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dzień4 — M107 i menu warsztatu, nadal oryginalny kod/bez zmian produkcji.
+Z potwierdzonego35036/M100 bieg do(-880,-2200) prowadzi do M107/a80203c8
+przy35802. HP210/story440/lock2, bez walki. Cold normal7,46s/SAN22,54s
+exit0, całe JSON zgodne z interaktywną trasą i między profilami, cały VRAM
+zgodny, B źródłowe/prywatne niezmienione, bu10 puste:
+/tmp/pe-day4-m107-entry-pair-v1-{proof.json,full-args.json}.
+
+Nieudane gałęzie testera zachowane, nie są błędami/obejściami kolizji gry:
+M106-v1 dochodzi do(-180,230), ale nie ma właściwego kierunku/interakcji.
+V2 zwraca Ayę w+Z i potwierdza: dialog157, nadalM107, story440/HP210.
+M108-v1 błędnie przypisuje wejście do(980,-1300); staje na x404 przed
+niedostępnym obszarem. Read-only /tmp/pe-day4-m107-observe-v1.log
+zakończony0 odczytuje aktualne31 trójkątów/33 wierzchołki, identyczne
+z wcześniejszą podłogą. Oryginalny skrypt aktora1 przy1008–1044 wykonuje
+opcode128 dla24/29/0/1, ustawiając kind0x80. Nie usuwano tych flag.
+Mapę zachowano osobno /tmp/pe-day4-m107-floor-a80203c8.json, wcześniejszego
+pliku nie nadpisano. Planner powinien odrzucać kind0x80; pierwsza próba
+ich nie uwzględniała. Próba rozmowy w gabinecie office-talk-v2 kończy
+dialog133, HP210/story440 i niezmieniony ekwipunek; normal-only.
+
+Pełna gałąź M107 player script przy2180 porównuje event0, a przy2492
+story>=432 wybiera M048/a8004448 zamiast bezpośredniego M108. Właściwy
+trigger to x[-510,-360],z[-3792,-3645], yaw(0x200,0x600), event0.
+Bieg przez(-142,-3137),(-167,-3417),(-430,-3700), zwrot w lewo2 i neutral500
+dochodzi36926 do M048, HP210/story440/lock2. Cold normal7,67s/SAN23,17s
+exit0, całe JSON zgodne live/między profilami, pełny VRAM zgodny, B bez zmian:
+/tmp/pe-day4-armory-entry-pair-v1-{proof.json,full-args.json}.
+Nie wolno przypisywać kolejnych Scene_EncodeBarcode drzwiom wyłącznie
+według kolejności adresów: event0 jest obsługiwany po innych gałęziach.
+
+Rzeczywista interakcja z warsztatem M048: początkowy Down80 kieruje z powrotem
+do M107; powrót drzwiami i krótka próbaUp4 wykazują, że w M048 Up zmniejsza Z
+(1223→1178), inaczej niż w poprzednich korytarzach. Następny zwykły ruch
+i właściwe zwrócenie przy ladzie uruchamiają dialog161. Read-only obserwator
+/tmp/pe-day4-armory-dialog-observe-v1.json odczytuje NPC2/node780: opcode34
+czeka na zamknięcie strony161, nie na I/O karty. Krótkie impulsy2/4 nie
+zmieniały strony w badanych punktach; przytrzymanieCross20 prowadzi do164.
+Nie ustalono przyczyny różnicy krótkich impulsów, nie naprawiano rendererem
+ani zapisem stanu. Oryginalne menu usług pokazuje Tune up weapon, Store equipment,
+Store item, Discard junk, Rename T Card collection, Cancel. Potwierdzenie otwiera
+listę wyboru do tuningu (menu1); anulowanie wraca do usług. Pięć oddzielnych
+Down wybiera Cancel, potem dialog162 i powrót do pola przy40116/lock2.
+Nie wykonano transferu statystyk ani magazynowania przedmiotu.
+
+Fresh cold replays czterech punktów39136/39416/39556/40116, każdy normal/SAN:
+8/8 terminal exit0. Cztery pełne JSON identyczne z live i między profilami,
+cztery pełne1MiB VRAM identyczne między profilami. Całe50 slotów i wszystkie
+4096B equipment records na końcu identyczne ze stanem zapisu B; źródłowy
+i wszystkie prywatne8192B B niezmienione, bu10 puste. Dowód
+/tmp/pe-day4-vendor-v1-proof.json; komplet wybranego przebiegu -full-args.json.
+Obejrzane obrazy -39416-normal.png i -39556-normal.png przedstawiają listę
+oraz menu usług. Finalnie M048/story440/HP210, nie ukończenie dnia4.
+Klient /tmp/pe-day4-armory-live-v1 zakończony quit/exit0 przy40116.
+Provenance -provenance.json ponownie hashuje366 obiektów i961 unikalnych
+plików: źródła/zależności/biblioteki/executable nadal zgodne z manifestem v2.
+PsyZ/SDL nieinstrumentowane; zgodność natywnych profili nie dowodzi pikseli/PCM PS1.
+
 Dzień4 — kolejne potwierdzone pomieszczenia, nie ukończenie komisariatu.
 Z M104 zwykły bieg do(-1090,0) i dokończenie przejścia wracają przy36992
 do M100, HP210/210/story440. Następnie hol do(485,-2300) prowadzi do

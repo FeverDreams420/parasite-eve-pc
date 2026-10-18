@@ -2,6 +2,58 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Nowy zwykły cold A2 przechodzi zachodnią część komisariatu do M117.
+Oryginalne Items/Discard usuwa Cure-M17, zwalniając miejsce; skrzynia
+M112/actor4 daje Medicine3/8 do17. Użycie leczy133→189 bez wydawania PE,
+slot17 znów pusty. Oryginalny reload dopełnia M16 z7 do16, bez zmian statystyk.
+Podejście do skrzyni musi prowadzić od prawej strony biurka przez[-432,600],
+[-939,588]; bezpośredni skrót od[-1040,1040] blokuje prawdziwa kolizja.
+
+Ta próba przechodzi M115 do zachodniego wyjścia bez losowego spotkania;
+nie jest dowodem ponownej wygranej M115 ani wyłączeniem losowości. M044
+uruchamia dialog83 przy29222, kolejne84/86/88/89/90/91/92/93/94 wracają
+do M121 przy33222. Dopiero tam wejście[-500,500] wyzwala rzeczywistą
+walkę: dwa typ9/70HP/def15 i typ8/35HP/def22. Wybrano Slow8, Heal2/1,
+a potem właściwe Barrier5 przez odczyt identyfikatora z menu.
+
+Korekta opisu starszej próby O→A2: wybrany8 oznacza Slow, nie Barrier.
+Definicje battle_ailment.h mają PE_SPELL_SLOW=8 i PE_SPELL_BARRIER=5.
+Zgodność stanu/obrazu starego replay pozostaje ważna, ale tamta nazwa czaru
+była błędna i nie dowodziła działania Barrier. W nowej próbie przy36462
+odczyt Combatant.stateFlags=0x10200200 potwierdza bit AYA_BARRIER/0x200,
+HP20/189. Niezależne replaye tego checkpointu w obu profilach zatrzymano
+w LLDB wyłącznie do odczytu; oba potwierdzają ten sam bit i pełny JSON/VRAM.
+Nie używano ReturnFromFrame w sanitizerze ani zapisów pamięci rozgrywki.
+Nie stanowi to kompletnego porównania wszystkich obrażeń z PS1.
+
+W M121 oryginalne Revive przy37146 zużywa slot12 i przywraca94/189.
+Pozostałych przeciwników pokonują zwykłe strzały M16; przy38166 battle2/live0,
+HP27/189 i EXP20. ObtainAll daje Medicine1/6 do12 i Tool22 do17; End
+pomija nieodebrane nagrody. M121→drzwi około[-814,135], obrót Up na2klatki
+wyzwala właściwe przejście do M117, dialogi100–104. Oryginalny lekarz
+przywraca27→189 bez zużycia Medicine1. Końcowy cap41618: M117/0xa80213c8,
+etap400, menuNULL/lock0, battle9/live0, HP189/189, broń10/zbroja14,
+capacity21. Alle50 slotów zachowane poza12/Revive→Medicine1 i17/Cure-M→Tool;
+wszystkie4096B wyposażenia poza loaded ammo7→8, offset138. Odczyt debuggera
+clip8/shared pool165. Brak nowego telefonu Save; niezmieniony A2 i zapisany
+trace całej trasy odtwarzają obecny punkt bez fabrykowania checkpointu.
+
+/tmp/pe-nypd-a2-west-v2-{args.json,input.jsonl,run.py,verify.py,proof.json}:
+normal8,51s/SAN23,85s exit0, pełny JSON i1MiB VRAM zgodny z sesją live;
+VRAM SHA256c1fbb72f00f434484dbdc1b9b853e0d0f82848bde084d13fefb9a05c1e71e65d.
+Sześć par checkpointów PASS12/12: Medicine3, przygotowanie/reload16,
+M044/dialog83, Barrier5, Revive, M121/zwycięstwo. Pełny JSON/VRAM zgodny,
+A2 zachowany; artefakty-checkpoints.py,-checkpoints-results.json,
+-checkpoints-proof.json. Obraz końcowy M117 obejrzany. Nie dodano plików repo
+ani zmian produkcyjnych, niezależny PS1 oracle tego odcinka i stały CTest
+pozostają niewykonane. M122/M123 i dalsza kampania nadal przed nami.
+Proces67277 zakończony exit0. Wstępny67250 z błędnym cwd wykluczono przed
+sterowaniem. Ustawiaj process launch -w /tmp/... jawnie oraz sprawdzaj cwd
+procesu; samo SBLaunchInfo.SetWorkingDirectory jest nadpisywane przez komendę
+process launch. Następna sesja może odtworzyć frozen v3, prywatny A2 i pełne
+normal-args do41618, następnie kontynuować fizycznymi przyciskami z M117.
+
+
 Dalsza próba z A2 wraca do M115 i leczy133→163→189 przez rzeczywiste
 Heal1. Kolejne losowe spotkanie znów ma trzy ptaki5/78HP i ukryte kontrolery6.
 Sterowanie tej próby przegrywa: przy28406 HP0, slot12/Revive jeszcze obecny;
@@ -44,9 +96,9 @@ załadowane16, wspólny zapas160→144. Należy czytać ItemDataRecord.ammo
 M116 przez[700,110],[700,-680],[800,-1000] wybiera scenkę M121, dialogi
 74/76/75, następnie M115 i flagę44/262144. W M115 walka ma trzy wybieralne
 ptaki typ5/78HP/def18 oraz trzy ukryte kontrolery typ6/72HP/flags0x4000,
-których nie uznano za cele. Rzeczywiste menu PE/Barrier i oryginalne strzały
+których nie uznano za cele. Rzeczywiste menu PE/Slow8 i oryginalne strzały
 M16 kończą spotkanie przy39886, HP133/181, battle2/live0, EXP20.
-Nie przeprowadzono osobnego pomiaru redukcji obrażeń przez Barrier.
+Starszy opis nazywał ten czar Barrier błędnie; identyfikator8 oznacza Slow.
 Zewnętrzny tester wymagał bliższej trasy uniku; zmieniono tylko jego
 prywatny helper /tmp, nie algorytm ani statystyki gry.
 Po awansie maxHP189, Cure-M/16 trafia do wolnego slotu17; resztę

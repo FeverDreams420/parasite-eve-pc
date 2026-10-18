@@ -54,8 +54,12 @@ Full replays, five checkpoint pairs and cold Continue pass normal/sanitized
 checks with matching full state, VRAM and save payloads. A later attempt at
 the repeated M115 encounter ends in Game Over after consuming Revive; both
 revival and the final failure reproduce in both profiles. A2 remains unchanged
-and is the current successful campaign checkpoint. This route has no new
-independent PS1 comparison.
+and remains the latest genuine phone save. A subsequent ordinary replay now
+wins M121, uses the real Revive, and reaches the M117 doctor, who restores full
+HP. Full normal/sanitized replays and six checkpoint pairs pass, including a
+read-only confirmation of the actual Barrier flag. The earlier test notes
+incorrectly called spell 8 Barrier; it is Slow, while Barrier is spell 5. This
+route has no new independent PS1 comparison.
 
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and

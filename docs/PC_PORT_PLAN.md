@@ -25,8 +25,9 @@ Nie był to ciąg samych ataków dzielących HP na pół. Odczyt65528 jest
 reprezentacją półsłowa−8 przed klamrą śmierci; późniejsze45HP przy52108
 pochodzi z Battle_SaveAyaState/Save_InitSystem/title, nie z Revive.
 
-/tmp/pe-nypd-m123-hp-watch-v3-{args.json,.cmd,hits.jsonl,verify.py,proof.json}
-i /tmp/pe_nypd_m123_hp_watch_v3.py zachowują pomiar. Normalny kandydat,
+/tmp/pe-nypd-m123-hp-watch-v3-{args.json,hits.jsonl,verify.py,proof.json},
+/tmp/pe-nypd-m123-hp-watch-v3.cmd i /tmp/pe_nypd_m123_hp_watch_v3.py
+zachowują pomiar. Normalny kandydat,
 watchpoint tylko do odczytu; rozszerzono wyłącznie hostowy cap50720→52576,
 normalne ReturnFromFrame omija zakończenie diagnostyczne, nie funkcję gry.
 Końcowy cały JSON i1MiBVRAM identyczne z replay bez watchpointu, A2 zachowany.

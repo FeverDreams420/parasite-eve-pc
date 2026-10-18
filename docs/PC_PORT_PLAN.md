@@ -2,6 +2,58 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dzień4 — wejście do szpitala oraz prawdziwy Save/Continue C, bez zmian produkcji.
+Poprzedni odcinek goal potwierdził laboratorium i przyjazd; obecny potwierdza
+kolejną scenkę, wejście do lobby i nowy trwały punkt kontynuacji.
+Od54341/M125 Up4 iRight75 przekraczają oryginalny trigger przed wejściem.
+Scenka zmienia story460→464, wykonuje rozmowy21–28 i daje Mayoke/item204
+(Helpful Good Luck Charm) do wolnego slotu12. Wcześniejsze nazwanie tej
+postaci pielęgniarką w komentarzu roboczym nie było potwierdzone; nie należy
+wyprowadzać jej tożsamości tylko z pozycji przed szpitalem.
+Przy58620 rozmowa zamknięta, lock0. Up110 i neutral500 przechodzą drzwi:
+59230/M126/a8022348, HP210/210/story464, battle0/live0, menuNULL/lock0.
+Obejrzany obraz przedstawia lobby z recepcją. Read-only obserwatory
+/tmp/pe-day4-m125-observe-v1.{json,log} i -m126-observe-v2.{json,log}
+odczytały aktualne skrypty i podłogi do osobnych plików; oba zakończone0
+po planowanym kill inferiora. Mapa scen125–160 w
+/tmp/pe-day4-hospital-scene-graph-v1.json jest pomocą nawigacji, nie dowodem przejścia.
+
+Cztery cold replaye punktów58620 i59230 normal/SAN zakończyły się exit0,
+bez raportów sanitizerów/Unbound; pełne JSON zgodne z live i między
+profilami, całe1MiB VRAM identyczne w każdej parze. Pierwszy runner odrzucił
+na końcu błędną skopiowaną asercję inventory unchanged. Zachowano jego log
+/tmp/pe-day4-hospital-lobby-v1-check.log; nie jest to awaria gry.
+Verifier -v1-verify-existing.py sprawdza zachowane cztery terminalne wyniki
+ponownie i wymaga dokładnie jedynej zmiany slot12:0→204 oraz niezmienionych
+pozostałych slotów/wszystkich4096B wyposażenia. Dowód -v1-proof.json.
+Odcinki wejścia normal15,69/15,87s, SAN45,66/47,22s. B źródłowe i prywatne
+niezmienione, bu10 puste; bez nowego Save w tych czterech replayach.
+
+Zwykły input w lobby dochodzi do telefonu przy(1353,1111), otwiera
+oryginalne Will you save your progress?, wybiera Slot1, nowy plikC i End.
+Obejrzano ekran File saved/No3/Day4 Hospital. Przy61710 powrót do pola,
+HP210/story464, menuNULL/lock0. Prywatny B zachowany, nowy C8192B:
+SHA256d2fb8f7a8152b288659d96d3089c942f245de194699763f14704bac258705b72,
+źródło /tmp/pe-day4-hospital-save-v1-source/BASLUS-006620000000C.
+Pełny cold replay od B normal15,86s/SAN45,89s exit0, całe JSON zgodne live
+oraz między profilami, całyVRAM zgodny, wszystkie8192B nowegoC identyczne
+z live i między profilami. /tmp/pe-day4-hospital-save-v1-{proof.json,full-args.json}.
+
+Osobny cold Continue z C wybiera trzeci plik dwiema odrębnymi Down:
+przy24000 M126/story464/HP210, brak dialogu/menu, lock0. Cały inventory
+zgodny z zapisem, włącznie z Mayoke. Init player przy424–488 rozpoznaje
+var1=998 i ustawia pozycję(1280,1160),yaw0; odczyt natywny to potwierdza
+(z wysokością-5 po kolizji). Nie oczekujemy dowolnego poprzedniego obrotu2126.
+Normal3,63s/SAN11,98s exit0, całe JSON/VRAM zgodne z live i między profilami,
+źródłowy/prywatny C niezmieniony. /tmp/pe-day4-hospital-continue-v1-{proof.json,full-args.json}.
+Razem8 terminalnych replayów; wszystkie klienty interaktywne zakończone quit/exit0.
+Provenance -hospital-save-v1-provenance.json ponownie potwierdza366 obiektów
+oraz961 plików zgodnych z manifestem kandydata v2. PsyZ/SDL nieinstrumentowane.
+Brak nowego porównania PS1 pikseli/PCM i stałego CTest tej trasy; dalsze
+piętra szpitala i pełna kampania nadal otwarte. Żadnych nowych plików repo,
+zmian gameplay RAM ani dotykania kart repozytorium.
+
+
 Dzień4 — dalsza oryginalna fabuła do szpitala, bez zmian kodu produkcyjnego.
 Poprzedni odcinek goal był postępem: potwierdził wyjście NYPD i Museum;
 obecny rozstrzyga zamknięte wejście i przechodzi właściwą dalszą scenkę.

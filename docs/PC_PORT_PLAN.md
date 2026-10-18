@@ -2,6 +2,42 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dalszy zwykły replay od zimnego Continue F obejmuje teraz obie skrzynie
+Medicine1 w M060 (sloty9 i13), przejście M060↔M061, walkę M061 z dwoma
+aktorami5/HP35, odebranie obu Junk20 (sloty14/15), wyjście M061→M063,
+wejście M064 i prawdziwy telefoniczny zapis G/siódmy plik. Walka M061
+nie odebrała HP. Przy65270: M064/etap232, HP81/92, pojemność16,
+weapon10/armor4, brak menu/dialogu/przeciwników, move_lock0, battle_mode9,
+sloty0..15=[256,257,258,512,259,200,201,55,13,6,260,55,13,6,20,20],
+pozycja[49648256,-65536,-14089344], yaw1396. Przejście z M059 do M060
+uruchamia się na wschodniej ścieżce około[1680,-1080]. W M060 środkowa
+północna alejka prowadzi do M061; skrzynie stoją około[-1148,-9588]
+i[1381,-9588]. M061 wymaga zachodniego obejścia od wejścia:
+[-1200,-2300]→[-2380,-1180]→[-2380,-1080]; potem rozpoczyna się walka.
+Zachodnie wyjście około[-4700,-300] prowadzi do M063. Wejście M064
+uruchamia się około[-2400,-1640]. Telefon M064: podejście[780,-225],
+twarz na zachód, kolizja zatrzymuje około[758,-215], Cross.
+
+Na niezmienionym /tmp/pe-park-attack-status-v1 cały replay F→G przechodzi
+normal/SAN exit0 w16,94/46,94s. Pełny JSON i1MiBVRAM zgodne z żywą sesją,
+wszystkie8192B G identyczne, F niezmieniony. G SHA256
+cfc8389d210accd11103b6a9039ca8b2b541bd03ca7f2259a48ba258eb5bfbaa;
+VRAM SHA256670e0c4688a9e43862a1779ba1d285042030491b638938e849b534395412f5bf.
+Dowód /tmp/pe-park-zoo-route-v1-{proof.json,verify.py,results.json}, pełne
+args/input/logi/VRAM pod tym prefiksem. Wszystkie procesy zakończone0.
+
+Osobny zimny Continue G: normal/SAN exit0 w4,62/14,23s, M064/etap232,
+HP81/92, lock0, brak menu/przeciwników, wszystkie sloty/4096B wyposażenia
+i wybrane sloty zgodne z sesją zapisu. Pełny JSON/VRAM zgodny; G bez zmian.
+/tmp/pe-park-phone-g-continue-v2-{proof.json,verify.py,results.json}.
+Pierwszy plik args v1 miał nieuporządkowany input i został poprawnie
+odrzucony przez parser przed uruchomieniem gry; dowód dotyczy v2.
+Odcinki nie są jeszcze trwałymi przypadkami CTest; nowego G nie sprawdzono
+w oryginalnym USA PS1. Prywatne karty, bez wywołania tworzenia save przez
+debugger, bez zapisu HP/stanu/RNG. Następne: interakcje M064 i Zoo Key,
+dalsza eksploracja oraz brama zoo. Nie jest to ukończenie kampanii ani
+niezależny dowód pixel-perfect. W tym odcinku nie zmieniano kodu produkcji.
+
 Zwykły zimny Continue F przechodzi wyjście NYPD, obowiązkowy FMV7,
 podróż M039 i intro Central Park M374. Wejście do M059 prowadzi zachodnią
 bramą około[-1500,700]; północna/południowa ulica wraca na mapę miasta.

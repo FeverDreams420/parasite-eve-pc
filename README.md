@@ -69,6 +69,11 @@ the reward medicine. Sanitizers exposed premature field-address formation
 through a defeated target's released core in the original battle module.
 The in-place fix defers status access until an ailment bit requires it; the
 full route now agrees in state and VRAM across both builds and the live run.
+The continued ordinary route collects both M060 Medicine 1 chests, wins the
+two-enemy M061 fight, receives both Junk rewards, enters M063/M064 and creates
+phone Save G. Full replay and cold Continue G pass normal and sanitized builds
+with matching complete state, VRAM, inventory and equipment; save payloads
+agree and the source F remains unchanged.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

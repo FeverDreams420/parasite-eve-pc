@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zimny Continue M ma teraz dalszy zapis fizycznych przycisków: apteka M097→
+M096→M093→M094, otwarcie sklepu i wejście do M095. Podejście do drzwi
+około[0,-100] wyzwala oryginalną sekwencję109–114; sama rozmowa z NPC
+przy[-86,-1009] wcześniej daje107 i nie otwiera sklepu. Po114 flaga25/32
+jest ustawiona. Ponowne podejście do drzwi przechodzi do M095.
+Skrzynia typu7 przy[-407,-1003], podejście od południa około[-406,-828]
+twarzą na północ, daje Tool22 do wolnego slotu20. Panel otrzymania
+przedmiotu zamknięty zwykłym Cross. Flaga85/16384 ustawiona, zmienna146=0.
+Przy35893: M095/etap328, HP181/181, menuNULL/lock2, battle0/live0.
+Sprawdzono wszystkie50 slotów: jedyna zmiana względem cold M to Tool20.
+Wszystkie4096B wyposażenia, weapon10/armor14 i capacity21 zachowane.
+Pozostałe skrzynie i interakcje sklepu nie są jeszcze tym dowodem objęte.
+
+/tmp/pe-day3-m-gunshop-v1-{args.json,input.jsonl,run.py,verify.py,proof.json}
+oraz logi/VRAM: niezmieniony kandydat /tmp/pe-park-attack-status-v1,
+normal exit0/6,98s i SAN exit0/20,17s. Pełny końcowy JSON oraz1MiBVRAM
+zgodne między oboma profilami i żywą sesją. SHA256VRAM
+bb056173d3cc7b28de0bdb0fdfd6fc11365ee201a95c600fb71be5e19b36bdd7.
+Wszystkie8192B źródłowego M zachowane w trzech prywatnych katalogach;
+nie tworzono nowego Save ani nie zapisywano stanu rozgrywki debuggerem.
+Obejrzano obraz M095 po odbiorze Tool. To potwierdzenie tego odcinka,
+bez nowego porównania PS1, stałego CTest ani dowodu całej kampanii.
+Nie dodano plików repozytorium i nie zmieniono kodu produkcyjnego.
+
+
 Zwykły zimny Continue L przechodzi teraz początek Day3/Soho i aptekę,
 zbiera opisane przedmioty, używa ulepszeń pancerza i tworzy
 prawdziwy Save M przez telefon M097. Na planszy M351 Cross→182→Down/No

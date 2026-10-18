@@ -12,6 +12,12 @@ compiler output, fixed code addresses and PS1 binary builds are no longer
 acceptance requirements. Changes are evaluated by behavior, portability,
 readability and native builds.
 
+A further ordinary cold Continue from the Day 3 pharmacy Save M reaches the
+Soho gunshop, completes its opening scene and collects its Tool. Normal and
+sanitized replays match the controlled session in full state and VRAM, preserving
+the source save and all equipment records. Other gunshop interactions and the
+remaining campaign still need verification.
+
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and
 story progression through Day 3 to the NYPD. Genuine phone-created checkpoint

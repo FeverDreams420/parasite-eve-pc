@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Oryginalne Tune Up ma nowy zwykły dowód `/tmp/pe-nypd-m16-prep-v1`.
+Pełny cold Continue A2→M120/52865, następnie przeładowanie M16 przez
+Items/Reload/Down/Cross do16 przy53185. Root Tune Up/wiersz6 otwiera
+listę13; wybór M92F (piąty indeks), docelowego M16/lista7, Parameters/panel27
+i potwierdzenie panel4 wykonuje rzeczywisty transfer. Komunikat uprzedza
+utratę M92F. Przy53637 M16 bonus6/4/1→7/5/4, loaded16→19, Tool8 zużyty,
+slot13/M92F pusty. Oryginalny kod pozostaje w item/armor_capacity.c;
+nie wywoływano transferu debuggerem. Medicine3/slot12 leczy120→189.
+
+Checkpoint prepared54041: M1200xa8022048, battle9/live0, HP189/189,
+menuNULL, broń10/armor14, capacity21; Medicine3/17 i Full Cure/20 zachowane.
+Całe50 slotów względem wcześniejszego52865 zmienia się tylko8/12/13→0.
+Całe4096B rekordów różni się tylko na offsetach138/142/144/146 M16
+(loaded4→19, bonus6→7/4→5/1→4) oraz256/266/270/272/274 dawcy M92F
+(icon1→0, loaded11→8, bonus1/1/3→0/0/0). Pozostałe bajty zachowane.
+To gotowy do zwykłego odtworzenia prefix, nie syntetyczny Save.
+
+Dalsza próba wyjścia przez M122 napotyka nowe spotkanie: przy54823 lock1,
+po bezczynnym500 do55323 HP53. To błąd strategii testera, nie stwierdzony
+hang. Wrogowie wybieralni5/98HP i3/78HP, ukryty4/72HP. Pierwsza próba
+Escape55623 nie kończy walki, licznik1; podczas następnej gotowości Aya
+ginie przy55707. Helper potem zgłasza brak menu, bo postać już martwa.
+Końcowy cap55787 ma HP0, M122; nie dotarto w tej próbie do M123.
+
+Cztery zakończone replaye normal/SAN prepared11,77/33,07s oraz
+death12,39/33,34s exit0. Pełny JSON/1MiBVRAM zgodny wewnątrz obu par;
+death dodatkowo identyczny z live. `-run.py,-results.json,-verify.py,-proof.json`
+asertują cały eksport, powyższe pełne delty wyposażenia/slotów, ciągłość
+input52865→55787 i zachowanie oryginalnego8192B A2 we wszystkich prywatnych
+kartach (bu10 puste). Brak sanitizer/Unbound diagnostics i zapisów pamięci
+rozgrywki. PreparedVRAM SHA256806447b0f8316212608946ea04e57e8ebe1f16e24ed89d8c050bf32bf2a7b566;
+death2f7be6e63c0471652420c410db8d526c313f0009f15a1916c2dde993bcc80dbd.
+PID70921 i cztery replaye zakończone. Następny punkt to pełne
+`-prepared-normal-args.json`/54041 na niezmienionym frozen v3; M122 wymaga
+reakcji na spotkanie zamiast ślepego czekania500. Nie ma nowego telefonu
+Save, niezależnego PS1 porównania Tune Up ani zwycięstwa M123. Bez nowych
+plików repo i bez zmian produkcyjnych; pełny cel pozostaje nieukończony.
+
+
 Nowy zwykły replay `/tmp/pe-nypd-m203-v1` rozszerza przygotowanie M120
 v1/52865 do M123/60285. Oryginalne Medicine3/slot12 leczy120→189,
 Weapon otwiera panel5 statystyk; dopiero kolejny Cross aktywuje listę7.

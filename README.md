@@ -37,6 +37,10 @@ Cathy's conversation, the M107 fight with Heal 2 and reloading, an M16A1 upgrade
 and the M108 weapon gift at story stage 400. Normal/sanitized full replays and
 four checkpoint pairs agree on full state and VRAM; N remains unchanged.
 
+The continued ordinary route completes the M115 Ben/Sheeva scene, wins another
+M100 encounter and creates phone Save O at stage 400. Full replay and cold
+Continue O pass in both profiles, preserving N and matching all save bytes.
+
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and
 story progression through Day 3 to the NYPD. Genuine phone-created checkpoint

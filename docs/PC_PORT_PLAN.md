@@ -2,6 +2,52 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły cold N ma teraz dalszy ciąg po zbrojowni aż do prawdziwego Save O.
+M108 wyjście około[10,1400] wybiera oryginalną scenę M115, gdy bank44
+ma67108864 i jeszcze nie ma131072. Przy44344 M115/etap400 ma dialog72,
+lock1 i brak gracza w tej autorskiej scence. Rozmowy72–73 wracają do M107
+przy44892; nie wymuszano obecności gracza w trakcie sceny. Flaga44/131072
+jest potem ustawiona. M107→[0,-2700],[700,-2700]→M100 działa.
+
+Powrót w kierunku M099 wyzwala kolejne losowe starcie M100: dwa typ5
+HP35/def22 i jeden6 HP70/def15. Nie uznano próby bocznej drogi za ominięcie
+walki: wejście w region faktycznie uruchomiło spotkanie i rozegrano je do końca.
+M16A1 z bonusem ataku6, nadal bez Heat:6 po dwóch strzałach ma6HP,
+po kolejnym ginie; obaj5 pokonani seriami po dwa. Przy47565 HP95/181,
+battle2/live0, oryginalny panel EXP20. ObtainAll daje Medicine1/6 do wolnego17,
+End pomija pozostałe nieodebrane przedmioty. Lek rzeczywiście użyty:95→140,
+slot17 znów pusty. Wszystkie50 slotów po tym odcinku identyczne z końcem
+M108;4096B wyposażenia zachowane poza loaded ammo12→5, offset138 rekordu4.
+Nie zużyto Revive ani nie zapisywano HP/PE/RNG/stanu rozgrywki debuggerem.
+
+M100→M099 i dojście do telefonu działa bez kolejnych zmian sterownika gry.
+Udana droga w biurze:[-200,800],[-200,500],[-100,-100],[-60,-233],[-100,-450],
+[-230,-800],[-200,-950],[-20,-1020],[180,-1000],[600,-840],[600,-800],[590,-780].
+Telefon6→oryginalny Save, z listy N13 Down do wolnego O14, potwierdzenie
+oraz zamknięcie wszystkich paneli. Przy51942 M099/etap400, HP140/181,
+menuNULL/lock0, battle9/live0. Źródłowy N pozostał nietknięty.
+
+/tmp/pe-nypd-n-after-armory-v1-{args.json,input.jsonl,run.py,verify.py,proof.json},
+logi/VRAM: frozen /tmp/pe-audio-queue-v3 normal11,38s/SAN31,69s, exit0,
+bez raportów sanitizerów i niepowiązanych opcode'ów. Pełny końcowy JSON oraz
+1MiBVRAM identyczne z żywą sesją; SHA256
+aa0f423def2b16f803f544f3570d825791e7656e9f69c7831e77a8ab5a1f6253.
+Wszystkie8192B nowego O zgodne w live/normal/SAN, SHA256
+924492715e0cf95afa6a20b8afd3f1f50e0ebab68e793099afa84c98fe1c399c.
+N niezmieniony, bu10 puste. Dwie pary checkpointów PASS4/4: M115/72 przy44344
+oraz zwycięstwoM100 przy47565; pełny JSON/VRAM zgodny, N zachowany.
+Artefakty-checkpoints.py,-checkpoints-results.json,-checkpoints-proof.json.
+
+/tmp/pe-nypd-phone-o-continue-v1-{run.py,verify.py,proof.json}: zimny Continue O
+normal4,60s/SAN14,01s, exit0. Pełny JSON/VRAM zgodny; M099/etap400,
+HP140/181, menuNULL/lock0, battle0/live0. Wszystkie50 slotów i4096B
+wyposażenia zgodne z sesją zapisującą; O niezmieniony. Obraz po zapisie
+obejrzany. Nie dodano plików repozytorium ani zmian produkcyjnych. Ostatnie
+niezależne porównanie z PS1 w bieżącym łańcuchu nadal dotyczy C, nie O;
+nie uznano zgodności normal/SAN za dowód całej wierności. Dalsza kampania,
+EX/Chrysler i stały CTest tej nowej trasy nadal pozostają do wykonania.
+
+
 Dalszy zwykły cold Continue N obejmuje M099→Cathy→M108/etap400.
 M099: rozmowa z NPC typu2[-493,-321] od prawej strony około[-173,-327]
 prowadzi44–47; ponowny Cross→48 i oryginalny panel Ammo+15. Panel przy27824

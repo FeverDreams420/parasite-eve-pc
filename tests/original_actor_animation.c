@@ -1,3 +1,8 @@
+#include "../src/overlays/room_m318_chrysler/m318_externs.h"
+#include "pe1/room_ember_burst.h"
+#include "pe1/room_ember_spiral.h"
+#include "pe1/room_shake_burst.h"
+#include "pe1/room_twin_ribbon.h"
 #include "pe1/field_orbit_point.h"
 #include "pe1/room_m123.h"
 #include "pe1/room_m349_effects.h"
@@ -6703,6 +6708,284 @@ static int original_m256_programs(SceneAssetView *room)
     srand(old_rng);*g_RoomFloorY=old_floor;memcpy(g_AkaoMessageQueue,old_audio,sizeof(old_audio));g_AkaoMessageQueueCount=old_count;
     if(ok)printf("Original M256 PM: %u complete authored cycles, two programs, both draw slots, hit/no-hit, rendering, natural expiry and pool/packet/OT guards passed\n",cycles);
     return ok;
+}
+
+static int original_m318_numeric(void)
+{
+    FieldFxTaskCallback callbacks[]={RoomM318_EmberBurstParticleCallback,RoomM318_RisingColumnParticleCallback,
+        RoomM318_FlashBurstParticleCallback,RoomM318_EmberFountainParticleCallback,RoomM318_EmberSpiralParticleCallback,
+        RoomM318_FanSweepTrailCallback,RoomM318_SpiralDropSparkCallback,RoomM318_ArcingSparkCallback,
+        RoomM318_ShakeBurstParticleCallback,RoomM318_CrossFlashParticleCallback,RoomM318_TwinRibbonPulseCallback};
+    const int modes[]={0,1,3},timers[]={0,1,7,15,23,31,32767,65535},velocities[]={-32768,-1,32767},floors[]={-100,0,100};
+    const u32 seeds[]={0,0x12345678};u64 hash=UINT64_C(14695981039346656037);unsigned count=0;
+    int old_age=g_FieldFxCurrentAge;RoomFloorY old_floor=*g_RoomFloorY;u32 old_rng=Psyz_RandState();
+    for(unsigned cb=0;cb<11;++cb)for(unsigned mode=0;mode<3;++mode)for(unsigned state=0;state<3;++state)
+    for(unsigned timer=0;timer<8;++timer)for(unsigned velocity=0;velocity<3;++velocity)for(unsigned floor=0;floor<3;++floor)for(unsigned seed=0;seed<2;++seed){
+        _Alignas(void *) u8 data[36];memset(data,0xa5,sizeof(data));
+        u16 words[]={123,(u16)-77,456,65530,velocities[velocity],velocities[velocity],velocities[velocity],8192,state,timers[timer]};memcpy(data+8,words,20);
+        g_RoomFloorY->y=floors[floor];g_FieldFxCurrentAge=timers[timer];srand(seeds[seed]);
+        u32 result=callbacks[cb](modes[mode],data+8,0),rng=Psyz_RandState();
+        hash=m349_hash_bytes(hash,&result,4);hash=m349_hash_bytes(hash,data,36);hash=m349_hash_bytes(hash,&rng,4);++count;
+    }
+    g_FieldFxCurrentAge=old_age;*g_RoomFloorY=old_floor;srand(old_rng);
+    if(count!=14256 || hash!=UINT64_C(0x6825cef1d3ef1dbd)){fprintf(stderr,"M318 numeric mismatch %u/%016llx\n",count,(unsigned long long)hash);return 0;}
+    puts("Original M318:14256 states of eleven callbacks, complete payload guards and RNG match USA MIPS");return 1;
+}
+
+static int original_m318_pool_states(void)
+{
+    FieldFxTaskCallback callbacks[]={RoomM318_FanSweepSpark,RoomM318_ShakeSweepParticleCallback};
+    const int modes[]={0,1,3},timers[]={0,1,7,23,35,36,32767,65535},velocities[]={-32768,-1,32767},floors[]={-100,0,100};
+    const u32 seeds[]={0,0x12345678};u64 hash=UINT64_C(14695981039346656037);unsigned count=0;
+    int old_age=g_FieldFxCurrentAge;RoomFloorY old_floor=*g_RoomFloorY;u32 old_rng=Psyz_RandState();
+    FieldFxTaskContext *old_context=g_FieldFxTaskContext;FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;
+    void *old_pool=g_RoomM318FanSweepSparkPool;GteShortVector old_fan=g_RoomM318FanSweepAnchor,old_sweep=g_RoomM318ShakeSweepAnchor;
+    g_FieldFxTaskContext=NULL;g_RoomM318FanSweepAnchor=g_RoomM318ShakeSweepAnchor=(GteShortVector){123,-200,1024,0};
+    for(unsigned cb=0;cb<2;++cb)for(unsigned mode=0;mode<3;++mode)for(unsigned state=0;state<3;++state)
+    for(unsigned timer=0;timer<8;++timer)for(unsigned velocity=0;velocity<3;++velocity)for(unsigned floor=0;floor<3;++floor)
+    for(unsigned seed=0;seed<2;++seed)for(unsigned full=0;full<2;++full){
+        _Alignas(void *) u8 pool[2048],data[32];memset(pool,0xa5,sizeof(pool));memset(data,0xa5,sizeof(data));
+        FieldFxTaskSlot task={.end=(char *)pool};g_FieldFxActiveTaskSlot=&task;g_RoomM318FanSweepSparkPool=pool;
+        FieldFx_InitCallbackList((char *)pool,16,24,callbacks[cb]);FieldFxCallbackList *list=(void *)pool;
+        if(full)for(unsigned i=0;i<24;++i)((FieldFxCallbackListEntry *)(list->entries+i*list->stride))->active=1;
+        u16 fan[]={state,8192,timers[timer],123,(u16)-77,456,velocities[velocity],0xa5a5};
+        u16 sweep[]={123,(u16)-77,456,state,velocities[velocity],8192,timers[timer],velocities[velocity]};
+        memcpy(data+8,cb?sweep:fan,16);g_RoomFloorY->y=floors[floor];g_FieldFxCurrentAge=timers[timer];srand(seeds[seed]);
+        u32 result=callbacks[cb](modes[mode],data+8,0),rng=Psyz_RandState();
+        hash=m349_hash_bytes(hash,&result,4);hash=m349_hash_bytes(hash,data,32);hash=m349_hash_bytes(hash,&rng,4);
+        for(unsigned i=0;i<24;++i){FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);
+            hash=m349_hash_bytes(hash,entry,4);hash=m349_hash_bytes(hash,entry->state,16);}
+        ++count;
+    }
+    g_FieldFxCurrentAge=old_age;*g_RoomFloorY=old_floor;srand(old_rng);g_FieldFxTaskContext=old_context;g_FieldFxActiveTaskSlot=old_task;
+    g_RoomM318FanSweepSparkPool=old_pool;g_RoomM318FanSweepAnchor=old_fan;g_RoomM318ShakeSweepAnchor=old_sweep;
+    if(count!=5184 || hash!=UINT64_C(0x0a6f03b306e499ce)){fprintf(stderr,"M318 pool mismatch %u/%016llx\n",count,(unsigned long long)hash);return 0;}
+    puts("Original M318:5184 FanSweepSpark/ShakeSweepParticle states, full/free child pools and RNG match USA MIPS");return 1;
+}
+
+static int original_m318_programs(PeDisc *disc)
+{
+    PeDiscFile archive;
+    if(!pe_disc_find(disc,"PE.IMG",&archive))return 0;
+    size_t common_bytes=(g_PeImageSectorTable[4]-g_PeImageSectorTable[3])*2048u;
+    u8 *common=malloc(common_bytes);
+    if(!common || !pe_disc_read(disc,&archive,(u64)g_PeImageSectorTable[3]*2048,common,common_bytes))return 0;
+    D_800F32D8=Asset_FindTable08ByU32Key(common,0x8AB5B684);
+    if(!D_800F32D8){free(common);return 0;}
+    FieldFxTaskProgram *programs[]={&g_RoomM318FanSweepEffects,&g_RoomM318ShakeSweepEffects,
+        &g_RoomM318ShakeBurstEffects,&g_RoomM318EmberBurstEffects,&g_RoomM318RisingColumnEffects,
+        &g_RoomM318EmberFountainEffects,&g_RoomM318FlashEffects,&g_RoomM318TwinRibbonEffects};
+    static RenderGpuTag ordering[4096];
+    static struct {_Alignas(void *) u8 data[1048576];u8 guard[32];} packets;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};int projection=256;
+    PolygonVertex polygon[]={{0,-4000,0,-4000},{0,4000,0,-4000},{0,4000,0,4000},{0,-4000,0,4000}};
+    g_GeomScroll.words.viewMatrix=&view;g_GeomScroll.words.projectionDistance=&projection;
+    g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;
+    g_RoomFloorY->y=0;g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;
+    FieldFx_InitTexturePageTable();Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,112);
+    int ok=1;unsigned cycles=0;
+    for(unsigned program=0;ok && program<8;++program)for(unsigned variant=0;ok && variant<2;++variant)for(unsigned draw=0;ok && draw<2;++draw){
+        struct {PmPrimarySlot slots[11];u8 guard[32];} bank={0};memset(bank.guard,0xa5,32);
+        FieldActor actor={0},player={0};FieldActorState state={0};Combatant player_state={0};u8 action=1;
+        RenderMatrix matrices[22]={0};actor.render_object.matrices=matrices;actor.state=&state;state.action_state=&action;
+        actor.type_id=6;actor.sub_id=0;state.control10.command_value=10;state.core_flags=0x01000000;
+        actor.mode=11;actor.action=64;actor.pos_y=-200*65536;actor.pos_z=1024*65536;
+        RenderMatrix player_matrix={.rotation={{4096,0,0},{0,4096,0},{0,0,4096}}};
+        player.render_object.matrices=&player_matrix;
+        player.state=(void *)&player_state;player.pos_z=variant?1024*65536:3000*65536;player.pos_x=variant?0:3000*65536;
+        player_matrix.translation[0]=player.pos_x/65536;player_matrix.translation[2]=player.pos_z/65536;
+        /* Isolated actor fixture: halt/resume only reads the frame count. */
+        RenderAnimationDataHeader player_animation={.frame_count=10};
+        for(unsigned j=0;j<48;++j)g_GameState.bank_rows[0][j]=&player_animation;
+        player_state.curHP=100;player_state.actionMode12=0;g_ActiveActor=&player_state;
+        g_PlayerEntity=&player;g_FieldActorListHead=&actor;
+        for(unsigned j=0;j<22;++j){for(unsigned k=0;k<3;++k)matrices[j].rotation[k][k]=4096;matrices[j].translation[1]=-200;matrices[j].translation[2]=1024;}
+        g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(variant+1);
+        g_RoomM318ScriptArg2=g_RoomM318StarFlarePhase=g_RoomScriptArg=0;
+        memset(g_RoomM318RisingColumnParams,0,sizeof(g_RoomM318RisingColumnParams));
+        RoomM318_SetActorParams(0,6,0,0);
+        if(g_FieldFxTaskPrograms[83+program]!=programs[program] || Scene_LoadRoomAssets(168+program,&actor)!=0){ok=0;break;}
+        int status;
+        if(program==0 || program==3)status=Pm_SendCmd(0,0,0,6,0,0);
+        else if(program==4)status=Pm_SendCmd(0,0,0,32,400,200);
+        else if(program==6)status=Pm_SendCmd(0,0,0,60,0,0);
+        else status=Pm_SendCmd(0,0,0,0,0,0);
+        if(status){ok=0;break;}
+        if(program==4 && variant)Pm_SendCmd(0,0,1,1,0,0);
+        unsigned frame=0,drawn=0,children=0,seen=0;
+        for(;frame<512;++frame){
+            if(program==7 && frame==64)Pm_SendCmd(0,0,1,1,0,0);
+            if(program==6 && frame==(variant?20u:40u))player_state.stateFlags|=0x10000000;
+            for(unsigned j=0;j<4096;++j)ordering[j]=(RenderGpuTag){.address=0xffffff};
+            memset(packets.guard,0xa5,32);g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;
+            D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)packets.data;
+            if(Pm_Start(0) || Pm_Exec(0)){ok=0;break;}
+            if(g_AkaoMessageQueueCount<0 || g_AkaoMessageQueueCount>16){ok=0;break;}
+            g_AkaoMessageQueueCount=0;drawn+=g_DrawPacketOffset!=0;FieldFxTaskContext *ctx=&bank.slots[0].task.tasks;
+            for(unsigned k=0;k<8;++k)if(ctx->slots[k].id!=0xffff){
+                unsigned id=ctx->slots[k].id;if(id>2){ok=0;break;}seen|=1u<<id;
+                if(ctx->slots[k].end){FieldFxCallbackList *list=(void *)ctx->slots[k].end;
+                    for(unsigned j=0;j<(unsigned)list->count;++j)children+=((FieldFxCallbackListEntry *)(list->entries+j*list->stride))->active!=0;}
+            }
+            if(ctx->used>sizeof(ctx->arena) || g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.data)){ok=0;break;}
+            for(unsigned j=0;j<4096 && ok;++j){uintptr_t link=ordering[j].address;unsigned count=0;
+                while(link && link!=0xffffff){if(link<(uintptr_t)packets.data || link+sizeof(RenderGpuTag)>(uintptr_t)packets.data+g_DrawPacketOffset || ++count>8192){ok=0;break;}link=((RenderGpuTag *)link)->address;}}
+            for(unsigned j=0;j<32;++j)if(bank.guard[j]!=0xa5 || packets.guard[j]!=0xa5)ok=0;
+            if(!ok || !bank.slots[0].header.state)break;
+        }
+        const unsigned expected_seen[]={3,3,3,1,1,3,7,1};
+        int expected_hit=program==1 || program==2 || (program==5 && variant);
+        if(!!(player_state.stateFlags&0x4000)!=expected_hit || action!=((program==1 || program==2 || program==5)?4:1))ok=0;
+        if(!ok || frame==512 || !drawn || !children || seen!=expected_seen[program] || bank.slots[0].header.state || bank.slots[0].task.tasks.count){
+            fprintf(stderr,"M318 PM %u/%u/%u frames%u drawn%u children%u seen%x state%u action%u\n",program,variant,draw,frame,drawn,children,seen,bank.slots[0].header.state,action);ok=0;}
+        if(ok){++cycles;fprintf(stderr,"M318 PM %u/%u/%u frames%u drawn%u children%u hit%d action%u passed\n",program,variant,draw,frame,drawn,children,!!(player_state.stateFlags&0x4000),action);}
+    }
+    free(common);return ok && cycles==32;
+}
+
+static int original_m318_assets(PeDisc *disc,PeDiscFile *exe)
+{
+    SceneRoomSectorRange range;PeDiscFile archive;
+    if(!pe_disc_find(disc,"PE.IMG",&archive) || !pe_disc_read(disc,exe,0x800ull+0x80093378u-0x80010000u+317*8,&range,8))return 0;
+    size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);if(!room)return 0;
+    int ok=bytes==378880 && pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+    const struct {u32 address;const void *data;size_t size;} data[]={
+        {0x8018f204u,&g_RoomM318EmberHaloColor,4},
+        {0x8018f200u,&g_RoomM318EmberRingColor,4},
+        {0x8019993cu,&g_RoomM318EmberFountainAnchor,8},
+        {0x8018f1f4u,&g_RoomM318ZeroSpin,8},
+        {0x8018f240u,&g_RoomM318EmberFountainParticleColor,4},
+        {0x8018f1f0u,&g_RoomM318FanSweepSparkColor,4},
+        {0x801998f8u,&g_RoomM318FanSweepAnchor,8},
+        {0x8018f214u,&g_RoomM318TwinRibbonRoot,8},
+        {0x8018f21cu,&g_RoomM318TwinRibbonTip,8},
+        {0x8018f224u,&g_RoomM318TwinRibbonFork,8},
+        {0x8018f22cu,&g_RoomM318TwinRibbonShed,8},
+        {0x8018f234u,&g_RoomM318TwinRibbonColorA,4},
+        {0x8018f238u,&g_RoomM318TwinRibbonColorB,4},
+        {0x8018f23cu,&g_RoomM318TwinRibbonColorC,4},
+        {0x80199904u,&g_RoomM318ShakeSweepAnchor,8},
+        {0x8018f210u,&g_RoomM318FlashBurstColor,4},
+        {0x80199924u,&g_RoomM318RisingColumnAnchor,8},
+        {0x8018f208u,&g_RoomM318FlatTilt,8},
+        {0x80199930u,&g_RoomM318CrossFlashAnchor,8},
+        {0x8018f1fcu,&g_RoomM318EmberParticleColor,4},
+        {0x8018f1ccu,&g_RoomM318GetMayaPosErrorFormat,36},
+        {0x80199464u,&g_RoomM318FanSweepTrailColorTrack,40},
+        {0x8019948cu,&g_RoomM318SpiralDropSparkColorTrack,48},
+        {0x801994bcu,&g_RoomM318SpiralDropColorTrack,48},
+        {0x801995bcu,&g_RoomM318StarFlareColorTrackA,32},
+        {0x801995dcu,&g_RoomM318StarFlareColorTrackB,32},
+        {0x801995fcu,&g_RoomM318ShakeBurstParticleColorTrack,40},
+        {0x80199674u,&g_RoomM318EmberBurstParticleColorTrack,40},
+        {0x801996ecu,&g_RoomM318RisingColumnParticleColorTrack,32},
+        {0x80199770u,&g_RoomM318FlashBurstColorTrack,40},
+        {0x80199798u,&g_RoomM318CrossFlashParticleColorTrack,40},
+        {0x80199868u,&g_RoomM318EmberFountainParticleColorTrack,40},
+        {0x80199890u,&g_RoomM318EmberSpiralColorTrack,40},
+        {0x80199444u,&g_RoomM318FanSweepScript,32},
+        {0x80199524u,&g_RoomM318ShakeSweepScript,36},
+        {0x80199580u,&g_RoomM318ShakeBurstScript,56},
+        {0x8019965cu,&g_RoomM318EmberBurstScript,24},
+        {0x801996d4u,&g_RoomM318RisingColumnScript,24},
+        {0x80199744u,&g_RoomM318FlashScript,44},
+        {0x801997f8u,&g_RoomM318TwinRibbonScript,20},
+        {0x80199844u,&g_RoomM318EmberFountainScript,36},
+    };
+    for(unsigned i=0;ok && i<sizeof(data)/sizeof(*data);++i)if(memcmp((u8 *)room+data[i].address-0x8018efe8,data[i].data,data[i].size)){fprintf(stderr,"M318 data mismatch %u\n",i);ok=0;}
+    if(ok){
+        {
+            FieldFxTaskProgram *p=&g_RoomM318FanSweepEffects;
+            const u32 original[14]={0x80192a7cu,0x80192ed4u,0x0u,0x0u,0x0u,0x0u,0x0u,0x0u,0x100010u,0x0u,0x0u,0x0u,0x80199218u,0x80199444u};
+            if(memcmp((u8 *)room+0x801994ecu-0x8018efe8u,original,sizeof(original)))ok=0;
+            FieldFxTaskCallback callbacks[8]={RoomM318_FanSweep,RoomM318_SpiralDrop,NULL,NULL,NULL,NULL,NULL,NULL};
+            const u16 sizes[8]={sizeof(RoomFanSweep),16,0,0,0,0,0,0};
+            for(unsigned j=0;j<8;++j)if(p->table.callbacks[j]!=callbacks[j] || p->table.sizes[j]!=sizes[j])ok=0;
+            if(p->initialize!=RoomM318_SetActorParams || p->script!=g_RoomM318FanSweepScript)ok=0;
+        }
+        {
+            FieldFxTaskProgram *p=&g_RoomM318ShakeSweepEffects;
+            const u32 original[14]={0x80193638u,0x80193b60u,0x0u,0x0u,0x0u,0x0u,0x0u,0x0u,0x8000cu,0x0u,0x0u,0x0u,0x0u,0x80199524u};
+            if(memcmp((u8 *)room+0x80199548u-0x8018efe8u,original,sizeof(original)))ok=0;
+            FieldFxTaskCallback callbacks[8]={RoomM318_ShakeSweep,RoomM318_ArcingSparks,NULL,NULL,NULL,NULL,NULL,NULL};
+            const u16 sizes[8]={12,8,0,0,0,0,0,0};
+            for(unsigned j=0;j<8;++j)if(p->table.callbacks[j]!=callbacks[j] || p->table.sizes[j]!=sizes[j])ok=0;
+            if(p->initialize!=NULL || p->script!=g_RoomM318ShakeSweepScript)ok=0;
+        }
+        {
+            FieldFxTaskProgram *p=&g_RoomM318ShakeBurstEffects;
+            const u32 original[14]={0x80193d88u,0x80194164u,0x0u,0x0u,0x0u,0x0u,0x0u,0x0u,0x8000cu,0x0u,0x0u,0x0u,0x0u,0x80199580u};
+            if(memcmp((u8 *)room+0x80199624u-0x8018efe8u,original,sizeof(original)))ok=0;
+            FieldFxTaskCallback callbacks[8]={RoomM318_StarFlare,RoomM318_ShakeBurst,NULL,NULL,NULL,NULL,NULL,NULL};
+            const u16 sizes[8]={12,8,0,0,0,0,0,0};
+            for(unsigned j=0;j<8;++j)if(p->table.callbacks[j]!=callbacks[j] || p->table.sizes[j]!=sizes[j])ok=0;
+            if(p->initialize!=NULL || p->script!=g_RoomM318ShakeBurstScript)ok=0;
+        }
+        {
+            FieldFxTaskProgram *p=&g_RoomM318EmberBurstEffects;
+            const u32 original[14]={0x80194aacu,0x0u,0x0u,0x0u,0x0u,0x0u,0x0u,0x0u,0x10u,0x0u,0x0u,0x0u,0x80199234u,0x8019965cu};
+            if(memcmp((u8 *)room+0x8019969cu-0x8018efe8u,original,sizeof(original)))ok=0;
+            FieldFxTaskCallback callbacks[8]={RoomM318_EmberBurst,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+            const u16 sizes[8]={16,0,0,0,0,0,0,0};
+            for(unsigned j=0;j<8;++j)if(p->table.callbacks[j]!=callbacks[j] || p->table.sizes[j]!=sizes[j])ok=0;
+            if(p->initialize!=RoomM318_SetEmberBurstParams || p->script!=g_RoomM318EmberBurstScript)ok=0;
+        }
+        {
+            FieldFxTaskProgram *p=&g_RoomM318RisingColumnEffects;
+            const u32 original[14]={0x801955e4u,0x0u,0x0u,0x0u,0x0u,0x0u,0x0u,0x0u,0xcu,0x0u,0x0u,0x0u,0x80199250u,0x801996d4u};
+            if(memcmp((u8 *)room+0x8019970cu-0x8018efe8u,original,sizeof(original)))ok=0;
+            FieldFxTaskCallback callbacks[8]={RoomM318_RisingColumn,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+            const u16 sizes[8]={12,0,0,0,0,0,0,0};
+            for(unsigned j=0;j<8;++j)if(p->table.callbacks[j]!=callbacks[j] || p->table.sizes[j]!=sizes[j])ok=0;
+            if(p->initialize!=RoomM318_SetRisingColumnParams || p->script!=g_RoomM318RisingColumnScript)ok=0;
+        }
+        {
+            FieldFxTaskProgram *p=&g_RoomM318FlashEffects;
+            const u32 original[14]={0x80195d20u,0x80196820u,0x801992a4u,0x0u,0x0u,0x0u,0x0u,0x0u,0x100008u,0x0u,0x0u,0x0u,0x80199294u,0x80199744u};
+            if(memcmp((u8 *)room+0x801997c0u-0x8018efe8u,original,sizeof(original)))ok=0;
+            FieldFxTaskCallback callbacks[8]={RoomM318_FlashBurst,RoomM318_CrossFlash,RoomM318_PlayerGate,NULL,NULL,NULL,NULL,NULL};
+            const u16 sizes[8]={8,16,0,0,0,0,0,0};
+            for(unsigned j=0;j<8;++j)if(p->table.callbacks[j]!=callbacks[j] || p->table.sizes[j]!=sizes[j])ok=0;
+            if(p->initialize!=RoomLib_SetArg1 || p->script!=g_RoomM318FlashScript)ok=0;
+        }
+        {
+            FieldFxTaskProgram *p=&g_RoomM318TwinRibbonEffects;
+            const u32 original[14]={0x80196e4cu,0x0u,0x0u,0x0u,0x0u,0x0u,0x0u,0x0u,0x188u,0x0u,0x0u,0x0u,0x8019937cu,0x801997f8u};
+            if(memcmp((u8 *)room+0x8019980cu-0x8018efe8u,original,sizeof(original)))ok=0;
+            FieldFxTaskCallback callbacks[8]={RoomM318_TwinRibbon,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+            const u16 sizes[8]={392,0,0,0,0,0,0,0};
+            for(unsigned j=0;j<8;++j)if(p->table.callbacks[j]!=callbacks[j] || p->table.sizes[j]!=sizes[j])ok=0;
+            if(p->initialize!=RoomM318_SetScriptArg2 || p->script!=g_RoomM318TwinRibbonScript)ok=0;
+        }
+        {
+            FieldFxTaskProgram *p=&g_RoomM318EmberFountainEffects;
+            const u32 original[14]={0x80197cbcu,0x801988f8u,0x0u,0x0u,0x0u,0x0u,0x0u,0x0u,0x100010u,0x0u,0x0u,0x0u,0x8019938cu,0x80199844u};
+            if(memcmp((u8 *)room+0x801998b8u-0x8018efe8u,original,sizeof(original)))ok=0;
+            FieldFxTaskCallback callbacks[8]={RoomM318_EmberFountain,RoomM318_EmberSpiral,NULL,NULL,NULL,NULL,NULL,NULL};
+            const u16 sizes[8]={16,16,0,0,0,0,0,0};
+            for(unsigned j=0;j<8;++j)if(p->table.callbacks[j]!=callbacks[j] || p->table.sizes[j]!=sizes[j])ok=0;
+            if(p->initialize!=RoomM318_GetActorParams || p->script!=g_RoomM318EmberFountainScript)ok=0;
+        }
+    }
+    free(room);if(ok)puts("Original M318 CUE: 41 constant/track/script ranges and all eight complete native descriptors passed");return ok;
+}
+
+static int original_m318_gate(void)
+{
+    FieldActor *old_player=g_PlayerEntity;FieldFxTaskContext *old_context=g_FieldFxTaskContext;
+    int old_age=g_FieldFxCurrentAge;FieldFxTaskContext task,expected;FieldActor player={0};Combatant state={0};
+    player.state=(void *)&state;g_PlayerEntity=&player;g_FieldFxTaskContext=&task;unsigned count=0;int ok=1;
+    for(int mode=-1;mode<5;mode++)for(int age=-1;age<66;age++)for(int limit=0;limit<65;limit+=8)for(int flag=0;flag<2;flag++){
+        memset(&task,0x5a,sizeof(task));expected=task;g_FieldFxCurrentAge=age;
+        state.stateFlags=0x89432101u|(flag?0x10000000u:0);unsigned flags=state.stateFlags;int want=0;
+        if(mode==0){expected.variables[0]=expected.variables[1]=0;flags&=~0x10000000u;}
+        if(mode==1 && (flag || age>=limit)){want=1;expected.variables[0]=1;expected.variables[1]=flag;}
+        if(RoomM318_PlayerGate(mode,NULL,(intptr_t)&limit)!=want || state.stateFlags!=flags || memcmp(&task,&expected,sizeof(task)))ok=0;
+        ++count;
+    }
+    g_PlayerEntity=old_player;g_FieldFxTaskContext=old_context;g_FieldFxCurrentAge=old_age;
+    if(ok && count==7236)puts("Original M318 player gate: 7236 USA MIPS cases and entire native task canary passed");
+    return ok && count==7236;
 }
 
 static int original_m256_assets(PeDisc *disc,PeDiscFile *exe)
@@ -15638,6 +15921,58 @@ int main(int argc, char **argv)
         size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);
         int ok=room && pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes) && original_m123_ai(room,bytes);
         free(room);pe_disc_close(&disc);return ok?0:1;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m318-states"))return original_m318_numeric() && original_m318_pool_states()?0:1;
+    if(argc==2 && !strcmp(argv[1],"--m318")){
+        if(!original_m318_numeric() || !original_m318_pool_states())return 1;
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0318i")))return 1;
+        int ok=original_m318_programs(&disc);CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);return ok?0:1;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m318-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        u32 token=Text_ParseBase32Id((signed char *)"m0318i");
+        const struct {void *data;size_t size;} zero[]={
+            {&g_RoomM318ActorParams,8},
+            {&g_RoomM318EmberBurstParams,8},
+            {&g_RoomM318RisingColumnParams,16},
+            {&g_RoomM318ScriptArg2,4},
+            {&g_RoomM318StarFlarePhase,4},
+            {&g_RoomScriptArg,4},
+            {&g_RoomM318FanSweepAnchor,8},
+            {&g_RoomM318ShakeSweepAnchor,8},
+            {&g_RoomM318RisingColumnAnchor,8},
+            {&g_RoomM318CrossFlashAnchor,8},
+            {&g_RoomM318EmberFountainAnchor,8},
+        };
+        FieldFxTaskProgram *programs[]={&g_RoomM318FanSweepEffects,&g_RoomM318ShakeSweepEffects,
+            &g_RoomM318ShakeBurstEffects,&g_RoomM318EmberBurstEffects,&g_RoomM318RisingColumnEffects,
+            &g_RoomM318EmberFountainEffects,&g_RoomM318FlashEffects,&g_RoomM318TwinRibbonEffects};
+        for(unsigned pass=0;pass<2;++pass){
+            FieldActor dummy={0};g_RoomM318EmberSpiralModel=g_RoomM318FanSweepSparkPool=&dummy;
+            for(unsigned i=0;i<sizeof(zero)/sizeof(*zero);++i)memset(zero[i].data,0xa5,zero[i].size);
+            for(unsigned i=0;i<8;++i)g_FieldFxTaskPrograms[83+i]=NULL;
+            g_PmCmdHandlerTable[75]=g_PmCmdHandlerTable[70]=NULL;
+            int status=Scene_LoadRoom(token);
+            if(status || g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] || g_PmCmdHandlerTable[70]!=&g_RoomActorClassTable[0] ||
+               g_RoomM318EmberSpiralModel || g_RoomM318FanSweepSparkPool){fprintf(stderr,"M318 real load pass%u status%d\n",pass,status);return 1;}
+            for(unsigned i=0;i<8;++i)if(g_FieldFxTaskPrograms[83+i]!=programs[i])return 1;
+            for(unsigned i=0;i<sizeof(zero)/sizeof(*zero);++i)for(unsigned j=0;j<zero[i].size;++j)if(((u8 *)zero[i].data)[j])return 1;
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original M318 loader: real CUE I/O, native geometry, all ten registrations and mutable-state reset passed twice");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m318-data")){
+        if(!original_m318_numeric() || !original_m318_pool_states() || !original_m318_gate())return 1;
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe;if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe))return 1;
+        int ok=original_m318_assets(&disc,&exe);pe_disc_close(&disc);return ok?0:1;
     }
     if(argc==2 && !strcmp(argv[1],"--m256")){
         if(!original_m256_states() || !original_m256_swing())return 1;

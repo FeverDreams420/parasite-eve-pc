@@ -96,9 +96,8 @@ extern u8 *D_800F32D8;
 extern void Battle_InitEntityColors(void);
 
 /* room_m318 particle callbacks and the sweep anchor. */
-extern int RoomM318_ShakeBurstParticleCallback(int mode,
-                         RoomShakeBurstParticleCallbackView *particle);
-extern int RoomM318_ShakeSweepParticleCallback(int mode, RoomShakeSweepParticle *particle);
+extern int RoomM318_ShakeBurstParticleCallback(int mode, void *data, intptr_t argument);
+extern int RoomM318_ShakeSweepParticleCallback(int mode, void *data, intptr_t argument);
 extern GteShortVector g_RoomM318ShakeSweepAnchor;
 
 /* Sweep particle draw: model asset, matrix helpers and clut lookups. */
@@ -106,7 +105,7 @@ extern void FieldFx_ModelSetTexture(int tpage, int clut);
 
 /* Flash burst controller (RoomM318_FlashBurst): its particle callback, colour
  * seed, glow track and the helpers it calls. */
-extern int RoomM318_FlashBurstParticleCallback(int mode, RoomOrbitTrailParticle *p);
+extern int RoomM318_FlashBurstParticleCallback(int mode, void *data, intptr_t argument);
 extern RenderColor g_RoomM318FlashBurstColor;
 extern u8 g_RoomM318FlashBurstColorTrack[];
 
@@ -127,10 +126,9 @@ typedef struct RoomRisingColumnParams {
 } RoomRisingColumnParams;
 
 extern GteShortVector g_RoomM318RisingColumnAnchor;
-extern int RoomM318_RisingColumnParticleCallback(int mode, RoomOrbitTrailParticle *p);
+extern int RoomM318_RisingColumnParticleCallback(int mode, void *data, intptr_t argument);
 extern GteRotation g_RoomM318FlatTilt;
 extern u8 g_RoomM318RisingColumnParticleColorTrack[];
-extern u16 g_FieldFxTpageSlot10;
 
 /* Cross flash controller (RoomM318_CrossFlash): an anchor with an orientation,
  * and particles that carry their own position, rotation and draw kind. */
@@ -149,7 +147,7 @@ typedef struct RoomCrossFlashParticle {
 } RoomCrossFlashParticle;
 
 extern GteShortVector g_RoomM318CrossFlashAnchor;
-extern int RoomM318_CrossFlashParticleCallback(int mode, RoomCrossFlashParticle *p);
+extern int RoomM318_CrossFlashParticleCallback(int mode, void *data, intptr_t argument);
 extern RenderColor g_RoomM318EmberParticleColor;
 extern u8 g_RoomM318CrossFlashParticleColorTrack[];
 

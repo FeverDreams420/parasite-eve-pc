@@ -209,6 +209,8 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/class_update_callback.c
     src/overlays/room_m256_museum/m256.c
     src/overlays/room_m256_museum/m256_class.c
+    src/overlays/room_m318_chrysler/m318.c
+    src/overlays/room_m318_chrysler/m318_player_gate.c
     src/overlays/room_m404_chrysler/m404.c
     src/overlays/room_m349_cruiser/m349.c
     src/overlays/room_m350_cruiser/m350.c
@@ -442,6 +444,12 @@ if(BUILD_TESTING)
     set_tests_properties(original-akao-queue-backpressure PROPERTIES TIMEOUT 30 LABELS "audio")
     add_test(NAME original-game-m123-ai COMMAND test-original-actor-animation --m123-ai)
     set_tests_properties(original-game-m123-ai PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
+    add_test(NAME original-game-m318 COMMAND test-original-actor-animation --m318)
+    set_tests_properties(original-game-m318 PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
+    add_test(NAME original-game-m318-data COMMAND test-original-actor-animation --m318-data)
+    set_tests_properties(original-game-m318-data PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
+    add_test(NAME original-game-m318-load COMMAND test-original-actor-animation --m318-load)
+    set_tests_properties(original-game-m318-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
     add_test(NAME original-game-m256 COMMAND test-original-actor-animation --m256)
     set_tests_properties(original-game-m256 PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
     add_test(NAME original-game-m256-load COMMAND test-original-actor-animation --m256-load)

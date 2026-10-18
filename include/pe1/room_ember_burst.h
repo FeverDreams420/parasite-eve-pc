@@ -42,7 +42,7 @@ extern RenderColor g_RoomM318EmberRingColor;
 extern RenderColor g_RoomM318EmberHaloColor;
 
 extern int rand(void);
-extern int RoomM318_EmberBurstParticleCallback(int mode, RoomOrbitTrailParticle *p);
+extern int RoomM318_EmberBurstParticleCallback(int mode, void *data, intptr_t argument);
 
 /* Ember fountain controller (RoomM318_EmberFountain): follows its actor for 141
  * frames while it sprays embers, smoke and orbiting sparks. */
@@ -61,7 +61,7 @@ typedef struct RoomEmberFountainChannel {
 } RoomEmberFountainChannel;
 
 extern GteShortVector g_RoomM318EmberFountainAnchor;
-extern int RoomM318_EmberFountainParticleCallback(int mode, RoomOrbitTrailParticle *p);
+extern int RoomM318_EmberFountainParticleCallback(int mode, void *data, intptr_t argument);
 
 /* Ember fountain particle (RoomM318_EmberFountainParticleCallback). */
 extern GteRotation g_RoomM318ZeroSpin;
@@ -132,7 +132,7 @@ typedef struct FieldFanSweepEvent {
 } FieldFanSweepEvent;
 
 extern RenderColor g_FieldFxFanSweepGlowTint;
-extern int RoomM318_FanSweepTrailCallback(int mode, s16 *position);
+extern int RoomM318_FanSweepTrailCallback(int mode, void *data, intptr_t argument);
 extern int FieldFx_UpdateCallbackList(void *pool);
 
 /* Spiral drop controller (RoomM318_SpiralDrop): attaches to the actor named by
@@ -168,22 +168,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSpiralDropSparkRecord, callback.speed) == 6,
                   room_spiral_drop_spark_speed_offset);
 
 extern u8 g_RoomM318SpiralDropColorTrack[];
-extern int RoomM318_SpiralDropSparkCallback(int mode, volatile RoomSpiralDropSparkRecord *spark);
-
-/* Attaches the effect to the first live actor with the given ids, or
- * reports the missing actor. */
-static inline void RoomEffect_AttachToActor(int subId, int typeId, void *anchor) {
-    FieldActor *actor;
-
-    for (actor = g_FieldActorListHead; actor != 0; actor = actor->next) {
-        if (actor != g_PlayerEntity && actor->state != 0 &&
-            actor->state->control10.command_value > 0 &&
-            actor->sub_id == subId && actor->type_id == typeId) {
-            FieldFx_GetActorPosition((char *)actor, 0, (s16 *)anchor);
-            return;
-        }
-    }
-    printf(g_RoomM318GetMayaPosErrorFormat, subId, typeId);
-}
+extern int RoomM318_SpiralDropSparkCallback(int mode, void *data, intptr_t argument);
 
 #endif

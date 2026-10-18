@@ -61,6 +61,6 @@ extern GteShortVector g_RoomM318TwinRibbonShed;
 extern RenderColor g_RoomM318TwinRibbonColorA;
 extern RenderColor g_RoomM318TwinRibbonColorB;
 extern RenderColor g_RoomM318TwinRibbonColorC;
-extern int RoomM318_TwinRibbonPulseCallback(int mode, RoomTwinRibbonPulse *p);
+extern int RoomM318_TwinRibbonPulseCallback(int mode, void *data, intptr_t argument);
 
 #endif

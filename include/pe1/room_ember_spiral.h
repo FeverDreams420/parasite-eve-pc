@@ -21,6 +21,6 @@ typedef struct RoomEmberSpiral {
 
 extern void *g_RoomM318EmberSpiralModel;
 extern u8 g_RoomM318EmberSpiralColorTrack[];
-extern int RoomM318_EmberSpiralParticleCallback(int mode, RoomOrbitTrailParticle *p);
+extern int RoomM318_EmberSpiralParticleCallback(int mode, void *data, intptr_t argument);
 
 #endif

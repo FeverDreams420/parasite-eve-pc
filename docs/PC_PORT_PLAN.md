@@ -2,7 +2,107 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
-Najnowsza integracja: cały oryginalny moduł M256 muzeum — m256.c i
+M318 — utrwalono porównania wszystkich13 callbacków cząstek w istniejącym
+repo fixture. Wszystkie33 oryginalne funkcje nadal mają definicje w dwóch
+pierwotnych plikach; audyt preprocesowanych źródeł względem symboli USA:
+/tmp/pe-m318-numeric-v1-function-proof.json. --m318-states wykonuje14256 stanów11 callbacków (hash6825cef1d3ef1dbd)
+oraz5184 stany FanSweepSpark/ShakeSweepParticle z pełną/wolną pulą
+(hash0a6f03b306e499ce). Cały payload z guardami, wynik, RNG oraz active/age
++16B payload każdego dziecka zgadzają się z oryginalnym USA MIPS; porównanie
+puli pomija wyłącznie natywne wyrównanie, nie dane cząstek. Tryby0/1/3,
+trzy stany, osiem liczników, skrajne prędkości, trzy podłogi i dwa RNG.
+Dowody /tmp/pe-m318-numeric-cpu-v2-proof.json i
+/tmp/pe-m318-pools-cpu-v1-proof.json. Tryb2/GTE jest wykonywany w pełnych
+cyklach PM, lecz bez porównania pikseli/PCM PS1. --m318 i --m318-data
+obowiązkowo wykonują oba zakresy stanów; nie są już harnessami wyłącznie/tmp.
+
+Kandydat /tmp/pe-m318-numeric-v1:183+183 świeże obiekty i cztery executable,
+Psyz/SDL nadal nieinstrumentowane. Dedykowane --m318 normal/SAN kończą
+exit0 po19440 stanach i32 pełnych cyklach PM/profil. Wszystkie34 regresje
+kończą terminalnym exit0, pełne JSON i1MiB VRAM replayów zgodne ze starą bazą
+i między profilami, telefoniczny B2 identyczny bajtowo, źródłowe karty
+niezmienione. /tmp/pe-m318-numeric-v1-verification.json oraz final-build-proof.json
+potwierdzają też rehash366 obiektów, wszystkich zależności, bibliotek i czterech
+executable. Użytkowy build/parasite-eve-pc z M318 przeszedł osobny replay67791:
+exit0/106.84s, HP76, całe JSON/VRAM identyczne z zamrożonym kandydatem,
+A2 niezmieniony, prywatnebu10 puste. Dowód
+/tmp/pe-m318-numeric-v1-user-proof.json, SHA256 executable
+33e241bd49f2d625e0f0e40aadc51d05c3a6edf9278fad7007a8df0080c3ef10.
+Pełny Chrysler, M123 i cała kampania nadal pozostają nieukończone.
+
+Poprzedni etap: M318 — pełne autorskie cykle PM są już wykonane: --m318 / original-game-m318
+w istniejącym tests/original_actor_animation.c uruchamia osiem niezmienionych
+programów, po dwa warianty i dwa draw sloty (32 cykle/profil). Odczyt sceny,
+geometria i modele efektów pochodzą z CUE; wspólny model8AB5B684 z oryginalnego
+startup resource pack. Lokalne aktory fixture mają kontrolowane macierze,
+a tabela animacji lokalnej Ayi zawiera tylko frame_count potrzebny do
+halt/resume; nie jest to odtworzenie animacji Ayi ani przejście kampanii.
+Kontrolowane są wszystkie wywołane callbacki, dzieci, zakończenie programów,
+trafienia ShakeSweep/ShakeBurst oraz bliski/daleki EmberSpiral, akcja2→4,
+arena/packet/OT canaries, RisingColumn ascend/descend, Flash success w klatce
+20/40 oraz komenda PM1 zatrzymująca TwinRibbon w klatce64.
+Timeout PlayerGate pozostawia success variable1=0 i nie otwiera następnego
+wait — oryginalny program oczekuje sukcesu; osobny test7236 obejmuje timeout.
+
+Pełne cykle ujawniły rzeczywisty błąd64-bit w M318: player flags odczytywane
+przez FieldActorState.flags zamiast Combatant.stateFlags. Bramkę i trzy miejsca
+trafienia poprawiono w oryginalnych plikach. Poprzedni fixture bramki używał
+FieldActorState i maskował różnicę natywnego layoutu; obecny używa Combatant.
+Świeży /tmp/pe-m318-gate-native-v2-proof.json potwierdza7236 przypadków w obu
+profilach i pełny canary; oryginalny MIPS /tmp/pe-m318-gate-cpu-v1-proof.json.
+
+Dodatkowy oracle MIPS i osobny natywny harness wykonują6480 stanów pięciu
+callbacków: EmberBurst/RisingColumn/FlashBurst/EmberFountain/EmberSpiral,
+tryby0/1/3, trzy stany, osiem timerów, skrajne prędkości, trzy podłogi i dwa RNG.
+Wynik+cały payload36B z guardami+RNG mają zgodny hash8ef38595f415e971 normal/SAN.
+/tmp/pe-m318-orbit-{cpu,native}-v1-proof.json. To nie obejmuje GTE/pikseli,
+pozostałych callbacków numerycznych ani PCM. Ten dodatkowy harness jest w /tmp;
+przeniesienie jego zakresu do istniejącego repo fixture pozostaje do wykonania.
+
+Aktualny zamrożony kandydat /tmp/pe-m318-cycles-integrated-v1 ma183+183 świeże
+obiekty, gry i fixture normal/ASan/UBSan/function, z nieinstrumentowanymi PsyZ/SDL.
+Wszystkie34 regresje kończą terminalnym exit0; checker/log/verification.json
+noszą ten sam prefiks. Całe JSON i1MiB VRAM replayów są identyczne z poprzednią
+bazą i między normal/SAN, telefoniczny B2 identyczny bajtowo, źródłowe karty
+niezmienione. Oba źródła M318 kompilują się bez ostrzeżeń w obu profilach.
+Finalny rehash366 obiektów, zależności, bibliotek i executable:
+/tmp/pe-m318-cycles-integrated-v1-final-build-proof.json. Build użytkownika
+pozostaje M256 do zakończenia dalszej weryfikacji. M123 i pełna kampania,
+Chrysler, obraz/PCM PS1 i pełny zakres PC nadal nie mają dowodu ukończenia.
+
+Wcześniejszy etap danych M318: M318 Chrysler jest już kompilowany z obu istniejących plików
+w miejscu. Odtworzono 41 zakresów stałych/krzywych/skryptów i osiem pełnych
+programów PM. Loader waliduje dziesięć oryginalnych adresów i rejestruje
+klasy70/75 oraz programy168..175; na każde wejście zeruje mutowalne dane.
+Slot tekstury10 jest rzeczywistym elementem istniejącej tablicy, nie osobnym
+niezdefiniowanym symbolem. --m318-data sprawdza wszystkie dane i pełne
+oryginalne deskryptory oraz ich natywne wskaźniki/callbacki/rozmiary;
+FanSweep powiększa payload ze wskaźnikiem do sizeof(RoomFanSweep).
+Cała współdzielona biblioteka aktorów13084B i42 wskaźniki klas zgadzają się
+z M022 po111 relokacjach J/JAL i20 niskich częściach adresów (delta120);
+/tmp/pe-m318-common-library-v1-proof.json. 7236 przypadków PlayerGate
+pozostaje zgodne z USA MIPS. --m318-load
+odczytuje rzeczywisty CUE dwukrotnie, rozwija geometrię i sprawdza wszystkie
+dziesięć rejestracji oraz reset uprzednio zabrudzonego stanu.
+
+Zamrożony roboczy kandydat /tmp/pe-m318-data-v3:183+183 świeże obiekty,
+gry i fixture normal/ASan/UBSan/function. Cztery dedykowane testy danych/load
+kończą exit0; /tmp/pe-m318-data-v3-test-proof.json. Archiwa PsyZ/SDL pozostają
+nieinstrumentowane. Wszystkie32 regresje kończą terminalnym exit0: pełne replaye
+M123/Save/Continue/Medicine2, pierwsza Melissa, --assets, M349/M350/M404/M256,
+ich rzeczywiste load, --m123-ai oraz nowe M318 data/load, każdy normal/SAN.
+Całe JSON i1MiB VRAM replayów zgodne z poprzednią bazą i między profilami;
+telefoniczny B2 identyczny, źródłowe karty niezmienione. Dowód
+/tmp/pe-m318-data-v3-verification.json. Finalny rehash366 obiektów, wszystkich
+zależności, obu archiwów na profil i czterech executable:
+/tmp/pe-m318-data-v3-final-build-proof.json.
+Nie wykonano jeszcze pełnych cykli ośmiu efektów M318 ani referencji liczbowych
+ich cząstek; moduł nie ma potwierdzenia kompletnego gameplayu ani zgodności
+obrazu/audio. Build użytkownika pozostaje M256. Następny krok to pełne cykle
+PM z prawdziwymi assetami, testy stanów i ewentualne naprawy UB; dopiero
+następny kompletny kandydat może zastąpić build użytkownika.
+
+Poprzednia pełniej zweryfikowana integracja: cały oryginalny moduł M256 muzeum — m256.c i
 m256_class.c — jest kompilowany w miejscu i podpięty do Scene_LoadRoom.
 Wszystkie18 funkcji M256 pozostały w swoich plikach. Dołączono również
 istniejący room_lib/class_update_callback.c; nie duplikowano tej funkcji
@@ -12123,3 +12223,27 @@ nie pokonaniem bossa (zniknięcie aktorów przy HP0 to cleanup). Nie zmieniono
 mechaniki ani kodu produkcyjnego. Dalsze kroki wymagają lepszej sekwencji
 uników albo rozłożenia obrażeń między głowy przed pokonaniem drugiej;
 aktualny potwierdzony punkt67791 ma HP76 i head4:344.
+
+
+M318 Chrysler — rozpoczęta normalizacja całego istniejącego modułu w miejscu.
+Oba pliki nadal poza natywnym linkiem; nie jest to działająca lokacja ani
+ukończona integracja. Wszystkie 25 jawnych callbacków efektów mają ABI
+(int, void *, intptr_t), callback FanSweepSpark pozostaje w dotychczasowym
+include. Konstruktory zwracają pełne wskaźniki, zachowując 32-bitowe wartości
+parametrów. Pule używają end aktywnego natywnego slotu; właściciel, action_state,
+core_flags i zmienne kontekstu są odczytywane przez kanoniczne struktury.
+Usunięto lokalny fałszywy widok właściciela i zdublowany inline wyszukiwania
+aktora; trzy emitery wywołują istniejące RoomM318_FindActorPosition.
+
+Bramka PlayerGate: 7236 przypadków (tryby -1..4, wiek -1..65, dziewięć limitów,
+flaga gracza 0/1), identyczne oczekiwane wyniki na oryginalnych instrukcjach
+USA MIPS i natywnie normal/ASan/UBSan/function. Canary całego kontekstu
+potwierdza zapisy tylko variables[0..1]; test natywny dodatkowo sprawdza
+pełne wskaźniki initializerów. Dowody /tmp/pe-m318-gate-{cpu,native}-v1-proof.json.
+Cztery świeże obiekty obu źródeł normal/SAN przechodzą sprawdzanie typów
+wskaźników i callbacków jako błędy; /tmp/pe-m318-native-abi-v1-proof.json.
+Są to testy fragmentu i kompilacja obiektów, nie świeży kandydat całej gry.
+Kolejny krok: oryginalne dane/osiem programów PM, dziesięć bindingów loadera,
+pełne cykle efektów z rzeczywistymi assetami, numeryczne referencje MIPS,
+naprawy ewentualnego UB, następnie świeży pełny build i regresje obu profili.
+Dotychczasowy build użytkownika pozostaje kandydatem M256.

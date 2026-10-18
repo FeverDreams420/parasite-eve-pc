@@ -7,6 +7,9 @@
 #include "pe1/fieldfx_task.h"
 #include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte.h"
+#include "pe1/geom_state.h"
+#include "pe1/room_fx.h"
+#include "pe1/room_module.h"
 #include "pe1/gte_types.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/random.h"
@@ -17,11 +20,6 @@
 #include "pe1/room_twin_ribbon.h"
 
 #include "m318_externs.h"
-
-typedef struct RoomM318Node {
-    char pad[8];
-    void *link;
-} RoomM318Node;
 
 typedef RoomTwinRibbonPulse RoomM318Pulse;
 
@@ -46,7 +44,9 @@ FieldActor *RoomM318_FindActorPosition(int type_id, int sub_id, s16 *position) {
     return 0;
 }
 
-s32 RoomM318_FanSweepTrailCallback(s32 mode, s16 *pos) {
+int RoomM318_FanSweepTrailCallback(int mode, void *data, intptr_t argument) {
+    s16 *pos = data;
+    (void)argument;
     s16 in[4];
     s16 out[4];
     switch (mode) {
@@ -87,24 +87,26 @@ s32 RoomM318_FanSweepTrailCallback(s32 mode, s16 *pos) {
  * every other frame it launches a spark on an angle that turns by a third
  * of a circle, updates the trail pool for 70 frames and each draw
  * publishes its anchor for the trail. */
-int RoomM318_FanSweep(int mode, RoomFanSweep *sweep, RoomEmberBurstParams *params) {
+int RoomM318_FanSweep(int mode, void *data, intptr_t argument) {
+    RoomFanSweep *sweep = data;
+    RoomEmberBurstParams *params = (void *)argument;
     RoomFanSweepSpark *spark;
     int handles;
 
     switch (mode) {
     case 0:
         sweep->angle = rand();
-        RoomEffect_AttachToActor(params->subId, params->typeId, sweep);
+        RoomM318_FindActorPosition(params->subId, params->typeId, (s16 *)sweep);
         sweep->y = g_RoomFloorY->y;
         FieldFx_PlaySoundAtOwner(0x5F3, FieldFx_GetOwnerProgress());
         FieldFx_PlaySoundAtOwner(0x5F4, 0x80);
-        handles = FieldFx_InitCallbackList(ANIM_POOL_AS(RoomEmberBurstChannel)->pool, 0x10, 0x18,
-                                (FieldFxCallbackListCallback)RoomM318_FanSweepSpark);
+        handles = FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x10, 0x18,
+                                RoomM318_FanSweepSpark);
         handles += FieldFx_AllocCallbackList(&sweep->pool, handles, 8, 0x12, RoomM318_FanSweepTrailCallback);
         return handles;
     case 1:
         if (g_FieldFxCurrentAge < 0x20 && (g_FieldFxCurrentAge & 1)) {
-            spark = (RoomFanSweepSpark *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomEmberBurstChannel)->pool);
+            spark = (RoomFanSweepSpark *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (spark) {
                 spark->angle = sweep->angle;
                 spark->radius = 0xC8;
@@ -154,7 +156,9 @@ int RoomM318_FanSweep(int mode, RoomFanSweep *sweep, RoomEmberBurstParams *param
 #undef ROOM_FAN_SWEEP_SPARK_PALETTE_LIT
 #undef ROOM_FAN_SWEEP_SPARK_PALETTE_BASE
 
-int RoomM318_SpiralDropSparkCallback(int mode, volatile RoomSpiralDropSparkRecord *record) {
+int RoomM318_SpiralDropSparkCallback(int mode, void *data, intptr_t argument) {
+    volatile RoomSpiralDropSparkRecord *record = data;
+    (void)argument;
     volatile RoomSpiralDropSparkCallbackView *particle = &record->callback;
     int color[2];
     GteShortVector position;
@@ -192,7 +196,9 @@ int RoomM318_SpiralDropSparkCallback(int mode, volatile RoomSpiralDropSparkRecor
 /* Spiral drop: attaches to the actor named by its parameters; for 51
  * frames it drops a falling spark from a point circling the actor on a
  * turning angle, while a glowing ring pulses there and sets the radius. */
-int RoomM318_SpiralDrop(int mode, RoomSpiralDrop *drop, RoomEmberBurstParams *params) {
+int RoomM318_SpiralDrop(int mode, void *data, intptr_t argument) {
+    RoomSpiralDrop *drop = data;
+    RoomEmberBurstParams *params = (void *)argument;
     RenderColor color;
     GteShortVector position;
     GteRotation spin;
@@ -203,12 +209,12 @@ int RoomM318_SpiralDrop(int mode, RoomSpiralDrop *drop, RoomEmberBurstParams *pa
     case 0:
         drop->angle = rand();
         drop->radius = 0;
-        RoomEffect_AttachToActor(params->subId, params->typeId, drop);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomEmberBurstChannel)->pool, 8, 0x18,
-                             (FieldFxCallbackListCallback)RoomM318_SpiralDropSparkCallback);
+        RoomM318_FindActorPosition(params->subId, params->typeId, (s16 *)drop);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 8, 0x18,
+                             RoomM318_SpiralDropSparkCallback);
     case 1:
         if (g_FieldFxCurrentAge < 0x33) {
-            spark = (RoomSpiralDropSparkRecord *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomEmberBurstChannel)->pool);
+            spark = (RoomSpiralDropSparkRecord *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (spark) {
                 spark->emitter.x = drop->x + rcos(drop->angle) * drop->radius / 4096;
                 spark->emitter.z = drop->z + rsin(drop->angle) * drop->radius / 4096;
@@ -255,7 +261,9 @@ int RoomM318_SpiralDrop(int mode, RoomSpiralDrop *drop, RoomEmberBurstParams *pa
 /* Sweep particle: while it rides the sweep centre it spins up, pulses its
  * size and drops a decaying copy every other frame; the draw turns and
  * stretches the shared model at its position. */
-int RoomM318_ShakeSweepParticleCallback(int mode, RoomShakeSweepParticle *p) {
+int RoomM318_ShakeSweepParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomShakeSweepParticle *p = data;
+    (void)argument;
     GteShortVector rotation;
     RoomSpriteMatrix matrix;
     RoomFxVec4 scale;
@@ -276,7 +284,7 @@ int RoomM318_ShakeSweepParticleCallback(int mode, RoomShakeSweepParticle *p) {
             p->size = rsin((g_FieldFxCurrentAge << 11) / 24) / 32;
             p->stretch = (g_FieldFxCurrentAge << 12) / 24;
             if (g_FieldFxCurrentAge & 1) {
-                child = (RoomShakeSweepParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+                child = (RoomShakeSweepParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child != 0) {
                     child->state = 1;
                     child->x = p->x;
@@ -332,10 +340,10 @@ int RoomM318_ShakeSweepParticleCallback(int mode, RoomShakeSweepParticle *p) {
             FieldFx_ModelSetTexture(page, (u16)palette);
         }
         FieldFx_ModelSetSemiTrans(1);
-        FieldFx_ModelSaveColors(D_800F32D8);
-        FieldFx_ModelSetColors(D_800F32D8, (u8)(p->size / 3), 0, (u8)(p->size / 2));
+        FieldFx_ModelSaveColors((char *)D_800F32D8);
+        FieldFx_ModelSetColors((char *)D_800F32D8, (u8)(p->size / 3), 0, (u8)(p->size / 2));
         FieldFx_ModelDraw((union FieldTexturedModel *)D_800F32D8, &matrix);
-        FieldFx_ModelRestoreColors(D_800F32D8);
+        FieldFx_ModelRestoreColors((char *)D_800F32D8);
         break;
     }
     return 0;
@@ -345,12 +353,14 @@ int RoomM318_ShakeSweepParticleCallback(int mode, RoomShakeSweepParticle *p) {
  * frames shakes the camera while handing a turning sweep angle to a new
  * particle every sixth frame; at frame 44 it hands the actor to the scene
  * script, and every draw publishes the anchor as the sweep centre. */
-int RoomM318_ShakeSweep(int mode, RoomShakeSweepAnchor *anchor) {
-    RoomShakeBurstSlot *pool;
-    RoomShakeBurstObject *object;
-    RoomShakeBurstChannel *channel;
+int RoomM318_ShakeSweep(int mode, void *data, intptr_t argument) {
+    RoomShakeSweepAnchor *anchor = data;
+    (void)argument;
+    FieldActor *pool;
+    FieldActorState *object;
+    FieldActor *channel;
     RoomShakeSweepParticle *next;
-    void **soundSlot;
+    struct SceneAssetBlob **soundSlot;
     int volume;
     int time;
 
@@ -366,25 +376,25 @@ int RoomM318_ShakeSweep(int mode, RoomShakeSweepAnchor *anchor) {
             Akao_SendTableCommand(*soundSlot, 0x5EF, time, 0x80, volume);
             /* Retail re-reads the sound owner for the test and again for
              * the argument. */
-            if (*(void *volatile *)soundSlot != 0)
+            if (*(struct SceneAssetBlob *volatile *)soundSlot != 0)
                 Akao_SendTableCommand(*soundSlot, 0x5F0, 0x80, 0x80, volume);
         }
-        if (FX_TASK_AS(RoomShakeBurstEvent)->active) {
-            pool = ANIM_OWNER_AS(RoomShakeBurstChannel)->pool;
-            if (pool != 0 && pool->object != 0) {
-                object = pool->object;
-                if (*object->status == 1)
-                    *object->status = 2;
+        if (g_FieldFxTaskContext->flags) {
+            pool = g_FieldFxOwner->actor;
+            if (pool != 0 && pool->state != 0) {
+                object = pool->state;
+                if (*object->action_state == 1)
+                    *object->action_state = 2;
             }
         }
         FieldFx_ModelScrollUv((union FieldTexturedModel *)D_800F32D8, 0, 0);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool, 0x10, 0x18,
-                             (FieldFxCallbackListCallback)RoomM318_ShakeSweepParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x10, 0x18,
+                             RoomM318_ShakeSweepParticleCallback);
     case 1:
         if (g_FieldFxCurrentAge < 0x2B)
             Battle_HaltOnPositiveX();
         if (g_FieldFxCurrentAge < 0x28 && g_FieldFxCurrentAge % 6 == 0) {
-            next = (RoomShakeSweepParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+            next = (RoomShakeSweepParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (next != 0) {
                 next->angle = anchor->angle;
                 next->state = 0;
@@ -398,13 +408,13 @@ int RoomM318_ShakeSweep(int mode, RoomShakeSweepAnchor *anchor) {
         }
         if (g_FieldFxCurrentAge == 0x2B)
             Battle_InitEntityColors();
-        if (g_FieldFxCurrentAge == 0x2C && FX_TASK_AS(RoomShakeBurstEvent)->active) {
-            channel = ANIM_OWNER_AS(RoomShakeBurstChannel);
-            if ((channel->pool->object->flags & 0x3F000000) == 0x01000000) {
-                (*((RoomShakeBurstEntity **)D_8009D254))->flags |= 0x4000;
-                channel->pool->object->flags =
-                    (channel->pool->object->flags & 0xC0FFFFFF) | 0x19000000;
-                channel->pool->object->flags |= 0x80000000;
+        if (g_FieldFxCurrentAge == 0x2C && g_FieldFxTaskContext->flags) {
+            channel = g_FieldFxOwner->actor;
+            if ((channel->state->core_flags & 0x3F000000) == 0x01000000) {
+                ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                channel->state->core_flags =
+                    (channel->state->core_flags & 0xC0FFFFFF) | 0x19000000;
+                channel->state->core_flags |= 0x80000000;
             }
         }
         if (g_FieldFxCurrentAge < 0x40)
@@ -419,8 +429,10 @@ int RoomM318_ShakeSweep(int mode, RoomShakeSweepAnchor *anchor) {
     return 0;
 }
 
-int RoomM318_ArcingSparkCallback(int mode, RenderArcingEffect *state)
+int RoomM318_ArcingSparkCallback(int mode, void *data, intptr_t argument)
 {
+    RenderArcingEffect *state = data;
+    (void)argument;
     GteShortVector position;
     GteRotation rotation;
     int intensity, palette;
@@ -452,8 +464,10 @@ int RoomM318_ArcingSparkCallback(int mode, RenderArcingEffect *state)
     return 0;
 }
 
-int RoomM318_ArcingSparks(int mode, GteShortVector *state)
+int RoomM318_ArcingSparks(int mode, void *data, intptr_t argument)
 {
+    GteShortVector *state = data;
+    (void)argument;
     RenderArcingEffect *particle;
     switch (mode) {
     case 0:
@@ -488,8 +502,10 @@ int RoomM318_ArcingSparks(int mode, GteShortVector *state)
     return 0;
 }
 
-int RoomM318_StarFlare(int mode, RenderSparkEmitter *state)
+int RoomM318_StarFlare(int mode, void *data, intptr_t argument)
 {
+    RenderSparkEmitter *state = data;
+    (void)argument;
     GteShortVector position;
     RenderColor color;
     int scale;
@@ -497,7 +513,7 @@ int RoomM318_StarFlare(int mode, RenderSparkEmitter *state)
     case 0:
         state->phase = g_RoomM318StarFlarePhase;
         g_RoomM318StarFlarePhase += 1365;
-        FieldFx_GetActorPosition(ANIM_OWNER_AS(RoomM318Node)->link, 0, &state->position.x);
+        FieldFx_GetActorPosition((char *)g_FieldFxOwner->actor, 0, &state->position.x);
         state->position.y -= 100;
         state->position.x += rcos(state->phase) * 300 / 4096;
         state->position.z += rsin(state->phase) * 300 / 4096;
@@ -521,7 +537,9 @@ int RoomM318_StarFlare(int mode, RenderSparkEmitter *state)
     return 0;
 }
 
-int RoomM318_ShakeBurstParticleCallback(int mode, RoomShakeBurstParticleCallbackView *particle) {
+int RoomM318_ShakeBurstParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomShakeBurstParticleCallbackView *particle = data;
+    (void)argument;
     int color[2];
     GteShortVector position;
     int kind, palette, scale, frame, random, value;
@@ -561,24 +579,26 @@ int RoomM318_ShakeBurstParticleCallback(int mode, RoomShakeBurstParticleCallback
 /* Wakes the actor's status byte and plays the burst sounds, then for 39
  * frames shakes the camera while scattering particles around the anchor
  * for the first 21; at frame 40 it hands the actor to the scene script. */
-int RoomM318_ShakeBurst(int mode, RoomShakeBurstPoint *anchor) {
-    RoomShakeBurstSlot *pool;
-    RoomShakeBurstObject *object;
-    RoomShakeBurstChannel *channel;
+int RoomM318_ShakeBurst(int mode, void *data, intptr_t argument) {
+    RoomShakeBurstPoint *anchor = data;
+    (void)argument;
+    FieldActor *pool;
+    FieldActorState *object;
+    FieldActor *channel;
     RoomShakeBurstPoint *next;
-    void **soundSlot;
+    struct SceneAssetBlob **soundSlot;
     int volume;
     int time;
 
     switch (mode) {
     case 0:
         FieldFx_GetActorPosition((char *)D_8009D254, 0, (s16 *)anchor);
-        if (FX_TASK_AS(RoomShakeBurstEvent)->active) {
-            pool = ANIM_OWNER_AS(RoomShakeBurstChannel)->pool;
-            if (pool != 0 && pool->object != 0) {
-                object = pool->object;
-                if (*object->status == 1)
-                    *object->status = 2;
+        if (g_FieldFxTaskContext->flags) {
+            pool = g_FieldFxOwner->actor;
+            if (pool != 0 && pool->state != 0) {
+                object = pool->state;
+                if (*object->action_state == 1)
+                    *object->action_state = 2;
             }
         }
         soundSlot = g_LoadedSceneAssetBlock;
@@ -588,16 +608,16 @@ int RoomM318_ShakeBurst(int mode, RoomShakeBurstPoint *anchor) {
             Akao_SendTableCommand(*soundSlot, 0x5F1, time, 0x80, volume);
             /* Retail re-reads the sound owner for the test and again for
              * the argument. */
-            if (*(void *volatile *)soundSlot != 0)
+            if (*(struct SceneAssetBlob *volatile *)soundSlot != 0)
                 Akao_SendTableCommand(*soundSlot, 0x5F2, 0x80, 0x80, volume);
         }
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool, 8, 0x14,
-                             (FieldFxCallbackListCallback)RoomM318_ShakeBurstParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 8, 0x14,
+                             RoomM318_ShakeBurstParticleCallback);
     case 1:
         if (g_FieldFxCurrentAge < 0x27)
             Battle_HaltOnPositiveX();
         if (g_FieldFxCurrentAge < 0x15) {
-            next = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+            next = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (next != 0) {
                 next->x = anchor->x + (rand() & 0x1FF) - 0x100;
                 next->y = anchor->y + (rand() & 0x1FF) - 0x100;
@@ -606,13 +626,13 @@ int RoomM318_ShakeBurst(int mode, RoomShakeBurstPoint *anchor) {
         }
         if (g_FieldFxCurrentAge == 0x27)
             Battle_InitEntityColors();
-        if (g_FieldFxCurrentAge == 0x28 && FX_TASK_AS(RoomShakeBurstEvent)->active) {
-            channel = ANIM_OWNER_AS(RoomShakeBurstChannel);
-            if ((channel->pool->object->flags & 0x3F000000) == 0x01000000) {
-                (*((RoomShakeBurstEntity **)D_8009D254))->flags |= 0x4000;
-                channel->pool->object->flags =
-                    (channel->pool->object->flags & 0xC0FFFFFF) | 0x19000000;
-                channel->pool->object->flags |= 0x80000000;
+        if (g_FieldFxCurrentAge == 0x28 && g_FieldFxTaskContext->flags) {
+            channel = g_FieldFxOwner->actor;
+            if ((channel->state->core_flags & 0x3F000000) == 0x01000000) {
+                ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                channel->state->core_flags =
+                    (channel->state->core_flags & 0xC0FFFFFF) | 0x19000000;
+                channel->state->core_flags |= 0x80000000;
             }
         }
         if (g_FieldFxCurrentAge < 0x35)
@@ -641,7 +661,9 @@ int RoomM318_ShakeBurst(int mode, RoomShakeBurstPoint *anchor) {
 /* Ember burst particle: embers drift up and bounce off the floor, flashes
  * pulse in place, and orbiting sparks sweep around their anchor drawing
  * the glow track; smoke rises and fades. */
-int RoomM318_EmberBurstParticleCallback(int mode, RoomOrbitTrailParticle *p) {
+int RoomM318_EmberBurstParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomOrbitTrailParticle *p = data;
+    (void)argument;
     GteRotation spin = g_RoomM318ZeroSpin;
     GteShortVector offset;
     RenderColor color = g_RoomM318EmberParticleColor;
@@ -770,7 +792,9 @@ int RoomM318_EmberBurstParticleCallback(int mode, RoomOrbitTrailParticle *p) {
 /* Ember burst: glows up for 16 frames, then for 24 frames scatters
  * orbiting sparks, embers on odd frames and smoke on even ones, then fades;
  * while it glows it draws a flickering halo and a ring. */
-int RoomM318_EmberBurst(int mode, RoomEmberBurst *burst, RoomEmberBurstParams *params) {
+int RoomM318_EmberBurst(int mode, void *data, intptr_t argument) {
+    RoomEmberBurst *burst = data;
+    RoomEmberBurstParams *params = (void *)argument;
     RenderColor ringColor = g_RoomM318EmberRingColor;
     RenderColor haloColor = g_RoomM318EmberHaloColor;
     RoomOrbitTrailParticle *child;
@@ -781,11 +805,11 @@ int RoomM318_EmberBurst(int mode, RoomEmberBurst *burst, RoomEmberBurstParams *p
         burst->state = 0;
         burst->timer = 0;
         burst->glow = 0;
-        RoomEffect_AttachToActor(params->subId, params->typeId, burst);
+        RoomM318_FindActorPosition(params->subId, params->typeId, (s16 *)burst);
         FieldFx_PlaySoundAtOwner(0x5F5, FieldFx_GetOwnerProgress());
         FieldFx_PlaySoundAtOwner(0x5F6, 0x80);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomEmberBurstChannel)->pool, 0x14, 0x28,
-                             (FieldFxCallbackListCallback)RoomM318_EmberBurstParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x28,
+                             RoomM318_EmberBurstParticleCallback);
     case 1:
         switch (burst->state) {
         case 0:
@@ -798,7 +822,7 @@ int RoomM318_EmberBurst(int mode, RoomEmberBurst *burst, RoomEmberBurstParams *p
         case 1:
             burst->timer++;
             if (burst->timer < 0x19) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomEmberBurstChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -815,7 +839,7 @@ int RoomM318_EmberBurst(int mode, RoomEmberBurst *burst, RoomEmberBurstParams *p
                 }
             }
             if (burst->timer & 1) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomEmberBurstChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -831,7 +855,7 @@ int RoomM318_EmberBurst(int mode, RoomEmberBurst *burst, RoomEmberBurstParams *p
                 }
             }
             if (!(burst->timer & 1)) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomEmberBurstChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -892,7 +916,9 @@ int RoomM318_EmberBurst(int mode, RoomEmberBurst *burst, RoomEmberBurstParams *p
 
 /* Rising column particle: rings pulse at the column centre while sparks
  * drift and bounce on the floor; both draw with the column's glow track. */
-int RoomM318_RisingColumnParticleCallback(int mode, RoomOrbitTrailParticle *p) {
+int RoomM318_RisingColumnParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomOrbitTrailParticle *p = data;
+    (void)argument;
     GteRotation spin = g_RoomM318FlatTilt;
     RenderColor color;
     int fall;
@@ -986,8 +1012,9 @@ int RoomM318_RisingColumnParticleCallback(int mode, RoomOrbitTrailParticle *p) {
 /* Rising column: follows the actor while its height eases from the floor
  * over the configured duration, shedding a falling spark every frame and
  * a ring every fourth; the draw publishes it as the column centre. */
-int RoomM318_RisingColumn(int mode, RoomRisingColumn *column,
-                  RoomRisingColumnParams *params) {
+int RoomM318_RisingColumn(int mode, void *data, intptr_t argument) {
+    RoomRisingColumn *column = data;
+    RoomRisingColumnParams *params = (void *)argument;
     RoomOrbitTrailParticle *child;
     int rise;
 
@@ -996,11 +1023,11 @@ int RoomM318_RisingColumn(int mode, RoomRisingColumn *column,
         column->counter = 0;
         column->timer = 0;
         FieldFx_PlaySoundAtOwner(0x5EA, FieldFx_GetOwnerProgress());
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool, 0x14, 0x20,
-                             (FieldFxCallbackListCallback)RoomM318_RisingColumnParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x20,
+                             RoomM318_RisingColumnParticleCallback);
     case 1:
         column->timer++;
-        FieldFx_GetActorPosition((char *)ANIM_OWNER_AS(RoomShakeBurstChannel)->pool, 0, (s16 *)column);
+        FieldFx_GetActorPosition((char *)g_FieldFxOwner->actor, 0, (s16 *)column);
         column->y = g_RoomFloorY->y - params->offset;
         rise = params->height * column->timer / params->duration;
         if (params->descend)
@@ -1009,13 +1036,13 @@ int RoomM318_RisingColumn(int mode, RoomRisingColumn *column,
             column->y -= params->height - rise;
         if (column->timer <= params->duration) {
             if ((column->timer & 3) == 0) {
-                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->state = 0;
                     child->timer = 0;
                 }
             }
-            child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+            child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = column->x;
                 child->y = column->y;
@@ -1051,7 +1078,9 @@ int RoomM318_RisingColumn(int mode, RoomRisingColumn *column,
 /* Flash burst particle: drifting rings slow down, falling sparks slow down
  * and bounce on the floor; both draw as spinning glow sprites that swell
  * and fade over 24 frames. */
-int RoomM318_FlashBurstParticleCallback(int mode, RoomOrbitTrailParticle *p) {
+int RoomM318_FlashBurstParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomOrbitTrailParticle *p = data;
+    (void)argument;
     GteRotation spin;
     int fall;
     int bounce;
@@ -1145,11 +1174,13 @@ int RoomM318_FlashBurstParticleCallback(int mode, RoomOrbitTrailParticle *p) {
 /* Flash burst: while the scene event runs it plays the burst sounds, drops
  * falling sparks at frame 3 and two drifting rings up to frame 4, then
  * fades a glow sprite, halo and ring over 32 frames. */
-int RoomM318_FlashBurst(int mode, RoomShakeBurstPoint *burst) {
+int RoomM318_FlashBurst(int mode, void *data, intptr_t argument) {
+    RoomShakeBurstPoint *burst = data;
+    (void)argument;
     RenderColor glowColor;
     RenderColor color = g_RoomM318FlashBurstColor;
     RoomOrbitTrailParticle *child;
-    void **soundSlot;
+    struct SceneAssetBlob **soundSlot;
     int volume;
     int time;
     int i;
@@ -1157,10 +1188,10 @@ int RoomM318_FlashBurst(int mode, RoomShakeBurstPoint *burst) {
     switch (mode) {
     case 0:
         FieldFx_GetActorPosition((char *)D_8009D254, 0, (s16 *)burst);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool, 0x14, 0x10,
-                             (FieldFxCallbackListCallback)RoomM318_FlashBurstParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x10,
+                             RoomM318_FlashBurstParticleCallback);
     case 1:
-        if (FX_TASK_AS(RoomShakeBurstEvent)->running == 0)
+        if (g_FieldFxTaskContext->variables[1] == 0)
             return 1;
         if (g_FieldFxCurrentAge == 2) {
             soundSlot = g_LoadedSceneAssetBlock;
@@ -1168,13 +1199,13 @@ int RoomM318_FlashBurst(int mode, RoomShakeBurstPoint *burst) {
                 volume = 0x7F;
                 time = FieldFx_GetOwnerProgress();
                 Akao_SendTableCommand(*soundSlot, 0x5E7, time, 0x80, volume);
-                if (*(void *volatile *)soundSlot != 0)
+                if (*(struct SceneAssetBlob *volatile *)soundSlot != 0)
                     Akao_SendTableCommand(*soundSlot, 0x5E8, 0x80, 0x80, volume);
             }
         }
         if (g_FieldFxCurrentAge == 3) {
             for (i = 0; i < 3; i++) {
-                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -1189,7 +1220,7 @@ int RoomM318_FlashBurst(int mode, RoomShakeBurstPoint *burst) {
         }
         if (g_FieldFxCurrentAge < 5) {
             for (i = 0; i < 2; i++) {
-                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -1271,7 +1302,9 @@ int RoomM318_FlashBurst(int mode, RoomShakeBurstPoint *burst) {
 /* Cross flash particle: the flash draws as a pulsing tilted ring, the
  * sparks spin their orientation by their offset and draw as flickering
  * beams from the cross flash centre. */
-int RoomM318_CrossFlashParticleCallback(int mode, RoomCrossFlashParticle *p) {
+int RoomM318_CrossFlashParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomCrossFlashParticle *p = data;
+    (void)argument;
     GteShortVector origin;
     RenderColor glowColor;
     RenderColor color = g_RoomM318EmberParticleColor;
@@ -1346,23 +1379,25 @@ int RoomM318_CrossFlashParticleCallback(int mode, RoomCrossFlashParticle *p) {
 /* Cross flash: takes the actor's orientation, then at frame 2 drops a
  * flash and four sparks turned a quarter turn about one axis, and at
  * frame 8 the same about the other axis; the draw publishes the anchor. */
-int RoomM318_CrossFlash(int mode, RoomCrossFlash *flash) {
+int RoomM318_CrossFlash(int mode, void *data, intptr_t argument) {
+    RoomCrossFlash *flash = data;
+    (void)argument;
     RoomCrossFlashParticle *child;
     int i;
 
     switch (mode) {
     case 0:
         FieldFx_GetActorPosition((char *)D_8009D254, 0, (s16 *)flash);
-        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomShakeBurstChannel)->pool, 0,
+        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0,
                       (GteShortVector *)&flash->rotation);
         flash->rotation.x = 0;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool, 0x14, 0x28,
-                             (FieldFxCallbackListCallback)RoomM318_CrossFlashParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x28,
+                             RoomM318_CrossFlashParticleCallback);
     case 1:
-        if (FX_TASK_AS(RoomShakeBurstEvent)->running == 0)
+        if (g_FieldFxTaskContext->variables[1] == 0)
             return 1;
         if (g_FieldFxCurrentAge == 2) {
-            child = (RoomCrossFlashParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+            child = (RoomCrossFlashParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = flash->x;
                 child->y = flash->y;
@@ -1375,7 +1410,7 @@ int RoomM318_CrossFlash(int mode, RoomCrossFlash *flash) {
                 child->timer = 0;
             }
             for (i = 0; i < 4; i++) {
-                child = (RoomCrossFlashParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+                child = (RoomCrossFlashParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = (rand() & 0x7F) - 0x40;
                     child->y = 0;
@@ -1392,7 +1427,7 @@ int RoomM318_CrossFlash(int mode, RoomCrossFlash *flash) {
             }
         }
         if (g_FieldFxCurrentAge == 8) {
-            child = (RoomCrossFlashParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+            child = (RoomCrossFlashParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = flash->x;
                 child->y = flash->y;
@@ -1406,7 +1441,7 @@ int RoomM318_CrossFlash(int mode, RoomCrossFlash *flash) {
                 child->timer = 0;
             }
             for (i = 0; i < 4; i++) {
-                child = (RoomCrossFlashParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+                child = (RoomCrossFlashParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = 0;
                     child->y = (rand() & 0x7F) - 0x40;
@@ -1445,7 +1480,9 @@ int RoomM318_CrossFlash(int mode, RoomCrossFlash *flash) {
     return 0;
 }
 
-int RoomM318_TwinRibbonPulseCallback(int mode, RoomM318Pulse *pulse) {
+int RoomM318_TwinRibbonPulseCallback(int mode, void *data, intptr_t argument) {
+    RoomM318Pulse *pulse = data;
+    (void)argument;
     int angle, sine, cosine, size, clut, random;
     s16 value;
     s16 *settings;
@@ -1503,7 +1540,9 @@ int RoomM318_TwinRibbonPulseCallback(int mode, RoomM318Pulse *pulse) {
  * offsets on bones 8 and 21; every frame a pulse is shed from one of the
  * two parameter bones. Draws a glow at the first offset, the ribbons and
  * restores the parameter block. */
-int RoomM318_TwinRibbon(int mode, RoomTwinRibbon *ribbon, RoomTwinRibbonParams *params) {
+int RoomM318_TwinRibbon(int mode, void *data, intptr_t argument) {
+    RoomTwinRibbon *ribbon = data;
+    RoomTwinRibbonParams *params = (void *)argument;
     GteShortVector from;
     GteShortVector to;
     GteShortVector root = g_RoomM318TwinRibbonRoot;
@@ -1525,28 +1564,28 @@ int RoomM318_TwinRibbon(int mode, RoomTwinRibbon *ribbon, RoomTwinRibbonParams *
         ribbon->timer = 0;
         tip.x *= -1;
         fork.x *= -1;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 8, &root, &from);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 8, &tip, &to);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 8, &root, &from);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 8, &tip, &to);
         FieldFx_DrawHistoryTrail(&from, &to, 0x3EC, (unsigned char *)&colorA, (unsigned char *)&colorB, 0x80, (struct FieldTrailPair *)ribbon->trailA, 1);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 8, &fork, &from);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 8, &fork, &from);
         FieldFx_DrawHistoryTrail(&from, &to, 0x3EE, (unsigned char *)&colorC, (unsigned char *)&colorB, 0x80, (struct FieldTrailPair *)ribbon->trailC, 1);
         tip.x *= -1;
         fork.x *= -1;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 0x15, &root, &from);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 0x15, &tip, &to);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x15, &root, &from);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x15, &tip, &to);
         FieldFx_DrawHistoryTrail(&from, &to, 0x3EC, (unsigned char *)&colorA, (unsigned char *)&colorB, 0x80, (struct FieldTrailPair *)ribbon->trailB, 1);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 0x15, &fork, &from);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x15, &fork, &from);
         FieldFx_DrawHistoryTrail(&from, &to, 0x3EE, (unsigned char *)&colorC, (unsigned char *)&colorB, 0x80, (struct FieldTrailPair *)ribbon->trailD, 1);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomEmberBurstChannel)->pool, 0x14, 0x10,
-                             (FieldFxCallbackListCallback)RoomM318_TwinRibbonPulseCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x10,
+                             RoomM318_TwinRibbonPulseCallback);
     case 1:
         ribbon->timer++;
         if (params->stop) return 2;
         if (!(ribbon->timer & 1))
-            FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, ribbon->boneA, &shed, &from);
+            FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, ribbon->boneA, &shed, &from);
         else
-            FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, ribbon->boneB, &shed, &from);
-        pulse = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomEmberBurstChannel)->pool);
+            FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, ribbon->boneB, &shed, &from);
+        pulse = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
         if (!pulse) return 0;
         pulse->x = from.x;
         pulse->y = from.y;
@@ -1579,7 +1618,7 @@ int RoomM318_TwinRibbon(int mode, RoomTwinRibbon *ribbon, RoomTwinRibbonParams *
             g_FieldFxSpriteParams.tpage = tpage;
         }
         root.z = 0;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 0, &root, &from);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0, &root, &from);
         {
             u16 clut;
             int kind;
@@ -1591,17 +1630,17 @@ int RoomM318_TwinRibbon(int mode, RoomTwinRibbon *ribbon, RoomTwinRibbonParams *
         }
         tip.x *= -1;
         fork.x *= -1;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 8, &root, &from);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 8, &tip, &to);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 8, &root, &from);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 8, &tip, &to);
         FieldFx_DrawHistoryTrail(&from, &to, 4, (unsigned char *)&colorA, (unsigned char *)&colorB, 0x80, (struct FieldTrailPair *)ribbon->trailA, 1);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 8, &fork, &from);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 8, &fork, &from);
         FieldFx_DrawHistoryTrail(&from, &to, 6, (unsigned char *)&colorC, (unsigned char *)&colorB, 0x80, (struct FieldTrailPair *)ribbon->trailC, 1);
         tip.x *= -1;
         fork.x *= -1;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 0x15, &root, &from);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 0x15, &tip, &to);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x15, &root, &from);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x15, &tip, &to);
         FieldFx_DrawHistoryTrail(&from, &to, 4, (unsigned char *)&colorA, (unsigned char *)&colorB, 0x80, (struct FieldTrailPair *)ribbon->trailB, 1);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 0x15, &fork, &from);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0x15, &fork, &from);
         FieldFx_DrawHistoryTrail(&from, &to, 6, (unsigned char *)&colorC, (unsigned char *)&colorB, 0x80, (struct FieldTrailPair *)ribbon->trailD, 1);
         g_FieldFxSpriteParams.parameter00 = 0x20;
         g_FieldFxSpriteParams.parameter02 = 2;
@@ -1622,7 +1661,9 @@ int RoomM318_TwinRibbon(int mode, RoomTwinRibbon *ribbon, RoomTwinRibbonParams *
 /* Ember fountain particle: embers fly out and bounce on the floor, orbiting
  * sparks ride the fountain centre while their heading turns, and smoke
  * rises; each draws with the fountain's glow track. */
-int RoomM318_EmberFountainParticleCallback(int mode, RoomOrbitTrailParticle *p) {
+int RoomM318_EmberFountainParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomOrbitTrailParticle *p = data;
+    (void)argument;
     GteRotation spin = g_RoomM318ZeroSpin;
     GteShortVector offset;
     RenderColor color;
@@ -1759,7 +1800,9 @@ int RoomM318_EmberFountainParticleCallback(int mode, RoomOrbitTrailParticle *p) 
  * the first 134 frames it sprays orbiting sparks, embers on odd frames and
  * smoke every fourth. It publishes its position as the fountain centre and
  * draws a halo and ring at it. */
-int RoomM318_EmberFountain(int mode, RoomEmberFountain *fountain) {
+int RoomM318_EmberFountain(int mode, void *data, intptr_t argument) {
+    RoomEmberFountain *fountain = data;
+    (void)argument;
     GteShortVector position;
     RenderColor color = g_RoomM318EmberRingColor;
     RoomOrbitTrailParticle *child;
@@ -1774,11 +1817,11 @@ int RoomM318_EmberFountain(int mode, RoomEmberFountain *fountain) {
         fountain->ringScale = 0;
         FieldFx_PlaySoundAtOwner(0x5EB, FieldFx_GetOwnerProgress());
         FieldFx_PlaySoundAtOwner(0x5EC, 0x80);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomEmberBurstChannel)->pool, 0x14, 0x28,
-                             (FieldFxCallbackListCallback)RoomM318_EmberFountainParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x28,
+                             RoomM318_EmberFountainParticleCallback);
     case 1:
         fountain->timer++;
-        FieldFx_GetActorPosition((char *)ANIM_OWNER_AS(RoomEmberFountainChannel)->pool, 0, (s16 *)fountain);
+        FieldFx_GetActorPosition((char *)g_FieldFxOwner->actor, 0, (s16 *)fountain);
         position.x = fountain->x;
         position.y = fountain->y;
         position.z = fountain->z;
@@ -1786,7 +1829,7 @@ int RoomM318_EmberFountain(int mode, RoomEmberFountain *fountain) {
         fountain->glow = rsin(angle) / 32;
         fountain->ringScale = rcos(angle);
         if (fountain->timer < 0x86) {
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomEmberBurstChannel)->pool);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = position.x;
                 child->y = position.y;
@@ -1802,7 +1845,7 @@ int RoomM318_EmberFountain(int mode, RoomEmberFountain *fountain) {
                 child->timer = 0;
             }
             if (fountain->timer & 1) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomEmberBurstChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = position.x;
                     child->y = position.y;
@@ -1818,7 +1861,7 @@ int RoomM318_EmberFountain(int mode, RoomEmberFountain *fountain) {
                 }
             }
             if (!(fountain->timer & 3)) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomEmberBurstChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = position.x;
                     child->y = position.y;
@@ -1865,7 +1908,9 @@ int RoomM318_EmberFountain(int mode, RoomEmberFountain *fountain) {
 /* Twisting ember particle: embers fly out and bounce on the floor, sparks
  * twist along a bent trail, and smoke rises; each draws with the glow
  * track. */
-int RoomM318_EmberSpiralParticleCallback(int mode, RoomOrbitTrailParticle *p) {
+int RoomM318_EmberSpiralParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomOrbitTrailParticle *p = data;
+    (void)argument;
     GteRotation spin = g_RoomM318ZeroSpin;
     GteShortVector offset;
     RenderColor color;
@@ -1935,7 +1980,7 @@ int RoomM318_EmberSpiralParticleCallback(int mode, RoomOrbitTrailParticle *p) {
             int kind;
             int palette;
             angle = (s16)p->timer << 6;
-            FieldFx_OffsetPointByAngles(p, &offset, 200, &p->heading,
+            FieldFx_OffsetPointByAngles((GteShortVector *)p, &offset, 200, &p->heading,
                           rsin(angle) * p->radius / 4096, p->heading.pad);
             size = rcos(angle) * 3 / 2;
             spin.z = p->heading.pad + (s16)p->timer * 32;
@@ -1996,7 +2041,9 @@ int RoomM318_EmberSpiralParticleCallback(int mode, RoomOrbitTrailParticle *p) {
  * heading, embers on odd frames and smoke, hits the player in reach, and
  * draws a glow plus the spiral model swelling and turning in front of the
  * hand. */
-int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
+int RoomM318_EmberSpiral(int mode, void *data, intptr_t argument) {
+    RoomEmberSpiral *spiral = data;
+    (void)argument;
     GteShortVector position;
     GteShortVector tip;
     GteShortVector rotation;
@@ -2004,10 +2051,10 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
     RoomSpriteMatrix matrix;
     RoomFxVec4 scale;
     RoomOrbitTrailParticle *child;
-    RoomShakeBurstSlot *pool;
-    RoomShakeBurstObject *object;
-    RoomShakeBurstChannel *channel;
-    void **soundSlot;
+    FieldActor *pool;
+    FieldActorState *object;
+    FieldActor *channel;
+    struct SceneAssetBlob **soundSlot;
     u16 *index;
     u16 *tpages;
     int volume;
@@ -2029,29 +2076,29 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
             Akao_SendTableCommand(*soundSlot, 0x5ED, time, 0x80, volume);
             /* Retail re-reads the sound owner for the test and again for
              * the argument. */
-            if (*(void *volatile *)soundSlot != 0)
+            if (*(struct SceneAssetBlob *volatile *)soundSlot != 0)
                 Akao_SendTableCommand(*soundSlot, 0x5EE, 0x80, 0x80, volume);
         }
         g_RoomM318EmberSpiralModel = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5509704);
         FieldFx_ModelScrollUv(g_RoomM318EmberSpiralModel, 0, 0);
-        if (FX_TASK_AS(RoomShakeBurstEvent)->active) {
-            pool = ANIM_OWNER_AS(RoomShakeBurstChannel)->pool;
-            if (pool != 0 && pool->object != 0) {
-                object = pool->object;
-                if (*object->status == 1)
-                    *object->status = 2;
+        if (g_FieldFxTaskContext->flags) {
+            pool = g_FieldFxOwner->actor;
+            if (pool != 0 && pool->state != 0) {
+                object = pool->state;
+                if (*object->action_state == 1)
+                    *object->action_state = 2;
             }
         }
-        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomShakeBurstChannel)->pool, 0,
+        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0,
                       (GteShortVector *)spiral);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool, 0x14, 0x28,
-                             (FieldFxCallbackListCallback)RoomM318_EmberSpiralParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x28,
+                             RoomM318_EmberSpiralParticleCallback);
     case 1:
         spiral->timer++;
-        FieldFx_GetActorPosition((char *)ANIM_OWNER_AS(RoomShakeBurstChannel)->pool, 0, (s16 *)&position);
+        FieldFx_GetActorPosition((char *)g_FieldFxOwner->actor, 0, (s16 *)&position);
         spiral->glow = rcos((spiral->timer << 10) / 24) / 32;
         if (spiral->timer < 0x19) {
-            child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+            child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = position.x;
                 child->y = position.y;
@@ -2068,7 +2115,7 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
                 child->timer = 0;
             }
             if (spiral->timer & 1) {
-                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = position.x;
                     child->y = position.y;
@@ -2083,7 +2130,7 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
                     child->timer = 0;
                 }
             }
-            child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomShakeBurstSparkChannel)->pool);
+            child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = position.x;
                 child->y = position.y;
@@ -2096,13 +2143,13 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
             }
         }
         if (FieldFx_IsPlayerWithinRadius(&position, 0x19A)) {
-            if (FX_TASK_AS(RoomShakeBurstEvent)->active) {
-                channel = ANIM_OWNER_AS(RoomShakeBurstChannel);
-                if ((channel->pool->object->flags & 0x3F000000) == 0x01000000) {
-                    (*((RoomShakeBurstEntity **)D_8009D254))->flags |= 0x4000;
-                    channel->pool->object->flags =
-                        (channel->pool->object->flags & 0xC0FFFFFF) | 0x19000000;
-                    channel->pool->object->flags |= 0x80000000;
+            if (g_FieldFxTaskContext->flags) {
+                channel = g_FieldFxOwner->actor;
+                if ((channel->state->core_flags & 0x3F000000) == 0x01000000) {
+                    ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                    channel->state->core_flags =
+                        (channel->state->core_flags & 0xC0FFFFFF) | 0x19000000;
+                    channel->state->core_flags |= 0x80000000;
                 }
             }
         }
@@ -2114,7 +2161,7 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
             gte_ldrotmatrix(matrixSlot->value);
             gte_ldtransmatrix(matrixSlot->value);
         }
-        FieldFx_GetActorPosition((char *)ANIM_OWNER_AS(RoomShakeBurstChannel)->pool, 0, (s16 *)&position);
+        FieldFx_GetActorPosition((char *)g_FieldFxOwner->actor, 0, (s16 *)&position);
         if (spiral->timer < 0x19) {
             glow = spiral->glow;
             if (g_FieldFxCurrentAge & 1)
@@ -2183,32 +2230,90 @@ int RoomM318_EmberSpiral(int mode, RoomEmberSpiral *spiral) {
     return 0;
 }
 
-int* RoomM318_SetActorParams(void* arg0, int arg1, int arg2) {
+intptr_t RoomM318_SetActorParams(int arg0, intptr_t arg1, intptr_t arg2, intptr_t arg3) {
+    (void)arg0;
+    (void)arg3;
     int* base = g_RoomM318ActorParams;
 
-    *base = arg2;
-    g_RoomM318ActorParams[1] = arg1;
+    *base = (s32)arg2;
+    g_RoomM318ActorParams[1] = (s32)arg1;
 
-    return base;
+    return (intptr_t)base;
 }
 
-int* RoomM318_SetEmberBurstParams(void* arg0, int arg1, int arg2) {
+intptr_t RoomM318_SetEmberBurstParams(int arg0, intptr_t arg1, intptr_t arg2, intptr_t arg3) {
+    (void)arg0;
+    (void)arg3;
     int* base = g_RoomM318EmberBurstParams;
 
-    *base = arg2;
-    g_RoomM318EmberBurstParams[1] = arg1;
+    *base = (s32)arg2;
+    g_RoomM318EmberBurstParams[1] = (s32)arg1;
 
-    return base;
+    return (intptr_t)base;
 }
 
-int* RoomM318_SetRisingColumnParams(int arg0, int arg1, int arg2, int arg3) {
+intptr_t RoomM318_SetRisingColumnParams(int arg0, intptr_t arg1, intptr_t arg2, intptr_t arg3) {
     if (arg0 == 1) {
-        g_RoomM318RisingColumnParams[0] = arg1;
+        g_RoomM318RisingColumnParams[0] = (s32)arg1;
     } else {
-        g_RoomM318RisingColumnParams[1] = arg1;
-        g_RoomM318RisingColumnParams[2] = arg2;
-        g_RoomM318RisingColumnParams[3] = arg3;
+        g_RoomM318RisingColumnParams[1] = (s32)arg1;
+        g_RoomM318RisingColumnParams[2] = (s32)arg2;
+        g_RoomM318RisingColumnParams[3] = (s32)arg3;
     }
 
-    return g_RoomM318RisingColumnParams;
+    return (intptr_t)g_RoomM318RisingColumnParams;
 }
+
+/* Original USA M318 constants, storage and all eight task programs. */
+RenderColor g_RoomM318EmberHaloColor={160,160,10,0};
+RenderColor g_RoomM318EmberRingColor={110,200,0,0};
+GteShortVector g_RoomM318EmberFountainAnchor={0,0,0,0};
+GteRotation g_RoomM318ZeroSpin={0,0,0,0};
+RenderColor g_RoomM318EmberFountainParticleColor={140,140,50,0};
+RenderColor g_RoomM318FanSweepSparkColor={140,120,70,0};
+GteShortVector g_RoomM318FanSweepAnchor={0,0,0,0};
+GteShortVector g_RoomM318TwinRibbonRoot={0,0,0,0};
+GteShortVector g_RoomM318TwinRibbonTip={-41,0,-235,0};
+GteShortVector g_RoomM318TwinRibbonFork={0,0,-400,0};
+GteShortVector g_RoomM318TwinRibbonShed={0,0,-32,0};
+RenderColor g_RoomM318TwinRibbonColorA={128,128,40,0};
+RenderColor g_RoomM318TwinRibbonColorB={128,50,50,0};
+RenderColor g_RoomM318TwinRibbonColorC={128,0,100,0};
+GteShortVector g_RoomM318ShakeSweepAnchor={0,0,0,0};
+RenderColor g_RoomM318FlashBurstColor={116,80,128,0};
+GteShortVector g_RoomM318RisingColumnAnchor={0,0,0,0};
+GteRotation g_RoomM318FlatTilt={1024,0,0,1};
+GteShortVector g_RoomM318CrossFlashAnchor={0,0,0,0};
+RenderColor g_RoomM318EmberParticleColor={128,128,128,0};
+char g_RoomM318GetMayaPosErrorFormat[36]={84,104,71,101,116,77,97,121,97,80,111,115,32,69,114,114,111,114,32,84,121,112,101,32,37,100,44,78,97,109,101,32,37,100,10,0};
+char g_RoomM318FanSweepTrailColorTrack[40]={0,0,0,0,0,0,0,0,-56,-96,16,6,0,0,0,0,80,100,70,6,0,0,0,0,40,-56,0,6,0,0,0,0,0,0,0,0,0,0,0,0};
+char g_RoomM318SpiralDropSparkColorTrack[48]={0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,-56,-6,-56,4,0,0,0,0,100,-66,0,8,0,0,0,0,0,-96,80,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RoomM318SpiralDropColorTrack[48]={0,0,0,0,0,0,0,0,0,50,0,8,0,0,0,0,190,200,0,16,0,0,0,0,50,100,0,16,0,0,0,0,0,60,70,10,0,0,0,0,0,0,0,0,0,0,0,0};
+char g_RoomM318StarFlareColorTrackA[32]={0,0,0,0,0,0,0,0,-56,-56,-56,4,0,0,0,0,0,-6,-106,4,0,0,0,0,0,0,0,0,0,0,0,0};
+char g_RoomM318StarFlareColorTrackB[32]={0,0,0,0,0,0,0,0,-56,-56,-56,4,0,0,0,0,-56,-56,0,4,0,0,0,0,0,0,0,0,0,0,0,0};
+char g_RoomM318ShakeBurstParticleColorTrack[40]={0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,100,100,100,10,0,0,0,0,60,0,100,16,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RoomM318EmberBurstParticleColorTrack[40]={0,0,0,0,0,0,0,0,200,200,120,8,0,0,0,0,100,180,0,8,0,0,0,0,0,100,0,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RoomM318RisingColumnParticleColorTrack[32]={0,0,0,0,0,0,0,0,10,80,200,8,0,0,0,0,0,180,0,8,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RoomM318FlashBurstColorTrack[40]={0,0,0,0,0,0,0,0,200,128,160,10,0,0,0,0,200,128,128,10,0,0,0,0,128,0,40,12,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RoomM318CrossFlashParticleColorTrack[40]={0,0,0,0,0,0,0,0,0,40,80,8,0,0,0,0,200,128,128,12,0,0,0,0,96,0,10,12,0,0,0,0,0,0,0,0,0,0,0,0};
+u8 g_RoomM318EmberFountainParticleColorTrack[40]={0,0,0,0,0,0,0,0,0,0,0,8,0,0,0,0,0,100,10,8,0,0,0,0,100,180,50,8,0,0,0,0,200,240,120,0,0,0,0,0};
+u8 g_RoomM318EmberSpiralColorTrack[40]={0,0,0,0,0,0,0,0,190,190,140,10,0,0,0,0,100,180,50,12,0,0,0,0,20,140,10,10,0,0,0,0,0,0,0,0,0,0,0,0};
+int g_RoomM318ActorParams[2], g_RoomM318EmberBurstParams[2], g_RoomM318RisingColumnParams[4];
+int g_RoomM318ScriptArg2, g_RoomM318StarFlarePhase;
+void *g_RoomM318FanSweepSparkPool, *g_RoomM318EmberSpiralModel;
+u16 g_RoomM318FanSweepScript[16]={1,6,9,2,0,0,4,3,0,2,1,0,0,0,0,0};
+FieldFxTaskProgram g_RoomM318FanSweepEffects={{{RoomM318_FanSweep,RoomM318_SpiralDrop,NULL,NULL,NULL,NULL,NULL,NULL},{sizeof(RoomFanSweep),16,0,0,0,0,0,0}},RoomM318_SetActorParams,g_RoomM318FanSweepScript};
+u16 g_RoomM318ShakeSweepScript[18]={5,0,0,1,6,84,2,0,0,4,4,0,2,1,0,0,0,0};
+FieldFxTaskProgram g_RoomM318ShakeSweepEffects={{{RoomM318_ShakeSweep,RoomM318_ArcingSparks,NULL,NULL,NULL,NULL,NULL,NULL},{12,8,0,0,0,0,0,0}},NULL,g_RoomM318ShakeSweepScript};
+u16 g_RoomM318ShakeBurstScript[28]={5,0,0,1,6,85,2,0,0,4,5,0,2,0,0,4,5,0,2,0,0,2,1,0,0,0,0,0};
+FieldFxTaskProgram g_RoomM318ShakeBurstEffects={{{RoomM318_StarFlare,RoomM318_ShakeBurst,NULL,NULL,NULL,NULL,NULL,NULL},{12,8,0,0,0,0,0,0}},NULL,g_RoomM318ShakeBurstScript};
+u16 g_RoomM318EmberBurstScript[12]={1,6,86,4,8,0,2,0,0,0,0,0};
+FieldFxTaskProgram g_RoomM318EmberBurstEffects={{{RoomM318_EmberBurst,NULL,NULL,NULL,NULL,NULL,NULL,NULL},{16,0,0,0,0,0,0,0}},RoomM318_SetEmberBurstParams,g_RoomM318EmberBurstScript};
+u16 g_RoomM318RisingColumnScript[12]={1,6,87,4,8,0,2,0,0,0,0,0};
+FieldFxTaskProgram g_RoomM318RisingColumnEffects={{{RoomM318_RisingColumn,NULL,NULL,NULL,NULL,NULL,NULL,NULL},{12,0,0,0,0,0,0,0}},RoomM318_SetRisingColumnParams,g_RoomM318RisingColumnScript};
+u16 g_RoomM318FlashScript[22]={1,6,89,1,1,0,2,2,0,4,1,1,2,0,0,2,1,0,0,0,0,0};
+FieldFxTaskProgram g_RoomM318FlashEffects={{{RoomM318_FlashBurst,RoomM318_CrossFlash,RoomM318_PlayerGate,NULL,NULL,NULL,NULL,NULL},{8,16,0,0,0,0,0,0}},RoomLib_SetArg1,g_RoomM318FlashScript};
+u16 g_RoomM318TwinRibbonScript[10]={1,6,90,2,0,0,0,0,0,0};
+FieldFxTaskProgram g_RoomM318TwinRibbonEffects={{{RoomM318_TwinRibbon,NULL,NULL,NULL,NULL,NULL,NULL,NULL},{392,0,0,0,0,0,0,0}},RoomM318_SetScriptArg2,g_RoomM318TwinRibbonScript};
+u16 g_RoomM318EmberFountainScript[18]={1,6,88,2,0,0,4,141,0,5,0,0,2,1,0,0,0,0};
+FieldFxTaskProgram g_RoomM318EmberFountainEffects={{{RoomM318_EmberFountain,RoomM318_EmberSpiral,NULL,NULL,NULL,NULL,NULL,NULL},{16,16,0,0,0,0,0,0}},RoomM318_GetActorParams,g_RoomM318EmberFountainScript};

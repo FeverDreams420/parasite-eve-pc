@@ -14,6 +14,7 @@ extern u16 g_FieldFxPaletteTable[];
 #define g_FieldFxTpageSlot3 (g_FieldFxTpageSlots[3])
 /* Slot table entries 4 and 11 and palette table entry 3. */
 #define g_FieldFxTpageSlot4 (g_FieldFxTpageSlots[4])
+#define g_FieldFxTpageSlot10 (g_FieldFxTpageSlots[10])
 #define g_FieldFxTpageSlot11 (g_FieldFxTpageSlots[11])
 #define g_FieldFxPaletteEntry3 (g_FieldFxPaletteTable[3])
 

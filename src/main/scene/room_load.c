@@ -19,6 +19,9 @@
 #include "pe1/room_m349_effects.h"
 #include "pe1/room_m404.h"
 #include "pe1/room_m256.h"
+#include "pe1/room_ember_burst.h"
+#include "pe1/room_shake_burst.h"
+#include "../../overlays/room_m318_chrysler/m318_externs.h"
 #include "pe1/room_model_pulse.h"
 #include "pe1/room_m350_sweep_trap.h"
 #include "../../overlays/room_m350_cruiser/room_m350_data.h"
@@ -585,6 +588,18 @@ int Scene_LoadRoom(unsigned int roomId)
             if(slot==131 && record[i].u.handlerAddress==0x80195de8u)native=&g_RoomM256ScatterEffects;
             if(slot==132 && record[i].u.handlerAddress==0x80195eb4u)native=&g_RoomM256TrailEffects;
         }
+        if (map + 1 == 318) {
+            if(slot==75 && record[i].u.handlerAddress==0x801993d4u)native=&g_RoomActorClassTable[2];
+            if(slot==70 && record[i].u.handlerAddress==0x8019939cu)native=&g_RoomActorClassTable[0];
+            if(slot==168 && record[i].u.handlerAddress==0x801994ecu)native=&g_RoomM318FanSweepEffects;
+            if(slot==169 && record[i].u.handlerAddress==0x80199548u)native=&g_RoomM318ShakeSweepEffects;
+            if(slot==170 && record[i].u.handlerAddress==0x80199624u)native=&g_RoomM318ShakeBurstEffects;
+            if(slot==171 && record[i].u.handlerAddress==0x8019969cu)native=&g_RoomM318EmberBurstEffects;
+            if(slot==172 && record[i].u.handlerAddress==0x8019970cu)native=&g_RoomM318RisingColumnEffects;
+            if(slot==173 && record[i].u.handlerAddress==0x801998b8u)native=&g_RoomM318EmberFountainEffects;
+            if(slot==174 && record[i].u.handlerAddress==0x801997c0u)native=&g_RoomM318FlashEffects;
+            if(slot==175 && record[i].u.handlerAddress==0x8019980cu)native=&g_RoomM318TwinRibbonEffects;
+        }
         if (map + 1 == 404) {
             if(slot==75 && record[i].u.handlerAddress==0x80193e6cu)native=&g_RoomActorClassTable[2];
             if(slot==133 && record[i].u.handlerAddress==0x80193f1cu)native=&g_RoomM404SinkingDropEffects;
@@ -736,6 +751,15 @@ int Scene_LoadRoom(unsigned int roomId)
         memset(g_RoomMotionTrailB, 0, sizeof(g_RoomMotionTrailB));
     }
 
+    if(map+1==318) {
+        memset(g_RoomM318ActorParams,0,sizeof(g_RoomM318ActorParams));
+        memset(g_RoomM318EmberBurstParams,0,sizeof(g_RoomM318EmberBurstParams));
+        memset(g_RoomM318RisingColumnParams,0,sizeof(g_RoomM318RisingColumnParams));
+        g_RoomScriptArg=g_RoomM318ScriptArg2=g_RoomM318StarFlarePhase=0;
+        g_RoomM318FanSweepSparkPool=g_RoomM318EmberSpiralModel=NULL;
+        g_RoomM318FanSweepAnchor=g_RoomM318ShakeSweepAnchor=g_RoomM318RisingColumnAnchor=
+            g_RoomM318CrossFlashAnchor=g_RoomM318EmberFountainAnchor=(GteShortVector){0};
+    }
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
         slot = record[i].source.bytes.slot;
@@ -758,6 +782,17 @@ int Scene_LoadRoom(unsigned int roomId)
             } else if(slot==76)g_PmCmdHandlerTable[76]=&g_RoomM256SwingClass;
             else if(slot==131)g_FieldFxTaskPrograms[46]=&g_RoomM256ScatterEffects;
             else if(slot==132)g_FieldFxTaskPrograms[47]=&g_RoomM256TrailEffects;
+        } else if (map + 1 == 318) {
+            if(slot==75)g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];
+            else if(slot==70)g_PmCmdHandlerTable[70]=&g_RoomActorClassTable[0];
+            else if(slot==168)g_FieldFxTaskPrograms[83]=&g_RoomM318FanSweepEffects;
+            else if(slot==169)g_FieldFxTaskPrograms[84]=&g_RoomM318ShakeSweepEffects;
+            else if(slot==170)g_FieldFxTaskPrograms[85]=&g_RoomM318ShakeBurstEffects;
+            else if(slot==171)g_FieldFxTaskPrograms[86]=&g_RoomM318EmberBurstEffects;
+            else if(slot==172)g_FieldFxTaskPrograms[87]=&g_RoomM318RisingColumnEffects;
+            else if(slot==173)g_FieldFxTaskPrograms[88]=&g_RoomM318EmberFountainEffects;
+            else if(slot==174)g_FieldFxTaskPrograms[89]=&g_RoomM318FlashEffects;
+            else if(slot==175)g_FieldFxTaskPrograms[90]=&g_RoomM318TwinRibbonEffects;
         } else if (map + 1 == 404) {
             if(slot==75){g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];g_RoomScriptArg=0;}
             else if(slot==133)g_FieldFxTaskPrograms[48]=&g_RoomM404SinkingDropEffects;

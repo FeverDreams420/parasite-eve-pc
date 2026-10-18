@@ -36,10 +36,14 @@ menuNULL, lock1. Oba profile exit0, pełne JSON/VRAM zgodne, B niezmieniony,
 ale brak przejścia do grywalnej sceny. Przedłużenie bez inputu do30000
 (v3 normal4,13s/SAN12,91s) nadal w tej samej scenie/lock1, game_frame4994.
 Pliki /tmp/pe-day4-continue-v{2,3}-proof.json dowodzą odczytu i zgodności
-profilów, NIE poprawnego Continue całego dnia. Trwa read-only LLDB
-/tmp/pe-day4-continue-observe-v1, proces44620/session97068, oczekujący
-na Boot_PollHost przy23999 do odczytu zadania skryptu; przy ostatnim
-sprawdzeniu rzeczywiście żywy. Nie zmieniano HP/PE/flag ani danych zapisu.
+profilów, NIE poprawnego Continue całego dnia. Read-only LLDB v1 doszedł
+do23999, ale import obserwatora odrzucono z powodu myślników w nazwie
+modułu Python; sesja97068 zakończyła się1, proces44620 nie istnieje.
+Poprawiona sesja17689, proces45689, /tmp/pe-day4-continue-observe-v2.log
+i obserwator /tmp/pe_day4_continue_observe_v2.py czekają na Boot_PollHost
+przy23999 do odczytu zadania skryptu; przy ostatnim sprawdzeniu rzeczywiście
+żywe. Wynik ma trafić do /tmp/pe-day4-continue-observe-v2.json.
+Nie zmieniano HP/PE/flag ani danych zapisu.
 Kod produkcyjny, zamrożone executable i biblioteki nadal bez zmian.
 
 M123 — POTWIERDZONE ZWYCIĘSTWO zwykłym inputem od autentycznej A2,

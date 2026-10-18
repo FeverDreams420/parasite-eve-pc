@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Kampania M123 — nowa odnoga z dokładnego, już zweryfikowanego prefixu
+63407/131HP (pokonana głowa3), zamiast prefixu późniejszej trasy head2.
+Samo kopiowanie czasów ataków z tej drugiej trasy nie działa: odmienne ATB
+powoduje zignorowanie wcześniejszych naciśnięć. Przy64099 Aya121HP,
+ATB9000, głowy4/2:400/300. Strzał64120..64160 bez dodatkowego przesunięcia
+celu daje przy64600 Aya77HP, głowy4/2:344/300, ammo7. Oryginalny Heal1
+wybrany Triangle→PE→Heal1→Aya oraz ruch host8224 daje65100:
+Aya97/195HP, PEraw1990668, ATB6996, ammo7, głowa4:344 i głowa2:300,
+głowa3 pozostaje pokonana. Identyczny heal z ruchem8320 kończy63HP.
+
+Pełny fizyczny input /tmp/pe-m123-early-center-action-v1-heal-8224-args.json,
+normal exit0; SAN exit0/47.84s, całe JSON i1MiB VRAM identyczne:
+/tmp/pe-m123-early-center-heal-pair-v1-proof.json. Użyto niezmienionego
+kandydata /tmp/pe-m318-numeric-v1, autentycznego A2 w prywatnychbu00/bu10,
+bez Save_Build/savestate i bez zapisów HP/PE/RNG/stanu gameplayu do pamięci.
+To alternatywna odnoga, nie globalnie lepszy checkpoint niż67791/76HP
+z dwiema pokonanymi głowami; w nowej odnodze głowa2 nadal ma pełneHP.
+
+Kontynuacja nowej odnogi: przy65220 kolejne trzy potwierdzenia bez przesunięcia
+trafiają głowę2 (244HP), a z jednym przesunięciem host32 trafiają środkową4
+(288HP). Obie kończą65700/Aya31HP. Domyślny cel nie jest stałą tożsamością:
+oryginalne Battle_BuildTargetList tworzy i sortuje listę, a Battle_CycleTarget
+wybiera jej indeks; zmiany pozycji wymagają obserwacji listy przy każdym
+celowaniu. Dalszy krok: odczyt bieżącego celu i lepsze uniki od65100,
+bez zmiany reguł AI/obrażeń. Nie pokonano M123 ani nie ukończono kampanii.
+
+Audyt /tmp/pe-m123-center-route-v1-audit.json obejmuje16 terminalnych exit0
+normal oraz osobną wyżej opisaną parę SAN. Trzy warianty wyboru celu na
+starszym prefixie dają w64099 głowy odpowiednio2:244,4:344,3:4 przyAya80;
+dwa strzały w4 na tej starej odnodze dają64530/4:288, ale Aya19HP.
+Odrzucone przez CLI niesortowane eksperymentalne inputy nie są wynikami gry
+i zostały wyłączone z audytu. Wszystkie źródłowe/prywatne karty i hashe
+zamrożonych executable zweryfikowano ponownie. Wszystkie procesy terminalne.
+Nie zmieniono kodu produkcyjnego ani testowego w tej turze.
+
 M318 — utrwalono porównania wszystkich13 callbacków cząstek w istniejącym
 repo fixture. Wszystkie33 oryginalne funkcje nadal mają definicje w dwóch
 pierwotnych plikach; audyt preprocesowanych źródeł względem symboli USA:

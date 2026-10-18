@@ -2,6 +2,110 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Dzień4 — odblokowane M327 i rzeczywiste zwycięstwo; następny brak: M328.
+Najnowsza baza trwała to autentyczny D z telefonu M325 (opis niżej).
+ContinueD/24000→M339/24640→M323→M321. Podejście do drzwi Autopsy przy
+(900,-2250) pokazuje dialog135 „Door unlocked” przy26774. Kolejny dialog134
+pyta o wyrzucenie zbędnego już klucza; domyślneYes usuwa209 z21 i wpuszcza
+do M327/a80623c8 przy27814, HP210/story470/lock0. Trzy checkpointy
+24640/26774/27814 ×normal/SAN:6/6 exit0, całe JSON zgodne z live/profilami,
+całe1MiB VRAM zgodne między profilami; źródłowe/prywatne D bez zmian,
+bu10 puste. /tmp/pe-autopsy-unlock-v1-{proof.json,check.py,check.log}.
+
+M327: siatka42 trójkątów pozwala obejść stoły przez(-725,597),(-275,532),
+lecz przejście środkową częścią uruchamia oryginalną walkę. Przy30076
+HP176, dwóch6:31/6:2 po110HP i5:1/88HP. PełneEnergyShot na najbliższym5:1
+zadaje110 i zabija go; dwie salwy54 rozłożone na latające cele zostawiają
+obu56HP. Przy32000 HP19/pełneATB wybrano posiadanąMedicine3/slot17 przez
+Use; po animacji32592 HP193, slot17 pusty (180HP minus bieżące trafienia).
+DrugieEnergyShot przyPE299 zabija6:31/56HP; automatyczne przeładowanie
+M16 do pojemności19. Przy33856 jeden6:2/56HP, Aya119. Dwie kule27+27
+zostawiają2HP, kolejna salwa kończy walkę. Przy35306 rzeczywiste zwycięstwo:
+Aya69/210, mode2/live0/enemies[], EXP/menu20, magazynek15; drugi pocisk
+z kolejki nie jest zużywany po śmierci ostatniego celu.
+
+All odbiera Cure-M16 do17 iMedicine2/7 do21. Przy35946 wolneM327,
+HP69/lock0, menuNULL. Pięć checkpointów30076/32592/33856/35306/35946
+×normal/SAN:10/10 exit0, całe JSON identyczne z live i między profilami,
+całe1MiB VRAM identyczne między profilami, brak ASan/UBSan/function/Unbound.
+Końcowe całe inventory/equipment względem D:17:Medicine3→Cure-M,
+21:AutopsyKey→Medicine2 oraz tylko equipment byte138 (M16ammo)5→15;
+pozostałe bajty4096 i sloty bez zmian. Oryginalny klucz iMedicine3 zużyto
+zwykłymi menu/skryptami; źródłowe/prywatne8192B D bez zmian, bu10 puste.
+/tmp/pe-m327-victory-v1-{proof.json,check.py,check.log}, pełne CLI -<frame>-*-args.json.
+Nie zmieniono produkcji ani parametrów gry. Łącznie w tym etapie30 udanych
+cold uruchomień obu profili (14 do Save/ContinueD,6 odblokowanie,10 walka).
+
+Przejście Right40,Up80 i neutral500 z35946 kończy się rzeczywistym exit1:
+`Scene_LoadRoom: native descriptor missing for M328 slot 166 (PS1 80192140)`
+`Scene frame startup failed: -2`. Oba profile potwierdzają tę samą oczekiwaną
+awarię, bez raportów sanitizerów i ze wszystkimi bajtami D bez zmian;
+/tmp/pe-m328-missing-v1-{proof.json,check.py,normal-args.json,san-args.json}.
+Nie jest to udane ładowanie ani ukończony szpital. Live klient kończy1;
+ostatni poprawny snapshot36066, ostatni zaplanowanyneutral do36566.
+
+Pełny USA moduł12780B w M141/M328 ma trzy rekordy:37/80192040
+(ground eruption),122/801920c8 (relokowany DroppedFlare) i166/80192140
+(homing projectile). Istniejące oryginalne pliki ground_eruption.c,
+homing_projectile.c i homing_projectile_seeds.c zawierają brakującą logikę;
+descriptor166 wskazuje91330/91c44 i setter91f38, skrypt92100.
+Następny krok: audyt wszystkich trzech powiązań/danych i pełnych istniejących
+modułów w miejscu, natywne ABI/wskaźniki, świeży pełny build obu profili
+oraz ponowne przejście do M328. Nie wiązać samego166 i nie pomijać37/122.
+Pełna kampania i zgodność PS1 nadal niepotwierdzone; cel całego portu aktywny.
+
+## Poprzedni potwierdzony etap — M325, Autopsy Key i SaveD
+
+Dzień4 — rzeczywiste dojście do M325, Medicine3, AutopsyKey i nowy SaveD.
+Z autentycznego C/Fuse1 i powrotu M326→M321 (bez tamtej opcjonalnej walki)
+M323/Maya przy42142 jest wolnym polem. Up250 prowadzi do M339/a80634c8
+przy42892, HP210/story470. Podejście do drzwi przy(-2287,1712), twarz+Z,
+Cross pokazuje dialog80 „You need the BLUE cardkey.”. Nie obchodzono tej
+bramki. Drugie przejście: z(-2625,1555) dalsze Left70 prowadzi do M325,
+przy45270 player(200,1600), lock0/210HP. M325 jest więc osiągalne przez
+oryginalne dostępne drzwi M339 bez walki w M324 i bez sceny zawalenia M134;
+nie zmieniono kolizji, skryptów, flag, parametrów ani kodu produkcyjnego.
+
+M325 kamera90: Right+Z, Up−X. Skrzynia aktora2/(-685,1175), po podejściu
+do(-576,1334), daje Medicine3/item8 do wolnego17 przy46058; obejrzano panel
+„Restores180HP”. Gabinet ma działający telefon: dialog6 to pytanie o zapis,
+a nie szuflada z kluczem; pierwsze wejście anulowano przezNo.
+Oryginalna siatka55 trójkątów wyjaśnia kolizję przy biurku: z(8,1904)
+Left5 iUp57 prowadzą do(-620,1906). Cross daje AutopsyKey/item209 do wolnego21
+przy48266; obejrzano panel „St.Francis Hospital Key / Autopsy Key”.
+Nie przechodzono przez biurko ani nie wyłączano podłogi.
+
+Powrót do telefonu(-573,1497), Yes→Slot1→plik4 (pusty, po istniejącym C)
+tworzy oryginalny BASLUS-006620000000D. Obejrzano „File saved”; OK iEnd
+oddają pole przy51399, M325/story470/HP210/lock0. Nowy D ma8192B,
+SHA256 96b24223b34a776f8fe456bb6125119e23b5533a8d281a5c601ced88f12f9637,
+źródło /tmp/pe-day4-autopsy-save-v1-source/BASLUS-006620000000D.
+Źródłowy i prywatny C pozostały niezmienione; kart repozytorium nie dotykano.
+
+Sześć cold checkpointów42892/44052/45270/46058/48266/51399, każdy normal
+oraz ASan/UBSan/function:12/12 terminal exit0, całe JSON zgodne z live
+oraz profilami, całe1MiB VRAM identyczne między profilami. Całe inventory
+i4096B equipment różnią się od C wyłącznie slot13→206, potem17→8 i21→209;
+magazynek M16 nadal5, bez zużytych nabojów. Każdy końcowy D identyczny
+wszystkimi8192B z live i między profilami, C niezmieniony, bu10 puste.
+/tmp/pe-autopsy-route-v1-{proof.json,check.py,check.log} i -<frame>-*-args.json.
+Zimne Continue z samym D: trzy impulsyDown wybierają czwarty plik, przy24000
+swobodne M325/story470/210HP z dokładnie zapisanym całym inventory/equipment.
+2/2 exit0, całe JSON/1MiB VRAM zgodne normal/SAN, źródłowe/prywatne D bez zmian;
+/tmp/pe-autopsy-continue-v1-{proof.json,check.py,sorted-args.json}; obejrzano PNG.
+Wszystkie14 uruchomień bez raportów ASan/UBSan/function/Unbound.
+Ponownie hashowano374 obiekty i596 plików zgodnych z manifestem M324-v1,
+/tmp/pe-autopsy-route-v1-provenance.json; SDK/SDL nadal nieinstrumentowane.
+
+Próba M9-2 w M324 była normal-only: zwykłe Equip ustawia weapon_slot8,
+trzy strzały zadają po17 (88→37), ammo11→8. Nie poprawiło to sumy względem
+M16A1 (2×27). Próba zakończonaquit; nie jest to zwycięstwo ani dowód SAN.
+/tmp/pe-m324-m9-v1-live. Najnowszą bazą dalszego przejścia jest autentyczny D,
+AutopsyKey209 pozwala teraz sprawdzić zamknięte wcześniej drzwi M327.
+Pełna kampania i zgodność PS1 nadal niepotwierdzone; cel portu aktywny.
+
+## Poprzedni potwierdzony etap — trasy M324 z pełnym zdrowiem
+
 Dzień4 — potwierdzony krótszy cold replay od autentycznego C do M324
 z pełnymi210HP i354PE, bez zmian kodu produkcyjnego ani zapisów RAM.
 Po zdobyciu Fuse1/206 w M326 przy38673 zamknięto panel, Left48 iDown120

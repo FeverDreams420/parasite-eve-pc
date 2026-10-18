@@ -15055,6 +15055,42 @@ static int script_movie_error_exit(const char *executable)
     puts("Original script error: movie failure terminates dispatcher instead of retrying or continuing the scene");return 1;
 }
 
+static int original_native_control(const char *executable)
+{
+    const char *disc=getenv("PE_TEST_DISC");if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+    if(!SDL_Init(SDL_INIT_EVENTS))return 1;
+    char resolved[2][2048];const char *paths[]={executable,disc};char *cwd=SDL_GetCurrentDirectory();if(!cwd)return 1;
+    for(unsigned i=0;i<2;++i){bool absolute=paths[i][0]=='/' || paths[i][0]=='\\' || (paths[i][0] && paths[i][1]==':');
+        int n=snprintf(resolved[i],sizeof(resolved[i]),"%s%s",absolute?"":cwd,paths[i]);if(n<0 || n>=sizeof(resolved[i])){SDL_free(cwd);return 1;}}
+    SDL_free(cwd);
+    const char *commands[]={"advance 2 0x4000\nadvance 4 0\n","quit\n","","advance 0 0\n","advance 7 0\n",
+        "advance -1 0\n","advance 1 65536\n","advance 1 -1\n","advance 1 0 garbage\n","advance 2\n","unknown\n",NULL};
+    char too_long[200];memset(too_long,'x',sizeof(too_long));too_long[sizeof(too_long)-1]=0;
+    unsigned passed=0;
+    for(unsigned trial=0;trial<sizeof(commands)/sizeof(*commands);++trial){
+        char directory[2048],card[2080];int n=snprintf(directory,sizeof(directory),"%spe-control-%llx-%u",SDL_GetBasePath(),(unsigned long long)SDL_GetPerformanceCounter(),trial);
+        if(n<0 || n>=sizeof(directory) || !SDL_CreateDirectory(directory))return 1;
+        for(unsigned slot=0;slot<2;++slot){snprintf(card,sizeof(card),"%s/bu%u0",directory,slot);if(!SDL_CreateDirectory(card))return 1;}
+        const char *args[]={resolved[0],"--disc",resolved[1],"--headless","--frame-limit","8","--control-at","2",NULL};
+        SDL_PropertiesID props=SDL_CreateProperties();SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
+        SDL_SetStringProperty(props,SDL_PROP_PROCESS_CREATE_WORKING_DIRECTORY_STRING,directory);
+        SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDIN_NUMBER,SDL_PROCESS_STDIO_APP);
+        SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER,SDL_PROCESS_STDIO_APP);
+        SDL_SetBooleanProperty(props,SDL_PROP_PROCESS_CREATE_STDERR_TO_STDOUT_BOOLEAN,true);
+        SDL_Process *child=SDL_CreateProcessWithProperties(props);SDL_DestroyProperties(props);if(!child)return 1;
+        SDL_IOStream *input=SDL_GetProcessInput(child);const char *command=commands[trial]?commands[trial]:too_long;size_t length=strlen(command);
+        int wrote=input && SDL_WriteIO(input,command,length)==length;if(input)SDL_CloseIO(input);
+        int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);SDL_DestroyProcess(child);
+        int expected=trial<3?0:2;int ok=wrote && output && status==expected && strstr(output,"\"event\":\"control\",\"vblanks\":2") && strstr(output,"\"control\":{");
+        if(output && (strstr(output,"runtime error:") || strstr(output,"AddressSanitizer") || strstr(output,"Unbound original")))ok=0;
+        if(trial==0 && (!strstr(output,"\"event\":\"control\",\"vblanks\":4") || !strstr(output,"\"event\":\"frame_limit\",\"vblanks\":8")))ok=0;
+        if(trial>0 && output && strstr(output,"\"event\":\"frame_limit\""))ok=0;
+        if(!ok){fprintf(stderr,"Native control case%u status%d: %.300s\n",trial,status,output?output:"");SDL_free(output);return 1;}
+        SDL_free(output);++passed;
+    }
+    printf("Native headless control:%u stdin advance/quit/EOF and malformed/overflow command cases passed with private cards\n",passed);return 0;
+}
+
 static int native_diagnostic_hp_arguments(const char *executable)
 {
     const char *bad[][9]={
@@ -16109,6 +16145,7 @@ int main(int argc, char **argv)
     if(argc==2 && !strcmp(argv[1],"--attack-effect-status-gate"))return original_attack_effect_status_gate()?0:158;
     if(argc==2 && !strcmp(argv[1],"--tool-equipped-donor"))return original_tool_equipped_donor()?0:157;
 
+    if(argc==3 && !strcmp(argv[1],"--native-control"))return original_native_control(argv[2]);
     if(argc==3 && !strcmp(argv[1],"--native-diagnostic-hp-arguments"))return native_diagnostic_hp_arguments(argv[2])?0:1;
     if(argc==2 && !strcmp(argv[1],"--texture-pages")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

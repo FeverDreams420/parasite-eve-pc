@@ -15,6 +15,8 @@ extern BootHostHealthEvent *g_BootHostHealthEvents;
 extern unsigned g_BootHostHealthEventCount,g_BootHostHealthApplied;
 extern int g_BootHostActive;
 extern u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
+/* Headless diagnostic boundary; stdin advances ordinary input only. */
+extern u32 g_BootHostControlAt;
 extern const char *g_BootHostVramPath;
 extern BootHostPadEvent *g_BootHostPadEvents;
 extern unsigned g_BootHostPadEventCount;

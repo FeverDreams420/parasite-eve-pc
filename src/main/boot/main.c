@@ -28,7 +28,8 @@ int main(int argc,char **argv) {
     int result=EXIT_FAILURE;
     for(int arg=1;arg<argc;++arg){
         if(!strcmp(argv[arg],"--help")){
-            printf("Usage: %s --disc <USA Disc 1 CUE/BIN> [--disc2 <USA Disc 2 CUE/BIN>] [--headless] [--frame-limit N] [--dump-vram PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",argv[0]);
+            printf("Usage: %s --disc <USA Disc 1 CUE/BIN> [--disc2 <USA Disc 2 CUE/BIN>] [--headless] [--frame-limit N] [--control-at N] [--dump-vram PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",argv[0]);
+            printf("Headless control: --control-at N pauses for stdin commands: advance FRAMES BUTTON_MASK or quit (requires --frame-limit).\n");
             printf("Headless fixtures only: --diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE (requires --frame-limit; output is marked coverage-only)\n");
             return EXIT_SUCCESS;
         }
@@ -39,6 +40,11 @@ int main(int argc,char **argv) {
             unsigned long limit=arg+1<argc?strtoul(argv[++arg],&end,10):0;
             if(!limit || limit>INT_MAX || errno || *end){fprintf(stderr,"Invalid frame limit\n");return EXIT_FAILURE;}
             g_BootHostVBlankLimit=(u32)limit;
+        }else if(!strcmp(argv[arg],"--control-at")){
+            char *end;errno=0;
+            unsigned long tick=arg+1<argc?strtoul(argv[++arg],&end,10):0;
+            if(!tick || tick>INT_MAX || errno || *end || g_BootHostControlAt){fprintf(stderr,"Invalid control boundary\n");return EXIT_FAILURE;}
+            g_BootHostControlAt=(u32)tick;
         }else if(!strcmp(argv[arg],"--dump-vram")){
             if(arg+1>=argc || g_BootHostVramPath){fprintf(stderr,"Missing or duplicate capture path\n");return EXIT_FAILURE;}
             g_BootHostVramPath=argv[++arg];
@@ -84,6 +90,15 @@ int main(int argc,char **argv) {
     }
     if(!paths[0]){fprintf(stderr,"Supply --disc with a USA CUE/BIN image\n");return EXIT_FAILURE;}
     if(g_BootHostVramPath && !g_BootHostVBlankLimit){fprintf(stderr,"VRAM capture requires --frame-limit\n");return EXIT_FAILURE;}
+    if(g_BootHostControlAt){
+        const char *headless=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
+        if(!headless || strcmp(headless,"1") || !g_BootHostVBlankLimit || g_BootHostControlAt>=g_BootHostVBlankLimit){
+            fprintf(stderr,"Control requires headless mode and a later frame limit\n");return EXIT_FAILURE;
+        }
+        if(g_BootHostPadEventCount && g_BootHostPadEvents[g_BootHostPadEventCount-1].vblank>g_BootHostControlAt){
+            fprintf(stderr,"Input schedule extends beyond control boundary\n");return EXIT_FAILURE;
+        }
+    }
     if(g_BootHostHealthEventCount){
         const char *headless=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
         if(!headless || strcmp(headless,"1") || !g_BootHostVBlankLimit ||

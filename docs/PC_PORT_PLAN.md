@@ -2,6 +2,84 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Headless — istniejące boot/main.c, boot/init.c i boot.h obsługują teraz
+--control-at N z wymaganym --headless i późniejszym --frame-limit MAX.
+Nie dodano plików repo, nie przeniesiono oryginalnych funkcji ani nie
+zmieniono gameplayu. PrzyN drukowany jest istniejący snapshot JSON
+(event:"control"), opcjonalnie zapisywany kompletny VRAM, po czym stdin
+przyjmuje `advance FRAMES BUTTON_MASK` albo `quit`. EOF kończy proces.
+FRAMES jest dodatnią liczbą dziesiętną, maska0..65535 dopuszcza0x;
+przekroczenie MAX, błędna komenda lub za długa linia kończy exit2.
+CLI --pad-at musi kończyć się najpóźniej przyN; dalej wejściem zarządza
+klient. Podczas advance wykonywany jest oryginalny kod gry i zwykły pad,
+bez zapisów HP/PE/RNG/flag gameplayu. PrzyMAX standardowy frame_limit kończy
+proces jak dotychczas. Bez --control-at format i działanie replayów pozostają
+zgodne z poprzednim kandydatem.
+
+Przykład (stdin wpisuje klient lub automat, stdout należy filtrować po JSON):
+```
+./build/parasite-eve-pc --disc "/path/Parasite Eve (Disc 1).cue" --headless --frame-limit 1000 --control-at 1 --dump-vram /tmp/pe-control.vram
+advance 20 0
+advance 4 16384
+advance 4 0
+quit
+```
+Snapshot w tym trybie dodaje `control`: stan menu item/PE, tryb i indeks
+celowania, aktywny slot, pozostałe akcje i kolejkę, podpisany zasięg oraz
+listę celów z type/sub/dystansem/kątem. Przed odczytem celu sprawdzana jest
+jego obecność na aktualnej liście aktorów. Binarne VRAM jest zamknięte przed
+wypisaniem JSON, więc klient może wtedy odczytać gotowy plik. Nie jest to
+modyfikacja silnika walki ani źródło nowych ataków/animacji.
+
+Test --native-control GAME w istniejącym original_actor_animation.c i CTest
+original-game-headless-control uruchamia12 przypadków advance/quit/EOF,
+niepoprawnych masek/czasów, przekroczenia limitu i za długiej komendy.
+Każde dziecko pracuje na prywatnych pustych kartach. Pierwszy kandydat
+/tmp/pe-control-stream-v1 przeszedł36 pełnych regresji w normal/SAN;
+końcowa korekta formatu podpisanego range ma świeżego kandydata
+/tmp/pe-control-stream-v2 (183+183 obiektów i cztery executable).
+Wszystkie36 regresji v2 kończą terminalnym exit0; pełne JSON i1MiB VRAM
+replayów zgodne z poprzednią bazą i między profilami, telefoniczny B2
+identyczny bajtowo, źródłowe karty niezmienione. Weryfikacja:
+/tmp/pe-control-stream-v2-verification.json; final-build-proof.json rehashuje366
+obiektów, wszystkie zależności, biblioteki i cztery executable. 22 dodatkowe
+błędne konfiguracje CLI (argument-proof.json) odrzucono przed odczytem obrazu.
+
+Rzeczywisty test interaktywny M123 wysyła27 komend, odbiera28 snapshotów,
+sprawdza zachowaną jedną akcję w kolejce i kończy66104/Aya87HP, głowa4:260.
+Normal17.64s i SAN50.87s kończąexit0, końcowe JSON (po usunięciu wyłącznie
+dodatkowego obiektu control) i1MiB VRAM identyczne z wcześniejszym zwykłym
+replayem tej samej fizycznej sekwencji. Bez LLDB ani ReturnFromFrame w obu
+profilach; /tmp/pe-control-stream-v2-m123-proof.json. Udokumentowany przykład
+1→21→25→29 także przechodzi normal/SAN z rzeczywistym CUE i VRAM1MiB.
+
+Użytkowy build/parasite-eve-pc przeszedł osobny pełny replay67791:
+exit0/106.05s, HP76, pełne JSON/VRAM identyczne z kandydatem, A2 niezmieniony,
+prywatnebu10 puste. SHA256 executable
+30b00e064f1b78abd644302cdff2d452c8bc80cd52466be99f2c3e69c21fd941,
+/tmp/pe-control-stream-v2-user-proof.json. Root fixture też przebudowany;
+jego identyczną kopię w/tmp uruchomiono przeciw temu buildowi we wszystkich12
+przypadkach, user-fixture-proof.json. Archiwa PsyZ/SDL pozostają
+nieinstrumentowane. Nie ma dowodu zgodności PCM ani ukończenia kampanii.
+
+M123 — dodatkowy test jednej akcji M16: poprawiono wyłącznie zewnętrzny
+helper /tmp/pe_zoo_checkpoint_control.py, skip32768 zamiast8192 (to drugie
+cofało kolejkę i nie oddawało strzału). Oryginalny Battle_HandleItemMenu
+używa FIELD0x2000 do zakończenia reszty tury; FIELD0x400 cofa wybór.
+Przy66104 Aya87HP, głowa4:260 (288→260), głowa2:300, ammo4 (5→4),
+ATB1961. /tmp/pe-m123-single-shot-v1-proof.json: normal17.25/SAN48.21s,
+oba exit0, całe JSON/VRAM identyczne; metryki zgodne z live. Dłuższy test
+jednego strzału kończy67728/Aya0, nie zwycięstwo. To nie daje43 obrażeń
+na nabój: faktyczny wynik to28.
+
+Odczyt starej próby PE67791 wykazał ItemState1/cycle0, menu2/selection41,
+cel2/dist417 i range1608. Wstawienie kierunku67371 działało jeszcze w oknie
+PE, nie przy wyborze celu; nie klasyfikować go jako błędu zasięgu.
+Późniejsze wstawienie67387 wykonało PE w głowę4:344→268, głowa2 nadal76,
+PE0, ammo16, ale Aya10HP. /tmp/pe-m123-energy-middle-v2-proof.json jest
+normal-only. Nie pokonano M123. Zmiany produkcyjne tej tury dotyczą wyłącznie
+sterowania/odczytu diagnostycznego w obecnych plikach hosta.
+
 M123 — zweryfikowany unik i dalszy ostrzał środkowej głowy. Nowy punkt
 66188: Aya97/195HP, PEraw5590713, ATB4346, ammo3; głowa4:232/400,
 głowa2:300/300, głowa3 pokonana. /tmp/pe-m123-middle-232-v1-proof.json:

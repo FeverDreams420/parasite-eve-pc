@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <ctype.h>
 #include <psyz/system.h>
 #include "common.h"
 #include "pe1/aya.h"
@@ -55,7 +57,7 @@ void MemCard_InitManager(void);
 void Boot_InitMemCard(void);
 
 int g_BootHostActive;
-u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
+u32 g_BootHostVBlankLimit,g_BootHostVBlankCount,g_BootHostControlAt;
 const char *g_BootHostVramPath;
 BootHostPadEvent *g_BootHostPadEvents;
 unsigned g_BootHostPadEventCount;
@@ -85,7 +87,8 @@ static void Boot_PollHost(void) {
             g_BootHostVBlankCount,event->expected,event->value);fflush(stdout);
     }
     if(Psyz_QuitRequested())exit(EXIT_SUCCESS);
-    if(!g_BootHostVBlankLimit || g_BootHostVBlankCount<g_BootHostVBlankLimit)return;
+    int terminal=g_BootHostVBlankLimit && g_BootHostVBlankCount>=g_BootHostVBlankLimit;
+    if(!terminal && (!g_BootHostControlAt || g_BootHostVBlankCount<g_BootHostControlAt))return;
     if(g_BootHostVramPath){
         static _Alignas(8) u16 vram[1024*512];RECT all={0,0,1024,512};
         StoreImage(&all,vram);DrawSync(0);
@@ -95,8 +98,8 @@ static void Boot_PollHost(void) {
         if(fclose(out)!=0 || !written){fprintf(stderr,"Cannot finish VRAM capture\n");fflush(stderr);_Exit(2);}
     }
     DISPENV display;GetDispEnv(&display);
-    printf("{\"event\":\"frame_limit\",\"vblanks\":%u,\"scene\":%u,\"flags\":%u,\"draw_slot\":%d,\"movie\":%d,\"pad\":%u,\"game_flags\":%u,\"video_state\":%u,\"game_frame\":%u,\"movie_frame\":%d,\"move_lock\":%d,\"display\":{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d,\"rgb24\":%d},\"dialogue\":[",
-        g_BootHostVBlankCount,(u32)g_SceneDispatchToken,g_GameStateFlags,g_ActiveDrawSlot,
+    printf("{\"event\":\"%s\",\"vblanks\":%u,\"scene\":%u,\"flags\":%u,\"draw_slot\":%d,\"movie\":%d,\"pad\":%u,\"game_flags\":%u,\"video_state\":%u,\"game_frame\":%u,\"movie_frame\":%d,\"move_lock\":%d,\"display\":{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d,\"rgb24\":%d},\"dialogue\":[",
+        terminal?"frame_limit":"control",g_BootHostVBlankCount,(u32)g_SceneDispatchToken,g_GameStateFlags,g_ActiveDrawSlot,
         g_GameState.scene_audio.tracks.movie_index,g_FieldPadBits,g_GameState.flags,
         g_GameState.scene_audio.tracks.draw_enabled.bits,g_GlobalFrameCounter[0],
         (s16)g_GameState.scene_audio.tracks.movie_frame,g_FieldMoveLock,
@@ -160,11 +163,50 @@ static void Boot_PollHost(void) {
             enemy->coreFlags,enemy->stateFlags,enemy->statusFlags2);
     }
     printf("]}");
+    if(g_BootHostControlAt){
+        printf(",\"control\":{\"item_state\":%d,\"target_cycle\":%d,\"target_index\":%d,\"turn_slot\":%d,\"remaining_actions\":%u,\"queue_count\":%u,\"range\":",
+            g_BattleItemMenuState,g_BattleTargetCycleMode,g_BattleTargetIndex,g_BattleActiveTurnSlot,
+            (unsigned)g_BattleRemainingActions,(unsigned)g_BattleActionQueueCount);
+        const Combatant *player=(g_GameStateFlags&2) && g_PlayerEntity?(const Combatant *)g_PlayerEntity->state:NULL;
+        if(player && player->action)printf("%d",(int)player->action->range);else printf("null");
+        printf(",\"targets\":[");
+        int count=(g_GameStateFlags&2)?g_BattleTargetCount:0;
+        if(count<0)count=0;if(count>BATTLE_TARGET_CAPACITY)count=BATTLE_TARGET_CAPACITY;
+        for(int i=0;i<count;++i){
+            const FieldActor *target=(const FieldActor *)g_BattleTargetList[i].actor,*found=NULL;
+            for(const FieldActor *actor=g_FieldActorListHead;actor;actor=actor->next)if(actor==target){found=actor;break;}
+            if(i)printf(",");
+            if(found)printf("{\"type\":%u,\"sub\":%u,\"distance\":%d,\"angle\":%d}",
+                found->type_id,found->sub_id,g_BattleTargetList[i].dist,g_BattleTargetList[i].angle);
+            else printf("null");
+        }
+        printf("]}");
+    }
     if(g_BootHostHealthEventCount)
         printf(",\"coverage_only\":true,\"ordinary_campaign_proof\":false,\"diagnostic_hp\":{\"scheduled\":%u,\"applied\":%u}",
             g_BootHostHealthEventCount,g_BootHostHealthApplied);
     printf("}\n");
     fflush(stdout);
+    if(!terminal){
+        char line[128],*end,*mask_end;
+        if(!fgets(line,sizeof(line),stdin))_Exit(EXIT_SUCCESS);
+        if(!strchr(line,'\n') && !feof(stdin)){fprintf(stderr,"Control command too long\n");fflush(stderr);_Exit(2);}
+        line[strcspn(line,"\r\n")]=0;
+        if(!strcmp(line,"quit"))_Exit(EXIT_SUCCESS);
+        if(strncmp(line,"advance ",8)){fprintf(stderr,"Invalid control command\n");fflush(stderr);_Exit(2);}
+        errno=0;unsigned long frames=strtoul(line+8,&end,10);
+        if(end==line+8 || !isspace((unsigned char)*end)){fprintf(stderr,"Invalid control duration\n");fflush(stderr);_Exit(2);}
+        while(isspace((unsigned char)*end))++end;
+        unsigned long buttons=strtoul(end,&mask_end,0);
+        if(mask_end==end){fprintf(stderr,"Missing control buttons\n");fflush(stderr);_Exit(2);}
+        while(isspace((unsigned char)*mask_end))++mask_end;
+        if(errno || *mask_end || !frames || frames>g_BootHostVBlankLimit-g_BootHostVBlankCount || buttons>65535){
+            fprintf(stderr,"Invalid control advance/buttons\n");fflush(stderr);_Exit(2);
+        }
+        hostButtons=(u16)buttons;
+        g_BootHostControlAt=g_BootHostVBlankCount+(u32)frames;
+        return;
+    }
     /* A diagnostic cap is a forced process boundary, even inside a menu's
      * VSync callback. Do not unwind through the locked SDK callback stack. */
     _Exit(EXIT_SUCCESS);

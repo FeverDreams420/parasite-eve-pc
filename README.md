@@ -22,6 +22,11 @@ movies 12/13, and returns to field control outside at story stage 376. Full
 state and VRAM agree between the controlled session and normal/sanitized
 replays; three additional checkpoint pairs cover arrival and both movies.
 
+Fast menu input now waits for space in the original 16-message AKAO queue,
+preventing an overflow that corrupted the sample-table pointer. A permanent
+regression covers full and paired-command boundaries with the real timer;
+normal/sanitized empty-card and Continue replays pass.
+
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and
 story progression through Day 3 to the NYPD. Genuine phone-created checkpoint

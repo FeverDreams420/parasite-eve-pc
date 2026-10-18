@@ -10,6 +10,7 @@
 #include "pe1/akao/voice_state.h"
 #include "pe1/akao_counters.h"
 #include "pe1/psyq_spu_api.h"
+#include "pe1/psyq_gpu.h"
 
 void Akao_SetNotePitch(AkaoTrack *track, int arg);
 
@@ -2066,8 +2067,16 @@ int Akao_EnqueueStagedCommand(void) {
     AkaoSequenceCounter sequence;
 
     result = 0;
-    g_AkaoMessageQueueLock = 1;
     opcode = g_AkaoCmd.opcode;
+    /* A fast native menu can fill the original queue before the next root
+     * counter interrupt. Poll that interrupt without advancing VBlank, before
+     * locking its consumer. Reserve both entries for paired commands. */
+    param = (opcode == 0xD8 || opcode == 0xD9 || opcode == 0xDA ||
+             opcode == 0x98 || opcode == 0x99) ? 2 : 1;
+    while (g_AkaoMessageQueueCount >
+           (int)(sizeof(g_AkaoMessageQueue) / sizeof(g_AkaoMessageQueue[0])) - param)
+        VSync(1);
+    g_AkaoMessageQueueLock = 1;
     switch (opcode) {
     case 0x10:
     case 0x12:

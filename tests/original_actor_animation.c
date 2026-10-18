@@ -6581,6 +6581,9 @@ static int original_m123_pulse_contact(void)
 
 static int original_m123_programs(SceneAssetView *room)
 {
+    AkaoQueueEntry old_audio[16];memcpy(old_audio,g_AkaoMessageQueue,sizeof(old_audio));
+    int old_queued=g_AkaoMessageQueueCount;unsigned sound_messages=0;
+    g_AkaoMessageQueueCount=0;
     PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
     const unsigned indices[]={43,58,59};void *old_programs[3];for(unsigned i=0;i<3;++i)old_programs[i]=g_FieldFxTaskPrograms[indices[i]];
     FieldFxTaskContext *old_context=g_FieldFxTaskContext;FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;
@@ -6619,6 +6622,11 @@ static int original_m123_programs(SceneAssetView *room)
             memset(packets.guard,0xa5,32);g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;
             D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)packets.bytes;
             if(Pm_Start(0) || Pm_Exec(0)){valid=0;break;}
+            /* This graphics fixture has no AKAO timer or sample bank. Observe
+             * and consume its staged commands each frame instead of allowing
+             * hundreds of simulated frames to overflow the real audio queue. */
+            if(g_AkaoMessageQueueCount<0 || g_AkaoMessageQueueCount>16){valid=0;break;}
+            sound_messages+=(unsigned)g_AkaoMessageQueueCount;g_AkaoMessageQueueCount=0;
             draws+=g_DrawPacketOffset!=0;FieldFxTaskContext *ctx=&bank.slots[0].task.tasks;
             for(unsigned slot=0;slot<8;++slot)if(ctx->slots[slot].id!=0xffff){
                 seen|=1u<<ctx->slots[slot].id;
@@ -6644,6 +6652,8 @@ static int original_m123_programs(SceneAssetView *room)
     g_RoomM123BeaconModel0=old_models[0];g_RoomM123BeaconModel1=old_models[1];g_RoomM123GlowBurstAngles=old_angles;g_RoomM123GlowBurstCenter=old_center;
     g_RoomM123SwirlSpeed=old_speed;g_RoomM123SwirlBrightness=old_brightness;memcpy(g_RoomM123SwirlAngles,old_swirl_angles,8);memcpy(g_RoomM123SwirlOrigin,old_origin,6);
     for(unsigned i=0;i<6;++i)memcpy(tracks[i].data,tracks[i].saved,tracks[i].size);
+    memcpy(g_AkaoMessageQueue,old_audio,sizeof(old_audio));g_AkaoMessageQueueCount=old_queued;
+    if(!sound_messages)valid=0;
     if(valid)printf("Original M123 PM: %u full authored cycles, three programs and both selector variants, all eleven callbacks, actual USA models, both draw slots, natural expiry and packet/OT/arena guards passed\n",cycles);
     return valid;
 }
@@ -14824,6 +14834,28 @@ static int original_attack_effect_status_gate(void)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--akao-queue-backpressure")){
+        /* Force both boundary cases before the real timer consumes the queue.
+         * Run separately: hardware initialization owns the global driver. */
+        Spu_InitHardware();
+        u32 blanks=g_BootHostVBlankCount;
+        for(unsigned i=0;i<128;++i){
+            while(g_AkaoMessageQueueCount)VSync(1);
+            memset(g_AkaoMessageQueue,0,sizeof(g_AkaoMessageQueue));
+            g_AkaoMessageQueueCount=(i&1)?15:16;
+            memset(&g_AkaoCmd,0,sizeof(g_AkaoCmd));
+            g_AkaoCmd.opcode=(i&1)?0x99:0;
+            if(Akao_EnqueueStagedCommand()!=0 ||
+               g_AkaoMessageQueueCount!=((i&1)?2:1))return 160;
+            if((i&1) && (g_AkaoMessageQueue[0].opcode.word!=0x9B ||
+                         g_AkaoMessageQueue[1].opcode.word!=0x9D))return 160;
+        }
+        while(g_AkaoMessageQueueCount)VSync(1);
+        if(g_BootHostVBlankCount!=blanks)return 160;
+        Spu_Shutdown();
+        puts("Original AKAO queue: 128 full/single and 15-entry/paired boundaries drain through the real timer without advancing VBlank");
+        return 0;
+    }
     if(argc==2 && !strcmp(argv[1],"--attack-effect-status-gate"))return original_attack_effect_status_gate()?0:158;
     if(argc==2 && !strcmp(argv[1],"--tool-equipped-donor"))return original_tool_equipped_donor()?0:157;
 

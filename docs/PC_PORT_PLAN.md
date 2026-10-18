@@ -2,6 +2,53 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Awaria audio z poprzedniego wpisu została odtworzona w poprawnym prywatnym
+cwd z pustymi kartami, także przy wymuszonym headless. Nie była wyłącznie
+skutkiem katalogu domowego ani wyboru urządzenia audio. Zwykły build kończył
+się SIGSEGV, podczas gdy wolniejszy SAN przechodził. Sprzętowy watchpoint
+wykazał zapis17. komunikatu AKAO poza tablicą16: Akao_EnqueueStagedCommand
+z Menu_PlayMoveSound nadpisywał g_AkaoSampleOffsetTable wartością
+0x8000000100. Przyspieszone menu potrafiło wyprzedzić timer root-counter.
+
+Poprawka w oryginalnym src/main/akao/voice_bank.c, bez nowej warstwy:
+przed zablokowaniem konsumenta czeka na wolne miejsce, odpytując timer
+przez VSync(1). Ten tryb nie przesuwa VBlank. D8/D9/DA/98/99 rezerwują
+dwa wpisy, pozostałe jeden; żaden komunikat nie jest odrzucany ani
+zastępowany. Istniejący nagłówek podaje faktyczny rozmiar tablicy16.
+Stały CTest original-akao-queue-backpressure wykonuje128 naprzemiennych
+granic: pełne16+pojedyncza komenda oraz15+para99. Sprawdza rzeczywiste
+opróżnienie przez timer, wynikową parę9B/9D, liczbę wpisów i niezmieniony
+licznik VBlank. Nowy fixture po podlinkowaniu starego voice_bank kończy
+się160; poprawiony przechodzi normal i ASan/UBSan/function.
+
+Szerszy test zasobów początkowo wisiał: sample procesu wskazał
+original_m123_programs→RoomM123_PulseRing→kolejka. Ten fixture graficzny
+nie ma timera/próbek audio i wcześniej pozostawiał komunikaty z setek
+symulowanych klatek, przepełniając globalne storage. Teraz obserwuje i
+odbiera je co klatkę, kontroluje limit i obecność komunikatów oraz
+odtwarza początkową kolejkę. Nie uznano tego za test odtwarzania audio.
+Po korekcie CTest AKAO layout, nowa granica i pełny player-input-assets
+PASS3/3 w13,14s; assets także exit0 z sanitizerami, bez ich raportów.
+
+/tmp/pe-audio-queue-v2-{run.py,verify.py,proof.json}: osiem właściwych
+uruchomień (puste/M × dummy/system audio × normal/SAN) przy35893, exit0.
+Dla każdej karty pełny JSON i1MiBVRAM zgodne we wszystkich czterech
+wariantach. M→sklep zachowuje poprzedni stan/obraz i8192B źródłowego M;
+puste karty wracają do tytułu, nadal pozostają puste. Systemowe urządzenie
+nie jest tym samym co pomiar słyszalnej poprawności całej ścieżki audio.
+Dalszy cold M→muzeum→M192/etap376 na poprawionym kodzie przechodzi
+normal25,73s/SAN73,68s: pełny JSON/VRAM identyczne z poprzednim kandydatem,
+źródłowy M niezmieniony. Artefakty /tmp/pe-audio-queue-v2-museum-*.
+
+Końcowy build /tmp/pe-audio-queue-v3 ma świeże173 obiekty na profil,
+manifest i-build-proof.json: ponownie sprawdzone346 obiektów, wszystkie
+zależności źródłowe, biblioteki i cztery executable. Odv2 zmienił się tylko
+obiekt fixture'a M123; sekcje __text/__data obu gier identyczne z testowanym
+v2. Pełny build CMake przechodzi. Nie dodano plików repozytorium, nowego
+modułu gry ani nowego porównania PS1. Pełna kampania i całe audio nadal
+nie mają kompletnego dowodu.
+
+
 Dalszy zwykły replay z tego samego M obejmuje też powrót M095→M094→M093,
 Daniela/100, niewłaściwe drzwi auta/101, właściwe drzwi/102–104 i mapę.
 Właściwe podejście od północy około[1700,-200] wymaga obejścia samochodu

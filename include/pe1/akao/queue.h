@@ -29,7 +29,7 @@ typedef struct AkaoQueueEntry {
 
 typedef void (*AkaoMessageHandler)(void *entry);
 
-extern AkaoQueueEntry g_AkaoMessageQueue[];
+extern AkaoQueueEntry g_AkaoMessageQueue[16];
 extern int g_AkaoMessageQueueCount;
 extern AkaoMessageHandler Akao_MessageHandlers[];
 

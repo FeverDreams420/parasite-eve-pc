@@ -2,6 +2,54 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dzień4 — dalsza oryginalna fabuła do szpitala, bez zmian kodu produkcyjnego.
+Poprzedni odcinek goal był postępem: potwierdził wyjście NYPD i Museum;
+obecny rozstrzyga zamknięte wejście i przechodzi właściwą dalszą scenkę.
+Read-only /tmp/pe-day4-m191-observe-v1.{json,log}, breakpoint init.c:101,
+przy50073 odczytał aktualne60 trójkątów/54 wierzchołki. Oryginalny init
+aktora1 przy720/732 ustawia kind0x80 dla58/59 w gałęzi wybranej przy
+story440; odczyt podłogi /tmp/pe-day4-m191-floor-a80290c8.json potwierdza
+obie blokady. Nie jest to dowód błędu kolizji portu; flag nie usuwano.
+Próba Soho przez mapę dochodzi do M096/M093, bez postaci do rozmowy;
+normal-only /tmp/pe-day4-soho-live-v1, nie kolejny punkt fabuły.
+
+Oryginalne skrypty wyjść mapy dodają Hospital/var3 bit19 od etapu448;
+read-only skan USA PE.IMG znalazł bezpośrednie ustawienie var74=448
+w M117 przy214808 i w M360. Zapisano nawigacyjne wyniki skanu w
+/tmp/pe-day4-{hospital-unlock,story448}-scan-v1.json. Odczyt skryptu nie
+jest samodzielnym dowodem wykonania. Potwierdzona niżej trasa wykonuje M117.
+
+Od potwierdzonego35036/M100 droga centralnym holem do(251,996),
+(600,1100),(860,1100) prowadzi przy36154 do M116/a8021348.
+Zwykły ruch do prawego dolnego wyjścia przez okolice(700,110),(700,-680)
+prowadzi do M115, następnie zachodnie schody do M121/a80220c8.
+Po jednej nieudanej próbie kierunku i powrocie przez M115 tester dopasowuje
+kierunek do kamery M121. Podejście(-1024,135) iUp19 wybiera drzwi M117:
+przy40373 M117/a80213c8, HP210/story440, menuNULL/lock2.
+Up4 iUpLeft60 uruchamiają nową scenkę laboratorium; dalsze zwykłe Cross
+przechodzą obserwowane strony136–152. Przy45397 oryginalny skrypt kończy
+na mapie a8000048/story448, bez zmiany HP lub inventory. Left4/release120
+wybiera widoczny Hospital, Cross20 uruchamia podróż M039/a80034c8.
+Obserwowane dialogi52–62 i dalszy input kończą przy54341 w M125/a80222c8,
+story460, HP210/210, battle0/live0, lock0, menuNULL i wszystkie dialogi zamknięte.
+Obejrzany obraz przedstawia Ayę przed wejściem do szpitala, nie jego wnętrze.
+
+Osiem fresh cold replayów czterech checkpointów36154/40373/45397/54341
+od autentycznego B, każdy normal i ASan/UBSan/function:8/8 terminal exit0,
+bez raportów sanitizerów/Unbound. Cztery całe JSON identyczne z live i między
+profilami; cztery całe1MiB VRAM zgodne między profilami. Ostatni odcinek
+normal15,58s/SAN42,56s. Całe50 slotów i4096B equipment na końcu identyczne
+z B; wszystkie źródłowe/prywatne8192B B niezmienione, bu10 puste.
+Dowód /tmp/pe-day4-lab-hospital-v1-proof.json, runner -v1.py,
+log -v1-check.log i pełne końcowe argumenty -v1-full-args.json.
+Provenance -v1-provenance.json ponownie hashuje366 obiektów i961 plików:
+cały kandydat v2, zależności i biblioteki nadal zgodne z pierwotnym manifestem.
+PsyZ/SDL nieinstrumentowane. Brak nowego porównania PS1 pikseli/PCM i stałego
+CTest tej trasy; pełna kampania pozostaje otwarta. Klienci museum-live-v2,
+soho-live-v1 i stairs-live-v1 zakończeni quit/exit0; obserwator zakończony0
+po zaplanowanym kill inferiora. Żadnych nowych plików repo ani zmian gameplay RAM.
+
+
 Dzień4 — wyjście z NYPD i przyjazd pod Museum, bez zmian produkcyjnych.
 Poprzedni odcinek goal zakończył świeży test pierwszej Melissy na aktualnym
 build/parasite-eve-pc: exit0/input14/FNVfd7ae4cac94eda93, log

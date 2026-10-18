@@ -2,6 +2,52 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dzień4 — oryginalna awaria windy i przejście do M320, bez zmian produkcji.
+Poprzedni odcinek goal był postępem: nowe wejście/lobby i prawdziwy Save C;
+obecny wykonuje dalszą scenkę i pozostawia zweryfikowaną trasę do etapu470.
+Od cold Continue C przy24000/M126 Down45, Left140 i neutral500 prowadzą
+przy24685 do M127/a80223c8/dialog87. Dalsze Cross kończą scenkę przy25745:
+M127/story464/HP210, dialog121 zamknięty, lock0/menuNULL.
+
+Pierwsza próba wejścia do lewej windy staje przed oryginalnie zamkniętymi
+drzwiami. Read-only /tmp/pe-day4-m127-observe-v1.{json,log} zachowuje
+aktualne skrypty i45 trójkątów podłogi; kind0x80 na4/17/21/28 blokuje
+oba boczne wejścia. Właściwa interakcja: przy(-271,-1246) zwrócenie Down2
+(yaw1058), Cross20, potem podejście do(-500,-1000). Przy28050 M128/a8022448,
+wewnątrz lewej windy, HP210/story464, menuNULL/lock0. Nie usuwano flag kolizji.
+
+Panel w M128 ma oryginalny trigger x245..320,z-250..-200. Podejście do
+około(278,-224) i Cross uruchamiają animację i dialog18, następnie98/99.
+Przy30801 M128/story467, dialog99 zamknięty, sterowanie oddane. Drugie
+naciśnięcie panelu wykonuje oryginalne otwarcie drzwi. Read-only
+/tmp/pe-day4-m128-observe-v2.json przy31863 odczytuje actor2/local10=2,
+aktywną pętlę wyjścia i podłogę bez blokad0x80. Oddzielny plik
+/tmp/pe-day4-m128-v2-floor-a8022448.json, starszej podłogi nie nadpisano.
+Próba ruchu po skosie nie przekraczała progu; zwykły Right20 przechodzi
+do M131/a80230c8/dialog33. Dalsze rozmowy/scenka przechodzą M320/a8062048,
+dialog101 i131, story470. Przy36503 swobodne pole: HP210/210, battle0/live0,
+lock0/menuNULL, dialogi zamknięte, pozycja(-1200,0,150), yaw2048.
+Obejrzane obrazy live przedstawiają hol wind, kabinę oraz końcowy korytarz;
+obejrzano również finalny PNG z zamrożonego normal replayu.
+
+Cztery fresh cold checkpointy25745/28050/30801/36503, każdy normal/SAN:
+8/8 terminal exit0, bez raportów ASan/UBSan/function i bez Unbound.
+Cztery całe JSON identyczne z live i między profilami, cztery całe1MiB VRAM
+identyczne między profilami. Ostatni normal6,15s/SAN18,45s. Wszystkie50 slotów
+i4096B equipment niezmienione względem C, całe8192B źródłowego i wszystkich
+prywatnych C niezmienione, bu10 puste. /tmp/pe-day4-hospital-elevator-v1-proof.json,
+runner -v1.py, log -v1-check.log i pełne końcowe -v1-full-args.json.
+Provenance -v1-provenance.json ponownie potwierdza366 obiektów i961 plików
+zgodnych z manifestem kandydata v2. PsyZ/SDL nieinstrumentowane; zgodność
+profili nie jest porównaniem pikseli/PCM PS1 ani dowodem ukończenia szpitala.
+Wszystkie trzy obserwatory zakończone0 po planowanym kill inferiora;
+klient /tmp/pe-day4-hospital-explore-live-v1 zakończony quit/exit0 przy36503.
+Nawigacyjny skan /tmp/pe-day4-hospital-lower-scene-graph-v1.json wskazuje
+powiązania M320→M321/M329, nadal wymagające zwykłego przejścia. Brak stałego
+CTest tej trasy. Pełna kampania nadal otwarta, bez nowych plików repo i bez
+zmian gameplay RAM lub kart repozytorium.
+
+
 Dzień4 — wejście do szpitala oraz prawdziwy Save/Continue C, bez zmian produkcji.
 Poprzedni odcinek goal potwierdził laboratorium i przyjazd; obecny potwierdza
 kolejną scenkę, wejście do lobby i nowy trwały punkt kontynuacji.

@@ -1,3 +1,5 @@
+#include "pe1/room_ground_eruption.h"
+#include "pe1/room_homing_model.h"
 #include "pe1/room_falling_burst.h"
 #include "pe1/room_motion_init.h"
 #include "common.h"
@@ -543,6 +545,11 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomOrbitFlareEffects;
         if (orbit_library && slot == 115 && record[i].u.handlerAddress == 0x80193250u)
             native = &g_RoomOrbitFlareEffects;
+        if(map+1==141 || map+1==328) {
+            if(slot==37 && record[i].u.handlerAddress==0x80192040u)native=&g_RoomGroundEruptionHandlers;
+            if(slot==122 && record[i].u.handlerAddress==0x801920c8u)native=&g_RoomDroppedFlareProgram;
+            if(slot==166 && record[i].u.handlerAddress==0x80192140u)native=&g_RoomHomingProgram;
+        }
         if (map+1==137 || map+1==140 || map+1==147 || map+1==324 || map+1==327) {
             if(slot==122 && record[i].u.handlerAddress==0x80190f10u)native=&g_RoomDroppedFlareProgram;
             if(slot==40 && record[i].u.handlerAddress==0x80190e84u)native=&g_RoomFallingBurstHandlers;
@@ -853,7 +860,7 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30 || map + 1 == 113 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
-        } else if ((map+1==126 || map+1==129 || map+1==137 || map+1==139 || map+1==140 || map+1==147 || map+1==149 || map+1==324 || map+1==326 || map+1==327) && slot==122) {
+        } else if ((map+1==126 || map+1==129 || map+1==137 || map+1==139 || map+1==140 || map+1==141 || map+1==147 || map+1==149 || map+1==324 || map+1==326 || map+1==327 || map+1==328) && slot==122) {
             g_FieldFxTaskPrograms[37]=&g_RoomDroppedFlareProgram;
             memset(g_RoomDroppedFlareArgs,0,sizeof(g_RoomDroppedFlareArgs));
         } else if ((map + 1 == 107 || map + 1 == 111 || map + 1 == 114 || map + 1 == 118 || map + 1 == 122) && slot == 35) {
@@ -863,6 +870,15 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 104 || map + 1 == 113 || map + 1 == 115 || map + 1 == 116 || map + 1 == 120 || map + 1 == 122 || map + 1 == 159 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 136) {
             g_FieldFxTaskPrograms[51]=&g_RoomLineBurstProgram;
             memset(RoomLib_SlotTable,0,8*sizeof(RoomSlotRec));
+        } else if((map+1==141 || map+1==328) && slot==166) {
+            g_FieldFxTaskPrograms[81]=&g_RoomHomingProgram;
+            memset(&g_RoomHomingLaunch,0,sizeof(g_RoomHomingLaunch));
+        } else if((map+1==141 || map+1==328) && slot==37) {
+            g_PmCmdHandlerTable[37]=&g_RoomGroundEruptionHandlers;
+            memset(&g_RoomEruptionGlowPacket,0,sizeof(g_RoomEruptionGlowPacket));
+            memset(&g_RoomEruptionDebrisPacket,0,sizeof(g_RoomEruptionDebrisPacket));
+            memset(&g_RoomEruptionShadowPacket,0,sizeof(g_RoomEruptionShadowPacket));
+            memset(&g_RoomEruptionRingPacket,0,sizeof(g_RoomEruptionRingPacket));
         } else if ((map+1==137 || map+1==140 || map+1==147 || map+1==324 || map+1==327) && slot==40) {
             g_PmCmdHandlerTable[slot]=&g_RoomFallingBurstHandlers;
             memset(&g_RoomFallingBurstShadow,0,sizeof(g_RoomFallingBurstShadow));

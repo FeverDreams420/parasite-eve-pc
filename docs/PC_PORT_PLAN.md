@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+M328 — bieżąca integracja usuwa brak deskryptora166. Oryginalne pliki
+room_lib/ground_eruption.c, homing_projectile.c i homing_projectile_seeds.c
+wchodzą do statycznego linku w całości; poprawiono ABI callbacków,
+pełne wskaźniki aktora i kontekstu oraz rozmiary natywnych alokacji.
+Nie dodano nowych plików źródłowych. M141/M328 mają identyczny oryginalny
+moduł12780B (SHA256 d7278225b4bf524d150349c8d6015d50b9e98db0f4fddfb1f26b5f85b1bd368b),
+trzy deskryptory:37/80192040 erupcja,122/801920c8 flara,
+166/80192140 pocisk. Loader rejestruje wszystkie trzy i zeruje dane przy wejściu.
+
+Świeży kandydat /tmp/pe-m328-port-v2:190 obiektów na profil,380 razem,
+normal oraz ASan/UBSan/function; archiwa PsyZ/SDL nieinstrumentowane.
+Trasa od autentycznego D przez zwycięstwo M327 dochodzi do M328/a8062448
+przy36566 i pozostaje tam bez błędu do40000. Para profili przy40000:
+exit0, identyczne pełne JSON i1MiB VRAM, HP69, źródłowy/prywatny D bez zmian,
+bu10 puste. Dowód /tmp/pe-m328-idle-pair-v2-proof.json; zrzut v1 obejrzany.
+Test --hospital-eruption w istniejącym original_actor_animation.c sprawdza
+skrypty z rzeczywistych obrazów M141/M328, wszystkie trzy bindingi i dwukrotny
+reset, parametry startowe pocisku, pełny wskaźnik z canary oraz czas życia iskry.
+Relokowana flara:228 stanów oryginalnego CPU/BIOS/GTE, hash162712f297cfbbdc,
+zgodny z wcześniejszym natywnym testem (/tmp/pe-m328-flare-cpu-v1.py).
+Audyt lotu potwierdza niskie32bity mnożenia i dzielenie przez16 z obcięciem do0.
+To potwierdza ładowanie i testowane ścieżki, nie pełną zgodność wszystkich
+18 callbacków erupcji i czterech funkcji pocisku. Nadal wymagane ich pełne
+cykle PM/render, referencje numeryczne MIPS i dalsze przejście kampanii.
+Regresje kandydata v2:38/38 exit0 (19 przypadków × normal/SAN), w tym
+nowy --hospital-eruption, sterowanie headless, Melissa, rzeczywiste assety,
+M349/M350/M404/M256/M318 oraz pełne replaye walki/leczenia/zapisu.
+Pełne JSON/VRAM i zapis telefonu zgodne z wcześniejszym kandydatem;
+źródłowe karty niezmienione. /tmp/pe-m328-port-v2-verification.json.
+Pochodzenie aktualnych źródeł/380 obiektów ponownie sprawdzone po testach.
+Poniższy opis brakującego166 dotyczy poprzedniego kandydata M324.
+
+
 Dzień4 — odblokowane M327 i rzeczywiste zwycięstwo; następny brak: M328.
 Najnowsza baza trwała to autentyczny D z telefonu M325 (opis niżej).
 ContinueD/24000→M339/24640→M323→M321. Podejście do drzwi Autopsy przy

@@ -25,7 +25,7 @@ typedef struct RoomEruptionActor {
     s16 collisionRadius;          /* 0x2E */
 } RoomEruptionActor;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEruptionActor, asset) == 0x24,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEruptionActor, asset) == sizeof(void *)+sizeof(GteMatrix),
                   room_eruption_actor_asset_offset);
 
 /* The rising column: the emitter's image source, the emitter, the
@@ -45,7 +45,7 @@ typedef struct RoomEruptionColumn {
     } speed;                      /* 0x124 */
 } RoomEruptionColumn;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEruptionColumn, scale) == 0x120,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomEruptionColumn, scale) == PE1_OFFSETOF(RoomEruptionColumn, emitter)+sizeof(FieldRingGeometry),
                   room_eruption_column_scale_offset);
 
 /* The flash at the owner's feet: its position and scale. */
@@ -123,27 +123,28 @@ extern RoomFxSpritePacket g_RoomEruptionRingPacket;
 /* The debris packet's depth as its own symbol: the debris draw stores the
  * floor shadow's depth through a separate address, and a store through the
  * packet would let the compiler keep the packet's address in a * across the loop. */
-extern s16 g_RoomEruptionDebrisDepth;
+#define g_RoomEruptionDebrisDepth (g_RoomEruptionDebrisPacket.depth)
 
 /* The eruption's module class (ground_eruption.c), in
  * class-table slot order, and the script and lists it hands the field
  * engine, named in each overlay's symbol file. */
 extern int g_RoomEruptionScript[];
-extern RoomModuleHandler g_RoomEruptionDrawList[];
-extern RoomModuleHandler g_RoomEruptionUpdateList[];
-extern RoomModuleHandler g_RoomEruptionInitList[];
+extern FieldFxHandler g_RoomEruptionDrawList[];
+extern FieldFxHandler g_RoomEruptionUpdateList[];
+extern FieldFxHandler g_RoomEruptionInitList[];
 extern int g_RoomEruptionSpawnLayout[];
 
-int RoomEffect_GroundEruptionNop0(void);
-int RoomEffect_GroundEruptionPlantScript(void *object);
-int RoomEffect_GroundEruptionSpawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
-int RoomEffect_GroundEruptionRegister(void *o);
-int RoomEffect_GroundEruptionStart(void *o);
-int RoomEffect_GroundEruptionRelease(struct RoomEnt *o);
-int RoomEffect_GroundEruptionNop6(void);
+extern PmCommand g_RoomGroundEruptionHandlers;
+void RoomEffect_GroundEruptionNop0(void);
+void RoomEffect_GroundEruptionPlantScript(PmSlotHeader *object);
+int RoomEffect_GroundEruptionSpawn6(PmSlotHeader *,int,int,intptr_t,intptr_t,intptr_t);
+int RoomEffect_GroundEruptionRegister(PmSlotHeader *);
+int RoomEffect_GroundEruptionStart(PmSlotHeader *);
+int RoomEffect_GroundEruptionRelease(PmSlotHeader *);
+void RoomEffect_GroundEruptionNop6(void);
 
 intptr_t *FieldFx_VarPtr(int index);
 int FieldFx_PlaySoundAtMatrixPosition(void *object, int message, void *state);
-void FieldFx_BuildRingGeometry(void *params);
+
 
 #endif

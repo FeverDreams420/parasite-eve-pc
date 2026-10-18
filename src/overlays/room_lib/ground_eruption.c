@@ -15,34 +15,41 @@
  */
 
 #include "pe1/pe_image.h"
+#include "pe1/battle.h"
+#include "pe1/geom_state.h"
 #include "pe1/random.h"
 #include "pe1/room_ground_eruption.h"
 
 #include "render_layouts.h"
 #include "room_lib.h"
 
-ROOMLIB_RETURN_ZERO(RoomEffect_GroundEruptionNop0)
-
-ROOMLIB_PLANT_TABLE(RoomEffect_GroundEruptionPlantScript, g_RoomEruptionScript)
-
-ROOMLIB_SPAWN6(RoomEffect_GroundEruptionSpawn6)
-
-ROOMLIB_REGISTER_TABLE_AT3(RoomEffect_GroundEruptionRegister, g_RoomEruptionDrawList)
-
-ROOMLIB_START_AT3(RoomEffect_GroundEruptionStart, g_RoomEruptionUpdateList,
-                  g_RoomEruptionInitList, g_RoomEruptionSpawnLayout,
-                  RoomEffect_GroundEruptionRelease)
-
-int RoomEffect_GroundEruptionRelease(RoomEnt *o) {
-    o->state = 4;
-    if ((unsigned int)FieldFx_GetStatus(o) >= 2) {
-        RoomRenderNode *target = o->link->target;
-        target->flags &= 0xC0FFFFFF;
-    }
+void RoomEffect_GroundEruptionNop0(void) {}
+void RoomEffect_GroundEruptionPlantScript(PmSlotHeader *object) {
+    *FieldFx_GetSlot((FieldFxObject *)object)=g_RoomEruptionScript;
+}
+int RoomEffect_GroundEruptionSpawn6(PmSlotHeader *object,int b,int c,intptr_t d,intptr_t e,intptr_t f) {
+    FieldFx_Spawn6((intptr_t)object,b,c,d,(int)e,(int)f);return 0;
+}
+int RoomEffect_GroundEruptionRegister(PmSlotHeader *object) {
+    if(FieldFx_GetStatus(object)==3)FieldFx_Register((FieldFxObject *)object,g_RoomEruptionDrawList);
     return 0;
 }
-
-ROOMLIB_RETURN_ZERO(RoomEffect_GroundEruptionNop6)
+int RoomEffect_GroundEruptionStart(PmSlotHeader *object) {
+    int result=-1;
+    if(FieldFx_GetStatus(object)==3) {
+        result=FieldFx_UpdateSlots((FieldFxObject *)object,g_RoomEruptionUpdateList);
+        result|=FieldFx_RunScript((FieldFxObject *)object,g_RoomEruptionInitList,(u16 *)g_RoomEruptionSpawnLayout);
+    }
+    if(result==-1)RoomEffect_GroundEruptionRelease(object);
+    return 0;
+}
+int RoomEffect_GroundEruptionRelease(PmSlotHeader *object) {
+    object->state=4;
+    if((unsigned)FieldFx_GetStatus(object)>=2)
+        ((FieldFxObjectPrefix *)object)->actor->state->core_flags&=0xC0FFFFFFu;
+    return 0;
+}
+void RoomEffect_GroundEruptionNop6(void) {}
 
 /*
  * The ground eruption: a column that rises from the floor under its owner,
@@ -73,10 +80,13 @@ static const RoomFxVec4 s_EruptionDebrisScale = { 0x226, 0x226, 0x226, 0 };
 
 /* Sets up the four packets and the column's work area, then hands the work
  * area to the field engine's effect handler 0x587. */
-void RoomEffect_GroundEruptionInit(RoomEnt *owner, void *arg1, RoomEruptionActor *state) {
-    RoomLink *entity;
+int RoomEffect_GroundEruptionInit(void *object, void *slot, void *data) {
+    FieldFxObjectPrefix *owner = object;
+    void *arg1 = slot;
+    RoomEruptionActor *state = data;
+    FieldActor *entity;
     int asset;
-    RoomEnt *callOwner;
+    void *callOwner;
     int depth;
     int color;
     int offset;
@@ -90,9 +100,9 @@ void RoomEffect_GroundEruptionInit(RoomEnt *owner, void *arg1, RoomEruptionActor
     workState->collisionState = 0;
     workState->reload = *FieldFx_VarPtr(5);
     workState->collisionRadius = *FieldFx_VarPtr(4);
-    entity = owner->link;
+    entity = owner->actor;
     workState->entity = entity;
-    workState->matrix = *(RoomSpriteMatrix *)entity->p238;
+    memcpy(&workState->matrix,entity->render_object.matrices,sizeof(workState->matrix));
     workState->matrix.t[0] = *FieldFx_VarPtr(1);
     workState->matrix.t[1] = *FieldFx_VarPtr(2);
     workState->matrix.t[2] = *FieldFx_VarPtr(3);
@@ -144,52 +154,37 @@ void RoomEffect_GroundEruptionInit(RoomEnt *owner, void *arg1, RoomEruptionActor
     g_RoomEruptionDebrisPacket.zero = 0;
     g_RoomFloorY->y = 0;
     FieldFx_PlaySoundAtMatrixPosition(callOwner, 0x587, workMatrix);
+    return 0;
 }
 
-void RoomEffect_GroundEruptionNop(void) {
+int RoomEffect_GroundEruptionNop(void *object, void *slot, void *data) {
+
+    return 0;
 }
 
 /* Fires once the owner's target reaches state 2 while armed: sets the
  * player's 0x4000 flag and marks the target, then waits the reload time. */
-void RoomEffect_GroundEruptionTick(RoomEnt *ent, unsigned char *signal,
-                                   RoomTimer2 *timer) {
-    RoomTimer2 *work;
-    int **flagsBase;
-    int *flags;
-    RoomRenderNode *target;
-    unsigned short reload;
-
-    work = timer;
-    if (timer->h2A == 0) {
-        if (work->h2C == 1) {
-            if (FieldFx_GetStatus(ent) == 3) {
-                if (ent->link->target->state[0] == 2) {
-                    reload = work->h28;
-                    flagsBase = (int **)D_8009D254;
-                    work->h2C = 0;
-                    timer->h2A = reload;
-
-                    flags = *flagsBase;
-                    flags[0x13] |= 0x4000;
-
-                    target = ent->link->target;
-                    target->flags |= 0x80000000;
-                }
-            }
+int RoomEffect_GroundEruptionTick(void *object,void *slot,void *data) {
+    RoomEruptionActor *state=data;RoomFxControl *signal=slot;
+    FieldActor *actor=((FieldFxObjectPrefix *)object)->actor;
+    if(!state->cooldown) {
+        if(state->collisionState==1 && FieldFx_GetStatus(object)==3 && *actor->state->action_state==2) {
+            state->collisionState=0;state->cooldown=state->reload;
+            ((Combatant *)g_PlayerEntity->state)->stateFlags|=0x4000;
+            actor->state->core_flags|=0x80000000u;
         }
     } else {
-        work->h2A = timer->h2A - 1;
-        work->h2C = 0;
+        --state->cooldown;state->collisionState=0;
     }
-
-    if (FieldFx_IsLastSlotHalted() == 1) {
-        signal[1] = 2;
-    }
+    if(FieldFx_IsLastSlotHalted()==1)signal->state=2;
+    return 0;
 }
 
 /* Emitter parameters of the rising column. */
-void RoomEffect_GroundEruptionInitColumn(void *ent, void *unused,
-                                         RoomEruptionColumn *state) {
+int RoomEffect_GroundEruptionInitColumn(void *object, void *slot, void *data) {
+    void *ent = object;
+    void *unused = slot;
+    RoomEruptionColumn *state = data;
     state->scale.signedValue = 0x5DC;
     state->depth = 0xFF;
     state->emitter.mode = 0x10;
@@ -205,11 +200,14 @@ void RoomEffect_GroundEruptionInitColumn(void *ent, void *unused,
     state->emitter.offset = 0;
     state->emitter.source = state->sourceData;
     FieldFx_BuildRingGeometry(&state->emitter);
+    return 0;
 }
 
 /* The retail function is marked handwritten and uses four explicit GTE windows. */
-void RoomEffect_GroundEruptionTransformColumn(void *arg0, void *arg1,
-                                              RoomEruptionColumn *state) {
+int RoomEffect_GroundEruptionTransformColumn(void *object, void *slot, void *data) {
+    void *arg0 = object;
+    void *arg1 = slot;
+    RoomEruptionColumn *state = data;
     RoomLibSpriteTransformStack stack;
     RoomSpriteMatrix *matrix;
     RoomSpriteMatrix *scaleMatrix;
@@ -268,6 +266,7 @@ void RoomEffect_GroundEruptionTransformColumn(void *arg0, void *arg1,
     stack.matrix.t[1] = owner->matrix.t[1];
     stack.matrix.t[2] = owner->matrix.t[2];
     FieldFx_DrawShadedRing(&workState->emitter, matrix, 0);
+    return 0;
 }
 
 typedef struct RoomEruptionRiseScript {
@@ -278,8 +277,9 @@ typedef struct RoomEruptionRiseScript {
 
 /* Grows the column and fades it after eight frames; the column's base hits
  * the owner when the owner stands inside its radius. */
-void RoomEffect_GroundEruptionUpdateColumn(
-    int unused, RoomEruptionRiseScript *script, RoomEruptionColumn *effect) {
+int RoomEffect_GroundEruptionUpdateColumn(void *object, void *slot, void *data) {
+    RoomEruptionRiseScript *script = slot;
+    RoomEruptionColumn *effect = data;
     s16 position[3];
     RoomEruptionActor *actor;
     s16 value;
@@ -305,10 +305,13 @@ void RoomEffect_GroundEruptionUpdateColumn(
     if (FieldFx_IsPlayerWithinRadius(position, actor->collisionRadius) != 0) {
         actor->collisionState = 1;
     }
+    return 0;
 }
 
-void RoomEffect_GroundEruptionInitGlow(void *unused0, void *unused1,
-                                       RoomEruptionGlow *state) {
+int RoomEffect_GroundEruptionInitGlow(void *object, void *slot, void *data) {
+    void *unused0 = object;
+    void *unused1 = slot;
+    RoomEruptionGlow *state = data;
     RoomEruptionActor *obj = FieldFx_GetScriptContext();
     int tmp;
     int cst;
@@ -322,10 +325,12 @@ void RoomEffect_GroundEruptionInitGlow(void *unused0, void *unused1,
     state->phase = 0;
     state->scale = cst;
     state->z = tmp;
+    return 0;
 }
 
 /* The flash at the owner's feet. */
-void RoomEffect_GroundEruptionDrawGlow(void) {
+int RoomEffect_GroundEruptionDrawGlow(void *object, void *slot, void *data) {
+
     RoomSpriteMatrix matrix;
     RoomFxVec4 scale;
     RoomEruptionActor *owner;
@@ -355,17 +360,23 @@ void RoomEffect_GroundEruptionDrawGlow(void) {
     matrix.t[1] = g_RoomFloorY->y;
     matrix.t[2] = owner->matrix.t[2];
     FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_RoomEruptionGlowPacket, &matrix, 1);
+    return 0;
 }
 
-void RoomEffect_GroundEruptionUpdateGlow(void *unused, RoomFxControl *state,
-                                         void *obj) {
+int RoomEffect_GroundEruptionUpdateGlow(void *object, void *slot, void *data) {
+    void *unused = object;
+    RoomFxControl *state = slot;
+    void *obj = data;
     if (state->frame == 0x3A) {
         state->state = 2;
     }
+    return 0;
 }
 
-void RoomEffect_GroundEruptionInitRing(void *arg0, void *arg1,
-                                       RoomEruptionRing *ring) {
+int RoomEffect_GroundEruptionInitRing(void *object, void *slot, void *data) {
+    void *arg0 = object;
+    void *arg1 = slot;
+    RoomEruptionRing *ring = data;
     RoomEruptionActor *owner;
     unsigned int i;
     int angle;
@@ -386,11 +397,15 @@ void RoomEffect_GroundEruptionInitRing(void *arg0, void *arg1,
     ring->acceleration = -0x3C;
     ring->phase = 0;
     ring->speed = 0x320;
+    return 0;
 }
 
 /* Draws the ring's centre sprite, then each point twice: in the air and
  * as its shadow on the floor. */
-void RoomEffect_GroundEruptionDrawRing(void *arg0, void *arg1, RoomEruptionRing *state) {
+int RoomEffect_GroundEruptionDrawRing(void *object, void *slot, void *data) {
+    void *arg0 = object;
+    void *arg1 = slot;
+    RoomEruptionRing *state = data;
     RoomSpriteMatrix matrix;
     RoomFxVec4 scale1;
     RoomFxVec4 scale2;
@@ -472,11 +487,14 @@ void RoomEffect_GroundEruptionDrawRing(void *arg0, void *arg1, RoomEruptionRing 
         RoomEffect_SpriteControlFromDepth(packetDepth)->code = code * 2 + 0x20;
         FieldFx_DrawGlowSprite((FieldGlowSprite *)packet, &matrix, 1);
     }
+    return 0;
 }
 
 /* Spreads the ring and fades it out over seven steps. */
-void RoomEffect_GroundEruptionUpdateRing(void *arg0, unsigned char *signal,
-                                         RoomEruptionRing *rec) {
+int RoomEffect_GroundEruptionUpdateRing(void *object, void *slot, void *data) {
+    void *arg0 = object;
+    unsigned char *signal = slot;
+    RoomEruptionRing *rec = data;
     unsigned int i;
     GteShortVector *cur;
     unsigned char phase;
@@ -503,10 +521,13 @@ void RoomEffect_GroundEruptionUpdateRing(void *arg0, unsigned char *signal,
         rec->frame = 0;
         signal[1] = 2;
     }
+    return 0;
 }
 
-void RoomEffect_GroundEruptionInitShadow(void *unused0, void *unused1,
-                                         RoomEruptionShadow *state) {
+int RoomEffect_GroundEruptionInitShadow(void *object, void *slot, void *data) {
+    void *unused0 = object;
+    void *unused1 = slot;
+    RoomEruptionShadow *state = data;
     RoomEruptionActor *obj = FieldFx_GetScriptContext();
     unsigned int i;
     GteShortVector *entries = state->point;
@@ -519,6 +540,7 @@ void RoomEffect_GroundEruptionInitShadow(void *unused0, void *unused1,
 
     state->depth = 0x80;
     state->scale = 0x800;
+    return 0;
 }
 
 typedef struct RoomEruptionShadowStack {
@@ -528,11 +550,13 @@ typedef struct RoomEruptionShadowStack {
     RoomFxVec4 scale;
 } RoomEruptionShadowStack;
 
-void RoomEffect_GroundEruptionDrawShadow(
-    void *unused0, void *unused1, RoomFxGroundSpriteParams *fx) {
+int RoomEffect_GroundEruptionDrawShadow(void *object, void *slot, void *data) {
+    void *unused0 = object;
+    void *unused1 = slot;
+    RoomFxGroundSpriteParams *fx = data;
     RoomEruptionShadowStack stack;
     RoomEruptionActor *owner;
-    unsigned short *depthSlot;
+    s16 *depthSlot;
     RenderMatrixSlot *matrixSlot;
 
     owner = FieldFx_GetScriptContext();
@@ -567,13 +591,19 @@ void RoomEffect_GroundEruptionDrawShadow(
     gte_ldrotmatrix(matrixSlot->value);
     gte_ldtransmatrix(matrixSlot->value);
     FieldFx_DrawGlowSprite((FieldGlowSprite *)((char *)depthSlot - 0xA), &stack.matrix, 1);
+    return 0;
 }
 
-void RoomEffect_GroundEruptionNop2(void) {
+int RoomEffect_GroundEruptionNop2(void *object, void *slot, void *data) {
+
+    return 0;
 }
 
 /* Flings the six debris particles out at random angles. */
-void RoomEffect_GroundEruptionInitDebris(void *arg0, void *arg1, RoomEruptionDebrisState *state) {
+int RoomEffect_GroundEruptionInitDebris(void *object, void *slot, void *data) {
+    void *arg0 = object;
+    void *arg1 = slot;
+    RoomEruptionDebrisState *state = data;
     RoomEruptionActor *owner;
     unsigned int i;
     int angle;
@@ -601,10 +631,14 @@ void RoomEffect_GroundEruptionInitDebris(void *arg0, void *arg1, RoomEruptionDeb
     state->depth = 0x80;
     state->scale = 0x400;
     state->speed = 0x320;
+    return 0;
 }
 
 /* Draws the live debris; the first particle also leaves a floor shadow. */
-void RoomEffect_GroundEruptionDrawDebris(void *arg0, void *arg1, RoomEruptionDebrisState *state) {
+int RoomEffect_GroundEruptionDrawDebris(void *object, void *slot, void *data) {
+    void *arg0 = object;
+    void *arg1 = slot;
+    RoomEruptionDebrisState *state = data;
     RoomSpriteMatrix matrix;
     RoomFxVec4 scale;
     RoomEruptionActor *owner;
@@ -673,12 +707,13 @@ void RoomEffect_GroundEruptionDrawDebris(void *arg0, void *arg1, RoomEruptionDeb
             }
         }
     }
+    return 0;
 }
 
 typedef struct RoomEruptionTrailEntry {
     u32 word0;
     u32 word4;
-} __attribute__((aligned(1), packed)) RoomEruptionTrailEntry;
+} RoomEruptionTrailEntry;
 
 typedef struct RoomEruptionTrailTrigger {
     u8 pad00;
@@ -692,8 +727,10 @@ typedef union RoomEruptionDebris {
 } RoomEruptionDebris;
 
 /* Moves the lead debris particle under gravity and shifts its trail. */
-void RoomEffect_GroundEruptionUpdateDebris(
-    void *unused, RoomEruptionTrailTrigger *trigger, RoomEruptionDebris *object) {
+int RoomEffect_GroundEruptionUpdateDebris(void *owner, void *slot, void *data) {
+    void *unused = owner;
+    RoomEruptionTrailTrigger *trigger = slot;
+    RoomEruptionDebris *object = data;
     int count;
 
     count = 5;
@@ -714,4 +751,28 @@ void RoomEffect_GroundEruptionUpdateDebris(
     if (trigger->timer == 60) {
         trigger->state = 2;
     }
+    return 0;
 }
+
+/* Complete USA M141/M328 tables. Original bytecode and callback ordering;
+ * only pointer-bearing allocations grow for the native ABI. */
+RoomFxSpritePacket g_RoomEruptionGlowPacket,g_RoomEruptionDebrisPacket,
+    g_RoomEruptionShadowPacket,g_RoomEruptionRingPacket;
+FieldFxHandler g_RoomEruptionInitList[]={RoomEffect_GroundEruptionInit,RoomEffect_GroundEruptionInitColumn,
+    RoomEffect_GroundEruptionInitGlow,RoomEffect_GroundEruptionInitRing,
+    RoomEffect_GroundEruptionInitShadow,RoomEffect_GroundEruptionInitDebris,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_RoomEruptionDrawList[]={RoomEffect_GroundEruptionNop,RoomEffect_GroundEruptionTransformColumn,
+    RoomEffect_GroundEruptionDrawGlow,RoomEffect_GroundEruptionDrawRing,
+    RoomEffect_GroundEruptionDrawShadow,RoomEffect_GroundEruptionDrawDebris,(FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_RoomEruptionUpdateList[]={RoomEffect_GroundEruptionTick,RoomEffect_GroundEruptionUpdateColumn,
+    RoomEffect_GroundEruptionUpdateGlow,RoomEffect_GroundEruptionUpdateRing,
+    RoomEffect_GroundEruptionNop2,RoomEffect_GroundEruptionUpdateDebris,(FieldFxHandler)(intptr_t)-1};
+#define ERUPTION_SIZE(bytes) (((bytes)+sizeof(void *)-1)&~(sizeof(void *)-1))
+int g_RoomEruptionSpawnLayout[]={ERUPTION_SIZE(sizeof(RoomEruptionActor))|(ERUPTION_SIZE(sizeof(RoomEruptionColumn))<<16),
+    ERUPTION_SIZE(sizeof(RoomEruptionGlow))|(ERUPTION_SIZE(sizeof(RoomEruptionRing))<<16),
+    ERUPTION_SIZE(0x88)|(ERUPTION_SIZE(sizeof(RoomEruptionDebrisState))<<16),0xffff};
+#undef ERUPTION_SIZE
+int g_RoomEruptionScript[]={0x00010000u,0x00100000u,0x10040000u,0x100d0001u,0x00200001u,0x00020000u,0x30fb0000u,0x00010001u,0x00010003u,0x00010005u,0x00010005u,0x00010005u,0x00010005u,0x00010005u,0x00010005u,0x00010005u,0x30f30000u,0xffffffffu};
+PmCommand g_RoomGroundEruptionHandlers={RoomEffect_GroundEruptionNop0,RoomEffect_GroundEruptionPlantScript,
+    RoomEffect_GroundEruptionSpawn6,RoomEffect_GroundEruptionRegister,RoomEffect_GroundEruptionStart,
+    RoomEffect_GroundEruptionRelease,RoomEffect_GroundEruptionNop6};

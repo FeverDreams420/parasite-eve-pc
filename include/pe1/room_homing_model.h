@@ -9,9 +9,9 @@
 #include "pe1/fieldfx_callback_list.h"
 #include "pe1/fieldfx_task_pool.h"
 #include "pe1/floor_polygon.h"
-#include "pe1/gte_sine_table.h"
 #include "pe1/gte_types.h"
 #include "pe1/pm.h"
+#include "pe1/fieldfx_task.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_object.h"
 #include "pe1/room_floor.h"
@@ -51,63 +51,6 @@ typedef struct RoomHomingModel {
 
 PE1_STATIC_ASSERT(sizeof(RoomHomingModel) == 0x3C, room_homing_model_size);
 
-typedef struct RoomHomingModelEvent {
-    u8 reserved[0x14];
-    RoomHomingModel *model;       /* 0x14 */
-} RoomHomingModelEvent;
-
-typedef struct RoomHomingModelActorCore {
-    u32 flags;                    /* 0x00 */
-    s32 reserved04;
-    s32 sound;                    /* 0x08 */
-    s32 reserved0C[3];
-    u8 *cue;                      /* 0x18: throw cue, 1 armed, 2 taken, 4 done */
-} RoomHomingModelActorCore;
-
-typedef struct RoomHomingModelActor {
-    RoomHomingModelActorCore *core; /* 0x00 */
-    u8 reserved04[0xA];
-    u8 phase;                     /* 0x0E */
-    u8 frameCount;                /* 0x0F */
-    u8 reserved10[6];
-    u16 frame;                    /* 0x16 */
-    u8 reserved18[4];
-    s32 motion;                   /* 0x1C: playback step, negated to reverse */
-    u8 reserved20[0x1A];
-    u16 heading;                  /* 0x3A */
-    u8 reserved3C[0x1FC];
-    GteMatrix *matrices;          /* 0x238 */
-} RoomHomingModelActor;
-
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomHomingModelActor, matrices) == 0x238,
-                  room_homing_model_actor_matrices);
-
-typedef struct RoomHomingModelActorChannel {
-    s32 reserved[2];
-    RoomHomingModelActor *actor;  /* 0x08 */
-} RoomHomingModelActorChannel;
-
-typedef struct RoomHomingModelSparkChannel {
-    s32 reserved[2];
-    char *pool;                   /* 0x08 */
-} RoomHomingModelSparkChannel;
-
-typedef struct RoomHomingModelSpark {
-    s16 x, y, z;
-} RoomHomingModelSpark;
-
-/* Walkable polygon vertex: x and the packed y/z word. */
-typedef struct RoomHomingModelVertex {
-    s16 reserved00;
-    u16 x;                        /* 0x02 */
-    u32 yz;                       /* 0x04 */
-} RoomHomingModelVertex;
-
-typedef struct RoomHomingModelEntity {
-    u8 reserved[0x28];
-    s32 position[3];              /* 0x28 */
-} RoomHomingModelEntity;
-
 #include "pe1/player_entity.h"
 
 extern void Akao_Cmd_21(int handle, int arg);
@@ -141,9 +84,11 @@ typedef struct RoomHomingLaunch {
 
 extern RoomHomingLaunch g_RoomHomingLaunch;
 
-int RoomEffect_HomingProjectileSpark(int mode, GteShortVector *spark);
-int RoomEffect_HomingProjectile(int mode);
-int RoomEffect_HomingProjectileThrow(int mode, RoomHomingModel *model);
-int RoomEffect_HomingProjectileConfigure(u32 mode, int a, int b, int c);
+extern FieldFxTaskProgram g_RoomHomingProgram;
+extern u16 g_RoomHomingScript[12];
+int RoomEffect_HomingProjectileSpark(int,void *,intptr_t);
+int RoomEffect_HomingProjectile(int,void *,intptr_t);
+int RoomEffect_HomingProjectileThrow(int,void *,intptr_t);
+intptr_t RoomEffect_HomingProjectileConfigure(int,intptr_t,intptr_t,intptr_t);
 
 #endif

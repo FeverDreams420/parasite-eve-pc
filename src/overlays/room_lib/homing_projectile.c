@@ -17,10 +17,13 @@
 #include "pe1/gte.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/room_homing_model.h"
+#include "pe1/field_actor.h"
+#include <string.h>
 
 /* Spark left where the projectile bounces: lives eight frames, drawn as a
  * pulsing sprite in the current palette. */
-int RoomEffect_HomingProjectileSpark(int mode, GteShortVector *spark) {
+int RoomEffect_HomingProjectileSpark(int mode,void *data,intptr_t argument) {
+    GteShortVector *spark=data;
     int size;
     int kind;
     int palette;
@@ -35,7 +38,7 @@ int RoomEffect_HomingProjectileSpark(int mode, GteShortVector *spark) {
     } else if (mode == 2) {
         frame = g_FieldFxCurrentAge - 1;
         kind = g_FieldFxSpriteParams.palette;
-        size = rcossin_tbl[((frame << 9) & 0x3E00) >> 2].word + 0x200;
+        size = rsin((((u32)frame << 9) & 0x3E00) >> 2) + 0x200;
         palette = g_FieldFxPaletteTable[kind];
         /* The pulse reads the cosine half through its own copy of the
          * frame, as retail does. */
@@ -46,7 +49,7 @@ int RoomEffect_HomingProjectileSpark(int mode, GteShortVector *spark) {
         clut = GetClut(0x80, palette);
         FieldFx_DrawShapeQuads(spark, &g_RoomHomingSparkRotation, (s16)size, (s16)size,
                       (s16)g_FieldFxSpriteParams.parameter02 * 2 + 0xFD, clut, 1,
-                      (s16)(rcossin_tbl[((pulse << 9) & 0x3E00) >> 2].word >> 16) >> 5,
+                      rcos((((u32)pulse << 9) & 0x3E00) >> 2) >> 5,
                       &g_RoomHomingSparkColor);
     }
     return 0;
@@ -57,43 +60,47 @@ int RoomEffect_HomingProjectileSpark(int mode, GteShortVector *spark) {
  * frame) or turns away from the player once outside, drops onto the floor
  * with a damped bounce, then reports its resting position through the
  * scene script.  Drawn as a glow sprite plus a floor ring while in flight. */
-int RoomEffect_HomingProjectile(int mode) {
-    RoomHomingModel *model = FX_TASK_AS(RoomHomingModelEvent)->model;
+int RoomEffect_HomingProjectile(int mode,void *data,intptr_t argument) {
+    RoomHomingModel *model;
+    /* Retail keeps this address in script variables1/2. This program never
+     * uses variable opcodes; widen across1..4 and keep variables5/6 intact. */
+    memcpy(&model,&g_FieldFxTaskContext->variables[1],sizeof(model));
+    Vec3Fixed playerPosition={g_PlayerEntity->pos_x,g_PlayerEntity->pos_y,g_PlayerEntity->pos_z};
     GteVector position;
     s16 vector[4];
     s16 rotated[4];
     GteMatrix matrix;
     s32 area;
-    RoomHomingModelActor *actor;
+    FieldActor *actor;
     int i;
 
     switch (mode) {
     case 0:
         model->state = 0;
-        model->angle = ANIM_OWNER_AS(RoomHomingModelActorChannel)->actor->heading;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomHomingModelSparkChannel)->pool, 8, 4,
-                             (FieldFxCallbackListCallback)RoomEffect_HomingProjectileSpark);
+        model->angle = g_FieldFxOwner->actor->rot_y;
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 8, 4,
+                             RoomEffect_HomingProjectileSpark);
     case 1:
-        actor = ANIM_OWNER_AS(RoomHomingModelActorChannel)->actor;
+        actor = g_FieldFxOwner->actor;
         switch (model->state) {
         case 0: {
-            GteMatrix *transform;
-            int frame = actor->frame;
-            if (actor->phase == 8) {
+            GteMatrix transform;
+            int frame = actor->anim.parts.integer;
+            if (actor->mode == 8) {
                 if (frame < 8) {
                     model->matrixIndex = 0x1A;
                 } else {
                     model->matrixIndex = 9;
                 }
-            } else if (actor->phase == 9) {
+            } else if (actor->mode == 9) {
                 model->matrixIndex = 9;
                 if (frame >= 2) {
                     model->state = 1;
                     model->soundHandle = Asset_Find08w(
-                        0x585, actor->core->sound,
-                        (s16)actor->matrices[9].t[0],
-                        (s16)actor->matrices[9].t[1],
-                        (s16)actor->matrices[9].t[2]);
+                        0x585, actor->state->progress,
+                        (s16)actor->render_object.matrices[9].translation[0],
+                        (s16)actor->render_object.matrices[9].translation[1],
+                        (s16)actor->render_object.matrices[9].translation[2]);
                 }
             }
             if (model->matrixIndex == 9) {
@@ -105,14 +112,14 @@ int RoomEffect_HomingProjectile(int mode) {
                 vector[1] = 0;
                 vector[2] = 0;
             }
-            transform = &actor->matrices[model->matrixIndex];
-            gte_ldrotmatrix(transform);
-            gte_ldtransmatrix(transform);
+            memcpy(&transform,&actor->render_object.matrices[model->matrixIndex],sizeof(transform));
+            gte_ldrotmatrix(&transform);
+            gte_ldtransmatrix(&transform);
             gte_ldv0(vector);
             gte_rtv0tr_mac();
             gte_stsv(vector);
             for (i = 0; i < 3; i++) {
-                model->position[i].word = vector[i] << 16;
+                model->position[i].word = (s32)((u32)(s32)vector[i] << 16);
             }
             return 0;
         }
@@ -124,7 +131,7 @@ int RoomEffect_HomingProjectile(int mode) {
             int sine;
             vector[0] = 0;
             vector[1] = 0;
-            vector[2] = -model->speed >> 12;
+            vector[2] = (s32)(0u-(u32)model->speed) >> 12;
             matrix.t[0] = 0;
             matrix.t[1] = 0;
             matrix.t[2] = 0;
@@ -148,14 +155,14 @@ int RoomEffect_HomingProjectile(int mode) {
                 gte_ldv0(vector);
                 gte_rtv0tr_mac();
                 gte_stsv(rotated);
-                position.x = model->position[0].word + (rotated[0] << 12);
-                position.z = model->position[2].word + (rotated[2] << 12);
+                position.x = (s32)((u32)model->position[0].word + ((u32)(s32)rotated[0] << 12));
+                position.z = (s32)((u32)model->position[2].word + ((u32)(s32)rotated[2] << 12));
                 point = ((u32)position.x >> 16) | (position.z & 0xFFFF0000);
-                previous = FLOOR_POLYGON_AS(RoomHomingModelVertex)[g_FloorPolygonVertexCount - 1].x |
-                           (FLOOR_POLYGON_AS(RoomHomingModelVertex)[g_FloorPolygonVertexCount - 1].yz & 0xFFFF0000);
+                previous = (u16)g_FloorPolygonVertices[g_FloorPolygonVertexCount-1].x |
+                           ((u32)(u16)g_FloorPolygonVertices[g_FloorPolygonVertexCount-1].z<<16);
                 i = 0;
                 while (i < g_FloorPolygonVertexCount) {
-                    current = FLOOR_POLYGON_AS(RoomHomingModelVertex)[i].x | (FLOOR_POLYGON_AS(RoomHomingModelVertex)[i].yz & 0xFFFF0000);
+                    current = (u16)g_FloorPolygonVertices[i].x | ((u32)(u16)g_FloorPolygonVertices[i].z<<16);
                     gte_ldsxy0(point);
                     gte_ldsxy2(previous);
                     gte_ldsxy1(current);
@@ -171,7 +178,7 @@ int RoomEffect_HomingProjectile(int mode) {
                 }
                 if (model->escaped == 0) {
                     model->angle = (FieldFx_VecToAngle((Vec3Fixed *)&model->position[0].word,
-                                                        (Vec3Fixed *)((RoomHomingModelEntity *)D_8009D254)->position) + 0x800) & 0xFFF;
+                                                        &playerPosition) + 0x800) & 0xFFF;
                     break;
                 }
                 i = ratan2((s16)current - (s16)previous,
@@ -183,18 +190,18 @@ int RoomEffect_HomingProjectile(int mode) {
             model->position[0].word = position.x;
             model->position[2].word = position.z;
             if (retries <= 0) {
-                model->speed = model->speed * model->damping / 16;
+                model->speed = (s32)((u32)model->speed*(u32)(s32)model->damping) / 16;
             }
             if (model->gravity != 0) {
-                model->position[1].word -= model->lift;
+                model->position[1].word=(s32)((u32)model->position[1].word-(u32)model->lift);
                 if ((model->position[1].word >> 16) >= model->floor - 0x20) {
-                    model->position[1].word = (model->floor - 0x20) << 16;
-                    model->lift = -model->lift * model->bounce / 16;
-                    model->speed = model->speed * model->damping / 16;
+                    model->position[1].word = (s32)(((u32)model->floor-0x20u)<<16);
+                    model->lift = (s32)((0u-(u32)model->lift)*(u32)(s32)model->bounce) / 16;
+                    model->speed = (s32)((u32)model->speed*(u32)(s32)model->damping) / 16;
                     if (model->lift <= 0x2FFFFF) {
                         model->gravity = 0;
                     } else {
-                        RoomHomingModelSpark *spark = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomHomingModelSparkChannel)->pool);
+                        GteShortVector *spark = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                         if (spark != 0) {
                             spark->x = model->position[0].part.integer;
                             spark->y = g_RoomFloorY->raw;
@@ -202,14 +209,14 @@ int RoomEffect_HomingProjectile(int mode) {
                         }
                     }
                 } else {
-                    model->lift -= model->gravity;
+                    model->lift=(s32)((u32)model->lift-(u32)model->gravity);
                 }
             } else {
-                model->speed -= model->drag;
+                model->speed=(s32)((u32)model->speed-(u32)model->drag);
                 if (model->speed <= 0) model->finished = 1;
             }
             if (model->floor - 0x200 < model->position[1].part.integer) {
-                area = FieldFx_GetDistanceXZ((Vec3Fixed *)&position.x, (Vec3Fixed *)((RoomHomingModelEntity *)D_8009D254)->position);
+                area = FieldFx_GetDistanceXZ((Vec3Fixed *)&position.x, &playerPosition);
                 if (area < 0x80) model->finished = 1;
             }
             if (model->finished == 0) return 0;
@@ -248,10 +255,10 @@ int RoomEffect_HomingProjectile(int mode) {
         }
         frame = g_FieldFxCurrentAge;
         if (frame < 8) {
-            scale = rcossin_tbl[((frame << 10) & 0x3C00) >> 2].part.sin + 0x1000;
+            scale = rsin((((u32)frame << 10) & 0x3C00) >> 2) + 0x1000;
             intensity = 0x80;
         } else {
-            intensity = rcossin_tbl[((frame << 12) & 0x3000) >> 2].part.cos / 64 + 0x60;
+            intensity = rcos((((u32)frame << 12) & 0x3000) >> 2) / 64 + 0x60;
             scale = 0x1000;
         }
         g_FieldFxSpriteParams.parameter00 = 0x20;
@@ -304,8 +311,9 @@ int RoomEffect_HomingProjectile(int mode) {
 /* Throw controller: seeds the model from the launch parameters, then
  * follows the actor's throw animation until it either releases the
  * projectile (the cue reaches the last frame) or is interrupted. */
-int RoomEffect_HomingProjectileThrow(int mode, RoomHomingModel *model) {
-    RoomHomingModelActor *actor = ANIM_OWNER_AS(RoomHomingModelActorChannel)->actor;
+int RoomEffect_HomingProjectileThrow(int mode,void *data,intptr_t argument) {
+    RoomHomingModel *model=data;
+    FieldActor *actor=g_FieldFxOwner->actor;
     u8 *cue;
     int motion;
     u16 frame;
@@ -313,8 +321,8 @@ int RoomEffect_HomingProjectileThrow(int mode, RoomHomingModel *model) {
 
     if (mode == 0) {
         int floor;
-        FX_TASK_AS(RoomHomingModelEvent)->model = model;
-        actor->core->flags |= 0x40000000;
+        memcpy(&g_FieldFxTaskContext->variables[1],&model,sizeof(model));
+        actor->state->core_flags |= 0x40000000;
         floor = g_RoomFloorY->y;
         model->matrixIndex = 0x1A;
         model->finished = 0;
@@ -333,15 +341,15 @@ int RoomEffect_HomingProjectileThrow(int mode, RoomHomingModel *model) {
         model->damping = g_RoomHomingLaunch.damping;
     } else if (mode == 1) {
         if (model->released == 0) {
-            if (actor->core == 0 || Battle_GetEnemyContextField((struct FieldActor *)actor, 0x2C) <= 0) {
+            if (actor->state == 0 || Battle_GetEnemyContextField((struct FieldActor *)actor, 0x2C) <= 0) {
                 model->released = 1;
-            } else if ((actor->core->flags & 0x1800) != 0) {
+            } else if ((actor->state->core_flags & 0x1800) != 0) {
                 model->released = 1;
-            } else if ((int)((actor->core->flags >> 1) & 7) > 0) {
+            } else if ((int)((actor->state->core_flags >> 1) & 7) > 0) {
                 model->released = 1;
             }
         }
-        if (model->state == 0 && model->armed != 0 && *actor->core->cue == 0) {
+        if (model->state == 0 && model->armed != 0 && *actor->state->action_state == 0) {
             model->released = 1;
         }
         if (model->released != 0) {
@@ -352,7 +360,7 @@ int RoomEffect_HomingProjectileThrow(int mode, RoomHomingModel *model) {
             return 1;
         }
 
-        cue = actor->core->cue;
+        cue = actor->state->action_state;
         if (*cue == 1) {
             *cue = 2;
             model->armed = 1;
@@ -360,30 +368,30 @@ int RoomEffect_HomingProjectileThrow(int mode, RoomHomingModel *model) {
         if (model->finished != 0) {
             model->finished++;
         }
-        if (actor->phase != 9) {
+        if (actor->mode != 9) {
             return 0;
         }
         /* Two reads of the frame, as retail: the last-frame test keeps
          * its own copy. */
-        frame = actor->frame;
-        lastFrame = actor->frame;
-        motion = actor->motion;
+        frame = actor->anim.parts.integer;
+        lastFrame = actor->anim.parts.integer;
+        motion = actor->anim_step;
         if (motion >= 0) {
             if ((s16)frame >= 0x1C && model->finished < 0x18) {
-                actor->motion = -motion;
+                actor->anim_step=(s32)(0u-(u32)motion);
                 return 0;
             }
-            if ((s16)lastFrame < actor->frameCount - 1) {
+            if ((s16)lastFrame < actor->action - 1) {
                 return 0;
             }
-            cue = actor->core->cue;
+            cue = actor->state->action_state;
             if (*cue == 2) {
                 *cue = 4;
             }
             return 1;
         }
         if ((s16)frame < 0x17) {
-            actor->motion = -motion;
+            actor->anim_step=(s32)(0u-(u32)motion);
         }
     }
     return 0;
@@ -391,7 +399,8 @@ int RoomEffect_HomingProjectileThrow(int mode, RoomHomingModel *model) {
 
 /* Scene script entry: mode 0 sets speed, drag and damping, mode 1 lift,
  * gravity and bounce, mode 2 the two values reported back. */
-int RoomEffect_HomingProjectileConfigure(u32 mode, int a, int b, int c) {
+intptr_t RoomEffect_HomingProjectileConfigure(int mode,intptr_t first,intptr_t second,intptr_t third) {
+    s32 a=(s32)first,b=(s32)second,c=(s32)third;
     switch (mode) {
     case 0:
         g_RoomHomingLaunch.speed = a;

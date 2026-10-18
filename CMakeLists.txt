@@ -243,6 +243,9 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/line_burst.c
     src/overlays/room_lib/script_slot.c
     src/overlays/room_lib/dropped_flare.c
+    src/overlays/room_lib/ground_eruption.c
+    src/overlays/room_lib/homing_projectile.c
+    src/overlays/room_lib/homing_projectile_seeds.c
     src/overlays/room_lib/script_args.c)
 target_include_directories(parasite-eve-original PRIVATE include)
 target_link_libraries(parasite-eve-original PRIVATE psyz)

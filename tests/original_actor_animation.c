@@ -1,3 +1,5 @@
+#include "pe1/room_ground_eruption.h"
+#include "pe1/room_homing_model.h"
 #include "pe1/room_falling_burst.h"
 #include "../src/overlays/room_m318_chrysler/m318_externs.h"
 #include "pe1/room_ember_burst.h"
@@ -15976,6 +15978,55 @@ static int original_hospital_falling_states(void)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--hospital-eruption")){
+        /* Exercise the native callback ABI, full pointer storage and guards. */
+        FieldFxTaskContext context={0};FieldFxObjectPrefix owner={0};
+        FieldActor actor={0};FieldActorState state={0};RoomHomingModel model={0};
+        owner.actor=&actor;actor.state=&state;
+        g_FieldFxTaskContext=&context;g_FieldFxOwner=&owner;
+        for(unsigned i=0;i<7;++i)context.variables[i]=(s16)(0x1230+i);
+        RoomEffect_HomingProjectileConfigure(0,0x12345678,-17,0);
+        RoomEffect_HomingProjectileConfigure(1,-12345,4567,0);
+        RoomEffect_HomingProjectileConfigure(2,71,93,0);
+        g_RoomFloorY->y=-123;
+        if(RoomEffect_HomingProjectileThrow(0,&model,0) || model.speed!=0x12345678 ||
+           model.drag!=-17 || model.lift!=-12345 || model.gravity!=4567 || model.floor!=-123 ||
+           model.damping!=8 || model.bounce!=10 || model.scriptArg0!=71 || model.scriptArg1!=93 ||
+           model.soundHandle!=-1 || model.matrixIndex!=26 || state.core_flags!=0x40000000)return 1;
+        RoomHomingModel *stored=NULL;memcpy(&stored,&context.variables[1],sizeof(stored));
+        if(stored!=&model || context.variables[0]!=0x1230 || context.variables[5]!=0x1235 || context.variables[6]!=0x1236)return 1;
+        RoomEffect_HomingProjectileConfigure(0,-7,8,13);RoomEffect_HomingProjectileConfigure(1,9,-10,17);
+        if(g_RoomHomingLaunch.damping!=13 || g_RoomHomingLaunch.bounce!=17)return 1;
+        RoomHomingLaunch launch=g_RoomHomingLaunch;RoomEffect_HomingProjectileConfigure(3,1,2,3);
+        if(memcmp(&launch,&g_RoomHomingLaunch,sizeof(launch)))return 1;
+        for(unsigned age=0;age<16;++age){g_FieldFxCurrentAge=age;
+            if(RoomEffect_HomingProjectileSpark(1,NULL,0)!=(age>=9))return 1;}
+        g_FieldFxTaskContext=NULL;g_FieldFxOwner=NULL;g_RoomFloorY->y=0;
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe,archive;
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        const unsigned rooms[]={141,328};
+        for(unsigned index=0;index<2;++index){
+            SceneRoomSectorRange range;u8 module[12780];
+            if(!pe_disc_read(&disc,&exe,0x800ull+0x80093378u-0x80010000u+(rooms[index]-1)*8,&range,8) ||
+               !pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048+8,module,sizeof(module)))return 1;
+            if(memcmp(module+0x306c,g_RoomEruptionScript,sizeof(int)*18) || memcmp(module+0x3110,g_RoomHomingScript,sizeof(g_RoomHomingScript)))return 1;
+            char name[16];snprintf(name,sizeof(name),"m%04ui",rooms[index]);u32 token=Text_ParseBase32Id((signed char *)name);
+            for(unsigned pass=0;pass<2;++pass){
+                memset(&g_RoomHomingLaunch,0xa5,sizeof(g_RoomHomingLaunch));
+                RoomFxSpritePacket *packets[]={&g_RoomEruptionGlowPacket,&g_RoomEruptionDebrisPacket,&g_RoomEruptionShadowPacket,&g_RoomEruptionRingPacket};
+                for(unsigned i=0;i<4;++i)memset(packets[i],0xa5,sizeof(*packets[i]));
+                if(Scene_LoadRoom(token) || g_FieldFxTaskPrograms[81]!=&g_RoomHomingProgram ||
+                   g_FieldFxTaskPrograms[37]!=&g_RoomDroppedFlareProgram || g_PmCmdHandlerTable[37]!=&g_RoomGroundEruptionHandlers)return 1;
+                for(unsigned i=0;i<sizeof(g_RoomHomingLaunch);++i)if(((u8 *)&g_RoomHomingLaunch)[i])return 1;
+                for(unsigned i=0;i<4;++i)for(unsigned j=0;j<sizeof(*packets[i]);++j)if(((u8 *)packets[i])[j])return 1;
+            }
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Hospital eruption: real M141/M328 scripts, all three descriptors and repeated reset; homing native pointer guards, launch parameters and spark lifetime passed");return 0;
+    }
     if(argc==2 && !strcmp(argv[1],"--hospital-falling")){
         if(!original_hospital_falling_states())return 1;
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

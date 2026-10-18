@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Nowy zwykły replay `/tmp/pe-nypd-m203-v1` rozszerza przygotowanie M120
+v1/52865 do M123/60285. Oryginalne Medicine3/slot12 leczy120→189,
+Weapon otwiera panel5 statystyk; dopiero kolejny Cross aktywuje listę7.
+Wybrano M203/slot15. Down w panelu5 otwiera panel6 zdolności, nie listę
+broni: wcześniejsza nieudana nawigacja testera zachowana w fizycznym śladzie
+nie jest błędem gry. Obraz `-mod.png` potwierdza „Add Heat Effect to Bullets”
+i trzy pozostałe pociski po dwóch strzałach. Nie przypisujemy M203 obrażeń
+obszarowych ani nie zmieniamy odporności dla ułatwienia przejścia.
+
+Żywe odczyty: pierwszy strzał do typu4 daje400→371 przy58705;
+Medicine3/slot17 w walce leczy79→189 przy59281; drugi strzał do typu3
+przy59757 daje200→195, typ4 nadal371, typ2 nadal300. To pośrednie odczyty
+live, bez osobnych sparowanych checkpointów tych HP i bez nowego porównania
+z oryginalnym PS1. Samo zgodne wykonanie nie dowodzi wierności obrażeń.
+Przy60029/HP86 panel6 nadal pokazuje M203. Przez listę7 wybrano M16,
+oryginalny panel41 pyta „Changed to M16A1”; kolejny Cross zatwierdza zmianę.
+Przy60285 menuNULL, slot broni10/armor14, M1230xa80221c8, battle0/live2,
+HP86/189. Oba Medicine3 zużyte, Full Cure/slot20 zachowane. Ta prywatna
+próba nie zmienia wcześniejszego pełnego prefixu52865 z dwoma lekami.
+
+Artefakty `-args.json,-input.jsonl,-run.py,-results.json,-verify.py,-proof.json`:
+normal13,94s/SAN38,37s exit0; cały eksport JSON i1MiBVRAM zgodny z live,
+SHA2561567dfe54fe9043219c1ad56869d69d4d0fb4c9e96bc6a432eb3fc8294ea6af2.
+Ślad wejścia ciągły52865→60285. Autentyczny A2 pozostaje8192B o SHA256
+62bd8fad766c40b4564717d3bfce1b3c936375f5653c7552a04df30c8c7027f3,
+we wszystkich trzech prywatnych katalogach jedyny zapis; bu10 puste.
+Bez zapisów pamięci rozgrywki, bez sanitizer/Unbound diagnostics. Normalny
+proces live70155 zakończony exit0; oba replaye również zakończone.
+Nie dodano plików repo ani zmian produkcyjnych. M123 nie wygrany; kolejna
+próba M16 powinna przeładować jego magazynek jeszcze przed wejściem do bossa.
+
+Ponowny wymagający obrazu Disc1 CTest `original-game-melissa-encounter`
+na aktualnym `build/parasite-eve-pc` PASS120,59s: pierwsza walka teatralna,
+pokonanie Melissy i odzyskanie sterowania. Wcześniejsze wywołanie bez
+PE_TEST_DISC zostało SKIP i nie jest liczone jako dowód. Ten test nie
+potwierdza dalszej M123 ani całej kampanii.
+
+
 Bieżący zwykły A2 ma teraz świeży dowód przygotowania M120 i menu BP.
 Od potwierdzonego M122/47972/HP189 wyjście około[-1000,150] prowadzi do
 M120 przy48609/0xa8022048. Nie było konieczności wracania przez M124 ani

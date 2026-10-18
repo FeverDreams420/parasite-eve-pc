@@ -27,7 +27,9 @@ static const RoomFxSeed8 s_FloorDecalRotation = {
 static const RoomFxVec4 s_ImpactParticleScale = { 0x190, 0x190, 0x190, 0 };
 
 /* Sets up the burst state and the room's five sprite records. */
-void RoomEffect_FallingBurstInit(void *arg0, int unused, void *arg2) {
+int RoomEffect_FallingBurstInit(void *object, void *slot, void *data) {
+    void *arg0 = object;
+    void *arg2 = data;
     RoomFallingBurstClock *state = arg2;
     RoomFallingBurstEntity *self = arg0;
 
@@ -87,21 +89,38 @@ void RoomEffect_FallingBurstInit(void *arg0, int unused, void *arg2) {
         g_RoomFallingBurstShadow.b = 0xA0;
         g_RoomFallingBurstShadow.zero = 0;
     }
+    return 0;
 }
 
-void RoomEffect_FallingBurstNop(void) {
+int RoomEffect_FallingBurstNop(void *object, void *slot, void *data) {
+    return 0;
 }
 
 /* Counts the hold timer down and re-sends the burst when it is rearmed; ends
  * the effect when the script reports completion. */
-ROOM_REARM_TIMER_TICK(RoomEffect_FallingBurstTick, 4)
+int RoomEffect_FallingBurstTick(void *object, void *slot, void *data) {
+    RoomFallingBurstClock *clock=data;
+    RoomFallingBurstControl *control=slot;
+    if(clock->cooldown) --clock->cooldown;
+    if(clock->hit==1) {
+        clock->hit=0;
+        if(!clock->cooldown) {
+            clock->cooldown=clock->reload;
+            func_800C6C18(object);
+        }
+    }
+    if(FieldFx_IsLastSlotHalted()==1)control->state=2;
+    return 0;
+}
 
 
 
 /* Places the sprite at the actor's offset and gives it a random sideways
  * drift, or the actor's facing when script 1 is set. */
-void RoomEffect_InitFallingSprite(void *entity, void *unused,
-                              RoomFallingSpriteState *state) {
+int RoomEffect_InitFallingSprite(void *object, void *slot, void *data) {
+    void *entity = object;
+    void *unused = slot;
+    RoomFallingSpriteState *state = data;
     RoomFxSeed8 positionSeed;
     GteShortVector position;
     RoomFxSeed8 velocitySeed;
@@ -137,12 +156,15 @@ void RoomEffect_InitFallingSprite(void *entity, void *unused,
     }
 
     FieldFx_FindAssetAtShortPosition(entity, 0x583, state);
+    return 0;
 }
 
 /* Draws the sprite stretched by its fall speed, then its shadow on the
  * floor. */
-void RoomEffect_DrawFallingSprite(void *unused0, void *unused1,
-                              RoomFallingSpriteState *fx) {
+int RoomEffect_DrawFallingSprite(void *object, void *slot, void *data) {
+    void *unused0 = object;
+    void *unused1 = slot;
+    RoomFallingSpriteState *fx = data;
     RoomSpriteMatrix matrix;
     RoomFxVec4 scratchScale;
     RoomFxVec4 scale;
@@ -200,14 +222,17 @@ void RoomEffect_DrawFallingSprite(void *unused0, void *unused1,
     matrix.t[1] = g_RoomFloorY->y;
     matrix.t[2] = (s16)fx->z;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_RoomFallingBurstShadow, &matrix, 1);
+    return 0;
 }
 
 
 /* Moves the sprite until it reaches the floor; there it shrinks away and,
- * once, spawns the impact shimmer (kind 3), the ground pulse (kind 2) and
+ * once, spawns the ground pulse (kind 3), the impact shimmer (kind 2) and
  * the six particles (kind 4) at the landing point. */
-void RoomEffect_UpdateFallingSprite(void *entity, RoomFallingBurstControl *control,
-                                RoomFallingSpriteState *effect) {
+int RoomEffect_UpdateFallingSprite(void *object, void *slot, void *data) {
+    void *entity = object;
+    RoomFallingBurstControl *control = slot;
+    RoomFallingSpriteState *effect = data;
     void *self = entity;
     RoomFallingSpriteState *state;
     RoomFallingBurstParticles *burst;
@@ -271,16 +296,22 @@ void RoomEffect_UpdateFallingSprite(void *entity, RoomFallingBurstControl *contr
         motion->scale += 0x28;
         motion->verticalStep += 0x64;
     }
+    return 0;
 }
 
-void RoomEffect_InitImpactShimmer(int a, int b, RoomFallingBurstDecal *c) {
+int RoomEffect_InitImpactShimmer(void *object, void *slot, void *data) {
+    RoomFallingBurstDecal *c = data;
     c->shimmerScale = 0x258;
     c->shimmerDepth = 0x80;
     c->shimmerAlpha = 0;
+    return 0;
 }
 
 /* Draws the shimmer flat on the floor. */
-void RoomEffect_DrawImpactShimmer(void *arg0, void *arg1, RoomSpriteFxParams *fx) {
+int RoomEffect_DrawImpactShimmer(void *object, void *slot, void *data) {
+    void *arg0 = object;
+    void *arg1 = slot;
+    RoomSpriteFxParams *fx = data;
     RoomSpriteMatrix matrix;
     RoomFxSeed8 seed;
     RoomFxVec4 scratch_scale;
@@ -308,11 +339,13 @@ void RoomEffect_DrawImpactShimmer(void *arg0, void *arg1, RoomSpriteFxParams *fx
     matrix.t[2] = fx->z;
     g_RoomFallingBurstShimmer.code = fx->alpha << 1;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_RoomFallingBurstShimmer, &matrix, 0);
+    return 0;
 }
 
 /* Grows the shimmer; in its last thirty ticks it fades in and ends. */
-void RoomEffect_UpdateImpactShimmer(int a, RoomFallingBurstControl *st,
-                                RoomFallingBurstDecal *c) {
+int RoomEffect_UpdateImpactShimmer(void *object, void *slot, void *data) {
+    RoomFallingBurstControl *st = slot;
+    RoomFallingBurstDecal *c = data;
     RoomFallingBurstClock *r = FieldFx_GetScriptContext();
     c->shimmerScale += 3;
     if (r->tick - 0x1E < st->endTick) {
@@ -323,16 +356,21 @@ void RoomEffect_UpdateImpactShimmer(int a, RoomFallingBurstControl *st,
             st->state = 2;
         }
     }
+    return 0;
 }
 
-void RoomEffect_InitGroundPulse(int a, int b, RoomFallingBurstDecal *c) {
+int RoomEffect_InitGroundPulse(void *object, void *slot, void *data) {
+    RoomFallingBurstDecal *c = data;
     c->pulseScale = 0xC8;
     c->pulseDepth = 0x80;
+    return 0;
 }
 
 /* Draws the pulse flat on the floor. */
-void RoomEffect_DrawGroundPulse(void *unused0, void *unused1,
-                            RoomUniformSpriteFxParams *fx) {
+int RoomEffect_DrawGroundPulse(void *object, void *slot, void *data) {
+    void *unused0 = object;
+    void *unused1 = slot;
+    RoomUniformSpriteFxParams *fx = data;
     RoomFxSeed8 seed;
     RoomSpriteMatrix matrix;
     RoomSpriteMatrix *matrixPtr;
@@ -361,12 +399,14 @@ void RoomEffect_DrawGroundPulse(void *unused0, void *unused1,
     matrixPtr->t[1] = fx->y;
     matrixPtr->t[2] = fx->z;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_RoomFallingBurstPulse, matrixPtr, 0);
+    return 0;
 }
 
 /* Expands the pulse with the clock, fades it in its last sixty ticks and
  * flags the clock when the pulse touches the player. */
-void RoomEffect_UpdateGroundPulse(int unused, RoomFallingBurstControl *state,
-                              RoomFallingBurstDecal *fx) {
+int RoomEffect_UpdateGroundPulse(void *object, void *slot, void *data) {
+    RoomFallingBurstControl *state = slot;
+    RoomFallingBurstDecal *fx = data;
     RoomFallingBurstClock *clock = FieldFx_GetScriptContext();
     if (clock->tick - 0x3C < state->endTick) {
         if (fx->pulseDepth >= 5) {
@@ -385,11 +425,13 @@ void RoomEffect_UpdateGroundPulse(int unused, RoomFallingBurstControl *state,
     if (state->endTick == clock->tick) {
         state->state = 2;
     }
+    return 0;
 }
 
 /* Launches the six particles upwards with random spreads. */
-void RoomEffect_InitImpactParticles(int unused, void *state,
-                                RoomFallingBurstParticles *fx) {
+int RoomEffect_InitImpactParticles(void *object, void *slot, void *data) {
+    void *state = slot;
+    RoomFallingBurstParticles *fx = data;
     RoomFxVec4 scale;
     unsigned int i;
     fx->matrix.m[2][2] = 0x1000;
@@ -414,11 +456,13 @@ void RoomEffect_InitImpactParticles(int unused, void *state,
         fx->velocity[i].y = -(rand() % 100 + 50);
         fx->velocity[i].z = rand() % 31 - 15;
     }
+    return 0;
 }
 
 /* Draws each live particle and its dimmer reflection on the floor. */
-void RoomEffect_DrawImpactParticles(int unused, void *state,
-                                RoomFallingBurstParticles *fx) {
+int RoomEffect_DrawImpactParticles(void *object, void *slot, void *data) {
+    void *state = slot;
+    RoomFallingBurstParticles *fx = data;
     RoomFallingBurstClock *clock = FieldFx_GetScriptContext();
     unsigned int i;
     FieldFx_SetSpriteTexturePreset(clock->asset.page);
@@ -437,12 +481,14 @@ void RoomEffect_DrawImpactParticles(int unused, void *state,
             FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_RoomFallingBurstParticle, &fx->matrix, 1);
         }
     }
+    return 0;
 }
 
 /* Per-frame particle step: velocity/16 integration, +4 gravity, kill on
  * floor hit; when the last one dies the effect ends. */
-void RoomEffect_UpdateImpactParticles(int a, unsigned char *st,
-                                  RoomFallingBurstParticles *sys) {
+int RoomEffect_UpdateImpactParticles(void *object, void *slot, void *data) {
+    unsigned char *st = slot;
+    RoomFallingBurstParticles *sys = data;
     int i;
     int grav;
     unsigned short *gp;
@@ -467,4 +513,30 @@ void RoomEffect_UpdateImpactParticles(int a, unsigned char *st,
             }
         }
     }
+    return 0;
 }
+
+/* Complete USA M137/M140/M147/M324/M327 module data. The bytecode and
+ * handler order are those at 80190e30..80190eec. Native pointer-bearing
+ * clock storage grows with the host ABI; every following slot stays aligned. */
+RoomFxSpritePacket g_RoomFallingBurstShadow,g_RoomFallingBurstShimmer,
+    g_RoomFallingBurstSprite,g_RoomFallingBurstPulse,g_RoomFallingBurstParticle;
+FieldFxHandler g_RoomInitList[]={RoomEffect_FallingBurstInit,RoomEffect_InitFallingSprite,
+    RoomEffect_InitImpactShimmer,RoomEffect_InitGroundPulse,RoomEffect_InitImpactParticles,
+    (FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_RoomDrawList[]={RoomEffect_FallingBurstNop,RoomEffect_DrawFallingSprite,
+    RoomEffect_DrawImpactShimmer,RoomEffect_DrawGroundPulse,RoomEffect_DrawImpactParticles,
+    (FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_RoomUpdateList[]={RoomEffect_FallingBurstTick,RoomEffect_UpdateFallingSprite,
+    RoomEffect_UpdateImpactShimmer,RoomEffect_UpdateGroundPulse,RoomEffect_UpdateImpactParticles,
+    (FieldFxHandler)(intptr_t)-1};
+#define FALLING_SIZE(bytes) (((bytes)+sizeof(void *)-1)&~(sizeof(void *)-1))
+int g_RoomSpawnLayout[]={FALLING_SIZE(sizeof(RoomFallingBurstClock))|(FALLING_SIZE(sizeof(RoomFallingSpriteState))<<16),
+    FALLING_SIZE(sizeof(RoomFallingBurstDecal))|(FALLING_SIZE(12)<<16),FALLING_SIZE(sizeof(RoomFallingBurstParticles))|0xffff0000u};
+#undef FALLING_SIZE
+int g_RoomScript[]={0x00010000,0x00100000,0x10050000,0x100b0028,0x100d0032,
+    0x00200001,0x00020000,0x30fa0000,0x00420000,0x00110000,0x00010001,
+    0x00020004,0x00320001,0x22fb0000,0x30f60000,0x00110001,0x00010001,
+    0x30f30000,-1};
+PmCommand g_RoomFallingBurstHandlers={RoomLib_ClassNop0,RoomLib_PlantScript,RoomLib_Spawn6,
+    RoomLib_RegisterDrawList,RoomLib_RegisterPairedTables,RoomLib_CloseTarget,RoomLib_ClassNop0};

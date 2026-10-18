@@ -1,3 +1,4 @@
+#include "pe1/room_falling_burst.h"
 #include "../src/overlays/room_m318_chrysler/m318_externs.h"
 #include "pe1/room_ember_burst.h"
 #include "pe1/room_ember_spiral.h"
@@ -15947,8 +15948,61 @@ static int original_attack_effect_status_gate(void)
     return 1;
 }
 
+static int original_hospital_falling_states(void)
+{
+    FieldFxState *old_script=g_FieldFxScriptState;int old_floor=g_RoomFloorY->y;u32 old_rng=Psyz_RandState();
+    FieldFxState script={0};RoomFallingBurstClock clock={.tick=100};
+    script.current_context=&clock;g_FieldFxScriptState=&script;g_RoomFloorY->y=0;
+    FieldFxHandler callbacks[]={g_RoomInitList__falling[2],g_RoomInitList__falling[3],
+        g_RoomInitList__falling[4],g_RoomUpdateList__falling[2],g_RoomUpdateList__falling[4],g_RoomUpdateList__falling[1]};
+    const u8 fills[]={0,1,0xa5,0xff};uint64_t hash=UINT64_C(14695981039346656037);
+    for(unsigned callback=0;callback<6;++callback)for(unsigned fill=0;fill<4;++fill)for(unsigned variant=0;variant<12;++variant){
+        _Alignas(void *) u8 data[512];u8 control[]={37,0xa5,variant*7,0};
+        memset(data,fills[fill],sizeof(data));srand(variant*0x1234567u);
+        if(callback==4){
+            s16 live=6;memcpy(data+164,&live,2);
+            for(unsigned i=0;i<6;++i){s16 position[]={100,-100,200,0},velocity[]={30,-80+(int)variant*20,40,0},active=i%2?1:0;
+                memcpy(data+32+i*8,position,8);memcpy(data+80+i*8,velocity,8);memcpy(data+152+i*2,&active,2);}
+        }
+        if(callback==5){s16 position[]={100,-100,200};memcpy(data,position,6);}
+        callbacks[callback](NULL,control,data);u32 random=Psyz_RandState();
+        const void *parts[]={data,control,&random};const unsigned lengths[]={512,4,4};
+        for(unsigned part=0;part<3;++part)for(unsigned j=0;j<lengths[part];++j)hash=(hash^((const u8 *)parts[part])[j])*UINT64_C(1099511628211);
+    }
+    g_FieldFxScriptState=old_script;g_RoomFloorY->y=old_floor;srand(old_rng);
+    if(hash!=UINT64_C(0x6c0c8a4195cf042a)){fprintf(stderr,"Hospital falling CPU hash %016llx\n",(unsigned long long)hash);return 0;}
+    puts("Original hospital falling burst: 288 unhooked USA CPU/BIOS/GTE initializer and update states, RNG, halfword wrap and full 512-byte guards passed");return 1;
+}
+
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--hospital-falling")){
+        if(!original_hospital_falling_states())return 1;
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe,archive;
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        const unsigned rooms[]={137,140,147,324,327};
+        for(unsigned index=0;index<5;++index){
+            SceneRoomSectorRange range;u8 module[8108];
+            if(!pe_disc_read(&disc,&exe,0x800ull+0x80093378u-0x80010000u+(rooms[index]-1)*8,&range,8) ||
+               !pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048+8,module,sizeof(module)))return 1;
+            uint64_t hash=UINT64_C(14695981039346656037);for(unsigned j=0;j<sizeof(module);++j)hash=(hash^module[j])*UINT64_C(1099511628211);
+            if(hash!=UINT64_C(0x54c61f96a7dcbbc1) || memcmp(module+0x1eb0,g_RoomScript__falling,sizeof(g_RoomScript__falling)) ||
+               memcmp(module+0x1efc,g_RoomDroppedFlareScript,36))return 1;
+            char name[16];snprintf(name,sizeof(name),"m%04ui",rooms[index]);
+            for(unsigned pass=0;pass<2;++pass){
+                memset(&g_RoomFallingBurstSprite,0xa5,sizeof(g_RoomFallingBurstSprite));g_RoomDroppedFlareArgs[0]=123;
+                if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)name)) || g_PmCmdHandlerTable[40]!=&g_RoomFallingBurstHandlers ||
+                   g_FieldFxTaskPrograms[37]!=&g_RoomDroppedFlareProgram || g_RoomDroppedFlareArgs[0])return 1;
+                const u8 *packet=(const void *)&g_RoomFallingBurstSprite;for(unsigned j=0;j<sizeof(g_RoomFallingBurstSprite);++j)if(packet[j])return 1;
+            }
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original five hospital modules: complete USA 8108-byte modules, original scripts, both native descriptors, real assets, geometry and per-entry reset passed twice");return 0;
+    }
+
     if(argc==2 && !strcmp(argv[1],"--m123-ai")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;

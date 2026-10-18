@@ -111,4 +111,8 @@ extern RoomFxSpritePacket g_RoomFallingBurstParticle;
 int *FieldFx_RegPtr(int index);
 intptr_t *FieldFx_VarPtr(int index);
 
+extern PmCommand g_RoomFallingBurstHandlers;
+extern FieldFxHandler g_RoomInitList__falling[6],g_RoomDrawList__falling[6],g_RoomUpdateList__falling[6];
+extern int g_RoomScript__falling[19],g_RoomSpawnLayout__falling[3];
+
 #endif

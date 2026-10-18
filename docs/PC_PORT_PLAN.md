@@ -2,6 +2,65 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Dzień4 — naprawione wejście do M324 po zawaleniu korytarza.
+Z autentycznego Continue C i potwierdzonego zwycięstwa M326/Fuse1:
+M323/Maya → zamknięte drzwi Autopsy (wymagany klucz209) → M134/dialog34 →
+M322/story476 → M321. Właściwe drzwi M324 mają prostokąt
+x[-3000,-2600],z[-2400,-2200] i zwrot w−X; wyjście wykonuje globalny aktor2,
+nie sam skrypt gracza. Nie obchodzono blokad ani nie zapisywano RAM rozgrywki.
+Stary zamrożony v2 odtwarza terminal exit1:
+`native descriptor missing for M324 slot 122 (PS1 80190f10)`.
+
+Pełny oryginalny moduł8108B jest identyczny w M137/M140/M147/M324/M327,
+SHA256 020ee1d956c772bcbf061298052ea1d7c98314bee383a55f43c6b685bee6fa56.
+Zawiera oba bindingi:122/80190f10 (DroppedFlare) i40/80190e84
+(FallingBurst). Dołączono cały istniejący falling_sprite_burst.c i oryginalne
+wspólne metody klasy; tablice, bytecode i reset danych pozostają w istniejących
+modułach. Wszystkie15 callbacków efektu mają pełne natywne ABI silnika,
+bez adapterów lub przenoszenia funkcji. Nie dodano plików repozytorium.
+Pozostałe warianty modułu12780B/20564B nie są przez to automatycznie obsługiwane.
+
+Różnicowy test kodu USA na CPU/BIOS/GTE potwierdza228 stanów relokowanego
+DroppedFlare (FNV162712f297cfbbdc) i288 initializerów/aktualizacji FallingBurst
+(FNV6c0c8a4195cf042a), w tym RNG, zawijanie półsłów i całe512B buforów.
+Pierwszy test wykrył zachowywany padding macierzy w ScaleMatrix PsyZ.
+Nasz fork c54ef1a zachowuje niskie32bity mnożenia PSY-Q oraz końcowy zapis
+całego słowa r33/padding; testy zawierają dodatni, ujemny i przepełniony wynik.
+137 testów GTE PsyZ przechodzi. Pierwszy nieudany hash fixture i logi audytu
+pozostawiono w /tmp/pe-m324-dev-fixture-v1.log oraz /tmp/pe-m324-*-cpu-v*.py.
+
+Świeży kandydat /tmp/pe-m324-port-v1:187 obiektów/profil,374 razem;
+pełne normal oraz ASan/UBSan/function. PsyZ/SDL pozostają nieinstrumentowane.
+Manifest i ponowne hashowanie obiektów/zależności/archiwów/exe:
+/tmp/pe-m324-port-v1-{build-manifest,provenance}.json.
+Oba fixture przechodzą288 stanów i dwukrotne rzeczywiste załadowanie każdego
+z pięciu pokoi, geometrię, oba bindingi i reset danych. Wszystkie36 dotychczasowych
+regresji przechodzi: bootstrap/control, Melissa, assety, Save/Continue, leczenie,
+M123 i dotychczasowe moduły M256/M318/M349/M350/M404; replaye zachowują
+całe JSON/VRAM i bajty kart. /tmp/pe-m324-port-v1-verification.json.
+
+Przy55375 M324/a8062248 jest swobodnym polem, story476/HP40/lock0.
+Normal/SAN kończą0, całe JSON i1MiB VRAM identyczne; obejrzano PNG.
+/tmp/pe-m324-port-v1-entry-proof.json oraz /tmp/pe-m324-route-v1-args.json.
+Budowa użytkownika jest również odświeżona; osobny replay porównuje jej
+całe JSON/VRAM ze świeżym kandydatem i odtwarza błąd starego v2:
+/tmp/pe-m324-user-replay-v1-proof.json. Źródłowy i prywatne8192B C pozostają
+niezmienione, bu10 puste; kart repozytorium nie dotykano.
+
+Dalsza próba wywołała oryginalną walkę M324: aktorzy4:31/4:1
+po88HP i5:0/110HP. Przy55935 gotowe pole walki, Aya40HP/PE67, magazynek0.
+Wybrano Heal1 (opis30HP), lecz próba ruchu po animacji zakończyła się śmiercią
+przy56483, HP0/mode3/live3. To porażka testera, nie zwycięstwo ani zakończenie
+pokoju. Pełny input /tmp/pe-day4-m324-live-v1/input.jsonl pozwala odtworzyć
+próbę bez modyfikacji stanu. Powtórzenie normal/SAN kończy0, oba całe JSON
+i1MiB VRAM identyczne, stan także zgodny z live, karty C niezmienione;
+/tmp/pe-m324-battle-v1-entry-proof.json. Następny krok: poprawić zapas HP/PE po M326
+(np. normalne leczenie i strzały zamiast kończącego PE EnergyShot), następnie
+pokonać M324 i dojść do M325/klucza209. Pełna kampania i zgodność obrazu/dźwięku
+z PS1 nadal niepotwierdzone; cel całego wiernego portu pozostaje aktywny.
+
+## Poprzedni potwierdzony etap — Fuse1 i M326
+
 Dzień4 — Fuse1 i rzeczywiste zwycięstwo M326, bez zmian produkcyjnych.
 Poprzedni odcinek goal potwierdził awarię windy; obecny kontynuuje zwykły
 cold Continue C przez M320 do nowych pomieszczeń i walki szpitala.

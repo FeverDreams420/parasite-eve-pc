@@ -35,6 +35,16 @@ normal/SAN. Wszystkie zależności,354 obiekty i4 executable ponownie
 zweryfikowano hashami; M350 kompiluje się bez ostrzeżeń. Dedykowany
 --m350 przeszedł normal/SAN, proof w /tmp/pe-m350-v3-focused-tg4q2d9l.
 PsyZ/SDL są nadal istniejącymi, nieinstrumentowanymi archiwami.
+/tmp/pe-m350-v3-verification.json potwierdza16 terminalnych exit0:
+normal/SAN replay do dwóch pokonanych głów M123, telefoniczny zapis B2,
+Medicine2 po Continue, cała pierwsza walka z Melissą od New Game,
+--assets, --m349, --m349-load i --m350. Pełne JSON i1MiB VRAM
+replayów zgadzają się z poprzednim kandydatem oraz między profilami;
+B2 jest identyczny bajtowo, źródłowe karty pozostają niezmienione.
+Przebudowany build/parasite-eve-pc przeszedł też osobny replay67791
+aktualizacji, z pełnym JSON/VRAM identycznym z bazą i niezmienionym A2:
+/tmp/pe-m350-v3-user-proof.json. Końcowy rehash354 obiektów,
+zależności, bibliotek i4 executable: /tmp/pe-m350-v3-final-build-proof.json.
 
 M350 **nie jest jeszcze rejestrowany przez Scene_LoadRoom**. Brakuje
 pełnych autorskich cykli sześciu programów, wszystkich ścieżek renderowania,

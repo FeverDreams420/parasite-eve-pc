@@ -71,6 +71,47 @@ PsyZ/SDL nadal pochodzą z istniejących nieinstrumentowanych archiwów.
 Testy izolowanego M350 nie dowodzą przejścia walki na krążowniku ani
 zgodności pikseli i PCM z PS1. Pełna kampania i cały port pozostają otwarte.
 
+Dalszy test kampanii, bez zmian kodu produkcyjnego: wcześniejszy ostrzał
+najsłabszej głowy M123, zwykłe Medicine3 i Energy Shot wybrane przyciskami
+menu dały nowy checkpoint63407: typ3 pokonany, Aya131/195HP, PEraw0,
+ATB159, ammo9; typ2/300HP i typ4/400HP pozostają. Medicine3/17 zużyte,
+Full Cure/20 nadal w ekwipunku. To wcześniejszy koniec tego etapu niż
+poprzedni64311/80HP, ale inny stan zasobów PE nie pozwala uznać całej
+odnogi za lepszą. /tmp/pe-m123-early-offense-v1-first-head-proof.json:
+normal14,91s i SAN42,97s, oba terminal exit0, całe JSON/1MiBVRAM zgodne
+między profilami, metryki zgodne z odczytem live, autentyczny A2 niezmieniony.
+Pełny fizyczny prefix: -first-head-full-args.json. Nie używano zapisu
+save-state, Save_Build ani modyfikacji HP/PE/RNG/stanu gameplayu.
+
+Dalsza eksploracyjna część tej samej sesji użyła Full Cure i Barrier,
+ale zatrzymano ją przy65783: Aya23HP, PEraw3029696, ammo5,
+typ2/188HP i typ4/400HP. Cały ślad jest w
+/tmp/pe-m123-early-offense-v1-full-args.json, a -exploratory.json jawnie
+zaznacza live_only i brak pary normal/SAN dla końcowej części odnogi.
+Nie jest to zwycięstwo ani nowy Save. Proces live68514 i debugger
+zakończone; karty testowano wyłącznie w prywatnych katalogach /tmp.
+
+Osobna próba od dotychczasowego67791/76HP do70003 kończy się porażką:
+ostatnia głowa344→288, HP0 mimo Full Cure i dwóch Heal1. Jej normal/SAN
+odtwarzają całe JSON/VRAM identyczne z live, exit0/19,91s i57,10s;
+/tmp/pe-m123-final-head-v1-proof.json, source A2 niezmieniony.
+Obserwacyjny hardware watchpoint potwierdził10HP kontaktu odejmowane
+przez Menu_MainUpdate, bez zatrucia, oraz śmiertelne trafienie właściciela1
+(power110, mode9/action37) przez Entity_ResolveDropTable. Watchpoint
+wyłącznie czytał stan i automatycznie kontynuował; proces67851 i debugger
+są zakończone. Nie mylimy exit0 diagnostycznego runnera ze zwycięstwem.
+
+Dalsze sterowanie musi rozróżniać wiązkę i PulseRing: istniejący
+RoomM123_PulseRing przy age32, aktywnym kontekście i uzbrojonym stanie
+właściciela zgłasza kontakt bez testu pozycji gracza. Jest to zachowanie
+oryginału objęte istniejącym oracle480 stanów CPU, a nie nowa zmiana
+mechaniki. Samo omijanie prognozowanej wiązki nie zapobiega temu atakowi;
+trzeba również zarządzać leczeniem, PE, ochroną i kolejnością celów.
+W pomocniczym observerze oryginału PS1 skorygowano filtr programów M123
+z128/129/130 na rzeczywiste128/143/144. Starszych obserwacji z błędnym
+filtrem nie należy używać jako dowodu braku PulseRing/WaveBurst.
+Pełna walka M123, kolejne telefoniczne Save/Continue i kampania są otwarte.
+
 Poprzednia integracja loadera: cały oryginalny moduł
 src/overlays/room_m349_cruiser/m349.c jest kompilowany i statycznie powiązany
 z rzeczywistym loaderem M349. Wszystkie trzy istniejące funkcje pozostają

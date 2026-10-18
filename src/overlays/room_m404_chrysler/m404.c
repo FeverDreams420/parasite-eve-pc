@@ -3,23 +3,29 @@
 #include "pe1/room_m404.h"
 #include "pe1/room_m404_drop.h"
 #include "pe1/room_m404_effects.h"
+#include "pe1/geom_state.h"
+#include "pe1/battle_runtime.h"
+#include "pe1/field_actor.h"
+#include "pe1/room_fx.h"
+#include "pe1/room_module.h"
+#include "pe1/fieldfx_task.h"
 
 /* Flashes the scene with the given code when the drop touches the player. */
-#define ROOM_M404_DROP_FLASH(code)                                            \
-    {                                                                         \
-        RoomM404DropChannel *channel = ANIM_OWNER_AS(RoomM404DropChannel);                            \
-        if ((channel->pool->node->flags & 0x3F000000) == 0x01000000) {        \
-            ((RoomM404DropEntity *)D_8009D254)->actor->flags |= 0x4000;                               \
-            channel->pool->node->flags =                                      \
-                (channel->pool->node->flags & 0xC0FFFFFF) | (code);           \
-            channel->pool->node->flags |= 0x80000000;                         \
-        }                                                                     \
-    }
+#define ROOM_M404_DROP_FLASH(code) do { \
+    FieldActor *owner = g_FieldFxOwner->actor; \
+    if (owner && owner->state && \
+        (owner->state->core_flags & 0x3F000000) == 0x01000000) { \
+        ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000; \
+        owner->state->core_flags = \
+            (owner->state->core_flags & 0xC0FFFFFF) | (code) | 0x80000000; \
+    } \
+} while (0)
 
 /* Sinking drop: sinks and jitters until it spreads on the floor, sheds
  * splash children, lingers as a pool that spits droplets and expires once
  * it leaves the walkable area; the splashes slow down and bounce. */
-int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
+int RoomM404_SinkingDropCallback(int mode, void *data, intptr_t argument) {
+    RoomM404Drop *drop = data;
     RoomM404DropRotation rotation = g_RoomM404DropFanTilt;
     RoomM404DropColor color = g_RoomM404DropFanColor;
     RoomM404DropColor glow = g_RoomM404DropGlowColor;
@@ -49,7 +55,7 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
                 drop->vz *= 2;
             }
             if (drop->timer & 1) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM404DropSpawnChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = drop->x;
                     child->y = drop->y;
@@ -62,10 +68,10 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
                 }
             }
             if (FieldFx_IsPlayerWithinRadius(drop, 0x6E) && drop->y >= g_RoomFloorY->y - 0x202 &&
-                FX_TASK_AS(RoomM404DropEvent)->active) {
+                g_FieldFxTaskContext->flags) {
                 ROOM_M404_DROP_FLASH(0x3D000000);
             }
-            if (Geo_PointInPoly(drop->x << 16, drop->z << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) return 1;
+            if (Geo_PointInPoly((s32)((u32)(s32)drop->x << 16), (s32)((u32)(s32)drop->z << 16), g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) return 1;
             break;
         case 1:
             drop->timer++;
@@ -75,7 +81,7 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
             drop->x += (rand() & 0x1F) - 0x10;
             drop->z += (rand() & 0x1F) - 0x10;
             if (drop->timer & 1) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM404DropSpawnChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = drop->x;
                     child->y = drop->y;
@@ -87,10 +93,10 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
                     child->timer = 0;
                 }
             }
-            if (FieldFx_IsPlayerWithinRadius(drop, 0x6E) && FX_TASK_AS(RoomM404DropEvent)->active) {
+            if (FieldFx_IsPlayerWithinRadius(drop, 0x6E) && g_FieldFxTaskContext->flags) {
                 ROOM_M404_DROP_FLASH(0x19000000);
             }
-            if (Geo_PointInPoly(drop->x << 16, drop->z << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) return 1;
+            if (Geo_PointInPoly((s32)((u32)(s32)drop->x << 16), (s32)((u32)(s32)drop->z << 16), g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) return 1;
             if (drop->timer >= 0x20) return 1;
             break;
         case 2:
@@ -128,11 +134,11 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
             break;
         case 4:
             drop->timer++;
-            if (FieldFx_IsPlayerWithinRadius(drop, 0x6E) && FX_TASK_AS(RoomM404DropEvent)->active) {
+            if (FieldFx_IsPlayerWithinRadius(drop, 0x6E) && g_FieldFxTaskContext->flags) {
                 ROOM_M404_DROP_FLASH(0x19000000);
             }
             if ((drop->timer & 1) && (rand() & 0xF) == 0) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM404DropSpawnChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = drop->x;
                     child->y = drop->y;
@@ -160,7 +166,7 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
         switch (drop->state) {
         case 0:
         case 1:
-            size = rsin(g_FieldFxCurrentAge << 9) / 4 + 0x1000;
+            size = rsin(g_FieldFxCurrentAge * 512) / 4 + 0x1000;
             alpha = (g_FieldFxCurrentAge & 1) * 48 + 0x80;
             {
                 int kind = g_FieldFxSpriteParams.palette;
@@ -178,7 +184,7 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
             FieldFx_DrawStarFan((GteShortVector *)drop, 0xC8, 0xC8, 5, 0, size, size, (struct RenderColor *)&glow, 0, alpha, 1);
             break;
         case 2:
-            FieldFx_SampleColorTrack(g_RoomM404SinkingDropColorTrack, &fadeColor, (drop->timer << 4) / 12);
+            FieldFx_SampleColorTrack(g_RoomM404SinkingDropColorTrack, &fadeColor, (drop->timer * 16) / 12);
             {
                 int kind = g_FieldFxSpriteParams.palette;
                 int palette = g_FieldFxPaletteTable[kind];
@@ -189,7 +195,7 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
             }
             return 0;
         case 3:
-            size = rsin(drop->timer << 6) * 4 / 9 + 0x1000;
+            size = rsin(drop->timer * 64) * 4 / 9 + 0x1000;
             {
                 int kind = g_FieldFxSpriteParams.palette;
                 int palette = g_FieldFxPaletteTable[kind];
@@ -200,7 +206,7 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
             }
             return 0;
         case 4:
-            alpha = rsin((drop->timer << 11) / 46) / 32;
+            alpha = rsin((drop->timer * 2048) / 46) / 32;
             size = drop->timer & 0xF;
             if (size >= 8) size += 0x18;
             g_FieldFxSpriteParams.extent_x = g_FieldFxSpriteParams.parameter00;
@@ -232,37 +238,38 @@ int RoomM404_SinkingDropCallback(int mode, RoomM404Drop *drop) {
 
 #undef ROOM_M404_DROP_FLASH
 
-int RoomM404_SinkingDrop(int mode, void *unused, char *state) {
+int RoomM404_SinkingDrop(int mode, void *unused, intptr_t argument) {
+    s16 *state = (s16 *)argument;
     RoomTemplate8 template = g_RoomM404SinkingDropAnchor;
     s16 position[4];
     s16 target[4];
     char *pool;
-    RoomM404Particle *child;
+    RoomM404Drop *child;
     switch (mode) {
     case 0:
         {
             int handle = FieldFx_GetOwnerProgress();
             FieldFx_PlaySoundAtOwner(0x5b9, handle);
-            if (FX_TASK_AS(RoomM404EventState)->active) {
-                RoomM404Node **slot = (RoomM404Node **)ANIM_OWNER_AS(RoomM404Channel)->pool;
-                if (slot && *slot) {
-                    u8 *flag = (*slot)->state;
+            if (g_FieldFxTaskContext->flags) {
+                FieldActor *actor = g_FieldFxOwner->actor;
+                if (actor && actor->state) {
+                    u8 *flag = actor->state->action_state;
                     if (*flag == 1) *flag = 2;
                 }
             }
-            pool = ANIM_POOL_AS(RoomM404Channel)->pool;
+            pool = g_FieldFxActiveTaskSlot->end;
             return FieldFx_InitCallbackList(pool, 20, 55,
-                                 (FieldFxCallbackListCallback)RoomM404_SinkingDropCallback);
+                                 RoomM404_SinkingDropCallback);
         }
     case 1:
     {
-        pool = ANIM_OWNER_AS(RoomM404Channel)->pool;
-        FieldFx_TransformMatrixPoint(pool, 3, &template, position);
-        pool = ANIM_OWNER_AS(RoomM404Channel)->pool;
+        pool = (char *)g_FieldFxOwner->actor;
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)pool, 3, (const GteShortVector *)&template, (GteShortVector *)position);
+        pool = (char *)g_FieldFxOwner->actor;
         FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)pool, 0,
                       (GteShortVector *)target);
         if (g_FieldFxCurrentAge == 1) {
-            pool = ANIM_POOL_AS(RoomM404Channel)->pool;
+            pool = g_FieldFxActiveTaskSlot->end;
             child = FieldFx_AcquireCallbackSlot(pool);
             if (child) {
                 child->x = position[0];
@@ -298,7 +305,8 @@ int RoomM404_SinkingDrop(int mode, void *unused, char *state) {
 /* Spark of the m404 joint debris burst: state 0 bounces twice off the
  * floor while circling and draws as two glow points, state 1 falls
  * and draws as a spinning sprite tinted by a color track. */
-int RoomM404_DebrisSparkCallback(int mode, RoomDampedSpark *spark) {
+int RoomM404_DebrisSparkCallback(int mode, void *data, intptr_t argument) {
+    RoomDampedSpark *spark = data;
     GteRotation rotation = g_RoomM404DebrisSparkRotation;
     GteShortVector position;
     RenderColor trackColor;
@@ -327,8 +335,8 @@ int RoomM404_DebrisSparkCallback(int mode, RoomDampedSpark *spark) {
                     spark->vy = (s16)bounce / 4;
                 }
             }
-            spark->z += rsin((s16)spark->timer << 9) / 512;
-            spark->x += rcos((s16)spark->timer << 9) / 512;
+            spark->z += rsin((s16)spark->timer * 512) / 512;
+            spark->x += rcos((s16)spark->timer * 512) / 512;
             if ((s16)spark->timer < 64) break;
             return 1;
         case 1:
@@ -365,12 +373,12 @@ int RoomM404_DebrisSparkCallback(int mode, RoomDampedSpark *spark) {
             int clut;
             int kind;
             int palette;
-            scale = rcos((s16)spark->timer << 5) + 0x1000;
+            scale = rcos((s16)spark->timer * 32) + 0x1000;
             g_FieldFxSpriteParams.parameter00 = 32;
             g_FieldFxSpriteParams.parameter02 = 2;
             g_FieldFxSpriteParams.extent_x = 32;
             g_FieldFxSpriteParams.extent_y = 32;
-            rotation.z = g_FieldFxCurrentAge << 5;
+            rotation.z = g_FieldFxCurrentAge * 32;
             FieldFx_SampleColorTrack(g_RoomM404DebrisSparkColorTrack, &trackColor, (s16)spark->timer);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
@@ -389,23 +397,24 @@ int RoomM404_DebrisSparkCallback(int mode, RoomDampedSpark *spark) {
 
 /* Bursts six bouncing sparks and two falling ones from a model joint
  * during the first frames of the effect. */
-int RoomM404_DebrisBurst(int mode, RoomM404BurstOrigin *origin) {
+int RoomM404_DebrisBurst(int mode, void *data, intptr_t argument) {
+    RoomM404BurstOrigin *origin = data;
     RoomM404JointTemplate template = g_RoomM404DebrisBurstAnchor;
     RoomDampedSpark *spark;
     int i;
 
     switch (mode) {
     case 0:
-        FieldFx_GetActorPosition(ANIM_OWNER_AS(RoomSparkChannel)->pool, 0, (s16 *)origin);
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 0, &template, origin);
+        FieldFx_GetActorPosition((char *)g_FieldFxOwner->actor, 0, (s16 *)origin);
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)g_FieldFxOwner->actor, 0, (const GteShortVector *)&template, (GteShortVector *)origin);
         FieldFx_PlaySoundAtOwner(0x5C0, FieldFx_GetOwnerProgress());
         FieldFx_PlaySoundAtOwner(0x5C1, 0x80);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 20, 32,
-                             (FieldFxCallbackListCallback)RoomM404_DebrisSparkCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 20, 32,
+                             RoomM404_DebrisSparkCallback);
     case 1:
         if (g_FieldFxCurrentAge < 5) {
             for (i = 0; i < 6; i++) {
-                spark = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                spark = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (spark != 0) {
                     spark->x = origin->x;
                     spark->y = origin->y;
@@ -418,7 +427,7 @@ int RoomM404_DebrisBurst(int mode, RoomM404BurstOrigin *origin) {
                 }
             }
             for (i = 0; i < 2; i++) {
-                spark = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                spark = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (spark != 0) {
                     spark->x = origin->x;
                     spark->y = origin->y;
@@ -444,9 +453,23 @@ int RoomM404_DebrisBurst(int mode, RoomM404BurstOrigin *origin) {
     return 0;
 }
 
-/* The stack templates the effects above copy: read-only data of this unit,
- * which GCC emits after the unit's jump tables, as retail has them. */
+/* Original local templates copied by the effects above. */
 const RoomTemplate8 g_RoomM404SinkingDropAnchor = {{0, 0xFFE2}};
 const GteRotation g_RoomM404DebrisSparkRotation = {0, 0, 0, 0};
 const RenderColor g_RoomM404DebrisSparkColor = {0x6E, 0x3C, 0x3C, 0};
 const RoomM404JointTemplate g_RoomM404DebrisBurstAnchor = {{0, 0x2BC}};
+
+/* Original USA M404 data and programs, statically linked with this module. */
+RoomM404DropRotation g_RoomM404DropFanTilt = {1024,0,0,1};
+RoomM404DropColor g_RoomM404DropFanColor = {96,8,70,0};
+RoomM404DropColor g_RoomM404DropGlowColor = {0,128,200,0};
+u8 g_RoomM404SinkingDropColorTrack[32] = {0,0,0,0,0,0,0,0,80,20,190,8,0,0,0,0,0,0,128,8,0,0,0,0,50,0,80,0,0,0,0,0};
+u8 g_RoomM404DebrisSparkColorTrack[32] = {0,0,0,0,0,0,0,0,110,20,20,16,0,0,0,0,20,60,60,16,0,0,0,0,0,0,0,0,0,0,0,0};
+u16 g_RoomM404SinkingDropScript[16] = {5,0,0,1,6,48,4,24,0,2,0,0,0,0,0,0};
+u16 g_RoomM404DebrisBurstScript[10] = {1,6,49,2,0,0,0,0,0,0};
+FieldFxTaskProgram g_RoomM404SinkingDropEffects = {
+    {{RoomM404_SinkingDrop},{4}}, RoomLib_SetArg1, g_RoomM404SinkingDropScript
+};
+FieldFxTaskProgram g_RoomM404DebrisBurstEffects = {
+    {{RoomM404_DebrisBurst},{8}}, NULL, g_RoomM404DebrisBurstScript
+};

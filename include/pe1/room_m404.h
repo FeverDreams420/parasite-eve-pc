@@ -12,23 +12,13 @@
 #include "pe1/fieldfx_task_pool.h"
 
 typedef struct { s32 word[2]; } __attribute__((packed)) RoomTemplate8;
-typedef struct RoomM404Node {
-    u8 reserved[0x18];
-    u8 *state;
-} RoomM404Node;
-typedef struct RoomM404Channel {
-    s32 reserved[2];
-    char *pool;
-} RoomM404Channel;
-typedef struct RoomM404EventState {
-    u8 reserved[0xD];
-    u8 active;
-} RoomM404EventState;
-typedef struct RoomM404Particle {
-    s16 x, y, z, unused06;
-    s16 vx, vy, vz, unused0E;
-    s16 state, timer;
-} RoomM404Particle;
 extern const RoomTemplate8 g_RoomM404SinkingDropAnchor;
 
+#include "pe1/fieldfx_task.h"
+int RoomM404_SinkingDropCallback(int, void *, intptr_t);
+int RoomM404_SinkingDrop(int, void *, intptr_t);
+int RoomM404_DebrisSparkCallback(int, void *, intptr_t);
+int RoomM404_DebrisBurst(int, void *, intptr_t);
+extern FieldFxTaskProgram g_RoomM404SinkingDropEffects, g_RoomM404DebrisBurstEffects;
+extern u16 g_RoomM404SinkingDropScript[16],g_RoomM404DebrisBurstScript[10];
 #endif

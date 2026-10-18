@@ -206,6 +206,7 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/window_class.c
     src/overlays/room_lib/window_class_table.c
     src/overlays/room_m272_liberty/m272.c
+    src/overlays/room_m404_chrysler/m404.c
     src/overlays/room_m349_cruiser/m349.c
     src/overlays/room_m350_cruiser/m350.c
     src/overlays/room_m350_cruiser/m350_callbacks.c
@@ -438,6 +439,10 @@ if(BUILD_TESTING)
     set_tests_properties(original-akao-queue-backpressure PROPERTIES TIMEOUT 30 LABELS "audio")
     add_test(NAME original-game-m123-ai COMMAND test-original-actor-animation --m123-ai)
     set_tests_properties(original-game-m123-ai PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
+    add_test(NAME original-game-m404 COMMAND test-original-actor-animation --m404)
+    set_tests_properties(original-game-m404 PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
+    add_test(NAME original-game-m404-load COMMAND test-original-actor-animation --m404-load)
+    set_tests_properties(original-game-m404-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
     add_test(NAME original-game-m350-load COMMAND test-original-actor-animation --m350-load)
     set_tests_properties(original-game-m350-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
     add_test(NAME original-game-m350 COMMAND test-original-actor-animation --m350)

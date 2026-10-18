@@ -2,6 +2,74 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Najnowsza integracja: cały istniejący moduł M404 (Chrysler) jest kompilowany
+natywnie i podpięty do Scene_LoadRoom. Wszystkie cztery oryginalne funkcje
+pozostały w src/overlays/room_m404_chrysler/m404.c. Callbacki używają
+kanonicznego ABI (int, void*, intptr_t), argument zachowuje pełny wskaźnik,
+a pule, kontekst, aktor i stan walki korzystają z istniejących struktur.
+Usunięto pozorne widoki struktur o sztywnych offsetach PS1. Odtworzono
+oryginalne stałe, oba pełne skrypty i oba deskryptory programu w tym samym
+pliku. Nie dodano plików repo, przeniesionych funkcji ani nowej warstwy gry.
+Przesunięcia ujemnych wartości zastąpiono równoważnym mnożeniem lub
+unsigned pakowaniem, zachowując zawężenia PS1.
+
+Loader waliduje wszystkie trzy rzeczywiste powiązania M404: klasa75
+(0x80193e6c), program133 SinkingDrop (0x80193f1c) i program134 DebrisBurst
+(0x80193f88). Przy wejściu zeruje oryginalny współdzielony argument modułu.
+--m404-load dwukrotnie czyta rzeczywiste CUE, rozwija natywną geometrię,
+sprawdza trzy rejestracje i reset uprzednio zanieczyszczonego argumentu.
+Test używa rzeczywistego I/O obrazu (fx_image_io=1), bez stubu odczytu.
+
+--m404 / original-game-m404 w istniejącym tests/original_actor_animation.c:
+- 5184 stany dwóch callbacków cząstek, tryby0/1/3, wszystkie stany cząstek,
+osiem liczników, skrajne prędkości, trzy podłogi, dwa RNG i pełna/wolna pula;
+wynik, cały payload, aktywne wpisy i dzieci oraz RNG są zgodne z USA MIPS,
+hash3a727777dace1af6;
+- 1176 przypadków trafień: granice promienia110 i wysokości, held context,
+siedem wzorców fazy/flag właściciela; wynik, oba stany aktorów, payload,
+dzieci i RNG są zgodne z USA MIPS, hash895af889e0f51685;
+- osiem pełnych autorskich cykli PM: oba programy, oba draw sloty,
+wariant w zasięgu i poza nim; rzeczywiste tworzenie i renderowanie cząstek,
+trafienie/brak trafienia, przejście sygnału akcji2→4, naturalne zakończenie,
+granice puli/areny pakietów/natywnego OT;
+- wszystkie trzy deskryptory, oba pełne skrypty i tabele callbacków/rozmiarów,
+wszystkie stałe oraz cała współdzielona biblioteka aktorów. Wszystkie13084B
+jej kodu i42 wskaźniki klas porównano z rzeczywistym M022: wyłącznie111
+relokacji J/JAL i20 niskich części adresów funkcji, pozostałe instrukcje
+identyczne. Własny moduł M404268288B i EXE2025472B używane przez oracle
+są zgodne z rzeczywistym CUE. Dowody:
+/tmp/pe-m404-{leaf,contact}-cpu-v1-proof.json,
+/tmp/pe-m404-disc-code-proof-v1.json (sektor93050 w PE.IMG, extent1013).
+Oracle wykonuje oryginalne callbacki i helpery puli/kolizji/poligonu/BIOS rand;
+nie zastępuje ich callbackami C. Osiem cykli PM jest testem natywnym,
+nie porównaniem pikseli/PCM z PS1 ani pełnym przejściem Chrysler.
+
+Zamrożony kandydat /tmp/pe-m404-integrated-v1:178+178 świeżych obiektów,
+gry i fixture normal/ASan/UBSan/function. --m404 i --m404-load przechodzą
+w obu profilach. /tmp/pe-m404-integrated-v1-verification.json potwierdza24
+terminalneexit0: M123/do dwóch pokonanych głów, telefoniczny Save B2,
+Medicine2 po Continue, cała pierwsza Melissa od New Game, --assets,
+M349/M350/M404 i ich rzeczywiste load oraz --m123-ai, każde normal/SAN.
+Całe JSON i1MiB VRAM replayów są zgodne ze starym kandydatem i między
+profilami; B2 identyczny bajtowo, źródłowe karty niezmienione. Finalny audyt
+/tmp/pe-m404-integrated-v1-final-build-proof.json ponownie zahaszował356
+obiektów, wszystkie zależności źródłowe, biblioteki i cztery executable.
+Archiwa PsyZ/SDL pozostają nieinstrumentowane; SAN obejmuje oryginalne
+moduły portu. Sam M404 nie emituje ostrzeżeń w obu świeżych buildach.
+
+Użytkowy build/parasite-eve-pc również przeszedł osobny pełny replay67791
+aktualizacji: exit0/103.38s, końcowe HP76, całe JSON/VRAM identyczne ze
+świeżym kandydatem, A2 niezmieniony, prywatnebu10 puste. Dowód
+/tmp/pe-m404-integrated-v1-user-proof.json, executable SHA256
+25d4e559400f8c5e1fcf7b287342c48dcc90ce1368da4191ea806cfbfa57028a.
+
+Dalsza próba kampanii M123 przy promieniu300 wokół bossa nadal kończy się
+porażką:68253, Aya0HP, głowa4:344. To tylko obserwacja normal na poprzednim
+zamrożonym M350, nie zwycięstwo ani para SAN:
+/tmp/pe-m123-close-orbit-v2-observation.json i pełny zwykły input
+/tmp/pe-m123-close-orbit-v2-full-args.json. Nie zmieniano gameplay RAM.
+M123, pełny Chrysler i cały cel portu pozostają nieukończone.
+
 Dalsza próba kampanii M123: kolejność z celem2 jako pierwszym nie dała
 zwycięstwa. Oryginalna głowa2 wielokrotnie odzyskiwała100HP po reakcji;
 Energy Shot przy PE~263 zadał110, nie pokonał jej z132HP. Końcowy stan
@@ -80,7 +148,7 @@ Następna strategia wymaga sprawdzenia ruchu blisko źródła wiązki,
 zamiast kolejnych stałych kierunków do krawędzi areny. Nie zmieniano
 obrażeń, czasu ataku, geometrii ani oryginalnego skryptu bossa.
 
-Najnowsza integracja: cały istniejący moduł M350 — m350.c,
+Poprzednia integracja: cały istniejący moduł M350 — m350.c,
 m350_callbacks.c i RoomEffect_ConfiguredPulseCallback.c — jest kompilowany
 w miejscu i podpięty do Scene_LoadRoom. Wszystkie62 oryginalne funkcje
 pozostają w swoich plikach. Callbacki mają natywny ABI, inicjalizatory

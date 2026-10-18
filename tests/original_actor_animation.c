@@ -1,6 +1,9 @@
 #include "pe1/field_orbit_point.h"
 #include "pe1/room_m123.h"
 #include "pe1/room_m349_effects.h"
+#include "pe1/room_m404.h"
+#include "pe1/room_m404_drop.h"
+#include "pe1/room_m404_effects.h"
 #include "../src/overlays/room_m350_cruiser/room_m350_data.h"
 #include "pe1/room_m350_sweep_trap.h"
 #include "pe1/scene_room_load.h"
@@ -6552,6 +6555,188 @@ static u64 m349_hash_bytes(u64 hash,const void *data,size_t count)
 {
     const u8 *bytes=data;for(size_t i=0;i<count;++i)hash=(hash^bytes[i])*UINT64_C(1099511628211);
     return hash;
+}
+
+static int original_m404_states(void)
+{
+    FieldActor *old_player=g_PlayerEntity;FieldActor player={0};
+    FieldFxTaskContext *old_context=g_FieldFxTaskContext,context={0};
+    FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;
+    PolygonVertex *old_polygon=g_FloorPolygonVertices;u16 old_count=g_FloorPolygonVertexCount;
+    PolygonVertex polygon[]={{0,-1000,0,-1000},{0,1000,0,-1000},{0,1000,0,1000},{0,-1000,0,1000}};
+    RoomFloorY old_floor=*g_RoomFloorY;u32 old_rng=Psyz_RandState();
+    struct {_Alignas(void *) char data[2048];u8 guard[16];} pool;
+    FieldFxTaskSlot task={.end=pool.data};g_FieldFxActiveTaskSlot=&task;g_FieldFxTaskContext=&context;
+    player.pos_x=player.pos_z=10000*65536;g_PlayerEntity=&player;
+    g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;
+    const int modes[]={0,1,3},timers[]={0,1,7,15,31,47,63,65535},velocities[]={-32768,-1,32767},floors[]={-100,0,100};
+    const u32 seeds[]={0,0x12345678};u64 hash=UINT64_C(14695981039346656037);unsigned cases=0;int ok=1;
+    for(unsigned fn=0;fn<2;++fn)for(unsigned mode=0;mode<3;++mode)for(unsigned state=0;state<(fn?5:2);++state)
+    for(unsigned timer=0;timer<8;++timer)for(unsigned velocity=0;velocity<3;++velocity)for(unsigned floor=0;floor<3;++floor)
+    for(unsigned seed=0;seed<2;++seed)for(unsigned full=0;full<(fn?2:1);++full){
+        memset(&pool,0xa5,sizeof(pool));FieldFx_InitCallbackList(pool.data,20,55,RoomM404_SinkingDropCallback);
+        FieldFxCallbackList *list=(void *)pool.data;
+        if(full)for(unsigned i=0;i<55;++i)((FieldFxCallbackListEntry *)(list->entries+i*list->stride))->active=1;
+        _Alignas(void *) u8 data[36];memset(data,0xa5,sizeof(data));
+        u16 words[]={123,(u16)-77,456,65530,(u16)velocities[velocity],(u16)velocities[velocity],(u16)velocities[velocity],8192,state,timers[timer]};
+        memcpy(data+8,words,20);g_RoomFloorY->y=floors[floor];Psyz_Srand(seeds[seed]);
+        u32 result=(fn?RoomM404_SinkingDropCallback:RoomM404_DebrisSparkCallback)(modes[mode],data+8,0),rng=Psyz_RandState();
+        hash=m349_hash_bytes(hash,&result,4);hash=m349_hash_bytes(hash,data,sizeof(data));hash=m349_hash_bytes(hash,&rng,4);
+        for(unsigned i=0;i<55;++i){FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);hash=m349_hash_bytes(hash,entry,4);hash=m349_hash_bytes(hash,entry->state,20);}
+        for(unsigned i=0;i<16;++i)if(pool.guard[i]!=0xa5)ok=0;
+        ++cases;
+    }
+    g_PlayerEntity=old_player;g_FieldFxTaskContext=old_context;g_FieldFxActiveTaskSlot=old_task;
+    g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_count;*g_RoomFloorY=old_floor;Psyz_Srand(old_rng);
+    if(!ok || cases!=5184 || hash!=UINT64_C(0x3a727777dace1af6)){
+        fprintf(stderr,"M404 CPU state mismatch %u/%016llx guards%d\n",cases,(unsigned long long)hash,ok);return 0;}
+    puts("Original M404: 5184 particle states, damping, bounce, floor polygon, real pool/full pool and BIOS RNG match USA MIPS");return 1;
+}
+
+static int original_m404_contact(void)
+{
+    FieldActor *old_player=g_PlayerEntity;FieldActor player={0},actor={0};FieldActorState core={0};Combatant player_core={0};
+    FieldFxObjectPrefix *old_owner=g_FieldFxOwner,owner={.actor=&actor};
+    FieldFxTaskContext *old_context=g_FieldFxTaskContext,context={0};FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;
+    PolygonVertex *old_polygon=g_FloorPolygonVertices;u16 old_count=g_FloorPolygonVertexCount;
+    PolygonVertex polygon[]={{0,-1000,0,-1000},{0,1000,0,-1000},{0,1000,0,1000},{0,-1000,0,1000}};
+    RoomFloorY old_floor=*g_RoomFloorY;u32 old_rng=Psyz_RandState();
+    struct {_Alignas(void *) char data[2048];u8 guard[16];} pool;FieldFxTaskSlot task={.end=pool.data};
+    player.state=(void *)&player_core;actor.state=&core;g_PlayerEntity=&player;g_FieldFxOwner=&owner;g_FieldFxTaskContext=&context;g_FieldFxActiveTaskSlot=&task;
+    g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;g_RoomFloorY->y=0;
+    const int states[]={0,1,4},xs[]={-111,-110,-109,0,109,110,111},heights[]={-579,-578,-577,0};
+    const u32 flags[]={0,0x01000000,0x01123456,0x81000000,0x11000000,0xc1000000,0xffffffff};
+    u64 hash=UINT64_C(14695981039346656037);unsigned cases=0;int ok=1;
+    for(unsigned state=0;state<3;++state)for(unsigned x=0;x<7;++x)for(unsigned enabled=0;enabled<2;++enabled)
+    for(unsigned flag=0;flag<7;++flag)for(unsigned height=0;height<4;++height){
+        memset(&pool,0xa5,sizeof(pool));FieldFx_InitCallbackList(pool.data,20,55,RoomM404_SinkingDropCallback);
+        _Alignas(void *) u8 data[36];memset(data,0xa5,sizeof(data));u16 words[]={123,(u16)heights[height],456,65530,0,0,0,8192,states[state],0};memcpy(data+8,words,20);
+        context.flags=enabled;core.core_flags=flags[flag];player_core.stateFlags=0x12345678;player.pos_x=(123+xs[x])*65536;player.pos_z=456*65536;Psyz_Srand(0x12345678);
+        u32 result=RoomM404_SinkingDropCallback(1,data+8,0),rng=Psyz_RandState();
+        hash=m349_hash_bytes(hash,&result,4);hash=m349_hash_bytes(hash,data,36);hash=m349_hash_bytes(hash,&rng,4);
+        hash=m349_hash_bytes(hash,&core.core_flags,4);hash=m349_hash_bytes(hash,&player_core.stateFlags,4);
+        FieldFxCallbackList *list=(void *)pool.data;
+        for(unsigned i=0;i<55;++i){FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);hash=m349_hash_bytes(hash,entry,4);hash=m349_hash_bytes(hash,entry->state,20);}
+        for(unsigned i=0;i<16;++i)if(pool.guard[i]!=0xa5)ok=0;++cases;
+    }
+    g_PlayerEntity=old_player;g_FieldFxOwner=old_owner;g_FieldFxTaskContext=old_context;g_FieldFxActiveTaskSlot=old_task;
+    g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_count;*g_RoomFloorY=old_floor;Psyz_Srand(old_rng);
+    if(!ok || cases!=1176 || hash!=UINT64_C(0x895af889e0f51685)){fprintf(stderr,"M404 contact CPU mismatch %u/%016llx\n",cases,(unsigned long long)hash);return 0;}
+    puts("Original M404 contact: 1176 radius/height/held-context/core-phase cases, both actor flags, payload, children and RNG match USA MIPS");return 1;
+}
+
+static int original_m404_programs(SceneAssetView *room)
+{
+    PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;u32 old_flags=g_GameStateFlags;
+    FieldFxTaskProgram *old_programs[]={g_FieldFxTaskPrograms[48],g_FieldFxTaskPrograms[49]};
+    FieldFxTaskProgram *programs[]={&g_RoomM404SinkingDropEffects,&g_RoomM404DebrisBurstEffects};
+    int old_arg=g_RoomScriptArg;FieldActor *old_player=g_PlayerEntity;
+    FieldFxObjectPrefix *old_owner=g_FieldFxOwner;FieldFxTaskContext *old_context=g_FieldFxTaskContext;
+    FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;int old_age=g_FieldFxCurrentAge;
+    RenderBufferPrefix old_buffers=D_800B0E38;int old_draw=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
+    RenderEffectParameters old_params=g_FieldFxSpriteParams;
+    GteMatrix *old_view=g_GeomScroll.words.viewMatrix;int *old_projection=g_GeomScroll.words.projectionDistance;
+    u32 old_rng=Psyz_RandState();RoomFloorY old_floor=*g_RoomFloorY;
+    PolygonVertex *old_polygon=g_FloorPolygonVertices;u16 old_vertices=g_FloorPolygonVertexCount;
+    PolygonVertex polygon[]={{0,-2000,0,-2000},{0,2000,0,-2000},{0,2000,0,2000},{0,-2000,0,2000}};
+    AkaoQueueEntry old_audio[16];memcpy(old_audio,g_AkaoMessageQueue,sizeof(old_audio));int old_count=g_AkaoMessageQueueCount;
+    static RenderGpuTag ordering[4096];static struct {_Alignas(void *) u8 data[262144];u8 guard[32];} packets;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};int projection=256,ok=1;unsigned cycles=0;
+    g_GeomScroll.words.viewMatrix=&view;g_GeomScroll.words.projectionDistance=&projection;
+    g_GameState.loaded_scene_archive=(void *)room;g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;g_RoomFloorY->y=0;
+    g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;
+    for(unsigned i=0;i<2;++i)g_FieldFxTaskPrograms[48+i]=programs[i];
+    FieldFx_InitTexturePageTable();Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,112);
+    for(unsigned program=0;ok && program<2;++program)for(unsigned variant=0;ok && variant<2;++variant)for(unsigned draw=0;ok && draw<2;++draw){
+        struct {PmPrimarySlot slots[11];u8 guard[32];} bank={0};memset(bank.guard,0xa5,32);
+        FieldActor actor={0},player={0};FieldActorState state={0},player_state={0};u8 action=1;
+        RenderMatrix matrices[4]={0};actor.render_object.matrices=matrices;actor.state=&state;state.action_state=&action;
+        actor.pos_y=-200*65536;actor.pos_z=1024*65536;player.state=&player_state;player.pos_z=variant?964*65536:3000*65536;player.pos_x=variant?0:3000*65536;
+        for(unsigned j=0;j<4;++j){for(unsigned k=0;k<3;++k)matrices[j].rotation[k][k]=4096;matrices[j].translation[1]=-200;matrices[j].translation[2]=1024;}
+        g_PlayerEntity=&player;g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(variant+1);
+        if(Scene_LoadRoomAssets(133+program,&actor)!=0 || Pm_SendCmd(0,0,0,60,0,0)){ok=0;break;}
+        unsigned frame=0,drawn=0,children=0,seen=0,handshake=0;
+        for(;frame<240;++frame){
+            for(unsigned j=0;j<4096;++j)ordering[j]=(RenderGpuTag){.address=0xffffff};
+            memset(packets.guard,0xa5,32);g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;
+            D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)packets.data;
+            if(Pm_Start(0) || Pm_Exec(0)){ok=0;break;}
+            handshake|=action==2;
+            if(g_AkaoMessageQueueCount<0 || g_AkaoMessageQueueCount>16){ok=0;break;}
+            g_AkaoMessageQueueCount=0;drawn+=g_DrawPacketOffset!=0;FieldFxTaskContext *ctx=&bank.slots[0].task.tasks;
+            for(unsigned k=0;k<8;++k)if(ctx->slots[k].id!=0xffff){
+                if(ctx->slots[k].id!=0 || !ctx->slots[k].end){ok=0;break;}seen=1;
+                FieldFxCallbackList *list=(void *)ctx->slots[k].end;
+                if(list->count!=(program?32:55) || list->callback!=(program?RoomM404_DebrisSparkCallback:RoomM404_SinkingDropCallback)){ok=0;break;}
+                for(unsigned j=0;j<(unsigned)list->count;++j)children+=((FieldFxCallbackListEntry *)(list->entries+j*list->stride))->active!=0;
+            }
+            if(ctx->used>sizeof(ctx->arena) || g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.data)){ok=0;break;}
+            for(unsigned j=0;j<4096 && ok;++j){uintptr_t link=ordering[j].address;unsigned count=0;
+                while(link && link!=0xffffff){if(link<(uintptr_t)packets.data || link+sizeof(RenderGpuTag)>(uintptr_t)packets.data+g_DrawPacketOffset || ++count>8192){ok=0;break;}link=((RenderGpuTag *)link)->address;}}
+            for(unsigned j=0;j<32;++j)if(bank.guard[j]!=0xa5 || packets.guard[j]!=0xa5)ok=0;
+            if(!ok || !bank.slots[0].header.state)break;
+        }
+        int hit=(player_state.flags&0x4000)!=0;
+        if((!program && (hit!=(int)variant || !handshake || action!=4)) || (program && hit))ok=0;
+        if(!ok || frame==240 || !drawn || !children || !seen || bank.slots[0].header.state || bank.slots[0].task.tasks.count){
+            fprintf(stderr,"M404 PM %u/%u/%u frames%u drawn%u children%u state%u hit%d action%u\n",program,variant,draw,frame,drawn,children,bank.slots[0].header.state,hit,action);ok=0;}
+        if(ok){++cycles;fprintf(stderr,"M404 PM %u/%u/%u frames%u drawn%u children%u hit%d passed\n",program,variant,draw,frame,drawn,children,hit);}
+    }
+    g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;g_PlayerEntity=old_player;g_RoomScriptArg=old_arg;
+    for(unsigned i=0;i<2;++i)g_FieldFxTaskPrograms[48+i]=old_programs[i];
+    g_FieldFxOwner=old_owner;g_FieldFxTaskContext=old_context;g_FieldFxActiveTaskSlot=old_task;g_FieldFxCurrentAge=old_age;g_FieldFxSpriteParams=old_params;
+    D_800B0E38=old_buffers;g_ActiveDrawSlot=old_draw;g_DrawPacketOffset=old_offset;g_GeomScroll.words.viewMatrix=old_view;g_GeomScroll.words.projectionDistance=old_projection;
+    g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_vertices;
+    srand(old_rng);*g_RoomFloorY=old_floor;memcpy(g_AkaoMessageQueue,old_audio,sizeof(old_audio));g_AkaoMessageQueueCount=old_count;
+    if(ok)printf("Original M404 PM: %u complete authored cycles, two programs, both draw slots, hit/no-hit, rendering, natural expiry and pool/packet/OT guards passed\n",cycles);
+    return ok;
+}
+
+static int original_m404_assets(PeDisc *disc,PeDiscFile *exe)
+{
+    SceneRoomSectorRange range;PeDiscFile archive;
+    if(!pe_disc_find(disc,"PE.IMG",&archive) || !pe_disc_read(disc,exe,0x800ull+0x80093378u-0x80010000u+403*8,&range,8))return 0;
+    size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);if(!room)return 0;
+    int ok=bytes==0x41800 && pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+    if(ok){
+        SceneRoomDirectory *dir=SceneAsset_ResolveOffset(room,room->header.directoryOffset);SceneRoomRecord *records=SceneAsset_ResolveOffset(room,dir->scripts&0x3fffff);
+        const u32 addresses[]={0x80193e6c,0x80193f1c,0x80193f88};const unsigned slots[]={75,133,134};
+        if(dir->scripts>>22!=3)ok=0;
+        for(unsigned i=0;i<3 && ok;++i)if(records[i].source.bytes.slot!=slots[i] || records[i].u.handlerAddress!=addresses[i])ok=0;
+        const struct {u32 address;const void *data;size_t size;} data[]={
+            {0x8018f1cc,&g_RoomM404DropFanTilt,8},{0x8018f1d4,&g_RoomM404DropFanColor,4},{0x8018f1d8,&g_RoomM404DropGlowColor,4},
+            {0x8018f208,&g_RoomM404SinkingDropAnchor,8},{0x8018f210,&g_RoomM404DebrisSparkRotation,8},
+            {0x8018f218,&g_RoomM404DebrisSparkColor,4},{0x8018f21c,&g_RoomM404DebrisBurstAnchor,8},
+            {0x80193edc,g_RoomM404SinkingDropScript,32},{0x80193efc,g_RoomM404SinkingDropColorTrack,32},
+            {0x80193f54,g_RoomM404DebrisBurstScript,20},{0x80193f68,g_RoomM404DebrisSparkColorTrack,32}};
+        for(unsigned i=0;i<sizeof(data)/sizeof(*data) && ok;++i)if(memcmp((u8 *)room+data[i].address-0x8018efe8,data[i].data,data[i].size))ok=0;
+        for(unsigned i=0;i<2 && ok;++i){
+            FieldFxTaskProgram *p=i?&g_RoomM404DebrisBurstEffects:&g_RoomM404SinkingDropEffects;u32 raw[14];memcpy(raw,(u8 *)room+addresses[i+1]-0x8018efe8,sizeof(raw));
+            if(raw[0]!=(i?0x80193a6c:0x80193368) || raw[12]!=(i?0:0x80193e24) || raw[13]!=(i?0x80193f54:0x80193edc))ok=0;
+            if(p->table.callbacks[0]!=(i?RoomM404_DebrisBurst:RoomM404_SinkingDrop) || p->initialize!=(i?NULL:RoomLib_SetArg1) || p->script!=(i?g_RoomM404DebrisBurstScript:g_RoomM404SinkingDropScript))ok=0;
+            for(unsigned j=1;j<8;++j)if(raw[j] || p->table.callbacks[j])ok=0;
+            u16 sizes[8];memcpy(sizes,raw+8,16);for(unsigned j=0;j<8;++j)if(sizes[j]!=p->table.sizes[j])ok=0;
+        }
+    }
+    /* Whole shared actor module and every class entry, with only local relocation. */
+    if(ok){
+        SceneRoomSectorRange canonical={0};if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-0x80010000u+21*8,&canonical,8))ok=0;
+        size_t size=(size_t)canonical.roomSectors*2048;u8 *data=ok?malloc(size):NULL;
+        if(!data || size<0x35a8 || !pe_disc_read(disc,&archive,(u64)(canonical.start+canonical.scratchSectors+canonical.textureSectors)*2048,data,size))ok=0;
+        unsigned jumps=0,addresses=0;
+        for(unsigned at=0;ok && at<13084;at+=4){
+            u32 a,b;memcpy(&a,data+0x1e4+at,4);memcpy(&b,(u8 *)room+0x23c+at,4);
+            if(a==b)continue;unsigned op=a>>26;u32 target=0x80000000u+((a&0x3ffffffu)<<2);
+            if((op==2 || op==3) && b==a+22 && target>=0x8018f1ccu && target<0x801924e8u){++jumps;continue;}
+            target=0x80190000u+(s16)a;
+            if(op==9 && (a&0xffff0000u)==(b&0xffff0000u) && (u16)b==(u16)(a+88) && target>=0x8018f1ccu && target<0x801924e8u){++addresses;continue;}
+            fprintf(stderr,"M404 shared instruction mismatch %x %08x/%08x\n",at,a,b);ok=0;
+        }
+        for(unsigned i=0;ok && i<42;++i){u32 a,b;memcpy(&a,data+0x3500+i*4,4);memcpy(&b,(u8 *)room+0x4e4c+i*4,4);if(!((!a && !b) || b==a+88))ok=0;}
+        if(jumps!=111 || addresses!=20)ok=0;free(data);
+    }
+    if(ok)ok=original_m404_programs(room);
+    free(room);if(ok)puts("Original M404 assets: all three real CUE descriptors, both complete programs/scripts, all constants, shared 13084 code bytes/42 class pointers passed");return ok;
 }
 
 static int original_m350_states(void)
@@ -15252,11 +15437,34 @@ int main(int argc, char **argv)
         int ok=room && pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes) && original_m123_ai(room,bytes);
         free(room);pe_disc_close(&disc);return ok?0:1;
     }
+    if(argc==2 && !strcmp(argv[1],"--m404")){
+        if(!original_m404_states() || !original_m404_contact())return 1;
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe;if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe))return 1;
+        int ok=original_m404_assets(&disc,&exe);pe_disc_close(&disc);return ok?0:1;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m404-states"))return original_m404_states() && original_m404_contact()?0:1;
     if(argc==2 && !strcmp(argv[1],"--m350")){
         if(!original_m350_states())return 1;
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};PeDiscFile exe;if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe))return 1;
         int ok=original_m350_assets(&disc,&exe);pe_disc_close(&disc);return ok?0:1;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m404-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        u32 token=Text_ParseBase32Id((signed char *)"m0404i");
+        for(unsigned pass=0;pass<2;++pass){
+            g_RoomScriptArg=0x12345678;g_FieldFxTaskPrograms[48]=g_FieldFxTaskPrograms[49]=NULL;g_PmCmdHandlerTable[75]=NULL;
+            int status=Scene_LoadRoom(token);
+            if(status || g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] ||
+               g_FieldFxTaskPrograms[48]!=&g_RoomM404SinkingDropEffects || g_FieldFxTaskPrograms[49]!=&g_RoomM404DebrisBurstEffects || g_RoomScriptArg){
+                fprintf(stderr,"M404 real load pass%u status%d\n",pass,status);return 1;}
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original M404 loader: real CUE I/O, native geometry, all three descriptor registrations and argument reset passed twice");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m350-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
@@ -15445,7 +15653,7 @@ int main(int argc, char **argv)
         if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) ||
            !pe_disc_read(&disc,&exe,0x943c0-0x10000+0x800,pointers,sizeof(pointers)))return 20;
         if (!original_paired_glow_assets(&disc,&exe) || !original_line_burst_assets(&disc,&exe) || !original_dropped_flare_assets(&disc,&exe) || !original_m089_assets(&disc,&exe) || !original_m086_assets(&disc,&exe) || !original_three_particle_assets(&disc,&exe) || !original_motion_assets(&disc,&exe) || !original_window_assets(&disc,&exe) || !original_scene_object_workspace_assets(&disc,&exe) || !original_effect_sequence_assets(&disc,&exe) || !original_room_actor_assets(&disc,&exe) || !original_m023_assets(&disc,&exe) || !original_m028_assets(&disc,&exe))return 157;
-        if (!original_m123_assets(&disc, &exe) || !original_m349_assets(&disc, &exe) || !original_m350_assets(&disc, &exe)) return 159;
+        if (!original_m404_assets(&disc, &exe) || !original_m123_assets(&disc, &exe) || !original_m349_assets(&disc, &exe) || !original_m350_assets(&disc, &exe)) return 159;
         if (!glyph_asset_records(&disc, &exe)) return 57;
         if (!original_fx_resources(&disc,&exe)) return 144;
         if (!original_icon_packets(&disc,&exe)) return 133;

@@ -17,6 +17,7 @@
 #include "pe1/room_line_burst.h"
 #include "pe1/room_m123.h"
 #include "pe1/room_m349_effects.h"
+#include "pe1/room_m404.h"
 #include "pe1/room_m350_sweep_trap.h"
 #include "../../overlays/room_m350_cruiser/room_m350_data.h"
 #include "pe1/room_m123_glow_burst.h"
@@ -576,6 +577,11 @@ int Scene_LoadRoom(unsigned int roomId)
             if(slot==143 && record[i].u.handlerAddress==0x801955d4u)native=&g_RoomM123PulseRingEffects;
             if(slot==144 && record[i].u.handlerAddress==0x8019564cu)native=&g_RoomM123WaveBurstEffects;
         }
+        if (map + 1 == 404) {
+            if(slot==75 && record[i].u.handlerAddress==0x80193e6cu)native=&g_RoomActorClassTable[2];
+            if(slot==133 && record[i].u.handlerAddress==0x80193f1cu)native=&g_RoomM404SinkingDropEffects;
+            if(slot==134 && record[i].u.handlerAddress==0x80193f88u)native=&g_RoomM404DebrisBurstEffects;
+        }
         if (map + 1 == 350) {
             const struct {int slot;u32 address;const void *program;} bindings[]={
                 {75,0x8019a350u,&g_RoomActorClassTable[2]},
@@ -735,6 +741,10 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
             g_RoomM005BeaconOffset = (GteShortVector){0};
             g_RoomM005BeaconCenter = (GteShortVector){0};
+        } else if (map + 1 == 404) {
+            if(slot==75){g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];g_RoomScriptArg=0;}
+            else if(slot==133)g_FieldFxTaskPrograms[48]=&g_RoomM404SinkingDropEffects;
+            else if(slot==134)g_FieldFxTaskPrograms[49]=&g_RoomM404DebrisBurstEffects;
         } else if (map + 1 == 350) {
             switch(slot){
             case 75:

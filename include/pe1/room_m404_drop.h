@@ -37,42 +37,7 @@ typedef struct RoomM404DropColor {
     u8 r, g, b, code;
 } __attribute__((packed)) RoomM404DropColor;
 
-typedef struct RoomM404DropNode {
-    u32 flags;
-} RoomM404DropNode;
-
-typedef struct RoomM404DropPool {
-    RoomM404DropNode *node;
-} RoomM404DropPool;
-
-typedef struct RoomM404DropChannel {
-    s32 reserved[2];
-    RoomM404DropPool *pool;
-} RoomM404DropChannel;
-
-typedef struct RoomM404DropSpawnChannel {
-    s32 reserved[2];
-    void *pool;
-} RoomM404DropSpawnChannel;
-
-typedef struct RoomM404DropActor {
-    u8 reserved[0x4C];
-    u32 flags;
-} RoomM404DropActor;
-
-typedef struct RoomM404DropEntity {
-    RoomM404DropActor *actor;
-} RoomM404DropEntity;
-
-typedef struct RoomM404DropEvent {
-    u8 reserved[0xD];
-    u8 active;
-} RoomM404DropEvent;
-
 #include "pe1/player_entity.h"
-extern RoomM404DropRotation g_RoomM404DropFanTilt;
-extern RoomM404DropColor g_RoomM404DropFanColor;
-extern RoomM404DropColor g_RoomM404DropGlowColor;
 extern RoomM404DropRotation g_RoomM404DropFanTilt;
 extern RoomM404DropColor g_RoomM404DropFanColor;
 extern RoomM404DropColor g_RoomM404DropGlowColor;

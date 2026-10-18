@@ -21,6 +21,6 @@ extern const GteRotation g_RoomM404DebrisSparkRotation;
 extern const RenderColor g_RoomM404DebrisSparkColor;
 extern u8 g_RoomM404DebrisSparkColorTrack[];
 
-extern int RoomM404_DebrisSparkCallback(int mode, RoomDampedSpark *spark);
+extern int RoomM404_DebrisSparkCallback(int mode, void *data, intptr_t argument);
 
 #endif

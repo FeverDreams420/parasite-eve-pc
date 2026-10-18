@@ -22,6 +22,17 @@ VRAM FNVfd7ae4cac94eda93; log
 /tmp/pe-melissa-user-log-recheck-20261018.log. Opcode82/206 są związane
 z oryginalnymi funkcjami; ta regresja nie wymagała zmiany produkcyjnej.
 
+Odrzucono hipotezę odwróconych osi pomocniczego testera: osiem rzeczywistych
+naciśnięć na bieżącym oryginalnym module M123 daje wektory ruchu zgodne
+z dotychczasowym kontrolerem (cosinus1, także skosy). Bezpośrednie porównanie
+mask hosta z FIELD_PAD_UP było błędne: Boot mapuje je wcześniej przez
+oryginalną tabelę. Dowód /tmp/pe-m123-input-basis-v1-proof.json obejmuje
+61443..61485, HP189, cameraBasis identity; nie dowodzi wszystkich kamer
+ani ogólnej zgodności sterowania z PS1. Nie wprowadzono zmiany mapowania.
+Dodatkowa próba głowy4 jako pierwszej kończy się Aya0HP przy62231,
+head4:288, pozostałe głowy pełne. /tmp/pe-m123-head4-first-v1-observation.json
+jest tylko obserwacją normal, bez pary SAN; nie jest zwycięstwem.
+
 Najnowsza integracja: cały istniejący moduł M350 — m350.c,
 m350_callbacks.c i RoomEffect_ConfiguredPulseCallback.c — jest kompilowany
 w miejscu i podpięty do Scene_LoadRoom. Wszystkie62 oryginalne funkcje

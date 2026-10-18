@@ -95,6 +95,11 @@ Ordinary input from I now traverses M076/M077, collects Ammo +15, exchanges
 Junk for Sv. Vest1, wins the two-enemy M080 bridge fight and reaches M078.
 Full reported state and VRAM agree across the live session and both builds;
 I remains unchanged. The swapped Junk stays in the chest.
+The continued ordinary route wins M078, collects and uses its Defense +1 on
+SP Vest1, collects M079 Tool, wins all four M081 enemies and the M082 bridge
+encounter, then reaches M083. Reward medicine and two field Heal1 casts use
+the original menus. Both builds match the live session in complete reported
+state and VRAM; source I and the unused Revive remain preserved.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

@@ -2,6 +2,57 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dalszy zwykły replay od zimnego Continue I, przez cały wcześniejszy M080,
+wygrywa teraz M078, M081 i M082 oraz przechodzi do M083. M078: typ4/HP44
+i typ5/HP32; zwycięstwo przy46HP. Awans zwiększa pojemność19→20 i maxHP
+do123. Obtain All odbiera Medicine1 do nowego slotu19; użycie przez menu
+leczy46→91 i zwalnia slot. Skrzynia M078 przy[-2756,-1843] daje Defense+1
+ID41 do19. Przedmiot zużyty przez oryginalne Items→lista pancerzy→SP Vest1;
+bonus obrony rekordu5/offset174 wzrasta3→4, flaga85/4 i zmienna134=0
+potwierdzają opróżnienie skrzyni. Podejście blokuje się przy[-2539,-1768],
+Cross w kierunku zachodnim działa. Zachodnie wyjście około[-5700,-400]
+prowadzi do M079.
+
+M079: sprawdzono pomijaną wcześniej skrzynię przy[2,-147]. Dojście wymaga
+północnej pętli przez[-3180,2100],[-2520,2840],[-20,2860],[-240,1520]
+i[-120,720]; bezpośrednia trasa od południa przecina teren poza podłogą.
+Z[0,200] podejście blokuje się około[0,76], twarz na południe i Cross.
+W tym przebiegu skrzynia daje Tool22 do19; flaga85/8 ustawiona, zmienna135=0.
+Panel Tool obejrzany. Wariant23 nie jest tym sprawdzony. Tool pozostaje
+niezużyty. Powrót północną pętlą i południowo-zachodnie wyjście[-2600,-2000]
+prowadzą do M081.
+
+M081: wejście[1200,4900], ścieżka przez[900,4300],[860,3560],[1140,2980],
+[1800,1500],[1580,400],[800,-700] uruchamia cztery typ3/HP35. M16 wygrywa
+przy72HP. W pełnym ekwipunku nagrodowa Medicine1 wymieniona za Junk17,
+użyta przez Items:72→117HP; slot17 pusty. Przejście około[-1700,-2800]
+prowadzi do M082. Na moście marsz na zachód uruchamia walkę dopiero
+około[-1080,1000], a nie przy wejściu[8100,1000]. Typ5/HP75 i dwa typ3/HP44
+pokonane, pomocnik typ4 nietargetowalny; wynik38HP, Revive13 niezużyte.
+Ekran nagród zamknięty po Obtain All, brak nowych przedmiotów w slotach.
+Dwa Heal1 przez menu leczą38→68→98. Zachodnie wyjście do M083 działa.
+Przy61820: M083/etap248, HP98/123, capacity20, weapon10/armor14,
+brak menu/locka/żywych wrogów, battle9. Slot19 Tool22, slot17 pusty,
+slot18 Junk; Revive13 i wcześniejszy ekwipunek zachowany. Wszystkie4096B
+rekordów względem wejścia M078 różnią się wyłącznie amunicją M16/offset138
+9→5 i bonusem SP Vest1/offset174 3→4.
+
+Cały replay od zimnego I do M083 na niezmienionym kandydacie
+/tmp/pe-park-attack-status-v1 normal/SAN exit0 w12,12/31,27s. Pełny JSON
+i1MiBVRAM identyczne z żywą sesją; SHA256
+fa7dcb80255f5981be3bef4f4de891eaad506b7fa2aec97a185bd96196c5a215.
+Źródłowy8192B I niezmieniony we wszystkich trzech prywatnych katalogach.
+Trzy pary punktów kontrolnych normal/SAN PASS6/6: M078 po Defense+1
+przy43487/HP91, M081 po leczeniu54506/HP117, M082 po zamknięciu nagród
+60504/HP38. Każda para ma identyczny cały JSON/1MiBVRAM, zakończoną
+walkę, menu zamknięte, właściwy bonus pancerza i niezmieniony I.
+/tmp/pe-park-i-m078-v1-checkpoints{.py,-proof.json,-results.json}.
+Dowód /tmp/pe-park-i-m078-v1-{proof.json,verify.py,results.json}; pełne
+args/input/logi/VRAM i navigation.log pod tym prefiksem. Bez zmian kodu
+produkcji ani nowych plików repo. Wyłącznie fizyczny input i konfiguracja
+hosta, bez zapisów HP/stanu/RNG. Brak nowego niezależnego PS1 i trwałego
+replayu CTest. Następne: M083 i dalsza droga do Eve. Kampania nieukończona.
+
 Zwykły zimny Continue I przechodzi teraz M075→M074→M076→M077→M080
 oraz po wygranej na moście do M078. Heal1 przez menu zwiększa52→82HP.
 Wyjście M075 wymaga[1300,-1000], dalej M074 przez[-7680,-4180]
@@ -33,7 +84,7 @@ bez dodatkowych plików kart. Dowód /tmp/pe-park-i-trails-v1-{proof.json,
 verify.py,results.json}, args/input/logi/VRAM i navigation.log pod tym
 prefiksem. Bez zmian kodu produkcji ani nowych plików repo; wyłącznie
 input i prywatne karty, bez zapisu HP/stanu/RNG. Brak nowego niezależnego
-PS1 i trwałego replayu CTest. Następne: M078 i dalsza droga do M082.
+PS1 i trwałego replayu CTest. Dalszy odcinek do M083 opisano powyżej.
 Cała kampania pozostaje nieukończona.
 
 Ponowna regresja zgłoszenia206/82: original-game-melissa-encounter

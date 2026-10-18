@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Nowy zwykły test przedmiotu Full Cure w walce M123:
+/tmp/pe-m123-fullcure-v1-pair-{results,proof}.json i
+/tmp/pe-m123-fullcure-v1-verify.py. Cztery terminalne procesy gry exit0:
+przed użyciem cap64491 normal17,38s/SAN46,22s oraz po użyciu cap64915
+normal17,32s/SAN46,08s. Każda para ma identyczne całe JSON,1MiB VRAM
+oraz bezpośrednio odczytane parametry regeneracji PE; identyczne także
+z odczytami sesji live. Sanitizery nie zgłosiły błędów; archiwa PsyZ/SDL
+pozostają nieinstrumentowane. Każdy proces zaczyna zwykłym Continue A2,
+z całym fizycznym prefixem, osobnym bu00/bu10 w /tmp i niezmienionym A2.
+Debugger w tych czterech procesach wyłącznie odczytuje cap; również SAN
+wykonuje normalne Continue, bez ReturnFromFrame i bez zapisu stanu gry.
+
+Full Cure/slot20/id17 zużyto przez Triangle→Items→Use. Parametry przed:
+PE step9362/rate11106, PEraw8324417, HP70; po: step23589/rate14268,
+PEraw9373685, HP60. Pełne50 slotów zmienia tylko20:17→0. W4096B
+wyposażenia zmienia się wyłącznie offset138 loaded14→8: otwarcie menu
+synchronizuje wcześniejszy backing z rzeczywistym magazynkiem, który
+w OBU punktach ma8 nabojów (BattleCmd_SyncActiveAmmo). Początkowy
+verifier błędnie oczekiwał braku tej synchronizacji; poprawiono oczekiwanie,
+a komplet terminalnych wyników zweryfikowano ponownie bez ponawiania gry.
+Full Cure resetuje parametry przez oryginalne Aya_DeriveStats; nie leczy
+HP i nie napełnia natychmiast paska PE. Skorygowano wyłącznie mylący
+komentarz tej funkcji w istniejącym src/main/aya/stats.c; po usunięciu
+komentarzy plik identyczny bajtowo (/tmp/pe-pe-recovery-comment-proof.json).
+Bez zmiany kodu wykonywalnego, nowego builda i nowych plików repo.
+Nie jest to jeszcze niezależne porównanie efektu z PS1.
+
+Dalszy live po Full Cure, oryginalnym Heal2 i zwykłym ruchu zakończono
+normalnie przy65519/exit0: HP76/195, PEraw5688227, ammo8, głowy2/300 i4/400.
+Cały input zachowany w /tmp/pe-m123-fullcure-v1-current-args.json.
+Ten dalszy punkt jest na razie normal-only, nie zaliczamy mu dowodu SAN.
+Nowa próba ostrzału od początku bez Energy Shot i ruchu wzdłuż tylnej
+ściany zabiła głowę3, ale zakończyła się śmiercią przy66531; eksperyment
+normal-only /tmp/pe-m123-gun-first-v1-*. Druga próba z wcześniejszego
+head2 również zakończyła się śmiercią. Odczyt ośmiokąta ograniczeń walki
+potwierdził niedostępność przedniej części pełnej podłogi sceny w starciu.
+Żadnej z tych prób nie uznajemy za zwycięstwo ani dowód ukończenia M123.
+
 Nowy dowód z oryginału PS1, M123: zwykły Continue autentycznej karty B2,
 wyłącznie fizyczne przyciski i odczyty pamięci GDB. Obserwacja zatrzymała
 emulator po trafieniu JointBeacon: input31172 ustawia flagę kontaktu0x4000

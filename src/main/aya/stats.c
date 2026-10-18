@@ -19,7 +19,7 @@ int *Battle_GetModifierTable(void) {
     return g_StatScaleBase;
 }
 
-/* Reports the active-time step and rate of the current PE energy level. */
+/* Reports the initial PE recovery step and decay divisor for the current PE level. */
 void Aya_DeriveStats(int *out_max, int *out_current) {
     int base;
     AyaLevelStats *stats;

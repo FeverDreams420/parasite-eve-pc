@@ -2,6 +2,65 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+M123 — zweryfikowany unik i dalszy ostrzał środkowej głowy. Nowy punkt
+66188: Aya97/195HP, PEraw5590713, ATB4346, ammo3; głowa4:232/400,
+głowa2:300/300, głowa3 pokonana. /tmp/pe-m123-middle-232-v1-proof.json:
+normal18.40s i SAN50.69s, oba terminal exit0, pełne JSON i1MiB VRAM identyczne
+między profilami; metryki zgodne z odczytem live (nie przechwycono jego VRAM
+w tym pośrednim punkcie). Pełne inputy -normal-args.json i -san-args.json.
+To alternatywna odnoga, nie zwycięstwo ani dominacja nad poprzednią trasą
+z dwiema pokonanymi głowami. Nie zmieniono kodu gry, HP/PE/RNG/ekwipunku.
+
+Źródło wcześniejszego trafienia ustalono odczytowo: JointBeacon zgłasza
+kontakt65445/age0, origin(900,-777), end(1938,931), właściciel typu1;
+watchpoint HP65447 potwierdza97→31 (66HP), power92/effect0/category0.
+Zmiana inputu na8320 w65380 unika trafienia:65700 Aya97HP, głowa4:288,
+głowa2:300. /tmp/pe-m123-two-head-beam-evade-v1-pair-proof.json, SAN48.36s,
+pełne JSON/VRAM identyczne z normal. Osiem kierunków w tym samym momencie
+daje HP31/31/11/97/31/11/31/11. Nie identyfikowano ataku po samej mocy.
+Odczyt celu przy65235 i65253: tryb1, indeks1, lista2:typ2/dist1350,
+typ4/dist1463 — faktycznie wybrana środkowa głowa. Trzy obserwatory są
+identyczne całym JSON/VRAM z replayem bez debuggera:
+/tmp/pe-m123-center-observers-v1-proof.json.
+
+Drugie trafienie: JointBeacon65931/age0, origin(-373,-749),
+end(-1076,1123), watchpoint65933 potwierdza97→53 (44HP), ten sam power92.
+/tmp/pe-m123-middle-second-hit-v1-{hp,fx}.jsonl; całe końcowe JSON/VRAM
+zgodne z nieobserwowanym /tmp/pe-m123-middle-next-v1-default-8224.
+Późne zmiany kierunku65900 nie unikają go. Sama zmiana terminu strzału
+66020 oraz jednostajny ruch65701 też nie dały wygranej (dwie próby HP0).
+
+Nowy zewnętrzny kontroler odczytuje aktualne macierze0/23 korpusu, granice
+rzeczywistego ośmiokąta podłogi i aktualną listę celów, wysyłając tylko
+zwykły input przez host oraz zmieniając diagnostyczny frame cap.
+Pierwsze300 aktualizacji65700→66000 zachowuje97HP; normal16.99s/SAN53.21s
+odtwarzają cały JSON/VRAM identycznie z live:
+/tmp/pe-m123-reactive-evade-v1-pair-proof.json. Następny zwykły strzał w4
+prowadzi do wyżej opisanego zweryfikowanego66188/232HP.
+Nie jest to oracle przyszłych wiązek ani porównanie pikseli/PCM z PS1.
+Archiwa PsyZ/SDL nadal nieinstrumentowane; SAN obejmuje oryginalne źródła portu.
+
+Sześć dłuższych prób kontrolera poza kodem produktu kończy śmierć, nie
+zwycięstwo: v1/67540, v2/67092, v3/68332, v4/67592, v5/67828, v6/68272.
+Najniższe osiągnięte HP głowy4 to176, głowa2 pozostaje300. Próby obejmowały
+odsuwanie od korpusu, margines podłogi, ruch w okręgu, model hamowania przy
+ścianie, wybór fazy odpoczynku oraz skrócenie zbędnego oczekiwania po
+potwierdzeniu strzału w helperze (160→8 host updates). Ani animacji, ani
+czasu ataku w grze nie zmieniano. Są tylko normal/live, nie pary SAN.
+/tmp/pe-m123-reactive-route-v1-audit.json obejmuje28 normalnych cold prób,
+trzy pary checkpointów, obserwatory i sześć jawnie przegranych prób live;
+hashe zamrożonych executable i wszystkie badane karty zachowane. Wszystkie
+procesy zakończone; prawdziwe Save/Savestate nie były generowane.
+
+Dodatkowy odczyt starej trasy przed PE:67280 Aya76HP, PEraw8643483,
+ATB9000, ammo17, głowa2:76 i głowa4:344. Wstawienie host32 w67371
+w /tmp/pe-m123-energy-middle-v1 nie wykonało ataku:67791 pozostaje
+tryb1/menu, PEraw8650036 i obie te same wartości HP. Nie liczyć tej próby
+jako przekierowanego EnergyShot. Dalszy krok może wykorzystać odczyt celu,
+zasięgu i stanu menu przed potwierdzeniem; alternatywą do sprawdzenia jest
+jeden strzał zamiast dwóch, żeby wcześniej dopuścić zwykły ruch po animacji.
+Pełna kampania, M123, pozostałe wymagania PC i dowody pixel/PCM nadal otwarte.
+
 Kampania M123 — nowa odnoga z dokładnego, już zweryfikowanego prefixu
 63407/131HP (pokonana głowa3), zamiast prefixu późniejszej trasy head2.
 Samo kopiowanie czasów ataków z tej drugiej trasy nie działa: odmienne ATB

@@ -17,6 +17,10 @@ Soho gunshop, completes its opening scene and collects its Tool. Normal and
 sanitized replays match the controlled session in full state and VRAM, preserving
 the source save and all equipment records. Other gunshop interactions and the
 remaining campaign still need verification.
+The continued replay drives to the museum, runs the M239 conversations and
+movies 12/13, and returns to field control outside at story stage 376. Full
+state and VRAM agree between the controlled session and normal/sanitized
+replays; three additional checkpoint pairs cover arrival and both movies.
 
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and

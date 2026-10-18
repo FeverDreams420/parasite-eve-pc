@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dalszy zwykły replay z tego samego M obejmuje też powrót M095→M094→M093,
+Daniela/100, niewłaściwe drzwi auta/101, właściwe drzwi/102–104 i mapę.
+Właściwe podejście od północy około[1700,-200] wymaga obejścia samochodu
+przez[800,-1400],[800,100],[1700,100]; kolizje gry niezmienione.
+Na mapie dwa Left, potem Cross prowadzą do muzeum M038/37 przy42615.
+Rozmowa przechodzi do M239, obejmuje filmy12 i13, a następnie oddaje
+sterowanie w M192 przy80907, etap376. HP181/181, menuNULL/lock2,
+battle0/live0. Wszystkie50 slotów identyczne z końcem sklepu,
+wszystkie4096B wyposażenia identyczne z cold M; jedyna zmiana względem
+M nadal Tool22 w20. Nie uznano tej trasy za pełne przejście kampanii.
+
+/tmp/pe-day3-m-departure-v1-{args.json,input.jsonl,run.py,verify.py,proof.json}
+i logi/VRAM: pełny cold M→sklep→muzeum→M192 normal25,16s/SAN74,36s,
+oba exit0, bez raportów sanitizerów i niepowiązanych opcode'ów.
+Cały końcowy JSON i1MiBVRAM identyczne w obu profilach i żywej sesji;
+SHA2569883afc9a42f6b560d34a4574321559f92cdc606b523afb2c8e8e65d798c1dec.
+Trzy dodatkowe pary checkpointów PASS6/6: przyjazd42615, film12/48867,
+film13/62043. Każda para ma zgodny pełny JSON/VRAM; filmy mają
+video_state2, RGB24 i dodatni numer klatki. Osobne-checkpoints-verify.py
+sprawdza gotowe artefakty (poprawiono odczyt rgb24 z pola display).
+Źródłowy8192B M niezmieniony we wszystkich prywatnych katalogach.
+Obejrzano końcowy obraz M192. Brak nowego porównania PS1 i stałego CTest.
+
+Przy pierwszej próbie wznowienia powłoka logowania zmieniła cwd na katalog
+domowy zamiast prywatnego katalogu z M; nie wymuszono też środowiska
+headless/dummy. Ta odrębna, niekwalifikowana próba zatrzymała się przy28607
+w Akao_LoadSamplePairFromIndex, ze wskaźnikiem tabeli0x8000000100.
+Nie ustalono przyczyny uszkodzenia; nie zaliczono tego uruchomienia jako
+udanego testu ani nie zamaskowano błędu w kodzie audio. Proces zakończono.
+Właściwe uruchomienie z login:false, prywatnym cwd i headless/dummy oraz
+późniejsze pełne replaye przechodzą. Odporność tego błędnego kontekstu
+uruchomienia i wariant rzeczywistego audio nadal wymagają odrębnego testu.
+W tym kroku nie dodano plików repozytorium ani zmian produkcyjnych.
+
+
 Zimny Continue M ma teraz dalszy zapis fizycznych przycisków: apteka M097→
 M096→M093→M094, otwarcie sklepu i wejście do M095. Podejście do drzwi
 około[0,-100] wyzwala oryginalną sekwencję109–114; sama rozmowa z NPC

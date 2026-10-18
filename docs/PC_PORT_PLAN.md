@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dzień4 — kolejne potwierdzone pomieszczenia, nie ukończenie komisariatu.
+Z M104 zwykły bieg do(-1090,0) i dokończenie przejścia wracają przy36992
+do M100, HP210/210/story440. Następnie hol do(485,-2300) prowadzi do
+M103/a80201c8 przy38258. Obejrzany
+/tmp/pe-day4-m103-entry-pair-v1-normal.png przedstawia salę konferencyjną.
+Cały cold replay od B, wraz z wcześniejszym wejściem i powrotem M104,
+normal7,89s/SAN23,85s exit0; całe JSON identyczne z interaktywną trasą
+i między profilami, pełny1MiB VRAM identyczny, B źródłowe/prywatne
+niezmienione, bu10 puste. /tmp/pe-day4-m103-entry-pair-v1-proof.json
+i -full-args.json. Nie jest to wyjście na ulicę.
+
+Druga zwykła trasa od B, z punktu35036/M100 przed opcjonalnym M104:
+(-129,-4014),(-166,-3886),(-201,-3708),(-500,-3700) prowadzi do
+M102/a8020148 przy35656. HP210/story440/lock2/menuNULL. Obejrzany
+/tmp/pe-day4-m102-entry-pair-v1-normal.png przedstawia szatnię.
+Normal7,16s/SAN22,45s exit0, pełne JSON zgodne z interaktywną trasą
+i między profilami, pełny VRAM identyczny, cały B niezmieniony, bu10 puste.
+/tmp/pe-day4-m102-entry-pair-v1-{proof.json,full-args.json}.
+Źródłowy B ponownie ma SHA71dd8723314849448dbd18f94f1cd7a53f4ec82a40c3e18456fd46f36e689cc3.
+
+Read-only /tmp/pe-day4-m100-observe-v1.log zakończony0 zachowuje pełne
+skrypty aktualnych aktorów. Player script ma powiązania scen M099/103/102/
+107/104/116 (kolejne eventy1..6); nie wolno nazywać dowolnych bocznych
+drzwi wyjściem komisariatu. Osobna normal-only wizualizacja
+/tmp/pe-day4-m100-front-view-v1.png odtwarza wcześniejszy koniec holu
+przy37042/x7,z4332: obraz schodów i drzwi EXIT, bez widocznej Ayi.
+Nie ustalono, czy to oczekiwana okluzja przy tej granicy; nie zmieniano
+kamery/kolizji na podstawie samej próby. Dalsza droga do mapy miasta
+i kolejne zdarzenia dnia4 nadal wymagają przejścia. Kod produkcyjny
+pozostaje bez zmian, PsyZ/SDL nieinstrumentowane; brak porównania PS1 PCM/pikseli.
+
 Dzień4 — M099→M100 po potwierdzonym zimnym Continue B.
 Planner najpierw wybierał zbyt wąskie punkty przy ścianach M099;
 v1/v2/v3 zatrzymywały tester na waypointach, bez awarii gry. V3 na końcu

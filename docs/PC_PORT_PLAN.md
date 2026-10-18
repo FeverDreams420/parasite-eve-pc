@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+M123 — kolejne próby zwykłym inputem po ecf996117, bez zmian produkcyjnych.
+Seria /tmp/pe-m123-beam-window-search-v3-proof.json: osiem stałych
+kierunków od69360 do70150, wszystkie exit0/HP0. Seria v4 od69600
+nie została ukończona: tester założył obecność player_hp po Game Over
+i powrocie do menu. Cztery końcowe snapshoty zachowane i sprawdzone
+w /tmp/pe-m123-beam-window-search-v4-partial-audit.json; brak dowodu8/8.
+Nie wolno uznawać nieobecności przeciwników po śmierci za zwycięstwo.
+Kontroler v9 leczy66→96 przy69412, ale umiera70288/head4:176.
+V10 odrzuca ruch przewidywany jako zerowy przy ścianie, lecz także
+umiera70296/head4:176. Oba przebiegi normal-only, karty niezmienione.
+
+Nowa trasa v11 używa oryginalnego Barrier przez menu PE zamiast trzeciej
+salwy: od69696 czeka40, otwiera PE, Right/Down wybiera packed index3,
+zatwierdza. Przy69944 ustawione AYA_BARRIER0x200, PE5996001→97761;
+przy70292 flaga znika, HP pozostaje66. Następna salwa kończy70496:
+HP66, head4:120, PE668412, ammo8, ATB3074. Cold replay normal21,84s
+i SAN61,39s exit0, identyczne pełne JSON i1MiB VRAM, źródłowa A2
+i prywatne karty niezmienione, bu10 puste. Dowód
+/tmp/pe-m123-barrier-head4-120-v1-proof.json. To osobna pozycja/czas,
+nie ulepszenie wcześniejszego punktu69832 (tam pozostaje więcej PE).
+Live v11 następnie ginie70764/head4:120; osiem kierunków od70496
+do70900 również kończy HP0, wszystkie exit0, normal-only:
+/tmp/pe-m123-beam-window-search-v5-proof.json. Boss nadal niepokonany.
+V12 używa Full Cure w oknie68800 (slot20/id17), kolejkuje go68912,
+następnie Heal1 przy69476: HP56→86 przy69624. Umiera70016,
+head4 wciąż288, ammo14; /tmp/pe-m123-stream-fight-v12-result.json.
+To normal-only nieudana trasa, bez nowych salw. Samo zwiększenie
+priorytetu leczenia ani Full Cure nie rozwiązało problemu uniku.
+Zależności PsyZ/SDL nadal nieinstrumentowane; zgodność natywnych profili
+nie dowodzi obrazu/audio PS1 ani ukończenia kampanii.
+
 Dalszy zwykły input M123, kandydat /tmp/pe-control-stream-v2:
 prefix do68427 odtworzony z komend stdin jako CLI pad-at ma identyczny
 pełny JSON (po usunięciu wyłącznie diagnostyki control), HP66/head4:288.

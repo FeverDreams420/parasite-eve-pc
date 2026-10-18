@@ -361,7 +361,7 @@ int RoomM350_DropBurstCallback(int event, void *_payload, intptr_t argument) {
         handle = GetClut(32, palette);
         FieldFx_DrawShapeQuads((GteShortVector *)position, 0, 5120, 5120, (s16)g_FieldFxSpriteParams.parameter02 * 2 + 216,
             (unsigned short)handle, 1,
-            (short)(int)((unsigned int)(unsigned short)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) | ((unsigned int)(unsigned short)rcos(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) << 16)) >> 5,
+            (s16)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) >> 5,
             (struct RenderColor *)g_RoomM350DropBurstColor);
     }
     return 0;
@@ -474,7 +474,7 @@ int RoomM350_DropController(int event, void *_payload, intptr_t argument) {
         else if ((unsigned int)(frame-19)<8) phase=27-frame;
         else phase=0;
         if (phase) {
-        int speed=(short)(int)((unsigned int)(unsigned short)rsin((((unsigned int)phase<<10)&0x3C00)/4) | ((unsigned int)(unsigned short)rcos((((unsigned int)phase<<10)&0x3C00)/4) << 16))>>6;
+        int speed=(s16)rsin((((unsigned int)phase<<10)&0x3C00)/4)>>6;
         int angle=FieldFx_VecToAngle((Vec3Fixed *)g_PlayerEntity->render_object.model_matrix.translation,(Vec3Fixed *)instance->render_object.model_matrix.translation);
         instance->rot_y=FieldFx_TurnToward(instance->rot_y,(short)angle,speed);
         }
@@ -511,7 +511,7 @@ int RoomM350_RushFlareCallback(int event, void *_payload, intptr_t argument) {
     if (event == 1) {
         int timer = g_FieldFxCurrentAge;
         if (timer >= 8) return 1;
-        particle->shade = (short)(int)((unsigned int)(unsigned short)rsin(((unsigned int)timer << 8) & 0xF00) | ((unsigned int)(unsigned short)rcos(((unsigned int)timer << 8) & 0xF00) << 16)) >> 5;
+        particle->shade = (s16)rsin(((unsigned int)timer << 8) & 0xF00) >> 5;
     } else if (event == 2) {
         int kind, palette;
         unsigned short clut;
@@ -1169,7 +1169,7 @@ int RoomM350_HandSparkCallback(s32 mode, void *_payload, intptr_t argument) {
     }
 
     FieldFx_DrawShapeQuads(ctx, 0, 0x1800, 0x1800, (s16)g_FieldFxSpriteParams.parameter02 + 0xDC, GetClut(0x30, tex), 1,
-                  ((int)((unsigned int)(unsigned short)rsin(((g_FieldFxCurrentAge - 1) << 8) & 0xF00) | ((unsigned int)(unsigned short)rcos(((g_FieldFxCurrentAge - 1) << 8) & 0xF00) << 16)) << 16) >> 21, &g_RoomM350HandSparkColor);
+                  (s16)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 8) & 0xF00) >> 5, &g_RoomM350HandSparkColor);
 ret0:
     return 0;
 

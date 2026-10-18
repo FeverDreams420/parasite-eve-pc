@@ -2,58 +2,76 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
-Bieżąca praca obejmuje również cały istniejący moduł M350: m350.c,
-m350_callbacks.c i RoomEffect_ConfiguredPulseCallback.c są kompilowane
-w miejscu. Wszystkie 62 oryginalne funkcje zachowano w ich plikach.
-Callbacki mają natywny ABI, inicjalizatory zachowują pełne wskaźniki,
-a aktorzy, macierze, stan walki i pule korzystają z kanonicznych struktur.
-Współdzielone kolejki zachowują sąsiedztwo po rozszerzeniu wskaźników.
-Sześć oryginalnych programów PM ma natywne descriptory i oryginalne skrypty.
-Odczyty sin/cos używają istniejącego PsyZ; odczyty całego słowa nadal
-składają oryginalne dwie signed16 połówki. Paleta2 to rzeczywisty element
-tablicy, a nie osobna kopia wartości.
+Najnowsza integracja: cały istniejący moduł M350 — m350.c,
+m350_callbacks.c i RoomEffect_ConfiguredPulseCallback.c — jest kompilowany
+w miejscu i podpięty do Scene_LoadRoom. Wszystkie62 oryginalne funkcje
+pozostają w swoich plikach. Callbacki mają natywny ABI, inicjalizatory
+zachowują pełne wskaźniki; aktorzy, macierze, stan walki i pule używają
+kanonicznych struktur. Współdzielone kolejki zachowują sąsiedztwo po
+rozszerzeniu wskaźników. Odczyty trygonometrii korzystają z istniejącego
+PsyZ i zachowują semantykę spakowanych słów. Pełna13-wierszowa tabela
+błysków oraz zakończenie skryptu Orb zachowują oryginalne nakładające się
+stałe. Nie dodano plików repo, przeniesionych funkcji ani nowego gameplayu.
 
-Test --m350 w istniejącym tests/original_actor_animation.c porównuje4320
-stanów20 callbacków z niezmodyfikowanym kodem USA MIPS (tryby0/1/3,
-18 wieków,4 payloady). Osobne108 przypadków wykonuje oryginalny emiter
-OrbTableFlash i rzeczywiste helpery puli: wszystkie klatki, oba źródła
-macierzy, powtarzane emisje i pełna pula. Hash ceb97844900f5774 pokrywa
-zwracany wynik oraz aktywne wpisy i ich pełne8B payloady.
-To wykryło konieczność zachowania pełnych13 wierszy tabeli błysków,
-której ostatnie wiersze w pliku USA mają też nazwy sąsiednich kolorów
-oraz rozmiarów. Zakończenie skryptu Orb odczytywało zerowy początek tej
-tabeli; natywna tablica skryptu zawiera również te cztery końcowe halfwordy.
-Test rzeczywistego CUE sprawdza wszystkie9 descriptorów,6 pełnych tabel
-programów,6 skryptów i wszystkie52B tabeli indeksowanej klatką.
-Oracle: /tmp/pe-m350-leaf-cpu-proof.json i /tmp/pe-m350-table-cpu-proof.json.
-Całe286720B modułu oracle porównano bezpośrednio z sekcją3 z CUE
-(PE.IMG extent1013, sektor83539): SHA256
+Loader waliduje rzeczywiste9 par slot/adres M350: klasy70/75/73 i sześć
+programów155/156/158/159/160/161. Rejestruje je we właściwych bankach,
+zeruje wszystkie zidentyfikowane mutowalne dane M350 i przywraca narożniki
+pułapki przy każdym wejściu. Test --m350-load dwukrotnie odczytuje scenę
+z rzeczywistego USA CUE, rozwija geometrię, sprawdza wszystkie9 powiązań
+i reset uprzednio zanieczyszczonych danych. Używa prawdziwego I/O obrazu,
+nie fixture stubu odczytu. Normal i ASan/UBSan/function: exit0.
+
+Test --m350 w istniejącym tests/original_actor_animation.c:
+- 4320 stanów20 callbacków zgodnych z niezmodyfikowanym USA MIPS,
+tryby0/1/3,18 wieków i4 payloady;
+- 108 stanów oryginalnego emitera OrbTableFlash i rzeczywistych helperów
+puli: klatki tabeli, dwa źródła macierzy i wyczerpanie puli;
+- 3168 stanów TestDropPlayerHit: cooldown, podłoga, granice wysokości,
+promień i granica koła, ujemne współrzędne oraz brak stanu właściciela.
+Porównanie obejmuje wynik, flagi obu aktorów, cooldown i cały bufor punktu;
+- 24 pełne autorskie cykle PM: wszystkie6 programów, oba draw sloty,
+wariant poza zasięgiem i wariant w zasięgu/śledzenie gracza, ujemny kąt,
+specjalna animacja6 dla Drop. Sprawdzane są dokładne maski wszystkich
+aktywnych zadań i rodzajów cząstek, renderowanie, naturalne zakończenie,
+trafienia Hand/Orb/Area/Rush i brak trafień poza zasięgiem, granice puli,
+areny pakietów, poprawne natywne łańcuchy OT i przywrócenie stanu fixture.
+To ćwiczy również drogi rysowania pomijane przez wcześniejsze testy stanów.
+Sanitizery wykryły dwa signed-shift UB: w jasności iskier i pakowaniu
+ujemnych współrzędnych pułapki. Zastąpiono je równoważnym signed16 sin
+oraz unsigned pakowaniem GTE. Ujemny yaw skaluje się mnożeniem256.
+Wszystkie24 cykle przechodzą normal/SAN bez tych błędów.
+
+Test danych z CUE obejmuje wszystkie9 descriptorów,6 pełnych tabel,
+6 skryptów,52B tabeli błysków i całą współdzieloną bibliotekę aktorów.
+Wszystkie13084B kodu porównano z rzeczywistym M022 z tego samego CUE:
+111 relokacji J/JAL i20 niskich adresów funkcji, pozostałe instrukcje
+identyczne; wszystkie42 wskaźniki tabeli klas identyczne po relokacji.
+Całe286720B M350 używane przez CPU oracle jest identyczne z sekcją3
+PE.IMG z CUE (extent1013, sektor83539), SHA256
 61508620951dcfa97b16d30bedb0333ea2e3c18c14c66262b53605ac8609ece0.
-Dowód: /tmp/pe-m350-disc-code-proof.json. Zamrożony kandydat
-/tmp/pe-m350-v3 obejmuje177+177 świeżych obiektów, gry i fixture
-normal/SAN. Wszystkie zależności,354 obiekty i4 executable ponownie
-zweryfikowano hashami; M350 kompiluje się bez ostrzeżeń. Dedykowany
---m350 przeszedł normal/SAN, proof w /tmp/pe-m350-v3-focused-tg4q2d9l.
-PsyZ/SDL są nadal istniejącymi, nieinstrumentowanymi archiwami.
-/tmp/pe-m350-v3-verification.json potwierdza16 terminalnych exit0:
-normal/SAN replay do dwóch pokonanych głów M123, telefoniczny zapis B2,
-Medicine2 po Continue, cała pierwsza walka z Melissą od New Game,
---assets, --m349, --m349-load i --m350. Pełne JSON i1MiB VRAM
-replayów zgadzają się z poprzednim kandydatem oraz między profilami;
-B2 jest identyczny bajtowo, źródłowe karty pozostają niezmienione.
-Przebudowany build/parasite-eve-pc przeszedł też osobny replay67791
-aktualizacji, z pełnym JSON/VRAM identycznym z bazą i niezmienionym A2:
-/tmp/pe-m350-v3-user-proof.json. Końcowy rehash354 obiektów,
-zależności, bibliotek i4 executable: /tmp/pe-m350-v3-final-build-proof.json.
+Oracle: /tmp/pe-m350-{leaf,table,drop-hit}-cpu-proof.json,
+/tmp/pe-m350-disc-code-proof.json i /tmp/pe-m350-shared-library-proof.json.
 
-M350 **nie jest jeszcze rejestrowany przez Scene_LoadRoom**. Brakuje
-pełnych autorskich cykli sześciu programów, wszystkich ścieżek renderowania,
-weryfikacji trzech współdzielonych klas oraz testu rzeczywistego loadera.
-Powyższe testy nie dowodzą działania walki na krążowniku ani zgodności
-pikseli i PCM z PS1. Cały port i pełna kampania pozostają nieukończone.
-Nie dodano plików repo ani nowej implementacji gameplayu.
+Aktualny zamrożony kandydat /tmp/pe-m350-integrated-v1 ma177+177 świeżych
+obiektów oraz gry/fixture normal/SAN. Dedykowane --m350 i --m350-load
+przeszły w obu profilach; logi w /tmp/pe-m350-integrated-v1-focused-ozidsu93.
+/tmp/pe-m350-integrated-v1-verification.json potwierdza18 terminalnych
+exit0: normal/SAN replay do dwóch pokonanych głów M123, telefoniczny
+zapis B2, Medicine2 po Continue, cała pierwsza walka z Melissą od New Game,
+--assets, --m349, --m349-load, --m350 i --m350-load. Pełne JSON i1MiB
+VRAM replayów są zgodne z poprzednim kandydatem i między profilami;
+B2 identyczny bajtowo, źródłowe karty niezmienione. Przebudowany lokalny
+build/parasite-eve-pc również przeszedł osobny replay67791 aktualizacji:
+pełne JSON/VRAM zgodne z bazą, A2 niezmieniony, końcowe HP76;
+/tmp/pe-m350-integrated-v1-user-proof.json. Końcowy rehash354 obiektów,
+wszystkich zależności/bibliotek i4 executable: -final-build-proof.json.
+Poprzedni checkpoint /tmp/pe-m350-v3 miał16 exit0, ale nie obejmował
+jeszcze rejestracji M350 ani pełnych cykli PM.
+PsyZ/SDL nadal pochodzą z istniejących nieinstrumentowanych archiwów.
+Testy izolowanego M350 nie dowodzą przejścia walki na krążowniku ani
+zgodności pikseli i PCM z PS1. Pełna kampania i cały port pozostają otwarte.
 
-Ostatni moduł w pełni podpięty do loadera: cały oryginalny moduł
+Poprzednia integracja loadera: cały oryginalny moduł
 src/overlays/room_m349_cruiser/m349.c jest kompilowany i statycznie powiązany
 z rzeczywistym loaderem M349. Wszystkie trzy istniejące funkcje pozostają
 w miejscu: Spark, FlareRing i SetFlareParams. Poprawiono rzeczywisty ABI

@@ -1,6 +1,3 @@
-/* cc1 -G8 makes the small texture slot word a cheap address, so its
- * volatile read stays an absolute load. */
-
 #include "pe1/field_sprite_draw.h"
 #include "pe1/field_sprite_params.h"
 #include "pe1/field_texture_tables.h"
@@ -11,8 +8,6 @@
 #include "room_m350_shared.h"
 #include "RoomEffect_ConfiguredPulseCallback_externs.h"
 #include "RoomEffect_ConfiguredPulseCallback_externs_1.h"
-
-/* Signed high-half view avoids LHU followed by explicit sign extension. */
 
 int RoomM350_AreaPlayerPulseCallback(int event, void *_payload, intptr_t argument) {
     void *object = _payload;

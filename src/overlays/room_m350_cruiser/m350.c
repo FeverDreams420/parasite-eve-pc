@@ -162,7 +162,7 @@ int RoomM350_HandPulseCallback(int event, void *_payload, intptr_t argument) {
         handle = GetClut(48, palette);
         FieldFx_DrawShapeQuads(effect->position, (struct GteRotation *)effect, scale, scale, 110,
             (unsigned short)handle, 1,
-            (short)(int)((unsigned int)(unsigned short)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) | ((unsigned int)(unsigned short)rcos(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) << 16)) >> 5,
+            (s16)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) >> 5,
             (struct RenderColor *)&effect->color);
     }
     return 0;
@@ -234,7 +234,7 @@ int RoomM350_HandGlowCallback(int event, void *_payload, intptr_t argument) {
         handle = GetClut(32, palette);
         FieldFx_DrawShapeQuads(object->position, 0, size, size, (s16)g_FieldFxSpriteParams.parameter02 + 216,
             (unsigned short)handle, 1,
-            (short)(int)((unsigned int)(unsigned short)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) | ((unsigned int)(unsigned short)rcos(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) << 16)) >> 5,
+            (s16)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) >> 5,
             &g_RoomM350GlowSpriteColor);
     }
     return 0;
@@ -409,10 +409,10 @@ int RoomM350_HandSweepTrapCallback(int mode, void *_payload, intptr_t argument) 
         }
         {
             int player = ((u32)g_PlayerEntity->render_object.model_matrix.translation[2] << 16) | (u16)g_PlayerEntity->render_object.model_matrix.translation[0];
-            int prev = (quad[3].z << 16) | (u16)quad[3].x;
+            int prev = ((u32)quad[3].z << 16) | (u16)quad[3].x;
             k = 0;
             while (k < 4) {
-                int cur = (quad[k].z << 16) | (u16)quad[k].x;
+                int cur = ((u32)quad[k].z << 16) | (u16)quad[k].x;
                 gte_ldsxy0(player);
                 gte_ldsxy2(prev);
                 gte_ldsxy1(cur);
@@ -560,7 +560,7 @@ int RoomM350_HandFlashCallback(int event, void *_payload, intptr_t argument) {
         handle = GetClut(0, (kind == 4 && g_FieldFxAltPaletteFlag != 0) ? palette + 8 : palette + 4);
         FieldFx_DrawShapeQuads((GteShortVector *)*object, 0, size, size, (s16)g_FieldFxSpriteParams.parameter02 * 6 + 128,
             (unsigned short)handle, 1,
-            (short)(int)((unsigned int)(unsigned short)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) | ((unsigned int)(unsigned short)rcos(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) << 16)) >> 5, 0);
+            (s16)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) >> 5, 0);
     }
     return 0;
 }
@@ -708,7 +708,7 @@ int RoomM350_OrbHandSparkCallback(int event, void *_payload, intptr_t argument) 
         FieldFx_DrawShapeQuads((GteShortVector *)&particle->x, 0, size, size, (s16)g_FieldFxSpriteParams.parameter02 * 5 + 216, clut, 1,
             rcos((((unsigned int)g_FieldFxCurrentAge - 1) << 7) & 0xF80) >> 5, (struct RenderColor *)particle);
         FieldFx_DrawStarFan((GteShortVector *)&particle->x, 96, 96, 8, 0, size, size, (struct RenderColor *)g_RoomM350OrbHandSparkColor, &g_RoomM350BlackColor,
-            (short)(int)((unsigned int)(unsigned short)rsin((((unsigned int)g_FieldFxCurrentAge - 1) << 8) & 0xF00) | ((unsigned int)(unsigned short)rcos((((unsigned int)g_FieldFxCurrentAge - 1) << 8) & 0xF00) << 16)) >> 5, 1);
+            (s16)rsin((((unsigned int)g_FieldFxCurrentAge - 1) << 8) & 0xF00) >> 5, 1);
     }
     return 0;
 }
@@ -874,7 +874,7 @@ int RoomM350_OrbCallback(int event, void *_payload, intptr_t argument) {
             gte_ldv0(&offset); gte_rtv0tr_mac();
             gte_stsv(&p->position);
         }
-        if(p->tail.value.active.frame<40) brightness=((short)(int)((unsigned int)(unsigned short)rsin((p->tail.value.active.frame<<9)&0xE00) | ((unsigned int)(unsigned short)rcos((p->tail.value.active.frame<<9)&0xE00) << 16))>>6)+128;
+        if(p->tail.value.active.frame<40) brightness=((s16)rsin((p->tail.value.active.frame<<9)&0xE00)>>6)+128;
         else {
             unsigned int value=rcos(((p->tail.value.active.frame-40)<<7)&0xF80);
             brightness=value>>5;
@@ -1003,7 +1003,7 @@ int RoomM350_OrbImpactCallback(int event, void *_payload, intptr_t argument) {
         handle = GetClut(0, (kind == 4 && g_FieldFxAltPaletteFlag != 0) ? palette + 6 : palette + 2);
         FieldFx_DrawShapeQuads((GteShortVector *)&position, 0, 8192, 8192, (s16)g_FieldFxSpriteParams.parameter02 * (frame >> 1),
             (unsigned short)handle, 1,
-            (short)(int)((unsigned int)(unsigned short)rsin(((unsigned int)frame << 7) & 0xF80) | ((unsigned int)(unsigned short)rcos(((unsigned int)frame << 7) & 0xF80) << 16)) >> 5,
+            (s16)rsin(((unsigned int)frame << 7) & 0xF80) >> 5,
             &g_RoomM350OrbImpactColor);
     }
     return 0;
@@ -1140,7 +1140,7 @@ int RoomM350_OrbTableFlashCallback(int event, void *_payload, intptr_t argument)
         FieldFx_DrawShapeQuads((GteShortVector *)position, 0, position[3], position[3],
             (s16)g_FieldFxSpriteParams.parameter02 * g_RoomM350OrbTableFlashSizes[(g_FieldFxCurrentAge - 1) / 2] + 128,
             (unsigned short)handle, 1,
-            (short)(int)((unsigned int)(unsigned short)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) | ((unsigned int)(unsigned short)rcos(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) << 16)) >> 5,
+            (s16)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) >> 5,
             &g_RoomM350GlowSpriteColor);
     }
     return 0;
@@ -1315,7 +1315,7 @@ int RoomM350_AreaSparkEmitter(int event, void *_payload, intptr_t argument) {
             int timer=g_FieldFxCurrentAge;
             phase=timer<32 ? (unsigned int)timer<<5:1024;
         }
-        sample=(short)(int)((unsigned int)(unsigned short)rsin(phase&4095) | ((unsigned int)(unsigned short)rcos(phase&4095) << 16));
+        sample=(s16)rsin(phase&4095);
         state->brightness=sample>>5;
         state->size=(unsigned int)sample<<2;
         if(state->count>=16) return 0;
@@ -1398,7 +1398,7 @@ case 0:
         {
             int yaw=(g_RoomM350AreaConfigYaw[0]);
             state->initialized=0;
-            state->yaw=yaw<<8;
+            state->yaw=yaw*256;
         }
         return 0;
     }
@@ -1586,7 +1586,7 @@ int RoomM350_AreaDropletCallback(int event, void *_payload, intptr_t argument) {
         FieldFx_DrawShapeQuads((GteShortVector *)position, 0, 12288, 12288,
             (s16)g_FieldFxSpriteParams.parameter02 * (((g_FieldFxCurrentAge - 1) >> 1) & 7) + 200,
             (unsigned short)handle, 1,
-            (short)(int)((unsigned int)(unsigned short)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) | ((unsigned int)(unsigned short)rcos(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) << 16)) >> 5,
+            (s16)rsin(((unsigned int)(g_FieldFxCurrentAge - 1) << 7) & 0xF80) >> 5,
             (struct RenderColor *)g_RoomM350AreaDropletColor);
     }
     return 0;

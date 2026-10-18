@@ -19,7 +19,9 @@ extern RenderColor g_RoomM350GlowSpriteColor;
 /* Actor found by RoomM350_HandConfigure (type and sub id lookup), and the pair of
  * anchor positions the paired effects attach to. */
 extern FieldActor *g_RoomM350HandActor;
-extern GteShortVector g_RoomM350HandPoints[];
+extern GteShortVector g_RoomM350HandPoints[4];
+extern s16 g_RoomM350HandSweepRepeats;
+extern u8 g_RoomM350HandSweepDone,g_RoomM350HandSweepHit;
 
 /* Actor found by RoomM350_OrbConfigure, and the joint position it returns. */
 

@@ -17,6 +17,8 @@
 #include "pe1/room_line_burst.h"
 #include "pe1/room_m123.h"
 #include "pe1/room_m349_effects.h"
+#include "pe1/room_m350_sweep_trap.h"
+#include "../../overlays/room_m350_cruiser/room_m350_data.h"
 #include "pe1/room_m123_glow_burst.h"
 #include "pe1/room_m123_beacon.h"
 #include "pe1/render_camera.h"
@@ -574,6 +576,21 @@ int Scene_LoadRoom(unsigned int roomId)
             if(slot==143 && record[i].u.handlerAddress==0x801955d4u)native=&g_RoomM123PulseRingEffects;
             if(slot==144 && record[i].u.handlerAddress==0x8019564cu)native=&g_RoomM123WaveBurstEffects;
         }
+        if (map + 1 == 350) {
+            const struct {int slot;u32 address;const void *program;} bindings[]={
+                {75,0x8019a350u,&g_RoomActorClassTable[2]},
+                {70,0x8019a318u,&g_RoomActorClassTable[0]},
+                {73,0x8019a388u,&g_RoomActorClassTable[4]},
+                {155,0x8019a468u,&g_RoomM350HandEffects},
+                {156,0x8019a508u,&g_RoomM350OrbEffects},
+                {158,0x8019a5a0u,&g_RoomM350AreaEffects},
+                {159,0x8019a638u,&g_RoomM350DropEffects},
+                {160,0x8019a6a0u,&g_RoomM350RushEffects},
+                {161,0x8019a73cu,&g_RoomM350BodyEffects}
+            };
+            for(unsigned j=0;j<sizeof(bindings)/sizeof(*bindings);++j)
+                if(slot==bindings[j].slot && record[i].u.handlerAddress==bindings[j].address)native=bindings[j].program;
+        }
         if (map + 1 == 349 && slot == 181 && record[i].u.handlerAddress == 0x8019015cu)
             native = &g_RoomM349FlareEffects;
         if (map + 1 == 86) {
@@ -718,6 +735,29 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
             g_RoomM005BeaconOffset = (GteShortVector){0};
             g_RoomM005BeaconCenter = (GteShortVector){0};
+        } else if (map + 1 == 350) {
+            switch(slot){
+            case 75:
+                g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];
+                /* A cold room-bank load restored the original mutable data. */
+                g_RoomM350HandActor=NULL;
+                memset(g_RoomM350HandPoints,0,sizeof(g_RoomM350HandPoints));
+                g_RoomM350HandSweepRepeats=0;g_RoomM350HandSweepDone=g_RoomM350HandSweepHit=0;
+                memset(&g_RoomM350OrbData,0,sizeof(g_RoomM350OrbData));
+                memset(&g_RoomM350AreaData,0,sizeof(g_RoomM350AreaData));
+                memset(&g_RoomEffectTrailPositions,0,sizeof(g_RoomEffectTrailPositions));
+                memset(&g_RoomM350RushData,0,sizeof(g_RoomM350RushData));
+                memcpy(g_RoomM350HandSweepTrapCorners,(GteShortVector[]){{-128,0,0,0},{128,0,0,0},{128,0,-4096,0},{-128,0,-4096,0}},4*sizeof(GteShortVector));
+                break;
+            case 70:g_PmCmdHandlerTable[70]=&g_RoomActorClassTable[0];break;
+            case 73:g_PmCmdHandlerTable[73]=&g_RoomActorClassTable[4];break;
+            case 155:g_FieldFxTaskPrograms[70]=&g_RoomM350HandEffects;break;
+            case 156:g_FieldFxTaskPrograms[71]=&g_RoomM350OrbEffects;break;
+            case 158:g_FieldFxTaskPrograms[73]=&g_RoomM350AreaEffects;break;
+            case 159:g_FieldFxTaskPrograms[74]=&g_RoomM350DropEffects;break;
+            case 160:g_FieldFxTaskPrograms[75]=&g_RoomM350RushEffects;break;
+            case 161:g_FieldFxTaskPrograms[76]=&g_RoomM350BodyEffects;break;
+            }
         } else if (map + 1 == 349 && slot == 181) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomM349FlareEffects;
             memset(&g_RoomM349FlareParams, 0, sizeof(g_RoomM349FlareParams));

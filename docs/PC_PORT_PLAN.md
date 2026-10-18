@@ -2,6 +2,66 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Standardowy `build/parasite-eve-pc` również przebudowano i sprawdzono
+zwykłym replayem head3/64311 w prywatnym katalogu. `-user-build-check.py`
+i `/tmp/pe-battle-detail-v1-user-build-proof.json`: exit0/102,03s, cały
+JSON/1MiBVRAM identyczny z nowym zamrożonym kandydatem, A2 zachowany.
+Lokalny CMake build nie ma optymalizacji, stąd dłuższy czas niż normal−O1;
+nie zmieniano ustawień kompilacji. SHA256 standardowego executable
+f47113d8529c3aa0b10572a88df198f5f4b73cfe40f9acb768124c90c3c76307.
+
+Istniejący diagnostyczny eksport w `src/main/boot/init.c` rozszerzono
+na miejscu o końcowy obiekt `battle_detail`. Dotychczasowe rekordy pozostają
+w tej samej postaci. Nowe dane to licznik walki/RNG, surowe PE/limit PE,
+ATB, flagi i żywa amunicja gracza oraz typ/subtyp, tryb, HP/limit HP,
+obrona i flagi każdego niegracza z combat core w aktywnej walce. Obejmują
+również niewybieralne kontrolery: ta lista nie jest listą legalnych celów
+ani alternatywnym licznikiem żywych przeciwników. `hp_limit` jest surowym
+polem hpAliveCap, nie obietnicą początkowego maxHP. Poza walką player=null
+i enemies=[]; nie reinterpretujemy wtedy stanów NPC. Kod wyłącznie czyta
+stan po osiągnięciu diagnostycznego limitu i nie działa w normalnym przebiegu
+bez cap. Nie przeniesiono funkcji, nie dodano plików repo ani warstwy gry.
+
+Nowy zamrożony kandydat `/tmp/pe-battle-detail-v1`: pełne świeże173 obiekty
+normal oraz173 ASan/UBSan/function, oba programy i fixture powiązane.
+`-build.py,-build-manifest.json,-build-proof.json` potwierdzają ponowny hash
+346 obiektów, zależności, bibliotek i czterech executable. Zmieniony init.c
+bez ostrzeżeń w obu profilach. Archiwa PsyZ/SDL są wcześniejszymi zależnościami
+opisanymi manifestem; nie jest to nowy dowód pełnej instrumentacji tych bibliotek.
+
+`-verify.py,-results.jsonl,-verification.json`:13 procesów exit0, obejmujące
+jeden czysty odczyt LLDB starszego v3 przy head3/64311 oraz sześć par
+nowego normal/SAN: head3, menu opened/waited/resumed, pole M120 i title8000.
+W każdej parze zgodny cały JSON i1MiBVRAM. W pięciu zakresach z istniejącym
+v3 snapshotem po odjęciu nowego obiektu pozostały JSON i VRAM identyczne
+ze starszym programem. Title sprawdzono tylko między nowymi profilami.
+Nowe pola head3 są dokładnie zgodne z niezależnym od printf odczytem typowanych
+pól starszego procesu: PE7421762/limit17694720, ATB4399, ammo8;
+HP1=1000010,5=10,4=400,2=300, brak3. Nie mylimy tej żywej amunicji
+z opóźnionym rekordem inventory. Stary v3 nadal niezmieniony i dostępny.
+Wszystkie replaye mają prywatne karty, niezmieniony8192B A2 i puste bu10;
+brak sanitizer/Unbound diagnostics, bez zapisów pamięci rozgrywki.
+
+Osobny zwykły test menu `/tmp/pe-m123-menu-clock-v1-checkpoints.py`:
+PASS6/6, wszystkie trzy pary normal/SAN zakończone. Otworzenie64507 i
+czekanie do65107 zachowuje HP80, PEraw8324417, ATB9000 i battleFrame1398.
+Po pierwszym Circle znika menu, ale nadal trwa reticle/battle1, więc tester
+jeszcze nie wykonuje uników. Dopiero drugi Circle i120 VBlanków ruchu:
+65259/battle0/menuNULL, PEraw8916123, battleFrame1465, HP70 po kontakcie.
+Odczyty tych zegarów w obu profilach czyste LLDB, bez ReturnFromFrame w SAN;
+końcowy JSON/VRAM zgodny również z live. Brak regeneracji PE podczas pauzy.
+Nie wykryto w tym teście błędu zatrzymywania zegara walki.
+
+Eksperyment `/tmp/pe-m123-forecast-v1` włącza prognozę od64311, potem
+próbuje górnego pasa i progu leczenia70. Mimo tego kończy się śmiercią przy
+66187, cel2 wcześniej188HP. `-experiment.json` oznacza live_only i brak pary
+normal/SAN; nie jest to nowy PASS kampanii. PID72862/73054 zakończone exit0.
+M123, niezależne porównanie walki z oryginalnym PS1, nowy telefon Save,
+dalsza kampania i pełny port pozostają nieukończone. Nowy eksport umożliwia
+ocenę prób bez wielokrotnych odczytów debuggera; nie dowodzi jeszcze pełnej
+automatyzacji przejścia ani pixel-perfect zgodności. Cel pozostaje aktywny.
+
+
 M123: ustalono rzeczywistą klatkę zgłoszenia kolizji JointBeacon, nie tylko
 późniejszego odjęcia HP. `/tmp/pe-m123-collision-order-v1/v2` odtwarzają
 pełny zwykły ślad od64311 do65139 z breakpointem w m123.c:433, którego

@@ -137,6 +137,29 @@ static void Boot_PollHost(void) {
     for(unsigned variable=0;variable<0x200;++variable)
         printf("%s%u",variable?",":"",g_ScriptVariableBank[variable]);
     printf("]");
+    /* Observe live combat resources at the diagnostic boundary. Keep this
+     * separate from the existing summary, including inactive scene actors. */
+    printf(",\"battle_detail\":{\"frame\":%d,\"rng_frame\":%u,\"player\":",
+        g_BattleFrameCounter,g_FrameRngCounter);
+    if((g_GameStateFlags&2) && g_PlayerEntity && g_PlayerEntity->state){
+        const Combatant *player=(const Combatant *)g_PlayerEntity->state;
+        printf("{\"pe_raw\":%d,\"pe_max_raw\":%d,\"atb\":%u,\"state_flags\":%u,\"ammo\":",
+            player->exp_or_acc,player->maxAtk,(unsigned)player->hpAlive,(u32)player->stateFlags);
+        if(player->action)printf("%u",player->action->attackWord&0x3FFu);
+        else printf("null");
+        printf("}");
+    }else printf("null");
+    printf(",\"enemies\":[");
+    unsigned combatant_index=0;
+    if(g_GameStateFlags&2)for(const FieldActor *actor=g_FieldActorListHead;actor;actor=actor->next){
+        if(actor==g_PlayerEntity || !actor->state)continue;
+        const EnemyCombatant *enemy=(const EnemyCombatant *)actor->state;
+        printf("%s{\"type\":%u,\"sub\":%u,\"mode\":%u,\"hp\":%d,\"hp_limit\":%d,\"defense\":%u,\"core_flags\":%u,\"state_flags\":%u,\"status_flags\":%u}",
+            combatant_index++?",":"",actor->type_id,actor->sub_id,actor->mode,
+            enemy->hpAlive,enemy->hpAliveCap,(unsigned)enemy->defense,
+            enemy->coreFlags,enemy->stateFlags,enemy->statusFlags2);
+    }
+    printf("]}");
     if(g_BootHostHealthEventCount)
         printf(",\"coverage_only\":true,\"ordinary_campaign_proof\":false,\"diagnostic_hp\":{\"scheduled\":%u,\"applied\":%u}",
             g_BootHostHealthEventCount,g_BootHostHealthApplied);

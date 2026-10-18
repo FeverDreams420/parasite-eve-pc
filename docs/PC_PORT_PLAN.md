@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Po M123 — zwykły input dochodzi do autentycznego zapisu DAY4/level18.
+Od74080 ruch Up8208 wyzwala w a8004248 rozmowy107/108/96/110–112,
+114–118 i dalsze do123. Następuje oryginalne przejście końca dnia,
+odnowienie HP4→210/210 oraz ekran zapisu. W prywatnym bu00 wybrano
+pusty plik B (Down z A, Confirm), bez nadpisania A. Przy79760 menu40
+pokazuje File saved; cały nowy B ma8192B, SHA256
+71dd8723314849448dbd18f94f1cd7a53f4ec82a40c3e18456fd46f36e689cc3.
+Trwałe, nieedytowane źródło kolejnych prób:
+/tmp/pe-day4-save-v1-source/BASLUS-006620000000B.
+Pełny cold A2→boss→nagrody→rozmowa→zapis: normal23,22s/SAN65,82s,
+oba exit0; całe JSON identyczne z live i między profilami, pełny VRAM
+identyczny, B identyczny wszystkimi8192 bajtami z live/między profilami.
+Źródłowa A2 i prywatne A niezmienione, prywatne bu10 puste.
+/tmp/pe-day4-save-v1-{full-args.json,proof.json}.
+
+OK po zapisie, Cancel z plików i Cancel z listy slotów prowadzą do
+sceny a8009448: rozmowa124–131 z Danielem i pozostałymi postaciami,
+story432→440, HP210/210, menuNULL, lock2. Przy82948 Aya po zwykłym
+ruchu nadal w tej sali; nie ukończono dalszych zadań dnia4.
+Cold replay normal24,71s/SAN70,50s, oba exit0, pełne JSON zgodne
+z live i między profilami, pełny VRAM zgodny i cały B niezmieniony:
+/tmp/pe-day4-meeting-v1-{full-args.json,proof.json}. Klient live zakończony
+quit/exit0; wszystkie inputy i snapshoty /tmp/pe-postboss-live-v1/.
+Obrazy frame.png rzeczywiście obejrzane: sala po walce, File saved DAY4,
+lista zapisów, następnie spotkanie. Nie jest to porównanie pikseli PS1.
+
+UWAGA — zimny Continue B nie ma jeszcze dowodu poprawnego wznowienia.
+Pierwszy tester v1 wybrał pusty wpis A zamiast B (oba procesy exit0,
+tester KeyError przy braku gracza); nie był to błąd pliku. Poprawny v2
+wybiera B i potwierdza odczyt: HP210, story432, ekwipunek, scene a8065148,
+menuNULL, lock1. Oba profile exit0, pełne JSON/VRAM zgodne, B niezmieniony,
+ale brak przejścia do grywalnej sceny. Przedłużenie bez inputu do30000
+(v3 normal4,13s/SAN12,91s) nadal w tej samej scenie/lock1, game_frame4994.
+Pliki /tmp/pe-day4-continue-v{2,3}-proof.json dowodzą odczytu i zgodności
+profilów, NIE poprawnego Continue całego dnia. Trwa read-only LLDB
+/tmp/pe-day4-continue-observe-v1, proces44620/session97068, oczekujący
+na Boot_PollHost przy23999 do odczytu zadania skryptu; przy ostatnim
+sprawdzeniu rzeczywiście żywy. Nie zmieniano HP/PE/flag ani danych zapisu.
+Kod produkcyjny, zamrożone executable i biblioteki nadal bez zmian.
+
 M123 — POTWIERDZONE ZWYCIĘSTWO zwykłym inputem od autentycznej A2,
 na niezmienionym kandydacie /tmp/pe-control-stream-v2. Przy69832
 HP66/head4:120: Down8256 do70020, potem Up+Right8240 do70200 unika

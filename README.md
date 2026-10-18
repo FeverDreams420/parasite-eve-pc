@@ -111,6 +111,12 @@ M087 and creates phone Save K. Full replay, two checkpoint pairs and cold
 Continue K pass both builds with matching reported state, VRAM and save
 payloads. Tools, M203, Mod Permits and Revive remain preserved; the rejected
 Tune Up attempts do not change equipment.
+From K, ordinary input defeats Eve in M089 using the existing M16, real
+PE healing and automatic Revive, then plays the subsequent scenes and
+movies, creates genuine Day 3 Save L and reaches M092's opening dialogue.
+Full replay, three checkpoint pairs and cold Continue L pass both builds
+with matching reported state, VRAM and save payloads. An earlier Game Over
+replay remains separately verified; victory does consume Revive.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

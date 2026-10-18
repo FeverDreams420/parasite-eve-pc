@@ -2,6 +2,69 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły zimny Continue K wygrywa teraz Eve/M089 bez Heat, przechodzi
+sceny/filmy po walce i nocleg, tworzy prawdziwy Save L na przejściu Day3
+oraz wchodzi do otwierającej rozmowy M092. K zachowuje także zużyte PE:
+odczyt3151525/65536≈48,09, polowe Heal2 jest poprawnie odrzucone, HP104/181
+bez zmian. Przejście M087→M086 nie powtarza pokonanej walki; dalej na zachód
+[-3500,0]→M088. Ruch uruchamia57/58 i etap280. Po nim region około[550,200]
+po lewej stronie powozu, a nie sam model, uruchamia film9→M089/etap272.
+Dialogi60–63 oddają walkę.
+
+Pierwsza próba v1 kończy się Game Over; zachowana jako dowód negatywny,
+nie zwycięstwo. Przy36993 HP0/mode3, Revive13 jeszcze obecne. Przy37993
+HP53/mode0, Revive zużyte; kolejna śmierć bez Revive prowadzi przy39385
+do M5000/Game Over. Pełny replay normal/SAN exit0 w9,35/25,44s, cały
+JSON/1MiBVRAM identyczny także z żywą sesją, K niezmieniony. Dwie pary
+checkpointów śmierć→wskrzeszenie PASS4/4. /tmp/pe-park-k-eve-v1-{proof.json,
+verify.py,results.json}, -checkpoints{.py,-proof.json,-results.json} i input/logi.
+To potwierdza Revive/Game Over, nie ukończenie tej próby.
+
+Druga próba v2 powtarza ten sam zwykły cold K i wejście do walki.
+Zewnętrzny sterownik poprawiono o granice areny (czworokąt około
+x294..819,z371..660), patrol i kontynuację ruchu, gdy Eve jest chwilowo
+nietargetowalna. Usunięto z jego decyzji nieodpowiednią projekcję podłogi3D;
+oryginalne kolizje gry nadal ograniczają ruch. Nie zmieniano gry ani jej AI.
+Po24 klatkach naturalnej regeneracji PE118,59→121,65 można użyć Heal2.
+Walka używa M16 i Heal1/Heal2; brak zmian wyposażenia. Aya ponownie traci
+wszystkie HP. Obserwacja co12 klatek zatrzymuje się przy37677 zaraz po
+Revive: HP90, slot13 pusty. Dalsze prawdziwe serie M16 kończą walkę.
+Przy38881 M089/etap272, HP53/181, battle12/live0/lock1, dialog64/state2;
+obraz zwycięstwa obejrzany. Nie jest to zwycięstwo bez Revive.
+
+Dialogi64–70, film i dalsze oryginalne rozmowy prowadzą przez M367 i M091
+do M351/Day3/SELECTION. Limity partii sterownika kończyły tylko wywołanie,
+nie proces; kontynuowano tę samą sesję. Przy83717 M351/etap312/HP181/181,
+lock1, brak menu — odpoczynek fabularny przywrócił HP. Cross uruchamia182
+oraz oryginalne Save. K10 zachowane, Down do pustego L11, potwierdzenie,
+File saved i zamknięcie paneli. Przy85945: M092/etap320, HP181/181,
+capacity21, weapon10/armor14, brak menu/żywych wrogów, battle12/lock3,
+otwierający dialog35/state2. To scena Day3, nie wolne sterowanie w polu.
+Wszystkie50 slotów względem K identyczne poza zużytym Revive13; wszystkie
+4096B wyposażenia identyczne poza rzeczywistą amunicją M16/offset138 10→14.
+Tool, M203, permity i niezużyty Defense+1 zachowane.
+
+Cały cold K→Eve→Day3/L→M092 na niezmienionym
+/tmp/pe-park-attack-status-v1 normal/SAN exit0 w22,96/63,58s. Pełny JSON
+i1MiBVRAM identyczne z żywą sesją; SHA256
+cd2fa38ed8f2a62e1a23a9f4285ecc3bcb46a2739da07605288664b09872ca6c.
+K niezmieniony, wszystkie8192B nowego L identyczne w trzech prywatnych
+katalogach. L SHA256
+9fd390691bf239a3ee212c0f026c410dfc381e6c7b97460e087c0aeb4ef3a18c.
+Trzy pary checkpointów normal/SAN PASS6/6: wskrzeszenie37677/HP90,
+zwycięstwo38881/HP53 i plansza Day3 83717/HP181. Pełny JSON/VRAM każdej
+pary zgodny, także z odczytanymi obrazami zwycięstwa/Day3, K niezmieniony.
+/tmp/pe-park-k-eve-v2-{proof.json,verify.py,results.json},
+-checkpoints{.py,-proof.json,-results.json}, args/input/logi/VRAM i fight.log.
+Zimny Continue L normal/SAN exit0 w3,86/11,92s: M351/etap312/HP181/181,
+lock1/brak menu, wszystkie sloty i4096B wyposażenia zgodne z sesją zapisu,
+cały JSON/VRAM zgodny, L niezmieniony. Plansza wymaga Cross.
+/tmp/pe-day3-save-l-continue-v1-{proof.json,verify.py,results.json}.
+Bez zmian kodu produkcji ani nowych plików repo; wyłącznie input i prywatne
+karty, bez zapisów HP/stanu/RNG przez debugger. Brak nowego niezależnego
+PS1 dla L oraz trwałego CTest tego replayu. Następne: Day3/Soho.
+Cała kampania pozostaje nieukończona.
+
 Zwykły zimny Continue J wygrywa teraz M086 obecnym M16 bez Heat i bez
 zmiany wyposażenia, odbiera nagrody, wraca do M087 i tworzy prawdziwy
 Save K. Przed walką oryginalne Tune Up odrzuca przeniesienie Heat z M203:
@@ -51,7 +114,7 @@ sloty i4096B wyposażenia zgodne z sesją zapisu, pełny JSON/VRAM zgodny,
 K niezmieniony. /tmp/pe-park-phone-k-continue-v1-{proof.json,verify.py,
 results.json}. Bez zmian kodu produkcji ani nowych plików repo, bez zapisów
 HP/stanu/RNG przez debugger. Nie ma nowego niezależnego porównania PS1
-ani trwałego CTest tego replayu. Następne: dalsza droga z K do Eve.
+ani trwałego CTest tego replayu. Dalsza droga z K do Eve i Day3 opisana powyżej.
 Kampania pozostaje nieukończona.
 
 Zwykły zimny Continue I przechodzi teraz także M083→M084→północ M085→

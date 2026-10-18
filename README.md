@@ -87,6 +87,10 @@ From H, ordinary input wins new M063/M358 encounter variants and M067, opens
 the second Zoo Key gate, completes the amphitheater Eve scene and follows her
 through M070 back to M072 at story stage 248. Full replay and four checkpoints
 pass both builds with matching reported state and VRAM; H remains unchanged.
+The route now continues through M068/M074 to M075, exchanges a Junk for
+Revive at a full inventory, collects both ammunition chests, wins the bear
+encounter and creates phone Save I. Full replay and cold Continue I pass both
+builds with matching reported state, VRAM, equipment and save payloads.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

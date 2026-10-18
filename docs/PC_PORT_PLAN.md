@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły replay od zimnego Continue H przechodzi teraz także dalszy odcinek
+po248, do prawdziwego zapisu I w M075. Heal1 w polu M072 zwiększa HP47→77;
+druga próba nie zwiększyła HP (literalny input zachowany). Narożnik przy
+schodach wymaga[700,100]→[700,-200]→[1100,-500], potem[2800,-2800]→M068.
+Próby rozmowy przy ciele M068 nie uruchomiły tekstu94; tej interakcji nie
+uznaje się za sprawdzoną. Wysokości Ayi i ciała odpowiadały podłodze.
+Obejście[ -1500,400]→[-1100,300]→[-1000,-500]→[-1800,-700] prowadzi
+do M074. W M074 początkowo trzeba obejść narożnik przez[-7680,-4520]
+i[-7460,-4500], potem wschodnią część alejki. Skrzynia przy[-6154,-5404]
+daje Revive18: pełny ekwipunek→oryginalny dialog3→wybór Junk13→wymiana.
+Revive jest w13; Junk20 zostaje w skrzyni (zmienna142=20, flaga85/0x800
+pozostaje wyzerowana). To odebranie Revive, nie opróżnienie skrzyni.
+Druga skrzynia M074 przy[-5537,-3330] daje w tym przebiegu Ammo+15;
+flaga85/0x400 ustawiona. Wariant Tool22 pozostaje do osobnego przejścia.
+
+Podejście[-5800,-4000]→[-5400,-4300] przechodzi do M075. Zwykły marsz
+uruchamia niedźwiedzia typ5/HP75 i jego nietargetowalnego pomocnika typ4.
+M16 wygrywa, HP77→52; ekran EXP/nagród oddaje sterowanie, amunicja
+odebrana, pozostały Junk zostawiony. Skrzynia M075 przy[978,4133]
+wylosowała Ammo+15 (zamiast Medicine2); flaga85/2 ustawiona. Telefon:
+podejście[1100,2000]→[850,1900]→[850,1750]→[800,1700], twarz na
+południowy zachód i Cross, oryginalny Save do I/dziewiątego pliku.
+Przy67854: M075/etap248, HP52/115, pojemność19, weapon10/armor14,
+brak menu/dialogów/przeciwników/locka, battle9; Revive13 zachowane,
+sloty16/17/18 nadal Junk, klucz9 i cały wcześniejszy ekwipunek zachowany.
+W całych4096B wyposażenia względem H różni się wyłącznie amunicja M16,
+offset138:9→15 po rzeczywistych strzałach/przeładowaniach.
+
+Na niezmienionym /tmp/pe-park-attack-status-v1 cały replay H→I normal/SAN
+exit0 w13,92/36,38s. Pełny JSON i1MiBVRAM identyczne z żywą sesją;
+SHA2566f2ac8eac14a8f46bf9939759b38221d96d3f9a39cdffbba771c4d8889e18091.
+Wszystkie8192B I identyczne, źródłowy H niezmieniony. I SHA256
+abeda1105fc8a40060cd85be5993108e6b6f82da04ab68008d629c647fea4401.
+Dowód /tmp/pe-park-after248-v1-{proof.json,verify.py,results.json}, pełne
+args/input/logi/VRAM pod tym prefiksem. Osobny zimny Continue I:
+normal/SAN exit0 w3,93/12,29s, M075/etap248/HP52/115/lock0/brak menu;
+wszystkie sloty i4096B wyposażenia zgodne z sesją zapisu, pełny JSON/VRAM
+zgodny, I bez zmian. /tmp/pe-park-phone-i-continue-v1-{proof.json,
+verify.py,results.json}. Bez zmian kodu produkcji ani nowych plików repo;
+wyłącznie input i prywatne karty, bez zapisu HP/stanu/RNG. Brak nowego
+niezależnego PS1 dla I i trwałego replayu CTest. Następne: M074→M076/M077
+i dalsza fabuła. Cała kampania pozostaje nieukończona.
+
 Zwykły zimny Continue H przechodzi teraz do M072/etapu248. Trasa obejmuje
 M063 (nowy wariant: dwa typ3/HP57), M358 (trzy typ6/HP35 i typ4/HP57)
 oraz M067 (dwa typ3/HP35 i typ4/HP44). Wszystkie trzy walki wygrane;

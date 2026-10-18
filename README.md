@@ -117,6 +117,12 @@ movies, creates genuine Day 3 Save L and reaches M092's opening dialogue.
 Full replay, three checkpoint pairs and cold Continue L pass both builds
 with matching reported state, VRAM and save payloads. An earlier Game Over
 replay remains separately verified; victory does consume Revive.
+Ordinary input from L collects M092 Ammo +30, talks to Maeda and Daniel,
+visits the pharmacy and obtains Medicine2, Revive, Medicine3, Cure-M,
+Defense +2 and PE +1. Original item menus apply the armor upgrades and
+handle the full-inventory exchange. Genuine phone Save M, its cold Continue,
+the complete replay and three checkpoint pairs agree across both builds
+in reported state, VRAM, inventory, equipment and save payloads.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

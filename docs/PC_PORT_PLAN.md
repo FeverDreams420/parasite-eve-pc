@@ -2,6 +2,71 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły zimny Continue L przechodzi teraz początek Day3/Soho i aptekę,
+zbiera opisane przedmioty, używa ulepszeń pancerza i tworzy
+prawdziwy Save M przez telefon M097. Na planszy M351 Cross→182→Down/No
+pomija ponowny Save, zachowując L. M092/35 oddaje sterowanie. Skrzynia
+przy[373,444], podejście około[353,269] twarzą na północ, daje Ammo+30;
+flaga85/0x100000 ustawiona, zmienna143=0. Obejrzany panel Ammo+30.
+Wyjście z pokoju wymaga obejścia mebli przez[280,120],[360,-60],[420,-80]
+i[700,0]. Rozmowy85–97 prowadzą do M093. Maeda/105 działa, powtórka
+nadal105, nie uznano106 za sprawdzone. Do Daniela trzeba obejść przód
+samochodu przez[800,-100],[800,-1400],[1700,-1250], potem podejść do
+[1737,-983]; rozmowy98/99 oddają sterowanie. Południową stroną auta
+[1700,-1450]→[4000,-1450]→[4070,-1100] przechodzi się do M096.
+Podejście[950,100]→[1100,300], dialog122→M097.
+
+Apteka M097: Medicine2 z typu6 przy[-96,1110] trafia do wolnego13.
+Ruchomy NPC w alejce obsługuje dialog129. Skrzynia typu7 przy[1644,-62],
+podejście[1467,-60] twarzą na wschód, daje Revive18; pełny ekwipunek→
+oryginalny dialog3→wybór Junk12→wymiana. Revive jest w12, Junk20 zostaje
+w skrzyni/zmienna149=20, flaga85/0x20000 wyzerowana. Medicine2 odebrana
+w całości: zmienna148=0, flaga85/0x10000 ustawiona. Nie ogłaszano
+opróżnienia skrzyni Revive.
+
+Dodatkowo sprawdzono cztery oryginalne punkty odbioru z aktora4:
+Medicine3/ID8 około[-1936,-133], twarz zachód, trafia do17;
+Cure-M/ID16 około[-331,1308], twarz północ, do18;
+Defense+2/ID42 około[-684,-2811], twarz północ, do20;
+PE+1/ID49 około[771,114], twarz wschód, do20 po użyciu Defense+2.
+Ich flagi w25/maska0x1e00000 ustawione. Warianty41/50 nie są tym
+sprawdzone. Przez oryginalne Items→Discard→Yes usunięto dwa Junk17/18,
+aby odebrać leki i ulepszenia. Wcześniejszy Defense+1 ze slotu20,
+nowy Defense+2 i PE+1 zużyte przez Items→lista pancerzy→SP Vest1.
+Bonusy rekordu5: Defense4→5→7, PE1→2. Pozostałe4094 bajty rekordów,
+w tym rekordy broni i liczby załadowanych nabojów, niezmienione.
+Leki pozostają niezużyte.
+Nie jest to audyt wszystkich pozostałych interakcji/pomieszczeń apteki.
+
+Wyjście M097→M096 i ponowne wejście działają. Przy narożnikach regałów
+sterownik używa dokładniejszych waypointów; nie zmieniono kolizji gry.
+Telefon M097: podejście około[-725,-2360], blokada przy[-714,-2346],
+twarz na południe i Cross/dialog6. Oryginalny Save z L11 Down do M12,
+potwierdzenie i zamknięcie paneli. Przy52383: M097/etap328, HP181/181,
+capacity21, weapon10/armor14, menuNULL/lock2, battle0/live0. Revive12,
+Medicine2 13, Medicine3 17, Cure-M18, slot20 pusty; Tool8/19, M20315,
+permity7/11 zachowane. Wszystkie50 slotów i4096B wyposażenia sprawdzone.
+
+Cały cold L→M na niezmienionym /tmp/pe-park-attack-status-v1 normal/SAN
+exit0 w10,52/30,08s. Pełny JSON i1MiBVRAM identyczne z żywą sesją;
+SHA256c926bef9377ec4c47233b9f36aa19f4d976ebc57c17c5364b92a202fcbaef381.
+Źródłowy8192B L niezmieniony; wszystkie8192B nowego M zgodne w trzech
+prywatnych katalogach. M SHA256
+583d6b288638c2c256acc8564759561b224d88c5db30e7099ad9d16c74fdce96.
+Trzy pary checkpointów normal/SAN PASS6/6: Ammo+30/27146, obie skrzynie
+apteki41541 i ukończone wskazane ulepszenia47777. Pełny JSON/VRAM zgodny
+w każdej parze, panel amunicji także z odczytem żywej sesji; L niezmieniony.
+/tmp/pe-day3-l-soho-v1-{proof.json,verify.py,results.json},
+-checkpoints{.py,-proof.json,-results.json}, args/input/logi/VRAM,
+navigation.log i /tmp/pe-day3-loot-control.py. Zimny Continue M normal/SAN
+exit0 w4,32/13,16s: M097/etap328/HP181/181/lock2/menuNULL, wszystkie sloty
+i4096B wyposażenia zgodne z sesją zapisu, cały JSON/VRAM zgodny,
+M niezmieniony. /tmp/pe-day3-phone-m-continue-v1-{proof.json,verify.py,
+results.json}. Bez zmian kodu produkcji ani nowych plików repo, bez zapisów
+HP/stanu/RNG przez debugger. Brak świeżego niezależnego PS1 dla M i trwałego
+CTest tego replayu. Następne: sklep z bronią i wyjazd z Soho do muzeum.
+Kampania pozostaje nieukończona.
+
 Zwykły zimny Continue K wygrywa teraz Eve/M089 bez Heat, przechodzi
 sceny/filmy po walce i nocleg, tworzy prawdziwy Save L na przejściu Day3
 oraz wchodzi do otwierającej rozmowy M092. K zachowuje także zużyte PE:
@@ -62,7 +127,7 @@ cały JSON/VRAM zgodny, L niezmieniony. Plansza wymaga Cross.
 /tmp/pe-day3-save-l-continue-v1-{proof.json,verify.py,results.json}.
 Bez zmian kodu produkcji ani nowych plików repo; wyłącznie input i prywatne
 karty, bez zapisów HP/stanu/RNG przez debugger. Brak nowego niezależnego
-PS1 dla L oraz trwałego CTest tego replayu. Następne: Day3/Soho.
+PS1 dla L oraz trwałego CTest tego replayu. Dalszy zwykły Day3/Soho do M opisano powyżej.
 Cała kampania pozostaje nieukończona.
 
 Zwykły zimny Continue J wygrywa teraz M086 obecnym M16 bez Heat i bez

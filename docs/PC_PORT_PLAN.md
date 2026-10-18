@@ -2,6 +2,52 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+M123 ma teraz przypisane źródło konkretnego trafienia za44HP po zniknięciu
+pierwszej głowy. `/tmp/pe-m123-source-watch-v1` odtwarza zwykły pełny
+prefix, zatrzymuje się64311 i zakłada tylko sprzętowy watchpoint HP.
+Dalsze wejście jest dokładnie z wcześniejszego śladu do65139. Zmiany HP:
+64343→70 i64567→60 w Menu_MainUpdate (konkretnego aktora tych dwóch
+kontaktów nie ustalono),64799→16 w Entity_ResolveDropTable oraz65099→76
+w Battle_ApplySpellEffect. Przy64799 wskaźnik entry odpowiada faktycznie
+stanowi aktora typu1/korpusu; power92, effectType0, category0, chance50,
+coreFlags0x91600000. Pole damage jest zoptymalizowane i odczyt zwraca null;
+44 wynika z rzeczywistych60→16, nie z tej niedostępnej zmiennej.
+Wzorzec0x11000000 jest zgodny ze ścieżką RoomM123_JointBeacon; nie
+przypisujemy tego obrażenia usuniętej głowie3 ani samemu globalnemu PulseRing.
+
+Artefakty `-args.json,.cmd,-hits.jsonl,-verify.py,-proof.json` i moduł
+`/tmp/pe_m123_source_watch_v1.py`. Cały końcowy JSON/1MiBVRAM identyczny
+z wcześniejszym nieobserwowanym normalnym replayem perimeter-v1/65139;
+A2 zachowany. Tylko host cap/ReturnFromFrame w Boot_PollHost, bez zapisów
+pamięci rozgrywki. Watch callback automatycznie kontynuuje, proces72109
+zakończony exit0. To obserwacja normalnego profilu, nie nowy PS1 oracle.
+
+Odczyty `/tmp/pe-m123-beam-projection-v1-{observe.json,hit-observe.json}`
+pokazują przy64793, że obliczenie z macierzy korpusu0 i złącza23, z
+oryginalnym offsetem−70 oraz długością2000, daje dokładnie aktywny segment
+[(108,−1110),(2103,−1242)]. Sprawdza to ten jeden stan, nie wszystkie GTE
+zaokrąglenia. Przy cap64799 HP nadal60 przed aktualizacją tej klatki;
+watchpoint w jej środku notuje już16. Nie mylić tych dwóch faz obserwacji.
+Po jednym asynchronicznym odczycie zbyt wcześnie powtórzono odczyt dopiero
+po rzeczywistym stopie Boot_PollHost. Proces72274 zakończony exit0.
+Prywatny `/tmp/pe_m123_prediction_control.py` czyta wyłącznie macierze.
+
+Dwie kolejne strategie testera pozostają nieudanymi eksperymentami live,
+bez nowych par normal/SAN i bez oznaczania ich jako PASS. beam-dodge-v1
+zwiększa wagę istniejącego wykrywania wiązki2→50, następnie dodaje
+przewidywany pas650; przy65815 Aya10HP, głowy4/288 i2/300. Sam tester
+już wcześniej rozpoznawał JointBeacon — początkowe przypuszczenie o braku
+obsługi tego efektu było błędne. counterclockwise-v1 od64311/80HP odwraca
+obieg, po serii do4 zachowuje80HP zamiast60, ale nadal trafia go wiązka.
+Heal2 pomaga36→96; po seriach do2 cel188HP, Aya ginie przy65999.
+Guard40 był zbyt niski wobec obserwowanych44/66HP; nie należy powtarzać
+ostrzału przy42HP. M123 nie wygrany. `-experiment.json` obu prób jawnie
+zapisuje live_only/nieuruchomione pary; ślady ciągłe, karty zachowane,
+PID72176/72402 terminal exit0. Ulepszenie uników musi uwzględniać fazę
+ataku i moment strzału, a nie tylko kierunek trasy. Niezależny PS1 oracle
+M123 nadal potrzebny. Bez nowych plików repo/zmian gry; pełny cel aktywny.
+
+
 M123 ma pierwszy zwykły dowód pokonania jednej głowy przy żywej Ayi:
 `/tmp/pe-nypd-m123-perimeter-v1`. Pełny cold Continue A2 i prefix61115,
 intro do61431/189HP. Tester od początku używa wewnętrznych punktów

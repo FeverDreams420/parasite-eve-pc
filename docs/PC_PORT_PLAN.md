@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dalsza próba z A2 wraca do M115 i leczy133→163→189 przez rzeczywiste
+Heal1. Kolejne losowe spotkanie znów ma trzy ptaki5/78HP i ukryte kontrolery6.
+Sterowanie tej próby przegrywa: przy28406 HP0, slot12/Revive jeszcze obecny;
+przy28850 oryginalne automatyczne Revive zużywa slot12 i przywraca94/189HP.
+Późniejszy Heal1 daje91→121; jeden ptak pokonany, ale przy30634 Aya ginie
+ponownie. Przy31650 powrót do title/M5000I, battle−1, brak gracza.
+Nie naprawiano ani nie wymuszano HP, PE, flag, RNG czy wyniku walki.
+Nie uznano tego za wygraną ani dalszy udany postęp kampanii.
+
+/tmp/pe-nypd-a2-west-v1-{args.json,input.jsonl,run.py,verify.py,proof.json}:
+normal5,71s/SAN16,50s exit0, pełny JSON/1MiBVRAM zgodny z sesją live;
+SHA256 VRAM02337fe3b16db78ac35ae706e5331f2c87bca6596f0308b3a47d61a93fb034c6.
+Osobny checkpoint Revive28850 normal5,14s/SAN14,70s exit0, pełny JSON/VRAM
+zgodny, HP94/max189, wszystkie50 slotów zachowane poza zużytym Revive12.
+Artefakty-revive-check.py,-revive-results.json,-revive-proof.json.
+Wszystkie prywatne kopie A2 zachowane8192B, bu10 puste, brak błędów
+ASan/UBSan/function lub niepowiązanych opcode'ów. Zakończony proces66952
+nie jest bieżącą sesją do kontynuowania. Następna próba powinna wrócić
+z niezmienionego A2, lepiej przygotować zasoby i sterowanie; pełny port
+pozostaje nieukończony. Przy uruchamianiu debuggera jawnie ustawiaj również
+SBLaunchInfo.SetWorkingDirectory na prywatny katalog /tmp; samo cwd
+narzędzia TTY okazało się niewystarczające. Wstępne uruchomienie66931
+z błędnym cwd zakończono przed sterowaniem i wykluczono z dowodów.
+
+
 Zwykły cold Continue O ma potwierdzony dalszy ciąg po piętrze komisariatu.
 Heal1 przez menu PE leczy140→170. Losowa walka M100 (typ5/35HP i6/70HP)
 kończy się zwycięstwem przy106HP; nagrodowe Medicine1 rzeczywiście leczy

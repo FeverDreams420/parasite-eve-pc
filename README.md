@@ -46,10 +46,20 @@ Scene, player position and facing, HP, capacity, all 50 inventory slots and all
 4096 equipment bytes agree with native Continue. This verifies the loaded
 checkpoint; complete gameplay, pixel and audio fidelity remain unproven.
 
+Ordinary Continue O now also covers another M100 victory, the M116 Ammo +6
+reward and manual reload, the M121 story scene, a three-target M115 victory,
+and a genuine phone Save in M112 with HP 133/189. This private save uses slot A
+(called A2 in the test notes to distinguish it from the early theater save).
+Full replays, five checkpoint pairs and cold Continue pass normal/sanitized
+checks with matching full state, VRAM and save payloads. A later attempt at
+the repeated M115 encounter ends in Game Over after consuming Revive; both
+revival and the final failure reproduce in both profiles. A2 remains unchanged
+and is the current successful campaign checkpoint. This route has no new
+independent PS1 comparison.
+
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and
-story progression through Day 3 to the NYPD. Genuine phone-created checkpoint
-N in M112 also loads in the original USA game: player position, HP, all inventory
+story progression through Day 3 to the NYPD. An earlier branch's genuine phone-created checkpoint N in M112 also loads in the original USA game: player position, HP, all inventory
 slots and equipment records agree. Ordinary input from N wins M120 and M122,
 collects and uses healing items, and reaches the M123 boss. M123 has not been
 won, and the remaining campaign and EX content are incomplete. Earlier runs

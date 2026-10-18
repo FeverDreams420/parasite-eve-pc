@@ -2,6 +2,55 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+M123 — POTWIERDZONE ZWYCIĘSTWO zwykłym inputem od autentycznej A2,
+na niezmienionym kandydacie /tmp/pe-control-stream-v2. Przy69832
+HP66/head4:120: Down8256 do70020, potem Up+Right8240 do70200 unika
+wiązki i kończy przy odpoczywającym korpusie/mode2, nadal66HP.
+/tmp/pe-m123-beam-last-dodge-v1-proof.json: normal22,82s/SAN59,65s,
+exit0, identyczne pełne JSON/1MiB VRAM. Następna salwa M16 kończy70336:
+HP66/head4:64/ammo6. Cold replay normal21,09s/SAN59,42s, exit0,
+pełne JSON/VRAM zgodne: /tmp/pe-m123-head4-64-v1-proof.json.
+
+Down8256 od70336 do70700 przeżywa kolejną wiązkę z4HP, PE9023487,
+ATB9000; korpus mode2. Oryginalne menu PE, packed index4 (Energy Shot6),
+cel4:3, zatwierdzenie przy70764. Trafienie70972 zadaje78 obrażeń:
+head4:64→-14, ammo6→5. Przy71272 Aya żyje z4/195HP, mode2/live0,
+enemies[], menu20/EXP review; wszystkie trzy głowy i korpus nieobecne.
+Nie jest to cleanup po śmierci Ayi. Pełny cold replay od A2 w normal21,77s
+i SAN61,38s, oba exit0; całe JSON identyczne z interaktywnym przebiegiem
+(po wyłączeniu diagnostyki control), pełny JSON i1MiB VRAM identyczne
+między profilami. Dowód /tmp/pe-m123-victory-v1-proof.json,
+kompletny replay /tmp/pe-m123-victory-v1-full-args.json. Źródłowa A2
+i prywatne kopie niezmienione; bu10 puste. PsyZ/SDL nieinstrumentowane.
+Ta para kończy się na EXP, bez dowodu odbioru łupów/zapisu po bossie.
+Normal-only v15 zatwierdza ekrany EXP/level-up i dochodzi71544 do
+menu12/nagrody, HP4/210 i maxPE354. Dalsza kampania pozostaje wymagana.
+
+Następnie v16 dwa razy zatwierdza listę nagród: M9-2/item70 zostaje
+zmaterializowane jako equipment record8/ref264 w wolnym inventory slot8.
+Record8: 0107460046000126360a0b000000010001000100022200000000000000000000.
+V17 po2400 neutralnych VBlank dochodzi74080 do sceny a8004248,
+story432, HP4/210, lock0, menuNULL, flags0, obecni aktorzy1/7/2/4/Aya.
+Pełny cold replay od A2 /tmp/pe-m123-postboss-v1-full-args.json:
+normal21,88s/SAN63,60s, oba exit0, pełny JSON identyczny z interaktywnym
+przebiegiem oraz między profilami, całe1MiB VRAM identyczne. Karty
+źródłowe/prywatne niezmienione, bu10 puste; dowód -proof.json.
+Pole movie14 jest historyczne: video_state0/movie_frame375 już przy71272;
+nie jest dowodem nowego/aktywnego FMV po zwycięstwie. V18 normal-only
+czeka do83680 bez ruchu: ta sama scena/story432/lock0, game_frame5930,
+bez awarii i bez nowego dialogu. To gotowy punkt do dalszej eksploracji,
+nie dowód ukończenia kolejnej lokacji ani trwałego zapisu po bossie.
+Provenance /tmp/pe-m123-victory-v1-provenance.json ponownie hashuje366
+obiektów i961 unikalnych plików: wszystkie zależności źródłowe, biblioteki
+i executable zgodne z manifestem kandydata v2. Nie zmieniono produkcji.
+
+Eksperymenty uniku: corner-v1 ma16 kompletnych prób, corner-v2 osiem,
+wszystkie exit0; source/private cards unchanged. Tylko v2 8256/70020/8240
+jest użyte w powyższej trasie. Dowody /tmp/pe-m123-beam-corner-v{1,2}-proof.json.
+Seria /tmp/pe-m123-beam-window-search-v6-proof.json ma osiem exit0,
+stały Down kończy70700 z4HP i jest użyty do końcowego Energy Shot.
+Nie są to porównania obrazu/audio PS1 ani ukończenie pełnego portu.
+
 M123 — kolejne próby zwykłym inputem po ecf996117, bez zmian produkcyjnych.
 Seria /tmp/pe-m123-beam-window-search-v3-proof.json: osiem stałych
 kierunków od69360 do70150, wszystkie exit0/HP0. Seria v4 od69600

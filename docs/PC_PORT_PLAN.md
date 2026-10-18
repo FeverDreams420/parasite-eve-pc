@@ -2,6 +2,65 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Najnowszy zwykły punkt kampanii: rzeczywisty telefoniczny Save **B2**
+(`/tmp/pe-nypd-preboss-save-v3-live/bu00/BASLUS-006620000000B`),
+8192B, SHA256a0ed3251efd6b5748ebe95501361b5ad37494c11b3ca46d88338f8cc600659c7.
+Powstał z autentycznego A2 po BP/Tune Up i zwycięstwie M122, powrocie
+M122→M124→M122→M121→M117→M121→M115→M112. Oryginalny A2
+pozostaje niezmieniony. B2 jest w M112/etap400: HP99/195, capacity22,
+M16slot10/SpVest14, Medicine2/8 i Medicine3/17 zachowane. Boss M123
+jest jeszcze niepokonany. Osobna wcześniejsza odnoga od A2 do67791
+potwierdza pokonanie głów3 i2, HP76 i pozostającą głowę4/344HP; jej
+dowód /tmp/pe-m123-head2-energy-pair-v1-proof.json pozostaje ważny.
+
+Nowy Save wykonano fizycznymi przyciskami w pustym slocieB przez oryginalny
+telefon, bez Save_Build, przechwytywania save-state i modyfikacji gameplay RAM.
+Cały ślad do69475 jest w /tmp/pe-nypd-preboss-save-v3-full-args.json.
+/tmp/pe-nypd-preboss-save-pair-v1-run.py i -proof.json: pełne cold replaye
+normal15,29s i ASan/UBSan/function42,37s, obaexit0, zgodny cały JSON,
+1MiB VRAM i wszystkie8192B B2 także z live. Prywatne bu00 mają tylko
+niezmieniony A2 i identyczny B2, bu10 puste. Zależności PsyZ/SDL nadal
+nieinstrumentowane. Bez zmian produkcyjnych i nowych plików repo.
+
+Świeży Continue B2: /tmp/pe-nypd-b2-continue-v1-{run.py,proof.json},
+normal4,28s/SAN13,23s exit0, cały JSON/VRAM zgodny. M112, HP99/195,
+menuNULL/lock0; wszystkie50 slotów i4096B wyposażenia zgodne z sesją Save.
+W obu prywatnych bu00 tylko oryginalny B2, niezmieniony po Continue.
+Ten krótszy autentyczny punkt umożliwia dalsze testy bez ponownego
+przechodzenia poprzednich walk i Tune Up przy każdej próbie.
+
+Niezależny retail USA/scph1001 w headless DuckStation także wczytuje B2:
+/tmp/pe-reference-day3-b2-v1/{verify.py,proof.json,loaded-b2-state.json}.
+Zgodne z natywnym Continue: scena0xa8021148, HP99/195, X/Y/Z
+[-97320960,-327680,54984704], yaw1024, capacity22, wszystkie50 slotów,
+całe4096B rekordów wyposażenia oraz wyposażone sloty10/14. Nie zmieniano
+emulowanego RAM ani EXE; hostowy loader tylko wkłada oryginalny payload
+do opakowania karty131072B. Po wczytaniu payload pozostaje identyczny;
+zmieniło się12 bajtów wyłącznie w sektorze63 opakowania (8064..8191),
+więc cały wrapper nie jest deklarowany jako niezmieniony. Firmware/menu
+obsługiwane zwykłymi przyciskami. Obejrzano obraz po wczytaniu. Renderer
+ma window0x0, audioNull. Oracle nie dowodzi jeszcze walki M123, pikseli/PCM
+całej gry ani pełnej kampanii. Emulator PID18445, tool84952 pozostawiono
+w pauzie po Continue, porty24930/GDB i24931/input; sprawdzić żywotność
+przed dalszą pracą. DYLD_LIBRARY_PATH wymaga istniejącego scratchpad/ds/lib
+(/tmp/claude-501/-Users-hasik-Projects-parasite-pc/6ba7dac9-3308-43c5-885c-b83c9cac9b57/scratchpad/ds/lib).
+
+Ustalenia powrotu: ponowna rozmowa M117 daje dialog105 i nie leczy
+(HP99 pozostaje99). M121 przy bezpośrednim powrocie uruchomiło kolejne
+spotkanie; jedna nieudana próba po zbyt długim czekaniu kończy się HP0.
+Wybrana zwykła pauza16VB i powrót zachowują99HP doM115, potwierdzone
+normal/SAN w /tmp/pe-nypd-return-safe-pair-v1-proof.json. Nie jest to dowód
+wyłączenia losowych spotkań. W M115 spotkanie następuje we wszystkich
+czterech badanych wariantach16/32/48/64VB; pierwszy Escape nieudany,
+drugi przechodzi battle4→10 i powrót na mapę, HP99 bez zużycia leków.
+Ten cały wybrany przebieg obejmuje dowód nowego Save opisany wyżej.
+
+Dalsze próby ruchu po łuku /tmp/pe-m123-orbit-v1 i /tmp/pe-m123-orbit-shot-v1
+nie dały zwycięstwa. Orbit650 kończy zHP4, a salwa ostatniej głowy
+344→288 także zHP4; wszystkie te eksperymenty są normal-only. Robot
+utykał przy granicy areny; brak skutecznego uniku nie dowodzi błędu gry
+ani nieuniknionego ataku. Pełny cel portu pozostaje aktywny.
+
 Standardowy `build/parasite-eve-pc` również przebudowano i sprawdzono
 zwykłym replayem head3/64311 w prywatnym katalogu. `-user-build-check.py`
 i `/tmp/pe-battle-detail-v1-user-build-proof.json`: exit0/102,03s, cały

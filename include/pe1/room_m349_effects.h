@@ -5,6 +5,7 @@
 #include "pe1/field_texture_tables.h"
 #include "pe1/render_object.h"
 #include "pe1/room_spark.h"
+#include "pe1/fieldfx_task.h"
 
 /* Room m349 flare spark: jitters its velocity (states 0 and 1) or its
  * position (state 2) while it falls and bounces off the floor height. */
@@ -33,12 +34,15 @@ typedef struct RoomM349FlareParams {
 } RoomM349FlareParams;
 
 extern GteRotation g_RoomM349SparkRotationBase;
-extern GteRotation g_RoomM349JointGlowAnchorNegY;
-extern GteRotation g_RoomM349SparkRotationBase;
-extern GteRotation g_RoomM349JointGlowAnchorNegY;
-extern GteRotation g_RoomM349JointGlowAnchorPosY;
+extern GteShortVector g_RoomM349JointGlowAnchorNegY;
+extern GteShortVector g_RoomM349JointGlowAnchorPosY;
 extern void Akao_Cmd_21(int handle, int arg);
-extern int RoomM349_FlareSparkCallback(int mode, RoomM349FlareSpark *spark);
+int RoomM349_FlareSparkCallback(int mode, void *data, intptr_t argument);
+int RoomM349_FlareRing(int mode, void *data, intptr_t argument);
+intptr_t RoomM349_SetFlareParams(int command, intptr_t x, intptr_t y, intptr_t z);
 extern RenderColor g_RoomM349FlareColor;
+extern RoomM349FlareParams g_RoomM349FlareParams;
+extern u16 g_RoomM349FlareScript[18];
+extern FieldFxTaskProgram g_RoomM349FlareEffects;
 
 #endif

@@ -5,7 +5,8 @@
 /* Spark that jitters its velocity (states 0 and 1) or its position
  * (state 2) by a small random amount each frame and bounces off the floor
  * height; draws as a spinning flare, the last state with a glow ring. */
-int RoomM349_FlareSparkCallback(int mode, RoomM349FlareSpark *spark) {
+int RoomM349_FlareSparkCallback(int mode, void *data, intptr_t argument) {
+    RoomM349FlareSpark *spark = data;
     GteRotation rotation = g_RoomM349SparkRotationBase;
     RenderColor color = g_RoomM349FlareColor;
     int angle;
@@ -81,7 +82,7 @@ int RoomM349_FlareSparkCallback(int mode, RoomM349FlareSpark *spark) {
             u16 clut;
             int kind;
             int palette;
-            angle = ((s16)spark->timer << 10) / 48;
+            angle = ((s16)spark->timer * 1024) / 48;
             fade = rsin(angle * 2) / 32;
             size = rcos(angle) / 2 + 0x2000;
             rotation.z = spark->angle - (s16)spark->timer * 8;
@@ -101,7 +102,7 @@ int RoomM349_FlareSparkCallback(int mode, RoomM349FlareSpark *spark) {
             u16 clut;
             int kind;
             int palette;
-            angle = (s16)spark->timer << 5;
+            angle = (s16)spark->timer * 32;
             fade = rsin(angle * 2) / 32;
             size = rcos(angle) / 4 + 0x2000;
             rotation.z = spark->angle + (s16)spark->timer * 12;
@@ -120,7 +121,7 @@ int RoomM349_FlareSparkCallback(int mode, RoomM349FlareSpark *spark) {
             u16 clut;
             int kind;
             int palette;
-            fade = rcos((s16)spark->timer << 5) / 40;
+            fade = rcos((s16)spark->timer * 32) / 40;
             rotation.z = spark->angle;
             size = spark->size;
             g_FieldFxSpriteParams.depth = 0x80;
@@ -145,12 +146,13 @@ int RoomM349_FlareSparkCallback(int mode, RoomM349FlareSpark *spark) {
  * (and a second kind half a period later) until `lastFrame`, scatters
  * glints around a model joint on random even frames, stops the looping
  * sound 16 frames after the ring ends and draws two joint glows. */
-int RoomM349_FlareRing(int mode, RoomM349FlareTarget *target,
-                  RoomM349FlareParams *params) {
+int RoomM349_FlareRing(int mode, void *data, intptr_t argument) {
+    RoomM349FlareTarget *target = data;
+    RoomM349FlareParams *params = (RoomM349FlareParams *)argument;
     GteShortVector joint;
     GteShortVector anchor;
-    GteRotation rotation = g_RoomM349JointGlowAnchorNegY;
-    GteRotation rotation2 = g_RoomM349JointGlowAnchorPosY;
+    GteShortVector rotation = g_RoomM349JointGlowAnchorNegY;
+    GteShortVector rotation2 = g_RoomM349JointGlowAnchorPosY;
     RenderColor color = g_RoomM349FlareColor;
     RoomM349FlareSpark *child;
     int radius;
@@ -167,24 +169,24 @@ int RoomM349_FlareRing(int mode, RoomM349FlareTarget *target,
         target->position.y = params->y;
         target->position.z = params->z;
         target->position.y = g_RoomFloorY->y;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 20, 70,
-                             (FieldFxCallbackListCallback)RoomM349_FlareSparkCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 20, 70,
+                             RoomM349_FlareSparkCallback);
     case 1:
-        FieldFx_GetActorPosition(ANIM_OWNER_AS(RoomSparkChannel)->pool, 0, (s16 *)&joint);
+        FieldFx_GetActorPosition((char *)g_FieldFxOwner->actor, 0, (s16 *)&joint);
         radius = params->radius;
         period = params->period;
         if (g_FieldFxCurrentAge <= params->lastFrame) {
             if (g_FieldFxCurrentAge % period == 0) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = target->position.x;
                     child->y = target->position.y;
                     child->z = target->position.z;
                     phase = rand();
-                    reach = radius * (rand() & 0xFF) / 256;
-                    child->x += rcos(phase) * reach / 4096;
+                    reach = (s32)((u32)radius * (u32)(rand() & 0xFF)) / 256;
+                    child->x += (s32)((u32)rcos(phase) * (u32)reach) / 4096;
                     child->y -= rand() & 0x1F;
-                    child->z += rsin(phase) * reach / 4096;
+                    child->z += (s32)((u32)rsin(phase) * (u32)reach) / 4096;
                     child->angle = rand();
                     child->vx = rand() % 32 - 16;
                     child->vy = -(rand() % 32);
@@ -194,16 +196,16 @@ int RoomM349_FlareRing(int mode, RoomM349FlareTarget *target,
                 }
             }
             if (g_FieldFxCurrentAge % period == period / 2) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = target->position.x;
                     child->y = target->position.y;
                     child->z = target->position.z;
                     phase = rand();
-                    reach = radius * (rand() & 0xFF) / 256;
-                    child->x += rcos(phase) * reach / 4096;
+                    reach = (s32)((u32)radius * (u32)(rand() & 0xFF)) / 256;
+                    child->x += (s32)((u32)rcos(phase) * (u32)reach) / 4096;
                     child->y -= rand() & 0x1F;
-                    child->z += rsin(phase) * reach / 4096;
+                    child->z += (s32)((u32)rsin(phase) * (u32)reach) / 4096;
                     child->angle = rand();
                     child->vx = rand() % 24 - 12;
                     child->vy = -(rand() % 24);
@@ -214,7 +216,7 @@ int RoomM349_FlareRing(int mode, RoomM349FlareTarget *target,
             }
         }
         if (!(g_FieldFxCurrentAge & 1) && !(rand() & 1)) {
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = joint.x;
                 child->y = joint.y;
@@ -231,7 +233,7 @@ int RoomM349_FlareRing(int mode, RoomM349FlareTarget *target,
                 child->timer = 0;
             }
         }
-        if (g_FieldFxCurrentAge == params->lastFrame + 16 && target->sound != -1) {
+        if (g_FieldFxCurrentAge == (s32)((u32)params->lastFrame + 16u) && target->sound != -1) {
             Akao_Cmd_21(target->sound, 0);
         }
         if (g_FieldFxCurrentAge < 16) break;
@@ -251,7 +253,7 @@ int RoomM349_FlareRing(int mode, RoomM349FlareTarget *target,
         }
         size = 0x2AA;
         phase = (rand() & 0x1F) + 0x20;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 13, &rotation, &anchor);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 13, &rotation, &anchor);
         {
             u16 clut;
             int kind;
@@ -264,7 +266,7 @@ int RoomM349_FlareRing(int mode, RoomM349FlareTarget *target,
                           (s16)g_FieldFxSpriteParams.parameter02 + 0xD8, clut, 1, phase,
                           &color);
         }
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 13, &rotation2, &anchor);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 13, &rotation2, &anchor);
         {
             u16 clut;
             int kind;
@@ -293,7 +295,8 @@ int RoomM349_FlareRing(int mode, RoomM349FlareTarget *target,
     return 0;
 }
 
-short *RoomM349_SetFlareParams(int arg0, int arg1, int arg2, int arg3) {
+intptr_t RoomM349_SetFlareParams(int arg0, intptr_t first, intptr_t second, intptr_t third) {
+    s32 arg1 = (s32)first, arg2 = (s32)second, arg3 = (s32)third;
     if (arg0 == 1) {
         g_RoomM349FlareParams.x = arg1;
         g_RoomM349FlareParams.y = arg2;
@@ -308,5 +311,16 @@ short *RoomM349_SetFlareParams(int arg0, int arg1, int arg2, int arg3) {
         }
         g_RoomM349FlareParams.period = arg1;
     }
-    return (short *)&g_RoomM349FlareParams;
+    return (intptr_t)&g_RoomM349FlareParams;
 }
+
+/* Original USA M349 constants and task program, linked in place of its overlay. */
+GteRotation g_RoomM349SparkRotationBase = {0,0,0,0};
+RenderColor g_RoomM349FlareColor = {32,200,0,0};
+GteShortVector g_RoomM349JointGlowAnchorNegY = {-36,-13,-15,0};
+GteShortVector g_RoomM349JointGlowAnchorPosY = {-36,13,-15,0};
+RoomM349FlareParams g_RoomM349FlareParams;
+u16 g_RoomM349FlareScript[18] = {5,0,0,1,6,37,4,62,0,1,0,1,2,0,0,0,0,0};
+FieldFxTaskProgram g_RoomM349FlareEffects = {
+    {{RoomM349_FlareRing}, {12}}, RoomM349_SetFlareParams, g_RoomM349FlareScript
+};

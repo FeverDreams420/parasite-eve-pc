@@ -16,6 +16,7 @@
 #include "pe1/room_paired_glow.h"
 #include "pe1/room_line_burst.h"
 #include "pe1/room_m123.h"
+#include "pe1/room_m349_effects.h"
 #include "pe1/room_m123_glow_burst.h"
 #include "pe1/room_m123_beacon.h"
 #include "pe1/render_camera.h"
@@ -573,6 +574,8 @@ int Scene_LoadRoom(unsigned int roomId)
             if(slot==143 && record[i].u.handlerAddress==0x801955d4u)native=&g_RoomM123PulseRingEffects;
             if(slot==144 && record[i].u.handlerAddress==0x8019564cu)native=&g_RoomM123WaveBurstEffects;
         }
+        if (map + 1 == 349 && slot == 181 && record[i].u.handlerAddress == 0x8019015cu)
+            native = &g_RoomM349FlareEffects;
         if (map + 1 == 86) {
             if(slot==120 && record[i].u.handlerAddress==0x80190aecu)native=&g_RoomM086SeekerProgram;
             if(slot==121 && record[i].u.handlerAddress==0x80190b3cu)native=&g_RoomM086GlintProgram;
@@ -715,6 +718,9 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
             g_RoomM005BeaconOffset = (GteShortVector){0};
             g_RoomM005BeaconCenter = (GteShortVector){0};
+        } else if (map + 1 == 349 && slot == 181) {
+            g_FieldFxTaskPrograms[slot - 85] = &g_RoomM349FlareEffects;
+            memset(&g_RoomM349FlareParams, 0, sizeof(g_RoomM349FlareParams));
         } else if (map + 1 == 123) {
             if(slot==73){
                 g_PmCmdHandlerTable[73]=&g_RoomActorClassTable[4];

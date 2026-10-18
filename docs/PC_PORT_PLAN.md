@@ -2,6 +2,56 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Najnowsza zmiana produkcyjna: cały oryginalny moduł
+src/overlays/room_m349_cruiser/m349.c jest kompilowany i statycznie powiązany
+z rzeczywistym loaderem M349. Wszystkie trzy istniejące funkcje pozostają
+w miejscu: Spark, FlareRing i SetFlareParams. Poprawiono rzeczywisty ABI
+callbacków oraz pełną szerokość wskaźnika argumentu; usunięto cast funkcji.
+Pula cząstek i właściciel korzystają z kanonicznych g_FieldFxActiveTaskSlot->end
+oraz g_FieldFxOwner->actor, zamiast widoków offsetów PS1 wskazujących na
+hostach64bit inne pola. Uzupełniono oryginalne cztery stałe,18 słów skryptu
+i descriptor. Scene_LoadRoom waliduje rzeczywisty slot181/adres8019015c,
+rejestruje program pod indeksem96 i zeruje stan przy każdym wejściu.
+Ujemne przesunięcia zastąpiono równoważnymi mnożeniami, a obliczenia
+promienia i lastFrame zachowują wrap32 bez signed-overflow UB.
+Bez nowych plików repo, przenoszenia funkcji i zastępowania mechaniki.
+
+Nowe testy w istniejącym tests/original_actor_animation.c i CMake:
+original-game-m349 oraz original-game-m349-load. Oracle
+/tmp/pe-m349-cpu.py wykonuje oryginalny kod USA i rzeczywisty BIOS rand,
+bez zastępowania callbacków ani helperów puli:5184 stanów Spark,
+360 konfiguracji i3456 aktualizacji emitera/puli, łącznie9000 przypadków.
+Hashy stanów/payloadów/guardów/RNG używa też test natywny. Promienie i czasy
+obejmują skrajne signed32. /tmp/pe-m349-code-proof.{json,log} wiąże oracle
+z4392B kodu faktycznie odczytanego przez loader z CUE; SHA256
+07bdadcb60d76257a11b3aed2f23c31ace638734b2a4eae15c62af7e1dfcf137.
+Osobno cztery pełne autorskie cykle PM (dwa okresy i oba draw sloty)
+rysują cząstki/poświaty, wygasają naturalnie i zachowują granice puli,
+areny pakietów oraz poprawne natywne łańcuchy OT. Dane i descriptor
+porównano z rzeczywistym USA CUE. Loader dwukrotnie czyta cały M349,
+rozwija geometrię, rejestruje181 i zeruje stan. Początkowa próba fixture
+nie włączyła realnego I/O; skorygowano konfigurację testu. Nie wymagało
+to zmiany formatu geometrii ani osłabienia walidacji.
+
+Zamrożony kandydat /tmp/pe-m349-v3:174+174 świeże obiekty, gry i fixture
+normal/SAN. -build-manifest.json/-build-proof.json, ponowne końcowe
+rehashowanie348 obiektów, wszystkich zależności, bibliotek i4 executable.
+M349 nie generuje ostrzeżeń. room_load.c zachowuje wcześniejsze ostrzeżenie
+przy widoku scene_load_scratch w innym loaderze; nie jest to release audit.
+PsyZ/SDL pozostają wcześniejszymi nieinstrumentowanymi archiwami.
+-check.py/-verification.json:14 terminalnych procesów exit0, w tym pełne
+Melissa i --assets oraz nowe dwa testy M349 w obu profilach. Trzy pary
+zwykłych replayów (head2 M123, telefon B2, Medicine2) mają identyczne całe
+JSON i1MiB VRAM jak poprzedni kandydat oraz normal/SAN. Telefoniczny B2
+ma również identyczne8192B; źródłowe karty pozostały niezmienione.
+Aktualny użytkowy build/parasite-eve-pc przebudowany: -user-proof.json,
+head2 replay exit0/104,87s, cały JSON/VRAM zgodny z wcześniejszym kandydatem,
+HP76, A2 niezmieniony. SHA256
+94a77f03b71fe672fe61f33132dd634f9e4c06bdfc1668b164aaf6f136a9e714.
+To dowód całego modułu efektów i rzeczywistego loadera M349 w izolacji,
+NIE przejście kampanii do krążownika ani porównanie pikseli/PCM z PS1.
+M123 oraz pełna kampania nadal nieukończone; pełny cel pozostaje aktywny.
+
 Nowy zwykły test przedmiotu Full Cure w walce M123:
 /tmp/pe-m123-fullcure-v1-pair-{results,proof}.json i
 /tmp/pe-m123-fullcure-v1-verify.py. Cztery terminalne procesy gry exit0:
@@ -75,7 +125,7 @@ Log /tmp/pe-melissa-user-report-recheck.log. Sprawdzono pokonanie bossa,
 zamknięcie dialogu60, HP14/45 i odzyskanie sterowania. Opkody206/82
 pozostają związane z oryginalnymi funkcjami; nowa poprawka nie była potrzebna.
 
-Najnowsza zmiana produkcyjna: w całym istniejącym `src/main/battle/encounter.c`
+Wcześniejsza zmiana produkcyjna: w całym istniejącym `src/main/battle/encounter.c`
 usunięto pięć nieużywanych `matchingStackReserve` (łącznie2392B deklaracji),
 powtórzone definicje tentative trzech globali i kwalifikator `volatile`
 widoku pakietu, opisany w starym komentarzu jako obejście byte match.

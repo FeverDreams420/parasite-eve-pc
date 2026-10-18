@@ -1,6 +1,8 @@
 #ifndef PE1_ROOM_M350_EFFECTS_H
 #define PE1_ROOM_M350_EFFECTS_H
 
+#include "pe1/fieldfx_task.h"
+
 #include "pe1/gte_types.h"
 
 typedef struct RoomM350ParticleMotion {
@@ -50,11 +52,11 @@ typedef struct RoomM350PointerQueue {
     s16 count;
 } RoomM350PointerQueue;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PointerQueue, pendingPositions) == 0x10,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PointerQueue, pendingPositions) == 4*sizeof(void *),
                   room_m350_pointer_queue_positions_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PointerQueue, anchorActor) == 0x50,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PointerQueue, anchorActor) == 4*sizeof(void *)+64,
                   room_m350_pointer_queue_actor_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PointerQueue, count) == 0x56,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PointerQueue, count) == 5*sizeof(void *)+66,
                   room_m350_pointer_queue_count_offset);
 
 typedef struct RoomM350PositionQueue {
@@ -67,7 +69,7 @@ typedef struct RoomM350PositionQueue {
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PositionQueue, anchorActor) == 0x40,
                   room_m350_position_queue_actor_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PositionQueue, count) == 0x48,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350PositionQueue, count) == 64+sizeof(void *)+4,
                   room_m350_position_queue_count_offset);
 
 typedef struct RoomM350FlareParticle {
@@ -142,41 +144,11 @@ typedef struct RoomM350Model {
     u8 transformCount;
 } RoomM350Model;
 
-typedef struct RoomM350EffectOwner {
-    u32 flags;
-    u32 reserved04;
-    void *asset;
-    u8 reserved0C[0x40];
-    u32 status;
-} RoomM350EffectOwner;
-
-typedef struct RoomM350EffectInstance {
-    RoomM350EffectOwner *owner;
-    u8 reserved04[10];
-    u8 animation;
-    u8 reserved0F[7];
-    u16 frame;
-    s16 reserved18;
-    u16 previousFrame;
-    u8 reserved1C[30];
-    u16 yaw;
-    u8 reserved3C[0x178];
-    RoomM350Model *model;
-    u8 reserved1B8[0x30];
-    GteMatrix transform;
-    u8 reserved208[0x30];
-    GteMatrix *transforms;
-} RoomM350EffectInstance;
-
-typedef struct RoomM350EffectActor {
-    s32 reserved[2];
-    RoomM350EffectInstance *instance;
-} RoomM350EffectActor;
-
-typedef struct RoomM350EffectEmitter {
-    s32 reserved[2];
-    void *pool;
-} RoomM350EffectEmitter;
+/* Runtime actor/state/task records use their canonical native layouts. */
+typedef FieldActorState RoomM350EffectOwner;
+typedef FieldActor RoomM350EffectInstance;
+typedef FieldFxObjectPrefix RoomM350EffectActor;
+typedef FieldFxTaskSlot RoomM350EffectEmitter;
 
 PE1_STATIC_ASSERT(sizeof(RoomM350ParticleMotion) == 8,
                   room_m350_particle_motion_size);
@@ -188,7 +160,7 @@ PE1_STATIC_ASSERT(sizeof(RoomM350FlareParticle) == 8,
                   room_m350_flare_particle_size);
 PE1_STATIC_ASSERT(sizeof(RoomM350CloudParticleState) == 8,
                   room_m350_cloud_particle_state_size);
-PE1_STATIC_ASSERT(sizeof(RoomM350CloudParticle) == 20,
+PE1_STATIC_ASSERT(sizeof(RoomM350CloudParticle) == sizeof(void *)+16,
                   room_m350_cloud_particle_size);
 PE1_STATIC_ASSERT(sizeof(RoomM350SineParticle) == 24,
                   room_m350_sine_particle_size);
@@ -199,33 +171,93 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350SineParticle, brightness) == 0x10,
                   room_m350_sine_particle_brightness_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350Model, transformCount) == 2,
                   room_m350_model_transform_count_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350CloudParticle, position) == 4,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350CloudParticle, position) == sizeof(void *),
                   room_m350_cloud_particle_position_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350CloudParticle, size) == 0xA,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350CloudParticle, size) == sizeof(void *)+6,
                   room_m350_cloud_particle_size_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350CloudParticle, state) == 0xC,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350CloudParticle, state) == sizeof(void *)+8,
                   room_m350_cloud_particle_state_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350Particle, motion) == 8,
                   room_m350_particle_motion_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350Particle, tail) == 16,
                   room_m350_particle_tail_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350EffectOwner, status) == 0x4C,
-                  room_m350_owner_status_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350EffectOwner, asset) == 8,
-                  room_m350_owner_asset_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350EffectInstance, animation) == 0xE,
-                  room_m350_instance_animation_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350EffectInstance, frame) == 0x16,
-                  room_m350_instance_frame_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350EffectInstance, yaw) == 0x3A,
-                  room_m350_instance_yaw_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350EffectInstance, model) == 0x1B4,
-                  room_m350_instance_model_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350EffectInstance, transform) == 0x1E8,
-                  room_m350_instance_transform_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350EffectInstance, transform.t) == 0x1FC,
-                  room_m350_instance_position_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM350EffectInstance, transforms) == 0x238,
-                  room_m350_instance_transforms_offset);
 
+
+/* Native task and particle callbacks keep the original entry points. */
+int RoomM350_AreaController(int mode, void *state, intptr_t argument);
+int RoomM350_AreaDropletCallback(int mode, void *state, intptr_t argument);
+int RoomM350_AreaDropletEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_AreaPlayerPulseCallback(int mode, void *state, intptr_t argument);
+int RoomM350_AreaPlayerPulseEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_AreaSparkCallback(int mode, void *state, intptr_t argument);
+int RoomM350_AreaSparkEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_AreaZoneEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_BodyDebrisCallback(int mode, void *state, intptr_t argument);
+int RoomM350_BodyDebrisEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_BodyRingCallback(int mode, void *state, intptr_t argument);
+int RoomM350_BodyRingEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_DropBurstCallback(int mode, void *state, intptr_t argument);
+int RoomM350_DropBurstEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_DropCallback(int mode, void *state, intptr_t argument);
+int RoomM350_DropController(int mode, void *state, intptr_t argument);
+int RoomM350_DropEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_DropFlareCallback(int mode, void *state, intptr_t argument);
+int RoomM350_DropFlareEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_DropHitCallback(int mode, void *state, intptr_t argument);
+int RoomM350_DropHitEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_DropSplashCallback(int mode, void *state, intptr_t argument);
+int RoomM350_DropSplashEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_DropTrailCallback(int mode, void *state, intptr_t argument);
+int RoomM350_DropTrailEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_HandFlashCallback(int mode, void *state, intptr_t argument);
+int RoomM350_HandFlashEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_HandGlowCallback(int mode, void *state, intptr_t argument);
+int RoomM350_HandGlowEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_HandPulseCallback(int mode, void *state, intptr_t argument);
+int RoomM350_HandPulseEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_HandSparkCallback(int mode, void *state, intptr_t argument);
+int RoomM350_HandSparkEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_HandSweepController(int mode, void *state, intptr_t argument);
+int RoomM350_HandSweepHitCallback(int mode, void *state, intptr_t argument);
+int RoomM350_HandSweepHitEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_HandSweepTrapCallback(int mode, void *state, intptr_t argument);
+int RoomM350_HandSweepTrapEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_OrbBurstCallback(int mode, void *state, intptr_t argument);
+int RoomM350_OrbBurstEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_OrbCallback(int mode, void *state, intptr_t argument);
+int RoomM350_OrbController(int mode, void *state, intptr_t argument);
+int RoomM350_OrbEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_OrbHandSparkCallback(int mode, void *state, intptr_t argument);
+int RoomM350_OrbHandSparkEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_OrbImpactCallback(int mode, void *state, intptr_t argument);
+int RoomM350_OrbImpactEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_OrbTableFlashCallback(int mode, void *state, intptr_t argument);
+int RoomM350_OrbTableFlashEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_OrbTrailCallback(int mode, void *state, intptr_t argument);
+int RoomM350_OrbTrailEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_RushCloudCallback(int mode, void *state, intptr_t argument);
+int RoomM350_RushCloudEmitter(int mode, void *state, intptr_t argument);
+int RoomM350_RushController(int mode, void *state, intptr_t argument);
+int RoomM350_RushFlareCallback(int mode, void *state, intptr_t argument);
+int RoomM350_RushFlareEmitter(int mode, void *state, intptr_t argument);
+intptr_t RoomM350_HandConfigure(int mode, intptr_t first, intptr_t second, intptr_t third);
+intptr_t RoomM350_OrbConfigure(int mode, intptr_t first, intptr_t second, intptr_t third);
+intptr_t RoomM350_AreaConfigure(int mode, intptr_t first, intptr_t second, intptr_t third);
+intptr_t RoomM350_DropConfigure(int mode, intptr_t first, intptr_t second, intptr_t third);
+intptr_t RoomM350_RushConfigure(int mode, intptr_t first, intptr_t second, intptr_t third);
+typedef struct RoomM350TableFlashEntry {u8 index,alternate;} RoomM350TableFlashEntry;
+extern RoomM350TableFlashEntry g_RoomM350OrbTableFlashEntries[13][2];
+
+extern FieldFxTaskProgram g_RoomM350HandEffects;
+extern u16 g_RoomM350HandScript[];
+extern FieldFxTaskProgram g_RoomM350OrbEffects;
+extern u16 g_RoomM350OrbScript[];
+extern FieldFxTaskProgram g_RoomM350AreaEffects;
+extern u16 g_RoomM350AreaScript[];
+extern FieldFxTaskProgram g_RoomM350DropEffects;
+extern u16 g_RoomM350DropScript[];
+extern FieldFxTaskProgram g_RoomM350RushEffects;
+extern u16 g_RoomM350RushScript[];
+extern FieldFxTaskProgram g_RoomM350BodyEffects;
+extern u16 g_RoomM350BodyScript[];
 #endif

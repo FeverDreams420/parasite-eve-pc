@@ -18,24 +18,28 @@ typedef struct RoomM350Drop {
  * the queued position count and the splash/contact positions. */
 typedef struct RoomM350TrailQueue {
     GteShortVector points[4];
-    u8 reserved20[2];
-    u8 splashed;
-    u8 touched;
+    union {
+        u8 event_slots[4];
+        struct {u8 reserved20[2];u8 splashed;u8 touched;};
+    };
     s32 reserved24;
     s16 count;
     s16 reserved2A;
     s16 splash_x;
     s16 splash_z;
-    s16 hit_x;
-    s16 hit_y;
-    s16 hit_z;
+    union {
+        s16 hit_values[4];
+        struct {s16 hit_x,hit_y,hit_z,lunge_timer;};
+    };
+    s16 hit_cooldown;
+    u8 done;
 } RoomM350TrailQueue;
 
 extern RoomM350TrailQueue g_RoomEffectTrailPositions;
 extern GteRotation g_RoomM350StarFanTilt;
 extern RenderColor g_RoomM350DropColors[3];
 
-int RoomM350_DropCallback(int mode, RoomM350Drop *drop);
+int RoomM350_DropCallback(int mode, void *state, intptr_t argument);
 int RoomM350_TestDropPlayerHit(short *point, int radius);
 
 #endif

@@ -207,6 +207,9 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/window_class_table.c
     src/overlays/room_m272_liberty/m272.c
     src/overlays/room_m349_cruiser/m349.c
+    src/overlays/room_m350_cruiser/m350.c
+    src/overlays/room_m350_cruiser/m350_callbacks.c
+    src/overlays/room_m350_cruiser/RoomEffect_ConfiguredPulseCallback.c
     src/overlays/room_m005_theater/m005.c
     src/overlays/room_m086_central_park/m086.c
     src/overlays/room_m089_central_park/m089.c
@@ -433,6 +436,8 @@ if(BUILD_TESTING)
     add_test(NAME original-attack-effect-status-gate COMMAND test-original-actor-animation --attack-effect-status-gate)
     add_test(NAME original-akao-queue-backpressure COMMAND test-original-actor-animation --akao-queue-backpressure)
     set_tests_properties(original-akao-queue-backpressure PROPERTIES TIMEOUT 30 LABELS "audio")
+    add_test(NAME original-game-m350 COMMAND test-original-actor-animation --m350)
+    set_tests_properties(original-game-m350 PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
     add_test(NAME original-game-m349-load COMMAND test-original-actor-animation --m349-load)
     set_tests_properties(original-game-m349-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets")
     add_test(NAME original-game-m349 COMMAND test-original-actor-animation --m349)

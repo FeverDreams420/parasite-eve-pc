@@ -1,6 +1,7 @@
 #include "pe1/field_orbit_point.h"
 #include "pe1/room_m123.h"
 #include "pe1/room_m349_effects.h"
+#include "../src/overlays/room_m350_cruiser/room_m350_data.h"
 #include "pe1/scene_room_load.h"
 #include "pe1/room_m123_beacon.h"
 #include "pe1/room_m123_glow_burst.h"
@@ -6550,6 +6551,100 @@ static u64 m349_hash_bytes(u64 hash,const void *data,size_t count)
 {
     const u8 *bytes=data;for(size_t i=0;i<count;++i)hash=(hash^bytes[i])*UINT64_C(1099511628211);
     return hash;
+}
+
+static int original_m350_states(void)
+{
+    const FieldFxTaskCallback callbacks[]={RoomM350_HandSparkCallback,RoomM350_HandPulseCallback,RoomM350_HandGlowCallback,RoomM350_HandSweepTrapCallback,RoomM350_HandSweepHitCallback,RoomM350_HandFlashCallback,RoomM350_OrbHandSparkCallback,RoomM350_OrbBurstCallback,RoomM350_OrbTrailCallback,RoomM350_OrbTableFlashCallback,RoomM350_AreaSparkCallback,RoomM350_AreaDropletCallback,RoomM350_AreaPlayerPulseCallback,RoomM350_DropHitCallback,RoomM350_DropBurstCallback,RoomM350_DropTrailCallback,RoomM350_DropFlareCallback,RoomM350_DropSplashCallback,RoomM350_BodyDebrisCallback,RoomM350_BodyRingCallback};
+    const int modes[]={0,1,3},ages[]={-1,0,1,3,4,7,8,15,16,17,31,32,47,48,127,255,32767,65535};
+    int old_age=g_FieldFxCurrentAge;u64 hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    for(unsigned fn=0;fn<20;++fn)for(unsigned mode=0;mode<3;++mode)for(unsigned age=0;age<18;++age)for(unsigned variant=0;variant<4;++variant){
+        _Alignas(void *) u8 data[80];for(unsigned i=0;i<80;++i)data[i]=(i*37+variant*3)&255;
+        g_FieldFxCurrentAge=ages[age];u32 result=callbacks[fn](modes[mode],data+8,0);
+        hash=m349_hash_bytes(hash,&result,4);hash=m349_hash_bytes(hash,data,80);++cases;
+    }
+    g_FieldFxCurrentAge=old_age;
+    if(cases!=4320 || hash!=UINT64_C(0x5e7c9ee5b292e233)){
+        fprintf(stderr,"M350 callback CPU mismatch %u/%016llx\n",cases,(unsigned long long)hash);return 0;}
+    RoomM350OrbStorage saved=g_RoomM350OrbData;FieldFxObjectPrefix *old_owner=g_FieldFxOwner;
+    FieldFxTaskSlot *old_slot=g_FieldFxActiveTaskSlot;FieldFxTaskContext *old_context=g_FieldFxTaskContext;
+    _Alignas(void *) char pool[2048];u8 start_guard[16];memset(start_guard,0xa5,16);
+    FieldFxTaskSlot task={.start=(char *)start_guard,.end=pool};FieldActor actor={.rot_y=123};FieldFxObjectPrefix owner={.actor=&actor};
+    g_FieldFxOwner=&owner;g_FieldFxActiveTaskSlot=&task;g_FieldFxTaskContext=NULL;memset(&g_RoomM350OrbData,0,sizeof(g_RoomM350OrbData));
+    GteShortVector positions[]={{10,20,30,0},{-100,0,300,0},{1000,-10,-20,0}};
+    for(unsigned i=0;i<3;++i)g_RoomM350OrbData.pointers[i]=&positions[i];
+    g_RoomM350OrbState.pointerCount=3;
+    if(RoomM350_OrbImpactEmitter(0,NULL,0)<=0 || RoomM350_OrbImpactEmitter(1,NULL,0) || g_RoomM350OrbState.pointerCount)return 0;
+    FieldFxCallbackList *list=(void *)pool;
+    if(list->count!=16 || list->callback!=RoomM350_OrbImpactCallback)return 0;
+    for(unsigned i=0;i<3;++i){
+        FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);GteShortVector *pointer;short offset;
+        memcpy(&pointer,entry->state,sizeof(pointer));memcpy(&offset,entry->state+sizeof(pointer),2);
+        if(entry->active!=1 || pointer!=&positions[i] || offset)return 0;
+    }
+    for(unsigned i=0;i<2;++i)g_RoomM350OrbData.positions[i]=positions[i];g_RoomM350OrbState.positionCount=2;
+    if(RoomM350_OrbTrailEmitter(0,NULL,0)<=0 || RoomM350_OrbTrailEmitter(1,NULL,0) || g_RoomM350OrbState.positionCount)return 0;
+    list=(void *)pool;if(list->count!=50 || list->callback!=RoomM350_OrbTrailCallback)return 0;
+    for(unsigned i=0;i<2;++i){FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);GteShortVector value;memcpy(&value,entry->state,8);
+        if(entry->active!=1 || value.x!=positions[i].x || value.y!=positions[i].y || value.z!=positions[i].z || value.pad!=123)return 0;}
+    for(unsigned i=0;i<16;++i)if(start_guard[i]!=0xa5)return 0;
+    /* Execute all authored flash-table frames with both transform owners and
+     * exhausted pools; the golden result executes the retail emitter and pool. */
+    RenderMatrix own_matrices[32]={0},other_matrices[32]={0};FieldActor other={0};
+    actor.render_object.matrices=own_matrices;other.render_object.matrices=other_matrices;
+    for(unsigned i=0;i<32;++i)for(unsigned j=0;j<3;++j){
+        own_matrices[i].translation[j]=i*100+j*7+11;
+        other_matrices[i].translation[j]=-(int)(i*103+j*13+17);
+    }
+    u64 table_hash=UINT64_C(14695981039346656037);unsigned table_cases=0;
+    for(unsigned frame=0;frame<18;++frame)for(unsigned repeat=0;repeat<3;++repeat)for(unsigned complete=0;complete<2;++complete){
+        const unsigned repeats[]={1,2,8};memset(pool,0xa5,sizeof(pool));
+        actor.anim.fixed=frame*65536;g_RoomM350OrbActor=&other;g_RoomM350OrbState.completionFlags[0]=complete;
+        if(RoomM350_OrbTableFlashEmitter(0,NULL,0)<=0)return 0;
+        u32 result=0;for(unsigned i=0;i<repeats[repeat];++i)result=RoomM350_OrbTableFlashEmitter(1,NULL,0);
+        table_hash=m349_hash_bytes(table_hash,&result,4);list=(void *)pool;
+        if(list->count!=10 || list->callback!=RoomM350_OrbTableFlashCallback)return 0;
+        for(unsigned i=0;i<10;++i){FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);
+            table_hash=m349_hash_bytes(table_hash,&entry->active,2);
+            if(entry->active)table_hash=m349_hash_bytes(table_hash,entry->state,8);
+        }
+        ++table_cases;
+    }
+    if(table_cases!=108 || table_hash!=UINT64_C(0xceb97844900f5774)){
+        fprintf(stderr,"M350 flash-table CPU mismatch %u/%016llx\n",table_cases,(unsigned long long)table_hash);return 0;}
+    g_RoomM350OrbData=saved;g_FieldFxOwner=old_owner;g_FieldFxActiveTaskSlot=old_slot;g_FieldFxTaskContext=old_context;
+    puts("Original M350: 4320 states of 20 unchanged USA CPU callbacks match, 108 retail flash-table/pool states, native pointer/position queue aliases and full-width callback payloads passed");return 1;
+}
+
+static int original_m350_assets(PeDisc *disc,PeDiscFile *exe)
+{
+    SceneRoomSectorRange range;PeDiscFile archive;
+    if(!pe_disc_find(disc,"PE.IMG",&archive) || !pe_disc_read(disc,exe,0x800ull+0x80093378u-0x80010000u+349*8,&range,8))return 0;
+    size_t bytes=(size_t)range.roomSectors*2048;SceneAssetView *room=malloc(bytes);if(!room)return 0;
+    int ok=bytes>0x45594 && pe_disc_read(disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,room,bytes);
+    if(ok){
+        SceneRoomDirectory *dir=SceneAsset_ResolveOffset(room,room->header.directoryOffset);SceneRoomRecord *records=SceneAsset_ResolveOffset(room,dir->scripts&0x3fffff);
+        if(memcmp(g_RoomM350OrbTableFlashEntries,(u8 *)room+0x8019a4d4u-0x8018efe8u,52))ok=0;
+        const unsigned slots[]={75,70,155,156,73,158,161,159,160};const u32 addresses[]={0x8019a350,0x8019a318,0x8019a468,0x8019a508,0x8019a388,0x8019a5a0,0x8019a73c,0x8019a638,0x8019a6a0};
+        if(dir->scripts>>22!=9)ok=0;
+        for(unsigned i=0;i<9 && ok;++i)if(records[i].source.bytes.slot!=slots[i] || records[i].u.handlerAddress!=addresses[i])ok=0;
+        const struct {FieldFxTaskProgram *program;u32 address,script;size_t script_bytes;intptr_t (*init)(int,intptr_t,intptr_t,intptr_t);} programs[]={
+            {&g_RoomM350HandEffects,0x8019a468,0x8019a3d4,60,RoomM350_HandConfigure},{&g_RoomM350OrbEffects,0x8019a508,0x8019a4a0,60,RoomM350_OrbConfigure},
+            {&g_RoomM350AreaEffects,0x8019a5a0,0x8019a540,44,RoomM350_AreaConfigure},{&g_RoomM350DropEffects,0x8019a638,0x8019a5d8,60,RoomM350_DropConfigure},
+            {&g_RoomM350RushEffects,0x8019a6a0,0x8019a670,32,RoomM350_RushConfigure},{&g_RoomM350BodyEffects,0x8019a73c,0x8019a710,36,NULL}};
+        const struct {u32 address;FieldFxTaskCallback fn;} callbacks[]={
+{0x80196e04,RoomM350_AreaController},{0x80197364,RoomM350_DropEmitter},{0x801976c8,RoomM350_DropHitEmitter},{0x8019784c,RoomM350_DropTrailEmitter},{0x80197b98,RoomM350_DropBurstEmitter},{0x80197da8,RoomM350_DropController},{0x80198400,RoomM350_RushFlareEmitter},{0x80198abc,RoomM350_RushCloudEmitter},{0x80198cf8,RoomM350_RushController},{0x801992a0,RoomM350_BodyDebrisEmitter},{0x8019988c,RoomM350_BodyRingEmitter},{0x80199d50,RoomM350_AreaPlayerPulseEmitter},{0x80199e50,RoomM350_DropFlareEmitter},{0x80199f2c,RoomM350_DropSplashEmitter},{0x80192508,RoomM350_HandSparkEmitter},{0x801928d4,RoomM350_HandPulseEmitter},{0x80192c34,RoomM350_HandGlowEmitter},{0x8019360c,RoomM350_HandSweepTrapEmitter},{0x801938e4,RoomM350_HandSweepHitEmitter},{0x80193bcc,RoomM350_HandFlashEmitter},{0x80193d6c,RoomM350_HandSweepController},{0x8019421c,RoomM350_OrbHandSparkEmitter},{0x80194654,RoomM350_OrbBurstEmitter},{0x80194cfc,RoomM350_OrbEmitter},{0x80195064,RoomM350_OrbImpactEmitter},{0x80195378,RoomM350_OrbTrailEmitter},{0x8019569c,RoomM350_OrbTableFlashEmitter},{0x801958dc,RoomM350_OrbController},{0x80195ce0,RoomM350_AreaSparkEmitter},{0x801960c4,RoomM350_AreaZoneEmitter},{0x80196a14,RoomM350_AreaDropletEmitter}};
+        for(unsigned i=0;i<6;++i){
+            u32 raw[14];memcpy(raw,(u8 *)room+programs[i].address-0x8018efe8,sizeof(raw));FieldFxTaskProgram *p=programs[i].program;
+            if(raw[12]!=(programs[i].init?((u32[]){0x80199b0c,0x80199ca4,0x80199d2c,0x80199e3c,0x8019a120,0})[i]:0) || raw[13]!=programs[i].script || p->initialize!=programs[i].init || memcmp(p->script,(u8 *)room+programs[i].script-0x8018efe8,programs[i].script_bytes))ok=0;
+            for(unsigned j=0;j<8;++j){
+                FieldFxTaskCallback expected=NULL;for(unsigned k=0;k<sizeof(callbacks)/sizeof(callbacks[0]);++k)if(raw[j]==callbacks[k].address)expected=callbacks[k].fn;
+                u16 sizes[8];memcpy(sizes,raw+8,sizeof(sizes));u16 size=sizes[j];if(i==2 && j==1)size=sizeof(void *)+16;
+                if((raw[j] && !expected) || p->table.callbacks[j]!=expected || p->table.sizes[j]!=size)ok=0;
+            }
+        }
+    }
+    free(room);if(ok)puts("Original M350 assets: all nine USA room descriptors, six complete native program tables and all six authored scripts match; scene registration still pending");return ok;
 }
 
 static int original_m349_states(void)
@@ -14987,6 +15082,12 @@ static int original_attack_effect_status_gate(void)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--m350")){
+        if(!original_m350_states())return 1;
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe;if(!pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe))return 1;
+        int ok=original_m350_assets(&disc,&exe);pe_disc_close(&disc);return ok?0:1;
+    }
     if(argc==2 && !strcmp(argv[1],"--m349-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;

@@ -2,7 +2,48 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
-Najnowsza zmiana produkcyjna: cały oryginalny moduł
+Bieżąca praca obejmuje również cały istniejący moduł M350: m350.c,
+m350_callbacks.c i RoomEffect_ConfiguredPulseCallback.c są kompilowane
+w miejscu. Wszystkie 62 oryginalne funkcje zachowano w ich plikach.
+Callbacki mają natywny ABI, inicjalizatory zachowują pełne wskaźniki,
+a aktorzy, macierze, stan walki i pule korzystają z kanonicznych struktur.
+Współdzielone kolejki zachowują sąsiedztwo po rozszerzeniu wskaźników.
+Sześć oryginalnych programów PM ma natywne descriptory i oryginalne skrypty.
+Odczyty sin/cos używają istniejącego PsyZ; odczyty całego słowa nadal
+składają oryginalne dwie signed16 połówki. Paleta2 to rzeczywisty element
+tablicy, a nie osobna kopia wartości.
+
+Test --m350 w istniejącym tests/original_actor_animation.c porównuje4320
+stanów20 callbacków z niezmodyfikowanym kodem USA MIPS (tryby0/1/3,
+18 wieków,4 payloady). Osobne108 przypadków wykonuje oryginalny emiter
+OrbTableFlash i rzeczywiste helpery puli: wszystkie klatki, oba źródła
+macierzy, powtarzane emisje i pełna pula. Hash ceb97844900f5774 pokrywa
+zwracany wynik oraz aktywne wpisy i ich pełne8B payloady.
+To wykryło konieczność zachowania pełnych13 wierszy tabeli błysków,
+której ostatnie wiersze w pliku USA mają też nazwy sąsiednich kolorów
+oraz rozmiarów. Zakończenie skryptu Orb odczytywało zerowy początek tej
+tabeli; natywna tablica skryptu zawiera również te cztery końcowe halfwordy.
+Test rzeczywistego CUE sprawdza wszystkie9 descriptorów,6 pełnych tabel
+programów,6 skryptów i wszystkie52B tabeli indeksowanej klatką.
+Oracle: /tmp/pe-m350-leaf-cpu-proof.json i /tmp/pe-m350-table-cpu-proof.json.
+Całe286720B modułu oracle porównano bezpośrednio z sekcją3 z CUE
+(PE.IMG extent1013, sektor83539): SHA256
+61508620951dcfa97b16d30bedb0333ea2e3c18c14c66262b53605ac8609ece0.
+Dowód: /tmp/pe-m350-disc-code-proof.json. Zamrożony kandydat
+/tmp/pe-m350-v3 obejmuje177+177 świeżych obiektów, gry i fixture
+normal/SAN. Wszystkie zależności,354 obiekty i4 executable ponownie
+zweryfikowano hashami; M350 kompiluje się bez ostrzeżeń. Dedykowany
+--m350 przeszedł normal/SAN, proof w /tmp/pe-m350-v3-focused-tg4q2d9l.
+PsyZ/SDL są nadal istniejącymi, nieinstrumentowanymi archiwami.
+
+M350 **nie jest jeszcze rejestrowany przez Scene_LoadRoom**. Brakuje
+pełnych autorskich cykli sześciu programów, wszystkich ścieżek renderowania,
+weryfikacji trzech współdzielonych klas oraz testu rzeczywistego loadera.
+Powyższe testy nie dowodzą działania walki na krążowniku ani zgodności
+pikseli i PCM z PS1. Cały port i pełna kampania pozostają nieukończone.
+Nie dodano plików repo ani nowej implementacji gameplayu.
+
+Ostatni moduł w pełni podpięty do loadera: cały oryginalny moduł
 src/overlays/room_m349_cruiser/m349.c jest kompilowany i statycznie powiązany
 z rzeczywistym loaderem M349. Wszystkie trzy istniejące funkcje pozostają
 w miejscu: Spark, FlareRing i SetFlareParams. Poprawiono rzeczywisty ABI

@@ -14,10 +14,8 @@
 
 /* Signed high-half view avoids LHU followed by explicit sign extension. */
 
-int RoomM350_AreaPlayerPulseCallback(int event, void *object)
-{
-    /* Match note: retail leaves sp+0x28..0x2F unused; original local unknown. */
-    char frameGap[8];
+int RoomM350_AreaPlayerPulseCallback(int event, void *_payload, intptr_t argument) {
+    void *object = _payload;
     if (event == 1) {
         if (g_FieldFxCurrentAge >= 8) return 1;
     } else if (event == 2) {
@@ -48,9 +46,9 @@ int RoomM350_AreaPlayerPulseCallback(int event, void *object)
         g_FieldFxSpriteParams.depth = unit;
         sampleOffset = ((unsigned int)(frame - 1) << 9) & 0x3E00;
         g_FieldFxSpriteParams.tpage = palette;
-        size = *(short *)((char *)rcossin_tbl + sampleOffset);
+        size = rsin(sampleOffset / 4);
         size = size * 2 + 4096;
-        handle = GetClut(clutX, g_FieldFxPaletteEntry2);
+        handle = GetClut(clutX, g_FieldFxPaletteTable[2]);
         {
             int frame = g_FieldFxCurrentAge - 1;
             int phase = (frame >> 2) & 3;
@@ -60,7 +58,7 @@ int RoomM350_AreaPlayerPulseCallback(int event, void *object)
             colors = g_RoomM350AreaPlayerPulseColor;
             FieldFx_DrawShapeQuads(object, 0, size, size,
                 (s16)((RenderEffectParameters *)state)->parameter02 * phase + 192,
-                handle, 1, rcossin_tbl[drawSampleOffset / 4].bits.cos >> 5, (struct RenderColor *)colors);
+                handle, 1, rcos(drawSampleOffset / 4) >> 5, (struct RenderColor *)colors);
         }
     }
     return 0;

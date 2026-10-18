@@ -13,7 +13,7 @@ typedef RoomM350Vector Vector;
 
 typedef GteMatrix Matrix;
 
-typedef struct { unsigned char index, alternate; } Entry;
+typedef RoomM350TableFlashEntry Entry;
 
 extern short g_RcossinTblCos[];
 extern int Inv_ScrambleGrid(void);

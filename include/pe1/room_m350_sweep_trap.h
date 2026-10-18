@@ -19,35 +19,10 @@ typedef struct RoomM350SweepTrap {
     /* 0x04 */ s16 done;
 } RoomM350SweepTrap;
 
-typedef struct RoomM350TrapNode {
-    u32 flags;
-} RoomM350TrapNode;
-
-typedef struct RoomM350TrapActor {
-    /* 0x00 */ RoomM350TrapNode *node;
-    /* 0x04 */ u8 reserved04[0x36];
-    /* 0x3A */ s16 heading;
-} RoomM350TrapActor;
-
-typedef struct RoomM350TrapChannel {
-    s32 reserved[2];
-    RoomM350TrapActor *actor;
-} RoomM350TrapChannel;
-
-typedef struct RoomM350PlayerActor {
-    u8 reserved[0x4C];
-    u32 flags;
-} RoomM350PlayerActor;
-
-typedef struct RoomM350Player {
-    /* 0x000 */ RoomM350PlayerActor *actor;
-    /* 0x004 */ u8 reserved004[0xA];
-    /* 0x00E */ u8 stance;
-    /* 0x00F */ u8 reserved00F[0x1ED];
-    /* 0x1FC */ s16 x;
-    /* 0x1FE */ u8 reserved1FE[6];
-    /* 0x204 */ s32 z;
-} RoomM350Player;
+typedef FieldActorState RoomM350TrapNode;
+typedef FieldActor RoomM350TrapActor;
+typedef FieldFxObjectPrefix RoomM350TrapChannel;
+typedef FieldActor RoomM350Player;
 
 /* rcossin table pairs; the bitfields make each read an SImode extract,
  * which keeps the lh + sra form of retail's shifted reads. */

@@ -79,6 +79,12 @@ watch distinguishes the half-HP effect from a later 72-HP hit and 10-HP contact
 losses; the watched run ends with the same state and VRAM as the unobserved
 replay. The boss remains unwon. The next preparation route branches from the
 verified full-HP M122 checkpoint toward M120 and the original BP menu.
+That branch now wins M120, collects two Medicine 3 and Full Cure through the
+original full-inventory exchange, and spends 500 of 562 BP on Active Time.
+Normal/sanitized full replays and six checkpoint pairs agree in state and VRAM;
+read-only observations confirm BP 62 and stat allocation 140→190 before and
+after combat. A2 remains unchanged. The prepared replay ends in M120 with HP
+120/189; the BP change has not yet been persisted in a new phone save.
 
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and

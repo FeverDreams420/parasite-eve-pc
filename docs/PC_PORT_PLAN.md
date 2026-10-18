@@ -2,6 +2,74 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Bieżący zwykły A2 ma teraz świeży dowód przygotowania M120 i menu BP.
+Od potwierdzonego M122/47972/HP189 wyjście około[-1000,150] prowadzi do
+M120 przy48609/0xa8022048. Nie było konieczności wracania przez M124 ani
+próby wyjścia z zablokowanej walki bossa. Poziom15, wszystkie7 poziomów
+alokacji statystyk początkowo140, autentyczne BP562.
+
+Oryginalne Triangle→BP/wiersz7→Active Time otwiera panel9. Pięć osobnych
+Down wydaje po100BP na kolejny próg, nie po10BP. Podgląd daje workingBP62,
+currentValue190/stat5; Cross i zamknięcie paneli zatwierdzają BP62 oraz
+stats.levels=[140,140,140,140,140,190,140]. Przy48897 menuNULL/lock0.
+W obu profilach odczytano tylko do odczytu BP i wszystkie7 wartości przed
+zmianą, po zatwierdzeniu oraz po późniejszej walce. Nie edytowano statystyk
+ani BP debuggerem. To potwierdza alokację Active Time; nie jest osobnym
+pomiarem wszystkich wariantów szybkości ATB ani trwałości w nowym Save.
+
+M120 spotkanie: dwa wybieralne typ4/78HP/def18, typ6/35HP/def22 oraz
+ukryte kontrolery5/72HP. Pierwsza seria M16 daje jednemu4 18HP, kolejna
+zabija go; drugiego4 pokonuje Energy Shot6, a ostatniego6 zwykły ostrzał.
+Przy51245 battle2/live0, EXP20, HP120/189. ObtainAll daje dwa Medicine3/8
+do wolnych12/17. Pozostałe Full Cure/17 odbiera się przez Obtain Item/row2,
+Right i prawdziwą zamianę ze slotem20/Tool. Przy52401 menu14, slot20=17.
+End pozostawia zamieniony Tool; Tools8/19 zachowane. Nie odrzucono nagrody
+z powodu pełnego21/21 inventory i nie przypisano Full Cure leczenia HP.
+
+Końcowy cap52865: M120/etap400, HP120/189, battle9/live0, menuNULL/lock0,
+M16 w10, SpVest w14, capacity21. Wszystkie50 slotów względem M122 zachowane
+poza12/17→Medicine3 oraz20/Tool→Full Cure; wszystkie4096B wyposażenia
+poza backing loaded ammo11→4/offset138. Poziom15/EXP1067, BP62 iATB190
+zachowane po walce. Odczyt live PE40,7613. Nie ma nowego telefonu Save;
+A2 pozostał niezmieniony8192B. Nie stwierdzono trwałości nowego BP w Continue.
+
+/tmp/pe-nypd-m120-prep-v1-{args.json,input.jsonl,run.py,verify.py,proof.json}:
+normal11,25s/SAN31,96s exit0, pełny JSON/1MiBVRAM zgodny z live, SHA256
+806447b0f8316212608946ea04e57e8ebe1f16e24ed89d8c050bf32bf2a7b566.
+Oba executable nadal zgodne z frozen /tmp/pe-audio-queue-v3-build-manifest.json.
+Sześć par checkpointów PASS12/12: wejście, BP zatwierdzone, zwycięstwo,
+dwa leki, zamiana Full Cure, pole. Każda para ma zgodny cały JSON/VRAM,
+A2 zachowany i bu10 puste; entry/bp-committed/field dodatkowo potwierdzają
+rzeczywiste BP i7 statów przez czyste odczyty LLDB w obu profilach,
+bez ReturnFromFrame w SAN. Artefakty-checkpoints.py,-checkpoints-results.json,
+-checkpoints-proof.json,*-observe.json. Pierwszy batch generatora miał błąd
+formatowania tekstu polecenia LLDB; poprawiono go i wykonano brakujące
+przypadki. Wcześniejsze zakończone zwycięstwo normal zachowano z jego
+rzeczywistym exit0/czasem, a potem zweryfikowano z pozostałymi; nie policzono
+nieuruchomionych przypadków jako PASS. Obrazy BP i końcowego pola obejrzane.
+
+Dodatkowa próba odzyskiwania PE przed pokonaniem ostatniego6 nie poprawiła
+przygotowania. Ze50937/HP120/PE21,0015 po600 klatkach prawdziwych uników
+HP93/PE81,3509; po kolejnych500 (nowy prywatny prostokąt testera w granicach
+areny) HP64/PE117,5925. Nie zmieniano PE/HP ani ruchu przeciwnika.
+/tmp/pe-nypd-m120-pe-v2-{args.json,input.jsonl,run.py,verify.py,proof.json}
+i-live-resources.json: normal11,45s/SAN31,25s exit0, cały JSON/VRAM zgodny
+z live, A2 zachowany i bu10 puste, brak błędów sanitizerów/opcode. Dokładne
+PE zapisano tylko w odczycie live; nie eksportuje go JSON ani osobno nie
+asertowano w tych dwóch replayach. To nadal trwająca walka z jednym wrogiem,
+nie kolejna wygrana. Do dalszej kampanii wybieramy v1/52865 i jego leki,
+a nie ten wariant z gorszym HP.
+
+Procesy69464/69772 zakończone exit0. Następna sesja może odtworzyć pełne
+normal-args v1 do52865 na frozen v3 i prywatnym A2. Rozsądne dalsze kroki:
+przywrócić HP oryginalnym Medicine3, zachować pozostałe leczenie i sprawdzić
+posiadany M203 przez oryginalne menu/broni przed kolejną próbą M123.
+M203/slot15/rekord6 to typ5, bazowe25/59/5 z bonusem2/1/0; działania tej
+broni w nowej walce jeszcze nie sprawdzono. Nie dodano plików repo ani zmian
+produkcyjnych. Niezależny PS1 oracle nowego odcinka, stałe CTesty, nowy
+telefon Save, M123 i dalsza kampania pozostają nieukończone.
+
+
 Nowy zwykły replay potwierdza rozpoczęcie M123 po dialog106 przy50720,
 HP189/189, battle0/lock4. M16 bez Heat uszkadza typ3/200HP/def24:
 dwie kolejne serie dają odczyty146 i92HP. Pierwsza próba kończy się śmiercią

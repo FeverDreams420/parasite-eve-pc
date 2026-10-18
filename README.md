@@ -79,6 +79,10 @@ full-inventory refusal and item discard menu, equips the vest, wins M063 and
 M358 encounters, collects M358 Ammo +15 and crosses the unlocked M062 gate.
 Normal and sanitized replays agree with the live run in complete reported
 state and VRAM; G remains unchanged.
+The next ordinary segment wins M062, collects all three chests, uses Defense
++1 on the equipped SP Vest1 and returns to create phone Save H. Full replay
+and cold Continue H pass both builds with matching reported state, VRAM,
+inventory, equipment and save payloads. The three chest flags are checked.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

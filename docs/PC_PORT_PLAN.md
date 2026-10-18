@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dalszy zwykły replay od Continue G obejmuje teraz wszystkie trzy skrzynie
+M062. Heal1 w polu podnosi HP50→80. Spotkanie z dwoma typ6/HP32 kończy
+się zwycięstwem/HP63; oba Medicine1 z nagrody zamieniono przez oryginalny
+ekran nagród za Junk13/16, jedno zużyto (HP63→101). Skrzynia typu4 przy
+[1728,-27] dała w tym przebiegu Defense+1/ID41 (skrypt losuje41/42).
+Użycie przez Items→Use i wybór SP Vest1 zwiększyło bonus obrony2→3,
+zużywając przedmiot. CureP z typu3/[1802,1848] i Medicine2 z typu5/
+[721,1883] odebrano po zwolnieniu dodatkowego slotu przez Discard
+powielonego CureP8. Zmienna84=0x1c821db0: wszystkie trzy flagi skrzyń
+0x04000000/0x08000000/0x10000000 ustawione, zmienna128=0 (bez przedmiotu
+pozostawionego w skrzyni po wymianie). Losowego wariantu ID42 jeszcze
+nie odebrano w tym zwykłym przebiegu.
+
+Powrót M062→M063→M064 nie uruchomił kolejnej walki. Oryginalny telefon
+utworzył H/ósmy plik. Przy60211: M064/etap232, HP101/101, pojemność17,
+weapon10/armor14, brak menu/przeciwników/locka, battle9. Sloty0..16:
+[256,257,258,512,259,200,201,55,13,202,260,55,13,7,261,262,6].
+Względem poprzedniego punktu za bramą M062 całe4096B wyposażenia różni
+się tylko offset138 M16 (13→9, cztery naboje) i174 SP Vest1 (2→3).
+Cały replay G→H na /tmp/pe-park-attack-status-v1: normal/SAN exit0
+w15,50/39,52s; pełny JSON i1MiBVRAM identyczne z żywą sesją, wszystkie
+8192B H identyczne, G niezmieniony. H SHA256
+735290942bce223887be2b8f0e4a101b2840de851c404d071e58b15dce36d741;
+VRAM SHA2563aab95e38084f0a08fd7a1e1b8ce0f4aa79ba8ccc7b5bcb4b7bdbb66b3df6bc8.
+Dowód /tmp/pe-park-m062-chests-v1-{proof.json,verify.py,results.json},
+pełne args/input/logi/VRAM pod tym prefiksem. Osobny zimny Continue H:
+normal/SAN exit0 w5,23/14,69s, M064/etap232/HP101/101/lock0; wszystkie
+sloty,4096B wyposażenia i wybrane indeksy zgodne z sesją zapisu,
+pełny JSON/VRAM zgodny i H bez zmian. Dowód
+/tmp/pe-park-phone-h-continue-v1-{proof.json,verify.py,results.json}.
+Bez zmian kodu produkcji ani nowych plików repo, prywatne karty i wyłącznie
+input, bez zapisu HP/stanu/RNG. Nowego H nie porównano jeszcze z USA PS1;
+odcinek nie jest trwałym replayem CTest. Następny etap: z H przez M358
+do dalszej fabuły M067/amfiteatru. Cała kampania pozostaje nieukończona.
+
 Zwykły zimny Continue G przechodzi teraz interakcje M064: menu BP (68BP,
 bez wydatku), Medicine1 ze slotu9 (HP81→92), otwarcie drzwi, ciało/tekst94,
 ZooKey202 do9, odmowę odbioru SP Vest1 przy pełnym16/16 ekwipunku,

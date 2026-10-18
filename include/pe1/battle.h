@@ -230,9 +230,9 @@ typedef struct Combatant {
 /* 0x24 */ u16  scaledOffense; /* = stat22 * tbl[anim] / 10 (battle/enemy_actions.c:39) */
 /* 0x26 */ s16  stat26;        /* SetContextField case18 (Battle_SetContextField.c:50) */
 /* 0x28 */ s32  maxAtk;        /* cap for exp_or_acc@0x08 (battle/attack.c:533,540; Battle_StartEncounter.c:116) */
-/* 0x2C */ s32  atbStep;       /* per-frame increment subtracted from atbRate */
-/* 0x30 */ s32  atbRate;       /* divisor/rate used while charging exp_or_acc */
-/* 0x34 */ s32  atbGauge;      /* ATB / "AT" gauge; reset 0, latched 0xF0 (Battle_ResetEnemyStats.c:41; Battle_StartEncounter.c:119) */
+/* 0x2C */ s32  atbStep;       /* per-update PE recovery increment for exp_or_acc */
+/* 0x30 */ s32  atbRate;       /* PE recovery divisor, decreases toward 1 */
+/* 0x34 */ s32  atbGauge;      /* PE-full protection timer: 240 updates on reaching maxAtk; halves incoming damage while positive */
 /* 0x38 */ u16  subActionStep;
 /* 0x3A */ u8   subActionCounter;
 /* 0x3B */ u8   subActionPeriod;

@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Nowy dowód z oryginału PS1, M123: zwykły Continue autentycznej karty B2,
+wyłącznie fizyczne przyciski i odczyty pamięci GDB. Obserwacja zatrzymała
+emulator po trafieniu JointBeacon: input31172 ustawia flagę kontaktu0x4000
+u Ayi i bit0x80000000 w rdzeniu korpusu; input31173 rozlicza HP5→0.
+PM command128, tabela0x8019553c, zadanie2; wiązka od[409,-1148]
+do[-1159,-2391], Aya[218,-1608], projekcja0,217617 i odległość241,82
+od odcinka, przy parametrze pasa320 w oryginalnej funkcji.
+W tym trafieniu effect power92/category0, licznik ochrony PE0.
+To dowód kontaktu i kolejności rozliczenia, NIE pomiar pełnych obrażeń
+(przed trafieniem zostało tylko5HP), porównanie pikseli ani zwycięstwo.
+/tmp/pe-reference-day3-b2-v1/{verify-first-contact.py,joint-contact-proof.json,
+joint-contact-input.jsonl,next-attack-observations.jsonl} utrwalają31173
+klatki wejścia, geometrię, stany i SHA256 artefaktów; payload8192B B2
+w karcie emulatora nadal identyczny ze źródłem. Emulator pozostaje w pauzie.
+Wcześniejsze trafienia154→77→26 wystąpiły bez zarejestrowanego JointBeacon;
+nie przypisujemy im tej wiązki. Następnie oryginalne Heal1 przywróciło26→56,
+a inne trafienie zostawiło5HP przed obserwowanym kontaktem.
+
+Wyjaśniono trzy mylące komentarze w istniejącym include/pe1/battle.h:
+atbStep/atbRate sterują regeneracją PE, a atbGauge to licznik ochrony po
+napełnieniu PE, nie właściwy pasek ATB. main_update.c ustawia go na240 po
+osiągnięciu maxAtk, encounter.c również przy pełnym PE na wejściu do walki;
+combat.c dzieli obrażenia przez2, gdy licznik dodatni. Wydanie PE powoduje
+jego wyzerowanie w aktualizacji menu. Zmieniono TYLKO komentarze, bez nazw,
+typów, deklaracji i logiki. /tmp/pe-pe-full-timer-comment-proof.json:
+po usunięciu komentarzy plik pozostaje identyczny bajtowo. Nie przypisujemy
+tej korekcie dokumentacji nowego builda ani nowego dowodu runtime.
+
+Ponownie aktualny użytkowy build/parasite-eve-pc przeszedł pełną pierwszą
+Melissę od New Game: fixture --native-melissa/input14, exit0,
+VRAM FNVfd7ae4cac94eda93; oryginalne CUE, headless, prywatne karty /tmp.
+Log /tmp/pe-melissa-user-report-recheck.log. Sprawdzono pokonanie bossa,
+zamknięcie dialogu60, HP14/45 i odzyskanie sterowania. Opkody206/82
+pozostają związane z oryginalnymi funkcjami; nowa poprawka nie była potrzebna.
+
 Najnowsza zmiana produkcyjna: w całym istniejącym `src/main/battle/encounter.c`
 usunięto pięć nieużywanych `matchingStackReserve` (łącznie2392B deklaracji),
 powtórzone definicje tentative trzech globali i kwalifikator `volatile`

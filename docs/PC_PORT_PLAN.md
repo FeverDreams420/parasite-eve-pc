@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Nowy zwykły odcinek `/tmp/pe-nypd-m122-tuned-v1` wygrywa spotkanie M122
+po Tune Up i dochodzi do M123. Start pełnym cold Continue A2 i prefixem
+prepared54041; powtórzenie przejścia daje ten sam trigger54823. Tym razem
+zatrzymano host cap przy54847/battle7 i przejście do aktywnej walki
+obserwowano co12 klatek. Pierwsze ATB55171 ma nadal189HP, zamiast utraty
+136HP podczas wcześniejszego bezczynnego500. Nie zmieniono AI ani obrażeń.
+
+M16 dwie serie do typu5 dają98→38 przy55359 oraz38→−22 przy55747;
+Aya156, następnie149HP. Kolejna gotowość55939/HP99. Energy Shot6 przez
+oryginalne PE menu otwiera pojedynczy cel; dodatkowy Cross rzeczywiście
+uruchamia czar. Przy56367 typ3/78→−20; przy56547 battle2, EXP20, HP99.
+Awans potwierdzony panelem21, następnie nagrody12. ObtainAll daje Medicine2
+w wolnym8; End zamyka nagrody. Oryginalne użycie tego leku przy58667
+leczy99→189, slot8 znowu pusty. Medicine3/17 oraz Full Cure/20 zachowane.
+
+Przejścia M122→M124 przy59267, M044/dialog95–96, M123/dialog97–99.
+Końcowy61115: M1230xa80221c8/battle7/live2, menuNULL, lock1,
+HP189/195, capacity22, weapon10/armor14. Odczyt live Aya: level15 (indeks
+zerowy, wyświetlany16), EXP1126, BP114, stats150/150/150/150/150/200/150.
+Tych BP/ATB nie sprawdzano osobnymi sparowanymi odczytami, a JSON ich
+nie eksportuje. MaxHP195/capacity22 są sprawdzone w pełnym eksporcie obu
+profili. Wszystkie50 slotów końcowo identyczne z prepared54041; całe4096B
+wyposażenia różni się tylko backing loaded ammo M16/offset138:19→14.
+Nie wyliczamy osobnych strzałów wyłącznie z opóźnionego backing ammo.
+
+Artefakty `-args.json,-input.jsonl,-run.py,-results.json,-verify.py,-proof.json`:
+normal13,52s/SAN36,92s exit0, pełny JSON i1MiBVRAM zgodne z live;
+SHA256e6b76adaca6bc7fb634631dbaf40c87fed49ffc649e85ec6414f68f9a6053d96.
+Sprawdzona ciągłość fizycznego wejścia54041→61115 i zachowanie autentycznego
+A2 we wszystkich trzech prywatnych katalogach (jedyny8192B zapis, bu10 puste).
+Brak sanitizer/Unbound diagnostics, brak zapisów pamięci rozgrywki. Końcowy
+obraz M123 obejrzany. Pośrednie HP wrogów są odczytami live, bez nowych
+sparowanych checkpointów każdego trafienia. PID71158 i oba replaye terminal
+exit0. Następny pełny prefix `-normal-args.json`/61115 daje lepiej przygotowane
+wejście M123 po zwycięstwie, nie syntetyczny Save. M123 jeszcze nie wygrany,
+nie ma nowego telefonu Save ani niezależnego oryginalnego PS1 porównania
+tego odcinka. Bez nowych plików repo/zmian produkcyjnych; cel nadal aktywny.
+
+
 Oryginalne Tune Up ma nowy zwykły dowód `/tmp/pe-nypd-m16-prep-v1`.
 Pełny cold Continue A2→M120/52865, następnie przeładowanie M16 przez
 Items/Reload/Down/Cross do16 przy53185. Root Tune Up/wiersz6 otwiera

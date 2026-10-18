@@ -2,6 +2,50 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+M123 ma pierwszy zwykły dowód pokonania jednej głowy przy żywej Ayi:
+`/tmp/pe-nypd-m123-perimeter-v1`. Pełny cold Continue A2 i prefix61115,
+intro do61431/189HP. Tester od początku używa wewnętrznych punktów
+[−350,−1600],[−400,−600],[850,−600],[800,−1600]. W kolejnych120-klatkowych
+próbkach uniku:61551/HP89/PE53,10;61671/89/73,23;61791/89/92,70;
+61911/38/111,48. Pętla zatrzymuje się przyHP<60. Trasa umożliwia ruch
+i regenerację PE, lecz nie jest potwierdzona jako bezpieczne omijanie ataków.
+Po zwykłym Medicine3/17 i gotowości62571 Aya134HP, PE160,8111.
+
+Energy Shot6 wybrano w menu PE, lista celów[2,4,3], dwukrotny Right
+wybiera3, kolejny Cross rzuca czar. Typ3/200HP pozostaje116HP. Kolejne
+serie M16:63559/60HP,63943/4HP, Aya80HP. Przy64123 kolejna gotowość,
+jedna akcja do3 i anulowanie niewykorzystanej Square; przy64311 typ3
+znika z listy aktorów, Aya nadal80HP. Pozostałe2/300 i4/400.
+To nie jest pokonanie całego Cerberusa i nie ustala, który aktor
+odpowiada za każdy rodzaj obrażeń.
+
+Dalsza seria do4 daje344HP przy64687/Aya60. Następna gotowość64867
+ma Aya16HP, PE147,9966; guardHP<40 zatrzymuje kolejne serie testera.
+Oryginalne Heal2/1 leczy16→76 przy65139. Walka nadal aktywna0/live2,
+M123, maxHP195, capacity22, weapon10/armor14, menuNULL. Typ3 nie wraca;
+pozostałe aktory1/2/4/5 są obecne. Live PEraw1965976 zapisano w
+`-live-resources.json`; nie asertowano go osobno w obu profilach.
+
+`-run.py,-results.json,-verify.py,-proof.json`: normal16,83s/SAN45,45s
+exit0, cały JSON/1MiBVRAM zgodny z live; SHA256
+3709942fcd0f72eeb76a57c286d12068284910f96bb9f6fd8a2428252e25309d.
+Wszystkie trzy snapshoty potwierdzają brak typu3 i obecność2/4. Pełne50
+slotów względem61115 zmienia tylko17/Medicine3→0;4096B wyposażenia tylko
+backing loaded M16/offset138:14→6. Źródłowy A2 zachowany, w prywatnych
+kartach tylko jego8192B i puste bu10; input ciągły61115→65139. Brak
+sanitizer/Unbound diagnostics i zapisów pamięci rozgrywki. PID71753 i oba
+replaye zakończone exit0. W prywatnym istniejącym helperze
+`/tmp/pe_park_combat_control.py` zachowano nową kolejność czterech punktów.
+
+`-head3-args.json` to przycięty pełny ślad cold Continue do64311/HP80
+(z wcześniejszego odczytu live), kandydat na następny punkt wznowienia;
+nie uruchamiano dla niego osobnej pary checkpointów. Nie jest Save ani
+zapisem pamięci. Następne niezakończone zadania: dwie pozostałe głowy,
+uniki względem kontaktu/szarży, niezależne oryginalne PS1 porównanie M123,
+nowy telefon Save i dalsza kampania. Bez nowych plików repo ani zmian
+produkcyjnych; pełny cel nadal aktywny.
+
+
 Nowa próba M123 `/tmp/pe-nypd-m123-tuned-v1` odtwarza pełny prefix
 61115. Po dialog106 pierwsze ATB61467 nadal189HP. Cel4/400HP po
 pierwszej serii61655 ma344HP, Aya94; druga62039 daje316HP/Aya50.

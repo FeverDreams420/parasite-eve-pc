@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły zimny Continue I przechodzi teraz M075→M074→M076→M077→M080
+oraz po wygranej na moście do M078. Heal1 przez menu zwiększa52→82HP.
+Wyjście M075 wymaga[1300,-1000], dalej M074 przez[-7680,-4180]
+i[-8500,-3100] do M076. Oryginalna podłoga M076 ma185 trójkątów;
+przejście do M077 przy[2050,-2900]. M077 ma162 trójkąty, skrzynię
+przy[-113,373]; podejście[100,300] daje w tym przebiegu Ammo+15,
+flaga85/1 ustawiona. Wariant Tool22 nie jest tym samym sprawdzony.
+Wyjście M077[-3300,-2450] prowadzi do mostu M080.
+
+W M080 skrzynia przy[3663,1444] daje Sv. Vest1/item168. Pełny ekwipunek:
+oryginalny dialog3→wybór Junk w slocie16→rekord7/ref263 w tym slocie.
+Junk pozostaje w skrzyni, zmienna136=20, flaga85/0x10 wyzerowana;
+nie jest to opróżnienie skrzyni. Panel przedmiotu obejrzany: Defense19,
+PEnergy16, Critical19, dodatkowa kieszeń. Nie zmieniano wyposażonego SP
+Vest1. Marsz na zachód uruchamia typ5/HP75 i typ6/HP35, pomocnik typ4
+jest nietargetowalny. M16 pokonuje obu, HP82→65. Ekran nagród zamknięty
+po Obtain All; pełne sloty bez nowych przedmiotów, amunicja odebrana.
+Zachodnie przejście około[150,300] prowadzi do M078. Przy39009:
+M078/etap248, HP65/115, pojemność19, weapon10/armor14, brak menu/locka,
+zero żywych przeciwników, battle9. Revive13 i wcześniejsze przedmioty
+zachowane. Wszystkie4096B wyposażenia względem zimnego I różnią się
+wyłącznie amunicją M16/offset138:15→9 i nowym rekordem Sv. Vest1.
+
+Na niezmienionym /tmp/pe-park-attack-status-v1 cały replay I→M078
+normal/SAN exit0 w6,86/18,42s. Pełny JSON i1MiBVRAM identyczne z żywą
+sesją, SHA25621d7990693eab0e6892a28a98b3632e6f61904e621898d5623362de5873e5e95.
+Źródłowy8192B I niezmieniony we wszystkich trzech prywatnych katalogach,
+bez dodatkowych plików kart. Dowód /tmp/pe-park-i-trails-v1-{proof.json,
+verify.py,results.json}, args/input/logi/VRAM i navigation.log pod tym
+prefiksem. Bez zmian kodu produkcji ani nowych plików repo; wyłącznie
+input i prywatne karty, bez zapisu HP/stanu/RNG. Brak nowego niezależnego
+PS1 i trwałego replayu CTest. Następne: M078 i dalsza droga do M082.
+Cała kampania pozostaje nieukończona.
+
+Ponowna regresja zgłoszenia206/82: original-game-melissa-encounter
+na aktualnym build/parasite-eve-pc z wymaganym prawdziwym CUE PASS121,05s.
+Test sprawdza zwycięstwo pierwszej walki od New Game, stan i obraz.
+
 Zwykły replay od zimnego Continue H przechodzi teraz także dalszy odcinek
 po248, do prawdziwego zapisu I w M075. Heal1 w polu M072 zwiększa HP47→77;
 druga próba nie zwiększyła HP (literalny input zachowany). Narożnik przy
@@ -42,8 +80,7 @@ wszystkie sloty i4096B wyposażenia zgodne z sesją zapisu, pełny JSON/VRAM
 zgodny, I bez zmian. /tmp/pe-park-phone-i-continue-v1-{proof.json,
 verify.py,results.json}. Bez zmian kodu produkcji ani nowych plików repo;
 wyłącznie input i prywatne karty, bez zapisu HP/stanu/RNG. Brak nowego
-niezależnego PS1 dla I i trwałego replayu CTest. Następne: M074→M076/M077
-i dalsza fabuła. Cała kampania pozostaje nieukończona.
+niezależnego PS1 dla I i trwałego replayu CTest. Dalszy odcinek I→M078 jest opisany powyżej. Cała kampania pozostaje nieukończona.
 
 Zwykły zimny Continue H przechodzi teraz do M072/etapu248. Trasa obejmuje
 M063 (nowy wariant: dwa typ3/HP57), M358 (trzy typ6/HP35 i typ4/HP57)

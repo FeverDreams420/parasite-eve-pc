@@ -91,6 +91,10 @@ The route now continues through M068/M074 to M075, exchanges a Junk for
 Revive at a full inventory, collects both ammunition chests, wins the bear
 encounter and creates phone Save I. Full replay and cold Continue I pass both
 builds with matching reported state, VRAM, equipment and save payloads.
+Ordinary input from I now traverses M076/M077, collects Ammo +15, exchanges
+Junk for Sv. Vest1, wins the two-enemy M080 bridge fight and reaches M078.
+Full reported state and VRAM agree across the live session and both builds;
+I remains unchanged. The swapped Junk stays in the chest.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

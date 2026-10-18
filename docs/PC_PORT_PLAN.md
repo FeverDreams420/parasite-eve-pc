@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Nowe niezależne porównanie z oryginalną wersją USA dotyczy teraz Save O
+z bieżącego zwykłego łańcucha, nie tylko wcześniejszego C. Retail Disc1
+w duckstation-regtest z BIOS scph1001 wczytuje O przez oryginalne
+Continue→karta1→pozycja15/O→File loaded→OK i oddaje sterowanie w M099.
+PS1: scene0xa80094c8, HP140/181, pozycja[39714816,0,-51904512], yaw0,
+capacity21, weapon10/armor14. Wszystkie50 slotów oraz wszystkie4096B
+wyposażenia identyczne z cold Continue O w portach normal/SAN.
+Dotyczy to również nowego M92F/rekordu8 i aktualnych bonusów M16/SP Vest1.
+
+Artefakty /tmp/pe-reference-day3-o-v1/: proof.json,verify.py,
+loaded-o-state.json,read-state.py,card-proof.json,input.jsonl,control.py,
+runner.log i obrazy boot/title/menu/cards/files/selected-o/loaded/m099.
+Oryginalny8192B O bez modyfikacji umieszczono w bloku1 prywatnego131072B
+obrazu karty; jedyną zmianą opakowania względem prywatnej karty C jest
+payload, nazwa katalogowa BASLUS-006620000000O i poprawione XOR-y ramek
+nagłówka. Payload po wczytaniu i cały obraz karty pozostają identyczne.
+SHA256 payload924492715e0cf95afa6a20b8afd3f1f50e0ebab68e793099afa84c98fe1c399c.
+Kopia emulatora, BIOS, zasoby i karta działają wyłącznie z prywatnego /tmp.
+Hostowy card_setup.cpp/.dylib używa istniejących MemoryCard::Open oraz
+Pad::SetMemoryCard przy pauzie; nie zapisuje emulowanego RAM ani kodu gry.
+Odczyt stanu przez GDB jest tylko do odczytu. Input obejmuje przyciski
+Start/Cross/Down i przełączenie Analog do trybu cyfrowego, bez patchowania
+pada lub pamięci. Proces65694 zakończono po zebraniu dowodów, porty24830/24831
+nie są już przeznaczone do kontynuowania tej sesji.
+
+To świeży dowód zgodności wczytanego checkpointu i zawartości zapisu z PS1.
+Nie porównano w ten sposób każdej poprzedniej akcji/walki ani wszystkich
+flag i zegarów; nie ogłoszono pełnego pixel-perfect, PCM ani całej kampanii.
+Nie dodano plików repozytorium ani zmian produkcyjnych. Dalsze przejście
+kampanii może kontynuować autentyczny O w M099/etap400, HP140/181.
+
+
 Zwykły cold N ma teraz dalszy ciąg po zbrojowni aż do prawdziwego Save O.
 M108 wyjście około[10,1400] wybiera oryginalną scenę M115, gdy bank44
 ma67108864 i jeszcze nie ma131072. Przy44344 M115/etap400 ma dialog72,

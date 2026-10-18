@@ -41,6 +41,11 @@ The continued ordinary route completes the M115 Ben/Sheeva scene, wins another
 M100 encounter and creates phone Save O at stage 400. Full replay and cold
 Continue O pass in both profiles, preserving N and matching all save bytes.
 
+A fresh independent check also loads this Save O in the original USA game.
+Scene, player position and facing, HP, capacity, all 50 inventory slots and all
+4096 equipment bytes agree with native Continue. This verifies the loaded
+checkpoint; complete gameplay, pixel and audio fidelity remain unproven.
+
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and
 story progression through Day 3 to the NYPD. Genuine phone-created checkpoint

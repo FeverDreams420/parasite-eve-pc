@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dalsza próba kampanii M123: kolejność z celem2 jako pierwszym nie dała
+zwycięstwa. Oryginalna głowa2 wielokrotnie odzyskiwała100HP po reakcji;
+Energy Shot przy PE~263 zadał110, nie pokonał jej z132HP. Końcowy stan
+65433: Aya0HP, głowy2/3/4 odpowiednio182/200/400. Pełny cold replay od
+prawdziwej kartyA2 normal17.51s i ASan/UBSan/function50.44s, obaexit0,
+całe JSON i1MiB VRAM identyczne z obserwowanym przebiegiem LLDB;
+źródłoweA2 niezmienione, prywatnebu10 puste. Dowód:
+/tmp/pe-m123-head3-last-v1-proof.json, pełny zwykły input w
+/tmp/pe-m123-head3-last-v1-full-args.json. To potwierdzona porażka,
+nie ukończenie walki ani nowy błąd silnika. Nie zmieniano gameplay RAM,
+HP/RNG/skryptów ani kodu produkcyjnego. Następna sprawdzana kolejność
+zaczyna od głowy4, która nie ma tej reakcji +100HP.
+
+Świeży test pierwszej Melissy na aktualnym build/parasite-eve-pc
+(SHA256bc418a318b1f8525d587643fa7c2c02e22bc91686cd3508cfc8de4e3c6bc62c6):
+--native-melissa, prawdziwe CUE z backup-20260927, input14, exit0,
+VRAM FNVfd7ae4cac94eda93; log
+/tmp/pe-melissa-user-log-recheck-20261018.log. Opcode82/206 są związane
+z oryginalnymi funkcjami; ta regresja nie wymagała zmiany produkcyjnej.
+
 Najnowsza integracja: cały istniejący moduł M350 — m350.c,
 m350_callbacks.c i RoomEffect_ConfiguredPulseCallback.c — jest kompilowany
 w miejscu i podpięty do Scene_LoadRoom. Wszystkie62 oryginalne funkcje

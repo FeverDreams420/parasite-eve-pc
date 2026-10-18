@@ -61,6 +61,14 @@ read-only confirmation of the actual Barrier flag. The earlier test notes
 incorrectly called spell 8 Barrier; it is Slow, while Barrier is spell 5. This
 route has no new independent PS1 comparison.
 
+A further ordinary branch wins the optional M118 encounter, collects its SG550,
+uses Heal 1 and Medicine 1, and reaches M122. Six normal/sanitized checkpoint
+pairs agree in full state and VRAM; all inventory and equipment changes are
+accounted for. Two attempts at M122 from this depleted branch end in Game Over,
+including a retry with the test driver's previously unreachable dodge route
+enabled. Neither attempt counts as a victory; the full-HP M117 replay remains
+available for the next campaign attempt.
+
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and
 story progression through Day 3 to the NYPD. An earlier branch's genuine phone-created checkpoint N in M112 also loads in the original USA game: player position, HP, all inventory

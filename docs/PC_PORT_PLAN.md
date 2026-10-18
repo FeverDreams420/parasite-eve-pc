@@ -2,6 +2,70 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykła kontynuacja od M117 potwierdza teraz opcjonalną wygraną M118 oraz
+prawdziwą nagrodę SG550 w bieżącym łańcuchu A2. Reload M16 do16, wyjście
+M117→M121; drzwi M121 około[3100,450] prowadzą do M118, nie M122.
+Barierkę w M121 omija droga przez[1100,450] przed podejściem do drzwi.
+Nie zmieniano geometrii ani kolizji gry.
+
+Items/Tool17 ma dwuwierszowy kontekst Move/Discard, więc Discard jest y1,
+nie y2 jak w kontekście leków. Pierwszy helper czekał na nieistniejący y2;
+to błąd testera, nie zawieszenie gry. Prawdziwe Discard/Yes zwalnia17,
+pozostałe trzy Tools8/19/20 pozostają. Wejście M118 uruchamia typ6/150HP,
+oryginalny dialog79 oraz walkę. Energy Shot6 sprowadza przeciwnika do59HP;
+późniejszy ostrzał M16 pokonuje go. Przy47204 battle2/live0, EXP20,
+Aya15/189HP. Komendy testera żądały serii2 i limitu1, ale porównanie
+magazynka wykazało zużycie czterech nabojów (16→12); nie należy uznawać
+nazwy helpera za dowód dokładnej liczby faktycznych strzałów.
+
+ObtainAll daje surowy item123 do17, a End finalizuje prawdziwy SG550:
+rekord9/ref265, loaded21, base40/108/20, bonus0/2/1, tailCount2.
+M16 nadal wyposażony w10, SpVest w14; nie nadpisywano broni ani bonusów.
+Heal2 przy PE106,26 zostaje prawidłowo odrzucone. Heal1 leczy15→45,
+potem Medicine1 ze12 leczy45→90 i zwalnia12. Oczekiwanie2000 klatek
+w polu nie regeneruje PE; po Heal1 pozostaje46,263. Nie wymuszano energii.
+
+M118→M121, następnie rzeczywiste schody do M122 przez[1450,500],[800,500],
+[800,-400],[700,-2600]. Bezpośrednie podejścia przyx1433..1455,z128 były
+blokowane przy barierce; helper musiał zmienić drogę. Przy53116 M122,
+etap400, HP90/189, menuNULL/lock0, battle9/live0. Wszystkie50 slotów względem
+M117 zachowane poza12/Medicine1→0 i17/Tool→SG550; wszystkie4096B wyposażenia
+zachowane poza loaded ammo8→12 i nowym32B rekordem9. Pełny rekord SG550
+sprawdzony, oryginalny A2 zachowany8192B. Nie powstał nowy telefon Save.
+
+/tmp/pe-nypd-m117-east-v1-{args.json,input.jsonl,run.py,verify.py,proof.json}
+oraz-entry-verify.py,-entry-proof.json: cała gałąź kończy się późniejszą
+porażką M122/title54812. Normal12,29s/SAN34,12s exit0, cały JSON/VRAM
+zgodny z live, bez sanitizer/Unbound diagnostics; A2 zachowany, bu10 puste.
+Sześć dodatkowych par checkpointów PASS12/12 obejmuje M118/dialog79,
+Energy Shot, zwycięstwo, SG550, leczenie i wejście M122. Każda para ma
+zgodny pełny JSON/1MiBVRAM i zachowany A2; artefakty-checkpoints.py,
+-checkpoints-results.json,-checkpoints-proof.json. Zwycięstwo M118 ma VRAM
+SHA2564201644264fa8878cb41af98dda3647b39e6eab6688680594dad932535992b83.
+Obraz po nagrodzie obejrzany. Ten dowód dotyczy M118 i dojścia do M122,
+nie wygranej M122 ani niezależnego oracle PS1.
+
+Wykryto osobny błąd prywatnego /tmp/pe_park_combat_control.py: funkcja
+kierunku miała trasę M122, ale lista patrol=token in nie zawierała M122,
+więc ta gałąź nigdy nie działała. Dodano token0xa8022148 wyłącznie w testerze;
+nie zmieniano kodu ani parametrów gry. Nowa próba z dokładnie tego samego
+53116/M122/HP90 pokonuje typ3 (przy54268 HP17, live1) i wykonuje Heal2
+(przy54964 HP33 po dalszych obrażeniach). Przy55312 Aya umiera przed
+następnym ostrzałem; przy56312 wraca title. To nadal porażka.
+
+/tmp/pe-nypd-m122-patrol-v2-{args.json,input.jsonl,run.py,verify.py,proof.json}:
+normal12,43s/SAN34,99s exit0, cały JSON i1MiBVRAM zgodny z live, A2 bez zmian,
+bu10 puste, brak błędów sanitizerów/opcode. Dwie pary checkpointów PASS4/4:
+pokonany typ3 i stan po Heal2, pełny JSON/VRAM zgodny. Procesy67625/67892
+zakończone exit0; nie kontynuować ich jako żywych sesji. Pełny port wciąż
+nieukończony. Następny bezpieczny krok to odtworzyć A2→M117/41618 z pełnym
+HP189 i iść od razu M121→środkowe schody→M122, z pominięciem już osobno
+sprawdzonego opcjonalnego M118. To wybór drogi gracza, bez edytowania
+RNG, HP, PE, flag ani tabel spotkań. Stałe CTesty tych nowych tras i dalsza
+kampania wymagają wykonania; nie dodano nowych plików repo ani zmian
+produkcyjnych.
+
+
 Nowy zwykły cold A2 przechodzi zachodnią część komisariatu do M117.
 Oryginalne Items/Discard usuwa Cure-M17, zwalniając miejsce; skrzynia
 M112/actor4 daje Medicine3/8 do17. Użycie leczy133→189 bez wydawania PE,
@@ -33,7 +97,7 @@ pomija nieodebrane nagrody. M121→drzwi około[-814,135], obrót Up na2klatki
 wyzwala właściwe przejście do M117, dialogi100–104. Oryginalny lekarz
 przywraca27→189 bez zużycia Medicine1. Końcowy cap41618: M117/0xa80213c8,
 etap400, menuNULL/lock0, battle9/live0, HP189/189, broń10/zbroja14,
-capacity21. Alle50 slotów zachowane poza12/Revive→Medicine1 i17/Cure-M→Tool;
+capacity21. Wszystkie50 slotów zachowane poza12/Revive→Medicine1 i17/Cure-M→Tool;
 wszystkie4096B wyposażenia poza loaded ammo7→8, offset138. Odczyt debuggera
 clip8/shared pool165. Brak nowego telefonu Save; niezmieniony A2 i zapisany
 trace całej trasy odtwarzają obecny punkt bez fabrykowania checkpointu.

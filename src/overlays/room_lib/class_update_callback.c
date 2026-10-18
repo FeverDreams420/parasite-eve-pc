@@ -7,7 +7,8 @@
 
 #include "room_lib.h"
 
-int RoomLib_UpdateCallback(RoomObj *obj) {
-    obj->callback();
+int RoomLib_UpdateCallback(PmSlotHeader *raw) {
+    RoomObj *obj=(void *)raw;
+    obj->callback(raw);
     return 0;
 }

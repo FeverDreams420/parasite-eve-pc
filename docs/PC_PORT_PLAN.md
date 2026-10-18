@@ -2,7 +2,84 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
-Najnowsza integracja: cały istniejący moduł M404 (Chrysler) jest kompilowany
+Najnowsza integracja: cały oryginalny moduł M256 muzeum — m256.c i
+m256_class.c — jest kompilowany w miejscu i podpięty do Scene_LoadRoom.
+Wszystkie18 funkcji M256 pozostały w swoich plikach. Dołączono również
+istniejący room_lib/class_update_callback.c; nie duplikowano tej funkcji
+w module. Jego callback ma teraz jawny argument kontekstu i natywny offset
+po PmSlotHeader. Klasa Swing używa właściwego ABI PM i pełnego wskaźnika
+sygnału zakończenia. Nie dodano plików repo, przeniesionych funkcji,
+nowego gameplayu ani warstwy abstrakcji.
+
+Usunięto rzeczywiste blokery64-bit: model śladu przechowywany jako int,
+obcięcie adresu próbki historii do unsigned, fałszywe widoki puli/kontekstu
+i assertiony stałych offsetów PS1 dla struktury ze wskaźnikami. Trzy historie
+po17 punktów zachowują oryginalne nakładające się widoki punktu4. Modele
+mają pełne wskaźniki, środek pierścienia pełny oryginalny rozmiar8B,
+macierze/skale korzystają z istniejących typów. Callbacki efektów mają ABI
+(int,void*,intptr_t), inicjalizatory zwracają intptr_t. Zachowano zawężenia
+PS1 i usunięto UB przesunięć signed, nie zmieniając reguł cząstek. Usunięto
+też zbędne statement expressions, martwy preamble i komentarze o kolejności
+GCC potrzebnej wyłącznie do dopasowania binarnego.
+
+Loader waliduje wszystkie cztery rzeczywiste powiązania M256: klasa75
+(0x80195d38), Swing76 (0x80195da8), scatter/swirl131 (0x80195de8),
+trail/pulse132 (0x80195eb4). Rejestruje właściwe banki i przy wejściu zeruje
+wszystkie zidentyfikowane mutowalne dane modułu. --m256-load dwukrotnie
+odczytuje scenę z rzeczywistego USA CUE, rozwija natywną geometrię,
+sprawdza cztery rejestracje i reset uprzednio zanieczyszczonych modeli,
+argumentów, trzech historii, jasności, kątów oraz środka pierścienia.
+I/O jest rzeczywiste (fx_image_io=1), bez stubu odczytu.
+
+--m256 / original-game-m256 w istniejącym tests/original_actor_animation.c:
+- 7344 stany update callbacków w trybach0/1/3: pięć stanów scatter drop,
+dwa stany swirl, pulse particle i numeryczne stany2..5 trail. Osiem liczników,
+skrajne prędkości, trzy podłogi, dwa RNG i pełna/wolna pula; wynik, cały
+payload, wpisy/dzieci puli i RNG zgodne z USA MIPS, hashc1db2c472afca4ed.
+Nie obejmuje to porównania CPU sterowania trail0/1 ani renderowania GTE;
+- 675 pełnych cykli Swing /8100 aktualizacji: bramka mode0/11, trzy segmenty
+cosine easing, kąty ujemne/dodatnie, długości1/2/7, reset animacji, zwolnienie
+i sygnał zakończenia. Oryginalny MIPS wykonuje rzeczywiste init/configure,
+wspólny UpdateCallback i callbacki klasy bez podmiany funkcji. Hash stanu
+3763c05cb2343a37 obejmuje każdą aktualizację. Test natywny dodatkowo
+sprawdza pełne wskaźniki obu inicjalizatorów efektów i dziewięć granic clamp;
+- osiem pełnych autorskich cykli PM: oba programy po dwa callbacki,
+oba draw sloty, gracz w zasięgu i poza nim. Tworzenie dzieci, rzeczywiste
+renderowanie śladów, modeli i cząstek, trafienia obu programów, brak trafień
+poza zasięgiem, sygnał akcji2→4, naturalne zakończenie i granice
+puli/areny pakietów/natywnego OT. To obejmuje natywne sterowanie trail0/1
+i wszystkie cztery emitery, lecz nie dowodzi zgodności pikseli/PCM z PS1;
+- cztery deskryptory sceny, wszystkie siedem metod klasy Swing, oba pełne
+task programs, skrypty36B/68B, obie krzywe kolorów40B i wszystkie stałe.
+Cała biblioteka aktorów13084B i42 wskaźniki klas są zgodne z rzeczywistym
+M022 po111 relokacjach J/JAL i20 niskich częściach adresów; pozostałe
+instrukcje identyczne. Całe348160B M256 używane przez oracle jest zgodne
+z CUE (PE.IMG extent1013, sektor66620), SHA256
+dbe1c13d8651607b30bd09cf3f9720a40545ab846f7688a49c815d243ea31de4.
+Dowody /tmp/pe-m256-{leaf,swing}-cpu-v1-proof.json i
+/tmp/pe-m256-disc-code-proof-v1.json wiążą też EXE i snapshot helperów
+oryginału używany przez CPU oracle.
+
+Zamrożony kandydat /tmp/pe-m256-integrated-v1:181+181 świeżych obiektów,
+gry i fixture normal/ASan/UBSan/function. Dedykowane --m256 i --m256-load
+przechodzą w obu profilach, moduł i wspólny updater nie emitują ostrzeżeń.
+/tmp/pe-m256-integrated-v1-verification.json potwierdza28 terminalnychexit0:
+M123/do dwóch pokonanych głów, telefoniczny Save B2, Medicine2 po Continue,
+cała pierwsza Melissa od New Game, --assets, M349/M350/M404/M256 oraz ich
+rzeczywiste load, --m123-ai — każde normal/SAN. Całe JSON i1MiB VRAM
+replayów zgodne ze starą bazą i między profilami, B2 identyczny bajtowo,
+źródłowe karty niezmienione. Finalny audyt
+/tmp/pe-m256-integrated-v1-final-build-proof.json ponownie zahaszował362
+obiekty, wszystkie zależności źródłowe, biblioteki i cztery executable.
+Psyz/SDL nadal są nieinstrumentowanymi archiwami; SAN obejmuje oryginalne
+moduły portu. Użytkowy build/parasite-eve-pc przeszedł osobny replay67791
+aktualizacji: exit0/102.45s, HP76, pełne JSON/VRAM identyczne z kandydatem,
+A2 niezmieniony, prywatnebu10 puste. Dowód
+/tmp/pe-m256-integrated-v1-user-proof.json, SHA256 executable
+41d5ade499472a8436006e25ec30ddca4603cf6cfdf29d6e40b75830493cd531.
+Pełne przejście muzeum, M123 i cała kampania pozostają nieukończone.
+
+Poprzednia integracja: cały istniejący moduł M404 (Chrysler) jest kompilowany
 natywnie i podpięty do Scene_LoadRoom. Wszystkie cztery oryginalne funkcje
 pozostały w src/overlays/room_m404_chrysler/m404.c. Callbacki używają
 kanonicznego ABI (int, void*, intptr_t), argument zachowuje pełny wskaźnik,

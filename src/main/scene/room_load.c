@@ -18,6 +18,8 @@
 #include "pe1/room_m123.h"
 #include "pe1/room_m349_effects.h"
 #include "pe1/room_m404.h"
+#include "pe1/room_m256.h"
+#include "pe1/room_model_pulse.h"
 #include "pe1/room_m350_sweep_trap.h"
 #include "../../overlays/room_m350_cruiser/room_m350_data.h"
 #include "pe1/room_m123_glow_burst.h"
@@ -577,6 +579,12 @@ int Scene_LoadRoom(unsigned int roomId)
             if(slot==143 && record[i].u.handlerAddress==0x801955d4u)native=&g_RoomM123PulseRingEffects;
             if(slot==144 && record[i].u.handlerAddress==0x8019564cu)native=&g_RoomM123WaveBurstEffects;
         }
+        if (map + 1 == 256) {
+            if(slot==75 && record[i].u.handlerAddress==0x80195d38u)native=&g_RoomActorClassTable[2];
+            if(slot==76 && record[i].u.handlerAddress==0x80195da8u)native=&g_RoomM256SwingClass;
+            if(slot==131 && record[i].u.handlerAddress==0x80195de8u)native=&g_RoomM256ScatterEffects;
+            if(slot==132 && record[i].u.handlerAddress==0x80195eb4u)native=&g_RoomM256TrailEffects;
+        }
         if (map + 1 == 404) {
             if(slot==75 && record[i].u.handlerAddress==0x80193e6cu)native=&g_RoomActorClassTable[2];
             if(slot==133 && record[i].u.handlerAddress==0x80193f1cu)native=&g_RoomM404SinkingDropEffects;
@@ -741,6 +749,15 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
             g_RoomM005BeaconOffset = (GteShortVector){0};
             g_RoomM005BeaconCenter = (GteShortVector){0};
+        } else if (map + 1 == 256) {
+            if(slot==75){
+                g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];
+                g_RoomM256ScatterConfig=g_RoomM256TrailConfig=g_RoomM256TrailTurnScale=0;
+                g_RoomM256TrailModel=g_RoomM256PulseModel=NULL;memset(g_RoomM256TrailHistory,0,sizeof(g_RoomM256TrailHistory));
+                g_RoomM256PulseBrightness=0;g_RoomM256PulseAngles=(GteShortVector){0};g_RoomM256PulseCenter=(RoomModelPulseAnchor){0};
+            } else if(slot==76)g_PmCmdHandlerTable[76]=&g_RoomM256SwingClass;
+            else if(slot==131)g_FieldFxTaskPrograms[46]=&g_RoomM256ScatterEffects;
+            else if(slot==132)g_FieldFxTaskPrograms[47]=&g_RoomM256TrailEffects;
         } else if (map + 1 == 404) {
             if(slot==75){g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];g_RoomScriptArg=0;}
             else if(slot==133)g_FieldFxTaskPrograms[48]=&g_RoomM404SinkingDropEffects;

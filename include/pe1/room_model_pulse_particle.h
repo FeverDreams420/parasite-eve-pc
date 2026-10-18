@@ -13,7 +13,7 @@ typedef struct RoomModelPulseParticle {
 } RoomModelPulseParticle;
 
 typedef struct RoomModelPulseAnchor {
-    s16 x, y, z;
+    s16 x, y, z, pad;
 } RoomModelPulseAnchor;
 
 /* Shared with the controller: the ring spin it writes (slot-2 output) and
@@ -21,6 +21,6 @@ typedef struct RoomModelPulseAnchor {
 extern GteShortVector g_RoomM256PulseAngles;
 extern RoomModelPulseAnchor g_RoomM256PulseCenter;
 
-int RoomM256_ModelPulseParticleCallback(int mode, RoomModelPulseParticle *particle);
+int RoomM256_ModelPulseParticleCallback(int, void *, intptr_t);
 
 #endif /* PE1_ROOM_MODEL_PULSE_PARTICLE_H */

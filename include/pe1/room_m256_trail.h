@@ -38,16 +38,17 @@ typedef struct RoomM256TrailHistory {
     GteShortVector point[17];
 } RoomM256TrailHistory;
 PE1_STATIC_ASSERT(sizeof(RoomM256TrailHistory) == 0x88, room_m256_trail_history_size);
-extern RoomM256TrailHistory g_RoomM256TrailHistory[];
-/* g_RoomM256TrailHistory[0].point[4] x, y and z as raw byte views: member
- * access recomputes the record address and no longer matches retail. */
-extern char g_RoomM256TrailPoint4X[], g_RoomM256TrailPoint4Y[], g_RoomM256TrailPoint4Z[];
-extern s32 g_RoomM256TrailTurnScale, g_RoomM256TrailModel;
-extern u16 g_FieldFxPaletteEntry2;
+extern RoomM256TrailHistory g_RoomM256TrailHistory[3];
+/* Original overlapping views within the contiguous three-history array. */
+#define g_RoomM256TrailPoint4X ((char *)g_RoomM256TrailHistory + PE1_OFFSETOF(RoomM256TrailHistory,point[4].x))
+#define g_RoomM256TrailPoint4Y ((char *)g_RoomM256TrailHistory + PE1_OFFSETOF(RoomM256TrailHistory,point[4].y))
+#define g_RoomM256TrailPoint4Z ((char *)g_RoomM256TrailHistory + PE1_OFFSETOF(RoomM256TrailHistory,point[4].z))
+extern s32 g_RoomM256TrailTurnScale;
+extern void *g_RoomM256TrailModel;
 typedef struct RoomM256TrailPalettes { u16 first, second; } RoomM256TrailPalettes;
 int rand(void);
 void FieldFx_ModelSetTexture(int,int);
 
-int RoomM256_TrailCallback(int mode, void *effect);
+int RoomM256_TrailCallback(int mode, void *effect, intptr_t argument);
 
 #endif

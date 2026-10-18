@@ -31,9 +31,10 @@
 #include "pe1/room_twelve_effect.h"
 
 typedef struct RoomObj {
-    char pad0[0xC];
-    void (*callback)(void);
+    char prefix[sizeof(PmSlotHeader)];
+    void (*callback)(void *);
 } RoomObj;
+int RoomLib_UpdateCallback(PmSlotHeader *);
 
 /* Parameters read by the matching room particle emitter handlers. */
 typedef struct RoomParticleEmitter {

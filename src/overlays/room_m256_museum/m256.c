@@ -11,12 +11,15 @@
 #include "pe1/room_orbiting_pair.h"
 
 #include "m256_externs.h"
+#include "pe1/geom_state.h"
+#include "pe1/battle_runtime.h"
+#include "pe1/room_fx.h"
+#include "pe1/pm.h"
 
-/* Cosine halves of the packed sine table words (pe1/gte_sine_table.h). */
+void RoomM256_SwingStep(void *raw);
 
-void RoomM256_SwingStep(RoomM256Swing *state);
-
-void RoomM256_SwingAwaitMode(RoomM256Swing *obj) {
+void RoomM256_SwingAwaitMode(void *raw) {
+    RoomM256Swing *obj=raw;
     FieldActor *slot = obj->actor;
 
     if (slot->mode == 0xB) {
@@ -24,7 +27,8 @@ void RoomM256_SwingAwaitMode(RoomM256Swing *obj) {
     }
 }
 
-void RoomM256_SwingStep(RoomM256Swing *state) {
+void RoomM256_SwingStep(void *raw) {
+    RoomM256Swing *state=raw;
     FieldActor *actor = state->actor;
     RoomM256SwingCycle *base = &state->cycle;
     int first;
@@ -43,9 +47,9 @@ void RoomM256_SwingStep(RoomM256Swing *state) {
     }
 
     timer = (u16)state->cycle.tick + 1;
-    phase = ((timer << 16) >> 5) / state->cycle.length;
+    phase = ((s32)((u32)timer << 16) >> 5) / state->cycle.length;
     state->cycle.tick = timer;
-    value = (-g_RcossinTblCos[(phase & 0xFFF) * 2] + 0x1000) *
+    value = (-rcos(phase & 0xFFF) + 0x1000) *
             state->cycle.sweep;
     if (value < 0) {
         value += 0x1FFF;
@@ -59,7 +63,7 @@ void RoomM256_SwingStep(RoomM256Swing *state) {
     if (state->cycle.tick >= state->cycle.length) {
         state->cycle.segment = (u16)state->cycle.segment + 1;
         if (state->cycle.segment >= 3) {
-            RoomM256_SwingRelease(state);
+            RoomM256_SwingRelease((PmSlotHeader *)state);
         } else {
             state->cycle.started = 0;
         }
@@ -70,7 +74,8 @@ void RoomM256_SwingStep(RoomM256Swing *state) {
     }
 }
 
-int RoomM256_SwingRelease(RoomM256Swing *obj) {
+int RoomM256_SwingRelease(PmSlotHeader *raw) {
+    RoomM256Swing *obj=(void *)raw;
     int *state;
 
     obj->actor->render_object.rotation_overrides[0].matrix_index = 0;
@@ -84,26 +89,25 @@ int RoomM256_SwingRelease(RoomM256Swing *obj) {
     return 0;
 }
 
-int RoomM256_SwingNop6(void) {
-    return 0;
+void RoomM256_SwingNop6(void) {
 }
 
 /* Flashes the scene when the drop touches the player. */
-#define ROOM_M256_DROP_FLASH(radius)                                          \
-    if (FieldFx_IsPlayerWithinRadius(drop, radius) && drop->hazard && FX_TASK_AS(RoomM256DropEvent)->active) {  \
-        RoomM256DropChannel *channel = ANIM_OWNER_AS(RoomM256DropChannel);                            \
-        if ((channel->pool->node->flags & 0x3F000000) == 0x01000000) {        \
-            ((RoomM256DropEntity *)D_8009D254)->actor->flags |= 0x4000;                               \
-            channel->pool->node->flags =                                      \
-                (channel->pool->node->flags & 0xC0FFFFFF) | 0x19000000;       \
-            channel->pool->node->flags |= 0x80000000;                         \
-        }                                                                     \
-    }
+#define ROOM_M256_DROP_FLASH(radius) do { \
+    if (FieldFx_IsPlayerWithinRadius(drop,radius) && drop->hazard && g_FieldFxTaskContext->flags) { \
+        FieldActor *owner=g_FieldFxOwner->actor; \
+        if (owner && owner->state && (owner->state->core_flags & 0x3F000000)==0x01000000) { \
+            ((Combatant *)g_PlayerEntity->state)->stateFlags|=0x4000; \
+            owner->state->core_flags=(owner->state->core_flags & 0xC0FFFFFF)|0x99000000; \
+        } \
+    } \
+} while (0)
 
 /* Scatter drop: falls and jitters, sheds three kinds of splash children,
  * flashes the scene on contact with the player and expires once it leaves
  * the walkable area; the splash children slow down and bounce. */
-int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
+int RoomM256_ScatterDropCallback(int mode, void *data, intptr_t argument) {
+    RoomM256Drop *drop=data;
     GteRotation rotation = g_RoomM256SpriteTilt;
     RoomM256DropColor color = g_RoomM256DropColor;
     RoomM256Drop *child;
@@ -131,7 +135,7 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
             }
             if (drop->timer & 1) {
                 if ((rand() & 7) == 0) {
-                    child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM256DropSpawnChannel)->pool);
+                    child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                     if (child) {
                         child->x = drop->x;
                         child->y = drop->y;
@@ -144,7 +148,7 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
                     }
                 }
                 if ((rand() & 7) == 1) {
-                    child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM256DropSpawnChannel)->pool);
+                    child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                     if (child) {
                         child->x = drop->x;
                         child->y = drop->y;
@@ -157,7 +161,7 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
                     }
                 }
                 if ((rand() & 0xF) == 2) {
-                    child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomM256DropSpawnChannel)->pool);
+                    child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                     if (child) {
                         child->x = drop->x;
                         child->y = drop->y;
@@ -171,7 +175,7 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
                 }
             }
             ROOM_M256_DROP_FLASH(0x19A);
-            if (Geo_PointInPoly(drop->x << 16, drop->z << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) return 1;
+            if (Geo_PointInPoly((s32)((u32)(s32)drop->x << 16), (s32)((u32)(s32)drop->z << 16), g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) return 1;
             if (drop->timer >= 0x20) return 1;
             break;
         case 1:
@@ -182,7 +186,7 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
             drop->x += (rand() & 0x1F) - 0x10;
             drop->z += (rand() & 0x1F) - 0x10;
             ROOM_M256_DROP_FLASH(0x26C);
-            if (Geo_PointInPoly(drop->x << 16, drop->z << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) return 1;
+            if (Geo_PointInPoly((s32)((u32)(s32)drop->x << 16), (s32)((u32)(s32)drop->z << 16), g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) return 1;
             if (drop->timer >= 0x20) return 1;
             break;
         case 2:
@@ -238,8 +242,8 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
         gte_ldtransmatrix(slot->value);
         switch (drop->state) {
         case 0:
-            width = (rsin(drop->timer << 5) + 0x1200) * 2;
-            height = (rsin(drop->timer << 5) + 0xE00) * 2;
+            width = (rsin(drop->timer * 32) + 0x1200) * 2;
+            height = (rsin(drop->timer * 32) + 0xE00) * 2;
             {
                 int kind = g_FieldFxSpriteParams.palette;
                 int palette = g_FieldFxPaletteTable[kind];
@@ -250,10 +254,10 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
             }
             if (rand() & 3) return 0;
             FieldFx_DrawStarFan((GteShortVector *)drop, 0xFA, 0xFA, 5, 0, width, width, (struct RenderColor *)&color, 0,
-                          rcos(drop->timer << 5) / 32, 3);
+                          rcos(drop->timer * 32) / 32, 3);
             return 0;
         case 1:
-            width = (rsin(drop->timer << 5) + 0x1200) * 2;
+            width = (rsin(drop->timer * 32) + 0x1200) * 2;
             {
                 int kind = g_FieldFxSpriteParams.palette;
                 int palette = g_FieldFxPaletteTable[kind];
@@ -264,7 +268,7 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
             }
             break;
         case 2:
-            width = rsin(drop->timer << 6) / 2 + 0x1200;
+            width = rsin(drop->timer * 64) / 2 + 0x1200;
             {
                 int kind = g_FieldFxSpriteParams.palette;
                 int palette = g_FieldFxPaletteTable[kind];
@@ -275,7 +279,7 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
             }
             return 0;
         case 3:
-            width = rsin(drop->timer << 6) / 2 + 0x1000;
+            width = rsin(drop->timer * 64) / 2 + 0x1000;
             {
                 int kind = g_FieldFxSpriteParams.palette;
                 int palette = g_FieldFxPaletteTable[kind];
@@ -286,7 +290,7 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
             }
             break;
         case 4:
-            width = rcos(drop->timer << 6) / 32 + 0x40;
+            width = rcos(drop->timer * 64) / 32 + 0x40;
             g_FieldFxSpriteParams.parameter00 = 0x20;
             g_FieldFxSpriteParams.parameter02 = 2;
             g_FieldFxSpriteParams.extent_x = 0x20;
@@ -303,15 +307,15 @@ int RoomM256_ScatterDropCallback(int mode, RoomM256Drop *drop) {
 
 #undef ROOM_M256_DROP_FLASH
 
-/* The stack templates the effects below copy: read-only data of this unit,
- * which GCC emits before the unit's jump tables, as retail has them. */
+/* Original local templates copied by the effects. */
 const RoomOrbitPairTemplate8 g_RoomM256ScatterDropAnchor = {{0, 0xFFE2}};
 const RoomM256Template g_RoomM256SwirlSparkAnchor = {{0, 0xFFBA}};
 const RenderColor g_RoomM256TrailColor = {0xC8, 0xBE, 0x18, 0};
 const RenderColor g_RoomM256TrailDarkColor = {0x0A, 0x80, 0xF0, 0};
 const GteRotation g_RoomM256TrailAnchor = {0, 0, -10, 0};
 
-int RoomM256_ScatterDropEmitter(int mode, u16 *counter) {
+int RoomM256_ScatterDropEmitter(int mode, void *data, intptr_t argument) {
+    u16 *counter=data;
     RoomOrbitPairTemplate8 template = g_RoomM256ScatterDropAnchor;
     s16 position[4];
     s16 target[4];
@@ -323,27 +327,24 @@ int RoomM256_ScatterDropEmitter(int mode, u16 *counter) {
     switch (mode) {
     case 0:
     {
-        RoomOrbitPairEventState *event = FX_TASK_AS(RoomOrbitPairEventState);
-        *counter = 0;
-        if (event->active) {
-            RoomOrbitPairNode **slot = (RoomOrbitPairNode **)ANIM_OWNER_AS(RoomOrbitPairChannel)->pool;
-            if (slot && *slot) {
-                u8 *flag = (*slot)->state;
-                if (*flag == 1) *flag = 2;
-            }
+        *counter=0;
+        FieldActor *actor=g_FieldFxOwner->actor;
+        if(g_FieldFxTaskContext->flags && actor && actor->state){
+            u8 *flag=actor->state->action_state;
+            if(*flag==1)*flag=2;
         }
     }
-    pool = ANIM_POOL_AS(RoomOrbitPairChannel)->pool;
+    pool = g_FieldFxActiveTaskSlot->end;
     return FieldFx_InitCallbackList(pool, 20, 50,
-                         (FieldFxCallbackListCallback)RoomM256_ScatterDropCallback);
+                         RoomM256_ScatterDropCallback);
     case 1:
-    pool = ANIM_OWNER_AS(RoomOrbitPairChannel)->pool;
-    FieldFx_TransformMatrixPoint(pool, 4, &template, position);
-    pool = ANIM_OWNER_AS(RoomOrbitPairChannel)->pool;
+    pool = (char *)g_FieldFxOwner->actor;
+    FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)pool,4,(const GteShortVector *)&template,(GteShortVector *)position);
+    pool = (char *)g_FieldFxOwner->actor;
     FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)pool, 4, (GteShortVector *)target);
     target[0] -= 0xDC;
     if (g_FieldFxCurrentAge < 110 && (g_FieldFxCurrentAge & 1)) {
-        pool = ANIM_POOL_AS(RoomOrbitPairChannel)->pool;
+        pool = g_FieldFxActiveTaskSlot->end;
         child = FieldFx_AcquireCallbackSlot(pool);
         if (child) {
             distance = (rand() & 7) + 0x37;
@@ -387,7 +388,8 @@ int RoomM256_ScatterDropEmitter(int mode, u16 *counter) {
 /* Spark that jitters sideways (state 0) or swirls on a spinning circle
  * (state 1) while it falls with damped velocity and bounces off the
  * floor height; draws as a fixed or a pulsing sprite. */
-int RoomM256_SwirlSparkCallback(int mode, RoomM256SwirlSpark *spark) {
+int RoomM256_SwirlSparkCallback(int mode, void *data, intptr_t argument) {
+    RoomM256SwirlSpark *spark=data;
     RenderMatrixSlot *matrixSlot;
     int fall;
     int bounce;
@@ -427,8 +429,8 @@ int RoomM256_SwirlSparkCallback(int mode, RoomM256SwirlSpark *spark) {
                 spark->vy = bounce;
             }
             spark->spin += 0x100;
-            spark->x += rsin(spark->spin << 8) / 1024;
-            spark->z += rcos(spark->spin << 8) / 1024;
+            spark->x += rsin(spark->spin * 256) / 1024;
+            spark->z += rcos(spark->spin * 256) / 1024;
             if ((s16)spark->timer < 16) break;
             return 1;
         }
@@ -456,7 +458,7 @@ int RoomM256_SwirlSparkCallback(int mode, RoomM256SwirlSpark *spark) {
             int kind;
             int palette;
             int page = 2;
-            scale = rsin(((s16)spark->timer << 10) / 24) + 0x1000;
+            scale = rsin(((s16)spark->timer * 1024) / 24) + 0x1000;
             scale /= 2;
             if (spark->small) page = 1;
             kind = g_FieldFxSpriteParams.palette;
@@ -478,13 +480,14 @@ int RoomM256_SwirlSparkCallback(int mode, RoomM256SwirlSpark *spark) {
  * effect is young sheds two swirl sparks per frame from the tracked joint,
  * aimed through one of three (then one of two) headings picked by a
  * rotating counter; mode 2 sets the sprite parameters. */
-int RoomM256_SwirlSparkEmitter(int mode, s16 *counter) {
+int RoomM256_SwirlSparkEmitter(int mode, void *data, intptr_t argument) {
+    s16 *counter=data;
     RoomM256Template template = g_RoomM256SwirlSparkAnchor;
     GteShortVector position;
     GteShortVector base;
     GteShortVector angles;
     RoomM256SwirlSpark *child;
-    void **soundSlot;
+    struct SceneAssetBlob **soundSlot;
     int distance = 0;
     int volume;
     int time;
@@ -499,16 +502,16 @@ int RoomM256_SwirlSparkEmitter(int mode, s16 *counter) {
             Akao_SendTableCommand(*soundSlot, 0x5A7, time, 0x80, volume);
             /* Retail re-reads the sound owner for the test and again for
              * the argument. */
-            if (*(void *volatile *)soundSlot != 0)
+            if (*(struct SceneAssetBlob *volatile *)soundSlot != 0)
                 Akao_SendTableCommand(*soundSlot, 0x5BF, 0x80, 0x80, volume);
         }
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 0x14, 0x20,
-                             (FieldFxCallbackListCallback)RoomM256_SwirlSparkCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x20,
+                             RoomM256_SwirlSparkCallback);
     case 1:
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 4, &template, &position);
-        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomSparkChannel)->pool, 4, &base);
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)g_FieldFxOwner->actor,4,(const GteShortVector *)&template,&position);
+        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)(RoomFxTransformOwner *)g_FieldFxOwner->actor, 4, &base);
         if (g_FieldFxCurrentAge < 0x6F) {
-            child = (RoomM256SwirlSpark *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = (RoomM256SwirlSpark *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = position.x;
                 child->y = position.y;
@@ -540,7 +543,7 @@ int RoomM256_SwirlSparkEmitter(int mode, s16 *counter) {
                 child->state = 0;
                 child->timer = 0;
             }
-            child = (RoomM256SwirlSpark *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = (RoomM256SwirlSpark *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = position.x;
                 child->y = position.y;
@@ -587,7 +590,7 @@ int RoomM256_SwirlSparkEmitter(int mode, s16 *counter) {
     return 0;
 }
 
-s32 RoomM256_TrailCallback(int mode, void *effect) {
+int RoomM256_TrailCallback(int mode, void *effect, intptr_t argument) {
     RoomM256TrailEffect *state = effect;
     RenderColor color = g_RoomM256TrailColor;
     RenderColor darkColor = g_RoomM256TrailDarkColor;
@@ -598,8 +601,6 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
     GteShortVector angles;
     GteMatrix transform;
     GteVector scale;
-    /* Unused space; the retail frame is 0xF0 bytes. */
-    s16 unusedVector[12];
     s16 impactFrame;
     s16 historyIndexX;
     s16 historyIndexY;
@@ -670,7 +671,7 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
             state->frame = 0;
             state->kind = 1U;
             state->ending = 0;
-            FieldFx_TransformMatrixPoint(g_FieldFxOwner->actor, 2, &initialRotation, state);
+            FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)g_FieldFxOwner->actor,2,(const GteShortVector *)&initialRotation,(GteShortVector *)state);
             FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0,
                           (GteShortVector *)&angles.x);
             historyCount = 16;
@@ -679,7 +680,7 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
             angles.x = initialPitch;
             {
                 int y = (u16)angles.y - 0x200;
-                int shiftedIndex = state->index << 9;
+                int shiftedIndex = state->index * 512;
                 initialYaw = y + shiftedIndex;
             }
             angles.y = initialYaw;
@@ -687,7 +688,7 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
             state->motionY = angles.y;
             state->motionZ = angles.z;
             state->motionY = (u16) (state->motionY + 0x800);
-            FieldFx_UpdatePointHistory(&g_RoomM256TrailHistory[state->index], historyCount, historyPosition, 1);
+            FieldFx_UpdatePointHistory((RenderHistoryPoint *)&g_RoomM256TrailHistory[state->index],historyCount,historyPosition,1);
             state->speed = (s16) ((rand() & 7) + 8);
             state->angle = 0;
             particle = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
@@ -708,7 +709,7 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
             state->frame = (s16) ((u16) state->frame + 1);
             history = &g_RoomM256TrailHistory[state->index];
             FieldFx_GetActorPosition((char *)g_PlayerEntity, 1, &delta.x);
-            FieldFx_CalculateLookAngles(state, &delta.x, &angles.x);
+            FieldFx_CalculateLookAngles((GteShortVector *)state,&delta,&angles);
             ending = state->ending;
             if (ending == 0) {
                 if (state->speed >= 0x1B) {
@@ -725,7 +726,7 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
                     turnBlend += 0xFFF;
                 }
                 motionAngles = &state->motionX;
-                FieldFx_EaseAngles(&angles.x, motionAngles, (turnBlend >> 0xC) & 0xFFFF);
+                FieldFx_EaseAngles((u16 *)&angles.x, motionAngles, (turnBlend >> 0xC) & 0xFFFF);
                 speedBeforeStep = state->speed;
                 if (speedBeforeStep < 0x32) {
                     state->speed = (s16) (speedBeforeStep + 6);
@@ -735,7 +736,7 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
                 if (squaredSpeed < 0) {
                     squaredSpeed += 0xF;
                 }
-                FieldFx_AnglesToVector(motionAngles, (squaredSpeed << 0xC) >> 0x10, (GteShortVector *)&delta.x);
+                FieldFx_AnglesToVector(motionAngles, (s32)((u32)squaredSpeed << 12) >> 0x10, (GteShortVector *)&delta.x);
                 state->x = (s16) ((u16) state->x + delta.x);
                 state->y = (s16) ((u16) state->y + delta.y);
                 state->z = (s16) ((u16) state->z + delta.z);
@@ -745,7 +746,7 @@ s32 RoomM256_TrailCallback(int mode, void *effect) {
                 if (nextEnding >= 0x10) return 1;
             }
             {
-                FieldFx_UpdatePointHistory(history, 0x10, state, 0);
+                FieldFx_UpdatePointHistory((RenderHistoryPoint *)history,0x10,(RenderHistoryPoint *)state,0);
                 if ((FieldFx_IsPlayerWithinRadius(state, 0x64) != 0) && (state->y >= (g_RoomFloorY->y - 0x202)) && (g_FieldFxTaskContext->flags != 0) && ((g_FieldFxOwner->actor->state->core_flags & 0x3F000000) == 0x01000000)) {
                     trailPlayerState = g_PlayerEntity->state;
                     trailPlayerState->flags = (s32) (trailPlayerState->flags | 0x4000);
@@ -910,14 +911,14 @@ checkLifetime:
             fade = ((g_FieldFxCurrentAge & 1) << 5) + 0x60;
             FieldFx_DrawStarFan((GteShortVector *)state, 0x190, 0x190, 8, 0, 0x1000, 0x1000, (RenderColor *)&color.r, 0, fade, 1);
             historySample = g_RoomM256TrailHistory[0].point + (rand() & 7);
-            FieldFx_DrawStarFan((void *)((unsigned)(state->index * 0x88) + (unsigned)historySample), 0x1F4, 0x1F4, 6, 0, 0x1000, 0x1000, (RenderColor *)&color.r, 0, (u32)fade >> 1, 1);
+            FieldFx_DrawStarFan((GteShortVector *)((char *)historySample + (ptrdiff_t)state->index * sizeof(RoomM256TrailHistory)), 0x1F4, 0x1F4, 6, 0, 0x1000, 0x1000, (RenderColor *)&color.r, 0, (u32)fade >> 1, 1);
             return 0;
         case 1:
-            firstFade = rcos(state->frame << 6) / 32;
-            renderScale = rcos(state->frame << 6);
+            firstFade = rcos(state->frame * 64) / 32;
+            renderScale = rcos(state->frame * 64);
             params = &g_FieldFxSpriteParams;
             spriteExtent = 0x10;
-            spriteClutY = g_FieldFxPaletteEntry2;
+            spriteClutY = g_FieldFxPaletteTable[2];
             palettes = (RoomM256TrailPalettes *)&g_FieldFxTpageSlot2;
             params->parameter00 = spriteExtent;
             spritePalette = palettes->first;
@@ -943,19 +944,10 @@ checkLifetime:
                 callScaleX = renderScale;
                 callScaleY = renderScale;
                 drawOffset = (s16)((const RenderEffectParameters *)params)->parameter02 * 2 + 0xD8;
-                /* Matching debt: consume CLUT and page in $2, then bound both
-                 * outgoing stores before the texture-offset load. Empty ASM
-                 * only; $4..$7 preserve the ready arguments. */
                 FieldFx_DrawShapeQuads((GteShortVector *)callState, callRotation, callScaleX, callScaleY,
                               drawOffset,
-                    ({
-                        int clutWord = drawClut;
-                        clutWord;
-                    }),
-                    ({
-                        int modeWord = 1;
-                        modeWord;
-                    }), firstFade,
+                    drawClut,
+                    1, firstFade,
                     (RenderColor *)(({
                         &color.r;
                     })));
@@ -967,8 +959,8 @@ checkLifetime:
             g_FieldFxSpriteParams.tpage = renderPalette;
             break;
         case 2:
-            renderScale = rsin(((state->frame << 0xA) / 10)) / 4;
-            fade = (rsin((state->frame << 0xB) / 10) / 48);
+            renderScale = rsin(((state->frame * 1024) / 10)) / 4;
+            fade = (rsin((state->frame * 2048) / 10) / 48);
             gte_ldrotmatrix(D_800BCFA4.value);
             gte_ldtransmatrix(D_800BCFA4.value);
             {
@@ -992,7 +984,7 @@ checkLifetime:
             }
             FieldFx_ModelSetTexture(modelPage, GetClut(0x70, modelClutY) & 0xFFFF);
             FieldFx_ModelSetSemiTrans(1);
-            RotMatrixYXZ(&state->motionX, &transform);
+            RotMatrixYXZ((GteShortVector *)&state->motionX,&transform);
             transform.t[0] = (s32) state->x;
             transform.t[1] = (s32) state->y;
             translationZ = state->z;
@@ -1000,7 +992,7 @@ checkLifetime:
             scale.y = renderScale;
             scale.z = 0x2AA;
             transform.t[2] = translationZ;
-            ScaleMatrix(&transform, &scale.x);
+            ScaleMatrix(&transform,&scale);
             FieldFx_ModelSaveColors((char *)g_RoomM256TrailModel);
             FieldFx_ModelSetColors((char *)g_RoomM256TrailModel, darkColor.r, darkColor.g, darkColor.b);
             FieldFx_ModelScaleColors((char *)g_RoomM256TrailModel, fade & 0xFFFF);
@@ -1008,9 +1000,9 @@ checkLifetime:
             FieldFx_ModelRestoreColors((char *)g_RoomM256TrailModel);
             return 0;
         case 3:
-            pulseSine = rsin(state->frame << 6);
+            pulseSine = rsin(state->frame * 64);
             renderScale = ((s32) ((pulseSine >> 0x1F) + pulseSine) >> 1) + 0x1000;
-            pulseCosine = rcos(state->frame << 6);
+            pulseCosine = rcos(state->frame * 64);
             fade = pulseCosine >> 5;
             if (pulseCosine < 0) {
                 fade = (pulseCosine + 0x1F) >> 5;
@@ -1029,8 +1021,8 @@ checkLifetime:
             g_FieldFxSpriteParams.depth = 8;
             break;
         case 4:
-            renderScale = rsin(state->frame << 6) + 0x1000;
-            rsin((state->frame << 11) / 24);
+            renderScale = rsin(state->frame * 64) + 0x1000;
+            rsin((state->frame * 2048) / 24);
             g_FieldFxSpriteParams.parameter00 = 0x20;
             g_FieldFxSpriteParams.parameter02 = 2;
             g_FieldFxSpriteParams.extent_x = 0x20;
@@ -1042,12 +1034,12 @@ checkLifetime:
             clut = GetClut(0x10, impactClutY) & 0xFFFF;
             tripledScale = renderScale * 3;
             impactScale = (s32) (tripledScale + (tripledScale >> 0x1F)) >> 1;
-            spriteFrame = &g_FieldFxSpriteParams.parameter02;
+            spriteFrame = (s16 *)&g_FieldFxSpriteParams.parameter02;
             FieldFx_DrawShapeQuads((GteShortVector *)state, &spriteRotation, impactScale, impactScale, (*spriteFrame * (s16) (state->frame / 3)) + 0x20, clut, 1, 0x80, 0);
             impactFrame = state->frame;
             if (impactFrame < 0xD) {
-                renderScale = rsin(((impactFrame << 10) / 12)) * 4;
-                impactCosine = rcos(((state->frame << 10) / 12));
+                renderScale = rsin(((impactFrame * 1024) / 12)) * 4;
+                impactCosine = rcos(((state->frame * 1024) / 12));
                 fade = impactCosine >> 5;
                 if (impactCosine < 0) {
                     fade = (impactCosine + 0x1F) >> 5;
@@ -1073,11 +1065,11 @@ checkLifetime:
     return 0;
 }
 
-int RoomM256_TrailEmitter(int mode, u16 *out) {
+int RoomM256_TrailEmitter(int mode, void *data, intptr_t argument) {
+    u16 *out=data;
     FieldActor *actor;
     FieldActorState *state;
     u8 *action;
-    /* Keep the return available for the retail mode dispatch. */
     int ret;
     RoomM256TrailEffect *task;
     u16 value;
@@ -1132,7 +1124,8 @@ int RoomM256_TrailEmitter(int mode, u16 *out) {
     return 0;
 }
 
-int RoomM256_ModelPulseParticleCallback(int mode, RoomModelPulseParticle *particle) {
+int RoomM256_ModelPulseParticleCallback(int mode, void *data, intptr_t argument) {
+    RoomModelPulseParticle *particle=data;
     GteShortVector position;
     GteShortVector color;
     int scale;
@@ -1147,8 +1140,8 @@ int RoomM256_ModelPulseParticleCallback(int mode, RoomModelPulseParticle *partic
         if ((s16)particle->frame >= 16) return 1;
         break;
     case 2:
-        scale = particle->scale * rcos((s16)particle->frame << 6) / 4096;
-        FieldFx_OffsetPointByAngles(&g_RoomM256PulseCenter, &position, scale, &g_RoomM256PulseAngles,
+        scale = particle->scale * rcos((s16)particle->frame * 64) / 4096;
+        FieldFx_OffsetPointByAngles((GteShortVector *)&g_RoomM256PulseCenter, &position, scale, &g_RoomM256PulseAngles,
                       scale, (s16)particle->offset);
         FieldFx_SampleColorTrack(g_RoomM256PulseParticleColorTrack, &color, 0x30 - (scale * 48) / 1024);
         kind = g_FieldFxSpriteParams.palette;
@@ -1169,19 +1162,14 @@ int RoomM256_ModelPulseParticleCallback(int mode, RoomModelPulseParticle *partic
 /* Controller: loads the model asset, seeds sixteen ring particles on frame
  * 1, then draws the slot-2 ring sprite and, from frame 4, the model scaled by
  * cos and brightened by sin of the elapsed time.
- *
- * Mode 2 keeps the ModelBurstController preamble (spin record, brightness
- * scaled by 2/3, a cos sample) whose results this effect never reads: the
- * spin stores and the cos call survive in retail, and the brightness test is
- * the branch that splits the scheduling block before the /40 division (its
- * empty jump is only removed after scheduling). */
-int RoomM256_ModelPulse(int mode, s16 *state) {
+ */
+int RoomM256_ModelPulse(int mode, void *data, intptr_t argument) {
+    s16 *state=data;
     GteRotation rotation = g_RoomM256PulseAnchor;
     GteShortVector position;
-    GteRotation spin;
     RenderColor color;
-    RoomModelPulseMatrix matrix;
-    RoomModelPulseScale scale;
+    GteMatrix matrix;
+    GteVector scale;
     RoomModelPulseParticle *child;
     void *slot;
     u16 *tpages;
@@ -1194,13 +1182,13 @@ int RoomM256_ModelPulse(int mode, s16 *state) {
         *state = 0;
         g_RoomM256PulseModel = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5487704);
         FieldFx_ModelScrollUv(g_RoomM256PulseModel, 0, 0);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 8, 0x10,
-                             (FieldFxCallbackListCallback)RoomM256_ModelPulseParticleCallback);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 8, 0x10,
+                             RoomM256_ModelPulseParticleCallback);
     case 1:
         if (*state < 0x80) *state += 4;
         if (g_FieldFxCurrentAge == 1) {
             for (i = 0; i < 16; i++) {
-                slot = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                slot = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 child = slot;
                 if (child) {
                     child->frame = 0;
@@ -1223,16 +1211,7 @@ int RoomM256_ModelPulse(int mode, s16 *state) {
             g_FieldFxSpriteParams.parameter0A = 0;
             g_FieldFxSpriteParams.depth = 0x18;
         }
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 2, &rotation, &position);
-        spin.x = 0;
-        spin.y = 0;
-        spin.flags = 0;
-        spin.z = -g_FieldFxCurrentAge << 6;
-        /* Copied from the burst template; the value is never read here, but
-         * the emptied branch still splits retail's schedule. */
-        brightness = *state;
-        if (g_FieldFxCurrentAge != 0) brightness = brightness * 2 / 3;
-        rcos((g_FieldFxCurrentAge << 10) / 40);
+        FieldFx_TransformMatrixPoint((RoomFxTransformOwner *)g_FieldFxOwner->actor,2,(const GteShortVector *)&rotation,&position);
         FieldFx_SampleColorTrack(g_RoomM256PulseColorTrack, &color, g_FieldFxCurrentAge * 3);
         FieldFx_DrawStarFan(&position, 0xA0, 0xA0, 8, 0, 0x1000, 0x1000, &color, 0,
                       0x80, 1);
@@ -1240,14 +1219,14 @@ int RoomM256_ModelPulse(int mode, s16 *state) {
         g_RoomM256PulseCenter.x = position.x;
         g_RoomM256PulseCenter.y = position.y;
         g_RoomM256PulseCenter.z = position.z;
-        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomSparkChannel)->pool, 2,
+        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)(RoomFxTransformOwner *)g_FieldFxOwner->actor, 2,
                       &g_RoomM256PulseAngles);
         g_RoomM256PulseAngles.x += 0x400;
         if (g_FieldFxCurrentAge >= 4) {
             int angle;
 
             i = g_FieldFxCurrentAge - 4;
-            angle = (i << 10) / 12;
+            angle = (i * 1024) / 12;
             size = rcos(angle);
             brightness = rsin(angle) / 32;
             {
@@ -1304,15 +1283,33 @@ int RoomM256_ModelPulse(int mode, s16 *state) {
     return 0;
 }
 
-void *RoomM256_ScatterConfigure(void) {
-    return g_RoomM256ScatterConfig;
+intptr_t RoomM256_ScatterConfigure(int mode, intptr_t a, intptr_t b, intptr_t c) {
+    return (intptr_t)&g_RoomM256ScatterConfig;
 }
 
-void *RoomM256_SetTrailTurnScale(void *arg0, int value) {
+intptr_t RoomM256_SetTrailTurnScale(int mode, intptr_t input, intptr_t b, intptr_t c) {
+    s32 value=(s32)input;
     if (value < 0x200) {
         value = 0x200;
     }
 
     g_RoomM256TrailTurnScale = value;
-    return g_RoomM256TrailConfig;
+    return (intptr_t)&g_RoomM256TrailConfig;
 }
+
+/* Original USA M256 constants, storage and complete task descriptors. */
+GteRotation g_RoomM256SpriteTilt={1024,0,0,1};
+GteRotation g_RoomM256PulseAnchor={0,0,110,0};
+RoomM256DropColor g_RoomM256DropColor={200,70,8,0};
+s32 g_RoomM256ScatterConfig,g_RoomM256TrailConfig,g_RoomM256TrailTurnScale;
+void *g_RoomM256TrailModel,*g_RoomM256PulseModel;
+RoomM256TrailHistory g_RoomM256TrailHistory[3];
+s16 g_RoomM256PulseBrightness;
+GteShortVector g_RoomM256PulseAngles;
+RoomModelPulseAnchor g_RoomM256PulseCenter;
+char g_RoomM256PulseParticleColorTrack[40]={0,0,0,0,0,0,0,0,-128,0,0,16,0,0,0,0,-56,-128,0,16,0,0,0,0,-16,-16,0,16,0,0,0,0,-16,-16,-128,0,0,0,0,0};
+u8 g_RoomM256PulseColorTrack[40]={0,0,0,0,0,0,0,0,0,0,0,16,0,0,0,0,200,128,0,16,0,0,0,0,240,240,0,16,0,0,0,0,240,240,128,0,0,0,0,0};
+u16 g_RoomM256ScatterScript[18]={5,0,0,1,6,46,2,1,0,4,50,0,2,0,0,0,0,0};
+u16 g_RoomM256TrailScript[34]={5,0,0,1,6,47,4,33,0,2,1,0,4,16,0,1,0,0,2,0,0,4,16,0,1,0,2,2,0,0,0,0,0,0};
+FieldFxTaskProgram g_RoomM256ScatterEffects={{{RoomM256_ScatterDropEmitter,RoomM256_SwirlSparkEmitter},{4,4}},RoomM256_ScatterConfigure,g_RoomM256ScatterScript};
+FieldFxTaskProgram g_RoomM256TrailEffects={{{RoomM256_TrailEmitter,RoomM256_ModelPulse},{4,4}},RoomM256_SetTrailTurnScale,g_RoomM256TrailScript};

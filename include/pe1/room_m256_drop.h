@@ -32,41 +32,7 @@ typedef struct RoomM256DropColor {
     u8 r, g, b, code;
 } __attribute__((packed)) RoomM256DropColor;
 
-typedef struct RoomM256DropNode {
-    u32 flags;
-} RoomM256DropNode;
-
-typedef struct RoomM256DropPool {
-    RoomM256DropNode *node;
-} RoomM256DropPool;
-
-typedef struct RoomM256DropChannel {
-    s32 reserved[2];
-    RoomM256DropPool *pool;
-} RoomM256DropChannel;
-
-typedef struct RoomM256DropSpawnChannel {
-    s32 reserved[2];
-    void *pool;
-} RoomM256DropSpawnChannel;
-
-typedef struct RoomM256DropActor {
-    u8 reserved[0x4C];
-    u32 flags;
-} RoomM256DropActor;
-
-typedef struct RoomM256DropEntity {
-    RoomM256DropActor *actor;
-} RoomM256DropEntity;
-
-typedef struct RoomM256DropEvent {
-    u8 reserved[0xD];
-    u8 active;
-} RoomM256DropEvent;
-
 #include "pe1/player_entity.h"
-extern GteRotation g_RoomM256SpriteTilt;
-extern RoomM256DropColor g_RoomM256DropColor;
 extern GteRotation g_RoomM256SpriteTilt;
 extern RoomM256DropColor g_RoomM256DropColor;
 

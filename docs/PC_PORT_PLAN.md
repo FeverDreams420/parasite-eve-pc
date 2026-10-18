@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dzień4 — M099→M100 po potwierdzonym zimnym Continue B.
+Planner najpierw wybierał zbyt wąskie punkty przy ścianach M099;
+v1/v2/v3 zatrzymywały tester na waypointach, bez awarii gry. V3 na końcu
+miał dead zone: wymagał dystansu22, ale nie wysyłał kierunku przy obu
+osiach≤25. Tolerancja35 na końcu i60 na pośrednich waypointach umożliwia
+dojście do punktu (580,-780). To TELEFON, nie wyjście ani punkt amunicji:
+Cross przy32916 uruchamia dialog6, następne zatwierdzenie menu36/sloty.
+Nie zapisywano nowego pliku. Próby ruchu v6/v7 przy nadal otwartym menu
+były błędem sterowania testera. V8 wybiera End w liście slotów i wraca
+do pola, następnie oryginalnym biegiem dochodzi do triggera(-100,1600).
+Przy35036 M100/a8020048, story440, HP210/210, lock2/menuNULL,
+zero żywych przeciwników. Cały cold replay od B w normal7,06s iSAN21,41s
+exit0, pełne JSON identyczne z interaktywnym przebiegiem i między profilami,
+całe1MiB VRAM identyczne; wszystkie8192B B źródłowe/prywatne niezmienione,
+bu10 puste. /tmp/pe-day4-m099-m100-pair-v1-{proof.json,full-args.json}.
+Skrypty/testery i ślady /tmp/pe-day4-m099-exit-v{1..8}.py oraz
+/tmp/pe-m123-day4-m099-exit-v8-* (historyczny prefix pe-m123 w testerze,
+nie numer aktualnego pokoju). Brak zmian produkcji, PsyZ/SDL nadal
+nieinstrumentowane. Dalsza droga przez M100 opisana poniżej.
+
+M100→M104 dnia4: bieganie przez oryginalny hol działa bez losowego starcia.
+Próby v1/v2 w stronę z4200/4332 nie zmieniają sceny; nie były wyjściem.
+V3 wybiera trigger x[363,603], z[3078,3393], cel(470,3230), prowadzący
+do M104/a8020248, nie na ulicę. Przy36466 HP210/210/story440/lock2,
+menuNULL. Pełny cold Continue B→M098→M099/telefon/End→M100→M104:
+normal7,49s/SAN22,62s exit0, całe JSON zgodne z interaktywnym przebiegiem
+i między profilami, pełny VRAM identyczny, B źródłowe/prywatne niezmienione,
+bu10 puste. /tmp/pe-day4-m100-m104-pair-v1-{proof.json,full-args.json}.
+Obraz /tmp/pe-day4-live-v3/frame.png obejrzany: mała sala z krzesłami,
+stołem i przejściem powrotnym. Klient session51633 zakończony quit/exit0.
+
+Read-only /tmp/pe-day4-m104-observe-v1.log zakończony0: skrypty aktorów
+i94 trójkąty/76 wierzchołków w /tmp/pe-floor-a8020248.json. Zwykły kontroler
+v1 zatrzymuje się przy ścianie; v2 wybiera szerszą drogę i dochodzi37800
+do(254,-1975), nadalM104/HP210/story440, bez dialogu. To normal-only
+eksploracja, nie wyjście z komisariatu ani dowód kolejnej lokacji.
+Ślady /tmp/pe-m123-day4-m104-exit-v2-*; kolejnym krokiem jest powrót
+przez trigger x[-1167,-1020],z[-228,258] do M100 i sprawdzenie pozostałych
+przejść. Kod produkcyjny nadal bez zmian; brak porównania pikseli/PCM PS1.
+
 Po M123 — zwykły input dochodzi do autentycznego zapisu DAY4/level18.
 Od74080 ruch Up8208 wyzwala w a8004248 rozmowy107/108/96/110–112,
 114–118 i dalsze do123. Następuje oryginalne przejście końca dnia,

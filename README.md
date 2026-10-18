@@ -105,6 +105,12 @@ Cr Evade +1 on SP Vest1, traverses northern M085, wins M087 and creates
 phone Save J there. Full replay and cold Continue J pass both builds with
 matching reported state, VRAM, inventory, equipment and save payloads.
 The M085 encounter did not trigger on this route and is not covered by it.
+From J, ordinary input also defeats all four M086 worms with the existing
+M16 and real Heal1/Heal2, collects ammunition and Defense +1, returns to
+M087 and creates phone Save K. Full replay, two checkpoint pairs and cold
+Continue K pass both builds with matching reported state, VRAM and save
+payloads. Tools, M203, Mod Permits and Revive remain preserved; the rejected
+Tune Up attempts do not change equipment.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

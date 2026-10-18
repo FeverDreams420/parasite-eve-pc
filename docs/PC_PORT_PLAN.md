@@ -2,6 +2,58 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły zimny Continue J wygrywa teraz M086 obecnym M16 bez Heat i bez
+zmiany wyposażenia, odbiera nagrody, wraca do M087 i tworzy prawdziwy
+Save K. Przed walką oryginalne Tune Up odrzuca przeniesienie Heat z M203:
+M16 ma tailCount1, zajęte przez Rate of Fire2. Mod Permit nie jest dostępny
+do użycia w polu. Odrzucone próby zachowane w input; Tool, M203, oba
+permity i wszystkie4096B rekordów pozostają niezmienione przy wejściu
+M086/cap27433. Nie wymuszano wolnego slotu ani statystyk. Ponownie
+sprawdzono manifest: wszystkie346 obiektów (173 na profil), ich zależności,
+biblioteki i4 zamrożone executable odpowiadają zapisanym SHA256.
+
+Z M087 wschód[1850,300]→M086, wejście[2400,0]. Marsz na zachód uruchamia
+cztery robaki typ3/HP120/defense13. M16 zadaje trafienia28, część strzałów
+nie trafia podczas zejścia pod ziemię. Sterownik czyta prawdziwe pociski
+PM120 i podłogę, wykonuje wyłącznie fizyczny input. Po śmierciach robaków
+pozostałe zmieniają fazę/HP, aż ostatni ma210HP; algorytm gry niezmieniony.
+W walce użyte Heal1/Heal2. Jedna próba Heal2 przy PE118,9969 jest odrzucona
+przez menu; następny wybór Heal1 leczy36→66. Późniejsze Heal2 m.in.15→75.
+Wszystkie cztery pokonane: przy39425 M086, live0, battle2, HP104/133,
+lock5, przed ekranem EXP. Nie zużyto Revive ani przedmiotów. Po oryginalnym
+EXP/awansie maxHP181, capacity21; Obtain All odbiera amunicję i Defense+1
+ID41 do nowego slotu20. Przedmiot pozostaje niezużyty. Dwie próby Heal1
+w polu nie zwiększyły104HP; input i odmowy zachowane.
+
+Powrót przez[1760,340]→[2800,0] do M087 nie uruchamia kolejnej walki.
+Telefon: podejście[500,350]→[210,450]→[210,550], kolizja około[230,488],
+facing2014, Cross/dialog6. Oryginalne Save: z obecnego J9 Down do K10,
+potwierdzenie i zamknięcie paneli. Przy45740: M087/etap248, HP104/181,
+capacity21, weapon10/armor14, brak menu/locka/żywych wrogów, battle9.
+Wszystkie50 slotów względem J identyczne poza nowym Defense+1 w20;
+wszystkie4096B wyposażenia identyczne poza faktyczną amunicją M16,
+offset138:8→10. Tool8/19, M20315, permity7/11 i Revive13 zachowane.
+
+Na niezmienionym /tmp/pe-park-attack-status-v1 cały replay J→K normal/SAN
+exit0 w9,06/25,26s. Pełny JSON i1MiBVRAM identyczne z żywą sesją;
+SHA2568ee174d55948cfe2c95fecd99130ff518b7a5a1393a088bdec7233a5877ec621.
+Źródłowy8192B J niezmieniony, wszystkie8192B nowego K identyczne we
+wszystkich trzech prywatnych katalogach. K SHA256
+3249a8153a787e4c817e391e86b3aeb24c14307697eded9e76a312aac25f4e8d.
+Dwie pary checkpointów normal/SAN PASS4/4: wejście27433 potwierdza brak
+zmian po odrzuconym Tune Up; zwycięstwo39425 potwierdza zakończoną walkę.
+Cały JSON/VRAM każdej pary zgodny, J niezmieniony. Artefakty
+/tmp/pe-park-j-worms-v1-{proof.json,verify.py,results.json},
+-checkpoints{.py,-proof.json,-results.json}, pełne args/input/logi/VRAM,
+fight.log i navigation.log pod tym prefiksem. Zimny Continue K normal/SAN
+exit0 w4,09/12,44s: M087/etap248/HP104/181/lock0/brak menu; wszystkie
+sloty i4096B wyposażenia zgodne z sesją zapisu, pełny JSON/VRAM zgodny,
+K niezmieniony. /tmp/pe-park-phone-k-continue-v1-{proof.json,verify.py,
+results.json}. Bez zmian kodu produkcji ani nowych plików repo, bez zapisów
+HP/stanu/RNG przez debugger. Nie ma nowego niezależnego porównania PS1
+ani trwałego CTest tego replayu. Następne: dalsza droga z K do Eve.
+Kampania pozostaje nieukończona.
+
 Zwykły zimny Continue I przechodzi teraz także M083→M084→północ M085→
 M087, wygrywa M083 i M087 i tworzy prawdziwy Save J przez telefon M087.
 To J bieżącego łańcucha od New Game z oryginalnymi zegarami, a nie starszy
@@ -55,7 +107,7 @@ identyczne, źródłowy J niezmieniony. Dowód
 /tmp/pe-park-phone-j-continue-v1-{proof.json,verify.py,results.json}.
 Bez zmian kodu produkcji ani nowych plików repo, wyłącznie input i prywatne
 karty, bez zapisów HP/stanu/RNG. Brak świeżego niezależnego PS1 dla J
-oraz trwałego replayu CTest. Następne: M086 i dalsza droga do Eve.
+oraz trwałego replayu CTest. M086 z bieżącego J opisano powyżej.
 Cała kampania pozostaje nieukończona.
 
 Dalszy zwykły replay od zimnego Continue I, przez cały wcześniejszy M080,

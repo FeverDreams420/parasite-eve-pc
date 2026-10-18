@@ -28,23 +28,55 @@ quit/exit0; wszystkie inputy i snapshoty /tmp/pe-postboss-live-v1/.
 Obrazy frame.png rzeczywiście obejrzane: sala po walce, File saved DAY4,
 lista zapisów, następnie spotkanie. Nie jest to porównanie pikseli PS1.
 
-UWAGA — zimny Continue B nie ma jeszcze dowodu poprawnego wznowienia.
+Zimny Continue B — wyjaśniony brak inputu testera, kod gry bez zmian.
 Pierwszy tester v1 wybrał pusty wpis A zamiast B (oba procesy exit0,
 tester KeyError przy braku gracza); nie był to błąd pliku. Poprawny v2
 wybiera B i potwierdza odczyt: HP210, story432, ekwipunek, scene a8065148,
 menuNULL, lock1. Oba profile exit0, pełne JSON/VRAM zgodne, B niezmieniony,
-ale brak przejścia do grywalnej sceny. Przedłużenie bez inputu do30000
+Przedłużenie bez inputu do30000
 (v3 normal4,13s/SAN12,91s) nadal w tej samej scenie/lock1, game_frame4994.
-Pliki /tmp/pe-day4-continue-v{2,3}-proof.json dowodzą odczytu i zgodności
-profilów, NIE poprawnego Continue całego dnia. Read-only LLDB v1 doszedł
+Pliki /tmp/pe-day4-continue-v{2,3}-proof.json same dowodzą tylko odczytu
+i zgodności profili. Read-only LLDB v1 doszedł
 do23999, ale import obserwatora odrzucono z powodu myślników w nazwie
 modułu Python; sesja97068 zakończyła się1, proces44620 nie istnieje.
-Poprawiona sesja17689, proces45689, /tmp/pe-day4-continue-observe-v2.log
-i obserwator /tmp/pe_day4_continue_observe_v2.py czekają na Boot_PollHost
-przy23999 do odczytu zadania skryptu; przy ostatnim sprawdzeniu rzeczywiście
-żywe. Wynik ma trafić do /tmp/pe-day4-continue-observe-v2.json.
-Nie zmieniano HP/PE/flag ani danych zapisu.
+Poprawiona sesja17689 zakończona0, obserwator v2 odczytał zadanie aktora1,
+offset10236/JumpToEntityOffset308. V3 zatrzymuje się na init.c:101 dopiero
+przy wypisywaniu końcowego snapshotu, zamiast kosztownego breakpointu
+każdego VBlank; sesja86904 zakończona0. Zachowane binarne skrypty i JSON
+/tmp/pe-day4-continue-observe-v3*. Pętla od616 wywołuje opcode17,
+tryb1/maska0x100: oczekiwanie na naciśnięcie przycisku, nie I/O karty.
+Obejrzany /tmp/pe-day4-continue-v3-normal.png przedstawia oryginalną
+planszę „Day4 — Conception”. Nie jest to zawieszenie Continue.
+
+V4 dodaje Cross24100→24110 po odczycie B: przechodzi do M098/a8009448,
+dialog124, HP210/210/story432. Normal5,62s/SAN18,09s, oba exit0,
+całe JSON i1MiB VRAM zgodne, B niezmieniony; -v4-proof.json.
+V5 dodatkowo zatwierdza osiem odcinków dialogu od30000 do31472:
+story440, dialog131 zamknięty, lock2/menuNULL, HP210. Cold normal6,22s
+i SAN19,22s exit0, pełne JSON identyczne z interaktywnym Continue
+oraz między profilami, całe VRAM identyczne, B źródłowe/prywatne
+niezmienione, bu10 puste; /tmp/pe-day4-continue-v5-proof.json.
+To dowód Continue do kolejnej sceny i zakończenia spotkania, nie całego
+dnia4. Klient /tmp/pe-day4-live-v1/ zakończony quit/exit0 przy31952
+po zwykłych próbach ruchu w M098. Wyjście osiągnięto poniższą trasą.
+Nie zmieniano HP/PE/flag ani danych zapisu. Nie ma żywego debuggera v2/v3.
 Kod produkcyjny, zamrożone executable i biblioteki nadal bez zmian.
+
+M098→M099 po zimnym Continue DAY4: read-only obserwator
+/tmp/pe-day4-office-observe-v1.log (sesja29825 zakończona0) odczytał
+37 trójkątów/36 wierzchołków podłogi oraz skrypt kontrolera wyjścia.
+Oryginalny trigger to x[-654,-567], z[1017,1425], nie miejsce wcześniejszych
+prób przy bocznych ścianach. Dane /tmp/pe-floor-a8009448.json i
+/tmp/pe-day4-office-observe-v1-actor1.bin, opcode119 przy64.
+Zwykłe bieganie przez (-1250,0),(-1120,150),(-950,330),(-850,600),
+(-850,900),(-800,1100),(-610,1200), następnie neutral500 przechodzi
+do M099/a80094c8 przy32104, HP210/210/story440/lock2/menuNULL.
+Cold replay od nieedytowanego B normal6,38s/SAN19,65s exit0, pełne JSON
+identyczne z interaktywną trasą i między profilami, pełny1MiB VRAM
+identyczny, wszystkie8192B B niezmienione, bu10 puste. Dowód i komplet
+inputu /tmp/pe-day4-office-exit-pair-v1-{proof.json,full-args.json}.
+PsyZ/SDL nadal nieinstrumentowane. Dalsza droga z M099 dnia4 nieprzetestowana;
+pixel/PCM PS1 i pełna kampania nadal bez kompletnego dowodu.
 
 M123 — POTWIERDZONE ZWYCIĘSTWO zwykłym inputem od autentycznej A2,
 na niezmienionym kandydacie /tmp/pe-control-stream-v2. Przy69832

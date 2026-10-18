@@ -2,6 +2,47 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły zimny Continue H przechodzi teraz do M072/etapu248. Trasa obejmuje
+M063 (nowy wariant: dwa typ3/HP57), M358 (trzy typ6/HP35 i typ4/HP57)
+oraz M067 (dwa typ3/HP35 i typ4/HP44). Wszystkie trzy walki wygrane;
+Medicine1 ze slotu16 leczy56→101 w M063, Medicine2 z13 leczy43→107
+w M358. W M067 użyto dwukrotnie Heal1 (m.in.36→66). Wyniki walk:
+M063/HP83, M358/HP75, M067/HP47. Nagrody amunicji odebrane; trzy Junk
+z M358 trafiają do13/16/17. Awans po M067 zwiększa pojemność do19,
+więc Obtain All odbiera jeszcze jeden Junk do18; ostatni pozostawiono.
+Klucz i wszystkie rekordy wyposażenia zachowane.
+
+Północne wyjście M358 około[-5500,8200] prowadzi do M067. Druga brama
+M067 około[-2250,8000], po podejściu i zwróceniu Ayi na północ, sprawdza
+ZooKey202, odgrywa animację i tekst107, następnie przechodzi do M068.
+M068[-1100,3480]→M072, dalej[-300,1100]→M069. Podejście[1100,-7400]
+uruchamia tekst36, scenę Eve/M071 i37/38, po czym M069/tekst108/etap240
+oddaje sterowanie. Powrót przez[3500,-7600]→M072 uruchamia ucieczkę Eve
+i etap244. W M072 droga przez[980,1300]→[3000,3460] prowadzi do M070;
+podejście do[300,0] uruchamia rozmowy96/45/97, Eve odchodzi i przejścia
+są odblokowane. Wyjście[3100,600]→M072 ustawia etap248. Przy53029:
+M072, HP47/115, pojemność19, weapon10/armor14, brak menu/dialogów,
+lock0, zero przeciwników, battle9, pozycja[189857792,0,158793728], yaw76.
+W całych4096B wyposażenia względem H zmienia się tylko M16/offset138:
+9→3 po rzeczywistych strzałach/przeładowaniach. Defense+1 SP Vest1 zostaje.
+
+Na niezmienionym /tmp/pe-park-attack-status-v1 cały replay H→etap248
+normal/SAN exit0 w11,24/31,33s. Pełny JSON i1MiBVRAM identyczne z żywą
+sesją; SHA256c386e51196914a8e87b170c14602409f1faa73aef99528f05fee46d8774b1874.
+Źródłowy H niezmieniony. Dowód /tmp/pe-park-h-amphitheater-v1-{proof.json,
+verify.py,results.json}, pełne args/input/logi/VRAM pod tym prefiksem.
+Cztery osobne punkty tego samego inputu: M063/30163, M358/35311,
+M067/40709 (mode2/menu20/zero przeciwników/dodatnie HP) i M069/48522
+(etap240/lock0/brak menu). Wszystkie8 procesów normal/SAN exit0; każda
+para ma identyczny pełny JSON i1MiBVRAM, H niezmieniony. Dowody
+/tmp/pe-park-h-amphitheater-v1-checkpoints{.py,-results.json,-proof.json}.
+To pierwsze porównanie obu buildów na tej zwykłej trasie także po etapie240;
+starsza relacja po tym etapie dotyczyła wyłącznie żywego debuggera.
+Nie zmieniano produkcji ani nie dodawano plików repo. Prywatne karty,
+wyłącznie input; bez zapisu HP/stanu/RNG. Brak niezależnego porównania
+PS1 tego odcinka, audytu wszystkich klatek filmu8 i trwałego replayu
+CTest. Następny etap: dalsza fabuła po248; pełna kampania nieukończona.
+
 Dalszy zwykły replay od Continue G obejmuje teraz wszystkie trzy skrzynie
 M062. Heal1 w polu podnosi HP50→80. Spotkanie z dwoma typ6/HP32 kończy
 się zwycięstwem/HP63; oba Medicine1 z nagrody zamieniono przez oryginalny

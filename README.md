@@ -83,6 +83,10 @@ The next ordinary segment wins M062, collects all three chests, uses Defense
 +1 on the equipped SP Vest1 and returns to create phone Save H. Full replay
 and cold Continue H pass both builds with matching reported state, VRAM,
 inventory, equipment and save payloads. The three chest flags are checked.
+From H, ordinary input wins new M063/M358 encounter variants and M067, opens
+the second Zoo Key gate, completes the amphitheater Eve scene and follows her
+through M070 back to M072 at story stage 248. Full replay and four checkpoints
+pass both builds with matching reported state and VRAM; H remains unchanged.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

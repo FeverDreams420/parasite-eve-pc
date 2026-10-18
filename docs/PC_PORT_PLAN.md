@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły zimny Continue G przechodzi teraz interakcje M064: menu BP (68BP,
+bez wydatku), Medicine1 ze slotu9 (HP81→92), otwarcie drzwi, ciało/tekst94,
+ZooKey202 do9, odmowę odbioru SP Vest1 przy pełnym16/16 ekwipunku,
+odrzucenie obu Junk14/15 przez Items→Discard→OK, ponowny odbiór SP Vest1
+do14/rekord5 i M203 do15/rekord6 po sprawdzeniu klucza. Armor faktycznie
+zakłada SP Vest1/slot14. Przy35040 w M064 zmienna54=126, HP92/92,
+brak menu, weapon10/armor14. Drzwi przy[756,350] uruchamiają animację;
+do środka prowadzi obejście przez[800,500]→[500,500]. Szafki klucz/pancerz
+są przy[-180,500]/[-300,400]; przejście przy[-150,0] otwiera dojście do
+M203 około[-300,-400]. Nie wywoływano funkcji przyznających przedmioty.
+
+Dalej ten sam input wygrywa M063 (jeden typ3/HP57, koniec HP83), M358
+(dwa typ6/HP35 i typ4/HP57, Medicine1 z13 HP24→69, koniec HP50), odbiera
+oba Junk do13/16 i skrzynię Ammo+15 M358 (flaga87/0x40000000).
+Powrót M358→M063, odnoga[-800,2900]→M062 i podejście[2250,-2140]
+z Zoo Key otwierają bramę. Trójkąt16 po animacji ma kind0; Aya faktycznie
+przechodzi za bramę do[1800,-1500]. Przy47548: M062/etap232, HP50/101,
+pojemność17, weapon10/armor14, brak menu/przeciwników i locka, battle9,
+zmienna54=524414, klucz9, nowe wyposażenie14/15, Junk13/16 zachowane.
+W pierwszych pięciu rekordach wyposażenia zmieniła się tylko rzeczywista
+amunicja M16/offset138:7→13 (walka/przeładowanie); pozostałe159B bez zmian.
+
+Cały replay G→M062/cap47548 na niezmienionym /tmp/pe-park-attack-status-v1
+przechodzi normal/SAN exit0 w10,77/27,92s. Pełny JSON i1MiBVRAM zgodne
+z żywą sesją, SHA256678c1da83d6d8fb285bbf4fa6e5632c00f83d35825967430fc6ae60f10065951.
+Źródłowy G niezmieniony. Dowód /tmp/pe-park-g-key-v1-{proof.json,
+verify.py,results.json}, pełne args/input/logi/VRAM. Ponownie sprawdzono
+manifest wszystkich346 obiektów/zależności/archiwów/4binariów. Brak zmian
+kodu produkcji. To zwykły input i prywatne karty, bez zmian HP/stanu/RNG.
+M062 trzy skrzynie i dalsza fabuła pozostają do przejścia na tej trasie;
+brak świeżego niezależnego PS1 i trwałego replayu tego odcinka w CTest.
+Osobne trzy punkty kontrolne tego samego inputu potwierdzają bezpośrednio
+M064/łupy i wyposażenie przy35040 oraz ekrany zwycięstwa EXP/mode2,
+menu20, zero żywych przeciwników i dodatnie HP w M063/38362 (83HP)
+oraz M358/43666 (50HP). Wszystkie6 procesów normal/SAN exit0; każda
+para ma identyczny cały JSON i1MiBVRAM, G niezmieniony.
+/tmp/pe-park-g-key-v1-checkpoints{.py,-results.json,-proof.json}; osobne
+args/logi/VRAM pod prefiksami loot, m063-victory i m358-victory.
+
 Dalszy zwykły replay od zimnego Continue F obejmuje teraz obie skrzynie
 Medicine1 w M060 (sloty9 i13), przejście M060↔M061, walkę M061 z dwoma
 aktorami5/HP35, odebranie obu Junk20 (sloty14/15), wyjście M061→M063,

@@ -74,6 +74,11 @@ two-enemy M061 fight, receives both Junk rewards, enters M063/M064 and creates
 phone Save G. Full replay and cold Continue G pass normal and sanitized builds
 with matching complete state, VRAM, inventory and equipment; save payloads
 agree and the source F remains unchanged.
+Ordinary input from G also obtains Zoo Key, SP Vest1 and M203, handles the
+full-inventory refusal and item discard menu, equips the vest, wins M063 and
+M358 encounters, collects M358 Ammo +15 and crosses the unlocked M062 gate.
+Normal and sanitized replays agree with the live run in complete reported
+state and VRAM; G remains unchanged.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

@@ -2,6 +2,62 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły zimny Continue I przechodzi teraz także M083→M084→północ M085→
+M087, wygrywa M083 i M087 i tworzy prawdziwy Save J przez telefon M087.
+To J bieżącego łańcucha od New Game z oryginalnymi zegarami, a nie starszy
+historyczny J z innego przebiegu. W M083 marsz od[2700,-3400] uruchamia
+dwa typ3/HP57. Po gotowości ATB Cure-P ze slotu8 przez Items nadaje
+poison immunity3 (potwierdzone odczytem stateFlags&3). Pierwsza próba
+menu przed gotowością nie otworzyła panelu; jej input także zachowany.
+M16 wygrywa przy38HP, Obtain All/End oddaje sterowanie, dwa Heal1
+leczą38→68→98. Skręt na schody przy[-800,-200] prowadzi do M084,
+nie bezpośrednio do M085.
+
+M084: obie skrzynie sprawdzone. Lewa[-550,1401] daje Cr Evade+1/ID45
+do zwolnionego slotu8; użycie przez Items→lista pancerzy→SP Vest1
+zwiększa bonus rekordu5/offset178 1→2. Prawa[541,1399] daje Tool22 do8.
+Flagi85/0x20 i0x40 ustawione, zmienne137/138=0: obie skrzynie puste.
+Warianty49/41 nie są tym przejściem sprawdzone. Przy prawej skrzyni
+odsunięcie do[0,1310] umożliwia marsz środkiem schodów do[0,4800]→M085.
+Wejście od M084 jest w[0,2650]; przejście północą do[0,7200]→M087
+nie uruchomiło walki M085. To dowód ładowania/przejścia, nie jej wygranej.
+
+M087: ruch do telefonu uruchamia typ3/HP60 i dwa typ4/HP35. Cure-P12
+zużyte przez Items, immunity3 potwierdzone; oba małe cele i następnie
+ostatni typ3 pokonane. Zwycięstwo82HP, awans zwiększa maxHP do133,
+Obtain All oddaje dwa Junk do12/17 i amunicję. Dwa Heal1 leczą82→112→133.
+Telefon: podejście[200,450] i[200,550] blokuje się około[203,486],
+facing2073, Cross uruchamia dialog6. Oryginalne Save wybiera obecny I8,
+Down do pustego J9, potwierdzenie i zamknięcie paneli. Przy80824:
+M087/etap248, HP133/133, capacity20, weapon10/armor14, brak menu/locka/
+żywych przeciwników, battle9. Tool w8/19, Junk12/17/18, Revive13
+niezużyte. Wszystkie4096B wyposażenia względem wejścia M083 różnią się
+wyłącznie amunicją M16/offset138 5→8 i Cr Evade SP Vest1/offset178 1→2.
+
+Cały replay od zimnego I do J na niezmienionym kandydacie
+/tmp/pe-park-attack-status-v1 normal/SAN exit0 w16,84/43,45s. Pełny JSON
+i1MiBVRAM identyczne z żywą sesją; SHA256
+b7a1c29b81645e7362d64d13edac49734acfae860b67e0140c8544194a2c965c.
+Źródłowy8192B I niezmieniony, wszystkie8192B nowego J identyczne we
+wszystkich trzech prywatnych katalogach. Trzy pary punktów kontrolnych
+normal/SAN PASS6/6: M083 po leczeniu66284/HP98, po skrzyniach M084
+wejście M08570841/HP98, M087 po nagrodach76988/HP82. Pełne JSON i VRAM
+identyczne w każdej parze, walki zakończone, menu/lock0, I niezmieniony;
+bonusy pancerza i odpowiednie flagi skrzyń sprawdzone.
+/tmp/pe-park-i-m083-v1-checkpoints{.py,-proof.json,-results.json}.
+J SHA256
+df6cee7aa0b3d7c05a30ef1e1c71a3c80ce563d7bda2923ef7e0ab15e1e6e9df.
+/tmp/pe-park-i-m083-v1-{proof.json,verify.py,results.json}, pełne args,
+input/logi/VRAM i navigation.log pod tym prefiksem. Zimny Continue J
+normal/SAN exit0 w4,11/12,59s: M087/HP133/133/etap248/lock0/brak menu,
+wszystkie sloty i4096B wyposażenia zgodne z sesją zapisu. Pełny JSON/VRAM
+identyczne, źródłowy J niezmieniony. Dowód
+/tmp/pe-park-phone-j-continue-v1-{proof.json,verify.py,results.json}.
+Bez zmian kodu produkcji ani nowych plików repo, wyłącznie input i prywatne
+karty, bez zapisów HP/stanu/RNG. Brak świeżego niezależnego PS1 dla J
+oraz trwałego replayu CTest. Następne: M086 i dalsza droga do Eve.
+Cała kampania pozostaje nieukończona.
+
 Dalszy zwykły replay od zimnego Continue I, przez cały wcześniejszy M080,
 wygrywa teraz M078, M081 i M082 oraz przechodzi do M083. M078: typ4/HP44
 i typ5/HP32; zwycięstwo przy46HP. Awans zwiększa pojemność19→20 i maxHP
@@ -51,7 +107,7 @@ Dowód /tmp/pe-park-i-m078-v1-{proof.json,verify.py,results.json}; pełne
 args/input/logi/VRAM i navigation.log pod tym prefiksem. Bez zmian kodu
 produkcji ani nowych plików repo. Wyłącznie fizyczny input i konfiguracja
 hosta, bez zapisów HP/stanu/RNG. Brak nowego niezależnego PS1 i trwałego
-replayu CTest. Następne: M083 i dalsza droga do Eve. Kampania nieukończona.
+replayu CTest. Dalszy odcinek do Save J opisano powyżej. Kampania nieukończona.
 
 Zwykły zimny Continue I przechodzi teraz M075→M074→M076→M077→M080
 oraz po wygranej na moście do M078. Heal1 przez menu zwiększa52→82HP.

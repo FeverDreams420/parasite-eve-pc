@@ -100,6 +100,11 @@ SP Vest1, collects M079 Tool, wins all four M081 enemies and the M082 bridge
 encounter, then reaches M083. Reward medicine and two field Heal1 casts use
 the original menus. Both builds match the live session in complete reported
 state and VRAM; source I and the unused Revive remain preserved.
+Ordinary input from I also wins M083, collects both M084 chests, uses
+Cr Evade +1 on SP Vest1, traverses northern M085, wins M087 and creates
+phone Save J there. Full replay and cold Continue J pass both builds with
+matching reported state, VRAM, inventory, equipment and save payloads.
+The M085 encounter did not trigger on this route and is not covered by it.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

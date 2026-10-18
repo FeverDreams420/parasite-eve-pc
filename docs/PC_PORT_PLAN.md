@@ -2,6 +2,66 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Dzień4 — potwierdzony krótszy cold replay od autentycznego C do M324
+z pełnymi210HP i354PE, bez zmian kodu produkcyjnego ani zapisów RAM.
+Po zdobyciu Fuse1/206 w M326 przy38673 zamknięto panel, Left48 iDown120
+prowadzą z powrotem przez oryginalne drzwi M321 przy39661. Ta droga nie
+uruchamia opcjonalnego starcia M326; poprzednie rzeczywiste zwycięstwo w nim
+pozostaje osobno potwierdzone. Fuse1 zachowany, magazynek5, pozostałe bajty
+inventory/equipment zgodne z C. M321→M323 uruchamia dialogi Maya123/124
+również przy wejściu od korytarza, następnie M134/dialog34→M322/story476.
+Przy46408 swobodne M324/a8062248/210HP; przy47008 gotowe ATB9000,
+pełne354PE, przeciwnicy4:31/4:1 po88HP i5:0/110HP, jeszcze bez obrażeń Ayi.
+
+Trzy checkpointy39661/46408/47008, każdy normal iASan/UBSan/function:
+6/6 terminal exit0, całe JSON zgodne z live i między profilami, całe1MiB
+VRAM zgodne między profilami. Źródłowy i wszystkie prywatne8192B C bez zmian,
+bu10 puste. /tmp/pe-hospital-return-v1-{proof.json,check.py,check.log};
+pełne CLI -<frame>-normal-args.json. Kandydat nadal /tmp/pe-m324-port-v1,
+187 obiektów/profil z wcześniejszego pełnego builda; SDK/SDL nieinstrumentowane.
+Ponowne hashowanie374 obiektów i596 unikalnych plików zgadza się z manifestem;
+/tmp/pe-hospital-return-v1-provenance.json. Całe inventory/equipment każdego
+checkpointu różni się od C wyłącznie slot13:0→Fuse1/206.
+Menu/akcja przed zapełnieniem ATB może być ignorowana: przy46968 ATB8932,
+więc pierwszy Triangle nie otworzył menu. To błąd sekwencji testera, nie powód
+do zmiany zasad inputu. Otwieranie przy47008/ATB9000 działa.
+
+Osobna dłuższa trasa z walką M326 również poprawiona: Heal2 zamiast kończącego
+EnergyShot, następnie dwie salwy27+27, automatyczne przeładowanie, ostatnia
+salwa zabija pozostałego88HP. Przy43398 rzeczywiste zwycięstwo85HP/354PE,
+mode2/live0/enemies[], magazynek16. All odbiera Cure-P iAmmo6; dwa polowe
+Heal2 dają205HP przy44594. Bez podnoszenia skrzyniAmmo30 trasa dochodzi do
+M324 przy50884/205HP i do menu celu przy51484. Próba kończy się śmiercią
+przy53768, HP0/mode3/live2. Pięć checkpointów43398/44594/50884/51484/53768,
+każdy normal/SAN:10/10 exit0, całe JSON zgodne z live/profilami, całe1MiB VRAM
+zgodne między profilami, wszystkie źródłowe/prywatne C niezmienione.
+/tmp/pe-hospital-healed-v1-{proof.json,check.py,check.log}.
+
+Dalsze eksperymenty wyłącznie normal-only: priorytet5 i rozdzielenie salwy
+między oba typy4 nie poprawiły przeżywalności. Barrier działa, lecz zużywa PE
+przy trafieniach i nie rozstrzygnął walki. Escape jest dostępne: dwie próby
+nieudane, trzecia udana przy52848, Aya17HP/live0/mode10;53348 daje lock0,
+polowe Heal2 dwukrotnie137HP. Ruch jednak ponownie uruchamia ten sam encounter,
+więc ucieczka nie dowodzi przejścia M324. Logi/inputy /tmp/pe-m324-{target5,
+split,escape}-v1-live; nie traktować tych prób jako zwycięstw ani dowodu SAN.
+Dalsza normal-only próba pełnego PE: prawidłowe Barrier zachowuje210HP,
+ale po pierwszych trafieniach PE spada do43 i pojawia się Slow; nie wygrano.
+EnergyShot przeciw5 zadaje110 i usuwa tego przeciwnika, lecz przy47772
+pozostają oba typy4/88HP, Aya112HP/PE12. Próby zatrzymano komendąquit,
+źródłowe/prywatne C niezmienione; /tmp/pe-m324-{barrier-full,energy5}-v1-live.
+Zwykły ruch Up20 z wejścia500,-1900 zachowuje wolne pole; dalsze Up14
+przy46442 daje477,-1651 i lock8 (uruchomiony encounter). Nie potwierdzono
+alternatywnej drogi przez pokój, /tmp/pe-m324-roompath-v1-live.
+Do następnej próby pozostaje pełny cold checkpoint47008 i opcja normalnego
+wyposażenia posiadanego M9-2/ref264/slot8: attack39, mod0x22 dekodowany
+przez oryginalne g_WeaponEffectCodes jako3 strzały zamiast2 w M16A1/attack41.
+Skuteczności tego sprzętu w M324 jeszcze nie testowano; BP176 pozwala
+według oryginalnego menu tylko na1 punkt statystyki (koszt100), więc nie
+zakładamy dowolnego wzmocnienia. Krótsza trasa z pełnym HP/PE jest aktualną
+bazą do dalszej walki, potem M325/klucz209. Pełna kampania i zgodność PS1 nadal niepotwierdzone.
+
+## Poprzedni potwierdzony etap — naprawa modułu M324
+
 Dzień4 — naprawione wejście do M324 po zawaleniu korytarza.
 Z autentycznego Continue C i potwierdzonego zwycięstwa M326/Fuse1:
 M323/Maya → zamknięte drzwi Autopsy (wymagany klucz209) → M134/dialog34 →

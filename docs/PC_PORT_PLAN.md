@@ -2,6 +2,66 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Najnowsza zmiana produkcyjna: w całym istniejącym `src/main/battle/encounter.c`
+usunięto pięć nieużywanych `matchingStackReserve` (łącznie2392B deklaracji),
+powtórzone definicje tentative trzech globali i kwalifikator `volatile`
+widoku pakietu, opisany w starym komentarzu jako obejście byte match.
+Funkcje, działania i struktury danych pozostają w oryginalnym module.
+Nie dodano plików repo ani kodu zastępującego mechanikę.
+
+Zamrożony `/tmp/pe-c11-battle-stack-v1`: świeże173+173 obiekty normal/SAN,
+programy i fixture; `-build-proof.json` ponownie sprawdza346 obiektów,
+wszystkie zależności, biblioteki i cztery executable. Zmieniony moduł bez
+ostrzeżeń. `-check.py,-verification.json`:10 terminalnych procesów exit0.
+Trzy pary pełnych replayów (M123/head2, telefon B2, użycie Medicine2) mają
+identyczne całe JSON/1MiBVRAM jak poprzedni kandydat i między profilami.
+B2 również identyczny8192B, źródłowe karty niezmienione. Pełna Melissa
+w obu profilach oraz fixture `--assets` PASS. PsyZ/SDL pozostają wcześniejszymi
+nieinstrumentowanymi archiwami. Standardowy `build/parasite-eve-pc`
+przebudowany; `/tmp/pe-c11-battle-stack-v1-user-{check.py,proof.json}`:
+head2 replay exit0/98,94s, cały JSON/VRAM zgodny z nowym kandydatem,
+HP76, A2 niezmieniony. SHA256 a6087d1da2bb1f593e3d7fe9e3087588876baa4e9170a69ae1c9d397b8b1075e.
+
+Nowy niezależny test inputu Medicine2: /tmp/pe-b2-medicine2-v1-{run.py,
+verify.py,proof.json}. Te same308 VBlanków fizycznych przycisków po Continue
+B2 dają w retail USA i porcie99→189HP, zużycie slotu8, identyczne wszystkie
+50 slotów, pozycję/yaw i wybór panelu1. Pierwsza para dotyczyła poprzedniego
+kandydata, a powyższa regresja nowego potwierdza identyczne całe JSON/VRAM.
+Nie deklarujemy tutaj identycznych pikseli/PCM z retail. Początkowy verifier
+miał błędną nazwę klucza menu; po korekcie `selection` sprawdził istniejące
+terminalne wyniki bez ponownego uruchamiania gry.
+
+Retail USA z prawdziwego B2 doszedł teraz zwykłymi przyciskami do aktywnej
+walki M123. Pełny zapis inputu obejmuje jedną śmierć w M115, powrót przez
+ekran tytułowy i ponowne Continue B2; po resecie ponownie użyto fizycznego
+Analog, bo gra ignoruje DPad nagłówka73. Dalej M115 bez walki, M121/Heal2
+i ucieczki, M122/ucieczki i zwycięstwo (Energy Shot do typu5 i salwa M16 do3),
+ObtainAll: Medicine2/8 oraz Cure-M/12, Medicine2 i field Heal1, M124/M044
+i dialogi aż106. M123: HP154/195, PEraw2744884, ammo11, rank16.
+M121 po niektórych ucieczkach ponownie aktywowało spotkanie; ruch w czasie
+powrotu pozwolił wyjść. M122 po ucieczce ponownie uruchomiło walkę, dlatego
+pokonano obu przeciwników. Są to obserwacje retail, nie poprawki portu.
+
+/tmp/pe-reference-day3-b2-v1/verify-m123-initial.py i m123-initial-proof.json:
+zgodne z nowymi normal/SAN przy61467 wszystkie pięć par typ/subtyp, pełne
+32-bit HP i limity, obrona oraz state/status flags. HP:1=1000010,5=10,
+2=300,3=200,4=400; obrona24 poza kontrolerem5/0. MaxHP gracza195 i
+limit PE270 również zgodne. `/tmp/pe-m123-initial-native-v1-proof.json`:
+normal13,70s/SAN38,63s exit0, pełny JSON/VRAM identyczny. Zasoby gracza,
+input i chwila obserwacji różnią się między tymi odnogami; to nie dowód
+identycznego przebiegu walki ani pixel/audio fidelity. Wczesny odczyt HP
+korpusu jako s16 obcinał sentinel; poprawiony odczyt s32 daje1000010.
+
+Zamrożony m123-initial-input.jsonl obejmuje29921 klatek przycisków; screenshot
+m123-original.png ma frame29922, a m123-initial-state.json odczytane dane.
+Navigator używa wyłącznie odczytów GDB `m` i API fizycznych przycisków,
+paginowanych po4KiB; próba dużego odczytu skończyła się timeoutem klienta,
+bez restartu emulatora. Obsługuje też brak aktora w przejściu M044 i odczyt
+payloadów wiązki M123 (obecnie pusto). Payload B2 pozostaje niezmieniony.
+Emulator PID18445/tool84952 nadal żywy i zatrzymany w M123, porty24930/24931.
+Następny krok: obserwacja wiązki w retail i dokończenie zwykłej walki portu.
+M123 i pełna kampania nadal nieukończone; pełny cel aktywny.
+
 Najnowszy zwykły punkt kampanii: rzeczywisty telefoniczny Save **B2**
 (`/tmp/pe-nypd-preboss-save-v3-live/bu00/BASLUS-006620000000B`),
 8192B, SHA256a0ed3251efd6b5748ebe95501361b5ad37494c11b3ca46d88338f8cc600659c7.
@@ -41,7 +101,7 @@ więc cały wrapper nie jest deklarowany jako niezmieniony. Firmware/menu
 obsługiwane zwykłymi przyciskami. Obejrzano obraz po wczytaniu. Renderer
 ma window0x0, audioNull. Oracle nie dowodzi jeszcze walki M123, pikseli/PCM
 całej gry ani pełnej kampanii. Emulator PID18445, tool84952 pozostawiono
-w pauzie po Continue, porty24930/GDB i24931/input; sprawdzić żywotność
+w pauzie (aktualna lokacja w najnowszym akapicie), porty24930/GDB i24931/input; sprawdzić żywotność
 przed dalszą pracą. DYLD_LIBRARY_PATH wymaga istniejącego scratchpad/ds/lib
 (/tmp/claude-501/-Users-hasik-Projects-parasite-pc/6ba7dac9-3308-43c5-885c-b83c9cac9b57/scratchpad/ds/lib).
 
@@ -61,7 +121,7 @@ nie dały zwycięstwa. Orbit650 kończy zHP4, a salwa ostatniej głowy
 utykał przy granicy areny; brak skutecznego uniku nie dowodzi błędu gry
 ani nieuniknionego ataku. Pełny cel portu pozostaje aktywny.
 
-Standardowy `build/parasite-eve-pc` również przebudowano i sprawdzono
+Wcześniejszy standardowy `build/parasite-eve-pc` przebudowano i sprawdzono
 zwykłym replayem head3/64311 w prywatnym katalogu. `-user-build-check.py`
 i `/tmp/pe-battle-detail-v1-user-build-proof.json`: exit0/102,03s, cały
 JSON/1MiBVRAM identyczny z nowym zamrożonym kandydatem, A2 zachowany.

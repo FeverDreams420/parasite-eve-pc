@@ -236,8 +236,6 @@ void Battle_StartEncounter(int mode) {
 }
 
 void Battle_Update(void) {
-    /* Retail reserves 0x1A0 unused bytes; original local layout is unknown. */
-    volatile u8 matchingStackReserve[0x1A0];
     s32 menuMode;
     BattleEntity *player;
     Combatant *active;
@@ -521,7 +519,6 @@ void Battle_Update(void) {
     }
 }
 
-/* COMMON metadata retains retail GP-relative addressing; symbols provide storage. */
 u8 g_BattleEndTimer, g_BattleStepIndex;
 Combatant *g_ActiveActor;
 int g_BattleModeState;
@@ -720,21 +717,15 @@ void Battle_StepLevelUp(void) {
     }
 }
 
-/* COMMON metadata preserves GP-relative accesses; retail symbols supply storage. */
-u8 g_BattleEndTimer, g_BattleStepIndex;
-s32 g_BattleModeState;
-
 /* End-of-battle sequence: retire enemy actors, fade sound and animate the
- * textured panel before completing the battle phase. Matching debt: * pins, empty barriers, a volatile packet view and 24 reserved stack bytes
- * in the other cases; case 3 sets the corners through a quad pointer.
+ * textured panel before completing the battle phase.
  * Countdown and stage stores remain local to their switch cases. */
 void Battle_StepPostBattle(void)
 {
-    volatile u8 matchingStackReserve[24];
     BattleEntity *player;
     BattleEntity *entity;
     RenderTexturedQuad *expandingPanel;
-    volatile RenderTexturedQuad *fadingPanel;
+    RenderTexturedQuad *fadingPanel;
     s32 remainingFrames;
     s32 horizontalInset;
     s8 brightness;
@@ -1027,8 +1018,6 @@ void Battle_StepEscapeOrDeath(void)
 
 /* Initialize the enemy turn and wait for HUD, animation and texture work. */
 void Battle_PhaseInitEnemyTurn(void) {
-    /* Retail reserves this unused local area; its original purpose is unknown. */
-    volatile u8 matchingStackReserve[0x300];
     s32 entityFlags;
     u8 ready;
     Combatant *actor;
@@ -1300,7 +1289,6 @@ void Battle_PhaseInitEnemyTurn(void) {
 }
 
 void Battle_PhaseHitReaction(void) {
-    volatile u8 matchingStackReserve[0x1A0];
     Combatant *active;
     BattleEntity *player;
     BattleEntity *entity;
@@ -1430,8 +1418,6 @@ void Battle_PhaseHitReaction(void) {
 }
 
 void Battle_PhaseEndTurn(void) {
-    /* Retail reserves 0x300 unused bytes; original local layout is unknown. */
-    volatile u8 matchingStackReserve[0x300];
     BattleEntity *player;
     Combatant *active;
     BattleEntity *initialPlayer;

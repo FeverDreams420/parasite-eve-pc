@@ -11440,3 +11440,58 @@ Opcode82 i206 pozostają przypisane do oryginalnych Scene_SetGlobalFlags
 i Entity_SetFieldByTypeId; nie wymagało to kolejnej zmiany produkcyjnej.
 To regresja natywnego portu, nie porównanie pikseli/PCM z PS1 ani dowód
 ukończenia pełnej kampanii.
+
+
+M123, dalsze przejście zwykłym inputem (2026-10-18, kandydat
+/tmp/pe-battle-detail-v1): po wcześniejszym pokonaniu głowy3 znaleziono
+uniki i kolejne salwy M16 przeciw głowie2, bez modyfikacji gameplay RAM.
+Pierwszy unik Down64735→64867 zachowuje HP60 zamiast16; pełny replay
+normal/SAN exit0, identyczne całe JSON i1MiB VRAM, dowód
+/tmp/pe-m123-dodge-ready-v1-proof.json. Następnie head2:300→244→188,
+oryginalne Heal2:HP16→76, unik Left od66323 zachowuje76, salwa→132.
+Magazynek opróżnia się naturalnie. Reload w menu ma disabled=1; próba
+wyboru nie jest błędem portu. Tester początkowo wybrał pamiętane Move,
+przeniósł M16slot10→20 i przywrócił10; cały ślad błędnej nawigacji jest
+w /tmp/pe-m123-reload-v1-input.jsonl. Ta próba nie jest wybraną trasą.
+
+Wybrana trasa: Up100 przed zatwierdzeniem ataku z pustym magazynkiem,
+Right zmienia cel na head2, potem oryginalne automatyczne przeładowanie
+z zapasu183→164 i dwa strzały: head2:132→76, magazynek17, HP76.
+Right67223→67283 doprowadza ATB9000, PE8650036. Normal/SAN exit0,
+całe JSON/VRAM zgodne: /tmp/pe-m123-reload-energy-ready-v1-proof.json.
+Następnie Energy Shot6 przez menu i reticle celu2 pokonuje head2.
+Do67791: HP76/195, PE0, magazynek16 (Energy Shot zużywa nabój),
+ATB2809; wrogowie1:1000010,5:10,4:344, głowy2/3 nieobecne.
+Pełny cold replay od prawdziwego A2: normal20.34s i SAN54.92s, obaexit0,
+całe JSON/VRAM identyczne także z obserwowanym przebiegiem LLDB.
+/tmp/pe-m123-head2-energy-pair-v1-{verify.py,proof.json}; pełny input
+/tmp/pe-m123-head2-energy-v1-full-args.json. Pierwsza asercja testera
+błędnie oczekiwała17 naboi po Energy Shot; poprawny odczyt wynosi16,
+ponowny verifier sprawdził istniejące terminalne wyniki bez rerunu gry.
+A2 SHA62bd8fad766c40b4564717d3bfce1b3c936375f5653c7552a04df30c8c7027f3
+pozostaje niezmieniony, prywatne bu10 puste. Zależności PsyZ/SDL nadal
+nieinstrumentowane; SAN obejmuje zamrożone oryginalne moduły portu.
+
+Dodatkowo czysto obserwacyjny callback przy wcześniejszej porażce uniku
+wykazał JointBeacon66403(age0), a nie PulseRing. Obserwator kończy
+identycznym całym JSON/VRAM jak replay bez niego, HP32; dowód
+/tmp/pe-m123-attack-kind-v1-proof.json. Nieskuteczne kierunki nie są
+dowodem nieuniknionego ataku ani powodem do zmiany mechaniki bossa.
+Boss nadal niepokonany; ten zakres nie dowodzi zgodności z PS1 ani
+całej kampanii. Dalsze eksperymenty po67791 są na razie normal-only.
+
+Ostatnia głowa4: dalsze normal-only próby nie dały bezpiecznej salwy.
+Gotowość67791→68151 Down zachowuje76HP, ale kolejna salwa do68459
+zmniejsza head4:344→288 i HP76→14, niezależnie od późniejszego kierunku.
+Watchpoint HP wykazał pojedyncze62 obrażeń przy68209, źródło body1,
+power110, effect0/category0, core_flags0x91600000. Oddzielny callback
+JointBeacon wskazuje kontakt68207/age0 (158,-1091)→(1618,-2457), brak
+PulseRing w tym oknie. Oba obserwatory kończą identycznym całym JSON
+i VRAM jak bez obserwacji; dowody /tmp/pe-m123-lasthead-{source,kind}-v1-proof.json.
+Próby wcześniejszego ruchu120, zmiany Down→Left od68011/68051/68091/68131
+oraz68163/68179/68195/68203 nie unikają trafienia; /tmp/pe-m123-lasthead-*.
+Dojście po prawej krawędzi i próba obejścia blisko korpusu kończą się śmiercią,
+nie pokonaniem bossa (zniknięcie aktorów przy HP0 to cleanup). Nie zmieniono
+mechaniki ani kodu produkcyjnego. Dalsze kroki wymagają lepszej sekwencji
+uników albo rozłożenia obrażeń między głowy przed pokonaniem drugiej;
+aktualny potwierdzony punkt67791 ma HP76 i head4:344.

@@ -32,6 +32,11 @@ a full-inventory refusal, wins the M100 encounter and creates phone Save N.
 The full replay and cold Continue N pass normal/sanitized checks with matching
 state, VRAM and save payloads. The source save remains unchanged.
 
+Cold Continue N also covers the M099 Ammo +15 reward, another M100 victory,
+Cathy's conversation, the M107 fight with Heal 2 and reloading, an M16A1 upgrade,
+and the M108 weapon gift at story stage 400. Normal/sanitized full replays and
+four checkpoint pairs agree on full state and VRAM; N remains unchanged.
+
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and
 story progression through Day 3 to the NYPD. Genuine phone-created checkpoint

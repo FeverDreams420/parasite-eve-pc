@@ -2,6 +2,62 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dalszy zwykły cold Continue N obejmuje M099→Cathy→M108/etap400.
+M099: rozmowa z NPC typu2[-493,-321] od prawej strony około[-173,-327]
+prowadzi44–47; ponowny Cross→48 i oryginalny panel Ammo+15. Panel przy27824
+obejrzany. Flaga46/8 jest jeszcze zerowa przy otwartym panelu, a ustawiona
+po zamknięciu. Weryfikator checkpointu poprawiono na tę oryginalną kolejność,
+nie zmieniano flag gry. Wyjście do M100 prowadzi przez[-100,-100],[-200,500],
+[-200,800],[-73,1500]. Próby zbyt bliskich waypointów w biurze zatrzymywały
+się na prawdziwych kolizjach, bez zmiany podłogi/obiektów gry.
+
+M100: ruch od wejścia do[-500,-3700] uruchamia kolejne losowe starcie,
+teraz dwa typ5/35HP/def22 i typ6/70HP/def15. Oryginalne strzały M16A1,
+bez Heat, pokonują wszystkie trzy; przy30427 HP80, potem prawdziwy panel
+EXP/nagród. ObtainAll odbiera Medicine1/6 do wolnego13; End pomija to,
+co nie mieści się w ekwipunku. Użyte Medicine1 leczy80→125 i zwalnia13.
+Pierwsza próba otwarcia Items była przed końcem przejścia po bitwie i helper
+odczytał brak panelu; ponowiono ją dopiero po lock0, bez naprawiania stanu gry.
+Droga do M107 idzie przez[0,-2500],[-850,-2200]. Stamtąd
+[0,-2700],[0,-900],[-550,-900]→M111/54. Cathy przy[-407,555], podejście
+około[-399,339], Cross→55–58, ustawia bank44/2048. Przy34632 HP125,
+menuNULL/lock0; po rozmowie wraca się do M107.
+
+M107: próba dojścia do zbrojowni[-450,-3710] wyzwala typ5/98HP/def20
+oraz typ6/35HP/def22. M16 eliminuje6 i uszkadza5; działa automatyczne
+przeładowanie z rzeczywistego zapasu. Przy75HP uruchomiono Heal2 przez
+oryginalne menu PE. Checkpoint36635 ma aktywny efekt/flag256, HP75,
+jeden żywy cel; późniejsze HP obejmują leczenie i dalsze trafienia.
+Kolejna seria zabija5, przy37455 HP57, battle2/live0, panel EXP20.
+ObtainAll daje Offense+1/29 do13; resztę nieodebranych przedmiotów pomija End.
+Medicine3/8 z17 rzeczywiście użyta:57→181, slot17 pusty. Offense1 przez
+Items→Use→oryginalna lista broni→M16A1 zwiększa bonus ataku5→6, zwalnia13.
+Nie utożsamiano odrębnych przejść paneli EXP/nagród z awansem poziomu.
+
+Wejście do M108 przez[-450,-3710], dialogi24–32, oryginalny panel5 z
+prezentem i dalsze rozmowy do39 kończą przy43436: etap400, HP181/181,
+menuNULL/lock0, battle9/live0. M92F z szablonu148 trafia do rekordu8,
+slot13=264. M16 pozostaje w10, SP Vest1 w14, capacity21. Wszystkie50 slotów
+sprawdzone względem N: tylko13=264 oraz Medicine3/17→0. Wszystkie4096B
+rekordów zachowane poza nowym32B rekordu8 oraz M16 ammo9→12/offset138
+i bonus ataku5→6/offset142. Flagi44/2048,4096,67108864 oraz46/8 ustawione.
+Wszystko przyciskami; bez zapisów gameplay/HP/PE/RNG debuggerem.
+
+/tmp/pe-nypd-n-briefing-v1-{args.json,input.jsonl,run.py,verify.py,proof.json},
+logi/VRAM: niezmieniony /tmp/pe-audio-queue-v3 normal9,00s/SAN25,35s,
+exit0, bez raportów sanitizerów i niepowiązanych opcode'ów. Pełny końcowy JSON
+oraz1MiBVRAM identyczne z żywą sesją; SHA256
+ d045197e830a8ab25ee5de8f292b94d13c064c6d2237691ee64f518f8c0eb298.
+Cztery pary checkpointów PASS8/8: Ammo15/27824, Cathy34632, aktywny
+Heal2/36635 i zwycięstwoM107/37455. Pełny JSON/VRAM zgodny w każdej parze;
+panel Ammo15 także z odczytem żywej sesji. Artefakty-checkpoints.py,
+-checkpoints-verify.py,-checkpoints-results.json,-checkpoints-proof.json.
+Źródłowy8192B N niezmieniony we wszystkich prywatnych katalogach, bu10 puste,
+bez nowego Save. Obejrzano panel Ammo15, listę ulepszenia M16 i końcowy M108.
+Nie dodano plików repozytorium ani zmian produkcyjnych. Brak nowego porównania
+PS1 i stałego CTest tej trasy; dalsza kampania nadal wymaga przejścia.
+
+
 Zwykły cold Continue M ma dalszy odcinek do prawdziwego Save N w NYPD.
 Po M192/etap376 wyjście około[7900,3440]→mapa, Left dwa razy→NYPD,
 Cross→M037/46. Oryginalne rozmowy prowadzą do M103/etap384. Pełne21

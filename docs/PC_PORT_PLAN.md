@@ -2,6 +2,73 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Nowy zwykły replay potwierdza rozpoczęcie M123 po dialog106 przy50720,
+HP189/189, battle0/lock4. M16 bez Heat uszkadza typ3/200HP/def24:
+dwie kolejne serie dają odczyty146 i92HP. Pierwsza próba kończy się śmiercią
+przy51571, bez Revive; przy52576 title. /tmp/pe-nypd-m123-current-v1-
+{args.json,input.jsonl,run.py,verify.py,proof.json}: normal11,60s/SAN32,25s
+exit0, cały JSON/1MiBVRAM zgodny z live, A2 zachowany, bu10 puste, brak
+sanitizer/Unbound diagnostics. Cztery pary checkpointów PASS8/8: dialog106,
+pierwsza i druga seria, śmierć. Artefakty-checkpoints.py,
+-checkpoints-verify.py,-checkpoints-results.json,-checkpoints-proof.json.
+To dowód odtwarzalnej porażki, nie wygranej M123.
+
+Sprzętowy watchpoint HP na tym samym zwykłym inputcie ustalił rzeczywistą
+kolejność, bez edycji HP lub innego stanu rozgrywki:
+50773:189→94, Battle_ApplyEnemyAttack, effectType8/power0 (połowa HP);
+51065:94→84, Menu_MainUpdate; 51135:84→12, Entity_ResolveDropTable,
+power92/effectType0/chance50; 51391:12→2, Menu_MainUpdate;
+51571:2→−8→0, Menu_MainUpdate. Ubytki po10 odpowiadają istniejącemu
+odejmowaniu contactDamage w main_update.c:531. Aktora źródłowego tych
+kontaktów nie ustalono, więc nie przypisujemy ich konkretnej głowie/korpusowi.
+Nie był to ciąg samych ataków dzielących HP na pół. Odczyt65528 jest
+reprezentacją półsłowa−8 przed klamrą śmierci; późniejsze45HP przy52108
+pochodzi z Battle_SaveAyaState/Save_InitSystem/title, nie z Revive.
+
+/tmp/pe-nypd-m123-hp-watch-v3-{args.json,.cmd,hits.jsonl,verify.py,proof.json}
+i /tmp/pe_nypd_m123_hp_watch_v3.py zachowują pomiar. Normalny kandydat,
+watchpoint tylko do odczytu; rozszerzono wyłącznie hostowy cap50720→52576,
+normalne ReturnFromFrame omija zakończenie diagnostyczne, nie funkcję gry.
+Końcowy cały JSON i1MiBVRAM identyczne z replay bez watchpointu, A2 zachowany.
+Wstępne konfiguracje watch-v1/v2 miały błędy API/importu callbacku LLDB,
+nie gry; nie są dowodami wykonania pełnego pomiaru.
+
+Druga próba prowadzi tester dalej na południe: prostokąt
+[(900,-1950),(-350,-1950),(-350,-1650),(900,-1650)], wyłącznie przyciski,
+bez zmiany kolizji. Pierwsza seria znów200→146 przy51004, Aya94.
+Przy51220 HP22 i PE153,12 pozwalają wybrać Heal2/1; przy51316 efekt
+aktywny, a przy51496 HP82 potwierdza rzeczywiste22→82. Dalsze obrażenia
+dają34HP. Zwykły Escape w menu zostaje zablokowany przez bossa;
+przy52132/52324 walka trwa, HP34, menuNULL, live2. W obu profilach
+nieinwazyjne LLDB potwierdza g_CurItemEffectData=g_EscapeBlockedTexts+14,
+licznik prób1 i nadal aktywną walkę. Oba odczyty głowy typu3 dają146HP.
+Nie zmieniano oryginalnej blokady ucieczki ani prawdopodobieństw.
+
+/tmp/pe-nypd-m123-south-v2-{args.json,input.jsonl,run.py,verify.py,proof.json}:
+normal12,28s/SAN34,25s exit0, pełny JSON/1MiBVRAM zgodny z live, SHA256
+3535e7e05d0b3b7a5fde6b5ca160598f471b1e8306d0cd099a07e25128d09cd9.
+Cztery pary checkpointów PASS8/8: pierwsza seria, Heal2 aktywne/zakończone,
+zablokowany Escape. Cały JSON/VRAM zgodny, A2 zachowany8192B, bu10 puste,
+brak błędów sanitizerów/opcode; artefakty-checkpoints.py,
+-checkpoints-results.json,-checkpoints-proof.json i*-observe.json.
+Wszystkie50 slotów zachowane względem wejścia M123;4096B wyposażenia
+poza backing ammo11→9 po otwarciu menu. Backing wyposażenia nie jest
+bieżącym magazynkiem w trakcie każdej klatki walki: w pierwszej próbie
+pozostaje11 podczas ostrzału. Poprawiono błędną asercję testera oczekującą
+jego natychmiastowej synchronizacji; nie zmieniano mechaniki amunicji gry.
+Obraz końcowy obejrzany. Brak nowego telefonu Save i brak wygranej M123.
+
+Procesy68665/68958/69029 zakończone exit0. Następny bezpieczny krok:
+odtworzyć bieżący A2→M122/47972 z pełnym HP189, przed wyjściem do M124,
+i sprawdzić boczne M120 oraz dostępne BP w oryginalnym menu. Starszy log
+/tmp/pe-nypd-current-v15-lldb.log pokazuje M122 około[-966,114]→M120;
+ta droga i tamte zasoby wymagają świeżego dowodu w bieżącym łańcuchu A2.
+Nie wracamy z bossa przez zablokowany Escape ani nie fabrykujemy zapisu.
+Nie dodano plików repo ani zmian produkcyjnych. Niezależny PS1 oracle
+nowej walki, stałe CTesty nowych tras, M123, dalsza kampania i pełny port
+pozostają nieukończone.
+
+
 Bieżący zwykły łańcuch A2 ma teraz potwierdzoną wygraną M122 i dojście
 do intro bossa M123 z pełnym HP. Od M117/41618 reload M16 do16,
 M117→M121→[800,500],[800,-400],[700,-2600] prowadzi bezpośrednio do M122.

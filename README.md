@@ -73,7 +73,12 @@ The full-inventory reward screen exchanges a Tool for Medicine 2; real items
 and Heal 1 restore full HP before M124/M044 and the M123 boss introduction.
 Full normal/sanitized replays and six checkpoint pairs agree on state and VRAM,
 with A2 unchanged. M123 remains unwon; its introduction is the current replay
-endpoint, with HP 189/189.
+endpoint, with HP 189/189. Further ordinary M123 input now has repeatable
+evidence for gun damage, Heal 2 and the boss's blocked Escape. A read-only HP
+watch distinguishes the half-HP effect from a later 72-HP hit and 10-HP contact
+losses; the watched run ends with the same state and VRAM as the unobserved
+replay. The boss remains unwon. The next preparation route branches from the
+verified full-HP M122 checkpoint toward M120 and the original BP menu.
 
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and

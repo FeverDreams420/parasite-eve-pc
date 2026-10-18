@@ -2,6 +2,47 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Nowa próba M123 `/tmp/pe-nypd-m123-tuned-v1` odtwarza pełny prefix
+61115. Po dialog106 pierwsze ATB61467 nadal189HP. Cel4/400HP po
+pierwszej serii61655 ma344HP, Aya94; druga62039 daje316HP/Aya50.
+Medicine3/17 zużyte; po kolejnej gotowości62879 Aya151HP. Oryginalna
+Barrier5 uruchomiona przez PE menu, przy63187 aktywne stateFlags&0x200.
+Próba strzału przed odnowieniem ATB nie strzela; gotowość63475. Kolejne
+serie dają4/232HP przy63679 i176HP przy64063, Aya151. Nie wyliczamy
+liczby trafień wyłącznie z argumentu limitu akcji helpera.
+
+Przy64243 Aya75HP, Barrier już nieaktywna, PE6,9048. Odczyt oryginalnego
+wielokąta ścian wykazał, że dwa punkty wcześniejszej trasy testera
+(900,−1950)/(−350,−1950) leżą poza nim. To wada sterowania automatycznego,
+nie zmiana geometrii gry. `-route-audit.json` zachowuje osiem odczytanych
+wierzchołków i asercje położenia punktów. Nowe punkty obwodu
+[−350,−1600],[−400,−600],[850,−600],[800,−1600] są wewnątrz; nie dowodzi
+to jeszcze braku kolizji całych odcinków ani skuteczności uników.
+Po pośredniej trasie poziomej i500 klatkach faktycznego ruchu64743:
+Aya24HP, PE61,0910. Heal1/0 leczy24→54 przy64999. Podczas następnej
+gotowości65035 Aya ginie; nie oddaje już następnej serii. Cel4 nadal176HP,
+pozostałe2/300 i3/200. Próba nie jest zwycięstwem ani blokadą portu.
+
+`-run.py,-results.json,-verify.py,-proof.json`: normal15,84s/SAN45,87s
+exit0, pełny JSON/1MiBVRAM zgodny z live, SHA256
+27131f9d76ac12076945eaaa79d64343b8c4764b30e1cc97b3ff3c627e96b116.
+Końcowy M123/battle3/HP0/195. Całe50 slotów względem61115 zmienia tylko
+17/Medicine3→0; całe4096B wyposażenia tylko offset138/loaded14→6.
+Prywatny A2 nadal jedyny8192B zapis, bu10 puste, oryginał zachowany;
+ciągły input61115→65035. Bez sanitizer/Unbound diagnostics i bez zapisów
+pamięci rozgrywki. PID71381 i oba replaye zakończone exit0.
+
+Dwie dodatkowe pary checkpointów PASS4/4 (`-checkpoints.py,-checkpoints-results.json,
+-checkpoints-proof.json`): Barrier63187/HP151 oraz Heal1-resolved64999/HP54.
+Pełny JSON i1MiBVRAM zgodny w każdej parze, karty zachowane. Barrier
+odczytana wyłącznie do odczytu w LLDB obu profili: bit512 iPEraw6728575
+identyczne; brak ReturnFromFrame w SAN. Główne replaye i checkpointy nie
+zastępują niezależnego PS1 oracle. M123 nadal niewygrany, nowego telefonu
+Save brak. Przed kolejną próbą należy zweryfikować uniki wewnątrz ścian
+oraz rozważyć zachowanie większego PE po M122; nie osłabiać oryginalnego
+bossa. Bez nowych plików repo i zmian produkcyjnych. Pełny cel aktywny.
+
+
 Nowy zwykły odcinek `/tmp/pe-nypd-m122-tuned-v1` wygrywa spotkanie M122
 po Tune Up i dochodzi do M123. Start pełnym cold Continue A2 i prefixem
 prepared54041; powtórzenie przejścia daje ten sam trigger54823. Tym razem

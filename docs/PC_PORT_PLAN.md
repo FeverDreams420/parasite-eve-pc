@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+M123: ustalono rzeczywistą klatkę zgłoszenia kolizji JointBeacon, nie tylko
+późniejszego odjęcia HP. `/tmp/pe-m123-collision-order-v1/v2` odtwarzają
+pełny zwykły ślad od64311 do65139 z breakpointem w m123.c:433, którego
+callback wyłącznie odczytuje stan i automatycznie kontynuuje. Przy liczniku
+VBlank64797 handler RoomM123_JointBeacon zgłasza kontakt właściciela1,
+HP nadal60. Stos: FieldFx_UpdateTasks→Pm_Exec→Pm_RunPrimary→Entity_FrameUpdate.
+Przy64799 wcześniejszy hardware watchpoint HP notuje60→16 w części
+Battle_Update/Menu_MainUpdate. Różnica2 dotyczy licznika VBlank; nie
+należy utożsamiać jej z dwoma tickami logiki gry. Źródło wywołuje
+Battle_Update przed Pm_RunPrimary w Entity_FrameUpdate, zgodnie z takim
+przeniesieniem sygnału trafienia do kolejnej aktualizacji.
+
+Przy faktycznym kontakcie v2: armed1/phase1, początek wiązki(115,−1148),
+koniec(2087,−1482), Aya integerXZ(757,−1564). Niezależna arytmetyka
+hosta daje projekcję0,3512 w obrębie odcinka i odległość302,949; mieści
+się to w parametrze radius320 oryginalnej funkcji (półszerokość pasa,
+nie całkowita szerokość). Ten przypadek nie jest trafieniem poza pasem.
+W v1 lokalny state był zoptymalizowany i geometria niedostępna; v2 odczytuje
+payload przez g_FieldFxActiveTaskSlot->start. Jedno niepoprawne wyrażenie
+obserwatora v2 pozostawia core_flags=null; nie użyto go do wnioskowania.
+Właściciel, geometria i moment kontaktu są teraz odczytane w samym handlerze.
+
+`/tmp/pe_m123_collision_order_v1.py`, `_v2.py`, odpowiadające `.cmd`,
+`-args.json,-hits.jsonl` oraz v2 `-verify.py,-proof.json`: oba procesy
+72658/72703 zakończone exit0. Pełny końcowy JSON i1MiBVRAM obu obserwacji
+identyczne z nieobserwowanym perimeter-v1/65139. A2 zachowany, prywatne
+bu10 puste; bez zapisów pamięci rozgrywki, tylko host cap i ReturnFromFrame
+w Boot_PollHost normalnego profilu. Nie wykonano nowej pary SAN ani
+niezależnego oryginalnego PS1 porównania. To diagnostyka konkretnego
+kontaktu, nie dowód poprawności wszystkich kolizji lub całego bossa.
+
+Wnioski dla dalszego testera: omijanie musi działać przed zgłoszeniem
+kontaktu, nie po zmianie HP. W poprzednim beam-dodge przewidywanie z
+macierzy włączono dopiero przy65139, po pierwszym trafieniu; nie dowodzi
+ono nieskuteczności prognozy działającej od64311. Do sprawdzenia pozostaje
+połączenie prognozy od początku, bezpiecznego momentu ostrzału i wyższego
+progu leczenia. M123 nadal niepokonany; port i pełny cel nieukończone.
+Nie dodano plików repo ani zmian produkcyjnych.
+
+
 M123 ma teraz przypisane źródło konkretnego trafienia za44HP po zniknięciu
 pierwszej głowy. `/tmp/pe-m123-source-watch-v1` odtwarza zwykły pełny
 prefix, zatrzymuje się64311 i zakłada tylko sprzętowy watchpoint HP.

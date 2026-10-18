@@ -59,6 +59,16 @@ VRAM, inventory and equipment. From D, ordinary input travels to the museum
 and creates phone Save E. Cold Continue E and the full Klamp conversation
 through the return to M192 also pass both builds with matching state and VRAM;
 inventory, equipment and source saves remain unchanged.
+Ordinary input from E also returns to NYPD, completes the second briefing,
+receives another Mod Permit and creates phone Save F. Full replay and cold
+Continue F pass normal and sanitized builds with matching state and VRAM;
+the genuine save payloads agree and the source E remains unchanged.
+From F, ordinary input plays the departure movie and park introduction,
+collects both M059 chest items, wins the first two-enemy park battle and uses
+the reward medicine. Sanitizers exposed premature field-address formation
+through a defeated target's released core in the original battle module.
+The in-place fix defers status access until an ailment bit requires it; the
+full route now agrees in state and VRAM across both builds and the live run.
 These are coverage results, not a completed-campaign result.
 All 23 resident effect programs (85–107) are registered and pass full PM
 lifecycle tests, including sanitized runs. Particle updates also agree with

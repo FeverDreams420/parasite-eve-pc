@@ -2,6 +2,58 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły zimny Continue F przechodzi wyjście NYPD, obowiązkowy FMV7,
+podróż M039 i intro Central Park M374. Wejście do M059 prowadzi zachodnią
+bramą około[-1500,700]; północna/południowa ulica wraca na mapę miasta.
+Obie skrzynie M059 zostały odebrane: CureP do12, Medicine1 do13.
+Południowa ścieżka uruchamia walkę5:31/HP32 i6:3/HP44. M16A1 pokonuje
+obu, oryginalne menu zużywa Medicine1 z13 i Medicine2 z9. Nagroda Medicine1
+trafia do9 i zostaje użyta. Przy51728: M059/etap232, HP81/92, brak menu,
+przeciwników i blokady ruchu, battle_mode9, weapon10/armor4, CureP12 obecne,
+sloty9/13 puste, pozycja[25225294,0,-478619890], yaw2729.
+
+Pierwsza próba zakończyła się zwykłym Game Over (zachowany input/log pod
+/tmp/pe-day2-f-park-v1). Udana próba /tmp/pe-day2-f-park-v2 na poprzednim
+kandydacie przeszła normal, lecz SAN wykrył UB w battle/phase.c:326:
+tworzenie &core->statusFlags2 przy NULL po zwolnieniu stanu zabitego celu.
+Oryginalna funkcja Battle_StartEnemyAttackEffect została poprawiona na miejscu:
+odczyt statusFlags2 następuje dopiero w gałęzi z odpowiednim bitem ataku.
+Nie pomija efektów ani nie zmienia ich masek/kolejności. Nowy trwały CTest
+original-attack-effect-status-gate sprawdza wszystkie65536 wartości turnWord
+przy już nałożonych statusach i NULL core przy braku bitów0x1F00.
+Nie jest to test uruchomienia wszystkich efektów statusu w kampanii.
+
+Świeży kandydat /tmp/pe-park-attack-status-v1: po173 nowe obiekty/profil,
+manifest zależności/obiektów/archiwów/4binariów sprawdzony. Cały replay F→
+pierwsza wygrana w parku: normal/SAN exit0 w14,07/39,50s, pełny JSON i1MiB
+VRAM identyczne z udaną żywą sesją sprzed poprawki, źródłowy F niezmieniony.
+VRAM SHA256e3abc22f06d39b4a9f45b6877d872965d35456b054c23f5d0ce1ee58d296df65.
+Dowód /tmp/pe-park-attack-status-v1-{proof.json,verify.py,results.json},
+pełne args/logi/VRAM; input żywej sesji /tmp/pe-day2-f-park-v2-input.jsonl
+oraz początkowe args zawierające wcześniejszy literalny input od F.
+CPU/assets/Tool normal/SAN6/6 PASS, nowa regresja osobno normal/SAN PASS;
+root build i CTest queue/status-gate/Tool3/3 PASS. Odcinek parku nie jest
+jeszcze trwałym pełnym replayem CTest. Prywatne karty, wyłącznie input,
+bez zmian HP/stanu/RNG. Następny etap: dalsza eksploracja Central Park.
+
+Zimny Continue E obejmuje teraz całą rozmowę z Klampem, wyjście M192,
+mapę→NYPD, podróż M037, powrót M046→M043, rozmowę200 i drugą odprawę
+M047/128–142. Kolejny Mod Permit55 trafia do slotu11. Oryginalny telefon
+M042 tworzy F/szósty plik. Przy56264: etap224, HP72/72, pojemność15,
+weapon10/armor4, sloty0..11=[256,257,258,512,259,200,201,55,13,7,260,55],
+brak menu/dialogu/przeciwników, move_lock2. Normal/SAN exit0 w15,83/45,48s;
+pełny JSON i1MiBVRAM zgodne z żywą sesją. Wszystkie8192B F identyczne,
+SHA256249f75e779952e590fedaaaf514ff6bf07911ce94e524e43e55b22be6be40f9a;
+źródłowy E niezmieniony. Dowód /tmp/pe-day2-e-return-v1-{proof.json,
+verify.py,results.json}, pełne args/input/logi/VRAM pod tym prefiksem.
+Osobny zimny Continue F: normal/SAN exit0 w4,46/13,35s, pełny JSON/VRAM
+zgodny, wszystkie sloty/4096B wyposażenia i wyposażone indeksy zgodne
+z sesją zapisu, M042/etap224/HP72, payload F niezmieniony.
+/tmp/pe-day2-phone-f-continue-v1-proof.json. Te odcinki nie są jeszcze
+trwałymi przypadkami CTest; F nie sprawdzono w oryginalnym USA PS1.
+To kolejne replaye połączone prawdziwymi zapisami, bez zapisu stanu gry
+przez debugger. Nie stanowią dowodu ukończenia kampanii ani pixel-perfect.
+
 Zwykły zimny Continue D przechodzi teraz wyjście M042→M043→M046,
 mapę Nowego Jorku (dwa Left wybierają Museum), podróż M038, wejście
 M191→M195, rozmowy przy schodach40–44 i recepcji45–46 oraz prawdziwy

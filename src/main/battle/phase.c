@@ -323,10 +323,11 @@ void Battle_AdvancePhase(void) {
 void Battle_StartEnemyAttackEffect(BattleEntity *entity)
 {
     EnemyCombatant *core = entity->core;
-    u32 *status = &core->statusFlags2;
+    /* A finished target can already have released its core. Retail only
+     * accesses status when the attack carries an ailment bit. */
     int effect;
 
-    if ((g_ActiveActor->action->turnWord & 0x400) && ((*status & 3) != 1)) {
+    if ((g_ActiveActor->action->turnWord & 0x400) && ((core->statusFlags2 & 3) != 1)) {
         effect = Scene_LoadRoomAssets(7, entity);
         g_BattleAilmentPmSlot = effect;
         Pm_SendCmd(effect, 0, 0, 2, 0, 0);
@@ -335,28 +336,28 @@ void Battle_StartEnemyAttackEffect(BattleEntity *entity)
         return;
     }
     if ((g_ActiveActor->action->turnWord & 0x300) == 0x300 &&
-        ((*status & 0x3C000) != 0x14000)) {
+        ((core->statusFlags2 & 0x3C000) != 0x14000)) {
         g_BattleAilmentPmSlot = Scene_LoadRoomAssets(90, entity);
         Asset_Find08Alt(0x488, 0, entity->renderObject.target_x,
                         entity->renderObject.target_y, entity->renderObject.target_z);
         return;
     }
     if ((g_ActiveActor->action->turnWord & 0x100) &&
-        ((*status & 0xC000) != 0x4000)) {
+        ((core->statusFlags2 & 0xC000) != 0x4000)) {
         g_BattleAilmentPmSlot = Scene_LoadRoomAssets(88, entity);
         Asset_Find08Alt(0x488, 0, entity->renderObject.target_x,
                         entity->renderObject.target_y, entity->renderObject.target_z);
         return;
     }
     if ((g_ActiveActor->action->turnWord & 0x200) &&
-        ((*status & 0x30000) != 0x10000)) {
+        ((core->statusFlags2 & 0x30000) != 0x10000)) {
         g_BattleAilmentPmSlot = Scene_LoadRoomAssets(89, entity);
         Asset_Find08Alt(0x486, 0, entity->renderObject.target_x,
                         entity->renderObject.target_y, entity->renderObject.target_z);
         return;
     }
     if ((g_ActiveActor->action->turnWord & 0x800) &&
-        ((*status & 0xC) != 4)) {
+        ((core->statusFlags2 & 0xC) != 4)) {
         effect = Scene_LoadRoomAssets(7, entity);
         g_BattleAilmentPmSlot = effect;
         Pm_SendCmd(effect, 0, 0, 1, 0, 0);
@@ -365,7 +366,7 @@ void Battle_StartEnemyAttackEffect(BattleEntity *entity)
         return;
     }
     if ((g_ActiveActor->action->turnWord & 0x1000) &&
-        ((*status & 0x30) != 0x10)) {
+        ((core->statusFlags2 & 0x30) != 0x10)) {
         effect = Scene_LoadRoomAssets(7, entity);
         g_BattleAilmentPmSlot = effect;
         Pm_SendCmd(effect, 0, 0, 0, 0, 0);

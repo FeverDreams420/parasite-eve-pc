@@ -14800,8 +14800,31 @@ static int original_tool_equipped_donor(void)
     return 1;
 }
 
+static int original_attack_effect_status_gate(void)
+{
+    Combatant active = {0}; BattleAction action = {0};
+    BattleEntity target = {0}; EnemyCombatant core = {0};
+    g_ActiveActor = &active; active.action = &action;
+    g_BattleAilmentPmSlot = -1;
+    for (unsigned word = 0; word < 65536; ++word) {
+        action.turnWord = word;
+        if (!(word & 0x1F00)) {
+            target.core = NULL;
+            Battle_StartEnemyAttackEffect(&target);
+        }
+        target.core = &core;
+        core.statusFlags2 = 0x14015;
+        EnemyCombatant before = core;
+        Battle_StartEnemyAttackEffect(&target);
+        if (memcmp(&core, &before, sizeof(core)) || g_BattleAilmentPmSlot != -1) return 0;
+    }
+    puts("Original attack effects: released target core without ailment bits and all 65536 already-applied status gates passed");
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--attack-effect-status-gate"))return original_attack_effect_status_gate()?0:158;
     if(argc==2 && !strcmp(argv[1],"--tool-equipped-donor"))return original_tool_equipped_donor()?0:157;
 
     if(argc==3 && !strcmp(argv[1],"--native-diagnostic-hp-arguments"))return native_diagnostic_hp_arguments(argv[2])?0:1;

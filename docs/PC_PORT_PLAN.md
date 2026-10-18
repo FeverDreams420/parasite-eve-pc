@@ -11424,3 +11424,19 @@ callback/class bindings, audio-state alias/routing, all uncompiled room consumer
 numeric-register pointer transport/arithmetic beyond tested scripts, scene
 integration, full gameplay and removal of pc/ remain incomplete. No new files
 or extracted functions.
+
+
+Ponowna regresja zgłoszenia Melissa (2026-10-18, HEAD 5d1f9d125):
+zamrożony fixture /tmp/pe-battle-detail-v1-fixture uruchomił
+--native-battle-entry na /tmp/pe-battle-detail-v1-game: exit0, input13,
+VRAM FNV458f8a58931d4e5a. --native-melissa na aktualnym użytkowym
+build/parasite-eve-pc: exit0, input14, VRAM FNVfd7ae4cac94eda93.
+Oba scenariusze użyły rzeczywistego CUE z backup-20260927, zwykłego
+inputu i prywatnych katalogów kart fixture w /tmp; kart repo nie zmieniano.
+Pełne starcie sprawdza dialog60 zamknięty, brak aktora Melissy2:0,
+zero żywych przeciwników, HP14/45 i zwolnioną blokadę ruchu.
+Logi /tmp/pe-melissa-{entry,current}-regression-20261018.log.
+Opcode82 i206 pozostają przypisane do oryginalnych Scene_SetGlobalFlags
+i Entity_SetFieldByTypeId; nie wymagało to kolejnej zmiany produkcyjnej.
+To regresja natywnego portu, nie porównanie pikseli/PCM z PS1 ani dowód
+ukończenia pełnej kampanii.

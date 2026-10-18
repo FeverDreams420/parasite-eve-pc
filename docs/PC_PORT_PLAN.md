@@ -2,6 +2,42 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Dalszy zwykły input M123, kandydat /tmp/pe-control-stream-v2:
+prefix do68427 odtworzony z komend stdin jako CLI pad-at ma identyczny
+pełny JSON (po usunięciu wyłącznie diagnostyki control), HP66/head4:288.
+Dowód /tmp/pe-m123-search-prefix-v1-proof.json. Ruch8208 od68427,
+następnie8320 od68640 unika następnej wiązki; przedłużenie do69000
+zachowuje66HP. Normal19,34s/SAN56,43s, exit0, pełny JSON i1MiB VRAM
+identyczne; /tmp/pe-m123-beam-best-extend-v1-proof.json.
+Kontynuacja od68800 z trzema salwami M16 dochodzi do69832:
+HP66/195, head4:120, ammo8, PE6245015, ATB3074. Świeży cold replay
+normal21,88s/SAN60,31s exit0 i identyczne pełne JSON/VRAM:
+/tmp/pe-m123-head4-120-v1-proof.json. Wszystko od autentycznej karty A2,
+bez zapisów gameplay RAM; źródło i kopie kart niezmienione, bu10 puste.
+PsyZ/SDL pozostają nieinstrumentowane. Żaden z tych wyników nie oznacza
+zwycięstwa: kontroler v6 umiera przy70116, head4 nadal120.
+
+Pierwsza równoległa seria64 kombinacji zakończyła się przedwcześnie:
+12 kompletnych wyników oraz SIGSEGV jednego dziecka8208/8336.
+Nie istnieje pozytywny dowód całej serii64. Raport macOS wskazuje NULL
+w Akao_LookupSampleBankByte przez główny sequencer/timer; zachowany
+/tmp/pe-m123-beam-search-crash-v1.ips i -proof.json. Ten sam input
+uruchomiony osobno normalnie i z sanitizerami kończy exit0/HP4,
+bez diagnostics; nie odtworzono awarii i nie ustalono przyczyny.
+Nie dodano NULL guard ani nie wyłączono audio. Następna seria ośmiu
+stałych kierunków od69832 do70200 kończy wszystkie próby exit0,
+ale tylko HP0 albo4; /tmp/pe-m123-beam-window-search-v2-proof.json.
+Normal-only kontynuacja wariantu8320 (stream-fight-v7) skutecznie wykonuje
+Heal1: HP4→34 przy70388, lecz kontakt z korpusem i następna wiązka
+kończą ją przy70740/HP0/head4:120. Nie jest to zwycięstwo.
+Wariant8224 (stream-fight-v8) też leczy4→34 przy70388, bez dwóch
+kontaktowych trafień po10 z v7, ale ginie przy70776/head4:120.
+Obie kontynuacje są wyłącznie normal-only; następny krok wymaga
+wcześniejszej zmiany pozycji przed69832 albo innego czasu akcji,
+zamiast uznania późnego ruchu/Heal1 za rozwiązanie tej wiązki.
+Kod produkcyjny pozostaje bez zmian. Zgodność PS1 obrazu/audio i dalsza
+kampania nadal wymagają dowodów.
+
 Headless — istniejące boot/main.c, boot/init.c i boot.h obsługują teraz
 --control-at N z wymaganym --headless i późniejszym --frame-limit MAX.
 Nie dodano plików repo, nie przeniesiono oryginalnych funkcji ani nie

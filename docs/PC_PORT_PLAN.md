@@ -2,6 +2,57 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły cold Continue M ma dalszy odcinek do prawdziwego Save N w NYPD.
+Po M192/etap376 wyjście około[7900,3440]→mapa, Left dwa razy→NYPD,
+Cross→M037/46. Oryginalne rozmowy prowadzą do M103/etap384. Pełne21
+slotów uniemożliwia pierwszy odbiór Locker Key2; scenka kończy się19,
+a klucz nie jest dopisany poza capacity. Przez Items→Discard→Yes usunięto
+Cure-M16 ze slotu18. Ponowne podejście do NPC typu3 przy[-99,-506],
+blokada około[-244,-478], Cross daje205 do18 i panel otrzymania55;
+po zamknięciu dialog20, flaga46/8192 ustawiona. To sprawdza odzyskanie
+klucza po odmowie przy pełnym ekwipunku, bez zmiany flag debuggerem.
+
+Sprawdzono też wyjście lobby na mapę i ponowne wejście do NYPD. Schody
+w M103 po stronie[-1050,950] prowadzą do M100/etap392. Zwykły ruch
+od wejścia[309,-2401] do[-200,-3800] uruchamia spotkanie: typ5 HP35/def22
+oraz typ6 HP70/def15. M16A1 ma nadal pojedyncze Rate of Fire2, bez Heat.
+Seria dwóch strzałów do6, kolejny pojedynczy i dwa do5 pokonują oba.
+Przy91125: HP115/181, battle2/live0 i panel EXP20. Z pełnym ekwipunkiem
+wybrano End w oryginalnym panelu nagród, bez odbioru przedmiotów.
+Medicine2 ze slotu13 użyta przez Items przywraca HP115→181 i zwalnia13.
+Nie ustawiano HP/PE/RNG ani stanu walki debuggerem.
+
+M100→M099 działa. Do telefonu trzeba obejść biurka i postać; udany końcowy
+odcinek prowadzi przez[-60,-233],[-100,-450], potem[-230,-800],[-200,-950],
+[-20,-1020],[180,-1000],[600,-840],[600,-800],[590,-780]. Nie zmieniono
+kolizji; wcześniejsze zbyt bezpośrednie waypointy poprawnie zatrzymywały ruch.
+Telefon: regionx486..687,z-840..-729, yaw1536..2560, Cross→6. Z listy M12
+Down do pustego N13, potwierdzenie i zamknięcie wszystkich paneli.
+Przy96348 M099/etap392, HP181/181, menuNULL/lock0, brak żywych wrogów;
+pozostaje stan battle9 po End. Zimny Continue N ma battle0 i oddaje sterowanie.
+
+/tmp/pe-day3-m-nypd-v1-{args.json,input.jsonl,run.py,verify.py,proof.json},
+logi/VRAM: frozen /tmp/pe-audio-queue-v3, normal31,55s/SAN92,02s, exit0,
+bez raportów sanitizerów i niepowiązanych opcode'ów. Pełny JSON i1MiBVRAM
+identyczne z żywą sesją; SHA256
+41d066d41417fc1f51c7e26dc8276e4b0664f67d9c5a0eb1e76442989633f39a.
+Wszystkie50 slotów sprawdzone: względem końca muzeum tylko7→0 w13
+oraz16→205 w18. Całe4096B wyposażenia zachowane poza załadowaną amunicją
+rekordu4, offset138:14→9; weapon10/armor14 i capacity21 niezmienione.
+Źródłowy8192B M niezmieniony. Nowy8192B N identyczny w live/normal/SAN,
+SHA256bdf5ee9868f29ec6f365ff2d9cd23b6d75c634058165b9854ac028e809cb91b3.
+Dwie dodatkowe pary checkpointów PASS4/4: odbiór klucza87439 i zwycięstwo
+M100/91125. W każdej parze pełny JSON/VRAM zgodny, M zachowany.
+
+/tmp/pe-day3-phone-n-continue-v1-{run.py,verify.py,proof.json}: zimny
+Continue N normal4,66s/SAN14,03s, exit0, pełny JSON/VRAM zgodny,
+wszystkie50 slotów i4096B wyposażenia zgodne z sesją zapisującą.
+M099/etap392, HP181/181, menuNULL/lock0, battle0/live0; N niezmieniony.
+Obejrzano obraz końcowy M099 i panel wyboru karty. Nie dodano plików
+repozytorium ani zmian produkcyjnych. Brak nowego porównania PS1 i stałego
+CTest tej trasy; dalsze NYPD i cała kampania nadal wymagają weryfikacji.
+
+
 Awaria audio z poprzedniego wpisu została odtworzona w poprawnym prywatnym
 cwd z pustymi kartami, także przy wymuszonym headless. Nie była wyłącznie
 skutkiem katalogu domowego ani wyboru urządzenia audio. Zwykły build kończył

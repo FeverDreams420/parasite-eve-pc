@@ -27,6 +27,11 @@ preventing an overflow that corrupted the sample-table pointer. A permanent
 regression covers full and paired-command boundaries with the real timer;
 normal/sanitized empty-card and Continue replays pass.
 
+Ordinary input from that route also returns to NYPD, recovers Locker Key 2 after
+a full-inventory refusal, wins the M100 encounter and creates phone Save N.
+The full replay and cold Continue N pass normal/sanitized checks with matching
+state, VRAM and save payloads. The source save remains unchanged.
+
 The executable runs the original game entrypoint. Recorded ordinary input
 covers New Game, the first Melissa fight, exploration, subsequent bosses and
 story progression through Day 3 to the NYPD. Genuine phone-created checkpoint

@@ -1,6 +1,59 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
-## Aktualny potwierdzony stan — 18 października 2026
+## Aktualny potwierdzony stan — 19 października 2026
+
+Dzień4 — Fuse1 i rzeczywiste zwycięstwo M326, bez zmian produkcyjnych.
+Poprzedni odcinek goal potwierdził awarię windy; obecny kontynuuje zwykły
+cold Continue C przez M320 do nowych pomieszczeń i walki szpitala.
+Z36503/M320 wyrównanie Z, następnie bieg w+X do około900 uruchamia
+M321/a80620c8 przy37731, HP210/story470/lock0, menuNULL. Bieg do(-800,-2270)
+i zwrócenie w+Z wybierają drzwi M326/a8062348 przy38309. Read-only
+/tmp/pe-day4-m320-observe-v1, -m321-observe-v1 i -m326-observe-v1 zachowują
+aktualne skrypty i osobne podłogi; zakończone0 po planowanym kill inferiora.
+
+M326: trigger x470..680,z-690..-500, twarz w+X, Cross daje Fuse1/item206
+do wolnego13. Obejrzano panel Fuse1 przy38673/menu55. Zamknięcie przy38993
+oddaje pole, var65 bit64 ustawiony. Podejście do bocznego wyjścia uruchamia
+oryginalną walkę: dwaj aktorzy6/sub31 i0, każdy88HP/def30. Pierwsze zbyt
+długie oczekiwanie testera kosztuje HP210→128; nie obchodzono ataku ani
+nie zmieniano parametrów przeciwników. M16 zadaje po27; pierwsza para
+strzałów zmniejsza jednego88→34, druga zabija go, zużywając kolejne2 naboje.
+Między salwami zwykłe ruchy unikają części ataków; wykonano PE Heal2.
+Menu pamięta kategorię, a dłuższy DPad może przesunąć więcej niż jedną
+pozycję: pomyłkowe wejścia testera w Equip/Items anulowano bez zmian sprzętu.
+Energy Shot wybrano po obejrzeniu listy PE i okna potwierdzenia.
+
+Przy42386 celEnergyShot6 to ostatni6:0/88HP, Aya43HP/PE354/ammo1.
+Przy42686 trafienie110 daje88→-22, PE0/ammo0. Przy42906 rzeczywiste
+zwycięstwo: Aya40/210, mode2/live0/enemies[], EXP/menu20. Nie jest to cleanup
+po śmierci. Obejrzano także PNG zamrożonego normal checkpointu EXP.
+All odbiera Cure-P13 do wolnego17 i Ammo+6; End zamyka nagrody.
+Skrzynia przy(539,873) po bliskim podejściu daje obejrzany panel Ammo+30.
+Przy44652 swobodne pole M326/story470/HP40, lock0/menuNULL, Fuse1 zachowany.
+
+Cztery fresh cold checkpointy37731/38673/42906/44652 od prawdziwego C,
+każdy normal/SAN:8/8 terminal exit0, bez raportów ASan/UBSan/function/Unbound.
+Cztery całe JSON identyczne z live i między profilami, cztery całe1MiB VRAM
+identyczne między profilami. Finał normal8,34s/SAN24,56s. Verifier wymaga
+wyłącznie zmian inventory slot13:0→206, slot17:0→13 oraz equipment byte138
+(M16 ammo):5→0; pozostałe sloty i bajty equipment identyczne z C.
+Źródłowy i wszystkie prywatne8192B C niezmienione, bu10 puste.
+/tmp/pe-day4-hospital-fuse1-v1-{proof.json,full-args.json}, runner -v1.py,
+log -v1-check.log. Provenance -v1-provenance.json ponownie potwierdza366
+obiektów i961 plików zgodnych z manifestem v2. PsyZ/SDL nieinstrumentowane.
+
+Osobny audyt brakującego w JSON wspólnego zapasu amunicji: read-only
+/tmp/pe-day4-ammo-audit-v2-{continue,postbattle,postbattle-san}.{json,log}
+odczytuje realny symbol g_InventoryItemWorkspace.ammo[1].ammo. ContinueC:194,
+finał normal/SAN:230, wzrost36 (6+30), oddzielny magazynek5→0.
+Dowód -v2-proof.json. Dwa wcześniejsze obserwatory v1 odrzucono za błędy
+skryptu narzędziowego (makro C użyte jak symbol i zbyt szeroka zamiana tekstu);
+logi zachowano, inferiory19513/19531 nie istnieją po zakończeniu debuggerów.
+Poprawione trzy odczyty v2 zakończone0. Klient hospital-lower-live-v1 zakończony
+quit/exit0 przy44652. Bez nowych plików repo i zmian gameplay RAM.
+Brak nowego porównania pikseli/PCM PS1 i trwałego CTest tej trasy;
+dalsze bezpieczniki i pełna kampania pozostają otwarte.
+
 
 Dzień4 — oryginalna awaria windy i przejście do M320, bez zmian produkcji.
 Poprzedni odcinek goal był postępem: nowe wejście/lobby i prawdziwy Save C;

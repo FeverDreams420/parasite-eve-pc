@@ -2,6 +2,56 @@
 
 ## Aktualny potwierdzony stan — 18 października 2026
 
+Zwykły cold Continue O ma potwierdzony dalszy ciąg po piętrze komisariatu.
+Heal1 przez menu PE leczy140→170. Losowa walka M100 (typ5/35HP i6/70HP)
+kończy się zwycięstwem przy106HP; nagrodowe Medicine1 rzeczywiście leczy
+106→151. Schody do M116 wymagają drogi przez[251,996],[519,1275],
+[551,942],[726,1269],[871,936], bez zmiany kolizji. Rozmowa NPC2 daje
+oryginalny Ammo+6/panel55 przy31961, obejrzany obraz. Po zamknięciu panelu
+ustawiona jest flaga45/2097152. Heal1 leczy151→181.
+
+Oryginalny reload M16 w Items otwiera menu62. Down przenosi naboje
+w podglądzie, Cross zatwierdza, Circle anuluje. Nieudane wcześniejsze próby
+anulowały podgląd; nie poprawiano mechaniki gry. Przy34941 rzeczywiście
+załadowane16, wspólny zapas160→144. Należy czytać ItemDataRecord.ammo
+(+0x0A), nie reserveAmmo(+0x0C), które nie jest załadowanym magazynkiem.
+
+M116 przez[700,110],[700,-680],[800,-1000] wybiera scenkę M121, dialogi
+74/76/75, następnie M115 i flagę44/262144. W M115 walka ma trzy wybieralne
+ptaki typ5/78HP/def18 oraz trzy ukryte kontrolery typ6/72HP/flags0x4000,
+których nie uznano za cele. Rzeczywiste menu PE/Barrier i oryginalne strzały
+M16 kończą spotkanie przy39886, HP133/181, battle2/live0, EXP20.
+Nie przeprowadzono osobnego pomiaru redukcji obrażeń przez Barrier.
+Zewnętrzny tester wymagał bliższej trasy uniku; zmieniono tylko jego
+prywatny helper /tmp, nie algorytm ani statystyki gry.
+Po awansie maxHP189, Cure-M/16 trafia do wolnego slotu17; resztę
+nieodebranych nagród pominięto przez End. Revive pozostaje w12.
+
+M115→M112, telefon i zwykły Save wybiera pusty A/index0 po14 naciśnięciach
+Up z O. Ten nowy prywatny A nazwano tutaj A2, aby odróżnić od wcześniejszego
+teatralnego A; rzeczywista nazwa BASLUS-006620000000A. Przy44891:
+M112/0xa8021148, etap400, HP133/189, menuNULL/lock0, battle9/live0.
+Źródłowy O nietknięty; wszystkie50 slotów zachowane poza Cure-M w17,
+wszystkie4096B wyposażenia poza loaded ammo5→7/offset138.
+SHA256 nowego8192B A2:
+62bd8fad766c40b4564717d3bfce1b3c936375f5653c7552a04df30c8c7027f3.
+
+/tmp/pe-nypd-o-upstairs-v1-{args.json,input.jsonl,run.py,verify.py,proof.json}
+i logi/VRAM: normal9,32s/SAN26,28s exit0, cały JSON i1MiB VRAM zgodne
+z sesją live, nowy zapis zgodny wszystkimi8192B. VRAM SHA256
+dfe04a66f78f68ad63560ffaf8dad9520102fa763a134be2d1c8d4dad55d175e.
+Pięć par checkpointów (Heal1, Ammo+6, reload16, M121/dialog74,
+M115/zwycięstwo) PASS10/10; cały JSON/VRAM oraz O zachowane.
+/tmp/pe-nypd-phone-a2-continue-v1-{run.py,verify.py,proof.json}: zimny
+Continue A2 normal4,40s/SAN13,10s, exit0, M112/etap400 HP133/189,
+menuNULL/lock0, battle0/live0, pełny JSON/VRAM zgodny, wszystkie sloty,
+4096B wyposażenia i wyposażone pozycje zgodne z sesją zapisującą.
+A2 niezmieniony. Nie dodano nowych plików repo ani zmian produkcyjnych.
+Niezależne porównanie PS1 poniżej dotyczy O, nie tego nowego odcinka/A2.
+Stały CTest tej trasy, dalsza kampania, EX/Chrysler i pełny audyt pozostają
+nieukończone. Testy używają prywatnych kart /tmp, bez ingerencji w karty gracza.
+
+
 Nowe niezależne porównanie z oryginalną wersją USA dotyczy teraz Save O
 z bieżącego zwykłego łańcucha, nie tylko wcześniejszego C. Retail Disc1
 w duckstation-regtest z BIOS scph1001 wczytuje O przez oryginalne
@@ -31,7 +81,7 @@ To świeży dowód zgodności wczytanego checkpointu i zawartości zapisu z PS1.
 Nie porównano w ten sposób każdej poprzedniej akcji/walki ani wszystkich
 flag i zegarów; nie ogłoszono pełnego pixel-perfect, PCM ani całej kampanii.
 Nie dodano plików repozytorium ani zmian produkcyjnych. Dalsze przejście
-kampanii może kontynuować autentyczny O w M099/etap400, HP140/181.
+kampanii kontynuuje teraz autentyczny A2 w M112/etap400, HP133/189.
 
 
 Zwykły cold N ma teraz dalszy ciąg po zbrojowni aż do prawdziwego Save O.

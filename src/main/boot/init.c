@@ -150,7 +150,8 @@ static void Boot_PollHost(void) {
             player->exp_or_acc,player->maxAtk,(unsigned)player->hpAlive,(u32)player->stateFlags);
         if(player->action)printf("%u",player->action->attackWord&0x3FFu);
         else printf("null");
-        printf("}");
+        printf(",\"pe_recovery_step\":%d,\"pe_recovery_divisor\":%d,\"pe_full_guard_frames\":%d,\"action_mode\":%u}",
+            player->atbStep,player->atbRate,player->atbGauge,(unsigned)g_PlayerEntity->mode);
     }else printf("null");
     printf(",\"enemies\":[");
     unsigned combatant_index=0;

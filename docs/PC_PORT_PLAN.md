@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Nowy autentyczny zapis K w M184 (metro), Day5/Level24,278/335HP,
+story_stage596. Powstał przez telefon i menu karty, w nowym slocie10;
+źródłowy J i jego prywatna kopia nie zostały nadpisane.
+/tmp/pe-subway-save-v1-source/BASLUS-006620000000K,8192B,
+SHA256 feb6b82ae293b7064904bdaa94cd08986469551fbc9a8dfaf3e733dcaa558994.
+Preferowana krótka kontynuacja z samym K na prywatnej karcie:
+/tmp/pe-subway-continue-v2-normal/args.json (cap26200, limit30000;
+przed dalszym długim przejściem zwiększyć sam limit). Normal i SAN
+wczytują M184/278HP/story596, całe wyposażenie i postęp zgodne z save'em;
+60 klatek zwykłego Down po Continue faktycznie porusza Ayą. Całe JSON-y
+oraz1MiB VRAM zgodne między profilami, K pozostaje bajtowo niezmienione.
+Pierwszy verifier v1 błędnie wymagał combat.mode9; nowy start ma0 bez
+wrogów. Weryfikacja v2 sprawdza rzeczywiste sterowanie, brak aktywnej walki,
+HP, lokację, wyposażenie i postęp, bez zmiany gry.
+
+Trasa: w M176 Turn it OFF czyści bank54/4000, przejście północnym wyjściem
+daje M180/138859 i story592→596. M180 przejście torów działa; wschodnie
+wyjście prowadzi M181/143189. Schody Up600 dają M182, wejście na peron
+M183 działa. Pojemnik w M183 przyznaje raw46 do pustego slotu20;
+„Drop an item here?” anulowane, bez utraty wyposażenia. Nie jest telefonem.
+Dalsze M184 zawiera Medicine3/raw8 (slot23) i telefon; Medicine3 w polu
+zwiększa98→278HP i znika z inwentarza. Telefon przyX≈-205/Z≈-3675,
+facing Up w tej kamerze. Save w157877 zakończony, sterowanie wróciło.
+Wszystko przez zwykły input, bez teleportów, zmian RAM i edytora save'ów.
+
+Osiem cold prób na tym samym m174-bindings-v2: normal/SAN dla M180,
+M181, pełnego J→telefon→K oraz świeżego Continue z samym K i ruchem.
+Wszystkie procesy gry exit0. M180/M181/save mają całe JSON-y i1MiB VRAM
+zgodne z live oraz między profilami. Oba buildy zapisują K identyczne
+bajtowo z zamrożonym live, a oba Continue odczytują tę samą kopię K.
+/tmp/pe-subway-save-v1-proof.json zbiera cztery szczegółowe dowody.
+Brak zmian kodu produkcyjnego; binaria root zgodne z kandydatem,
+root bu00/bu10 nietknięte. PsyZ/SDL nadal nieinstrumentowane.
+Dalsze metro, bossowie, reszta kampanii i pełna zgodność z PS1 otwarte.
+
 M174–M176: dalsza naturalna trasa potwierdzona bez zmian kodu.
 M174 zejście po drabinie na dno uruchamia dwa cele6/215HP; próby29HP
 oraz98HP zakończyły się śmiercią, nie zwycięstwem. Cold normal/SAN w120879

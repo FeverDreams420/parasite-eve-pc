@@ -9,6 +9,8 @@
 
 #include "room_lib.h"
 
+int g_RoomScriptArgA, g_RoomScriptArgB;
+
 ROOMLIB_SET_ARG1(RoomLib_SetArgA, g_RoomScriptArgA)
 
 ROOMLIB_SET_ARG1(RoomLib_SetArgB, g_RoomScriptArgB)

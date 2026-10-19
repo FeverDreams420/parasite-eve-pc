@@ -16,6 +16,7 @@
 #include "pe1/room_effect_sequence.h"
 #include "pe1/room_drop_field.h"
 #include "pe1/room_orbit_set.h"
+#include "pe1/room_spark_barrage.h"
 #include "pe1/room_three_particle_class.h"
 #include "pe1/room_m086_seeker.h"
 #include "pe1/room_m089_model_pulse.h"
@@ -573,6 +574,20 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomActorClassTable[4];
         if (actor_library && slot == 73 && record[i].u.handlerAddress == 0x80192558u)
             native = &g_RoomActorClassTable[4];
+        if (map + 1 == 188 || map + 1 == 390) {
+            if (slot == 73 && record[i].u.handlerAddress == 0x80195e08u)
+                native = &g_RoomActorClassTable[4];
+            if (slot == 75 && record[i].u.handlerAddress == 0x80195dd0u)
+                native = &g_RoomActorClassTable[2];
+            if (slot == 70 && record[i].u.handlerAddress == 0x80195d98u)
+                native = &g_RoomActorClassTable[0];
+            if (slot == 124 && record[i].u.handlerAddress == 0x80195e84u)
+                native = &g_RoomSparkBarrageProgram124;
+            if (slot == 125 && record[i].u.handlerAddress == 0x80195f28u)
+                native = &g_RoomSparkBarrageProgram125;
+            if (slot == 127 && record[i].u.handlerAddress == 0x80195f98u)
+                native = &g_RoomSparkBarrageProgram127;
+        }
         if (map + 1 == 187 && slot == 36 && record[i].u.handlerAddress == 0x8018fff0u)
             native = &g_RoomOrbitSetHandlers;
         /* M174/M383 share the complete USA glow/drop/actor module. */
@@ -844,6 +859,20 @@ int Scene_LoadRoom(unsigned int roomId)
         memset(g_RoomMotionTrailB, 0, sizeof(g_RoomMotionTrailB));
     }
 
+    if (map + 1 == 188 || map + 1 == 390) {
+        g_RoomScriptArgA = g_RoomScriptArgB = 0;
+        memset(&g_RoomCometSparkTrail, 0, sizeof(g_RoomCometSparkTrail));
+        struct {u8 *track; size_t bytes;} tracks[] = {
+            {g_RoomBouncingSparkColors,32}, {g_RoomWaveSparkColors,32},
+            {g_RoomCometSparkColors,40}, {g_RoomLiftedSparkColors,32}
+        };
+        for (unsigned track = 0; track < 4; ++track) {
+            memset(tracks[track].track, 0, 8);
+            for (size_t offset = 12; offset + 4 <= tracks[track].bytes; offset += 8)
+                memset(tracks[track].track + offset, 0, 4);
+        }
+    }
+
     if(map+1==318) {
         memset(g_RoomM318ActorParams,0,sizeof(g_RoomM318ActorParams));
         memset(g_RoomM318EmberBurstParams,0,sizeof(g_RoomM318EmberBurstParams));
@@ -858,7 +887,14 @@ int Scene_LoadRoom(unsigned int roomId)
         slot = record[i].source.bytes.slot;
         /* Validation above resolves the room-specific descriptor. Assign even
          * when a prior statically linked room used this same slot. */
-        if (twelve_library) {
+        if (map + 1 == 188 || map + 1 == 390) {
+            if (slot == 73) g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];
+            else if (slot == 75) g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
+            else if (slot == 70) g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];
+            else g_FieldFxTaskPrograms[slot - 85] = slot == 124 ?
+                &g_RoomSparkBarrageProgram124 : slot == 125 ?
+                &g_RoomSparkBarrageProgram125 : &g_RoomSparkBarrageProgram127;
+        } else if (twelve_library) {
             if (slot == 75) g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
             else if (slot == 70) g_PmCmdHandlerTable[70] = &g_RoomActorClassTable[0];
             else if (slot == 73) g_PmCmdHandlerTable[73] = &g_RoomActorClassTable[4];

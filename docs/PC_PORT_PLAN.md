@@ -2,6 +2,66 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+M188/M390: cały istniejący spark_barrage.c (dziesięć procedur, pięć
+ataków) i script_arg_pair.c są w natywnym linku. Bez nowych plików źródłowych
+ani przenoszenia funkcji. Callbacki mają ABI (int, void *, intptr_t),
+wskaźniki initializerów zachowują szerokość hosta. Dawne widoki offsetów
+PS1 zastąpiono kanonicznym aktorem, action_state, core_flags, macierzami
+kości i pulą aktywnego slotu. Kopie pozycji/prędkości trailu używają memcpy.
+Nieokreślone początkowe XYZ fal są zerowane: render każdorazowo wylicza
+ich pozycję z kości i nie konsumuje tych początkowych bajtów.
+
+Obie lokacje mają identyczny cały moduł 0x7008 B, SHA256
+00f92b4009e1bfeb598b05ed7dc28443af73bdeb7e53b10789629c57ef4ef32e,
+FNV64 fd4854c55ef9da6b. Loader waliduje wszystkie sześć descriptorów:
+klasy 70/D,75/E,73/C i programy124,125,127. Odtworzono komplet trzech
+skryptów, tabel rozmiarów, czterech ramp kolorów i rekord trailu w istniejącym
+module. Każde wejście resetuje oba argumenty, trail i robocze pola ramp.
+Test --m188-load czyta rzeczywiste CUE obu lokacji, porównuje pełny moduł,
+skrypty i klucze kolorów, dwa razy ładuje każdą lokację, a następnie wykonuje
+wszystkie trzy autorskie programy przez PM w obu buforach rysowania.
+24 pełne cykle/profil, 48 łącznie: wszystkie pięć ataków, naturalne wygaszenie,
+canary puli/pakietów oraz poprawne łącza OT. CTest original-m188-spark-barrage-load.
+
+5120 przypadków aktualizacji cząstek porównuje całe bajty stanu, wynik
+callbacku i RNG z oryginalnymi instrukcjami USA MIPS, normal i SAN.
+Zakres stanów: phased2/3, bouncing0/1/2, wave0/1, comet2, lifted0/1;
+pozostałe stany i rysowanie mają test pełnych natywnych cykli, nie osobną
+numeryczną referencję MIPS. /tmp/pe-m188-updates-v1-proof.json.
+Cztery obiekty obu istniejących źródeł normal/SAN kompilują się bez ostrzeżeń
+z błędami typów wskaźników/callbacków jako errors:
+/tmp/pe-m188-abi-v1-proof.json. Nie jest to dowód pełnej zgodności pikseli PS1.
+
+Aktualny kandydat /tmp/pe-m188-barrage-v2:398 świeżych obiektów (199/profil),
+rehash1014 plików,58/58 regresji i CTest2/2 (assets iM188/M390).
+Pole all_fifty_six_terminal_exit0 w odziedziczonym formacie verification.json
+ma historyczną nazwę; lista results zawiera58 zakończonych prób.
+Osiem cold przebiegów od autentycznego K: wcześniejsze M184/26200 i zwycięstwo
+M187/34662 zachowują pełny JSON/VRAM wcześniejszego kandydata; nowe wejście
+M188/36252 (278HP,story596) oraz naturalna walka M188/37452 (212HP,czterech
+aktorów przeciwnika) mają cały JSON/VRAM zgodny z live i między profilami.
+Dowody /tmp/pe-m188-barrage-v2-{verification.json,entry-proof.json,
+rehash-proof.json,promotion-proof.json,release-proof.json},
+/tmp/pe-m188-prior-v1-proof.json,
+/tmp/pe-m188-prior-battle-v2-replay-proof.json,
+/tmp/pe-m188-battle-check-v1-replay-proof.json.
+Root game/fixture są kopiami zweryfikowanego normal; K niezmienione,
+użytkowe bu00/bu10 nietknięte. PsyZ/SDL pozostają nieinstrumentowane.
+
+Dalszy zwykły input w walce M188 do37900: Aya174HP,PE około207,ATB pełne,
+ammo1; trzy strzały G23 zmniejszyły HP aktora5:31 z1000500 do1000446,
+pozostałe6:30/120HP,7:29/120HP,8:28/180HP nadal żyją. Bez zmian gameplay RAM.
+Ten dodatkowy checkpoint jest na razie normal-only:
+/tmp/pe-m188-battle-progress-v1-37900-args.json oraz .json/.vram.
+Punkt porównany obu profili to37452, wejście36252 ma krótszą reprodukcję
+/tmp/pe-m188-barrage-v2-entry-normal/args.json. Live zamknięty poprawnie.
+Kolejny krok: wygrać naturalną walkę M188, odebrać nagrody i przejść dalej.
+M390 ma dowód loadera/modułu/efektów, bez naturalnego wejścia w kampanii.
+Pełna kampania, sąsiednie warianty orbit i ogólna zgodność audio/obrazu
+z PS1 pozostają otwarte; ukończenia portu ani metra nie deklarujemy.
+
+### Poprzedni kandydat M187 — historia weryfikacji
+
 M187 podłączone i zweryfikowane w kampanii. Istniejący orbit_set.c
 włączony do linku; room_load.c waliduje descriptor36/8018fff0 i zeruje
 cztery bloki sprite'ów przy każdym wejściu. Cały autorski moduł10ccB,

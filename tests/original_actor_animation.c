@@ -1,4 +1,5 @@
 #include "pe1/room_orbit_set.h"
+#include "pe1/room_spark_barrage.h"
 #include "pe1/room_twelve_effect.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_spark_attacks.h"
@@ -2763,6 +2764,71 @@ static int original_drop_field_states(void)
 #undef DROP_HASH
     if(cases!=428 || hash!=UINT64_C(0xb3bad0b238c533aa)){fprintf(stderr,"Drop field CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
     puts("Original DropField: 428 unhooked USA CPU initializer/update states, signed positions, word/halfword wrap, timers, phases and whole-buffer guards passed");
+    return 1;
+}
+
+static int original_spark_barrage_cycles(void)
+{
+    PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;
+    u32 old_flags=g_GameStateFlags,old_rng=Psyz_RandState();RoomFloorY old_floor=*g_RoomFloorY;
+    RenderBufferPrefix old_buffers=D_800B0E38;int old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
+    GteMatrix *old_view=g_GeomScroll.words.viewMatrix,view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    s32 *old_projection=g_GeomScroll.words.projectionDistance,projection=256;
+    FieldActor *old_player=g_PlayerEntity;
+    FieldFxObjectPrefix *old_owner=g_FieldFxOwner;FieldFxTaskContext *old_context=g_FieldFxTaskContext;
+    FieldFxTaskSlot *old_task=g_FieldFxActiveTaskSlot;
+    static RenderGpuTag ordering[4096];
+    struct {_Alignas(16) u8 bytes[65536];u8 guard[32];} packets;
+    const unsigned commands[]={124,125,127};unsigned cycles=0;
+    for(unsigned kind=0;kind<3;++kind)for(unsigned draw=0;draw<2;++draw){
+        struct {PmPrimarySlot slots[11];u8 guard[32];} bank={0};
+        RenderMatrix matrices[24]={0};
+        for(unsigned i=0;i<24;++i){for(unsigned j=0;j<3;++j)matrices[i].rotation[j][j]=4096;
+            matrices[i].translation[0]=i*20-200;matrices[i].translation[1]=-100;
+            matrices[i].translation[2]=1200;}
+        FieldActorState core={.control10.command_value=1};u8 action=1;
+        FieldActor actor={.state=&core,.mode=2};core.action_state=&action;actor.render_object.matrices=matrices;
+        Combatant battle={0};FieldActor player={.state=(FieldActorState *)&battle};g_PlayerEntity=&player;
+        player.pos_x=0;player.pos_y=0;player.pos_z=1200*65536;
+        player.render_object.matrices=matrices;
+        g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};
+        g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;g_GameState.cd_range_read_mode=0;
+        g_GeomScroll.words.viewMatrix=&view;g_GeomScroll.words.projectionDistance=&projection;g_RoomFloorY->raw=0;
+        Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
+        FieldFx_InitTexturePageTable();srand(kind+1);memset(bank.guard,0xa5,sizeof(bank.guard));
+        if(Scene_LoadRoomAssets(commands[kind],&actor) || Pm_SendCmd(0,0,0,17,0,0))return 0;
+        unsigned seen=0,drawn=0,frame=0;FieldFxTaskContext *context=&bank.slots[0].task.tasks;
+        for(;frame<600;++frame){
+            for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
+            memset(packets.guard,0xa5,sizeof(packets.guard));g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;
+            D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)packets.bytes;
+            if(Pm_Start(0) || Pm_Exec(0))return 0;
+            for(unsigned i=0;i<8;++i)if(context->slots[i].id!=0xffff)seen|=1u<<context->slots[i].id;
+            if(g_DrawPacketOffset)++drawn;
+            if(g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes))return 0;
+            for(unsigned i=0;i<4096;++i){uintptr_t at=ordering[i].address;unsigned links=0;
+                while(at && at!=0xffffff){
+                    if(at<(uintptr_t)packets.bytes || at+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset ||
+                        at%_Alignof(RenderGpuTag) || ++links>512)return 0;
+                    at=((RenderGpuTag *)at)->address;
+                }
+            }
+            for(unsigned i=0;i<32;++i)if(bank.guard[i]!=0xa5 || packets.guard[i]!=0xa5)return 0;
+            g_AkaoMessageQueueCount=0;
+            if(!bank.slots[0].header.state || bank.slots[0].header.state==4)break;
+        }
+        if(frame==600 || seen!=(kind==2?1u:3u) || !drawn || context->count){
+            fprintf(stderr,"M188 program%u draw%u frames%u seen%x drawn%u count%d\n",
+                commands[kind],draw,frame,seen,drawn,context->count);return 0;
+        }
+        if(Pm_Stop(0,&actor,0))return 0;
+        ++cycles;
+    }
+    g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;srand(old_rng);*g_RoomFloorY=old_floor;
+    D_800B0E38=old_buffers;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;
+    g_GeomScroll.words.viewMatrix=old_view;g_GeomScroll.words.projectionDistance=old_projection;
+    g_PlayerEntity=old_player;g_FieldFxOwner=old_owner;g_FieldFxTaskContext=old_context;g_FieldFxActiveTaskSlot=old_task;
+    printf("Original spark barrage: %u authored task cycles, all five attacks, both draw buffers, natural expiry and pool/packet/OT guards passed\n",cycles);
     return 1;
 }
 
@@ -17086,6 +17152,50 @@ int main(int argc, char **argv)
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M404 loader: real CUE I/O, native geometry, all three descriptor registrations and argument reset passed twice");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m188-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        const unsigned rooms[]={188,390};
+        FieldFxTaskProgram *programs[]={&g_RoomSparkBarrageProgram124,&g_RoomSparkBarrageProgram125,&g_RoomSparkBarrageProgram127};
+        const unsigned indices[]={39,40,42};
+        PeDiscFile exe,archive;
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 1;
+        for(unsigned room=0;room<2;++room){
+            SceneRoomSectorRange range;u8 module[0x7010];
+            if(!pe_disc_read(&disc,&exe,0x800ull+0x80093378u-0x80010000u+(rooms[room]-1)*8,&range,8) ||
+               !pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,module,sizeof(module)))return 1;
+            uint64_t hash=UINT64_C(14695981039346656037);
+            for(unsigned i=8;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+            if(hash!=UINT64_C(0xfd4854c55ef9da6b))return 1;
+            const u32 script_addresses[]={0x80195e40u,0x80195ebcu,0x80195f60u};
+            const unsigned script_sizes[]={36,36,24};
+            for(unsigned i=0;i<3;++i)if(memcmp(module+(script_addresses[i]-0x8018efe8u),programs[i]->script,script_sizes[i]))return 1;
+            const u32 track_addresses[]={0x80195e64u,0x80195ee0u,0x80195f00u,0x80195f78u};
+            u8 *tracks[]={g_RoomBouncingSparkColors,g_RoomWaveSparkColors,g_RoomCometSparkColors,g_RoomLiftedSparkColors};
+            const unsigned lengths[]={32,32,40,32};
+            for(unsigned i=0;i<4;++i)for(unsigned offset=8;offset<lengths[i];offset+=8)
+                if(memcmp(module+(track_addresses[i]-0x8018efe8u)+offset,tracks[i]+offset,4))return 1;
+        }
+        for(unsigned room=0;room<2;++room)for(unsigned pass=0;pass<2;++pass){
+            g_RoomScriptArgA=123;g_RoomScriptArgB=456;
+            memset(&g_RoomCometSparkTrail,0xa5,sizeof(g_RoomCometSparkTrail));
+            u8 *tracks[]={g_RoomBouncingSparkColors,g_RoomWaveSparkColors,g_RoomCometSparkColors,g_RoomLiftedSparkColors};
+            const unsigned lengths[]={32,32,40,32};
+            for(unsigned i=0;i<4;++i){memset(tracks[i],0xa5,8);for(unsigned j=12;j+4<=lengths[i];j+=8)memset(tracks[i]+j,0xa5,4);}
+            for(unsigned i=0;i<3;++i)g_FieldFxTaskPrograms[indices[i]]=NULL;
+            char name[7];snprintf(name,sizeof(name),"m%04ui",rooms[room]);
+            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)name)))return 1;
+            for(unsigned i=0;i<3;++i)if(g_FieldFxTaskPrograms[indices[i]]!=programs[i])return 1;
+            if(g_PmCmdHandlerTable[70]!=&g_RoomActorClassTable[0] || g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] || g_PmCmdHandlerTable[73]!=&g_RoomActorClassTable[4] || g_RoomScriptArgA || g_RoomScriptArgB)return 1;
+            for(unsigned i=0;i<sizeof(g_RoomCometSparkTrail);++i)if(((u8 *)&g_RoomCometSparkTrail)[i])return 1;
+            for(unsigned i=0;i<4;++i){for(unsigned j=0;j<8;++j)if(tracks[i][j])return 1;for(unsigned j=12;j+4<=lengths[i];j+=8)for(unsigned k=0;k<4;++k)if(tracks[i][j+k])return 1;}
+            if(!original_spark_barrage_cycles())return 1;
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original M188/M390 loader: all six descriptors, per-entry reset and authored task cycles passed twice per room");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m187-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

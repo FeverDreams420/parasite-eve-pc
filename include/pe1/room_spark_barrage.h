@@ -2,6 +2,7 @@
 #define PE1_ROOM_SPARK_BARRAGE_H
 
 #include "common.h"
+#include "pe1/fieldfx_task.h"
 #include "pe1/gte_types.h"
 #include "pe1/render_object.h"
 #include "pe1/room_spark.h"
@@ -29,5 +30,20 @@ extern u8 g_RoomWaveSparkColors[];
 extern u8 g_RoomCometSparkColors[];
 extern RoomCometSparkTrail g_RoomCometSparkTrail;
 extern u8 g_RoomLiftedSparkColors[];
+
+int RoomEffect_PhasedSparkParticle(int mode, void *data, intptr_t argument);
+int RoomEffect_PhasedSparkController(int mode, void *data, intptr_t argument);
+int RoomEffect_BouncingSparkParticle(int mode, void *data, intptr_t argument);
+int RoomEffect_BouncingSparkController(int mode, void *data, intptr_t argument);
+int RoomEffect_WaveSparkParticle(int mode, void *data, intptr_t argument);
+int RoomEffect_WaveSparkController(int mode, void *data, intptr_t argument);
+int RoomEffect_CometSparkParticle(int mode, void *data, intptr_t argument);
+int RoomEffect_CometSparkController(int mode, void *data, intptr_t argument);
+int RoomEffect_LiftedSparkParticle(int mode, void *data, intptr_t argument);
+int RoomEffect_LiftedSparkController(int mode, void *data, intptr_t argument);
+
+extern FieldFxTaskProgram g_RoomSparkBarrageProgram124;
+extern FieldFxTaskProgram g_RoomSparkBarrageProgram125;
+extern FieldFxTaskProgram g_RoomSparkBarrageProgram127;
 
 #endif

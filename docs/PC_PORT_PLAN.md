@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+M167: kolejne spotkanie wygrane bez zmian kodu,116299,23/335HP.
+Z wejścia110701 zwykły input, uniki Up/Down, Energy Shot na7:29/112HP,
+automatyczne przeładowanie i trzy strzały na8:31 (99→18). Pierwsza gałąź
+zginęła od trucizny przy ostatnim przeciwniku; zachowana jako porażka.
+Skuteczna gałąź od114539 używa Detox (PE108→8, znika flaga trucizny),
+po czym jedna akcja zabija18HP, dwie osłabiają drugiego99→45; dwie końcowe
+akcje i Square kończą walkę. Wrogowie nie są pomijani ani usuwani testowo.
+Nagrody odebrane; przejście wschodniej odnogi przy licznikach4/6 faktycznie
+prowadzi do M166/118329. Drabina przy x≈0 prowadzi do M165/119849.
+Sześć cold prób normal/SAN kończy się0: pełne JSON-y i1MiB VRAM zgodne
+między profilami oraz z zamrożonym live dla wszystkich trzech punktów.
+/tmp/pe-m167-win-check-v1-replay-proof.json,
+/tmp/pe-m166-arrival-check-v1-replay-proof.json,
+/tmp/pe-m165-arrival-check-v1-replay-proof.json.
+Preferowana kontynuacja /tmp/pe-m165-arrival-check-v1-replay-119849-normal/args.json.
+Źródłowe J i prywatne karty niezmienione; root bu00/bu10 nietknięte.
+Ten sam kandydat akao-bank-stop-v1, bez nowych źródeł/zmian mechaniki;
+Psyz/SDL nieinstrumentowane, SAN obejmuje moduły portu.
+
+M165 to świątynia z Maedą; rozmowa „Maybe Eve is with the slime?” działa.
+Dalszy normal-only powrót przez południowe wyjście daje M163/126774.
+To potwierdzone wyjście z labiryntu do świątyni, nie dowód dalszego postępu
+fabularnego: story_stage pozostaje568. Wcześniejsze określenie „główne
+wyjście” oznaczało warunek4/6 w skrypcie M167; nie udowodniono, że ta odnoga
+prowadzi dalej w kampanii. Trzeba zbadać pozostałe odnogi, w szczególności
+M170/M171, i ustalić trasę do następnego zdarzenia fabularnego.
+Pełna kampania i nowy trwały zapis nadal otwarte.
+
 Preferowany nowy punkt: M167/110701,277/335HP, po pełnym przejściu M169.
 Zamiast natychmiastowego Energy Shot końcowa faza używa Heal3 (113→335HP),
 Cure-D, naprzemiennych uników Up/Down i regeneracji PE do23402496;

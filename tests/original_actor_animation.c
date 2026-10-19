@@ -1913,9 +1913,35 @@ static int native_glow_layer_packets(void)
         const u8 *bytes=(const u8 *)&buffer;
         for(size_t i=count*sizeof(FieldStripPacket);i<sizeof(buffer);++i) if(bytes[i]!=0xa5) return 0;
     }
+    /* M269's authored orbit trail passes NULL for a zero-scale endpoint.
+     * Compare every emitted byte with the equivalent nonnull colour path. */
+    struct { _Alignas(RenderGpuTag) u8 bytes[512]; u8 guard[32]; } line_buffer;
+    u8 reference[512], colour[4]={120,80,40,0};
+    GteShortVector from={-30,0,1024,0},to={30,0,1024,0};
+    RenderEffectParameters old_params=g_FieldFxSpriteParams;
+    memset(&g_FieldFxSpriteParams,0,sizeof(g_FieldFxSpriteParams));
+    for(unsigned slot=0;slot<2;++slot)for(unsigned mode=0;mode<2;++mode){
+        int used=0;
+        for(unsigned null_endpoint=0;null_endpoint<2;++null_endpoint){
+            memset(&line_buffer,0xa5,sizeof(line_buffer));
+            for(unsigned depth=0;depth<4096;++depth)ordering[depth].address=0xffffff;
+            D_800B0E38.ordering[slot]=ordering;D_800B0E38.packets[slot]=(char *)&line_buffer;
+            g_ActiveDrawSlot=slot;g_DrawPacketOffset=0;
+            gte_ldrotmatrix(&view);gte_ldtransmatrix(&view);
+            FieldFx_DrawGlowLine(&from,&to,null_endpoint?NULL:colour,colour,0,128,mode?255:1);
+            FieldLineG2Packet *line=(void *)line_buffer.bytes;
+            if(line->r0 || line->g0 || line->b0 || line->r1!=120 || line->g1!=80 || line->b1 ||
+                g_DrawPacketOffset>sizeof(line_buffer.bytes) || g_DrawPacketOffset<=sizeof(*line))return 0;
+            for(unsigned k=0;k<sizeof(line_buffer.guard);++k)if(line_buffer.guard[k]!=0xa5)return 0;
+            if(!null_endpoint){used=g_DrawPacketOffset;memcpy(reference,line_buffer.bytes,sizeof(reference));}
+            else if(used!=g_DrawPacketOffset || memcmp(reference,line_buffer.bytes,sizeof(reference)))return 0;
+        }
+    }
+    g_FieldFxSpriteParams=old_params;
     D_800B0E38=saved; g_ActiveDrawSlot=saved_slot; g_DrawPacketOffset=saved_offset;
     g_GeomScroll.words.viewMatrix=saved_view;
     puts("Original glow layers: three paired variants and four-layer variant, both slots, native chains and guards passed");
+    puts("Original M269 zero-scale glow endpoint: NULL and nonnull emit identical packets, both buffers and blend modes, guards passed");
     return 1;
 }
 

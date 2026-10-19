@@ -1717,9 +1717,15 @@ void FieldFx_DrawGlowLine(GteShortVector *from, GteShortVector *to, u8 *color0,
     gte_cop2_hazard_slot();
     gte_cop2_hazard_slot();
     gte_rtps_command();
-    line->r0 = color0[0] * scale0 / 128;
-    line->g0 = color0[1] * scale0 / 128;
-    line->b0 = color0[2] * scale0 / 128;
+    /* Retail callers may pass address zero for a black endpoint. Its
+     * zero scale makes the colour irrelevant; native code must not read it. */
+    if (scale0 == 0) {
+        line->r0 = line->g0 = line->b0 = 0;
+    } else {
+        line->r0 = color0[0] * scale0 / 128;
+        line->g0 = color0[1] * scale0 / 128;
+        line->b0 = color0[2] * scale0 / 128;
+    }
     {
         s32 *out;
         out = (s32 *)&depth[0];

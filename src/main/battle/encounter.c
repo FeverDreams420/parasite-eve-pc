@@ -385,7 +385,7 @@ void Battle_Update(void) {
                 }
             }
         }
-        if ((Pad_GetMenuPressedBitOrDisabled() << 0x18) > 0) {
+        if ((s32)((u32)Pad_GetMenuPressedBitOrDisabled() << 0x18) > 0) {
             if (!(g_ActiveActor->stateFlags & 0x4000) || (g_GameStateFlags & 0x100)) {
                 menuMode = 2;
                 Battle_StepScriptEntry();

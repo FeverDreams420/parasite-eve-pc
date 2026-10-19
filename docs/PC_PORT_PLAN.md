@@ -2,7 +2,38 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-### M269: podłączony cały oryginalny moduł, walka w toku
+### M269: poprawione zerowe kolory smug i arytmetyka wejścia
+
+Aktualny kandydat /tmp/pe-m269-glow-v2 naprawia na miejscu dalszą awarię
+r00-c05 po Heal3. Raport normal wskazywał FieldFx_DrawGlowLine wywołany
+z RoomEffect_OrbitTrailParticle; SAN dodatkowo zatrzymywał przesunięcie
+ujemnej wartości wejścia w encounter.c:388. Odwzorowano 32-bitowy wynik
+przesunięcia bez UB. W geometry.c endpoint o skali0 emituje czarny kolor
+bez odczytu wskaźnika, który oryginalny M269 ustawia na0.
+
+To oryginalny kontrakt, potwierdzony instrukcjami USA w M269 i SLUS_006.62:
+/tmp/pe-m269-glow-v2-original-proof.json. Zachowano również oryginalny
+sposób skalowania niebieskiego kanału końca linii. Regresja w istniejącym
+native_glow_layer_packets porównuje wszystkie bajty pakietów dla NULL
+oraz zwykłego koloru przy skali0, obie strony bufora i oba tryby mieszania,
+sprawdza RGB i guardy. Pod SAN przechodzi.
+
+Dokładny input c05 do65545 kończy0 normal/SAN, pełny JSON/VRAM identyczny,
+Aya1/437HP, walka nadal trwa:
+/tmp/pe-m269-c05-glow-v2-replay-proof.json. Bez edycji RAM, statystyk ani
+save. To usunięcie awarii, nie zwycięstwo. Świeże400 obiektów,
+615 unikalnych zależności źródłowych ponownie zahashowanych,62/62 regresje
+normal/SAN oraz CTest3/3 (core actor-animation, M269 CUE, input-assets):
+/tmp/pe-m269-glow-v2-release-proof.json. Root game/fixture są identycznymi
+kopiami zweryfikowanego normal kandydata. PsyZ/SDL nieinstrumentowane.
+
+Nowa seria /tmp/pe-warehouse-m269-search-v2.py, sesja30868, używa SAN
+w każdej próbie i utrwala każdy input. Pierwsze cztery warianty kończą0
+po Heal3,65545,437HP. Przed następnym startem sprawdzić uchwyt i terminal.json.
+Stary live M269 sesja80365 zamknięty0, L bez zmian. Pełna walka M269,
+reszta Warehouse i kampania pozostają nieukończone.
+
+### Wcześniejsze podłączenie całego oryginalnego modułu M269
 
 Kandydat /tmp/pe-m269-native-v5 obejmuje cały istniejący grab_attack.c
 (20 oryginalnych funkcji), dołączony do natywnego zestawu CMake.

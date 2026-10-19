@@ -37,7 +37,24 @@ To audyt danych i izolowane cykle, nie przejście Chrysler Building w kampanii.
 Replaye M328/35104 HP205, ucieczki43414, powrotu43864 i porażki45702
 pozostają zgodne z historycznym live oraz między profilami (cały JSON,
 pełne1MiB VRAM); źródłowy zapis D i prywatne kopie bez zmian, bu10 puste.
-Zwycięstwo w M328 i pełna kampania nadal niepotwierdzone; cel pozostaje aktywny.
+M328: zwycięstwo potwierdzone na tym samym kandydacie. Autentyczny D →
+wygrana M327 → leczenie Med3 w eksploracji → M328. Wyłącznie zwykły input,
+bez edytora zapisów i zapisów RAM. Barrier, ruch po arenie, cztery salwy
+w latających przeciwników, salwa i Energy Shot w ostatniego przeciwnika.
+39738: tryb wyników, zero przeciwników, HP128. 40458: odebrane wszystkie
+nagrody (Ammo+6, Ammo+6, Medicine2), swobodna eksploracja, HP128, M16 mag5;
+Medicine2 w dawniej pustym slocie17, Full Cure/Med2/Cure-M nadal w20/21/22.
+Live zakończony quit/exit0; źródłowy D i wszystkie prywatne kopie bez zmian.
+
+Cztery kolejne zimne odtworzenia (oba checkpointy ×normal/SAN) exit0:
+cały stan i1MiB VRAM zgodne z live oraz profilami. Po tych testach ponownie
+sprawdzono wszystkie384 obiekty/zależności/archiwa/binaria i kopię w build/.
+/tmp/pe-chrysler-port-v1-campaign-proof.json i /tmp/pe-m328-barrier-v1-replay-proof.json.
+Pełna trasa do ponowienia: /tmp/pe-m328-barrier-v1-replay-40458-normal-args.json
+(SAN analogicznie); trace/input i obraz są w /tmp/pe-m328-barrier-v1-live.
+Pierwotny final-proof opisuje stan modułów przed tą próbą; campaign-proof
+potwierdza późniejsze zwycięstwo bez zmiany kodu. Pełna kampania nadal
+niepotwierdzona; cel pozostaje aktywny.
 
 ### Poprzedni zweryfikowany kandydat floor walker
 

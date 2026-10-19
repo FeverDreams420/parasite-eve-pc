@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M231 druga próba: pokonany typ3, Escape i powrót do M229
+
+LiveSAN73074 kontynuował od215799 po wydaniu100BP. Heal3 odnowiło
+280HP,Detox usuwał zatrucie,lecz typ4 nakładał je ponownie. Skupione
+serie G23 pokonały typ3/sub30 przy219103; typ4/sub31 nadal390HP.
+Późniejsza seria zmniejszyła go do312. Przy124HP i małym PE wybrano
+wycofanie:Triangle,Escape(rootcursor4),Cross. Dwie próby nie zakończyły
+walki; trzecia dała mode10,52HP,brak aktywnych przeciwników. Po zakończeniu
+animacji223454 move_lock0;Left35,wait400→M229 przy223889,52HP.
+Zamrożone JSON/VRAM i pełny input zwykłych przycisków znajdują się pod
+/tmp/pe-m231-escape-v1; uruchomiono normal/SAN replay,wynik wymaga
+potwierdzenia. Nie traktować tego jako zwycięstwa M231 ani naprawy błędu.
+LiveSAN73074 pozostaje wM229,52HP. Zasoby lecznicze wyczerpane; następną
+próbę warto zacząć od potwierdzonego215799 z205HP i wcześniej sprawdzić
+Escape oraz dalszą drogę zamiast ponownie zużywać całePE na leczenie.
+Nie dodano ani nie zmodyfikowano źródeł produkcyjnych.
+
 ### M231: przegrana próba i odtworzenie wejścia
 
 Po215305 runRight100 uruchomiło typ4/sub31 (390HP) i typ3/sub30
@@ -23,7 +40,10 @@ oryginalnego O do215305,zwykłym inputem,bez przywracania RAM. Proces73074
 potwierdził początkowy stan215305,205HP,field/lock0. Przed kolejną walką
 oryginalnym menu BP wydano100BP:198→98,G23attack62→63. Po zamknięciu
 menu215799 nadal205HP. Zamrożono JSON/VRAM i uruchomiono powtórki:
-/tmp/pe-m231-bp-v1-replay.py (wynik wymaga potwierdzenia).
+/tmp/pe-m231-bp-v1-replay-proof.json:oba exit0,pełny JSON/VRAM
+normal/SAN/live równy,bez raportów sanitizerów. Pola historyczne BP1300
+w tym szablonie dotyczą wcześniejszego zapisu A; dodatkowe100 wydano
+w215627,co pokazuje ekran215687 (98BP,attack63).
 Źródła produkcyjne nie zmieniły się. Następna taktyka powinna ograniczyć
 koszt czekania i chybienia oraz wcześniej usuwać zatrucie.
 

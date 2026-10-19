@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### Museum: quiz i wygrane M206/M207, wejście M209
+
+Dwie pierwsze próby M206 po wejściu z92HP zakończyły się śmiercią. Nie
+wykazały błędu kodu; samo powtarzanie małych Heal2/uników nie wystarczyło.
+Wrócono zwykłym deterministycznym replayem do M205 po wygranej,94361.
+Kiosk przy x≈880,z≈524 wymaga obejścia skał dołem:z≈51,Right dox≈880,
+Up do≈524,Cross. Oryginalne pytanie o źródło pożywienia pierwszych
+organizmów:odpowiedź druga(Nitrogen oxides from volcanoes). Nagroda
+wylosowana oryginalnym skryptem:Medicine3. Przy pełnym inventory zastąpiono
+jeden duplikat CureD(slot10),po czym oryginalne Use przywróciło180HP:
+92→272. Kolejna poprawna odpowiedź nie daje drugiej nagrody; terminal
+pamięta pierwszą odpowiedź(global41=48). Nie traktować go jako farmy.
+Quiz,wymiana i użycie:pełny JSON/VRAM normal/SAN/live,97299:
+/tmp/pe-m205-quiz-check-v1-replay-proof.json.
+
+Czas quizu naturalnie zmienia losowaną grupę M206:typ4/sub31,30 po200HP
+oraz typ3/sub29 280HP. Skupienie ognia,Heal3 i ruch podczas końca serii/
+przeładowania wygrywają przy102471:477/547HP,mode2,live0. Pełny JSON/VRAM
+normal/SAN/live:/tmp/pe-m206-victory-v1-replay-proof.json. Oryginalne ALL,
+END działają. Trasa do M207:Left50,Up240,Left45,Up75 od pozycji po walce;
+wejście104761 zachowuje477HP. Potwierdzenie:
+/tmp/pe-m207-entry-v1-replay-proof.json.
+
+M207:trzy cele typ5/sub31,30,29 po200HP. G23,Heal3 i ruch wzdłuż sali
+po seriach,wybór osłabionego celu; pojedynczy pocisk i Square kończą
+kolejkę przeciw15HP. Wygrana108441,541/547HP,duży zapasPE. Dalej
+ALL,END,Up/run300 prowadzi do M209/0xa80404c8,110321,541HP.
+Pełny JSON/VRAM normal/SAN/live dla obu punktów:
+/tmp/pe-m207-victory-v1-replay-proof.json,
+/tmp/pe-m209-entry-v1-replay-proof.json. Agregat10 cold prób:
+/tmp/pe-museum-progress-v3-proof.json.
+Kod produkcyjny pozostaje kandydatem /tmp/pe-m205-native-v3; root bez zmian.
+Żadnych edycji HP,save,seedów ani warunków spotkań. Autentyczny A i O
+zachowane. Sprawdzone menu M209:Level28,ActiveTime36(naturalny wzrost
+po level-up),ItemCapacity28,BP50; za mało na następny zakup za100BP.
+Live SAN:/tmp/pe-m205-quiz-v1-live.py,sesja9666,110481,M209,field.
+Starsze23127 i31383
+zamknięte. Kampania nadal nieukończona; telefon pozostaje do znalezienia.
+
 ### M205: oryginalny Sound Burst podłączony na PC
 
 Wyjście M204 na zachodzie przy x≈−93,z3058 prowadzi do M205. Kandydat

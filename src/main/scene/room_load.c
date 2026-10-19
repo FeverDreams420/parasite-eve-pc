@@ -572,6 +572,15 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomActorClassTable[4];
         if (actor_library && slot == 73 && record[i].u.handlerAddress == 0x80192558u)
             native = &g_RoomActorClassTable[4];
+        /* M174/M383 share the complete USA glow/drop/actor module. */
+        if (map + 1 == 174 || map + 1 == 383) {
+            if (slot == 75 && record[i].u.handlerAddress == 0x80196f58u)
+                native = &g_RoomActorClassTable[2];
+            if (slot == 8 && record[i].u.handlerAddress == 0x80196cc4u)
+                native = &g_RoomGlowOrbHandlers;
+            if (slot == 9 && record[i].u.handlerAddress == 0x80196e30u)
+                native = &g_RoomDropFieldHandlers;
+        }
         if (map + 1 == 34 && slot == 8 && record[i].u.handlerAddress == 0x8018ff7cu)
             native = &g_RoomGlowOrbHandlers;
         if (slot == 14 && record[i].u.handlerAddress == 0x80192bccu) {
@@ -1023,11 +1032,11 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if (actor_library && slot == 70) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];
         } else if ((actor_library || map + 1 == 358 || map + 1 == 384 ||
-                    map + 1 == 387) && slot == 75) {
+                    map + 1 == 387 || map + 1 == 174 || map + 1 == 383) && slot == 75) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
         } else if (actor_library && slot == 73) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];
-        } else if (map + 1 == 34 && slot == 8) {
+        } else if ((map + 1 == 34 || map + 1 == 174 || map + 1 == 383) && slot == 8) {
             g_PmCmdHandlerTable[slot] = &g_RoomGlowOrbHandlers;
             g_RoomGlowOrbOwner = NULL;
             memset(&g_RoomGlowOrbAxes, 0, sizeof(g_RoomGlowOrbAxes));
@@ -1047,7 +1056,7 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&RoomLib_ThreeParticleFloorPacket,0,sizeof(RoomLib_ThreeParticleFloorPacket));
         } else if (map + 1 == 87 && slot == 75) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
-        } else if (map + 1 == 348 && slot == 9) {
+        } else if ((map + 1 == 348 || map + 1 == 174 || map + 1 == 383) && slot == 9) {
             g_PmCmdHandlerTable[slot] = &g_RoomDropFieldHandlers;
             g_RoomDropFieldModel = NULL;
             memset(g_RoomDropFieldRings, 0, sizeof(g_RoomDropFieldRings));

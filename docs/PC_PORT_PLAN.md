@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Naprawione wejście M174 po filmie M433: w istniejącym scene/room_load.c
+podpięte wszystkie trzy oryginalne descriptory, nie tylko pierwszy brakujący.
+M174/M383 mają identyczny cały moduł USA8510B/34064B,
+SHA256 f0f1216cff0950a661d384855f4d946dc09b7ddc28503bf66d53f93f48717d3b.
+Slot75/80196f58 używa istniejącego wierszaE g_RoomActorClassTable[2],
+slot8/80196cc4 glow orb, slot9/80196e30 drop field. Obie lokacje dostają
+istniejące resety właściciela, macierzy, modelu, pierścieni i sprite'ów.
+Nie przenoszono funkcji, nie dodawano źródeł ani nie zmieniano mechaniki.
+
+Audyt /tmp/pe-m174-module-audit-v1-proof.json porównuje całe zakresy kodu
+z już istniejącymi oryginalnymi modułami M034/M348/M022:970+3577+3271
+instrukcji, jedyne różnice to46+151+135 relokacji adresów (w tym122 skoki).
+Zgodne po relokacji wszystkie cztery tablice Configure i sześć wierszy klas;
+stałe glow/drop zgodne bajtowo. Istniejący test original_m028_assets
+rozszerzony o cały moduł M174/M383, trzy rekordy, wierszE i autorskie skrypty
+glow/drop. Kontroluje też błąd odczytu przed użyciem zakresu sektorów.
+
+Końcowy kandydat /tmp/pe-m174-bindings-v2:196 świeżych obiektów/profil,
+392 łącznie, rehash1003 plików.54/54 regresji normal/SAN przeszło.
+Cztery cold próby na autentycznym J i zwykłym input: wcześniejszy M433
+110929 ma cały JSON i1MiB VRAM zgodny ze starym live/między profilami;
+117519 przechodzi poprzedni błąd loadera do M174/A8027248,29/335HP,
+story_stage584, cały JSON/VRAM identyczny normal/SAN. Działa dialog Ayi
+„I have to get the slime out of the reservoir before it connects with Eve.”
+Dowody /tmp/pe-m174-bindings-v2-{verification.json,entry-proof.json,
+prior-replay-proof.json,rehash-proof.json,promotion-proof.json}.
+Kopie build/parasite-eve-pc i build/test-original-actor-animation zgodne
+z zamrożonym normal. Źródłowe J i prywatne karty bez zmian, root bu00/bu10
+nietknięte; PsyZ/SDL nadal nieinstrumentowane. Kontynuacja:
+/tmp/pe-m174-bindings-v2-entry-normal/args.json.
+
+Potwierdzone jest wejście M174 po prawdziwym dialogu/filmie, nie pełna
+rozgrywka tej lokacji ani wszystkie cykle jej efektów. M383 ma dowód
+kompletnego modułu/danych, nie naturalnego wejścia kampanii. Następny krok:
+sterowanie komorą M174, dalsze M175/M176 i rzeczywisty trwały zapis.
+Pełna kampania i całościowa zgodność obrazu/audio z PS1 pozostają otwarte.
+Poniższy opis brakującego descriptora M174 to zachowana diagnoza sprzed naprawy.
+
 Właściwa dalsza trasa kanałów ustalona i odtworzona: wcześniejszy M167
 81551/129HP ma bank55=2. Południowe wyjście zmniejsza55 do1 i prowadzi
 M168; zachodni koniec przy55==1 prowadzi M173 i zmniejsza55 do0.

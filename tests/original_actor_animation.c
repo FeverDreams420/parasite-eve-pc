@@ -16289,8 +16289,152 @@ static int original_floor_walker_states(void)
     puts("Original floor walker: 704 USA CPU/GTE movement, reflection, hop and squash states plus native pointer ABI passed");return 1;
 }
 
+
+/* Verify relocation equivalence of complete original modules before reusing
+ * their native procedures. These helpers are fixture-only asset readers. */
+static u32 original_chrysler_word(const u8 *module,u32 address)
+{
+    u32 value;memcpy(&value,module+(address-0x8018eff0u),4);return value;
+}
+static int original_chrysler_read(PeDisc *disc,PeDiscFile *exe,PeDiscFile *archive,unsigned room,u8 *module,unsigned bytes)
+{
+    SceneRoomSectorRange range;
+    return pe_disc_read(disc,exe,0x800ull+0x80093378u-0x80010000u+(room-1)*8,&range,8) &&
+        pe_disc_read(disc,archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048+8,module,bytes);
+}
+typedef struct OriginalChryslerRelocation {unsigned offset;s32 delta;} OriginalChryslerRelocation;
+static int original_chrysler_code(const u8 *module,u32 dest,const u8 *reference,u32 source,unsigned bytes,const OriginalChryslerRelocation *reloc,unsigned count)
+{
+    s32 delta=(s32)(dest-source);
+    for(unsigned offset=0;offset<bytes;offset+=4){
+        u32 expected=original_chrysler_word(reference,source+offset),actual=original_chrysler_word(module,dest+offset);
+        unsigned opcode=expected>>26,target=(expected&0x3ffffff)<<2;
+        if((opcode==2 || opcode==3) && target>=(source&0xfffffff) && target<((source+bytes)&0xfffffff))expected+=(u32)(delta/4);
+        for(unsigned i=0;i<count;++i)if(offset==reloc[i].offset)expected=(expected&0xffff0000)|(u16)((u16)expected+reloc[i].delta);
+        if(actual!=expected){fprintf(stderr,"Chrysler original code %08x+%x: %08x expected %08x\n",dest,offset,actual,expected);return 0;}
+    }
+    return 1;
+}
+static int original_chrysler_particle_assets(void)
+{
+    const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return 0;
+    PeDisc disc={0};PeDiscFile exe,archive;int valid=0;unsigned room=0;
+    if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 0;
+    u8 three[4276],actor[21476],line[3876],falling[14084],walker[26532],module[26532];
+#define CHRYSLER_REQUIRE(condition) do {if(!(condition)){fprintf(stderr,"Original Chrysler room%u check line%d failed\n",room,__LINE__);goto done;}}while(0)
+#define CHRYSLER_BYTES(buffer,address) ((buffer)+((u32)(address)-0x8018eff0u))
+#define CHRYSLER_WORD(buffer,address) original_chrysler_word(buffer,(address))
+    CHRYSLER_REQUIRE(original_chrysler_read(&disc,&exe,&archive,65,three,sizeof(three)) &&
+        original_chrysler_read(&disc,&exe,&archive,75,actor,sizeof(actor)) &&
+        original_chrysler_read(&disc,&exe,&archive,104,line,sizeof(line)) &&
+        original_chrysler_read(&disc,&exe,&archive,146,falling,sizeof(falling)) &&
+        original_chrysler_read(&disc,&exe,&archive,153,walker,sizeof(walker)));
+    ResetGraph(0);CdRom_BindImage(&disc,NULL);CHRYSLER_REQUIRE(Asset_OpenPeImage()==0);
+    Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+    static const struct {unsigned room,bytes;uint64_t hash;u32 actor,three,falling,walker,timed,line;} rooms[]={
+        {391,21876,UINT64_C(0xdcec40a3f540c42),0x801943fc,0x80194360,0,0,0,0x8019448c},
+        {393,22708,UINT64_C(0x5a5f2f7aa1df38cc),0x801947c4,0x8019466c,0x80194724,0,0,0},
+        {394,21876,UINT64_C(0xdcec40a3f540c42),0x801943fc,0x80194360,0,0,0,0x8019448c},
+        {395,21876,UINT64_C(0xdcec40a3f540c42),0x801943fc,0x80194360,0,0,0,0x8019448c},
+        {396,22708,UINT64_C(0x5a5f2f7aa1df38cc),0x801947c4,0x8019466c,0x80194724,0,0,0},
+        {399,21436,UINT64_C(0x21bd8cb7dd4dba1b),0x80194288,0x801941ec,0,0x801942f8,0x80194354,0},
+        {401,26140,UINT64_C(0xd3a9af747a8c7a18),0x80195498,0x80195340,0x801953f8,0x80195508,0x80195564,0},
+        {402,21436,UINT64_C(0x21bd8cb7dd4dba1b),0x80194288,0x801941ec,0,0x801942f8,0x80194354,0}
+    };
+    const unsigned data_offsets[]={0x14,0x7c,0xc8,0xdc,0xe4,0x980};
+    const unsigned work_offsets[]={0x264,0x270,0x27c,0x288,0x290,0x298,0x2a0,0x2a8,0x2b0,0x2b8,0x2c0,0x2c8,0x2d0,0x2d8,0x2e0,0x2e8,0x988,0x994,0x9b8,0xa94,0xb60};
+    const unsigned falling_data[]={0x1c,0x84,0xd0,0xe4,0xec,0x848,0x854};
+    const unsigned falling_seeds[]={0x460,0x488,0x740,0x9d4,0xb9c,0xdfc};
+    const unsigned falling_work[]={0x244,0x250,0x25c,0x268,0x274,0x27c,0x284,0x28c,0x294,0x29c,0x2a4,0x2ac,0x2b4,0x2bc,0x2c4,0x2cc,0x2d4,0x2dc,0x2e4,0x2ec,0x2f4,0x2fc,0x304,0x30c,0x314,0x31c,0x324,0x32c,0x334,0x33c,0x344,0x34c,0x354,0x360,0x36c,0x374,0x37c,0x384,0x38c,0x394,0x6c8,0x780,0xa8c,0xac8,0xc5c,0xf60};
+    for(unsigned index=0;index<sizeof(rooms)/sizeof(rooms[0]);++index){
+        room=rooms[index].room;CHRYSLER_REQUIRE(original_chrysler_read(&disc,&exe,&archive,room,module,rooms[index].bytes));
+        uint64_t hash=UINT64_C(14695981039346656037);for(unsigned i=0;i<rooms[index].bytes;++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+        CHRYSLER_REQUIRE(hash==rooms[index].hash);
+        u32 start=CHRYSLER_WORD(module,rooms[index].three+4);s32 delta=(s32)(start-0x8018effc),data_delta=(s32)(rooms[index].three-0x80190024);
+        s32 work_delta=(u16)(CHRYSLER_WORD(module,start+0x264)-CHRYSLER_WORD(three,0x8018effc+0x264));
+        OriginalChryslerRelocation relocs[64];unsigned count=0;
+        for(unsigned i=0;i<6;++i)relocs[count++]=(OriginalChryslerRelocation){data_offsets[i],data_delta};
+        for(unsigned i=0;i<21;++i)relocs[count++]=(OriginalChryslerRelocation){work_offsets[i],work_delta};
+        CHRYSLER_REQUIRE(original_chrysler_code(module,start,three,0x8018effc,0xffc,relocs,count));
+        for(unsigned k=0;k<7;++k)CHRYSLER_REQUIRE(CHRYSLER_WORD(module,rooms[index].three+4*k)==CHRYSLER_WORD(three,0x80190024+4*k)+(u32)delta);
+        for(unsigned k=0;k<11;++k){u32 expected=CHRYSLER_WORD(three,0x80190024-44+4*k);if(k<9 && expected!=0xffffffff)expected+=(u32)delta;
+            CHRYSLER_REQUIRE(CHRYSLER_WORD(module,rooms[index].three-44+4*k)==expected);}
+        CHRYSLER_REQUIRE(!memcmp(CHRYSLER_BYTES(module,rooms[index].three+28),g_RoomThreeParticleScript,56) &&
+            !memcmp(CHRYSLER_BYTES(module,rooms[index].three+84),RoomLib_ThreeParticleTable,16));
+        start=CHRYSLER_WORD(module,rooms[index].actor);delta=(s32)(start-0x80191974);
+        relocs[0]=(OriginalChryslerRelocation){0x34,delta};relocs[1]=(OriginalChryslerRelocation){0x260,delta};relocs[2]=(OriginalChryslerRelocation){0x418,delta};
+        relocs[3]=(OriginalChryslerRelocation){0xa4,(s32)(u16)CHRYSLER_WORD(module,start+0xa4)-(s32)(u16)CHRYSLER_WORD(actor,0x80191974+0xa4)};
+        CHRYSLER_REQUIRE(original_chrysler_code(module,start,actor,0x80191974,0xaa4,relocs,4));
+        u32 jump=0x80190000u+(s32)(s16)CHRYSLER_WORD(module,start+0xa4);
+        for(unsigned k=0;k<33;++k)CHRYSLER_REQUIRE(CHRYSLER_WORD(module,jump+4*k)==CHRYSLER_WORD(actor,0x8018f08c+4*k)+(u32)delta);
+        for(unsigned k=0;k<7;++k)CHRYSLER_REQUIRE(CHRYSLER_WORD(module,rooms[index].actor+4*k)==CHRYSLER_WORD(actor,0x80194048+4*k)+(u32)delta);
+        if(rooms[index].walker){
+            start=CHRYSLER_WORD(module,rooms[index].walker);delta=(s32)(start-0x80193a04);
+            relocs[0]=(OriginalChryslerRelocation){0x30,delta};relocs[1]=(OriginalChryslerRelocation){0x398,delta};
+            CHRYSLER_REQUIRE(original_chrysler_code(module,start,walker,0x80193a04,0x7f0,relocs,2));
+            for(unsigned k=0;k<7;++k)CHRYSLER_REQUIRE(CHRYSLER_WORD(module,rooms[index].walker+4*k)==CHRYSLER_WORD(walker,0x8019562c+4*k)+(u32)delta);
+            start=CHRYSLER_WORD(module,rooms[index].timed)-0x198;delta=(s32)(start-0x801941f4);
+            u32 script=CHRYSLER_WORD(module,rooms[index].timed+52),seed=0x80190000u+(s32)(s16)CHRYSLER_WORD(module,start+0x20);
+            relocs[0]=(OriginalChryslerRelocation){0x20,(s32)(seed-0x8018f21c)};
+            relocs[1]=(OriginalChryslerRelocation){0x104,(s32)(script+32-0x80195668)};relocs[2]=(OriginalChryslerRelocation){0x2b8,delta};
+            CHRYSLER_REQUIRE(original_chrysler_code(module,start,walker,0x801941f4,0x4dc,relocs,3));
+            CHRYSLER_REQUIRE(!memcmp(CHRYSLER_BYTES(module,seed),CHRYSLER_BYTES(walker,0x8018f21c),8) &&
+                !memcmp(CHRYSLER_BYTES(module,script),g_RoomTimedSpawnScript,32) &&
+                !memcmp(CHRYSLER_BYTES(module,script+32),CHRYSLER_BYTES(walker,0x80195668),32));
+            for(unsigned k=0;k<14;++k){u32 expected=CHRYSLER_WORD(walker,0x80195688+4*k);if(k==0)expected+=(u32)delta;if(k==13)expected=script;
+                CHRYSLER_REQUIRE(CHRYSLER_WORD(module,rooms[index].timed+4*k)==expected);}
+        }
+        if(rooms[index].falling){
+            start=CHRYSLER_WORD(module,rooms[index].falling);delta=(s32)(start-0x80190540);data_delta=(s32)(rooms[index].falling-0x80192564);
+            work_delta=(u16)(CHRYSLER_WORD(module,start+0x244)-0x26d0);count=0;
+            for(unsigned i=0;i<7;++i)relocs[count++]=(OriginalChryslerRelocation){falling_data[i],data_delta};
+            for(unsigned i=0;i<6;++i)relocs[count++]=(OriginalChryslerRelocation){falling_seeds[i],-0x48};
+            for(unsigned i=0;i<46;++i)relocs[count++]=(OriginalChryslerRelocation){falling_work[i],work_delta};
+            CHRYSLER_REQUIRE(original_chrysler_code(module,start,falling,0x80190540,0x111c,relocs,count));
+            for(unsigned k=0;k<7;++k)CHRYSLER_REQUIRE(CHRYSLER_WORD(module,rooms[index].falling+4*k)==CHRYSLER_WORD(falling,0x80192564+4*k)+(u32)delta);
+            for(unsigned k=0;k<21;++k){u32 expected=CHRYSLER_WORD(falling,0x80192564-84+4*k);if(k<18 && expected!=0xffffffff)expected+=(u32)delta;
+                CHRYSLER_REQUIRE(CHRYSLER_WORD(module,rooms[index].falling-84+4*k)==expected);}
+            CHRYSLER_REQUIRE(!memcmp(CHRYSLER_BYTES(module,rooms[index].falling+28),g_RoomScript__falling,sizeof(g_RoomScript__falling)) &&
+                !memcmp(CHRYSLER_BYTES(module,0x8018effc),CHRYSLER_BYTES(falling,0x8018f044),48));
+            for(unsigned k=0;k<108;++k)CHRYSLER_REQUIRE(!CHRYSLER_BYTES(module,0x80192688u+(u32)work_delta)[k]);
+        }
+        if(rooms[index].line){
+            delta=(s32)(CHRYSLER_WORD(module,rooms[index].line)-0x8018f3a4);start=0x8018f008u+(u32)delta;
+            relocs[0]=(OriginalChryslerRelocation){0x20,0x1e0};relocs[1]=(OriginalChryslerRelocation){0x3c8,0x1e0};relocs[2]=(OriginalChryslerRelocation){0x3f0,0x1e0};
+            relocs[3]=(OriginalChryslerRelocation){0x524,delta};relocs[4]=(OriginalChryslerRelocation){0xdf8,(s32)(rooms[index].line+60-0x8018fe94)};
+            CHRYSLER_REQUIRE(original_chrysler_code(module,start,line,0x8018f008,0xe34,relocs,5));
+            u32 script=CHRYSLER_WORD(module,rooms[index].line+52);
+            CHRYSLER_REQUIRE(!memcmp(CHRYSLER_BYTES(module,0x8018f1d4),CHRYSLER_BYTES(line,0x8018eff4),20) && !memcmp(CHRYSLER_BYTES(module,script),g_RoomLineBurstScript,32));
+            for(unsigned k=0;k<14;++k){u32 expected=CHRYSLER_WORD(line,0x8018fe5c+4*k);if(k==0 || k==12)expected+=(u32)delta;if(k==13)expected=script;
+                CHRYSLER_REQUIRE(CHRYSLER_WORD(module,rooms[index].line+4*k)==expected);}
+            for(unsigned k=0;k<128;++k)CHRYSLER_REQUIRE(!CHRYSLER_BYTES(module,rooms[index].line+60)[k]);
+        }
+        char name[16];snprintf(name,sizeof(name),"m%04ui",room);u32 token=Text_ParseBase32Id((signed char *)name);
+        for(unsigned pass=0;pass<2;++pass){
+            RoomFxSpritePacket *packets[]={&RoomLib_ThreeParticlePacket,&RoomLib_ThreeParticleFloorPacket,&g_RoomFallingBurstShadow,&g_RoomFallingBurstShimmer,&g_RoomFallingBurstSprite,&g_RoomFallingBurstPulse,&g_RoomFallingBurstParticle};
+            for(unsigned i=0;i<7;++i)memset(packets[i],0xa5,sizeof(*packets[i]));memset(RoomLib_SlotTable,0xa5,8*sizeof(RoomSlotRec));
+            memset(RoomLib_TimedRenderTable,0xa5,8);for(unsigned offset=12;offset<32;offset+=8)memset(RoomLib_TimedRenderTable+offset,0xa5,4);
+            CHRYSLER_REQUIRE(Scene_LoadRoom(token)==0 && g_PmCmdHandlerTable[75]==&g_RoomActorClassTable[2] && g_PmCmdHandlerTable[10]==&g_RoomThreeParticleHandlers);
+            for(unsigned i=0;i<(rooms[index].falling?7:2);++i)for(unsigned b=0;b<sizeof(*packets[i]);++b)CHRYSLER_REQUIRE(!((u8 *)packets[i])[b]);
+            if(rooms[index].falling)CHRYSLER_REQUIRE(g_PmCmdHandlerTable[40]==&g_RoomFallingBurstHandlers);
+            if(rooms[index].walker)CHRYSLER_REQUIRE(g_PmCmdHandlerTable[79]==&g_RoomFloorWalkerHandlers && g_FieldFxTaskPrograms[102]==&g_RoomTimedSpawnProgram &&
+                !memcmp(RoomLib_TimedRenderTable,CHRYSLER_BYTES(walker,0x80195668),32));
+            if(rooms[index].line){CHRYSLER_REQUIRE(g_FieldFxTaskPrograms[51]==&g_RoomLineBurstProgram);
+                for(unsigned b=0;b<8*sizeof(RoomSlotRec);++b)CHRYSLER_REQUIRE(!((u8 *)RoomLib_SlotTable)[b]);}
+        }
+    }
+    CHRYSLER_REQUIRE(original_three_particle_states() && original_three_particle_program() && original_timed_spawn_cycle());valid=1;
+done:
+    CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+#undef CHRYSLER_WORD
+#undef CHRYSLER_BYTES
+#undef CHRYSLER_REQUIRE
+    if(valid)puts("Original Chrysler M391/M393/M394/M395/M396/M399/M401/M402: 22101 complete original instructions with only audited relocations, all methods/scripts/seeds/work data, 16 room loads, descriptor banks and repeated reset passed");return valid;
+}
+
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--chrysler-particles"))return original_chrysler_particle_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--floor-walker"))return original_floor_walker_states() && original_timed_spawn_states() && original_floor_walker_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--hospital-eruption")){
         if(!original_hospital_eruption_states() || !original_hospital_homing_flight_states() || !original_hospital_homing_throw_states())return 1;

@@ -376,7 +376,8 @@ int Scene_LoadRoom(unsigned int roomId)
     int map;
     int actor_library = 0;
     int orbit_library = 0;
-    u32 walker_actor=0,walker_class=0,walker_task=0;
+    u32 shared_actor=0,walker_class=0,walker_task=0;
+    u32 chrysler_particles=0,chrysler_falling=0,chrysler_line=0;
     int ready;
     int loaded;
     unsigned int i;
@@ -479,17 +480,29 @@ int Scene_LoadRoom(unsigned int roomId)
         break;
     }
     switch(map+1){
-    case 145:case 332:walker_actor=0x801931f4;walker_class=0x80193264;walker_task=0x801932c0;break;
-    case 152:walker_actor=0x80193edc;walker_class=0x80193f4c;walker_task=0x80194004;break;
-    case 153:case 154:walker_actor=0x801955bc;walker_class=0x8019562c;walker_task=0x80195688;break;
+    case 145:case 332:shared_actor=0x801931f4;walker_class=0x80193264;walker_task=0x801932c0;break;
+    case 152:shared_actor=0x80193edc;walker_class=0x80193f4c;walker_task=0x80194004;break;
+    case 153:case 154:shared_actor=0x801955bc;walker_class=0x8019562c;walker_task=0x80195688;break;
+    case 391:case 394:case 395:
+        shared_actor=0x801943fc;chrysler_particles=0x80194360;chrysler_line=0x8019448c;break;
+    case 393:case 396:
+        shared_actor=0x801947c4;chrysler_particles=0x8019466c;chrysler_falling=0x80194724;break;
+    case 399:case 402:
+        shared_actor=0x80194288;chrysler_particles=0x801941ec;walker_class=0x801942f8;walker_task=0x80194354;break;
+    case 401:
+        shared_actor=0x80195498;chrysler_particles=0x80195340;chrysler_falling=0x801953f8;
+        walker_class=0x80195508;walker_task=0x80195564;break;
     }
     /* Validate all native bindings before mutating the scene banks. */
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
         const void *native = NULL;
         slot = record[i].source.bytes.slot;
-        if(walker_actor){
-            if(slot==75 && record[i].u.handlerAddress==walker_actor)native=&g_RoomActorClassTable[2];
+        if(shared_actor){
+            if(chrysler_particles && slot==10 && record[i].u.handlerAddress==chrysler_particles)native=&g_RoomThreeParticleHandlers;
+            if(chrysler_falling && slot==40 && record[i].u.handlerAddress==chrysler_falling)native=&g_RoomFallingBurstHandlers;
+            if(chrysler_line && slot==136 && record[i].u.handlerAddress==chrysler_line)native=&g_RoomLineBurstProgram;
+            if(slot==75 && record[i].u.handlerAddress==shared_actor)native=&g_RoomActorClassTable[2];
             if(slot==79 && record[i].u.handlerAddress==walker_class)native=&g_RoomFloorWalkerHandlers;
             if(slot==187 && record[i].u.handlerAddress==walker_task)native=&g_RoomTimedSpawnProgram;
             if(map+1==152 && slot==122 && record[i].u.handlerAddress==0x80193f8c)native=&g_RoomDroppedFlareProgram;
@@ -882,11 +895,11 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30 || map + 1 == 113 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
-        } else if(walker_actor && slot==75){
+        } else if(shared_actor && slot==75){
             g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];
-        } else if(walker_actor && slot==79){
+        } else if(walker_class && slot==79){
             g_PmCmdHandlerTable[79]=&g_RoomFloorWalkerHandlers;
-        } else if(walker_actor && slot==187){
+        } else if(walker_task && slot==187){
             g_FieldFxTaskPrograms[102]=&g_RoomTimedSpawnProgram;
             memset(RoomLib_TimedRenderTable,0,8);
             for(unsigned offset=12;offset<32;offset+=8)memset(RoomLib_TimedRenderTable+offset,0,4);
@@ -897,7 +910,7 @@ int Scene_LoadRoom(unsigned int roomId)
             g_PmCmdHandlerTable[slot]=&g_RoomPairedGlowHandlers;
             memset(&g_RoomPairedGlowSprite,0,sizeof(g_RoomPairedGlowSprite));
             g_RoomPairedGlowPacket__paired=NULL;
-        } else if ((map + 1 == 104 || map + 1 == 113 || map + 1 == 115 || map + 1 == 116 || map + 1 == 120 || map + 1 == 122 || map + 1 == 159 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 136) {
+        } else if ((map + 1 == 104 || map + 1 == 113 || map + 1 == 115 || map + 1 == 116 || map + 1 == 120 || map + 1 == 122 || map + 1 == 159 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333 || chrysler_line) && slot == 136) {
             g_FieldFxTaskPrograms[51]=&g_RoomLineBurstProgram;
             memset(RoomLib_SlotTable,0,8*sizeof(RoomSlotRec));
         } else if((map+1==141 || map+1==146 || map+1==153 || map+1==154 || map+1==328) && slot==166) {
@@ -909,7 +922,7 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_RoomEruptionDebrisPacket,0,sizeof(g_RoomEruptionDebrisPacket));
             memset(&g_RoomEruptionShadowPacket,0,sizeof(g_RoomEruptionShadowPacket));
             memset(&g_RoomEruptionRingPacket,0,sizeof(g_RoomEruptionRingPacket));
-        } else if ((map+1==137 || map+1==140 || map+1==146 || map+1==147 || map+1==324 || map+1==327) && slot==40) {
+        } else if ((map+1==137 || map+1==140 || map+1==146 || map+1==147 || map+1==324 || map+1==327 || chrysler_falling) && slot==40) {
             g_PmCmdHandlerTable[slot]=&g_RoomFallingBurstHandlers;
             memset(&g_RoomFallingBurstShadow,0,sizeof(g_RoomFallingBurstShadow));
             memset(&g_RoomFallingBurstShimmer,0,sizeof(g_RoomFallingBurstShimmer));
@@ -970,7 +983,7 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_EffectSequenceGlowSpriteSecondary, 0, sizeof(g_EffectSequenceGlowSpriteSecondary));
             memset(&g_EffectSequenceFinalGlowSprite, 0, sizeof(g_EffectSequenceFinalGlowSprite));
             memset(&g_EffectSequenceSparkleSprite, 0, sizeof(g_EffectSequenceSparkleSprite));
-        } else if ((map + 1 == 65 || map + 1 == 85 || map + 1 == 87) && slot == 10) {
+        } else if ((map + 1 == 65 || map + 1 == 85 || map + 1 == 87 || chrysler_particles) && slot == 10) {
             g_PmCmdHandlerTable[slot] = &g_RoomThreeParticleHandlers;
             memset(&RoomLib_ThreeParticlePacket,0,sizeof(RoomLib_ThreeParticlePacket));
             memset(&RoomLib_ThreeParticleFloorPacket,0,sizeof(RoomLib_ThreeParticleFloorPacket));

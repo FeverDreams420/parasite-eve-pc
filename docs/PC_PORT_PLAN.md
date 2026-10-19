@@ -2,7 +2,46 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Aktualny zweryfikowany kandydat: /tmp/pe-walker-port-v3. Wszystkie384
+Aktualny zweryfikowany kandydat: /tmp/pe-chrysler-port-v1. Wszystkie384
+obiekty zbudowane od zera (192/profil),46/46 regresji exit0 i osiem cold
+replayów szpitala exit0. Ponownie sprawdzono bieżące zależności, obiekty,
+archiwa i binaria. build/parasite-eve-pc i fixture są kopiami sprawdzonych
+binarnych normal. SAN obejmuje kod portu (address,undefined,function);
+PsyZ/SDL nadal nieinstrumentowane. /tmp/pe-chrysler-port-v1-{final-proof,
+verification,module-proof}.json oraz {strong-entry,escape-reentry}-proof.json.
+
+Podłączone kompletne oryginalne moduły M391/M394/M395 (75,136,10),
+M393/M396 (75,10,40), M399/M402 (10,187,75,79) i M401 (10,187,75,79,40).
+Zmiany wykonania ograniczają się do istniejącego room_load.c: powiązania
+z już naprawionymi pełnymi modułami i reset ich danych. Bez nowych plików
+źródłowych, przenoszenia funkcji i nowych implementacji gameplayu.
+
+Nowy --chrysler-particles sprawdza22101 instrukcji oryginalnych modułów
+z wyłącznie jawnie wyliczonymi relokacjami: całe jednostki cząstek, klasy E,
+chodzącego przeciwnika, pierścieni, spadających efektów i smug. Wszystkie
+metody,33 cele Configure na klasę E, listy callbacków/rozmiary, skrypty,
+ziarna, kolory i pierwotnie zerowane bufory są sprawdzone. Każda z ośmiu
+lokacji ładowana dwukrotnie/profil; potwierdzone pełne banki deskryptorów
+oraz reset pakietów, toru koloru i tabeli smug. Ten sam test powtarza1320
+referencyjnych stanów CPU/GTE i448 przypadków pakietów/OT, pełny skrypt
+cząstek w obu buforach oraz cykl PM pierścieni aż do wygaśnięcia.
+GTE korzysta ze wspólnego helpera PsyZ; to nie niezależny audyt GTE/pikseli.
+
+Skan450 wpisów tabeli pomieszczeń każdej płyty USA (414 czytelnych
+katalogów/płytę) potwierdza wszystkie wystąpienia tych trzech rodzin:
+slot10 w11 lokacjach,79 i187 w8 lokacjach. Wszystkie mają natywne powiązania;
+osiem nowych modułów jest identycznych na obu płytach. Dowody:
+/tmp/pe-chrysler-family-inventory-v1.json i /tmp/pe-disc2-family-inventory-v1.json.
+To audyt danych i izolowane cykle, nie przejście Chrysler Building w kampanii.
+
+Replaye M328/35104 HP205, ucieczki43414, powrotu43864 i porażki45702
+pozostają zgodne z historycznym live oraz między profilami (cały JSON,
+pełne1MiB VRAM); źródłowy zapis D i prywatne kopie bez zmian, bu10 puste.
+Zwycięstwo w M328 i pełna kampania nadal niepotwierdzone; cel pozostaje aktywny.
+
+### Poprzedni zweryfikowany kandydat floor walker
+
+Poprzedni zweryfikowany kandydat: /tmp/pe-walker-port-v3. Wszystkie384
 obiekty zbudowane od zera (192 na profil normal/SAN),44/44 przypadki regresji
 exit0 oraz osiem cold replayów szpitala exit0. Ponownie sprawdzono hashe
 obiektów, bieżących zależności, archiwów i binariów. build/parasite-eve-pc

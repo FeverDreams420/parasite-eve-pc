@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M231: Confuse, Heal2 poza walką i oczekiwanie w polu
+
+LiveSAN50379 (/tmp/pe-m231-prepared-v1-live.py) odtworzył215799.
+Podejście przy lewej ścianie (Up260,Right8,Up180) również uruchomiło
+spotkanie; kolizja przesunęła Ayę do pola encounter. Heal3,Detox oraz
+krótsze prostokąty ruchu nie zapewniły bezpiecznego odnawiania PE.
+Przy219223 użyto Confuse z właściwego menu(row5,col0),na typ4/sub31.
+Po219483 jego state_flags185204992,HP390; nie dowodzi to skutecznego
+powstrzymania wszystkich ataków. Po kolejnych Detox i próbach Escape
+ucieczka powiodła się przy221045,37HP. Nie zaliczono zwycięstwa.
+
+Po ucieczce zwykłe menu pola pozwoliło użyć Heal2(row0,col1):37→97HP
+przy221577. Zamknięcie menu i6000klatek bez wejścia nie przywróciło
+możliwości użycia Heal3 (nadal szare w menu przy227687). Nie ma jeszcze
+bezpośredniego pomiaru pola PE przed i po oczekiwaniu; nie wyciągać z tego
+wniosku o dokładnej szybkości regeneracji. Zachowane JSON/VRAM oraz
+zwykły input:/tmp/pe-m231-field-heal-v1-227687.{json,vram} i pełne wejścia
+w/tmp/pe-m231-prepared-v1-live/input.jsonl. Powtórki normal/SAN trwają
+przez/tmp/pe-m231-field-heal-v1-replay.py; sprawdzić ich wynik.
+Live50379 czeka w menu PE,M231,97HP. Źródła produkcyjne bez zmian.
+Dalsza próba wymaga uzupełnienia zasobów/lepszego przygotowania przez
+zwykłe mechanizmy; nie powielać szerokich tras wchodzących w przeszkody.
+
 ### M231: kolejne spotkania po ucieczce i zasięg EnergyShot
 
 Powrót zM229 doM231 przy225142 (52HP) odtworzył obu przeciwników;

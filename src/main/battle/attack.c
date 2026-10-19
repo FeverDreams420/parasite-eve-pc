@@ -880,9 +880,9 @@ s32 Battle_StepAyaAction(void)
         targetAngle = Battle_CalcAngleToTarget(&targetEntity->renderObject, &g_AyaSavedPos);
         D_8009D254->facingAngle = targetAngle;
         product = targetDistance * rsin(targetAngle);
-        D_8009D254->posX.fixed = (g_BattleActionQueue[g_BattleActionIndex].actor->renderObject.target_x << 16) + (product * 16);
+        D_8009D254->posX.fixed = (g_BattleActionQueue[g_BattleActionIndex].actor->renderObject.target_x * 65536) + (product * 16);
         product = targetDistance * rcos(D_8009D254->facingAngle);
-        D_8009D254->posZ.fixed = (g_BattleActionQueue[g_BattleActionIndex].actor->renderObject.target_z << 16) + (product * 16);
+        D_8009D254->posZ.fixed = (g_BattleActionQueue[g_BattleActionIndex].actor->renderObject.target_z * 65536) + (product * 16);
       }
       D_8009D254->baseX = D_8009D254->posX.fixed;
       D_8009D254->baseY = D_8009D254->posY.fixed;

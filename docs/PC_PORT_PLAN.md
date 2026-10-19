@@ -1,6 +1,195 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
-## Aktualny potwierdzony stan — 19 października 2026
+## Aktualny potwierdzony stan — 20 października 2026
+
+### M245: próba bez Energy Shot — 20 października
+
+**Liberate odblokowane zwykłym awansem i poprawiony błąd C11.**
+M217 wygrane przy165279, Aya499/604, trzy cele240HP pokonane.
+Ekran165709 pokazał poziom33, maxHP621 i Liberate. Cold replay SAN
+do tego punktu: exit0 bez raportów, pełny JSON/VRAM identyczne,
+karty B/C/D zgodne ze źródłami: /tmp/pe-liberate-unlock-v1-proof/.
+Loot odebrany, Medicine3 zachowane. Zwykły powrót M217→M243 użył
+Klamp Key, następnie schody doM245 i przejście doT-Rexa odnowiłyHP621.
+
+Pierwsze użycie Liberate zmniejszyło T-Rex2400→804. Przy174014
+Aya601/621, ammo10, PE0. Oryginalny normalny przebieg zachowany w
+/tmp/pe-trex-liberate-v1-proof/. Jego replay SAN wykrył przesunięcie
+ujemnego target_x w src/main/battle/attack.c:883 (wartość−2953).
+Nieudany SAN i exit.json zachowane; nie uznawać ich za zaliczony test.
+Naprawiono na miejscu obie współrzędne X/Z w Battle_StepAyaAction:
+target_x/target_z są s16, więc mnożenie przez65536 zachowuje dokładny
+wynik w s32 i usuwa UB przesunięcia wartości ujemnej. Bez nowych plików
+źródłowych, zmian obrażeń, pozycji docelowych lub mechaniki Liberate.
+
+Świeży kandydat /tmp/pe-liberate-signed-position-v1-*:
+406 obiektów (203 normal +203 ASan/UBSan/function), 620 zależności
+ponownie sprawdzonych, binaria build/ identyczne ze świeżym normal.
+68/68 regresji terminalexit0 (-verification.json), sześć wymaganych
+CTestów zasobów Passed bez SKIP (-ctest-assets.log). PsyZ/SDL nadal
+nieinstrumentowane. Pełny cold replay Liberate normal/SAN do174014:
+oba exit0 bez raportów, pełny JSON/VRAM identyczne między wariantami
+i z wcześniejszym normalnym przebiegiem; karty B/C/D identyczne
+ze źródłami. -liberate-proof.json, -fight-proof.json, -source-check.json.
+T-Rex nadal niepokonany:804HP w tym zweryfikowanym punkcie.
+
+Starszy live53270 zakończony quit, exit0. Późniejszy punkt176120
+(Aya325, boss710, menuPE/Liberate) zachowany osobno w
+/tmp/pe-trex-liberate-menu-v1/; nie ma niezależnego replayu.
+Liberate nie można tu użyć ponownie przy niepełnym PE: oryginalny
+Menu_CheckItemAffordable dla action19 wymaga remaining>=total.
+Nie zmieniać tego warunku. Nowy live81850 odtwarza na poprawionym
+kandydacie zweryfikowany174014 przez cold Continue:
+/tmp/pe-trex-liberate-fixed-v1-live.py. Pełna kampania pozostaje otwarta.
+
+**Przygotowanie do T-Rexa przez zwykłe zdobywanie EXP.** Live5213
+zakończony quit, exit0 przy146162 (Aya306, boss1940); ślad zachowany.
+Nowy cold Continue /tmp/pe-trex-preparation-v1-live/ (sesja53270)
+odtworzył zwycięstwo nad Triceratopsem i odbiór nagród do137211.
+Zamiast iść do T-Rexa wrócono schodami do M243. Ponowne spotkanie390HP
+zakończone zwycięstwem, loot pominięty, Aya397/604 przy142500.
+Cold replay SAN: exit0 bez raportów, pełny JSON/VRAM identyczne,
+karty B/C/D zgodne ze źródłami. /tmp/pe-trex-preparation-v1-proof/.
+
+Następnie wygrano M242 (320/240/240): przy147049 ekran nagród,
+zero przeciwników, Aya472/604. W trakcie Medic usunął Darkness0x10,
+z oryginalnym kosztem600PE; później kolejne strzały zakończyły walkę.
+Niezależny cold replay SAN również exit0, bez raportów, pełny JSON/VRAM
+identyczne, karty B/C/D zgodne ze źródłami.
+/tmp/pe-trex-preparation-v2-proof/proof.json i skrypt .py obok.
+Po nagrodach zabrano Medicine3 (slot1, wartość8) i amunicję.
+
+Odczyty LLDB były tylko odczytami, bez wywołań funkcji: EXP po
+Triceratopsie160577, po M243162613, po M242166846. Próg rawlevel32
+(wyświetlany33) wynosi168061, wpis Liberate ma unlockKey32.
+Pozostało1215EXP. Logi /tmp/pe-trex-preparation-v1-readonly.log
+i /tmp/pe-trex-preparation-v2-exp-readonly.log. Plan przygotowania
+jest zgodny z sugestią użytkownika o EXP/ulepszeniach, bez edycji save/RAM.
+Ponowny powrót do M243 nie uruchomił od razu kolejnej walki — nie
+zakładać gwarantowanego respawnu na tej trasie. Najnowszy live53270
+przy151581 jest znowu przy wejściu M242, Aya472/604, Medicine3 zachowane;
+późniejsza trasa po147049 nie ma jeszcze niezależnego odtworzenia.
+
+**Haste sprawdzony w autentycznej walce.** W live5213 wybrano PE,
+cztery razy Down i Right (prawa kolumna, wiersz4), następnie potwierdzono
+Haste. Stan otrzymał bit AYA_HASTE=0x100; zwykły ruch Up80 przesunął
+X o1350 jednostek (zamiast900 przy normalnej prędkości). Implementacja
+src/main/scene/player_movement.c wybiera AYA_MOVE_SPEED_HASTE;
+atak PE ustawia oryginalny timer450 i koszt200. Następnie Heal3 odnowił
+268→548, późniejsze trafienie10 zostawiło538HP. Przy144419 boss2216,
+Aya538/604, PE24334222, ammo5, Haste aktywny.
+
+Niezależny cold replay SAN tego punktu: exit0 bez raportów błędów,
+pełny JSON/VRAM identyczne z normalnym live, karty B/C/D zgodne
+ze źródłami. /tmp/pe-trex-haste-v1-proof/proof.json i skrypt .py obok.
+Dowód potwierdza działanie Haste i tego przebiegu, nie zwycięstwo ani
+porównanie z PS1. Nowszy nieodtworzony punkt live5213 przy145325:
+Aya326/604, boss2032/2400, PE41733635, ammo1, celowanie poza zasięgiem
+(1541/1272). Haste już wygasł. Nie zatwierdzać salwy poza zasięgiem.
+
+Retry live53281 zakończył się porażką: przy151213 Aya0 HP,
+T-Rex882/2400; zamknięto quit, exit0. Normalny punkt147907
+(Aya509/604, boss1526/2400, ammo1) ma niezależny cold replay SAN:
+exit0, pełny JSON/VRAM identyczne, karty B/C/D zgodne ze źródłami,
+bez raportów błędów. Dowód /tmp/pe-trex-dodge-v2-proof/proof.json.
+Końcowa porażka ma osobny cold replay SAN: exit0 bez raportów błędów,
+pełny JSON/VRAM identyczne, karty B/C/D zgodne ze źródłami.
+/tmp/pe-trex-dodge-defeat-v1-proof/proof.json oraz skrypt .py obok;
+nie mylić jej z zaliczeniem bossa.
+
+Nowy live /tmp/pe-trex-short-step-v1-live/ (sesja5213) odtworzył wejście
+141521 zwykłym Continue. Zamiast pierwszej salwy wykonano Up60,
+Left40, Left40, Down60. Przy141736 Aya432/604, boss2400, PE47306996,
+ammo9, celowanie w zasięgu918/1272, bossmode11. Krótsze kroki ujawniły
+dwa trafienia po81 i okresy blokady ruchu podczas reakcji na trafienie.
+To nowszy punkt bez niezależnego replayu, a nie potwierdzona poprawa
+całej strategii. Kod gry i parametry pozostały bez zmian.
+
+Retry T-Rexa: cold replay SAN do143183 potwierdził pełny JSON i VRAM
+live53281, exit0 bez raportów błędów oraz zgodność kart B/C/D.
+Artefakty /tmp/pe-trex-dodge-v1-proof/ i skrypt o tej samej nazwie .py.
+Aya405/604, boss2262/2400, magazynek6. Odcinki30klatek pokazały ruch
+Up/Left, podczas gdy część ruchów przy ciele bossa nie zmieniała pozycji.
+Odejście Up60 i salwa z ruchem Left250 przeszły405→405HP.
+To obserwacja konkretnego przebiegu, nie dowód błędu kolizji ani ogólnej
+skuteczności strategii. Późniejszy nieodtworzony punkt143571 live53281:
+Aya324/604, T-Rex2170/2400, PE63408709, magazynek4, celowanie
+w zasięgu (513/1272). Walka i pełna kampania nadal nieukończone.
+
+Próba T-Rexa z live51721 zakończyła się porażką przy148139:
+Aya0 HP, boss1342/2400. Zamrożono stan, VRAM i input w
+/tmp/pe-trex-first-defeat-v1/; zamknięcie quit, exit0. Nie zaliczać walki.
+Nowy cold Continue /tmp/pe-trex-dodge-v1-live/ (sesja53281) odtwarza
+wejście141521; początkowy pełny JSON porównano z niezależnym dowodem
+SAN wejścia. Dowód porównania: /tmp/pe-trex-dodge-v1-initial-proof.json.
+Bez zmian kodu, zapisów ani pamięci. Oryginalny Battle_HandleItemMenu
+w src/main/battle/turn.c pozwala zatwierdzić niepełną kolejkę Square.
+Sprawdzono zwykłym inputem: queue_count1, ammo9→8, boss2400→2354.
+Jednak przy141876 Aya ma już261 HP i action_mode7; samo skrócenie
+kolejki nie wystarcza do uniknięcia wcześniejszego ataku. Live53281 trwa,
+ten późniejszy punkt nie ma jeszcze niezależnego replayu SAN.
+
+**Dalsza walka z T-Rexem:** niezależny cold replay SAN do 145827
+potwierdził pełny JSON/VRAM normalnego live, exit0 bez raportów błędów
+oraz identyczność autentycznych kart B/C/D. Aya404/604 HP,
+T-Rex1756/2400, magazynek6, PE28798751. Artefakty:
+/tmp/pe-trex-combat-v1-proof/, skrypt /tmp/pe-trex-combat-v1-proof.py.
+W tym śladzie Heal3 skutecznie odnowił HP trzy razy podczas tej walki.
+Nie jest to jeszcze zwycięstwo ani porównanie z PS1.
+
+Najnowszy live51721 przy 147746: Aya295/604, T-Rex1388/2400,
+PE5566026, magazynek9; celowanie, dystans1452 przy zasięgu1272.
+Ten późniejszy punkt nie ma jeszcze niezależnego odtworzenia. Trzeba
+anulować celowanie i podejść, a nie zatwierdzać strzałów poza zasięgiem.
+Kamera walki: Down zwiększa X, Up zmniejsza X, Right zwiększa Z,
+Left zmniejsza Z. Med3 zużyto wcześniej na Triceratopsie; zapas PE
+po czwartym Heal3 jest niski, więc dalsza próba wymaga unikania ataków.
+
+**Przejście po zwycięstwie do walki z T-Rexem potwierdzone.** Zwykły
+ruch na południe i potwierdzenia dialogów przeprowadziły M245→scenę
+0xa80450c8→0xa80452c8→wariant walki 0xa8045348. Scenariusz odnowił
+HP Ayi do 604; przy zamrożonym 141521 ma 594/604, a przeciwnik
+2:0 ma 2400/2400 HP. Cold replay SAN od źródłowej karty B zakończony
+exit0, bez raportów błędów, pełny JSON/VRAM identyczne z normalnym live,
+karty B/C/D identyczne ze źródłami. Artefakty i proof.json:
+/tmp/pe-trex-entry-v1-proof/, skrypt /tmp/pe-trex-entry-v1-proof.py.
+To dowód wejścia w walkę, nie pokonania T-Rexa.
+
+Live51721 przy 142735 jest zatrzymany w celowaniu: Aya450/604,
+T-Rex2216/2400, PE37723285, magazynek5, dystans1438 przy zasięgu1272.
+Nie zatwierdzać strzałów poza zasięgiem. Pierwsza salwa i późne odejście
+kosztowały404HP; Heal3 odnowił280 przed kolejnym trafieniem10.
+Późniejszego punktu walki jeszcze nie odtworzono niezależnie.
+
+**Obie fazy Triceratopsa pokonane.** Zamrożony punkt 135541 pokazuje
+ekran nagród (combat.mode=2), zero przeciwników i żywą Ayę 298/589 HP.
+Niezależny cold Continue od źródłowej karty B z pełnym śladem wejścia
+na tym samym kandydacie ASan/UBSan/function: exit0, bez raportów błędów,
+pełny JSON i VRAM identyczne z normalnym live, karty B/C/D identyczne
+ze źródłami. Dowód: /tmp/pe-triceratops-victory-v1-proof/proof.json,
+skrypt /tmp/pe-triceratops-victory-v1-proof.py. Walka używała zwykłych
+strzałów, Heal 3 i jednego Medicine 3; bez Energy Shot, edycji stanu
+czy zmian w kodzie rozgrywki. To dowód natywny/SAN, nie porównanie PS1.
+
+Po nagrodach ekran potwierdził poziom 32, maxHP604 i odblokowanie
+Full Recover. Zabrano Ammo+6. Live51721 przy 137211 jest z powrotem
+w M245, menu zamknięte, move_lock=0, Aya ma 298 HP. Późniejszego
+punktu po nagrodach jeszcze nie odtworzono niezależnie. Dalsza kampania,
+w tym T-Rex, pozostaje niezaliczona.
+
+Nowy ślad /tmp/pe-triceratops-pe-policy-v1-live/ kontynuuje autentyczny
+Continue B, bez edycji zapisów lub pamięci, na kandydacie 25bc4a0a9.
+Zwykłe strzały i Heal 3 doprowadziły do drugiej fazy (aktor 7:30).
+Przy 131527 Aya ma 401/589 HP, przeciwnik 1000900 HP, Medicine 3
+pozostaje w slocie 1. Niezależny cold replay ASan/UBSan/function kończy
+się exit0, bez raportów sanitizerów: pełny JSON i VRAM identyczne z live,
+karty B/C/D identyczne z autentycznymi źródłami. Zamrożone artefakty:
+/tmp/pe-triceratops-pe-policy-v1-proof/, proof.json; skrypt obok katalogu.
+To potwierdzenie punktu drugiej fazy, nie zwycięstwa.
+
+Wcześniejszy punkt live 51721: przy 132307 Aya ma 313/589 HP,
+druga faza 1000741 HP, magazynek 1. Tego późniejszego punktu jeszcze
+nie odtworzono niezależnie. Nie zmieniano kodu ani parametrów rozgrywki.
 
 ### Diagnostyka PE i nieudana próba M245
 
@@ -37,7 +226,7 @@ kandydatem. Dowód: /tmp/pe-combat-pe-observe-v1-fight-proof-v2.json.
 Odczyty końcowe: recovery_step52405, recovery_divisor19327, guard0,
 action_mode19. To dowód rozszerzenia obserwowalności bez zmiany zachowania,
 nie zaliczenie walki. Dalsza próba powinna korzystać z odczytów PE/timera
-albo uzupełnić ekwipunek przed bossem. Żaden live gry teraz nie działa.
+albo uzupełnić ekwipunek przed bossem. W chwili zakończenia tej starszej próby żaden live nie działał.
 Pełna kampania i cały cel portu pozostają nieukończone.
 
 ### M243→M245: pełne HP z zachowanym Medicine 3
@@ -158,7 +347,12 @@ menu BP wydano 300 z 365 punktów na Active Time: poziom 39→42 (po zakończeni
 pozostało 65 BP, co potwierdzono ekranem po zamknięciu i otwarciu menu.
 W dialogu BP zwiększa Down, nie Right; pierwsza próba z Right nie wydała
 punktów. M500 nadal ma Rate 2; nie jest to docelowa broń pojedynczego
-strzału. Nie zmieniano parametrów gry, kodu ani pamięci kampanii.
+strzału. Przy doborze broni preferować pojedynczy strzał: wielokrotny
+strzał rozdziela obrażenia między pociski i zużywa dodatkową amunicję.
+Double Action i Triple Action są odrębnymi, pożądanymi modyfikacjami;
+nie utożsamiać ich z Rate 2/3. Ewentualną zmianę wyposażenia wykonywać
+wyłącznie przez oryginalne menu i dostępne narzędzia.
+Nie zmieniano parametrów gry, kodu ani pamięci kampanii.
 
 W walce zwykłe pary strzałów zmniejszały HP pierwszego celu po 70.
 Heal 3 użyto już przy 180 HP: przy 129113 Aya ma 460 HP.

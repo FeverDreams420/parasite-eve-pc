@@ -50,8 +50,23 @@ odczyt LLDB potwierdza radius63 i move_speed4096,bez zmiany pamięci:
 /tmp/pe-m210-collision-live-v1.log. Sam graf sąsiedztwa nie dowodzi
 przechodniości dla tej postaci. Nie zmieniano kolizji. Oryginalne skrypty
 mają też połączenia M207→M214→M216→M212→M211; zbadać je oraz oryginalne
-warunki wejścia. Live SAN:/tmp/pe-loot-record-v2-live.py,sesja57461,
-126246,M210,448HP,3×Medicine4. Autentyczne A i O zachowane.
+warunki wejścia. Poprzednia sesja57461 zakończona poprawnym quit po
+nieudanej gałęzi z powtórnym starciem. Autentyczne A i O zachowane.
+
+Powrót M210→M207, nowa sesja SAN19532:
+/tmp/pe-m207-east-route-v4-live.py. Zwykłe wejścia od O odtworzyły
+127131,M207,448HP. Zwężenie korytarza uniemożliwiło obejście pierwszego
+triggera; powtórne starcie wygrano136619,65HP. Zmiany broni M79-3→M9-2
+→M203→Club1→M203 i dwa Heal3; pałka zadaje34 bez amunicji.
+Pełny JSON/VRAM normal/SAN/live, oba procesy exit0:
+/tmp/pe-m207-return-victory-v1-replay-proof.json.
+Po END użyto Medicine4(slot11),65→465HP. Drzwi wschodnie wymagają
+obejścia podstawy schodów: od x≈476,z−2415 Down45,Right50,Up45,
+wait400. Wejście M214/0xa8041248 przy139423,465HP,field/lock0.
+Zamrożony JSON/VRAM i wejścia:/tmp/pe-m214-entry-v1-*; sparowane
+odtworzenie zakończone:oba exit0,pełny JSON/VRAM normal/SAN/live,
+bez raportów sanitizerów:/tmp/pe-m214-entry-v1-replay-proof.json. Bez zmiany kolizji, RAM ani save. Aktualny live19532
+czeka przy139423 w M214; dwa Medicine4 pozostały.
 Telefon i dalsza kampania pozostają do ukończenia.
 
 ### Museum: quiz i wygrane M206/M207, wejście M209

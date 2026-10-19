@@ -2,7 +2,30 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-### M269: pierwsza część bossa pokonana
+### M269: druga część bossa pokonana, dwie serie SAN w toku
+
+Seria search-v2 pokonuje również część5:29. Punkt r08-c04,68917,
+427/437HP,5 żywych przeciwników, brak4:30 i5:29. Cold normal/SAN od
+niezmienionego autentycznego L: pełny JSON i VRAM identyczny także z punktem
+SAN serii /tmp/pe-m269-second-claw-v1-replay-proof.json. Root build nadal
+jest zweryfikowanym /tmp/pe-m269-glow-v2, kod produkcyjny bez nowych zmian.
+
+/tmp/pe-warehouse-m269-search-v2.py, sesja30868, nadal działa. Runda9
+sprowadza korpus do1000697HP przy427HP Ayi. Dodatkowa niezależna gałąź
+zwykłego inputu /tmp/pe-warehouse-m269-body-v1.py, sesja12110, startuje
+z r06-c00,68073 i preferuje korpus w zasięgu; pierwsze strzały zmniejszają
+go do1000718 przy437HP Ayi. Obie serie używają SAN i własnych kart L,
+każdy input jest utrwalany. Audyt ukończonych prób:
+/tmp/pe-m269-san-progress-v2.json. Sprawdzić oba uchwyty i terminal.json
+przed ponownym startem. Pełne zwycięstwo nadal niepotwierdzone.
+
+Oryginalny skrypt dodaje1000000 do HP korpusu i odejmuje ten offset przy
+obliczaniu procentów; próg flagi śmierci porównuje HP z offsetem. To powód
+priorytetu celu w dodatkowej gałęzi inputu, nie zmiana HP ani gameplayu.
+Audyt instrukcji /tmp/pe-m269-body-script-audit-v1.json. Efekt całej gałęzi
+śmierci pozostaje do sprawdzenia podczas naturalnego zakończenia walki.
+
+### Wcześniejsza pierwsza część bossa pokonana
 
 Seria /tmp/pe-warehouse-m269-search-v2.py nadal pracuje pod SAN (sesja30868).
 Punkt r02-c00,66401,437/437HP ma już6 przeciwników zamiast7: część4:30

@@ -2,6 +2,58 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+M186/M385/M388/M389 podłączone jako cały wspólny moduł0x53bcB:
+SHA256 c3c944a011802d8fd154048bc439cf540b1df04c3e3515dcb55835f0997e2013,
+FNV64 bff23bf6f78c6128. Istniejące twelve_elements.c, orbit_set.c i klasy
+aktorów pozostają bez zmian; dodano tylko pełne powiązania loadera:
+36/80194214 (orbit),11/80194164 (twelve),75/801942dc (E),70/801942a4 (D)
+oraz reset wszystkich sześciu pakietów obu efektów przy ponownym wejściu.
+Żadnych nowych źródeł repo ani przepisywania mechaniki.
+
+Audyt całych czterech modułów potwierdza identyczne bajty USA; porównanie
+z oryginalnymi M167/M187 obejmuje5066 instrukcji (twelve/orbit/aktorzy),
+212 zmian wyłącznie adresów, bez zmian pozostałych instrukcji. Zgodne są
+też oba zestawy seedów, relokowane jump tables, pełny skrypt29 słów orbitu,
+skrypt4 słów twelve oraz tabela60B kolorów. To weryfikacja referencji,
+nie wymóg byte-match portu. /tmp/pe-m186-family-v1-module-proof.json
+oraz powtarzalny module-audit.py pod tym samym prefiksem.
+
+Nowy --m186-load czyta rzeczywiste CUE wszystkich czterech lokacji i ładuje
+każdą dwukrotnie, z zatrutymi wcześniej sześcioma pakietami. Wszystkie
+cztery descriptory i reset są sprawdzane, a oba autorskie zestawy wykonują
+pełne cykle PM na assetach danej lokacji. Na profil32 cykle orbitu
+(oba parametry/oba bufory) i16 twelve (oba bufory, wszystkie12 elementów),
+naturalne wygaśnięcie, canary puli/pakietów i łącza OT; razem96 cykli
+normal/SAN. Test --sewer-twelve nadal zachowuje wcześniejsze pokrycie9 lokacji.
+
+Aktualny kandydat /tmp/pe-m186-family-v1:398 świeżych obiektów (199/profil),
+rehash1014 plików,60/60 regresji, CTest2/2 (assets irodzinaM186).
+Osiem cold prób na tym kandydacie potwierdza cały JSON/VRAM wcześniejszego
+wejścia i drugiej fazy M188 oraz przełączanie celów. Zwykły Right/Left
+przełącza indeksy w przód/wstecz i zawija0→1→2→3→0; Up/Down nie zmieniają
+celu w tym stanie, HP30 pozostaje niezmienione przy pauzie celowania.
+Root game/fixture są kopiami zweryfikowanego normal; źródłowy/prywatny K
+niezmienione, użytkowe karty nietknięte, PsyZ/SDL nadal nieinstrumentowane.
+Dowody /tmp/pe-m186-family-v1-{verification.json,rehash-proof.json,
+load-results.json,promotion-proof.json,release-proof.json},
+/tmp/pe-m186-family-v1-{split,target}-replay-proof.json. Naturalne wejście
+M186 i trzech wariantów Chrysler nadal wymaga dalszej kampanii; nie
+utożsamiać loadera/cykli z pełnym przejściem tych lokacji.
+
+Seria input-search-v2 zakończona0:24 rundy,376 zwykłych prób normal-only,
+bez wygranej; /tmp/pe-m188-input-search-v2-proof.json. Zachowana wcześniejsza
+gałąź r11-c02 daje jednak drugą fazę43992 ze335HP Ayi, PE3255492/65536,
+13 pociskami i czterema celami300/120/120/180. Od niej działa nowa seria
+na aktualnym kandydacie, /tmp/pe-m188-input-search-v3.py i katalog o tej samej
+nazwie (best/history/terminal.json), log /tmp/pe-m188-input-search-v3.log.
+Uwzględnia wybór najsłabszego celu w zasięgu i szybsze serie do jego zabicia;
+wyłącznie zwykłe menu/input, bez ingerencji w RAM/zapis/statystyki.
+Sesja exec59385 przy uruchomieniu była żywa; przed kolejnym startem sprawdzić
+ją i terminal.json. Kolejny krok pozostaje ten sam: wygrać całą walkę M188,
+odebrać nagrody i przejść do dalszych lokacji. Pełna kampania nieukończona.
+
+### Poprzedni odcinek M188 — historia dowodów
+
 M188 osiągnęło drugą fazę zwykłym inputem, bez zmian RAM/zapisu/statystyk.
 Automatyczne porównanie120 wariantów (15 rund po8, normal-only) jest terminalne:
 /tmp/pe-m188-input-search-v1/{terminal.json,history.json}, log
@@ -22,7 +74,7 @@ pełne VRAM zgodne między profilami, dwa końcowe również z live:
 /tmp/pe-m188-split-check-v1-replay-proof.json. Źródłowy/prywatny K bez zmian,
 root bu00/bu10 nietknięte. Ten live zamknięty0.
 
-Nadal aktywne jest automatyczne porównanie kolejnych wariantów, od wcześniejszego
+Historyczne uruchomienie porównania (obecnie zakończone — wynik powyżej), od
 38230 (przed pierwszym Energy Shot): /tmp/pe-m188-input-search-v2.py,
 /tmp/pe-m188-input-search-v2/{best.json,history.json,terminal.json},
 log /tmp/pe-m188-input-search-v2.log. Dwie zachowane gałęzie, osiem kierunków,

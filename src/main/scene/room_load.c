@@ -383,6 +383,7 @@ int Scene_LoadRoom(unsigned int roomId)
     int orbit_library = 0;
     int homing_flash_library = 0;
     int twelve_library = 0;
+    int twelve_orbit_library = 0;
     u32 shared_actor=0,walker_class=0,walker_task=0;
     u32 chrysler_particles=0,chrysler_falling=0,chrysler_line=0;
     int ready;
@@ -469,6 +470,8 @@ int Scene_LoadRoom(unsigned int roomId)
 
     room = state->loaded_scene_assets;
     directory = SceneAsset_ResolveOffset(room, room->header.directoryOffset);
+    twelve_orbit_library = map + 1 == 186 || map + 1 == 385 ||
+        map + 1 == 388 || map + 1 == 389;
     /* Exact complete USA module, including class rows and authored data. */
     twelve_library = map + 1 == 167 || map + 1 == 168 || map + 1 == 169 ||
         map + 1 == 173 || map + 1 == 178 || map + 1 == 295 ||
@@ -587,6 +590,18 @@ int Scene_LoadRoom(unsigned int roomId)
                 native = &g_RoomSparkBarrageProgram125;
             if (slot == 127 && record[i].u.handlerAddress == 0x80195f98u)
                 native = &g_RoomSparkBarrageProgram127;
+        }
+        /* Complete identical M186/M385/M388/M389 module: both original
+         * effect classes and the actor rows linked by its four records. */
+        if (twelve_orbit_library) {
+            if (slot == 36 && record[i].u.handlerAddress == 0x80194214u)
+                native = &g_RoomOrbitSetHandlers;
+            if (slot == 11 && record[i].u.handlerAddress == 0x80194164u)
+                native = &g_RoomTwelveElementHandlers;
+            if (slot == 75 && record[i].u.handlerAddress == 0x801942dcu)
+                native = &g_RoomActorClassTable[2];
+            if (slot == 70 && record[i].u.handlerAddress == 0x801942a4u)
+                native = &g_RoomActorClassTable[0];
         }
         if (map + 1 == 187 && slot == 36 && record[i].u.handlerAddress == 0x8018fff0u)
             native = &g_RoomOrbitSetHandlers;
@@ -894,6 +909,20 @@ int Scene_LoadRoom(unsigned int roomId)
             else g_FieldFxTaskPrograms[slot - 85] = slot == 124 ?
                 &g_RoomSparkBarrageProgram124 : slot == 125 ?
                 &g_RoomSparkBarrageProgram125 : &g_RoomSparkBarrageProgram127;
+        } else if (twelve_orbit_library) {
+            if (slot == 75) g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
+            else if (slot == 70) g_PmCmdHandlerTable[70] = &g_RoomActorClassTable[0];
+            else if (slot == 11) {
+                g_PmCmdHandlerTable[11] = &g_RoomTwelveElementHandlers;
+                memset(&RoomLib_TwelveEffectPrimaryPacket, 0, sizeof(RoomLib_TwelveEffectPrimaryPacket));
+                memset(&RoomLib_TwelveEffectSecondaryPacket, 0, sizeof(RoomLib_TwelveEffectSecondaryPacket));
+            } else if (slot == 36) {
+                g_PmCmdHandlerTable[36] = &g_RoomOrbitSetHandlers;
+                memset(&g_RoomOrbitSpritePacket, 0, sizeof(g_RoomOrbitSpritePacket));
+                memset(&g_RoomOrbitParticlePacket, 0, sizeof(g_RoomOrbitParticlePacket));
+                memset(&g_RoomOrbitBurstPacket, 0, sizeof(g_RoomOrbitBurstPacket));
+                memset(&g_RoomOrbitShadowPacket, 0, sizeof(g_RoomOrbitShadowPacket));
+            }
         } else if (twelve_library) {
             if (slot == 75) g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
             else if (slot == 70) g_PmCmdHandlerTable[70] = &g_RoomActorClassTable[0];

@@ -26,9 +26,16 @@ Club1,pełne ATB. Nie jest to jeszcze zwycięstwo M231 ani wejście M232.
 
 Zamrożone pełne JSON/VRAM i pełna trasa zwykłego inputu:
 /tmp/pe-m231-spitter-down-v1-213280.{json,vram},
-/tmp/pe-m231-spitter-down-v1-base-args.json. Trwa cold replay normal/SAN:
-/tmp/pe-m231-spitter-down-v1-replay.py (session38895); wymaga potwierdzenia.
-Live94439 czeka przy213280. Bez zapisów RAM,edytowania save'ów i zmian
+/tmp/pe-m231-spitter-down-v1-base-args.json. Cold replay normal/SAN zakończony: oba exit0,całe JSON i VRAM równe
+także z live: /tmp/pe-m231-spitter-down-v1-replay-proof.json.
+Dalsza próba nie pokonała ostatniego przeciwnika. Heal2 odnowiło132→192HP,
+lecz kolejne podejście kosztowało66HP. M203 nadal miał1 nabój (użycie
+M203 dotyczyło osobnej,odrzuconej gałęzi). Wyposażono go i odsunięto
+Ayę na górną krawędź. Postój214364→215364 zachował126HP,ale dalsze6500
+klatek zakończyło się ekranem Game Over przy221864. Krótka obserwacja
+nie dowodzi więc bezpiecznej regeneracji w tym miejscu. Zamrożone
+JSON/VRAM/input: /tmp/pe-m231-final-enemy-defeat-v1-221864*. Live94439
+zamknięty quit,exit0. Dalszy punkt nie ma osobnej powtórki normal/SAN. Bez zapisów RAM,edytowania save'ów i zmian
 produkcji; root karty nietknięte. Źródłowy kandydat pozostaje niezmieniony.
 
 ### M227: odbiór i wyposażenie SvProtector zamiast SpVest1

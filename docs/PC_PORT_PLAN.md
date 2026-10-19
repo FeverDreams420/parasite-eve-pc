@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M225→M224→M223 i powrót: dodatkowe spotkanie, bez EXP/BP
+
+Próba pe-m224-grind-v1 miała błędną konfigurację: brak --control-at.
+Nie oddała sterowania przy194350; przerwano ją Ctrl-C. PID60138 zakończony.
+To nie jest dowód przejścia ani awarii gry. Poprawiona,osobna próba
+/tmp/pe-m224-grind-v2-live.py z jawnym --control-at194350 odtworzyła
+M225,437HP. Medicine3 ze slot10 przywróciło573HP. Up12,wait400→M224
+przy195086. Przejście przez oba pola spotkań nie uruchomiło walki.
+Dalszy powrót na północ→M223 przy195986. Left120 uruchomiło dodatkowe
+spotkanie trzech typ4/sub31,30,29 po200HP. Wybrano M203 przez zwykłe
+menu; pojedynczy lodowy strzał zmniejszył sub31 tylko200→190.
+Po trzech próbach Escape wycofanie się powiodło przy198448,315HP.
+Poza walką Heal3 odnowiło315→573HP,bez użycia Medicine4 ani drugiej
+Medicine3. Powrót przez M224→M225 przy200444:573HP,mode10,lock0.
+Nie zdobyto EXP ani BP; nie nazywać tej pętli udanym grindem.
+
+Zamrożony JSON/VRAM i pełny zwykły input:
+/tmp/pe-m224-return-v1-200444.{json,vram}; powtórki normal/SAN trwają
+przez/tmp/pe-m224-return-v1-replay.py. Live49086 czeka wM225,573HP,
+M203 wyposażony/pusty; zachowane Medicine4 i jedna Medicine3. G23 trzeba
+ponownie wyposażyć przed następną próbą. Root bu00/bu10 nietknięte.
+Pomocniczo sprawdzono poradnik autora enaysoft:
+https://gamefaqs.gamespot.com/ps/198265-parasite-eve/faqs/30073
+Opisuje on dodatkowe spotkania po powrotach do sal; to wskazówka dla
+nawigacji,nie dowód zachowania naszego buildu. Obserwacje z tej próby
+nie dowodzą jeszcze reguły odnawiania spotkań. Źródła bez zmian.
+
 ### Pomiar PE w polu i powrót do lepiej zaopatrzonej trasy
 
 Odczyt wyłącznie przez LLDB,bez przypisań i wywołań funkcji,przy227907:

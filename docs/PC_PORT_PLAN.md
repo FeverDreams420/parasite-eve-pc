@@ -2,6 +2,50 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Najnowszy punkt kampanii do dalszej pracy: cold replay D→M327→M328 przy35104,
+HP205, PE8521590/23199744 (około130/354), M16 załadowane16; FullCure17 w20,
+Medicine2/7 w21 iCure-M16 w22. Odtwarzalny CLI:
+/tmp/pe-m328-strong-entry-v1-35104-normal-args.json (SAN analogicznie).
+Dwa profile exit0, pełne JSON identyczne z live i profilami,1MiB VRAM zgodne,
+zrzut normal obejrzany; /tmp/pe-m328-strong-entry-v1-proof.json.
+
+Nowy wariant M327: pierwszeEnergyShot na6:2/110, nie na5:1/88; dwie kule
+w6:31 zostawiają56, drugieEnergyShot przyPE6794860 zabija go, a cztery
+kolejne zwykłe strzały kończą5:1. Przy33012 rzeczywiste zwycięstwo HP25,
+mode2/enemies[], magazynek16 iMed3 nadal w17. Po All przy33652 wolne pole;
+Medicine3 użyta poza walką daje25→205HP, przy34424 lock0/menuNULL.
+Cztery cold replaye33012/34424 ×normal/SAN:4/4 exit0, całe JSON zgodne
+z live i profilami, pełny VRAM zgodny między profilami, wszystkie karty D
+bez zmian. /tmp/pe-m327-fly-first-v1-{proof.json,check.py,check.log}.
+Względem autentycznego startu walki zmieniają się tylko sloty17:8→0,
+21:0→7,22:0→16 i equipment byte138 (amunicja M16)5→16; pozostałe4096B i sloty
+identyczne. /tmp/pe-m327-fly-first-v1-inventory-proof.json. Nie generowano save'a.
+
+M328: odrębny wariant split-v1 potwierdza zwykłą ucieczkę przy42814/mode4,
+zakończenie przy43414 (mode10, HP83, lock0) i ponowne wejście w obszar walki:
+43534/mode7,43864/mode0 z trzema przeciwnikami i ich pełnym120/88/88HP.
+Później Aya ginie;45702 HP0/mode3. Sześć cold replayów43414/43864/45702
+×normal/SAN exit0, pełne JSON zgodne z live i profilami,1MiB VRAM zgodne,
+D bez zmian, bez raportów sanitizerów. /tmp/pe-m328-escape-reentry-v1-proof.json.
+To pokrycie resetu i wygaszania efektów przy ucieczce/powrocie/porażce,
+nie zwycięstwo w M328. Trasa tactics-v1 kończy HP0/43191, split-v1 HP0/45702;
+oba klienty zamknięte quit/exit0. preserve-pe-v1 przerwano przy33028/HP64,
+bez zwycięstwa. fly-first-v1 po checkpoint35104 ma późniejszą nieudaną próbę
+M328 do35854/HP42, klient także zakończony quit/exit0. Żadna z tych sesji
+nie jest już aktywna; do kolejnej próby używać CLI35104, nie latest state.json.
+
+Audyt obrażeń na tym samym v5: pełny domyślny fixture normal iSAN exit0,
+w tym147456 przypadków obrażeń przeciwnika i311040 obrażeń Ayi z USA CPU.
+/tmp/pe-m328-v5-core-full-v1-{normal,san}.log. Odczyt LLDB w przerwanym
+wariancie potwierdza prawdziwy Battle_ApplyDamage(8) przy32533:
+Med3 podnosi86→210HP; niższe późniejsze HP wynikają z kolejnych trafień,
+nie pominięcia leczenia. Wyłącznie odczyty i zwykłe step-out, bez ReturnFromFrame,
+wywoływania funkcji gry z debuggera ani zapisów RAM; /tmp/pe-m327-heal-watch-v2.log.
+/tmp/pe-m328-runtime-audit-v1-proof.json. Końcowa walidacja: /tmp/pe-m328-campaign-progress-v1-proof.json. Ten etap nie zmienia kodu gry ani
+mechanik; wszystkie nowe punkty uzyskano zwykłymi inputami z autentycznego D.
+M328 i pełna kampania nadal wymagają dalszego przejścia oraz audytu wierności.
+
+
 Aktualny kandydat: /tmp/pe-m328-port-v5 (poniższe v2/v3 to historia dowodów).
 380 świeżych obiektów, normal i ASan/UBSan/function. Wszystkie38 regresji
 oraz cztery cold replaye M328 (pierwsza awaria41913 i porażka42669 × oba

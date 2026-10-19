@@ -2,6 +2,42 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M217: wygrana trójka, leczenie PE i geometria Burst
+
+Live12235 przy53355 walczył z dwoma typ4/sub31,30 po280HP. Heal3
+odnowiło162→442HP; czwarta próba Escape zakończyła wycofanie bez straty
+kolejnych HP. Ten wariant nie został wygrany. Ponowny ruch od wejścia
+uruchomił trójkę typ6/sub31,30,29 po240HP przy55862.
+
+Trzecie spotkanie zostało wygrane przy58748,313HP. Zwykła seria M500
+zmniejszyła sub29:240→144. EnergyShot przy PE30387874 zadało175
+sub31:240→65 i zużyło jeden pocisk/PE. Po zmianie pozycji wybrano sub31
+na liście celów (Right dwa razy); dwa pociski Burst wyeliminowały go,
+jednocześnie sub30:240→144 i sub29:144→48. To potwierdza trafienie
+zgrupowanych celów, a nie bezwarunkowy atak na wszystkich w pokoju.
+Automatyczne przeładowanie0→7, kolejna seria sub30:144→96. Pojedynczy
+zatwierdzony Square strzał zabił sub29:48→0 (z zachowaniem kary Rate2).
+Ostatnie dwa pociski sub30:96→0. Koniec:313HP,2pociski w magazynku,
+zero przeciwników; wynik EXP90166,NEXT5732. Łup to trzy Ammo+15.
+ALL i END zamknięto przy59380, pole/lock0,mode9. Cold replay od B:
+normal/SAN exit0, całe JSON i VRAM identyczne z live; B/C zachowane,
+odtworzony D identyczny bajtowo. Dowód:
+/tmp/pe-m217-m500-victory-v3-replay-proof.json.
+V1 odtwarzał punkt59172 podczas panelu łupu, a jego warunek błędnie
+wymagał już pola; V2 odtwarza59380, ale porównanie pliku D miało błędną
+ścieżkę do źródła. V3 naprawia wyłącznie ścieżkę, zachowując obie próby.
+
+Up220 i oczekiwanie300 doprowadziły przy59900 doM214,313HP,
+pozycja(0,-4000),bez blokady. Próba dalszego przejścia uruchomiła kolejne
+trzy typ6 po240HP. Bieżący live12235 przy60556: M214,272HP,PE23049220,
+ATB9000,2pociski M500, wszyscy trzej przeciwnicy240HP. Następny krok:
+rozegrać tę walkę i przejść doM207 (strefa x708..1300,z−1235..−1035).
+Nie traktować statycznego grafu samych opcode49 jako kompletnej mapy:
+nie obejmuje przejść przez tokeny w zmiennych i warianty scen.
+
+Nie zmieniono kodu ani parametrów gry. Wszystkie akcje to zwykłe wejścia;
+źródłowe karty B/C/D pozostają prywatne i zachowane.
+
 ### Dalsza kampania: alarm → film21 → M234 → M217
 
 Live12235 kontynuował od punktu40980 po utworzeniu D. Wyjście doM235

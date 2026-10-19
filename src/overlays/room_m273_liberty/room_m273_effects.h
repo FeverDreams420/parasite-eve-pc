@@ -8,6 +8,8 @@
 #include "pe1/fieldfx_callback_list.h"
 #include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte_types.h"
+#include "pe1/gte_sine_table.h"
+extern GteSineWord g_RoomM273Trig[4096];
 #include "pe1/s32_vector3.h"
 
 #include "room_m273_particles.h"

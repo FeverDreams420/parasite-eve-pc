@@ -2,6 +2,68 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273 podłączone: wejście do walki Eve i Liberate
+
+Cały istniejący moduł M273 jest linkowany natywnie: cztery oryginalne
+pliki C, współdzielone kroki chwytu, dwie klasy M273 i pięć programów
+ataków. Loader wiąże wszystkie10 oryginalnych rekordów (w tym trzy
+wspólne klasy aktorów), z dokładną kontrolą slot/adres. Stałe, kolory,
+macierze i skrypty pochodzą z oryginalnego obrazu USA. Reset przy
+wczytaniu odtwarza stan overlaya; nakładające się symbole wskazują
+wspólne pola, m.in. trafienia, pulse i zasoby modelu, zamiast kopii.
+Nie dodano nowych plików ani zastępczego kodu rozgrywki.
+
+Istniejący original_actor_animation ma --m273-load: dwukrotne zatrucie
+stanu i reload, wszystkie10 powiązań, porównanie pięciu skryptów z
+obrazem,4096 par sinus/cosinus z EXE oraz wywołania prawdziwych typów
+PM obu klas z natywnymi adresami parametrów. Pierwsza wersja testu
+błędnie używała wielkich liter identyfikatora; poprawny parser wymaga
+m0273i. Kolejny SAN znalazł pośredni wskaźnik poza tablicą w samym
+teście (module+address-base); poprawiono na module+(address-base).
+Nie zmieniano gry z powodu tych błędów testu.
+
+Autentyczny F-only live przeszedł film36 i wszedł doM273/0xa80471c8.
+Przy29624 Aya621/621, zwykły ruch uruchomił scenę rozmowy z Eve.
+Po dialogu rozpoczęła się walka; przy40096 Aya523, M8000slot1,
+ammo9, Medicine3slot27 zachowane. Cele2/5/6/7 mają oryginalne
+stany i HP10/1001516/1001750/1001900; wysokie wartości pozostawiono
+bez zmian. Powtórki świeżego kandydata v5 normal i SAN: exit0,
+pełny JSON/VRAM identyczne między sobą i wcześniejszym normalnym live,
+źródłowe i prywatne F niezmienione:
+/tmp/pe-m273-battle-entry-v5-{normal,san}-proof/proof.json.
+
+Pierwszy SAN walki v3 zatrzymał się w m273.c:2578 na -frame<<9
+(ujemna wartość). Zamieniono na -frame*512, zachowując wynik MIPS;
+przejrzano też powiązane odczyty signed16 z pakowanej tablicy trig.
+Nieudany replay i log pozostają w /tmp/pe-m273-battle-entry-v3-proof/,
+a błąd testu w /tmp/pe-m273-native-v3-m273-load-san.log.
+
+Na v5 oryginalne menu wybrało Liberate przy pełnym PE i364HP.
+Po zakończeniu, przy42293: HP364, PE0, ammo9, cele2/5/6/7
+HP10/1001233/1001452/1000335. Cold SAN z F-only: exit0 bez
+raportów, pełny JSON/VRAM identyczne, F bez zmian:
+/tmp/pe-m273-liberate-v5-proof/proof.json. To dowód powtarzalności
+natywne/SAN, nie oracle grafiki/audio PS1 ani dowód pokonania Eve.
+
+Świeży kandydat /tmp/pe-m273-native-v5-*:416 obiektów normal/SAN,
+645 zależności ponownie zahashowanych, **70/70 regresji exit0** oraz
+**7/7 asset CTests bez SKIP** (sześć dotychczasowych i M273).
+Artefakty: -build-manifest.json, -verification.json, -source-check.json,
+-regressions.log, -ctest-assets.log. PsyZ/SDL nadal nieinstrumentowane.
+Build w repo odpowiada świeżemu v5. Usunięcie zdublowanej pozycji
+class_update_callback.c w CMake nie zmieniło zestawu208 obiektów.
+
+Starszy pomocniczy -layout-v1-module-build.json był używany ponownie
+podczas lokalnych kompilacji rozwojowych; nie jest zamrożonym dowodem
+historycznego 355babf6c. Bieżącą integrację potwierdzają świeże artefakty
+v5 powyżej. Poprzednie nieudane próby runtime pozostają zachowane.
+
+Live33590 (v2) zamknięty quit, exit0. Aktualny live58354,
+/tmp/pe-m273-native-v5-live.py, został odtworzony od F do40096 na v5
+i kontynuuje walkę. Przy42293 nadal trwa walka, nie udowodniono jeszcze
+wszystkich wariantów ataków i chwytu M273 ani zwycięstwa. Dalsza
+kampania i pełny zakres portu pozostają otwarte.
+
 ### M273: przygotowanie oryginalnych struktur do natywnej integracji
 
 Zmiany w istniejących czterech plikach C i ich nagłówkach, bez nowych

@@ -7,11 +7,11 @@
 #include "m273_class_externs.h"
 #include "room_m273.h"
 
-int RoomM273_GrabNop0(void) {
-    return 0;
+void RoomM273_GrabNop0(void) {
 }
 
-int RoomM273_GrabInit(RoomSelectionState *obj) {
+void RoomM273_GrabInit(PmSlotHeader *raw) {
+    RoomSelectionState *obj = (void *)raw;
     GteMatrix rotation;
 
     obj->callback = RoomLib_GrabAwaitStance;
@@ -20,17 +20,18 @@ int RoomM273_GrabInit(RoomSelectionState *obj) {
     obj->verticalTicks = 0;
     obj->activated = 0;
     obj->flag3 = 0xFF;
-    RotMatrixYXZ(&g_RoomM273GrabInitAngles, &rotation);
+    RotMatrixYXZ((GteShortVector *)&g_RoomM273GrabInitAngles, &rotation);
 
     MulMatrix0(&g_RoomM273GrabInitMatrix, &rotation, (GteMatrix *)&obj->matrix);
     /* Preserve the authored grab transform with native pointer alignment. */
     obj->matrix.translation[0] = g_RoomM273GrabInitTranslationX;
     obj->matrix.translation[1] = g_RoomM273GrabInitTranslationY;
     obj->matrix.translation[2] = g_RoomM273GrabInitTranslationZ;
-    return 0;
+    return;
 }
 
-int RoomM273_GrabConfigure(void *obj, int mode, int event, intptr_t arg3, int index) {
+int RoomM273_GrabConfigure(PmSlotHeader *raw, int mode, int event, intptr_t arg3, intptr_t index, intptr_t unused) {
+    RoomSelectionState *obj = (void *)raw;
     switch (event) {
     case 0x19:
         if (mode == 1) {
@@ -47,6 +48,6 @@ int RoomM273_GrabConfigure(void *obj, int mode, int event, intptr_t arg3, int in
     return 0;
 }
 
-int RoomM273_GrabNop3(void) {
+int RoomM273_GrabNop3(PmSlotHeader *raw) {
     return 0;
 }

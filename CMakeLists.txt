@@ -224,7 +224,12 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/window_class.c
     src/overlays/room_lib/window_class_table.c
     src/overlays/room_m272_liberty/m272.c
+    src/overlays/room_m273_liberty/m273.c
+    src/overlays/room_m273_liberty/m273_class.c
+    src/overlays/room_m273_liberty/RoomM273_PulseSpriteCallback.c
+    src/overlays/room_m273_liberty/RoomEffect_PhasedArcSpriteFlow.c
     src/overlays/room_lib/class_update_callback.c
+    src/overlays/room_lib/grab_await_stance.c
     src/overlays/room_m256_museum/m256.c
     src/overlays/room_m256_museum/m256_class.c
     src/overlays/room_m318_chrysler/m318.c
@@ -530,6 +535,9 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-fx-motion PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
     add_test(NAME original-game-fx-models COMMAND test-original-actor-animation --fx-models)
     set_tests_properties(original-game-fx-models PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+    add_test(NAME original-m273-liberty-load COMMAND test-original-actor-animation --m273-load)
+    set_tests_properties(original-m273-liberty-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" LABELS "game-assets;render")
     add_test(NAME original-m245-trail-burst-load COMMAND test-original-actor-animation --m245-load)
     set_tests_properties(original-m245-trail-burst-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" LABELS "render")

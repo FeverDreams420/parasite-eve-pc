@@ -6,9 +6,10 @@
  */
 
 #include "room_lib.h"
+#include "pe1/scene_grab_head.h"
 
 int RoomLib_UpdateCallback(PmSlotHeader *raw) {
-    RoomObj *obj=(void *)raw;
-    obj->callback(raw);
+    SceneGrabHead *obj=(void *)raw;
+    obj->callback(obj);
     return 0;
 }

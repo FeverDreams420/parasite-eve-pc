@@ -31,6 +31,13 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273SwayState, done) == 0x2E,
 PE1_STATIC_ASSERT(sizeof(RoomM273SwayState) == 0x30,
                   room_m273_sway_state_size);
 
-extern RoomM273SwayState g_RoomM273SwayState;
+typedef struct RoomM273SwayStorage {
+    u32 reserved;
+    void *trail_pool;
+    RoomM273SwayState state;
+} RoomM273SwayStorage;
+extern RoomM273SwayStorage g_RoomM273SwayStorage;
+#define g_RoomM273SwayState (g_RoomM273SwayStorage.state)
+#define g_RoomM273SwayShardTrailPool (g_RoomM273SwayStorage.trail_pool)
 
 #endif

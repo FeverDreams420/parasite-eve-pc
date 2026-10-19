@@ -30,9 +30,9 @@
 #endif
 ROOMLIB_POLL_RESET_POOL_CONTEXT_DECL;
 
-int ROOMLIB_POLL_RESET_CALLBACK();
+int ROOMLIB_POLL_RESET_CALLBACK(int mode, void *data, intptr_t argument);
 
-s32 ROOMLIB_POLL_RESET_FUNC(s32 state) {
+s32 ROOMLIB_POLL_RESET_FUNC(int state, void *task_data, intptr_t argument) {
     RoomFxSeed8 *obj;
     int index;
     u16 size;
@@ -44,7 +44,7 @@ s32 ROOMLIB_POLL_RESET_FUNC(s32 state) {
     switch (state) {
     case 0:
         return FieldFx_InitCallbackList(ROOMLIB_POLL_RESET_POOL_EXPR, 8, 4,
-                             (FieldFxCallbackListCallback)ROOMLIB_POLL_RESET_CALLBACK);
+                             ROOMLIB_POLL_RESET_CALLBACK);
     case 1:
         if (ROOMLIB_POLL_RESET_FLAG != 0) {
             return 2;

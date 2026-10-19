@@ -1,4 +1,8 @@
 #include "pe1/room_spark_ring_burst.h"
+#include "../src/overlays/room_m273_liberty/room_m273.h"
+#include "../src/overlays/room_m273_liberty/room_m273_boss_state.h"
+#include "../src/overlays/room_m273_liberty/room_m273_sweep.h"
+#include "../src/overlays/room_m273_liberty/room_m273_sway.h"
 #include "pe1/room_orbit_set.h"
 #include "pe1/room_spark_barrage.h"
 #include "pe1/room_twelve_effect.h"
@@ -17357,6 +17361,73 @@ int main(int argc, char **argv)
             if(RoomEffect_BurstSparkParticle(1,&spark,0)!=1)return 1;}
         g_PlayerEntity=NULL;g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
         puts("Original Museum spark modules: all ten rooms, complete hashes/scripts/palette, descriptors, reloads and native controllers passed");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m273-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[0xc000];
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
+        if(!pe_disc_read(&disc,&exe,0x800+(0x80093378-0x80010000)+272*8,&range,8))return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
+        u32 offset=(range.start+range.scratchSectors+range.textureSectors)*2048u;
+        if(!pe_disc_read(&disc,&archive,offset,module,sizeof(module)))return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
+        const unsigned slots[]={82,75,184,73,185,183,81,186,167,72};
+        FieldFxTaskProgram *programs[]={&g_RoomM273GrabPlacementEffects,&g_RoomM273GrabEffects,&g_RoomM273HandTrailEffects,&g_RoomM273SweepEffects,&g_RoomM273SwayEffects};
+        const u32 programs_ps1[]={0x8019ab94,0x8019ac40,0x8019ace4,0x8019ad98,0x8019ae24};
+        const unsigned script_bytes[]={32,48,44,56,48};
+        for(unsigned pass=0;pass<2;++pass){
+            for(unsigned i=0;i<10;++i)if(slots[i]<85)g_PmCmdHandlerTable[slots[i]]=NULL;else g_FieldFxTaskPrograms[slots[i]-85]=NULL;
+            memset(&g_RoomM273HandTrailState,0xa5,sizeof(g_RoomM273HandTrailState));
+            memset(&g_RoomM273SweepState,0xa5,sizeof(g_RoomM273SweepState));
+            memset(&g_RoomM273SwayStorage,0xa5,sizeof(g_RoomM273SwayStorage));
+            int loaded=Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0273i"));
+            fprintf(stderr,"M273 load=%d slots82=%d 81=%d 75=%d 73=%d 72=%d effects=%d,%d,%d,%d,%d\n",loaded,
+                g_PmCmdHandlerTable[82]==&g_RoomM273OscillationClass,g_PmCmdHandlerTable[81]==&g_RoomM273GrabClass,
+                g_PmCmdHandlerTable[75]==&g_RoomActorClassTable[2],g_PmCmdHandlerTable[73]==&g_RoomActorClassTable[4],
+                g_PmCmdHandlerTable[72]==&g_RoomActorClassTable[3],g_FieldFxTaskPrograms[82]==programs[0],
+                g_FieldFxTaskPrograms[98]==programs[1],g_FieldFxTaskPrograms[99]==programs[2],g_FieldFxTaskPrograms[100]==programs[3],g_FieldFxTaskPrograms[101]==programs[4]);
+            if(loaded ||
+               g_PmCmdHandlerTable[82]!=&g_RoomM273OscillationClass || g_PmCmdHandlerTable[81]!=&g_RoomM273GrabClass ||
+               g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] || g_PmCmdHandlerTable[73]!=&g_RoomActorClassTable[4] ||
+               g_PmCmdHandlerTable[72]!=&g_RoomActorClassTable[3] || g_FieldFxTaskPrograms[82]!=programs[0] ||
+               g_FieldFxTaskPrograms[98]!=programs[1] || g_FieldFxTaskPrograms[99]!=programs[2] ||
+               g_FieldFxTaskPrograms[100]!=programs[3] || g_FieldFxTaskPrograms[101]!=programs[4])return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
+            RoomM273BossState hand={0};RoomM273DropQueue sweep={0};RoomM273SwayStorage sway={0};
+            if(memcmp(&hand,&g_RoomM273HandTrailState,sizeof(hand)) || memcmp(&sweep,&g_RoomM273SweepState,sizeof(sweep)) || memcmp(&sway,&g_RoomM273SwayStorage,sizeof(sway)))return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
+            for(unsigned i=0;i<5;++i){
+                u32 script;memcpy(&script,module+(programs_ps1[i]-0x8018efe8)+52,4);
+                if(memcmp(programs[i]->script,module+(script-0x8018efe8),script_bytes[i]))return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
+            }
+            for(unsigned angle=0;angle<4096;++angle){
+                u32 sine; if(!pe_disc_read(&disc,&exe,0x800+(0x800966ec-0x80010000)+angle*4,&sine,4))return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
+                if(g_RoomM273Trig[angle].word!=(s32)sine)return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
+            }
+        }
+        /* Invoke through the actual PM method types: the parameters are
+         * native addresses, so ASan/function also checks the dispatch ABI. */
+        FieldActor boss={0},player={0};FieldActor *saved_player=g_PlayerEntity;
+        g_PlayerEntity=&player;boss.pos_x=3*65536;boss.pos_z=4*65536;
+        RoomOscillationEffect oscillation={0};oscillation.actor=&boss;
+        s32 angle=-1,distance=-1,x=6*65536,z=8*65536,measured=-1;
+        g_RoomM273OscillationClass.init();
+        g_RoomM273OscillationClass.initialize((PmSlotHeader *)&oscillation);
+        g_RoomM273OscillationClass.send((PmSlotHeader *)&oscillation,0,4,(intptr_t)&angle,(intptr_t)&distance,0);
+        g_RoomM273OscillationClass.execute((PmSlotHeader *)&oscillation);
+        g_RoomM273OscillationClass.send((PmSlotHeader *)&oscillation,0,2,(intptr_t)&x,(intptr_t)&z,(intptr_t)&measured);
+        if(distance!=5 || measured!=5 || angle<0 || angle>=4096)return fprintf(stderr,"M273 native PM address operands failed\n"),1;
+        g_RoomM273OscillationClass.stop((PmSlotHeader *)&oscillation);
+        g_RoomM273OscillationClass.unload();
+        RoomSelectionState grab={0};grab.actor=&boss;s32 signal=0;
+        g_RoomM273GrabClass.init();g_RoomM273GrabClass.initialize((PmSlotHeader *)&grab);
+        g_RoomM273GrabClass.send((PmSlotHeader *)&grab,1,0x19,(intptr_t)&signal,0,0);
+        g_RoomM273GrabClass.send((PmSlotHeader *)&grab,0,0x1d,3,1,0);
+        if(signal!=1 || grab.placement.signal!=&signal || grab.placement.phase_countdown!=3 ||
+           grab.placement.pending_action!=module[0x8019a8e1-0x8018efe8])return fprintf(stderr,"M273 native grab tail failed\n"),1;
+        g_RoomM273GrabClass.execute((PmSlotHeader *)&grab);g_RoomM273GrabClass.stop((PmSlotHeader *)&grab);g_RoomM273GrabClass.unload();
+        if(signal!=0 || grab.status!=4)return fprintf(stderr,"M273 native grab release failed\n"),1;
+        g_PlayerEntity=saved_player;
+        puts("Original M273 complete descriptor set, authored task scripts, sine table and full work-area reload passed");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m245-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

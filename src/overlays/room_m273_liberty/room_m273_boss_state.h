@@ -3,12 +3,15 @@
 
 #include "common.h"
 #include "pe1/gte_types.h"
+#include "pe1/room_fx.h"
 
 /* Boss controller state at 0x8019AE9C. */
 typedef struct RoomM273BossState {
     GteShortVector hands[2];
-    s16 hit[3];       /* 0x10: where a falling trail touched the player */
-    s16 hit_flag;
+    union {
+        struct { s16 hit[3]; s16 hit_flag; };
+        RoomFxSeed8 hit_seed;
+    };
     s32 base_height;
     s16 landing_x[8]; /* 0x1C: trail landing positions */
     s16 landing_y[8];

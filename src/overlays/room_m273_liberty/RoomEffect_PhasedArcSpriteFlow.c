@@ -28,8 +28,8 @@ int RoomM273_HandRingBandCallback(int mode, void *data, intptr_t argument) {
         int frame=g_FieldFxCurrentAge-1;
         unsigned int sizeOffset=((unsigned int)(u8)frame<<8)&0x3F00;
         unsigned int shadeOffset=((unsigned int)frame<<9)&0x3E00;
-        int size=rcossin_tbl[sizeOffset/4].part.sin*2+4096;
-        int shade=(short)rcossin_tbl[shadeOffset/4].word>>5;
+        int size=g_RoomM273Trig[sizeOffset/4].part.sin*2+4096;
+        int shade=(short)g_RoomM273Trig[shadeOffset/4].word>>5;
         parameters.x=0;
         parameters.y=g_FieldFxOwner->actor->rot_y;
         parameters.z=(unsigned int)frame<<8;
@@ -42,7 +42,7 @@ int RoomM273_HandRingBandCallback(int mode, void *data, intptr_t argument) {
 
 /* Arc spawn-state helper, callback, and pool controller. */
 
-void *RoomM273_SweepConfigure(int unused, int value, int flag) {
+intptr_t RoomM273_SweepConfigure(int unused, intptr_t value, intptr_t flag, intptr_t arg3) {
     g_RoomM273SweepState.loops = value;
     g_RoomM273SweepState.reserved_54 = value;
     value++;
@@ -50,10 +50,10 @@ void *RoomM273_SweepConfigure(int unused, int value, int flag) {
     g_RoomM273SweepState.side = flag;
     g_RoomM273SweepState.contact = flag != 0 ? 0x52 : 0xE;
 
-    return &g_RoomM273SweepPoint;
+    return (intptr_t)&g_RoomM273SweepPoint;
 }
 
-s32 RoomM273_SweepArcEmitter(s32 arg0) {
+s32 RoomM273_SweepArcEmitter(int arg0, void *task_data, intptr_t argument) {
     char *obj;
 
     if (arg0 != 1) {
@@ -85,11 +85,11 @@ s32 RoomM273_SweepArcEmitter(s32 arg0) {
     return 0;
 }
 
-short *RoomM273_SwayConfigure(void *arg0, short arg1) {
+intptr_t RoomM273_SwayConfigure(int arg0, intptr_t arg1, intptr_t arg2, intptr_t arg3) {
     short *ptr = &g_RoomM273SwayState.repeat;
 
     *ptr = arg1;
-    return ptr - 0x17;
+    return (intptr_t)&g_RoomM273SwayStorage;
 }
 
 s32 RoomM273_SweepArcCallback(int mode, void *data, intptr_t argument) {
@@ -123,10 +123,10 @@ s32 RoomM273_SweepArcCallback(int mode, void *data, intptr_t argument) {
         count = 0x10;
         rotationValue = day << 7;
         rotation.z = rotationValue;
-        packed = rcossin_tbl[(day << 6) & 0xFC0].word;
+        packed = g_RoomM273Trig[(day << 6) & 0xFC0].word;
         FieldFx_DrawStarFan((GteShortVector *)callState, 0x100, 0x100, count, (GteRotation *)&rotation,
-        ((packed << 16) >> 16) + 0x400,
-        ((packed << 16) >> 16) + 0x400,
+        (s16)packed + 0x400,
+        (s16)packed + 0x400,
         (struct RenderColor *)g_RoomM273BlackColor, (struct RenderColor *)g_RoomM273SweepArcColor, packed >> 21, 1);
         }
     }

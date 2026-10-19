@@ -89,7 +89,6 @@ typedef struct RoomM273SwayShard {
 
 typedef RoomM273PoolContext RoomM273EffectPools;
 
-extern void *g_RoomM273SwayShardTrailPool;
 extern GteShortVector g_RoomM273SwayShardVelocity;
 extern RenderColor g_RoomM273SwayShardRingColor;
 extern RenderColor g_RoomM273SwayShardStarColor;

@@ -1,4 +1,5 @@
 #include "pe1/room_spark_ring_burst.h"
+#include "../../overlays/room_m273_liberty/room_m273.h"
 #include "pe1/room_trail_burst.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_floor_walker.h"
@@ -690,6 +691,18 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 140 && record[i].u.handlerAddress == 0x80195720u) native = &g_RoomSeekingTrailProgram;
             if (slot == 141 && record[i].u.handlerAddress == 0x801957e4u) native = &g_RoomScatterTrailProgram;
         }
+        if (map + 1 == 273) {
+            if (slot == 82 && record[i].u.handlerAddress == 0x8019a900u) native = &g_RoomM273OscillationClass;
+            if (slot == 81 && record[i].u.handlerAddress == 0x8019a8e4u) native = &g_RoomM273GrabClass;
+            if (slot == 75 && record[i].u.handlerAddress == 0x8019a848u) native = &g_RoomActorClassTable[2];
+            if (slot == 73 && record[i].u.handlerAddress == 0x8019a880u) native = &g_RoomActorClassTable[4];
+            if (slot == 72 && record[i].u.handlerAddress == 0x8019a864u) native = &g_RoomActorClassTable[3];
+            if (slot == 167 && record[i].u.handlerAddress == 0x8019ab94u) native = &g_RoomM273GrabPlacementEffects;
+            if (slot == 183 && record[i].u.handlerAddress == 0x8019ac40u) native = &g_RoomM273GrabEffects;
+            if (slot == 184 && record[i].u.handlerAddress == 0x8019ace4u) native = &g_RoomM273HandTrailEffects;
+            if (slot == 185 && record[i].u.handlerAddress == 0x8019ad98u) native = &g_RoomM273SweepEffects;
+            if (slot == 186 && record[i].u.handlerAddress == 0x8019ae24u) native = &g_RoomM273SwayEffects;
+        }
         /* M205/M243 link the identical complete USA actor/SoundBurst module. */
         if (map + 1 == 205 || map + 1 == 243) {
             if (slot == 75 && record[i].u.handlerAddress == 0x80192c70u) native = &g_RoomActorClassTable[2];
@@ -1137,6 +1150,17 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 205 || map + 1 == 243) && slot == 116) {
             g_FieldFxTaskPrograms[31] = &g_RoomSoundBurstProgram;
             memset(g_RoomScriptArgs,0,sizeof(g_RoomScriptArgs));
+        } else if (map + 1 == 273) {
+            if (slot == 82) { g_PmCmdHandlerTable[82] = &g_RoomM273OscillationClass; RoomM273_ResetModule(); }
+            else if (slot == 81) g_PmCmdHandlerTable[81] = &g_RoomM273GrabClass;
+            else if (slot == 75) g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
+            else if (slot == 73) g_PmCmdHandlerTable[73] = &g_RoomActorClassTable[4];
+            else if (slot == 72) g_PmCmdHandlerTable[72] = &g_RoomActorClassTable[3];
+            else if (slot == 167) g_FieldFxTaskPrograms[82] = &g_RoomM273GrabPlacementEffects;
+            else if (slot == 183) g_FieldFxTaskPrograms[98] = &g_RoomM273GrabEffects;
+            else if (slot == 184) g_FieldFxTaskPrograms[99] = &g_RoomM273HandTrailEffects;
+            else if (slot == 185) g_FieldFxTaskPrograms[100] = &g_RoomM273SweepEffects;
+            else if (slot == 186) g_FieldFxTaskPrograms[101] = &g_RoomM273SwayEffects;
         } else if (map + 1 == 269 && slot == 137) {
             g_FieldFxTaskPrograms[52] = &g_RoomGroundSweepProgram;
         } else if (map + 1 == 269 && slot == 138) {

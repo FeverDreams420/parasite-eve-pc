@@ -2,6 +2,7 @@
 #define ROOM_M273_H
 
 #include "pe1/field_actor.h"
+#include "pe1/pm_types.h"
 #include "pe1/scene_grab_head.h"
 #include "pe1/field_texture_tables.h"
 #include "pe1/fieldfx_callback_list.h"
@@ -77,7 +78,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273TemplatePoint, flags) ==
 extern s16 g_RoomM273GrabColorIndex;
 extern int g_RoomM273GrabColors[];
 extern s16 g_RoomM273HandTrailLandingPulseScale[];
-extern u8 g_RoomM273SwayHitFlags[];
 extern void *g_RoomM273GrabSparkPool;
 extern RoomM273PaletteWord g_RoomM273StarBurstColors[];
 extern unsigned char g_RoomM273BlackColor[];
@@ -169,7 +169,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, pending_action) ==
  * substate the grab sequence flips to 2 and 4. */
 typedef FieldActorState RoomM273ActorState;
 
-s32 RoomM273_GrabRelease(RoomSelectionState *selection);
+int RoomM273_GrabRelease(PmSlotHeader *raw);
 
 PE1_STATIC_ASSERT(sizeof(RoomM273SampledLayerEffect) == 12,
                   room_m273_sampled_layer_effect_size);
@@ -206,6 +206,11 @@ typedef struct RoomOscillationEffect {
 } RoomOscillationEffect;
 
 
-int RoomM273_OscillationUpdate(RoomOscillationEffect *effect);
+int RoomM273_OscillationUpdate(PmSlotHeader *raw);
+
+extern PmCommand g_RoomM273GrabClass, g_RoomM273OscillationClass;
+extern FieldFxTaskProgram g_RoomM273GrabPlacementEffects, g_RoomM273GrabEffects;
+extern FieldFxTaskProgram g_RoomM273HandTrailEffects, g_RoomM273SweepEffects, g_RoomM273SwayEffects;
+void RoomM273_ResetModule(void);
 
 #endif

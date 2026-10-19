@@ -21,8 +21,8 @@ int RoomM273_PulseSpriteCallback(int mode, void *data, intptr_t argument) {
         frame = g_FieldFxCurrentAge - 1;
         sizeOffset = (frame << 8) & 0x3F00;
         shadeOffset = (frame << 9) & 0x3E00;
-        sizeSample = ((RoomM273TrigEntry *)((char *)rcossin_tbl + sizeOffset))->low;
-        sample = *(int *)((char *)rcossin_tbl + shadeOffset);
+        sizeSample = ((RoomM273TrigEntry *)((char *)g_RoomM273Trig + sizeOffset))->low;
+        sample = *(int *)((char *)g_RoomM273Trig + shadeOffset);
         frame = 4;
         size = sizeSample * 2 + 4096;
         shade = (s16)sample >> 5;

@@ -167,6 +167,38 @@ Nie zmieniano oryginalnego kodu, kolizji, RAM ani save. W sprawie menu:
 Menu_StepItemSelectScreen(status_panels.c) przewiduje cancel bez warunku
 pozycji; wcześniejszej obserwacji nie uznawać za oryginalne ograniczenie.
 
+### Następna naprawa: oryginalny moduł M221 spark_ring_burst
+
+Z M220 odebrano ALL:Junk×2 iAmmo15,END. Od pozycji po walce Down25,
+Right110,wait400 próbuje wejść doM221. Przy178091 trwa zmiana sceny;
+proces zakończył się exit1 przed kolejnym stanem:
+Scene_LoadRoom: native descriptor missing for M221 slot75(PS1 80194008).
+Live42185 jest zakończony; log i input:
+/tmp/pe-m220-battle-live-v1-live/{game.log,input.jsonl}.
+Pełne wejścia reprodukcji:/tmp/pe-m221-missing-descriptor-v1-base-args.json.
+
+Odczyt USA PE.IMG dał moduł20828B,SHA256
+ af5bf0a63579d9521032b0f878ce9896ad0800cd4079a840010237a750323d5d.
+Trzy deskryptory:75/80194008(zwykła klasa2),142/801940b8(stan12B,
+controller8019281c,script80194078),180/80194110(stan4B,
+controller80193cdc,initializer80193fc0,script801940f0).
+Kontrolery odpowiadają istniejącym RoomEffect_SparkRingController oraz
+RoomEffect_BurstSparkSpawner w src/overlays/room_lib/spark_ring_burst.c.
+MIPS potwierdza dźwięk0x59e,czekanie20/emisję32,pule0x14/0x37.
+Artefakty pierwotne:/tmp/pe-m221-native-audit-v1.bin,
+/tmp/pe-m221-native-audit-v1.json,/tmp/pe-m221-native-audit-v1-mips.txt,
+/tmp/pe-m221-native-original-v1-proof.json. Okna bajtów skryptów zawierają
+też rodata/padding; nie traktować ich długości jako długości skryptu.
+
+Integracja nie jest jeszcze zaimplementowana. Należy naprawić cały
+istniejący spark_ring_burst.c na miejscu:pięć oryginalnych funkcji,
+callbackABI,wskaźniki/pule/stany aktora,dane i inicjalizer; potem jawne
+powiązania wszystkich trzech deskryptorów,regresja rzeczywistego I/O i
+powtórnego ładowania oraz pełny świeży build normal/SAN i przejście.
+Nie dodano źródła,zastępczej implementacji ani stuba. Ostatni w pełni
+sparowany punkt to177106/wygranaM220; późniejszy łup i próba wejścia
+mają na razie tylko rzeczywisty przebiegSAN i log błędu.
+
 Telefon i dalsza kampania pozostają do ukończenia.
 
 ### Museum: quiz i wygrane M206/M207, wejście M209

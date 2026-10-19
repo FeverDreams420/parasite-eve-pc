@@ -2,7 +2,42 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Aktualny zweryfikowany kandydat: /tmp/pe-m146-port-v1,380 świeżych obiektów
+Aktualny zweryfikowany kandydat: /tmp/pe-walker-port-v3. Wszystkie384
+obiekty zbudowane od zera (192 na profil normal/SAN),44/44 przypadki regresji
+exit0 oraz osiem cold replayów szpitala exit0. Ponownie sprawdzono hashe
+obiektów, bieżących zależności, archiwów i binariów. build/parasite-eve-pc
+oraz fixture są kopiami sprawdzonych binariów normal. PsyZ/SDL pozostają
+nieinstrumentowane; SAN obejmuje kod portu (address,undefined,function).
+Dowody: /tmp/pe-walker-port-v3-{final-proof,verification,module-proof}.json,
+/tmp/pe-walker-port-v3-{strong-entry,escape-reentry}-proof.json.
+
+Naprawiono na miejscu całe istniejące floor_walker_class.c (9 funkcji)
+i timed_spawn.c (2 callbacki). Bez nowych plików źródłowych i przenoszenia
+funkcji: natywne rekordy aktora i PM, pełne wskaźniki intptr_t, lokalny
+scratchpad oraz jawna arytmetyka zawijana32bit. Dołączono kompletne oryginalne
+moduły M145/M332 (sloty75,79,187), M152 (75,79,122,187) oraz M153/M154
+(37,75,79,166,187), wykorzystując istniejące moduły erupcji, flary i pocisku.
+Resetowane są mutowane dane toru koloru i parametry istniejących efektów.
+
+Nowy --floor-walker:704 oryginalne stany CPU/GTE ruchu, odbić, skoków
+i skalowania modelu oraz318 stanów kontrolera/życia pierścienia. Dodatkowo
+natywne wskaźniki sygnałów i lidera, kompletne dane modułów z USA CUE/BIN,
+po dwa ładowania każdej lokacji/profil i sprawdzenie resetu. Pełny oryginalny
+skrypt efektu wykonuje się przez PM: rysowanie pierścieni, poprawne łańcuchy
+OT, strażniki pakietów i wygaśnięcie ostatniego callbacku. Korpusy referencyjne:
+/tmp/pe-walker-{step,transform,timed}-cpu-v1.{py,log}. Instrukcje GTE używają
+wspólnego helpera PsyZ; to nie jest niezależny audyt dokładności GTE/pikseli.
+
+Replaye rzeczywistej gry obejmują M328/35104 HP205 oraz ucieczkę43414,
+powrót43864 i porażkę45702 w obu profilach. Pełny JSON zgodny z historycznym
+live i profilami,1MiB VRAM zgodne między profilami; autentyczny źródłowy
+zapis D i prywatne kopie bez zmian, bu10 puste. Nowe cykle modułów są
+izolowanymi testami, nie przejściem tych pięciu lokacji w kampanii.
+Zwycięstwo w M328 i pełna kampania nadal niepotwierdzone; cel pozostaje aktywny.
+
+### Poprzedni zweryfikowany kandydat M146
+
+Poprzedni zweryfikowany kandydat: /tmp/pe-m146-port-v1,380 świeżych obiektów
 (190 na profil normal/SAN),42/42 regresji exit0. Zestaw obejmuje pełny
 podstawowy fixture, --hospital-falling oraz rozszerzony --hospital-eruption
 z realnym M146 i cyklami PM. Osiem cold replayów szpitala na tym samym

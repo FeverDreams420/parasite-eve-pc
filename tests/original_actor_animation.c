@@ -16113,8 +16113,185 @@ static int original_hospital_eruption_states(void)
     puts("Original hospital eruption: 288 unhooked USA CPU/BIOS/GTE leaf states and full 512-byte guards passed");return 1;
 }
 
+#include "pe1/room_floor_walker.h"
+#include "pe1/fieldfx_callback_list.h"
+/* Isolated PM cycle using the last real loaded room's descriptor bank.
+ * This checks the authored task and ring rendering, not campaign progress. */
+static int original_timed_spawn_cycle(void)
+{
+    PmPrimarySlot bank[11]={0};PmTables old_tables=g_PmTables;RenderBufferPrefix old_buffers=D_800B0E38;
+    GteMatrix *old_view=g_GeomScroll.words.viewMatrix;void *old_archive=g_GameState.loaded_scene_archive;
+    FieldActor actor={0};FieldActorState core={0};RenderMatrix matrices[27]={0};u8 cue=1;
+    actor.state=&core;actor.render_object.matrices=matrices;core.control10.command_value=120;core.action_state=&cue;
+    for(unsigned i=0;i<27;++i){for(unsigned axis=0;axis<3;++axis)matrices[i].rotation[axis][axis]=4096;matrices[i].translation[2]=1024;}
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};static RenderGpuTag ordering[4096];
+    struct {_Alignas(void *) u8 bytes[65536];u8 guard[16];} packets;
+    g_PmTables=(PmTables){old_tables.handlers,bank,NULL};g_GeomScroll.words.viewMatrix=&view;
+    g_GameStateFlags=0x80;g_RoomFloorY->y=0;
+    Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(27,1);Psyz_GteCtrlWrite(28,0);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);FieldFx_InitTexturePageTable();
+    int valid=Scene_LoadRoomAssets(187,&actor)==0 && Pm_SendCmd(0,0,0,0,0,0)==0;unsigned drawn=0,linked=0,seen=0;
+    for(unsigned frame=0;valid && frame<120;++frame){
+        memset(&packets,0xa5,sizeof(packets));for(unsigned depth=0;depth<4096;++depth)ordering[depth]=(RenderGpuTag){.address=0xffffff};
+        g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.bytes;
+        valid=Pm_Start(0)==0 && Pm_Exec(0)==0;
+        for(unsigned slot=0;slot<8;++slot)if(bank[0].task.tasks.slots[slot].id!=0xffff)seen|=1u<<bank[0].task.tasks.slots[slot].id;
+        if(g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes)){valid=0;break;}drawn+=g_DrawPacketOffset!=0;
+        for(unsigned depth=0;valid && depth<4096;++depth){uintptr_t address=ordering[depth].address;unsigned chain=0;
+            while(address!=0xffffff){if(address<(uintptr_t)packets.bytes || address+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset || address%_Alignof(RenderGpuTag) || ++chain>1024){valid=0;break;}
+                ++linked;address=((RenderGpuTag *)address)->address;}}
+        for(unsigned i=0;i<16;++i)if(packets.guard[i]!=0xa5)valid=0;
+    }
+    valid=valid && drawn && linked && seen==1 && !bank[0].task.tasks.count;
+    if(!valid)fprintf(stderr,"Timed spawn PM cycle drawn%u linked%u seen%x remaining%d\n",drawn,linked,seen,bank[0].task.tasks.count);
+    g_PmTables=old_tables;D_800B0E38=old_buffers;g_GeomScroll.words.viewMatrix=old_view;g_GameState.loaded_scene_archive=old_archive;
+    g_FieldFxTaskContext=NULL;g_FieldFxOwner=NULL;g_FieldFxActiveTaskSlot=NULL;
+    if(valid)puts("Original timed spawn: complete authored PM task, ring drawing, OT/packet guards and callback expiry passed");return valid;
+}
+
+static int original_floor_walker_assets(void)
+{
+    const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return 0;
+    PeDisc disc={0};PeDiscFile exe,archive;
+    if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 0;
+    ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 0;
+    Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+    const unsigned rooms[]={145,332,152,153,154},sizes[]={17160,17160,20564,26532,26532};
+    const uint64_t hashes[]={UINT64_C(0x7d00803c30c0112c),UINT64_C(0x7d00803c30c0112c),UINT64_C(0x38fff0ca5c9f3fc2),UINT64_C(0x175125898b12d28f),UINT64_C(0x175125898b12d28f)};
+    const u32 scripts[]={0x80193280,0x80193280,0x80193fc4,0x80195648,0x80195648};
+    for(unsigned index=0;index<5;++index){
+        SceneRoomSectorRange range;u8 module[26532];
+        if(!pe_disc_read(&disc,&exe,0x800ull+0x80093378u-0x80010000u+(rooms[index]-1)*8,&range,8) ||
+           !pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048+8,module,sizes[index]))return 0;
+        uint64_t hash=UINT64_C(14695981039346656037);for(unsigned i=0;i<sizes[index];++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+        if(hash!=hashes[index] || memcmp(module+(scripts[index]-0x8018eff0),g_RoomTimedSpawnScript,32) ||
+           memcmp(module+(scripts[index]+32-0x8018eff0),RoomLib_TimedRenderTable,32))return 0;
+        if(index>=3 && (memcmp(module+(0x8019553c-0x8018eff0),g_RoomEruptionScript,18*sizeof(int)) ||
+                       memcmp(module+(0x801956c0-0x8018eff0),g_RoomHomingScript,sizeof(g_RoomHomingScript))))return 0;
+        if(index==2 && memcmp(module+(0x80193f68-0x8018eff0),g_RoomDroppedFlareScript,sizeof(g_RoomDroppedFlareScript)))return 0;
+        char name[16];snprintf(name,sizeof(name),"m%04ui",rooms[index]);u32 token=Text_ParseBase32Id((signed char *)name);
+        for(unsigned pass=0;pass<2;++pass){
+            memset(RoomLib_TimedRenderTable,0xa5,8);for(unsigned offset=12;offset<32;offset+=8)memset(RoomLib_TimedRenderTable+offset,0xa5,4);
+            memset(&g_RoomHomingLaunch,0xa5,sizeof(g_RoomHomingLaunch));memset(g_RoomDroppedFlareArgs,0xa5,sizeof(g_RoomDroppedFlareArgs));
+            int loaded=Scene_LoadRoom(token);
+            if(loaded || g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] || g_PmCmdHandlerTable[79]!=&g_RoomFloorWalkerHandlers ||
+               g_FieldFxTaskPrograms[102]!=&g_RoomTimedSpawnProgram ||
+               memcmp(module+(scripts[index]+32-0x8018eff0),RoomLib_TimedRenderTable,32)){fprintf(stderr,"Floor walker room%u pass%u load%d\n",rooms[index],pass,loaded);return 0;}
+            if(index==2){if(g_FieldFxTaskPrograms[37]!=&g_RoomDroppedFlareProgram)return 0;for(unsigned i=0;i<sizeof(g_RoomDroppedFlareArgs);++i)if(((u8 *)g_RoomDroppedFlareArgs)[i])return 0;}
+            if(index>=3){if(g_FieldFxTaskPrograms[81]!=&g_RoomHomingProgram || g_PmCmdHandlerTable[37]!=&g_RoomGroundEruptionHandlers)return 0;for(unsigned i=0;i<sizeof(g_RoomHomingLaunch);++i)if(((u8 *)&g_RoomHomingLaunch)[i])return 0;}
+        }
+    }
+    CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+    puts("Original M145/M332/M152/M153/M154: full USA module fingerprints, scripts, complete descriptor banks and repeated color/launch reset passed");return original_timed_spawn_cycle();
+}
+
+static int original_timed_spawn_states(void)
+{
+    FieldFxTaskContext *old_context=g_FieldFxTaskContext;FieldFxTaskSlot *old_slot=g_FieldFxActiveTaskSlot;
+    FieldFxObjectPrefix *old_owner=g_FieldFxOwner;FieldActor *old_player=g_PlayerEntity;
+    int old_age=g_FieldFxCurrentAge;s16 old_floor=g_RoomFloorY->y;
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;int ok=0;
+#define TIMED_HASH(pointer,length) do {const u8 *p_=(const u8 *)(pointer);for(size_t i_=0;i_<(length);++i_)hash=(hash^p_[i_])*UINT64_C(1099511628211);}while(0)
+    const u32 flags[]={0x01001234,0x82005678,0x41009abc};
+    for(int age=0;age<41;++age)for(unsigned held=0;held<2;++held)for(unsigned f=0;f<3;++f){
+        u16 data[]={0x1234,0x5678,11,22,33,0xaaaa};FieldFxTaskContext context={0};u8 *pool=(u8 *)context.arena;memset(pool,0x5a,1024);
+        FieldFxTaskSlot slot={.end=(char *)pool};FieldFxObjectPrefix owner={0};
+        FieldActor actor={0},player={0};FieldActorState state={0};Combatant player_state={0};
+        context.flags=held;owner.actor=&actor;actor.state=&state;state.core_flags=flags[f];player.state=(void *)&player_state;player_state.stateFlags=0x123;
+        g_FieldFxTaskContext=&context;g_FieldFxActiveTaskSlot=&slot;g_FieldFxOwner=&owner;g_PlayerEntity=&player;g_FieldFxCurrentAge=age;g_RoomFloorY->y=-123;
+        if(FieldFx_InitCallbackList((char *)pool,12,8,RoomLib_UpdateTimedRender)<0){fprintf(stderr,"Timed callback allocation failed\n");goto done;}
+        int ret=RoomLib_ControlTimedSpawn(1,data,0);TIMED_HASH(&ret,4);TIMED_HASH(data,12);TIMED_HASH(&state.core_flags,4);TIMED_HASH(&player_state.stateFlags,4);
+        FieldFxCallbackList *list=(void *)pool;
+        for(unsigned i=0;i<8;++i){FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);TIMED_HASH(entry,4);TIMED_HASH(entry->state,12);}++cases;
+    }
+    if(hash!=UINT64_C(0x788c12a3dfd829f9)){fprintf(stderr,"Original timed controller: %u states hash %016llx\n",cases,(unsigned long long)hash);goto done;}
+    hash=UINT64_C(14695981039346656037);cases=0;
+    const s16 disabled[]={-1,0,1};const u16 frames[]={0,1,22,23,24,32766,32767,65535};const int modes[]={0,1,3};
+    for(unsigned d=0;d<3;++d)for(unsigned f=0;f<8;++f)for(unsigned m=0;m<3;++m){
+        RoomFxTimedRenderState state={.x=11,.y=22,.z=33,.pad06=0xaaaa,.disabled=disabled[d],.frame=frames[f]};
+        int ret=RoomLib_UpdateTimedRender(modes[m],&state,0);TIMED_HASH(&ret,4);TIMED_HASH(&state,12);++cases;
+    }
+    if(hash!=UINT64_C(0x38aef67fe18b9687)){fprintf(stderr,"Original timed ring: %u states hash %016llx\n",cases,(unsigned long long)hash);goto done;}
+    ok=1;
+done:
+    g_FieldFxTaskContext=old_context;g_FieldFxActiveTaskSlot=old_slot;g_FieldFxOwner=old_owner;g_PlayerEntity=old_player;g_FieldFxCurrentAge=old_age;g_RoomFloorY->y=old_floor;
+#undef TIMED_HASH
+    if(ok)puts("Original timed spawn: 318 USA CPU controller/callback states, spawn cadence and held status flags passed");return ok;
+}
+
+static int original_floor_walker_states(void)
+{
+    PolygonVertex *old_polygon=g_FloorPolygonVertices;
+    u16 old_count=g_FloorPolygonVertexCount;
+    FieldActor *old_player=g_PlayerEntity,player={0};
+    s16 old_floor=g_RoomFloorY->y;
+    PolygonVertex polygon[]={{0,-1000,0,-1000},{0,1000,0,-1000},{0,1000,0,1000},{0,-1000,0,1000}};
+    const int positions[][2]={{0,0},{999,999},{-1200,0},{0,-1200},{999,-999}};
+    uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
+    g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;g_RoomFloorY->y=0;
+    player.pos_x=300*65536;player.pos_z=-300*65536;g_PlayerEntity=&player;
+#define WALKER_HASH(pointer,length) do {const u8 *p_=(const u8 *)(pointer);for(size_t i_=0;i_<(length);++i_)hash=(hash^p_[i_])*UINT64_C(1099511628211);}while(0)
+    for(unsigned angle=0;angle<4096;angle+=512)for(unsigned xy=0;xy<5;++xy)
+    for(unsigned phase=0;phase<=2;phase+=2)for(unsigned started=0;started<2;++started)
+    for(unsigned rest=0;rest<=3;rest+=3)for(unsigned flag=0;flag<=0x40000;flag+=0x40000){
+        RoomFloorWalkerObject object={0};FieldActor actor={0};RoomFloorWalkerState *state=&object.state;
+        object.header.owner=&actor;actor.mode=phase;actor.rot_y=angle;
+        actor.pos_x=positions[xy][0]*65536;actor.pos_y=(started?-10:0)*65536;actor.pos_z=positions[xy][1]*65536;
+        actor.motion_y=12345;actor.gravity_y=67890;actor.flags=flag|0x123;
+        state->started=started;state->speed=0x38000;state->hopVelocity=0x20000;state->velocity=-0x18000;state->gravity=0x4000;
+        state->angle=angle+256;state->rest=rest;state->restTime=6;state->turning=started;
+        RoomLib_HandlerGFloorWalker((struct RoomEnt *)&object);
+        WALKER_HASH(&state->started,1);WALKER_HASH(&state->speed,24);
+        WALKER_HASH(&actor.pos_x,12);WALKER_HASH(&actor.motion_y,4);WALKER_HASH(&actor.gravity_y,4);WALKER_HASH(&actor.flags,4);++cases;
+    }
+#undef WALKER_HASH
+    g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_count;g_PlayerEntity=old_player;g_RoomFloorY->y=old_floor;
+    if(hash!=UINT64_C(0x1888ca2de21b88ad)){fprintf(stderr,"Original floor walker: %u states hash %016llx\n",cases,(unsigned long long)hash);return 0;}
+    hash=UINT64_C(14695981039346656037);cases=0;
+    const int angles[]={0,512,1536,3584},scales[]={0,1024,4096,8192},rests[]={0,1,3,6};
+    for(unsigned ai=0;ai<4;++ai)for(unsigned si=0;si<4;++si)for(unsigned ri=0;ri<4;++ri){
+        RoomFloorWalkerObject object={0};FieldActor actor={0};object.header.owner=&actor;
+        object.state.callback=RoomLib_HandlerGFloorWalker;object.state.started=1;object.state.rest=rests[ri];object.state.restTime=6;
+        actor.move_speed=scales[si];actor.pos_x=-123456789;actor.pos_y=987654321;actor.pos_z=-409600000;
+        actor.rot_x=angles[ai];actor.rot_y=angles[ai]+256;actor.rot_z=angles[ai]+512;
+        if(RoomLib_UpdateHandlerG(&object.header))return 0;
+        const u8 *parts[]={(const u8 *)&actor.render_object.model_matrix,(const u8 *)&object.state.rest};
+        const unsigned sizes[]={32,2};for(unsigned p=0;p<2;++p)for(unsigned b=0;b<sizes[p];++b)hash=(hash^parts[p][b])*UINT64_C(1099511628211);++cases;
+    }
+    if(hash!=UINT64_C(0x96ccb2e1f39bd42c)){fprintf(stderr,"Original floor walker transforms: %u states hash %016llx\n",cases,(unsigned long long)hash);return 0;}
+    /* Native pointer ABI, actor initialization and release retain the full
+     * pointer and touch only the original authored fields. */
+    FieldActor actor={0},expected={0};RoomFloorWalkerObject object={0};object.header.owner=&actor;
+    actor.flags=expected.flags=0xabc00000;actor.render_object.flags_9C=expected.render_object.flags_9C=0x123;
+    RoomLib_InitHandlerG(&object.header);expected.flags|=0x10002;expected.render_object.flags_9C|=0x400;
+    if(memcmp(&actor,&expected,sizeof(actor)) || object.state.callback!=RoomLib_HandlerG || object.state.active ||
+       object.state.variant!=-1 || object.state.frame!=-1 || object.state.enabled!=-1 || object.state.flags!=3 ||
+       object.state.started || object.state.signal || object.state.rest || object.state.turning)return 0;
+    int signal=-17;
+    if(g_RoomFloorWalkerHandlers.send(&object.header,1,25,(intptr_t)&signal,0,0) || object.state.signal!=&signal || signal!=1)return 0;
+    g_RoomFloorWalkerHandlers.send(&object.header,0,4,0x12345678,0,0);
+    g_RoomFloorWalkerHandlers.send(&object.header,0,12,-12345,6789,19);
+    if(object.state.speed!=0x12345678 || object.state.hopVelocity!=-12345 || object.state.gravity!=6789 || object.state.restTime!=19)return 0;
+    if(g_RoomFloorWalkerHandlers.stop(&object.header) || signal || object.header.state!=4)return 0;
+    FieldActor *old_head=g_FieldActorListHead,leader={0},dead={0};FieldActorState leader_state={0};RenderMatrix matrices[5]={0};
+    leader.type_id=dead.type_id=6;leader.sub_id=dead.sub_id=3;dead.flags=0x10;dead.next=&leader;
+    leader.state=&leader_state;leader_state.control10.command_value=120;leader.render_object.matrices=matrices;
+    matrices[4].translation[0]=-123;matrices[4].translation[1]=456;matrices[4].translation[2]=-789;
+    leader.rot_x=111;leader.rot_y=222;leader.rot_z=333;leader.pad_03E[0]=0x5a;leader.pad_03E[1]=0xa5;
+    leader.mode=7;leader.anim.parts.integer=3;leader.anim_prev=2*65536;
+    g_FieldActorListHead=&dead;RoomLib_InitHandlerG(&object.header);
+    int selected=g_RoomFloorWalkerHandlers.send(&object.header,0,0,6,3,0)==0 && object.state.leader==&leader;
+    if(selected)RoomLib_HandlerG((struct RoomEnt *)&object);
+    g_FieldActorListHead=old_head;
+    if(!selected || actor.pos_x!=-123*65536 || actor.pos_y!=456*65536 || actor.pos_z!=-789*65536 ||
+       memcmp(&actor.rot_x,&leader.rot_x,8) || object.state.callback!=RoomLib_HandlerGFloorWalker)return 0;
+    leader.state=NULL;object.state.signal=&signal;signal=1;RoomLib_HandlerG((struct RoomEnt *)&object);
+    if(signal || object.header.state!=4)return 0;
+    puts("Original floor walker: 704 USA CPU/GTE movement, reflection, hop and squash states plus native pointer ABI passed");return 1;
+}
+
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--floor-walker"))return original_floor_walker_states() && original_timed_spawn_states() && original_floor_walker_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--hospital-eruption")){
         if(!original_hospital_eruption_states() || !original_hospital_homing_flight_states() || !original_hospital_homing_throw_states())return 1;
         /* An animation may finish before its effect's final slot. No active

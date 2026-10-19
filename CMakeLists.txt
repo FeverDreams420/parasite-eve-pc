@@ -245,6 +245,8 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/dropped_flare.c
     src/overlays/room_lib/ground_eruption.c
     src/overlays/room_lib/homing_projectile.c
+    src/overlays/room_lib/floor_walker_class.c
+    src/overlays/room_lib/timed_spawn.c
     src/overlays/room_lib/homing_projectile_seeds.c
     src/overlays/room_lib/script_args.c)
 target_include_directories(parasite-eve-original PRIVATE include)

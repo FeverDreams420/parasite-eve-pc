@@ -6,6 +6,8 @@
  */
 
 #include "common.h"
+#include "pe1/battle.h"
+#include "pe1/room_floor_walker.h"
 #include "pe1/akao.h"
 #include "pe1/field_owner_actor.h"
 #include "pe1/field_sprite_draw.h"
@@ -14,6 +16,7 @@
 #include "pe1/fieldfx_callback_list.h"
 #include "pe1/fieldfx_task_pool.h"
 #include "pe1/gte.h"
+#include "pe1/geom_state.h"
 #include "pe1/gte_types.h"
 #include "pe1/player_entity.h"
 #include "pe1/render_matrix_slot.h"
@@ -23,7 +26,8 @@
 
 #include "room_lib.h"
 
-int RoomLib_UpdateTimedRender(int mode, RoomFxTimedRenderState *state) {
+int RoomLib_UpdateTimedRender(int mode,void *data,intptr_t argument) {
+    RoomFxTimedRenderState *state=data;
     RoomFxSeed8 work;
     RoomFxSeed8 seed = {{0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00}};
     RoomFxSeed8 *seedPtr;
@@ -50,7 +54,7 @@ int RoomLib_UpdateTimedRender(int mode, RoomFxTimedRenderState *state) {
         gte_ldtransmatrix(*matrixSlot);
         FieldFx_SampleColorTrack(&RoomLib_TimedRenderTable, &work,
                       (short)state->frame);
-        angle = rsin((g_FieldFxCurrentAge << 10) / 24);
+        angle = rsin((s32)((u32)g_FieldFxCurrentAge<<10) / 24);
         FieldFx_DrawRingBand((GteShortVector *)state, 0x578, 0x640, 0x14, (GteRotation *)seedPtr, angle, angle, 0,
                       (struct RenderColor *)&work, 0x80, 1);
         return 0;
@@ -73,31 +77,11 @@ typedef struct RoomTimedSpawnState {
     s16 x;
     s16 y;
     RoomTimedSpawnPosition position;  /* 0x04 */
+    u16 reserved0a;
 } RoomTimedSpawnState;
 
-typedef struct RoomTimedSpawnEventState {
-    u8 reserved[0xD];
-    u8 active;                        /* 0x0D */
-} RoomTimedSpawnEventState;
-
-typedef struct RoomTimedSpawnNode {
-    u32 flags;                        /* 0x00: 0x3F000000 owner bits */
-    u8 reserved04[0x14];
-    u8 *status;                       /* 0x18 */
-} RoomTimedSpawnNode;
-
-/* The animation owner: its link, whose first word is the render node. */
-typedef struct RoomTimedSpawnOwner {
-    u8 reserved[0x8];
-    RoomTimedSpawnNode **link;        /* 0x08 */
-} RoomTimedSpawnOwner;
-
-typedef struct RoomTimedSpawnEngine {
-    u8 reserved[0x4C];
-    u32 flags;                        /* 0x4C */
-} RoomTimedSpawnEngine;
-
-int RoomLib_ControlTimedSpawn(int mode, RoomTimedSpawnState *state) {
+int RoomLib_ControlTimedSpawn(int mode,void *data,intptr_t argument) {
+    RoomTimedSpawnState *state=data;
     RoomFxTimedRenderState *actor;
     int tick;
     int value;
@@ -106,15 +90,15 @@ int RoomLib_ControlTimedSpawn(int mode, RoomTimedSpawnState *state) {
     switch (mode) {
     case 0:
 
-        FieldFx_GetActorPosition(ANIM_OWNER_AS(RoomTimedSpawnOwner)->link, 0, (s16 *)&state->position);
+        FieldFx_GetActorPosition((char *)g_FieldFxOwner->actor, 0, (s16 *)&state->position);
         state->x = 0;
         state->y = 0;
 
-        if (FX_TASK_AS(RoomTimedSpawnEventState)->active != 0) {
-            RoomTimedSpawnNode **p = ANIM_OWNER_AS(RoomTimedSpawnOwner)->link;
-            if (p != 0 && *p != 0) {
-                u8 *status = (*p)->status;
-                if (*status == 1) {
+        if (g_FieldFxTaskContext->flags != 0) {
+            FieldActor *p=g_FieldFxOwner->actor;
+            if(p && p->state) {
+                u8 *status=p->state->action_state;
+                if(status && *status == 1) {
                     *status = 2;
                 }
             }
@@ -124,13 +108,13 @@ int RoomLib_ControlTimedSpawn(int mode, RoomTimedSpawnState *state) {
             value = FieldFx_GetOwnerProgress();
             Akao_SendTableCommand(g_LoadedSceneAssetBlock[0], 0x588, value, 0x80, 0x7F);
         }
-        return FieldFx_InitCallbackList(((void **)ANIM_POOL_AS(void))[2], 0xC, 8,
-                             (FieldFxCallbackListCallback)RoomLib_UpdateTimedRender);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0xC, 8,
+                             RoomLib_UpdateTimedRender);
 
         case 1:
     tick = g_FieldFxCurrentAge;
     if (tick < 0x20 && tick % 6 == 0) {
-        actor = FieldFx_AcquireCallbackSlot(((void **)ANIM_POOL_AS(void))[2]);
+        actor = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
         if (actor != 0) {
             actor->x = state->position.x;
             actor->y = state->position.y;
@@ -142,20 +126,11 @@ int RoomLib_ControlTimedSpawn(int mode, RoomTimedSpawnState *state) {
         }
     }
 
-    if (g_FieldFxCurrentAge == 7 && FX_TASK_AS(RoomTimedSpawnEventState)->active != 0) {
-        RoomTimedSpawnOwner *root;
-        root = ANIM_OWNER_AS(RoomTimedSpawnOwner);
-        if (((*root->link)->flags & 0x3F000000) ==
-            0x01000000) {
-            RoomTimedSpawnNode *object;
-            RoomTimedSpawnEngine *engine = *(RoomTimedSpawnEngine **)g_PlayerEntity;
-            engine->flags |= 0x4000;
-
-            object = *root->link;
-            object->flags = (object->flags & 0xC0FFFFFF) | 0x21000000;
-
-            object = *root->link;
-            object->flags |= 0x80000000;
+    if (g_FieldFxCurrentAge == 7 && g_FieldFxTaskContext->flags != 0) {
+        FieldActor *owner=g_FieldFxOwner->actor;
+        if(owner && owner->state && (owner->state->core_flags&0x3F000000)==0x01000000) {
+            if(g_PlayerEntity && g_PlayerEntity->state)((Combatant *)g_PlayerEntity->state)->stateFlags|=0x4000;
+            owner->state->core_flags=(owner->state->core_flags&0xC0FFFFFF)|0xA1000000u;
         }
     }
         if (g_FieldFxCurrentAge >= 8) return 2;
@@ -179,3 +154,7 @@ int RoomLib_ControlTimedSpawn(int mode, RoomTimedSpawnState *state) {
     }
     return 0;
 }
+
+u8 RoomLib_TimedRenderTable[32]={0,0,0,0,0,0,0,0,40,120,30,12,0,0,0,0,128,40,12,12,0,0,0,0,0,0,0,0,0,0,0,0};
+u16 g_RoomTimedSpawnScript[16]={5,0,0,1,6,102,4,48,0,2,0,0,0,0,0,0};
+FieldFxTaskProgram g_RoomTimedSpawnProgram={{{RoomLib_ControlTimedSpawn,NULL,NULL,NULL,NULL,NULL,NULL,NULL},{12,0,0,0,0,0,0,0}},NULL,g_RoomTimedSpawnScript};

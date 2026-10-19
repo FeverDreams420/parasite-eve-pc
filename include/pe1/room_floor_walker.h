@@ -1,108 +1,53 @@
 #ifndef PE1_ROOM_FLOOR_WALKER_H
 #define PE1_ROOM_FLOOR_WALKER_H
-
 #include "common.h"
-#include "pe1/field_vector_math.h"
-#include "pe1/floor_polygon.h"
+#include "pe1/field_actor.h"
+#include "pe1/fieldfx_task.h"
+#include "pe1/pm_types.h"
 #include "pe1/gte_types.h"
-
-/* Room creature that walks along its heading inside the walkable floor
- * polygon, turning off the polygon's edges, and hops with a simple
- * vertical velocity/gravity integration. */
-
-typedef struct RoomFloorWalkerCore {
-    u8 pad00[0xE];
-    u8 phase;                     /* 0x0E */
-    u8 pad0F[0x19];
-    s32 pos[3];                   /* 0x28: 16.16 */
-    u16 pad34[3];
-    u16 heading;                  /* 0x3A */
-    u8 pad3C[0x30];
-    s32 field6C;                  /* 0x6C */
-    u8 pad70[0x1C];
-    s32 field8C;                  /* 0x8C */
-    u8 pad90[0x8];
-    u32 flags;                    /* 0x98 */
-} RoomFloorWalkerCore;
-
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFloorWalkerCore, flags) == 0x98,
-                  room_floor_walker_core_flags);
-
-/* Handler state at RoomFloorWalkerObject + 0xC. */
+struct RoomEnt;
+/* Original handler G instance state; only pointer-bearing fields widen. */
 typedef struct RoomFloorWalkerState {
-    void (*callback)(void);       /* 0x00 */
-    int *signal;                  /* 0x04 */
-    u8 pad08[0x6];
-    u8 started;                   /* 0x0E (object + 0x1A) */
-    u8 pad0F;
-    struct RoomLink *leader;      /* 0x10: actor whose view the walker follows */
-    s32 speed;                    /* 0x14: 16.16 */
-    s32 hopVelocity;              /* 0x18 */
-    s32 velocity;                 /* 0x1C */
-    s32 gravity;                  /* 0x20 */
-    u16 angle;                    /* 0x24 */
-    s16 rest;                     /* 0x26: frames left on the floor */
-    u16 restTime;                 /* 0x28 */
-    s16 turning;                  /* 0x2A: last step hit an edge */
+    void (*callback)(struct RoomEnt *);
+    int *signal;
+    s16 active;
+    s8 variant, frame;
+#if INTPTR_MAX > INT32_MAX
+    u8 argumentHigh[sizeof(intptr_t)-sizeof(s32)];
+#endif
+    s8 enabled;
+    u8 flags, started, reserved;
+    FieldActor *leader;
+    s32 speed, hopVelocity, velocity, gravity;
+    u16 angle;
+    s16 rest;
+    u16 restTime;
+    s16 turning;
 } RoomFloorWalkerState;
-
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFloorWalkerState, turning) == 0x2A,
-                  room_floor_walker_state_turning);
-
 typedef struct RoomFloorWalkerObject {
-    u8 pad00[0x8];
-    RoomFloorWalkerCore *core;    /* 0x08 */
-    RoomFloorWalkerState state;   /* 0x0C */
+    PmSlotHeader header;
+    RoomFloorWalkerState state;
 } RoomFloorWalkerObject;
-
-/* Scratchpad work area for one step. */
+/* One step's original scratchpad workspace, now ordinary local storage. */
 typedef struct RoomFloorWalkerScratch {
-    union {
-        GteShortVector v;
-        struct {
-            s32 xy;
-            s16 z;
-        } words;
-    } step;                       /* 0x00: forward step fed to the GTE */
-    GteVector rotated;            /* 0x08 */
-    GteVector next;               /* 0x18: candidate 16.16 position */
-    volatile GteMatrix yaw;       /* 0x28 */
-    s32 area;                     /* 0x48 */
+    union {GteShortVector v;struct {s32 xy;s16 z;} words;} step;
+    GteVector rotated,next;
+    GteMatrix yaw;
+    s32 area;
 } RoomFloorWalkerScratch;
-
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFloorWalkerScratch, area) == 0x48,
-                  room_floor_walker_scratch_area);
-
-#define ROOM_FLOOR_WALKER_SCRATCH ((RoomFloorWalkerScratch *)0x1F800000)
-
-/* Walkable polygon vertex: x and the packed y/z word. */
-typedef struct RoomFloorWalkerVertex {
-    s16 pad00;
-    u16 x;                        /* 0x02 */
-    u32 yz;                       /* 0x04 */
-} RoomFloorWalkerVertex;
-
-/* rsin/rcos table entry, also read as one word. */
-typedef union RoomFloorWalkerTrig {
-    s32 word;
-    struct {
-        s16 sine;
-        s16 cosine;
-    } part;
-} RoomFloorWalkerTrig;
-
-typedef struct RoomFloorWalkerTarget {
-    u8 pad00[0x28];
-    s32 pos[3];                   /* 0x28 */
-} RoomFloorWalkerTarget;
-
-/* The rsin/rcos table (rcossin_tbl) and the player entity (D_8009D254) are
- * declared by the room library header and read through the views above;
- * the floor height is g_RoomFloorY (pe1/room_floor.h). */
-
-/* The scale vector RoomLib_UpdateHandlerG builds in the scratchpad. */
-extern s32 Scratch_1F800008 asm("0x1F800008");
-extern s32 Scratch_1F80000C asm("0x1F80000C");
-extern s32 Scratch_1F800010 asm("0x1F800010");
-
+extern PmCommand g_RoomFloorWalkerHandlers;
+extern FieldFxTaskProgram g_RoomTimedSpawnProgram;
+extern u16 g_RoomTimedSpawnScript[16];
+extern u8 RoomLib_TimedRenderTable[32];
+int RoomLib_UpdateTimedRender(int,void *,intptr_t);
+int RoomLib_ControlTimedSpawn(int,void *,intptr_t);
+void RoomLib_HandlerGNop0(void);
+void RoomLib_InitHandlerG(PmSlotHeader *);
+int RoomLib_ConfigureHandlerG(PmSlotHeader *,int,int,intptr_t,intptr_t,intptr_t);
+int RoomLib_HandlerGNop3(PmSlotHeader *);
+int RoomLib_UpdateHandlerG(PmSlotHeader *);
+void RoomLib_HandlerG(struct RoomEnt *);
+void RoomLib_HandlerGFloorWalker(struct RoomEnt *);
+int RoomLib_ReleaseHandlerG(PmSlotHeader *);
+void RoomLib_HandlerGNop6(void);
 #endif

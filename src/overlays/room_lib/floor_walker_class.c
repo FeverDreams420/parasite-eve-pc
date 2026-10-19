@@ -14,23 +14,16 @@
 
 #include "room_lib.h"
 
-/* The update handler's owner: the step callback it runs first and the
- * squash timer it plays out. */
-typedef struct RoomTransformScaleOwner {
-    char pad0[8];
-    FieldActor *actor;
-    void (*callback)(struct RoomTransformScaleOwner *);
-    char pad10[0x22];
-    s16 timer;
-    s16 duration;
-} RoomTransformScaleOwner;
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFloorWalkerObject,state.started)==PE1_OFFSETOF(RoomEnt,t1A),floor_walker_started_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomFloorWalkerObject,state.callback)==PE1_OFFSETOF(RoomEnt,sub.cb),floor_walker_callback_alias);
+PE1_STATIC_ASSERT(sizeof(RoomFloorWalkerObject)<=sizeof(PmSecondarySlot),floor_walker_slot_capacity);
 
-int RoomLib_HandlerGNop0(void) {
-    return 0;
+void RoomLib_HandlerGNop0(void) {
 }
-int RoomLib_InitHandlerG(RoomEnt *o) {
+void RoomLib_InitHandlerG(PmSlotHeader *raw) {
+    RoomEnt *o=(void *)raw;
     unsigned int m = 0x10002;
-    RoomLink *l = o->link;
+    FieldActor *l = raw->owner;
     o->t16 = -1;
     o->t17 = -1;
     o->t18 = -1;
@@ -41,13 +34,13 @@ int RoomLib_InitHandlerG(RoomEnt *o) {
     ((RoomFloorWalkerObject *)o)->state.rest = 0;
     ((RoomFloorWalkerObject *)o)->state.turning = 0;
     o->sub.cb = RoomLib_HandlerG;
-    RW32(l, 0x98) |= m;
-    l->h250 |= 0x400;
-    return 0;
+    l->flags |= m;
+    l->render_object.flags_9C |= 0x400;
 }
 
-int RoomLib_ConfigureHandlerG(RoomEnt *o, int mode, unsigned int op,
-                              int arg0, int arg1, int arg2) {
+int RoomLib_ConfigureHandlerG(PmSlotHeader *raw,int mode,int op,intptr_t first,intptr_t second,intptr_t third) {
+    RoomEnt *o=(void *)raw;
+    s32 arg0=(s32)first,arg1=(s32)second,arg2=(s32)third;
     RoomFloorWalkerState *p = &((RoomFloorWalkerObject *)o)->state;
 
     if (op != 4) {
@@ -66,8 +59,8 @@ int RoomLib_ConfigureHandlerG(RoomEnt *o, int mode, unsigned int op,
     if (mode != 1) {
         return 0;
     }
-    o->sub.signal = (int *)arg0;
-    *(int *)arg0 = mode;
+    o->sub.signal = (int *)first;
+    *(int *)first = mode;
 
     }
     else
@@ -77,23 +70,23 @@ case4:
     return 0;
 
 case0:
-    ((RoomFloorWalkerObject *)o)->state.leader = (RoomLink *)g_FieldActorListHead;
+    ((RoomFloorWalkerObject *)o)->state.leader = g_FieldActorListHead;
     if (g_FieldActorListHead != 0) {
         do {
-            FieldActorNode *cur = (FieldActorNode *)p->leader;
-            if (cur->b0C == arg0 && cur->b0D == arg1) {
-                if ((cur->w98 & 0x10) == 0) {
+            FieldActor *cur=p->leader;
+            if (cur->type_id == arg0 && cur->sub_id == arg1) {
+                if ((cur->flags & 0x10) == 0) {
                     break;
                 }
             }
-            p->leader = (RoomLink *)((FieldActorNode *)p->leader)->next;
+            p->leader = p->leader->next;
         } while (p->leader != 0);
         if (p->leader != 0) {
             return 0;
         }
-        RoomLib_ReleaseHandlerG(o);
+        RoomLib_ReleaseHandlerG((PmSlotHeader *)o);
     } else {
-        RoomLib_ReleaseHandlerG(o);
+        RoomLib_ReleaseHandlerG((PmSlotHeader *)o);
     }
     return 0;
 
@@ -107,20 +100,23 @@ ret:
     return 0;
 }
 
-int RoomLib_HandlerGNop3(void) {
+int RoomLib_HandlerGNop3(PmSlotHeader *unused) {
     return 0;
 }
 
-int RoomLib_UpdateHandlerG(RoomTransformScaleOwner *owner) {
+int RoomLib_UpdateHandlerG(PmSlotHeader *raw) {
+    RoomFloorWalkerObject *owner=(void *)raw;
+    RoomFloorWalkerState *state=&owner->state;
+    GteVector scaleStorage;
     FieldActor *actor;
     RenderMatrix *matrix;
     s32 *scale;
     s32 scaleValue;
     s32 curve;
 
-    actor = owner->actor;
-    scale = (s32 *)0x1F800008;
-    owner->callback(owner);
+    actor = owner->header.owner;
+    scale = (s32 *)&scaleStorage;
+    state->callback((RoomEnt *)owner);
 
     matrix = &actor->render_object.model_matrix;
     matrix->translation[0] = Pe1Fixed_Integer(&actor->pos_x);
@@ -129,19 +125,18 @@ int RoomLib_UpdateHandlerG(RoomTransformScaleOwner *owner) {
     RotMatrixYXZ((void *)&actor->rot_x, (void *)matrix);
 
     scaleValue = actor->move_speed;
-    Scratch_1F800010 = scaleValue;
-    Scratch_1F80000C = scaleValue;
-    Scratch_1F800008 = scaleValue;
-    ScaleMatrix((void *)matrix, (void *)0x1F800008);
+    scaleStorage.z = scaleValue;
+    scaleStorage.y = scaleValue;
+    scaleStorage.x = scaleValue;
+    ScaleMatrix((void *)matrix, (void *)&scaleStorage);
 
-    if (owner->timer != 0) {
-        curve = (*(s32 *)rcossin_tbl[(((owner->duration - owner->timer) << 11) /
-                                     owner->duration) & 0xFFF].half << 16) >> 17;
-        Scratch_1F800010 = 0x1000 + curve;
+    if (state->rest != 0) {
+        curve = rsin(((s32)((u32)((s16)state->restTime-state->rest)<<11)/(s16)state->restTime)&0xFFF)>>1;
+        scaleStorage.z = 0x1000 + curve;
         scale[0] = 0x1000 + curve;
-        Scratch_1F80000C = 0x1000 - curve;
+        scaleStorage.y = 0x1000 - curve;
         ScaleMatrix((void *)matrix, (void *)scale);
-        owner->timer--;
+        state->rest--;
     }
 
     return 0;
@@ -149,24 +144,24 @@ int RoomLib_UpdateHandlerG(RoomTransformScaleOwner *owner) {
 
 void RoomLib_HandlerG(RoomEnt *o) {
     RoomEnt *self = o;
-    RoomLink *src = ((RoomFloorWalkerObject *)self)->state.leader;
-    RoomLink *dst = self->link;
-    dst->pos[0] = ((GteMatrix *)src->p238)[4].t[0] << 16;
-    dst->pos[1] = ((GteMatrix *)src->p238)[4].t[1] << 16;
-    dst->pos[2] = ((GteMatrix *)src->p238)[4].t[2] << 16;
-    *(RoomLibPacked8 *)dst->rotation = *(RoomLibPacked8 *)src->rotation;
-    if ((src->variant == 7) && (src->winLo >= 3) && (src->winHi < 3)) {
+    FieldActor *src=((RoomFloorWalkerObject *)self)->state.leader;
+    FieldActor *dst=(FieldActor *)self->link;
+    dst->pos_x=(s32)((u32)src->render_object.matrices[4].translation[0]<<16);
+    dst->pos_y=(s32)((u32)src->render_object.matrices[4].translation[1]<<16);
+    dst->pos_z=(s32)((u32)src->render_object.matrices[4].translation[2]<<16);
+    memcpy(&dst->rot_x,&src->rot_x,8);
+    if ((src->mode == 7) && (src->anim.parts.integer >= 3) && (((u32)src->anim_prev>>16) < 3)) {
         self->sub.cb = RoomLib_HandlerGFloorWalker;
     }
-    if (src->target != 0) {
+    if (src->state != 0) {
         if (Battle_GetEnemyContextField((struct FieldActor *)src, 0x2C) <= 0) {
             Entity_WriteFieldByCmd(dst, 0x2D, 0);
             Entity_WriteFieldByCmd(dst, 0x2C, 0);
             Entity_WriteFieldByCmd(dst, 0x5F, 0);
-            RoomLib_ReleaseHandlerG(self);
+            RoomLib_ReleaseHandlerG((PmSlotHeader *)self);
         }
     } else {
-        RoomLib_ReleaseHandlerG(self);
+        RoomLib_ReleaseHandlerG((PmSlotHeader *)self);
     }
 }
 
@@ -178,9 +173,8 @@ void RoomLib_HandlerG(RoomEnt *o) {
 void RoomLib_HandlerGFloorWalker(RoomEnt *obj) {
     RoomFloorWalkerObject *object = (RoomFloorWalkerObject *)obj;
     RoomFloorWalkerState *state = &object->state;
-    RoomFloorWalkerCore *core = object->core;
-    RoomFloorWalkerScratch *scratch = ROOM_FLOOR_WALKER_SCRATCH;
-    RoomFloorWalkerTrig *entry;
+    FieldActor *core=object->header.owner;
+    RoomFloorWalkerScratch workspace={0},*scratch=&workspace;
     s16 retries;
     int i;
     int point;
@@ -189,13 +183,13 @@ void RoomLib_HandlerGFloorWalker(RoomEnt *obj) {
 
     if (state->started == 0) {
         state->started = 1;
-        core->field8C = 0;
-        core->field6C = 0;
+        core->gravity_y = 0;
+        core->motion_y = 0;
         core->flags &= ~0x40000;
-        state->angle = core->heading;
+        state->angle = core->rot_y;
         state->velocity = state->hopVelocity;
     }
-    if (core->phase < 2) {
+    if (core->mode < 2) {
         return;
     }
     if (core->flags & 0x40000) {
@@ -207,16 +201,15 @@ void RoomLib_HandlerGFloorWalker(RoomEnt *obj) {
     }
     retries = 1;
     do {
-        entry = (RoomFloorWalkerTrig *)rcossin_tbl[(state->angle + 0x800) & 0xFFF].half;
         {
-            int cosine = entry->part.cosine;
+            int cosine = rcos((state->angle+0x800)&0xFFF);
             int sine;
             u16 c;
             u16 s;
 
             scratch->yaw.m[0][1] = 0;
             scratch->yaw.m[0][0] = cosine;
-            sine = entry->word;
+            sine=rsin((state->angle+0x800)&0xFFF);
             c = scratch->yaw.m[0][0];
             scratch->yaw.m[1][0] = 0;
             scratch->yaw.m[1][2] = 0;
@@ -233,14 +226,14 @@ void RoomLib_HandlerGFloorWalker(RoomEnt *obj) {
         gte_ldv0(&scratch->step);
         gte_mvmva();
         gte_stmac(&scratch->rotated);
-        scratch->next.x = core->pos[0] + (scratch->rotated.x << 12);
-        scratch->next.z = core->pos[2] + (scratch->rotated.z << 12);
+        scratch->next.x = (s32)((u32)core->pos_x+((u32)scratch->rotated.x<<12));
+        scratch->next.z = (s32)((u32)core->pos_z+((u32)scratch->rotated.z<<12));
         point = ((u32)scratch->next.x >> 16) | (scratch->next.z & 0xFFFF0000);
-        previous = FLOOR_POLYGON_AS(RoomFloorWalkerVertex)[(s16)g_FloorPolygonVertexCount - 1].x |
-                   (FLOOR_POLYGON_AS(RoomFloorWalkerVertex)[(s16)g_FloorPolygonVertexCount - 1].yz & 0xFFFF0000);
+        previous = (u16)g_FloorPolygonVertices[(s16)g_FloorPolygonVertexCount - 1].x |
+                   ((u32)(u16)g_FloorPolygonVertices[(s16)g_FloorPolygonVertexCount - 1].z << 16);
         i = 0;
         while (i < (s16)g_FloorPolygonVertexCount) {
-            current = FLOOR_POLYGON_AS(RoomFloorWalkerVertex)[i].x | (FLOOR_POLYGON_AS(RoomFloorWalkerVertex)[i].yz & 0xFFFF0000);
+            current = (u16)g_FloorPolygonVertices[i].x | ((u32)(u16)g_FloorPolygonVertices[i].z << 16);
             gte_ldsxy0(point);
             gte_ldsxy2(previous);
             gte_ldsxy1(current);
@@ -255,8 +248,8 @@ void RoomLib_HandlerGFloorWalker(RoomEnt *obj) {
             break;
         }
         if (state->turning == 0) {
-            state->angle = (FieldFx_VecToAngle((Vec3Fixed *)&core->pos[0],
-                                                (Vec3Fixed *)((RoomFloorWalkerTarget *)D_8009D254)->pos) + 0x800) & 0xFFF;
+            state->angle = (FieldFx_VecToAngle(&(Vec3Fixed){core->pos_x,core->pos_y,core->pos_z},
+                                                &(Vec3Fixed){g_PlayerEntity->pos_x,g_PlayerEntity->pos_y,g_PlayerEntity->pos_z}) + 0x800) & 0xFFF;
             break;
         }
         {
@@ -270,19 +263,20 @@ void RoomLib_HandlerGFloorWalker(RoomEnt *obj) {
     if (retries < 0) {
         state->turning = 0;
     }
-    core->pos[0] = scratch->next.x;
-    core->pos[2] = scratch->next.z;
-    core->pos[1] += state->velocity;
-    if ((core->pos[1] >> 16) >= g_RoomFloorY->y) {
-        core->pos[1] = g_RoomFloorY->y << 16;
-        state->velocity = -state->hopVelocity;
+    core->pos_x = scratch->next.x;
+    core->pos_z = scratch->next.z;
+    core->pos_y=(s32)((u32)core->pos_y+(u32)state->velocity);
+    if ((core->pos_y >> 16) >= g_RoomFloorY->y) {
+        core->pos_y = (s32)((u32)(s32)g_RoomFloorY->y<<16);
+        state->velocity=(s32)(0u-(u32)state->hopVelocity);
         state->rest = state->restTime;
     } else {
-        state->velocity += state->gravity;
+        state->velocity=(s32)((u32)state->velocity+(u32)state->gravity);
     }
 }
 
-int RoomLib_ReleaseHandlerG(RoomEnt *o) {
+int RoomLib_ReleaseHandlerG(PmSlotHeader *raw) {
+    RoomEnt *o=(void *)raw;
     int *p = o->sub.signal;
     o->state = 4;
     if (p != 0) {
@@ -290,6 +284,7 @@ int RoomLib_ReleaseHandlerG(RoomEnt *o) {
     }
     return 0;
 }
-int RoomLib_HandlerGNop6(void) {
-    return 0;
+void RoomLib_HandlerGNop6(void) {
 }
+
+PmCommand g_RoomFloorWalkerHandlers={RoomLib_HandlerGNop0,RoomLib_InitHandlerG,RoomLib_ConfigureHandlerG,RoomLib_HandlerGNop3,RoomLib_UpdateHandlerG,RoomLib_ReleaseHandlerG,RoomLib_HandlerGNop6};

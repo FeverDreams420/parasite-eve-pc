@@ -938,7 +938,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDlgState, h12) == PE1_OFFSETOF(FieldFxTaskCon
 
 /* The colour ramp table of the timed spawns (timed_spawn.c), each
  * room's own data. */
-extern char RoomLib_TimedRenderTable;
+extern u8 RoomLib_TimedRenderTable[32];
 
 #define ROOMLIB_MSG_DISPATCH(name, rect, blob) \
     int name(int mode, RoomMsg *msg, short *pitch) { \
@@ -1149,16 +1149,7 @@ int RoomLib_UpdateHandlerA(PmSlotHeader *slot);
 void RoomLib_RearmHandlerA(RoomEnt *o);
 int RoomLib_ReleaseHandlerA(PmSlotHeader *slot);
 void RoomLib_HandlerANop6(void);
-struct RoomFloorWalkerObject;
-int RoomLib_HandlerGNop0(void);
-int RoomLib_InitHandlerG(RoomEnt *o);
-int RoomLib_ConfigureHandlerG(RoomEnt *o, int mode, unsigned int op,
-                              int arg0, int arg1, int arg2);
-int RoomLib_HandlerGNop3(void);
-void RoomLib_HandlerG(RoomEnt *o);
-void RoomLib_HandlerGFloorWalker(struct RoomEnt *obj);
-int RoomLib_ReleaseHandlerG(RoomEnt *o);
-int RoomLib_HandlerGNop6(void);
+#include "pe1/room_floor_walker.h"
 
 /* One row of a room's class table (g_RoomClassTable) per actor class. */
 #define ROOMLIB_ACTOR_CLASS_D \

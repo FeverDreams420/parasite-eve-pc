@@ -2,10 +2,10 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp kampanii: zwycięstwa w M126 i M146, nagrody, rozmowa
-z pacjentem/lekarzem i wejście do M147. Szesnaście nowych replayów
-normal/SAN opisano w sekcji M146 poniżej. Walka w M147, klucz i dalszy
-szpital pozostają nieukończone. Kod produkcyjny bez zmian.
+Najnowszy postęp kampanii: M147 wygrane, wspomnienie i rozmowa z pielęgniarką
+przechodzą do otrzymania klucza211/story491. Dwadzieścia nowych replayów
+oraz26 par klatek wspomnienia normal/SAN opisano poniżej. Dalszy szpital
+i pełna kampania pozostają nieukończone. Kod produkcyjny bez zmian.
 
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
@@ -50,6 +50,71 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M147 — zwycięstwo, wspomnienie i klucz211/story491
+
+Nowszy dowód zastępuje wcześniejszy opis nieukończonej walki M147.
+Kandydat pozostaje pe-control-read-v2, bez zmian produkcyjnych, nowych
+plików źródłowych, przenoszenia funkcji lub zmian balansu. Rewalidacja384
+obiektów, wszystkich zależności, bibliotek, binariów i kopii build:
+/tmp/pe-hospital-m147-v2-build-proof.json. Wyłącznie autentyczny E i
+odtwarzalne zwykłe wejście; bez edytora ani zapisów RAM.
+
+/tmp/pe-hospital-m147-v1-live od54041 używa obu zdobytych Medicine2:
+HP35→125→215, slot17/21 item7→0. Field Heal2 przy55615 daje273/273HP.
+Dalsza próba zabija dwa cele, używa FullCure ze slot20 (przy58377 usunięte
+poison i Slow), lecz kończy59145/HP0 podczas salwy z automatycznym
+przeładowaniem. Quit/exit0. Sześć cold replayów55615/58377/59145 ×
+normal/SAN, pełny stan zgodny z live/profilami i pełny VRAM między
+profilami: /tmp/pe-hospital-m147-v1-replay-proof.json. To zweryfikowana
+porażka, nie zwycięstwo. Read-only odczyt floor/camera przy56295:
+93 trójkąty, /tmp/pe-hospital-m147-floor-safe-v1.{json,log}; rzut podłogi
+pomaga wybrać dolną część pokoju, nie jest zmianą kolizji lub sterowania.
+
+/tmp/pe-hospital-m147-v2-live odtwarza tę gałąź do55615, następnie oryginalne
+Items→M16→Reload, wybór ilości i potwierdzenie. Przy56623 broń ma19
+nabojów zamiast5, HP273, pole bez menu. W tej gałęzi nie jest potrzebne
+przeładowanie podczas walki. Skupiony ostrzał i dzielenie dwóch strzałów
+między kończony i następny cel zabijają6:31/0/1; przy62849 pozostaje
+5:0/80HP, Aya33HP. Użyto FullCure i Heal2 przez oryginalne menu; nawet
+ostatni cel może zadać duże obrażenia i Slow, nie należy zakładać jego
+nieszkodliwości z samego type/sub. Kolejne salwy kończą64725: mode2,
+zero wrogów, HP15/273, ekran nagród. M16 ma6 nabojów. Zachowane pełne
+/tmp/pe-hospital-m147-v2-64725.{json,vram}.
+
+Po nagrodach skrypt prowadzi Ayę do rozmowy127 i uruchamia wspomnienie:
+66665 a80663c8,67665 a8023348, następnie powrót69165 do M147/a80243c8
+z pielęgniarką/page39. Zwykłe Cross kończy dialogi; skrypt prowadzi do
+punktu985,−1250 i daje item211 w slot21. Przy71325 story488→491,
+mode9, lock0, brak menu, dialogstate0, HP15; pełne zachowane
+/tmp/pe-hospital-m147-v2-71325.{json,vram}. Nowy łup obejmuje Cure-P
+(slot17) i Medicine2 (slot20); wcześniejszy FullCure był zużyty.
+Nie ma jeszcze nowego trwałego save; punktem dalszej próby jest pełny
+journal71325 z kluczem. Następnie potrzebny powrót M146→M126→M127,
+wydarzenie Maya/story492 i otwarcie dalszej trasy M148/M149.
+
+Czternaście cold replayów56623/62849/64725/66665/67665/69165/71325 ×
+normal/SAN: exit0, cały emitowany stan zgodny z live/profilami, pełny VRAM
+między profilami i z zachowanym64725/71325:
+/tmp/pe-hospital-m147-v2-replay-proof.json. Osobne dwie cold sesje
+/tmp/pe-hospital-m147-flash-v1-{live,san-live} zapisują26 stanów i pełnych
+VRAM co100 klatek66665..69165. Wszystkie pary zgodne:
+/tmp/pe-hospital-m147-flash-v1-proof.json. Obejrzany arkusz
+/tmp/pe-hospital-m147-flash-v1-sheet.png pokazuje dziecko na łóżku,
+lekarza, białe przejścia, korytarz, hol, wejście i powrót do pielęgniarki.
+Zarejestrowano też tokeny a8022348/a80222c8 pomiędzy przebitkami. To
+kontrola zawartości obrazu i powtarzalności, nie niezależny dowód pixel
+perfect całej sekwencji względem PS1 ani test audio.
+
+Read-only SBValue przy71325 potwierdza kanoniczne pola: level18 wewnętrzny,
+BP242, maxHP273/currentHP15, pe_bonus_pool9, zapas amunicji171:
+/tmp/pe-hospital-m147-v2-key-stats-v2.{json,log}. Pierwszy odczyt nieistniejącego
+symbolu makra g_InvSpecialItemRecords był nieważny; retry używa rzeczywistego
+g_InventoryItemWorkspace.ammo[1]. Bez wywołań funkcji gry i zapisów RAM.
+Obie sesje walki oraz obie sesje klatek kończą quit/exit0, E i prywatne
+kopie bez zmian, bu10 puste, root bu00/bu10 nietknięte. PsyZ/SDL nadal
+nieinstrumentowane. Pełna kampania i niezależna weryfikacja progresji
+statystyk pozostają nieukończone.
 
 ### M146 — zwycięstwo, rozmowa po walce i wejście do M147
 

@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Okręt, helikopter i zapis F; następny brakujący moduł M273
+
+Kandydat e60419a9f przeszedł dalsze dialogi M271 i scenę helikoptera
+M272/0xa8047148. Przy112024 powrócił do mostka M271 po filmie34,
+video_state0. Cold SAN od samego autentycznego E: exit0 bez raportów,
+pełny JSON/VRAM identyczne, E bez zmian:
+/tmp/pe-m272-helicopter-v1-proof/proof.json. Nie jest to oracle PS1
+ani dowód braku skipu każdego filmu w tej sekwencji.
+
+Oryginalna fabuła otworzyła menu zapisu. Odmówiono nadpisania E
+(domyslne No), wybrano pusty slot5/No6 i zapisano F. Ekran118252
+potwierdził File saved, lokalizacja Carrier. Po zamknięciu menu przy118696
+M271, movie35, video_state0. Cold SAN exit0 bez raportów, pełny JSON/VRAM
+identyczne, E bez zmian, wygenerowane F identyczne bajtowo ze źródłem.
+Weryfikator v1 błędnie oczekiwał movie34; v2 sprawdził istniejące
+terminalne artefakty z movie35 bez ponownego uruchamiania gry:
+/tmp/pe-m271-save-F-v2-proof.json, -v2-verify.py; replay w -v1-proof/.
+Źródłowe F: /tmp/pe-m271-save-F-v1-source/BASLUS-006620000000F.
+
+Cold Continue z jedynym F: normal i SAN exit0 bez raportów, pełne
+JSON/VRAM identyczne, cały inventory zapisany w F zachowany, karta bez
+zmian: /tmp/pe-m271-continue-F-v2-proof.json, skrypt -v2.py.
+V1 odpadł przed grą przez nieposortowane zdarzenia inputu; zachowany.
+
+Dalszy live94804 zakończył się exit1: po filmie36 przy próbie przejścia
+z M271 do M273 brakuje natywnego deskryptora slot82, PS1 8019a900.
+Ostatni kontrolowany punkt120544 (movie36 w trakcie), potem advance3600
+bez inputu zakończył proces. Zachowane wejścia, stan, VRAM, log błędu
+i inwentarz źródeł: /tmp/pe-m273-missing-descriptor-v1/.
+To rzeczywista blokada dalszej kampanii, nie ukończenie gry.
+
+Istniejący moduł src/overlays/room_m273_liberty ma cztery pliki C i
+nagłówki, łącznie4131 linii. Nie jest jeszcze zintegrowany z natywnym
+loaderem. Próby C11 z flagami istniejącego targetu potwierdzają m.in.
+asercje struktur zakładających wskaźniki32bit; kod nadal zawiera adresy
+scratchpadu PS1. Diagnostyka /tmp/pe-m273-*-syntax-v1.log. Następny etap:
+naprawić cały ten moduł na miejscu, powiązać oryginalne dane, callbacki
+oraz deskryptory, potem świeże buildy/regresje i replay od F.
+Nie dodano nowych plików źródłowych ani zastępczej implementacji gry.
+
 ### Po E: M8000, M246 i dalsze sceny Eve
 
 Live94804 startuje wyłącznie z autentycznego E na kandydacie e60419a9f.

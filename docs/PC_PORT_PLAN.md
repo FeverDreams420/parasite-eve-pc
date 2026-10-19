@@ -2,38 +2,29 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: potwierdzono pojedynczy strzał + Square kończące resztę
-kolejki. Przy71809 w nowej gałęzi Aya66HP/boss268HP/17 naboi, bez
-Stiffness; dwa strzały z tego samego punktu kończyły się śmiercią.
-Nie jest to pokonanie bossa ani lepszy zapas HP niż wcześniejszy69355/169HP.
-Wcześniejsza trasa M380 osiąga69945 z106HP, bossem268HP i16 nabojami.
-Dalsze oryginalne Heal2/Haste przy71841 zostawiają84HP i aktywne Haste,
-bez Stiffness. Bezpośrednia salwa później kończy się śmiercią; osobny
-normal-only wariant krótkiego uniku dociera do235HP bossa, lecz Aya ma
-już tylko3HP. Cały boss nadal niepokonany; nie traktujemy tego jako wygranej.
-Wyłącznie oryginalne menu i zwykły input, bez zmian produkcji, nowych
-plików źródłowych, save editora lub zapisów gameplay RAM.
+Najnowszy postęp: obie formy pająka M156/M380 pokonane autentyczną
+trasą H i zwykłym sterowaniem. Przy81103 oryginalny ekran wyników,
+zero żywych przeciwników, Aya34/283HP. Nagroda G23 odebrana; następnie
+M381, dialog Eve i film16. Przy88803 story508, brak menu/dialogu,
+video_state0, move_lock0; następny ruch zmienia pozycję Ayi. Maksymalne
+HP po wynikach rośnie do320, PE do610. To postęp kampanii, nie ukończenie
+całego portu. Bez zmian kodu, nowych plików źródłowych, edytora save'ów
+lub zapisów gameplay RAM.
 
-Kandydat /tmp/pe-m156-cycles-v4: świeże388 obiektów (194/profil),48/48
-regresji exit0 oraz40 wybranych cold replayów trasy i walki exit0.
-Poprzednie osiem obejmuje pierwsze trafienia, dalszą walkę, wyczerpanie
-pierwszej formy i wejście M380. Pełny stan zgodny z live i między normal/SAN;
-pełne1MiB VRAM zgodne między profilami, a przy66443 także z zachowanym live.
-Dowód: /tmp/pe-hospital-spider-m380-v1-replay-proof.json.
-Wcześniejsze cztery obejmują gotowe ATB w M380 oraz leczenie i pierwszą
-salwę; stan zgodny z live, VRAM zgodny między profilami i przy67989
-także z zachowanym live: /tmp/pe-hospital-spider-m380-v2-replay-proof.json.
-Wcześniejsze osiem potwierdza przeładowanie w kolejce oraz wybraną trasę
-po uniku i Heal2: /tmp/pe-hospital-spider-m380-v{3,5}-replay-proof.json.
-Pełny stan zgodny z live, VRAM między profilami; bez zachowanego live VRAM
-tych punktów.
-Najnowsze cztery potwierdzają268HP bossa i Haste po Stiffness:
-/tmp/pe-hospital-spider-m380-v6-replay-proof.json.
-Rewalidacja388 obiektów i995 unikalnych plików oraz kopii build:
-/tmp/pe-hospital-spider-m380-v1-build-proof.json.
-SAN obejmuje kod portu (address,undefined,function); archiwa PsyZ/SDL
-pozostają nieinstrumentowane. build/parasite-eve-pc i fixture są kopiami
-tego kandydata normal. Pełna kampania nadal nie jest ukończona.
+Kandydat /tmp/pe-m156-cycles-v4 pozostaje niezmieniony:388 świeżych
+obiektów (194/profil),48/48 wcześniejszych regresji exit0 oraz54 wybrane
+cold replaye trasy/walki exit0. Najnowsze14 to trzy punkty walki ×2 profile
+oraz zwycięstwo/nagroda/film/powrót do sterowania ×2 profile.
+Pełny stan zgodny z historycznymi sesjami live; pełne1MiB VRAM zgodne
+między normal/SAN, a przy81103/82103/88803 także z zachowanym live.
+Dowody: /tmp/pe-hospital-spider-adaptive-v4-replay-proof.json oraz
+/tmp/pe-hospital-spider-finale-v1-replay-proof.json. Pozostałe próby
+taktyczne są osobną eksploracją, nie dodatkowymi zwycięstwami/regresjami.
+Rehash388 obiektów i995 plików manifestu, kopii build oraz prywatnych H:
+/tmp/pe-hospital-spider-finale-v1-build-proof.json. SAN obejmuje kod portu
+(address,undefined,function); archiwa PsyZ/SDL nieinstrumentowane.
+build/parasite-eve-pc i fixture nadal są kopiami kandydata normal.
+Pełna kampania i kompletna zgodność obrazu/audio z PS1 pozostają otwarte.
 
 Naprawa wyłącznie w istniejącym src/main/boot/init.c: blokujący odczyt
 sterowania zachowuje częściową komendę po EINTR, ponawia odczyt i odróżnia
@@ -69,6 +60,75 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Zwycięstwo M380, G23, M381 i story508
+
+Poprzedni odcinek był postępem: poprawna pojedyncza kula i Square do
+zakończenia reszty kolejki potwierdzone. Produkcja nadal bez zmian.
+Cztery normal-only próby /tmp/pe-spider-m380-single-v3-results.json
+stosują tę taktykę już od69355/169HP; najlepszy Down kończy69845/106HP,
+boss268HP. Sam krótszy ostrzał nie rozwiązuje ataków obszarowych.
+
+Runner w /tmp/pe-hospital-spider-adaptive-v{1,2,3,4}-live.py steruje
+wyłącznie oryginalnymi przyciskami, odczytując stan co20 klatek.
+V1 leczy podczas Stiffness i wyczerpuje PE, śmierć73143/boss268HP.
+V2 zmienia kierunek obiegania i używa Cure-M po nałożeniu blokady,
+ale umiera70035/boss301HP przed następnym gotowym ATB. V3 profilaktycznie
+używa Cure-M, lecz błędna kolejność nawigacji po kolejnym przedmiocie
+przenosi go do innego slotu i kończy80413 w menu; nie jest zwycięstwem.
+V4 naprawia wyłącznie zewnętrzny runner: otwiera listę, odczytuje kursor,
+wybiera slot, dopiero potem podmenu Use. Bez zmiany gry lub RAM.
+Wszystkie sesje zamknięte quit0, prywatne H i źródło niezmienione.
+
+Wybrany prefix /tmp/pe-hospital-spider-adaptive-v4-live do77407:
+Cure-M ze slotów0 i21, oryginalne Heal2 i pojedyncze strzały w fazie2/8.
+72145:Aya207HP/boss301HP;74105:Aya102HP/boss169HP;
+77407:Aya117HP/boss70HP/11 naboi, Cure-M22 nadal w ekwipunku.
+Późniejszy ogon v4 zużywa ostatnie Cure-M i umiera78785; nie jest wybraną
+kontynuacją. Sześć cold prób72145/74105/77407 × normal/SAN:
+/tmp/pe-hospital-spider-adaptive-v4-replay-proof.json. Pełny stan live
+zgodny, pełny VRAM zgodny między profilami; brak zachowanego live VRAM
+tych trzech punktów, więc nie ma takiego porównania.
+
+Cztery normal-only próby /tmp/pe-spider-m380-finaldodge-v1-results.json
+od77407 testują400 klatek ruchu. Down zachowuje117HP bez Stiffness,
+Right75,Left15,Up7. Wybrana /tmp/pe-spider-m380-finaldodge-v1-down
+prowadzi do77807 z70HP bossa,117HP Ayi i niezużytym Cure-M22.
+
+/tmp/pe-hospital-spider-finale-v1-live odtwarza ten prefix. Right260,
+Left260 iLeft40 pozwalają odnowić PE bez utraty HP. Heal2 oraz Right340:
+79183/Aya177HP. Podejście UpLeft180+100 kosztuje40+63HP, ale daje
+reticle1333. Dwie kule iDown340:80153/Aya74HP/boss4HP/9 naboi.
+Up160 daje reticle777; pojedynczy strzał, Square iDown340:
+80803/Aya34HP/boss999971 (autorski offset1000000), oryginalna sekwencja
+trybu7. Down300 prowadzi do81103:tryb2, zero żywych przeciwników,
+34/283HP,8 naboi. Obejrzany ekran wyników:
+/tmp/pe-hospital-spider-victory-v1-preview/frame.png.
+
+Oryginalne potwierdzenia wyników i Obtain All Items odbierają G23
+(dynamiczny item256 w pustym slocie0). Przy82103 M381/scenea80680c8,
+story504; maxHP320 i maxPE610, aktualneHP34 pozostaje. Obejrzany ekran
+nagrody /tmp/pe-hospital-spider-reward-v1-preview/frame.png wskazuje G23.
+Dalsze zwykłe potwierdzanie dialogów Eve uruchamia film16:86003,
+movie_frame333/video_state2. Advance1200 bez przycisków pozwala mu się
+zakończyć; kolejne dialogi do88803 dają story508, video_state0,
+move_lock0, menuNULL, brak aktywnego dialogu. Obejrzany obraz:
+/tmp/pe-hospital-spider-story508-v1-preview/frame.png. Left120 przy88923
+zmienia pozycję Ayi, po czym sesja quit0. Nie użyto pominięcia filmu.
+
+Osiem cold prób81103/82103/86003/88803 × normal/SAN, pełny stan równy
+live i pełne1MiB VRAM równe między profilami. Zachowane live JSON/VRAM
+przy81103/82103/88803 dodatkowo zgodne; przy86003 tylko stan live i VRAM
+między profilami. Dowód: /tmp/pe-hospital-spider-finale-v1-replay-proof.json.
+Zamrożone /tmp/pe-hospital-spider-finale-v1-{81103,82103,88803}.{json,vram}.
+Nie jest to dowód porównania całego filmu/PCM z oryginalnym PS1.
+Rehash i kopie build: /tmp/pe-hospital-spider-finale-v1-build-proof.json,
+388 obiektów/995 plików manifestu; archiwa SDK bez SAN. Wcześniejsze48/48
+regresji tego samego kandydata pozostają aktualne. Źródłowy H i wszystkie
+prywatne kopie niezmienione, bu10 puste; root karty nietknięte.
+Następny krok: autentyczne wyjście z dachu po story508, dalszy szpital/
+kampania i kolejny rzeczywisty zapis przez oryginalne menu telefonu.
+Historyczne sekcje poniżej opisują wcześniejsze, nieukończone próby.
 
 ### M380: pojedynczy strzał i poprawne zakończenie kolejki
 

@@ -2,6 +2,42 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Dodatkowe próby M188 na tym samym kandydacie (bez zmian produkcyjnych):
+pierwszy przebieg kończy się naturalnym Game Over; drugi potwierdza Heal3
+(135→335HP), zużycie Cure-P z usunięciem zatrucia oraz zużycie Cure-D.
+Ciemność została później nałożona ponownie przez przeciwnika. Nie deklarujemy
+zwycięstwa. /tmp/pe-m188-recovery-v1-replay-proof.json: sześć cold prób
+normal/SAN, checkpointy41344/42460/43790; pełne JSON-y zgodne z live,
+VRAM zgodny między profilami, końcowy także z zamrożonym live.
+
+Pełna ścieżka porażki została odtworzona:40122/0HP/GameOver,
+41762/ekran tytułowy, następnie Continue z tej samej prywatnej karty K,
+48202/M184/story596/278HP. Po wczytaniu zwykłe Down60 przesuwa Ayę,
+ekwipunek i rekordy wyposażenia są identyczne z wcześniejszym cold Continue
+K. /tmp/pe-m188-gameover-v3-replay-proof.json: sześć cold prób normal/SAN,
+pełny JSON i VRAM zgodne między profilami, końcowy VRAM również z live.
+Źródłowy i prywatny K niezmienione, brak dodatkowych zapisów, użytkowe karty
+nietknięte. Oba live zakończone0. Dodatkowe dowody i hashe kandydata:
+/tmp/pe-m188-campaign-extended-v1-proof.json. To rozszerzenie dowodów
+rozgrywki, nie nowy build ani pełna zgodność obrazu/audio z PS1.
+
+Przygotowano lepszą zwykłą drogę od tego samego K: od33820 w M187
+zamiast Energy Shot wykonano dwie serie po trzy strzały i podejście Left160.
+Pierwsza seria trafia raz (86→61HP), druga trzy razy (61→-14HP), automatyczne
+przeładowanie z2 pocisków do13 po strzale działa. Aya nadal278HP,
+PE31986731/65536 przed nagrodami, potem32047718/65536 (około489).
+Nagrody odebrane normalnie35310; Right1000,Up20,Right600 prowadzi do
+M188/36930/278HP. Cztery cold próby normal/SAN potwierdzają pełny JSON
+nagrody i wejścia oraz zgodny VRAM obu profili, końcowy również z live:
+/tmp/pe-m187-gun-check-v1-replay-proof.json. Źródłowy i prywatny K niezmienione.
+To nowy preferowany start do bossa:
+/tmp/pe-m187-gun-check-v1-36930-normal/args.json (usunąć --dump-vram przed
+nowym live i wybrać świeży katalog prywatnych kart). Wszystkie live zamknięte0.
+Łącznie w tym odcinku16 dodatkowych cold prób na niezmienionym kandydacie.
+Następny odcinek nadal ma wygrać M188 i przejść dalej; stary start z prawie
+pustym PE jest historią nieudanych prób. Nie zmieniać obrażeń, HP, skryptów
+ani zachowania bossa dla ułatwienia testu.
+
 M188/M390: cały istniejący spark_barrage.c (dziesięć procedur, pięć
 ataków) i script_arg_pair.c są w natywnym linku. Bez nowych plików źródłowych
 ani przenoszenia funkcji. Callbacki mają ABI (int, void *, intptr_t),

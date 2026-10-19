@@ -46,7 +46,58 @@ To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
 
-### Wspólna trasa bezpieczników i zasilanie
+### Naprawione przewody i działająca winda do parteru
+
+Doprecyzowanie poprzedniego etapu: autentyczny E ma trzy bezpieczniki
+zainstalowane i włączony przełącznik (bit32768), ale przewody jeszcze
+nie są naprawione (bit65536=0). Zielona kontrolka oraz sam bit32768 nie
+potwierdzają pełnej naprawy instalacji ani działania windy. Poprzednie
+replaye pozostają poprawne dla tego ograniczonego stanu; pełny warunek
+zasilania został sprawdzony dopiero poniżej.
+
+/tmp/pe-day4-power-continue-v2-live: zimne Continue z samym E. Wstępna
+próba M325→M339→M323→M321→M322 potwierdza nadal zawalone schody;
+M320 prowadzi do M329, nie na parter. Powrót do M144 i właściwa oryginalna
+interakcja lewego panelu: Toggle power off (28159, bit32768=0), ponowne
+podejście i druga opcja Repair wires (29204/29404, bit65536=1), zamknięcie
+dialogu i Toggle power on. Przy29933 story476→488, flag65=0x2041ffcb.
+Przy30333 automatyczne przejście do oświetlonego M142/a8024148;30593
+swobodne pole. Nie zmieniano warunków skryptów, przejść ani geometrii.
+
+Z M142 przez M130 i z powrotem, następnie środkowe drzwi korytarza →
+M129/a80224c8 przy31893. Oryginalny przycisk(-1161,191), Cross, podejście
+przez(-1600,~500) i32506: wnętrze windy M132/a8023148. Panel ma trigger
+x-400..-200,z-300..-160; krótki zwykły krok Left2 (bez biegu) przy33525
+pozwala wejść w obszar przy krawędzi podłogi, Cross uruchamia przejazd.
+Read-only SBValue/ReadMemory odczytuje15 oryginalnych trójkątów bez zmian:
+/tmp/pe-hospital-m132-floor-safe-v1.{json,log}. Detach nie kończy gry;
+kolejne wejścia działają. Nie usuwano kolizji ani blokad kind0x80.
+33965 drzwi otwarte; Left40 i34245: hol M127/a80223c8 na parterze,
+dialog126 „Maya...and me?”. Przy35085 dialog zamknięty, lock0/menuNULL,
+HP108/story488. Winda M129→M132→M127 jest więc rzeczywiście przejechana,
+nie tylko załadowana jako izolowana lokacja.
+
+Dalsza próba wejścia do lobby M126:35175..35755, następnie ruchDown
+uruchamia spotkanie czterech aktorów7:31/2/1/0, każdy88HP/def30.
+Próba anulowania kolejki ostrzału i ucieczki kończy się37347/HP0/tryb3;
+nie jest to zwycięstwo ani potwierdzenie przejścia lobby. Zachowano pełne
+input/log/state. Klient kończy quit/exit0, źródłowy i prywatny E bez zmian,
+bu10 puste, root kart nietknięty. Najnowszy bezpieczny punkt journalu do
+kontynuacji to35085/M127, nadal z autentycznego E. Następny krok: przygotować
+Ayę do spotkania lub przejść do właściwego triggera fabuły; skrypt windy
+udostępnia wybór13F dopiero przy story>=494, obecnie488.
+
+Dwanaście cold checkpointów28159/29404/30593/32506/34245/35085,
+każdy normal i ASan/UBSan/function:12/12 terminal exit0. Całe JSON zgodne
+z live i profilami, pełne1MiB VRAM zgodne między profilami; zachowane
+surowe live30593 i34245 również identyczne. Źródłowy i każda prywatna
+kopia8192B E bez zmian, bu10 puste. /tmp/pe-hospital-wire-repair-v1-replay-proof.json.
+Ponowna kontrola384 obiektów, ich zależności, archiwów i binariów oraz
+kopii build: /tmp/pe-hospital-wire-repair-v1-build-proof.json. Kandydat
+pe-control-read-v2 bez zmian kodu produkcyjnego. PsyZ/SDL nieinstrumentowane;
+nie jest to dowód ukończenia wyższych pięter ani niezależna referencja PS1.
+
+### Wspólna trasa bezpieczników i przełącznik (przed naprawą przewodów)
 
 Bez zmian produkcyjnych; kandydat nadal pe-control-read-v2. Sesja
 /tmp/pe-hospital-fuses-joined-v1-live odtwarza autentyczny D → M327/M328

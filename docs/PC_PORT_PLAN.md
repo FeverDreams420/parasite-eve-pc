@@ -2,6 +2,61 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Lepszy przebieg M168/M172: druga walka wygrana w89903 z143/335HP,
+zamiast6HP. Dwa Cure-D, zwykłe strzały G23, automatyczne przeładowanie,
+Energy Shot na zdrowego przeciwnika i dwie końcowe akcje zakończone Square.
+Nieudana seria po przeładowaniu nie zmieniła HP przeciwników; nie zaliczono
+jej jako trafień. Pozostałe PE3135839. Medicine2/raw7 z wcześniejszego łupu
+użyte w polu:143→233HP w91253. Przy pustym PE leczenie zaklęciami w polu jest niedostępne.
+Następnie ponowne M172, krótsze dojście do skrzyni, odbiór Super Tool
+(rawslot20 po zużytym Medicine2), powrót M167 w99603 z233HP i licznikami4/4.
+Źródłowe J oraz karty prywatne bez zmian. Bez zmian kodu gry i nowych źródeł.
+
+Cztery dodatkowe cold próby normal/SAN tego samego frog-fix-v1:
+89903 wygrana M168 i99603 powrót z Super Tool. Pełne JSON-y i1MiB VRAM
+zgodne z live oraz między profilami; /tmp/pe-sewer-cured-v1-proof.json
+wskazuje oba szczegółowe replay-proof. Kontynuacja ma lepszy stan:
+/tmp/pe-sewer-cured-check-v2-replay-99603-normal/args.json.
+Starsza trasa z6HP pozostaje historycznym dowodem, nie preferowanym wejściem.
+
+Dalsza sesja /tmp/pe-sewer-crossing-v1-live: M167 cztery aktywne aktory,
+HP194, a pierwsza próba Escape skuteczna (100945, tryb10, bez wrogów).
+Przejście do M169 w102465 ma194HP i liczniki4/5. M169 pozostaje do
+pełnego przejścia. Późniejszy odwrót i wyjście tą samą stroną obniżają
+licznik do4; nie jest to ukończenie korytarza. Nowe spotkania M167/M169
+po powrocie, Heal3, nieudane strzały podczas Darkness oraz udane i nieudane
+próby Escape są zachowane w dzienniku. Końcowy punkt114407 jest ponowną
+walką M169 z124HP, nie zwycięstwem ani nowym ukończonym odcinkiem.
+Nie zmieniano mechaniki dla przejścia testu. Preferowany bezpieczny punkt
+pozostaje99603/Super Tool/233HP; wejście M169194HP daje krótszy punkt do
+opracowania taktyki, bez nowego natywnego zapisu. Brak nowej awarii silnika
+nie dowodzi pełnej zgodności gameplayu, obrazu lub audio z PS1.
+
+Cztery kolejne cold próby normal/SAN potwierdzają100945 (Escape M167)
+i102465 (M169194HP): pełne JSON-y zgodne z live,1MiB VRAM zgodny między
+profilami. Tych dwóch punktów nie porównano z osobno zachowanym VRAM live.
+/tmp/pe-sewer-cured-v2-proof.json zbiera osiem prób tego etapu; kandydat
+frog-fix-v1 i wcześniejsze50 regresji pozostają niezmienione. Archiwa
+PsyZ/SDL nieinstrumentowane. Wejście M169:
+/tmp/pe-sewer-crossing-check-v1-replay-102465-normal/args.json.
+
+Dodatkowa próba normal /tmp/pe-sewer-bypass-v1-live, bez walki: przy wejściu
+M169 (x=-1850) ruch Down220 zatrzymuje się na z=-43, a Up500 na z=697.
+Oba blokowane brzegi leżą wewnątrz z=[-161,945] pierwszej strefy spotkania
+x=[-1800,-1500]. Ta próba nie znajduje obejścia bokiem; nie zmieniono
+kolizji ani stref. HP194, bez aktywnych przeciwników. Dowód normal-only:
+/tmp/pe-sewer-m169-wall-v1-proof.json. Nie jest to para SAN ani pełny test
+wszystkich możliwych obejść. Ponowny rehash kandydata:392 obiekty/1003 pliki,
+root game identyczny, /tmp/pe-sewer-cured-v2-rehash-proof.json.
+
+Oryginalne warunki M167: główna wschodnia odnoga przy bank55==4 i bank56==6
+ustawia bit0 bank54 i prowadzi do M166; inne odnogi dają pętle lub skrzynie.
+/tmp/pe-sewer-exits-v1-proof.json: odczyt oryginalnych skryptów i poprawne
+dekodowanie wszystkich tokenów. Warunek4/6 nie jest jeszcze potwierdzony
+runtime. Po powrocie M172 wyzwala się nowe spotkanie M167 z czterema aktorami;
+próby środkiem i bokiem skończyły się śmiercią. Potwierdzony punkt99603
+jest przed tym spotkaniem. Dalsza kampania i nowe trwałe save'y nadal otwarte.
+
 Kontynuacja kanałów: druga wygrana M168 (tym razem para aktorów8),
 pełne przejście korytarza, M172 i odebrany Super Tool. Oryginalne dane
 M167 wymagają bank[55]>=4 przed północnym wyjściem. Wyjście zwiększa

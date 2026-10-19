@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M201 wygrane EnergyShot, trasa przez warianty M340/M371
+
+Od70165 wM206 wycofano się spod zamkniętych południowych drzwi.
+Obejście centralnej ekspozycji od zachodu i północy, następnie wschodnie
+wyjście przy(2200,−450) dało M205 przy71393. Right245 doM204 przy71938;
+Down300,DownRight100 doM201 przy72646. Cała trasa369HP,bez walk.
+
+Down310 uruchomiło jeden typ3/sub31,200HP. Ruch180 odnowił pełne
+PE82837504; Aya345HP. Oryginalne menu PE/EnergyShot,potwierdzenie,
+wybór celu i Cross: przy73766 zwycięstwo345HP,magazynek7→6,PE0.
+Łup Junk pominięto przez END; bez wymiany pełnego plecaka. Po dalszym
+ruchu południowe wyjście M201 wybrało zgodnie ze stage183 wariantM340
+(A8064048),przy74775. Jest to poalarmowy wariant pomieszczenia M196,
+którego nie obejmował graf samych pokojów192..258.
+
+M340: centralną ekspozycję obchodzono od wschodu. Południowe wyjście
+prowadzi do zewnętrznego M192 przy75724. Lock2 nie blokuje wejść:
+Down50 zmieniło pozycję; Up80 uruchomiło zwykłą animację wejścia
+(lock3), która wróciła doM340 przy76661. Brak aktywnego dialogu.
+Zachodnie przejście M340 przyx−1771,z1003,po zwróceniu w lewo przez
+8klatek,uruchomiło M371 przy78600,345HP,menuNone,lock0. M371 jest
+klatką schodową, NIE laboratorium; to wynik obserwacji obrazu. Wstępna
+hipoteza o dojściu tymi drzwiami do laboratorium nie potwierdziła się.
+
+Rozszerzono odczyt pierwotnych skryptów w /tmp o warianty339..379 oraz
+M191/M37. Nie traktować grafu natychmiastowych opcode49 jako pełnego
+połączenia scen. Live12235 czeka wM371 przy78600; następny krok:
+ustalić faktyczną drogę do zdarzenia Klampa i kontynuować fabułę.
+Cold replay od B trasy i walki M201: normal/SAN exit0, cały JSON i VRAM
+równe live, B/C zachowane, ponownie utworzony D identyczny bajtowo.
+Dowód: /tmp/pe-m371-post-alarm-entry-v1-replay-proof.json.
+Nie zaliczono jeszcze klucza, labu ani ukończenia muzeum. Źródła
+produkcyjne bez zmian; SAN nie instrumentuje bibliotek PsyZ/SDL.
+
 ### M206: wygrana po alarmie, blokada drzwi zgodna z fabułą
 
 M207 przy64513: Down60,Left95,Down65 i przejście doM206 przy65049,

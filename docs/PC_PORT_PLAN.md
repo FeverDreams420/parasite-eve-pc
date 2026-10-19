@@ -2,6 +2,82 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M340: autentyczny zapis E po T-Rexie i Continue
+
+Telefon znajduje się w M340, po zachodniej stronie lobby. Jego strefa
+interakcji ma X−2000..−1650, Z−650..−480, wymagany kierunek512..1536.
+Z przejścia M197 spawn(−1653,250): Down70run, Left12run, zwolnienie
+przycisków i Cross otworzyły „Will you save your progress?”. Tak, Slot1,
+pusty slot4/No.5 utworzyły E; ekran186596 potwierdził „File saved”.
+Po zamknięciu menu przy188020: M340, Aya285/621, field/lock0,
+M500 nadal wyposażone, M8000 w slocie1, Medicine3 w slotach15 i27.
+
+Źródło /tmp/pe-m340-post-trex-save-E-v1-source/BASLUS-006620000000E,
+8192B, SHA256 8a23993e31fe9410836f934eac690417e38d58f6f4631ebe1c7c331caa998808.
+Pełny cold replay SAN od B ponownie utworzył identyczne bajtowo E,
+zachował B/C/D, zakończył exit0 bez raportów; pełny JSON/VRAM identyczne
+z normalnym live. /tmp/pe-m340-post-trex-save-E-v1-proof/proof.json.
+
+Osobne cold Continue wyłącznie ze źródłowego E: oba procesy normal/SAN
+exit0 bez raportów, pełny JSON i VRAM identyczne, cały inventory równy
+zapisanemu, story stage zachowany, menu/dialogi zamknięte, lock0, HP285.
+Oryginalny wariant wejścia global1=998 ustawia pozycję
+(−108855296,0,−38928384), yaw3072; oba replaye są z nim dokładnie zgodne.
+Weryfikator v1 odpadł przed uruchomieniem przez zły indeks parsowania
+argumentów. V2 uruchomił oba procesy poprawnie, lecz błędnie oczekiwał
+pozycji sprzed zapisu. Osobny v3 sprawdził wszystkie dane terminalnych
+replayów v2 i dokładny oryginalny spawn; bez zmian gry ani powtarzania
+testów po samej korekcie weryfikatora. Dowód
+/tmp/pe-m340-continue-E-v3-proof.json, skrypt -v3-verify.py; procesy i pełne
+artefakty w /tmp/pe-m340-continue-E-v2-{normal,san}/. Źródłowe E bez zmian.
+
+Długi live73708 zamknięty quit, exit0. Nowy live94804,
+/tmp/pe-m340-continue-E-live-v1.py, startuje z samego E na kandydacie
+e60419a9f do zweryfikowanego20000. Kolejne próby mogą korzystać z tego
+autentycznego checkpointu zamiast odtwarzać całą trasę od B. Pełna
+kampania i pozostały zakres portu nadal nieukończone.
+
+### M253: T-Rex pokonany na kandydacie e60419a9f
+
+**M8000 odebrane, oba Medicine3 zachowane.** Live73708 odtworzył176801,
+wybrał SEL i wymienił M8000 z Medicine3 w slocie1, następnie pending
+Medicine3 z CureP w slocie15. END zostawił CureP, zamknął nagrody i
+przeszedł doM371/0xa80670c8. Przy178647: Aya285/621, mode9, lock0,
+slot1=269 (record13, itemId0x48=M8000), slot15=8, slot27=8,
+weapon_slot nadal26 (M500). Nie deklarować jeszcze wyposażenia M8000.
+Niezależny cold replay SAN od autentycznego B: exit0 bez raportów,
+pełny JSON/VRAM identyczne, karty B/C/D zgodne ze źródłami.
+/tmp/pe-trex-loot-v1-proof/proof.json i skrypt .py obok; weryfikator
+sprawdza także slot1/15/27 i HP285. To zastępuje nieudany odbiór ALL.
+
+Późniejszy zwykły ruch przeszedł M371→M340→M201 (rainforest).
+Live73708 przy180742: M201, Aya285/621, menuNone, lock0,
+pozycja(250,−3568). Ta późniejsza trasa nie ma jeszcze niezależnego
+replayu. Nowy zapis po bossie nadal nie został utworzony; nie zakładać
+telefonu w M201 na podstawie nazwy „Museum Entrance” z poradnika.
+
+Cold Continue B, zwykły awans33 i Liberate, następnie zwykłe salwy M500
+oraz kończący EnergyShot pokonały T-Rexa. Przy176801 combat.mode2,
+ekran nagród, zero przeciwników, Aya285/621, ammo8, PE0. Oba Medicine3
+(slot1 i27) zachowane. Niezależny cold replay ASan/UBSan/function od B
+zakończył się exit0 bez raportów: pełny JSON i VRAM identyczne z live,
+karty B/C/D zgodne ze źródłami. Dowód /tmp/pe-trex-victory-v1-proof/,
+proof.json i skrypt /tmp/pe-trex-victory-v1-proof.py. Weryfikator wymaga
+mode2, live_enemies0 i żywej Ayi. To zaliczenie natywne/SAN, nie PS1.
+
+Liberate zadało1596HP (2400→804), sześć par strzałów po94 pozostawiło
+240HP: checkpointy804→710→616→522→428→334→240. Następnie EnergyShot
+zakończył walkę.
+Nie zużyto Medicine3. Żadnych zmian obrażeń, statystyk ani save/RAM.
+
+Pierwszy odbiór łupu przez ALL nie przejął M8000: pełny plecak28/28.
+Zamknięcie nagród przeniosło do0xa80670c8; inventory nie zawiera nowej
+broni. Zachowano ten nieudany odbiór w /tmp/pe-trex-uncollected-loot-v1/,
+live81850 zamknięty quit, exit0. Nowy cold Continue na tym samym
+kandydacie odtwarza176801 przed nagrodami: live73708,
+/tmp/pe-trex-loot-v1-live.py. M8000 należy odebrać przez zwykłą wymianę
+w menu; nie deklarować jeszcze zdobycia. Dalsza kampania pozostaje otwarta.
+
 ### M245: próba bez Energy Shot — 20 października
 
 **Liberate odblokowane zwykłym awansem i poprawiony błąd C11.**

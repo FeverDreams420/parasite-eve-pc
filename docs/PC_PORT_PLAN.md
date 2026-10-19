@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M229: zwycięstwo nad wariantem320HP i wybór punktu z amunicją
+
+Live49086 wyposażył G23 i odtworzył zwykły input drogi M225→M227→M228
+(gzyms,zejście)→M229 przy208231,573HP. Down30 i inicjalizacja wybrały
+tym razem pojedynczy typ4/sub31,320HP. Ruch odnowił PE do78118912/max,
+przy415HP. G23 przeładował ostatnie3 naboje,pojedynczy strzał zadał36.
+EnergyShot przy210883 pokonał284HP celu;211283 wynik zwycięstwa,415HP.
+ALL odebrało Medicine3 do pustego slot10,END→field przy211965.
+Zachowane Medicine4(slot15) i Medicine3(slot17),G23slot0,clip1,rezerwa0.
+Nie użyto RAM writes ani edytowanych save'ów. Pełny JSON/VRAM normal/SAN/
+live równy,oba exit0,bez raportów sanitizerów:
+/tmp/pe-m229-frog-victory-v1-replay-proof.json. To zwycięstwo wariantu
+pojedynczego; wcześniejszy wariant z dwoma typ3 ma osobny dowód.
+
+Próba zużyła prawie całą amunicję. Live49086 zamknięty quit,exit0.
+Uruchomiono/tmp/pe-m229-ammo-grind-v1-live.py z jawnym --control-at215799:
+pełne zwykłe odtworzenie potwierdzonej starszej trasy,gdzie dwa typ3 wM229
+dały dwie paczkiAmmo15,a następnie wydano100BP na G23attack62→63.
+Początek:M231 przed spotkaniem,205HP,98BP i zdobyte30 nabojów; stan należy
+potwierdzić po dojściu. Plan:wrócić bez uruchomienia M231 doM229 i zdobywać
+nagrody z dostępną amunicją. Nie zaliczać jeszcze EXP ani BP z tej próby.
+Źródła produkcyjne bez zmian.
+
 ### M225→M224→M223 i powrót: dodatkowe spotkanie, bez EXP/BP
 
 Próba pe-m224-grind-v1 miała błędną konfigurację: brak --control-at.
@@ -19,8 +42,9 @@ Medicine3. Powrót przez M224→M225 przy200444:573HP,mode10,lock0.
 Nie zdobyto EXP ani BP; nie nazywać tej pętli udanym grindem.
 
 Zamrożony JSON/VRAM i pełny zwykły input:
-/tmp/pe-m224-return-v1-200444.{json,vram}; powtórki normal/SAN trwają
-przez/tmp/pe-m224-return-v1-replay.py. Live49086 czeka wM225,573HP,
+/tmp/pe-m224-return-v1-200444.{json,vram}; powtórki normal/SAN exit0,
+pełny JSON/VRAM równy live,bez raportów sanitizerów:
+/tmp/pe-m224-return-v1-replay-proof.json. Live49086 czeka wM225,573HP,
 M203 wyposażony/pusty; zachowane Medicine4 i jedna Medicine3. G23 trzeba
 ponownie wyposażyć przed następną próbą. Root bu00/bu10 nietknięte.
 Pomocniczo sprawdzono poradnik autora enaysoft:

@@ -27,12 +27,26 @@ Osobna trasa po Continue N ponownie otwiera drzwi M266→M333,26706,
 /tmp/pe-warehouse-key-save-v1-proof.json. Root game/fixture nadal równe
 kandydatowi /tmp/pe-m186-event-v1; kod produkcyjny bez zmian.
 
-M333 uruchamia następną walkę (4:31,4:30,6:31,6:30),242/242/10/10HP.
-Seria /tmp/pe-warehouse-m333-search-v1.py, sesja45832, jest aktywna;
-sprawdzić terminal.json przed kolejnym startem. Jej zwykły input pochodzi
-od L przez klucz i poprzednią wygraną. Nowy live /tmp/pe-warehouse-N-v1-live.py,
-sesja93171, stoi w26706 przy wejściu M333 po Continue N. Pełna walka M333,
-reszta Warehouse i kampania pozostają nieukończone.
+M333: pełna walka wygrana zwykłym inputem, 55278,230/437HP,
+zero przeciwników. Seria zakończona po 80 próbach normal (9 rund):
+/tmp/pe-warehouse-m333-search-v1-proof.json. Cold normal/SAN odtwarzają
+pełny JSON i VRAM identyczne z live:
+/tmp/pe-m333-victory-v1-replay-proof.json. Prywatny i źródłowy L bez zmian,
+Warehouse Key220 zachowany. Po oryginalnych nagrodach zwykłe przejście
+prowadzi do M267,56428,230HP; pełny JSON/VRAM normal/SAN/live:
+/tmp/pe-warehouse-m267-v1-replay-proof.json.
+
+Dalszy zwykły input omija przeszkody M267 i prowadzi do drabiny M268
+(0xa8046448),58573,230HP. Cold normal/SAN potwierdza pełny JSON/VRAM identyczny z live:
+/tmp/pe-warehouse-m268-v1-replay-proof.json. Live
+/tmp/pe-m333-victory-v1-live.py zakończył się podczas zejścia po drabinie:
+po60463 kolejny Down300 prowadzi do M269, gdzie loader zgłasza brak
+native descriptor slot77,PS1 801921c8 (exit1). Zabezpieczony log/input:
+/tmp/pe-warehouse-m269-missing-v1/. Istniejące grab_attack.c i
+grab_await_stance.c wskazują oryginalną rodzinę room_m269; kolejny krok
+to audyt całego modułu i naprawa bindingów w istniejących plikach.
+Nie zmieniano kodu produkcyjnego. Reszta Warehouse i pełna kampania
+pozostają nieukończone.
 
 ### Wcześniejsze zdobycie klucza
 

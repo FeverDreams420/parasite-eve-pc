@@ -44,7 +44,17 @@ po60463 kolejny Down300 prowadzi do M269, gdzie loader zgłasza brak
 native descriptor slot77,PS1 801921c8 (exit1). Zabezpieczony log/input:
 /tmp/pe-warehouse-m269-missing-v1/. Istniejące grab_attack.c i
 grab_await_stance.c wskazują oryginalną rodzinę room_m269; kolejny krok
-to audyt całego modułu i naprawa bindingów w istniejących plikach.
+to dostosowanie całego istniejącego modułu i naprawa bindingów.
+Audyt /tmp/pe-m269-grab-audit-v1.json potwierdza pełne 13140B modułu,
+SHA256 bf8b6d0d585d08479fd1ac02c8946e79f4142d424086b4f67d7b7e31583554dd,
+oraz cztery deskryptory:77/801921c8,137/80192228,138/801922a8,
+139/801922f8. Wszystkie20 funkcji jest już w grab_attack.c, lecz pliku
+nie ma w zestawie źródeł CMake. Próba kompilacji istniejącymi flagami
+normal kończy się1: trzy asercje offsetów zakładają32-bitowe wskaźniki.
+Dodatkowo Configure przyjmuje wskaźnik przez int, callback jest wywoływany
+bez obiektu, a scratchpad nadal ma adres0x1f800008. Log kompilacji:
+/tmp/pe-m269-grab-audit-v1-compile.log. Samo dodanie slot77 nie jest
+wystarczającą naprawą. Kod produkcyjny nadal bez zmian.
 Nie zmieniano kodu produkcyjnego. Reszta Warehouse i pełna kampania
 pozostają nieukończone.
 

@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M231: kolejne spotkania po ucieczce i zasięg EnergyShot
+
+Powrót zM229 doM231 przy225142 (52HP) odtworzył obu przeciwników;
+próba skończyła się śmiercią226092. Zamrożono JSON/VRAM/input pod
+/tmp/pe-m231-reentry-defeat-v1-226092. Live73074 zamknięty quit,exit0.
+Nowy live60551 odtworzył potwierdzony215799 (205HP,attack63,98BP).
+Po Right100,Up420 pierwsza próba Escape się powiodła bez utraty HP.
+Próba przejścia sali ponownie uruchomiła spotkanie,tym razem typ5/sub31
+320HP i dwa typ3/sub30,29 po280HP. Escape za drugim razem powiódł się
+przy162HP. Kolejne przejście znowu uruchomiło typ4/sub31+typ3/sub30.
+Nie utożsamiać wszystkich pól spotkań z jednym wyczyszczonym starciem.
+
+EnergyShot przy58892725/78118912 PE,z odległości2536 na typ4/sub31,
+zmniejszył jegoHP390→148. HP Ayi162→115 podczas animacji; dalsze
+zatrucie i ataki doprowadziły do śmierci219925,również podczas próby
+ucieczki. Zamrożone JSON/VRAM/input:
+/tmp/pe-m231-early-escape-defeat-v1-219925. To obserwacje zwykłej gry,
+nie dowód błędu. Nie zmieniano RAM ani źródeł. Następna próba powinna
+odnowić HP/PE przed atakiem i używać krótszych odcinków ruchu po środku
+sali: szerokie prostokąty blokowały Ayę na przeszkodach.
+
 ### M231 druga próba: pokonany typ3, Escape i powrót do M229
 
 LiveSAN73074 kontynuował od215799 po wydaniu100BP. Heal3 odnowiło
@@ -12,8 +33,8 @@ wycofanie:Triangle,Escape(rootcursor4),Cross. Dwie próby nie zakończyły
 walki; trzecia dała mode10,52HP,brak aktywnych przeciwników. Po zakończeniu
 animacji223454 move_lock0;Left35,wait400→M229 przy223889,52HP.
 Zamrożone JSON/VRAM i pełny input zwykłych przycisków znajdują się pod
-/tmp/pe-m231-escape-v1; uruchomiono normal/SAN replay,wynik wymaga
-potwierdzenia. Nie traktować tego jako zwycięstwa M231 ani naprawy błędu.
+/tmp/pe-m231-escape-v1. Normal/SAN exit0,pełny JSON/VRAM obu wariantów
+równy live,bez raportów sanitizerów:pe-m231-escape-v1-replay-proof.json. Nie traktować tego jako zwycięstwa M231 ani naprawy błędu.
 LiveSAN73074 pozostaje wM229,52HP. Zasoby lecznicze wyczerpane; następną
 próbę warto zacząć od potwierdzonego215799 z205HP i wcześniej sprawdzić
 Escape oraz dalszą drogę zamiast ponownie zużywać całePE na leczenie.

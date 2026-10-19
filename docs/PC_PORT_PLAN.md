@@ -2,10 +2,10 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp kampanii: zwycięstwo w M149 przez oryginalny Energy Shot,
-uruchomienie urządzenia/story494 i powrót do M126. Osiem nowych cold
-replayów normal/SAN opisano poniżej. Nowy zapis przy telefonie,13F oraz
-dalsza kampania pozostają niepotwierdzone. Kod produkcyjny bez zmian.
+Najnowszy postęp kampanii: autentyczny telefoniczny Save F po story494,
+zimny Continue F i wjazd na13F/M150/story496, następnie M152.
+Szesnaście nowych cold replayów normal/SAN opisano poniżej. M152 nadal
+niewygrane; trzy próby ucieczki kończą się śmiercią. Kod produkcyjny bez zmian.
 
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
@@ -51,6 +51,90 @@ To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
 
+### Trwały Save F, Continue i13F — story496, M152 nadal niewygrane
+
+Poprzedni odcinek był postępem: osiem parowanych replayów potwierdziło
+zwycięstwo M149 i urządzenie494. Obecny odcinek znajduje właściwy telefon.
+Współrzędne3050,1800 z poprzedniej próby dotyczyły innej interakcji przy
+recepcji; właściwy telefon w lobby działa przy1337.5,1107.5.
+/tmp/pe-hospital-savef-v2-live odtwarza pełny journal E do92898/M126,
+Right110 i Up54, Cross, oryginalne Will you save your progress?/Yes.
+Slot1 domyślnie wskazuje istniejący E/index4; pojedyncze Down wybiera
+pusty F/index5. Potwierdzono ekran Unused File przed zapisem i No6 po nim.
+Save i End kończą95356: M126/story494/HP11, menuNULL/lock0.
+Zachowane /tmp/pe-hospital-savef-v2-95356.{json,vram}.
+
+F powstał wyłącznie przez menu gry na prywatnej karcie. Źródło:
+/tmp/pe-hospital-device-save-v1-source/BASLUS-006620000000F,8192B,
+SHA2566e091fc7adc8d41c0f00ba2dfbd46a79d3e77e1c3694c4279f05232fb80a0c3e.
+Dwa cold replaye całego E→SaveF normal/SAN mają identyczny cały stan,
+pełny VRAM i wszystkie8192 bajty F względem live oraz między profilami:
+/tmp/pe-hospital-savef-v2-replay-proof.json. E nie nadpisano.
+
+Zimny Continue tylko z F wymaga pięciu odrębnych Down do pliku6.
+/tmp/pe-hospital-device-continue-v2-live przy24000: M126/story494/HP11,
+menuNULL/lock0, cały ekwipunek identyczny z95356. Oryginalny init zapisu
+ustawia pozycję1280,1160; nie wymaga się dowolnego położenia przed Save.
+Dwa cold replaye normal/SAN zgodne całym JSON/VRAM także z zachowanym live:
+/tmp/pe-hospital-device-continue-v2-replay-proof.json. Pierwszy launcher
+v1 zakończył1 z Invalid input buttons/order, bo dodatkowy impuls18240 był
+po późniejszych wpisach. Posortowano wyłącznie argumenty testera; v2 exit0.
+
+Z F zwykły marsz prowadzi24865 do M127. Prawa winda jest dostępna przy
+oryginalnych flagach66; przejście26220→26480 daje M132/a8023148.
+Panel ma polygon x−400..−200,z−300..−160 i yaw3584..512 przez wrap.
+Przy27105 Aya ma około(−224,−174), Left4 ustawia yaw0. Cross otwiera
+Select Floor/page117; po rozwinięciu menu dwa Down wybierają13th Floor.
+Przy29917 animacja jazdy zakończona, lock0. Wyjście daje30201
+M150/a8025048, init oryginalnego skryptu ustawia story494→496.
+Zachowano /tmp/pe-hospital-device-continue-v2-30201.{json,vram}.
+
+Oglądnięto poboczny widok okna M151 (30660), powrót31224 do M150.
+Zbliżenie do drzwi uruchamia oryginalną animację i prowadzi31581 do
+M152/a8025148, HP11/lock0. Zachowane -continue-v2-31581.{json,vram}.
+Dalszy ruch uruchamia czterech wrogów4:31/170HP,5:0/45HP i6:0,6:1/88HP;
+wróg4 tworzy kolejnych5. Przy32001 pełny ATB, PE~55, nadal11HP.
+Escape z oryginalnego menu nie udaje się; późny ruch kończy32553 HP0/mode3.
+Sześć cold replayów30201/31581/32553 ×normal/SAN, cały JSON zgodny z live,
+pełny VRAM między profilami i zachowanym30201/31581:
+/tmp/pe-hospital-13f-v1-replay-proof.json. Śmierć nie oznacza awarii portu.
+
+Read-only SBValue/ReadMemory, attach/detach exit0, M152 ma45 trójkątów,
+podłoga niepłaska: /tmp/pe-hospital-m152-floor-safe-v1.{json,log}.
+Wszystkie17 wspólnych stanów31581..32433 identyczne z sesją bez obserwatora;
+/tmp/pe-hospital-m152-floor-observer-v1-proof.json. Pierwsza końcowa asercja
+weryfikatora błędnie oczekiwała18 stanów; poprawiono licznik na dokładną
+listę17 i zweryfikowano istniejące artefakty, bez rerunu gry.
+Przy z−1940 wszystkie przechodnie odcinki łączą się w
+x[−750.0676,692.7328], wewnątrz triggera x[−777,870],z[−1950,−1840].
+Zwykły ciągły marsz od wejścia z−2100 do Medicine3 z~−690 przecina trigger;
+nie dotyczy to ucieczki lub skryptowych przejść. Dowód
+/tmp/pe-hospital-m152-route-v1-barrier-proof.json. Analiza USA używa
+/tmp/pe-hospital-device-v2-room{151..154}.bin, poprawnych pól sektorów8/12/12.
+
+Dwanaście wariantów normal-only: opóźnienia pierwszego Escape20..160
+krok20 nie dają ucieczki, późniejsze kończą się śmiercią. Wcześniejszy bieg
+Up+Left/mask8336 po pierwszym nieudanym Escape pozwala32593 osiągnąć
+pełny ATB i zachować11HP; trzy inne kierunki kończą się śmiercią.
+/tmp/pe-hospital-m152-escape-variants-v1-proof.json, bez parowania SAN.
+Kontynuacja tego wariantu /tmp/pe-hospital-m152-escape-v3-live: drugi
+Escape nieudany33085, HP11; przy33185 HP3. Trzeci również nieudany,
+33617 HP0/mode3, wszyscy wrogowie nadal żyją. Sześć cold replayów
+32593/33085/33617 ×normal/SAN ma identyczny cały stan względem live
+oraz pełny VRAM między profilami: /tmp/pe-hospital-m152-escape-v3-replay-proof.json.
+Nie wykazano błędu RNG ani nieuniknionej śmierci; nie zmieniano balansu.
+
+Łącznie16 nowych terminalnych cold przypadków obu profili. Rehash384
+obiektów, zależności, archiwów i binariów, kopia build gry identyczna:
+/tmp/pe-hospital-device-save-v1-build-proof.json. SAN obejmuje kod portu,
+PsyZ/SDL nadal nieinstrumentowane. Sesje interaktywne zakończone quit0,
+źródłowe/prywatne E/F niezmienione poza utworzeniem nowego F, bu10 puste;
+karty root nietknięte. Brak zmian produkcyjnych i nowych plików repo.
+Następny krok: leczenie PE w M152 lub lepiej zachowane HP po M149,
+następnie zwycięstwo i dalsza trasa. F jest trwałym autentycznym punktem494;
+13F/story496 wymaga odtworzenia krótkiego journalu od F. Pełna kampania,
+niezależna zgodność pikseli/PCM z PS1 i dalsze wymagania pozostają otwarte.
+
 ### M149 — zwycięstwo, urządzenie/story494 i powrót
 
 /tmp/pe-hospital-m149-energy-v1-live odtwarza pełny autentyczny journal E,
@@ -90,8 +174,9 @@ przechodni zakres x[−1695.1724,−414.7553] leży wewnątrz triggera
 x[−1805.9880,−193.9390]. Zwykły ciągły marsz od startu do urządzenia
 przecina spotkanie; nie jest to dowód dotyczący ucieczki lub przejść skryptem.
 
-Próby telefonu po powrocie skierowały Ayę do sąsiednich pomieszczeń.
-Nie wykonano nowego zapisu F ani Continue F. Trwałym źródłem nadal E;
+W tym wcześniejszym odcinku próby telefonu skierowały Ayę do sąsiednich
+pomieszczeń. Nie wykonano jeszcze F ani Continue F (późniejsze testy wyżej).
+Ówczesnym trwałym źródłem był E;
 sprawdzony postęp494 wymaga pełnego journalu. Sesje energy/route/confuse
 oraz osobna /tmp/pe-hospital-savef-v1-live kończą quit/exit0; źródłowy E
 oraz prywatne kopie bez zmian, bu10 puste. Root bu00/bu10 nietknięte.

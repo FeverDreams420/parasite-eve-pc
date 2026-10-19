@@ -2,7 +2,27 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-### M269: poprawione zerowe kolory smug i arytmetyka wejścia
+### M269: pierwsza część bossa pokonana
+
+Seria /tmp/pe-warehouse-m269-search-v2.py nadal pracuje pod SAN (sesja30868).
+Punkt r02-c00,66401,437/437HP ma już6 przeciwników zamiast7: część4:30
+pokonana zwykłym inputem. Cold normal/SAN od autentycznego L odtwarzają
+pełny JSON i VRAM identyczny także z punktem SAN serii:
+/tmp/pe-m269-first-claw-v1-replay-proof.json. Prywatny i źródłowy L bez zmian,
+bez edycji RAM, save ani statystyk. Kod produkcyjny bez nowych zmian.
+
+Co najmniej40 zakończonych prób SAN przeszło audyt inputu, kart i logów:
+/tmp/pe-m269-san-progress-v1.json. Po rundzie3 najlepszy r03-c04,66819,
+437HP,6 wrogów; główna część3:31 ma1000772HP, pozostałe345/420/420/420/420.
+To dalszy odcinek walki, nie zwycięstwo. Sprawdzić żywy uchwyt i terminal.json
+przed kolejnym startem. Pełny boss i kampania nadal nieukończone.
+
+Surowy M365 (następna scena w grafie Warehouse) nie ma żadnych deskryptorów
+PM, tylko blok skryptów475B; audyt /tmp/pe-warehouse-m365-audit-v1.json,
+blok /tmp/pe-warehouse-m365-script-v1.bin. Bez naturalnego wejścia M365 nie
+jest zaliczony jako działająca lokacja.
+
+### Wcześniejsze poprawki zerowych kolorów smug i arytmetyki wejścia
 
 Aktualny kandydat /tmp/pe-m269-glow-v2 naprawia na miejscu dalszą awarię
 r00-c05 po Heal3. Raport normal wskazywał FieldFx_DrawGlowLine wywołany

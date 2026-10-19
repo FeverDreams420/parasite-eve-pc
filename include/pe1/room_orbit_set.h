@@ -23,12 +23,12 @@ typedef struct RoomOrbitSetState {
     struct FieldActor *owner;
     RenderMatrix matrix;
     union {
-        void *allocation;
+        int index;
         u8 page;                  /* texture page the draws select */
     } asset;
 } RoomOrbitSetState;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOrbitSetState, asset) == 0x24,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOrbitSetState, asset) == sizeof(void *) + 0x20,
                   room_orbit_set_allocation_offset);
 
 /* Per-room data: the four sprite records, at different addresses and with
@@ -42,20 +42,34 @@ extern RoomFxSpritePacket g_RoomOrbitShadowPacket;
  * order, and the script and lists it hands the field engine, named in each
  * room's symbol file. */
 extern int g_RoomOrbitSetScript[];
-extern RoomModuleHandler g_RoomOrbitSetDrawList[];
-extern RoomModuleHandler g_RoomOrbitSetUpdateList[];
-extern RoomModuleHandler g_RoomOrbitSetInitList[];
-extern int g_RoomOrbitSetSpawnLayout[];
+extern FieldFxHandler g_RoomOrbitSetDrawList[];
+extern FieldFxHandler g_RoomOrbitSetUpdateList[];
+extern FieldFxHandler g_RoomOrbitSetInitList[];
+extern u16 g_RoomOrbitSetSpawnLayout[];
 
-int RoomEffect_OrbitSetNop0(void);
-int RoomEffect_OrbitSetPlantScript(void *object);
-int RoomEffect_OrbitSetSpawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
-int RoomEffect_OrbitSetRegister(void *o);
-int RoomEffect_OrbitSetStart(void *o);
-int RoomEffect_OrbitSetClose(struct RoomEnt *o);
-int RoomEffect_OrbitSetNop6(void);
+extern PmCommand g_RoomOrbitSetHandlers;
+void RoomEffect_OrbitSetNop0(void);
+void RoomEffect_OrbitSetPlantScript(PmSlotHeader *object);
+int RoomEffect_OrbitSetSpawn6(PmSlotHeader *, int, int, intptr_t, intptr_t, intptr_t);
+int RoomEffect_OrbitSetRegister(PmSlotHeader *object);
+int RoomEffect_OrbitSetStart(PmSlotHeader *object);
+int RoomEffect_OrbitSetClose(PmSlotHeader *object);
+void RoomEffect_OrbitSetNop6(void);
 
-/* The frame counter at 0x800942EC, read as the floor height. */
+int RoomEffect_OrbitSetInit(void *, void *, void *);
+int RoomEffect_OrbitSetDraw(void *, void *, void *);
+int RoomEffect_OrbitSetUpdate(void *, void *, void *);
+int RoomEffect_InitOrbitParticles(void *, void *, void *);
+int RoomEffect_DrawOrbitParticles(void *, void *, void *);
+int RoomEffect_UpdateOrbitParticles(void *, void *, void *);
+int RoomEffect_InitOrbitBurst(void *, void *, void *);
+int RoomEffect_DrawOrbitBurst(void *, void *, void *);
+int RoomEffect_UpdateOrbitBurst(void *, void *, void *);
+int RoomEffect_InitOrbitSprite(void *, void *, void *);
+int RoomEffect_DrawOrbitSprite(void *, void *, void *);
+int RoomEffect_UpdateOrbitSprite(void *, void *, void *);
+
+/* Current room floor height is declared by room_floor.h. */
 
 void FieldFx_SetScriptContext(void *state);
 int *FieldFx_RegPtr(int index);

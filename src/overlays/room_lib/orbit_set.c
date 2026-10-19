@@ -9,32 +9,48 @@
  * (pe1/room_orbit_set.h).
  *
  * The class and the set follow each other in all five rooms, with the
- * set's seeds as the unit's only rodata, so they are one unit. The set's
- * loops need -fno-strength-reduce; the class methods compile the same
- * either way.
+ * set's seeds as the unit's only rodata, so they are one unit.
  */
 
 #include "pe1/field_actor.h"
 #include "pe1/room_orbit_set.h"
 
-#include "render_layouts.h"
+#include "pe1/gte.h"
+#include <string.h>
 #include "room_lib.h"
 
-ROOMLIB_RETURN_ZERO(RoomEffect_OrbitSetNop0)
-
-ROOMLIB_PLANT_TABLE(RoomEffect_OrbitSetPlantScript, g_RoomOrbitSetScript)
-
-ROOMLIB_SPAWN6(RoomEffect_OrbitSetSpawn6)
-
-ROOMLIB_REGISTER_TABLE_AT3(RoomEffect_OrbitSetRegister, g_RoomOrbitSetDrawList)
-
-ROOMLIB_START_AT3(RoomEffect_OrbitSetStart, g_RoomOrbitSetUpdateList,
-                  g_RoomOrbitSetInitList, g_RoomOrbitSetSpawnLayout,
-                  RoomEffect_OrbitSetClose)
-
-ROOMLIB_CLOSE_TARGET(RoomEffect_OrbitSetClose)
-
-ROOMLIB_RETURN_ZERO(RoomEffect_OrbitSetNop6)
+void RoomEffect_OrbitSetNop0(void) {}
+void RoomEffect_OrbitSetPlantScript(PmSlotHeader *object) {
+    *FieldFx_GetSlot((FieldFxObject *)object) = g_RoomOrbitSetScript;
+}
+int RoomEffect_OrbitSetSpawn6(PmSlotHeader *object, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)object,b,c,d,(int)e,(int)f);
+    return 0;
+}
+int RoomEffect_OrbitSetRegister(PmSlotHeader *object) {
+    if(FieldFx_GetStatus(object)==3)
+        FieldFx_Register((FieldFxObject *)object,g_RoomOrbitSetDrawList);
+    return 0;
+}
+int RoomEffect_OrbitSetStart(PmSlotHeader *object) {
+    int result=-1;
+    if(FieldFx_GetStatus(object)==3) {
+        result=FieldFx_UpdateSlots((FieldFxObject *)object,g_RoomOrbitSetUpdateList);
+        result|=FieldFx_RunScript((FieldFxObject *)object,g_RoomOrbitSetInitList,g_RoomOrbitSetSpawnLayout);
+    }
+    if(result==-1)RoomEffect_OrbitSetClose(object);
+    return 0;
+}
+int RoomEffect_OrbitSetClose(PmSlotHeader *object) {
+    object->state=4;
+    if((unsigned)FieldFx_GetStatus(object)>=2) {
+        FieldActor *actor=((FieldFxObjectPrefix *)object)->actor;
+        actor->state->core_flags &= 0xC0FFFFFFu;
+        *actor->state->action_state=4;
+    }
+    return 0;
+}
+void RoomEffect_OrbitSetNop6(void) {}
 
 /*
  * The orbit effect set: eight particles that orbit outwards from the actor,
@@ -48,18 +64,16 @@ ROOMLIB_RETURN_ZERO(RoomEffect_OrbitSetNop6)
  * the room prefix. The four sprite records live in each room's own data.
  */
 
-/* Copies the owner's eight words into the state, allocates the set's
- * buffer and fills the four sprite records. The pins and launders
- * reproduce retail's assignment of the shared constants. */
+/* Copies the owner's matrix into the state, selects the texture page
+ * and fills the four sprite records. */
 /* The script object the set belongs to and its owner actor. */
-typedef struct RoomOrbitSetEntity {
-    u8 pad00[0x8];
-    FieldActor *owner;            /* 0x08 */
-} RoomOrbitSetEntity;
+int RoomEffect_OrbitSetInit(void *data0, void *data1, void *data2) {
+    FieldFxObject * object = data0;
+    void * unused = data1;
+    RoomOrbitSetState * state = data2;
 
-void RoomEffect_OrbitSetInit(RoomOrbitSetEntity *object, void *unused, RoomOrbitSetState *state) {
     FieldActor *owner;
-    void *allocation;
+    int allocation;
     RenderMatrix *source;
     RenderMatrix *matrixArg;
     void *callObject;
@@ -71,14 +85,14 @@ void RoomEffect_OrbitSetInit(RoomOrbitSetEntity *object, void *unused, RoomOrbit
     int valueNeg42;
 
     FieldFx_SetScriptContext(state);
-    owner = object->owner;
+    owner = object->prefix.actor;
     state->owner = owner;
     source = owner->render_object.matrices;
     state->matrix = *source;
     allocation = Asset_SearchByKeyType(0x24);
 
     callObject = object;
-    state->asset.allocation = allocation;
+    state->asset.index = allocation;
     value = -0x29;
     value128a = 0x80;
     value128b = 0x80;
@@ -122,39 +136,43 @@ void RoomEffect_OrbitSetInit(RoomOrbitSetEntity *object, void *unused, RoomOrbit
     g_RoomOrbitSpritePacket.b = value128b;
     g_RoomOrbitSpritePacket.zero = 0;
     FieldFx_PlaySoundAtMatrixPosition(callObject, 0x592, matrixArg);
+    return 0;
 }
 
 /* The set itself draws nothing; each effect draws its own sprites. */
-void RoomEffect_OrbitSetDraw(void) {
+int RoomEffect_OrbitSetDraw(void *data0, void *data1, void *data2) {
+
+
+    return 0;
 }
 
-void RoomEffect_OrbitSetUpdate(void *arg0, char *event) {
+int RoomEffect_OrbitSetUpdate(void *data0, void *data1, void *data2) {
+    void * arg0 = data0;
+    char * event = data1;
+
     if (FieldFx_IsLastSlotHalted() == 1) {
         event[1] = 2;
     }
+    return 0;
 }
 
-void RoomEffect_InitOrbitParticles(void *unused, void *unused2, RoomOrbitParticleState *state) {
+int RoomEffect_InitOrbitParticles(void *data0, void *data1, void *data2) {
+    void * unused = data0;
+    void * unused2 = data1;
+    RoomOrbitParticleState * state = data2;
+
     RoomOrbitSetState *clock = FieldFx_GetScriptContext();
     unsigned int i;
-    RoomOrbitParticleLaneView *particle;
-
-    i = 0;
-    particle = (RoomOrbitParticleLaneView *)state;
-    while (i < 8) {
+    for (i=0;i<8;++i) {
         int angle;
-
-        *(u16 *)&particle->position.x = clock->matrix.translation[0];
-        particle->position.y = (u16)g_RoomFloorY->y;
-        particle->position.z = clock->matrix.translation[2];
-
-        angle = rand() % 0x1000;
-        particle->velocity.x = rsin(angle);
-        angle = rand() % 0x1000;
-        particle->velocity.z = rcos(angle);
-        particle->velocity.angle = -(rand() % 8000 + 4000);
-        i++;
-        particle = (RoomOrbitParticleLaneView *)(&particle->position + 1);
+        state->position[i].x = clock->matrix.translation[0];
+        state->position[i].y = g_RoomFloorY->y;
+        state->position[i].z = clock->matrix.translation[2];
+        angle=rand()%0x1000;
+        state->velocity[i].x=rsin(angle);
+        angle=rand()%0x1000;
+        state->velocity[i].z=rcos(angle);
+        state->velocity[i].angle=-(rand()%8000+4000);
     }
 
     state->decay = 0x80;
@@ -162,16 +180,19 @@ void RoomEffect_InitOrbitParticles(void *unused, void *unused2, RoomOrbitParticl
     state->radiusStep = -30;
     state->intensity = 0;
     state->radius = 0x258;
+    return 0;
 }
 
-void RoomEffect_DrawOrbitParticles(
-    void *unused0, void *unused1, RoomOrbitParticleState *fx) {
+int RoomEffect_DrawOrbitParticles(void *data0, void *data1, void *data2) {
+    void * unused0 = data0;
+    void * unused1 = data1;
+    RoomOrbitParticleState * fx = data2;
+
     RoomSpriteMatrix matrix;
     RoomFxVec4 scratchScale;
     RoomFxVec4 scale;
     RoomOrbitSetState *owner;
-    unsigned short *depthSlot;
-    short *position;
+    short *depthSlot;
     unsigned int i;
 
     owner = FieldFx_GetScriptContext();
@@ -203,23 +224,24 @@ void RoomEffect_DrawOrbitParticles(
     scratchScale = scale;
     ScaleMatrix(&matrix, &scratchScale);
 
-    position = &fx->position[0].x;
     while (i < 8) {
-        matrix.t[0] = position[0];
-        matrix.t[1] = position[1];
-        matrix.t[2] = position[2];
+        matrix.t[0] = (s16)fx->position[i].x;
+        matrix.t[1] = (s16)fx->position[i].y;
+        matrix.t[2] = (s16)fx->position[i].z;
         *depthSlot = fx->decay >> 1;
         *((unsigned char *)depthSlot - 6) = fx->frame << 1;
         FieldFx_DrawGlowSprite((FieldGlowSprite *)((char *)depthSlot - 0xA), &matrix, 1);
         i++;
-        position += 4;
     }
+    return 0;
 }
 
-void RoomEffect_UpdateOrbitParticles(
-    void *unused, u8 *control, RoomOrbitParticleState *state) {
+int RoomEffect_UpdateOrbitParticles(void *data0, void *data1, void *data2) {
+    void * unused = data0;
+    u8 * control = data1;
+    RoomOrbitParticleState * state = data2;
+
     unsigned int i;
-    RoomOrbitParticleLaneView *lane;
     u8 intensity;
     u16 height;
 
@@ -228,17 +250,11 @@ void RoomEffect_UpdateOrbitParticles(
         state->decay -= 8;
     }
 
-    i = 0;
-    lane = (RoomOrbitParticleLaneView *)state;
-    while (i < 8) {
-        s32 xDelta = (lane->velocity.x * state->radius) >> 16;
-
-        lane->position.y += (s8)(lane->velocity.angle >> 8);
-        lane->position.x += xDelta;
-        lane->position.z += (lane->velocity.z * state->radius) >> 16;
-        lane->velocity.angle += 0x258;
-        i++;
-        lane = (RoomOrbitParticleLaneView *)(&lane->position + 1);
+    for(i=0;i<8;++i) {
+        state->position[i].y += (s8)(state->velocity[i].angle >> 8);
+        state->position[i].x += (state->velocity[i].x * state->radius) >> 16;
+        state->position[i].z += (state->velocity[i].z * state->radius) >> 16;
+        state->velocity[i].angle += 0x258;
     }
 
     height = state->height + 0x46;
@@ -251,41 +267,44 @@ void RoomEffect_UpdateOrbitParticles(
         state->frame = 0;
         control[1] = 2;
     }
+    return 0;
 }
 
-void RoomEffect_InitOrbitBurst(
-    void *unused0, void *unused1, RoomOrbitBurstState *state) {
-    RoomLibOrbitView *view;
-    short *particle;
+int RoomEffect_InitOrbitBurst(void *data0, void *data1, void *data2) {
+    void * unused0 = data0;
+    void * unused1 = data1;
+    RoomOrbitBurstState * state = data2;
+
+    RoomOrbitSetState *view;
     unsigned int i;
 
     view = FieldFx_GetScriptContext();
-    i = 0;
-    particle = (short *)state;
-    while (i < 8) {
-        particle[0] = view->baseX;
-        particle[1] = g_RoomFloorY->y;
-        particle[2] = view->baseZ;
-        particle[0x20] = rand() % 0x2000 - 0x1000;
-        particle[0x22] = rand() % 0x2000 - 0x1000;
-        particle[0x21] = -(rand() % 8000 + 8000);
-        particle[0x40] = 0;
-        particle[0x41] = 0;
-        particle[0x42] = rand() % 0x1000;
-        state->active[i] = 1;
-        state->frame[i] = rand() % 3;
-        i++;
-        particle += 4;
+    for(i=0;i<8;++i) {
+        state->position[i].x=view->matrix.translation[0];
+        state->position[i].y=g_RoomFloorY->y;
+        state->position[i].z=view->matrix.translation[2];
+        state->velocity[i].x=rand()%0x2000-0x1000;
+        state->velocity[i].z=rand()%0x2000-0x1000;
+        state->velocity[i].y=-(rand()%8000+8000);
+        state->secondary[i].x=0;
+        state->secondary[i].y=0;
+        state->secondary[i].z=rand()%0x1000;
+        state->active[i]=1;
+        state->frame[i]=rand()%3;
     }
 
     state->depth = 0x80;
     state->scale = 0x200;
     state->phaseStep = 0xC8;
     state->count = 8;
+    return 0;
 }
 
-void RoomEffect_DrawOrbitBurst(
-    void *unused0, void *unused1, RoomOrbitBurstState *state) {
+int RoomEffect_DrawOrbitBurst(void *data0, void *data1, void *data2) {
+    void * unused0 = data0;
+    void * unused1 = data1;
+    RoomOrbitBurstState * state = data2;
+
     RoomSpriteMatrix matrix;
     RoomFxVec4 scratchScale;
     RoomFxVec4 scale;
@@ -331,57 +350,38 @@ void RoomEffect_DrawOrbitBurst(
         i++;
         position++;
     }
+    return 0;
 }
 
-/* One burst sprite's lane through the parallel position, velocity and
- * spin arrays, read as unsigned halfwords. */
-typedef struct RoomOrbitBurstLaneView {
-    unsigned short position[4];   /* 0x00 */
-    unsigned char pad08[0x38];
-    unsigned short velocity[4];   /* 0x40 */
-    unsigned char pad48[0x38];
-    unsigned short secondary[4];  /* 0x80 */
-} RoomOrbitBurstLaneView;
+int RoomEffect_UpdateOrbitBurst(void *data0, void *data1, void *data2) {
+    void * unused = data0;
+    unsigned char * control = data1;
+    RoomOrbitBurstState * state = data2;
 
-void RoomEffect_UpdateOrbitBurst(
-    void *unused, unsigned char *control, RoomOrbitBurstState *state) {
-    unsigned char *particle;
     unsigned int i;
 
     if ((short)state->depth >= 9) {
         state->depth -= 8;
     }
 
-    i = 0;
-    particle = (unsigned char *)state;
-    while (i < 8) {
-        if (state->active[i] == 1) {
-            RoomOrbitBurstLaneView *lane = (RoomOrbitBurstLaneView *)particle;
-            int xStep =
-                (signed char)(lane->velocity[0] >> 8);
-            int yStep =
-                (signed char)(lane->velocity[1] >> 8);
-            int zStep =
-                (signed char)(lane->velocity[2] >> 8);
-
-            lane->position[0] += xStep;
-            lane->position[1] += yStep;
-            lane->position[2] += zStep;
-            lane->velocity[1] += 0x190;
-            lane->secondary[2] +=
-                rand() % 0x200;
-            if ((short)lane->position[1] > g_RoomFloorY->y) {
+    for(i=0;i<8;++i) {
+        if(state->active[i]==1) {
+            state->position[i].x += (s8)((u16)state->velocity[i].x >> 8);
+            state->position[i].y += (s8)((u16)state->velocity[i].y >> 8);
+            state->position[i].z += (s8)((u16)state->velocity[i].z >> 8);
+            state->velocity[i].y += 0x190;
+            state->secondary[i].z += rand()%0x200;
+            if(state->position[i].y > g_RoomFloorY->y) {
                 state->count--;
-                state->active[i] = 0;
+                state->active[i]=0;
             }
         }
-        i++;
-        particle += 8;
     }
 
     if (state->count == 0) {
         control[1] = 2;
     }
+    return 0;
 }
 
 /* Sprite and floor-point offsets from the actor, for the two sides. */
@@ -398,14 +398,17 @@ static const RoomFxSeed8 s_OrbitSpriteSeed3 = {
     { 0x38, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
 };
 
-void RoomEffect_InitOrbitSprite(
-    void *unused0, void *unused1, RoomOrbitSpriteFxParams *state) {
+int RoomEffect_InitOrbitSprite(void *data0, void *data1, void *data2) {
+    void * unused0 = data0;
+    void * unused1 = data1;
+    RoomOrbitSpriteFxParams * state = data2;
+
     RoomFxSeed8 seed0;
     RoomFxSeed8 seed1;
     RoomFxSeed8 seed2;
     RoomFxSeed8 seed3;
     unsigned short position[4];
-    RoomLibOrbitView *view;
+    RoomOrbitSetState *view;
 
     view = FieldFx_GetScriptContext();
     seed0 = s_OrbitSpriteSeed0;
@@ -414,28 +417,32 @@ void RoomEffect_InitOrbitSprite(
     seed3 = s_OrbitSpriteSeed3;
 
     if (*FieldFx_RegPtr(1) == 0) {
-        ApplyMatrixSV((GteMatrix *)view->transform, &seed0.vector,
+        ApplyMatrixSV((GteMatrix *)&view->matrix, &seed0.vector,
                       &state->velocity);
-        ApplyMatrixSV((GteMatrix *)view->transform, &seed1.vector,
+        ApplyMatrixSV((GteMatrix *)&view->matrix, &seed1.vector,
                       (GteShortVector *)position);
     } else {
-        ApplyMatrixSV((GteMatrix *)view->transform, &seed2.vector,
+        ApplyMatrixSV((GteMatrix *)&view->matrix, &seed2.vector,
                       &state->velocity);
-        ApplyMatrixSV((GteMatrix *)view->transform, &seed3.vector,
+        ApplyMatrixSV((GteMatrix *)&view->matrix, &seed3.vector,
                       (GteShortVector *)position);
     }
 
-    state->x = position[0] + view->baseX;
+    state->x = position[0] + view->matrix.translation[0];
     state->y = g_RoomFloorY->y;
-    state->z = position[2] + view->baseZ;
+    state->z = position[2] + view->matrix.translation[2];
     state->depth = 0x80;
     state->scale = 0x800;
     state->phase = 0x258;
     state->alpha = 0;
+    return 0;
 }
 
-void RoomEffect_DrawOrbitSprite(
-    void *unused, void *unused2, RoomOrbitSpriteFxParams *fx) {
+int RoomEffect_DrawOrbitSprite(void *data0, void *data1, void *data2) {
+    void * unused = data0;
+    void * unused2 = data1;
+    RoomOrbitSpriteFxParams * fx = data2;
+
     RoomSpriteMatrix matrix;
     RoomFxVec4 scratchScale;
     RoomFxVec4 scale;
@@ -466,12 +473,17 @@ void RoomEffect_DrawOrbitSprite(
     matrix.t[0] = fx->x;
     matrix.t[1] = fx->y;
     matrix.t[2] = fx->z;
-    *drawSlot = ((s16)fx->alpha >> 1) << 1;
+    *drawSlot = fx->alpha & 0xfffeu;
     g_RoomOrbitSpritePacket.depth = fx->depth;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)(drawSlot - 4), &matrix, 1);
+    return 0;
 }
 
-void RoomEffect_UpdateOrbitSprite(unsigned char *arg0, RoomFxControl *signal, RoomOrbitSpriteFxParams *state) {
+int RoomEffect_UpdateOrbitSprite(void *data0, void *data1, void *data2) {
+    unsigned char * arg0 = data0;
+    RoomFxControl * signal = data1;
+    RoomOrbitSpriteFxParams * state = data2;
+
     RoomOrbitSpriteFxParams *p = state;
     unsigned short counter = state->alpha;
 
@@ -494,4 +506,32 @@ void RoomEffect_UpdateOrbitSprite(unsigned char *arg0, RoomFxControl *signal, Ro
     if (signal->frame >= 21) {
         signal->state = 2;
     }
+    return 0;
 }
+
+/* Complete authored M187 lists at FFA8/FFBC/FFD0, class FFF0 and
+ * script 9000C..9007C. Only the pointer-bearing controller grows on PC;
+ * retain the burst's two authored spare bytes. */
+FieldFxHandler g_RoomOrbitSetInitList[] = {RoomEffect_OrbitSetInit,
+    RoomEffect_InitOrbitParticles,RoomEffect_InitOrbitBurst,RoomEffect_InitOrbitSprite,
+    (FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_RoomOrbitSetDrawList[] = {RoomEffect_OrbitSetDraw,
+    RoomEffect_DrawOrbitParticles,RoomEffect_DrawOrbitBurst,RoomEffect_DrawOrbitSprite,
+    (FieldFxHandler)(intptr_t)-1};
+FieldFxHandler g_RoomOrbitSetUpdateList[] = {RoomEffect_OrbitSetUpdate,
+    RoomEffect_UpdateOrbitParticles,RoomEffect_UpdateOrbitBurst,RoomEffect_UpdateOrbitSprite,
+    (FieldFxHandler)(intptr_t)-1};
+u16 g_RoomOrbitSetSpawnLayout[] = {sizeof(RoomOrbitSetState),sizeof(RoomOrbitParticleState),
+    sizeof(RoomOrbitBurstState)+2,sizeof(RoomOrbitSpriteFxParams),65535,0};
+int g_RoomOrbitSetScript[] = {
+    0x00010000,0x00100000,0x10040014,0x10180015,0x00200001,0x00020000,
+    0x30fb0000,0x00420000,0x12010000,0x00010002,0x00010001,0x00020004,
+    0x00010001,0x00420000,0x120c0000,0x00020002,0x00110001,0x00010003,
+    0x00020008,0x00110000,0x00010003,0x00020008,0x00110001,0x00010003,
+    0x00020008,0x00110000,0x00010003,0x30e80000,0xffffffff,
+};
+PmCommand g_RoomOrbitSetHandlers = {RoomEffect_OrbitSetNop0,RoomEffect_OrbitSetPlantScript,
+    RoomEffect_OrbitSetSpawn6,RoomEffect_OrbitSetRegister,RoomEffect_OrbitSetStart,
+    RoomEffect_OrbitSetClose,RoomEffect_OrbitSetNop6};
+RoomFxSpritePacket g_RoomOrbitSpritePacket,g_RoomOrbitParticlePacket;
+RoomFxSpritePacket g_RoomOrbitBurstPacket,g_RoomOrbitShadowPacket;

@@ -2,6 +2,43 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+M187: nowe rzeczywiste wejście z autentycznego K kończy proces1 na
+brakującym descriptorze36/8018fff0. /tmp/pe-subway-k-v1-live/game.log,
+odtworzenie /tmp/pe-m187-missing-v1-repro-args.json (cap31010).
+Trasa M184 do sąsiedniego toru wymaga obejścia obiektów i przejścia przez
+rejon skoków; nie jest to awaria ruchu ani nieunikniona blokada geometrii.
+M187 ma jeden descriptor i cały moduł10ccB; istniejący orbit_set.c zawiera
+wszystkie19 funkcji (siedem metod klasy i12 callbacków efektów).
+
+Rozpoczęta normalizacja CAŁEGO istniejącego orbit_set.c w miejscu oraz
+room_orbit_set.h; nadal poza natywnym linkiem/loaderem, M187 nie naprawione.
+Pełne wskaźniki właściciela przez FieldFxObject.prefix.actor, macierz przez
+kanoniczny RoomOrbitSetState, indeks tekstury jakoint, bez lokalnych
+fałszywych widoków z przesunięciami PS1. Wszystkie12 callbacków mają ABI
+FieldFxHandler, siedem metod ABI PmCommand. Oryginalne listy Init/Draw/Update,
+29 słów skryptu i cztery rozmiary stanów odtworzone w tym samym pliku.
+Tylko kontroler zawierający wskaźnik rośnie40→48B; burst zachowuje218B
+z dwoma autorskimi zapasowymi bajtami mimo struktury216B. Usunięto
+nakładające się widoki równoległych tablic i zastąpiono dostępem do ich
+kanonicznych pól; zachowana kolejność losowań. Brak nowych źródeł repo.
+
+Dwa świeże obiekty normal/SAN kompilują cały moduł z błędami typów
+callbacków/wskaźników i pointer-sign jako błędy, bez ostrzeżeń:
+/tmp/pe-m187-orbit-abi-v3-proof.json (hash źródeł, zależności, obiektów).
+1536 przypadków trzech Update (cząstki/burst/sprite), całe bajty stanu,
+cztery bajty sygnału i RNG identyczne z oryginalnymi instrukcjami MIPS
+USA oraz rzeczywistym RNG BIOS-u. Normal iASan/UBSan/function przechodzą,
+canary stanu nienaruszone. /tmp/pe-m187-orbit-updates-v2-proof.json;
+verifier/harness/build w /tmp/pe-m187-orbit-updates-v2-*.
+To testy numeryczne tych trzech funkcji i ABI całego źródła, nie dowód
+inicjalizacji, rysowania, pełnego cyklu PM ani działania M187 w kampanii.
+Następny krok: pozostałe Init/Draw, pełne autorskie cykle z assetami,
+audyt descriptorów/danych, binding i reset w istniejącym room_load.c,
+włączenie istniejącego źródła w CMake, świeży pełny build i regresje obu
+profili oraz rzeczywiste wejście M187. Root binaria pozostają identyczne
+z ostatnim zweryfikowanym m174-bindings-v2. K niezmienione, użytkowe
+bu00/bu10 nietknięte. Pełna kampania nadal otwarta.
+
 Nowy autentyczny zapis K w M184 (metro), Day5/Level24,278/335HP,
 story_stage596. Powstał przez telefon i menu karty, w nowym slocie10;
 źródłowy J i jego prywatna kopia nie zostały nadpisane.

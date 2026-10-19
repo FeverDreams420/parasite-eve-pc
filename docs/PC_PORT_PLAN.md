@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Gałąź z Warehouse Key wygrywa ponownie czterech wrogów M265:
+48905,353/437HP,brak przeciwników,220 w slocie25 i global47&2 zachowane.
+104 próby normal (12 rund), wszystkie prywatne L bez zmian:
+/tmp/pe-warehouse-key-search-v1-proof.json. Cold pełny JSON/VRAM normal/SAN/live:
+/tmp/pe-warehouse-key-victory-v1-replay-proof.json. Zwykłe przejście
+M265→M266,schody i wcześniej zamknięte drzwi teraz prowadzą do M333,
+50888,bez blokady: /tmp/pe-warehouse-m333-entry-v1-replay-proof.json.
+To naturalne wejście, nie tylko wcześniejszy audyt wspólnego modułu.
+
+Powrót przez te same drzwi M333→M266 oraz oryginalny telefon tworzą
+nowy autentyczny N,8192B,353HP,story600,Warehouse Key w slocie25:
+/tmp/pe-warehouse-key-save-v1-source/BASLUS-006620000000N,
+SHA256 3fd4d31f24587108c3bb54f73b217f1a19cd6825bb333a166da99e7b6158a2fe.
+L ani M nie nadpisano. Cold normal/SAN zapisują identyczne bajty N i cały
+stan/VRAM po telefonie53300:
+/tmp/pe-warehouse-key-save-check-v1-replay-proof.json. Continue tylko z N
+odtwarza inventory/postęp/global47&2; zwykły input działa i pełny JSON/VRAM
+normal=SAN: /tmp/pe-warehouse-key-continue-v1-proof.json.
+
+Osobna trasa po Continue N ponownie otwiera drzwi M266→M333,26706,
+353HP,220 zachowane. Pełny JSON/VRAM normal/SAN/live:
+/tmp/pe-warehouse-N-door-v1-replay-proof.json. Agregat10 cold prób:
+/tmp/pe-warehouse-key-save-v1-proof.json. Root game/fixture nadal równe
+kandydatowi /tmp/pe-m186-event-v1; kod produkcyjny bez zmian.
+
+M333 uruchamia następną walkę (4:31,4:30,6:31,6:30),242/242/10/10HP.
+Seria /tmp/pe-warehouse-m333-search-v1.py, sesja45832, jest aktywna;
+sprawdzić terminal.json przed kolejnym startem. Jej zwykły input pochodzi
+od L przez klucz i poprzednią wygraną. Nowy live /tmp/pe-warehouse-N-v1-live.py,
+sesja93171, stoi w26706 przy wejściu M333 po Continue N. Pełna walka M333,
+reszta Warehouse i kampania pozostają nieukończone.
+
+### Wcześniejsze zdobycie klucza
+
 Warehouse Key(raw220) zdobyty zwykłą interakcją w M263, po pierwszej walce
 przy x≈2085,z≈−1161. Wcześniejsze szukanie w M266 było błędnym odczytaniem
 wspólnej gałęzi skryptu gracza: M266 zawiera odbiór220 pod event6,

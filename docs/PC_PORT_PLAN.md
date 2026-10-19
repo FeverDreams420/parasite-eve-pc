@@ -37,8 +37,9 @@ niezmienione, użytkowe karty nietknięte, PsyZ/SDL nadal nieinstrumentowane.
 Dowody /tmp/pe-m186-family-v1-{verification.json,rehash-proof.json,
 load-results.json,promotion-proof.json,release-proof.json},
 /tmp/pe-m186-family-v1-{split,target}-replay-proof.json. Naturalne wejście
-M186 i trzech wariantów Chrysler nadal wymaga dalszej kampanii; nie
-utożsamiać loadera/cykli z pełnym przejściem tych lokacji.
+M186 jest teraz potwierdzone poniższą trasą kampanii; trzy warianty Chrysler
+nadal wymagają dalszej kampanii. Nie utożsamiać loadera/cykli z pełnym
+przejściem tych lokacji.
 
 Seria input-search-v2 zakończona0:24 rundy,376 zwykłych prób normal-only,
 bez wygranej; /tmp/pe-m188-input-search-v2-proof.json. Zachowana wcześniejsza
@@ -63,8 +64,26 @@ normal/SAN z pełną zgodnością JSON/VRAM:
 /tmp/pe-m189-entry-check-v1-replay-proof.json. Dalszy zwykły input dochodzi
 do sceny0xa8029048,60176 vblank (postać przy rannym na moście);
 /tmp/pe-post-subway-bridge-v1-60176.{json,vram,-input.jsonl}.
-Ten ostatni punkt nie ma jeszcze cold porównania. Kolejny zapis oraz
-naturalne wejście M186 pozostają niepotwierdzone; pełna kampania nieukończona.
+Dalsza interakcja przy pełnym ekwipunku poprawnie wyświetla odmowę.
+Użycie Medicine3 przez zwykłe menu leczy219→399HP i zwalnia slot;
+ponowna interakcja daje Subway Gate Key (raw219,slot24). Stan63808,
+bez blokady ruchu, ma cold normal/SAN/live pełny JSON/VRAM:
+/tmp/pe-bridge-key-check-v1-replay-proof.json. Źródłowy/prywatny K bez zmian.
+Nie jest to jeszcze zapis postępu na karcie.
+Dalsze wyjście z uruchomienia tylko z --disc kończy się oczekiwanym
+Game image selection failed:-4, bo wymagany jest drugi obraz. Disc2 istnieje
+lokalnie; /tmp/pe-bridge-dual-v1-live.py odtwarza trasę z oboma CUE.
+Z oboma CUE przejście powrotne do M189 działa bez ręcznej zmiany płyty:
+66088 vblank,399HP,GateKey zachowany. Pełny JSON/VRAM normal/SAN/live:
+/tmp/pe-bridge-dual-check-v1-replay-proof.json. Naturalny dalszy powrót
+prowadzi do M186,67988; walka z trzema przeciwnikami (4:31,5:30,5:29)
+startuje do68788,395HP. Oba punkty mają cold pełny JSON/VRAM normal/SAN/live:
+/tmp/pe-m186-natural-check-v1-replay-proof.json oraz
+/tmp/pe-m186-battle-check-v1-replay-proof.json. Źródłowy/prywatny K bez zmian.
+Pierwsza seria trzech strzałów G23 obniża5:30 z112 do10HP, bez zmiany
+mechaniki. Live /tmp/pe-bridge-dual-v1-live jest w69226, walka w toku;
+nie uznawać wejścia/wymiany ognia za wygraną. Kolejny zapis niepotwierdzony;
+pełna kampania nieukończona.
 ### Poprzedni odcinek M188 — historia dowodów
 
 M188 osiągnęło drugą fazę zwykłym inputem, bez zmian RAM/zapisu/statystyk.

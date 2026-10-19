@@ -2,30 +2,32 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: M159 wygrane oryginalnym Confuse i ostrzałem, Aya58HP,
-tryb2, zero żywych przeciwników. Cure-M odebrane; M160/Maeda/Daniel,
-M025/rozmowa w samochodzie, powrót na komisariat i story534.
-Telefon M042 tworzy autentyczny zapis I. Z niego zwykły Continue i dialog
-M041 kończą Dzień4: karta Day5, pełne320HP, zapis J. Continue z J po
-oryginalnym pytaniu o ponowny zapis prowadzi do mapy Dnia5/story544.
-Bez zmian kodu w tym odcinku, edytora save'ów lub zapisów gameplay RAM.
+Najnowszy postęp: autentyczny Continue J → mapa Dnia 5/story544 →
+Chinatown M161 → M162. Naprawiono brakujące powiązania całego istniejącego
+modułu homing_flash.c, jego wskaźniki i dostęp do natywnych struktur.
+Pierwsza walka M162 wygrana zwykłym Energy Shot i ostrzałem: 108HP,
+zero przeciwników; poziom24, odebrane przedmioty, swobodna eksploracja.
+Przejście do M163 rozpoczyna kolejną walkę z trzema przeciwnikami.
+M163 nie jest jeszcze wygrane. Zapis J i jego prywatne kopie bez zmian.
+Bez nowych plików źródłowych, przenoszenia funkcji, edytora save'ów lub
+zapisów gameplay RAM. CMake dołącza istniejący moduł do portu.
 
-Niezmieniony kandydat /tmp/pe-akao-queue-v1 ma48/48 wcześniejszych regresji
-oraz18 nowych cold prób normal/SAN:8 walki/powrotu/zapisu I,6 zakończenia
-dnia/zapisu J i4 Continue I/J. Pełny stan oraz1MiB VRAM zgodne w zakresach
-opisanych poniżej. Wszystkie8192B I i J zgodne między profilami i sesjami
-live; Continue zachowuje ekwipunek, HP i fabułę. Dowód zbiorczy:
-/tmp/pe-day4-day5-save-v1-proof.json. Źródła:
-/tmp/pe-nypd-post-hospital-save-v1-source/BASLUS-006620000000I oraz
+Nowy kandydat /tmp/pe-chinatown-module-v1: 390 świeżych obiektów
+(195/profil), rehash1000 plików manifestu, 48/48 regresji i10 cold prób
+kampanii normal/SAN. Pełny stan zgodny z sesją live na pięciu checkpointach;
+1MiB VRAM zgodny między profilami, a zwycięstwo, pole po walce i M163
+również z zachowanym VRAM live. Kopie build odpowiadają kandydatowi.
+Dowody: /tmp/pe-chinatown-module-v1-release-proof.json,
+/tmp/pe-chinatown-module-v1-replay-v2-proof.json oraz
+/tmp/pe-chinatown-module-v1-m163-replay-v1-proof.json.
+SAN obejmuje kod portu; archiwa PsyZ/SDL nieinstrumentowane.
+Root bu00/bu10 nietknięte. Pełna kampania, dalszy Dzień5 i kompletna
+zgodność obrazu/audio z PS1 pozostają otwarte.
+
+Poprzedni etap: M159 wygrane, autentyczne zapisy I i J oraz Continue
+na mapę Dnia5 potwierdzone w /tmp/pe-day4-day5-save-v1-proof.json.
+Źródło bieżącej trasy:
 /tmp/pe-day5-save-v1-source/BASLUS-006620000000J.
-
-Rehash388 obiektów i995 plików manifestu oraz zgodność kopii build
-potwierdzone w tym samym proof. SAN obejmuje kod portu; archiwa PsyZ/SDL
-nieinstrumentowane. Poprzednia naprawa kolejki AKAO pozostaje w istniejącym
-voice_bank.c, bez nowych plików źródłowych. Wcześniejszy null-read nie wrócił
-w nowych próbach, lecz pełne audio/PCM i jego osobna przyczyna nadal nie są
-zamknięte. Root bu00/bu10 nietknięte; źródła H/I/J i prywatne kopie bez zmian.
-Pełna kampania, Dzień5 i kompletna zgodność obrazu/audio z PS1 pozostają otwarte.
 
 Naprawa wyłącznie w istniejącym src/main/boot/init.c: blokujący odczyt
 sterowania zachowuje częściową komendę po EINTR, ponawia odczyt i odróżnia
@@ -61,6 +63,58 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Chinatown: cały moduł homing flash i wygrana M162
+
+Zwykły Continue J i odpowiedź No na pytanie o ponowny zapis prowadzą
+na mapę/story544. Sesja /tmp/pe-day5-map-v1-live obejmuje wizytę w NYPD,
+powrót na mapę, wybór Chinatown i wejście do M161/a80260c8.
+Dalszy ruch Up kończył proces: brak deskryptora M162 slot75/80193174,
+Scene_LoadRoom=-2. Nie pomijano tej walki ani oryginalnych handlerów.
+
+Istniejący homing_flash.c zawiera oba oryginalne callbacki. Dołączono
+cały plik w CMake. Poprawki w miejscu: pełna szerokość argumentu callbacka,
+kanoniczne FieldFxTaskContext/FieldFxTaskSlot/FieldActor zamiast widoków
+ze stałymi offsetami PS1, właściwe pole stanu Combatant przy trafieniu,
+kanoniczne deklaracje rysowania i mnożenie zamiast przesunięcia signed.
+Oryginalny program slot123/80193254, wszystkie40 halfwordów skryptu
+801931e4 i32 bajty koloru80193234 pozostają zachowane. Loader wiąże
+slot70 z klasą D,75 z klasą E i123 z programem; zeruje trzy argumenty
+przy kolejnym ładowaniu. Nie ma nowej warstwy ani zastępczej logiki walki.
+
+Dane z PE.IMG dowodzą identyczności całych16568 bajtów kodu klas,
+obu efektów, deskryptorów, skryptu i danych (8018f1e0–80193298 exclusive)
+w M162/M163/M398/M400/M403. SHA256:
+f6562978d797c2eaf8f7fea7f663db10f60e288af1ccb0a363568ffd761773cb.
+Powiązania ograniczono do tych pięciu sprawdzonych archiwów.
+/tmp/pe-chinatown-module-v1-original-proof.json i disasm.txt zachowują
+wynik audytu. Nie jest to dowód zgodności obrazu/PCM ani ukończenia
+pokojów Chrysler398/400/403; te trzy nie były odwiedzone tą trasą.
+
+Sesja /tmp/pe-chinatown-module-v1-live, wyłącznie wejście gracza:
+32500 M162/a8026148,295HP, dwa wpisy przeciwników5:31 i5:30 po135HP.
+Energy Shot zużywa PE i pocisk:34403 ma228HP, przeciwnicy9/135HP.
+Dalszy ostrzał i bieganie, w tym oryginalne automatyczne przeładowanie,
+kończą walkę:36783 tryb2, zero przeciwników,108HP i15 pocisków.
+Oryginalny ekran awansu daje poziom24/maxHP335. Obtain All odbiera
+przedmioty.37879: tryb9, menuNULL, move_lock0 i swobodne pole M162.
+38519: M163/a80261c8,108/335HP, trzej przeciwnicy8:31/7:30/8:29;
+walka trwa. Sesja zakończona quit0; wszystkie8192B J bez zmian.
+Pełne args.json, input.jsonl, game.log i zamrożone JSON/VRAM w /tmp.
+
+48/48 regresji świeżego kandydata przeszło. Osiem cold prób normal/SAN
+na32500/34403/36783/37879 ma pełny JSON zgodny z live i VRAM zgodny
+między profilami; dwa ostatnie także z live. Dwie dalsze próby38519
+potwierdzają pełny JSON oraz VRAM live/normal/SAN i niezmienione J.
+Pierwszy weryfikator używał frame_limit zamiast control-at, więc różniły
+się event i brak pola control, a nie stan gry. Poprawiono wyłącznie runner;
+nowe oddzielne katalogi replay-v2 zawierają zakończone próby quit0.
+Nie dolicza się pierwszej próby do10 sukcesów.
+
+Rehash390 obiektów/1000 plików i zgodność kopii build są zapisane w
+/tmp/pe-chinatown-module-v1-release-proof.json. Następny punkt kampanii:
+kontynuacja walki M163 z38519 przez odtworzenie pełnego input.jsonl
+od autentycznego J. Brak nowego trwałego save'a po wygranej M162.
 
 ### M159 wygrane, zapis I, zakończenie Dnia4 i zapis J/Continue Day5
 

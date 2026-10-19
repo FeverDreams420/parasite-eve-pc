@@ -5,6 +5,7 @@
 #include "pe1/field_sprite_params.h"
 #include "pe1/field_texture_tables.h"
 #include "pe1/room_sound_burst.h"
+#include "pe1/fieldfx_task.h"
 
 /* The homing flash (src/overlays/room_lib/homing_flash.c): a
  * flash controller anchored to the actor and the homing sparks it
@@ -38,9 +39,8 @@ typedef struct RoomFlashSpriteChild {
 /* Per-room data: the colour ramp the controller blends through. */
 extern u8 g_RoomFlashColorRamp[];
 
-int RoomEffect_HomingSpark(int mode, RoomHomingSpark *spark,
-                           RoomHomingSparkParams *params);
-int RoomEffect_FlashSpriteController(int mode, RoomFlashSpriteState *state,
-                                     RoomFlashSpriteSpawn *spawn);
+int RoomEffect_HomingSpark(int mode, void *data, intptr_t argument);
+int RoomEffect_FlashSpriteController(int mode, void *data, intptr_t argument);
+extern FieldFxTaskProgram g_RoomHomingFlashProgram;
 
 #endif

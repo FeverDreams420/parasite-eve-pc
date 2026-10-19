@@ -14,6 +14,8 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/room_floor.h"
+#include "pe1/field_orbit_point.h"
+#include "pe1/field_glow_line.h"
 
 /* Room effect controllers that play a sound, then emit one particle every
  * third frame along an angle that sweeps half a turn over seventy frames. */
@@ -78,9 +80,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSoundBurstState, soundHandle) == 0xC,
 extern void Akao_Cmd_21(int, int);
 extern int rand(void);
 #include "pe1/player_entity.h"
-extern void FieldFx_OffsetPointByAngles(void *, void *, int, void *, int, int);
 extern void LoadAverageShort12(void *, void *, int, int, void *);
-extern void FieldFx_DrawGlowLine(void *, void *, void *, void *, int, int, int);
 
 /* Homing spark: anchor, heading vector, state, timer and sound handle. */
 typedef struct RoomHomingSpark {

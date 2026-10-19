@@ -12,6 +12,9 @@
  */
 
 #include "pe1/gte.h"
+#include "pe1/geom_state.h"
+#include "pe1/battle.h"
+#include "pe1/room_module.h"
 #include "pe1/room_homing_flash.h"
 
 static const RoomSoundBurstColor s_HomingSparkHitColor = { 0xFF, 0x80, 0, 0 };
@@ -20,8 +23,9 @@ static const GteRotation s_FlashSpriteRotation = { 0, 0, -100, 0 };
 
 /* Spark that homes on the player, flags the battle actor when it arrives,
  * then burns out; sub-states 1 and 2 play the hit and fade animations. */
-int RoomEffect_HomingSpark(int mode, RoomHomingSpark *spark,
-                           RoomHomingSparkParams *params) {
+int RoomEffect_HomingSpark(int mode, void *data, intptr_t argument) {
+    RoomHomingSpark *spark = data;
+    RoomHomingSparkParams *params = (void *)argument;
     RoomSoundBurstColor color = s_HomingSparkHitColor;
     GteRotation rotation = s_HomingSparkRotation;
     GteShortVector angles;
@@ -44,15 +48,14 @@ int RoomEffect_HomingSpark(int mode, RoomHomingSpark *spark,
             spark->y += target.y;
             spark->z += target.z;
             if (FieldFx_IsPlayerWithinRadius(spark, 50)) {
-                if (FX_TASK_AS(RoomSoundBurstEventState)->active) {
-                    RoomSoundBurstChannel *channel = ANIM_OWNER_AS(RoomSoundBurstChannel);
-                    u32 *entry;
-                    if ((**(u32 **)channel->pool & 0x3F000000) == 0x01000000) {
-                        ((RoomSoundBurstBattleEntity *)D_8009D254)->actor->flags |= 0x4000;
-                        entry = *(u32 **)channel->pool;
-                        *entry = (*entry & 0xC0FFFFFF) | 0x11000000;
-                        entry = *(u32 **)channel->pool;
-                        *entry |= 0x80000000;
+                if (g_FieldFxTaskContext->flags) {
+                    FieldActor *owner = g_FieldFxOwner->actor;
+                    if (owner && owner->state &&
+                        (owner->state->core_flags & 0x3F000000) == 0x01000000) {
+                        if (g_PlayerEntity && g_PlayerEntity->state)
+                            ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                        owner->state->core_flags = (owner->state->core_flags & 0xC0FFFFFF) | 0x11000000;
+                        owner->state->core_flags |= 0x80000000;
                     }
                 }
                 spark->state = 1;
@@ -62,7 +65,7 @@ int RoomEffect_HomingSpark(int mode, RoomHomingSpark *spark,
                 }
             }
             if (g_FieldFxCurrentAge & 1) {
-                pool = ANIM_POOL_AS(RoomSoundBurstChannel)->pool;
+                pool = g_FieldFxActiveTaskSlot->end;
                 child = FieldFx_AcquireCallbackSlot(pool);
                 if (child) {
                     child->x = spark->x;
@@ -135,8 +138,9 @@ int RoomEffect_HomingSpark(int mode, RoomHomingSpark *spark,
 /* Controller that anchors a flash to the actor, plays a sound, waits sixteen
  * frames, releases two particles, then draws a pulsing sprite that blends
  * into the actor position. */
-int RoomEffect_FlashSpriteController(int mode, RoomFlashSpriteState *state,
-                                     RoomFlashSpriteSpawn *spawn) {
+int RoomEffect_FlashSpriteController(int mode, void *data, intptr_t argument) {
+    RoomFlashSpriteState *state = data;
+    RoomFlashSpriteSpawn *spawn = (void *)argument;
     GteRotation rotation = s_FlashSpriteRotation;
     GteShortVector target;
     GteShortVector output;
@@ -156,11 +160,11 @@ int RoomEffect_FlashSpriteController(int mode, RoomFlashSpriteState *state,
 
     switch (mode) {
     case 0:
-        pool = ANIM_OWNER_AS(RoomSoundBurstChannel)->pool;
+        pool = (char *)g_FieldFxOwner->actor;
         FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)pool, 0,
                       (GteShortVector *)&state->ax);
         state->soundHandle = -1;
-        switch (FX_TASK_AS(RoomSoundBurstEventState)->phase) {
+        switch (g_FieldFxTaskContext->variables[0]) {
         case 0:
             state->attachment = 0x20;
             state->ay -= spawn->lift;
@@ -176,25 +180,25 @@ int RoomEffect_FlashSpriteController(int mode, RoomFlashSpriteState *state,
             state->ay += spawn->lift;
             break;
         }
-        pool = ANIM_OWNER_AS(RoomSoundBurstChannel)->pool;
-        FieldFx_TransformMatrixPoint(pool, state->attachment, &rotation, state);
+        pool = (char *)g_FieldFxOwner->actor;
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)pool, state->attachment, (GteShortVector *)&rotation, (GteShortVector *)state);
         state->y = g_RoomFloorY->y;
         FieldFx_AnglesToVector((GteShortVector *)&state->ax, 0x12C, &target);
         state->x += target.x;
         state->y += target.y;
         state->z += target.z;
-        if (FX_TASK_AS(RoomSoundBurstEventState)->active) {
-            RoomSoundBurstNode **slot = (RoomSoundBurstNode **)ANIM_OWNER_AS(RoomSoundBurstChannel)->pool;
-            if (slot && *slot) {
-                u8 *flag = (*slot)->state;
+        if (g_FieldFxTaskContext->flags) {
+            FieldActor *owner = g_FieldFxOwner->actor;
+            if (owner && owner->state && owner->state->action_state) {
+                u8 *flag = owner->state->action_state;
                 if (*flag == 1) *flag = 2;
             }
         }
         state->state = 0;
         state->frame = 0;
-        pool = ANIM_POOL_AS(RoomSoundBurstChannel)->pool;
+        pool = g_FieldFxActiveTaskSlot->end;
         return FieldFx_InitCallbackList(pool, 24, 16,
-                             (FieldFxCallbackListCallback)RoomEffect_HomingSpark);
+                             RoomEffect_HomingSpark);
     case 1:
         switch (state->state) {
         case 0:
@@ -208,7 +212,7 @@ int RoomEffect_FlashSpriteController(int mode, RoomFlashSpriteState *state,
             if ((s16)state->frame < 4) break;
             state->state = 2;
             state->frame = 0;
-            pool = ANIM_POOL_AS(RoomSoundBurstChannel)->pool;
+            pool = g_FieldFxActiveTaskSlot->end;
             child = FieldFx_AcquireCallbackSlot(pool);
             if (child) {
                 child->x = state->x;
@@ -222,7 +226,7 @@ int RoomEffect_FlashSpriteController(int mode, RoomFlashSpriteState *state,
                 child->timer = 0;
                 child->soundHandle = state->soundHandle;
             }
-            pool = ANIM_POOL_AS(RoomSoundBurstChannel)->pool;
+            pool = g_FieldFxActiveTaskSlot->end;
             child = FieldFx_AcquireCallbackSlot(pool);
             if (child) {
                 child->x = state->x;
@@ -239,8 +243,8 @@ int RoomEffect_FlashSpriteController(int mode, RoomFlashSpriteState *state,
         }
         break;
     case 2:
-        pool = ANIM_OWNER_AS(RoomSoundBurstChannel)->pool;
-        FieldFx_TransformMatrixPoint(pool, state->attachment, &rotation, &target);
+        pool = (char *)g_FieldFxOwner->actor;
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)pool, state->attachment, (GteShortVector *)&rotation, &target);
         {
             int index;
             int tpage;
@@ -259,24 +263,24 @@ int RoomEffect_FlashSpriteController(int mode, RoomFlashSpriteState *state,
         }
         switch (state->state) {
         case 0:
-            rsin((s16)state->frame << 6);
+            rsin((s16)state->frame * 64);
             opacity = (state->frame & 1) ? 0x40 : 0x80;
-            scale = rsin((s16)state->frame << 6);
+            scale = rsin((s16)state->frame * 64);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             if (kind == 4 && g_FieldFxAltPaletteFlag != 0) palette += 4;
             clut = GetClut(0x10, palette);
-            FieldFx_DrawShapeQuads(&target, 0, scale, scale, 0x20, clut, 1, opacity, 0);
+            FieldFx_DrawShapeQuads((GteShortVector *)&target, 0, scale, scale, 0x20, clut, 1, opacity, 0);
             break;
         case 1:
-            blend = (s16)state->frame << 10;
+            blend = (s16)state->frame * 1024;
             LoadAverageShort12(&target, state, 0x1000 - blend, blend, &output);
             FieldFx_SampleColorTrack(g_RoomFlashColorRamp, &color,
                           (s16)state->frame);
             matrixSlot = &g_ViewMatrixSlot;
             gte_ldrotmatrix(matrixSlot->value);
             gte_ldtransmatrix(matrixSlot->value);
-            FieldFx_DrawGlowLine(&target, &output, &color, &color, 0, 0x80, 1);
+            FieldFx_DrawGlowLine(&target, &output, (u8 *)&color, (u8 *)&color, 0, 0x80, 1);
             break;
         case 2:
             frame = (s16)state->frame;
@@ -285,10 +289,27 @@ int RoomEffect_FlashSpriteController(int mode, RoomFlashSpriteState *state,
             matrixSlot = &g_ViewMatrixSlot;
             gte_ldrotmatrix(matrixSlot->value);
             gte_ldtransmatrix(matrixSlot->value);
-            FieldFx_DrawGlowLine(&target, state, &color, &color, 0, 0x80, 1);
+            FieldFx_DrawGlowLine(&target, (GteShortVector *)state, (u8 *)&color, (u8 *)&color, 0, 0x80, 1);
             break;
         }
         break;
     }
     return 0;
 }
+
+/* USA M162/M163/M398/M400/M403 share this complete module, including
+ * descriptor 80193254, script 801931E4 and colour track 80193234. */
+u8 g_RoomFlashColorRamp[32] = {
+    0,0,0,0,0,0,0,0, 128,0,0,4,0,0,0,0,
+    255,128,0,4,0,0,0,0, 0,0,0,0,0,0,0,0
+};
+static u16 s_HomingFlashScript[40] = {
+    5,0,0, 1,6,38, 4,8,0, 1,0,0, 2,0,0, 4,3,0,
+    1,0,1, 2,0,0, 4,3,0, 1,0,2, 2,0,0, 4,3,0, 0,0,0,0
+};
+FieldFxTaskProgram g_RoomHomingFlashProgram = {
+    .table = {.callbacks = {RoomEffect_FlashSpriteController},
+              .sizes = {sizeof(RoomFlashSpriteState)}},
+    .initialize = RoomLib_SetArgs3,
+    .script = s_HomingFlashScript,
+};

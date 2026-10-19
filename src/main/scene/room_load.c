@@ -1,6 +1,7 @@
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_floor_walker.h"
 #include "pe1/room_homing_model.h"
+#include "pe1/room_homing_flash.h"
 #include "pe1/room_falling_burst.h"
 #include "pe1/room_motion_init.h"
 #include "common.h"
@@ -377,6 +378,7 @@ int Scene_LoadRoom(unsigned int roomId)
     int map;
     int actor_library = 0;
     int orbit_library = 0;
+    int homing_flash_library = 0;
     u32 shared_actor=0,walker_class=0,walker_task=0;
     u32 chrysler_particles=0,chrysler_falling=0,chrysler_line=0;
     int ready;
@@ -463,6 +465,8 @@ int Scene_LoadRoom(unsigned int roomId)
 
     room = state->loaded_scene_assets;
     directory = SceneAsset_ResolveOffset(room, room->header.directoryOffset);
+    homing_flash_library = map + 1 == 162 || map + 1 == 163 ||
+        map + 1 == 398 || map + 1 == 400 || map + 1 == 403;
     /* These USA rooms link the same complete actor library and class table. */
     switch (map + 1) {
     case 22: case 32: case 59: case 61: case 62: case 66: case 67:
@@ -679,6 +683,14 @@ int Scene_LoadRoom(unsigned int roomId)
             if(slot==120 && record[i].u.handlerAddress==0x80190aecu)native=&g_RoomM086SeekerProgram;
             if(slot==121 && record[i].u.handlerAddress==0x80190b3cu)native=&g_RoomM086GlintProgram;
         }
+        if (homing_flash_library) {
+            if (slot == 75 && record[i].u.handlerAddress == 0x80193174u)
+                native = &g_RoomActorClassTable[2];
+            if (slot == 70 && record[i].u.handlerAddress == 0x8019313cu)
+                native = &g_RoomActorClassTable[0];
+            if (slot == 123 && record[i].u.handlerAddress == 0x80193254u)
+                native = &g_RoomHomingFlashProgram;
+        }
         if (!native) {
             fprintf(stderr, "Scene_LoadRoom: native descriptor missing for M%03d slot %u (PS1 %08x)\n",
                     map + 1, slot, record[i].u.handlerAddress);
@@ -818,7 +830,14 @@ int Scene_LoadRoom(unsigned int roomId)
         slot = record[i].source.bytes.slot;
         /* Validation above resolves the room-specific descriptor. Assign even
          * when a prior statically linked room used this same slot. */
-        if (map + 1 == 5) {
+        if (homing_flash_library) {
+            if (slot == 75) g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
+            else if (slot == 70) g_PmCmdHandlerTable[70] = &g_RoomActorClassTable[0];
+            else if (slot == 123) {
+                g_FieldFxTaskPrograms[38] = &g_RoomHomingFlashProgram;
+                memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
+            }
+        } else if (map + 1 == 5) {
             /* Task descriptors belong to the animation program bank, not the
              * 86-entry PM handler array. */
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomM005Effects;

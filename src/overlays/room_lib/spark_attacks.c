@@ -12,19 +12,16 @@
  */
 
 #include "pe1/gte.h"
+#include "pe1/geom_state.h"
+#include "pe1/fieldfx_task.h"
+#include "pe1/field_actor.h"
+#include "pe1/battle.h"
+#include "pe1/room_module.h"
+#include "room_lib.h"
 #include "pe1/render_prim.h"
 #include "pe1/room_line_burst.h"
 #include "pe1/room_sound_slot.h"
 #include "pe1/room_spark_attacks.h"
-
-/* First object of the primary channel's pool: its packet flags. */
-typedef struct RoomBurstOrbObject {
-    u32 flags;
-} RoomBurstOrbObject;
-
-typedef struct RoomBurstOrbPool {
-    RoomBurstOrbObject *object;
-} RoomBurstOrbPool;
 
 static const GteRotation s_BurstOrbRingRotation = { 0x400, 0, 0, 1 };
 static const GteRotation s_BurstOrbRotation = { 0, 0, 0, 0 };
@@ -32,24 +29,21 @@ static const RenderColor s_BurstOrbColor = { 0xC8, 0x46, 0x08, 0 };
 
 /* Hit the player: flag the battle actor and retarget the primary channel
  * object, as the other room sparks do. */
-#define ROOMEFFECT_BURST_ORB_HIT()                                                    \
-    if (FX_TASK_AS(RoomSparkEventState)->active) {                                                         \
-        RoomSparkChannel *channel = ANIM_OWNER_AS(RoomSparkChannel);                                       \
-        if ((((RoomBurstOrbPool *)channel->pool)->object->flags & 0x3F000000) ==      \
-            0x01000000) {                                                             \
-            ((RoomSparkBattleEntity *)D_8009D254)->actor->flags |= 0x4000;                                       \
-            ((RoomBurstOrbPool *)channel->pool)->object->flags =                      \
-                (((RoomBurstOrbPool *)channel->pool)->object->flags & 0xC0FFFFFF) |   \
-                0x19000000;                                                           \
-            ((RoomBurstOrbPool *)channel->pool)->object->flags |= 0x80000000;         \
-        }                                                                             \
+#define ROOMEFFECT_BURST_ORB_HIT() \
+    if (g_FieldFxTaskContext->flags) { \
+        FieldActorState *owner = g_FieldFxOwner->actor->state; \
+        if ((owner->core_flags & 0x3F000000) == 0x01000000) { \
+            ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000; \
+            owner->core_flags = (owner->core_flags & 0xC0FFFFFF) | 0x99000000; \
+        } \
     }
 
 /* Orb that flies along its velocity shedding sparks, bursts into a ring of
  * debris when it reaches the floor and dies off the walkable polygon; the
  * debris states 2..4 fall with different drag and the sprites differ per
  * state. */
-int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
+int RoomEffect_BurstOrbParticle(int mode, void *data, intptr_t argument) {
+    RoomDampedSpark *spark = data;
     GteRotation ringRotation = s_BurstOrbRingRotation;
     GteRotation rotation = s_BurstOrbRotation;
     GteShortVector position;
@@ -83,7 +77,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
                 spark->state = 1;
                 spark->timer = 0;
                 for (i = 0; i < 8; i++) {
-                    child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                    child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                     if (child != 0) {
                         child->x = spark->x;
                         child->y = spark->y;
@@ -96,7 +90,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
                         child->state = 4;
                         child->timer = 0;
                     }
-                    child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                    child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                     if (child != 0) {
                         child->x = spark->x;
                         child->y = spark->y;
@@ -112,7 +106,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
                 }
             }
             if (spark->timer & 1) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child != 0) {
                     child->x = spark->x;
                     child->y = spark->y;
@@ -128,7 +122,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
                 }
             }
             if ((s16)spark->timer % 3 == 0) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child != 0) {
                     child->x = spark->x;
                     child->y = spark->y;
@@ -141,7 +135,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
                 }
             }
             if (spark->timer & 1) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child != 0) {
                     child->x = spark->x;
                     child->y = spark->y;
@@ -156,7 +150,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
             if (FieldFx_IsPlayerWithinRadius(spark, 0x96)) {
                 ROOMEFFECT_BURST_ORB_HIT();
             }
-            if (Geo_PointInPoly(spark->x << 16, spark->z << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount)) {
+            if (Geo_PointInPoly(spark->x * 65536, spark->z * 65536, g_FloorPolygonVertices, g_FloorPolygonVertexCount)) {
                 return 0;
             }
             spark->state = 5;
@@ -227,7 +221,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
             g_FieldFxSpriteParams.parameter02 = 2;
             g_FieldFxSpriteParams.extent_x = 0x20;
             g_FieldFxSpriteParams.extent_y = 0x20;
-            rotation.z = g_FieldFxCurrentAge << 8;
+            rotation.z = g_FieldFxCurrentAge * 256;
             {
                 u16 clut;
                 int kind;
@@ -267,8 +261,8 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
             g_FieldFxSpriteParams.parameter02 = 4;
             g_FieldFxSpriteParams.extent_x = 0x40;
             g_FieldFxSpriteParams.extent_y = 0x40;
-            scale = rsin((s16)spark->timer << 6) + 0x1000;
-            fade = rcos((s16)spark->timer << 6) / 64;
+            scale = rsin((s16)spark->timer * 64) + 0x1000;
+            fade = rcos((s16)spark->timer * 64) / 64;
             ringRotation.z = g_RoomBurstOrbHeading + 0x400;
             for (i = 0; i < 3; i++) {
                 u16 clut;
@@ -278,7 +272,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
                 position.x = spark->x;
                 position.y = spark->y;
                 position.z = spark->z;
-                size = (((s16)spark->timer * i) << 4) + 0xC8;
+                size = (((s16)spark->timer * i) * 16) + 0xC8;
                 position.x += rcos(g_RoomBurstOrbHeading) * size / 4096;
                 position.z += rsin(g_RoomBurstOrbHeading) * size / 4096;
                 kind = g_FieldFxSpriteParams.palette;
@@ -294,7 +288,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
             int kind;
             int palette;
 
-            scale = rsin(((s16)spark->timer << 10) / 24) / 2 + 0x1000;
+            scale = rsin(((s16)spark->timer * 1024) / 24) / 2 + 0x1000;
             size = (s16)spark->timer;
             if (size >= 8) size += 8;
             g_FieldFxSpriteParams.parameter00 = 0x20;
@@ -314,7 +308,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
             int kind;
             int palette;
 
-            scale = rsin(((s16)spark->timer << 10) / 24) / 2 + 0x1000;
+            scale = rsin(((s16)spark->timer * 1024) / 24) / 2 + 0x1000;
             fade = rcos((s16)spark->timer * 1204 / 24) / 128 + 0x28;
             g_FieldFxSpriteParams.parameter00 = 0x20;
             g_FieldFxSpriteParams.parameter02 = 2;
@@ -330,7 +324,7 @@ int RoomEffect_BurstOrbParticle(int mode, RoomDampedSpark *spark) {
             break;
         }
         case 4:
-            fade = rcos((s16)spark->timer << 6) / 32 + 0x40;
+            fade = rcos((s16)spark->timer * 64) / 32 + 0x40;
             g_FieldFxSpriteParams.parameter00 = 0x20;
             g_FieldFxSpriteParams.parameter02 = 2;
             g_FieldFxSpriteParams.extent_x = 0x20;
@@ -385,7 +379,8 @@ static const RoomSparkWords8 s_SparkLaunchOffset = { { 0xFFBA0000, 0x0000FF9C } 
 
 /* Throws a burst orb from the actor's hand (joint 7) along the actor's
  * heading on the first frame, with a fading flash at the hand. */
-int RoomEffect_BurstOrbController(int mode, void *unused, s32 *state) {
+int RoomEffect_BurstOrbController(int mode, void *unused, intptr_t argument) {
+    s32 *state = (void *)argument;
     RoomSparkWords8 template = s_SparkLaunchOffset;
     s16 position[4];
     s16 target[4];
@@ -394,25 +389,26 @@ int RoomEffect_BurstOrbController(int mode, void *unused, s32 *state) {
     switch (mode) {
     case 0:
 
-        if (FX_TASK_AS(RoomSparkEventState)->active) {
-            RoomSparkNode **slot = (RoomSparkNode **)ANIM_OWNER_AS(RoomSparkChannel)->pool;
-            if (slot && *slot) {
-                u8 *flag = (*slot)->state;
+        if (g_FieldFxTaskContext->flags) {
+            FieldActor *owner = g_FieldFxOwner->actor;
+            if (owner && owner->state && owner->state->action_state) {
+                u8 *flag = owner->state->action_state;
                 if (*flag == 1) *flag = 2;
             }
         }
-        pool = ANIM_POOL_AS(RoomSparkChannel)->pool;
+        pool = g_FieldFxActiveTaskSlot->end;
         return FieldFx_InitCallbackList(pool, 20, 46,
-                             (FieldFxCallbackListCallback)RoomEffect_BurstOrbParticle);
+                             RoomEffect_BurstOrbParticle);
         case 1:
-    pool = ANIM_OWNER_AS(RoomSparkChannel)->pool;
-    FieldFx_TransformMatrixPoint(pool, 7, &template, position);
-    pool = ANIM_OWNER_AS(RoomSparkChannel)->pool;
+    pool = (char *)g_FieldFxOwner->actor;
+    FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)pool, 7,
+                                 (GteShortVector *)&template, (GteShortVector *)position);
+    pool = (char *)g_FieldFxOwner->actor;
     FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)pool, 0,
                   (GteShortVector *)target);
     g_RoomBurstOrbHeading = -(u16)target[1] + 0x400;
     if (g_FieldFxCurrentAge == 1) {
-        pool = ANIM_POOL_AS(RoomSparkChannel)->pool;
+        pool = g_FieldFxActiveTaskSlot->end;
         child = FieldFx_AcquireCallbackSlot(pool);
         if (child) {
             int radius = *state;
@@ -425,7 +421,7 @@ int RoomEffect_BurstOrbController(int mode, void *unused, s32 *state) {
             child->state = 0;
             child->timer = 0;
         }
-        pool = ANIM_POOL_AS(RoomSparkChannel)->pool;
+        pool = g_FieldFxActiveTaskSlot->end;
         child = FieldFx_AcquireCallbackSlot(pool);
         if (child) {
             child->x = position[0];
@@ -454,7 +450,8 @@ int RoomEffect_BurstOrbController(int mode, void *unused, s32 *state) {
 
 /* Spark particle that drifts with damped velocity, falls under gravity
  * and bounces off the floor height, then draws as a growing sprite. */
-int RoomEffect_DampedSparkParticle(int mode, RoomDampedSpark *spark) {
+int RoomEffect_DampedSparkParticle(int mode, void *data, intptr_t argument) {
+    RoomDampedSpark *spark = data;
     RenderMatrixSlot *matrixSlot;
     int fall;
     int bounce;
@@ -519,7 +516,7 @@ int RoomEffect_DampedSparkParticle(int mode, RoomDampedSpark *spark) {
             int clut;
             int kind;
             int palette;
-            scale = rsin(((s16)spark->timer << 10) / 24) + 0x1000;
+            scale = rsin(((s16)spark->timer * 1024) / 24) + 0x1000;
             scale /= 2;
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
@@ -538,7 +535,7 @@ int RoomEffect_DampedSparkParticle(int mode, RoomDampedSpark *spark) {
 
 /* Plays the spray sound, then sprays damped sparks from the actor's hand
  * around its heading for 47 frames. */
-int RoomEffect_DampedSparkController(int mode, void *unused, void *state) {
+int RoomEffect_DampedSparkController(int mode, void *unused, intptr_t argument) {
     RoomSparkWords8 template = s_SparkLaunchOffset;
     s16 position[4];
     s16 target[4];
@@ -551,20 +548,21 @@ int RoomEffect_DampedSparkController(int mode, void *unused, void *state) {
         {
             int handle = FieldFx_GetOwnerProgress();
             FieldFx_PlaySoundAtOwner(0x58B, handle);
-            pool = ANIM_POOL_AS(RoomSparkChannel)->pool;
+            pool = g_FieldFxActiveTaskSlot->end;
             return FieldFx_InitCallbackList(pool, 20, 16,
-                                 (FieldFxCallbackListCallback)RoomEffect_DampedSparkParticle);
+                                 RoomEffect_DampedSparkParticle);
         }
         case 1:
-    pool = ANIM_OWNER_AS(RoomSparkChannel)->pool;
-    FieldFx_TransformMatrixPoint(pool, 7, &template, position);
-    pool = ANIM_OWNER_AS(RoomSparkChannel)->pool;
+    pool = (char *)g_FieldFxOwner->actor;
+    FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)pool, 7,
+                                 (GteShortVector *)&template, (GteShortVector *)position);
+    pool = (char *)g_FieldFxOwner->actor;
     FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)pool, 0,
                   (GteShortVector *)target);
     angle = -target[1] + 0x400;
     if (g_FieldFxCurrentAge < 47) {
         if (g_FieldFxCurrentAge & 1) {
-            pool = ANIM_POOL_AS(RoomSparkChannel)->pool;
+            pool = g_FieldFxActiveTaskSlot->end;
             child = FieldFx_AcquireCallbackSlot(pool);
             if (child) {
                 child->x = position[0];
@@ -579,7 +577,7 @@ int RoomEffect_DampedSparkController(int mode, void *unused, void *state) {
                 child->timer = 0;
             }
         } else {
-            pool = ANIM_POOL_AS(RoomSparkChannel)->pool;
+            pool = g_FieldFxActiveTaskSlot->end;
             child = FieldFx_AcquireCallbackSlot(pool);
             if (child) {
                 child->x = position[0];
@@ -627,31 +625,6 @@ static const RoomLineBurstColor s_BeamBounceTileColor = { 0x80, 0x80, 0x80, 0 };
 #define ROOMLIB_BOUNCE_FRAME_BASE 0x80
 #include "bounce_render.inc"
 
-/* Flat-colour GPU line packet with its tag split into address and length. */
-typedef struct RoomBeamLinePacket {
-    u8 address[3], length;
-    u8 r, g, b, code;
-    s16 x0, y0, x1, y1;
-} RoomBeamLinePacket;
-
-typedef struct RoomBeamSparkMatrix {
-    s16 m[3][3];
-    s16 reserved12;
-    s32 t[3];                     /* 0x14 */
-} RoomBeamSparkMatrix;
-
-/* First object of the primary channel's pool: its packet flags and the
- * actor state byte it owns. */
-typedef struct RoomBeamSparkObject {
-    u32 flags;
-    u8 reserved[0x14];
-    u8 *status;                   /* 0x18 */
-} RoomBeamSparkObject;
-
-typedef struct RoomBeamSparkPool {
-    RoomBeamSparkObject *object;
-} RoomBeamSparkPool;
-
 static const GteRotation s_BeamSparkRotation = { 0, 0, -100, 0 };
 
 
@@ -659,18 +632,18 @@ static const GteRotation s_BeamSparkRotation = { 0, 0, -100, 0 };
  * beam tip towards the target while spraying sparks, holds the beam while
  * a scaled model pulses at the target and hits anything in reach, then
  * fades the model out. */
-int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
-                               RoomBeamSparkParams *params) {
+int RoomEffect_BeamSparkController(int mode, void *data, intptr_t argument) {
+    RoomBeamSpark *fx = data;
+    RoomBeamSparkParams *params = (void *)argument;
     GteRotation rotation = s_BeamSparkRotation;
     GteRotation modelRotation = s_BurstOrbRotation;
     GteShortVector actor;
     int depth;
     int scratch;
-    RoomBeamLinePacket *line;
+    RoomLineBurstLinePacket *line;
     RoomBounceSpark *child;
-    RoomBeamSparkPool *pool;
-    RoomBeamSparkObject *object;
-    RoomSparkChannel *channel;
+    FieldActor *owner;
+    FieldActorState *object;
     RenderMatrixSlot *matrixSlot;
     u16 *tpages;
     u16 *index;
@@ -694,20 +667,19 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
         FieldFx_ModelScrollUv(g_RoomBeamSparkAsset, 0, 0);
         handle = FieldFx_GetOwnerProgress();
         FieldFx_PlaySoundAtOwner(0x58A, handle);
-        if (FX_TASK_AS(RoomSparkEventState)->active) {
-            pool = (RoomBeamSparkPool *)ANIM_OWNER_AS(RoomSparkChannel)->pool;
-            if (pool) {
-                object = pool->object;
-                if (object) {
-                    if (*object->status == 1) *object->status = 2;
-                }
+        if (g_FieldFxTaskContext->flags) {
+            owner = g_FieldFxOwner->actor;
+            if (owner && owner->state && owner->state->action_state) {
+                object = owner->state;
+                if (*object->action_state == 1) *object->action_state = 2;
             }
         }
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 0x14, 0x20,
-                             (FieldFxCallbackListCallback)RoomEffect_BeamBounceParticle);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x20,
+                             RoomEffect_BeamBounceParticle);
     case 1:
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 0x1F, &rotation, fx);
-        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomSparkChannel)->pool, 0,
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor,
+                                     0x1F, (GteShortVector *)&rotation, (GteShortVector *)fx);
+        FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)(char *)g_FieldFxOwner->actor, 0,
                       &actor);
         angle = -actor.y + 0x400;
         switch (fx->state) {
@@ -715,7 +687,7 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
             fx->timer++;
             if ((s16)fx->timer == 1) {
                 for (i = 0; i < 2; i++) {
-                    child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                    child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                     if (child) {
                         child->x = fx->x;
                         child->y = fx->y;
@@ -728,14 +700,14 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
                     }
                 }
             }
-            scratch = 0x1000 - rcos(((s16)fx->timer << 10) / 6);
+            scratch = 0x1000 - rcos(((s16)fx->timer * 1024) / 6);
             LoadAverageShort12(fx, &fx->tx, 0x1000 - scratch, scratch, &fx->tipX);
-            fx->brightness = 0x80 - ((s16)fx->timer << 5) / 6;
+            fx->brightness = 0x80 - ((s16)fx->timer * 32) / 6;
             if ((s16)fx->timer < 6) break;
             fx->state = 1;
             fx->timer = 0;
             for (i = 0; i < 8; i++) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = fx->tx;
                     child->y = fx->ty;
@@ -749,22 +721,22 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
                 }
                 angle += 0x200;
             }
-            if (Geo_PointInPoly(fx->tx << 16, fx->tz << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount)) break;
+            if (Geo_PointInPoly(fx->tx * 65536, fx->tz * 65536, g_FloorPolygonVertices, g_FloorPolygonVertexCount)) break;
             return 1;
         case 1:
             fx->timer++;
-            fx->brightness = rcos(((s16)fx->timer << 10) / 6) / 128 + 0x40;
+            fx->brightness = rcos(((s16)fx->timer * 1024) / 6) / 128 + 0x40;
             fx->tipX = fx->tx;
             fx->tipY = fx->ty;
             fx->tipZ = fx->tz;
-            fx->scale = rsin(((s16)fx->timer << 10) / 6) + 0x800;
+            fx->scale = rsin(((s16)fx->timer * 1024) / 6) + 0x800;
             fx->glow = 0x80;
             if ((s16)fx->timer < 6) break;
             fx->state = 2;
             fx->timer = 0;
             fx->brightness = 0;
             for (i = 0; i < 0x16; i++) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     scratch = rand() & 0xFFF;
                     LoadAverageShort12(fx, &fx->tx, 0x1000 - scratch, scratch, child);
@@ -778,18 +750,14 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
         case 2:
             fx->timer++;
             if (fx->scale > 0x1000) fx->scale -= 0x400;
-            fx->glow = rsin(((s16)fx->timer << 14) / params->duration) / 128 + 0x80;
+            fx->glow = rsin(((s16)fx->timer * 16384) / params->duration) / 128 + 0x80;
             if (fx->countdown != 0) fx->countdown--;
             if (FieldFx_IsPlayerWithinRadius(&fx->tx, 0x258) && fx->countdown == 0) {
-                if (FX_TASK_AS(RoomSparkEventState)->active) {
-                    channel = ANIM_OWNER_AS(RoomSparkChannel);
-                    if ((((RoomBeamSparkPool *)channel->pool)->object->flags & 0x3F000000) ==
-                        0x01000000) {
-                        ((RoomSparkBattleEntity *)D_8009D254)->actor->flags |= 0x4000;
-                        ((RoomBeamSparkPool *)channel->pool)->object->flags =
-                            (((RoomBeamSparkPool *)channel->pool)->object->flags & 0xC0FFFFFF) |
-                            0x19000000;
-                        ((RoomBeamSparkPool *)channel->pool)->object->flags |= 0x80000000;
+                if (g_FieldFxTaskContext->flags) {
+                    FieldActorState *ownerState = g_FieldFxOwner->actor->state;
+                    if ((ownerState->core_flags & 0x3F000000) == 0x01000000) {
+                        ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                        ownerState->core_flags = (ownerState->core_flags & 0xC0FFFFFF) | 0x99000000;
                     }
                 }
                 fx->countdown = params->interval;
@@ -800,8 +768,8 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
             break;
         case 3:
             fx->timer++;
-            fx->scale = rcos((s16)fx->timer << 5);
-            fx->glow = rcos((s16)fx->timer << 5) / 32;
+            fx->scale = rcos((s16)fx->timer * 32);
+            fx->glow = rcos((s16)fx->timer * 32) / 32;
             if ((s16)fx->timer >= 0x20) return 1;
             break;
         }
@@ -811,11 +779,11 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
         gte_ldrotmatrix(matrixSlot->value);
         gte_ldtransmatrix(matrixSlot->value);
         if (fx->brightness != 0) {
-            line = (RoomBeamLinePacket *)(D_800B0E38.packets[g_ActiveDrawSlot] + g_DrawPacketOffset);
-            g_DrawPacketOffset += 0x10;
+            line = (RoomLineBurstLinePacket *)(D_800B0E38.packets[g_ActiveDrawSlot] + g_DrawPacketOffset);
+            g_DrawPacketOffset += sizeof(*line);
             gte_ldv3(fx, &fx->tipX, fx);
             gte_rtpt_padded();
-            line->length = 3;
+            line->tag.length = 3;
             line->code = 0x40;
             line->r = fx->brightness;
             line->g = fx->brightness;
@@ -841,7 +809,7 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
             g_FieldFxSpriteParams.tpage = tpage;
         }
         if ((s16)fx->glow != 0) {
-            RoomBeamSparkMatrix matrix;
+            GteMatrix matrix;
             GteVector scale;
             u16 clut;
             int kind;
@@ -863,7 +831,7 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
             clut = GetClut(0x40, palette);
             FieldFx_ModelSetTexture(page, clut);
             FieldFx_ModelSetSemiTrans(1);
-            RotMatrixYXZ(&modelRotation, &matrix);
+            RotMatrixYXZ((GteShortVector *)&modelRotation, &matrix);
             matrix.t[0] = fx->tx;
             matrix.t[1] = fx->ty;
             matrix.t[2] = fx->tz;
@@ -873,7 +841,7 @@ int RoomEffect_BeamSparkController(int mode, RoomBeamSpark *fx,
             ScaleMatrix(&matrix, &scale);
             FieldFx_ModelSaveColors(g_RoomBeamSparkAsset);
             FieldFx_ModelScaleColors(g_RoomBeamSparkAsset, (u16)((s16)fx->glow / 2));
-            FieldFx_ModelDraw(g_RoomBeamSparkAsset, (GteMatrix *)&matrix);
+            FieldFx_ModelDraw(g_RoomBeamSparkAsset, &matrix);
             FieldFx_ModelRestoreColors(g_RoomBeamSparkAsset);
         }
         g_FieldFxSpriteParams.parameter00 = 0x20;
@@ -898,11 +866,9 @@ static const GteRotation s_JitterSparkRotation = { 0, 0, 0, 0 };
 /* Spark that jitters its position (state 0) or its velocity (states 1 and
  * 2) by a small random amount each frame, bounces off the floor height and
  * draws as a spinning sprite whose size follows a cosine of its age. */
-int RoomEffect_JitterSparkParticle(int mode, RoomDampedSpark *spark) {
+int RoomEffect_JitterSparkParticle(int mode, void *data, intptr_t argument) {
+    RoomDampedSpark *spark = data;
     GteRotation rotation = s_JitterSparkRotation;
-    /* Retail reserves one 16-byte local that nothing in the shipped code
-     * reads; keep it so the frame matches. */
-    GteVector unusedVector;
     int angle;
     int size;
     int fade;
@@ -958,7 +924,7 @@ int RoomEffect_JitterSparkParticle(int mode, RoomDampedSpark *spark) {
             int kind;
             int palette;
             int scale;
-            angle = (s16)spark->timer << 5;
+            angle = (s16)spark->timer * 32;
             fade = rcos(angle) / 60;
             scale = rcos(angle) / 4 + 0x1000;
             size = scale * 3;
@@ -977,7 +943,7 @@ int RoomEffect_JitterSparkParticle(int mode, RoomDampedSpark *spark) {
             int kind;
             int palette;
             int scale;
-            angle = ((s16)spark->timer << 10) / 20;
+            angle = ((s16)spark->timer * 1024) / 20;
             fade = rcos(angle) / 60;
             scale = rcos(angle) / 4 + 0x1000;
             size = scale * 2;
@@ -997,7 +963,7 @@ int RoomEffect_JitterSparkParticle(int mode, RoomDampedSpark *spark) {
             int kind;
             int palette;
             int scale;
-            angle = ((s16)spark->timer << 10) / 20;
+            angle = ((s16)spark->timer * 1024) / 20;
             fade = rcos(angle) / 32;
             scale = rcos(angle) / 4 + 0x1000;
             size = scale * 2;
@@ -1021,8 +987,9 @@ int RoomEffect_JitterSparkParticle(int mode, RoomDampedSpark *spark) {
 /* Controller that bursts a ring of jittering sparks on the first frame,
  * keeps spawning pairs for the first 32 frames, plays the two burst sounds
  * on creation and configures the sprite palette. */
-int RoomEffect_JitterSparkController(int mode, GteShortVector *target,
-                                      RoomSparkRingParams *params) {
+int RoomEffect_JitterSparkController(int mode, void *data, intptr_t argument) {
+    GteShortVector *target = data;
+    RoomSparkRingParams *params = (void *)argument;
     RoomDampedSpark *child;
     int radius;
     int angle;
@@ -1047,13 +1014,13 @@ int RoomEffect_JitterSparkController(int mode, GteShortVector *target,
         target->y = params->y;
         target->z = params->z;
         target->y = g_RoomFloorY->raw;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 20, 60,
-                             (FieldFxCallbackListCallback)RoomEffect_JitterSparkParticle);
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 20, 60,
+                             RoomEffect_JitterSparkParticle);
     case 1:
         radius = params->radius;
         if (g_FieldFxCurrentAge == 1) {
             for (i = 0; i < 20; i++) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = target->x;
                     child->y = target->y;
@@ -1071,7 +1038,7 @@ int RoomEffect_JitterSparkController(int mode, GteShortVector *target,
                 }
             }
             for (i = 0; i < 16; i++) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = target->x;
                     child->y = target->y;
@@ -1091,7 +1058,7 @@ int RoomEffect_JitterSparkController(int mode, GteShortVector *target,
         }
         if (g_FieldFxCurrentAge < 33) {
             if (g_FieldFxCurrentAge & 1) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = target->x;
                     child->y = target->y;
@@ -1108,7 +1075,7 @@ int RoomEffect_JitterSparkController(int mode, GteShortVector *target,
                     child->timer = 0;
                 }
             }
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = target->x;
                 child->y = target->y;
@@ -1145,3 +1112,29 @@ int RoomEffect_JitterSparkController(int mode, GteShortVector *target,
     }
     return 0;
 }
+
+/* Original M156/M291/M380 task data. Callback sizes are record bytes;
+ * callback-list storage follows each slot at its native aligned end. */
+s16 g_RoomBurstOrbHeading;
+void *g_RoomBeamSparkAsset;
+u16 g_RoomBurstOrbScript[22] = {
+    5,0,0, 1,6,44, 2,1,0, 4,46,0, 2,0,0, 4,8,0, 0,0,0, 0
+};
+u16 g_RoomBeamSparkScript[18] = {
+    5,0,0, 1,6,45, 4,46,0, 2,0,0, 4,8,0, 0,0,0
+};
+u16 g_RoomJitterSparkScript[18] = {
+    5,0,0, 1,6,37, 4,62,0, 1,0,1, 2,0,0, 0,0,0
+};
+FieldFxTaskProgram g_RoomBurstOrbProgram = {
+    {{RoomEffect_BurstOrbController, RoomEffect_DampedSparkController}, {4,4}},
+    RoomLib_SetArg1, g_RoomBurstOrbScript
+};
+FieldFxTaskProgram g_RoomBeamSparkProgram = {
+    {{RoomEffect_BeamSparkController}, {36}},
+    RoomLib_SlotSet, g_RoomBeamSparkScript
+};
+FieldFxTaskProgram g_RoomJitterSparkProgram = {
+    {{RoomEffect_JitterSparkController}, {8}},
+    RoomLib_CaptureFrameSample, g_RoomJitterSparkScript
+};

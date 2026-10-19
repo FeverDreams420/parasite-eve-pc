@@ -2,18 +2,18 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: autentyczny H → Elevator Key → ponowna wygrana M154,
-zużycie klucza, scena na okręcie i przejazd windą M155/story504.
-Dwanaście nowych cold przypadków normal/SAN potwierdza pełny stan/VRAM.
-Następny brak portu odtworzony w obu profilach: wejście M156 odrzucone
-przez loader, slot129/PS1 80192b08 nie ma natywnego deskryptora.
-Kod produkcyjny bez zmian; cały port i dalsza kampania nie są ukończone.
+Najnowszy postęp: istniejące całe spark_attacks.c i capture_frame_sample.c
+naprawione w miejscu i statycznie podłączone dla M156/M291/M380. Autentyczna
+trasa H przechodzi poprzednie odrzucenie loadera i uruchamia dach M156.
+Zwykłe wejście rozpoczyna walkę z pająkiem i trafienie pajęczyną:56518/HP92.
+Boss niepokonany; pełne cykle i numeryczne odniesienia wszystkich efektów
+tego modułu nadal wymagają weryfikacji. Nie dodano plików źródłowych.
 
-Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
-regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
-cold replayów szpitala exit0. Cały stan i pełne1MiB VRAM zgodne między
-normal/SAN; historyczny stan live również zgodny. Rewalidacja zależności,
-obiektów, archiwów i binariów: /tmp/pe-control-read-v2-final-proof.json.
+Kandydat /tmp/pe-m156-v4: świeże388 obiektów (194/profil),48/48
+regresji exit0 oraz6 cold replayów trasy/początku walki M156 exit0.
+Cały stan i pełne1MiB VRAM zgodne między normal/SAN; zachowany obraz
+live56518 również zgodny. Rewalidacja995 unikalnych zależności/obiektów/
+archiwów/binarek i kopii build: /tmp/pe-m156-v4-final-proof.json.
 SAN obejmuje kod portu (address,undefined,function); archiwa PsyZ/SDL
 pozostają nieinstrumentowane. build/parasite-eve-pc i fixture są kopiami
 tego kandydata normal. Pełna kampania nadal nie jest ukończona.
@@ -52,6 +52,70 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M156/M291/M380 — integracja istniejącego modułu iskier
+
+Całe src/overlays/room_lib/spark_attacks.c i capture_frame_sample.c
+pozostają w dotychczasowych plikach, bez wydzielania funkcji. Osiem
+callbacków iskier/kontrolerów używa wspólnego ABI (int,void*,intptr_t),
+bez maskowania niezgodnych wskaźników funkcji rzutowaniem. Próbkowanie
+pozycji zachowuje pełny wskaźnik aktora i zwraca pełny adres oryginalnego
+bloku XYZ/radius; ten blok ma zachowane12 bajtów i przerwę przy+6.
+Poprawiono dostęp do kanonicznych action_state/core_flags oraz pola
+stateFlags stanu walki Ayi, aktywnej flagi kontekstu i end natywnego slotu
+puli. Linia GPU używa natywnego taga i sizeof pakietu, macierz GteMatrix.
+Przesunięcia podpisanych współrzędnych/liczników zastąpiono równoważnymi
+mnożeniami w zakresie oryginalnych16-bitowych wartości. Gameplay nie jest
+zastępowany nową implementacją; struktura oryginalnych faz pozostaje.
+
+Cały oryginalny payload15432B jest identyczny dla USA M156/M291/M380:
+/tmp/pe-m156-module-v1-audit.json. W istniejącym module odtworzono trzy
+pełne programy z ich skryptami, rozmiarami i initializerami. Istniejący
+loader sprawdza dokładne pary slot/adres:129/80192b08 i130/80192b64 we
+wszystkich trzech pokojach;126/80192bc0 dodatkowo w M380. Oryginalne
+RoomLib_SetArg1 i RoomLib_SlotSet obsługują pierwsze dwa initializery,
+naprawiony RoomLib_CaptureFrameSample trzeci. Dane robocze zerowane
+przy ładowaniu, źródła włączone w istniejącym CMakeLists.txt.
+
+W istniejącym tests/original_actor_animation.c test --hospital-spark
+czyta autentyczne CUE/PE.IMG: cały fingerprint modułu, wszystkie trzy
+skrypty i tabele rozmiarów, typy/identyczność callbacków i initializerów,
+sześć ładowań pokojów i powtarzane zerowanie danych. Normal/SAN exit0.
+Pierwsza wersja testu miała UB we własnym obliczaniu offsetu wskaźnika;
+poprawiono nawiasowanie przed świeżym buildem v4. Nie był to błąd gry.
+Cztery osobne obiekty obu źródeł z błędami typów callbacków, konwersji
+int/pointer i macro-redefined jako błędami: /tmp/pe-m156-abi-v4-compile.json.
+Próbkowanie pozycji:882 przypadki oryginalnego USA MIPS versus każdy
+profil natywny; wszystkie12 bajtów, adres zwrotny, nienaruszony aktor,
+właściciel/floor i przerwa danych zgodne. Test hosta wymusza wskaźnik
+aktora powyżej32 bitów. /tmp/pe-m156-capture-v2-proof.json.
+
+Świeży /tmp/pe-m156-v4 ma388 obiektów,48 regresji exit0:
+/tmp/pe-m156-v4-verification.json. Obejmują nowy test danych/loadera,
+dotychczasowe menu/input/audio/assets, Melissę, pokoje i efekty oraz
+replaye wcześniejszej gry ze zgodnymi całymi JSON/VRAM i bajtami zapisu.
+Autentyczny H + pełne zwykłe wejście poprzedniego odcinka do55708
+przechodzi do0xa8025348/M156, story504/HP124, menuNULL/lock0.
+Dwa cold profile exit0, cały stan i1MiB VRAM identyczne:
+/tmp/pe-m156-v4-entry-proof.json. Obraz dachu obejrzany.
+
+/tmp/pe-m156-v4-live odtwarza ten punkt, Left180 rozpoczyna spotkanie,
+przy56088 HP124 i czterech przeciwników3:31/6:31/5:31/4:31. Zwykły
+ruch, otwarcie/anulowanie celowania i dalszy ruch:56518 HP92 po ataku
+pajęczyną, obraz starcia obejrzany. Dwie pary cold56088/56518 dają exit0,
+całe JSON iVRAM zgodne między profilami; VRAM56518 zgodny z zamrożonym
+live. /tmp/pe-m156-v4-combat-replay-proof.json. Live zakończone quit0,
+wejściowy H i prywatne kopie bez zmian, prywatne bu10 puste; root karty
+nietknięte. Pełna trasa w /tmp/pe-m156-v4-live/{args.json,input.jsonl}.
+Build użytkowy i fixture są dokładnymi kopiami kandydata po wszystkich
+powyższych testach: /tmp/pe-m156-v4-final-proof.json.
+
+Ten zakres nie dowodzi wygrania walki, kompletnych PM cykli wszystkich
+trzech programów, numerycznej zgodności każdej fazy efektu z MIPS,
+pixel/PCM parity z PS1 ani ukończenia kampanii. Archiwa PsyZ/SDL nadal
+nieinstrumentowane. Następny krok: pełne cykle tych oryginalnych efektów
+z assetami i referencjami MIPS, potem dalsza autentyczna walka na dachu.
+Zapis H pozostaje bezpiecznym punktem; kontynuację56518 odtwarza journal.
 
 ### Od Elevator Key do M156 — potwierdzony brak modułu
 

@@ -63,6 +63,7 @@
 #include "pe1/room_flare.h"
 #include "pe1/room_paired_glow.h"
 #include "pe1/room_module.h"
+#include "pe1/room_spark_attacks.h"
 #include "pe1/scene_transition.h"
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
@@ -511,6 +512,11 @@ int Scene_LoadRoom(unsigned int roomId)
                 if(slot==166 && record[i].u.handlerAddress==0x80195700)native=&g_RoomHomingProgram;
             }
         }
+        if (map + 1 == 156 || map + 1 == 291 || map + 1 == 380) {
+            if (slot == 129 && record[i].u.handlerAddress == 0x80192b08u) native = &g_RoomBurstOrbProgram;
+            if (slot == 130 && record[i].u.handlerAddress == 0x80192b64u) native = &g_RoomBeamSparkProgram;
+            if (map + 1 == 380 && slot == 126 && record[i].u.handlerAddress == 0x80192bc0u) native = &g_RoomJitterSparkProgram;
+        }
         /* Seven USA rooms share the original mirror module. */
         if (slot == 69 && record[i].u.handlerAddress == 0x8018fb44u) {
             switch (map + 1) {
@@ -892,6 +898,14 @@ int Scene_LoadRoom(unsigned int roomId)
             }else if(slot==128)g_FieldFxTaskPrograms[43]=&g_RoomM123JointEffects;
             else if(slot==143)g_FieldFxTaskPrograms[58]=&g_RoomM123PulseRingEffects;
             else if(slot==144)g_FieldFxTaskPrograms[59]=&g_RoomM123WaveBurstEffects;
+        } else if (map + 1 == 156 || map + 1 == 291 || map + 1 == 380) {
+            g_FieldFxTaskPrograms[slot - 85] = slot == 129 ? &g_RoomBurstOrbProgram :
+                slot == 130 ? &g_RoomBeamSparkProgram : &g_RoomJitterSparkProgram;
+            g_RoomScriptArg = 0;
+            g_RoomBurstOrbHeading = 0;
+            g_RoomBeamSparkAsset = NULL;
+            memset(RoomLib_SlotTable, 0, 8 * sizeof(*RoomLib_SlotTable));
+            memset(&g_RoomSparkCapture, 0, sizeof(g_RoomSparkCapture));
         } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30 || map + 1 == 113 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));

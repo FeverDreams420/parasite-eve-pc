@@ -59,7 +59,7 @@
 /* pe1/room_spark_ring_burst.h */
 #define g_RoomSparkSlot PE_OVERLAY_SYM(g_RoomSparkSlot)
 /* pe1/room_spark_attacks.h */
-#define g_RoomCaptureFrameWord PE_OVERLAY_SYM(g_RoomCaptureFrameWord)
+#define g_RoomSparkCapture PE_OVERLAY_SYM(g_RoomSparkCapture)
 
 /* Shared room_lib functions that read or write one of the names above (or
  * call such a function). Each overlay's copy works on that overlay's data,

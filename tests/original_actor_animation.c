@@ -1,4 +1,5 @@
 #include "pe1/room_ground_eruption.h"
+#include "pe1/room_spark_attacks.h"
 #include "pe1/room_homing_model.h"
 #include "pe1/room_falling_burst.h"
 #include "../src/overlays/room_m318_chrysler/m318_externs.h"
@@ -16436,8 +16437,53 @@ done:
     if(valid)puts("Original Chrysler M391/M393/M394/M395/M396/M399/M401/M402: 22101 complete original instructions with only audited relocations, all methods/scripts/seeds/work data, 16 room loads, descriptor banks and repeated reset passed");return valid;
 }
 
+static int original_hospital_spark_assets(void)
+{
+    const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return 0;
+    PeDisc disc={0};PeDiscFile exe,archive;
+    if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 0;
+    ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 0;
+    Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+    const unsigned rooms[]={156,291,380};
+    const struct {u32 address;const void *native;size_t size;} scripts[]={
+        {0x80192adc,g_RoomBurstOrbScript,sizeof(g_RoomBurstOrbScript)},
+        {0x80192b40,g_RoomBeamSparkScript,sizeof(g_RoomBeamSparkScript)},
+        {0x80192b9c,g_RoomJitterSparkScript,sizeof(g_RoomJitterSparkScript)}};
+    FieldFxTaskProgram *programs[]={&g_RoomBurstOrbProgram,&g_RoomBeamSparkProgram,&g_RoomJitterSparkProgram};
+    FieldFxTaskCallback callbacks[]={RoomEffect_BurstOrbController,RoomEffect_DampedSparkController,RoomEffect_BeamSparkController,RoomEffect_JitterSparkController};
+    if(programs[0]->table.callbacks[0]!=callbacks[0] || programs[0]->table.callbacks[1]!=callbacks[1] ||
+       programs[1]->table.callbacks[0]!=callbacks[2] || programs[2]->table.callbacks[0]!=callbacks[3] ||
+       programs[0]->initialize!=RoomLib_SetArg1 || programs[1]->initialize!=RoomLib_SlotSet || programs[2]->initialize!=RoomLib_CaptureFrameSample)return 0;
+    for(unsigned index=0;index<3;++index){
+        SceneRoomSectorRange range;u8 module[15432];
+        if(!pe_disc_read(&disc,&exe,0x800ull+0x80093378u-0x80010000u+(rooms[index]-1)*8,&range,8) ||
+           !pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048+8,module,sizeof(module)))return 0;
+        uint64_t hash=UINT64_C(14695981039346656037);for(unsigned i=0;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+        if(hash!=UINT64_C(0xf70fe1e97ba8ce7c))return 0;
+        const u32 descriptors[]={0x80192b08,0x80192b64,0x80192bc0};
+        for(unsigned program=0;program<3;++program){
+            if(memcmp(module+(scripts[program].address-0x8018eff0),scripts[program].native,scripts[program].size) ||
+               programs[program]->script!=scripts[program].native ||
+               memcmp(module+(descriptors[program]-0x8018eff0)+32,programs[program]->table.sizes,16))return 0;
+        }
+        char name[16];snprintf(name,sizeof(name),"m%04ui",rooms[index]);u32 token=Text_ParseBase32Id((signed char *)name);
+        for(unsigned pass=0;pass<2;++pass){
+            g_RoomBurstOrbHeading=123;g_RoomBeamSparkAsset=module;g_RoomScriptArg=19;
+            memset(RoomLib_SlotTable,0xa5,8*sizeof(*RoomLib_SlotTable));memset(&g_RoomSparkCapture,0xa5,sizeof(g_RoomSparkCapture));
+            if(Scene_LoadRoom(token) || g_FieldFxTaskPrograms[44]!=programs[0] || g_FieldFxTaskPrograms[45]!=programs[1] ||
+               (rooms[index]==380 && g_FieldFxTaskPrograms[41]!=programs[2]) ||
+               g_RoomBurstOrbHeading || g_RoomBeamSparkAsset || g_RoomScriptArg)return 0;
+            for(unsigned i=0;i<8*sizeof(*RoomLib_SlotTable);++i)if(((u8 *)RoomLib_SlotTable)[i])return 0;
+            for(unsigned i=0;i<sizeof(g_RoomSparkCapture);++i)if(((u8 *)&g_RoomSparkCapture)[i])return 0;
+        }
+    }
+    CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+    puts("Original M156/M291/M380: whole USA module fingerprint, three complete task scripts/tables, callback ABI, six room loads and repeated work-data reset passed");return 1;
+}
+
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--hospital-spark"))return original_hospital_spark_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--chrysler-particles"))return original_chrysler_particle_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--floor-walker"))return original_floor_walker_states() && original_timed_spawn_states() && original_floor_walker_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--hospital-eruption")){

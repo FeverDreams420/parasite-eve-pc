@@ -12,37 +12,21 @@
 #include "pe1/room_floor.h"
 #include "pe1/room_spark_attacks.h"
 
-typedef struct RoomCaptureContext {
-    unsigned char pad00[8];
-    FieldActor *object;
-} RoomCaptureContext;
+RoomSparkRingParams g_RoomSparkCapture;
 
-void RoomLib_CaptureFrameSample(RoomCaptureContext *modeOrContext, int x, int y, int z) {
-    unsigned int sample;
-    FieldActor *object;
-    volatile s16 *captureX;
-
-    if ((int)modeOrContext == 1) {
-        g_RoomCaptureX = x;
-        g_RoomCaptureY = y;
-        g_RoomCaptureZ = z;
+intptr_t RoomLib_CaptureFrameSample(int mode, intptr_t x, intptr_t y, intptr_t z) {
+    FieldActor *object = g_FieldFxOwner->actor;
+    if (mode == 1) {
+        g_RoomCaptureX = (s16)x;
+        g_RoomCaptureY = (s16)y;
+        g_RoomCaptureZ = (s16)z;
     } else {
-        g_RoomCaptureFrameWord = x;
+        g_RoomCaptureFrameWord = (s32)x;
     }
-
-    modeOrContext = ANIM_OWNER_AS(RoomCaptureContext);
-    captureX = &g_RoomCaptureX;
-    object = modeOrContext->object;
-    sample = (u16)object->render_object.target_x;
-    *captureX = sample;
-    sample = (unsigned int)modeOrContext->object;
-    sample = (u16)((FieldActor *)sample)->render_object.target_y;
-    g_RoomCaptureY = sample;
-    sample = (unsigned int)modeOrContext->object;
-    modeOrContext = (RoomCaptureContext *)(unsigned int)g_RoomFloorY->raw;
-    x = (u16)((FieldActor *)sample)->render_object.target_z;
-    sample = 0x76c;
-    g_RoomCaptureY = (unsigned int)modeOrContext;
-    g_RoomCaptureFrameWord = sample;
-    g_RoomCaptureZ = x;
+    g_RoomCaptureX = object->render_object.target_x;
+    g_RoomCaptureY = object->render_object.target_y;
+    g_RoomCaptureY = (s16)g_RoomFloorY->raw;
+    g_RoomCaptureZ = object->render_object.target_z;
+    g_RoomCaptureFrameWord = 0x76C;
+    return (intptr_t)&g_RoomSparkCapture;
 }

@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M245: BP i przejście pierwszej fazy bossa
+
+Po dwóch porażkach odtworzono autentyczny ślad B do 124071, przed
+uruchomieniem bossa. Retry v1 doszedł do 131897 z identycznym pełnym JSON,
+ale wrapper zakończył się na EOF stdin; retry v2 miał prawidłowy PTY.
+Heal 2 użyty dopiero w tym punkcie nie wystarczył: Aya zginęła przy
+132419. Obie nieudane próby zachowano w /tmp/pe-m245-boss-retry-v*-live/.
+
+Nowy live /tmp/pe-m245-preboss-upgrade-v1-live/ (sesja 66761) używa tego
+samego normalnego kandydata 8232fcb25 i prywatnej karty B. Przez zwykłe
+menu BP wydano 300 z 365 punktów na Active Time: poziom 39→40,
+pozostało 65 BP, co potwierdzono ekranem po zamknięciu i otwarciu menu.
+W dialogu BP zwiększa Down, nie Right; pierwsza próba z Right nie wydała
+punktów. M500 nadal ma Rate 2; nie jest to docelowa broń pojedynczego
+strzału. Nie zmieniano parametrów gry, kodu ani pamięci kampanii.
+
+W walce zwykłe pary strzałów zmniejszały HP pierwszego celu po 70.
+Heal 3 użyto już przy 180 HP: przy 129113 Aya ma 460 HP.
+Energy Shot przy 130545 zmniejszył 1000260→1000003 (257 HP).
+Kolejny strzał zakończył pierwszą fazę; drugi z kolejki nie zużył kuli.
+Przy 131005 aktor 6:31 zniknął, a 7:30 ma 1000900 HP; aktor 8:29
+nadal ma 400 HP. Aya 286/589 HP, magazynek 7, ruch odblokowany,
+menu zamknięte. To PIERWSZA FAZA, nie pełna wygrana ani ukończenie portu.
+Stan i VRAM zamrożono do osobnego cold Continue z ASan/UBSan:
+/tmp/pe-m245-phase-two-v1-san/. SAN zakończył się exit 0; pełny JSON
+i VRAM są identyczne z normalnym live. Prywatne B/C/D mają identyczne
+hashe jak autentyczne źródła. Dowód: /tmp/pe-m245-phase-two-v1-proof.json.
+PsyZ/SDL nadal nie są instrumentowane; porównanie obrazu z PS1 pozostaje
+nieukończone. Live 66761 czeka przy 131005 na dalsze zwykłe wejścia.
+
 ### M245: pierwsza próba bossa i powtarzalność walki
 
 Na commit 8232fcb25 zwykłe wejścia uruchomiły scenę i walkę w M245.
@@ -23,35 +53,35 @@ porównanie efektów z PS1 nadal nie jest wykonane. Cel portu aktywny.
 ### M245/M397: natywna integracja całego istniejącego trail_burst_attacks.c
 
 Włączono cały dotychczasowy plik do istniejącego buildu CMake, bez nowych
-plików źródłowych. Wszystkie8 callbacków mają natywną sygnaturę zadania,
+plików źródłowych. Wszystkie 8 callbacków mają natywną sygnaturę zadania,
 korzystają z g_FieldFxActiveTaskSlot->end, rzeczywistego aktora i natywnych
 pól kontekstu. Trafienie śladem ustawia właściwy Combatant.stateFlags i
 core_flags właściciela; action_state jest osobnym wskaźnikiem z kontrolą
 guardów. Zachowano oryginalne timingi, stałe i oba gettery zwracające
-SeekingTrailHistory (potwierdzone instrukcjami801955e4/801955f4).
+SeekingTrailHistory (potwierdzone instrukcjami 801955e4/801955f4).
 
-Odtworzono autorowane skrypty36/60 B, dwie40 B krzywe kolorów, dwie historie
-po2×25 punktów, 16 kolorowe warstwy CLUT, modele i kotwice. Dane porównano
-z pełnym identycznym modułem M245/M397:27556 B, SHA8 a458699….
-Krzywe zawierają klucz końcowy; nie obcinać ich do32 B. Loader wiąże
-klasy75/70 i programy140/141→task55/56 oraz resetuje całą mutowalną
+Odtworzono autorowane skrypty 36/60 B, dwie 40 B krzywe kolorów, dwie historie
+po 2×25 punktów, 16 kolorowe warstwy CLUT, modele i kotwice. Dane porównano
+z pełnym identycznym modułem M245/M397:27556 B, SHA 8a458699….
+Krzywe zawierają klucz końcowy; nie obcinać ich do 32 B. Loader wiąże
+klasy 75/70 i programy 140/141→task55/56 oraz resetuje całą mutowalną
 pamięć, łącznie z nagłówkami/timingiem krzywych. Istniejący helper
 FieldFx_LoadRotatedClutRow w geometry.c zastąpił niezdefiniowany bufor
-PS1 D_800E21A8 lokalnym16-elementowym buforem C. Przechowuje nadal kolor0
-i obraca pozostałe15. Usunięto ujemne przesunięcia spin.z, odtwarzając
+PS1 D_800E21A8 lokalnym 16-elementowym buforem C. Przechowuje nadal kolor 0
+i obraca pozostałe 15. Usunięto ujemne przesunięcia spin.z, odtwarzając
 zawijanie halfword przez mnożenie i rzutowanie.
 
 Nowy tryb --m245-load w ISTNIEJĄCYM original_actor_animation.c sprawdza
 realne CUE I/O obu pokoi, hash całego modułu, skrypty/krzywe, 4 powiązania,
 dwukrotny reload każdego pokoju po celowym zabrudzeniu danych, prawdziwe
-gettery, oba trafienia śladów oraz ich flagi/guardy, czasy8/48/16 klatek
+gettery, oba trafienia śladów oraz ich flagi/guardy, czasy 8/48/16 klatek
 kontrolerów i cząstek oraz odczyt/obrót rzeczywistego CLUT w VRAM.
 Normal i ASan/UBSan/function przechodzą. To testy izolowane silnika,
 nie edycja stanu autentycznego przejścia kampanii. Tryby rysowania efektów
 w prawdziwej walce oraz zgodność obrazu PS1 wymagają dalszych dowodów.
 
-Świeży kandydat /tmp/pe-m245-trail-native-v1-* ma406 obiektów
-(203 normal+203 SAN), 620 zweryfikowanych zależności. Wszystkie68 regresji
+Świeży kandydat /tmp/pe-m245-trail-native-v1-* ma 406 obiektów
+(203 normal+203 SAN), 620 zweryfikowanych zależności. Wszystkie 68 regresji
 terminalnie exit0: -verification.json. Sześć wymaganych CTestów zasobów
 bez SKIP: -ctest-assets.log. Build/game i fixture podmienione na ten sam
 świeży profil normal. Biblioteki PsyZ/SDL nadal nieinstrumentowane.
@@ -63,7 +93,7 @@ B/C/D są identyczne z autentycznymi źródłami:
 /tmp/pe-m245-trail-native-v1-entry-proof.json. Brak native descriptor
 missing. Wczesna próba zejścia spod balustrady wróciła zwykłym wyjściem
 do M243; ponowne wejście do M245 przy 123500 działało. Up45 i Left60
-zeszły z górnego końca schodów. Bieżący live97695 przy 123621 w M245,
+zeszły z górnego końca schodów. Ówczesny live97695 przy 123621 w M245,
 589 HP, pozycja(428, 1229), ruch odblokowany. Te późniejsze ruchy mają na
 razie tylko normalny ślad. Następny krok: scena/boss, rzeczywiste efekty
 trail/model burst w walce oraz nowy autentyczny zapis przy telefonie.
@@ -7919,7 +7949,7 @@ przechodzi za bramę do[1800,-1500]. Przy47548: M062/etap232, HP50/101,
 pojemność17, weapon10/armor14, brak menu/przeciwników i locka, battle9,
 zmienna54=524414, klucz9, nowe wyposażenie14/15, Junk13/16 zachowane.
 W pierwszych pięciu rekordach wyposażenia zmieniła się tylko rzeczywista
-amunicja M16/offset138:7→13 (walka/przeładowanie); pozostałe159B bez zmian.
+amunicja M16/offset138:7→13 (walka/przeładowanie); pozostałe 159B bez zmian.
 
 Cały replay G→M062/cap47548 na niezmienionym /tmp/pe-park-attack-status-v1
 przechodzi normal/SAN exit0 w10,77/27,92s. Pełny JSON i1MiBVRAM zgodne

@@ -16437,6 +16437,108 @@ done:
     if(valid)puts("Original Chrysler M391/M393/M394/M395/M396/M399/M401/M402: 22101 complete original instructions with only audited relocations, all methods/scripts/seeds/work data, 16 room loads, descriptor banks and repeated reset passed");return valid;
 }
 
+/* CPU oracle hashes include each whole 64-byte record, all 64 serialized
+ * callback entries, return value and actual BIOS RNG state (no draw hooks). */
+static int original_hospital_spark_particle_states(void)
+{
+    FieldFxTaskCallback callbacks[]={RoomEffect_BurstOrbParticle,RoomEffect_DampedSparkParticle,RoomEffect_BeamBounceParticle,RoomEffect_JitterSparkParticle};
+    const uint64_t expected[]={UINT64_C(0xa02cc554e27b765a),UINT64_C(0x818487d9e34c3d0d),UINT64_C(0x11bbe210a94a5062),UINT64_C(0x9391bb57790f740b)};
+    const s16 values[]={-32768,-1000,-1,0,1,1000,32767,17};const u16 timers[]={0,7,15,23,31,32767,65535};
+    FieldFxTaskContext context={0};FieldFxTaskSlot slot={0};FieldActor player={0};
+    static _Alignas(void *) char pool[4096];_Alignas(void *) u8 data[64];
+    PolygonVertex floor[]={{0,-10000,0,-10000},{0,10000,0,-10000},{0,10000,0,10000},{0,-10000,0,10000}};
+    FieldFxTaskContext *old_context=g_FieldFxTaskContext;FieldFxTaskSlot *old_slot=g_FieldFxActiveTaskSlot;FieldActor *old_player=g_PlayerEntity;
+    PolygonVertex *old_polygon=g_FloorPolygonVertices;u16 old_count=g_FloorPolygonVertexCount;s16 old_floor=g_RoomFloorY->y,old_heading=g_RoomBurstOrbHeading;
+    int old_age=g_FieldFxCurrentAge;u32 old_rng=Psyz_RandState();int valid=1;
+    g_FieldFxTaskContext=&context;g_FieldFxActiveTaskSlot=&slot;slot.end=pool;g_PlayerEntity=&player;
+    player.pos_x=player.pos_z=30000*65536;player.render_object.hit_cylinder.radius=63;
+    g_FloorPolygonVertices=floor;g_FloorPolygonVertexCount=4;
+    for(unsigned callback=0;callback<4 && valid;++callback){
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned state=0;state<7;++state)for(unsigned t=0;t<7;++t)for(unsigned v=0;v<8;++v){
+            memset(data,0xa5,sizeof(data));u16 fields[]={values[v],values[(v+2)%8],values[(v+4)%8],v*511,values[(v+1)%8],values[(v+3)%8],values[(v+5)%8],v+1,state,timers[t]};memcpy(data,fields,20);
+            memset(pool,0xa5,sizeof(pool));if(FieldFx_InitCallbackList(pool,20,64,callbacks[callback])<=0){valid=0;break;}
+            g_RoomFloorY->y=values[(v+6)%8];g_FieldFxCurrentAge=v*7;g_RoomBurstOrbHeading=v*511-1000;srand(v*0x1234567u);
+            u32 result=callbacks[callback](1,data,0),random=Psyz_RandState();
+            const void *parts[]={&result,&random,data};const unsigned sizes[]={4,4,64};
+            for(unsigned part=0;part<3;++part)for(unsigned j=0;j<sizes[part];++j)hash=(hash^((const u8 *)parts[part])[j])*UINT64_C(1099511628211);
+            FieldFxCallbackList *list=(void *)pool;
+            for(unsigned i=0;i<64;++i){FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);
+                for(unsigned j=0;j<4;++j)hash=(hash^((u8 *)entry)[j])*UINT64_C(1099511628211);
+                for(unsigned j=0;j<20;++j)hash=(hash^entry->state[j])*UINT64_C(1099511628211);}
+        }
+        if(hash!=expected[callback]){fprintf(stderr,"Hospital spark CPU callback%u hash%016llx expected%016llx\n",callback,(unsigned long long)hash,(unsigned long long)expected[callback]);valid=0;}
+    }
+    g_FieldFxTaskContext=old_context;g_FieldFxActiveTaskSlot=old_slot;g_PlayerEntity=old_player;g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_count;
+    g_RoomFloorY->y=old_floor;g_RoomBurstOrbHeading=old_heading;g_FieldFxCurrentAge=old_age;srand(old_rng);
+    if(valid)puts("Original hospital sparks: 1568 USA MIPS/BIOS/GTE update states, full record/pool guards, return and RNG passed");return valid;
+}
+
+/* Asset-backed PM lifecycle fixture; actors/floor are isolated test inputs,
+ * not a campaign shortcut. All callbacks, scripts and draws are original. */
+static int original_hospital_spark_cycles(void)
+{
+    PmTables old_pm=g_PmTables;RenderBufferPrefix old_buffers=D_800B0E38;
+    FieldActor *old_player=g_PlayerEntity;GteMatrix *old_view=g_GeomScroll.words.viewMatrix;
+    void *old_archive=g_GameState.loaded_scene_archive;u8 *old_effects=g_FieldEffectAssetTable;
+    PolygonVertex *old_floor=g_FloorPolygonVertices;u16 old_count=g_FloorPolygonVertexCount;
+    static PmPrimarySlot bank[11];static RenderGpuTag ordering[4096];
+    static struct {_Alignas(void *) u8 bytes[0x40000];u8 guard[64];} packets;
+    FieldActor actor={0},player={0};FieldActorState core={0};Combatant player_core={0};RenderMatrix matrices[32]={0};u8 cue=1;
+    actor.state=&core;actor.render_object.matrices=matrices;core.control10.command_value=120;core.action_state=&cue;
+    player.state=(void *)&player_core;player.pos_x=player.pos_z=10000*65536;player.render_object.hit_cylinder.radius=63;
+    actor.render_object.target_x=20;actor.render_object.target_y=-200;actor.render_object.target_z=1024;
+    for(unsigned i=0;i<32;++i){for(unsigned axis=0;axis<3;++axis)matrices[i].rotation[axis][axis]=4096;matrices[i].translation[0]=20;matrices[i].translation[1]=-200;matrices[i].translation[2]=1024;}
+    PolygonVertex floor[]={{0,-10000,0,-10000},{0,10000,0,-10000},{0,10000,0,10000},{0,-10000,0,10000}};
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    g_PmTables=(PmTables){old_pm.handlers,bank,NULL};g_PlayerEntity=&player;g_GeomScroll.words.viewMatrix=&view;
+    g_GameState.loaded_scene_archive=g_GameState.loaded_scene_assets;g_FieldEffectAssetTable=g_GameState.loaded_scene_assets;
+    g_FloorPolygonVertices=floor;g_FloorPolygonVertexCount=4;g_RoomFloorY->y=0;g_GameStateFlags=0x80;
+    if(!Asset_FindTable08ByU32Key(g_GameState.loaded_scene_archive,0xc5485704))return 0;
+    Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(27,1);Psyz_GteCtrlWrite(28,0);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);FieldFx_InitTexturePageTable();
+    const unsigned commands[]={129,130,126},masks[]={3,1,1};int valid=1;unsigned particle_states[4]={0};
+    for(unsigned effect=0;effect<3 && valid;++effect){
+        memset(bank,0,sizeof(bank));for(unsigned i=0;i<11;++i)memset(bank[i].task.tasks.arena,0xa5,sizeof(bank[i].task.tasks.arena));
+        cue=1;core.core_flags=0;player_core.stateFlags=0;srand(1);
+        int handle=Scene_LoadRoomAssets(commands[effect],&actor);if(handle!=0){fprintf(stderr,"Spark PM allocate cmd%u=%d\n",commands[effect],handle);valid=0;break;}
+        if(effect==0)valid=Pm_SendCmd(handle,0,0,24,0,0)==0;
+        else if(effect==1)valid=Pm_SendCmd(handle,0,1,0,36,8)==0 && Pm_SendCmd(handle,0,0,0,20,1024)==0;
+        else valid=Pm_SendCmd(handle,0,0,500,0,0)==0;
+        unsigned frames=0,seen=0,drawn=0,linked=0,peak=0,beam_phases=0;
+        while(valid && bank[handle].header.state && frames<300){
+            memset(&packets,0xa5,sizeof(packets));for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
+            g_ActiveDrawSlot=frames&1;g_DrawPacketOffset=0;D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.bytes;
+            if(Pm_Start(handle) || Pm_Exec(handle)){valid=0;break;}
+            FieldFxTaskContext *ctx=&bank[handle].task.tasks;
+            if(ctx->used>sizeof(ctx->arena) || g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes)){valid=0;break;}
+            drawn+=g_DrawPacketOffset!=0;
+            for(unsigned i=0;i<8;++i)if(ctx->slots[i].id!=0xffff){
+                FieldFxTaskSlot *slot=&ctx->slots[i];seen|=1u<<slot->id;
+                if(slot->start<ctx->arena || slot->start>=ctx->arena+sizeof(ctx->arena) || slot->end<slot->start || slot->end>=ctx->arena+sizeof(ctx->arena)){valid=0;break;}
+                if(effect==1)beam_phases|=1u<<((RoomBeamSpark *)slot->start)->state;
+                FieldFxCallbackList *list=(void *)slot->end;unsigned active=0;
+                for(int j=0;j<list->count;++j){FieldFxCallbackListEntry *entry=(void *)(list->entries+(size_t)j*list->stride);active+=entry->active!=0;
+                    if(entry->active){unsigned kind=list->callback==RoomEffect_BurstOrbParticle?0:list->callback==RoomEffect_DampedSparkParticle?1:list->callback==RoomEffect_BeamBounceParticle?2:3;
+                        s16 state;memcpy(&state,entry->state+16,2);if(state<0 || state>5){valid=0;break;}particle_states[kind]|=1u<<state;}}
+                if(active>peak)peak=active;
+            }
+            for(unsigned i=ctx->used;i<sizeof(ctx->arena);++i)if((u8)ctx->arena[i]!=0xa5)valid=0;
+            for(unsigned i=0;i<64;++i)if(packets.guard[i]!=0xa5)valid=0;
+            for(unsigned depth=0;valid && depth<4096;++depth){uintptr_t address=ordering[depth].address;unsigned chain=0;
+                while(address!=0xffffff){if(address<(uintptr_t)packets.bytes || address+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset || address%_Alignof(RenderGpuTag) || ++chain>4096){valid=0;break;}++linked;address=((RenderGpuTag *)address)->address;}}
+            ++frames;
+        }
+        if(bank[handle].header.state || !drawn || !linked || !peak || seen!=masks[effect] || (effect==1 && beam_phases!=15))valid=0;
+        fprintf(stderr,"Spark PM cmd%u frames%u state%u seen%x peak%u draw%u links%u phases%x valid%d\n",commands[effect],frames,bank[handle].header.state,seen,peak,drawn,linked,beam_phases,valid);
+    }
+    if(particle_states[0]!=0x3f || particle_states[1]!=3 || particle_states[2]!=3 || particle_states[3]!=7)valid=0;
+    fprintf(stderr,"Spark PM particle phases %x/%x/%x/%x valid%d\n",particle_states[0],particle_states[1],particle_states[2],particle_states[3],valid);
+    g_PmTables=old_pm;D_800B0E38=old_buffers;g_PlayerEntity=old_player;g_GeomScroll.words.viewMatrix=old_view;
+    g_GameState.loaded_scene_archive=old_archive;g_FieldEffectAssetTable=old_effects;g_FloorPolygonVertices=old_floor;g_FloorPolygonVertexCount=old_count;
+    g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
+    if(valid)puts("Original hospital sparks: three complete authored PM programs, both orb/spray callbacks, all beam phases, particle expiry, real model and OT/arena/packet guards passed");return valid;
+}
+
 static int original_hospital_spark_assets(void)
 {
     const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return 0;
@@ -16477,13 +16579,15 @@ static int original_hospital_spark_assets(void)
             for(unsigned i=0;i<sizeof(g_RoomSparkCapture);++i)if(((u8 *)&g_RoomSparkCapture)[i])return 0;
         }
     }
+    int cycles=original_hospital_spark_cycles();
     CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+    if(!cycles)return 0;
     puts("Original M156/M291/M380: whole USA module fingerprint, three complete task scripts/tables, callback ABI, six room loads and repeated work-data reset passed");return 1;
 }
 
 int main(int argc, char **argv)
 {
-    if(argc==2 && !strcmp(argv[1],"--hospital-spark"))return original_hospital_spark_assets()?0:1;
+    if(argc==2 && !strcmp(argv[1],"--hospital-spark"))return original_hospital_spark_particle_states() && original_hospital_spark_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--chrysler-particles"))return original_chrysler_particle_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--floor-walker"))return original_floor_walker_states() && original_timed_spawn_states() && original_floor_walker_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--hospital-eruption")){

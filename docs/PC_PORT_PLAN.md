@@ -2,18 +2,19 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: istniejące całe spark_attacks.c i capture_frame_sample.c
-naprawione w miejscu i statycznie podłączone dla M156/M291/M380. Autentyczna
-trasa H przechodzi poprzednie odrzucenie loadera i uruchamia dach M156.
-Zwykłe wejście rozpoczyna walkę z pająkiem i trafienie pajęczyną:56518/HP92.
-Boss niepokonany; pełne cykle i numeryczne odniesienia wszystkich efektów
-tego modułu nadal wymagają weryfikacji. Nie dodano plików źródłowych.
+Najnowszy postęp: pełne cykle trzech oryginalnych programów iskier M156/
+M291/M380 potwierdzone z modelem z assetów, wszystkimi fazami promienia
+oraz stanami czterech cząstek. Dodatkowo1568 stanów aktualizacji cząstek
+zgodnych z oryginalnym USA MIPS i RNG z BIOS-u, w obu profilach natywnych.
+Boss M156 nadal niepokonany. Ostatnia eksploracyjna próba walki kończy się
+śmiercią; zapisu H nie zmieniano. W tym odcinku rozszerzono wyłącznie
+istniejący test, bez zmian kodu produkcyjnego i nowych plików źródłowych.
 
-Kandydat /tmp/pe-m156-v4: świeże388 obiektów (194/profil),48/48
+Kandydat /tmp/pe-m156-cycles-v4: świeże388 obiektów (194/profil),48/48
 regresji exit0 oraz6 cold replayów trasy/początku walki M156 exit0.
 Cały stan i pełne1MiB VRAM zgodne między normal/SAN; zachowany obraz
 live56518 również zgodny. Rewalidacja995 unikalnych zależności/obiektów/
-archiwów/binarek i kopii build: /tmp/pe-m156-v4-final-proof.json.
+archiwów/binarek i kopii build: /tmp/pe-m156-cycles-v4-final-proof.json.
 SAN obejmuje kod portu (address,undefined,function); archiwa PsyZ/SDL
 pozostają nieinstrumentowane. build/parasite-eve-pc i fixture są kopiami
 tego kandydata normal. Pełna kampania nadal nie jest ukończona.
@@ -52,6 +53,60 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Pełne cykle iskier i1568 stanów cząstek USA MIPS
+
+Istniejący tests/original_actor_animation.c/--hospital-spark rozszerzony
+bez zmian produkcji. Izolowany fixture używa syntetycznych aktorów/podłogi
+oraz rzeczywistego modelu0xc5485704 z załadowanych assetów. Oryginalne
+PM_Send/Start/Exec prowadzą całe trzy skrypty do zwolnienia właściciela:
+129 kończy przy90 klatkach (oba kontrolery, maks37 cząstek,85 klatek
+rysowania),130 przy129 (maks32,42 klatki rysowania),126 przy129
+(maks60,62 klatki rysowania). Wszystkie cztery fazy promienia oraz stany
+cząstek:Orb0..5, Damped0..1, Bounce0..1, Jitter0..2 rzeczywiście osiągnięte.
+Sprawdzone kompletne wygaszenie, niepuste łańcuchy OT, natywne wyrównanie
+i granice linków pakietów, strażnicy pakietów i nieużytej części areny,
+wskaźniki slotów oraz limity pamięci. Normal/SAN identyczne liczniki.
+
+Niezależne numeryczne odniesienie wykonuje oryginalne instrukcje USA MIPS
+czterech callbacków cząstek w mode1:7 stanów ×7 liczników (w tym32767,
+65535) ×8 zestawów współrzędnych/prędkości/granic16-bitowych, po392
+przypadki dla każdego, łącznie1568. Wywołania rand/memset trafiają do
+rzeczywistych implementacji ROM BIOS; wyłącznie instrukcje sprzętowego
+COP2 są przekazywane do backendu GTE, bez podmiany wyników funkcji CPU.
+Porównanie obejmuje cały64-bajtowy bufor wejściowy ze strażnikami,
+wszystkie64 znormalizowane wpisy puli (active/age/20B danych), wynik
+funkcji i stan RNG. Wszystkie cztery hashe zgodne natywnie normal/SAN:
+/tmp/pe-m156-particles-v1-cpu-proof.json; oczekiwane hashe i przypadki
+są w utrzymywanym istniejącym teście. Pełne dane oracle zachowane w
+/tmp/pe-m156-particles-v1-cpu.bin. To numeryczna zgodność aktualizacji
+cząstek, nie odniesienie obrazu/PCM z PS1 ani wszystkich trybów kontrolerów.
+
+Świeży kandydat /tmp/pe-m156-cycles-v4:388 obiektów i48/48 regresji,
+/tmp/pe-m156-cycles-v4-verification.json. Dodatkowo dwa wejścia55708
+z H oraz cztery cold56088/56518 × normal/SAN ponownie zgodne całymi
+JSON/VRAM z historyczną trasą, w tym zachowanym live56518:
+/tmp/pe-m156-cycles-v4-{entry,combat-replay}-proof.json. Build gry/fixture
+skopiowany dopiero po tych wynikach i ponownym hashowaniu388 obiektów,
+995 unikalnych plików: /tmp/pe-m156-cycles-v4-final-proof.json.
+Archiwa PsyZ/SDL nadal nieinstrumentowane.
+
+Dalsza zwykła sesja /tmp/pe-hospital-spider-v1-live odtwarza H i journal
+przy56518/HP92/Stiffness. Cure-M w slot0 usuwa blokadę; ruch i kolejny
+atak prowadzą do50HP przy57218. Medicine2 ze slot20 daje50→140 przy58006,
+potem następne ataki ponownie zostawiają50HP i Stiffness. Haste przez
+oryginalne menu PE usuwa Stiffness i ustawia haste przy59156, lecz kolejny
+atak zabija Ayę przy59236, bez oddanego strzału (magazynek nadal8).
+To nieudana gałąź taktyczna normal-only, nie zwycięstwo ani dowód błędu
+portu; zakończona quit0. H i prywatna kopia bez zmian, bu10 puste;
+root karty nietknięte. Przyjęta trasa pozostaje na wcześniejszym H i
+potwierdzonym56518, nie na przegranej gałęzi.
+
+Następny krok: lepsze przygotowanie przed spotkaniem i pełna autentyczna
+walka na dachu, dalsza kampania; nadal wymagane numeryczne odniesienia
+rysowania i pozostałych trybów callbacków sterujących, porównania audio/
+obrazu i pełny audyt zakresu portu. Pełne PM cykle i update cząstek są
+teraz potwierdzone, zastępując wcześniejszy brak tych dowodów poniżej.
 
 ### M156/M291/M380 — integracja istniejącego modułu iskier
 

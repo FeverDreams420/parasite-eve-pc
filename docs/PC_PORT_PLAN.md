@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M229 z amunicją i zwycięstwo M231; wejście M232
+
+Live normal33307,/tmp/pe-m229-svprotector-ammo-v1-live.py,odtworzył201100,
+573HP,SvProtector. Wait16,Down30 uruchomiły jeden typ4/sub31:320HP.
+Escape za drugim razem powiodło się przy552HP. Wait200,wait8,Down16
+uruchomiły przy202896 dwa typ3/sub31,30 po280HP. Pierwotny skrypt M229
+przy60464 odczytuje licznik klatek1 i maskuje go31; przy60628..60960
+wybiera dwa typ3 albo jeden typ4. To zwykła zależność czasu gry,nie wymaga
+modyfikowania RAM. Odczyt LLDB counter1=192725 przy202572 był wyłącznie
+obserwacyjny (attach,expr,detach),bez wywołań funkcji/zapisów.
+
+AT4 trafił obu280→134. M203 EnergyShot przy67974138/78118912 PE zadał205
+i pokonał sub30. G23 przeładował ostatnie3 naboje,rezerwa0,seria37*3
+zmniejszyła sub31:134→23. Club1 trafił28 z bliska,przy206932 zwycięstwo,
+215HP. ALL odebrało dwie paczki Ammo+15. Medicine4 ze slot15 odnowiło
+215→573HP,Medicine3(slot17) zachowane. Ponownie wyposażono G23.
+Punkt208244:573HP,SvProtector,G23,oryginalne menu Items widocznie pokazuje
+AmmoCrate30. Pełne JSON i VRAM normal/SAN/live równe,oba exit0:
+/tmp/pe-m229-svprotector-ammo-victory-v1-replay-proof.json. Nie przenoszono
+zasobów między gałęziami. Ten punkt zastępuje przygotowanie bez amunicji.
+
+Dalszy input doprowadził doM231 przy208822. Walka wybrała typ4/sub31:390HP
+i typ3/sub30:280HP. Pierwsza seria G23 trafiła dwukrotnie37 (280→206),
+EnergyShot przy43901267 PE zadał222 i pokonał typ3. Zwykła seria zadała78
+trudniejszemu390→312; Detox usunął truciznę. Medicine3 ze slot17 odnowiło
+286→466HP. Kolejna seria312→234,EnergyShot przy26428412 PE zadał134,
+234→100. Trzy strzały100→22,pojedynczy po przeładowaniu22→-4.
+Zwycięstwo213614:257HP,G23clip13,zero żywych przeciwników. Łup CureP
+trafił do slot15 (value13); END przy214296 wróciło do pola.
+RunUp170 i oczekiwanie doprowadziły doM232/0xa8043148 przy214866,257HP,
+field/lock0,bez walki. Obejrzany render sali i Ayi; wejście reaguje na input.
+
+Pełny input od autentycznegoO,zamrożone JSON/VRAM/PNG i uruchomione
+cold powtórki normal/SAN: /tmp/pe-m232-entry-v1-214866.{json,vram,png},
+/tmp/pe-m232-entry-v1-base-args.json,/tmp/pe-m232-entry-v1-replay.py.
+Session20998 wymaga jeszcze sprawdzenia wyniku. Live33307 czeka wM232.
+Bez zmian źródeł i mechaniki,edycji save'ów i zapisów RAM. Root bu00/bu10
+nietknięte. Następny cel eksploracji: działający telefon i zwykły trwały zapis.
+
 ### M231: pokonany przeciwnik390HP, walka nadal trwa
 
 Nowy liveSAN94439,/tmp/pe-m231-svprotector-v1-live.py,odtworzył potwierdzony
@@ -19,7 +58,7 @@ Zwykły pocisk AT4 trafił obu przeciwników: przy209917 mają275 i134HP.
 Po wyposażeniu G23,odnowieniu pełnego PE78118912 i wybraniu celu4/sub31,
 EnergyShot zadał303: przy211039 przeciwnik ma-28HP,pozostały134HP,Aya174HP.
 Medicine3 ze slot27 odnowiło zdrowie; przy211803 Aya318HP. Następnie
-wyposażono Club1. Detox przy212556 usunął truciznę i Darkness; HP198
+wyposażono Club1. Detox przy212556 usunął truciznę; HP198
 zachowane do212946. Kolejny atak przeciwnika obniżył je do132,ale Club1
 zadał28,134→106. Punkt213280:M231,jeden żywy3/sub30,106HP,Aya132HP,
 Club1,pełne ATB. Nie jest to jeszcze zwycięstwo M231 ani wejście M232.

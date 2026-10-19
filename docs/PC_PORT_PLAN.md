@@ -2,10 +2,12 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp kampanii: autentyczny telefoniczny Save F po story494,
-zimny Continue F i wjazd na13F/M150/story496, następnie M152.
-Szesnaście nowych cold replayów normal/SAN opisano poniżej. M152 nadal
-niewygrane; trzy próby ucieczki kończą się śmiercią. Kod produkcyjny bez zmian.
+Najnowszy postęp: lepszy oryginalny wariant M149 wygrywa ze190HP zamiast11,
+urządzenie/story494, autentyczny Save G i zimny Continue G→M152/story496,
+nadal190HP. Osiemnaście nowych cold przypadków normal/SAN opisano poniżej.
+M152 niewygrane. Zweryfikowano oryginalny zakaz Escape dla4:31 i jego5;
+wcześniejsze traktowanie prób jako nieudanych losowań było błędne.
+Kod produkcyjny bez zmian.
 
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
@@ -50,6 +52,80 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Save G ze190HP i korekta diagnozy Escape w M152
+
+Poprzedni odcinek był postępem: autentyczny F i wejście13F/story496.
+Obecny odcinek potwierdza Heal2 w M152, wyjaśnia zakaz ucieczki i daje
+lepszą trwałą bazę do dalszej walki, bez zmian kodu, statystyk lub RAM.
+
+Read-only SBValue przy32593: /tmp/pe-hospital-m152-status-v1.{json,log}.
+M152/4:31 ma statusFlags2=5637505,5:0/5:1=5510486; wszyscy mają bit0x40000.
+6:0/6:1 mają5351848, bez tego bitu. Oryginalny Battle_RollEscapeChance
+(src/main/battle/turn.c) przy żywym wrogu z0x40000 kończy skan z−1,
+wybiera tekst Can't escape i nie wywołuje rand. Licznik prób mimo tego rośnie.
+Wcześniejsze próby nie były zatem nieudanymi losowaniami; dobór momentu
+kolejnego Escape nie usuwa blokady. /tmp/pe-hospital-m152-noescape-v1-proof.json.
+4:31 ma ponadto Confuse_pair1 i Slow_pair1 (odporność), player attributes0.
+Nie usuwano żadnej flagi. Attach/detach exit0; wszystkie15 wspólnych stanów
+32593..33401 identyczne z sesją bez obserwatora:
+/tmp/pe-hospital-m152-status-observer-v1-proof.json.
+
+Z autentycznego F: /tmp/pe-hospital-m152-heal-v1-live i status-v1-live
+po wcześniejszym uniku wybierają oryginalny Heal2. Przy33149 HP11→71,
+Left252 pozwala33401 zachować71HP i odzyskać pełny ATB. Wariant ponawiający
+Escape umiera33983. Wariant ostrzału daje33651 dwa trafienia M16 po30,
+wróg4:31 HP170→110, ale dalszy ruch kończy33871 HP0. To nie zwycięstwo.
+Osiem cold replayów33149/33401/33651/33871 ×normal/SAN ma cały JSON
+identyczny z live i pełny VRAM identyczny między profilami:
+/tmp/pe-hospital-m152-heal-v1-replay-proof.json.
+
+Lepszy wariant M149 zaczyna od autentycznego E i całego wcześniejszego
+journalu. Cztery normal-only kierunki87054→87162: Up/Left/Right zachowują
+265HP, Down257, wszystkie kończą pełnym ATB. /tmp/pe-hospital-m149-opening-v1-proof.json.
+Wybrany Up odsuwa Ayę na z~2627, pozwala ominąć pierwsze duże trafienie.
+/tmp/pe-hospital-m149-opening-v2-live po drugim ostrzale ma157HP,
+późniejszy ruch dostaje78; nie jest to nowy potwierdzony wariant zwycięstwa.
+
+Właściwa /tmp/pe-hospital-m149-opening-v3-live: przy87642 po pierwszej
+salwie HP265, wróg141HP/mode8. Zamiast wtedy strzelać, Left100 pozwala
+87742 zakończyć atak wroga (mode2), nadal265HP. Druga salwa odbiera60HP;
+późniejsze trafienie odbiera75HP Ayi. Przy88222 Aya190HP, wróg81HP.
+Oryginalny Energy Shot zatwierdzono88676: przy88896 wróg−14HP (95damage).
+89196 zwycięstwo: mode2, zero żywych wrogów, HP190/PE0, M16ammo14.
+Zachowano /tmp/pe-hospital-m149-opening-v3-89196.{json,vram}.
+Nie jest to bezobrażeniowy wariant ani zmiana parametrów przeciwnika.
+
+Po nagrodach zwykły marsz dochodzi do urządzenia przy(134,770).
+90662 story494, lock0, HP190; zachowane -opening-v3-90662.{json,vram}.
+Powrót M148→M127→M126 kończy92272; telefon ponownie przy1337.5,1107.5.
+Slot1 domyślnie wskazuje E/index4, dwa Down wybierają pusty G/index6.
+Obejrzano Unused File przed zapisem. Save/End kończy94768, M126/story494,
+HP190/menuNULL/lock0; zachowane -opening-v3-94768.{json,vram}.
+Nowy autentyczny G8192B:
+/tmp/pe-hospital-tactical-save-v1-source/BASLUS-006620000000G,
+SHA256cb24a62b65a6a0a546700299f82ce535d270eb7ba9c3f670599fef83b56f3faa.
+F pozostaje osobnym, niezmienionym źródłem wcześniejszej trasy.
+
+Sześć cold przypadków87742/89196/94768 ×normal/SAN: cały JSON zgodny z live,
+pełny VRAM zgodny między profilami oraz zachowanym89196/94768, wszystkie
+8192B G identyczne z live i między profilami:
+/tmp/pe-hospital-m149-opening-v3-replay-proof.json. Zimny Continue G wybiera
+siódmy plik sześcioma Down. Przy24000 M126/story494/190HP, cały ekwipunek
+identyczny z94768. Ten sam zwykły journal windy i13F daje31581
+M152/story496/190HP/lock0, przed triggerem walki. Cztery cold przypadki
+24000/31581 ×normal/SAN zgodne całym JSON i pełnym VRAM również z live:
+/tmp/pe-hospital-tactical-continue-v1-replay-proof.json.
+
+Łącznie18 nowych cold przypadków normal/SAN exit0. Rehash384 obiektów,
+wszystkich zależności, bibliotek i binariów, build gry identyczny z kandydatem:
+/tmp/pe-hospital-tactical-save-v1-build-proof.json. PsyZ/SDL pozostają
+nieinstrumentowane. Wszystkie pięć sesji interaktywnych zakończono quit0;
+źródłowe/prywatne E/F/G niezmienione poza utworzeniem nowego G, bu10 puste,
+root bu00/bu10 nietknięte. Nie dodano plików repo ani zmian produkcyjnych.
+Następny krok: M152 z G/190HP, bez marnowania tur na zablokowane Escape;
+priorytet oryginalnego spawnera4:31, leczenie PE i dalsza kampania.
+M152, niezależna zgodność PS1 pikseli/PCM i pełny zakres portu nadal otwarte.
 
 ### Trwały Save F, Continue i13F — story496, M152 nadal niewygrane
 
@@ -122,7 +198,8 @@ Escape nieudany33085, HP11; przy33185 HP3. Trzeci również nieudany,
 33617 HP0/mode3, wszyscy wrogowie nadal żyją. Sześć cold replayów
 32593/33085/33617 ×normal/SAN ma identyczny cały stan względem live
 oraz pełny VRAM między profilami: /tmp/pe-hospital-m152-escape-v3-replay-proof.json.
-Nie wykazano błędu RNG ani nieuniknionej śmierci; nie zmieniano balansu.
+Późniejszy odczyt flag wyżej wyjaśnia te odmowy: Escape jest zablokowane,
+a nie losowane. Nie wykazano nieuniknionej śmierci; nie zmieniano balansu.
 
 Łącznie16 nowych terminalnych cold przypadków obu profili. Rehash384
 obiektów, zależności, archiwów i binariów, kopia build gry identyczna:

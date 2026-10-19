@@ -67,6 +67,29 @@ Zamrożony JSON/VRAM i wejścia:/tmp/pe-m214-entry-v1-*; sparowane
 odtworzenie zakończone:oba exit0,pełny JSON/VRAM normal/SAN/live,
 bez raportów sanitizerów:/tmp/pe-m214-entry-v1-replay-proof.json. Bez zmiany kolizji, RAM ani save. Aktualny live19532
 czeka przy139423 w M214; dwa Medicine4 pozostały.
+
+Dalsza zwykła eksploracja tego samego kandydata: M214→M216 przy140573.
+Od spawn M214:Left90,Up150,wait350,Left80,Up80,wait400. M216 ma
+obrócone sterowanie:Up zmniejsza worldX,Right zwiększa worldZ. Trasa
+wokół uszkodzonego pomostu:Left180,Up190,Up135,Right220,wait400,
+Up60,Right140,Left30,Up12,wait300 →M212/0xa8041148,142240,465HP.
+Przejście działa bez zmian kolizji ani modułów źródłowych.
+
+M212: drabina ma interakcję przy x≈679,z−418, skierowanie w górę ekranu.
+Od spawn:Right40,Up12,wait400,Left37,Up8 omyłkowo wróciło doM216;
+powrótUp20,wait350. NastępnieRight50,Down7,Right18,Down2,Down15,
+Right28,Up12,Cross20,wait800:oryginalne podejście i dialog „I can go up
+or down...”. Cross,wait300 otwiera wybór. Down,Cross wybiera pierwsze
+piętro:M211/0xa80410c8 przy146647,465HP. Zamrożony JSON/VRAM, wejścia
+oraz pełny JSON/VRAM normal/SAN/live,oba exit0,bez raportów sanitizerów:
+/tmp/pe-m211-ladder-entry-v1-replay-proof.json.
+M211:Up14,Cross20,wait500 wraca po drabinie doM212 przy147181.
+StamtądDown29,Right40,Up8,Cross20,wait800,Cross20,wait200,Cross20,
+wait1000 wybiera trzecie piętro:M213/0xa80411c8 przy149318,465HP.
+Pełny JSON/VRAM normal/SAN/live,oba exit0,bez raportów sanitizerów:
+/tmp/pe-m213-ladder-entry-v1-replay-proof.json. Live SAN19532 czeka teraz przy149318 wM213,2×Medicine4.
+Odczyt oryginalnych skryptów:/tmp/pe-m{211,212,213,214,216}-nav-v1.txt.
+
 Telefon i dalsza kampania pozostają do ukończenia.
 
 ### Museum: quiz i wygrane M206/M207, wejście M209

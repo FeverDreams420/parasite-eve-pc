@@ -2,16 +2,16 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: pełne cykle trzech oryginalnych programów iskier M156/
-M291/M380 potwierdzone z modelem z assetów, wszystkimi fazami promienia
-oraz stanami czterech cząstek. Dodatkowo1568 stanów aktualizacji cząstek
-zgodnych z oryginalnym USA MIPS i RNG z BIOS-u, w obu profilach natywnych.
-Boss M156 nadal niepokonany. Ostatnia eksploracyjna próba walki kończy się
-śmiercią; zapisu H nie zmieniano. W tym odcinku rozszerzono wyłącznie
-istniejący test, bez zmian kodu produkcyjnego i nowych plików źródłowych.
+Najnowszy postęp: lepsza autentyczna trasa H przez ponowne M154 do dachu.
+M154 wygrane z117HP i pełnym PE; oryginalne leczenie/reload przygotowują
+283HP,19 naboi i wejście M156. Ruch na początku spotkania zachowuje283HP
+aż do gotowego ATB9000. Osiem nowych cold prób normal/SAN zgodnych.
+Boss nadal niepokonany; dalszy normal-only eksperyment obejmuje Haste,
+ponowne Stiffness i dwa strzały bez spadku HP bossa. Bez zmian produkcji,
+nowych plików źródłowych, save editora lub zapisów gameplay RAM.
 
 Kandydat /tmp/pe-m156-cycles-v4: świeże388 obiektów (194/profil),48/48
-regresji exit0 oraz6 cold replayów trasy/początku walki M156 exit0.
+regresji exit0 oraz14 cold replayów trasy/przygotowania/początku walki exit0.
 Cały stan i pełne1MiB VRAM zgodne między normal/SAN; zachowany obraz
 live56518 również zgodny. Rewalidacja995 unikalnych zależności/obiektów/
 archiwów/binarek i kopii build: /tmp/pe-m156-cycles-v4-final-proof.json.
@@ -53,6 +53,61 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Nowa trasa H:283HP i19 naboi na dachu
+
+Poprzedni odcinek był postępem: pełne PM cykle i1568 stanów MIPS
+potwierdzone; produkcja w tym odcinku pozostaje tym samym kandydatem.
+Dwie zwykłe gałęzie /tmp/pe-hospital-roof-prep-v{1,2}-live szukają
+przejścia wokół mebli M154 od37602/story500. Dolna trasa inicjuje ponowne
+spotkanie przy37797, górna blokuje się na geometrii przy37857; oba quit0,
+bez obejścia kolizji. Nie dowodzi to niemożliwości innej trasy. Gałęzie
+normal-only, nie są wybranym journalem kampanii.
+
+Wybrana /tmp/pe-hospital-roof-prep-v3-live odtwarza autentyczny H,
+dokumenty/Elevator Key i zwykły input do39895/M154:HP279, pełne PE,
+M16ammo19. Haste, dwie salwy do9:1/120HP, potem trzy do7:31/170HP,
+następnie pozostałe8. Przy44746 prawdziwe zwycięstwo:mode2, zero żywych
+przeciwników, HP117/283, PE462/max, ammo3. Haste później znika; ten test
+nie rozstrzyga konkretnej przyczyny. Pominięto nagrodę Cure-M przy pełnym
+ekwipunku przez oryginalne End. Dwa polowe Heal2:117→177→237, potem
+Medicine2 slot20:237→283 z limitem, slot20→0. Reload M16 do19.
+Przy48306 menuNULL/lock0, pełne HP. Stare wejściowe Cure-M pozostają.
+
+Zwykły ruch, użycie/zużycie Elevator Key, dialogi na okręcie i panel
+windy prowadzą56072 doM156/a8025348, story504/HP283. Zamrożone
+/tmp/pe-hospital-roof-prep-v3-56072.{json,vram}. Przy rozpoczęciu
+spotkania56252 odczyt PE14548992=222. Left180, dalszeLeft200 iUp100
+zbliżają Ayę do centrum; przy56632 nadal HP283, ATB9000, ammo19,
+bez aktywnego Stiffness. To lepszy punkt do dalszej próby niż poprzednie
+wejście124HP i stan56518/92HP.
+
+Cztery punkty44746/48306/56072/56632 × normal/SAN:8 exit0, całe JSON
+zgodne z live i między profilami, pełne1MiB VRAM zgodne między profilami,
+zamrożony live56072 również zgodny. /tmp/pe-hospital-roof-prep-v3-replay-proof.json.
+Ponowny hash388 obiektów i995 zależności/archiwów/binarek, kopie build
+gry/fixture i wejściowy/prywatny H zgodne:
+/tmp/pe-hospital-roof-prep-v3-build-proof.json. Archiwa PsyZ/SDL pozostają
+nieinstrumentowane. Root bu00/bu10 nietknięte, prywatne bu10 puste.
+
+Dalszy normal-only eksperyment od56632: Haste przez menu PE, przy57402
+HP283 i bit haste aktywny. Ruch DownRight150 kończy57552 HP149 i Stiffness;
+celowanie pokazuje dystans3510 przy zasięgu1608. Dwa strzały zużywają
+19→17 naboi, odczyt HP3:31 pozostaje1000450. Nie rozstrzygnięto jeszcze
+przyczyny braku obrażeń; ten eksperyment nie jest dowodem błędu portu
+ani udanego trafienia. Koniec57882:HP149,ATB3332,Stiffness aktywne,
+quit0. Stan/VRAM zamrożone; nie sparowano tej dalszej gałęzi zSAN.
+Wybranym punktem dalszej próby pozostaje56072 lub56632 z pełnym HP,
+odtwarzanym przez args.json + input.jsonl tej samej sesji.
+
+Dodatkowe odczyty: oryginalny USA blob M156 ma jawne dodania1000000
+przy209632/209672/209712 do pól44/45/60 oraz odjęcie przy213992.
+Sam milion w odczycie HP nie dowodzi uszkodzenia danych. Implementacja
+ITEM_CURE_M w istniejącym battle/attack.c usuwa Stiffness, gdy już trwa,
+a przy braku efektu ustawia maskę ochronną; obserwowane wcześniejsze
+użycie podczas blokady odpowiada gałęzi leczenia. Nie zmieniono tej
+mechaniki. Następne zadanie: podejść i skutecznie trafić pająka, zweryfikować
+jego fazy oraz ukończyć starcie i dalszą kampanię zwykłym wejściem.
 
 ### Pełne cykle iskier i1568 stanów cząstek USA MIPS
 

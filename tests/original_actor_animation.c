@@ -1,6 +1,7 @@
 #include "pe1/room_orbit_set.h"
 #include "pe1/room_spark_barrage.h"
 #include "pe1/room_twelve_effect.h"
+#include "pe1/room_grab_attack.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_spark_attacks.h"
 #include "pe1/room_homing_model.h"
@@ -17224,6 +17225,60 @@ int main(int argc, char **argv)
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M404 loader: real CUE I/O, native geometry, all three descriptor registrations and argument reset passed twice");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m269-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[13140];
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive) ||
+            !pe_disc_read(&disc,&exe,0x800+(0x80093378-0x80010000)+268*8,&range,8))return 1;
+        u32 offset=(range.start+range.scratchSectors+range.textureSectors)*2048u;
+        if(!pe_disc_read(&disc,&archive,offset+8,module,sizeof(module)))return 1;
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned i=0;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+        if(hash!=UINT64_C(0xf77cd2091472d470))return 1;
+        const unsigned slots[]={77,137,138,139},addresses[]={0x801921c8,0x80192228,0x801922a8,0x801922f8};
+        const u32 methods[]={0x8018f058,0x8018f060,0x8018f084,0x8018f130,0x8018f138,0x8018f6bc,0x8018f7f8};
+        if(memcmp(module+(addresses[0]-0x8018eff0),methods,sizeof(methods)) ||
+            memcmp(module+(0x80192280-0x8018eff0),g_RoomGrabTrailTrack,40))return 1;
+        FieldFxTaskProgram *programs[]={&g_RoomGroundSweepProgram,&g_RoomOrbitTrailProgram,&g_RoomRisingSprayProgram};
+        for(unsigned i=0;i<3;++i){
+            u32 pc;memcpy(&pc,module+(addresses[i+1]-0x8018eff0+52),4);
+            if(memcmp(module+(pc-0x8018eff0),programs[i]->script,i==2?24:32))return 1;
+        }
+        for(unsigned pass=0;pass<2;++pass){
+            for(unsigned i=0;i<4;++i)g_PmCmdHandlerTable[slots[i]]=NULL;
+            g_RoomGrabSweepSide=123;g_RoomGrabSlot=456;RoomLib_PairA=789;RoomLib_PairB=321;
+            memset(&g_RoomGrabOrbitCentre,0xa5,sizeof(g_RoomGrabOrbitCentre));
+            memset(g_RoomGrabTrailTrack,0xa5,8);
+            for(unsigned i=12;i<40;i+=8)memset(g_RoomGrabTrailTrack+i,0xa5,4);
+            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0269i")) ||
+                g_PmCmdHandlerTable[77]!=&g_RoomGrabHandlers || g_RoomGrabSweepSide || g_RoomGrabSlot ||
+                RoomLib_PairA || RoomLib_PairB || g_RoomGrabOrbitCentre.x || g_RoomGrabOrbitCentre.y || g_RoomGrabOrbitCentre.z ||
+                memcmp(module+(0x80192280-0x8018eff0),g_RoomGrabTrailTrack,40))return 1;
+            for(unsigned i=0;i<3;++i)if(g_FieldFxTaskPrograms[52+i]!=programs[i])return 1;
+            struct {u64 before;RoomMotionTrigger object;u64 after;} guarded={0};
+            guarded.before=guarded.after=UINT64_C(0x13579bdf2468ace0);
+            RoomMotionTrigger *o=&guarded.object;FieldActor owner={0},source={0};s32 completion=-1;
+            o->probe_actor=&owner;source.type_id=30;source.sub_id=4;g_FieldActorListHead=&source;
+            g_RoomGrabHandlers.initialize((PmSlotHeader *)o);
+            if(o->flag03!=255 || o->flag1A || o->activated || o->callback!=RoomEffect_GrabAwaitTarget)return 1;
+            g_RoomGrabHandlers.send((PmSlotHeader *)o,1,0x19,(intptr_t)&completion,0,0);
+            g_RoomGrabHandlers.send((PmSlotHeader *)o,0,0x200,30,4,0);
+            if(completion!=1 || o->completion_state!=&completion || o->source_actor!=&source)return 1;
+            owner.mode=0;g_RoomGrabHandlers.execute((PmSlotHeader *)o);
+            if(o->callback!=RoomEffect_GrabAwaitTarget)return 1;
+            owner.mode=0x10;g_RoomGrabHandlers.execute((PmSlotHeader *)o);
+            if(o->callback!=RoomEffect_GrabStartOnProximity)return 1;
+            FieldActor *old_player=g_PlayerEntity, player={0};g_PlayerEntity=&player;player.mode=0x12;
+            g_RoomGrabHandlers.execute((PmSlotHeader *)o);g_PlayerEntity=old_player;
+            if(o->state!=4 || completion || guarded.before!=UINT64_C(0x13579bdf2468ace0) || guarded.after!=guarded.before)return 1;
+            g_FieldActorListHead=NULL;
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original M269: all four real CUE descriptors, authored scripts and track, reload reset, native completion pointer and callback lifecycle guards passed");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m186-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

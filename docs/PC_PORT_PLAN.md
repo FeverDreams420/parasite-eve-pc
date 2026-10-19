@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M269: podłączony cały oryginalny moduł, walka w toku
+
+Kandydat /tmp/pe-m269-native-v5 obejmuje cały istniejący grab_attack.c
+(20 oryginalnych funkcji), dołączony do natywnego zestawu CMake.
+Naprawione na miejscu: szerokość wskaźników PM i sygnału zakończenia,
+relacyjny układ stanu, typowane wywołania callbacków z obiektem, lokalny
+scratchpad oraz zdefiniowane przesunięcia ujemnych współrzędnych.
+Oryginalne tablice i skrypty deskryptorów77/137/138/139 oraz track kolorów
+pochodzą z pełnego modułu USA. Loader resetuje też zmienne overlayu i cache
+tracka przy ponownym wejściu. Nie dodano nowych plików źródłowych.
+
+Pierwszy dłuższy test walki ujawnił błąd dostępu do list cząstek: stary
+RoomSparkChannel odczytywał start zamiast end natywnego FieldFxTaskSlot,
+przez co lista nadpisywała kontroler. Wszystkie takie odwołania w tym
+module poprawiono na g_FieldFxActiveTaskSlot->end. Repro SAN sprzed poprawki:
+/tmp/pe-m269-crash-v3-san/game.log. Poprawiony kandydat odtwarza tę samą
+trasę L i zwykły input do63199 bez błędów normal/SAN, pełny JSON/VRAM równy:
+/tmp/pe-m269-combat-v5-replay-proof.json.
+
+Dalsza normalna walka do64859: Aya166/437HP, część4:30 ma145HP,
+część5:29 ma345HP. Ataki bossa i strzały są wykonywane. Cold normal/SAN
+odtwarzają pełny JSON/VRAM identyczny także z live:
+/tmp/pe-m269-attacks-v6-replay-proof.json oraz agregat
+/tmp/pe-m269-native-v5-release-proof.json. To dowód wejścia i odcinka walki,
+nie zwycięstwa ani kompletności wszystkich ataków. Źródłowy/prywatny L bez
+zmian, karty użytkownika pozostawione bez zmian.
+
+Świeże buildy:400 obiektów (200/profil),615 unikalnych zależności źródłowych
+ponownie zahashowanych; PsyZ/SDL pozostają nieinstrumentowane.62/62 regresje
+normal/SAN oraz CTest2/2 (M269 real CUE i player-input-assets) zakończone0.
+Test M269 sprawdza hash pełnych13140B modułu, wszystkie deskryptory,
+autorskie skrypty/track, dwa wczytania z celowo zabrudzonym stanem,
+wskaźnik zakończenia i cykl callbacków z guardami. Root game/fixture są
+identycznymi kopiami zweryfikowanego normal v5.
+
+Live /tmp/pe-m269-native-v5-live.py, sesja80365, stoi w64859.
+Seria zwykłego inputu /tmp/pe-warehouse-m269-search-v1.py, sesja11156,
+pracuje od tego punktu z autentycznego L; pierwsze próby używają Heal3
+i przywracają437HP. Sprawdzić terminal.json i żywy uchwyt przed kolejnym
+startem. Pełna walka M269, reszta Warehouse i kampania pozostają nieukończone.
+
+### Wcześniejsze dojście do M269 i diagnoza
+
 Gałąź z Warehouse Key wygrywa ponownie czterech wrogów M265:
 48905,353/437HP,brak przeciwników,220 w slocie25 i global47&2 zachowane.
 104 próby normal (12 rund), wszystkie prywatne L bez zmian:

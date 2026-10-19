@@ -12,7 +12,7 @@ typedef struct RoomMotionTrigger {
     /* 0x03 */ u8 flag03;
     /* 0x04 */ u8 reserved04[4];
     /* 0x08 */ FieldActor *probe_actor;
-    /* 0x0C */ void (*callback)();
+    /* 0x0C */ void (*callback)(struct RoomMotionTrigger *);
     /* 0x10 */ s32 *completion_state;
     /* 0x14 */ u8 reserved14[6];
     /* 0x1A */ u8 flag1A;
@@ -23,13 +23,13 @@ typedef struct RoomMotionTrigger {
     /* 0x28 */ u8 activated;
 } RoomMotionTrigger;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomMotionTrigger, probe_actor) == 0x08,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomMotionTrigger, probe_actor) == 8,
                   room_motion_trigger_probe_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomMotionTrigger, completion_state) == 0x10,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomMotionTrigger, completion_state) == 8 + 2 * sizeof(void *),
                   room_motion_trigger_completion_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomMotionTrigger, source_actor) == 0x1C,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomMotionTrigger, source_actor) == 16 + 3 * sizeof(void *),
                   room_motion_trigger_source_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomMotionTrigger, activated) == 0x28,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomMotionTrigger, activated) == 24 + 4 * sizeof(void *),
                   room_motion_trigger_active_offset);
 
 #endif

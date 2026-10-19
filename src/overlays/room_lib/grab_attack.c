@@ -19,30 +19,35 @@
 
 #include "pe1/room_grab_attack.h"
 
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomMotionTrigger, source_actor) - PE1_OFFSETOF(RoomMotionTrigger, callback) == PE1_OFFSETOF(RoomGrabStateTail, source_actor), grab_tail_source_alias);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomMotionTrigger, activated) - PE1_OFFSETOF(RoomMotionTrigger, callback) == PE1_OFFSETOF(RoomGrabStateTail, activated), grab_tail_active_alias);
+PE1_STATIC_ASSERT(sizeof(RoomMotionTrigger) <= sizeof(PmSecondarySlot), grab_slot_capacity);
+
 /* The player, as the class sees it. */
 #define GRAB_PLAYER ((FieldActor *)D_8009D254)
 
 /* Class slots 0 and 3. */
-int RoomEffect_GrabNop0(void) {
-    return 0;
+void RoomEffect_GrabNop0(void) {
 }
 
-int RoomEffect_GrabInit(RoomMotionTrigger *obj) {
+void RoomEffect_GrabInit(PmSlotHeader *raw) {
+    RoomMotionTrigger *obj = (void *)raw;
     obj->callback = RoomEffect_GrabAwaitTarget;
     obj->flag03 = 0xFF;
     obj->flag1A = 0;
     obj->activated = 0;
-    return 0;
 }
 
 /* Message handler: message 0x19 hands the class a completion flag, message
  * 0x200 finds the actor it grabs with. */
-int RoomEffect_GrabConfigure(char *obj, int arg1, int op, int arg3, int arg4) {
+int RoomEffect_GrabConfigure(PmSlotHeader *raw, int arg1, int op, intptr_t arg3, intptr_t arg4, intptr_t arg5) {
+    RoomMotionTrigger *obj = (void *)raw;
+    (void)arg5;
     FieldActor *node;
     RoomGrabStateTail *base;
     FieldActor *next;
 
-    base = (RoomGrabStateTail *)(obj + 0xC);
+    base = (RoomGrabStateTail *)&obj->callback;
     if (op != 0x19) {
         if (op != 0x200) {
             return 0;
@@ -75,13 +80,15 @@ int RoomEffect_GrabConfigure(char *obj, int arg1, int op, int arg3, int arg4) {
     return 0;
 }
 
-int RoomEffect_GrabNop3(void) {
+int RoomEffect_GrabNop3(PmSlotHeader *raw) {
+    (void)raw;
     return 0;
 }
 
 /* Class update: runs the current state. */
-int RoomEffect_GrabUpdate(RoomMotionTrigger *obj) {
-    obj->callback();
+int RoomEffect_GrabUpdate(PmSlotHeader *raw) {
+    RoomMotionTrigger *obj = (void *)raw;
+    obj->callback(obj);
     return 0;
 }
 
@@ -97,14 +104,15 @@ void RoomEffect_GrabStartOnProximity(RoomMotionTrigger *arg) {
     s32 kind = arg->probe_actor->anim.parts.integer;
 
     if (mode >= 0x12) {
-        RoomEffect_GrabRelease(arg);
+        RoomEffect_GrabRelease((PmSlotHeader *)arg);
         return;
     }
     if (kind < 8) {
         return;
     }
     if (kind < 0xF) {
-        RoomGrabPoint *sp = (RoomGrabPoint *)0x1F800008;
+        RoomGrabPoint scratch;
+        RoomGrabPoint *sp = &scratch;
         s32 v;
         s32 s;
         /* Retain the negated sine in the call-argument register. */
@@ -113,9 +121,9 @@ void RoomEffect_GrabStartOnProximity(RoomMotionTrigger *arg) {
         RenderMatrix *rotationMatrix;
         FieldActor *actor;
 
-        Render_FindAnimEntry(&arg->source_actor->render_object, 6, sp);
-        sp->x <<= 16;
-        sp->z <<= 16;
+        Render_FindAnimEntry(&arg->source_actor->render_object, 6, &sp->x);
+        sp->x = (s32)((u32)sp->x << 16);
+        sp->z = (s32)((u32)sp->z << 16);
         if (FieldFx_GetDistanceXZ((Vec3Fixed *)&GRAB_PLAYER->pos_x, (Vec3Fixed *)sp) >= 0x100) {
             return;
         }
@@ -159,7 +167,7 @@ void RoomEffect_GrabStartOnProximity(RoomMotionTrigger *arg) {
         arg->saved_z = p->pos_z;
         return;
     }
-    RoomEffect_GrabRelease(arg);
+    RoomEffect_GrabRelease((PmSlotHeader *)arg);
 }
 
 static const RoomFxVec4 s_GrabHoldScale = { 0x1400, 0x1400, 0x1400, 0 };
@@ -210,7 +218,7 @@ void RoomEffect_GrabHold(RoomMotionTrigger *arg0) {
     rotationMatrix->rotation[2][2] = 0x1000;
     scale = s_GrabHoldScale;
     matrix_arg = RoomEffect_GrabPlayerView(((RoomSparkBattleEntity *)D_8009D254));
-    ScaleMatrix(&matrix_arg->render_object.model_matrix, &scale);
+    ScaleMatrix((GteMatrix *)&matrix_arg->render_object.model_matrix, &scale);
     g = RoomEffect_GrabPlayerView(((RoomSparkBattleEntity *)D_8009D254));
     g->render_object.model_matrix.translation[0] = 0x100;
     g->render_object.model_matrix.translation[1] = -0x20;
@@ -225,13 +233,13 @@ void RoomEffect_GrabHold(RoomMotionTrigger *arg0) {
             Battle_ReturnToIdle();
         }
         RoomEffect_GrabResetPlayer(s1, s3v);
-        RoomEffect_GrabRelease(arg0);
+        RoomEffect_GrabRelease((PmSlotHeader *)arg0);
         return;
     }
 
     if (RoomEffect_GrabPlayerView(((RoomSparkBattleEntity *)D_8009D254))->state->amount <= 0) {
         RoomEffect_GrabResetPlayer(s1, s3v);
-        RoomEffect_GrabRelease(arg0);
+        RoomEffect_GrabRelease((PmSlotHeader *)arg0);
         return;
     }
     kind = s1->mode;
@@ -242,14 +250,14 @@ void RoomEffect_GrabHold(RoomMotionTrigger *arg0) {
         }
         Battle_ReturnToIdle();
         RoomEffect_GrabResetPlayer(s1, s3v);
-        RoomEffect_GrabRelease(arg0);
+        RoomEffect_GrabRelease((PmSlotHeader *)arg0);
         return;
     }
 
     if (kind != 0x10) {
         Battle_ReturnToIdle();
         RoomEffect_GrabResetPlayer(s1, s3v);
-        RoomEffect_GrabRelease(arg0);
+        RoomEffect_GrabRelease((PmSlotHeader *)arg0);
         return;
     }
     if ((s16)s0 < 0x12) {
@@ -290,7 +298,7 @@ void RoomEffect_GrabHold(RoomMotionTrigger *arg0) {
     }
     Battle_ReturnToIdle();
     RoomEffect_GrabResetPlayer(s1, s3v);
-    RoomEffect_GrabRelease(arg0);
+    RoomEffect_GrabRelease((PmSlotHeader *)arg0);
 }
 
 /* Lets the player go: clears the animation borrowed from the actor, puts
@@ -310,9 +318,9 @@ void RoomEffect_GrabResetPlayer(FieldActor *unused, RoomGrabStateTail *state) {
     {
         FieldActor *actor = GRAB_PLAYER;
 
-        actor->pos_x <<= 16;
-        actor->pos_z <<= 16;
-        Entity_FindFloor(actor);
+        actor->pos_x = (s32)((u32)actor->pos_x << 16);
+        actor->pos_z = (s32)((u32)actor->pos_z << 16);
+        Entity_FindFloor((struct BattleEntity *)actor);
     }
 
     {
@@ -337,7 +345,8 @@ void RoomEffect_GrabResetPlayer(FieldActor *unused, RoomGrabStateTail *state) {
 }
 
 /* Class release: signals completion and, if the player is held, lets go. */
-int RoomEffect_GrabRelease(RoomMotionTrigger *entity) {
+int RoomEffect_GrabRelease(PmSlotHeader *raw) {
+    RoomMotionTrigger *entity = (void *)raw;
     int *signal;
 
     signal = entity->completion_state;
@@ -368,9 +377,9 @@ int RoomEffect_GrabRelease(RoomMotionTrigger *entity) {
         {
             FieldActor *actor = GRAB_PLAYER;
 
-            actor->pos_x <<= 16;
-            actor->pos_z <<= 16;
-            Entity_FindFloor(actor);
+            actor->pos_x = (s32)((u32)actor->pos_x << 16);
+            actor->pos_z = (s32)((u32)actor->pos_z << 16);
+            Entity_FindFloor((struct BattleEntity *)actor);
         }
 
         {
@@ -401,13 +410,14 @@ int RoomEffect_GrabRelease(RoomMotionTrigger *entity) {
 }
 
 /* Class slot 6. */
-int RoomEffect_GrabNop6(void) {
-    return 0;
+void RoomEffect_GrabNop6(void) {
 }
 
 static const RoomFxSeed8 s_GroundSweepMarkSeed = {{0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00}};
 
-int RoomEffect_GroundSweepMark(int mode, RoomGroundSweepMark *state) {
+int RoomEffect_GroundSweepMark(int mode, void *data, intptr_t argument) {
+    RoomGroundSweepMark *state = data;
+    (void)argument;
     GteShortVector position;
     RoomFxSeed8 seed = s_GroundSweepMarkSeed;
     int shade;
@@ -470,8 +480,9 @@ static const RenderColor s_GroundSweepColorB = { 0x00, 0x50, 0xA0, 0x00 };
 /* Controller that sweeps a ribbon of light along the ground from the
  * actor's hand: it rises, lunges out and back a few times leaving scorch
  * marks and hitting the player in reach, then fades out. */
-int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
-                                 RoomGroundSweepParams *params) {
+int RoomEffect_GroundSweepController(int mode, void *data, intptr_t argument) {
+    RoomGroundSweep *sweep = data;
+    RoomGroundSweepParams *params = (RoomGroundSweepParams *)argument;
     GteShortVector offset = s_GroundSweepOffset;
     GteShortVector hand;
     GteShortVector step;
@@ -488,14 +499,14 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
         work.y = 0;
         work.x = (g_RoomGrabSweepSide - 1) * 350;
         work.z = -(rand() & 0xFF) - 400;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 4, &work, sweep);
+        FieldFx_TransformMatrixPoint((void *)ANIM_OWNER_AS(RoomSparkChannel)->pool, 4, &work, (GteShortVector *)sweep);
         sweep->y = g_RoomFloorY->y;
         sweep->x += (rand() & 0x1F) - 0x10;
         sweep->z += (rand() & 0x1F) - 0x10;
         sweep->heading.x = 0;
         sweep->heading.y = rand() & 0xFFF;
         sweep->heading.z = 0;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 4, &offset, &hand);
+        FieldFx_TransformMatrixPoint((void *)ANIM_OWNER_AS(RoomSparkChannel)->pool, 4, &offset, &hand);
         FieldFx_DrawHistoryTrail(&hand, (GteShortVector *)sweep, 0x3F0, (unsigned char *)&colorA, (unsigned char *)&colorA, 0x8C, (struct FieldTrailPair *)sweep->trail, 1);
         if (FX_TASK_AS(RoomSparkEventState)->active) {
             RoomSparkNode **slot = (RoomSparkNode **)ANIM_OWNER_AS(RoomSparkChannel)->pool;
@@ -507,7 +518,7 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
         sweep->phase = 0;
         sweep->timer = 0;
         sweep->sweeps = 8;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 0xC, 0x10,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0xC, 0x10,
                              (FieldFxCallbackListCallback)RoomEffect_GroundSweepMark);
     case 1:
         FieldFx_GetActorPosition((char *)D_8009D254, 1, (s16 *)&hand);
@@ -537,7 +548,7 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
             sweep->y += step.y;
             sweep->z += step.z;
             sweep->y = g_RoomFloorY->y;
-            mark = (RoomGroundSweepMark *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            mark = (RoomGroundSweepMark *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (mark) {
                 mark->x = sweep->x;
                 mark->y = sweep->y;
@@ -569,7 +580,7 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
         case 2:
             sweep->timer++;
             scale = (s16)sweep->timer * 650;
-            FieldFx_CalculateLookAngles(sweep, &hand, &angles);
+            FieldFx_CalculateLookAngles((GteShortVector *)sweep, &hand, &angles);
             angles.x = 0;
             FieldFx_EaseAngles((unsigned short *)&angles, (unsigned short *)&sweep->heading, (u16)scale);
             FieldFx_AnglesToVector(&sweep->heading, (s16)(params->distance / 2), &step);
@@ -577,7 +588,7 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
             sweep->y += step.y;
             sweep->z += step.z;
             sweep->y = g_RoomFloorY->y;
-            mark = (RoomGroundSweepMark *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            mark = (RoomGroundSweepMark *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (mark) {
                 mark->x = sweep->x;
                 mark->y = sweep->y;
@@ -620,7 +631,7 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
         break;
     case 2: {
         RenderColor *color;
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 4, &offset, &hand);
+        FieldFx_TransformMatrixPoint((void *)ANIM_OWNER_AS(RoomSparkChannel)->pool, 4, &offset, &hand);
         if (g_FieldFxCurrentAge & 1) color = &colorA;
         else color = &colorB;
         g_FieldFxSpriteParams.parameter00 = 0x20;
@@ -647,7 +658,7 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
             int palette;
             scale = (s16)sweep->timer << 10;
             LoadAverageShort12(&hand, sweep, 0x1000 - scale, scale, &work);
-            FieldFx_DrawGlowLine(&hand, &work, color, color, 0x80, 0, 1);
+            FieldFx_DrawGlowLine(&hand, &work, (u8 *)color, (u8 *)color, 0x80, 0, 1);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
             if (kind == 4 && g_FieldFxAltPaletteFlag != 0) palette += 4;
@@ -661,7 +672,7 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
             u16 clut;
             int kind;
             int palette;
-            FieldFx_DrawGlowLine(&hand, sweep, color, color, 0x8C, 0x8C, 1);
+            FieldFx_DrawGlowLine(&hand, (GteShortVector *)sweep, (u8 *)color, (u8 *)color, 0x8C, 0x8C, 1);
             FieldFx_DrawHistoryTrail(&hand, (GteShortVector *)sweep, 8, (unsigned char *)color, (unsigned char *)&colorA, 0x8C, (struct FieldTrailPair *)sweep->trail, 1);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
@@ -676,7 +687,7 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
             u16 clut;
             int kind;
             int palette;
-            FieldFx_DrawGlowLine(&hand, sweep, color, color, 0x60, 0x60, 1);
+            FieldFx_DrawGlowLine(&hand, (GteShortVector *)sweep, (u8 *)color, (u8 *)color, 0x60, 0x60, 1);
             FieldFx_DrawHistoryTrail(&hand, (GteShortVector *)sweep, 8, (unsigned char *)color, (unsigned char *)&colorA, 0x8C, (struct FieldTrailPair *)sweep->trail, 1);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
@@ -692,7 +703,7 @@ int RoomEffect_GroundSweepController(int mode, RoomGroundSweep *sweep,
             int kind;
             int palette;
             int fade = rcos((s16)sweep->timer << 7) / 32;
-            FieldFx_DrawGlowLine(&hand, sweep, color, color, fade, fade, 1);
+            FieldFx_DrawGlowLine(&hand, (GteShortVector *)sweep, (u8 *)color, (u8 *)color, fade, fade, 1);
             FieldFx_DrawHistoryTrail(&hand, (GteShortVector *)sweep, 8, (unsigned char *)color, (unsigned char *)&colorA, 0x8C, (struct FieldTrailPair *)sweep->trail, 1);
             kind = g_FieldFxSpriteParams.palette;
             palette = g_FieldFxPaletteTable[kind];
@@ -718,7 +729,9 @@ static const RenderColor s_OrbitTrailColor = { 0x80, 0x80, 0x80, 0x00 };
 /* Particle that sweeps out from the orbit centre drawing a coloured trail,
  * then flashes as a pulsing sprite, then drifts as a tilted ring; the
  * update side drifts and bounces it while it fades. */
-int RoomEffect_OrbitTrailParticle(int mode, RoomOrbitTrailParticle *p) {
+int RoomEffect_OrbitTrailParticle(int mode, void *data, intptr_t argument) {
+    RoomOrbitTrailParticle *p = data;
+    (void)argument;
     GteShortVector offset;
     GteShortVector blend;
     RenderColor color;
@@ -776,8 +789,8 @@ int RoomEffect_OrbitTrailParticle(int mode, RoomOrbitTrailParticle *p) {
                 gte_ldrotmatrix(matrixSlot->value);
                 gte_ldtransmatrix(matrixSlot->value);
             }
-            FieldFx_SampleColorTrack(g_RoomGrabTrailTrack, &color, (s16)p->timer);
-            FieldFx_DrawGlowLine(&blend, &offset, 0, &color, 0, 0x80, 1);
+            FieldFx_SampleColorTrack(g_RoomGrabTrailTrack, (u8 *)&color, (s16)p->timer);
+            FieldFx_DrawGlowLine(&blend, &offset, 0, (u8 *)&color, 0, 0x80, 1);
             break;
         case 1: {
             u16 clut;
@@ -840,7 +853,9 @@ static const RenderColor s_OrbitBurstColor = { 0xC8, 0xBE, 0x78, 0x00 };
  * first four frames (falling sparks, sweeping trails and drifting rings),
  * flashes a glow, ring and halo while it fades, and publishes the actor
  * position as the orbit centre the trails sweep out from. */
-int RoomEffect_OrbitTrailBurst(int mode, RoomOrbitTrailBurst *burst) {
+int RoomEffect_OrbitTrailBurst(int mode, void *data, intptr_t argument) {
+    RoomOrbitTrailBurst *burst = data;
+    (void)argument;
     RenderColor color = s_OrbitBurstColor;
     RoomOrbitTrailParticle *child;
     int i;
@@ -851,12 +866,12 @@ int RoomEffect_OrbitTrailBurst(int mode, RoomOrbitTrailBurst *burst) {
         burst->counterA = 0;
         FieldFx_GetActorPosition((char *)D_8009D254, 0, (s16 *)burst);
         FieldFx_PlaySoundAtOwner(0x596, FieldFx_GetOwnerProgress());
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 0x14, 0x28,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x28,
                              (FieldFxCallbackListCallback)RoomEffect_OrbitTrailParticle);
     case 1:
         if (g_FieldFxCurrentAge < 4) {
             for (i = 0; i < 3; i++) {
-                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -869,7 +884,7 @@ int RoomEffect_OrbitTrailBurst(int mode, RoomOrbitTrailBurst *burst) {
                 }
             }
             for (i = 0; i < 5; i++) {
-                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -883,7 +898,7 @@ int RoomEffect_OrbitTrailBurst(int mode, RoomOrbitTrailBurst *burst) {
                 }
             }
             for (i = 0; i < 4; i++) {
-                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = (RoomOrbitTrailParticle *)FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     child->x = burst->x;
                     child->y = burst->y;
@@ -962,7 +977,9 @@ int RoomEffect_OrbitTrailBurst(int mode, RoomOrbitTrailBurst *burst) {
  * it reaches them, then hovers, or falls and bounces off the floor; drawn
  * as a spinning glow with a floor shadow, a fading glow or a shrinking
  * spark. */
-int RoomEffect_RisingSprayParticle(int mode, RoomSpraySpark *spark) {
+int RoomEffect_RisingSprayParticle(int mode, void *data, intptr_t argument) {
+    RoomSpraySpark *spark = data;
+    (void)argument;
     GteRotation rotation;
     GteShortVector position;
     GteShortVector shadow;
@@ -1014,7 +1031,7 @@ int RoomEffect_RisingSprayParticle(int mode, RoomSpraySpark *spark) {
                 spark->vy /= 2;
                 spark->vz /= 2;
             }
-            if (Geo_PointInPoly(spark->x << 16, spark->z << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount)) break;
+            if (Geo_PointInPoly((s32)((u32)spark->x << 16), (s32)((u32)spark->z << 16), g_FloorPolygonVertices, g_FloorPolygonVertexCount)) break;
             return 1;
         case 1:
             spark->timer++;
@@ -1151,8 +1168,9 @@ static const GteShortVector s_RisingSprayOffset = { 0, 0, -150, 0 };
 /* Controller that sprays sparks from above the primary actor: a wide burst
  * on odd frames for the first second, then a stream along the actor's
  * heading, with two sound cues at frames 1 and 16. */
-int RoomEffect_RisingSprayController(int mode, void *state,
-                                 RoomRisingSprayParams *params) {
+int RoomEffect_RisingSprayController(int mode, void *data, intptr_t argument) {
+    void *state = data;
+    RoomRisingSprayParams *params = (RoomRisingSprayParams *)argument;
     GteShortVector offset = s_RisingSprayOffset;
     GteShortVector position;
     GteShortVector heading;
@@ -1168,16 +1186,16 @@ int RoomEffect_RisingSprayController(int mode, void *state,
                 if (*flag == 1) *flag = 2;
             }
         }
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 0x14, 0x37,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x14, 0x37,
                              (FieldFxCallbackListCallback)RoomEffect_RisingSprayParticle);
     case 1:
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 0, &offset, &position);
+        FieldFx_TransformMatrixPoint((void *)ANIM_OWNER_AS(RoomSparkChannel)->pool, 0, &offset, &position);
         position.y -= 0x50;
         FieldFx_GetTransformLookAngles((void *)ANIM_OWNER_AS(RoomSparkChannel)->pool, 0, &heading);
         heading.z = 0;
         heading.x = 0;
         if ((g_FieldFxCurrentAge & 1) && g_FieldFxCurrentAge < 0x3C) {
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = position.x;
                 child->y = position.y;
@@ -1208,7 +1226,7 @@ int RoomEffect_RisingSprayController(int mode, void *state,
             }
         }
         if ((u32)(g_FieldFxCurrentAge - 0x10) < 0x2D) {
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = position.x;
                 child->y = position.y;
@@ -1241,19 +1259,33 @@ int RoomEffect_RisingSprayController(int mode, void *state,
 }
 
 /* Setters of the room's attack arguments, called from its script. */
-int *RoomEffect_GrabSetSlot(int a0, int a1) {
-    int *p = &g_RoomGrabSlot;
-    *p = a1;
-    return p;
+intptr_t RoomEffect_GrabSetSlot(int mode, intptr_t first, intptr_t second, intptr_t third) {
+    (void)mode; (void)second; (void)third;
+    g_RoomGrabSlot = (s32)first;
+    return (intptr_t)&g_RoomGrabSlot;
 }
 
-int *RoomEffect_GrabGetSlot(void) {
-    return &g_RoomGrabSlot;
+intptr_t RoomEffect_GrabGetSlot(int mode, intptr_t first, intptr_t second, intptr_t third) {
+    (void)mode; (void)first; (void)second; (void)third;
+    return (intptr_t)&g_RoomGrabSlot;
 }
 
-int *RoomEffect_GrabSetPair(int a0, int a1, int a2) {
-    int *p = &RoomLib_PairA;
-    *p = a1;
-    RoomLib_PairB = a2;
-    return p;
+intptr_t RoomEffect_GrabSetPair(int mode, intptr_t first, intptr_t second, intptr_t third) {
+    (void)mode; (void)third;
+    RoomLib_PairA = (s32)first;
+    RoomLib_PairB = (s32)second;
+    return (intptr_t)&RoomLib_PairA;
 }
+
+/* Complete USA M269 class, task tables, scripts and mutable overlay data. */
+s32 g_RoomGrabSweepSide;
+GteShortVector g_RoomGrabOrbitCentre;
+int g_RoomGrabSlot, g_RoomGrabPair[2];
+u8 g_RoomGrabTrailTrack[40] = {0,0,0,0,0,0,0,0,200,200,200,8,0,0,0,0,200,200,0,8,0,0,0,0,96,0,128,8};
+PmCommand g_RoomGrabHandlers = {RoomEffect_GrabNop0, RoomEffect_GrabInit, RoomEffect_GrabConfigure, RoomEffect_GrabNop3, RoomEffect_GrabUpdate, RoomEffect_GrabRelease, RoomEffect_GrabNop6};
+static u16 s_GroundSweepScript[16] = {5,0,0,1,6,52,4,28,0,2};
+static u16 s_OrbitTrailScript[16] = {5,0,0,1,6,53,4,12,0,2};
+static u16 s_RisingSprayScript[12] = {5,0,0,1,6,54,2};
+FieldFxTaskProgram g_RoomGroundSweepProgram = {{{RoomEffect_GroundSweepController},{sizeof(RoomGroundSweep)}},RoomEffect_GrabSetSlot,s_GroundSweepScript};
+FieldFxTaskProgram g_RoomOrbitTrailProgram = {{{RoomEffect_OrbitTrailBurst},{sizeof(RoomOrbitTrailBurst)}},RoomEffect_GrabGetSlot,s_OrbitTrailScript};
+FieldFxTaskProgram g_RoomRisingSprayProgram = {{{RoomEffect_RisingSprayController},{4}},RoomEffect_GrabSetPair,s_RisingSprayScript};

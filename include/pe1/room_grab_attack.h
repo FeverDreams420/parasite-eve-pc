@@ -2,6 +2,7 @@
 #define PE1_ROOM_GRAB_ATTACK_H
 
 #include "common.h"
+#include "pe1/pm_types.h"
 #include "pe1/akao_send.h"
 #include "pe1/battle_context.h"
 #include "pe1/battle_setup.h"
@@ -24,7 +25,7 @@
 
 /* The class's state words from 0x0C on, as the player reset receives them. */
 typedef struct RoomGrabStateTail {
-    /* 0x00 */ void (*callback)();
+    /* 0x00 */ void (*callback)(RoomMotionTrigger *);
     /* 0x04 */ s32 *completion_state;
     /* 0x08 */ u8 reserved08[8];
     /* 0x10 */ FieldActor *source_actor;
@@ -51,26 +52,30 @@ extern s32 g_RoomGrabSweepSide;
 extern GteShortVector g_RoomGrabOrbitCentre;
 extern u8 g_RoomGrabTrailTrack[];
 extern int g_RoomGrabSlot;
-extern int RoomLib_PairA;
-extern int RoomLib_PairB;
+extern int g_RoomGrabPair[2];
+#define RoomLib_PairA g_RoomGrabPair[0]
+#undef RoomLib_PairB
+#define RoomLib_PairB g_RoomGrabPair[1]
 
-int RoomEffect_GrabNop0(void);
-int RoomEffect_GrabInit(RoomMotionTrigger *obj);
-int RoomEffect_GrabConfigure(char *obj, int arg1, int op, int arg3, int arg4);
-int RoomEffect_GrabNop3(void);
-int RoomEffect_GrabUpdate(RoomMotionTrigger *obj);
+void RoomEffect_GrabNop0(void);
+void RoomEffect_GrabInit(PmSlotHeader *raw);
+int RoomEffect_GrabConfigure(PmSlotHeader *obj, int arg1, int op, intptr_t arg3, intptr_t arg4, intptr_t arg5);
+int RoomEffect_GrabNop3(PmSlotHeader *raw);
+int RoomEffect_GrabUpdate(PmSlotHeader *raw);
 void RoomEffect_GrabAwaitTarget(RoomMotionTrigger *obj);
 void RoomEffect_GrabStartOnProximity(RoomMotionTrigger *arg);
 void RoomEffect_GrabHold(RoomMotionTrigger *arg0);
 void RoomEffect_GrabResetPlayer(FieldActor *unused, RoomGrabStateTail *state);
-int RoomEffect_GrabRelease(RoomMotionTrigger *entity);
-int RoomEffect_GrabNop6(void);
-int RoomEffect_GroundSweepMark(int mode, RoomGroundSweepMark *state);
-int RoomEffect_OrbitTrailParticle(int mode, RoomOrbitTrailParticle *p);
-int RoomEffect_RisingSprayParticle(int mode, RoomSpraySpark *spark);
+int RoomEffect_GrabRelease(PmSlotHeader *raw);
+void RoomEffect_GrabNop6(void);
+int RoomEffect_GroundSweepMark(int mode, void *data, intptr_t argument);
+int RoomEffect_OrbitTrailParticle(int mode, void *data, intptr_t argument);
+int RoomEffect_RisingSprayParticle(int mode, void *data, intptr_t argument);
 
-void Render_FindAnimEntry(void *object, int count, void *out);
+int Render_FindAnimEntry(RenderObjectEntity *object, int count, s32 *out);
 void Akao_Cmd_21(int handle, int arg);
-void FieldFx_DrawGlowLine(void *, void *, void *, void *, int, int, int);
+#include "pe1/field_glow_line.h"
 
+extern PmCommand g_RoomGrabHandlers;
+extern FieldFxTaskProgram g_RoomGroundSweepProgram, g_RoomOrbitTrailProgram, g_RoomRisingSprayProgram;
 #endif

@@ -67,6 +67,7 @@
 #include "pe1/room_flare.h"
 #include "pe1/room_paired_glow.h"
 #include "pe1/room_module.h"
+#include "pe1/room_grab_attack.h"
 #include "pe1/room_spark_attacks.h"
 #include "pe1/scene_transition.h"
 
@@ -667,6 +668,12 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomOrbitFlareEffects;
         if (map + 1 == 113 && slot == 136 && record[i].u.handlerAddress == 0x80190b54u)
             native = &g_RoomLineBurstProgram;
+        if (map + 1 == 269) {
+            if (slot == 77 && record[i].u.handlerAddress == 0x801921c8u) native = &g_RoomGrabHandlers;
+            if (slot == 137 && record[i].u.handlerAddress == 0x80192228u) native = &g_RoomGroundSweepProgram;
+            if (slot == 138 && record[i].u.handlerAddress == 0x801922a8u) native = &g_RoomOrbitTrailProgram;
+            if (slot == 139 && record[i].u.handlerAddress == 0x801922f8u) native = &g_RoomRisingSprayProgram;
+        }
         if (map + 1 == 263 || map + 1 == 265 || map + 1 == 333) {
             if (slot == 70 && record[i].u.handlerAddress == 0x80193fb4u) native = &g_RoomActorClassTable[0];
             if (slot == 75 && record[i].u.handlerAddress == 0x80193fecu) native = &g_RoomActorClassTable[2];
@@ -1066,6 +1073,19 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_RoomFallingBurstParticle,0,sizeof(g_RoomFallingBurstParticle));
         } else if ((map + 1 == 116 || map + 1 == 120) && slot == 75) {
             g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[2];
+        } else if (map + 1 == 269 && slot == 137) {
+            g_FieldFxTaskPrograms[52] = &g_RoomGroundSweepProgram;
+        } else if (map + 1 == 269 && slot == 138) {
+            g_FieldFxTaskPrograms[53] = &g_RoomOrbitTrailProgram;
+        } else if (map + 1 == 269 && slot == 139) {
+            g_FieldFxTaskPrograms[54] = &g_RoomRisingSprayProgram;
+        } else if (map + 1 == 269 && slot == 77) {
+            g_PmCmdHandlerTable[slot] = &g_RoomGrabHandlers;
+            g_RoomGrabSweepSide = 0; g_RoomGrabSlot = 0;
+            memset(&g_RoomGrabOrbitCentre,0,sizeof(g_RoomGrabOrbitCentre));
+            RoomLib_PairA = RoomLib_PairB = 0;
+            memset(g_RoomGrabTrailTrack,0,8);
+            for(unsigned i=12;i<40;i+=8)memset(g_RoomGrabTrailTrack+i,0,4);
         } else if ((map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 70) {
             g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[0];
         } else if ((map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 75) {

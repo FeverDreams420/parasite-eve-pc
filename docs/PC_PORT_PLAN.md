@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M232 i M233 wygrane; wejście M234
+
+Dalszy normal live33307 przeszedł M232. RunUp290 uruchomiło trzy typ5
+po200HP/def40; postój400 kosztował120HP (257→137). Escape pierwszy
+nieskuteczny,62HP; oryginalne Heal3 odnowiło62→342. Drugi Escape nieudany,
+312HP,trzeci udany przy217422. Nie jest to zwycięstwo wariantu z trzema
+przeciwnikami. Próba ponownego przejścia uruchomiła dwa typ5 po200HP.
+Przy218202 Aya252HP,PE36996232. EnergyShot pokonał jeden cel; drugi
+200→83→-34 po dwóch seriach39*3. Przy219526 zwycięstwo,222HP,clip6.
+ALL odebrało Medicine2 do slot17(value7) i Junk do slot27(value20).
+Right35,Up100 prowadzi doM233/0xa80431c8 przy220743,222HP,field/lock0.
+Pełny JSON/VRAM normal/SAN/live równy,oba exit0:
+/tmp/pe-m233-entry-v1-replay-proof.json. Wariant trzech przeciwników
+pozostaje niepokonany; powtórka obejmuje ucieczkę i wygraną wariantu dwóch.
+
+M233:Up100 uruchomiło typ4/sub31:320HP/def50 i typ3/sub30:240HP/def71.
+Medicine2 odnowiło176→266HP. Ruch odnowił PE do34213636,Heal3→546HP.
+Pierwsze3 strzały G23 dały lizard240→153 (29/hit); druga seria trafiła
+dwukrotnie153→95. Pojedynczy strzał po reloadzie95→66; EnergyShot przy
+37878715 PE pokonał go. Dla EnergyShot wybrano cel1,odległość3030;
+oryginalna umiejętność pomija zwykłe ograniczenie zasięgu. Trzy serie36*3
+pokonały drugi cel320→212→104→-4. Zwycięstwo225228:458HP,clip3.
+ALL odebrało Medicine3 do slot17(value8); nowy zapas amunicji wymaga
+odczytu w menu. Up100,Left60 doprowadziły doM234/0xa8043248 przy226470,
+458HP,field/lock0,SvProtector/G23. Obejrzano render obu nowych sal.
+
+Zamrożone JSON/VRAM/PNG i pełna trasa zwykłego inputu:
+/tmp/pe-m234-entry-v1-226470.{json,vram,png},
+/tmp/pe-m234-entry-v1-base-args.json. Powtórka normal/SAN uruchomiona:
+/tmp/pe-m234-entry-v1-replay.py,session93212; wynik wymaga potwierdzenia.
+Live33307 czeka wM234. Kod produkcyjny niezmieniony; nie użyto zapisów RAM
+ani edytowanych save'ów. Brak nowego telefonu/zapisu; to następny cel.
+
 ### M229 z amunicją i zwycięstwo M231; wejście M232
 
 Live normal33307,/tmp/pe-m229-svprotector-ammo-v1-live.py,odtworzył201100,
@@ -37,7 +70,8 @@ field/lock0,bez walki. Obejrzany render sali i Ayi; wejście reaguje na input.
 Pełny input od autentycznegoO,zamrożone JSON/VRAM/PNG i uruchomione
 cold powtórki normal/SAN: /tmp/pe-m232-entry-v1-214866.{json,vram,png},
 /tmp/pe-m232-entry-v1-base-args.json,/tmp/pe-m232-entry-v1-replay.py.
-Session20998 wymaga jeszcze sprawdzenia wyniku. Live33307 czeka wM232.
+Oba warianty zakończyły się exit0,całe JSON i VRAM równe normal/SAN/live:
+/tmp/pe-m232-entry-v1-replay-proof.json. Live33307 kontynuował dalej.
 Bez zmian źródeł i mechaniki,edycji save'ów i zapisów RAM. Root bu00/bu10
 nietknięte. Następny cel eksploracji: działający telefon i zwykły trwały zapis.
 

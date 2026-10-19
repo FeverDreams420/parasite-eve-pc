@@ -2,19 +2,22 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: autentyczna trasa H przechodzi pierwszą formę pająka
-w M156 i dociera do drugiej formy M380. Przy66443 Aya żyje z17/283HP,
-tryb0, drugi boss ma1000400HP (oryginalny skryptowy offset1000000).
-Późniejsza próba kończy się śmiercią; cały boss nadal niepokonany.
+Najnowszy postęp: druga forma M380 odpowiada na oryginalne Heal2 i ostrzał.
+Przy67989 Aya żyje z86/283HP, boss1000334 (334 ponad oryginalnym offsetem),
+1 nabój. Osobne normal-only próby ruchu podczas przejścia M156→M380
+zachowują110HP zamiast17HP. Cały boss nadal niepokonany.
 Wyłącznie oryginalne menu i zwykły input, bez zmian produkcji, nowych
 plików źródłowych, save editora lub zapisów gameplay RAM.
 
 Kandydat /tmp/pe-m156-cycles-v4: świeże388 obiektów (194/profil),48/48
-regresji exit0 oraz22 wybrane cold replaye trasy i walki exit0.
-Osiem najnowszych obejmuje pierwsze trafienia, dalszą walkę, wyczerpanie
+regresji exit0 oraz26 wybranych cold replayów trasy i walki exit0.
+Poprzednie osiem obejmuje pierwsze trafienia, dalszą walkę, wyczerpanie
 pierwszej formy i wejście M380. Pełny stan zgodny z live i między normal/SAN;
 pełne1MiB VRAM zgodne między profilami, a przy66443 także z zachowanym live.
 Dowód: /tmp/pe-hospital-spider-m380-v1-replay-proof.json.
+Najnowsze cztery obejmują gotowe ATB w M380 oraz leczenie i pierwszą
+salwę; stan zgodny z live, VRAM zgodny między profilami i przy67989
+także z zachowanym live: /tmp/pe-hospital-spider-m380-v2-replay-proof.json.
 Rewalidacja388 obiektów i995 unikalnych plików oraz kopii build:
 /tmp/pe-hospital-spider-m380-v1-build-proof.json.
 SAN obejmuje kod portu (address,undefined,function); archiwa PsyZ/SDL
@@ -55,6 +58,36 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Kontynuacja M380: leczenie i pierwsza skuteczna salwa
+
+Poprzedni odcinek był postępem: przejście M156→M380 potwierdzono w obu
+profilach. W tym odcinku nadal bez zmian kodu. Dziewięć normal-only cold
+prób /tmp/pe-spider-transition-v1-search.py od65843 testuje600 klatek
+zwykłego ruchu, zamiast postoju. Wyniki66443:neutral17HP, DownRight36,
+kierunki osiowe68 (Right78), UpLeft68, UpRight i DownLeft110. Wszystkie
+osiągają M380/story504 z żywą Ayą; pełne wyniki w
+/tmp/pe-spider-transition-v1-results.json. Te próby są eksploracją,
+nie potwierdzeniem zwycięstwa ani porównaniem z SAN.
+
+/tmp/pe-hospital-spider-m380-v2-live wybiera Up (68HP), potem Right180:
+66623/68HP/ATB9000. Oryginalne PE→Heal2 oraz Right340 dają67439/86HP
+(leczenie60 pomniejszone o obrażenia42). Dwie kule z dystansu1450 i
+UpLeft400 dają67989:Aya86HP, boss1000400→1000334,1 nabój, ATB9000.
+Sesja zakończona quit0; nie jest zwycięstwem nad bossem. Zachowane
+/tmp/pe-hospital-spider-m380-v2-67989.{json,vram}; obejrzany podgląd
+/tmp/pe-hospital-spider-m380-v2-preview/frame.png pokazuje drugą formę
+i HUD86/283,1 nabój. Źródłowy H oraz wszystkie prywatne kopie bez zmian,
+bu10 puste; root karty nietknięte.
+
+Cztery cold próby66623/67989 × normal/SAN porównują pełny stan z live,
+pełne1MiB VRAM między profilami i przy67989 także z zachowanym live.
+Dowód: /tmp/pe-hospital-spider-m380-v2-replay-proof.json. Nadal ten sam
+kandydat /tmp/pe-m156-cycles-v4 i wcześniejsze48/48 regresji; ponowny hash
+388 obiektów, zależności, archiwów, binarek, kopii build i prywatnych kart:
+/tmp/pe-hospital-spider-m380-v2-build-proof.json. Archiwa SDK bez SAN.
+Następny krok: wybrać wariant110HP, kontynuować oryginalną walkę M380,
+leczenie i przeładowanie; druga forma i dalsza kampania pozostają otwarte.
 
 ### M156 pierwsza forma → M380 druga forma, bez zwycięstwa nad całym bossem
 

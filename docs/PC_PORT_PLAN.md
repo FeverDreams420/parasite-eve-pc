@@ -2,7 +2,38 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-### Po bossie Warehouse: powrót, autentyczny zapis O i Continue
+### Od Continue O: wyjście z Warehouse i naturalne wejście do Museum
+
+Zwykły input od O prowadzi M266→M265→M263→M262→M260→mapaM000.
+Po drodze nie powtarza się walka;427HP i inventory pozostają jak po Continue.
+W M266 trzeba obejść barierkę catwalku od zachodu (x≈−1694), zejść do
+z≈−374 i przejść rampą na dolny poziom. W M260 schody są przy x≈130,
+z≈3800; dojście górą przez z≈4360 pozwala zejść w kierunku x≈−20,z≈3600.
+Siatka kolizji: /tmp/pe-m260-return-collision-v1.json. Kod bez zmian.
+
+Mapa po Warehouse,34273. Left wybiera Carnegie Hall, kolejne Left Museum;
+Cross rozpoczyna oryginalne zbliżenie/nazwę lokacji, ponowne Cross zamyka
+kartę i prowadzi do M192,35989. Dalej oryginalne schody i drzwi prowadzą
+do M196,38909. Zamknięta bramka w holu wyświetla dialog(page24); zwykłe
+Cross go zamyka. Zachodnie drzwi prowadzą do M197,40319; obejście ekspozycji
+kończy się wejściem do M198,43037. Sterowanie zależy od kamery, więc
+kierunków ekranowych nie utożsamiać stale z osiami świata.
+
+Cold normal/SAN od samego O, pełny JSON/VRAM identyczny z live:
+/tmp/pe-museum-m196-entry-v1-replay-proof.json,
+/tmp/pe-museum-m197-entry-v1-replay-proof.json (40669),
+/tmp/pe-museum-m198-entry-v1-replay-proof.json.
+Agregat6 cold prób /tmp/pe-museum-arrival-v1-proof.json. Cały inventory
+identyczny z Continue O,427HP,AT4 i oba klucze zachowane. Oryginalny skrypt
+Museum naturalnie podnosi story600→608. Źródłowy/prywatny O i root build
+bez zmian. To wejścia i eksploracja, nie potwierdzenie walk ani ukończenia Museum.
+
+Live SAN /tmp/pe-warehouse-O-v1-live.py, sesja3441, stoi43037 w M198,
+przy drzwiach od M197. Dalej kontynuować Museum z tego punktu; krótkie
+odtworzenie ma args w /tmp/pe-museum-m198-entry-v1-base-args.json.
+Cała kampania pozostaje nieukończona.
+
+### Wcześniejszy powrót, autentyczny zapis O i Continue
 
 Powrót M269→M268 przez oryginalne schody działa: środkiem z≈−820,
 marsz w prawo od x≈−765 do≈330 podnosi Ayę do y−225 i uruchamia wyjście.

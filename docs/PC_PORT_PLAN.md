@@ -2,7 +2,11 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: M380 osiąga69945 z106HP, bossem268HP i16 nabojami.
+Najnowszy postęp: potwierdzono pojedynczy strzał + Square kończące resztę
+kolejki. Przy71809 w nowej gałęzi Aya66HP/boss268HP/17 naboi, bez
+Stiffness; dwa strzały z tego samego punktu kończyły się śmiercią.
+Nie jest to pokonanie bossa ani lepszy zapas HP niż wcześniejszy69355/169HP.
+Wcześniejsza trasa M380 osiąga69945 z106HP, bossem268HP i16 nabojami.
 Dalsze oryginalne Heal2/Haste przy71841 zostawiają84HP i aktywne Haste,
 bez Stiffness. Bezpośrednia salwa później kończy się śmiercią; osobny
 normal-only wariant krótkiego uniku dociera do235HP bossa, lecz Aya ma
@@ -11,7 +15,7 @@ Wyłącznie oryginalne menu i zwykły input, bez zmian produkcji, nowych
 plików źródłowych, save editora lub zapisów gameplay RAM.
 
 Kandydat /tmp/pe-m156-cycles-v4: świeże388 obiektów (194/profil),48/48
-regresji exit0 oraz38 wybranych cold replayów trasy i walki exit0.
+regresji exit0 oraz40 wybranych cold replayów trasy i walki exit0.
 Poprzednie osiem obejmuje pierwsze trafienia, dalszą walkę, wyczerpanie
 pierwszej formy i wejście M380. Pełny stan zgodny z live i między normal/SAN;
 pełne1MiB VRAM zgodne między profilami, a przy66443 także z zachowanym live.
@@ -65,6 +69,50 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M380: pojedynczy strzał i poprawne zakończenie kolejki
+
+Poprzedni odcinek był postępem:268HP bossa i Haste zweryfikowane.
+Przegląd istniejących Battle_ApplyEnemyAttack/Battle_HandleItemMenu oraz
+Boot_BuildRenderFlagTable nie wykazał w tych obserwacjach błędu portu:
+Stiffness, kasowanie Haste przez efekt i usuwanie Stiffness przez Haste
+są jawnie zapisane w oryginalnej logice. Nie jest to nowy dowód pełnej
+zgodności numerycznej wszystkich efektów z MIPS.
+
+/tmp/pe-hospital-spider-barrier-v1-live odtwarza69355/169HP/boss301HP.
+Oryginalne PE→Barrier i Up340 dają70209/127HP, PE2375544raw i Stiffness;
+bariera zużywa PE i nie zapewnia trwałej ochrony w tej trasie. Cure-M
+slot0 usuwa Stiffness;71099/127HP,18 naboi. Podejście Right120 daje
+71319/117HP, reticle71339 dystans210. Dwie kule i Down340 kończą się
+śmiercią71809, boss235HP. Sesja zakończona quit0, nie jest zwycięstwem.
+
+Cztery normal-only próby /tmp/pe-spider-m380-single-v1-results.json
+błędnie używały Circle po jednym dodanym strzale. Circle cofa wpis
+(Battle_AdvanceTurnSlot); wszystkie kończą71809 w trybie1, bez strzału,
+117HP i18 naboi. Początkową interpretację anulowania skorygowano na
+podstawie stanu i kodu, bez zmiany gry. Właściwe Square (raw32768,
+field0x2000) kończy pozostałe akcje i wykonuje zachowaną kolejkę.
+
+Cztery poprawione normal-only próby
+/tmp/pe-spider-m380-single-v2-results.json od71399:Cross20,neutral30,
+Square20 i340 klatek ruchu. Wszystkie wykonują dokładnie jeden strzał,
+18→17 naboi, boss301→268HP. Left zachowuje66HP bez Stiffness, Up/Right56,
+Down5. Ruch po jednym strzale pozwala przeżyć sytuację śmiertelną przy
+kolejce dwóch strzałów. To wskazówka taktyczna, nie pełne zwycięstwo.
+Wybrany journal: /tmp/pe-spider-m380-single-v2-left/args.json. Obejrzany
+podgląd /tmp/pe-hospital-spider-single-v2-preview/frame.png pokazuje
+żywą Ayę66/283HP,17 naboi i drugą formę.
+
+Dwa cold replaye71809 normal/SAN porównują cały stan z wybraną próbą
+normal-only, pełne1MiB VRAM między profilami i z zachowanym obrazem tej
+próby: /tmp/pe-hospital-spider-single-v2-replay-proof.json. Etykieta live
+w tym proof oznacza historyczny wybrany cold run, nie interaktywną sesję.
+Niezmieniony cycles-v4, wcześniejsze48/48 regresji; ponowny hash388
+obiektów, manifestu/archiwów/binarek i kopii build:
+/tmp/pe-hospital-spider-single-v2-build-proof.json. H i prywatne kopie
+niezmienione, bu10 puste, root karty nietknięte. SDK bez instrumentacji.
+Następny krok: użyć pojedynczych strzałów wcześniej w wybranej trasie,
+zachować więcej HP/PE i zakończyć całą walkę M380 zwykłym sterowaniem.
 
 ### M380:268HP bossa i potwierdzone Haste po Stiffness
 

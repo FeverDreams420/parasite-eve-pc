@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### Dalsza kampania: alarm → film21 → M234 → M217
+
+Live12235 kontynuował od punktu40980 po utworzeniu D. Wyjście doM235
+przy41478; przekroczenie strefy z1488..1848 z global34=180 uruchomiło
+oryginalny film21 (przy42568 video_state2, movie_frame230). Po filmie
+M234, dwa dialogi Ayi o ożywionych obiektach/T-rexie zamknięto Cross.
+Przy48284 global34=183,372HP, ruch odblokowany. Zachodnie wyjście
+M234 stało się dostępne zgodnie z oryginalnym warunkiem fabularnym;
+przy49334 wejście M217,372HP,M500/B Jacket1. Cold replay od B:
+normal/SAN exit0, pełny JSON równy live, VRAM normal/SAN identyczny;
+B/C bez zmian, odtworzony D identyczny bajtowo. Dowód:
+/tmp/pe-m217-post-alarm-entry-v1-replay-proof.json. Nie zachowano VRAM
+live z49334, dlatego dowód obrazu porównuje wyłącznie oba cold replaye.
+
+Dalsza żywa próba M217 uruchomiła trzy typ6/sub31,30,29 po240HP.
+Postój400 był kosztowny:372→229HP. Pierwsza seria M500 zużyła2pociski,
+sub30:240→144; pozostałe dwa zachowały240. Nie dowodzi to działania
+Burst na całą grupę. Później106HP, Heal3 przez oryginalne menu i
+potwierdzenie odnowiło280HP (przy51673 już380HP po trafieniu).
+Czwarta próba Escape zakończyła się wycofaniem przy170HP,bez zwycięstwa.
+Powrót ruchu po ucieczce ustawił Ayę w punkcie wejścia; dalszy ruch
+uruchomił nowy wariant dwóch typ4 po280HP. Live przy53355 ma170HP,
+M217,walka/lock4,PE33291699,5pocisków M500. Próba pozostaje do rozegrania.
+Nie zaliczać żadnego z tych spotkań jako wygranej.
+
+Korekta identyfikacji ekwipunku: wartość20 w slots oznacza item0x14=Junk,
+nie Medicine3 (ta ma item0x08). Potwierdzone include/pe1/item_ids.h i
+menu „Broken Item”. Powyżej poprawiono opis przeniesienia kieszeni
+przy zmianie pancerza. W obecnym plecaku nie zakładać zapasu Medicine3;
+leczenie tej próby było Heal3. Nie modyfikowano źródeł gry.
+
 ### Muzeum 4F: oryginalne Tune Up, M500 i B Jacket 1
 
 Kontynuacja autentycznego B w live12235 obejmuje CCTV M237 (global37|8),
@@ -25,13 +56,13 @@ Items/Use, wskazując M500. Bonus zasięgu9→11, suma parametrów74/72/11.
 M500 wyposażony w slot26, nadal ma Burst i Rate2: to nie broń
 jednostrzałowa ani docelowa optymalizacja. Odebrano B Jacket1 ze skrzyni
 (global252) i wyposażono slot0:44/49/28,bonusy1/1/1. Zmiana SvProtector
-usunęła dodatkową kieszeń; oryginalne menu przeniosło Medicine3 z27 do
+usunęła dodatkową kieszeń; oryginalne menu przeniosło Junk (item0x14=20) z27 do
 wolnego17. Wszystkie27 przedmiotów mieszczą się w nowej pojemności27.
 Punkt36316 ma372HP, pole bez blokady. Oba exit0, pełny JSON/VRAM
 normal/SAN/live równy: /tmp/pe-m250-gear-ready-v2-replay-proof.json.
 Wersja v1 weryfikatora błędnie oczekiwała pustego slot17 po zmianie
 pancerza; pełny stan już był równy live. V2 sprawdza rzeczywiste przeniesienie
-Medicine3 ze slot27 do17 i nie nadpisuje nieudanej próby.
+Junk ze slot27 do17 i nie nadpisuje nieudanej próby.
 
 Powrót windą na2F i telefon M237: zapis D wybrano w pustym slocie3,
 success przy40356, pole przy40980,372HP. Plik8192B jest zamrożony w

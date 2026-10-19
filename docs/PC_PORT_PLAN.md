@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M245: pierwsza próba bossa i powtarzalność walki
+
+Na commit 8232fcb25 zwykłe wejścia uruchomiły scenę i walkę w M245.
+Osobny cold Continue z autentycznego B, pełnym śladem oraz ASan/UBSan
+zakończył się exit 0 przy klatce 128071. Pełny JSON i VRAM są identyczne
+z przebiegiem normalnym: /tmp/pe-m245-boss-native-v2-proof.json.
+Próba v1 miała błędny parametr runnera --pad i zakończyła się przed grą;
+v2 używa poprawnego --pad-at. Nie zastępować nieudanych dowodów.
+
+Zwykłe strzały odejmowały po 35 HP, Energy Shot odjął 215 HP.
+Heal 2 przywrócił 60 HP, Heal 3 przywrócił 280 HP; ataki bossa
+odejmowały HP Ayi. Przy 131912 pierwszy cel miał 1000045 HP
+(początkowo 1000750), drugi 400 HP. Kolejna seria nie zdążyła trafić:
+przy 132222 Aya ma 0 HP. To PORAŻKA, nie dowód ukończenia walki.
+Stan, VRAM i pełny ślad: /tmp/pe-m245-boss-defeat-v1/.
+Następna próba powinna wcześniej leczyć Ayę i zachowywać dystans;
+porównanie efektów z PS1 nadal nie jest wykonane. Cel portu aktywny.
+
 ### M245/M397: natywna integracja całego istniejącego trail_burst_attacks.c
 
 Włączono cały dotychczasowy plik do istniejącego buildu CMake, bez nowych

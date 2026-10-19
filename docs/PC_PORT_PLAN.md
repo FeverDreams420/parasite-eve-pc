@@ -2,6 +2,55 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M227: odbiór i wyposażenie SvProtector zamiast SpVest1
+
+Potwierdzono nowy zwykły pickup,bez zmian źródeł ani save'ów. Skrypt
+pierwotny M227 przy8476 ustawia local1=170 (SvProtector),skrzynia ma
+pozycję(-1090,-288,613),flagę global87/0x80000 i GiveItem przy9776.
+Wskazówkę o przedmiocie dał poradnik Shotgunnova; właściwy dowód pochodzi
+ze skryptu i działającego kandydata:
+https://gamefaqs.gamespot.com/ps/198265-parasite-eve/faqs/55672
+
+Osobny liveSAN75962,/tmp/pe-m227-armor-v1-live.py,odtworzył195845.
+Medicine3 ze slot10 odnowiło437→573HP i zwolniło miejsce. Drogę do skrzyni
+trzeba poprowadzić dołem wokół gabloty; bezpośrednie Up z wejścia blokuje
+kolizja. Z x≈-955,z≈606,patrząc Up(world-X),Cross otworzyło skrzynię.
+Oryginalny panel otrzymania pokazał SvProtector:39/36/30. Przedmiot trafił
+do slot10,value266,nowy record10,itemId170. Oryginalne menu Armor(root3),
+lista(row2),Cross wyposażyło go przy197466. Punkt197576:573HP,field/lock0,
+armor_slot10,weapon_slot0. SpVest1 miał27/16/20. JSON capacity nadal27;
+nie deklarować na tej podstawie zwiększenia faktycznego limitu slotów.
+
+Pełny JSON/VRAM normal/SAN/live równy,oba exit0,bez raportów sanitizerów:
+/tmp/pe-m227-armor-v1-replay-proof.json. Runner dodatkowo sprawdza itemId,
+39/36/30,wyposażony slot i niezmienione bajty wszystkich starych rekordów
+wyposażenia (pierwsze320B i zakres352..koniec).
+
+Po wyposażeniu zwykła droga przez okno i zejście M228 doprowadziła doM229
+przy201100,573HP,SvProtector. Zamrożono stan/VRAM i uruchomiono powtórki:
+/tmp/pe-m229-svprotector-entry-v1-replay.py; wynik wymaga potwierdzenia.
+Live75962 czeka tam przed walką. Zachowane Medicine4(slot15) i Medicine3
+(slot17); G23slot0 jest pusty,pozostała rezerwa3. To wcześniejsza gałąź
+sprzed dodatkowego wydania100BP,więc G23attack62 iBP198.
+
+### Próba z amunicją: dodatkowe zwycięstwo i powrót na dolny gzyms
+
+Starsza gałąź z30 zdobytymi nabojami została odtworzona przy215799.
+Left16,wait400 wróciły M231→M229 bez uruchomienia M231. Up70,Left100
+uruchomiły pojedynczy typ4/sub31,320HP. Heal3 odnowiło205→485HP,
+późniejsze417HP utrzymało się do końca. Trzy serie po3 strzały G23
+(36/hit) dały320→212→104→-4; przed ostatnią serią anulowano celowanie
+z1915 i zbliżono się do751. Zwycięstwo218403,Medicine3 odebrane i field
+przy219085. Powrót przez okno prowadzi M229→M228 na dolny gzyms;
+próba podejścia do dawnego miejsca zejścia nie uruchomiła drogi w górę.
+Nie dowodzi to jeszcze,że każda droga powrotna jest niemożliwa.
+
+Punkt220547:M228,417HP,brak walki. Pełny JSON/VRAM normal/SAN/live równy,
+oba exit0,bez raportów sanitizerów:
+/tmp/pe-m229-ammo-victory-v1-replay-proof.json. Live85785 zamknięty quit,
+exit0 przed rozpoczęciem osobnej gałęzi ze SvProtector. Nie mieszano ich
+stanów ani ekwipunku. Źródła produkcyjne i root bu00/bu10 nietknięte.
+
 ### M229: zwycięstwo nad wariantem320HP i wybór punktu z amunicją
 
 Live49086 wyposażył G23 i odtworzył zwykły input drogi M225→M227→M228

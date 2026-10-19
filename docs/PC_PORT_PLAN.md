@@ -2,10 +2,10 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp kampanii: powrót z kluczem, rozmowa/story492, użycie
-i odrzucenie klucza, przejście M148→M149. Dwanaście nowych replayów
-normal/SAN opisano poniżej. Walka i urządzenie M149,13F oraz dalsza
-kampania pozostają nieukończone. Kod produkcyjny bez zmian.
+Najnowszy postęp kampanii: zwycięstwo w M149 przez oryginalny Energy Shot,
+uruchomienie urządzenia/story494 i powrót do M126. Osiem nowych cold
+replayów normal/SAN opisano poniżej. Nowy zapis przy telefonie,13F oraz
+dalsza kampania pozostają niepotwierdzone. Kod produkcyjny bez zmian.
 
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
@@ -50,6 +50,53 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M149 — zwycięstwo, urządzenie/story494 i powrót
+
+/tmp/pe-hospital-m149-energy-v1-live odtwarza pełny autentyczny journal E,
+bez edycji zapisu lub RAM. Przy88194 Aya ma99HP i przeciwnik4:31 ma81HP.
+Oryginalny Energy Shot: wybór PE row2/col0, target_cycle4 przy88628,
+zatwierdzenie88648. Przy88868 wróg ma−13HP: trafienie zadało94 obrażenia.
+Przy89168 tryb2, zero żywych wrogów, Aya11HP/PE0, M16 ma14 naboi.
+Zachowano cały JSON/VRAM: /tmp/pe-hospital-m149-energy-v1-89168.{json,vram}.
+Po odebraniu nagród pole89988 ma lock0; nie uzyskano nowej Medicine2.
+
+Oryginalny floor wymaga obejścia dolnego końca przeszkody przed urządzeniem:
+z787→552, x−325→125, następnie z754. Interakcja potrzebuje pozycji
+x70..180,z732..902 oraz yaw1536..2560; Up4 daje yaw2048.
+Cross i zakończenie animacji dają91288 story494, lock0, HP11.
+/tmp/pe-hospital-m149-energy-v1-91288.{json,vram}. Powrót prowadzi przez
+M148 przy92123, M12792538 i M12692898, nadal story494/HP11.
+
+Osiem cold replayów88868/89168/91288/92898 ×normal/SAN sprawdza cały
+emitowany stan względem live, pełny VRAM między profilami i zachowane
+obrazy89168/91288; /tmp/pe-hospital-m149-energy-v1-replay-proof.json.
+Rehash384 obiektów i wszystkich zależności, bibliotek oraz binariów:
+/tmp/pe-hospital-m149-energy-v1-build-proof.json; build gry nadal identyczny
+z normalnym kandydatem. SDK PsyZ/SDL nieinstrumentowane.
+
+Dodatkowe próby normal-only: /tmp/pe-hospital-m149-confuse-v1-live
+zachowuje dodatkowe120PE przez pominięcie trzeciego field Heal2.
+Confuse rzeczywiście przerywa akcję:87684 mode4/core_flags0x00600006,
+wróg201HP. Cure-P usuwa poison przy88730, ale wróg nie otrzymał obrażeń,
+a Aya umiera89030. Nie jest to zwycięstwo ani para SAN.
+Read-only /tmp/pe-hospital-m149-status-v1.json wskazuje statusFlags2=5611929:
+Confuse pair0 (oryginalny los50%), Slow pair1 (odporność), player attributes0.
+Nie ma zniżki kosztu PE z pancerza; wymaga ona attributes bit0x200.
+
+Read-only floor105 płaskich trójkątów i oryginalny polygon spotkania:
+/tmp/pe-hospital-m149-route-v1-barrier-proof.json. Na przekroju z1890 cały
+przechodni zakres x[−1695.1724,−414.7553] leży wewnątrz triggera
+x[−1805.9880,−193.9390]. Zwykły ciągły marsz od startu do urządzenia
+przecina spotkanie; nie jest to dowód dotyczący ucieczki lub przejść skryptem.
+
+Próby telefonu po powrocie skierowały Ayę do sąsiednich pomieszczeń.
+Nie wykonano nowego zapisu F ani Continue F. Trwałym źródłem nadal E;
+sprawdzony postęp494 wymaga pełnego journalu. Sesje energy/route/confuse
+oraz osobna /tmp/pe-hospital-savef-v1-live kończą quit/exit0; źródłowy E
+oraz prywatne kopie bez zmian, bu10 puste. Root bu00/bu10 nietknięte.
+Następny krok: prawidłowa trasa do telefonu, odzyskanie zasobów i13F.
+Nie jest to ukończenie kampanii ani dowód pixel-perfect zgodności z PS1.
 
 ### Powrót z kluczem — story492, odblokowanie M148 i wejście M149
 

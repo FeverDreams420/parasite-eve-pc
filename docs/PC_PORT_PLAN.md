@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M231: przegrana próba i odtworzenie wejścia
+
+Po215305 runRight100 uruchomiło typ4/sub31 (390HP) i typ3/sub30
+(280HP). Zwykłe menu Heal3 trzykrotnie odnowiło280HP; Detox usunął
+pierwsze zatrucie, lecz zostało nałożone ponownie. G23 serie zadawały
+po26 typ4 i37 typ3; ruch celów powodował także chybienia. Sub30 został
+pokonany,sub31 pozostał156HP. Przy221073 Aya0/573HP,mode3,live1.
+Nie jest to potwierdzony błąd portu. Użycie item16 ze slot13 nie usunęło
+zatrucia; nie należy utożsamiać tego przedmiotu z Cure-P.
+Zamrożone JSON/VRAM i pełny input:
+/tmp/pe-m231-defeat-v1-221073.{json,vram},
+/tmp/pe-m231-defeat-v1-221073-input.jsonl.
+Powtórki normal/SAN exit0,pełny JSON/VRAM równy live,bez raportów
+sanitizerów:/tmp/pe-m231-defeat-v1-replay-proof.json.
+
+Pierwszy liveSAN20828 zamknięty poleceniem quit,exit0. Nowa próba
+/tmp/pe-m231-retry-v1-live.py odtwarza całą potwierdzoną trasę od
+oryginalnego O do215305,zwykłym inputem,bez przywracania RAM. Proces73074
+potwierdził początkowy stan215305,205HP,field/lock0. Przed kolejną walką
+oryginalnym menu BP wydano100BP:198→98,G23attack62→63. Po zamknięciu
+menu215799 nadal205HP. Zamrożono JSON/VRAM i uruchomiono powtórki:
+/tmp/pe-m231-bp-v1-replay.py (wynik wymaga potwierdzenia).
+Źródła produkcyjne nie zmieniły się. Następna taktyka powinna ograniczyć
+koszt czekania i chybienia oraz wcześniej usuwać zatrucie.
+
 ### M229: dwa przeciwniki, leczenie, Club1 i przejście M231
 
 M229 przy201995 uruchomił walkę z typ3/sub31 i typ3/sub30, oba280HP.

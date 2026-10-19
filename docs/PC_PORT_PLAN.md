@@ -46,6 +46,42 @@ To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
 
+### M126 — ślad kontaktów czterech niezależnych ataków
+
+/tmp/pe-hospital-contact-audit-v1-live odtwarza ten sam E i neutralny input
+od38959, zatrzymuje39459/HP0 i kończy quit/exit0. Odczytowe breakpointy
+FieldFx_IsPlayerWithinRadius i Entity_ResolveDropTable zapisują SBValue oraz
+ReadMemory; bez wywołań funkcji gry i zapisów RAM. Cztery kontakty39159,
+39163,39175,39201 należą kolejno do aktorów7:1,7:2,7:0,7:31. Każdy z nich
+ma dokładnie jedno wejście do naliczania obrażeń dwie klatki później:
+39161,39165,39177,39203. Różne adresy właścicieli, task_flags1,
+owner_flags przed kontaktem0x01600000, przy obrażeniach0x91600000.
+/tmp/pe-hospital-contact-audit-v1-events.jsonl. Ten konkretny ślad nie
+pokazuje wielokrotnego naliczania jednego pocisku; nie dowodzi wszystkich
+możliwych przebiegów ani zgodności pełnego harmonogramu z konsolą.
+
+Wszystkie cztery kontakty: promień Ayi63 + dodatkowy50, próg113²=12769.
+Kwadraty odległości XZ:12200/9074/1765/7393. Wysokość Y nie uczestniczy
+w tym oryginalnym teście. /tmp/pe-hospital-contact-audit-v1-mips.py uruchamia
+bezpośrednio oryginalne instrukcje USA EXE pod0x800C6B90 (bez zastępowania
+helpera): cztery rzeczywiste zestawy oraz po cztery próby graniczne
+odległości0/112/113/114. Wszystkie20 wyników zgodne; kontakt przy112,
+brak kontaktu przy113/114. SHA EXE/helpera i offset750480 zapisane w
+/tmp/pe-hospital-contact-audit-v1-mips-proof.json. Początkowo próbowano
+powiązać cached engine z PE.IMG; brak dopasowania wyjaśniono faktycznym
+pochodzeniem helpera z EXE i końcowy oracle wykonuje wyłącznie bajty EXE.
+Nie jest to nowy dowód całego efektu; istniejące228 stanów efektu pozostaje
+osobnym testem w tests/original_actor_animation.c.
+
+Dwa cold replaye39459 normal/SAN exit0: pełny stan zgodny z obserwowanym
+live i między profilami, pełny VRAM zgodny między profilami:
+/tmp/pe-hospital-contact-audit-v1-replay-proof.json. Źródłowy/prywatny E
+bez zmian, bu10 puste; root bu00/bu10 nietknięte. LLDB odłączony, gra i
+wrapper zakończone0. SDK PsyZ/SDL nadal nieinstrumentowane. Bez zmian
+produkcyjnych i nowego buildu; M126 nadal nieprzebyte. Kolejna próba
+powinna uwzględnić cztery niezależne pociski, bez arbitralnego osłabiania
+ataków lub zwiększania nietykalności Ayi.
+
 ### M126 — niezależna kontrola wielkości obrażeń
 
 /tmp/pe-hospital-damage-audit-v1-live odtwarza autentyczny E do38959,

@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M243→M245: pełne HP z zachowanym Medicine 3
+
+Zamknięto poprzedni live 45849 przez quit, exit 0; jego ślad i dowody
+pozostają zachowane. Nowy /tmp/pe-m243-preserve-medicine-v1-live/
+(sesja 79745) odtwarza autentyczne B do 118691. W M243 nie użyto Energy
+Shot. Zwykłe strzały z M500 odejmują po 46 HP: 390→298→206, następnie
+po Heal 3 206→114→22→śmierć. Heal 3 w walce odnowiło 306→586 przed
+kolejnymi trafieniami; końcowe HP 253 przy 121568. Zachowano pełne PE.
+Dodatkowe Cure-P z łupu pominięto przez END (własny Cure-P już posiadany).
+Medicine 3 ze slotu 1 nie zużyto.
+
+Po walce zwykłe menu PE: Heal 3 odnawia 253→533, Heal 2 533→589.
+Wydano 300 BP na Active Time, pozostało 65. Przy 123304 M245, 589/589 HP,
+Medicine 3 nadal slot 1/value 8. Odczyt LLDB bez zmian pamięci potwierdza
+stats.levels[5]=440 i PE 42205184 (~644), log:
+/tmp/pe-m245-medicine-ready-v1-readonly.log.
+
+Osobny cold Continue z ASan/UBSan/function zakończył się exit 0 przy
+123304. Pełny JSON i VRAM identyczne ze zwykłym live; B/C/D mają bajty
+autentycznych źródeł. /tmp/pe-m245-medicine-ready-v1-proof.json.
+Kod produkcyjny pozostaje kandydatem 8232fcb25; PsyZ/SDL nieinstrumentowane.
+Nie jest to dowód wygranej bossa ani pełnej kampanii.
+
+Dalszy zwykły ślad normalny: Up45, Left60, Down180, wait900 uruchamiają
+Triceratopsa. Przy 124489 Aya589 HP/PE47198799, boss6:31 1000750 HP.
+Ruch Right140, Up35 i Left50 (z anulowaniem celowania przed ruchem)
+pozwala uniknąć trafień. Bieżący live79745 przy124775: Aya589 HP,
+PE57620105, magazynek5, aktywne celowanie, 2 strzały do zlecenia,
+cel6:31 w odległości366; drugi aktor8:29 400 HP. Medicine 3 zachowane.
+Ta późniejsza część ma na razie tylko normalny ślad. Następny krok:
+kontynuować walkę, używać leczenia przed niskim HP i dopiero po wygranej
+sprawdzić dalsze sceny oraz nowy zapis przy telefonie.
+
 ### M242: quiz, nieudane i udane ucieczki, ponowne spotkanie oraz łupy
 
 Nowa autentyczna gałąź /tmp/pe-m245-restock-v1-live/ (live 45849)

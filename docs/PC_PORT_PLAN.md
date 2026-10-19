@@ -2,7 +2,60 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-### M234 wygrane, telefon M237, zapis i Continue B/C, alarm wyłączony
+### Muzeum 4F: oryginalne Tune Up, M500 i B Jacket 1
+
+Kontynuacja autentycznego B w live12235 obejmuje CCTV M237 (global37|8),
+przejście do windy M258 i wybór 4F, następnie M250 przy30999. Do windy
+prowadzi północne obejście przegrody: z okolic(-10,1865) na(422,1865),
+potem w dół do strefy wyjścia. Próby przejścia przez przegrodę od południa
+zatrzymywała poprawna oryginalna kolizja; nie zmieniano jej kodem.
+
+Odebrano Tool22 i M500106. Przy pełnym plecaku Range+2 ze slot26
+wymieniono na M500, zachowując Range+2 w skrzyni (global219=34).
+Tune Up: lewa lista wybiera DAWCĘ, prawa odbiorcę. Zatwierdzono wyłącznie
+przeniesienie parametrów G23 do M500: G23 i zwykły Tool zostały zużyte,
+bonusy M500 wzrosły z2/2/2 do17/9/6; bazowe57/61/5 bez zmian.
+Próba odwrotnego wyboru została anulowana na pytaniu, bez mutacji sprzętu.
+Pełny cold replay od B przy34054: normal/SAN exit0, całe JSON i VRAM
+identyczne z live, źródłowy B i zapisany po drodze C niezmienione:
+/tmp/pe-m250-tool-transfer-v1-replay-proof.json.
+
+Następnie odzyskano Range+2 zwykłym otwarciem skrzyni i zużyto go przez
+Items/Use, wskazując M500. Bonus zasięgu9→11, suma parametrów74/72/11.
+M500 wyposażony w slot26, nadal ma Burst i Rate2: to nie broń
+jednostrzałowa ani docelowa optymalizacja. Odebrano B Jacket1 ze skrzyni
+(global252) i wyposażono slot0:44/49/28,bonusy1/1/1. Zmiana SvProtector
+usunęła dodatkową kieszeń; oryginalne menu przeniosło Medicine3 z27 do
+wolnego17. Wszystkie27 przedmiotów mieszczą się w nowej pojemności27.
+Punkt36316 ma372HP, pole bez blokady. Oba exit0, pełny JSON/VRAM
+normal/SAN/live równy: /tmp/pe-m250-gear-ready-v2-replay-proof.json.
+Wersja v1 weryfikatora błędnie oczekiwała pustego slot17 po zmianie
+pancerza; pełny stan już był równy live. V2 sprawdza rzeczywiste przeniesienie
+Medicine3 ze slot27 do17 i nie nadpisuje nieudanej próby.
+
+Powrót windą na2F i telefon M237: zapis D wybrano w pustym slocie3,
+success przy40356, pole przy40980,372HP. Plik8192B jest zamrożony w
+/tmp/pe-m237-upgraded-save-D-v1-source/BASLUS-006620000000D,
+SHA256 2d44ceb761b6d4a5c4bb7f7637264803713ca6dbd4dfd218cb72852bd764c67b.
+Pełny replay od B ponownie utworzył identyczny bajtowo D, zachował B/C,
+normal/SAN exit0, całe JSON i VRAM równe live:
+/tmp/pe-m237-upgraded-save-D-v1-replay-proof.json.
+Osobny cold Continue wyłącznie z D również przeszedł normal/SAN exit0:
+pełne JSON/VRAM równe, inventory identyczne z zapisanym stanem, alarm
+wyłączony,372HP, pole bez dialogów i blokady; źródłowy D bez zmian.
+Dowód: /tmp/pe-m237-continue-D-v2-replay-proof.json. V1 odrzucono przed
+uruchomieniem gry z powodu niesortowanego harmonogramu --pad-at; V2
+porządkuje te same zwykłe wejścia chronologicznie.
+Live12235 czeka przy40980 w M237; ekwipunek M500/B Jacket1.
+Następny krok: dalsza kampania od D, szukanie legalnej broni jednostrzałowej
+lub SuperTool; nie usuwać Rate2 kodem ani edycją zapisu.
+
+Brak zmian źródeł produkcyjnych i nowych plików repozytorium; nadal ten
+sam kandydat265fc10fa. Testy są headless, karty wyłącznie prywatne /tmp.
+Instrumentacja SAN nie obejmuje bibliotek PsyZ/SDL. Ten dowód obejmuje
+przygotowanie w muzeum, nie ukończenie kampanii.
+
+### Wcześniejszy punkt: M234, telefon M237 i Continue B/C
 
 Normal live33307 zakończył M234 przy231259:72HP,zero przeciwników,
 G23clip3. Medicine3 odnowiło265→445HP przed dalszymi trafieniami;
@@ -69,7 +122,7 @@ nie szybkostrzelność. Priorytet przygotowania: broń jednostrzałowa z dobrymi
 parametrami albo legalna modyfikacja obecnej przez oryginalny system.
 Nie zmieniać tych reguł kodem portu dla łatwiejszego przejścia.
 
-Aktualny G23:62ataku,mod0x22(low5bits=2) dajeROF3. M9-2 równieżROF3,
+Przed przeniesieniem parametrów G23:62ataku,mod0x22(low5bits=2) dajeROF3. M9-2 równieżROF3,
 39ataku. M79-3:54ataku,ROF2; M203:27ataku,bez ROF,pojedynczy strzał.
 AT4:128ataku,jednostrzałowy,bez pocisków. W bieżącym ekwipunku nie ma
 Tool/SuperTool ani zestawów narzędzi. Nie zakładać,że samo zatwierdzenie

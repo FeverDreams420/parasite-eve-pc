@@ -46,6 +46,58 @@ To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
 
+### M126 — transfer Rate3, skuteczny odwrót i Confuse
+
+Bez zmian kodu produkcyjnego. Rewalidacja384 obiektów, zależności,
+archiwów, binariów i kopii build potwierdza ten sam kandydat:
+/tmp/pe-hospital-preparation-v1-build-proof.json. Wszystkie poniższe sesje
+używają autentycznego E, prywatnych kart i zwykłego inputu. Bez edycji RAM,
+fabrykowania zapisów, nowych plików źródłowych ani dotykania root bu00/bu10.
+
+Odczyt kanonicznego g_SaveRuntimeState.player.aya potwierdza176BP,
+level17 wewnętrzny (18 na ekranie), maxHP210/currentHP108:
+/tmp/pe-hospital-armor-v1-stats-v2.log. Pierwszy odczyt nieistniejącego
+symbolu g_AyaSaveState był nieważny; jego zera nie są dowodem.
+Sp Vest1/ref261 już wyposażony ma parametry27/16/20 i jest najlepszą
+posiadaną zbroją według tych parametrów. Koszt ulepszenia wynosi100BP/+1.
+
+/tmp/pe-hospital-tune-v1-live: oryginalne Tune-Up (root row6), M16 jako
+odbiorca, M9-2 jako dawca, wybór Rate3 i potwierdzenie. Przy38233 zużyto
+Tool slot19 i usunięto dawcę slot8. W całych4096 bajtach rekordów sprzętu
+zmieniły się wyłącznie offset149:33→34,256:1→0,277:34→0. Wyposażone sloty
+broni10/zbroi14 bez zmian. Medicine2 slot21 odzyskuje108→198HP przy39759.
+Przy40459 dostępne3 akcje; live40659 kolejkuje3 strzały. Trzy trafienia
+po18 odbierają54HP jednemu szczurowi; Rate2 wcześniej dawał2×27, więc nie
+jest to dowód wzrostu obrażeń salwy. Koniec40979/HP31, czterech żywych.
+Osiem cold replayów (38233/39759/40459/40979 × normal/SAN), exit0,
+pełny stan zgodny z live i między profilami, VRAM między profilami oraz
+z zachowanym live38233/39759:
+/tmp/pe-hospital-tune-v1-replay-proof.json. To nie zwycięstwo.
+
+Próba obejścia zachodnią stroną lobby uruchamia drugi obszar spotkania;
+nie potwierdzono obejścia walki. Pięć zwykłych prób opóźnienia pierwszej
+ucieczki o0/8/16/32/64 klatki również nie daje wyjścia z walki:
+/tmp/pe-hospital-retreat-search-v1-results.json (normal tylko).
+
+/tmp/pe-hospital-retreat-follow-v1-live kontynuuje autentyczną drugą
+ucieczkę37217/HP18, mode4. Left700 prowadzi do M127 przy37917 bez wrogów,
+lecz z dialogiem zamkniętych drzwi. Dłuższe Cross60 zamyka dialog przy38557:
+lock0, dialogstate0, HP18. Nie potwierdzono podejrzewanego zakleszczenia;
+nie wprowadzono poprawki. Powrót do M126 znów uruchamia cztery szczury.
+Oryginalne PE Confuse: wybór celu przy39737, przy39937 przeciwnik7:31
+ma core_flags0x01600006 i mode4, przerwany wcześniejszy atak. HP15,
+czterech żywych. Potwierdzono efekt na jednym celu, nie zwycięstwo.
+Dziesięć cold replayów (37217/37917/38557/39737/39937 × normal/SAN), exit0,
+pełny stan zgodny z live/profilami, VRAM między profilami i z zachowanymi
+37917/39937: /tmp/pe-hospital-retreat-follow-v1-replay-proof.json.
+
+Obie serie kończą się quit/exit0, źródłowy i prywatny E bez zmian.
+Sanitizery obejmują port; PsyZ/SDL pozostają nieinstrumentowane. Nie są to
+nowe pełne regresje ani niezależne porównanie PS1. Trwały zapis E i punkt
+M127/35085 pozostają bazą; odwrót38557 ma tylko18HP. Przejście M126 i dalsza
+kampania pozostają nieukończone. Następny krok: dalsza autentyczna strategia
+walki lub niezależny audyt obrażeń/kontaktu, bez zgadywania zmian balansu.
+
 ### M126 — odtworzone porażki, obrażenia i przygotowanie wyposażenia
 
 Bez zmian produkcyjnych; kandydat pe-control-read-v2 pozostaje ten sam.

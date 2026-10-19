@@ -27,11 +27,31 @@ Pełny JSON/VRAM normal/SAN/live równy,oba exit0,bez raportów sanitizerów:
 wyposażenia (pierwsze320B i zakres352..koniec).
 
 Po wyposażeniu zwykła droga przez okno i zejście M228 doprowadziła doM229
-przy201100,573HP,SvProtector. Zamrożono stan/VRAM i uruchomiono powtórki:
-/tmp/pe-m229-svprotector-entry-v1-replay.py; wynik wymaga potwierdzenia.
-Live75962 czeka tam przed walką. Zachowane Medicine4(slot15) i Medicine3
-(slot17); G23slot0 jest pusty,pozostała rezerwa3. To wcześniejsza gałąź
-sprzed dodatkowego wydania100BP,więc G23attack62 iBP198.
+przy201100,573HP,SvProtector. Pełne JSON i VRAM normal/SAN/live są równe,
+oba procesy exit0: /tmp/pe-m229-svprotector-entry-v1-replay-proof.json.
+To wcześniejsza gałąź sprzed dodatkowego wydania100BP,więc G23attack62
+iBP198.
+
+Pierwsza walka M229 wybrała jeden typ4/sub31,320HP. Po odnowieniu PE,
+przeładowaniu ostatnich3 nabojów i jednym trafieniu36,EnergyShot pokonał
+pozostałe284HP. Wynik205112:323HP. ALL odebrało Medicine3 do slot27,
+mimo że diagnostyczne capacity pozostaje27: dodatkowa kieszeń SvProtector
+faktycznie działa. Użycie starszego Medicine3 ze slot17 odnowiło323→503HP;
+nowy slot27 i Medicine4(slot15) zachowane. Punkt206182 ma G23clip1,
+rezerwę0. Pełny JSON/VRAM normal/SAN/live równy,oba exit0:
+/tmp/pe-m229-svprotector-victory-v1-replay-proof.json.
+
+Druga próba zdobycia zasobów po powrocie M231→M229 uruchomiła ponownie
+jeden typ4/sub31,320HP. Odczyt rekordu9 potwierdził AT4 z jednym pociskiem;
+wcześniejsze przypuszczenie o pustym AT4 było błędne. Wyposażono M203,
+odnowiono pełne PE78118912 i użyto EnergyShot. Przy210873:394HP,
+przeciwnik94HP,PE0,M203clip0. Rzeczywiste obrażenia226 zastępują robocze
+przewidywanie307 z niepełnej analizy wzoru; nie jest to dowód błędu portu.
+Podejścia Club1 nie zadały dalszych obrażeń; przy212155:217HP,wróg94HP.
+Zamrożone JSON/VRAM/input: /tmp/pe-m229-svprotector-second-attempt-v1-212155*.
+Nie jest to zwycięstwo ani dowód normal/SAN. Live75962 zamknięty quit,exit0.
+Kolejna próba startuje z potwierdzonego206182,bez przenoszenia zasobów
+między gałęziami. Nie zmieniono źródeł,mechaniki ani save'ów.
 
 ### Próba z amunicją: dodatkowe zwycięstwo i powrót na dolny gzyms
 

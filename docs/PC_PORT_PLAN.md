@@ -144,6 +144,29 @@ G23wyposażony. Obecny limit180000 zostawia≈7kklatek; przed dalszą długą
 gałęzią odtworzyć zarejestrowane wejścia z większym limitem w nowej
 prywatnej sesji. Nie zmieniano kodu ani danych zapisu.
 
+### M220: trzy cele, wygrana i zwiększenie limitu odtwarzania
+
+Próba Right140 od wejścia zatrzymała Ayę na kolizji x≈351; Down140
+uruchomiło walkę zamiast obejścia:typ3/sub31,30 po200HP oraz typ4/sub29
+240HP. Początkowe151HP uzupełniono ostatnim Medicine4(slot17); przy
+173888 było507HP. Poprzednia prywatna sesja19532 zamknięta quit/exit0.
+Nowa prywatna sesja SAN42185, /tmp/pe-m220-battle-live-v1.py, odtwarza
+wszystkie te same wejścia od O z limitem500000 zamiast180000.
+Przy173888 pełny JSON iVRAM są identyczne z poprzednią sesjąSAN:
+/tmp/pe-m220-battle-live-v1-resume-proof.json. Bez zmiany stanu gry.
+
+G23 przeładował się z amunicji z M219. Typ3 dostawały38/strzał,
+typ4 po28. Focus sub30,następnie sub31 pozostawił jeden cel240HP.
+Heal3 przy175250 podniósł283→561HP. Ostrzał i kolejne przeładowanie
+zakończyły starcie177106:471HP,mode2,live0,G23clip7. Wszystkie ruchy,
+zmiany menu i ataki zarejestrowane. Zamrożony JSON/VRAM i pełny runner:
+/tmp/pe-m220-victory-v1-replay-proof.json:pełny JSON/VRAM normal/SAN/live,
+oba exit0,bez raportów sanitizerów.
+Live42185 czeka na ekranie wyniku177106. Łup jeszcze nieodebrany.
+Nie zmieniano oryginalnego kodu, kolizji, RAM ani save. W sprawie menu:
+Menu_StepItemSelectScreen(status_panels.c) przewiduje cancel bez warunku
+pozycji; wcześniejszej obserwacji nie uznawać za oryginalne ograniczenie.
+
 Telefon i dalsza kampania pozostają do ukończenia.
 
 ### Museum: quiz i wygrane M206/M207, wejście M209

@@ -2,10 +2,10 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp kampanii: M147 wygrane, wspomnienie i rozmowa z pielęgniarką
-przechodzą do otrzymania klucza211/story491. Dwadzieścia nowych replayów
-oraz26 par klatek wspomnienia normal/SAN opisano poniżej. Dalszy szpital
-i pełna kampania pozostają nieukończone. Kod produkcyjny bez zmian.
+Najnowszy postęp kampanii: powrót z kluczem, rozmowa/story492, użycie
+i odrzucenie klucza, przejście M148→M149. Dwanaście nowych replayów
+normal/SAN opisano poniżej. Walka i urządzenie M149,13F oraz dalsza
+kampania pozostają nieukończone. Kod produkcyjny bez zmian.
 
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
@@ -50,6 +50,69 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Powrót z kluczem — story492, odblokowanie M148 i wejście M149
+
+/tmp/pe-hospital-key-return-v1-live odtwarza pełny autentyczny journal E
+z kluczem przy71325. M147→M14672215→M12673443, bez ponownych walk.
+Pomyłkowy wschodni skręt daje M12574073, potem powrót do M12674383;
+właściwe zachodnie wyjście prowadzi do M12775163. Rozmowa z Mayą
+(page46 i kolejne) kończy się78023: story491→492, lock0, dialogstate0,
+HP15, item211 nadal w slot21. Bez nowych plików źródłowych, przenoszenia
+funkcji, zmian produkcyjnych, balansu, zapisów RAM lub edytora save.
+
+Interakcja wymaga właściwego miejsca i kierunku. Drewniane drzwi przy
+x~0,z−500 nadal pokazują Door locked. Panel klucza ma prostokąt
+x250..350,z−696..−596, yaw2560..3584. W odczytowym śladzie82175/82177
+Script_PointInPoly dla aktora5:0 sprawdza tylko ten panel, drewniane drzwi
+i wyjście do holu: /tmp/pe-hospital-m127-poly-probe-v1.jsonl. Próba przy
+x272,z−1249 badała niewłaściwy, nieaktywny tu przycisk windy; wcześniejszy
+breakpoint Script_DispatchCmd miał zero trafień. Nie wykazano błędu
+interpretera, kolizji ani gubienia krawędzi wejścia.
+
+Oryginalny Field_HandleStateTransition bezwarunkowo zamienia fizyczne
+Cross/Circle przed mapowaniem USA. Odczyt podczas przytrzymania: raw8192
+→field0x40000401, raw16384→field0x20000300; skrypt wymaga nowej krawędzi
+0x20000000. Wcześniejsza sugestia ustawienia konfiguracji była błędna:
+to stała zamiana w tym dekoderze. Jednoklatkowe Up nie zmieniło kierunku;
+Up4 dało yaw3072. Przy poprawnej pozycji i rawCross skrypt uruchamia
+oryginalny event7. Przy82555: global65 bit32 ustawiony
+0x23c1ffcf→0x23c1ffef, global66 bit16 ustawiony0x224→0x234,
+dialog134 o odrzuceniu niepotrzebnego klucza. Cross kończy dialog,
+item211 w slot21→0. Przejście przez odblokowane drzwi daje83359
+M148/a8024448, pole/lock0, HP15. Zachowane
+/tmp/pe-hospital-key-return-v1-83359.{json,vram}.
+
+Przed dalszą trasą użyto zdobytego Medicine2 ze slot20 (HP15→105),
+przeładowano M16 do19 i użyto trzech Heal2 w polu. Przy86125 HP273/273,
+magazynek19, slot20→0, bez menu. Zachowane
+/tmp/pe-hospital-key-return-v1-86125.{json,vram}. PE przy nowym spotkaniu
+wynosi2752512=42×65536, po wydaniu360PE z402; leczenie nie jest darmowe.
+Korytarz M148 prowadzi86620 do M149/a80244c8, bez menu/wrogów, lock0.
+
+Dalszy ruch uruchamia w M149 jednego4:31/201HP. Dwie salwy M16 odbierają
+po60, do81HP; Aya ma99HP przy88194. Próba Heal2 kończy89050/HP0,
+mode3, cel nadal81HP. Osobny normal-only /tmp/pe-hospital-m149-focus-v1-live
+od88194 próbuje szybszego ostrzału: trafienie99→13 przed strzałem,
+śmierć88674. Pusta lista wrogów po Game Over nie jest zwycięstwem;
+tryb pozostaje3. /tmp/pe-hospital-m149-dodge-v1-live od tego samego
+punktu: Up40 także przyjmuje86HP, potem Heal2 daje63HP po ticku;
+kończy89010/HP0, cel81HP. Obie dodatkowe próby quit/exit0, bez nowej
+sparowanej weryfikacji SAN. Nie uzyskano jeszcze story494, urządzenia
+M149 ani wejścia na13F. Zachowany bezpieczny prefix86620 ma pełne HP
+oraz magazynek;86125 jest wcześniejszym punktem przygotowania w M148.
+Nie ma nowego trwałego save: źródłem nadal E i cały zwykły journal.
+
+Dwanaście cold replayów78023/82555/83359/86125/86620/89050 × normal/SAN,
+exit0, cały emitowany stan zgodny z live/profilami, pełny VRAM między
+profilami i z zachowanym83359/86125:
+/tmp/pe-hospital-key-return-v1-replay-proof.json. Rewalidacja384 obiektów,
+zależności, bibliotek, binariów i kopii build:
+/tmp/pe-hospital-key-return-v1-build-proof.json. Wszystkie trzy sesje live
+zakończone quit/exit0; oba LLDB odłączone, tylko SBValue/ReadMemory,
+bez wywołań funkcji gry. Źródłowy i prywatne E bez zmian, bu10 puste,
+root bu00/bu10 nietknięte. PsyZ/SDL nadal nieinstrumentowane. To dowód
+opisanej trasy i porażki, nie ukończenia M149 ani pełnej kampanii.
 
 ### M147 — zwycięstwo, wspomnienie i klucz211/story491
 

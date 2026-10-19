@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+M174–M176: dalsza naturalna trasa potwierdzona bez zmian kodu.
+M174 zejście po drabinie na dno uruchamia dwa cele6/215HP; próby29HP
+oraz98HP zakończyły się śmiercią, nie zwycięstwem. Cold normal/SAN w120879
+potwierdza aktywne spotkanie i całe JSON/VRAM, nie pełne cykle efektów.
+Lepsza wcześniejsza sekwencja: M173 w107275 ma98HP/PE24577181;
+krótkie anulowanie celu i110 klatek oczekiwania zwiększa PE26448716.
+Energy Shot pokonuje112HP w108327 bez kolejnego podejścia i utraty69HP.
+Dialog/film dają M174 w116857 z98HP zamiast29HP.
+
+Górna droga M174 prowadzi dalej bez zejścia do tej walki: Up1700,
+Right1800 zatrzymuje na krawędzi; Up160 ustawiaZ≈-151, Right1800 daje
+M175/122777. W M175 Up200, Right160, Up100 otwierają drzwi, wait800
+prowadzi M176/124437 z98HP. Dalsze dojście wokół pulpitu i Cross uruchamia
+panel. Zasilanie włączone, pierwsza Pump1 zgłasza niewystarczającą moc;
+Pump2 uruchamia film20 i po powrocie story_stage584→592, HP98.
+Film w130505 ma193 klatkę i RGB24; poprawny podgląd24-bitowy jest czytelny.
+Starszy pomocniczy rendererRGB555 dawał tu fałszywe zielone artefakty;
+poprawiono tylko podgląd w /tmp/pe-m174-upper-v1-render.py, bez zmiany gry.
+
+14 cold prób normal/SAN na niezmienionym kandydacie m174-bindings-v2,
+wszystkieexit0:120879,108327,116857,122777,124437,130505,136791.
+Całe JSON-y zgodne z live,1MiB VRAM zgodny między profilami. W108327,
+116857,122777,124437,136791 także zgodny z zamrożonym VRAM live.
+/tmp/pe-m176-campaign-v1-proof.json zbiera pięć szczegółowych replay-proof.
+Źródłowe J i karty prywatne niezmienione, root bu00/bu10 nietknięte;
+root binaria identyczne z kandydatem. PsyZ/SDL nieinstrumentowane.
+Kontynuacja /tmp/pe-m176-pump-check-v1-replay-136791-normal/args.json:
+M176/98HP/story592, panel zakończony, zwykłe sterowanie aktywne.
+Oryginalny skrypt9d68..9eb8 wymaga bitów bank54/1000 i2000 oraz wyłączonego
+4000 (zasilanie główne) przed odnogą M180. Obecnie wszystkie trzy ustawione;
+następny krok to Turn it OFF i sprawdzenie północnego wyjścia przyX[-857,-500],
+Z[400,787]. Ta dalsza odnoga nie ma jeszcze dowodu runtime.
+Brak nowego trwałego save'a; pełna kampania i zgodność z PS1 nadal otwarte.
+
 Naprawione wejście M174 po filmie M433: w istniejącym scene/room_load.c
 podpięte wszystkie trzy oryginalne descriptory, nie tylko pierwszy brakujący.
 M174/M383 mają identyczny cały moduł USA8510B/34064B,

@@ -11,6 +11,7 @@
 #include "pe1/akao_counters.h"
 #include "pe1/psyq_spu_api.h"
 #include "pe1/psyq_gpu.h"
+#include "pe1/psyq_bios.h"
 
 void Akao_SetNotePitch(AkaoTrack *track, int arg);
 
@@ -2073,9 +2074,18 @@ int Akao_EnqueueStagedCommand(void) {
      * locking its consumer. Reserve both entries for paired commands. */
     param = (opcode == 0xD8 || opcode == 0xD9 || opcode == 0xDA ||
              opcode == 0x98 || opcode == 0x99) ? 2 : 1;
-    while (g_AkaoMessageQueueCount >
-           (int)(sizeof(g_AkaoMessageQueue) / sizeof(g_AkaoMessageQueue[0])) - param)
+    /* The host timer runs on another thread. Protect the complete original
+     * queue transaction, including bank queries and the capacity check; the
+     * volatile PS1 interrupt flag alone cannot serialize native threads.
+     * Release the critical section before waiting for the consumer. */
+    for (;;) {
+        EnterCriticalSection();
+        if (g_AkaoMessageQueueCount <=
+            (int)(sizeof(g_AkaoMessageQueue) / sizeof(g_AkaoMessageQueue[0])) - param)
+            break;
+        ExitCriticalSection();
         VSync(1);
+    }
     g_AkaoMessageQueueLock = 1;
     switch (opcode) {
     case 0x10:
@@ -2168,5 +2178,6 @@ int Akao_EnqueueStagedCommand(void) {
         break;
     }
     g_AkaoMessageQueueLock = 0;
+    ExitCriticalSection();
     return result;
 }

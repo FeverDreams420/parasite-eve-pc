@@ -2,29 +2,36 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: obie formy pająka M156/M380 pokonane autentyczną
-trasą H i zwykłym sterowaniem. Przy81103 oryginalny ekran wyników,
-zero żywych przeciwników, Aya34/283HP. Nagroda G23 odebrana; następnie
-M381, dialog Eve i film16. Przy88803 story508, brak menu/dialogu,
-video_state0, move_lock0; następny ruch zmienia pozycję Ayi. Maksymalne
-HP po wynikach rośnie do320, PE do610. To postęp kampanii, nie ukończenie
-całego portu. Bez zmian kodu, nowych plików źródłowych, edytora save'ów
-lub zapisów gameplay RAM.
+Najnowszy postęp: autentyczna ucieczka po pająku prowadzi z M381/story508
+przez M157/film18 i M158 do walki M159 (dwaj przeciwnicy po152HP).
+Pójście do windy lub nieudana ucieczka prowadzą przez film17 do M438/
+Game Over i oryginalnego powrotu do tytułu; nie jest to awaria przejścia.
+Walka M159 nadal nieukończona. Oryginalny Heal1 na dachu przygotowuje64HP
+zamiast34HP (osobna próba normal-only); Heal3 jest na razie niedostępny
+przy pozostałym PE. Kolejny zapis telefonu nie został jeszcze wykonany.
 
-Kandydat /tmp/pe-m156-cycles-v4 pozostaje niezmieniony:388 świeżych
-obiektów (194/profil),48/48 wcześniejszych regresji exit0 oraz54 wybrane
-cold replaye trasy/walki exit0. Najnowsze14 to trzy punkty walki ×2 profile
-oraz zwycięstwo/nagroda/film/powrót do sterowania ×2 profile.
-Pełny stan zgodny z historycznymi sesjami live; pełne1MiB VRAM zgodne
-między normal/SAN, a przy81103/82103/88803 także z zachowanym live.
-Dowody: /tmp/pe-hospital-spider-adaptive-v4-replay-proof.json oraz
-/tmp/pe-hospital-spider-finale-v1-replay-proof.json. Pozostałe próby
-taktyczne są osobną eksploracją, nie dodatkowymi zwycięstwami/regresjami.
-Rehash388 obiektów i995 plików manifestu, kopii build oraz prywatnych H:
-/tmp/pe-hospital-spider-finale-v1-build-proof.json. SAN obejmuje kod portu
-(address,undefined,function); archiwa PsyZ/SDL nieinstrumentowane.
-build/parasite-eve-pc i fixture nadal są kopiami kandydata normal.
-Pełna kampania i kompletna zgodność obrazu/audio z PS1 pozostają otwarte.
+Podczas cold SAN wykryto sporadyczny null-read AKAO/sequencer.c:359.
+Osobny TSan potwierdził wyścig blokady kolejki między timerem i głównym
+wątkiem. Naprawiono transakcję w istniejącym src/main/akao/voice_bank.c
+sekcją krytyczną; bez nowych plików źródłowych lub warstwy audio.
+Nie udowodniono osobno związku przyczynowego wyścigu z null-read; ten
+odczyt nie powtórzył się w nowych testach. Pełne audio/PCM nadal otwarte.
+
+Nowy kandydat /tmp/pe-akao-queue-v1:388 świeżych obiektów (194/profil),
+48/48 regresji exit0,14 cold replayów normal/SAN oraz4 dodatkowe próby
+SAN wcześniejszego zawodnego punktu. Dwa pełne przebiegi diagnostyczne
+TSan po poprawce (91523 i95717) exit0 bez raportu; przed nią TSan zgłaszał
+wyścig. TSan obejmuje194 obiekty gry; archiwa PsyZ/SDL nieinstrumentowane,
+tak samo jak w profilu SAN (address,undefined,function) kodu portu.
+Dowody: /tmp/pe-akao-queue-v1-verification.json,
+/tmp/pe-akao-queue-v1-{escape,victory,failure}-replay-proof.json,
+/tmp/pe-akao-queue-v1-stress-proof.json i /tmp/pe-akao-queue-v1-tsan-proof.json.
+Pełny stan i1MiB VRAM zgodne w opisanych poniżej zakresach. Rehash388
+obiektów i995 plików manifestu: /tmp/pe-akao-queue-v1-release-proof.json.
+build/parasite-eve-pc i fixture są kopiami tego kandydata normal.
+Pełna kampania, zapis po M159 i kompletna zgodność obrazu/audio z PS1
+pozostają otwarte. Bez save editora, zapisów gameplay RAM i zmian źródłowych
+kart; użytkowe root bu00/bu10 nietknięte.
 
 Naprawa wyłącznie w istniejącym src/main/boot/init.c: blokujący odczyt
 sterowania zachowuje częściową komendę po EINTR, ponawia odczyt i odróżnia
@@ -60,6 +67,93 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Ucieczka M381 → M157/M158/M159 i synchronizacja kolejki AKAO
+
+Poprzedni odcinek był postępem: obie formy pająka pokonane, G23 odebrane,
+film16 i story508 zweryfikowane. /tmp/pe-hospital-roof-resume-v1-live
+odtwarza88803 i próbuje prawej strony dachu/windy. Film17 prowadzi do
+M438/a8083448, potem tytułu i story0. Osobna Left500 próba
+/tmp/pe-hospital-roof-escape-v1-live blokuje się przy wyrwie, później
+też zawodzi. Obie quit0; exit0 nie oznacza przejścia kampanii.
+Oryginalne dane M438 z Disc1/PE.IMG mają jawne opcode49→a9400048
+w bajtach220 i336 kodu, SHA i zakresy:
+/tmp/pe-roof-transition-v1-script-proof.json. Obejrzany obraz
+/tmp/pe-roof-failure-v1-preview/frame.png pokazuje Game Over.
+Dwa cold replaye tego przypadku starego kandydata zgodne:
+/tmp/pe-hospital-roof-failure-v1-replay-proof.json; brak live VRAM92333.
+
+Trasę do rusztowania podpowiedział [poradnik RPGClassics](https://shrines.rpgclassics.com/psx/pe/day4.shtml),
+a jej działanie potwierdza własny przebieg oryginalnej gry. Cztery
+normal-only próby /tmp/pe-hospital-roof-directions-v1-results.json
+sprawdzają kierunki ukośne od88803. DownLeft460, Cross20 i neutral120
+prowadzą do89403 na dolnej części dachu. Pozostałe kierunki nie dowodzą
+ucieczki; UpRight przywołuje dialog przy windzie. Wybrana
+/tmp/pe-hospital-roof-escape-v2-live dodajeDownLeft220, przechodzi do
+M157/a80253c8 przy89623, uruchamia film18 (aktywny przy90123), potem
+M158/a8025448 i dialog137. Przy91523 M159/a80254c8:34HP, dwaj przeciwnicy
+1:31 i2:31 po152HP. To faktyczne przejście dalej po bossie.
+
+Dalszy ogon tej próby: utrata HP34→8/Slow, Heal2 i ruch dają92839/11HP;
+kolejne Heal2 iLeft440 prowadzą do93835/71HP. Left1000:94835/25HP,
+PE24302546raw. Oryginalne PE→Energy Shot (nowy układ po Heal3:
+row2,col1), wybór celu i zakończenie kolejki dają95717:25HP, PE0,
+8→7 naboi, pierwszy przeciwnik152→54HP, drugi pozostaje152HP.
+Próba kończy się śmiercią przy95917; quit0. Nie jest wygraną walką M159.
+Osobna /tmp/pe-hospital-roof-heal-v1-live próbuje Heal3 na dachu: menu
+odmawia przy niedostatecznym PE. Heal1 poprawnie podnosi34→64HP,
+zużywając60PE, druga próba jest już niedostępna. Zamknięcie menu,
+DownLeft680, pełne oczekiwanie na film18 i dialog M158 prowadzą do
+91997/M159 z64HP. Ta przygotowawcza gałąź jest normal-only, nie dowodem
+zwycięstwa ani osobną parą cold SAN. Wszystkie sesje zamknięte quit0.
+
+Pierwszy ośmiopunktowy replay starego cycles-v4 nie przeszedł:
+/tmp/pe-hospital-roof-escape-v2-replay.log. SAN91523 exit−6, null pointer
+w Akao_LookupSampleBankByte, sequencer.c:359. Inne rozpoczęte przypadki
+nie czynią całego zestawu zielonym; proof sukcesu nie powstał. Pojedyncza
+ponowna próba /tmp/pe-hospital-roof-audio-null-v1 i uruchomienie pod LLDB
+/tmp/pe-roof-audio-lldb-v2.log zakończyły się exit0, bez reprodukcji.
+Debugger wyłącznie odczytywał stan; nie wywoływał funkcji gry ani nie
+zapisywał RAM. To uzasadniało badanie współbieżności, nie null-guard.
+
+Diagnostyczny build194 obiektów -fsanitize=thread:
+/tmp/pe-roof-audio-tsan-v1-run/game.log zgłasza odczyt
+Akao_Tick/sequencer.c:308 w wątku timera i zapis
+Akao_EnqueueStagedCommand/voice_bank.c:2079 w głównym wątku na tym samym
+g_AkaoMessageQueueLock. Oryginalny volatile flag nie serializuje wątków
+hosta. Audyt dostępów: inicjalizacja w Spu_InitVoiceState przed włączeniem
+eventu, konsument w timerze, wszystkie rezerwacje slotów przez enqueue.
+Naprawa wyłącznie w istniejącym voice_bank.c, z istniejącym nagłówkiem
+psyq_bios.h: EnterCriticalSection przed sprawdzeniem pojemności, cała
+oryginalna transakcja/odczyt banku/zapis poleceń/flag pod blokadą,
+ExitCriticalSection na końcu także dla odmowy nagłówka. Przy pełnej
+kolejce zwolnienie blokady przed VSync(1), ponowny chroniony odczyt;
+zachowano rezerwację dwóch slotów dla poleceń parowanych. Bez przenoszenia
+funkcji, nowej kolejki, adaptera lub zmiany gameplayu.
+
+Nowy /tmp/pe-akao-queue-v1: pełne388 obiektów i nowe game/fixture w obu
+profilach;48 regresji exit0, oryginalne testy danych/stanów/MIPS i replaye
+head2/phone/medicine nadal zgodne. Osiem nowych cold prób90123/91523/
+93835/95717 × normal/SAN zakończone exit0, pełny stan równy live,
+pełne1MiB VRAM równe między profilami. Brak zachowanego live VRAM tych
+czterech punktów — pole saved_live w proof jest warunkowe, nie dowodzi
+porównania z nieistniejącym obrazem. Cztery dalsze cold próby81103/88803
+× normal/SAN potwierdzają zwycięstwo pająka i story508, także z zachowanym
+live VRAM. Dwie cold próby92333 × normal/SAN potwierdzają oryginalną
+ścieżkę porażki M438. Łącznie14; nie są to14 zwycięstw nad M159.
+Dodatkowe4 cold SAN91523 exit0 i dwa pełne diagnostyczne przebiegi TSan
+91523/95717 exit0 bez raportu:
+/tmp/pe-akao-queue-v1-tsan-proof.json. SDK nieinstrumentowane.
+Nie udowodniono osobno, że wyścig powodował null-read, ani braku wszystkich
+możliwych błędów audio. W badanych nowych przebiegach null-read nie wrócił.
+
+Manifest /tmp/pe-akao-queue-v1-build-manifest.json, wynik48 regresji
+/tmp/pe-akao-queue-v1-verification.json, świeży rehash388 obiektów/995
+plików i kopii build: /tmp/pe-akao-queue-v1-release-proof.json. H oraz jego
+prywatne kopie niezmienione, bu10 puste; root karty nietknięte.
+Następny krok: ukończyć M159 z lepszym otwarciem/leczeniem, przejść do
+Maedy/Daniela i wykonać oryginalny zapis telefonu. Pełna kampania nadal
+nieukończona. Niżej pozostaje historia wcześniejszego kandydata cycles-v4.
 
 ### Zwycięstwo M380, G23, M381 i story508
 

@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### Museum M199: zwycięstwo po wydaniu BP
+
+Zwykły input od O, menu BP i osobny zapis A prowadzą ponownie do M199.
+Ulepszony G23 (atak62), Active Time35 i jedno Heal3 wystarczają do
+pokonania obu raptorów280HP. Stan52987:272/532HP,mode2,live_enemies0.
+Dwa cold runy od O tworzą też identyczny A i odtwarzają całe zwycięstwo:
+/tmp/pe-museum-m199-victory-v1-replay-proof.json. Pełny JSON/VRAM
+normal/SAN identyczny z zamrożonym live,exit0; PsyZ/SDL bez instrumentacji.
+Bez grindu, edycji statystyk/save ani zmian kodu. Ammo+15×2 odebrano przez
+ALL,END wraca do eksploracji. Oryginalny dialog po walce działa.
+
+Północne drzwi M199 są na razie zamknięte: oryginalny skrypt wymaga
+przedmiotu213 lub odpowiedniej flagi/stage. Nie obchodzić warunku.
+Wcześniejsza porażka AT4 nie była dowodem błędu portu. Następnie znaleźć
+normalną drogę do klucza/otwarcia drzwi i kontynuować Museum.
+Live SAN sesja11625, /tmp/pe-warehouse-bp-v2-live,57187,M199,272HP,
+pozycja≈x−496,z−2427. Poprzedni checkpoint A zachowany.
+Cała kampania nadal nieukończona.
+
+### BP przed kolejną próbą Museum
+
+M199 naturalnie uruchamia walkę z dwoma raptorami po280HP; wejście45117
+potwierdzone pełnym JSON/VRAM normal/SAN/live:
+/tmp/pe-museum-m199-fight-v1-replay-proof.json. AT4 zadaje po141 obrażeń
+obu celom jednym rakietowym strzałem; normal/SAN JSON równy live47289,
+VRAM równy pomiędzy buildami (brak zamrożonego liveVRAM tego strzału):
+/tmp/pe-museum-at4-shot-v1-replay-proof.json. W inventory nie ma zapasowych
+rakiet, więc pusta AT4 nie przeładowuje się zwykłymi pociskami. Próba
+zakończyła się śmiercią i powrotem do title50055, bez crasha SAN; nie jest
+to dowód zwycięstwa. Próba Barrier szybko zużyła PE, także bez zwycięstwa.
+
+Po uwadze użytkownika wrócono do autentycznego O: poziom27,1316BP.
+Oryginalne menu BP:600BP Active Time29→35,700BP atak G23 55→62;
+pozostaje16BP,427/532HP. Bez zmian kodu, RAM ani edycji save.
+Telefon M266 utworzył osobny A w pustym slocie0, O zachowany.
+Checkpoint /tmp/pe-warehouse-bp-save-v1-source/BASLUS-006620000000A.
+Dwa cold runy od O odtwarzają menu i tworzą identyczne bajty A,
+pełny JSON/VRAM równy live31218, exit0 bez błędów sanitizerów:
+/tmp/pe-warehouse-bp-check-v1-replay-proof.json.
+PsyZ/SDL pozostają nieinstrumentowane. Następna próba walki powinna
+korzystać z ulepszonego G23; grind zostaje opcją, jeśli nadal potrzebny.
+Museum i kampania pozostają nieukończone.
+
 ### Od Continue O: wyjście z Warehouse i naturalne wejście do Museum
 
 Zwykły input od O prowadzi M266→M265→M263→M262→M260→mapaM000.
@@ -28,9 +71,9 @@ identyczny z Continue O,427HP,AT4 i oba klucze zachowane. Oryginalny skrypt
 Museum naturalnie podnosi story600→608. Źródłowy/prywatny O i root build
 bez zmian. To wejścia i eksploracja, nie potwierdzenie walk ani ukończenia Museum.
 
-Live SAN /tmp/pe-warehouse-O-v1-live.py, sesja3441, stoi43037 w M198,
-przy drzwiach od M197. Dalej kontynuować Museum z tego punktu; krótkie
-odtworzenie ma args w /tmp/pe-museum-m198-entry-v1-base-args.json.
+Historyczne wejście M198 ma args w
+/tmp/pe-museum-m198-entry-v1-base-args.json. Sesja3441 została zamknięta;
+aktualny live BP: /tmp/pe-warehouse-bp-v2-live.py, sesja11625, M266.
 Cała kampania pozostaje nieukończona.
 
 ### Wcześniejszy powrót, autentyczny zapis O i Continue

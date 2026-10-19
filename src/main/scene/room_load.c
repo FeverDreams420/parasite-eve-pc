@@ -481,6 +481,11 @@ int Scene_LoadRoom(unsigned int roomId)
         map + 1 == 299 || map + 1 == 309 || map + 1 == 310;
     homing_flash_library = map + 1 == 162 || map + 1 == 163 ||
         map + 1 == 398 || map + 1 == 400 || map + 1 == 403;
+    /* Eight identical USA spark modules; two add the original SoundBurst unit. */
+    const int spark_combined = map + 1 == 231 || map + 1 == 234;
+    const int spark_library = spark_combined || map + 1 == 203 || map + 1 == 221 ||
+        map + 1 == 223 || map + 1 == 224 || map + 1 == 229 ||
+        map + 1 == 233 || map + 1 == 242 || map + 1 == 246;
     /* These USA rooms link the same complete actor library and class table. */
     switch (map + 1) {
     case 22: case 32: case 59: case 61: case 62: case 66: case 67:
@@ -670,10 +675,12 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomOrbitFlareEffects;
         if (map + 1 == 113 && slot == 136 && record[i].u.handlerAddress == 0x80190b54u)
             native = &g_RoomLineBurstProgram;
-        if (map + 1 == 221) {
-            if(slot==75 && record[i].u.handlerAddress==0x80194008u)native=&g_RoomActorClassTable[2];
-            if(slot==142 && record[i].u.handlerAddress==0x801940b8u)native=&g_RoomSparkRingProgram;
-            if(slot==180 && record[i].u.handlerAddress==0x80194110u)native=&g_RoomBurstSparkProgram;
+        if (spark_library) {
+            if(slot==75 && record[i].u.handlerAddress==(spark_combined?0x80194758u:0x80194008u))native=&g_RoomActorClassTable[2];
+            if(!spark_combined && slot==70 && record[i].u.handlerAddress==0x80193fd0u)native=&g_RoomActorClassTable[0];
+            if(slot==142 && record[i].u.handlerAddress==(spark_combined?0x80194864u:0x801940b8u))native=&g_RoomSparkRingProgram;
+            if(slot==180 && record[i].u.handlerAddress==(spark_combined?0x801948bcu:0x80194110u))native=&g_RoomBurstSparkProgram;
+            if(spark_combined && slot==116 && record[i].u.handlerAddress==0x801947ecu)native=&g_RoomSoundBurstProgram;
         }
         if (map + 1 == 205) {
             if (slot == 75 && record[i].u.handlerAddress == 0x80192c70u) native = &g_RoomActorClassTable[2];
@@ -1084,14 +1091,19 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_RoomFallingBurstParticle,0,sizeof(g_RoomFallingBurstParticle));
         } else if ((map + 1 == 116 || map + 1 == 120) && slot == 75) {
             g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[2];
-        } else if (map + 1 == 221 && slot == 75) {
+        } else if (spark_library && slot == 75) {
             g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];
-        } else if (map + 1 == 221 && slot == 142) {
+        } else if (spark_library && slot == 142) {
             g_FieldFxTaskPrograms[57]=&g_RoomSparkRingProgram;
             g_RoomSparkSlot=0;
-        } else if (map + 1 == 221 && slot == 180) {
+        } else if (spark_library && slot == 180) {
             g_FieldFxTaskPrograms[95]=&g_RoomBurstSparkProgram;
             g_RoomSparkSlot=0;
+        } else if (spark_library && slot == 70) {
+            g_PmCmdHandlerTable[70]=&g_RoomActorClassTable[0];
+        } else if (spark_combined && slot == 116) {
+            g_FieldFxTaskPrograms[31]=&g_RoomSoundBurstProgram;
+            memset(g_RoomScriptArgs,0,sizeof(g_RoomScriptArgs));
         } else if (map + 1 == 205 && slot == 75) {
             g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
         } else if (map + 1 == 205 && slot == 116) {

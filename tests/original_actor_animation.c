@@ -17281,29 +17281,44 @@ int main(int argc, char **argv)
     }
     if(argc==2 && !strcmp(argv[1],"--m221-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
-        PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[20828];
+        PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[22804];
         if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
         ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
         Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
-        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive) ||
-           !pe_disc_read(&disc,&exe,0x800+(0x80093378-0x80010000)+220*8,&range,8))return 1;
-        u32 offset=(range.start+range.scratchSectors+range.textureSectors)*2048u;
-        if(!pe_disc_read(&disc,&archive,offset+8,module,sizeof(module)))return 1;
-        uint64_t hash=UINT64_C(14695981039346656037);
-        for(unsigned i=0;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
-        if(hash!=UINT64_C(0xa112e74d849b5626))return 1;
-        if(memcmp(module+(0x80194078-0x8018eff0),g_RoomSparkRingProgram.script,36) ||
-           memcmp(module+(0x801940f0-0x8018eff0),g_RoomBurstSparkProgram.script,32) ||
-           memcmp(module+(0x80194098-0x8018eff0),g_RoomSparkRingColorRamp,32) ||
-           g_RoomSparkRingProgram.table.sizes[0]!=12 || g_RoomBurstSparkProgram.table.sizes[0]!=4)return 1;
-        for(unsigned pass=0;pass<2;++pass){
-            g_PmCmdHandlerTable[75]=NULL;g_FieldFxTaskPrograms[57]=g_FieldFxTaskPrograms[95]=NULL;g_RoomSparkSlot=123;
-            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0221i")) ||
-               g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] ||
-               g_FieldFxTaskPrograms[57]!=&g_RoomSparkRingProgram ||
-               g_FieldFxTaskPrograms[95]!=&g_RoomBurstSparkProgram || g_RoomSparkSlot)return 1;
-            intptr_t slot=g_RoomBurstSparkProgram.initialize(0,55,0,0);
-            if(slot!=(intptr_t)&g_RoomSparkSlot || g_RoomSparkSlot!=55)return 1;
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 1;
+        const unsigned rooms[]={203,221,223,224,229,231,233,234,242,246};
+        for(unsigned ri=0;ri<sizeof(rooms)/sizeof(rooms[0]);++ri){
+            unsigned room=rooms[ri],combined=room==231 || room==234;
+            unsigned class0=room==203 || room==224 || room==233 || room==242 || room==246;
+            unsigned size=combined?22804:20828;
+            if(!pe_disc_read(&disc,&exe,0x800+(0x80093378-0x80010000)+(room-1)*8,&range,8))return 1;
+            u32 offset=(range.start+range.scratchSectors+range.textureSectors)*2048u;
+            if(!pe_disc_read(&disc,&archive,offset+8,module,size))return 1;
+            uint64_t hash=UINT64_C(14695981039346656037);
+            for(unsigned i=0;i<size;++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+            if(hash!=(combined?UINT64_C(0x43eec2de603026ac):UINT64_C(0xa112e74d849b5626)))return 1;
+            if(memcmp(module+((combined?0x80194824:0x80194078)-0x8018eff0),g_RoomSparkRingProgram.script,36) ||
+               memcmp(module+((combined?0x8019489c:0x801940f0)-0x8018eff0),g_RoomBurstSparkProgram.script,32) ||
+               memcmp(module+((combined?0x80194844:0x80194098)-0x8018eff0),g_RoomSparkRingColorRamp,32) ||
+               g_RoomSparkRingProgram.table.sizes[0]!=12 || g_RoomBurstSparkProgram.table.sizes[0]!=4 ||
+               (combined && memcmp(module+(0x801947c8-0x8018eff0),g_RoomSoundBurstProgram.script,36)))return 1;
+            char name[16];snprintf(name,sizeof(name),"m%04ui",room);
+            for(unsigned pass=0;pass<2;++pass){
+                g_PmCmdHandlerTable[70]=g_PmCmdHandlerTable[75]=NULL;
+                g_FieldFxTaskPrograms[31]=g_FieldFxTaskPrograms[57]=g_FieldFxTaskPrograms[95]=NULL;
+                g_RoomSparkSlot=123;g_RoomScriptArgs[0]=11;g_RoomScriptArgs[1]=22;g_RoomScriptArgs[2]=33;
+                int status=Scene_LoadRoom(Text_ParseBase32Id((signed char *)name));
+                if(status || g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] ||
+                   g_PmCmdHandlerTable[70]!=(class0?&g_RoomActorClassTable[0]:NULL) ||
+                   g_FieldFxTaskPrograms[57]!=&g_RoomSparkRingProgram ||
+                   g_FieldFxTaskPrograms[95]!=&g_RoomBurstSparkProgram || g_RoomSparkSlot ||
+                   g_FieldFxTaskPrograms[31]!=(combined?&g_RoomSoundBurstProgram:NULL) ||
+                   (combined && (g_RoomScriptArgs[0] || g_RoomScriptArgs[1] || g_RoomScriptArgs[2]))){
+                    fprintf(stderr,"Spark module M%u reload%u status%d failed\n",room,pass,status);return 1;}
+                intptr_t slot=g_RoomBurstSparkProgram.initialize(0,55,0,0);
+                if(slot!=(intptr_t)&g_RoomSparkSlot || g_RoomSparkSlot!=55)return 1;
+                if(combined && g_RoomSoundBurstProgram.initialize(0,3,-4,5)!=(intptr_t)g_RoomScriptArgs)return 1;
+            }
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         FieldActor actor={0},player={0};FieldActorState actor_state={0};RenderMatrix transforms[18]={0};
@@ -17340,7 +17355,7 @@ int main(int argc, char **argv)
         for(unsigned i=0;i<4;++i){RoomBurstSpark spark={0};spark.state=states[i];spark.timer=limits[i]-1;
             if(RoomEffect_BurstSparkParticle(1,&spark,0)!=1)return 1;}
         g_PlayerEntity=NULL;g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
-        puts("Original M221 complete module, both scripts, palette, all descriptors and native slot initializer/reload passed");return 0;
+        puts("Original Museum spark modules: all ten rooms, complete hashes/scripts/palette, descriptors, reloads and native controllers passed");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m205-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

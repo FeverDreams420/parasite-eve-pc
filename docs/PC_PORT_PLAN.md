@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### Museum: powiązania obu wariantów spark_ring_burst we wszystkich10salach
+
+Kandydat /tmp/pe-museum-spark-native-v1 rozszerza wyłącznie istniejący
+room_load.c i test w original_actor_animation.c. Osiem identycznych modułów
+203,221,223,224,229,233,242,246 rejestruje75/142/180,a sale203,224,233,
+242,246 również70→klasa0. Wariant231/234 ma przesunięte deskryptory
+75/116/142/180 i dodatkowo SoundBurst31 z resetem g_RoomScriptArgs.
+Wspólne dane i funkcje pozostają w już istniejących modułach. Nie dodano
+nowych plików źródłowych,helperów ani zastępczego zachowania.
+
+Klasa0:porównanie źródłowego MIPS obu kompletnych modułów potwierdza
+siedem metod i400instrukcji ze znaną klasą M263; różnice to wyłącznie
+relokacje0x30:/tmp/pe-museum-spark-class0-primary-v1.json.
+Skrypty i paleta obu wariantów potwierdzone danymi USA:
+/tmp/pe-spark-ring-combined-data-comparison-v1.json. Test --m221-load
+teraz ładuje każdy z10pokoi dwukrotnie przez rzeczywisty CUE,sprawdza
+pełne hashe modułów20828/22804B,skrypty,paletę,wszystkie deskryptory,
+zerowanie stanu oraz initializery. Dotychczasowe testy kontrolerów i
+chronionych wskaźników pozostają. Ten sam rozszerzony test ze starym
+loaderem odrzucaM203/slot75:/tmp/pe-museum-spark-native-v1-negative-test-proof.json.
+
+404świeże obiekty(202/profil),618zależności ponownie zahaszowanych;
+66/66regresji normal/SAN i5/5wybranych CTest z wymaganymi assetami,bez SKIP.
+Rootgame/fixture są dokładnymi normalnymi kopiami; PsyZ/SDL bez instrumentacji.
+Manifest:/tmp/pe-museum-spark-native-v1-build-manifest.json,regresje:
+/tmp/pe-museum-spark-native-v1-verification.json,CTest:
+/tmp/pe-museum-spark-native-v1-ctest-assets.log.
+
+Pełne zwykłe wejścia od O przez BP,A iMuseum weszły doM223/0xa80421c8,
+185355,518HP,field/lock0. Normal/SAN oba exit0,pełny JSON/VRAM równe
+sobie i live,bez raportów sanitizerów:
+/tmp/pe-m223-entry-v1-replay-proof.json. LiveSAN20828:
+/tmp/pe-museum-spark-native-v1-live.py,czyta185355 wM223,limit500000.
+O/A prywatne niezmienione. Ślad wszystkich5funkcji M221 na tym
+samym nowym kandydacie zakończył się exit0:liczniki update/draw obu
+efektów identyczne z poprzednim kandydatem,pełny JSON/VRAM identyczny
+z wcześniejszym normal/SAN/live. Prywatne O/A niezmienione:
+/tmp/pe-museum-spark-effect-trace-v1-proof.json.
+Ładowanie/reload10sal nie zastępuje ich pełnego przejścia w kampanii.
+
 ### M221: wygrana, Medic i następne brakujące powiązania
 
 Kandydat m221-native-v2. Od178491 Up130,wait300,Right140,Down70,wait500,

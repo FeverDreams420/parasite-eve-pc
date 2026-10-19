@@ -2,16 +2,16 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: wybrana trasa M380 osiąga69355 z169/283HP,
-18 nabojami po oryginalnym automatycznym przeładowaniu i bossem301HP
-(1000301 z autorskim offsetem). Zwykły unik Left440 zachowuje109HP,
-potem Heal2 podnosi je do169 bez strat podczas leczenia. Późniejsza
-kontynuacja traci zdrowie; cały boss nadal niepokonany.
+Najnowszy postęp: M380 osiąga69945 z106HP, bossem268HP i16 nabojami.
+Dalsze oryginalne Heal2/Haste przy71841 zostawiają84HP i aktywne Haste,
+bez Stiffness. Bezpośrednia salwa później kończy się śmiercią; osobny
+normal-only wariant krótkiego uniku dociera do235HP bossa, lecz Aya ma
+już tylko3HP. Cały boss nadal niepokonany; nie traktujemy tego jako wygranej.
 Wyłącznie oryginalne menu i zwykły input, bez zmian produkcji, nowych
 plików źródłowych, save editora lub zapisów gameplay RAM.
 
 Kandydat /tmp/pe-m156-cycles-v4: świeże388 obiektów (194/profil),48/48
-regresji exit0 oraz34 wybrane cold replaye trasy i walki exit0.
+regresji exit0 oraz38 wybranych cold replayów trasy i walki exit0.
 Poprzednie osiem obejmuje pierwsze trafienia, dalszą walkę, wyczerpanie
 pierwszej formy i wejście M380. Pełny stan zgodny z live i między normal/SAN;
 pełne1MiB VRAM zgodne między profilami, a przy66443 także z zachowanym live.
@@ -19,10 +19,12 @@ Dowód: /tmp/pe-hospital-spider-m380-v1-replay-proof.json.
 Wcześniejsze cztery obejmują gotowe ATB w M380 oraz leczenie i pierwszą
 salwę; stan zgodny z live, VRAM zgodny między profilami i przy67989
 także z zachowanym live: /tmp/pe-hospital-spider-m380-v2-replay-proof.json.
-Najnowsze osiem potwierdza przeładowanie w kolejce oraz wybraną trasę
+Wcześniejsze osiem potwierdza przeładowanie w kolejce oraz wybraną trasę
 po uniku i Heal2: /tmp/pe-hospital-spider-m380-v{3,5}-replay-proof.json.
 Pełny stan zgodny z live, VRAM między profilami; bez zachowanego live VRAM
 tych punktów.
+Najnowsze cztery potwierdzają268HP bossa i Haste po Stiffness:
+/tmp/pe-hospital-spider-m380-v6-replay-proof.json.
 Rewalidacja388 obiektów i995 unikalnych plików oraz kopii build:
 /tmp/pe-hospital-spider-m380-v1-build-proof.json.
 SAN obejmuje kod portu (address,undefined,function); archiwa PsyZ/SDL
@@ -63,6 +65,41 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M380:268HP bossa i potwierdzone Haste po Stiffness
+
+Poprzedni odcinek był postępem: przeładowanie, unik i Heal2 dały69355/
+169HP/boss301HP. Kod pozostaje niezmieniony. Dziewięć normal-only cold
+prób /tmp/pe-spider-m380-salvo-v1-results.json sprawdza salwę i440 klatek
+ruchu od69355. Wszystkie trafiają raz (boss268HP), lecz kierunki różnią
+się stratą zdrowia i Stiffness. Down/DownLeft/neutral zachowują106HP;
+wybrany Down bez Stiffness. Dziewięć dalszych prób
+/tmp/pe-spider-m380-approach-v1-results.json dodaje140 klatek podejścia
+przed salwą: Up/UpLeft trafiają dwukrotnie (235HP), lecz mają46/67HP
+oraz Stiffness; inne warianty nie poprawiają wybranej trasy. To wyłącznie
+eksploracja oryginalnego inputu, nie zwycięstwa ani cold SAN.
+
+/tmp/pe-hospital-spider-m380-v6-live odtwarza wybrany69945/106HP/
+268HP bossa/16 naboi. Reticle pokazuje dystans3435, więc nie strzelamy
+ponownie z tego miejsca. Heal2 i Up340:70841/84HP/Stiffness/ATB6128.
+Po90 klatkach ATB gotowe; oryginalne Haste usuwa Stiffness i umożliwia
+Up240 do71841/84HP/ATB9000/aktywny Haste. Reticle71861 ma dystans1749.
+Salwa i Left240 kończą się śmiercią przy72231, boss235HP; sesja quit0.
+Dwie dodatkowe normal-only próby120 klatek uniku przed salwą:
+/tmp/pe-spider-m380-haste-v1-results.json. Left umiera, Right osiąga72351/
+3HP/boss235HP/14 naboi/ATB9000/Haste. Nie jest to wygrana. Źródło H,
+prywatne kopie i puste bu10 potwierdzone; root karty nietknięte.
+
+Cztery cold próby69945/71841 × normal/SAN zakończone exit0: pełny stan
+równy historycznemu live, pełne1MiB VRAM równe między profilami.
+Brak zachowanego live VRAM tych punktów, więc nie ma takiego porównania;
+pole proof dotyczące saved_live jest warunkowe. Dowód:
+/tmp/pe-hospital-spider-m380-v6-replay-proof.json. Nadal poprzednie48/48
+regresji tego samego cycles-v4; rehash388 obiektów, manifestu, archiwów,
+binarek i kopii build: /tmp/pe-hospital-spider-m380-v6-build-proof.json.
+Archiwa PsyZ/SDL nieinstrumentowane. Pełna kampania nadal nieukończona.
+Następny krok: poprawić przeżywalność po69355/169HP, rozpoznać timing
+ataków M380 i przejść pozostałą walkę zwykłym sterowaniem.
 
 ### M380: przeładowanie w kolejce, unik i169HP po Heal2
 

@@ -483,12 +483,12 @@ int RoomLib_ReleaseHandlerD(PmSlotHeader *slot) {
     o->flag3 = 0;
     if (((RoomLibHandlerDState *)&o->sub)->copyRotation == 0) {
         if (o->active != 0) {
-            if (o->link->target != 0) {
+            if (o->link->target != 0 && o->link->target->state != 0) {
                 *o->link->target->state = 4;
             }
         }
     } else {
-        if (o->link->target != 0) {
+        if (o->link->target != 0 && o->link->target->state != 0) {
             unsigned char *state = o->link->target->state;
             if (*state == 1) {
                 *state = 4;
@@ -834,7 +834,7 @@ int RoomLib_ReleaseHandlerE(PmSlotHeader *slot) {
     o->flag3 = 0;
     if (o->active != 0) {
         RoomLink *l = o->link;
-        if (l->target != 0) {
+        if (l->target != 0 && l->target->state != 0) {
             *l->target->state = 4;
         }
     }
@@ -1310,7 +1310,7 @@ int RoomLib_ReleaseHandlerB(PmSlotHeader *slot) {
     struct RoomSub *s = &o->sub;
     if (o->active != 0) {
         RoomLink *l = o->link;
-        if (l->target != 0) {
+        if (l->target != 0 && l->target->state != 0) {
             *l->target->state = 4;
         }
     }
@@ -1751,7 +1751,7 @@ int RoomLib_ReleaseHandlerC(PmSlotHeader *slot) {
     struct RoomSub *s = &o->sub;
     if (o->active != 0) {
         RoomLink *l = o->link;
-        if (l->target != 0) {
+        if (l->target != 0 && l->target->state != 0) {
             *l->target->state = 4;
         }
     }

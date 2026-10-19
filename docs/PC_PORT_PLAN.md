@@ -2,7 +2,35 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: M167 i M169 wygrane zwykłym sterowaniem od autentycznego
+Najnowsza sesja: M168 wygrane zwykłym sterowaniem od autentycznego J,
+bez modyfikacji RAM ani zapisu. Punkt76041:129/335HP, tryb2, zero żywych
+przeciwników; po odebraniu łupu powrót do swobodnego M167 w78211.
+Nowego trwałego zapisu po Chinatown nadal nie ma.
+
+W istniejącym actor_classes.c naprawiono zamykanie klas B/C/D/E:
+potwierdzenie zdarzenia jest zapisywane tylko przy obecnym wskaźniku
+zdarzenia. Cleanup PM i sygnału oraz warunek rotacji klasy D pozostają.
+Oryginalna sekwencja M168 od74741, RunUp100, powodowała SIGSEGV;
+UBSan wskazał zapis NULL w RoomLib_ReleaseHandlerC (linia1755 przed
+poprawką). Nie ustalono osobnym śledzeniem, kiedy wskaźnik wyzerowano.
+Rozszerzony istniejący test obejmuje150 przypadków B/C/D/E z obecnym,
+pustym i nieobecnym odbiorcą, aktywnością0/1 oraz bramką rotacji D.
+Bez nowych plików źródłowych, przenoszenia funkcji i zmian reguł walki.
+
+Kandydat /tmp/pe-sewer-frog-fix-v1:392 świeże obiekty, rehash1003 plików,
+50/50 regresji i14 niezależnych cold prób normal/SAN. Pięć punktów walki,
+powrót do pola78211 i dokładna sekwencja wcześniejszej awarii do75000 mają
+pełne JSON-y zgodne z live oraz1MiB VRAM zgodny między profilami.
+Zwycięstwo76041 i pole78211 porównano również z zachowanym VRAM live.
+Źródłowe J i prywatne karty bez zmian; root bu00/bu10 nietknięte.
+Dowody /tmp/pe-sewer-frog-fix-v1-{diagnosis-proof.json,verification.json,
+replay-proof.json,rehash-proof.json,release-proof.json} oraz
+/tmp/pe-sewer-frog-{check,exact}-v1-replay-proof.json.
+Kopie build/parasite-eve-pc i build/test-original-actor-animation zgodne
+z kandydatem. SAN obejmuje kod portu, archiwa PsyZ/SDL nieinstrumentowane.
+Dalsza trasa, pełna kampania i zgodność obrazu/audio z PS1 nadal otwarte.
+
+Poprzedni postęp: M167 i M169 wygrane zwykłym sterowaniem od autentycznego
 J. Tune Up przenosi parametry M16A1 do G23, zużywając Tool i dawcę;
 G23 zachowuje trzy akcje. Leczenie w polu i w walce, Cure-D, Energy Shot,
 przeładowanie i odbiór łupu działają na tej samej trasie. M167:285HP,

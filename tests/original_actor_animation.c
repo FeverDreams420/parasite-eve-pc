@@ -6286,17 +6286,29 @@ static int room_actor_view(void)
     if(actor.pos_z!=-5*65536 || actor.base_y!=17 || actor.render_object.flags_9C!=0x400 ||
        state.core_flags!=0x40000000 || state.reserveda8[4]!=9) return 0;
     FieldActor snapshot=actor;
-    int (*release[])(PmSlotHeader *)={RoomLib_ReleaseHandlerB,RoomLib_ReleaseHandlerC};
-    for(unsigned method=0;method<2;++method) {
-        int signal=1;
-        RoomEnt object={0};
-        object.link=view; object.active=1; object.flag3=1; object.sub.signal=&signal;
-        action_state=1;
-        if(release[method]((PmSlotHeader *)&object)!=0 || action_state!=4 || signal || object.flag3 || object.state!=4)
-            return 0;
-        if(memcmp(&actor,&snapshot,sizeof(actor))) return 0;
+    int (*release[])(PmSlotHeader *)={RoomLib_ReleaseHandlerB,RoomLib_ReleaseHandlerC,
+        RoomLib_ReleaseHandlerD,RoomLib_ReleaseHandlerE};
+    /* A movement owner can outlive its enemy event. Releasing it must still
+     * clear its PM slot/signal, without acknowledging a missing event. */
+    unsigned cases=0;
+    for(unsigned method=0;method<4;++method) for(unsigned active=0;active<2;++active)
+    for(unsigned target=0;target<3;++target) for(unsigned value=0;value<5;++value)
+    for(unsigned rotation=0;rotation<(method==2?2:1);++rotation) {
+        int signal=1; RoomEnt object={0};
+        object.link=view; object.active=active; object.flag3=1; object.sub.signal=&signal;
+        action_state=value; state.action_state=target==2?&action_state:NULL;
+        actor.state=target?&state:NULL;
+        ((RoomLibHandlerDState *)&object.sub)->copyRotation=rotation;
+        FieldActor before=actor; FieldActorState core_before=state;
+        unsigned expected=value;
+        if(target==2 && (rotation?value==1:active)) expected=4;
+        if(release[method]((PmSlotHeader *)&object)!=0 || action_state!=expected ||
+           signal || object.flag3 || object.state!=4 || memcmp(&actor,&before,sizeof(actor)) ||
+           memcmp(&state,&core_before,sizeof(state))) return 0;
+        ++cases;
     }
-    puts("Original room actor view: canonical position, animation, motion, parent/model pointers and B/C release state passed");
+    actor=snapshot;
+    puts("Original room actor view: canonical fields and 150 B/C/D/E release lifecycle cases with live/absent events and D rotation gate passed");
     return 1;
 }
 

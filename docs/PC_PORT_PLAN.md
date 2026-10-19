@@ -2,7 +2,34 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-### M269: druga część bossa pokonana, dwie serie SAN w toku
+### M269: pełne zwycięstwo i odbiór AT4 potwierdzone
+
+Boss Warehouse pokonany zwykłym inputem,73471,427HP,mode2,
+zero przeciwników i oryginalne menu doświadczenia (EXP27695). Trasa
+pochodzi od niezmienionego autentycznego L przez search-v2/r11-c00,
+70171, a potem ręcznie dobrane serie strzałów i zwykły ruch w SAN live.
+Cold normal/SAN: pełny JSON/VRAM identyczny także z live:
+/tmp/pe-m269-victory-v1-replay-proof.json. Nie zmieniono kodu ani statystyk.
+
+Oryginalne menu nagród oferuje AT4. Ekwipunek był pełny: ALL nie wystarczał;
+kanoniczna gałąź ponawia input od zwycięstwa, wybiera SEL, przechodzi do
+prawej listy i wymienia Cure-P w slocie23 na AT4. Po END,75555,fieldmode9,
+427/532HP,AT4 jako mutable record265 z itemId144(0x90),slot23.
+GateKey219 i WarehouseKey220 zachowane w24/25. Cold pełny JSON/VRAM
+normal/SAN/live: /tmp/pe-m269-loot-check-v1-replay-proof.json.
+Agregat /tmp/pe-m269-victory-v1-proof.json. Źródłowy/prywatny L bez zmian;
+nie dotykano kart użytkownika. Kod i root build nadal /tmp/pe-m269-glow-v2.
+
+Search-v2 (sesja30868) i body-v1 (sesja12110) zatrzymano celowo po wygranej:
+oba parenty zakończone130 po SIGINT, nie są aktywne. Nie restartować ich
+jako rzekomo przerwanych przez timeout. Stary finish-v1 live zamknięty0.
+Obecny live /tmp/pe-m269-loot-v1-live.py, sesja21028, stoi78217,M269,
+427HP,AT4 zachowany, przy próbie wejścia na schody powrotne; nie ma jeszcze
+nowego zapisu telefonicznego. Najnowsze próby ruchu i pełny stan w tym live.
+Powrót przez schody/drabinę do M268 wymaga dalszego zwykłego inputu; nie
+obchodzono go zmianą RAM ani sceny. Reszta kampanii nadal nieukończona.
+
+### Wcześniejsze pokonanie drugiej części i serie SAN
 
 Seria search-v2 pokonuje również część5:29. Punkt r08-c04,68917,
 427/437HP,5 żywych przeciwników, brak4:30 i5:29. Cold normal/SAN od

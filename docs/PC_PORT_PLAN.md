@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Naprawiono crash naturalnej walki M186 po zabiciu pierwszego przeciwnika:
+OrbitSetClose pisało przez pusty action_state po zakończeniu zdarzenia
+animacji, gdy efekt nadal dobiegał końca. Stary kandydat normal kończył
+SIGSEGV; SAN potwierdził null store orbit_set.c:49:
+/tmp/pe-m186-crash-v1-san/{args.json,game.log}. Oryginalne czyszczenie
+core_flags i zamknięcie PM pozostają; zapis stanu4 wykonuje się tylko,
+gdy zdarzenie jeszcze istnieje. Analogiczny koniec twelve ma tę samą
+obsługę. Zmiany w istniejących orbit_set.c/twelve_elements.c, bez nowych
+źródeł ani zmiany gameplay'u. Jest to dopasowanie czasu życia wskaźnika
+native, jak w istniejącym FieldFx_UpdateSlots, nie pominięcie efektu.
+
+Testy pełnych cykli teraz zachowują także wariant z action_state wyzerowanym
+w10 klatce, przy nadal aktywnych slotach. Każda lokacja/ponowne wejście:
+8 orbit +4 twelve; rodzina M186 daje192 pełne cykle normal/SAN.
+Nowy kandydat /tmp/pe-m186-event-v1:398 świeżych obiektów,1014 plików
+zweryfikowanych hashami,60/60 regresji i CTest2/2 (assets/rodzinaM186).
+Cold replay tej samej zwykłej
+trasy K do69700 ma pełny JSON/VRAM normal=SAN,294HP,2 przeciwników;
+/tmp/pe-m186-event-v1-crash-proof.json. Źródłowy/prywatny K bez zmian.
+Psyz/SDL pozostają nieinstrumentowane. Root game/fixture są kopiami
+zweryfikowanego normal, promotion-proof.json pod tym samym prefiksem.
+Walka M186 nadal nieukończona; dalsza sesja /tmp/pe-m186-event-v1-live.py,
+71672 w menu przedmiotów,203HP. Pełna kampania pozostaje otwarta.
+
+### Poprzedni kandydat M186 i dowody wejścia
+
 M186/M385/M388/M389 podłączone jako cały wspólny moduł0x53bcB:
 SHA256 c3c944a011802d8fd154048bc439cf540b1df04c3e3515dcb55835f0997e2013,
 FNV64 bff23bf6f78c6128. Istniejące twelve_elements.c, orbit_set.c i klasy

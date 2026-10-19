@@ -2846,7 +2846,7 @@ static int original_twelve_element_cycles(const int *authored_script)
     static RenderGpuTag ordering[4096];
     struct {_Alignas(16) u8 bytes[65536];u8 guard[32];} packets;
     PolygonVertex polygon[4]={{.x=-2000,.z=-2000},{.x=2000,.z=-2000},{.x=2000,.z=2000},{.x=-2000,.z=2000}};
-    for(unsigned draw=0;draw<2;++draw){
+    for(unsigned ended=0;ended<2;++ended)for(unsigned draw=0;draw<2;++draw){
         struct {PmPrimarySlot slots[11];u8 guard[32];} bank={0};
         RenderMatrix matrix={.rotation={{4096,0,0},{0,4096,0},{0,0,4096}},.translation={0,-100,1200}};
         FieldActorState core={.control10.command_value=1};u8 action=2;
@@ -2869,6 +2869,7 @@ static int original_twelve_element_cycles(const int *authored_script)
             for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
             memset(packets.guard,0xa5,sizeof(packets.guard));g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;
             D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)packets.bytes;
+            if(ended && frame==10)core.action_state=NULL;
             if(Pm_Start(0) || Pm_Exec(0))return 0;
             for(unsigned i=0;i<64;++i)if(object->slots[i].flag==1){
                 FieldFxSlot *slot=&object->slots[i];seen|=1u<<slot->handler_id;
@@ -2898,7 +2899,7 @@ static int original_twelve_element_cycles(const int *authored_script)
     g_FloorPolygonVertices=old_polygon;g_FloorPolygonVertexCount=old_polygon_count;g_PlayerEntity=old_player;
     g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;g_FieldFxSlotTable=old_slots;
     g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;
-    puts("Original twelve-element actual assets: 2 complete PM cycles, both buffers, all twelve elements, natural expiry and pool/packet/OT guards passed");
+    puts("Original twelve-element actual assets: 4 complete PM cycles, live and completed animation events, both buffers, all twelve elements, natural expiry and pool/packet/OT guards passed");
     return 1;
 }
 
@@ -2914,7 +2915,7 @@ static int original_orbit_set_cycles(void)
     static RenderGpuTag ordering[4096];
     struct {_Alignas(16) u8 bytes[65536];u8 guard[32];} packets;
     unsigned cycles=0;
-    for(unsigned mode=0;mode<2;++mode)for(unsigned draw=0;draw<2;++draw){
+    for(unsigned ended=0;ended<2;++ended)for(unsigned mode=0;mode<2;++mode)for(unsigned draw=0;draw<2;++draw){
         struct {PmPrimarySlot slots[11];u8 guard[32];} bank={0};
         RenderMatrix matrix={0};for(unsigned j=0;j<3;++j)matrix.rotation[j][j]=4096;
         matrix.translation[0]=mode?123:-123;matrix.translation[1]=-100;matrix.translation[2]=1200;
@@ -2931,6 +2932,7 @@ static int original_orbit_set_cycles(void)
             for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
             memset(packets.guard,0xa5,sizeof(packets.guard));g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;
             D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)packets.bytes;
+            if(ended && frame==10)core.action_state=NULL;
             if(Pm_Start(0) || Pm_Exec(0))return 0;
             for(unsigned i=0;i<64;++i)if(object->slots[i].flag==1)seen|=1u<<object->slots[i].handler_id;
             if(g_DrawPacketOffset)++drawn;
@@ -2958,7 +2960,7 @@ static int original_orbit_set_cycles(void)
     g_GeomScroll.words.viewMatrix=old_view;g_GeomScroll.words.projectionDistance=old_projection;
     g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;g_FieldFxSlotTable=old_slots;
     g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;
-    printf("Original M187 orbit: %u complete authored cycles, both sprite sides and draw buffers, all four effect types, natural expiry and pool/packet/OT guards passed\n",cycles);
+    printf("Original M187 orbit: %u complete authored cycles, live and completed animation events, both sprite sides and draw buffers, all four effect types, natural expiry and pool/packet/OT guards passed\n",cycles);
     return 1;
 }
 

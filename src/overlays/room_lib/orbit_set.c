@@ -46,7 +46,8 @@ int RoomEffect_OrbitSetClose(PmSlotHeader *object) {
     if((unsigned)FieldFx_GetStatus(object)>=2) {
         FieldActor *actor=((FieldFxObjectPrefix *)object)->actor;
         actor->state->core_flags &= 0xC0FFFFFFu;
-        *actor->state->action_state=4;
+        /* Animation events may finish before their effect slots expire. */
+        if(actor->state->action_state) *actor->state->action_state=4;
     }
     return 0;
 }

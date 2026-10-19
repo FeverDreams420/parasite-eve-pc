@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M242: quiz, nieudane i udane ucieczki, ponowne spotkanie oraz łupy
+
+Nowa autentyczna gałąź /tmp/pe-m245-restock-v1-live/ (live 45849)
+odtwarza B do 124641, z wydanymi 300 BP, przed bossem M245.
+Zwykły powrót schodami do M243 i drzwiami do M242 działa. Quiz przy
+(-1495,324), po obróceniu Up (kamera 90°, world -X), Cross i poprawnej
+odpowiedzi daje Ammo +30. Kolejna poprawna odpowiedź nie daje następnej
+nagrody. Przy przejściu przez salę zaczyna się zwykła walka 320/240/240.
+Ucieczka z menu Escape nie udaje się dwukrotnie, trzecia przywraca pole
+(129857→130097, 222 HP). Wejście ponownie w obszar spotkania uruchamia
+nowych przeciwników. Nie traktować ucieczki jako zwycięstwa ani jako
+trwałego usunięcia wyzwalacza.
+
+Heal 3 podczas ponownej walki odnawia 216→496 HP. Energy Shot zmniejsza
+320→11; zwykłe strzały i Burst kończą całą grupę. Przy 133697 wygrana,
+301 HP. Odebrano Medicine 3 do wolnego slotu 1 oraz dwa Ammo +15.
+Field Heal 2 następnie odnawia 301→361 HP; po 2000 klatek postoju nadal
+nie można użyć go ponownie (pasek PE nie uzupełnił kosztu). Medicine 3
+pozostaje niezużyte. Ekran EXP był animowany; odczyt LLDB wyłącznie do
+odczytu po zamknięciu wyników potwierdza 114810 EXP, poziom 31, 65 BP:
+/tmp/pe-m242-restock-exp-readonly-v1.log. Nie ma na tej podstawie błędu EXP.
+
+Osobny cold Continue z ASan/UBSan/function zakończył się exit 0 przy
+137899. Pełny JSON oraz VRAM identyczne z normalnym live; B/C/D równe
+bajtom źródłowym. /tmp/pe-m242-restock-v1-proof.json. Biblioteki PsyZ/SDL
+pozostają nieinstrumentowane. Live 45849 czeka w M242, menu PE, 361 HP.
+Nie utworzono jeszcze zapisu E i nie odebrano Medicine 4.
+
+Skrypt inicjalizuje aktora skrzyni 3 przy (-994,1427), local1=9.
+Bezpośrednie dojście jest blokowane; odczytana bez zapisu pamięci siatka
+kolizji: /tmp/pe-m242-restock-walkmesh-v2.json. V1 eksportu miał błędne
+nazwy pól posX zamiast pos_x i nie zapisał wyniku. Nie przesuwać skrzyni
+ani nie uznawać jej za odebraną bez potwierdzenia oryginalnego zachowania.
+Pomocniczo sprawdzono poradnik Day 5, który rozróżnia quiz i późniejsze
+otwarcie przejść po trzęsieniu; nie jest on dowodem błędu portu:
+https://gamefaqs.gamespot.com/ps/198265-parasite-eve/faqs/80267/day-5-evolution-part-2
+Następne przygotowanie warto rozważyć wcześniej w M243: zachować
+Medicine 3 do bossa, zamiast zużywać je na końcu tej walki, i zweryfikować
+leczenie PE przed przejściem schodami. Dotychczasowe gałęzie zachowane.
+
 ### M245: druga faza, zmiana broni i korekta odczytu BP
 
 Kontynuacja normalnego live 66761 dochodzi do 133287. Osobny cold

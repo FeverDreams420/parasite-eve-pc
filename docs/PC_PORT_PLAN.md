@@ -2,11 +2,11 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: M153 wygrane, poziom20 i odblokowane Haste, przygotowanie
-283HP/19 naboi, następnie wejście i rozpoczęte spotkanie M154.
-Haste użyte w oryginalnej walce, potwierdzony wzrost ATB w badanym oknie.
-Dwadzieścia dwa nowe cold przypadki normal/SAN opisano poniżej.
-M154 niewygrane, Save H nie powstał. Kod produkcyjny bez zmian.
+Najnowszy postęp: M154 wygrane, autentyczny Save H i zimny Continue H
+potwierdzone. Następnie odczyt dokumentacji przy biurkach, pełny ekwipunek,
+Discard Junk i ponowienie odbioru Elevator Key/item218: story496→500.
+Osiemnaście nowych cold przypadków normal/SAN opisano poniżej.
+Kod produkcyjny bez zmian; dalsza kampania nadal wymaga przejścia.
 
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
@@ -51,6 +51,52 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M154 wygrane, Save H/Continue i Elevator Key
+
+Kontynuacja /tmp/pe-hospital-m154-v1-live z autentycznego G, wyłącznie
+zwykłe wejście: najpierw9:1/120HP pokonany przy58186, następnie trzy
+salwy do7:31/170HP i usunięcie spawnera przy60090, pozostałe8 pokonane
+przy61310. Zwycięstwo: mode2, zero żywych przeciwników, HP146/283,
+pełne PE462, magazynek5. Haste działa na początku; później jego bit znika,
+bez rozstrzygnięcia w tym teście, czy wskutek czasu, czy efektu przeciwnika.
+Sześć cold replayów58186/60090/61310 × normal/SAN: exit0, całe JSON
+i1MiB VRAM zgodne między profilami, stan zgodny z live, zamrożony VRAM
+61310 również zgodny. /tmp/pe-hospital-m154-v1-replay-proof.json.
+
+Odbiór nagród, nowe Medicine2 w slot13:146→236HP; Heal2→283,
+reload M16 do19. Poprzednie Medicine2 pozostaje w slot20. Przy64128
+swobodne pole. Oryginalny telefon/event17 otwiera dialog zapisu; wybrano
+Unused File H, potwierdzono zapis i wyszło się z menu. Stan66549:
+M154/story496/HP283/ammo19, menuNULL/lock0. Cztery cold przypadki
+64128/66549 × normal/SAN porównują całe JSON/VRAM, zachowany VRAM66549
+oraz wszystkie8192 bajty nowego H: /tmp/pe-hospital-office-save-v1-replay-proof.json.
+Źródło /tmp/pe-hospital-office-save-v1-source/BASLUS-006620000000H,
+SHA25605026898625ae406161a2a4e149a3f1c9ab804a585fa3e2833179f092dfd5dc7.
+
+Zimny Continue z prywatnym H jako jedynym zapisem odtwarza przy24000
+M154/story496/HP283 i cały ekwipunek stanu66549. Dwa cold profile exit0,
+całe JSON i VRAM zgodne także z zachowanym live24000:
+/tmp/pe-hospital-office-continue-v1-replay-proof.json.
+Dalsze zwykłe wejście przy komputerze odtwarza dialogi o Mayi/Melissie.
+Pierwsza próba odebrania Elevator Key kończy się oryginalnym komunikatem
+pełnego ekwipunku: przy30940 nadal story496 i Junk20 w slot13.
+Przez Items→Discard→OK usunięto Junk (31742 slot13=0), po ponownym
+przeszukaniu drugiego biurka klucz218 trafia do13 i story przechodzi500.
+Przy37602 HP283, menuNULL/lock0; cały journal obejmuje również ponownie
+otwarte i zakończone dialogi. Sześć cold replayów30940/31742/37602
+× normal/SAN: /tmp/pe-hospital-office-story-v1-replay-proof.json.
+
+W tym odcinku bez zmian kodu produkcyjnego, nowych źródeł, edytora save'ów
+lub zapisów gameplay RAM. Obie sesje interaktywne zakończone quit/exit0.
+Źródłowe i prywatne wejściowe G/H niezmienione; prywatne bu10 puste,
+root bu00/bu10 nietknięte. Ponowne hashowanie384 obiektów i990 unikalnych
+plików zależności/archiwów/binarek/źródeł save oraz kopii build zgodne:
+/tmp/pe-hospital-office-v1-build-proof.json. SAN nadal nie obejmuje archiwów
+PsyZ/SDL. Te testy nie dowodzą zgodności pikseli/PCM z PS1 ani ukończenia
+kampanii. Następny punkt: autentyczne wyjście z gabinetu i dalsza trasa
+szpitala po otrzymaniu Elevator Key; H pozostaje bezpiecznym zapisem
+sprzed odbioru klucza, a journal odtwarza dojście do story500.
 
 ### M153 wygrane, poziom20/Haste i rozpoczęta walka M154
 

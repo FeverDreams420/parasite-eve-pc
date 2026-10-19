@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M214 wygrane, poziom31 i schody doM207
+
+Kontynuacja live12235 od60556: trzy typ6/sub31,30,29 po240HP.
+Cztery serie M500, z ruchem między turami, zakończyły walkę przy61916.
+Aya przez ten odcinek zachowała272HP. Stany HP po seriach:
+60896:192/144/144 (magazynek0),61236:144/48/96 (automatyczne
+przeładowanie do11 i dwa pociski,magazynek9),61576:48/0/48 (magazynek7),
+61916:0/0/0 (magazynek6; ostatni pocisk kolejki nie był już potrzebny).
+Potwierdzony Burst na zgrupowanych celach, bez zmian obrażeń/ROF kodem.
+
+Ekran awansu: level31,MaxHP589,BP246,ofensywa/defensywa/PE/status31,
+ActiveTime39,ItemCapacity31. Panel łupu pokazał trzy Ammo+15 oraz
+AmmoCrate34 przed odbiorem. ALL i END doprowadziły przy62714 do pola,
+272HP,bez blokady. Nie było potrzeby leczenia tej walki.
+
+Dojście do bocznych schodów M214 wymaga obejścia balustrady od północy.
+Z okolic(540,−1182) Up40 do z−733,Right40 dox990,Down40 na schody;
+przy64213 Y12854119, następnie64513 scenaM207/A80403C8,272HP,
+pozycja(1000,−2616),menuNone,lock0. Próby przejścia przez balustradę
+od południa zatrzymywała oryginalna geometria; źródła bez zmian.
+Cold replay od B obejmujący wcześniejsze zdarzenia, obie wygrane i
+wejście M207: normal/SAN exit0, pełny JSON i VRAM równe live,
+B/C zachowane, ponownie utworzony D identyczny bajtowo. Dowód:
+/tmp/pe-m207-post-alarm-entry-v1-replay-proof.json.
+SAN nie instrumentuje zewnętrznych bibliotek PsyZ/SDL. Brak nowych
+plików repozytorium i zmian kandydata produkcyjnego.
+Live12235 czeka przy64513. Następne przejście M207→M206 ma strefę
+x−900..600,z−4000..−3800. Nie zaliczono jeszcze dalszego odcinka.
+
 ### M217: wygrana trójka, leczenie PE i geometria Burst
 
 Live12235 przy53355 walczył z dwoma typ4/sub31,30 po280HP. Heal3

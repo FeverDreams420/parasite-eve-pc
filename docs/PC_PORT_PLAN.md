@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Od autentycznego L wykonano zwykłe Continue z oboma CUE, M184→M183,
+wyjście schodami na mapę miasta0xa8000048, wybór Warehouse i oryginalną
+scenę policjanta0xa8046048. Wejście z mapy32054 ma zgodny pełny JSON/VRAM
+normal/SAN/live: /tmp/pe-warehouse-entry-v1-replay-proof.json.
+Po rozmowie i dojściu po schodkach drzwi prowadzą do0xa8046148,35294,
+bez blokady ruchu: /tmp/pe-warehouse-interior-v1-replay-proof.json.
+
+Dalsze przejście do0xa80461c8 uruchamia pierwszą walkę,7:31 z215HP.
+Zwykłe trzy serie po3 strzały G23 wygrywają;37918,107/437HP,zero wrogów,
+menu doświadczenia. /tmp/pe-warehouse-first-battle-v1-replay-proof.json.
+Odbiór nagród,Medicine3 z istniejącego slot25 leczy107→287HP i znika,
+a drzwi prowadzą do0xa80462c8 (pomieszczenie z zamkniętą rampą).
+Punkt41461 potwierdzony pełnym JSON/VRAM normal/SAN/live:
+/tmp/pe-warehouse-ramp-v1-replay-proof.json. To nie dowód otwarcia rampy,
+ukończenia Warehouse ani pełnej kampanii. Zapisów nie edytowano,
+źródłowy/prywatny L bez zmian; brak zmian kodu produkcyjnego.
+Agregat8 cold prób: /tmp/pe-warehouse-progression-v1-proof.json.
+Live /tmp/pe-subway-L-v1-live.py, sesja21706, jest w42369,287HP,
+0xa80462c8 przy lewej ścianie rampy. Dalsze przejście jeszcze niepotwierdzone.
+
+### Wcześniejsza poprawka czasu życia efektów i etap M186
+
 Naprawiono crash naturalnej walki M186 po zabiciu pierwszego przeciwnika:
 OrbitSetClose pisało przez pusty action_state po zakończeniu zdarzenia
 animacji, gdy efekt nadal dobiegał końca. Stary kandydat normal kończył

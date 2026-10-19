@@ -2,6 +2,47 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M225→M227→M228→M229: okno, gzyms i zejście
+
+Zwykły input po punkcie194350: zamknięcie kontrolnego menu, Left30,
+runLeft140,runDown180,runLeft120,runDown25,wait300,Left8,wait400.
+M225 ma standardowe osie; na progu do M227 trzeba zwrócić Ayę w lewo.
+M227 przy195629 uruchomił dialog o zamkniętych drzwiach. Dwa potwierdzenia
+z oczekiwaniem doprowadziły do195845,437HP,field/lock0. Pełny JSON/VRAM
+normal/SAN/live równy, oba exit0: /tmp/pe-m227-entry-v1-replay-proof.json.
+
+W M227 Up zmniejsza X,Right zwiększa Z. Po podejściu do rozbitego okna
+krótkie Up uruchomiło wybór „Go through window”. Zwykłe potwierdzenie
+przeniosło do M228. Po dialogu o ryzyku upadku przejście w prawo po
+wąskim gzymsie uruchomiło dialog „Let's see” i wybór „Go down”. Wybrano
+zejście; po animacji i „Made it” przejście w lewo doprowadziło do M229.
+Punkt201965:0xa80424c8,437/573HP,field/lock0. Nie zmieniano kolizji,
+RAM,skryptów ani źródeł; nie znaleziono jeszcze telefonu. Zamrożono pełny
+JSON/VRAM. Niezależne powtórki normal/SAN zakończyły się exit0; pełny
+JSON/VRAM obu wariantów zgadza się z live, bez raportów sanitizerów:
+/tmp/pe-m229-entry-v1-replay-proof.json.
+LiveSAN20828 czeka w M229. Prywatne karty pozostają odseparowane od bu00/.
+
+### M224: zwycięstwo i przejście do M225; kontrola rozwoju Ayi
+
+Kandydat museum-spark-native-v1 przeszedł M224 zwykłym inputem. Po
+regeneracji PE podczas unikania przeciwnika Energy Shot pokonał typ4/sub31
+(320HP). Punkt192093:437HP i zwycięstwo. Dowód pełnego JSON/VRAM
+normal/SAN/live, oba exit0: /tmp/pe-m224-victory-v1-replay-proof.json.
+Okno awansu poprzedziło odbiór Medicine3: przy pełnym plecaku wymieniono
+Junk ze slot10 (20→8), bez zmian bajtów rekordów wyposażenia.
+Down115 i oczekiwanie doprowadziły do M225/0xa80422c8 przy194350,
+437/573HP, field/lock0. Pełne powtórki normal/SAN/live i kontrola dokładnie
+tej jednej zmiany inventory: /tmp/pe-m225-entry-v1-replay-proof.json.
+Nie ma jeszcze nowego zapisu telefonicznego od A.
+
+Kontrola zwykłego menu przy194388 potwierdziła poziom30,198BP,
+ActiveTime38, G23 i SpVest1. Wcześniejsza trasa wydała już1300BP:
+600 na ActiveTime29→35 i700 na attack G23 55→62. Obecne statystyki
+obejmują późniejsze naturalne awanse. Nie zmieniano RAM ani save'ów.
+Użytkownik dopuszcza dalsze zwykłe wydawanie BP, ulepszenia i grinding,
+gdy wymaga tego trudność walk; porażka sama nie dowodzi błędu portu.
+
 ### M223: Energy Shot, Medicine3 i wejście M224
 
 Aktualny kandydat museum-spark-native-v1. Od wejścia185355 Right12,

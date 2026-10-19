@@ -120,7 +120,11 @@ int Inv_TransferItem(int fromList, int fromSlot, int toList, int toSlot) {
                 s16 *table = g_InvActiveListItems;
                 item = &table[fromSlot];
             }
-            if (Item_LookupBaseData(*item - 1)->kind >= 16 && Item_LookupBaseData(*item - 1)->kind < 19) {
+            /* Pending rewards may contain equipment moved out of Aya's
+             * inventory. Resolve its encoded record, not the base-item index. */
+            ItemDataRecord *record = Inv_LookupItemRecord(*item);
+            if (record == NULL) return 0;
+            if (record->kind >= 16 && record->kind < 19) {
                 result = Inv_CanAddActiveListItemToAya(fromSlot) == 0;
             } else {
                 u16 *table = g_InvActiveListItems;

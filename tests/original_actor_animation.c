@@ -167,6 +167,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/menu_notification_dialog.h"
 #include "pe1/menu_state.h"
 #include "pe1/menu_inventory.h"
+#include "pe1/menu_equipment.h"
 #include "pe1/inventory_slots.h"
 #include "pe1/stat_modifiers.h"
 #include "../src/overlays/menu_memcard/menu_memcard_screen.h"
@@ -4561,6 +4562,30 @@ static int original_inventory_storage_swaps(void)
         if(memcmp(g_AyaInventoryItems,full?initial:collected,sizeof(initial)) ||
            memcmp(g_InvActiveListItems,full?pending:empty,sizeof(pending)))return 0;
     }
+    /* A weapon can be temporarily deposited in the pending reward list,
+     * then taken back. Its encoded reference is not a base-table index. */
+    const s16 references[]={0x100,0x106,0x17f};
+    for(unsigned r=0;r<3;++r)for(unsigned occupied=0;occupied<2;++occupied){
+        memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
+        memset(&g_InventoryItemWorkspace,0,sizeof(g_InventoryItemWorkspace));
+        g_AyaSaveState.inventory_slot_count=6;g_AyaSaveState.max_hp=100;g_AyaSaveState.current_hp=50;
+        g_EquippedWeaponSlot=-1;g_EquippedArmorSlot=-1;
+        g_MenuEquipMode=0;g_MenuBattleEquipMode=0;g_InvActiveListOverride=NULL;g_InvOverrideSlotLimit=0;
+        ItemDataRecord *weapon=&g_InventoryRuntime.equipment[references[r]-0x100];
+        weapon->kind=6;weapon->flags=1;weapon->iconId=5;weapon->itemId=0x83;
+        g_InventoryRuntime.equipment[1].kind=9;g_InventoryRuntime.equipment[1].flags=1;
+        g_InventoryRuntime.equipment[1].itemId=0x96;g_InventoryRuntime.equipment[1].iconId=1;
+        ItemDataRecord before=*weapon;
+        g_AyaInventoryItems[0]=occupied?257:0;g_InvActiveListItems[0]=references[r];g_InvActiveListCount=1;
+        if(!Inv_TransferItem(13,0,14,0) || g_AyaInventoryItems[0]!=references[r] ||
+           g_InvActiveListItems[0]!=(occupied?257:0) || memcmp(weapon,&before,sizeof(before)))return 0;
+        if(!Inv_TransferItem(14,0,13,0) || g_AyaInventoryItems[0]!=(occupied?257:0) ||
+           g_InvActiveListItems[0]!=references[r] || memcmp(weapon,&before,sizeof(before)))return 0;
+        g_InvActiveListItems[0]=0x180;
+        if(Inv_TransferItem(13,0,14,0) || g_InvActiveListItems[0]!=0x180 ||
+           g_AyaInventoryItems[0]!=(occupied?257:0))return 0;
+    }
+    puts("Pending reward equipment round trips: first, M203 and last native records, empty/occupied destinations, metadata unchanged and invalid references rejected");
     g_InvActiveListCount=saved_pending_count;memcpy(g_InvActiveListItems,saved_pending,sizeof(saved_pending));
     g_PlayerInventoryState=saved_player;g_InventoryItemWorkspace=saved_workspace;g_InvItemPtr=saved_items;g_InvActiveItemList=saved_active;g_InvActiveListOverride=saved_override;
     g_InvSlotLimit=saved_limit;g_InvActiveListSlotCount=saved_active_count;g_InvOverrideSlotLimit=saved_override_limit;g_InvTransferItemCount=saved_transfer;

@@ -2,6 +2,58 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M209→M210: wstrząs, wygrana i naprawa oddawania broni z łupu
+
+M209:od wejścia Up100,Left20 uruchamia oryginalny wstrząs i dialog
+„Wait...What was that noise...?!”. Cross,wstrząs/zmiana otoczenia prowadzą
+do M210/0xa8041048,112221,541HP,move_lock0. Historyczny pełny JSON/VRAM
+normal/SAN/live na poprzednim kandydacie:
+/tmp/pe-m210-entry-v1-replay-proof.json. M210 ma zaplanowane starcie:
+obszar x≈1005..1114,z−580..641 wysyła komendę2 trzem typ5/sub29..31.
+Każdy ma240HP. Wygrana120543,448HP,mode2,live0. Pod koniec skończyła
+się amunicja G23; oryginalne menu pozwala zmienić broń na M79-3(slot22)
+i dokończyć walkę. Oryginalne nagrody:Medicine4×3,level-up.
+Historyczny dowód walki:/tmp/pe-m210-victory-v1-replay-proof.json.
+
+Przy wymianie pełnego inventory tymczasowo odłożono M203 do listy łupu.
+Próba oddania go Ayi ujawniła błąd PC:Inv_TransferItem w swap.c używał
+Item_LookupBaseData(value−1),choć value=262 jest referencją do modyfikowalnego
+rekordu. Lookup zwracałNULL i dereferencja kind przerywała SAN.
+Reprodukcja i raport:/tmp/pe-loot-record-v1-base-args.json,
+/tmp/pe-loot-record-v1-before-asan.log. Sesja9666 zakończona awarią.
+
+Naprawa na miejscu w src/main/item/swap.c:istniejący Inv_LookupItemRecord
+rozpoznaje wszystkie oryginalne przestrzenie referencji; nieprawidłowy
+rekord zwraca0. Bez nowego pliku źródłowego/abstrakcji ani zmiany zasad.
+W istniejącym teście inventory dodano przejścia w obie strony dla0x100,
+M203/0x106 i0x17F,pustego/zajętego celu,niezmienionych parametrów broni
+i odrzucenia0x180. Ten sam nowy test ze starym obiektem swap.c celowo
+kończy się null-deref; z nowym przechodzi:
+/tmp/pe-loot-record-v2-negative-test-proof.json.
+
+Końcowy kandydat /tmp/pe-loot-record-v2:402 świeże obiekty(201/profil),
+64/64 regresje normal/SAN,4/4 wybrane CTest z wymaganymi assetami,bez SKIP.
+Root game/fixture to dokładne normalne kopie. PsyZ/SDL bez instrumentacji.
+Pełny replay od autentycznego O przez BP,A i Museum potwierdza przy124629
+oddanie M203:pełny JSON/VRAM normal/SAN/live,bez błędu:
+/tmp/pe-loot-return-v1-replay-proof.json. Dalej odebrano wszystkie trzy
+Medicine4,usuwając netto dwa CureD i jeden ModPermit; M203 przeniósł się
+z15 do21,wszystkie bajty rekordów ekwipunku zachowane. HP448,field w M210.
+Pełny JSON/VRAM normal/SAN/live końcowego stanu126246 i jawna kontrola
+netto inventory/niezmienionych rekordów:
+/tmp/pe-m210-loot-complete-v1-replay-proof.json. Manifest i końcowe
+sprawdzenie źródeł/obiektów:/tmp/pe-loot-record-v2-release-proof.json.
+
+Bezpośrednia próba przejścia na północ kończy się na oryginalnej kolizji.
+Siatka /tmp/pe-m210-collision-v1.json zawiera bardzo wąskie trójkąty43..49;
+odczyt LLDB potwierdza radius63 i move_speed4096,bez zmiany pamięci:
+/tmp/pe-m210-collision-live-v1.log. Sam graf sąsiedztwa nie dowodzi
+przechodniości dla tej postaci. Nie zmieniano kolizji. Oryginalne skrypty
+mają też połączenia M207→M214→M216→M212→M211; zbadać je oraz oryginalne
+warunki wejścia. Live SAN:/tmp/pe-loot-record-v2-live.py,sesja57461,
+126246,M210,448HP,3×Medicine4. Autentyczne A i O zachowane.
+Telefon i dalsza kampania pozostają do ukończenia.
+
 ### Museum: quiz i wygrane M206/M207, wejście M209
 
 Dwie pierwsze próby M206 po wejściu z92HP zakończyły się śmiercią. Nie

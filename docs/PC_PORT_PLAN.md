@@ -2,11 +2,11 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: M152 wygrane z autentycznego G/190HP, nagrody odebrane,
-Medicine3 użyta, M16 przeładowany, oryginalny panel otwiera Research Kennel.
-Przejście do M153/story496:242HP i19 naboi, bez aktywnej walki.
-Dwadzieścia nowych cold przypadków normal/SAN opisano poniżej.
-Kod produkcyjny bez zmian. Dalsza kampania nadal nieukończona.
+Najnowszy postęp: M153 wygrane, poziom20 i odblokowane Haste, przygotowanie
+283HP/19 naboi, następnie wejście i rozpoczęte spotkanie M154.
+Haste użyte w oryginalnej walce, potwierdzony wzrost ATB w badanym oknie.
+Dwadzieścia dwa nowe cold przypadki normal/SAN opisano poniżej.
+M154 niewygrane, Save H nie powstał. Kod produkcyjny bez zmian.
 
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
@@ -51,6 +51,95 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M153 wygrane, poziom20/Haste i rozpoczęta walka M154
+
+Poprzedni odcinek był postępem: wygrane M152 i bezpieczny45720/M153.
+/tmp/pe-hospital-m153-v1-live odtwarza autentyczny G oraz pełny journal
+M152. Up100 uruchamia45820 spotkanie:4:31/170HP,5:0/45HP,6:0/120HP.
+Pierwsza salwa do spawnera daje110HP, ale po próbie uniku HP spada
+z242 do117 przy46756. Sesja zakończona quit0 przy46836,
+bez zwycięstwa i bez parowania SAN tej gałęzi.
+
+Read-only SBValue, /tmp/pe-hospital-m153-status-v1.{json,log}: obrona wszystkich
+odczytanych wrogów30;4:31 i5 mają0x40000/zakaz Escape,6 go nie ma.
+Read-only SBValue/ReadMemory przy46180 drugiej gałęzi:19 płaskich trójkątów,
+wszystkie kind0, cameraBasis identity i baseAngleDigital0:
+/tmp/pe-hospital-m153-floor-safe-v1.{json,log}. Oba attach/detach exit0,
+bez wywołań funkcji gry lub zapisów RAM. Późniejsze cold replaye bez
+obserwatorów zgadzają się całym stanem/VRAM z obserwowanym live.
+
+/tmp/pe-hospital-m153-v2-live zmienia wyłącznie zwykłe wejścia od46180:
+najpierw ostrzał6:0. Dwie salwy po60 odbierają mu120HP; przy46930 go brak,
+Aya178HP. Następnie trzy salwy do spawnera170→110→50→śmierć.
+Przy48790 Aya136HP, bez4:31, pozostają5:0..2 po45HP; wcześniej widoczny
+5:3 nie jest już obecny. Kolejne salwy usuwają pozostałych wrogów.
+50610: zwycięstwo/mode2, live0, HP120, PEraw26345472 (402), M16ammo3,
+statusy wyczyszczone. W walce nie użyto PE ani przedmiotów leczących.
+Zachowane /tmp/pe-hospital-m153-v2-50610.{json,vram}.
+
+Oryginalny panel awansu51130 pokazuje Level20, MaxHP283 i nowe Haste.
+Obraz odtworzony z cold normal oraz porównany pełnym VRAM z SAN:
+/tmp/pe-hospital-m153-haste-preview-v1/frame.png. Potwierdzenie awansu
+podnosi maxPE do30277632 (462). Obtain All odbiera Medicine2/item7 do20
+oraz Cure-M/item16 do21. Przy51870 pole, HP120/max283, lock0/menuNULL;
+zachowane -m153-v2-51870.{json,vram}. Podgląd animowanego BP nie jest
+końcowym odczytem: późniejszy kanoniczny stan ma308BP.
+
+Dziesięć cold przypadków46930/48790/50610/51130/51870 ×normal/SAN:
+cały JSON zgodny z live, pełny1MiB VRAM między profilami i zachowanym
+50610/51870, /tmp/pe-hospital-m153-v2-replay-proof.json.
+
+Dwa polowe Heal2 przez oryginalne menu dają HP120→180→240 (52746).
+Medicine1 ze slot13 doprowadza HP240 do limitu283 (53430), slot13 pusty.
+Reload M16 z3→19 kończy54126, pole/lock0, Medicine2 pozostaje w20.
+Marsz zachodnią częścią podłogi, następnie wschodni mostek/wyjście
+prowadzi54836 do M154/a8025248, story496,283HP,19 naboi, menuNULL/lock0.
+Zachowane -m153-v2-{54126,54836}.{json,vram} i -54836.png, obraz obejrzany.
+Sześć cold przypadków52746/54126/54836 ×normal/SAN: cały JSON zgodny
+z live, pełny VRAM między profilami i zachowanym54126/54836,
+/tmp/pe-hospital-m153-post-v1-replay-proof.json.
+
+W M154 jest oryginalny telefon/event17 (save dialog6), ale próba dojścia
+do niego uruchamia kolejne spotkanie. Przy55484:283HP,7:31/170HP,
+8:0/45HP,9:1/120HP. Nie wykonano Save H. Zachowane
+/tmp/pe-hospital-m153-v2-55484.{json,vram}, bezpieczny prefix54836 pozostaje.
+
+Próba nowego PE ujawniła zmianę układu listy: Haste jest wstawione przed
+Confuse, więc row4/col0 wskazuje teraz Confuse. Ten wybór anulowano,
+bez wydania PE i bez działania Confuse na wrogów; wymagało to wyjścia
+z wyboru celu i ponownego otwarcia menu. Po anulowaniu żywy czas gry
+wiąże się ze spadkiem HP279→220. Obejrzana lista potwierdza
+Haste na row3/col1. Poprawny wybór uruchamia oryginalny efekt.
+
+57210: HP220, ammo19, bitAYA_HASTE/0x100 aktywny. Przy57230 pozostaje
+aktywny; ATB2352→3192 w20 VBlankach, średnio42/VBlank. Wcześniejsze okno
+bez Haste55484→55634 daje4661→8861 w150 VBlankach, średnio28/VBlank.
+To obserwacja1.5× w tych dwóch oknach, nie pełny oracle wszystkich czasów.
+Zachowane -m153-v2-{57210,57230}.{json,vram}.
+
+Read-only SBValue/ReadMemory przy57230:
+/tmp/pe-hospital-m154-haste-stats-v1.{json,log}, attach/detach exit0.
+Kanoniczny g_SaveRuntimeState.player.aya: level19 wewnętrzny/20 na ekranie,
+maxHP283, currentHP220, BP308, spell_flags2027 z ustawionym bitem9.
+Oryginalny rekord resident parasiteSpells[9]: unlockKey19, cost200 PE.
+Nie modyfikowano tabel ani postaci.
+
+Sześć cold przypadków55484/57210/57230 ×normal/SAN: cały JSON zgodny
+z live, pełny VRAM między profilami i zachowanym każdym z tych punktów,
+/tmp/pe-hospital-m154-haste-v1-replay-proof.json. Obejmują anulowany wybór
+Confuse, właściwe Haste i mierzone okna ATB. M154 nadal niewygrane;
+wszyscy trzej początkowi przeciwnicy mają pełne HP przy57230.
+
+Łącznie22 nowe cold przypadki exit0. Rehash384 obiektów, zależności,
+archiwów i binariów, identyczna kopia build gry:
+/tmp/pe-hospital-m153-v2-build-proof.json. SDK PsyZ/SDL nieinstrumentowane.
+Obie sesje live zakończone quit0, źródłowy/prywatny G niezmieniony, bu10
+puste; root bu00/bu10 nietknięte. Bez zmian kodu produkcyjnego i nowych
+plików repo. Bazą trwałą nadal G, dalsze punkty wymagają pełnego journalu.
+Następny krok: M154 od54836/283HP albo57230/220HP z Haste; zwycięstwo,
+telefoniczny Save H i dalsza fabuła. Pełna kampania i niezależne porównania
+PS1 pikseli/PCM nadal otwarte; ten odcinek nie zamyka całego goal.
 
 ### M152 wygrane, Medicine3 i otwarcie Research Kennel/M153
 

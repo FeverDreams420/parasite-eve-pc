@@ -23,8 +23,37 @@ trasy K do69700 ma pełny JSON/VRAM normal=SAN,294HP,2 przeciwników;
 /tmp/pe-m186-event-v1-crash-proof.json. Źródłowy/prywatny K bez zmian.
 Psyz/SDL pozostają nieinstrumentowane. Root game/fixture są kopiami
 zweryfikowanego normal, promotion-proof.json pod tym samym prefiksem.
-Walka M186 nadal nieukończona; dalsza sesja /tmp/pe-m186-event-v1-live.py,
-71672 w menu przedmiotów,203HP. Pełna kampania pozostaje otwarta.
+Pełna zwykła walka M186 już wygrana:74234,331/437HP,zero przeciwników,
+menu doświadczenia. Zwycięstwo to gałąź r09-c01 input-search-v1 i zwykły
+EnergyShot na ostatniego 4:31 (62→−77HP), bez zmian RAM/zapisu/statystyk.
+Cold normal/SAN/live cały JSON/VRAM:
+/tmp/pe-m186-victory-check-v1-replay-proof.json. Sama seria128 prób normal
+(16 rund) kończy się bez wygranej; /tmp/pe-m186-input-search-v1-proof.json
+oddziela ją od wygrywającego rozszerzenia. Wszystkie prywatne K bez zmian.
+Wcześniejsza ręczna próba zakończona porażką Ayi (nie crashem) ma także
+cold JSON/VRAM normal/SAN/live: /tmp/pe-m186-loss-check-v1-replay-proof.json.
+
+Cure-D działa w walce. Menu kontekstowe otwierało się już na Use; dodatkowy
+Up przełączał na Discard (potwierdzenie anulowane). Odczyt LLDB w72796:
+tryb walki1,slot10,kontekst0,bit użycia slot10 ustawiony. Bez dodatkowego
+Up zwykły Cross zużywa Cure-D i usuwa flagę0x10. Pełny JSON/VRAM normal/SAN:
+/tmp/pe-m186-cured-check-v1-replay-proof.json. Dane USA flags0x2 dla13–16,
+Medicine6–10 flags0x3: /tmp/pe-m186-cure-data-v1-proof.json.
+Bez zmian kodu menu ani reguł dostępności przedmiotów.
+
+Po wygranej odebrano Ammo+8; dwa Cure-D i Cure-P pozostawiono przy pełnym
+ekwipunku. Trasa M186→M188→M187→M184 dochodzi do oryginalnego telefonu.
+Nowy autentyczny zapis L,8192B,331HP,poziom26,GateKey(raw219) w ekwipunku:
+/tmp/pe-post-subway-save-v1-source/BASLUS-006620000000L,
+SHA256 988be1ae151417754d5612732246cb525181b94faf999cc415ff064c0af5ff48.
+K nie nadpisano. Cold ponowne zapisanie L daje identyczne8192B normal/SAN,
+pełny JSON/VRAM live/normal/SAN: /tmp/pe-post-subway-save-check-v2-replay-proof.json.
+Continue z L i oboma CUE działa, zwykły input porusza Ayą; inventory i
+postęp równają się zapisanym, story600,331/437HP,bez wrogów/blokady.
+Cały JSON i VRAM normal=SAN: /tmp/pe-post-subway-continue-v4-proof.json.
+Agregat10 cold prób: /tmp/pe-post-subway-save-v1-proof.json.
+Live /tmp/pe-m186-finish-v1-live.py jest w83060,
+M184 bez blokady ruchu. Dalsza kampania i Chrysler pozostają otwarte.
 
 ### Poprzedni kandydat M186 i dowody wejścia
 

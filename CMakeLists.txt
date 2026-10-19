@@ -253,6 +253,7 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/homing_flash.c
     src/overlays/room_lib/twelve_elements.c
     src/overlays/room_lib/floor_walker_class.c
+    src/overlays/room_lib/spark_ring_burst.c
     src/overlays/room_lib/sound_burst.c
     src/overlays/room_lib/grab_attack.c
     src/overlays/room_lib/timed_spawn.c
@@ -530,6 +531,9 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-fx-models PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
     add_test(NAME original-m205-sound-burst-load COMMAND test-original-actor-animation --m205-load)
     set_tests_properties(original-m205-sound-burst-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" LABELS "render")
+    add_test(NAME original-m221-spark-ring-burst-load COMMAND test-original-actor-animation --m221-load)
+    set_tests_properties(original-m221-spark-ring-burst-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" LABELS "render")
     add_test(NAME original-m269-grab-load COMMAND test-original-actor-animation --m269-load)
     set_tests_properties(original-m269-grab-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60

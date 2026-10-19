@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M221: natywna integracja istniejącego spark_ring_burst.c
+
+Aktualny kandydat /tmp/pe-m221-native-v2. Naprawiono cały istniejący
+src/overlays/room_lib/spark_ring_burst.c na miejscu:pięć oryginalnych
+funkcji,sygnatury callbacków z intptr_t,natywne pule task.end oraz
+wskaźniki actor/state/action_state i stan walki gracza. Usunięto nieużywane
+fasady układu PS1 z istniejącego nagłówka. Bez nowych plików źródłowych
+ani zastępczej rozgrywki. Oryginalne skrypty M221(36/32B),paleta32B,
+rozmiary stanów12/4B i initializer slotu pochodzą z USA PE.IMG.
+room_load.c jawnie waliduje i rejestruje wszystkie trzy deskryptory
+75/80194008,142/801940b8,180/80194110 oraz zeruje slot przy reload.
+
+Istniejący tests/original_actor_animation.c rozszerzono o --m221-load:
+pełny hash modułu20828B,prawdziwy CUE/I/O,dwa ładowania,skrypty/paleta,
+wszystkie powiązania,natywny initializer,chronione wskaźniki action_state,
+przebieg obu kontrolerów i czasy życia obu cząstek. Ten sam nowy fixture
+ze starym obiektem loadera odrzucaM221 zgodnie z oczekiwaniem:
+/tmp/pe-m221-native-v2-negative-test-proof.json. Nowy CTest:
+original-m221-spark-ring-burst-load. Dokument danych pierwotnych:
+/tmp/pe-m221-native-v2-original-proof.json.
+
+404świeże obiekty(202/profil),618zależności źródłowych ponownie zahaszowane,
+66/66regresji normal/SAN,w tym stare pełne JSON/VRAM replays i zapis
+NYPD;5/5wybranych CTest z wymaganymi assetami,bez SKIP. PsyZ/SDL bez
+instrumentacji. Root game/fixture są dokładnymi normalnymi kopiami.
+Manifest:/tmp/pe-m221-native-v2-build-manifest.json,regresje:
+/tmp/pe-m221-native-v2-verification.json,CTest:
+/tmp/pe-m221-native-v2-ctest-assets.log.
+
+Pełne zwykłe wejścia od autentycznego O przez BP,A iMuseum doprowadziły
+doM221/0xa80420c8,178491,471HP,field/lock0. Niezależne normal/SAN oba
+exit0,bez raportów sanitizerów,pełny JSON/VRAM równe sobie i live:
+/tmp/pe-m221-entry-v2-replay-proof.json. Prywatne O/A niezmienione.
+LiveSAN35703:/tmp/pe-m221-native-v2-live.py,czyta stan178491 wM221;
+limit500000. Oryginalny skrypt:/tmp/pe-m221-nav-v1.txt. Rzeczywiste
+ataki/rysowanie obu nowych efektów w walce M221 nadal wymagają dowodu
+z kampanii; samo wejście i testy kontrolerów nie zamykają tego zakresu.
+
 ### M209→M210: wstrząs, wygrana i naprawa oddawania broni z łupu
 
 M209:od wejścia Up100,Left20 uruchamia oryginalny wstrząs i dialog
@@ -167,7 +205,7 @@ Nie zmieniano oryginalnego kodu, kolizji, RAM ani save. W sprawie menu:
 Menu_StepItemSelectScreen(status_panels.c) przewiduje cancel bez warunku
 pozycji; wcześniejszej obserwacji nie uznawać za oryginalne ograniczenie.
 
-### Następna naprawa: oryginalny moduł M221 spark_ring_burst
+### M221: historyczna reprodukcja braku modułu (naprawa powyżej)
 
 Z M220 odebrano ALL:Junk×2 iAmmo15,END. Od pozycji po walce Down25,
 Right110,wait400 próbuje wejść doM221. Przy178091 trwa zmiana sceny;
@@ -190,7 +228,7 @@ Artefakty pierwotne:/tmp/pe-m221-native-audit-v1.bin,
 /tmp/pe-m221-native-original-v1-proof.json. Okna bajtów skryptów zawierają
 też rodata/padding; nie traktować ich długości jako długości skryptu.
 
-Integracja nie jest jeszcze zaimplementowana. Należy naprawić cały
+W chwili tej reprodukcji integracja nie była zaimplementowana. Planowano naprawić cały
 istniejący spark_ring_burst.c na miejscu:pięć oryginalnych funkcji,
 callbackABI,wskaźniki/pule/stany aktora,dane i inicjalizer; potem jawne
 powiązania wszystkich trzech deskryptorów,regresja rzeczywistego I/O i

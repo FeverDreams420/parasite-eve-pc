@@ -13,6 +13,9 @@
 #include "pe1/render_object.h"
 #include "pe1/room_floor.h"
 #include "pe1/room_interface.h"
+#include "pe1/fieldfx_task.h"
+#undef g_RoomSparkSlot
+#undef RoomEffect_SetSparkSlot
 
 /* The spark ring and spark burst effects linked by ten museum rooms
  * (src/overlays/room_lib/spark_ring_burst.c). The ring controller
@@ -63,30 +66,7 @@ typedef struct RoomSparkLaunch {
     s16 hx, hy, hz;               /* 0x08 */
 } RoomSparkLaunch;
 
-/* Field effect channel: its pool sits at 0x08. */
-typedef struct RoomSparkNode {
-    u8 reserved[0x18];
-    u8 *state;                    /* 0x18 */
-} RoomSparkNode;
-
-typedef struct RoomSparkChannel {
-    s32 reserved[2];
-    char *pool;                   /* 0x08 */
-} RoomSparkChannel;
-
-typedef struct RoomSparkEventState {
-    u8 reserved[0xD];
-    u8 active;                    /* 0x0D */
-} RoomSparkEventState;
-
-typedef struct RoomSparkActor {
-    u8 reserved[0x4C];
-    u32 flags;                    /* 0x4C */
-} RoomSparkActor;
-
-typedef struct RoomSparkBattleEntity {
-    RoomSparkActor *actor;
-} RoomSparkBattleEntity;
+/* Native task pools and actor state use fieldfx_task_pool.h directly. */
 
 #include "pe1/player_entity.h"
 
@@ -96,5 +76,11 @@ int rand(void);
  * and the word the room's slot setter writes. */
 extern u8 g_RoomSparkRingColorRamp[];
 extern int g_RoomSparkSlot;
+extern FieldFxTaskProgram g_RoomSparkRingProgram, g_RoomBurstSparkProgram;
+int RoomEffect_SparkRingParticle(int, void *, intptr_t);
+int RoomEffect_SparkRingController(int, void *, intptr_t);
+int RoomEffect_BurstSparkParticle(int, void *, intptr_t);
+int RoomEffect_BurstSparkSpawner(int, void *, intptr_t);
+intptr_t RoomEffect_SetSparkSlot(int, intptr_t, intptr_t, intptr_t);
 
 #endif

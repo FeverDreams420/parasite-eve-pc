@@ -1,3 +1,4 @@
+#include "pe1/room_spark_ring_burst.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_floor_walker.h"
 #include "pe1/room_homing_model.h"
@@ -669,6 +670,11 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomOrbitFlareEffects;
         if (map + 1 == 113 && slot == 136 && record[i].u.handlerAddress == 0x80190b54u)
             native = &g_RoomLineBurstProgram;
+        if (map + 1 == 221) {
+            if(slot==75 && record[i].u.handlerAddress==0x80194008u)native=&g_RoomActorClassTable[2];
+            if(slot==142 && record[i].u.handlerAddress==0x801940b8u)native=&g_RoomSparkRingProgram;
+            if(slot==180 && record[i].u.handlerAddress==0x80194110u)native=&g_RoomBurstSparkProgram;
+        }
         if (map + 1 == 205) {
             if (slot == 75 && record[i].u.handlerAddress == 0x80192c70u) native = &g_RoomActorClassTable[2];
             if (slot == 116 && record[i].u.handlerAddress == 0x80192d04u) native = &g_RoomSoundBurstProgram;
@@ -1078,6 +1084,14 @@ int Scene_LoadRoom(unsigned int roomId)
             memset(&g_RoomFallingBurstParticle,0,sizeof(g_RoomFallingBurstParticle));
         } else if ((map + 1 == 116 || map + 1 == 120) && slot == 75) {
             g_PmCmdHandlerTable[slot]=&g_RoomActorClassTable[2];
+        } else if (map + 1 == 221 && slot == 75) {
+            g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];
+        } else if (map + 1 == 221 && slot == 142) {
+            g_FieldFxTaskPrograms[57]=&g_RoomSparkRingProgram;
+            g_RoomSparkSlot=0;
+        } else if (map + 1 == 221 && slot == 180) {
+            g_FieldFxTaskPrograms[95]=&g_RoomBurstSparkProgram;
+            g_RoomSparkSlot=0;
         } else if (map + 1 == 205 && slot == 75) {
             g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
         } else if (map + 1 == 205 && slot == 116) {

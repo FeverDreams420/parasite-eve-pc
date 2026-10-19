@@ -1,3 +1,4 @@
+#include "pe1/room_spark_ring_burst.h"
 #include "pe1/room_orbit_set.h"
 #include "pe1/room_spark_barrage.h"
 #include "pe1/room_twelve_effect.h"
@@ -17277,6 +17278,69 @@ int main(int argc, char **argv)
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M404 loader: real CUE I/O, native geometry, all three descriptor registrations and argument reset passed twice");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m221-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[20828];
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive) ||
+           !pe_disc_read(&disc,&exe,0x800+(0x80093378-0x80010000)+220*8,&range,8))return 1;
+        u32 offset=(range.start+range.scratchSectors+range.textureSectors)*2048u;
+        if(!pe_disc_read(&disc,&archive,offset+8,module,sizeof(module)))return 1;
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned i=0;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+        if(hash!=UINT64_C(0xa112e74d849b5626))return 1;
+        if(memcmp(module+(0x80194078-0x8018eff0),g_RoomSparkRingProgram.script,36) ||
+           memcmp(module+(0x801940f0-0x8018eff0),g_RoomBurstSparkProgram.script,32) ||
+           memcmp(module+(0x80194098-0x8018eff0),g_RoomSparkRingColorRamp,32) ||
+           g_RoomSparkRingProgram.table.sizes[0]!=12 || g_RoomBurstSparkProgram.table.sizes[0]!=4)return 1;
+        for(unsigned pass=0;pass<2;++pass){
+            g_PmCmdHandlerTable[75]=NULL;g_FieldFxTaskPrograms[57]=g_FieldFxTaskPrograms[95]=NULL;g_RoomSparkSlot=123;
+            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0221i")) ||
+               g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] ||
+               g_FieldFxTaskPrograms[57]!=&g_RoomSparkRingProgram ||
+               g_FieldFxTaskPrograms[95]!=&g_RoomBurstSparkProgram || g_RoomSparkSlot)return 1;
+            intptr_t slot=g_RoomBurstSparkProgram.initialize(0,55,0,0);
+            if(slot!=(intptr_t)&g_RoomSparkSlot || g_RoomSparkSlot!=55)return 1;
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        FieldActor actor={0},player={0};FieldActorState actor_state={0};RenderMatrix transforms[18]={0};
+        struct {u64 before;u8 value;u8 padding[7];u64 after;} marker={0};
+        FieldFxObjectPrefix owner={0};FieldFxTaskContext context={0};FieldFxTaskSlot task={0};
+        _Alignas(void *) u8 arena[8192];RoomSparkRingState ring={0};int count;
+        marker.before=marker.after=UINT64_C(0x13579bdf2468ace0);
+        actor.state=&actor_state;actor.render_object.matrices=transforms;
+        player.render_object.matrices=transforms;g_PlayerEntity=&player;
+        actor_state.action_state=&marker.value;owner.actor=&actor;task.end=(char *)arena;
+        g_FieldFxOwner=&owner;g_FieldFxTaskContext=&context;g_FieldFxActiveTaskSlot=&task;g_FieldFxCurrentAge=0;
+        const u8 initial[]={0,1,2,255};
+        for(unsigned enabled=0;enabled<2;++enabled)for(unsigned i=0;i<4;++i){
+            context.flags=enabled;actor_state.core_flags=0x13579bdf;
+            marker.value=initial[i];
+            if(RoomEffect_SparkRingController(0,&ring,0)<=0 ||
+               marker.value!=(enabled && initial[i]==1?2:initial[i]))return 1;
+            marker.value=initial[i];count=99;
+            if(RoomEffect_BurstSparkSpawner(0,&count,0)<=0 || count ||
+               marker.value!=(enabled && initial[i]==1?2:initial[i]) ||
+               actor_state.core_flags!=0x13579bdf || marker.before!=UINT64_C(0x13579bdf2468ace0) ||
+               marker.after!=marker.before)return 1;
+        }
+        context.flags=0;g_RoomFloorY->y=1000;
+        if(RoomEffect_SparkRingController(0,&ring,0)<=0)return 1;
+        for(unsigned frame=1;frame<=52;++frame){g_FieldFxCurrentAge=frame;if(RoomEffect_SparkRingController(1,&ring,0))return 1;}
+        if(ring.state!=2 || RoomEffect_SparkRingController(1,&ring,0)!=2)return 1;
+        if(RoomEffect_BurstSparkSpawner(0,&count,0)<=0)return 1;
+        for(unsigned frame=1;frame<=8;++frame){g_FieldFxCurrentAge=frame;int result=RoomEffect_BurstSparkSpawner(1,&count,0);if(result!=(frame==8?2:0))return 1;}
+        if(count!=3)return 1;
+        RoomSparkRingParticle particle={0};particle.timer=23;
+        if(RoomEffect_SparkRingParticle(1,&particle,0)!=1)return 1;
+        const int states[]={1,2,3,4},limits[]={6,16,12,16};
+        for(unsigned i=0;i<4;++i){RoomBurstSpark spark={0};spark.state=states[i];spark.timer=limits[i]-1;
+            if(RoomEffect_BurstSparkParticle(1,&spark,0)!=1)return 1;}
+        g_PlayerEntity=NULL;g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
+        puts("Original M221 complete module, both scripts, palette, all descriptors and native slot initializer/reload passed");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m205-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

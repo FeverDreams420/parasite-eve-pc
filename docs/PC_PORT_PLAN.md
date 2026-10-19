@@ -46,6 +46,46 @@ To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
 
+### Bezpieczniki — kolejne autentyczne próby
+
+Bez zmian kodu produkcyjnego. Z oryginalnych danych płyt odczytano
+Script_GiveItem167: M326/206 (offset83224), M328/207 (189792), M332/208
+(134548). Fuse2: punkt interakcji1500,1050; Fuse3: wąski obszar
+x762..782,z-835..-815. /tmp/pe-hospital-fuses-v1-source-proof.json
+potwierdza dane; sam ten skan nie jest dowodem rozgrywki.
+
+/tmp/pe-hospital-fuse2-v1-live: autentyczny D i wcześniejsza zwycięska
+trasa do M328/41730 HP210. Podejście do skrzynki, Cross, pełny ekwipunek:
+42955 nie ma207, inventory i flag65 identyczne jak41730. Ta interakcja
+nie uruchamia wymiany przedmiotów. Przez oryginalne menu usunięto
+nieużywany Cm Vest1 ze slot0, bez zmiany wyposażonej broni/pancerza,
+i ponowiono interakcję. 44655: panel Fuse2, item207 w0, flag65=541065419;
+44875: swobodne pole, HP210, zachowane Fuse1/206 i BlueCardkey/210.
+To nowy punkt do kontynuowania wspólnej trasy, zamiast powrotu po Fuse2
+przez ponowne spotkania po otwarciu Blue Door.
+
+/tmp/pe-hospital-fuse3-v1-live: odrębna autentyczna gałąź D, wcześniejsza
+trasa z Blue Door/Fuse1 i wygraną M332/57815. Podejście za róg pomieszczenia
+x774,z-831 i Cross. 58444: panel Fuse3/item208;58644: pole, HP163,
+item208 w13, flag65=541070155. /tmp/pe-hospital-fuses-v1-live-proof.json.
+Osiem cold replayów (44655/44875 i58444/58644 × normal/SAN) exit0:
+cały JSON zgodny z live oraz między profilami, pełne1MiB VRAM zgodne
+między profilami; zachowane live VRAM44655 i58644 również zgodne.
+/tmp/pe-hospital-fuses-v1-replay-proof.json. Bieżące384 obiekty, zależności,
+archiwa i binaria ponownie zgodne z manifestem pe-control-read-v2;
+binaria w build nadal identyczne. PsyZ/SDL pozostają nieinstrumentowane.
+Obie sesje zakończone quit/exit0, źródłowy D i prywatne karty bez zmian.
+Nie oznacza to zdobycia obu bezpieczników w jednej gałęzi ani naprawienia
+zasilania; konieczne jest połączenie tych czynności na zwykłej trasie.
+
+Dodatkowe próby powrotu z M321 do M328: /tmp/pe-hospital-fuses-v1-live
+oraz v2/v3/v4/v5-live. Ponowne spotkanie M327, nieudane ucieczki/statusy;
+w v2 trzecia ucieczka kończy się powodzeniem66441/HP66, ale następnie
+bardzo szybko uruchamia się nowe spotkanie. Zachowano pełne wejścia/stany,
+bez zmian mechaniki, bez uznania tego za dowód poprawności powrotu.
+Nie ustalono jeszcze, czy wymaga to naprawy portu czy innej sekwencji
+wyjścia z obszaru aktywacji. Wszystkie te sesje zamknięte quit/exit0.
+
 ## Poprzedni potwierdzony stan — 19 października 2026
 
 Aktualny zweryfikowany kandydat: /tmp/pe-chrysler-port-v1. Wszystkie384

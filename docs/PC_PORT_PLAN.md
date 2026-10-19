@@ -2,6 +2,62 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M234 wygrane, telefon M237, zapis i Continue B/C, alarm wyłączony
+
+Normal live33307 zakończył M234 przy231259:72HP,zero przeciwników,
+G23clip3. Medicine3 odnowiło265→445HP przed dalszymi trafieniami;
+ruch odnowił pełne PE78118912,EnergyShot trafił skorpiona390→87.
+Trzy strzały dały87→9; następna kolejka rozdzieliła jeden pocisk na
+skorpiona9→-17 i dwa na latającego104→32. Ostatni pojedynczy pocisk
+zakończył32→-4. Nie zmieniono ROF3 ani mechaniki dla ułatwienia walki.
+ALL odebrało CureP(slot15) i Medicine3(slot17). Medicine3:72→252HP,
+dwa oryginalne Heal2 po60 dały372HP. Left140,Up170 doprowadziły doM235
+przy233643; dalsze Up190 do pokoju ochrony M237 przy234641. Dialog Ayi
+o alarmie zamknięto zwykłym Cross. Telefon przy(-982,8) działał po podejściu
+w okolice(-851,5),twarzą w lewo. Nowy zapis B utworzono w pustym slocie,
+bez nadpisania A/O; powrót do pola237397:372HP,SvProtector/G23.
+
+Pełny cold replay od autentycznego O: oba exit0,całe JSON i VRAM równe
+normal/SAN/live,a plik B identyczny bajtowo:
+/tmp/pe-m237-phone-save-v1-replay-proof.json. Prywatne A/O bez zmian.
+Autentyczny B jest zamrożony w /tmp/pe-m237-phone-save-v1-source/
+BASLUS-006620000000B,8192B,SHA256
+2b97783d6781736d06f21ecd02718749e3660aac994ca391ad764fd580cdacec.
+
+Osobny cold Continue ma wyłącznie B na prywatnej karcie. Wybór slotu B,
+„File loaded”,Cross i zamknięcie wejściowej kwestii Ayi doprowadziły do
+sterowalnego M237,372HP. Ruch Right5 zmienił pozycję,ekwipunek jest
+identyczny ze stanem zapisu. Oba exit0,całe JSON/VRAM normal/SAN/live równe:
+/tmp/pe-m237-continue-v1-replay-proof.json. Oryginalny live33307 zamknięty
+quit,exit0. Dalsza trasa używa autentycznego B,bez replayu całej walki.
+
+Kontynuacja B,live12235,/tmp/pe-m237-continue-v1-live.py: panel przy
+x24..226,z1989..2241,patrząc Up,Cross otworzył pytanie o wyłączenie alarmu.
+Zatwierdzenie i zamknięcie komunikatu ustawiły script_variables[34]:130→180,
+przy21211 field/lock0,372HP. Pełny JSON/VRAM normal/SAN/live równy:
+/tmp/pe-m237-alarm-off-v1-replay-proof.json. Powrót do telefonu i zapis
+w pustym slocie C przy23114,success40 przy23414,powrót do pola24038.
+B zachowany. Oba exit0,całe JSON/VRAM równe,nowy plik C identyczny bajtowo:
+/tmp/pe-m237-alarm-save-C-v1-replay-proof.json.
+
+Autentyczny C: /tmp/pe-m237-alarm-save-C-v1-source/BASLUS-006620000000C,
+8192B,SHA2565975126d26968531fa8375c9663276b07400b0e7af5ce00f4ae026699edbb9eb.
+Osobny cold Continue tylko z C potwierdził M237,372HP,pełny ekwipunek,
+flagę34=180,brak dialogu wejściowego i zwolniony ruch. Oba exit0,całe
+JSON/VRAM normal/SAN równe,źródłowy C bez zmian:
+/tmp/pe-m237-continue-C-v1-replay-proof.json. To nowy trwały punkt kampanii,
+nie dowód ukończenia muzeum ani pełnego celu. Live12235 czeka przy24038,
+po zapisie C; źródłowy B jego prywatnej karty pozostaje bez zmian.
+
+Następne przygotowanie zgodne z uwagą użytkownika: oryginalny skrypt M250
+zawiera skrzynie Tool(item22,offset1308),M500(item106,3136),B Jacket1
+(item187,4964). Wyjście M237 prowadzi do M258 (strefa x220..600,z40..300),
+a M250 wraca doM258. Pliki /tmp/pe-m250-upgrade-nav-v1.{bin,txt} i
+/tmp/pe-m258-upgrade-nav-v1.{bin,txt}. Przedmiotów jeszcze nie odebrano;
+trzeba sprawdzić wybór piętra windy i statystyki/M500 w normalnym menu.
+Bez zmian źródeł produkcyjnych; testy używają tego samego kandydata.
+Root bu00/bu10 nietknięte. Brak nowych plików źródłowych repozytorium.
+
 ### Taktyka: szybkostrzelność a podwójna/potrójna akcja
 
 Zgodnie z uwagą użytkownika nie traktować ROF jako dodatkowych pełnych

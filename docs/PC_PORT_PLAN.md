@@ -47,6 +47,8 @@ wcześniejsze przypuszczenie o pustym AT4 było błędne. Wyposażono M203,
 odnowiono pełne PE78118912 i użyto EnergyShot. Przy210873:394HP,
 przeciwnik94HP,PE0,M203clip0. Rzeczywiste obrażenia226 zastępują robocze
 przewidywanie307 z niepełnej analizy wzoru; nie jest to dowód błędu portu.
+Ponowny odczyt właściwego rekordu6 wyjaśnia wynik: M203 ma25+2=27
+ataku,nie54. Siła65 daje (65+27)*3-50=226 zgodnie z oryginalnym kodem.
 Podejścia Club1 nie zadały dalszych obrażeń; przy212155:217HP,wróg94HP.
 Zamrożone JSON/VRAM/input: /tmp/pe-m229-svprotector-second-attempt-v1-212155*.
 Nie jest to zwycięstwo ani dowód normal/SAN. Live75962 zamknięty quit,exit0.

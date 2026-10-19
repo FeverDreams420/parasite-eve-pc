@@ -2,36 +2,30 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: autentyczna ucieczka po pająku prowadzi z M381/story508
-przez M157/film18 i M158 do walki M159 (dwaj przeciwnicy po152HP).
-Pójście do windy lub nieudana ucieczka prowadzą przez film17 do M438/
-Game Over i oryginalnego powrotu do tytułu; nie jest to awaria przejścia.
-Walka M159 nadal nieukończona. Oryginalny Heal1 na dachu przygotowuje64HP
-zamiast34HP (osobna próba normal-only); Heal3 jest na razie niedostępny
-przy pozostałym PE. Kolejny zapis telefonu nie został jeszcze wykonany.
+Najnowszy postęp: M159 wygrane oryginalnym Confuse i ostrzałem, Aya58HP,
+tryb2, zero żywych przeciwników. Cure-M odebrane; M160/Maeda/Daniel,
+M025/rozmowa w samochodzie, powrót na komisariat i story534.
+Telefon M042 tworzy autentyczny zapis I. Z niego zwykły Continue i dialog
+M041 kończą Dzień4: karta Day5, pełne320HP, zapis J. Continue z J po
+oryginalnym pytaniu o ponowny zapis prowadzi do mapy Dnia5/story544.
+Bez zmian kodu w tym odcinku, edytora save'ów lub zapisów gameplay RAM.
 
-Podczas cold SAN wykryto sporadyczny null-read AKAO/sequencer.c:359.
-Osobny TSan potwierdził wyścig blokady kolejki między timerem i głównym
-wątkiem. Naprawiono transakcję w istniejącym src/main/akao/voice_bank.c
-sekcją krytyczną; bez nowych plików źródłowych lub warstwy audio.
-Nie udowodniono osobno związku przyczynowego wyścigu z null-read; ten
-odczyt nie powtórzył się w nowych testach. Pełne audio/PCM nadal otwarte.
+Niezmieniony kandydat /tmp/pe-akao-queue-v1 ma48/48 wcześniejszych regresji
+oraz18 nowych cold prób normal/SAN:8 walki/powrotu/zapisu I,6 zakończenia
+dnia/zapisu J i4 Continue I/J. Pełny stan oraz1MiB VRAM zgodne w zakresach
+opisanych poniżej. Wszystkie8192B I i J zgodne między profilami i sesjami
+live; Continue zachowuje ekwipunek, HP i fabułę. Dowód zbiorczy:
+/tmp/pe-day4-day5-save-v1-proof.json. Źródła:
+/tmp/pe-nypd-post-hospital-save-v1-source/BASLUS-006620000000I oraz
+/tmp/pe-day5-save-v1-source/BASLUS-006620000000J.
 
-Nowy kandydat /tmp/pe-akao-queue-v1:388 świeżych obiektów (194/profil),
-48/48 regresji exit0,14 cold replayów normal/SAN oraz4 dodatkowe próby
-SAN wcześniejszego zawodnego punktu. Dwa pełne przebiegi diagnostyczne
-TSan po poprawce (91523 i95717) exit0 bez raportu; przed nią TSan zgłaszał
-wyścig. TSan obejmuje194 obiekty gry; archiwa PsyZ/SDL nieinstrumentowane,
-tak samo jak w profilu SAN (address,undefined,function) kodu portu.
-Dowody: /tmp/pe-akao-queue-v1-verification.json,
-/tmp/pe-akao-queue-v1-{escape,victory,failure}-replay-proof.json,
-/tmp/pe-akao-queue-v1-stress-proof.json i /tmp/pe-akao-queue-v1-tsan-proof.json.
-Pełny stan i1MiB VRAM zgodne w opisanych poniżej zakresach. Rehash388
-obiektów i995 plików manifestu: /tmp/pe-akao-queue-v1-release-proof.json.
-build/parasite-eve-pc i fixture są kopiami tego kandydata normal.
-Pełna kampania, zapis po M159 i kompletna zgodność obrazu/audio z PS1
-pozostają otwarte. Bez save editora, zapisów gameplay RAM i zmian źródłowych
-kart; użytkowe root bu00/bu10 nietknięte.
+Rehash388 obiektów i995 plików manifestu oraz zgodność kopii build
+potwierdzone w tym samym proof. SAN obejmuje kod portu; archiwa PsyZ/SDL
+nieinstrumentowane. Poprzednia naprawa kolejki AKAO pozostaje w istniejącym
+voice_bank.c, bez nowych plików źródłowych. Wcześniejszy null-read nie wrócił
+w nowych próbach, lecz pełne audio/PCM i jego osobna przyczyna nadal nie są
+zamknięte. Root bu00/bu10 nietknięte; źródła H/I/J i prywatne kopie bez zmian.
+Pełna kampania, Dzień5 i kompletna zgodność obrazu/audio z PS1 pozostają otwarte.
 
 Naprawa wyłącznie w istniejącym src/main/boot/init.c: blokujący odczyt
 sterowania zachowuje częściową komendę po EINTR, ponawia odczyt i odróżnia
@@ -67,6 +61,88 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M159 wygrane, zapis I, zakończenie Dnia4 i zapis J/Continue Day5
+
+Poprzedni odcinek był postępem: ucieczka z dachu i naprawa wyścigu AKAO.
+Ten odcinek nie zmienia produkcji. /tmp/pe-hospital-scaffold-v1-live
+odtwarza autentyczny H, całą wcześniejszą trasę i przygotowanie Heal1
+na dachu do91997/M159:64HP. Początkowy Right340 i Slow tracą HP,
+przy92349 pozostają2HP, ale oryginalne Heal2 i ruch odbudowują zdrowie:
+94341/70HP, dwie kule zmniejszają cel1:31 ze152 do86HP; dalsze Heal2
+prowadzi95877/58HP. Dane przeciwnika mają Slow/Confuse pair2 — podatność.
+Oryginalne Confuse (row4,col1 po odblokowaniu Heal3) ustawia core_flags
+262144→262150. Przy96785 Aya58HP i cel86HP. Dwie kule:97395/cel20HP;
+jedna kula i Square kończące resztę kolejki:97885/58HP, tryb2 i zero żywych
+przeciwników. Wpis2:31 miał nadal152HP przed śmiercią1:31 i zniknął wraz
+z nim; nie wymagał osobnego ostrzału. Wcześniejsze określenie dwóch
+niezależnych przeciwników na podstawie samej listy było zbyt mocne.
+Obejrzany ekran wyników: /tmp/pe-scaffold-victory-v1-preview/frame.png.
+
+Obtain All Items odbiera Cure-M16 do slotu13. Wyjście prowadzi przez
+M160/a8026048:100045/story520/spotkanie z Maedą i Danielem, następnie
+M025/a80032c8 — rozmowę w samochodzie, nie recepcję. Po dialogach M046/
+a8004348 i story534. Sterowanie działa także przy move_lock2; ten bit
+sam nie oznacza blokady ruchu. Początkowe próby drzwi nie trafiały w ich
+oś. Oryginalny skrypt M046 wskazuje podejście około x−1022,z912;
+ustawienie blisko tej osi i Up przechodzi do M043. Oryginalne podejście
+M043→M042 znajduje się około x−49,z−4311. Bez obchodzenia kolizji,
+teleportów, debuggerowych wywołań lub zmian RAM.
+
+Telefon M042 przy pozycji około x588,z−793 otwiera port36 i listę37.
+Domyślny cursor[0,7] wskazuje H; Down wybiera pusty[0,8], potwierdzenie
+zapisu tworzy I, bez nadpisania H. Zamknięcie menu do112765 daje
+M042/story534/58HP/320max/menuNULL. Wszystkie8192B zapisu I:
+SHA2564dc7b4db37e44faa93b023bbbf7e4889b2d43fb791b337a4dd0091ae4b3bf70f.
+Źródło zamrożone w /tmp/pe-nypd-post-hospital-save-v1-source.
+Osiem cold prób96785/97885/100045/112765 × normal/SAN:
+/tmp/pe-hospital-scaffold-v1-replay-proof.json. Pełny stan równy live,
+pełne1MiB VRAM zgodne między profilami; zachowane live VRAM przy97885,
+100045 i112765 także zgodne. Przy112765 obie karty zawierają tylko
+niezmieniony H i nowy I; wszystkie8192B I zgodne z live.
+
+Zwykły zimny Continue I w obu profilach: /tmp/pe-nypd-post-hospital-continue-v3-proof.json.
+M042/story534/58HP/320max, cały ekwipunek zgodny z112765. Pełny stan
+oraz1MiB VRAM równe między profilami. Pierwszy weryfikator miał błędnie
+zbudowane argumenty i został odrzucony przed startem gry; drugi nie
+potwierdzał pytania Load. Poprawiono wyłącznie runner, zachowując
+oryginalne przyciski i niezmieniony plik I. To nie były błędy gry.
+
+/tmp/pe-nypd-day4-finale-v1-live zaczyna od tego Continue I/24000.
+Oryginalne przejście M042→M041 i rozmowa z Maedą/Danielem:
+29434/M362/a8065148, story536, potem29454/pełne320HP. Obejrzana karta
+Day5 z oryginalnym pytaniem o zapis:
+/tmp/pe-nypd-day4-end-v1-preview/frame.png. Port36→lista37 wskazuje I
+cursor[0,8]; Down wybiera pusty[0,9] i potwierdzenie tworzy J. Przy31992
+menu wraca do listy. Dwa anulowania zamykają zapis;32752/story544/M000/
+mapa Dnia5. Zamrożone33352 JSON/VRAM. Prywatny I pozostał niezmieniony.
+Wszystkie8192B J: SHA256
+61f5f2c104d3b7f7e3c542a032c77807ff01b127303181636e458592425bb730.
+Źródło /tmp/pe-day5-save-v1-source/BASLUS-006620000000J.
+Sześć cold prób29634/31992/33352 × normal/SAN:
+/tmp/pe-nypd-day4-finale-v2-replay-proof.json. Pełny stan równy live,
+VRAM równy między profilami; przy33352 także równy zachowanemu live.
+Przy31992/33352 karty zawierają tylko niezmieniony I i nowy J; całe J
+równe live. Pierwszy skrypt tego zestawu miał złą ścieżkę źródła i nie
+uruchomił gry; poprawiony v2 korzysta z prawidłowego I.
+
+J zapisuje kartę M362/story536, nie gotową mapę. Zwykły Continue J
+prawidłowo wraca do tej karty z320HP; początkowe założenie weryfikatora
+o natychmiastowej mapie było błędne. Oryginalne Right i potwierdzenie
+wybierają No przy ponownym pytaniu o zapis, bez nadpisywania J, i dają
+M000/story544/mapę. Dwa cold profile zgodne:
+/tmp/pe-day5-continue-v2-proof.json, obejrzany obraz
+/tmp/pe-day5-resume-v1-preview/frame.png. Ekwipunek odpowiada live33352,
+pełny stan i1MiB VRAM równe między profilami, źródłowy i prywatny J bez zmian.
+
+Łącznie18 nowych cold prób exit0; te same binarki /tmp/pe-akao-queue-v1,
+wcześniejsze48/48 regresji nadal dotyczą tego kandydata. Rehash388 obiektów/
+995 plików, kopii build, źródeł i porównanie trwałego ekwipunku I/J:
+/tmp/pe-day4-day5-save-v1-proof.json. PsyZ/SDL bez instrumentacji SAN.
+Nie jest to dowód ukończenia Dnia5, całej kampanii ani pełnego PCM/obrazu
+PS1. Root karty nietknięte. Wszystkie sesje live zakończone quit0.
+Następny krok: kontynuować Dzień5 od sprawdzonego J, bez odtwarzania całego
+szpitala, i weryfikować kolejne oryginalne sceny/walki oraz zawartość opcjonalną.
 
 ### Ucieczka M381 → M157/M158/M159 i synchronizacja kolejki AKAO
 

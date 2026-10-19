@@ -2,11 +2,12 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: M154 wygrane, autentyczny Save H i zimny Continue H
-potwierdzone. Następnie odczyt dokumentacji przy biurkach, pełny ekwipunek,
-Discard Junk i ponowienie odbioru Elevator Key/item218: story496→500.
-Osiemnaście nowych cold przypadków normal/SAN opisano poniżej.
-Kod produkcyjny bez zmian; dalsza kampania nadal wymaga przejścia.
+Najnowszy postęp: autentyczny H → Elevator Key → ponowna wygrana M154,
+zużycie klucza, scena na okręcie i przejazd windą M155/story504.
+Dwanaście nowych cold przypadków normal/SAN potwierdza pełny stan/VRAM.
+Następny brak portu odtworzony w obu profilach: wejście M156 odrzucone
+przez loader, slot129/PS1 80192b08 nie ma natywnego deskryptora.
+Kod produkcyjny bez zmian; cały port i dalsza kampania nie są ukończone.
 
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
@@ -51,6 +52,59 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Od Elevator Key do M156 — potwierdzony brak modułu
+
+/tmp/pe-hospital-office-exit-v1-live odtwarza cały zwykły journal H do37602,
+następnie szuka przejścia po gabinecie. Po wejściu w obszar spotkania przy
+39255 rozpoczyna się ponowna walka7:31/8:0/9:1. Nie rozstrzygnięto zgodności
+tego ponowienia z PS1. Energy Shot zmniejsza spawnera170→48, salwa usuwa
+go przy41919. Dalsze salwy pokonują dwa8, ale pozostawiają9:1/60HP i Ayę
+z11HP przy43569. Pierwsza gałąź bez leczenia kończy się prawdziwą śmiercią
+43899/HP0, nie zwycięstwem; quit/exit0. To eksploracja normal-only.
+
+/tmp/pe-hospital-office-exit-v2-live odtwarza ten sam autentyczny przebieg
+H do43569. Heal2 daje przeżycie następnego trafienia: przy44321 HP8,
+potem44456 HP4 i gotowe ATB. Ostatnia salwa zabija9:1 przy44786:
+mode2, live_enemies0, HP4, ammo8. Oryginalne nagrody i wyjście z menu,
+dwa polowe Heal2:4→124HP. Przy46982 swobodna eksploracja M154.
+Oryginalny player event4 używa Elevator Key218, pokazuje dialog134 o
+wyrzuceniu klucza i zwalnia kontrolę. Przy48888 slot13=0. Przejście przez
+otwarte drzwi uruchamia scenę0xa80470c8/story502 na mostku okrętu
+(50178; obraz z dialogiem admirała obejrzany). Zwykłe zamykanie dialogów
+prowadzi do0xa80252c8/M155; użycie panelu windy kończy przy55058:
+story504/HP124, menuNULL/lock0. Następne Down50 daje55108 przy wyjściu.
+
+Sześć punktów43569/44786/48888/50178/55058/55108 × normal/SAN:
+12 exit0, całe JSON zgodne z historycznym live i między profilami, pełny
+1MiB VRAM zgodny między profilami oraz z zachowanym live55108:
+/tmp/pe-hospital-office-route-v1-replay-proof.json. Bez edytora save,
+zapisów gameplay RAM, teleportów lub pomijania starć. H i prywatne kopie
+bez zmian, prywatne bu10 puste, root karty nietknięte. Ponowny hash384
+obiektów/988 unikalnych zależności, archiwów i binarek oraz kopii build:
+/tmp/pe-hospital-office-route-v1-build-proof.json. SAN nie obejmuje PsyZ/SDL.
+
+Po55108 następne600 neutralnego wejścia kończy grę exit1:
+Scene_LoadRoom: native descriptor missing for M156 slot129 (PS1 80192b08),
+Scene frame startup failed:-2. Dwa niezależne cold profile od autentycznego
+H kończą identycznym oczekiwanym odrzuceniem loadera, bez diagnostyki
+sanitizerów: /tmp/pe-hospital-m156-missing-v1-proof.json. To potwierdzony
+brak portu, nie działające M156. Pełne zwykłe wejście do dalszej naprawy:
+/tmp/pe-hospital-m156-entry-v1-args.json, źródło H jak poniżej.
+
+Oryginalny USA room blob /tmp/pe-hospital-office-v1-room156.bin zawiera
+oba rekordy slot129/80192b08 i slot130/80192b64. Istniejące całe moduły
+src/overlays/room_lib/spark_attacks.c oraz capture_frame_sample.c są
+współdzielone przez M156/M291/M380, ale nie są jeszcze w natywnym linku.
+Próba ich kompilacji z flagami obecnego kandydata i błędami typów wskaźników:
+/tmp/pe-m156-initial-v1-compile.json. spark_attacks nie kompiluje się w obu
+profilach (m.in. brak deklaracji g_GeomScroll i stare typy transformacji);
+capture_frame_sample kompiluje się z siedmioma ostrzeżeniami o obcinaniu
+wskaźników do32 bitów. Nie jest to nowy kandydat ani działająca integracja.
+Następny krok: naprawić oba całe istniejące moduły w miejscu, odtworzyć
+ich oryginalne dane/PM i podłączyć oba deskryptory w istniejącym loaderze,
+zweryfikować cykle efektów z assetami/odniesieniem MIPS, następnie świeży
+pełny build i regresje obu profili oraz ponowienie tej autentycznej trasy.
 
 ### M154 wygrane, Save H/Continue i Elevator Key
 

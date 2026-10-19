@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M344: zakończone oryginalne zdarzenie Klampa, Maeda’s Gun i Klamp Key
+
+Analiza pierwotnych skryptów znalazła jedyne przypisanie global34=185
+wM344 przy17012. Poprawna trasa odM340 toM343→M344, nie M371 ani
+przedalarmowe warianty labu239/230. Uzupełniony graf wariantów jest w
+/tmp/pe-museum-variants-graph-v2.json; token sceny dekoduje cyfry z pól
+5bit: (token>>17)&31,(token>>12)&31,(token>>7)&31. Pierwsza robocza
+próba dekodowania jako BCD była błędna i została zastąpiona.
+
+M371 opuszczono zwykłym ruchem: Left15 odwraca wcześniejsze Right15,
+Down15 skierowało na wejście (kamera tego pokoju obraca osie),M340 przy79011.
+Wschodnie schody M340 wymagają obejścia od południa, około(792,−653),
+Right40,Up35: M343 przy80866. Pierwszy ruch Right ze spawnuM343
+przeciął strefę powrotną doM340. To nie zmiana orientacji kamery M343:
+późniejsze Left/Down/Up potwierdziły zwykłe osie. Powrót przez schody
+przy81995. W M343 z(−21,67) Up43 do z562,Right220 do drzwi x2341.
+Dialog „There’s someone in there…” i Cross prowadzą doM344 przy83797.
+
+Przeszedł pełny ciąg oryginalnych dialogów i animacji: Maeda, konfrontacja
+z Klampem, wejście Daniela, pożar, ucieczka Maedy/Daniela i ostatnia
+rozmowa Ayi z Klampem. Nie było nieznanego opcode ani przerwania.
+Maeda’s Gun(item97) odebrano z pełnym plecakiem: w wymuszonej siatce
+wskazano Junk0x14,slot11 (x1,y5). Przy88587 slot11=268,nowy rekord12,
+bez zmiany wyposażonych M500/B Jacket1. Odbiór Klamp Key213 przy107505
+również wymagał miejsca: wybrano drugi Junk,slot17(x1,y8),potwierdzony
+opisem „Broken Item”. Przy108165 slot17=213,global34=185,345HP,
+menuNone,lock0. To rzeczywisty postęp fabuły i zdobycie klucza przez grę,
+bez modyfikacji RAM/zapisu i bez zmian kodu produkcyjnego.
+
+Pełny cold replay od autentycznego B do108165: normal/SAN exit0,
+cały JSON oraz VRAM równy live; B/C zachowane, ponownie utworzony D
+identyczny bajtowo. Nowy rekord12 ma itemId97; slot17 ma213.
+Dowód: /tmp/pe-m344-klamp-key-v1-replay-proof.json. SAN nie obejmuje
+zewnętrznych bibliotek PsyZ/SDL; kandydat produkcyjny nadal265fc10fa.
+Live12235 czeka wM344 po zdarzeniu,
+pozycja(−99,395),M500/B Jacket1,oba nowe przedmioty zachowane.
+Następny krok: wyjście doM343 i dalsza kampania z Klamp Key; utworzyć
+kolejny autentyczny zapis przy dostępnym telefonie, zachowując B/C/D.
+Nie zaliczono jeszcze dalszych bossów ani ukończenia muzeum.
+
 ### M201 wygrane EnergyShot, trasa przez warianty M340/M371
 
 Od70165 wM206 wycofano się spod zamkniętych południowych drzwi.

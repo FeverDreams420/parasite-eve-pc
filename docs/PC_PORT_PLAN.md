@@ -46,6 +46,74 @@ To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
 
+### M126 — odtworzone porażki, obrażenia i przygotowanie wyposażenia
+
+Bez zmian produkcyjnych; kandydat pe-control-read-v2 pozostaje ten sam.
+Kontynuacja zwykłym inputem z autentycznego E i zweryfikowanego M127/35085.
+/tmp/pe-hospital-ground-v1-live: próba obejścia lobby, przypadkowe spotkanie
+czterech7:31/2/1/0, Heal1 odzyskuje30HP, kolejna salwa kończy się36550/HP0.
+/tmp/pe-hospital-ground-v2-live: Medicine2 ze slot21 odzyskuje108→198HP;
+pierwsza ucieczka nieudana, druga37217 udana przy18HP, następnie po
+powrocie do pola uruchamia się nowe spotkanie. Nie jest to wyjście z lobby.
+
+/tmp/pe-hospital-ground-v3-live: północne drzwi M127 przyx~0,z-500
+pokazują oryginalny komunikat Door locked. Dane skryptu wymagają item211;
+M147 daje211 i ustawia story491, M149 ustawia494. Są to odczyty danych,
+nie dowód odebrania klucza/przejścia tych scen. Należy dojść przez
+M126→M146→M147, wrócić do M127, potem otworzyć M148/M149. Bez sztucznego
+przestawiania story ani obchodzenia zamka.
+
+Przez oryginalny ekran Weapon (drugi Cross otwiera listę7, a nie panel
+efektów6) wyposażono M203: slot15 zamiast M16/10. Obejrzane statystyki:
+M16 attack41/range115/ammo19, M203 attack27/range60/ammo5. Medicine2
+zużyta w eksploracji i198HP. Walka: Barrier, jeden zwykły pocisk M203
+zmienia HP7:1 z88→49; Aya ginie40913. Granatnik nie został uznany za
+lepsze wyposażenie ani za dowód obrażeń obszarowych.
+
+Read-only HP watch w /tmp/pe-hospital-ground-hit-v1-live od38959/HP192:
+Right700 zachowuje192HP; późniejszy Down300 daje9HP;40179/HP0.
+Watchpoint korzysta z SBValue/SBProcess.ReadMemory, bez EvaluateExpression,
+wywołań gry, ReturnFromFrame i zapisów RAM. Zarejestrowane trafienia
+Entity_ResolveDropTable:39737 HP189→151,39779 151→94,39811 91→53,
+39815 53→15. Każdy odczytany deskryptor ma power90/effectType1/category0;
+pojawiają się także osobne ubytki3HP w Battle_SubActionStep (trucizna).
+To identyfikacja źródła ubytku w natywnym wykonaniu, nie niezależne
+potwierdzenie parametrów/kolizji i obrażeń względem PS1. Sam wysoki ubytek
+nie uzasadnia zmiany balansu. /tmp/pe-hospital-ground-hit-v1-hits.jsonl.
+Pierwsza konfiguracja callbacka LLDB użyła niedostępnej metody i zakończyła
+klienta; połączenie odtworzono przez watchpoint command add. Drugi klient
+LLDB kończy1 po zamierzonym detach w callbacku przyHP0 (diagnostyka
+„process not in stopped state ... detached”), sama gra quit/exit0.
+
+Dziesięć normalnych prób ruchu do40179, wyłącznie input:
+/tmp/pe-hospital-ground-move-search-v1-artifact-proof.json. Najlepsze1/8
+mają136HP i PE21057915/23199744, bez zabitych przeciwników. Próby3/4
+kończą się Game Over/powrotem do launchera bez player_hp — to porażki;
+KeyError w pierwotnym podsumowaniu poprawiono dla pozostałych prób,
+wcześniejsze artefakty zweryfikowano bez ponownego uruchamiania.
+
+/tmp/pe-hospital-ground-best-v1-live z próby1: Energy Shot M203
+zmienia88→12HP u7:1; następny zwykły strzał zabija tego jednego aktora.
+41701:56HP/trzech żywych przeciwników;41921:HP0. Nadal brak zwycięstwa.
+/tmp/pe-hospital-ground-best-v2-live: przedmiot17 ze slot20 usuwa truciznę
+(przy40939 bit0 statusu wyzerowany, slot20→0), Heal2 i41955/159HP.
+Następna salwa zostawia17HP; sesję świadomie zakończono w menu broni
+przy42391, nie uznano jej za wygraną. Wszystkie klienty live quit/exit0,
+źródłowe/prywatne E niezmienione i bu10 puste. Brak operacji na kartach repo.
+Następna próba wymaga lepszego przygotowania broni/pancerza i użycia
+oryginalnych metod leczenia/uników; bez naprawy runtime opartej na domyśle.
+
+Szesnaście świeżych cold replayów normal/SAN exit0: obserwacja HP
+38959/39659/39959/40179 (8), zabicie pojedynczego7:1/śmierć41701/41921 (4),
+przedmiot na truciznę/Heal2 przy40939/41955 (4). Całe JSON zgodne z live
+(w tym obserwowanym przez debugger) i profilami; pełne1MiB VRAM zgodne
+między profilami. Końcowe live VRAM40179 i41921 również identyczne.
+/tmp/pe-hospital-ground-{hits,best,cure}-v1-replay-proof.json.
+W każdym źródłowy i prywatny E bez zmian, bu10 puste. Ponownie sprawdzone
+384 obiekty/zależności/archiwa/binaria i ich kopie build:
+/tmp/pe-hospital-ground-v1-build-proof.json. PsyZ/SDL nadal nieinstrumentowane.
+To dowody zachowania tych prób, nie przejścia M126 ani dalszej kampanii.
+
 ### Naprawione przewody i działająca winda do parteru
 
 Doprecyzowanie poprzedniego etapu: autentyczny E ma trzy bezpieczniki

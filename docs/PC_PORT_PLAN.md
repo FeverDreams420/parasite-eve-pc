@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Kontynuacja kanałów: druga wygrana M168 (tym razem para aktorów8),
+pełne przejście korytarza, M172 i odebrany Super Tool. Oryginalne dane
+M167 wymagają bank[55]>=4 przed północnym wyjściem. Wyjście zwiększa
+licznik; zawrócenie tą samą stroną M168 go zmniejsza. Pełne przejście
+M168 daje w100909 licznik4, a następne północne wyjście otwiera M172.
+Token a8027148 dekoduje się jako M0172I. W roboczej nazwie artefaktów
+m178-check-v1 jest błędny numer; JSON i token dotyczą M172, nie M178.
+
+Sesja /tmp/pe-sewer-escape-v1-live: normalne wejście od autentycznego J.
+Heal3 przywraca335HP; trzy nieudane próby Escape, czwarta skuteczna.
+Po powrocie tą samą stroną licznik pozostaje3. Następne spotkanie M168:
+Confuse, Heal2, Cure-D, trzy strzały i dwa Energy Shot;97859 tryb2,
+zero żywych przeciwników,6/335HP. To wygrana, nie cleanup po śmierci.
+Łup odebrany, następnie przejście całego korytarza i M172 w102989.
+Próba dalszego marszu w głąb M172 nie znajduje wyjścia: moduł ma tylko
+powrót M167. Zwykłe podejście do bocznej strefy skrzyni i Cross otwiera
+komunikat Super Tool;110059 swobodne pole, rawslot23:0→23.
+
+Trasa ma6HP i PE0, więc przed kolejną walką wymaga autentycznego leczenia
+lub lepszego wcześniejszego przebiegu. Nie jest to nowy trwały save ani
+ukończone kanały. Bez modyfikacji RAM/zapisu, zmian kodu produkcyjnego
+lub nowych źródeł. Wcześniejsze próby walki/odwrotu z niskim HP kończyły
+się śmiercią i zachowano je jako nieudane, nie zaliczono do wygranych.
+
+Dodatkowe sześć cold prób tego samego kandydata frog-fix-v1 normal/SAN:
+97859 druga wygrana M168,102989 wejście M172,110059 odebrany Super Tool.
+Pełne JSON-y zgodne z live i1MiB VRAM zgodny z zachowanym live oraz między
+profilami. Źródłowe J i prywatne karty bez zmian; root bu00/bu10 nietknięte.
+Dowody /tmp/pe-sewer-sequence-v1-{proof.json,candidate-proof.json},
+/tmp/pe-sewer-maze-v1-script-proof.json oraz trzy wskazane replay-proof.
+Nazwa /tmp/pe-sewer-m178-check-v1-replay-proof.json historycznie błędna:
+sprawdza token M172. Istniejący build i wcześniejsze50 regresji dotyczą
+tego samego niezmienionego kandydata. PsyZ/SDL nieinstrumentowane.
+Kontynuacja: /tmp/pe-sewer-supertool-v1-replay-110059-normal/args.json.
+
 Najnowsza sesja: M168 wygrane zwykłym sterowaniem od autentycznego J,
 bez modyfikacji RAM ani zapisu. Punkt76041:129/335HP, tryb2, zero żywych
 przeciwników; po odebraniu łupu powrót do swobodnego M167 w78211.

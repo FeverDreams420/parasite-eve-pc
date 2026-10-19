@@ -90,6 +90,33 @@ Pełny JSON/VRAM normal/SAN/live,oba exit0,bez raportów sanitizerów:
 /tmp/pe-m213-ladder-entry-v1-replay-proof.json. Live SAN19532 czeka teraz przy149318 wM213,2×Medicine4.
 Odczyt oryginalnych skryptów:/tmp/pe-m{211,212,213,214,216}-nav-v1.txt.
 
+### M218: Energy Shot, wygrana i amunicja; wejście M219
+
+Od M213149318:Left25,Up8,Cross20,wait500 →M218/0xa8041448,
+149871,465HP. Sterowanie M218 obrócone:Right zwiększa worldZ,
+Down zwiększa worldX. Right140,Down85 uruchomiło jeden typ3/sub31,
+280HP. Próby pałką wymagały podejścia bliżej niż nominalny zasięg,
+bo przeciwnik oddala się podczas animacji; trafienia zadają27.
+
+Korekta notatek sterowania PE, odczytana z renderu oryginalnego menu:
+wiersze Heal1/Heal2, Heal3/Detox, Medic/Barrier, EnergyShot/Scan,
+Slow/Haste, Confuse/GeneHeal. Wcześniej w M207 aktywowano Barrier,
+nie EnergyShot. EnergyShot jest niedostępny z Club1; po zmianie na
+M203, przy pełnym PE, wiersz3/kolumna0,confirm i oddzielne potwierdzenie
+celu zadziałały. Jeden nabój i PE dały226 obrażeń:280→54. Medicine4
+slot15 przywróciło132→532HP. Dwa trafienia Club1 po27 i Slow doprowadziły
+do wygranej157547,313HP,mode2,live0. Pełne wejścia, zamrożony JSON/VRAM
+oraz pełny JSON/VRAM normal/SAN/live,oba exit0,bez raportów sanitizerów:
+/tmp/pe-m218-victory-v1-replay-proof.json.
+
+Łup to Ammo+15; ALL odebrało amunicję, END zamknęło wynik. Od pozycji
+po walce Left90,Down150,wait400 →M219/0xa80414c8,159077,313HP,field.
+Pełny JSON/VRAM normal/SAN/live,oba exit0,bez raportów sanitizerów:
+/tmp/pe-m219-entry-v1-replay-proof.json. Odczyt LLDB bez zmiany pamięci
+potwierdza g_InventoryItemWorkspace.ammo[1].ammo=15:
+/tmp/pe-m219-ammo-read-v2.log. Live SAN19532 czeka teraz w M219,159077; jedno Medicine4
+pozostało. Wszystkie wejścia zwykłe, bez zmian kodu, RAM ani save.
+
 Telefon i dalsza kampania pozostają do ukończenia.
 
 ### Museum: quiz i wygrane M206/M207, wejście M209

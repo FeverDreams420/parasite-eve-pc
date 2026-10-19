@@ -2,10 +2,10 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp kampanii: wygrana walka czterech szczurów w M126, odbiór
-nagród i swobodna eksploracja, następnie wejście do M146. Dwanaście nowych
-replayów normal/SAN opisano w sekcji M126 poniżej. Dalszy szpital pozostaje
-nieukończony. Kod produkcyjny bez zmian.
+Najnowszy postęp kampanii: zwycięstwa w M126 i M146, nagrody, rozmowa
+z pacjentem/lekarzem i wejście do M147. Szesnaście nowych replayów
+normal/SAN opisano w sekcji M146 poniżej. Walka w M147, klucz i dalszy
+szpital pozostają nieukończone. Kod produkcyjny bez zmian.
 
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
@@ -50,6 +50,55 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M146 — zwycięstwo, rozmowa po walce i wejście do M147
+
+Nowszy przebieg /tmp/pe-hospital-prep-v4-live odtwarza autentyczny E oraz
+cały zwycięski journal M126 do44377. Bez zmian produkcyjnych, nowych
+plików źródłowych, przenoszenia funkcji ani manipulacji RAM/save. Pole PE
+pozwala legalnie użyć Heal2: przy44933 HP46→106; przy wejściu do kolejnej
+walki PE wynosi2808552, czyli10672872−120×65536. Nie jest to darmowe
+leczenie. Źródło Battle_StartEncounter zeruje statusy/odporności przy
+inicjalizacji, więc nie zużywano środków zapobiegawczych przed spotkaniem.
+
+M14645773: pole, HP106. Zmieniona trasa ruchu nie omija spotkania:
+46293 dwa cele7:31/120HP i6:0/110HP. Po pierwszej salwie7:31 ma66HP,
+Aya37HP; Heal2 przywraca zapas zdrowia. Kolejna salwa daje12HP celu;
+w następnej kolejce pierwszy strzał kończy7:31, drugi trafia6:0, który
+ma83HP przy48836 (Aya85HP). Dalsze dwie salwy kończą walkę50136:
+mode2, zero wrogów, HP35/210, menu nagród. Zachowane pełne state/VRAM:
+/tmp/pe-hospital-prep-v4-50136.{json,vram}. W czasie tej próby występują
+silne obrażenia i Stiffness/Slow; wcześniejsza identyfikacja silniejszego
+ataku wyłącznie po typie celu była przypuszczeniem, nie dowodem autora
+trafienia. Nie zmieniano obrażeń, odporności ani czasu reakcji.
+
+Odbiór nagród daje dwa Medicine2/item7 do slot17 i21. Po rozliczeniu
+wyników stan pokazuje maxHP273 i maxPE26345472; to obserwacja tej gałęzi,
+nie niezależna weryfikacja całej progresji poziomów. Po walce oryginalny
+skrypt sam prowadzi Ayę do pacjenta/lekarza i uruchamia dialog (m.in.
+page106,37,38). Zwykłe Cross kończy rozmowę;53016 mode9, lock0, dialog
+state0, HP35/273/story488, bez menu i wrogów. Ruch Up35, Right150 z
+przerwami prowadzi54041 do M147/a80243c8, pole/lock0, HP35.
+
+Dalsza próba M147:54521 cztery cele6:31/1/0 po88HP i5:0/110HP.
+Medicine2 ze slot17 użyto oryginalnym menu: slot17→0, slot21 nadal7;
+po późniejszych obrażeniach55343 HP84. Slow i poison oraz dalsze
+trafienia sprowadzają HP do17 przy55813, wszyscy czterej żyją. Zachowane
+/tmp/pe-hospital-prep-v4-55813.{json,vram}. Quit/exit0. To nie zwycięstwo
+M147 i nie uzyskano jeszcze item211/story491. Następna próba powinna
+wykorzystać leczenie przed wejściem do spotkania: bezpieczne53016/M146
+lub54041/M147 zachowują oba Medicine2. Nie ma nowego trwałego save;
+źródłem pozostaje E i pełny odtwarzalny journal zwykłych wejść.
+
+Szesnaście cold replayów44933/48836/50136/53016/54041/54521/55343/55813
+× normal/SAN: wszystkie exit0, pełny stan zgodny z obserwowanym live i
+między profilami; pełny VRAM zgodny między profilami i z zachowanym
+50136/55813: /tmp/pe-hospital-prep-v4-replay-proof.json. Rewalidacja384
+obiektów, zależności, bibliotek, binariów i kopii build (990 plików):
+/tmp/pe-hospital-prep-v4-build-proof.json. Źródłowy/prywatny E bez zmian,
+bu10 puste; root bu00/bu10 nietknięte. PsyZ/SDL nadal nieinstrumentowane.
+To dowód opisanego fragmentu, nie ukończenia kampanii ani pełnego
+porównania rozgrywki z PS1.
 
 ### M126 — zwycięstwo i przejście do M146
 

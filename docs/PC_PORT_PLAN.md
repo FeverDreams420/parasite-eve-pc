@@ -2,6 +2,50 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+M188 osiągnęło drugą fazę zwykłym inputem, bez zmian RAM/zapisu/statystyk.
+Automatyczne porównanie120 wariantów (15 rund po8, normal-only) jest terminalne:
+/tmp/pe-m188-input-search-v1/{terminal.json,history.json}, log
+/tmp/pe-m188-input-search-v1.log. Każdy wariant odtwarza K i cały wcześniejszy
+input, porównuje pełny stan rodzica, korzysta z własnych kart i kończy0.
+To dobór inputu w /tmp, bez nowych plików ani warstw w kodzie gry.
+Żaden z tych120 wariantów nie wygrał całej walki.
+
+Wybrano zachowaną gałąź r04-c02 (41756,135HP,PE około557, segment1000172HP)
+i kontynuowano ręcznie przez ten sam headless runner: Heal3, Cure-P,
+strzały, Heal2, Cure-D i dalsze strzały z automatycznym przeładowaniem.
+Przy46304 główny segment ma999983HP i tryb17; przy46434 skrypt ustawia go
+na300HP, rozdziela cztery cele300/120/120/180 i udostępnia je w celowaniu.
+Aya40→30HP, zatruta; całej walki nadal nie wygrano. Zrzut wizualny:
+/tmp/pe-m188-boss-v8-live/frame.png. Pełny zwykły input i trzy checkpointy
+41756/46304/46434 mają sześć cold prób normal/SAN, cały JSON zgodny z live,
+pełne VRAM zgodne między profilami, dwa końcowe również z live:
+/tmp/pe-m188-split-check-v1-replay-proof.json. Źródłowy/prywatny K bez zmian,
+root bu00/bu10 nietknięte. Ten live zamknięty0.
+
+Nadal aktywne jest automatyczne porównanie kolejnych wariantów, od wcześniejszego
+38230 (przed pierwszym Energy Shot): /tmp/pe-m188-input-search-v2.py,
+/tmp/pe-m188-input-search-v2/{best.json,history.json,terminal.json},
+log /tmp/pe-m188-input-search-v2.log. Dwie zachowane gałęzie, osiem kierunków,
+limit24 rund; tylko zwykły input i prywatne karty, żadnych diagnostic-hp.
+Przy przekazaniu pracy sesja exec98770 była potwierdzona jako żywa; przed
+nowym uruchomieniem sprawdzić jej stan oraz terminal.json. Nie traktować
+braku świeżego wiersza logu jako zakończenia. Wynik tej serii nie jest jeszcze
+dowodem zwycięstwa. Kolejny krok: wygrać całą drugą fazę i przejść dalej.
+
+Dalsze porównanie M188 z USA MIPS (bez zmian kodu produkcyjnego):
+6144 nowe przypadki PhasedSparkParticle stan0/1 i CometSparkParticle stan1,
+po3072 z pulą potomków o zerowej pojemności oraz z pulą4 wpisów (część
+zajęta, część dostępna). Normal/SAN zgadzają się z oryginałem co do całych
+bajtów rodzica, flag właściciela i gracza, wyniku callbacku i RNG BIOS-u;
+w drugim zestawie także active/age/cały payload wszystkich czterech potomków.
+W każdym zestawie rzeczywiste trafienia:93/81/152 dla trzech gałęzi;
+drugi obejmuje409 nowych potomków stanu0 i614 stanu1. Granice promienia,
+współrzędne bliskie/dalekie, wysokość podłogi, fazy/timery i maski flag
+są zróżnicowane. Canary natywnej puli przechodzi. Dowody:
+/tmp/pe-m188-hit-v{1,2}-{proof.json,coverage-proof.json,provenance.json}.
+Nie wykryto rozbieżności w tych gałęziach; nie jest to porównanie renderu
+ani pełnej wieloklatkowej walki z emulatorem PS1.
+
 Dodatkowe próby M188 na tym samym kandydacie (bez zmian produkcyjnych):
 pierwszy przebieg kończy się naturalnym Game Over; drugi potwierdza Heal3
 (135→335HP), zużycie Cure-P z usunięciem zatrucia oraz zużycie Cure-D.

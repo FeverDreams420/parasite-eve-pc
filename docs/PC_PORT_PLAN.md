@@ -2,6 +2,53 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M221: wygrana, Medic i następne brakujące powiązania
+
+Kandydat m221-native-v2. Od178491 Up130,wait300,Right140,Down70,wait500,
+Right120,wait600 uruchomiły oryginalną scenę i pojedynczy typ5/sub31,
+320HP. Sterowanie M221:Up zmniejsza worldX,Right zwiększa worldZ.
+Przeciwnik nałożył Darkness(stateFlags&0x30==0x10). Nominalne pole
+control.range nadal podaje1209,ale oryginalne AYA_DARKNESS_RANGE wynosi200;
+pudła przy325..1176 nie dowodzą błędu obrażeń. Medic(row2,col0) usunął
+status. Następna seria zadała105(3×35). Heal3 przy182319 przywrócił
+295→561HP. Dalszy ostrzał i pojedynczy strzał zakończonySquare wygrały
+walkę183915:518HP,mode2,live0,G23clip5. Pełny zwykły replay odO normal/SAN,
+oba exit0,pełny JSON/VRAM równe sobie i live,bez raportów sanitizerów:
+/tmp/pe-m221-victory-v2-replay-proof.json.
+
+Ślad LLDB ma kontrolę pozytywną na --m221-load:
+/tmp/pe-m221-effect-trace-fixture-v2/counts.json. Wszystkie5funkcji trafione.
+Próby trace-v1/v2 były nieważną instrumentacją:adresy przed ASLR i callback
+wywołany przed zakończeniem importu modułuPython. Nie używać ich pustych
+liczników jako dowodu braku wykonania efektów. Poprawiony pełny trace-v3
+z callbackiem uruchomionym po imporcie zakończył się exit0 i potwierdził
+wszystkie5funkcji:RingController mode0=2,mode1=134,mode2=181;
+RingParticle mode1=1383,mode2=1669;BurstSpawner mode0=2,mode1=107,
+mode2=141;BurstParticle mode1=2462,mode2=2299;SetSparkSlot=2.
+Breakpoints na wejściach czytały argumenty; bez zapisu do stanu gry.
+Końcowy pełny JSON/VRAM identyczny z niezdebugowanym live oraz normal/SAN,
+prywatne O/A zachowane:/tmp/pe-m221-effect-trace-v3-proof.json.
+
+Po walce ALL odebrało Medicine4,END. Right190,wait400 prowadzi doM223,
+ale loader znów odrzuca slot75/80194008. Live35703 zakończony exit1:
+/tmp/pe-m221-native-v2-live/game.log. Pełna reprodukcja:
+/tmp/pe-m223-missing-descriptor-v2-base-args.json. Ostatni sparowany
+punkt to183915; późniejsze Medicine4 i próba przejścia mają tylko przebiegSAN.
+
+Audyt całego Museum(192..256) znalazł dokładnie10pokoi z task142:
+203,221,223,224,229,231,233,234,242,246. Osiem(bez231/234) ma identyczny
+moduł20828B SHAaf5bf0a6…; niektóre dodatkowo slot70/80193fd0(klasa0).
+231/234 mają wariant22804B SHA79465fc2… z dodatkowym SoundBurst.
+Kompletny katalog:/tmp/pe-spark-ring-museum-module-catalog-v1.json.
+/tmp/pe-spark-ring-combined-data-comparison-v1.json potwierdza identyczne
+skrypty Ring36B,Burst32B,paletę32B oraz skryptSoundBurst36B wariantu231
+z już obsługiwanymi danymi221/205.
+Dane wariantu:/tmp/pe-m231-native-audit-v1.bin/.json. Powiązania wariantu:
+75/80194758,116/801947ec(SoundBurst),142/80194864,180/801948bc.
+Następny krok:potwierdzić skrypty/palety obu wariantów,rozszerzyć jawne
+powiązania i test rzeczywistego I/O/reload na wszystkie10pokoi,w pełnym
+świeżym kandydacie. Nie przepisywać funkcji ani tworzyć nowych plików.
+
 ### M221: natywna integracja istniejącego spark_ring_burst.c
 
 Aktualny kandydat /tmp/pe-m221-native-v2. Naprawiono cały istniejący
@@ -36,9 +83,9 @@ doM221/0xa80420c8,178491,471HP,field/lock0. Niezależne normal/SAN oba
 exit0,bez raportów sanitizerów,pełny JSON/VRAM równe sobie i live:
 /tmp/pe-m221-entry-v2-replay-proof.json. Prywatne O/A niezmienione.
 LiveSAN35703:/tmp/pe-m221-native-v2-live.py,czyta stan178491 wM221;
-limit500000. Oryginalny skrypt:/tmp/pe-m221-nav-v1.txt. Rzeczywiste
-ataki/rysowanie obu nowych efektów w walce M221 nadal wymagają dowodu
-z kampanii; samo wejście i testy kontrolerów nie zamykają tego zakresu.
+limit500000. Oryginalny skrypt:/tmp/pe-m221-nav-v1.txt. Późniejsza walka
+M221 potwierdziła aktualizację i rysowanie obu efektów; ślad wywołań
+i pełne porównanie stanu/obrazu opisano powyżej.
 
 ### M209→M210: wstrząs, wygrana i naprawa oddawania broni z łupu
 

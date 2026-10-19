@@ -2,6 +2,53 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M243 wygrane; M245 wymaga całego trail_burst_attacks.c
+
+Live38136 na kandydacie d07eafddc: Up110 uruchomiło wM243 pojedynczy
+cel typ3/sub31,390HP. Ruch do gotowości ATB zachował447HP/pełnePE.
+EnergyShot z odległości1962 (poza zwykłym zasięgiem1272) odjął348HP:
+390→42. Przy119799 Aya409HP,PE0,magazynek2. Po podejściu do967
+zlecono dwa strzały; pierwszy zakończył przeciwnika,drugi nie zużył
+amunicji. Przy120239 wygrana409HP,magazynek1. Łup CureP pominięto
+przez END. Posiadane Medicine3 ze slot1 zużyto w zwykłym Items/Use:
+409→589HP,slot1 pusty przy120881.
+
+Schody M243→M245: bezpośredni Right blokuje balustrada. Ostateczne
+wejście z okolic(313,−750):Down20 do z−975,Right40 dox697,Up40;
+przy122531 Y−17671096,menuNone,lock1 (przejście rozpoczęte),589HP,
+zero przeciwników. Pełny cold replay od autentycznego B do122531:
+normal/SAN exit0, cały JSON i VRAM identyczne z live, B/C/D identyczne
+ze źródłami, bu10 puste. Dowód:
+/tmp/pe-m243-native-victory-v1-proof.json. Kod produkcyjny bez dalszych
+zmian; nadal kandydat d07eafddc. To potwierdza tę walkę i schody, nie
+pełną zgodność wszystkich efektów M243 z oryginalnym obrazem PS1.
+
+Następne oczekiwanie na przejście zakończyło live38136 exit1:
+„Scene_LoadRoom: native descriptor missing for M245 slot75 (PS1 8019563c)”.
+Reprodukcja: /tmp/pe-m245-missing-descriptor-v1-args.json i .log.
+Nie restartować tego zakończonego procesu w ciemno; po poprawce odtworzyć
+zwykłe wejścia z B na nowym kandydacie. Nie ma obecnie aktywnego live.
+
+Audyt oryginalnych zasobów /tmp/pe-m245-trail-burst-audit-v1.json:
+M245 i M397 mają identyczny kompletny moduł27556B (rozmiar0x6ba4 z
+rekordów),SHA256 8a458699189cd838d04670b5614ae8a40cf43ee8644c190d4f8d860ad06dd2cf.
+Rekordy:75/8019563c,70/80195604,140/80195720,141/801957e4.
+Program140:callbacki80193244/8019368c,initializer801955e4,
+script801956ac;141:callbacki80194aac/80194ef4,initializer801955f4,
+script80195758. Istniejący oryginalny plik
+src/overlays/room_lib/trail_burst_attacks.c (926linii) zawiera osiem
+funkcji i dwa gettery historii,ale nie jest włączony w CMake. Dane i
+typy w include/pe1/room_trail_burst.h. Oba gettery historii w oryginale
+zwracają historię seeking,nie zmieniać tego „dla porządku”.
+
+Następna poprawka: dostosować CAŁY istniejący trail_burst_attacks.c do
+natywnych callbacków/puli/wskaźników,odtworzyć oryginalne dane i reset,
+powiązać oba programy oraz klasy M245/M397,sprawdzić realne I/O/reload
+i uruchomienie kontrolerów. Nie dodawać plików źródłowych,nie mapować
+wyłącznie75 i nie pomijać efektów. Po zmianie wymagany świeży kandydat
+normal/SAN oraz pełne istniejące regresje. Dalsza kampania pozostaje
+niepotwierdzona; źródłowe karty użytkownika nadal nietknięte.
+
 ### M243: naprawa brakującego pełnego modułu actor/SoundBurst
 
 Kontynuacja po Klampie opuściłaM344 przy109080 przez Up32,Left130

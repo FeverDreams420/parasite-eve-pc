@@ -2,6 +2,7 @@
 #include "pe1/room_floor_walker.h"
 #include "pe1/room_homing_model.h"
 #include "pe1/room_homing_flash.h"
+#include "pe1/room_twelve_effect.h"
 #include "pe1/room_falling_burst.h"
 #include "pe1/room_motion_init.h"
 #include "common.h"
@@ -691,6 +692,14 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 123 && record[i].u.handlerAddress == 0x80193254u)
                 native = &g_RoomHomingFlashProgram;
         }
+        if (map + 1 == 167) {
+            if (slot == 75 && record[i].u.handlerAddress == 0x80193250u)
+                native = &g_RoomActorClassTable[2];
+            if (slot == 70 && record[i].u.handlerAddress == 0x80193218u)
+                native = &g_RoomActorClassTable[0];
+            if (slot == 11 && record[i].u.handlerAddress == 0x801931b0u)
+                native = &g_RoomTwelveElementHandlers;
+        }
         if (!native) {
             fprintf(stderr, "Scene_LoadRoom: native descriptor missing for M%03d slot %u (PS1 %08x)\n",
                     map + 1, slot, record[i].u.handlerAddress);
@@ -830,7 +839,15 @@ int Scene_LoadRoom(unsigned int roomId)
         slot = record[i].source.bytes.slot;
         /* Validation above resolves the room-specific descriptor. Assign even
          * when a prior statically linked room used this same slot. */
-        if (homing_flash_library) {
+        if (map + 1 == 167) {
+            if (slot == 75) g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
+            else if (slot == 70) g_PmCmdHandlerTable[70] = &g_RoomActorClassTable[0];
+            else if (slot == 11) {
+                g_PmCmdHandlerTable[11] = &g_RoomTwelveElementHandlers;
+                memset(&RoomLib_TwelveEffectPrimaryPacket, 0, sizeof(RoomLib_TwelveEffectPrimaryPacket));
+                memset(&RoomLib_TwelveEffectSecondaryPacket, 0, sizeof(RoomLib_TwelveEffectSecondaryPacket));
+            }
+        } else if (homing_flash_library) {
             if (slot == 75) g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
             else if (slot == 70) g_PmCmdHandlerTable[70] = &g_RoomActorClassTable[0];
             else if (slot == 123) {

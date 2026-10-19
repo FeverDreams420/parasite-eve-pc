@@ -2,6 +2,7 @@
 #define PE1_ROOM_TWELVE_EFFECT_H
 
 #include "pe1/room_fx.h"
+#include "pe1/pm_types.h"
 
 typedef struct RoomLibTick12Rec {
     RoomSpriteMatrix matrix;
@@ -19,5 +20,9 @@ typedef struct RoomLibTick12Rec {
 
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomLibTick12Rec, position) == 0x5C, room_twelve_position_offset);
 PE1_STATIC_ASSERT(sizeof(RoomLibTick12Rec) == 0xBC, room_twelve_state_size);
+
+extern PmCommand g_RoomTwelveElementHandlers;
+extern RoomFxSpritePacket RoomLib_TwelveEffectPrimaryPacket;
+extern RoomFxSpritePacket RoomLib_TwelveEffectSecondaryPacket;
 
 #endif

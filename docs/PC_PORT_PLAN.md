@@ -2,36 +2,40 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: autentyczny Continue J → mapa Dnia 5/story544 →
-Chinatown M161 → M162. Naprawiono brakujące powiązania całego istniejącego
-modułu homing_flash.c, jego wskaźniki i dostęp do natywnych struktur.
-Pierwsza walka M162 wygrana zwykłym Energy Shot i ostrzałem: 108HP,
-zero przeciwników; poziom24, odebrane przedmioty, swobodna eksploracja.
-M163 również wygrane:72/335HP, zero przeciwników. Maeda daje Narita
-(item203), story560; zejście drabiną do kanałów M166 daje story568.
-Przejście M166→M167 nadal wymaga podłączenia całego istniejącego
-modułu twelve_elements.c. Zapis J i jego prywatne kopie bez zmian.
-Bez nowych plików źródłowych, przenoszenia funkcji, edytora save'ów lub
-zapisów gameplay RAM. CMake dołącza istniejący moduł do portu.
+Najnowszy postęp: M167 w kanałach ładuje się i uruchamia oryginalną
+walkę. Naprawiony w miejscu cały istniejący twelve_elements.c: osiem
+funkcji efektu, jego oryginalna klasa, listy, skrypt i60 bajtów kolorów.
+Loader wiąże wszystkie trzy deskryptory M167. Nie pomija się slot11 ani
+oryginalnych ataków. Bez nowych plików źródłowych lub przenoszenia funkcji.
 
-Nowy kandydat /tmp/pe-chinatown-module-v1: 390 świeżych obiektów
-(195/profil), rehash1000 plików manifestu, 48/48 regresji i20 cold prób
-kampanii normal/SAN (10 z poprzedniego etapu i10 z kontynuacji M163).
-Pełny stan zgodny z sesjami live w dziesięciu punktach;
-1MiB VRAM zgodny między profilami, a zwycięstwo, pole po walce i M163
-również z zachowanym VRAM live. Kopie build odpowiadają kandydatowi.
-Dowody: /tmp/pe-chinatown-module-v1-release-proof.json,
-/tmp/pe-chinatown-module-v1-replay-v2-proof.json oraz
-/tmp/pe-chinatown-module-v1-m163-replay-v1-proof.json oraz
-/tmp/pe-chinatown-m163-check-v1-final-proof.json.
+Kandydat /tmp/pe-sewer-twelve-v4:392 świeże obiekty (196/profil),
+rehash1003 plików manifestu,50/50 regresji, w tym nowy test całego M167.
+Test używa prawdziwego CUE do ładowania i porównania danych, a osobny
+izolowany cykl PM z kontrolowaną macierzą/teksturowaniem uruchamia cały
+oryginalny skrypt, obydwa bufory, wszystkie12 elementów, natywne łańcuchy
+GPU i wygaszenie efektu. Nie jest to porównanie obrazu z PS1.
+
+Dwanaście nowych cold prób normal/SAN: M163 wygrane, Narita/story560,
+M166/story568, wejście M167, trwająca walka oraz śmierć Ayi w tej walce.
+Pełny stan zgodny z live;1MiB VRAM zgodny między profilami, dla czterech
+punktów także z zachowanym live. M167 nie jest wygrane: próba z72HP
+kończy się0HP/tryb3. Zniknięcie przeciwników przy śmierci nie jest wygraną.
+Następny pewny punkt to53600/M167 przed walką lub53900 podczas walki.
+Źródło nadal autentyczne J, bez edytora i zapisów gameplay RAM; nowych
+trwałych save'ów po Chinatown brak. Root bu00/bu10 nietknięte.
+
+Dowody /tmp/pe-sewer-twelve-v4-{verification.json,replay-v2-proof.json,
+release-proof.json,original-proof.json}; kopie build zgodne z kandydatem.
 SAN obejmuje kod portu; archiwa PsyZ/SDL nieinstrumentowane.
-Root bu00/bu10 nietknięte. Pełna kampania, dalszy Dzień5 i kompletna
+Pozostałe pokoje korzystające z twelve_elements wymagają osobnego audytu
+ich danych i powiązań. Pełna kampania, dalsze kanały/Dzień5 i kompletna
 zgodność obrazu/audio z PS1 pozostają otwarte.
 
-Poprzedni etap: M159 wygrane, autentyczne zapisy I i J oraz Continue
-na mapę Dnia5 potwierdzone w /tmp/pe-day4-day5-save-v1-proof.json.
-Źródło bieżącej trasy:
-/tmp/pe-day5-save-v1-source/BASLUS-006620000000J.
+Poprzednie odcinki: M159 wygrane i zapisy I/J, M162 oraz M163 wygrane,
+Narita od Maedy i zejście po drabinie do M166. Historyczne dowody:
+/tmp/pe-day4-day5-save-v1-proof.json oraz
+/tmp/pe-chinatown-m163-check-v1-final-proof.json.
+Źródło kampanii: /tmp/pe-day5-save-v1-source/BASLUS-006620000000J.
 
 Naprawa wyłącznie w istniejącym src/main/boot/init.c: blokujący odczyt
 sterowania zachowuje częściową komendę po EINTR, ponawia odczyt i odróżnia
@@ -67,6 +71,81 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Cały moduł twelve_elements i wejście do M167
+
+Poprzedni błąd przejścia M166→M167 (slot75/80193250) odtworzony na
+niezmienionym wcześniejszym kandydacie. M167 posiada też slot70/80193218
+oraz11/801931b0. Podłączenie samej klasy aktora nie wystarczałoby:
+slot11 jest pełną oryginalną klasą dwunastu elementów ataku.
+
+Naprawiono istniejący src/overlays/room_lib/twelve_elements.c i jego
+nagłówek, CMake i loader. Wszystkie osiem funkcji pozostaje w tym samym
+pliku. Native FieldFxHandler zwraca int i przyjmuje trzy wskaźniki;
+wyeliminowano dawny int/truncation właściciela. Zamiast niealigned widoku
+rekordu przesuniętego o i bajtów używa się state[i]/timer[i]. Pozycja Ayi
+pochodzi z kanonicznych pól FieldActor, nie offsetów PS1 0x2A/2E/32.
+Ujemne współrzędne polygonu skalowane są przez unsigned shift, a macierz
+właściciela kopiowana memcpy. Punkt kolizji ma rzeczywisty typ SVECTOR.
+Oryginalna logika ruchu, kolorów, trafienia, cooldown40,12 liczników
+oraz zakończenia efektu zachowana. Wielkość kontekstu clock dostosowana
+do natywnego wskaźnika, work/state pozostaje oryginalnym0x120.
+
+Odtworzono oryginalne siedem metod klasy z jej własnymi listami, skryptem
+{0x2000d,0x10000,0x10001,-1}, parametrami spawn i60 bajtami toru kolorów.
+Nie dodano warstwy gameplayu ani zastępczego ataku. Loader M167 wiąże
+slot70 z klasą D,75 z E i11 z g_RoomTwelveElementHandlers, zerując obydwa
+natywne szablony pakietów przy ponownym ładowaniu. Pozostałe mapy nie są
+wiązane bez osobnego sprawdzenia ich danych.
+
+/tmp/pe-sewer-twelve-v4-original-proof.json zawiera oryginalne deskryptory,
+listy, rozmiary, skrypt i kolory z PE.IMG. Osiem funkcji 8018f39c..8018fe68
+(exclusive),2764 bajty, SHA256:
+ec323aa92df56eb18bdad21c38eab2e9a864f74fe0afa5a7b786fda650961763.
+Disassembly całej klasy i efektu zachowane w
+/tmp/pe-sewer-twelve-v3-original-disasm.txt. Ten audyt nie dowodzi pełnej
+zgodności rysowania i audio z PS1 ani gotowości pozostałych12 pokojów.
+
+Istniejący tests/original_actor_animation.c ma nowy --sewer-twelve.
+Prawdziwe odczyty CUE i dwukrotne Scene_LoadRoom sprawdzają dane,
+wszystkie trzy rejestracje i reset pakietów. Osobny izolowany cykl z
+kontrolowaną macierzą, podłogą i wpisem tekstury uruchamia oryginalny
+PmCommand i skrypt; sprawdza pełną szerokość argumentu, obydwa bufory,
+aktywację wszystkich12 elementów, rysowane pakiety i ich natywne
+łańcuchy OT, ochronę poza areną oraz automatyczne wygaszenie. Przechodzi
+normal/SAN. To test integracji silnika, nie edytowany zapis kampanii.
+Pierwszy szkic testu miał zbyt duży odstęp, by12 elementów zdążyło się
+aktywować przed terminem, oraz brak konfiguracji projekcji GTE.
+Poprawiono warunki fixture. SAN dodatkowo wykrył pośredni adres poza
+tablicą w zapisie module+address-base; użyto module+(address-base).
+Nie był to błąd gameplayu i nie zaliczono tych prób jako sukcesów.
+
+Sesja /tmp/pe-sewer-twelve-v1-live odtwarza całą sprawdzoną trasę z J,
+M163 i Narita, do53266/M166. Left180 i neutral prowadzą do53600:
+M167/a80263c8,72/335HP, story568, swobodne pole, bez menu. Left200
+uruchamia oryginalną walkę.53900:72HP, trzej przeciwnicy7:31/30/29
+po112HP, ATB5940. Obraz /tmp/pe-sewer-twelve-v4-53900-preview/frame.png
+pokazuje natywnie rysowany żółty efekt pierścieniowy. Kolejne Left240
+kończy się śmiercią;54220 ma0HP i tryb3. Sesja quit0. Nie jest to
+zwycięstwo ani koniec kanałów. Nie zapisano nowej karty.
+
+Finalny /tmp/pe-sewer-twelve-v4 ma392 świeże obiekty i50/50 regresji
+normal/SAN. Dwanaście cold prób tego samego kandydata na46855,50475,
+53266,53600,53900 i54220 (każdy normal/SAN) potwierdza pełne JSON-y
+live i1MiB VRAM zgodny między profilami. Dla46855/53266/53900/54220
+również VRAM live jest identyczny. Wszystkie próby kończą się quit0,
+bez raportów sanitizerów, nieznanych opcode lub brakujących deskryptorów.
+Początkowy runner zawierał wejścia po wcześniejszym control-at i został
+odrzucony przed startem gameplayu. Oddzielny replay-v2 filtruje te przyszłe
+zdarzenia; nie dolicza się odrzuconej konfiguracji do12 sukcesów.
+
+Źródłowe8192B J i wszystkie prywatne kopie pozostają identyczne;
+prywatne bu10 puste, root bu00/bu10 nietknięte. Rehash392 obiektów,
+1003 plików manifestu i zgodność kopii build zapisane w
+/tmp/pe-sewer-twelve-v4-release-proof.json. SAN obejmuje port,
+PsyZ/SDL pozostają nieinstrumentowane. Następny krok: przejść walkę
+M167 ze zwykłym sterowaniem; checkpoint53600 lub53900 dostępny jako
+/tmp/pe-sewer-twelve-v4-replay-v2-<frame>-normal/args.json.
 
 ### M163 wygrane, Narita od Maedy i wejście do kanałów M166
 

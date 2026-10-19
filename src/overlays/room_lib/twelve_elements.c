@@ -9,6 +9,9 @@
  */
 
 #include "common.h"
+#include "pe1/room_module.h"
+#include "pe1/field_glow_sprite.h"
+#include "pe1/field_sprite_state.h"
 #include "pe1/field_script_context.h"
 #include "pe1/fieldfx_calls.h"
 #include "pe1/floor_polygon.h"
@@ -25,26 +28,24 @@ static const RoomFxSeed8 s_TwelveEffectInitSeed = {{0, 0, 0, 0, 0, 0, 0, 0}};
 static const RoomFxSeed8 s_TwelveEffectDrawSeed = {{0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
 static const RoomFxVec4 s_TwelveEffectShadowScale = {0x1000, 0x2000, 0x1000, 0};
 
-int RoomLib_TwelveEffectNop0(void) {
-    return 0;
+void RoomLib_TwelveEffectNop0(void) {
 }
 
-int RoomLib_TwelveEffectNop1(void) {
-    return 0;
+void RoomLib_TwelveEffectNop1(void) {
 }
 
 /* Init: binds the state to the owner's matrix words and sets up the two
  * packet templates the draw pass fills (primary sprite, floor shadow). */
-void RoomLib_InitTwelveEffectPackets(RoomEnt *obj, void *unused, RoomLibFxMatrixState *state) {
+int RoomLib_InitTwelveEffectPackets(void *object, void *unused, void *data) {
+    RoomEnt *obj = object;
+    RoomLibFxMatrixState *state = data;
     RoomLink *owner;
-    RoomLibFxMatrixWords *words;
 
     FieldFx_SetScriptContext(state);
     state->asset.index = Asset_SearchByKeyType(0xB);
     owner = obj->link;
     state->link = owner;
-    words = owner->p238;
-    state->matrix = *words;
+    memcpy(&state->matrix, owner->p238, sizeof(state->matrix));
     state->reload = 0x28;
     state->cooldown = 0;
     state->hit = 0;
@@ -64,13 +65,16 @@ void RoomLib_InitTwelveEffectPackets(RoomEnt *obj, void *unused, RoomLibFxMatrix
     RoomLib_TwelveEffectSecondaryPacket.g = 0x80;
     RoomLib_TwelveEffectSecondaryPacket.b = 0x80;
     RoomLib_TwelveEffectSecondaryPacket.zero = 0;
+    return 0;
 }
 
-void RoomLib_TwelveEffectNop3(void) {
+int RoomLib_TwelveEffectNop3(void *object, void *control, void *data) {
+    return 0;
 }
 
-void RoomLib_UpdateTwelveElementTimer(int arg0, char *arg1, char *arg2) {
-    RoomLibFxMatrixState *state = (RoomLibFxMatrixState *)arg2;
+int RoomLib_UpdateTwelveElementTimer(void *arg0, void *control, void *data) {
+    char *arg1 = control;
+    RoomLibFxMatrixState *state = data;
 
     if (state->cooldown != 0) {
         state->cooldown--;
@@ -89,6 +93,7 @@ void RoomLib_UpdateTwelveElementTimer(int arg0, char *arg1, char *arg2) {
     if (FieldFx_IsLastSlotHalted() == 1) {
         arg1[1] = 2;
     }
+    return 0;
 }
 
 /* The element records followed, past the spawn work area, by the handle
@@ -109,8 +114,8 @@ intptr_t *FieldFx_VarPtr(int index);
 int FieldFx_PlaySoundAtMatrixPosition(void *object, int message, void *state);
 
 /* Retail marks this function handwritten; only its COP2 windows remain ASM. */
-void RoomLib_InitTwelveElementEffect(void *owner, void *unused, char *state) {
-    RoomTwelveEffectStack stack;
+int RoomLib_InitTwelveElementEffect(void *owner, void *unused, void *state) {
+    RoomTwelveEffectStack stack = {0};
     void *effectOwner;
     RoomLibTick12Rec *workState;
     int spacing;
@@ -183,6 +188,7 @@ void RoomLib_InitTwelveElementEffect(void *owner, void *unused, char *state) {
     }
     ((RoomTwelveEffectWork *)workState)->effectHandle =
         FieldFx_PlaySoundAtMatrixPosition(effectOwner, 0x58F, &stack.sourceMatrix);
+    return 0;
 }
 
 typedef struct RoomTwelveEffectDrawStack {
@@ -190,7 +196,7 @@ typedef struct RoomTwelveEffectDrawStack {
     RoomSpriteMatrix secondaryMatrix;
     RoomFxSeed8 seed;
     s16 collision[4];
-    s16 point[4];
+    GteShortVector point;
     RoomSpriteMatrix localMatrix;
     RoomFxVec4 scale;
     RoomFxVec4 sourceScale;
@@ -200,16 +206,14 @@ void ApplyMatrix(RoomSpriteMatrix *matrix, void *position, int *translation);
 int FieldFx_IsPointInSpriteQuad(GteShortVector *point, GteMatrix *matrix);
 
 /* Retail marks this function handwritten; only its COP2 windows remain ASM. */
-void RoomLib_DrawTwelveElementEffect(void *unused0, void *unused1,
-                                     char *state) {
-    RoomTwelveEffectDrawStack stack;
+int RoomLib_DrawTwelveElementEffect(void *unused0, void *unused1, void *state) {
+    RoomTwelveEffectDrawStack stack = {0};
     RoomLibTick12Rec *workState;
     RoomLibFxMatrixState *clock;
     unsigned int i;
     RoomSpriteMatrix *primaryMatrix;
     RoomFxVec4 *sourceScale;
     RoomSpriteMatrix *secondaryMatrix;
-    char *element;
     int pointX, pointY, pointZ;
 
     workState = (RoomLibTick12Rec *)state;
@@ -239,8 +243,7 @@ void RoomLib_DrawTwelveElementEffect(void *unused0, void *unused1,
     FieldFx_SetSpriteBlendMode(2);
 
     for (; i < 12; i++) {
-        element = (char *)workState + i;
-        if (((RoomLibTick12Rec *)element)->state[0] == 1) {
+        if (workState->state[i] == 1) {
             stack.primaryMatrix = workState->matrix;
             ApplyMatrix(primaryMatrix, &workState->position[i],
                           stack.primaryMatrix.t);
@@ -256,7 +259,7 @@ void RoomLib_DrawTwelveElementEffect(void *unused0, void *unused1,
             stack.primaryMatrix.t[1] += clock->matrix.matrix.t[1];
             stack.primaryMatrix.t[2] += clock->matrix.matrix.t[2];
             FieldFx_InterpolateColorRamp(RoomLib_TwelveEffectTable,
-                          ((RoomLibTick12Rec *)element)->timer[0],
+                          workState->timer[i],
                           (unsigned char *)&RoomLib_TwelveEffectPrimaryPacket);
 
             stack.secondaryMatrix = stack.primaryMatrix;
@@ -283,7 +286,7 @@ void RoomLib_DrawTwelveElementEffect(void *unused0, void *unused1,
                           primaryMatrix, 0);
             stack.secondaryMatrix.t[1] = g_RoomFloorY->y;
             FieldFx_InterpolateColorRamp(RoomLib_TwelveEffectTable,
-                          ((RoomLibTick12Rec *)element)->timer[0],
+                          workState->timer[i],
                           (unsigned char *)&RoomLib_TwelveEffectSecondaryPacket);
             FieldFx_DrawGlowSprite((FieldGlowSprite *)&RoomLib_TwelveEffectSecondaryPacket,
                           secondaryMatrix, 0);
@@ -291,23 +294,94 @@ void RoomLib_DrawTwelveElementEffect(void *unused0, void *unused1,
             stack.collision[0] = stack.secondaryMatrix.t[0];
             stack.collision[1] = 0;
             stack.collision[2] = stack.secondaryMatrix.t[2];
-            if (Geo_PointInPoly(stack.secondaryMatrix.t[0] << 16,
-                              stack.secondaryMatrix.t[2] << 16,
+            if (Geo_PointInPoly((s32)((u32)stack.secondaryMatrix.t[0] << 16),
+                              (s32)((u32)stack.secondaryMatrix.t[2] << 16),
                               g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) {
-                ((RoomLibTick12Rec *)element)->state[0] = -1;
+                workState->state[i] = -1;
             }
 
-            pointX = RW16(D_8009D254, 0x2A);
-            stack.point[0] = pointX;
-            pointY = RW16(D_8009D254, 0x2E);
-            stack.point[1] = pointY;
-            pointZ = RW16(D_8009D254, 0x32);
-            stack.point[2] = pointZ;
-            if (FieldFx_IsPointInSpriteQuad(stack.point, secondaryMatrix) != 0) {
+            pointX = (s16)(g_PlayerEntity->pos_x >> 16);
+            stack.point.x = pointX;
+            pointY = (s16)(g_PlayerEntity->pos_y >> 16);
+            stack.point.y = pointY;
+            pointZ = (s16)(g_PlayerEntity->pos_z >> 16);
+            stack.point.z = pointZ;
+            if (FieldFx_IsPointInSpriteQuad(&stack.point, secondaryMatrix) != 0) {
                 clock->hit = 1;
             }
         }
     }
+    return 0;
 }
 
-ROOMLIB_TICK_12_COUNTERS(RoomLib_TickTwelveElementCounters)
+int RoomLib_TickTwelveElementCounters(void *owner, void *control, void *data) {
+    u8 *signal = control;
+    RoomLibTick12Rec *rec = data;
+    for (unsigned i = 0; i < 12; ++i) {
+        int state = rec->state[i];
+        if (state != -1) {
+            if (state == 1) {
+                rec->phase[i] += rec->phaseStep;
+                if (rec->phaseLimit < (s16)rec->phase[i])
+                    rec->phase[i] = rec->phaseLimit;
+            }
+            rec->position[i].z -= rec->frameStep;
+            if ((s16)rec->position[i].z < 10) rec->state[i] = 1;
+        }
+        rec->timer[i] = (s8)(u8)(rec->timer[i] + 1);
+        if (rec->timer[i] == rec->timerLimit) {
+            --rec->repeatCount;
+            if ((s16)rec->repeatCount == 0) signal[1] = 2;
+        }
+    }
+    return 0;
+}
+
+/* Complete USA M167 descriptor, lists, script and colour track. */
+static FieldFxHandler s_TwelveInit[] = {RoomLib_InitTwelveEffectPackets,
+    RoomLib_InitTwelveElementEffect, (FieldFxHandler)(intptr_t)-1};
+static FieldFxHandler s_TwelveDraw[] = {RoomLib_TwelveEffectNop3,
+    RoomLib_DrawTwelveElementEffect, (FieldFxHandler)(intptr_t)-1};
+static FieldFxHandler s_TwelveUpdate[] = {RoomLib_UpdateTwelveElementTimer,
+    RoomLib_TickTwelveElementCounters, (FieldFxHandler)(intptr_t)-1};
+static u16 s_TwelveSpawn[] = {sizeof(RoomLibFxMatrixState), sizeof(RoomTwelveEffectWork), 65535, 0};
+static int s_TwelveScript[] = {0x2000d, 0x10000, 0x10001, -1};
+RoomFxSpritePacket RoomLib_TwelveEffectPrimaryPacket, RoomLib_TwelveEffectSecondaryPacket;
+u8 RoomLib_TwelveEffectTable[60] = {
+    0,0,0,10, 128,128,64,5, 128,255,64,5, 255,128,64,5,
+    128,128,64,10, 128,128,64,5, 128,255,64,5, 255,128,64,5,
+    128,128,64,10, 128,128,64,5, 128,255,64,5, 255,128,64,5,
+    128,128,64,10, 0,0,64,255, 0,0,0,255
+};
+static void TwelvePlant(PmSlotHeader *object) {
+    *FieldFx_GetSlot((FieldFxObject *)object) = s_TwelveScript;
+}
+static int TwelveSpawn(PmSlotHeader *object, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)object, b, c, d, (int)e, (int)f);
+    return 0;
+}
+static int TwelveRegister(PmSlotHeader *object) {
+    if ((unsigned)FieldFx_GetStatus(object) >= 2)
+        FieldFx_Register((FieldFxObject *)object, s_TwelveDraw);
+    return 0;
+}
+static int TwelveClose(PmSlotHeader *object) {
+    object->state = 4;
+    if ((unsigned)FieldFx_GetStatus(object) >= 2) {
+        FieldActor *actor = ((FieldFxObjectPrefix *)object)->actor;
+        actor->state->core_flags &= 0xC0FFFFFFu;
+        *actor->state->action_state = 4;
+    }
+    return 0;
+}
+static int TwelveStart(PmSlotHeader *object) {
+    int result = -1;
+    if ((unsigned)FieldFx_GetStatus(object) >= 2) {
+        result = FieldFx_UpdateSlots((FieldFxObject *)object, s_TwelveUpdate);
+        result |= FieldFx_RunScript((FieldFxObject *)object, s_TwelveInit, s_TwelveSpawn);
+    }
+    if (result == -1) TwelveClose(object);
+    return 0;
+}
+PmCommand g_RoomTwelveElementHandlers = {RoomLib_TwelveEffectNop1, TwelvePlant,
+    TwelveSpawn, TwelveRegister, TwelveStart, TwelveClose, RoomLib_TwelveEffectNop0};

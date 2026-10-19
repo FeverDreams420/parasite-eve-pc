@@ -1,3 +1,4 @@
+#include "pe1/room_twelve_effect.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_spark_attacks.h"
 #include "pe1/room_homing_model.h"
@@ -16585,8 +16586,104 @@ static int original_hospital_spark_assets(void)
     puts("Original M156/M291/M380: whole USA module fingerprint, three complete task scripts/tables, callback ABI, six room loads and repeated work-data reset passed");return 1;
 }
 
+static int original_sewer_twelve_assets(void)
+{
+    const char *path = getenv("PE_TEST_DISC");
+    if (!path || !*path) return 0;
+    PeDisc disc = {0}; PeDiscFile exe, archive;
+    if (!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path) ||
+        !pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive)) return 0;
+#define TWELVE_REQUIRE(c) do {if (!(c)) {fprintf(stderr,"Twelve element integration line %u failed\n",__LINE__);return 0;}} while (0)
+    u8 module[17132];
+    TWELVE_REQUIRE(original_chrysler_read(&disc,&exe,&archive,167,module,sizeof(module)));
+    const u32 methods[] = {0x8018f3a4,0x8018f1ec,0x8018f218,0x8018f244,0x8018f28c,0x8018f318,0x8018f39c};
+    TWELVE_REQUIRE(!memcmp(module+(0x801931b0u-0x8018eff0u),methods,sizeof(methods)) &&
+        !memcmp(module+(0x801931ccu-0x8018eff0u),RoomLib_TwelveEffectTable,60));
+    ResetGraph(0); CdRom_BindImage(&disc,NULL);
+    TWELVE_REQUIRE(Asset_OpenPeImage()==0);
+    Boot_InitGameState(); D_8009CDC8='m'; fx_image_io=1;
+    for (unsigned pass=0;pass<2;++pass) {
+        memset(&RoomLib_TwelveEffectPrimaryPacket,0xa5,sizeof(RoomLib_TwelveEffectPrimaryPacket));
+        memset(&RoomLib_TwelveEffectSecondaryPacket,0xa5,sizeof(RoomLib_TwelveEffectSecondaryPacket));
+        g_PmCmdHandlerTable[11]=g_PmCmdHandlerTable[70]=g_PmCmdHandlerTable[75]=NULL;
+        TWELVE_REQUIRE(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0167i"))==0 &&
+            g_PmCmdHandlerTable[11]==&g_RoomTwelveElementHandlers &&
+            g_PmCmdHandlerTable[70]==&g_RoomActorClassTable[0] && g_PmCmdHandlerTable[75]==&g_RoomActorClassTable[2]);
+        for (unsigned b=0;b<sizeof(RoomFxSpritePacket);++b)
+            TWELVE_REQUIRE(!((u8 *)&RoomLib_TwelveEffectPrimaryPacket)[b] && !((u8 *)&RoomLib_TwelveEffectSecondaryPacket)[b]);
+    }
+    CdRom_BindImage(NULL,NULL); pe_disc_close(&disc);
+    _Alignas(8) u8 assets[128]={0}; ((SceneAssetBlob *)assets)->directoryOffset=8;
+    ((SceneAssetDirectory *)(assets+8))->keyEntries=(1u<<22)|64;
+    ((AssetU32KeyRecord *)(assets+64))->packedOffset=80;
+    ((AssetU32KeyRecord *)(assets+64))->key=0x73decd80;
+    ((TimPackedImage *)(assets+80))->key.bytes.type=11;
+    ((TimPackedImage *)(assets+80))->geometry=(832u<<10)|(256u<<21);
+    g_GameState.loaded_scene_archive=assets;
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}}; s32 projection=320;
+    g_GeomScroll.words.viewMatrix=&view; g_GeomScroll.words.projectionDistance=&projection; g_RoomFloorY->y=0;
+    PolygonVertex polygon[4]={{.x=-2000,.z=-2000},{.x=2000,.z=-2000},{.x=2000,.z=2000},{.x=-2000,.z=2000}};
+    g_FloorPolygonVertices=polygon; g_FloorPolygonVertexCount=4;
+    _Alignas(void *) static u8 arena[65536]; static RenderGpuTag ordering[4096];
+    for (unsigned draw=0;draw<2;++draw) {
+        for (unsigned i=0;i<32;++i) {Psyz_GteCtrlWrite(i,0); Psyz_GteDataWrite(i,0);}
+        Psyz_GteCtrlWrite(24,160u<<16); Psyz_GteCtrlWrite(25,112u<<16);
+        Psyz_GteCtrlWrite(26,320); Psyz_GteCtrlWrite(29,1365); Psyz_GteCtrlWrite(30,1024);
+        FieldFxObject object={0}; FieldActor actor={0}; FieldActorState state={0}; u8 action=2;
+        RenderMatrix matrix={.rotation={{4096,0,0},{0,4096,0},{0,0,4096}},.translation={0,-100,1200}};
+        actor.state=&state; state.control10.command_value=1; state.action_state=&action;
+        actor.render_object.matrices=&matrix; actor.pos_x=8000*65536; actor.pos_z=8000*65536;
+        g_PlayerEntity=&actor; object.prefix.actor=&actor;
+        g_RoomTwelveElementHandlers.init(); g_RoomTwelveElementHandlers.initialize((PmSlotHeader *)&object);
+        TWELVE_REQUIRE(!memcmp(object.state.commands,module+(0x80193208u-0x8018eff0u),16));
+        const intptr_t vars[]={10,60,100,20,0,64,4096};
+        for (unsigned v=0;v<7;++v) g_RoomTwelveElementHandlers.send((PmSlotHeader *)&object,0,v,vars[v],0,0);
+        intptr_t wide=sizeof(intptr_t)>4?(intptr_t)UINT64_C(0x1234567887654321):0x7654321;
+        g_RoomTwelveElementHandlers.send((PmSlotHeader *)&object,0,8,wide,0,0);
+        TWELVE_REQUIRE(object.state.vars[8]==wide);
+        unsigned seen=0,active=0,drawn=0,ticks=0;
+        for (;ticks<180;++ticks) {
+            memset(arena,0xa5,sizeof(arena));
+            for (unsigned i=0;i<4096;++i) ordering[i]=(RenderGpuTag){.address=0xffffff};
+            g_ActiveDrawSlot=draw; g_DrawPacketOffset=0;
+            D_800B0E38.ordering[draw]=ordering; D_800B0E38.packets[draw]=(char *)arena;
+            g_RoomTwelveElementHandlers.start((PmSlotHeader *)&object);
+            g_RoomTwelveElementHandlers.execute((PmSlotHeader *)&object);
+            for (unsigned i=0;i<64;++i) if (object.slots[i].flag) {
+                FieldFxSlot *slot=&object.slots[i]; seen|=1u<<slot->handler_id;
+                TWELVE_REQUIRE(slot->handler_id<=1 && slot->data_offset>=0);
+                if (slot->handler_id==1) {
+                    RoomLibTick12Rec *data=(void *)(object.data+slot->data_offset);
+                    TWELVE_REQUIRE((uintptr_t)data%_Alignof(RoomLibTick12Rec)==0);
+                    for (unsigned j=0;j<12;++j) if (data->state[j]==1) active|=1u<<j;
+                }
+            }
+            TWELVE_REQUIRE(g_DrawPacketOffset>=0 && g_DrawPacketOffset<sizeof(arena));
+            drawn+=g_DrawPacketOffset!=0;
+            for (unsigned layer=0;layer<4096;++layer) {
+                uintptr_t link=ordering[layer].address; unsigned links=0;
+                while (link!=0xffffff) {
+                    TWELVE_REQUIRE(link>=(uintptr_t)arena && link+sizeof(RenderGpuTag)<=(uintptr_t)arena+g_DrawPacketOffset && ++links<=48);
+                    link=((RenderGpuTag *)link)->address;
+                }
+            }
+            for (unsigned b=g_DrawPacketOffset+sizeof(FieldStripPacket);b<sizeof(arena);++b) TWELVE_REQUIRE(arena[b]==0xa5);
+            if (object.prefix.reserved00==4) break;
+        }
+        if (ticks>=180 || seen!=3 || active!=4095 || !drawn) fprintf(stderr,"Twelve draw%u ticks%u seen%u active%x drawn%u\n",draw,ticks,seen,active,drawn);
+        TWELVE_REQUIRE(ticks<180 && seen==3 && active==4095 && drawn>0);
+        state.core_flags=0x3fabcdef;
+        g_RoomTwelveElementHandlers.stop((PmSlotHeader *)&object); g_RoomTwelveElementHandlers.unload();
+        TWELVE_REQUIRE(state.core_flags==0x00abcdef && action==4);
+    }
+    puts("Original M167: real CUE descriptor/data, reload resets, full authored PM script, both buffers, all twelve elements, native OT chains and expiry passed");
+    return 1;
+#undef TWELVE_REQUIRE
+}
+
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--sewer-twelve"))return original_sewer_twelve_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--hospital-spark"))return original_hospital_spark_particle_states() && original_hospital_spark_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--chrysler-particles"))return original_chrysler_particle_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--floor-walker"))return original_floor_walker_states() && original_timed_spawn_states() && original_floor_walker_assets()?0:1;

@@ -2,6 +2,55 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M205: oryginalny Sound Burst podłączony na PC
+
+Wyjście M204 na zachodzie przy x≈−93,z3058 prowadzi do M205. Kandydat
+sprzed poprawki kończył ładowanie komunikatem `native descriptor missing
+for M205 slot75 (PS1 80192c70)`,exit1. Log/input:
+/tmp/pe-warehouse-bp-v2-live; sesja11625 zakończona,autentyczny A zachowany.
+M205 linkuje istniejącą bibliotekę aktorów i dwie oryginalne funkcje w
+src/overlays/room_lib/sound_burst.c. Włączono cały ten plik i poprawiono
+na miejscu szerokość argumentu callbacka oraz natywne wskaźniki końca
+puli,aktora i stanu gracza. Oryginalny skrypt36B,stan16B i inicjalizator
+RoomLib_SetArgs3; oba deskryptory75/80192c70 i116/80192d04,reset argumentów
+przy ładowaniu. Bez nowego pliku źródłowego i zmian zasad gameplay.
+
+Audyt USA MIPS ujawnił błąd pierwszej poprawki(v1):kontroler powinien
+zapisać bajt przez actor->state->action_state (PS1 state+0x18),nie dolny
+bajt core_flags. V1 odrzucono. V2 poprawia ten zapis; v3 dodatkowo usuwa
+ostrzeżenia typów i dodaje test wskaźnika. Końcowym kandydatem jest
+/tmp/pe-m205-native-v3. Nie używać wyników v1 jako potwierdzenia wierności.
+
+Test --m205-load czyta cały15704B moduł z CUE i sprawdza hash,oryginalny
+skrypt,obie rejestracje oraz reset argumentów przy dwóch ładowaniach.
+Dodatkowo uruchamia prawdziwy kontroler z osobnym wskaźnikiem i strażnikami
+pamięci:8 kombinacji aktywności/bajtu(0,1,2,255),wyłącznie aktywne1→2,
+core_flags bez zmiany. Ten przypadek odróżnia poprawkę od błędnego v1.
+Oracle:/tmp/pe-m205-native-v3-original-proof.json.
+
+V3:402 świeże obiekty(201/profil),616 zależności,64/64 regresje normal/SAN,
+4/4 wybrane CTest z wymaganymi assetami,bez SKIP. Domyślny CTest bez
+PE_TEST_DISC pomija testy assetów; nie dowodzi pełnego pokrycia. PsyZ/SDL
+bez instrumentacji. Root game/fixture to dokładne kopie nowego normal:
+/tmp/pe-m205-native-v3-release-proof.json.
+
+Zwykły input od O odtwarza wydanie BP,zapisA,wszystkie poprzednie walki,
+wejście M205 i oryginalny dialog. M205:typ4/sub31,430HP,SoundBurst i poison.
+Pierwsza gałąź z v1 zakończyła się śmiercią przy70HP przeciwnika. Ponowny
+przebieg od92047 wcześniej wznawia ruch po przeładowaniu i wygrywa przy
+92761,92HP,mode2,live0. Poprawne v2 i v3 zachowują ten wynik.
+Po nagrodach/level-up i END normalne zachodnie wyjście prowadzi do
+M206/0xa8040348,94861,92HP,move_lock0. V3 cold normal/SAN potwierdzają zwycięstwo92761 (pełny JSON zgodny
+z wcześniejszą obserwacją,VRAM porównana pomiędzy buildami):
+/tmp/pe-m205-victory-v3-replay-proof.json. Następnie pełny JSON/VRAM
+M206 równy także bieżącemu live v3:
+/tmp/pe-m206-entry-v3-replay-proof.json. Live SAN v3, sesja23127,
+/tmp/pe-m205-native-v3-live. Args całej trasy:
+/tmp/pe-m206-entry-v3-base-args.json. Skrypty z opcode239 wskazują
+telefon w M239; /tmp/pe-museum-phone-search-v2.json. Starsze sesje
+v1/v2 zamknięte,nie kontynuować ich jako kandydata końcowego.
+Kampania pozostaje nieukończona; kolejnym krokiem telefon i dalsze Museum.
+
 ### Dalsze Museum: M198, M197, M201 i wejście M204
 
 Po zwycięstwie M199 zwykła droga powrotna M198→M197 wyzwala nowe

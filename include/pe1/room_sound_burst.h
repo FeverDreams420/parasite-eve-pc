@@ -99,4 +99,9 @@ typedef struct RoomHomingSparkParams {
 
 PE1_STATIC_ASSERT(sizeof(RoomHomingSpark) == 0x16, room_homing_spark_size);
 
+#include "pe1/fieldfx_task.h"
+extern int RoomEffect_SoundBurstParticle(int, void *, intptr_t);
+extern int RoomEffect_SoundBurstController(int, void *, intptr_t);
+extern FieldFxTaskProgram g_RoomSoundBurstProgram;
+
 #endif

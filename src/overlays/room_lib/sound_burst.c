@@ -7,14 +7,17 @@
  */
 
 #include "common.h"
+#include "pe1/battle.h"
+#include "pe1/room_module.h"
 #include "pe1/field_sprite_params.h"
 #include "pe1/room_sound_burst.h"
 
 /* Particle emitted by the sound burst controller: it swings on a sine
  * while rising, lights the battle actor when it lands near it, and draws a
  * cosine-sized sprite with its floor shadow. */
-int RoomEffect_SoundBurstParticle(int mode, RoomSoundBurstParticle *particle,
-                                  s32 *step) {
+int RoomEffect_SoundBurstParticle(int mode, void *data, intptr_t argument) {
+    RoomSoundBurstParticle *particle = data;
+    s32 *step = (void *)argument;
     GteShortVector position;
     RoomSoundBurstColor color = {0x40, 0x00, 0x80, 0x00};
     GteShortVector *world;
@@ -37,18 +40,16 @@ int RoomEffect_SoundBurstParticle(int mode, RoomSoundBurstParticle *particle,
         position.x = 0;
         position.y = particle->height;
         position.z = 0;
-        FieldFx_OffsetPointByAngles(particle, world, (s16)particle->swing, &position, swing,
+        FieldFx_OffsetPointByAngles((GteShortVector *)particle, world, (s16)particle->swing, &position, swing,
                       0);
         if (FieldFx_IsPlayerWithinRadius(world, 100) != 0) {
-            if (FX_TASK_AS(RoomSoundBurstEventState)->active) {
-                RoomSoundBurstChannel *channel = ANIM_OWNER_AS(RoomSoundBurstChannel);
-                u32 *entry;
-                if ((**(u32 **)channel->pool & 0x3F000000) == 0x01000000) {
-                    ((RoomSoundBurstBattleEntity *)D_8009D254)->actor->flags |= 0x4000;
-                    entry = *(u32 **)channel->pool;
-                    *entry = (*entry & 0xC0FFFFFF) | 0x21000000;
-                    entry = *(u32 **)channel->pool;
-                    *entry |= 0x80000000;
+            if (g_FieldFxTaskContext->flags) {
+                FieldActor *owner = g_FieldFxOwner->actor;
+                if (owner && owner->state &&
+                    (owner->state->core_flags & 0x3F000000) == 0x01000000) {
+                    if (g_PlayerEntity && g_PlayerEntity->state)
+                        ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                    owner->state->core_flags = (owner->state->core_flags & 0xC0FFFFFF) | 0xA1000000;
                 }
             }
         }
@@ -83,7 +84,9 @@ int RoomEffect_SoundBurstParticle(int mode, RoomSoundBurstParticle *particle,
     return 0;
 }
 
-int RoomEffect_SoundBurstController(int mode, RoomSoundBurstState *state) {
+int RoomEffect_SoundBurstController(int mode, void *data, intptr_t argument) {
+    RoomSoundBurstState *state = data;
+    (void)argument;
     RoomSoundBurstTemplate8 template = {{0x00000000, 0x0000FFC4}};
     s16 position[4];
     s16 target[4];
@@ -94,20 +97,21 @@ int RoomEffect_SoundBurstController(int mode, RoomSoundBurstState *state) {
     switch (mode) {
     case 0:
         state->soundHandle = FieldFx_PlaySoundAtOwner(0x5A1, FieldFx_GetOwnerProgress());
-        pool = ANIM_POOL_AS(RoomSoundBurstChannel)->pool;
+        pool = g_FieldFxActiveTaskSlot->end;
         return FieldFx_InitCallbackList(pool, 24, 24,
                              (FieldFxCallbackListCallback)RoomEffect_SoundBurstParticle);
     case 1:
         state->frame++;
         if (g_FieldFxCurrentAge < 0x47) {
-            pool = ANIM_OWNER_AS(RoomSoundBurstChannel)->pool;
-            FieldFx_TransformMatrixPoint(pool, 9, &template, position);
+            pool = (char *)g_FieldFxOwner->actor;
+            FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)pool, 9,
+                (const GteShortVector *)&template, (GteShortVector *)position);
             angle = rsin((g_FieldFxCurrentAge << 11) / 70) / 32;
             if (g_FieldFxCurrentAge % 3 == 0) {
-                pool = ANIM_POOL_AS(RoomSoundBurstChannel)->pool;
+                pool = g_FieldFxActiveTaskSlot->end;
                 child = FieldFx_AcquireCallbackSlot(pool);
                 if (child) {
-                    pool = ANIM_OWNER_AS(RoomSoundBurstChannel)->pool;
+                    pool = (char *)g_FieldFxOwner->actor;
                     FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)pool, 0,
                                   (GteShortVector *)target);
                     child->height = target[1];
@@ -120,13 +124,11 @@ int RoomEffect_SoundBurstController(int mode, RoomSoundBurstState *state) {
                     child->tilt = rand();
                     child->spread = angle;
                 }
-                if (FX_TASK_AS(RoomSoundBurstEventState)->active) {
-                    RoomSoundBurstNode **slot =
-                        (RoomSoundBurstNode **)ANIM_OWNER_AS(RoomSoundBurstChannel)->pool;
-                    if (slot && *slot) {
-                        u8 *flag = (*slot)->state;
-                        if (*flag == 1) *flag = 2;
-                    }
+                if (g_FieldFxTaskContext->flags) {
+                    FieldActor *actor = g_FieldFxOwner->actor;
+                    if (actor && actor->state && actor->state->action_state &&
+                        *actor->state->action_state == 1)
+                        *actor->state->action_state = 2;
                 }
             }
         }
@@ -156,3 +158,7 @@ int RoomEffect_SoundBurstController(int mode, RoomSoundBurstState *state) {
 }
 
 #undef RoomEffect_SoundBurstParticle
+
+/* Complete USA M205 task table and its authored, aligned script. */
+static u16 s_SoundBurstScript[18] = {5,0,0,1,6,31,4,14,0,2,0,0,4,14,0,0,0,0};
+FieldFxTaskProgram g_RoomSoundBurstProgram = {{{RoomEffect_SoundBurstController},{16}},RoomLib_SetArgs3,s_SoundBurstScript};

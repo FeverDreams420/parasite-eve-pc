@@ -2,6 +2,7 @@
 #include "pe1/room_spark_barrage.h"
 #include "pe1/room_twelve_effect.h"
 #include "pe1/room_grab_attack.h"
+#include "pe1/room_sound_burst.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_spark_attacks.h"
 #include "pe1/room_homing_model.h"
@@ -17251,6 +17252,56 @@ int main(int argc, char **argv)
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M404 loader: real CUE I/O, native geometry, all three descriptor registrations and argument reset passed twice");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m205-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[15704];
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive) ||
+            !pe_disc_read(&disc,&exe,0x800+(0x80093378-0x80010000)+204*8,&range,8))return 1;
+        u32 offset=(range.start+range.scratchSectors+range.textureSectors)*2048u;
+        if(!pe_disc_read(&disc,&archive,offset+8,module,sizeof(module)))return 1;
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned i=0;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+        if(hash!=UINT64_C(0x16c6af58d5917c29))return 1;
+        if(memcmp(module+(0x80192ce0-0x8018eff0),g_RoomSoundBurstProgram.script,36) ||
+            g_RoomSoundBurstProgram.table.sizes[0]!=16)return 1;
+        for(unsigned pass=0;pass<2;++pass){
+            g_PmCmdHandlerTable[75]=NULL;g_FieldFxTaskPrograms[31]=NULL;
+            g_RoomScriptArgs[0]=1;g_RoomScriptArgs[1]=2;g_RoomScriptArgs[2]=3;
+            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0205i")) ||
+               g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] ||
+               g_FieldFxTaskPrograms[31]!=&g_RoomSoundBurstProgram ||
+               g_RoomScriptArgs[0] || g_RoomScriptArgs[1] || g_RoomScriptArgs[2])return 1;
+            intptr_t args=g_RoomSoundBurstProgram.initialize(0,3,-4,5);
+            if(args!=(intptr_t)g_RoomScriptArgs || g_RoomScriptArgs[0]!=3 ||
+               g_RoomScriptArgs[1]!=-4 || g_RoomScriptArgs[2]!=5)return 1;
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        /* Retail writes through state+0x18, not the low byte of core_flags.
+         * Separate native pointers and guards catch that distinction. */
+        FieldActor actor={0};FieldActorState actor_state={0};RenderMatrix transforms[10]={0};
+        struct {u64 before;u8 value;u8 padding[7];u64 after;} marker={0};
+        FieldFxObjectPrefix owner={0};FieldFxTaskContext context={0};FieldFxTaskSlot task={0};
+        _Alignas(void *) u8 arena[4096];RoomSoundBurstState burst={0};
+        marker.before=marker.after=UINT64_C(0x13579bdf2468ace0);
+        actor.state=&actor_state;actor.render_object.matrices=transforms;
+        actor_state.action_state=&marker.value;owner.actor=&actor;task.end=(char *)arena;
+        g_FieldFxOwner=&owner;g_FieldFxTaskContext=&context;g_FieldFxActiveTaskSlot=&task;
+        g_FieldFxCurrentAge=0;burst.soundHandle=-1;
+        const u8 initial[]={0,1,2,255};
+        for(unsigned enabled=0;enabled<2;++enabled)for(unsigned i=0;i<4;++i){
+            context.flags=enabled;marker.value=initial[i];actor_state.core_flags=0x13579bdf;
+            if(FieldFx_InitCallbackList((char *)arena,sizeof(RoomSoundBurstParticle),24,RoomEffect_SoundBurstParticle)<=0 ||
+               g_RoomSoundBurstProgram.table.callbacks[0](1,&burst,0)!=0 ||
+               marker.value!=(enabled && initial[i]==1?2:initial[i]) ||
+               actor_state.core_flags!=0x13579bdf || marker.before!=UINT64_C(0x13579bdf2468ace0) ||
+               marker.after!=marker.before)return 1;
+        }
+        g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
+        puts("Original M205 complete module, descriptors, script, reload and guarded native action-state pointer passed");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m269-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M229: dwa przeciwniki, leczenie, Club1 i przejście M231
+
+M229 przy201995 uruchomił walkę z typ3/sub31 i typ3/sub30, oba280HP.
+G23 przeładowano z pozostałych3 nabojów; zwykły strzał zadał37 sub30.
+Medicine4 ze slot15 odnowiło228→573HP. Po unikaniu ataków EnergyShot
+zużył jeden nabój i pokonał sub30 (243→-88). Pozostały sub31 został
+pokonany Club1 po zmianie broni w oryginalnym menu; trafienia zadawały28.
+Próby spoza zasięgu i ruchomy cel powodowały także chybienia. Użyto
+Medicine3 ze slot10 (205→385), umiejętności leczącej +60HP oraz Medicine3
+ze slot17 (81→261). Nie edytowano HP,amunicji ani save'ów.
+Punkt213435:205HP,mode2,live0. Zamrożony stan/VRAM i zwykłe wejścia:
+/tmp/pe-m229-victory-v1-replay-proof.json. Oba warianty zakończyły się
+exit0; pełny JSON/VRAM normal/SAN/live równy, bez raportów sanitizerów.
+
+ALL odebrało dwie paczki Ammo+15,END wrócił do pola. W zwykłym menu
+ponownie wybrano G23 (slot0); zużyte sloty10,15,17 są puste. Wyjście
+na prawo wymaga zwrócenia Ayi w prawo na progu. Punkt215305:
+M231/0xa80430c8,205/573HP,field/lock0. Obie powtórki exit0, bez
+raportów sanitizerów; pełny JSON/VRAM normal/SAN/live równy:
+/tmp/pe-m231-entry-v1-replay-proof.json.
+LiveSAN20828 czeka wM231; nie ma jeszcze nowego telefonu.
+
 ### M225→M227→M228→M229: okno, gzyms i zejście
 
 Zwykły input po punkcie194350: zamknięcie kontrolnego menu, Left30,

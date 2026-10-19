@@ -15066,7 +15066,10 @@ static int original_native_control(const char *executable)
     for(unsigned i=0;i<2;++i){bool absolute=paths[i][0]=='/' || paths[i][0]=='\\' || (paths[i][0] && paths[i][1]==':');
         int n=snprintf(resolved[i],sizeof(resolved[i]),"%s%s",absolute?"":cwd,paths[i]);if(n<0 || n>=sizeof(resolved[i])){SDL_free(cwd);return 1;}}
     SDL_free(cwd);
-    const char *commands[]={"advance 2 0x4000\nadvance 4 0\n","quit\n","","advance 0 0\n","advance 7 0\n",
+    char final_command[127];memset(final_command,' ',sizeof(final_command)-1);
+    memcpy(final_command,"advance 2 0",11);final_command[sizeof(final_command)-1]=0;
+    const char *commands[]={"advance 2 0x4000\nadvance 4 0\n","quit\n","",
+        "advance 2 0x4000","advance 2 0x4000\r\nquit",final_command,"advance 0 0\n","advance 7 0\n",
         "advance -1 0\n","advance 1 65536\n","advance 1 -1\n","advance 1 0 garbage\n","advance 2\n","unknown\n",NULL};
     char too_long[200];memset(too_long,'x',sizeof(too_long));too_long[sizeof(too_long)-1]=0;
     unsigned passed=0;
@@ -15084,9 +15087,10 @@ static int original_native_control(const char *executable)
         SDL_IOStream *input=SDL_GetProcessInput(child);const char *command=commands[trial]?commands[trial]:too_long;size_t length=strlen(command);
         int wrote=input && SDL_WriteIO(input,command,length)==length;if(input)SDL_CloseIO(input);
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);SDL_DestroyProcess(child);
-        int expected=trial<3?0:2;int ok=wrote && output && status==expected && strstr(output,"\"event\":\"control\",\"vblanks\":2") && strstr(output,"\"control\":{");
+        int expected=trial<6?0:2;int ok=wrote && output && status==expected && strstr(output,"\"event\":\"control\",\"vblanks\":2") && strstr(output,"\"control\":{");
         if(output && (strstr(output,"runtime error:") || strstr(output,"AddressSanitizer") || strstr(output,"Unbound original")))ok=0;
         if(trial==0 && (!strstr(output,"\"event\":\"control\",\"vblanks\":4") || !strstr(output,"\"event\":\"frame_limit\",\"vblanks\":8")))ok=0;
+        if(trial>=3 && trial<6 && !strstr(output,"\"event\":\"control\",\"vblanks\":4"))ok=0;
         if(trial>0 && output && strstr(output,"\"event\":\"frame_limit\""))ok=0;
         if(!ok){fprintf(stderr,"Native control case%u status%d: %.300s\n",trial,status,output?output:"");SDL_free(output);return 1;}
         SDL_free(output);++passed;

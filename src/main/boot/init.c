@@ -189,7 +189,26 @@ static void Boot_PollHost(void) {
     fflush(stdout);
     if(!terminal){
         char line[128],*end,*mask_end;
-        if(!fgets(line,sizeof(line),stdin))_Exit(EXIT_SUCCESS);
+        size_t length=0;
+        for(;;){
+            errno=0;
+            int byte=fgetc(stdin);
+            if(byte==EOF){
+                if(ferror(stdin)){
+                    /* Attaching a debugger can interrupt the blocked read.
+                     * Keep both the paused frame and any partial command. */
+                    if(errno==EINTR){clearerr(stdin);continue;}
+                    fprintf(stderr,"Cannot read control command: %s\n",strerror(errno?errno:EIO));
+                    fflush(stderr);_Exit(2);
+                }
+                if(!length)_Exit(EXIT_SUCCESS);
+                break;
+            }
+            line[length++]=(char)byte;
+            if(byte=='\n')break;
+            if(length==sizeof(line)-1){fprintf(stderr,"Control command too long\n");fflush(stderr);_Exit(2);}
+        }
+        line[length]=0;
         if(!strchr(line,'\n') && !feof(stdin)){fprintf(stderr,"Control command too long\n");fflush(stderr);_Exit(2);}
         line[strcspn(line,"\r\n")]=0;
         if(!strcmp(line,"quit"))_Exit(EXIT_SUCCESS);

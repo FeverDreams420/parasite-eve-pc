@@ -2,6 +2,52 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
+regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
+cold replayów szpitala exit0. Cały stan i pełne1MiB VRAM zgodne między
+normal/SAN; historyczny stan live również zgodny. Rewalidacja zależności,
+obiektów, archiwów i binariów: /tmp/pe-control-read-v2-final-proof.json.
+SAN obejmuje kod portu (address,undefined,function); archiwa PsyZ/SDL
+pozostają nieinstrumentowane. build/parasite-eve-pc i fixture są kopiami
+tego kandydata normal. Pełna kampania nadal nie jest ukończona.
+
+Naprawa wyłącznie w istniejącym src/main/boot/init.c: blokujący odczyt
+sterowania zachowuje częściową komendę po EINTR, ponawia odczyt i odróżnia
+prawdziwy EOF od błędu I/O (exit2). Oryginalny fgets po podłączeniu/debugger
+detach zwracał errno4, eof0, error1 i błędnie zamykał grę statusem0.
+Potwierdzenie przyczyny: /tmp/pe-control-read-probe-v1-proof.json.
+Nie była to awaria skryptu ani walki. Istniejący test --native-control ma
+teraz15 przypadków, w tym CRLF, ostatnią komendę bez newline i poprawną
+126-bajtową komendę przy EOF. Osobne18 prób obejmuje puste/częściowe oraz
+powtarzane przerwanie prawdziwym LLDB attach/detach, EOF i błędny deskryptor:
+/tmp/pe-control-read-v2-stream-proof.json. Bez zmian gameplayu, nowych
+plików źródłowych i przenoszenia funkcji.
+
+Autentyczny zapis D, wyłącznie zwykłe wejście, bez zapisów RAM/edytora:
+M328 → Medicine2 HP128→210 → Blue Cardkey/item210 (41730), wymiana przy
+pełnym ekwipunku i użycie Offense+2 (46040, M16 byte142:7→9), dialog Eve
+w M321/story476 (47443), otwarcie Blue Door i zużycie karty, M329 (50632).
+Osiem replayów normal/SAN: /tmp/pe-control-read-v2-hospital-check-proof.json.
+Następnie panel M144, instalacja Fuse1: slot13 item206→0 (51960), powrót
+na korytarz i M332. Właściwa walka obejmuje odłączenie ogona, ostrzał,
+automatyczne przeładowanie w kolejce i Energy Shot. Zwycięstwo57295:
+tryb2, zero żywych przeciwników, HP163. Pole57815: swobodna eksploracja,
+Cure-M odebrane; Tool58340. Osiem replayów zgodnych także z zachowanym
+VRAM live: /tmp/pe-control-read-v2-m332-check-proof.json. Pierwszy skrypt
+podsumowania miał błędny indeks pary normal/SAN; poprawiono wyłącznie
+weryfikator i ponownie sprawdzono zakończone artefakty, bez zmiany gry.
+
+Dalsza sesja /tmp/pe-hospital-resume-v3-live odtwarza cały stan58340,
+odbiera Tool i Medicine2 w M332, Micro UZ w M329 (wymiana duplikatu Cure-M),
+przechodzi M320 i wraca do M321. Kończy63646: HP163/story476, lock0,
+bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
+Źródłowy D i prywatna kopia bez zmian, bu10 puste. Root bu00/bu10 nietknięte.
+To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
+pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
+M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+## Poprzedni potwierdzony stan — 19 października 2026
+
 Aktualny zweryfikowany kandydat: /tmp/pe-chrysler-port-v1. Wszystkie384
 obiekty zbudowane od zera (192/profil),46/46 regresji exit0 i osiem cold
 replayów szpitala exit0. Ponownie sprawdzono bieżące zależności, obiekty,

@@ -46,6 +46,57 @@ To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
 
+### Wspólna trasa bezpieczników i zasilanie
+
+Bez zmian produkcyjnych; kandydat nadal pe-control-read-v2. Sesja
+/tmp/pe-hospital-fuses-joined-v1-live odtwarza autentyczny D → M327/M328
+zwycięstwa → BlueCardkey/Fuse2/44875. Następnie M328→M327→M321
+bez kolejnej walki i bez utraty HP, dialog Eve/story476, Blue Door
+(zużycie210), M329 i panel M144. Fuse1 i Fuse2 zainstalowane przy51103:
+slot13/206→0 i slot0/207→0, HP210, flag65=541079243.
+
+M332 na tej samej gałęzi: oryginalny odłączający się/odrastający ogon,
+wybór korpusu w liście celów, przeładowanie wewnątrz salwy, Energy Shot
+i na końcu ostrzał pozostałego ogona. 56110: rzeczywiste zwycięstwo,
+tryb2/zero żywych przeciwników/HP108;56630 swobodne pole i odebrane
+Cure-M. Fuse3 odebrany za rogiem przy57068, pole57268/item208 w13.
+Powrót do M144: instalacja Fuse3 przy58940 (208→0, flag65=541097931),
+następnie lewy główny przełącznik i potwierdzenie. 59570:
+flag65=541130699/0x2040ffcb, ustawiony bit32768, zielona kontrolka
+rzeczywiście obejrzana. Wszystkie trzy bezpieczniki i uruchomienie
+przełącznika należą do jednej autentycznej trasy zwykłym inputem.
+
+Powrót M329→M339→M325, oryginalny telefon/Slot1/plik5:63135 panel
+File saved, nowy BASLUS-006620000000E,8192B,
+SHA256 5b25d2a0d525b543cbb2a1791421c5a6842b1130e7f04af6ca0b45e429c9448c.
+Autentyczne źródło do dalszego Continue:
+/tmp/pe-day4-power-save-v1-source/BASLUS-006620000000E.
+Przy wychodzeniu z listy omyłkowo potwierdzono także pusty plik7/G;
+zachowano tę operację w journalu i dowodach, nie usuwano prywatnego zapisu.
+Circle wraca z listy plików do Slot1/Slot2/End. 64287: swobodne M325,
+HP108/story476/lock0, bez menu, zasilanie zachowane, quit/exit0.
+D i źródłowe zapisy bez zmian; wszystkie operacje kart wyłącznie w /tmp,
+root bu00/bu10 nietknięte. Ten etap nie potwierdza jeszcze windy,
+dalszych pięter ani bossa szpitala.
+
+Dwanaście cold replayów51103/56110/57268/59570/63135/64287 × normal/SAN:
+12/12 exit0. Cały JSON zgodny z live i profilami; pełne1MiB VRAM zgodne
+między profilami oraz zachowanym live (poza63135, gdzie zachowano obraz
+panelu, lecz nie osobny surowy zrzut live). E oraz dodatkowy G identyczne
+wszystkimi8192B z live i między profilami; D niezmieniony, bu10 puste.
+/tmp/pe-hospital-fuses-joined-v1-replay-proof.json. Ponownie sprawdzone
+wszystkie384 obiekty/zależności/archiwa/binaria oraz kopie w build:
+/tmp/pe-hospital-fuses-joined-v1-build-proof.json. Bez nowego źródła,
+przenoszenia funkcji i zmian kodu gry.
+
+Zimne Continue z samym autentycznym E i czterema impulsamiDown:
+2/2 normal/SAN exit0, przy24000 swobodne M325/HP108/story476, bit32768
+zachowany, całe inventory/equipment identyczne ze stanem po zapisie.
+Cały JSON i pełne1MiB VRAM identyczne między profilami, źródłowy E
+oraz prywatne kopie bez zmian. /tmp/pe-power-continue-v1-proof.json.
+PsyZ/SDL pozostają nieinstrumentowane. Następny punkt kampanii to E,
+który zastępuje D jako najnowszy autentyczny zapis do kontynuowania.
+
 ### Bezpieczniki — kolejne autentyczne próby
 
 Bez zmian kodu produkcyjnego. Z oryginalnych danych płyt odczytano

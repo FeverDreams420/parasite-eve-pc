@@ -2,6 +2,47 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Właściwa dalsza trasa kanałów ustalona i odtworzona: wcześniejszy M167
+81551/129HP ma bank55=2. Południowe wyjście zmniejsza55 do1 i prowadzi
+M168; zachodni koniec przy55==1 prowadzi M173 i zmniejsza55 do0.
+M170/M171/M172 mają tylko powroty do M167. Audyt oryginalnych danych:
+/tmp/pe-sewer-mainpath-v1-script-proof.json (hash15 pełnych modułów,
+warunki/pozycje skryptów); samo wskazanie w danych nie było dowodem runtime.
+Przejście runtime /tmp/pe-sewer-mainpath-v2-live: walka M168 wygrana
+91739/94HP, M173 w93619. Heal3, Cure-D, G23 z przeładowaniem i Energy Shot;
+starsza gałąź bez obsługi spotkania zginęła i nie jest zaliczona.
+Medicine2 w polu podnosi94→184HP; oryginalna drabina w obie strony działa.
+Po wyjściu na pomost trzeba najpierw przesunąć się poza strefę zejścia,
+potem obejść komorę (Right zmniejszaZ, Down zmniejszaX w tej kamerze).
+Kolejna walka M173 wygrana109239/29HP: Heal2, Cure-D, dwa Energy Shot;
+pierwszy zostawia112→1HP, drugi pokonuje cel. Odnoga do M433/110929
+zmienia story_stage568→576. Jest to postęp fabuły, w odróżnieniu od
+wcześniejszego powrotu przez M166 do świątyni przy licznikach4/6.
+
+Osiem cold prób normal/SAN tego samego akao-bank-stop-v1 kończy się0.
+Całe JSON-y zgodne z live w91739,93619,109239,110929;1MiB VRAM zgodny
+między profilami. Dla93619 i110929 również zgodny z zamrożonym VRAM live.
+/tmp/pe-m173-arrival-check-v1-replay-proof.json,
+/tmp/pe-m433-arrival-check-v1-replay-proof.json,
+/tmp/pe-sewer-mainpath-v1-runtime-proof.json.
+Źródłowe J i prywatne karty bez zmian; root bu00/bu10 nietknięte.
+Brak zmian kodu produkcyjnego i nowych źródeł. PsyZ/SDL nieinstrumentowane.
+Kontynuacja /tmp/pe-m433-arrival-check-v1-replay-110929-normal/args.json.
+
+Dalszy normal-only input w M433 uruchamia kamerę/dialog Ayi przy komorze
+i film; wejście M174 następnie kończy proces1:
+Scene_LoadRoom: native descriptor missing for M174 slot75 (PS1 80196f58).
+Pełny dziennik /tmp/pe-sewer-mainpath-v2-live/game.log, odtworzenie
+/tmp/pe-m174-missing-v1-repro-args.json. To brak bindingu, nie zwycięstwo
+ani ukończona lokacja. M174 ma trzy rekordy:75/80196f58 (wierszE tabeli
+aktorów80196f20),9/80196e30 (drop field),8/80196cc4 (glow orb), moduł8510B.
+Istniejące room_lib/{actor_classes,glow_orb,drop_field}.c zawierają te
+oryginalne moduły. Potrzebny pełny audyt kodu i danych M174 oraz podpięcie
+wszystkich rekordów/resetów w istniejącym room_load.c, bez przenoszenia
+funkcji lub dodawania źródeł. Następnie świeży pełny build obu profili,
+regresje i ponowne rzeczywiste wejście po filmie. M174 nie naprawione.
+Pełna kampania i nowy trwały zapis pozostają otwarte.
+
 M167: kolejne spotkanie wygrane bez zmian kodu,116299,23/335HP.
 Z wejścia110701 zwykły input, uniki Up/Down, Energy Shot na7:29/112HP,
 automatyczne przeładowanie i trzy strzały na8:31 (99→18). Pierwsza gałąź

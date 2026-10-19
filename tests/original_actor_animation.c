@@ -15976,6 +15976,51 @@ static int original_hospital_falling_states(void)
     puts("Original hospital falling burst: 288 unhooked USA CPU/BIOS/GTE initializer and update states, RNG, halfword wrap and full 512-byte guards passed");return 1;
 }
 
+static int original_hospital_object_cycles(void)
+{
+    PmPrimarySlot bank[11]={0};PmTables old_tables=g_PmTables;RenderBufferPrefix old_buffers=D_800B0E38;
+    FieldActor *old_player=g_PlayerEntity;GteMatrix *old_view=g_GeomScroll.words.viewMatrix;
+    FieldFxState *old_state=g_FieldFxScriptState;FieldFxObject *old_object=g_FieldFxScriptObject;
+    FieldFxSlot *old_slots=g_FieldFxSlotTable;char *old_data=g_FieldFxScriptData;int *old_commands=g_FieldFxCommandTable;
+    u32 old_flags=g_GameStateFlags,old_random=Psyz_RandState();int old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
+    FieldActor actor={0},player={0};FieldActorState core={0};Combatant player_core={0};RenderMatrix matrices[27]={0};
+    u8 cue=1;actor.state=&core;actor.render_object.matrices=matrices;core.control10.command_value=120;core.action_state=&cue;
+    player.state=(void *)&player_core;player.pos_x=player.pos_z=10000*65536;player.render_object.hit_cylinder.radius=63;
+    for(unsigned i=0;i<27;++i){for(unsigned axis=0;axis<3;++axis)matrices[i].rotation[axis][axis]=4096;
+        matrices[i].translation[0]=20;matrices[i].translation[1]=-200;matrices[i].translation[2]=1024;}
+    GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    static RenderGpuTag ordering[4096];struct {_Alignas(void *) u8 bytes[65536];u8 guard[16];} packets;
+    g_PmTables=(PmTables){old_tables.handlers,bank,NULL};g_PlayerEntity=&player;g_GeomScroll.words.viewMatrix=&view;
+    g_GameStateFlags=0x80;Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(27,1);Psyz_GteCtrlWrite(28,0);
+    Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);FieldFx_InitTexturePageTable();
+    const unsigned commands[]={37,40},expected[]={0x2b,0x1f};
+    for(unsigned effect=0;effect<2;++effect){
+        memset(bank,0,sizeof(bank));cue=1;core.core_flags=0;srand(1);
+        int handle=Scene_LoadRoomAssets(commands[effect],&actor);if(handle!=0){fprintf(stderr,"Hospital cycle allocate cmd%u result%d\n",commands[effect],handle);return 0;}
+        const int ground[]={0,20,0,1024,256,30},falling[]={1,8,100,30,0,0};const int *vars=effect?falling:ground;
+        for(unsigned i=0;i<6;++i)if(Pm_SendCmd(handle,0,i,vars[i],0,0))return 0;
+        unsigned drawn=0,seen=0,frames=0;
+        while(bank[handle].header.state && frames<240){
+            memset(&packets,0xa5,sizeof(packets));for(unsigned depth=0;depth<4096;++depth)ordering[depth]=(RenderGpuTag){.address=0xffffff};
+            g_ActiveDrawSlot=frames&1;g_DrawPacketOffset=0;D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;
+            D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.bytes;
+            if(Pm_Start(handle) || Pm_Exec(handle)){fprintf(stderr,"Hospital cycle cmd%u frame%u PM failure\n",commands[effect],frames);return 0;}
+            for(unsigned i=0;i<64;++i)if(bank[handle].effect.slots[i].flag==1)seen|=1u<<bank[handle].effect.slots[i].handler_id;
+            if(g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes))return 0;drawn+=g_DrawPacketOffset!=0;
+            for(unsigned depth=0;depth<4096;++depth){uintptr_t address=ordering[depth].address;unsigned chain=0;
+                while(address!=0xffffff){if(address<(uintptr_t)packets.bytes || address+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset || address%_Alignof(RenderGpuTag) || ++chain>1024)return 0;
+                    address=((RenderGpuTag *)address)->address;}}
+            for(unsigned i=0;i<16;++i)if(packets.guard[i]!=0xa5)return 0;++frames;
+        }
+        if(bank[handle].header.state || !drawn || (seen&expected[effect])!=expected[effect] || cue!=(effect?4:2)){
+            fprintf(stderr,"Hospital cycle cmd%u frames%u state%u drawn%u seen%x cue%u\n",commands[effect],frames,bank[handle].header.state,drawn,seen,cue);return 0;}
+    }
+    g_PmTables=old_tables;D_800B0E38=old_buffers;g_PlayerEntity=old_player;g_GeomScroll.words.viewMatrix=old_view;
+    g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;g_FieldFxSlotTable=old_slots;g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;
+    g_GameStateFlags=old_flags;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;srand(old_random);
+    puts("Original M146 ground/falling modules: real PM creation, original scripts, all authored slots, draw/update packet guards and complete expiry passed");return 1;
+}
+
 static int original_hospital_homing_throw_states(void)
 {
     FieldFxObjectPrefix *old_owner=g_FieldFxOwner;FieldActor actor={0};FieldActorState state={0};
@@ -16116,25 +16161,37 @@ int main(int argc, char **argv)
         if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path) || !pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 1;
         ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
         Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
-        const unsigned rooms[]={141,328};
-        for(unsigned index=0;index<2;++index){
-            SceneRoomSectorRange range;u8 module[12780];
+        const unsigned rooms[]={141,146,328};
+        for(unsigned index=0;index<3;++index){
+            SceneRoomSectorRange range;u8 module[14084];size_t bytes=rooms[index]==146?14084:12780;
             if(!pe_disc_read(&disc,&exe,0x800ull+0x80093378u-0x80010000u+(rooms[index]-1)*8,&range,8) ||
-               !pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048+8,module,sizeof(module)))return 1;
-            if(memcmp(module+0x306c,g_RoomEruptionScript,sizeof(int)*18) || memcmp(module+0x3110,g_RoomHomingScript,sizeof(g_RoomHomingScript)))return 1;
+               !pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048+8,module,bytes))return 1;
+            if(memcmp(module+(rooms[index]==146?0x34d8:0x306c),g_RoomEruptionScript,sizeof(int)*18) ||
+               memcmp(module+(rooms[index]==146?0x35dc:0x3110),g_RoomHomingScript,sizeof(g_RoomHomingScript)))return 1;
+            if(rooms[index]==146){
+                uint64_t hash=UINT64_C(14695981039346656037);for(size_t j=0;j<bytes;++j)hash=(hash^module[j])*UINT64_C(1099511628211);
+                if(hash!=UINT64_C(0x4354368d130c77fb) || memcmp(module+0x3590,g_RoomScript__falling,sizeof(g_RoomScript__falling)))return 1;
+            }
             char name[16];snprintf(name,sizeof(name),"m%04ui",rooms[index]);u32 token=Text_ParseBase32Id((signed char *)name);
             for(unsigned pass=0;pass<2;++pass){
                 memset(&g_RoomHomingLaunch,0xa5,sizeof(g_RoomHomingLaunch));
                 RoomFxSpritePacket *packets[]={&g_RoomEruptionGlowPacket,&g_RoomEruptionDebrisPacket,&g_RoomEruptionShadowPacket,&g_RoomEruptionRingPacket};
                 for(unsigned i=0;i<4;++i)memset(packets[i],0xa5,sizeof(*packets[i]));
-                if(Scene_LoadRoom(token) || g_FieldFxTaskPrograms[81]!=&g_RoomHomingProgram ||
-                   g_FieldFxTaskPrograms[37]!=&g_RoomDroppedFlareProgram || g_PmCmdHandlerTable[37]!=&g_RoomGroundEruptionHandlers)return 1;
+                RoomFxSpritePacket *falling[]={&g_RoomFallingBurstShadow,&g_RoomFallingBurstShimmer,&g_RoomFallingBurstSprite,&g_RoomFallingBurstPulse,&g_RoomFallingBurstParticle};
+                if(rooms[index]==146)for(unsigned i=0;i<5;++i)memset(falling[i],0xa5,sizeof(*falling[i]));
+                int loaded=Scene_LoadRoom(token);
+                if(loaded || g_FieldFxTaskPrograms[81]!=&g_RoomHomingProgram || g_PmCmdHandlerTable[37]!=&g_RoomGroundEruptionHandlers){fprintf(stderr,"Eruption room%u pass%u load%d\n",rooms[index],pass,loaded);return 1;}
+                if(rooms[index]==146){
+                    if(g_PmCmdHandlerTable[40]!=&g_RoomFallingBurstHandlers)return 1;
+                    for(unsigned i=0;i<5;++i)for(unsigned j=0;j<sizeof(*falling[i]);++j)if(((u8 *)falling[i])[j])return 1;
+                }else if(g_FieldFxTaskPrograms[37]!=&g_RoomDroppedFlareProgram)return 1;
                 for(unsigned i=0;i<sizeof(g_RoomHomingLaunch);++i)if(((u8 *)&g_RoomHomingLaunch)[i])return 1;
                 for(unsigned i=0;i<4;++i)for(unsigned j=0;j<sizeof(*packets[i]);++j)if(((u8 *)packets[i])[j])return 1;
+                if(rooms[index]==146 && pass==0 && !original_hospital_object_cycles())return 1;
             }
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
-        puts("Hospital eruption: real M141/M328 scripts, all three descriptors and repeated reset; homing native pointer guards, launch parameters and spark lifetime passed");return 0;
+        puts("Hospital eruption: real M141/M146/M328 scripts, all three descriptors per room and repeated reset; homing native pointer guards, launch parameters and spark lifetime passed");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--hospital-falling")){
         if(!original_hospital_falling_states())return 1;

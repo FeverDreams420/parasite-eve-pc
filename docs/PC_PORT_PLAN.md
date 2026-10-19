@@ -2,10 +2,51 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Aktualny zweryfikowany kandydat: /tmp/pe-m146-port-v1,380 świeżych obiektów
+(190 na profil normal/SAN),42/42 regresji exit0. Zestaw obejmuje pełny
+podstawowy fixture, --hospital-falling oraz rozszerzony --hospital-eruption
+z realnym M146 i cyklami PM. Osiem cold replayów szpitala na tym samym
+kandydacie (M328/35104 HP205 oraz ucieczka43414/powrót43864/porażka45702
+×oba profile) także exit0: całe JSON zgodne z historycznym live i profilami,
+pełne1MiB VRAM zgodne między profilami, źródłowy/prywatny D bez zmian,
+bu10 puste. Pochodzenie wszystkich380 obiektów/zależności/archiwów/binarnych
+ponownie sprawdzone po testach. build/parasite-eve-pc i fixture to kopie
+sprawdzonych binariów normal. Archiwa PsyZ/SDL nieinstrumentowane.
+/tmp/pe-m146-port-v1-{final-proof.json,verification.json},
+/tmp/pe-m146-port-v1-{strong-entry,escape-reentry}-proof.json.
+Wcześniejsze kandydaty v5 poniżej zachowano jako historię dowodów.
+
+
+M146 — podłączony cały oryginalny moduł14084B z trzema deskryptorami:
+37/801924ac (erupcja),40/80192564 (spadający efekt),166/8019260c (pocisk).
+SHA256 f3ceb5115772babdd8c50bbd0ce23cc5084f84c59c9f345790cce65f8c152a2f.
+Istniejące ground_eruption.c, falling_sprite_burst.c i homing_projectile.c
+pozostają na miejscu, bez nowych plików źródłowych i bez nowych implementacji
+gameplayu. Dodane wyłącznie powiązania w room_load.c i reset wszystkich
+pakietów/parametrów przy wejściu. Oryginalne skrypty18/19 słów i12 halfwordów
+są identyczne z już używanymi przez te jednostki; adresy kodu/danych są inne.
+Pełny moduł oraz skrypty weryfikuje rozszerzony --hospital-eruption na realnym
+CUE/BIN; M141→M146→M328, po dwa ładowania i kontrola resetu wszystkich danych.
+
+Dla rzeczywistego M146 wykonano1856 oryginalnych stanów CPU/SDK/BIOS/GTE:
+288 erupcji (ba517b063e65beed),288 spadających (6c0c8a4195cf042a),
+256 lotu (f0e781cbc727084d),1024 rzutu (96842f7cd6e5bb01). Hash zgodny
+z natywnymi testami tych istniejących modułów. /tmp/pe-m146-*-cpu-v1.{py,log},
+/tmp/pe-m146-module-v1-proof.json; GTE używa wspólnego helpera PsyZ.
+Dodatkowo, na realnie załadowanych assetach M146, pełne normalne cykle PM
+37 i40 tworzą obiekty ze skryptów, przechodzą wszystkie autorskie sloty,
+rysują/aktualizują, zachowują granice areny pakietów i łańcuchów OT oraz
+kończą się samodzielnym zwolnieniem slotu; sprawdzone również końcowe cue.
+To test izolowanego cyklu, nie przejście M146 w kampanii ani pełny audyt pikseli.
+Zbadano też M153/M154: ich identyczny moduł26532B zawiera dodatkowe75/79/187;
+nie dodano częściowych bindingów tych lokacji. Audyt binarny wszystkich pięciu
+modułów: /tmp/pe-m328-related-modules-v1-audit.json.
+
+
 Najnowszy punkt kampanii do dalszej pracy: cold replay D→M327→M328 przy35104,
 HP205, PE8521590/23199744 (około130/354), M16 załadowane16; FullCure17 w20,
 Medicine2/7 w21 iCure-M16 w22. Odtwarzalny CLI:
-/tmp/pe-m328-strong-entry-v1-35104-normal-args.json (SAN analogicznie).
+/tmp/pe-m146-port-v1-strong-entry-35104-normal-args.json (SAN analogicznie).
 Dwa profile exit0, pełne JSON identyczne z live i profilami,1MiB VRAM zgodne,
 zrzut normal obejrzany; /tmp/pe-m328-strong-entry-v1-proof.json.
 

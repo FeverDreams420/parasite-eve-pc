@@ -550,6 +550,11 @@ int Scene_LoadRoom(unsigned int roomId)
             if(slot==122 && record[i].u.handlerAddress==0x801920c8u)native=&g_RoomDroppedFlareProgram;
             if(slot==166 && record[i].u.handlerAddress==0x80192140u)native=&g_RoomHomingProgram;
         }
+        if(map+1==146) {
+            if(slot==37 && record[i].u.handlerAddress==0x801924acu)native=&g_RoomGroundEruptionHandlers;
+            if(slot==40 && record[i].u.handlerAddress==0x80192564u)native=&g_RoomFallingBurstHandlers;
+            if(slot==166 && record[i].u.handlerAddress==0x8019260cu)native=&g_RoomHomingProgram;
+        }
         if (map+1==137 || map+1==140 || map+1==147 || map+1==324 || map+1==327) {
             if(slot==122 && record[i].u.handlerAddress==0x80190f10u)native=&g_RoomDroppedFlareProgram;
             if(slot==40 && record[i].u.handlerAddress==0x80190e84u)native=&g_RoomFallingBurstHandlers;
@@ -870,16 +875,16 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 104 || map + 1 == 113 || map + 1 == 115 || map + 1 == 116 || map + 1 == 120 || map + 1 == 122 || map + 1 == 159 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333) && slot == 136) {
             g_FieldFxTaskPrograms[51]=&g_RoomLineBurstProgram;
             memset(RoomLib_SlotTable,0,8*sizeof(RoomSlotRec));
-        } else if((map+1==141 || map+1==328) && slot==166) {
+        } else if((map+1==141 || map+1==146 || map+1==328) && slot==166) {
             g_FieldFxTaskPrograms[81]=&g_RoomHomingProgram;
             memset(&g_RoomHomingLaunch,0,sizeof(g_RoomHomingLaunch));
-        } else if((map+1==141 || map+1==328) && slot==37) {
+        } else if((map+1==141 || map+1==146 || map+1==328) && slot==37) {
             g_PmCmdHandlerTable[37]=&g_RoomGroundEruptionHandlers;
             memset(&g_RoomEruptionGlowPacket,0,sizeof(g_RoomEruptionGlowPacket));
             memset(&g_RoomEruptionDebrisPacket,0,sizeof(g_RoomEruptionDebrisPacket));
             memset(&g_RoomEruptionShadowPacket,0,sizeof(g_RoomEruptionShadowPacket));
             memset(&g_RoomEruptionRingPacket,0,sizeof(g_RoomEruptionRingPacket));
-        } else if ((map+1==137 || map+1==140 || map+1==147 || map+1==324 || map+1==327) && slot==40) {
+        } else if ((map+1==137 || map+1==140 || map+1==146 || map+1==147 || map+1==324 || map+1==327) && slot==40) {
             g_PmCmdHandlerTable[slot]=&g_RoomFallingBurstHandlers;
             memset(&g_RoomFallingBurstShadow,0,sizeof(g_RoomFallingBurstShadow));
             memset(&g_RoomFallingBurstShimmer,0,sizeof(g_RoomFallingBurstShimmer));

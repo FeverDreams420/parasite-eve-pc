@@ -43,15 +43,28 @@ utożsamiać loadera/cykli z pełnym przejściem tych lokacji.
 Seria input-search-v2 zakończona0:24 rundy,376 zwykłych prób normal-only,
 bez wygranej; /tmp/pe-m188-input-search-v2-proof.json. Zachowana wcześniejsza
 gałąź r11-c02 daje jednak drugą fazę43992 ze335HP Ayi, PE3255492/65536,
-13 pociskami i czterema celami300/120/120/180. Od niej działa nowa seria
-na aktualnym kandydacie, /tmp/pe-m188-input-search-v3.py i katalog o tej samej
-nazwie (best/history/terminal.json), log /tmp/pe-m188-input-search-v3.log.
-Uwzględnia wybór najsłabszego celu w zasięgu i szybsze serie do jego zabicia;
-wyłącznie zwykłe menu/input, bez ingerencji w RAM/zapis/statystyki.
-Sesja exec59385 przy uruchomieniu była żywa; przed kolejnym startem sprawdzić
-ją i terminal.json. Kolejny krok pozostaje ten sam: wygrać całą walkę M188,
-odebrać nagrody i przejść do dalszych lokacji. Pełna kampania nieukończona.
+13 pociskami i czterema celami300/120/120/180. Seria v3 zakończyła się
+pełną wygraną M188:12 rund,184 próby zwykłego inputu, zwycięska gałąź
+r11-c02,49374 vblank,219HP, brak żywych przeciwników. Audyt184 prywatnych
+kart i argumentów: /tmp/pe-m188-input-search-v3-proof.json; terminal.json
+potwierdza victory=true. Żadnych zmian RAM, zapisów ani statystyk.
 
+Cold replay normal/SAN na tym samym kandydacie potwierdza pełny JSON i cały
+1MiB VRAM wygranej: /tmp/pe-m188-victory-check-v1-replay-proof.json.
+Oryginalne menu nagród przyznało dwa Medicine3, M79-3 i Ammo+30.
+Przy pełnym ekwipunku wymieniono dodatkowy Cure-M na granatnik zwykłym
+menu wymiany; jeden Cure-M pozostał. Po zamknięciu nagród,51706 vblank,
+M188 wróciło do eksploracji:219/437HP, pojemność26. Również ten stan
+ma zgodny pełny JSON/VRAM normal/SAN/live:
+/tmp/pe-m188-rewards-check-v2-replay-proof.json. Źródłowy i prywatny K
+niezmienione, karty użytkownika nietknięte. PsyZ/SDL nieinstrumentowane.
+Naturalne wyjście M188→M189 (most),58826 vblank, także ma cold replay
+normal/SAN z pełną zgodnością JSON/VRAM:
+/tmp/pe-m189-entry-check-v1-replay-proof.json. Dalszy zwykły input dochodzi
+do sceny0xa8029048,60176 vblank (postać przy rannym na moście);
+/tmp/pe-post-subway-bridge-v1-60176.{json,vram,-input.jsonl}.
+Ten ostatni punkt nie ma jeszcze cold porównania. Kolejny zapis oraz
+naturalne wejście M186 pozostają niepotwierdzone; pełna kampania nieukończona.
 ### Poprzedni odcinek M188 — historia dowodów
 
 M188 osiągnęło drugą fazę zwykłym inputem, bez zmian RAM/zapisu/statystyk.

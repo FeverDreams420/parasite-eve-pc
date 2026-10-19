@@ -2,6 +2,11 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Najnowszy postęp kampanii: wygrana walka czterech szczurów w M126, odbiór
+nagród i swobodna eksploracja, następnie wejście do M146. Dwanaście nowych
+replayów normal/SAN opisano w sekcji M126 poniżej. Dalszy szpital pozostaje
+nieukończony. Kod produkcyjny bez zmian.
+
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
 cold replayów szpitala exit0. Cały stan i pełne1MiB VRAM zgodne między
@@ -45,6 +50,60 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M126 — zwycięstwo i przejście do M146
+
+Nowszy dowód zastępuje wcześniejsze stwierdzenia o nieprzebytym lobby;
+opisane niżej porażki i audyty pozostają historycznymi artefaktami.
+Bez zmian produkcyjnych, nowych plików źródłowych, przenoszenia funkcji
+ani zmian balansu. Kandydat nadal pe-control-read-v2: ponownie sprawdzono
+384 obiekty oraz wszystkie zależności, biblioteki, binaria i kopie build
+(990 plików): /tmp/pe-hospital-focus-v3-build-proof.json.
+
+Wszystkie próby odtwarzają autentyczny E i zwykłe wejście, bez zapisów RAM
+lub edytora. /tmp/pe-hospital-focus-v1-live od36453/HP198: oryginalny M16
+Rate2, dwie salwy w tego samego szczura, ruch między turami. Przy37311
+znika7:0. Detox faktycznie usuwa poison przy37987, lecz dalsza próba
+z Heal2 kończy40513/HP0 po wyeliminowaniu dwóch szczurów. Quit/exit0.
+/tmp/pe-hospital-focus-v2-live kontynuuje37431/HP139, zastępując Detox
+kolejnym ostrzałem. Przy38371 pozostają dwa cele (HP65), po dalszym
+ostrzelaniu przy40235 Aya ginie, pozostaje jeden szczur. Quit/exit0.
+To nie dowody zwycięstwa; wskazują koszt dodatkowej tury i potrzebę
+wcześniejszego leczenia. Tool/Rate3 nie są używane w tej gałęzi.
+
+/tmp/pe-hospital-focus-v3-live odtwarza całą tę autentyczną gałąź do39727,
+HP51, dwa cele:7:31/88HP i7:2/34HP. Wcześniejsze Heal2, ruch między turami,
+dokończenie7:2 i kolejne Heal2 pozwalają przeżyć. Przy40951 pozostaje
+wyłącznie7:31/88HP, Aya46HP. W kolejce występuje automatyczne przeładowanie
+M16; po dalszym ostrzale cel ma61HP przy42337 i7HP przy42957. Po skróceniu
+dystansu i ostatniej salwie43557: battle mode2, zero wrogów, HP46/210,
+ekran nagród (EXP2738, NEXT169, cztery pozycje łupu). Zachowane pełne
+state/VRAM /tmp/pe-hospital-focus-v3-43557.{json,vram}.
+
+Obtain All Items odbiera amunicję i Cure-P/item13 do wolnego slot13;
+wyjście z menu przy44377 przywraca pole: mode9, lock0, brak menu/wrogów,
+HP46/story488. /tmp/pe-hospital-focus-v3-44377.{json,vram}. Następnie
+zwykły ruch obok recepcji i północnym przejściem prowadzi przy45577 do
+M146/a8024348, pole/lock0, bez wrogów, HP46:
+/tmp/pe-hospital-focus-v3-45577.{json,vram}. Przejście północnej strefy
+M126 po zwycięstwie nie uruchamia ponownie spotkania.
+
+Dalszy ruch w M146 uruchamia następne spotkanie:46072/HP42,
+7:31/120HP i6:0/110HP. Heal2 daje98HP przed kolejnymi obrażeniami;
+pojawia się Stiffness/Slow. Pierwsza ucieczka nieudana; koniec47290/HP48,
+oba cele żyją, quit/exit0. Ten końcowy fragment jest próbą normal, nie
+zwycięstwem ani wejściem do M147. Bez nowego trwałego save; E pozostaje
+źródłem, a zweryfikowany pełny journal daje punkty44377 (M126) i45577
+(M146) do dalszych prób. M147, klucz i dalszy szpital nadal nieukończone.
+
+Dwanaście cold replayów38371/40951/43557/44377/45577/46072 × normal/SAN,
+wszystkie exit0, pełny stan zgodny z obserwowanym live i między profilami,
+pełny VRAM zgodny między profilami oraz z zachowanym43557/44377/45577:
+/tmp/pe-hospital-focus-v3-replay-proof.json. Źródłowy i wszystkie prywatne E
+bez zmian, bu10 puste; root bu00/bu10 nietknięte. PsyZ/SDL nadal
+nieinstrumentowane. To dowód tego fragmentu kampanii, nie pełnej gry ani
+niezależnego porównania całej walki z PS1. Następnie: przygotowanie HP/statusów
+po zwycięstwie, M146→M147 i autentyczny dalszy przebieg szpitala.
 
 ### M126 — ślad kontaktów czterech niezależnych ataków
 

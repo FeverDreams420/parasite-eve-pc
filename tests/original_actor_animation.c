@@ -4,6 +4,7 @@
 #include "pe1/room_twelve_effect.h"
 #include "pe1/room_grab_attack.h"
 #include "pe1/room_sound_burst.h"
+#include "pe1/room_trail_burst.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_spark_attacks.h"
 #include "pe1/room_homing_model.h"
@@ -17356,6 +17357,87 @@ int main(int argc, char **argv)
             if(RoomEffect_BurstSparkParticle(1,&spark,0)!=1)return 1;}
         g_PlayerEntity=NULL;g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
         puts("Original Museum spark modules: all ten rooms, complete hashes/scripts/palette, descriptors, reloads and native controllers passed");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m245-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[27556];
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 1;
+        const unsigned rooms[]={245,397};
+        for(unsigned r=0;r<2;++r){
+            if(!pe_disc_read(&disc,&exe,0x800+(0x80093378-0x80010000)+(rooms[r]-1)*8,&range,8))return 1;
+            u32 offset=(range.start+range.scratchSectors+range.textureSectors)*2048u;
+            if(!pe_disc_read(&disc,&archive,offset+8,module,sizeof(module)))return 1;
+            uint64_t hash=UINT64_C(14695981039346656037);
+            for(unsigned i=0;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+            if(hash!=UINT64_C(0x727e58a0299805cf) ||
+               memcmp(module+0x66bc,g_RoomSeekingTrailProgram.script,36) ||
+               memcmp(module+0x6768,g_RoomScatterTrailProgram.script,60))return 1;
+            for(unsigned pass=0;pass<2;++pass){
+                char name[8];snprintf(name,sizeof(name),"m%04ui",rooms[r]);
+                g_PmCmdHandlerTable[70]=g_PmCmdHandlerTable[75]=NULL;
+                g_FieldFxTaskPrograms[55]=g_FieldFxTaskPrograms[56]=NULL;
+                memset(g_RoomSeekingTrailHistory,0xa5,sizeof(g_RoomSeekingTrailHistory));
+                memset(g_RoomScatterTrailHistory,0xa5,sizeof(g_RoomScatterTrailHistory));
+                memset(g_RoomModelBurstLayer,0xa5,sizeof(g_RoomModelBurstLayer));
+                memset(g_RoomScatterBurstLayer,0xa5,sizeof(g_RoomScatterBurstLayer));
+                memset(&g_RoomModelBurstAnchor,0xa5,sizeof(g_RoomModelBurstAnchor));
+                memset(&g_RoomScatterBurstAnchor,0xa5,sizeof(g_RoomScatterBurstAnchor));
+                g_RoomModelBurstAsset=g_RoomScatterBurstAsset=module;
+                RenderColor sampled;FieldFx_SampleColorTrack(g_RoomModelBurstColors,&sampled,19);
+                FieldFx_SampleColorTrack(g_RoomScatterBurstColors,&sampled,31);
+                if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)name)) ||
+                   g_PmCmdHandlerTable[70]!=&g_RoomActorClassTable[0] || g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] ||
+                   g_FieldFxTaskPrograms[55]!=&g_RoomSeekingTrailProgram || g_FieldFxTaskPrograms[56]!=&g_RoomScatterTrailProgram ||
+                   g_RoomModelBurstAsset || g_RoomScatterBurstAsset ||
+                   memcmp(module+0x6708,g_RoomModelBurstColors,40) || memcmp(module+0x67cc,g_RoomScatterBurstColors,40))return 1;
+                const struct {void *p;size_t n;} zero[]={
+                    {g_RoomSeekingTrailHistory,sizeof(g_RoomSeekingTrailHistory)}, {g_RoomScatterTrailHistory,sizeof(g_RoomScatterTrailHistory)},
+                    {g_RoomModelBurstLayer,sizeof(g_RoomModelBurstLayer)}, {g_RoomScatterBurstLayer,sizeof(g_RoomScatterBurstLayer)},
+                    {&g_RoomModelBurstAnchor,sizeof(g_RoomModelBurstAnchor)}, {&g_RoomScatterBurstAnchor,sizeof(g_RoomScatterBurstAnchor)}};
+                for(unsigned i=0;i<6;++i)for(size_t j=0;j<zero[i].n;++j)if(((u8 *)zero[i].p)[j])return 1;
+                if(g_RoomSeekingTrailProgram.initialize(0,1,2,3)!=(intptr_t)g_RoomSeekingTrailHistory ||
+                   g_RoomScatterTrailProgram.initialize(0,3,2,1)!=(intptr_t)g_RoomSeekingTrailHistory)return 1;
+            }
+        }
+        FieldActor actor={0},player={0};FieldActorState actor_state={0};Combatant player_state={0};RenderMatrix transforms[18]={0};
+        struct {u64 before;u8 value;u8 padding[7];u64 after;} marker={UINT64_C(0x1234567887654321),1,{0},UINT64_C(0x1234567887654321)};
+        FieldFxObjectPrefix owner={0};FieldFxTaskContext context={0};FieldFxTaskSlot task={0};_Alignas(void *) char arena[8192];
+        actor.state=&actor_state;actor.render_object.matrices=transforms;actor_state.action_state=&marker.value;
+        player.state=(FieldActorState *)&player_state;player.render_object.matrices=transforms;owner.actor=&actor;
+        g_FieldFxOwner=&owner;g_FieldFxTaskContext=&context;g_FieldFxActiveTaskSlot=&task;task.end=arena;g_PlayerEntity=&player;
+        int (*controllers[2])(int,void *,intptr_t)={RoomEffect_SeekingTrailController,RoomEffect_ScatterTrailController};
+        int (*particles[2])(int,void *,intptr_t)={RoomEffect_SeekingTrailParticle,RoomEffect_ScatterTrailParticle};
+        for(unsigned kind=0;kind<2;++kind){
+            u16 slot=99;marker.value=1;context.flags=1;context.variables[0]=1;actor_state.core_flags=0x01000000;player_state.stateFlags=0;
+            if(controllers[kind](0,&slot,0)<=0 || slot || marker.value!=2)return 1;
+            g_FieldFxCurrentAge=1;if(controllers[kind](1,&slot,0))return 1;
+            g_FieldFxCurrentAge=8;if(controllers[kind](1,&slot,0)!=2)return 1;
+            RoomSeekingTrail trail={0};if(particles[kind](1,&trail,0) || trail.state!=1 || trail.slot!=(kind?1:0))return 1;
+            trail.fade=1;if(particles[kind](1,&trail,0) || !(player_state.stateFlags&0x4000) || (actor_state.core_flags&0xff000000)!=0xbf000000)return 1;
+            if(marker.before!=UINT64_C(0x1234567887654321) || marker.after!=marker.before)return 1;
+        }
+        int (*bursts[2])(int,void *,intptr_t)={RoomEffect_ModelBurstController,RoomEffect_ScatterBurstController};
+        int (*sprites[2])(int,void *,intptr_t)={RoomEffect_ModelBurstParticle,RoomEffect_ScatterBurstParticle};
+        for(unsigned kind=0;kind<2;++kind){
+            s16 state=123;if(bursts[kind](0,&state,0)<=0 || state)return 1;
+            for(unsigned age=1;age<=48;++age){g_FieldFxCurrentAge=age;if(bursts[kind](1,&state,0)!=(age==48?1:0))return 1;}
+            RoomModelBurstParticle sprite={0};sprite.vx=(u16)-4;sprite.vy=9;
+            for(unsigned age=1;age<=16;++age)if(sprites[kind](1,&sprite,0)!=(age==16?1:0))return 1;
+            if(sprite.x!=(u16)-64 || sprite.y!=144 || sprite.z!=384)return 1;
+        }
+        g_FieldFxSpriteParams.palette=3;u16 pixels[16],saved[16],rotated[16];
+        for(unsigned i=0;i<16;++i)pixels[i]=0x4000+i;
+        RECT rect={48,g_FieldFxPaletteTable[3],16,1};LoadImage(&rect,pixels);DrawSync(0);
+        FieldFx_LoadRotatedClutRow(3,-1,saved);DrawSync(0);if(memcmp(saved,pixels,sizeof(pixels)))return 1;
+        FieldFx_LoadRotatedClutRow(3,1,saved);DrawSync(0);StoreImage(&rect,rotated);DrawSync(0);
+        if(rotated[0]!=pixels[0])return 1;
+        for(unsigned i=1;i<16;++i)if(rotated[i%15+1]!=pixels[i])return 1;
+        g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;g_PlayerEntity=NULL;
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original M245/M397 complete module, authored scripts/colors, native bindings/reloads, both trail hits, all controller lifetimes and CLUT rotation passed");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m205-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

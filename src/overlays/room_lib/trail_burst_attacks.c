@@ -12,6 +12,11 @@
  */
 
 #include "pe1/gte.h"
+#include "pe1/geom_state.h"
+#include "pe1/battle.h"
+#include "pe1/room_module.h"
+#include "pe1/fieldfx_task.h"
+#include "pe1/room_fx.h"
 #include "pe1/room_trail_burst.h"
 
 static const RenderColor s_TrailHeadColor = { 0xA0, 0xA0, 0xA0, 0 };
@@ -28,7 +33,9 @@ typedef struct RoomSeekingTrailPacket {
 /* Seeking trail: state 1 is the head that turns towards the player and
  * records its path, state 2 a spark shed from the path and state 3 a flash
  * at the head. A trail point near the player flags the battle actor. */
-int RoomEffect_SeekingTrailParticle(int mode, RoomSeekingTrail *trail) {
+int RoomEffect_SeekingTrailParticle(int mode, void *data, intptr_t argument) {
+    RoomSeekingTrail *trail = data;
+    (void)argument;
     RenderColor colorA;
     RenderColor colorB;
     GteRotation rotation;
@@ -55,16 +62,16 @@ int RoomEffect_SeekingTrailParticle(int mode, RoomSeekingTrail *trail) {
             trail->timer = 0;
             trail->state = 1;
             trail->fade = 0;
-            FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 7, &rotation, trail);
-            FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomSparkChannel)->pool, 0, &angles);
+            FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 7, (const GteShortVector *)&rotation, (GteShortVector *)trail);
+            FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0, &angles);
             angles.x = 0;
             trail->ax = angles.x;
             trail->ay = angles.y;
             trail->az = angles.z;
-            FieldFx_UpdatePointHistory(&g_RoomSeekingTrailHistory[trail->slot], 0x18, trail, 1);
+            FieldFx_UpdatePointHistory((RenderHistoryPoint *)&g_RoomSeekingTrailHistory[trail->slot], 0x18, (RenderHistoryPoint *)trail, 1);
             trail->speed = 0x20;
             trail->turn = 0x200;
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (!child) return 0;
             child->x = trail->x;
             child->y = trail->y;
@@ -76,10 +83,10 @@ int RoomEffect_SeekingTrailParticle(int mode, RoomSeekingTrail *trail) {
             trail->timer++;
             point = g_RoomSeekingTrailHistory[trail->slot].point;
             FieldFx_GetActorPosition((char *)D_8009D254, 1, &target.x);
-            FieldFx_CalculateLookAngles(trail, &target, &angles);
+            FieldFx_CalculateLookAngles((GteShortVector *)trail, &target, &angles);
             angles.x = 0;
             if (trail->fade == 0) {
-                FieldFx_EaseAngles((unsigned short *)&angles, &trail->ax, trail->turn);
+                FieldFx_EaseAngles((unsigned short *)&angles, (u16 *)&trail->ax, trail->turn);
                 if (trail->timer >= 3) {
                     range = trail->timer * 16 + 0x100;
                     if (!(rand() & 1)) {
@@ -96,22 +103,22 @@ int RoomEffect_SeekingTrailParticle(int mode, RoomSeekingTrail *trail) {
             } else if (++trail->fade >= 16) {
                 return 1;
             }
-            FieldFx_UpdatePointHistory(point, 0x18, trail, 0);
+            FieldFx_UpdatePointHistory((RenderHistoryPoint *)point, 0x18, (RenderHistoryPoint *)trail, 0);
             point = g_RoomSeekingTrailHistory[trail->slot].point;
             for (i = 0; i < 0x18; i++, point++) {
-                if (FieldFx_IsPlayerWithinRadius(point, 0x68) && FX_TASK_AS(RoomSparkEventState)->active) {
-                    RoomSparkChannel *channel = ANIM_OWNER_AS(RoomSparkChannel);
-                    if (((*(RoomSeekingTrailPacket **)channel->pool)->code & 0x3F000000) ==
-                        0x01000000) {
-                        ((RoomSparkBattleEntity *)D_8009D254)->actor->flags |= 0x4000;
-                        (*(RoomSeekingTrailPacket **)channel->pool)->code |= 0x3F000000;
-                        (*(RoomSeekingTrailPacket **)channel->pool)->code |= 0x80000000;
+                if (FieldFx_IsPlayerWithinRadius(point, 0x68) && g_FieldFxTaskContext->flags) {
+                    FieldActor *owner = g_FieldFxOwner->actor;
+                    if (owner && owner->state &&
+                        (owner->state->core_flags & 0x3F000000) == 0x01000000) {
+                        if (g_PlayerEntity && g_PlayerEntity->state)
+                            ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                        owner->state->core_flags |= 0xBF000000;
                     }
                 }
             }
             point = g_RoomSeekingTrailHistory[trail->slot].point;
             if (trail->fade == 0) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     point += (rand() & 3) * 4;
                     child->x = point->x;
@@ -133,7 +140,7 @@ int RoomEffect_SeekingTrailParticle(int mode, RoomSeekingTrail *trail) {
             }
             if (g_FieldFxCurrentAge < 0x20) return 0;
             if (trail->fade != 0) return 0;
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = trail->x;
                 child->y = trail->y;
@@ -247,29 +254,26 @@ int RoomEffect_SeekingTrailParticle(int mode, RoomSeekingTrail *trail) {
 /* Trail controller: mode 0 opens a pool of 32 trails, mode 1 launches one
  * on the first frame, into the history slot the caller gives, and finishes
  * after eight frames; mode 2 sets the sprite parameters. */
-int RoomEffect_SeekingTrailController(int mode, u16 *slot) {
+int RoomEffect_SeekingTrailController(int mode, void *data, intptr_t argument) {
+    u16 *slot = data;
+    (void)argument;
     RoomSeekingTrail *trail;
-    RoomSparkEventState *event;
     u16 tpage;
 
     switch (mode) {
     case 0:
-        event = FX_TASK_AS(RoomSparkEventState);
         *slot = 0;
-        if (event->active != 0) {
-            RoomSparkNode **nodes = (RoomSparkNode **)ANIM_OWNER_AS(RoomSparkChannel)->pool;
-            if (nodes != 0 && *nodes != 0) {
-                u8 *state = (*nodes)->state;
-                if (*state == 1) {
-                    *state = 2;
-                }
-            }
+        if (g_FieldFxTaskContext->flags) {
+            FieldActor *actor = g_FieldFxOwner->actor;
+            if (actor && actor->state && actor->state->action_state &&
+                *actor->state->action_state == 1)
+                *actor->state->action_state = 2;
         }
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 0x18, 0x20,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x18, 0x20,
                              (FieldFxCallbackListCallback)RoomEffect_SeekingTrailParticle);
     case 1:
         if (g_FieldFxCurrentAge == mode) {
-            trail = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            trail = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (trail != 0) {
                 trail->slot = *slot;
                 trail->state = 0;
@@ -295,7 +299,9 @@ int RoomEffect_SeekingTrailController(int mode, u16 *slot) {
 /* Sprite shed by the model burst. Mode 1 drifts it for sixteen frames;
  * mode 2 draws a textured rectangle and a scaled sprite at the burst's
  * anchor, pulsing with a cosine of its frame counter. */
-int RoomEffect_ModelBurstParticle(int mode, RoomModelBurstParticle *state) {
+int RoomEffect_ModelBurstParticle(int mode, void *data, intptr_t argument) {
+    RoomModelBurstParticle *state = data;
+    (void)argument;
     RenderColor color;
     RenderMatrixSlot *matrixSlot;
     int scale;
@@ -340,7 +346,9 @@ int RoomEffect_ModelBurstParticle(int mode, RoomModelBurstParticle *state) {
 /* Model burst: loads the model asset, then for 48 frames brightens and sheds
  * one sprite per frame, while drawing a growing sprite pair at joint 7 and
  * the spinning, scaled model coloured from the room's ramp. */
-int RoomEffect_ModelBurstController(int mode, s16 *state) {
+int RoomEffect_ModelBurstController(int mode, void *data, intptr_t argument) {
+    s16 *state = data;
+    (void)argument;
     GteRotation rotation = s_JointOffset;
     GteShortVector position;
     GteRotation spin;
@@ -368,7 +376,7 @@ int RoomEffect_ModelBurstController(int mode, s16 *state) {
         FieldFx_LoadRotatedClutRow(3, -1, g_RoomModelBurstLayer);
         handle = FieldFx_GetOwnerProgress();
         FieldFx_PlaySoundAtOwner(0x5A4, handle);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 0x10, 0x10,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x10, 0x10,
                              (FieldFxCallbackListCallback)RoomEffect_ModelBurstParticle);
     case 1:
         if (*state < 0x80) *state += 8;
@@ -379,7 +387,7 @@ int RoomEffect_ModelBurstController(int mode, s16 *state) {
             g_FieldFxSpriteParams.tpage = tpage;
             FieldFx_LoadRotatedClutRow(3, g_FieldFxCurrentAge * 2, g_RoomModelBurstLayer);
         }
-        child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+        child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
         if (child) {
             child->x = rand();
             child->y = rand();
@@ -405,11 +413,11 @@ int RoomEffect_ModelBurstController(int mode, s16 *state) {
             g_FieldFxSpriteParams.depth = 0x18;
             g_FieldFxSpriteParams.tpage = tpage;
         }
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 7, &rotation, &position);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 7, (const GteShortVector *)&rotation, &position);
         spin.x = rsin(g_FieldFxCurrentAge * 80) / 4;
         spin.y = rcos(g_FieldFxCurrentAge << 7) / 8;
         spin.flags = 0;
-        spin.z = -g_FieldFxCurrentAge << 3;
+        spin.z = (s16)(-(s32)g_FieldFxCurrentAge * 8);
         brightness = *state;
         if (g_FieldFxCurrentAge != 0) brightness = brightness * 2 / 3;
         size = rsin((g_FieldFxCurrentAge << 10) / 48) / 4 + 0x400;
@@ -477,7 +485,9 @@ int RoomEffect_ModelBurstController(int mode, s16 *state) {
 
 /* The second trail: it takes its history slot from the event state, nudges
  * its initial heading, starts from joint 5 and jitters with a fixed spread. */
-int RoomEffect_ScatterTrailParticle(int mode, RoomSeekingTrail *trail) {
+int RoomEffect_ScatterTrailParticle(int mode, void *data, intptr_t argument) {
+    RoomSeekingTrail *trail = data;
+    (void)argument;
     RenderColor colorA;
     RenderColor colorB;
     GteRotation rotation;
@@ -501,19 +511,19 @@ int RoomEffect_ScatterTrailParticle(int mode, RoomSeekingTrail *trail) {
         case 0:
             trail->timer = 0;
             trail->state = 1;
-            trail->slot = FX_TASK_AS(RoomSparkEventState)->trailSlot;
+            trail->slot = g_FieldFxTaskContext->variables[0];
             trail->fade = 0;
-            FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 5, &rotation, trail);
-            FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)ANIM_OWNER_AS(RoomSparkChannel)->pool, 0, &angles);
+            FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 5, (const GteShortVector *)&rotation, (GteShortVector *)trail);
+            FieldFx_GetTransformLookAngles((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 0, &angles);
             angles.x = 0;
             angles.y += (rand() & 0x1FF) - 0x100;
             trail->ax = angles.x;
             trail->ay = angles.y;
             trail->az = angles.z;
-            FieldFx_UpdatePointHistory(&g_RoomScatterTrailHistory[trail->slot], 0x18, trail, 1);
+            FieldFx_UpdatePointHistory((RenderHistoryPoint *)&g_RoomScatterTrailHistory[trail->slot], 0x18, (RenderHistoryPoint *)trail, 1);
             trail->speed = 0x20;
             trail->turn = 0x200;
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (!child) return 0;
             child->x = trail->x;
             child->y = trail->y;
@@ -525,10 +535,10 @@ int RoomEffect_ScatterTrailParticle(int mode, RoomSeekingTrail *trail) {
             trail->timer++;
             point = g_RoomScatterTrailHistory[trail->slot].point;
             FieldFx_GetActorPosition((char *)D_8009D254, 1, &target.x);
-            FieldFx_CalculateLookAngles(trail, &target, &angles);
+            FieldFx_CalculateLookAngles((GteShortVector *)trail, &target, &angles);
             angles.x = 0;
             if (trail->fade == 0) {
-                FieldFx_EaseAngles((unsigned short *)&angles, &trail->ax, trail->turn);
+                FieldFx_EaseAngles((unsigned short *)&angles, (u16 *)&trail->ax, trail->turn);
                 if (!(rand() & 1)) {
                     trail->ay += rand() % 800 - 400;
                 } else {
@@ -542,22 +552,22 @@ int RoomEffect_ScatterTrailParticle(int mode, RoomSeekingTrail *trail) {
             } else if (++trail->fade >= 16) {
                 return 1;
             }
-            FieldFx_UpdatePointHistory(point, 0x18, trail, 0);
+            FieldFx_UpdatePointHistory((RenderHistoryPoint *)point, 0x18, (RenderHistoryPoint *)trail, 0);
             point = g_RoomScatterTrailHistory[trail->slot].point;
             for (i = 0; i < 0x18; i++, point++) {
-                if (FieldFx_IsPlayerWithinRadius(point, 0x64) && FX_TASK_AS(RoomSparkEventState)->active) {
-                    RoomSparkChannel *channel = ANIM_OWNER_AS(RoomSparkChannel);
-                    if (((*(RoomSeekingTrailPacket **)channel->pool)->code & 0x3F000000) ==
-                        0x01000000) {
-                        ((RoomSparkBattleEntity *)D_8009D254)->actor->flags |= 0x4000;
-                        (*(RoomSeekingTrailPacket **)channel->pool)->code |= 0x3F000000;
-                        (*(RoomSeekingTrailPacket **)channel->pool)->code |= 0x80000000;
+                if (FieldFx_IsPlayerWithinRadius(point, 0x64) && g_FieldFxTaskContext->flags) {
+                    FieldActor *owner = g_FieldFxOwner->actor;
+                    if (owner && owner->state &&
+                        (owner->state->core_flags & 0x3F000000) == 0x01000000) {
+                        if (g_PlayerEntity && g_PlayerEntity->state)
+                            ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                        owner->state->core_flags |= 0xBF000000;
                     }
                 }
             }
             point = g_RoomScatterTrailHistory[trail->slot].point;
             if (trail->fade == 0) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
                     point += (rand() & 3) * 4;
                     child->x = point->x;
@@ -579,7 +589,7 @@ int RoomEffect_ScatterTrailParticle(int mode, RoomSeekingTrail *trail) {
             }
             if (g_FieldFxCurrentAge < 0x20) return 0;
             if (trail->fade != 0) return 0;
-            child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
                 child->x = trail->x;
                 child->y = trail->y;
@@ -691,29 +701,26 @@ int RoomEffect_ScatterTrailParticle(int mode, RoomSeekingTrail *trail) {
 }
 
 /* Controller of the second trail, as the first. */
-int RoomEffect_ScatterTrailController(int mode, u16 *slot) {
+int RoomEffect_ScatterTrailController(int mode, void *data, intptr_t argument) {
+    u16 *slot = data;
+    (void)argument;
     RoomSeekingTrail *trail;
-    RoomSparkEventState *event;
     u16 tpage;
 
     switch (mode) {
     case 0:
-        event = FX_TASK_AS(RoomSparkEventState);
         *slot = 0;
-        if (event->active != 0) {
-            RoomSparkNode **nodes = (RoomSparkNode **)ANIM_OWNER_AS(RoomSparkChannel)->pool;
-            if (nodes != 0 && *nodes != 0) {
-                u8 *state = (*nodes)->state;
-                if (*state == 1) {
-                    *state = 2;
-                }
-            }
+        if (g_FieldFxTaskContext->flags) {
+            FieldActor *actor = g_FieldFxOwner->actor;
+            if (actor && actor->state && actor->state->action_state &&
+                *actor->state->action_state == 1)
+                *actor->state->action_state = 2;
         }
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 0x18, 0x20,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x18, 0x20,
                              (FieldFxCallbackListCallback)RoomEffect_ScatterTrailParticle);
     case 1:
         if (g_FieldFxCurrentAge == mode) {
-            trail = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+            trail = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (trail != 0) {
                 trail->slot = *slot;
                 trail->state = 0;
@@ -737,7 +744,9 @@ int RoomEffect_ScatterTrailController(int mode, u16 *slot) {
 }
 
 /* Sprite shed by the second burst, drawn at its anchor. */
-int RoomEffect_ScatterBurstParticle(int mode, RoomModelBurstParticle *state) {
+int RoomEffect_ScatterBurstParticle(int mode, void *data, intptr_t argument) {
+    RoomModelBurstParticle *state = data;
+    (void)argument;
     RenderColor color;
     RenderMatrixSlot *matrixSlot;
     int scale;
@@ -780,7 +789,9 @@ int RoomEffect_ScatterBurstParticle(int mode, RoomModelBurstParticle *state) {
 }
 
 /* The second burst, following joint 5. */
-int RoomEffect_ScatterBurstController(int mode, s16 *state) {
+int RoomEffect_ScatterBurstController(int mode, void *data, intptr_t argument) {
+    s16 *state = data;
+    (void)argument;
     GteRotation rotation = s_JointOffset;
     GteShortVector position;
     GteRotation spin;
@@ -808,7 +819,7 @@ int RoomEffect_ScatterBurstController(int mode, s16 *state) {
         FieldFx_LoadRotatedClutRow(3, -1, g_RoomScatterBurstLayer);
         handle = FieldFx_GetOwnerProgress();
         FieldFx_PlaySoundAtOwner(0x5A4, handle);
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomSparkChannel)->pool, 0x10, 0x10,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 0x10, 0x10,
                              (FieldFxCallbackListCallback)RoomEffect_ScatterBurstParticle);
     case 1:
         if (*state < 0x80) *state += 8;
@@ -819,7 +830,7 @@ int RoomEffect_ScatterBurstController(int mode, s16 *state) {
             g_FieldFxSpriteParams.tpage = tpage;
             FieldFx_LoadRotatedClutRow(3, g_FieldFxCurrentAge * 2, g_RoomScatterBurstLayer);
         }
-        child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+        child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
         if (child) {
             child->x = rand();
             child->y = rand();
@@ -845,11 +856,11 @@ int RoomEffect_ScatterBurstController(int mode, s16 *state) {
             g_FieldFxSpriteParams.depth = 0x18;
             g_FieldFxSpriteParams.tpage = tpage;
         }
-        FieldFx_TransformMatrixPoint(ANIM_OWNER_AS(RoomSparkChannel)->pool, 5, &rotation, &position);
+        FieldFx_TransformMatrixPoint((struct RoomFxTransformOwner *)g_FieldFxOwner->actor, 5, (const GteShortVector *)&rotation, &position);
         spin.x = rsin(g_FieldFxCurrentAge * 80) / 4;
         spin.y = rcos(g_FieldFxCurrentAge << 7) / 8;
         spin.flags = 0;
-        spin.z = -g_FieldFxCurrentAge << 3;
+        spin.z = (s16)(-(s32)g_FieldFxCurrentAge * 8);
         brightness = *state;
         if (g_FieldFxCurrentAge != 0) brightness = brightness * 2 / 3;
         size = rsin((g_FieldFxCurrentAge << 10) / 48) / 4 + 0x400;
@@ -917,10 +928,24 @@ int RoomEffect_ScatterBurstController(int mode, s16 *state) {
 
 /* History getters of the seeking and the scatter trail classes; retail has
  * both return the seeking trail's histories. */
-void *RoomEffect_SeekingTrailHistory(void) {
-    return g_RoomSeekingTrailHistory;
+intptr_t RoomEffect_SeekingTrailHistory(int mode, intptr_t a, intptr_t b, intptr_t c) {
+    (void)mode; (void)a; (void)b; (void)c;
+    return (intptr_t)g_RoomSeekingTrailHistory;
 }
 
-void *RoomEffect_ScatterTrailHistory(void) {
-    return g_RoomSeekingTrailHistory;
+intptr_t RoomEffect_ScatterTrailHistory(int mode, intptr_t a, intptr_t b, intptr_t c) {
+    (void)mode; (void)a; (void)b; (void)c;
+    return (intptr_t)g_RoomSeekingTrailHistory;
 }
+
+/* Authored data shared by the complete USA M245/M397 module. */
+RoomSeekingTrailHistory g_RoomSeekingTrailHistory[2], g_RoomScatterTrailHistory[2];
+u8 g_RoomModelBurstColors[40] = {0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 16, 0, 0, 0, 0, 140, 32, 0, 16, 0, 0, 0, 0, 200, 200, 0, 16, 0, 0, 0, 0, 240, 240, 128, 0, 0, 0, 0, 0};
+u8 g_RoomScatterBurstColors[40] = {0, 0, 0, 0, 0, 0, 0, 0, 128, 0, 0, 16, 0, 0, 0, 0, 140, 32, 0, 16, 0, 0, 0, 0, 200, 200, 0, 16, 0, 0, 0, 0, 240, 240, 128, 0, 0, 0, 0, 0};
+void *g_RoomModelBurstAsset, *g_RoomScatterBurstAsset;
+u16 g_RoomModelBurstLayer[16], g_RoomScatterBurstLayer[16];
+GteShortVector g_RoomModelBurstAnchor, g_RoomScatterBurstAnchor;
+static u16 s_SeekingTrailScript[18] = {5, 0, 0, 1, 6, 55, 2, 1, 0, 4, 46, 0, 2, 0, 0, 0, 0, 0};
+static u16 s_ScatterTrailScript[30] = {5, 0, 0, 1, 6, 56, 2, 1, 0, 4, 46, 0, 1, 0, 0, 2, 0, 0, 4, 12, 0, 1, 0, 1, 2, 0, 0, 0, 0, 0};
+FieldFxTaskProgram g_RoomSeekingTrailProgram = {{{RoomEffect_SeekingTrailController,RoomEffect_ModelBurstController},{4,4}},RoomEffect_SeekingTrailHistory,s_SeekingTrailScript};
+FieldFxTaskProgram g_RoomScatterTrailProgram = {{{RoomEffect_ScatterTrailController,RoomEffect_ScatterBurstController},{4,4}},RoomEffect_ScatterTrailHistory,s_ScatterTrailScript};

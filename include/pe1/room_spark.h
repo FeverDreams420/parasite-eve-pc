@@ -48,7 +48,7 @@ extern int rand(void);
  * ribbon. */
 /* Rotates an offset by a bone's matrix. */
 /* Fades a colour layer record in or out. */
-extern void FieldFx_LoadRotatedClutRow(int kind, int value, void *layer);
+extern void FieldFx_LoadRotatedClutRow(int kind, int value, u16 *layer);
 
 /* Asset library lookup and the model draw calls of the model effects. */
 void FieldFx_ModelSetTexture(int tpage, int clut);

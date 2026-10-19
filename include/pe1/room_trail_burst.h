@@ -49,16 +49,29 @@ PE1_STATIC_ASSERT(sizeof(RoomModelBurstParticle) == 0x10,
 
 /* Per-room data: the trail histories (two trails each), the colour ramps,
  * the model assets, the layer records and the anchors of the two bursts. */
-extern RoomSeekingTrailHistory g_RoomSeekingTrailHistory[];
-extern RoomSeekingTrailHistory g_RoomScatterTrailHistory[];
-extern u8 g_RoomModelBurstColors[];
-extern u8 g_RoomScatterBurstColors[];
+extern RoomSeekingTrailHistory g_RoomSeekingTrailHistory[2];
+extern RoomSeekingTrailHistory g_RoomScatterTrailHistory[2];
+extern u8 g_RoomModelBurstColors[40];
+extern u8 g_RoomScatterBurstColors[40];
 extern void *g_RoomModelBurstAsset;
 extern void *g_RoomScatterBurstAsset;
-extern u8 g_RoomModelBurstLayer[];
-extern u8 g_RoomScatterBurstLayer[];
+extern u16 g_RoomModelBurstLayer[16];
+extern u16 g_RoomScatterBurstLayer[16];
 /* Where each burst last drew its model; its shed sprites are drawn there. */
 extern GteShortVector g_RoomModelBurstAnchor;
 extern GteShortVector g_RoomScatterBurstAnchor;
+
+#include "pe1/fieldfx_task.h"
+extern FieldFxTaskProgram g_RoomSeekingTrailProgram, g_RoomScatterTrailProgram;
+int RoomEffect_SeekingTrailParticle(int, void *, intptr_t);
+int RoomEffect_SeekingTrailController(int, void *, intptr_t);
+int RoomEffect_ModelBurstParticle(int, void *, intptr_t);
+int RoomEffect_ModelBurstController(int, void *, intptr_t);
+int RoomEffect_ScatterTrailParticle(int, void *, intptr_t);
+int RoomEffect_ScatterTrailController(int, void *, intptr_t);
+int RoomEffect_ScatterBurstParticle(int, void *, intptr_t);
+int RoomEffect_ScatterBurstController(int, void *, intptr_t);
+intptr_t RoomEffect_SeekingTrailHistory(int, intptr_t, intptr_t, intptr_t);
+intptr_t RoomEffect_ScatterTrailHistory(int, intptr_t, intptr_t, intptr_t);
 
 #endif

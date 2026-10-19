@@ -1,4 +1,5 @@
 #include "pe1/room_spark_ring_burst.h"
+#include "pe1/room_trail_burst.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_floor_walker.h"
 #include "pe1/room_homing_model.h"
@@ -682,6 +683,13 @@ int Scene_LoadRoom(unsigned int roomId)
             if(slot==180 && record[i].u.handlerAddress==(spark_combined?0x801948bcu:0x80194110u))native=&g_RoomBurstSparkProgram;
             if(spark_combined && slot==116 && record[i].u.handlerAddress==0x801947ecu)native=&g_RoomSoundBurstProgram;
         }
+        /* Complete identical M245/M397 trail and model-burst module. */
+        if (map + 1 == 245 || map + 1 == 397) {
+            if (slot == 75 && record[i].u.handlerAddress == 0x8019563cu) native = &g_RoomActorClassTable[2];
+            if (slot == 70 && record[i].u.handlerAddress == 0x80195604u) native = &g_RoomActorClassTable[0];
+            if (slot == 140 && record[i].u.handlerAddress == 0x80195720u) native = &g_RoomSeekingTrailProgram;
+            if (slot == 141 && record[i].u.handlerAddress == 0x801957e4u) native = &g_RoomScatterTrailProgram;
+        }
         /* M205/M243 link the identical complete USA actor/SoundBurst module. */
         if (map + 1 == 205 || map + 1 == 243) {
             if (slot == 75 && record[i].u.handlerAddress == 0x80192c70u) native = &g_RoomActorClassTable[2];
@@ -1105,6 +1113,25 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if (spark_combined && slot == 116) {
             g_FieldFxTaskPrograms[31]=&g_RoomSoundBurstProgram;
             memset(g_RoomScriptArgs,0,sizeof(g_RoomScriptArgs));
+        } else if ((map + 1 == 245 || map + 1 == 397) && (slot == 75 || slot == 70)) {
+            g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[slot == 75 ? 2 : 0];
+        } else if ((map + 1 == 245 || map + 1 == 397) && slot == 140) {
+            g_FieldFxTaskPrograms[55] = &g_RoomSeekingTrailProgram;
+            memset(g_RoomSeekingTrailHistory,0,sizeof(g_RoomSeekingTrailHistory));
+            memset(g_RoomScatterTrailHistory,0,sizeof(g_RoomScatterTrailHistory));
+            memset(g_RoomModelBurstLayer,0,sizeof(g_RoomModelBurstLayer));
+            memset(g_RoomScatterBurstLayer,0,sizeof(g_RoomScatterBurstLayer));
+            memset(&g_RoomModelBurstAnchor,0,sizeof(g_RoomModelBurstAnchor));
+            memset(&g_RoomScatterBurstAnchor,0,sizeof(g_RoomScatterBurstAnchor));
+            g_RoomModelBurstAsset = g_RoomScatterBurstAsset = NULL;
+            memset(g_RoomModelBurstColors,0,8);
+            memset(g_RoomScatterBurstColors,0,8);
+            for (unsigned key=8;key<40;key+=8) {
+                memset(g_RoomModelBurstColors+key+4,0,4);
+                memset(g_RoomScatterBurstColors+key+4,0,4);
+            }
+        } else if ((map + 1 == 245 || map + 1 == 397) && slot == 141) {
+            g_FieldFxTaskPrograms[56] = &g_RoomScatterTrailProgram;
         } else if ((map + 1 == 205 || map + 1 == 243) && slot == 75) {
             g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
         } else if ((map + 1 == 205 || map + 1 == 243) && slot == 116) {

@@ -2,6 +2,55 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M245/M397: natywna integracja całego istniejącego trail_burst_attacks.c
+
+Włączono cały dotychczasowy plik do istniejącego buildu CMake, bez nowych
+plików źródłowych. Wszystkie8 callbacków mają natywną sygnaturę zadania,
+korzystają z g_FieldFxActiveTaskSlot->end, rzeczywistego aktora i natywnych
+pól kontekstu. Trafienie śladem ustawia właściwy Combatant.stateFlags i
+core_flags właściciela; action_state jest osobnym wskaźnikiem z kontrolą
+guardów. Zachowano oryginalne timingi, stałe i oba gettery zwracające
+SeekingTrailHistory (potwierdzone instrukcjami801955e4/801955f4).
+
+Odtworzono autorowane skrypty36/60 B, dwie40 B krzywe kolorów, dwie historie
+po2×25 punktów, 16 kolorowe warstwy CLUT, modele i kotwice. Dane porównano
+z pełnym identycznym modułem M245/M397:27556 B, SHA8 a458699….
+Krzywe zawierają klucz końcowy; nie obcinać ich do32 B. Loader wiąże
+klasy75/70 i programy140/141→task55/56 oraz resetuje całą mutowalną
+pamięć, łącznie z nagłówkami/timingiem krzywych. Istniejący helper
+FieldFx_LoadRotatedClutRow w geometry.c zastąpił niezdefiniowany bufor
+PS1 D_800E21A8 lokalnym16-elementowym buforem C. Przechowuje nadal kolor0
+i obraca pozostałe15. Usunięto ujemne przesunięcia spin.z, odtwarzając
+zawijanie halfword przez mnożenie i rzutowanie.
+
+Nowy tryb --m245-load w ISTNIEJĄCYM original_actor_animation.c sprawdza
+realne CUE I/O obu pokoi, hash całego modułu, skrypty/krzywe, 4 powiązania,
+dwukrotny reload każdego pokoju po celowym zabrudzeniu danych, prawdziwe
+gettery, oba trafienia śladów oraz ich flagi/guardy, czasy8/48/16 klatek
+kontrolerów i cząstek oraz odczyt/obrót rzeczywistego CLUT w VRAM.
+Normal i ASan/UBSan/function przechodzą. To testy izolowane silnika,
+nie edycja stanu autentycznego przejścia kampanii. Tryby rysowania efektów
+w prawdziwej walce oraz zgodność obrazu PS1 wymagają dalszych dowodów.
+
+Świeży kandydat /tmp/pe-m245-trail-native-v1-* ma406 obiektów
+(203 normal+203 SAN), 620 zweryfikowanych zależności. Wszystkie68 regresji
+terminalnie exit0: -verification.json. Sześć wymaganych CTestów zasobów
+bez SKIP: -ctest-assets.log. Build/game i fixture podmienione na ten sam
+świeży profil normal. Biblioteki PsyZ/SDL nadal nieinstrumentowane.
+
+Pełny cold Continue od autentycznego B, z pierwotnym śladem aż za schody
+M243: M245/A80442C8 przy 122881, 589 HP, menuNone, lock0, stage186.
+Normalny live97695 i osobny SAN exit0 mają identyczny CAŁY JSON/VRAM;
+B/C/D są identyczne z autentycznymi źródłami:
+/tmp/pe-m245-trail-native-v1-entry-proof.json. Brak native descriptor
+missing. Wczesna próba zejścia spod balustrady wróciła zwykłym wyjściem
+do M243; ponowne wejście do M245 przy 123500 działało. Up45 i Left60
+zeszły z górnego końca schodów. Bieżący live97695 przy 123621 w M245,
+589 HP, pozycja(428, 1229), ruch odblokowany. Te późniejsze ruchy mają na
+razie tylko normalny ślad. Następny krok: scena/boss, rzeczywiste efekty
+trail/model burst w walce oraz nowy autentyczny zapis przy telefonie.
+Pełny cel portu i dalsza kampania pozostają nieukończone.
+
 ### M243 wygrane; M245 wymaga całego trail_burst_attacks.c
 
 Live38136 na kandydacie d07eafddc: Up110 uruchomiło wM243 pojedynczy

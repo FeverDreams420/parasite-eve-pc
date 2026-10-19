@@ -440,7 +440,8 @@ void FieldFx_LoadRotatedClutRow(int arg0, int arg1, u16 *pixels) {
 
     i = 1;
     magic = 0x88888889;
-    dst = D_800E21A8;
+    u16 rotated[16];
+    dst = rotated;
     dst[0] = pixels[0];
     do {
         source_offset = (u16)i * 2;

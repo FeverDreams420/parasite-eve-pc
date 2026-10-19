@@ -511,7 +511,7 @@ int RoomEffect_UpdateOrbitSprite(void *data0, void *data1, void *data2) {
 
 /* Complete authored M187 lists at FFA8/FFBC/FFD0, class FFF0 and
  * script 9000C..9007C. Only the pointer-bearing controller grows on PC;
- * retain the burst's two authored spare bytes. */
+ * retain the particles' and burst's two authored spare bytes. */
 FieldFxHandler g_RoomOrbitSetInitList[] = {RoomEffect_OrbitSetInit,
     RoomEffect_InitOrbitParticles,RoomEffect_InitOrbitBurst,RoomEffect_InitOrbitSprite,
     (FieldFxHandler)(intptr_t)-1};
@@ -521,7 +521,7 @@ FieldFxHandler g_RoomOrbitSetDrawList[] = {RoomEffect_OrbitSetDraw,
 FieldFxHandler g_RoomOrbitSetUpdateList[] = {RoomEffect_OrbitSetUpdate,
     RoomEffect_UpdateOrbitParticles,RoomEffect_UpdateOrbitBurst,RoomEffect_UpdateOrbitSprite,
     (FieldFxHandler)(intptr_t)-1};
-u16 g_RoomOrbitSetSpawnLayout[] = {sizeof(RoomOrbitSetState),sizeof(RoomOrbitParticleState),
+u16 g_RoomOrbitSetSpawnLayout[] = {sizeof(RoomOrbitSetState),sizeof(RoomOrbitParticleState)+2,
     sizeof(RoomOrbitBurstState)+2,sizeof(RoomOrbitSpriteFxParams),65535,0};
 int g_RoomOrbitSetScript[] = {
     0x00010000,0x00100000,0x10040014,0x10180015,0x00200001,0x00020000,

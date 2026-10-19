@@ -1,3 +1,4 @@
+#include "pe1/room_orbit_set.h"
 #include "pe1/room_twelve_effect.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_spark_attacks.h"
@@ -2762,6 +2763,66 @@ static int original_drop_field_states(void)
 #undef DROP_HASH
     if(cases!=428 || hash!=UINT64_C(0xb3bad0b238c533aa)){fprintf(stderr,"Drop field CPU hash %u %016llx\n",cases,(unsigned long long)hash);return 0;}
     puts("Original DropField: 428 unhooked USA CPU initializer/update states, signed positions, word/halfword wrap, timers, phases and whole-buffer guards passed");
+    return 1;
+}
+
+static int original_orbit_set_cycles(void)
+{
+    PmTables old_tables=g_PmTables;Pe1GameState old_game=g_GameState;
+    u32 old_flags=g_GameStateFlags,old_rng=Psyz_RandState();RoomFloorY old_floor=*g_RoomFloorY;
+    RenderBufferPrefix old_buffers=D_800B0E38;int old_slot=g_ActiveDrawSlot,old_offset=g_DrawPacketOffset;
+    GteMatrix *old_view=g_GeomScroll.words.viewMatrix,view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
+    s32 *old_projection=g_GeomScroll.words.projectionDistance,projection=256;
+    FieldFxState *old_state=g_FieldFxScriptState;FieldFxObject *old_object=g_FieldFxScriptObject;
+    FieldFxSlot *old_slots=g_FieldFxSlotTable;char *old_data=g_FieldFxScriptData;int *old_commands=g_FieldFxCommandTable;
+    static RenderGpuTag ordering[4096];
+    struct {_Alignas(16) u8 bytes[65536];u8 guard[32];} packets;
+    unsigned cycles=0;
+    for(unsigned mode=0;mode<2;++mode)for(unsigned draw=0;draw<2;++draw){
+        struct {PmPrimarySlot slots[11];u8 guard[32];} bank={0};
+        RenderMatrix matrix={0};for(unsigned j=0;j<3;++j)matrix.rotation[j][j]=4096;
+        matrix.translation[0]=mode?123:-123;matrix.translation[1]=-100;matrix.translation[2]=1200;
+        FieldActorState core={.control10.command_value=1};u8 action=1;
+        FieldActor owner={.state=&core};core.action_state=&action;owner.render_object.matrices=&matrix;
+        g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};
+        g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;g_GameState.cd_range_read_mode=0;
+        g_GeomScroll.words.viewMatrix=&view;g_GeomScroll.words.projectionDistance=&projection;g_RoomFloorY->y=0;
+        Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
+        FieldFx_InitTexturePageTable();srand(mode+1);memset(bank.guard,0xa5,sizeof(bank.guard));
+        if(Scene_LoadRoomAssets(36,&owner) || Pm_SendCmd(0,0,0,mode,0,0))return 0;
+        unsigned seen=0,drawn=0,frame=0;FieldFxObject *object=&bank.slots[0].effect;
+        for(;frame<600;++frame){
+            for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};
+            memset(packets.guard,0xa5,sizeof(packets.guard));g_ActiveDrawSlot=draw;g_DrawPacketOffset=0;
+            D_800B0E38.ordering[draw]=ordering;D_800B0E38.packets[draw]=(char *)packets.bytes;
+            if(Pm_Start(0) || Pm_Exec(0))return 0;
+            for(unsigned i=0;i<64;++i)if(object->slots[i].flag==1)seen|=1u<<object->slots[i].handler_id;
+            if(g_DrawPacketOffset)++drawn;
+            if(g_DrawPacketOffset<0 || g_DrawPacketOffset>sizeof(packets.bytes))return 0;
+            for(unsigned i=0;i<4096;++i){uintptr_t at=ordering[i].address;unsigned links=0;
+                while(at && at!=0xffffff){
+                    if(at<(uintptr_t)packets.bytes || at+sizeof(RenderGpuTag)>(uintptr_t)packets.bytes+g_DrawPacketOffset ||
+                        at%_Alignof(RenderGpuTag) || ++links>512)return 0;
+                    at=((RenderGpuTag *)at)->address;
+                }
+            }
+            for(unsigned i=0;i<32;++i)if(bank.guard[i]!=0xa5 || packets.guard[i]!=0xa5)return 0;
+            /* Observe original sound staging; this graphics fixture has no audio timer. */
+            g_AkaoMessageQueueCount=0;
+            if(!bank.slots[0].header.state)break;
+        }
+        if(frame==600 || seen!=(mode?15u:3u) || !drawn || object->state.slot_count || !object->state.halted || bank.slots[0].header.owner){
+            fprintf(stderr,"M187 orbit mode%u draw%u frames%u seen%x drawn%u slots%d halted%d\n",
+                mode,draw,frame,seen,drawn,object->state.slot_count,object->state.halted);return 0;
+        }
+        ++cycles;
+    }
+    g_PmTables=old_tables;g_GameState=old_game;g_GameStateFlags=old_flags;srand(old_rng);*g_RoomFloorY=old_floor;
+    D_800B0E38=old_buffers;g_ActiveDrawSlot=old_slot;g_DrawPacketOffset=old_offset;
+    g_GeomScroll.words.viewMatrix=old_view;g_GeomScroll.words.projectionDistance=old_projection;
+    g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;g_FieldFxSlotTable=old_slots;
+    g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;
+    printf("Original M187 orbit: %u complete authored cycles, both sprite sides and draw buffers, all four effect types, natural expiry and pool/packet/OT guards passed\n",cycles);
     return 1;
 }
 
@@ -17025,6 +17086,34 @@ int main(int argc, char **argv)
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M404 loader: real CUE I/O, native geometry, all three descriptor registrations and argument reset passed twice");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m187-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[0x10d4];
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive) ||
+            !pe_disc_read(&disc,&exe,0x800ull+0x80093378u-0x80010000u+186*8,&range,8) ||
+            !pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048,module,sizeof(module)))return 1;
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned i=8;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+        if(hash!=UINT64_C(0x20d34cc7504f29a2) || memcmp(module+(0x8019000cu-0x8018efe8u),g_RoomOrbitSetScript,29*4) ||
+            g_RoomOrbitSetSpawnLayout[0]!=sizeof(RoomOrbitSetState) || g_RoomOrbitSetSpawnLayout[1]!=140 ||
+            g_RoomOrbitSetSpawnLayout[2]!=218 || g_RoomOrbitSetSpawnLayout[3]!=24)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        for(unsigned pass=0;pass<2;++pass){
+            RoomFxSpritePacket *packets[]={&g_RoomOrbitSpritePacket,&g_RoomOrbitParticlePacket,
+                &g_RoomOrbitBurstPacket,&g_RoomOrbitShadowPacket};
+            for(unsigned i=0;i<4;++i)memset(packets[i],0xa5,sizeof(*packets[i]));
+            g_PmCmdHandlerTable[36]=NULL;
+            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0187i")) ||
+                g_PmCmdHandlerTable[36]!=&g_RoomOrbitSetHandlers)return 1;
+            for(unsigned i=0;i<4;++i)for(unsigned j=0;j<sizeof(*packets[i]);++j)
+                if(((u8 *)packets[i])[j])return 1;
+            if(!original_orbit_set_cycles())return 1;
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original M187 loader: real USA assets, complete orbit descriptor and per-entry reset passed twice");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m350-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

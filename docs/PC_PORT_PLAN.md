@@ -2,6 +2,55 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+M187 podłączone i zweryfikowane w kampanii. Istniejący orbit_set.c
+włączony do linku; room_load.c waliduje descriptor36/8018fff0 i zeruje
+cztery bloki sprite'ów przy każdym wejściu. Cały autorski moduł10ccB,
+FNV64 20d34cc7504f29a2, oraz wszystkie29 słów skryptu porównane z USA.
+Zachowane oba zapasowe bajty cząstek (138+2=140B) i burstu (216+2=218B);
+kontroler ze wskaźnikiem ma48B natywnie zamiast40B na PS1.
+Wcześniejszy wpis ABI jest historią przygotowania; M187 nie jest już
+zatrzymane na brakującym descriptorze.
+
+Istniejący original_actor_animation --m187-load testuje dwukrotne rzeczywiste
+ładowanie z CUE, reset4 bloków i po4 kompletne cykle PM (razem8/profil).
+Parametr0 wybiera kontroler/cząstki, parametr1 także burst i cztery kolejne
+sprite'y po obu stronach; oba bufory obrazu, naturalne wygaszenie, canary
+puli/pakietów i wszystkie łącza OT przechodzą normal/SAN. Pierwszy fixture
+błędnie oczekiwał wszystkich typów przy parametrze0; poprawiono wywołanie
+testu, nie skrypt. Nowy test CTest original-m187-orbit-load, timeout60.
+2560 przypadków InitParticles/InitBurst oraz trzech Update porównuje całe
+bajty stanu/sygnału/RNG z oryginalnymi instrukcjami USA MIPS i RNG BIOS-u.
+/tmp/pe-m187-orbit-updates-v4-proof.json; kompilacja ABI całego źródła
+bez ostrzeżeń z błędami wskaźników/callbacków jakoerrors:
+/tmp/pe-m187-orbit-abi-v4-proof.json. InitSprite/Draw mają pełne cykle PM,
+ale nie osobną numeryczną referencję MIPS ani pełną zgodność pikseli PS1.
+
+Kandydat /tmp/pe-m187-orbit-v2:394 świeże obiekty (197/profil),
+rehash1007 plików,56/56 regresji, CTest2/2 (assets iM187).
+Sześć cold prób normal/SAN: wcześniejszy K/M184/26200 cały JSON iVRAM
+identyczne ze starym kandydatem; wejście M187/31010 ma278HP/story596,
+cały JSON/VRAM zgodny między profilami. Naturalna walka M187 z4:31/161HP:
+trzy strzały G23 zmniejszają do86, Energy Shot kończy ją w34662 bez utraty
+HP; całe JSON-y i1MiB VRAM zgodne z live oraz między profilami.
+Nagrody odebrane, bez pominięcia walki, zmian RAM ani zmian mechaniki.
+/tmp/pe-m187-orbit-v2-{verification.json,entry-proof.json,rehash-proof.json,
+promotion-proof.json}, /tmp/pe-m187-prior-v1-proof.json,
+/tmp/pe-m187-battle-check-v1-replay-proof.json. Root game/fixture są kopiami
+zweryfikowanego normal. K niezmienione; użytkowe bu00/bu10 nietknięte.
+Psyz/SDL nadal nieinstrumentowane. Kontynuacja przed walką:
+/tmp/pe-m187-orbit-v2-entry-normal/args.json; po wygranej:
+/tmp/pe-m187-battle-check-v1-replay-34662-normal/args.json.
+
+Dalszy normal-only input po nagrodach prowadzi do nowego braku M188:
+native descriptor missing slot73/80195e08, proces kończy1.
+/tmp/pe-m188-missing-v1-repro-args.json (cap36252), dziennik
+/tmp/pe-m187-native-v1-live/game.log. Cały moduł M188 ma7008B i sześć
+rekordów:73/80195e08,75/80195dd0,127/80195f98,124/80195e84,
+70/80195d98,125/80195f28. Potrzebny audyt CAŁEGO modułu i wszystkich
+sześciu bindingów. Nie jest to naprawione M188 ani ukończenie metra.
+Sąsiednie warianty orbit M186/M385/M388/M389 nadal bez dowodu naturalnego
+wejścia. Pełna kampania i ogólna zgodność audio/obrazu z PS1 otwarte.
+
 M187: nowe rzeczywiste wejście z autentycznego K kończy proces1 na
 brakującym descriptorze36/8018fff0. /tmp/pe-subway-k-v1-live/game.log,
 odtworzenie /tmp/pe-m187-missing-v1-repro-args.json (cap31010).

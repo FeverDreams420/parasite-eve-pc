@@ -15,6 +15,7 @@
 #include "pe1/room_glow_orb.h"
 #include "pe1/room_effect_sequence.h"
 #include "pe1/room_drop_field.h"
+#include "pe1/room_orbit_set.h"
 #include "pe1/room_three_particle_class.h"
 #include "pe1/room_m086_seeker.h"
 #include "pe1/room_m089_model_pulse.h"
@@ -572,6 +573,8 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomActorClassTable[4];
         if (actor_library && slot == 73 && record[i].u.handlerAddress == 0x80192558u)
             native = &g_RoomActorClassTable[4];
+        if (map + 1 == 187 && slot == 36 && record[i].u.handlerAddress == 0x8018fff0u)
+            native = &g_RoomOrbitSetHandlers;
         /* M174/M383 share the complete USA glow/drop/actor module. */
         if (map + 1 == 174 || map + 1 == 383) {
             if (slot == 75 && record[i].u.handlerAddress == 0x80196f58u)
@@ -1036,6 +1039,12 @@ int Scene_LoadRoom(unsigned int roomId)
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
         } else if (actor_library && slot == 73) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];
+        } else if (map + 1 == 187 && slot == 36) {
+            g_PmCmdHandlerTable[slot] = &g_RoomOrbitSetHandlers;
+            memset(&g_RoomOrbitSpritePacket,0,sizeof(g_RoomOrbitSpritePacket));
+            memset(&g_RoomOrbitParticlePacket,0,sizeof(g_RoomOrbitParticlePacket));
+            memset(&g_RoomOrbitBurstPacket,0,sizeof(g_RoomOrbitBurstPacket));
+            memset(&g_RoomOrbitShadowPacket,0,sizeof(g_RoomOrbitShadowPacket));
         } else if ((map + 1 == 34 || map + 1 == 174 || map + 1 == 383) && slot == 8) {
             g_PmCmdHandlerTable[slot] = &g_RoomGlowOrbHandlers;
             g_RoomGlowOrbOwner = NULL;

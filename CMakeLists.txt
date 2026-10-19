@@ -212,6 +212,7 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/glow_orb.c
     src/overlays/room_lib/three_particles.c
     src/overlays/room_lib/drop_field.c
+    src/overlays/room_lib/orbit_set.c
     src/overlays/room_lib/glow_orb_setup.c
     src/overlays/room_lib/class_spawn.c
     src/overlays/room_lib/class_close_target.c
@@ -523,6 +524,9 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-fx-motion PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
     add_test(NAME original-game-fx-models COMMAND test-original-actor-animation --fx-models)
     set_tests_properties(original-game-fx-models PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+    add_test(NAME original-m187-orbit-load COMMAND test-original-actor-animation --m187-load)
+    set_tests_properties(original-m187-orbit-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" LABELS "render")
     add_test(NAME original-game-player-input-assets COMMAND test-original-actor-animation --assets)
     set_tests_properties(original-game-player-input-assets PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
 endif()

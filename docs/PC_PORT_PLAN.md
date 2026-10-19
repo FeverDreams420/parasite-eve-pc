@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### Diagnostyka PE i nieudana próba M245
+
+Próba z zachowanym Medicine 3 zakończyła się porażką. Energy Shot odjął
+326 HP (610→284 ponad próg), Medicine 3 odnowiło 287→467 HP.
+Dalsze strzały zostawiły 214 HP ponad próg. Aya zginęła przy 127631;
+zamrożony stan 127639, VRAM i ślad: /tmp/pe-m245-medicine-defeat-v1/.
+Live79745 zamknięty quit, exit0. Wygrana bossa nadal niepotwierdzona.
+Odczyt kodu Barrier ujawnia koszt maxPE/3 oraz zużycie PE przy trafieniu;
+regeneracja podczas Barrier jest wstrzymana. Nie uznawać go bez próby
+za rozwiązanie problemu przeżycia.
+
+Commit 25bc4a0a9 modyfikuje tylko istniejący src/main/boot/init.c.
+Snapshot battle_detail.player otrzymał cztery odczyty istniejących pól:
+pe_recovery_step, pe_recovery_divisor, pe_full_guard_frames, action_mode.
+Nie zmieniono rozgrywki i nie dodano plików źródłowych. Dotychczasowe atb
+w JSON oznacza gotowość akcji; ochrona pełnego PE ma osobny timer.
+
+Świeży kandydat /tmp/pe-combat-pe-observe-v1-* obejmuje 406 obiektów
+(203 normal + 203 ASan/UBSan/function) i 620 sprawdzonych zależności.
+68/68 regresji exit0 (-verification.json), sześć wymaganych CTestów zasobów
+bez SKIP (-ctest-assets.log). Binaria build/ mają hashe tych samych
+kandydatów normal. PsyZ/SDL pozostają nieinstrumentowane. Końcowy audyt
+początkowo oczekiwał innego formatu podsumowania CTest; poprawiony audyt
+liczy sześć rzeczywistych wierszy Passed i potwierdza bieżące podsumowanie
+„100% tests passed out of 6”: -source-check.json.
+
+Osobne cold Continue normal/SAN ostatniej próby M245 kończą się exit0
+przy 127639: PEŁNY JSON oraz VRAM identyczne. VRAM i wszystkie stare pola
+JSON są identyczne z wcześniejszym kandydatem. Weryfikator v1 wymagał
+starego schematu i odrzucił cztery nowe pola; poprawiony v2 zachowuje ścisłe
+porównanie całego normal/SAN i dokładnie wszystkich dawnych pól z dawnym
+kandydatem. Dowód: /tmp/pe-combat-pe-observe-v1-fight-proof-v2.json.
+Odczyty końcowe: recovery_step52405, recovery_divisor19327, guard0,
+action_mode19. To dowód rozszerzenia obserwowalności bez zmiany zachowania,
+nie zaliczenie walki. Dalsza próba powinna korzystać z odczytów PE/timera
+albo uzupełnić ekwipunek przed bossem. Żaden live gry teraz nie działa.
+Pełna kampania i cały cel portu pozostają nieukończone.
+
 ### M243→M245: pełne HP z zachowanym Medicine 3
 
 Zamknięto poprzedni live 45849 przez quit, exit 0; jego ślad i dowody

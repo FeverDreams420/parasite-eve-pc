@@ -2,6 +2,42 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### Dalsze Museum: M198, M197, M201 i wejście M204
+
+Po zwycięstwie M199 zwykła droga powrotna M198→M197 wyzwala nowe
+starcia. M198:typ4/sub31 280HP oraz typ5/sub30,29 po200HP; zwycięstwo
+65304,377HP. M197:typ5/sub31 280HP oraz typ6/sub30,29 po200HP;
+ucieczka(mode10) cofa do wejścia, ponowne przekroczenie obszaru znowu
+wyzwala grupę. Ostatecznie zwycięstwo74400,159HP. Nie zmieniano warunków
+starć ani obrażeń; zwykłe G23,Heal3,input. Obie walki w cold normal/SAN
+od O:pełny JSON/VRAM równy zamrożonemu live,exit0:
+/tmp/pe-museum-m198-victory-v1-replay-proof.json,
+/tmp/pe-museum-m197-victory-v1-replay-proof.json.
+
+Powrót przez północne drzwi M197(z≈1825,x≈−375) do M196. Drzwi zachodnie
+na z≈1014 prowadzą do M254:to dodatkowy korytarz ze skrzyniami, nie
+potwierdzona droga na piętro; oglądano go i wrócono do M196. Główna dalsza
+trasa:od wejścia M254 w prawo dox≈−528,Up do≈z1537,Right dox≈−145,
+Up przez≈z2000 prowadzi naturalnie do M201/0xa80400c8,81032.
+Pełny JSON/VRAM normal/SAN/live:
+/tmp/pe-museum-m201-entry-v1-replay-proof.json.
+
+M201,ekspozycja Rain Forest:dwóch przeciwników typ3 po200HP. Zwycięstwo
+85022,298/532HP,mode2,live0. Zwykłe Heal2 i Heal3,G23; bez grindu poza
+walkami wyzwalanymi na trasie. Pełny JSON/VRAM normal/SAN/live,exit0:
+/tmp/pe-museum-m201-victory-v1-replay-proof.json. Wszystkie cold próby
+odtwarzają również BP i identyczny osobny zapis A; źródłowy/prywatny O
+zachowany. Biblioteki PsyZ/SDL nadal bez instrumentacji.
+
+Po odebraniu nagród Up/run200 prowadzi do M204/0xa8040248,86602,
+298HP,menuNULL,move_lock0. Pełny JSON/VRAM normal/SAN/live,exit0:
+/tmp/pe-museum-m204-entry-v1-replay-proof.json. Agregat10 cold prób
+/tmp/pe-museum-progress-v2-proof.json. Kod produkcyjny bez zmian.
+Live SAN sesja11625,
+/tmp/pe-warehouse-bp-v2-live. Zamknięte północne drzwi M199 wymagają
+przedmiotu213=Klamp Key (lub późniejszej flagi/stage); dostępna trasa
+przez M201 nie wymaga obchodzenia tego warunku. Kampania nieukończona.
+
 ### Museum M199: zwycięstwo po wydaniu BP
 
 Zwykły input od O, menu BP i osobny zapis A prowadzą ponownie do M199.

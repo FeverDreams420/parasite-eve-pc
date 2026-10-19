@@ -38,10 +38,12 @@ wskaźnik zakończenia i cykl callbacków z guardami. Root game/fixture są
 identycznymi kopiami zweryfikowanego normal v5.
 
 Live /tmp/pe-m269-native-v5-live.py, sesja80365, stoi w64859.
-Seria zwykłego inputu /tmp/pe-warehouse-m269-search-v1.py, sesja11156,
-pracuje od tego punktu z autentycznego L; pierwsze próby używają Heal3
-i przywracają437HP. Sprawdzić terminal.json i żywy uchwyt przed kolejnym
-startem. Pełna walka M269, reszta Warehouse i kampania pozostają nieukończone.
+Seria zwykłego inputu /tmp/pe-warehouse-m269-search-v1.py od tego punktu
+z autentycznego L zakończyła się błędem: r00-c05 SIGSEGV podczas końcowego
+ruchu140 klatek po Heal3; pierwsze r00-c00..03 przywracają437HP i kończą0.
+Nie ma terminal.json ani potwierdzonego zwycięstwa. Konkretne odtworzenie
+c05 z SAN i utrwalaniem każdego inputu: /tmp/pe-m269-c05-v5-san.py,
+log /tmp/pe-m269-c05-v5-san.log; sprawdzić proces i wynik przed zmianami. Pełna walka M269, reszta Warehouse i kampania pozostają nieukończone.
 
 ### Wcześniejsze dojście do M269 i diagnoza
 

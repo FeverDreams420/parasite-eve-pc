@@ -2,6 +2,50 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Po E: M8000, M246 i dalsze sceny Eve
+
+Live94804 startuje wyłącznie z autentycznego E na kandydacie e60419a9f.
+Oryginalne menu wyposażyło M8000 w slocie1. Trasa M340→M343→M229→
+M242→M243→M245→M246 uruchomiła film22; odtworzono go bez skipu.
+Przy31281 M246, video_state0, lock0, Aya285; inventory identyczne z E
+poza weapon_slot1. Cold SAN exit0, bez raportów, pełny JSON/VRAM
+identyczne, jedyna źródłowa karta E bez zmian:
+/tmp/pe-m246-movie22-v1-proof/proof.json.
+
+W M246 uruchomiło się spotkanie280/280/240. M8000 ma turn_slot2,
+remaining_actions1: dwie osobne komendy, pojedynczy pocisk na strzał.
+Przez menu wybrano Medicine3 ze slot15 i strzał w jednej turze:
+249→429HP przed późniejszymi trafieniami, ammo12→11, cel280→200.
+Punkt33469 Aya377; cold SAN exit0, pełny JSON/VRAM zgodne,
+E bez zmian: /tmp/pe-m246-double-action-v1-proof/proof.json.
+Następnie Heal3 i strzał w jednej turze295→575HP, cel200→120.
+Square zatwierdził tylko ostatni potrzebny strzał. Wygrana36252:
+Aya383/621, mode2, zero wrogów, ammo11, Medicine3 w slocie27 zachowane.
+Cold SAN exit0 bez raportów, pełny JSON/VRAM identyczne.
+Weryfikator v1 po poprawnym porównaniu błędnie wymagał menuNone na
+ekranie nagród; osobny v2 sprawdził terminalne artefakty i właściwe menu20:
+/tmp/pe-m246-victory-v2-proof.json, -v2-verify.py, replay w -v1-proof/.
+Loot odebrany przez ALL/END, slot15 pozostaje pusty.
+
+Z pola(−654,422) w M246: Left70run, Down140run, Right45run,
+wait350→M248 (kamera M246:Down+X,Right+Z). Stamtąd Left145run,
+Up40run i potwierdzenie „Eve's on the other side!” prowadzą doM249.
+Przeszły dialogi Eve, filmy23 i24 bez skipu, scena M192 z Danielem/Maedą
+i przejście do samochodu M037. Cały cold replay SAN od samego E do60948
+exit0 bez raportów, pełny JSON/VRAM identyczne, E niezmienione:
+/tmp/pe-m249-story-v1-proof/proof.json. To porównanie natywne/SAN,
+nie oracle obrazu lub dźwięku PS1.
+
+Nowszy live94804 przy62796 jest w M367/0xa80663c8, retrospekcja
+szpitalna z dialogiem Maedy; w tej scenie brak aktora gracza jest zgodny
+z widoczną retrospekcją, nie dowodzi utraty HP. Późniejszy odcinek po60948
+nie ma jeszcze niezależnego replayu. Dalsza kampania pozostaje otwarta.
+
+Obserwacja do późniejszego sprawdzenia: przy windzie M340 ruch Up na
+X≈−1032 zatrzymywał Z≈1453.5, przed odczytaną strefą przycisku1456..1570.
+Nie ustalono przyczyny ani poprawności względem PS1; nie zmieniano
+geometrii/skryptu. Do dalszej fabuły użyto opisanej trasy przez schody.
+
 ### M340: autentyczny zapis E po T-Rexie i Continue
 
 Telefon znajduje się w M340, po zachodniej stronie lobby. Jego strefa

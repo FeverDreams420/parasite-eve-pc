@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### Taktyka: szybkostrzelność a podwójna/potrójna akcja
+
+Zgodnie z uwagą użytkownika nie traktować ROF jako dodatkowych pełnych
+ataków. Oryginalne enemy_movement.c skaluje moc: 1→100%,2→60%,3→41%,
+5→25%,7→18%,10→13%. Kara pozostaje przy skróceniu kolejki Square;
+liczbę bierze z action->turnWord,nie z faktycznie oddanych strzałów.
+Podwójna/potrójna akcja to osobny mechanizm slotów poleceń (mody19/20),
+nie szybkostrzelność. Priorytet przygotowania: broń jednostrzałowa z dobrymi
+parametrami albo legalna modyfikacja obecnej przez oryginalny system.
+Nie zmieniać tych reguł kodem portu dla łatwiejszego przejścia.
+
+Aktualny G23:62ataku,mod0x22(low5bits=2) dajeROF3. M9-2 równieżROF3,
+39ataku. M79-3:54ataku,ROF2; M203:27ataku,bez ROF,pojedynczy strzał.
+AT4:128ataku,jednostrzałowy,bez pocisków. W bieżącym ekwipunku nie ma
+Tool/SuperTool ani zestawów narzędzi. Nie zakładać,że samo zatwierdzenie
+jednego strzału G23 omija karę albo że zmieniono już modyfikację broni.
+Dalszy dobór i przenoszenie parametrów wymagają weryfikacji w normalnym
+menu oraz zasobów; dotychczasowe serie są dowodem wykonanej trasy,
+nie rekomendacją optymalnej budowy broni.
+
+M234 po226470:Left160,Up160 uruchomiły typ5/sub31(skorpion):390HP/def78
+oraz6/sub30(latający):320HP/def50. Dwie serie G23 zmniejszyły latającego
+320→212→104. Przy227778 Aya319HP,PE51100528,G23clip11.
+Następnie użyto CureP ze slot15. Przy228306:292HP,PE57260792,oba wrogowie
+nadal390/104HP. Trucizna jest ponownie aktywna(stateFlags&3==1).
+Oryginalne CureP usuwa istniejące zatrucie; prewencję ustawia przy braku
+zatrucia. Nie utożsamiać jednego użycia w zatruciu z trwałą odpornością.
+Zamrożony stan/VRAM/input: /tmp/pe-m234-combat-v1-228306*.
+Live33307 czeka przy228306. To normal-only obserwacja,nie wygrana M234.
+
 ### M232 i M233 wygrane; wejście M234
 
 Dalszy normal live33307 przeszedł M232. RunUp290 uruchomiło trzy typ5
@@ -30,9 +60,9 @@ odczytu w menu. Up100,Left60 doprowadziły doM234/0xa8043248 przy226470,
 
 Zamrożone JSON/VRAM/PNG i pełna trasa zwykłego inputu:
 /tmp/pe-m234-entry-v1-226470.{json,vram,png},
-/tmp/pe-m234-entry-v1-base-args.json. Powtórka normal/SAN uruchomiona:
-/tmp/pe-m234-entry-v1-replay.py,session93212; wynik wymaga potwierdzenia.
-Live33307 czeka wM234. Kod produkcyjny niezmieniony; nie użyto zapisów RAM
+/tmp/pe-m234-entry-v1-base-args.json. Powtórka normal/SAN zakończona: oba exit0,całe JSON i VRAM równe
+normal/SAN/live: /tmp/pe-m234-entry-v1-replay-proof.json.
+Live33307 kontynuował wM234. Kod produkcyjny niezmieniony; nie użyto zapisów RAM
 ani edytowanych save'ów. Brak nowego telefonu/zapisu; to następny cel.
 
 ### M229 z amunicją i zwycięstwo M231; wejście M232

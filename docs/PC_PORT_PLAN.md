@@ -36,10 +36,27 @@ exit0 bez raportów, pełny JSON/VRAM identyczne, E niezmienione:
 /tmp/pe-m249-story-v1-proof/proof.json. To porównanie natywne/SAN,
 nie oracle obrazu lub dźwięku PS1.
 
-Nowszy live94804 przy62796 jest w M367/0xa80663c8, retrospekcja
-szpitalna z dialogiem Maedy; w tej scenie brak aktora gracza jest zgodny
-z widoczną retrospekcją, nie dowodzi utraty HP. Późniejszy odcinek po60948
-nie ma jeszcze niezależnego replayu. Dalsza kampania pozostaje otwarta.
+Dalszy live94804 przeszedł retrospekcję szpitalną M367, dialog w
+samochodzie M036 i dotarł do M271/0xa80470c8, sceny na mostku okrętu.
+Cold replay SAN od autentycznego E do71420: exit0 bez raportów,
+pełny JSON/VRAM identyczne z zamrożonym live, jedyna karta E bez zmian.
+Dowód /tmp/pe-m367-flashback-v1-proof/proof.json, skrypt .py obok.
+Brak aktora gracza w retrospekcji i scenie mostka nie oznacza utraty HP;
+w samochodzie stan nadal potwierdzał383/621HP. To dowód natywne/SAN,
+bez niezależnego oracle PS1.
+
+Dalsze ujęcia okrętu, samochód M038 i rozmowa Ayi, Daniela i Maedy
+na ulicy M259/0xa80454c8 przeszły do86124: Aya383/621, M8000slot1,
+Medicine3slot27 zachowane, video_state0, movie27, story678. Cold SAN
+exit0 bez raportów i pełny JSON/VRAM identyczne; źródłowe i prywatne E
+bez zmian. Weryfikator v1 błędnie oczekiwał movie25 po porównaniu
+pełnego stanu; osobny v2 sprawdził terminalne artefakty z movie27.
+Dowód /tmp/pe-m259-street-v2-proof.json, skrypt -v2-verify.py,
+zamrożone replaye /tmp/pe-m266-street-v1-proof/ (historyczna błędna
+nazwa katalogu; token sceny w stanie i weryfikatorze to M259).
+Nie dowodzi to braku skipu każdego filmu25–27 ani zgodności z PS1.
+Live przy87640 wrócił do M271, trwa kolejna sekwencja z Ayą;
+odcinek po86124 nie ma jeszcze osobnego replayu. Dalsza kampania otwarta.
 
 Obserwacja do późniejszego sprawdzenia: przy windzie M340 ruch Up na
 X≈−1032 zatrzymywał Z≈1453.5, przed odczytaną strefą przycisku1456..1570.

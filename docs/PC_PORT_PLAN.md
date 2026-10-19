@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M231: pokonany przeciwnik390HP, walka nadal trwa
+
+Nowy liveSAN94439,/tmp/pe-m231-svprotector-v1-live.py,odtworzył potwierdzony
+punkt206182:503HP,SvProtector,G23clip1,AT4clip1. Wyposażenie AT4 w polu,
+wejście M231 i zwykły ruch uruchomiły typ4/sub31:390HP oraz3/sub30:280HP.
+Medicine4 ze slot15 użyto przy208573; animacja odnowiła zdrowie,a dalsze
+trafienia/trucizna obniżyły je do510 przy208823.
+
+EnergyShot jest niedostępny z AT4: panel przy209437 pokazuje go szaro.
+Oryginalne Menu_CheckItemAffordable w src/main/menu/status_panels.c
+sprawdza kategorię broni i amunicję; ten zestaw nie spełnia warunku.
+Przewidywanie500HP EnergyShot z AT4 było więc niedozwoloną kombinacją,
+nie wynikiem możliwej akcji gry. Nie zmieniano tego ograniczenia.
+Zwykły pocisk AT4 trafił obu przeciwników: przy209917 mają275 i134HP.
+Po wyposażeniu G23,odnowieniu pełnego PE78118912 i wybraniu celu4/sub31,
+EnergyShot zadał303: przy211039 przeciwnik ma-28HP,pozostały134HP,Aya174HP.
+Medicine3 ze slot27 odnowiło zdrowie; przy211803 Aya318HP. Następnie
+wyposażono Club1. Detox przy212556 usunął truciznę i Darkness; HP198
+zachowane do212946. Kolejny atak przeciwnika obniżył je do132,ale Club1
+zadał28,134→106. Punkt213280:M231,jeden żywy3/sub30,106HP,Aya132HP,
+Club1,pełne ATB. Nie jest to jeszcze zwycięstwo M231 ani wejście M232.
+
+Zamrożone pełne JSON/VRAM i pełna trasa zwykłego inputu:
+/tmp/pe-m231-spitter-down-v1-213280.{json,vram},
+/tmp/pe-m231-spitter-down-v1-base-args.json. Trwa cold replay normal/SAN:
+/tmp/pe-m231-spitter-down-v1-replay.py (session38895); wymaga potwierdzenia.
+Live94439 czeka przy213280. Bez zapisów RAM,edytowania save'ów i zmian
+produkcji; root karty nietknięte. Źródłowy kandydat pozostaje niezmieniony.
+
 ### M227: odbiór i wyposażenie SvProtector zamiast SpVest1
 
 Potwierdzono nowy zwykły pickup,bez zmian źródeł ani save'ów. Skrypt

@@ -7,19 +7,23 @@ Chinatown M161 → M162. Naprawiono brakujące powiązania całego istniejącego
 modułu homing_flash.c, jego wskaźniki i dostęp do natywnych struktur.
 Pierwsza walka M162 wygrana zwykłym Energy Shot i ostrzałem: 108HP,
 zero przeciwników; poziom24, odebrane przedmioty, swobodna eksploracja.
-Przejście do M163 rozpoczyna kolejną walkę z trzema przeciwnikami.
-M163 nie jest jeszcze wygrane. Zapis J i jego prywatne kopie bez zmian.
+M163 również wygrane:72/335HP, zero przeciwników. Maeda daje Narita
+(item203), story560; zejście drabiną do kanałów M166 daje story568.
+Przejście M166→M167 nadal wymaga podłączenia całego istniejącego
+modułu twelve_elements.c. Zapis J i jego prywatne kopie bez zmian.
 Bez nowych plików źródłowych, przenoszenia funkcji, edytora save'ów lub
 zapisów gameplay RAM. CMake dołącza istniejący moduł do portu.
 
 Nowy kandydat /tmp/pe-chinatown-module-v1: 390 świeżych obiektów
-(195/profil), rehash1000 plików manifestu, 48/48 regresji i10 cold prób
-kampanii normal/SAN. Pełny stan zgodny z sesją live na pięciu checkpointach;
+(195/profil), rehash1000 plików manifestu, 48/48 regresji i20 cold prób
+kampanii normal/SAN (10 z poprzedniego etapu i10 z kontynuacji M163).
+Pełny stan zgodny z sesjami live w dziesięciu punktach;
 1MiB VRAM zgodny między profilami, a zwycięstwo, pole po walce i M163
 również z zachowanym VRAM live. Kopie build odpowiadają kandydatowi.
 Dowody: /tmp/pe-chinatown-module-v1-release-proof.json,
 /tmp/pe-chinatown-module-v1-replay-v2-proof.json oraz
-/tmp/pe-chinatown-module-v1-m163-replay-v1-proof.json.
+/tmp/pe-chinatown-module-v1-m163-replay-v1-proof.json oraz
+/tmp/pe-chinatown-m163-check-v1-final-proof.json.
 SAN obejmuje kod portu; archiwa PsyZ/SDL nieinstrumentowane.
 Root bu00/bu10 nietknięte. Pełna kampania, dalszy Dzień5 i kompletna
 zgodność obrazu/audio z PS1 pozostają otwarte.
@@ -63,6 +67,62 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M163 wygrane, Narita od Maedy i wejście do kanałów M166
+
+Kontynuacja nie zmienia kodu gry ani kandydata /tmp/pe-chinatown-module-v1.
+Pierwsza gałąź /tmp/pe-chinatown-m163-v1-live odtwarza poprzednią trasę
+z J do38519/M163. Oryginalne Heal3, Heal2 i Detox działają, ale Aya ginie:
+43431 ma0HP, tryb3 i dwóch przeciwników. To potwierdzony wynik rozgrywki,
+nie awaria. Sesja kończy się quit0. Nie liczy się jako zwycięstwo.
+
+Druga gałąź /tmp/pe-chinatown-m163-v2-live zaczyna od37879/M162 po
+wygranej. Próba użycia Cure-P w polu poprawnie pozostaje nieaktywna;
+po wejściu do M163 użycie tego samego posiadanego przedmiotu działa.
+40581: slot17 item13→0, stateFlags2097155 (niska para3),108HP.
+To jednorazowa ochrona przed następnym zatruciem, nie odporność na całą
+walkę. Po zużyciu ochrony dalsze ataki znowu mogą zatruć Ayę.
+
+Dwa użycia Heal3, zmiana celu i podział jednej kolejki na dwóch różnych
+przeciwników, zwykły ostrzał i ruch kończą walkę.46855/M163/a80261c8:
+72/335HP, tryb2, zero żywych przeciwników,2 pociski. Bez podmiany RAM,
+ustawiania HP, edytora save'ów ani pomijania skryptu. Po zamknięciu
+oryginalnych wyników47595: tryb9, menuNULL, move_lock0. Nie ma awansu
+po tej walce; poziom24 pochodzi z wcześniejszej wygranej M162.
+
+Dalszy ruch Up po ulicy wyzwala M165/a80262c8 i rozmowę z Maedą:
+48675 story552/dialog11. Oryginalne przekazanie przedmiotu i zamknięcie
+komunikatu:50475 story560, slot17 item203/Narita,72HP, menuNULL,
+move_lock0. Podejście do włazu i Cross uruchamia M166/a8026348 oraz
+pełne zejście po drabinie.53266: story568,72HP, swobodne pole,
+pozycja[1638400,0,-16777216]. Następne Left180 zatrzymuje ładowanie:
+M167 slot75/PS1 80193250, Scene_LoadRoom=-2. Nie maskowano tego błędu.
+
+Audyt danych M167 z PE.IMG: slot75/80193250,70/80193218 i11/801931b0.
+Kolejny wymagany moduł istnieje jako src/overlays/room_lib/twelve_elements.c
+(313 linii, osiem oryginalnych funkcji). Wymaga naprawy całego modułu
+w miejscu i powiązań, nie pominięcia slot11. Oryginalne archiwum zachowane
+w /tmp/pe-sewer-module-v1-m167.bin. Nie jest jeszcze naprawione.
+
+Dziesięć cold prób normal/SAN kończy się quit0:
+43431 gałęzi v1 (śmierć), a w v2:40581 (Cure-P),46855 (zwycięstwo),
+50475 (Narita/story560) i53266 (M166/story568). Pełne JSON-y zgodne
+z odpowiednimi sesjami live;1MiB VRAM zgodny normal/SAN. Dla43431,
+46855 i53266 również zachowany VRAM live jest identyczny.
+/tmp/pe-chinatown-m163-check-v1-proof.json oraz args.json i game.log
+w osobnych katalogach każdej próby zachowują dowody. Wszystkie8192B
+źródłowego J i prywatnych kopii bez zmian, prywatne bu10 puste.
+Nie ma nowego trwałego save'a po Chinatown. Root bu00/bu10 nietknięte.
+
+Następny pewny punkt: cold args z
+/tmp/pe-chinatown-m163-check-v1-v2-53266-normal/args.json uruchamiają
+całą trasę od J i zatrzymują ją w M166. Do przejścia M167 pozostaje
+naprawa twelve_elements.c. Wcześniejsze48/48 regresji nie uruchamiano
+ponownie bez zmiany kodu. Manifest390 obiektów/1000 plików i zgodność
+kopii build potwierdza
+/tmp/pe-chinatown-m163-check-v1-final-proof.json.
+SAN nadal nie instrumentuje archiwów PsyZ/SDL. Pełna kampania pozostaje
+nieukończona; M167 i dalsza część Dnia5 nie są jeszcze przechodnie.
 
 ### Chinatown: cały moduł homing flash i wygrana M162
 

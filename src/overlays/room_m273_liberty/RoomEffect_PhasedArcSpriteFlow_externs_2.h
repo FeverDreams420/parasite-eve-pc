@@ -5,5 +5,5 @@
 
 #include "room_m273_arc.h"
 
-extern s32 RoomM273_SweepArcCallback(s32 mode, RoomM273ArcCallbackState *state);
+extern s32 RoomM273_SweepArcCallback(int mode, void *data, intptr_t argument);
 #endif /* PE1_EXT_28C411744D1E */

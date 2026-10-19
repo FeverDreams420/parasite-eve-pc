@@ -10,7 +10,7 @@ typedef struct RoomLibertyChoiceInputs {
     s32 *distance;
 } RoomLibertyChoiceInputs;
 
-PE1_STATIC_ASSERT(sizeof(RoomLibertyChoiceInputs) == 8, room_liberty_choice_inputs_size);
+PE1_STATIC_ASSERT(sizeof(RoomLibertyChoiceInputs) == 2 * sizeof(s32 *), room_liberty_choice_inputs_size);
 
 s32 RoomM273_ChooseWeightedAction(s32 value, RoomLibertyChoiceInputs *inputs);
 

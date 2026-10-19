@@ -1,7 +1,8 @@
 #ifndef ROOM_M273_H
 #define ROOM_M273_H
 
-#include "pe1/field_actor_script_state.h"
+#include "pe1/field_actor.h"
+#include "pe1/scene_grab_head.h"
 #include "pe1/field_texture_tables.h"
 #include "pe1/fieldfx_callback_list.h"
 #include "pe1/gte_sine_table.h"
@@ -57,9 +58,6 @@ typedef struct RoomM273SampledLayerEffect {
 } RoomM273SampledLayerEffect;
 
 PE1_STATIC_ASSERT(sizeof(RoomM273PaletteWord) == 4, room_m273_palette_word_size);
-PE1_STATIC_ASSERT(sizeof(RoomM273PaletteEffect) == 16, room_m273_palette_effect_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273PaletteInput, size) == 4,
-                  room_m273_palette_input_size_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273PulseInput, velocity) == 8,
                   room_m273_pulse_velocity_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273PulseInput, unknown_0A) == 0x0A,
@@ -86,7 +84,7 @@ extern unsigned char g_RoomM273BlackColor[];
 extern char g_RoomM273LandingFanColor[];
 extern char g_RoomM273LandingFanRotations[];
 int Inv_ScrambleGrid(void);
-int RoomM273_SwayBurstCallback(int mode, RoomM273RisingParticle *particle);
+int RoomM273_SwayBurstCallback(int mode, void *data, intptr_t argument);
 
 typedef struct RoomPlacementMap {
     u8 pad_000[0x594];
@@ -95,10 +93,7 @@ typedef struct RoomPlacementMap {
     s32 z;
 } RoomPlacementMap;
 
-typedef struct RoomPlacementOwner {
-    u8 pad_000[0x238];
-    RoomPlacementMap *map;
-} RoomPlacementOwner;
+typedef FieldActor RoomPlacementOwner;
 
 typedef struct RoomPlacementStateContext {
     u8 reserved[8];
@@ -119,50 +114,63 @@ typedef struct RoomPlacementState {
     u8 pending_action;
 } RoomPlacementState;
 
+/* Runtime grab object; comments retain the PS1 field names, while the
+ * placement tail and callback view share native pointer-sized storage. */
 typedef struct RoomSelectionState RoomSelectionState;
 struct RoomSelectionState {
-    u8 status;                  /* 4 = closed */
+    u8 status;
     u8 pad_01[2];
-    u8 flag3;                   /* RoomEnt flag3, 0xFF while armed */
+    u8 flag3;
     u8 pad_04[4];
-    struct FieldActor *actor;
-    void (*callback)(RoomSelectionState *);
-    int *signal;
-    u8 pad_14[6];
-    u8 started;                 /* 0x1A */
-    u8 pad_1B;
-    RenderMatrix matrix;        /* 0x1C: grab placement, translation at 0x30 */
-    u8 pad_3c[4];
-    int savedX;
-    int savedZ;
-    s16 verticalTicks;          /* 0x48: RoomPlacementState.vertical_ticks */
-    u8 placementChecked;        /* 0x4A */
-    u8 activated;
+    FieldActor *actor;
+    union {
+        struct {
+            void (*callback)(SceneGrabHead *);
+            int *signal;
+            s16 phase_countdown;
+            u8 selection_pad[4];
+            u8 started;
+            u8 pad_1B;
+            RenderMatrix matrix;
+            u8 pad_3c[4];
+            int savedX;
+            int savedZ;
+            s16 verticalTicks;
+            u8 placementChecked;
+            u8 activated;
+            u8 pending_action;
+        };
+        RoomPlacementState placement;
+    };
 };
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, callback) == 0x0C,
-                  room_selection_callback_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, signal) == 0x10,
-                  room_selection_signal_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, actor) == 0x08,
-                  room_selection_actor_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, matrix) == 0x1c,
-                  room_selection_matrix_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, activated) == 0x4b,
-                  room_selection_activated_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, callback) +
-                      PE1_OFFSETOF(RoomPlacementState, active) ==
-                      PE1_OFFSETOF(RoomSelectionState, activated),
-                  room_selection_placement_state_overlap);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, actor) ==
+                      PE1_OFFSETOF(SceneGrabHead, actor), room_selection_actor_prefix);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, callback) ==
+                      PE1_OFFSETOF(SceneGrabHead, callback), room_selection_callback_prefix);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, signal) ==
+                      PE1_OFFSETOF(RoomSelectionState, placement.signal), room_selection_signal_overlap);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, phase_countdown) ==
+                      PE1_OFFSETOF(RoomSelectionState, placement.phase_countdown), room_selection_countdown_overlap);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, savedX) ==
+                      PE1_OFFSETOF(RoomSelectionState, placement.fallback_x), room_selection_saved_x_overlap);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, savedZ) ==
+                      PE1_OFFSETOF(RoomSelectionState, placement.fallback_z), room_selection_saved_z_overlap);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, verticalTicks) ==
+                      PE1_OFFSETOF(RoomSelectionState, placement.vertical_ticks), room_selection_vertical_overlap);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, placementChecked) ==
+                      PE1_OFFSETOF(RoomSelectionState, placement.placement_checked), room_selection_checked_overlap);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, activated) ==
+                      PE1_OFFSETOF(RoomSelectionState, placement.active), room_selection_active_overlap);
+PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomSelectionState, pending_action) ==
+                      PE1_OFFSETOF(RoomSelectionState, placement.pending_action), room_selection_pending_overlap);
 
 /* View of the partner actor's script state: the byte record at 0x18 is the
  * substate the grab sequence flips to 2 and 4. */
-typedef FieldActorScriptState RoomM273ActorState;
+typedef FieldActorState RoomM273ActorState;
 
 s32 RoomM273_GrabRelease(RoomSelectionState *selection);
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementOwner, map) == 0x238,
-                  room_placement_map_offset);
 PE1_STATIC_ASSERT(sizeof(RoomM273SampledLayerEffect) == 12,
                   room_m273_sampled_layer_effect_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273SampledLayerEffect, parameter) == 8,
@@ -171,18 +179,6 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementStateContext, owner) == 8,
                   room_placement_state_context_owner_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementMap, x) == 0x594,
                   room_placement_x_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementState, active) == 0x3F,
-                  room_placement_active_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementState, signal) == 4,
-                  room_placement_signal_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementState, phase_countdown) == 8,
-                  room_placement_phase_countdown_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementState, vertical_step) == 0x30,
-                  room_placement_vertical_step_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementState, vertical_ticks) == 0x3C,
-                  room_placement_vertical_ticks_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomPlacementState, placement_checked) == 0x3E,
-                  room_placement_checked_offset);
 
 void RoomM273_ReturnPlayerToPlacement(RoomPlacementOwner *owner, RoomPlacementState *state);
 
@@ -209,12 +205,6 @@ typedef struct RoomOscillationEffect {
     RoomOscillationParams params;   /* 0x0C */
 } RoomOscillationEffect;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOscillationEffect, actor) == 0x08,
-                  room_oscillation_actor_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOscillationEffect, params.frame) == 0x18,
-                  room_oscillation_frame_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomOscillationEffect, params.period) == 0x24,
-                  room_oscillation_period_offset);
 
 int RoomM273_OscillationUpdate(RoomOscillationEffect *effect);
 

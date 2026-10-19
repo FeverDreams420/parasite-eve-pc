@@ -16,7 +16,7 @@ typedef struct SceneGrabHead {
     /* 0x0C */ void (*callback)();
 } SceneGrabHead;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneGrabHead, callback) == 0x0C,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneGrabHead, callback) == 8 + sizeof(struct FieldActor *),
                   scene_grab_head_callback_offset);
 
 /* Step that waits for the actor's attack stance

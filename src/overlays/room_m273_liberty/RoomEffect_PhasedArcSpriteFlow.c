@@ -17,7 +17,8 @@
 typedef RoomM273PointerPoolEffect Effect;
 typedef struct { unsigned char unknown[58]; unsigned short value; } Object;
 
-int RoomM273_HandRingBandCallback(int mode,Effect *effect) {
+int RoomM273_HandRingBandCallback(int mode, void *data, intptr_t argument) {
+    Effect * effect = data;
     GteRotation parameters;
     /* Layout only: purpose of these eight original frame bytes is unknown. */
     int stack_pad[2];
@@ -30,7 +31,7 @@ int RoomM273_HandRingBandCallback(int mode,Effect *effect) {
         int size=rcossin_tbl[sizeOffset/4].part.sin*2+4096;
         int shade=(short)rcossin_tbl[shadeOffset/4].word>>5;
         parameters.x=0;
-        parameters.y=((Object *)ANIM_OWNER_AS(RoomM273EffectStateContext)->state.mode)->value;
+        parameters.y=g_FieldFxOwner->actor->rot_y;
         parameters.z=(unsigned int)frame<<8;
         parameters.flags=1;
         FieldFx_DrawRingBand(effect->position,32,96,8,&parameters,size,size,
@@ -63,7 +64,7 @@ s32 RoomM273_SweepArcEmitter(s32 arg0) {
             return 0;
         }
         return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool, 8, 5,
-                             (FieldFxCallbackListCallback)RoomM273_SweepArcCallback);
+                             RoomM273_SweepArcCallback);
     }
 
     if (g_RoomM273SweepState.started != 0) {
@@ -91,7 +92,8 @@ short *RoomM273_SwayConfigure(void *arg0, short arg1) {
     return ptr - 0x17;
 }
 
-s32 RoomM273_SweepArcCallback(s32 mode, RoomM273ArcCallbackState *state) {
+s32 RoomM273_SweepArcCallback(int mode, void *data, intptr_t argument) {
+    RoomM273ArcCallbackState * state = data;
     s32 day;
     s32 rotationValue;
     s32 packed;

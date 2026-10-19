@@ -6,7 +6,8 @@ typedef struct {
     GteShortVector *position;
 } RoomM273PaletteSpriteState;
 
-int RoomM273_PulseSpriteCallback(int mode, RoomM273PaletteSpriteState *state) {
+int RoomM273_PulseSpriteCallback(int mode, void *data, intptr_t argument) {
+    RoomM273PaletteSpriteState * state = data;
     int frame;
     int size, shade, kind, palette;
     u16 clut;

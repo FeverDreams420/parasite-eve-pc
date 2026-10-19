@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273: przygotowanie oryginalnych struktur do natywnej integracji
+
+Zmiany w istniejących czterech plikach C i ich nagłówkach, bez nowych
+plików źródłowych: widoki aktorów o offsetach PS1 zastąpiono istniejącym
+FieldActor/FieldActorState; callbacki list efektów mają pełną sygnaturę
+(int,void*,intptr_t); parametry zawierające adresy mają intptr_t.
+Scratchpad chwytu i jego macierzy zastępują zmienne lokalne. Nakładające
+się pola RoomSelectionState/RoomPlacementState dzielą union i mają
+asercje zgodności wszystkich pól używanych przez oba widoki. Bufory
+cząstek zawierające wskaźniki alokują rozmiar natywnych struktur.
+Żadna z75 funkcji czterech plików nie została usunięta ani przeniesiona.
+
+Wszystkie cztery pliki kompilują się oddzielnie normalnie i z
+ASan/UBSan/function: osiem obiektów, zależności i hashe w
+/tmp/pe-m273-layout-v1-module-build.json; komendy w -compile-module.py.
+Nie są jeszcze linkowane do gry. To przygotowanie integracji, **nie**
+dowód działania M273 ani usunięcia błędu brakującego deskryptora.
+
+Świeże406 obiektów działającego targetu normal/SAN, 68/68 regresji
+exit0 oraz6/6 asset CTests bez SKIP: /tmp/pe-m273-layout-v1-build-manifest.json,
+-verification.json, -regressions.log, -ctest-assets.log, -scope-proof.json.
+Obiekty, zależności, biblioteki i pliki wykonywalne ponownie zahashowano.
+Archiwa PsyZ/SDL nadal nieinstrumentowane. Build w repo odpowiada
+świeżemu targetowi, który jeszcze nie zawiera M273; wcześniejsze
+ograniczenia kampanii pozostają aktualne.
+
+Odczytano z rzeczywistego M273 wszystkie10 rekordów deskryptorów:
+sloty82/75/184/73/185/183/81/186/167/72, adresy i rozmiary w
+/tmp/pe-m273-native-descriptors-v1.json; obraz /tmp/pe-m273-room.bin.
+Podstawa adresowania obejmuje prefiks archiwum przy0x8018efe8,
+co potwierdzają wszystkie siedem metod klasy oscylacji przy0x8019a900.
+Dalsza praca: oryginalne stałe i programy efektów, pełne powiązania
+klas/deskryptorów, reset/reload, następnie testy całego modułu i replay F.
+
 ### Okręt, helikopter i zapis F; następny brakujący moduł M273
 
 Kandydat e60419a9f przeszedł dalsze dialogi M271 i scenę helikoptera

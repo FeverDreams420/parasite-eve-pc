@@ -2,6 +2,7 @@
 #define ROOM_M273_EFFECTS_H
 
 #include "common.h"
+#include "pe1/field_actor.h"
 #include "pe1/field_sprite_params.h"
 #include "pe1/field_texture_tables.h"
 #include "pe1/fieldfx_callback_list.h"
@@ -18,14 +19,7 @@ typedef struct RoomM273PoolContext {
 } RoomM273PoolContext;
 
 /* Common prefix read by the threshold-effect controller family. */
-typedef struct RoomM273EffectModeState {
-    u8 reserved_00[0x0E];
-    u8 kind;
-    u8 reserved_0F[7];
-    s16 value22;
-    u8 reserved_18[2];
-    u16 value26;
-} RoomM273EffectModeState;
+typedef FieldActor RoomM273EffectModeState;
 
 typedef struct RoomM273PulseSeed {
     u8 reserved_00[2];
@@ -105,12 +99,7 @@ typedef union RoomM273PlayerActorTail {
     u8 *object;
 } RoomM273PlayerActorTail;
 
-typedef struct RoomM273PlayerActorView {
-    u8 reserved_00[0x0E];
-    u8 kind;
-    u8 reserved_0F[0x229];
-    RoomM273PlayerActorTail tail;
-} RoomM273PlayerActorView;
+typedef FieldActor RoomM273PlayerActorView;
 
 /* Several sprite pools store only a pointer to their position payload. */
 typedef struct RoomM273PointerPoolEffect {
@@ -126,11 +115,7 @@ typedef struct RoomM273ThresholdTransform {
     s32 z;
 } RoomM273ThresholdTransform;
 
-typedef struct RoomM273ThresholdEntityState {
-    RoomM273EffectModeState mode;
-    u8 reserved_1C[0x21C];
-    RoomM273ThresholdTransform *transform;
-} RoomM273ThresholdEntityState;
+typedef FieldActor RoomM273ThresholdEntityState;
 
 typedef struct RoomM273DirectedRingOwner {
     u8 reserved_00[8];
@@ -141,10 +126,7 @@ typedef struct RoomM273DirectedRingState {
     RoomM273DirectedRingOwner *owner;
 } RoomM273DirectedRingState;
 
-typedef struct RoomM273ScaledLayerOwner {
-    u8 reserved_00[0x238];
-    RoomM273ThresholdTransform *transform;
-} RoomM273ScaledLayerOwner;
+typedef FieldActor RoomM273ScaledLayerOwner;
 
 /* g_FieldFxOwner points at either view as each controller is active. */
 typedef union RoomM273EffectStatePointer {
@@ -161,18 +143,8 @@ typedef struct RoomM273EffectStateContext {
 } RoomM273EffectStateContext;
 
 
-PE1_STATIC_ASSERT(sizeof(RoomM273PoolContext) == 0x0C,
-                  room_m273_pool_context_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273PoolContext, pool) == 8,
                   room_m273_pool_context_pool_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273EffectModeState, kind) == 0x0E,
-                  room_m273_effect_state_kind_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273EffectModeState, value22) == 0x16,
-                  room_m273_effect_state_value22_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273EffectModeState, value26) == 0x1A,
-                  room_m273_effect_state_value26_offset);
-PE1_STATIC_ASSERT(sizeof(RoomM273EffectModeState) == 0x1C,
-                  room_m273_effect_state_size);
 PE1_STATIC_ASSERT(sizeof(RoomM273PulseSeed) == 8, room_m273_pulse_seed_size);
 PE1_STATIC_ASSERT(sizeof(RoomM273PulseEmitterView) == 0x0C,
                   room_m273_pulse_emitter_view_size);
@@ -198,40 +170,12 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273PlayerTransform, position) == 0x14,
                   room_m273_player_transform_position_offset);
 PE1_STATIC_ASSERT(sizeof(RoomM273PlayerTransform) == 0x20,
                   room_m273_player_transform_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273PlayerActorView, kind) == 0x0E,
-                  room_m273_player_actor_kind_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273PlayerActorView, tail) == 0x238,
-                  room_m273_player_actor_tail_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273PlayerActorTail, transform) == 0,
-                  room_m273_player_actor_transform_view_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273PlayerActorTail, object) == 0,
-                  room_m273_player_actor_object_view_offset);
-PE1_STATIC_ASSERT(sizeof(RoomM273PlayerActorTail) == 4,
-                  room_m273_player_actor_tail_size);
-PE1_STATIC_ASSERT(sizeof(RoomM273PlayerActorView) == 0x23C,
-                  room_m273_player_actor_view_size);
-PE1_STATIC_ASSERT(sizeof(RoomM273PointerPoolEffect) == 4,
-                  room_m273_pointer_pool_effect_size);
-PE1_STATIC_ASSERT(sizeof(RoomM273SpritePoolEffect) == 4,
-                  room_m273_sprite_pool_effect_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273ThresholdTransform, x) == 0x594,
                   room_m273_threshold_transform_x_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273ThresholdEntityState, transform) == 0x238,
-                  room_m273_threshold_entity_transform_offset);
-PE1_STATIC_ASSERT(sizeof(RoomM273ThresholdEntityState) == 0x23C,
-                  room_m273_threshold_entity_state_size);
 PE1_STATIC_ASSERT(sizeof(RoomM273ThresholdTransform) == 0x5A0,
                   room_m273_threshold_transform_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273DirectedRingOwner, value) == 8,
                   room_m273_directed_ring_owner_value_offset);
-PE1_STATIC_ASSERT(sizeof(RoomM273DirectedRingOwner) == 0x0C,
-                  room_m273_directed_ring_owner_size);
-PE1_STATIC_ASSERT(sizeof(RoomM273DirectedRingState) == 4,
-                  room_m273_directed_ring_state_size);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273ScaledLayerOwner, transform) == 0x238,
-                  room_m273_scaled_layer_transform_offset);
-PE1_STATIC_ASSERT(sizeof(RoomM273ScaledLayerOwner) == 0x23C,
-                  room_m273_scaled_layer_owner_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273EffectStateContext, state) == 8,
                   room_m273_effect_context_state_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273EffectStatePointer, mode) == 0,
@@ -240,9 +184,5 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273EffectStatePointer, threshold) == 0,
                   room_m273_effect_state_threshold_pointer_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomM273EffectStatePointer, player) == 0,
                   room_m273_effect_state_player_pointer_offset);
-PE1_STATIC_ASSERT(sizeof(RoomM273EffectStatePointer) == 4,
-                  room_m273_effect_state_pointer_size);
-PE1_STATIC_ASSERT(sizeof(RoomM273EffectStateContext) == 0x0C,
-                  room_m273_effect_context_size);
 
 #endif

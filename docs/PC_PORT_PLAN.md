@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M245: druga faza, zmiana broni i korekta odczytu BP
+
+Kontynuacja normalnego live 66761 dochodzi do 133287. Osobny cold
+Continue z autentycznego B i całym śladem wejść, ASan/UBSan/function,
+kończy się exit 0. CAŁY JSON i VRAM są identyczne; prywatne B/C/D
+mają hashe autentycznych źródeł. Dowód:
+/tmp/pe-m245-phase-two-combat-v1-proof.json.
+
+Pierwsza para M500 w drugiej fazie odejmuje 106 HP (900→794 ponad
+milionowy próg). Przez menu walki zmieniono broń na posiadany M79-3:
+jedna akcja/strzał, 794→764, amunicja po załadowaniu 5→4. To działająca
+zmiana wyposażenia i pojedynczy strzał, ale ta konkretna słabsza broń
+nie rozwiązuje problemu zapasu leczenia. Maeda's Gun ma atak 1 i nie
+został wyposażony. M203 nie był w tej próbie wyposażony. Heal 2 leczy
+60 HP; kolejne trafienie odbiera 58. Przy 133287 Aya 75/589 HP,
+PE 9565457/82837504, ATB 4392/9000, M79-3 z 4 kulami, boss 7:30
+1000764 HP i drugi aktor 8:29 nadal 400 HP. Walka NIEZALICZONA.
+Live nadal czeka na wejścia; następne przygotowanie wymaga zapasu
+leczenia zdobytego zwykłą rozgrywką przed bossem.
+
+Korekta BP: poprzedni dowód /tmp/pe-m245-phase-two-v1-proof.json
+błędnie zapisał active_time_level_after=40 z trwającej animacji.
+Po animacji ekran pokazuje 42 (39→42 po 300 BP). Odczyt LLDB bez
+wykonywania funkcji ani zapisu pamięci potwierdza bonus_points=65
+oraz stats.levels[5]=440; log /tmp/pe-m245-phase-two-BP-readonly-v2.log.
+Pierwsza próba odczytu używała nazwy makra zamiast symbolu i nie znalazła
+zmiennej; v2 odczytuje g_SaveRuntimeState.player.aya. Nowy dowód jawnie
+zastępuje tylko błędny odczyt BP, nie usuwa historycznych artefaktów.
+Biblioteki PsyZ/SDL pozostają nieinstrumentowane; porównanie z PS1
+oraz dalsze fazy i pełna kampania nadal wymagają pracy.
+
 ### M245: BP i przejście pierwszej fazy bossa
 
 Po dwóch porażkach odtworzono autentyczny ślad B do 124071, przed
@@ -12,7 +43,7 @@ Heal 2 użyty dopiero w tym punkcie nie wystarczył: Aya zginęła przy
 
 Nowy live /tmp/pe-m245-preboss-upgrade-v1-live/ (sesja 66761) używa tego
 samego normalnego kandydata 8232fcb25 i prywatnej karty B. Przez zwykłe
-menu BP wydano 300 z 365 punktów na Active Time: poziom 39→40,
+menu BP wydano 300 z 365 punktów na Active Time: poziom 39→42 (po zakończeniu animacji),
 pozostało 65 BP, co potwierdzono ekranem po zamknięciu i otwarciu menu.
 W dialogu BP zwiększa Down, nie Right; pierwsza próba z Right nie wydała
 punktów. M500 nadal ma Rate 2; nie jest to docelowa broń pojedynczego

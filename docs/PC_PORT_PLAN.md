@@ -2,34 +2,34 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: M167 w kanałach ładuje się i uruchamia oryginalną
-walkę. Naprawiony w miejscu cały istniejący twelve_elements.c: osiem
-funkcji efektu, jego oryginalna klasa, listy, skrypt i60 bajtów kolorów.
-Loader wiąże wszystkie trzy deskryptory M167. Nie pomija się slot11 ani
-oryginalnych ataków. Bez nowych plików źródłowych lub przenoszenia funkcji.
+Najnowszy postęp: M167 i M169 wygrane zwykłym sterowaniem od autentycznego
+J. Tune Up przenosi parametry M16A1 do G23, zużywając Tool i dawcę;
+G23 zachowuje trzy akcje. Leczenie w polu i w walce, Cure-D, Energy Shot,
+przeładowanie i odbiór łupu działają na tej samej trasie. M167:285HP,
+M169:193HP; oba tryb2 i zero żywych przeciwników. Potem zwykłe wyjście
+prowadzi do M167;71801 ma193/335HP i swobodne pole. Dalsza trasa kanałów
+pozostaje do zbadania, nie ma nowego trwałego save'a po Chinatown.
 
-Kandydat /tmp/pe-sewer-twelve-v4:392 świeże obiekty (196/profil),
-rehash1003 plików manifestu,50/50 regresji, w tym nowy test całego M167.
-Test używa prawdziwego CUE do ładowania i porównania danych, a osobny
-izolowany cykl PM z kontrolowaną macierzą/teksturowaniem uruchamia cały
-oryginalny skrypt, obydwa bufory, wszystkie12 elementów, natywne łańcuchy
-GPU i wygaszenie efektu. Nie jest to porównanie obrazu z PS1.
+Rozszerzono istniejący loader i test na M167/M168/M169/M173/M178 oraz
+M295/M299/M309/M310. Wszystkie dziewięć zawiera identyczne17128 bajtów
+całego modułu (kod, klasy, skrypt, kolory i BSS); dane i ładowanie każdego
+sprawdzone bezpośrednio z CUE. Dodatkowa klasa slot73 M168/M169 ma
+oryginalny deskryptor80193288. Bez nowych plików źródłowych, przenoszenia
+funkcji ani zastępowania gameplayu. Kampania odwiedziła z tej grupy M167
+oraz M169; samo ładowanie pozostałych nie oznacza ich ukończenia.
 
-Dwanaście nowych cold prób normal/SAN: M163 wygrane, Narita/story560,
-M166/story568, wejście M167, trwająca walka oraz śmierć Ayi w tej walce.
-Pełny stan zgodny z live;1MiB VRAM zgodny między profilami, dla czterech
-punktów także z zachowanym live. M167 nie jest wygrane: próba z72HP
-kończy się0HP/tryb3. Zniknięcie przeciwników przy śmierci nie jest wygraną.
-Następny pewny punkt to53600/M167 przed walką lub53900 podczas walki.
-Źródło nadal autentyczne J, bez edytora i zapisów gameplay RAM; nowych
-trwałych save'ów po Chinatown brak. Root bu00/bu10 nietknięte.
+Kandydat /tmp/pe-sewer-library-v1:392 świeże obiekty (196/profil),
+rehash1003 plików manifestu,50/50 regresji i14 cold prób kampanii
+normal/SAN. Pełne JSON-y zgodne z live w siedmiu punktach,1MiB VRAM
+zgodny między profilami; obie wygrane i końcowe pole także z zachowanym
+VRAM live. Źródłowe J i prywatne karty bez zmian, root bu00/bu10 nietknięte.
 
-Dowody /tmp/pe-sewer-twelve-v4-{verification.json,replay-v2-proof.json,
+Dowody /tmp/pe-sewer-library-v1-{verification.json,replay-proof.json,
 release-proof.json,original-proof.json}; kopie build zgodne z kandydatem.
 SAN obejmuje kod portu; archiwa PsyZ/SDL nieinstrumentowane.
-Pozostałe pokoje korzystające z twelve_elements wymagają osobnego audytu
-ich danych i powiązań. Pełna kampania, dalsze kanały/Dzień5 i kompletna
-zgodność obrazu/audio z PS1 pozostają otwarte.
+Pozostałe warianty twelve_elements wymagają osobnego audytu. Pełna
+kampania, dalsze kanały/Dzień5 oraz kompletna zgodność obrazu/audio z PS1
+pozostają otwarte.
 
 Poprzednie odcinki: M159 wygrane i zapisy I/J, M162 oraz M163 wygrane,
 Narita od Maedy i zejście po drabinie do M166. Historyczne dowody:
@@ -71,6 +71,79 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### Wygrane M167/M169, Tune Up oraz dziewięć pełnych wariantów loadera
+
+Kontynuacja od autentycznego J. /tmp/pe-sewer-combat-v1-live odtwarza
+53900/M167; Down100 kończy się śmiercią Ayi z72HP. Bez błędu silnika,
+quit0. Ta gałąź nie jest wygraną ani częścią14 nowych sukcesów cold.
+
+/tmp/pe-sewer-combat-v2-live odtwarza53600/M167 przed walką. W oryginalnym
+menu wyposażono G23, a Tune Up przeniosło parametry M16A1 do G23.
+Dziennik obejmuje też zwykłe Move w ekwipunku, które przestawiło Narita,
+Tool i M16A1 przed transferem.56754: weapon_slot0, G23/E-Reg0 ma bonusy
+[8,7,4] zamiast[1,2,0]; jego bazowe[47,58,10] i CMDx3 pozostają.
+M16A1/E-Reg4 ma iconId0 i wyzerowane bonusy; dawca i Tool usunięte
+z bieżących slotów17 i10. To rzeczywista obsługa menu i konsumpcja
+przedmiotów, nie edycja pamięci. Transfer z działającej gry rozszerza
+wcześniejszy izolowany test Tool.
+
+Oryginalne Heal2 i Heal1 w polu: HP72→132 przy57462, następnie162
+przed walką. G23 daje trzy akcje i range1209. Właściwa walka obejmuje
+kolejki trzech strzałów, dzielenie kolejki na dwóch przeciwników,
+przeładowanie, Darkness i Heal3: HP62→335 przy61812. Końcowe dwa
+strzały i Square kończą kolejkę.63178/M167/a80263c8:285/335HP,
+tryb2, zero przeciwników,7 pocisków. Z wyników odebrano Ammo+6,
+Cure-D i Ammo+6;63898 pole/tryb9/menuNULL/lock0, item14 w slocie10.
+Obraz zwycięstwa /tmp/pe-sewer-library-v1-m167-victory-preview/frame.png.
+
+Dalszy Left240 ujawnił brak deskryptora M169 slot73/80193288. Audyt
+PE.IMG znalazł dziewięć identycznych całych modułów w pokojach:
+167,168,169,173,178,295,299,309,310. Zakres8018eff4..801932dc
+(exclusive),17128 bajtów, SHA256:
+b16909890f196fc63285a9882bc5444448505313f447e1cc1951f77401408bfc.
+Obejmuje rodata, kompletny kod, klasy, skrypt,60 bajtów kolorów oraz BSS,
+nie tylko wybrane funkcje. /tmp/pe-sewer-library-v1-original-proof.json
+zachowuje też SHA każdego archiwum i wszystkie jego rekordy handlerów.
+
+Istniejący room_load.c wiąże tę sprawdzoną grupę:70/80193218 z D,
+75/80193250 z E,11/801931b0 z całym twelve_elements, a73/80193288 z C.
+W tests/original_actor_animation.c --sewer-twelve porównuje cały blok
+każdego pokoju bezpośrednio z CUE i ładuje każdy dwukrotnie, sprawdzając
+rejestracje oraz reset obydwu szablonów pakietów. Zachowany pełny cykl
+PM/skrypt/12 elementów/GPU/wygaszenie w obu buforach. Test przechodzi
+normal/SAN. Nie wiązano pozostałych wariantów na podstawie podobnej nazwy.
+M168/M173/M178 i cztery pokoje Chrysler nie są jeszcze przejściem kampanii.
+
+/tmp/pe-sewer-library-v1-live odtwarza całą trasę z transferem i wygraną
+M167; po poprawce64400 ma M169/a80264c8,285HP, dwóch przeciwników8:31/30
+po112HP. Darkness obniża skuteczność zwykłych strzałów. Posiadany Cure-D
+użyto w menu walki:65670 HP189, niska para Darkness wyzerowana, slot10
+item14→0. Późniejszy atak ponownie nakłada Darkness. Heal3 przy67206
+pozostawia289HP; trafienia do8:31 zmniejszają HP112→60. Energy Shot
+z PE23107141 i ostatniego pocisku zabija ten cel;69481 pozostaje tylko
+8:30/112HP, Aya193HP i ammo0. Oryginalny automatyczny reload oraz pięć
+trafionych strzałów kończą walkę.70701:193/335HP, tryb2, zero przeciwników,
+9 pocisków. Obraz /tmp/pe-sewer-library-v1-m169-victory-preview/frame.png.
+
+Odebrano dwa Cure-D (sloty10 i17). Po zamknięciu wyników71421 swobodne
+pole M169. Kolejne Left200 wraca do M167, nie do nowego pokoju.71801:
+M167/a80263c8,193/335HP, story568, tryb9, menuNULL, lock0, pozycja
+[66093056,10944512,720896]. Sesja quit0. Następny krok to zbadanie
+pozostałych wyjść tego skrzyżowania. Nie ma nowego save'a; źródłem wciąż
+jest /tmp/pe-day5-save-v1-source/BASLUS-006620000000J. Bez edytora lub
+zapisów gameplay RAM, źródło i wszystkie prywatne karty bez zmian.
+
+Finalny kandydat /tmp/pe-sewer-library-v1 ma50/50 świeżych regresji
+normal/SAN. Czternaście cold prób na56754/63178/64400/65670/69481/
+70701/71801 (każda normal/SAN) potwierdza pełny JSON live i1MiB VRAM
+zgodny między profilami. Dla63178/70701/71801 także VRAM live identyczny.
+Wszystkie próby kończą się quit0, bez raportów sanitizerów i brakujących
+opcode/deskryptorów. Rehash392 obiektów/1003 plików i zgodność kopii build
+są w /tmp/pe-sewer-library-v1-release-proof.json. PsyZ/SDL nadal bez
+instrumentacji SAN. Root bu00/bu10 nietknięte. Pełna kampania nieukończona.
+Punkt kontynuacji z pełnym zwykłym inputem od J:
+/tmp/pe-sewer-library-v1-replay-71801-normal/args.json.
 
 ### Cały moduł twelve_elements i wejście do M167
 

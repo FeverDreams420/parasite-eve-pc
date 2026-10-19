@@ -16602,15 +16602,23 @@ static int original_sewer_twelve_assets(void)
     ResetGraph(0); CdRom_BindImage(&disc,NULL);
     TWELVE_REQUIRE(Asset_OpenPeImage()==0);
     Boot_InitGameState(); D_8009CDC8='m'; fx_image_io=1;
+    const unsigned rooms[]={167,168,169,173,178,295,299,309,310};
+    for (unsigned room_index=0;room_index<sizeof(rooms)/sizeof(*rooms);++room_index) {
+        unsigned room=rooms[room_index]; u8 other[sizeof(module)];
+        TWELVE_REQUIRE(original_chrysler_read(&disc,&exe,&archive,room,other,sizeof(other)) &&
+            !memcmp(other+4,module+4,sizeof(module)-4));
+        char name[16]; snprintf(name,sizeof(name),"m%04ui",room);
     for (unsigned pass=0;pass<2;++pass) {
         memset(&RoomLib_TwelveEffectPrimaryPacket,0xa5,sizeof(RoomLib_TwelveEffectPrimaryPacket));
         memset(&RoomLib_TwelveEffectSecondaryPacket,0xa5,sizeof(RoomLib_TwelveEffectSecondaryPacket));
         g_PmCmdHandlerTable[11]=g_PmCmdHandlerTable[70]=g_PmCmdHandlerTable[75]=NULL;
-        TWELVE_REQUIRE(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0167i"))==0 &&
+        TWELVE_REQUIRE(Scene_LoadRoom(Text_ParseBase32Id((signed char *)name))==0 &&
             g_PmCmdHandlerTable[11]==&g_RoomTwelveElementHandlers &&
             g_PmCmdHandlerTable[70]==&g_RoomActorClassTable[0] && g_PmCmdHandlerTable[75]==&g_RoomActorClassTable[2]);
+        if (room==168 || room==169) TWELVE_REQUIRE(g_PmCmdHandlerTable[73]==&g_RoomActorClassTable[4]);
         for (unsigned b=0;b<sizeof(RoomFxSpritePacket);++b)
             TWELVE_REQUIRE(!((u8 *)&RoomLib_TwelveEffectPrimaryPacket)[b] && !((u8 *)&RoomLib_TwelveEffectSecondaryPacket)[b]);
+    }
     }
     CdRom_BindImage(NULL,NULL); pe_disc_close(&disc);
     _Alignas(8) u8 assets[128]={0}; ((SceneAssetBlob *)assets)->directoryOffset=8;
@@ -16676,7 +16684,7 @@ static int original_sewer_twelve_assets(void)
         g_RoomTwelveElementHandlers.stop((PmSlotHeader *)&object); g_RoomTwelveElementHandlers.unload();
         TWELVE_REQUIRE(state.core_flags==0x00abcdef && action==4);
     }
-    puts("Original M167: real CUE descriptor/data, reload resets, full authored PM script, both buffers, all twelve elements, native OT chains and expiry passed");
+    puts("Original twelve-element library: nine exact USA modules, all real CUE descriptors and reload resets, full authored PM script, both buffers, all twelve elements, native OT chains and expiry passed");
     return 1;
 #undef TWELVE_REQUIRE
 }

@@ -380,6 +380,7 @@ int Scene_LoadRoom(unsigned int roomId)
     int actor_library = 0;
     int orbit_library = 0;
     int homing_flash_library = 0;
+    int twelve_library = 0;
     u32 shared_actor=0,walker_class=0,walker_task=0;
     u32 chrysler_particles=0,chrysler_falling=0,chrysler_line=0;
     int ready;
@@ -466,6 +467,10 @@ int Scene_LoadRoom(unsigned int roomId)
 
     room = state->loaded_scene_assets;
     directory = SceneAsset_ResolveOffset(room, room->header.directoryOffset);
+    /* Exact complete USA module, including class rows and authored data. */
+    twelve_library = map + 1 == 167 || map + 1 == 168 || map + 1 == 169 ||
+        map + 1 == 173 || map + 1 == 178 || map + 1 == 295 ||
+        map + 1 == 299 || map + 1 == 309 || map + 1 == 310;
     homing_flash_library = map + 1 == 162 || map + 1 == 163 ||
         map + 1 == 398 || map + 1 == 400 || map + 1 == 403;
     /* These USA rooms link the same complete actor library and class table. */
@@ -692,11 +697,13 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 123 && record[i].u.handlerAddress == 0x80193254u)
                 native = &g_RoomHomingFlashProgram;
         }
-        if (map + 1 == 167) {
+        if (twelve_library) {
             if (slot == 75 && record[i].u.handlerAddress == 0x80193250u)
                 native = &g_RoomActorClassTable[2];
             if (slot == 70 && record[i].u.handlerAddress == 0x80193218u)
                 native = &g_RoomActorClassTable[0];
+            if (slot == 73 && record[i].u.handlerAddress == 0x80193288u)
+                native = &g_RoomActorClassTable[4];
             if (slot == 11 && record[i].u.handlerAddress == 0x801931b0u)
                 native = &g_RoomTwelveElementHandlers;
         }
@@ -839,9 +846,10 @@ int Scene_LoadRoom(unsigned int roomId)
         slot = record[i].source.bytes.slot;
         /* Validation above resolves the room-specific descriptor. Assign even
          * when a prior statically linked room used this same slot. */
-        if (map + 1 == 167) {
+        if (twelve_library) {
             if (slot == 75) g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
             else if (slot == 70) g_PmCmdHandlerTable[70] = &g_RoomActorClassTable[0];
+            else if (slot == 73) g_PmCmdHandlerTable[73] = &g_RoomActorClassTable[4];
             else if (slot == 11) {
                 g_PmCmdHandlerTable[11] = &g_RoomTwelveElementHandlers;
                 memset(&RoomLib_TwelveEffectPrimaryPacket, 0, sizeof(RoomLib_TwelveEffectPrimaryPacket));

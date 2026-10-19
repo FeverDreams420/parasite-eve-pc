@@ -138,6 +138,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/script_state.h"
 #include "pe1/script_queue.h"
 #include "pe1/akao/queue.h"
+#include "pe1/psyq_bios.h"
 #include "pe1/fieldfx_particle.h"
 #include "pe1/field_tri_test.h"
 #include "pe1/field_collision.h"
@@ -13510,6 +13511,66 @@ static int original_credit_images(PeDisc *disc)
     printf("Original credits images: 31 real images, %u decoder steps, %u RGB24 slice uploads, full staged VRAM and both presented buffers match whole-frame MDEC output; ten invalid states/workspaces fail and recover\n",states,uploads);return 1;
 }
 
+static u8 *s_AkaoReplacementBank;
+static unsigned s_AkaoReplacementChecks;
+static int s_AkaoReplacementValid;
+
+static void original_akao_check_old_bank(void *message)
+{
+    (void)message;
+    for (unsigned i=0;i<64;++i)
+        if (s_AkaoReplacementBank[i]!=0x8f) s_AkaoReplacementValid=0;
+    ++s_AkaoReplacementChecks;
+}
+
+static int original_akao_bank_lifetime(void)
+{
+    static struct AkaoReplacementFixture {
+        SceneAssetBlob header;
+        SceneAssetDirectory directory;
+        u8 program[64];
+    } scene;
+    static u8 bank[0x1400],other[0x1400];
+    SceneTrackRecord record={0};
+    AkaoMessageHandler saved=Akao_MessageHandlers[0];
+    Spu_InitHardware();
+    u32 blanks=g_BootHostVBlankCount;
+    scene.header.directoryOffset=offsetof(struct AkaoReplacementFixture,directory);
+    memset(scene.program,0x91,sizeof(scene.program));
+    record.offset=offsetof(struct AkaoReplacementFixture,program);
+    record.size=sizeof(scene.program);
+    g_GameState.loaded_scene_archive=(void *)&scene;
+    g_GameState.loaded_scene_assets=(void *)&scene;
+    g_GameState.bank_work_base=bank;g_GameState.bank_work_end=other;
+    s_AkaoReplacementBank=bank;s_AkaoReplacementChecks=0;s_AkaoReplacementValid=1;
+    Akao_MessageHandlers[0]=original_akao_check_old_bank;
+    int valid=1;
+    for(unsigned pass=0;pass<64 && valid;++pass){
+        while(g_AkaoMessageQueueCount)VSync(1);
+        EnterCriticalSection();
+        memset(bank,0x8f,sizeof(bank));memset(other,0x55,sizeof(other));
+        g_AkaoSequencerState.primary.active_voice_mask=1;
+        g_AkaoSequencerTracks[0].track.pc=bank+16;
+        g_AkaoSequencerTracks[0].track.note_length=3;
+        g_AkaoSequencerTracks[0].track.pan_duration=1;
+        g_AkaoMessageQueue[0].opcode.word=0;g_AkaoMessageQueueCount=1;
+        Akao_Cmd_F0();
+        g_GameState.cd_track_phase=9;g_CdTrackRecord=&record;g_CdTrackBank=7;
+        ExitCriticalSection();
+        int slot=-1;
+        if(CdRom_SeekToTrack(123,1,0,&slot,0)!=0 || slot!=0 ||
+           g_GameState.cd_track_phase || g_AkaoMessageQueueCount ||
+           s_AkaoReplacementChecks!=pass+1 || !s_AkaoReplacementValid ||
+           memcmp(bank,scene.program,sizeof(scene.program)))valid=0;
+        for(unsigned i=0;i<sizeof(other);++i)if(other[i]!=0x55)valid=0;
+    }
+    while(g_AkaoMessageQueueCount)VSync(1);
+    if(g_BootHostVBlankCount!=blanks)valid=0;
+    Spu_Shutdown();Akao_MessageHandlers[0]=saved;
+    if(valid)puts("Original AKAO bank lifetime: 64 pending-stop replacements consume commands against old bytes before copying, preserve the other bank and do not advance VBlank");
+    return valid;
+}
+
 static int original_menu_sound_commands(PeDisc *disc,PeDiscFile *exe)
 {
     _Alignas(16) static u8 bank[0x1400];PeDiscFile archive;
@@ -16983,6 +17044,7 @@ int main(int argc, char **argv)
         int ok=original_m349_assets(&disc,&exe);pe_disc_close(&disc);return ok?0:1;
     }
 
+    if(argc==2 && !strcmp(argv[1],"--akao-bank-lifetime"))return original_akao_bank_lifetime()?0:161;
     if(argc==2 && !strcmp(argv[1],"--akao-queue-backpressure")){
         /* Force both boundary cases before the real timer consumes the queue.
          * Run separately: hardware initialization owns the global driver. */

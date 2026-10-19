@@ -1,6 +1,7 @@
 #include "common.h"
 #include "pe1/akao/bgm.h"
 #include "pe1/akao/commands.h"
+#include "pe1/akao/queue.h"
 #include "pe1/akao/stream.h"
 #include "pe1/akao_send.h"
 #include "pe1/boot.h"
@@ -9,6 +10,8 @@
 #include <string.h>
 #include "pe1/scene_archive.h"
 #include "pe1/scene_assets.h"
+#include "pe1/psyq_bios.h"
+#include "pe1/psyq_gpu.h"
 
 /* COMMON supplies small-data metadata to MASPSX: these words are reached
  * through $gp, every other extern stays absolute. */
@@ -371,6 +374,20 @@ int CdRom_SeekToTrack(int key, int mode, int group, int *slot, int blocking)
         case 9:
             *slot = bankIndex;
             if (g_CdTrackRecord) {
+                /* The stop queued for bank 0 must run before its bytes are
+                 * reused. File-image reads can finish before the next AKAO
+                 * interrupt, while the old tracks still point into this bank.
+                 * Poll the real timer without advancing the game VBlank. */
+                if (!bankIndex) {
+                    for (;;) {
+                        int pending;
+                        EnterCriticalSection();
+                        pending = g_AkaoMessageQueueCount;
+                        ExitCriticalSection();
+                        if (!pending) break;
+                        VSync(1);
+                    }
+                }
                 memcpy(destination,
                        SceneAsset_ResolveOffset(state->loaded_scene_assets,
                                                 g_CdTrackRecord->offset & 0xFFFFFF),

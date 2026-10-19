@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Naprawiona kolejność wymiany banku muzyki w istniejącym cdrom/track_read.c.
+Podczas odtwarzania pełnego J→M169 zwykły build dostał SIGSEGV w
+Akao_StepSampleLoader (sequencer.c:679). Read-only LLDB zatrzymał później
+SeqOp_Return/0xCA z pustym call_stack[0]; interpreter nie został zmieniony.
+Osobna obserwacja tuż przed memcpy CdRom_SeekToTrack w28221 wykazała18
+aktywnych ścieżek z PC w nadpisywanym banku oraz kolejkę F0,F1,F1,F0.
+Są to osobne obserwacje, nie pełna historia wszystkich zapisów jednej awarii.
+ASan odtworzył tę samą sekwencję bez błędu, więc sama udana próba SAN
+nie wykluczała problemu zależnego od czasu obsługi timera.
+
+Odczyt obrazu może skończyć się przed obsługą zakolejkowanego stopu.
+Przed memcpy banku0 moduł czeka teraz na opróżnienie kolejki AKAO, czytając
+jej stan pod istniejącą sekcją krytyczną. VSync(1) odpytuje prawdziwy timer
+bez przesuwania VBlank gry; nie pomija poleceń, ścieżek ani NULL w parserze.
+Brak nowych plików źródłowych, przenoszenia funkcji i zmian reguł walki.
+Istniejący test original_actor_animation --akao-bank-lifetime obejmuje64
+wymiany z aktywną ścieżką i oczekującym F0: wcześniejsze polecenie musi
+odczytać stare bajty przed wymianą, drugi bank pozostaje nietknięty,
+a VBlank nie rośnie. Test normal/SAN przechodzi; po podłączeniu starego
+obiektu track_read.c ten sam fixture kończy się161. Zarejestrowany w CTest.
+
+Kandydat /tmp/pe-akao-bank-stop-v1:392 świeże obiekty (196/profil),
+rehash1003 plików,54/54 regresji i12 cold prób normal/SAN. Pełne JSON-y
+zgodne z live w74741,76041,89903,99603,102465,103185;1MiB VRAM zgodny
+między profilami, a76041/89903/99603 także z zachowanym VRAM live.
+Read-only LLDB po poprawce obserwuje pięć rzeczywistych kopii banków
+(26161,28221,29251,30757,52413), każdą przy pustej kolejce i bez aktywnego
+PC w zastępowanych bajtach; proces dochodzi103185 i wychodzi0.
+Źródłowe J i prywatne karty bez zmian; root bu00/bu10 nietknięte.
+Dowody /tmp/pe-akao-bank-stop-v1-{diagnosis-proof.json,unit-proof.json,
+verification.json,replay-proof.json,rehash-proof.json,release-proof.json}
+oraz /tmp/pe-akao-banktrace-fixed-v1/observations.json.
+Kopie build zgodne z kandydatem; archiwa PsyZ/SDL nieinstrumentowane.
+To naprawa bezpieczeństwa zmiany muzyki, nie pełny dowód zgodności PCM
+z PS1. Pełne przejście M169, dalsza kampania i nowy trwały save nadal otwarte.
+Kontynuacja z poprawionym kandydatem:
+/tmp/pe-akao-bank-stop-v1-replay-102465-normal/args.json (M169194HP),
+lub /tmp/pe-akao-bank-stop-v1-replay-99603-normal/args.json (Super Tool233HP).
+
 Lepszy przebieg M168/M172: druga walka wygrana w89903 z143/335HP,
 zamiast6HP. Dwa Cure-D, zwykłe strzały G23, automatyczne przeładowanie,
 Energy Shot na zdrowego przeciwnika i dwie końcowe akcje zakończone Square.

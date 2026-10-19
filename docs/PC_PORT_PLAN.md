@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+M265: druga walka Warehouse (242/242/10/10HP) wygrana zwykłym inputem,
+47678,340/437HP,zero przeciwników,menu doświadczenia. Seria88 prób normal
+(10 rund) zakończona0, bez RAM/zapis/stat cheatów:
+/tmp/pe-warehouse-ramp-search-v1-proof.json. Cold normal/SAN/live pełny
+JSON/VRAM: /tmp/pe-warehouse-ramp-victory-v1-replay-proof.json.
+
+Odczyt oryginalnego skryptu wyjaśnia, że widoczna rampa M265 nie jest
+wyjściem. Boczne drzwi mają bezpośrednie komendy49 do M266 przy
+x≈−1111,z≈−2002 i z powrotem M263 przyx≈−1115,z≈1313.
+/tmp/pe-warehouse-graph-v1-proof.json i exit-graph-v1-proof.json pod tym
+samym prefiksem; graf nie zastępuje naturalnego przejścia. Zwykły powrót
+po nagrodach rzeczywiście wchodzi do M266,48733; cold pełny JSON/VRAM:
+/tmp/pe-warehouse-m266-v1-replay-proof.json. W M266 działa powrót do M265,
+wejście po schodach, zablokowane drzwi z komunikatem oraz pełna oryginalna
+animacja wejścia i zejścia po drabinie. Dalej niż M266 jeszcze niepotwierdzone.
+
+Oryginalny telefon M266 utworzył autentyczny zapis M,8192B,340HP,story600:
+/tmp/pe-warehouse-save-v1-source/BASLUS-006620000000M,
+SHA256 ce909dda3f36438f036eb3630f507f568087ae04a5473dcedb80c6018b940e8a.
+L nie nadpisano. Cold normal/SAN zapisują identyczne bajty M i cały stan/VRAM
+po wyjściu z telefonu54647:
+/tmp/pe-warehouse-save-check-v1-replay-proof.json. Continue tylko z M,
+z oboma CUE, ma pełny JSON/VRAM normal=SAN,340HP i zgodne inventory/postęp;
+zwykły input porusza Ayą: /tmp/pe-warehouse-continue-v1-proof.json.
+Agregat8 cold prób: /tmp/pe-warehouse-save-v1-proof.json.
+Kod produkcyjny bez zmian. Kolejny krok: zdobycie raw220 i sprawdzenie
+warunku global47&2 otwierającego M333, a następnie reszta Warehouse/kampanii.
+Nowy wrapper /tmp/pe-warehouse-M-v1-live.py startuje zwykłym Continue z M.
+
+### Wcześniejsze wejście do Warehouse
+
 Od autentycznego L wykonano zwykłe Continue z oboma CUE, M184→M183,
 wyjście schodami na mapę miasta0xa8000048, wybór Warehouse i oryginalną
 scenę policjanta0xa8046048. Wejście z mapy32054 ma zgodny pełny JSON/VRAM

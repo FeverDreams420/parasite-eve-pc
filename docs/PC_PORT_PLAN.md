@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M206: wygrana po alarmie, blokada drzwi zgodna z fabułą
+
+M207 przy64513: Down60,Left95,Down65 i przejście doM206 przy65049,
+272HP. Dalszy ruch południowym korytarzem uruchomił spotkanie:
+typ5/sub31 i30 po240HP oraz typ3/sub29 280HP. Przy65873 Aya212HP.
+Dwa oryginalne Heal3: pierwsze212→492 (do66355 już407 po trafieniach),
+drugie224→504 przy67237. Potem serie M500, ruch między turami:
+66775 HPwrogów240/190/156,67657:190/90/94,67997:90/40/94,
+68337:40/40/0,68677:0/40/0. Pojedynczy zatwierdzony Square pocisk
+zakończył ostatniego przy69017. Wygrana369HP,7pocisków w magazynku,
+PE75498011. Łup trzy Ammo+15, ekran przed odbiorem AmmoCrate68.
+ALL/END przy69599: pole/lock0,zero przeciwników.
+
+Południowe drzwi M206→M199 zareagowały dialogiem Ayi: alarm wyłączony,
+a drzwi nadal nie otwierają się. Oryginalny skrypt5484..6288 wymaga
+stage>=182 oraz global35&16 albo item213=Klamp Key. Przy obecnym
+stanie nie ma ani klucza, ani flagi. To oczekiwany warunek fabularny,
+bez zmian źródeł. Dwa Cross zamknęły strony dialogu; przy70165 pole
+bez blokady,369HP. Następna trasa ma prowadzić do laboratorium przez
+inne dostępne przejścia, zamiast próbować tych drzwi ponownie.
+
+Cold replay od B do70165: normal/SAN exit0, pełny JSON i VRAM równe
+live; B/C zachowane, ponownie utworzony D identyczny bajtowo.
+Dowód: /tmp/pe-m206-post-alarm-victory-v2-replay-proof.json.
+Bez zmian źródeł produkcyjnych, nadal kandydat265fc10fa.
+V1 utrwalił70057, gdy druga strona
+dialogu wciąż miała lock1, ale warunek wymagał lock0. V2 utrwala70165
+po rzeczywistym zakończeniu dialogu. Obie próby są zachowane.
+Live12235 czeka przy70165 wM206,(-330,−2411),M500/B Jacket1.
+
 ### M214 wygrane, poziom31 i schody doM207
 
 Kontynuacja live12235 od60556: trzy typ6/sub31,30,29 po240HP.

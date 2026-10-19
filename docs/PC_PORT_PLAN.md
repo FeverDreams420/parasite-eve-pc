@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### Pomiar PE w polu i powrót do lepiej zaopatrzonej trasy
+
+Odczyt wyłącznie przez LLDB,bez przypisań i wywołań funkcji,przy227907:
+Combatant.exp_or_acc11479790,maxAtk78118912. Po6000klatek pola,233907,
+wartości identyczne,97HP. To bezpośredni dowód braku regeneracji w tym
+przebiegu,bez wnioskowania z samego koloru menu:
+/tmp/pe-m231-field-pe-idle-v1-{before,after}.json. Live50379 zamknięto
+quit po zachowaniu stanu. Błąd pierwszego wyrażenia LLDB (core jest void*)
+nie zmienił pamięci; poprawne wyrażenia zawierały cast do Combatant*.
+
+Do przygotowania grindu uruchomiono/tmp/pe-m224-grind-v1-live.py:
+pełne zwykłe odtworzenie od O do potwierdzonego M225/194350,437HP,
+z Medicine4 i dwiema Medicine3. Nie przywraca to RAM ani edytowanego
+save'a. Następnym krokiem jest sprawdzenie powrotu M225→M224 i ponownego
+spotkania/nagród. Nie jest jeszcze potwierdzone,że ten grind jest dostępny.
+Źródła produkcyjne nie zmieniły się.
+
 ### M231: Confuse, Heal2 poza walką i oczekiwanie w polu
 
 LiveSAN50379 (/tmp/pe-m231-prepared-v1-live.py) odtworzył215799.
@@ -20,7 +37,8 @@ bezpośredniego pomiaru pola PE przed i po oczekiwaniu; nie wyciągać z tego
 wniosku o dokładnej szybkości regeneracji. Zachowane JSON/VRAM oraz
 zwykły input:/tmp/pe-m231-field-heal-v1-227687.{json,vram} i pełne wejścia
 w/tmp/pe-m231-prepared-v1-live/input.jsonl. Powtórki normal/SAN trwają
-przez/tmp/pe-m231-field-heal-v1-replay.py; sprawdzić ich wynik.
+przez/tmp/pe-m231-field-heal-v1-replay.py:oba exit0,pełny JSON/VRAM
+normal/SAN/live równy,bez raportów sanitizerów.
 Live50379 czeka w menu PE,M231,97HP. Źródła produkcyjne bez zmian.
 Dalsza próba wymaga uzupełnienia zasobów/lepszego przygotowania przez
 zwykłe mechanizmy; nie powielać szerokich tras wchodzących w przeszkody.

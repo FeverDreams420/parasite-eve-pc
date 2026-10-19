@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M223: Energy Shot, Medicine3 i wejście M224
+
+Aktualny kandydat museum-spark-native-v1. Od wejścia185355 Right12,
+Down170,Right160,Down170 uruchomiły typ5/sub31,320HP. Kolizja ograniczyła
+obejście dox≈705. Left270 napełniało ATB podczas inicjalizacji;Right60
+ominęło pierwszy atak zDarkness. Po zbliżeniu Right40 seria G23 zadała105
+bez utratyHP. Właściwe sterowanie sali:Right zwiększa worldX,Up worldZ.
+Przy186605 zostało215HP przeciwnika,dwa naboje wG23 i dużoPE.
+Up90,EnergyShot(row3,col0),potwierdzenie celu pokonały cel przy187193.
+Końcowy punkt187329:518HP,mode2,live0,G23clip1. Wszystkie wejścia zwykłe.
+Pełny JSON/VRAM normal/SAN/live,oba exit0,bez raportów sanitizerów:
+/tmp/pe-m223-victory-v1-replay-proof.json.
+
+ALL odebrało Medicine3(value8) do wcześniej pustego slot17. Bajty rekordów
+ekwipunku nie zmieniły się. END,Down140,Right130,wait400 →M224/0xa8042248,
+188669,518HP,field/lock0. Droga ominęła drugie pole spotkania; nie zmieniano
+kolizji/skryptu ani RAM. Zamrożony JSON/VRAM i pełne wejścia:
+/tmp/pe-m224-entry-v1-replay-proof.json:pełny JSON/VRAM normal/SAN/live,
+oba exit0,bez raportów sanitizerów. Runner dodatkowo
+sprawdza dokładnie jedną zmianę inventory:(17,0,8),bez zmiany ekwipunku.
+LiveSAN20828 czeka wM224 przy188669,limit500000. Prywatne O/A zachowane.
+Skrypty pierwotne:/tmp/pe-m223-nav-v1.txt i/tmp/pe-m224-nav-v1.txt.
+Nie ma jeszcze nowego zapisu na telefonie od checkpointuA.
+
 ### Museum: powiązania obu wariantów spark_ring_burst we wszystkich10salach
 
 Kandydat /tmp/pe-museum-spark-native-v1 rozszerza wyłącznie istniejący

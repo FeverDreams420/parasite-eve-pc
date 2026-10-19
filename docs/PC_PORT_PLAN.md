@@ -117,6 +117,33 @@ potwierdza g_InventoryItemWorkspace.ammo[1].ammo=15:
 /tmp/pe-m219-ammo-read-v2.log. Live SAN19532 czeka teraz w M219,159077; jedno Medicine4
 pozostało. Wszystkie wejścia zwykłe, bez zmian kodu, RAM ani save.
 
+### M219: wygrana, przeładowanie i wejście M220
+
+Ten sam kandydat loot-record-v2, zwykłe wejścia z autentycznego O.
+W polu wyposażono G23(slot0). Zamykanie menu po tej zmianie udało się
+po powrocie kursora głównej listy doUseItem0; wcześniejsze Circle przy
+innych pozycjach pozostawiało menu otwarte. To obserwacja do zbadania,
+nie dowód zgodności takiego ograniczenia z oryginałem.
+
+M219 Down300 uruchomiło dwie typ4/sub31,30 po240HP. Bezruch300
+kosztował dużoHP; Heal3 podniósł37→317. Oryginalna kolejka trzech
+ataków przeładowała G23 z zapasu15 i oddała strzały po28. Słabszy cel
+wyeliminowano trzema seriami; dwa kolejne Heal3 utrzymały Ayę przy życiu.
+Ostatni cel po nabojach miał100HP. Próby Club1 dały tylko3obrażenia.
+Zwykłe bieganie odbudowało PE,zmiana naM203 i EnergyShot przy PE≈378
+zadały81:97→16. Ostatni nabój zapasu G23 został przeładowany i zabił cel.
+Wygrana170722,187HP,mode2,live0. Pełne wejścia i zamrożony JSON/VRAM:
+/tmp/pe-m219-victory-v1-replay-proof.json:pełny JSON/VRAM normal/SAN/live,
+oba exit0,bez raportów sanitizerów.
+
+Łup Ammo+15×2 odebranyALL. Medicine2 slot10:187→277HP. END i w polu
+Down200,wait400 →M220/0xa8042048,172628,277HP,field/lock0.
+Pełny JSON/VRAM normal/SAN/live,oba exit0,bez raportów sanitizerów:
+/tmp/pe-m220-entry-v1-replay-proof.json. Live SAN19532 czeka wM220;1×Medicine4,30nabojów z łupu,
+G23wyposażony. Obecny limit180000 zostawia≈7kklatek; przed dalszą długą
+gałęzią odtworzyć zarejestrowane wejścia z większym limitem w nowej
+prywatnej sesji. Nie zmieniano kodu ani danych zapisu.
+
 Telefon i dalsza kampania pozostają do ukończenia.
 
 ### Museum: quiz i wygrane M206/M207, wejście M209

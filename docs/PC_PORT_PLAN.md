@@ -46,6 +46,41 @@ To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
 
+### M126 — niezależna kontrola wielkości obrażeń
+
+/tmp/pe-hospital-damage-audit-v1-live odtwarza autentyczny E do38959,
+następnie neutral1220 zamiast wcześniejszego ruchu. Read-only breakpoint
+Entity_ResolveDropTable (SBValue/ReadMemory, bez wywołań funkcji gry i zapisów
+RAM) przechwytuje cztery wejścia39161/39165/39177/39203:
+/tmp/pe-hospital-damage-audit-v1-entries.jsonl. HP przed nimi189/132/94/37;
+stat20=180, parameterWord=25182235 (pola27/16/24), power90, effectChance37,
+coreFlags wybiera pole drugie16, timer ochronny atbGauge0. Obrona bazowa
+180/5=36, więc zwykłe obrażenia90−36−16=38; krytyczne38×3/2=57.
+Szansa krytyczna po parametrze pancerza wynosi37×(100−24)/100=28 procent.
+Nie należy mylić stat20=180 z parametrem obrony samej zbroi27.
+
+/tmp/pe-hospital-damage-audit-v1-mips.py wykonuje oryginalne USA
+0x8001F4D4 na tych czterech zestawach i100 ziarnach RNG/zestaw: każdy daje
+wyłącznie38/57, zgodne z pierwszymi trzema obserwowanymi deltami57/38/57.
+/tmp/pe-hospital-damage-audit-v1-mips-proof.json wiąże SHA oryginalnego EXE.
+Zakres wyłącznie arytmetyka obrażeń: effectType ustawiony0 i guard animacji
+0x2000 w izolowanej pamięci emulatora, aby wyłączyć statusy/reakcję; nie
+zmieniano pamięci gry. Żywego ziarna RNG nie odczytano. Nie jest to dowód
+zgodności kontaktów, częstotliwości trafień, animacji ani trucizny z PS1.
+Duże obrażenia same w sobie nie uzasadniają poprawki wzoru lub balansu.
+
+Neutralna próba kończy się śmiercią i launcherem a9400048 przy40179.
+Gra exit0; wrapper live exit1 przez KeyError player_hp po zniknięciu aktora
+na launcherze. Artefakty zachowane, nie traktujemy wrappera jako sukcesu.
+Dwa cold odtworzenia normal/SAN exit0 dają cały stan zgodny z live i między
+profilami, pełny VRAM zgodny między profilami; źródłowy/prywatny E bez zmian,
+bu10 puste: /tmp/pe-hospital-damage-audit-v1-replay-proof.json. Początkowy
+weryfikator błędnie oczekiwał scene0 zamiast tokenu launchera a9400048;
+poprawiono tylko weryfikator i sprawdzono zachowane zakończone artefakty.
+SDK PsyZ/SDL nadal nieinstrumentowane. Kod produkcyjny i root karty bez
+zmian; nie wykonano nowego buildu. Dalej potrzebne sprawdzenie kontaktów
+lub skuteczna autentyczna taktyka; lobby nadal nie zostało przebyte.
+
 ### M126 — transfer Rate3, skuteczny odwrót i Confuse
 
 Bez zmian kodu produkcyjnego. Rewalidacja384 obiektów, zależności,

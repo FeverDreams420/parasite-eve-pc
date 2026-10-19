@@ -2,7 +2,40 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-### M269: pełne zwycięstwo i odbiór AT4 potwierdzone
+### Po bossie Warehouse: powrót, autentyczny zapis O i Continue
+
+Powrót M269→M268 przez oryginalne schody działa: środkiem z≈−820,
+marsz w prawo od x≈−765 do≈330 podnosi Ayę do y−225 i uruchamia wyjście.
+Nie zmieniano kolizji. Render_LoadGeomState jest zmianą kamery; właściwą
+trasę wskazały oryginalne trójkąty22→21→2→5 z danych kolizji.
+Audyt siatki /tmp/pe-m269-collision-audit-v1.json. Punkt79507 w M268,
+427HP,AT4 zachowany, pełny JSON/VRAM normal/SAN/live:
+/tmp/pe-m269-return-m268-v1-replay-proof.json.
+
+Zwykłe Up na drabinie prowadzi do M267; obejście dołem po lewej stronie
+przeszkody prowadzi do M333,82437, a dalej do M266,83417. Aya wraca do
+oryginalnego telefonu i zapisuje nowy O w pustym slocie14 (No.15).
+Źródło /tmp/pe-warehouse-boss-save-v1-source/BASLUS-006620000000O,
+8192B,SHA256 ace9c09d7ef4948c5ebd013d7f661bda7147b6d9ebd5b634bd36b0ad72ba8811.
+L/M/N nie nadpisano. Cold normal/SAN tworzą identyczne bajty O,
+pełny JSON/VRAM równy live85602:
+/tmp/pe-warehouse-boss-save-check-v1-replay-proof.json.
+
+Continue tylko z O ładuje M266,427/532HP,AT4 w23,oba klucze w24/25.
+Cały inventory i wszystkie trwałe script_variables są identyczne ze stanem
+po zapisie; pełny JSON/VRAM normal/SAN identyczny:
+/tmp/pe-warehouse-boss-continue-v1-proof.json. Agregat10 cold prób
+(wygrana,nagroda,powrót,zapis,Continue):
+/tmp/pe-warehouse-boss-save-v1-proof.json. To preferowany nowy checkpoint.
+Karty użytkownika i starsze źródła bez zmian; kod produkcyjny nadal glov2.
+
+Nowy live SAN /tmp/pe-warehouse-O-v1-live.py, sesja3441, w26228,M266,
+427HP,po Continue O. Zwykłe Right/run20 zmienia x−438→−168, a release8
+zatrzymuje ruch; /tmp/pe-warehouse-O-v1-input-proof.json. Karty O bez zmian.
+Stary długi live od L (sesja21028) zamknięty0 po zabezpieczeniu O i dowodów.
+Dalsza kampania pozostaje nieukończona.
+
+### Wcześniejsze pełne zwycięstwo i odbiór AT4
 
 Boss Warehouse pokonany zwykłym inputem,73471,427HP,mode2,
 zero przeciwników i oryginalne menu doświadczenia (EXP27695). Trasa

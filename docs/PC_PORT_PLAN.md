@@ -2,12 +2,11 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: lepszy oryginalny wariant M149 wygrywa ze190HP zamiast11,
-urządzenie/story494, autentyczny Save G i zimny Continue G→M152/story496,
-nadal190HP. Osiemnaście nowych cold przypadków normal/SAN opisano poniżej.
-M152 niewygrane. Zweryfikowano oryginalny zakaz Escape dla4:31 i jego5;
-wcześniejsze traktowanie prób jako nieudanych losowań było błędne.
-Kod produkcyjny bez zmian.
+Najnowszy postęp: M152 wygrane z autentycznego G/190HP, nagrody odebrane,
+Medicine3 użyta, M16 przeładowany, oryginalny panel otwiera Research Kennel.
+Przejście do M153/story496:242HP i19 naboi, bez aktywnej walki.
+Dwadzieścia nowych cold przypadków normal/SAN opisano poniżej.
+Kod produkcyjny bez zmian. Dalsza kampania nadal nieukończona.
 
 Kandydat /tmp/pe-control-read-v2: świeże384 obiekty (192/profil),46/46
 regresji exit0,18 prób protokołu sterowania z oczekiwanym statusem oraz28
@@ -52,6 +51,72 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M152 wygrane, Medicine3 i otwarcie Research Kennel/M153
+
+Poprzedni odcinek był postępem: SaveG/190HP i wyjaśnienie zakazu Escape.
+/tmp/pe-hospital-m152-g-v1-live odtwarza zwykły Continue G i pełny journal
+windy do31581, M152/story496/190HP. Bez zmiany kodu, statystyk, ekwipunku
+przez edytor, skoków do scen ani zapisów RAM. Karty wyłącznie prywatne /tmp.
+
+Trigger31681 uruchamia czterech wrogów:4:31/170HP,5:0/45HP,
+6:0 i6:1 po88HP. Pierwszy pełny ATB32001, PE~55, M16ammo14.
+Trzy salwy po2×30 do4:31 dają170→110→50→śmierć; cel wybierany w oryginalnej
+kolejce, a między turami zwykły ruch. Przy33791 spawner usunięty, Aya162HP.
+Powstał tylko dodatkowy5:1/45HP; po spawnerze pozostają dwa5 i dwa6.
+Efekt spowalniający wygasa przed34111, nie zużyto Cure-M.
+
+Energy Shot na6:0 przy34961 zadaje110: HP88→−22, ammo8→7; później PE0.
+Aya dostaje zatrucie i traci HP. Oryginalny Cure-P ze slot13 usuwa poison
+przy36041, HP81. Ostrzał usuwa5:0. Odsunięcie i czekanie pozwalają
+odzyskać PE do Heal2; pojedyncze trafienie8 zmniejsza HP81→73.
+Heal2 daje38247 HP73→133. Nie była to darmowa regeneracja HP.
+
+Pozostały6:1 ma88HP: dwa strzały→28; w kolejnej salwie jeden strzał zabija6,
+drugi trafia5:1 (45→15). Ponowne zatrucie zmniejsza HP, ale ostatni nabój
+zabija5:1. Przy40183 zwycięstwo: mode2, zero żywych wrogów, HP62,
+PEraw4335329, M16ammo0; statusy gracza wyczyszczone. Obejrzenie nagród
+pokazuje Medicine1 i dwa Ammo+6. Obtain All/End kończy41003, pole/lock0,
+Medicine1/item6 w dawnym slocie13. Zachowane pełne JSON/VRAM:
+/tmp/pe-hospital-m152-g-v1-{40183,41003}.{json,vram}.
+
+Dwanaście cold przypadków33791/34961/36041/38247/40183/41003 ×normal/SAN:
+cały emitowany JSON zgodny z live, pełny1MiB VRAM zgodny między profilami
+i z zachowanym40183/41003, źródłowy/prywatny G niezmieniony:
+/tmp/pe-hospital-m152-g-v1-replay-proof.json. Ten zakres dowodzi również
+podziału salwy między cele, Cure-P, Heal2 i śmierci wszystkich wrogów;
+nie oznacza niezależnego porównania całej walki z PS1.
+
+Po walce zwykły marsz do około(745,−690), właściwy kierunek i Cross
+otwierają oryginalne otrzymanie Medicine3/item8. Obejrzano panel
+Restores180HP, item8 trafia do wolnego slot20; przy41513 znowu pole.
+Użycie przez Items/slot20 daje42273 HP62→242 i slot20→0. Oryginalny Reload
+M16 ze slot10 uzupełnia pusty magazynek do19; przy43083 pole/lock0,
+HP242, ammo19. Zachowane /tmp/pe-hospital-m152-g-v1-43083.{json,vram}.
+
+Dojście do(207,988), yaw2048, uruchamia dialog86/87: OPEN/CLOSE Door to
+Research Kennel. Up4/yaw3072 i Cross otwierają osłonę panelu:44688,
+global65 bit134217728 ustawiony, Aya(380,996). Left4/yaw2048 i Cross
+uruchamiają przełącznik;45152 global66 bit128 ustawiony (828→956),
+oryginalny skrypt zdejmuje blokadę podłogi19 i uruchamia wyjście.
+Marsz do x~1138,z~−1287 prowadzi45720 do M153/a80251c8.
+Stan: story496,242HP,19 naboi, menuNULL/lock0, bez aktywnego spotkania.
+Zachowane -m152-g-v1-45720.{json,vram,png}; obraz wejścia obejrzany.
+
+Osiem kolejnych cold przypadków41513/43083/45152/45720 ×normal/SAN:
+cały JSON zgodny z live, pełny VRAM zgodny między profilami i z zachowanym
+43083/45720; /tmp/pe-hospital-m152-post-v1-replay-proof.json.
+Łącznie20 nowych przypadków exit0, bez zmian produkcyjnych lub nowych
+plików repo. Rehash384 obiektów, zależności, archiwów i binariów oraz
+identyczna kopia build gry: /tmp/pe-hospital-m152-g-v1-build-proof.json.
+PsyZ/SDL nadal nieinstrumentowane. Sesja live zakończona quit/exit0,
+źródłowy/prywatny G niezmieniony, bu10 puste, root bu00/bu10 nietknięte.
+
+Nowego trwałego Save po M152 nie wykonano. Bazą pozostaje autentyczny G;
+sprawdzony pełny journal prowadzi do bezpiecznego45720/M153 i jest
+punktem wyjścia dalszej kampanii. Następny krok: oryginalne M153/M154.
+Pełna kampania, niezależna zgodność PS1 pikseli/PCM i pozostałe wymagania
+portu nadal otwarte; ten odcinek nie zamyka całego goal.
 
 ### Save G ze190HP i korekta diagnozy Escape w M152
 

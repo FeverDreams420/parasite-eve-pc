@@ -2,19 +2,21 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: lepsza autentyczna trasa H przez ponowne M154 do dachu.
-M154 wygrane z117HP i pełnym PE; oryginalne leczenie/reload przygotowują
-283HP,19 naboi i wejście M156. Ruch na początku spotkania zachowuje283HP
-aż do gotowego ATB9000. Osiem nowych cold prób normal/SAN zgodnych.
-Boss nadal niepokonany; dalszy normal-only eksperyment obejmuje Haste,
-ponowne Stiffness i dwa strzały bez spadku HP bossa. Bez zmian produkcji,
-nowych plików źródłowych, save editora lub zapisów gameplay RAM.
+Najnowszy postęp: autentyczna trasa H przechodzi pierwszą formę pająka
+w M156 i dociera do drugiej formy M380. Przy66443 Aya żyje z17/283HP,
+tryb0, drugi boss ma1000400HP (oryginalny skryptowy offset1000000).
+Późniejsza próba kończy się śmiercią; cały boss nadal niepokonany.
+Wyłącznie oryginalne menu i zwykły input, bez zmian produkcji, nowych
+plików źródłowych, save editora lub zapisów gameplay RAM.
 
 Kandydat /tmp/pe-m156-cycles-v4: świeże388 obiektów (194/profil),48/48
-regresji exit0 oraz14 cold replayów trasy/przygotowania/początku walki exit0.
-Cały stan i pełne1MiB VRAM zgodne między normal/SAN; zachowany obraz
-live56518 również zgodny. Rewalidacja995 unikalnych zależności/obiektów/
-archiwów/binarek i kopii build: /tmp/pe-m156-cycles-v4-final-proof.json.
+regresji exit0 oraz22 wybrane cold replaye trasy i walki exit0.
+Osiem najnowszych obejmuje pierwsze trafienia, dalszą walkę, wyczerpanie
+pierwszej formy i wejście M380. Pełny stan zgodny z live i między normal/SAN;
+pełne1MiB VRAM zgodne między profilami, a przy66443 także z zachowanym live.
+Dowód: /tmp/pe-hospital-spider-m380-v1-replay-proof.json.
+Rewalidacja388 obiektów i995 unikalnych plików oraz kopii build:
+/tmp/pe-hospital-spider-m380-v1-build-proof.json.
 SAN obejmuje kod portu (address,undefined,function); archiwa PsyZ/SDL
 pozostają nieinstrumentowane. build/parasite-eve-pc i fixture są kopiami
 tego kandydata normal. Pełna kampania nadal nie jest ukończona.
@@ -53,6 +55,52 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M156 pierwsza forma → M380 druga forma, bez zwycięstwa nad całym bossem
+
+Ten odcinek zmienia wyłącznie dokumentację. Autentyczny H pozostaje
+8192-bajtowym plikiem o SHA256
+05026898625ae406161a2a4e149a3f1c9ab804a585fa3e2833179f092dfd5dc7.
+Wszystkie sesje headless mają prywatne karty w /tmp; źródło i ich kopie H
+pozostały niezmienione, prywatne bu10 puste. Root bu00/bu10 nietknięte.
+
+Po przygotowaniu dachu wybrana trasa używa Down150 od56452, zbliżając Ayę
+do pająka. Poprzednie pudła z dużego dystansu odpowiadają oryginalnemu
+Battle_CheckEvasion: dystans co najmniej1801/1000 zasięgu gwarantuje pudło.
+Nie są samodzielnym dowodem błędu portu. Pierwsze dwie kule przy57092
+zmniejszają HP pierwszej formy1000450→1000392; Aya220HP. Dalsze salwy,
+ruch i oryginalne Heal1/Heal2 dają przy61255 boss1000218/Aya98HP.
+Prefix /tmp/pe-hospital-spider-close-v1-live do63487 daje113HP i boss1000160;
+późniejszy śmiertelny ogon tej sesji nie należy do wybranej trasy.
+
+Szesnaście normal-only cold prób kierunków podejścia oraz dziewięć prób
+ostatniej salwy zapisano w /tmp/pe-spider-approach-v{1,2}-results.json
+oraz /tmp/pe-spider-final-v1-results.json. Są eksploracją zwykłego inputu,
+nie dodatkowymi dowodami zwycięstwa: część kończy się śmiercią/powrotem
+do tytułu mimo exit0. Wybrane DownLeft140, dwie kule i Up340 dają64117:
+Aya113HP, boss1000102,7 naboi. Próby boczne i finish-v1/v2/v3 także
+nie dowodzą pokonania całego bossa. Cure-M użyte profilaktycznie w v3
+pozostawiało niewykorzystaną odporność; wybrana v4 zastępuje je Heal2.
+
+/tmp/pe-hospital-spider-finish-v4-live zawiera pełne args i journal od
+wybranego64117. Heal2 oraz DownRight310 przygotowują173HP; dwie kule
+z Up340 dają65473:Aya110HP/boss1000044. Kolejne dwie i Left220 dają65843:
+Aya110HP, boss999986,3 naboje. Oryginalna sekwencja przejścia prowadzi
+przez66143/68HP do66443/M380 (scene a8068048), Aya17HP, mode0,
+boss1000400 i cztery żywe części. M380 jest drugą formą, nie sceną Game Over.
+Zachowane /tmp/pe-hospital-spider-finish-v4-66443.{json,vram}; obejrzany
+podgląd /tmp/pe-hospital-spider-m380-v1-preview/frame.png pokazuje żywą
+Ayę i drugą formę. Dalszy Left145 kończy się HP0 przy66588.
+
+Osiem nowych cold prób:57092,61255,65843,66443 × normal/SAN, wszystkie
+exit0, pełny stan równy historycznemu live i pełny VRAM równy między
+profilami. Tylko66443 ma dodatkowe porównanie z zachowanym VRAM live
+w tym zestawie. Journal/proof: /tmp/pe-hospital-spider-m380-v1-replay.py,
+/tmp/pe-hospital-spider-m380-v1-replay-proof.json. Nie zmieniono kodu;
+pozostają wcześniejsze48 regresji tego samego kandydata. Hashowanie
+potwierdza zgodność wszystkich388 obiektów/995 plików i kopii build.
+Następny krok: poprawić zdrowie na przejściu i przejść drugą formę M380
+zwykłym sterowaniem. Pełne zwycięstwo i dalsza kampania pozostają otwarte.
 
 ### Nowa trasa H:283HP i19 naboi na dachu
 

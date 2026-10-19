@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Warehouse Key(raw220) zdobyty zwykłą interakcją w M263, po pierwszej walce
+przy x≈2085,z≈−1161. Wcześniejsze szukanie w M266 było błędnym odczytaniem
+wspólnej gałęzi skryptu gracza: M266 zawiera odbiór220 pod event6,
+ale nie ma lokalnego emitera tego zdarzenia. Aktywny emiter M263 wysyła2
+w prostokącie x1872..2208,z−1460..−1100; gracz odgrywa oryginalną animację
+i dostaje Port Storage Key. Pozostawiono całe oryginalne moduły bez zmian.
+
+Punkt40582,287HP,220 w wolnym slocie25,global47=16777219 (maska0x2 ustawiona),
+ma cold pełny JSON/VRAM normal/SAN/live:
+/tmp/pe-warehouse-key-check-v1-replay-proof.json. Źródłowy/prywatny L bez
+zmian. To gałąź od autentycznego L; zapis M utworzony wcześniej nie ma220.
+Nie edytowano ani nie nadpisano zapisów. Agregat:
+/tmp/pe-warehouse-key-acquisition-v1-proof.json.
+
+Cały moduł M263/M265/M333 jest identyczny,35308B,
+SHA256 6684ce1859eb70b9cbe6664d2a4559a4e7a2c39ea72549981d430a88678bbe91.
+Wszystkie cztery deskryptory75/70/115/136 mają istniejące pełne bindingi
+native: /tmp/pe-warehouse-shared-module-v1-proof.json. Ten audyt nie jest
+naturalnym wejściem M333. Próba powrotu M→M265 ponawia czterech wrogów;
+próba obejścia prawą stroną w gałęzi z kluczem również uruchamia tę walkę.
+Nowy dobór zwykłego inputu /tmp/pe-warehouse-key-search-v1.py (sesja50107)
+pracuje od43571 z220 w ekwipunku. Sprawdzić jego terminal.json przed
+kolejnym uruchomieniem. Live /tmp/pe-warehouse-key-v1-live.py, sesja89734,
+pozostaje przy43571. Pełna kampania i dalsze Warehouse nieukończone.
+
+### Wcześniejsza wygrana bez Warehouse Key i zapis M
+
 M265: druga walka Warehouse (242/242/10/10HP) wygrana zwykłym inputem,
 47678,340/437HP,zero przeciwników,menu doświadczenia. Seria88 prób normal
 (10 rund) zakończona0, bez RAM/zapis/stat cheatów:

@@ -17363,8 +17363,12 @@ int main(int argc, char **argv)
         if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
         ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
         Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
-        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive) ||
-            !pe_disc_read(&disc,&exe,0x800+(0x80093378-0x80010000)+204*8,&range,8))return 1;
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 1;
+        const unsigned rooms[]={205,243};
+        for(unsigned room_index=0;room_index<2;++room_index){
+        unsigned room_number=rooms[room_index];char room_name[8];
+        snprintf(room_name,sizeof(room_name),"m%04ui",room_number);
+        if(!pe_disc_read(&disc,&exe,0x800+(0x80093378-0x80010000)+(room_number-1)*8,&range,8))return 1;
         u32 offset=(range.start+range.scratchSectors+range.textureSectors)*2048u;
         if(!pe_disc_read(&disc,&archive,offset+8,module,sizeof(module)))return 1;
         uint64_t hash=UINT64_C(14695981039346656037);
@@ -17375,13 +17379,14 @@ int main(int argc, char **argv)
         for(unsigned pass=0;pass<2;++pass){
             g_PmCmdHandlerTable[75]=NULL;g_FieldFxTaskPrograms[31]=NULL;
             g_RoomScriptArgs[0]=1;g_RoomScriptArgs[1]=2;g_RoomScriptArgs[2]=3;
-            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0205i")) ||
+            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)room_name)) ||
                g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] ||
                g_FieldFxTaskPrograms[31]!=&g_RoomSoundBurstProgram ||
                g_RoomScriptArgs[0] || g_RoomScriptArgs[1] || g_RoomScriptArgs[2])return 1;
             intptr_t args=g_RoomSoundBurstProgram.initialize(0,3,-4,5);
             if(args!=(intptr_t)g_RoomScriptArgs || g_RoomScriptArgs[0]!=3 ||
                g_RoomScriptArgs[1]!=-4 || g_RoomScriptArgs[2]!=5)return 1;
+        }
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         /* Retail writes through state+0x18, not the low byte of core_flags.
@@ -17405,7 +17410,7 @@ int main(int argc, char **argv)
                marker.after!=marker.before)return 1;
         }
         g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
-        puts("Original M205 complete module, descriptors, script, reload and guarded native action-state pointer passed");return 0;
+        puts("Original M205/M243 complete modules, descriptors, script, reloads and guarded native action-state pointer passed");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m269-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

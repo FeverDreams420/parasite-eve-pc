@@ -2,6 +2,67 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+### M243: naprawa brakującego pełnego modułu actor/SoundBurst
+
+Kontynuacja po Klampie opuściłaM344 przy109080 przez Up32,Left130
+(kamera labu:Down→+X,Left→−Z). M343→M229 przy110301. M229 uruchomił
+jeden typ4/sub31,320HP. Trzy serie M500 po120 zakończyły go przy112070,
+278HP,bez dalszych obrażeń podczas ostrzału. Medicine3 z łupu wymieniono
+przez SEL na słabszy N Vest(slot1),następnie użyto:278→458HP. Dwa Heal2
+po60 dały578HP. M242 przy113820. Kamera M242 ma Down→+X,Left→−Z;
+krótki błędny ruch powrotny doM229 został skorygowany zwykłymi wejściami.
+
+M242 uruchomił typ5/sub31 320HP,typ4/sub30 280HP,typ6/sub29 240HP.
+Cztery serie M500 i ruch między turami: HPwrogów po115578=200/218/140,
+115918=200/94/140,116258=80/0/40,116598=0/0/0. Wygrana447HP,
+PE82837504 pełne,3pociski w magazynku. Łup Ammo+15,Medicine3,Ammo+15
+odebrano ALL (wolny slot po zużytym leczeniu). Plecak ponownie27/27.
+
+Zachodnie drzwi M242 wyświetliły „Used Klamp Key.” przy118233.
+Po Cross program zakończył exit1 podczas ładowaniaM243:
+„native descriptor missing for M243 slot75 (PS1 80192c70)”. Pełny
+trace/log/VRAM i argumenty zamrożone pod /tmp/pe-m243-missing-descriptor-v1-*.
+To rzeczywisty brak powiązania portu, a nie warunek fabuły czy trudność walki.
+
+Odczyt oryginalnego PE.IMG potwierdził identyczny CAŁY moduł15704B
+wM205/M243,SHA256 a0aacdb413f376a72eec01c18414c5a8e4aeec97551110b2720934b63fc5566e.
+Audyt192..258 znalazł dokładnie te dwa pokoje z tym modułem:
+/tmp/pe-m243-soundburst-module-comparison-v1.json. Istniejące implementacje
+actor_class_table i sound_burst nie wymagają przepisywania. Naprawa w
+istniejącym room_load.c rozszerza naM243: deskryptory75/80192c70 i
+116/80192d04, rejestrację klasy, rejestrację task31 oraz zerowanie
+argumentów SoundBurst przy ładowaniu. Istniejący test --m205-load w
+original_actor_animation.c sprawdza teraz pełny hash modułu,skrypt36B,
+oba deskryptory,resetargumentów i dwa ładowania każdego zM205/M243.
+Nie dodano plików źródłowych ani nowej implementacji efektu.
+
+Pierwsza próba v1 obejmowała deskryptory, ale test rzeczywistego reloadu
+wykrył brak rejestracji/resetuM243. Nie jest zaliczona; jej CTest i regresje
+pozostały nieudane. V2 uzupełnia cały istniejący ciąg. Świeże404obiekty
+(202normal+202SAN),618zależności zweryfikowanych; pięć wymaganych CTestów
+zasobów przeszło bez SKIP. Build/parasite-eve-pc oraz fixture są identyczne
+z nowymi plikami normal. Bieżące artefakty /tmp/pe-m243-soundburst-native-v2-*.
+Wszystkie66regresji zakończyły exit0:
+/tmp/pe-m243-soundburst-native-v2-verification.json. Pięć CTestów bezSKIP
+w /tmp/pe-m243-soundburst-native-v2-ctest-assets.log. Pełny replay odB
+normal/SAN i nowy live38136 dały ten sam cały JSON/VRAM przy118691:
+M243/A80441C8,447HP,menuNone,lock0,stage186,global37&64,KlampKey
+w17,Maeda’sGun w11,Medicine3 w1,M500/B Jacket1 wyposażone.
+B/C/D identyczne ze źródłami; prywatne bu10 puste. Dowód porównania:
+/tmp/pe-m243-soundburst-native-v4-entry-proof.json. Używa zakończonych
+exit0 przebiegów v3-entry i niezależnego live poprawnego kandydata v2.
+
+Weryfikator v2-entry początkowo wymagał stage185; rzeczywiste wejście
+ma186. V3-entry potwierdził cały JSON, lecz odrzucił obraz z niepełnej
+poprawki v1 (82bajty różnicyVRAM). Nie użyto tamtego wadliwego wariantu
+jako wzorca obrazu: normal/SAN i świeży live właściwego kandydata v2
+są identyczne. Kod produkcyjny pozostał ten sam przez całą weryfikację v2.
+Nieudane porównania zachowano. Live12235 zakończony pierwotnym błędem;
+pomocniczy live75346 v1 zamknięty quit/exit0. Bieżący live38136,
+/tmp/pe-m243-soundburst-native-v2-live.py,czeka przy118691 wM243.
+Następny krok: dalsza kampania i autentyczny zapis przy telefonie.
+SAN nie instrumentuje bibliotek PsyZ/SDL. Nie zaliczono dalszej kampanii.
+
 ### M344: zakończone oryginalne zdarzenie Klampa, Maeda’s Gun i Klamp Key
 
 Analiza pierwotnych skryptów znalazła jedyne przypisanie global34=185

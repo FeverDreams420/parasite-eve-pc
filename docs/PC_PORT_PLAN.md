@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
+Preferowany nowy punkt: M167/110701,277/335HP, po pełnym przejściu M169.
+Zamiast natychmiastowego Energy Shot końcowa faza używa Heal3 (113→335HP),
+Cure-D, naprzemiennych uników Up/Down i regeneracji PE do23402496;
+Energy Shot pokonuje pozostałego przeciwnika86HP w108671 z277HP.
+Nagrody i przejście przeciwnego końca korytarza zachowują277HP.
+Cztery dodatkowe cold próby normal/SAN:108671 i110701, wszystkieexit0,
+całe JSON-y zgodne z live,1MiB VRAM zgodny między profilami. Dla tej pary
+nie zachowano osobnego VRAM live. Źródłowe J i prywatne karty niezmienione.
+Dowód /tmp/pe-m169-healthy-check-v1-replay-proof.json; pełne wejście:
+/tmp/pe-m169-healthy-check-v1-replay-110701-normal/args.json.
+Brak zmian kodu produkcyjnego; nadal ten sam kandydat i54/54 regresji.
+Psyz/SDL pozostają nieinstrumentowane. Dalsze normal-only wejście M167
+wyzwala trzy aktory (8:31/99HP,8:30/99HP,7:29/112HP). Skrócone wejście
+z unikami zachowuje208HP przy111211, ale walka nie jest jeszcze wygrana.
+Dziennik /tmp/pe-m167-healthy-v2-live; zakończony zwykłym quit/exit0.
+
+Pełne przejście M169 potwierdzone na niezmienionym kandydacie
+akao-bank-stop-v1. Zwykłe wejście J, Cure-D, strzały G23, uniki Up/Down
+i Energy Shot kończą walkę w105285 z113/335HP; Up na most i Right przez
+przeciwny koniec korytarza prowadzą do M167 w107115. Oryginalne liczniki
+bank55/56 wynoszą4/6. Cztery cold próby normal/SAN kończą się0, całe JSON-y
+i1MiB VRAM zgodne między profilami oraz z zamrożonym przebiegiem live.
+Dowody /tmp/pe-m169-{dodge,route}-check-v1-replay-proof.json.
+Źródłowe J i prywatne karty niezmienione; root bu00/bu10 nietknięte.
+Nie zmieniono kodu, kolizji, reguł walki ani skryptów, brak nowych źródeł.
+Kolejne spotkanie M167 nie jest jeszcze wygrane; dwie próby Escape w
+starszej gałęzi kończą odwrót z15HP, nie ukończenie odnogi. M166, dalsza
+kampania i nowy trwały zapis nadal otwarte. Poniższe wcześniejsze wpisy
+opisujące M169/warunek4/6 jako otwarte są historią poprzednich punktów.
+
 Naprawiona kolejność wymiany banku muzyki w istniejącym cdrom/track_read.c.
 Podczas odtwarzania pełnego J→M169 zwykły build dostał SIGSEGV w
 Akao_StepSampleLoader (sequencer.c:679). Read-only LLDB zatrzymał później

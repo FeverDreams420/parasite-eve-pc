@@ -2,22 +2,27 @@
 
 ## Aktualny potwierdzony stan — 19 października 2026
 
-Najnowszy postęp: druga forma M380 odpowiada na oryginalne Heal2 i ostrzał.
-Przy67989 Aya żyje z86/283HP, boss1000334 (334 ponad oryginalnym offsetem),
-1 nabój. Osobne normal-only próby ruchu podczas przejścia M156→M380
-zachowują110HP zamiast17HP. Cały boss nadal niepokonany.
+Najnowszy postęp: wybrana trasa M380 osiąga69355 z169/283HP,
+18 nabojami po oryginalnym automatycznym przeładowaniu i bossem301HP
+(1000301 z autorskim offsetem). Zwykły unik Left440 zachowuje109HP,
+potem Heal2 podnosi je do169 bez strat podczas leczenia. Późniejsza
+kontynuacja traci zdrowie; cały boss nadal niepokonany.
 Wyłącznie oryginalne menu i zwykły input, bez zmian produkcji, nowych
 plików źródłowych, save editora lub zapisów gameplay RAM.
 
 Kandydat /tmp/pe-m156-cycles-v4: świeże388 obiektów (194/profil),48/48
-regresji exit0 oraz26 wybranych cold replayów trasy i walki exit0.
+regresji exit0 oraz34 wybrane cold replaye trasy i walki exit0.
 Poprzednie osiem obejmuje pierwsze trafienia, dalszą walkę, wyczerpanie
 pierwszej formy i wejście M380. Pełny stan zgodny z live i między normal/SAN;
 pełne1MiB VRAM zgodne między profilami, a przy66443 także z zachowanym live.
 Dowód: /tmp/pe-hospital-spider-m380-v1-replay-proof.json.
-Najnowsze cztery obejmują gotowe ATB w M380 oraz leczenie i pierwszą
+Wcześniejsze cztery obejmują gotowe ATB w M380 oraz leczenie i pierwszą
 salwę; stan zgodny z live, VRAM zgodny między profilami i przy67989
 także z zachowanym live: /tmp/pe-hospital-spider-m380-v2-replay-proof.json.
+Najnowsze osiem potwierdza przeładowanie w kolejce oraz wybraną trasę
+po uniku i Heal2: /tmp/pe-hospital-spider-m380-v{3,5}-replay-proof.json.
+Pełny stan zgodny z live, VRAM między profilami; bez zachowanego live VRAM
+tych punktów.
 Rewalidacja388 obiektów i995 unikalnych plików oraz kopii build:
 /tmp/pe-hospital-spider-m380-v1-build-proof.json.
 SAN obejmuje kod portu (address,undefined,function); archiwa PsyZ/SDL
@@ -58,6 +63,49 @@ bez menu. LLDB attach/detach, następny advance i quit działają; exit0.
 To dodatkowa sesja normal, nie osobna para cold SAN. Następny krok:
 pozostałe bezpieczniki i dalsza autentyczna trasa szpitala; zbadane szafki
 M332 dają Tool/Medicine2, a M329 Micro UZ, nie pozostałe bezpieczniki.
+
+### M380: przeładowanie w kolejce, unik i169HP po Heal2
+
+Poprzedni odcinek był postępem: M380 przyjmuje leczenie i obrażenia,
+a wariant UpRight przejścia zachowuje110HP. W tym odcinku bez zmian
+produkcji, nadal kandydat cycles-v4. /tmp/pe-hospital-spider-m380-v3-live
+odtwarza ten wariant, Right200 daje66643/ATB9000. Heal2 i UpLeft340
+prowadzą do67459/160HP. Pierwsza salwa:67949/109HP/boss367HP/1 nabój.
+Druga salwa automatycznie przeładowuje broń w kolejce:68539/18 naboi,
+boss301HP, lecz Up440 kosztuje102HP i wywołuje Stiffness. Cztery cold
+próby67459/68539 × normal/SAN potwierdzają pełny stan live i zgodny
+VRAM między profilami: /tmp/pe-hospital-spider-m380-v3-replay-proof.json.
+Brak zachowanego obrazu live tych dwóch punktów; nazwa pola proof
+full_vram_equal_profiles_and_saved_live oznacza warunkowe porównanie
+z live tylko gdy plik istnieje. Dalszy ogon v3 kończy się śmiercią.
+
+Dziewięć normal-only cold prób ruchu po drugiej salwie od68099:
+/tmp/pe-spider-m380-dodge-v1-results.json. Left440 zachowuje109HP,
+18 naboi i brak Stiffness; DownLeft kończy się HP0 mimo exit0.
+To eksploracja zwykłego inputu, nie dziewięć zwycięstw. Osobna gałąź
+/tmp/pe-hospital-spider-m380-v4-live sprawdza profilaktyczne Cure-M:
+67949/109HP→68689/99HP/odpornośćC0, późniejszy ostrzał przeładowuje,
+lecz dalsza utrata zdrowia czyni tę trasę gorszą; quit0, bez zwycięstwa.
+
+Wybrana /tmp/pe-hospital-spider-m380-v5-live odtwarza Left440 do68539:
+109HP/boss301HP/18 naboi, PE20422308raw. Oryginalne Heal2 i Down340
+prowadzą do69355:169HP, ATB9000,18 naboi, bez Stiffness. Późniejszy
+Up120 trafia na atak:69575/109HP/Stiffness. Cure-M ze slotu0 usuwa je,
+ale dalsza trasa ponownie traci zdrowie; sesję zakończono quit0 przy72645/
+4HP. Próba Energy Shot z dużego dystansu nie dała obrażeń i nie dowodzi
+błędu implementacji. Do dalszego przejścia wybieramy prefix do69355,
+nie słabszy ogon. Wszystkie sesje mają prywatne karty, H niezmieniony,
+bu10 puste; root karty nietknięte.
+
+Cztery dodatkowe cold próby68539/69355 × normal/SAN potwierdzają pełny
+stan live oraz pełne1MiB VRAM między profilami:
+/tmp/pe-hospital-spider-m380-v5-replay-proof.json. Tych punktów także
+nie porównywano z niezachowanym VRAM live. Łącznie osiem nowych prób
+wybranych tras i wcześniejsze48/48 regresji niezmienionego kandydata.
+Rehash388 obiektów,995 plików manifestu i2 kopii build oraz prywatnych
+kart: /tmp/pe-hospital-spider-m380-v5-build-proof.json. PsyZ/SDL bez SAN.
+Następny krok: kontynuować od69355, unikać ataku wiążącego/Stiffness,
+pokonać pozostałe301HP i zweryfikować oryginalne wyjście z walki.
 
 ### Kontynuacja M380: leczenie i pierwsza skuteczna salwa
 

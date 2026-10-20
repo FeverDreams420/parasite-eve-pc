@@ -3,6 +3,33 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — scena Bena i Sheevy M115 po bramce M099
+
+Wyjście z właściwego M099 na północ uruchamia M115/a80212c8.
+Przy186893 dialog72/lock1; po72–73 powrót do M100/a8020048.
+Przy187973 story400,HP178/189,enemy0,battle9,menu null,lock0,
+spawn[-10,-4106]. Bank44:67115068→67246140 (dodane131072).
+Cały ekwipunek oraz4096B rekordów bez zmian od rozmowy M099.
+
+Podejście początkowo zatrzymało się na geometrii; read-only LLDB/detach
+zapisuje podłogę /tmp/pe-ex-true-m099-floor-K-v1.json. W tej płaskiej
+podłodze kind0 jest powierzchnią chodzenia (93 trójkąty), nie kind128
+z wcześniejszego skosu M103; omyłkowy filtr dał brak ścieżki, bez zmian
+kolizji gry. Poprawna trasa[-220,300],[-80,1340] prowadzi do wyjścia.
+
+/tmp/pe-ex-ben-sheeva-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, kopie K bajtowo niezmienione.
+Cały ekwipunek i wszystkie zmienne sprawdzone, obserwacja dialog72
+potwierdzona w logu live. Artefakty
+/tmp/pe-ex-ben-sheeva-K-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji, brak niezależnego oracle obrazu/audio PS1.
+Bez zmian kodu produkcyjnego ani edycji RAM/RNG/save. Nie wykonano jeszcze
+nowego zapisu przy telefonie; K nadal ostatni trwały zapis. Następne:
+dalsze schody NYPD po scenie Bena/Sheevy i dojście do M112/telefonu.
+Pełny port pozostaje nieukończony.
+
+
+
 ### EX — właściwe M099, trzeci M100 i bramka dalszej fabuły
 
 Korekta nazewnictwa ostatnich wpisów: hol z tokenem a80201c8 to M103,

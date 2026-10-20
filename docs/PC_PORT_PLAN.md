@@ -30,6 +30,10 @@ Cold normal/SAN poprawionej gałęzi exit0;
 /tmp/pe-ex-torres-receipt-v1-verify.py potwierdza pełny JSON/VRAM zgodny
 z live, prywatny B wszystkie8192B bez zmian, brak sanitizer/opcode/assertion.
 Dowód: /tmp/pe-ex-torres-receipt-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Pierwsze uruchomienie weryfikatora odrzuciło odziedziczone założenie, że
+item30 pozostaje w slot0. Poprawiono test na faktyczny stan po Move:
+item30 w slot4, nowy rekord262 w slot0; ponowna pełna weryfikacja PASS.
+Nie zmieniano wyników runtime ani gry w celu przejścia tego sprawdzenia.
 Pełny EX/Chrysler i porównanie
 obrazu/audio PS1 nadal niepotwierdzone.
 

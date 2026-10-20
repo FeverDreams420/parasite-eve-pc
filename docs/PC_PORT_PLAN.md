@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — M074/M075, niedźwiedź i trwały zapis G po etapie248
+
+Dalszy pad przechodzi schody M072 przez[678,93]→[~640,−200]→[~1100,−500],
+wraca do M068, omija narożniki dolnej alejki i wczytuje M074/a8007248.
+Obejście progu około[−7680,−4520], wschodnia alejka i wyjście koło
+[−5400,−4300] prowadzą do M075/a80072c8. Skrzynie M074 pominięte na tej
+trasie; nie uznaje się ich za sprawdzone przez ten dowód.
+
+W M075 oryginalne starcie5:31/104HP/def25 i pomocniczy4:0/13HP/def0.
+Lista celów zawiera tylko niedźwiedzia. Anulowanie celu poza zasięgiem,
+podejście i Double Action pokonują go za dwa naboje4→2; HP94→82/115.
+Rewards zamyka się,enemy0,battle9,capacity19 bez awansu. Medicine1
+ze slot10 leczy82→115/115, slot pusty. Telefon przy[888,1699]/yaw1294:
+prompt6→Yes→karta1→pusty G/cursor6→FileSaved40→zamknięcie menu.
+Przy201121 M075/story248,115/115HP,move_lock0,menu null,enemy0,battle9.
+Klucz4/Medicine2slot8/Junk16i18 zachowane,var54=1835362.
+
+/tmp/pe-ex-posteve-save-G-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM i wszystkie8192B G identyczne z live; E/F i hashe bez
+zmian, brak sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-posteve-save-G-v1-{seed.json,checkpoint,proof/proof.json}.
+G skopiowano dopiero po PASS do /tmp/pe-ex-posteve-G-v1-source/
+BASLUS-006620000000G; hash G w proof.json. To bieżąca linia EX E→F→G,
+nie historyczny G z innych prób opisanych dalej.
+
+Osobne zimne Continue wyłącznie G przy12600: M075/story248,115/115HP,
+menu null; cały ekwipunek i wszystkie zmienne skryptów zgodne z zapisem.
+/tmp/pe-ex-posteve-G-loaded-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM zgodny między profilami, G bajtowo i hash bez zmian.
+Nowy live /tmp/pe-ex-posteve-G-nav-v1-live identyczny z tym zimnym
+checkpointem (startup-proof.json); stary długi kontroler jawnie zamknięty0.
+SDK/SDL bez instrumentacji. Bez zmian kodu gry, RAM, RNG lub payloadów
+save’ów. Nie jest to ukończony park/Day2/EX ani porównanie PS1 obrazu/audio.
+Następne: dalsza trasa z M075 i fabuła Central Park po248.
+
 ### EX — pościg za Eve, rozmowa M070 i etap248
 
 Z M069 po etapie240 powrót przez[~3500,−7600] wczytuje M072 i

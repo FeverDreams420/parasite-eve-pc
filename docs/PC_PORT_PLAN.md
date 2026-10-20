@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M188: obie fazy i wszystkie segmenty pokonane
+
+Kontynuacja32086:Heal2/Square daje32722 Aya220HP i potwierdzony reset
+korpusu do300/300HP. Lista przełącza się na osobne segmenty. Items/Cure-D
+slot24+strzał daje33794 korpus212HP,Aya210,Darkness usunięte.
+Po ruchu pełneATB;Right wybiera korpus(index1),dwa strzały dają34338
+36HP. Kolejna lista ma korpus index2;dwa Right,jeden strzał,Square
+prowadzą34786 do trzech pozostałych segmentów,Aya164HP.
+
+Dwa strzały w8:28/251HP dają35158 75HP,Aya130. Heal2+strzał zabija
+segment8:35910 dwa cele6/7 po167HP,Aya190. Dwa strzały w7 trafiają raz
+(75HP). Podejście ze1671 do585,jeden strzał/Square daje36934 ostatni
+segment6/167HP,Aya151,ammo2. Podejście z1720 do940,Double Action dwa
+pojedyncze strzały daje37474/37774 EXP/selection20,mode2,zero wrogów,
+Aya141/335HP,ammo0. Nagrody jeszcze nieodebrane. Całość przez zwykły pad,
+bez zmiany mechaniki,bossa,save payload,RAM lub RNG.
+
+Dwa świeże pełne cold37774 normal/SAN na pe-control-aim-v1 exit0,
+bez diagnostyki sanitizer/opcode. Pełny JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Asercje obejmują reset300,212,36,
+usunięcie korpusu,75HP segmentu8,liczby celów3→2→1→0 oraz940 końcowego
+celu. Wszystkie sloty/4096B rekordów i zmienne sprawdzone względem F2:
+slot8:13→0,slot24:14→0,rekord14:67→89,426:7→0;zmienne1=187,
+11=74,20=1049957,78=129,reszta bez zmian. BP36. Źródłowy i prywatne F2
+identyczne bajtowo. Dowód /tmp/pe-ex-m188-win-F2-v1-{seed.json,checkpoint,
+proof/proof.json},runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oraclePS1,/tmp nietrwałe. Potwierdzono zwycięstwo tej gałęzi EX,
+nie pełną kampanię ani wszystkie warianty bossa. Następne:nagrody,
+wyjście M189 i kolejny trwały zapis.
+
+
 ### EX M188: korpus poniżej progu, Aya przeżywa160HP
 
 Na pe-control-aim-v1 nowa próba z bonusem pancerza89,po zwykłym Cure-P

@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — czwarta wygrana, Defense+2 i zewnętrzna nawigacja
+
+Za bramą M062 przy93415 rozpoczyna się starcie6:31/6:1/6:0, każdy44HP,
+def25. Dwie tury Double Action pokonują trzech za trzy naboje, bez
+kolejnych obrażeń. Oryginalne ekrany awansu zwiększają maxHP101→107,
+capacity17→18; Medicine1 nagrody zajmuje slot17. Przy95383 enemy0,
+menu null,battle9,97/107HP. Items→Use Medicine1/slot8 leczy do107/107.
+
+Oryginalna skrzynia M062 typu4 wylosowała tym razem42/Defense+2,
+nie41/Defense+1. Odbiór do wolnego slot8; Items→Use, filtrowana lista
+pancerzy, B Jacket1/wiersz1: bonus obrony43→45, przedmiot zużyty.
+Przy125917 M062/story232,107/107HP,18 miejsc,menu null,move_lock0.
+Zmienna84=134217863 zawiera flagę skrzyni0x08000000. W całym4096B
+wyposażenia wobec E tylko offset14 43→45 oraz ammo426 10→13.
+
+/tmp/pe-ex-zoo-defense2-v1-verify.py wykonany PASS: normal/SAN exit0,
+cały JSON i VRAM zgodny z live, E/F i ich hashe bez zmian, brak błędów
+sanitizer/opcode/assertion. /tmp/pe-ex-zoo-defense2-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Brak zmian kodu gry, RAM, RNG i save’ów;
+nie jest to ukończony park ani porównanie PS1 obrazu/audio.
+
+Kontroler /tmp/pe-ex-zoo-nav-v1.py wysyła wyłącznie pad co8 VBlanków,
+zatrzymuje na scenie/wrogach/HP/menu lub limicie. Zastąpienie starego
+procesu zimnym replayem przy97861 potwierdziło identyczny cały JSON,
+VRAM i E/F (/tmp/pe-ex-zoo-nav-v1-replacement-proof.json); stary zamknięty0.
+Siatkę odczytano tylko do odczytu: /tmp/pe-ex-zoo-garden-floor-v1.json.
+Planer radius55 wymagał ręcznego obejścia jednego narożnika; dwie próby
+osiągnęły limit1500 kroków. Trzecia trasa doszła do kolizji skrzyni,
+Cross poprawnie odebrał przedmiot. To pomoc testowa, nie dowód pełnej
+samodzielnej nawigacji. Obecny proces: /tmp/pe-ex-zoo-nav-v1-live.
+Kompresja kolejnych identycznych padów10428→1337 ma identyczny stan
+inputu na wszystkich granicach zmian (/tmp/pe-ex-zoo-input-compaction-v1-proof.json).
+Powyższy replay używa pierwotnego inputu; seed compact zachowano osobno.
+
 ### EX — trzecia wygrana i przejście bramy z Zoo Key
 
 Wyjście M064→M063, marsz ku odnodze M062 uruchamia przy88623 walkę

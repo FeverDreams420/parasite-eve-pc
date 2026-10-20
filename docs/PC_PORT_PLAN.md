@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M188: nieudana próba, reload i Game Over
+
+Kontynuacja28694/87HP: pierwszy Triangle zbyt wcześnie przed ATB9000
+nie otwiera menu. Ponowienie28876 otwiera zwykłe PE/Heal2; po wykonaniu
+z Square i ruchu29572 Aya77HP,leczenie nie kompensuje kolejnych trafień.
+ATB7210 wymaga dalszego czasu. Up/run100 obniża do17HP,po czym zwykłe
+Cross kolejkują dwa strzały. Reload0→18 działa;30136 GameOver,
+combat.mode3,HP0,battle ammo16. Trwały runtime rekord wyposażenia426
+nadal18 w tym momencie śmierci; verifier rozróżnia go od battle ammo16.
+Żaden cel fazy drugiej ani zwycięstwo niepotwierdzone.
+
+Dwa świeże pełne odtworzenia30136 od cold F2 normal/SAN exit0,
+bez diagnostyki sanitizer/opcode. Pełny JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Cały ekwipunek/4096B rekordów i
+wszystkie zmienne sprawdzone; względem28694 tylko rekord426:0→18,
+zmienne bez zmian. Źródłowy i prywatne F2 identyczne bajtowo.
+Dowód /tmp/pe-ex-m188-gameover-F2-v1-{seed.json,checkpoint,proof/proof.json},
+runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save payload;
+ten sam pe-video-clock-v1. SDK/SDL nieinstrumentowane,brak oraclePS1,
+/tmp nietrwałe. Jest to dowód porażki,nie ukończenia bossa.
+Następna próba wymaga lepszego unikania ataków lub zwykłych ulepszeń/
+leczenia przed bossem,bez zmiany mechaniki w kodzie.
+
+
 ### EX M188: aktywna walka i Heal2, bez zwycięstwa
 
 Od25986 Right240,Up96 uruchamia26522 spotkanie.26822 cztery aktory:

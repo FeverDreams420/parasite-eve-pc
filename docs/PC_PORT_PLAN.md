@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M173: oryginalna drabina na górny pomost
+
+Od88880 kilka prób podejścia wróciło doM168 lub zatrzymało się na
+geometrii obok drabiny. Journal zachowuje wszystkie te zwykłe wejścia.
+Ponowny powrót doM173 przy92566 zachowuje335HP. Odczyt skryptów przez
+LLDB był tylko do odczytu,z detach; historyczny journal normalnej gry
+posłużył wyłącznie jako wskazówka położenia,nie dowód obecnej gałęziEX.
+
+Dolne podejście prowadzi wokół geometrii przez okoliceworldX3622/worldZ2633,
+następnie do drabiny przy3630/2926.106322 Aya około[3579,2529,2902].
+Up20normal,Left1normal,Cross i oczekiwanie uruchamiają oryginalny skrypt
+wspinaczki.107587 kończy na[4176,-105,2903],M173/a80271c8/story568,
+335/335HP,menuNULL,move_lock0,zero przeciwników. ZmianaY2529→-105
+jest skutkiem animacji/skryptu drabiny,nie teleportu testera.
+
+Dwa świeże cold107587 normal/SAN exit0 bez diagnostyki sanitizer/opcode;
+całe JSON i1MiB VRAM równe między profilami oraz zamrożonym live107587.
+Asercje obejmują dolną wysokość2529 i dokładną końcową pozycję pomostu.
+Cały ekwipunek i4096B rekordów równy wejściuM173/88880. Wszystkie zmienne
+względem coldE2:1:998→168,3:9428992→12566528,20:0→357,
+54:1838946→1838947,56:0→4,67:18655→2147502303,74:536→568,
+78:232→138;pozostałe bez zmian. Źródłowy i prywatneE2 niezmienione.
+Dowód,journal,checkpoint
+/tmp/pe-ex-m173-ladder-E2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ/RAM/save,ten sam pe-video-clock-v1.
+SDK/SDL nieinstrumentowane,brak niezależnego oraclePS1,/tmp tymczasowe.
+Potwierdzono wejście na pomost,nie ukończenie komory. Następny krok:
+obejście strefy zejścia i dalsza rozgrywkaM173.
+
+
 ### EX: pełne zdrowie, południowa trasa55=1 → M173/55=0
 
 Od wyniku84544 odebrano nagrody kolejnegoM167,w tym Cure-D14 do24.

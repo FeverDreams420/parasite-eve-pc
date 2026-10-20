@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M428 strzałami i nowa wygrana M350 bez leków
+
+Sesja78718 od L do punktu124764 powtórzyła oryginalne wejścia, potem
+M428: pojedyncze strzały Double Action. Atak sprowadził Ayę536→1HP;
+dwa Heal3 w jednej turze podniosły HP do561. Dalsze strzały wyłączyły
+bossa przy128172/999996. Przy129172 M350/story731, Aya466HP.
+/tmp/pe-m428-trained-gun-v2-proof/proof.json: cold L normal/SAN,
+pełny JSON/VRAM zgodny z live, exit0 bez raportów, L bez zmian.
+
+W M350 zachowane PE77956433 pozwoliło po krótkim ruchu odzyskać pełne
+PE, przy432HP. Liberate nie daje się zatwierdzić przy89779570/93061120;
+po powrocie do pełnego paska wybrano je, następnie ostatnią komendę
+strzału (samo Liberate kolejkuje7, pozostaje ósma akcja). Przy134491
+skrzydło179, ciało900 ponad próg miliona, Aya432HP. Przy135099 skrzydło
+wyłączone, Aya341HP. Heal3 i strzały: ciało816→732→564→396→228→60.
+Ostatnie Heal3 pomogło przeżyć; strzał z1276 poza zasięgiem1245 nie
+trafił. Podejście i odświeżenie celowania do585, strzał: przy140123
+boss999976/mode7, Aya148HP. Przy140723 przejście M349/story732,
+mode12/live0. Nie zużyto przedmiotów ani nie zmieniano balansu/kodu.
+/tmp/pe-m350-trained-victory-v2-proof/proof.json: cold L normal/SAN
+do140723, pełny JSON/VRAM identyczny z live, exit0 bez raportów, L bez zmian.
+Dalsze dialogi doprowadziły przy141819 do M429/E19,148HP, przed walką;
+ten późniejszy punkt jeszcze bez osobnego proof. E19 nadal niewygrane.
+
+### M350 po Liberate w M428: próba częściowa i zmiana taktyki
+
+Sesja50642 przy128499 miała349HP, PE23241513/93061120 i części3/2
+1000950/1001500. Heal2+Heal1 podniosły HP do439. Zwykły ruch po arenie
+odbudował PE do92681207 przy131567, ale HP spadło do133. Dwa Heal3
+przywróciły621HP kosztem PE do30330765. Strzały potem obniżyły części
+do1000822/1001080 przy133953, Aya286HP, PE41706263. Brak zwycięstwa.
+To nie jest dowód błędu gry: regeneracja i leczenie zostały zużyte,
+zanim osłabiono przeciwnika. /tmp/pe-m350-trained-partial-v1-proof/
+proof.json: cold L normal/SAN do133953, pełny JSON/VRAM zgodny z
+pe-m350-trained-partial-v1-live, oba exit0 bez raportów. Bez zwycięstwa.
+
+Sesja50642 zakończona quit0, bez zmiany źródłowego L. Nowa sesja78718,
+/tmp/pe-m428-trained-gun-v2-live.py, odtwarza zwykłe wejścia od L do
+124764 przed wyborem Liberate w M428. Następna taktyka: pierwsza forma
+strzałami i leczeniem, aby zachować PE na Liberate przeciw dwóm częściom
+M350. Bez edycji savów, pamięci, kodu ani balansu. Pełny finał nadal otwarty.
+
 ### Przygotowana gałąź: M427, film40 i zwycięstwo M428 przez Liberate
 
 Identyfikatory sprawdzono dekoderem nazwy sceny: a80822c8=M425,

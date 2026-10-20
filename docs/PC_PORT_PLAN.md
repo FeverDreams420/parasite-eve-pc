@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX: Continue C2 → pełny ekwipunek → Elevator Key, story500
+
+Na niezmienionym kandydacie pe-video-clock-v1 zimny Continue C2 od12920
+odtworzył M154/story496/283HP. Pierwsze przeszukanie komputera zakończyło
+się oryginalnym dialogiem4 o pełnym ekwipunku. Przez Items→Discard→Yes
+usunięto drugi Cure-M ze slot19 (16684:0; slot18 zachowany). Ponowna
+interakcja dała Junk20 do19 przy17038. Junk usunięto tym samym menu
+(23600:0), następnie przeszukano drugie biurko:27080 klucz218 w19,
+story500. Przy29780 menuNULL/lock0,283/283HP i zero przeciwników.
+
+Dwa świeże cold replaye normal/SAN zakończyły się exit0 bez diagnostyki
+sanitizerów/opcode; całe JSON i1MiB VRAM są równe między profilami oraz
+zamrożonym live29780. Sprawdzono cały ekwipunek, wszystkie rekordy sprzętu
+(bez zmian) i wszystkie zmienne skryptowe: względem coldC2 jedynie
+65:801243119→1874984943,67:18575→18655,74:496→500; slot19:16→218.
+Źródłowe C2 oraz prywatne kopie replayów pozostały bajtowo niezmienione,
+SHA256821ecb80671106d258e14335b4346782cd5a58c99adf4e8864c25e1956b1f7cf.
+Dowód /tmp/pe-ex-hospital-key-C2-v1-proof/proof.json, journal i checkpoint
+/tmp/pe-ex-hospital-key-C2-v1-{seed.json,checkpoint}. Wyłącznie zwykły
+input pada; brak zmian źródeł gry/PsyZ, RAM lub payloadów zapisów.
+SDK/SDL pozostają nieinstrumentowane; brak niezależnego oracle PS1.
+Artefakty /tmp są tymczasowe i nie zastępują trwałych testów CTest.
+
+
 
 ### EX — telefon M154, autentyczny Save/Continue C2
 

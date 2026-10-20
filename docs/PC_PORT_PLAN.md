@@ -2,6 +2,18 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E19: aktualizacja SpinRay zgodna z oryginalnym MIPS
+
+/tmp/pe-e19-spin-update-v1-proof.json: 1008 przypadków trybu1 oryginalnego
+callbacku80196748, bez hooków. Porównano zwrot i wszystkie16 bajtów efektu
+z rzeczywistym obiektem e19 kandydata v3 w normal/SAN. Stany0/1/2 oraz
+nieobsługiwane, granice timerów15/16 i47/48, przepełnienia signed16 oraz
+różne kąty/przyrosty dają identyczny wynik. Helper, skrypt budowy, manifest,
+moduł M429 i źródło mają SHA256 w proof; dane natywne zapisano osobno.
+Nie zmieniono źródeł gry. Nie obejmuje trybu2/renderingu, harmonogramu
+całego emitera ani zwycięstwa E19. Sesja56313 pozostaje żywa, bez dalszych
+inputów po143123/113HP; jej późniejszy stan nadal bez cold proof.
+
 ### E19: potwierdzone okno Heal3 i oracle licznika emitera homing
 
 Sesja56313 odtworzyła left_up do142547 i przez oryginalne menu wykonała

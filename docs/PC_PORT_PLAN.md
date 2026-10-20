@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — odzyskanie Locker Key2 po odmowie przy pełnym ekwipunku
+
+Wstępne rozmowy NYPD zakończyły się19 bez klucza, bo21 slotów pełne.
+Przez oryginalne Items wybrano Junk17 (prawa kolumna,row8)→Discard.
+Pierwsze potwierdzenie domyślnegoNo nic nie usuwa; ponowneDiscard,
+Left/Yes usuwa tylkoJunk17. Podejście do NPC typu3[-99,-506] iCross
+przy123091 uruchamia panel55, LockerKey2/item205 dopisany do17.
+Zamknięcie panelu i dialog20: przy123751 M099/story384,HP181/181,
+menu null,enemy0. Flaga46 wzrasta393408→401600 (0x2000 odbioru).
+Pozostały ekwipunek i cały4096B bufor rekordów bez zmian wobec wejścia NYPD.
+To dowód ponownego legalnego odbioru po zwolnieniu miejsca, bez zmian RAM.
+
+/tmp/pe-ex-lockerkey2-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live; K bajtowo/hash bez zmian. W całym
+odcinku od zimnego K delty slotów16:20→22,17:20→205; wszystkie inne
+pola ekwipunku identyczne. Delty wszystkich zmiennych w proof.json.
+Artefakty /tmp/pe-ex-lockerkey2-K-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji, brak nowego oracle PS1 obrazu/audio; ta
+powtórka używa wcześniejszego inputu podczas FMV, osobny test zerowego
+inputu opisano wyżej. Produkcyjny kod bez zmian. Następne: schody do
+M100 i dalsze wydarzenia NYPD/Day3.
+
+
 ### EX — powtórka bez inputu w przedziałach FMV12/13
 
 Osobny seed powtarza cały zimnyK→Museum→NYPD384, usuwając Cross

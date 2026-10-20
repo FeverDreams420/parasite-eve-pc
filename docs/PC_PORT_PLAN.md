@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — odgałęzienie M303, ponowne spotkanie M310 i odporność na Slow
+
+Po wygranej M309 przejście na południe prowadzi do M310 (map selection22),
+a wschodnia odnoga do M303 (selection23). Read-only LLDB odczytał skrypty
+M309 i M303: M303 ma wyłącznie trigger powrotny, nie dalsze wyjście.
+Oględziny obrazu i ruch do końca korytarza potwierdziły ślepą odnogę.
+Powrót do M310 przy98215 uruchamia nowe spotkanie (selection21), type4
+106HP/def49 i type3 98HP/def45. Nie ukończono piętra ani drugiej walki.
+
+Aya dostała30 obrażeń i Darkness. Normalne menu pozwoliło wybrać Slow1
+na type4 jako pierwszą akcję. Próba Heal1 jako drugiej PE pozostawiła
+wyszarzoną listę, queue_count1/remaining_actions1 bez dodania polecenia.
+Nie deklaruje się testu wszystkich zasad łączenia PE. Anulowano menu
+i dodano zwykły strzał. PE spadło, amunicja10→9, Slow bit0 celu nieustawiony.
+Oryginalny attack.c/PE_SPELL_SLOW sprawdza (statusFlags2>>8)&3:
+wartość2 nakłada efekt zawsze,0 przy coin flip,1/3 nie nakładają.
+Cel ma0x584591, para=1, więc brak efektu zgadza się z tą gałęzią;
+nie ma podstaw do poprawiania kodu Slow na podstawie tej obserwacji.
+Nie wykonano niezależnego PS1 oracle tego starcia.
+
+Dalsza próba manewru zakończyła się porażką: przy100165 M310/story164,
+HP0,mode3,dwóch żywych przeciwników. Kontroler jawnie quit/exit0.
+/tmp/pe-ex-chrysler-slow-v1-verify.py wykonany PASS: zimne normal/SAN
+exit0, cały końcowy JSON i VRAM identyczny z live, prywatny B bajtowo
+identyczny ze źródłem/historycznym hashem, brak sanitizer/opcode/assertion.
+Pośrednie menu/PE/para odporności potwierdzone w live states.jsonl;
+zimne porównanie dotyczy końca przebiegu, nie każdej klatki pośredniej.
+Artefakty: /tmp/pe-ex-chrysler-slow-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji, kod gry/PsyZ bez zmian. Druga walka,
+dalsze odnogi, zapis ulepszeń i pełny Chrysler nadal otwarte.
+
 ### EX — wygrana w M309 po przygotowaniu, nagrody i Slow1
 
 Z żywego checkpointu BP88186 zamknięto menu i weszło do M309 zwykłym

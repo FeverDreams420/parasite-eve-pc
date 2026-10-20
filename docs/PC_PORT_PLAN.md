@@ -46,6 +46,20 @@ proces wyłącznie z zapisanym J, normal/SAN do20000, rzeczywiste Continue
 do M340/story632, HP550 i oba Medicine4 oraz Medicine3 zachowane.
 Pełny JSON/VRAM normal/SAN identyczny, exit0 bez raportów, J bez zmian.
 
+W tej samej gałęzi oryginalne menu BP: trzy zwiększenia Active Time
+44→47, koszt300, zostało17BP. Pierwsze próby Right nic nie zmieniły;
+oryginalny dialog zwiększa wartość przy Down. Zatwierdzono przy49879,
+wyjście do głównego menu przy50067. Odczyt SBValue bez zapisów/wywołań:
+/tmp/pe-training-BP-v1.json, EXP213090, BP17, surowe stats.levels[5]=490.
+Zapisano nowy K, osobny od wcześniejszych zapisów finału:
+/tmp/pe-m371-BP-save-K-v1-source/BASLUS-006620000000K,8192B,
+SHA256 6d4186a65ef5ef3528079eb8946bbeada9883bda790a63b087b7c0805961aa4d.
+/tmp/pe-m371-BP-save-K-v1-proof/proof.json: cold I do51833,
+pełny JSON/VRAM live/normal/SAN i bajty K zgodne. Osobny cold Continue
+wyłącznie z K: /tmp/pe-m371-BP-K-continue-v1-proof/proof.json do20000,
+M340/story632, HP550, pełny JSON/VRAM normal/SAN zgodny. Wszystkie
+procesy exit0 bez raportów. Broń i Medicine4/Medicine3 zachowane.
+
 ### E20/M430: komplet oryginalnego modułu w natywnym buildzie
 
 Włączono wszystkie trzy istniejące pliki SceneE20_CommandEffectSlot,

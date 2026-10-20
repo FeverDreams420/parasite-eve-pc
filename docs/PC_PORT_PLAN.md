@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Próba M273 z przygotowanego L: porażka, bez zaliczenia finału
+
+Sesja59296 przeszła z L do M273. Po dialogach pierwsze strzały,
+następnie Cure-M+Liberate w jednej turze: przy40551 części5/6/7
+mają1000350/1001154/1001587HP, Aya523HP. Medicine3/slot4 podniosło
+336→516HP, późniejsze Heal3 216→496HP. Oddalenie dało cele poza
+zasięgiem2064; ponowne podejście doprowadziło do kolejnych trafień
+i blokady menu w trakcie ataku Eve. Przy43925 Aya0HP/mode3, części
+1000173/1001154/1001587: brak zwycięstwa.
+/tmp/pe-m273-trained-death-v1-proof/proof.json: zimny L normal/SAN,
+pełny JSON/VRAM zgodny z live, exit0 bez raportów. Pozostały trzy
+Medicine3 i dwa Medicine4. Nie zmieniano balansu ani źródeł gry.
+Wrapper przerwał po wykryciu śmierci (RuntimeError player died);
+proces gry zakończył się po zamknięciu wejścia, nie zgłoszono crasha gry.
+Ta próba nie wykazuje jeszcze błędu portu; następna wymaga unikania
+ataków i używania menu, gdy Aya może przyjmować komendy.
+
 ### Nowy autentyczny zapis L przed finałem: zapis i Continue potwierdzone
 
 Oryginalna scena M271/story716, dwa potwierdzenia zapisu, prywatny slot11:

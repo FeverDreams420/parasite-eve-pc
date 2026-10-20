@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — mapa Nowego Jorku i wejście do Chrysler Building
+
+Po sekwencji Bena zwykły input prowadzi z M043 do sali odpraw M047
+(potwierdzona oględzinami obrazu) i z powrotem, następnie przez M046
+recepcję do mapy Nowego Jorku. Pierwsze potwierdzenie domyślnego celu
+wróciło do komisariatu; ponowne wyjście i dwa Right wybrały Chrysler.
+Cross uruchamia zbliżenie/mapowy opis Chrysler Building (strona10),
+kolejny Cross prowadzi do oryginalnego wejścia M290 (0xa8049048).
+Przy81030 story164,72/72HP,menu null,move_lock0. Obraz pokazuje Ayę
+w holu Chryslera. Nie zmieniano kodu gry, save'a ani pamięci.
+
+/tmp/pe-ex-chrysler-entry-v1-verify.py: wykonany PASS przed dokumentacją.
+Niezależne zimne normal/SAN exit0, pełny JSON i VRAM identyczne z live;
+prywatny B bajtowo zgodny ze źródłem, źródłowy hash zgodny z wcześniejszym
+dowodem Bena. Brak sanitizer/opcode/assertion. Zachowany Offense+2,
+Mod Permit zużyty, M8000 rekord13 tylko byte20 3→4 względem receipt.
+Artefakty: /tmp/pe-ex-chrysler-entry-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. To wyłącznie wejście do Chryslera w EX;
+piętra, ich generowanie, klucze, bossowie i finał Chryslera nadal otwarte,
+podobnie pełny Day2/EX oraz porównanie obrazu/audio PS1.
+
 ### EX — korytarz komisariatu i sekwencja z Benem
 
 Od52304 oryginalne przejścia M051→M043→M042→M041 i powrót

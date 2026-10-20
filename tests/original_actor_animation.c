@@ -17751,6 +17751,76 @@ int main(int argc, char **argv)
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M187 loader: real USA assets, complete orbit descriptor and per-entry reset passed twice");return 0;
     }
+    if(argc==2 && !strcmp(argv[1],"--m418-cycles-draw")){
+        const char *path=getenv("PE_TEST_DISC2");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!SDL_Init(SDL_INIT_EVENTS)||!pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        /* Pm_InitScene is skipped: each cycle below installs its own guarded bank.
+         * Still load the original shared and room effect TIMs before drawing. */
+        if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0418i"))||Scene_StreamTexturePage())return 1;DrawSync(0);
+        g_GameStateFlags|=0x80;g_GameState.flags|=8;
+        int texture_status=1;
+        for(unsigned attempt=0;attempt<10 && texture_status>0;attempt++)
+            texture_status=Asset_LoadTimTextures(1);
+        if(texture_status)return 1;
+        DrawSync(0);
+        static RenderGpuTag ordering[4096];static u16 pixels[320*224];RECT area={0,0,320,224};DRAWENV draw;SetDefDrawEnv(&draw,0,0,320,224);draw.isbg=0;draw.dtd=0;PutDrawEnv(&draw);
+        static struct {_Alignas(void *) u8 data[1048576];u8 guard[32];} packets;
+        GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};int projection=256;
+        g_GeomScroll.words.viewMatrix=&view;g_GeomScroll.words.projectionDistance=&projection;
+        g_GameStateFlags=0x80;g_GameState.flags&=~8u;g_GameState.tim_load_state=0;g_RoomFloorY->y=0;
+        PolygonVertex polygon[]={{0,-4000,0,-4000},{0,4000,0,-4000},{0,4000,0,4000},{0,-4000,0,4000}};g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;
+        FieldFx_InitTexturePageTable();Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,112);
+        for(unsigned program=0;program<4;program++)for(unsigned variant=0;variant<2;variant++){
+            SceneE08_ResetModule();struct {PmPrimarySlot slots[11];u8 guard[32];} bank={0};memset(bank.guard,0xa5,32);
+            FieldActor actor={0},player={0};FieldActorState state={0};Combatant player_state={0};u8 action=1;
+            RenderMatrix matrices[64]={0};actor.render_object.matrices=matrices;actor.state=&state;state.action_state=&action;
+            actor.type_id=6;actor.sub_id=0;state.control10.command_value=120;state.core_flags=0x01000000;
+            actor.mode=11;actor.action=64;actor.pos_y=-200*65536;actor.pos_z=1024*65536;
+            RenderMatrix player_matrix[64]={0};player.render_object.matrices=player_matrix;
+            player.state=(void *)&player_state;player.pos_z=3000*65536;player.pos_x=-800*65536;
+            player.render_object.hit_cylinder.radius=63;for(unsigned j=0;j<64;j++){for(unsigned k=0;k<3;k++)player_matrix[j].rotation[k][k]=4096;player_matrix[j].translation[0]=-800+(j%7)*8;player_matrix[j].translation[1]=-200-(int)j*4;player_matrix[j].translation[2]=3000+(j%5)*8;}
+            RenderAnimationDataHeader player_animation={.frame_count=10};for(unsigned j=0;j<48;j++)g_GameState.bank_rows[0][j]=&player_animation;
+            player_state.curHP=100;player_state.actionMode12=0;g_ActiveActor=&player_state;g_PlayerEntity=&player;g_FieldActorListHead=&actor;
+            for(unsigned j=0;j<64;j++){for(unsigned k=0;k<3;k++)matrices[j].rotation[k][k]=4096;matrices[j].translation[1]=-200;matrices[j].translation[2]=1024;}
+            g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(variant+1);
+            int handle=Scene_LoadRoomAssets(46+program,&actor);if(handle!=0)return 1;
+            if(program==3 && Pm_SendCmd(handle,0,1,variant?256:128,0,0))return 1;
+            unsigned frame=0,seen=0,drawn=0,pixel_frames=0;
+            for(;frame<900;frame++){
+                if(program==2 && frame==10 && Pm_SendCmd(handle,0,1,variant,0,0))return 1;
+                ClearOTagR((u_int *)ordering,4096);uintptr_t terminal=ordering[0].address;
+                memset(packets.guard,0xa5,32);g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;
+                D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.data;
+                if(Pm_Start(handle)||Pm_Exec(handle))return 1;
+                if(g_DrawPacketOffset<0||g_DrawPacketOffset>sizeof(packets.data))return 1;drawn+=g_DrawPacketOffset!=0;
+                uintptr_t link=(uintptr_t)&ordering[4095];unsigned links=0;
+                while(link && link!=0xffffff){if(link==terminal){RenderGpuTag *end=(void *)link;if(end->address!=0xffffff||end->length!=4)return 1;break;}int is_ot=link>=(uintptr_t)ordering&&link+sizeof(RenderGpuTag)<=(uintptr_t)ordering+sizeof(ordering)&&(link-(uintptr_t)ordering)%sizeof(RenderGpuTag)==0;
+                    int is_packet=link>=(uintptr_t)packets.data&&link+sizeof(RenderGpuTag)<=(uintptr_t)packets.data+g_DrawPacketOffset&&link%_Alignof(RenderGpuTag)==0;
+                    if((!is_ot&&!is_packet)||++links>4097u+(unsigned)g_DrawPacketOffset/sizeof(RenderGpuTag))return 1;link=((RenderGpuTag *)link)->address;}
+                ClearImage(&area,0,0,0);DrawOTag((u_int *)&ordering[4095]);DrawSync(0);
+                if(frame==12||frame==24||frame==36||frame==48||frame==60||frame==80||frame==120||frame==240||frame==500||frame==800){
+                    StoreImage(&area,pixels);DrawSync(0);unsigned visible=0;uint64_t hash=UINT64_C(14695981039346656037);
+                    for(unsigned j=0;j<320*224;j++){visible+=(pixels[j]&0x7fff)!=0;hash=(hash^(pixels[j]&255))*UINT64_C(1099511628211);hash=(hash^(pixels[j]>>8))*UINT64_C(1099511628211);}pixel_frames+=visible!=0;
+                    fprintf(stderr,"GPU program%u variant%u frame%u visible%u hash%016llx\n",program,variant,frame,visible,(unsigned long long)hash);
+
+                }
+                for(unsigned j=0;j<32;j++)if(packets.guard[j]!=0xa5)return 1;
+                for(unsigned i=0;i<64;i++)if(bank.slots[handle].effect.slots[i].flag==1)seen|=1u<<bank.slots[handle].effect.slots[i].handler_id;
+                if(g_AkaoMessageQueueCount<0||g_AkaoMessageQueueCount>16)return 1;g_AkaoMessageQueueCount=0;
+                for(unsigned i=0;i<32;i++)if(bank.guard[i]!=0xa5)return 1;
+                if(!bank.slots[handle].header.state)break;
+            }
+            fprintf(stderr,"E08 cycle program%u variant%u frame%u state%u seen%x action%u drawn%u\n",program,variant,frame,bank.slots[handle].header.state,seen,action,drawn);fflush(stderr);
+            unsigned expected_seen=program==0?7u:program==1?15u:program==2?(variant?0x37du:0x201u):0x3fu;
+            if(seen!=expected_seen || action!=4 || !drawn || !pixel_frames)return 1;
+            if(program==2 && variant && !(player_state.stateFlags&0x4000)){fprintf(stderr,"E08 player flag missing: %08x\n",player_state.stateFlags);return 1;}
+            if(bank.slots[handle].header.state)return 1;
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original E08 rendering: eight real-asset cycles, GPU chains, packet guards, nonblack VRAM and expiry passed");return 0;
+    }
     if(argc==2 && !strcmp(argv[1],"--m418-cycles-update")){
         const char *path=getenv("PE_TEST_DISC2");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!SDL_Init(SDL_INIT_EVENTS)||!pe_disc_open(&disc,path))return 1;

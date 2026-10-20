@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E08: headless GPU, pełne cykle rysowania i rzeczywiste tekstury
+
+Dodano original-m418-chrysler-draw (--m418-cycles-draw) w istniejącym
+pliku testowym. Cztery oryginalne programy, po dwa warianty, wykonują
+Pm_Start/Pm_Exec, budują rzeczywiste pakiety i renderują DrawOTag do VRAM.
+Test sprawdza powiązania OT/pakietów, zewnętrzny terminator PsyZ, granice
+bufora i banku, widoczny obraz dla każdego wariantu, maski slotów,
+wygaśnięcie i flagę gracza. Kontrolowane macierze64 kości obu aktorów,
+podłoga i minimalna animacja pozostają fixture; nie jest to kampania.
+
+Pierwsze próby ujawniły braki testera: jedna macierz gracza zamiast64,
+nieuwzględniony zewnętrzny terminator OT i pominięty Asset_LoadTimTextures.
+Loaded_scene_assets/archive są dwoma widokami tego samego wskaźnika;
+Asset_SearchByKeyType zwraca prawidłowy tryb0, lecz bez loadera atlas
+(832,256) i palety są puste. Boot_LoadOverlayTables nie zastępuje tego
+etapu. Dodano wywołanie istniejącego loadera, bez zmian kodu gry.
+Zachowano nieudane próby /tmp/pe-e08-draw-probe-v1..v8 i logi;
+v9 daje obrazy pierścieni, kul i smug, obejrzane w zestawieniu
+/tmp/pe-e08-draw-v9-preview.png.
+
+Świeżo skompilowana fixture normal/SAN z aktualnym źródłem, podlinkowana
+z niezmienionymi obiektami kandydata updates-v1: wszystkie55 sygnatur
+VRAM i osiem cykli identyczne. Core oraz loader/update/draw przechodzą
+w obu profilach; 11/11 CTestów w każdym profilu. Pozostałe niezmienione
+binarki assetów pochodzą z build. PsyZ/SDL nadal nieinstrumentowane.
+Dowody /tmp/pe-e08-draw-permanent-v1-{proof.json,build-commands.json},
+logi *normal*, *san* i *ctest*. Porównanie core używa exit0; jego
+stdout/stderr przeplata timestampowane ostrzeżenie SDK, więc nie są
+porównywane bajtowo. Binarna gra użytkownika pozostaje bez zmian.
+
+To dowód kontrolowanych cykli renderera, nie zgodności pikseli z PS1,
+wszystkich gałęzi E08, audio ani przejścia M418. CentreGlow/OrbitParticles
+z trzeciej listy nadal niepokryte tymi skryptami. E19 niewygrane;
+pełny zakres portu pozostaje otwarty.
+
 ### E08: osiem pełnych cykli aktualizacji i naprawa arytmetyki/flag gracza
 
 Permanentny original-m418-chrysler-update (--m418-cycles-update) ładuje

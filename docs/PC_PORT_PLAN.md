@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Warehouse M263: spotkanie300HP wygrane
+
+Od26244 M262 zwykłe Up/run200,Up200normal i dalszeUp/run112
+prowadzą28396/28596 do M263/a80461c8. Cross przed drzwiami nie było
+potrzebne; przejście następuje po dojściu do strefy. Up/run80 uruchamia
+28676 spotkanie,28876 jeden7:31/300HP,Aya320/437HP,ammo9.
+Pierwszy Cross przed ATB9000 nie otwiera celu. Przy29400 reticle1638;
+anulowanie iUpRight/run80 podchodzą bliżej,koszt75HP. Dwa strzały
+Double Action dają29888 cel102HP,Aya245,ammo7. Następna para pudłuje.
+Ponowny cel30512 na946;dwa strzały kończą30872/31072 EXP/selection20,
+combat.mode2,zero wrogów,Aya245/437HP,ammo3. Nagrody i klucz nieodebrane.
+
+Dwa świeże pełne cold31072 normal/SAN pe-control-aim-v1 exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Verifier sprawdza300→102HP,
+reticle946,wynik,całe inventory/4096B rekordów i wszystkie zmienne.
+Względem26244 tylko rekord426:9→3,zmienne1:260→262,11:74→202,
+78:159→28;reszta bez zmian. Źródłowy/prywatne G2 identyczne bajtowo.
+Dowód /tmp/pe-ex-warehouse-m263-win-G2-v1-{seed.json,checkpoint,
+proof/proof.json},runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/
+save payload;SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp nietrwałe.
+Następne:nagrody,zwolnienie miejsca zwykłym użyciem przedmiotu i klucz220.
+
+
 ### EX Warehouse: poprawione oznaczenie M260 i przejście M262
 
 Poprzedni wpis błędnie nazywał scenę a8046048 M266;to M260,co poprawiono

@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M159 wygrane i powrót do NYPD/story534
+
+Od zweryfikowanego76852 zwykłe zamknięcie dialog137 prowadzi77212 do
+M159/a80254c8,192→164HP, dwa wpisy1:31/2:31 po212HP. Cel1:31 jest
+w dystansie758 przy zasięgu1245. Dwie kule zmniejszają212→24HP,
+77796 Aya161HP,magazynek1. Trzecia kula z dystansu97 i Square do
+zakończenia reszty akcji prowadzą78280/78520 do wynikuEXP/selection20,
+mode2,zero żywych przeciwników,161/320HP,ammo0. Wpis2:31 znika razem
+z1:31; nie ostrzeliwano go oddzielnie.
+
+Świeże cold78520 normal/SAN:exit0 bez diagnostyki sanitizer/opcode,
+całe JSON i1MiB VRAM równe między profilami oraz zamrożonym live78520.
+Cały ekwipunek i wszystkie zmienne względem76852:tylko rekord bajt426
+3→0 i zmienna1:157→158;reszta bez zmian. Dowód i journal
+/tmp/pe-ex-m159-win-C2-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Oryginalne Obtain All Items odbiera Cure-M16 do19. 79720 M160/a8026048,
+story520, spotkanie z Maedą i Danielem. Dialogi prowadzą82720 do
+samochodu M025/a80032c8, następnie87520/87820 doNYPD M046/a8004348,
+story534,161/320HP,menuNULL,zero przeciwników. move_lock2 nie jest
+w tym przypadku dowodem blokady; ruch będzie sprawdzany dalej.
+
+Świeże cold87820 normal/SAN:exit0, całe JSON i1MiB VRAM równe między
+profilami oraz zamrożonym live87820. Cały ekwipunek/rekordy i wszystkie
+zmienne względem76852 sprawdzone:slot19:0→16,bajt426:3→0,
+zmienne1:157→35,74:512→534;reszta bez zmian. Asercje obejmują HP24
+przeciwnika po dwóch kulach, zwycięstwo oraz M160 i M025. Dowód
+/tmp/pe-ex-hospital-nypd-C2-v1-{seed.json,checkpoint,proof/proof.json}.
+Źródłowy C2 i prywatne kopie obu zestawów bajtowo niezmienione.
+Wyłącznie input pada, bez zmian źródeł gry/PsyZ/RAM/save, ten sam
+pe-video-clock-v1. SDK/SDL nieinstrumentowane, brak niezależnego oracle
+PS1, artefakty /tmp tymczasowe. Następny krok: telefon i trwały zapis
+nowego punktu EX oraz przejście do Dnia5.
+
+
 ### EX: G23, FMV16/story508 i rusztowanie → FMV18/M158/story512
 
 Dalsze potwierdzenia nagród odbierają G23 do pustego slot18 jako dynamiczny

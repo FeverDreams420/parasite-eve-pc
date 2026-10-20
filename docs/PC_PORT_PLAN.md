@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Medicine2 po M100 i powrót do holu NYPD
+
+Oryginalne Items→slot8/Medicine2→Use: HP118→181/181,slot8 wyzerowany,
+przy132863 menu zamknięte. M100→M099 działa: dojście[420,-2385] iRight80
+wczytuje hol. Nie udało się uzyskać zapisu: wcześniejsze współrzędne telefonu
+z innej trasy prowadziły do biurek/wyjścia. Po wyjściu na mapę i ponownym
+wyborze NYPD przy138674 M099/story392,HP181/181,menu null,enemy0,battle9.
+Nie utworzono nowego save'a. K nadal ostatnim potwierdzonym zapisem.
+
+Read-only LLDB/detach: /tmp/pe-ex-m099-floor-K-v1.json (67 trójkątów,
+skosy) i /tmp/pe-ex-m099-phone-K-v1 (skrypty aktywnych aktorów). Planer
+nie znalazł ścieżki do[590,-780] ani[600,-900]; punkty nie leżą w bezpiecznej
+części obecnego mesh. Aktor4 opisuje region schodów i wyjście na mapę,
+nie odnaleziono w odczycie obsługi telefonu. To korekta trasy testera,
+nie dowód całkowitego braku zapisu w NYPD ani zmiana gry.
+
+/tmp/pe-ex-m100-heal-return-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, K bajtowo/hash bez zmian. Od zimnego K
+slot8:7→0,16:20→22,17:20→205; wszystkie inne pola identyczne poza
+ammo426:9→5. Artefakty /tmp/pe-ex-m100-heal-return-K-v1-{seed.json,
+checkpoint,proof/proof.json}. SDK/SDL bez instrumentacji, brak nowego
+oracle PS1. Kod produkcyjny,RAM/RNG,payloady save bez zmian. Następne:
+dalsza eksploracja M100 i właściwy punkt zapisu; pełny port nadal otwarty.
+
+
 ### EX — schody NYPD i zwycięstwo nad trzema przeciwnikami M100
 
 Po kluczu tester przypadkowo wyszedł na mapę (etap392), wrócił zwykłym

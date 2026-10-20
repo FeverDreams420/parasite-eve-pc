@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: pełne zdrowie, południowa trasa55=1 → M173/55=0
+
+Od wyniku84544 odebrano nagrody kolejnegoM167,w tym Cure-D14 do24.
+Cztery wykonane poloweHeal2 zwiększają111→171→231→291→335HP z limitem.
+87488 swobodneM167;południowe wyjście87848 dajeM168/a8026448,
+licznik55:2→1,56 pozostaje4,335HP. Down w tej kamerze zmniejsza worldX.
+Przejście pełnego korytarza nie uruchamia nowego spotkania. Przeciwległy
+koniec88680/88880 otwieraM173/a80271c8 i zmniejsza55:1→0. Aya335/335,
+menuNULL,move_lock0,zero wrogów,pozycja[4267,2038] w worldX/Z.
+To właściwa odnoga dalszej kampanii,nie powrótM166 do świątyni.
+
+Dwa świeże cold88880 normal/SAN exit0 bez diagnostyki sanitizer/opcode;
+całe JSON i1MiB VRAM równe między profilami oraz zamrożonym live88880.
+Asercje obejmują pełne zdrowie przed wyjściem,55=1 przy wejściuM168
+oraz zero przeciwników/335HP doM173. Cały ekwipunek/4096B rekordów
+oraz wszystkie zmienne względem coldE2:slot23:0→203,slot24:0→14,
+bajt426:0→10,zmienne1:998→168,3:9428992→12566528,20:0→357,
+54:1838946→1838947,56:0→4,67:18655→2147502303,74:536→568,
+78:232→181;55 wraca do źródłowego0,reszta bez zmian.
+Źródłowy i prywatneE2 niezmienione. Dowód,journal,checkpoint
+/tmp/pe-ex-sewer-m173-entry-E2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ/RAM/save,ten sam pe-video-clock-v1.
+SDK/SDL nieinstrumentowane,brak niezależnego oraclePS1,/tmp tymczasowe.
+Potwierdzono wejścieM173,nie ukończenie tej komory. Następny krok:
+drabina,pomost i dalsza rozgrywkaM173 w tej gałęzi EX.
+
+
 ### EX: pełny korytarz M168 → M167/licznik2, czterech wrogów pokonanych
 
 Po nagrodach M168 posiadany Cure-D jest w24. Dwa wykonane poloweHeal2

@@ -3,6 +3,30 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — zimny Continue L z telefonu NYPD
+
+Świeże procesy normal/SAN, wyłącznie autentyczny L na prywatnej karcie1.
+Zwykły Continue→karta1→pozycja12/L→File loaded→OK. Przy12800
+M112/a8021148,story400,HP80/189,menu null,enemy0,battle0.
+Cały ekwipunek (50 slotów,4096B rekordów,wyposażone pozycje,capacity21)
+i wszystkie zmienne skryptowe identyczne ze stanem File saved/215089.
+
+/tmp/pe-ex-nypd-L-loaded-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON oraz VRAM między profilami identyczne. L bajtowo niezmieniony,
+SHA256 d50d65295c8b0571f4c1b3904bf41a6561fc23217dcdc402abaf2a97dfd42dbe.
+Artefakty /tmp/pe-ex-nypd-L-loaded-v1-{seed.json,proof/proof.json}.
+Nowa sesja /tmp/pe-ex-nypd-L-nav-v1-live uruchomiona z tego samego zimnego
+prefixu; startup-proof.json PASS pełny JSON/VRAM zgodny z cold normal/SAN.
+Poprzednia sesja od K zamknięta quit/native exit0, K i źródłowe dane bez zmian.
+
+SDK/SDL bez instrumentacji, brak niezależnego oracle obrazu/audio PS1.
+Bez nowych plików repo/kodu produkcyjnego ani edycji RAM/RNG/save.
+L jest teraz potwierdzonym punktem trwałej kontynuacji. Następne: dalszy
+NYPD, z uwzględnieniem niskiego HP i leczenia przez oryginalne mechaniki.
+Pełny port pozostaje nieukończony.
+
+
+
 ### EX — górny NYPD, walka M115 i prawdziwy zapis L
 
 Z M100 po scenie Bena powrót do M107/111 nie prowadzi dalej; północne

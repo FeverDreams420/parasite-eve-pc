@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — trzecia wygrana i przejście bramy z Zoo Key
+
+Wyjście M064→M063, marsz ku odnodze M062 uruchamia przy88623 walkę
+z dwoma3:31/3:0 po79HP/def25. Pierwsza tura Double Action rozdziela
+trafienia po65 (obaj14HP), zużywając ostatnie dwa naboje. Kolejna tura
+przeładowuje M8000 i pokonuje oba cele. HP101→97; po zamknięciu EXP/
+TakeAll/End przy90519 brak menu/wrogów, battle9. Plecak pełny; nie
+potwierdza się odbioru wszystkich nagród tego starcia.
+
+Odnoga około[−800,2900] prowadzi do M062/a8006148. Podejście do bramy
+[2232,−2230] z kluczem202 uruchamia oryginalne otwarcie, zmienna54
+98→524386 (bit0x80000). Dalszy zwykły Right280 rzeczywiście przechodzi
+za bramę: przy93007,[1782,0,−1694],97/101HP,story232,move_lock0,
+menu null,battle9,enemy0. Klucz slot4 i Junk slot16 zachowane.
+W całym4096B wyposażenia jedyna różnica wobec E to ammo/offset426,
+10→16 po strzałach i przeładowaniu; żadnych zmian statystyk broni/pancerza.
+
+/tmp/pe-ex-zoo-gate-E-v1-verify.py wykonany PASS: zimne normal/SAN
+exit0, pełny JSON i VRAM identyczne z live, E i F bajtowo bez zmian
+względem wcześniejszych dowodów/hashów, brak sanitizer/opcode/assertion.
+Artefakty /tmp/pe-ex-zoo-gate-E-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Bez zmian kodu, RAM, RNG lub save’ów.
+Dowód obejmuje użycie klucza i przejście, nie cały park/Day2/EX ani
+zgodność obrazu/audio PS1. Następne: dalsza eksploracja za bramą.
+
 ### EX — Medicine1, otwarcie budynku i Zoo Key w M064
 
 Po zapisie F użycie Medicine1 ze slot4 leczy92→101/101HP i zwalnia

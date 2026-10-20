@@ -3,6 +3,38 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — zakończenie Day3, autentyczny zapis M i zimny Continue
+
+Po Sheevie ruch na północ M044 uruchamia107/108/96/110–123.
+Zamknięcie123 przechodzi do M351/a8065148 (koniec dnia); HP25→210/210.
+Oryginalny panel21,dialog182 i Save→karta1→pusty M/index12→File saved
+przy65586. Po zamknięciu zapisu65898 M098/a8009448/dialog124,
+story432,HP210/210,menu null,lock3. Całe wyposażenie jak po Sheevie.
+Od checkpointu zwycięstwa zmienne1:124→998 i310:785115→1066324.
+
+/tmp/pe-ex-day4-save-M-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM jak live, wszystkie8192B nowego M zgodne między profilami
+i live,L bajtowo niezmieniony. Całe sloty/rekordy i wszystkie zmienne
+sprawdzone. M /tmp/pe-ex-day4-save-M-v1-source/BASLUS-006620000000M,
+SHA256 25d9d077c54b01762ed3111c590757555812284d9eb3956d4978d733c751ebe2.
+Artefakty /tmp/pe-ex-day4-save-M-v1-{seed.json,checkpoint,proof/proof.json}.
+
+/tmp/pe-ex-day4-M-loaded-v1-verify.py wykonany PASS: zimny Continue M
+normal/SAN exit0,pełny JSON/VRAM identyczny. Przy12840 M351/story432,
+HP210/210,menu null,enemy0,battle0; całe wyposażenie i wszystkie zmienne
+jak File saved65586. M bajtowo niezmieniony. Artefakty
+/tmp/pe-ex-day4-M-loaded-v1-{seed.json,proof/proof.json}. Nowa sesja
+/tmp/pe-ex-day4-M-nav-v1-live startup-proof.json PASS pełny JSON/VRAM
+jak cold normal/SAN. Poprzednia sesja Sheeva/Day3 zamknięta quit/exit0.
+
+SDK/SDL bez instrumentacji,brak niezależnego oracle PS1. Kod produkcyjny,
+RAM/RNG/payloady save bez edycji. Bieżący łańcuch EX ma zakończony Day3
+i trwały punkt początku Day4; nie jest to dowód pełnej kampanii New Game
+ani ukończenia EX/Chrysler. Następne kontynuacja M351→M098 i fabuła Day4.
+Pełny port pozostaje nieukończony.
+
+
+
 ### EX — diagnoza Revive i zweryfikowane zwycięstwo Sheeva
 
 Korekta poprzedniego podejrzenia: Revive działa. Read-only LLDB breakpointy

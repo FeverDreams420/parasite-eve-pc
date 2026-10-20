@@ -2,15 +2,41 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
-### EX G2: wejście Warehouse M266 i rozmowa z policjantem
+### EX Warehouse: poprawione oznaczenie M260 i przejście M262
+
+Poprzedni wpis błędnie nazywał scenę a8046048 M266;to M260,co poprawiono
+w tym wpisie i opisie dowodu. Numery scen/stan/VRAM były od początku
+sprawdzane poprawnie. M266 to późniejsza scena a8046348 z telefonem.
+Nie traktować wejścia M260 jako dowodu wejścia do M266.
+
+Kontynuacja21289 zwykłe Up blokuje się na przeszkodzie. Right/run35,
+Up/run300 uruchamia22524 drugi dialog policjanta14. Po zamknięciu
+obejście i schody:nieudane podejścia zapisane w journalu;odczyt skryptu
+M260 LLDB tylko read/detach wskazał docelowe wejście ok.[740,4774].
+Ostatnie UpRight/run100 iCross/wait600 daje26244 M262/a8046148,
+320/437HP,menu null,move_lock0,zero wrogów,pozycja[-111,0,-1331].
+Warehouse Key jeszcze niezdobyty,brak walki w tym odcinku.
+
+Dwa świeże pełne cold26244 normal/SAN pe-control-aim-v1 exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Verifier sprawdza dialog14,całe
+inventory/4096B rekordów (bez zmian) i wszystkie zmienne. Względem21289
+tylko1:999→260,44:72751165→2220234813;reszta bez zmian. Źródłowy/
+prywatne G2 identyczne bajtowo. Dowód /tmp/pe-ex-warehouse-m262-G2-v1-
+{seed.json,checkpoint,proof/proof.json},runner/verifier obok.
+Bez zmian produkcji/PsyZ/RAM/save payload;SDK/SDL nieinstrumentowane,
+brak oraclePS1,/tmp nietrwałe. Następne:M263 i klucz.
+
+
+### EX G2: wejście Warehouse M260 i rozmowa z policjantem
 
 Od18653 mapy kolejne Right wybierają Hospital6,Chrysler10,CentralPark2,
 NYPD4,Museum3,CarnegieHall1,Warehouse8.19549 nazwa Warehouse potwierdzona
-podglądem;dwa Cross przechodzą potwierdzenie i20489 M266/a8046048,
+podglądem;dwa Cross przechodzą potwierdzenie i20489 M260/a8046048,
 oryginalny dialog11 „Cop: Officer Brea!!”. Cross przechodzi przez12,13;
 21289 swobodne sterowanie,move_lock0,menu null,320/437HP,zero wrogów.
 Warehouse Key jeszcze niezdobyty. Wcześniejsze dowody pokazują go dalej
-w M263;nie omijać warunku zamkniętych drzwi w M266.
+w M263;nie omijać warunku zamkniętych drzwi wewnątrz Warehouse.
 
 Dwa świeże pełne cold21289 normal/SAN pe-control-aim-v1 exit0,
 bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne
@@ -22,7 +48,7 @@ reszta bez zmian. Źródłowy/prywatne G2 identyczne bajtowo.
 Dowód /tmp/pe-ex-warehouse-entry-G2-v1-{seed.json,checkpoint,proof/proof.json},
 runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save payload;
 SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp nietrwałe.
-Następne:oryginalna droga M266→M265→M263 i Warehouse Key.
+Następne:oryginalna droga M260→M262→M263 i Warehouse Key.
 
 
 ### EX G2: ruch po Continue i brama metra → mapa miasta

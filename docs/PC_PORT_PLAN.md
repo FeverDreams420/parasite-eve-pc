@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Przygotowana gałąź: pokład M275, Wayne M276 i grawerowanie
+
+Sesja50642 przeszła dialogi M428 i film38 do M275/a80472c8.
+Początkowe czekanie i Cross nie posuwały sceny: lock2 oznacza swobodne
+chodzenie. Z pozycji wejścia zwykłe Up80run+Left120run weszły do M276
+przy96096. Dialogi Wayne'a, magazyn otwarty i zamknięty bez transferu;
+pokazywał tylko amunicję/rakiety, nie leki. Wybrano Nothing w dialogu
+Hold equipment/Hold items, następnie oryginalne grawerowanie M8000
+i B Jacket1, dotychczasowe nazwy zatwierdzono Start dwukrotnie.
+
+/tmp/pe-m276-trained-Wayne-v1-proof/proof.json: zimny L normal/SAN
+do100866, M276,621HP, pełny JSON/VRAM identyczny z live, exit0 bez
+raportów, L bez zmian. Sloty inventory oraz base/bonus/effects wszystkich
+rekordów sprzętu identyczne jak przed Wayne'em. Bez zmian kodu gry.
+Dalsze zwykłe Right50run+Down80run wyprowadziły z kabiny; przy101784
+M426/a8082348, dialog30. Przy104248 nadal stage726/dialog39; dalsze
+wejścia nie mają jeszcze osobnego proof. Pozostaje doprowadzić finał
+do końca, E19 nadal niewygrane.
+
 ### Nowy zapis M po Eve i potwierdzone Continue; wejście do M428
 
 Po przejściu do M352/a8065148 oryginalny skrypt przywrócił621HP,

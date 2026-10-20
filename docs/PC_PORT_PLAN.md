@@ -3,6 +3,39 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — Medicine3 z M112, leczenie bez utraty ekwipunku
+
+Zimny L/80HP. Skrzynka aktor4[-1146,604] ma Medicine3/item8.
+Podejście od telefonu bezpośrednio blokuje biurko. Planer z marginesem55
+nie znajduje części punktów przy biurku; trasa do[-1146,1100] działa,
+lecz kolejny narożnik wymaga manualnej korekty. Ostatecznie od około
+[-1006,1035] Down100,Left175,Up50 pozwala uruchomić skrzynkę.
+
+Pełne21 slotów uruchamia dialog3 i oryginalną zamianę. Tester dodatkowym
+Cross wybrał omyłkowo slot0/262 zamiast Junk8: Medicine3 trafia do0,
+262 pozostaje w skrzynce (zmienna170). Nie utracono wyposażonej broni5.
+Items→Use Medicine3 leczy80→189/189, zwalnia0. Ponowne otwarcie skrzynki
+oddaje262 do0 i zeruje170. Przy16465 M112/story400,menu null,lock0,
+wszystkie50 slotów i4096B rekordów oraz wyposażone pozycje identyczne z L.
+Jedyna zmiana wszystkich zmiennych skryptowych:86:0→512 (otwarta skrzynka).
+
+/tmp/pe-ex-m112-heal-L-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, L bajtowo niezmieniony. Asercje obejmują
+lek w0/262 w skrzynce, użycie i odzyskanie oryginalnego przedmiotu.
+Artefakty /tmp/pe-ex-m112-heal-L-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Wcześniej wysłano brakującą trasę po błędzie planera: pomocnik v1 zakończył
+się wyjątkiem, native quit/exit0, bez ruchu po12800, źródłowe L bez zmian.
+Pomocnik /tmp/pe-ex-nypd-L-nav-v2.py odrzuca OSError/ValueError trasy
+bez zamykania sesji; komenda nieistniejącej trasy potwierdziła nav_rejected
+przy12800, po czym ta sama sesja wykonała pełne leczenie. Kod gry bez zmian.
+Aktualna sesja /tmp/pe-ex-nypd-L-nav-v2-live; wcześniejsza v1 zamknięta.
+SDK/SDL bez instrumentacji, brak niezależnego oracle PS1; RAM/save bez edycji.
+L pozostaje ostatnim trwałym zapisem80HP, live po leczeniu189HP.
+Następne dalsze NYPD; pełny port pozostaje nieukończony.
+
+
+
 ### EX — zimny Continue L z telefonu NYPD
 
 Świeże procesy normal/SAN, wyłącznie autentyczny L na prywatnej karcie1.

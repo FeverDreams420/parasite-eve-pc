@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — sala prób: film5, druga walka z Eve i wizja
+
+Z checkpointu dziennika63017 kontynuowano zwykłym inputem. Powrót M012,
+drugi koniec korytarza, oryginalna bramka Rehearse Key i dialog118;
+wejście M319/0xa80614c8 przy65863. Podejście do fortepianu uruchamia
+dialog120, dalej121..124 oraz film5. Podczas filmu wystąpił jeden Cross
+w zaplanowanym ciągu potwierdzeń; nie wysyłano Start. Ten dowód dotyczy
+przejścia sekwencji, nie osobnego audytu pełnego filmu bez inputu.
+Po wait2400 gra jest w M023/0xa80021c8, story91, dialog125, movie_frame231.
+Po126 oryginalna walka Eve type2:0, HP1000128/def6. Zwykła kolejka
+M8000/Double Action kończy tę walkę, przy72599 brak przeciwników.
+Dialogi127..129 prowadzą do wizji M371,story94, dialogi130/131;
+powrót M319/story95 i dialog133. Przy76279 story96, menu null,
+move_lock0,42/53HP. Wszystkie aktywne strony120..131 i133 są obecne
+w states.jsonl; nie deklaruje się niezaobserwowanej strony132.
+Seed/checkpoint: /tmp/pe-ex-rehearsal-v1-{seed.json,checkpoint}.
+Niezależne cold normal/SAN exit0. /tmp/pe-ex-rehearsal-v1-verify.py
+potwierdza pełny JSON/VRAM zgodny z live, prywatny A wszystkie8192B
+niezmienione, brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-rehearsal-v1-proof/proof.json. PsyZ/SDL bez instrumentacji.
+Bez zmian kodu/skryptów/balansu,
+bez edycji RAM lub zapisów. Pełny EX/Chrysler i zgodność PS1 nadal otwarte.
+
 ### EX — M018: dziennik Melissy i Rehearse Key
 
 Po zakończeniu zdarzenia M021 wyjście wymaga obejścia ciała; próba

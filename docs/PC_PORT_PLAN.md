@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273 z H: BP, Cure-M+Liberate i tryb11 Eve
+
+Cold H dotarł do M273 z621HP i lekami9/8 w15/27. W oryginalnym menu
+wydano300BP: ponowne otwarcie pokazało ActiveTime47 i17BP. Próba użycia
+Cure-M poza walką nie zużyła przedmiotu; opcja Use była niedostępna,
+a slot13 nadal16. /tmp/pe-m273-H-BP-menu-v1-proof/proof.json i frame.png:
+cold SAN do29000 exit0 bez raportów, pełny JSON/VRAM równe normalnemu,
+H bez zmian. Nie zaliczamy tej próby jako użycia Cure-M w polu.
+
+Wejście do walki39254:621HP, pełne PE, ammo9. Left225run pozwoliło
+osiągnąć pierwszą turę bez obrażeń. Przez oryginalne menu ustawiono
+Cure-M, a następnie Liberate w tej samej turze Double Action (8 komend).
+Po Liberate części5/6/7 mają1001317/1000558/1001274HP. Przy42318 Aya447,
+odporność stiffness0xc0, slot13 zużyty, ammo9, leki9/8 zachowane.
+/tmp/pe-m273-H-CureM-Liberate-v1-proof/proof.json: cold SAN exit0 bez
+raportów, pełny JSON/VRAM zgodne z normalnym live, H bez zmian.
+
+Dalsza walka zaobserwowała tryb11 Eve; zachowane22 pełne snapshoty
+w /tmp/pe-m273-H-mode11-v1-proof/observed-mode11-normal.json. Dwa strzały
+obniżyły część6 1000558→1000444 bez utratyHP. Podejście podczas trybu11
+zadało447→275HP. Heal3+strzał w jednej turze dały275→555HP i część6
+1000444→1000387. Przy43379 pełna kontrola, odporność0xc0, ammo6,
+Medicine4/Medicine3 nadal w15/27. Cold SAN do43379 exit0 bez raportów,
+pełny JSON/VRAM identyczne, autentyczne H bez zmian:
+/tmp/pe-m273-H-mode11-v1-proof/proof.json. Jest to porównanie natywne/SAN,
+bez oracle PS1 i bez zwycięstwa. Live66498 pozostaje na43379.
+Źródła gry, balans i pliki zapisu nie były modyfikowane w tych próbach.
+
 ### Przygotowana gałąź: zapis H przed finałem, oba leki zachowane
 
 Po wygranej M246 gałąź E→Medicine4→G przeszła M248/M249, dialogi Eve,

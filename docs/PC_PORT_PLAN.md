@@ -51,6 +51,11 @@ więc zgodność samego JSON nie dowodzi synchronizacji transportu.
 Warianty v1/v2 poprawki przeszły normal/SAN do134000 z identycznym JSON
 napisów; nie zastępuje to dowodu dla finalnego kandydata ani clear data.
 Karty źródłowe i użytkownika pozostają nietknięte; clear save nadal otwarty.
+Finalny v3 ma też niezależne cold normal/SAN do117948/M050/story754,
+film46/frame720, całe JSON/VRAM identyczne z wcześniejszym live, exit0,
+bez sanitizer/opcode/assertion i bez zmian źródłowego M lub prywatnych kart:
+/tmp/pe-credits-cold-audio-v3-precredits-proof/proof.json. Ten dowód obejmuje
+oba etapy E20, ucieczkę i epilog do filmu46; nie obejmuje końca XA ani save clear.
 
 ### E20 wygrana zwykłym inputem; potwierdzona ucieczka i epilog M288
 

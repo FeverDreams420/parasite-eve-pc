@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E08: komplet czterech skryptów i dwunastu list w istniejącym e08.c
+
+Z pełnego M418 odtworzono cztery oryginalne skrypty,12 list init/draw/update
+z terminatorami i cztery tablice rozmiarów. Wszystkie pozostają w e08.c;
+żadna funkcja nie została przeniesiona. Dwa adresy niewymienione w dawnym
+pliku symboli potwierdzono instrukcjami:801905f8 UpdateFadeSlots i80191db8
+InitParticleSlots, obie funkcje już istnieją. Surowy odczyt zapisano w
+/tmp/pe-e08-program-data-v1.json; rekonstrukcja w /tmp/pe-e08-program-data-v1-apply.py.
+Rozmiary zawierających wskaźniki kontekstów wynikają z sizeof: fade48,
+orb56, slots48, layered56. Bufor GlowRings636 zachowuje oryginalne620
+bajtów plus wzrost dwóch rekordów FieldRingGeometry; pozostałe oryginalne
+alokacje zachowano. Wyrównanie i przebieg alokacji nadal wymagają testu
+rzeczywistego wykonywania czterech skryptów przed podłączeniem loadera.
+
+/tmp/pe-e08-programs-v1-data-proof.json: parser skompilowanych Mach-O
+normal/SAN sprawdza wszystkie słowa skryptów, rozmiary i każdą relokację
+listy do właściwej funkcji, także terminatory. Nie jest to porównanie samego
+tekstu initializerów. Hash pełnego M418, pliku symboli, odczytu, skryptów
+oraz obiektów w proof. Cztery kompilacje plików E08 bez diagnostyk,
+/tmp/pe-e08-programs-v1-build-proof.json. Aktualny obiekt przechodzi również
+845 przypadków MIPS ScreenFade, /tmp/pe-e08-fade-oracle-v2-proof.json.
+Świeże216 normal+216 SAN obiektów zlinkowanej gry/fixture i pełny rehash
+/tmp/pe-e08-programs-v1-build-proof.json;70/70 regresji exit0 i8/8 CTestów
+(siedem assetowych oraz M430), z oboma wymaganymi obrazami. CTest aktora
+używa świeżej fixture, pozostałe niezmienione binarki testowe z build;
+Psyz/SDL pozostają nieinstrumentowane. Build użytkownika nadal v3.
+E08 nadal poza linkiem gry: pozostają stałe/aliasy danych graficznych,
+cztery klasy PM, reset, bindingi i wykonanie całego modułu. Dane i zielona
+kompilacja nie dowodzą działania lokacji ani ukończenia Chrysler Building.
+
 ### E08: cały istniejący moduł kompiluje się natywnie; integracja otwarta
 
 Naprawiono typy w obu dotychczasowych plikach E08 oraz ich istniejących

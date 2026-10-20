@@ -2951,3 +2951,255 @@ int SceneE08_UpdateArmGlow(void *raw0, void *raw1, void *raw2) {
 
     return 0;
 }
+
+/* Original USA M418 scripts and all four complete handler sets.
+ * Only pointer-bearing contexts change their allocation sizes on the host. */
+int g_RoomScript[] = {
+    0x10000,
+    0x100000,
+    0x10040000,
+    0x10070001,
+    0x200001,
+    0x20000,
+    0x30fb0000,
+    0x10001,
+    0x2000a,
+    0x10002,
+    0x30f90000,
+    -1
+};
+int g_SceneE08OrbScript[] = {
+    0x110006,
+    0x10000,
+    0x100000,
+    0x120000,
+    0x10120022,
+    0x120064,
+    0x10100024,
+    0x12ff9c,
+    0x100e0026,
+    0x1200c8,
+    0x100c0028,
+    0x12ff38,
+    0x100a002a,
+    0x12012c,
+    0x1008002c,
+    0x12fed4,
+    0x1006002e,
+    0x10070032,
+    0x200001,
+    0x20000,
+    0x30ee0000,
+    0x10001,
+    0x30fb0000,
+    0x10002,
+    0x30f90000,
+    -1
+};
+FieldFxHandler g_SceneE08OrbDrawList[] = {
+    SceneE08_DrawOrbContext,
+    SceneE08_DrawFadeSlots,
+    SceneE08_DrawPlayerOrb,
+    SceneE08_DrawRingSprites,
+    (FieldFxHandler)(intptr_t)-1
+};
+FieldFxHandler g_SceneE08OrbUpdateList[] = {
+    SceneE08_UpdateOrbContext,
+    SceneE08_UpdateFadeSlots,
+    SceneE08_UpdatePlayerOrb,
+    SceneE08_UpdateRingSprites,
+    (FieldFxHandler)(intptr_t)-1
+};
+FieldFxHandler g_SceneE08OrbInitList[] = {
+    SceneE08_InitOrbContext,
+    SceneE08_InitFadeSlots,
+    SceneE08_InitPlayerOrb,
+    SceneE08_InitRingSprites,
+    (FieldFxHandler)(intptr_t)-1
+};
+u16 g_SceneE08OrbSpawnLayout[] = {
+    sizeof(SceneE08State),
+    72,
+    172,
+    16,
+    0xffff
+};
+int g_SceneE08SlotsScript[] = {
+    0x100000,
+    0x500001,
+    0x10000,
+    0x100000,
+    0x10009,
+    0x2001e,
+    0x410001,
+    0x111a0000,
+    0x11010001,
+    0x30180000,
+    0x10110000,
+    0x100c0005,
+    0x100d000f,
+    0x1010004b,
+    0x10110078,
+    0x10060091,
+    0x101100fa,
+    0x200001,
+    0x20000,
+    0x30f60000,
+    0x10007,
+    0x30fb0000,
+    0x10006,
+    0x30f90000,
+    0x10002,
+    0x30f70000,
+    0x10005,
+    0x30f50000,
+    0x10003,
+    0x30f30000,
+    0x10004,
+    0x30f10000,
+    0x10008,
+    0x30ef0000,
+    -1
+};
+FieldFxHandler g_SceneE08SlotsDrawList[] = {
+    SceneE08_DrawSlotsContext,
+    SceneE08_DrawCentreGlow,
+    SceneE08_DrawRadialRibbons,
+    SceneE08_DrawParticleSlots,
+    SceneE08_DrawRingEffect,
+    SceneE08_DrawSpiralRibbons,
+    SceneE08_DrawScreenFade,
+    SceneE08_DrawOrbitParticles,
+    SceneE08_DrawGlowModel,
+    SceneE08_DrawLimbBeams,
+    (FieldFxHandler)(intptr_t)-1
+};
+FieldFxHandler g_SceneE08SlotsUpdateList[] = {
+    SceneE08_UpdateSlotsContext,
+    SceneE08_UpdateCentreGlow,
+    SceneE08_UpdateRadialRibbons,
+    SceneE08_UpdateParticleSlots,
+    SceneE08_UpdateRingEffect,
+    SceneE08_UpdateSpiralRibbons,
+    SceneE08_UpdateScreenFade,
+    SceneE08_UpdateOrbitParticles,
+    SceneE08_UpdateGlowModel,
+    SceneE08_UpdateLimbBeams,
+    (FieldFxHandler)(intptr_t)-1
+};
+FieldFxHandler g_SceneE08SlotsInitList[] = {
+    SceneE08_InitSlotsContext,
+    SceneE08_InitCentreGlow,
+    SceneE08_InitRadialRibbons,
+    SceneE08_InitParticleSlots,
+    SceneE08_InitRingEffect,
+    SceneE08_InitSpiralRibbons,
+    SceneE08_InitScreenFade,
+    SceneE08_InitOrbitParticles,
+    SceneE08_InitGlowModel,
+    SceneE08_InitLimbBeams,
+    (FieldFxHandler)(intptr_t)-1
+};
+u16 g_SceneE08SlotsSpawnLayout[] = {
+    sizeof(SceneE08InitState),
+    16,
+    640,
+    92,
+    24,
+    672,
+    8,
+    320,
+    28,
+    48,
+    0xffff
+};
+int g_SceneE08LayeredSpriteScript[] = {
+    0x10000,
+    0x10005,
+    0x100000,
+    0x100a0002,
+    0x1012000a,
+    0x10110012,
+    0x1010001a,
+    0x10080014,
+    0x10100018,
+    0x100f001c,
+    0x1010006e,
+    0x200001,
+    0x20000,
+    0x30f50000,
+    0x10001,
+    0x30fb0000,
+    0x12001c,
+    0x130000,
+    0x10002,
+    0x12003c,
+    0x130001,
+    0x10002,
+    0x30f40000,
+    0x10003,
+    0x30f20000,
+    0x10004,
+    0x30f00000,
+    -1
+};
+FieldFxHandler g_SceneE08LayeredSpriteDrawList[] = {
+    SceneE08_DrawLayeredSpriteContext,
+    SceneE08_DrawTrailGlow,
+    SceneE08_DrawLayeredSprite,
+    SceneE08_DrawSpinningGlow,
+    SceneE08_DrawExpandingGlow,
+    SceneE08_DrawArmGlow,
+    (FieldFxHandler)(intptr_t)-1
+};
+FieldFxHandler g_SceneE08LayeredSpriteUpdateList[] = {
+    SceneE08_UpdateLayeredSpriteContext,
+    SceneE08_UpdateTrailGlow,
+    SceneE08_UpdateLayeredSprite,
+    SceneE08_UpdateSpinningGlow,
+    SceneE08_UpdateExpandingGlow,
+    SceneE08_UpdateArmGlow,
+    (FieldFxHandler)(intptr_t)-1
+};
+FieldFxHandler g_SceneE08LayeredSpriteInitList[] = {
+    SceneE08_InitLayeredSpriteContext,
+    SceneE08_InitTrailGlow,
+    SceneE08_InitLayeredSprite,
+    SceneE08_InitSpinningGlow,
+    SceneE08_InitExpandingGlow,
+    SceneE08_InitArmGlow,
+    (FieldFxHandler)(intptr_t)-1
+};
+u16 g_SceneE08LayeredSpriteSpawnLayout[] = {
+    sizeof(SceneE08Context),
+    144,
+    224,
+    36,
+    24,
+    44,
+    0xffff
+};
+FieldFxHandler g_RoomInitList[] = {
+    SceneE08_InitContext,
+    SceneE08_InitGlowRings,
+    SceneE08_InitParticleCluster,
+    (FieldFxHandler)(intptr_t)-1
+};
+FieldFxHandler g_RoomDrawList[] = {
+    SceneE08_DrawContext,
+    SceneE08_DrawGlowRings,
+    SceneE08_DrawParticleCluster,
+    (FieldFxHandler)(intptr_t)-1
+};
+FieldFxHandler g_RoomUpdateList[] = {
+    SceneE08_UpdateContext,
+    SceneE08_UpdateGlowRings,
+    SceneE08_UpdateParticleCluster,
+    (FieldFxHandler)(intptr_t)-1
+};
+u16 g_SceneE08FadeSpawnLayout[] = {
+    sizeof(SceneE08LinkInitState),
+    620 + 2 * (sizeof(FieldRingGeometry) - 24),
+    602,
+    0xffff
+};

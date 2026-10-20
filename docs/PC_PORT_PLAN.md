@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: powrót do telefonu, autentyczny G2 i cold Continue
+
+Nagrody M186 zamknięte54398; Cure-D14 w slocie25. Powrót prowadzi
+54830 M188. Nieudane obejście zawiera Up300 do[-853,-5954];odczyt
+oryginalnego skryptu LLDB tylko read/detach wskazał boczny polygon M187.
+Down/run250,Left/run180 daje56060 M187. Up/run22,Left/run440,
+wait300 daje56822 M184. Zwykłe zejście po schodach i obejście ławek
+kończy58522 przy[-215,-370,-3675]. Cross uruchamia telefon/dialog6;
+Cross do port36,potem pliki37/59962,kursor0,5 na źródłowym F2.
+Down wybiera nowy slot0,6. Cross daje60620 FileSaved/selection40,
+320/437HP,story600. Nowy autentyczny plik:
+/tmp/pe-ex-subway-save-G2-v1-source/BASLUS-006620000000G,8192B,
+SHA256 38a66501cc97d97b5081ae7112345a46bdafd2610f84b3128a82d85f5194edc8.
+
+Pełny cold F2→60620 normal/SAN pe-control-aim-v1 exit0,bez diagnostyki.
+Cały JSON i1MiB VRAM równe profilom i zamrożonemu live;nowy G wszystkimi
+8192B równy live. Cały inventory/4096B rekordów i wszystkie zmienne
+sprawdzone;względem wyniku53198 tylko slot25:0→14,zmienne1:188→998,
+20:1049957→1312101,78:134→159. Źródłowy/prywatne F2 niezmienione.
+Dowód /tmp/pe-ex-subway-save-G2-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Dwa świeże cold Continue z samym G2,cap12920:M184/a8028248,story600,
+320/437HP,menu null,move_lock0,combat.mode0 bez wrogów. Pełny JSON/VRAM
+zgodny między profilami;cały ekwipunek i wszystkie zmienne równe
+FileSaved60620,G2 źródłowy/prywatne kopie niezmienione. Dowód
+/tmp/pe-ex-subway-G2-loaded-v2-{seed.json,proof/proof.json}. V1 seed miał
+szóste Down poza kolejnością i został odrzucony przed startem gry;
+v2 sortuje tylko argumenty pad. Ruch po Continue nie był tym testem.
+SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp nietrwałe. Bez zmian
+produkcji/PsyZ/RAM/save payload. Następne:dalsza kampania z G2.
+
+
 ### EX: powrót przez M188 i wygrana M186
 
 Od47810 M189 Down700,Down/run152 prowadzą48862 M188. Dalsze
